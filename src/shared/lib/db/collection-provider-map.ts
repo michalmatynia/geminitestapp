@@ -40,9 +40,7 @@ const findCollectionRoute = (
   if (direct) return direct;
   const normalized = collectionName.trim().toLowerCase();
   if (!normalized) return undefined;
-  const matchedKey = Object.keys(map).find(
-    (key) => key.trim().toLowerCase() === normalized
-  );
+  const matchedKey = Object.keys(map).find((key) => key.trim().toLowerCase() === normalized);
   return matchedKey ? map[matchedKey] : undefined;
 };
 
@@ -66,10 +64,7 @@ const readMapFromMongo = async (key: string): Promise<Record<string, DatabaseEng
     const doc = await mongo
       .collection<{ _id: string; key?: string; value?: string }>('settings')
       .findOne({
-        $or: [
-          { _id: key },
-          { key },
-        ],
+        $or: [{ _id: key }, { key }],
       });
     return parseMap(doc?.value);
   } catch {

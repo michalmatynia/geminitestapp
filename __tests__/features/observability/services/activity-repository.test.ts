@@ -42,9 +42,11 @@ describe('prismaActivityRepository', () => {
 
     expect(result).toHaveLength(1);
     expect(result[0]?.id).toBe('1');
-    expect(prisma.systemLog.findMany).toHaveBeenCalledWith(expect.objectContaining({
-      take: 10,
-    }));
+    expect(prisma.systemLog.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        take: 10,
+      })
+    );
   });
 
   it('should create an activity log', async () => {

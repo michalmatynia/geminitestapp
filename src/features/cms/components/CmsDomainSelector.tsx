@@ -17,13 +17,17 @@ export function CmsDomainSelector({
   triggerClassName,
   onChange,
 }: CmsDomainSelectorProps): React.ReactNode {
-  const { domains, activeDomainId, hostDomainId, setActiveDomainId, zoningEnabled } = useCmsDomainSelection();
+  const { domains, activeDomainId, hostDomainId, setActiveDomainId, zoningEnabled } =
+    useCmsDomainSelection();
   const options = useMemo(
     () =>
       domains.map((item: CmsDomain) => ({
         value: item.id,
         label: item.domain,
-        description: [hostDomainId === item.id ? 'current host' : null, item.aliasOf ? 'shared zone' : null]
+        description: [
+          hostDomainId === item.id ? 'current host' : null,
+          item.aliasOf ? 'shared zone' : null,
+        ]
           .filter(Boolean)
           .join(', '),
       })),
@@ -39,7 +43,11 @@ export function CmsDomainSelector({
   if (!zoningEnabled) {
     return (
       <div className='flex items-center gap-2'>
-        {label && <span className='text-[11px] font-medium uppercase tracking-wide text-gray-400'>{label}</span>}
+        {label && (
+          <span className='text-[11px] font-medium uppercase tracking-wide text-gray-400'>
+            {label}
+          </span>
+        )}
         <span className='text-[11px] text-gray-500'>Simple routing</span>
       </div>
     );
@@ -47,8 +55,13 @@ export function CmsDomainSelector({
 
   return (
     <div className='flex items-center gap-2'>
-      {label && <span className='text-[11px] font-medium uppercase tracking-wide text-gray-400'>{label}</span>}
-      <SelectSimple size='sm'
+      {label && (
+        <span className='text-[11px] font-medium uppercase tracking-wide text-gray-400'>
+          {label}
+        </span>
+      )}
+      <SelectSimple
+        size='sm'
         options={options}
         value={activeDomainId ?? undefined}
         onValueChange={handleChange}

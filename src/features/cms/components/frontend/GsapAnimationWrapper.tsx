@@ -37,9 +37,7 @@ const buildStagger = (
 ): GSAPStaggerVars | undefined => {
   if (targetCount <= 1) return undefined;
   const hasStagger =
-    config.preset === 'stagger' ||
-    (config.staggerEach ?? 0) > 0 ||
-    (config.staggerAmount ?? 0) > 0;
+    config.preset === 'stagger' || (config.staggerEach ?? 0) > 0 || (config.staggerAmount ?? 0) > 0;
   if (!hasStagger) return undefined;
   const from = config.staggerFrom ?? DEFAULT_ANIMATION_CONFIG.staggerFrom ?? 'start';
   const amount = config.staggerAmount ?? 0;
@@ -100,17 +98,14 @@ const buildScrollTrigger = (
   if (!isScroll) return undefined;
   const scrub =
     scrollMode === 'scrub' || scrollMode === 'pin' || scrollMode === 'story'
-      ? config.scrollScrub ?? DEFAULT_ANIMATION_CONFIG.scrollScrub ?? 0.6
+      ? (config.scrollScrub ?? DEFAULT_ANIMATION_CONFIG.scrollScrub ?? 0.6)
       : false;
-  const pin =
-    scrollMode === 'pin' || scrollMode === 'story'
-      ? true
-      : config.scrollPin ?? false;
+  const pin = scrollMode === 'pin' || scrollMode === 'story' ? true : (config.scrollPin ?? false);
   const snap = config.scrollSnap
     ? {
-      snapTo: Math.max(1, targetCount - 1) ? 1 / Math.max(1, targetCount - 1) : 1,
-      duration: config.scrollSnapDuration ?? DEFAULT_ANIMATION_CONFIG.scrollSnapDuration ?? 0.3,
-    }
+        snapTo: Math.max(1, targetCount - 1) ? 1 / Math.max(1, targetCount - 1) : 1,
+        duration: config.scrollSnapDuration ?? DEFAULT_ANIMATION_CONFIG.scrollSnapDuration ?? 0.3,
+      }
     : undefined;
   return {
     trigger: root,
@@ -126,15 +121,7 @@ const buildScrollTrigger = (
 const buildKeyframes = (preset: AnimationPreset): GSAPTweenVars | null => {
   if (preset === 'shake') {
     return {
-      keyframes: [
-        { x: -6 },
-        { x: 6 },
-        { x: -4 },
-        { x: 4 },
-        { x: -2 },
-        { x: 2 },
-        { x: 0 },
-      ],
+      keyframes: [{ x: -6 }, { x: 6 }, { x: -4 }, { x: 4 }, { x: -2 }, { x: 2 }, { x: 0 }],
     };
   }
   if (preset === 'wiggle') {
@@ -173,11 +160,8 @@ const resolveMotionPath = (config: GsapAnimationConfig, root: HTMLElement): stri
   return vectorShapesToPathWithBounds(shapes, rect.width, rect.height);
 };
 
-const buildMotionPathVars = (
-  config: GsapAnimationConfig,
-  path: string
-): GSAPTweenVars => {
-  const autoRotate = config.motionPathAutoRotate ? config.motionPathRotateOffset ?? 0 : false;
+const buildMotionPathVars = (config: GsapAnimationConfig, path: string): GSAPTweenVars => {
+  const autoRotate = config.motionPathAutoRotate ? (config.motionPathRotateOffset ?? 0) : false;
   return {
     path,
     align: config.motionPathAlign ? path : false,
@@ -192,7 +176,7 @@ const resolveParallaxOffset = (config: GsapAnimationConfig): number => {
   if (raw !== 0) return raw;
   const preset = config.parallaxPreset ?? 'none';
   const presetData = PARALLAX_DEFAULTS[preset];
-  const offset = (presetData && typeof presetData === 'object' ? (presetData).offset : 0) ?? 0;
+  const offset = (presetData && typeof presetData === 'object' ? presetData.offset : 0) ?? 0;
   return typeof offset === 'number' ? offset : 0;
 };
 
@@ -219,7 +203,8 @@ const computeParallaxOffset = (
     return (base + step * index) * reverse;
   }
   if (pattern === 'layers') {
-    const strength = config.parallaxLayerStrength ?? DEFAULT_ANIMATION_CONFIG.parallaxLayerStrength ?? 0.35;
+    const strength =
+      config.parallaxLayerStrength ?? DEFAULT_ANIMATION_CONFIG.parallaxLayerStrength ?? 0.35;
     const t = total > 1 ? index / (total - 1) : 0;
     return base * (1 + strength * t) * reverse;
   }
@@ -239,7 +224,7 @@ export function GsapAnimationWrapper({
 }: GsapAnimationWrapperProps): React.ReactNode {
   const ref = useRef<HTMLDivElement>(null);
   const blockSettings = useBlockSettings();
-  
+
   const config = useMemo(() => {
     if (propConfig) return propConfig;
     if (blockSettings?.['gsapAnimation']) {
@@ -255,24 +240,28 @@ export function GsapAnimationWrapper({
   }, [config]);
   const hasMotionPathConfig = Boolean(
     mergedConfig?.motionPathEnabled &&
-      ((mergedConfig.motionPathPath ?? '').trim() || (mergedConfig.motionPathShapes?.length ?? 0) > 0)
+    ((mergedConfig.motionPathPath ?? '').trim() || (mergedConfig.motionPathShapes?.length ?? 0) > 0)
   );
   const hasParallaxConfig = Boolean(
     mergedConfig &&
-      (mergedConfig.parallaxPreset !== 'none' ||
-        (mergedConfig.parallaxOffset ?? 0) !== 0 ||
-        (mergedConfig.parallaxScaleFrom ?? 1) !== 1 ||
-        (mergedConfig.parallaxScaleTo ?? 1) !== 1 ||
-        (mergedConfig.parallaxRotateFrom ?? 0) !== 0 ||
-        (mergedConfig.parallaxRotateTo ?? 0) !== 0 ||
-        (mergedConfig.parallaxOpacityFrom ?? 1) !== 1 ||
-        (mergedConfig.parallaxOpacityTo ?? 1) !== 1 ||
-        (mergedConfig.parallaxBlurFrom ?? 0) !== 0 ||
-        (mergedConfig.parallaxBlurTo ?? 0) !== 0)
+    (mergedConfig.parallaxPreset !== 'none' ||
+      (mergedConfig.parallaxOffset ?? 0) !== 0 ||
+      (mergedConfig.parallaxScaleFrom ?? 1) !== 1 ||
+      (mergedConfig.parallaxScaleTo ?? 1) !== 1 ||
+      (mergedConfig.parallaxRotateFrom ?? 0) !== 0 ||
+      (mergedConfig.parallaxRotateTo ?? 0) !== 0 ||
+      (mergedConfig.parallaxOpacityFrom ?? 1) !== 1 ||
+      (mergedConfig.parallaxOpacityTo ?? 1) !== 1 ||
+      (mergedConfig.parallaxBlurFrom ?? 0) !== 0 ||
+      (mergedConfig.parallaxBlurTo ?? 0) !== 0)
   );
 
   useEffect(() => {
-    if (!mergedConfig || (mergedConfig.preset === 'none' && !hasMotionPathConfig && !hasParallaxConfig)) return;
+    if (
+      !mergedConfig ||
+      (mergedConfig.preset === 'none' && !hasMotionPathConfig && !hasParallaxConfig)
+    )
+      return;
     if (!ref.current) return;
     let ctx: ReturnType<typeof import('gsap').gsap.context> | null = null;
     let cancelled = false;
@@ -312,12 +301,15 @@ export function GsapAnimationWrapper({
           ...(scrollTrigger ? { scrollTrigger } : {}),
         };
 
-        const motionPathPath = mergedConfig.motionPathEnabled ? resolveMotionPath(mergedConfig, root) : '';
+        const motionPathPath = mergedConfig.motionPathEnabled
+          ? resolveMotionPath(mergedConfig, root)
+          : '';
         const hasMotionPath = Boolean(mergedConfig.motionPathEnabled && motionPathPath);
         if (hasMotionPath) {
           const motionPathVars = buildMotionPathVars(mergedConfig, motionPathPath);
           if (mergedConfig.motionPathFollow && targets.length > 1) {
-            const spacing = mergedConfig.motionPathSpacing ?? DEFAULT_ANIMATION_CONFIG.motionPathSpacing ?? 0.08;
+            const spacing =
+              mergedConfig.motionPathSpacing ?? DEFAULT_ANIMATION_CONFIG.motionPathSpacing ?? 0.08;
             targets.forEach((target: Element, index: number) => {
               const offset = spacing * index;
               const start = clamp01((mergedConfig.motionPathStart ?? 0) + offset);
@@ -340,9 +332,12 @@ export function GsapAnimationWrapper({
           const parallaxTargets = buildTargets(root, parallaxSelector || mergedConfig.selector);
           if (parallaxTargets.length > 0) {
             const axis = mergedConfig.parallaxAxis ?? 'y';
-            const start = mergedConfig.parallaxStart ?? DEFAULT_ANIMATION_CONFIG.parallaxStart ?? 'top bottom';
-            const end = mergedConfig.parallaxEnd ?? DEFAULT_ANIMATION_CONFIG.parallaxEnd ?? 'bottom top';
-            const scrub = mergedConfig.parallaxScrub ?? DEFAULT_ANIMATION_CONFIG.parallaxScrub ?? 0.6;
+            const start =
+              mergedConfig.parallaxStart ?? DEFAULT_ANIMATION_CONFIG.parallaxStart ?? 'top bottom';
+            const end =
+              mergedConfig.parallaxEnd ?? DEFAULT_ANIMATION_CONFIG.parallaxEnd ?? 'bottom top';
+            const scrub =
+              mergedConfig.parallaxScrub ?? DEFAULT_ANIMATION_CONFIG.parallaxScrub ?? 0.6;
             const easeValue = buildEaseValue(
               mergedConfig.parallaxEase ?? mergedConfig.easing,
               mergedConfig.customEase,
@@ -351,8 +346,15 @@ export function GsapAnimationWrapper({
             const baseScaleFrom = mergedConfig.parallaxScaleFrom ?? 1;
             const baseScaleTo = mergedConfig.parallaxScaleTo ?? 1;
             const depthData = PARALLAX_DEFAULTS['depth'];
-            const depthScale = (mergedConfig.parallaxPreset === 'depth' && depthData && typeof depthData === 'object') ? (depthData).scale : undefined;
-            const scaleFromSeed = baseScaleFrom !== 1 || baseScaleTo !== 1 ? baseScaleFrom : ((depthScale) ?? baseScaleFrom);            const scaleToSeed = baseScaleFrom !== 1 || baseScaleTo !== 1 ? baseScaleTo : 1;
+            const depthScale =
+              mergedConfig.parallaxPreset === 'depth' && depthData && typeof depthData === 'object'
+                ? depthData.scale
+                : undefined;
+            const scaleFromSeed =
+              baseScaleFrom !== 1 || baseScaleTo !== 1
+                ? baseScaleFrom
+                : (depthScale ?? baseScaleFrom);
+            const scaleToSeed = baseScaleFrom !== 1 || baseScaleTo !== 1 ? baseScaleTo : 1;
             const rotateFromSeed = mergedConfig.parallaxRotateFrom ?? 0;
             const rotateToSeed = mergedConfig.parallaxRotateTo ?? 0;
             const opacityFromSeed = mergedConfig.parallaxOpacityFrom ?? 1;
@@ -361,7 +363,9 @@ export function GsapAnimationWrapper({
             const blurToSeed = mergedConfig.parallaxBlurTo ?? 0;
             const scaleStep =
               mergedConfig.parallaxPattern === 'layers'
-                ? mergedConfig.parallaxLayerScaleStep ?? DEFAULT_ANIMATION_CONFIG.parallaxLayerScaleStep ?? 0
+                ? (mergedConfig.parallaxLayerScaleStep ??
+                  DEFAULT_ANIMATION_CONFIG.parallaxLayerScaleStep ??
+                  0)
                 : 0;
 
             parallaxTargets.forEach((target: Element, index: number) => {
@@ -434,7 +438,10 @@ export function GsapAnimationWrapper({
     };
   }, [mergedConfig, configSignature, hasMotionPathConfig, hasParallaxConfig]);
 
-  if (!mergedConfig || (mergedConfig.preset === 'none' && !hasMotionPathConfig && !hasParallaxConfig)) {
+  if (
+    !mergedConfig ||
+    (mergedConfig.preset === 'none' && !hasMotionPathConfig && !hasParallaxConfig)
+  ) {
     return <>{children}</>;
   }
 

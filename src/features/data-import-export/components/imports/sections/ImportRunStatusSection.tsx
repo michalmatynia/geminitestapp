@@ -2,12 +2,7 @@
 
 import React, { useMemo } from 'react';
 import { useImportExport } from '@/features/data-import-export/context/ImportExportContext';
-import {
-  Button,
-  FormSection,
-  Badge,
-  Hint,
-} from '@/shared/ui';
+import { Button, FormSection, Badge, Hint } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 export function ImportRunStatusSection(): React.JSX.Element | null {
@@ -26,9 +21,7 @@ export function ImportRunStatusSection(): React.JSX.Element | null {
   const runHasRetryableItems = useMemo(
     (): boolean =>
       Boolean(
-        activeImportRun?.items.some(
-          (item) => item.status === 'failed' || item.status === 'pending'
-        )
+        activeImportRun?.items.some((item) => item.status === 'failed' || item.status === 'pending')
       ),
     [activeImportRun?.items]
   );
@@ -168,15 +161,13 @@ export function ImportRunStatusSection(): React.JSX.Element | null {
             onClick={(): void => {
               void handleCancelImport();
             }}
-            disabled={!(activeRun.status === 'queued' || activeRun.status === 'running') || importing}
+            disabled={
+              !(activeRun.status === 'queued' || activeRun.status === 'running') || importing
+            }
           >
             Cancel run
           </Button>
-          <Button
-            type='button'
-            variant='secondary'
-            onClick={handleDownloadImportReport}
-          >
+          <Button type='button' variant='secondary' onClick={handleDownloadImportReport}>
             Download report
           </Button>
         </div>
@@ -184,10 +175,9 @@ export function ImportRunStatusSection(): React.JSX.Element | null {
     >
       {activeRunStats ? (
         <p className='mt-1 text-sm text-gray-300'>
-          Total {activeRunStats.total} · Imported {activeRunStats.imported}{' '}
-          · Updated {activeRunStats.updated} · Skipped{' '}
-          {activeRunStats.skipped} · Failed {activeRunStats.failed} · Pending{' '}
-          {activeRunStats.pending}
+          Total {activeRunStats.total} · Imported {activeRunStats.imported} · Updated{' '}
+          {activeRunStats.updated} · Skipped {activeRunStats.skipped} · Failed{' '}
+          {activeRunStats.failed} · Pending {activeRunStats.pending}
         </p>
       ) : null}
       {activeRunParameterImportSummary ? (
@@ -228,9 +218,7 @@ export function ImportRunStatusSection(): React.JSX.Element | null {
       {activeRun.summaryMessage ? (
         <p className='mt-2 text-xs text-gray-400'>{activeRun.summaryMessage}</p>
       ) : null}
-      {loadingImportRun ? (
-        <Hint className='mt-2'>Refreshing run status...</Hint>
-      ) : null}
+      {loadingImportRun ? <Hint className='mt-2'>Refreshing run status...</Hint> : null}
       {runErrorItems.length > 0 ? (
         <div className='mt-3 space-y-1 text-xs text-gray-400'>
           {runErrorItems.map((item) => (

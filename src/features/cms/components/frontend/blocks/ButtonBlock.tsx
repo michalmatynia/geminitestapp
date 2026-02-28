@@ -10,7 +10,8 @@ export function ButtonBlock(): React.ReactNode {
   const link = (settings['buttonLink'] as string) || '#';
   const style = (settings['buttonStyle'] as string) || 'solid';
 
-  const baseClasses = 'cms-hover-button inline-block rounded-md px-6 py-2.5 text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2';
+  const baseClasses =
+    'cms-hover-button inline-block rounded-md px-6 py-2.5 text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2';
 
   const customStyles: React.CSSProperties = {};
   const fontFamily = settings['fontFamily'] as string | undefined;

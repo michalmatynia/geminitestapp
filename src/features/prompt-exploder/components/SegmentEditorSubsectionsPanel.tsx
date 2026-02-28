@@ -3,14 +3,7 @@
 import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react';
 import React from 'react';
 
-import {
-  Button,
-  Input,
-  SelectSimple,
-  FormField,
-  SectionHeader,
-  Card,
-} from '@/shared/ui';
+import { Button, Input, SelectSimple, FormField, SectionHeader, Card } from '@/shared/ui';
 
 import { PromptExploderHierarchyTreeProvider } from './PromptExploderHierarchyTreeContext';
 import { PromptExploderHierarchyTreeEditor } from './PromptExploderHierarchyTreeEditor';
@@ -48,10 +41,7 @@ export function SegmentEditorSubsectionsPanel(): React.JSX.Element | null {
     item: PromptExploderListItem;
     onChange: (updater: (item: PromptExploderListItem) => PromptExploderListItem) => void;
   }): React.JSX.Element => (
-    <SegmentEditorListItemLogicalEditor
-      item={renderArgs.item}
-      onChange={renderArgs.onChange}
-    />
+    <SegmentEditorListItemLogicalEditor item={renderArgs.item} onChange={renderArgs.onChange} />
   );
 
   const onUpdateSegment = (updater: (current: PromptExploderSegment) => PromptExploderSegment) => {
@@ -86,8 +76,13 @@ export function SegmentEditorSubsectionsPanel(): React.JSX.Element | null {
       {segment.subsections.length === 0 ? (
         <div className='text-xs text-gray-500'>No subsections detected.</div>
       ) : null}
-      {(segment.subsections).map((subsection: PromptExploderSubsection, subsectionIndex: number) => (
-        <Card key={subsection.id} variant='subtle-compact' padding='md' className='space-y-2 border-border/50 bg-card/20'>
+      {segment.subsections.map((subsection: PromptExploderSubsection, subsectionIndex: number) => (
+        <Card
+          key={subsection.id}
+          variant='subtle-compact'
+          padding='md'
+          className='space-y-2 border-border/50 bg-card/20'
+        >
           <SectionHeader
             title={`Subsection ${subsectionIndex + 1}`}
             size='xxs'
@@ -114,7 +109,7 @@ export function SegmentEditorSubsectionsPanel(): React.JSX.Element | null {
                   type='button'
                   variant='ghost'
                   size='icon'
-                  disabled={subsectionIndex === (segment.subsections).length - 1}
+                  disabled={subsectionIndex === segment.subsections.length - 1}
                   onClick={() => {
                     onUpdateSegment((current: PromptExploderSegment) => {
                       const typedCurrent = current;
@@ -154,13 +149,14 @@ export function SegmentEditorSubsectionsPanel(): React.JSX.Element | null {
               onChange={(event) => {
                 onUpdateSegment((current: PromptExploderSegment) => {
                   const typedCurrent = current;
-                  const nextSubsections = typedCurrent.subsections.map((candidate: PromptExploderSubsection, candidateIndex: number) =>
-                    candidateIndex === subsectionIndex
-                      ? {
-                        ...candidate,
-                        title: event.target.value,
-                      }
-                      : candidate
+                  const nextSubsections = typedCurrent.subsections.map(
+                    (candidate: PromptExploderSubsection, candidateIndex: number) =>
+                      candidateIndex === subsectionIndex
+                        ? {
+                            ...candidate,
+                            title: event.target.value,
+                          }
+                        : candidate
                   );
                   return {
                     ...typedCurrent,
@@ -175,13 +171,14 @@ export function SegmentEditorSubsectionsPanel(): React.JSX.Element | null {
               onChange={(event) => {
                 onUpdateSegment((current: PromptExploderSegment) => {
                   const typedCurrent = current;
-                  const nextSubsections = typedCurrent.subsections.map((candidate: PromptExploderSubsection, candidateIndex: number) =>
-                    candidateIndex === subsectionIndex
-                      ? {
-                        ...candidate,
-                        code: event.target.value.trim().toUpperCase() || null,
-                      }
-                      : candidate
+                  const nextSubsections = typedCurrent.subsections.map(
+                    (candidate: PromptExploderSubsection, candidateIndex: number) =>
+                      candidateIndex === subsectionIndex
+                        ? {
+                            ...candidate,
+                            code: event.target.value.trim().toUpperCase() || null,
+                          }
+                        : candidate
                   );
                   return {
                     ...typedCurrent,
@@ -197,13 +194,14 @@ export function SegmentEditorSubsectionsPanel(): React.JSX.Element | null {
             onChange={(event) => {
               onUpdateSegment((current: PromptExploderSegment) => {
                 const typedCurrent = current;
-                const nextSubsections = typedCurrent.subsections.map((candidate: PromptExploderSubsection, candidateIndex: number) =>
-                  candidateIndex === subsectionIndex
-                    ? {
-                      ...candidate,
-                      condition: event.target.value.trim() || null,
-                    }
-                    : candidate
+                const nextSubsections = typedCurrent.subsections.map(
+                  (candidate: PromptExploderSubsection, candidateIndex: number) =>
+                    candidateIndex === subsectionIndex
+                      ? {
+                          ...candidate,
+                          condition: event.target.value.trim() || null,
+                        }
+                      : candidate
                 );
                 return {
                   ...typedCurrent,
@@ -214,13 +212,10 @@ export function SegmentEditorSubsectionsPanel(): React.JSX.Element | null {
             placeholder='Condition (optional)'
           />
           {(() => {
-            const parsedCondition = parseSubsectionConditionText(
-              subsection.condition
-            );
+            const parsedCondition = parseSubsectionConditionText(subsection.condition);
             const operatorValue = parsedCondition?.operator ?? 'none';
             const paramPath = parsedCondition?.paramPath ?? '';
-            const comparatorValue =
-              parsedCondition?.comparator ?? 'truthy';
+            const comparatorValue = parsedCondition?.comparator ?? 'truthy';
             const selectedParamEntry = paramPath
               ? (listParamEntryByPath.get(paramPath) ?? null)
               : null;
@@ -248,8 +243,7 @@ export function SegmentEditorSubsectionsPanel(): React.JSX.Element | null {
                 patch.comparator ??
                 parsedCondition?.comparator ??
                 (nextOperator === 'unless' ? 'falsy' : 'truthy');
-              const nextValue =
-                patch.value ?? parsedCondition?.value ?? null;
+              const nextValue = patch.value ?? parsedCondition?.value ?? null;
               const nextCondition = buildSubsectionConditionText({
                 operator: nextOperator,
                 paramPath: nextParamPath,
@@ -258,13 +252,14 @@ export function SegmentEditorSubsectionsPanel(): React.JSX.Element | null {
               });
               onUpdateSegment((current: PromptExploderSegment) => {
                 const typedCurrent = current;
-                const nextSubsections = typedCurrent.subsections.map((candidate: PromptExploderSubsection, candidateIndex: number) =>
-                  candidateIndex === subsectionIndex
-                    ? {
-                      ...candidate,
-                      condition: nextCondition,
-                    }
-                    : candidate
+                const nextSubsections = typedCurrent.subsections.map(
+                  (candidate: PromptExploderSubsection, candidateIndex: number) =>
+                    candidateIndex === subsectionIndex
+                      ? {
+                          ...candidate,
+                          condition: nextCondition,
+                        }
+                      : candidate
                 );
                 return {
                   ...typedCurrent,
@@ -276,19 +271,21 @@ export function SegmentEditorSubsectionsPanel(): React.JSX.Element | null {
             return (
               <div className='grid gap-2 md:grid-cols-4'>
                 <FormField label='Operator'>
-                  <SelectSimple size='sm'
+                  <SelectSimple
+                    size='sm'
                     value={operatorValue}
                     onValueChange={(next: string) => {
                       if (next === 'none') {
                         onUpdateSegment((current: PromptExploderSegment) => {
                           const typedCurrent = current;
-                          const nextSubsections = typedCurrent.subsections.map((candidate: PromptExploderSubsection, candidateIndex: number) =>
-                            candidateIndex === subsectionIndex
-                              ? {
-                                ...candidate,
-                                condition: null,
-                              }
-                              : candidate
+                          const nextSubsections = typedCurrent.subsections.map(
+                            (candidate: PromptExploderSubsection, candidateIndex: number) =>
+                              candidateIndex === subsectionIndex
+                                ? {
+                                    ...candidate,
+                                    condition: null,
+                                  }
+                                : candidate
                           );
                           return {
                             ...typedCurrent,
@@ -309,7 +306,8 @@ export function SegmentEditorSubsectionsPanel(): React.JSX.Element | null {
                 </FormField>
 
                 <FormField label='Referenced Param'>
-                  <SelectSimple size='sm'
+                  <SelectSimple
+                    size='sm'
                     value={paramPath}
                     onValueChange={(next: string) => {
                       patchCondition({
@@ -325,7 +323,8 @@ export function SegmentEditorSubsectionsPanel(): React.JSX.Element | null {
                 </FormField>
 
                 <FormField label='Comparator'>
-                  <SelectSimple size='sm'
+                  <SelectSimple
+                    size='sm'
                     value={comparatorValue}
                     onValueChange={(next: string) => {
                       if (!isLogicalComparator(next)) return;
@@ -334,7 +333,7 @@ export function SegmentEditorSubsectionsPanel(): React.JSX.Element | null {
                         value:
                           next === 'truthy' || next === 'falsy'
                             ? null
-                            : parsedCondition?.value ?? null,
+                            : (parsedCondition?.value ?? null),
                       });
                     }}
                     options={PROMPT_EXPLODER_LOGICAL_COMPARATOR_OPTIONS.map((option) => ({
@@ -347,7 +346,8 @@ export function SegmentEditorSubsectionsPanel(): React.JSX.Element | null {
                 <FormField label='Value'>
                   {needsValue ? (
                     selectedParamEntry?.spec?.kind === 'boolean' ? (
-                      <SelectSimple size='sm'
+                      <SelectSimple
+                        size='sm'
                         value={String(Boolean(parsedCondition?.value))}
                         onValueChange={(next: string) => {
                           patchCondition({
@@ -384,13 +384,15 @@ export function SegmentEditorSubsectionsPanel(): React.JSX.Element | null {
               onChange: (nextItems) => {
                 onUpdateSegment((current: PromptExploderSegment) => {
                   const typedCurrent = current;
-                  const nextSubsections = typedCurrent.subsections.map((candidate: PromptExploderSubsection, candidateIndex: number) => {
-                    if (candidateIndex !== subsectionIndex) return candidate;
-                    return {
-                      ...candidate,
-                      items: nextItems,
-                    };
-                  });
+                  const nextSubsections = typedCurrent.subsections.map(
+                    (candidate: PromptExploderSubsection, candidateIndex: number) => {
+                      if (candidateIndex !== subsectionIndex) return candidate;
+                      return {
+                        ...candidate,
+                        items: nextItems,
+                      };
+                    }
+                  );
                   return {
                     ...typedCurrent,
                     subsections: nextSubsections,

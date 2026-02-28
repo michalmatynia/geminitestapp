@@ -2,10 +2,7 @@ import {
   type UpscaleRequestStrategyPayload,
   type UpscaleSmoothingQuality,
 } from './GenerationToolbarImageUtils.types';
-import {
-  loadImageElement,
-  sleep,
-} from './GenerationToolbarImageUtils.helpers';
+import { loadImageElement, sleep } from './GenerationToolbarImageUtils.helpers';
 import { ApiError } from '@/shared/lib/api-client';
 
 export const isClientUpscaleCrossOriginError = (error: unknown): boolean =>
@@ -17,18 +14,22 @@ export const isUpscaleAbortError = (error: unknown): boolean =>
 export const isRetryableUpscaleError = (error: unknown): boolean => {
   if (isUpscaleAbortError(error)) return false;
   if (error instanceof ApiError) {
-    return error.status === 408 || error.status === 425 || error.status === 429 || error.status >= 500;
+    return (
+      error.status === 408 || error.status === 425 || error.status === 429 || error.status >= 500
+    );
   }
   return (
     error instanceof Error &&
-    /timeout|network|failed to fetch|temporarily unavailable|retry/i.test(error.message.toLowerCase())
+    /timeout|network|failed to fetch|temporarily unavailable|retry/i.test(
+      error.message.toLowerCase()
+    )
   );
 };
 
 export const buildUpscaleRequestId = (): string =>
   `upscale_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
 
-export const withUpscaleRetry = async <T,>(
+export const withUpscaleRetry = async <T>(
   run: () => Promise<T>,
   signal: AbortSignal,
   retries = 1,
@@ -67,21 +68,23 @@ export const upscaleCanvasImage = async (
     throw new Error('Source image dimensions are invalid.');
   }
 
-  const outputWidth = request.strategy === 'scale'
-    ? Math.max(1, Math.round(sourceWidth * request.scale))
-    : request.targetWidth;
-  const outputHeight = request.strategy === 'scale'
-    ? Math.max(1, Math.round(sourceHeight * request.scale))
-    : request.targetHeight;
+  const outputWidth =
+    request.strategy === 'scale'
+      ? Math.max(1, Math.round(sourceWidth * request.scale))
+      : request.targetWidth;
+  const outputHeight =
+    request.strategy === 'scale'
+      ? Math.max(1, Math.round(sourceHeight * request.scale))
+      : request.targetHeight;
   if (
     request.strategy === 'target_resolution' &&
-    (
-      outputWidth < sourceWidth ||
+    (outputWidth < sourceWidth ||
       outputHeight < sourceHeight ||
-      (outputWidth === sourceWidth && outputHeight === sourceHeight)
-    )
+      (outputWidth === sourceWidth && outputHeight === sourceHeight))
   ) {
-    throw new Error('Target resolution must upscale at least one side and not reduce source dimensions.');
+    throw new Error(
+      'Target resolution must upscale at least one side and not reduce source dimensions.'
+    );
   }
 
   const canvas = document.createElement('canvas');
@@ -95,7 +98,9 @@ export const upscaleCanvasImage = async (
 
   context2d.imageSmoothingEnabled = true;
   try {
-    (context2d as CanvasRenderingContext2D & { imageSmoothingQuality?: UpscaleSmoothingQuality }).imageSmoothingQuality = smoothingQuality;
+    (
+      context2d as CanvasRenderingContext2D & { imageSmoothingQuality?: UpscaleSmoothingQuality }
+    ).imageSmoothingQuality = smoothingQuality;
   } catch {
     // ignore browser incompatibility and continue with default smoothing
   }
@@ -108,11 +113,11 @@ export const upscaleCanvasImage = async (
       outputHeight,
       sourceWidth,
       sourceHeight,
-      scale: Number(
-        Math.max(outputWidth / sourceWidth, outputHeight / sourceHeight).toFixed(4)
-      ),
+      scale: Number(Math.max(outputWidth / sourceWidth, outputHeight / sourceHeight).toFixed(4)),
     };
   } catch {
-    throw new Error('Client upscale failed due to cross-origin restrictions. Use "Upscale Server: Sharp".');
+    throw new Error(
+      'Client upscale failed due to cross-origin restrictions. Use "Upscale Server: Sharp".'
+    );
   }
 };

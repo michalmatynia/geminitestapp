@@ -1,14 +1,7 @@
 'use client';
 
 import React from 'react';
-import {
-  Badge,
-  Button,
-  Card,
-  Hint,
-  SelectSimple,
-  StatusBadge,
-} from '@/shared/ui';
+import { Badge, Button, Card, Hint, SelectSimple, StatusBadge } from '@/shared/ui';
 import { useAdminAiPathsValidationContext } from '../../context/AdminAiPathsValidationContext';
 import { getCandidateTags } from '../../pages/AdminAiPathsValidationUtils';
 import { AiPathsValidationRule } from '../../lib';
@@ -39,9 +32,7 @@ export function CentralDocsSyncPanel(): React.JSX.Element {
   return (
     <Card variant='subtle' padding='md' className='border-border/60 bg-card/40'>
       <div className='mb-4 flex flex-wrap items-center justify-between gap-2'>
-        <h3 className='text-sm font-semibold text-white'>
-          Central Docs Inference Sync
-        </h3>
+        <h3 className='text-sm font-semibold text-white'>Central Docs Inference Sync</h3>
         <div className='flex items-center gap-2'>
           <Button
             type='button'
@@ -100,9 +91,7 @@ export function CentralDocsSyncPanel(): React.JSX.Element {
         <StatusBadge
           status={`Coverage: ${validatorCoverage.coveredCount}/${validatorCoverage.totalCount}`}
           variant={
-            validatorCoverage.coveredCount >= validatorCoverage.totalCount
-              ? 'success'
-              : 'warning'
+            validatorCoverage.coveredCount >= validatorCoverage.totalCount ? 'success' : 'warning'
           }
           size='sm'
         />
@@ -110,8 +99,7 @@ export function CentralDocsSyncPanel(): React.JSX.Element {
 
       {validatorCoverage.uncoveredNodeTypes.length > 0 ? (
         <div className='mb-3 text-[11px] text-gray-500'>
-          Uncovered node types:{' '}
-          {validatorCoverage.uncoveredNodeTypes.slice(0, 10).join(', ')}
+          Uncovered node types: {validatorCoverage.uncoveredNodeTypes.slice(0, 10).join(', ')}
           {validatorCoverage.uncoveredNodeTypes.length > 10 ? ' …' : ''}
         </div>
       ) : null}
@@ -125,7 +113,11 @@ export function CentralDocsSyncPanel(): React.JSX.Element {
       ) : null}
 
       {centralSnapshot?.sources?.length ? (
-        <Card variant='subtle-compact' padding='sm' className='mb-3 max-h-28 space-y-1 overflow-y-auto border-border/60 bg-card/30'>
+        <Card
+          variant='subtle-compact'
+          padding='sm'
+          className='mb-3 max-h-28 space-y-1 overflow-y-auto border-border/60 bg-card/30'
+        >
           {centralSnapshot.sources.map((source) => (
             <div
               key={`${source.id}:${source.hash}`}
@@ -144,17 +136,13 @@ export function CentralDocsSyncPanel(): React.JSX.Element {
       <div className='mb-3 grid gap-2 sm:grid-cols-2'>
         <SelectSimple
           value={candidateModuleFilter}
-          onValueChange={(value: string) =>
-            setCandidateModuleFilter(value || 'all')
-          }
+          onValueChange={(value: string) => setCandidateModuleFilter(value || 'all')}
           options={candidateModuleOptions}
           ariaLabel='Filter candidates by module'
         />
         <SelectSimple
           value={candidateTagFilter}
-          onValueChange={(value: string) =>
-            setCandidateTagFilter(value || 'all')
-          }
+          onValueChange={(value: string) => setCandidateTagFilter(value || 'all')}
           options={candidateTagOptions}
           ariaLabel='Filter candidates by tag'
         />
@@ -164,7 +152,11 @@ export function CentralDocsSyncPanel(): React.JSX.Element {
           Inferred Candidates ({candidateRules.length})
         </Hint>
         {candidateRules.length > 0 ? (
-          <Card variant='subtle-compact' padding='sm' className='max-h-60 space-y-2 overflow-y-auto border-border/60 bg-card/30'>
+          <Card
+            variant='subtle-compact'
+            padding='sm'
+            className='max-h-60 space-y-2 overflow-y-auto border-border/60 bg-card/30'
+          >
             {candidateRules.map((rule: AiPathsValidationRule) => (
               <Card
                 key={rule.id}
@@ -174,9 +166,7 @@ export function CentralDocsSyncPanel(): React.JSX.Element {
               >
                 <div className='flex flex-wrap items-start justify-between gap-2'>
                   <div className='min-w-0'>
-                    <div className='text-xs font-medium text-gray-100'>
-                      {rule.title}
-                    </div>
+                    <div className='text-xs font-medium text-gray-100'>{rule.title}</div>
                     <div className='text-[10px] text-gray-500'>{rule.id}</div>
                     <div className='text-[10px] text-gray-500'>
                       {rule.inference?.sourcePath ?? 'central docs'}
@@ -197,11 +187,17 @@ export function CentralDocsSyncPanel(): React.JSX.Element {
                       >
                         {candidateChangeKindById.get(rule.id) ?? 'new'}
                       </Badge>
-                      {getCandidateTags(rule).slice(0, 3).map((tag: string) => (
-                        <Badge key={`${rule.id}:${tag}`} variant='outline' className='text-[10px]'>
-                          {tag}
-                        </Badge>
-                      ))}
+                      {getCandidateTags(rule)
+                        .slice(0, 3)
+                        .map((tag: string) => (
+                          <Badge
+                            key={`${rule.id}:${tag}`}
+                            variant='outline'
+                            className='text-[10px]'
+                          >
+                            {tag}
+                          </Badge>
+                        ))}
                     </div>
                   </div>
                   <div className='flex items-center gap-1'>
@@ -229,17 +225,23 @@ export function CentralDocsSyncPanel(): React.JSX.Element {
             ))}
           </Card>
         ) : (
-          <Card variant='subtle-compact' padding='md' className='border-border/60 bg-card/30 text-xs text-gray-500'>
+          <Card
+            variant='subtle-compact'
+            padding='md'
+            className='border-border/60 bg-card/30 text-xs text-gray-500'
+          >
             Sync from central docs to generate inference candidates.
           </Card>
         )}
       </div>
 
       {rejectedCandidates.length > 0 ? (
-        <Card variant='subtle-compact' padding='sm' className='mt-3 space-y-1 border-border/60 bg-card/30'>
-          <div className='text-[11px] font-medium text-gray-300'>
-            Rejected candidates
-          </div>
+        <Card
+          variant='subtle-compact'
+          padding='sm'
+          className='mt-3 space-y-1 border-border/60 bg-card/30'
+        >
+          <div className='text-[11px] font-medium text-gray-300'>Rejected candidates</div>
           <div className='max-h-20 space-y-1 overflow-y-auto'>
             {rejectedCandidates.map((rule: AiPathsValidationRule) => (
               <div key={rule.id} className='text-[10px] text-gray-500'>

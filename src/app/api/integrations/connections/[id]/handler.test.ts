@@ -132,12 +132,8 @@ describe('integrations/connections/[id] PUT handler', () => {
   });
 
   it('allows empty username for Baselinker updates', async () => {
-    const response = await PUT_handler(
-      {} as NextRequest,
-      buildContext(),
-      { id: 'conn-1' }
-    );
-    const body = await response.json() as Record<string, unknown>;
+    const response = await PUT_handler({} as NextRequest, buildContext(), { id: 'conn-1' });
+    const body = (await response.json()) as Record<string, unknown>;
 
     expect(response.status).toBe(200);
     expect(updateConnectionMock).toHaveBeenCalledWith(
@@ -159,9 +155,9 @@ describe('integrations/connections/[id] PUT handler', () => {
       updatedAt: null,
     });
 
-    await expect(
-      PUT_handler({} as NextRequest, buildContext(), { id: 'conn-1' })
-    ).rejects.toThrow('Username is required for this integration.');
+    await expect(PUT_handler({} as NextRequest, buildContext(), { id: 'conn-1' })).rejects.toThrow(
+      'Username is required for this integration.'
+    );
     expect(updateConnectionMock).not.toHaveBeenCalled();
   });
 
@@ -219,9 +215,9 @@ describe('integrations/connections/[id] PUT handler', () => {
       nextUrl: { searchParams: new URLSearchParams() },
     } as unknown as NextRequest;
 
-    await expect(
-      DELETE_handler(request, buildContext(), { id: 'conn-1' })
-    ).rejects.toThrow('Invalid password.');
+    await expect(DELETE_handler(request, buildContext(), { id: 'conn-1' })).rejects.toThrow(
+      'Invalid password.'
+    );
 
     expect(deleteConnectionMock).not.toHaveBeenCalled();
   });

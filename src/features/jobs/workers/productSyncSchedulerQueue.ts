@@ -21,13 +21,13 @@ const parseMsFromEnv = (raw: string | undefined, fallback: number, min: number):
 export const PRODUCT_SYNC_SCHEDULER_REPEAT_EVERY_MS = parseMsFromEnv(
   process.env['PRODUCT_SYNC_SCHEDULER_REPEAT_EVERY_MS'],
   60_000,
-  30_000,
+  30_000
 );
 
 const PRODUCT_SYNC_SCHEDULER_LOCK_DURATION_MS = parseMsFromEnv(
   process.env['PRODUCT_SYNC_SCHEDULER_LOCK_DURATION_MS'],
   60_000,
-  30_000,
+  30_000
 );
 
 const normalizeSkipReason = (error: unknown): string => {

@@ -80,9 +80,7 @@ describe('public product metadata handlers', () => {
 
     const response = await getPublicParametersHandler(
       request as Parameters<typeof getPublicParametersHandler>[0],
-      { query: { catalogId: 'catalog-1' } } as Parameters<
-        typeof getPublicParametersHandler
-      >[1]
+      { query: { catalogId: 'catalog-1' } } as Parameters<typeof getPublicParametersHandler>[1]
     );
 
     const payload = (await response.json()) as Array<{
@@ -110,9 +108,7 @@ describe('public product metadata handlers', () => {
 
     const response = await getPublicCategoriesHandler(
       request as Parameters<typeof getPublicCategoriesHandler>[0],
-      { query: { catalogId: 'catalog-1' } } as Parameters<
-        typeof getPublicCategoriesHandler
-      >[1]
+      { query: { catalogId: 'catalog-1' } } as Parameters<typeof getPublicCategoriesHandler>[1]
     );
 
     const payload = (await response.json()) as Array<{

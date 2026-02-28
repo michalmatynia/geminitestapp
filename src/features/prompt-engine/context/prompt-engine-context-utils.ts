@@ -20,14 +20,9 @@ const IMAGE_STUDIO_SCOPE_VALUES: PromptValidationScope[] = [
   'image_studio_extraction',
   'image_studio_generation',
 ];
-const IMAGE_STUDIO_SCOPE_SET = new Set<PromptValidationScope>(
-  IMAGE_STUDIO_SCOPE_VALUES,
-);
+const IMAGE_STUDIO_SCOPE_SET = new Set<PromptValidationScope>(IMAGE_STUDIO_SCOPE_VALUES);
 
-export const createRuleDraft = (
-  rule: PromptValidationRule,
-  uid: string = rule.id,
-): RuleDraft => ({
+export const createRuleDraft = (rule: PromptValidationRule, uid: string = rule.id): RuleDraft => ({
   uid,
   text: JSON.stringify(rule, null, 2),
   parsed: rule,
@@ -45,16 +40,13 @@ export const normalizeSequenceGroupDebounceMs = (value: unknown): number => {
 };
 
 export const getSequenceGroupId = (
-  rule: PromptValidationRule | null | undefined,
+  rule: PromptValidationRule | null | undefined
 ): string | null => {
   const value = rule?.sequenceGroupId?.trim();
   return value ? value : null;
 };
 
-export const getRuleSequence = (
-  rule: PromptValidationRule,
-  fallbackIndex: number,
-): number => {
+export const getRuleSequence = (rule: PromptValidationRule, fallbackIndex: number): number => {
   if (typeof rule.sequence === 'number' && Number.isFinite(rule.sequence)) {
     return Math.max(0, Math.floor(rule.sequence));
   }
@@ -62,7 +54,7 @@ export const getRuleSequence = (
 };
 
 const normalizeRuleScopes = (
-  scopes: PromptValidationScope[] | null | undefined,
+  scopes: PromptValidationScope[] | null | undefined
 ): PromptValidationScope[] => {
   if (!Array.isArray(scopes) || scopes.length === 0) {
     return [...DEFAULT_PROMPT_VALIDATION_SCOPES];
@@ -88,15 +80,10 @@ export const isImageStudioRule = (rule: PromptValidationRule): boolean => {
 
   const appliesToScopes = normalizeRuleScopes(rule.appliesToScopes);
   const launchScopes = normalizeRuleScopes(rule.launchAppliesToScopes);
-  return (
-    hasOnlyImageStudioScopes(appliesToScopes) ||
-    hasOnlyImageStudioScopes(launchScopes)
-  );
+  return hasOnlyImageStudioScopes(appliesToScopes) || hasOnlyImageStudioScopes(launchScopes);
 };
 
-export const isCaseResolverPromptExploderRule = (
-  rule: PromptValidationRule,
-): boolean => {
+export const isCaseResolverPromptExploderRule = (rule: PromptValidationRule): boolean => {
   const id = rule.id.toLowerCase();
   if (
     id.includes('case_resolver_prompt_exploder') ||
@@ -107,25 +94,21 @@ export const isCaseResolverPromptExploderRule = (
 
   const appliesToScopes = normalizeRuleScopes(rule.appliesToScopes);
   const launchScopes = normalizeRuleScopes(rule.launchAppliesToScopes);
-  const hasCaseResolverScope = appliesToScopes.includes(
-    'case_resolver_prompt_exploder',
-  );
+  const hasCaseResolverScope = appliesToScopes.includes('case_resolver_prompt_exploder');
   const hasOnlyCaseResolverOrGlobal =
     hasCaseResolverScope &&
     appliesToScopes.every(
       (scope: PromptValidationScope) =>
-        scope === 'case_resolver_prompt_exploder' || scope === 'global',
+        scope === 'case_resolver_prompt_exploder' || scope === 'global'
     );
   if (hasOnlyCaseResolverOrGlobal) return true;
 
-  const hasCaseResolverLaunchScope = launchScopes.includes(
-    'case_resolver_prompt_exploder',
-  );
+  const hasCaseResolverLaunchScope = launchScopes.includes('case_resolver_prompt_exploder');
   const hasOnlyCaseResolverLaunchOrGlobal =
     hasCaseResolverLaunchScope &&
     launchScopes.every(
       (scope: PromptValidationScope) =>
-        scope === 'case_resolver_prompt_exploder' || scope === 'global',
+        scope === 'case_resolver_prompt_exploder' || scope === 'global'
     );
   return hasOnlyCaseResolverLaunchOrGlobal;
 };
@@ -156,7 +139,7 @@ export const applyRulePatch = (draft: RuleDraft, patch: RulePatch): RuleDraft =>
 };
 
 export const createNewRule = (
-  preset: 'core' | 'prompt_exploder' | 'image_studio' | 'case_resolver' = 'core',
+  preset: 'core' | 'prompt_exploder' | 'image_studio' | 'case_resolver' = 'core'
 ): PromptValidationRule => {
   const now = Date.now();
   const baseRule: PromptValidationRule = {
@@ -221,11 +204,9 @@ export const ruleSearchText = (rule: PromptValidationRule): string => {
     rule.message,
     rule.description ?? '',
   ];
-  (rule.appliesToScopes ?? DEFAULT_PROMPT_VALIDATION_SCOPES).forEach((scope) =>
-    parts.push(scope),
-  );
+  (rule.appliesToScopes ?? DEFAULT_PROMPT_VALIDATION_SCOPES).forEach((scope) => parts.push(scope));
   (rule.launchAppliesToScopes ?? DEFAULT_PROMPT_VALIDATION_SCOPES).forEach((scope) =>
-    parts.push(scope),
+    parts.push(scope)
   );
   if (rule.kind === 'regex') {
     parts.push(rule.pattern);
@@ -253,11 +234,7 @@ export const ruleSearchText = (rule: PromptValidationRule): string => {
 
 export const isPromptExploderRule = (rule: PromptValidationRule): boolean => {
   const id = rule.id.toLowerCase();
-  if (
-    id.includes('prompt_exploder') ||
-    id.includes('exploder') ||
-    id.startsWith('segment.')
-  ) {
+  if (id.includes('prompt_exploder') || id.includes('exploder') || id.startsWith('segment.')) {
     return true;
   }
 
@@ -268,8 +245,7 @@ export const isPromptExploderRule = (rule: PromptValidationRule): boolean => {
   const hasOnlyPromptOrGlobal =
     hasPromptScope &&
     appliesToScopes.every(
-      (scope: PromptValidationScope) =>
-        scope === 'prompt_exploder' || scope === 'global',
+      (scope: PromptValidationScope) => scope === 'prompt_exploder' || scope === 'global'
     );
   if (hasOnlyPromptOrGlobal) return true;
 
@@ -277,8 +253,7 @@ export const isPromptExploderRule = (rule: PromptValidationRule): boolean => {
   const hasOnlyPromptLaunchOrGlobal =
     hasPromptLaunchScope &&
     launchScopes.every(
-      (scope: PromptValidationScope) =>
-        scope === 'prompt_exploder' || scope === 'global',
+      (scope: PromptValidationScope) => scope === 'prompt_exploder' || scope === 'global'
     );
 
   return hasOnlyPromptLaunchOrGlobal;

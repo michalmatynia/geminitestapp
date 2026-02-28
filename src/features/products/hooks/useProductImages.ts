@@ -32,16 +32,12 @@ const normalizeImageLinks = (links?: string[] | null): string[] => {
   return next;
 };
 
-const normalizeImageBase64s = (
-  base64s?: string[] | null,
-  links?: string[] | null,
-): string[] => {
+const normalizeImageBase64s = (base64s?: string[] | null, links?: string[] | null): string[] => {
   const next: string[] = new Array<string>(TOTAL_IMAGE_SLOTS).fill('');
   if (Array.isArray(base64s)) {
     base64s.slice(0, TOTAL_IMAGE_SLOTS).forEach((value: string, index: number) => {
-      next[index] = typeof value === 'string' && value.trim().startsWith('data:')
-        ? value.trim()
-        : '';
+      next[index] =
+        typeof value === 'string' && value.trim().startsWith('data:') ? value.trim() : '';
     });
   }
   if (Array.isArray(links)) {
@@ -55,9 +51,7 @@ const normalizeImageBase64s = (
   return next;
 };
 
-const buildImageSlotsFromProduct = (
-  product?: ProductWithImages,
-): ProductImageSlot[] => {
+const buildImageSlotsFromProduct = (product?: ProductWithImages): ProductImageSlot[] => {
   const slots: ProductImageSlot[] = buildEmptySlots(TOTAL_IMAGE_SLOTS);
   if (!product?.images?.length) return slots;
   product.images.slice(0, TOTAL_IMAGE_SLOTS).forEach((pImg: ProductImageRecord, index: number) => {
@@ -88,24 +82,27 @@ export interface ProductImagesHookResult {
 
 export function useProductImages(
   product?: ProductWithImages,
-  initialImageLinks?: string[] | null,
+  initialImageLinks?: string[] | null
 ): ProductImagesHookResult {
   const queryClient = useQueryClient();
-  const [imageSlots, setImageSlots] = useState<ProductImageSlot[]>(
-    () => buildImageSlotsFromProduct(product),
+  const [imageSlots, setImageSlots] = useState<ProductImageSlot[]>(() =>
+    buildImageSlotsFromProduct(product)
   );
   const [imageLinks, setImageLinks] = useState<string[]>(() =>
-    normalizeImageLinks(product?.imageLinks ?? initialImageLinks),
+    normalizeImageLinks(product?.imageLinks ?? initialImageLinks)
   );
   const [imageBase64s, setImageBase64s] = useState<string[]>(() =>
-    normalizeImageBase64s(product?.imageBase64s, product?.imageLinks ?? initialImageLinks),
+    normalizeImageBase64s(product?.imageBase64s, product?.imageLinks ?? initialImageLinks)
   );
   const [showFileManager, setShowFileManager] = useState(false);
   const objectUrlsRef = useRef<string[]>([]);
   const isReorderingRef = useRef(false);
   const pendingRefreshRef = useRef<ProductWithImages | null>(null);
-  
-  const disconnectImageMutation = createDeleteMutationV2<void, { productId: string; imageFileId: string }>({
+
+  const disconnectImageMutation = createDeleteMutationV2<
+    void,
+    { productId: string; imageFileId: string }
+  >({
     mutationFn: ({ productId, imageFileId }) =>
       api.delete<void>(`/api/products/${productId}/images/${imageFileId}`),
     mutationKey: QUERY_KEYS.products.all,
@@ -119,18 +116,20 @@ export function useProductImages(
     },
     onSuccess: () => {
       void invalidateProducts(queryClient);
-    }
+    },
   });
 
   // Effect to clean up object URLs when imageSlots change
   useEffect(() => {
     const currentObjectUrls = imageSlots
-      .map((slot: ProductImageSlot | null): string | null => (slot?.type === 'file' ? slot.previewUrl : null))
+      .map((slot: ProductImageSlot | null): string | null =>
+        slot?.type === 'file' ? slot.previewUrl : null
+      )
       .filter((url: string | null): url is string => Boolean(url));
 
     // Revoke old object URLs that are no longer in use
     const oldObjectUrls = objectUrlsRef.current.filter(
-      (url: string) => !currentObjectUrls.includes(url),
+      (url: string) => !currentObjectUrls.includes(url)
     );
     oldObjectUrls.forEach((url: string) => URL.revokeObjectURL(url));
 
@@ -146,30 +145,27 @@ export function useProductImages(
     };
   }, []);
 
-  const handleSlotImageChange = useCallback(
-    (file: File | null, index: number): void => {
-      setImageSlots((prevSlots: ProductImageSlot[]) => {
-        const newSlots = [...prevSlots];
-        if (file) {
-          // Revoke existing object URL if replacing an image
-          const existingSlot = newSlots[index];
-          if (existingSlot?.type === 'file') {
-            URL.revokeObjectURL(existingSlot.previewUrl);
-          }
-          newSlots[index] = createFileImageSlot(file);
-        } else {
-          // Revoke object URL if clearing the slot
-          const existingSlot = newSlots[index];
-          if (existingSlot?.type === 'file') {
-            URL.revokeObjectURL(existingSlot.previewUrl);
-          }
-          newSlots[index] = null;
+  const handleSlotImageChange = useCallback((file: File | null, index: number): void => {
+    setImageSlots((prevSlots: ProductImageSlot[]) => {
+      const newSlots = [...prevSlots];
+      if (file) {
+        // Revoke existing object URL if replacing an image
+        const existingSlot = newSlots[index];
+        if (existingSlot?.type === 'file') {
+          URL.revokeObjectURL(existingSlot.previewUrl);
         }
-        return newSlots;
-      });
-    },
-    [],
-  );
+        newSlots[index] = createFileImageSlot(file);
+      } else {
+        // Revoke object URL if clearing the slot
+        const existingSlot = newSlots[index];
+        if (existingSlot?.type === 'file') {
+          URL.revokeObjectURL(existingSlot.previewUrl);
+        }
+        newSlots[index] = null;
+      }
+      return newSlots;
+    });
+  }, []);
 
   const handleSlotFileSelect = useCallback(
     (file: ImageFileSelection | null, index: number): void => {
@@ -194,7 +190,7 @@ export function useProductImages(
       });
       setShowFileManager(false);
     },
-    [],
+    []
   );
 
   const handleSlotDisconnectImage = useCallback(
@@ -215,13 +211,20 @@ export function useProductImages(
             imageFileId: slotToClear.data.id,
           });
         } catch (error) {
-          logClientError(error, { context: { source: 'useProductImages', action: 'disconnectImage', productId: product.id, imageFileId: slotToClear.data.id } });
+          logClientError(error, {
+            context: {
+              source: 'useProductImages',
+              action: 'disconnectImage',
+              productId: product.id,
+              imageFileId: slotToClear.data.id,
+            },
+          });
         }
       } else if (slotToClear.type === 'file') {
         URL.revokeObjectURL(slotToClear.previewUrl);
       }
     },
-    [imageSlots, product, disconnectImageMutation],
+    [imageSlots, product, disconnectImageMutation]
   );
 
   const setImageLinkAt = useCallback((index: number, value: string): void => {
@@ -310,18 +313,17 @@ export function useProductImages(
       const newSlots: ProductImageSlot[] = [...prevSlots];
 
       // Update slots with saved images
-      savedProduct.images.slice(0, TOTAL_IMAGE_SLOTS).forEach((pImg: ProductImageRecord, index: number) => {
-        if (pImg.imageFile) {
-          const existingSlot = newSlots[index];
-          // Only update if the image ID changed or slot was empty
-          if (
-            existingSlot?.type !== 'existing' ||
-            existingSlot.slotId !== pImg.imageFile.id
-          ) {
-            newSlots[index] = createExistingImageSlot(pImg.imageFile);
+      savedProduct.images
+        .slice(0, TOTAL_IMAGE_SLOTS)
+        .forEach((pImg: ProductImageRecord, index: number) => {
+          if (pImg.imageFile) {
+            const existingSlot = newSlots[index];
+            // Only update if the image ID changed or slot was empty
+            if (existingSlot?.type !== 'existing' || existingSlot.slotId !== pImg.imageFile.id) {
+              newSlots[index] = createExistingImageSlot(pImg.imageFile);
+            }
           }
-        }
-      });
+        });
 
       // Clear slots beyond saved images count
       for (let i = savedProduct.images.length; i < TOTAL_IMAGE_SLOTS; i++) {
@@ -347,7 +349,7 @@ export function useProductImages(
         applyRefresh(pending);
       }
     },
-    [applyRefresh],
+    [applyRefresh]
   );
 
   // Function to refresh state from product (e.g. after save)
@@ -362,7 +364,7 @@ export function useProductImages(
       }
       applyRefresh(savedProduct);
     },
-    [applyRefresh],
+    [applyRefresh]
   );
 
   return {

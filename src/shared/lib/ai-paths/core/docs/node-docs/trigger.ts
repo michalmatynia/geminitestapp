@@ -20,8 +20,7 @@ export const triggerDocs: NodeConfigDocField[] = [
 export const fetcherDocs: NodeConfigDocField[] = [
   {
     path: 'fetcher.sourceMode',
-    description:
-      'How to resolve context: live_context, simulation_id, or live_then_simulation.',
+    description: 'How to resolve context: live_context, simulation_id, or live_then_simulation.',
     defaultValue: 'live_context',
   },
   {
@@ -31,8 +30,7 @@ export const fetcherDocs: NodeConfigDocField[] = [
   },
   {
     path: 'fetcher.entityId',
-    description:
-      'Entity ID used by simulation fetch modes (preferred over productId alias).',
+    description: 'Entity ID used by simulation fetch modes (preferred over productId alias).',
   },
   {
     path: 'fetcher.productId',
@@ -54,8 +52,7 @@ export const simulationDocs: NodeConfigDocField[] = [
   },
   {
     path: 'simulation.productId',
-    description:
-      'Product ID alias for entity identifier. Prefer entityId + entityType.',
+    description: 'Product ID alias for entity identifier. Prefer entityId + entityType.',
     defaultValue: '""',
   },
   {

@@ -2,7 +2,10 @@ import { promises as fs } from 'fs';
 
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
-import { captureSessionContext, captureSnapshot } from '@/features/ai/agent-runtime/tools/playwright/browser';
+import {
+  captureSessionContext,
+  captureSnapshot,
+} from '@/features/ai/agent-runtime/tools/playwright/browser';
 import prisma from '@/shared/lib/db/prisma';
 
 vi.mock('@/shared/lib/db/prisma', () => ({
@@ -49,38 +52,42 @@ describe('Agent Runtime - Browser Tools', () => {
   describe('captureSessionContext', () => {
     it('should extract cookies and storage and log to prisma', async () => {
       mockPage.evaluate.mockResolvedValue({ localCount: 1, sessionCount: 0 });
-      
+
       await captureSessionContext(mockPage as any, mockContext as any, 'run-1', 'init');
 
       expect(mockContext.cookies).toHaveBeenCalled();
-      expect(prisma.agentAuditLog.create).toHaveBeenCalledWith(expect.objectContaining({
-        data: expect.objectContaining({
-          message: 'Captured session context.',
-          metadata: expect.objectContaining({
-            label: 'init',
-            url: 'http://test.com',
-            cookies: expect.any(Array),
-          })
+      expect(prisma.agentAuditLog.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            message: 'Captured session context.',
+            metadata: expect.objectContaining({
+              label: 'init',
+              url: 'http://test.com',
+              cookies: expect.any(Array),
+            }),
+          }),
         })
-      }));
+      );
     });
   });
 
   describe('captureSnapshot', () => {
     it('should take screenshot, get DOM and save to prisma', async () => {
       mockPage.evaluate.mockResolvedValue('DOM Text');
-      
+
       const result = await captureSnapshot(mockPage as any, 'run-1', '/tmp', 'test-label');
 
       expect(mockPage.screenshot).toHaveBeenCalled();
       expect(fs.writeFile).toHaveBeenCalled();
-      expect(prisma.agentBrowserSnapshot.create).toHaveBeenCalledWith(expect.objectContaining({
-        data: expect.objectContaining({
-          domText: 'DOM Text',
-          title: 'Test Title',
-          viewportWidth: 1280,
+      expect(prisma.agentBrowserSnapshot.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            domText: 'DOM Text',
+            title: 'Test Title',
+            viewportWidth: 1280,
+          }),
         })
-      }));
+      );
       expect(result.domText).toBe('DOM Text');
     });
   });

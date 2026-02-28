@@ -22,7 +22,7 @@ type Deferred<T> = {
   reject: (reason?: unknown) => void;
 };
 
-const createDeferred = <T,>(): Deferred<T> => {
+const createDeferred = <T>(): Deferred<T> => {
   let resolve!: (value: T) => void;
   let reject!: (reason?: unknown) => void;
   const promise = new Promise<T>((res, rej) => {
@@ -37,21 +37,18 @@ const createJsonResponse = (payload: unknown, status = 200): Response =>
     ok: status >= 200 && status < 300,
     status,
     json: async () => payload,
-    text: async () => (
-      typeof payload === 'string' ? payload : JSON.stringify(payload)
-    ),
+    text: async () => (typeof payload === 'string' ? payload : JSON.stringify(payload)),
   }) as Response;
 
-const createMutableState = <T,>(initial: T): {
+const createMutableState = <T>(
+  initial: T
+): {
   get: () => T;
   set: React.Dispatch<React.SetStateAction<T>>;
 } => {
   let current = initial;
   const set: React.Dispatch<React.SetStateAction<T>> = (value): void => {
-    current =
-      typeof value === 'function'
-        ? (value as (prev: T) => T)(current)
-        : value;
+    current = typeof value === 'function' ? (value as (prev: T) => T)(current) : value;
   };
   return {
     get: (): T => current,
@@ -59,7 +56,9 @@ const createMutableState = <T,>(initial: T): {
   };
 };
 
-const buildHarness = (sourceFile: CaseResolverFile): {
+const buildHarness = (
+  sourceFile: CaseResolverFile
+): {
   result: { current: UseCaseResolverStateAssetActionsResult };
   getWorkspace: () => CaseResolverWorkspace;
   setWorkspace: (next: CaseResolverWorkspace) => void;
@@ -127,11 +126,14 @@ const buildHarness = (sourceFile: CaseResolverFile): {
   };
 };
 
-const withLockedFile = (workspace: CaseResolverWorkspace, fileId: string): CaseResolverWorkspace => ({
+const withLockedFile = (
+  workspace: CaseResolverWorkspace,
+  fileId: string
+): CaseResolverWorkspace => ({
   ...workspace,
-  files: (workspace.files || []).map((file: CaseResolverFile) => (
+  files: (workspace.files || []).map((file: CaseResolverFile) =>
     file.id === fileId ? { ...file, isLocked: true } : file
-  )),
+  ),
 });
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -158,10 +160,9 @@ describe('case resolver asset actions lock races', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    const uploadPromise = harness.result.current.handleUploadScanFiles(
-      'scan-1',
-      [new File(['image-bytes'], 'scan.png', { type: 'image/png' })] as File[]
-    );
+    const uploadPromise = harness.result.current.handleUploadScanFiles('scan-1', [
+      new File(['image-bytes'], 'scan.png', { type: 'image/png' }),
+    ] as File[]);
 
     harness.setWorkspace(withLockedFile(harness.getWorkspace(), 'scan-1'));
     uploadDeferred.resolve(
@@ -179,9 +180,11 @@ describe('case resolver asset actions lock races', () => {
     );
     await uploadPromise;
 
-    const finalFile = harness.getWorkspace().files?.find((file: CaseResolverFile) => file.id === 'scan-1');
+    const finalFile = harness
+      .getWorkspace()
+      .files?.find((file: CaseResolverFile) => file.id === 'scan-1');
     expect(finalFile?.isLocked).toBe(true);
-    
+
     expect(finalFile?.scanSlots).toHaveLength(0);
     expect(harness.toast).toHaveBeenCalledWith(
       'Document was locked before uploaded files could be attached.',
@@ -232,18 +235,22 @@ describe('case resolver asset actions lock races', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    const before = harness.getWorkspace().files?.find((file: CaseResolverFile) => file.id === 'scan-1');
+    const before = harness
+      .getWorkspace()
+      .files?.find((file: CaseResolverFile) => file.id === 'scan-1');
     const beforeDocumentContentVersion = before?.documentContentVersion ?? null;
     const beforeOcrText = before?.scanSlots?.[0]?.ocrText ?? '';
-    
+
     const ocrPromise = harness.result.current.handleRunScanFileOcr('scan-1');
-    
+
     harness.setWorkspace(withLockedFile(harness.getWorkspace(), 'scan-1'));
     enqueueDeferred.resolve(createJsonResponse({ job: { id: 'job-1' } }));
     await ocrPromise;
-    
-    const after = harness.getWorkspace().files?.find((file: CaseResolverFile) => file.id === 'scan-1');
-    
+
+    const after = harness
+      .getWorkspace()
+      .files?.find((file: CaseResolverFile) => file.id === 'scan-1');
+
     expect(after?.isLocked).toBe(true);
     expect(after?.scanSlots?.[0]?.ocrText ?? '').toBe(beforeOcrText);
     expect(after?.documentContentVersion ?? null).toBe(beforeDocumentContentVersion);
@@ -297,7 +304,9 @@ describe('case resolver asset actions lock races', () => {
 
     await harness.result.current.handleRunScanFileOcr('scan-ocr-success');
 
-    const after = harness.getWorkspace().files?.find((file: CaseResolverFile) => file.id === 'scan-ocr-success');
+    const after = harness
+      .getWorkspace()
+      .files?.find((file: CaseResolverFile) => file.id === 'scan-ocr-success');
     expect(after?.isLocked).toBe(false);
     expect(after?.editorType).toBe('markdown');
     expect(after?.documentContent).toBe('Recognized text from OCR.');

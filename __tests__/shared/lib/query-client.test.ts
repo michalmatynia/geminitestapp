@@ -1,6 +1,9 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
-import { emitTanstackTelemetry, getTanstackFactoryMetaFromBag } from '@/shared/lib/observability/tanstack-telemetry';
+import {
+  emitTanstackTelemetry,
+  getTanstackFactoryMetaFromBag,
+} from '@/shared/lib/observability/tanstack-telemetry';
 import { createQueryClient } from '@/shared/lib/query-client';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -143,14 +146,11 @@ describe('createQueryClient', () => {
     expect(typeof onError).toBe('function');
     if (typeof onError !== 'function') return;
 
-    onError(
-      new Error('factory error'),
-      {
-        queryKey: ['products'],
-        state: { fetchFailureCount: 1 },
-        meta: { tanstackFactoryV2Meta: { source: 'x' } },
-      } as unknown as Parameters<NonNullable<typeof onError>>[1]
-    );
+    onError(new Error('factory error'), {
+      queryKey: ['products'],
+      state: { fetchFailureCount: 1 },
+      meta: { tanstackFactoryV2Meta: { source: 'x' } },
+    } as unknown as Parameters<NonNullable<typeof onError>>[1]);
 
     expect(emitTanstackTelemetry).not.toHaveBeenCalled();
   });

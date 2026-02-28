@@ -1,4 +1,7 @@
-import { DOCUMENTATION_MODULE_IDS, type DocumentationEntry } from '@/shared/lib/documentation/types';
+import {
+  DOCUMENTATION_MODULE_IDS,
+  type DocumentationEntry,
+} from '@/shared/lib/documentation/types';
 
 import {
   VALIDATOR_FUNCTION_DOCS,

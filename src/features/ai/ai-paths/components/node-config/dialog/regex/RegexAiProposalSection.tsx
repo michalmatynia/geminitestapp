@@ -29,7 +29,8 @@ export function RegexAiProposalSection({
     <div className='space-y-3'>
       {hasAiProposal && (
         <div className='mt-2 flex items-center gap-2'>
-          <SelectSimple size='sm'
+          <SelectSimple
+            size='sm'
             value={activeVariant}
             onValueChange={(value: string): void => {
               if (value === 'ai' || value === 'manual') {
@@ -44,9 +45,7 @@ export function RegexAiProposalSection({
               { value: 'ai', label: 'AI Proposal' },
             ]}
           />
-          <div className='text-[11px] text-gray-500'>
-            Switch between manual and AI proposal.
-          </div>
+          <div className='text-[11px] text-gray-500'>Switch between manual and AI proposal.</div>
         </div>
       )}
 
@@ -55,7 +54,10 @@ export function RegexAiProposalSection({
           <div className='mb-2 text-[11px] text-gray-300'>AI Proposal History</div>
           <div className='space-y-2'>
             {aiProposals.map((proposal, index: number) => (
-              <div key={`${proposal.pattern}-${proposal.createdAt}-${index}`} className='rounded border border-border/60 bg-card/60 p-2'>
+              <div
+                key={`${proposal.pattern}-${proposal.createdAt}-${index}`}
+                className='rounded border border-border/60 bg-card/60 p-2'
+              >
                 <div className='flex items-center justify-between gap-2'>
                   <div className='text-[11px] text-gray-200 truncate'>{proposal.pattern}</div>
                   <Button

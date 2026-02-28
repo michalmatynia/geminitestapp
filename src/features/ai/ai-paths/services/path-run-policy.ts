@@ -21,7 +21,9 @@ const toNodeTypeSet = (value: string | undefined): Set<string> => {
 export const resolveDisabledNodeTypesPolicy = (): Set<string> =>
   toNodeTypeSet(process.env['AI_PATHS_DISABLED_NODE_TYPES']);
 
-export const evaluateDisabledNodeTypesPolicy = (nodes: AiNode[]): {
+export const evaluateDisabledNodeTypesPolicy = (
+  nodes: AiNode[]
+): {
   disabledNodeTypes: string[];
   violations: DisabledNodePolicyViolation[];
 } => {
@@ -31,11 +33,13 @@ export const evaluateDisabledNodeTypesPolicy = (nodes: AiNode[]): {
   }
   const violations: DisabledNodePolicyViolation[] = nodes
     .filter((node: AiNode): boolean => disabledTypes.has(node.type.toLowerCase()))
-    .map((node: AiNode): DisabledNodePolicyViolation => ({
-      nodeId: node.id,
-      nodeType: node.type,
-      nodeTitle: node.title ?? node.id,
-    }));
+    .map(
+      (node: AiNode): DisabledNodePolicyViolation => ({
+        nodeId: node.id,
+        nodeType: node.type,
+        nodeTitle: node.title ?? node.id,
+      })
+    );
 
   return {
     disabledNodeTypes: Array.from(disabledTypes),

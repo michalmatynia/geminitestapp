@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import type { WithId } from 'mongodb';
 
-import { toProductResponse } from '../mongo-product-repository-mappers';
+import { toProductResponse, type ProductDocument } from '../mongo-product-repository-mappers';
 
 describe('mongo product repository mappers', () => {
   it('prefers localized scalar fields over legacy nested object values', () => {
@@ -19,7 +20,7 @@ describe('mongo product repository mappers', () => {
       description_de: null,
       catalogId: 'catalog-1',
       published: false,
-    } as any);
+    } as unknown as WithId<ProductDocument>);
 
     expect(result.name['en']).toBe('new name');
     expect(result.name['pl']).toBeNull();
@@ -41,7 +42,7 @@ describe('mongo product repository mappers', () => {
       description_de: undefined,
       catalogId: 'catalog-1',
       published: false,
-    } as any);
+    } as unknown as WithId<ProductDocument>);
 
     expect(result.description['en']).toBe('legacy description');
     expect(result.description['pl']).toBe('legacy-pl');

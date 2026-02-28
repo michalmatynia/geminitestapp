@@ -45,8 +45,5 @@ const readSettingValue = async (key: string): Promise<string | null> => {
 export const getAuthUserPageSettings = async (): Promise<AuthUserPageSettings> => {
   const stored = await readSettingValue(AUTH_SETTINGS_KEYS.userPages);
   if (!stored) return DEFAULT_AUTH_USER_PAGE_SETTINGS;
-  return parseJsonSetting<AuthUserPageSettings>(
-    stored,
-    DEFAULT_AUTH_USER_PAGE_SETTINGS
-  );
+  return parseJsonSetting<AuthUserPageSettings>(stored, DEFAULT_AUTH_USER_PAGE_SETTINGS);
 };

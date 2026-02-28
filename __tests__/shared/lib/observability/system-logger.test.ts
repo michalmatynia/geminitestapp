@@ -35,12 +35,14 @@ describe('system-logger', () => {
     });
     await waitForAsyncLog();
 
-    expect(createSystemLog).toHaveBeenCalledWith(expect.objectContaining({
-      level: 'info',
-      message: 'Something happened',
-      source: 'test',
-      context: expect.objectContaining({ foo: 'bar' }),
-    }));
+    expect(createSystemLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        level: 'info',
+        message: 'Something happened',
+        source: 'test',
+        context: expect.objectContaining({ foo: 'bar' }),
+      })
+    );
   });
 
   it('should log a system error', async () => {
@@ -51,17 +53,19 @@ describe('system-logger', () => {
     });
     await waitForAsyncLog();
 
-    expect(createSystemLog).toHaveBeenCalledWith(expect.objectContaining({
-      level: 'error',
-      message: 'An error occurred',
-      stack: error.stack,
-      context: expect.objectContaining({
-        error: expect.objectContaining({
-          message: 'Boom',
+    expect(createSystemLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        level: 'error',
+        message: 'An error occurred',
+        stack: error.stack,
+        context: expect.objectContaining({
+          error: expect.objectContaining({
+            message: 'Boom',
+          }),
+          fingerprint: expect.any(String),
         }),
-        fingerprint: expect.any(String),
-      }),
-    }));
+      })
+    );
   });
 
   it('should preserve AppError metadata and cause chain', async () => {
@@ -82,24 +86,26 @@ describe('system-logger', () => {
     });
     await waitForAsyncLog();
 
-    expect(createSystemLog).toHaveBeenCalledWith(expect.objectContaining({
-      level: 'error',
-      category: expect.any(String),
-      context: expect.objectContaining({
+    expect(createSystemLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        level: 'error',
         category: expect.any(String),
-        errorCode: AppErrorCodes.validation,
-        errorName: 'AppError',
-        error: expect.objectContaining({
-          code: AppErrorCodes.validation,
-          httpStatus: 400,
-          expected: true,
-          meta: expect.objectContaining({ field: 'sku' }),
-          causeChain: expect.arrayContaining([
-            expect.objectContaining({ message: 'Database timeout' }),
-          ]),
+        context: expect.objectContaining({
+          category: expect.any(String),
+          errorCode: AppErrorCodes.validation,
+          errorName: 'AppError',
+          error: expect.objectContaining({
+            code: AppErrorCodes.validation,
+            httpStatus: 400,
+            expected: true,
+            meta: expect.objectContaining({ field: 'sku' }),
+            causeChain: expect.arrayContaining([
+              expect.objectContaining({ message: 'Database timeout' }),
+            ]),
+          }),
         }),
-      }),
-    }));
+      })
+    );
   });
 
   it('should notify for critical errors', async () => {
@@ -128,10 +134,12 @@ describe('system-logger', () => {
     });
     await waitForAsyncLog();
 
-    expect(createSystemLog).toHaveBeenCalledWith(expect.objectContaining({
-      path: '/api/test',
-      method: 'POST',
-      requestId: 'req-123',
-    }));
+    expect(createSystemLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        path: '/api/test',
+        method: 'POST',
+        requestId: 'req-123',
+      })
+    );
   });
 });

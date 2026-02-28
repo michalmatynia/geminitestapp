@@ -17,7 +17,18 @@ interface SearchInputProps extends Omit<React.InputHTMLAttributes<HTMLInputEleme
 }
 
 export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
-  ({ value, onClear, containerClassName, className, variant = 'default', size = 'default', ...props }, ref) => {
+  (
+    {
+      value,
+      onClear,
+      containerClassName,
+      className,
+      variant = 'default',
+      size = 'default',
+      ...props
+    },
+    ref
+  ) => {
     return (
       <div className={cn('relative flex items-center', containerClassName)}>
         <Search className='absolute left-3 size-4 text-gray-500' />

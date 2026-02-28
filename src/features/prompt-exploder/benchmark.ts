@@ -182,13 +182,7 @@ PIPELINE
 
 FINAL QA (PASS/FAIL)
 QA1 Background preserved.`,
-    expectedTypes: [
-      'metadata',
-      'parameter_block',
-      'sequence',
-      'hierarchical_list',
-      'qa_matrix',
-    ],
+    expectedTypes: ['metadata', 'parameter_block', 'sequence', 'hierarchical_list', 'qa_matrix'],
     minSegments: 5,
   },
   {
@@ -481,64 +475,65 @@ export function runPromptExploderBenchmark(args: {
       validationRules: args.validationRules,
       learnedTemplates: args.learnedTemplates ?? [],
       ...(args.validationScope ? { validationScope: args.validationScope } : {}),
-      ...(args.similarityThreshold !== undefined ? { similarityThreshold: args.similarityThreshold } : {}),
+      ...(args.similarityThreshold !== undefined
+        ? { similarityThreshold: args.similarityThreshold }
+        : {}),
     });
 
     const predictedTypeSet = new Set<PromptExploderSegmentType>(
       document.segments.map((segment: PromptExploderSegment) => segment.type)
     );
     const expectedTypeSet = new Set(benchmarkCase.expectedTypes);
-    const matchedTypes = benchmarkCase.expectedTypes.filter((type) =>
-      predictedTypeSet.has(type)
-    );
-    const missingTypes = benchmarkCase.expectedTypes.filter(
-      (type) => !predictedTypeSet.has(type)
-    );
-    const unexpectedTypes = [...predictedTypeSet].filter(
-      (type) => !expectedTypeSet.has(type)
-    );
+    const matchedTypes = benchmarkCase.expectedTypes.filter((type) => predictedTypeSet.has(type));
+    const missingTypes = benchmarkCase.expectedTypes.filter((type) => !predictedTypeSet.has(type));
+    const unexpectedTypes = [...predictedTypeSet].filter((type) => !expectedTypeSet.has(type));
     const precision = safeDivide(matchedTypes.length, predictedTypeSet.size);
     const recall = safeDivide(matchedTypes.length, benchmarkCase.expectedTypes.length);
     const f1 = computeF1(precision, recall);
     const avgSegmentConfidence = safeDivide(
-      document.segments.reduce((sum: number, segment: PromptExploderSegment) => sum + segment.confidence, 0),
+      document.segments.reduce(
+        (sum: number, segment: PromptExploderSegment) => sum + segment.confidence,
+        0
+      ),
       document.segments.length
     );
     const lowConfidenceSegmentList = document.segments.filter(
       (segment: PromptExploderSegment) => segment.confidence < lowConfidenceThreshold
     );
-    const lowConfidenceSuggestions: PromptExploderBenchmarkSuggestion[] =
-      [...lowConfidenceSegmentList]
-        .sort((left: PromptExploderSegment, right: PromptExploderSegment) => left.confidence - right.confidence)
-        .slice(0, suggestionLimit)
-        .map((segment: PromptExploderSegment, index: number) => {
-          const sampleText = buildSuggestionSampleText({
-            text: segment.text || '',
-            listItems: (segment.listItems || []).map((item) => ({ text: item.text || '' })),
-            subsections: (segment.subsections || []).map((sub) => ({ title: sub.title || '' })),
-          });
-          const suggestedRulePattern = buildSuggestedRulePattern(
-            segment.title || '',
-            sampleText
-          );
-          const segmentSlug = safeSlug(segment.title || '');
-          return {
-            id: `bench_${benchmarkCase.id}_${segmentSlug}_${index + 1}`,
-            caseId: benchmarkCase.id,
-            segmentId: segment.id,
-            segmentTitle: segment.title,
-            segmentType: segment.type,
-            confidence: segment.confidence,
-            sampleText,
-            matchedPatternIds: [...segment.matchedPatternIds],
-            suggestedRuleTitle: `Benchmark ${benchmarkCase.id} · ${segment.type} · ${segment.title || 'Untitled'}`,
-            suggestedRulePattern,
-            suggestedSegmentType: segment.type,
-            suggestedPriority: 18,
-            suggestedConfidenceBoost: 0.1,
-            suggestedTreatAsHeading: isHeadingLike(segment.title || ''),
-          };
-        });    const meetsMinSegments = document.segments.length >= benchmarkCase.minSegments;
+    const lowConfidenceSuggestions: PromptExploderBenchmarkSuggestion[] = [
+      ...lowConfidenceSegmentList,
+    ]
+      .sort(
+        (left: PromptExploderSegment, right: PromptExploderSegment) =>
+          left.confidence - right.confidence
+      )
+      .slice(0, suggestionLimit)
+      .map((segment: PromptExploderSegment, index: number) => {
+        const sampleText = buildSuggestionSampleText({
+          text: segment.text || '',
+          listItems: (segment.listItems || []).map((item) => ({ text: item.text || '' })),
+          subsections: (segment.subsections || []).map((sub) => ({ title: sub.title || '' })),
+        });
+        const suggestedRulePattern = buildSuggestedRulePattern(segment.title || '', sampleText);
+        const segmentSlug = safeSlug(segment.title || '');
+        return {
+          id: `bench_${benchmarkCase.id}_${segmentSlug}_${index + 1}`,
+          caseId: benchmarkCase.id,
+          segmentId: segment.id,
+          segmentTitle: segment.title,
+          segmentType: segment.type,
+          confidence: segment.confidence,
+          sampleText,
+          matchedPatternIds: [...segment.matchedPatternIds],
+          suggestedRuleTitle: `Benchmark ${benchmarkCase.id} · ${segment.type} · ${segment.title || 'Untitled'}`,
+          suggestedRulePattern,
+          suggestedSegmentType: segment.type,
+          suggestedPriority: 18,
+          suggestedConfidenceBoost: 0.1,
+          suggestedTreatAsHeading: isHeadingLike(segment.title || ''),
+        };
+      });
+    const meetsMinSegments = document.segments.length >= benchmarkCase.minSegments;
 
     reports.push({
       id: benchmarkCase.id,

@@ -86,23 +86,21 @@ export function useDocumentRelationSearch({
           if (file.documentDate.isoDate > dateTo) return false;
         }
         if (tagIdFilter !== null && (file.tagId ?? null) !== tagIdFilter) return false;
-        if (categoryIdFilter !== null && (file.categoryId ?? null) !== categoryIdFilter) return false;
+        if (categoryIdFilter !== null && (file.categoryId ?? null) !== categoryIdFilter)
+          return false;
         return true;
       }),
     [workspace.files, excludeSet, fileTypeFilter, dateFrom, dateTo, tagIdFilter, categoryIdFilter]
   );
 
-  const caseScopedSearchableFiles = useMemo(
-    (): CaseResolverFile[] => {
-      if (!activeCaseId || !scopedCaseIds || scopedCaseIds.size === 0) {
-        return allSearchableFiles;
-      }
-      return allSearchableFiles.filter((file: CaseResolverFile): boolean =>
-        Boolean(file.parentCaseId && scopedCaseIds.has(file.parentCaseId))
-      );
-    },
-    [activeCaseId, allSearchableFiles, scopedCaseIds]
-  );
+  const caseScopedSearchableFiles = useMemo((): CaseResolverFile[] => {
+    if (!activeCaseId || !scopedCaseIds || scopedCaseIds.size === 0) {
+      return allSearchableFiles;
+    }
+    return allSearchableFiles.filter((file: CaseResolverFile): boolean =>
+      Boolean(file.parentCaseId && scopedCaseIds.has(file.parentCaseId))
+    );
+  }, [activeCaseId, allSearchableFiles, scopedCaseIds]);
 
   const documentSearchRows = useMemo((): NodeFileDocumentSearchRow[] => {
     const sourceFiles =
@@ -222,15 +220,12 @@ export function useDocumentRelationSearch({
         ),
         docCount: workspace.files.filter(
           (f: CaseResolverFile): boolean =>
-            f.parentCaseId === caseFile.id &&
-            !excludeSet.has(f.id) &&
-            f.fileType !== 'case'
+            f.parentCaseId === caseFile.id && !excludeSet.has(f.id) && f.fileType !== 'case'
         ).length,
       }))
       .filter(
         (row): boolean =>
-          !query ||
-          normalizeSearchText(row.signatureLabel + ' ' + row.file.name).includes(query)
+          !query || normalizeSearchText(row.signatureLabel + ' ' + row.file.name).includes(query)
       );
   }, [caseSearchQuery, workspace.files, caseIdentifierLabelById, excludeSet]);
 

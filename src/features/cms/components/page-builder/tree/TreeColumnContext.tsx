@@ -17,11 +17,7 @@ export function TreeColumnProvider({
   columnId,
   children,
 }: TreeColumnProviderProps): React.JSX.Element {
-  return (
-    <TreeColumnContext.Provider value={{ columnId }}>
-      {children}
-    </TreeColumnContext.Provider>
-  );
+  return <TreeColumnContext.Provider value={{ columnId }}>{children}</TreeColumnContext.Provider>;
 }
 
 export function useOptionalTreeColumnId(explicitColumnId?: string): string | undefined {
@@ -35,7 +31,9 @@ export function useOptionalTreeColumnId(explicitColumnId?: string): string | und
 export function useTreeColumnId(explicitColumnId?: string): string {
   const columnId = useOptionalTreeColumnId(explicitColumnId);
   if (!columnId) {
-    throw new Error('useTreeColumnId must be used within TreeColumnProvider or receive a columnId prop');
+    throw new Error(
+      'useTreeColumnId must be used within TreeColumnProvider or receive a columnId prop'
+    );
   }
   return columnId;
 }

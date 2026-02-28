@@ -1,13 +1,8 @@
 import { extractParamsFromPrompt } from '@/shared/utils/prompt-params';
-import type {
-  PromptValidationRule,
-} from '@/shared/contracts/prompt-engine';
+import type { PromptValidationRule } from '@/shared/contracts/prompt-engine';
 
 import { buildPromptExploderBindings } from './parser-bindings';
-import {
-  collectReferencedParamsFromItems,
-  parseListLines,
-} from './parser-list-items';
+import { collectReferencedParamsFromItems, parseListLines } from './parser-list-items';
 import {
   collectMatchedRules,
   matchesBoundaryHeading,
@@ -26,25 +21,15 @@ import {
   parseSequenceSubsections,
   type ParseCursor,
 } from './parser-section-parsing';
-import {
-  createPromptExploderSegment,
-  renderPromptExploderSegment,
-} from './parser-segment-factory';
-import {
-  normalizeHeadingLabel,
-  parseCodeFromLine,
-  toLine,
-} from './parser-text-utils';
+import { createPromptExploderSegment, renderPromptExploderSegment } from './parser-segment-factory';
+import { normalizeHeadingLabel, parseCodeFromLine, toLine } from './parser-text-utils';
 import {
   inferTypeFromLearnedTemplates,
   inferTypeFromRuleSequence,
   shouldKeepEmptyTitleForCaseResolver,
 } from './parser-type-inference';
 
-import type {
-  PatternRuntime,
-  RuntimeRegexRule,
-} from './parser-runtime-patterns';
+import type { PatternRuntime, RuntimeRegexRule } from './parser-runtime-patterns';
 import type {
   PromptExploderBinding,
   PromptExploderDocument,
@@ -62,7 +47,8 @@ export {
 } from './parser-runtime-patterns';
 
 const BRACKET_SECTION_HEADING_RE = /^\s*\[[A-Z0-9 _()\-/:&+.,]{2,}]$/i;
-const STUDIO_RELIGHTING_BOUNDARY_FALLBACK_RE = /^(===\s*STUDIO\s+RELIGHTING|STUDIO\s+RELIGHTING\b)/i;
+const STUDIO_RELIGHTING_BOUNDARY_FALLBACK_RE =
+  /^(===\s*STUDIO\s+RELIGHTING|STUDIO\s+RELIGHTING\b)/i;
 const REQUIREMENTS_BOUNDARY_FALLBACK_RE = /^(REQUIREMENTS|COMPOSITING\s+REQUIREMENTS)\b/i;
 const PIPELINE_BOUNDARY_FALLBACK_RE = /^(PIPELINE|WORKFLOW|PROCESS|EXECUTION\s+TEMPLATE)\b/i;
 const FINAL_QA_BOUNDARY_FALLBACK_RE = /^FINAL\s+QA\b/i;
@@ -111,7 +97,8 @@ const resetParserRuntimeIds = (): void => {
   bindingIdFactory.reset();
 };
 
-const trimTrailingBlankLines = (value: string): string => value.replace(/\n{3,}$/g, '\n\n').trimEnd();
+const trimTrailingBlankLines = (value: string): string =>
+  value.replace(/\n{3,}$/g, '\n\n').trimEnd();
 
 const normalizeMultiline = (value: string): string => value.replace(/\r\n/g, '\n');
 
@@ -123,12 +110,14 @@ const decodeHtmlEntities = (value: string): string => {
     lt: '<',
     gt: '>',
     quot: '"',
-    apos: '\'',
+    apos: "'",
     nbsp: ' ',
   };
 
   return value.replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (full, entity): string => {
-    const normalized = String(entity ?? '').trim().toLowerCase();
+    const normalized = String(entity ?? '')
+      .trim()
+      .toLowerCase();
     if (!normalized) return full;
     if (normalized.startsWith('#x')) {
       const code = Number.parseInt(normalized.slice(2), 16);
@@ -216,9 +205,7 @@ const createRuleDrivenSegment = (args: {
 }): PromptExploderSegment => {
   const raw = trimTrailingBlankLines(args.blockLines.join('\n'));
   const headingTitle = normalizeHeadingLabel(args.headingLine ?? '');
-  const parsedTitle = parseCodeFromLine(
-    headingTitle || (args.headingLine ?? '').trim()
-  );
+  const parsedTitle = parseCodeFromLine(headingTitle || (args.headingLine ?? '').trim());
   const title =
     parsedTitle.title ||
     headingTitle ||
@@ -314,10 +301,7 @@ const createRuleDrivenSegment = (args: {
     type,
     lockType: true,
     title,
-    raw:
-      args.headingLine && !keepEmptyTitle && hasBodyContent
-        ? contentRaw
-        : raw,
+    raw: args.headingLine && !keepEmptyTitle && hasBodyContent ? contentRaw : raw,
   });
 };
 
@@ -450,14 +434,13 @@ const parseSegments = (prompt: string, runtime: PatternRuntime): PromptExploderS
         normalizedHeading
       )
     ) {
-      const blockLines = consumeBlockUntilBoundary(cursor, [
-        pipelineBoundary,
-        finalQaBoundary,
-      ]);
+      const blockLines = consumeBlockUntilBoundary(cursor, [pipelineBoundary, finalQaBoundary]);
       const segmentTitle = blockLines[0]?.trim() || 'STUDIO RELIGHTING EXTENSION';
       const bodyLines = blockLines.slice(1);
       const firstBodyLine = bodyLines.find((line) => line.trim().length > 0) ?? '';
-      const hasSectionRuleLine = /^RELIGHTING\s+RULES\b/i.test(normalizeHeadingLabel(firstBodyLine));
+      const hasSectionRuleLine = /^RELIGHTING\s+RULES\b/i.test(
+        normalizeHeadingLabel(firstBodyLine)
+      );
       const sectionRuleCondition = hasSectionRuleLine ? normalizeHeadingLabel(firstBodyLine) : null;
       const subsectionLines = hasSectionRuleLine
         ? bodyLines.slice(bodyLines.indexOf(firstBodyLine) + 1)
@@ -523,10 +506,7 @@ const parseSegments = (prompt: string, runtime: PatternRuntime): PromptExploderS
     }
 
     if (/^VALIDATION(?:_MODULE|\s+MODULE)\b/i.test(normalizedHeading)) {
-      const blockLines = consumeBlockUntilBoundary(cursor, [
-        BRACKET_SECTION_HEADING_RE,
-        /^END\b/i,
-      ]);
+      const blockLines = consumeBlockUntilBoundary(cursor, [BRACKET_SECTION_HEADING_RE, /^END\b/i]);
       const body = blockLines.slice(1);
       segments.push(
         createSegment({
@@ -543,19 +523,14 @@ const parseSegments = (prompt: string, runtime: PatternRuntime): PromptExploderS
             parseListLines: parseListLinesWithRuntimeIds,
             finalQaBoundaryFallback: FINAL_QA_BOUNDARY_FALLBACK_RE,
           }),
-          condition: /\bfix\s+until\b/i.test(blockLines.join('\n'))
-            ? 'fix_until_all_pass'
-            : null,
+          condition: /\bfix\s+until\b/i.test(blockLines.join('\n')) ? 'fix_until_all_pass' : null,
         })
       );
       continue;
     }
 
     if (/^DRY[_\s]RUN[_\s]BEHAVIOR\b/i.test(normalizedHeading)) {
-      const blockLines = consumeBlockUntilBoundary(cursor, [
-        BRACKET_SECTION_HEADING_RE,
-        /^END\b/i,
-      ]);
+      const blockLines = consumeBlockUntilBoundary(cursor, [BRACKET_SECTION_HEADING_RE, /^END\b/i]);
       const body = blockLines.slice(1);
       segments.push(
         createSegment({
@@ -565,9 +540,7 @@ const parseSegments = (prompt: string, runtime: PatternRuntime): PromptExploderS
           title: normalizeHeadingLabel(blockLines[0] ?? '') || 'DRY_RUN_BEHAVIOR',
           raw: trimTrailingBlankLines(blockLines.join('\n')),
           listItems: parseListLinesWithRuntimeIds(body),
-          condition: /\bDRY[_\s]RUN\b/i.test(blockLines.join('\n'))
-            ? 'dry_run_branching'
-            : null,
+          condition: /\bDRY[_\s]RUN\b/i.test(blockLines.join('\n')) ? 'dry_run_branching' : null,
         })
       );
       continue;
@@ -598,15 +571,15 @@ const parseSegments = (prompt: string, runtime: PatternRuntime): PromptExploderS
     ) {
       const blockLines = isRequirementsHeading
         ? consumeBlockUntilBoundary(cursor, [
-          studioRelightingBoundary,
-          pipelineBoundary,
-          finalQaBoundary,
-        ])
+            studioRelightingBoundary,
+            pipelineBoundary,
+            finalQaBoundary,
+          ])
         : consumeParagraphBlock(
-          cursor,
-          [studioRelightingBoundary, pipelineBoundary, finalQaBoundary],
-          runtime
-        );
+            cursor,
+            [studioRelightingBoundary, pipelineBoundary, finalQaBoundary],
+            runtime
+          );
       const body = blockLines.slice(1);
       const subsections = parseSequenceSubsections({
         lines: body,
@@ -652,9 +625,7 @@ const parseSegments = (prompt: string, runtime: PatternRuntime): PromptExploderS
           title,
           raw: trimTrailingBlankLines(blockLines.join('\n')),
           listItems: parseListLinesWithRuntimeIds(body),
-          condition: body.some((value) => /\bif\b|\bonly if\b/i.test(value))
-            ? 'conditional'
-            : null,
+          condition: body.some((value) => /\bif\b|\bonly if\b/i.test(value)) ? 'conditional' : null,
         })
       );
       continue;
@@ -691,9 +662,7 @@ const parseSegments = (prompt: string, runtime: PatternRuntime): PromptExploderS
             parseListLines: parseListLinesWithRuntimeIds,
             finalQaBoundaryFallback: FINAL_QA_BOUNDARY_FALLBACK_RE,
           }),
-          condition: /\bfix\s+until\b/i.test(blockLines.join('\n'))
-            ? 'fix_until_all_pass'
-            : null,
+          condition: /\bfix\s+until\b/i.test(blockLines.join('\n')) ? 'fix_until_all_pass' : null,
         })
       );
       continue;
@@ -702,8 +671,7 @@ const parseSegments = (prompt: string, runtime: PatternRuntime): PromptExploderS
     const parsedTitle = parseCodeFromLine(normalizedHeading);
     if (parsedTitle.code) {
       const blockLines = consumeParagraphBlock(cursor, [], runtime);
-      const title =
-        normalizeHeadingLabel(blockLines[0] ?? '') || parsedTitle.title;
+      const title = normalizeHeadingLabel(blockLines[0] ?? '') || parsedTitle.title;
       segments.push(
         createSegment({
           runtime,
@@ -791,29 +759,25 @@ const applyLearnedTemplateTypes = (
   if (templates.length === 0) return segments;
 
   return segments.map((segment) => {
-    const inferred = inferTypeFromLearnedTemplates(
-      segment,
-      templates,
-      similarityThreshold
-    );
+    const inferred = inferTypeFromLearnedTemplates(segment, templates, similarityThreshold);
     if (!inferred.matchedTemplateId && inferred.type === segment.type) {
       return segment;
     }
     const nextPatternLabels = inferred.matchedTemplateId
       ? [
-        ...new Set([
-          ...(segment.matchedPatternLabels ?? []),
-          `Learned Template: ${inferred.type.replaceAll('_', ' ')}`,
-        ]),
-      ]
+          ...new Set([
+            ...(segment.matchedPatternLabels ?? []),
+            `Learned Template: ${inferred.type.replaceAll('_', ' ')}`,
+          ]),
+        ]
       : (segment.matchedPatternLabels ?? []);
     const nextPatternIds = inferred.matchedTemplateId
       ? [
-        ...new Set([
-          ...segment.matchedPatternIds,
-          `segment.learned.${inferred.type}.${inferred.matchedTemplateId}`,
-        ]),
-      ]
+          ...new Set([
+            ...segment.matchedPatternIds,
+            `segment.learned.${inferred.type}.${inferred.matchedTemplateId}`,
+          ]),
+        ]
       : segment.matchedPatternIds;
     return {
       ...segment,
@@ -838,18 +802,14 @@ export function explodePromptText(args: {
   resetParserRuntimeIds();
   const prompt = normalizePromptSource(args.prompt);
   const validationScope = normalizeRuntimeValidationScope(args.validationScope);
-  const runtime = resolveRuntimePatterns(
-    args.validationRules,
-    validationScope,
-    {
-      runtimeCacheKey: args.runtimeCacheKey,
-      correlationId: args.correlationId,
-    }
-  );
+  const runtime = resolveRuntimePatterns(args.validationRules, validationScope, {
+    runtimeCacheKey: args.runtimeCacheKey,
+    correlationId: args.correlationId,
+  });
   const parsedSegments =
-            validationScope === 'case_resolver_prompt_exploder'
-              ? parseSegmentsRuleDriven(prompt, runtime)
-              : parseSegments(prompt, runtime);
+    validationScope === 'case_resolver_prompt_exploder'
+      ? parseSegmentsRuleDriven(prompt, runtime)
+      : parseSegments(prompt, runtime);
   const segments = applyLearnedTemplateTypes(
     parsedSegments,
     args.learnedTemplates ?? [],
@@ -857,18 +817,19 @@ export function explodePromptText(args: {
   );
   const bindings = buildBindings(segments);
   const warnings: string[] = [];
-  
+
   if (segments.length === 0) {
     warnings.push('No segments were detected.');
   }
-  
-  if (validationScope === 'prompt_exploder') {    if (!segments.some((segment) => segment.type === 'parameter_block')) {
-    warnings.push('No PARAMS block was detected.');
-  }
 
-  if (!segments.some((segment) => segment.type === 'qa_matrix')) {
-    warnings.push('No FINAL QA matrix was detected.');
-  }
+  if (validationScope === 'prompt_exploder') {
+    if (!segments.some((segment) => segment.type === 'parameter_block')) {
+      warnings.push('No PARAMS block was detected.');
+    }
+
+    if (!segments.some((segment) => segment.type === 'qa_matrix')) {
+      warnings.push('No FINAL QA matrix was detected.');
+    }
   }
 
   const reassembledPrompt = reassemblePromptSegments(segments);
@@ -888,7 +849,8 @@ export function explodePromptText(args: {
     tags: [],
     errors: [],
     diagnostics: [],
-  };}
+  };
+}
 
 export function reassemblePromptSegments(segments: PromptExploderSegment[]): string {
   const rendered = segments

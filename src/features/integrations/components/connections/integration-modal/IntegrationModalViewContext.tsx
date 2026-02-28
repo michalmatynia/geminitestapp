@@ -16,7 +16,9 @@ export type IntegrationModalViewContextValue = {
   onSavePlaywrightSettings: () => void;
 };
 
-const IntegrationModalViewContext = React.createContext<IntegrationModalViewContextValue | null>(null);
+const IntegrationModalViewContext = React.createContext<IntegrationModalViewContextValue | null>(
+  null
+);
 
 type IntegrationModalViewProviderProps = {
   value: IntegrationModalViewContextValue;
@@ -37,7 +39,9 @@ export function IntegrationModalViewProvider({
 export function useIntegrationModalViewContext(): IntegrationModalViewContextValue {
   const context = React.useContext(IntegrationModalViewContext);
   if (!context) {
-    throw new Error('useIntegrationModalViewContext must be used within IntegrationModalViewProvider');
+    throw new Error(
+      'useIntegrationModalViewContext must be used within IntegrationModalViewProvider'
+    );
   }
   return context;
 }

@@ -3,9 +3,13 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { describe, it, expect } from 'vitest';
 
-import { useAssets3D, useAsset3DCategories, useAsset3DTags, useAsset3DById } from '@/features/viewer3d/hooks/useAsset3dQueries';
+import {
+  useAssets3D,
+  useAsset3DCategories,
+  useAsset3DTags,
+  useAsset3DById,
+} from '@/shared/lib/viewer3d/hooks/useAsset3dQueries';
 import { server } from '@/mocks/server';
-
 
 const createWrapper = () => {
   const queryClient = new QueryClient({

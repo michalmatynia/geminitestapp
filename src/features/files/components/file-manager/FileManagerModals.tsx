@@ -9,19 +9,13 @@ import { AssetPreviewModal } from './AssetPreviewModal';
 import { useFileManager } from '../../contexts/FileManagerContext';
 
 export function FileManagerModals(): React.JSX.Element {
-  const {
-    previewFile, setPreviewFile,
-    previewAsset, setPreviewAsset,
-    ConfirmationModal,
-  } = useFileManager();
+  const { previewFile, setPreviewFile, previewAsset, setPreviewAsset, ConfirmationModal } =
+    useFileManager();
 
   return (
     <>
       {previewFile && (
-        <FilePreviewModal
-          file={previewFile}
-          onClose={(): void => setPreviewFile(null)}
-        >
+        <FilePreviewModal file={previewFile} onClose={(): void => setPreviewFile(null)}>
           <h3 className='text-xl font-bold mt-8 mb-4'>Linked Products</h3>
           <div className='flex flex-wrap gap-2'>
             {previewFile.products.map(({ product }: { product: { id: string; name: string } }) => (

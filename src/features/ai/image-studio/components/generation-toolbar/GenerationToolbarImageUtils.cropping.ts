@@ -1,12 +1,6 @@
 import { ApiError } from '@/shared/lib/api-client';
-import {
-  type CropCanvasContext,
-  type CropRect,
-} from './GenerationToolbarImageUtils.types';
-import {
-  loadImageElement,
-  sleep,
-} from './GenerationToolbarImageUtils.helpers';
+import { type CropCanvasContext, type CropRect } from './GenerationToolbarImageUtils.types';
+import { loadImageElement, sleep } from './GenerationToolbarImageUtils.helpers';
 import { mapCanvasRectToImageRect } from './GenerationToolbarImageUtils.geometry';
 
 export const isClientCropCrossOriginError = (error: unknown): boolean =>
@@ -18,18 +12,22 @@ export const isCropAbortError = (error: unknown): boolean =>
 export const isRetryableCropError = (error: unknown): boolean => {
   if (isCropAbortError(error)) return false;
   if (error instanceof ApiError) {
-    return error.status === 408 || error.status === 425 || error.status === 429 || error.status >= 500;
+    return (
+      error.status === 408 || error.status === 425 || error.status === 429 || error.status >= 500
+    );
   }
   return (
     error instanceof Error &&
-    /timeout|network|failed to fetch|temporarily unavailable|retry/i.test(error.message.toLowerCase())
+    /timeout|network|failed to fetch|temporarily unavailable|retry/i.test(
+      error.message.toLowerCase()
+    )
   );
 };
 
 export const buildCropRequestId = (): string =>
   `crop_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
 
-export const withCropRetry = async <T,>(
+export const withCropRetry = async <T>(
   run: () => Promise<T>,
   signal: AbortSignal,
   retries = 1,
@@ -129,6 +127,8 @@ export const cropCanvasImage = async (
   try {
     return canvas.toDataURL('image/png');
   } catch {
-    throw new Error('Client crop failed due to cross-origin restrictions. Use "Crop Server: Sharp".');
+    throw new Error(
+      'Client crop failed due to cross-origin restrictions. Use "Crop Server: Sharp".'
+    );
   }
 };

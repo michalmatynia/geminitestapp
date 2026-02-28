@@ -61,10 +61,7 @@ describe('prompt exploder manual bindings', () => {
 
   it('resolves subsection ids by clearing invalid references', () => {
     const segmentById = new Map([
-      [
-        'a',
-        buildSegment('a', 'A', [buildSubsection('sub_a_1', 'A1')]),
-      ],
+      ['a', buildSegment('a', 'A', [buildSubsection('sub_a_1', 'A1')])],
       ['b', buildSegment('b', 'B')],
     ]);
     const resolved = resolveManualBindingSubsectionIds({
@@ -106,10 +103,7 @@ describe('prompt exploder manual bindings', () => {
   it('builds valid binding with default labels and manual origin', () => {
     const section = buildSubsection('sub_1', 'Sub 1');
     const result = buildManualBindingFromDraft({
-      segments: [
-        buildSegment('from', 'From Segment', [section]),
-        buildSegment('to', 'To Segment'),
-      ],
+      segments: [buildSegment('from', 'From Segment', [section]), buildSegment('to', 'To Segment')],
       draft: {
         type: 'references',
         fromSegmentId: 'from',

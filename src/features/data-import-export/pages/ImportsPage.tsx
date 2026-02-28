@@ -22,15 +22,15 @@ import {
 import { TemplatesTabContent } from './imports/TemplatesTabContent';
 
 function ImportsPageContent(): React.JSX.Element {
-  const {
-    checkingIntegration,
-    isBaseConnected,
-  } = useImportExport();
+  const { checkingIntegration, isBaseConnected } = useImportExport();
 
   if (checkingIntegration) {
     return (
       <div className='w-full py-10 container mx-auto'>
-        <LoadingState message='Checking Base.com integration status...' className='bg-card/40 border border-border/60 rounded-lg h-64' />
+        <LoadingState
+          message='Checking Base.com integration status...'
+          className='bg-card/40 border border-border/60 rounded-lg h-64'
+        />
       </div>
     );
   }
@@ -39,7 +39,10 @@ function ImportsPageContent(): React.JSX.Element {
       <div className='w-full py-10 container mx-auto'>
         <Card variant='warning' padding='lg'>
           <h3 className='text-lg font-bold mb-2 text-amber-300'>Base.com integration required</h3>
-          <p className='text-sm text-amber-300'>Please configure your Base.com API connection in the Integrations settings before using import/export tools.</p>
+          <p className='text-sm text-amber-300'>
+            Please configure your Base.com API connection in the Integrations settings before using
+            import/export tools.
+          </p>
         </Card>
       </div>
     );
@@ -49,8 +52,11 @@ function ImportsPageContent(): React.JSX.Element {
     <div className='container mx-auto py-10 space-y-6'>
       <SectionHeader
         title='Product Import/Export'
-        subtitle={(
-          <nav aria-label='Breadcrumb' className='flex flex-wrap items-center gap-1 text-xs text-gray-400'>
+        subtitle={
+          <nav
+            aria-label='Breadcrumb'
+            className='flex flex-wrap items-center gap-1 text-xs text-gray-400'
+          >
             <Link href='/admin' className='hover:text-gray-200 transition-colors'>
               Admin
             </Link>
@@ -61,9 +67,9 @@ function ImportsPageContent(): React.JSX.Element {
             <span>/</span>
             <span className='text-gray-300'>Imports</span>
           </nav>
-        )}
+        }
       />
-      
+
       <Tabs defaultValue='imports' className='w-full'>
         <TabsList className='bg-muted/40 p-1'>
           <TabsTrigger value='imports' className='gap-2'>

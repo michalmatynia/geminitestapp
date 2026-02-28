@@ -219,9 +219,7 @@ export const renderNodeDiagnosticsTooltipContent = ({
                 [{issue.severity.toUpperCase()}] {issue.code}
               </div>
               <div className='mt-0.5 text-gray-200'>{issue.message}</div>
-              {scopeParts ? (
-                <div className='mt-0.5 text-gray-400'>{scopeParts}</div>
-              ) : null}
+              {scopeParts ? <div className='mt-0.5 text-gray-400'>{scopeParts}</div> : null}
               <div className='mt-0.5 text-gray-300'>Fix: {issue.recommendation}</div>
             </div>
           );
@@ -258,9 +256,7 @@ export const mergeRuntimePayload = (
   current: Record<string, unknown> | undefined,
   historyValue: unknown
 ): Record<string, unknown> | undefined => {
-  const historical = isPlainRecord(historyValue)
-    ? historyValue
-    : undefined;
+  const historical = isPlainRecord(historyValue) ? historyValue : undefined;
   if (!historical && !current) return undefined;
   if (!historical) return current;
   if (!current) return historical;

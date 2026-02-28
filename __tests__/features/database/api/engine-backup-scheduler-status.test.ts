@@ -6,7 +6,7 @@ import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { GET } from '@/app/api/databases/engine/backup-scheduler/status/route';
-import { getDatabaseBackupSchedulerStatus } from '@/features/database/services/database-backup-scheduler';
+import { getDatabaseBackupSchedulerStatus } from '@/shared/lib/db/services/database-backup-scheduler';
 import {
   DATABASE_BACKUP_SCHEDULER_REPEAT_EVERY_MS,
   getDatabaseBackupSchedulerQueueStatus,
@@ -16,13 +16,13 @@ import {
 vi.mock('@/shared/lib/api/api-handler', () => ({
   apiHandler:
     (handler: (req: NextRequest, ctx: unknown) => Promise<Response>) =>
-      async (req: NextRequest): Promise<Response> =>
-        handler(req, {
-          requestId: 'test-request-id',
-        }),
+    async (req: NextRequest): Promise<Response> =>
+      handler(req, {
+        requestId: 'test-request-id',
+      }),
 }));
 
-vi.mock('@/features/database/services/database-backup-scheduler', () => ({
+vi.mock('@/shared/lib/db/services/database-backup-scheduler', () => ({
   getDatabaseBackupSchedulerStatus: vi.fn(),
 }));
 

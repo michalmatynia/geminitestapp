@@ -9,16 +9,18 @@ import { LibraryProvider } from './LibraryContext';
 import { SegmentEditorProvider } from './SegmentEditorContext';
 import { SettingsProvider } from './SettingsContext';
 
-export function PromptExploderProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
+export function PromptExploderProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}): React.JSX.Element {
   return (
     <SettingsProvider>
       <DocumentProvider>
         <BenchmarkProvider>
           <LibraryProvider>
             <SegmentEditorProvider>
-              <BindingsProvider>
-                {children}
-              </BindingsProvider>
+              <BindingsProvider>{children}</BindingsProvider>
             </SegmentEditorProvider>
           </LibraryProvider>
         </BenchmarkProvider>

@@ -105,4 +105,3 @@ describe('handleFetcher', () => {
     expect((result['context'] as Record<string, unknown>)['product']).toBeUndefined();
   });
 });
-

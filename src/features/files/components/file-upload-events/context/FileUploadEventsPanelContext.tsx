@@ -7,7 +7,9 @@ type FileUploadEventsPanelContextValue = {
   description: string;
 };
 
-const FileUploadEventsPanelContext = React.createContext<FileUploadEventsPanelContextValue | null>(null);
+const FileUploadEventsPanelContext = React.createContext<FileUploadEventsPanelContextValue | null>(
+  null
+);
 
 type FileUploadEventsPanelProviderProps = {
   value: FileUploadEventsPanelContextValue;
@@ -28,7 +30,9 @@ export function FileUploadEventsPanelProvider({
 export function useFileUploadEventsPanelContext(): FileUploadEventsPanelContextValue {
   const context = React.useContext(FileUploadEventsPanelContext);
   if (!context) {
-    throw new Error('useFileUploadEventsPanelContext must be used within FileUploadEventsPanelProvider');
+    throw new Error(
+      'useFileUploadEventsPanelContext must be used within FileUploadEventsPanelProvider'
+    );
   }
   return context;
 }

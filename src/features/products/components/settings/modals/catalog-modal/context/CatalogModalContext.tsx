@@ -45,11 +45,7 @@ export function CatalogModalProvider({
   value,
   children,
 }: CatalogModalProviderProps): React.JSX.Element {
-  return (
-    <CatalogModalContext.Provider value={value}>
-      {children}
-    </CatalogModalContext.Provider>
-  );
+  return <CatalogModalContext.Provider value={value}>{children}</CatalogModalContext.Provider>;
 }
 
 export function useCatalogModalContext(): CatalogModalContextValue {

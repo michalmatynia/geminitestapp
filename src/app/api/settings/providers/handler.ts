@@ -37,9 +37,7 @@ const normalizeAuthProvider = (value?: string | null): ProviderValue | null => {
   return value.toLowerCase().trim() === 'prisma' ? 'prisma' : 'mongodb';
 };
 
-const isPrismaMissingTableError = (
-  error: unknown
-): error is Prisma.PrismaClientKnownRequestError =>
+const isPrismaMissingTableError = (error: unknown): error is Prisma.PrismaClientKnownRequestError =>
   error instanceof Prisma.PrismaClientKnownRequestError &&
   (error.code === 'P2021' || error.code === 'P2022');
 
@@ -99,7 +97,9 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
   const hasMongoUri = Boolean(process.env['MONGODB_URI']);
   const appDbProviderEnv = process.env['APP_DB_PROVIDER']?.trim() || null;
 
-  const appPrismaSetting = normalizeAppProvider(await readPrismaSetting(APP_DB_PROVIDER_SETTING_KEY));
+  const appPrismaSetting = normalizeAppProvider(
+    await readPrismaSetting(APP_DB_PROVIDER_SETTING_KEY)
+  );
   const appMongoSetting = normalizeAppProvider(await readMongoSetting(APP_DB_PROVIDER_SETTING_KEY));
   const envAppProvider = normalizeAppProvider(appDbProviderEnv);
   const appConfigured = envAppProvider ?? appPrismaSetting ?? appMongoSetting;
@@ -112,9 +112,14 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
         : null;
   const appEffective = await getAppDbProvider();
 
-  const authMongoSetting = normalizeAuthProvider(await readMongoSetting(AUTH_SETTINGS_KEYS.provider));
-  const authPrismaSetting = normalizeAuthProvider(await readPrismaSetting(AUTH_SETTINGS_KEYS.provider));
-  const authConfigured = authMongoSetting ?? authPrismaSetting ?? (hasMongoUri ? 'mongodb' : 'prisma');
+  const authMongoSetting = normalizeAuthProvider(
+    await readMongoSetting(AUTH_SETTINGS_KEYS.provider)
+  );
+  const authPrismaSetting = normalizeAuthProvider(
+    await readPrismaSetting(AUTH_SETTINGS_KEYS.provider)
+  );
+  const authConfigured =
+    authMongoSetting ?? authPrismaSetting ?? (hasMongoUri ? 'mongodb' : 'prisma');
   const authConfiguredSource: ProviderSource = authMongoSetting
     ? 'mongo-setting'
     : authPrismaSetting
@@ -141,7 +146,9 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
       : (productMongoSetting ?? productPrismaSetting ?? (hasDatabaseUrl ? 'prisma' : 'mongodb'));
   const productConfiguredSource: ProviderSource =
     appEffective === 'prisma'
-      ? (productPrismaSetting ? 'prisma-setting' : 'derived')
+      ? productPrismaSetting
+        ? 'prisma-setting'
+        : 'derived'
       : productMongoSetting
         ? 'mongo-setting'
         : productPrismaSetting
@@ -235,4 +242,3 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
     headers: { 'Cache-Control': 'no-store' },
   });
 }
-

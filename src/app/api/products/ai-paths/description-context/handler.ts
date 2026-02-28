@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import {
-  getCategoryRepository,
-  getParameterRepository,
-} from '@/features/products/server';
+import { getCategoryRepository, getParameterRepository } from '@/features/products/server';
 import type {
   ProductCategoryDto as ProductCategory,
   ProductParameterDto as ProductParameter,
@@ -79,18 +76,13 @@ const resolveCategoryName = (
     (category: DescriptionContextCategory): boolean => category.id === categoryId
   );
   if (!match) return null;
-  const preferredName = [
-    match.name_en,
-    match.name,
-    match.name_pl,
-    match.name_de,
-  ].find((value: string | null): value is string => Boolean(value?.trim()));
+  const preferredName = [match.name_en, match.name, match.name_pl, match.name_de].find(
+    (value: string | null): value is string => Boolean(value?.trim())
+  );
   return preferredName?.trim() ?? null;
 };
 
-const toDescriptionContextCategory = (
-  category: ProductCategory
-): DescriptionContextCategory => ({
+const toDescriptionContextCategory = (category: ProductCategory): DescriptionContextCategory => ({
   id: category.id,
   name: category.name,
   name_en: category.name_en ?? null,
@@ -103,30 +95,19 @@ const toDescriptionContextCategory = (
 const normalizeIncludeCategories = (value: string | null): boolean => {
   const normalized = normalizeQueryValue(value).toLowerCase();
   if (!normalized) return true;
-  if (
-    normalized === '0' ||
-    normalized === 'false' ||
-    normalized === 'no' ||
-    normalized === 'off'
-  ) {
+  if (normalized === '0' || normalized === 'false' || normalized === 'no' || normalized === 'off') {
     return false;
   }
   return true;
 };
 
-export async function GET_handler(
-  req: NextRequest,
-  ctx: ApiHandlerContext
-): Promise<Response> {
+export async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const query = ctx.query as DescriptionContextQuery | undefined;
   const { searchParams } = new URL(req.url);
-  const catalogId =
-    query?.catalogId ?? normalizeQueryValue(searchParams.get('catalogId'));
-  const categoryId =
-    query?.categoryId ?? normalizeQueryValue(searchParams.get('categoryId'));
+  const catalogId = query?.catalogId ?? normalizeQueryValue(searchParams.get('catalogId'));
+  const categoryId = query?.categoryId ?? normalizeQueryValue(searchParams.get('categoryId'));
   const includeCategories =
-    query?.includeCategories ??
-    normalizeIncludeCategories(searchParams.get('includeCategories'));
+    query?.includeCategories ?? normalizeIncludeCategories(searchParams.get('includeCategories'));
 
   if (!catalogId) {
     return NextResponse.json(buildEmptyPayload(null, categoryId || null));
@@ -139,10 +120,10 @@ export async function GET_handler(
     parameterRepository.listParameters({ catalogId }),
     shouldFetchCategories
       ? (async (): Promise<DescriptionContextCategory[]> => {
-        const categoryRepository = await getCategoryRepository();
-        const categoryList = await categoryRepository.listCategories({ catalogId });
-        return categoryList.map(toDescriptionContextCategory);
-      })()
+          const categoryRepository = await getCategoryRepository();
+          const categoryList = await categoryRepository.listCategories({ catalogId });
+          return categoryList.map(toDescriptionContextCategory);
+        })()
       : Promise.resolve<DescriptionContextCategory[]>([]),
   ]);
 

@@ -4,8 +4,7 @@ import { COMMON_RUNTIME_FIELDS } from '../node-docs.constants';
 export const contextDocs: NodeConfigDocField[] = [
   {
     path: 'context.role',
-    description:
-      'Context role for downstream nodes (used as a hint for prompts and filtering).',
+    description: 'Context role for downstream nodes (used as a hint for prompts and filtering).',
   },
   {
     path: 'context.entityType',
@@ -15,8 +14,7 @@ export const contextDocs: NodeConfigDocField[] = [
   },
   {
     path: 'context.entityIdSource',
-    description:
-      'Where to read entityId from when loading context. simulation/manual/context.',
+    description: 'Where to read entityId from when loading context. simulation/manual/context.',
     defaultValue: 'simulation',
   },
   {
@@ -40,13 +38,13 @@ export const contextDocs: NodeConfigDocField[] = [
   {
     path: 'context.includePaths',
     description:
-      'List of JSON paths to keep when scopeMode is include (example: [\'title\',\'images\']).',
+      "List of JSON paths to keep when scopeMode is include (example: ['title','images']).",
     defaultValue: '[]',
   },
   {
     path: 'context.excludePaths',
     description:
-      'List of JSON paths to remove when scopeMode is exclude (example: [\'internal.notes\']).',
+      "List of JSON paths to remove when scopeMode is exclude (example: ['internal.notes']).",
     defaultValue: '[]',
   },
   ...COMMON_RUNTIME_FIELDS,
@@ -55,14 +53,12 @@ export const contextDocs: NodeConfigDocField[] = [
 export const parserDocs: NodeConfigDocField[] = [
   {
     path: 'parser.outputMode',
-    description:
-      'individual emits one port per mapping; bundle emits a single bundle output.',
+    description: 'individual emits one port per mapping; bundle emits a single bundle output.',
     defaultValue: 'individual',
   },
   {
     path: 'parser.mappings',
-    description:
-      'Map output port name -> JSON path (relative to entityJson/context).',
+    description: 'Map output port name -> JSON path (relative to entityJson/context).',
     defaultValue: '{}',
   },
   {
@@ -160,14 +156,12 @@ export const iteratorDocs: NodeConfigDocField[] = [
 export const mapperDocs: NodeConfigDocField[] = [
   {
     path: 'mapper.outputs',
-    description:
-      'Which output ports the mapper should expose (the ports must exist on the node).',
+    description: 'Which output ports the mapper should expose (the ports must exist on the node).',
     defaultValue: '["value"]',
   },
   {
     path: 'mapper.mappings',
-    description:
-      'Map output port name -> JSON path (relative to context).',
+    description: 'Map output port name -> JSON path (relative to context).',
     defaultValue: '{}',
   },
   {
@@ -182,8 +176,7 @@ export const mapperDocs: NodeConfigDocField[] = [
 export const mutatorDocs: NodeConfigDocField[] = [
   {
     path: 'mutator.path',
-    description:
-      'JSON path to write to (example: \'meta.flags.needsReview\').',
+    description: "JSON path to write to (example: 'meta.flags.needsReview').",
   },
   {
     path: 'mutator.valueTemplate',
@@ -196,41 +189,34 @@ export const mutatorDocs: NodeConfigDocField[] = [
 export const stringMutatorDocs: NodeConfigDocField[] = [
   {
     path: 'stringMutator.operations',
-    description:
-      'Ordered list of string operations to apply to the incoming value.',
+    description: 'Ordered list of string operations to apply to the incoming value.',
     defaultValue: '[]',
   },
   {
     path: 'stringMutator.operations[].type',
-    description:
-      'Operation type: trim, replace, remove, case, append, slice.',
+    description: 'Operation type: trim, replace, remove, case, append, slice.',
   },
   {
     path: 'stringMutator.operations[].search',
-    description:
-      'Text or regex pattern to replace/remove (replace/remove only).',
+    description: 'Text or regex pattern to replace/remove (replace/remove only).',
   },
   {
     path: 'stringMutator.operations[].replace',
-    description:
-      'Replacement text for replace operations.',
+    description: 'Replacement text for replace operations.',
   },
   {
     path: 'stringMutator.operations[].matchMode',
-    description:
-      'Match mode for replace/remove (first or all).',
+    description: 'Match mode for replace/remove (first or all).',
     defaultValue: 'all',
   },
   {
     path: 'stringMutator.operations[].useRegex',
-    description:
-      'If true, treat search as a regex pattern.',
+    description: 'If true, treat search as a regex pattern.',
     defaultValue: 'false',
   },
   {
     path: 'stringMutator.operations[].flags',
-    description:
-      'Regex flags when useRegex is enabled (e.g., gim).',
+    description: 'Regex flags when useRegex is enabled (e.g., gim).',
   },
   ...COMMON_RUNTIME_FIELDS,
 ];
@@ -238,14 +224,12 @@ export const stringMutatorDocs: NodeConfigDocField[] = [
 export const validatorDocs: NodeConfigDocField[] = [
   {
     path: 'validator.requiredPaths',
-    description:
-      'List of JSON paths that must exist (and be non-empty) for valid=true.',
+    description: 'List of JSON paths that must exist (and be non-empty) for valid=true.',
     defaultValue: '[]',
   },
   {
     path: 'validator.mode',
-    description:
-      'all = require all requiredPaths; any = require at least one.',
+    description: 'all = require all requiredPaths; any = require at least one.',
     defaultValue: 'all',
   },
   ...COMMON_RUNTIME_FIELDS,
@@ -260,13 +244,11 @@ export const validationPatternDocs: NodeConfigDocField[] = [
   },
   {
     path: 'validationPattern.stackId',
-    description:
-      'Selected global validation stack/list ID used when source=global_stack.',
+    description: 'Selected global validation stack/list ID used when source=global_stack.',
   },
   {
     path: 'validationPattern.scope',
-    description:
-      'Prompt validation scope used while evaluating rules (for scope-gated rules).',
+    description: 'Prompt validation scope used while evaluating rules (for scope-gated rules).',
     defaultValue: 'global',
   },
   {
@@ -283,38 +265,32 @@ export const validationPatternDocs: NodeConfigDocField[] = [
   },
   {
     path: 'validationPattern.inputPort',
-    description:
-      'Preferred input source (auto/value/prompt/result/context).',
+    description: 'Preferred input source (auto/value/prompt/result/context).',
     defaultValue: 'auto',
   },
   {
     path: 'validationPattern.outputPort',
-    description:
-      'Primary output target for normalized text.',
+    description: 'Primary output target for normalized text.',
     defaultValue: 'value',
   },
   {
     path: 'validationPattern.maxAutofixPasses',
-    description:
-      'Maximum autofix refinement passes when runtimeMode is validate_and_autofix.',
+    description: 'Maximum autofix refinement passes when runtimeMode is validate_and_autofix.',
     defaultValue: '1',
   },
   {
     path: 'validationPattern.includeRuleIds',
-    description:
-      'Optional allowlist of rule IDs to execute.',
+    description: 'Optional allowlist of rule IDs to execute.',
     defaultValue: '[]',
   },
   {
     path: 'validationPattern.rules',
-    description:
-      'Active rule set used during runtime (global snapshot or path-local list).',
+    description: 'Active rule set used during runtime (global snapshot or path-local list).',
     defaultValue: '[]',
   },
   {
     path: 'validationPattern.learnedRules',
-    description:
-      'Optional learned-rule list merged into runtime validation.',
+    description: 'Optional learned-rule list merged into runtime validation.',
     defaultValue: '[]',
   },
   ...COMMON_RUNTIME_FIELDS,
@@ -335,32 +311,38 @@ export const boundsNormalizerDocs: NodeConfigDocField[] = [
   },
   {
     path: 'boundsNormalizer.leftField',
-    description: 'Override the field name for the left/x1 coordinate. Default: left (or x1 for pixels_tlbr).',
+    description:
+      'Override the field name for the left/x1 coordinate. Default: left (or x1 for pixels_tlbr).',
     defaultValue: 'left',
   },
   {
     path: 'boundsNormalizer.topField',
-    description: 'Override the field name for the top/y1 coordinate. Default: top (or y1 for pixels_tlbr).',
+    description:
+      'Override the field name for the top/y1 coordinate. Default: top (or y1 for pixels_tlbr).',
     defaultValue: 'top',
   },
   {
     path: 'boundsNormalizer.widthField',
-    description: 'Override the field name for the width/x2 coordinate. Default: width (or x2 for pixels_tlbr).',
+    description:
+      'Override the field name for the width/x2 coordinate. Default: width (or x2 for pixels_tlbr).',
     defaultValue: 'width',
   },
   {
     path: 'boundsNormalizer.heightField',
-    description: 'Override the field name for the height/y2 coordinate. Default: height (or y2 for pixels_tlbr).',
+    description:
+      'Override the field name for the height/y2 coordinate. Default: height (or y2 for pixels_tlbr).',
     defaultValue: 'height',
   },
   {
     path: 'boundsNormalizer.imageWidthPath',
-    description: 'Dot-path inside the context port value for source image width. Required for relative/percentage formats.',
+    description:
+      'Dot-path inside the context port value for source image width. Required for relative/percentage formats.',
     defaultValue: 'imageWidth',
   },
   {
     path: 'boundsNormalizer.imageHeightPath',
-    description: 'Dot-path inside the context port value for source image height. Required for relative/percentage formats.',
+    description:
+      'Dot-path inside the context port value for source image height. Required for relative/percentage formats.',
     defaultValue: 'imageHeight',
   },
   {

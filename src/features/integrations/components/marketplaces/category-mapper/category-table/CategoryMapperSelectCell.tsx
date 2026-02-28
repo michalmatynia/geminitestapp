@@ -19,14 +19,9 @@ export function CategoryMapperSelectCell({
   return (
     <SelectSimple
       value={value ?? '__unmapped__'}
-      onValueChange={(val: string): void =>
-        onChange(val === '__unmapped__' ? null : val)
-      }
+      onValueChange={(val: string): void => onChange(val === '__unmapped__' ? null : val)}
       disabled={disabled}
-      options={[
-        { value: '__unmapped__', label: '— Not mapped —' },
-        ...options
-      ]}
+      options={[{ value: '__unmapped__', label: '— Not mapped —' }, ...options]}
       placeholder='— Not mapped —'
       variant='subtle'
       size='sm'

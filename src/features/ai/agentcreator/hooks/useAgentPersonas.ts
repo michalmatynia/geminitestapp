@@ -36,7 +36,7 @@ export function useSaveAgentPersonasMutation(): UseMutationResult<
   void,
   Error,
   { personas: AgentPersona[] }
-  > {
+> {
   const queryClient = useQueryClient();
 
   return createUpdateMutationV2<void, { personas: AgentPersona[] }>({

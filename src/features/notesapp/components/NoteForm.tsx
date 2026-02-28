@@ -5,19 +5,9 @@ import Image from 'next/image';
 import React from 'react';
 
 import { MarkdownToolbarActionsProvider } from '@/features/notesapp/context/MarkdownToolbarActionsContext';
-import {
-  useNoteFormContext,
-  NoteFormProvider,
-} from '@/features/notesapp/context/NoteFormContext';
+import { useNoteFormContext, NoteFormProvider } from '@/features/notesapp/context/NoteFormContext';
 import type { NoteFormProps } from '@/shared/contracts/notes';
-import {
-  Button,
-  Input,
-  FormField,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from '@/shared/ui';
+import { Button, Input, FormField, Dialog, DialogContent, DialogTitle } from '@/shared/ui';
 
 import { FileAttachments } from './editor/FileAttachments';
 import { MarkdownEditor } from './editor/MarkdownEditor';
@@ -73,9 +63,7 @@ function NoteFormInner(): React.JSX.Element {
             type='text'
             placeholder='Enter note title'
             value={title}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-              setTitle(e.target.value)
-            }
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setTitle(e.target.value)}
             className='w-full rounded-lg border bg-card/40 px-4 py-2 text-white text-lg font-semibold placeholder:text-gray-500 focus:border-blue-500 focus:outline-none h-12'
             required
           />
@@ -99,10 +87,7 @@ function NoteFormInner(): React.JSX.Element {
         <NoteMetadata showTitle={false} />
       </form>
 
-      <Dialog
-        open={!!lightboxImage}
-        onOpenChange={(open) => !open && setLightboxImage(null)}
-      >
+      <Dialog open={!!lightboxImage} onOpenChange={(open) => !open && setLightboxImage(null)}>
         <DialogContent className='max-w-screen-xl border-none bg-black/90 p-0 shadow-none sm:max-w-screen-xl'>
           <DialogTitle className='sr-only'>Image Preview</DialogTitle>
           <div className='relative h-[90vh] w-[90vw]'>
@@ -142,7 +127,7 @@ export function NoteForm({
     () => ({
       formRef: formRef ?? undefined,
     }),
-    [formRef],
+    [formRef]
   );
 
   return (

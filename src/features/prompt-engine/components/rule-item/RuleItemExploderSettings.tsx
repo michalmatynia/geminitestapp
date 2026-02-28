@@ -1,21 +1,14 @@
 'use client';
 
 import React from 'react';
-import {
-  Input,
-  SelectSimple,
-  FormField,
-} from '@/shared/ui';
+import { Input, SelectSimple, FormField } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 import { useRuleItemContext } from '../context/RuleItemContext';
-import {
-  PROMPT_EXPLODER_SEGMENT_OPTIONS,
-  normalizeRuleScopes,
-} from '../rule-item-utils';
-import type { 
-  PromptExploderRuleSegmentType, 
-  PromptExploderCaptureApplyTo, 
-  PromptExploderCaptureNormalize 
+import { PROMPT_EXPLODER_SEGMENT_OPTIONS, normalizeRuleScopes } from '../rule-item-utils';
+import type {
+  PromptExploderRuleSegmentType,
+  PromptExploderCaptureApplyTo,
+  PromptExploderCaptureNormalize,
 } from '../../settings';
 
 export function RuleItemExploderSettings(): React.JSX.Element | null {
@@ -68,9 +61,7 @@ export function RuleItemExploderSettings(): React.JSX.Element | null {
               patchRule({ promptExploderSegmentType: null });
               return;
             }
-            const valid = PROMPT_EXPLODER_SEGMENT_OPTIONS.some(
-              (option) => option.value === value
-            );
+            const valid = PROMPT_EXPLODER_SEGMENT_OPTIONS.some((option) => option.value === value);
             if (!valid) return;
             patchRule({
               promptExploderSegmentType: value as PromptExploderRuleSegmentType,

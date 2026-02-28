@@ -4,10 +4,8 @@ import { persistQueryClient, type PersistedClient } from '@tanstack/react-query-
 
 import { QUERY_KEYS } from './query-keys';
 
-const shouldPersistQuery = (
-  queryKey: unknown,
-  status: unknown
-): boolean => status === 'success' && isOfflineQueryKey(queryKey);
+const shouldPersistQuery = (queryKey: unknown, status: unknown): boolean =>
+  status === 'success' && isOfflineQueryKey(queryKey);
 
 const isOfflineQueryKey = (queryKey: unknown): boolean =>
   Array.isArray(queryKey) && isOfflineQuery(queryKey as readonly unknown[]);

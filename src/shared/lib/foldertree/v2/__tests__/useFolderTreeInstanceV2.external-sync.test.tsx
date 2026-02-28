@@ -28,13 +28,13 @@ describe('useFolderTreeInstanceV2 external sync replace', () => {
       async (tx: FolderTreeTransaction): Promise<FolderTreePreparedTransaction> => ({
         tx,
         preparedAt: Date.now(),
-      }),
+      })
     );
     const apply = vi.fn(
       async (tx: FolderTreeTransaction): Promise<FolderTreeAppliedTransaction> => ({
         tx,
         appliedAt: Date.now(),
-      }),
+      })
     );
     const commit = vi.fn(async () => undefined);
 
@@ -46,7 +46,7 @@ describe('useFolderTreeInstanceV2 external sync replace', () => {
           apply,
           commit,
         },
-      }),
+      })
     );
 
     await act(async () => {

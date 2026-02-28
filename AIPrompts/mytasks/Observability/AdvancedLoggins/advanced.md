@@ -22,25 +22,19 @@ For sensitive actions (role changes, deletes, price changes): log who/when/what.
 
 4. Error handling consistency
 
-
 Right now you try/catch and rethrow the same error:
 
 Copy
 catch (error) {
-  logger.error("Error creating product:", error);
-  throw error;
+logger.error("Error creating product:", error);
+throw error;
 }
 That’s fine for logging, but it’s not giving you typed, mappable errors (400/404/409/etc.).
 
-
 Upgrade:
-
 
 Introduce AppError types and throw those from service/repo.
 
-
 Route wrapper maps errors → HTTP status + safe payload.
 
-
 Your service should not throw plain Error("SKU is required") (that becomes 500 unless mapped).
-

@@ -4,18 +4,8 @@
   "nodeType": "audio_speaker",
   "title": "Audio Speaker (Mono)",
   "purpose": "Play incoming audio signals in local runtime.",
-  "inputs": [
-    "audioSignal",
-    "frequency",
-    "waveform",
-    "gain",
-    "durationMs",
-    "trigger"
-  ],
-  "outputs": [
-    "status",
-    "audioSignal"
-  ],
+  "inputs": ["audioSignal", "frequency", "waveform", "gain", "durationMs", "trigger"],
+  "outputs": ["status", "audioSignal"],
   "configFields": [
     {
       "path": "audioSpeaker.enabled",
@@ -66,18 +56,8 @@
       "x": 100,
       "y": 100
     },
-    "inputs": [
-      "audioSignal",
-      "frequency",
-      "waveform",
-      "gain",
-      "durationMs",
-      "trigger"
-    ],
-    "outputs": [
-      "status",
-      "audioSignal"
-    ],
+    "inputs": ["audioSignal", "frequency", "waveform", "gain", "durationMs", "trigger"],
+    "outputs": ["status", "audioSignal"],
     "config": {
       "audioSpeaker": {
         "enabled": true,

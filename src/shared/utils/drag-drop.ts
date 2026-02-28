@@ -82,23 +82,19 @@ export const resolveVerticalDropPosition = (
 };
 
 export const setNoteDragData = (dataTransfer: DataTransfer, noteId: string): void => {
-  setDragData(
-    dataTransfer,
-    { [DRAG_KEYS.NOTE_ID]: noteId },
-    { effectAllowed: 'linkMove' }
-  );
+  setDragData(dataTransfer, { [DRAG_KEYS.NOTE_ID]: noteId }, { effectAllowed: 'linkMove' });
 };
 
 export const setFolderDragData = (dataTransfer: DataTransfer, folderId: string): void => {
-  setDragData(
-    dataTransfer,
-    { [DRAG_KEYS.FOLDER_ID]: folderId },
-    { effectAllowed: 'move' }
-  );
+  setDragData(dataTransfer, { [DRAG_KEYS.FOLDER_ID]: folderId }, { effectAllowed: 'move' });
 };
 
-export const getNoteDragId = (dataTransfer: DataTransfer, fallback?: string | null): string | null =>
-  getFirstDragValue(dataTransfer, [DRAG_KEYS.NOTE_ID], fallback);
+export const getNoteDragId = (
+  dataTransfer: DataTransfer,
+  fallback?: string | null
+): string | null => getFirstDragValue(dataTransfer, [DRAG_KEYS.NOTE_ID], fallback);
 
-export const getFolderDragId = (dataTransfer: DataTransfer, fallback?: string | null): string | null =>
-  getFirstDragValue(dataTransfer, [DRAG_KEYS.FOLDER_ID], fallback);
+export const getFolderDragId = (
+  dataTransfer: DataTransfer,
+  fallback?: string | null
+): string | null => getFirstDragValue(dataTransfer, [DRAG_KEYS.FOLDER_ID], fallback);

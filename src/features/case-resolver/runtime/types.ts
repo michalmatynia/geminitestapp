@@ -78,6 +78,4 @@ export type CaseResolverRuntimeSnapshot = {
   state: CaseResolverRuntimeState;
 };
 
-export type CaseResolverRuntimeSelector<T> = (
-  snapshot: CaseResolverRuntimeSnapshot,
-) => T;
+export type CaseResolverRuntimeSelector<T> = (snapshot: CaseResolverRuntimeSnapshot) => T;

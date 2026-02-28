@@ -25,7 +25,7 @@ export interface CanvasBoardUIContextValue {
   view: { x: number; y: number; scale: number };
   viewportSize: { width: number; height: number } | null;
   detailLevel: SvgDetailLevel;
-  
+
   // Graph Data
   nodes: AiNode[];
   edges: Edge[];
@@ -35,19 +35,19 @@ export interface CanvasBoardUIContextValue {
   edgeRoutingMode: EdgeRoutingMode;
   connecting: { fromNodeId: string; fromPort: string; start: { x: number; y: number } } | null;
   connectingPos: { x: number; y: number } | null;
-  
+
   // Selection
   selectedNodeId: string | null;
   selectedNodeIdSet: Set<string>;
   selectedEdgeId: string | null;
-  
+
   // Runtime
   runtimeState: RuntimeState;
   runtimeNodeStatuses: AiPathRuntimeNodeStatusMap;
   runtimeRunStatus: RuntimeRunStatus;
   nodeDurations: Record<string, number>;
   nodeDiagnosticsById: Record<string, DataContractNodeIssueSummary>;
-  
+
   // Pulse & Effects
   inputPulseNodes: Set<string>;
   outputPulseNodes: Set<string>;
@@ -56,19 +56,19 @@ export interface CanvasBoardUIContextValue {
   wireFlowEnabled: boolean;
   flowingIntensity: Exclude<PathFlowIntensity, 'off'>;
   reduceVisualEffects: boolean;
-  
+
   // Interaction Settings
   enableNodeAnimations: boolean;
   connectorHitTargetPx: number;
   openNodeConfigOnSingleClick: boolean;
-  
+
   // Viewport Control
   zoomTo: (targetScale: number) => void;
   fitToNodes: () => void;
   fitToSelection: () => void;
   resetView: () => void;
   centerOnCanvasPoint: (canvasX: number, canvasY: number) => void;
-  
+
   // Connector Tooltip State
   hoveredConnectorKey: string | null;
   pinnedConnectorKey: string | null;
@@ -91,9 +91,17 @@ export interface CanvasBoardUIContextValue {
   onPointerUpNode: (event: React.PointerEvent<Element>, nodeId: string) => void;
   onSelectNode: (nodeId: string, options?: { toggle?: boolean }) => void | Promise<void>;
   onOpenNodeConfig: () => void;
-  onStartConnection: (event: React.PointerEvent<Element>, node: AiNode, port: string) => void | Promise<void>;
+  onStartConnection: (
+    event: React.PointerEvent<Element>,
+    node: AiNode,
+    port: string
+  ) => void | Promise<void>;
   onCompleteConnection: (event: React.PointerEvent<Element>, node: AiNode, port: string) => void;
-  onReconnectInput: (event: React.PointerEvent<Element>, nodeId: string, port: string) => void | Promise<void>;
+  onReconnectInput: (
+    event: React.PointerEvent<Element>,
+    nodeId: string,
+    port: string
+  ) => void | Promise<void>;
   onDisconnectPort: (direction: 'input' | 'output', nodeId: string, port: string) => void;
   onFireTrigger: (node: AiNode) => void | Promise<void>;
   onRemoveEdge: (edgeId: string) => void;
@@ -109,11 +117,7 @@ export function CanvasBoardUIProvider({
   children: React.ReactNode;
   value: CanvasBoardUIContextValue;
 }) {
-  return (
-    <CanvasBoardUIContext.Provider value={value}>
-      {children}
-    </CanvasBoardUIContext.Provider>
-  );
+  return <CanvasBoardUIContext.Provider value={value}>{children}</CanvasBoardUIContext.Provider>;
 }
 
 export function useCanvasBoardUI() {

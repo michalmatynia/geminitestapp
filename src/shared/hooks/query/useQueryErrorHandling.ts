@@ -43,9 +43,7 @@ const getErrorMessage = (error: unknown): string => {
       return true;
     });
     if (entries.length > 0) {
-      return entries
-        .map(([key, value]) => `${key}: ${String(value)}`)
-        .join(', ');
+      return entries.map(([key, value]) => `${key}: ${String(value)}`).join(', ');
     }
   }
   return '';
@@ -120,10 +118,8 @@ const pruneErrorToastSignatures = (
   });
 };
 
-export const buildQueryErrorSignature = (
-  queryKey: unknown[],
-  message: string
-): string => `${toQueryKeySignature(queryKey)}::${message.trim().toLowerCase()}`;
+export const buildQueryErrorSignature = (queryKey: unknown[], message: string): string =>
+  `${toQueryKeySignature(queryKey)}::${message.trim().toLowerCase()}`;
 
 export const shouldEmitDedupedErrorToast = (args: {
   signature: string;
@@ -131,12 +127,7 @@ export const shouldEmitDedupedErrorToast = (args: {
   nowMs: number;
   lastShownAtBySignature: Map<string, number>;
 }): boolean => {
-  const {
-    signature,
-    dedupeWindowMs,
-    nowMs,
-    lastShownAtBySignature,
-  } = args;
+  const { signature, dedupeWindowMs, nowMs, lastShownAtBySignature } = args;
   const normalizedWindowMs = Math.max(0, dedupeWindowMs);
   if (normalizedWindowMs === 0) {
     lastShownAtBySignature.set(signature, nowMs);
@@ -164,10 +155,9 @@ export function useGlobalQueryErrorHandler(config: ErrorHandlingConfig = {}): vo
   const retryDelayMs = config.retryDelayMs ?? DEFAULT_AUTO_RETRY_DELAY_MS;
   const maxAutoRetriesPerQuery =
     config.maxAutoRetriesPerQuery ?? DEFAULT_MAX_AUTO_RETRIES_PER_QUERY;
-  const toastDedupeWindowMs =
-    config.toastDedupeWindowMs ?? DEFAULT_TOAST_DEDUPE_WINDOW_MS;
+  const toastDedupeWindowMs = config.toastDedupeWindowMs ?? DEFAULT_TOAST_DEDUPE_WINDOW_MS;
   const onError = config.onError;
-  
+
   // Only use toast on client side
   const toast = typeof window !== 'undefined' ? useToast().toast : null;
 
@@ -221,7 +211,7 @@ export function useGlobalQueryErrorHandler(config: ErrorHandlingConfig = {}): vo
             logPayload['error'] = loggableError;
           }
           logClientError(loggableError || message, { context: logPayload });
-          
+
           // Mark as logged
           if (isLoggableObject(error)) {
             try {
@@ -249,25 +239,22 @@ export function useGlobalQueryErrorHandler(config: ErrorHandlingConfig = {}): vo
         }
 
         // Custom error handler
-        onError?.(
-          error instanceof Error ? error : new Error(message),
-          queryKey
-        );
+        onError?.(error instanceof Error ? error : new Error(message), queryKey);
 
         // Optional additional retry hook for stubborn transient network errors.
         // React Query already retries by default; keep this capped to avoid loops.
-        if (
-          retryOnError &&
-          isNetworkError(error instanceof Error ? error : new Error(message))
-        ) {
+        if (retryOnError && isNetworkError(error instanceof Error ? error : new Error(message))) {
           const retriesPerformed = autoRetryCountByQueryRef.current.get(queryKeySignature) ?? 0;
           if (retriesPerformed >= Math.max(0, maxAutoRetriesPerQuery)) {
             return;
           }
           autoRetryCountByQueryRef.current.set(queryKeySignature, retriesPerformed + 1);
-          setTimeout((): void => {
-            void queryClient.invalidateQueries({ queryKey });
-          }, Math.max(0, retryDelayMs));
+          setTimeout(
+            (): void => {
+              void queryClient.invalidateQueries({ queryKey });
+            },
+            Math.max(0, retryDelayMs)
+          );
         }
       }
     });
@@ -298,23 +285,23 @@ export function useResilientQuery<TData>(
   }
 ): UseQueryResult<TData, Error> {
   const toast = typeof window !== 'undefined' ? useToast().toast : null;
-  
+
   const query = createListQueryV2<unknown, TData>({
     queryKey,
     queryFn,
     retry: (failureCount: number, error: Error): boolean => {
       const maxRetries = options?.maxRetries || 3;
-      
+
       // Don't retry on client errors (4xx)
       if (isClientError(error)) return false;
-      
+
       return failureCount < maxRetries;
     },
     retryDelay: (attemptIndex: number): number => {
       const baseDelay = options?.retryDelay || 1000;
       return Math.min(baseDelay * Math.pow(2, attemptIndex), 30000);
     },
-    placeholderData: options?.fallbackData as (TData extends Function ? never : TData),
+    placeholderData: options?.fallbackData as TData extends Function ? never : TData,
     meta: {
       source: 'shared.hooks.query.useResilientQuery',
       operation: 'list',
@@ -349,29 +336,36 @@ export function useCircuitBreakerQuery<TData>(
 ): UseQueryResult<TData, Error> {
   const failureThreshold = options?.failureThreshold || 5;
   const resetTimeout = options?.resetTimeout || 60000; // 1 minute
-  
+
   const circuitKey = `circuit-${JSON.stringify(queryKey)}`;
-  
-  const getCircuitState = useCallback((): { failures: number; isOpen: boolean; lastFailure: number } => {
+
+  const getCircuitState = useCallback((): {
+    failures: number;
+    isOpen: boolean;
+    lastFailure: number;
+  } => {
     const stored = localStorage.getItem(circuitKey);
     if (!stored) return { failures: 0, isOpen: false, lastFailure: 0 };
     return JSON.parse(stored) as { failures: number; isOpen: boolean; lastFailure: number };
   }, [circuitKey]);
 
-  const updateCircuitState = useCallback((state: { failures: number; isOpen: boolean; lastFailure: number }): void => {
-    localStorage.setItem(circuitKey, JSON.stringify(state));
-  }, [circuitKey]);
+  const updateCircuitState = useCallback(
+    (state: { failures: number; isOpen: boolean; lastFailure: number }): void => {
+      localStorage.setItem(circuitKey, JSON.stringify(state));
+    },
+    [circuitKey]
+  );
 
   return createListQueryV2<unknown, TData>({
     queryKey,
     queryFn: async (): Promise<TData> => {
       const circuit = getCircuitState();
-      
+
       // Check if circuit is open and should reset
       if (circuit.isOpen && Date.now() - circuit.lastFailure > resetTimeout) {
         updateCircuitState({ failures: 0, isOpen: false, lastFailure: 0 });
       }
-      
+
       // If circuit is open, return fallback or throw
       if (circuit.isOpen) {
         if (options?.fallbackData !== undefined) {
@@ -379,7 +373,7 @@ export function useCircuitBreakerQuery<TData>(
         }
         throw new Error('Circuit breaker is open');
       }
-      
+
       try {
         const result = await queryFn();
         // Reset on success
@@ -390,13 +384,13 @@ export function useCircuitBreakerQuery<TData>(
       } catch (error) {
         const newFailures = circuit.failures + 1;
         const shouldOpen = newFailures >= failureThreshold;
-        
+
         updateCircuitState({
           failures: newFailures,
           isOpen: shouldOpen,
           lastFailure: Date.now(),
         });
-        
+
         throw error;
       }
     },
@@ -413,10 +407,12 @@ export function useCircuitBreakerQuery<TData>(
 
 // Helper functions
 function isNetworkError(error: unknown): boolean {
-  return error instanceof Error && 
-    (error.message.includes('fetch') || 
-     error.message.includes('network') ||
-     error.message.includes('timeout'));
+  return (
+    error instanceof Error &&
+    (error.message.includes('fetch') ||
+      error.message.includes('network') ||
+      error.message.includes('timeout'))
+  );
 }
 
 function isClientError(error: unknown): boolean {

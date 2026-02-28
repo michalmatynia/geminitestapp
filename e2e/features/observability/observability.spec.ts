@@ -8,7 +8,9 @@ const ensureSignedInForAdmin = async (page: import('@playwright/test').Page): Pr
   const systemLogsHeading = page.getByRole('heading', { name: /System Logs/i });
   const signInHeading = page.getByRole('heading', { name: /Sign in/i });
 
-  const hasSystemLogsHeading = await systemLogsHeading.isVisible({ timeout: 3000 }).catch(() => false);
+  const hasSystemLogsHeading = await systemLogsHeading
+    .isVisible({ timeout: 3000 })
+    .catch(() => false);
   if (hasSystemLogsHeading) return;
 
   await Promise.race([
@@ -16,7 +18,9 @@ const ensureSignedInForAdmin = async (page: import('@playwright/test').Page): Pr
     systemLogsHeading.waitFor({ state: 'visible', timeout: 15000 }),
   ]).catch(() => {});
 
-  const hasSystemLogsAfterWait = await systemLogsHeading.isVisible({ timeout: 1000 }).catch(() => false);
+  const hasSystemLogsAfterWait = await systemLogsHeading
+    .isVisible({ timeout: 1000 })
+    .catch(() => false);
   if (hasSystemLogsAfterWait) return;
 
   await expect(signInHeading).toBeVisible({ timeout: 10000 });
@@ -40,10 +44,10 @@ test.describe('Observability and Monitoring', () => {
 
   test('should display system logs and allow refreshing', async ({ page }) => {
     await page.goto('/admin/system/logs');
-    
+
     await expect(page.getByRole('heading', { name: /System Logs/i })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Refresh', exact: true }).first()).toBeVisible();
-    
+
     // Check if metrics cards appear
     await expect(page.getByText('Totals')).toBeVisible();
     await expect(page.getByText('By level')).toBeVisible();
@@ -51,12 +55,12 @@ test.describe('Observability and Monitoring', () => {
 
   test('should filter logs by level', async ({ page }) => {
     await page.goto('/admin/system/logs');
-    
+
     // In real UI it's a Radix Select
     const levelTrigger = page.getByRole('combobox').first();
     await levelTrigger.click();
     await page.getByRole('option', { name: 'Errors' }).click();
-    
+
     // Check if UI reflects change
     await expect(page.getByText(/Showing/i)).toBeVisible();
   });
@@ -65,7 +69,7 @@ test.describe('Observability and Monitoring', () => {
     let capturedPayload: any = null;
 
     // Route the client-errors API call to capture its payload
-    await page.route('**/api/client-errors', async route => {
+    await page.route('**/api/client-errors', async (route) => {
       const request = route.request();
       if (request.method() === 'POST') {
         capturedPayload = request.postDataJSON();
@@ -75,7 +79,9 @@ test.describe('Observability and Monitoring', () => {
           contentType: 'application/json',
           body: JSON.stringify({ success: true }),
         });
-        await page.evaluate(() => { (window as any).__e2e_error_captured__ = true; });
+        await page.evaluate(() => {
+          (window as any).__e2e_error_captured__ = true;
+        });
       } else {
         await route.continue();
       }
@@ -87,14 +93,16 @@ test.describe('Observability and Monitoring', () => {
 
     // Explicitly call logClientError from within the page context
     await page.evaluate(() => {
-      // @ts-expect-error window._logClientError is injected by the application
-      window._logClientError(new Error('E2E Test Client Error - direct call'), { context: { source: 'playwright-e2e' } });
+      (window as any)._logClientError(new Error('E2E Test Client Error - direct call'), {
+        context: { source: 'playwright-e2e' },
+      });
     });
 
     // Wait for the route handler to capture the payload
-    // @ts-expect-error - testing direct global check
-    await page.waitForFunction(() => window.__e2e_error_captured__, { timeout: 5000 }).catch(() => {});
-    
+    await page
+      .waitForFunction(() => (window as any).__e2e_error_captured__, { timeout: 5000 })
+      .catch(() => {});
+
     // Assert against the captured payload
     expect(capturedPayload).not.toBeNull();
     expect(capturedPayload.message).toBe('E2E Test Client Error - direct call');
@@ -160,26 +168,26 @@ test.describe('Observability and Monitoring', () => {
           cleared
             ? { logs: [], total: 0, page: 1, pageSize: 50 }
             : {
-              logs: [
-                {
-                  id: 'log-e2e-1',
-                  level: 'info',
-                  message: 'E2E log entry',
-                  source: 'e2e',
-                  context: null,
-                  stack: null,
-                  path: '/admin/system/logs',
-                  method: 'GET',
-                  statusCode: 200,
-                  requestId: 'req-e2e-1',
-                  userId: null,
-                  createdAt: new Date().toISOString(),
-                },
-              ],
-              total: 1,
-              page: 1,
-              pageSize: 50,
-            }
+                logs: [
+                  {
+                    id: 'log-e2e-1',
+                    level: 'info',
+                    message: 'E2E log entry',
+                    source: 'e2e',
+                    context: null,
+                    stack: null,
+                    path: '/admin/system/logs',
+                    method: 'GET',
+                    statusCode: 200,
+                    requestId: 'req-e2e-1',
+                    userId: null,
+                    createdAt: new Date().toISOString(),
+                  },
+                ],
+                total: 1,
+                page: 1,
+                pageSize: 50,
+              }
         ),
       });
     });

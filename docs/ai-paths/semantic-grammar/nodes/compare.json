@@ -4,14 +4,8 @@
   "nodeType": "compare",
   "title": "Compare",
   "purpose": "Compare a value and emit valid/errors.",
-  "inputs": [
-    "value"
-  ],
-  "outputs": [
-    "value",
-    "valid",
-    "errors"
-  ],
+  "inputs": ["value"],
+  "outputs": ["value", "valid", "errors"],
   "configFields": [
     {
       "path": "compare.operator",
@@ -53,14 +47,8 @@
       "x": 100,
       "y": 100
     },
-    "inputs": [
-      "value"
-    ],
-    "outputs": [
-      "value",
-      "valid",
-      "errors"
-    ],
+    "inputs": ["value"],
+    "outputs": ["value", "valid", "errors"],
     "data": {},
     "connections": {
       "incoming": [],

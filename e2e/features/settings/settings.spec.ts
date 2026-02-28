@@ -13,10 +13,13 @@ test.describe('Settings - Notifications', () => {
 
   test('should save notification settings', async ({ page }) => {
     // Example: toggle a setting and save
-    const toggle = page.locator('label').filter({ hasText: 'Enable Email Notifications' }).locator('input[type="checkbox"]');
+    const toggle = page
+      .locator('label')
+      .filter({ hasText: 'Enable Email Notifications' })
+      .locator('input[type="checkbox"]');
     await expect(toggle).toBeVisible();
     await toggle.click(); // Toggle it (assuming it starts unchecked or checked)
-    
+
     await page.getByRole('button', { name: 'Save Settings' }).click();
     await expect(page.getByText('Notification settings saved successfully.')).toBeVisible();
 
@@ -24,6 +27,6 @@ test.describe('Settings - Notifications', () => {
     await page.reload();
     await expect(page.getByRole('heading', { name: 'Notifications', exact: true })).toBeVisible();
     // Check if the toggle state persisted (this depends on exact UI implementation, assuming it's checked now)
-    await expect(toggle).toBeChecked(); 
+    await expect(toggle).toBeChecked();
   });
 });

@@ -51,7 +51,7 @@ const resolveNoteProvider = async (): Promise<'mongodb' | 'prisma'> => {
   const provider = (await getAppDbProvider()) as 'mongodb' | 'prisma';
   if (process.env['NODE_ENV'] === 'test') {
     console.log(
-      `[note-service] Resolved provider: ${provider} (APP_DB_PROVIDER=${process.env['APP_DB_PROVIDER']})`,
+      `[note-service] Resolved provider: ${provider} (APP_DB_PROVIDER=${process.env['APP_DB_PROVIDER']})`
     );
   }
   return provider;
@@ -61,12 +61,10 @@ async function getRepository(): Promise<NoteRepository> {
   if (!_repository) {
     const provider = await resolveNoteProvider();
     if (provider === 'mongodb') {
-      const { mongoNoteRepository } =
-        await import('./note-repository/mongo-note-repository');
+      const { mongoNoteRepository } = await import('./note-repository/mongo-note-repository');
       _repository = mongoNoteRepository;
     } else {
-      const { prismaNoteRepository } =
-        await import('./note-repository/prisma-note-repository');
+      const { prismaNoteRepository } = await import('./note-repository/prisma-note-repository');
       _repository = prismaNoteRepository;
     }
   }
@@ -88,9 +86,7 @@ const repoCall = async <K extends keyof NoteRepository>(
     const fn = repo[key] as (
       ...args: Parameters<NoteRepository[K]>
     ) => ReturnType<NoteRepository[K]>;
-    return (await fn(...args)) as Promise<
-      Awaited<ReturnType<NoteRepository[K]>>
-    >;
+    return (await fn(...args)) as Promise<Awaited<ReturnType<NoteRepository[K]>>>;
   } catch (error) {
     await ErrorSystem.captureException(error, {
       service: 'note-service',
@@ -124,11 +120,9 @@ const buildRelations = (note: NoteWithRelations): RelatedNote[] => {
 function populateRelations(data: NoteWithRelations[]): NoteWithRelations[];
 function populateRelations(data: NoteWithRelations): NoteWithRelations;
 function populateRelations(data: null): null;
+function populateRelations(data: NoteWithRelations | null): NoteWithRelations | null;
 function populateRelations(
-  data: NoteWithRelations | null,
-): NoteWithRelations | null;
-function populateRelations(
-  data: NoteWithRelations | NoteWithRelations[] | null,
+  data: NoteWithRelations | NoteWithRelations[] | null
 ): NoteWithRelations | NoteWithRelations[] | null {
   if (!data) return data;
   if (Array.isArray(data)) {
@@ -169,10 +163,7 @@ export const noteService: NoteRepository = {
     return populated;
   },
 
-  update: async (
-    id: string,
-    data: NoteUpdateInput,
-  ): Promise<NoteWithRelations | null> => {
+  update: async (id: string, data: NoteUpdateInput): Promise<NoteWithRelations | null> => {
     const previousNote = await repoCall('getById', id);
     const note = await repoCall('update', id, data);
 
@@ -186,19 +177,14 @@ export const noteService: NoteRepository = {
           .filter((rid: string | undefined): rid is string => !!rid) || [];
       const nextRelatedIds = data.relatedNoteIds;
       const addedRelations = nextRelatedIds.filter(
-        (relId: string) => !previousRelatedIds.includes(relId) && relId !== id,
+        (relId: string) => !previousRelatedIds.includes(relId) && relId !== id
       );
       const removedRelations = previousRelatedIds.filter(
-        (relId: string) => !nextRelatedIds.includes(relId) && relId !== id,
+        (relId: string) => !nextRelatedIds.includes(relId) && relId !== id
       );
 
       if (addedRelations.length > 0 || removedRelations.length > 0) {
-        await repoCall(
-          'syncRelatedNotesBatch',
-          id,
-          addedRelations,
-          removedRelations,
-        );
+        await repoCall('syncRelatedNotesBatch', id, addedRelations, removedRelations);
       }
     }
 
@@ -216,9 +202,7 @@ export const noteService: NoteRepository = {
   delete: async (id: string): Promise<boolean> => {
     try {
       const files = await repoCall('getNoteFiles', id);
-      await Promise.all(
-        files.map((file: NoteFileRecord) => cleanupNoteFile(id, file.filepath)),
-      );
+      await Promise.all(files.map((file: NoteFileRecord) => cleanupNoteFile(id, file.filepath)));
     } catch (error) {
       void ErrorSystem.captureException(error, {
         service: 'note-service',
@@ -241,66 +225,49 @@ export const noteService: NoteRepository = {
   syncRelatedNotesBatch: (
     noteId: string,
     addedIds: string[],
-    removedIds: string[],
-  ): Promise<void> =>
-    repoCall('syncRelatedNotesBatch', noteId, addedIds, removedIds),
+    removedIds: string[]
+  ): Promise<void> => repoCall('syncRelatedNotesBatch', noteId, addedIds, removedIds),
 
   // Pass-through methods
   getAllTags: (notebookId?: string | null): Promise<TagRecord[]> =>
     repoCall('getAllTags', notebookId),
-  getTagById: (id: string): Promise<TagRecord | null> =>
-    repoCall('getTagById', id),
-  createTag: (data: TagCreateInput): Promise<TagRecord> =>
-    repoCall('createTag', data),
+  getTagById: (id: string): Promise<TagRecord | null> => repoCall('getTagById', id),
+  createTag: (data: TagCreateInput): Promise<TagRecord> => repoCall('createTag', data),
   updateTag: (id: string, data: TagUpdateInput): Promise<TagRecord | null> =>
     repoCall('updateTag', id, data),
   deleteTag: (id: string): Promise<boolean> => repoCall('deleteTag', id),
   getAllCategories: (notebookId?: string | null): Promise<CategoryRecord[]> =>
     repoCall('getAllCategories', notebookId),
-  getCategoryById: (id: string): Promise<CategoryRecord | null> =>
-    repoCall('getCategoryById', id),
-  getCategoryTree: (
-    notebookId?: string | null,
-  ): Promise<CategoryWithChildren[]> => repoCall('getCategoryTree', notebookId),
+  getCategoryById: (id: string): Promise<CategoryRecord | null> => repoCall('getCategoryById', id),
+  getCategoryTree: (notebookId?: string | null): Promise<CategoryWithChildren[]> =>
+    repoCall('getCategoryTree', notebookId),
   createCategory: (data: CategoryCreateInput): Promise<CategoryRecord> =>
     repoCall('createCategory', data),
-  updateCategory: (
-    id: string,
-    data: CategoryUpdateInput,
-  ): Promise<CategoryRecord | null> => repoCall('updateCategory', id, data),
+  updateCategory: (id: string, data: CategoryUpdateInput): Promise<CategoryRecord | null> =>
+    repoCall('updateCategory', id, data),
   deleteCategory: (id: string, recursive?: boolean): Promise<boolean> =>
     repoCall('deleteCategory', id, recursive),
   getAllNotebooks: (): Promise<NotebookRecord[]> => repoCall('getAllNotebooks'),
-  getNotebookById: (id: string): Promise<NotebookRecord | null> =>
-    repoCall('getNotebookById', id),
+  getNotebookById: (id: string): Promise<NotebookRecord | null> => repoCall('getNotebookById', id),
   createNotebook: (data: NotebookCreateInput): Promise<NotebookRecord> =>
     repoCall('createNotebook', data),
-  updateNotebook: (
-    id: string,
-    data: NotebookUpdateInput,
-  ): Promise<NotebookRecord | null> => repoCall('updateNotebook', id, data),
-  deleteNotebook: (id: string): Promise<boolean> =>
-    repoCall('deleteNotebook', id),
-  getOrCreateDefaultNotebook: (): Promise<NotebookRecord> =>
-    repoCall('getOrCreateDefaultNotebook'),
+  updateNotebook: (id: string, data: NotebookUpdateInput): Promise<NotebookRecord | null> =>
+    repoCall('updateNotebook', id, data),
+  deleteNotebook: (id: string): Promise<boolean> => repoCall('deleteNotebook', id),
+  getOrCreateDefaultNotebook: (): Promise<NotebookRecord> => repoCall('getOrCreateDefaultNotebook'),
   invalidateDefaultNotebookCache: async (): Promise<void> => {
     await repoCall('invalidateDefaultNotebookCache');
   },
   getAllThemes: (notebookId?: string | null): Promise<ThemeRecord[]> =>
     repoCall('getAllThemes', notebookId),
-  getThemeById: (id: string): Promise<ThemeRecord | null> =>
-    repoCall('getThemeById', id),
-  createTheme: (data: ThemeCreateInput): Promise<ThemeRecord> =>
-    repoCall('createTheme', data),
-  updateTheme: (
-    id: string,
-    data: ThemeUpdateInput,
-  ): Promise<ThemeRecord | null> => repoCall('updateTheme', id, data),
+  getThemeById: (id: string): Promise<ThemeRecord | null> => repoCall('getThemeById', id),
+  createTheme: (data: ThemeCreateInput): Promise<ThemeRecord> => repoCall('createTheme', data),
+  updateTheme: (id: string, data: ThemeUpdateInput): Promise<ThemeRecord | null> =>
+    repoCall('updateTheme', id, data),
   deleteTheme: (id: string): Promise<boolean> => repoCall('deleteTheme', id),
   createNoteFile: (data: NoteFileCreateInput): Promise<NoteFileRecord> =>
     repoCall('createNoteFile', data),
-  getNoteFiles: (noteId: string): Promise<NoteFileRecord[]> =>
-    repoCall('getNoteFiles', noteId),
+  getNoteFiles: (noteId: string): Promise<NoteFileRecord[]> => repoCall('getNoteFiles', noteId),
   deleteNoteFile: (noteId: string, slotIndex: number): Promise<boolean> =>
     repoCall('deleteNoteFile', noteId, slotIndex),
 };

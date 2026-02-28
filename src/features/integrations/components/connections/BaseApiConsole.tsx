@@ -20,7 +20,7 @@ export function BaseApiConsole(): React.JSX.Element {
 
   const activeConnection = connections[0] || null;
   const defaultInventoryId = activeConnection?.baseLastInventoryId ?? '';
-  
+
   const baseApiPresets: ApiPreset[] = [
     { label: 'Inventories', method: 'getInventories', params: {} },
     {
@@ -53,7 +53,9 @@ export function BaseApiConsole(): React.JSX.Element {
         loading: baseApiLoading,
         error: baseApiError,
         response: baseApiResponse,
-        onRequest: () => { void handleBaseApiRequest(); },
+        onRequest: () => {
+          void handleBaseApiRequest();
+        },
         isConnected: true,
       }}
     >

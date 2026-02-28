@@ -17,8 +17,11 @@ type CmsMenuProps = {
   animationsEnabled?: boolean;
 };
 
-
-export function CmsMenu({ menu, colorSchemes, animationsEnabled = true }: CmsMenuProps): React.ReactNode {
+export function CmsMenu({
+  menu,
+  colorSchemes,
+  animationsEnabled = true,
+}: CmsMenuProps): React.ReactNode {
   const pathname = usePathname();
   const [hydrated, setHydrated] = useState(false);
   const itemsRef = useRef<HTMLDivElement | null>(null);
@@ -75,7 +78,12 @@ export function CmsMenu({ menu, colorSchemes, animationsEnabled = true }: CmsMen
     };
   }, [allowHideOnScroll, showOnScrollUpAfterPx]);
 
-  const resolvedColors = useMemo((): { background?: string; text?: string; border?: string; accent?: string } => {
+  const resolvedColors = useMemo((): {
+    background?: string;
+    text?: string;
+    border?: string;
+    accent?: string;
+  } => {
     if (menu.menuColorSchemeId && menu.menuColorSchemeId !== 'custom') {
       const scheme = colorSchemes?.[menu.menuColorSchemeId];
       if (scheme) {
@@ -182,14 +190,23 @@ export function CmsMenu({ menu, colorSchemes, animationsEnabled = true }: CmsMen
   const transitions = [
     menu.collapsible ? 'width 200ms ease' : null,
     allowHideOnScroll ? 'transform 220ms ease, opacity 220ms ease' : null,
-  ].filter(Boolean).join(', ');
+  ]
+    .filter(Boolean)
+    .join(', ');
 
   const navStyle: React.CSSProperties = {
     backgroundColor: resolvedColors.background,
     color: resolvedColors.text,
-    borderBottom: !isSide && resolvedColors.border ? `1px solid ${resolvedColors.border}` : undefined,
-    borderRight: menu.menuPlacement === 'left' && resolvedColors.border ? `1px solid ${resolvedColors.border}` : undefined,
-    borderLeft: menu.menuPlacement === 'right' && resolvedColors.border ? `1px solid ${resolvedColors.border}` : undefined,
+    borderBottom:
+      !isSide && resolvedColors.border ? `1px solid ${resolvedColors.border}` : undefined,
+    borderRight:
+      menu.menuPlacement === 'left' && resolvedColors.border
+        ? `1px solid ${resolvedColors.border}`
+        : undefined,
+    borderLeft:
+      menu.menuPlacement === 'right' && resolvedColors.border
+        ? `1px solid ${resolvedColors.border}`
+        : undefined,
     paddingTop: menu.paddingTop,
     paddingBottom: menu.paddingBottom,
     paddingLeft: menu.paddingLeft,
@@ -308,7 +325,13 @@ export function CmsMenu({ menu, colorSchemes, animationsEnabled = true }: CmsMen
                 {content}
               </a>
             ) : (
-              <Link key={item.id} href={item.url || '/'} className={className} style={style} data-menu-item>
+              <Link
+                key={item.id}
+                href={item.url || '/'}
+                className={className}
+                style={style}
+                data-menu-item
+              >
                 {content}
               </Link>
             );

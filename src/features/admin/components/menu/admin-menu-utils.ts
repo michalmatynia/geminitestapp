@@ -1,10 +1,6 @@
 'use client';
 
-import type { 
-  AdminNavItem, 
-  AdminMenuCustomNode,
-  AdminNavLeaf,
-} from '@/shared/contracts/admin';
+import type { AdminNavItem, AdminMenuCustomNode, AdminNavLeaf } from '@/shared/contracts/admin';
 
 export type NavItem = Omit<AdminNavItem, 'children'> & {
   icon?: React.ReactNode;
@@ -37,11 +33,7 @@ export const isActiveHref = (pathname: string, href: string, exact?: boolean): b
 export const matchesQuery = (item: NavItem, query: string): boolean => {
   if (!query) return true;
   const haystack = normalizeText(
-    [
-      item.label,
-      item.href ? stripQuery(item.href) : '',
-      ...(item.keywords ?? []),
-    ].join(' ')
+    [item.label, item.href ? stripQuery(item.href) : '', ...(item.keywords ?? [])].join(' ')
   );
   return haystack.includes(query);
 };
@@ -86,7 +78,9 @@ export const collectActiveGroupIds = (
         stripQuery(node.href) === '/admin' &&
         pathname === '/admin'
       );
-    const childResults: Array<{ any: boolean; nonFavorite: boolean }> = (node.children ?? []).map(walk);
+    const childResults: Array<{ any: boolean; nonFavorite: boolean }> = (node.children ?? []).map(
+      walk
+    );
     const childActive = childResults.some((result) => result.any);
     const childNonFavorite = childResults.some((result) => result.nonFavorite);
     const isFavoriteLeaf = !node.children?.length && favoriteIds.has(node.id);

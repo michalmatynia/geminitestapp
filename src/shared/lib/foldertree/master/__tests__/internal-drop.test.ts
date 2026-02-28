@@ -72,11 +72,7 @@ describe('internal-drop', () => {
     });
 
     expect(controller.reorderNode).toHaveBeenCalledTimes(1);
-    expect(controller.reorderNode).toHaveBeenCalledWith(
-      'folder:alpha',
-      'folder:beta',
-      'before'
-    );
+    expect(controller.reorderNode).toHaveBeenCalledWith('folder:alpha', 'folder:beta', 'before');
     expect(controller.dropNodeToRoot).not.toHaveBeenCalled();
     expect(controller.moveNode).not.toHaveBeenCalled();
   });

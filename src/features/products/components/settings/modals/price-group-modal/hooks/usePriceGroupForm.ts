@@ -22,9 +22,7 @@ interface UsePriceGroupFormReturn {
   handleSubmit: () => Promise<void>;
 }
 
-export function usePriceGroupForm({
-  priceGroup,
-}: UsePriceGroupFormProps): UsePriceGroupFormReturn {
+export function usePriceGroupForm({ priceGroup }: UsePriceGroupFormProps): UsePriceGroupFormReturn {
   const [form, setForm] = React.useState<PriceGroupFormState>({
     name: '',
     currencyCode: '',
@@ -64,7 +62,13 @@ export function usePriceGroupForm({
 
       toast('Price group saved.', { variant: 'success' });
     } catch (err) {
-      logClientError(err, { context: { source: 'PriceGroupModal', action: 'savePriceGroup', priceGroupId: priceGroup?.id } });
+      logClientError(err, {
+        context: {
+          source: 'PriceGroupModal',
+          action: 'savePriceGroup',
+          priceGroupId: priceGroup?.id,
+        },
+      });
       toast('Failed to save price group.', { variant: 'error' });
     }
   };

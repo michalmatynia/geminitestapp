@@ -4,9 +4,7 @@ import {
   type CaseResolverWorkspace,
   type CaseResolverFile,
 } from '@/shared/contracts/case-resolver';
-import {
-  sanitizeOptionalId,
-} from './settings.helpers';
+import { sanitizeOptionalId } from './settings.helpers';
 import { sanitizeGraph } from './settings-graph';
 import { normalizeCaseResolverWorkspace } from './settings.workspace';
 
@@ -30,8 +28,12 @@ export const parseNodeFileSnapshot = (textContent: string): CaseResolverNodeFile
       (parsed as Record<string, unknown>)['kind'] === 'case_resolver_node_file_snapshot_v1'
     ) {
       const record = parsed as Record<string, unknown>;
-      const parsedNodes = (Array.isArray(record['nodes']) ? record['nodes'] : []) as CaseResolverNodeFileSnapshot['nodes'];
-      const parsedEdges = (Array.isArray(record['edges']) ? record['edges'] : []) as CaseResolverNodeFileSnapshot['edges'];
+      const parsedNodes = (
+        Array.isArray(record['nodes']) ? record['nodes'] : []
+      ) as CaseResolverNodeFileSnapshot['nodes'];
+      const parsedEdges = (
+        Array.isArray(record['edges']) ? record['edges'] : []
+      ) as CaseResolverNodeFileSnapshot['edges'];
       const parsedNodeFileMeta =
         record['nodeFileMeta'] !== null &&
         typeof record['nodeFileMeta'] === 'object' &&
@@ -79,14 +81,14 @@ export const parseNodeFileSnapshot = (textContent: string): CaseResolverNodeFile
           : [];
       const resolvedLegacyNodeId =
         legacyNodeId ||
-        (
-          legacyNodes[0] &&
-          typeof legacyNodes[0].id === 'string' &&
-          legacyNodes[0].id.trim().length > 0
-            ? legacyNodes[0].id.trim()
-            : ''
-        );
-      const legacyEdges = (Array.isArray(record['connectedEdges']) ? record['connectedEdges'] : []) as CaseResolverNodeFileSnapshot['edges'];
+        (legacyNodes[0] &&
+        typeof legacyNodes[0].id === 'string' &&
+        legacyNodes[0].id.trim().length > 0
+          ? legacyNodes[0].id.trim()
+          : '');
+      const legacyEdges = (
+        Array.isArray(record['connectedEdges']) ? record['connectedEdges'] : []
+      ) as CaseResolverNodeFileSnapshot['edges'];
       const sourceFileId = sanitizeOptionalId(record['sourceFileId']);
       const sourceFileName =
         typeof record['sourceFileName'] === 'string' && record['sourceFileName'].trim().length > 0
@@ -97,12 +99,12 @@ export const parseNodeFileSnapshot = (textContent: string): CaseResolverNodeFile
       const legacyNodeFileMeta: CaseResolverNodeFileSnapshot['nodeFileMeta'] =
         sourceFileId && resolvedLegacyNodeId
           ? {
-            [resolvedLegacyNodeId]: {
-              fileId: sourceFileId,
-              fileType: sourceFileType,
-              fileName: sourceFileName,
-            },
-          }
+              [resolvedLegacyNodeId]: {
+                fileId: sourceFileId,
+                fileType: sourceFileType,
+                fileName: sourceFileName,
+              },
+            }
           : {};
 
       return {

@@ -17,7 +17,9 @@ type VersionGraphContextMenuValue = {
   onCopyId: (nodeId: string) => void;
 };
 
-const VersionGraphContextMenuContext = React.createContext<VersionGraphContextMenuValue | null>(null);
+const VersionGraphContextMenuContext = React.createContext<VersionGraphContextMenuValue | null>(
+  null
+);
 
 export function VersionGraphContextMenuProvider({
   value,
@@ -36,7 +38,9 @@ export function VersionGraphContextMenuProvider({
 export function useVersionGraphContextMenuContext(): VersionGraphContextMenuValue {
   const context = React.useContext(VersionGraphContextMenuContext);
   if (!context) {
-    throw new Error('useVersionGraphContextMenuContext must be used inside VersionGraphContextMenuProvider');
+    throw new Error(
+      'useVersionGraphContextMenuContext must be used inside VersionGraphContextMenuProvider'
+    );
   }
   return context;
 }

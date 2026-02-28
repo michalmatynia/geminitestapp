@@ -1,10 +1,7 @@
 import { createMasterFolderTreeAdapter } from '@/shared/lib/foldertree';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
-import {
-  decodeCmsMasterNodeId,
-  fromCmsZoneNodeId,
-} from './cms-master-tree';
+import { decodeCmsMasterNodeId, fromCmsZoneNodeId } from './cms-master-tree';
 
 import type { PageZone } from '../../../types/page-builder';
 

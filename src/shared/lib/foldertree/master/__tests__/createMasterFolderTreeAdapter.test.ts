@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
 
-
 import { createMasterFolderTreeAdapter } from '@/shared/lib/foldertree/master/createMasterFolderTreeAdapter';
 import type {
   MasterFolderTreePersistContext,

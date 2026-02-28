@@ -11,7 +11,7 @@ import {
   IntegrationRecord,
   IntegrationConnectionRecord,
   IntegrationRepository,
-  IntegrationWithConnections
+  IntegrationWithConnections,
 } from '../types/integrations';
 
 const INTEGRATION_COLLECTION = 'integrations';
@@ -106,9 +106,7 @@ type ConnectionDependencyCounts = {
   total: number;
 };
 
-const normalizeOptionalConnectionId = (
-  value: string | null | undefined
-): string | null => {
+const normalizeOptionalConnectionId = (value: string | null | undefined): string | null => {
   const trimmed = value?.trim();
   return trimmed ? trimmed : null;
 };
@@ -153,9 +151,8 @@ const remapProductSyncProfilesSetting = (
       continue;
     }
     const record = entry as Record<string, unknown>;
-    const connectionId = typeof record['connectionId'] === 'string'
-      ? record['connectionId'].trim()
-      : '';
+    const connectionId =
+      typeof record['connectionId'] === 'string' ? record['connectionId'].trim() : '';
     if (connectionId !== sourceConnectionId) {
       nextProfiles.push(entry);
       continue;
@@ -177,21 +174,20 @@ const updatePrismaConnectionScopedSettings = async (
   connectionId: string,
   replacementConnectionId: string | null
 ): Promise<void> => {
-  const [defaultConnectionSetting, activeTemplateSetting, syncProfilesSetting] =
-    await Promise.all([
-      prisma.setting.findUnique({
-        where: { key: DEFAULT_CONNECTION_SETTING_KEY },
-        select: { value: true },
-      }),
-      prisma.setting.findUnique({
-        where: { key: ACTIVE_TEMPLATE_SETTING_KEY },
-        select: { value: true },
-      }),
-      prisma.setting.findUnique({
-        where: { key: PRODUCT_SYNC_PROFILE_SETTINGS_KEY },
-        select: { value: true },
-      }),
-    ]);
+  const [defaultConnectionSetting, activeTemplateSetting, syncProfilesSetting] = await Promise.all([
+    prisma.setting.findUnique({
+      where: { key: DEFAULT_CONNECTION_SETTING_KEY },
+      select: { value: true },
+    }),
+    prisma.setting.findUnique({
+      where: { key: ACTIVE_TEMPLATE_SETTING_KEY },
+      select: { value: true },
+    }),
+    prisma.setting.findUnique({
+      where: { key: PRODUCT_SYNC_PROFILE_SETTINGS_KEY },
+      select: { value: true },
+    }),
+  ]);
 
   if (defaultConnectionSetting?.value?.trim() === connectionId) {
     await prisma.setting.upsert({
@@ -323,9 +319,7 @@ const resolvePrismaReplacementConnectionId = async (input: {
   integrationId: string;
   replacementConnectionId?: string | null | undefined;
 }): Promise<string | null> => {
-  const requestedReplacementId = normalizeOptionalConnectionId(
-    input.replacementConnectionId
-  );
+  const requestedReplacementId = normalizeOptionalConnectionId(input.replacementConnectionId);
   if (requestedReplacementId) {
     if (requestedReplacementId === input.connectionId) {
       throw badRequestError(
@@ -341,13 +335,10 @@ const resolvePrismaReplacementConnectionId = async (input: {
       select: { id: true },
     });
     if (!replacementConnection) {
-      throw badRequestError(
-        'Replacement connection does not exist in this integration.',
-        {
-          replacementConnectionId: requestedReplacementId,
-          integrationId: input.integrationId,
-        }
-      );
+      throw badRequestError('Replacement connection does not exist in this integration.', {
+        replacementConnectionId: requestedReplacementId,
+        integrationId: input.integrationId,
+      });
     }
     return replacementConnection.id;
   }
@@ -464,36 +455,29 @@ const updateMongoConnectionScopedSettings = async (
   replacementConnectionId: string | null
 ): Promise<void> => {
   const db = await getMongoDb();
-  const settings = db.collection<{ _id: string | ObjectId; key?: string; value?: string; createdAt?: Date; updatedAt?: Date }>('settings');
-  const [defaultConnectionSetting, activeTemplateSetting, syncProfilesSetting] =
-    await Promise.all([
-      settings.findOne({
-        $or: [
-          { _id: DEFAULT_CONNECTION_SETTING_KEY },
-          { key: DEFAULT_CONNECTION_SETTING_KEY },
-        ],
-      }),
-      settings.findOne({
-        $or: [
-          { _id: ACTIVE_TEMPLATE_SETTING_KEY },
-          { key: ACTIVE_TEMPLATE_SETTING_KEY },
-        ],
-      }),
-      settings.findOne({
-        $or: [
-          { _id: PRODUCT_SYNC_PROFILE_SETTINGS_KEY },
-          { key: PRODUCT_SYNC_PROFILE_SETTINGS_KEY },
-        ],
-      }),
-    ]);
+  const settings = db.collection<{
+    _id: string | ObjectId;
+    key?: string;
+    value?: string;
+    createdAt?: Date;
+    updatedAt?: Date;
+  }>('settings');
+  const [defaultConnectionSetting, activeTemplateSetting, syncProfilesSetting] = await Promise.all([
+    settings.findOne({
+      $or: [{ _id: DEFAULT_CONNECTION_SETTING_KEY }, { key: DEFAULT_CONNECTION_SETTING_KEY }],
+    }),
+    settings.findOne({
+      $or: [{ _id: ACTIVE_TEMPLATE_SETTING_KEY }, { key: ACTIVE_TEMPLATE_SETTING_KEY }],
+    }),
+    settings.findOne({
+      $or: [{ _id: PRODUCT_SYNC_PROFILE_SETTINGS_KEY }, { key: PRODUCT_SYNC_PROFILE_SETTINGS_KEY }],
+    }),
+  ]);
 
   if (defaultConnectionSetting?.value?.trim() === connectionId) {
     await settings.updateMany(
       {
-        $or: [
-          { _id: DEFAULT_CONNECTION_SETTING_KEY },
-          { key: DEFAULT_CONNECTION_SETTING_KEY },
-        ],
+        $or: [{ _id: DEFAULT_CONNECTION_SETTING_KEY }, { key: DEFAULT_CONNECTION_SETTING_KEY }],
       },
       {
         $set: {
@@ -514,10 +498,7 @@ const updateMongoConnectionScopedSettings = async (
   if (nextActiveTemplateValue !== (activeTemplateSetting?.value ?? null)) {
     await settings.updateMany(
       {
-        $or: [
-          { _id: ACTIVE_TEMPLATE_SETTING_KEY },
-          { key: ACTIVE_TEMPLATE_SETTING_KEY },
-        ],
+        $or: [{ _id: ACTIVE_TEMPLATE_SETTING_KEY }, { key: ACTIVE_TEMPLATE_SETTING_KEY }],
       },
       {
         $set: {
@@ -563,9 +544,7 @@ const resolveMongoReplacementConnectionId = async (input: {
   replacementConnectionId?: string | null | undefined;
 }): Promise<string | null> => {
   const db = await getMongoDb();
-  const requestedReplacementId = normalizeOptionalConnectionId(
-    input.replacementConnectionId
-  );
+  const requestedReplacementId = normalizeOptionalConnectionId(input.replacementConnectionId);
   if (requestedReplacementId) {
     if (requestedReplacementId === input.connectionId) {
       throw badRequestError(
@@ -575,21 +554,19 @@ const resolveMongoReplacementConnectionId = async (input: {
 
     const replacementCandidates = toDocumentIdCandidates(requestedReplacementId);
     const replacement = await db
-      .collection<{ _id: string | ObjectId; integrationId: string }>(
-        INTEGRATION_CONNECTION_COLLECTION
-      )
+      .collection<{
+        _id: string | ObjectId;
+        integrationId: string;
+      }>(INTEGRATION_CONNECTION_COLLECTION)
       .findOne({
         _id: { $in: replacementCandidates },
         integrationId: input.integrationId,
       } as Record<string, unknown>);
     if (!replacement) {
-      throw badRequestError(
-        'Replacement connection does not exist in this integration.',
-        {
-          replacementConnectionId: requestedReplacementId,
-          integrationId: input.integrationId,
-        }
-      );
+      throw badRequestError('Replacement connection does not exist in this integration.', {
+        replacementConnectionId: requestedReplacementId,
+        integrationId: input.integrationId,
+      });
     }
     return replacement._id.toString();
   }
@@ -728,32 +705,27 @@ const toIntegrationRecord = (
 });
 
 const toConnectionRecord = (
-  doc: WithId<IntegrationConnectionDocument> | Prisma.IntegrationConnectionGetPayload<Record<string, never>>
+  doc:
+    | WithId<IntegrationConnectionDocument>
+    | Prisma.IntegrationConnectionGetPayload<Record<string, never>>
 ): IntegrationConnectionRecord => {
   const isPrisma = 'id' in doc;
   return {
-    id: isPrisma ? doc.id : (doc)._id.toString(),
+    id: isPrisma ? doc.id : doc._id.toString(),
     integrationId: doc.integrationId,
     name: doc.name,
     username: doc.username,
     password: doc.password,
     playwrightStorageState: doc.playwrightStorageState ?? null,
-    playwrightStorageStateUpdatedAt: toIsoStringOrNull(
-      doc.playwrightStorageStateUpdatedAt
-    ),
-    playwrightHeadless:
-      doc.playwrightHeadless ?? CONNECTION_DEFAULTS.playwrightHeadless,
-    playwrightSlowMo:
-      doc.playwrightSlowMo ?? CONNECTION_DEFAULTS.playwrightSlowMo,
-    playwrightTimeout:
-      doc.playwrightTimeout ?? CONNECTION_DEFAULTS.playwrightTimeout,
+    playwrightStorageStateUpdatedAt: toIsoStringOrNull(doc.playwrightStorageStateUpdatedAt),
+    playwrightHeadless: doc.playwrightHeadless ?? CONNECTION_DEFAULTS.playwrightHeadless,
+    playwrightSlowMo: doc.playwrightSlowMo ?? CONNECTION_DEFAULTS.playwrightSlowMo,
+    playwrightTimeout: doc.playwrightTimeout ?? CONNECTION_DEFAULTS.playwrightTimeout,
     playwrightNavigationTimeout:
-      doc.playwrightNavigationTimeout ??
-      CONNECTION_DEFAULTS.playwrightNavigationTimeout,
+      doc.playwrightNavigationTimeout ?? CONNECTION_DEFAULTS.playwrightNavigationTimeout,
     playwrightHumanizeMouse:
       doc.playwrightHumanizeMouse ?? CONNECTION_DEFAULTS.playwrightHumanizeMouse,
-    playwrightMouseJitter:
-      doc.playwrightMouseJitter ?? CONNECTION_DEFAULTS.playwrightMouseJitter,
+    playwrightMouseJitter: doc.playwrightMouseJitter ?? CONNECTION_DEFAULTS.playwrightMouseJitter,
     playwrightClickDelayMin:
       doc.playwrightClickDelayMin ?? CONNECTION_DEFAULTS.playwrightClickDelayMin,
     playwrightClickDelayMax:
@@ -768,17 +740,14 @@ const toConnectionRecord = (
       doc.playwrightActionDelayMax ?? CONNECTION_DEFAULTS.playwrightActionDelayMax,
     playwrightProxyEnabled:
       doc.playwrightProxyEnabled ?? CONNECTION_DEFAULTS.playwrightProxyEnabled,
-    playwrightProxyServer:
-      doc.playwrightProxyServer ?? CONNECTION_DEFAULTS.playwrightProxyServer,
+    playwrightProxyServer: doc.playwrightProxyServer ?? CONNECTION_DEFAULTS.playwrightProxyServer,
     playwrightProxyUsername:
       doc.playwrightProxyUsername ?? CONNECTION_DEFAULTS.playwrightProxyUsername,
     playwrightProxyPassword: doc.playwrightProxyPassword ?? null,
     playwrightEmulateDevice:
       doc.playwrightEmulateDevice ?? CONNECTION_DEFAULTS.playwrightEmulateDevice,
-    playwrightDeviceName:
-      doc.playwrightDeviceName ?? CONNECTION_DEFAULTS.playwrightDeviceName,
-    playwrightPersonaId:
-      doc.playwrightPersonaId ?? CONNECTION_DEFAULTS.playwrightPersonaId,
+    playwrightDeviceName: doc.playwrightDeviceName ?? CONNECTION_DEFAULTS.playwrightDeviceName,
+    playwrightPersonaId: doc.playwrightPersonaId ?? CONNECTION_DEFAULTS.playwrightPersonaId,
     allegroAccessToken: doc.allegroAccessToken ?? null,
     allegroRefreshToken: doc.allegroRefreshToken ?? null,
     allegroTokenType: doc.allegroTokenType ?? null,
@@ -792,21 +761,15 @@ const toConnectionRecord = (
     traderaDefaultTemplateId:
       doc.traderaDefaultTemplateId ?? CONNECTION_DEFAULTS.traderaDefaultTemplateId,
     traderaDefaultDurationHours:
-      doc.traderaDefaultDurationHours ??
-      CONNECTION_DEFAULTS.traderaDefaultDurationHours,
+      doc.traderaDefaultDurationHours ?? CONNECTION_DEFAULTS.traderaDefaultDurationHours,
     traderaAutoRelistEnabled:
-      doc.traderaAutoRelistEnabled ??
-      CONNECTION_DEFAULTS.traderaAutoRelistEnabled,
+      doc.traderaAutoRelistEnabled ?? CONNECTION_DEFAULTS.traderaAutoRelistEnabled,
     traderaAutoRelistLeadMinutes:
-      doc.traderaAutoRelistLeadMinutes ??
-      CONNECTION_DEFAULTS.traderaAutoRelistLeadMinutes,
+      doc.traderaAutoRelistLeadMinutes ?? CONNECTION_DEFAULTS.traderaAutoRelistLeadMinutes,
     traderaApiAppId: doc.traderaApiAppId ?? CONNECTION_DEFAULTS.traderaApiAppId,
-    traderaApiAppKey:
-      doc.traderaApiAppKey ?? CONNECTION_DEFAULTS.traderaApiAppKey,
-    traderaApiPublicKey:
-      doc.traderaApiPublicKey ?? CONNECTION_DEFAULTS.traderaApiPublicKey,
-    traderaApiUserId:
-      doc.traderaApiUserId ?? CONNECTION_DEFAULTS.traderaApiUserId,
+    traderaApiAppKey: doc.traderaApiAppKey ?? CONNECTION_DEFAULTS.traderaApiAppKey,
+    traderaApiPublicKey: doc.traderaApiPublicKey ?? CONNECTION_DEFAULTS.traderaApiPublicKey,
+    traderaApiUserId: doc.traderaApiUserId ?? CONNECTION_DEFAULTS.traderaApiUserId,
     traderaApiToken: doc.traderaApiToken ?? CONNECTION_DEFAULTS.traderaApiToken,
     traderaApiTokenUpdatedAt: toIsoStringOrNull(doc.traderaApiTokenUpdatedAt),
     createdAt: toRequiredIsoString(doc.createdAt),
@@ -825,7 +788,7 @@ export async function getIntegrationRepository(): Promise<IntegrationRepository>
 export async function getIntegrationsWithConnections(): Promise<IntegrationWithConnections[]> {
   const repo = await getIntegrationRepository();
   const integrations = await repo.listIntegrations();
-  
+
   return Promise.all(
     integrations.map(async (integration) => {
       const connections = await repo.listConnections(integration.id);
@@ -846,10 +809,7 @@ export function getPrismaIntegrationRepository(): IntegrationRepository {
       return docs.map(toIntegrationRecord);
     },
 
-    async upsertIntegration(input: {
-      name: string;
-      slug: string;
-    }): Promise<IntegrationRecord> {
+    async upsertIntegration(input: { name: string; slug: string }): Promise<IntegrationRecord> {
       const doc = await prisma.integration.upsert({
         where: { slug: input.slug },
         update: { name: input.name },
@@ -865,9 +825,7 @@ export function getPrismaIntegrationRepository(): IntegrationRepository {
       return doc ? toIntegrationRecord(doc) : null;
     },
 
-    async listConnections(
-      integrationId: string
-    ): Promise<IntegrationConnectionRecord[]> {
+    async listConnections(integrationId: string): Promise<IntegrationConnectionRecord[]> {
       const docs = await prisma.integrationConnection.findMany({
         where: { integrationId },
         orderBy: { name: 'asc' },
@@ -875,9 +833,7 @@ export function getPrismaIntegrationRepository(): IntegrationRepository {
       return docs.map(toConnectionRecord);
     },
 
-    async getConnectionById(
-      id: string
-    ): Promise<IntegrationConnectionRecord | null> {
+    async getConnectionById(id: string): Promise<IntegrationConnectionRecord | null> {
       const doc = await prisma.integrationConnection.findUnique({
         where: { id },
       });
@@ -916,7 +872,7 @@ export function getPrismaIntegrationRepository(): IntegrationRepository {
       const updateData: Record<string, unknown> = { ...input };
       delete updateData['id'];
       delete updateData['createdAt'];
-      
+
       const doc = await prisma.integrationConnection.update({
         where: { id },
         data: updateData as unknown as Prisma.IntegrationConnectionUpdateInput,
@@ -924,10 +880,7 @@ export function getPrismaIntegrationRepository(): IntegrationRepository {
       return toConnectionRecord(doc);
     },
 
-    async deleteConnection(
-      id: string,
-      options?: ConnectionDeleteOptions
-    ): Promise<void> {
+    async deleteConnection(id: string, options?: ConnectionDeleteOptions): Promise<void> {
       const connection = await prisma.integrationConnection.findUnique({
         where: { id },
         select: { id: true, integrationId: true },
@@ -992,26 +945,21 @@ export function getMongoIntegrationRepository(): IntegrationRepository {
       return docs.map(toIntegrationRecord);
     },
 
-    async upsertIntegration(input: {
-            name: string;
-            slug: string;
-          }): Promise<IntegrationRecord> {
+    async upsertIntegration(input: { name: string; slug: string }): Promise<IntegrationRecord> {
       const db = await getMongoDb();
       const now = new Date();
-      const res = await db
-        .collection<IntegrationDocument>(INTEGRATION_COLLECTION)
-        .findOneAndUpdate(
-          { slug: input.slug },
-          {
-            $set: { name: input.name, updatedAt: now },
-            $setOnInsert: { createdAt: now },
-          },
-          { upsert: true, returnDocument: 'after' }
-        );
+      const res = await db.collection<IntegrationDocument>(INTEGRATION_COLLECTION).findOneAndUpdate(
+        { slug: input.slug },
+        {
+          $set: { name: input.name, updatedAt: now },
+          $setOnInsert: { createdAt: now },
+        },
+        { upsert: true, returnDocument: 'after' }
+      );
       if (!res) throw new Error('Failed to upsert integration');
       return toIntegrationRecord(res);
     },
-    
+
     async getIntegrationById(id: string): Promise<IntegrationRecord | null> {
       const db = await getMongoDb();
       const idCandidates = toDocumentIdCandidates(id);
@@ -1020,34 +968,26 @@ export function getMongoIntegrationRepository(): IntegrationRepository {
         .findOne({ _id: { $in: idCandidates } } as Record<string, unknown>);
       return doc ? toIntegrationRecord(doc) : null;
     },
-    
-    async listConnections(
-      integrationId: string
-    ): Promise<IntegrationConnectionRecord[]> {
+
+    async listConnections(integrationId: string): Promise<IntegrationConnectionRecord[]> {
       const db = await getMongoDb();
       const docs = await db
-        .collection<IntegrationConnectionDocument>(
-          INTEGRATION_CONNECTION_COLLECTION
-        )
+        .collection<IntegrationConnectionDocument>(INTEGRATION_CONNECTION_COLLECTION)
         .find({ integrationId })
         .sort({ name: 1 })
         .toArray();
-      return docs.map(doc => toConnectionRecord(doc));
+      return docs.map((doc) => toConnectionRecord(doc));
     },
-    
-    async getConnectionById(
-      id: string
-    ): Promise<IntegrationConnectionRecord | null> {
+
+    async getConnectionById(id: string): Promise<IntegrationConnectionRecord | null> {
       const db = await getMongoDb();
       const idCandidates = toDocumentIdCandidates(id);
       const doc = await db
-        .collection<IntegrationConnectionDocument>(
-          INTEGRATION_CONNECTION_COLLECTION
-        )
+        .collection<IntegrationConnectionDocument>(INTEGRATION_CONNECTION_COLLECTION)
         .findOne({ _id: { $in: idCandidates } } as Record<string, unknown>);
       return doc ? toConnectionRecord(doc) : null;
     },
-    
+
     async getConnectionByIdAndIntegration(
       id: string,
       integrationId: string
@@ -1055,16 +995,14 @@ export function getMongoIntegrationRepository(): IntegrationRepository {
       const db = await getMongoDb();
       const idCandidates = toDocumentIdCandidates(id);
       const doc = await db
-        .collection<IntegrationConnectionDocument>(
-          INTEGRATION_CONNECTION_COLLECTION
-        )
+        .collection<IntegrationConnectionDocument>(INTEGRATION_CONNECTION_COLLECTION)
         .findOne({
           _id: { $in: idCandidates },
           integrationId,
         } as Record<string, unknown>);
       return doc ? toConnectionRecord(doc) : null;
     },
-    
+
     async createConnection(
       integrationId: string,
       input: Record<string, unknown>
@@ -1081,13 +1019,14 @@ export function getMongoIntegrationRepository(): IntegrationRepository {
         updatedAt: now,
       };
       const res = await db
-        .collection<IntegrationConnectionDocument>(
-          INTEGRATION_CONNECTION_COLLECTION
-        )
+        .collection<IntegrationConnectionDocument>(INTEGRATION_CONNECTION_COLLECTION)
         .insertOne(doc);
-      return toConnectionRecord({ ...doc, _id: res.insertedId } as WithId<IntegrationConnectionDocument>);
+      return toConnectionRecord({
+        ...doc,
+        _id: res.insertedId,
+      } as WithId<IntegrationConnectionDocument>);
     },
-    
+
     async updateConnection(
       id: string,
       input: Partial<IntegrationConnectionRecord>
@@ -1102,11 +1041,9 @@ export function getMongoIntegrationRepository(): IntegrationRepository {
       delete updateData['id'];
       delete updateData['_id'];
       delete updateData['createdAt'];
-    
+
       const res = await db
-        .collection<IntegrationConnectionDocument>(
-          INTEGRATION_CONNECTION_COLLECTION
-        )
+        .collection<IntegrationConnectionDocument>(INTEGRATION_CONNECTION_COLLECTION)
         .findOneAndUpdate(
           { _id: { $in: idCandidates } } as Record<string, unknown>,
           { $set: updateData },
@@ -1115,11 +1052,8 @@ export function getMongoIntegrationRepository(): IntegrationRepository {
       if (!res) throw new Error('Connection not found');
       return toConnectionRecord(res);
     },
-    
-    async deleteConnection(
-      id: string,
-      options?: ConnectionDeleteOptions
-    ): Promise<void> {
+
+    async deleteConnection(id: string, options?: ConnectionDeleteOptions): Promise<void> {
       const db = await getMongoDb();
       const sourceConnectionCandidates = toDocumentIdCandidates(id);
       const sourceConnection = await db
@@ -1129,14 +1063,10 @@ export function getMongoIntegrationRepository(): IntegrationRepository {
         } as Record<string, unknown>);
       if (!sourceConnection) return;
 
-      const integrationCandidates = toDocumentIdCandidates(
-        sourceConnection.integrationId
-      );
-      const integration = await db
-        .collection<IntegrationDocument>(INTEGRATION_COLLECTION)
-        .findOne({
-          _id: { $in: integrationCandidates },
-        } as Record<string, unknown>);
+      const integrationCandidates = toDocumentIdCandidates(sourceConnection.integrationId);
+      const integration = await db.collection<IntegrationDocument>(INTEGRATION_COLLECTION).findOne({
+        _id: { $in: integrationCandidates },
+      } as Record<string, unknown>);
       const isBaseConnection = isBaseIntegrationSlug(integration?.slug ?? null);
 
       if (!isBaseConnection) {

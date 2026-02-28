@@ -3,7 +3,11 @@
 import React, { useMemo } from 'react';
 
 import type { AgentTeachingEmbeddingCollectionRecord } from '@/shared/contracts/agent-teaching';
-import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
+import { Input } from '@/shared/ui';
+import {
+  SettingsPanelBuilder,
+  type SettingsField,
+} from '@/shared/ui/templates/SettingsPanelBuilder';
 import { useAgentTeachingCollectionsContext } from '../context/AgentTeachingCollectionsContext';
 
 export function AgentTeachingCollectionModal(): React.JSX.Element | null {
@@ -18,34 +22,49 @@ export function AgentTeachingCollectionModal(): React.JSX.Element | null {
     handleSave,
   } = useAgentTeachingCollectionsContext();
 
-  const fields: SettingsField<Partial<AgentTeachingEmbeddingCollectionRecord>>[] = useMemo(() => [
-    {
-      key: 'name',
-      label: 'Name',
-      type: 'text',
-      placeholder: 'e.g. "Product Manuals"',
-      required: true,
-    },
-    {
-      key: 'description',
-      label: 'Description',
-      type: 'textarea',
-      placeholder: 'Optional description of contents',
-    },
-    {
-      key: 'embeddingModel',
-      label: 'Embedding Model',
-      type: 'select',
-      options: embeddingModels.map(m => ({ value: m, label: m })),
-      placeholder: 'Select model',
-      helperText: 'Determines the vector space for semantic search. Cannot be changed after creation.',
-      disabled: !!editingItem,
-      required: true,
-    }
-  ], [embeddingModels, editingItem]);
+  const fields: SettingsField<Partial<AgentTeachingEmbeddingCollectionRecord>>[] = useMemo(
+    () => [
+      {
+        key: 'name',
+        label: 'Name',
+        type: 'text',
+        placeholder: 'e.g. "Product Manuals"',
+        required: true,
+      },
+      {
+        key: 'description',
+        label: 'Description',
+        type: 'textarea',
+        placeholder: 'Optional description of contents',
+      },
+      {
+        key: 'embeddingModel',
+        label: 'Embedding Model',
+        type: 'custom',
+        helperText: editingItem
+          ? 'Existing collections keep their stored embedding model. New collections use the AI Brain embedding capability.'
+          : 'Brain-managed via Agent Teaching Embeddings. This field is informational only.',
+        required: true,
+        render: ({ value }) => {
+          const currentValue =
+            (typeof value === 'string' && value.trim()) || embeddingModels[0] || '';
+          return (
+            <Input
+              value={currentValue || 'Not configured in AI Brain'}
+              readOnly
+              disabled
+              className='cursor-not-allowed'
+              placeholder='Not configured in AI Brain'
+            />
+          );
+        },
+      },
+    ],
+    [embeddingModels, editingItem]
+  );
 
   const handleChange = (vals: Partial<Partial<AgentTeachingEmbeddingCollectionRecord>>) => {
-    setDraft(prev => ({ ...prev, ...vals }));
+    setDraft((prev) => ({ ...prev, ...vals }));
   };
 
   if (!isModalOpen) return null;

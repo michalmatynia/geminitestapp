@@ -12,7 +12,6 @@ export const NoteFoldersContext = createContext<NoteFoldersData | null>(null);
 
 export function useNoteFolders(): NoteFoldersData {
   const context = useContext(NoteFoldersContext);
-  if (!context)
-    throw new Error('useNoteFolders must be used within NoteFormProvider');
+  if (!context) throw new Error('useNoteFolders must be used within NoteFormProvider');
   return context;
 }

@@ -74,16 +74,10 @@ const normalizeSettings = (
   const base = DEFAULT_TRANSIENT_RECOVERY_SETTINGS;
   const enabled = typeof input?.enabled === 'boolean' ? input.enabled : base.enabled;
   const retryEnabled =
-    typeof input?.retry?.enabled === 'boolean'
-      ? input.retry.enabled
-      : base.retry.enabled;
+    typeof input?.retry?.enabled === 'boolean' ? input.retry.enabled : base.retry.enabled;
   const retry = {
     enabled: retryEnabled,
-    maxAttempts: toPositiveNumber(
-      input?.retry?.maxAttempts,
-      base.retry.maxAttempts,
-      1
-    ),
+    maxAttempts: toPositiveNumber(input?.retry?.maxAttempts, base.retry.maxAttempts, 1),
     initialDelayMs: toPositiveNumber(input?.retry?.initialDelayMs, base.retry.initialDelayMs),
     maxDelayMs: toPositiveNumber(input?.retry?.maxDelayMs, base.retry.maxDelayMs),
     timeoutMs: ((): number | null => {
@@ -94,9 +88,7 @@ const normalizeSettings = (
     })(),
   };
   const circuitEnabled =
-    typeof input?.circuit?.enabled === 'boolean'
-      ? input.circuit.enabled
-      : base.circuit.enabled;
+    typeof input?.circuit?.enabled === 'boolean' ? input.circuit.enabled : base.circuit.enabled;
   const circuit = {
     enabled: circuitEnabled,
     failureThreshold: toPositiveNumber(
@@ -114,15 +106,17 @@ const normalizeSettings = (
   };
 };
 
-export const getTransientRecoverySettings = async (
-  options?: { force?: boolean }
-): Promise<TransientRecoverySettings> => {
+export const getTransientRecoverySettings = async (options?: {
+  force?: boolean;
+}): Promise<TransientRecoverySettings> => {
   const now = Date.now();
   if (!options?.force && cached && cached.expiresAt > now) {
     return cached.value;
   }
   const stored = await readSettingValue(TRANSIENT_RECOVERY_KEYS.settings);
-  const parsed: TransientRecoverySettings | null = parseJsonSetting<TransientRecoverySettings | null>(stored, null);  const value = normalizeSettings(parsed);
+  const parsed: TransientRecoverySettings | null =
+    parseJsonSetting<TransientRecoverySettings | null>(stored, null);
+  const value = normalizeSettings(parsed);
   cached = {
     value,
     expiresAt: now + CACHE_TTL_MS,

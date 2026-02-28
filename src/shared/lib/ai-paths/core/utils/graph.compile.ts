@@ -1,8 +1,5 @@
 import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
-import type {
-  GraphCompileFinding,
-  GraphCompileReport,
-} from './graph.types';
+import type { GraphCompileFinding, GraphCompileReport } from './graph.types';
 import { sanitizeEdges } from './graph.edges';
 import { getNodeInputPortCardinality, getNodeInputPortContract } from './graph.nodes';
 import { normalizePortName } from './graph.ports';
@@ -20,7 +17,7 @@ export const compileGraph = (
 ): GraphCompileReport => {
   const findings: GraphCompileFinding[] = [];
   const normalizedEdges = sanitizeEdges(nodes, edges);
-  
+
   const nodeMap = new Map(nodes.map((node: AiNode) => [node.id, node]));
   const adjacency = new Map<string, string[]>();
   const inverseAdjacency = new Map<string, string[]>();
@@ -29,7 +26,7 @@ export const compileGraph = (
 
   normalizedEdges.forEach((edge: Edge) => {
     if (!edge.from || !edge.to) return;
-    
+
     const targets = adjacency.get(edge.from) ?? [];
     targets.push(edge.to);
     adjacency.set(edge.from, targets);
@@ -62,16 +59,16 @@ export const compileGraph = (
     .map((node: AiNode) => node.id);
 
   // Scoping logic
-  let reachableNodeIds = new Set<string>(nodes.map(n => n.id));
+  let reachableNodeIds = new Set<string>(nodes.map((n) => n.id));
   if (options.scopeMode === 'reachable_from_roots' && options.scopeRootNodeIds) {
     reachableNodeIds = new Set<string>();
     const queue = [...options.scopeRootNodeIds];
-    options.scopeRootNodeIds.forEach(id => reachableNodeIds.add(id));
-    
+    options.scopeRootNodeIds.forEach((id) => reachableNodeIds.add(id));
+
     while (queue.length > 0) {
       const current = queue.shift()!;
       const targets = adjacency.get(current) ?? [];
-      targets.forEach(target => {
+      targets.forEach((target) => {
         if (!reachableNodeIds.has(target)) {
           reachableNodeIds.add(target);
           queue.push(target);
@@ -81,11 +78,11 @@ export const compileGraph = (
   }
 
   // 1. Fan-in validation
-  nodes.forEach(node => {
+  nodes.forEach((node) => {
     if (!reachableNodeIds.has(node.id)) return;
     const incomingEdges = edgeMap.get(node.id) ?? [];
     const portGroups = new Map<string, Edge[]>();
-    incomingEdges.forEach(edge => {
+    incomingEdges.forEach((edge) => {
       if (edge.toPort) {
         const group = portGroups.get(edge.toPort) ?? [];
         group.push(edge);
@@ -110,13 +107,15 @@ export const compileGraph = (
   });
 
   // 2. Required input validation
-  nodes.forEach(node => {
+  nodes.forEach((node) => {
     if (!reachableNodeIds.has(node.id)) return;
     if (node.type === 'trigger') return;
 
-    const incomingPorts = new Set((edgeMap.get(node.id) ?? []).map(e => e.toPort).filter(Boolean) as string[]);
-    
-    (node.inputs || []).forEach(port => {
+    const incomingPorts = new Set(
+      (edgeMap.get(node.id) ?? []).map((e) => e.toPort).filter(Boolean) as string[]
+    );
+
+    (node.inputs || []).forEach((port) => {
       const contract = getNodeInputPortContract(node, port);
       if (contract.required && !incomingPorts.has(port)) {
         findings.push({
@@ -147,11 +146,14 @@ export const compileGraph = (
         const cycleNodes = path.slice(path.indexOf(v));
         const firstId = cycleNodes[0]!;
         const secondId = cycleNodes[1]!;
-        const isTriggerSimulationHandshake = cycleNodes.length === 2 && 
-          ((nodeMap.get(firstId)?.type === 'trigger' && nodeMap.get(secondId)?.type === 'simulation') ||
-           (nodeMap.get(secondId)?.type === 'trigger' && nodeMap.get(firstId)?.type === 'simulation'));
+        const isTriggerSimulationHandshake =
+          cycleNodes.length === 2 &&
+          ((nodeMap.get(firstId)?.type === 'trigger' &&
+            nodeMap.get(secondId)?.type === 'simulation') ||
+            (nodeMap.get(secondId)?.type === 'trigger' &&
+              nodeMap.get(firstId)?.type === 'simulation'));
 
-        const isAllowedLoop = cycleNodes.some(id => {
+        const isAllowedLoop = cycleNodes.some((id) => {
           const type = nodeMap.get(id)?.type;
           return type === 'iterator' || type === 'delay' || type === 'poll';
         });
@@ -160,32 +162,40 @@ export const compileGraph = (
           findings.push({
             code: 'cycle_detected',
             severity: 'warning',
-            message: 'Trigger/Simulation handshake loop detected. This pattern is supported but Trigger -> Fetcher -> Context Filter is preferred.',
-            metadata: { legacyTriggerSimulationHandshake: true, nodeIds: cycleNodes }
+            message:
+              'Trigger/Simulation handshake loop detected. This pattern is supported but Trigger -> Fetcher -> Context Filter is preferred.',
+            metadata: { legacyTriggerSimulationHandshake: true, nodeIds: cycleNodes },
           });
         } else if (isAllowedLoop) {
           findings.push({
             code: 'cycle_detected',
             severity: 'warning',
             message: `Detected a circular loop across ${cycleNodes.length} node(s). Fix: remove at least one loop edge.`,
-            metadata: { nodeIds: cycleNodes }
+            metadata: { nodeIds: cycleNodes },
           });
 
           // Also check for deadlock risk in loops
-          const loopNodes = cycleNodes.map(id => nodeMap.get(id)).filter(Boolean) as AiNode[];
-          const allWait = loopNodes.every(n => n.config?.runtime?.waitForInputs);
+          const loopNodes = cycleNodes.map((id) => nodeMap.get(id)).filter(Boolean) as AiNode[];
+          const allWait = loopNodes.every((n) => n.config?.runtime?.waitForInputs);
           if (allWait) {
-            const anyExternalRequired = loopNodes.some(n => {
-              const incomingFromOutside = (edgeMap.get(n.id) ?? []).filter(e => !cycleNodes.includes(e.from!));
-              const ports = new Set(incomingFromOutside.map(e => e.toPort).filter(Boolean) as string[]);
-              return (n.inputs || []).some(p => getNodeInputPortContract(n, p).required && ports.has(p));
+            const anyExternalRequired = loopNodes.some((n) => {
+              const incomingFromOutside = (edgeMap.get(n.id) ?? []).filter(
+                (e) => !cycleNodes.includes(e.from!)
+              );
+              const ports = new Set(
+                incomingFromOutside.map((e) => e.toPort).filter(Boolean) as string[]
+              );
+              return (n.inputs || []).some(
+                (p) => getNodeInputPortContract(n, p).required && ports.has(p)
+              );
             });
             if (!anyExternalRequired) {
               findings.push({
                 code: 'cycle_wait_deadlock_risk',
                 severity: 'warning',
-                message: 'This loop contains only wait-for-inputs nodes with internal dependencies. Fix: provide at least one required input from outside the loop.',
-                metadata: { nodeIds: cycleNodes }
+                message:
+                  'This loop contains only wait-for-inputs nodes with internal dependencies. Fix: provide at least one required input from outside the loop.',
+                metadata: { nodeIds: cycleNodes },
               });
             }
           }
@@ -193,8 +203,9 @@ export const compileGraph = (
           findings.push({
             code: 'unsupported_cycle',
             severity: 'error',
-            message: 'Unsupported circular dependency detected. Circular loops are only allowed through Iterator, Delay, or Poll nodes.',
-            metadata: { nodeIds: cycleNodes }
+            message:
+              'Unsupported circular dependency detected. Circular loops are only allowed through Iterator, Delay, or Poll nodes.',
+            metadata: { nodeIds: cycleNodes },
           });
         }
       }
@@ -204,7 +215,7 @@ export const compileGraph = (
     path.pop();
   };
 
-  nodes.forEach(node => {
+  nodes.forEach((node) => {
     if (!visited.has(node.id)) {
       detectCycle(node.id, []);
     }
@@ -217,10 +228,7 @@ export const compileGraph = (
     const second = typeof fallback === 'string' ? fallback.trim() : '';
     return second.length > 0 ? second : null;
   };
-  const resolvePort = (
-    primary?: string | null,
-    fallback?: string | null
-  ): string | null => {
+  const resolvePort = (primary?: string | null, fallback?: string | null): string | null => {
     const first = typeof primary === 'string' ? normalizePortName(primary) : '';
     if (first.length > 0) return first;
     const second = typeof fallback === 'string' ? normalizePortName(fallback) : '';
@@ -257,7 +265,13 @@ export const compileGraph = (
   });
 
   // 5. Context cache scope risk
-  const contextBoundPorts = new Set(['context', 'entityid', 'entitytype', 'entityjson', 'productid']);
+  const contextBoundPorts = new Set([
+    'context',
+    'entityid',
+    'entitytype',
+    'entityjson',
+    'productid',
+  ]);
   nodes.forEach((node) => {
     if (!reachableNodeIds.has(node.id)) return;
     const cacheScope = node.config?.runtime?.cache?.scope;
@@ -265,7 +279,12 @@ export const compileGraph = (
     const nodeHasContextInputs = (node.inputs || []).some((port) =>
       contextBoundPorts.has(normalizePortName(port).trim().toLowerCase())
     );
-    if (node.type === 'fetcher' || node.type === 'context' || node.type === 'simulation' || nodeHasContextInputs) {
+    if (
+      node.type === 'fetcher' ||
+      node.type === 'context' ||
+      node.type === 'simulation' ||
+      nodeHasContextInputs
+    ) {
       findings.push({
         code: 'context_cache_scope_risk',
         severity: 'warning',
@@ -276,7 +295,7 @@ export const compileGraph = (
   });
 
   // 6. Trigger context resolution risk
-  nodes.forEach(node => {
+  nodes.forEach((node) => {
     if (node.type === 'trigger' && node.config?.trigger?.contextMode === 'simulation_required') {
       const incomingEdges = edgeMap.get(node.id) ?? [];
       const outgoingEdges = outgoingEdgeMap.get(node.id) ?? [];
@@ -326,31 +345,32 @@ export const compileGraph = (
           code: 'trigger_context_resolution_risk',
           severity: 'warning',
           message,
-          nodeId: node.id
+          nodeId: node.id,
         });
       }
     }
   });
 
   // 7. Model prompt deadlock risk
-  nodes.forEach(node => {
+  nodes.forEach((node) => {
     if (node.type === 'model') {
       const isPromptRequired = getNodeInputPortContract(node, 'prompt').required;
       const waitForInputs = node.config?.runtime?.waitForInputs;
       if (isPromptRequired && waitForInputs) {
         // Check if prompt comes from a cycle
-        const incoming = (edgeMap.get(node.id) ?? []).find(e => e.toPort === 'prompt');
+        const incoming = (edgeMap.get(node.id) ?? []).find((e) => e.toPort === 'prompt');
         if (incoming) {
           // Simple check: if fromPort is 'result' and fromNode is 'prompt' node which depends on us
           const source = nodeMap.get(incoming.from!);
           if (source?.type === 'prompt') {
-            const sourceIncoming = (edgeMap.get(source.id) ?? []).some(e => e.from === node.id);
+            const sourceIncoming = (edgeMap.get(source.id) ?? []).some((e) => e.from === node.id);
             if (sourceIncoming) {
               findings.push({
                 code: 'model_prompt_deadlock_risk',
                 severity: 'warning',
-                message: 'Model prompt may never resolve because it depends on this model\'s own output in a wait-for-inputs cycle.',
-                nodeId: node.id
+                message:
+                  "Model prompt may never resolve because it depends on this model's own output in a wait-for-inputs cycle.",
+                nodeId: node.id,
               });
             }
           }
@@ -359,8 +379,8 @@ export const compileGraph = (
     }
   });
 
-  const errors = findings.filter(f => f.severity === 'error').length;
-  const warnings = findings.filter(f => f.severity === 'warning').length;
+  const errors = findings.filter((f) => f.severity === 'error').length;
+  const warnings = findings.filter((f) => f.severity === 'warning').length;
 
   return {
     nodes,

@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { RequestPreviewImage } from '../utils/run-request-preview';
+import type { RequestPreviewImage } from '@/shared/lib/ai/image-studio/utils/run-request-preview';
 
 export interface ActionHistoryEntrySummary {
   id: string;
@@ -77,11 +77,7 @@ export function RightSidebarProvider({
   value: RightSidebarContextValue;
   children: React.ReactNode;
 }): React.JSX.Element {
-  return (
-    <RightSidebarContext.Provider value={value}>
-      {children}
-    </RightSidebarContext.Provider>
-  );
+  return <RightSidebarContext.Provider value={value}>{children}</RightSidebarContext.Provider>;
 }
 
 export function useRightSidebarContext(): RightSidebarContextValue {

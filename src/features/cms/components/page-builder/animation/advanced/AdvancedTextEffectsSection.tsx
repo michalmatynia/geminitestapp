@@ -1,32 +1,30 @@
 'use client';
 
 import React from 'react';
-import {
-  Input,
-  Checkbox,
-  SelectSimple,
-  FormSection,
-  FormField,
-} from '@/shared/ui';
+import { Input, Checkbox, SelectSimple, FormSection, FormField } from '@/shared/ui';
 import { DEFAULT_ANIMATION_CONFIG, TEXT_EFFECTS, type TextEffect } from '@/shared/lib/gsap';
 import { useAnimationConfigContext } from '../AnimationConfigContext';
 
 export function AdvancedTextEffectsSection(): React.JSX.Element {
   const { config, onChange } = useAnimationConfigContext();
-  
+
   const textEffectValue = config.textEffect ?? DEFAULT_ANIMATION_CONFIG.textEffect ?? 'none';
   const textStaggerValue = config.textStagger ?? DEFAULT_ANIMATION_CONFIG.textStagger ?? 0.05;
-  const textScrambleCharsValue = config.textScrambleChars ?? DEFAULT_ANIMATION_CONFIG.textScrambleChars ?? '';
-  const textTypingSpeedValue = config.textTypingSpeed ?? DEFAULT_ANIMATION_CONFIG.textTypingSpeed ?? 24;
+  const textScrambleCharsValue =
+    config.textScrambleChars ?? DEFAULT_ANIMATION_CONFIG.textScrambleChars ?? '';
+  const textTypingSpeedValue =
+    config.textTypingSpeed ?? DEFAULT_ANIMATION_CONFIG.textTypingSpeed ?? 24;
   const textCursorValue = config.textCursor ?? DEFAULT_ANIMATION_CONFIG.textCursor ?? false;
   const textCountFromValue = config.textCountFrom ?? DEFAULT_ANIMATION_CONFIG.textCountFrom ?? 0;
   const textCountToValue = config.textCountTo ?? DEFAULT_ANIMATION_CONFIG.textCountTo ?? 100;
-  const textCountDecimalsValue = config.textCountDecimals ?? DEFAULT_ANIMATION_CONFIG.textCountDecimals ?? 0;
+  const textCountDecimalsValue =
+    config.textCountDecimals ?? DEFAULT_ANIMATION_CONFIG.textCountDecimals ?? 0;
 
   return (
     <FormSection title='Text Effects' variant='subtle-compact' className='p-3 space-y-4'>
       <FormField label='Mode'>
-        <SelectSimple size='sm'
+        <SelectSimple
+          size='sm'
           value={textEffectValue}
           onValueChange={(v) => onChange({ ...config, textEffect: v as TextEffect })}
           options={TEXT_EFFECTS}
@@ -36,8 +34,8 @@ export function AdvancedTextEffectsSection(): React.JSX.Element {
       {textEffectValue !== 'none' && (
         <div className='mt-4 space-y-4'>
           {(textEffectValue === 'splitChars' ||
-                      textEffectValue === 'splitWords' ||
-                      textEffectValue === 'splitLines') && (
+            textEffectValue === 'splitWords' ||
+            textEffectValue === 'splitLines') && (
             <FormField label='Stagger (seconds)'>
               <Input
                 type='number'
@@ -47,7 +45,8 @@ export function AdvancedTextEffectsSection(): React.JSX.Element {
                 value={textStaggerValue}
                 onChange={(e) => {
                   const val = parseFloat(e.target.value);
-                  if (!isNaN(val)) onChange({ ...config, textStagger: Math.max(0.01, Math.min(2, val)) });
+                  if (!isNaN(val))
+                    onChange({ ...config, textStagger: Math.max(0.01, Math.min(2, val)) });
                 }}
                 className='h-9'
               />
@@ -75,13 +74,17 @@ export function AdvancedTextEffectsSection(): React.JSX.Element {
                   value={textTypingSpeedValue}
                   onChange={(e) => {
                     const val = parseFloat(e.target.value);
-                    if (!isNaN(val)) onChange({ ...config, textTypingSpeed: Math.max(4, Math.min(120, val)) });
+                    if (!isNaN(val))
+                      onChange({ ...config, textTypingSpeed: Math.max(4, Math.min(120, val)) });
                   }}
                   className='h-9'
                 />
               </FormField>
               <div className='flex items-center gap-2'>
-                <Checkbox checked={textCursorValue} onCheckedChange={(v) => onChange({ ...config, textCursor: v === true })} />
+                <Checkbox
+                  checked={textCursorValue}
+                  onCheckedChange={(v) => onChange({ ...config, textCursor: v === true })}
+                />
                 <span className='text-xs text-gray-300'>Show cursor</span>
               </div>
             </>
@@ -120,7 +123,8 @@ export function AdvancedTextEffectsSection(): React.JSX.Element {
                   value={textCountDecimalsValue}
                   onChange={(e) => {
                     const val = parseFloat(e.target.value);
-                    if (!isNaN(val)) onChange({ ...config, textCountDecimals: Math.max(0, Math.min(6, val)) });
+                    if (!isNaN(val))
+                      onChange({ ...config, textCountDecimals: Math.max(0, Math.min(6, val)) });
                   }}
                   className='h-9'
                 />

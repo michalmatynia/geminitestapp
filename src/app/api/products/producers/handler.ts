@@ -17,7 +17,7 @@ export const producerCreateSchema = z.object({
 export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const repository = await getProducerRepository();
   const producers = await repository.listProducers({});
-  
+
   return NextResponse.json(producers);
 }
 
@@ -32,7 +32,7 @@ export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): P
 
   const repository = await getProducerRepository();
   const existing = await repository.findByName(trimmedName);
-  
+
   if (existing) {
     throw conflictError('A producer with this name already exists', {
       name: trimmedName,
@@ -44,6 +44,6 @@ export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): P
     name: trimmedName,
     website: data.website ?? null,
   });
-  
+
   return NextResponse.json(created, { status: 201 });
 }

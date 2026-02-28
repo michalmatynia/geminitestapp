@@ -13,12 +13,14 @@ interface PageLayoutProps {
   description?: string | undefined;
   eyebrow?: ReactNode;
   headerActions?: ReactNode;
-  refresh?: {
-    onRefresh: () => void;
-    isRefreshing: boolean;
-  } | undefined;
+  refresh?:
+    | {
+        onRefresh: () => void;
+        isRefreshing: boolean;
+      }
+    | undefined;
   children: ReactNode;
-  
+
   // Tabs configuration (optional)
   tabs?: {
     activeTab: string;
@@ -35,7 +37,7 @@ interface PageLayoutProps {
   isSaving?: boolean;
   saveText?: string;
   stickyFooter?: boolean;
-  
+
   containerClassName?: string;
 }
 
@@ -58,12 +60,8 @@ export function PageLayout({
   return (
     <div className={cn(containerClassName, stickyFooter && 'pb-32')}>
       {tabs && (
-        <Tabs
-          value={tabs.activeTab}
-          onValueChange={tabs.onTabChange}
-          className='mb-6'
-        >
-          <TabsList 
+        <Tabs value={tabs.activeTab} onValueChange={tabs.onTabChange} className='mb-6'>
+          <TabsList
             className='grid w-full max-w-md'
             style={{ gridTemplateColumns: `repeat(${tabs.tabsList.length}, minmax(0, 1fr))` }}
           >
@@ -94,14 +92,17 @@ export function PageLayout({
       )}
 
       {onSave && (
-        <div className={cn(
-          'flex justify-end mt-6',
-          stickyFooter && 'fixed bottom-0 left-0 right-0 z-50 border-t border-white/5 bg-background/80 p-6 backdrop-blur-md'
-        )}>
+        <div
+          className={cn(
+            'flex justify-end mt-6',
+            stickyFooter &&
+              'fixed bottom-0 left-0 right-0 z-50 border-t border-white/5 bg-background/80 p-6 backdrop-blur-md'
+          )}
+        >
           <div className={cn(stickyFooter && 'container mx-auto flex justify-end')}>
-            <Button 
-              onClick={() => void onSave()} 
-              disabled={isSaving} 
+            <Button
+              onClick={() => void onSave()}
+              disabled={isSaving}
               variant='default'
               className='min-w-[140px]'
             >

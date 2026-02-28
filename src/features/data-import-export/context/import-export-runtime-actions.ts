@@ -1,10 +1,5 @@
-import type {
-  ImportResponse,
-} from '@/shared/contracts/data-import-export';
-import type { 
-  BaseImportMode,
-  ImageRetryPreset,
-} from '@/shared/contracts/integrations';
+import type { ImportResponse } from '@/shared/contracts/data-import-export';
+import type { BaseImportMode, ImageRetryPreset } from '@/shared/contracts/integrations';
 
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 
@@ -65,10 +60,7 @@ type ClearInventoryMutationLike = {
 };
 
 type RefreshImportParameterCacheMutationLike = {
-  mutateAsync: (payload: {
-    inventoryId: string;
-    connectionId: string;
-  }) => Promise<unknown>;
+  mutateAsync: (payload: { inventoryId: string; connectionId: string }) => Promise<unknown>;
 };
 
 export type ImportExportRuntimeActionsArgs = {
@@ -169,9 +161,7 @@ export const createImportExportRuntimeActions = ({
     const result = await refetchInventories();
     if (result.error) {
       const message =
-        result.error instanceof Error
-          ? result.error.message
-          : 'Failed to load inventories.';
+        result.error instanceof Error ? result.error.message : 'Failed to load inventories.';
       toast(message, { variant: 'error' });
       return;
     }
@@ -182,9 +172,7 @@ export const createImportExportRuntimeActions = ({
       }
       return '';
     };
-    const resultInventories = Array.isArray(result.data)
-      ? result.data
-      : [];
+    const resultInventories = Array.isArray(result.data) ? result.data : [];
     const firstLoadedInventoryId = normalizeInventoryId(
       (resultInventories[0] as { inventory_id?: unknown; id?: unknown } | undefined)
         ?.inventory_id ??
@@ -211,9 +199,7 @@ export const createImportExportRuntimeActions = ({
     const result = await refetchWarehouses();
     if (result.error) {
       const message =
-        result.error instanceof Error
-          ? result.error.message
-          : 'Failed to load warehouses.';
+        result.error instanceof Error ? result.error.message : 'Failed to load warehouses.';
       toast(message, { variant: 'error' });
       return;
     }
@@ -227,9 +213,7 @@ export const createImportExportRuntimeActions = ({
     const result = await refetchImportList();
     if (result.error) {
       const message =
-        result.error instanceof Error
-          ? result.error.message
-          : 'Failed to load import list.';
+        result.error instanceof Error ? result.error.message : 'Failed to load import list.';
       toast(message, { variant: 'error' });
       return;
     }
@@ -287,10 +271,7 @@ export const createImportExportRuntimeActions = ({
         const preflightErrors = res.preflight.issues
           .filter((issue) => issue.severity === 'error')
           .map((issue) => issue.message);
-        toast(
-          preflightErrors[0] || res.summaryMessage || 'Import failed.',
-          { variant: 'error' }
-        );
+        toast(preflightErrors[0] || res.summaryMessage || 'Import failed.', { variant: 'error' });
       }
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Import failed';
@@ -312,8 +293,7 @@ export const createImportExportRuntimeActions = ({
       setPollImportRun(true);
       toast('Import resume queued.', { variant: 'success' });
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : 'Failed to resume import run.';
+      const message = error instanceof Error ? error.message : 'Failed to resume import run.';
       toast(message, { variant: 'error' });
     }
   };
@@ -330,8 +310,7 @@ export const createImportExportRuntimeActions = ({
       setPollImportRun(true);
       toast('Import cancel requested.', { variant: 'success' });
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : 'Failed to request import cancel.';
+      const message = error instanceof Error ? error.message : 'Failed to request import cancel.';
       toast(message, { variant: 'error' });
     }
   };

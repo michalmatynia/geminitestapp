@@ -28,29 +28,31 @@ import {
   normalizeCenterLayoutConfig,
   validateCenterOutputDimensions,
   validateCenterSourceDimensions,
-} from '@/features/ai/image-studio/server/center-utils';
+} from '@/shared/lib/ai/image-studio/server/center-utils';
 import {
   getImageStudioSlotLinkBySourceAndRelation,
   upsertImageStudioSlotLink,
-} from '@/features/ai/image-studio/server/slot-link-repository';
+} from '@/shared/lib/ai/image-studio/server/slot-link-repository';
 import {
   createImageStudioSlots,
   getImageStudioSlotById,
-} from '@/features/ai/image-studio/server/slot-repository';
+} from '@/shared/lib/ai/image-studio/server/slot-repository';
 import {
   loadSourceBufferFromSlot,
   parseImageDataUrl,
-} from '@/features/ai/image-studio/server/source-image-utils';
+} from '@/shared/lib/ai/image-studio/server/source-image-utils';
 import { getImageFileRepository } from '@/features/files/server';
-import { logSystemEvent } from '@/features/observability/server';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, isAppError, notFoundError } from '@/shared/errors/app-error';
 
 const uploadsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio', 'center');
 const SOURCE_FETCH_TIMEOUT_MS = 15_000;
 const CENTER_PIPELINE_VERSION = process.env['IMAGE_STUDIO_CENTER_PIPELINE_VERSION']?.trim() || 'v2';
-const STRICT_SERVER_CENTER_ENABLED = process.env['IMAGE_STUDIO_CENTER_SERVER_AUTHORITATIVE'] !== 'false';
-const CENTER_FINGERPRINT_DEDUPE_ENABLED = process.env['IMAGE_STUDIO_CENTER_DEDUPE_BY_FINGERPRINT'] === 'true';
+const STRICT_SERVER_CENTER_ENABLED =
+  process.env['IMAGE_STUDIO_CENTER_SERVER_AUTHORITATIVE'] !== 'false';
+const CENTER_FINGERPRINT_DEDUPE_ENABLED =
+  process.env['IMAGE_STUDIO_CENTER_DEDUPE_BY_FINGERPRINT'] === 'true';
 
 type StudioSlotRecord = NonNullable<Awaited<ReturnType<typeof getImageStudioSlotById>>>;
 type UploadedClientCenterImage = {
@@ -100,11 +102,9 @@ const centerBadRequest = (
   meta?: Record<string, unknown>
 ) => badRequestError(message, { centerErrorCode, ...(meta ?? {}) });
 
-const sanitizeSegment = (value: string): string =>
-  value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
+const sanitizeSegment = (value: string): string => value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
 
-const sanitizeFilename = (value: string): string =>
-  value.replace(/[^a-zA-Z0-9._-]/g, '_');
+const sanitizeFilename = (value: string): string => value.replace(/[^a-zA-Z0-9._-]/g, '_');
 
 const isClientCenterMode = (mode: ImageStudioCenterMode): boolean =>
   mode === 'client_alpha_bbox' || mode === 'client_object_layout_v1';
@@ -116,12 +116,13 @@ const isObjectLayoutMode = (mode: ImageStudioCenterMode): boolean =>
   mode === 'client_object_layout_v1' || mode === 'server_object_layout_v1';
 
 const readIdempotencyKey = (req: NextRequest): string | null => {
-  const headerValue = req.headers.get('x-idempotency-key') ?? req.headers.get('x-center-request-id');
+  const headerValue =
+    req.headers.get('x-idempotency-key') ?? req.headers.get('x-center-request-id');
   const normalized = headerValue?.trim() ?? '';
   return normalized.length >= 8 ? normalized : null;
 };
 
-const parseJsonFormValue = <T,>(value: FormDataEntryValue | null): T | undefined => {
+const parseJsonFormValue = <T>(value: FormDataEntryValue | null): T | undefined => {
   if (typeof value !== 'string') return undefined;
   const normalized = value.trim();
   if (!normalized) return undefined;
@@ -163,18 +164,21 @@ const normalizeCenterLayoutPayload = (value: unknown): Record<string, unknown> |
   if (paddingYPercent !== null) normalized['paddingYPercent'] = paddingYPercent;
 
   const fillMissingCanvasWhite = coerceBoolean(layout['fillMissingCanvasWhite']);
-  if (fillMissingCanvasWhite !== null) normalized['fillMissingCanvasWhite'] = fillMissingCanvasWhite;
+  if (fillMissingCanvasWhite !== null)
+    normalized['fillMissingCanvasWhite'] = fillMissingCanvasWhite;
 
   const targetCanvasWidth = coerceFiniteNumber(layout['targetCanvasWidth']);
   if (targetCanvasWidth !== null) normalized['targetCanvasWidth'] = Math.round(targetCanvasWidth);
   const targetCanvasHeight = coerceFiniteNumber(layout['targetCanvasHeight']);
-  if (targetCanvasHeight !== null) normalized['targetCanvasHeight'] = Math.round(targetCanvasHeight);
+  if (targetCanvasHeight !== null)
+    normalized['targetCanvasHeight'] = Math.round(targetCanvasHeight);
   const whiteThreshold = coerceFiniteNumber(layout['whiteThreshold']);
   if (whiteThreshold !== null) normalized['whiteThreshold'] = Math.round(whiteThreshold);
   const chromaThreshold = coerceFiniteNumber(layout['chromaThreshold']);
   if (chromaThreshold !== null) normalized['chromaThreshold'] = Math.round(chromaThreshold);
 
-  const shadowPolicy = typeof layout['shadowPolicy'] === 'string' ? layout['shadowPolicy'].trim() : '';
+  const shadowPolicy =
+    typeof layout['shadowPolicy'] === 'string' ? layout['shadowPolicy'].trim() : '';
   if (shadowPolicy) normalized['shadowPolicy'] = shadowPolicy;
   const detection = typeof layout['detection'] === 'string' ? layout['detection'].trim() : '';
   if (detection) normalized['detection'] = detection;
@@ -196,7 +200,8 @@ const normalizeCenterRequestBody = (body: unknown): Record<string, unknown> => {
   const normalizedMode = typeof normalized['mode'] === 'string' ? normalized['mode'].trim() : '';
   normalized['mode'] = normalizedMode || 'server_alpha_bbox';
 
-  const normalizedDataUrl = typeof normalized['dataUrl'] === 'string' ? normalized['dataUrl'].trim() : '';
+  const normalizedDataUrl =
+    typeof normalized['dataUrl'] === 'string' ? normalized['dataUrl'].trim() : '';
   if (normalizedDataUrl) {
     normalized['dataUrl'] = normalizedDataUrl;
   } else {
@@ -210,7 +215,8 @@ const normalizeCenterRequestBody = (body: unknown): Record<string, unknown> => {
     delete normalized['name'];
   }
 
-  const normalizedRequestId = typeof normalized['requestId'] === 'string' ? normalized['requestId'].trim() : '';
+  const normalizedRequestId =
+    typeof normalized['requestId'] === 'string' ? normalized['requestId'].trim() : '';
   if (normalizedRequestId) {
     normalized['requestId'] = normalizedRequestId;
   } else {
@@ -227,10 +233,7 @@ const normalizeCenterRequestBody = (body: unknown): Record<string, unknown> => {
   return normalized;
 };
 
-const parseCenterResponsePayload = (
-  payload: unknown,
-  meta?: Record<string, unknown>
-) => {
+const parseCenterResponsePayload = (payload: unknown, meta?: Record<string, unknown>) => {
   const parsed = imageStudioCenterResponseSchema.safeParse(payload);
   if (parsed.success) return parsed.data;
   throw centerBadRequest(
@@ -329,10 +332,13 @@ const readCenterMetadataFromSlot = (
       ? slot.metadata
       : null;
   const center =
-    metadata?.['center'] && typeof metadata['center'] === 'object' && !Array.isArray(metadata['center'])
+    metadata?.['center'] &&
+    typeof metadata['center'] === 'object' &&
+    !Array.isArray(metadata['center'])
       ? (metadata['center'] as Record<string, unknown>)
       : null;
-  const effectiveModeRaw = typeof center?.['effectiveMode'] === 'string' ? center['effectiveMode'] : null;
+  const effectiveModeRaw =
+    typeof center?.['effectiveMode'] === 'string' ? center['effectiveMode'] : null;
   const effectiveMode =
     effectiveModeRaw === 'client_alpha_bbox' ||
     effectiveModeRaw === 'server_alpha_bbox' ||
@@ -353,14 +359,10 @@ const readCenterMetadataFromSlot = (
   };
 
   const parseShadowPolicy = (value: unknown): ImageStudioCenterShadowPolicy | null =>
-    value === 'auto' || value === 'include_shadow' || value === 'exclude_shadow'
-      ? value
-      : null;
+    value === 'auto' || value === 'include_shadow' || value === 'exclude_shadow' ? value : null;
 
   const parseDetectionMode = (value: unknown): ImageStudioCenterDetectionMode | null =>
-    value === 'alpha_bbox' || value === 'white_bg_first_colored_pixel'
-      ? value
-      : null;
+    value === 'alpha_bbox' || value === 'white_bg_first_colored_pixel' ? value : null;
 
   const parseDetectionDetails = (value: unknown): ImageStudioDetectionDetails | null => {
     if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
@@ -375,7 +377,8 @@ const readCenterMetadataFromSlot = (
     const corePixelsRaw = details['corePixels'];
     const touchesBorder = details['touchesBorder'] === true;
     const maskSourceRaw = details['maskSource'];
-    const maskSource = maskSourceRaw === 'foreground' || maskSourceRaw === 'core' ? maskSourceRaw : null;
+    const maskSource =
+      maskSourceRaw === 'foreground' || maskSourceRaw === 'core' ? maskSourceRaw : null;
     const policyVersionRaw = details['policyVersion'];
     const policyReasonRaw = details['policyReason'];
     const fallbackAppliedRaw = details['fallbackApplied'];
@@ -420,7 +423,8 @@ const readCenterMetadataFromSlot = (
         ? Math.max(0, Math.floor(selectedComponentPixelsRaw))
         : NaN;
     const selectedComponentCoverage =
-      typeof selectedComponentCoverageRaw === 'number' && Number.isFinite(selectedComponentCoverageRaw)
+      typeof selectedComponentCoverageRaw === 'number' &&
+      Number.isFinite(selectedComponentCoverageRaw)
         ? Math.max(0, Math.min(1, selectedComponentCoverageRaw))
         : NaN;
     const foregroundPixels =
@@ -455,9 +459,7 @@ const readCenterMetadataFromSlot = (
         ? policyReasonRaw.trim()
         : undefined;
     const fallbackApplied =
-      typeof fallbackAppliedRaw === 'boolean'
-        ? fallbackAppliedRaw
-        : undefined;
+      typeof fallbackAppliedRaw === 'boolean' ? fallbackAppliedRaw : undefined;
     const alphaCandidate = candidateDetectionsRaw
       ? parseCandidateSummary(candidateDetectionsRaw['alpha_bbox'])
       : null;
@@ -466,9 +468,9 @@ const readCenterMetadataFromSlot = (
       : null;
     const candidateDetections = candidateDetectionsRaw
       ? {
-        alpha_bbox: alphaCandidate,
-        white_bg_first_colored_pixel: whiteCandidate,
-      }
+          alpha_bbox: alphaCandidate,
+          white_bg_first_colored_pixel: whiteCandidate,
+        }
       : undefined;
 
     return {
@@ -492,9 +494,9 @@ const readCenterMetadataFromSlot = (
   const parsedLayout = (() => {
     if (!center || typeof center !== 'object') return null;
     const layoutRaw =
-        center['layout'] && typeof center['layout'] === 'object' && !Array.isArray(center['layout'])
-          ? (center['layout'] as Record<string, unknown>)
-          : null;
+      center['layout'] && typeof center['layout'] === 'object' && !Array.isArray(center['layout'])
+        ? (center['layout'] as Record<string, unknown>)
+        : null;
     if (!layoutRaw) return null;
     const paddingPercentRaw = layoutRaw['paddingPercent'];
     const paddingXPercentRaw = layoutRaw['paddingXPercent'];
@@ -524,13 +526,13 @@ const readCenterMetadataFromSlot = (
     const paddingYPercent = Number.isFinite(paddingYFromRaw) ? paddingYFromRaw : paddingPercent;
     const fillMissingCanvasWhite = fillMissingCanvasWhiteRaw === true;
     const targetCanvasWidth =
-        typeof targetCanvasWidthRaw === 'number' && Number.isFinite(targetCanvasWidthRaw)
-          ? Math.floor(targetCanvasWidthRaw)
-          : null;
+      typeof targetCanvasWidthRaw === 'number' && Number.isFinite(targetCanvasWidthRaw)
+        ? Math.floor(targetCanvasWidthRaw)
+        : null;
     const targetCanvasHeight =
-        typeof targetCanvasHeightRaw === 'number' && Number.isFinite(targetCanvasHeightRaw)
-          ? Math.floor(targetCanvasHeightRaw)
-          : null;
+      typeof targetCanvasHeightRaw === 'number' && Number.isFinite(targetCanvasHeightRaw)
+        ? Math.floor(targetCanvasHeightRaw)
+        : null;
     const whiteThreshold = typeof whiteThresholdRaw === 'number' ? whiteThresholdRaw : NaN;
     const chromaThreshold = typeof chromaThresholdRaw === 'number' ? chromaThresholdRaw : NaN;
     const shadowPolicy: ImageStudioCenterShadowPolicy =
@@ -556,10 +558,10 @@ const readCenterMetadataFromSlot = (
     const scale = typeof scaleRaw === 'number' && Number.isFinite(scaleRaw) ? scaleRaw : null;
     if (
       !Number.isFinite(paddingPercent) ||
-        !Number.isFinite(paddingXPercent) ||
-        !Number.isFinite(paddingYPercent) ||
-        !Number.isFinite(whiteThreshold) ||
-        !Number.isFinite(chromaThreshold)
+      !Number.isFinite(paddingXPercent) ||
+      !Number.isFinite(paddingYPercent) ||
+      !Number.isFinite(whiteThreshold) ||
+      !Number.isFinite(chromaThreshold)
     ) {
       return null;
     }
@@ -582,9 +584,7 @@ const readCenterMetadataFromSlot = (
 
   const detectionUsedRaw = center?.['detectionUsed'];
   const detectionUsed =
-    parseDetectionMode(detectionUsedRaw) ??
-    parseDetectionMode(parsedLayout?.detectionUsed) ??
-    null;
+    parseDetectionMode(detectionUsedRaw) ?? parseDetectionMode(parsedLayout?.detectionUsed) ?? null;
   const confidenceBeforeRaw = center?.['confidenceBefore'];
   const confidenceBefore =
     typeof confidenceBeforeRaw === 'number' && Number.isFinite(confidenceBeforeRaw)
@@ -593,9 +593,7 @@ const readCenterMetadataFromSlot = (
   const detectionDetails = parseDetectionDetails(center?.['detectionDetails']);
   const scaleRaw = center?.['scale'];
   const scaleFromCenter =
-    typeof scaleRaw === 'number' && Number.isFinite(scaleRaw)
-      ? scaleRaw
-      : null;
+    typeof scaleRaw === 'number' && Number.isFinite(scaleRaw) ? scaleRaw : null;
 
   return {
     effectiveMode,
@@ -679,7 +677,10 @@ async function processCenterPayload(input: {
       try {
         centered = await centerAndScaleObjectByLayout(sourceBuffer, payload.layout);
       } catch (error) {
-        if (error instanceof Error && /No visible object pixels were detected to center/i.test(error.message)) {
+        if (
+          error instanceof Error &&
+          /No visible object pixels were detected to center/i.test(error.message)
+        ) {
           throw centerBadRequest(
             IMAGE_STUDIO_CENTER_ERROR_CODES.SOURCE_OBJECT_NOT_FOUND,
             'No visible object pixels were detected to layout.'
@@ -740,7 +741,10 @@ async function processCenterPayload(input: {
     try {
       centered = await centerObjectByAlpha(sourceBuffer);
     } catch (error) {
-      if (error instanceof Error && /No visible object pixels were detected to center/i.test(error.message)) {
+      if (
+        error instanceof Error &&
+        /No visible object pixels were detected to center/i.test(error.message)
+      ) {
         throw centerBadRequest(
           IMAGE_STUDIO_CENTER_ERROR_CODES.SOURCE_OBJECT_NOT_FOUND,
           'No visible object pixels were detected to center.'
@@ -787,13 +791,15 @@ async function processCenterPayload(input: {
     throw sourceLoadError instanceof Error
       ? sourceLoadError
       : centerBadRequest(
-        IMAGE_STUDIO_CENTER_ERROR_CODES.SOURCE_IMAGE_MISSING,
-        'Server centering requires a resolvable source image.'
-      );
+          IMAGE_STUDIO_CENTER_ERROR_CODES.SOURCE_IMAGE_MISSING,
+          'Server centering requires a resolvable source image.'
+        );
   }
 
   if (uploadedClientImage) {
-    const metadata = await sharp(uploadedClientImage.buffer).metadata().catch(() => null);
+    const metadata = await sharp(uploadedClientImage.buffer)
+      .metadata()
+      .catch(() => null);
     const outputWidth = metadata?.width ?? null;
     const outputHeight = metadata?.height ?? null;
     if (outputWidth && outputHeight && !validateCenterOutputDimensions(outputWidth, outputHeight)) {
@@ -811,7 +817,10 @@ async function processCenterPayload(input: {
       outputHeight,
       sourceObjectBounds: null,
       targetObjectBounds: null,
-      effectiveMode: payload.mode === 'client_object_layout_v1' ? 'client_object_layout_v1' : 'client_alpha_bbox',
+      effectiveMode:
+        payload.mode === 'client_object_layout_v1'
+          ? 'client_object_layout_v1'
+          : 'client_alpha_bbox',
       authoritativeSource: 'client_upload_fallback',
       detectionUsed: null,
       confidenceBefore: null,
@@ -819,20 +828,20 @@ async function processCenterPayload(input: {
       scale: null,
       layout: isObjectLayoutMode(payload.mode)
         ? {
-          paddingPercent: normalizedLayout.paddingPercent,
-          paddingXPercent: normalizedLayout.paddingXPercent,
-          paddingYPercent: normalizedLayout.paddingYPercent,
-          fillMissingCanvasWhite: normalizedLayout.fillMissingCanvasWhite,
-          targetCanvasWidth: normalizedLayout.targetCanvasWidth,
-          targetCanvasHeight: normalizedLayout.targetCanvasHeight,
-          whiteThreshold: normalizedLayout.whiteThreshold,
-          chromaThreshold: normalizedLayout.chromaThreshold,
-          shadowPolicy: normalizedLayout.shadowPolicy,
-          layoutPolicyVersion: null,
-          detectionPolicyDecision: null,
-          detectionUsed: null,
-          scale: null,
-        }
+            paddingPercent: normalizedLayout.paddingPercent,
+            paddingXPercent: normalizedLayout.paddingXPercent,
+            paddingYPercent: normalizedLayout.paddingYPercent,
+            fillMissingCanvasWhite: normalizedLayout.fillMissingCanvasWhite,
+            targetCanvasWidth: normalizedLayout.targetCanvasWidth,
+            targetCanvasHeight: normalizedLayout.targetCanvasHeight,
+            whiteThreshold: normalizedLayout.whiteThreshold,
+            chromaThreshold: normalizedLayout.chromaThreshold,
+            shadowPolicy: normalizedLayout.shadowPolicy,
+            layoutPolicyVersion: null,
+            detectionPolicyDecision: null,
+            detectionUsed: null,
+            scale: null,
+          }
         : null,
     };
   }
@@ -845,7 +854,9 @@ async function processCenterPayload(input: {
     );
   }
 
-  const metadata = await sharp(parsedData.buffer).metadata().catch(() => null);
+  const metadata = await sharp(parsedData.buffer)
+    .metadata()
+    .catch(() => null);
   const outputWidth = metadata?.width ?? null;
   const outputHeight = metadata?.height ?? null;
   if (outputWidth && outputHeight && !validateCenterOutputDimensions(outputWidth, outputHeight)) {
@@ -863,7 +874,8 @@ async function processCenterPayload(input: {
     outputHeight,
     sourceObjectBounds: null,
     targetObjectBounds: null,
-    effectiveMode: payload.mode === 'client_object_layout_v1' ? 'client_object_layout_v1' : 'client_alpha_bbox',
+    effectiveMode:
+      payload.mode === 'client_object_layout_v1' ? 'client_object_layout_v1' : 'client_alpha_bbox',
     authoritativeSource: 'client_upload_fallback',
     detectionUsed: null,
     confidenceBefore: null,
@@ -871,20 +883,20 @@ async function processCenterPayload(input: {
     scale: null,
     layout: isObjectLayoutMode(payload.mode)
       ? {
-        paddingPercent: normalizedLayout.paddingPercent,
-        paddingXPercent: normalizedLayout.paddingXPercent,
-        paddingYPercent: normalizedLayout.paddingYPercent,
-        fillMissingCanvasWhite: normalizedLayout.fillMissingCanvasWhite,
-        targetCanvasWidth: normalizedLayout.targetCanvasWidth,
-        targetCanvasHeight: normalizedLayout.targetCanvasHeight,
-        whiteThreshold: normalizedLayout.whiteThreshold,
-        chromaThreshold: normalizedLayout.chromaThreshold,
-        shadowPolicy: normalizedLayout.shadowPolicy,
-        layoutPolicyVersion: null,
-        detectionPolicyDecision: null,
-        detectionUsed: null,
-        scale: null,
-      }
+          paddingPercent: normalizedLayout.paddingPercent,
+          paddingXPercent: normalizedLayout.paddingXPercent,
+          paddingYPercent: normalizedLayout.paddingYPercent,
+          fillMissingCanvasWhite: normalizedLayout.fillMissingCanvasWhite,
+          targetCanvasWidth: normalizedLayout.targetCanvasWidth,
+          targetCanvasHeight: normalizedLayout.targetCanvasHeight,
+          whiteThreshold: normalizedLayout.whiteThreshold,
+          chromaThreshold: normalizedLayout.chromaThreshold,
+          shadowPolicy: normalizedLayout.shadowPolicy,
+          layoutPolicyVersion: null,
+          detectionPolicyDecision: null,
+          detectionUsed: null,
+          scale: null,
+        }
       : null,
   };
 }
@@ -946,7 +958,9 @@ export async function postCenterSlotHandler(
   ].join('|');
 
   const clientPayloadSignature = buildClientPayloadSignature(payload, uploadedClientImage);
-  const layoutSignature = isObjectLayoutMode(payload.mode) ? buildCenterLayoutSignature(payload.layout) : null;
+  const layoutSignature = isObjectLayoutMode(payload.mode)
+    ? buildCenterLayoutSignature(payload.layout)
+    : null;
   const fingerprint = buildCenterFingerprint({
     sourceSignature,
     mode: payload.mode,
@@ -957,7 +971,9 @@ export async function postCenterSlotHandler(
     layoutSignature,
   });
   const fingerprintRelationType = buildCenterFingerprintRelationType(fingerprint);
-  const requestRelationType = idempotencyKey ? buildCenterRequestRelationType(idempotencyKey) : null;
+  const requestRelationType = idempotencyKey
+    ? buildCenterRequestRelationType(idempotencyKey)
+    : null;
 
   if (requestRelationType) {
     const existingByRequest = await getImageStudioSlotLinkBySourceAndRelation(
@@ -969,29 +985,32 @@ export async function postCenterSlotHandler(
       const existingSlot = await getImageStudioSlotById(existingByRequest.targetSlotId);
       if (existingSlot) {
         const existingCenter = readCenterMetadataFromSlot(existingSlot);
-        const responseBody = parseCenterResponsePayload({
-          sourceSlotId: sourceSlot.id,
-          slot: existingSlot,
-          mode: payload.mode,
-          effectiveMode: existingCenter.effectiveMode ?? payload.mode,
-          sourceObjectBounds: existingCenter.sourceObjectBounds,
-          targetObjectBounds: existingCenter.targetObjectBounds,
-          layout: existingCenter.layout,
-          detectionUsed: existingCenter.detectionUsed,
-          confidenceBefore: existingCenter.confidenceBefore,
-          detectionDetails: existingCenter.detectionDetails,
-          scale: existingCenter.scale,
-          requestId: idempotencyKey,
-          fingerprint,
-          deduplicated: true,
-          dedupeReason: 'request',
-          lifecycle: { state: 'persisted', durationMs: Date.now() - startedAt },
-          pipelineVersion: CENTER_PIPELINE_VERSION,
-        }, {
-          responseStage: 'request_dedupe',
-          sourceSlotId: sourceSlot.id,
-          targetSlotId: existingSlot.id,
-        });
+        const responseBody = parseCenterResponsePayload(
+          {
+            sourceSlotId: sourceSlot.id,
+            slot: existingSlot,
+            mode: payload.mode,
+            effectiveMode: existingCenter.effectiveMode ?? payload.mode,
+            sourceObjectBounds: existingCenter.sourceObjectBounds,
+            targetObjectBounds: existingCenter.targetObjectBounds,
+            layout: existingCenter.layout,
+            detectionUsed: existingCenter.detectionUsed,
+            confidenceBefore: existingCenter.confidenceBefore,
+            detectionDetails: existingCenter.detectionDetails,
+            scale: existingCenter.scale,
+            requestId: idempotencyKey,
+            fingerprint,
+            deduplicated: true,
+            dedupeReason: 'request',
+            lifecycle: { state: 'persisted', durationMs: Date.now() - startedAt },
+            pipelineVersion: CENTER_PIPELINE_VERSION,
+          },
+          {
+            responseStage: 'request_dedupe',
+            sourceSlotId: sourceSlot.id,
+            targetSlotId: existingSlot.id,
+          }
+        );
         return NextResponse.json(responseBody, { status: 200 });
       }
     }
@@ -1007,29 +1026,32 @@ export async function postCenterSlotHandler(
       const existingSlot = await getImageStudioSlotById(existingFingerprintLink.targetSlotId);
       if (existingSlot) {
         const existingCenter = readCenterMetadataFromSlot(existingSlot);
-        const responseBody = parseCenterResponsePayload({
-          sourceSlotId: sourceSlot.id,
-          slot: existingSlot,
-          mode: payload.mode,
-          effectiveMode: existingCenter.effectiveMode ?? payload.mode,
-          sourceObjectBounds: existingCenter.sourceObjectBounds,
-          targetObjectBounds: existingCenter.targetObjectBounds,
-          layout: existingCenter.layout,
-          detectionUsed: existingCenter.detectionUsed,
-          confidenceBefore: existingCenter.confidenceBefore,
-          detectionDetails: existingCenter.detectionDetails,
-          scale: existingCenter.scale,
-          requestId: idempotencyKey,
-          fingerprint,
-          deduplicated: true,
-          dedupeReason: 'fingerprint',
-          lifecycle: { state: 'persisted', durationMs: Date.now() - startedAt },
-          pipelineVersion: CENTER_PIPELINE_VERSION,
-        }, {
-          responseStage: 'fingerprint_dedupe',
-          sourceSlotId: sourceSlot.id,
-          targetSlotId: existingSlot.id,
-        });
+        const responseBody = parseCenterResponsePayload(
+          {
+            sourceSlotId: sourceSlot.id,
+            slot: existingSlot,
+            mode: payload.mode,
+            effectiveMode: existingCenter.effectiveMode ?? payload.mode,
+            sourceObjectBounds: existingCenter.sourceObjectBounds,
+            targetObjectBounds: existingCenter.targetObjectBounds,
+            layout: existingCenter.layout,
+            detectionUsed: existingCenter.detectionUsed,
+            confidenceBefore: existingCenter.confidenceBefore,
+            detectionDetails: existingCenter.detectionDetails,
+            scale: existingCenter.scale,
+            requestId: idempotencyKey,
+            fingerprint,
+            deduplicated: true,
+            dedupeReason: 'fingerprint',
+            lifecycle: { state: 'persisted', durationMs: Date.now() - startedAt },
+            pipelineVersion: CENTER_PIPELINE_VERSION,
+          },
+          {
+            responseStage: 'fingerprint_dedupe',
+            sourceSlotId: sourceSlot.id,
+            targetSlotId: existingSlot.id,
+          }
+        );
         return NextResponse.json(responseBody, { status: 200 });
       }
     }
@@ -1046,7 +1068,8 @@ export async function postCenterSlotHandler(
       void logSystemEvent({
         level: 'warn',
         source: 'image-studio.center',
-        message: 'Centering fell back to client-provided payload because source image was unavailable.',
+        message:
+          'Centering fell back to client-provided payload because source image was unavailable.',
         request: req,
         requestId: ctx.requestId,
         context: {
@@ -1200,43 +1223,46 @@ export async function postCenterSlotHandler(
       },
     });
 
-    const responseBody = parseCenterResponsePayload({
-      sourceSlotId: sourceSlot.id,
-      mode: payload.mode,
-      effectiveMode: processed.effectiveMode,
-      slot: createdSlot,
-      output: imageFile,
-      sourceObjectBounds: processed.sourceObjectBounds,
-      targetObjectBounds: processed.targetObjectBounds,
-      layout: processed.layout,
-      detectionUsed: processed.detectionUsed,
-      confidenceBefore: processed.confidenceBefore,
-      detectionDetails: processed.detectionDetails,
-      scale: processed.scale,
-      requestId: idempotencyKey,
-      fingerprint,
-      deduplicated: false,
-      lifecycle: {
-        state: 'persisted',
-        durationMs,
+    const responseBody = parseCenterResponsePayload(
+      {
+        sourceSlotId: sourceSlot.id,
+        mode: payload.mode,
+        effectiveMode: processed.effectiveMode,
+        slot: createdSlot,
+        output: imageFile,
+        sourceObjectBounds: processed.sourceObjectBounds,
+        targetObjectBounds: processed.targetObjectBounds,
+        layout: processed.layout,
+        detectionUsed: processed.detectionUsed,
+        confidenceBefore: processed.confidenceBefore,
+        detectionDetails: processed.detectionDetails,
+        scale: processed.scale,
+        requestId: idempotencyKey,
+        fingerprint,
+        deduplicated: false,
+        lifecycle: {
+          state: 'persisted',
+          durationMs,
+        },
+        pipelineVersion: CENTER_PIPELINE_VERSION,
       },
-      pipelineVersion: CENTER_PIPELINE_VERSION,
-    }, {
-      responseStage: 'created',
-      sourceSlotId: sourceSlot.id,
-      targetSlotId: createdSlot.id,
-      requestId: idempotencyKey,
-    });
+      {
+        responseStage: 'created',
+        sourceSlotId: sourceSlot.id,
+        targetSlotId: createdSlot.id,
+        requestId: idempotencyKey,
+      }
+    );
 
     return NextResponse.json(responseBody, { status: 201 });
   } catch (error) {
     const normalizedError =
       error instanceof z.ZodError
         ? centerBadRequest(
-          IMAGE_STUDIO_CENTER_ERROR_CODES.OUTPUT_INVALID,
-          'Center schema validation failed.',
-          { responseErrors: error.format() }
-        )
+            IMAGE_STUDIO_CENTER_ERROR_CODES.OUTPUT_INVALID,
+            'Center schema validation failed.',
+            { responseErrors: error.format() }
+          )
         : error;
 
     void logSystemEvent({
@@ -1252,7 +1278,9 @@ export async function postCenterSlotHandler(
         mode: payload.mode,
         requestId: idempotencyKey,
         fingerprint,
-        centerErrorCode: isAppError(normalizedError) ? normalizedError.meta?.['centerErrorCode'] : undefined,
+        centerErrorCode: isAppError(normalizedError)
+          ? normalizedError.meta?.['centerErrorCode']
+          : undefined,
         durationMs: Date.now() - startedAt,
       },
     });

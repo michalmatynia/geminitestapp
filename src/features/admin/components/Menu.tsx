@@ -1,8 +1,6 @@
 'use client';
 
-import {
-  StarIcon,
-} from 'lucide-react';
+import { StarIcon } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import React, { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react';
 
@@ -17,50 +15,100 @@ import {
 import { useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
 import { useCreateChatbotSession } from '@/features/ai/chatbot/hooks/useChatbotMutations';
 import { useChatbotSessions } from '@/features/ai/chatbot/hooks/useChatbotQueries';
-import type { 
-  AdminMenuCustomNode,
-  AdminMenuColorOption
-} from '@/shared/contracts/admin';
+import type { AdminMenuCustomNode, AdminMenuColorOption } from '@/shared/contracts/admin';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Button, SearchInput, Tooltip, TreeHeader } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { buildAdminNav } from './admin-menu-nav';
-import { 
-  type NavItem, 
-  type FlattenedNavItem, 
-  normalizeText, 
-  filterTree, 
-  collectGroupIds, 
-  collectActiveGroupIds, 
-  flattenAdminNav, 
-  normalizeAdminMenuCustomNav, 
-  buildAdminMenuFromCustomNav, 
+import {
+  type NavItem,
+  type FlattenedNavItem,
+  normalizeText,
+  filterTree,
+  collectGroupIds,
+  collectActiveGroupIds,
+  flattenAdminNav,
+  normalizeAdminMenuCustomNav,
+  buildAdminMenuFromCustomNav,
   applySectionColors,
   adminNavToCustomNav,
-  getAdminMenuSections
+  getAdminMenuSections,
 } from './menu/admin-menu-utils';
-import { NavTree, AdminMenuTreeContext, AdminMenuDepthContext, type AdminMenuTreeContextValue } from './menu/NavTree';
+import {
+  NavTree,
+  AdminMenuTreeContext,
+  AdminMenuDepthContext,
+  type AdminMenuTreeContextValue,
+} from './menu/NavTree';
 
-export { 
+export {
   buildAdminNav,
   normalizeAdminMenuCustomNav,
   buildAdminMenuFromCustomNav,
   flattenAdminNav,
   adminNavToCustomNav,
-  getAdminMenuSections
+  getAdminMenuSections,
 };
 export type { AdminMenuCustomNode, NavItem, FlattenedNavItem };
 
 export const ADMIN_MENU_COLORS: AdminMenuColorOption[] = [
-  { value: 'slate', label: 'Slate', dot: 'bg-slate-400', border: 'border-slate-400/60', text: 'text-slate-200' },
-  { value: 'emerald', label: 'Emerald', dot: 'bg-emerald-400', border: 'border-emerald-400/60', text: 'text-emerald-200' },
-  { value: 'blue', label: 'Blue', dot: 'bg-blue-400', border: 'border-blue-400/60', text: 'text-blue-200' },
-  { value: 'amber', label: 'Amber', dot: 'bg-amber-400', border: 'border-amber-400/60', text: 'text-amber-200' },
-  { value: 'violet', label: 'Violet', dot: 'bg-violet-400', border: 'border-violet-400/60', text: 'text-violet-200' },
-  { value: 'cyan', label: 'Cyan', dot: 'bg-cyan-400', border: 'border-cyan-400/60', text: 'text-cyan-200' },
-  { value: 'orange', label: 'Orange', dot: 'bg-orange-400', border: 'border-orange-400/60', text: 'text-orange-200' },
-  { value: 'rose', label: 'Rose', dot: 'bg-rose-400', border: 'border-rose-400/60', text: 'text-rose-200' },
+  {
+    value: 'slate',
+    label: 'Slate',
+    dot: 'bg-slate-400',
+    border: 'border-slate-400/60',
+    text: 'text-slate-200',
+  },
+  {
+    value: 'emerald',
+    label: 'Emerald',
+    dot: 'bg-emerald-400',
+    border: 'border-emerald-400/60',
+    text: 'text-emerald-200',
+  },
+  {
+    value: 'blue',
+    label: 'Blue',
+    dot: 'bg-blue-400',
+    border: 'border-blue-400/60',
+    text: 'text-blue-200',
+  },
+  {
+    value: 'amber',
+    label: 'Amber',
+    dot: 'bg-amber-400',
+    border: 'border-amber-400/60',
+    text: 'text-amber-200',
+  },
+  {
+    value: 'violet',
+    label: 'Violet',
+    dot: 'bg-violet-400',
+    border: 'border-violet-400/60',
+    text: 'text-violet-200',
+  },
+  {
+    value: 'cyan',
+    label: 'Cyan',
+    dot: 'bg-cyan-400',
+    border: 'border-cyan-400/60',
+    text: 'text-cyan-200',
+  },
+  {
+    value: 'orange',
+    label: 'Orange',
+    dot: 'bg-orange-400',
+    border: 'border-orange-400/60',
+    text: 'text-orange-200',
+  },
+  {
+    value: 'rose',
+    label: 'Rose',
+    dot: 'bg-rose-400',
+    border: 'border-rose-400/60',
+    text: 'text-rose-200',
+  },
 ];
 
 export const ADMIN_MENU_COLOR_MAP: Record<string, AdminMenuColorOption> = Object.fromEntries(
@@ -93,7 +141,9 @@ export default function Menu(): React.ReactNode {
       if (!raw) return;
       const parsed = JSON.parse(raw) as unknown;
       if (Array.isArray(parsed)) {
-        setUserOpenIds(new Set(parsed.filter((id: unknown): id is string => typeof id === 'string')));
+        setUserOpenIds(
+          new Set(parsed.filter((id: unknown): id is string => typeof id === 'string'))
+        );
       }
     } catch {
       // ignore
@@ -112,42 +162,45 @@ export default function Menu(): React.ReactNode {
     }
   }, [openIdsLoaded, userOpenIds]);
 
-  const handleOpenChat = useCallback((event: React.MouseEvent<HTMLAnchorElement>): void => {
-    if (typeof window === 'undefined') return;
-    event.preventDefault();
+  const handleOpenChat = useCallback(
+    (event: React.MouseEvent<HTMLAnchorElement>): void => {
+      if (typeof window === 'undefined') return;
+      event.preventDefault();
 
-    const openChat = async (): Promise<void> => {
-      const storedSession = window.localStorage.getItem('chatbotSessionId');
-      if (storedSession) {
-        router.push(`/admin/chatbot?session=${storedSession}`);
-        return;
-      }
-      try {
-        let latestId: string | undefined = chatbotSessions[0]?.id;
-        if (!latestId) {
-          const sessionsResult = await refetchChatbotSessions();
-          latestId = sessionsResult.data?.[0]?.id;
-        }
-        if (latestId) {
-          window.localStorage.setItem('chatbotSessionId', latestId);
-          router.push(`/admin/chatbot?session=${latestId}`);
+      const openChat = async (): Promise<void> => {
+        const storedSession = window.localStorage.getItem('chatbotSessionId');
+        if (storedSession) {
+          router.push(`/admin/chatbot?session=${storedSession}`);
           return;
         }
-        
-        const created = await createChatbotSession({});
-        if (created.sessionId) {
-          window.localStorage.setItem('chatbotSessionId', created.sessionId);
-          router.push(`/admin/chatbot?session=${created.sessionId}`);
-        } else {
+        try {
+          let latestId: string | undefined = chatbotSessions[0]?.id;
+          if (!latestId) {
+            const sessionsResult = await refetchChatbotSessions();
+            latestId = sessionsResult.data?.[0]?.id;
+          }
+          if (latestId) {
+            window.localStorage.setItem('chatbotSessionId', latestId);
+            router.push(`/admin/chatbot?session=${latestId}`);
+            return;
+          }
+
+          const created = await createChatbotSession({});
+          if (created.sessionId) {
+            window.localStorage.setItem('chatbotSessionId', created.sessionId);
+            router.push(`/admin/chatbot?session=${created.sessionId}`);
+          } else {
+            router.push('/admin/chatbot');
+          }
+        } catch {
           router.push('/admin/chatbot');
         }
-      } catch {
-        router.push('/admin/chatbot');
-      }
-    };
+      };
 
-    void openChat();
-  }, [router, chatbotSessions, createChatbotSession, refetchChatbotSessions]);
+      void openChat();
+    },
+    [router, chatbotSessions, createChatbotSession, refetchChatbotSessions]
+  );
 
   const handleCreatePageClick = useCallback((): void => {
     setIsMenuCollapsed(true);
@@ -159,15 +212,13 @@ export default function Menu(): React.ReactNode {
   const favoriteIds = useMemo<string[]>(() => {
     const raw = settingsStore.get(ADMIN_MENU_FAVORITES_KEY);
     const parsed = parseAdminMenuJson<string[]>(raw, []);
-    return parsed.filter(
-      (id: string): id is string => typeof id === 'string' && id.length > 0
-    );
+    return parsed.filter((id: string): id is string => typeof id === 'string' && id.length > 0);
   }, [settingsStore]);
   const favoriteIdSet = useMemo(() => new Set(favoriteIds), [favoriteIds]);
   const sectionColors = useMemo<Record<string, string>>(() => {
     const raw = settingsStore.get(ADMIN_MENU_SECTION_COLORS_KEY);
     const parsed = parseAdminMenuJson<Record<string, string> | null>(raw, null);
-    return (parsed && typeof parsed === 'object') ? parsed : {};
+    return parsed && typeof parsed === 'object' ? parsed : {};
   }, [settingsStore]);
   const customEnabled = useMemo(
     () => parseAdminMenuBoolean(settingsStore.get(ADMIN_MENU_CUSTOM_ENABLED_KEY), false),
@@ -189,10 +240,7 @@ export default function Menu(): React.ReactNode {
     [baseNav, customEnabled, customNav]
   );
 
-  const navWithColors = useMemo(
-    () => applySectionColors(nav, sectionColors),
-    [nav, sectionColors]
-  );
+  const navWithColors = useMemo(() => applySectionColors(nav, sectionColors), [nav, sectionColors]);
   const baseNavWithColors = useMemo(
     () => applySectionColors(baseNav, sectionColors),
     [baseNav, sectionColors]
@@ -229,7 +277,10 @@ export default function Menu(): React.ReactNode {
   }, [favoriteItems, navWithColors]);
 
   const normalizedQuery = normalizeText(deferredQuery);
-  const filteredNav = useMemo<NavItem[]>(() => filterTree(navWithFavorites, normalizedQuery), [navWithFavorites, normalizedQuery]);
+  const filteredNav = useMemo<NavItem[]>(
+    () => filterTree(navWithFavorites, normalizedQuery),
+    [navWithFavorites, normalizedQuery]
+  );
   const autoOpenIds = useMemo(
     () =>
       normalizedQuery
@@ -268,47 +319,53 @@ export default function Menu(): React.ReactNode {
 
   const isAnyFolderOpen = effectiveOpenIds.size > 0;
 
-  const handleToggleOpen = useCallback((id: string): void => {
-    if (normalizedQuery) return;
-    const isOpen = effectiveOpenIds.has(id);
+  const handleToggleOpen = useCallback(
+    (id: string): void => {
+      if (normalizedQuery) return;
+      const isOpen = effectiveOpenIds.has(id);
 
-    if (isOpen) {
-      // One-click close, even for auto-opened "active route" folders.
-      setUserOpenIds((prev: Set<string>) => {
-        if (!prev.has(id)) return prev;
+      if (isOpen) {
+        // One-click close, even for auto-opened "active route" folders.
+        setUserOpenIds((prev: Set<string>) => {
+          if (!prev.has(id)) return prev;
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+        if (autoOpenIds.has(id)) {
+          setClosedAutoIds((prev: Set<string>) => {
+            if (prev.has(id)) return prev;
+            const next = new Set(prev);
+            next.add(id);
+            return next;
+          });
+        }
+        return;
+      }
+
+      setClosedAutoIds((prev: Set<string>) => {
         const next = new Set(prev);
         next.delete(id);
         return next;
       });
-      if (autoOpenIds.has(id)) {
-        setClosedAutoIds((prev: Set<string>) => {
-          if (prev.has(id)) return prev;
-          const next = new Set(prev);
-          next.add(id);
-          return next;
-        });
-      }
-      return;
-    }
+      setUserOpenIds((prev: Set<string>) => {
+        const next = new Set(prev);
+        next.add(id);
+        return next;
+      });
+    },
+    [autoOpenIds, effectiveOpenIds, normalizedQuery]
+  );
 
-    setClosedAutoIds((prev: Set<string>) => {
-      const next = new Set(prev);
-      next.delete(id);
-      return next;
-    });
-    setUserOpenIds((prev: Set<string>) => {
-      const next = new Set(prev);
-      next.add(id);
-      return next;
-    });
-  }, [autoOpenIds, effectiveOpenIds, normalizedQuery]);
-
-  const navTreeContextValue = useMemo<AdminMenuTreeContextValue>(() => ({
-    isMenuCollapsed,
-    pathname,
-    openIds: effectiveOpenIds,
-    onToggleOpen: handleToggleOpen,
-  }), [effectiveOpenIds, handleToggleOpen, isMenuCollapsed, pathname]);
+  const navTreeContextValue = useMemo<AdminMenuTreeContextValue>(
+    () => ({
+      isMenuCollapsed,
+      pathname,
+      openIds: effectiveOpenIds,
+      onToggleOpen: handleToggleOpen,
+    }),
+    [effectiveOpenIds, handleToggleOpen, isMenuCollapsed, pathname]
+  );
 
   const handleToggleAllFolders = useCallback((): void => {
     // While searching, folders are intentionally opened to reveal results.
@@ -326,8 +383,6 @@ export default function Menu(): React.ReactNode {
     setUserOpenIds(new Set<string>(allGroupIds));
   }, [allGroupIds, autoOpenIds, isAnyFolderOpen, normalizedQuery]);
 
-
-
   return (
     <nav
       data-admin-menu
@@ -338,7 +393,9 @@ export default function Menu(): React.ReactNode {
           <div className='flex items-center gap-2'>
             <SearchInput
               value={query}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) => setQuery(event.target.value)}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                setQuery(event.target.value)
+              }
               placeholder='Search admin pages…'
               className='h-9 flex-1 bg-gray-900/40'
               onClear={() => setQuery('')}
@@ -361,7 +418,10 @@ export default function Menu(): React.ReactNode {
           ) : null}
         </TreeHeader>
       ) : (
-        <Tooltip content={isAnyFolderOpen ? 'Collapse all folders' : 'Expand all folders'} side='right'>
+        <Tooltip
+          content={isAnyFolderOpen ? 'Collapse all folders' : 'Expand all folders'}
+          side='right'
+        >
           <div>
             <Button
               variant='outline'
@@ -378,9 +438,7 @@ export default function Menu(): React.ReactNode {
 
       <AdminMenuTreeContext.Provider value={navTreeContextValue}>
         <AdminMenuDepthContext.Provider value={0}>
-          <NavTree
-            items={filteredNav}
-          />
+          <NavTree items={filteredNav} />
         </AdminMenuDepthContext.Provider>
       </AdminMenuTreeContext.Provider>
     </nav>

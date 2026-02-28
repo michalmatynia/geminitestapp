@@ -2,9 +2,7 @@ import React from 'react';
 
 import { Button, Input, Label, Hint } from '@/shared/ui';
 
-import type {
-  PromptValidationSimilarPattern,
-} from '../settings';
+import type { PromptValidationSimilarPattern } from '../settings';
 
 import { useRuleItemContext } from './context/RuleItemContext';
 

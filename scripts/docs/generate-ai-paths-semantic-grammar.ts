@@ -6,10 +6,7 @@ import { palette } from '@/shared/lib/ai-paths/core/definitions';
 import { AI_PATHS_NODE_DOCS } from '@/shared/lib/ai-paths/core/docs/node-docs';
 
 const workspaceRoot = process.cwd();
-const semanticDocsDir = path.join(
-  workspaceRoot,
-  'docs/ai-paths/semantic-grammar',
-);
+const semanticDocsDir = path.join(workspaceRoot, 'docs/ai-paths/semantic-grammar');
 const nodesDir = path.join(semanticDocsDir, 'nodes');
 
 type NodeDocExportRow = {
@@ -31,9 +28,7 @@ type NodeDocExportRow = {
 const resolveDefaultConfig = (nodeType: string): Record<string, unknown> | undefined => {
   const typedWithConfig = palette.find(
     (definition) =>
-      definition.type === nodeType &&
-      definition.config &&
-      typeof definition.config === 'object',
+      definition.type === nodeType && definition.config && typeof definition.config === 'object'
   );
   if (typedWithConfig?.config && typeof typedWithConfig.config === 'object') {
     return typedWithConfig.config as Record<string, unknown>;
@@ -61,8 +56,7 @@ const computeNodeHash = (value: unknown): string =>
     .update(JSON.stringify(normalizeForHashing(value)), 'utf8')
     .digest('hex');
 
-const summarizePurpose = (value: string): string =>
-  value.trim().replace(/\s+/g, ' ').slice(0, 140);
+const summarizePurpose = (value: string): string => value.trim().replace(/\s+/g, ' ').slice(0, 140);
 
 const CRITICAL_CONFIG_FIELD_PATTERN =
   /(entityId|collection|modelId|template|event|pattern|queryTemplate|intervalMs|maxAttempts|mappings|url)$/i;
@@ -79,9 +73,7 @@ for (const doc of AI_PATHS_NODE_DOCS) {
   const configFields = doc.config.map((field) => ({
     path: field.path,
     description: field.description,
-    ...(field.defaultValue !== undefined
-      ? { defaultValue: field.defaultValue }
-      : {}),
+    ...(field.defaultValue !== undefined ? { defaultValue: field.defaultValue } : {}),
   }));
   const basePayload = {
     specVersion: 'ai-paths.semantic-grammar.v1',
@@ -120,10 +112,10 @@ for (const doc of AI_PATHS_NODE_DOCS) {
   fs.writeFileSync(filePath, stableJson(payload), 'utf8');
 
   const runtimeFieldCount = configFields.filter((field) =>
-    field.path.startsWith('runtime.'),
+    field.path.startsWith('runtime.')
   ).length;
   const criticalFieldCount = configFields.filter((field) =>
-    CRITICAL_CONFIG_FIELD_PATTERN.test(field.path),
+    CRITICAL_CONFIG_FIELD_PATTERN.test(field.path)
   ).length;
   const defaultConfigKeyCount = defaultConfig ? Object.keys(defaultConfig).length : 0;
 
@@ -144,9 +136,7 @@ for (const doc of AI_PATHS_NODE_DOCS) {
   });
 }
 
-const sortedRows = indexRows.sort((left, right) =>
-  left.nodeType.localeCompare(right.nodeType),
-);
+const sortedRows = indexRows.sort((left, right) => left.nodeType.localeCompare(right.nodeType));
 fs.writeFileSync(path.join(nodesDir, 'index.json'), stableJson(sortedRows), 'utf8');
 
 const readmeLines = [
@@ -169,6 +159,4 @@ const readmeLines = [
 ];
 fs.writeFileSync(path.join(nodesDir, 'README.md'), readmeLines.join('\n'), 'utf8');
 
-console.log(
-  `Semantic grammar node docs generated for ${sortedRows.length} node types.`,
-);
+console.log(`Semantic grammar node docs generated for ${sortedRows.length} node types.`);

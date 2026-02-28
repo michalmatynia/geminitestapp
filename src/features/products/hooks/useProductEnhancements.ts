@@ -22,7 +22,7 @@ export function useOptimisticProductUpdate(): UseMutationResult<
   Error,
   { id: string; data: Partial<ProductWithImages> },
   { previousData: ProductWithImages[] | undefined }
-  > {
+> {
   return useOptimisticMutation<
     ProductWithImages,
     Error,
@@ -34,7 +34,10 @@ export function useOptimisticProductUpdate(): UseMutationResult<
     },
     {
       queryKey: productsAllQueryKey,
-      updateFn: (oldData: ProductWithImages[] | undefined, { id, data }: { id: string; data: Partial<ProductWithImages> }) => {
+      updateFn: (
+        oldData: ProductWithImages[] | undefined,
+        { id, data }: { id: string; data: Partial<ProductWithImages> }
+      ) => {
         if (!oldData) return [];
         return oldData.map((product: ProductWithImages) =>
           product.id === id ? ({ ...product, ...data } as ProductWithImages) : product
@@ -73,12 +76,16 @@ export function useProductCacheWarmup(productId?: string): void {
       },
       priority: 'medium' as const,
     },
-    ...(productId ? [{
-      queryKey: getProductDetailQueryKey(productId),
-      queryFn: () => getProductById(productId),
-      priority: 'high' as const,
-      conditions: (): boolean => !!productId,
-    }] : []),
+    ...(productId
+      ? [
+          {
+            queryKey: getProductDetailQueryKey(productId),
+            queryFn: () => getProductById(productId),
+            priority: 'high' as const,
+            conditions: (): boolean => !!productId,
+          },
+        ]
+      : []),
   ]);
 }
 
@@ -86,20 +93,16 @@ export function useProductCacheWarmup(productId?: string): void {
 export function useProductPrefetch(): {
   prefetchProduct: (productId: string) => { onMouseEnter: () => void; onMouseLeave: () => void };
   prefetchProductEdit: (productId: string) => { onFocus: () => void };
-  } {
+} {
   const { prefetchOnHover, prefetchOnFocus } = useSmartPrefetch();
 
-  const prefetchProduct = (productId: string): { onMouseEnter: () => void; onMouseLeave: () => void } =>
-    prefetchOnHover(
-      getProductDetailQueryKey(productId),
-      () => getProductById(productId)
-    );
+  const prefetchProduct = (
+    productId: string
+  ): { onMouseEnter: () => void; onMouseLeave: () => void } =>
+    prefetchOnHover(getProductDetailQueryKey(productId), () => getProductById(productId));
 
   const prefetchProductEdit = (productId: string): { onFocus: () => void } =>
-    prefetchOnFocus(
-      getProductDetailEditQueryKey(productId),
-      () => getProductById(productId)
-    );
+    prefetchOnFocus(getProductDetailEditQueryKey(productId), () => getProductById(productId));
 
   return { prefetchProduct, prefetchProductEdit };
 }

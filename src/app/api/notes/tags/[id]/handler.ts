@@ -24,10 +24,7 @@ export async function PATCH_handler(
   if (!parsed.ok) {
     return parsed.response;
   }
-  const tag = await noteService.updateTag(
-    id,
-    removeUndefined(parsed.data) as TagUpdateInput
-  );
+  const tag = await noteService.updateTag(id, removeUndefined(parsed.data) as TagUpdateInput);
   return NextResponse.json(tag);
 }
 

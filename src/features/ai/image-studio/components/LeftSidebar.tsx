@@ -9,14 +9,7 @@ import {
 } from '@/features/products/constants';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import {
-  Button,
-  Input,
-  SidePanel,
-  Tooltip,
-  useToast,
-  EmptyState,
-} from '@/shared/ui';
+import { Button, Input, SidePanel, Tooltip, useToast, EmptyState } from '@/shared/ui';
 
 import {
   ImageStudioSingleSlotManager,
@@ -30,15 +23,15 @@ import { usePromptState } from '../context/PromptContext';
 import { useSettingsActions, useSettingsState } from '../context/SettingsContext';
 import { useSlotsState, useSlotsActions } from '../context/SlotsContext';
 import { useUiState } from '../context/UiContext';
-import { getImageStudioSlotImageSrc } from '../utils/image-src';
+import { getImageStudioSlotImageSrc } from '@/shared/lib/ai/image-studio/utils/image-src';
 import {
   getImageStudioProjectSessionKey,
   saveImageStudioProjectSessionLocal,
   serializeImageStudioProjectSession,
   type ImageStudioProjectSession,
-} from '../utils/project-session';
-import { getImageStudioDocTooltip } from '../utils/studio-docs';
-import { buildImageStudioSequenceSnapshot } from '../utils/studio-settings';
+} from '@/shared/lib/ai/image-studio/utils/project-session';
+import { getImageStudioDocTooltip } from '@/shared/lib/ai/image-studio/utils/studio-docs';
+import { buildImageStudioSequenceSnapshot } from '@/shared/lib/ai/image-studio/utils/studio-settings';
 
 const REVEAL_IN_TREE_EVENT = 'image-studio:reveal-in-tree';
 
@@ -72,14 +65,12 @@ export function LeftSidebar(): React.JSX.Element {
     createSlots,
     createFolderMutation,
   } = useSlotsActions();
-  const {
-    setMaskShapes,
-    setActiveMaskId,
-    setSelectedPointIndex,
-  } = useMaskingActions();
+  const { setMaskShapes, setActiveMaskId, setSelectedPointIndex } = useMaskingActions();
 
   const { toast } = useToast();
-  const [revealRequest, setRevealRequest] = useState<{ slotId: string; nonce: number } | null>(null);
+  const [revealRequest, setRevealRequest] = useState<{ slotId: string; nonce: number } | null>(
+    null
+  );
   const [projectSaveBusy, setProjectSaveBusy] = useState(false);
   const [projectRenameEditing, setProjectRenameEditing] = useState(false);
   const [projectNameDraft, setProjectNameDraft] = useState('');
@@ -95,8 +86,7 @@ export function LeftSidebar(): React.JSX.Element {
     ? getImageStudioSlotImageSrc(selectedSlot, productImagesExternalBaseUrl)
     : null;
   const canLoadToCanvas = Boolean(
-    (temporaryObjectUpload && projectId) ||
-    (selectedSlot?.id && selectedSlotImageSrc)
+    (temporaryObjectUpload && projectId) || (selectedSlot?.id && selectedSlotImageSrc)
   );
   const activeProjectNameFieldValue = useMemo((): string => {
     const normalizedProjectId = projectId.trim();
@@ -111,10 +101,13 @@ export function LeftSidebar(): React.JSX.Element {
     if (!activeProject || typeof activeProject !== 'object') return normalizedProjectId;
     const activeProjectRecord = activeProject as Record<string, unknown>;
     const activeProjectNameRaw = activeProjectRecord['name'];
-    const activeProjectName = typeof activeProjectNameRaw === 'string' ? activeProjectNameRaw.trim() : '';
+    const activeProjectName =
+      typeof activeProjectNameRaw === 'string' ? activeProjectNameRaw.trim() : '';
     return activeProjectName || normalizedProjectId;
   }, [projectId, projectsQuery.data]);
-  const visibleProjectNameFieldValue = projectRenameEditing ? projectNameDraft : activeProjectNameFieldValue;
+  const visibleProjectNameFieldValue = projectRenameEditing
+    ? projectNameDraft
+    : activeProjectNameFieldValue;
   const docsTooltips = useMemo(
     () => ({
       selectCardFirst: getImageStudioDocTooltip('sidebar_select_card_first'),
@@ -152,11 +145,15 @@ export function LeftSidebar(): React.JSX.Element {
     setLoadToCanvasBusy(true);
     void (async (): Promise<void> => {
       const consumedTemporaryUpload =
-        (await singleSlotManagerRef.current?.consumeTemporaryObjectUpload({ loadToCanvas: true })) ?? false;
+        (await singleSlotManagerRef.current?.consumeTemporaryObjectUpload({
+          loadToCanvas: true,
+        })) ?? false;
       if (consumedTemporaryUpload) return;
 
       if (temporaryObjectUpload) {
-        toast('Failed to load uploaded image onto canvas. Try uploading again.', { variant: 'error' });
+        toast('Failed to load uploaded image onto canvas. Try uploading again.', {
+          variant: 'error',
+        });
         return;
       }
 
@@ -165,12 +162,13 @@ export function LeftSidebar(): React.JSX.Element {
         setWorkingSlotId(selectedSlot.id);
         return;
       }
-      toast('Load to canvas is only available for Object slot upload or a card with an image.', { variant: 'info' });
-    })()
-      .finally(() => {
-        loadToCanvasBusyRef.current = false;
-        setLoadToCanvasBusy(false);
+      toast('Load to canvas is only available for Object slot upload or a card with an image.', {
+        variant: 'info',
       });
+    })().finally(() => {
+      loadToCanvasBusyRef.current = false;
+      setLoadToCanvasBusy(false);
+    });
   };
 
   const handleDeCanvas = (): void => {
@@ -180,21 +178,27 @@ export function LeftSidebar(): React.JSX.Element {
     setSelectedPointIndex(null);
   };
 
-  const queueRevealInTree = useCallback((targetSlotId: string | null): void => {
-    if (!targetSlotId) {
-      toast('No card is currently loaded in the preview.', { variant: 'info' });
-      return;
-    }
-    setSelectedSlotId(targetSlotId);
-    setRevealRequest((prev) => ({
-      slotId: targetSlotId,
-      nonce: (prev?.nonce ?? 0) + 1,
-    }));
-  }, [setSelectedSlotId, toast]);
+  const queueRevealInTree = useCallback(
+    (targetSlotId: string | null): void => {
+      if (!targetSlotId) {
+        toast('No card is currently loaded in the preview.', { variant: 'info' });
+        return;
+      }
+      setSelectedSlotId(targetSlotId);
+      setRevealRequest((prev) => ({
+        slotId: targetSlotId,
+        nonce: (prev?.nonce ?? 0) + 1,
+      }));
+    },
+    [setSelectedSlotId, toast]
+  );
 
   const handleCreateFolder = (): void => {
     const normalizePath = (value: string): string =>
-      value.trim().replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
+      value
+        .trim()
+        .replace(/\\/g, '/')
+        .replace(/^\/+|\/+$/g, '');
 
     // When a card is selected, create folder in the card's parent folder.
     // When a folder is selected, create inside it. Otherwise create at root.
@@ -213,9 +217,13 @@ export function LeftSidebar(): React.JSX.Element {
 
     const siblingFolderNames = new Set<string>();
     allFolderPaths.forEach((folderPath: string) => {
-      const parent = folderPath.includes('/') ? folderPath.slice(0, folderPath.lastIndexOf('/')) : '';
+      const parent = folderPath.includes('/')
+        ? folderPath.slice(0, folderPath.lastIndexOf('/'))
+        : '';
       if (parent !== selectedParent) return;
-      const leaf = folderPath.includes('/') ? folderPath.slice(folderPath.lastIndexOf('/') + 1) : folderPath;
+      const leaf = folderPath.includes('/')
+        ? folderPath.slice(folderPath.lastIndexOf('/') + 1)
+        : folderPath;
       if (!leaf) return;
       siblingFolderNames.add(leaf.toLowerCase());
     });
@@ -230,7 +238,9 @@ export function LeftSidebar(): React.JSX.Element {
 
     const nextPath = selectedParent ? `${selectedParent}/${nextLeaf}` : nextLeaf;
     void createFolderMutation.mutateAsync(nextPath).catch((error: unknown) => {
-      toast(error instanceof Error ? error.message : 'Failed to create folder', { variant: 'error' });
+      toast(error instanceof Error ? error.message : 'Failed to create folder', {
+        variant: 'error',
+      });
     });
   };
 
@@ -255,16 +265,11 @@ export function LeftSidebar(): React.JSX.Element {
       queueRevealInTree(nextCard.id);
       toast('Created empty card.', { variant: 'success' });
     })().catch((error: unknown) => {
-      toast(error instanceof Error ? error.message : 'Failed to create card.', { variant: 'error' });
+      toast(error instanceof Error ? error.message : 'Failed to create card.', {
+        variant: 'error',
+      });
     });
-  }, [
-    createSlots,
-    queueRevealInTree,
-    selectedFolder,
-    selectedSlot,
-    selectedSlotId,
-    toast,
-  ]);
+  }, [createSlots, queueRevealInTree, selectedFolder, selectedSlot, selectedSlotId, toast]);
 
   const handleDuplicateSelectedCard = useCallback((): void => {
     if (duplicateCardBusy) return;
@@ -298,7 +303,9 @@ export function LeftSidebar(): React.JSX.Element {
           ...(sourceImageUrl ? { imageUrl: sourceImageUrl } : {}),
           ...(sourceImageBase64 ? { imageBase64: sourceImageBase64 } : {}),
           ...(selectedSlot.asset3dId ? { asset3dId: selectedSlot.asset3dId } : {}),
-          ...(selectedSlot.screenshotFileId ? { screenshotFileId: selectedSlot.screenshotFileId } : {}),
+          ...(selectedSlot.screenshotFileId
+            ? { screenshotFileId: selectedSlot.screenshotFileId }
+            : {}),
           ...(sourceMetadata ? { metadata: sourceMetadata } : {}),
         },
       ]);
@@ -310,19 +317,16 @@ export function LeftSidebar(): React.JSX.Element {
 
       queueRevealInTree(duplicatedCard.id);
       toast('Card duplicated.', { variant: 'success' });
-    })().catch((error: unknown) => {
-      toast(error instanceof Error ? error.message : 'Failed to duplicate card.', { variant: 'error' });
-    }).finally(() => {
-      setDuplicateCardBusy(false);
-    });
-  }, [
-    createSlots,
-    duplicateCardBusy,
-    projectId,
-    queueRevealInTree,
-    selectedSlot,
-    toast,
-  ]);
+    })()
+      .catch((error: unknown) => {
+        toast(error instanceof Error ? error.message : 'Failed to duplicate card.', {
+          variant: 'error',
+        });
+      })
+      .finally(() => {
+        setDuplicateCardBusy(false);
+      });
+  }, [createSlots, duplicateCardBusy, projectId, queueRevealInTree, selectedSlot, toast]);
 
   const handleSaveProject = (): void => {
     const normalizedProjectId = projectId.trim();
@@ -508,7 +512,8 @@ export function LeftSidebar(): React.JSX.Element {
     >
       <div className='grid min-h-0 flex-1 grid-rows-[auto_auto_clamp(240px,38vh,420px)_minmax(160px,1fr)] gap-3 overflow-hidden p-4'>
         <div className='flex items-center gap-2 px-1 py-1' data-preserve-slot-selection='true'>
-          <Button size='xs'
+          <Button
+            size='xs'
             type='button'
             variant='outline'
             className='h-7 shrink-0 px-2 text-[11px]'
@@ -564,7 +569,8 @@ export function LeftSidebar(): React.JSX.Element {
           </div>
           <div className='flex shrink-0 flex-col items-center gap-2 self-start'>
             <Tooltip content={selectedSlot ? docsTooltips.editCard : docsTooltips.selectCardFirst}>
-              <Button size='xs'
+              <Button
+                size='xs'
                 type='button'
                 variant='outline'
                 title={selectedSlot ? docsTooltips.editCard : docsTooltips.selectCardFirst}
@@ -575,8 +581,11 @@ export function LeftSidebar(): React.JSX.Element {
                 <Settings2 className='size-4' />
               </Button>
             </Tooltip>
-            <Tooltip content={selectedSlot ? docsTooltips.duplicateCard : docsTooltips.selectCardFirst}>
-              <Button size='xs'
+            <Tooltip
+              content={selectedSlot ? docsTooltips.duplicateCard : docsTooltips.selectCardFirst}
+            >
+              <Button
+                size='xs'
                 type='button'
                 variant='outline'
                 title={selectedSlot ? docsTooltips.duplicateCard : docsTooltips.selectCardFirst}
@@ -590,7 +599,8 @@ export function LeftSidebar(): React.JSX.Element {
           </div>
           <div className='flex shrink-0 flex-col items-center gap-2 self-start'>
             <Tooltip content={docsTooltips.loadToCanvas}>
-              <Button size='xs'
+              <Button
+                size='xs'
                 type='button'
                 variant='outline'
                 title={docsTooltips.loadToCanvas}
@@ -602,7 +612,8 @@ export function LeftSidebar(): React.JSX.Element {
               </Button>
             </Tooltip>
             <Tooltip content={docsTooltips.decanvas}>
-              <Button size='xs'
+              <Button
+                size='xs'
                 type='button'
                 variant='outline'
                 title={docsTooltips.decanvas}
@@ -614,7 +625,8 @@ export function LeftSidebar(): React.JSX.Element {
               </Button>
             </Tooltip>
             <Tooltip content={docsTooltips.newCard}>
-              <Button size='xs'
+              <Button
+                size='xs'
                 type='button'
                 variant='outline'
                 title={docsTooltips.newCard}
@@ -626,7 +638,8 @@ export function LeftSidebar(): React.JSX.Element {
               </Button>
             </Tooltip>
             <Tooltip content={docsTooltips.newFolder}>
-              <Button size='xs'
+              <Button
+                size='xs'
                 type='button'
                 variant='outline'
                 title={docsTooltips.newFolder}

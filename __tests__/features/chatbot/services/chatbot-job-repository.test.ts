@@ -27,16 +27,20 @@ vi.mock('@/shared/lib/db/mongo-client', () => ({
 }));
 
 vi.mock('mongodb', async (importOriginal) => {
-  const actual = await importOriginal() as any;
+  const actual = (await importOriginal()) as any;
   class MockObjectId {
     id: string;
     constructor(id: string) {
       this.id = id;
     }
-    toString() { return this.id; }
-    equals(other: any) { return other.toString() === this.id; }
+    toString() {
+      return this.id;
+    }
+    equals(other: any) {
+      return other.toString() === this.id;
+    }
   }
-  const MockObjectIdCtor = function(id: string) {
+  const MockObjectIdCtor = function (id: string) {
     return new MockObjectId(id);
   };
   (MockObjectIdCtor as any).isValid = actual.ObjectId.isValid;
@@ -111,7 +115,10 @@ describe('Chatbot Job Repository', () => {
       };
       mockCollection.findOneAndUpdate.mockResolvedValue(mockJob);
 
-      const result = await chatbotJobRepository.update(validId, { status: 'completed', resultText: 'done' });
+      const result = await chatbotJobRepository.update(validId, {
+        status: 'completed',
+        resultText: 'done',
+      });
 
       expect(mockCollection.findOneAndUpdate).toHaveBeenCalled();
       expect(result?.status).toBe('completed');
@@ -122,7 +129,9 @@ describe('Chatbot Job Repository', () => {
     it('deletes multiple jobs by status', async () => {
       mockCollection.deleteMany.mockResolvedValue({ deletedCount: 5 });
       const result = await chatbotJobRepository.deleteMany(['completed', 'failed']);
-      expect(mockCollection.deleteMany).toHaveBeenCalledWith({ status: { $in: ['completed', 'failed'] } });
+      expect(mockCollection.deleteMany).toHaveBeenCalledWith({
+        status: { $in: ['completed', 'failed'] },
+      });
       expect(result).toBe(5);
     });
   });

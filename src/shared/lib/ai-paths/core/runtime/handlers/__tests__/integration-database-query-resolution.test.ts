@@ -42,7 +42,8 @@ describe('resolveDatabaseQuery guardrails', () => {
 
     expect(result.output['bundle']).toEqual(
       expect.objectContaining({
-        error: 'No explicit query provided. Define queryTemplate or connect query/queryCallback/aiQuery input.',
+        error:
+          'No explicit query provided. Define queryTemplate or connect query/queryCallback/aiQuery input.',
         guardrail: 'query-resolution',
         querySource: 'customTemplate',
       })

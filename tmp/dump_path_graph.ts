@@ -26,7 +26,7 @@ async function main(): Promise<void> {
         title: node.title,
         type: node.type,
       },
-    ]),
+    ])
   );
 
   const simplifiedEdges = edges.map((edge) => {
@@ -58,8 +58,8 @@ async function main(): Promise<void> {
         edges: simplifiedEdges,
       },
       null,
-      2,
-    ),
+      2
+    )
   );
 }
 

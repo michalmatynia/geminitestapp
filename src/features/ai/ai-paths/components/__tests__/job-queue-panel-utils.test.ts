@@ -3,8 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { AiPathRunNodeRecord } from '@/shared/contracts/ai-paths';
 
 vi.mock('../AiPathsSettingsUtils', () => ({
-  safeJsonStringify: (value: unknown): string =>
-    JSON.stringify(value ?? null),
+  safeJsonStringify: (value: unknown): string => JSON.stringify(value ?? null),
 }));
 
 import { normalizeRunNodes } from '../job-queue-panel-utils';

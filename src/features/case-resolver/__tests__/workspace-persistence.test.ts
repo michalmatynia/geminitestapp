@@ -161,7 +161,7 @@ describe('case-resolver workspace persistence', () => {
             key: CASE_RESOLVER_WORKSPACE_KEY,
             value: JSON.stringify(workspace),
           },
-        ]),
+        ])
       );
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
 
@@ -170,10 +170,10 @@ describe('case-resolver workspace persistence', () => {
     expect(result).not.toBeNull();
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(fetchMock.mock.calls[0]?.[0]).toBe(
-      `/api/settings?scope=light&fresh=1&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`,
+      `/api/settings?scope=light&fresh=1&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`
     );
     expect(fetchMock.mock.calls[1]?.[0]).toBe(
-      `/api/settings?scope=light&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`,
+      `/api/settings?scope=light&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`
     );
   });
 
@@ -183,7 +183,7 @@ describe('case-resolver workspace persistence', () => {
       toJsonResponse(200, {
         key: CASE_RESOLVER_WORKSPACE_KEY,
         value: JSON.stringify(workspace),
-      }),
+      })
     );
     globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
 
@@ -263,7 +263,8 @@ describe('case-resolver workspace persistence', () => {
           id: 'scan-history-1',
           savedAt: '2026-02-26T10:00:00.000Z',
           documentContentVersion: 1,
-          editorType: 'markdown',          activeDocumentVersion: 'original',
+          editorType: 'markdown',
+          activeDocumentVersion: 'original',
           documentContent: '# History',
           documentContentMarkdown: '# History',
           documentContentHtml: '<h1>History</h1>',
@@ -284,7 +285,8 @@ describe('case-resolver workspace persistence', () => {
           id: 'doc-history-1',
           savedAt: '2026-02-26T10:00:00.000Z',
           documentContentVersion: 1,
-          editorType: 'wysiwyg',          activeDocumentVersion: 'original',
+          editorType: 'wysiwyg',
+          activeDocumentVersion: 'original',
           documentContent: '<p>History</p>',
           documentContentMarkdown: 'History',
           documentContentHtml: '<p>History</p>',

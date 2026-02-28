@@ -2,15 +2,8 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { Dispatch, SetStateAction } from 'react';
 
-import type {
-  PathConfig,
-  PathMeta,
-  RuntimeState,
-} from '@/shared/lib/ai-paths';
-import {
-  DEFAULT_AI_PATHS_VALIDATION_CONFIG,
-  createDefaultPathConfig,
-} from '@/shared/lib/ai-paths';
+import type { PathConfig, PathMeta, RuntimeState } from '@/shared/lib/ai-paths';
+import { DEFAULT_AI_PATHS_VALIDATION_CONFIG, createDefaultPathConfig } from '@/shared/lib/ai-paths';
 
 import { useAiPathsSettingsModeActions } from '../useAiPathsSettingsModeActions';
 
@@ -70,19 +63,14 @@ describe('useAiPathsSettingsModeActions', () => {
     const setFlowIntensity = createDispatchMock<ModeActionsInput['flowIntensity']>();
     const setRunMode = createDispatchMock<ModeActionsInput['runMode']>();
     const setStrictFlowMode = createDispatchMock<boolean>();
-    const setBlockedRunPolicy =
-      createDispatchMock<ModeActionsInput['blockedRunPolicy']>();
+    const setBlockedRunPolicy = createDispatchMock<ModeActionsInput['blockedRunPolicy']>();
     const setHistoryRetentionPasses = createDispatchMock<number>();
     const setPaths = createDispatchMock<PathMeta[]>();
     const setPathConfigs = createDispatchMock<Record<string, PathConfig>>();
 
     const persistPathSettings = vi
       .fn<
-        (
-          nextPaths: PathMeta[],
-          nextActivePathId: string,
-          nextConfig: PathConfig,
-        ) => Promise<void>
+        (nextPaths: PathMeta[], nextActivePathId: string, nextConfig: PathConfig) => Promise<void>
       >()
       .mockResolvedValue(undefined);
     const persistSettingsBulk = vi
@@ -142,9 +130,7 @@ describe('useAiPathsSettingsModeActions', () => {
     const setPathConfigsArg = setPathConfigs.mock.mock.calls[0]?.[0];
     expect(typeof setPathConfigsArg).toBe('function');
     const nextConfigs = (
-      setPathConfigsArg as (
-        prev: Record<string, PathConfig>,
-      ) => Record<string, PathConfig>
+      setPathConfigsArg as (prev: Record<string, PathConfig>) => Record<string, PathConfig>
     )({
       [activePathId]: pathConfig,
     });

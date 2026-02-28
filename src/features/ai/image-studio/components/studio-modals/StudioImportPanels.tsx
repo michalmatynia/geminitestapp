@@ -61,7 +61,7 @@ export function StudioImportPanels(): React.JSX.Element {
             disabled={uploadPending}
             asChild
           >
-            <Button 
+            <Button
               size='sm'
               type='button'
               variant='outline'

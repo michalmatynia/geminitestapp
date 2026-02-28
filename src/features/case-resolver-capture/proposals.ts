@@ -20,7 +20,11 @@ import type {
   CaseResolverCaptureSettings,
 } from './settings';
 
-export type CaseResolverCaptureProposalMatchKind = 'none' | 'party' | 'address' | 'party_and_address';
+export type CaseResolverCaptureProposalMatchKind =
+  | 'none'
+  | 'party'
+  | 'address'
+  | 'party_and_address';
 
 export type CaseResolverCaptureProposal = {
   role: CaseResolverCaptureRole;
@@ -167,9 +171,7 @@ const resolvePreferredRoleForEquivalentCandidates = (
     return 'addresser';
   }
 
-  const hasOrganizationSignal = (
-    candidate: PromptExploderCaseResolverPartyCandidate
-  ): boolean =>
+  const hasOrganizationSignal = (candidate: PromptExploderCaseResolverPartyCandidate): boolean =>
     candidate.kind === 'organization' ||
     normalizeCaseResolverComparable(candidate.organizationName ?? '').length > 0;
 
@@ -188,7 +190,8 @@ const buildCaseResolverCaptureProposal = (args: {
   database: FilemakerDatabase;
 }): CaseResolverCaptureProposal | null => {
   if (!args.mapping.enabled) return null;
-  if (!(args.candidate.rawText ?? '').trim() && !(args.candidate.displayName ?? '').trim()) return null;
+  if (!(args.candidate.rawText ?? '').trim() && !(args.candidate.displayName ?? '').trim())
+    return null;
 
   const existingReference = args.mapping.autoMatchPartyReference
     ? findExistingFilemakerPartyReference(args.database, args.candidate)
@@ -196,13 +199,13 @@ const buildCaseResolverCaptureProposal = (args: {
 
   const existingAddressId = args.mapping.autoMatchAddress
     ? findExistingFilemakerAddressId(args.database, {
-      street: args.candidate.street ?? '',
-      streetNumber: composeCandidateStreetNumber(args.candidate),
-      city: args.candidate.city ?? '',
-      postalCode: args.candidate.postalCode ?? '',
-      country: args.candidate.country ?? '',
-      countryId: '',
-    })
+        street: args.candidate.street ?? '',
+        streetNumber: composeCandidateStreetNumber(args.candidate),
+        city: args.candidate.city ?? '',
+        postalCode: args.candidate.postalCode ?? '',
+        country: args.candidate.country ?? '',
+        countryId: '',
+      })
     : null;
 
   const hasAddressCandidate = Boolean(
@@ -213,13 +216,14 @@ const buildCaseResolverCaptureProposal = (args: {
     (args.candidate.country ?? '').trim()
   );
 
-  const matchKind: CaseResolverCaptureProposalMatchKind = existingReference && existingAddressId
-    ? 'party_and_address'
-    : existingReference
-      ? 'party'
-      : existingAddressId
-        ? 'address'
-        : 'none';
+  const matchKind: CaseResolverCaptureProposalMatchKind =
+    existingReference && existingAddressId
+      ? 'party_and_address'
+      : existingReference
+        ? 'party'
+        : existingAddressId
+          ? 'address'
+          : 'none';
 
   const action: CaseResolverCaptureAction = (() => {
     if (matchKind === 'party' || matchKind === 'party_and_address') {
@@ -228,7 +232,10 @@ const buildCaseResolverCaptureProposal = (args: {
     if (hasAddressCandidate || matchKind === 'address') {
       return 'createInFilemaker';
     }
-    if (args.mapping.defaultAction === 'createInFilemaker' || args.mapping.defaultAction === 'ignore') {
+    if (
+      args.mapping.defaultAction === 'createInFilemaker' ||
+      args.mapping.defaultAction === 'ignore'
+    ) {
       return args.mapping.defaultAction;
     }
     if (args.mapping.defaultAction === 'keepText') {
@@ -243,10 +250,10 @@ const buildCaseResolverCaptureProposal = (args: {
     candidate: args.candidate,
     existingReference: existingReference
       ? {
-        kind: existingReference.kind,
-        id: String(existingReference.id),
-        name: existingReference.displayName,
-      }
+          kind: existingReference.kind,
+          id: String(existingReference.id),
+          name: existingReference.displayName,
+        }
       : null,
     existingAddressId,
     matchKind,
@@ -277,8 +284,8 @@ export const buildCaseResolverCaptureProposalState = (
 
   if (
     resolvedCandidates.addresser &&
-        resolvedCandidates.addressee &&
-        areEquivalentCandidates(resolvedCandidates.addresser, resolvedCandidates.addressee)
+    resolvedCandidates.addressee &&
+    areEquivalentCandidates(resolvedCandidates.addresser, resolvedCandidates.addressee)
   ) {
     const preferredRole = resolvePreferredRoleForEquivalentCandidates(
       resolvedCandidates.addresser,
@@ -321,8 +328,7 @@ export const buildCaseResolverCaptureProposalState = (
     }
   });
 
-  const normalizeDateToken = (value: string): string =>
-    value.replace(/[^\d]/g, '');
+  const normalizeDateToken = (value: string): string => value.replace(/[^\d]/g, '');
 
   const normalizeYear = (value: string): string => {
     const digits = normalizeDateToken(value);
@@ -346,11 +352,7 @@ export const buildCaseResolverCaptureProposalState = (
   const sourceTextDate = sourceText ? extractCaseResolverDocumentDate(sourceText) : null;
   const detectedDate = metadataDate ?? sourceTextDate;
   const detectedDateSource: CaseResolverCaptureDocumentDateProposal['source'] | null =
-    metadataDate !== null
-      ? 'metadata'
-      : sourceTextDate !== null
-        ? 'text'
-        : null;
+    metadataDate !== null ? 'metadata' : sourceTextDate !== null ? 'text' : null;
   const cityHint = metadataPlaceDate?.city?.trim() || null;
   const sourceDateLine = (() => {
     if (!detectedDate || !sourceText) return null;
@@ -387,13 +389,13 @@ export const buildCaseResolverCaptureProposalState = (
   const documentDateProposal: CaseResolverCaptureDocumentDateProposal | null =
     detectedDate && detectedDateSource
       ? {
-        isoDate: detectedDate,
-        source: detectedDateSource,
-        sourceLine: sourceDateLine,
-        cityHint,
-        city: resolvedDocumentCity,
-        action: 'useDetectedDate',
-      }
+          isoDate: detectedDate,
+          source: detectedDateSource,
+          sourceLine: sourceDateLine,
+          cityHint,
+          city: resolvedDocumentCity,
+          action: 'useDetectedDate',
+        }
       : null;
 
   if (!proposals.addresser && !proposals.addressee && !documentDateProposal) return null;
@@ -509,7 +511,7 @@ const decodeBasicCaptureHtmlEntities = (value: string): string =>
     .replace(/&lt;/gi, '<')
     .replace(/&gt;/gi, '>')
     .replace(/&quot;/gi, '"')
-    .replace(/&#39;/gi, '\'');
+    .replace(/&#39;/gi, "'");
 
 const normalizeCaptureSourceText = (
   sourceText: string
@@ -540,8 +542,7 @@ const normalizeCaptureSourceText = (
 const CAPTURE_HEADER_LINE_SEARCH_LIMIT = 140;
 const CAPTURE_HEADER_BLOCK_EXTRA_SPAN = 6;
 
-const splitCaptureTextLines = (sourceText: string): string[] =>
-  sourceText.split(/\r?\n/);
+const splitCaptureTextLines = (sourceText: string): string[] => sourceText.split(/\r?\n/);
 
 const compactCaptureTextLines = (lines: string[]): string[] => {
   const compact: string[] = [];
@@ -579,10 +580,7 @@ const resolveCaptureHeaderSearchLimit = (sourceLines: string[]): number => {
     blankRun = 0;
     const wordCount = line.split(/\s+/).filter(Boolean).length;
     const looksLikeBodyParagraph =
-      index >= 6 &&
-      wordCount >= 12 &&
-      line.length >= 70 &&
-      /[.;:]/.test(line);
+      index >= 6 && wordCount >= 12 && line.length >= 70 && /[.;:]/.test(line);
     if (looksLikeBodyParagraph) {
       return index;
     }
@@ -635,15 +633,13 @@ const collectCandidateNameLines = (
   const personFullName = [
     candidate.firstName ?? '',
     candidate.middleName ?? '',
-    candidate.lastName ?? '',  ]
+    candidate.lastName ?? '',
+  ]
     .map((part: string): string => part.trim())
     .filter(Boolean)
     .join(' ')
     .trim();
-  const personShortName = [
-    candidate.firstName ?? '',
-    candidate.lastName ?? '',
-  ]
+  const personShortName = [candidate.firstName ?? '', candidate.lastName ?? '']
     .map((part: string): string => part.trim())
     .filter(Boolean)
     .join(' ')
@@ -721,7 +717,8 @@ const buildCandidateComparableText = (
     candidate.organizationName,
     candidate.firstName,
     candidate.middleName,
-    candidate.lastName,    candidate.street,
+    candidate.lastName,
+    candidate.street,
     composeCandidateStreetNumber(candidate),
     candidate.city,
     candidate.postalCode,
@@ -786,12 +783,7 @@ const findOrderedCaptureBlockIndices = (input: {
   headerSearchLimit: number;
   excludedIndexes?: Set<number> | undefined;
 }): number[] | null => {
-  const {
-    sourceLineKeys,
-    blockLineKeys,
-    headerSearchLimit,
-    excludedIndexes,
-  } = input;
+  const { sourceLineKeys, blockLineKeys, headerSearchLimit, excludedIndexes } = input;
 
   const sanitizedBlock = blockLineKeys.filter(Boolean);
   if (sanitizedBlock.length < 1) return null;
@@ -818,8 +810,7 @@ const findOrderedCaptureBlockIndices = (input: {
     }
 
     if (blockIndex !== sanitizedBlock.length) continue;
-    const span =
-      (matchIndexes[matchIndexes.length - 1] ?? start) - start;
+    const span = (matchIndexes[matchIndexes.length - 1] ?? start) - start;
     const maxSpan = sanitizedBlock.length + CAPTURE_HEADER_BLOCK_EXTRA_SPAN;
     if (span > maxSpan) continue;
     if (span < bestSpan) {
@@ -835,10 +826,10 @@ const stripAcceptedAddressLinesFromTextDetailed = (
   sourceText: string,
   proposalState: CaseResolverCaptureProposalState | null
 ): {
-    text: string;
-    removedLineCount: number;
-    removedByRole: { addresser: number; addressee: number };
-  } => {
+  text: string;
+  removedLineCount: number;
+  removedByRole: { addresser: number; addressee: number };
+} => {
   if (!sourceText || !proposalState) {
     return {
       text: sourceText,
@@ -851,9 +842,7 @@ const stripAcceptedAddressLinesFromTextDetailed = (
   }
 
   const sourceLines = splitCaptureTextLines(sourceText);
-  const sourceLineKeys = sourceLines.map((line: string): string =>
-    normalizeCaptureTextLine(line)
-  );
+  const sourceLineKeys = sourceLines.map((line: string): string => normalizeCaptureTextLine(line));
   const headerSearchLimit = resolveCaptureHeaderSearchLimit(sourceLines);
   if (headerSearchLimit <= 0) {
     return {
@@ -884,10 +873,12 @@ const stripAcceptedAddressLinesFromTextDetailed = (
     changed = true;
   };
 
-  ([
-    ['addresser', proposalState.addresser],
-    ['addressee', proposalState.addressee],
-  ] as const).forEach(([role, proposal]) => {
+  (
+    [
+      ['addresser', proposalState.addresser],
+      ['addressee', proposalState.addressee],
+    ] as const
+  ).forEach(([role, proposal]) => {
     if (!proposal || proposal.action === 'ignore' || proposal.action === 'keepText') return;
 
     const beforeCount = removedByRole[role];
@@ -1048,9 +1039,7 @@ const stripAcceptedDateLineFromTextDetailed = (
   }
 
   const sourceLines = splitCaptureTextLines(sourceText);
-  const sourceLineKeys = sourceLines.map((line: string): string =>
-    normalizeCaptureTextLine(line)
-  );
+  const sourceLineKeys = sourceLines.map((line: string): string => normalizeCaptureTextLine(line));
   const headerSearchLimit = resolveCaptureHeaderSearchLimit(sourceLines);
   if (headerSearchLimit <= 0) {
     return {
@@ -1061,9 +1050,10 @@ const stripAcceptedDateLineFromTextDetailed = (
   const sourceLineKey = documentDate.sourceLine
     ? normalizeCaptureTextLine(documentDate.sourceLine)
     : '';
-  const normalizedCityHint = (documentDate.city ?? documentDate.cityHint)
-    ? normalizeCaseResolverComparable(documentDate.city ?? documentDate.cityHint ?? '')
-    : '';
+  const normalizedCityHint =
+    (documentDate.city ?? documentDate.cityHint)
+      ? normalizeCaseResolverComparable(documentDate.city ?? documentDate.cityHint ?? '')
+      : '';
 
   let removalIndex = -1;
   if (sourceLineKey) {
@@ -1132,10 +1122,7 @@ export const stripAcceptedCaptureContentFromTextWithReport = (
     normalizedSource.plainText,
     proposalState
   );
-  const dateCleanup = stripAcceptedDateLineFromTextDetailed(
-    addressCleanup.text,
-    proposalState
-  );
+  const dateCleanup = stripAcceptedDateLineFromTextDetailed(addressCleanup.text, proposalState);
   return {
     text: dateCleanup.text,
     report: {

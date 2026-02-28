@@ -9,12 +9,17 @@ import { useBindingsState, useBindingsActions } from '../context/hooks/useBindin
 import { useDocumentState } from '../context/hooks/useDocument';
 import { promptExploderFormatSubsectionLabel } from '../helpers/segment-helpers';
 
-import type { PromptExploderBinding, PromptExploderBindingType, PromptExploderSubsection } from '../types';
+import type {
+  PromptExploderBinding,
+  PromptExploderBindingType,
+  PromptExploderSubsection,
+} from '../types';
 
 export function BindingsPanel(): React.JSX.Element {
   const { documentState, segmentOptions, segmentById } = useDocumentState();
   const { bindingDraft, fromSubsectionOptions, toSubsectionOptions } = useBindingsState();
-  const { setBindingDraft, handleAddManualBinding, handleRemoveManualBinding } = useBindingsActions();
+  const { setBindingDraft, handleAddManualBinding, handleRemoveManualBinding } =
+    useBindingsActions();
 
   const describeBindingEndpoint = (
     segmentId: string,
@@ -23,7 +28,9 @@ export function BindingsPanel(): React.JSX.Element {
     const segment = segmentById.get(segmentId);
     if (!segment) return 'Unknown segment';
     if (!subsectionId) return segment.title || 'Untitled';
-    const subsection = (segment.subsections || []).find((candidate: PromptExploderSubsection) => candidate.id === subsectionId);
+    const subsection = (segment.subsections || []).find(
+      (candidate: PromptExploderSubsection) => candidate.id === subsectionId
+    );
     if (!subsection) return segment.title || 'Untitled';
     return `${segment.title || 'Untitled'} · ${promptExploderFormatSubsectionLabel(subsection)}`;
   };
@@ -42,7 +49,8 @@ export function BindingsPanel(): React.JSX.Element {
           <div className='rounded border border-border/50 bg-card/20 p-2'>
             <div className='grid gap-2'>
               <div className='grid gap-2 md:grid-cols-3'>
-                <SelectSimple size='sm'
+                <SelectSimple
+                  size='sm'
                   value={bindingDraft.type}
                   onValueChange={(value: string) => {
                     setBindingDraft((previous) => ({
@@ -56,7 +64,8 @@ export function BindingsPanel(): React.JSX.Element {
                     { value: 'uses_param', label: 'Uses Param' },
                   ]}
                 />
-                <SelectSimple size='sm'
+                <SelectSimple
+                  size='sm'
                   value={bindingDraft.fromSegmentId}
                   onValueChange={(value: string) => {
                     setBindingDraft((previous) => ({
@@ -67,7 +76,8 @@ export function BindingsPanel(): React.JSX.Element {
                   }}
                   options={segmentOptions}
                 />
-                <SelectSimple size='sm'
+                <SelectSimple
+                  size='sm'
                   value={bindingDraft.fromSubsectionId}
                   onValueChange={(value: string) => {
                     setBindingDraft((previous) => ({
@@ -79,7 +89,8 @@ export function BindingsPanel(): React.JSX.Element {
                 />
               </div>
               <div className='grid gap-2 md:grid-cols-2'>
-                <SelectSimple size='sm'
+                <SelectSimple
+                  size='sm'
                   value={bindingDraft.toSegmentId}
                   onValueChange={(value: string) => {
                     setBindingDraft((previous) => ({
@@ -90,7 +101,8 @@ export function BindingsPanel(): React.JSX.Element {
                   }}
                   options={segmentOptions}
                 />
-                <SelectSimple size='sm'
+                <SelectSimple
+                  size='sm'
                   value={bindingDraft.toSubsectionId}
                   onValueChange={(value: string) => {
                     setBindingDraft((previous) => ({
@@ -143,13 +155,17 @@ export function BindingsPanel(): React.JSX.Element {
           ) : (
             <div className='max-h-[280px] space-y-2 overflow-auto'>
               {documentState.bindings.map((binding: PromptExploderBinding) => (
-                <div key={binding.id} className='rounded border border-border/50 bg-card/20 p-2 text-xs'>
+                <div
+                  key={binding.id}
+                  className='rounded border border-border/50 bg-card/20 p-2 text-xs'
+                >
                   <div className='flex items-center justify-between gap-2'>
                     <div className='flex items-center gap-2 text-gray-200'>
                       <Link2 className='size-3.5' />
                       <span className='uppercase text-[10px] tracking-wide text-gray-500'>
                         {(binding.type || '').replaceAll('_', ' ')}
-                      </span>                      <span className='rounded border border-border/60 px-1 py-0.5 text-[9px] uppercase text-gray-400'>
+                      </span>{' '}
+                      <span className='rounded border border-border/60 px-1 py-0.5 text-[9px] uppercase text-gray-400'>
                         {binding.origin}
                       </span>
                     </div>
@@ -170,9 +186,10 @@ export function BindingsPanel(): React.JSX.Element {
                     {binding.sourceLabel} → {binding.targetLabel}
                   </div>
                   <div className='mt-1 text-[10px] text-gray-500'>
-                    {describeBindingEndpoint(binding.fromSegmentId ?? '', binding.fromSubsectionId)} →{' '}
-                    {describeBindingEndpoint(binding.toSegmentId ?? '', binding.toSubsectionId)}
-                  </div>                </div>
+                    {describeBindingEndpoint(binding.fromSegmentId ?? '', binding.fromSubsectionId)}{' '}
+                    → {describeBindingEndpoint(binding.toSegmentId ?? '', binding.toSubsectionId)}
+                  </div>{' '}
+                </div>
               ))}
             </div>
           )}

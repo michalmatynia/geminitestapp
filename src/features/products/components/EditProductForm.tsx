@@ -4,7 +4,10 @@ import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 
 import ProductForm from '@/features/products/components/ProductForm';
-import { ProductFormProvider, useProductFormContext } from '@/features/products/context/ProductFormContext';
+import {
+  ProductFormProvider,
+  useProductFormContext,
+} from '@/features/products/context/ProductFormContext';
 import type { ProductWithImages } from '@/shared/contracts/products';
 import { Button, Card } from '@/shared/ui';
 
@@ -32,13 +35,8 @@ function ArrowLeftIcon(props: React.SVGProps<SVGSVGElement>): React.JSX.Element 
 }
 
 function EditProductForm(): React.JSX.Element {
-  const {
-    showFileManager,
-    handleMultiFileSelect,
-    uploading,
-    handleSubmit,
-    hasUnsavedChanges,
-  } = useProductFormContext();
+  const { showFileManager, handleMultiFileSelect, uploading, handleSubmit, hasUnsavedChanges } =
+    useProductFormContext();
   const router = useRouter();
   const isSaveDisabled = uploading || !hasUnsavedChanges;
 
@@ -46,7 +44,9 @@ function EditProductForm(): React.JSX.Element {
     <Card variant='default' padding='lg' className='shadow-lg'>
       <div className='mb-6 flex items-center gap-4 border-b border-border pb-4'>
         <Button
-          onClick={(e: React.FormEvent | React.MouseEvent) => { void handleSubmit(e); }}
+          onClick={(e: React.FormEvent | React.MouseEvent) => {
+            void handleSubmit(e);
+          }}
           disabled={isSaveDisabled}
           aria-disabled={isSaveDisabled}
           variant={hasUnsavedChanges ? 'success' : 'default'}

@@ -16,10 +16,7 @@ const CASE_RESOLVER_CONFLICT_RETRY_MAX_DELAY_MS_DEFAULT = 1_500;
 const CASE_RESOLVER_CONFLICT_RETRY_JITTER_MS_DEFAULT = 120;
 const CASE_RESOLVER_WORKSPACE_FETCH_TIMEOUT_MS_DEFAULT = 8_000;
 
-const readPositiveIntegerEnv = (
-  key: string,
-  fallback: number
-): number => {
+const readPositiveIntegerEnv = (key: string, fallback: number): number => {
   const value = process.env[key];
   if (!value) return fallback;
   const parsed = Number(value);
@@ -145,9 +142,8 @@ const formatByteCount = (value: number): string => {
     normalized /= 1024;
     unitIndex += 1;
   }
-  const rounded = normalized >= 10 || unitIndex === 0
-    ? normalized.toFixed(0)
-    : normalized.toFixed(1);
+  const rounded =
+    normalized >= 10 || unitIndex === 0 ? normalized.toFixed(0) : normalized.toFixed(1);
   return `${rounded} ${units[unitIndex]}`;
 };
 
@@ -155,8 +151,7 @@ export const getCaseResolverWorkspaceMaxPayloadBytes = (): number =>
   CASE_RESOLVER_WORKSPACE_MAX_PAYLOAD_BYTES;
 
 export const isCaseResolverWorkspacePayloadTooLarge = (payloadBytes: number): boolean =>
-  Number.isFinite(payloadBytes) &&
-  payloadBytes > CASE_RESOLVER_WORKSPACE_MAX_PAYLOAD_BYTES;
+  Number.isFinite(payloadBytes) && payloadBytes > CASE_RESOLVER_WORKSPACE_MAX_PAYLOAD_BYTES;
 
 export const computeCaseResolverConflictRetryDelayMs = (
   attempt: number,
@@ -166,8 +161,7 @@ export const computeCaseResolverConflictRetryDelayMs = (
     jitterMs?: number;
   }
 ): number => {
-  const normalizedAttempt =
-    Number.isFinite(attempt) && attempt > 0 ? Math.floor(attempt) : 1;
+  const normalizedAttempt = Number.isFinite(attempt) && attempt > 0 ? Math.floor(attempt) : 1;
   const baseDelayMs =
     Number.isFinite(options?.baseDelayMs) && (options?.baseDelayMs ?? 0) > 0
       ? Math.floor(options?.baseDelayMs ?? 0)
@@ -181,24 +175,23 @@ export const computeCaseResolverConflictRetryDelayMs = (
       ? Math.floor(options?.jitterMs ?? 0)
       : CASE_RESOLVER_CONFLICT_RETRY_JITTER_MS_DEFAULT;
 
-  const exponentialDelay = Math.min(
-    maxDelayMs,
-    baseDelayMs * Math.pow(2, normalizedAttempt - 1)
-  );
+  const exponentialDelay = Math.min(maxDelayMs, baseDelayMs * Math.pow(2, normalizedAttempt - 1));
   const jitter = jitterMs > 0 ? Math.floor(Math.random() * (jitterMs + 1)) : 0;
   return exponentialDelay + jitter;
 };
 
-export const createCaseResolverWorkspaceMutationId = (prefix = 'case-resolver-workspace'): string => {
+export const createCaseResolverWorkspaceMutationId = (
+  prefix = 'case-resolver-workspace'
+): string => {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return `${prefix}-${crypto.randomUUID()}`;
   }
   return `${prefix}-${Math.random().toString(36).slice(2, 10)}-${Date.now()}`;
 };
 
-export const getCaseResolverWorkspaceRevision = (
-  workspace: { workspaceRevision?: unknown }
-): number => {
+export const getCaseResolverWorkspaceRevision = (workspace: {
+  workspaceRevision?: unknown;
+}): number => {
   const candidate = workspace.workspaceRevision;
   if (typeof candidate !== 'number' || !Number.isFinite(candidate)) return 0;
   if (candidate <= 0) return 0;
@@ -214,9 +207,8 @@ export const stampCaseResolverWorkspaceMutation = (
     normalizeWorkspace?: boolean;
   }
 ): CaseResolverWorkspace => {
-  const baseWorkspace = input.normalizeWorkspace === false
-    ? workspace
-    : normalizeCaseResolverWorkspace(workspace);
+  const baseWorkspace =
+    input.normalizeWorkspace === false ? workspace : normalizeCaseResolverWorkspace(workspace);
   const baseRevision =
     typeof input.baseRevision === 'number' && Number.isFinite(input.baseRevision)
       ? Math.max(0, Math.floor(input.baseRevision))
@@ -251,13 +243,17 @@ export const logCaseResolverWorkspaceEvent = (
   }
 };
 
-export const readCaseResolverWorkspaceDebugEvents = (): CaseResolverWorkspaceDebugEvent[] =>
-  [...readDebugBuffer()];
+export const readCaseResolverWorkspaceDebugEvents = (): CaseResolverWorkspaceDebugEvent[] => [
+  ...readDebugBuffer(),
+];
 
 export const getCaseResolverWorkspaceDebugEventName = (): string =>
   CASE_RESOLVER_WORKSPACE_DEBUG_EVENT_NAME;
 
-const readWorkspaceFromSettingRecord = (record: SettingsRecordLike | null, fallback: string): CaseResolverWorkspace => {
+const readWorkspaceFromSettingRecord = (
+  record: SettingsRecordLike | null,
+  fallback: string
+): CaseResolverWorkspace => {
   const rawValue = typeof record?.value === 'string' ? record.value : fallback;
   return parseCaseResolverWorkspace(rawValue);
 };
@@ -265,36 +261,28 @@ const readWorkspaceFromSettingRecord = (record: SettingsRecordLike | null, fallb
 const readSettingsRecordsFromPayload = (payload: unknown): SettingsRecordLike[] => {
   if (Array.isArray(payload)) {
     return payload.filter(
-      (entry: unknown): entry is SettingsRecordLike =>
-        Boolean(entry) && typeof entry === 'object',
+      (entry: unknown): entry is SettingsRecordLike => Boolean(entry) && typeof entry === 'object'
     );
   }
   if (!payload || typeof payload !== 'object') return [];
   const payloadRecord = payload as WorkspaceSettingsPayloadLike;
   if (Array.isArray(payloadRecord.settings)) {
     return payloadRecord.settings.filter(
-      (entry: unknown): entry is SettingsRecordLike =>
-        Boolean(entry) && typeof entry === 'object',
+      (entry: unknown): entry is SettingsRecordLike => Boolean(entry) && typeof entry === 'object'
     );
   }
-  if (
-    typeof payloadRecord.key === 'string' &&
-    typeof payloadRecord.value === 'string'
-  ) {
+  if (typeof payloadRecord.key === 'string' && typeof payloadRecord.value === 'string') {
     return [payloadRecord as SettingsRecordLike];
   }
   return [];
 };
 
-const resolveWorkspaceRecordFromSettingsPayload = (
-  payload: unknown,
-): SettingsRecordLike | null => {
+const resolveWorkspaceRecordFromSettingsPayload = (payload: unknown): SettingsRecordLike | null => {
   const records = readSettingsRecordsFromPayload(payload);
   return (
     records.find(
       (entry: SettingsRecordLike): boolean =>
-        entry?.key === CASE_RESOLVER_WORKSPACE_KEY &&
-        typeof entry?.value === 'string',
+        entry?.key === CASE_RESOLVER_WORKSPACE_KEY && typeof entry?.value === 'string'
     ) ?? null
   );
 };
@@ -303,12 +291,11 @@ const fetchSettingsPayloadWithTimeout = async (input: {
   url: string;
   timeoutMs: number;
 }): Promise<Response> => {
-  const controller =
-    typeof AbortController !== 'undefined' ? new AbortController() : null;
+  const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
   const timeoutId = controller
     ? setTimeout((): void => {
-      controller.abort();
-    }, input.timeoutMs)
+        controller.abort();
+      }, input.timeoutMs)
     : null;
   try {
     return await fetch(input.url, {
@@ -348,14 +335,12 @@ export const fetchCaseResolverWorkspaceMetadata = async (
   source: string
 ): Promise<CaseResolverWorkspaceMetadata | null> => {
   const startedAt = Date.now();
-  const controller =
-    typeof AbortController !== 'undefined' ? new AbortController() : null;
-  const timeoutId =
-    controller
-      ? setTimeout((): void => {
+  const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  const timeoutId = controller
+    ? setTimeout((): void => {
         controller.abort();
       }, CASE_RESOLVER_WORKSPACE_FETCH_TIMEOUT_MS)
-      : null;
+    : null;
   try {
     const response = await fetch(
       `/api/settings?scope=light&fresh=1&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}&meta=1`,
@@ -497,19 +482,19 @@ export const compactCaseResolverWorkspaceForPersist = (
     const rawHistory = fileRecord['documentHistory'];
     const compactedHistory = Array.isArray(rawHistory)
       ? rawHistory.map((entry: unknown) => {
-        if (!entry || typeof entry !== 'object') return entry;
-        const entryRecord = entry as Record<string, unknown>;
-        const rest = { ...entryRecord };
-        if (isScanFile) {
-          delete rest['documentContent'];
-          delete rest['documentContentHtml'];
-          delete rest['documentContentPlainText'];
-        } else {
-          delete rest['documentContentMarkdown'];
-          delete rest['documentContentPlainText'];
-        }
-        return rest;
-      })
+          if (!entry || typeof entry !== 'object') return entry;
+          const entryRecord = entry as Record<string, unknown>;
+          const rest = { ...entryRecord };
+          if (isScanFile) {
+            delete rest['documentContent'];
+            delete rest['documentContentHtml'];
+            delete rest['documentContentPlainText'];
+          } else {
+            delete rest['documentContentMarkdown'];
+            delete rest['documentContentPlainText'];
+          }
+          return rest;
+        })
       : rawHistory;
     if (isScanFile) {
       const {
@@ -662,8 +647,7 @@ export const persistCaseResolverWorkspaceSnapshot = async (
   const message =
     (payload && typeof payload.value === 'string' && payload.value.trim().length > 0
       ? payload.value
-      : null) ??
-    `Failed to persist Case Resolver workspace (${response.status}).`;
+      : null) ?? `Failed to persist Case Resolver workspace (${response.status}).`;
   logCaseResolverWorkspaceEvent({
     source: input.source,
     action: 'persist_failed',

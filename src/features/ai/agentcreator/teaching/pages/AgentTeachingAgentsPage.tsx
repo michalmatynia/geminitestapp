@@ -2,40 +2,31 @@
 
 import React from 'react';
 
-import { buildModelProfile } from '@/features/ai/chatbot/utils';
-import type { AgentTeachingAgentRecord, AgentTeachingEmbeddingCollectionRecord } from '@/shared/contracts/agent-teaching';
+import type {
+  AgentTeachingAgentRecord,
+  AgentTeachingEmbeddingCollectionRecord,
+} from '@/shared/contracts/agent-teaching';
 import { ItemLibrary, useToast } from '@/shared/ui';
 
 import { useAgentTeachingQueriesContext } from '../context/AgentTeachingContext';
-import { useDeleteTeachingAgentMutation, useUpsertTeachingAgentMutation } from '../hooks/useAgentTeachingQueries';
+import {
+  useDeleteTeachingAgentMutation,
+  useUpsertTeachingAgentMutation,
+} from '../hooks/useAgentTeachingQueries';
 import { LearnerAgentForm, type LearnerAgentLibraryItem } from '../components/LearnerAgentForm';
-
-const isEmbeddingModel = (model: string): boolean => Boolean(buildModelProfile(model).isEmbedding);
 
 export function AgentTeachingAgentsPage(): React.JSX.Element {
   const { toast } = useToast();
-  const { agents, collections, modelOptions, isLoading: isLoadingContext } = useAgentTeachingQueriesContext();
+  const {
+    agents,
+    collections,
+    chatModelId,
+    embeddingModelId,
+    isLoading: isLoadingContext,
+  } = useAgentTeachingQueriesContext();
 
   const { mutateAsync: upsert, isPending: saving } = useUpsertTeachingAgentMutation();
   const { mutateAsync: remove } = useDeleteTeachingAgentMutation();
-  
-  const normalizedModelOptions = React.useMemo(
-    () =>
-      (Array.isArray(modelOptions) ? modelOptions : [])
-        .filter((model): model is string => typeof model === 'string')
-        .map((model) => model.trim())
-        .filter((model) => model.length > 0),
-    [modelOptions]
-  );
-
-  const chatModels = React.useMemo(
-    () => normalizedModelOptions.filter((m: string) => !isEmbeddingModel(m)),
-    [normalizedModelOptions]
-  );
-  const embeddingModels = React.useMemo(
-    () => normalizedModelOptions.filter((m: string) => isEmbeddingModel(m)),
-    [normalizedModelOptions]
-  );
   const libraryAgents = React.useMemo<LearnerAgentLibraryItem[]>(
     () =>
       agents.map((agent: AgentTeachingAgentRecord) => ({
@@ -51,21 +42,27 @@ export function AgentTeachingAgentsPage(): React.JSX.Element {
       toast('Agent name is required.', { variant: 'error' });
       return;
     }
-    const llmModel = draft.llmModel?.trim();
+    const llmModel = chatModelId.trim();
     if (!llmModel) {
-      toast('LLM model is required.', { variant: 'error' });
+      toast('Configure Agent Teaching Chat in AI Brain first.', { variant: 'error' });
       return;
     }
-    const embeddingModel = draft.embeddingModel?.trim();
+    const embeddingModel = embeddingModelId.trim();
     if (!embeddingModel) {
-      toast('Embedding model is required.', { variant: 'error' });
+      toast('Configure Agent Teaching Embeddings in AI Brain first.', { variant: 'error' });
       return;
     }
 
     const selectedCollectionIds = Array.isArray(draft.collectionIds) ? draft.collectionIds : [];
     const mismatchedCollections = selectedCollectionIds
-      .map((id: string) => collections.find((c: AgentTeachingEmbeddingCollectionRecord) => c.id === id))
-      .filter((c: AgentTeachingEmbeddingCollectionRecord | undefined): c is AgentTeachingEmbeddingCollectionRecord => Boolean(c))
+      .map((id: string) =>
+        collections.find((c: AgentTeachingEmbeddingCollectionRecord) => c.id === id)
+      )
+      .filter(
+        (
+          c: AgentTeachingEmbeddingCollectionRecord | undefined
+        ): c is AgentTeachingEmbeddingCollectionRecord => Boolean(c)
+      )
       .filter((c: AgentTeachingEmbeddingCollectionRecord) => c.embeddingModel !== embeddingModel);
     if (mismatchedCollections.length > 0) {
       toast(
@@ -79,7 +76,9 @@ export function AgentTeachingAgentsPage(): React.JSX.Element {
 
     try {
       const temperatureRaw = typeof draft.temperature === 'number' ? draft.temperature : 0.2;
-      const temperature = Number.isFinite(temperatureRaw) ? Math.max(0, Math.min(temperatureRaw, 2)) : 0.2;
+      const temperature = Number.isFinite(temperatureRaw)
+        ? Math.max(0, Math.min(temperatureRaw, 2))
+        : 0.2;
       const maxTokensRaw = typeof draft.maxTokens === 'number' ? draft.maxTokens : 800;
       const maxTokens = Number.isFinite(maxTokensRaw) ? Math.max(1, Math.round(maxTokensRaw)) : 800;
       const maxDocsPerCollectionRaw =
@@ -105,7 +104,9 @@ export function AgentTeachingAgentsPage(): React.JSX.Element {
       });
       toast(draft.id ? 'Learner agent updated.' : 'Learner agent created.', { variant: 'success' });
     } catch (error) {
-      toast(error instanceof Error ? error.message : 'Failed to save learner agent.', { variant: 'error' });
+      toast(error instanceof Error ? error.message : 'Failed to save learner agent.', {
+        variant: 'error',
+      });
       throw error;
     }
   };
@@ -115,7 +116,9 @@ export function AgentTeachingAgentsPage(): React.JSX.Element {
       await remove({ id: agent.id });
       toast('Learner agent deleted.', { variant: 'success' });
     } catch (error) {
-      toast(error instanceof Error ? error.message : 'Failed to delete learner agent.', { variant: 'error' });
+      toast(error instanceof Error ? error.message : 'Failed to delete learner agent.', {
+        variant: 'error',
+      });
       throw error;
     }
   };
@@ -130,16 +133,16 @@ export function AgentTeachingAgentsPage(): React.JSX.Element {
       isSaving={saving}
       onSave={handleSave}
       onDelete={handleDelete}
-      backLink={(
+      backLink={
         <a href='/admin/agentcreator/teaching' className='text-blue-300 hover:text-blue-200'>
           ← Back to learners
         </a>
-      )}
+      }
       buildDefaultItem={() => ({
         name: '',
         description: '',
-        llmModel: chatModels[0] ?? '',
-        embeddingModel: embeddingModels[0] ?? '',
+        llmModel: chatModelId,
+        embeddingModel: embeddingModelId,
         systemPrompt: '',
         collectionIds: [],
         temperature: 0.2,
@@ -149,17 +152,20 @@ export function AgentTeachingAgentsPage(): React.JSX.Element {
         maxDocsPerCollection: 400,
       })}
       renderItemTags={(agent: LearnerAgentLibraryItem) => [
-        `LLM: ${agent.llmModel || '—'}`,
-        `Embed: ${agent.embeddingModel || '—'}`,
+        `LLM: ${chatModelId || agent.llmModel || '—'}`,
+        `Embed: ${embeddingModelId || agent.embeddingModel || '—'}`,
         `KB: ${(agent.collectionIds ?? []).length}`,
         `Temp: ${(typeof agent.temperature === 'number' ? agent.temperature : 0.2).toFixed(2)}`,
       ]}
-      renderExtraFields={(draft: LearnerAgentLibraryItem, onChange: (changes: Partial<LearnerAgentLibraryItem>) => void) => (
-        <LearnerAgentForm 
+      renderExtraFields={(
+        draft: LearnerAgentLibraryItem,
+        onChange: (changes: Partial<LearnerAgentLibraryItem>) => void
+      ) => (
+        <LearnerAgentForm
           draft={draft}
           onChange={onChange}
-          chatModels={chatModels}
-          embeddingModels={embeddingModels}
+          chatModel={chatModelId}
+          embeddingModel={embeddingModelId}
           collections={collections}
         />
       )}

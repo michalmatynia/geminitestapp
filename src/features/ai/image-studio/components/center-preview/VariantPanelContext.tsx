@@ -24,7 +24,10 @@ export type VariantPanelContextValue = {
   onSetCompareVariantB: (variantId: string) => void;
   onVariantTimestampQueryChange: (value: string) => void;
   onVariantTooltipLeave: () => void;
-  onVariantTooltipMove: (event: React.MouseEvent<HTMLButtonElement>, variant: VariantThumbnailInfo) => void;
+  onVariantTooltipMove: (
+    event: React.MouseEvent<HTMLButtonElement>,
+    variant: VariantThumbnailInfo
+  ) => void;
 };
 
 const VariantPanelContext = createContext<VariantPanelContextValue | null>(null);
@@ -36,11 +39,7 @@ export function VariantPanelProvider({
   children: React.ReactNode;
   value: VariantPanelContextValue;
 }) {
-  return (
-    <VariantPanelContext.Provider value={value}>
-      {children}
-    </VariantPanelContext.Provider>
-  );
+  return <VariantPanelContext.Provider value={value}>{children}</VariantPanelContext.Provider>;
 }
 
 export function useVariantPanelContext() {

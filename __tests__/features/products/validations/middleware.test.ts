@@ -4,10 +4,8 @@ const validateProductCreateMock = vi.fn();
 const validateProductUpdateMock = vi.fn();
 
 vi.mock('@/features/products/validations/validators', () => ({
-  validateProductCreate: (...args: unknown[]) =>
-    validateProductCreateMock(...args),
-  validateProductUpdate: (...args: unknown[]) =>
-    validateProductUpdateMock(...args),
+  validateProductCreate: (...args: unknown[]) => validateProductCreateMock(...args),
+  validateProductUpdate: (...args: unknown[]) => validateProductUpdateMock(...args),
 }));
 
 import {

@@ -15,21 +15,15 @@ export function HomeCmsDefaultContent({
   colorSchemes: React.ComponentProps<typeof CmsPageRenderer>['colorSchemes'];
   hasCmsContent: boolean;
   defaultSlug: string;
-  rendererComponents: React.ComponentProps<
-    typeof CmsPageRenderer
-  >['components'];
+  rendererComponents: React.ComponentProps<typeof CmsPageRenderer>['components'];
 }): React.JSX.Element {
   return hasCmsContent ? (
     <CmsPageRenderer
       components={rendererComponents}
       colorSchemes={colorSchemes}
       layout={{ fullWidth: Boolean(themeSettings.fullWidth) }}
-      hoverEffect={
-        themeSettings.enableAnimations ? themeSettings.hoverEffect : undefined
-      }
-      hoverScale={
-        themeSettings.enableAnimations ? themeSettings.hoverScale : undefined
-      }
+      hoverEffect={themeSettings.enableAnimations ? themeSettings.hoverEffect : undefined}
+      hoverScale={themeSettings.enableAnimations ? themeSettings.hoverScale : undefined}
       mediaVars={getMediaStyleVars(themeSettings)}
       mediaStyles={getMediaInlineStyles(themeSettings)}
     />

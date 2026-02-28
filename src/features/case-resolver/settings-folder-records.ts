@@ -1,4 +1,8 @@
-import type { CaseResolverAssetFile, CaseResolverFile, CaseResolverFolderRecord } from '@/shared/contracts/case-resolver';
+import type {
+  CaseResolverAssetFile,
+  CaseResolverFile,
+  CaseResolverFolderRecord,
+} from '@/shared/contracts/case-resolver';
 
 const normalizeFolderPath = (value: string): string => {
   const normalized = value.replace(/\\/g, '/').trim();
@@ -24,10 +28,8 @@ const sanitizeOptionalId = (value: unknown): string | null => {
   return normalized.length > 0 ? normalized : null;
 };
 
-const buildCaseResolverFolderRecordKey = (
-  path: string,
-  ownerCaseId: string | null
-): string => `${ownerCaseId ?? '__none__'}::${path}`;
+const buildCaseResolverFolderRecordKey = (path: string, ownerCaseId: string | null): string =>
+  `${ownerCaseId ?? '__none__'}::${path}`;
 
 const normalizeFolderRecordOwnerCaseId = (
   value: unknown,
@@ -60,9 +62,8 @@ export const parseCaseResolverFolderRecords = (
         ownerCaseId: normalizeFolderRecordOwnerCaseId(record['ownerCaseId'], validCaseIds),
       };
     })
-    .filter(
-      (entry: CaseResolverFolderRecord | null): entry is CaseResolverFolderRecord =>
-        Boolean(entry)
+    .filter((entry: CaseResolverFolderRecord | null): entry is CaseResolverFolderRecord =>
+      Boolean(entry)
     );
   const ownedPaths = new Set<string>(
     records
@@ -132,13 +133,15 @@ export const buildCaseResolverFolderRecords = ({
       typeof asset.sourceFileId === 'string' && asset.sourceFileId.trim().length > 0
         ? asset.sourceFileId.trim()
         : null;
-    const ownerCaseId = sourceFileId ? fileOwnerCaseIdByFileId.get(sourceFileId) ?? null : null;
+    const ownerCaseId = sourceFileId ? (fileOwnerCaseIdByFileId.get(sourceFileId) ?? null) : null;
     registerRecord(asset.folder, ownerCaseId);
   });
 
-  return Array.from(recordsByKey.values()).sort((left: CaseResolverFolderRecord, right: CaseResolverFolderRecord) => {
-    const pathDelta = left.path.localeCompare(right.path);
-    if (pathDelta !== 0) return pathDelta;
-    return (left.ownerCaseId ?? '').localeCompare(right.ownerCaseId ?? '');
-  });
+  return Array.from(recordsByKey.values()).sort(
+    (left: CaseResolverFolderRecord, right: CaseResolverFolderRecord) => {
+      const pathDelta = left.path.localeCompare(right.path);
+      if (pathDelta !== 0) return pathDelta;
+      return (left.ownerCaseId ?? '').localeCompare(right.ownerCaseId ?? '');
+    }
+  );
 };

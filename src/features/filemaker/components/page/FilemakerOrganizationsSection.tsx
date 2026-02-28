@@ -3,12 +3,7 @@
 import { Edit2, Plus, Trash2 } from 'lucide-react';
 import React from 'react';
 
-import {
-  Button,
-  FormSection,
-  Card,
-  EmptyState,
-} from '@/shared/ui';
+import { Button, FormSection, Card, EmptyState } from '@/shared/ui';
 import { useAdminFilemakerPageContext } from '../../context/AdminFilemakerPageContext';
 import { formatFilemakerAddress } from '../../settings';
 import type { FilemakerOrganization } from '../../types';
@@ -21,13 +16,8 @@ const formatTimestamp = (value: string | null | undefined): string => {
 };
 
 export function FilemakerOrganizationsSection(): React.JSX.Element {
-  const {
-    database,
-    openCreateOrg,
-    handleStartEditOrg,
-    handleDeleteOrganization,
-    updateSetting,
-  } = useAdminFilemakerPageContext();
+  const { database, openCreateOrg, handleStartEditOrg, handleDeleteOrganization, updateSetting } =
+    useAdminFilemakerPageContext();
 
   const { organizations } = database;
 
@@ -35,7 +25,7 @@ export function FilemakerOrganizationsSection(): React.JSX.Element {
     <FormSection
       title='Organizations'
       className='space-y-4 p-4'
-      actions={(
+      actions={
         <Button
           type='button'
           onClick={openCreateOrg}
@@ -45,7 +35,7 @@ export function FilemakerOrganizationsSection(): React.JSX.Element {
           <Plus className='mr-1.5 size-3.5' />
           Add Organization
         </Button>
-      )}
+      }
     >
       <div className='space-y-2'>
         {organizations.length === 0 ? (
@@ -57,12 +47,15 @@ export function FilemakerOrganizationsSection(): React.JSX.Element {
           />
         ) : (
           organizations.map((org: FilemakerOrganization) => (
-            <Card key={org.id} variant='subtle-compact' padding='md' className='border-border/60 bg-card/35'>
+            <Card
+              key={org.id}
+              variant='subtle-compact'
+              padding='md'
+              className='border-border/60 bg-card/35'
+            >
               <div className='flex flex-wrap items-start justify-between gap-3'>
                 <div className='min-w-0 flex-1 space-y-1'>
-                  <div className='text-sm font-semibold text-white'>
-                    {org.name}
-                  </div>
+                  <div className='text-sm font-semibold text-white'>{org.name}</div>
                   <div className='text-xs text-gray-300'>{formatFilemakerAddress(org)}</div>
                   <div className='text-[11px] text-gray-500'>
                     NIP: {org.taxId || 'n/a'} | KRS: {org.krs || 'n/a'}

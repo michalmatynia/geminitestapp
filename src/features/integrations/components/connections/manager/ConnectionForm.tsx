@@ -13,9 +13,7 @@ import { ConnectionFormFields } from './ConnectionFormFields';
 
 export function ConnectionForm(): React.JSX.Element {
   const { activeIntegration, handleSaveConnection } = useIntegrationsContext();
-  const [createForm, setCreateForm] = useState<ConnectionFormState>(
-    createEmptyConnectionForm()
-  );
+  const [createForm, setCreateForm] = useState<ConnectionFormState>(createEmptyConnectionForm());
   const [isSaving, setIsSaving] = useState(false);
 
   if (!activeIntegration) return <></>;

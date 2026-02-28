@@ -1,5 +1,3 @@
-
-
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getIntegrationRepository } from '@/features/integrations/server';
@@ -17,10 +15,8 @@ type TestLogEntry = {
 
 const PROD_BASE_URL = process.env['ALLEGRO_API_URL'] ?? 'https://api.allegro.pl';
 const SANDBOX_BASE_URL =
-  process.env['ALLEGRO_SANDBOX_API_URL'] ??
-  'https://api.allegro.pl.allegrosandbox.pl';
-const PROD_TOKEN_URL =
-  process.env['ALLEGRO_TOKEN_URL'] ?? 'https://allegro.pl/auth/oauth/token';
+  process.env['ALLEGRO_SANDBOX_API_URL'] ?? 'https://api.allegro.pl.allegrosandbox.pl';
+const PROD_TOKEN_URL = process.env['ALLEGRO_TOKEN_URL'] ?? 'https://allegro.pl/auth/oauth/token';
 const SANDBOX_TOKEN_URL =
   process.env['ALLEGRO_SANDBOX_TOKEN_URL'] ??
   'https://allegro.pl.allegrosandbox.pl/auth/oauth/token';
@@ -29,26 +25,26 @@ const SANDBOX_TOKEN_URL =
  * POST /api/integrations/[id]/connections/[connectionId]/allegro/test
  * Tests Allegro API access using stored credentials.
  */
-export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; connectionId: string }): Promise<Response> {
+export async function POST_handler(
+  _req: NextRequest,
+  _ctx: ApiHandlerContext,
+  params: { id: string; connectionId: string }
+): Promise<Response> {
   const steps: TestLogEntry[] = [];
 
-  const pushStep = (
-    step: string,
-    status: 'pending' | 'ok' | 'failed',
-    detail: string
-  ): void => {
+  const pushStep = (step: string, status: 'pending' | 'ok' | 'failed', detail: string): void => {
     steps.push({
       step,
       status,
       detail,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   };
 
   const fail = async (step: string, detail: string, status: number = 400): Promise<Response> => {
     const safeDetail = detail?.trim() ? detail : 'Unknown error';
     pushStep(step, 'failed', safeDetail);
-    
+
     throw mapStatusToAppError(safeDetail, status);
   };
 
@@ -59,10 +55,7 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, p
 
   pushStep('Loading connection', 'pending', 'Fetching stored credentials');
   const repo = await getIntegrationRepository();
-  const connection = await repo.getConnectionByIdAndIntegration(
-    connectionId,
-    id
-  );
+  const connection = await repo.getConnectionByIdAndIntegration(connectionId, id);
 
   if (!connection) {
     return await fail('Loading connection', 'Connection not found', 404);
@@ -84,34 +77,25 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, p
   }
 
   if (!connection.allegroAccessToken) {
-    return await fail(
-      'Token validation',
-      'Allegro access token not configured. Connect first.'
-    );
+    return await fail('Token validation', 'Allegro access token not configured. Connect first.');
   }
 
   const clientId = connection.username?.trim();
-  const clientSecret = connection.password
-    ? decryptSecret(connection.password)
-    : null;
+  const clientSecret = connection.password ? decryptSecret(connection.password) : null;
   const refreshToken = connection.allegroRefreshToken
     ? decryptSecret(connection.allegroRefreshToken)
     : null;
 
-  const baseUrl = connection.allegroUseSandbox
-    ? SANDBOX_BASE_URL
-    : PROD_BASE_URL;
-  const tokenUrl = connection.allegroUseSandbox
-    ? SANDBOX_TOKEN_URL
-    : PROD_TOKEN_URL;
+  const baseUrl = connection.allegroUseSandbox ? SANDBOX_BASE_URL : PROD_BASE_URL;
+  const tokenUrl = connection.allegroUseSandbox ? SANDBOX_TOKEN_URL : PROD_TOKEN_URL;
 
   const buildRequest = (token: string): Promise<Response> =>
     fetch(`${baseUrl}/me`, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
-        Accept: 'application/vnd.allegro.public.v1+json'
-      }
+        Accept: 'application/vnd.allegro.public.v1+json',
+      },
     });
 
   const refreshAccessToken = async (): Promise<string> => {
@@ -121,22 +105,21 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, p
     const auth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
     const body = new URLSearchParams({
       grant_type: 'refresh_token',
-      refresh_token: refreshToken
+      refresh_token: refreshToken,
     });
     const tokenRes = await fetch(tokenUrl, {
       method: 'POST',
       headers: {
         Authorization: `Basic ${auth}`,
-        'Content-Type': 'application/x-www-form-urlencoded'
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body
+      body,
     });
     if (!tokenRes.ok) {
       const payload = await tokenRes.text();
-      throw externalServiceError(
-        `Failed to refresh Allegro token: ${tokenRes.status} ${payload}`,
-        { status: tokenRes.status }
-      );
+      throw externalServiceError(`Failed to refresh Allegro token: ${tokenRes.status} ${payload}`, {
+        status: tokenRes.status,
+      });
     }
     const payload = (await tokenRes.json()) as {
       access_token: string;
@@ -145,18 +128,16 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, p
       scope?: string;
       expires_in?: number;
     };
-    const expiresAt = payload.expires_in
-      ? new Date(Date.now() + payload.expires_in * 1000)
-      : null;
+    const expiresAt = payload.expires_in ? new Date(Date.now() + payload.expires_in * 1000) : null;
     await repo.updateConnection(connection.id, {
       allegroAccessToken: encryptSecret(payload.access_token),
       allegroRefreshToken: payload.refresh_token
         ? encryptSecret(payload.refresh_token)
-        : connection.allegroRefreshToken ?? null,
+        : (connection.allegroRefreshToken ?? null),
       allegroTokenType: payload.token_type ?? null,
       allegroScope: payload.scope ?? null,
       allegroExpiresAt: expiresAt ? expiresAt.toISOString() : null,
-      allegroTokenUpdatedAt: new Date().toISOString()
+      allegroTokenUpdatedAt: new Date().toISOString(),
     });
     return payload.access_token;
   };
@@ -181,19 +162,21 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, p
 
   const raw = await response.text();
   if (!response.ok) {
-    return await fail('Testing API connection', raw || `${response.status} ${response.statusText}`.trim(), response.status);
+    return await fail(
+      'Testing API connection',
+      raw || `${response.status} ${response.statusText}`.trim(),
+      response.status
+    );
   }
 
   pushStep(
     'Testing API connection',
     'ok',
-    refreshed
-      ? 'API connection successful. Token refreshed.'
-      : 'API connection successful.'
+    refreshed ? 'API connection successful. Token refreshed.' : 'API connection successful.'
   );
 
   await repo.updateConnection(connection.id, {
-    allegroTokenUpdatedAt: new Date().toISOString()
+    allegroTokenUpdatedAt: new Date().toISOString(),
   });
 
   let profile: unknown;
@@ -206,6 +189,6 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, p
   return NextResponse.json({
     ok: true,
     steps,
-    profile
+    profile,
   });
 }

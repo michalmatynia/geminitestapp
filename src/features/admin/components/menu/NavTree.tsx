@@ -5,10 +5,7 @@ import Link from 'next/link';
 import { AppWindow, ChevronRightIcon } from 'lucide-react';
 import { cn } from '@/shared/utils';
 import { Tooltip, TreeContextMenu } from '@/shared/ui';
-import { 
-  type NavItem, 
-  isActiveHref, 
-} from './admin-menu-utils';
+import { type NavItem, isActiveHref } from './admin-menu-utils';
 import { ADMIN_MENU_COLOR_MAP } from '../Menu';
 
 export type AdminMenuTreeContextValue = {
@@ -64,7 +61,11 @@ const buildNavContextItems = (
     items.push({ id: 'run-action', label: 'Run action', onSelect: () => item.action?.() });
   }
   if (hasChildren) {
-    items.push({ id: 'toggle-children', label: isOpen ? 'Collapse' : 'Expand', onSelect: () => onToggleOpen(item.id) });
+    items.push({
+      id: 'toggle-children',
+      label: isOpen ? 'Collapse' : 'Expand',
+      onSelect: () => onToggleOpen(item.id),
+    });
     items.push({ id: 'separator-1', separator: true });
   }
   const itemHref = item.href;
@@ -93,11 +94,7 @@ const buildNavContextItems = (
   return items;
 };
 
-export function NavTree({
-  items,
-}: {
-  items: NavItem[];
-}): React.ReactNode {
+export function NavTree({ items }: { items: NavItem[] }): React.ReactNode {
   const depth = useAdminMenuDepth();
   const { isMenuCollapsed, pathname, openIds, onToggleOpen } = useAdminMenuTreeContext();
 
@@ -105,15 +102,15 @@ export function NavTree({
     <div className={cn(depth === 0 ? 'space-y-1.5' : 'space-y-1')}>
       {items.map((item: NavItem) => {
         const hasChildren = !!item.children?.length;
-        const active = !hasChildren && item.href ? isActiveHref(pathname, item.href, item.exact) : false;
+        const active =
+          !hasChildren && item.href ? isActiveHref(pathname, item.href, item.exact) : false;
         const isOpen = !isMenuCollapsed && hasChildren && openIds.has(item.id);
         const contextItems = buildNavContextItems(item, isOpen, hasChildren, onToggleOpen);
         const sectionStyle = item.sectionColor ? ADMIN_MENU_COLOR_MAP[item.sectionColor] : null;
 
-        const rowStyle: React.CSSProperties | undefined =
-          isMenuCollapsed
-            ? undefined
-            : {
+        const rowStyle: React.CSSProperties | undefined = isMenuCollapsed
+          ? undefined
+          : {
               paddingLeft: 10 + depth * 14,
             };
 
@@ -137,13 +134,20 @@ export function NavTree({
                         className={cn(
                           'flex items-center justify-center rounded-md px-2 py-2 transition border-l-2 cursor-pointer',
                           sectionStyle ? sectionStyle.border : 'border-transparent',
-                          active ? 'bg-gray-700/60 text-white' : 'text-gray-200 hover:bg-gray-700/40'
+                          active
+                            ? 'bg-gray-700/60 text-white'
+                            : 'text-gray-200 hover:bg-gray-700/40'
                         )}
                       >
                         <span className='relative text-gray-200'>
                           {item.icon ?? <AppWindow className='size-4' />}
                           {sectionStyle ? (
-                            <span className={cn('absolute -right-1 -top-1 h-2 w-2 rounded-full', sectionStyle.dot)} />
+                            <span
+                              className={cn(
+                                'absolute -right-1 -top-1 h-2 w-2 rounded-full',
+                                sectionStyle.dot
+                              )}
+                            />
                           ) : null}
                         </span>
                         <span className='sr-only'>{item.label}</span>
@@ -160,13 +164,20 @@ export function NavTree({
                         className={cn(
                           'flex w-full items-center justify-center rounded-md px-2 py-2 transition border-l-2 cursor-pointer',
                           sectionStyle ? sectionStyle.border : 'border-transparent',
-                          active ? 'bg-gray-700/60 text-white' : 'text-gray-200 hover:bg-gray-700/40'
+                          active
+                            ? 'bg-gray-700/60 text-white'
+                            : 'text-gray-200 hover:bg-gray-700/40'
                         )}
                       >
                         <span className='relative text-gray-200'>
                           {item.icon ?? <AppWindow className='size-4' />}
                           {sectionStyle ? (
-                            <span className={cn('absolute -right-1 -top-1 h-2 w-2 rounded-full', sectionStyle.dot)} />
+                            <span
+                              className={cn(
+                                'absolute -right-1 -top-1 h-2 w-2 rounded-full',
+                                sectionStyle.dot
+                              )}
+                            />
                           ) : null}
                         </span>
                         <span className='sr-only'>{item.label}</span>
@@ -283,9 +294,7 @@ export function NavTree({
                 {hasChildren && isOpen ? (
                   <div className='mt-1' id={`${item.id}-children`}>
                     <AdminMenuDepthContext.Provider value={depth + 1}>
-                      <NavTree
-                        items={item.children ?? []}
-                      />
+                      <NavTree items={item.children ?? []} />
                     </AdminMenuDepthContext.Provider>
                   </div>
                 ) : null}

@@ -22,11 +22,7 @@ export const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
       <div
         ref={ref}
         role='alert'
-        className={cn(
-          'rounded-md border px-4 py-3 text-sm',
-          variantStyles[variant],
-          className
-        )}
+        className={cn('rounded-md border px-4 py-3 text-sm', variantStyles[variant], className)}
         {...props}
       />
     );

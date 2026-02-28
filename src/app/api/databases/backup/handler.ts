@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { assertDatabaseEngineManageAccess } from '@/features/database/services/database-engine-access';
-import { assertDatabaseEngineOperationEnabled } from '@/features/database/services/database-engine-operation-guards';
+import { assertDatabaseEngineManageAccess } from '@/shared/lib/db/services/database-engine-access';
+import { assertDatabaseEngineOperationEnabled } from '@/shared/lib/db/services/database-engine-operation-guards';
 import {
   enqueueProductAiJob,
   enqueueProductAiJobToQueue,
@@ -47,7 +47,8 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     await enqueueProductAiJobToQueue(job.id, job.productId, runtimeType, job.payload);
   } catch (enqueueError: unknown) {
     await logSystemError({
-      message: '[databases.backup] Failed to enqueue db backup job to runtime queue, falling back to inline processing',
+      message:
+        '[databases.backup] Failed to enqueue db backup job to runtime queue, falling back to inline processing',
       error: enqueueError,
       source: 'api/databases/backup',
       context: { jobId: job.id, dbType },

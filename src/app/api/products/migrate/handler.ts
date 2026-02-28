@@ -23,9 +23,7 @@ const migrationSchema = z.object({
 
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const { searchParams } = new URL(req.url);
-  const parsedDirection = migrationDirectionSchema.safeParse(
-    searchParams.get('direction')
-  );
+  const parsedDirection = migrationDirectionSchema.safeParse(searchParams.get('direction'));
   if (!parsedDirection.success) {
     throw badRequestError('Invalid migration direction.');
   }
@@ -40,19 +38,25 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   if (!parsed.ok) {
     return parsed.response;
   }
-  const shouldBackup =
-    !parsed.data.dryRun && (!parsed.data.cursor || parsed.data.cursor === '');
+  const shouldBackup = !parsed.data.dryRun && (!parsed.data.cursor || parsed.data.cursor === '');
   if (shouldBackup) {
     const backupResult = await createFullDatabaseBackup();
     if (!backupResult.mongo || !backupResult.postgres) {
       throw operationFailedError('Failed to create full database backup.');
     }
   }
-  const result = await migrateProductBatch(removeUndefined({
-    direction: parsed.data.direction,
-    dryRun: Boolean(parsed.data.dryRun),
-    cursor: parsed.data.cursor ?? null,
-    batchSize: parsed.data.batchSize,
-  }) as { direction: MigrationDirection; dryRun?: boolean; cursor?: string | null; batchSize?: number });
+  const result = await migrateProductBatch(
+    removeUndefined({
+      direction: parsed.data.direction,
+      dryRun: Boolean(parsed.data.dryRun),
+      cursor: parsed.data.cursor ?? null,
+      batchSize: parsed.data.batchSize,
+    }) as {
+      direction: MigrationDirection;
+      dryRun?: boolean;
+      cursor?: string | null;
+      batchSize?: number;
+    }
+  );
   return NextResponse.json({ result, backup: shouldBackup });
 }

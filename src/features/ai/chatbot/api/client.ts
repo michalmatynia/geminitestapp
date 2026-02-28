@@ -1,6 +1,8 @@
 const defaultErrorMessage = 'Request failed.';
 
-export const readErrorResponse = async (res: Response): Promise<{ message: string; errorId?: string }> => {
+export const readErrorResponse = async (
+  res: Response
+): Promise<{ message: string; errorId?: string }> => {
   try {
     const data = (await res.json()) as { error?: string; errorId?: string };
     return {
@@ -31,15 +33,10 @@ export const fetchWithTimeout = async (
   }
 };
 
-export const readErrorMessage = async (
-  res: Response,
-  fallbackMessage: string
-): Promise<string> => {
+export const readErrorMessage = async (res: Response, fallbackMessage: string): Promise<string> => {
   const error = await readErrorResponse(res);
   const message =
-    error.message && error.message !== defaultErrorMessage
-      ? error.message
-      : fallbackMessage;
+    error.message && error.message !== defaultErrorMessage ? error.message : fallbackMessage;
   const suffix = error.errorId ? ` (Error ID: ${error.errorId})` : '';
   return `${message}${suffix}`;
 };
@@ -54,10 +51,7 @@ export const requestJson = async <T>(
     ? await fetchWithTimeout(input, initOptions, options.timeoutMs)
     : await fetch(input, initOptions);
   if (!res.ok) {
-    const message = await readErrorMessage(
-      res,
-      options?.fallbackMessage ?? defaultErrorMessage
-    );
+    const message = await readErrorMessage(res, options?.fallbackMessage ?? defaultErrorMessage);
     throw new Error(message);
   }
   return (await res.json()) as T;

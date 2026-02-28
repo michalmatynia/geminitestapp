@@ -1,10 +1,10 @@
-import prisma from "@/shared/lib/db/prisma";
-import bcrypt from "bcryptjs";
+import prisma from '@/shared/lib/db/prisma';
+import bcrypt from 'bcryptjs';
 
 async function main() {
   try {
-    const email = "admin@example.com";
-    const password = "admin123";
+    const email = 'admin@example.com';
+    const password = 'admin123';
     const passwordHash = await bcrypt.hash(password, 12);
 
     const user = await prisma.user.upsert({
@@ -12,14 +12,14 @@ async function main() {
       update: {},
       create: {
         email,
-        name: "Admin User",
+        name: 'Admin User',
         passwordHash,
       },
     });
 
-    console.log("Admin user ensured:", user.email);
+    console.log('Admin user ensured:', user.email);
   } catch (error) {
-    console.error("Error seeding admin:", error);
+    console.error('Error seeding admin:', error);
   } finally {
     process.exit();
   }

@@ -5,12 +5,7 @@ import React, { useCallback, useMemo } from 'react';
 
 import type { SettingsField, SettingsFieldOption } from '@/shared/contracts/cms';
 import type { ColorScheme } from '@/shared/contracts/cms-theme';
-import {
-  Label,
-  RadioGroup,
-  RadioGroupItem,
-  Button,
-} from '@/shared/ui';
+import { Label, RadioGroup, RadioGroupItem, Button } from '@/shared/ui';
 
 import { useOptionalSettingsForm } from './settings/SettingsFormContext';
 import {
@@ -24,12 +19,15 @@ import {
 } from './shared-fields';
 import { useThemeSettings } from './ThemeSettingsContext';
 
-import { 
-  FONT_FAMILY_OPTIONS, 
-  FONT_WEIGHT_OPTIONS, 
-  COLOR_SCHEME_OPTIONS 
+import {
+  FONT_FAMILY_OPTIONS,
+  FONT_WEIGHT_OPTIONS,
+  COLOR_SCHEME_OPTIONS,
 } from './settings/fields/settings-field-constants';
-import { CompositeFieldContext, type CompositeFieldContextValue } from './settings/fields/CompositeFieldContext';
+import {
+  CompositeFieldContext,
+  type CompositeFieldContextValue,
+} from './settings/fields/CompositeFieldContext';
 import { SpacingField } from './settings/fields/composite/SpacingField';
 import { BorderField } from './settings/fields/composite/BorderField';
 import { ShadowField } from './settings/fields/composite/ShadowField';
@@ -52,9 +50,7 @@ function CompositeFieldProvider({
   );
 
   return (
-    <CompositeFieldContext.Provider value={contextValue}>
-      {children}
-    </CompositeFieldContext.Provider>
+    <CompositeFieldContext.Provider value={contextValue}>{children}</CompositeFieldContext.Provider>
   );
 }
 
@@ -68,7 +64,7 @@ export function SettingsFieldRenderer({
   onChange?: (key: string, value: unknown) => void;
 }): React.ReactNode {
   const context = useOptionalSettingsForm();
-  
+
   const value = propValue !== undefined ? propValue : context?.values[field.key];
   const onChange = propOnChange || context?.onChange;
 
@@ -79,11 +75,14 @@ export function SettingsFieldRenderer({
       theme.colorSchemes.length === 0
         ? COLOR_SCHEME_OPTIONS
         : theme.colorSchemes.map((scheme: ColorScheme) => ({
-          label: scheme.name || scheme.id,
-          value: scheme.id,
-        }));
+            label: scheme.name || scheme.id,
+            value: scheme.id,
+          }));
     const extraOptions = field.options
-      ? field.options.filter((opt: SettingsFieldOption) => !baseOptions.some((base: SettingsFieldOption) => base.value === opt.value))
+      ? field.options.filter(
+          (opt: SettingsFieldOption) =>
+            !baseOptions.some((base: SettingsFieldOption) => base.value === opt.value)
+        )
       : [];
     return [...extraOptions, ...baseOptions];
   }, [field.options, theme.colorSchemes]);
@@ -141,7 +140,7 @@ export function SettingsFieldRenderer({
         <SelectField
           label={field.label}
           value={
-            (typeof value === 'string' && value.trim().length > 0)
+            typeof value === 'string' && value.trim().length > 0
               ? value
               : typeof field.defaultValue === 'string'
                 ? field.defaultValue
@@ -159,11 +158,13 @@ export function SettingsFieldRenderer({
             {field.label}
           </Label>
           <div className='grid grid-cols-3 gap-2'>
-            {(field.options ?? [
-              { label: 'Left', value: 'left' },
-              { label: 'Center', value: 'center' },
-              { label: 'Right', value: 'right' },
-            ]).map((opt: SettingsFieldOption) => {
+            {(
+              field.options ?? [
+                { label: 'Left', value: 'left' },
+                { label: 'Center', value: 'center' },
+                { label: 'Right', value: 'right' },
+              ]
+            ).map((opt: SettingsFieldOption) => {
               const currentValue = (value as string) ?? field.options?.[0]?.value ?? 'left';
               const isActive = currentValue === opt.value;
               return (
@@ -206,8 +207,15 @@ export function SettingsFieldRenderer({
           >
             {(field.options ?? []).map((opt: SettingsFieldOption) => (
               <div key={opt.value} className='flex items-center gap-2'>
-                <RadioGroupItem value={opt.value} id={`${field.key}-${opt.value}`} disabled={isDisabled} />
-                <Label htmlFor={`${field.key}-${opt.value}`} className='text-sm text-gray-300 cursor-pointer'>
+                <RadioGroupItem
+                  value={opt.value}
+                  id={`${field.key}-${opt.value}`}
+                  disabled={isDisabled}
+                />
+                <Label
+                  htmlFor={`${field.key}-${opt.value}`}
+                  className='text-sm text-gray-300 cursor-pointer'
+                >
                   {opt.label}
                 </Label>
               </div>

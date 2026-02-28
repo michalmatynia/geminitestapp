@@ -7,27 +7,35 @@ import { useAuthUsers } from '@/features/auth/hooks/useAuthQueries';
 import type { AuthRole } from '@/features/auth/utils/auth-management';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { AuthUser as AuthUserSummary } from '@/shared/contracts/auth';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, useToast, SectionHeader, Alert, MetadataItem, LoadingState } from '@/shared/ui';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  useToast,
+  SectionHeader,
+  Alert,
+  MetadataItem,
+  LoadingState,
+} from '@/shared/ui';
 
 export default function AuthDashboardPage(): React.JSX.Element {
   const { toast } = useToast();
-  const {
-    roles,
-    userRoles,
-    canReadUsers,
-    isLoading: authLoading,
-  } = useAuth();
+  const { roles, userRoles, canReadUsers, isLoading: authLoading } = useAuth();
 
   const authUsersQuery = useAuthUsers(canReadUsers);
 
   useEffect(() => {
     if (!authUsersQuery.error || !canReadUsers) return;
-    logClientError(authUsersQuery.error, { context: { source: 'AuthDashboardPage', action: 'loadMetrics' } });
+    logClientError(authUsersQuery.error, {
+      context: { source: 'AuthDashboardPage', action: 'loadMetrics' },
+    });
     toast('Failed to load auth dashboard data', { variant: 'error' });
   }, [authUsersQuery.error, toast, canReadUsers]);
 
   const users = useMemo<AuthUserSummary[]>(
-    () => (canReadUsers ? authUsersQuery.data?.users ?? [] : []),
+    () => (canReadUsers ? (authUsersQuery.data?.users ?? []) : []),
     [authUsersQuery.data?.users, canReadUsers]
   );
   const provider = authUsersQuery.data?.provider ?? 'mongodb';
@@ -36,10 +44,13 @@ export default function AuthDashboardPage(): React.JSX.Element {
     const total = users.length;
     const verified = users.filter((user: AuthUserSummary) => Boolean(user.emailVerified)).length;
     const unverified = total - verified;
-    const roleCounts = roles.reduce<Record<string, number>>((acc: Record<string, number>, role: AuthRole) => {
-      acc[role.id] = 0;
-      return acc;
-    }, {});
+    const roleCounts = roles.reduce<Record<string, number>>(
+      (acc: Record<string, number>, role: AuthRole) => {
+        acc[role.id] = 0;
+        return acc;
+      },
+      {}
+    );
     let unassigned = 0;
     users.forEach((user: AuthUserSummary) => {
       const assignedRole = userRoles[user.id];
@@ -116,9 +127,7 @@ export default function AuthDashboardPage(): React.JSX.Element {
       <Card className='bg-card border-border'>
         <CardHeader>
           <CardTitle className='text-white text-lg'>Role Distribution</CardTitle>
-          <CardDescription className='text-gray-500'>
-            Users assigned to each role.
-          </CardDescription>
+          <CardDescription className='text-gray-500'>Users assigned to each role.</CardDescription>
         </CardHeader>
         <CardContent className='grid gap-3 sm:grid-cols-2 lg:grid-cols-3'>
           {roles.map((role: AuthRole) => (

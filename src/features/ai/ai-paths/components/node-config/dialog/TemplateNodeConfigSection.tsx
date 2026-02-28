@@ -15,13 +15,7 @@ import {
 } from '../database/PlaceholderMatrixDialog';
 
 export function TemplateNodeConfigSection(): React.JSX.Element | null {
-  const {
-    selectedNode,
-    nodes,
-    edges,
-    runtimeState,
-    updateSelectedNodeConfig,
-  } = useAiPathConfig();
+  const { selectedNode, nodes, edges, runtimeState, updateSelectedNodeConfig } = useAiPathConfig();
 
   if (selectedNode?.type !== 'template') return null;
 
@@ -42,9 +36,7 @@ export function TemplateNodeConfigSection(): React.JSX.Element | null {
     const fromNode = nodes.find((node: AiNode) => node.id === edge.from);
     if (!fromNode) return;
     if (fromNode.type === 'parser') {
-      const mappings =
-        fromNode.config?.parser?.mappings ??
-        createParserMappings(fromNode.outputs);
+      const mappings = fromNode.config?.parser?.mappings ?? createParserMappings(fromNode.outputs);
       Object.keys(mappings).forEach((key: string) => {
         const trimmed = key.trim();
         if (trimmed) bundleKeys.add(trimmed);
@@ -58,15 +50,14 @@ export function TemplateNodeConfigSection(): React.JSX.Element | null {
       });
     }
     if (fromNode.type === 'mapper') {
-      const mapperOutputs =
-        fromNode.config?.mapper?.outputs ?? fromNode.outputs;
+      const mapperOutputs = fromNode.config?.mapper?.outputs ?? fromNode.outputs;
       mapperOutputs.forEach((output: string) => {
         const trimmed = output.trim();
         if (trimmed) bundleKeys.add(trimmed);
       });
     }
   });
-  const runtimeInputs = (runtimeState.inputs?.[selectedNode.id] ?? {});
+  const runtimeInputs = runtimeState.inputs?.[selectedNode.id] ?? {};
   const placeholderGroups: PlaceholderGroup[] = React.useMemo(() => {
     const groups: PlaceholderGroup[] = [];
     const uniqueDirect = Array.from(new Set(inputPorts));
@@ -111,8 +102,7 @@ export function TemplateNodeConfigSection(): React.JSX.Element | null {
           id: `bundle-${key}-${index}`,
           label: key,
           token: `{{bundle.${key}}}`,
-          resolvesTo:
-            resolved !== undefined ? formatRuntimeValue(resolved) : `Bundle key: ${key}`,
+          resolvesTo: resolved !== undefined ? formatRuntimeValue(resolved) : `Bundle key: ${key}`,
         });
       });
     }
@@ -126,8 +116,7 @@ export function TemplateNodeConfigSection(): React.JSX.Element | null {
     }
 
     const currentValue = runtimeInputs['value'];
-    const currentResolved =
-      currentValue !== undefined ? formatRuntimeValue(currentValue) : '—';
+    const currentResolved = currentValue !== undefined ? formatRuntimeValue(currentValue) : '—';
     groups.push({
       id: 'special',
       title: 'Current Value',
@@ -157,11 +146,16 @@ export function TemplateNodeConfigSection(): React.JSX.Element | null {
     const currentTemplate = templateConfig.template ?? '';
     const textArea = templateRef.current;
     const selectionStart =
-      typeof textArea?.selectionStart === 'number' ? textArea.selectionStart : currentTemplate.length;
+      typeof textArea?.selectionStart === 'number'
+        ? textArea.selectionStart
+        : currentTemplate.length;
     const selectionEnd =
       typeof textArea?.selectionEnd === 'number' ? textArea.selectionEnd : currentTemplate.length;
     const rangeStart = Math.max(0, Math.min(selectionStart, selectionEnd, currentTemplate.length));
-    const rangeEnd = Math.max(rangeStart, Math.min(Math.max(selectionStart, selectionEnd), currentTemplate.length));
+    const rangeEnd = Math.max(
+      rangeStart,
+      Math.min(Math.max(selectionStart, selectionEnd), currentTemplate.length)
+    );
     const prefix = currentTemplate.slice(0, rangeStart);
     const needsSeparator = prefix.length > 0 && !prefix.endsWith(' ') && !prefix.endsWith('\n');
     const separator = needsSeparator ? ' ' : '';
@@ -203,9 +197,8 @@ export function TemplateNodeConfigSection(): React.JSX.Element | null {
           }
         />
         <p className='mt-2 text-[11px] text-gray-500'>
-          Use placeholders like{' '}
-          <span className='text-gray-300'>{'{{context.entity.title}}'}</span> or{' '}
-          <span className='text-gray-300'>{'{{result}}'}</span>.
+          Use placeholders like <span className='text-gray-300'>{'{{context.entity.title}}'}</span>{' '}
+          or <span className='text-gray-300'>{'{{result}}'}</span>.
         </p>
       </div>
       <PlaceholderMatrixDialog

@@ -22,7 +22,7 @@ export class PerformanceMonitor {
       name,
       value,
       timestamp: Date.now(),
-      tags
+      tags,
     });
 
     // Keep only recent metrics
@@ -39,7 +39,11 @@ export class PerformanceMonitor {
     return result;
   }
 
-  async timeAsync<T>(name: string, fn: () => Promise<T>, tags?: Record<string, string>): Promise<T> {
+  async timeAsync<T>(
+    name: string,
+    fn: () => Promise<T>,
+    tags?: Record<string, string>
+  ): Promise<T> {
     const start = performance.now();
     const result = await fn();
     const duration = performance.now() - start;
@@ -62,7 +66,10 @@ export class PerformanceMonitor {
     return filtered;
   }
 
-  getStats(name: string, timeWindow: number = 300000): {
+  getStats(
+    name: string,
+    timeWindow: number = 300000
+  ): {
     count: number;
     avg: number;
     min: number;
@@ -71,12 +78,14 @@ export class PerformanceMonitor {
     p99: number;
   } {
     const metrics = this.getMetrics(name, timeWindow);
-    
+
     if (metrics.length === 0) {
       return { count: 0, avg: 0, min: 0, max: 0, p95: 0, p99: 0 };
     }
 
-    const values = metrics.map((m: PerformanceMetric) => m.value).sort((a: number, b: number) => a - b);
+    const values = metrics
+      .map((m: PerformanceMetric) => m.value)
+      .sort((a: number, b: number) => a - b);
     const sum = values.reduce((a: number, b: number) => a + b, 0);
 
     return {
@@ -85,14 +94,14 @@ export class PerformanceMonitor {
       min: values[0] ?? 0,
       max: values[values.length - 1] ?? 0,
       p95: values[Math.floor(values.length * 0.95)] ?? 0,
-      p99: values[Math.floor(values.length * 0.99)] ?? 0
+      p99: values[Math.floor(values.length * 0.99)] ?? 0,
     };
   }
 
   async getCacheMetrics(): Promise<CacheMetrics> {
     const { queryCache } = await import('./query-cache');
     const { imageOptimizer } = await import('./image-optimizer');
-    
+
     const queryStats = queryCache.getStats();
     const imageStats = imageOptimizer.getCacheStats();
 
@@ -106,7 +115,7 @@ export class PerformanceMonitor {
       misses: cacheMisses,
       hitRate: total > 0 ? cacheHits / total : 0,
       size: queryStats.size + imageStats.entries,
-      memory: queryStats.memory + imageStats.memory
+      memory: queryStats.memory + imageStats.memory,
     };
   }
 
@@ -130,7 +139,7 @@ export class PerformanceMonitor {
       avgQueryTime: queryStats.avg,
       avgImageOptTime: imageStats.avg,
       cacheHitRate: cacheMetrics.hitRate,
-      errorRate: totalRequests > 0 ? errorCount / totalRequests : 0
+      errorRate: totalRequests > 0 ? errorCount / totalRequests : 0,
     };
 
     const issues: string[] = [];
@@ -196,37 +205,37 @@ export const performanceMonitor: PerformanceMonitor = new PerformanceMonitor();
 
 // Performance middleware for API routes
 export function withPerformanceMiddleware(
-  handler: (...args: unknown[]) => Promise<unknown>, 
+  handler: (...args: unknown[]) => Promise<unknown>,
   name: string
 ): (...args: unknown[]) => Promise<unknown> {
   return async (req: unknown, res: unknown, ...args: unknown[]): Promise<unknown> => {
     const start = performance.now();
-    
+
     try {
       const result = await handler(req, res, ...args);
       const duration = performance.now() - start;
-      
+
       performanceMonitor.record('request', duration, {
         method: String((req as { method?: string })?.method || 'UNKNOWN'),
         endpoint: name,
-        status: 'success'
+        status: 'success',
       });
-      
+
       return result;
     } catch (error) {
       const duration = performance.now() - start;
-      
+
       performanceMonitor.record('request', duration, {
         method: String((req as { method?: string })?.method || 'UNKNOWN'),
         endpoint: name,
-        status: 'error'
+        status: 'error',
       });
-      
+
       performanceMonitor.record('error', 1, {
         endpoint: name,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
-      
+
       throw error;
     }
   };

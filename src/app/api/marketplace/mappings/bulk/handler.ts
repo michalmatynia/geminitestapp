@@ -42,7 +42,10 @@ export async function POST_handler(
   }
 
   const repo = getCategoryMappingRepository();
-  const typedMappings = mappings as { externalCategoryId: string; internalCategoryId: string | null }[];
+  const typedMappings = mappings as {
+    externalCategoryId: string;
+    internalCategoryId: string | null;
+  }[];
   const upsertedCount = await repo.bulkUpsert(connectionId, catalogId, typedMappings);
 
   return NextResponse.json({

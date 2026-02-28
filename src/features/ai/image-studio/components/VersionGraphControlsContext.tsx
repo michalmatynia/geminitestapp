@@ -3,7 +3,7 @@
 import React from 'react';
 
 import type { VersionNode } from '../context/VersionGraphContext';
-import type { LayoutMode } from '../utils/version-graph';
+import type { LayoutMode } from '@/shared/lib/ai/image-studio/utils/version-graph';
 
 type VersionGraphControlsContextValue = {
   nodeCount: number;
@@ -48,7 +48,9 @@ type VersionGraphControlsContextValue = {
   onClearFilters: () => void;
 };
 
-const VersionGraphControlsContext = React.createContext<VersionGraphControlsContextValue | null>(null);
+const VersionGraphControlsContext = React.createContext<VersionGraphControlsContextValue | null>(
+  null
+);
 
 export function VersionGraphControlsProvider({
   value,
@@ -67,7 +69,9 @@ export function VersionGraphControlsProvider({
 export function useVersionGraphControlsContext(): VersionGraphControlsContextValue {
   const context = React.useContext(VersionGraphControlsContext);
   if (!context) {
-    throw new Error('useVersionGraphControlsContext must be used inside VersionGraphControlsProvider');
+    throw new Error(
+      'useVersionGraphControlsContext must be used inside VersionGraphControlsProvider'
+    );
   }
   return context;
 }

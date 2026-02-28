@@ -3,10 +3,7 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { api } from '@/shared/lib/api-client';
-import {
-  createListQueryV2,
-  createMutationV2,
-} from '@/shared/lib/query-factories-v2';
+import { createListQueryV2, createMutationV2 } from '@/shared/lib/query-factories-v2';
 
 import type { ReactElement, ReactNode } from 'react';
 

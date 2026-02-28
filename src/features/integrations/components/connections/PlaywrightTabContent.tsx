@@ -8,11 +8,16 @@ import { Button, SelectSimple, FormSection, FormField } from '@/shared/ui';
 import { DynamicPlaywrightSettingsForm } from './DynamicPlaywrightSettingsForm';
 
 export function PlaywrightTabContent(): React.JSX.Element {
-  const { playwrightPersonas, playwrightPersonasLoading, playwrightPersonaId, handleSelectPlaywrightPersona } =
-    useIntegrationsContext();
+  const {
+    playwrightPersonas,
+    playwrightPersonasLoading,
+    playwrightPersonaId,
+    handleSelectPlaywrightPersona,
+  } = useIntegrationsContext();
 
   const selectedPersona =
-    playwrightPersonas.find((persona: PlaywrightPersona) => persona.id === playwrightPersonaId) ?? null;
+    playwrightPersonas.find((persona: PlaywrightPersona) => persona.id === playwrightPersonaId) ??
+    null;
 
   return (
     <>
@@ -29,12 +34,13 @@ export function PlaywrightTabContent(): React.JSX.Element {
         {playwrightPersonasLoading ? (
           <p className='mt-4 text-xs text-gray-500'>Loading personas...</p>
         ) : playwrightPersonas.length === 0 ? (
-          <p className='mt-4 text-xs text-gray-500'>
-            No personas yet. Create one in settings.
-          </p>
+          <p className='mt-4 text-xs text-gray-500'>No personas yet. Create one in settings.</p>
         ) : (
           <div className='mt-4 grid gap-4 md:grid-cols-2'>
-            <FormField label='Persona' description='Selecting a persona overwrites the settings below.'>
+            <FormField
+              label='Persona'
+              description='Selecting a persona overwrites the settings below.'
+            >
               <SelectSimple
                 value={playwrightPersonaId ?? 'custom'}
                 onValueChange={(value: string): void => {
@@ -56,7 +62,9 @@ export function PlaywrightTabContent(): React.JSX.Element {
               {selectedPersona ? (
                 <>
                   <p className='text-xs font-semibold text-gray-200'>{selectedPersona.name}</p>
-                  <p className='mt-1'>{selectedPersona.description || 'No description provided.'}</p>
+                  <p className='mt-1'>
+                    {selectedPersona.description || 'No description provided.'}
+                  </p>
                 </>
               ) : (
                 <>

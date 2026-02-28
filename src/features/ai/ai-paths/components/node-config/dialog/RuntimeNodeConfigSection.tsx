@@ -1,10 +1,6 @@
 'use client';
 
-import type {
-  NodeCacheMode,
-  NodeCacheScope,
-  NodeSideEffectPolicy,
-} from '@/shared/lib/ai-paths';
+import type { NodeCacheMode, NodeCacheScope, NodeSideEffectPolicy } from '@/shared/lib/ai-paths';
 import { Button, Input, MultiSelect, SelectSimple, ToggleRow, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
@@ -82,17 +78,11 @@ export function RuntimeNodeConfigSection(): React.JSX.Element | null {
       ...Array.from(optionalSet),
     ]);
 
-    const nextContracts: Record<
-      string,
-      { required?: boolean; cardinality?: 'single' | 'many' }
-    > = {};
+    const nextContracts: Record<string, { required?: boolean; cardinality?: 'single' | 'many' }> =
+      {};
     keys.forEach((port: string): void => {
       const existing = inputContracts[port];
-      const required = requiredSet.has(port)
-        ? true
-        : optionalSet.has(port)
-          ? false
-          : undefined;
+      const required = requiredSet.has(port) ? true : optionalSet.has(port) ? false : undefined;
       if (!existing && required === undefined) return;
       const cardinality = existing?.cardinality;
       if (required === undefined && cardinality === undefined) return;
@@ -119,7 +109,8 @@ export function RuntimeNodeConfigSection(): React.JSX.Element | null {
   return (
     <div className='space-y-3 rounded-md border border-border bg-card/50 p-3'>
       <FormField label='Execution cache'>
-        <SelectSimple size='sm'
+        <SelectSimple
+          size='sm'
           value={cacheMode}
           onValueChange={(value: string): void =>
             updateSelectedNodeConfig({
@@ -201,7 +192,8 @@ export function RuntimeNodeConfigSection(): React.JSX.Element | null {
         Auto caching skips re-execution when inputs are unchanged under the selected cache scope.
       </p>
       <p className='text-[11px] text-gray-500'>
-        Disable cache to always re-run nodes that must execute every time (HTTP, DB writes, AI, delays, notifications).
+        Disable cache to always re-run nodes that must execute every time (HTTP, DB writes, AI,
+        delays, notifications).
       </p>
       {isSideEffectNode && (
         <FormField
@@ -288,7 +280,9 @@ export function RuntimeNodeConfigSection(): React.JSX.Element | null {
             updateSelectedNodeConfig({
               runtime: {
                 ...runtimeConfig,
-                ...(Number.isFinite(parsed) && parsed > 0 ? { timeoutMs: parsed } : { timeoutMs: undefined }),
+                ...(Number.isFinite(parsed) && parsed > 0
+                  ? { timeoutMs: parsed }
+                  : { timeoutMs: undefined }),
               },
             });
           }}
@@ -296,10 +290,7 @@ export function RuntimeNodeConfigSection(): React.JSX.Element | null {
         />
       </FormField>
       <div className='grid gap-3 sm:grid-cols-2'>
-        <FormField
-          label='Retry attempts'
-          description='Total attempts including first execution.'
-        >
+        <FormField label='Retry attempts' description='Total attempts including first execution.'>
           <Input
             type='number'
             min={1}
@@ -309,7 +300,9 @@ export function RuntimeNodeConfigSection(): React.JSX.Element | null {
               const parsed = parseInt(event.target.value, 10);
               const nextRetry = {
                 ...retryConfig,
-                ...(Number.isFinite(parsed) && parsed > 0 ? { attempts: parsed } : { attempts: undefined }),
+                ...(Number.isFinite(parsed) && parsed > 0
+                  ? { attempts: parsed }
+                  : { attempts: undefined }),
               };
               updateSelectedNodeConfig({
                 runtime: {
@@ -321,10 +314,7 @@ export function RuntimeNodeConfigSection(): React.JSX.Element | null {
             className='mt-1 w-full border-border bg-card/70 text-sm text-white'
           />
         </FormField>
-        <FormField
-          label='Retry backoff (ms)'
-          description='Delay before each retry attempt.'
-        >
+        <FormField label='Retry backoff (ms)' description='Delay before each retry attempt.'>
           <Input
             type='number'
             min={0}
@@ -334,7 +324,9 @@ export function RuntimeNodeConfigSection(): React.JSX.Element | null {
               const parsed = parseInt(event.target.value, 10);
               const nextRetry = {
                 ...retryConfig,
-                ...(Number.isFinite(parsed) && parsed >= 0 ? { backoffMs: parsed } : { backoffMs: undefined }),
+                ...(Number.isFinite(parsed) && parsed >= 0
+                  ? { backoffMs: parsed }
+                  : { backoffMs: undefined }),
               };
               updateSelectedNodeConfig({
                 runtime: {

@@ -1,12 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import {
-  listBaseImportRuns,
-} from '@/features/integrations/services/imports/base-import-run-repository';
-import {
-  startBaseImportRunResponse,
-} from '@/features/integrations/services/imports/base-import-run-starter';
+import { listBaseImportRuns } from '@/features/integrations/services/imports/base-import-run-repository';
+import { startBaseImportRunResponse } from '@/features/integrations/services/imports/base-import-run-starter';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 export const startRunSchema = z.object({
@@ -28,10 +24,7 @@ export const listRunsQuerySchema = z.object({
   limit: z.coerce.number().int().positive().max(200).optional(),
 });
 
-export async function GET_handler(
-  _req: NextRequest,
-  ctx: ApiHandlerContext
-): Promise<Response> {
+export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const query = (ctx.query ?? {}) as z.infer<typeof listRunsQuerySchema>;
   const runs = await listBaseImportRuns(query.limit ?? 25);
   return NextResponse.json(
@@ -44,10 +37,7 @@ export async function GET_handler(
   );
 }
 
-export async function POST_handler(
-  _req: NextRequest,
-  ctx: ApiHandlerContext
-): Promise<Response> {
+export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const data = ctx.body as z.infer<typeof startRunSchema>;
   const response = await startBaseImportRunResponse({
     inventoryId: data.inventoryId,

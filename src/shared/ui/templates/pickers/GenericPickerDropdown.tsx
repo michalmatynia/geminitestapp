@@ -6,7 +6,6 @@ import { memo, useState, useCallback, useMemo } from 'react';
 import type { GenericPickerDropdownProps, PickerOption, PickerGroup } from '@/shared/contracts/ui';
 import { cn } from '@/shared/utils';
 
-
 /**
  * GenericPickerDropdown - Reusable dropdown picker for grouped options
  *
@@ -35,7 +34,7 @@ import { cn } from '@/shared/utils';
  * />
  */
 export const GenericPickerDropdown = memo(function GenericPickerDropdown<
-  T extends PickerOption = PickerOption
+  T extends PickerOption = PickerOption,
 >({
   groups,
   onSelect,
@@ -78,10 +77,7 @@ export const GenericPickerDropdown = memo(function GenericPickerDropdown<
     [handleOpenChange]
   );
 
-  const allOptions = useMemo(
-    () => groups.flatMap((g: PickerGroup) => g.options),
-    [groups]
-  );
+  const allOptions = useMemo(() => groups.flatMap((g: PickerGroup) => g.options), [groups]);
 
   const filteredGroups = useMemo(() => {
     if (!searchable || !searchQuery) return groups;
@@ -90,9 +86,10 @@ export const GenericPickerDropdown = memo(function GenericPickerDropdown<
     return groups
       .map((group: PickerGroup) => ({
         ...group,
-        options: group.options.filter((opt: PickerOption) =>
-          opt.label.toLowerCase().includes(query) ||
-          opt.description?.toLowerCase().includes(query)
+        options: group.options.filter(
+          (opt: PickerOption) =>
+            opt.label.toLowerCase().includes(query) ||
+            opt.description?.toLowerCase().includes(query)
         ),
       }))
       .filter((group: PickerGroup) => group.options.length > 0);

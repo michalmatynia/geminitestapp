@@ -36,16 +36,13 @@ export const resolvePriceGroupContext = async (
     const priceGroupCollection = mongo.collection<PriceGroupLookup>('price_groups');
     const byId = preferredPriceGroupId?.trim()
       ? await priceGroupCollection.findOne(
-        { id: preferredPriceGroupId.trim() },
-        { projection: projectedFields }
-      )
+          { id: preferredPriceGroupId.trim() },
+          { projection: projectedFields }
+        )
       : null;
     const fallbackDefault = byId
       ? null
-      : await priceGroupCollection.findOne(
-        { isDefault: true },
-        { projection: projectedFields }
-      );
+      : await priceGroupCollection.findOne({ isDefault: true }, { projection: projectedFields });
     const resolved = byId ?? fallbackDefault;
     if (!resolved?.id) {
       return { defaultPriceGroupId: null, preferredCurrencies: [] };
@@ -80,26 +77,26 @@ export const resolvePriceGroupContext = async (
 
   const byId = preferredPriceGroupId?.trim()
     ? await prisma.priceGroup.findUnique({
-      where: { id: preferredPriceGroupId.trim() },
-      select: {
-        id: true,
-        groupId: true,
-        currencyId: true,
-        currency: { select: { code: true } },
-      },
-    })
+        where: { id: preferredPriceGroupId.trim() },
+        select: {
+          id: true,
+          groupId: true,
+          currencyId: true,
+          currency: { select: { code: true } },
+        },
+      })
     : null;
   const fallbackDefault = byId
     ? null
     : await prisma.priceGroup.findFirst({
-      where: { isDefault: true },
-      select: {
-        id: true,
-        groupId: true,
-        currencyId: true,
-        currency: { select: { code: true } },
-      },
-    });
+        where: { isDefault: true },
+        select: {
+          id: true,
+          groupId: true,
+          currencyId: true,
+          currency: { select: { code: true } },
+        },
+      });
   const resolved = byId ?? fallbackDefault;
   if (!resolved?.id) {
     return { defaultPriceGroupId: null, preferredCurrencies: [] };
@@ -118,7 +115,10 @@ export const resolvePriceGroupContext = async (
 
 const normalizeLanguageCode = (value: unknown): string | null => {
   if (typeof value !== 'string') return null;
-  const normalized = value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
+  const normalized = value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]/g, '');
   return normalized.length > 0 ? normalized : null;
 };
 
@@ -131,16 +131,14 @@ export const resolveCatalogLanguageContext = async (
 ): Promise<{ languageCodes: string[]; defaultLanguageCode: string | null }> => {
   const catalogLanguageIds = Array.isArray(catalog.languageIds)
     ? catalog.languageIds
-      .map((id: string) => (typeof id === 'string' ? id.trim() : ''))
-      .filter((id: string): boolean => id.length > 0)
+        .map((id: string) => (typeof id === 'string' ? id.trim() : ''))
+        .filter((id: string): boolean => id.length > 0)
     : [];
   const defaultLanguageId = catalog.defaultLanguageId?.trim() ?? '';
 
   const idsToResolve = Array.from(
     new Set(
-      [...catalogLanguageIds, defaultLanguageId].filter(
-        (id: string): boolean => id.length > 0
-      )
+      [...catalogLanguageIds, defaultLanguageId].filter((id: string): boolean => id.length > 0)
     )
   );
   if (idsToResolve.length === 0) {
@@ -200,10 +198,10 @@ export const resolveCatalogLanguageContext = async (
   );
 
   const defaultLanguageCode = defaultLanguageId
-    ? idToCode.get(defaultLanguageId) ??
+    ? (idToCode.get(defaultLanguageId) ??
       idToCode.get(defaultLanguageId.toLowerCase()) ??
-      normalizeLanguageCode(defaultLanguageId)
-    : languageCodes[0] ?? null;
+      normalizeLanguageCode(defaultLanguageId))
+    : (languageCodes[0] ?? null);
 
   return {
     languageCodes,

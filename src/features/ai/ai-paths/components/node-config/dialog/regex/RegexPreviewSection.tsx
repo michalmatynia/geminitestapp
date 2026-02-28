@@ -33,7 +33,9 @@ export function RegexPreviewSection({
       <Textarea
         className='min-h-[110px] w-full rounded-md border border-border bg-card/70 font-mono text-xs text-white'
         value={sampleSource}
-        onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => onSampleChange(event.target.value)}
+        onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
+          onSampleChange(event.target.value)
+        }
         placeholder='Paste example strings here (one per line). Leave empty to use runtime inputs.'
       />
       <div className='grid grid-cols-1 gap-3 md:grid-cols-2'>

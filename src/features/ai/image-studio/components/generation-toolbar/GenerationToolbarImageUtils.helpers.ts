@@ -1,7 +1,5 @@
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
-import {
-  type ImageContentFrame,
-} from './GenerationToolbarImageUtils.types';
+import { type ImageContentFrame } from './GenerationToolbarImageUtils.types';
 
 export const CENTER_LAYOUT_DEFAULT_PADDING_PERCENT = 8;
 export const CENTER_LAYOUT_MIN_PADDING_PERCENT = 0;
@@ -15,7 +13,8 @@ export const CENTER_LAYOUT_MAX_CHROMA_THRESHOLD = 80;
 export const CENTER_LAYOUT_MIN_TARGET_CANVAS_SIDE = 1;
 export const CENTER_LAYOUT_MAX_TARGET_CANVAS_SIDE = 32_768;
 
-export const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+export const sleep = (ms: number): Promise<void> =>
+  new Promise((resolve) => setTimeout(resolve, ms));
 
 export const clamp01 = (value: number): number => Math.max(0, Math.min(1, value));
 
@@ -25,14 +24,15 @@ export const isFiniteNumber = (value: unknown): value is number =>
 export const shapePointsAreUnitNormalized = (shape: {
   points: Array<{ x: number; y: number }>;
 }): boolean =>
-  shape.points.every((point) => (
-    isFiniteNumber(point.x) &&
-    isFiniteNumber(point.y) &&
-    point.x >= 0 &&
-    point.x <= 1 &&
-    point.y >= 0 &&
-    point.y <= 1
-  ));
+  shape.points.every(
+    (point) =>
+      isFiniteNumber(point.x) &&
+      isFiniteNumber(point.y) &&
+      point.x >= 0 &&
+      point.x <= 1 &&
+      point.y >= 0 &&
+      point.y <= 1
+  );
 
 export const normalizeImageContentFrame = (
   frame: ImageContentFrame | null | undefined

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { logSystemEvent } from '@/features/observability/server';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { parseJsonBody } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, internalError, notFoundError } from '@/shared/errors/app-error';
@@ -14,12 +14,14 @@ const messageSchema = z.object({
   content: z.string().trim().min(1),
 });
 
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { sessionId: string }): Promise<Response> {
+export async function GET_handler(
+  _req: NextRequest,
+  _ctx: ApiHandlerContext,
+  params: { sessionId: string }
+): Promise<Response> {
   const requestStart = Date.now();
   if (!('chatbotMessage' in prisma) || !('chatbotSession' in prisma)) {
-    throw internalError(
-      'Chat sessions not initialized. Run prisma generate/db push.'
-    );
+    throw internalError('Chat sessions not initialized. Run prisma generate/db push.');
   }
   const { sessionId } = params;
   const session = await prisma.chatbotSession.findUnique({
@@ -44,19 +46,24 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, pa
       },
     });
   }
-  return NextResponse.json({ messages }, {
-    headers: {
-      'Cache-Control': 'no-store',
-    },
-  });
+  return NextResponse.json(
+    { messages },
+    {
+      headers: {
+        'Cache-Control': 'no-store',
+      },
+    }
+  );
 }
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { sessionId: string }): Promise<Response> {
+export async function POST_handler(
+  req: NextRequest,
+  _ctx: ApiHandlerContext,
+  params: { sessionId: string }
+): Promise<Response> {
   const requestStart = Date.now();
   if (!('chatbotMessage' in prisma) || !('chatbotSession' in prisma)) {
-    throw internalError(
-      'Chat sessions not initialized. Run prisma generate/db push.'
-    );
+    throw internalError('Chat sessions not initialized. Run prisma generate/db push.');
   }
   const { sessionId } = params;
   const session = await prisma.chatbotSession.findUnique({

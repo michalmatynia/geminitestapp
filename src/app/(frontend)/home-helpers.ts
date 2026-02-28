@@ -25,9 +25,7 @@ const isAdminSession = (session: Session | null): boolean => {
   return ['admin', 'super_admin', 'superuser'].includes(role);
 };
 
-export const canPreviewDrafts = async (
-  session: Session | null,
-): Promise<boolean> => {
+export const canPreviewDrafts = async (session: Session | null): Promise<boolean> => {
   if (!isAdminSession(session)) return false;
   const userId = session?.user?.id;
   if (!userId) return false;

@@ -1,12 +1,6 @@
 'use client';
 
-import {
-  createContext,
-  useContext,
-  useState,
-  useMemo,
-  type ReactNode,
-} from 'react';
+import { createContext, useContext, useState, useMemo, type ReactNode } from 'react';
 
 import type { AiNode } from '@/shared/lib/ai-paths';
 
@@ -71,10 +65,8 @@ export function SelectionProvider({
     initialSelectedNodeId ? [initialSelectedNodeId] : []
   );
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
-  const [selectionToolMode, setSelectionToolModeState] =
-    useState<SelectionToolMode>('pan');
-  const [selectionScopeMode, setSelectionScopeModeState] =
-    useState<SelectionScopeMode>('portion');
+  const [selectionToolMode, setSelectionToolModeState] = useState<SelectionToolMode>('pan');
+  const [selectionScopeMode, setSelectionScopeModeState] = useState<SelectionScopeMode>('portion');
   const [configOpen, setConfigOpenState] = useState(false);
   const [nodeConfigDirty, setNodeConfigDirtyState] = useState(false);
   const [nodeConfigDraft, setNodeConfigDraftState] = useState<AiNode | null>(null);
@@ -123,9 +115,8 @@ export function SelectionProvider({
         if (!normalized) return;
         setSelectedNodeIds((prev: string[]) => {
           const next = prev.filter((value: string) => value !== normalized);
-          setSelectedNodeId(
-            (prevSelectedNodeId: string | null): string | null =>
-              prevSelectedNodeId === normalized ? (next[0] ?? null) : prevSelectedNodeId
+          setSelectedNodeId((prevSelectedNodeId: string | null): string | null =>
+            prevSelectedNodeId === normalized ? (next[0] ?? null) : prevSelectedNodeId
           );
           return next;
         });
@@ -138,13 +129,11 @@ export function SelectionProvider({
           const next = exists
             ? prev.filter((value: string) => value !== normalized)
             : [...prev, normalized];
-          setSelectedNodeId(
-            (prevSelectedNodeId: string | null): string | null => {
-              if (!exists) return normalized;
-              if (prevSelectedNodeId === normalized) return next[0] ?? null;
-              return prevSelectedNodeId;
-            }
-          );
+          setSelectedNodeId((prevSelectedNodeId: string | null): string | null => {
+            if (!exists) return normalized;
+            if (prevSelectedNodeId === normalized) return next[0] ?? null;
+            return prevSelectedNodeId;
+          });
           if (next.length > 0) {
             setSelectedEdgeId(null);
           }
@@ -208,9 +197,7 @@ export function SelectionProvider({
 
   return (
     <SelectionActionsContext.Provider value={actions}>
-      <SelectionStateContext.Provider value={state}>
-        {children}
-      </SelectionStateContext.Provider>
+      <SelectionStateContext.Provider value={state}>{children}</SelectionStateContext.Provider>
     </SelectionActionsContext.Provider>
   );
 }

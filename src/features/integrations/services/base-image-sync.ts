@@ -1,6 +1,3 @@
- 
- 
- 
 import 'server-only';
 
 import { getProductListingRepository } from '@/features/integrations/server';
@@ -41,7 +38,6 @@ const mergeImageLinks = (existing: string[], incoming: string[]): string[] => {
 };
 
 export const listBaseListingsForSync = async (): Promise<BaseListingSyncInfo[]> => {
-  
   const provider = await getProductDataProvider();
   if (provider === 'mongodb') {
     const db = await getMongoDb();
@@ -90,7 +86,7 @@ export const listBaseListingsForSync = async (): Promise<BaseListingSyncInfo[]> 
 export const syncBaseImagesForListing = async (
   listingId: string,
   productId: string,
-  inventoryIdOverride?: string | null,
+  inventoryIdOverride?: string | null
 ): Promise<{ productId: string; listingId: string; count: number; added: number }> => {
   try {
     const productRepo = await getProductRepository();

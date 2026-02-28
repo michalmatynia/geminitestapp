@@ -17,7 +17,10 @@ const TRADERA_MARKETPLACE_SLUGS = new Set(['tradera']);
  * Fetches categories from the marketplace API and stores them locally.
  * Currently supports Base.com (BaseLinker).
  */
-export async function POST_handler(request: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function POST_handler(
+  request: NextRequest,
+  _ctx: ApiHandlerContext
+): Promise<Response> {
   const body = (await request.json()) as FetchCategoriesRequest;
   const { connectionId } = body;
 
@@ -60,9 +63,7 @@ export async function POST_handler(request: NextRequest, _ctx: ApiHandlerContext
     categories = await fetchTraderaCategoriesForConnection(connection);
     sourceName = 'Tradera';
   } else {
-    throw badRequestError(
-      `${integration.name} is not yet supported for category fetch`
-    );
+    throw badRequestError(`${integration.name} is not yet supported for category fetch`);
   }
 
   if (categories.length === 0) {

@@ -8,16 +8,25 @@ const variants = [
   { name: 'original', edges },
   { name: 'no_sim_to_trigger', edges: edges.filter((e) => e.id !== 'edge-xjm6zb') },
   { name: 'no_trigger_to_sim', edges: edges.filter((e) => e.id !== 'edge-o27z1h') },
-  { name: 'no_sim_loop', edges: edges.filter((e) => e.id !== 'edge-xjm6zb' && e.id !== 'edge-o27z1h') },
+  {
+    name: 'no_sim_loop',
+    edges: edges.filter((e) => e.id !== 'edge-xjm6zb' && e.id !== 'edge-o27z1h'),
+  },
 ];
 
 for (const variant of variants) {
   const report = compileGraph(cfg.nodes, variant.edges);
-  console.log(JSON.stringify({
-    variant: variant.name,
-    ok: report.ok,
-    errors: report.errors,
-    warnings: report.warnings,
-    top: report.findings.slice(0, 3),
-  }, null, 2));
+  console.log(
+    JSON.stringify(
+      {
+        variant: variant.name,
+        ok: report.ok,
+        errors: report.errors,
+        warnings: report.warnings,
+        top: report.findings.slice(0, 3),
+      },
+      null,
+      2
+    )
+  );
 }

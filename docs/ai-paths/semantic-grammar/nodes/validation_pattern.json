@@ -4,20 +4,8 @@
   "nodeType": "validation_pattern",
   "title": "Validation Pattern",
   "purpose": "Run ordered validation patterns from a stack or a path-local rule list.",
-  "inputs": [
-    "value",
-    "prompt",
-    "result",
-    "context"
-  ],
-  "outputs": [
-    "value",
-    "result",
-    "context",
-    "valid",
-    "errors",
-    "bundle"
-  ],
+  "inputs": ["value", "prompt", "result", "context"],
+  "outputs": ["value", "result", "context", "valid", "errors", "bundle"],
   "configFields": [
     {
       "path": "validationPattern.source",
@@ -112,20 +100,8 @@
       "x": 100,
       "y": 100
     },
-    "inputs": [
-      "value",
-      "prompt",
-      "result",
-      "context"
-    ],
-    "outputs": [
-      "value",
-      "result",
-      "context",
-      "valid",
-      "errors",
-      "bundle"
-    ],
+    "inputs": ["value", "prompt", "result", "context"],
+    "outputs": ["value", "result", "context", "valid", "errors", "bundle"],
     "config": {
       "validationPattern": {
         "source": "global_stack",

@@ -12,12 +12,12 @@ vi.mock('crypto', () => {
   };
 });
 
-import { 
-  createDraft, 
-  getDraft, 
-  listDrafts, 
-  updateDraft, 
-  deleteDraft 
+import {
+  createDraft,
+  getDraft,
+  listDrafts,
+  updateDraft,
+  deleteDraft,
 } from '@/features/drafter/services/draft-repository';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 

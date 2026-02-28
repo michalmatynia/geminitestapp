@@ -32,21 +32,12 @@ export const isLikelyCaseResolverOcrCapableModelId = (value: string): boolean =>
   return OCR_MODEL_ID_HINTS.some((hint) => normalized.includes(hint));
 };
 
-export const uniqueSortedCaseResolverOcrModelIds = (
-  modelIds: readonly string[]
-): string[] =>
-  Array.from(
-    new Set(
-      modelIds
-        .map((modelId: string) => modelId.trim())
-        .filter(Boolean)
-    )
-  ).sort((left: string, right: string) => left.localeCompare(right));
+export const uniqueSortedCaseResolverOcrModelIds = (modelIds: readonly string[]): string[] =>
+  Array.from(new Set(modelIds.map((modelId: string) => modelId.trim()).filter(Boolean))).sort(
+    (left: string, right: string) => left.localeCompare(right)
+  );
 
-export const toLikelyCaseResolverOcrModelIds = (
-  modelIds: readonly string[]
-): string[] =>
+export const toLikelyCaseResolverOcrModelIds = (modelIds: readonly string[]): string[] =>
   uniqueSortedCaseResolverOcrModelIds(
     modelIds.filter((modelId: string): boolean => isLikelyCaseResolverOcrCapableModelId(modelId))
   );
-

@@ -16,7 +16,14 @@ interface FormActionsProps {
   isDisabled?: boolean | undefined;
   className?: string | undefined;
   saveVariant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link' | undefined;
-  cancelVariant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link' | undefined;
+  cancelVariant?:
+    | 'default'
+    | 'destructive'
+    | 'outline'
+    | 'secondary'
+    | 'ghost'
+    | 'link'
+    | undefined;
   children?: React.ReactNode | undefined;
 }
 

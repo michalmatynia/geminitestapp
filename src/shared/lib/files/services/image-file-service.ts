@@ -1,12 +1,17 @@
 import 'server-only';
 
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import type { ImageFileRecord, ImageFileRepository, ImageFileCreateInput, ImageFileListFilters, ImageFileUpdateInput } from '@/shared/contracts/files';
+import type {
+  ImageFileRecord,
+  ImageFileRepository,
+  ImageFileCreateInput,
+  ImageFileListFilters,
+  ImageFileUpdateInput,
+} from '@/shared/contracts/files';
 
 import { getImageFileRepository } from './image-file-repository';
 import { mongoImageFileRepository } from './image-file-repository/mongo-image-file-repository';
 import { prismaImageFileRepository } from './image-file-repository/prisma-image-file-repository';
-
 
 /**
  * Service that wraps the Image File repository with error handling and logging.
@@ -20,7 +25,7 @@ const repoCall = async <K extends keyof ImageFileRepository>(
     const fn = repo[key] as (
       ...args: Parameters<ImageFileRepository[K]>
     ) => ReturnType<ImageFileRepository[K]>;
-    return await fn(...args) as Promise<Awaited<ReturnType<ImageFileRepository[K]>>>;
+    return (await fn(...args)) as Promise<Awaited<ReturnType<ImageFileRepository[K]>>>;
   } catch (error) {
     await ErrorSystem.captureException(error, {
       service: 'image-file-service',
@@ -46,8 +51,7 @@ export const imageFileService: ImageFileRepository = {
     repoCall('updateImageFileTags', id, tags),
   updateImageFile: (id: string, data: ImageFileUpdateInput): Promise<ImageFileRecord | null> =>
     repoCall('updateImageFile', id, data),
-  deleteImageFile: (id: string): Promise<ImageFileRecord | null> =>
-    repoCall('deleteImageFile', id),
+  deleteImageFile: (id: string): Promise<ImageFileRecord | null> => repoCall('deleteImageFile', id),
 };
 
 export type {
@@ -59,11 +63,7 @@ export type {
 };
 
 export { getImageFileRepository, mongoImageFileRepository, prismaImageFileRepository };
-export {
-  deleteFileFromStorage,
-  getDiskPathFromPublicPath,
-  uploadFile,
-} from '../file-uploader';
+export { deleteFileFromStorage, getDiskPathFromPublicPath, uploadFile } from '../file-uploader';
 export {
   getPublicPathFromStoredPath,
   uploadToConfiguredStorage,

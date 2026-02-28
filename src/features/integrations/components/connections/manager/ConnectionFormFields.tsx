@@ -37,7 +37,7 @@ export function ConnectionFormFields({
     ? 'Integration name (e.g. Allegro Main)'
     : isBaselinker
       ? 'Integration name (e.g. Main Baselinker)'
-      : 'Integration name (e.g. John\'s Tradera)';
+      : "Integration name (e.g. John's Tradera)";
 
   const usernameLabel = isAllegro
     ? 'Allegro client ID'
@@ -188,7 +188,10 @@ export function ConnectionFormFields({
                 }))
               }
             />
-            <Label htmlFor={`${idPrefix}-traderaAutoRelistEnabled`} className='text-xs font-medium text-gray-300'>
+            <Label
+              htmlFor={`${idPrefix}-traderaAutoRelistEnabled`}
+              className='text-xs font-medium text-gray-300'
+            >
               Enable auto relist by default
             </Label>
           </div>
@@ -215,9 +218,7 @@ export function ConnectionFormFields({
                   size='sm'
                   type='password'
                   placeholder={
-                    isCreateMode
-                      ? 'Application key'
-                      : 'New application key (leave blank to keep)'
+                    isCreateMode ? 'Application key' : 'New application key (leave blank to keep)'
                   }
                   value={form.traderaApiAppKey}
                   onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
@@ -230,10 +231,10 @@ export function ConnectionFormFields({
                 {!isCreateMode &&
                   !form.traderaApiAppKey.trim() &&
                   selectedConnection?.hasTraderaApiAppKey && (
-                  <p className='mt-1 text-xs text-emerald-300'>
-                    Stored app key retained. Leave blank to keep it.
-                  </p>
-                )}
+                    <p className='mt-1 text-xs text-emerald-300'>
+                      Stored app key retained. Leave blank to keep it.
+                    </p>
+                  )}
               </FormField>
               <FormField label='Tradera API Public Key (optional)'>
                 <Input
@@ -269,11 +270,7 @@ export function ConnectionFormFields({
                   variant='subtle'
                   size='sm'
                   type='password'
-                  placeholder={
-                    isCreateMode
-                      ? 'Access token'
-                      : 'New token (leave blank to keep)'
-                  }
+                  placeholder={isCreateMode ? 'Access token' : 'New token (leave blank to keep)'}
                   value={form.traderaApiToken}
                   onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                     setForm((prev) => ({
@@ -285,10 +282,10 @@ export function ConnectionFormFields({
                 {!isCreateMode &&
                   !form.traderaApiToken.trim() &&
                   selectedConnection?.hasTraderaApiToken && (
-                  <p className='mt-1 text-xs text-emerald-300'>
-                    Stored token retained. Leave blank to keep it.
-                  </p>
-                )}
+                    <p className='mt-1 text-xs text-emerald-300'>
+                      Stored token retained. Leave blank to keep it.
+                    </p>
+                  )}
               </FormField>
               <div className='flex items-center gap-3 py-1'>
                 <Checkbox
@@ -301,7 +298,10 @@ export function ConnectionFormFields({
                     }))
                   }
                 />
-                <Label htmlFor={`${idPrefix}-traderaApiSandbox`} className='text-xs font-medium text-gray-300'>
+                <Label
+                  htmlFor={`${idPrefix}-traderaApiSandbox`}
+                  className='text-xs font-medium text-gray-300'
+                >
                   Use Tradera sandbox
                 </Label>
               </div>

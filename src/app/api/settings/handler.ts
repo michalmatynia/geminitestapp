@@ -27,9 +27,7 @@ import {
   DATABASE_ENGINE_POLICY_KEY,
   DATABASE_ENGINE_SERVICE_ROUTE_MAP_KEY,
 } from '@/shared/lib/db/database-engine-constants';
-import {
-  invalidateDatabaseEnginePolicyCache,
-} from '@/shared/lib/db/database-engine-policy';
+import { invalidateDatabaseEnginePolicyCache } from '@/shared/lib/db/database-engine-policy';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import {
@@ -72,8 +70,12 @@ const HEAVY_KEYS = new Set<string>([
   'ai_insights_runtime_analytics_history',
   'ai_insights_logs_history',
 ]);
-const HEAVY_PREFIX_REGEX = new RegExp(`^(${HEAVY_PREFIXES.map((p) => p.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|')})`);
-const AI_PATHS_PREFIX_REGEX = new RegExp(`^${AI_PATHS_KEY_PREFIX.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}`);
+const HEAVY_PREFIX_REGEX = new RegExp(
+  `^(${HEAVY_PREFIXES.map((p) => p.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|')})`
+);
+const AI_PATHS_PREFIX_REGEX = new RegExp(
+  `^${AI_PATHS_KEY_PREFIX.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}`
+);
 const DEFAULT_SCOPE: SettingsScope = 'light';
 let settingsIndexesEnsured: Promise<void> | null = null;
 
@@ -85,14 +87,13 @@ const SETTINGS_SLOW_SCOPE_TIMEOUT_MS = parsePositiveInt(
   process.env['SETTINGS_SLOW_SCOPE_TIMEOUT_MS'],
   3_000
 );
-const isSlowSettingsScope = (scope: SettingsScope): boolean =>
-  scope === 'all' || scope === 'heavy';
+const isSlowSettingsScope = (scope: SettingsScope): boolean => scope === 'all' || scope === 'heavy';
 const isSettingsTimeoutError = (error: unknown): error is Error =>
   error instanceof Error &&
   error.message.includes('[settings]') &&
   error.message.includes('timed out');
 
-const withSettingsScopeTimeout = async <T,>(
+const withSettingsScopeTimeout = async <T>(
   scope: SettingsScope,
   label: string,
   promise: Promise<T>
@@ -117,7 +118,9 @@ const ensureSettingsIndexes = async (): Promise<void> => {
     settingsIndexesEnsured = (async (): Promise<void> => {
       try {
         const mongo = await getMongoDb();
-        await mongo.collection(SETTINGS_COLLECTION).createIndex({ key: 1 }, { name: 'settings_key' });
+        await mongo
+          .collection(SETTINGS_COLLECTION)
+          .createIndex({ key: 1 }, { name: 'settings_key' });
       } catch (error) {
         await ErrorSystem.logWarning('[settings] Failed to ensure settings indexes.', {
           service: 'api/settings',
@@ -131,8 +134,7 @@ const ensureSettingsIndexes = async (): Promise<void> => {
 const isHeavySettingKey = (key: string): boolean =>
   HEAVY_KEYS.has(key) || HEAVY_PREFIXES.some((prefix) => key.startsWith(prefix));
 const isAiPathsSettingKey = (key: string): boolean => key.startsWith(AI_PATHS_KEY_PREFIX);
-const shouldCompressSettingValue = (key: string): boolean =>
-  COMPRESSIBLE_SETTING_KEYS.has(key);
+const shouldCompressSettingValue = (key: string): boolean => COMPRESSIBLE_SETTING_KEYS.has(key);
 const decodeSettingValue = (key: string, value: string): string => {
   if (!shouldCompressSettingValue(key)) return value;
   if (!value.startsWith(COMPRESSED_SETTING_PREFIX)) return value;
@@ -173,9 +175,7 @@ const encodeSettingValue = (key: string, value: string): string => {
 const canUsePrismaSettings = (provider: 'prisma' | 'mongodb') =>
   provider === 'prisma' && Boolean(process.env['DATABASE_URL']) && 'setting' in prisma;
 
-const isPrismaMissingTableError = (
-  error: unknown
-): error is Prisma.PrismaClientKnownRequestError =>
+const isPrismaMissingTableError = (error: unknown): error is Prisma.PrismaClientKnownRequestError =>
   error instanceof Prisma.PrismaClientKnownRequestError &&
   (error.code === 'P2021' || error.code === 'P2022');
 
@@ -309,7 +309,9 @@ const parseJsonStringLiteral = (raw: string): string | null => {
   }
 };
 
-const parseCaseResolverWorkspaceMetadata = (raw: string | null): {
+const parseCaseResolverWorkspaceMetadata = (
+  raw: string | null
+): {
   revision: number;
   lastMutationId: string | null;
 } => {
@@ -323,13 +325,13 @@ const parseCaseResolverWorkspaceMetadata = (raw: string | null): {
   const mutationMatch = WORKSPACE_LAST_MUTATION_PATTERN.exec(raw);
   if (revisionMatch || mutationMatch) {
     const revisionCandidate = revisionMatch?.[1] ? Number.parseInt(revisionMatch[1], 10) : 0;
-    const revision = Number.isFinite(revisionCandidate) && revisionCandidate > 0
-      ? Math.floor(revisionCandidate)
-      : 0;    const mutationLiteral = mutationMatch?.[1] ?? 'null';
+    const revision =
+      Number.isFinite(revisionCandidate) && revisionCandidate > 0
+        ? Math.floor(revisionCandidate)
+        : 0;
+    const mutationLiteral = mutationMatch?.[1] ?? 'null';
     const lastMutationId =
-      mutationLiteral === 'null'
-        ? null
-        : parseJsonStringLiteral(mutationLiteral)?.trim() || null;
+      mutationLiteral === 'null' ? null : parseJsonStringLiteral(mutationLiteral)?.trim() || null;
     return {
       revision,
       lastMutationId,
@@ -350,9 +352,7 @@ const parseCaseResolverWorkspaceMetadata = (raw: string | null): {
         : 0;
     const mutationRaw = parsed['lastMutationId'];
     const lastMutationId =
-      typeof mutationRaw === 'string' && mutationRaw.trim().length > 0
-        ? mutationRaw.trim()
-        : null;
+      typeof mutationRaw === 'string' && mutationRaw.trim().length > 0 ? mutationRaw.trim() : null;
     return {
       revision,
       lastMutationId,
@@ -365,7 +365,6 @@ const parseCaseResolverWorkspaceMetadata = (raw: string | null): {
   }
 };
 
-
 const normalizeScope = (scope?: string | null): SettingsScope => {
   if (scope === 'heavy' || scope === 'light' || scope === 'all') return scope;
   return DEFAULT_SCOPE;
@@ -377,13 +376,9 @@ const applyScopeFilter = (settings: SettingRecord[], scope: SettingsScope): Sett
   );
   if (scope === 'all') return withoutAiPaths;
   if (scope === 'heavy') {
-    return withoutAiPaths.filter((setting: SettingRecord) =>
-      isHeavySettingKey(setting.key)
-    );
+    return withoutAiPaths.filter((setting: SettingRecord) => isHeavySettingKey(setting.key));
   }
-  return withoutAiPaths.filter(
-    (setting: SettingRecord) => !isHeavySettingKey(setting.key)
-  );
+  return withoutAiPaths.filter((setting: SettingRecord) => !isHeavySettingKey(setting.key));
 };
 
 const buildPrismaScopeWhere = (scope: SettingsScope): Record<string, unknown> => {
@@ -397,10 +392,7 @@ const buildPrismaScopeWhere = (scope: SettingsScope): Record<string, unknown> =>
     return { AND: [{ OR: heavyOr }, { NOT: aiPathsExclusion }] };
   }
   return {
-    AND: [
-      { NOT: { OR: heavyOr } },
-      { NOT: aiPathsExclusion },
-    ],
+    AND: [{ NOT: { OR: heavyOr } }, { NOT: aiPathsExclusion }],
   };
 };
 
@@ -441,10 +433,7 @@ const listMongoSettings = async (scope: SettingsScope): Promise<SettingRecord[]>
     .filter((doc: SettingRecord) => typeof doc.key === 'string' && typeof doc.value === 'string');
 };
 
-const upsertMongoSetting = async (
-  key: string,
-  value: string
-): Promise<SettingRecord | null> => {
+const upsertMongoSetting = async (key: string, value: string): Promise<SettingRecord | null> => {
   if (!process.env['MONGODB_URI']) return null;
   const mongo = await getMongoDb();
   const now = new Date();
@@ -468,7 +457,10 @@ const buildServerTiming = (entries: Record<string, number | null | undefined>): 
   return parts.join(', ');
 };
 
-const attachTimingHeaders = (response: Response, entries: Record<string, number | null | undefined>): void => {
+const attachTimingHeaders = (
+  response: Response,
+  entries: Record<string, number | null | undefined>
+): void => {
   const value = buildServerTiming(entries);
   if (value) {
     response.headers.set('Server-Timing', value);
@@ -556,7 +548,7 @@ export async function GET_handler(
   const scope = scopeOverride ?? normalizeScope(req.nextUrl.searchParams.get('scope'));
   const requestedKey = req.nextUrl.searchParams.get('key')?.trim() ?? '';
   const forceFresh = req.nextUrl.searchParams.get('fresh') === '1';
-  
+
   // Use no-store for settings to ensure freshness
   const SETTINGS_CACHE_CONTROL = 'no-store';
 
@@ -572,8 +564,7 @@ export async function GET_handler(
   if (requestedKey.length > 0) {
     const timings: Record<string, number | null | undefined> = {};
     const returnMetadataOnly =
-      requestedKey === CASE_RESOLVER_WORKSPACE_KEY &&
-      req.nextUrl.searchParams.get('meta') === '1';
+      requestedKey === CASE_RESOLVER_WORKSPACE_KEY && req.nextUrl.searchParams.get('meta') === '1';
     const providerStart = performance.now();
     const provider = await getAppDbProvider();
     timings['provider'] = performance.now() - providerStart;
@@ -604,8 +595,7 @@ export async function GET_handler(
       });
       return response;
     }
-    const payload: SettingRecord[] =
-      value === null ? [] : [{ key: requestedKey, value }];
+    const payload: SettingRecord[] = value === null ? [] : [{ key: requestedKey, value }];
     const response = NextResponse.json(payload, {
       headers: {
         'Cache-Control': SETTINGS_CACHE_CONTROL,
@@ -623,24 +613,16 @@ export async function GET_handler(
 
   const stale = getStaleSettings(scope);
   const lastKnown = getLastKnownSettings(scope);
-  const buildTimeoutFallbackResponse = async (
-    reason: string
-  ): Promise<Response> => {
+  const buildTimeoutFallbackResponse = async (reason: string): Promise<Response> => {
     const fallbackFromAll =
       scope === 'heavy'
         ? (() => {
-          const allKnown = getLastKnownSettings('all');
-          return allKnown ? applyScopeFilter(allKnown, 'heavy') : null;
-        })()
+            const allKnown = getLastKnownSettings('all');
+            return allKnown ? applyScopeFilter(allKnown, 'heavy') : null;
+          })()
         : null;
-    const fallbackFromLight =
-      scope === 'all' ? getLastKnownSettings('light') : null;
-    let fallbackData =
-      stale ??
-      lastKnown ??
-      fallbackFromAll ??
-      fallbackFromLight ??
-      [];
+    const fallbackFromLight = scope === 'all' ? getLastKnownSettings('light') : null;
+    let fallbackData = stale ?? lastKnown ?? fallbackFromAll ?? fallbackFromLight ?? [];
     let cacheStatus = stale
       ? 'timeout-stale'
       : lastKnown
@@ -712,7 +694,11 @@ export async function GET_handler(
       headers: { 'Cache-Control': SETTINGS_CACHE_CONTROL, 'X-Cache': 'fresh' },
     });
     await attachProviderHeader(response);
-    attachTimingHeaders(response, { total: performance.now() - requestStart, cache: 0, ...timings });
+    attachTimingHeaders(response, {
+      total: performance.now() - requestStart,
+      cache: 0,
+      ...timings,
+    });
     return response;
   }
   const cached = getCachedSettings(scope);
@@ -769,7 +755,10 @@ export async function GET_handler(
     const refreshPromise = fetchAndCacheSettings(scope, timings)
       .catch((error) => {
         // Log refresh error but return stale data to keep app running
-        void ErrorSystem.captureException(error, { service: 'api/settings', action: 'stale_refresh' });
+        void ErrorSystem.captureException(error, {
+          service: 'api/settings',
+          action: 'stale_refresh',
+        });
         return stale;
       })
       .finally(() => {
@@ -785,10 +774,9 @@ export async function GET_handler(
   }
 
   const timings: Record<string, number | null | undefined> = {};
-  const inflightPromise = fetchAndCacheSettings(scope, timings)
-    .finally(() => {
-      setSettingsInflight(null, scope);
-    });
+  const inflightPromise = fetchAndCacheSettings(scope, timings).finally(() => {
+    setSettingsInflight(null, scope);
+  });
   setSettingsInflight(inflightPromise, scope);
   let data: SettingRecord[];
   try {
@@ -837,7 +825,11 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     return NextResponse.json({ success: true });
   }
   if (shouldLog()) {
-    await ErrorSystem.logInfo('[settings] upserting', { service: 'api/settings', key, valuePreview: value.slice(0, 40) });
+    await ErrorSystem.logInfo('[settings] upserting', {
+      service: 'api/settings',
+      key,
+      valuePreview: value.slice(0, 40),
+    });
   }
   const provider = await getAppDbProvider();
   if (key === CASE_RESOLVER_WORKSPACE_KEY && expectedRevision !== undefined) {
@@ -879,7 +871,8 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     }
     const incomingUpdatedAtMs = parseUpdatedAtMsFromPathConfig(value);
     if (incomingUpdatedAtMs !== null) {
-      const currentValue = currentValueForPathConfig ?? (await readCurrentSettingValue(key, provider));
+      const currentValue =
+        currentValueForPathConfig ?? (await readCurrentSettingValue(key, provider));
       if (currentValue) {
         const currentUpdatedAtMs = parseUpdatedAtMsFromPathConfig(currentValue);
         if (currentUpdatedAtMs !== null && currentUpdatedAtMs > incomingUpdatedAtMs) {

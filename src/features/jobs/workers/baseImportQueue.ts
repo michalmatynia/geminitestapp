@@ -22,9 +22,7 @@ const queue = createManagedQueue<BaseImportQueueJobData>({
   processor: async (data, jobId) => {
     await processBaseImportRun(data.runId, {
       jobId,
-      ...(Array.isArray(data.statuses)
-        ? { allowedStatuses: data.statuses }
-        : {}),
+      ...(Array.isArray(data.statuses) ? { allowedStatuses: data.statuses } : {}),
     });
     return {
       ok: true,
@@ -58,9 +56,7 @@ export const stopBaseImportQueue = async (): Promise<void> => {
   await queue.stopWorker();
 };
 
-export const enqueueBaseImportRunJob = async (
-  data: BaseImportQueueJobData
-): Promise<string> => {
+export const enqueueBaseImportRunJob = async (data: BaseImportQueueJobData): Promise<string> => {
   const dedupeBucket = Math.floor(Date.now() / 30_000);
   const statusesKey = (data.statuses ?? ['pending']).join('-');
   // BullMQ rejects custom job IDs containing ":".

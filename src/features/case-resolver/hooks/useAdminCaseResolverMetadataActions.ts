@@ -7,9 +7,7 @@ import type {
   CaseResolverWorkspace,
 } from '@/shared/contracts/case-resolver';
 import type { FilemakerDatabase } from '@/shared/contracts/filemaker';
-import {
-  buildFilemakerPartyOptions,
-} from '@/features/filemaker/settings';
+import { buildFilemakerPartyOptions } from '@/features/filemaker/settings';
 import { buildPathLabelMap } from '../pages/admin-case-resolver-page-helpers';
 
 export function useAdminCaseResolverMetadataActions({
@@ -24,7 +22,13 @@ export function useAdminCaseResolverMetadataActions({
   workspace: CaseResolverWorkspace;
   updateWorkspace: (
     updater: (current: CaseResolverWorkspace) => CaseResolverWorkspace,
-    options?: { persistToast?: string; persistNow?: boolean; mutationId?: string; source?: string; skipNormalization?: boolean }
+    options?: {
+      persistToast?: string;
+      persistNow?: boolean;
+      mutationId?: string;
+      source?: string;
+      skipNormalization?: boolean;
+    }
   ) => void;
   caseResolverTags: CaseResolverTag[];
   caseResolverIdentifiers: CaseResolverIdentifier[];
@@ -32,10 +36,7 @@ export function useAdminCaseResolverMetadataActions({
   filemakerDatabase: FilemakerDatabase;
   activeCaseFile: CaseResolverFile | null;
 }) {
-  const caseTagPathById = useMemo(
-    () => buildPathLabelMap(caseResolverTags),
-    [caseResolverTags]
-  );
+  const caseTagPathById = useMemo(() => buildPathLabelMap(caseResolverTags), [caseResolverTags]);
   const caseIdentifierPathById = useMemo(
     () => buildPathLabelMap(caseResolverIdentifiers),
     [caseResolverIdentifiers]
@@ -44,7 +45,7 @@ export function useAdminCaseResolverMetadataActions({
     () => buildPathLabelMap(caseResolverCategories),
     [caseResolverCategories]
   );
-  
+
   const caseTagOptions = useMemo(
     () => [
       { value: '__none__', label: caseResolverTags.length > 0 ? 'No tag' : 'No tags' },
@@ -55,7 +56,7 @@ export function useAdminCaseResolverMetadataActions({
     ],
     [caseResolverTags, caseTagPathById]
   );
-  
+
   const caseIdentifierOptions = useMemo(
     () => [
       {
@@ -64,15 +65,19 @@ export function useAdminCaseResolverMetadataActions({
       },
       ...caseResolverIdentifiers.map((identifier: CaseResolverIdentifier) => ({
         value: identifier.id,
-        label: caseIdentifierPathById.get(identifier.id) ?? identifier.label ?? identifier.name ?? '',
+        label:
+          caseIdentifierPathById.get(identifier.id) ?? identifier.label ?? identifier.name ?? '',
       })),
     ],
     [caseIdentifierPathById, caseResolverIdentifiers]
   );
-  
+
   const caseCategoryOptions = useMemo(
     () => [
-      { value: '__none__', label: caseResolverCategories.length > 0 ? 'No category' : 'No categories' },
+      {
+        value: '__none__',
+        label: caseResolverCategories.length > 0 ? 'No category' : 'No categories',
+      },
       ...caseResolverCategories.map((category: CaseResolverCategory) => ({
         value: category.id,
         label: caseCategoryPathById.get(category.id) ?? category.name,
@@ -80,7 +85,7 @@ export function useAdminCaseResolverMetadataActions({
     ],
     [caseCategoryPathById, caseResolverCategories]
   );
-  
+
   const caseReferenceOptions = useMemo(
     () =>
       workspace.files
@@ -92,12 +97,12 @@ export function useAdminCaseResolverMetadataActions({
         .sort((left, right) => left.label.localeCompare(right.label)),
     [workspace.files]
   );
-  
+
   const parentCaseOptions = useMemo(
     () => [{ value: '__none__', label: 'No parent (root case)' }, ...caseReferenceOptions],
     [caseReferenceOptions]
   );
-  
+
   const partyOptions = useMemo(
     () => buildFilemakerPartyOptions(filemakerDatabase),
     [filemakerDatabase]
@@ -117,7 +122,7 @@ export function useAdminCaseResolverMetadataActions({
           | 'caseStatus'
           | 'happeningDate'
         >
-      >,
+      >
     ): void => {
       if (!activeCaseFile) return;
       if (activeCaseFile.isLocked) return;
@@ -126,41 +131,23 @@ export function useAdminCaseResolverMetadataActions({
         (current: CaseResolverWorkspace) => {
           const currentCase = current.files.find(
             (file: CaseResolverFile): boolean =>
-              file.id === activeCaseFile.id && file.fileType === 'case',
+              file.id === activeCaseFile.id && file.fileType === 'case'
           );
           if (!currentCase || currentCase.isLocked) return current;
 
-          const hasNamePatch = Object.prototype.hasOwnProperty.call(
-            patch,
-            'name',
-          );
-          const hasParentCasePatch = Object.prototype.hasOwnProperty.call(
-            patch,
-            'parentCaseId',
-          );
-          const hasReferencePatch = Object.prototype.hasOwnProperty.call(
-            patch,
-            'referenceCaseIds',
-          );
-          const hasTagPatch = Object.prototype.hasOwnProperty.call(
-            patch,
-            'tagId',
-          );
+          const hasNamePatch = Object.prototype.hasOwnProperty.call(patch, 'name');
+          const hasParentCasePatch = Object.prototype.hasOwnProperty.call(patch, 'parentCaseId');
+          const hasReferencePatch = Object.prototype.hasOwnProperty.call(patch, 'referenceCaseIds');
+          const hasTagPatch = Object.prototype.hasOwnProperty.call(patch, 'tagId');
           const hasCaseIdentifierPatch = Object.prototype.hasOwnProperty.call(
             patch,
-            'caseIdentifierId',
+            'caseIdentifierId'
           );
-          const hasCategoryPatch = Object.prototype.hasOwnProperty.call(
-            patch,
-            'categoryId',
-          );
-          const hasCaseStatusPatch = Object.prototype.hasOwnProperty.call(
-            patch,
-            'caseStatus',
-          );
+          const hasCategoryPatch = Object.prototype.hasOwnProperty.call(patch, 'categoryId');
+          const hasCaseStatusPatch = Object.prototype.hasOwnProperty.call(patch, 'caseStatus');
           const hasHappeningDatePatch = Object.prototype.hasOwnProperty.call(
             patch,
-            'happeningDate',
+            'happeningDate'
           );
 
           const nextName = hasNamePatch
@@ -169,39 +156,32 @@ export function useAdminCaseResolverMetadataActions({
           const rawParentCaseId = hasParentCasePatch
             ? (patch.parentCaseId ?? null)
             : currentCase.parentCaseId;
-          const nextParentCaseId = rawParentCaseId?.trim()
-            ? rawParentCaseId.trim()
-            : null;
+          const nextParentCaseId = rawParentCaseId?.trim() ? rawParentCaseId.trim() : null;
           const normalizedParentCaseId =
             nextParentCaseId === currentCase.id ? null : nextParentCaseId;
           const nextReferenceCaseIds = hasReferencePatch
             ? Array.from(
-              new Set(
-                (patch.referenceCaseIds ?? [])
-                  .map((value: string): string => value.trim())
-                  .filter(
-                    (value: string): boolean =>
-                      value.length > 0 && value !== currentCase.id,
-                  ),
-              ),
-            )
+                new Set(
+                  (patch.referenceCaseIds ?? [])
+                    .map((value: string): string => value.trim())
+                    .filter(
+                      (value: string): boolean => value.length > 0 && value !== currentCase.id
+                    )
+                )
+              )
             : currentCase.referenceCaseIds;
 
-          const nextTagId = hasTagPatch
-            ? patch.tagId?.trim() || null
-            : currentCase.tagId;
+          const nextTagId = hasTagPatch ? patch.tagId?.trim() || null : currentCase.tagId;
           const nextCaseIdentifierId = hasCaseIdentifierPatch
             ? patch.caseIdentifierId?.trim() || null
             : currentCase.caseIdentifierId;
           const nextCategoryId = hasCategoryPatch
             ? patch.categoryId?.trim() || null
             : currentCase.categoryId;
-          const nextCaseStatus = hasCaseStatusPatch
-            ? patch.caseStatus
-            : currentCase.caseStatus;
+          const nextCaseStatus = hasCaseStatusPatch ? patch.caseStatus : currentCase.caseStatus;
           const nextHappeningDate = hasHappeningDatePatch
             ? patch.happeningDate?.trim() || null
-            : currentCase.happeningDate ?? null;
+            : (currentCase.happeningDate ?? null);
 
           const now = new Date().toISOString();
           const nextCase: CaseResolverFile = {
@@ -219,16 +199,14 @@ export function useAdminCaseResolverMetadataActions({
 
           return {
             ...current,
-            files: current.files.map((file) =>
-              file.id === activeCaseFile.id ? nextCase : file,
-            ),
+            files: current.files.map((file) => (file.id === activeCaseFile.id ? nextCase : file)),
             updatedAt: now,
           };
         },
-        { persistToast: 'Case metadata updated.' },
+        { persistToast: 'Case metadata updated.' }
       );
     },
-    [activeCaseFile, updateWorkspace],
+    [activeCaseFile, updateWorkspace]
   );
 
   return {

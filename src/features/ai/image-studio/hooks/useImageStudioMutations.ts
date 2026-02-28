@@ -8,7 +8,11 @@ import type {
   ImageStudioProjectRecord,
   ImageStudioSlotRecord,
   StudioSlotsResponse,
+  RunStudioPayload,
+  ImageStudioRunStatus,
 } from '@/shared/contracts/image-studio';
+
+export type { RunStudioPayload, ImageStudioRunStatus };
 import type { CreateMutation, UpdateMutation, DeleteMutation } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import {
@@ -21,7 +25,6 @@ import {
   invalidateImageStudioSlots,
 } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-
 
 const normalizeStudioSlotId = (rawId: string): string => rawId.trim();
 const DELETE_SLOT_TIMEOUT_MS = 120_000;
@@ -57,42 +60,6 @@ const isDeleteTimeoutError = (error: unknown): boolean => {
   return message.includes('request timeout') || message.includes('timeout');
 };
 
-export interface RunStudioPayload {
-  projectId: string;
-  operation?: 'generate' | 'center_object' | undefined;
-  asset?: { filepath: string; id?: string | undefined } | undefined;
-  referenceAssets?: Array<{ filepath: string; id?: string | undefined }> | undefined;
-  prompt: string;
-  mask?: {
-    type: 'polygons';
-    polygons: Array<Array<{ x: number; y: number }>>;
-    invert?: boolean | undefined;
-    feather?: number | undefined;
-  } | null | undefined;
-  center?: {
-    mode:
-      | 'client_alpha_bbox'
-      | 'server_alpha_bbox'
-      | 'client_object_layout_v1'
-      | 'server_object_layout_v1';
-    dataUrl?: string | undefined;
-    layout?: {
-      paddingPercent?: number | undefined;
-      paddingXPercent?: number | undefined;
-      paddingYPercent?: number | undefined;
-      fillMissingCanvasWhite?: boolean | undefined;
-      targetCanvasWidth?: number | undefined;
-      targetCanvasHeight?: number | undefined;
-      whiteThreshold?: number | undefined;
-      chromaThreshold?: number | undefined;
-      detection?: 'auto' | 'alpha_bbox' | 'white_bg_first_colored_pixel' | undefined;
-    } | undefined;
-  } | undefined;
-  studioSettings?: Record<string, unknown> | undefined;
-}
-
-export type ImageStudioRunStatus = 'queued' | 'running' | 'completed' | 'failed';
-
 export interface ImageStudioRunHistoryEvent {
   id: string;
   type: string;
@@ -110,18 +77,18 @@ export interface ImageStudioRunRequestRecord {
   referenceAssets?: Array<{ filepath?: string; id?: string }>;
   mask?:
     | {
-      type: 'polygon';
-      points: Array<{ x: number; y: number }>;
-      closed?: boolean;
-      invert?: boolean;
-      feather?: number;
-    }
+        type: 'polygon';
+        points: Array<{ x: number; y: number }>;
+        closed?: boolean;
+        invert?: boolean;
+        feather?: number;
+      }
     | {
-      type: 'polygons';
-      polygons: Array<Array<{ x: number; y: number }>>;
-      invert?: boolean;
-      feather?: number;
-    }
+        type: 'polygons';
+        polygons: Array<Array<{ x: number; y: number }>>;
+        invert?: boolean;
+        feather?: number;
+      }
     | null;
   center?: {
     mode?:
@@ -236,11 +203,17 @@ export function useCreateStudioProject(): CreateMutation<string, CreateStudioPro
   });
 }
 
-export function useRenameStudioProject(): UpdateMutation<RenameStudioProjectResult, RenameStudioProjectPayload> {
+export function useRenameStudioProject(): UpdateMutation<
+  RenameStudioProjectResult,
+  RenameStudioProjectPayload
+> {
   const queryClient = useQueryClient();
 
   return createUpdateMutationV2({
-    mutationFn: async ({ projectId, nextProjectId }: RenameStudioProjectPayload): Promise<RenameStudioProjectResult> => {
+    mutationFn: async ({
+      projectId,
+      nextProjectId,
+    }: RenameStudioProjectPayload): Promise<RenameStudioProjectResult> => {
       const fromProjectId = projectId.trim();
       const response = await api.patch<RenameStudioProjectResult>(
         `/api/image-studio/projects/${encodeURIComponent(fromProjectId)}`,
@@ -278,7 +251,10 @@ export function useRenameStudioProject(): UpdateMutation<RenameStudioProjectResu
   });
 }
 
-export function useResizeStudioProjectCanvas(): UpdateMutation<ResizeStudioProjectCanvasResult, ResizeStudioProjectCanvasPayload> {
+export function useResizeStudioProjectCanvas(): UpdateMutation<
+  ResizeStudioProjectCanvasResult,
+  ResizeStudioProjectCanvasPayload
+> {
   const queryClient = useQueryClient();
 
   return createUpdateMutationV2({
@@ -289,10 +265,7 @@ export function useResizeStudioProjectCanvas(): UpdateMutation<ResizeStudioProje
       if (!normalizedProjectId) {
         throw new Error('Project id is required.');
       }
-      if (
-        typeof payload.canvasWidthPx !== 'number' &&
-        typeof payload.canvasHeightPx !== 'number'
-      ) {
+      if (typeof payload.canvasWidthPx !== 'number' && typeof payload.canvasHeightPx !== 'number') {
         throw new Error('At least one canvas dimension is required.');
       }
       const response = await api.patch<ResizeStudioProjectCanvasResult>(
@@ -363,12 +336,17 @@ export function useDeleteStudioProject(): DeleteMutation<string, string> {
   });
 }
 
-export function useCreateStudioSlots(projectId: string): CreateMutation<StudioSlotsResponse, Array<Partial<ImageStudioSlotRecord>>> {
+export function useCreateStudioSlots(
+  projectId: string
+): CreateMutation<StudioSlotsResponse, Array<Partial<ImageStudioSlotRecord>>> {
   const queryClient = useQueryClient();
 
   return createCreateMutationV2({
-    mutationFn: (slots: Array<Partial<ImageStudioSlotRecord>>) => 
-      api.post<StudioSlotsResponse>(`/api/image-studio/projects/${encodeURIComponent(projectId)}/slots`, { slots }),
+    mutationFn: (slots: Array<Partial<ImageStudioSlotRecord>>) =>
+      api.post<StudioSlotsResponse>(
+        `/api/image-studio/projects/${encodeURIComponent(projectId)}/slots`,
+        { slots }
+      ),
     mutationKey: QUERY_KEYS.imageStudio.slots(projectId),
     meta: {
       source: 'imageStudio.hooks.useCreateStudioSlots',
@@ -384,7 +362,9 @@ export function useCreateStudioSlots(projectId: string): CreateMutation<StudioSl
   });
 }
 
-export function useUpdateStudioSlot(projectId: string): UpdateMutation<ImageStudioSlotRecord, { id: string; data: Partial<ImageStudioSlotRecord> }> {
+export function useUpdateStudioSlot(
+  projectId: string
+): UpdateMutation<ImageStudioSlotRecord, { id: string; data: Partial<ImageStudioSlotRecord> }> {
   const queryClient = useQueryClient();
 
   return createUpdateMutationV2<
@@ -392,9 +372,18 @@ export function useUpdateStudioSlot(projectId: string): UpdateMutation<ImageStud
     { id: string; data: Partial<ImageStudioSlotRecord> },
     { previous?: StudioSlotsResponse | undefined }
   >({
-    mutationFn: async ({ id, data }: { id: string; data: Partial<ImageStudioSlotRecord> }): Promise<ImageStudioSlotRecord> => {
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: Partial<ImageStudioSlotRecord>;
+    }): Promise<ImageStudioSlotRecord> => {
       const slotId = normalizeStudioSlotId(id);
-      const response = await api.patch<{ slot?: ImageStudioSlotRecord }>(`/api/image-studio/slots/${encodeURIComponent(slotId)}`, data);
+      const response = await api.patch<{ slot?: ImageStudioSlotRecord }>(
+        `/api/image-studio/slots/${encodeURIComponent(slotId)}`,
+        data
+      );
       if (!response.slot) {
         throw new Error('Failed to update image studio slot');
       }
@@ -501,14 +490,14 @@ export function useDeleteStudioSlot(projectId: string): DeleteMutation<void, str
       (current: StudioSlotsResponse | undefined): StudioSlotsResponse | undefined => {
         if (!current?.slots?.length) return current;
         const nextSlots = current.slots.filter(
-          (slot: ImageStudioSlotRecord) => !candidateIds.has(normalizeStudioSlotId(slot.id)),
+          (slot: ImageStudioSlotRecord) => !candidateIds.has(normalizeStudioSlotId(slot.id))
         );
         if (nextSlots.length === current.slots.length) return current;
         return {
           ...current,
           slots: nextSlots,
         };
-      },
+      }
     );
   };
 
@@ -522,8 +511,9 @@ export function useDeleteStudioSlot(projectId: string): DeleteMutation<void, str
     if (activeDeleteVerifierIdsRef.current.has(normalizedDeletedSlotId)) return;
     activeDeleteVerifierIdsRef.current.add(normalizedDeletedSlotId);
 
-    const candidateIds = pendingDeleteCandidatesRef.current.get(normalizedDeletedSlotId)
-      ?? new Set(resolveStudioSlotIdCandidates(normalizedDeletedSlotId));
+    const candidateIds =
+      pendingDeleteCandidatesRef.current.get(normalizedDeletedSlotId) ??
+      new Set(resolveStudioSlotIdCandidates(normalizedDeletedSlotId));
 
     const cleanup = (): void => {
       timeoutFallbackIdsRef.current.delete(normalizedDeletedSlotId);
@@ -571,10 +561,13 @@ export function useDeleteStudioSlot(projectId: string): DeleteMutation<void, str
 
       cleanup();
       void invalidateImageStudioSlots(queryClient, normalizedProjectId);
-      console.warn('[image-studio] delete verification timed out; slot still present after polling', {
-        projectId: normalizedProjectId,
-        slotId: normalizedDeletedSlotId,
-      });
+      console.warn(
+        '[image-studio] delete verification timed out; slot still present after polling',
+        {
+          projectId: normalizedProjectId,
+          slotId: normalizedDeletedSlotId,
+        }
+      );
     } catch (error) {
       cleanup();
       void invalidateImageStudioSlots(queryClient, normalizedProjectId);
@@ -600,16 +593,14 @@ export function useDeleteStudioSlot(projectId: string): DeleteMutation<void, str
           `/api/image-studio/slots/${encodeURIComponent(slotId)}`,
           {
             timeout: DELETE_SLOT_TIMEOUT_MS,
-            ...(process.env['NODE_ENV'] !== 'production'
-              ? { params: { debug: '1' } }
-              : {}),
+            ...(process.env['NODE_ENV'] !== 'production' ? { params: { debug: '1' } } : {}),
           }
         );
         const deletedSlotIds = Array.isArray(response?.deletedSlotIds)
           ? response.deletedSlotIds
-            .filter((value: unknown): value is string => typeof value === 'string')
-            .map((value: string) => normalizeStudioSlotId(value))
-            .filter((value: string) => value.length > 0)
+              .filter((value: unknown): value is string => typeof value === 'string')
+              .map((value: string) => normalizeStudioSlotId(value))
+              .filter((value: string) => value.length > 0)
           : [];
         deletedIdsByRequestRef.current.set(slotId, deletedSlotIds);
         deleteTimingsByRequestRef.current.set(slotId, response?.timingsMs ?? null);
@@ -617,10 +608,13 @@ export function useDeleteStudioSlot(projectId: string): DeleteMutation<void, str
         if (isDeleteTimeoutError(error)) {
           timeoutFallbackIdsRef.current.add(slotId);
           deletedIdsByRequestRef.current.set(slotId, []);
-          console.info('[image-studio] delete request timed out; keeping optimistic state and polling', {
-            projectId,
-            slotId,
-          });
+          console.info(
+            '[image-studio] delete request timed out; keeping optimistic state and polling',
+            {
+              projectId,
+              slotId,
+            }
+          );
           return;
         }
         throw error;
@@ -643,7 +637,7 @@ export function useDeleteStudioSlot(projectId: string): DeleteMutation<void, str
       pendingDeleteCandidatesRef.current.set(normalizedDeletedSlotId, deleteCandidates);
 
       const previousSlots = queryClient.getQueryData<StudioSlotsResponse | undefined>(
-        slotsQueryKey,
+        slotsQueryKey
       );
 
       applyOptimisticDeleteFilter(deleteCandidates);
@@ -661,7 +655,7 @@ export function useDeleteStudioSlot(projectId: string): DeleteMutation<void, str
       if (typedContext?.previousSlots) {
         queryClient.setQueryData<StudioSlotsResponse | undefined>(
           slotsQueryKey,
-          typedContext.previousSlots,
+          typedContext.previousSlots
         );
       }
       console.error('[image-studio] delete card failed', {
@@ -718,7 +712,9 @@ export function useDeleteStudioSlot(projectId: string): DeleteMutation<void, str
   });
 }
 
-export function useUploadStudioAssets(projectId: string): CreateMutation<StudioAssetImportResult, { files: File[]; folder: string }> {
+export function useUploadStudioAssets(
+  projectId: string
+): CreateMutation<StudioAssetImportResult, { files: File[]; folder: string }> {
   const queryClient = useQueryClient();
 
   return createCreateMutationV2({
@@ -728,7 +724,10 @@ export function useUploadStudioAssets(projectId: string): CreateMutation<StudioA
       if (folder.trim()) {
         formData.append('folder', folder.trim());
       }
-      return api.post<StudioAssetImportResult>(`/api/image-studio/projects/${encodeURIComponent(projectId)}/assets`, formData);
+      return api.post<StudioAssetImportResult>(
+        `/api/image-studio/projects/${encodeURIComponent(projectId)}/assets`,
+        formData
+      );
     },
     mutationKey: QUERY_KEYS.imageStudio.slots(projectId),
     meta: {
@@ -745,12 +744,17 @@ export function useUploadStudioAssets(projectId: string): CreateMutation<StudioA
   });
 }
 
-export function useImportStudioAssetsFromDrive(projectId: string): CreateMutation<StudioAssetImportResult, { files: ImageFileSelection[]; folder: string }> {
+export function useImportStudioAssetsFromDrive(
+  projectId: string
+): CreateMutation<StudioAssetImportResult, { files: ImageFileSelection[]; folder: string }> {
   const queryClient = useQueryClient();
 
   return createCreateMutationV2({
     mutationFn: ({ files, folder }: { files: ImageFileSelection[]; folder: string }) =>
-      api.post<StudioAssetImportResult>(`/api/image-studio/projects/${encodeURIComponent(projectId)}/assets/import`, { files, folder }),
+      api.post<StudioAssetImportResult>(
+        `/api/image-studio/projects/${encodeURIComponent(projectId)}/assets/import`,
+        { files, folder }
+      ),
     mutationKey: QUERY_KEYS.imageStudio.slots(projectId),
     meta: {
       source: 'imageStudio.hooks.useImportStudioAssetsFromDrive',

@@ -11,9 +11,7 @@ export type NoteCardHeaderProps = {
   note: NoteWithRelations;
 };
 
-export function NoteCardHeader({
-  note,
-}: NoteCardHeaderProps): React.JSX.Element {
+export function NoteCardHeader({ note }: NoteCardHeaderProps): React.JSX.Element {
   const { handleToggleFavorite } = useNotesAppContext();
 
   const isCodeNote = (note.editorType as string) === 'code';
@@ -33,19 +31,14 @@ export function NoteCardHeader({
       </div>
       <div className='flex items-center gap-2'>
         {isCodeNote && (
-          <CopyButton
-            value={note.content}
-            className='text-gray-500 hover:text-blue-500'
-          />
+          <CopyButton value={note.content} className='text-gray-500 hover:text-blue-500' />
         )}
         <Button
           type='button'
           variant='ghost'
           size='icon'
           className='h-auto w-auto p-0 text-gray-500 hover:bg-transparent hover:text-yellow-500'
-          onMouseDown={(event: React.MouseEvent): void =>
-            event.preventDefault()
-          }
+          onMouseDown={(event: React.MouseEvent): void => event.preventDefault()}
           onClick={(event: React.MouseEvent): void => {
             event.stopPropagation();
             onToggleFavorite(note);
@@ -53,10 +46,7 @@ export function NoteCardHeader({
           aria-label={note.isFavorite ? 'Unfavorite note' : 'Favorite note'}
           title={note.isFavorite ? 'Remove favorite' : 'Add favorite'}
         >
-          <Star
-            size={16}
-            className={note.isFavorite ? 'fill-yellow-400 text-yellow-500' : ''}
-          />
+          <Star size={16} className={note.isFavorite ? 'fill-yellow-400 text-yellow-500' : ''} />
         </Button>
         {note.isPinned && <Pin size={16} className='text-blue-600' />}
       </div>

@@ -40,7 +40,7 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
   const notebooksQuery = useNotebooks();
   const notebooks = useMemo(
     (): NotebookRecord[] => notebooksQuery.data ?? [],
-    [notebooksQuery.data],
+    [notebooksQuery.data]
   );
   const loading = notebooksQuery.isPending;
 

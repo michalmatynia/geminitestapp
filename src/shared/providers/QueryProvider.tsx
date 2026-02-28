@@ -8,7 +8,11 @@ import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useGlobalQueryErrorHandler } from '@/shared/hooks/query/useQueryErrorHandling';
 import { usePerformanceMonitor } from '@/shared/hooks/useQueryAnalytics';
 import { useQueryPersistence } from '@/shared/hooks/query/useQueryPersistence';
-import { useQueryMiddleware, developmentMiddlewares, productionMiddlewares } from '@/shared/hooks/query/useQueryMiddleware';
+import {
+  useQueryMiddleware,
+  developmentMiddlewares,
+  productionMiddlewares,
+} from '@/shared/hooks/query/useQueryMiddleware';
 import { useSmartCache, useCacheWarming } from '@/shared/hooks/query/useSmartCache';
 import { useQueryLifecycle } from '@/shared/hooks/query/useQueryLifecycle';
 import { useQueryBatching } from '@/shared/hooks/query/useQueryBatching';
@@ -36,11 +40,7 @@ const getQueryClient = (): QueryClient => {
 
 function QueryProviderAdvancedRuntime({ shouldWarmup }: { shouldWarmup: boolean }): null {
   usePerformanceMonitor();
-  useQueryMiddleware(
-    isDevelopment
-      ? developmentMiddlewares
-      : productionMiddlewares
-  );
+  useQueryMiddleware(isDevelopment ? developmentMiddlewares : productionMiddlewares);
 
   const { optimizeCache } = useSmartCache();
   const { warmFrequentlyAccessedData } = useCacheWarming();
@@ -48,14 +48,20 @@ function QueryProviderAdvancedRuntime({ shouldWarmup }: { shouldWarmup: boolean 
   useQueryBatching({ maxBatchSize: 5, batchDelay: 100 });
 
   useEffect((): (() => void) => {
-    const optimizeInterval = setInterval((): void => {
-      optimizeCache();
-      optimizeQueryPriorities();
-    }, 5 * 60 * 1000);
+    const optimizeInterval = setInterval(
+      (): void => {
+        optimizeCache();
+        optimizeQueryPriorities();
+      },
+      5 * 60 * 1000
+    );
 
-    const cleanupInterval = setInterval((): void => {
-      cleanupStaleQueries();
-    }, 10 * 60 * 1000);
+    const cleanupInterval = setInterval(
+      (): void => {
+        cleanupStaleQueries();
+      },
+      10 * 60 * 1000
+    );
 
     return (): void => {
       clearInterval(optimizeInterval);
@@ -81,19 +87,14 @@ function QueryProviderInner({ children }: QueryProviderProps): React.JSX.Element
 
   useQueryPersistence({
     key: 'app-queries',
-    queryKeys: [
-      [...QUERY_KEYS.userPreferences.all],
-      [...QUERY_KEYS.settings.scope('lite')],
-    ],
+    queryKeys: [[...QUERY_KEYS.userPreferences.all], [...QUERY_KEYS.settings.scope('lite')]],
     ttl: 1000 * 60 * 60,
     maxItemBytes: 16 * 1024,
   });
 
   return (
     <>
-      {enableAdvancedRuntime ? (
-        <QueryProviderAdvancedRuntime shouldWarmup={enableWarmup} />
-      ) : null}
+      {enableAdvancedRuntime ? <QueryProviderAdvancedRuntime shouldWarmup={enableWarmup} /> : null}
       {children}
     </>
   );
@@ -115,9 +116,7 @@ export const QueryProvider = ({ children }: QueryProviderProps): React.JSX.Eleme
 
   return (
     <QueryClientProvider client={queryClient}>
-      <QueryProviderInner>
-        {children}
-      </QueryProviderInner>
+      <QueryProviderInner>{children}</QueryProviderInner>
     </QueryClientProvider>
   );
 };

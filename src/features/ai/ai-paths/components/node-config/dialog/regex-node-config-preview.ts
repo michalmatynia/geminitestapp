@@ -130,8 +130,10 @@ export const parseRegexCandidate = (raw: string): RegexCandidate | null => {
     const groupByLine = trimmed.match(/(?:^|\n)\s*groupBy\s*[:=]\s*(.+)\s*$/im);
     const extracted = extractRegexLiteral(patternValue);
     return {
-      pattern: extracted ? extracted.pattern : patternValue.replace(/^"|"$/g, '').replace(/^'|'$/g, ''),
-      flags: normalizeRegexFlags(flagsLine?.[1] ?? (extracted?.flags ?? '')),
+      pattern: extracted
+        ? extracted.pattern
+        : patternValue.replace(/^"|"$/g, '').replace(/^'|'$/g, ''),
+      flags: normalizeRegexFlags(flagsLine?.[1] ?? extracted?.flags ?? ''),
       ...(groupByLine?.[1] ? { groupBy: groupByLine[1].trim() } : {}),
     };
   }
@@ -177,12 +179,14 @@ const resolveRegexSelection = (match: RegExpExecArray, selector: string | undefi
     match.groups && typeof match.groups === 'object'
       ? (match.groups as Record<string, string | undefined>)
       : null;
-  const groups =
-    rawGroups
-      ? (Object.fromEntries(
-        Object.entries(rawGroups).map(([name, value]: [string, string | undefined]) => [name, value ?? ''])
+  const groups = rawGroups
+    ? (Object.fromEntries(
+        Object.entries(rawGroups).map(([name, value]: [string, string | undefined]) => [
+          name,
+          value ?? '',
+        ])
       ) as Record<string, string>)
-      : null;
+    : null;
   if (key === 'groups') {
     return groups;
   }
@@ -203,10 +207,7 @@ const resolveGroupKey = (match: RegExpExecArray, groupBy: string | undefined): s
   return stringifyRegexSelection(selected);
 };
 
-const parseRegexExtractedJson = (
-  value: unknown,
-  policy: JsonIntegrityPolicy
-): unknown => {
+const parseRegexExtractedJson = (value: unknown, policy: JsonIntegrityPolicy): unknown => {
   if (Array.isArray(value)) {
     return value.map((entry: unknown) => parseRegexExtractedJson(entry, policy));
   }
@@ -221,9 +222,7 @@ export const buildRegexPreview = (
   const mode = regexConfig.mode ?? 'group';
   const isExtractMode = mode === 'extract' || mode === 'extract_json';
   const shouldParse = mode === 'extract_json';
-  const jsonIntegrityPolicy = normalizeJsonIntegrityPolicy(
-    regexConfig.jsonIntegrityPolicy
-  );
+  const jsonIntegrityPolicy = normalizeJsonIntegrityPolicy(regexConfig.jsonIntegrityPolicy);
   const includeUnmatched = regexConfig.includeUnmatched ?? true;
   const unmatchedKey = (regexConfig.unmatchedKey ?? '__unmatched__').trim() || '__unmatched__';
   const matchMode = regexConfig.matchMode ?? 'first';
@@ -263,14 +262,14 @@ export const buildRegexPreview = (
       const groups =
         match.groups && typeof match.groups === 'object'
           ? (Object.fromEntries(
-            Object.entries(match.groups).map(([k, v]: [string, string | undefined]) => [k, v ?? ''])
-          ) as Record<string, string>)
+              Object.entries(match.groups).map(([k, v]: [string, string | undefined]) => [
+                k,
+                v ?? '',
+              ])
+            ) as Record<string, string>)
           : null;
       const extracted = shouldParse
-        ? parseRegexExtractedJson(
-          resolveRegexSelection(match, groupBy),
-          jsonIntegrityPolicy
-        )
+        ? parseRegexExtractedJson(resolveRegexSelection(match, groupBy), jsonIntegrityPolicy)
         : resolveRegexSelection(match, groupBy);
       const record: RegexPreviewRecord = {
         input,
@@ -312,14 +311,14 @@ export const buildRegexPreview = (
           const groups =
             match.groups && typeof match.groups === 'object'
               ? (Object.fromEntries(
-                Object.entries(match.groups).map(([k, v]: [string, string | undefined]) => [k, v ?? ''])
-              ) as Record<string, string>)
+                  Object.entries(match.groups).map(([k, v]: [string, string | undefined]) => [
+                    k,
+                    v ?? '',
+                  ])
+                ) as Record<string, string>)
               : null;
           const extracted = shouldParse
-            ? parseRegexExtractedJson(
-              resolveRegexSelection(match, groupBy),
-              jsonIntegrityPolicy
-            )
+            ? parseRegexExtractedJson(resolveRegexSelection(match, groupBy), jsonIntegrityPolicy)
             : resolveRegexSelection(match, groupBy);
           const record: RegexPreviewRecord = {
             input,
@@ -375,14 +374,14 @@ export const buildRegexPreview = (
       const groups =
         match.groups && typeof match.groups === 'object'
           ? (Object.fromEntries(
-            Object.entries(match.groups).map(([k, v]: [string, string | undefined]) => [k, v ?? ''])
-          ) as Record<string, string>)
+              Object.entries(match.groups).map(([k, v]: [string, string | undefined]) => [
+                k,
+                v ?? '',
+              ])
+            ) as Record<string, string>)
           : null;
       const extracted = shouldParse
-        ? parseRegexExtractedJson(
-          resolveRegexSelection(match, groupBy),
-          jsonIntegrityPolicy
-        )
+        ? parseRegexExtractedJson(resolveRegexSelection(match, groupBy), jsonIntegrityPolicy)
         : resolveRegexSelection(match, groupBy);
       const record: RegexPreviewRecord = {
         input,
@@ -401,7 +400,10 @@ export const buildRegexPreview = (
   const groupedObject = Object.fromEntries(groupedMap.entries());
   const grouped =
     regexConfig.outputMode === 'array'
-      ? Object.entries(groupedObject).map(([key, items]: [string, RegexPreviewRecord[]]) => ({ key, items }))
+      ? Object.entries(groupedObject).map(([key, items]: [string, RegexPreviewRecord[]]) => ({
+          key,
+          items,
+        }))
       : groupedObject;
   const extractedValues = matches
     .filter((record: RegexPreviewRecord): boolean => record.match !== null)

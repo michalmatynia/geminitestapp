@@ -3,19 +3,12 @@
 import { Plus } from 'lucide-react';
 import React from 'react';
 
-import {
-  Button,
-  EmptyState,
-  FormSection,
-  LoadingState,
-  useToast,
-} from '@/shared/ui';
+import { Button, EmptyState, FormSection, LoadingState, useToast } from '@/shared/ui';
 
 import { ValidatorPatternImportModal } from './ValidatorPatternImportModal';
 import { ValidatorPatternTree } from './ValidatorPatternTree';
 import { useValidatorSettingsContext } from './ValidatorSettingsContext';
 import { buildFullValidatorDocumentationClipboardText } from './validator-documentation-clipboard';
-
 
 /**
  * Validator docs: see docs/validator/function-reference.md#ui.validatorpatterntablepanel
@@ -56,9 +49,7 @@ export function ValidatorPatternTablePanel(): React.JSX.Element {
       return;
     }
     try {
-      await navigator.clipboard.writeText(
-        buildFullValidatorDocumentationClipboardText()
-      );
+      await navigator.clipboard.writeText(buildFullValidatorDocumentationClipboardText());
       toast('Full validator documentation copied (including JSON snippets).', {
         variant: 'success',
       });
@@ -75,7 +66,7 @@ export function ValidatorPatternTablePanel(): React.JSX.Element {
       description={`Active patterns: ${summary.enabled}/${summary.total}`}
       variant='subtle'
       className='p-4'
-      actions={(
+      actions={
         <div className='flex flex-wrap items-center gap-2'>
           <Button
             onClick={handleCreateSkuAutoIncrement}
@@ -141,11 +132,14 @@ export function ValidatorPatternTablePanel(): React.JSX.Element {
             Add Pattern
           </Button>
         </div>
-      )}
+      }
     >
       <div className='mt-4'>
         {loading ? (
-          <LoadingState message='Loading validator patterns...' className='py-8 border border-dashed' />
+          <LoadingState
+            message='Loading validator patterns...'
+            className='py-8 border border-dashed'
+          />
         ) : patterns.length === 0 ? (
           <EmptyState
             title='No validator patterns'

@@ -4,18 +4,14 @@ import React from 'react';
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { ImageFileRecord, ImageFileSelection } from '@/shared/contracts/files';
-import {
-  useToast,
-  FileUploadButton,
-  type FileUploadHelpers,
-} from '@/shared/ui';
+import { useToast, FileUploadButton, type FileUploadHelpers } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
 import { useUploadCmsMedia } from '../../hooks/useCmsQueries';
 
 const FileManager = dynamic(() => import('@/features/files/components/FileManager'), {
   ssr: false,
-  loading: () => <div>Loading file manager...</div>
+  loading: () => <div>Loading file manager...</div>,
 });
 
 interface MediaLibraryPanelProps {
@@ -45,7 +41,8 @@ export function MediaLibraryPanel({
       .map((file: ImageFileSelection) => file.filepath)
       .filter((path): path is string => typeof path === 'string' && path.length > 0);
     if (filepaths.length === 0) return;
-    onSelect(filepaths);    if (selectionMode === 'single') {
+    onSelect(filepaths);
+    if (selectionMode === 'single') {
       onOpenChange(false);
     }
   };
@@ -69,12 +66,17 @@ export function MediaLibraryPanel({
         });
         uploaded.push(result);
       }
-      
+
       if (uploaded.length > 0) {
         toast('Upload complete.', { variant: 'success' });
         if (shouldAutoConfirm) {
           const selections: ImageFileSelection[] = uploaded
-            .map((file: ImageFileRecord): ImageFileSelection => ({ id: file.id, filepath: file.filepath }))
+            .map(
+              (file: ImageFileRecord): ImageFileSelection => ({
+                id: file.id,
+                filepath: file.filepath,
+              })
+            )
             .filter((file: ImageFileSelection): boolean => Boolean(file.filepath));
           if (selections.length > 0) {
             handleSelect(selections);
@@ -105,7 +107,7 @@ export function MediaLibraryPanel({
               accept='image/*'
               multiple
               disabled={uploadMutation.isPending}
-              onFilesSelected={(files: File[], helpers?: FileUploadHelpers) => 
+              onFilesSelected={(files: File[], helpers?: FileUploadHelpers) =>
                 onFilesSelected ? onFilesSelected(files, helpers) : handleUpload(files, helpers)
               }
             >

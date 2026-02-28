@@ -1,9 +1,9 @@
 'use client';
 
 import { createContext, useContext } from 'react';
-import type { 
-  PromptExploderParamEntry, 
-  PromptExploderParamEntriesState 
+import type {
+  PromptExploderParamEntry,
+  PromptExploderParamEntriesState,
 } from '../../params-editor';
 
 export interface DocumentParamsState {

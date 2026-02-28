@@ -3,10 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 import type { SettingsStoreValue } from '@/shared/providers/SettingsStoreProvider';
 
-import type {
-  CaseResolverRequestedCaseIssue,
-  CaseResolverRequestedCaseStatus,
-} from '../types';
+import type { CaseResolverRequestedCaseIssue, CaseResolverRequestedCaseStatus } from '../types';
 import {
   fetchCaseResolverWorkspaceSnapshot,
   getCaseResolverWorkspaceRevision,
@@ -44,7 +41,7 @@ type RequestedContextTransitionResolvedVia =
   | 'none';
 
 const mapRequestedContextRuntimeToLegacyStatus = (
-  status: CaseResolverRuntimeRequestedContextSlice['status'],
+  status: CaseResolverRuntimeRequestedContextSlice['status']
 ): CaseResolverRequestedCaseStatus => {
   if (status === 'loading') return 'loading';
   if (status === 'missing_not_found' || status === 'missing_unavailable') {
@@ -54,7 +51,7 @@ const mapRequestedContextRuntimeToLegacyStatus = (
 };
 
 const createInitialRequestedContextRuntimeState = (
-  requestedFileId: string | null,
+  requestedFileId: string | null
 ): CaseResolverRuntimeRequestedContextSlice => {
   const normalizedRequestedFileId = requestedFileId?.trim() ?? '';
   if (!normalizedRequestedFileId) {
@@ -113,40 +110,37 @@ export function useCaseResolverStateRequestedContext({
   const initialRequestedContextRuntimeState = useMemo(
     (): CaseResolverRuntimeRequestedContextSlice =>
       createInitialRequestedContextRuntimeState(requestedFileId),
-    [requestedFileId],
+    [requestedFileId]
   );
 
   const [requestedCaseStatus, setRequestedCaseStatusState] =
     useState<CaseResolverRequestedCaseStatus>(
-      mapRequestedContextRuntimeToLegacyStatus(initialRequestedContextRuntimeState.status),
+      mapRequestedContextRuntimeToLegacyStatus(initialRequestedContextRuntimeState.status)
     );
   const [requestedCaseIssue, setRequestedCaseIssueState] =
-    useState<CaseResolverRequestedCaseIssue | null>(
-      initialRequestedContextRuntimeState.issue,
-    );
+    useState<CaseResolverRequestedCaseIssue | null>(initialRequestedContextRuntimeState.issue);
   const [requestedContextRetryTick, setRequestedContextRetryTick] = useState(
-    initialRequestedContextRuntimeState.retryTick,
+    initialRequestedContextRuntimeState.retryTick
   );
-  const [requestedContextAutoClearRequestKey, setRequestedContextAutoClearRequestKey] =
-    useState<string | null>(null);
+  const [requestedContextAutoClearRequestKey, setRequestedContextAutoClearRequestKey] = useState<
+    string | null
+  >(null);
 
   const requestedWorkspaceRefreshFileIdRef = useRef<string | null>(null);
   const requestedWorkspaceMissingFileIdRef = useRef<string | null>(null);
   const requestedCaseStatusRef = useRef<CaseResolverRequestedCaseStatus>(
-    mapRequestedContextRuntimeToLegacyStatus(initialRequestedContextRuntimeState.status),
+    mapRequestedContextRuntimeToLegacyStatus(initialRequestedContextRuntimeState.status)
   );
   const requestedCaseIssueRef = useRef<CaseResolverRequestedCaseIssue | null>(
-    initialRequestedContextRuntimeState.issue,
+    initialRequestedContextRuntimeState.issue
   );
   const requestedContextRetryTickRef = useRef<number>(
-    initialRequestedContextRuntimeState.retryTick,
+    initialRequestedContextRuntimeState.retryTick
   );
   const requestedContextRuntimeStateRef = useRef<CaseResolverRuntimeRequestedContextSlice>(
-    initialRequestedContextRuntimeState,
+    initialRequestedContextRuntimeState
   );
-  const requestedContextInFlightRef = useRef<RequestedContextInFlightState | null>(
-    null,
-  );
+  const requestedContextInFlightRef = useRef<RequestedContextInFlightState | null>(null);
   const requestedContextAttemptKeyRef = useRef<string | null>(null);
   const requestedContextStartedAtRef = useRef<number | null>(null);
   const requestedContextAutoClearRequestKeyRef = useRef<string | null>(null);
@@ -159,7 +153,7 @@ export function useCaseResolverStateRequestedContext({
       requestedCaseStatusRef.current = nextStatus;
       setRequestedCaseStatusState(nextStatus);
     },
-    [],
+    []
   );
 
   const setRequestedCaseIssue = useCallback(
@@ -168,15 +162,12 @@ export function useCaseResolverStateRequestedContext({
       requestedCaseIssueRef.current = nextIssue;
       setRequestedCaseIssueState(nextIssue);
     },
-    [],
+    []
   );
 
   const applyRequestedContextEvent = useCallback(
     (event: RequestedContextEvent): CaseResolverRuntimeRequestedContextSlice => {
-      const nextState = reduceRequestedContextState(
-        requestedContextRuntimeStateRef.current,
-        event,
-      );
+      const nextState = reduceRequestedContextState(requestedContextRuntimeStateRef.current, event);
       requestedContextRuntimeStateRef.current = nextState;
       setRequestedCaseStatus(mapRequestedContextRuntimeToLegacyStatus(nextState.status));
       setRequestedCaseIssue(nextState.issue);
@@ -197,7 +188,7 @@ export function useCaseResolverStateRequestedContext({
       }
       return nextState;
     },
-    [setRequestedCaseIssue, setRequestedCaseStatus],
+    [setRequestedCaseIssue, setRequestedCaseStatus]
   );
 
   const logRequestedContextTransition = useCallback(
@@ -207,7 +198,7 @@ export function useCaseResolverStateRequestedContext({
         message?: string;
         requestKey?: string | null;
         resolvedVia?: RequestedContextTransitionResolvedVia;
-      },
+      }
     ): void => {
       const message = input?.message;
       const requestKey = input?.requestKey ?? null;
@@ -245,7 +236,7 @@ export function useCaseResolverStateRequestedContext({
           .join(' '),
       });
     },
-    [requestedFileId],
+    [requestedFileId]
   );
 
   const queueRequestedContextAutoClear = useCallback(
@@ -260,14 +251,11 @@ export function useCaseResolverStateRequestedContext({
     }): void => {
       const normalizedRequestKey = requestKey?.trim() ?? '';
       if (issue === 'workspace_unavailable') {
-        logRequestedContextTransition(
-          'requested_context_auto_clear_suppressed_unavailable',
-          {
-            message: `${message} reason_tag=auto_clear_suppressed_unavailable`,
-            requestKey: normalizedRequestKey || requestedContextAttemptKeyRef.current,
-            resolvedVia: 'none',
-          },
-        );
+        logRequestedContextTransition('requested_context_auto_clear_suppressed_unavailable', {
+          message: `${message} reason_tag=auto_clear_suppressed_unavailable`,
+          requestKey: normalizedRequestKey || requestedContextAttemptKeyRef.current,
+          resolvedVia: 'none',
+        });
         return;
       }
       if (
@@ -290,25 +278,23 @@ export function useCaseResolverStateRequestedContext({
         resolvedVia: 'auto_clear',
       });
     },
-    [logRequestedContextTransition, requestedFileId],
+    [logRequestedContextTransition, requestedFileId]
   );
 
   const handleAcknowledgeRequestedContextAutoClear = useCallback(
     (requestKey: string | null): void => {
       const normalizedRequestKey =
-        requestKey?.trim() ??
-        requestedContextAutoClearRequestKeyRef.current?.trim() ??
-        '';
+        requestKey?.trim() ?? requestedContextAutoClearRequestKeyRef.current?.trim() ?? '';
       if (!normalizedRequestKey) return;
       requestedContextLastQueuedAutoClearKeyRef.current = normalizedRequestKey;
       if (requestedContextAutoClearRequestKeyRef.current === normalizedRequestKey) {
         requestedContextAutoClearRequestKeyRef.current = null;
       }
       setRequestedContextAutoClearRequestKey((current: string | null): string | null =>
-        current === normalizedRequestKey ? null : current,
+        current === normalizedRequestKey ? null : current
       );
     },
-    [],
+    []
   );
 
   const resetTransientRefs = useCallback((): void => {
@@ -337,7 +323,7 @@ export function useCaseResolverStateRequestedContext({
     });
     const nextRequestKey = buildRequestedContextRequestKey(
       normalizedRequestedFileId,
-      nextRequestedContextState.retryTick,
+      nextRequestedContextState.retryTick
     );
     resetTransientRefs();
     requestedWorkspaceRefreshFileIdRef.current = normalizedRequestedFileId;
@@ -386,7 +372,7 @@ export function useCaseResolverStateRequestedContext({
 
     const hasRequestedFileInWorkspace = hasRequestedCaseFile(
       workspace.files,
-      normalizedRequestedFileId,
+      normalizedRequestedFileId
     );
     if (!hasRequestedFileInWorkspace) return;
 
@@ -413,7 +399,7 @@ export function useCaseResolverStateRequestedContext({
 
     const requestKey = buildRequestedContextRequestKey(
       normalizedRequestedFileId,
-      requestedContextRetryTick,
+      requestedContextRetryTick
     );
     const shouldStartFetch = shouldStartRequestedContextFetch({
       currentRequestKey: requestKey,
@@ -440,7 +426,7 @@ export function useCaseResolverStateRequestedContext({
 
     void (async (): Promise<void> => {
       const refreshedWorkspace = await fetchCaseResolverWorkspaceSnapshot(
-        'case_view_requested_context_resolve',
+        'case_view_requested_context_resolve'
       );
       if (!isMountedRef.current) return;
       const currentInFlight = requestedContextInFlightRef.current;
@@ -495,7 +481,7 @@ export function useCaseResolverStateRequestedContext({
 
       const refreshedHasRequestedFile = hasRequestedCaseFile(
         refreshedWorkspace.files,
-        normalizedRequestedFileId,
+        normalizedRequestedFileId
       );
       const requestedIssueAfterRefresh = resolveRequestedCaseIssueAfterRefresh({
         refreshSucceeded: true,
@@ -576,7 +562,7 @@ export function useCaseResolverStateRequestedContext({
     if (!normalizedRequestedFileId) return;
     const requestKey = buildRequestedContextRequestKey(
       normalizedRequestedFileId,
-      requestedContextRetryTick,
+      requestedContextRetryTick
     );
 
     const watchdogTimer = window.setInterval((): void => {

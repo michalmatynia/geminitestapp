@@ -4,9 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { useProductFormMetadata } from '@/features/products/context/ProductFormMetadataContext';
-import {
-  useProductValidationState,
-} from '@/features/products/context/ProductValidationSettingsContext';
+import { useProductValidationState } from '@/features/products/context/ProductValidationSettingsContext';
 import {
   isPatternEnabledForValidationScope,
   isPatternReplacementEnabledForValidationScope,
@@ -28,7 +26,18 @@ import {
 } from '@/features/products/validation-engine/core';
 import { ProductFormData } from '@/shared/contracts/products';
 import type { ProductValidationPattern } from '@/shared/contracts/products';
-import { Input, Tabs, TabsList, TabsTrigger, TabsContent, SelectSimple, FormSection, FormField, Alert, Skeleton } from '@/shared/ui';
+import {
+  Input,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+  SelectSimple,
+  FormSection,
+  FormField,
+  Alert,
+  Skeleton,
+} from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { ValidatedField } from './ValidatedField';
@@ -41,9 +50,7 @@ export default function ProductFormGeneral(): React.JSX.Element {
     validatorPatterns,
     latestProductValues,
   } = useProductValidationState();
-  const {
-    filteredLanguages,
-  } = useProductFormMetadata();
+  const { filteredLanguages } = useProductFormMetadata();
 
   const { register, getValues, setValue, watch } = useFormContext<ProductFormData>();
   const [activeNameTab, setActiveNameTab] = useState<string>('');
@@ -54,61 +61,101 @@ export default function ProductFormGeneral(): React.JSX.Element {
     cycleHits: 0,
   });
 
-  const [identifierType, setIdentifierType] = useState<'ean' | 'gtin' | 'asin'>((): 'ean' | 'gtin' | 'asin' => {
-    const vals = getValues();
-    if (vals.asin) return 'asin';
-    if (vals.gtin) return 'gtin';
-    return 'ean';
-  });
+  const [identifierType, setIdentifierType] = useState<'ean' | 'gtin' | 'asin'>(
+    (): 'ean' | 'gtin' | 'asin' => {
+      const vals = getValues();
+      if (vals.asin) return 'asin';
+      if (vals.gtin) return 'gtin';
+      return 'ean';
+    }
+  );
 
   // Subscribe only to the fields this component renders or uses in the formatter.
   // Changes to parameters, imageLinks, imageBase64s, etc. will no longer cause
   // this component to re-render.
   const [
-    nameEn, namePl, nameDe,
-    descEn, descPl, descDe,
-    sku, weight, sizeLength, sizeWidth, fieldLength,
-    supplierName, supplierLink, priceComment,
-    price, stock,
-  ] = watch([
-    'name_en', 'name_pl', 'name_de',
-    'description_en', 'description_pl', 'description_de',
-    'sku', 'weight', 'sizeLength', 'sizeWidth', 'length',
-    'supplierName', 'supplierLink', 'priceComment',
-    'price', 'stock',
-  ]);
-
-  // Object used for field-value lookups in JSX (tab labels, hint values).
-  // Only reconstructed when one of the watched fields changes.
-  const displayValues = useMemo((): Record<string, unknown> => ({
-    name_en: nameEn,
-    name_pl: namePl,
-    name_de: nameDe,
-    description_en: descEn,
-    description_pl: descPl,
-    description_de: descDe,
+    nameEn,
+    namePl,
+    nameDe,
+    descEn,
+    descPl,
+    descDe,
     sku,
     weight,
     sizeLength,
     sizeWidth,
-    length: fieldLength,
+    fieldLength,
     supplierName,
     supplierLink,
     priceComment,
     price,
     stock,
-  }), [
-    nameEn, namePl, nameDe,
-    descEn, descPl, descDe,
-    sku, weight, sizeLength, sizeWidth, fieldLength,
-    supplierName, supplierLink, priceComment,
-    price, stock,
+  ] = watch([
+    'name_en',
+    'name_pl',
+    'name_de',
+    'description_en',
+    'description_pl',
+    'description_de',
+    'sku',
+    'weight',
+    'sizeLength',
+    'sizeWidth',
+    'length',
+    'supplierName',
+    'supplierLink',
+    'priceComment',
+    'price',
+    'stock',
   ]);
+
+  // Object used for field-value lookups in JSX (tab labels, hint values).
+  // Only reconstructed when one of the watched fields changes.
+  const displayValues = useMemo(
+    (): Record<string, unknown> => ({
+      name_en: nameEn,
+      name_pl: namePl,
+      name_de: nameDe,
+      description_en: descEn,
+      description_pl: descPl,
+      description_de: descDe,
+      sku,
+      weight,
+      sizeLength,
+      sizeWidth,
+      length: fieldLength,
+      supplierName,
+      supplierLink,
+      priceComment,
+      price,
+      stock,
+    }),
+    [
+      nameEn,
+      namePl,
+      nameDe,
+      descEn,
+      descPl,
+      descDe,
+      sku,
+      weight,
+      sizeLength,
+      sizeWidth,
+      fieldLength,
+      supplierName,
+      supplierLink,
+      priceComment,
+      price,
+      stock,
+    ]
+  );
   const hasCatalogs = (filteredLanguages ?? []).length > 0;
   const languagesReady = (filteredLanguages ?? []).length > 0;
   const languageTabValues = useMemo(
     () =>
-      filteredLanguages.map((language: { code: string }) => String(language.code).trim().toLowerCase()),
+      filteredLanguages.map((language: { code: string }) =>
+        String(language.code).trim().toLowerCase()
+      ),
     [filteredLanguages]
   );
   const firstLanguageTab = languageTabValues[0] ?? '';
@@ -171,7 +218,10 @@ export default function ProductFormGeneral(): React.JSX.Element {
     // in the dependency array. This means the effect only re-runs when one of the
     // formatter-target watched fields changes, not on every unrelated field change.
     const currentValues = getValues() as Record<string, unknown>;
-    const pendingFieldUpdates = new Map<keyof ProductFormData, ProductFormData[keyof ProductFormData]>();
+    const pendingFieldUpdates = new Map<
+      keyof ProductFormData,
+      ProductFormData[keyof ProductFormData]
+    >();
     const orderedPatterns = sortValidatorPatterns(compiledPatterns.map((c) => c.pattern));
     const sequenceGroupCounts = buildSequenceGroupCounts(orderedPatterns);
     // Build a map for O(1) compiled-regex lookup inside the inner loop.
@@ -191,7 +241,8 @@ export default function ProductFormGeneral(): React.JSX.Element {
 
       const replacementPatterns = orderedPatterns.filter((pattern: ProductValidationPattern) => {
         if (!pattern.enabled) return false;
-        if (!isPatternEnabledForValidationScope(pattern.appliesToScopes, validationInstanceScope)) return false;
+        if (!isPatternEnabledForValidationScope(pattern.appliesToScopes, validationInstanceScope))
+          return false;
         if (isRuntimePatternEnabled(pattern)) return false;
         if (!pattern.replacementEnabled || !pattern.replacementValue) return false;
         if (pattern.target !== target) return false;
@@ -205,8 +256,7 @@ export default function ProductFormGeneral(): React.JSX.Element {
           pattern.launchEnabled && pattern.launchSourceMode !== 'current_field'
       );
       const hasLatestPriceStockMirror = replacementPatterns.some(
-        (pattern: ProductValidationPattern): boolean =>
-          isLatestPriceStockMirrorPattern(pattern)
+        (pattern: ProductValidationPattern): boolean => isLatestPriceStockMirrorPattern(pattern)
       );
       if (!rawValue && !hasExternalLaunchSource && !hasLatestPriceStockMirror) continue;
       let nextValue: string = rawValue;
@@ -317,9 +367,7 @@ export default function ProductFormGeneral(): React.JSX.Element {
           if (!Number.isFinite(numericValue)) continue;
           const normalizedNumeric = Math.max(0, Math.floor(numericValue));
           const currentNumeric =
-            typeof rawUnknown === 'number' && Number.isFinite(rawUnknown)
-              ? rawUnknown
-              : Number.NaN;
+            typeof rawUnknown === 'number' && Number.isFinite(rawUnknown) ? rawUnknown : Number.NaN;
           if (Number.isFinite(currentNumeric) && currentNumeric === normalizedNumeric) {
             continue;
           }
@@ -329,10 +377,7 @@ export default function ProductFormGeneral(): React.JSX.Element {
           );
           continue;
         }
-        pendingFieldUpdates.set(
-          fieldName,
-          nextValue as ProductFormData[typeof fieldName]
-        );
+        pendingFieldUpdates.set(fieldName, nextValue as ProductFormData[typeof fieldName]);
       }
     }
     if (pendingFieldUpdates.size === 0) {
@@ -340,9 +385,8 @@ export default function ProductFormGeneral(): React.JSX.Element {
       formatterLoopGuardRef.current.recentSignatures = [];
       return;
     }
-    const seenBefore = formatterLoopGuardRef.current.recentSignatures.includes(
-      formatterInputSignature
-    );
+    const seenBefore =
+      formatterLoopGuardRef.current.recentSignatures.includes(formatterInputSignature);
     formatterLoopGuardRef.current.cycleHits = seenBefore
       ? formatterLoopGuardRef.current.cycleHits + 1
       : 0;
@@ -364,11 +408,22 @@ export default function ProductFormGeneral(): React.JSX.Element {
     // is called inside the effect to get fresh values at execution time, so we
     // don't need allValues in deps. Changes to parameters/imageLinks/imageBase64s
     // no longer trigger this effect.
-    nameEn, namePl, nameDe,
-    descEn, descPl, descDe,
-    sku, price, stock,
-    weight, sizeLength, sizeWidth, fieldLength,
-    supplierName, supplierLink, priceComment,
+    nameEn,
+    namePl,
+    nameDe,
+    descEn,
+    descPl,
+    descDe,
+    sku,
+    price,
+    stock,
+    weight,
+    sizeLength,
+    sizeWidth,
+    fieldLength,
+    supplierName,
+    supplierLink,
+    priceComment,
     compiledPatterns,
     formatterEnabled,
     getValues,
@@ -382,7 +437,10 @@ export default function ProductFormGeneral(): React.JSX.Element {
     <div className='space-y-6'>
       {!hasCatalogs && (
         <Alert variant='warning' className='mb-6'>
-          <p className='text-sm'>Select a catalog to edit product titles and descriptions. Language fields are based on catalog settings.</p>
+          <p className='text-sm'>
+            Select a catalog to edit product titles and descriptions. Language fields are based on
+            catalog settings.
+          </p>
         </Alert>
       )}
 
@@ -412,11 +470,7 @@ export default function ProductFormGeneral(): React.JSX.Element {
 
       {hasCatalogs && languagesReady && (
         <FormSection>
-          <Tabs
-            value={resolvedActiveNameTab}
-            onValueChange={setActiveNameTab}
-            className='w-full'
-          >
+          <Tabs value={resolvedActiveNameTab} onValueChange={setActiveNameTab} className='w-full'>
             <TabsList className='mb-4'>
               {filteredLanguages.map((language: { name: string; code: string }) => {
                 const fieldName = `name_${language.code.toLowerCase()}` as keyof ProductFormData;
@@ -457,7 +511,8 @@ export default function ProductFormGeneral(): React.JSX.Element {
           >
             <TabsList className='mb-4'>
               {filteredLanguages.map((language: { name: string; code: string }) => {
-                const fieldName = `description_${language.code.toLowerCase()}` as keyof ProductFormData;
+                const fieldName =
+                  `description_${language.code.toLowerCase()}` as keyof ProductFormData;
                 const fieldValue = displayValues[String(fieldName)] as string | undefined;
                 return (
                   <TabsTrigger
@@ -475,7 +530,8 @@ export default function ProductFormGeneral(): React.JSX.Element {
               })}
             </TabsList>
             {filteredLanguages.map((language: { name: string; code: string }) => {
-              const fieldName = `description_${language.code.toLowerCase()}` as keyof ProductFormData;
+              const fieldName =
+                `description_${language.code.toLowerCase()}` as keyof ProductFormData;
               return (
                 <TabsContent key={language.code} value={language.code.toLowerCase()}>
                   <ValidatedField
@@ -493,16 +549,12 @@ export default function ProductFormGeneral(): React.JSX.Element {
       )}
 
       <FormSection title='Identifiers' gridClassName='md:grid-cols-2'>
-        <ValidatedField
-          name='sku'
-          label='SKU'
-          required
-          placeholder='Unique stock keeping unit'
-        />
-        
+        <ValidatedField name='sku' label='SKU' required placeholder='Unique stock keeping unit' />
+
         <FormField label='Product Identifier' description='EAN, GTIN or ASIN code.'>
           <div className='flex gap-2'>
-            <SelectSimple size='sm'
+            <SelectSimple
+              size='sm'
               value={identifierType}
               onValueChange={(value: string): void =>
                 setIdentifierType(value as 'ean' | 'gtin' | 'asin')
@@ -524,37 +576,13 @@ export default function ProductFormGeneral(): React.JSX.Element {
       </FormSection>
 
       <FormSection title='Dimensions & Weight' gridClassName='grid-cols-2 md:grid-cols-4'>
-        <ValidatedField
-          name='weight'
-          label='Weight (kg)'
-          type='number'
-          step='0.01'
-          unit='KG'
-        />
+        <ValidatedField name='weight' label='Weight (kg)' type='number' step='0.01' unit='KG' />
 
-        <ValidatedField
-          name='sizeLength'
-          label='Length (cm)'
-          type='number'
-          step='0.1'
-          unit='CM'
-        />
+        <ValidatedField name='sizeLength' label='Length (cm)' type='number' step='0.1' unit='CM' />
 
-        <ValidatedField
-          name='sizeWidth'
-          label='Width (cm)'
-          type='number'
-          step='0.1'
-          unit='CM'
-        />
+        <ValidatedField name='sizeWidth' label='Width (cm)' type='number' step='0.1' unit='CM' />
 
-        <ValidatedField
-          name='length'
-          label='Height (cm)'
-          type='number'
-          step='0.1'
-          unit='CM'
-        />
+        <ValidatedField name='length' label='Height (cm)' type='number' step='0.1' unit='CM' />
       </FormSection>
     </div>
   );

@@ -42,9 +42,7 @@ type SlugDocument = {
 
 const getFallbackDomain = (): string => {
   const url =
-    process.env['NEXT_PUBLIC_APP_URL'] ||
-    process.env['NEXTAUTH_URL'] ||
-    'http://localhost';
+    process.env['NEXT_PUBLIC_APP_URL'] || process.env['NEXTAUTH_URL'] || 'http://localhost';
   try {
     return new URL(url).hostname.toLowerCase();
   } catch {
@@ -89,17 +87,13 @@ const getHostFromHeaders = (
   if (typeof headers === 'object') {
     const record = headers as Record<string, unknown>;
     const forwarded =
-      record['x-forwarded-host'] ??
-      record['X-Forwarded-Host'] ??
-      record['host'] ??
-      record['Host'];
+      record['x-forwarded-host'] ?? record['X-Forwarded-Host'] ?? record['host'] ?? record['Host'];
     if (typeof forwarded === 'string') return forwarded;
   }
   return null;
 };
 
-const canUsePrismaSlugs = (): boolean =>
-  Boolean(process.env['DATABASE_URL']) && 'slug' in prisma;
+const canUsePrismaSlugs = (): boolean => Boolean(process.env['DATABASE_URL']) && 'slug' in prisma;
 
 export async function isDomainZoningEnabled(): Promise<boolean> {
   if (!process.env['MONGODB_URI']) return false;
@@ -113,15 +107,13 @@ export async function setGlobalDefaultSlug(slugId: string | null): Promise<void>
     if (!process.env['MONGODB_URI']) return;
     const db = await getMongoDb();
     const now = new Date();
-    await (db.collection<SlugDocument>(SLUGS_COLLECTION)).updateMany(
-      {},
-      { $set: { isDefault: false, updatedAt: now } }
-    );
+    await db
+      .collection<SlugDocument>(SLUGS_COLLECTION)
+      .updateMany({}, { $set: { isDefault: false, updatedAt: now } });
     if (!slugId) return;
-    await db.collection<SlugDocument>(SLUGS_COLLECTION).updateOne(
-      { id: slugId },
-      { $set: { isDefault: true, updatedAt: now } }
-    );
+    await db
+      .collection<SlugDocument>(SLUGS_COLLECTION)
+      .updateOne({ id: slugId }, { $set: { isDefault: true, updatedAt: now } });
     return;
   }
   if (!canUsePrismaSlugs()) return;
@@ -159,9 +151,7 @@ export async function resolveCmsDomainFromHeaders(
 const getDomainRecordById = async (domainId: string): Promise<CmsDomainRecord | null> => {
   if (!process.env['MONGODB_URI']) return null;
   const db = await getMongoDb();
-  return db
-    .collection<CmsDomainRecord>(DOMAIN_COLLECTION)
-    .findOne({ id: domainId });
+  return db.collection<CmsDomainRecord>(DOMAIN_COLLECTION).findOne({ id: domainId });
 };
 
 export async function resolveCmsDomainScopeById(domainId: string): Promise<CmsDomain | null> {
@@ -190,9 +180,7 @@ export async function resolveCmsDomainByHost(hostHeader: string | null): Promise
   }
 
   const db = await getMongoDb();
-  const existing = await db
-    .collection<CmsDomainRecord>(DOMAIN_COLLECTION)
-    .findOne({ domain });
+  const existing = await db.collection<CmsDomainRecord>(DOMAIN_COLLECTION).findOne({ domain });
   if (existing) {
     const scoped = await resolveCmsDomainScopeById(existing.id);
     return scoped ?? toDomainResponse(existing);
@@ -224,10 +212,7 @@ export async function getDomainSlugLinks(domainId: string): Promise<CmsDomainSlu
   const zoningEnabled = await isDomainZoningEnabled();
   if (!zoningEnabled) return [];
   const db = await getMongoDb();
-  return db
-    .collection<CmsDomainSlugLink>(DOMAIN_SLUGS_COLLECTION)
-    .find({ domainId })
-    .toArray();
+  return db.collection<CmsDomainSlugLink>(DOMAIN_SLUGS_COLLECTION).find({ domainId }).toArray();
 }
 
 export async function getDomainIdsForSlug(slugId: string): Promise<string[]> {
@@ -301,15 +286,15 @@ export async function deleteCmsDomain(domainId: string): Promise<void> {
   const db = await getMongoDb();
   await db
     .collection<CmsDomainRecord>(DOMAIN_COLLECTION)
-    .updateMany(
-      { aliasOf: domainId },
-      { $set: { aliasOf: null, updatedAt: new Date() } }
-    );
+    .updateMany({ aliasOf: domainId }, { $set: { aliasOf: null, updatedAt: new Date() } });
   await db.collection<CmsDomainRecord>(DOMAIN_COLLECTION).deleteOne({ id: domainId });
   await db.collection<CmsDomainSlugLink>(DOMAIN_SLUGS_COLLECTION).deleteMany({ domainId });
 }
 
-export async function setCmsDomainAlias(domainId: string, aliasOf: string | null): Promise<CmsDomainResponse | null> {
+export async function setCmsDomainAlias(
+  domainId: string,
+  aliasOf: string | null
+): Promise<CmsDomainResponse | null> {
   const zoningEnabled = await isDomainZoningEnabled();
   if (!zoningEnabled) return null;
   if (aliasOf === domainId) aliasOf = null;
@@ -328,10 +313,7 @@ export async function setCmsDomainAlias(domainId: string, aliasOf: string | null
   const updatedAt = new Date();
   await db
     .collection<CmsDomainRecord>(DOMAIN_COLLECTION)
-    .updateOne(
-      { id: domainId },
-      { $set: { aliasOf: targetId ?? null, updatedAt } }
-    );
+    .updateOne({ id: domainId }, { $set: { aliasOf: targetId ?? null, updatedAt } });
   return toDomainResponse({
     ...domain,
     aliasOf: targetId ?? null,
@@ -379,10 +361,9 @@ export async function setDomainDefaultSlug(domainId: string, slugId: string | nu
   const zoningEnabled = await isDomainZoningEnabled();
   if (!zoningEnabled) return;
   const db = await getMongoDb();
-  await db.collection<CmsDomainSlugLink>(DOMAIN_SLUGS_COLLECTION).updateMany(
-    { domainId },
-    { $set: { isDefault: false, updatedAt: new Date() } }
-  );
+  await db
+    .collection<CmsDomainSlugLink>(DOMAIN_SLUGS_COLLECTION)
+    .updateMany({ domainId }, { $set: { isDefault: false, updatedAt: new Date() } });
   if (!slugId) return;
   await db.collection<CmsDomainSlugLink>(DOMAIN_SLUGS_COLLECTION).updateOne(
     { domainId, slugId },
@@ -411,10 +392,10 @@ export async function getSlugsForDomain(domainId: string, repo: CmsRepository): 
   }
   const links = await getDomainSlugLinks(domainId);
   if (!links.length) return [];
-  
+
   const slugIds = links.map((link: CmsDomainSlugLink) => link.slugId);
   const map = new Map(links.map((link: CmsDomainSlugLink) => [link.slugId, link]));
-  
+
   const slugs = await repo.getSlugsByIds(slugIds);
   return slugs.map((slug: Slug) => ({
     ...slug,

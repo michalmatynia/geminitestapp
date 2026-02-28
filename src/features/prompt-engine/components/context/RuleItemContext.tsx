@@ -2,18 +2,18 @@
 
 import React, { createContext, useContext, useCallback, useMemo } from 'react';
 import type { RuleDraft } from '../../context/prompt-engine-context-utils';
-import type { 
-  PromptValidationRule, 
-  PromptValidationSimilarPattern, 
-  PromptAutofixOperation 
+import type {
+  PromptValidationRule,
+  PromptValidationSimilarPattern,
+  PromptAutofixOperation,
 } from '../../settings';
-import { 
-  updateSimilarInRule, 
-  removeSimilarFromRule, 
+import {
+  updateSimilarInRule,
+  removeSimilarFromRule,
   addSimilarToRule,
   updateAutofixOperationInRule,
   removeAutofixOperationFromRule,
-  addAutofixOperationToRule
+  addAutofixOperationToRule,
 } from '../rule-item-mutations';
 import { usePromptEngine } from '../../context/PromptEngineContext';
 
@@ -48,60 +48,77 @@ export function RuleItemProvider({ draft, children }: RuleItemProviderProps): Re
   const { handlePatchRule } = usePromptEngine();
   const rule = draft.parsed;
 
-  const patchRule = useCallback((patch: Partial<PromptValidationRule>): void => {
-    if (!rule) return;
-    handlePatchRule(draft.uid, patch);
-  }, [draft.uid, handlePatchRule, rule]);
+  const patchRule = useCallback(
+    (patch: Partial<PromptValidationRule>): void => {
+      if (!rule) return;
+      handlePatchRule(draft.uid, patch);
+    },
+    [draft.uid, handlePatchRule, rule]
+  );
 
-  const updateSimilar = useCallback((index: number, patch: Partial<PromptValidationSimilarPattern>): void => {
-    updateSimilarInRule(rule, patchRule, index, patch);
-  }, [rule, patchRule]);
+  const updateSimilar = useCallback(
+    (index: number, patch: Partial<PromptValidationSimilarPattern>): void => {
+      updateSimilarInRule(rule, patchRule, index, patch);
+    },
+    [rule, patchRule]
+  );
 
-  const removeSimilar = useCallback((index: number): void => {
-    removeSimilarFromRule(rule, patchRule, index);
-  }, [rule, patchRule]);
+  const removeSimilar = useCallback(
+    (index: number): void => {
+      removeSimilarFromRule(rule, patchRule, index);
+    },
+    [rule, patchRule]
+  );
 
   const addSimilar = useCallback((): void => {
     addSimilarToRule(rule, patchRule);
   }, [rule, patchRule]);
 
-  const updateAutofixOperation = useCallback((index: number, operation: PromptAutofixOperation): void => {
-    updateAutofixOperationInRule(rule, patchRule, index, operation);
-  }, [rule, patchRule]);
-
-  const removeAutofixOperation = useCallback((index: number): void => {
-    removeAutofixOperationFromRule(rule, patchRule, index);
-  }, [rule, patchRule]);
-
-  const addAutofixOperation = useCallback((kind: PromptAutofixOperation['kind']): void => {
-    addAutofixOperationToRule(rule, patchRule, kind);
-  }, [rule, patchRule]);
-
-  const value = useMemo(() => ({
-    draft,
-    rule,
-    patchRule,
-    updateSimilar,
-    removeSimilar,
-    addSimilar,
-    updateAutofixOperation,
-    removeAutofixOperation,
-    addAutofixOperation
-  }), [
-    draft,
-    rule,
-    patchRule,
-    updateSimilar,
-    removeSimilar,
-    addSimilar,
-    updateAutofixOperation,
-    removeAutofixOperation,
-    addAutofixOperation
-  ]);
-
-  return (
-    <RuleItemContext.Provider value={value}>
-      {children}
-    </RuleItemContext.Provider>
+  const updateAutofixOperation = useCallback(
+    (index: number, operation: PromptAutofixOperation): void => {
+      updateAutofixOperationInRule(rule, patchRule, index, operation);
+    },
+    [rule, patchRule]
   );
+
+  const removeAutofixOperation = useCallback(
+    (index: number): void => {
+      removeAutofixOperationFromRule(rule, patchRule, index);
+    },
+    [rule, patchRule]
+  );
+
+  const addAutofixOperation = useCallback(
+    (kind: PromptAutofixOperation['kind']): void => {
+      addAutofixOperationToRule(rule, patchRule, kind);
+    },
+    [rule, patchRule]
+  );
+
+  const value = useMemo(
+    () => ({
+      draft,
+      rule,
+      patchRule,
+      updateSimilar,
+      removeSimilar,
+      addSimilar,
+      updateAutofixOperation,
+      removeAutofixOperation,
+      addAutofixOperation,
+    }),
+    [
+      draft,
+      rule,
+      patchRule,
+      updateSimilar,
+      removeSimilar,
+      addSimilar,
+      updateAutofixOperation,
+      removeAutofixOperation,
+      addAutofixOperation,
+    ]
+  );
+
+  return <RuleItemContext.Provider value={value}>{children}</RuleItemContext.Provider>;
 }

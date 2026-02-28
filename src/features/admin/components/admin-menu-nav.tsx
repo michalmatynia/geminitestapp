@@ -23,7 +23,7 @@ import type { NavItem } from './Menu';
 export const buildAdminNav = (handlers: {
   onOpenChat: React.MouseEventHandler<HTMLAnchorElement>;
   onCreatePageClick: () => void;
-}): NavItem[] => ([
+}): NavItem[] => [
   {
     id: 'home',
     label: 'Home',
@@ -45,9 +45,22 @@ export const buildAdminNav = (handlers: {
         href: '/admin/databases/engine',
         keywords: ['database', 'backups', 'operations', 'engine'],
         children: [
-          { id: 'workspace/databases/backups', label: 'Backups', href: '/admin/databases/engine?view=backups', exact: true },
-          { id: 'workspace/databases/operations', label: 'Operations', href: '/admin/databases/engine?view=operations' },
-          { id: 'workspace/databases/engine', label: 'Database Engine', href: '/admin/databases/engine' },
+          {
+            id: 'workspace/databases/backups',
+            label: 'Backups',
+            href: '/admin/databases/engine?view=backups',
+            exact: true,
+          },
+          {
+            id: 'workspace/databases/operations',
+            label: 'Operations',
+            href: '/admin/databases/engine?view=operations',
+          },
+          {
+            id: 'workspace/databases/engine',
+            label: 'Database Engine',
+            href: '/admin/databases/engine',
+          },
         ],
       },
       { id: 'workspace/app-embeds', label: 'App Embeds', href: '/admin/app-embeds' },
@@ -58,11 +71,23 @@ export const buildAdminNav = (handlers: {
     label: 'Filemaker',
     href: '/admin/filemaker',
     icon: <BookOpenIcon className='size-4' />,
-    keywords: ['database', 'persons', 'organizations', 'events', 'emails', 'addressing', 'case resolver'],
+    keywords: [
+      'database',
+      'persons',
+      'organizations',
+      'events',
+      'emails',
+      'addressing',
+      'case resolver',
+    ],
     children: [
       { id: 'filemaker/database', label: 'Database', href: '/admin/filemaker', exact: true },
       { id: 'filemaker/persons', label: 'Persons', href: '/admin/filemaker/persons' },
-      { id: 'filemaker/organizations', label: 'Organizations', href: '/admin/filemaker/organizations' },
+      {
+        id: 'filemaker/organizations',
+        label: 'Organizations',
+        href: '/admin/filemaker/organizations',
+      },
       { id: 'filemaker/events', label: 'Events', href: '/admin/filemaker/events' },
       { id: 'filemaker/emails', label: 'Emails', href: '/admin/filemaker/emails' },
       { id: 'filemaker/list', label: 'Combined List', href: '/admin/filemaker/list' },
@@ -82,8 +107,16 @@ export const buildAdminNav = (handlers: {
     icon: <SparklesIcon className='size-4' />,
     keywords: ['ai', 'prompt', 'exploder', 'projects', 'segmentation'],
     children: [
-      { id: 'prompt-exploder/projects', label: 'Projects', href: '/admin/prompt-exploder/projects' },
-      { id: 'prompt-exploder/settings', label: 'Settings', href: '/admin/prompt-exploder/settings' },
+      {
+        id: 'prompt-exploder/projects',
+        label: 'Projects',
+        href: '/admin/prompt-exploder/projects',
+      },
+      {
+        id: 'prompt-exploder/settings',
+        label: 'Settings',
+        href: '/admin/prompt-exploder/settings',
+      },
     ],
   },
   {
@@ -97,10 +130,23 @@ export const buildAdminNav = (handlers: {
         label: 'Products',
         href: '/admin/products',
         children: [
-          { id: 'commerce/products/all', label: 'All Products', href: '/admin/products', exact: true },
+          {
+            id: 'commerce/products/all',
+            label: 'All Products',
+            href: '/admin/products',
+            exact: true,
+          },
           { id: 'commerce/products/drafts', label: 'Drafts', href: '/admin/drafts' },
-          { id: 'commerce/products/producers', label: 'Producers', href: '/admin/products/producers' },
-          { id: 'commerce/products/preferences', label: 'Preferences', href: '/admin/products/preferences' },
+          {
+            id: 'commerce/products/producers',
+            label: 'Producers',
+            href: '/admin/products/producers',
+          },
+          {
+            id: 'commerce/products/preferences',
+            label: 'Preferences',
+            href: '/admin/products/preferences',
+          },
           { id: 'commerce/products/settings', label: 'Settings', href: '/admin/products/settings' },
         ],
       },
@@ -162,15 +208,43 @@ export const buildAdminNav = (handlers: {
             label: 'Allegro',
             href: '/admin/integrations/marketplaces/allegro',
             children: [
-              { id: 'integrations/marketplaces/allegro/connections', label: 'Connections', href: '/admin/integrations/marketplaces/allegro/connections' },
-              { id: 'integrations/marketplaces/allegro/listing-management', label: 'Listing Management', href: '/admin/integrations/marketplaces/allegro/listing-management' },
-              { id: 'integrations/marketplaces/allegro/listing-templates', label: 'Listing Templates', href: '/admin/integrations/marketplaces/allegro/listing-templates' },
-              { id: 'integrations/marketplaces/allegro/messages', label: 'Messages', href: '/admin/integrations/marketplaces/allegro/messages' },
-              { id: 'integrations/marketplaces/allegro/parameter-mapping', label: 'Parameter Mapping', href: '/admin/integrations/marketplaces/allegro/parameter-mapping' },
-              { id: 'integrations/marketplaces/allegro/shipping-price-management', label: 'Shipping Price Management', href: '/admin/integrations/marketplaces/allegro/shipping-price-management' },
+              {
+                id: 'integrations/marketplaces/allegro/connections',
+                label: 'Connections',
+                href: '/admin/integrations/marketplaces/allegro/connections',
+              },
+              {
+                id: 'integrations/marketplaces/allegro/listing-management',
+                label: 'Listing Management',
+                href: '/admin/integrations/marketplaces/allegro/listing-management',
+              },
+              {
+                id: 'integrations/marketplaces/allegro/listing-templates',
+                label: 'Listing Templates',
+                href: '/admin/integrations/marketplaces/allegro/listing-templates',
+              },
+              {
+                id: 'integrations/marketplaces/allegro/messages',
+                label: 'Messages',
+                href: '/admin/integrations/marketplaces/allegro/messages',
+              },
+              {
+                id: 'integrations/marketplaces/allegro/parameter-mapping',
+                label: 'Parameter Mapping',
+                href: '/admin/integrations/marketplaces/allegro/parameter-mapping',
+              },
+              {
+                id: 'integrations/marketplaces/allegro/shipping-price-management',
+                label: 'Shipping Price Management',
+                href: '/admin/integrations/marketplaces/allegro/shipping-price-management',
+              },
             ],
           },
-          { id: 'integrations/marketplaces/tradera', label: 'Tradera', href: '/admin/integrations/tradera' },
+          {
+            id: 'integrations/marketplaces/tradera',
+            label: 'Tradera',
+            href: '/admin/integrations/tradera',
+          },
         ],
       },
     ],
@@ -198,20 +272,57 @@ export const buildAdminNav = (handlers: {
         href: '/admin/ai-paths',
         children: [
           { id: 'ai/ai-paths/canvas', label: 'Canvas', href: '/admin/ai-paths', exact: true },
-          { id: 'ai/ai-paths/trigger-buttons', label: 'Trigger Buttons', href: '/admin/ai-paths/trigger-buttons' },
+          {
+            id: 'ai/ai-paths/trigger-buttons',
+            label: 'Trigger Buttons',
+            href: '/admin/ai-paths/trigger-buttons',
+          },
           {
             id: 'ai/ai-paths/case-resolver',
             label: 'Case Resolver',
             href: '/admin/case-resolver',
             children: [
-              { id: 'ai/ai-paths/case-resolver/studio', label: 'Studio', href: '/admin/case-resolver', exact: true },
-              { id: 'ai/ai-paths/case-resolver/cases', label: 'Cases', href: '/admin/case-resolver/cases' },
-              { id: 'ai/ai-paths/case-resolver/tags', label: 'Tags', href: '/admin/case-resolver/tags' },
-              { id: 'ai/ai-paths/case-resolver/identifiers', label: 'Case Identifiers', href: '/admin/case-resolver/identifiers' },
-              { id: 'ai/ai-paths/case-resolver/categories', label: 'Categories', href: '/admin/case-resolver/categories' },
-              { id: 'ai/ai-paths/case-resolver/preferences', label: 'Preferences', href: '/admin/case-resolver/preferences' },
-              { id: 'ai/ai-paths/case-resolver/capture', label: 'Capture', href: '/admin/case-resolver/capture' },
-              { id: 'ai/ai-paths/case-resolver/settings', label: 'Settings', href: '/admin/case-resolver/settings' },
+              {
+                id: 'ai/ai-paths/case-resolver/studio',
+                label: 'Studio',
+                href: '/admin/case-resolver',
+                exact: true,
+              },
+              {
+                id: 'ai/ai-paths/case-resolver/cases',
+                label: 'Cases',
+                href: '/admin/case-resolver/cases',
+              },
+              {
+                id: 'ai/ai-paths/case-resolver/tags',
+                label: 'Tags',
+                href: '/admin/case-resolver/tags',
+              },
+              {
+                id: 'ai/ai-paths/case-resolver/identifiers',
+                label: 'Case Identifiers',
+                href: '/admin/case-resolver/identifiers',
+              },
+              {
+                id: 'ai/ai-paths/case-resolver/categories',
+                label: 'Categories',
+                href: '/admin/case-resolver/categories',
+              },
+              {
+                id: 'ai/ai-paths/case-resolver/preferences',
+                label: 'Preferences',
+                href: '/admin/case-resolver/preferences',
+              },
+              {
+                id: 'ai/ai-paths/case-resolver/capture',
+                label: 'Capture',
+                href: '/admin/case-resolver/capture',
+              },
+              {
+                id: 'ai/ai-paths/case-resolver/settings',
+                label: 'Settings',
+                href: '/admin/case-resolver/settings',
+              },
             ],
           },
         ],
@@ -220,10 +331,21 @@ export const buildAdminNav = (handlers: {
         id: 'ai/prompt-engine',
         label: 'Global Validator',
         href: '/admin/validator',
-        keywords: ['validation', 'extractor', 'formatter', 'prompt rules', 'products', 'image studio'],
+        keywords: [
+          'validation',
+          'extractor',
+          'formatter',
+          'prompt rules',
+          'products',
+          'image studio',
+        ],
         children: [
           { id: 'ai/prompt-engine/validation', label: 'Pattern Editor', href: '/admin/validator' },
-          { id: 'ai/prompt-engine/validation-lists', label: 'List Manager', href: '/admin/validator/lists' },
+          {
+            id: 'ai/prompt-engine/validation-lists',
+            label: 'List Manager',
+            href: '/admin/validator/lists',
+          },
         ],
       },
       {
@@ -233,9 +355,21 @@ export const buildAdminNav = (handlers: {
         keywords: ['images', 'mask', 'polygon', 'relight', 'studio'],
         children: [
           { id: 'ai/image-studio/studio', label: 'Studio', href: '/admin/image-studio' },
-          { id: 'ai/image-studio/projects', label: 'Projects', href: '/admin/image-studio?tab=projects' },
-          { id: 'ai/image-studio/settings', label: 'Settings', href: '/admin/image-studio?tab=settings' },
-          { id: 'ai/image-studio/ui-presets', label: 'UI Presets', href: '/admin/image-studio/ui-presets' },
+          {
+            id: 'ai/image-studio/projects',
+            label: 'Projects',
+            href: '/admin/image-studio?tab=projects',
+          },
+          {
+            id: 'ai/image-studio/settings',
+            label: 'Settings',
+            href: '/admin/image-studio?tab=settings',
+          },
+          {
+            id: 'ai/image-studio/ui-presets',
+            label: 'UI Presets',
+            href: '/admin/image-studio/ui-presets',
+          },
         ],
       },
       {
@@ -249,12 +383,28 @@ export const buildAdminNav = (handlers: {
             href: '/admin/agentcreator/teaching',
             keywords: ['teaching', 'embedding', 'rag', 'school'],
             children: [
-              { id: 'ai/agent-creator/learners/agents', label: 'Agents', href: '/admin/agentcreator/teaching/agents' },
-              { id: 'ai/agent-creator/learners/school', label: 'Embedding School', href: '/admin/agentcreator/teaching/collections' },
-              { id: 'ai/agent-creator/learners/chat', label: 'Chat', href: '/admin/agentcreator/teaching/chat' },
+              {
+                id: 'ai/agent-creator/learners/agents',
+                label: 'Agents',
+                href: '/admin/agentcreator/teaching/agents',
+              },
+              {
+                id: 'ai/agent-creator/learners/school',
+                label: 'Embedding School',
+                href: '/admin/agentcreator/teaching/collections',
+              },
+              {
+                id: 'ai/agent-creator/learners/chat',
+                label: 'Chat',
+                href: '/admin/agentcreator/teaching/chat',
+              },
             ],
           },
-          { id: 'ai/agent-creator/personas', label: 'Personas', href: '/admin/agentcreator/personas' },
+          {
+            id: 'ai/agent-creator/personas',
+            label: 'Personas',
+            href: '/admin/agentcreator/personas',
+          },
         ],
       },
       {
@@ -312,12 +462,20 @@ export const buildAdminNav = (handlers: {
             },
           },
           { id: 'content/cms/builder', label: 'Page Builder', href: '/admin/cms/builder' },
-          { id: 'content/cms/builder/settings', label: 'Builder Settings', href: '/admin/cms/builder/settings' },
+          {
+            id: 'content/cms/builder/settings',
+            label: 'Builder Settings',
+            href: '/admin/cms/builder/settings',
+          },
           { id: 'content/cms/zones', label: 'Zones', href: '/admin/cms/zones' },
           { id: 'content/cms/slugs', label: 'Slugs', href: '/admin/cms/slugs' },
           { id: 'content/cms/slugs/create', label: 'Create Slug', href: '/admin/cms/slugs/create' },
           { id: 'content/cms/themes', label: 'Themes', href: '/admin/cms/themes' },
-          { id: 'content/cms/themes/create', label: 'Create Theme', href: '/admin/cms/themes/create' },
+          {
+            id: 'content/cms/themes/create',
+            label: 'Create Theme',
+            href: '/admin/cms/themes/create',
+          },
         ],
       },
     ],
@@ -335,12 +493,32 @@ export const buildAdminNav = (handlers: {
         children: [
           { id: 'system/settings/overview', label: 'Overview', href: '/admin/settings' },
           { id: 'system/settings/brain', label: 'Brain', href: '/admin/settings/brain' },
-          { id: 'system/settings/typography', label: 'Typography', href: '/admin/settings/typography' },
-          { id: 'system/settings/notifications', label: 'Notifications', href: '/admin/settings/notifications' },
-          { id: 'system/settings/playwright', label: 'Playwright Personas', href: '/admin/settings/playwright' },
+          {
+            id: 'system/settings/typography',
+            label: 'Typography',
+            href: '/admin/settings/typography',
+          },
+          {
+            id: 'system/settings/notifications',
+            label: 'Notifications',
+            href: '/admin/settings/notifications',
+          },
+          {
+            id: 'system/settings/playwright',
+            label: 'Playwright Personas',
+            href: '/admin/settings/playwright',
+          },
           { id: 'system/settings/logging', label: 'Logging', href: '/admin/settings/logging' },
-          { id: 'system/settings/folder-trees', label: 'Folder Trees', href: '/admin/settings/folder-trees' },
-          { id: 'system/settings/recovery', label: 'Transient Recovery', href: '/admin/settings/recovery' },
+          {
+            id: 'system/settings/folder-trees',
+            label: 'Folder Trees',
+            href: '/admin/settings/folder-trees',
+          },
+          {
+            id: 'system/settings/recovery',
+            label: 'Transient Recovery',
+            href: '/admin/settings/recovery',
+          },
           { id: 'system/settings/sync', label: 'Background Sync', href: '/admin/settings/sync' },
           { id: 'system/settings/menu', label: 'Admin Menu', href: '/admin/settings/menu' },
         ],
@@ -366,7 +544,12 @@ export const buildAdminNav = (handlers: {
         icon: <SparklesIcon className='size-4' />,
         keywords: ['ai insights', 'analytics', 'logs', 'warnings'],
       },
-      { id: 'system/logs', label: 'System Logs', href: '/admin/system/logs', icon: <ActivityIcon className='size-4' /> },
+      {
+        id: 'system/logs',
+        label: 'System Logs',
+        href: '/admin/system/logs',
+        icon: <ActivityIcon className='size-4' />,
+      },
       {
         id: 'system/auth',
         label: 'Auth',
@@ -382,4 +565,4 @@ export const buildAdminNav = (handlers: {
       },
     ],
   },
-]);
+];

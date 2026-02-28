@@ -7,7 +7,6 @@ import { DELETE, PUT } from '@/app/api/languages/[id]/route';
 import { GET, POST } from '@/app/api/languages/route';
 import prisma from '@/shared/lib/db/prisma';
 
-
 type LanguageResponse = {
   id: string;
   code: string;
@@ -71,13 +70,13 @@ describe('Languages API', () => {
     it('should create a language with country assignments', async () => {
       // Need a country first
       const country = await prisma.country.create({
-        data: { code: 'PL', name: 'Poland' }
+        data: { code: 'PL', name: 'Poland' },
       });
 
       const newLanguage = {
         code: 'pl',
         name: 'Polish',
-        countryIds: [country.id]
+        countryIds: [country.id],
       };
 
       const req = new NextRequest('http://localhost/api/languages', {

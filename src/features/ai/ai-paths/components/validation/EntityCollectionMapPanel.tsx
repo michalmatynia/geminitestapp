@@ -1,20 +1,12 @@
 'use client';
 
 import React from 'react';
-import {
-  Button,
-  Card,
-  Label,
-  Textarea,
-} from '@/shared/ui';
+import { Button, Card, Label, Textarea } from '@/shared/ui';
 import { useAdminAiPathsValidationContext } from '../../context/AdminAiPathsValidationContext';
 
 export function EntityCollectionMapPanel(): React.JSX.Element {
-  const {
-    collectionMapDraft,
-    setCollectionMapDraft,
-    handleApplyCollectionMap,
-  } = useAdminAiPathsValidationContext();
+  const { collectionMapDraft, setCollectionMapDraft, handleApplyCollectionMap } =
+    useAdminAiPathsValidationContext();
 
   return (
     <Card variant='subtle' padding='md' className='border-border/60 bg-card/40'>

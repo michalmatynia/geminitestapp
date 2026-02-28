@@ -78,8 +78,8 @@ export function IconSelector({
               <div
                 className={cn(
                   'flex h-10 w-10 items-center justify-center rounded-md border transition cursor-pointer',
-                  selected 
-                    ? 'border-emerald-500 bg-emerald-500/20 text-emerald-400' 
+                  selected
+                    ? 'border-emerald-500 bg-emerald-500/20 text-emerald-400'
                     : 'border-border bg-gray-800 text-gray-400 hover:border-border/60 hover:text-gray-300',
                   buttonClassName
                 )}

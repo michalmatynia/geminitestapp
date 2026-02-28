@@ -4,7 +4,12 @@ import React, { createContext, useContext } from 'react';
 
 import { useToast } from '@/shared/ui';
 
-import { useAnalyticsInsightsQuery, useLogInsightsQuery, useRunAnalyticsInsightMutation, useRunLogInsightMutation } from '../hooks/useInsightQueries';
+import {
+  useAnalyticsInsightsQuery,
+  useLogInsightsQuery,
+  useRunAnalyticsInsightMutation,
+  useRunLogInsightMutation,
+} from '../hooks/useInsightQueries';
 
 interface InsightsContextValue {
   analyticsQuery: ReturnType<typeof useAnalyticsInsightsQuery>;

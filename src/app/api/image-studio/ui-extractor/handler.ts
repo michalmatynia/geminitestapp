@@ -1,16 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import OpenAI from 'openai';
 import { z } from 'zod';
 
+import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
 import {
-  IMAGE_STUDIO_OPENAI_API_KEY_KEY,
+  runBrainChatCompletion,
+  supportsBrainJsonMode,
+} from '@/shared/lib/ai-brain/server-runtime-client';
+import {
   IMAGE_STUDIO_SETTINGS_KEY,
   parseImageStudioSettings,
-} from '@/features/ai/image-studio/utils/studio-settings';
+} from '@/shared/lib/ai/image-studio/studio-settings';
 import { auth } from '@/features/auth/server';
 import { getSettingValue } from '@/features/products/services/aiDescriptionService';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { authError, configurationError, internalError } from '@/shared/errors/app-error';
+import { authError, internalError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
 const uiControlEnum = z.enum([
@@ -62,33 +65,21 @@ const responseSchema = z.object({
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const session = await auth();
   const hasAccess =
-    session?.user?.isElevated ||
-    session?.user?.permissions?.includes('ai_paths.manage');
+    session?.user?.isElevated || session?.user?.permissions?.includes('ai_paths.manage');
   if (!hasAccess) throw authError('Unauthorized.');
 
-  const parsed = await parseJsonBody(req, payloadSchema, { logPrefix: 'image-studio.ui-extractor.POST' });
+  const parsed = await parseJsonBody(req, payloadSchema, {
+    logPrefix: 'image-studio.ui-extractor.POST',
+  });
   if (!parsed.ok) return parsed.response;
 
-  const apiKey =
-    (await getSettingValue(IMAGE_STUDIO_OPENAI_API_KEY_KEY))?.trim() ||
-    (await getSettingValue('openai_api_key'))?.trim() ||
-    process.env['OPENAI_API_KEY'] ||
-    null;
-  if (!apiKey) {
-    throw configurationError('OpenAI API key is missing. Set it in Image Studio settings.');
-  }
-
-  const settingsRaw = await getSettingValue(IMAGE_STUDIO_SETTINGS_KEY);
+  const settingsRaw = (await getSettingValue(IMAGE_STUDIO_SETTINGS_KEY)) as
+    | string
+    | null
+    | undefined;
   const settings = parseImageStudioSettings(settingsRaw);
-  const model =
-    settings.uiExtractor.model ||
-    settings.promptExtraction.gpt.model ||
-    (await getSettingValue('openai_model')) ||
-    'gpt-4o-mini';
   const temperature = settings.uiExtractor.temperature ?? 0.2;
-  const max_output_tokens = settings.uiExtractor.max_output_tokens ?? 800;
-
-  const client = new OpenAI({ apiKey });
+  const maxOutputTokens = settings.uiExtractor.max_output_tokens ?? 800;
 
   const systemPrompt = [
     'You map prompt parameters to UI controls.',
@@ -107,17 +98,25 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     JSON.stringify(parsed.data.params, null, 2),
   ].join('\n');
 
-  const response = await client.chat.completions.create({
-    model,
-    temperature,
-    max_tokens: max_output_tokens,
+  const brainConfig = await resolveBrainExecutionConfigForCapability('image_studio.ui_extractor', {
+    defaultTemperature: temperature,
+    defaultMaxTokens: maxOutputTokens,
+    defaultSystemPrompt: systemPrompt,
+    runtimeKind: 'validation',
+  });
+
+  const response = await runBrainChatCompletion({
+    modelId: brainConfig.modelId,
+    temperature: brainConfig.temperature,
+    maxTokens: brainConfig.maxTokens,
+    jsonMode: supportsBrainJsonMode(brainConfig.modelId),
     messages: [
-      { role: 'system', content: systemPrompt },
+      { role: 'system', content: brainConfig.systemPrompt },
       { role: 'user', content: userPrompt },
     ],
   });
 
-  const raw = response.choices[0]?.message?.content ?? '';
+  const raw = response.text ?? '';
   let json: unknown;
   try {
     json = JSON.parse(raw);
@@ -127,7 +126,9 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
 
   const validated = responseSchema.safeParse(json);
   if (!validated.success) {
-    throw internalError('Invalid UI extractor response shape.', { issues: validated.error.flatten() });
+    throw internalError('Invalid UI extractor response shape.', {
+      issues: validated.error.flatten(),
+    });
   }
 
   return NextResponse.json({

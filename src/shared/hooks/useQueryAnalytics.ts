@@ -66,9 +66,15 @@ export function useQueryAnalytics(config: AnalyticsConfig = {}): {
 } {
   const queryClient = useQueryClient();
   const metricsRef = useRef<Map<string, QueryMetrics>>(new Map());
-  const fetchStartedAtRef = useRef<WeakMap<Query<unknown, unknown, unknown, readonly unknown[]>, number>>(new WeakMap());
-  const handledDataUpdatedAtRef = useRef<WeakMap<Query<unknown, unknown, unknown, readonly unknown[]>, number>>(new WeakMap());
-  const handledErrorUpdatedAtRef = useRef<WeakMap<Query<unknown, unknown, unknown, readonly unknown[]>, number>>(new WeakMap());
+  const fetchStartedAtRef = useRef<
+    WeakMap<Query<unknown, unknown, unknown, readonly unknown[]>, number>
+  >(new WeakMap());
+  const handledDataUpdatedAtRef = useRef<
+    WeakMap<Query<unknown, unknown, unknown, readonly unknown[]>, number>
+  >(new WeakMap());
+  const handledErrorUpdatedAtRef = useRef<
+    WeakMap<Query<unknown, unknown, unknown, readonly unknown[]>, number>
+  >(new WeakMap());
   const enabled = config.enabled !== false;
   const sampleRate = config.sampleRate || 1;
   const maxEntries = config.maxEntries || 1000;
@@ -264,7 +270,10 @@ export function usePerformanceMonitor(): ReturnType<typeof useQueryAnalytics> {
     const stats = analytics.getCacheStats();
     const slowQueries = analytics
       .getTopSlowQueries(5)
-      .filter((metric: QueryMetrics): boolean => metric.executionTime >= QUERY_PERF_REPORT_SLOW_THRESHOLD_MS)
+      .filter(
+        (metric: QueryMetrics): boolean =>
+          metric.executionTime >= QUERY_PERF_REPORT_SLOW_THRESHOLD_MS
+      )
       .map((metric: QueryMetrics) => ({
         queryKey: metric.queryKey,
         avgExecutionTimeMs: Math.round(metric.executionTime),

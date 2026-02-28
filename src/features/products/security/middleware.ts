@@ -3,7 +3,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { AppError } from '@/shared/errors/app-error';
 
 import { withSecureFileUpload } from './file-upload';
-import { InputSanitizer, ProductSanitizationRules, validateProductInput, type SanitizationOptions } from './input-sanitization';
+import {
+  InputSanitizer,
+  ProductSanitizationRules,
+  validateProductInput,
+  type SanitizationOptions,
+} from './input-sanitization';
 import { withRateLimit, rateLimiters } from './rate-limiting';
 
 type SecurityConfig = {
@@ -31,24 +36,20 @@ export class SecurityMiddleware {
     message?: string | undefined;
     sanitizedData?: unknown;
   }> {
-    const {
-      enableRateLimit = true,
-      enableInputSanitization = true,
-      rateLimiter = 'api'
-    } = config;
+    const { enableRateLimit = true, enableInputSanitization = true, rateLimiter = 'api' } = config;
 
     // Rate limiting check
     if (enableRateLimit) {
       // With `noUncheckedIndexedAccess`, bracket access can be `T | undefined`, so keep a safe fallback.
       const limiter = rateLimiters[rateLimiter ?? 'api'] ?? rateLimiters.api;
       const rateLimitResult = await withRateLimit(limiter)(req);
-      
+
       if (!rateLimitResult.allowed) {
         return {
           allowed: false,
           headers: rateLimitResult.headers,
           status: rateLimitResult.status,
-          message: rateLimitResult.message
+          message: rateLimitResult.message,
         };
       }
     }
@@ -58,21 +59,23 @@ export class SecurityMiddleware {
     if (enableInputSanitization) {
       try {
         const contentType = req.headers.get('content-type') || '';
-        
+
         if (contentType.includes('application/json')) {
           const body = (await req.json()) as Record<string, unknown>;
           sanitizedData = InputSanitizer.sanitizeObject(
             body,
-            (config.customSanitizationRules || ProductSanitizationRules) as Partial<Record<string, SanitizationOptions>>
+            (config.customSanitizationRules || ProductSanitizationRules) as Partial<
+              Record<string, SanitizationOptions>
+            >
           );
-          
+
           // Validate sanitized data
           const validation = validateProductInput(sanitizedData as Record<string, unknown>);
           if (!validation.isValid) {
             return {
               allowed: false,
               status: 400,
-              message: `Validation failed: ${validation.errors.join(', ')}`
+              message: `Validation failed: ${validation.errors.join(', ')}`,
             };
           }
         }
@@ -80,14 +83,14 @@ export class SecurityMiddleware {
         return {
           allowed: false,
           status: 400,
-          message: 'Invalid request body'
+          message: 'Invalid request body',
         };
       }
     }
 
     return {
       allowed: true,
-      sanitizedData
+      sanitizedData,
     };
   }
 
@@ -104,13 +107,13 @@ export class SecurityMiddleware {
     // Rate limiting for file uploads
     if (config.enableRateLimit !== false) {
       const rateLimitResult = await withRateLimit(rateLimiters.imageUpload)(req);
-      
+
       if (!rateLimitResult.allowed) {
         return {
           allowed: false,
           headers: rateLimitResult.headers,
           status: rateLimitResult.status,
-          message: rateLimitResult.message
+          message: rateLimitResult.message,
         };
       }
     }
@@ -118,18 +121,18 @@ export class SecurityMiddleware {
     // File upload security
     if (config.enableFileUploadSecurity !== false) {
       const uploadResult = await withSecureFileUpload(req);
-      
+
       if (!uploadResult.isValid) {
         return {
           allowed: false,
           status: 400,
-          message: `File upload failed: ${uploadResult.errors.join(', ')}`
+          message: `File upload failed: ${uploadResult.errors.join(', ')}`,
         };
       }
 
       return {
         allowed: true,
-        files: uploadResult.sanitizedFiles as SanitizedFile[]
+        files: uploadResult.sanitizedFiles as SanitizedFile[],
       };
     }
 
@@ -142,7 +145,7 @@ export function addSecurityHeaders(response: NextResponse): NextResponse {
   // Content Security Policy
   response.headers.set(
     'Content-Security-Policy',
-    'default-src \'self\'; img-src \'self\' data: https:; script-src \'self\' \'unsafe-inline\'; style-src \'self\' \'unsafe-inline\''
+    "default-src 'self'; img-src 'self' data: https:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
   );
 
   // Other security headers
@@ -150,7 +153,7 @@ export function addSecurityHeaders(response: NextResponse): NextResponse {
   response.headers.set('X-Content-Type-Options', 'nosniff');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
-  
+
   // Remove server information
   response.headers.delete('Server');
   response.headers.delete('X-Powered-By');
@@ -169,7 +172,7 @@ export function withSecurity(
     try {
       // Validate request
       const validation = await SecurityMiddleware.validateRequest(req, config);
-      
+
       if (!validation.allowed) {
         throw new AppError(validation.message || 'Request not allowed', {
           code: 'SECURITY_VALIDATION_FAILED',
@@ -179,18 +182,17 @@ export function withSecurity(
       }
 
       // Call original handler with sanitized data
-      const modifiedReq = validation.sanitizedData 
+      const modifiedReq = validation.sanitizedData
         ? new NextRequest(req.url, {
-          ...req,
-          body: JSON.stringify(validation.sanitizedData)
-        })
+            ...req,
+            body: JSON.stringify(validation.sanitizedData),
+          })
         : req;
 
       const response = await handler(modifiedReq, ...args);
-      
+
       // Add security headers to response
       return addSecurityHeaders(response as NextResponse);
-
     } catch (error) {
       const { createErrorResponse } = await import('@/shared/lib/api/handle-api-error');
       const response = await createErrorResponse(error, {
@@ -203,7 +205,11 @@ export function withSecurity(
   };
 }
 
-type FileUploadHandler = (req: NextRequest, files: SanitizedFile[], ...args: unknown[]) => Promise<Response>;
+type FileUploadHandler = (
+  req: NextRequest,
+  files: SanitizedFile[],
+  ...args: unknown[]
+) => Promise<Response>;
 
 // File upload wrapper with security
 export function withFileUploadSecurity(
@@ -213,7 +219,7 @@ export function withFileUploadSecurity(
   return async (req: NextRequest, ...args: unknown[]): Promise<Response> => {
     try {
       const validation = await SecurityMiddleware.validateFileUpload(req, config);
-      
+
       if (!validation.allowed) {
         throw new AppError(validation.message || 'File upload not allowed', {
           code: 'FILE_UPLOAD_SECURITY_FAILED',
@@ -224,7 +230,6 @@ export function withFileUploadSecurity(
 
       const response = await handler(req, validation.files || [], ...args);
       return addSecurityHeaders(response as NextResponse);
-
     } catch (error) {
       const { createErrorResponse } = await import('@/shared/lib/api/handle-api-error');
       const response = await createErrorResponse(error, {

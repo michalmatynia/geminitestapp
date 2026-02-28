@@ -61,9 +61,7 @@ export const sanitizePhoneCandidate = (value: string): string => {
   if (!digits) return '';
 
   if (hasInternationalPrefix) {
-    const withoutPrefix = current.startsWith('00')
-      ? digits.replace(/^00/, '')
-      : digits;
+    const withoutPrefix = current.startsWith('00') ? digits.replace(/^00/, '') : digits;
     return withoutPrefix ? `+${withoutPrefix}` : '';
   }
   return digits;

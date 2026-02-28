@@ -34,7 +34,7 @@ export const mongoActivityRepository: ActivityRepository = {
   async listActivity(filters: ActivityFilters): Promise<ActivityLogDto[]> {
     const db = await getMongoDb();
     const query: Filter<ActivityLogDoc> = {};
-    
+
     if (filters.userId) query.userId = filters.userId;
     if (filters.type) query.type = filters.type;
     if (filters.entityId) query.entityId = filters.entityId;
@@ -57,7 +57,7 @@ export const mongoActivityRepository: ActivityRepository = {
   async countActivity(filters: ActivityFilters): Promise<number> {
     const db = await getMongoDb();
     const query: Filter<ActivityLogDoc> = {};
-    
+
     if (filters.userId) query.userId = filters.userId;
     if (filters.type) query.type = filters.type;
     if (filters.entityId) query.entityId = filters.entityId;
@@ -82,7 +82,7 @@ export const mongoActivityRepository: ActivityRepository = {
       createdAt: now,
       updatedAt: now,
     } as ActivityLogDoc;
-    
+
     const result = await db.collection<ActivityLogDoc>(COLLECTION).insertOne(doc);
     return toActivityDto({ ...doc, _id: result.insertedId });
   },

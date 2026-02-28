@@ -4,14 +4,8 @@ import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import React from 'react';
 
 import { Button } from '@/shared/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/shared/ui/select';
-import { cn } from '@/shared/utils/ui-utils';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
+import { cn } from '@/shared/utils';
 
 interface PanelPaginationProps {
   page: number;

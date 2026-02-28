@@ -7,7 +7,7 @@ import type {
   DynamicReplacementLogicOperator,
   DynamicReplacementLogicAction,
   DynamicReplacementRecipe,
-  ProductValidationPattern
+  ProductValidationPattern,
 } from '@/shared/contracts/products';
 
 export type {
@@ -128,10 +128,7 @@ const normalizeRecipe = (raw: unknown): DynamicReplacementRecipe | null => {
     LOGIC_OPS.has(source['logicOperator'] as DynamicReplacementLogicOperator)
       ? (source['logicOperator'] as DynamicReplacementLogicOperator)
       : 'none';
-  const logicOperand =
-    typeof source['logicOperand'] === 'string'
-      ? source['logicOperand']
-      : null;
+  const logicOperand = typeof source['logicOperand'] === 'string' ? source['logicOperand'] : null;
   const logicFlags =
     typeof source['logicFlags'] === 'string' && source['logicFlags'].trim()
       ? source['logicFlags'].trim()
@@ -142,18 +139,14 @@ const normalizeRecipe = (raw: unknown): DynamicReplacementRecipe | null => {
       ? (source['logicWhenTrueAction'] as DynamicReplacementLogicAction)
       : 'keep';
   const logicWhenTrueValue =
-    typeof source['logicWhenTrueValue'] === 'string'
-      ? source['logicWhenTrueValue']
-      : null;
+    typeof source['logicWhenTrueValue'] === 'string' ? source['logicWhenTrueValue'] : null;
   const logicWhenFalseAction =
     typeof source['logicWhenFalseAction'] === 'string' &&
     LOGIC_ACTIONS.has(source['logicWhenFalseAction'] as DynamicReplacementLogicAction)
       ? (source['logicWhenFalseAction'] as DynamicReplacementLogicAction)
       : 'keep';
   const logicWhenFalseValue =
-    typeof source['logicWhenFalseValue'] === 'string'
-      ? source['logicWhenFalseValue']
-      : null;
+    typeof source['logicWhenFalseValue'] === 'string' ? source['logicWhenFalseValue'] : null;
   const resultAssembly =
     typeof source['resultAssembly'] === 'string' &&
     ASSEMBLY_OPS.has(source['resultAssembly'] as DynamicReplacementResultAssembly)
@@ -210,7 +203,7 @@ const applyMathTransform = (
   value: string,
   operation: DynamicReplacementMathOperation,
   operand: number | null | undefined,
-  roundMode: DynamicReplacementRoundMode,
+  roundMode: DynamicReplacementRoundMode
 ): string | null => {
   if (operation === 'none') return value;
   const numericValue = Number(value);
@@ -316,7 +309,7 @@ export const encodeDynamicReplacementRecipe = (recipe: DynamicReplacementRecipe)
   `${DYNAMIC_REPLACEMENT_PREFIX}${JSON.stringify(recipe)}`;
 
 export const parseDynamicReplacementRecipe = (
-  replacementValue: string | null | undefined,
+  replacementValue: string | null | undefined
 ): DynamicReplacementRecipe | null => {
   if (typeof replacementValue !== 'string') return null;
   const trimmed = replacementValue.trim();
@@ -335,7 +328,7 @@ export const isDynamicReplacementValue = (replacementValue: string | null | unde
   parseDynamicReplacementRecipe(replacementValue) !== null;
 
 export const getStaticReplacementValue = (
-  replacementValue: string | null | undefined,
+  replacementValue: string | null | undefined
 ): string | null => {
   if (typeof replacementValue !== 'string') return null;
   if (isDynamicReplacementValue(replacementValue)) return null;
@@ -343,7 +336,7 @@ export const getStaticReplacementValue = (
 };
 
 export const describeDynamicReplacementRecipe = (
-  recipe: DynamicReplacementRecipe | null,
+  recipe: DynamicReplacementRecipe | null
 ): string => {
   if (!recipe) return 'n/a';
   const sourceBase =
@@ -352,7 +345,9 @@ export const describeDynamicReplacementRecipe = (
       : recipe.sourceField
         ? `${recipe.sourceMode}:${recipe.sourceField}`
         : recipe.sourceMode;
-  const extraction = recipe.sourceRegex ? ` /${recipe.sourceRegex}/${recipe.sourceFlags ?? ''}` : '';
+  const extraction = recipe.sourceRegex
+    ? ` /${recipe.sourceRegex}/${recipe.sourceFlags ?? ''}`
+    : '';
   const captureGroup =
     typeof recipe.sourceMatchGroup === 'number' ? ` group#${recipe.sourceMatchGroup}` : '';
   const math =
@@ -362,8 +357,8 @@ export const describeDynamicReplacementRecipe = (
   const logic =
     recipe.logicOperator && recipe.logicOperator !== 'none'
       ? ` if ${recipe.logicOperator} ${recipe.logicOperand ?? ''} ? ${
-        recipe.logicWhenTrueAction ?? 'keep'
-      } : ${recipe.logicWhenFalseAction ?? 'keep'}`
+          recipe.logicWhenTrueAction ?? 'keep'
+        } : ${recipe.logicWhenFalseAction ?? 'keep'}`
       : '';
   const assembly = recipe.resultAssembly ?? 'segment_only';
   const targetApply = recipe.targetApply ?? 'replace_matched_segment';
@@ -372,7 +367,7 @@ export const describeDynamicReplacementRecipe = (
 
 export const evaluateDynamicReplacementRecipe = (
   recipe: DynamicReplacementRecipe,
-  context: DynamicReplacementContext,
+  context: DynamicReplacementContext
 ): string | null => {
   const { fieldValue, formValues, latestProductValues, pattern } = context;
 
@@ -399,11 +394,7 @@ export const evaluateDynamicReplacementRecipe = (
         ? Math.floor(recipe.sourceMatchGroup)
         : null;
     const selected =
-      requestedGroup !== null
-        ? match[requestedGroup]
-        : match.length > 1
-          ? match[1]
-          : match[0];
+      requestedGroup !== null ? match[requestedGroup] : match.length > 1 ? match[1] : match[0];
     if (typeof selected !== 'string') return null;
     extractedValue = selected ?? '';
     sourceMatchIndex = match.index;
@@ -415,7 +406,7 @@ export const evaluateDynamicReplacementRecipe = (
     extractedValue,
     recipe.mathOperation ?? 'none',
     recipe.mathOperand ?? null,
-    recipe.roundMode ?? 'none',
+    recipe.roundMode ?? 'none'
   );
   if (transformed === null) return null;
 
@@ -435,12 +426,12 @@ export const evaluateDynamicReplacementRecipe = (
     });
     const logicValue = applyLogicAction({
       action: conditionMet
-        ? recipe.logicWhenTrueAction ?? 'keep'
-        : recipe.logicWhenFalseAction ?? 'keep',
+        ? (recipe.logicWhenTrueAction ?? 'keep')
+        : (recipe.logicWhenFalseAction ?? 'keep'),
       value: transformedOutput,
       actionValue: conditionMet
-        ? recipe.logicWhenTrueValue ?? null
-        : recipe.logicWhenFalseValue ?? null,
+        ? (recipe.logicWhenTrueValue ?? null)
+        : (recipe.logicWhenFalseValue ?? null),
     });
     if (logicValue === null) return null;
     transformedOutput = logicValue;
@@ -468,7 +459,7 @@ export const evaluateDynamicReplacementRecipe = (
 
 export const getPatternReplacementPreview = (
   pattern: ProductValidationPattern,
-  context: DynamicReplacementContext,
+  context: DynamicReplacementContext
 ): string | null => {
   if (!pattern.replacementEnabled || !pattern.replacementValue) return null;
   const recipe = parseDynamicReplacementRecipe(pattern.replacementValue);

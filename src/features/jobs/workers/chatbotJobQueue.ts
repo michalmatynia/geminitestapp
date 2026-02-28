@@ -30,7 +30,7 @@ const queue = createManagedQueue<ChatbotJobData>({
   },
   onFailed: async (_jobId, error, data) => {
     const message = error instanceof Error ? error.message : 'Job failed.';
-    
+
     void ErrorSystem.captureException(error, {
       service: 'chatbot-job-queue',
       jobId: data.jobId,

@@ -4,13 +4,11 @@ import type {
   CaseResolverFile,
   CaseResolverWorkspace,
 } from '@/shared/contracts/case-resolver';
-import {
-  type CaseResolverFileEditDraft,
-} from '../types';
+import { type CaseResolverFileEditDraft } from '../types';
 import {
   buildFileEditDraft,
   createCaseResolverHistorySnapshotEntry,
-} from '../utils/caseResolverUtils';
+} from '@/features/case-resolver/utils/caseResolverUtils';
 import {
   CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT,
   buildCaseResolverDraftCanonicalState,
@@ -25,7 +23,7 @@ import {
   ensureSafeDocumentHtml,
   stripHtmlToPlainText,
   toStorageDocumentValue,
-} from '@/features/document-editor/content-format';
+} from '@/shared/lib/document-editor/content-format';
 import { createCaseResolverFile } from '../settings';
 
 type CaseResolverOpenFileEditorOptions = {
@@ -49,123 +47,140 @@ export function useCaseResolverStateEditorActions({
   workspace: CaseResolverWorkspace;
   updateWorkspace: (
     updater: (current: CaseResolverWorkspace) => CaseResolverWorkspace,
-    options?: { persistToast?: string; persistNow?: boolean; mutationId?: string; source?: string; skipNormalization?: boolean }
+    options?: {
+      persistToast?: string;
+      persistNow?: boolean;
+      mutationId?: string;
+      source?: string;
+      skipNormalization?: boolean;
+    }
   ) => void;
   editingDocumentDraft: CaseResolverFileEditDraft | null;
   setEditingDocumentDraft: React.Dispatch<React.SetStateAction<CaseResolverFileEditDraft | null>>;
-  setEditingDocumentNodeContext: React.Dispatch<React.SetStateAction<CaseResolverEditorNodeContext | null>>;
+  setEditingDocumentNodeContext: React.Dispatch<
+    React.SetStateAction<CaseResolverEditorNodeContext | null>
+  >;
   setSelectedFileId: React.Dispatch<React.SetStateAction<string | null>>;
   setSelectedAssetId: React.Dispatch<React.SetStateAction<string | null>>;
   setSelectedFolderPath: React.Dispatch<React.SetStateAction<string | null>>;
   setWorkspace: React.Dispatch<React.SetStateAction<CaseResolverWorkspace>>;
   toast: Toast;
 }) {
-  const handleOpenFileEditor = useCallback((
-    fileId: string,
-    options?: CaseResolverOpenFileEditorOptions
-  ): void => {
-    const target = workspace.files.find((file) => file.id === fileId);
-    if (!target) {
-      setEditingDocumentNodeContext(null);
-      toast('File not found.', { variant: 'warning' });
-      return;
-    }
-    if (target.fileType === 'case') {
-      setEditingDocumentNodeContext(null);
-      toast('Cases are edited in the Cases list. Select a document to edit.', {
-        variant: 'info',
-      });
-      return;
-    }
-    const baseDraft = buildFileEditDraft(target);
-    const mergedDraft: CaseResolverFileEditDraft = {
-      ...baseDraft,
-      documentHistory: baseDraft.documentHistory ?? [],
-    };
-    const canonicalDraft = (() => {
-      if (mergedDraft.fileType === 'scanfile') {
-        const resolvedDraftMarkdown = (() => {
-          if (
-            typeof mergedDraft.documentContentMarkdown === 'string' &&
-            mergedDraft.documentContentMarkdown.trim().length > 0
-          ) {
-            return mergedDraft.documentContentMarkdown;
-          }
-          if (
-            typeof mergedDraft.documentContentPlainText === 'string' &&
-            mergedDraft.documentContentPlainText.trim().length > 0
-          ) {
-            return mergedDraft.documentContentPlainText;
-          }
-          const fallbackContent = mergedDraft.documentContent ?? '';
-          if (fallbackContent.trim().length > 0) {
-            return hasHtmlMarkup(fallbackContent)
-              ? stripHtmlToPlainText(fallbackContent)
-              : fallbackContent;
-          }
+  const handleOpenFileEditor = useCallback(
+    (fileId: string, options?: CaseResolverOpenFileEditorOptions): void => {
+      const target = workspace.files.find((file) => file.id === fileId);
+      if (!target) {
+        setEditingDocumentNodeContext(null);
+        toast('File not found.', { variant: 'warning' });
+        return;
+      }
+      if (target.fileType === 'case') {
+        setEditingDocumentNodeContext(null);
+        toast('Cases are edited in the Cases list. Select a document to edit.', {
+          variant: 'info',
+        });
+        return;
+      }
+      const baseDraft = buildFileEditDraft(target);
+      const mergedDraft: CaseResolverFileEditDraft = {
+        ...baseDraft,
+        documentHistory: baseDraft.documentHistory ?? [],
+      };
+      const canonicalDraft = (() => {
+        if (mergedDraft.fileType === 'scanfile') {
+          const resolvedDraftMarkdown = (() => {
+            if (
+              typeof mergedDraft.documentContentMarkdown === 'string' &&
+              mergedDraft.documentContentMarkdown.trim().length > 0
+            ) {
+              return mergedDraft.documentContentMarkdown;
+            }
+            if (
+              typeof mergedDraft.documentContentPlainText === 'string' &&
+              mergedDraft.documentContentPlainText.trim().length > 0
+            ) {
+              return mergedDraft.documentContentPlainText;
+            }
+            const fallbackContent = mergedDraft.documentContent ?? '';
+            if (fallbackContent.trim().length > 0) {
+              return hasHtmlMarkup(fallbackContent)
+                ? stripHtmlToPlainText(fallbackContent)
+                : fallbackContent;
+            }
+            if (
+              typeof mergedDraft.documentContentHtml === 'string' &&
+              mergedDraft.documentContentHtml.trim().length > 0
+            ) {
+              return stripHtmlToPlainText(mergedDraft.documentContentHtml);
+            }
+            return '';
+          })();
+          return deriveDocumentContentSync({
+            mode: 'markdown',
+            value: resolvedDraftMarkdown,
+            previousHtml: mergedDraft.documentContentHtml,
+            previousMarkdown: mergedDraft.documentContentMarkdown,
+          });
+        }
+
+        const resolvedDraftHtml = (() => {
           if (
             typeof mergedDraft.documentContentHtml === 'string' &&
             mergedDraft.documentContentHtml.trim().length > 0
           ) {
-            return stripHtmlToPlainText(mergedDraft.documentContentHtml);
+            return mergedDraft.documentContentHtml;
           }
-          return '';
+          if (
+            typeof mergedDraft.documentContentMarkdown === 'string' &&
+            mergedDraft.documentContentMarkdown.trim().length > 0
+          ) {
+            return ensureHtmlForPreview(mergedDraft.documentContentMarkdown, 'markdown');
+          }
+          return ensureSafeDocumentHtml(mergedDraft.documentContent ?? '');
         })();
         return deriveDocumentContentSync({
-          mode: 'markdown',
-          value: resolvedDraftMarkdown,
+          mode: 'wysiwyg',
+          value: resolvedDraftHtml,
           previousHtml: mergedDraft.documentContentHtml,
           previousMarkdown: mergedDraft.documentContentMarkdown,
         });
-      }
-
-      const resolvedDraftHtml = (() => {
-        if (
-          typeof mergedDraft.documentContentHtml === 'string' &&
-          mergedDraft.documentContentHtml.trim().length > 0
-        ) {
-          return mergedDraft.documentContentHtml;
-        }
-        if (
-          typeof mergedDraft.documentContentMarkdown === 'string' &&
-          mergedDraft.documentContentMarkdown.trim().length > 0
-        ) {
-          return ensureHtmlForPreview(mergedDraft.documentContentMarkdown, 'markdown');
-        }
-        return ensureSafeDocumentHtml(mergedDraft.documentContent ?? '');
       })();
-      return deriveDocumentContentSync({
-        mode: 'wysiwyg',
-        value: resolvedDraftHtml,
-        previousHtml: mergedDraft.documentContentHtml,
-        previousMarkdown: mergedDraft.documentContentMarkdown,
-      });
-    })();
-    const nextDraft: CaseResolverFileEditDraft = {
-      ...mergedDraft,
-      editorType: mergedDraft.fileType === 'scanfile' ? 'markdown' : 'wysiwyg',
-      documentContentFormatVersion: 1,
-      documentContent: toStorageDocumentValue(canonicalDraft),
-      documentContentMarkdown: canonicalDraft.markdown,
-      documentContentHtml: canonicalDraft.html,
-      documentContentPlainText: canonicalDraft.plainText,
-      documentConversionWarnings: canonicalDraft.warnings,
-    };
-    clearStoredEditorDraft(fileId);
-    setEditingDocumentDraft(nextDraft);
-    setEditingDocumentNodeContext(options?.nodeContext ?? null);
-    setSelectedFileId(fileId);
-    setSelectedAssetId(null);
-    setSelectedFolderPath(null);
-    setWorkspace((current) => (
-      current.activeFileId === fileId
-        ? current
-        : {
-          ...current,
-          activeFileId: fileId,
-        }
-    ));
-  }, [workspace.files, toast, setEditingDocumentNodeContext, setEditingDocumentDraft, setSelectedFileId, setSelectedAssetId, setSelectedFolderPath, setWorkspace]);
+      const nextDraft: CaseResolverFileEditDraft = {
+        ...mergedDraft,
+        editorType: mergedDraft.fileType === 'scanfile' ? 'markdown' : 'wysiwyg',
+        documentContentFormatVersion: 1,
+        documentContent: toStorageDocumentValue(canonicalDraft),
+        documentContentMarkdown: canonicalDraft.markdown,
+        documentContentHtml: canonicalDraft.html,
+        documentContentPlainText: canonicalDraft.plainText,
+        documentConversionWarnings: canonicalDraft.warnings,
+      };
+      clearStoredEditorDraft(fileId);
+      setEditingDocumentDraft(nextDraft);
+      setEditingDocumentNodeContext(options?.nodeContext ?? null);
+      setSelectedFileId(fileId);
+      setSelectedAssetId(null);
+      setSelectedFolderPath(null);
+      setWorkspace((current) =>
+        current.activeFileId === fileId
+          ? current
+          : {
+              ...current,
+              activeFileId: fileId,
+            }
+      );
+    },
+    [
+      workspace.files,
+      toast,
+      setEditingDocumentNodeContext,
+      setEditingDocumentDraft,
+      setSelectedFileId,
+      setSelectedAssetId,
+      setSelectedFolderPath,
+      setWorkspace,
+    ]
+  );
 
   const handleSaveFileEditor = useCallback((): void => {
     if (!editingDocumentDraft) return;
@@ -177,9 +192,9 @@ export function useCaseResolverStateEditorActions({
       return;
     }
     if (currentFile.isLocked) {
-      setEditingDocumentDraft((current) => (
+      setEditingDocumentDraft((current) =>
         current?.id === currentFile.id ? buildFileEditDraft(currentFile) : current
-      ));
+      );
       toast('Document is locked. Unlock it in Case Resolver before saving.', {
         variant: 'warning',
       });
@@ -198,7 +213,8 @@ export function useCaseResolverStateEditorActions({
       currentFile.documentContentMarkdown !== canonicalState.markdown ||
       currentFile.documentContentHtml !== canonicalState.html ||
       currentFile.documentContentPlainText !== canonicalState.plainText ||
-      JSON.stringify(currentFile.documentConversionWarnings) !== JSON.stringify(canonicalState.warnings) ||
+      JSON.stringify(currentFile.documentConversionWarnings) !==
+        JSON.stringify(canonicalState.warnings) ||
       currentFile.originalDocumentContent !== nextOriginalDocumentContent ||
       currentFile.explodedDocumentContent !== nextExplodedDocumentContent;
     const hasMeaningfulChanges = hasCaseResolverDraftMeaningfulChanges({
@@ -215,11 +231,9 @@ export function useCaseResolverStateEditorActions({
     if (!hasMeaningfulChanges && !canSavePristineInitialDocument) {
       clearStoredEditorDraft(editingDocumentDraft.id);
       if (hasVersionDrift) {
-        setEditingDocumentDraft((current) => (
-          current?.id === editingDocumentDraft.id
-            ? buildFileEditDraft(currentFile)
-            : current
-        ));
+        setEditingDocumentDraft((current) =>
+          current?.id === editingDocumentDraft.id ? buildFileEditDraft(currentFile) : current
+        );
         toast('Document is already synced with the latest version. No changes to save.', {
           variant: 'info',
         });
@@ -237,18 +251,21 @@ export function useCaseResolverStateEditorActions({
     const nextDocumentContentVersion = currentFile.documentContentVersion + 1;
     const currentSnapshot = hasContentChanges
       ? createCaseResolverHistorySnapshotEntry({
-        savedAt: now,
-        documentContentVersion: currentFile.documentContentVersion,
-        activeDocumentVersion: currentFile.activeDocumentVersion,
-        editorType: currentFile.editorType,
-        documentContent: currentFile.documentContent,
-        documentContentMarkdown: currentFile.documentContentMarkdown,
-        documentContentHtml: currentFile.documentContentHtml,
-        documentContentPlainText: currentFile.documentContentPlainText,
-      })
+          savedAt: now,
+          documentContentVersion: currentFile.documentContentVersion,
+          activeDocumentVersion: currentFile.activeDocumentVersion,
+          editorType: currentFile.editorType,
+          documentContent: currentFile.documentContent,
+          documentContentMarkdown: currentFile.documentContentMarkdown,
+          documentContentHtml: currentFile.documentContentHtml,
+          documentContentPlainText: currentFile.documentContentPlainText,
+        })
       : null;
     const nextDocumentHistory = currentSnapshot
-      ? [currentSnapshot, ...currentFile.documentHistory].slice(0, CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT)
+      ? [currentSnapshot, ...currentFile.documentHistory].slice(
+          0,
+          CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT
+        )
       : currentFile.documentHistory;
     const nextParentCaseId =
       editingDocumentDraft.parentCaseId === undefined
@@ -273,17 +290,18 @@ export function useCaseResolverStateEditorActions({
       createdAt: editingDocumentDraft.createdAt || currentFile.createdAt || now,
       updatedAt: now,
     });
-    updateWorkspace((current) => ({
-      ...current,
-      files: current.files.map((file) =>
-        file.id === editingDocumentDraft.id
-          ? nextSavedFile
-          : file
-      ),
-    }), {
-      persistToast: 'Document changes saved.',
-      source: 'case_view_document_save',
-    });
+    updateWorkspace(
+      (current) => ({
+        ...current,
+        files: current.files.map((file) =>
+          file.id === editingDocumentDraft.id ? nextSavedFile : file
+        ),
+      }),
+      {
+        persistToast: 'Document changes saved.',
+        source: 'case_view_document_save',
+      }
+    );
     clearStoredEditorDraft(editingDocumentDraft.id);
     setEditingDocumentDraft((current) => {
       if (current?.id !== editingDocumentDraft.id) return current;

@@ -20,4 +20,3 @@ describe('port type compatibility', () => {
     expect(isValueCompatibleWithTypes(value, ['image'])).toBe(true);
   });
 });
-

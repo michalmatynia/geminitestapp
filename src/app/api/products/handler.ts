@@ -1,24 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { logSystemEvent } from '@/features/observability/server';
-import {
-  CachedProductService,
-  performanceMonitor,
-} from '@/features/products/performance';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { CachedProductService, performanceMonitor } from '@/features/products/performance';
 import { getProductDataProvider } from '@/features/products/server';
 import { productService } from '@/features/products/services/productService'; // Direct import
 import { ProductFiltersParsed, productFilterSchema } from '@/features/products/validations';
 import { validateProductCreateMiddleware } from '@/features/products/validations/middleware';
 import type { ProductWithImages } from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import {
-  badRequestError,
-  payloadTooLargeError,
-} from '@/shared/errors/app-error';
+import { badRequestError, payloadTooLargeError } from '@/shared/errors/app-error';
 import { env } from '@/shared/lib/env';
 
 export { productFilterSchema };
-
 
 /**
  * GET /api/products
@@ -37,21 +30,16 @@ const isLikelyPayloadTooLarge = (error: unknown): boolean => {
   );
 };
 
-const buildServerTiming = (
-  entries: Record<string, number | null | undefined>,
-): string => {
+const buildServerTiming = (entries: Record<string, number | null | undefined>): string => {
   const parts = Object.entries(entries)
-    .filter(
-      ([, value]) =>
-        typeof value === 'number' && Number.isFinite(value) && value >= 0,
-    )
+    .filter(([, value]) => typeof value === 'number' && Number.isFinite(value) && value >= 0)
     .map(([name, value]) => `${name};dur=${Math.round(value as number)}`);
   return parts.join(', ');
 };
 
 const attachTimingHeaders = (
   response: Response,
-  entries: Record<string, number | null | undefined>,
+  entries: Record<string, number | null | undefined>
 ): void => {
   const value = buildServerTiming(entries);
   if (value) {
@@ -59,10 +47,7 @@ const attachTimingHeaders = (
   }
 };
 
-export async function GET_handler(
-  req: NextRequest,
-  ctx: ApiHandlerContext,
-): Promise<Response> {
+export async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const filters = ctx.query as ProductFiltersParsed;
   const timings: Record<string, number | null | undefined> = {};
   const forceFresh = req.nextUrl.searchParams.get('fresh') === '1';
@@ -76,7 +61,7 @@ export async function GET_handler(
     const products = forceFresh
       ? await productService.getProducts(filters, { timings, provider })
       : await CachedProductService.getProducts(filters);
-    
+
     timings['total'] = ctx.getElapsedMs();
 
     if (shouldLogTiming()) {
@@ -108,18 +93,14 @@ export async function GET_handler(
  * POST /api/products
  * Creates a new product with validation and cache invalidation.
  */
-export async function POST_handler(
-  req: NextRequest,
-  _ctx: ApiHandlerContext,
-): Promise<Response> {
+export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   let formData: FormData;
   try {
-     
     formData = await req.formData();
   } catch (error) {
     if (isLikelyPayloadTooLarge(error)) {
       throw payloadTooLargeError(
-        'Upload payload too large. Reduce image sizes/count or increase proxyClientMaxBodySize.',
+        'Upload payload too large. Reduce image sizes/count or increase proxyClientMaxBodySize.'
       );
     }
     throw badRequestError('Invalid form data payload', { error });
@@ -131,26 +112,24 @@ export async function POST_handler(
     return validation.response;
   }
 
-   
   const idempotencyKey = req.headers.get('idempotency-key') ?? req.headers.get('x-idempotency-key');
   const skuField = formData.get('sku');
   if (idempotencyKey && typeof skuField === 'string' && skuField.trim()) {
     const existing: ProductWithImages | null = await CachedProductService.getProductBySku(
-      skuField.trim(),
+      skuField.trim()
     );
     if (existing) {
-       
       return NextResponse.json({
         ...existing,
         idempotent: true,
       });
     }
   }
-  
+
   const options = _ctx.userId ? { userId: _ctx.userId } : {};
-       
+
   const product: ProductWithImages | null = await productService.createProduct(formData, options);
-  
+
   // Invalidate relevant caches
   CachedProductService.invalidateAll();
 

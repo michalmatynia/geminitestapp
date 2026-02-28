@@ -4,7 +4,6 @@ import React from 'react';
 
 import { ConfirmModal } from './modals/ConfirmModal';
 
-
 export interface ConfirmDialogConfig {
   id: string;
   open: boolean;
@@ -41,9 +40,7 @@ export interface ConfirmDialogBatchProps {
  * />
  * ```
  */
-export function ConfirmDialogBatch({
-  dialogs,
-}: ConfirmDialogBatchProps): React.JSX.Element {
+export function ConfirmDialogBatch({ dialogs }: ConfirmDialogBatchProps): React.JSX.Element {
   return (
     <>
       {dialogs.map((dialog) => (

@@ -46,8 +46,12 @@ export function useDependentQueries<T1, T2, T3>(
   });
 
   const third = createListQueryV2<T3, T3>({
-    queryKey: normalizeQueryKey(thirdQuery ? [...thirdQuery.queryKey, second.data] : ['__empty_third__']),
-    queryFn: thirdQuery ? () => thirdQuery.queryFn(second.data!) : () => Promise.resolve(null as unknown as T3),
+    queryKey: normalizeQueryKey(
+      thirdQuery ? [...thirdQuery.queryKey, second.data] : ['__empty_third__']
+    ),
+    queryFn: thirdQuery
+      ? () => thirdQuery.queryFn(second.data!)
+      : () => Promise.resolve(null as unknown as T3),
     enabled: !!thirdQuery && !!second.data && second.isSuccess,
     meta: {
       source: 'shared.hooks.query.useDependentQueries.third',
@@ -62,23 +66,24 @@ export function useDependentQueries<T1, T2, T3>(
     first,
     second,
     third: thirdQuery ? third : null,
-    isLoading: Boolean(first.isLoading || (first.isSuccess && second.isLoading) || 
-               (thirdQuery && second.isSuccess && third.isLoading)),
+    isLoading: Boolean(
+      first.isLoading ||
+      (first.isSuccess && second.isLoading) ||
+      (thirdQuery && second.isSuccess && third.isLoading)
+    ),
     isError: Boolean(first.isError || second.isError || (thirdQuery && third.isError)),
     error: (first.error || second.error || (thirdQuery && third.error)) as Error | null,
   };
 }
 
 // Hook for parallel queries with combined loading state
-export function useParallelQueries<T extends Record<string, unknown>>(
-  queries: {
-    [K in keyof T]: {
-      queryKey: unknown[];
-      queryFn: () => Promise<T[K]>;
-      enabled?: boolean;
-    };
-  }
-): {
+export function useParallelQueries<T extends Record<string, unknown>>(queries: {
+  [K in keyof T]: {
+    queryKey: unknown[];
+    queryFn: () => Promise<T[K]>;
+    enabled?: boolean;
+  };
+}): {
   data: T;
   isLoading: boolean;
   isError: boolean;
@@ -97,7 +102,7 @@ export function useParallelQueries<T extends Record<string, unknown>>(
 
   const results = useMemo(() => {
     const data = {} as T;
-    
+
     queryResults.forEach((result, index) => {
       const key = keys[index];
       if (key) {
@@ -107,11 +112,11 @@ export function useParallelQueries<T extends Record<string, unknown>>(
 
     return {
       data,
-      isLoading: queryResults.some(q => q.isLoading),
-      isError: queryResults.some(q => q.isError),
-      errors: queryResults.filter(q => q.isError).map(q => q.error),
-      isSuccess: queryResults.every(q => q.isSuccess),
-      refetch: async () => await Promise.all(queryResults.map(q => q.refetch())),
+      isLoading: queryResults.some((q) => q.isLoading),
+      isError: queryResults.some((q) => q.isError),
+      errors: queryResults.filter((q) => q.isError).map((q) => q.error),
+      isSuccess: queryResults.every((q) => q.isSuccess),
+      refetch: async () => await Promise.all(queryResults.map((q) => q.refetch())),
     };
   }, [queryResults, keys]);
 
@@ -149,7 +154,8 @@ export function useConditionalQuery<T>(
 
     // Check permission
     if (conditions.permission) {
-      const permissionsStr = typeof window !== 'undefined' ? localStorage.getItem('permissions') : null;
+      const permissionsStr =
+        typeof window !== 'undefined' ? localStorage.getItem('permissions') : null;
       const permissions = permissionsStr ? (JSON.parse(permissionsStr) as string[]) : [];
       if (!Array.isArray(permissions) || !permissions.includes(conditions.permission)) {
         return false;

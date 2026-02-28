@@ -47,9 +47,7 @@ describe('api/integrations/product-listings', () => {
   });
 
   it('prefers integration slug mapping when available', async () => {
-    listIntegrationsMock.mockResolvedValue([
-      { id: 'integration-1', slug: 'base-com' },
-    ]);
+    listIntegrationsMock.mockResolvedValue([{ id: 'integration-1', slug: 'base-com' }]);
     listAllListingsMock.mockResolvedValue([
       {
         productId: 'product-2',

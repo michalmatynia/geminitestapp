@@ -2,13 +2,7 @@
 
 import React from 'react';
 import { Plus } from 'lucide-react';
-import { 
-  Button, 
-  Input, 
-  Textarea, 
-  FormSection, 
-  FormField 
-} from '@/shared/ui';
+import { Button, Input, Textarea, FormSection, FormField } from '@/shared/ui';
 
 export type DocumentAddFormProps = {
   title: string;
@@ -26,10 +20,14 @@ export type DocumentAddFormProps = {
 };
 
 export function DocumentAddForm({
-  title, setTitle,
-  source, setSource,
-  tags, setTags,
-  text, setText,
+  title,
+  setTitle,
+  source,
+  setSource,
+  tags,
+  setTags,
+  text,
+  setText,
   onAdd,
   isAdding,
   isDeleting,
@@ -40,19 +38,28 @@ export function DocumentAddForm({
       <div className='space-y-4'>
         <div className='grid gap-4 md:grid-cols-2'>
           <FormField label='Title (optional)'>
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder='e.g. Product naming rules' />
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder='e.g. Product naming rules'
+            />
           </FormField>
           <FormField label='Source (optional)'>
-            <Input value={source} onChange={(e) => setSource(e.target.value)} placeholder='e.g. internal wiki' />
+            <Input
+              value={source}
+              onChange={(e) => setSource(e.target.value)}
+              placeholder='e.g. internal wiki'
+            />
           </FormField>
         </div>
         <FormField label='Tags (comma separated)'>
-          <Input value={tags} onChange={(e) => setTags(e.target.value)} placeholder='pricing, listings, seo' />
+          <Input
+            value={tags}
+            onChange={(e) => setTags(e.target.value)}
+            placeholder='pricing, listings, seo'
+          />
         </FormField>
-        <FormField
-          label='Text Content'
-          description='Raw text to be vectorized and stored.'
-        >
+        <FormField label='Text Content' description='Raw text to be vectorized and stored.'>
           <Textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
@@ -61,9 +68,9 @@ export function DocumentAddForm({
           />
         </FormField>
         <div className='flex justify-end'>
-          <Button 
-            onClick={onAdd} 
-            loading={isAdding} 
+          <Button
+            onClick={onAdd}
+            loading={isAdding}
             disabled={isDeleting || !collectionId || !text.trim()}
           >
             <Plus className='mr-2 size-4' />

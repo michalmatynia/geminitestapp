@@ -1,6 +1,4 @@
-import {
-  stableStringify,
-} from '../../ai/ai-paths/lib';
+import { stableStringify } from '../../ai/ai-paths/lib';
 
 export {
   buildCaseResolverDraftCanonicalState,
@@ -10,9 +8,7 @@ export {
   canCaseResolverDraftPerformInitialManualSave,
 } from './useCaseResolverState.helpers.canonical';
 
-export type {
-  CaseResolverDraftCanonicalState,
-} from './useCaseResolverState.helpers.canonical';
+export type { CaseResolverDraftCanonicalState } from './useCaseResolverState.helpers.canonical';
 
 export {
   readStoredEditorDraft,
@@ -30,21 +26,19 @@ export {
   resolveUploadBaseFolder,
 } from './useCaseResolverState.helpers.upload';
 
-export type {
-  CaseResolverUploadedFile,
-} from './useCaseResolverState.helpers.upload';
+export type { CaseResolverUploadedFile } from './useCaseResolverState.helpers.upload';
 
 export {
   createPlaceholderAssetName,
   createUniqueCaseFileName,
 } from './useCaseResolverState.helpers.naming';
 
-export { ensureSafeDocumentHtml } from '@/features/document-editor/content-format';
+export { ensureSafeDocumentHtml } from '@/shared/lib/document-editor/content-format';
 export {
   isLikelyImageFile,
   isLikelyPdfFile,
   isLikelyScanInputFile,
-} from '../utils/caseResolverUtils';
+} from '@/features/case-resolver/utils/caseResolverUtils';
 
 export {
   normalizeFolderRecords,

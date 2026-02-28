@@ -31,10 +31,7 @@ export const getNodeFileDocumentColumns = ({
       accessorKey: 'folderPath',
       header: 'Folder',
       cell: ({ row }: { row: Row<NodeFileDocumentSearchRow> }): React.JSX.Element => (
-        <span
-          className='block truncate text-gray-400'
-          title={row.original.folderPath || '—'}
-        >
+        <span className='block truncate text-gray-400' title={row.original.folderPath || '—'}>
           {row.original.folderPath || '—'}
         </span>
       ),
@@ -61,10 +58,7 @@ export const getNodeFileDocumentColumns = ({
       accessorKey: 'addresserLabel',
       header: 'From',
       cell: ({ row }: { row: Row<NodeFileDocumentSearchRow> }): React.JSX.Element => (
-        <span
-          className='block truncate text-gray-400'
-          title={row.original.addresserLabel || '—'}
-        >
+        <span className='block truncate text-gray-400' title={row.original.addresserLabel || '—'}>
           {row.original.addresserLabel || '—'}
         </span>
       ),
@@ -73,10 +67,7 @@ export const getNodeFileDocumentColumns = ({
       accessorKey: 'addresseeLabel',
       header: 'To',
       cell: ({ row }: { row: Row<NodeFileDocumentSearchRow> }): React.JSX.Element => (
-        <span
-          className='block truncate text-gray-400'
-          title={row.original.addresseeLabel || '—'}
-        >
+        <span className='block truncate text-gray-400' title={row.original.addresseeLabel || '—'}>
           {row.original.addresseeLabel || '—'}
         </span>
       ),

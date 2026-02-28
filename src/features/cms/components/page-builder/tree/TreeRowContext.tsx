@@ -13,15 +13,8 @@ type TreeRowProviderProps = {
   children: React.ReactNode;
 };
 
-export function TreeRowProvider({
-  rowId,
-  children,
-}: TreeRowProviderProps): React.JSX.Element {
-  return (
-    <TreeRowContext.Provider value={{ rowId }}>
-      {children}
-    </TreeRowContext.Provider>
-  );
+export function TreeRowProvider({ rowId, children }: TreeRowProviderProps): React.JSX.Element {
+  return <TreeRowContext.Provider value={{ rowId }}>{children}</TreeRowContext.Provider>;
 }
 
 export function useOptionalTreeRowId(explicitRowId?: string): string | undefined {

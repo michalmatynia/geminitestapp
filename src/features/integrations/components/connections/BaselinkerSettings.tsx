@@ -3,7 +3,15 @@
 import React from 'react';
 
 import { useBaselinkerSettingsState } from '@/features/integrations/hooks/useBaselinkerSettingsState';
-import { Button, Input, SelectSimple, StatusBadge, FormSection, FormField, EmptyState } from '@/shared/ui';
+import {
+  Button,
+  Input,
+  SelectSimple,
+  StatusBadge,
+  FormSection,
+  FormField,
+  EmptyState,
+} from '@/shared/ui';
 
 export function BaselinkerSettings(): React.JSX.Element {
   const {
@@ -48,8 +56,7 @@ export function BaselinkerSettings(): React.JSX.Element {
               <StatusBadge status={baselinkerConnected ? 'Connected' : 'Not tested'} />
             </div>
             <p className='mt-2'>
-              <span className='text-gray-400'>Last verified:</span>{' '}
-              {baseTokenUpdatedAt}
+              <span className='text-gray-400'>Last verified:</span> {baseTokenUpdatedAt}
             </p>
             {activeConnection.baseLastInventoryId && (
               <p className='mt-1'>
@@ -88,7 +95,9 @@ export function BaselinkerSettings(): React.JSX.Element {
               <div className='flex items-center gap-2'>
                 <Button
                   type='button'
-                  onClick={(): void => { void handleSaveDefaultConnection(); }}
+                  onClick={(): void => {
+                    void handleSaveDefaultConnection();
+                  }}
                   loading={savingDefaultConnection}
                   disabled={connections.length === 0}
                   size='sm'
@@ -97,8 +106,7 @@ export function BaselinkerSettings(): React.JSX.Element {
                 </Button>
                 {defaultExportConnectionId ? (
                   <span className='text-[10px] text-gray-400'>
-                    Current default ID:{' '}
-                    {defaultExportConnectionId}
+                    Current default ID: {defaultExportConnectionId}
                   </span>
                 ) : null}
               </div>
@@ -108,10 +116,10 @@ export function BaselinkerSettings(): React.JSX.Element {
             </div>
           </FormSection>
 
-          <FormSection 
+          <FormSection
             title='Listing sync interval'
             description='Controls how often Base.com is checked for listing status updates.'
-            variant='subtle' 
+            variant='subtle'
             className='p-3 text-xs text-gray-300'
           >
             <div className='mt-2 flex flex-wrap items-center gap-2'>
@@ -121,14 +129,18 @@ export function BaselinkerSettings(): React.JSX.Element {
                     type='number'
                     min='1'
                     value={syncIntervalMinutes}
-                    onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setSyncIntervalMinutes(event.target.value)}
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                      setSyncIntervalMinutes(event.target.value)
+                    }
                     variant='subtle'
                     size='sm'
                     className='w-32'
                   />
                   <Button
                     type='button'
-                    onClick={(): void => { void handleSaveSyncInterval(); }}
+                    onClick={(): void => {
+                      void handleSaveSyncInterval();
+                    }}
                     loading={isSavingSyncInterval}
                     size='sm'
                   >
@@ -137,21 +149,19 @@ export function BaselinkerSettings(): React.JSX.Element {
                 </div>
               </FormField>
             </div>
-            {syncMessage && (
-              <p className='mt-2 text-[10px] text-gray-400'>{syncMessage}</p>
-            )}
+            {syncMessage && <p className='mt-2 text-[10px] text-gray-400'>{syncMessage}</p>}
           </FormSection>
 
           <div className='flex flex-wrap items-center gap-3'>
             <Button
               type='button'
-              onClick={() => { void handleBaselinkerTest(activeConnection); }}
+              onClick={() => {
+                void handleBaselinkerTest(activeConnection);
+              }}
               loading={isTesting}
               variant='solid'
             >
-              {baselinkerConnected
-                ? 'Re-test Connection'
-                : 'Test Connection'}
+              {baselinkerConnected ? 'Re-test Connection' : 'Test Connection'}
             </Button>
           </div>
 
@@ -174,6 +184,3 @@ export function BaselinkerSettings(): React.JSX.Element {
     </FormSection>
   );
 }
-
-
-  

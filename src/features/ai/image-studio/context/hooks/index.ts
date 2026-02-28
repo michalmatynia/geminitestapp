@@ -66,10 +66,4 @@ export {
 } from './useVersionGraph';
 
 // UI
-export {
-  useUi,
-  useUiState,
-  useUiActions,
-  type UiState,
-  type UiActions,
-} from './useUi';
+export { useUi, useUiState, useUiActions, type UiState, type UiActions } from './useUi';

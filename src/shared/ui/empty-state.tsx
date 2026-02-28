@@ -34,7 +34,12 @@ export function EmptyState({
       {icon && <div className={cn(isCompact ? 'mb-2' : 'mb-4', 'text-gray-500')}>{icon}</div>}
       <h3 className={cn(isCompact ? 'text-sm' : 'text-lg', 'font-medium text-white')}>{title}</h3>
       {description && (
-        <p className={cn(isCompact ? 'mt-1 text-xs' : 'mt-2 text-sm', 'text-gray-400 max-w-xs mx-auto')}>
+        <p
+          className={cn(
+            isCompact ? 'mt-1 text-xs' : 'mt-2 text-sm',
+            'text-gray-400 max-w-xs mx-auto'
+          )}
+        >
           {description}
         </p>
       )}

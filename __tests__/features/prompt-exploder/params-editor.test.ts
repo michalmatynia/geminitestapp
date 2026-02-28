@@ -31,9 +31,15 @@ describe('prompt exploder params editor', () => {
       paramsText,
     });
 
-    const ratio = state.entries.find((entry: PromptExploderParamEntry) => entry.path === 'relight.key_to_fill_ratio');
-    const preset = state.entries.find((entry: PromptExploderParamEntry) => entry.path === 'relight.preset');
-    const enabled = state.entries.find((entry: PromptExploderParamEntry) => entry.path === 'apply_studio_relighting');
+    const ratio = state.entries.find(
+      (entry: PromptExploderParamEntry) => entry.path === 'relight.key_to_fill_ratio'
+    );
+    const preset = state.entries.find(
+      (entry: PromptExploderParamEntry) => entry.path === 'relight.preset'
+    );
+    const enabled = state.entries.find(
+      (entry: PromptExploderParamEntry) => entry.path === 'apply_studio_relighting'
+    );
 
     expect(state.entries.length).toBe(3);
     expect(enabled?.description).toContain('Enables relighting pipeline.');
@@ -66,17 +72,9 @@ describe('prompt exploder params editor', () => {
 
   it('updates selector and text metadata maps path-by-path', () => {
     const controls = setParamUiControlForPath({}, 'relight.key_to_fill_ratio', 'slider');
-    const clearedControls = setParamUiControlForPath(
-      controls,
-      'relight.key_to_fill_ratio',
-      'auto'
-    );
+    const clearedControls = setParamUiControlForPath(controls, 'relight.key_to_fill_ratio', 'auto');
     const comments = setParamTextMetaForPath({}, 'relight.key_to_fill_ratio', '>=1.5');
-    const clearedComments = setParamTextMetaForPath(
-      comments,
-      'relight.key_to_fill_ratio',
-      ''
-    );
+    const clearedComments = setParamTextMetaForPath(comments, 'relight.key_to_fill_ratio', '');
 
     expect(controls['relight.key_to_fill_ratio']).toBe('slider');
     expect(clearedControls['relight.key_to_fill_ratio']).toBeUndefined();

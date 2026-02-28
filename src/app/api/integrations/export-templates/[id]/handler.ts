@@ -4,7 +4,7 @@ import { z } from 'zod';
 import {
   deleteExportTemplate,
   getExportTemplate,
-  updateExportTemplate
+  updateExportTemplate,
 } from '@/features/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
@@ -12,17 +12,21 @@ import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
 const mappingSchema = z.object({
   sourceKey: z.string().trim().min(1),
-  targetField: z.string().trim().min(1)
+  targetField: z.string().trim().min(1),
 });
 
 const templateSchema = z.object({
   name: z.string().trim().min(1).optional(),
   description: z.string().trim().optional(),
   mappings: z.array(mappingSchema).optional(),
-  exportImagesAsBase64: z.boolean().optional()
+  exportImagesAsBase64: z.boolean().optional(),
 });
 
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
+export async function GET_handler(
+  _req: NextRequest,
+  _ctx: ApiHandlerContext,
+  params: { id: string }
+): Promise<Response> {
   const { id } = params;
   if (!id) {
     throw badRequestError('Template id is required');
@@ -34,13 +38,17 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, pa
   return NextResponse.json(template);
 }
 
-export async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
+export async function PUT_handler(
+  req: NextRequest,
+  _ctx: ApiHandlerContext,
+  params: { id: string }
+): Promise<Response> {
   const { id } = params;
   if (!id) {
     throw badRequestError('Template id is required');
   }
   const parsed = await parseJsonBody(req, templateSchema, {
-    logPrefix: 'export-templates.PUT'
+    logPrefix: 'export-templates.PUT',
   });
   if (!parsed.ok) {
     return parsed.response;
@@ -50,7 +58,7 @@ export async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, par
     name: data.name,
     description: data.description,
     mappings: data.mappings,
-    exportImagesAsBase64: data.exportImagesAsBase64
+    exportImagesAsBase64: data.exportImagesAsBase64,
   });
   if (!template) {
     throw notFoundError('Template not found.', { templateId: id });
@@ -58,7 +66,11 @@ export async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, par
   return NextResponse.json(template);
 }
 
-export async function DELETE_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
+export async function DELETE_handler(
+  _req: NextRequest,
+  _ctx: ApiHandlerContext,
+  params: { id: string }
+): Promise<Response> {
   const { id } = params;
   if (!id) {
     throw badRequestError('Template id is required');

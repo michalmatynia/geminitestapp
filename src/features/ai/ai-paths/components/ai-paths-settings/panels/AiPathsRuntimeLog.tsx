@@ -9,18 +9,15 @@ export function AiPathsRuntimeLog(): React.JSX.Element {
 
   const runtimeLogEvents = useMemo(
     () => runtimeEvents.slice(Math.max(0, runtimeEvents.length - 80)).reverse(),
-    [runtimeEvents],
+    [runtimeEvents]
   );
 
   return (
     <div className='space-y-3 rounded-lg border border-border/60 bg-card/50 p-4'>
       <div>
-        <div className='text-sm font-semibold text-white'>
-          Live Runtime Log
-        </div>
+        <div className='text-sm font-semibold text-white'>Live Runtime Log</div>
         <div className='text-xs text-gray-400'>
-          Last {runtimeLogEvents.length} runtime events from local +
-          server execution.
+          Last {runtimeLogEvents.length} runtime events from local + server execution.
         </div>
       </div>
       <div className='max-h-[280px] space-y-2 overflow-y-auto pr-1'>
@@ -37,11 +34,7 @@ export function AiPathsRuntimeLog(): React.JSX.Element {
                 <StatusBadge
                   status={event.level ?? 'info'}
                   variant={
-                    event.level === 'error'
-                      ? 'error'
-                      : event.level === 'warn'
-                        ? 'warning'
-                        : 'info'
+                    event.level === 'error' ? 'error' : event.level === 'warn' ? 'warning' : 'info'
                   }
                   size='sm'
                   className='font-bold'
@@ -53,9 +46,7 @@ export function AiPathsRuntimeLog(): React.JSX.Element {
                   className='border-border/60 text-gray-400'
                 />
               </div>
-              <div className='mt-1 text-gray-200'>
-                {event.message}
-              </div>
+              <div className='mt-1 text-gray-200'>{event.message}</div>
             </div>
           ))
         ) : (

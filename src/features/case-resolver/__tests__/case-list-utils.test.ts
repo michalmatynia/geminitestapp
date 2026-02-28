@@ -8,11 +8,7 @@ import { toCaseResolverCaseNodeId } from '@/features/case-resolver/master-tree';
 import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
-const buildCaseFile = (
-  id: string,
-  name: string,
-  happeningDate: string | null
-): CaseResolverFile =>
+const buildCaseFile = (id: string, name: string, happeningDate: string | null): CaseResolverFile =>
   ({
     id,
     workspaceId: 'workspace-1',
@@ -39,11 +35,7 @@ const buildCaseFile = (
     happeningDate,
   }) as unknown as CaseResolverFile;
 
-const buildCaseNode = (
-  caseId: string,
-  name: string,
-  sortOrder: number
-): MasterTreeNode => ({
+const buildCaseNode = (caseId: string, name: string, sortOrder: number): MasterTreeNode => ({
   id: toCaseResolverCaseNodeId(caseId),
   type: 'folder',
   kind: 'case_entry',
@@ -57,7 +49,7 @@ describe('case list utilities', () => {
   it('builds case resolver href with encoded fileId', () => {
     expect(buildCaseResolverCaseHref('case-123')).toBe('/admin/case-resolver?fileId=case-123');
     expect(buildCaseResolverCaseHref('case/with space')).toBe(
-      '/admin/case-resolver?fileId=case%2Fwith%20space',
+      '/admin/case-resolver?fileId=case%2Fwith%20space'
     );
   });
 

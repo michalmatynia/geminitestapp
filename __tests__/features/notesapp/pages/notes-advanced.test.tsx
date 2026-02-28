@@ -15,7 +15,6 @@ import { server } from '@/mocks/server';
 import type { NoteWithRelations } from '@/shared/contracts/notes';
 import { ToastProvider } from '@/shared/ui/toast';
 
-
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false } },
 });
@@ -81,12 +80,14 @@ describe('Notes Advanced UI', () => {
       http.get('/api/notes/categories/tree', () => HttpResponse.json([])),
       http.get('/api/notes', () => HttpResponse.json(notes)),
       http.get('/api/notes/:id', ({ params }) => {
-        const note = notes.find(n => n.id === params['id']);
-        return note ? HttpResponse.json(note) : HttpResponse.json({ error: 'Not found' }, { status: 404 });
+        const note = notes.find((n) => n.id === params['id']);
+        return note
+          ? HttpResponse.json(note)
+          : HttpResponse.json({ error: 'Not found' }, { status: 404 });
       }),
       http.patch('/api/notes/:id', async ({ params, request }) => {
-        const body = await request.json() as any;
-        const index = notes.findIndex(n => n.id === params['id']);
+        const body = (await request.json()) as any;
+        const index = notes.findIndex((n) => n.id === params['id']);
         if (index !== -1) {
           notes[index] = { ...notes[index], ...body };
           return HttpResponse.json(notes[index]);
@@ -94,14 +95,17 @@ describe('Notes Advanced UI', () => {
         return HttpResponse.json({ error: 'Not found' }, { status: 404 });
       }),
       http.delete('/api/notes/:id', ({ params }) => {
-        notes = notes.filter(n => n.id !== params['id']);
+        notes = notes.filter((n) => n.id !== params['id']);
         return HttpResponse.json({ success: true });
       })
     );
 
     // Mock confirm for deletion
-    vi.stubGlobal('confirm', vi.fn(() => true));
-    
+    vi.stubGlobal(
+      'confirm',
+      vi.fn(() => true)
+    );
+
     // Mock navigator.clipboard
     Object.defineProperty(navigator, 'clipboard', {
       value: {
@@ -121,7 +125,7 @@ describe('Notes Advanced UI', () => {
 
     const grid4Button = await screen.findByRole('button', { name: /Grid 4/i });
     await user.click(grid4Button);
-    
+
     // Grid 4 button should now be the 'default' variant
     // In our implementation, default has text-foreground/90, and outline does not
     expect(grid4Button.className).toContain('text-foreground/90');
@@ -159,10 +163,10 @@ describe('Notes Advanced UI', () => {
 
     // Use findByText to wait for the detail view to render
     expect(await screen.findByText('First note', {}, { timeout: 3000 })).toBeInTheDocument();
-    
+
     const editBtn = await screen.findByRole('button', { name: 'Edit' });
     await user.click(editBtn);
-    
+
     const titleInput = screen.getByPlaceholderText('Enter note title');
     expect(titleInput).toHaveValue('Apple');
   });
@@ -177,11 +181,13 @@ describe('Notes Advanced UI', () => {
     const titleInput = screen.getByPlaceholderText('Enter note title');
     await user.clear(titleInput);
     await user.type(titleInput, 'Updated Apple');
-    
+
     await user.click(screen.getByRole('button', { name: 'Update' }));
 
-    // Should be back in detail view with updated title. 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Updated Apple' })).toBeInTheDocument();
+    // Should be back in detail view with updated title.
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Updated Apple' })
+    ).toBeInTheDocument();
   });
 
   it('deletes a note from edit mode', async () => {
@@ -190,7 +196,7 @@ describe('Notes Advanced UI', () => {
 
     await user.click(await screen.findByRole('heading', { name: 'Banana' }));
     await user.click(await screen.findByRole('button', { name: 'Edit' }));
-    
+
     const deleteBtn = screen.getByRole('button', { name: 'Delete' });
     await user.click(deleteBtn);
 
@@ -212,13 +218,17 @@ describe('Notes Advanced UI', () => {
 
     // Use a more robust selector to find the card container
     const appleTitle = await screen.findByRole('heading', { name: 'Apple' });
-    const appleCard = appleTitle.closest('.rounded-lg.border.p-4') || appleTitle.parentElement; 
-    
-    const favBtn = await within(appleCard as HTMLElement).findByRole('button', { name: /Favorite note/i });
-    
+    const appleCard = appleTitle.closest('.rounded-lg.border.p-4') || appleTitle.parentElement;
+
+    const favBtn = await within(appleCard as HTMLElement).findByRole('button', {
+      name: /Favorite note/i,
+    });
+
     await user.click(favBtn);
-    
+
     // Check if it's now Unfavorite note
-    expect(await within(appleCard as HTMLElement).findByRole('button', { name: /Unfavorite note/i })).toBeInTheDocument();
+    expect(
+      await within(appleCard as HTMLElement).findByRole('button', { name: /Unfavorite note/i })
+    ).toBeInTheDocument();
   });
 });

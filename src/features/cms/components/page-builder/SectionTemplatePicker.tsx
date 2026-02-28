@@ -74,9 +74,7 @@ export function SectionTemplatePicker({
       renderItem={(item, selected) => (
         <div
           className={`p-3 rounded border-2 transition ${
-            selected
-              ? 'border-blue-500 bg-blue-500/10'
-              : 'border-border/40 hover:border-border/60'
+            selected ? 'border-blue-500 bg-blue-500/10' : 'border-border/40 hover:border-border/60'
           }`}
         >
           <div className='text-xs font-semibold text-gray-200'>

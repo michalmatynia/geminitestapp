@@ -70,7 +70,9 @@ export function useFileUploadEventsTableProps() {
       {
         accessorKey: 'errorMessage',
         header: 'Error',
-        cell: ({ getValue }) => <span className='text-xs text-rose-200'>{String(getValue() ?? '—')}</span>,
+        cell: ({ getValue }) => (
+          <span className='text-xs text-rose-200'>{String(getValue() ?? '—')}</span>
+        ),
       },
     ],
     []

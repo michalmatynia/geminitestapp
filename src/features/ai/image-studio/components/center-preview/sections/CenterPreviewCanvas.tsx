@@ -3,7 +3,7 @@
 import React from 'react';
 import { Locate } from 'lucide-react';
 import { VectorDrawingCanvas, VectorDrawingProvider } from '@/shared/lib/vector-drawing';
-import { Viewer3D } from '@/features/viewer3d/components/Viewer3D';
+import { Viewer3D } from '@/shared/lib/viewer3d/components/Viewer3D';
 import { Button, LoadingState } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 import { SplitVariantPreview } from '../SplitVariantPreview';
@@ -14,7 +14,10 @@ import { useVersionGraphState } from '../../../context/VersionGraphContext';
 import { useMaskingState } from '../../../context/MaskingContext';
 import type { VectorDrawingContextValue } from '@/shared/lib/vector-drawing';
 import type { VectorShape } from '@/shared/contracts/vector';
-import type { PreviewCanvasCropRect, PreviewCanvasImageContentFrame } from '../../../context/UiContext';
+import type {
+  PreviewCanvasCropRect,
+  PreviewCanvasImageContentFrame,
+} from '../../../context/UiContext';
 
 export interface CenterPreviewCanvasProps {
   vectorContextValue: VectorDrawingContextValue;
@@ -87,12 +90,18 @@ export function CenterPreviewCanvas({
             captureRef={captureRef}
             className='h-full w-full'
           />
-        ) : splitVariantView && canCompareSelectedVariants && compareVariantImageA && compareVariantImageB ? (
+        ) : splitVariantView &&
+          canCompareSelectedVariants &&
+          compareVariantImageA &&
+          compareVariantImageB ? (
           <SplitVariantPreview
             sourceSlotImageSrc={compareVariantImageA}
             workingSlotImageSrc={compareVariantImageB}
           />
-        ) : splitVariantView && canCompareWithSource && sourceSlotImageSrc && workingSlotImageSrc ? (
+        ) : splitVariantView &&
+          canCompareWithSource &&
+          sourceSlotImageSrc &&
+          workingSlotImageSrc ? (
           <SplitVariantPreview
             sourceSlotImageSrc={sourceSlotImageSrc}
             workingSlotImageSrc={workingSlotImageSrc}
@@ -111,7 +120,9 @@ export function CenterPreviewCanvas({
               selectionEnabled={canvasSelectionEnabled}
               imageMoveEnabled={imageTransformMode === 'move'}
               imageOffset={canvasImageOffset}
-              onImageOffsetChange={(offset) => { setCanvasImageOffset(offset); }}
+              onImageOffsetChange={(offset) => {
+                setCanvasImageOffset(offset);
+              }}
               backgroundLayerEnabled={canvasBackgroundLayerEnabled}
               backgroundColor={canvasBackgroundColor}
               onViewCropRectChange={handlePreviewCanvasCropRectChange}
@@ -157,7 +168,9 @@ export function CenterPreviewCanvas({
           <div className='absolute inset-0 z-40 flex items-center justify-center bg-black/20 backdrop-blur-[2px]'>
             <div className='flex flex-col items-center gap-3 rounded-lg bg-slate-900/80 p-6 border border-white/10 shadow-2xl'>
               <LoadingState size='md' message='' className='p-0' />
-              <div className='text-xs font-medium text-emerald-200 uppercase tracking-widest'>Compositing...</div>
+              <div className='text-xs font-medium text-emerald-200 uppercase tracking-widest'>
+                Compositing...
+              </div>
             </div>
           </div>
         )}

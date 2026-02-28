@@ -6,11 +6,7 @@ function unknownToErrorMessage(value: unknown): string | null {
   }
 
   if (typeof value === 'string') return value;
-  if (
-    typeof value === 'number' ||
-    typeof value === 'boolean' ||
-    typeof value === 'bigint'
-  ) {
+  if (typeof value === 'number' || typeof value === 'boolean' || typeof value === 'bigint') {
     return String(value);
   }
 
@@ -21,9 +17,7 @@ function unknownToErrorMessage(value: unknown): string | null {
     } catch {
       // last-resort: try to extract a "message" property if present
       const maybeMessage = (value as { message?: unknown }).message;
-      return typeof maybeMessage === 'string'
-        ? maybeMessage
-        : 'Non-serializable error object';
+      return typeof maybeMessage === 'string' ? maybeMessage : 'Non-serializable error object';
     }
   }
 

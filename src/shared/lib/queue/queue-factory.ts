@@ -2,43 +2,17 @@ import 'server-only';
 
 import { Queue, Worker } from 'bullmq';
 
-import type {
-  ManagedQueue,
-  QueueConfig,
-  QueueHealthStatus,
-} from '@/shared/contracts/jobs';
+import type { ManagedQueue, QueueConfig, QueueHealthStatus } from '@/shared/contracts/jobs';
 
 import { getRedisConnection } from './redis-connection';
 import { registerQueue } from './registry';
 
+import { logSystemEvent } from '../observability/system-logger';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
 import type { Job } from 'bullmq';
 
-const logSystemEvent = async (params: { level: 'info' | 'warn' | 'error'; message: string; source: string; context?: Record<string, unknown> }): Promise<void> => {
-  try {
-     
-    const mod = await import('@/features/observability/server') as { logSystemEvent: (input: unknown) => Promise<void> };
-    await mod.logSystemEvent(params);
-  } catch {
-    // ignore
-  }
-};
-
-const captureException = async (error: unknown, context: { service: string; category?: string; context?: Record<string, unknown> }): Promise<void> => {
-  try {
-     
-    const mod = await import('@/features/observability/server');
-    await mod.ErrorSystem.captureException(error, context);
-  } catch {
-    // ignore
-  }
-};
-
-const TRANSIENT_REDIS_ERROR_CODES = new Set([
-  'EPIPE',
-  'ECONNRESET',
-  'ECONNREFUSED',
-  'ETIMEDOUT',
-]);
+const TRANSIENT_REDIS_ERROR_CODES = new Set(['EPIPE', 'ECONNRESET', 'ECONNREFUSED', 'ETIMEDOUT']);
 
 const transientErrorLoggedAt = new Map<string, number>();
 const TRANSIENT_ERROR_LOG_COOLDOWN_MS = 30_000;
@@ -71,7 +45,7 @@ const shouldLogTransientQueueError = (queueName: string, message: string): boole
 };
 
 export function createManagedQueue<TJobData>(
-  config: QueueConfig<TJobData>,
+  config: QueueConfig<TJobData>
 ): ManagedQueue<TJobData> {
   let queue: Queue | null = null;
   let worker: Worker | null = null;
@@ -98,12 +72,12 @@ export function createManagedQueue<TJobData>(
             level: 'warn',
             source: 'queue-factory',
             message: `[queue-factory:${config.name}] transient queue transport error: ${normalizedMessage}`,
-            context: { queueName: config.name }
+            context: { queueName: config.name },
           });
         }
         return;
       }
-      void captureException(err, {
+      void ErrorSystem.captureException(err, {
         service: `queue:${config.name}`,
         category: 'SYSTEM',
       });
@@ -117,7 +91,10 @@ export function createManagedQueue<TJobData>(
 
   const enqueue = async (
     data: TJobData,
-    opts?: Partial<import('bullmq').JobsOptions> & { repeat?: { every: number }; jobId?: string },
+    opts?: Partial<import('bullmq').JobsOptions> & {
+      repeat?: { every: number };
+      jobId?: string;
+    }
   ): Promise<string> => {
     const q = ensureQueue();
     if (!q) {
@@ -126,15 +103,11 @@ export function createManagedQueue<TJobData>(
       return `inline-${Date.now()}`;
     }
     const { repeat, jobId, ...jobOpts } = opts ?? {};
-    const job = await q.add(
-      config.name,
-      data as Record<string, unknown>,
-      {
-        ...jobOpts,
-        ...(repeat ? { repeat } : {}),
-        ...(jobId ? { jobId } : {}),
-      },
-    );
+    const job = await q.add(config.name, data as Record<string, unknown>, {
+      ...jobOpts,
+      ...(repeat ? { repeat } : {}),
+      ...(jobId ? { jobId } : {}),
+    });
     return job.id ?? `unknown-${Date.now()}`;
   };
 
@@ -145,7 +118,7 @@ export function createManagedQueue<TJobData>(
       void logSystemEvent({
         level: 'info',
         message: `[queue-factory:${config.name}] Redis not available, using inline processing mode`,
-        source: 'queue-factory'
+        source: 'queue-factory',
       });
       return;
     }
@@ -163,7 +136,7 @@ export function createManagedQueue<TJobData>(
         concurrency: config.concurrency,
         removeOnComplete: { count: 0 },
         removeOnFail: { count: 100 },
-      },
+      }
     );
 
     if (config.onCompleted) {
@@ -180,12 +153,10 @@ export function createManagedQueue<TJobData>(
               ? Math.max(1, Math.floor(job.opts.attempts))
               : 1;
           const attemptsMade = Math.max(1, Math.floor(job.attemptsMade || 0));
-          void config.onFailed!(
-            job.id ?? 'unknown',
-            error,
-            job.data as TJobData,
-            { attemptsMade, maxAttempts }
-          );
+          void config.onFailed!(job.id ?? 'unknown', error, job.data as TJobData, {
+            attemptsMade,
+            maxAttempts,
+          });
         }
       });
     }
@@ -198,12 +169,12 @@ export function createManagedQueue<TJobData>(
             level: 'warn',
             source: 'queue-factory',
             message: `[queue-factory:${config.name}] transient worker transport error: ${normalizedMessage}`,
-            context: { queueName: config.name }
+            context: { queueName: config.name },
           });
         }
         return;
       }
-      void captureException(err, {
+      void ErrorSystem.captureException(err, {
         service: `queue-worker:${config.name}`,
         category: 'SYSTEM',
       });
@@ -213,7 +184,7 @@ export function createManagedQueue<TJobData>(
       level: 'info',
       message: `[queue-factory:${config.name}] BullMQ worker started (concurrency: ${config.concurrency})`,
       source: 'queue-factory',
-      context: { concurrency: config.concurrency }
+      context: { concurrency: config.concurrency },
     });
   };
 
@@ -230,7 +201,7 @@ export function createManagedQueue<TJobData>(
     void logSystemEvent({
       level: 'info',
       message: `[queue-factory:${config.name}] Worker stopped`,
-      source: 'queue-factory'
+      source: 'queue-factory',
     });
   };
 

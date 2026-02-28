@@ -20,11 +20,11 @@ import {
 import {
   getImageStudioSlotLinkBySourceAndRelation,
   upsertImageStudioSlotLink,
-} from '@/features/ai/image-studio/server/slot-link-repository';
+} from '@/shared/lib/ai/image-studio/server/slot-link-repository';
 import {
   createImageStudioSlots,
   getImageStudioSlotById,
-} from '@/features/ai/image-studio/server/slot-repository';
+} from '@/shared/lib/ai/image-studio/server/slot-repository';
 import {
   buildUpscaleFingerprint,
   buildUpscaleFingerprintRelationType,
@@ -34,16 +34,18 @@ import {
   upscaleImageWithSharp,
   validateUpscaleOutputDimensions,
   validateUpscaleSourceDimensions,
-} from '@/features/ai/image-studio/server/upscale-utils';
+} from '@/shared/lib/ai/image-studio/server/upscale-utils';
 import { getDiskPathFromPublicPath, getImageFileRepository } from '@/features/files/server';
-import { logSystemEvent } from '@/features/observability/server';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, isAppError, notFoundError } from '@/shared/errors/app-error';
 
 const uploadsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio', 'upscale');
 const SOURCE_FETCH_TIMEOUT_MS = 15_000;
-const UPSCALE_PIPELINE_VERSION = process.env['IMAGE_STUDIO_UPSCALE_PIPELINE_VERSION']?.trim() || 'v2';
-const STRICT_SERVER_UPSCALE_ENABLED = process.env['IMAGE_STUDIO_UPSCALE_SERVER_AUTHORITATIVE'] !== 'false';
+const UPSCALE_PIPELINE_VERSION =
+  process.env['IMAGE_STUDIO_UPSCALE_PIPELINE_VERSION']?.trim() || 'v2';
+const STRICT_SERVER_UPSCALE_ENABLED =
+  process.env['IMAGE_STUDIO_UPSCALE_SERVER_AUTHORITATIVE'] !== 'false';
 
 type StudioSlotRecord = NonNullable<Awaited<ReturnType<typeof getImageStudioSlotById>>>;
 type UploadedClientUpscaleImage = {
@@ -84,11 +86,9 @@ const upscaleBadRequest = (
   meta?: Record<string, unknown>
 ) => badRequestError(message, { upscaleErrorCode, ...(meta ?? {}) });
 
-const sanitizeSegment = (value: string): string =>
-  value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
+const sanitizeSegment = (value: string): string => value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
 
-const sanitizeFilename = (value: string): string =>
-  value.replace(/[^a-zA-Z0-9._-]/g, '_');
+const sanitizeFilename = (value: string): string => value.replace(/[^a-zA-Z0-9._-]/g, '_');
 
 const parseNumericFormValue = (value: FormDataEntryValue | null): number | undefined => {
   if (typeof value !== 'string') return undefined;
@@ -100,7 +100,8 @@ const parseNumericFormValue = (value: FormDataEntryValue | null): number | undef
 };
 
 const readIdempotencyKey = (req: NextRequest): string | null => {
-  const headerValue = req.headers.get('x-idempotency-key') ?? req.headers.get('x-upscale-request-id');
+  const headerValue =
+    req.headers.get('x-idempotency-key') ?? req.headers.get('x-upscale-request-id');
   const normalized = headerValue?.trim() ?? '';
   return normalized.length >= 8 ? normalized : null;
 };
@@ -126,7 +127,10 @@ const resolveUpscaleRequest = (payload: ImageStudioUpscaleRequest): ResolvedUpsc
         'Target resolution requires both targetWidth and targetHeight.'
       );
     }
-    if (targetWidth > IMAGE_STUDIO_UPSCALE_MAX_OUTPUT_SIDE_PX || targetHeight > IMAGE_STUDIO_UPSCALE_MAX_OUTPUT_SIDE_PX) {
+    if (
+      targetWidth > IMAGE_STUDIO_UPSCALE_MAX_OUTPUT_SIDE_PX ||
+      targetHeight > IMAGE_STUDIO_UPSCALE_MAX_OUTPUT_SIDE_PX
+    ) {
       throw upscaleBadRequest(
         IMAGE_STUDIO_UPSCALE_ERROR_CODES.TARGET_RESOLUTION_INVALID,
         'Target resolution exceeds upscale side limit.',
@@ -237,7 +241,9 @@ function normalizePublicPath(filepath: string): string {
   return normalized;
 }
 
-async function loadSourceBuffer(slot: StudioSlotRecord): Promise<{ buffer: Buffer; mimeHint: string | null }> {
+async function loadSourceBuffer(
+  slot: StudioSlotRecord
+): Promise<{ buffer: Buffer; mimeHint: string | null }> {
   const base64Candidate =
     typeof slot.imageBase64 === 'string' && slot.imageBase64.trim().startsWith('data:')
       ? slot.imageBase64.trim()
@@ -326,52 +332,56 @@ const readUpscaleMetadataFromSlot = (
       ? slot.metadata
       : null;
   const upscale =
-    metadata?.['upscale'] && typeof metadata['upscale'] === 'object' && !Array.isArray(metadata['upscale'])
+    metadata?.['upscale'] &&
+    typeof metadata['upscale'] === 'object' &&
+    !Array.isArray(metadata['upscale'])
       ? (metadata['upscale'] as Record<string, unknown>)
       : null;
 
-  const effectiveModeRaw = typeof upscale?.['effectiveMode'] === 'string'
-    ? upscale['effectiveMode']
-    : typeof upscale?.['mode'] === 'string'
-      ? upscale['mode']
-      : null;
+  const effectiveModeRaw =
+    typeof upscale?.['effectiveMode'] === 'string'
+      ? upscale['effectiveMode']
+      : typeof upscale?.['mode'] === 'string'
+        ? upscale['mode']
+        : null;
   const effectiveMode =
     effectiveModeRaw === 'client_data_url' || effectiveModeRaw === 'server_sharp'
       ? effectiveModeRaw
       : null;
 
-  const scaleCandidate = typeof upscale?.['scale'] === 'number'
-    ? upscale['scale']
-    : Number(upscale?.['scale']);
-  const scale = Number.isFinite(scaleCandidate) && scaleCandidate > 0
-    ? Number(scaleCandidate)
-    : null;
+  const scaleCandidate =
+    typeof upscale?.['scale'] === 'number' ? upscale['scale'] : Number(upscale?.['scale']);
+  const scale =
+    Number.isFinite(scaleCandidate) && scaleCandidate > 0 ? Number(scaleCandidate) : null;
 
   const strategyRaw = typeof upscale?.['strategy'] === 'string' ? upscale['strategy'] : null;
   const strategy =
-    strategyRaw === 'scale' || strategyRaw === 'target_resolution'
-      ? strategyRaw
+    strategyRaw === 'scale' || strategyRaw === 'target_resolution' ? strategyRaw : null;
+
+  const targetWidthCandidate =
+    typeof upscale?.['targetWidth'] === 'number'
+      ? upscale['targetWidth']
+      : Number(upscale?.['targetWidth']);
+  const targetWidth =
+    Number.isFinite(targetWidthCandidate) && targetWidthCandidate > 0
+      ? Math.floor(Number(targetWidthCandidate))
       : null;
 
-  const targetWidthCandidate = typeof upscale?.['targetWidth'] === 'number'
-    ? upscale['targetWidth']
-    : Number(upscale?.['targetWidth']);
-  const targetWidth = Number.isFinite(targetWidthCandidate) && targetWidthCandidate > 0
-    ? Math.floor(Number(targetWidthCandidate))
-    : null;
+  const targetHeightCandidate =
+    typeof upscale?.['targetHeight'] === 'number'
+      ? upscale['targetHeight']
+      : Number(upscale?.['targetHeight']);
+  const targetHeight =
+    Number.isFinite(targetHeightCandidate) && targetHeightCandidate > 0
+      ? Math.floor(Number(targetHeightCandidate))
+      : null;
 
-  const targetHeightCandidate = typeof upscale?.['targetHeight'] === 'number'
-    ? upscale['targetHeight']
-    : Number(upscale?.['targetHeight']);
-  const targetHeight = Number.isFinite(targetHeightCandidate) && targetHeightCandidate > 0
-    ? Math.floor(Number(targetHeightCandidate))
-    : null;
-
-  const smoothingQualityRaw = typeof upscale?.['smoothingQuality'] === 'string'
-    ? upscale['smoothingQuality']
-    : null;
+  const smoothingQualityRaw =
+    typeof upscale?.['smoothingQuality'] === 'string' ? upscale['smoothingQuality'] : null;
   const smoothingQuality =
-    smoothingQualityRaw === 'low' || smoothingQualityRaw === 'medium' || smoothingQualityRaw === 'high'
+    smoothingQualityRaw === 'low' ||
+    smoothingQualityRaw === 'medium' ||
+    smoothingQualityRaw === 'high'
       ? smoothingQualityRaw
       : null;
 
@@ -491,8 +501,10 @@ async function processUpscalePayload(input: {
       outputHeight: serverUpscale.outputHeight,
       scale: serverUpscale.scale,
       strategy: serverUpscale.strategy,
-      targetWidth: serverUpscale.strategy === 'target_resolution' ? serverUpscale.outputWidth : null,
-      targetHeight: serverUpscale.strategy === 'target_resolution' ? serverUpscale.outputHeight : null,
+      targetWidth:
+        serverUpscale.strategy === 'target_resolution' ? serverUpscale.outputWidth : null,
+      targetHeight:
+        serverUpscale.strategy === 'target_resolution' ? serverUpscale.outputHeight : null,
       effectiveMode: 'server_sharp',
       authoritativeSource: 'source_slot',
       kernel: serverUpscale.kernel,
@@ -504,16 +516,22 @@ async function processUpscalePayload(input: {
     throw sourceLoadError instanceof Error
       ? sourceLoadError
       : upscaleBadRequest(
-        IMAGE_STUDIO_UPSCALE_ERROR_CODES.SOURCE_IMAGE_MISSING,
-        'Server upscale requires a resolvable source image.'
-      );
+          IMAGE_STUDIO_UPSCALE_ERROR_CODES.SOURCE_IMAGE_MISSING,
+          'Server upscale requires a resolvable source image.'
+        );
   }
 
   if (uploadedClientImage) {
-    const metadata = await sharp(uploadedClientImage.buffer).metadata().catch(() => null);
+    const metadata = await sharp(uploadedClientImage.buffer)
+      .metadata()
+      .catch(() => null);
     const outputWidth = metadata?.width ?? null;
     const outputHeight = metadata?.height ?? null;
-    if (outputWidth && outputHeight && !validateUpscaleOutputDimensions(outputWidth, outputHeight)) {
+    if (
+      outputWidth &&
+      outputHeight &&
+      !validateUpscaleOutputDimensions(outputWidth, outputHeight)
+    ) {
       throw upscaleBadRequest(
         IMAGE_STUDIO_UPSCALE_ERROR_CODES.OUTPUT_INVALID,
         'Uploaded upscale output exceeds upscale limits.',
@@ -546,21 +564,23 @@ async function processUpscalePayload(input: {
       scale:
         outputWidth && outputHeight && sourceWidth > 0 && sourceHeight > 0
           ? deriveUpscaleScaleFromOutputDimensions({
-            sourceWidth,
-            sourceHeight,
-            outputWidth,
-            outputHeight,
-          })
+              sourceWidth,
+              sourceHeight,
+              outputWidth,
+              outputHeight,
+            })
           : resolvedRequest.strategy === 'scale'
             ? resolvedRequest.scale
             : null,
       strategy: resolvedRequest.strategy,
-      targetWidth: resolvedRequest.strategy === 'target_resolution'
-        ? (resolvedRequest.targetWidth ?? outputWidth)
-        : null,
-      targetHeight: resolvedRequest.strategy === 'target_resolution'
-        ? (resolvedRequest.targetHeight ?? outputHeight)
-        : null,
+      targetWidth:
+        resolvedRequest.strategy === 'target_resolution'
+          ? (resolvedRequest.targetWidth ?? outputWidth)
+          : null,
+      targetHeight:
+        resolvedRequest.strategy === 'target_resolution'
+          ? (resolvedRequest.targetHeight ?? outputHeight)
+          : null,
       effectiveMode: 'client_data_url',
       authoritativeSource: 'client_upload_fallback',
       kernel: null,
@@ -576,7 +596,9 @@ async function processUpscalePayload(input: {
     );
   }
 
-  const metadata = await sharp(parsedData.buffer).metadata().catch(() => null);
+  const metadata = await sharp(parsedData.buffer)
+    .metadata()
+    .catch(() => null);
   const outputWidth = metadata?.width ?? null;
   const outputHeight = metadata?.height ?? null;
   if (outputWidth && outputHeight && !validateUpscaleOutputDimensions(outputWidth, outputHeight)) {
@@ -612,21 +634,23 @@ async function processUpscalePayload(input: {
     scale:
       outputWidth && outputHeight && sourceWidth > 0 && sourceHeight > 0
         ? deriveUpscaleScaleFromOutputDimensions({
-          sourceWidth,
-          sourceHeight,
-          outputWidth,
-          outputHeight,
-        })
+            sourceWidth,
+            sourceHeight,
+            outputWidth,
+            outputHeight,
+          })
         : resolvedRequest.strategy === 'scale'
           ? resolvedRequest.scale
           : null,
     strategy: resolvedRequest.strategy,
-    targetWidth: resolvedRequest.strategy === 'target_resolution'
-      ? (resolvedRequest.targetWidth ?? outputWidth)
-      : null,
-    targetHeight: resolvedRequest.strategy === 'target_resolution'
-      ? (resolvedRequest.targetHeight ?? outputHeight)
-      : null,
+    targetWidth:
+      resolvedRequest.strategy === 'target_resolution'
+        ? (resolvedRequest.targetWidth ?? outputWidth)
+        : null,
+    targetHeight:
+      resolvedRequest.strategy === 'target_resolution'
+        ? (resolvedRequest.targetHeight ?? outputHeight)
+        : null,
     effectiveMode: 'client_data_url',
     authoritativeSource: 'client_upload_fallback',
     kernel: null,
@@ -641,7 +665,10 @@ export async function postUpscaleSlotHandler(
 ): Promise<Response> {
   const slotId = params.slotId?.trim() ?? '';
   if (!slotId) {
-    throw upscaleBadRequest(IMAGE_STUDIO_UPSCALE_ERROR_CODES.INVALID_PAYLOAD, 'Slot id is required.');
+    throw upscaleBadRequest(
+      IMAGE_STUDIO_UPSCALE_ERROR_CODES.INVALID_PAYLOAD,
+      'Slot id is required.'
+    );
   }
 
   const startedAt = Date.now();
@@ -696,8 +723,10 @@ export async function postUpscaleSlotHandler(
     mode: payload.mode,
     strategy: resolvedRequest.strategy,
     scale: resolvedRequest.strategy === 'scale' ? resolvedRequest.scale : null,
-    targetWidth: resolvedRequest.strategy === 'target_resolution' ? resolvedRequest.targetWidth : null,
-    targetHeight: resolvedRequest.strategy === 'target_resolution' ? resolvedRequest.targetHeight : null,
+    targetWidth:
+      resolvedRequest.strategy === 'target_resolution' ? resolvedRequest.targetWidth : null,
+    targetHeight:
+      resolvedRequest.strategy === 'target_resolution' ? resolvedRequest.targetHeight : null,
     smoothingQuality:
       payload.mode === 'client_data_url' && !STRICT_SERVER_UPSCALE_ENABLED
         ? (payload.smoothingQuality ?? null)
@@ -708,7 +737,9 @@ export async function postUpscaleSlotHandler(
         : null,
   });
   const fingerprintRelationType = buildUpscaleFingerprintRelationType(fingerprint);
-  const requestRelationType = idempotencyKey ? buildUpscaleRequestRelationType(idempotencyKey) : null;
+  const requestRelationType = idempotencyKey
+    ? buildUpscaleRequestRelationType(idempotencyKey)
+    : null;
 
   if (requestRelationType) {
     const existingByRequest = await getImageStudioSlotLinkBySourceAndRelation(
@@ -725,7 +756,9 @@ export async function postUpscaleSlotHandler(
           mode: payload.mode,
           effectiveMode: existingUpscale.effectiveMode ?? payload.mode,
           strategy: existingUpscale.strategy ?? resolvedRequest.strategy,
-          scale: existingUpscale.scale ?? (resolvedRequest.strategy === 'scale' ? resolvedRequest.scale : null),
+          scale:
+            existingUpscale.scale ??
+            (resolvedRequest.strategy === 'scale' ? resolvedRequest.scale : null),
           targetWidth: existingUpscale.targetWidth ?? resolvedRequest.targetWidth,
           targetHeight: existingUpscale.targetHeight ?? resolvedRequest.targetHeight,
           smoothingQuality: existingUpscale.smoothingQuality,
@@ -756,7 +789,9 @@ export async function postUpscaleSlotHandler(
         mode: payload.mode,
         effectiveMode: existingUpscale.effectiveMode ?? payload.mode,
         strategy: existingUpscale.strategy ?? resolvedRequest.strategy,
-        scale: existingUpscale.scale ?? (resolvedRequest.strategy === 'scale' ? resolvedRequest.scale : null),
+        scale:
+          existingUpscale.scale ??
+          (resolvedRequest.strategy === 'scale' ? resolvedRequest.scale : null),
         targetWidth: existingUpscale.targetWidth ?? resolvedRequest.targetWidth,
         targetHeight: existingUpscale.targetHeight ?? resolvedRequest.targetHeight,
         smoothingQuality: existingUpscale.smoothingQuality,
@@ -784,7 +819,8 @@ export async function postUpscaleSlotHandler(
       void logSystemEvent({
         level: 'warn',
         source: 'image-studio.upscale',
-        message: 'Upscale fell back to client-provided payload because source image was unavailable.',
+        message:
+          'Upscale fell back to client-provided payload because source image was unavailable.',
         request: req,
         requestId: ctx.requestId,
         context: {
@@ -810,8 +846,7 @@ export async function postUpscaleSlotHandler(
         ? `${processed.targetWidth}x${processed.targetHeight}`
         : formatScaleLabel(processed.scale ?? resolvedRequest.scale);
     const baseName =
-      sanitizeFilename(payload.name ?? '') ||
-      `upscale-${payload.mode}-${upscaleLabel}-${now}`;
+      sanitizeFilename(payload.name ?? '') || `upscale-${payload.mode}-${upscaleLabel}-${now}`;
     const fileName = baseName.endsWith(ext) ? baseName : `${baseName}${ext}`;
 
     const diskDir = path.join(uploadsRoot, safeProjectId, safeSourceSlotId);

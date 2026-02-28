@@ -137,7 +137,9 @@ const resolvePayloadVersion = (options?: PromptExploderBridgeSaveOptions): numbe
   return BRIDGE_PAYLOAD_VERSION;
 };
 
-const resolvePayloadStatus = (options?: PromptExploderBridgeSaveOptions): PromptExploderBridgePayloadStatus => {
+const resolvePayloadStatus = (
+  options?: PromptExploderBridgeSaveOptions
+): PromptExploderBridgePayloadStatus => {
   const candidate = options?.status;
   if (candidate && BRIDGE_PAYLOAD_STATUSES.includes(candidate)) return candidate;
   return 'pending';
@@ -149,10 +151,7 @@ const resolvePayloadAppliedAt = (options?: PromptExploderBridgeSaveOptions): str
 };
 
 const resolvePayloadTransferId = (options?: PromptExploderBridgeSaveOptions): string => {
-  const candidate =
-    typeof options?.transferId === 'string'
-      ? options.transferId.trim()
-      : '';
+  const candidate = typeof options?.transferId === 'string' ? options.transferId.trim() : '';
   if (candidate.length > 0) return candidate;
   return createBridgeTransferId();
 };
@@ -293,21 +292,20 @@ const parseBridgePayload = (raw: string | null): PromptExploderBridgePayload | n
       if (typeof candidate !== 'number') return 1;
       return candidate > 0 ? candidate : 1;
     })();
-    const expiresAt = toIsoTimestamp(
-      typeof parsed.expiresAt === 'string' ? parsed.expiresAt : null
-    ) ?? undefined;
+    const expiresAt =
+      toIsoTimestamp(typeof parsed.expiresAt === 'string' ? parsed.expiresAt : null) ?? undefined;
     const statusRaw = toTrimmedString(parsed.status);
     const status: PromptExploderBridgePayloadStatus = BRIDGE_PAYLOAD_STATUSES.includes(
       statusRaw as PromptExploderBridgePayloadStatus
     )
       ? (statusRaw as PromptExploderBridgePayloadStatus)
       : 'pending';
-    const appliedAt = toIsoTimestamp(
-      typeof parsed.appliedAt === 'string' ? parsed.appliedAt : null
-    ) ?? undefined;
+    const appliedAt =
+      toIsoTimestamp(typeof parsed.appliedAt === 'string' ? parsed.appliedAt : null) ?? undefined;
     const checksum = toTrimmedString(parsed.checksum) || undefined;
     const caseResolverContext = (() => {
-      if (!parsed.caseResolverContext || typeof parsed.caseResolverContext !== 'object') return undefined;
+      if (!parsed.caseResolverContext || typeof parsed.caseResolverContext !== 'object')
+        return undefined;
       const record = parsed.caseResolverContext as Record<string, unknown>;
       const fileId = typeof record['fileId'] === 'string' ? record['fileId'].trim() : '';
       const fileName = typeof record['fileName'] === 'string' ? record['fileName'].trim() : '';
@@ -322,7 +320,8 @@ const parseBridgePayload = (raw: string | null): PromptExploderBridgePayload | n
       };
     })();
     const caseResolverParties = (() => {
-      if (!parsed.caseResolverParties || typeof parsed.caseResolverParties !== 'object') return undefined;
+      if (!parsed.caseResolverParties || typeof parsed.caseResolverParties !== 'object')
+        return undefined;
       const record = parsed.caseResolverParties as Record<string, unknown>;
       const addresser = sanitizeCaseResolverPartyCandidate(record['addresser'], 'addresser');
       const addressee = sanitizeCaseResolverPartyCandidate(record['addressee'], 'addressee');
@@ -333,7 +332,8 @@ const parseBridgePayload = (raw: string | null): PromptExploderBridgePayload | n
       };
     })();
     const caseResolverMetadata = (() => {
-      if (!parsed.caseResolverMetadata || typeof parsed.caseResolverMetadata !== 'object') return undefined;
+      if (!parsed.caseResolverMetadata || typeof parsed.caseResolverMetadata !== 'object')
+        return undefined;
       const record = parsed.caseResolverMetadata as Record<string, unknown>;
       const placeDate = sanitizeCaseResolverPlaceDate(record['placeDate']);
       if (!placeDate) return undefined;
@@ -365,7 +365,9 @@ const parseBridgePayload = (raw: string | null): PromptExploderBridgePayload | n
 const trimPrompt = (prompt: string, maxLength: number): string =>
   prompt.length <= maxLength ? prompt : prompt.slice(0, maxLength);
 
-const compactPayloadVariants = (payload: PromptExploderBridgePayload): PromptExploderBridgePayload[] => {
+const compactPayloadVariants = (
+  payload: PromptExploderBridgePayload
+): PromptExploderBridgePayload[] => {
   const variants: PromptExploderBridgePayload[] = [payload];
   PROMPT_COMPACT_LENGTHS.forEach((maxLength) => {
     variants.push({
@@ -386,9 +388,11 @@ const dispatchBridgeStorageEvent = (storageKey: string): void => {
   if (!hasWindow()) return;
   if (typeof window.dispatchEvent !== 'function') return;
   if (typeof CustomEvent === 'function') {
-    window.dispatchEvent(new CustomEvent(PROMPT_EXPLODER_BRIDGE_STORAGE_EVENT, {
-      detail: { storageKey },
-    }));
+    window.dispatchEvent(
+      new CustomEvent(PROMPT_EXPLODER_BRIDGE_STORAGE_EVENT, {
+        detail: { storageKey },
+      })
+    );
     return;
   }
   window.dispatchEvent(new Event(PROMPT_EXPLODER_BRIDGE_STORAGE_EVENT));
@@ -427,7 +431,9 @@ const writeBridgePayload = (storageKey: string, payload: PromptExploderBridgePay
   }
 };
 
-const resolveBridgePayloadExpiryState = (payload: PromptExploderBridgePayload): {
+const resolveBridgePayloadExpiryState = (
+  payload: PromptExploderBridgePayload
+): {
   isExpired: boolean;
   expiresAt: string | null;
 } => {
@@ -435,14 +441,10 @@ const resolveBridgePayloadExpiryState = (payload: PromptExploderBridgePayload): 
   const createdAtMs = Date.parse(payload.createdAt);
   const resolvedExpiresAtMs = Number.isFinite(expiresAtMs)
     ? expiresAtMs
-    : (
-      Number.isFinite(createdAtMs)
-        ? createdAtMs + PROMPT_EXPLODER_PAYLOAD_TTL_MS
-        : Number.NaN
-    );
-  const isExpired =
-    !Number.isFinite(resolvedExpiresAtMs) ||
-    Date.now() > resolvedExpiresAtMs;
+    : Number.isFinite(createdAtMs)
+      ? createdAtMs + PROMPT_EXPLODER_PAYLOAD_TTL_MS
+      : Number.NaN;
+  const isExpired = !Number.isFinite(resolvedExpiresAtMs) || Date.now() > resolvedExpiresAtMs;
   return {
     isExpired,
     expiresAt: Number.isFinite(resolvedExpiresAtMs)
@@ -536,9 +538,7 @@ const buildBridgePayload = (input: {
   const appliedAt = resolvePayloadAppliedAt(input.options);
   const checksum = (() => {
     const candidate =
-      typeof input.options?.checksum === 'string'
-        ? input.options.checksum.trim()
-        : '';
+      typeof input.options?.checksum === 'string' ? input.options.checksum.trim() : '';
     if (candidate.length > 0) return candidate;
     return computePromptExploderBridgeChecksum(input.prompt, input.caseResolverContext ?? null);
   })();
@@ -560,11 +560,13 @@ const buildBridgePayload = (input: {
 };
 
 export function savePromptExploderDraftPrompt(prompt: string): void {
-  saveDraftPayload(buildBridgePayload({
-    prompt,
-    source: 'image-studio',
-    target: 'prompt-exploder',
-  }));
+  saveDraftPayload(
+    buildBridgePayload({
+      prompt,
+      source: 'image-studio',
+      target: 'prompt-exploder',
+    })
+  );
 }
 
 export function savePromptExploderDraftPromptFromCaseResolver(
@@ -572,13 +574,15 @@ export function savePromptExploderDraftPromptFromCaseResolver(
   context: PromptExploderCaseResolverContext,
   options?: PromptExploderBridgeSaveOptions
 ): void {
-  saveDraftPayload(buildBridgePayload({
-    prompt,
-    source: 'case-resolver',
-    target: 'prompt-exploder',
-    caseResolverContext: context,
-    options,
-  }));
+  saveDraftPayload(
+    buildBridgePayload({
+      prompt,
+      source: 'case-resolver',
+      target: 'prompt-exploder',
+      caseResolverContext: context,
+      options,
+    })
+  );
 }
 
 export function readPromptExploderDraftPayload(): PromptExploderBridgePayload | null {
@@ -613,12 +617,14 @@ export function savePromptExploderApplyPrompt(
   prompt: string,
   options?: PromptExploderBridgeSaveOptions
 ): void {
-  saveApplyPayload(buildBridgePayload({
-    prompt,
-    source: 'prompt-exploder',
-    target: 'image-studio',
-    options,
-  }));
+  saveApplyPayload(
+    buildBridgePayload({
+      prompt,
+      source: 'prompt-exploder',
+      target: 'image-studio',
+      options,
+    })
+  );
 }
 
 export function savePromptExploderApplyPromptForCaseResolver(
@@ -628,15 +634,17 @@ export function savePromptExploderApplyPromptForCaseResolver(
   metadata?: PromptExploderCaseResolverMetadata | null,
   options?: PromptExploderBridgeSaveOptions
 ): void {
-  saveApplyPayload(buildBridgePayload({
-    prompt,
-    source: 'prompt-exploder',
-    target: 'case-resolver',
-    caseResolverContext: context ?? undefined,
-    caseResolverParties: parties ?? undefined,
-    caseResolverMetadata: metadata ?? undefined,
-    options,
-  }));
+  saveApplyPayload(
+    buildBridgePayload({
+      prompt,
+      source: 'prompt-exploder',
+      target: 'case-resolver',
+      caseResolverContext: context ?? undefined,
+      caseResolverParties: parties ?? undefined,
+      caseResolverMetadata: metadata ?? undefined,
+      options,
+    })
+  );
 }
 
 export function readPromptExploderApplyPayload(): PromptExploderBridgePayload | null {

@@ -1,5 +1,3 @@
-
-
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -10,7 +8,7 @@ import {
   getImportSampleInventoryId,
   getImportSampleProductId,
   setImportSampleInventoryId,
-  setImportSampleProductId
+  setImportSampleProductId,
 } from '@/features/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
@@ -20,7 +18,7 @@ const requestSchema = z.object({
   inventoryId: z.string().trim().optional().nullable(),
   productId: z.string().trim().min(1).optional(),
   connectionId: z.string().trim().min(1).optional(),
-  saveOnly: z.boolean().optional()
+  saveOnly: z.boolean().optional(),
 });
 
 const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);
@@ -78,7 +76,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, requestSchema, {
-    logPrefix: 'imports.base.sample-product.POST'
+    logPrefix: 'imports.base.sample-product.POST',
   });
   if (!parsed.ok) {
     return parsed.response;
@@ -97,7 +95,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     }
     return NextResponse.json({
       productId: data.productId ?? null,
-      inventoryId: inventoryId || null
+      inventoryId: inventoryId || null,
     });
   }
 
@@ -110,20 +108,20 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     const integrationRepo = await getIntegrationRepository();
     const integrations = await integrationRepo.listIntegrations();
     const baseIntegration = integrations.find((integration: (typeof integrations)[number]) =>
-      BASE_INTEGRATION_SLUGS.has(
-        (integration.slug ?? '').trim().toLowerCase()
-      )
+      BASE_INTEGRATION_SLUGS.has((integration.slug ?? '').trim().toLowerCase())
     );
     if (!baseIntegration) {
       throw notFoundError('Base integration not found.');
     }
-    const connections = await integrationRepo.listConnections(
-      baseIntegration.id
-    );
+    const connections = await integrationRepo.listConnections(baseIntegration.id);
     const normalizedConnectionId = data.connectionId?.trim();
     const connection = normalizedConnectionId
-      ? connections.find((entry: (typeof connections)[number]) => entry.id === normalizedConnectionId)
-      : connections.find((entry: (typeof connections)[number]) => entry.baseApiToken || entry.password);
+      ? connections.find(
+          (entry: (typeof connections)[number]) => entry.id === normalizedConnectionId
+        )
+      : connections.find(
+          (entry: (typeof connections)[number]) => entry.baseApiToken || entry.password
+        );
     if (!connection?.baseApiToken && !connection?.password) {
       throw badRequestError('No Base API token configured.');
     }
@@ -140,7 +138,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
 
     const payload = await callBaseApi(token, 'getInventoryProductsList', {
       inventory_id: inventoryId,
-      limit: 1
+      limit: 1,
     });
     productId = extractFirstProductId(payload) ?? undefined;
     if (!productId) {

@@ -4,17 +4,8 @@
   "nodeType": "prompt",
   "title": "Prompt",
   "purpose": "Formats text with placeholders.",
-  "inputs": [
-    "bundle",
-    "title",
-    "images",
-    "result",
-    "entityId"
-  ],
-  "outputs": [
-    "prompt",
-    "images"
-  ],
+  "inputs": ["bundle", "title", "images", "result", "entityId"],
+  "outputs": ["prompt", "images"],
   "configFields": [
     {
       "path": "prompt.template",
@@ -42,17 +33,8 @@
       "x": 100,
       "y": 100
     },
-    "inputs": [
-      "bundle",
-      "title",
-      "images",
-      "result",
-      "entityId"
-    ],
-    "outputs": [
-      "prompt",
-      "images"
-    ],
+    "inputs": ["bundle", "title", "images", "result", "entityId"],
+    "outputs": ["prompt", "images"],
     "data": {},
     "connections": {
       "incoming": [],

@@ -10,8 +10,7 @@ export const httpDocs: NodeConfigDocField[] = [
   },
   {
     path: 'http.headers',
-    description:
-      'JSON string of request headers. Must be valid JSON.',
+    description: 'JSON string of request headers. Must be valid JSON.',
     defaultValue: '{...}',
   },
   {
@@ -27,8 +26,7 @@ export const httpDocs: NodeConfigDocField[] = [
   },
   {
     path: 'http.responsePath',
-    description:
-      'Optional JSON path to extract from the response when responseMode is json.',
+    description: 'Optional JSON path to extract from the response when responseMode is json.',
     defaultValue: '""',
   },
   ...COMMON_RUNTIME_FIELDS,
@@ -43,14 +41,12 @@ export const apiAdvancedDocs: NodeConfigDocField[] = [
   },
   {
     path: 'apiAdvanced.pathParamsJson',
-    description:
-      'JSON object for explicit path parameter substitution before request execution.',
+    description: 'JSON object for explicit path parameter substitution before request execution.',
     defaultValue: '{}',
   },
   {
     path: 'apiAdvanced.queryParamsJson',
-    description:
-      'JSON object for explicit query parameters. Values can include templates.',
+    description: 'JSON object for explicit query parameters. Values can include templates.',
     defaultValue: '{}',
   },
   {
@@ -60,8 +56,7 @@ export const apiAdvancedDocs: NodeConfigDocField[] = [
   },
   {
     path: 'apiAdvanced.authMode',
-    description:
-      'none/api_key/bearer/basic/oauth2_client_credentials/connection auth strategy.',
+    description: 'none/api_key/bearer/basic/oauth2_client_credentials/connection auth strategy.',
     defaultValue: 'none',
   },
   {
@@ -71,14 +66,12 @@ export const apiAdvancedDocs: NodeConfigDocField[] = [
   },
   {
     path: 'apiAdvanced.responsePath',
-    description:
-      'Optional JSON path selection from parsed response payload.',
+    description: 'Optional JSON path selection from parsed response payload.',
     defaultValue: '""',
   },
   {
     path: 'apiAdvanced.outputMappingsJson',
-    description:
-      'JSON object mapping output port -> JSON path in response envelope.',
+    description: 'JSON object mapping output port -> JSON path in response envelope.',
     defaultValue: '{}',
   },
   {
@@ -93,20 +86,17 @@ export const apiAdvancedDocs: NodeConfigDocField[] = [
   },
   {
     path: 'apiAdvanced.retryOnStatusJson',
-    description:
-      'JSON array of status codes that should be retried when retries are enabled.',
+    description: 'JSON array of status codes that should be retried when retries are enabled.',
     defaultValue: '[429,500,502,503,504]',
   },
   {
     path: 'apiAdvanced.paginationMode',
-    description:
-      'none/page/cursor/link pagination strategy.',
+    description: 'none/page/cursor/link pagination strategy.',
     defaultValue: 'none',
   },
   {
     path: 'apiAdvanced.errorRoutesJson',
-    description:
-      'JSON array of explicit error route matchers and target output ports.',
+    description: 'JSON array of explicit error route matchers and target output ports.',
     defaultValue: '[]',
   },
   ...COMMON_RUNTIME_FIELDS,
@@ -201,7 +191,8 @@ export const promptDocs: NodeConfigDocField[] = [
 export const modelDocs: NodeConfigDocField[] = [
   {
     path: 'model.modelId',
-    description: 'Brain-managed model identifier. Node value is stored for compatibility but runtime uses AI Brain routing.',
+    description:
+      'Brain-managed model identifier. Node value is stored for compatibility but runtime uses AI Brain routing.',
     defaultValue: 'AI Brain assignment',
   },
   {
@@ -221,8 +212,7 @@ export const modelDocs: NodeConfigDocField[] = [
   },
   {
     path: 'model.vision',
-    description:
-      'When true, image URLs are included as vision inputs if connected.',
+    description: 'When true, image URLs are included as vision inputs if connected.',
     defaultValue: 'false',
   },
   {
@@ -237,14 +227,12 @@ export const modelDocs: NodeConfigDocField[] = [
 export const agentDocs: NodeConfigDocField[] = [
   {
     path: 'agent.personaId',
-    description:
-      'Persona to use from Agent Creator. Empty means runtime defaults.',
+    description: 'Persona to use from Agent Creator. Empty means runtime defaults.',
     defaultValue: '""',
   },
   {
     path: 'agent.promptTemplate',
-    description:
-      'Optional template to build the agent prompt from incoming ports.',
+    description: 'Optional template to build the agent prompt from incoming ports.',
     defaultValue: '""',
   },
   {

@@ -15,7 +15,6 @@ import { StudioImportProvider } from './studio-modals/StudioImportContext';
 import { StudioInlineEditProvider } from './studio-modals/StudioInlineEditContext';
 import { StudioInlineEditPanels } from './studio-modals/StudioInlineEditPanels';
 
-
 export function StudioModals(): React.JSX.Element {
   const { toast } = useToast();
   const { projectId } = useProjectsState();
@@ -42,7 +41,9 @@ export function StudioModals(): React.JSX.Element {
   } = useSlotsActions();
 
   const localUploadInputRef = useRef<HTMLInputElement | null>(null);
-  const [localUploadMode, setLocalUploadMode] = React.useState<'create' | 'replace' | 'temporary-object' | 'environment'>('create');
+  const [localUploadMode, setLocalUploadMode] = React.useState<
+    'create' | 'replace' | 'temporary-object' | 'environment'
+  >('create');
   const [localUploadTargetId, setLocalUploadTargetId] = React.useState<string | null>(null);
 
   const deleteStagedAsset = async (asset: { id: string; filepath: string }): Promise<void> => {
@@ -86,12 +87,15 @@ export function StudioModals(): React.JSX.Element {
     uploadMutation,
   });
 
-  const handleCreateEmptySlot = async (): Promise<void> => { 
-    setSlotCreateOpen(false); 
-    await handleCreateEmptySlotCore(); 
+  const handleCreateEmptySlot = async (): Promise<void> => {
+    setSlotCreateOpen(false);
+    await handleCreateEmptySlotCore();
   };
 
-  const triggerLocalUpload = (mode: 'create' | 'replace' | 'temporary-object' | 'environment', targetId: string | null): void => {
+  const triggerLocalUpload = (
+    mode: 'create' | 'replace' | 'temporary-object' | 'environment',
+    targetId: string | null
+  ): void => {
     setLocalUploadMode(mode);
     setLocalUploadTargetId(targetId);
     window.setTimeout(() => localUploadInputRef.current?.click(), 0);

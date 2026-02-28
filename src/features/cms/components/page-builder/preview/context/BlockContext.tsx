@@ -27,12 +27,8 @@ export function BlockContextProvider({
   // Merge with parent context if exists
   const parentValue = useContext(BlockContext);
   const mergedValue = { ...parentValue, ...value };
-  
-  return (
-    <BlockContext.Provider value={mergedValue}>
-      {children}
-    </BlockContext.Provider>
-  );
+
+  return <BlockContext.Provider value={mergedValue}>{children}</BlockContext.Provider>;
 }
 
 export function useBlockContext(): BlockContextValue {

@@ -2,7 +2,6 @@
 
 import {
   Button,
-  
   FileUploadButton,
   type FileUploadHelpers,
   PageLayout,
@@ -14,12 +13,13 @@ import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { getDatabaseColumns } from '../components/DatabaseColumns';
 import { LogModal } from '../components/LogModal';
 import { RestoreModal } from '../components/RestoreModal';
-import { DatabaseBackupsProvider, useDatabaseBackupsContext } from '../context/DatabaseBackupsContext';
+import {
+  DatabaseBackupsProvider,
+  useDatabaseBackupsContext,
+} from '../context/DatabaseBackupsContext';
 import { DatabaseProvider } from '../context/DatabaseContext';
 
 import type { DatabaseType } from '@/shared/contracts/database';
-
-
 
 function DatabasesContentInner(): React.JSX.Element {
   const {
@@ -64,7 +64,9 @@ function DatabasesContentInner(): React.JSX.Element {
             Create Backup
           </Button>
           <FileUploadButton
-            onFilesSelected={(files: File[], helpers?: FileUploadHelpers) => handleUpload(files, helpers)}
+            onFilesSelected={(files: File[], helpers?: FileUploadHelpers) =>
+              handleUpload(files, helpers)
+            }
             accept={activeTab === 'postgresql' ? '.dump' : '.archive'}
             disabled={isProd}
             title={isProd ? 'Disabled in production' : undefined}
@@ -101,9 +103,7 @@ function DatabasesContentInner(): React.JSX.Element {
         ],
       }}
     >
-      {isLogModalOpen && (
-        <LogModal isOpen={true} item={logModalContent} onClose={closeLogModal} />
-      )}
+      {isLogModalOpen && <LogModal isOpen={true} item={logModalContent} onClose={closeLogModal} />}
 
       {isRestoreModalOpen && selectedBackupForRestore && (
         <RestoreModal
@@ -113,7 +113,9 @@ function DatabasesContentInner(): React.JSX.Element {
             setIsRestoreModalOpen(false);
             setSelectedBackupForRestore(null);
           }}
-          onConfirm={(t: boolean): void => { void handleRestoreConfirm(t).catch(() => {}); }}
+          onConfirm={(t: boolean): void => {
+            void handleRestoreConfirm(t).catch(() => {});
+          }}
         />
       )}
 
@@ -129,10 +131,11 @@ function DatabasesContentInner(): React.JSX.Element {
 
       {isProd && (
         <Alert variant='warning' className='mb-6'>
-          Backups are disabled in production. Create or upload backups in a non-production environment.
+          Backups are disabled in production. Create or upload backups in a non-production
+          environment.
         </Alert>
       )}
-      
+
       <StandardDataTablePanel
         columns={getDatabaseColumns()}
         data={data}

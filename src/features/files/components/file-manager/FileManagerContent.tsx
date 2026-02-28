@@ -9,13 +9,15 @@ import { FileManagerGrid } from './FileManagerGrid';
 import { useFileManager } from '../../contexts/FileManagerContext';
 
 export function FileManagerContent(): React.JSX.Element {
-  const {
-    activeTab, setActiveTab,
-    assets3d, setPreviewAsset,
-  } = useFileManager();
+  const { activeTab, setActiveTab, assets3d, setPreviewAsset } = useFileManager();
 
   return (
-    <Tabs value={activeTab} onValueChange={(value: string): void => setActiveTab(value as 'uploads' | 'links' | 'base64' | 'assets3d')}>
+    <Tabs
+      value={activeTab}
+      onValueChange={(value: string): void =>
+        setActiveTab(value as 'uploads' | 'links' | 'base64' | 'assets3d')
+      }
+    >
       <TabsList className='mb-4'>
         <TabsTrigger value='uploads'>Uploads</TabsTrigger>
         <TabsTrigger value='links'>Links</TabsTrigger>
@@ -38,9 +40,16 @@ export function FileManagerContent(): React.JSX.Element {
       <TabsContent value='assets3d'>
         <div className='grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4'>
           {assets3d.map((asset: Asset3DRecord) => (
-            <Card key={asset.id} variant='subtle' padding='sm' className='border-border/60 bg-card/40'>
+            <Card
+              key={asset.id}
+              variant='subtle'
+              padding='sm'
+              className='border-border/60 bg-card/40'
+            >
               <div className='text-xs uppercase tracking-wide text-gray-400'>3D Asset</div>
-              <div className='mt-2 text-sm font-semibold text-white break-words'>{asset.name ?? asset.filename}</div>
+              <div className='mt-2 text-sm font-semibold text-white break-words'>
+                {asset.name ?? asset.filename}
+              </div>
               <div className='text-xs text-gray-400 break-words'>{asset.filename}</div>
               {(asset.tags ?? []).length > 0 && (
                 <div className='mt-2 flex flex-wrap gap-1'>
@@ -54,11 +63,7 @@ export function FileManagerContent(): React.JSX.Element {
                 {asset.categoryId && <span>{asset.categoryId}</span>}
               </div>
               <div className='mt-3 flex justify-end'>
-                <Button
-                  variant='secondary'
-                  size='sm'
-                  onClick={(): void => setPreviewAsset(asset)}
-                >
+                <Button variant='secondary' size='sm' onClick={(): void => setPreviewAsset(asset)}>
                   View
                 </Button>
               </div>

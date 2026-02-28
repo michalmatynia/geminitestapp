@@ -3,14 +3,21 @@
 import { Box, Trash2, GripVertical, type LucideIcon } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
-import { TreeRow, TreeCaret, TreeActionButton, TreeActionSlot, TreeContextMenu, type TreeContextMenuItem } from '@/shared/ui';
+import {
+  TreeRow,
+  TreeCaret,
+  TreeActionButton,
+  TreeActionSlot,
+  TreeContextMenu,
+  type TreeContextMenuItem,
+} from '@/shared/ui';
 import { DRAG_KEYS, hasDragType } from '@/shared/utils/drag-drop';
 
 import { BLOCK_ICONS, CONVERTIBLE_SECTION_TYPES, resolveBlockLabel } from './tree-constants';
 import { useDragStateExtract } from '../../../hooks/useDragStateExtract';
 import { usePageBuilder } from '../../../hooks/usePageBuilderContext';
 import { useTreeActions } from '../../../hooks/useTreeActionsContext';
-import { readBlockDragData, setBlockDragData } from '../../../utils/page-builder-dnd';
+import { readBlockDragData, setBlockDragData } from '@/features/cms/utils/page-builder-dnd';
 import { ColumnBlockPicker } from '../ColumnBlockPicker';
 import { BlockNodeItem } from './BlockNodeItem';
 import { useTreeColumnId } from './TreeColumnContext';
@@ -20,20 +27,11 @@ import { useTreeSectionId } from './TreeSectionContext';
 import type { SectionBlockNodeItemProps } from './tree-types';
 import type { BlockInstance } from '../../../types/page-builder';
 
-export function SectionBlockNodeItem({
-  block,
-  index,
-}: SectionBlockNodeItemProps): React.ReactNode {
+export function SectionBlockNodeItem({ block, index }: SectionBlockNodeItemProps): React.ReactNode {
   const sectionId = useTreeSectionId();
   const columnId = useTreeColumnId();
   const { state: pbState } = usePageBuilder();
-  const {
-    expandedIds,
-    selectNode,
-    toggleExpand,
-    blockActions,
-    sectionActions,
-  } = useTreeActions();
+  const { expandedIds, selectNode, toggleExpand, blockActions, sectionActions } = useTreeActions();
 
   const selectedNodeId = pbState.selectedNodeId;
 
@@ -111,7 +109,10 @@ export function SectionBlockNodeItem({
             endBlockDrag();
           }}
           onDragOver={(e: React.DragEvent) => {
-            const isSectionDrop = draggedSectionId && draggedSectionId !== sectionId && CONVERTIBLE_SECTION_TYPES.includes(draggedSectionType ?? '');
+            const isSectionDrop =
+              draggedSectionId &&
+              draggedSectionId !== sectionId &&
+              CONVERTIBLE_SECTION_TYPES.includes(draggedSectionType ?? '');
             const hasBlockPayload = hasDragType(e.dataTransfer, [DRAG_KEYS.BLOCK_ID]);
             const isBlockDrop = (draggedBlockId && draggedBlockId !== block.id) || hasBlockPayload;
             if (isTextAtom) {
@@ -172,7 +173,13 @@ export function SectionBlockNodeItem({
               );
               endBlockDrag();
             } else if (draggedSectionId && draggedSectionId !== sectionId) {
-              sectionActions.dropToColumn(draggedSectionId, sectionId, columnId, (block.blocks ?? []).length, block.id);
+              sectionActions.dropToColumn(
+                draggedSectionId,
+                sectionId,
+                columnId,
+                (block.blocks ?? []).length,
+                block.id
+              );
               endSectionDrag();
             }
           }}
@@ -228,14 +235,14 @@ export function SectionBlockNodeItem({
           />
           <Icon className='size-3.5 shrink-0' />
           <span className='flex-1 truncate text-left'>{blockLabel}</span>
-          {isDragOver && (
-            <span className='text-[10px] text-emerald-300'>Drop here</span>
-          )}
+          {isDragOver && <span className='text-[10px] text-emerald-300'>Drop here</span>}
           {!isTextAtom && (
             <TreeActionSlot show='always' align='inline'>
               <div draggable={false} onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}>
                 <ColumnBlockPicker
-                  onSelect={(elemType: string) => blockActions.addElementToNestedBlock(sectionId, columnId, block.id, elemType)}
+                  onSelect={(elemType: string) =>
+                    blockActions.addElementToNestedBlock(sectionId, columnId, block.id, elemType)
+                  }
                 />
               </div>
             </TreeActionSlot>
@@ -262,10 +269,7 @@ export function SectionBlockNodeItem({
         <div className='ml-5 border-l border-border/30 pl-1'>
           {(block.blocks ?? []).map((child: BlockInstance, childIndex: number) => (
             <TreeParentBlockProvider key={child.id} parentBlockId={block.id}>
-              <BlockNodeItem
-                block={child}
-                index={childIndex}
-              />
+              <BlockNodeItem block={child} index={childIndex} />
             </TreeParentBlockProvider>
           ))}
         </div>

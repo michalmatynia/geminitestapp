@@ -16,7 +16,7 @@ const parseLogicalReferenceValue = (rawValue: string | null | undefined): unknow
   if (/^-?\d+(?:\.\d+)?$/.test(trimmed)) return Number(trimmed);
   if (
     (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
-    (trimmed.startsWith('\'') && trimmed.endsWith('\''))
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
   ) {
     return trimmed.slice(1, -1);
   }
@@ -33,9 +33,7 @@ const parseLogicalReferenceValue = (rawValue: string | null | undefined): unknow
   return trimmed;
 };
 
-const normalizeLogicalOperator = (
-  raw: string
-): PromptExploderLogicalOperator | null => {
+const normalizeLogicalOperator = (raw: string): PromptExploderLogicalOperator | null => {
   const normalized = raw.trim().toLowerCase();
   if (normalized === 'only if') return 'only_if';
   if (normalized === 'if') return 'if';
@@ -60,12 +58,13 @@ const normalizeLogicalComparator = (
 };
 
 const normalizeLogicalParamPath = (raw: string): string => {
-  return raw.trim().replace(/^\[(.+)]$/i, '$1').replace(/^params\./i, '');
+  return raw
+    .trim()
+    .replace(/^\[(.+)]$/i, '$1')
+    .replace(/^params\./i, '');
 };
 
-const normalizeLogicalJoin = (
-  raw: string | null | undefined
-): PromptExploderLogicalJoin | null => {
+const normalizeLogicalJoin = (raw: string | null | undefined): PromptExploderLogicalJoin | null => {
   if (!raw) return null;
   const normalized = raw.trim().toLowerCase();
   if (normalized === 'and') return 'and';
@@ -77,9 +76,8 @@ const parseLogicalConditionExpression = (
   expression: string,
   fallbackComparator: PromptExploderLogicalComparator
 ): Omit<PromptExploderLogicalCondition, 'id' | 'joinWithPrevious'> | null => {
-  const expressionMatch = /^([A-Za-z_][A-Za-z0-9_.[\]]*)(?:\s*(==|=|!=|>=|<=|>|<|contains)\s*(.+))?$/i.exec(
-    expression
-  );
+  const expressionMatch =
+    /^([A-Za-z_][A-Za-z0-9_.[\]]*)(?:\s*(==|=|!=|>=|<=|>|<|contains)\s*(.+))?$/i.exec(expression);
   if (!expressionMatch) return null;
 
   const paramPath = normalizeLogicalParamPath(expressionMatch[1] ?? '');
@@ -209,9 +207,7 @@ export const parseListLines = (args: {
     const indent = raw.match(/^\s*/)?.[0]?.length ?? 0;
     const markerMatch = LIST_ITEM_MARKER_RE.exec(raw);
     const hasMarker = Boolean(markerMatch);
-    const cleaned = raw
-      .replace(/^\s*(\d+[.)]|[A-Z]\)|[*-])\s+/, '')
-      .trim();
+    const cleaned = raw.replace(/^\s*(\d+[.)]|[A-Z]\)|[*-])\s+/, '').trim();
 
     if (!cleaned) return;
 
@@ -282,21 +278,15 @@ const resolveLogicalConditions = (
         id: condition.id || `${item.id}_condition_${index + 1}`,
         paramPath,
         comparator,
-        value:
-          comparator === 'truthy' || comparator === 'falsy'
-            ? null
-            : condition.value ?? null,
-        joinWithPrevious:
-          index === 0 ? null : (condition.joinWithPrevious === 'or' ? 'or' : 'and'),
+        value: comparator === 'truthy' || comparator === 'falsy' ? null : (condition.value ?? null),
+        joinWithPrevious: index === 0 ? null : condition.joinWithPrevious === 'or' ? 'or' : 'and',
       } as PromptExploderLogicalCondition;
     })
     .filter((condition): condition is PromptExploderLogicalCondition => condition !== null);
   return fromItem;
 };
 
-const formatLogicalConditionExpression = (
-  condition: PromptExploderLogicalCondition
-): string => {
+const formatLogicalConditionExpression = (condition: PromptExploderLogicalCondition): string => {
   if (condition.comparator === 'truthy') return condition.paramPath;
   if (condition.comparator === 'falsy') return `${condition.paramPath}=false`;
   if (condition.comparator === 'equals') {
@@ -330,7 +320,9 @@ const formatLogicalListItemPrefix = (item: PromptExploderListItem): string | nul
   if (!logicalConditions.length) return null;
 
   const operatorLabel =
-    operator === 'only_if' ? 'Only if' : `${operator.slice(0, 1).toUpperCase()}${operator.slice(1)}`;
+    operator === 'only_if'
+      ? 'Only if'
+      : `${operator.slice(0, 1).toUpperCase()}${operator.slice(1)}`;
   const expression = logicalConditions
     .map((condition, index) => {
       const clause = formatLogicalConditionExpression(condition);
@@ -354,8 +346,11 @@ export const flattenItemsToTextLines = (
     const indent = '  '.repeat(level);
     const marker = ordered && level === 0 ? `${index + 1}.` : '*';
     const logicalPrefix = formatLogicalListItemPrefix(item);
-    const bodyText = (item.text || '').trim();    const renderedText = logicalPrefix
-      ? (bodyText ? `${logicalPrefix}: ${bodyText}` : logicalPrefix)
+    const bodyText = (item.text || '').trim();
+    const renderedText = logicalPrefix
+      ? bodyText
+        ? `${logicalPrefix}: ${bodyText}`
+        : logicalPrefix
       : bodyText;
     lines.push(`${indent}${marker} ${renderedText}`);
     lines.push(...flattenItemsToTextLines(item.children, { ordered: false, level: level + 1 }));

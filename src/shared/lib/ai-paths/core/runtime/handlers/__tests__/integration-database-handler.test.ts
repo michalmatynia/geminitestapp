@@ -14,9 +14,12 @@ const {
   getCachedSchemaMock: vi.fn(),
 }));
 
-vi.mock('@/shared/lib/ai-paths/core/runtime/handlers/integration-database-input-resolution', () => ({
-  resolveDatabaseInputs: resolveDatabaseInputsMock,
-}));
+vi.mock(
+  '@/shared/lib/ai-paths/core/runtime/handlers/integration-database-input-resolution',
+  () => ({
+    resolveDatabaseInputs: resolveDatabaseInputsMock,
+  })
+);
 
 vi.mock('@/shared/lib/ai-paths/core/runtime/handlers/integration-database-mongo-actions', () => ({
   handleDatabaseMongoAction: handleDatabaseMongoActionMock,
@@ -26,17 +29,19 @@ vi.mock('@/shared/lib/ai-paths/core/runtime/handlers/integration-database-operat
   handleDatabaseStandardOperation: handleDatabaseStandardOperationMock,
 }));
 
-vi.mock('@/shared/lib/ai-paths/core/runtime/handlers/integration-database-template-context', () => ({
-  prepareDatabaseTemplateContext: prepareDatabaseTemplateContextMock,
-}));
+vi.mock(
+  '@/shared/lib/ai-paths/core/runtime/handlers/integration-database-template-context',
+  () => ({
+    prepareDatabaseTemplateContext: prepareDatabaseTemplateContextMock,
+  })
+);
 
 vi.mock('@/shared/lib/ai-paths/core/runtime/handlers/integration-schema-handler', () => ({
   getCachedSchema: getCachedSchemaMock,
 }));
 
 import { handleDatabase } from '@/shared/lib/ai-paths/core/runtime/handlers/integration-database-handler';
-import type { AiNode } from '@/shared/contracts/ai-paths';
-import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
+import type { AiNode, NodeHandlerContext } from '@/shared/contracts';
 
 describe('handleDatabase', () => {
   const reportAiPathsError = vi.fn();
@@ -131,9 +136,7 @@ describe('handleDatabase', () => {
 
     expect(caughtError).toBeInstanceOf(Error);
     expect((caughtError as Error).message).toContain('Record not found');
-    expect((caughtError as { nodeOutput?: unknown }).nodeOutput).toEqual(
-      mongoResult
-    );
+    expect((caughtError as { nodeOutput?: unknown }).nodeOutput).toEqual(mongoResult);
 
     expect(reportAiPathsError).toHaveBeenCalled();
   });
@@ -159,8 +162,8 @@ describe('handleDatabase', () => {
             operation: 'query',
           },
         },
-      } as AiNode,
-    } as NodeHandlerContext);
+      } as unknown as AiNode,
+    });
 
     expect(result).toEqual(
       expect.objectContaining({
@@ -175,7 +178,8 @@ describe('handleDatabase', () => {
     const mongoResult = {
       result: null,
       bundle: {
-        error: 'Mapping-based update mode is disabled. Configure an explicit query filter and explicit update document.',
+        error:
+          'Mapping-based update mode is disabled. Configure an explicit query filter and explicit update document.',
         guardrail: 'update-mode-explicit-only',
         guardrailMeta: {
           code: 'write-template-values',
@@ -226,12 +230,8 @@ describe('handleDatabase', () => {
     }
 
     expect(caughtError).toBeInstanceOf(Error);
-    expect((caughtError as Error).message).toContain(
-      'Mapping-based update mode is disabled'
-    );
-    expect((caughtError as { nodeOutput?: unknown }).nodeOutput).toEqual(
-      mongoResult
-    );
+    expect((caughtError as Error).message).toContain('Mapping-based update mode is disabled');
+    expect((caughtError as { nodeOutput?: unknown }).nodeOutput).toEqual(mongoResult);
   });
 
   it('does not throw when write outcome is warning only', async () => {
@@ -266,15 +266,15 @@ describe('handleDatabase', () => {
             action: 'updateOne',
           },
         },
-      } as AiNode,
-    } as NodeHandlerContext);
+      } as unknown as AiNode,
+    });
 
     expect(result).toEqual(
       expect.objectContaining({
         writeOutcome: expect.objectContaining({
           status: 'warning',
         }),
-      }),
+      })
     );
   });
 

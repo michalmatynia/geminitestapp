@@ -11,8 +11,8 @@ import {
   ensureMongoBackupsDir,
   assertValidMongoBackupName,
 } from '@/features/database/server';
-import { assertDatabaseEngineManageAccess } from '@/features/database/services/database-engine-access';
-import { assertDatabaseEngineOperationEnabled } from '@/features/database/services/database-engine-operation-guards';
+import { assertDatabaseEngineManageAccess } from '@/shared/lib/db/services/database-engine-access';
+import { assertDatabaseEngineOperationEnabled } from '@/shared/lib/db/services/database-engine-operation-guards';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, forbiddenError } from '@/shared/errors/app-error';
 
@@ -32,8 +32,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   }
 
   const dbType = type === 'mongodb' ? 'mongodb' : 'postgresql';
-  const backupsDir =
-    dbType === 'mongodb' ? mongoBackupsDir : pgBackupsDir;
+  const backupsDir = dbType === 'mongodb' ? mongoBackupsDir : pgBackupsDir;
   if (dbType === 'mongodb') {
     assertValidMongoBackupName(file.name);
     await ensureMongoBackupsDir();

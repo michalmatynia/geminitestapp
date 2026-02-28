@@ -122,7 +122,9 @@ function AuthPermissionsForm({
       {
         id,
         name: newPermissionName.trim(),
-        ...(newPermissionDescription.trim() ? { description: newPermissionDescription.trim() } : {}),
+        ...(newPermissionDescription.trim()
+          ? { description: newPermissionDescription.trim() }
+          : {}),
       },
     ]);
     setNewPermissionId('');
@@ -188,14 +190,14 @@ function AuthPermissionsForm({
       prev.map((role: AuthRole) =>
         role.id === roleId
           ? {
-            ...role,
-            [field]:
-              field === 'level'
-                ? Number.isNaN(Number(value))
-                  ? role.level ?? 0
-                  : Number(value)
-                : value,
-          }
+              ...role,
+              [field]:
+                field === 'level'
+                  ? Number.isNaN(Number(value))
+                    ? (role.level ?? 0)
+                    : Number(value)
+                  : value,
+            }
           : role
       )
     );
@@ -273,7 +275,7 @@ function AuthPermissionsForm({
 
             <div className='rounded-md border border-border bg-card/40 p-4 space-y-3'>
               <div className='text-sm font-semibold text-white'>Add Permission</div>
-              
+
               <FormField label='Name'>
                 <Input
                   id='permission-name'
@@ -313,12 +315,7 @@ function AuthPermissionsForm({
                 />
               </FormField>
 
-              <Button
-                onClick={handleAddPermission}
-                variant='default'
-                size='sm'
-                className='w-full'
-              >
+              <Button onClick={handleAddPermission} variant='default' size='sm' className='w-full'>
                 Add Permission
               </Button>
             </div>
@@ -334,7 +331,10 @@ function AuthPermissionsForm({
           </CardHeader>
           <CardContent className='space-y-4'>
             {roles.map((role: AuthRole) => (
-              <div key={role.id} className='rounded-md border border-border bg-card/40 p-4 space-y-3'>
+              <div
+                key={role.id}
+                className='rounded-md border border-border bg-card/40 p-4 space-y-3'
+              >
                 <div className='flex items-start justify-between gap-3'>
                   <div className='space-y-3 flex-1'>
                     <FormField label='Role name'>
@@ -347,7 +347,7 @@ function AuthPermissionsForm({
                         size='sm'
                       />
                     </FormField>
-                    
+
                     <FormField label='Description'>
                       <Input
                         value={role.description ?? ''}
@@ -359,8 +359,8 @@ function AuthPermissionsForm({
                       />
                     </FormField>
 
-                    <FormField 
-                      label='Role level' 
+                    <FormField
+                      label='Role level'
                       description='Levels ≥ 90 are treated as elevated access.'
                     >
                       <Input
@@ -375,8 +375,10 @@ function AuthPermissionsForm({
                         size='sm'
                       />
                     </FormField>
-                    
-                    <div className='text-[10px] text-gray-500 font-mono uppercase tracking-widest'>ID: {role.id}</div>
+
+                    <div className='text-[10px] text-gray-500 font-mono uppercase tracking-widest'>
+                      ID: {role.id}
+                    </div>
                   </div>
                   <Button
                     variant='ghost'
@@ -409,7 +411,7 @@ function AuthPermissionsForm({
 
             <div className='rounded-md border border-border bg-card/40 p-4 space-y-3'>
               <div className='text-sm font-semibold text-white'>Add Role</div>
-              
+
               <FormField label='Role name'>
                 <Input
                   id='role-name'
@@ -436,12 +438,7 @@ function AuthPermissionsForm({
                 />
               </FormField>
 
-              <Button 
-                onClick={handleAddRole} 
-                variant='default'
-                size='sm'
-                className='w-full'
-              >
+              <Button onClick={handleAddRole} variant='default' size='sm' className='w-full'>
                 Add Role
               </Button>
             </div>

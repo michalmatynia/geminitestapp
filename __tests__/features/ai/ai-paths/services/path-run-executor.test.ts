@@ -1,8 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-import { 
-  GraphExecutionCancelled,
-} from '@/shared/lib/ai-paths';
+import { GraphExecutionCancelled } from '@/shared/lib/ai-paths';
 import { evaluateGraphWithIteratorAutoContinue } from '@/shared/lib/ai-paths/core/runtime/engine-server';
 import { executePathRun } from '@/features/ai/ai-paths/services/path-run-executor';
 import type { AiNode, Edge, AiPathRunRecord } from '@/shared/contracts/ai-paths';
@@ -18,11 +16,11 @@ let runStore: Record<string, any> = {};
 const mockRepo = vi.hoisted(() => ({
   createRun: vi.fn().mockImplementation((args) => {
     const id = args.id || 'mock-run-id';
-    const run = { 
-      id, 
+    const run = {
+      id,
       status: 'queued',
       createdAt: new Date().toISOString(),
-      ...args 
+      ...args,
     };
     runStore[id] = run;
     return Promise.resolve(run);
@@ -57,7 +55,7 @@ describe('PathRunExecutor', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     runStore = {};
-    
+
     // Default mocks
     mockRepo.findRunById.mockImplementation((id) => Promise.resolve(runStore[id] || null));
     mockRepo.listRunNodes.mockResolvedValue([]);
@@ -73,8 +71,8 @@ describe('PathRunExecutor', () => {
       position: { x: 0, y: 0 },
       inputs: [],
       outputs: ['value'],
-      config: { constant: { valueType: 'string', value: 'test' } }
-    }
+      config: { constant: { valueType: 'string', value: 'test' } },
+    },
   ];
 
   const mockEdges: Edge[] = [];
@@ -128,7 +126,7 @@ describe('PathRunExecutor', () => {
     (evaluateGraphWithIteratorAutoContinue as any).mockResolvedValue({
       inputs: { 'node-111111111111111111111111': {} },
       outputs: { 'node-111111111111111111111111': { value: 'test' } },
-      hashes: { 'node-111111111111111111111111': 'hash' }
+      hashes: { 'node-111111111111111111111111': 'hash' },
     });
 
     const run = await mockRepo.createRun({
@@ -147,7 +145,7 @@ describe('PathRunExecutor', () => {
   it('should fail the run if graph is invalid', async () => {
     const run = await mockRepo.createRun({
       pathId: 'test',
-      graph: null as any // Invalid graph
+      graph: null as any, // Invalid graph
     });
 
     await executePathRun(run as AiPathRunRecord);
@@ -184,7 +182,7 @@ describe('PathRunExecutor', () => {
     });
 
     await executePathRun(run as AiPathRunRecord);
-    
+
     expect(mockRepo.upsertRunNode).toHaveBeenCalled();
   });
 
@@ -208,7 +206,7 @@ describe('PathRunExecutor', () => {
     });
 
     await executePathRun(run as AiPathRunRecord);
-    
+
     expect(mockRepo.upsertRunNode).toHaveBeenCalledWith(
       expect.anything(),
       mockNodes[0]!.id,
@@ -233,7 +231,7 @@ describe('PathRunExecutor', () => {
     });
 
     await executePathRun(run as AiPathRunRecord);
-    
+
     expect(mockRepo.upsertRunNode).toHaveBeenCalledWith(
       expect.anything(),
       mockNodes[0]!.id,
@@ -261,7 +259,7 @@ describe('PathRunExecutor', () => {
     });
 
     await expect(executePathRun(run as AiPathRunRecord)).rejects.toThrow('Execution failed');
-    
+
     expect(mockRepo.upsertRunNode).toHaveBeenCalledWith(
       expect.anything(),
       mockNodes[0]!.id,
@@ -284,13 +282,13 @@ describe('PathRunExecutor', () => {
 
     runStore[run.id].status = 'canceled';
 
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 100));
 
     try {
       await executionPromise;
     } catch (e) {
       expect(e).toBeInstanceOf(GraphExecutionCancelled);
-      
+
       const callArgs = (evaluateGraphWithIteratorAutoContinue as any).mock.calls[0]?.[0];
       expect(callArgs?.control?.signal).toBeDefined();
       expect(callArgs?.control?.signal).toBeInstanceOf(AbortSignal);
@@ -329,11 +327,11 @@ describe('PathRunExecutor', () => {
           runtimeTrace: expect.objectContaining({
             profile: expect.objectContaining({
               summary: expect.objectContaining({
-                durationMs: 1200
-              })
-            })
-          })
-        })
+                durationMs: 1200,
+              }),
+            }),
+          }),
+        }),
       })
     );
   });
@@ -342,8 +340,14 @@ describe('PathRunExecutor', () => {
     (evaluateGraphWithIteratorAutoContinue as any).mockImplementation(async (options: any) => {
       const node = options.nodes[0];
       await options.onNodeStart({ node, nodeInputs: {}, prevOutputs: {}, iteration: 1 });
-      await options.onNodeFinish({ node, nodeInputs: {}, prevOutputs: {}, nextOutputs: { value: 'span-ok' }, iteration: 1 });
-      
+      await options.onNodeFinish({
+        node,
+        nodeInputs: {},
+        prevOutputs: {},
+        nextOutputs: { value: 'span-ok' },
+        iteration: 1,
+      });
+
       return { outputs: { [node.id]: { value: 'span-ok' } } };
     });
 
@@ -355,7 +359,9 @@ describe('PathRunExecutor', () => {
 
     await executePathRun(run as AiPathRunRecord);
 
-    const updateCall = mockRepo.updateRunIfStatus.mock.calls.find((c: any) => c[2].meta?.runtimeTrace);
+    const updateCall = mockRepo.updateRunIfStatus.mock.calls.find(
+      (c: any) => c[2].meta?.runtimeTrace
+    );
     const runtimeTrace = updateCall?.[2].meta.runtimeTrace;
     const nodeSpans = runtimeTrace?.profile?.nodeSpans ?? [];
     expect(nodeSpans.length).toBeGreaterThan(0);
@@ -376,7 +382,9 @@ describe('PathRunExecutor', () => {
         meta: { aiPathsValidation: { enabled: false } },
       } as any);
 
-      await expect(executePathRun(run as AiPathRunRecord)).rejects.toThrow('Path blocked by node policy');
+      await expect(executePathRun(run as AiPathRunRecord)).rejects.toThrow(
+        'Path blocked by node policy'
+      );
     } finally {
       if (previous === undefined) {
         delete process.env['AI_PATHS_DISABLED_NODE_TYPES'];
@@ -396,7 +404,9 @@ describe('PathRunExecutor', () => {
       },
     } as any);
 
-    await expect(executePathRun(run as AiPathRunRecord)).rejects.toThrow(/is missing required input wiring for port "prompt"/);
+    await expect(executePathRun(run as AiPathRunRecord)).rejects.toThrow(
+      /is missing required input wiring for port "prompt"/
+    );
   });
 
   it('should bypass strict-flow preflight when node validation is disabled', async () => {
@@ -441,7 +451,9 @@ describe('PathRunExecutor', () => {
       },
     } as any);
 
-    await expect(executePathRun(run as AiPathRunRecord)).rejects.toThrow(/is missing required input wiring for port "prompt"/);
+    await expect(executePathRun(run as AiPathRunRecord)).rejects.toThrow(
+      /is missing required input wiring for port "prompt"/
+    );
     expect(evaluateGraphWithIteratorAutoContinue).not.toHaveBeenCalled();
   });
 
@@ -456,7 +468,7 @@ describe('PathRunExecutor', () => {
         position: { x: 0, y: 0 },
         inputs: [],
         outputs: ['trigger'],
-        config: { trigger: { event: 'manual' } }
+        config: { trigger: { event: 'manual' } },
       },
       {
         id: 'node-db-111111111111111111111111',
@@ -481,20 +493,20 @@ describe('PathRunExecutor', () => {
               sort: '{}',
               projection: '{}',
               single: false,
-            }
-          }
-        }
-      }
+            },
+          },
+        },
+      },
     ];
-    
+
     const invalidEdges: Edge[] = [
       {
         id: 'edge-1',
         from: 'node-trigger-111111111111111111111111',
         to: 'node-db-111111111111111111111111',
         fromPort: 'trigger',
-        toPort: 'trigger'
-      }
+        toPort: 'trigger',
+      },
     ];
 
     const run = await mockRepo.createRun({

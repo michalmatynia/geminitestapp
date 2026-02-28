@@ -28,7 +28,11 @@ export default function GlobalError({
         <Button onClick={() => reset()} className='bg-blue-600 text-white hover:bg-blue-700'>
           Try Again
         </Button>
-        <Button asChild variant='outline' className='border-gray-700 text-gray-300 hover:bg-gray-800'>
+        <Button
+          asChild
+          variant='outline'
+          className='border-gray-700 text-gray-300 hover:bg-gray-800'
+        >
           <Link href='/'>Go Home</Link>
         </Button>
       </div>

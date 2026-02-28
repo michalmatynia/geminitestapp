@@ -1,16 +1,16 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-import { updateAsset3D } from '@/features/viewer3d/api';
-import { Asset3DEditModal } from '@/features/viewer3d/components/Asset3DEditModal';
-import { useAdmin3DAssetsContext } from '@/features/viewer3d/context/Admin3DAssetsContext';
+import { updateAsset3D } from '@/shared/lib/viewer3d/api';
+import { Asset3DEditModal } from '@/shared/lib/viewer3d/components/Asset3DEditModal';
+import { useAdmin3DAssetsContext } from '@/shared/lib/viewer3d/context/Admin3DAssetsContext';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 
 const { logClientErrorMock } = vi.hoisted(() => ({
   logClientErrorMock: vi.fn(),
 }));
 
-vi.mock('@/features/viewer3d/api', () => ({
+vi.mock('@/shared/lib/viewer3d/api', () => ({
   updateAsset3D: vi.fn(),
 }));
 
@@ -18,7 +18,7 @@ vi.mock('@/features/observability', () => ({
   logClientError: logClientErrorMock,
 }));
 
-vi.mock('@/features/viewer3d/context/Admin3DAssetsContext', () => ({
+vi.mock('@/shared/lib/viewer3d/context/Admin3DAssetsContext', () => ({
   useAdmin3DAssetsContext: vi.fn(),
 }));
 
@@ -103,9 +103,12 @@ describe('Asset3DEditModal', () => {
     fireEvent.click(saveButton);
 
     await waitFor(() => expect(updateAsset3D).toHaveBeenCalled());
-    expect(updateAsset3D).toHaveBeenCalledWith(mockAsset.id, expect.objectContaining({
-      name: 'Updated Name',
-    }));
+    expect(updateAsset3D).toHaveBeenCalledWith(
+      mockAsset.id,
+      expect.objectContaining({
+        name: 'Updated Name',
+      })
+    );
     expect(vi.mocked(useAdmin3DAssetsContext)().handleEdit).toHaveBeenCalledWith(updatedAsset);
     expect(defaultProps.onClose).toHaveBeenCalled();
   });

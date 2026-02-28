@@ -1,9 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import {
-  coerceStatus,
-  normalizeSteps,
-} from '@/features/integrations/utils/connections';
+import { coerceStatus, normalizeSteps } from '@/features/integrations/utils/connections';
 
 describe('integrations connection utils', () => {
   describe('coerceStatus', () => {
@@ -31,11 +28,11 @@ describe('integrations connection utils', () => {
         { step: { complex: true }, status: 'invalid' },
       ];
       const result = normalizeSteps(input);
-      
+
       expect(result).toHaveLength(3);
       expect(result[0]!.step).toBe('Step 1');
       expect(result[0]!.status).toBe('ok');
-      
+
       expect(result[1]!.step).toBe('2');
       expect(result[1]!.status).toBe('pending');
       expect(result[1]!.timestamp).toBeDefined();

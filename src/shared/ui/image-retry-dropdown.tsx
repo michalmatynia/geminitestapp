@@ -29,12 +29,7 @@ export function ImageRetryDropdown({
     <div className={className}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button
-            variant='secondary'
-            size='sm'
-            className={buttonClassName}
-            disabled={disabled}
-          >
+          <Button variant='secondary' size='sm' className={buttonClassName} disabled={disabled}>
             Retry image export
           </Button>
         </DropdownMenuTrigger>
@@ -47,9 +42,7 @@ export function ImageRetryDropdown({
             >
               <div className='flex flex-col'>
                 <span className='text-sm'>{preset.label}</span>
-                <span className='text-xs text-gray-400'>
-                  {preset.description}
-                </span>
+                <span className='text-xs text-gray-400'>{preset.description}</span>
               </div>
             </DropdownMenuItem>
           ))}

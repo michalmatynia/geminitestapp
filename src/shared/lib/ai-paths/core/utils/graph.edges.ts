@@ -4,7 +4,10 @@ import { arePortTypesCompatible, formatPortDataTypes, getPortDataTypes } from '.
 
 export const sanitizeEdges = (nodes: AiNode[], edges: Edge[]): Edge[] => {
   const nodeMap = new Map(nodes.map((node: AiNode) => [node.id, node]));
-  const resolveNodeId = (primary: string | undefined, fallback: string | undefined): string | null => {
+  const resolveNodeId = (
+    primary: string | undefined,
+    fallback: string | undefined
+  ): string | null => {
     const first = typeof primary === 'string' ? primary.trim() : '';
     if (first.length > 0) return first;
     const second = typeof fallback === 'string' ? fallback.trim() : '';
@@ -66,8 +69,7 @@ export const sanitizeEdges = (nodes: AiNode[], edges: Edge[]): Edge[] => {
       if (emittedTriggerFetcherPairs.has(pairKey)) return [];
       const hasExplicitSignal = triggerFetcherPairsWithSignal.has(pairKey);
       const isExplicitSignalEdge =
-        (fromPort === 'trigger' || !fromPort) &&
-        (toPort === 'trigger' || !toPort);
+        (fromPort === 'trigger' || !fromPort) && (toPort === 'trigger' || !toPort);
       if (hasExplicitSignal && !isExplicitSignalEdge) {
         return [];
       }
@@ -85,10 +87,8 @@ export const sanitizeEdges = (nodes: AiNode[], edges: Edge[]): Edge[] => {
       if (isValidConnection(from, to, fromPort, toPort)) {
         return [toCanonicalEdge(edge, fromNodeId, toNodeId, fromPort, toPort)];
       }
-      const canAlignByFromPort =
-        from.outputs.includes(fromPort) && to.inputs.includes(fromPort);
-      const canAlignByToPort =
-        from.outputs.includes(toPort) && to.inputs.includes(toPort);
+      const canAlignByFromPort = from.outputs.includes(fromPort) && to.inputs.includes(fromPort);
+      const canAlignByToPort = from.outputs.includes(toPort) && to.inputs.includes(toPort);
       // Prefer the source port when both alignments are possible. This avoids
       // accidental output inversions when only the target port drifts.
       if (canAlignByFromPort) {
@@ -117,10 +117,16 @@ export const validateConnection = (
     return { valid: false, message: 'Source and target ports must be specified.' };
   }
   if (!from.outputs.includes(fromPort)) {
-    return { valid: false, message: `Node "${from.title ?? from.id}" does not have output port "${fromPort}".` };
+    return {
+      valid: false,
+      message: `Node "${from.title ?? from.id}" does not have output port "${fromPort}".`,
+    };
   }
   if (!to.inputs.includes(toPort)) {
-    return { valid: false, message: `Node "${to.title ?? to.id}" does not have input port "${toPort}".` };
+    return {
+      valid: false,
+      message: `Node "${to.title ?? to.id}" does not have input port "${toPort}".`,
+    };
   }
 
   const fromTypes = getPortDataTypes(fromPort);

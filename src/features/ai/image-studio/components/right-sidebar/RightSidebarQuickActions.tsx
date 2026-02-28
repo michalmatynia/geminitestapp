@@ -1,7 +1,7 @@
 import { Eye, Play, SlidersHorizontal, Sparkles, Workflow } from 'lucide-react';
 import React from 'react';
 
-import { Button, SelectSimple } from '@/shared/ui';
+import { Button, Input } from '@/shared/ui';
 
 import { useRightSidebarContext } from '../RightSidebarContext';
 
@@ -13,32 +13,35 @@ export function RightSidebarQuickActions(): React.JSX.Element {
     generationLabel,
     hasExtractedControls,
     modelSupportsSequenceGeneration,
-    modelValue,
-    onModelChange,
     onOpenControls,
     onOpenPromptControl,
     onOpenRequestPreview,
     onRunGeneration,
     onRunSequenceGeneration,
-    quickModelOptions,
     selectedModelId,
     sequenceRunBusy,
   } = useRightSidebarContext();
+  const displayedModelId = selectedModelId || 'Not configured in AI Brain';
 
   return (
     <>
       <div className='rounded border border-border/60 bg-card/30 p-2'>
         <div className='space-y-2'>
-          <SelectSimple size='sm'
-            value={modelValue}
-            onValueChange={onModelChange}
-            options={quickModelOptions}
-            placeholder='Select model'
-            triggerClassName='h-8 text-xs'
-            ariaLabel='Quick generation model'
+          <Input
+            value={displayedModelId}
+            readOnly
+            disabled
+            size='sm'
+            className='h-8 text-xs cursor-not-allowed'
+            aria-label='Brain-managed generation model'
           />
+          <div className='text-[11px] text-gray-400'>
+            Generation routing is managed in AI Brain. Local Image Studio model presets are kept
+            only as compatibility snapshots.
+          </div>
           <div className='flex flex-wrap items-center gap-2 sm:justify-end'>
-            <Button size='xs'
+            <Button
+              size='xs'
               onClick={onRunGeneration}
               disabled={generationBusy || sequenceRunBusy}
               className='sm:min-w-[140px]'
@@ -48,7 +51,8 @@ export function RightSidebarQuickActions(): React.JSX.Element {
               {generationLabel}
             </Button>
             {modelSupportsSequenceGeneration ? (
-              <Button size='xs'
+              <Button
+                size='xs'
                 variant='outline'
                 onClick={onRunSequenceGeneration}
                 disabled={generationBusy || sequenceRunBusy}
@@ -65,20 +69,19 @@ export function RightSidebarQuickActions(): React.JSX.Element {
           </div>
         </div>
         <div className='mt-2 flex flex-wrap items-center gap-3 text-[11px] text-gray-400'>
-          <span className='text-gray-300'>
-            Tokens ~{estimatedPromptTokens.toLocaleString()}
-          </span>
+          <span className='text-gray-300'>Tokens ~{estimatedPromptTokens.toLocaleString()}</span>
           <span
             className='max-w-full truncate text-gray-300'
-            title={`Estimated generation cost for ${selectedModelId}`}
+            title={`Estimated generation cost for ${displayedModelId}`}
           >
-            Est. Cost ({selectedModelId}) ${estimatedGenerationCost.toFixed(3)}
+            Est. Cost ({displayedModelId}) ${estimatedGenerationCost.toFixed(3)}
           </span>
         </div>
       </div>
 
       <div className='flex flex-wrap items-center justify-end gap-2'>
-        <Button size='xs'
+        <Button
+          size='xs'
           variant='outline'
           title='Open prompt controls'
           aria-label='Open prompt controls'
@@ -87,7 +90,8 @@ export function RightSidebarQuickActions(): React.JSX.Element {
           <Sparkles className='mr-2 size-4' />
           Control Prompt
         </Button>
-        <Button size='xs'
+        <Button
+          size='xs'
           variant='outline'
           title='Preview generation request payload and input images'
           aria-label='Preview generation request payload and input images'
@@ -96,7 +100,8 @@ export function RightSidebarQuickActions(): React.JSX.Element {
           <Eye className='mr-2 size-4' />
           Preview Request
         </Button>
-        <Button size='xs'
+        <Button
+          size='xs'
           variant='outline'
           title={hasExtractedControls ? 'Open extracted controls' : 'Extract controls first'}
           aria-label='Open extracted controls'

@@ -19,7 +19,7 @@ const functionReferenceLines: string[] = [
   '| ID | Symbol | File | Purpose |',
   '| --- | --- | --- | --- |',
   ...VALIDATOR_FUNCTION_DOCS.map(
-    (doc) => `| ${doc.id} | \`${doc.symbol}\` | \`${doc.file}\` | ${doc.purpose} |`,
+    (doc) => `| ${doc.id} | \`${doc.symbol}\` | \`${doc.file}\` | ${doc.purpose} |`
   ),
   '',
 ];
@@ -47,7 +47,7 @@ const uiTooltipLines: string[] = [
   '| --- | --- | --- | --- |',
   ...VALIDATOR_UI_DOCS.map(
     (doc) =>
-      `| ${doc.id} | ${doc.title} | ${doc.description} | ${doc.relatedFunctions.join(', ')} |`,
+      `| ${doc.id} | ${doc.title} | ${doc.description} | ${doc.relatedFunctions.join(', ')} |`
   ),
   '',
 ];

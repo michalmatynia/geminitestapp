@@ -69,7 +69,9 @@ export class ProductTransformer {
     return this.transformToV2(data);
   }
 
-  private static transformToV2(data: Partial<ProductWithImages> & Record<string, unknown>): Record<string, unknown> {
+  private static transformToV2(
+    data: Partial<ProductWithImages> & Record<string, unknown>
+  ): Record<string, unknown> {
     return {
       id: data.id,
       sku: data.sku,
@@ -77,42 +79,42 @@ export class ProductTransformer {
       names: {
         en: data.name_en,
         pl: data.name_pl,
-        de: data.name_de
+        de: data.name_de,
       },
       descriptions: {
         en: data.description_en,
         pl: data.description_pl,
-        de: data.description_de
+        de: data.description_de,
       },
       pricing: {
         price: data.price,
         priceGroupId: data.defaultPriceGroupId,
-        comment: data.priceComment
+        comment: data.priceComment,
       },
       inventory: {
         stock: data.stock,
         sku: data.sku,
         ean: data.ean,
-        gtin: data.gtin
+        gtin: data.gtin,
       },
       supplier: {
         name: data.supplierName,
-        link: data.supplierLink
+        link: data.supplierLink,
       },
       dimensions: {
         length: data.sizeLength,
         width: data.sizeWidth,
         height: data.length,
-        weight: data.weight
+        weight: data.weight,
       },
       media: {
         images: data.imageLinks || [],
-        base64Images: data.imageBase64s || []
+        base64Images: data.imageBase64s || [],
       },
       metadata: {
         createdAt: data.createdAt,
-        updatedAt: data.updatedAt
-      }
+        updatedAt: data.updatedAt,
+      },
     };
   }
 }
@@ -131,15 +133,15 @@ export function createVersionedResponse<T>(
   const response: VersionedResponse<typeof transformedData> = {
     version,
     data: transformedData,
-    ...(meta && Object.keys(meta).length > 0 ? { meta } : {})
+    ...(meta && Object.keys(meta).length > 0 ? { meta } : {}),
   };
 
   return new Response(JSON.stringify(response), {
     status,
     headers: {
       'Content-Type': 'application/json',
-      'API-Version': version
-    }
+      'API-Version': version,
+    },
   });
 }
 
@@ -158,7 +160,7 @@ export function withApiVersioning(
         }),
         {
           status: 400,
-          headers: { 'Content-Type': 'application/json' }
+          headers: { 'Content-Type': 'application/json' },
         }
       );
     }

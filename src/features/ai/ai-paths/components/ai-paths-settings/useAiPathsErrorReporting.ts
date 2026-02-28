@@ -36,28 +36,19 @@ export function useAiPathsErrorReporting(
   const { activePathId, pathName, nodes, edges } = useGraphState();
   const { setLastError } = useRuntimeActions();
 
-  const persistLastError = useCallback(
-    async (payload: LastErrorPayload): Promise<void> => {
-      try {
-        await updateAiPathsSetting(
-          AI_PATHS_LAST_ERROR_KEY,
-          payload ? JSON.stringify(payload) : ''
-        );
-      } catch (error: unknown) {
-        logClientError(error, { context: { source: 'useAiPathsErrorReporting', action: 'persistLastError' } });
-      }
-    },
-    []
-  );
+  const persistLastError = useCallback(async (payload: LastErrorPayload): Promise<void> => {
+    try {
+      await updateAiPathsSetting(AI_PATHS_LAST_ERROR_KEY, payload ? JSON.stringify(payload) : '');
+    } catch (error: unknown) {
+      logClientError(error, {
+        context: { source: 'useAiPathsErrorReporting', action: 'persistLastError' },
+      });
+    }
+  }, []);
 
   const reportAiPathsError = useCallback(
-    (
-      error: unknown,
-      context: Record<string, unknown>,
-      fallbackMessage?: string
-    ): void => {
-      const rawMessage =
-        error instanceof Error ? error.message : safeStringify(error);
+    (error: unknown, context: Record<string, unknown>, fallbackMessage?: string): void => {
+      const rawMessage = error instanceof Error ? error.message : safeStringify(error);
       const summary = (fallbackMessage ?? rawMessage).replace(/:$/, '');
       const logMessage = `[AI Paths] ${summary}`;
       const logError = new Error(logMessage);

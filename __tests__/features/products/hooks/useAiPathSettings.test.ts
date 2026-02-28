@@ -49,13 +49,9 @@ describe('findTriggerPath', () => {
       event: 'manual',
     });
 
-    const selected = findTriggerPath(
-      [manualPath],
-      null,
-      null,
-      'path_generate_description',
-      { fallbackToAnyPath: false }
-    );
+    const selected = findTriggerPath([manualPath], null, null, 'path_generate_description', {
+      fallbackToAnyPath: false,
+    });
 
     expect(selected).toBeUndefined();
   });
@@ -67,12 +63,7 @@ describe('findTriggerPath', () => {
       event: 'manual',
     });
 
-    const selected = findTriggerPath(
-      [manualPath],
-      null,
-      null,
-      'path_generate_description'
-    );
+    const selected = findTriggerPath([manualPath], null, null, 'path_generate_description');
 
     expect(selected?.id).toBe('manual-path');
   });
@@ -84,13 +75,10 @@ describe('findTriggerPath', () => {
       withTriggerConfig: false,
     });
 
-    const manualSelection = findTriggerPath(
-      [pathWithoutEvent],
-      null,
-      null,
-      'manual',
-      { fallbackToAnyPath: false, defaultTriggerEventId: 'manual' }
-    );
+    const manualSelection = findTriggerPath([pathWithoutEvent], null, null, 'manual', {
+      fallbackToAnyPath: false,
+      defaultTriggerEventId: 'manual',
+    });
     const legacySelection = findTriggerPath(
       [pathWithoutEvent],
       null,
@@ -115,13 +103,9 @@ describe('findTriggerPath', () => {
       event: 'manual',
     });
 
-    const selected = findTriggerPath(
-      [firstPath, secondPath],
-      null,
-      'path-second',
-      'manual',
-      { fallbackToAnyPath: false }
-    );
+    const selected = findTriggerPath([firstPath, secondPath], null, 'path-second', 'manual', {
+      fallbackToAnyPath: false,
+    });
 
     expect(selected?.id).toBe('path-second');
   });

@@ -2,12 +2,7 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 
-import {
-  createDomain,
-  deleteDomain,
-  fetchDomains,
-  updateDomain,
-} from '@/features/cms/api/domains';
+import { createDomain, deleteDomain, fetchDomains, updateDomain } from '@/features/cms/api/domains';
 import {
   createPage,
   deletePage,
@@ -32,14 +27,17 @@ import {
   fetchThemes,
   updateTheme,
 } from '@/features/cms/api/themes';
-import type { Page, PageSummary, Slug, CmsDomain, CmsTheme, CmsThemeCreateInput, CmsThemeUpdateInput } from '@/shared/contracts/cms';
+import type {
+  Page,
+  PageSummary,
+  Slug,
+  CmsDomain,
+  CmsTheme,
+  CmsThemeCreateInput,
+  CmsThemeUpdateInput,
+} from '@/shared/contracts/cms';
 import type { ImageFileRecord } from '@/shared/contracts/files';
-import type { 
-  ListQuery,
-  SingleQuery,
-  CreateMutation, 
-  UpdateMutation 
-} from '@/shared/contracts/ui';
+import type { ListQuery, SingleQuery, CreateMutation, UpdateMutation } from '@/shared/contracts/ui';
 import {
   createDeleteMutationV2,
   createListQueryV2,
@@ -58,7 +56,6 @@ import {
   invalidateFiles,
 } from '@/shared/lib/query-invalidation';
 import { cmsKeys } from '@/shared/lib/query-key-exports';
-
 
 export function useCmsPages(domainId?: string | null): ListQuery<PageSummary> {
   const queryKey = cmsKeys.pages.list(domainId);
@@ -95,7 +92,7 @@ export function useCmsPage(id?: string): SingleQuery<Page> {
 export function useCreatePage(): CreateMutation<Page, { name: string; slugIds: string[] }> {
   const queryClient = useQueryClient();
   return createCreateMutationV2({
-    mutationFn: (input: { name: string; slugIds: string[] }) => 
+    mutationFn: (input: { name: string; slugIds: string[] }) =>
       createPage(input).then(({ ok, payload }) => {
         if (!ok) throw new Error('Failed to create page');
         return payload;
@@ -114,13 +111,17 @@ export function useCreatePage(): CreateMutation<Page, { name: string; slugIds: s
   });
 }
 
-export function useUpdatePage(): UpdateMutation<Page, { id: string; input: Page & { slugIds?: string[] } }> {
+export function useUpdatePage(): UpdateMutation<
+  Page,
+  { id: string; input: Page & { slugIds?: string[] } }
+> {
   const queryClient = useQueryClient();
   return createUpdateMutationV2({
-    mutationFn: ({ id, input }: { id: string; input: Page & { slugIds?: string[] } }) => 
+    mutationFn: ({ id, input }: { id: string; input: Page & { slugIds?: string[] } }) =>
       updatePage(id, input).then(({ ok, payload }) => {
         if (!ok) {
-          const message = (payload as unknown as { error?: string }).error ?? 'Failed to update page';
+          const message =
+            (payload as unknown as { error?: string }).error ?? 'Failed to update page';
           throw new Error(message);
         }
         return payload;
@@ -143,7 +144,7 @@ export function useUpdatePage(): UpdateMutation<Page, { id: string; input: Page 
 export function useDeletePage(): UpdateMutation<string, string> {
   const queryClient = useQueryClient();
   return createDeleteMutationV2({
-    mutationFn: (id: string) => 
+    mutationFn: (id: string) =>
       deletePage(id).then(({ ok }) => {
         if (!ok) throw new Error('Failed to delete page');
         return id;
@@ -230,7 +231,7 @@ export function useCmsSlugDomains(id?: string): SingleQuery<{ domainIds: string[
 export function useCreateSlug(): CreateMutation<Slug, { slug: string; domainId?: string | null }> {
   const queryClient = useQueryClient();
   return createCreateMutationV2({
-    mutationFn: (input: { slug: string; domainId?: string | null }) => 
+    mutationFn: (input: { slug: string; domainId?: string | null }) =>
       createSlug(input).then(({ ok, payload }) => {
         if (!ok) throw new Error('Failed to create slug');
         return payload;
@@ -249,10 +250,21 @@ export function useCreateSlug(): CreateMutation<Slug, { slug: string; domainId?:
   });
 }
 
-export function useUpdateSlug(): UpdateMutation<Slug, { id: string; input: Partial<Slug>; domainId?: string | null }> {
+export function useUpdateSlug(): UpdateMutation<
+  Slug,
+  { id: string; input: Partial<Slug>; domainId?: string | null }
+> {
   const queryClient = useQueryClient();
   return createUpdateMutationV2({
-    mutationFn: ({ id, input, domainId }: { id: string; input: Partial<Slug>; domainId?: string | null }) => 
+    mutationFn: ({
+      id,
+      input,
+      domainId,
+    }: {
+      id: string;
+      input: Partial<Slug>;
+      domainId?: string | null;
+    }) =>
       updateSlug(id, input, domainId).then(({ ok, payload }) => {
         if (!ok) throw new Error('Failed to update slug');
         return payload;
@@ -265,7 +277,10 @@ export function useUpdateSlug(): UpdateMutation<Slug, { id: string; input: Parti
       mutationKey: cmsKeys.slugs.lists(),
       tags: ['cms', 'slugs', 'update'],
     },
-    onSuccess: (_data: Slug, variables: { id: string; input: Partial<Slug>; domainId?: string | null }) => {
+    onSuccess: (
+      _data: Slug,
+      variables: { id: string; input: Partial<Slug>; domainId?: string | null }
+    ) => {
       void invalidateCmsSlugs(queryClient);
       void invalidateCmsSlugDetail(queryClient, variables.id);
     },
@@ -275,10 +290,11 @@ export function useUpdateSlug(): UpdateMutation<Slug, { id: string; input: Parti
 export function useUpdateSlugDomains(): UpdateMutation<
   { domainIds: string[] },
   { id: string; domainIds: string[] }
-  > {
+> {
   const queryClient = useQueryClient();
   return createUpdateMutationV2({
-    mutationFn: ({ id, domainIds }: { id: string; domainIds: string[] }) => updateSlugDomains(id, domainIds),
+    mutationFn: ({ id, domainIds }: { id: string; domainIds: string[] }) =>
+      updateSlugDomains(id, domainIds),
     mutationKey: cmsKeys.slugs.lists(),
     meta: {
       source: 'cms.hooks.useUpdateSlugDomains',
@@ -297,7 +313,7 @@ export function useUpdateSlugDomains(): UpdateMutation<
 export function useDeleteSlug(): UpdateMutation<string, { id: string; domainId?: string | null }> {
   const queryClient = useQueryClient();
   return createDeleteMutationV2({
-    mutationFn: ({ id, domainId }: { id: string; domainId?: string | null }) => 
+    mutationFn: ({ id, domainId }: { id: string; domainId?: string | null }) =>
       deleteSlug(id, domainId).then(({ ok }) => {
         if (!ok) throw new Error('Failed to delete slug');
         return id;
@@ -338,7 +354,7 @@ export function useCmsDomains(): ListQuery<CmsDomain> {
 export function useCreateCmsDomain(): CreateMutation<CmsDomain, { domain: string }> {
   const queryClient = useQueryClient();
   return createCreateMutationV2({
-    mutationFn: (input: { domain: string }) => 
+    mutationFn: (input: { domain: string }) =>
       createDomain(input).then(({ ok, payload }) => {
         if (!ok) throw new Error('Failed to create domain');
         return payload;
@@ -360,7 +376,7 @@ export function useCreateCmsDomain(): CreateMutation<CmsDomain, { domain: string
 export function useDeleteCmsDomain(): UpdateMutation<string, string> {
   const queryClient = useQueryClient();
   return createDeleteMutationV2({
-    mutationFn: (id: string) => 
+    mutationFn: (id: string) =>
       deleteDomain(id).then(({ ok }) => {
         if (!ok) throw new Error('Failed to delete domain');
         return id;
@@ -379,10 +395,13 @@ export function useDeleteCmsDomain(): UpdateMutation<string, string> {
   });
 }
 
-export function useUpdateCmsDomain(): UpdateMutation<CmsDomain, { id: string; input: { aliasOf?: string | null } }> {
+export function useUpdateCmsDomain(): UpdateMutation<
+  CmsDomain,
+  { id: string; input: { aliasOf?: string | null } }
+> {
   const queryClient = useQueryClient();
   return createUpdateMutationV2({
-    mutationFn: ({ id, input }: { id: string; input: { aliasOf?: string | null } }) => 
+    mutationFn: ({ id, input }: { id: string; input: { aliasOf?: string | null } }) =>
       updateDomain(id, input).then(({ ok, payload }) => {
         if (!ok) throw new Error('Failed to update domain');
         return payload;
@@ -440,7 +459,7 @@ export function useCmsTheme(id?: string): SingleQuery<CmsTheme> {
 export function useCreateTheme(): CreateMutation<CmsTheme, CmsThemeCreateInput> {
   const queryClient = useQueryClient();
   return createCreateMutationV2({
-    mutationFn: (input: CmsThemeCreateInput) => 
+    mutationFn: (input: CmsThemeCreateInput) =>
       createTheme(input).then(({ ok, payload }) => {
         if (!ok) throw new Error('Failed to create theme');
         return payload;
@@ -459,10 +478,13 @@ export function useCreateTheme(): CreateMutation<CmsTheme, CmsThemeCreateInput> 
   });
 }
 
-export function useUpdateTheme(): UpdateMutation<CmsTheme, { id: string; input: CmsThemeUpdateInput }> {
+export function useUpdateTheme(): UpdateMutation<
+  CmsTheme,
+  { id: string; input: CmsThemeUpdateInput }
+> {
   const queryClient = useQueryClient();
   return createUpdateMutationV2({
-    mutationFn: ({ id, input }: { id: string; input: CmsThemeUpdateInput }) => 
+    mutationFn: ({ id, input }: { id: string; input: CmsThemeUpdateInput }) =>
       updateTheme(id, input).then(({ ok, payload }) => {
         if (!ok) throw new Error('Failed to update theme');
         return payload;
@@ -485,7 +507,7 @@ export function useUpdateTheme(): UpdateMutation<CmsTheme, { id: string; input: 
 export function useDeleteTheme(): UpdateMutation<string, string> {
   const queryClient = useQueryClient();
   return createDeleteMutationV2({
-    mutationFn: (id: string) => 
+    mutationFn: (id: string) =>
       deleteTheme(id).then(({ ok }) => {
         if (!ok) throw new Error('Failed to delete theme');
         return id;
@@ -507,10 +529,16 @@ export function useDeleteTheme(): UpdateMutation<string, string> {
 export function useUploadCmsMedia(): CreateMutation<
   ImageFileRecord,
   { file: File; onProgress?: (loaded: number, total?: number) => void }
-  > {
+> {
   const queryClient = useQueryClient();
   return createCreateMutationV2({
-    mutationFn: async ({ file, onProgress }: { file: File; onProgress?: (loaded: number, total?: number) => void }): Promise<ImageFileRecord> => {
+    mutationFn: async ({
+      file,
+      onProgress,
+    }: {
+      file: File;
+      onProgress?: (loaded: number, total?: number) => void;
+    }): Promise<ImageFileRecord> => {
       const formData = new FormData();
       formData.append('file', file);
       const { uploadWithProgress } = await import('@/shared/utils/upload-with-progress');
@@ -537,4 +565,3 @@ export function useUploadCmsMedia(): CreateMutation<
     },
   });
 }
-      

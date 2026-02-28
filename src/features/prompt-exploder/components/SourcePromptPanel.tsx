@@ -24,11 +24,7 @@ export function SourcePromptPanel(): React.JSX.Element {
       className='p-4'
       actions={
         <div className='flex items-center gap-2'>
-          <Button
-            type='button'
-            onClick={handleExplode}
-            disabled={Boolean(runtimeGuardrailIssue)}
-          >
+          <Button type='button' onClick={handleExplode} disabled={Boolean(runtimeGuardrailIssue)}>
             Explode Prompt
           </Button>
           <Button
@@ -38,9 +34,7 @@ export function SourcePromptPanel(): React.JSX.Element {
               void handleApplyToImageStudio();
             }}
           >
-            {returnTarget === 'case-resolver'
-              ? 'Apply to Case Resolver'
-              : 'Apply to Image Studio'}
+            {returnTarget === 'case-resolver' ? 'Apply to Case Resolver' : 'Apply to Image Studio'}
           </Button>
         </div>
       }
@@ -52,7 +46,11 @@ export function SourcePromptPanel(): React.JSX.Element {
           </Card>
         ) : null}
         {returnTarget === 'case-resolver' ? (
-          <Card variant='info' padding='sm' className='border-cyan-500/30 bg-cyan-500/10 text-xs text-cyan-100'>
+          <Card
+            variant='info'
+            padding='sm'
+            className='border-cyan-500/30 bg-cyan-500/10 text-xs text-cyan-100'
+          >
             Case Resolver capture mode: {caseResolverCaptureModeLabel}
           </Card>
         ) : null}

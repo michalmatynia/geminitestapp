@@ -64,6 +64,6 @@ export function useConfirm() {
   return {
     confirm,
     ConfirmationModal,
-    isPending: isLoading
+    isPending: isLoading,
   };
 }

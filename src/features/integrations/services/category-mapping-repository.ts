@@ -19,7 +19,10 @@ export type CategoryMappingRepository = {
   update: (id: string, input: CategoryMappingUpdateInput) => Promise<CategoryMapping>;
   delete: (id: string) => Promise<void>;
   getById: (id: string) => Promise<CategoryMapping | null>;
-  listByConnection: (connectionId: string, catalogId?: string) => Promise<CategoryMappingWithDetails[]>;
+  listByConnection: (
+    connectionId: string,
+    catalogId?: string
+  ) => Promise<CategoryMappingWithDetails[]>;
   getByExternalCategory: (
     connectionId: string,
     externalCategoryId: string,
@@ -237,9 +240,7 @@ type UniqueInternalCategoryScope = {
   excludeId?: string | null | undefined;
 };
 
-const normalizeInternalCategoryId = (
-  value: string | null | undefined
-): string | null => {
+const normalizeInternalCategoryId = (value: string | null | undefined): string | null => {
   const trimmed = value?.trim();
   return trimmed ? trimmed : null;
 };
@@ -247,9 +248,7 @@ const normalizeInternalCategoryId = (
 const buildMongoUniquenessFilter = (
   scope: UniqueInternalCategoryScope
 ): Filter<MongoCategoryMappingDoc> | null => {
-  const normalizedInternalCategoryId = normalizeInternalCategoryId(
-    scope.internalCategoryId
-  );
+  const normalizedInternalCategoryId = normalizeInternalCategoryId(scope.internalCategoryId);
   if (!normalizedInternalCategoryId) return null;
 
   const filter: Filter<MongoCategoryMappingDoc> = {
@@ -290,9 +289,7 @@ const deactivateCompetingMongoMappings = async (
 const buildPrismaUniquenessWhere = (
   scope: UniqueInternalCategoryScope
 ): Prisma.CategoryMappingWhereInput | null => {
-  const normalizedInternalCategoryId = normalizeInternalCategoryId(
-    scope.internalCategoryId
-  );
+  const normalizedInternalCategoryId = normalizeInternalCategoryId(scope.internalCategoryId);
   if (!normalizedInternalCategoryId) return null;
 
   const where: Prisma.CategoryMappingWhereInput = {
@@ -306,10 +303,7 @@ const buildPrismaUniquenessWhere = (
   const excludeId = scope.excludeId?.trim();
   if (excludeExternalCategoryId && excludeId) {
     where.NOT = {
-      OR: [
-        { externalCategoryId: excludeExternalCategoryId },
-        { id: excludeId },
-      ],
+      OR: [{ externalCategoryId: excludeExternalCategoryId }, { id: excludeId }],
     };
   } else if (excludeExternalCategoryId) {
     where.NOT = { externalCategoryId: excludeExternalCategoryId };
@@ -340,9 +334,7 @@ export function getCategoryMappingRepository(): CategoryMappingRepository {
       if (provider === 'mongodb') {
         await ensureMongoCategoryMappingIndexes();
         const db = await getMongoDb();
-        const externalCanonicalMap = await buildExternalCategoryCanonicalMap(
-          input.connectionId
-        );
+        const externalCanonicalMap = await buildExternalCategoryCanonicalMap(input.connectionId);
         const canonicalExternalCategoryId =
           externalCanonicalMap.get(input.externalCategoryId) ?? input.externalCategoryId;
         const collection = db.collection<MongoCategoryMappingDoc>(CATEGORY_MAPPING_COLLECTION);
@@ -542,40 +534,42 @@ export function getCategoryMappingRepository(): CategoryMappingRepository {
               );
             }
 
-            return (fallbackRecords as EnrichedCategoryMapping[]).map((r: EnrichedCategoryMapping) => ({
-              id: r.id,
-              connectionId: r.connectionId,
-              externalCategoryId: r.externalCategoryId,
-              internalCategoryId: r.internalCategoryId,
-              catalogId: r.catalogId,
-              isActive: r.isActive,
-              createdAt: r.createdAt.toISOString(),
-              updatedAt: r.updatedAt.toISOString(),
-              externalCategory: {
-                id: r.externalCategory.id,
-                connectionId: r.externalCategory.connectionId,
-                externalId: r.externalCategory.externalId,
-                name: r.externalCategory.name,
-                parentExternalId: r.externalCategory.parentExternalId,
-                path: r.externalCategory.path,
-                depth: r.externalCategory.depth,
-                isLeaf: r.externalCategory.isLeaf,
-                metadata: r.externalCategory.metadata as Record<string, unknown> | null,
-                fetchedAt: r.externalCategory.fetchedAt.toISOString(),
-                createdAt: r.externalCategory.createdAt.toISOString(),
-                updatedAt: r.externalCategory.updatedAt.toISOString(),
-              },
-              internalCategory: {
-                id: r.internalCategory.id,
-                name: r.internalCategory.name,
-                description: r.internalCategory.description,
-                color: r.internalCategory.color,
-                parentId: r.internalCategory.parentId,
-                catalogId: r.internalCategory.catalogId,
-                createdAt: r.internalCategory.createdAt.toISOString(),
-                updatedAt: r.internalCategory.updatedAt.toISOString(),
-              },
-            }));
+            return (fallbackRecords as EnrichedCategoryMapping[]).map(
+              (r: EnrichedCategoryMapping) => ({
+                id: r.id,
+                connectionId: r.connectionId,
+                externalCategoryId: r.externalCategoryId,
+                internalCategoryId: r.internalCategoryId,
+                catalogId: r.catalogId,
+                isActive: r.isActive,
+                createdAt: r.createdAt.toISOString(),
+                updatedAt: r.updatedAt.toISOString(),
+                externalCategory: {
+                  id: r.externalCategory.id,
+                  connectionId: r.externalCategory.connectionId,
+                  externalId: r.externalCategory.externalId,
+                  name: r.externalCategory.name,
+                  parentExternalId: r.externalCategory.parentExternalId,
+                  path: r.externalCategory.path,
+                  depth: r.externalCategory.depth,
+                  isLeaf: r.externalCategory.isLeaf,
+                  metadata: r.externalCategory.metadata as Record<string, unknown> | null,
+                  fetchedAt: r.externalCategory.fetchedAt.toISOString(),
+                  createdAt: r.externalCategory.createdAt.toISOString(),
+                  updatedAt: r.externalCategory.updatedAt.toISOString(),
+                },
+                internalCategory: {
+                  id: r.internalCategory.id,
+                  name: r.internalCategory.name,
+                  description: r.internalCategory.description,
+                  color: r.internalCategory.color,
+                  parentId: r.internalCategory.parentId,
+                  catalogId: r.internalCategory.catalogId,
+                  createdAt: r.internalCategory.createdAt.toISOString(),
+                  updatedAt: r.internalCategory.updatedAt.toISOString(),
+                },
+              })
+            );
           } catch {
             return [];
           }
@@ -585,10 +579,7 @@ export function getCategoryMappingRepository(): CategoryMappingRepository {
           .collection<MongoExternalCategoryDoc>(EXTERNAL_CATEGORY_COLLECTION)
           .find({ connectionId })
           .toArray();
-        const externalById = new Map<
-          string,
-          CategoryMappingWithDetails['externalCategory']
-        >(
+        const externalById = new Map<string, CategoryMappingWithDetails['externalCategory']>(
           externalDocs.map((doc: MongoExternalCategoryDoc) => [
             doc._id.toString(),
             mapMongoExternalCategory(doc),
@@ -608,10 +599,7 @@ export function getCategoryMappingRepository(): CategoryMappingRepository {
           new Set(
             mappingDocs
               .map((doc: MongoCategoryMappingDoc) => doc.externalCategoryId)
-              .filter(
-                (id: string) =>
-                  !externalById.has(id) && !externalByExternalId.has(id)
-              )
+              .filter((id: string) => !externalById.has(id) && !externalByExternalId.has(id))
           )
         );
         if (missingExternalIds.length > 0) {
@@ -652,10 +640,7 @@ export function getCategoryMappingRepository(): CategoryMappingRepository {
             .find({ catalogId: { $in: catalogIds } })
             .toArray();
         }
-        const internalById = new Map<
-          string,
-          CategoryMappingWithDetails['internalCategory']
-        >(
+        const internalById = new Map<string, CategoryMappingWithDetails['internalCategory']>(
           internalDocs.map((doc: MongoProductCategoryDoc) => [
             doc._id.toString(),
             mapMongoInternalCategory(doc),
@@ -697,8 +682,7 @@ export function getCategoryMappingRepository(): CategoryMappingRepository {
             externalByExternalId.get(mapping.externalCategoryId) ??
             createMissingExternalCategory(mapping);
           const internal: CategoryMappingWithDetails['internalCategory'] =
-            internalById.get(mapping.internalCategoryId) ??
-            createMissingInternalCategory(mapping);
+            internalById.get(mapping.internalCategoryId) ?? createMissingInternalCategory(mapping);
 
           return {
             id: mapping._id.toString(),
@@ -731,10 +715,7 @@ export function getCategoryMappingRepository(): CategoryMappingRepository {
           externalCategory: true,
           internalCategory: true,
         },
-        orderBy: [
-          { externalCategory: { depth: 'asc' } },
-          { externalCategory: { name: 'asc' } },
-        ],
+        orderBy: [{ externalCategory: { depth: 'asc' } }, { externalCategory: { name: 'asc' } }],
       });
 
       return (records as EnrichedCategoryMapping[]).map((r: EnrichedCategoryMapping) => ({
@@ -782,9 +763,7 @@ export function getCategoryMappingRepository(): CategoryMappingRepository {
       if (provider === 'mongodb') {
         await ensureMongoCategoryMappingIndexes();
         const db = await getMongoDb();
-        const externalCanonicalMap = await buildExternalCategoryCanonicalMap(
-          connectionId
-        );
+        const externalCanonicalMap = await buildExternalCategoryCanonicalMap(connectionId);
         const canonicalExternalCategoryId =
           externalCanonicalMap.get(externalCategoryId) ?? externalCategoryId;
         const lookupExternalCategoryIds = Array.from(
@@ -858,16 +837,13 @@ export function getCategoryMappingRepository(): CategoryMappingRepository {
       if (provider === 'mongodb') {
         await ensureMongoCategoryMappingIndexes();
         const db = await getMongoDb();
-        const externalCanonicalMap = await buildExternalCategoryCanonicalMap(
-          connectionId
-        );
+        const externalCanonicalMap = await buildExternalCategoryCanonicalMap(connectionId);
         const collection = db.collection<MongoCategoryMappingDoc>(CATEGORY_MAPPING_COLLECTION);
         let count = 0;
 
         for (const mapping of mappings) {
           const canonicalExternalCategoryId =
-            externalCanonicalMap.get(mapping.externalCategoryId) ??
-            mapping.externalCategoryId;
+            externalCanonicalMap.get(mapping.externalCategoryId) ?? mapping.externalCategoryId;
           if (mapping.internalCategoryId === null) {
             const deactivated = await collection.updateMany(
               {

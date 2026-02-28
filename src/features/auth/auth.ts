@@ -17,7 +17,10 @@ import {
   recordLoginFailure,
   recordLoginSuccess,
 } from '@/features/auth/services/auth-security';
-import { getAuthSecurityProfile, updateAuthSecurityProfile } from '@/features/auth/services/auth-security-profile';
+import {
+  getAuthSecurityProfile,
+  updateAuthSecurityProfile,
+} from '@/features/auth/services/auth-security-profile';
 import { getAuthUserPageSettings } from '@/features/auth/services/auth-settings';
 import { hashRecoveryCode, verifyTotpToken } from '@/features/auth/services/totp';
 import { decryptAuthSecret } from '@/features/auth/utils/auth-encryption';
@@ -51,7 +54,7 @@ const credentialsProvider = Credentials({
       const otp = credentials?.['otp']?.toString() ?? '';
       const recoveryCode = credentials?.['recoveryCode']?.toString() ?? '';
       const challengeId = credentials?.['challengeId']?.toString() ?? '';
-      
+
       if (!email || !password) {
         // Log non-critical info without awaiting
         void ErrorSystem.logInfo('[AUTH] Missing email or password', { service: 'auth' });
@@ -59,13 +62,15 @@ const credentialsProvider = Credentials({
       }
 
       const ip = extractClientIp(request);
-      
+
       // Parallelize initial security checks and user lookup
       const [allowed, user] = await Promise.all([
         checkLoginAllowed({ email, ip }),
-        challengeId 
-          ? consumeLoginChallenge({ id: challengeId, email, ip }).then(c => c ? findAuthUserById(c.userId) : null)
-          : findAuthUserByEmail(email)
+        challengeId
+          ? consumeLoginChallenge({ id: challengeId, email, ip }).then((c) =>
+              c ? findAuthUserById(c.userId) : null
+            )
+          : findAuthUserByEmail(email),
       ]);
 
       if (!allowed.allowed) {
@@ -79,7 +84,10 @@ const credentialsProvider = Credentials({
       }
 
       if (!user) {
-        void ErrorSystem.logInfo('[AUTH] User not found or challenge invalid', { service: 'auth', email });
+        void ErrorSystem.logInfo('[AUTH] User not found or challenge invalid', {
+          service: 'auth',
+          email,
+        });
         void recordLoginFailure({ email, ip, request });
         return null;
       }
@@ -87,7 +95,7 @@ const credentialsProvider = Credentials({
       // Parallelize profile fetching
       const [security, settings] = await Promise.all([
         getAuthSecurityProfile(user.id),
-        getAuthUserPageSettings()
+        getAuthUserPageSettings(),
       ]);
 
       if (security.bannedAt || security.disabledAt) {
@@ -110,13 +118,16 @@ const credentialsProvider = Credentials({
       // But we still verify MFA if enabled
       if (!challengeId) {
         if (!user.passwordHash) {
-          void ErrorSystem.logWarning('[AUTH] User has no password hash', { service: 'auth', userId: user.id });
+          void ErrorSystem.logWarning('[AUTH] User has no password hash', {
+            service: 'auth',
+            userId: user.id,
+          });
           void recordLoginFailure({ email, ip, request });
           return null;
         }
 
         const isValid = await bcrypt.compare(password, user.passwordHash);
-        
+
         if (!isValid) {
           void recordLoginFailure({ email, ip, request });
           return null;
@@ -127,13 +138,11 @@ const credentialsProvider = Credentials({
         const providedRecovery = recoveryCode.trim();
         const providedOtp = otp.trim();
         let mfaOk = false;
-        
+
         if (providedRecovery) {
           const hashed = hashRecoveryCode(providedRecovery);
           if (security.recoveryCodes.includes(hashed)) {
-            const nextCodes = security.recoveryCodes.filter(
-              (code: string) => code !== hashed
-            );
+            const nextCodes = security.recoveryCodes.filter((code: string) => code !== hashed);
             // Update codes in background
             void updateAuthSecurityProfile(user.id, {
               recoveryCodes: nextCodes,
@@ -144,7 +153,7 @@ const credentialsProvider = Credentials({
           const secret = decryptAuthSecret(security.mfaSecret);
           mfaOk = verifyTotpToken(secret, providedOtp);
         }
-        
+
         if (!mfaOk) {
           void recordLoginFailure({ email, ip, request });
           return null;
@@ -171,7 +180,7 @@ const credentialsProvider = Credentials({
 
 const buildProviders = (): Provider[] => {
   const providers: Provider[] = [credentialsProvider];
-  
+
   if (process.env['GOOGLE_CLIENT_ID'] && process.env['GOOGLE_CLIENT_SECRET']) {
     providers.push(
       Google({
@@ -181,10 +190,13 @@ const buildProviders = (): Provider[] => {
     );
   } else {
     // Non-critical warning, log to system but don't spam if not configured
-    void ErrorSystem.logWarning('[AUTH] Google Client ID/Secret not found. Google login will be unavailable.', {
-      service: 'auth',
-      provider: 'google'
-    });
+    void ErrorSystem.logWarning(
+      '[AUTH] Google Client ID/Secret not found. Google login will be unavailable.',
+      {
+        service: 'auth',
+        provider: 'google',
+      }
+    );
   }
 
   if (process.env['FACEBOOK_CLIENT_ID'] && process.env['FACEBOOK_CLIENT_SECRET']) {
@@ -195,10 +207,13 @@ const buildProviders = (): Provider[] => {
       })
     );
   } else {
-    void ErrorSystem.logWarning('[AUTH] Facebook Client ID/Secret not found. Facebook login will be unavailable.', {
-      service: 'auth',
-      provider: 'facebook'
-    });
+    void ErrorSystem.logWarning(
+      '[AUTH] Facebook Client ID/Secret not found. Facebook login will be unavailable.',
+      {
+        service: 'auth',
+        provider: 'facebook',
+      }
+    );
   }
 
   return providers;
@@ -227,7 +242,10 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
       throw configurationError(`[AUTH] Adapter initialization failed for "${provider}".`);
     }
     if (authLoggingEnabled) {
-      await ErrorSystem.logInfo(`[AUTH] Adapter configured for ${provider}.`, { service: 'auth', provider });
+      await ErrorSystem.logInfo(`[AUTH] Adapter configured for ${provider}.`, {
+        service: 'auth',
+        provider,
+      });
     }
 
     return {
@@ -242,8 +260,12 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
 
           const tokenMeta = token as JWT & { authRefreshedAt?: number };
           const now = Date.now();
-          const refreshTtlMs = Number.parseInt(process.env['AUTH_TOKEN_REFRESH_TTL_MS'] ?? '60000', 10);
-          const lastRefresh = typeof tokenMeta.authRefreshedAt === 'number' ? tokenMeta.authRefreshedAt : 0;
+          const refreshTtlMs = Number.parseInt(
+            process.env['AUTH_TOKEN_REFRESH_TTL_MS'] ?? '60000',
+            10
+          );
+          const lastRefresh =
+            typeof tokenMeta.authRefreshedAt === 'number' ? tokenMeta.authRefreshedAt : 0;
           const hasRole = typeof tokenMeta.role === 'string' && tokenMeta.role.length > 0;
           const shouldRefresh = Boolean(user) || !hasRole || now - lastRefresh > refreshTtlMs;
 
@@ -296,7 +318,9 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
             }).catch(() => {});
           }
         },
-        async signOut(message: { session: void | AdapterSession | null | undefined; } | { token: JWT | null; }) {
+        async signOut(
+          message: { session: void | AdapterSession | null | undefined } | { token: JWT | null }
+        ) {
           if ('token' in message && message.token?.sub) {
             void logActivity({
               type: ActivityTypes.AUTH.LOGOUT,
@@ -350,4 +374,3 @@ const getAuthConfig = async (): Promise<NextAuthConfig> => {
 };
 
 export const { handlers, auth, signIn, signOut } = NextAuth(getAuthConfig);
-  

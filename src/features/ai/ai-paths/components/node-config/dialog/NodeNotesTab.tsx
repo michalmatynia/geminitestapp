@@ -33,10 +33,7 @@ export function NodeNotesTab(): React.JSX.Element | null {
   const noteColor = resolveColor(notes.color);
   const showOnCanvas = Boolean(notes.showOnCanvas);
 
-  const previewStyle = useMemo(
-    () => ({ backgroundColor: noteColor }),
-    [noteColor]
-  );
+  const previewStyle = useMemo(() => ({ backgroundColor: noteColor }), [noteColor]);
 
   return (
     <div className='space-y-4'>
@@ -73,7 +70,9 @@ export function NodeNotesTab(): React.JSX.Element | null {
               key={swatch}
               type='button'
               className={`h-7 w-7 rounded border transition-all ${
-                noteColor === swatch ? 'border-white ring-2 ring-white/20' : 'border-border/60 hover:border-white/40'
+                noteColor === swatch
+                  ? 'border-white ring-2 ring-white/20'
+                  : 'border-border/60 hover:border-white/40'
               }`}
               style={{ backgroundColor: swatch }}
               onClick={() => updateSelectedNodeConfig({ notes: { color: swatch } })}
@@ -96,8 +95,11 @@ export function NodeNotesTab(): React.JSX.Element | null {
           </div>
         </div>
       </FormField>
-      
-      <div className='rounded border border-border/60 px-3 py-2 text-[11px] text-gray-900 shadow-sm' style={previewStyle}>
+
+      <div
+        className='rounded border border-border/60 px-3 py-2 text-[11px] text-gray-900 shadow-sm'
+        style={previewStyle}
+      >
         {noteText.trim() ? noteText : 'Preview: your note will appear here.'}
       </div>
     </div>

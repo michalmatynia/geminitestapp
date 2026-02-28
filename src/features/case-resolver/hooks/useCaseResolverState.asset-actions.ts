@@ -21,7 +21,13 @@ type UseCaseResolverStateAssetActionsInput = {
   toast: Toast;
   updateWorkspace: (
     updater: (current: CaseResolverWorkspace) => CaseResolverWorkspace,
-    options?: { persistToast?: string; persistNow?: boolean; mutationId?: string; source?: string; skipNormalization?: boolean }
+    options?: {
+      persistToast?: string;
+      persistNow?: boolean;
+      mutationId?: string;
+      source?: string;
+      skipNormalization?: boolean;
+    }
   ) => void;
   workspace: CaseResolverWorkspace;
   editingDocumentDraft: CaseResolverFileEditDraft | null;
@@ -46,7 +52,10 @@ export type UseCaseResolverStateAssetActionsResult = {
   handleRunScanFileOcr: (fileId: string) => Promise<void>;
   handleCreateDocumentFromText: (scanFileId: string) => void;
   handleCreateImageAsset: (targetFolderPath: string | null) => void;
-  handleUploadAssets: (files: File[], targetFolderPath: string | null) => Promise<CaseResolverAssetFile[]>;
+  handleUploadAssets: (
+    files: File[],
+    targetFolderPath: string | null
+  ) => Promise<CaseResolverAssetFile[]>;
   handleAttachAssetFile: (
     assetId: string,
     file: File,

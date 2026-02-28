@@ -2,12 +2,7 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  FolderPlus,
-  FilePlus,
-  FileImage,
-  FileCode2
-} from 'lucide-react';
+import { FolderPlus, FilePlus, FileImage, FileCode2 } from 'lucide-react';
 
 import { Button, Switch } from '@/shared/ui';
 import { FolderTreeSearchBar } from '@/shared/lib/foldertree/v2/search';
@@ -72,9 +67,7 @@ export function CaseResolverTreeHeader({
   const activeCaseIdentifierLabel = React.useMemo((): string | null => {
     const identifierId = activeCaseFile?.caseIdentifierId ?? null;
     if (!identifierId) return null;
-    const match = caseResolverIdentifiers.find(
-      (identifier) => identifier.id === identifierId,
-    );
+    const match = caseResolverIdentifiers.find((identifier) => identifier.id === identifierId);
     return match?.name ?? identifierId;
   }, [activeCaseFile?.caseIdentifierId, caseResolverIdentifiers]);
 

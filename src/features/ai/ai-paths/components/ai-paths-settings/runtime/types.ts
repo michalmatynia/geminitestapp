@@ -24,7 +24,6 @@ export type { QueuedRun } from '@/shared/lib/ai-paths';
 
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 
-
 /**
  * The actual UI toast function type used in runtime hooks.
  * Different from ToastFn in @/shared/contracts/ai-paths-runtime which is the
@@ -32,7 +31,11 @@ import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
  */
 export type UiToastFn = (
   message: string,
-  options?: { variant?: 'success' | 'error' | 'info' | 'warning'; duration?: number; error?: unknown }
+  options?: {
+    variant?: 'success' | 'error' | 'info' | 'warning';
+    duration?: number;
+    error?: unknown;
+  }
 ) => void;
 
 /**
@@ -122,8 +125,15 @@ export interface LocalExecutionArgs {
   normalizeNodeStatus: (value: unknown) => AiPathRuntimeNodeStatus | null;
   formatStatusLabel: (status: AiPathRuntimeNodeStatus) => string;
   hasPendingIteratorAdvance: (state: RuntimeState) => boolean;
-  fetchEntityByType: (entityType: string, entityId: string) => Promise<Record<string, unknown> | null>;
-  reportAiPathsError: (error: unknown, context: Record<string, unknown>, fallbackMessage?: string) => void;
+  fetchEntityByType: (
+    entityType: string,
+    entityId: string
+  ) => Promise<Record<string, unknown> | null>;
+  reportAiPathsError: (
+    error: unknown,
+    context: Record<string, unknown>,
+    fallbackMessage?: string
+  ) => void;
   toast: UiToastFn;
   stopServerRunStream: () => void;
   runServerStream: (
@@ -157,7 +167,11 @@ export interface UseAiPathsRuntimeArgs {
   setPathDebugSnapshots: Dispatch<SetStateAction<Record<string, PathDebugSnapshot>>>;
   setLastRunAt: (at: string | null) => void;
   lastRunAt?: string | null;
-  reportAiPathsError: (error: unknown, context: Record<string, unknown>, fallbackMessage?: string) => void;
+  reportAiPathsError: (
+    error: unknown,
+    context: Record<string, unknown>,
+    fallbackMessage?: string
+  ) => void;
   toast: UiToastFn;
 }
 

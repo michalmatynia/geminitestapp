@@ -66,7 +66,13 @@ const normalizeNodeIds = (
   values: ReadonlyArray<string> | Set<string> | null | undefined
 ): string[] => {
   if (!values) return [];
-  return Array.from(new Set(Array.from(values).map((id) => id.trim()).filter(Boolean)));
+  return Array.from(
+    new Set(
+      Array.from(values)
+        .map((id) => id.trim())
+        .filter(Boolean)
+    )
+  );
 };
 
 const areNodeListsEqual = (
@@ -214,25 +220,21 @@ export function useMasterFolderTreeInstance({
   const hasPersistedUiStateLegacy = shouldReadLegacyState && rawUiStateV1 !== undefined;
   const hasPersistedUiState = hasPersistedUiStateV2 || hasPersistedUiStateLegacy;
   const isExpandedNodeIdsControlled = fallbackExpandedNodeIds !== undefined;
-  const persistedExpandedNodeIds =
-    hasPersistedUiStateV2
+  const persistedExpandedNodeIds = hasPersistedUiStateV2
+    ? uiEntry.expandedNodeIds
+    : uiEntry.expandedNodeIds.length > 0
       ? uiEntry.expandedNodeIds
-      : uiEntry.expandedNodeIds.length > 0
-        ? uiEntry.expandedNodeIds
-        : undefined;
-  const resolvedExpandedNodeIds =
-    persistedExpandedNodeIds ?? fallbackExpandedNodeIds;
+      : undefined;
+  const resolvedExpandedNodeIds = persistedExpandedNodeIds ?? fallbackExpandedNodeIds;
   const resolvedInitialExpandedNodeIds =
     persistedExpandedNodeIds !== undefined
       ? persistedExpandedNodeIds
-      : fallbackInitiallyExpandedNodeIds ?? fallbackExpandedNodeIds;
+      : (fallbackInitiallyExpandedNodeIds ?? fallbackExpandedNodeIds);
 
   const panelCollapsed = uiEntry.panelCollapsed;
 
   const queuePersistTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastPersistedUiPayloadRef = useRef<string>(
-    serializeFolderTreeUiStateV2Entry(uiEntry)
-  );
+  const lastPersistedUiPayloadRef = useRef<string>(serializeFolderTreeUiStateV2Entry(uiEntry));
 
   useEffect(() => {
     lastPersistedUiPayloadRef.current = serializeFolderTreeUiStateV2Entry(uiEntry);

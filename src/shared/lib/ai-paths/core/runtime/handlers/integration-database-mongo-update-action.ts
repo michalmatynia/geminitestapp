@@ -88,14 +88,8 @@ export async function handleDatabaseMongoUpdateAction({
     return planResult.output;
   }
 
-  const {
-    resolvedFilter,
-    debugPayload,
-    parameterTargetPath,
-    updates,
-    primaryTarget,
-    updateDoc,
-  } = planResult.plan;
+  const { resolvedFilter, debugPayload, parameterTargetPath, updates, primaryTarget, updateDoc } =
+    planResult.plan;
 
   if (executed.updater.has(node.id)) {
     return prevOutputs;
@@ -117,9 +111,14 @@ export async function handleDatabaseMongoUpdateAction({
     };
   }
 
-  const updatePayloadMode = dbConfig.updatePayloadMode ?? (dbConfig.mappings?.length ? 'mapping' : 'custom');
-  
-  if (updatePayloadMode !== 'custom' && updatePayloadMode !== 'mapping' && (updatePayloadMode as string) !== 'mongo') {
+  const updatePayloadMode =
+    dbConfig.updatePayloadMode ?? (dbConfig.mappings?.length ? 'mapping' : 'custom');
+
+  if (
+    updatePayloadMode !== 'custom' &&
+    updatePayloadMode !== 'mapping' &&
+    (updatePayloadMode as string) !== 'mongo'
+  ) {
     const error =
       'Unsupported update mode. Configure explicit filter and update document or use mappings.';
     reportAiPathsError(
@@ -129,7 +128,7 @@ export async function handleDatabaseMongoUpdateAction({
         nodeId: node.id,
         updatePayloadMode,
       },
-      'Database update blocked:',
+      'Database update blocked:'
     );
     toast(error, { variant: 'error' });
     return {

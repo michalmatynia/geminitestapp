@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { mocks } = vi.hoisted(() => ({
   mocks: {
-    chatbotProcessor: null as any
-  }
+    chatbotProcessor: null as any,
+  },
 }));
 
 vi.mock('@/shared/lib/queue', () => ({
@@ -47,7 +47,9 @@ describe('Chatbot Job Queue Worker', () => {
     startChatbotJobQueue();
     // Check if any instance's startWorker was called
     const instances = (createManagedQueue as any).mock.results.map((r: any) => r.value);
-    const startWorkerCalled = instances.some((i: any) => i.startWorker && i.startWorker.mock.calls.length > 0);
+    const startWorkerCalled = instances.some(
+      (i: any) => i.startWorker && i.startWorker.mock.calls.length > 0
+    );
     expect(startWorkerCalled).toBe(true);
   });
 
@@ -58,17 +60,23 @@ describe('Chatbot Job Queue Worker', () => {
       id: 'j1',
       status: 'pending',
     };
-    
+
     vi.mocked(chatbotJobRepository.findById).mockResolvedValue(mockJob as any);
-    vi.mocked(chatbotJobRepository.update).mockResolvedValue({ ...mockJob, status: 'running' } as any);
+    vi.mocked(chatbotJobRepository.update).mockResolvedValue({
+      ...mockJob,
+      status: 'running',
+    } as any);
 
     await mocks.chatbotProcessor({ jobId: 'j1' });
 
     expect(chatbotJobRepository.findById).toHaveBeenCalledWith('j1');
-    expect(chatbotJobRepository.update).toHaveBeenCalledWith('j1', expect.objectContaining({ 
-      status: 'running',
-      startedAt: expect.any(Date)
-    }));
+    expect(chatbotJobRepository.update).toHaveBeenCalledWith(
+      'j1',
+      expect.objectContaining({
+        status: 'running',
+        startedAt: expect.any(Date),
+      })
+    );
     expect(processJob).toHaveBeenCalledWith('j1');
   });
 
@@ -79,7 +87,7 @@ describe('Chatbot Job Queue Worker', () => {
       id: 'j1',
       status: 'running',
     };
-    
+
     vi.mocked(chatbotJobRepository.findById).mockResolvedValue(mockJob as any);
 
     await mocks.chatbotProcessor({ jobId: 'j1' });

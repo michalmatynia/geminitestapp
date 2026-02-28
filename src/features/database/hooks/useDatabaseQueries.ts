@@ -24,14 +24,12 @@ import type {
   DatabaseType,
   SqlQueryResult,
 } from '@/shared/contracts/database';
-import type { 
-  ListQuery, 
-  SingleQuery, 
-  MutationResult, 
-  UpdateMutation
-} from '@/shared/contracts/ui';
+import type { ListQuery, SingleQuery, MutationResult, UpdateMutation } from '@/shared/contracts/ui';
 import { ApiError } from '@/shared/lib/api-client';
-import { resolvePayloadErrorMessage, unwrapMutationResult } from '@/shared/lib/mutation-error-handler';
+import {
+  resolvePayloadErrorMessage,
+  unwrapMutationResult,
+} from '@/shared/lib/mutation-error-handler';
 import {
   createDeleteMutationV2,
   createListQueryV2,
@@ -66,7 +64,6 @@ import {
   type ApiPayloadResult,
 } from '../api';
 
-
 const invalidateBackups = (queryClient: QueryClient, dbType: DatabaseType): void => {
   void queryClient.invalidateQueries({ queryKey: dbKeys.backups(dbType) });
 };
@@ -81,9 +78,7 @@ const invalidateEngineSchedulerStatus = (queryClient: QueryClient): void => {
   void queryClient.invalidateQueries({ queryKey: dbKeys.engineBackupSchedulerStatus() });
 };
 
-export function useDatabaseBackups(
-  dbType: DatabaseType
-): ListQuery<DatabaseInfoResponse> {
+export function useDatabaseBackups(dbType: DatabaseType): ListQuery<DatabaseInfoResponse> {
   const queryKey = dbKeys.backups(dbType);
   return createListQueryV2({
     queryKey,
@@ -102,7 +97,7 @@ export function useDatabaseBackups(
 export function useCreateBackupMutation(): MutationResult<
   ApiPayloadResult<DatabaseBackupResponse>,
   DatabaseType
-  > {
+> {
   const queryClient = useQueryClient();
   const mutationKey = dbKeys.all;
   return createCreateMutationV2({
@@ -125,7 +120,7 @@ export function useCreateBackupMutation(): MutationResult<
 export function useRestoreBackupMutation(): MutationResult<
   ApiPayloadResult<DatabaseRestoreResponse>,
   { dbType: DatabaseType; backupName: string; truncateBeforeRestore: boolean }
-  > {
+> {
   const mutationKey = dbKeys.all;
   return createUpdateMutationV2({
     mutationFn: (variables: {
@@ -152,7 +147,7 @@ export function useRestoreBackupMutation(): MutationResult<
 export function useUploadBackupMutation(): MutationResult<
   ApiPayloadResult<DatabaseBackupResponse>,
   { dbType: DatabaseType; file: File; onProgress?: (loaded: number, total?: number) => void }
-  > {
+> {
   const queryClient = useQueryClient();
   const mutationKey = dbKeys.all;
   return createCreateMutationV2({
@@ -179,7 +174,7 @@ export function useUploadBackupMutation(): MutationResult<
 export function useDeleteBackupMutation(): MutationResult<
   ApiPayloadResult<DatabaseBackupResponse>,
   { dbType: DatabaseType; backupName: string }
-  > {
+> {
   const queryClient = useQueryClient();
   const mutationKey = dbKeys.all;
   return createDeleteMutationV2({
@@ -216,7 +211,7 @@ export function useDatabasePreview(input: {
     page,
     pageSize,
   });
-  
+
   return createSingleQueryV2({
     id: `${backupName ?? 'none'}:${mode ?? 'none'}:${type ?? 'none'}:${page ?? 1}:${pageSize ?? 0}`,
     queryKey,
@@ -229,7 +224,10 @@ export function useDatabasePreview(input: {
         pageSize,
       });
       if (!result.ok) {
-        const message = resolvePayloadErrorMessage(result.payload, 'Failed to fetch database preview.');
+        const message = resolvePayloadErrorMessage(
+          result.payload,
+          'Failed to fetch database preview.'
+        );
         throw new ApiError(message, 400);
       }
       return result.payload;
@@ -242,7 +240,7 @@ export function useDatabasePreview(input: {
       domain: 'global',
       queryKey,
       tags: ['database', 'preview'],
-    }
+    },
   });
 }
 
@@ -258,7 +256,7 @@ export function useSqlQueryMutation(): MutationResult<
     update?: Record<string, unknown>;
     pipeline?: Record<string, unknown>[];
   }
-  > {
+> {
   const mutationKey = dbKeys.all;
   return createUpdateMutationV2({
     mutationFn: (input) => executeSqlQuery(input),
@@ -347,9 +345,7 @@ export function useDatabaseEngineStatus(): SingleQuery<DatabaseEngineStatusRespo
   });
 }
 
-export function useDatabaseBackupSchedulerStatus(): SingleQuery<
-  DatabaseEngineBackupSchedulerStatusResponse
-  > {
+export function useDatabaseBackupSchedulerStatus(): SingleQuery<DatabaseEngineBackupSchedulerStatusResponse> {
   const queryKey = dbKeys.engineBackupSchedulerStatus();
   return createSingleQueryV2({
     id: 'engine-backup-scheduler-status',
@@ -392,7 +388,7 @@ export function useDatabaseEngineOperationsJobs(
 export function useDatabaseBackupSchedulerTickMutation(): UpdateMutation<
   DatabaseEngineBackupSchedulerTickResponse,
   void
-  > {
+> {
   const queryClient = useQueryClient();
   const mutationKey = dbKeys.all;
   return createUpdateMutationV2({
@@ -415,12 +411,11 @@ export function useDatabaseBackupSchedulerTickMutation(): UpdateMutation<
 export function useDatabaseBackupRunNowMutation(): UpdateMutation<
   DatabaseEngineBackupRunNowResponse,
   { dbType: 'mongodb' | 'postgresql' | 'all' }
-  > {
+> {
   const queryClient = useQueryClient();
   const mutationKey = dbKeys.all;
   return createCreateMutationV2({
-    mutationFn: (variables) =>
-      runDatabaseEngineBackupNow(variables.dbType),
+    mutationFn: (variables) => runDatabaseEngineBackupNow(variables.dbType),
     mutationKey,
     meta: {
       source: 'database.hooks.useDatabaseBackupRunNowMutation',
@@ -442,12 +437,11 @@ export function useDatabaseBackupRunNowMutation(): UpdateMutation<
 export function useCancelDatabaseEngineOperationJobMutation(): MutationResult<
   { success: boolean; job: unknown },
   { jobId: string }
-  > {
+> {
   const queryClient = useQueryClient();
   const mutationKey = dbKeys.all;
   return createUpdateMutationV2({
-    mutationFn: (variables: { jobId: string }) =>
-      cancelDatabaseEngineOperationJob(variables.jobId),
+    mutationFn: (variables: { jobId: string }) => cancelDatabaseEngineOperationJob(variables.jobId),
     mutationKey,
     meta: {
       source: 'database.hooks.useCancelDatabaseEngineOperationJobMutation',
@@ -491,7 +485,7 @@ export function useDatabaseEngineProviderPreview(
 export function useCopyCollectionMutation(): MutationResult<
   CollectionCopyResult,
   { collection: string; direction: 'mongo_to_prisma' | 'prisma_to_mongo' }
-  > {
+> {
   const queryClient = useQueryClient();
   const mutationKey = dbKeys.all;
   return createCreateMutationV2({
@@ -520,10 +514,7 @@ export function useCopyCollectionMutation(): MutationResult<
   });
 }
 
-export function useCreateJsonBackupMutation(): UpdateMutation<
-  DatabaseBackupResponse,
-  void
-  > {
+export function useCreateJsonBackupMutation(): UpdateMutation<DatabaseBackupResponse, void> {
   const queryClient = useQueryClient();
   const mutationKey = dbKeys.all;
   return createCreateMutationV2({
@@ -546,10 +537,7 @@ export function useCreateJsonBackupMutation(): UpdateMutation<
   });
 }
 
-export function useRestoreJsonBackupMutation(): UpdateMutation<
-  DatabaseRestoreResponse,
-  string
-  > {
+export function useRestoreJsonBackupMutation(): UpdateMutation<DatabaseRestoreResponse, string> {
   const mutationKey = dbKeys.all;
   return createUpdateMutationV2({
     mutationFn: async (backupName: string): Promise<DatabaseRestoreResponse> => {

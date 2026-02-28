@@ -35,17 +35,16 @@ export const dismissConsent = async (
   activeStepId?: string | null
 ): Promise<void> => {
   if (!page) return;
-  const buttonText = 
-    /accept|agree|ok|got it|allow all|accept all|dismiss|close/i;
+  const buttonText = /accept|agree|ok|got it|allow all|accept all|dismiss|close/i;
   const selectors = [
     'button',
-    '[role=\'button\']',
-    'input[type=\'button\']',
-    'input[type=\'submit\']',
-    '[data-testid*=\'consent\' i]',
-    '[data-testid*=\'cookie\' i]',
-    '[aria-label*=\'accept\' i]',
-    '[aria-label*=\'cookie\' i]',
+    "[role='button']",
+    "input[type='button']",
+    "input[type='submit']",
+    "[data-testid*='consent' i]",
+    "[data-testid*='cookie' i]",
+    "[aria-label*='accept' i]",
+    "[aria-label*='cookie' i]",
   ];
   try {
     const candidates = page.locator(selectors.join(', '));
@@ -133,7 +132,9 @@ export const inferLoginCandidates = async (
         return score;
       };
 
-      const describe = (el: Element): {
+      const describe = (
+        el: Element
+      ): {
         tag: string;
         id: string | null;
         name: string | null;
@@ -153,20 +154,17 @@ export const inferLoginCandidates = async (
         selector: cssPath(el),
       });
 
-      const inputs = Array.from(
-        document.querySelectorAll('input, textarea, select')
-      )
+      const inputs = Array.from(document.querySelectorAll('input, textarea, select'))
         .filter((el: Element) => (el as HTMLElement).offsetParent !== null)
         .map((el: Element) => ({
           ...describe(el),
-          score:
-            el instanceof HTMLInputElement ? scoreInput(el) : 0,
+          score: el instanceof HTMLInputElement ? scoreInput(el) : 0,
         }))
         .sort((a: { score: number }, b: { score: number }) => b.score - a.score)
         .slice(0, 12);
 
       const buttons = Array.from(
-        document.querySelectorAll('button, input[type=\'submit\'], input[type=\'button\']')
+        document.querySelectorAll("button, input[type='submit'], input[type='button']")
       )
         .filter((el: Element) => (el as HTMLElement).offsetParent !== null)
         .map((el: Element) => ({
@@ -213,20 +211,19 @@ export const ensureLoginFormVisible = async (
   if (passwordField) return true;
 
   const loginTrigger = await findFirstVisible(
-    page.locator(
-      'a, button, [role="button"]'
-    ).filter({
-      hasText: /log in|login|sign in|zaloguj|zalogować|zaloguj się|inloggen|logga in|connexion|accedi/i,
+    page.locator('a, button, [role="button"]').filter({
+      hasText:
+        /log in|login|sign in|zaloguj|zalogować|zaloguj się|inloggen|logga in|connexion|accedi/i,
     })
   );
 
   if (loginTrigger) {
     await loginTrigger.click();
     if (log) await log('info', 'Clicked login trigger.');
-    // We cannot call captureSessionContext here easily without importing context, 
-    // but better to keep actions pure-ish or passed context. 
-    // For now omitting session capture inside helper to avoid circular dep, 
-    // or we assume context is passed if we want. 
+    // We cannot call captureSessionContext here easily without importing context,
+    // but better to keep actions pure-ish or passed context.
+    // For now omitting session capture inside helper to avoid circular dep,
+    // or we assume context is passed if we want.
     // Let's assume the caller handles context capture or we pass the browser context.
     try {
       await page.waitForSelector(passwordSelector, { timeout: 10000 });

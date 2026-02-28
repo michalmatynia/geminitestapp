@@ -10,16 +10,14 @@ import type {
   SemanticNodeDto as SemanticNode,
 } from '@/shared/contracts/ai-paths-semantic-grammar';
 
-import { createDefaultPathConfig } from '../utils/factory';
+import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factory';
 import { normalizeAiPathsValidationConfig } from '../validation-engine';
 
 export type ParseSemanticDocumentResult =
   | { ok: true; value: SemanticDocument }
   | { ok: false; error: string };
 
-export const parseSemanticDocument = (
-  input: unknown,
-): ParseSemanticDocumentResult => {
+export const parseSemanticDocument = (input: unknown): ParseSemanticDocumentResult => {
   const parsed = semanticDocumentSchema.safeParse(input);
   if (parsed.success) {
     return { ok: true, value: parsed.data };
@@ -32,9 +30,7 @@ export const parseSemanticDocument = (
   };
 };
 
-export const parseSemanticCanvasDocument = (
-  input: unknown,
-): ParseSemanticDocumentResult => {
+export const parseSemanticCanvasDocument = (input: unknown): ParseSemanticDocumentResult => {
   const parsed = canvasSemanticDocumentSchema.safeParse(input);
   if (parsed.success) {
     return { ok: true, value: parsed.data };
@@ -55,10 +51,7 @@ const toAiNode = (semanticNode: SemanticNode, fallbackTimestamp: string): AiNode
   position: semanticNode.position,
   inputs: semanticNode.inputs,
   outputs: semanticNode.outputs,
-  data:
-    semanticNode.data && typeof semanticNode.data === 'object'
-      ? semanticNode.data
-      : {},
+  data: semanticNode.data && typeof semanticNode.data === 'object' ? semanticNode.data : {},
   createdAt: semanticNode.createdAt ?? fallbackTimestamp,
   updatedAt:
     typeof semanticNode.updatedAt === 'string' || semanticNode.updatedAt === null
@@ -77,15 +70,15 @@ const toAiEdge = (semanticEdge: SemanticEdge): Edge => ({
   target: semanticEdge.toNodeId,
   ...(typeof semanticEdge.fromPort === 'string' || semanticEdge.fromPort === null
     ? {
-      fromPort: semanticEdge.fromPort,
-      sourceHandle: semanticEdge.fromPort,
-    }
+        fromPort: semanticEdge.fromPort,
+        sourceHandle: semanticEdge.fromPort,
+      }
     : {}),
   ...(typeof semanticEdge.toPort === 'string' || semanticEdge.toPort === null
     ? {
-      toPort: semanticEdge.toPort,
-      targetHandle: semanticEdge.toPort,
-    }
+        toPort: semanticEdge.toPort,
+        targetHandle: semanticEdge.toPort,
+      }
     : {}),
   ...(typeof semanticEdge.label === 'string' || semanticEdge.label === null
     ? { label: semanticEdge.label }
@@ -94,25 +87,19 @@ const toAiEdge = (semanticEdge: SemanticEdge): Edge => ({
   ...(semanticEdge.data && typeof semanticEdge.data === 'object'
     ? { data: semanticEdge.data }
     : {}),
-  ...(typeof semanticEdge.createdAt === 'string'
-    ? { createdAt: semanticEdge.createdAt }
-    : {}),
+  ...(typeof semanticEdge.createdAt === 'string' ? { createdAt: semanticEdge.createdAt } : {}),
   ...(typeof semanticEdge.updatedAt === 'string' || semanticEdge.updatedAt === null
     ? { updatedAt: semanticEdge.updatedAt }
     : {}),
 });
 
 export const deserializeSemanticCanvasToPathConfig = (
-  semanticDocument: CanvasSemanticDocument,
+  semanticDocument: CanvasSemanticDocument
 ): PathConfig => {
   const now = new Date().toISOString();
   const base = createDefaultPathConfig(semanticDocument.path.id);
-  const nodes = semanticDocument.nodes.map((node: SemanticNode): AiNode =>
-    toAiNode(node, now),
-  );
-  const edges = semanticDocument.edges.map((edge: SemanticEdge): Edge =>
-    toAiEdge(edge),
-  );
+  const nodes = semanticDocument.nodes.map((node: SemanticNode): AiNode => toAiNode(node, now));
+  const edges = semanticDocument.edges.map((edge: SemanticEdge): Edge => toAiEdge(edge));
   const runtimeState = (
     semanticDocument.execution?.runtimeState !== undefined
       ? semanticDocument.execution.runtimeState
@@ -168,7 +155,7 @@ export const deserializeSemanticCanvasToPathConfig = (
         ? semanticDocument.execution.runCount
         : 0,
     aiPathsValidation: normalizeAiPathsValidationConfig(
-      semanticDocument.validation ?? base.aiPathsValidation,
+      semanticDocument.validation ?? base.aiPathsValidation
     ),
     uiState: {
       selectedNodeId: nodes[0]?.id ?? null,
@@ -178,7 +165,7 @@ export const deserializeSemanticCanvasToPathConfig = (
 };
 
 export const parseAndDeserializeSemanticCanvas = (
-  input: unknown,
+  input: unknown
 ): { ok: true; value: PathConfig } | { ok: false; error: string } => {
   const parsed = parseSemanticCanvasDocument(input);
   if (!parsed.ok) {
@@ -186,8 +173,6 @@ export const parseAndDeserializeSemanticCanvas = (
   }
   return {
     ok: true,
-    value: deserializeSemanticCanvasToPathConfig(
-      parsed.value as CanvasSemanticDocument,
-    ),
+    value: deserializeSemanticCanvasToPathConfig(parsed.value as CanvasSemanticDocument),
   };
 };

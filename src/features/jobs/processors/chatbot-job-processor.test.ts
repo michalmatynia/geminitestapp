@@ -14,7 +14,7 @@ const {
   addMessageMock: vi.fn(),
 }));
 
-vi.mock('@/features/ai/brain/server', () => ({
+vi.mock('@/shared/lib/ai-brain/server', () => ({
   resolveBrainModelExecutionConfig: resolveBrainModelExecutionConfigMock,
 }));
 
@@ -89,7 +89,7 @@ describe('chatbot job processor', () => {
       expect.objectContaining({
         defaultTemperature: 0.7,
         defaultMaxTokens: 800,
-      }),
+      })
     );
     expect(runChatbotModelMock).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -97,15 +97,15 @@ describe('chatbot job processor', () => {
         temperature: 0.4,
         maxTokens: 1200,
         systemPrompt: 'Brain prompt',
-      }),
+      })
     );
     expect(addMessageMock).toHaveBeenCalledTimes(1);
     const addMessageArgs = addMessageMock.mock.calls[0] as [
       string,
       {
-        role: 'assistant',
-        content: 'Brain reply',
-        model: 'brain-model',
+        role: 'assistant';
+        content: 'Brain reply';
+        model: 'brain-model';
         metadata?: {
           brainApplied?: {
             feature?: string;
@@ -129,8 +129,8 @@ describe('chatbot job processor', () => {
     const updateArgs = updateMock.mock.calls[0] as [
       string,
       {
-        status: 'completed',
-        model: 'brain-model',
+        status: 'completed';
+        model: 'brain-model';
         payload?: {
           model?: string;
           options?: {

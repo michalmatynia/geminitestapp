@@ -38,9 +38,7 @@ describe('GenericItemMapper', () => {
     { value: 'ext-2', label: 'External 2' },
   ];
 
-  const mockMappings: MockMapping[] = [
-    { internalId: '1', externalId: 'ext-1' },
-  ];
+  const mockMappings: MockMapping[] = [{ internalId: '1', externalId: 'ext-1' }];
 
   const defaultMockContext = {
     pendingMappings: new Map(),

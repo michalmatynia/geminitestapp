@@ -1,5 +1,3 @@
-
-
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -7,20 +5,23 @@ import { getIntegrationRepository } from '@/features/integrations/server';
 import { decryptSecret, encryptSecret } from '@/features/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { badRequestError, configurationError, externalServiceError, notFoundError } from '@/shared/errors/app-error';
+import {
+  badRequestError,
+  configurationError,
+  externalServiceError,
+  notFoundError,
+} from '@/shared/errors/app-error';
 
 const requestSchema = z.object({
   method: z.enum(['GET', 'POST', 'PUT', 'PATCH', 'DELETE']).default('GET'),
   path: z.string().trim().min(1),
-  body: z['unknown']().optional()
+  body: z['unknown']().optional(),
 });
 
 const PROD_BASE_URL = process.env['ALLEGRO_API_URL'] ?? 'https://api.allegro.pl';
 const SANDBOX_BASE_URL =
-  process.env['ALLEGRO_SANDBOX_API_URL'] ??
-  'https://api.allegro.pl.allegrosandbox.pl';
-const PROD_TOKEN_URL =
-  process.env['ALLEGRO_TOKEN_URL'] ?? 'https://allegro.pl/auth/oauth/token';
+  process.env['ALLEGRO_SANDBOX_API_URL'] ?? 'https://api.allegro.pl.allegrosandbox.pl';
+const PROD_TOKEN_URL = process.env['ALLEGRO_TOKEN_URL'] ?? 'https://allegro.pl/auth/oauth/token';
 const SANDBOX_TOKEN_URL =
   process.env['ALLEGRO_SANDBOX_TOKEN_URL'] ??
   'https://allegro.pl.allegrosandbox.pl/auth/oauth/token';
@@ -29,13 +30,17 @@ const SANDBOX_TOKEN_URL =
  * POST /api/integrations/[id]/connections/[connectionId]/allegro/request
  * Proxy Allegro API requests using the stored access token.
  */
-export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; connectionId: string }): Promise<Response> {
+export async function POST_handler(
+  _req: NextRequest,
+  _ctx: ApiHandlerContext,
+  params: { id: string; connectionId: string }
+): Promise<Response> {
   const { id, connectionId } = params;
   if (!id || !connectionId) {
     throw badRequestError('Integration id and connection id are required');
   }
   const parsed = await parseJsonBody(_req, requestSchema, {
-    logPrefix: 'integrations.allegro.request.POST'
+    logPrefix: 'integrations.allegro.request.POST',
   });
   if (!parsed.ok) {
     return parsed.response;
@@ -54,14 +59,11 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, p
   const integration = await repo.getIntegrationById(id);
   if (integration?.slug !== 'allegro') {
     throw notFoundError('Allegro integration not found.', {
-      integrationId: id
+      integrationId: id,
     });
   }
 
-  const connection = await repo.getConnectionByIdAndIntegration(
-    connectionId,
-    id
-  );
+  const connection = await repo.getConnectionByIdAndIntegration(connectionId, id);
   if (!connection) {
     throw notFoundError('Connection not found.', { connectionId });
   }
@@ -71,20 +73,14 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, p
   }
 
   const clientId = connection.username?.trim();
-  const clientSecret = connection.password
-    ? decryptSecret(connection.password)
-    : null;
+  const clientSecret = connection.password ? decryptSecret(connection.password) : null;
 
   const refreshToken = connection.allegroRefreshToken
     ? decryptSecret(connection.allegroRefreshToken)
     : null;
 
-  const baseUrl = connection.allegroUseSandbox
-    ? SANDBOX_BASE_URL
-    : PROD_BASE_URL;
-  const tokenUrl = connection.allegroUseSandbox
-    ? SANDBOX_TOKEN_URL
-    : PROD_TOKEN_URL;
+  const baseUrl = connection.allegroUseSandbox ? SANDBOX_BASE_URL : PROD_BASE_URL;
+  const tokenUrl = connection.allegroUseSandbox ? SANDBOX_TOKEN_URL : PROD_TOKEN_URL;
   const url = new URL(`${baseUrl}${data.path}`);
 
   const buildFetchOptions = (token: string): RequestInit => {
@@ -92,13 +88,13 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, p
       method: data.method,
       headers: {
         Authorization: `Bearer ${token}`,
-        Accept: 'application/vnd.allegro.public.v1+json'
-      }
+        Accept: 'application/vnd.allegro.public.v1+json',
+      },
     };
     if (data.method !== 'GET' && data.body !== undefined) {
       options.headers = {
         ...options.headers,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       };
       options.body = JSON.stringify(data.body);
     }
@@ -112,22 +108,21 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, p
     const auth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
     const body = new URLSearchParams({
       grant_type: 'refresh_token',
-      refresh_token: refreshToken
+      refresh_token: refreshToken,
     });
     const tokenRes = await fetch(tokenUrl, {
       method: 'POST',
       headers: {
         Authorization: `Basic ${auth}`,
-        'Content-Type': 'application/x-www-form-urlencoded'
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body
+      body,
     });
     if (!tokenRes.ok) {
       const payload = await tokenRes.text();
-      throw externalServiceError(
-        `Failed to refresh Allegro token: ${tokenRes.status} ${payload}`,
-        { status: tokenRes.status }
-      );
+      throw externalServiceError(`Failed to refresh Allegro token: ${tokenRes.status} ${payload}`, {
+        status: tokenRes.status,
+      });
     }
     const payload = (await tokenRes.json()) as {
       access_token: string;
@@ -136,18 +131,16 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, p
       scope?: string;
       expires_in?: number;
     };
-    const expiresAt = payload.expires_in
-      ? new Date(Date.now() + payload.expires_in * 1000)
-      : null;
+    const expiresAt = payload.expires_in ? new Date(Date.now() + payload.expires_in * 1000) : null;
     await repo.updateConnection(connection.id, {
       allegroAccessToken: encryptSecret(payload.access_token),
       allegroRefreshToken: payload.refresh_token
         ? encryptSecret(payload.refresh_token)
-        : connection.allegroRefreshToken ?? null,
+        : (connection.allegroRefreshToken ?? null),
       allegroTokenType: payload.token_type ?? null,
       allegroScope: payload.scope ?? null,
       allegroExpiresAt: expiresAt ? expiresAt.toISOString() : null,
-      allegroTokenUpdatedAt: new Date().toISOString()
+      allegroTokenUpdatedAt: new Date().toISOString(),
     });
     return payload.access_token;
   };
@@ -175,6 +168,6 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, p
     status: response.status,
     statusText: response.statusText,
     data: apiResponseData,
-    refreshed
+    refreshed,
   });
 }

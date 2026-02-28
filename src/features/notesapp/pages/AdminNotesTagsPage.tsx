@@ -8,10 +8,7 @@ import {
   useDeleteNoteTag,
   useUpdateNoteTag,
 } from '@/features/notesapp/api/useNoteMutations';
-import {
-  useNotebooks,
-  useNoteTags,
-} from '@/features/notesapp/api/useNoteQueries';
+import { useNotebooks, useNoteTags } from '@/features/notesapp/api/useNoteQueries';
 import { useNoteSettings } from '@/features/notesapp/hooks/NoteSettingsContext';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { NoteTagDto as TagRecord } from '@/shared/contracts/notes';
@@ -49,10 +46,7 @@ export function AdminNotesTagsPage(): React.JSX.Element {
   const updateTag = useUpdateNoteTag();
   const deleteTag = useDeleteNoteTag();
 
-  const tags = useMemo(
-    (): TagRecord[] => tagsQuery.data ?? [],
-    [tagsQuery.data],
-  );
+  const tags = useMemo((): TagRecord[] => tagsQuery.data ?? [], [tagsQuery.data]);
   const loading = tagsQuery.isLoading;
 
   useEffect((): void => {
@@ -145,9 +139,9 @@ export function AdminNotesTagsPage(): React.JSX.Element {
   const filteredTags = useMemo(
     (): TagRecord[] =>
       tags.filter((tag: TagRecord) =>
-        tag.name.toLowerCase().includes(searchQuery.trim().toLowerCase()),
+        tag.name.toLowerCase().includes(searchQuery.trim().toLowerCase())
       ),
-    [tags, searchQuery],
+    [tags, searchQuery]
   );
 
   const columns = useMemo<ColumnDef<TagRecord>[]>(
@@ -165,9 +159,9 @@ export function AdminNotesTagsPage(): React.JSX.Element {
                 <Input
                   type='text'
                   value={editingName}
-                  onChange={(
-                    event: React.ChangeEvent<HTMLInputElement>,
-                  ): void => setEditingName(event.target.value)}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                    setEditingName(event.target.value)
+                  }
                   className='h-8 w-full sm:max-w-[200px]'
                   autoFocus
                 />
@@ -175,9 +169,9 @@ export function AdminNotesTagsPage(): React.JSX.Element {
                   <Input
                     type='color'
                     value={editingColor}
-                    onChange={(
-                      event: React.ChangeEvent<HTMLInputElement>,
-                    ): void => setEditingColor(event.target.value)}
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                      setEditingColor(event.target.value)
+                    }
                     className='h-8 w-12 p-1'
                   />
                   <span className='text-[10px] font-mono text-gray-500 uppercase'>
@@ -225,11 +219,7 @@ export function AdminNotesTagsPage(): React.JSX.Element {
                 </>
               ) : (
                 <>
-                  <Button
-                    variant='outline'
-                    size='xs'
-                    onClick={(): void => handleEditStart(tag)}
-                  >
+                  <Button variant='outline' size='xs' onClick={(): void => handleEditStart(tag)}>
                     Edit
                   </Button>
                   <Button
@@ -257,7 +247,7 @@ export function AdminNotesTagsPage(): React.JSX.Element {
       updateTag.isPending,
       handleEditCancel,
       handleEditStart,
-    ],
+    ]
   );
 
   return (
@@ -290,14 +280,12 @@ export function AdminNotesTagsPage(): React.JSX.Element {
                 <Input
                   type='color'
                   value={color}
-                  onChange={(
-                    event: React.ChangeEvent<HTMLInputElement>,
-                  ): void => setColor(event.target.value)}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                    setColor(event.target.value)
+                  }
                   className='h-10 w-16 p-1'
                 />
-                <span className='text-xs font-mono text-gray-500 uppercase'>
-                  {color}
-                </span>
+                <span className='text-xs font-mono text-gray-500 uppercase'>{color}</span>
               </div>
             </FormField>
             <Button

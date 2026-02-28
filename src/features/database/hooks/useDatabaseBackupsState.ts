@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import type { DatabaseInfo, DatabaseType } from '@/shared/contracts/database';
+import type { DatabaseInfo, DatabaseType } from '@/shared/contracts';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import {
   isValidDatabaseEngineBackupTimeUtc,
@@ -21,7 +21,7 @@ import { normalizeDatabaseEngineOperationControls } from '@/shared/lib/db/databa
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useToast, type FileUploadHelpers } from '@/shared/ui';
 
-import { localHmToUtcHm, utcHmToLocalHm } from '../utils/backup-schedule-time';
+import { localHmToUtcHm, utcHmToLocalHm } from '@/shared/lib/db/utils/backup-schedule-time';
 import {
   useCreateBackupMutation,
   useDatabaseBackups,
@@ -29,7 +29,6 @@ import {
   useRestoreBackupMutation,
   useUploadBackupMutation,
 } from '../hooks/useDatabaseQueries';
-
 
 export function useDatabaseBackupsState() {
   const dbKeys = QUERY_KEYS.system.databases;
@@ -43,7 +42,7 @@ export function useDatabaseBackupsState() {
   const [repeatTickEnabledDraft, setRepeatTickEnabledDraft] = useState(false);
   const [activeTargetEnabledDraft, setActiveTargetEnabledDraft] = useState(false);
   const [activeTargetTimeLocalDraft, setActiveTargetTimeLocalDraft] = useState('02:00');
-  
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const isProd = process.env['NODE_ENV'] === 'production';
@@ -67,9 +66,7 @@ export function useDatabaseBackupsState() {
 
   const backupSchedule = useMemo(() => {
     const raw = settingsQuery.data?.get(DATABASE_ENGINE_BACKUP_SCHEDULE_KEY);
-    return normalizeDatabaseEngineBackupSchedule(
-      raw ?? DEFAULT_DATABASE_ENGINE_BACKUP_SCHEDULE
-    );
+    return normalizeDatabaseEngineBackupSchedule(raw ?? DEFAULT_DATABASE_ENGINE_BACKUP_SCHEDULE);
   }, [settingsQuery.data]);
 
   const backupRunNowAllowed = operationControls.allowManualBackupRunNow;
@@ -77,12 +74,11 @@ export function useDatabaseBackupsState() {
   const schedulerEnabled = backupSchedule.schedulerEnabled;
   const repeatSchedulerTickEnabled = backupSchedule.repeatTickEnabled;
   const isBackupScheduleSaving = updateSetting.isPending;
-  const activeTargetKey: DatabaseEngineBackupType = activeTab === 'mongodb' ? 'mongodb' : 'postgresql';
+  const activeTargetKey: DatabaseEngineBackupType =
+    activeTab === 'mongodb' ? 'mongodb' : 'postgresql';
   const activeTargetSchedule = backupSchedule[activeTargetKey];
   const activeTargetTimeLocalCurrent = useMemo(
-    () =>
-      utcHmToLocalHm(activeTargetSchedule.timeUtc) ??
-      activeTargetSchedule.timeUtc,
+    () => utcHmToLocalHm(activeTargetSchedule.timeUtc) ?? activeTargetSchedule.timeUtc,
     [activeTargetSchedule.timeUtc]
   );
   const activeTargetTimeLocalDraftValid = isValidDatabaseEngineBackupTimeUtc(
@@ -168,9 +164,13 @@ ${log}`
           .join('\n');
 
         openLogModal(
-          `${payload.error ?? 'Failed to restore backup.'}${meta ? `
+          `${payload.error ?? 'Failed to restore backup.'}${
+            meta
+              ? `
 
-${meta}` : ''}
+${meta}`
+              : ''
+          }
 
 ---LOG---
 ${log}`
@@ -178,7 +178,12 @@ ${log}`
       }
     } catch (error: unknown) {
       logClientError(error, {
-        context: { source: 'DatabaseBackupsPanel', action: 'restoreBackup', backupName, dbType: activeTab },
+        context: {
+          source: 'DatabaseBackupsPanel',
+          action: 'restoreBackup',
+          backupName,
+          dbType: activeTab,
+        },
       });
       openLogModal(`An error occurred during restoration.
 
@@ -233,7 +238,10 @@ ${String(error)}`);
   const handleConfirmDelete = async (): Promise<void> => {
     if (!backupToDelete) return;
     try {
-      const result = await deleteBackup.mutateAsync({ dbType: activeTab, backupName: backupToDelete });
+      const result = await deleteBackup.mutateAsync({
+        dbType: activeTab,
+        backupName: backupToDelete,
+      });
       if (result.ok) {
         toast('Backup deleted successfully.', { variant: 'success' });
       } else {
@@ -329,17 +337,17 @@ ${String(error)}`);
     const nextSchedule =
       activeTargetKey === 'mongodb'
         ? {
-          ...backupSchedule,
-          schedulerEnabled: schedulerEnabledDraft,
-          repeatTickEnabled: repeatTickEnabledDraft,
-          mongodb: activeTargetNext,
-        }
+            ...backupSchedule,
+            schedulerEnabled: schedulerEnabledDraft,
+            repeatTickEnabled: repeatTickEnabledDraft,
+            mongodb: activeTargetNext,
+          }
         : {
-          ...backupSchedule,
-          schedulerEnabled: schedulerEnabledDraft,
-          repeatTickEnabled: repeatTickEnabledDraft,
-          postgresql: activeTargetNext,
-        };
+            ...backupSchedule,
+            schedulerEnabled: schedulerEnabledDraft,
+            repeatTickEnabled: repeatTickEnabledDraft,
+            postgresql: activeTargetNext,
+          };
 
     try {
       await updateSetting.mutateAsync({

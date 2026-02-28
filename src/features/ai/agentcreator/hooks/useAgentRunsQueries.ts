@@ -2,14 +2,8 @@ import { useQueryClient } from '@tanstack/react-query';
 
 import { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import { AgentSnapshot, AgentBrowserLog, AgentAuditLog } from '@/shared/contracts/chatbot';
-import type { 
-  ListQuery, 
-  MutationResult
-} from '@/shared/contracts/ui';
-import {
-  createDeleteMutationV2,
-  createListQueryV2,
-} from '@/shared/lib/query-factories-v2';
+import type { ListQuery, MutationResult } from '@/shared/contracts/ui';
+import { createDeleteMutationV2, createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateAgentRuns } from '@/shared/lib/query-invalidation';
 import { agentRunsKeys } from '@/shared/lib/query-key-exports';
 
@@ -50,7 +44,10 @@ export function useAgentSnapshots(runId: string | null): ListQuery<AgentSnapshot
   });
 }
 
-export function useAgentLogs(runId: string | null, options?: { refetchInterval?: number | false }): ListQuery<AgentBrowserLog> {
+export function useAgentLogs(
+  runId: string | null,
+  options?: { refetchInterval?: number | false }
+): ListQuery<AgentBrowserLog> {
   const queryKey = agentRunsKeys.logs(runId || '');
   return createListQueryV2<AgentBrowserLog>({
     queryKey,
@@ -68,7 +65,10 @@ export function useAgentLogs(runId: string | null, options?: { refetchInterval?:
   });
 }
 
-export function useAgentAudits(runId: string | null, options?: { refetchInterval?: number | false }): ListQuery<AgentAuditLog> {
+export function useAgentAudits(
+  runId: string | null,
+  options?: { refetchInterval?: number | false }
+): ListQuery<AgentAuditLog> {
   const queryKey = agentRunsKeys.audits(runId || '');
   return createListQueryV2<AgentAuditLog>({
     queryKey,
@@ -86,11 +86,14 @@ export function useAgentAudits(runId: string | null, options?: { refetchInterval
   });
 }
 
-export function useDeleteAgentRunMutation(): MutationResult<void, { runId: string; force?: boolean }> {
+export function useDeleteAgentRunMutation(): MutationResult<
+  void,
+  { runId: string; force?: boolean }
+> {
   const queryClient = useQueryClient();
   const mutationKey = agentRunsKeys.lists();
   return createDeleteMutationV2<void, { runId: string; force?: boolean }>({
-    mutationFn: ({ runId, force }: { runId: string; force?: boolean }) => 
+    mutationFn: ({ runId, force }: { runId: string; force?: boolean }) =>
       api.deleteAgentRun(runId, force),
     mutationKey,
     meta: {

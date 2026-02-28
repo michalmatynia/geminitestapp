@@ -49,9 +49,7 @@ import {
 import { createDefaultPlaywrightConfig } from '../playwright/default-config';
 import { derivePaletteNodeTypeId } from '../utils/node-identity';
 
-const buildOptionalInputContracts = (
-  inputs: string[]
-): Record<string, { required: boolean }> =>
+const buildOptionalInputContracts = (inputs: string[]): Record<string, { required: boolean }> =>
   Object.fromEntries(
     inputs.map((port: string): [string, { required: boolean }] => [port, { required: false }])
   );
@@ -277,8 +275,7 @@ const basePalette: NodeDefinition[] = [
   {
     type: 'validation_pattern',
     title: 'Validation Pattern',
-    description:
-      'Run ordered validation patterns from a stack or a path-local rule list.',
+    description: 'Run ordered validation patterns from a stack or a path-local rule list.',
     inputs: VALIDATION_PATTERN_INPUT_PORTS,
     outputs: VALIDATION_PATTERN_OUTPUT_PORTS,
     inputContracts: buildOptionalInputContracts(VALIDATION_PATTERN_INPUT_PORTS),
@@ -486,7 +483,8 @@ const basePalette: NodeDefinition[] = [
   {
     type: 'trigger',
     title: 'Trigger: Image Studio Analysis',
-    description: 'Entry point for Image Studio object analysis. Receives imageUrl, imageWidth, imageHeight, slotId, and projectId from the Image Studio analysis panel.',
+    description:
+      'Entry point for Image Studio object analysis. Receives imageUrl, imageWidth, imageHeight, slotId, and projectId from the Image Studio analysis panel.',
     inputs: TRIGGER_INPUT_PORTS,
     outputs: TRIGGER_OUTPUT_PORTS,
     inputContracts: buildOptionalInputContracts(TRIGGER_INPUT_PORTS),
@@ -500,7 +498,8 @@ const basePalette: NodeDefinition[] = [
   {
     type: 'bounds_normalizer',
     title: 'Bounds Normaliser',
-    description: 'Normalise bounding-box coordinates from any vision API format (pixels, Gemini millirelative, YOLO relative, percentage) to standard {left, top, width, height} in pixels.',
+    description:
+      'Normalise bounding-box coordinates from any vision API format (pixels, Gemini millirelative, YOLO relative, percentage) to standard {left, top, width, height} in pixels.',
     inputs: ['value', 'context'],
     outputs: ['value'],
     inputContracts: buildOptionalInputContracts(['value', 'context']),
@@ -513,7 +512,8 @@ const basePalette: NodeDefinition[] = [
   {
     type: 'canvas_output',
     title: 'Canvas Output',
-    description: 'Image Studio terminal node. Emits standardised bounds at a named run-result key so Image Studio can reposition the canvas without manual field-mapping configuration.',
+    description:
+      'Image Studio terminal node. Emits standardised bounds at a named run-result key so Image Studio can reposition the canvas without manual field-mapping configuration.',
     inputs: ['value', 'confidence', 'label'],
     outputs: ['value'],
     inputContracts: buildOptionalInputContracts(['value', 'confidence', 'label']),
@@ -525,36 +525,24 @@ const basePalette: NodeDefinition[] = [
   },
 ];
 
-const ensurePaletteNodeTypeIds = (
-  definitions: NodeDefinition[]
-): NodeDefinition[] => {
+const ensurePaletteNodeTypeIds = (definitions: NodeDefinition[]): NodeDefinition[] => {
   const usedNodeTypeIds = new Set<string>();
-  return definitions.map(
-    (definition: NodeDefinition, index: number): NodeDefinition => {
-      let collisionSalt = 0;
-      let candidate = derivePaletteNodeTypeId(
-        definition,
-        index,
-        collisionSalt,
-      );
-      while (usedNodeTypeIds.has(candidate)) {
-        collisionSalt += 1;
-        candidate = derivePaletteNodeTypeId(
-          definition,
-          index,
-          collisionSalt,
-        );
-      }
-      usedNodeTypeIds.add(candidate);
-      if (definition.nodeTypeId === candidate) {
-        return definition;
-      }
-      return {
-        ...definition,
-        nodeTypeId: candidate,
-      };
+  return definitions.map((definition: NodeDefinition, index: number): NodeDefinition => {
+    let collisionSalt = 0;
+    let candidate = derivePaletteNodeTypeId(definition, index, collisionSalt);
+    while (usedNodeTypeIds.has(candidate)) {
+      collisionSalt += 1;
+      candidate = derivePaletteNodeTypeId(definition, index, collisionSalt);
     }
-  );
+    usedNodeTypeIds.add(candidate);
+    if (definition.nodeTypeId === candidate) {
+      return definition;
+    }
+    return {
+      ...definition,
+      nodeTypeId: candidate,
+    };
+  });
 };
 
 export const palette: NodeDefinition[] = ensurePaletteNodeTypeIds(basePalette);

@@ -1,13 +1,7 @@
 'use client';
 
 import React from 'react';
-import {
-  Input,
-  MultiSelect,
-  SelectSimple,
-  Textarea,
-  FormField,
-} from '@/shared/ui';
+import { Input, MultiSelect, SelectSimple, Textarea, FormField } from '@/shared/ui';
 import { useRuleItemContext } from '../context/RuleItemContext';
 import { usePromptEngine } from '../../context/PromptEngineContext';
 import {
@@ -135,9 +129,7 @@ export function RuleItemBasicSettings(): React.JSX.Element | null {
         </>
       ) : null}
       {rule.kind === 'regex' && regexStatus && !regexStatus.ok ? (
-        <div className='md:col-span-4 text-xs text-red-300'>
-          Regex error: {regexStatus.error}
-        </div>
+        <div className='md:col-span-4 text-xs text-red-300'>Regex error: {regexStatus.error}</div>
       ) : null}
       <FormField label='Validation Scopes' className='md:col-span-4'>
         <MultiSelect

@@ -3,11 +3,9 @@
 import { Loader2, RefreshCw } from 'lucide-react';
 import React from 'react';
 
-
 import { PanelAction } from '@/shared/contracts/ui';
 import { Button } from '@/shared/ui/button';
-import { cn } from '@/shared/utils/ui-utils';
-
+import { cn } from '@/shared/utils';
 
 interface PanelHeaderProps {
   title: string;
@@ -91,7 +89,9 @@ export const PanelHeader: React.FC<PanelHeaderProps> = ({
               key={action.key}
               variant={action.variant || 'outline'}
               size='sm'
-              onClick={() => { void action.onClick(); }}
+              onClick={() => {
+                void action.onClick();
+              }}
               disabled={action.disabled || isRefreshing}
               title={action.tooltip}
               className='h-8'
@@ -106,7 +106,9 @@ export const PanelHeader: React.FC<PanelHeaderProps> = ({
             <Button
               variant='outline'
               size='sm'
-              onClick={() => { void handleRefresh(); }}
+              onClick={() => {
+                void handleRefresh();
+              }}
               disabled={isRefreshing}
               className='h-8 w-8 p-0'
               title='Refresh'

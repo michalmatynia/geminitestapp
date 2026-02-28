@@ -73,8 +73,11 @@ export function Pagination({
 
       {showPageSize && onPageSizeChange && pageSize !== undefined && (
         <div className='flex items-center gap-2'>
-          {showLabels && !isCompact && <Label className='text-xs text-muted-foreground whitespace-nowrap'>Rows per page</Label>}
-          <SelectSimple size='sm'
+          {showLabels && !isCompact && (
+            <Label className='text-xs text-muted-foreground whitespace-nowrap'>Rows per page</Label>
+          )}
+          <SelectSimple
+            size='sm'
             value={String(pageSize)}
             onValueChange={(value) => {
               onPageSizeChange(Number(value));

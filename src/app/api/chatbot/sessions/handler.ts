@@ -1,12 +1,13 @@
-
-
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { chatbotSessionRepository } from '@/features/ai/chatbot/server';
-import { logSystemEvent } from '@/features/observability/server';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { parseJsonBody } from '@/features/products/server';
-import type { ChatbotSessionDto as ChatSession, UpdateChatSessionDto as UpdateSessionInput } from '@/shared/contracts/chatbot';
+import type {
+  ChatbotSessionDto as ChatSession,
+  UpdateChatSessionDto as UpdateSessionInput,
+} from '@/shared/contracts/chatbot';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { notFoundError, validationError } from '@/shared/errors/app-error';
 import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
@@ -46,10 +47,7 @@ const parseBody = async <T>(
   ctx: ApiHandlerContext,
   schema: z.ZodSchema<T>,
   logPrefix: string
-): Promise<
-  | { ok: true; data: T }
-  | { ok: false; response: Response }
-> => {
+): Promise<{ ok: true; data: T } | { ok: false; response: Response }> => {
   if (ctx.body !== undefined) {
     const parsed = schema.safeParse(ctx.body);
     if (parsed.success) {
@@ -123,11 +121,14 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
     });
   }
 
-  return NextResponse.json({ sessions }, {
-    headers: {
-      'Cache-Control': 'no-store',
-    },
-  });
+  return NextResponse.json(
+    { sessions },
+    {
+      headers: {
+        'Cache-Control': 'no-store',
+      },
+    }
+  );
 }
 
 // PATCH /api/chatbot/sessions - Update session (title)
@@ -213,4 +214,3 @@ export async function DELETE_handler(req: NextRequest, ctx: ApiHandlerContext): 
 
   return NextResponse.json({ success: true });
 }
-

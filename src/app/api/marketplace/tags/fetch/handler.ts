@@ -17,7 +17,10 @@ const BASE_MARKETPLACE_SLUGS = new Set(['baselinker', 'base', 'base-com']);
  * POST /api/marketplace/tags/fetch
  * Fetches tags from Base.com and stores them locally for mapping.
  */
-export async function POST_handler(request: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function POST_handler(
+  request: NextRequest,
+  _ctx: ApiHandlerContext
+): Promise<Response> {
   const body = (await request.json()) as FetchMarketplaceTagsRequest;
   const { connectionId } = body;
 

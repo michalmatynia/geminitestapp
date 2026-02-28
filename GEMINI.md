@@ -83,12 +83,14 @@ src/app/
 ```
 
 ### Development Standards
+
 - **UI Components**: Follow patterns defined in [docs/COMPONENT_PATTERNS.md](docs/COMPONENT_PATTERNS.md) for DataTable, ListPanel, and FormSection.
 - **Data Access**: Use explicit v2 factories from `src/shared/lib/query-factories-v2.ts` (`createListQueryV2`, `createSingleQueryV2`, `createMutationV2` and operation-specific aliases).
 - **Factory Metadata**: Define explicit `meta` objects at each factory call site; legacy meta inference helpers are retired.
 - **Telemetry Guard**: Run `npm run check:factory-meta` to ensure every v2 factory call includes `meta` (or `npm run check:factory-meta:strict` to also enforce alias/operation alignment).
 
 Notable API route groups:
+
 - `/api/products`, `/api/drafts`, `/api/notes`
 - `/api/integrations` (imports/exports, connections, jobs)
 - `/api/cms` (pages, blocks, themes, media, domains)
@@ -133,30 +135,30 @@ For a comprehensive overview of the AI Paths feature, including its core concept
 
 Explicit mapping of features to their test locations to aid AI context.
 
-| Feature | Source | Unit/Integration Tests | E2E Tests |
-| :--- | :--- | :--- | :--- |
-| **Admin** | `src/features/admin` | `__tests__/features/admin` | `e2e/features/admin` |
-| **Agent Runtime** | `src/features/agent-runtime` | `__tests__/features/agent-runtime` | - |
-| **Agent Creator** | `src/features/agentcreator` | `__tests__/features/agentcreator` | `e2e/features/agentcreator` |
-| **AI Paths** | `src/features/ai-paths` | `__tests__/features/ai-paths` | `e2e/features/ai-paths` |
-| **App Embeds** | `src/features/app-embeds` | `__tests__/features/app-embeds` | - |
-| **Auth** | `src/features/auth` | `__tests__/features/auth` | - |
-| **Chatbot** | `src/features/chatbot` | `__tests__/features/chatbot` | `e2e/features/chatbot` |
-| **CMS** | `src/features/cms` | `__tests__/features/cms` | `e2e/features/cms` |
-| **Data Import/Export** | `src/features/data-import-export` | `__tests__/features/data-import-export` | `e2e/features/data-import-export` |
-| **Database** | `src/features/database` | `__tests__/features/database` | `e2e/features/database` |
-| **Drafter** | `src/features/drafter` | `__tests__/features/drafter` | `e2e/features/drafter` |
-| **Files** | `src/features/files` | `__tests__/features/files` | `e2e/features/files` |
-| **Folder Tree** | `src/features/foldertree` | `__tests__/features/foldertree` | - |
-| **GSAP** | `src/features/gsap` | `__tests__/features/gsap` | - |
-| **Integrations** | `src/features/integrations` | `__tests__/features/integrations` | `e2e/features/integrations` |
-| **Internationalization** | `src/features/internationalization` | `__tests__/features/internationalization` | - |
-| **Jobs** | `src/features/jobs` | `__tests__/features/jobs` | - |
-| **Notes App** | `src/features/notesapp` | `__tests__/features/notesapp` | `e2e/features/notesapp` |
-| **Observability** | `src/features/observability` | `__tests__/features/observability` | `e2e/features/observability` |
-| **Playwright Mgr** | `src/features/playwright` | `__tests__/features/playwright` | - |
-| **Products** | `src/features/products` | `__tests__/features/products` | `e2e/features/products` |
-| **Viewer 3D** | `src/features/viewer3d` | `__tests__/features/viewer3d` | `e2e/features/viewer3d` |
+| Feature                  | Source                              | Unit/Integration Tests                    | E2E Tests                         |
+| :----------------------- | :---------------------------------- | :---------------------------------------- | :-------------------------------- |
+| **Admin**                | `src/features/admin`                | `__tests__/features/admin`                | `e2e/features/admin`              |
+| **Agent Runtime**        | `src/features/agent-runtime`        | `__tests__/features/agent-runtime`        | -                                 |
+| **Agent Creator**        | `src/features/agentcreator`         | `__tests__/features/agentcreator`         | `e2e/features/agentcreator`       |
+| **AI Paths**             | `src/features/ai-paths`             | `__tests__/features/ai-paths`             | `e2e/features/ai-paths`           |
+| **App Embeds**           | `src/features/app-embeds`           | `__tests__/features/app-embeds`           | -                                 |
+| **Auth**                 | `src/features/auth`                 | `__tests__/features/auth`                 | -                                 |
+| **Chatbot**              | `src/features/chatbot`              | `__tests__/features/chatbot`              | `e2e/features/chatbot`            |
+| **CMS**                  | `src/features/cms`                  | `__tests__/features/cms`                  | `e2e/features/cms`                |
+| **Data Import/Export**   | `src/features/data-import-export`   | `__tests__/features/data-import-export`   | `e2e/features/data-import-export` |
+| **Database**             | `src/features/database`             | `__tests__/features/database`             | `e2e/features/database`           |
+| **Drafter**              | `src/features/drafter`              | `__tests__/features/drafter`              | `e2e/features/drafter`            |
+| **Files**                | `src/features/files`                | `__tests__/features/files`                | `e2e/features/files`              |
+| **Folder Tree**          | `src/features/foldertree`           | `__tests__/features/foldertree`           | -                                 |
+| **GSAP**                 | `src/features/gsap`                 | `__tests__/features/gsap`                 | -                                 |
+| **Integrations**         | `src/features/integrations`         | `__tests__/features/integrations`         | `e2e/features/integrations`       |
+| **Internationalization** | `src/features/internationalization` | `__tests__/features/internationalization` | -                                 |
+| **Jobs**                 | `src/features/jobs`                 | `__tests__/features/jobs`                 | -                                 |
+| **Notes App**            | `src/features/notesapp`             | `__tests__/features/notesapp`             | `e2e/features/notesapp`           |
+| **Observability**        | `src/features/observability`        | `__tests__/features/observability`        | `e2e/features/observability`      |
+| **Playwright Mgr**       | `src/features/playwright`           | `__tests__/features/playwright`           | -                                 |
+| **Products**             | `src/features/products`             | `__tests__/features/products`             | `e2e/features/products`           |
+| **Viewer 3D**            | `src/features/viewer3d`             | `__tests__/features/viewer3d`             | `e2e/features/viewer3d`           |
 
 ## Data Layer (Verified)
 

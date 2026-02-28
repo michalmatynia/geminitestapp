@@ -47,14 +47,10 @@ describe('System Logs Metrics API', () => {
         ];
       }
       if (by.includes('source')) {
-        return [
-          { source: 'web', _count: { _all: 10 } },
-        ];
+        return [{ source: 'web', _count: { _all: 10 } }];
       }
       if (by.includes('path')) {
-        return [
-          { path: '/api/test', _count: { _all: 5 } },
-        ];
+        return [{ path: '/api/test', _count: { _all: 5 } }];
       }
       return [];
     });

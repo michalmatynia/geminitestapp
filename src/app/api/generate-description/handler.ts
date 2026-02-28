@@ -1,18 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { generateProductDescription } from '@/features/products/services/aiDescriptionService';
-import { productCreateSchema } from '@/features/products/validations/schemas'; // Import schema
+import { generateProductAiDescription } from '@/features/products/services/aiDescriptionService';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { validationError } from '@/shared/errors/app-error';
 
 interface GenerateDescriptionBody {
-  productData?: {
-    name_en?: string | null;
-    [key: string]: unknown;
-  };
+  productId?: string;
   imageUrls?: string[];
-  visionOutputEnabled?: boolean;
-  generationOutputEnabled?: boolean;
+  visionInputPrompt?: string;
+  visionOutputPrompt?: string;
+  generationInputPrompt?: string;
+  generationOutputPrompt?: string;
+  visionEnabled?: boolean;
+  generationEnabled?: boolean;
 }
 
 /**
@@ -21,23 +20,22 @@ interface GenerateDescriptionBody {
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const body = (await req.json()) as GenerateDescriptionBody;
 
-  const rawProductData = body.productData;
+  const productId = body.productId || 'unknown';
   const imageUrls = Array.isArray(body.imageUrls)
     ? body.imageUrls.filter((item: unknown): item is string => typeof item === 'string')
     : [];
 
-  if (!rawProductData?.name_en) {
-    throw validationError('Product name is required', { field: 'name_en' });
-  }
-
-  // Validate and transform rawProductData to ProductFormData
-  const productData = productCreateSchema.parse(rawProductData);
-
-  const result = await generateProductDescription({
-    productData: productData,
-    imageUrls,
-    visionOutputEnabled: body.visionOutputEnabled,
-    generationOutputEnabled: body.generationOutputEnabled
+  const result = await generateProductAiDescription({
+    productId,
+    images: imageUrls,
+    visionInputPrompt: body.visionInputPrompt || '',
+    visionOutputPrompt: body.visionOutputPrompt,
+    generationInputPrompt: body.generationInputPrompt || '',
+    generationOutputPrompt: body.generationOutputPrompt,
+    options: {
+      visionEnabled: body.visionEnabled,
+      generationEnabled: body.generationEnabled,
+    },
   });
 
   return NextResponse.json(result);

@@ -63,7 +63,9 @@ export function CopyButton({
       type='button'
       variant={variant}
       size={showText ? 'default' : size}
-      onClick={(e: React.MouseEvent): void => { void handleCopy(e); }}
+      onClick={(e: React.MouseEvent): void => {
+        void handleCopy(e);
+      }}
       className={className}
       disabled={disabled}
       title={isCopied ? 'Copied!' : 'Copy to clipboard'}

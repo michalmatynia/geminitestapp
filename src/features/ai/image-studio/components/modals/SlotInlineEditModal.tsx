@@ -8,7 +8,6 @@ import type { EntityModalProps } from '@/shared/contracts/ui';
 import { Button } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
-
 interface SlotInlineEditModalProps extends EntityModalProps<ImageStudioSlotRecord> {
   onCopyId: (id: string) => void;
   header: React.ReactNode;

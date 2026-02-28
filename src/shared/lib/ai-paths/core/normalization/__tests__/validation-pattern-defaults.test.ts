@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  getDefaultConfigForType,
-  normalizeNodes,
-} from '@/shared/lib/ai-paths/core/normalization';
+import { getDefaultConfigForType, normalizeNodes } from '@/shared/lib/ai-paths/core/normalization';
 import type { AiNode } from '@/shared/contracts/ai-paths';
 
 describe('validation_pattern normalization', () => {
@@ -48,4 +45,3 @@ describe('validation_pattern normalization', () => {
     });
   });
 });
-

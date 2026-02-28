@@ -1,9 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-import {
-  encryptAuthSecret,
-  decryptAuthSecret,
-} from '@/features/auth/utils/auth-encryption';
+import { encryptAuthSecret, decryptAuthSecret } from '@/features/auth/utils/auth-encryption';
 
 // Mock server-only
 vi.mock('server-only', () => ({}));
@@ -25,10 +22,10 @@ describe('auth-encryption', () => {
   it('should encrypt and decrypt a value correctly', () => {
     const secret = 'my-super-secret-password';
     const encrypted = encryptAuthSecret(secret);
-    
+
     expect(encrypted).toContain(':');
     expect(encrypted.split(':')).toHaveLength(3);
-    
+
     const decrypted = decryptAuthSecret(encrypted);
     expect(decrypted).toBe(secret);
   });

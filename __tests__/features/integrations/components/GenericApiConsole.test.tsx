@@ -1,7 +1,10 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 
-import { GenericApiConsole, type ApiPreset } from '@/features/integrations/components/connections/GenericApiConsole';
+import {
+  GenericApiConsole,
+  type ApiPreset,
+} from '@/features/integrations/components/connections/GenericApiConsole';
 
 describe('GenericApiConsole', () => {
   const mockPresets: ApiPreset[] = [

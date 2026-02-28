@@ -7,7 +7,10 @@ import {
 import { Button, SelectSimple, Tooltip } from '@/shared/ui';
 
 import { useGenerationToolbarContext, type CenterMode } from './GenerationToolbarContext';
-import type { ImageStudioCenterDetectionMode, ImageStudioCenterShadowPolicy } from '../../contracts/center';
+import type {
+  ImageStudioCenterDetectionMode,
+  ImageStudioCenterShadowPolicy,
+} from '../../contracts/center';
 
 type SelectOption = {
   value: string;
@@ -105,18 +108,28 @@ export function GenerationToolbarCenterSection({
   onToggleCenterGuides,
 }: GenerationToolbarCenterSectionProps): React.JSX.Element {
   const {
-    centerMode, setCenterMode,
-    centerLayoutShadowPolicy, setCenterLayoutShadowPolicy,
-    centerLayoutPadding, setCenterLayoutPadding,
+    centerMode,
+    setCenterMode,
+    centerLayoutShadowPolicy,
+    setCenterLayoutShadowPolicy,
+    centerLayoutPadding,
+    setCenterLayoutPadding,
     centerLayoutSplitAxes,
     centerLayoutAdvancedEnabled,
-    centerLayoutDetection, setCenterLayoutDetection,
-    centerLayoutWhiteThreshold, setCenterLayoutWhiteThreshold,
-    centerLayoutChromaThreshold, setCenterLayoutChromaThreshold,
-    centerLayoutPresetDraftName, setCenterLayoutPresetDraftName,
-    centerLayoutPaddingX, setCenterLayoutPaddingX,
-    centerLayoutPaddingY, setCenterLayoutPaddingY,
-    centerLayoutFillMissingCanvasWhite, setCenterLayoutFillMissingCanvasWhite,
+    centerLayoutDetection,
+    setCenterLayoutDetection,
+    centerLayoutWhiteThreshold,
+    setCenterLayoutWhiteThreshold,
+    centerLayoutChromaThreshold,
+    setCenterLayoutChromaThreshold,
+    centerLayoutPresetDraftName,
+    setCenterLayoutPresetDraftName,
+    centerLayoutPaddingX,
+    setCenterLayoutPaddingX,
+    centerLayoutPaddingY,
+    setCenterLayoutPaddingY,
+    centerLayoutFillMissingCanvasWhite,
+    setCenterLayoutFillMissingCanvasWhite,
     centerBusy,
   } = useGenerationToolbarContext();
 
@@ -165,7 +178,8 @@ export function GenerationToolbarCenterSection({
       ) : null}
       {analysisPlanWillSwitchSlot ? (
         <div className='mb-2 rounded border border-sky-500/30 bg-sky-500/10 px-2 py-1 text-[10px] text-sky-100'>
-          Latest saved analysis plan targets a different slot{analysisPlanSwitchSlotLabel ? `: ${analysisPlanSwitchSlotLabel}` : ''}.
+          Latest saved analysis plan targets a different slot
+          {analysisPlanSwitchSlotLabel ? `: ${analysisPlanSwitchSlotLabel}` : ''}.
         </div>
       ) : null}
       {analysisPlanIsStale ? (
@@ -185,7 +199,8 @@ export function GenerationToolbarCenterSection({
       ) : null}
       {slotSelectionLocked ? (
         <div className='mb-2 rounded border border-amber-500/40 bg-amber-500/10 px-2 py-1 text-[10px] text-amber-100'>
-          Slot selection is locked by sequencing. Existing saved plans cannot switch slots until unlocked.
+          Slot selection is locked by sequencing. Existing saved plans cannot switch slots until
+          unlocked.
         </div>
       ) : null}
       {analysisPlanSlotMissing ? (
@@ -196,7 +211,8 @@ export function GenerationToolbarCenterSection({
       <div className='grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center'>
         {maybeWrapTooltip(
           centerTooltipContent.mode,
-          <SelectSimple size='sm'
+          <SelectSimple
+            size='sm'
             className='w-full'
             value={centerMode}
             onValueChange={(val) => setCenterMode(val as CenterMode)}
@@ -206,7 +222,8 @@ export function GenerationToolbarCenterSection({
           />,
           'inline-flex w-full'
         )}
-        <Button size='xs'
+        <Button
+          size='xs'
           type='button'
           variant='outline'
           onClick={onToggleCenterGuides}
@@ -223,7 +240,9 @@ export function GenerationToolbarCenterSection({
               size='sm'
               className='w-full'
               value={centerLayoutShadowPolicy}
-              onValueChange={(val) => setCenterLayoutShadowPolicy(val as ImageStudioCenterShadowPolicy)}
+              onValueChange={(val) =>
+                setCenterLayoutShadowPolicy(val as ImageStudioCenterShadowPolicy)
+              }
               options={centerLayoutShadowPolicyOptions}
               triggerClassName='h-8 text-xs'
               ariaLabel='Object layout shadow policy'
@@ -258,7 +277,11 @@ export function GenerationToolbarCenterSection({
                   className='h-8 w-full rounded border border-border/60 bg-card/40 px-2 text-xs text-gray-100 outline-none'
                   placeholder='Padding %'
                   aria-label='Object layout padding percent'
-                  title={centerTooltipsEnabled ? centerTooltipContent.padding : 'Padding around detected object after centering/scaling'}
+                  title={
+                    centerTooltipsEnabled
+                      ? centerTooltipContent.padding
+                      : 'Padding around detected object after centering/scaling'
+                  }
                 />
               </div>,
               'inline-flex w-full'
@@ -270,7 +293,11 @@ export function GenerationToolbarCenterSection({
                 type='button'
                 variant='outline'
                 onClick={onToggleCenterLayoutSplitAxes}
-                title={centerTooltipsEnabled ? centerTooltipContent.paddingAxes : 'Toggle separate horizontal and vertical padding'}
+                title={
+                  centerTooltipsEnabled
+                    ? centerTooltipContent.paddingAxes
+                    : 'Toggle separate horizontal and vertical padding'
+                }
               >
                 {centerLayoutSplitAxes ? 'Linked X/Y' : 'Split X/Y'}
               </Button>
@@ -284,7 +311,11 @@ export function GenerationToolbarCenterSection({
                 type='button'
                 variant='outline'
                 onClick={onToggleCenterLayoutAdvanced}
-                title={centerTooltipsEnabled ? centerTooltipContent.detection : 'Show detection and threshold controls'}
+                title={
+                  centerTooltipsEnabled
+                    ? centerTooltipContent.detection
+                    : 'Show detection and threshold controls'
+                }
               >
                 {centerLayoutAdvancedEnabled ? 'Hide Advanced' : 'Show Advanced'}
               </Button>
@@ -311,7 +342,9 @@ export function GenerationToolbarCenterSection({
                   size='sm'
                   className='w-full'
                   value={centerLayoutDetection}
-                  onValueChange={(val) => setCenterLayoutDetection(val as ImageStudioCenterDetectionMode)}
+                  onValueChange={(val) =>
+                    setCenterLayoutDetection(val as ImageStudioCenterDetectionMode)
+                  }
                   options={centerLayoutDetectionOptions}
                   triggerClassName='h-8 text-xs'
                   ariaLabel='Object layout detection mode'
@@ -467,12 +500,17 @@ export function GenerationToolbarCenterSection({
         </Button>
         {maybeWrapTooltip(
           centerTooltipContent.apply,
-          <Button size='xs'
+          <Button
+            size='xs'
             type='button'
             variant='outline'
             onClick={onCenterObject}
             disabled={!hasSourceImage || centerBusy}
-            title={centerTooltipsEnabled ? centerTooltipContent.apply : 'Create a centered linked variant from the active slot'}
+            title={
+              centerTooltipsEnabled
+                ? centerTooltipContent.apply
+                : 'Create a centered linked variant from the active slot'
+            }
             loading={centerBusy}
           >
             {centerBusyLabel}

@@ -38,11 +38,12 @@ export function ConfirmDialog({
   variant = 'default',
   loading = false,
 }: ConfirmDialogProps): React.JSX.Element {
-  const confirmButtonClass = variant === 'destructive' 
-    ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' 
-    : variant === 'success'
-      ? 'bg-emerald-600 text-white hover:bg-emerald-700'
-      : '';
+  const confirmButtonClass =
+    variant === 'destructive'
+      ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
+      : variant === 'success'
+        ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+        : '';
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>

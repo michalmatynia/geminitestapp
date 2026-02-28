@@ -1,12 +1,13 @@
 import React from 'react';
 
-import {
-  Alert,
-  Button,
-  StatusBadge,
-} from '@/shared/ui';
+import { Alert, Button, StatusBadge } from '@/shared/ui';
 
-import { formatDurationMs, getSloVariant, type QueueHistoryEntry, type QueueStatus } from './job-queue-panel-utils';
+import {
+  formatDurationMs,
+  getSloVariant,
+  type QueueHistoryEntry,
+  type QueueStatus,
+} from './job-queue-panel-utils';
 import { RunningIndicator } from './job-queue-running-indicator';
 
 type JobQueueOverviewProps = {
@@ -91,9 +92,7 @@ export function JobQueueOverview({
         </div>
         <div className='rounded-md border border-border/60 bg-card/50 p-3 text-xs text-gray-300'>
           <div className='text-[10px] uppercase text-gray-500'>Queue Depth</div>
-          <div className='mt-1 text-sm text-white'>
-            {queueStatus?.queuedCount ?? 0} queued
-          </div>
+          <div className='mt-1 text-sm text-white'>{queueStatus?.queuedCount ?? 0} queued</div>
           <div className='mt-1 text-[11px] text-gray-400'>
             Lag: {formatDurationMs(queueStatus?.queueLagMs ?? null)}
           </div>
@@ -105,9 +104,7 @@ export function JobQueueOverview({
                 queueHistory.slice(-30).map((entry: QueueHistoryEntry, index: number) => {
                   const max = Math.max(
                     1,
-                    ...queueHistory
-                      .slice(-30)
-                      .map((item: QueueHistoryEntry) => item.queued)
+                    ...queueHistory.slice(-30).map((item: QueueHistoryEntry) => item.queued)
                   );
                   const height = Math.max(8, Math.round((entry.queued / max) * 100));
                   return (
@@ -136,7 +133,8 @@ export function JobQueueOverview({
           </div>
           <div className='mt-1 flex items-center gap-2 text-[11px] text-gray-400'>
             <span>
-              Active {queueStatus?.brainQueue?.activeJobs ?? 0} · Waiting {queueStatus?.brainQueue?.waitingJobs ?? 0}
+              Active {queueStatus?.brainQueue?.activeJobs ?? 0} · Waiting{' '}
+              {queueStatus?.brainQueue?.waitingJobs ?? 0}
             </span>
             {(queueStatus?.brainQueue?.activeJobs ?? 0) > 0 ? (
               <RunningIndicator label='Busy' />
@@ -146,17 +144,21 @@ export function JobQueueOverview({
             Reports 24h: {queueStatus?.brainAnalytics24h?.totalReports ?? 0}
           </div>
           <div className='mt-1 text-[10px] text-gray-400'>
-            Analytics {queueStatus?.brainAnalytics24h?.analyticsReports ?? 0} · Logs {queueStatus?.brainAnalytics24h?.logReports ?? 0}
+            Analytics {queueStatus?.brainAnalytics24h?.analyticsReports ?? 0} · Logs{' '}
+            {queueStatus?.brainAnalytics24h?.logReports ?? 0}
           </div>
           <div className='mt-1 text-[10px] text-amber-200/90'>
-            Warnings {queueStatus?.brainAnalytics24h?.warningReports ?? 0} · Errors {queueStatus?.brainAnalytics24h?.errorReports ?? 0}
+            Warnings {queueStatus?.brainAnalytics24h?.warningReports ?? 0} · Errors{' '}
+            {queueStatus?.brainAnalytics24h?.errorReports ?? 0}
           </div>
         </div>
       </div>
 
       {queueStatus?.queueLagMs && queueStatus.queueLagMs > lagThresholdMs ? (
         <Alert variant='error' className='mt-4'>
-          Queue lag is high: {formatDurationMs(queueStatus.queueLagMs)} (threshold {formatDurationMs(lagThresholdMs)}). Consider increasing concurrency or investigating slow nodes.
+          Queue lag is high: {formatDurationMs(queueStatus.queueLagMs)} (threshold{' '}
+          {formatDurationMs(lagThresholdMs)}). Consider increasing concurrency or investigating slow
+          nodes.
         </Alert>
       ) : null}
 
@@ -164,7 +166,10 @@ export function JobQueueOverview({
         <Alert variant={getSloVariant(queueStatus.slo.overall)} className='mt-3'>
           <div className='font-medium'>Runtime SLO is {queueStatus.slo.overall}.</div>
           <div className='mt-1 text-xs opacity-90'>
-            {queueStatus.slo.breaches.slice(0, 3).map((breach) => breach.message).join(' ')}
+            {queueStatus.slo.breaches
+              .slice(0, 3)
+              .map((breach) => breach.message)
+              .join(' ')}
           </div>
         </Alert>
       ) : null}
@@ -174,7 +179,8 @@ export function JobQueueOverview({
           <div>
             <div className='text-xs text-gray-200'>Queue Metrics (History)</div>
             <div className='text-[11px] text-gray-500'>
-              Last {queueHistory.length} samples · refresh {autoRefreshEnabled ? `${Math.round(autoRefreshInterval / 1000)}s` : 'off'}
+              Last {queueHistory.length} samples · refresh{' '}
+              {autoRefreshEnabled ? `${Math.round(autoRefreshInterval / 1000)}s` : 'off'}
               {queueHistory.length > 0
                 ? ` · last sample ${new Date(queueHistory[queueHistory.length - 1]!.ts).toLocaleTimeString()}`
                 : ''}
@@ -245,7 +251,8 @@ export function JobQueueOverview({
                   avg {formatDurationMs(queueStatus?.avgRuntimeMs ?? null)}
                 </div>
                 <div className='mt-1 text-[10px] text-gray-400'>
-                  p50 {formatDurationMs(queueStatus?.p50RuntimeMs ?? null)} · p95 {formatDurationMs(queueStatus?.p95RuntimeMs ?? null)}
+                  p50 {formatDurationMs(queueStatus?.p50RuntimeMs ?? null)} · p95{' '}
+                  {formatDurationMs(queueStatus?.p95RuntimeMs ?? null)}
                 </div>
               </div>
             </div>

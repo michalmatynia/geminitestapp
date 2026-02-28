@@ -26,7 +26,7 @@ export const ErrorSystem = {
     try {
       const { logSystemEvent } = await import('@/shared/lib/observability/system-logger');
       const { classifyError } = await import('@/shared/errors/error-classifier');
-      
+
       const message = error instanceof Error ? error.message : String(error);
       const service = context.service || 'unknown';
       const category = context.category || classifyError(error);
@@ -42,19 +42,19 @@ export const ErrorSystem = {
           category,
           jobId: context.jobId,
           runId: context.runId,
-          productId: context.productId
-        }
+          productId: context.productId,
+        },
       });
 
       // 2. Domain-Specific Logging
-      
+
       // If it's an Agent Run, log to Agent Audit
       if (context.runId) {
         try {
           const { logAgentAudit } = await import('@/features/ai/agent-runtime/audit');
           await logAgentAudit(context.runId, 'error', message, {
             errorId: context.errorId || 'unknown',
-            ...context
+            ...context,
           });
         } catch (auditError) {
           // Fallback to logger if audit logging fails
@@ -77,7 +77,7 @@ export const ErrorSystem = {
       const { classifyError } = await import('@/shared/errors/error-classifier');
       const service = context.service || 'unknown';
       const category = context.category || classifyError(message);
-      
+
       await logSystemEvent({
         level: 'warn',
         message: `[${service}] ${message}`,
@@ -85,7 +85,7 @@ export const ErrorSystem = {
         context: {
           ...context,
           category,
-        }
+        },
       });
 
       if (context.runId) {
@@ -110,15 +110,15 @@ export const ErrorSystem = {
     try {
       const { logSystemEvent } = await import('@/shared/lib/observability/system-logger');
       const service = context.service || 'unknown';
-      
+
       await logSystemEvent({
         level: 'warn',
         message: `[Validation] [${service}] ${message}`,
         source: service,
         context: {
           ...context,
-          category: ERROR_CATEGORY.VALIDATION
-        }
+          category: ERROR_CATEGORY.VALIDATION,
+        },
       });
     } catch (importError) {
       const { logger } = await import('@/shared/utils/logger');
@@ -135,7 +135,7 @@ export const ErrorSystem = {
       const { classifyError } = await import('@/shared/errors/error-classifier');
       const service = context.service || 'unknown';
       const category = context.category || classifyError(message);
-      
+
       await logSystemEvent({
         level: 'info',
         message: `[${service}] ${message}`,
@@ -143,7 +143,7 @@ export const ErrorSystem = {
         context: {
           ...context,
           category,
-        }
+        },
       });
     } catch (importError) {
       const { logger } = await import('@/shared/utils/logger');
@@ -163,13 +163,14 @@ export const ErrorSystem = {
       (Object.values(ErrorCategories) as string[]).includes(contextCategory)
         ? (contextCategory as ErrorCategory)
         : classifySharedError(error);
-    
+
     return {
       id: context.errorId || `err_${Date.now()}`,
       timestamp: new Date().toISOString(),
       category,
       message,
-      userMessage: context.userMessage || 'An unexpected error occurred. Please try again or contact support.',
+      userMessage:
+        context.userMessage || 'An unexpected error occurred. Please try again or contact support.',
       service: context.service || 'unknown',
       suggestedActions: getSharedSuggestedActions(category, error),
       context: {
@@ -177,9 +178,9 @@ export const ErrorSystem = {
         // Remove sensitive or redundant info
         errorId: undefined,
         userMessage: undefined,
-        category: undefined
+        category: undefined,
       },
-      debug: process.env['NODE_ENV'] !== 'production' ? { stack } : undefined
+      debug: process.env['NODE_ENV'] !== 'production' ? { stack } : undefined,
     };
-  }
+  },
 };

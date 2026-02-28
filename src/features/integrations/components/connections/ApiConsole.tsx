@@ -2,7 +2,16 @@
 
 import React from 'react';
 
-import { Button, Input, Textarea, Alert, SelectSimple, StatusBadge, FormField, Card } from '@/shared/ui';
+import {
+  Button,
+  Input,
+  Textarea,
+  Alert,
+  SelectSimple,
+  StatusBadge,
+  FormField,
+  Card,
+} from '@/shared/ui';
 
 import { useApiConsoleContext, type ApiPreset } from './ApiConsoleContext';
 
@@ -63,7 +72,11 @@ export function ApiConsole({
             onClick={() => {
               setMethod(preset.method);
               if (setPath && preset.path) setPath(preset.path);
-              const val = preset.body || (typeof preset.params === 'object' ? JSON.stringify(preset.params, null, 2) : preset.params);
+              const val =
+                preset.body ||
+                (typeof preset.params === 'object'
+                  ? JSON.stringify(preset.params, null, 2)
+                  : preset.params);
               if (val) setBodyOrParams(val);
               else setBodyOrParams('{}');
             }}
@@ -72,7 +85,7 @@ export function ApiConsole({
           </Button>
         ))}
       </div>
-      {(!isConnected && connectionWarning) && (
+      {!isConnected && connectionWarning && (
         <Alert variant='warning' className='mb-3 text-xs'>
           {connectionWarning}
         </Alert>
@@ -115,10 +128,13 @@ export function ApiConsole({
             size='sm'
             className='h-32 font-mono'
             value={bodyOrParams}
-            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setBodyOrParams(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+              setBodyOrParams(e.target.value)
+            }
           />
         </FormField>
-      </div>      <div className='mt-3 flex items-center gap-3'>
+      </div>{' '}
+      <div className='mt-3 flex items-center gap-3'>
         <Button
           variant='default'
           type='button'
@@ -129,11 +145,7 @@ export function ApiConsole({
         >
           Send request
         </Button>
-        {baseUrl && (
-          <span className='text-xs text-gray-500'>
-            Base URL: {baseUrl}
-          </span>
-        )}
+        {baseUrl && <span className='text-xs text-gray-500'>Base URL: {baseUrl}</span>}
       </div>
       {error && (
         <Alert variant='error' className='mt-3 text-xs'>

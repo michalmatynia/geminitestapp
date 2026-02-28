@@ -49,7 +49,9 @@ export default function AddIntegrationPage(): React.JSX.Element {
 
   useEffect(() => {
     if (!integrationsQuery.isError) return;
-    logClientError(integrationsQuery.error, { context: { source: 'AddIntegrationPage', action: 'loadIntegrations' } });
+    logClientError(integrationsQuery.error, {
+      context: { source: 'AddIntegrationPage', action: 'loadIntegrations' },
+    });
     const message =
       integrationsQuery.error instanceof Error
         ? integrationsQuery.error.message
@@ -65,19 +67,23 @@ export default function AddIntegrationPage(): React.JSX.Element {
       });
       router.push('/admin/integrations');
     } catch (error: unknown) {
-      logClientError(error, { context: { source: 'AddIntegrationPage', action: 'addIntegration', slug: integration.slug } });
-      const message =
-        error instanceof Error ? error.message : 'Failed to add integration.';
+      logClientError(error, {
+        context: { source: 'AddIntegrationPage', action: 'addIntegration', slug: integration.slug },
+      });
+      const message = error instanceof Error ? error.message : 'Failed to add integration.';
       toast(message, { variant: 'error' });
     }
   };
 
   const integrationCounts = useMemo((): Record<string, number> => {
     const data = integrationsQuery.data ?? [];
-    return data.reduce<Record<string, number>>((acc: Record<string, number>, integration: Integration) => {
-      acc[integration.slug] = (acc[integration.slug] || 0) + 1;
-      return acc;
-    }, {});
+    return data.reduce<Record<string, number>>(
+      (acc: Record<string, number>, integration: Integration) => {
+        acc[integration.slug] = (acc[integration.slug] || 0) + 1;
+        return acc;
+      },
+      {}
+    );
   }, [integrationsQuery.data]);
 
   return (
@@ -85,11 +91,11 @@ export default function AddIntegrationPage(): React.JSX.Element {
       <SectionHeader
         title='Add Integrations'
         description='Select a marketplace connection to add to your map.'
-        eyebrow={(
+        eyebrow={
           <Link href='/admin/integrations' className='text-blue-300 hover:text-blue-200'>
             ← Back to integrations
           </Link>
-        )}
+        }
         className='mb-6'
       />
 
@@ -106,7 +112,9 @@ export default function AddIntegrationPage(): React.JSX.Element {
           <Button
             size='sm'
             disabled={createIntegrationMutation.isPending}
-            onClick={() => { void handleAdd(item.original); }}
+            onClick={() => {
+              void handleAdd(item.original);
+            }}
           >
             Add
           </Button>

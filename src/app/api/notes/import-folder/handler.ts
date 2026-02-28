@@ -39,12 +39,11 @@ const folderNodeSchema: z.ZodType<FolderNode> = z.lazy(() =>
   })
 );
 
-const importSchema: z.ZodSchema<ImportRequest> = z
-  .object({
-    notebookId: z.string().trim().min(1),
-    parentFolderId: z.string().trim().min(1).nullable().optional(),
-    structures: z.array(folderNodeSchema).min(1),
-  });
+const importSchema: z.ZodSchema<ImportRequest> = z.object({
+  notebookId: z.string().trim().min(1),
+  parentFolderId: z.string().trim().min(1).nullable().optional(),
+  structures: z.array(folderNodeSchema).min(1),
+});
 
 async function createFolderStructure(
   node: FolderNode,
@@ -99,12 +98,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   const categoryMap = new Map<string, string>();
 
   for (const folderStructure of structures) {
-    await createFolderStructure(
-      folderStructure,
-      notebookId,
-      parentFolderId || null,
-      categoryMap
-    );
+    await createFolderStructure(folderStructure, notebookId, parentFolderId || null, categoryMap);
   }
 
   return NextResponse.json({

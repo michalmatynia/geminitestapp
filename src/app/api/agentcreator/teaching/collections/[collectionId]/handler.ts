@@ -19,10 +19,7 @@ const updateCollectionSchema = z.object({
 
 type Params = { collectionId: string };
 
-export async function PATCH_handler(
-  req: NextRequest,
-  ctx: ApiHandlerContext,
-): Promise<Response> {
+export async function PATCH_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const params = ctx.params as unknown as Params | undefined;
   const collectionId = params?.collectionId;
   if (!collectionId) throw badRequestError('Missing collectionId.');
@@ -35,25 +32,17 @@ export async function PATCH_handler(
   });
   if (!parsed.ok) return parsed.response;
   const data = parsed.data;
-  const collection: AgentTeachingEmbeddingCollectionRecord =
-    await upsertEmbeddingCollection({
-      ...existing,
-      id: collectionId,
-      ...(data.name !== undefined ? { name: data.name } : {}),
-      ...(data.description !== undefined
-        ? { description: data.description ?? null }
-        : {}),
-      ...(data.embeddingModel !== undefined
-        ? { embeddingModel: data.embeddingModel }
-        : {}),
-    });
+  const collection: AgentTeachingEmbeddingCollectionRecord = await upsertEmbeddingCollection({
+    ...existing,
+    id: collectionId,
+    ...(data.name !== undefined ? { name: data.name } : {}),
+    ...(data.description !== undefined ? { description: data.description ?? null } : {}),
+    ...(data.embeddingModel !== undefined ? { embeddingModel: data.embeddingModel } : {}),
+  });
   return NextResponse.json({ collection });
 }
 
-export async function DELETE_handler(
-  _req: NextRequest,
-  ctx: ApiHandlerContext,
-): Promise<Response> {
+export async function DELETE_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const params = ctx.params as unknown as Params | undefined;
   const collectionId = params?.collectionId;
   if (!collectionId) throw badRequestError('Missing collectionId.');

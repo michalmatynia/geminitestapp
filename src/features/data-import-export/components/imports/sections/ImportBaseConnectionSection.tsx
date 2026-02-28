@@ -11,7 +11,11 @@ import {
   Hint,
   ToggleRow,
 } from '@/shared/ui';
-import type { InventoryOption, CatalogOption, Template } from '@/shared/contracts/data-import-export';
+import type {
+  InventoryOption,
+  CatalogOption,
+  Template,
+} from '@/shared/contracts/data-import-export';
 
 export function ImportBaseConnectionSection(): React.JSX.Element {
   const {
@@ -63,7 +67,8 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
     >
       <div className='mt-4 space-y-4'>
         <FormField label='Base connection for import'>
-          <SelectSimple size='sm'
+          <SelectSimple
+            size='sm'
             value={selectedBaseConnectionId || '__none__'}
             onValueChange={(v: string): void =>
               setSelectedBaseConnectionId(v === '__none__' ? '' : v)
@@ -77,9 +82,7 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
               })),
             ]}
             placeholder={
-              baseConnections.length === 0
-                ? 'No connections loaded'
-                : 'Select a connection...'
+              baseConnections.length === 0 ? 'No connections loaded' : 'Select a connection...'
             }
             triggerClassName='w-full bg-gray-900 border-border text-sm text-white h-9'
           />
@@ -97,9 +100,7 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
             >
               Set as default Base connection
             </Button>
-            <Hint>
-              Saves this connection for import/export tools and one-click export.
-            </Hint>
+            <Hint>Saves this connection for import/export tools and one-click export.</Hint>
           </div>
         </FormField>
 
@@ -116,11 +117,15 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
             Load inventories
           </Button>
           <FormField label='Inventory' className='flex-1 min-w-[200px]'>
-            <SelectSimple size='sm'
+            <SelectSimple
+              size='sm'
               value={inventoryId}
               onValueChange={setInventoryId}
               disabled={inventories.length === 0}
-              options={inventories.map((inv: InventoryOption) => ({ value: inv.id, label: inv.name }))}
+              options={inventories.map((inv: InventoryOption) => ({
+                value: inv.id,
+                label: inv.name,
+              }))}
               placeholder={inventories.length === 0 ? 'Load inventories first' : 'Select inventory'}
               triggerClassName='w-full bg-gray-900 border-border text-sm text-white h-9'
             />
@@ -137,7 +142,8 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
             Clear inventory
           </Button>
           <FormField label='Limit' className='w-40'>
-            <SelectSimple size='sm'
+            <SelectSimple
+              size='sm'
               value={limit}
               onValueChange={setLimit}
               options={[
@@ -146,7 +152,7 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
                 { value: '10', label: '10' },
                 { value: '50', label: '50' },
                 { value: '100', label: '100' },
-                { value: 'all', label: 'All' }
+                { value: 'all', label: 'All' },
               ]}
               triggerClassName='w-full bg-gray-900 border-border text-sm text-white h-9'
             />
@@ -155,26 +161,34 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
 
         <div className='grid gap-4 md:grid-cols-2'>
           <FormField label='Catalog'>
-            <SelectSimple size='sm'
+            <SelectSimple
+              size='sm'
               value={catalogId || '__none__'}
               onValueChange={(v: string): void => setCatalogId(v === '__none__' ? '' : v)}
               disabled={loadingCatalogs || catalogs.length === 0}
               options={[
                 { value: '__none__', label: '— No catalog —' },
-                ...catalogs.map((cat: CatalogOption) => ({ value: cat.id, label: `${cat.name}${cat.isDefault ? ' (Default)' : ''}` }))
+                ...catalogs.map((cat: CatalogOption) => ({
+                  value: cat.id,
+                  label: `${cat.name}${cat.isDefault ? ' (Default)' : ''}`,
+                })),
               ]}
               placeholder={loadingCatalogs ? 'Loading catalogs...' : 'No catalogs'}
               triggerClassName='w-full bg-gray-900 border-border text-sm text-white h-9'
             />
           </FormField>
           <FormField label='Import template'>
-            <SelectSimple size='sm'
+            <SelectSimple
+              size='sm'
               value={importTemplateId || '__none__'}
               onValueChange={(v: string): void => setImportTemplateId(v === '__none__' ? '' : v)}
               disabled={loadingImportTemplates || importTemplates.length === 0}
               options={[
                 { value: '__none__', label: 'No template' },
-                ...importTemplates.map((template: Template) => ({ value: template.id, label: template.name }))
+                ...importTemplates.map((template: Template) => ({
+                  value: template.id,
+                  label: template.name,
+                })),
               ]}
               placeholder='No template'
               triggerClassName='w-full bg-gray-900 border-border text-sm text-white h-9'
@@ -184,12 +198,13 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
 
         <div className='grid gap-4 md:grid-cols-3'>
           <FormField label='Images'>
-            <SelectSimple size='sm'
+            <SelectSimple
+              size='sm'
               value={imageMode}
               onValueChange={(v: string): void => setImageMode(v as 'links' | 'download')}
               options={[
                 { value: 'links', label: 'Import image links' },
-                { value: 'download', label: 'Download product images' }
+                { value: 'download', label: 'Download product images' },
               ]}
               triggerClassName='w-full bg-gray-900 border-border text-sm text-white h-9'
             />
@@ -209,12 +224,11 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
             </Hint>
           </FormField>
           <FormField label='Import behavior'>
-            <SelectSimple size='sm'
+            <SelectSimple
+              size='sm'
               value={importMode}
               onValueChange={(value: string): void =>
-                setImportMode(
-                  value as 'create_only' | 'upsert_on_base_id' | 'upsert_on_sku'
-                )
+                setImportMode(value as 'create_only' | 'upsert_on_base_id' | 'upsert_on_sku')
               }
               options={[
                 {
@@ -242,9 +256,7 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
         </div>
 
         <div className='flex items-center justify-between gap-4'>
-          <Hint>
-            Default catalog and price group must be configured before import.
-          </Hint>
+          <Hint>Default catalog and price group must be configured before import.</Hint>
           <Button
             onClick={(): void => {
               void handleImport();

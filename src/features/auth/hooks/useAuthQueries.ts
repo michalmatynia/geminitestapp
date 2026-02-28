@@ -15,18 +15,14 @@ import {
   type AuthUserSecurityProfile,
 } from '@/features/auth/api/users';
 
-export type {
-  AuthUsersResponse,
-  AuthUserSecurityProfile,
-  VerifyCredentialsResponse,
-};
+export type { AuthUsersResponse, AuthUserSecurityProfile, VerifyCredentialsResponse };
 
 import type { AuthUser as AuthUserSummary } from '@/shared/contracts/auth';
-import type { 
-  SingleQuery, 
-  UpdateMutation, 
-  CreateMutation, 
-  MutationResult 
+import type {
+  SingleQuery,
+  UpdateMutation,
+  CreateMutation,
+  MutationResult,
 } from '@/shared/contracts/ui';
 import { ApiError } from '@/shared/lib/api-client';
 import {
@@ -35,13 +31,8 @@ import {
   createUpdateMutationV2,
   createCreateMutationV2,
 } from '@/shared/lib/query-factories-v2';
-import {
-  invalidateAuthSecurity,
-  invalidateUsers,
-} from '@/shared/lib/query-invalidation';
+import { invalidateAuthSecurity, invalidateUsers } from '@/shared/lib/query-invalidation';
 import { authKeys } from '@/shared/lib/query-key-exports';
-
-
 
 const AUTH_USERS_STALE_MS = 10_000;
 const AUTH_SECURITY_STALE_MS = 10_000;
@@ -84,8 +75,11 @@ export function useAuthUserSecurity(userId?: string | null): SingleQuery<AuthUse
 
 export function useUpdateAuthUser(): UpdateMutation<
   AuthUserSummary,
-  { userId: string; input: { name?: string | null; email?: string | null; emailVerified?: boolean | null } }
-  > {
+  {
+    userId: string;
+    input: { name?: string | null; email?: string | null; emailVerified?: boolean | null };
+  }
+> {
   const queryClient = useQueryClient();
   return createUpdateMutationV2({
     mutationFn: async ({
@@ -119,8 +113,11 @@ export function useUpdateAuthUser(): UpdateMutation<
 
 export function useUpdateAuthUserSecurity(): UpdateMutation<
   AuthUserSecurityProfile,
-  { userId: string; input: { disabled?: boolean; banned?: boolean; allowedIps?: string[]; disableMfa?: boolean } }
-  > {
+  {
+    userId: string;
+    input: { disabled?: boolean; banned?: boolean; allowedIps?: string[]; disableMfa?: boolean };
+  }
+> {
   const queryClient = useQueryClient();
   return createUpdateMutationV2({
     mutationFn: async ({
@@ -147,7 +144,18 @@ export function useUpdateAuthUserSecurity(): UpdateMutation<
       mutationKey: authKeys.users.all,
       tags: ['auth', 'security', 'update'],
     },
-    onSuccess: (_data: AuthUserSecurityProfile, variables: { userId: string; input: { disabled?: boolean; banned?: boolean; allowedIps?: string[]; disableMfa?: boolean } }): void => {
+    onSuccess: (
+      _data: AuthUserSecurityProfile,
+      variables: {
+        userId: string;
+        input: {
+          disabled?: boolean;
+          banned?: boolean;
+          allowedIps?: string[];
+          disableMfa?: boolean;
+        };
+      }
+    ): void => {
       void invalidateUsers(queryClient);
       void invalidateAuthSecurity(queryClient, variables.userId);
     },
@@ -157,10 +165,14 @@ export function useUpdateAuthUserSecurity(): UpdateMutation<
 export function useDeleteAuthUser(): UpdateMutation<
   { id: string; deleted: boolean },
   { userId: string }
-  > {
+> {
   const queryClient = useQueryClient();
   return createDeleteMutationV2({
-    mutationFn: async ({ userId }: { userId: string }): Promise<{ id: string; deleted: boolean }> => {
+    mutationFn: async ({
+      userId,
+    }: {
+      userId: string;
+    }): Promise<{ id: string; deleted: boolean }> => {
       return deleteAuthUser(userId);
     },
     mutationKey: authKeys.users.all,
@@ -178,7 +190,10 @@ export function useDeleteAuthUser(): UpdateMutation<
   });
 }
 
-export function useMockSignIn(): MutationResult<{ ok: boolean; payload: { ok?: boolean; message?: string } }, { email: string; password: string }> {
+export function useMockSignIn(): MutationResult<
+  { ok: boolean; payload: { ok?: boolean; message?: string } },
+  { email: string; password: string }
+> {
   return createCreateMutationV2({
     mutationFn: mockSignIn,
     mutationKey: authKeys.users.all,
@@ -194,8 +209,13 @@ export function useMockSignIn(): MutationResult<{ ok: boolean; payload: { ok?: b
 
 export function useRegisterUser(): CreateMutation<
   { ok: boolean; payload: RegisterResponse },
-  { email: string; password: string; name?: string | undefined; emailVerified?: boolean | undefined }
-  > {
+  {
+    email: string;
+    password: string;
+    name?: string | undefined;
+    emailVerified?: boolean | undefined;
+  }
+> {
   const queryClient = useQueryClient();
   return createCreateMutationV2({
     mutationFn: registerUser,
@@ -216,7 +236,7 @@ export function useRegisterUser(): CreateMutation<
 export function useVerifyCredentials(): MutationResult<
   { ok: boolean; payload: VerifyCredentialsResponse },
   { email: string; password: string }
-  > {
+> {
   return createCreateMutationV2({
     mutationFn: verifyCredentials,
     mutationKey: authKeys.users.all,

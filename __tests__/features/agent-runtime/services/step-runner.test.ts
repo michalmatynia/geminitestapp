@@ -62,7 +62,14 @@ describe('Agent Runtime - Step Runner', () => {
   const mockInput = {
     context: {
       run: { id: 'run-1', prompt: 'Prompt' },
-      settings: { maxSteps: 10, maxStepAttempts: 3, loopGuardThreshold: 1, maxReplanCalls: 3, maxSelfChecks: 3, replanEverySteps: 5 } as any,
+      settings: {
+        maxSteps: 10,
+        maxStepAttempts: 3,
+        loopGuardThreshold: 1,
+        maxReplanCalls: 3,
+        maxSelfChecks: 3,
+        replanEverySteps: 5,
+      } as any,
       preferences: { requireHumanApproval: false } as any,
       memoryContext: [],
       memoryKey: 'mem-1',
@@ -93,7 +100,7 @@ describe('Agent Runtime - Step Runner', () => {
   it('should run steps until completion', async () => {
     (toolsModule.runAgentTool as any).mockResolvedValue({
       ok: true,
-      output: { url: 'http://example.com', snapshotId: 'snap-1' }
+      output: { url: 'http://example.com', snapshotId: 'snap-1' },
     });
 
     const result = await runPlanStepLoop(mockInput);
@@ -115,21 +122,25 @@ describe('Agent Runtime - Step Runner', () => {
     const result = await runPlanStepLoop(inputWithApproval);
 
     expect(result.stepIndex).toBe(0);
-    expect(prisma.chatbotAgentRun.update).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({ status: 'waiting_human' })
-    }));
+    expect(prisma.chatbotAgentRun.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ status: 'waiting_human' }),
+      })
+    );
   });
 
   it('should handle tool failure and attempt replan', async () => {
     (toolsModule.runAgentTool as any).mockResolvedValue({
       ok: false,
-      error: 'Element not found'
+      error: 'Element not found',
     });
-    
+
     (llmPlanning.buildPlanWithLLM as any).mockResolvedValue({
-      branchSteps: [{ id: 'new-step', title: 'Recovery Step', tool: 'playwright', status: 'pending' }],
+      branchSteps: [
+        { id: 'new-step', title: 'Recovery Step', tool: 'playwright', status: 'pending' },
+      ],
       meta: { taskType: 'web_task' },
-      source: 'llm'
+      source: 'llm',
     });
 
     const result = await runPlanStepLoop(mockInput);
@@ -140,16 +151,22 @@ describe('Agent Runtime - Step Runner', () => {
 
   it('should detect loops and trigger loop guard', async () => {
     const loopGuardModule = await import('@/features/ai/agent-runtime/execution/loop-guard');
-    (loopGuardModule.detectLoopPattern as any).mockReturnValue({ pattern: 'repeat-same-step', reason: 'Repeat' });
+    (loopGuardModule.detectLoopPattern as any).mockReturnValue({
+      pattern: 'repeat-same-step',
+      reason: 'Repeat',
+    });
     (loopGuardModule.buildLoopGuardReview as any).mockResolvedValue({
       action: 'replan',
       steps: [{ id: 'loop-fix', title: 'Fix Loop', tool: 'playwright', status: 'pending' }],
-      meta: { taskType: 'web_task' }
+      meta: { taskType: 'web_task' },
     });
-    (toolsModule.runAgentTool as any).mockResolvedValue({ ok: true, output: { url: 'http://a.com', snapshotId: 'snap-1' } });
+    (toolsModule.runAgentTool as any).mockResolvedValue({
+      ok: true,
+      output: { url: 'http://a.com', snapshotId: 'snap-1' },
+    });
 
     const result = await runPlanStepLoop(mockInput);
-      
+
     expect(loopGuardModule.buildLoopGuardReview).toHaveBeenCalled();
     expect(result.planSteps).toContainEqual(expect.objectContaining({ title: 'Fix Loop' }));
   });

@@ -2,10 +2,22 @@
 
 import React, { createContext, useContext, useState, useMemo, ReactNode } from 'react';
 
-import { useDeleteCountryMutation, useDeleteCurrencyMutation, useDeleteLanguageMutation } from '@/shared/lib/internationalization/hooks/useInternationalizationMutations';
-import { useCountries, useCurrencies, useLanguages } from '@/shared/lib/internationalization/hooks/useInternationalizationQueries';
+import {
+  useDeleteCountryMutation,
+  useDeleteCurrencyMutation,
+  useDeleteLanguageMutation,
+} from '@/shared/lib/internationalization/hooks/useInternationalizationMutations';
+import {
+  useCountries,
+  useCurrencies,
+  useLanguages,
+} from '@/shared/lib/internationalization/hooks/useInternationalizationQueries';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import type { CurrencyOption, CountryOption, Language } from '@/shared/contracts/internationalization';
+import type {
+  CurrencyOption,
+  CountryOption,
+  Language,
+} from '@/shared/contracts/internationalization';
 import { internalError } from '@/shared/errors/app-error';
 import { useToast } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
@@ -19,12 +31,12 @@ interface InternationalizationContextType {
   languages: Language[];
   languagesLoading: boolean;
   languagesError: string | null;
-  
+
   // Search/Filter
   countrySearch: string;
   setCountrySearch: (value: string) => void;
   filteredCountries: CountryOption[];
-  
+
   // Modal State
   isLanguageModalOpen: boolean;
   activeLanguage: Language | null;
@@ -32,16 +44,16 @@ interface InternationalizationContextType {
   activeCurrency: CurrencyOption | null;
   isCountryModalOpen: boolean;
   activeCountry: CountryOption | null;
-  
+
   // Handlers
   handleOpenLanguageModal: (language?: Language | null) => void;
   handleCloseLanguageModal: () => void;
   handleDeleteLanguage: (language: Language) => Promise<void>;
-  
+
   handleOpenCurrencyModal: (currency?: CurrencyOption | null) => void;
   handleCloseCurrencyModal: () => void;
   handleDeleteCurrency: (currency: CurrencyOption) => Promise<void>;
-  
+
   handleOpenCountryModal: (country?: CountryOption | null) => void;
   handleCloseCountryModal: () => void;
   handleDeleteCountry: (country: CountryOption) => Promise<void>;
@@ -63,23 +75,35 @@ interface InternationalizationContextType {
   }) => void;
 }
 
-export const InternationalizationContext = createContext<InternationalizationContextType | null>(null);
+export const InternationalizationContext = createContext<InternationalizationContextType | null>(
+  null
+);
 
 export function useInternationalizationContext(): InternationalizationContextType {
   const context = useContext(InternationalizationContext);
   if (!context) {
-    throw internalError('useInternationalizationContext must be used within an InternationalizationProvider');
+    throw internalError(
+      'useInternationalizationContext must be used within an InternationalizationProvider'
+    );
   }
   return context;
 }
 
-export function InternationalizationProvider({ children }: { children: ReactNode }): React.JSX.Element {
+export function InternationalizationProvider({
+  children,
+}: {
+  children: ReactNode;
+}): React.JSX.Element {
   const { toast } = useToast();
-  
+
   // Queries
   const { data: currencies = [], isLoading: loadingCurrencies } = useCurrencies();
   const { data: countries = [], isLoading: loadingCountries } = useCountries();
-  const { data: languages = [], isLoading: languagesLoading, error: languagesError } = useLanguages();
+  const {
+    data: languages = [],
+    isLoading: languagesLoading,
+    error: languagesError,
+  } = useLanguages();
 
   // Search state
   const [countrySearch, setCountrySearch] = useState('');
@@ -97,7 +121,7 @@ export function InternationalizationProvider({ children }: { children: ReactNode
     onConfirm: () => void | Promise<void>;
     confirmText?: string;
     isDangerous?: boolean;
-      } | null>(null);
+  } | null>(null);
 
   const confirmAction = (config: {
     title: string;
@@ -139,10 +163,16 @@ export function InternationalizationProvider({ children }: { children: ReactNode
           await deleteLanguageMutation.mutateAsync(l.id);
           toast(`Language ${l.name} deleted.`, { variant: 'success' });
         } catch (error) {
-          logClientError(error, { context: { source: 'InternationalizationContext', action: 'deleteLanguage', languageId: l.id } });
+          logClientError(error, {
+            context: {
+              source: 'InternationalizationContext',
+              action: 'deleteLanguage',
+              languageId: l.id,
+            },
+          });
           toast('Failed to delete language.', { variant: 'error' });
         }
-      }
+      },
     });
   };
 
@@ -162,10 +192,16 @@ export function InternationalizationProvider({ children }: { children: ReactNode
           await deleteCurrencyMutation.mutateAsync(c.id);
           toast(`Currency ${c.code} deleted.`, { variant: 'success' });
         } catch (error) {
-          logClientError(error, { context: { source: 'InternationalizationContext', action: 'deleteCurrency', currencyId: c.id } });
+          logClientError(error, {
+            context: {
+              source: 'InternationalizationContext',
+              action: 'deleteCurrency',
+              currencyId: c.id,
+            },
+          });
           toast('Failed to delete currency.', { variant: 'error' });
         }
-      }
+      },
     });
   };
 
@@ -185,10 +221,16 @@ export function InternationalizationProvider({ children }: { children: ReactNode
           await deleteCountryMutation.mutateAsync(c.id);
           toast(`Country ${c.name} deleted.`, { variant: 'success' });
         } catch (error) {
-          logClientError(error, { context: { source: 'InternationalizationContext', action: 'deleteCountry', countryId: c.id } });
+          logClientError(error, {
+            context: {
+              source: 'InternationalizationContext',
+              action: 'deleteCountry',
+              countryId: c.id,
+            },
+          });
           toast('Failed to delete country.', { variant: 'error' });
         }
-      }
+      },
     });
   };
 
@@ -199,27 +241,28 @@ export function InternationalizationProvider({ children }: { children: ReactNode
     loadingCountries,
     languages,
     languagesLoading,
-    languagesError: languagesError instanceof Error ? languagesError.message : (languagesError || null),
-    
+    languagesError:
+      languagesError instanceof Error ? languagesError.message : languagesError || null,
+
     countrySearch,
     setCountrySearch,
     filteredCountries,
-    
+
     isLanguageModalOpen: showLanguageModal,
     activeLanguage: editingLanguage,
     isCurrencyModalOpen: showCurrencyModal,
     activeCurrency: editingCurrency,
     isCountryModalOpen: showCountryModal,
     activeCountry: editingCountry,
-    
+
     handleOpenLanguageModal,
     handleCloseLanguageModal: () => setShowLanguageModal(false),
     handleDeleteLanguage,
-    
+
     handleOpenCurrencyModal,
     handleCloseCurrencyModal: () => setShowCurrencyModal(false),
     handleDeleteCurrency,
-    
+
     handleOpenCountryModal,
     handleCloseCountryModal: () => setShowCountryModal(false),
     handleDeleteCountry,

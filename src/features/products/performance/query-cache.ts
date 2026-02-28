@@ -58,12 +58,12 @@ export class QueryCache {
   set<T>(query: string, params: unknown[], data: T, options: CacheOptions = {}): void {
     const key = this.generateKey(query, params, options.keyPrefix);
     const tags = options.tags || [];
-    
+
     const entry: CacheEntry<T> = {
       data,
       timestamp: Date.now(),
       ttl: options.ttl || this.defaultTTL,
-      tags
+      tags,
     };
 
     // Remove old entry from tag index if exists
@@ -115,7 +115,7 @@ export class QueryCache {
     return {
       size: this.cache.size,
       tags: this.tagIndex.size,
-      memory: JSON.stringify([...this.cache.entries()]).length
+      memory: JSON.stringify([...this.cache.entries()]).length,
     };
   }
 }
@@ -128,7 +128,7 @@ export function withQueryCache<TArgs extends unknown[], TResult>(
     ttl?: number;
     tags?: (...args: TArgs) => string[];
     invalidateOn?: string[];
-  },
+  }
 ): (...args: TArgs) => Promise<TResult> {
   return async (...args: TArgs): Promise<TResult> => {
     const key = options.keyGenerator(...args);
@@ -169,7 +169,10 @@ export const ProductCacheHelpers = {
 
   getTags: {
     product: (id: string): string[] => [`product:${id}`, 'products:list'],
-    productList: (filters?: Record<string, unknown>): string[] => ['products:list', `products:filter:${JSON.stringify(filters || {})}`],
-    category: (id: string): string[] => [`category:${id}`, 'categories:list']
-  }
+    productList: (filters?: Record<string, unknown>): string[] => [
+      'products:list',
+      `products:filter:${JSON.stringify(filters || {})}`,
+    ],
+    category: (id: string): string[] => [`category:${id}`, 'categories:list'],
+  },
 };

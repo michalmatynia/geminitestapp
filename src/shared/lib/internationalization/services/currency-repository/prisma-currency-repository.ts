@@ -5,7 +5,6 @@ import type { CurrencyRecord } from '@/shared/contracts/internationalization';
 import type { CurrencyRepository } from '@/shared/contracts/internationalization';
 import prisma from '@/shared/lib/db/prisma';
 
-
 const toCurrencyDomain = (currency: Currency): CurrencyRecord => ({
   id: currency.id,
   code: currency.code,
@@ -39,7 +38,11 @@ export const prismaCurrencyRepository: CurrencyRepository = {
     return currency ? toCurrencyDomain(currency) : null;
   },
 
-  async createCurrency(data: { code: string; name: string; symbol?: string | null }): Promise<CurrencyRecord> {
+  async createCurrency(data: {
+    code: string;
+    name: string;
+    symbol?: string | null;
+  }): Promise<CurrencyRecord> {
     const currency = await prisma.currency.create({
       data: {
         id: data.code,
@@ -51,7 +54,10 @@ export const prismaCurrencyRepository: CurrencyRepository = {
     return toCurrencyDomain(currency);
   },
 
-  async updateCurrency(id: string, data: { code?: string; name?: string; symbol?: string | null }): Promise<CurrencyRecord> {
+  async updateCurrency(
+    id: string,
+    data: { code?: string; name?: string; symbol?: string | null }
+  ): Promise<CurrencyRecord> {
     const updateData: _Prisma.CurrencyUpdateInput = {
       id: data.code ?? id,
     };
@@ -81,11 +87,11 @@ export const prismaCurrencyRepository: CurrencyRepository = {
 
   async ensureDefaultCurrencies(): Promise<void> {
     await prisma.currency.createMany({
-      data: defaultCurrencies.map(c => ({
+      data: defaultCurrencies.map((c) => ({
         id: c.code,
         code: c.code as CurrencyCode,
         name: c.name,
-        symbol: c.symbol ?? null
+        symbol: c.symbol ?? null,
       })),
       skipDuplicates: true,
     });

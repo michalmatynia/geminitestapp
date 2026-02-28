@@ -22,9 +22,7 @@ const clampNumber = (value: unknown, fallback: number, min: number, max: number)
   return Math.min(Math.max(value, min), max);
 };
 
-export const normalizeAuthSecurityPolicy = (
-  raw: unknown
-): AuthSecurityPolicy => {
+export const normalizeAuthSecurityPolicy = (raw: unknown): AuthSecurityPolicy => {
   const data = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
   return {
     minPasswordLength: clampNumber(

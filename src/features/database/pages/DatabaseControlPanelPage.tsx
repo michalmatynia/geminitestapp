@@ -127,7 +127,9 @@ export default function DatabaseControlPanelPage(): React.JSX.Element {
         {
           onSuccess: () => toast('Provider assignment saved.', { variant: 'success' }),
           onError: (error: Error) => {
-            logClientError(error, { context: { source: 'ControlPanel', action: 'updateProviderMap' } });
+            logClientError(error, {
+              context: { source: 'ControlPanel', action: 'updateProviderMap' },
+            });
             toast('Failed to save provider assignment.', { variant: 'error' });
           },
         }
@@ -159,12 +161,17 @@ export default function DatabaseControlPanelPage(): React.JSX.Element {
         const msg = `Copied ${result.sourceCount} items. Inserted: ${result.targetInserted}, Deleted: ${result.targetDeleted}`;
         toast(msg, { variant: 'success' });
       } else if (result.status === 'skipped') {
-        toast(`Collection "${pendingCopy.collection}" was skipped: ${result.warnings?.join(', ') ?? 'unknown reason'}`, { variant: 'warning' });
+        toast(
+          `Collection "${pendingCopy.collection}" was skipped: ${result.warnings?.join(', ') ?? 'unknown reason'}`,
+          { variant: 'warning' }
+        );
       } else {
         toast(`Copy failed: ${result.error ?? 'Unknown error'}`, { variant: 'error' });
       }
     } catch (error: unknown) {
-      logClientError(error, { context: { source: 'ControlPanel', action: 'copyCollection', ...pendingCopy } });
+      logClientError(error, {
+        context: { source: 'ControlPanel', action: 'copyCollection', ...pendingCopy },
+      });
       toast('An error occurred during copy.', { variant: 'error' });
     }
   }, [pendingCopy, copyMutation, toast]);
@@ -187,7 +194,13 @@ export default function DatabaseControlPanelPage(): React.JSX.Element {
       const result = await restoreJsonBackup.mutateAsync(selectedJsonBackup);
       setLogModalContent(result.log ?? result.message ?? 'Backup restored');
     } catch (error: unknown) {
-      logClientError(error, { context: { source: 'ControlPanel', action: 'restoreJsonBackup', backupName: selectedJsonBackup } });
+      logClientError(error, {
+        context: {
+          source: 'ControlPanel',
+          action: 'restoreJsonBackup',
+          backupName: selectedJsonBackup,
+        },
+      });
       toast('Failed to restore JSON backup.', { variant: 'error' });
     }
   }, [selectedJsonBackup, restoreJsonBackup, toast]);
@@ -234,12 +247,14 @@ export default function DatabaseControlPanelPage(): React.JSX.Element {
       {/* Collections Table */}
       <StandardDataTablePanel
         title='Collections'
-        headerActions={(
+        headerActions={
           <RefreshButton
-            onRefresh={(): void => { void schemaQuery.refetch(); }}
+            onRefresh={(): void => {
+              void schemaQuery.refetch();
+            }}
             isRefreshing={schemaQuery.isFetching}
           />
-        )}
+        }
         columns={columns}
         data={rows}
         isLoading={schemaQuery.isLoading}
@@ -271,7 +286,9 @@ export default function DatabaseControlPanelPage(): React.JSX.Element {
       >
         <div className='mt-4 flex flex-wrap items-end gap-4'>
           <Button
-            onClick={(): void => { void handleCreateJsonBackup(); }}
+            onClick={(): void => {
+              void handleCreateJsonBackup();
+            }}
             disabled={createJsonBackup.isPending}
           >
             {createJsonBackup.isPending ? 'Creating...' : 'Create JSON Backup'}
@@ -279,19 +296,22 @@ export default function DatabaseControlPanelPage(): React.JSX.Element {
 
           <div className='flex items-end gap-2'>
             <FormField label='Select backup to restore'>
-              <SelectSimple size='sm'
+              <SelectSimple
+                size='sm'
                 value={selectedJsonBackup}
                 onValueChange={setSelectedJsonBackup}
                 options={[
                   { value: '', label: '-- Select --' },
-                  ...jsonBackups.map((name: string) => ({ value: name, label: name }))
+                  ...jsonBackups.map((name: string) => ({ value: name, label: name })),
                 ]}
                 triggerClassName='w-[200px]'
               />
             </FormField>
             <Button
               variant='outline'
-              onClick={(): void => { void handleRestoreJsonBackup(); }}
+              onClick={(): void => {
+                void handleRestoreJsonBackup();
+              }}
               disabled={!selectedJsonBackup || restoreJsonBackup.isPending}
               className='h-9'
             >

@@ -2,7 +2,10 @@
 
 import React from 'react';
 import { useProductListingsContext } from '@/features/integrations/context/ProductListingsContext';
-import type { ProductListingWithDetails, ProductListingExportEvent } from '@/shared/contracts/integrations';
+import type {
+  ProductListingWithDetails,
+  ProductListingExportEvent,
+} from '@/shared/contracts/integrations';
 import { StatusBadge, Card, Button } from '@/shared/ui';
 import { TRADERA_INTEGRATION_SLUGS } from '@/features/integrations/constants/slugs';
 
@@ -13,20 +16,21 @@ const formatTimestamp = (value: string | Date | null | undefined): string => {
   return date.toLocaleString();
 };
 
-const formatListValue = (value: string | null | undefined): string =>
-  value ? value : '—';
+const formatListValue = (value: string | null | undefined): string => (value ? value : '—');
 
 const normalizeIntegrationSlug = (value: string | null | undefined): string =>
   (value ?? '').trim().toLowerCase();
 
-export function ProductListingDetails({ listing }: { listing: ProductListingWithDetails }): React.JSX.Element {
-  const {
-    product,
-    historyOpenByListing,
-    setHistoryOpenByListing,
-  } = useProductListingsContext();
+export function ProductListingDetails({
+  listing,
+}: {
+  listing: ProductListingWithDetails;
+}): React.JSX.Element {
+  const { product, historyOpenByListing, setHistoryOpenByListing } = useProductListingsContext();
 
-  const isBaseListing = ['baselinker', 'base-com', 'base'].includes(normalizeIntegrationSlug(listing.integration.slug));
+  const isBaseListing = ['baselinker', 'base-com', 'base'].includes(
+    normalizeIntegrationSlug(listing.integration.slug)
+  );
   const isTraderaListing = TRADERA_INTEGRATION_SLUGS.has(
     normalizeIntegrationSlug(listing.integration.slug)
   );
@@ -46,23 +50,15 @@ export function ProductListingDetails({ listing }: { listing: ProductListingWith
   return (
     <div className='flex-1'>
       <div className='flex items-center gap-2'>
-        <span className='font-medium text-white'>
-          {listing.integration.name}
-        </span>
+        <span className='font-medium text-white'>{listing.integration.name}</span>
         <StatusBadge status={listing.status} />
       </div>
-      <p className='mt-1 text-xs text-gray-400'>
-        Account: {listing.connection.name}
-      </p>
+      <p className='mt-1 text-xs text-gray-400'>Account: {listing.connection.name}</p>
       {listing.externalListingId && (
-        <p className='text-xs text-gray-500'>
-          External ID: {listing.externalListingId}
-        </p>
+        <p className='text-xs text-gray-500'>External ID: {listing.externalListingId}</p>
       )}
       {listing.inventoryId && (
-        <p className='text-xs text-gray-500'>
-          Inventory ID: {listing.inventoryId}
-        </p>
+        <p className='text-xs text-gray-500'>Inventory ID: {listing.inventoryId}</p>
       )}
       <div className='mt-2 space-y-1 text-xs text-gray-500'>
         <p>Last export: {formatTimestamp(listing.listedAt)}</p>
@@ -78,16 +74,12 @@ export function ProductListingDetails({ listing }: { listing: ProductListingWith
         {listing.failureReason ? (
           <p className='text-red-300/90'>Failure: {listing.failureReason}</p>
         ) : null}
-        {isBaseListing && (
-          <p>Exported fields: {getExportFieldsLabel()}</p>
-        )}
+        {isBaseListing && <p>Exported fields: {getExportFieldsLabel()}</p>}
       </div>
       {listing.exportHistory && listing.exportHistory.length > 0 ? (
         <Card variant='subtle-compact' padding='sm' className='mt-3 bg-card/50'>
           <div className='flex items-center justify-between'>
-            <p className='text-[10px] uppercase tracking-wide text-gray-500'>
-              Export history
-            </p>
+            <p className='text-[10px] uppercase tracking-wide text-gray-500'>Export history</p>
             <Button
               type='button'
               variant='ghost'
@@ -100,36 +92,36 @@ export function ProductListingDetails({ listing }: { listing: ProductListingWith
               }
               className='text-[10px] uppercase tracking-wide text-gray-400 hover:text-gray-200'
             >
-              {(historyOpenByListing[listing.id] ?? false)
-                ? 'Hide'
-                : 'Show'}
+              {(historyOpenByListing[listing.id] ?? false) ? 'Hide' : 'Show'}
             </Button>
           </div>
           {(historyOpenByListing[listing.id] ?? false) ? (
             <div className='mt-2 space-y-2 text-xs text-gray-400'>
-              {listing.exportHistory.slice(0, 5).map((event: ProductListingExportEvent, index: number) => (
-                <div key={`${listing.id}-export-${index}`} className='grid gap-1'>
-                  <div className='flex items-center justify-between text-gray-300'>
-                    <span>{formatTimestamp(event.exportedAt)}</span>
-                    <span className='uppercase text-[10px] text-gray-500'>
-                      {event.status ?? 'success'}
-                    </span>
+              {listing.exportHistory
+                .slice(0, 5)
+                .map((event: ProductListingExportEvent, index: number) => (
+                  <div key={`${listing.id}-export-${index}`} className='grid gap-1'>
+                    <div className='flex items-center justify-between text-gray-300'>
+                      <span>{formatTimestamp(event.exportedAt)}</span>
+                      <span className='uppercase text-[10px] text-gray-500'>
+                        {event.status ?? 'success'}
+                      </span>
+                    </div>
+                    <div className='grid gap-1'>
+                      <span>Inventory: {formatListValue(event.inventoryId)}</span>
+                      <span>Template: {formatListValue(event.templateId)}</span>
+                      <span>Warehouse: {formatListValue(event.warehouseId)}</span>
+                      {event.externalListingId && (
+                        <span>External ID: {event.externalListingId}</span>
+                      )}
+                      {event.fields && event.fields.length > 0 ? (
+                        <span>Fields: {event.fields.join(', ')}</span>
+                      ) : (
+                        <span>Fields: &mdash;</span>
+                      )}
+                    </div>
                   </div>
-                  <div className='grid gap-1'>
-                    <span>Inventory: {formatListValue(event.inventoryId)}</span>
-                    <span>Template: {formatListValue(event.templateId)}</span>
-                    <span>Warehouse: {formatListValue(event.warehouseId)}</span>
-                    {event.externalListingId && (
-                      <span>External ID: {event.externalListingId}</span>
-                    )}
-                    {event.fields && event.fields.length > 0 ? (
-                      <span>Fields: {event.fields.join(', ')}</span>
-                    ) : (
-                      <span>Fields: &mdash;</span>
-                    )}
-                  </div>
-                </div>
-              ))}
+                ))}
             </div>
           ) : null}
         </Card>

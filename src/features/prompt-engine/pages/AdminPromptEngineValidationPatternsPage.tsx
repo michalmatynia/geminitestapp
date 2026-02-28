@@ -8,14 +8,12 @@ import { LearnedRuleList } from '../components/LearnedRuleList';
 import { PromptEngineFilters } from '../components/PromptEngineFilters';
 import { PromptEngineToolbar } from '../components/PromptEngineToolbar';
 import { RuleList } from '../components/RuleList';
+import { PromptEngineProvider, usePromptEngine } from '../context/PromptEngineContext';
 import {
-  PromptEngineProvider,
-  usePromptEngine,
-} from '../context/PromptEngineContext';
-import { type ExploderPatternSubTab, type PatternCollectionTab } from '../context/prompt-engine/PromptEngineConfigContext';
-import {
-  PromptEngineValidationPageProvider,
-} from '../context/PromptEngineValidationPageContext';
+  type ExploderPatternSubTab,
+  type PatternCollectionTab,
+} from '../context/prompt-engine/PromptEngineConfigContext';
+import { PromptEngineValidationPageProvider } from '../context/PromptEngineValidationPageContext';
 import type { PromptValidationScope } from '../settings';
 
 type AdminPromptEngineValidationPatternsPageProps = {
@@ -42,7 +40,11 @@ function AdminPromptEngineValidationPatternsContent(): React.JSX.Element {
       <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/40'>
         <div className='flex flex-wrap items-center justify-between gap-2'>
           <StatusBadge
-            status={promptEngineSettings.promptValidation.enabled ? 'Validator enabled' : 'Validator disabled'}
+            status={
+              promptEngineSettings.promptValidation.enabled
+                ? 'Validator enabled'
+                : 'Validator disabled'
+            }
             variant={promptEngineSettings.promptValidation.enabled ? 'success' : 'warning'}
           />
           <PropertyRow
@@ -53,9 +55,7 @@ function AdminPromptEngineValidationPatternsContent(): React.JSX.Element {
         </div>
       </Card>
 
-      {saveError ? (
-        <Alert variant='error'>{saveError}</Alert>
-      ) : null}
+      {saveError ? <Alert variant='error'>{saveError}</Alert> : null}
 
       <PromptEngineFilters />
 

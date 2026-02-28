@@ -3,18 +3,18 @@
 import { useParams } from 'next/navigation';
 import { useState, useMemo, useCallback } from 'react';
 
-import type { 
-  AgentTeachingChatSource, 
-  AgentTeachingEmbeddingDocumentListItem 
+import type {
+  AgentTeachingChatSource,
+  AgentTeachingEmbeddingDocumentListItem,
 } from '@/shared/contracts/agent-teaching';
 import { useToast } from '@/shared/ui';
 
 import { useAgentTeachingQueriesContext } from '../context/AgentTeachingContext';
-import { 
-  useAddEmbeddingDocumentMutation, 
-  useDeleteEmbeddingDocumentMutation, 
-  useEmbeddingDocuments, 
-  useSearchEmbeddingCollectionMutation 
+import {
+  useAddEmbeddingDocumentMutation,
+  useDeleteEmbeddingDocumentMutation,
+  useEmbeddingDocuments,
+  useSearchEmbeddingCollectionMutation,
 } from '../hooks/useAgentTeachingQueries';
 
 export function useAgentTeachingQueriesCollectionDetailState() {
@@ -24,11 +24,15 @@ export function useAgentTeachingQueriesCollectionDetailState() {
 
   const { collections, isLoading: loadingCollections } = useAgentTeachingQueriesContext();
   const collection = useMemo(
-    () => collectionId ? collections.find((c) => c.id === collectionId) ?? null : null,
+    () => (collectionId ? (collections.find((c) => c.id === collectionId) ?? null) : null),
     [collectionId, collections]
   );
 
-  const { data: docsResult, isLoading: loadingDocs, refetch: refetchDocs } = useEmbeddingDocuments(collectionId);
+  const {
+    data: docsResult,
+    isLoading: loadingDocs,
+    refetch: refetchDocs,
+  } = useEmbeddingDocuments(collectionId);
   const { mutateAsync: addDoc, isPending: adding } = useAddEmbeddingDocumentMutation();
   const { mutateAsync: deleteDoc, isPending: deleting } = useDeleteEmbeddingDocumentMutation();
   const searchMutation = useSearchEmbeddingCollectionMutation();
@@ -37,7 +41,9 @@ export function useAgentTeachingQueriesCollectionDetailState() {
   const [title, setTitle] = useState('');
   const [source, setSource] = useState('');
   const [tags, setTags] = useState('');
-  const [docToDelete, setDocToDelete] = useState<AgentTeachingEmbeddingDocumentListItem | null>(null);
+  const [docToDelete, setDocToDelete] = useState<AgentTeachingEmbeddingDocumentListItem | null>(
+    null
+  );
   const [searchQuery, setSearchQuery] = useState('');
   const [searchTopK, setSearchTopK] = useState(8);
   const [searchMinScore, setSearchMinScore] = useState(0.15);
@@ -60,7 +66,10 @@ export function useAgentTeachingQueriesCollectionDetailState() {
         text: trimmed,
         title: title.trim() || null,
         source: source.trim() || null,
-        tags: tags.split(',').map((t) => t.trim()).filter(Boolean),
+        tags: tags
+          .split(',')
+          .map((t) => t.trim())
+          .filter(Boolean),
       });
       toast('Document embedded and saved.', { variant: 'success' });
       setText('');
@@ -69,7 +78,9 @@ export function useAgentTeachingQueriesCollectionDetailState() {
       setTags('');
       void refetchDocs();
     } catch (error) {
-      toast(error instanceof Error ? error.message : 'Failed to add document.', { variant: 'error' });
+      toast(error instanceof Error ? error.message : 'Failed to add document.', {
+        variant: 'error',
+      });
     }
   }, [collectionId, text, title, source, tags, addDoc, toast, refetchDocs]);
 
@@ -80,7 +91,9 @@ export function useAgentTeachingQueriesCollectionDetailState() {
       toast('Document deleted.', { variant: 'success' });
       void refetchDocs();
     } catch (error) {
-      toast(error instanceof Error ? error.message : 'Failed to delete document.', { variant: 'error' });
+      toast(error instanceof Error ? error.message : 'Failed to delete document.', {
+        variant: 'error',
+      });
     } finally {
       setDocToDelete(null);
     }
@@ -115,14 +128,22 @@ export function useAgentTeachingQueriesCollectionDetailState() {
     adding,
     deleting,
     searching,
-    text, setText,
-    title, setTitle,
-    source, setSource,
-    tags, setTags,
-    docToDelete, setDocToDelete,
-    searchQuery, setSearchQuery,
-    searchTopK, setSearchTopK,
-    searchMinScore, setSearchMinScore,
+    text,
+    setText,
+    title,
+    setTitle,
+    source,
+    setSource,
+    tags,
+    setTags,
+    docToDelete,
+    setDocToDelete,
+    searchQuery,
+    setSearchQuery,
+    searchTopK,
+    setSearchTopK,
+    searchMinScore,
+    setSearchMinScore,
     searchResults,
     searchError,
     handleAdd,

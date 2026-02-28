@@ -79,13 +79,10 @@ export async function handleDatabaseMongoCreateAction({
       });
     }
   }
-  const parsedPayload: unknown = payloadTemplate
-    ? parseJsonTemplate(payloadTemplate)
-    : null;
+  const parsedPayload: unknown = payloadTemplate ? parseJsonTemplate(payloadTemplate) : null;
   if (
     payloadTemplate &&
-  (!parsedPayload ||
-    (typeof parsedPayload !== 'object' && !Array.isArray(parsedPayload)))
+    (!parsedPayload || (typeof parsedPayload !== 'object' && !Array.isArray(parsedPayload)))
   ) {
     toast('Insert template must be valid JSON.', {
       variant: 'error',
@@ -97,12 +94,9 @@ export async function handleDatabaseMongoCreateAction({
     };
   }
   const payloadFromTemplate: unknown =
-  parsedPayload && typeof parsedPayload === 'object'
-    ? parsedPayload
-    : null;
+    parsedPayload && typeof parsedPayload === 'object' ? parsedPayload : null;
   const rawPayload: unknown =
-  payloadFromTemplate ??
-  coerceInput(resolvedInputs[dbConfig.writeSource ?? 'bundle']);
+    payloadFromTemplate ?? coerceInput(resolvedInputs[dbConfig.writeSource ?? 'bundle']);
   const coercePayloadObject = (value: unknown): Record<string, unknown> | null => {
     if (!value) return null;
     if (typeof value === 'string') {
@@ -142,16 +136,16 @@ export async function handleDatabaseMongoCreateAction({
     };
   }
   const insertActionPayload = {
-    ...(queryPayload['provider'] ? { provider: queryPayload['provider'] as 'auto' | 'mongodb' | 'prisma' } : {}),
-    ...(queryPayload['collectionMap'] ? { collectionMap: queryPayload['collectionMap'] as Record<string, string> } : {}),
+    ...(queryPayload['provider']
+      ? { provider: queryPayload['provider'] as 'auto' | 'mongodb' | 'prisma' }
+      : {}),
+    ...(queryPayload['collectionMap']
+      ? { collectionMap: queryPayload['collectionMap'] as Record<string, string> }
+      : {}),
     action,
     collection,
-    ...(action === 'insertOne' && payloadObject
-      ? { document: payloadObject }
-      : {}),
-    ...(action === 'insertMany'
-      ? { documents: Array.isArray(payload) ? (payload) : [payload] }
-      : {}),
+    ...(action === 'insertOne' && payloadObject ? { document: payloadObject } : {}),
+    ...(action === 'insertMany' ? { documents: Array.isArray(payload) ? payload : [payload] } : {}),
   };
   const insertResult: ApiResponse<unknown> = await dbApi.action(insertActionPayload);
   executed.updater.add(node.id);
@@ -159,15 +153,15 @@ export async function handleDatabaseMongoCreateAction({
     reportAiPathsError(
       new Error(insertResult.error),
       { action: 'dbInsert', collection, nodeId: node.id },
-      'Database insert failed:',
+      'Database insert failed:'
     );
     toast(insertResult.error || 'Database insert failed.', { variant: 'error' });
     return { result: null, bundle: { error: 'Insert failed' }, aiPrompt };
   }
   const insertedCount: number =
-  typeof (insertResult.data as Record<string, unknown> | null)?.['insertedCount'] === 'number'
-    ? ((insertResult.data as Record<string, unknown>)['insertedCount'] as number)
-    : 1;
+    typeof (insertResult.data as Record<string, unknown> | null)?.['insertedCount'] === 'number'
+      ? ((insertResult.data as Record<string, unknown>)['insertedCount'] as number)
+      : 1;
   const writeOutcomeEvaluation = evaluateWriteOutcome({
     operation: 'insert',
     action,
@@ -177,8 +171,7 @@ export async function handleDatabaseMongoCreateAction({
   const writeOutcome = writeOutcomeEvaluation.writeOutcome;
   if (writeOutcomeEvaluation.isZeroAffected) {
     const message =
-      writeOutcome.message ??
-      `Database write affected 0 records for insert (${action}).`;
+      writeOutcome.message ?? `Database write affected 0 records for insert (${action}).`;
     if (writeOutcome.status === 'failed') {
       reportAiPathsError(
         new Error(message),
@@ -188,7 +181,7 @@ export async function handleDatabaseMongoCreateAction({
           nodeId: node.id,
           writeOutcome,
         },
-        'Database insert failed:',
+        'Database insert failed:'
       );
       toast(message, { variant: 'error' });
       throw new Error(message);
@@ -197,7 +190,7 @@ export async function handleDatabaseMongoCreateAction({
   } else {
     toast(
       `Entity created in ${collection} (${insertedCount} row${insertedCount === 1 ? '' : 's'}).`,
-      { variant: 'success' },
+      { variant: 'success' }
     );
   }
   return {

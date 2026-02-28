@@ -39,11 +39,7 @@ export function CategoryFormProvider({
   value: CategoryFormContextValue;
   children: React.ReactNode;
 }): React.JSX.Element {
-  return (
-    <CategoryFormContext.Provider value={value}>
-      {children}
-    </CategoryFormContext.Provider>
-  );
+  return <CategoryFormContext.Provider value={value}>{children}</CategoryFormContext.Provider>;
 }
 
 export function useCategoryFormContext(): CategoryFormContextValue {

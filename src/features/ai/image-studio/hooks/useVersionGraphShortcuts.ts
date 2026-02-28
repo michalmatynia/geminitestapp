@@ -41,54 +41,80 @@ export function useVersionGraphShortcuts({
   fitToView,
   focusNode,
 }: UseVersionGraphShortcutsParams): React.KeyboardEventHandler {
-  return useCallback((e: React.KeyboardEvent) => {
-    // Don't capture when typing in inputs
-    const tag = (e.target as HTMLElement).tagName;
-    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+  return useCallback(
+    (e: React.KeyboardEvent) => {
+      // Don't capture when typing in inputs
+      const tag = (e.target as HTMLElement).tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
 
-    switch (e.key) {
-      case 'Escape':
-        if (mergeMode) { toggleMergeMode(); }
-        else if (compositeMode) { toggleCompositeMode(); }
-        else if (compareMode) { toggleCompareMode(); }
-        else if (isolatedNodeId) { isolateBranch(null); }
-        else if (selectedNodeId) { selectNode(null); }
-        break;
-      case 'f':
-        fitToView();
-        break;
-      case 'Delete':
-      case 'Backspace':
-        if (selectedNodeId) {
-          void setAnnotation(selectedNodeId, '');
-          setAnnotationDraft('');
-        }
-        break;
-      case 'ArrowUp':
-      case 'ArrowDown':
-      case 'ArrowLeft':
-      case 'ArrowRight': {
-        e.preventDefault();
-        if (!selectedNodeId) {
-          if (nodes.length > 0) selectNode(nodes[0]!.id);
+      switch (e.key) {
+        case 'Escape':
+          if (mergeMode) {
+            toggleMergeMode();
+          } else if (compositeMode) {
+            toggleCompositeMode();
+          } else if (compareMode) {
+            toggleCompareMode();
+          } else if (isolatedNodeId) {
+            isolateBranch(null);
+          } else if (selectedNodeId) {
+            selectNode(null);
+          }
+          break;
+        case 'f':
+          fitToView();
+          break;
+        case 'Delete':
+        case 'Backspace':
+          if (selectedNodeId) {
+            void setAnnotation(selectedNodeId, '');
+            setAnnotationDraft('');
+          }
+          break;
+        case 'ArrowUp':
+        case 'ArrowDown':
+        case 'ArrowLeft':
+        case 'ArrowRight': {
+          e.preventDefault();
+          if (!selectedNodeId) {
+            if (nodes.length > 0) selectNode(nodes[0]!.id);
+            break;
+          }
+          const current = nodes.find((n) => n.id === selectedNodeId);
+          if (!current) break;
+          if ((e.key === 'ArrowUp' || e.key === 'ArrowLeft') && current.parentIds.length > 0) {
+            selectNode(current.parentIds[0]!);
+          } else if (
+            (e.key === 'ArrowDown' || e.key === 'ArrowRight') &&
+            current.childIds.length > 0
+          ) {
+            selectNode(current.childIds[0]!);
+          }
           break;
         }
-        const current = nodes.find((n) => n.id === selectedNodeId);
-        if (!current) break;
-        if ((e.key === 'ArrowUp' || e.key === 'ArrowLeft') && current.parentIds.length > 0) {
-          selectNode(current.parentIds[0]!);
-        } else if ((e.key === 'ArrowDown' || e.key === 'ArrowRight') && current.childIds.length > 0) {
-          selectNode(current.childIds[0]!);
-        }
-        break;
+        case 'Enter':
+          if (selectedNodeId) {
+            focusNode(selectedNodeId);
+          }
+          break;
       }
-      case 'Enter':
-        if (selectedNodeId) {
-          focusNode(selectedNodeId);
-        }
-        break;
-    }
-  }, [mergeMode, compositeMode, compareMode, isolatedNodeId, selectedNodeId, nodes,
-    toggleMergeMode, toggleCompositeMode, toggleCompareMode, isolateBranch, selectNode,
-    setAnnotation, setAnnotationDraft, fitToView, focusNode]);
+    },
+    [
+      mergeMode,
+      compositeMode,
+      compareMode,
+      isolatedNodeId,
+      selectedNodeId,
+      nodes,
+      toggleMergeMode,
+      toggleCompositeMode,
+      toggleCompareMode,
+      isolateBranch,
+      selectNode,
+      setAnnotation,
+      setAnnotationDraft,
+      fitToView,
+      focusNode,
+    ]
+  );
 }

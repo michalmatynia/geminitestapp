@@ -6,7 +6,14 @@ import {
   useClearAiInsightsNotifications,
 } from '@/features/admin/hooks/useAiInsightsNotifications';
 import type { AiInsightNotification } from '@/shared/contracts';
-import { Button, StatusBadge, DocumentationSection, LoadingState, EmptyState, Drawer } from '@/shared/ui';
+import {
+  Button,
+  StatusBadge,
+  DocumentationSection,
+  LoadingState,
+  EmptyState,
+  Drawer,
+} from '@/shared/ui';
 import { useToast } from '@/shared/ui';
 
 export function AiInsightsNotificationsDrawer(): React.JSX.Element | null {
@@ -22,7 +29,9 @@ export function AiInsightsNotificationsDrawer(): React.JSX.Element | null {
       await clearMutation.mutateAsync();
       toast('AI notifications cleared.', { variant: 'success' });
     } catch (error) {
-      toast(error instanceof Error ? error.message : 'Failed to clear notifications.', { variant: 'error' });
+      toast(error instanceof Error ? error.message : 'Failed to clear notifications.', {
+        variant: 'error',
+      });
     }
   };
 
@@ -67,7 +76,9 @@ export function AiInsightsNotificationsDrawer(): React.JSX.Element | null {
               >
                 <div className='flex items-center justify-between gap-2'>
                   <span className='text-[10px] uppercase text-gray-500'>
-                    {notification.createdAt ? new Date(notification.createdAt).toLocaleString() : 'N/A'}
+                    {notification.createdAt
+                      ? new Date(notification.createdAt).toLocaleString()
+                      : 'N/A'}
                   </span>
                   <StatusBadge
                     status={notification.status ?? 'new'}
@@ -84,7 +95,10 @@ export function AiInsightsNotificationsDrawer(): React.JSX.Element | null {
                 </div>
                 <div className='mt-2 text-sm text-white'>{notification.summary}</div>
                 {notification.warnings && notification.warnings.length > 0 ? (
-                  <DocumentationSection title='Issues' className='mt-3 p-3 bg-amber-500/5 border-amber-500/20'>
+                  <DocumentationSection
+                    title='Issues'
+                    className='mt-3 p-3 bg-amber-500/5 border-amber-500/20'
+                  >
                     <ul className='list-disc space-y-1 pl-4 text-[11px] text-amber-200'>
                       {(notification.warnings ?? []).map((warning: string, index: number) => (
                         <li key={`${notification.id}-warn-${index}`}>{warning}</li>

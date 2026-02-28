@@ -25,16 +25,20 @@ vi.mock('@/shared/lib/db/mongo-client', () => ({
 }));
 
 vi.mock('mongodb', async (importOriginal) => {
-  const actual = await importOriginal() as any;
+  const actual = (await importOriginal()) as any;
   class MockObjectId {
     id: string;
     constructor(id: string) {
       this.id = id;
     }
-    toString() { return this.id; }
-    equals(other: any) { return other.toString() === this.id; }
+    toString() {
+      return this.id;
+    }
+    equals(other: any) {
+      return other.toString() === this.id;
+    }
   }
-  const MockObjectIdCtor = function(id: string) {
+  const MockObjectIdCtor = function (id: string) {
     return new MockObjectId(id);
   };
   (MockObjectIdCtor as any).isValid = actual.ObjectId.isValid;
@@ -54,8 +58,20 @@ describe('Chatbot Session Repository', () => {
   describe('findAll', () => {
     it('returns all sessions sorted by updatedAt', async () => {
       const mockDocs = [
-        { _id: new ObjectId('507f1f77bcf86cd799439011'), title: 'Session 1', messages: [], createdAt: new Date(), updatedAt: new Date() },
-        { _id: new ObjectId('507f1f77bcf86cd799439012'), title: 'Session 2', messages: [], createdAt: new Date(), updatedAt: new Date() },
+        {
+          _id: new ObjectId('507f1f77bcf86cd799439011'),
+          title: 'Session 1',
+          messages: [],
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
+          _id: new ObjectId('507f1f77bcf86cd799439012'),
+          title: 'Session 2',
+          messages: [],
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
       ];
       mockCollection.toArray.mockResolvedValue(mockDocs);
 
@@ -101,7 +117,7 @@ describe('Chatbot Session Repository', () => {
         userId: null,
         messages: [],
         messageCount: 0,
-        settings: { model: 'gpt-4' }
+        settings: { model: 'gpt-4' },
       };
       const newId = new ObjectId('507f1f77bcf86cd799439013');
       mockCollection.insertOne.mockResolvedValue({ insertedId: newId });
@@ -176,7 +192,7 @@ describe('Chatbot Session Repository', () => {
     it('updates timestamps when adding a message', async () => {
       const id = '507f1f77bcf86cd799439011';
       const message = { role: 'user' as const, content: 'New message' };
-      
+
       const beforeDate = new Date('2020-01-01');
       const mockDoc = {
         _id: new ObjectId(id),
@@ -185,13 +201,13 @@ describe('Chatbot Session Repository', () => {
         createdAt: beforeDate,
         updatedAt: new Date(), // updated
       };
-      
+
       mockCollection.findOneAndUpdate.mockResolvedValue(mockDoc);
-      
+
       const result = await chatbotSessionRepository.addMessage(id, message);
-      
+
       // We can't strictly assert the date instance passed to $set because it's created inside the function,
-      // but we verified it is passed in the previous test. 
+      // but we verified it is passed in the previous test.
       // Here we just verify the returned object reflects an update.
       expect(result?.updatedAt).toBeDefined();
       expect(new Date(result!.updatedAt!).getTime()).toBeGreaterThan(beforeDate.getTime());

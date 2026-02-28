@@ -108,10 +108,7 @@ const ALLOWED_REPLACEMENT_FIELDS = new Set<string>(PRODUCT_VALIDATION_REPLACEMEN
 /**
  * Validator docs: see docs/validator/function-reference.md#helpers.normalizereplacementfields
  */
-export const normalizeReplacementFields = (
-  fields: unknown,
-  _target?: string
-): string[] => {
+export const normalizeReplacementFields = (fields: unknown, _target?: string): string[] => {
   if (!Array.isArray(fields) || fields.length === 0) return [];
   const unique = new Set<string>();
   const fieldsArray = fields as string[];
@@ -139,7 +136,6 @@ export const getReplacementFieldsForTarget = (
 ): Array<{ value: string; label: string }> => {
   let fields: string[];
   if (target === 'name') {
-
     fields = PRODUCT_VALIDATION_REPLACEMENT_FIELDS.filter((field) => field.startsWith('name_'));
   } else if (target === 'description') {
     fields = PRODUCT_VALIDATION_REPLACEMENT_FIELDS.filter((field) =>
@@ -251,9 +247,7 @@ export const buildDynamicRecipeFromForm = (
     mathOperand: Number.isFinite(parsedOperand) ? parsedOperand : null,
     roundMode: formData.roundMode,
     padLength:
-      Number.isFinite(parsedPadLength) && parsedPadLength > 0
-        ? Math.floor(parsedPadLength)
-        : null,
+      Number.isFinite(parsedPadLength) && parsedPadLength > 0 ? Math.floor(parsedPadLength) : null,
     padChar: formData.padChar || null,
     logicOperator: formData.logicOperator,
     logicOperand: formData.logicOperand,
@@ -326,7 +320,10 @@ export const buildUniqueLabel = (label: string, existingLabels: Set<string>): st
 /**
  * Validator docs: see docs/validator/function-reference.md#helpers.getpatternsequence
  */
-export const getPatternSequence = (pattern: ProductValidationPattern, fallbackIndex: number): number => {
+export const getPatternSequence = (
+  pattern: ProductValidationPattern,
+  fallbackIndex: number
+): number => {
   if (typeof pattern.sequence === 'number' && Number.isFinite(pattern.sequence)) {
     return Math.max(0, Math.floor(pattern.sequence));
   }

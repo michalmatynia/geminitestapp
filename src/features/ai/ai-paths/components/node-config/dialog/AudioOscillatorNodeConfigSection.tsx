@@ -2,12 +2,7 @@
 
 import type { AudioWaveform } from '@/shared/lib/ai-paths';
 import { toNumber } from '@/shared/lib/ai-paths';
-import {
-  Input,
-  
-  SelectSimple,
-  FormField,
-} from '@/shared/ui';
+import { Input, SelectSimple, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -29,7 +24,8 @@ export function AudioOscillatorNodeConfigSection(): React.JSX.Element | null {
   return (
     <div className='space-y-4'>
       <FormField label='Waveform'>
-        <SelectSimple size='sm'
+        <SelectSimple
+          size='sm'
           variant='subtle'
           value={oscillatorConfig.waveform}
           onValueChange={(value: string): void =>

@@ -28,9 +28,9 @@ describe('category-mapping-repository (mongodb)', () => {
 
   it('bulkUpsert does not duplicate externalCategoryId across $set and $setOnInsert', async () => {
     const createIndex = vi.fn().mockResolvedValue('ok');
-    const externalFindToArray = vi.fn().mockResolvedValue([
-      { _id: 'canonical-external-id', externalId: 'base-external-100' },
-    ]);
+    const externalFindToArray = vi
+      .fn()
+      .mockResolvedValue([{ _id: 'canonical-external-id', externalId: 'base-external-100' }]);
     const externalFind = vi.fn().mockReturnValue({
       toArray: externalFindToArray,
     });

@@ -3,10 +3,24 @@
 import { Plus } from 'lucide-react';
 import { useState, useCallback } from 'react';
 
-import { useSaveParameterMutation, useDeleteParameterMutation } from '@/features/products/hooks/useProductSettingsQueries';
+import {
+  useSaveParameterMutation,
+  useDeleteParameterMutation,
+} from '@/features/products/hooks/useProductSettingsQueries';
 import type { CatalogRecord } from '@/shared/contracts/products';
 import type { ProductParameter } from '@/shared/contracts/products';
-import { useToast, Button, Input, SelectSimple, FormModal, EmptyState, FormSection, FormField, Textarea, SimpleSettingsList } from '@/shared/ui';
+import {
+  useToast,
+  Button,
+  Input,
+  SelectSimple,
+  FormModal,
+  EmptyState,
+  FormSection,
+  FormField,
+  Textarea,
+  SimpleSettingsList,
+} from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 type ParametersSettingsProps = {
@@ -132,10 +146,7 @@ export function ParametersSettings({
     }
 
     const optionLabels = normalizeOptionLabels(formData.optionLabelsInput);
-    if (
-      SELECTOR_TYPES_REQUIRING_OPTIONS.has(formData.selectorType) &&
-      optionLabels.length === 0
-    ) {
+    if (SELECTOR_TYPES_REQUIRING_OPTIONS.has(formData.selectorType) && optionLabels.length === 0) {
       toast('This selector type requires at least one value label.', {
         variant: 'error',
       });
@@ -163,8 +174,7 @@ export function ParametersSettings({
       setShowModal(false);
       onRefresh();
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Failed to save parameter.';
+      const message = error instanceof Error ? error.message : 'Failed to save parameter.';
       toast(message, { variant: 'error' });
     }
   };
@@ -176,12 +186,14 @@ export function ParametersSettings({
   const handleConfirmDelete = async (): Promise<void> => {
     if (!parameterToDelete) return;
     try {
-      await deleteParameterMutation.mutateAsync({ id: parameterToDelete.id, catalogId: selectedCatalogId });
+      await deleteParameterMutation.mutateAsync({
+        id: parameterToDelete.id,
+        catalogId: selectedCatalogId,
+      });
       toast('Parameter deleted.', { variant: 'success' });
       onRefresh();
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Failed to delete parameter.';
+      const message = error instanceof Error ? error.message : 'Failed to delete parameter.';
       toast(message, { variant: 'error' });
     } finally {
       setParameterToDelete(null);
@@ -201,12 +213,13 @@ export function ParametersSettings({
         className='p-4'
       >
         <div className='mt-4 w-full max-w-xs'>
-          <SelectSimple size='sm'
+          <SelectSimple
+            size='sm'
             value={selectedCatalogId || ''}
             onValueChange={onCatalogChange}
             options={catalogs.map((catalog: CatalogRecord) => ({
               value: catalog.id,
-              label: `${catalog.name}${catalog.isDefault ? ' (Default)' : ''}`
+              label: `${catalog.name}${catalog.isDefault ? ' (Default)' : ''}`,
             }))}
             placeholder='Select a catalog...'
           />
@@ -216,19 +229,13 @@ export function ParametersSettings({
       {selectedCatalogId && (
         <>
           <div className='flex justify-start'>
-            <Button
-              onClick={openCreateModal}
-              className='bg-white text-gray-900 hover:bg-gray-200'
-            >
+            <Button onClick={openCreateModal} className='bg-white text-gray-900 hover:bg-gray-200'>
               <Plus className='size-4 mr-2' />
               Add Parameter
             </Button>
           </div>
 
-          <FormSection
-            title={`Parameters for "${selectedCatalog?.name}"`}
-            className='p-4'
-          >
+          <FormSection title={`Parameters for "${selectedCatalog?.name}"`} className='p-4'>
             <div className='mt-4'>
               <SimpleSettingsList
                 items={parameters.map((parameter: ProductParameter) => ({
@@ -240,19 +247,17 @@ export function ParametersSettings({
                       {parameter.optionLabels.length > 0 && (
                         <span>Options: {parameter.optionLabels.length}</span>
                       )}
-                      {parameter.name_pl && (
-                        <span>PL: {parameter.name_pl}</span>
-                      )}
-                      {parameter.name_de && (
-                        <span>DE: {parameter.name_de}</span>
-                      )}
+                      {parameter.name_pl && <span>PL: {parameter.name_pl}</span>}
+                      {parameter.name_de && <span>DE: {parameter.name_de}</span>}
                     </div>
                   ),
-                  original: parameter
+                  original: parameter,
                 }))}
                 isLoading={loading}
                 onEdit={(item) => openEditModal(item.original)}
-                onDelete={(item) => { handleDelete(item.original); }}
+                onDelete={(item) => {
+                  handleDelete(item.original);
+                }}
                 emptyMessage='No parameters yet. Create product parameters and choose their selector type.'
               />
             </div>
@@ -282,7 +287,9 @@ export function ParametersSettings({
           open={showModal}
           onClose={(): void => setShowModal(false)}
           title={editingParameter ? 'Edit Parameter' : 'Create Parameter'}
-          onSave={(): void => { void handleSave(); }}
+          onSave={(): void => {
+            void handleSave();
+          }}
           isSaving={saveParameterMutation.isPending}
           size='md'
         >

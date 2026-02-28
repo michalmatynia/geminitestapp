@@ -1,11 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import type {
-  CaseResolverFile,
-  CaseResolverWorkspace,
-} from '@/shared/contracts/case-resolver';
-import {
-  type CaseResolverRequestedCaseStatus,
-} from '../types';
+import type { CaseResolverFile, CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
+import { type CaseResolverRequestedCaseStatus } from '../types';
 import {
   resolveCaseContainerIdForFileId,
   resolveCaseResolverActiveCaseId,
@@ -64,25 +59,29 @@ export function useCaseResolverStateViewState({
   const [isPreviewPageVisible, setIsPreviewPageVisible] = useState(false);
   const [isPartiesModalOpen, setIsPartiesModalOpen] = useState(false);
 
-  const handleSelectFile = useCallback((fileId: string): void => {
-    if (selectedFileId === fileId) {
-      setSelectedFileId(null);
+  const handleSelectFile = useCallback(
+    (fileId: string): void => {
+      if (selectedFileId === fileId) {
+        setSelectedFileId(null);
+        setSelectedFolderPath(null);
+        setSelectedAssetId(null);
+        return;
+      }
+      setSelectedFileId(fileId);
+      setWorkspace(
+        (current: CaseResolverWorkspace): CaseResolverWorkspace =>
+          current.activeFileId === fileId
+            ? current
+            : {
+                ...current,
+                activeFileId: fileId,
+              }
+      );
       setSelectedFolderPath(null);
       setSelectedAssetId(null);
-      return;
-    }
-    setSelectedFileId(fileId);
-    setWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace => (
-      current.activeFileId === fileId
-        ? current
-        : {
-          ...current,
-          activeFileId: fileId,
-        }
-    ));
-    setSelectedFolderPath(null);
-    setSelectedAssetId(null);
-  }, [selectedFileId, setWorkspace]);
+    },
+    [selectedFileId, setWorkspace]
+  );
 
   const handleSelectAsset = useCallback((assetId: string): void => {
     setSelectedFileId(null);
@@ -90,20 +89,26 @@ export function useCaseResolverStateViewState({
     setSelectedFolderPath(null);
   }, []);
 
-  const handleSelectFolder = useCallback((folderPath: string | null): void => {
-    if (folderPath !== null && selectedFolderPath === folderPath) {
+  const handleSelectFolder = useCallback(
+    (folderPath: string | null): void => {
+      if (folderPath !== null && selectedFolderPath === folderPath) {
+        setSelectedFileId(null);
+        setSelectedFolderPath(null);
+        setSelectedAssetId(null);
+        return;
+      }
       setSelectedFileId(null);
-      setSelectedFolderPath(null);
+      setSelectedFolderPath(folderPath);
       setSelectedAssetId(null);
-      return;
-    }
-    setSelectedFileId(null);
-    setSelectedFolderPath(folderPath);
-    setSelectedAssetId(null);
-  }, [selectedFolderPath]);
+    },
+    [selectedFolderPath]
+  );
 
   const filesById = useMemo(
-    () => new Map<string, CaseResolverFile>(workspace.files.map((file: CaseResolverFile): [string, CaseResolverFile] => [file.id, file])),
+    () =>
+      new Map<string, CaseResolverFile>(
+        workspace.files.map((file: CaseResolverFile): [string, CaseResolverFile] => [file.id, file])
+      ),
     [workspace.files]
   );
 

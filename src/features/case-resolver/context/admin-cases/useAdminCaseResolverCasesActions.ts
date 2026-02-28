@@ -1,25 +1,22 @@
 'use client';
 
 import { useCallback, type Dispatch, type MutableRefObject, type SetStateAction } from 'react';
-import type { 
-  CaseResolverWorkspace, 
-  CaseResolverFile 
-} from '@/shared/contracts/case-resolver';
-import { 
-  createCaseResolverWorkspaceMutationId, 
-  fetchCaseResolverWorkspaceSnapshot, 
-  getCaseResolverWorkspaceRevision, 
-  logCaseResolverWorkspaceEvent, 
-  persistCaseResolverWorkspaceSnapshot, 
-  stampCaseResolverWorkspaceMutation 
+import type { CaseResolverWorkspace, CaseResolverFile } from '@/shared/contracts/case-resolver';
+import {
+  createCaseResolverWorkspaceMutationId,
+  fetchCaseResolverWorkspaceSnapshot,
+  getCaseResolverWorkspaceRevision,
+  logCaseResolverWorkspaceEvent,
+  persistCaseResolverWorkspaceSnapshot,
+  stampCaseResolverWorkspaceMutation,
 } from '../../workspace-persistence';
-import { 
-  CASE_RESOLVER_CASE_READY_MAX_ATTEMPTS, 
+import {
+  CASE_RESOLVER_CASE_READY_MAX_ATTEMPTS,
   CASE_RESOLVER_CASE_READY_INTERVAL_MS,
   normalizeCaseParentId,
   getSortedSiblingIds,
   assignSiblingCaseOrder,
-  isDescendantCaseId
+  isDescendantCaseId,
 } from './utils';
 import { createCaseResolverFile } from '../../settings';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -79,13 +76,11 @@ export function useAdminCaseResolverCasesActions({
         source?: string;
         maxAttempts?: number;
         intervalMs?: number;
-      },
+      }
     ): Promise<boolean> => {
       const source = options?.source ?? 'cases_page_case_sync';
-      const maxAttempts =
-        options?.maxAttempts ?? CASE_RESOLVER_CASE_READY_MAX_ATTEMPTS;
-      const intervalMs =
-        options?.intervalMs ?? CASE_RESOLVER_CASE_READY_INTERVAL_MS;
+      const maxAttempts = options?.maxAttempts ?? CASE_RESOLVER_CASE_READY_MAX_ATTEMPTS;
+      const intervalMs = options?.intervalMs ?? CASE_RESOLVER_CASE_READY_INTERVAL_MS;
       const wait = async (ms: number): Promise<void> =>
         new Promise<void>((resolve) => {
           window.setTimeout(resolve, ms);
@@ -95,8 +90,7 @@ export function useAdminCaseResolverCasesActions({
         const snapshot = await fetchCaseResolverWorkspaceSnapshot(source);
         if (snapshot) {
           const hasCase = snapshot.files.some(
-            (file: CaseResolverFile): boolean =>
-              file.id === caseId && file.fileType === 'case',
+            (file: CaseResolverFile): boolean => file.id === caseId && file.fileType === 'case'
           );
           if (hasCase) {
             const serialized = JSON.stringify(snapshot);
@@ -131,7 +125,12 @@ export function useAdminCaseResolverCasesActions({
       });
       return false;
     },
-    [lastPersistedWorkspaceRevisionRef, lastPersistedWorkspaceValueRef, setWorkspace, settingsStoreRefetchRef],
+    [
+      lastPersistedWorkspaceRevisionRef,
+      lastPersistedWorkspaceValueRef,
+      setWorkspace,
+      settingsStoreRefetchRef,
+    ]
   );
 
   const handleCreateCase = useCallback(async (): Promise<void> => {
@@ -147,8 +146,7 @@ export function useAdminCaseResolverCasesActions({
       const siblingCaseOrders = workspace.files
         .filter(
           (file: CaseResolverFile): boolean =>
-            file.fileType === 'case' &&
-            (file.parentCaseId?.trim() || null) === parentCaseId
+            file.fileType === 'case' && (file.parentCaseId?.trim() || null) === parentCaseId
         )
         .map((file: CaseResolverFile): number =>
           typeof file.caseTreeOrder === 'number' && Number.isFinite(file.caseTreeOrder)
@@ -167,25 +165,15 @@ export function useAdminCaseResolverCasesActions({
         caseTreeOrder: nextCaseTreeOrder,
         referenceCaseIds: caseDraft.referenceCaseIds || [],
         documentContent:
-          typeof caseDraft.documentContent === 'string'
-            ? caseDraft.documentContent
-            : '',
-        documentCity:
-          typeof caseDraft.documentCity === 'string'
-            ? caseDraft.documentCity
-            : null,
+          typeof caseDraft.documentContent === 'string' ? caseDraft.documentContent : '',
+        documentCity: typeof caseDraft.documentCity === 'string' ? caseDraft.documentCity : null,
         documentDate:
           typeof caseDraft.documentDate === 'string'
             ? caseDraft.documentDate
-            : caseDraft.documentDate ?? null,
-        happeningDate:
-          typeof caseDraft.happeningDate === 'string'
-            ? caseDraft.happeningDate
-            : null,
+            : (caseDraft.documentDate ?? null),
+        happeningDate: typeof caseDraft.happeningDate === 'string' ? caseDraft.happeningDate : null,
         activeDocumentVersion:
-          caseDraft.activeDocumentVersion === 'exploded'
-            ? 'exploded'
-            : 'original',
+          caseDraft.activeDocumentVersion === 'exploded' ? 'exploded' : 'original',
         isLocked: caseDraft.isLocked === true,
         isSent: caseDraft.isSent === true,
         tagId: caseDraft.tagId || null,
@@ -197,28 +185,51 @@ export function useAdminCaseResolverCasesActions({
         ...workspace,
         files: [...workspace.files, newFile],
       };
-      stampCaseResolverWorkspaceMutation(nextWorkspace, { baseRevision: getCaseResolverWorkspaceRevision(nextWorkspace), mutationId });
+      stampCaseResolverWorkspaceMutation(nextWorkspace, {
+        baseRevision: getCaseResolverWorkspaceRevision(nextWorkspace),
+        mutationId,
+      });
 
       const revision = getCaseResolverWorkspaceRevision(nextWorkspace);
       lastPersistedWorkspaceValueRef.current = JSON.stringify(nextWorkspace);
       lastPersistedWorkspaceRevisionRef.current = revision;
       setWorkspace(nextWorkspace);
 
-      await persistCaseResolverWorkspaceSnapshot({ workspace: nextWorkspace, expectedRevision: revision, mutationId, source: 'cases_page_create' });
-      
+      await persistCaseResolverWorkspaceSnapshot({
+        workspace: nextWorkspace,
+        expectedRevision: revision,
+        mutationId,
+        source: 'cases_page_create',
+      });
+
       setIsCreateCaseModalOpen(false);
       setCaseDraft({});
       setEditingCaseId(null);
       toast('Case created successfully.', { variant: 'success' });
-      
+
       void waitForCaseAvailability(newFile.id, { source: 'cases_page_create_sync' });
     } catch (error) {
-      logClientError(error, { context: { source: 'AdminCaseResolverCasesPage', action: 'createCase' } });
+      logClientError(error, {
+        context: { source: 'AdminCaseResolverCasesPage', action: 'createCase' },
+      });
       toast('Failed to create case.', { variant: 'error' });
     } finally {
       setIsCreatingCase(false);
     }
-  }, [caseDraft, toast, waitForCaseAvailability, workspace, lastPersistedWorkspaceRevisionRef, lastPersistedWorkspaceValueRef, setWorkspace, createCaseMutationIdRef, setIsCreatingCase, setIsCreateCaseModalOpen, setCaseDraft, setEditingCaseId]);
+  }, [
+    caseDraft,
+    toast,
+    waitForCaseAvailability,
+    workspace,
+    lastPersistedWorkspaceRevisionRef,
+    lastPersistedWorkspaceValueRef,
+    setWorkspace,
+    createCaseMutationIdRef,
+    setIsCreatingCase,
+    setIsCreateCaseModalOpen,
+    setCaseDraft,
+    setEditingCaseId,
+  ]);
 
   const handleUpdateCase = useCallback(async (): Promise<void> => {
     if (!editingCaseId || !editingCaseName.trim()) {
@@ -232,34 +243,58 @@ export function useAdminCaseResolverCasesActions({
         files: workspace.files.map((file) =>
           file.id === editingCaseId
             ? {
-              ...file,
-              name: editingCaseName.trim(),
-              parentCaseId: editingCaseParentId,
-              referenceCaseIds: editingCaseReferenceCaseIds,
-              tagId: editingCaseTagId,
-              caseIdentifierId: editingCaseCaseIdentifierId,
-              categoryId: editingCaseCategoryId,
-              updatedAt: new Date().toISOString(),
-            }
+                ...file,
+                name: editingCaseName.trim(),
+                parentCaseId: editingCaseParentId,
+                referenceCaseIds: editingCaseReferenceCaseIds,
+                tagId: editingCaseTagId,
+                caseIdentifierId: editingCaseCaseIdentifierId,
+                categoryId: editingCaseCategoryId,
+                updatedAt: new Date().toISOString(),
+              }
             : file
         ),
       };
-      stampCaseResolverWorkspaceMutation(nextWorkspace, { baseRevision: getCaseResolverWorkspaceRevision(nextWorkspace), mutationId });
+      stampCaseResolverWorkspaceMutation(nextWorkspace, {
+        baseRevision: getCaseResolverWorkspaceRevision(nextWorkspace),
+        mutationId,
+      });
 
       const revision = getCaseResolverWorkspaceRevision(nextWorkspace);
       lastPersistedWorkspaceValueRef.current = JSON.stringify(nextWorkspace);
       lastPersistedWorkspaceRevisionRef.current = revision;
       setWorkspace(nextWorkspace);
 
-      await persistCaseResolverWorkspaceSnapshot({ workspace: nextWorkspace, expectedRevision: revision, mutationId, source: 'cases_page_update' });
-      
+      await persistCaseResolverWorkspaceSnapshot({
+        workspace: nextWorkspace,
+        expectedRevision: revision,
+        mutationId,
+        source: 'cases_page_update',
+      });
+
       setEditingCaseId(null);
       toast('Case updated successfully.', { variant: 'success' });
     } catch (error) {
-      logClientError(error, { context: { source: 'AdminCaseResolverCasesPage', action: 'updateCase' } });
+      logClientError(error, {
+        context: { source: 'AdminCaseResolverCasesPage', action: 'updateCase' },
+      });
       toast('Failed to update case.', { variant: 'error' });
     }
-  }, [editingCaseId, editingCaseName, editingCaseParentId, editingCaseReferenceCaseIds, editingCaseTagId, editingCaseCaseIdentifierId, editingCaseCategoryId, toast, workspace, lastPersistedWorkspaceRevisionRef, lastPersistedWorkspaceValueRef, setWorkspace, setEditingCaseId]);
+  }, [
+    editingCaseId,
+    editingCaseName,
+    editingCaseParentId,
+    editingCaseReferenceCaseIds,
+    editingCaseTagId,
+    editingCaseCaseIdentifierId,
+    editingCaseCategoryId,
+    toast,
+    workspace,
+    lastPersistedWorkspaceRevisionRef,
+    lastPersistedWorkspaceValueRef,
+    setWorkspace,
+    setEditingCaseId,
+  ]);
 
   const handleSaveCaseDraft = useCallback(async (): Promise<void> => {
     if (!editingCaseId) {
@@ -268,8 +303,7 @@ export function useAdminCaseResolverCasesActions({
     }
 
     const existingCase = workspace.files.find(
-      (file: CaseResolverFile): boolean =>
-        file.id === editingCaseId && file.fileType === 'case',
+      (file: CaseResolverFile): boolean => file.id === editingCaseId && file.fileType === 'case'
     );
     if (!existingCase) {
       toast('Selected case no longer exists.', { variant: 'error' });
@@ -277,22 +311,17 @@ export function useAdminCaseResolverCasesActions({
     }
 
     const resolvedName =
-      typeof caseDraft.name === 'string'
-        ? caseDraft.name.trim()
-        : existingCase.name.trim();
+      typeof caseDraft.name === 'string' ? caseDraft.name.trim() : existingCase.name.trim();
     if (!resolvedName) {
       toast('Case name is required.', { variant: 'error' });
       return;
     }
 
     const caseFiles = workspace.files.filter(
-      (file: CaseResolverFile): boolean => file.fileType === 'case',
+      (file: CaseResolverFile): boolean => file.fileType === 'case'
     );
     const caseFilesById = new Map<string, CaseResolverFile>(
-      caseFiles.map((file: CaseResolverFile): [string, CaseResolverFile] => [
-        file.id,
-        file,
-      ]),
+      caseFiles.map((file: CaseResolverFile): [string, CaseResolverFile] => [file.id, file])
     );
     const normalizeOptionalCaseId = (value: unknown): string | null => {
       if (typeof value !== 'string') return null;
@@ -330,9 +359,9 @@ export function useAdminCaseResolverCasesActions({
           .filter((referenceCaseId: string): boolean => referenceCaseId.length > 0)
           .filter(
             (referenceCaseId: string): boolean =>
-              referenceCaseId !== editingCaseId && caseFilesById.has(referenceCaseId),
-          ),
-      ),
+              referenceCaseId !== editingCaseId && caseFilesById.has(referenceCaseId)
+          )
+      )
     );
 
     const resolvedCaseStatus =
@@ -342,29 +371,27 @@ export function useAdminCaseResolverCasesActions({
           ? 'completed'
           : 'pending';
     const resolvedFolder =
-      typeof caseDraft.folder === 'string'
-        ? caseDraft.folder
-        : existingCase.folder ?? '';
+      typeof caseDraft.folder === 'string' ? caseDraft.folder : (existingCase.folder ?? '');
     const resolvedDocumentContent =
       typeof caseDraft.documentContent === 'string'
         ? caseDraft.documentContent
-        : existingCase.documentContent ?? '';
+        : (existingCase.documentContent ?? '');
     const resolvedDocumentCity =
       typeof caseDraft.documentCity === 'string'
         ? caseDraft.documentCity
-        : existingCase.documentCity ?? null;
+        : (existingCase.documentCity ?? null);
     const resolvedDocumentDate =
       caseDraft.documentDate !== undefined
         ? typeof caseDraft.documentDate === 'string'
           ? caseDraft.documentDate
-          : caseDraft.documentDate ?? null
-        : existingCase.documentDate ?? null;
+          : (caseDraft.documentDate ?? null)
+        : (existingCase.documentDate ?? null);
     const resolvedHappeningDate =
       caseDraft.happeningDate !== undefined
         ? typeof caseDraft.happeningDate === 'string'
           ? caseDraft.happeningDate
           : null
-        : existingCase.happeningDate ?? null;
+        : (existingCase.happeningDate ?? null);
     const resolvedDocumentVersion =
       caseDraft.activeDocumentVersion === 'exploded' ||
       caseDraft.activeDocumentVersion === 'original'
@@ -389,9 +416,7 @@ export function useAdminCaseResolverCasesActions({
         ? caseDraft.isLocked === true
         : existingCase.isLocked === true;
     const resolvedIsSent =
-      caseDraft.isSent !== undefined
-        ? caseDraft.isSent === true
-        : existingCase.isSent === true;
+      caseDraft.isSent !== undefined ? caseDraft.isSent === true : existingCase.isSent === true;
 
     setIsCreatingCase(true);
     try {
@@ -454,39 +479,72 @@ export function useAdminCaseResolverCasesActions({
     } finally {
       setIsCreatingCase(false);
     }
-  }, [caseDraft, editingCaseId, handleCreateCase, toast, workspace, lastPersistedWorkspaceRevisionRef, lastPersistedWorkspaceValueRef, setWorkspace, setIsCreatingCase, setIsCreateCaseModalOpen, setCaseDraft, setEditingCaseId]);
+  }, [
+    caseDraft,
+    editingCaseId,
+    handleCreateCase,
+    toast,
+    workspace,
+    lastPersistedWorkspaceRevisionRef,
+    lastPersistedWorkspaceValueRef,
+    setWorkspace,
+    setIsCreatingCase,
+    setIsCreateCaseModalOpen,
+    setCaseDraft,
+    setEditingCaseId,
+  ]);
 
-  const handleDeleteCaseLocal = useCallback((caseId: string): void => {
-    setConfirmation({
-      title: 'Delete Case',
-      message: 'Are you sure you want to delete this case? This action cannot be undone.',
-      confirmText: 'Delete',
-      isDangerous: true,
-      onConfirm: async () => {
-        try {
-          const mutationId = createCaseResolverWorkspaceMutationId();
-          const nextWorkspace = {
-            ...workspace,
-            files: workspace.files.filter((file) => file.id !== caseId),
-          };
-          stampCaseResolverWorkspaceMutation(nextWorkspace, { baseRevision: getCaseResolverWorkspaceRevision(nextWorkspace), mutationId });
+  const handleDeleteCaseLocal = useCallback(
+    (caseId: string): void => {
+      setConfirmation({
+        title: 'Delete Case',
+        message: 'Are you sure you want to delete this case? This action cannot be undone.',
+        confirmText: 'Delete',
+        isDangerous: true,
+        onConfirm: async () => {
+          try {
+            const mutationId = createCaseResolverWorkspaceMutationId();
+            const nextWorkspace = {
+              ...workspace,
+              files: workspace.files.filter((file) => file.id !== caseId),
+            };
+            stampCaseResolverWorkspaceMutation(nextWorkspace, {
+              baseRevision: getCaseResolverWorkspaceRevision(nextWorkspace),
+              mutationId,
+            });
 
-          const revision = getCaseResolverWorkspaceRevision(nextWorkspace);
-          lastPersistedWorkspaceValueRef.current = JSON.stringify(nextWorkspace);
-          lastPersistedWorkspaceRevisionRef.current = revision;
-          setWorkspace(nextWorkspace);
+            const revision = getCaseResolverWorkspaceRevision(nextWorkspace);
+            lastPersistedWorkspaceValueRef.current = JSON.stringify(nextWorkspace);
+            lastPersistedWorkspaceRevisionRef.current = revision;
+            setWorkspace(nextWorkspace);
 
-          await persistCaseResolverWorkspaceSnapshot({ workspace: nextWorkspace, expectedRevision: revision, mutationId, source: 'cases_page_delete' });
-          toast('Case deleted successfully.', { variant: 'success' });
-        } catch (error) {
-          logClientError(error, { context: { source: 'AdminCaseResolverCasesPage', action: 'deleteCase' } });
-          toast('Failed to delete case.', { variant: 'error' });
-        } finally {
-          setConfirmation(null);
-        }
-      },
-    });
-  }, [toast, workspace, lastPersistedWorkspaceRevisionRef, lastPersistedWorkspaceValueRef, setWorkspace, setConfirmation]);
+            await persistCaseResolverWorkspaceSnapshot({
+              workspace: nextWorkspace,
+              expectedRevision: revision,
+              mutationId,
+              source: 'cases_page_delete',
+            });
+            toast('Case deleted successfully.', { variant: 'success' });
+          } catch (error) {
+            logClientError(error, {
+              context: { source: 'AdminCaseResolverCasesPage', action: 'deleteCase' },
+            });
+            toast('Failed to delete case.', { variant: 'error' });
+          } finally {
+            setConfirmation(null);
+          }
+        },
+      });
+    },
+    [
+      toast,
+      workspace,
+      lastPersistedWorkspaceRevisionRef,
+      lastPersistedWorkspaceValueRef,
+      setWorkspace,
+      setConfirmation,
+    ]
+  );
 
   const handleMoveCase = useCallback(
     async (
@@ -721,14 +779,15 @@ export function useAdminCaseResolverCasesActions({
         const now = new Date().toISOString();
         const nextWorkspace: CaseResolverWorkspace = {
           ...workspace,
-          files: workspace.files.map((file: CaseResolverFile): CaseResolverFile =>
-            file.id === caseId
-              ? {
-                ...file,
-                name: normalizedName,
-                updatedAt: now,
-              }
-              : file
+          files: workspace.files.map(
+            (file: CaseResolverFile): CaseResolverFile =>
+              file.id === caseId
+                ? {
+                    ...file,
+                    name: normalizedName,
+                    updatedAt: now,
+                  }
+                : file
           ),
         };
 
@@ -766,27 +825,26 @@ export function useAdminCaseResolverCasesActions({
   const handleToggleCaseStatus = useCallback(
     async (caseId: string): Promise<void> => {
       const targetCase = workspace.files.find(
-        (file: CaseResolverFile): boolean =>
-          file.id === caseId && file.fileType === 'case',
+        (file: CaseResolverFile): boolean => file.id === caseId && file.fileType === 'case'
       );
       if (!targetCase || targetCase.isLocked) return;
 
-      const nextStatus =
-        targetCase.caseStatus === 'completed' ? 'pending' : 'completed';
+      const nextStatus = targetCase.caseStatus === 'completed' ? 'pending' : 'completed';
       const now = new Date().toISOString();
 
       try {
         const mutationId = createCaseResolverWorkspaceMutationId();
         const nextWorkspace: CaseResolverWorkspace = {
           ...workspace,
-          files: workspace.files.map((file: CaseResolverFile): CaseResolverFile =>
-            file.id === caseId && file.fileType === 'case'
-              ? {
-                ...file,
-                caseStatus: nextStatus,
-                updatedAt: now,
-              }
-              : file,
+          files: workspace.files.map(
+            (file: CaseResolverFile): CaseResolverFile =>
+              file.id === caseId && file.fileType === 'case'
+                ? {
+                    ...file,
+                    caseStatus: nextStatus,
+                    updatedAt: now,
+                  }
+                : file
           ),
         };
         stampCaseResolverWorkspaceMutation(nextWorkspace, {
@@ -816,7 +874,13 @@ export function useAdminCaseResolverCasesActions({
         toast('Failed to update case status.', { variant: 'error' });
       }
     },
-    [toast, workspace, lastPersistedWorkspaceRevisionRef, lastPersistedWorkspaceValueRef, setWorkspace],
+    [
+      toast,
+      workspace,
+      lastPersistedWorkspaceRevisionRef,
+      lastPersistedWorkspaceValueRef,
+      setWorkspace,
+    ]
   );
 
   return {

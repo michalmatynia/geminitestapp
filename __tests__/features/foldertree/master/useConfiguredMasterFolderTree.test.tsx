@@ -23,13 +23,7 @@ describe('useConfiguredMasterFolderTree', () => {
     const initialNodes = createNodes('a');
 
     const { result, rerender } = renderHook(
-      ({
-        nodes,
-        selectedNodeId,
-      }: {
-        nodes: MasterTreeNode[];
-        selectedNodeId?: string | null;
-      }) =>
+      ({ nodes, selectedNodeId }: { nodes: MasterTreeNode[]; selectedNodeId?: string | null }) =>
         useConfiguredMasterFolderTree({
           nodes,
           ...(selectedNodeId !== undefined ? { selectedNodeId } : {}),

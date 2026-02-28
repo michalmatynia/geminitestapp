@@ -39,7 +39,9 @@ export function useStreamingQuery<T>(
         config.onMessage?.(data);
         reconnectAttemptsRef.current = 0; // Reset on successful message
       } catch (error) {
-        logClientError(error instanceof Error ? error : new Error(String(error)), { context: { source: 'useStreamingQuery', action: 'parseStreamingData', level: 'warn' } });
+        logClientError(error instanceof Error ? error : new Error(String(error)), {
+          context: { source: 'useStreamingQuery', action: 'parseStreamingData', level: 'warn' },
+        });
       }
     };
 
@@ -49,9 +51,12 @@ export function useStreamingQuery<T>(
       // Attempt reconnection
       if (reconnectAttemptsRef.current < maxReconnectAttempts) {
         reconnectAttemptsRef.current++;
-        setTimeout((): void => {
-          connect();
-        }, reconnectDelay * Math.pow(2, reconnectAttemptsRef.current));
+        setTimeout(
+          (): void => {
+            connect();
+          },
+          reconnectDelay * Math.pow(2, reconnectAttemptsRef.current)
+        );
       }
     };
   }, [config, queryKey, queryClient, maxReconnectAttempts, reconnectDelay]);
@@ -109,12 +114,16 @@ export function useWebSocketQuery<T>(
         queryClient.setQueryData(queryKey, data);
         options?.onMessage?.(data);
       } catch (error) {
-        logClientError(error instanceof Error ? error : new Error(String(error)), { context: { source: 'useWebSocketQuery', action: 'parseWebSocketData', level: 'warn' } });
+        logClientError(error instanceof Error ? error : new Error(String(error)), {
+          context: { source: 'useWebSocketQuery', action: 'parseWebSocketData', level: 'warn' },
+        });
       }
     };
 
     wsRef.current.onerror = (error: Event): void => {
-      logClientError(new Error('WebSocket error'), { context: { source: 'WebSocketQuery', url: wsUrl, queryKey } });
+      logClientError(new Error('WebSocket error'), {
+        context: { source: 'WebSocketQuery', url: wsUrl, queryKey },
+      });
       options?.onError?.(error);
     };
 
@@ -197,10 +206,7 @@ export function useSmartPolling<T>(
     if (query.isError) {
       errorCountRef.current++;
       // Increase interval on error (exponential backoff)
-      intervalRef.current = Math.min(
-        intervalRef.current * backoffMultiplier,
-        maxInterval
-      );
+      intervalRef.current = Math.min(intervalRef.current * backoffMultiplier, maxInterval);
     }
   }, [query.isSuccess, query.isError, baseInterval, backoffMultiplier, maxInterval]);
 

@@ -8,9 +8,7 @@ import type {
 } from '@/shared/contracts/notes';
 import prisma from '@/shared/lib/db/prisma';
 
-export const createNoteFile = async (
-  data: NoteFileCreateInput,
-): Promise<NoteFileRecord> => {
+export const createNoteFile = async (data: NoteFileCreateInput): Promise<NoteFileRecord> => {
   const createData: Prisma.NoteFileCreateInput = {
     note: { connect: { id: data.noteId } },
     slotIndex: data.slotIndex,
@@ -35,9 +33,7 @@ export const createNoteFile = async (
   };
 };
 
-export const getNoteFiles = async (
-  noteId: string,
-): Promise<NoteFileRecord[]> => {
+export const getNoteFiles = async (noteId: string): Promise<NoteFileRecord[]> => {
   const files = await prisma.noteFile.findMany({
     where: { noteId },
     orderBy: { slotIndex: 'asc' },
@@ -49,10 +45,7 @@ export const getNoteFiles = async (
   }));
 };
 
-export const deleteNoteFile = async (
-  noteId: string,
-  slotIndex: number,
-): Promise<boolean> => {
+export const deleteNoteFile = async (noteId: string, slotIndex: number): Promise<boolean> => {
   try {
     await prisma.noteFile.delete({
       where: {

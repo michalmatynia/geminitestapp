@@ -32,9 +32,14 @@ export function VariantPanel(): React.JSX.Element {
   } = useVariantPanelContext();
 
   return (
-    <Card variant='subtle-compact' padding='sm' className='h-full shrink-0 overflow-hidden bg-card/40'>
+    <Card
+      variant='subtle-compact'
+      padding='sm'
+      className='h-full shrink-0 overflow-hidden bg-card/40'
+    >
       <div className='mb-2 flex items-center gap-2'>
-        <Input size='sm'
+        <Input
+          size='sm'
           value={variantTimestampQuery}
           onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
             onVariantTimestampQueryChange(event.target.value);
@@ -51,13 +56,19 @@ export function VariantPanel(): React.JSX.Element {
         <span>Compare in canvas:</span>
         <Badge
           variant={compareVariantA ? 'active' : 'neutral'}
-          className={cn('px-1.5 py-0.5 text-[10px]', compareVariantA ? 'border-cyan-400/60 text-cyan-200' : 'border-border/60')}
+          className={cn(
+            'px-1.5 py-0.5 text-[10px]',
+            compareVariantA ? 'border-cyan-400/60 text-cyan-200' : 'border-border/60'
+          )}
         >
           1 {compareVariantA ? `#${compareVariantA.index}` : 'unset'}
         </Badge>
         <Badge
           variant={compareVariantB ? 'warning' : 'neutral'}
-          className={cn('px-1.5 py-0.5 text-[10px]', compareVariantB ? 'border-amber-400/60 text-amber-200' : 'border-border/60')}
+          className={cn(
+            'px-1.5 py-0.5 text-[10px]',
+            compareVariantB ? 'border-amber-400/60 text-amber-200' : 'border-border/60'
+          )}
         >
           2 {compareVariantB ? `#${compareVariantB.index}` : 'unset'}
         </Badge>
@@ -123,7 +134,11 @@ export function VariantPanel(): React.JSX.Element {
                         />
                       </div>
                     ) : (
-                      <Card variant='subtle-compact' padding='none' className='flex h-20 w-full items-center justify-center border-dashed border-border/70 text-[10px] text-gray-500'>
+                      <Card
+                        variant='subtle-compact'
+                        padding='none'
+                        className='flex h-20 w-full items-center justify-center border-dashed border-border/70 text-[10px] text-gray-500'
+                      >
                         {variant.status === 'pending' ? (
                           <LoadingState message='Waiting' size='xs' />
                         ) : (
@@ -141,7 +156,10 @@ export function VariantPanel(): React.JSX.Element {
                         onClick={(): void => onSetCompareVariantA(variant.id)}
                         title='Set as compare thumbnail 1'
                         aria-pressed={isCompareA}
-                        className={cn('size-5 rounded bg-black/65 px-0 text-[10px] text-cyan-200 hover:bg-cyan-500/20 hover:text-cyan-100', isCompareA && 'bg-cyan-500/30 text-cyan-100')}
+                        className={cn(
+                          'size-5 rounded bg-black/65 px-0 text-[10px] text-cyan-200 hover:bg-cyan-500/20 hover:text-cyan-100',
+                          isCompareA && 'bg-cyan-500/30 text-cyan-100'
+                        )}
                       >
                         1
                       </Button>
@@ -152,7 +170,10 @@ export function VariantPanel(): React.JSX.Element {
                         onClick={(): void => onSetCompareVariantB(variant.id)}
                         title='Set as compare thumbnail 2'
                         aria-pressed={isCompareB}
-                        className={cn('size-5 rounded bg-black/65 px-0 text-[10px] text-amber-200 hover:bg-amber-500/20 hover:text-amber-100', isCompareB && 'bg-amber-500/30 text-amber-100')}
+                        className={cn(
+                          'size-5 rounded bg-black/65 px-0 text-[10px] text-amber-200 hover:bg-amber-500/20 hover:text-amber-100',
+                          isCompareB && 'bg-amber-500/30 text-amber-100'
+                        )}
                       >
                         2
                       </Button>

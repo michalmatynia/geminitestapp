@@ -22,10 +22,7 @@ describe('getValueAtMappingPath', () => {
 
   it('resolves object paths from array inputs by selecting first matching entry', () => {
     const context = {
-      result: [
-        'not-json',
-        '{"parameters":[{"parameterId":"param-2","value":"acrylic"}]}',
-      ],
+      result: ['not-json', '{"parameters":[{"parameterId":"param-2","value":"acrylic"}]}'],
     };
 
     expect(getValueAtMappingPath(context, 'result.parameters[0].parameterId')).toBe('param-2');

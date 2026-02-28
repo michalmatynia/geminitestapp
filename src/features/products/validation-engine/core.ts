@@ -64,9 +64,7 @@ export const normalizeValidationDebounceMs = (value: unknown): number => {
 /**
  * Validator docs: see docs/validator/function-reference.md#core.normalizepostacceptbehavior
  */
-export const normalizePostAcceptBehavior = (
-  value: unknown
-): ProductValidationPostAcceptBehavior =>
+export const normalizePostAcceptBehavior = (value: unknown): ProductValidationPostAcceptBehavior =>
   value === 'stop_after_accept' ? 'stop_after_accept' : 'revalidate';
 
 /**
@@ -114,7 +112,9 @@ const getSequenceScopeKey = (pattern: ProductValidationPattern): string | null =
 /**
  * Validator docs: see docs/validator/function-reference.md#core.buildsequencegroupcounts
  */
-export const buildSequenceGroupCounts = (patterns: ProductValidationPattern[]): Map<string, number> => {
+export const buildSequenceGroupCounts = (
+  patterns: ProductValidationPattern[]
+): Map<string, number> => {
   const counts = new Map<string, number>();
   for (const pattern of patterns) {
     if (!pattern.enabled) continue;
@@ -140,7 +140,9 @@ export const isPatternInSequenceGroup = (
 /**
  * Validator docs: see docs/validator/function-reference.md#core.sortvalidatorpatterns
  */
-export const sortValidatorPatterns = (patterns: ProductValidationPattern[]): ProductValidationPattern[] =>
+export const sortValidatorPatterns = (
+  patterns: ProductValidationPattern[]
+): ProductValidationPattern[] =>
   patterns
     .map((pattern: ProductValidationPattern, index: number) => ({ pattern, index }))
     .sort((a, b) => {
@@ -233,8 +235,7 @@ export const isLatestPriceStockMirrorPattern = (pattern: ProductValidationPatter
   const recipe = parseDynamicReplacementRecipe(pattern.replacementValue);
   if (!recipe) return false;
   return (
-    recipe.sourceMode === 'latest_product_field' &&
-    recipe.targetApply === 'replace_whole_field'
+    recipe.sourceMode === 'latest_product_field' && recipe.targetApply === 'replace_whole_field'
   );
 };
 
@@ -377,9 +378,9 @@ export const applyResolvedReplacement = ({
     const flags =
       replacement.kind === 'static'
         ? (pattern.flags ?? '').includes('g')
-          ? pattern.flags ?? undefined
+          ? (pattern.flags ?? undefined)
           : `${pattern.flags ?? ''}g`
-        : pattern.flags ?? undefined;
+        : (pattern.flags ?? undefined);
     const regex = new RegExp(pattern.regex, flags);
     return value.replace(regex, (match: string) =>
       match === replacement.value ? match : replacement.value
@@ -585,23 +586,22 @@ export const buildFieldIssues = ({
           (replacementScope === 'global' || replacementFields.includes(fieldName));
         const resolvedReplacement = replacementActive
           ? resolvePatternReplacementValue({
-            pattern,
-            fieldValue: candidateValue,
-            values,
-            latestProductValues,
-          })
+              pattern,
+              fieldValue: candidateValue,
+              values,
+              latestProductValues,
+            })
           : null;
         const effectiveReplacement = resolvedReplacement;
         const hasEffectiveReplacement = Boolean(effectiveReplacement?.value);
         const nextValue = hasEffectiveReplacement
           ? applyResolvedReplacement({
-            value: candidateValue,
-            pattern,
-            replacement: effectiveReplacement,
-          })
+              value: candidateValue,
+              pattern,
+              replacement: effectiveReplacement,
+            })
           : candidateValue;
-        const isNoopReplacement =
-          hasEffectiveReplacement && nextValue === candidateValue;
+        const isNoopReplacement = hasEffectiveReplacement && nextValue === candidateValue;
         const shouldSuppressNoopReplacementProposal =
           normalizeProductValidationSkipNoopReplacementProposal(
             pattern.skipNoopReplacementProposal
@@ -619,9 +619,11 @@ export const buildFieldIssues = ({
             length,
             regex: pattern.regex,
             flags: pattern.flags ?? null,
-            replacementValue: hasEffectiveReplacement ? effectiveReplacement?.value ?? null : null,
+            replacementValue: hasEffectiveReplacement
+              ? (effectiveReplacement?.value ?? null)
+              : null,
             replacementApplyMode: hasEffectiveReplacement
-              ? effectiveReplacement?.applyMode ?? 'replace_matched_segment'
+              ? (effectiveReplacement?.applyMode ?? 'replace_matched_segment')
               : 'replace_matched_segment',
             replacementScope,
             replacementActive: replacementActive && hasEffectiveReplacement,
@@ -703,10 +705,7 @@ export const mergeFieldIssueMaps = (
   runtimeIssues: Record<string, FieldValidatorIssue[]>
 ): Record<string, FieldValidatorIssue[]> => {
   const merged: Record<string, FieldValidatorIssue[]> = {};
-  const keys = new Set<string>([
-    ...Object.keys(staticIssues),
-    ...Object.keys(runtimeIssues),
-  ]);
+  const keys = new Set<string>([...Object.keys(staticIssues), ...Object.keys(runtimeIssues)]);
   for (const key of keys) {
     merged[key] = [...(staticIssues[key] ?? []), ...(runtimeIssues[key] ?? [])];
   }
@@ -758,10 +757,7 @@ export const areIssueMapsEquivalent = (
 /**
  * Validator docs: see docs/validator/function-reference.md#core.getissuereplacementpreview
  */
-export const getIssueReplacementPreview = (
-  value: string,
-  issue: FieldValidatorIssue
-): string => {
+export const getIssueReplacementPreview = (value: string, issue: FieldValidatorIssue): string => {
   if (!issue.replacementValue) return value;
   if (issue.replacementApplyMode === 'replace_whole_field') {
     return issue.replacementValue;

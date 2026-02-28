@@ -8,7 +8,12 @@ import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 export const CASE_RESOLVER_CAPTURE_SETTINGS_KEY = 'case_resolver_capture_settings_v1';
 
-export type { CaseResolverCaptureAction, CaseResolverCaptureRole, CaseResolverCaptureRoleMapping, CaseResolverCaptureSettings };
+export type {
+  CaseResolverCaptureAction,
+  CaseResolverCaptureRole,
+  CaseResolverCaptureRoleMapping,
+  CaseResolverCaptureSettings,
+};
 
 export const CASE_RESOLVER_CAPTURE_ACTION_OPTIONS: Array<{
   value: CaseResolverCaptureAction;
@@ -85,7 +90,10 @@ export const DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS: CaseResolverCaptureSettings
   },
 };
 
-const normalizeCaptureRole = (value: unknown, fallback: CaseResolverCaptureRole): CaseResolverCaptureRole => {
+const normalizeCaptureRole = (
+  value: unknown,
+  fallback: CaseResolverCaptureRole
+): CaseResolverCaptureRole => {
   if (value === 'addresser' || value === 'addressee') {
     return value;
   }
@@ -139,7 +147,10 @@ const normalizeRoleMapping = (
       record['targetRole'],
       normalizeCaptureRole(fallback.targetRole, fallbackTargetRole)
     ),
-    defaultAction: normalizeCaptureAction(record['defaultAction'], fallback.defaultAction || 'keepText'),
+    defaultAction: normalizeCaptureAction(
+      record['defaultAction'],
+      fallback.defaultAction || 'keepText'
+    ),
     autoMatchPartyReference:
       typeof record['autoMatchPartyReference'] === 'boolean'
         ? record['autoMatchPartyReference']

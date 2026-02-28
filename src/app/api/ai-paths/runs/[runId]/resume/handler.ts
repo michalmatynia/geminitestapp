@@ -20,7 +20,7 @@ const resumeSchema = z.object({
 export async function POST_handler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
-  params: { runId: string },
+  params: { runId: string }
 ): Promise<Response> {
   const access = await requireAiPathsAccess();
   await enforceAiPathsActionRateLimit(access, 'run-resume');

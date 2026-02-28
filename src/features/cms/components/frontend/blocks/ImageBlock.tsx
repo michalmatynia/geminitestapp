@@ -4,12 +4,12 @@ import Image from 'next/image';
 import React from 'react';
 
 import { useRequiredBlockRenderContext, useRequiredBlockSettings } from './BlockContext';
-import { 
-  clampNumber, 
-  resolveObjectPosition, 
-  resolveGradientDirection, 
+import {
+  clampNumber,
+  resolveObjectPosition,
+  resolveGradientDirection,
   buildTransparencyMaskStyles,
-  toBoolean
+  toBoolean,
 } from './image-utils';
 
 export function ImageElementBlock(): React.ReactNode {
@@ -83,7 +83,10 @@ export function ImageElementBlock(): React.ReactNode {
     }
   }
 
-  Object.assign(wrapperStyles, buildTransparencyMaskStyles(transparencyMode, transparencyDirection, transparencyStrength));
+  Object.assign(
+    wrapperStyles,
+    buildTransparencyMaskStyles(transparencyMode, transparencyDirection, transparencyStrength)
+  );
 
   const filters: string[] = [];
   if (blur > 0) filters.push(`blur(${blur}px)`);
@@ -135,12 +138,7 @@ export function ImageElementBlock(): React.ReactNode {
   return (
     <div className='relative' style={wrapperStyles}>
       {useFill ? (
-        <Image
-          src={src}
-          alt={alt}
-          fill
-          style={imageStylesForFill}
-        />
+        <Image src={src} alt={alt} fill style={imageStylesForFill} />
       ) : (
         <Image
           src={src}

@@ -17,15 +17,15 @@ export const buildCategoryTree = (categories: ExternalCategory[]): CategoryRow[]
   const roots: CategoryRow[] = [];
 
   // First pass: create all nodes
-  categories.forEach(cat => {
+  categories.forEach((cat) => {
     byId.set(cat.externalId, { ...cat, subRows: [] });
   });
 
   // Second pass: link children
-  categories.forEach(cat => {
+  categories.forEach((cat) => {
     const node = byId.get(cat.externalId)!;
     const parentId = normalizeParentExternalId(cat.parentExternalId);
-    
+
     if (parentId && byId.has(parentId)) {
       byId.get(parentId)!.subRows!.push(node);
     } else {
@@ -36,7 +36,7 @@ export const buildCategoryTree = (categories: ExternalCategory[]): CategoryRow[]
   // Sort function
   const sortNodes = (nodes: CategoryRow[]) => {
     nodes.sort((a, b) => a.name.localeCompare(b.name));
-    nodes.forEach(node => {
+    nodes.forEach((node) => {
       if (node.subRows?.length) {
         sortNodes(node.subRows);
       } else {

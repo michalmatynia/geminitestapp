@@ -33,21 +33,30 @@ export type SaveCurrencyInput = Partial<CurrencyOption>;
 export type SaveCountryInput = Partial<CountryOption> & { currencyIds?: string[] };
 export type SaveLanguageInput = Partial<Language> & { countryIds?: string[] };
 
-export async function saveCurrency(id: string | undefined, data: SaveCurrencyInput): Promise<CurrencyOption> {
+export async function saveCurrency(
+  id: string | undefined,
+  data: SaveCurrencyInput
+): Promise<CurrencyOption> {
   if (id) {
     return api.put<CurrencyOption>(`/api/currencies/${id}`, data);
   }
   return api.post<CurrencyOption>('/api/currencies', data);
 }
 
-export async function saveCountry(id: string | undefined, data: SaveCountryInput): Promise<CountryOption> {
+export async function saveCountry(
+  id: string | undefined,
+  data: SaveCountryInput
+): Promise<CountryOption> {
   if (id) {
     return api.put<CountryOption>(`/api/countries/${id}`, data);
   }
   return api.post<CountryOption>('/api/countries', data);
 }
 
-export async function saveLanguage(id: string | undefined, data: SaveLanguageInput): Promise<Language> {
+export async function saveLanguage(
+  id: string | undefined,
+  data: SaveLanguageInput
+): Promise<Language> {
   if (id) {
     return api.put<Language>(`/api/languages/${id}`, data);
   }

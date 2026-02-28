@@ -31,7 +31,10 @@ export function TraderaStatusButton({
         getMarketplaceButtonClass(status, true, 'tradera')
       )}
     >
-      <span aria-hidden='true' className='text-[10px] font-black uppercase leading-none tracking-tight'>
+      <span
+        aria-hidden='true'
+        className='text-[10px] font-black uppercase leading-none tracking-tight'
+      >
         T
       </span>
     </Button>

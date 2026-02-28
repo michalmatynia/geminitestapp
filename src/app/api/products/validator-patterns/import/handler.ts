@@ -51,9 +51,7 @@ type SequenceAssignment = {
 
 const MAX_IMPORT_OPERATIONS = 2_000;
 
-const normalizeNullableTrimmed = (
-  value: string | null | undefined
-): string | null => {
+const normalizeNullableTrimmed = (value: string | null | undefined): string | null => {
   if (typeof value !== 'string') return null;
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : null;
@@ -126,10 +124,7 @@ const hasPatternChanges = (
   if (current.severity !== (next.severity ?? 'error')) return true;
   if (current.enabled !== (next.enabled ?? true)) return true;
   if (current.replacementEnabled !== (next.replacementEnabled ?? false)) return true;
-  if (
-    (current.replacementAutoApply ?? false) !==
-    (next.replacementAutoApply ?? false)
-  ) {
+  if ((current.replacementAutoApply ?? false) !== (next.replacementAutoApply ?? false)) {
     return true;
   }
   if (
@@ -197,7 +192,9 @@ const hasPatternChanges = (
   ) {
     return true;
   }
-  if ((current.launchSourceMode ?? 'current_field') !== (next.launchSourceMode ?? 'current_field')) {
+  if (
+    (current.launchSourceMode ?? 'current_field') !== (next.launchSourceMode ?? 'current_field')
+  ) {
     return true;
   }
   if ((current.launchSourceField ?? null) !== (next.launchSourceField ?? null)) return true;
@@ -215,10 +212,7 @@ const hasPatternChanges = (
   return false;
 };
 
-const assertValidRegex = (
-  regexSource: string,
-  flags: string | null | undefined
-): void => {
+const assertValidRegex = (regexSource: string, flags: string | null | undefined): void => {
   const safety = validateRegexSafety(regexSource, flags);
   if (!safety.ok) {
     throw badRequestError(safety.message, {
@@ -287,11 +281,7 @@ const canResolveReplacementAtRuntime = ({
   replacementValue: string | null;
   runtimeEnabled: boolean;
   runtimeType: ProductValidationRuntimeType;
-}): boolean =>
-  replacementEnabled &&
-  !replacementValue &&
-  runtimeEnabled &&
-  runtimeType !== 'none';
+}): boolean => replacementEnabled && !replacementValue && runtimeEnabled && runtimeType !== 'none';
 
 const toCreateInput = (
   pattern: ProductValidatorImportPattern,
@@ -319,8 +309,7 @@ const toCreateInput = (
   const launchSourceMode = pattern.launchSourceMode ?? 'current_field';
   const launchSourceField = normalizeNullableTrimmed(pattern.launchSourceField);
   const launchOperator = pattern.launchOperator ?? 'equals';
-  const launchValue =
-    typeof pattern.launchValue === 'string' ? pattern.launchValue : null;
+  const launchValue = typeof pattern.launchValue === 'string' ? pattern.launchValue : null;
   const launchFlags = normalizeNullableTrimmed(pattern.launchFlags);
 
   if (
@@ -363,8 +352,7 @@ const toCreateInput = (
     sequenceAssignment?.sequenceGroupLabel ?? normalizeNullableTrimmed(pattern.sequenceGroupLabel);
   const assignedSequenceGroupDebounceMs =
     sequenceAssignment?.sequenceGroupDebounceMs ?? pattern.sequenceGroupDebounceMs ?? 0;
-  const assignedSequence =
-    sequenceAssignment?.sequence ?? pattern.sequence ?? null;
+  const assignedSequence = sequenceAssignment?.sequence ?? pattern.sequence ?? null;
 
   return {
     label,
@@ -402,9 +390,7 @@ const toCreateInput = (
       pattern.launchAppliesToScopes,
       pattern.appliesToScopes
     ),
-    launchScopeBehavior: normalizeProductValidationLaunchScopeBehavior(
-      pattern.launchScopeBehavior
-    ),
+    launchScopeBehavior: normalizeProductValidationLaunchScopeBehavior(pattern.launchScopeBehavior),
     launchSourceMode,
     launchSourceField,
     launchOperator,
@@ -482,10 +468,8 @@ const buildSequenceAssignments = (
         normalizeNullableTrimmed(pattern.sequenceLabel) ??
         definedSequence?.label ??
         inlineSequenceCode,
-      sequenceGroupDebounceMs:
-        pattern.sequenceDebounceMs ?? definedSequence?.debounceMs ?? 0,
-      sequence:
-        pattern.sequenceOrder ?? pattern.sequence ?? null,
+      sequenceGroupDebounceMs: pattern.sequenceDebounceMs ?? definedSequence?.debounceMs ?? 0,
+      sequence: pattern.sequenceOrder ?? pattern.sequence ?? null,
     });
   }
 
@@ -598,9 +582,7 @@ const buildImportPlan = (
       errors.push({
         code: importPattern.code,
         message:
-          error instanceof Error
-            ? error.message
-            : 'Pattern validation failed during import.',
+          error instanceof Error ? error.message : 'Pattern validation failed during import.',
       });
     }
   }
@@ -627,7 +609,9 @@ const buildImportPlan = (
   return { operations, errors };
 };
 
-const summarizeOperations = (operations: PlannedOperation[]): ProductValidatorImportResult['summary'] => ({
+const summarizeOperations = (
+  operations: PlannedOperation[]
+): ProductValidatorImportResult['summary'] => ({
   createCount: operations.filter((entry) => entry.action === 'create').length,
   updateCount: operations.filter((entry) => entry.action === 'update').length,
   deleteCount: operations.filter((entry) => entry.action === 'delete').length,

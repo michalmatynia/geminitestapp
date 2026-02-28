@@ -1,5 +1,9 @@
 import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
-import type { NodeHandler, NodeHandlerContext, RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
+import type {
+  NodeHandler,
+  NodeHandlerContext,
+  RuntimePortValues,
+} from '@/shared/contracts/ai-paths-runtime';
 
 import { aiJobsApi, aiGenerationApi } from '../../../api';
 import {
@@ -10,34 +14,28 @@ import {
   renderTemplate,
 } from '../../utils';
 import { evaluateOutboundUrlPolicy } from '../security/outbound-url-policy';
-import {
-  buildPromptOutput,
-  extractImageUrls,
-  pollGraphJob,
-  resolveJobProductId,
-} from '../utils';
+import { buildPromptOutput, extractImageUrls, pollGraphJob, resolveJobProductId } from '../utils';
 
-export const handleTemplate: NodeHandler = ({ node, nodeInputs }: NodeHandlerContext): RuntimePortValues => {
+export const handleTemplate: NodeHandler = ({
+  node,
+  nodeInputs,
+}: NodeHandlerContext): RuntimePortValues => {
   const templateConfig = node.config?.template ?? { template: '' };
-  const data = { ...(nodeInputs) };
+  const data = { ...nodeInputs };
   const currentValue = coerceInput(nodeInputs['value']) ?? '';
   const prompt = templateConfig.template
-    ? renderTemplate(
-      templateConfig.template,
-      data,
-      currentValue
-    )
+    ? renderTemplate(templateConfig.template, data, currentValue)
     : Object.entries(data)
-      .map(([key, value]: [string, unknown]) => `${key}: ${formatRuntimeValue(value)}`)
-      .join('\n');
+        .map(([key, value]: [string, unknown]) => `${key}: ${formatRuntimeValue(value)}`)
+        .join('\n');
   return { prompt: prompt || 'Prompt: (no template)' };
 };
 
-export const handlePrompt: NodeHandler = ({ node, nodeInputs }: NodeHandlerContext): RuntimePortValues => {
-  const { promptOutput, imagesValue } = buildPromptOutput(
-    node.config?.prompt,
-    nodeInputs
-  );
+export const handlePrompt: NodeHandler = ({
+  node,
+  nodeInputs,
+}: NodeHandlerContext): RuntimePortValues => {
+  const { promptOutput, imagesValue } = buildPromptOutput(node.config?.prompt, nodeInputs);
   return imagesValue !== undefined
     ? { prompt: promptOutput, images: imagesValue }
     : { prompt: promptOutput };
@@ -79,9 +77,7 @@ const resolveImageUrlForOutboundPolicy = (rawUrl: string): string => {
     process.env['AI_PATHS_ASSET_BASE_URL'],
     process.env['NEXT_PUBLIC_APP_URL'],
     process.env['NEXTAUTH_URL'],
-    process.env['VERCEL_URL']
-      ? `https://${process.env['VERCEL_URL']}`
-      : null,
+    process.env['VERCEL_URL'] ? `https://${process.env['VERCEL_URL']}` : null,
   ];
   envBaseCandidates.forEach((candidate) => {
     if (typeof candidate === 'string' && candidate.trim().length > 0) {
@@ -90,12 +86,11 @@ const resolveImageUrlForOutboundPolicy = (rawUrl: string): string => {
   });
 
   for (const baseCandidate of baseCandidates) {
-    const normalizedBase =
-      /^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(baseCandidate)
-        ? baseCandidate
-        : baseCandidate.startsWith('//')
-          ? `https:${baseCandidate}`
-          : `https://${baseCandidate.replace(/^\/+/, '')}`;
+    const normalizedBase = /^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(baseCandidate)
+      ? baseCandidate
+      : baseCandidate.startsWith('//')
+        ? `https:${baseCandidate}`
+        : `https://${baseCandidate.replace(/^\/+/, '')}`;
     try {
       return new URL(trimmed, normalizedBase).toString();
     } catch {
@@ -139,9 +134,7 @@ const filterImageUrlsByOutboundPolicy = (input: {
   });
 
   if (blocked.length > 0) {
-    const reasons = Array.from(
-      new Set(blocked.map((entry) => entry.reason ?? 'policy_violation'))
-    )
+    const reasons = Array.from(new Set(blocked.map((entry) => entry.reason ?? 'policy_violation')))
       .slice(0, 3)
       .join(', ');
     const summary = `Blocked ${blocked.length} image URL${blocked.length === 1 ? '' : 's'} by outbound policy (${reasons}).`;
@@ -185,7 +178,7 @@ const buildModelTerminalOutputs = (options: {
   };
 };
 
-export const handleModel: NodeHandler = async ({ 
+export const handleModel: NodeHandler = async ({
   node,
   nodeInputs,
   prevOutputs,
@@ -275,21 +268,17 @@ export const handleModel: NodeHandler = async ({
       hasMeaningfulValue(entry.promptValue) ||
       hasMeaningfulValue(entry.derivedPromptValue)
   );
-  const promptSourceNode =
-    promptCandidate?.fromNode ??
-    promptCandidates[0]?.fromNode ??
-    null;
-  const promptSourceInputs = promptSourceNode
-    ? (allInputs[promptSourceNode.id] ?? {})
-    : {};
+  const promptSourceNode = promptCandidate?.fromNode ?? promptCandidates[0]?.fromNode ?? null;
+  const promptSourceInputs = promptSourceNode ? (allInputs[promptSourceNode.id] ?? {}) : {};
   const promptSourceTemplate =
     typeof promptSourceNode?.config?.prompt?.template === 'string'
       ? promptSourceNode.config.prompt.template.trim()
       : '';
   const promptSourceHasInputs = Object.values(promptSourceInputs).some(hasMeaningfulValue);
-  const derivedPrompt = promptSourceNode && (promptSourceTemplate.length > 0 || promptSourceHasInputs)
-    ? buildPromptOutput(promptSourceNode.config?.prompt, promptSourceInputs)
-    : null;
+  const derivedPrompt =
+    promptSourceNode && (promptSourceTemplate.length > 0 || promptSourceHasInputs)
+      ? buildPromptOutput(promptSourceNode.config?.prompt, promptSourceInputs)
+      : null;
   const promptSourceOutput =
     firstMeaningfulValue([
       promptCandidate?.edgeValue,
@@ -297,32 +286,26 @@ export const handleModel: NodeHandler = async ({
       promptCandidate?.derivedPromptValue,
       promptSourceNode ? allOutputs[promptSourceNode.id]?.['prompt'] : undefined,
       derivedPrompt?.promptOutput,
-    ]) ??
-    undefined;
-  const promptInput =
-    firstMeaningfulValue([
-      promptSourceOutput,
-      ...([...promptInputs].reverse()),
     ]) ?? undefined;
+  const promptInput =
+    firstMeaningfulValue([promptSourceOutput, ...[...promptInputs].reverse()]) ?? undefined;
   const modelConfig = node.config?.model ?? {
     modelId: 'gpt-4o',
     temperature: 0.7,
     maxTokens: 800,
     vision: node.inputs.includes('images'),
   };
-  // When no prompt port is wired but the node has a systemPrompt config, use it
-  // as the user message so the model can run without an external prompt node.
-  const effectivePromptInput = promptInput ?? modelConfig.systemPrompt?.trim() ?? undefined;
-  if (effectivePromptInput === undefined || effectivePromptInput === null) {
-    const promptSourceWaitingOnPorts = promptCandidates
-      .flatMap((entry: PromptCandidate): string[] => {
+  if (promptInput === undefined || promptInput === null) {
+    const promptSourceWaitingOnPorts = promptCandidates.flatMap(
+      (entry: PromptCandidate): string[] => {
         const waitingOnPorts = entry.sourceOutputs['waitingOnPorts'];
         if (!Array.isArray(waitingOnPorts)) return [];
         return waitingOnPorts
           .filter((port: unknown): port is string => typeof port === 'string')
           .map((port: string): string => port.trim())
           .filter((port: string): boolean => port.length > 0);
-      });
+      }
+    );
     return buildModelTerminalOutputs({
       status: 'blocked',
       reason: 'missing_prompt',
@@ -343,15 +326,15 @@ export const handleModel: NodeHandler = async ({
   const hasResultConsumers = edges.some(
     (edge: Edge): boolean =>
       edge.from === node.id &&
-      (edge.fromPort === 'result' ||
-        (edge.fromPort === undefined && edge.toPort === 'result'))
+      (edge.fromPort === 'result' || (edge.fromPort === undefined && edge.toPort === 'result'))
   );
   const hasPollConsumer = edges.some((edge: Edge): boolean => {
     if (edge.from !== node.id) return false;
     if (edge.fromPort && edge.fromPort !== 'jobId') return false;
     const targetNodeId = edge.to;
     if (!targetNodeId) return false;
-    const targetNode = nodeById?.get(targetNodeId) ?? nodes.find((item: AiNode) => item.id === targetNodeId);
+    const targetNode =
+      nodeById?.get(targetNodeId) ?? nodes.find((item: AiNode) => item.id === targetNodeId);
     return targetNode?.type === 'poll';
   });
   const waitPreference = modelConfig.waitForResult;
@@ -363,9 +346,7 @@ export const handleModel: NodeHandler = async ({
     shouldWait = true;
   }
   const prompt =
-    typeof effectivePromptInput === 'string'
-      ? effectivePromptInput.trim()
-      : formatRuntimeValue(effectivePromptInput);
+    typeof promptInput === 'string' ? promptInput.trim() : formatRuntimeValue(promptInput);
   if (!prompt || prompt === '—') {
     return buildModelTerminalOutputs({
       status: 'blocked',
@@ -379,22 +360,19 @@ export const handleModel: NodeHandler = async ({
       const fromNode = fromNodeId
         ? (nodeById?.get(fromNodeId) ?? nodes.find((item: AiNode) => item.id === fromNodeId))
         : undefined;
-      const value = fromNodeId
-        ? allOutputs[fromNodeId]?.[edge.fromPort ?? 'images']
-        : undefined;
+      const value = fromNodeId ? allOutputs[fromNodeId]?.[edge.fromPort ?? 'images'] : undefined;
       return {
         edge,
         fromNode,
         value,
       };
     })
-    .find((entry): boolean =>
-      entry.fromNode?.type === 'prompt' &&
-      entry.value !== undefined &&
-      entry.value !== null
+    .find(
+      (entry): boolean =>
+        entry.fromNode?.type === 'prompt' && entry.value !== undefined && entry.value !== null
     );
   const promptImageOutput = promptSourceNode?.id
-    ? derivedPrompt?.imagesValue ?? allOutputs[promptSourceNode.id]?.['images']
+    ? (derivedPrompt?.imagesValue ?? allOutputs[promptSourceNode.id]?.['images'])
     : undefined;
   const imageSource =
     promptImageOutput ??
@@ -430,17 +408,21 @@ export const handleModel: NodeHandler = async ({
       runId,
     },
   };
-  const productId = resolveJobProductId(nodeInputs, simulationEntityType, simulationEntityId, activePathId);
+  const productId = resolveJobProductId(
+    nodeInputs,
+    simulationEntityType,
+    simulationEntityId,
+    activePathId
+  );
   const cacheKey = hashRuntimeValue(payload);
   const payloadHash = hashRuntimeValue({ payload, runId, runStartedAt });
 
   // Idempotency across evaluateGraph calls (seeded outputs): if we already enqueued a job for the same payload,
   // don't enqueue again. This prevents accidental duplicate jobs when the graph is re-evaluated during polling
   // or iterator auto-continue.
-  const prevJobId = typeof prevOutputs['jobId'] === 'string' ? (prevOutputs['jobId']).trim() : '';
-  const prevPayloadHash = typeof (prevOutputs)['payloadHash'] === 'string'
-    ? ((prevOutputs)['payloadHash'])
-    : '';
+  const prevJobId = typeof prevOutputs['jobId'] === 'string' ? prevOutputs['jobId'].trim() : '';
+  const prevPayloadHash =
+    typeof prevOutputs['payloadHash'] === 'string' ? prevOutputs['payloadHash'] : '';
   if (prevJobId && prevPayloadHash === payloadHash) {
     return { ...prevOutputs, payloadHash };
   }
@@ -479,14 +461,11 @@ export const handleModel: NodeHandler = async ({
       1,
       Math.ceil(configuredTimeoutMs / defaultModelPollIntervalMs)
     );
-    const result = await pollGraphJob(
-      enqueueResult.data.jobId,
-      {
-        intervalMs: defaultModelPollIntervalMs,
-        maxAttempts: pollMaxAttempts,
-        ...(abortSignal ? { signal: abortSignal } : {}),
-      }
-    );
+    const result = await pollGraphJob(enqueueResult.data.jobId, {
+      intervalMs: defaultModelPollIntervalMs,
+      maxAttempts: pollMaxAttempts,
+      ...(abortSignal ? { signal: abortSignal } : {}),
+    });
     return {
       result,
       jobId: enqueueResult.data.jobId,
@@ -511,17 +490,8 @@ export const handleModel: NodeHandler = async ({
       isOllamaConnectionError ||
       normalizedErrorMessage.includes('ai job timed out') ||
       normalizedErrorMessage.includes('connection error after');
-    reportAiPathsError(
-      error,
-      { action: 'graphModel', nodeId: node.id },
-      'AI model job failed:'
-    );
-    toast(
-      isOllamaConnectionError
-        ? errorMessage
-        : 'AI model job failed.',
-      { variant: 'error' }
-    );
+    reportAiPathsError(error, { action: 'graphModel', nodeId: node.id }, 'AI model job failed:');
+    toast(isOllamaConnectionError ? errorMessage : 'AI model job failed.', { variant: 'error' });
     executed.ai.add(node.id);
     if (isHardFailure) {
       throw error instanceof Error ? error : new Error(errorMessage);
@@ -537,7 +507,7 @@ export const handleModel: NodeHandler = async ({
   }
 };
 
-export const handleAiDescription: NodeHandler = async ({ 
+export const handleAiDescription: NodeHandler = async ({
   node,
   nodeInputs,
   prevOutputs,
@@ -546,9 +516,7 @@ export const handleAiDescription: NodeHandler = async ({
   toast,
 }: NodeHandlerContext): Promise<RuntimePortValues> => {
   if (executed.ai.has(node.id)) return prevOutputs;
-  const entityJson = coerceInput(nodeInputs['entityJson']) as
-    | Record<string, unknown>
-    | undefined;
+  const entityJson = coerceInput(nodeInputs['entityJson']) as Record<string, unknown> | undefined;
   if (!entityJson) {
     return {};
   }
@@ -599,7 +567,7 @@ export const handleAiDescription: NodeHandler = async ({
   }
 };
 
-export const handleDescriptionUpdater: NodeHandler = async ({ 
+export const handleDescriptionUpdater: NodeHandler = async ({
   node,
   nodeInputs,
   prevOutputs,

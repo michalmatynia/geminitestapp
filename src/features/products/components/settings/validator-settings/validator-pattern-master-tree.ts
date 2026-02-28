@@ -11,8 +11,7 @@ const PATTERN_PREFIX = 'vpat:';
 
 // ─── ID helpers ──────────────────────────────────────────────────────────────
 
-export const toSeqGroupMasterNodeId = (groupId: string): string =>
-  `${SEQ_GROUP_PREFIX}${groupId}`;
+export const toSeqGroupMasterNodeId = (groupId: string): string => `${SEQ_GROUP_PREFIX}${groupId}`;
 
 export const fromSeqGroupMasterNodeId = (nodeId: string): string | null => {
   if (!nodeId.startsWith(SEQ_GROUP_PREFIX)) return null;
@@ -20,8 +19,7 @@ export const fromSeqGroupMasterNodeId = (nodeId: string): string | null => {
   return value || null;
 };
 
-export const toPatternMasterNodeId = (patternId: string): string =>
-  `${PATTERN_PREFIX}${patternId}`;
+export const toPatternMasterNodeId = (patternId: string): string => `${PATTERN_PREFIX}${patternId}`;
 
 export const fromPatternMasterNodeId = (nodeId: string): string | null => {
   if (!nodeId.startsWith(PATTERN_PREFIX)) return null;
@@ -275,9 +273,7 @@ export function rebuildValidatorPatternListFromMasterNodes(args: {
       const groupFolderId = parentById.get(patternId) ?? null;
       const groupId = groupFolderId ? fromSeqGroupMasterNodeId(groupFolderId) : null;
 
-      const groupNode = groupFolderId
-        ? args.nodes.find((n) => n.id === groupFolderId)
-        : null;
+      const groupNode = groupFolderId ? args.nodes.find((n) => n.id === groupFolderId) : null;
       const groupMeta =
         groupNode?.metadata && typeof groupNode.metadata === 'object'
           ? (groupNode.metadata as { validatorGroup?: ValidatorGroupNodeMetadata }).validatorGroup

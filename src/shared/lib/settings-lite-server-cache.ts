@@ -29,8 +29,7 @@ const getState = (): LiteSettingsServerCacheState => {
 export const cloneLiteSettings = (rows: LiteSettingRecord[]): LiteSettingRecord[] =>
   rows.map((row: LiteSettingRecord) => ({ key: row.key, value: row.value }));
 
-export const getLiteSettingsCache = (): LiteSettingsCacheEntry | null =>
-  getState().cache;
+export const getLiteSettingsCache = (): LiteSettingsCacheEntry | null => getState().cache;
 
 export const setLiteSettingsCache = (cache: LiteSettingsCacheEntry | null): void => {
   getState().cache = cache;
@@ -39,9 +38,7 @@ export const setLiteSettingsCache = (cache: LiteSettingsCacheEntry | null): void
 export const getLiteSettingsInflight = (): Promise<LiteSettingRecord[]> | null =>
   getState().inflight;
 
-export const setLiteSettingsInflight = (
-  inflight: Promise<LiteSettingRecord[]> | null
-): void => {
+export const setLiteSettingsInflight = (inflight: Promise<LiteSettingRecord[]> | null): void => {
   getState().inflight = inflight;
 };
 

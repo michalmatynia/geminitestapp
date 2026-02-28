@@ -1,8 +1,5 @@
 'use client';
 
-
-
-
 import type { RouterConfig } from '@/shared/lib/ai-paths';
 import { Input, Label, SelectSimple } from '@/shared/ui';
 
@@ -23,7 +20,8 @@ export function RouterNodeConfigSection(): React.JSX.Element | null {
     <div className='space-y-4'>
       <div>
         <Label className='text-xs text-gray-400'>Match Source</Label>
-        <SelectSimple size='sm'
+        <SelectSimple
+          size='sm'
           value={routerConfig.mode}
           onValueChange={(value: string): void =>
             updateSelectedNodeConfig({
@@ -35,7 +33,7 @@ export function RouterNodeConfigSection(): React.JSX.Element | null {
           }
           options={[
             { value: 'valid', label: 'Validator valid' },
-            { value: 'value', label: 'Value input' }
+            { value: 'value', label: 'Value input' },
           ]}
           placeholder='Select mode'
           triggerClassName='mt-2 w-full border-border bg-card/70 text-sm text-white'
@@ -43,7 +41,8 @@ export function RouterNodeConfigSection(): React.JSX.Element | null {
       </div>
       <div>
         <Label className='text-xs text-gray-400'>Match Mode</Label>
-        <SelectSimple size='sm'
+        <SelectSimple
+          size='sm'
           value={routerConfig.matchMode}
           onValueChange={(value: string): void =>
             updateSelectedNodeConfig({
@@ -57,7 +56,7 @@ export function RouterNodeConfigSection(): React.JSX.Element | null {
             { value: 'truthy', label: 'Truthy' },
             { value: 'falsy', label: 'Falsy' },
             { value: 'equals', label: 'Equals' },
-            { value: 'contains', label: 'Contains' }
+            { value: 'contains', label: 'Contains' },
           ]}
           placeholder='Select match mode'
           triggerClassName='mt-2 w-full border-border bg-card/70 text-sm text-white'

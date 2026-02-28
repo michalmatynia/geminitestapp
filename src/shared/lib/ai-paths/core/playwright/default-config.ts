@@ -7,13 +7,10 @@ export const DEFAULT_PLAYWRIGHT_SCRIPT =
   'export default async function run({ page, input, emit }) { return {}; }';
 
 export const DEFAULT_PLAYWRIGHT_TIMEOUT_MS = 120000;
-export const DEFAULT_PLAYWRIGHT_BROWSER_ENGINE: NonNullable<
-  PlaywrightConfig['browserEngine']
-> = 'chromium';
+export const DEFAULT_PLAYWRIGHT_BROWSER_ENGINE: NonNullable<PlaywrightConfig['browserEngine']> =
+  'chromium';
 
-export const DEFAULT_PLAYWRIGHT_CAPTURE_CONFIG: NonNullable<
-  PlaywrightConfig['capture']
-> = {
+export const DEFAULT_PLAYWRIGHT_CAPTURE_CONFIG: NonNullable<PlaywrightConfig['capture']> = {
   screenshot: true,
   html: false,
   video: false,
@@ -50,8 +47,7 @@ export const normalizePlaywrightConfig = (
     contextOptionsJson: config?.contextOptionsJson ?? defaults.contextOptionsJson,
     settingsOverrides: config?.settingsOverrides ?? defaults.settingsOverrides,
     capture: {
-      screenshot:
-        config?.capture?.screenshot ?? defaults.capture?.screenshot ?? true,
+      screenshot: config?.capture?.screenshot ?? defaults.capture?.screenshot ?? true,
       html: config?.capture?.html ?? defaults.capture?.html ?? false,
       video: config?.capture?.video ?? defaults.capture?.video ?? false,
       trace: config?.capture?.trace ?? defaults.capture?.trace ?? false,

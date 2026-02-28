@@ -60,15 +60,13 @@ export function ConfirmModal({
         <div className='flex gap-2'>
           {extraAction}
           <div className='flex-1' />
-          <Button
-            onClick={onClose}
-            variant='outline'
-            disabled={loading}
-          >
+          <Button onClick={onClose} variant='outline' disabled={loading}>
             {cancelText}
           </Button>
           <Button
-            onClick={() => { void handleConfirm(); }}
+            onClick={() => {
+              void handleConfirm();
+            }}
             variant={isDangerous ? 'destructive' : 'primary'}
             disabled={loading}
           >
@@ -78,9 +76,7 @@ export function ConfirmModal({
       }
     >
       {message && (
-        <div className='text-sm text-muted-foreground whitespace-pre-wrap'>
-          {message}
-        </div>
+        <div className='text-sm text-muted-foreground whitespace-pre-wrap'>{message}</div>
       )}
     </AppModal>
   );

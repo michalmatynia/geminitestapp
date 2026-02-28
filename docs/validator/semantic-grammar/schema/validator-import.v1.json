@@ -4,12 +4,7 @@
   "title": "Validator Import Payload",
   "description": "Copy-paste payload for creating/updating product validator patterns and sequence groups.",
   "type": "object",
-  "required": [
-    "version",
-    "scope",
-    "mode",
-    "patterns"
-  ],
+  "required": ["version", "scope", "mode", "patterns"],
   "properties": {
     "version": {
       "const": 1,
@@ -17,21 +12,12 @@
     },
     "scope": {
       "type": "string",
-      "enum": [
-        "products",
-        "image-studio",
-        "prompt-exploder",
-        "case-resolver-prompt-exploder"
-      ],
+      "enum": ["products", "image-studio", "prompt-exploder", "case-resolver-prompt-exploder"],
       "description": "Validator scope targeted by the import endpoint."
     },
     "mode": {
       "type": "string",
-      "enum": [
-        "append",
-        "upsert",
-        "replace_scope"
-      ],
+      "enum": ["append", "upsert", "replace_scope"],
       "description": "append=create only, upsert=create/update, replace_scope=create/update/delete missing."
     },
     "dryRun": {
@@ -71,21 +57,11 @@
     },
     "scope": {
       "type": "string",
-      "enum": [
-        "draft_template",
-        "product_create",
-        "product_edit"
-      ]
+      "enum": ["draft_template", "product_create", "product_edit"]
     },
     "productPattern": {
       "type": "object",
-      "required": [
-        "code",
-        "label",
-        "target",
-        "regex",
-        "message"
-      ],
+      "required": ["code", "label", "target", "regex", "message"],
       "additionalProperties": false,
       "properties": {
         "id": { "type": "string" },
@@ -216,11 +192,7 @@
     },
     "sequence": {
       "type": "object",
-      "required": [
-        "code",
-        "label",
-        "steps"
-      ],
+      "required": ["code", "label", "steps"],
       "additionalProperties": false,
       "properties": {
         "code": { "$ref": "#/$defs/semanticCode" },

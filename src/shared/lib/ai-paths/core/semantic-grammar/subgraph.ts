@@ -66,7 +66,7 @@ const resolveSemanticIdentityValue = (
   if (!extensions || typeof extensions !== 'object' || Array.isArray(extensions)) {
     return '';
   }
-  const identity = (extensions)['aiPathsIdentity'];
+  const identity = extensions['aiPathsIdentity'];
   if (!identity || typeof identity !== 'object' || Array.isArray(identity)) {
     return '';
   }
@@ -76,7 +76,7 @@ const resolveSemanticIdentityValue = (
 
 export const buildSemanticSubgraphFromPathConfig = (
   pathConfig: PathConfig,
-  options: BuildSemanticSubgraphOptions,
+  options: BuildSemanticSubgraphOptions
 ): SubgraphSemanticDocument => {
   const selected = new Set<string>(options.selectedNodeIds);
   const full = serializePathConfigToSemanticCanvas(pathConfig, {
@@ -86,15 +86,14 @@ export const buildSemanticSubgraphFromPathConfig = (
     exporterVersion: options.exporterVersion,
     workspace: options.workspace,
   });
-  const nodes = full.nodes.filter((node: SemanticNode): boolean =>
-    selected.has(node.id),
-  );
+  const nodes = full.nodes.filter((node: SemanticNode): boolean => selected.has(node.id));
   const edges = full.edges.filter(
-    (edge: SemanticEdge): boolean =>
-      selected.has(edge.fromNodeId) && selected.has(edge.toNodeId),
+    (edge: SemanticEdge): boolean => selected.has(edge.fromNodeId) && selected.has(edge.toNodeId)
   );
   const boundaryIncoming = full.edges
-    .filter((edge: SemanticEdge): boolean => !selected.has(edge.fromNodeId) && selected.has(edge.toNodeId))
+    .filter(
+      (edge: SemanticEdge): boolean => !selected.has(edge.fromNodeId) && selected.has(edge.toNodeId)
+    )
     .map((edge: SemanticEdge) => ({
       edgeId: edge.id,
       fromNodeId: edge.fromNodeId,
@@ -103,7 +102,9 @@ export const buildSemanticSubgraphFromPathConfig = (
       ...(edge.toPort !== undefined ? { toPort: edge.toPort } : {}),
     }));
   const boundaryOutgoing = full.edges
-    .filter((edge: SemanticEdge): boolean => selected.has(edge.fromNodeId) && !selected.has(edge.toNodeId))
+    .filter(
+      (edge: SemanticEdge): boolean => selected.has(edge.fromNodeId) && !selected.has(edge.toNodeId)
+    )
     .map((edge: SemanticEdge) => ({
       edgeId: edge.id,
       fromNodeId: edge.fromNodeId,
@@ -128,7 +129,7 @@ export const buildSemanticSubgraphFromPathConfig = (
 };
 
 export const parseSemanticSubgraphDocument = (
-  input: unknown,
+  input: unknown
 ): { ok: true; value: SubgraphSemanticDocument } | { ok: false; error: string } => {
   const parsed = subgraphSemanticDocumentSchema.safeParse(input);
   if (parsed.success) {
@@ -148,7 +149,7 @@ export const parseSemanticSubgraphDocument = (
 export const applySemanticSubgraphToPathConfig = (
   targetConfig: PathConfig,
   subgraph: SubgraphSemanticDocument,
-  options?: ApplySemanticSubgraphOptions,
+  options?: ApplySemanticSubgraphOptions
 ): {
   pathConfig: PathConfig;
   nodeIdMap: Record<string, string>;
@@ -162,10 +163,10 @@ export const applySemanticSubgraphToPathConfig = (
   const offset = options?.positionOffset ?? { x: 56, y: 56 };
 
   const existingNodeIds = new Set<string>(
-    (targetConfig.nodes ?? []).map((node: AiNode): string => node.id),
+    (targetConfig.nodes ?? []).map((node: AiNode): string => node.id)
   );
   const existingEdgeIds = new Set<string>(
-    (targetConfig.edges ?? []).map((edge: Edge): string => edge.id),
+    (targetConfig.edges ?? []).map((edge: Edge): string => edge.id)
   );
   const nodeIdMap: Record<string, string> = {};
   const edgeIdMap: Record<string, string> = {};
@@ -178,10 +179,10 @@ export const applySemanticSubgraphToPathConfig = (
       semanticNodeTypeId.length > 0
         ? semanticNodeTypeId
         : resolveNodeTypeId({
-          type: node.type,
-          title: node.title,
-          config: node.config as AiNode['config'] | undefined,
-        });
+            type: node.type,
+            title: node.title,
+            config: node.config as AiNode['config'] | undefined,
+          });
     return {
       id: remappedId,
       instanceId: remappedId,
@@ -205,7 +206,9 @@ export const applySemanticSubgraphToPathConfig = (
   });
 
   const appendedEdges = subgraph.edges
-    .filter((edge: SemanticEdge): boolean => Boolean(nodeIdMap[edge.fromNodeId] && nodeIdMap[edge.toNodeId]))
+    .filter((edge: SemanticEdge): boolean =>
+      Boolean(nodeIdMap[edge.fromNodeId] && nodeIdMap[edge.toNodeId])
+    )
     .map((edge: SemanticEdge): Edge => {
       const remappedId = resolveUniqueId(`${idPrefix}${edge.id}`, existingEdgeIds);
       edgeIdMap[edge.id] = remappedId;
@@ -219,19 +222,17 @@ export const applySemanticSubgraphToPathConfig = (
         target: toNodeId,
         ...(typeof edge.fromPort === 'string' || edge.fromPort === null
           ? {
-            fromPort: edge.fromPort,
-            sourceHandle: edge.fromPort,
-          }
+              fromPort: edge.fromPort,
+              sourceHandle: edge.fromPort,
+            }
           : {}),
         ...(typeof edge.toPort === 'string' || edge.toPort === null
           ? {
-            toPort: edge.toPort,
-            targetHandle: edge.toPort,
-          }
+              toPort: edge.toPort,
+              targetHandle: edge.toPort,
+            }
           : {}),
-        ...(typeof edge.label === 'string' || edge.label === null
-          ? { label: edge.label }
-          : {}),
+        ...(typeof edge.label === 'string' || edge.label === null ? { label: edge.label } : {}),
         ...(typeof edge.type === 'string' ? { type: edge.type } : {}),
         ...(edge.data && typeof edge.data === 'object' ? { data: edge.data } : {}),
         createdAt: now,
@@ -260,16 +261,16 @@ export const applySemanticSubgraphToPathConfig = (
 export const applyParsedSemanticSubgraphToPathConfig = (
   targetConfig: PathConfig,
   input: unknown,
-  options?: ApplySemanticSubgraphOptions,
+  options?: ApplySemanticSubgraphOptions
 ):
   | {
-    ok: true;
-    value: {
-      pathConfig: PathConfig;
-      nodeIdMap: Record<string, string>;
-      edgeIdMap: Record<string, string>;
-    };
-  }
+      ok: true;
+      value: {
+        pathConfig: PathConfig;
+        nodeIdMap: Record<string, string>;
+        edgeIdMap: Record<string, string>;
+      };
+    }
   | { ok: false; error: string } => {
   const parsed = parseSemanticSubgraphDocument(input);
   if (!parsed.ok) return parsed;
@@ -279,7 +280,9 @@ export const applyParsedSemanticSubgraphToPathConfig = (
   };
 };
 
-export const summarizeSubgraphBoundary = (subgraph: SubgraphSemanticDocument): {
+export const summarizeSubgraphBoundary = (
+  subgraph: SubgraphSemanticDocument
+): {
   incomingCount: number;
   outgoingCount: number;
 } => ({
@@ -294,7 +297,7 @@ export const findSubgraphDanglingEdges = (pathConfig: PathConfig): string[] =>
       const toNodeId = resolveEdgeToNodeId(edge);
       if (!fromNodeId || !toNodeId) return true;
       const nodeIds = new Set<string>(
-        (pathConfig.nodes ?? []).map((node: AiNode): string => node.id),
+        (pathConfig.nodes ?? []).map((node: AiNode): string => node.id)
       );
       return !nodeIds.has(fromNodeId) || !nodeIds.has(toNodeId);
     })

@@ -15,10 +15,15 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 
-import { Card, CardHeader, CardTitle, CardDescription, Button, SectionHeader, FormSection } from '@/shared/ui';
-
-
-
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  Button,
+  SectionHeader,
+  FormSection,
+} from '@/shared/ui';
 
 type SettingsOption = {
   id: string;
@@ -63,7 +68,8 @@ const settings: SettingsOption[] = [
     href: '/admin/settings/brain',
     icon: Brain,
     title: 'Brain',
-    description: 'Unified AI center: provider keys, model routing, prompts, schedules, and metrics.',
+    description:
+      'Unified AI center: provider keys, model routing, prompts, schedules, and metrics.',
     color: 'emerald',
     bgColor: 'bg-emerald-500/10',
   },
@@ -168,10 +174,14 @@ export function AdminSettingsHomePage(): React.ReactNode {
 
           return (
             <Link key={setting.id} href={setting.href}>
-              <Card className={`group relative h-full cursor-pointer border-border bg-card transition-all duration-300 hover:border hover:bg-muted/50 ${colors.border}`}>
+              <Card
+                className={`group relative h-full cursor-pointer border-border bg-card transition-all duration-300 hover:border hover:bg-muted/50 ${colors.border}`}
+              >
                 <CardHeader className='flex flex-row items-start gap-4'>
                   {/* Icon */}
-                  <div className={`flex size-12 flex-shrink-0 items-center justify-center rounded-lg ${setting.bgColor} transition-transform duration-300 group-hover:scale-110`}>
+                  <div
+                    className={`flex size-12 flex-shrink-0 items-center justify-center rounded-lg ${setting.bgColor} transition-transform duration-300 group-hover:scale-110`}
+                  >
                     <Icon className={`size-6 ${colors.text}`} />
                   </div>
 
@@ -202,7 +212,8 @@ export function AdminSettingsHomePage(): React.ReactNode {
       {/* Help Section */}
       <FormSection title='Need Help?' className='mt-8'>
         <p className='text-sm text-gray-400'>
-          Each setting section contains detailed explanations and preview options to help you customize your preferences.
+          Each setting section contains detailed explanations and preview options to help you
+          customize your preferences.
         </p>
         <div className='mt-4 flex gap-2'>
           <Button variant='outline' size='sm' asChild>

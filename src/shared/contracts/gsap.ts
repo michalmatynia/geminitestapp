@@ -87,7 +87,14 @@ export const parallaxAxisSchema = z.enum(['x', 'y', 'both']);
 export type ParallaxAxisDto = z.infer<typeof parallaxAxisSchema>;
 export type ParallaxAxis = ParallaxAxisDto;
 
-export const parallaxPatternSchema = z.enum(['uniform', 'random', 'stepped', 'alternating', 'layers', 'increment']);
+export const parallaxPatternSchema = z.enum([
+  'uniform',
+  'random',
+  'stepped',
+  'alternating',
+  'layers',
+  'increment',
+]);
 export type ParallaxPatternDto = z.infer<typeof parallaxPatternSchema>;
 export type ParallaxPattern = ParallaxPatternDto;
 
@@ -135,7 +142,14 @@ export const timelineModeSchema = z.enum([
 export type TimelineModeDto = z.infer<typeof timelineModeSchema>;
 export type TimelineMode = TimelineModeDto;
 
-export const scrollModeSchema = z.enum(['none', 'scrub', 'pin', 'reveal', 'horizontal-scroll', 'story']);
+export const scrollModeSchema = z.enum([
+  'none',
+  'scrub',
+  'pin',
+  'reveal',
+  'horizontal-scroll',
+  'story',
+]);
 export type ScrollModeDto = z.infer<typeof scrollModeSchema>;
 export type ScrollMode = ScrollModeDto;
 
@@ -290,17 +304,38 @@ export const ANIMATION_PRESETS: { label: string; value: AnimationPreset }[] = [
 ];
 
 export const ANIMATION_EASINGS = [
-  'power1.in', 'power1.out', 'power1.inOut',
-  'power2.in', 'power2.out', 'power2.inOut',
-  'power3.in', 'power3.out', 'power3.inOut',
-  'power4.in', 'power4.out', 'power4.inOut',
-  'back.in', 'back.out', 'back.inOut',
-  'elastic.in', 'elastic.out', 'elastic.inOut',
-  'bounce.in', 'bounce.out', 'bounce.inOut',
-  'sine.in', 'sine.out', 'sine.inOut',
-  'expo.in', 'expo.out', 'expo.inOut',
-  'circ.in', 'circ.out', 'circ.inOut',
-  'none', 'linear',
+  'power1.in',
+  'power1.out',
+  'power1.inOut',
+  'power2.in',
+  'power2.out',
+  'power2.inOut',
+  'power3.in',
+  'power3.out',
+  'power3.inOut',
+  'power4.in',
+  'power4.out',
+  'power4.inOut',
+  'back.in',
+  'back.out',
+  'back.inOut',
+  'elastic.in',
+  'elastic.out',
+  'elastic.inOut',
+  'bounce.in',
+  'bounce.out',
+  'bounce.inOut',
+  'sine.in',
+  'sine.out',
+  'sine.inOut',
+  'expo.in',
+  'expo.out',
+  'expo.inOut',
+  'circ.in',
+  'circ.out',
+  'circ.inOut',
+  'none',
+  'linear',
 ].map((easing) => ({ label: easing, value: easing }));
 
 export const PARALLAX_PRESETS: { label: string; value: ParallaxPreset }[] = [

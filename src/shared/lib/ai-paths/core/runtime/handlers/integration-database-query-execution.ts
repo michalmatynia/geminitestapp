@@ -1,13 +1,10 @@
-import type {
-  DbQueryConfig,
-  RuntimePortValues,
-} from '@/shared/contracts/ai-paths';
+import type { DbQueryConfig, RuntimePortValues } from '@/shared/contracts/ai-paths';
 import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 
 import { dbApi, ApiResponse } from '../../../api';
 import { parseJsonSafe } from '../../utils';
 
-import type { AiPathsCollectionMap } from '../../utils/collection-mapping';
+import type { AiPathsCollectionMap } from '@/shared/lib/ai-paths/core/utils/collection-mapping';
 
 interface DbQueryResult {
   items?: unknown[];
@@ -41,9 +38,9 @@ export async function executeDatabaseQuery({
   dryRun,
   aiPrompt,
 }: ExecuteDatabaseQueryInput): Promise<RuntimePortValues> {
-  const projection: Record<string, unknown> | undefined = parseJsonSafe(queryConfig.projection ?? '') as
-    | Record<string, unknown>
-    | undefined;
+  const projection: Record<string, unknown> | undefined = parseJsonSafe(
+    queryConfig.projection ?? ''
+  ) as Record<string, unknown> | undefined;
   const sort: Record<string, unknown> | undefined = parseJsonSafe(queryConfig.sort ?? '') as
     | Record<string, unknown>
     | undefined;
@@ -51,8 +48,7 @@ export async function executeDatabaseQuery({
   if (dryRun) {
     const requestedProvider =
       typeof queryConfig.provider === 'string' ? queryConfig.provider : 'auto';
-    const resolvedProvider =
-      requestedProvider === 'auto' ? null : requestedProvider;
+    const resolvedProvider = requestedProvider === 'auto' ? null : requestedProvider;
     return {
       result: query,
       bundle: {
@@ -91,7 +87,7 @@ export async function executeDatabaseQuery({
     reportAiPathsError(
       new Error(queryResult.error),
       { action: 'dbQuery', collection: queryConfig.collection, query },
-      'Database query failed:',
+      'Database query failed:'
     );
     toast(queryResult.error || 'Database query failed.', { variant: 'error' });
     return {
@@ -137,7 +133,7 @@ export async function executeDatabaseQuery({
       : 'collection';
   toast(
     `Database query succeeded for ${collectionLabel} (${count} result${count === 1 ? '' : 's'}).`,
-    { variant: 'success' },
+    { variant: 'success' }
   );
 
   return {

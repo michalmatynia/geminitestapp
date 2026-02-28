@@ -1,13 +1,6 @@
 'use client';
 
-import {
-  createContext,
-  useContext,
-  useState,
-  useMemo,
-  useCallback,
-  type ReactNode,
-} from 'react';
+import { createContext, useContext, useState, useMemo, useCallback, type ReactNode } from 'react';
 
 import type {
   AiNode,
@@ -19,12 +12,7 @@ import type {
   PathRunMode,
   NodeConfig,
 } from '@/shared/lib/ai-paths';
-import {
-  initialNodes,
-  initialEdges,
-  normalizeNodes,
-  sanitizeEdges,
-} from '@/shared/lib/ai-paths';
+import { initialNodes, initialEdges, normalizeNodes, sanitizeEdges } from '@/shared/lib/ai-paths';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -70,7 +58,11 @@ export interface GraphActions {
 
   // Path management
   setPaths: (paths: PathMeta[] | ((prev: PathMeta[]) => PathMeta[])) => void;
-  setPathConfigs: (configs: Record<string, PathConfig> | ((prev: Record<string, PathConfig>) => Record<string, PathConfig>)) => void;
+  setPathConfigs: (
+    configs:
+      | Record<string, PathConfig>
+      | ((prev: Record<string, PathConfig>) => Record<string, PathConfig>)
+  ) => void;
   setActivePathId: (pathId: string | null) => void;
 
   // Path metadata
@@ -110,7 +102,8 @@ export interface GraphActions {
 // ---------------------------------------------------------------------------
 
 const DEFAULT_PATH_NAME = 'AI Description Path';
-const DEFAULT_PATH_DESCRIPTION = 'Visual analysis + description generation with structured updates.';
+const DEFAULT_PATH_DESCRIPTION =
+  'Visual analysis + description generation with structured updates.';
 const DEFAULT_TRIGGER = 'Product Modal - Context Filter';
 const DEFAULT_EXECUTION_MODE: PathExecutionMode = 'server';
 const DEFAULT_FLOW_INTENSITY: PathFlowIntensity = 'medium';
@@ -151,15 +144,18 @@ export function GraphProvider({
 
   // Path management
   const [paths, setPathsInternal] = useState<PathMeta[]>(initialPaths);
-  const [pathConfigs, setPathConfigsInternal] = useState<Record<string, PathConfig>>(initialPathConfigs);
+  const [pathConfigs, setPathConfigsInternal] =
+    useState<Record<string, PathConfig>>(initialPathConfigs);
   const [activePathId, setActivePathIdInternal] = useState<string | null>(initialActivePathId);
 
   // Active path metadata
   const [pathName, setPathNameInternal] = useState(DEFAULT_PATH_NAME);
   const [pathDescription, setPathDescriptionInternal] = useState(DEFAULT_PATH_DESCRIPTION);
   const [activeTrigger, setActiveTriggerInternal] = useState(DEFAULT_TRIGGER);
-  const [executionMode, setExecutionModeInternal] = useState<PathExecutionMode>(DEFAULT_EXECUTION_MODE);
-  const [flowIntensity, setFlowIntensityInternal] = useState<PathFlowIntensity>(DEFAULT_FLOW_INTENSITY);
+  const [executionMode, setExecutionModeInternal] =
+    useState<PathExecutionMode>(DEFAULT_EXECUTION_MODE);
+  const [flowIntensity, setFlowIntensityInternal] =
+    useState<PathFlowIntensity>(DEFAULT_FLOW_INTENSITY);
   const [runMode, setRunModeInternal] = useState<PathRunMode>(DEFAULT_RUN_MODE);
   const [strictFlowMode, setStrictFlowModeInternal] = useState<boolean>(DEFAULT_STRICT_FLOW_MODE);
 
@@ -187,9 +183,7 @@ export function GraphProvider({
   const removeNode = useCallback((nodeId: string) => {
     setNodesInternal((prev) => prev.filter((node) => node.id !== nodeId));
     // Also remove connected edges
-    setEdgesInternal((prev) =>
-      prev.filter((edge) => edge.from !== nodeId && edge.to !== nodeId)
-    );
+    setEdgesInternal((prev) => prev.filter((edge) => edge.from !== nodeId && edge.to !== nodeId));
   }, []);
 
   // Memoized edge operations
@@ -206,33 +200,36 @@ export function GraphProvider({
   }, []);
 
   // Bulk operations
-  const loadGraph = useCallback((data: {
-    nodes: AiNode[];
-    edges: Edge[];
-    pathName?: string | undefined;
-    pathDescription?: string | undefined;
-    activeTrigger?: string | undefined;
-    executionMode?: PathExecutionMode | undefined;
-    flowIntensity?: PathFlowIntensity | undefined;
-    runMode?: PathRunMode | undefined;
-    strictFlowMode?: boolean | undefined;
-    isPathLocked?: boolean | undefined;
-    isPathActive?: boolean | undefined;
-  }) => {
-    const normalizedNodes = normalizeNodes(data.nodes);
-    const sanitizedEdges = sanitizeEdges(normalizedNodes, data.edges);
-    setNodesInternal(normalizedNodes);
-    setEdgesInternal(sanitizedEdges);
-    if (data.pathName !== undefined) setPathNameInternal(data.pathName);
-    if (data.pathDescription !== undefined) setPathDescriptionInternal(data.pathDescription);
-    if (data.activeTrigger !== undefined) setActiveTriggerInternal(data.activeTrigger);
-    if (data.executionMode !== undefined) setExecutionModeInternal(data.executionMode);
-    if (data.flowIntensity !== undefined) setFlowIntensityInternal(data.flowIntensity);
-    if (data.runMode !== undefined) setRunModeInternal(data.runMode);
-    if (data.strictFlowMode !== undefined) setStrictFlowModeInternal(data.strictFlowMode);
-    if (data.isPathLocked !== undefined) setIsPathLockedInternal(data.isPathLocked);
-    if (data.isPathActive !== undefined) setIsPathActiveInternal(data.isPathActive);
-  }, []);
+  const loadGraph = useCallback(
+    (data: {
+      nodes: AiNode[];
+      edges: Edge[];
+      pathName?: string | undefined;
+      pathDescription?: string | undefined;
+      activeTrigger?: string | undefined;
+      executionMode?: PathExecutionMode | undefined;
+      flowIntensity?: PathFlowIntensity | undefined;
+      runMode?: PathRunMode | undefined;
+      strictFlowMode?: boolean | undefined;
+      isPathLocked?: boolean | undefined;
+      isPathActive?: boolean | undefined;
+    }) => {
+      const normalizedNodes = normalizeNodes(data.nodes);
+      const sanitizedEdges = sanitizeEdges(normalizedNodes, data.edges);
+      setNodesInternal(normalizedNodes);
+      setEdgesInternal(sanitizedEdges);
+      if (data.pathName !== undefined) setPathNameInternal(data.pathName);
+      if (data.pathDescription !== undefined) setPathDescriptionInternal(data.pathDescription);
+      if (data.activeTrigger !== undefined) setActiveTriggerInternal(data.activeTrigger);
+      if (data.executionMode !== undefined) setExecutionModeInternal(data.executionMode);
+      if (data.flowIntensity !== undefined) setFlowIntensityInternal(data.flowIntensity);
+      if (data.runMode !== undefined) setRunModeInternal(data.runMode);
+      if (data.strictFlowMode !== undefined) setStrictFlowModeInternal(data.strictFlowMode);
+      if (data.isPathLocked !== undefined) setIsPathLockedInternal(data.isPathLocked);
+      if (data.isPathActive !== undefined) setIsPathActiveInternal(data.isPathActive);
+    },
+    []
+  );
 
   const resetGraph = useCallback(() => {
     setNodesInternal(initialNodes);
@@ -287,7 +284,17 @@ export function GraphProvider({
       loadGraph,
       resetGraph,
     }),
-    [addNode, updateNode, updateNodeConfig, removeNode, addEdge, removeEdge, clearEdges, loadGraph, resetGraph]
+    [
+      addNode,
+      updateNode,
+      updateNodeConfig,
+      removeNode,
+      addEdge,
+      removeEdge,
+      clearEdges,
+      loadGraph,
+      resetGraph,
+    ]
   );
 
   const state = useMemo<GraphState>(
@@ -327,9 +334,7 @@ export function GraphProvider({
 
   return (
     <GraphActionsContext.Provider value={actions}>
-      <GraphStateContext.Provider value={state}>
-        {children}
-      </GraphStateContext.Provider>
+      <GraphStateContext.Provider value={state}>{children}</GraphStateContext.Provider>
     </GraphActionsContext.Provider>
   );
 }

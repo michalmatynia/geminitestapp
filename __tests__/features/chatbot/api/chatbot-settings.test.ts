@@ -24,7 +24,7 @@ describe('Chatbot Settings API', () => {
     expect(res.status).toBe(200);
     expect(data.settings).toEqual(mockSettings);
     expect(prisma.chatbotSettings.findUnique).toHaveBeenCalledWith({
-      where: { key: 'default' }
+      where: { key: 'default' },
     });
   });
 
@@ -42,11 +42,13 @@ describe('Chatbot Settings API', () => {
 
     expect(res.status).toBe(200);
     expect(data.settings).toEqual(mockSaved);
-    expect(prisma.chatbotSettings.upsert).toHaveBeenCalledWith(expect.objectContaining({
-      where: { key: 'default' },
-      update: { settings: { model: 'gpt-4' } },
-      create: { key: 'default', settings: { model: 'gpt-4' } },
-    }));
+    expect(prisma.chatbotSettings.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { key: 'default' },
+        update: { settings: { model: 'gpt-4' } },
+        create: { key: 'default', settings: { model: 'gpt-4' } },
+      })
+    );
   });
 
   it('POST: returns 400 if settings missing', async () => {

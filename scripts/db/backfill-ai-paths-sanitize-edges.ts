@@ -1,8 +1,6 @@
 import 'dotenv/config';
 
-import {
-  sanitizeEdges,
-} from '@/shared/lib/ai-paths/core/utils/graph';
+import { sanitizeEdges } from '@/shared/lib/ai-paths/core/utils/graph';
 import { normalizeNodes } from '@/shared/lib/ai-paths/core/normalization';
 import { stableStringify } from '@/shared/lib/ai-paths/core/utils/runtime';
 import {
@@ -113,10 +111,7 @@ async function main(): Promise<void> {
     rewiredEdges += canonicalEdges.reduce((count: number, edge, index: number): number => {
       const original = originalEdgesById.get(edge.id) ?? parsed.edges?.[index];
       if (!original) return count;
-      if (
-        original.fromPort !== edge.fromPort ||
-        original.toPort !== edge.toPort
-      ) {
+      if (original.fromPort !== edge.fromPort || original.toPort !== edge.toPort) {
         return count + 1;
       }
       return count;

@@ -2,10 +2,7 @@ import { createMasterFolderTreeAdapter } from '@/shared/lib/foldertree';
 import type { ReorderCategoryPayload } from '@/features/products/api/settings';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
-import {
-  decodeCategoryMasterNodeId,
-  fromCategoryMasterNodeId,
-} from './category-master-tree';
+import { decodeCategoryMasterNodeId, fromCategoryMasterNodeId } from './category-master-tree';
 
 export type CategoryMasterTreeAdapterOptions = {
   selectedCatalogId: string | null;
@@ -27,10 +24,13 @@ export const createCategoryMasterTreeAdapter = ({
           const firstRootSiblingId =
             context.nextNodes
               .filter((entry: MasterTreeNode) => entry.parentId === null)
-              .sort((left: MasterTreeNode, right: MasterTreeNode) => left.sortOrder - right.sortOrder)
+              .sort(
+                (left: MasterTreeNode, right: MasterTreeNode) => left.sortOrder - right.sortOrder
+              )
               .map((entry: MasterTreeNode): string | null => fromCategoryMasterNodeId(entry.id))
               .find(
-                (categoryId: string | null): boolean => Boolean(categoryId) && categoryId !== node.id
+                (categoryId: string | null): boolean =>
+                  Boolean(categoryId) && categoryId !== node.id
               ) ?? null;
 
           if (firstRootSiblingId) {

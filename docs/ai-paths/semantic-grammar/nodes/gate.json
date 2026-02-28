@@ -4,16 +4,8 @@
   "nodeType": "gate",
   "title": "Gate",
   "purpose": "Allow context through when valid is true.",
-  "inputs": [
-    "context",
-    "valid",
-    "errors"
-  ],
-  "outputs": [
-    "context",
-    "valid",
-    "errors"
-  ],
+  "inputs": ["context", "valid", "errors"],
+  "outputs": ["context", "valid", "errors"],
   "configFields": [
     {
       "path": "gate.mode",
@@ -45,16 +37,8 @@
       "x": 100,
       "y": 100
     },
-    "inputs": [
-      "context",
-      "valid",
-      "errors"
-    ],
-    "outputs": [
-      "context",
-      "valid",
-      "errors"
-    ],
+    "inputs": ["context", "valid", "errors"],
+    "outputs": ["context", "valid", "errors"],
     "data": {},
     "connections": {
       "incoming": [],

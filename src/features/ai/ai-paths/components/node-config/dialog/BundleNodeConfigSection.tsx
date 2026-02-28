@@ -1,10 +1,7 @@
 'use client';
 
-
-
-
 import { parsePathList } from '@/shared/lib/ai-paths';
-import { Button,  Textarea, FormField } from '@/shared/ui';
+import { Button, Textarea, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -19,8 +16,8 @@ export function BundleNodeConfigSection(): React.JSX.Element | null {
 
   return (
     <div className='space-y-4'>
-      <FormField 
-        label='Included Ports (one per line)' 
+      <FormField
+        label='Included Ports (one per line)'
         description='Bundle outputs a single object with the selected ports as keys.'
         actions={
           <Button

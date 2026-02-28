@@ -71,9 +71,7 @@ describe('playwright-artifacts helpers', () => {
     const artifacts = extractPlaywrightArtifactsFromNode(node);
 
     expect(artifacts).toHaveLength(1);
-    expect(artifacts[0]?.url).toBe(
-      '/api/ai-paths/playwright/run-1/artifacts/trace-1.zip'
-    );
+    expect(artifacts[0]?.url).toBe('/api/ai-paths/playwright/run-1/artifacts/trace-1.zip');
   });
 
   it('does not create fallback url when artifact path uses nested file segments', () => {

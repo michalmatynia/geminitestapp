@@ -8,6 +8,7 @@ Status: In Progress (Phase A complete, Phase B foundation complete, Phase C comp
 This plan covers the Object Layout tool in Image Studio, including shared image analysis used by Object Layout and Auto Scaler.
 
 Primary code surfaces:
+
 - `src/features/ai/image-studio/analysis/shared.ts`
 - `src/features/ai/image-studio/server/center-utils.ts`
 - `src/app/api/image-studio/slots/[slotId]/center/handler.ts`
@@ -16,6 +17,7 @@ Primary code surfaces:
 - `src/features/ai/image-studio/components/ImageStudioAnalysisTab.tsx`
 
 Related contracts and tests:
+
 - `src/shared/contracts/image-studio.ts`
 - `src/features/ai/image-studio/contracts/center.ts`
 - `src/features/ai/image-studio/server/__tests__/center-utils.test.ts`
@@ -67,6 +69,7 @@ Related contracts and tests:
 ### Progress Snapshot (2026-02-20)
 
 Completed:
+
 1. Phase A fixture framework:
    - `analysis/__fixtures__/object-layout/` synthetic fixture pack added.
    - IoU + bounds delta helpers added.
@@ -111,6 +114,7 @@ Completed:
    - Verified all three handler suites together in one Phase K run.
 
 Remaining:
+
 1. Phase B rollout hardening:
    - policy decision metadata surfaced in all UI diagnostics where useful.
 2. Phase L onward unchanged.
@@ -118,9 +122,11 @@ Remaining:
 ### Phase A: Detection Quality Framework
 
 Objectives:
+
 - Build repeatable quality baseline before changing detection behavior.
 
 Tasks:
+
 1. Add fixture set and expected bounds (small curated dataset):
    - `src/features/ai/image-studio/analysis/__fixtures__/object-layout/`
 2. Add golden tests for detector output and confidence:
@@ -130,15 +136,18 @@ Tasks:
 4. Add helper assertions for IoU and boundary deltas.
 
 Acceptance:
+
 1. Golden suite stable in CI.
 2. Baseline metric report generated for current detector behavior.
 
 ### Phase B: Detection Policy v2
 
 Objectives:
+
 - Make detector choice and confidence handling more predictable.
 
 Tasks:
+
 1. Introduce policy module for detector arbitration:
    - `src/features/ai/image-studio/analysis/policy.ts`
 2. Add confidence thresholds and tie-break rules:
@@ -153,15 +162,18 @@ Tasks:
    - `candidateDetections` summary
 
 Acceptance:
+
 1. Golden IoU improves without regression on easy fixtures.
 2. Route responses include policy metadata for debugging.
 
 ### Phase C: Advanced Layout Controls
 
 Objectives:
+
 - Expose enough controls to tune difficult images from the main Object Layout tool.
 
 Tasks:
+
 1. Add optional advanced panel in `GenerationToolbarCenterSection`:
    - white threshold
    - chroma threshold
@@ -174,15 +186,18 @@ Tasks:
 4. Mirror controls in Analysis tab for parity.
 
 Acceptance:
+
 1. User can tune and re-run layout without leaving Object Layout flow.
 2. Presets apply consistently in Object Layout and Analysis tab.
 
 ### Phase D: Visual Explainability in Workflow
 
 Objectives:
+
 - Reduce blind execution by showing what detector sees before applying.
 
 Tasks:
+
 1. Add "Preview Detection" action in center section.
 2. Render overlay for:
    - source detected bounds
@@ -192,15 +207,18 @@ Tasks:
 4. Add "Apply anyway" vs "adjust thresholds" prompt on low confidence.
 
 Acceptance:
+
 1. Users can inspect detection before mutation.
 2. Low-confidence runs produce explicit UI warnings.
 
 ### Phase E: Reliability and Fallback Hardening
 
 Objectives:
+
 - Improve failure handling and make behavior explicit.
 
 Tasks:
+
 1. Add explicit error path tests for center handler:
    - source too large
    - source object not found
@@ -210,15 +228,18 @@ Tasks:
 3. Add structured error mapping in UI with actionable messages.
 
 Acceptance:
+
 1. All critical error codes have direct tests and user-facing messages.
 2. No ambiguous "Failed to layout image object." for known cases.
 
 ### Phase F: Performance and Caching
 
 Objectives:
+
 - Avoid duplicate analysis work and reduce P95 latency.
 
 Tasks:
+
 1. Add in-request analysis reuse in center handler:
    - avoid duplicate decode/detection in related calls.
 2. Add optional short-lived analysis cache keyed by:
@@ -229,15 +250,18 @@ Tasks:
    - `src/features/ai/image-studio/analysis/__tests__/shared.perf.test.ts`
 
 Acceptance:
+
 1. P95 latency improvement measured against baseline.
 2. No correctness regression in golden tests.
 
 ### Phase G: Rollout and De-Experimentalization
 
 Objectives:
+
 - Move Object Layout from experimental to standard mode safely.
 
 Tasks:
+
 1. Add rollout flags:
    - `IMAGE_STUDIO_OBJECT_LAYOUT_POLICY_V2_ENABLED`
    - `IMAGE_STUDIO_OBJECT_LAYOUT_ADVANCED_UI_ENABLED`
@@ -247,6 +271,7 @@ Tasks:
 4. Publish operator runbook for troubleshooting and recommended presets.
 
 Acceptance:
+
 1. KPI targets met for two consecutive validation runs.
 2. Experimental label removed with no major incidents.
 
@@ -255,9 +280,11 @@ Acceptance:
 ### Phase H: Shared Configuration Integration (In Progress)
 
 Objectives:
+
 - Make all three tools execute with the same detection policy defaults and user presets.
 
 Tasks:
+
 1. Share advanced detection config storage across Analysis and Object Layout:
    - detector mode
    - white threshold
@@ -268,6 +295,7 @@ Tasks:
 4. Show integration hint in Auto Scaler UI to reduce ambiguity.
 
 Acceptance:
+
 1. Updating advanced settings in Analysis or Object Layout affects both tools.
 2. Auto Scaler uses the same detector policy settings in its server/client runs.
 3. Custom presets are available in both Analysis and Object Layout panels.
@@ -275,9 +303,11 @@ Acceptance:
 ### Phase I: Analysis-to-Action Bridging
 
 Objectives:
+
 - Reduce manual copy/re-entry between analysis and execution tools.
 
 Tasks:
+
 1. Add action buttons in Analysis tab:
    - `Apply To Object Layout`
    - `Apply To Auto Scaler`
@@ -290,15 +320,18 @@ Tasks:
    - prompt user to rerun analysis before apply
 
 Acceptance:
+
 1. User can run analysis and launch layout/autoscale with one click.
 2. stale-plan warning blocks accidental apply of obsolete analysis results.
 
 ### Phase J: Visual Coherence and Diagnostics
 
 Objectives:
+
 - Make detector decisions and planned transforms visible in every tool entry point.
 
 Tasks:
+
 1. Add shared "analysis summary chip" component:
    - detection used
    - confidence
@@ -311,15 +344,18 @@ Tasks:
 3. Add threshold mismatch warnings if runtime payload differs from saved preset.
 
 Acceptance:
+
 1. All tools present consistent policy/confidence diagnostics.
 2. Operators can identify why outputs differ without reading raw JSON payloads.
 
 ### Phase K: End-to-End Integration Testing
 
 Objectives:
+
 - Lock integration behavior with deterministic tests.
 
 Tasks:
+
 1. Add integration-focused tests for shared preset propagation.
 2. Add action-chain tests:
    - analysis -> object layout
@@ -327,6 +363,7 @@ Tasks:
 3. Add fallback policy assertion tests for low-confidence scenarios across all three tools.
 
 Acceptance:
+
 1. Integration tests fail on any regression in shared settings propagation.
 2. Analysis/center/autoscale alignment remains stable after refactors.
 

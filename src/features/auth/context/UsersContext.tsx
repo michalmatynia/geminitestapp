@@ -6,7 +6,7 @@ import { useUsersState, type UseUsersStateReturn } from '../hooks/useUsersState'
 import type {
   AuthUser as AuthUserSummary,
   AuthRole,
-  AuthUserSecurityProfile
+  AuthUserSecurityProfile,
 } from '@/shared/contracts/auth';
 import type { AuthUserRoleMap } from '@/features/auth/utils/auth-management';
 
@@ -88,59 +88,97 @@ const UsersContext = createContext<UseUsersStateReturn | undefined>(undefined);
 export function UsersProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
   const state = useUsersState();
 
-  const dataValue = useMemo<UsersData>(() => ({
-    users: state.users,
-    filteredUsers: state.filteredUsers,
-    isLoading: state.isLoading,
-    isFetching: state.isFetching,
-    canReadUsers: state.canReadUsers,
-    canManageSecurity: state.canManageSecurity,
-    roles: state.roles,
-    provider: state.provider,
-    refetch: state.refetch,
-    userSecurity: state.userSecurity,
-    loadingSecurity: state.loadingSecurity,
-    mutations: state.mutations,
-  }), [state.users, state.filteredUsers, state.isLoading, state.isFetching, state.canReadUsers, state.canManageSecurity, state.roles, state.provider, state.refetch, state.userSecurity, state.loadingSecurity, state.mutations]);
+  const dataValue = useMemo<UsersData>(
+    () => ({
+      users: state.users,
+      filteredUsers: state.filteredUsers,
+      isLoading: state.isLoading,
+      isFetching: state.isFetching,
+      canReadUsers: state.canReadUsers,
+      canManageSecurity: state.canManageSecurity,
+      roles: state.roles,
+      provider: state.provider,
+      refetch: state.refetch,
+      userSecurity: state.userSecurity,
+      loadingSecurity: state.loadingSecurity,
+      mutations: state.mutations,
+    }),
+    [
+      state.users,
+      state.filteredUsers,
+      state.isLoading,
+      state.isFetching,
+      state.canReadUsers,
+      state.canManageSecurity,
+      state.roles,
+      state.provider,
+      state.refetch,
+      state.userSecurity,
+      state.loadingSecurity,
+      state.mutations,
+    ]
+  );
 
-  const searchValue = useMemo<UsersSearch>(() => ({
-    search: state.search,
-    setSearch: state.setSearch,
-  }), [state.search, state.setSearch]);
+  const searchValue = useMemo<UsersSearch>(
+    () => ({
+      search: state.search,
+      setSearch: state.setSearch,
+    }),
+    [state.search, state.setSearch]
+  );
 
-  const rolesValue = useMemo<UsersRoles>(() => ({
-    localUserRoles: state.localUserRoles,
-    handleRoleChange: state.handleRoleChange,
-    dirtyRoles: state.dirtyRoles,
-    saveRoles: state.saveRoles,
-  }), [state.localUserRoles, state.handleRoleChange, state.dirtyRoles, state.saveRoles]);
+  const rolesValue = useMemo<UsersRoles>(
+    () => ({
+      localUserRoles: state.localUserRoles,
+      handleRoleChange: state.handleRoleChange,
+      dirtyRoles: state.dirtyRoles,
+      saveRoles: state.saveRoles,
+    }),
+    [state.localUserRoles, state.handleRoleChange, state.dirtyRoles, state.saveRoles]
+  );
 
-  const dialogsValue = useMemo<UsersDialogs>(() => ({
-    editingUser: state.editingUser,
-    setEditingUser: state.setEditingUser,
-    userToDelete: state.userToDelete,
-    setUserToDelete: state.setUserToDelete,
-    deleteUser: state.deleteUser,
-    createOpen: state.createOpen,
-    setCreateOpen: state.setCreateOpen,
-    createForm: state.createForm,
-    setCreateForm: state.setCreateForm,
-    mockOpen: state.mockOpen,
-    setMockOpen: state.setMockOpen,
-    mockEmail: state.mockEmail,
-    setMockEmail: state.setMockEmail,
-    mockPassword: state.mockPassword,
-    setMockPassword: state.setMockPassword,
-  }), [state.editingUser, state.setEditingUser, state.userToDelete, state.setUserToDelete, state.deleteUser, state.createOpen, state.setCreateOpen, state.createForm, state.setCreateForm, state.mockOpen, state.setMockOpen, state.mockEmail, state.mockPassword, state.setMockPassword]);
+  const dialogsValue = useMemo<UsersDialogs>(
+    () => ({
+      editingUser: state.editingUser,
+      setEditingUser: state.setEditingUser,
+      userToDelete: state.userToDelete,
+      setUserToDelete: state.setUserToDelete,
+      deleteUser: state.deleteUser,
+      createOpen: state.createOpen,
+      setCreateOpen: state.setCreateOpen,
+      createForm: state.createForm,
+      setCreateForm: state.setCreateForm,
+      mockOpen: state.mockOpen,
+      setMockOpen: state.setMockOpen,
+      mockEmail: state.mockEmail,
+      setMockEmail: state.setMockEmail,
+      mockPassword: state.mockPassword,
+      setMockPassword: state.setMockPassword,
+    }),
+    [
+      state.editingUser,
+      state.setEditingUser,
+      state.userToDelete,
+      state.setUserToDelete,
+      state.deleteUser,
+      state.createOpen,
+      state.setCreateOpen,
+      state.createForm,
+      state.setCreateForm,
+      state.mockOpen,
+      state.setMockOpen,
+      state.mockEmail,
+      state.mockPassword,
+      state.setMockPassword,
+    ]
+  );
 
   return (
     <DataContext.Provider value={dataValue}>
       <SearchContext.Provider value={searchValue}>
         <RolesContext.Provider value={rolesValue}>
           <DialogsContext.Provider value={dialogsValue}>
-            <UsersContext.Provider value={state}>
-              {children}
-            </UsersContext.Provider>
+            <UsersContext.Provider value={state}>{children}</UsersContext.Provider>
           </DialogsContext.Provider>
         </RolesContext.Provider>
       </SearchContext.Provider>

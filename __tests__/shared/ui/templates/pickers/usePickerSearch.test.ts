@@ -11,18 +11,14 @@ describe('usePickerSearch', () => {
   ];
 
   it('returns all items when query is empty', () => {
-    const { result } = renderHook(() =>
-      usePickerSearch(mockItems)
-    );
+    const { result } = renderHook(() => usePickerSearch(mockItems));
 
     expect(result.current.filtered).toHaveLength(3);
     expect(result.current.query).toBe('');
   });
 
   it('filters items based on query', () => {
-    const { result } = renderHook(() =>
-      usePickerSearch(mockItems)
-    );
+    const { result } = renderHook(() => usePickerSearch(mockItems));
 
     act(() => {
       result.current.setQuery('grid');
@@ -33,9 +29,7 @@ describe('usePickerSearch', () => {
   });
 
   it('performs case-insensitive search', () => {
-    const { result } = renderHook(() =>
-      usePickerSearch(mockItems)
-    );
+    const { result } = renderHook(() => usePickerSearch(mockItems));
 
     act(() => {
       result.current.setQuery('BLOCK');
@@ -46,12 +40,9 @@ describe('usePickerSearch', () => {
   });
 
   it('uses custom matcher function', () => {
-    const customMatcher = (query: string, item: any) =>
-      item.id === query;
+    const customMatcher = (query: string, item: any) => item.id === query;
 
-    const { result } = renderHook(() =>
-      usePickerSearch(mockItems, { matcher: customMatcher })
-    );
+    const { result } = renderHook(() => usePickerSearch(mockItems, { matcher: customMatcher }));
 
     act(() => {
       result.current.setQuery('2');
@@ -62,9 +53,7 @@ describe('usePickerSearch', () => {
   });
 
   it('tracks isSearching state', () => {
-    const { result } = renderHook(() =>
-      usePickerSearch(mockItems)
-    );
+    const { result } = renderHook(() => usePickerSearch(mockItems));
 
     expect(result.current.isSearching).toBe(false);
 
@@ -76,9 +65,7 @@ describe('usePickerSearch', () => {
   });
 
   it('clears search query', () => {
-    const { result } = renderHook(() =>
-      usePickerSearch(mockItems)
-    );
+    const { result } = renderHook(() => usePickerSearch(mockItems));
 
     act(() => {
       result.current.setQuery('grid');
@@ -95,9 +82,7 @@ describe('usePickerSearch', () => {
   });
 
   it('handles empty search results', () => {
-    const { result } = renderHook(() =>
-      usePickerSearch(mockItems)
-    );
+    const { result } = renderHook(() => usePickerSearch(mockItems));
 
     act(() => {
       result.current.setQuery('nonexistent');
@@ -107,19 +92,16 @@ describe('usePickerSearch', () => {
   });
 
   it('supports initial query', () => {
-    const { result } = renderHook(() =>
-      usePickerSearch(mockItems, { initialQuery: 'block' })
-    );
+    const { result } = renderHook(() => usePickerSearch(mockItems, { initialQuery: 'block' }));
 
     expect(result.current.query).toBe('block');
     expect(result.current.filtered).toHaveLength(1);
   });
 
   it('updates filtered results when items change', () => {
-    const { result, rerender } = renderHook(
-      ({ items }) => usePickerSearch(items),
-      { initialProps: { items: mockItems } }
-    );
+    const { result, rerender } = renderHook(({ items }) => usePickerSearch(items), {
+      initialProps: { items: mockItems },
+    });
 
     act(() => {
       result.current.setQuery('grid');

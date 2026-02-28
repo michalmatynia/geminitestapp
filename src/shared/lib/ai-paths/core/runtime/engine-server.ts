@@ -1,22 +1,11 @@
 import 'server-only';
 
-import type {
-  AiNode,
-  Edge,
-} from '@/shared/contracts/ai-paths';
-import type {
-  NodeHandler,
-  RuntimeState,
-} from '@/shared/contracts/ai-paths-runtime';
+import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
+import type { NodeHandler, RuntimeState } from '@/shared/contracts/ai-paths-runtime';
 
-import {
-  evaluateGraphInternal,
-} from './engine-core';
+import { evaluateGraphInternal } from './engine-core';
 
-import {
-  type EvaluateGraphArgs,
-  type EvaluateGraphOptions,
-} from './engine-modules/engine-types';
+import { type EvaluateGraphArgs, type EvaluateGraphOptions } from './engine-modules/engine-types';
 
 import {
   handleAiDescription,
@@ -146,7 +135,7 @@ export async function evaluateGraphServer(
     services: {
       prisma,
       mongo,
-      ...(resolvedOptions.services as Record<string, unknown> ?? {}),
+      ...((resolvedOptions.services as Record<string, unknown>) ?? {}),
     },
   });
 }

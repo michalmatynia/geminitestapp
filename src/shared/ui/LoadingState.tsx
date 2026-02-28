@@ -27,10 +27,12 @@ export function LoadingState({
     <div className={cn('flex flex-col items-center justify-center p-8 text-center', className)}>
       <Loader2 className={cn('animate-spin text-muted-foreground', iconSize)} />
       {message && (
-        <p className={cn(
-          'mt-2 text-muted-foreground',
-          (size === 'sm' || size === 'xs') ? 'text-[10px] mt-1' : 'text-sm'
-        )}>
+        <p
+          className={cn(
+            'mt-2 text-muted-foreground',
+            size === 'sm' || size === 'xs' ? 'text-[10px] mt-1' : 'text-sm'
+          )}
+        >
           {message}
         </p>
       )}

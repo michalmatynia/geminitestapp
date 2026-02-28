@@ -19,7 +19,9 @@ export function PromptExploderHeaderBar({
   const router = useRouter();
   const searchParams = useSearchParams();
   const returnTo = searchParams?.get('returnTo') || '/admin/image-studio';
-  const returnTarget = returnTo.startsWith('/admin/case-resolver') ? 'case-resolver' : 'image-studio';
+  const returnTarget = returnTo.startsWith('/admin/case-resolver')
+    ? 'case-resolver'
+    : 'image-studio';
   const { handleReloadFromStudio } = useDocumentActions();
 
   return (
@@ -29,7 +31,8 @@ export function PromptExploderHeaderBar({
       description='Explode prompts into typed segments, edit structure, and reassemble with references intact.'
       actions={
         <div className='flex flex-wrap items-center gap-2'>
-          <Button size='xs'
+          <Button
+            size='xs'
             variant='outline'
             onClick={handleReloadFromStudio}
             data-doc-id='reload_incoming_draft'
@@ -37,7 +40,8 @@ export function PromptExploderHeaderBar({
             <RefreshCcw className='mr-2 size-4' />
             Reload Incoming Draft
           </Button>
-          <Button size='xs'
+          <Button
+            size='xs'
             variant='outline'
             onClick={() => {
               router.push('/admin/prompt-exploder/settings');
@@ -47,7 +51,8 @@ export function PromptExploderHeaderBar({
             <Settings2 className='mr-2 size-4' />
             Settings
           </Button>
-          <Button size='xs'
+          <Button
+            size='xs'
             variant='outline'
             onClick={() => {
               router.push(returnTo);

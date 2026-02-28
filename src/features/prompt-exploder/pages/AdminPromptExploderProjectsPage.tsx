@@ -1,6 +1,13 @@
 'use client';
 
-import { ArrowLeft, Edit3, Plus, Trash2, Library, ExternalLink as ExternalLinkIcon } from 'lucide-react';
+import {
+  ArrowLeft,
+  Edit3,
+  Plus,
+  Trash2,
+  Library,
+  ExternalLink as ExternalLinkIcon,
+} from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useMemo, useState, useCallback } from 'react';
 
@@ -14,7 +21,10 @@ import {
   StandardDataTablePanel,
   Card,
 } from '@/shared/ui';
-import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
+import {
+  SettingsPanelBuilder,
+  type SettingsField,
+} from '@/shared/ui/templates/SettingsPanelBuilder';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 import { DocsTooltipEnhancer } from '../components/DocsTooltipEnhancer';
@@ -45,8 +55,7 @@ const formatPromptPreview = (value: string): string => {
 export function AdminPromptExploderProjectsPage(): React.JSX.Element {
   const router = useRouter();
   const { toast } = useToast();
-  const { docsTooltipsEnabled, setDocsTooltipsEnabled } =
-    usePromptExploderDocsTooltips();
+  const { docsTooltipsEnabled, setDocsTooltipsEnabled } = usePromptExploderDocsTooltips();
   const settingsQuery = useSettingsMap({ scope: 'all' });
   const updateSetting = useUpdateSetting();
 
@@ -69,14 +78,18 @@ export function AdminPromptExploderProjectsPage(): React.JSX.Element {
   const editingProject = useMemo(
     () =>
       editingProjectId
-        ? projects.find((project: PromptExploderLibraryItem): boolean => project.id === editingProjectId) ?? null
+        ? (projects.find(
+            (project: PromptExploderLibraryItem): boolean => project.id === editingProjectId
+          ) ?? null)
         : null,
     [editingProjectId, projects]
   );
   const pendingDeleteProject = useMemo(
     () =>
       projectPendingDeleteId
-        ? projects.find((project: PromptExploderLibraryItem): boolean => project.id === projectPendingDeleteId) ?? null
+        ? (projects.find(
+            (project: PromptExploderLibraryItem): boolean => project.id === projectPendingDeleteId
+          ) ?? null)
         : null,
     [projectPendingDeleteId, projects]
   );
@@ -87,9 +100,7 @@ export function AdminPromptExploderProjectsPage(): React.JSX.Element {
     editingProject !== null &&
     editingProject.prompt.trim() !== draftPrompt.trim();
 
-  const persistProjects = async (
-    nextItems: PromptExploderLibraryItem[]
-  ): Promise<boolean> => {
+  const persistProjects = async (nextItems: PromptExploderLibraryItem[]): Promise<boolean> => {
     const serialized = serializeSetting({
       version: 1,
       items: nextItems,
@@ -139,16 +150,14 @@ export function AdminPromptExploderProjectsPage(): React.JSX.Element {
       return;
     }
 
-    const existing =
-      editingProjectId
-        ? promptLibraryState.items.find(
+    const existing = editingProjectId
+      ? (promptLibraryState.items.find(
           (project: PromptExploderLibraryItem): boolean => project.id === editingProjectId
-        ) ?? null
-        : null;
+        ) ?? null)
+      : null;
     const now = new Date().toISOString();
     const shouldClearDocument =
-      Boolean(existing?.document) &&
-      (existing?.prompt.trim() ?? '') !== normalizedPrompt;
+      Boolean(existing?.document) && (existing?.prompt.trim() ?? '') !== normalizedPrompt;
 
     const nextProject: PromptExploderLibraryItem = {
       id: existing?.id ?? createPromptExploderLibraryItemId(),
@@ -177,10 +186,9 @@ export function AdminPromptExploderProjectsPage(): React.JSX.Element {
       setDraftPrompt('');
       toast(existing ? 'Project updated.' : 'Project created.', { variant: 'success' });
     } catch (error: unknown) {
-      toast(
-        error instanceof Error ? error.message : 'Failed to save Prompt Exploder project.',
-        { variant: 'error' }
-      );
+      toast(error instanceof Error ? error.message : 'Failed to save Prompt Exploder project.', {
+        variant: 'error',
+      });
     }
   };
 
@@ -208,14 +216,15 @@ export function AdminPromptExploderProjectsPage(): React.JSX.Element {
       key: 'prompt',
       label: '',
       type: 'custom',
-      render: () => shouldClearDocumentOnSave ? (
-        <Card variant='warning' padding='md' className='border-amber-500/20'>
-          <div className='text-xs text-amber-200/80 leading-relaxed italic'>
-            Note: Changing the prompt will reset the existing segment analysis for this project.
-          </div>
-        </Card>
-      ) : null
-    }
+      render: () =>
+        shouldClearDocumentOnSave ? (
+          <Card variant='warning' padding='md' className='border-amber-500/20'>
+            <div className='text-xs text-amber-200/80 leading-relaxed italic'>
+              Note: Changing the prompt will reset the existing segment analysis for this project.
+            </div>
+          </Card>
+        ) : null,
+    },
   ];
 
   const handleDeleteProject = async (): Promise<void> => {
@@ -242,98 +251,101 @@ export function AdminPromptExploderProjectsPage(): React.JSX.Element {
       setProjectPendingDeleteId(null);
       toast(`Deleted project: ${target.name}`, { variant: 'success' });
     } catch (error: unknown) {
-      toast(
-        error instanceof Error ? error.message : 'Failed to delete Prompt Exploder project.',
-        { variant: 'error' }
-      );
+      toast(error instanceof Error ? error.message : 'Failed to delete Prompt Exploder project.', {
+        variant: 'error',
+      });
     }
   };
 
-  const handleOpenInExploder = useCallback((projectId: string): void => {
-    router.push(`/admin/prompt-exploder?projectId=${encodeURIComponent(projectId)}`);
-  }, [router]);
+  const handleOpenInExploder = useCallback(
+    (projectId: string): void => {
+      router.push(`/admin/prompt-exploder?projectId=${encodeURIComponent(projectId)}`);
+    },
+    [router]
+  );
 
-  const columns = useMemo<ColumnDef<PromptExploderLibraryItem>[]>(() => [
-    {
-      accessorKey: 'name',
-      header: 'Project Name',
-      cell: ({ row }) => <span className='font-medium text-gray-100'>{row.original.name}</span>,
-    },
-    {
-      accessorKey: 'prompt',
-      header: 'Prompt',
-      cell: ({ row }) => (
-        <span className='text-xs text-gray-400'>
-          {formatPromptPreview(row.original.prompt)}
-        </span>
-      ),
-    },
-    {
-      id: 'segments',
-      header: 'Segments',
-      cell: ({ row }) => (
-        <span className='text-xs text-gray-300'>
-          {row.original.document?.segments.length ?? 0}
-        </span>
-      ),
-    },
-    {
-      accessorKey: 'updatedAt',
-      header: 'Updated',
-      cell: ({ row }) => (
-        <span className='text-xs text-gray-300'>
-          {promptExploderFormatTimestamp(row.original.updatedAt)}
-        </span>
-      ),
-    },
-    {
-      id: 'actions',
-      header: () => <div className='text-right'>Actions</div>,
-      cell: ({ row }) => {
-        const project = row.original;
-        return (
-          <div className='flex items-center justify-end gap-2'>
-            <Button
-              type='button'
-              size='xs'
-              variant='outline'
-              onClick={(): void => {
-                handleOpenInExploder(project.id);
-              }}
-            >
-              <ExternalLinkIcon className='mr-1 size-3.5' />
-              Open
-            </Button>
-            <Button
-              type='button'
-              size='xs'
-              variant='outline'
-              onClick={(): void => {
-                openEditEditor(project);
-              }}
-              disabled={isBusy}
-            >
-              <Edit3 className='mr-1 size-3.5' />
-              Edit
-            </Button>
-            <Button
-              type='button'
-              size='xs'
-              variant='outline'
-              onClick={(): void => {
-                setProjectPendingDeleteId(project.id);
-              }}
-              disabled={isBusy}
-              className='text-red-300 hover:text-red-200'
-            >
-              <Trash2 className='mr-1 size-3.5' />
-              Delete
-            </Button>
-          </div>
-        );
+  const columns = useMemo<ColumnDef<PromptExploderLibraryItem>[]>(
+    () => [
+      {
+        accessorKey: 'name',
+        header: 'Project Name',
+        cell: ({ row }) => <span className='font-medium text-gray-100'>{row.original.name}</span>,
       },
-    },
-  ], [handleOpenInExploder, isBusy]);
+      {
+        accessorKey: 'prompt',
+        header: 'Prompt',
+        cell: ({ row }) => (
+          <span className='text-xs text-gray-400'>{formatPromptPreview(row.original.prompt)}</span>
+        ),
+      },
+      {
+        id: 'segments',
+        header: 'Segments',
+        cell: ({ row }) => (
+          <span className='text-xs text-gray-300'>
+            {row.original.document?.segments.length ?? 0}
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'updatedAt',
+        header: 'Updated',
+        cell: ({ row }) => (
+          <span className='text-xs text-gray-300'>
+            {promptExploderFormatTimestamp(row.original.updatedAt)}
+          </span>
+        ),
+      },
+      {
+        id: 'actions',
+        header: () => <div className='text-right'>Actions</div>,
+        cell: ({ row }) => {
+          const project = row.original;
+          return (
+            <div className='flex items-center justify-end gap-2'>
+              <Button
+                type='button'
+                size='xs'
+                variant='outline'
+                onClick={(): void => {
+                  handleOpenInExploder(project.id);
+                }}
+              >
+                <ExternalLinkIcon className='mr-1 size-3.5' />
+                Open
+              </Button>
+              <Button
+                type='button'
+                size='xs'
+                variant='outline'
+                onClick={(): void => {
+                  openEditEditor(project);
+                }}
+                disabled={isBusy}
+              >
+                <Edit3 className='mr-1 size-3.5' />
+                Edit
+              </Button>
+              <Button
+                type='button'
+                size='xs'
+                variant='outline'
+                onClick={(): void => {
+                  setProjectPendingDeleteId(project.id);
+                }}
+                disabled={isBusy}
+                className='text-red-300 hover:text-red-200'
+              >
+                <Trash2 className='mr-1 size-3.5' />
+                Delete
+              </Button>
+            </div>
+          );
+        },
+      },
+    ],
+    [handleOpenInExploder, isBusy]
+  );
 
   return (
     <div id='prompt-exploder-projects-docs-root' className='container mx-auto space-y-6 py-10'>
@@ -355,7 +367,7 @@ export function AdminPromptExploderProjectsPage(): React.JSX.Element {
             icon: <Plus className='size-4' />,
             onClick: openCreateEditor,
             disabled: isBusy,
-          }
+          },
         ]}
       />
       <div className='flex justify-end'>

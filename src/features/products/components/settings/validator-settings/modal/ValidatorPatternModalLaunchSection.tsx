@@ -18,18 +18,12 @@ import {
 } from '../validator-pattern-modal-options';
 import { ValidatorDocTooltip } from '../ValidatorDocsTooltips';
 import { useValidatorSettingsContext } from '../ValidatorSettingsContext';
-import { 
-  normalizeProductValidationPatternLaunchScopes 
-} from '@/features/products/utils/validator-instance-behavior';
+import { normalizeProductValidationPatternLaunchScopes } from '@/features/products/utils/validator-instance-behavior';
 import type { PatternFormData, ProductValidationLaunchOperator } from '@/shared/contracts/products';
 import type { DynamicReplacementSourceMode } from '@/features/products/utils/validator-replacement-recipe';
 
 export function ValidatorPatternModalLaunchSection(): React.JSX.Element {
-  const {
-    formData,
-    setFormData,
-    sourceFieldOptions,
-  } = useValidatorSettingsContext();
+  const { formData, setFormData, sourceFieldOptions } = useValidatorSettingsContext();
 
   return (
     <FormSection
@@ -37,7 +31,7 @@ export function ValidatorPatternModalLaunchSection(): React.JSX.Element {
       description='Run this pattern only when the condition is satisfied.'
       variant='subtle'
       className='border border-sky-500/25 bg-sky-500/5 p-3 space-y-4'
-      actions={(
+      actions={
         <ValidatorDocTooltip docId='validator.modal.launch.toggle'>
           <StatusToggle
             enabled={formData.launchEnabled}
@@ -49,7 +43,7 @@ export function ValidatorPatternModalLaunchSection(): React.JSX.Element {
             }
           />
         </ValidatorDocTooltip>
-      )}
+      }
     >
       {formData.launchEnabled && (
         <div className='mt-4 space-y-4'>
@@ -84,15 +78,13 @@ export function ValidatorPatternModalLaunchSection(): React.JSX.Element {
             label='Launch Scope Behavior'
             description='`Gate` blocks pattern outside selected forms. `Condition Only` skips condition outside selected forms.'
           >
-            <SelectSimple size='sm'
+            <SelectSimple
+              size='sm'
               value={formData.launchScopeBehavior}
               onValueChange={(value: string): void =>
                 setFormData((prev: PatternFormData) => ({
                   ...prev,
-                  launchScopeBehavior:
-                    value === 'condition_only'
-                      ? 'condition_only'
-                      : 'gate',
+                  launchScopeBehavior: value === 'condition_only' ? 'condition_only' : 'gate',
                 }))
               }
               options={LAUNCH_SCOPE_BEHAVIOR_OPTIONS}
@@ -101,7 +93,8 @@ export function ValidatorPatternModalLaunchSection(): React.JSX.Element {
 
           <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
             <FormField label='Launch Source Mode'>
-              <SelectSimple size='sm'
+              <SelectSimple
+                size='sm'
                 value={formData.launchSourceMode}
                 onValueChange={(value: string): void =>
                   setFormData((prev: PatternFormData) => ({
@@ -113,7 +106,8 @@ export function ValidatorPatternModalLaunchSection(): React.JSX.Element {
               />
             </FormField>
             <FormField label='Launch Operator'>
-              <SelectSimple size='sm'
+              <SelectSimple
+                size='sm'
                 value={formData.launchOperator}
                 onValueChange={(value: string): void =>
                   setFormData((prev: PatternFormData) => ({
@@ -142,7 +136,8 @@ export function ValidatorPatternModalLaunchSection(): React.JSX.Element {
           {(formData.launchSourceMode === 'form_field' ||
             formData.launchSourceMode === 'latest_product_field') && (
             <FormField label='Launch Source Field'>
-              <SelectSimple size='sm'
+              <SelectSimple
+                size='sm'
                 value={formData.launchSourceField || '__none__'}
                 onValueChange={(value: string): void =>
                   setFormData((prev: PatternFormData) => ({
@@ -150,10 +145,7 @@ export function ValidatorPatternModalLaunchSection(): React.JSX.Element {
                     launchSourceField: value === '__none__' ? '' : value,
                   }))
                 }
-                options={[
-                  SOURCE_FIELD_PLACEHOLDER_OPTION,
-                  ...sourceFieldOptions,
-                ]}
+                options={[SOURCE_FIELD_PLACEHOLDER_OPTION, ...sourceFieldOptions]}
               />
             </FormField>
           )}

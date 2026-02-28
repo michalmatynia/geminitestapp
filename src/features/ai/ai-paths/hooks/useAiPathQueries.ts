@@ -13,10 +13,10 @@ import {
 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
-import { 
-  fetchAiPathsSettingsCached, 
-  invalidateAiPathsSettingsCache, 
-  updateAiPathsSetting 
+import {
+  fetchAiPathsSettingsCached,
+  invalidateAiPathsSettingsCache,
+  updateAiPathsSetting,
 } from '../lib/settings-store-client';
 
 export function useAiPathsSettingsQuery(): ListQuery<{ key: string; value: string }> {
@@ -109,11 +109,19 @@ export function useAiPathRuntimeAnalytics(
   });
 }
 
-export function useAiPathsQueueStatusQuery(): SingleQuery<{ status: string; active: number; queued: number; total: number }> {
+export function useAiPathsQueueStatusQuery(): SingleQuery<{
+  status: string;
+  active: number;
+  queued: number;
+  total: number;
+}> {
   const queryKey = QUERY_KEYS.ai.aiPaths.queueStatus();
   return createSingleQueryV2({
     queryKey,
-    queryFn: () => api.get<{ status: string; active: number; queued: number; total: number }>('/api/ai-paths/queue-status'),
+    queryFn: () =>
+      api.get<{ status: string; active: number; queued: number; total: number }>(
+        '/api/ai-paths/queue-status'
+      ),
     id: 'queue-status',
     meta: {
       source: 'aiPaths.hooks.useAiPathsQueueStatusQuery',

@@ -19,9 +19,7 @@ export function useNoteTheme({
   fetchFolderTree,
   setNotebook,
 }: UseNoteThemeProps): {
-  getThemeForNote: (
-    note: NoteWithRelations | null | undefined,
-  ) => ThemeRecord | null;
+  getThemeForNote: (note: NoteWithRelations | null | undefined) => ThemeRecord | null;
   selectedNoteTheme: ThemeRecord | null;
   selectedFolderTheme: ThemeRecord | null;
   selectedFolderThemeId: string;
@@ -29,13 +27,8 @@ export function useNoteTheme({
 } {
   const themeMap = useMemo(
     (): Map<string, ThemeRecord> =>
-      new Map(
-        themes.map((theme: ThemeRecord): [string, ThemeRecord] => [
-          String(theme.id),
-          theme,
-        ]),
-      ),
-    [themes],
+      new Map(themes.map((theme: ThemeRecord): [string, ThemeRecord] => [String(theme.id), theme])),
+    [themes]
   );
 
   const defaultTheme: ThemeRecord | null = notebook?.defaultThemeId
@@ -50,19 +43,19 @@ export function useNoteTheme({
       if (!themeId) return null;
       return themeMap.get(themeId) ?? null;
     },
-    [folderTree, themeMap],
+    [folderTree, themeMap]
   );
 
   const selectedFolderTheme = useMemo(
     (): ThemeRecord | null => getThemeForFolderId(selectedFolderId),
-    [getThemeForFolderId, selectedFolderId],
+    [getThemeForFolderId, selectedFolderId]
   );
 
   const selectedFolderThemeId: string = selectedFolderId
     ? ((): string => {
-      const folder = findFolderById(folderTree, selectedFolderId);
-      return folder?.themeId ? String(folder.themeId) : '';
-    })()
+        const folder = findFolderById(folderTree, selectedFolderId);
+        return folder?.themeId ? String(folder.themeId) : '';
+      })()
     : notebook?.defaultThemeId
       ? String(notebook.defaultThemeId)
       : '';
@@ -77,9 +70,8 @@ export function useNoteTheme({
       }
       // 2. Check note's category themes
       const categoryIds =
-        note.categories?.map(
-          (category: { categoryId: string }): string => category.categoryId,
-        ) ?? [];
+        note.categories?.map((category: { categoryId: string }): string => category.categoryId) ??
+        [];
       for (const categoryId of categoryIds) {
         const theme = getThemeForFolderId(categoryId);
         if (theme) return theme;
@@ -87,26 +79,23 @@ export function useNoteTheme({
       // 3. Fall back to notebook's default theme
       return defaultTheme;
     },
-    [getThemeForFolderId, selectedFolderId, defaultTheme],
+    [getThemeForFolderId, selectedFolderId, defaultTheme]
   );
 
   const selectedNoteTheme: ThemeRecord | null = useMemo(
     (): ThemeRecord | null => getThemeForNote(selectedNote),
-    [getThemeForNote, selectedNote],
+    [getThemeForNote, selectedNote]
   );
 
   const handleUpdateFolderTheme = useCallback(
     async (themeId: string | null): Promise<void> => {
       if (!selectedFolderId) return;
       try {
-        const response = await fetch(
-          `/api/notes/categories/${selectedFolderId}`,
-          {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ themeId }),
-          },
-        );
+        const response = await fetch(`/api/notes/categories/${selectedFolderId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ themeId }),
+        });
         if (response.ok) {
           await fetchFolderTree();
         }
@@ -121,21 +110,18 @@ export function useNoteTheme({
         });
       }
     },
-    [selectedFolderId, fetchFolderTree],
+    [selectedFolderId, fetchFolderTree]
   );
 
   const handleUpdateNotebookDefaultTheme = useCallback(
     async (themeId: string | null): Promise<void> => {
       if (!selectedNotebookId) return;
       try {
-        const response = await fetch(
-          `/api/notes/notebooks/${selectedNotebookId}`,
-          {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ defaultThemeId: themeId }),
-          },
-        );
+        const response = await fetch(`/api/notes/notebooks/${selectedNotebookId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ defaultThemeId: themeId }),
+        });
         if (response.ok) {
           const updated = (await response.json()) as NotebookRecord;
           setNotebook(updated);
@@ -151,7 +137,7 @@ export function useNoteTheme({
         });
       }
     },
-    [selectedNotebookId, setNotebook],
+    [selectedNotebookId, setNotebook]
   );
 
   const handleThemeChange = useCallback(
@@ -162,11 +148,7 @@ export function useNoteTheme({
         await handleUpdateNotebookDefaultTheme(themeId);
       }
     },
-    [
-      selectedFolderId,
-      handleUpdateFolderTheme,
-      handleUpdateNotebookDefaultTheme,
-    ],
+    [selectedFolderId, handleUpdateFolderTheme, handleUpdateNotebookDefaultTheme]
   );
 
   return {

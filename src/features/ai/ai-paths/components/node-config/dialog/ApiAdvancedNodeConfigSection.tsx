@@ -1,14 +1,7 @@
 'use client';
 
 import type { AdvancedApiConfig } from '@/shared/lib/ai-paths';
-import {
-  Input,
-  
-  SelectSimple,
-  Textarea,
-  ToggleRow,
-  FormField,
-} from '@/shared/ui';
+import { Input, SelectSimple, Textarea, ToggleRow, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -425,9 +418,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
         <ToggleRow
           label='Enable retry'
           checked={config.retryEnabled !== false}
-          onCheckedChange={(checked: boolean): void =>
-            update({ retryEnabled: checked })
-          }
+          onCheckedChange={(checked: boolean): void => update({ retryEnabled: checked })}
           className='bg-transparent border-none p-0 hover:bg-transparent'
         />
         {config.retryEnabled !== false && (
@@ -491,9 +482,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
             <ToggleRow
               label='Retry network errors'
               checked={config.retryOnNetworkError !== false}
-              onCheckedChange={(checked: boolean): void =>
-                update({ retryOnNetworkError: checked })
-              }
+              onCheckedChange={(checked: boolean): void => update({ retryOnNetworkError: checked })}
               className='bg-transparent border border-border/40 p-2'
             />
           </div>
@@ -532,8 +521,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
               value={config.paginationAggregateMode ?? 'first_page'}
               onValueChange={(value: string): void =>
                 update({
-                  paginationAggregateMode:
-                    value as AdvancedApiConfig['paginationAggregateMode'],
+                  paginationAggregateMode: value as AdvancedApiConfig['paginationAggregateMode'],
                 })
               }
               options={paginationAggregateOptions}
@@ -648,9 +636,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
         <ToggleRow
           label='Enable rate limit guard'
           checked={Boolean(config.rateLimitEnabled)}
-          onCheckedChange={(checked: boolean): void =>
-            update({ rateLimitEnabled: checked })
-          }
+          onCheckedChange={(checked: boolean): void => update({ rateLimitEnabled: checked })}
           className='bg-transparent border-none p-0 hover:bg-transparent'
         />
         {config.rateLimitEnabled && (
@@ -712,9 +698,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
         <ToggleRow
           label='Enable idempotency header'
           checked={Boolean(config.idempotencyEnabled)}
-          onCheckedChange={(checked: boolean): void =>
-            update({ idempotencyEnabled: checked })
-          }
+          onCheckedChange={(checked: boolean): void => update({ idempotencyEnabled: checked })}
           className='bg-transparent border-none p-0 hover:bg-transparent'
         />
         {config.idempotencyEnabled && (
@@ -752,7 +736,7 @@ export function ApiAdvancedNodeConfigSection(): React.JSX.Element | null {
           }
         />
       </FormField>
-      <FormField 
+      <FormField
         label='Error routes JSON'
         description='Route format: [{ "id":"warehouse_mismatch","when":"status","status":422,"outputPort":"warehouse_mismatch" }]'
       >

@@ -24,8 +24,8 @@ async function uploadHandler(_req: NextRequest, files: UploadedFile[]): Promise<
         small: { width: 300, quality: 85 },
         medium: { width: 600, quality: 85 },
         large: { width: 1200, quality: 90 },
-        original: { width: 2400, quality: 95 }
-      }
+        original: { width: 2400, quality: 95 },
+      },
     });
 
     results.push({
@@ -36,18 +36,18 @@ async function uploadHandler(_req: NextRequest, files: UploadedFile[]): Promise<
       size: file.size,
       mimeType: file.type,
       optimizedVersions: optimizedImages.length,
-      url: `/api/images/${hash.slice(0, 8)}`
+      url: `/api/images/${hash.slice(0, 8)}`,
     });
   }
 
   return NextResponse.json({
     success: true,
     uploaded: results.length,
-    files: results
+    files: results,
   });
 }
 
 export const ProductsImagesUploadPOST = withFileUploadSecurity(uploadHandler, {
   enableRateLimit: true,
-  enableFileUploadSecurity: true
+  enableFileUploadSecurity: true,
 });

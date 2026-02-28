@@ -9,17 +9,20 @@ export function SequenceRuntimeCard(): React.JSX.Element {
   const { studioSettings } = useSettingsState();
   const { setStudioSettings } = useSettingsActions();
 
-  const handleToggleSequencingEnabled = useCallback((checked: boolean): void => {
-    setStudioSettings((prev) => {
-      return {
-        ...prev,
-        projectSequencing: {
-          ...prev.projectSequencing,
-          enabled: Boolean(checked),
-        },
-      };
-    });
-  }, [setStudioSettings]);
+  const handleToggleSequencingEnabled = useCallback(
+    (checked: boolean): void => {
+      setStudioSettings((prev) => {
+        return {
+          ...prev,
+          projectSequencing: {
+            ...prev.projectSequencing,
+            enabled: Boolean(checked),
+          },
+        };
+      });
+    },
+    [setStudioSettings]
+  );
 
   return (
     <StudioCard label='Sequencing Runtime' className='shrink-0'>

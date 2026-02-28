@@ -11,13 +11,13 @@ async function main() {
           catalog: {
             include: {
               languages: {
-                include: { language: true }
-              }
-            }
-          }
-        }
-      }
-    }
+                include: { language: true },
+              },
+            },
+          },
+        },
+      },
+    },
   });
 
   console.log('\n=== Product Info ===');
@@ -52,4 +52,6 @@ async function main() {
   console.log('Languages:', targetLanguages.join(', '));
 }
 
-main().catch(console.error).finally(() => prisma.$disconnect());
+main()
+  .catch(console.error)
+  .finally(() => prisma.$disconnect());

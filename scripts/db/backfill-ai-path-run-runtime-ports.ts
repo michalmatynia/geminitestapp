@@ -163,10 +163,7 @@ const processPhase = async (args: {
     offset += runs.length;
 
     for (const listEntry of runs) {
-      if (
-        options.perPhaseRunLimit !== null &&
-        metrics.scannedRuns >= options.perPhaseRunLimit
-      ) {
+      if (options.perPhaseRunLimit !== null && metrics.scannedRuns >= options.perPhaseRunLimit) {
         return metrics;
       }
       metrics.scannedRuns += 1;
@@ -308,4 +305,3 @@ void main().catch((error) => {
   console.error('Failed to backfill AI Path run runtime ports:', error);
   process.exit(1);
 });
-

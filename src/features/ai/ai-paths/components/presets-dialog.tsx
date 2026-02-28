@@ -4,10 +4,7 @@ import React, { useCallback } from 'react';
 
 import type { ClusterPreset } from '@/shared/contracts/ai-paths';
 import type { ModalStateProps } from '@/shared/contracts/ui';
-import {
-  Button,
-  Textarea,
-} from '@/shared/ui';
+import { Button, Textarea } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
 import { useAiPathsSettingsOrchestrator } from './ai-paths-settings/AiPathsSettingsOrchestratorContext';
@@ -79,14 +76,18 @@ export function PresetsDialog(): React.JSX.Element {
           <Button
             type='button'
             variant='default'
-            onClick={() => { void onImport('merge'); }}
+            onClick={() => {
+              void onImport('merge');
+            }}
           >
             Import (Merge)
           </Button>
           <Button
             type='button'
             variant='destructive'
-            onClick={() => { void onImport('replace'); }}
+            onClick={() => {
+              void onImport('replace');
+            }}
           >
             Replace Existing
           </Button>

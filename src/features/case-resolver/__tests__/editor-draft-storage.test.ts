@@ -4,8 +4,9 @@ import {
   readStoredEditorDraft,
   writeStoredEditorDraft,
 } from '@/features/case-resolver/hooks/useCaseResolverState.helpers';
-import { createCaseResolverFile } from '@/features/case-resolver/settings';
+import type { CaseResolverFileEditDraft } from '@/shared/contracts/case-resolver';
 import { buildFileEditDraft } from '@/features/case-resolver/utils/caseResolverUtils';
+import { createCaseResolverFile } from '@/features/case-resolver/settings';
 
 type StorageMock = Storage & { _map: Map<string, string> };
 
@@ -49,7 +50,7 @@ const createStorageMock = ({
   };
 };
 
-const buildDraft = () => {
+const buildDraft = (): CaseResolverFileEditDraft => {
   const file = createCaseResolverFile({
     id: 'case-file-1',
     fileType: 'scanfile',
@@ -135,7 +136,7 @@ describe('case resolver editor draft storage', () => {
 
     const persisted = readStoredEditorDraft('case-file-1');
     expect(persisted).not.toBeNull();
-    const draft = persisted?.draft as any;
+    const draft = persisted?.draft as unknown as CaseResolverFileEditDraft;
     expect(draft.documentHistory).toBeUndefined();
     expect(draft.documentContentPlainText).toBeUndefined();
     expect(draft.documentContent).toBeUndefined();
@@ -147,7 +148,6 @@ describe('case resolver editor draft storage', () => {
       expect(draft.documentContentMarkdown).toBe('# Body');
     }
     expect(draft.scanSlots?.[0]?.ocrText).toBe('');
-    
   });
 
   it('falls back to minimal payload when primary payload keeps hitting quota', () => {
@@ -168,9 +168,8 @@ describe('case resolver editor draft storage', () => {
     expect(result).toEqual({ ok: true });
     const persisted = readStoredEditorDraft('case-file-1');
     expect(persisted).not.toBeNull();
-    const draft = persisted?.draft as any;
+    const draft = persisted?.draft as unknown as CaseResolverFileEditDraft;
     expect(draft.documentContentMarkdown).toBeUndefined();
     expect(draft.originalDocumentContent).toBeUndefined();
-    
   });
 });

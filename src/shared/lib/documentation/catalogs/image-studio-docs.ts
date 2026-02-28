@@ -158,12 +158,14 @@ export const IMAGE_STUDIO_DOCS: Record<ImageStudioDocKey, ImageStudioDocEntry> =
   crop_box_tool: {
     key: 'crop_box_tool',
     title: 'Create Rectangle',
-    description: 'Creates a rectangle shape you can resize and move, then use as the crop boundary.',
+    description:
+      'Creates a rectangle shape you can resize and move, then use as the crop boundary.',
   },
   crop: {
     key: 'crop',
     title: 'Crop',
-    description: 'Runs crop using the active boundary shape and creates a linked cropped output card.',
+    description:
+      'Runs crop using the active boundary shape and creates a linked cropped output card.',
   },
   square_crop: {
     key: 'square_crop',
@@ -301,7 +303,8 @@ export const IMAGE_STUDIO_DOCS: Record<ImageStudioDocKey, ImageStudioDocEntry> =
   version_graph_merge_mode_toggle: {
     key: 'version_graph_merge_mode_toggle',
     title: 'Version Graph: Merge Mode',
-    description: 'Enables node multi-select for merge planning. Pick 2 or more nodes, then run Merge.',
+    description:
+      'Enables node multi-select for merge planning. Pick 2 or more nodes, then run Merge.',
   },
   version_graph_merge_execute: {
     key: 'version_graph_merge_execute',
@@ -316,7 +319,8 @@ export const IMAGE_STUDIO_DOCS: Record<ImageStudioDocKey, ImageStudioDocEntry> =
   version_graph_composite_mode_toggle: {
     key: 'version_graph_composite_mode_toggle',
     title: 'Version Graph: Composite Mode',
-    description: 'Enables node multi-select for compositing. Pick 2 or more nodes, then run Composite.',
+    description:
+      'Enables node multi-select for compositing. Pick 2 or more nodes, then run Composite.',
   },
   version_graph_composite_execute: {
     key: 'version_graph_composite_execute',
@@ -331,7 +335,8 @@ export const IMAGE_STUDIO_DOCS: Record<ImageStudioDocKey, ImageStudioDocEntry> =
   version_graph_compare_mode_toggle: {
     key: 'version_graph_compare_mode_toggle',
     title: 'Version Graph: Compare Mode',
-    description: 'Switches graph clicks into compare selection so two nodes can be inspected side by side.',
+    description:
+      'Switches graph clicks into compare selection so two nodes can be inspected side by side.',
   },
   version_graph_collapse_all: {
     key: 'version_graph_collapse_all',

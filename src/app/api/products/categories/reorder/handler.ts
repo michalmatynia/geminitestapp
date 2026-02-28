@@ -1,17 +1,11 @@
-
-
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { logSystemEvent } from '@/features/observability/server';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { CachedProductService } from '@/features/products/performance/cached-service';
 import { getCategoryRepository } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import {
-  badRequestError,
-  conflictError,
-  notFoundError,
-} from '@/shared/errors/app-error';
+import { badRequestError, conflictError, notFoundError } from '@/shared/errors/app-error';
 
 export const reorderCategorySchema = z.object({
   categoryId: z.string().min(1),
@@ -25,9 +19,7 @@ type ReorderCategoryPayload = z.infer<typeof reorderCategorySchema>;
 
 const shouldLogTiming = (): boolean => process.env['DEBUG_API_TIMING'] === 'true';
 
-const buildServerTiming = (
-  entries: Record<string, number | null | undefined>
-): string => {
+const buildServerTiming = (entries: Record<string, number | null | undefined>): string => {
   const parts = Object.entries(entries)
     .filter(
       ([, value]: [string, number | null | undefined]): boolean =>
@@ -56,10 +48,7 @@ const normalizeId = (value: string | null | undefined): string | null => {
   return trimmed ? trimmed : null;
 };
 
-export async function POST_handler(
-  _req: NextRequest,
-  ctx: ApiHandlerContext
-): Promise<Response> {
+export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const timings: Record<string, number | null | undefined> = {};
   const requestStart = performance.now();
   const payload = ctx.body as ReorderCategoryPayload;
@@ -107,11 +96,7 @@ export async function POST_handler(
   }
 
   const duplicateStart = performance.now();
-  const duplicate = await repository.findByName(
-    nextCatalogId,
-    current.name,
-    targetParentId
-  );
+  const duplicate = await repository.findByName(nextCatalogId, current.name, targetParentId);
   timings['duplicateCheck'] = performance.now() - duplicateStart;
   if (duplicate && duplicate.id !== categoryId) {
     throw conflictError('A category with this name already exists at this level', {
@@ -175,4 +160,3 @@ export async function POST_handler(
   attachTimingHeaders(response, timings);
   return response;
 }
-

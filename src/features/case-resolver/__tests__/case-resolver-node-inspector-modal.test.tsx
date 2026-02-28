@@ -55,9 +55,7 @@ vi.mock('@/shared/ui', () => ({
   Label: ({ children }: { children: React.ReactNode }) => <label>{children}</label>,
   SelectSimple: () => <div />,
   EmptyState: ({ title }: { title: string }) => <div>{title}</div>,
-  Textarea: (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => (
-    <textarea {...props} />
-  ),
+  Textarea: (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => <textarea {...props} />,
   useToast: () => ({ toast: vi.fn() }),
   ValidatorFormatterToggle: () => <div />,
 }));
@@ -71,7 +69,13 @@ vi.mock('@/shared/ui/templates/modals/DetailModal', () => ({
     isOpen: boolean;
     title: React.ReactNode;
     children: React.ReactNode;
-  }) => (isOpen ? <div><div>{title}</div>{children}</div> : null),
+  }) =>
+    isOpen ? (
+      <div>
+        <div>{title}</div>
+        {children}
+      </div>
+    ) : null,
 }));
 
 describe('CaseResolverNodeInspectorModal', () => {

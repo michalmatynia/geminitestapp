@@ -8,7 +8,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { POST as POST_ACCEPT } from '@/app/api/products/[id]/studio/accept/route';
 import { POST as POST_LINK } from '@/app/api/products/[id]/studio/link/route';
 import { GET as GET_PREFLIGHT } from '@/app/api/products/[id]/studio/preflight/route';
-import { GET as GET_STUDIO_CONFIG, PUT as PUT_STUDIO_CONFIG } from '@/app/api/products/[id]/studio/route';
+import {
+  GET as GET_STUDIO_CONFIG,
+  PUT as PUT_STUDIO_CONFIG,
+} from '@/app/api/products/[id]/studio/route';
 import { POST as POST_SEND } from '@/app/api/products/[id]/studio/send/route';
 import { GET as GET_VARIANTS } from '@/app/api/products/[id]/studio/variants/route';
 import {
@@ -27,23 +30,19 @@ import { productService } from '@/features/products/services/productService';
 vi.mock('@/shared/lib/api/api-handler', () => ({
   apiHandlerWithParams:
     (
-      handler: (
-        req: NextRequest,
-        ctx: unknown,
-        params: Record<string, string>
-      ) => Promise<Response>
+      handler: (req: NextRequest, ctx: unknown, params: Record<string, string>) => Promise<Response>
     ) =>
-      async (
-        req: NextRequest,
-        routeCtx: { params: Promise<Record<string, string>> }
-      ): Promise<Response> =>
-        handler(
-          req,
-          {
-            requestId: 'test-request-id',
-          },
-          await routeCtx.params
-        ),
+    async (
+      req: NextRequest,
+      routeCtx: { params: Promise<Record<string, string>> }
+    ): Promise<Response> =>
+      handler(
+        req,
+        {
+          requestId: 'test-request-id',
+        },
+        await routeCtx.params
+      ),
 }));
 
 vi.mock('@/features/products/services/productService', () => ({
@@ -363,7 +362,7 @@ describe('Product Studio API', () => {
       sequencingDiagnostics?: { selectedSettingsKey?: string | null };
     };
     expect(payload.sequencingDiagnostics?.selectedSettingsKey).toBe(
-      'image_studio_project_settings_studio-a',
+      'image_studio_project_settings_studio-a'
     );
     expect(getProductStudioVariants).toHaveBeenCalledWith({
       productId: 'prod-1',

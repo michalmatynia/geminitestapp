@@ -1,9 +1,6 @@
 'use client';
 
-import type {
-  SettingRecordDto,
-  SettingsScopeDto,
-} from '@/shared/contracts/settings';
+import type { SettingRecordDto, SettingsScopeDto } from '@/shared/contracts/settings';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 export type SettingRecord = SettingRecordDto;
@@ -119,7 +116,8 @@ async function fetchSettingsFromApi(
 ): Promise<SettingRecord[]> {
   try {
     const scopeValue = normalizeScope(scope);
-    const url = scopeValue === 'all' ? '/api/settings?scope=all' : `/api/settings?scope=${scopeValue}`;
+    const url =
+      scopeValue === 'all' ? '/api/settings?scope=all' : `/api/settings?scope=${scopeValue}`;
     // Heavy settings drive AI Paths graph/config hydration; always bypass browser HTTP cache
     // to prevent stale config on hard refresh after recent writes.
     const cacheMode: RequestCache = bypassCache || scopeValue === 'heavy' ? 'no-store' : 'default';

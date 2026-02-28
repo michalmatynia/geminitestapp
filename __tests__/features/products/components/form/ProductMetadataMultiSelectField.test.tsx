@@ -10,14 +10,14 @@ import {
 const multiSelectSpy = vi.fn();
 
 vi.mock('@/shared/ui', () => ({
-  MultiSelect: (props: any) => {
+  MultiSelect: (props: Record<string, unknown>) => {
     multiSelectSpy(props);
     return null;
   },
 }));
 
 const buildMetadataContext = (
-  overrides: Partial<ProductFormMetadataContextType> = {},
+  overrides: Partial<ProductFormMetadataContextType> = {}
 ): ProductFormMetadataContextType =>
   ({
     categories: [{ id: 'cat-dice', name: 'Dice' }],
@@ -60,7 +60,7 @@ describe('ProductMetadataMultiSelectField', () => {
           contextOnChangeKey='onCategoryChange'
           single
         />
-      </ProductFormMetadataContext.Provider>,
+      </ProductFormMetadataContext.Provider>
     );
 
     expect(multiSelectSpy).toHaveBeenCalledTimes(1);

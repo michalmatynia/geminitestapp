@@ -1,16 +1,10 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import {
-  useState,
-  useEffect,
-  useMemo,
-  useCallback,
-  useRef,
-} from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 
 import { useAgentCreatorSettings } from '@/features/ai/agentcreator';
-import { useBrainModelOptions } from '@/features/ai/brain/hooks/useBrainModelOptions';
+import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
 import type {
   ChatMessageDto as ChatMessage,
   CreateChatbotSettingsDto as ChatbotSettingsPayload,
@@ -21,7 +15,7 @@ import { useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import * as chatbotApi from '../api';
-import { CHATBOT_SETTINGS_KEY, DEFAULT_CHATBOT_SETTINGS } from '../utils/constants';
+import { CHATBOT_SETTINGS_KEY, DEFAULT_CHATBOT_SETTINGS } from '@/features/ai/chatbot/utils/constants';
 
 export interface UseChatbotLogicReturn {
   messages: ChatMessage[];
@@ -192,9 +186,7 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
   });
   const [globalContext, setGlobalContext] = useState<string>('');
   const [localContext, setLocalContext] = useState<string>('');
-  const [localContextMode, setLocalContextMode] = useState<
-    'override' | 'append'
-  >('override');
+  const [localContextMode, setLocalContextMode] = useState<'override' | 'append'>('override');
   const [settingsDirty, setSettingsDirty] = useState<boolean>(false);
   const [settingsSaving, setSettingsSaving] = useState<boolean>(false);
   const [settingsSnapshot, setSettingsSnapshot] = useState<ChatbotSettingsPayload | null>(null);
@@ -209,18 +201,12 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
     return currentSessionId || searchParams.get('session') || null;
   }, [currentSessionId, searchParams]);
 
-  const setModel = useCallback<React.Dispatch<React.SetStateAction<string>>>(
-    (): void => {
-      // Brain is authoritative for Chatbot model routing.
-    },
-    [],
-  );
+  const setModel = useCallback<React.Dispatch<React.SetStateAction<string>>>((): void => {
+    // Brain is authoritative for Chatbot model routing.
+  }, []);
 
   useEffect((): void => {
-    const nextModel =
-      brainModelOptions.effectiveModelId ||
-      brainModelOptions.models[0] ||
-      '';
+    const nextModel = brainModelOptions.effectiveModelId || brainModelOptions.models[0] || '';
     if (!nextModel || nextModel === model) return;
     setModelState(nextModel);
   }, [brainModelOptions.effectiveModelId, brainModelOptions.models, model]);
@@ -315,7 +301,9 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
       const session = await chatbotApi.fetchChatbotSession(id);
       setMessages(session?.messages || []);
     } catch (error: unknown) {
-      logClientError(error, { context: { source: 'useChatbotLogic.loadSessionMessages', sessionId: id } });
+      logClientError(error, {
+        context: { source: 'useChatbotLogic.loadSessionMessages', sessionId: id },
+      });
     }
   }, []);
 
@@ -334,18 +322,23 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
     }
   }, [webSearchEnabled, useGlobalContext, useLocalContext, fetchSessions, toast]);
 
-  const deleteSession = useCallback(async (id: string): Promise<void> => {
-    try {
-      await chatbotApi.deleteChatbotSession(id);
-      await fetchSessions();
-      if (currentSessionId === id) {
-        setCurrentSessionId(sessions[0]?.id || null);
+  const deleteSession = useCallback(
+    async (id: string): Promise<void> => {
+      try {
+        await chatbotApi.deleteChatbotSession(id);
+        await fetchSessions();
+        if (currentSessionId === id) {
+          setCurrentSessionId(sessions[0]?.id || null);
+        }
+      } catch (error: unknown) {
+        logClientError(error, {
+          context: { source: 'useChatbotLogic.deleteSession', sessionId: id },
+        });
+        toast('Failed to delete chat session', { variant: 'error' });
       }
-    } catch (error: unknown) {
-      logClientError(error, { context: { source: 'useChatbotLogic.deleteSession', sessionId: id } });
-      toast('Failed to delete chat session', { variant: 'error' });
-    }
-  }, [currentSessionId, sessions, fetchSessions, toast]);
+    },
+    [currentSessionId, sessions, fetchSessions, toast]
+  );
 
   // Fetch sessions on mount
   useEffect((): void => {
@@ -363,10 +356,7 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
 
   const loadChatbotSettings = useCallback(async (): Promise<void> => {
     try {
-      const data = await chatbotApi.fetchChatbotSettings(
-        CHATBOT_SETTINGS_KEY,
-        5000
-      );
+      const data = await chatbotApi.fetchChatbotSettings(CHATBOT_SETTINGS_KEY, 5000);
       if (!data.settings?.settings) {
         throw new Error('No chatbot settings saved.');
       }
@@ -473,19 +463,14 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
     try {
       const payload = currentSettings;
 
-      await chatbotApi.saveChatbotSettings(
-        CHATBOT_SETTINGS_KEY,
-        payload,
-        5000
-      );
+      await chatbotApi.saveChatbotSettings(CHATBOT_SETTINGS_KEY, payload, 5000);
 
       setSettingsDirty(false);
       setSettingsSnapshot(payload);
       toast('Chatbot settings saved.', { variant: 'success' });
     } catch (error: unknown) {
       logClientError(error, { context: { source: 'useChatbotLogic.saveChatbotSettings' } });
-      const message =
-        error instanceof Error ? error.message : 'Failed to save settings.';
+      const message = error instanceof Error ? error.message : 'Failed to save settings.';
       toast(message, { variant: 'error' });
     } finally {
       setSettingsSaving(false);

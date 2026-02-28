@@ -1,7 +1,7 @@
 'use client';
 
 import type { HttpConfig } from '@/shared/lib/ai-paths';
-import { Input,  Textarea, SelectSimple, FormField } from '@/shared/ui';
+import { Input, Textarea, SelectSimple, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -49,7 +49,8 @@ export function HttpNodeConfigSection(): React.JSX.Element | null {
       </FormField>
       <div className='grid gap-3 sm:grid-cols-2'>
         <FormField label='Method'>
-          <SelectSimple size='sm'
+          <SelectSimple
+            size='sm'
             variant='subtle'
             value={httpConfig.method}
             onValueChange={(value: string): void =>
@@ -62,7 +63,8 @@ export function HttpNodeConfigSection(): React.JSX.Element | null {
           />
         </FormField>
         <FormField label='Response Mode'>
-          <SelectSimple size='sm'
+          <SelectSimple
+            size='sm'
             variant='subtle'
             value={httpConfig.responseMode}
             onValueChange={(value: string): void =>
@@ -104,8 +106,8 @@ export function HttpNodeConfigSection(): React.JSX.Element | null {
           }
         />
       </FormField>
-      <FormField 
-        label='Response Path' 
+      <FormField
+        label='Response Path'
         description='Optional JSON path to extract a field from the response.'
       >
         <Input

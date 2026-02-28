@@ -43,12 +43,13 @@ export function LearnedRuleItem({ draft }: LearnedRuleItemProps): React.JSX.Elem
       className='p-4'
       actions={
         <div className='flex items-center gap-2'>
-          <CopyButton
-            value={draft.text}
-            variant='ghost'
-            size='icon'
-          />
-          <Button type='button' variant='outline' size='sm' onClick={() => handleRemoveLearnedRule(draft.uid)}>
+          <CopyButton value={draft.text} variant='ghost' size='icon' />
+          <Button
+            type='button'
+            variant='outline'
+            size='sm'
+            onClick={() => handleRemoveLearnedRule(draft.uid)}
+          >
             Remove
           </Button>
         </div>
@@ -58,10 +59,14 @@ export function LearnedRuleItem({ draft }: LearnedRuleItemProps): React.JSX.Elem
         <Textarea
           className='min-h-[140px] font-mono text-[12px]'
           value={draft.text}
-          onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => handleLearnedRuleTextChange(draft.uid, event.target.value)}
+          onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
+            handleLearnedRuleTextChange(draft.uid, event.target.value)
+          }
         />
         {draft.error ? (
-          <Alert variant='error' className='text-xs'>{draft.error}</Alert>
+          <Alert variant='error' className='text-xs'>
+            {draft.error}
+          </Alert>
         ) : null}
         {rule ? (
           <div className='flex flex-wrap gap-4 items-center pt-1'>

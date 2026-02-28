@@ -1,19 +1,22 @@
 import { type QueryClient, type UseQueryResult } from '@tanstack/react-query';
 import React from 'react';
-import { type ImageStudioProjectRecord, type ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
+import {
+  type ImageStudioProjectRecord,
+  type ImageStudioSlotRecord,
+} from '@/shared/contracts/image-studio';
 import { type VectorShape, type VectorToolMode } from '@/shared/contracts/vector';
 import { type SettingsStoreValue } from '@/shared/providers/SettingsStoreProvider';
-import { type ImageStudioSettings } from '../../utils/studio-settings';
+import { type ImageStudioSettings } from '@/shared/lib/ai/image-studio/utils/studio-settings';
 import { type GenerationToolbarContextValue } from './GenerationToolbarContext';
 import {
   type MaskShapeForExport,
   type CropRectResolutionDiagnostics,
   type CropRect,
 } from './GenerationToolbarImageUtils';
-import { type ImageStudioAnalysisSharedLayout } from '../../utils/analysis-bridge';
+import { type ImageStudioAnalysisSharedLayout } from '@/shared/lib/ai/image-studio/utils/analysis-bridge';
 import { type ImageStudioCenterLayoutConfig } from '../../contracts/center';
 import { type PreviewCanvasImageFrameBinding } from '../../context/UiContext';
-import { type ObjectLayoutCustomPreset } from '../../utils/object-layout-presets';
+import { type ObjectLayoutCustomPreset } from '@/shared/lib/ai/image-studio/utils/object-layout-presets';
 import { type ImageStudioAnalysisSummaryChipData } from '@/features/ai/image-studio/components/ImageStudioAnalysisSummaryChip';
 
 export interface GenerationToolbarHandlers {
@@ -63,7 +66,10 @@ export interface GenerationToolbarState extends GenerationToolbarContextValue {
   handleAiMaskGeneration: (mode: 'ai-polygon' | 'ai-bbox' | 'threshold' | 'edges') => Promise<void>;
   studioSettings: ImageStudioSettings;
   setStudioSettings: React.Dispatch<React.SetStateAction<ImageStudioSettings>>;
-  toast: (message: string, options?: { variant?: 'default' | 'success' | 'error' | 'info' | 'warning' }) => void;
+  toast: (
+    message: string,
+    options?: { variant?: 'default' | 'success' | 'error' | 'info' | 'warning' }
+  ) => void;
   queryClient: QueryClient;
   upscaleRequestInFlightRef: React.MutableRefObject<boolean>;
   upscaleAbortControllerRef: React.MutableRefObject<AbortController | null>;
@@ -103,6 +109,12 @@ export interface GenerationToolbarState extends GenerationToolbarContextValue {
   centerAnalysisConfigMismatchMessage: string | null;
   autoScaleAnalysisConfigMismatchMessage: string | null;
   centerLayoutPresetOptions: Array<{ value: string; label: string }>;
-  applyAnalysisLayoutToCenter: (layout: ImageStudioAnalysisSharedLayout, mode: 'auto' | 'manual') => void;
-  applyAnalysisLayoutToAutoScaler: (layout: ImageStudioAnalysisSharedLayout, mode: 'auto' | 'manual') => void;
+  applyAnalysisLayoutToCenter: (
+    layout: ImageStudioAnalysisSharedLayout,
+    mode: 'auto' | 'manual'
+  ) => void;
+  applyAnalysisLayoutToAutoScaler: (
+    layout: ImageStudioAnalysisSharedLayout,
+    mode: 'auto' | 'manual'
+  ) => void;
 }

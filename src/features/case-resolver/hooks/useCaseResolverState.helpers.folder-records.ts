@@ -1,13 +1,6 @@
-import type {
-  CaseResolverFile,
-  CaseResolverFolderRecord,
-} from '@/shared/contracts/case-resolver';
-import {
-  expandFolderPath,
-  normalizeFolderPath,
-  renameFolderPath,
-} from '../settings';
-import { isPathWithinFolder } from '../utils/caseResolverUtils';
+import type { CaseResolverFile, CaseResolverFolderRecord } from '@/shared/contracts/case-resolver';
+import { expandFolderPath, normalizeFolderPath, renameFolderPath } from '../settings';
+import { isPathWithinFolder } from '@/features/case-resolver/utils/caseResolverUtils';
 
 const buildFolderRecordKey = (path: string, ownerCaseId: string | null): string =>
   `${ownerCaseId ?? '__none__'}::${path}`;
@@ -31,11 +24,13 @@ export const normalizeFolderRecords = (
       ownerCaseId,
     });
   });
-  return Array.from(byKey.values()).sort((left: CaseResolverFolderRecord, right: CaseResolverFolderRecord) => {
-    const pathDelta = left.path.localeCompare(right.path);
-    if (pathDelta !== 0) return pathDelta;
-    return (left.ownerCaseId ?? '').localeCompare(right.ownerCaseId ?? '');
-  });
+  return Array.from(byKey.values()).sort(
+    (left: CaseResolverFolderRecord, right: CaseResolverFolderRecord) => {
+      const pathDelta = left.path.localeCompare(right.path);
+      if (pathDelta !== 0) return pathDelta;
+      return (left.ownerCaseId ?? '').localeCompare(right.ownerCaseId ?? '');
+    }
+  );
 };
 
 export const appendOwnedFolderRecords = ({
@@ -51,12 +46,10 @@ export const appendOwnedFolderRecords = ({
   if (!normalizedPath) return normalizeFolderRecords(records);
   const current = normalizeFolderRecords(records);
   const byKey = new Map<string, CaseResolverFolderRecord>(
-    current.map(
-      (record: CaseResolverFolderRecord): [string, CaseResolverFolderRecord] => [
-        buildFolderRecordKey(record.path, record.ownerCaseId ?? null),
-        record,
-      ]
-    )
+    current.map((record: CaseResolverFolderRecord): [string, CaseResolverFolderRecord] => [
+      buildFolderRecordKey(record.path, record.ownerCaseId ?? null),
+      record,
+    ])
   );
   expandFolderPath(normalizedPath).forEach((path: string): void => {
     const key = buildFolderRecordKey(path, ownerCaseId);

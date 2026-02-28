@@ -10,9 +10,7 @@ import type {
   AiPathRunRecord,
   AiPathRuntimeEvent,
 } from '@/shared/lib/ai-paths';
-import {
-  runsApi,
-} from '@/shared/lib/ai-paths';
+import { runsApi } from '@/shared/lib/ai-paths';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import {
   invalidateAiPathQueue,
@@ -20,15 +18,13 @@ import {
   optimisticallyInsertAiPathRunInQueueCache,
 } from '@/shared/lib/query-invalidation';
 
-import { 
-  mergeRuntimeStateSnapshot, 
-  resolveRunAt, 
-  resolveRunStartedAt,
-  buildActivePathConfig
-} from './utils';
 import {
-  parseRuntimeState,
-} from '../../AiPathsSettingsUtils';
+  mergeRuntimeStateSnapshot,
+  resolveRunAt,
+  resolveRunStartedAt,
+  buildActivePathConfig,
+} from './utils';
+import { parseRuntimeState } from '../../AiPathsSettingsUtils';
 
 import type { ServerExecutionArgs } from './types';
 
@@ -76,11 +72,15 @@ const normalizeRuntimeEventLevel = (value: unknown): RuntimeEventLevel => {
 
 const normalizeNodeStreamPayload = (value: unknown): AiPathRunNodeRecord[] => {
   if (Array.isArray(value)) {
-    return value.filter((entry: unknown): boolean => isRecord(entry)) as unknown as AiPathRunNodeRecord[];
+    return value.filter((entry: unknown): boolean =>
+      isRecord(entry)
+    ) as unknown as AiPathRunNodeRecord[];
   }
   if (!isRecord(value)) return [];
   if (Array.isArray(value['nodes'])) {
-    return value['nodes'].filter((entry: unknown): boolean => isRecord(entry)) as unknown as AiPathRunNodeRecord[];
+    return value['nodes'].filter((entry: unknown): boolean =>
+      isRecord(entry)
+    ) as unknown as AiPathRunNodeRecord[];
   }
   if (typeof value['nodeId'] === 'string') {
     return [value as unknown as AiPathRunNodeRecord];
@@ -92,11 +92,15 @@ const normalizeEventStreamPayload = (
   value: unknown
 ): Array<AiPathRunEventRecord | Record<string, unknown>> => {
   if (Array.isArray(value)) {
-    return value.filter((entry: unknown): boolean => isRecord(entry)) as Array<AiPathRunEventRecord | Record<string, unknown>>;
+    return value.filter((entry: unknown): boolean => isRecord(entry)) as Array<
+      AiPathRunEventRecord | Record<string, unknown>
+    >;
   }
   if (!isRecord(value)) return [];
   if (Array.isArray(value['events'])) {
-    return value['events'].filter((entry: unknown): boolean => isRecord(entry)) as Array<AiPathRunEventRecord | Record<string, unknown>>;
+    return value['events'].filter((entry: unknown): boolean => isRecord(entry)) as Array<
+      AiPathRunEventRecord | Record<string, unknown>
+    >;
   }
   if (typeof value['message'] === 'string') {
     return [value];
@@ -105,11 +109,7 @@ const normalizeEventStreamPayload = (
 };
 
 const resolveEntityIdFromContext = (triggerContext: Record<string, unknown>): string | null => {
-  return (
-    asString(triggerContext['entityId']) ??
-    asString(triggerContext['productId']) ??
-    null
-  );
+  return asString(triggerContext['entityId']) ?? asString(triggerContext['productId']) ?? null;
 };
 
 const resolveEntityTypeFromContext = (
@@ -229,12 +229,11 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
           return;
         }
 
-        const runPayload = isRecord(enqueueResult.data) && isRecord(enqueueResult.data['run'])
-          ? (enqueueResult.data['run'] as AiPathRunRecord)
-          : null;
-        const runId = runPayload && typeof runPayload.id === 'string'
-          ? runPayload.id
-          : null;
+        const runPayload =
+          isRecord(enqueueResult.data) && isRecord(enqueueResult.data['run'])
+            ? (enqueueResult.data['run'] as AiPathRunRecord)
+            : null;
+        const runId = runPayload && typeof runPayload.id === 'string' ? runPayload.id : null;
 
         if (!runId) {
           const message = 'Server run was enqueued without a run id.';
@@ -255,9 +254,8 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
         notifyAiPathRunEnqueued(runId);
 
         const runStartedAt =
-          (runPayload
-            ? resolveRunStartedAt(runPayload, args.runtimeStateRef.current)
-            : null) ?? new Date().toISOString();
+          (runPayload ? resolveRunStartedAt(runPayload, args.runtimeStateRef.current) : null) ??
+          new Date().toISOString();
 
         if (args.currentRunIdRef) {
           args.currentRunIdRef.current = runId;
@@ -299,43 +297,44 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
         const finalizeRun = (
           terminalStatus: 'completed' | 'failed' | 'canceled',
           options?: {
-          run?: AiPathRunRecord | null;
-          message?: string;
-          finishedAt?: string | null;
-          level?: RuntimeEventLevel;
-        }
+            run?: AiPathRunRecord | null;
+            message?: string;
+            finishedAt?: string | null;
+            level?: RuntimeEventLevel;
+          }
         ): void => {
           if (terminalHandled) return;
           terminalHandled = true;
           const runFromOptions = options?.run ?? null;
           const finishedAt =
-          options?.finishedAt ??
-          (runFromOptions ? resolveRunAt(runFromOptions) : new Date().toISOString());
+            options?.finishedAt ??
+            (runFromOptions ? resolveRunAt(runFromOptions) : new Date().toISOString());
           const resolvedRunStartedAt =
-          (runFromOptions
-            ? resolveRunStartedAt(runFromOptions, args.runtimeStateRef.current)
-            : null) ??
-          (args.currentRunStartedAtRef?.current ?? runStartedAt);
+            (runFromOptions
+              ? resolveRunStartedAt(runFromOptions, args.runtimeStateRef.current)
+              : null) ??
+            args.currentRunStartedAtRef?.current ??
+            runStartedAt;
           const kind =
-          terminalStatus === 'completed'
-            ? 'run_completed'
-            : terminalStatus === 'canceled'
-              ? 'run_canceled'
-              : 'run_failed';
+            terminalStatus === 'completed'
+              ? 'run_completed'
+              : terminalStatus === 'canceled'
+                ? 'run_canceled'
+                : 'run_failed';
           const level =
-          options?.level ??
-          (terminalStatus === 'completed'
-            ? 'info'
-            : terminalStatus === 'canceled'
-              ? 'warn'
-              : 'error');
+            options?.level ??
+            (terminalStatus === 'completed'
+              ? 'info'
+              : terminalStatus === 'canceled'
+                ? 'warn'
+                : 'error');
           const message =
-          options?.message ??
-          (terminalStatus === 'completed'
-            ? 'Server run completed.'
-            : terminalStatus === 'canceled'
-              ? 'Server run canceled.'
-              : 'Server run failed.');
+            options?.message ??
+            (terminalStatus === 'completed'
+              ? 'Server run completed.'
+              : terminalStatus === 'canceled'
+                ? 'Server run canceled.'
+                : 'Server run failed.');
           args.appendRuntimeEvent({
             source: 'server',
             kind,
@@ -351,31 +350,28 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
               ...prev,
               [args.activePathId!]: {
                 ...(prev[args.activePathId!] ??
-                buildActivePathConfig({
-                  activePathId: args.activePathId,
-                  pathName: args.pathName,
-                  pathDescription: args.pathDescription,
-                  activeTrigger: args.activeTrigger,
-                  executionMode: args.executionMode,
-                  runMode: args.runMode,
-                  strictFlowMode: args.strictFlowMode,
-                  blockedRunPolicy: args.blockedRunPolicy,
-                  aiPathsValidation: args.aiPathsValidation,
-                  nodes: args.normalizedNodes,
-                  edges: args.sanitizedEdges,
-                  updatedAt: finishedAt,
-                  parserSamples: args.parserSamples,
-                  updaterSamples: args.updaterSamples,
-                  runtimeState: args.runtimeStateRef.current,
-                  lastRunAt: finishedAt,
-                  runCount: 1,
-                })),
+                  buildActivePathConfig({
+                    activePathId: args.activePathId,
+                    pathName: args.pathName,
+                    pathDescription: args.pathDescription,
+                    activeTrigger: args.activeTrigger,
+                    executionMode: args.executionMode,
+                    runMode: args.runMode,
+                    strictFlowMode: args.strictFlowMode,
+                    blockedRunPolicy: args.blockedRunPolicy,
+                    aiPathsValidation: args.aiPathsValidation,
+                    nodes: args.normalizedNodes,
+                    edges: args.sanitizedEdges,
+                    updatedAt: finishedAt,
+                    parserSamples: args.parserSamples,
+                    updaterSamples: args.updaterSamples,
+                    runtimeState: args.runtimeStateRef.current,
+                    lastRunAt: finishedAt,
+                    runCount: 1,
+                  })),
                 runtimeState: args.runtimeStateRef.current,
                 lastRunAt: finishedAt,
-                runCount: Math.max(
-                  1,
-                  Math.trunc((prev[args.activePathId!]?.runCount ?? 0) + 1),
-                ),
+                runCount: Math.max(1, Math.trunc((prev[args.activePathId!]?.runCount ?? 0) + 1)),
               },
             }));
           }
@@ -405,21 +401,16 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
             if (!isRecord(payload)) return;
             const run = payload as AiPathRunRecord;
             const latestRunStartedAt =
-            resolveRunStartedAt(run, args.runtimeStateRef.current) ??
-            args.currentRunStartedAtRef?.current ??
-            runStartedAt;
+              resolveRunStartedAt(run, args.runtimeStateRef.current) ??
+              args.currentRunStartedAtRef?.current ??
+              runStartedAt;
             if (args.currentRunStartedAtRef && latestRunStartedAt) {
               args.currentRunStartedAtRef.current = latestRunStartedAt;
             }
             if (run.runtimeState) {
               const nextState = parseRuntimeState(run.runtimeState);
               args.setRuntimeState((prev) =>
-                mergeRuntimeStateSnapshot(
-                  prev,
-                  nextState,
-                  runId,
-                  latestRunStartedAt ?? undefined,
-                )
+                mergeRuntimeStateSnapshot(prev, nextState, runId, latestRunStartedAt ?? undefined)
               );
             }
             const runStatus = asString(run.status);
@@ -452,11 +443,11 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
             finalizeRun('failed', {
               run,
               message:
-              run.errorMessage ??
-              run.error ??
-              (runStatus === 'dead_lettered'
-                ? 'Run moved to dead letter queue.'
-                : 'Server run failed.'),
+                run.errorMessage ??
+                run.error ??
+                (runStatus === 'dead_lettered'
+                  ? 'Run moved to dead letter queue.'
+                  : 'Server run failed.'),
             });
           } catch (err) {
             logClientError(err, {
@@ -491,9 +482,9 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
               const nodeTitle = runtimeNode?.title ?? nodeUpdate.nodeTitle ?? nodeId;
               const errorMessage = asString(nodeUpdate.errorMessage) ?? asString(nodeUpdate.error);
               const runStartedAtForNode =
-              asString(nodeUpdate.startedAt) ??
-              args.currentRunStartedAtRef?.current ??
-              runStartedAt;
+                asString(nodeUpdate.startedAt) ??
+                args.currentRunStartedAtRef?.current ??
+                runStartedAt;
               const iteration = asNumber(nodeUpdate.attempt);
               const isFailed = status === 'failed';
               const isWarningStatus = status === 'blocked' || status === 'skipped';
@@ -509,16 +500,16 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
                 kind: isFailed ? 'node_failed' : 'node_status',
                 level: isFailed ? 'error' : isWarningStatus ? 'warn' : 'info',
                 message:
-                isFailed && errorMessage
-                  ? `Node ${nodeTitle} failed: ${errorMessage}`
-                  : `Node ${nodeTitle} ${args.formatStatusLabel(status)}.`,
+                  isFailed && errorMessage
+                    ? `Node ${nodeTitle} failed: ${errorMessage}`
+                    : `Node ${nodeTitle} ${args.formatStatusLabel(status)}.`,
                 metadata:
-                errorMessage || nodeUpdate.outputs
-                  ? {
-                    ...(errorMessage ? { error: errorMessage } : {}),
-                    ...(nodeUpdate.outputs ? { outputs: nodeUpdate.outputs } : {}),
-                  }
-                  : undefined,
+                  errorMessage || nodeUpdate.outputs
+                    ? {
+                        ...(errorMessage ? { error: errorMessage } : {}),
+                        ...(nodeUpdate.outputs ? { outputs: nodeUpdate.outputs } : {}),
+                      }
+                    : undefined,
               });
               args.setRuntimeState((prev) => {
                 const nextInputs = {
@@ -562,45 +553,45 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
             const payload = parseSsePayload(event);
             const rawEvents = normalizeEventStreamPayload(payload);
             const streamedEvents: AiPathRuntimeEvent[] = [];
-            rawEvents.forEach((rawEvent: AiPathRunEventRecord | Record<string, unknown>, index: number): void => {
-              if (!isRecord(rawEvent)) return;
-              const message = asString(rawEvent.message);
-              if (!message) return;
-              const metadata = isRecord(rawEvent.metadata) ? rawEvent.metadata : null;
-              const nodeId =
-              asString(rawEvent.nodeId) ??
-              (metadata ? asString(metadata['nodeId']) : null) ??
-              undefined;
-              const runtimeNode = nodeId ? runtimeNodeById.get(nodeId) : null;
-              const status =
-              args.normalizeNodeStatus(rawEvent.status) ??
-              (metadata ? args.normalizeNodeStatus(metadata['status']) : null);
-              const iteration =
-              asNumber(rawEvent.iteration) ??
-              (metadata ? asNumber(metadata['iteration']) : null);
-              const rawTimestamp =
-              asString(rawEvent['createdAt']) ??
-              new Date().toISOString();
-              streamedEvents.push({
-                id:
-                asString(rawEvent.id) ??
-                `server_evt_${Date.now()}_${index}_${Math.random().toString(16).slice(2, 8)}`,
-                timestamp: rawTimestamp,
-                source: 'server',
-                kind: 'log',
-                level: normalizeRuntimeEventLevel(rawEvent.level),
-                message,
-                runId: asString(rawEvent.runId) ?? runId,
-                ...(nodeId ? { nodeId } : {}),
-                ...(runtimeNode?.type ? { nodeType: runtimeNode.type } : {}),
-                ...(runtimeNode?.title || rawEvent['nodeTitle']
-                  ? { nodeTitle: runtimeNode?.title ?? asString(rawEvent['nodeTitle']) }
-                  : {}),
-                ...(status ? { status } : {}),
-                ...(iteration !== null ? { iteration } : {}),
-                ...(metadata ? { metadata } : {}),
-              } as unknown as AiPathRuntimeEvent);
-            });
+            rawEvents.forEach(
+              (rawEvent: AiPathRunEventRecord | Record<string, unknown>, index: number): void => {
+                if (!isRecord(rawEvent)) return;
+                const message = asString(rawEvent.message);
+                if (!message) return;
+                const metadata = isRecord(rawEvent.metadata) ? rawEvent.metadata : null;
+                const nodeId =
+                  asString(rawEvent.nodeId) ??
+                  (metadata ? asString(metadata['nodeId']) : null) ??
+                  undefined;
+                const runtimeNode = nodeId ? runtimeNodeById.get(nodeId) : null;
+                const status =
+                  args.normalizeNodeStatus(rawEvent.status) ??
+                  (metadata ? args.normalizeNodeStatus(metadata['status']) : null);
+                const iteration =
+                  asNumber(rawEvent.iteration) ??
+                  (metadata ? asNumber(metadata['iteration']) : null);
+                const rawTimestamp = asString(rawEvent['createdAt']) ?? new Date().toISOString();
+                streamedEvents.push({
+                  id:
+                    asString(rawEvent.id) ??
+                    `server_evt_${Date.now()}_${index}_${Math.random().toString(16).slice(2, 8)}`,
+                  timestamp: rawTimestamp,
+                  source: 'server',
+                  kind: 'log',
+                  level: normalizeRuntimeEventLevel(rawEvent.level),
+                  message,
+                  runId: asString(rawEvent.runId) ?? runId,
+                  ...(nodeId ? { nodeId } : {}),
+                  ...(runtimeNode?.type ? { nodeType: runtimeNode.type } : {}),
+                  ...(runtimeNode?.title || rawEvent['nodeTitle']
+                    ? { nodeTitle: runtimeNode?.title ?? asString(rawEvent['nodeTitle']) }
+                    : {}),
+                  ...(status ? { status } : {}),
+                  ...(iteration !== null ? { iteration } : {}),
+                  ...(metadata ? { metadata } : {}),
+                } as unknown as AiPathRuntimeEvent);
+              }
+            );
             if (streamedEvents.length > 0) {
               args.setRuntimeEvents((prev) => [...prev, ...streamedEvents]);
             }
@@ -630,9 +621,9 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
             }
             finalizeRun('failed', {
               message:
-              status === 'dead_lettered'
-                ? 'Run moved to dead letter queue.'
-                : 'Server run failed.',
+                status === 'dead_lettered'
+                  ? 'Run moved to dead letter queue.'
+                  : 'Server run failed.',
             });
           } catch (err) {
             logClientError(err, {
@@ -649,9 +640,8 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
           if (!(event instanceof MessageEvent)) return;
           try {
             const payload = parseSsePayload(event);
-            const errorMessage =
-            isRecord(payload)
-              ? asString(payload['error']) ?? asString(payload['message'])
+            const errorMessage = isRecord(payload)
+              ? (asString(payload['error']) ?? asString(payload['message']))
               : null;
             finalizeRun('failed', {
               message: errorMessage ? `Server run failed: ${errorMessage}` : 'Server run failed.',

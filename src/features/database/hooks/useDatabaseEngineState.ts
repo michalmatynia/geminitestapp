@@ -3,15 +3,15 @@
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useState, useMemo, useCallback, useEffect, Dispatch, SetStateAction } from 'react';
 
-import type { 
-  DatabaseEngineStatus, 
-  DatabaseEngineOperationJob, 
+import type {
+  DatabaseEngineStatus,
+  DatabaseEngineOperationJob,
   DatabaseEngineOperationsJobs,
   DatabaseEngineBackupSchedulerStatus,
   RedisOverview,
   DatabaseEngineProviderPreview,
   DatabaseEngineWorkspaceView,
-  UnifiedCollection
+  UnifiedCollection,
 } from '@/shared/contracts/database';
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import {
@@ -52,7 +52,9 @@ export type DatabaseCollectionRow = UnifiedCollection;
 
 const services: DatabaseEngineServiceRoute[] = ['app', 'auth', 'product', 'integrations', 'cms'];
 
-const parseServiceRouteMap = (raw: string | undefined): Partial<Record<DatabaseEngineServiceRoute, DatabaseEngineProvider>> => {
+const parseServiceRouteMap = (
+  raw: string | undefined
+): Partial<Record<DatabaseEngineServiceRoute, DatabaseEngineProvider>> => {
   const parsed = parseJsonSetting<Record<string, unknown>>(raw, {});
   const result: Partial<Record<DatabaseEngineServiceRoute, DatabaseEngineProvider>> = {};
   for (const service of services) {
@@ -64,7 +66,9 @@ const parseServiceRouteMap = (raw: string | undefined): Partial<Record<DatabaseE
   return result;
 };
 
-const parseCollectionRouteMap = (raw: string | undefined): Record<string, DatabaseEngineProvider> => {
+const parseCollectionRouteMap = (
+  raw: string | undefined
+): Record<string, DatabaseEngineProvider> => {
   const parsed = parseJsonSetting<Record<string, unknown>>(raw, {});
   const result: Record<string, DatabaseEngineProvider> = {};
   for (const [collection, provider] of Object.entries(parsed)) {
@@ -81,7 +85,9 @@ export interface UseDatabaseEngineStateReturn {
   policyDraft: DatabaseEnginePolicy;
   setPolicyDraft: Dispatch<SetStateAction<DatabaseEnginePolicy>>;
   serviceRouteMapDraft: Partial<Record<DatabaseEngineServiceRoute, DatabaseEngineProvider>>;
-  setServiceRouteMapDraft: Dispatch<SetStateAction<Partial<Record<DatabaseEngineServiceRoute, DatabaseEngineProvider>>>>;
+  setServiceRouteMapDraft: Dispatch<
+    SetStateAction<Partial<Record<DatabaseEngineServiceRoute, DatabaseEngineProvider>>>
+  >;
   collectionRouteMapDraft: Record<string, DatabaseEngineProvider>;
   setCollectionRouteMapDraft: Dispatch<SetStateAction<Record<string, DatabaseEngineProvider>>>;
   backupScheduleDraft: DatabaseEngineBackupSchedule;
@@ -108,7 +114,7 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { toast } = useToast();
-  
+
   const settingsQuery = useSettingsMap({ scope: 'all' });
   const updateSettingsBulk = useUpdateSettingsBulk();
   const schemaQuery = useAllCollectionsSchema();
@@ -116,41 +122,57 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
   const engineStatusQuery = useDatabaseEngineStatus();
   const backupSchedulerStatusQuery = useDatabaseBackupSchedulerStatus();
   const operationsJobsQuery = useDatabaseEngineOperationsJobs(30);
-  
+
   const [workspaceView, setWorkspaceView] = useState<DatabaseEngineWorkspaceView>(
     (searchParams.get('view') as DatabaseEngineWorkspaceView) || 'engine'
   );
 
-  const policyFromSettings = useMemo(() => 
-    parseJsonSetting<DatabaseEnginePolicy>(settingsQuery.data?.get(DATABASE_ENGINE_POLICY_KEY), DEFAULT_DATABASE_ENGINE_POLICY),
-  [settingsQuery.data]
+  const policyFromSettings = useMemo(
+    () =>
+      parseJsonSetting<DatabaseEnginePolicy>(
+        settingsQuery.data?.get(DATABASE_ENGINE_POLICY_KEY),
+        DEFAULT_DATABASE_ENGINE_POLICY
+      ),
+    [settingsQuery.data]
   );
 
-  const serviceRouteMapFromSettings = useMemo(() => 
-    parseServiceRouteMap(settingsQuery.data?.get(DATABASE_ENGINE_SERVICE_ROUTE_MAP_KEY)),
-  [settingsQuery.data]
+  const serviceRouteMapFromSettings = useMemo(
+    () => parseServiceRouteMap(settingsQuery.data?.get(DATABASE_ENGINE_SERVICE_ROUTE_MAP_KEY)),
+    [settingsQuery.data]
   );
 
-  const collectionRouteMapFromSettings = useMemo(() => 
-    parseCollectionRouteMap(settingsQuery.data?.get(DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY)),
-  [settingsQuery.data]
+  const collectionRouteMapFromSettings = useMemo(
+    () =>
+      parseCollectionRouteMap(settingsQuery.data?.get(DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY)),
+    [settingsQuery.data]
   );
 
-  const backupScheduleFromSettings = useMemo(() => 
-    normalizeDatabaseEngineBackupSchedule(settingsQuery.data?.get(DATABASE_ENGINE_BACKUP_SCHEDULE_KEY)),
-  [settingsQuery.data]
+  const backupScheduleFromSettings = useMemo(
+    () =>
+      normalizeDatabaseEngineBackupSchedule(
+        settingsQuery.data?.get(DATABASE_ENGINE_BACKUP_SCHEDULE_KEY)
+      ),
+    [settingsQuery.data]
   );
 
-  const operationControlsFromSettings = useMemo(() => 
-    normalizeDatabaseEngineOperationControls(settingsQuery.data?.get(DATABASE_ENGINE_OPERATION_CONTROLS_KEY) ?? DEFAULT_DATABASE_ENGINE_OPERATION_CONTROLS),
-  [settingsQuery.data]
+  const operationControlsFromSettings = useMemo(
+    () =>
+      normalizeDatabaseEngineOperationControls(
+        settingsQuery.data?.get(DATABASE_ENGINE_OPERATION_CONTROLS_KEY) ??
+          DEFAULT_DATABASE_ENGINE_OPERATION_CONTROLS
+      ),
+    [settingsQuery.data]
   );
 
   const [policyDraft, setPolicyDraft] = useState<DatabaseEnginePolicy>(policyFromSettings);
   const [serviceRouteMapDraft, setServiceRouteMapDraft] = useState(serviceRouteMapFromSettings);
-  const [collectionRouteMapDraft, setCollectionRouteMapDraft] = useState(collectionRouteMapFromSettings);
+  const [collectionRouteMapDraft, setCollectionRouteMapDraft] = useState(
+    collectionRouteMapFromSettings
+  );
   const [backupScheduleDraft, setBackupScheduleDraft] = useState(backupScheduleFromSettings);
-  const [operationControlsDraft, setOperationControlsDraft] = useState(operationControlsFromSettings);
+  const [operationControlsDraft, setOperationControlsDraft] = useState(
+    operationControlsFromSettings
+  );
 
   useEffect(() => {
     setPolicyDraft(policyFromSettings);
@@ -158,7 +180,13 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
     setCollectionRouteMapDraft(collectionRouteMapFromSettings);
     setBackupScheduleDraft(backupScheduleFromSettings);
     setOperationControlsDraft(operationControlsFromSettings);
-  }, [policyFromSettings, serviceRouteMapFromSettings, collectionRouteMapFromSettings, backupScheduleFromSettings, operationControlsFromSettings]);
+  }, [
+    policyFromSettings,
+    serviceRouteMapFromSettings,
+    collectionRouteMapFromSettings,
+    backupScheduleFromSettings,
+    operationControlsFromSettings,
+  ]);
 
   const rows = useMemo<DatabaseCollectionRow[]>(() => {
     const data = schemaQuery.data;
@@ -182,8 +210,8 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
           name: collection.name,
           existsInMongo: isMongo,
           existsInPrisma: !isMongo,
-          mongoDocumentCount: isMongo ? collection.documentCount ?? null : null,
-          prismaRowCount: isMongo ? null : collection.documentCount ?? null,
+          mongoDocumentCount: isMongo ? (collection.documentCount ?? null) : null,
+          prismaRowCount: isMongo ? null : (collection.documentCount ?? null),
           mongoFieldCount: isMongo ? collection.fields.length : null,
           prismaFieldCount: isMongo ? null : collection.fields.length,
           assignedProvider: 'auto',
@@ -221,9 +249,15 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
       await updateSettingsBulk.mutateAsync([
         { key: DATABASE_ENGINE_POLICY_KEY, value: JSON.stringify(policyDraft) },
         { key: DATABASE_ENGINE_SERVICE_ROUTE_MAP_KEY, value: JSON.stringify(serviceRouteMapDraft) },
-        { key: DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY, value: JSON.stringify(collectionRouteMapDraft) },
+        {
+          key: DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY,
+          value: JSON.stringify(collectionRouteMapDraft),
+        },
         { key: DATABASE_ENGINE_BACKUP_SCHEDULE_KEY, value: JSON.stringify(backupScheduleDraft) },
-        { key: DATABASE_ENGINE_OPERATION_CONTROLS_KEY, value: JSON.stringify(operationControlsDraft) },
+        {
+          key: DATABASE_ENGINE_OPERATION_CONTROLS_KEY,
+          value: JSON.stringify(operationControlsDraft),
+        },
       ]);
       toast('Configuration saved.', { variant: 'success' });
     } catch (_e) {
@@ -231,13 +265,16 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
     }
   };
 
-  const setView = useCallback((nextView: DatabaseEngineWorkspaceView) => {
-    setWorkspaceView(nextView);
-    const params = new URLSearchParams(searchParams.toString());
-    if (nextView === 'engine') params.delete('view');
-    else params.set('view', nextView);
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-  }, [pathname, router, searchParams]);
+  const setView = useCallback(
+    (nextView: DatabaseEngineWorkspaceView) => {
+      setWorkspaceView(nextView);
+      const params = new URLSearchParams(searchParams.toString());
+      if (nextView === 'engine') params.delete('view');
+      else params.set('view', nextView);
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    },
+    [pathname, router, searchParams]
+  );
 
   return {
     workspaceView,

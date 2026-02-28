@@ -20,7 +20,9 @@ export const useImageRetryPresets = (): ImageRetryPreset[] => {
         '/api/integrations/exports/base/image-retry-presets',
         { signal }
       );
-      return payload.presets ? normalizeImageRetryPresets(payload.presets) : getDefaultImageRetryPresets();
+      return payload.presets
+        ? normalizeImageRetryPresets(payload.presets)
+        : getDefaultImageRetryPresets();
     },
     staleTime: 1000 * 60 * 60, // 1 hour
     refetchOnMount: false,

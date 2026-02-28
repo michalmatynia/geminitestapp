@@ -25,20 +25,20 @@ export async function PUT_handler(
 
   const repository = await getTagRepository();
   const current = await repository.getTagById(params.id);
-  
+
   if (!current) {
     throw notFoundError('Tag not found', { tagId: params.id });
   }
-  
+
   const nextCatalogId = catalogId ?? current.catalogId;
-  
+
   if (name !== undefined) {
     const existing = await repository.findByName(nextCatalogId, name);
     if (existing && existing.id !== params.id) {
-      throw conflictError(
-        'A tag with this name already exists in this catalog',
-        { name, catalogId: nextCatalogId }
-      );
+      throw conflictError('A tag with this name already exists in this catalog', {
+        name,
+        catalogId: nextCatalogId,
+      });
     }
   }
 

@@ -2,7 +2,7 @@
 
 import React, { useReducer, useMemo, useState, useCallback, type ReactNode } from 'react';
 
-import type { 
+import type {
   PageBuilderState,
   PageBuilderAction,
   InspectorSettings,
@@ -14,8 +14,18 @@ export { pageBuilderReducer } from './page-builder/page-builder-reducer';
 
 import { PageStateContext, usePageBuilderState } from './page-builder/PageStateContext';
 import { PageDispatchContext, usePageBuilderDispatch } from './page-builder/PageDispatchContext';
-import { PageSelectionContext, PageSelectionValue, usePageBuilderSelection } from './page-builder/PageSelectionContext';
-import { VectorOverlayContext, VectorOverlayRequest, VectorOverlayValue, useVectorOverlay, VectorOverlayResult } from './page-builder/VectorOverlayContext';
+import {
+  PageSelectionContext,
+  PageSelectionValue,
+  usePageBuilderSelection,
+} from './page-builder/PageSelectionContext';
+import {
+  VectorOverlayContext,
+  VectorOverlayRequest,
+  VectorOverlayValue,
+  useVectorOverlay,
+  VectorOverlayResult,
+} from './page-builder/VectorOverlayContext';
 
 export { usePageBuilderState, usePageBuilderDispatch, usePageBuilderSelection, useVectorOverlay };
 export type { VectorOverlayResult, VectorOverlayRequest };
@@ -55,10 +65,10 @@ export interface PageBuilderContextValue extends PageSelectionValue, VectorOverl
   dispatch: React.Dispatch<PageBuilderAction>;
 }
 
-export function PageBuilderProvider({ 
-  children, 
-  initialState: customInitialState = initialState 
-}: { 
+export function PageBuilderProvider({
+  children,
+  initialState: customInitialState = initialState,
+}: {
   children: ReactNode;
   initialState?: PageBuilderState;
 }): React.ReactNode {
@@ -95,7 +105,11 @@ export function PageBuilderProvider({
     // Check if it's a column
     const colResult = findColumn(state.sections, state.selectedNodeId);
     if (colResult) {
-      return { ...empty, selectedColumn: colResult.column, selectedColumnParentSection: colResult.section };
+      return {
+        ...empty,
+        selectedColumn: colResult.column,
+        selectedColumnParentSection: colResult.section,
+      };
     }
 
     // Check if it's a block (including blocks inside columns and nested blocks)
@@ -114,11 +128,14 @@ export function PageBuilderProvider({
     return empty;
   }, [state.sections, state.selectedNodeId]);
 
-  const vectorOverlayValue = useMemo((): VectorOverlayValue => ({
-    vectorOverlay,
-    openVectorOverlay,
-    closeVectorOverlay,
-  }), [vectorOverlay, openVectorOverlay, closeVectorOverlay]);
+  const vectorOverlayValue = useMemo(
+    (): VectorOverlayValue => ({
+      vectorOverlay,
+      openVectorOverlay,
+      closeVectorOverlay,
+    }),
+    [vectorOverlay, openVectorOverlay, closeVectorOverlay]
+  );
 
   return (
     <PageStateContext.Provider value={state}>
@@ -139,10 +156,13 @@ export function usePageBuilder(): PageBuilderContextValue {
   const selection = usePageBuilderSelection();
   const vectorOverlay = useVectorOverlay();
 
-  return useMemo(() => ({
-    state,
-    dispatch,
-    ...selection,
-    ...vectorOverlay,
-  }), [state, dispatch, selection, vectorOverlay]);
+  return useMemo(
+    () => ({
+      state,
+      dispatch,
+      ...selection,
+      ...vectorOverlay,
+    }),
+    [state, dispatch, selection, vectorOverlay]
+  );
 }

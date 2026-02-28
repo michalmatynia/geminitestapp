@@ -97,7 +97,7 @@ export interface UseAiPathsSettingsStateReturn {
     } | null>
   >;
   persistLastError: (
-    payload: { message: string; time: string; pathId?: string | null } | null,
+    payload: { message: string; time: string; pathId?: string | null } | null
   ) => Promise<void>;
   setLoadNonce: React.Dispatch<React.SetStateAction<number>>;
   lastRunAt: string | null;
@@ -147,22 +147,13 @@ export interface UseAiPathsSettingsStateReturn {
   setPaletteCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
   expandedPaletteGroups: Set<string>;
   togglePaletteGroup: (group: string) => void;
-  handleDragStart: (
-    e: React.DragEvent<HTMLDivElement>,
-    node: NodeDefinition,
-  ) => void;
+  handleDragStart: (e: React.DragEvent<HTMLDivElement>, node: NodeDefinition) => void;
   selectedNode: AiNode | null;
   handleSelectEdge: (edgeId: string | null) => void;
   handleFireTrigger: (triggerNode: AiNode, event?: React.MouseEvent) => void;
-  handleFireTriggerPersistent: (
-    triggerNode: AiNode,
-    event?: React.MouseEvent,
-  ) => Promise<void>;
+  handleFireTriggerPersistent: (triggerNode: AiNode, event?: React.MouseEvent) => Promise<void>;
   setSimulationOpenNodeId: React.Dispatch<React.SetStateAction<string | null>>;
-  updateSelectedNode: (
-    update: Partial<AiNode>,
-    options?: { nodeId?: string },
-  ) => void;
+  updateSelectedNode: (update: Partial<AiNode>, options?: { nodeId?: string }) => void;
   setConfigOpen: React.Dispatch<React.SetStateAction<boolean>>;
   handleDeleteSelectedNode: () => void;
   handleRemoveEdge: (edgeId: string) => void;
@@ -170,38 +161,25 @@ export interface UseAiPathsSettingsStateReturn {
   handleClearConnectorData: () => Promise<void>;
   handleClearHistory: () => Promise<void>;
   handleClearNodeHistory: (nodeId: string) => Promise<void>;
-  handleDisconnectPort: (
-    direction: 'input' | 'output',
-    nodeId: string,
-    port: string,
-  ) => void;
+  handleDisconnectPort: (direction: 'input' | 'output', nodeId: string, port: string) => void;
   handleReconnectInput: (
     event: React.PointerEvent<HTMLButtonElement>,
     nodeId: string,
-    port: string,
+    port: string
   ) => void;
   handleSelectNode: (nodeId: string) => void;
-  handlePointerDown: (
-    event: React.PointerEvent<HTMLDivElement>,
-    nodeId: string,
-  ) => void;
-  handlePointerMove: (
-    event: React.PointerEvent<HTMLDivElement>,
-    nodeId: string,
-  ) => void;
-  handlePointerUp: (
-    event: React.PointerEvent<HTMLDivElement>,
-    nodeId: string,
-  ) => void;
+  handlePointerDown: (event: React.PointerEvent<HTMLDivElement>, nodeId: string) => void;
+  handlePointerMove: (event: React.PointerEvent<HTMLDivElement>, nodeId: string) => void;
+  handlePointerUp: (event: React.PointerEvent<HTMLDivElement>, nodeId: string) => void;
   handleStartConnection: (
     event: React.PointerEvent<HTMLButtonElement>,
     node: AiNode,
-    port: string,
+    port: string
   ) => void;
   handleCompleteConnection: (
     event: React.PointerEvent<HTMLButtonElement>,
     node: AiNode,
-    port: string,
+    port: string
   ) => void;
   handleDrop: (event: React.DragEvent<HTMLDivElement>) => void;
   handleDragOver: (event: React.DragEvent<HTMLDivElement>) => void;
@@ -228,13 +206,9 @@ export interface UseAiPathsSettingsStateReturn {
   runFilter: RunHistoryFilter;
   setRunFilter: React.Dispatch<React.SetStateAction<RunHistoryFilter>>;
   expandedRunHistory: Record<string, boolean>;
-  setExpandedRunHistory: React.Dispatch<
-    React.SetStateAction<Record<string, boolean>>
-  >;
+  setExpandedRunHistory: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   runHistorySelection: Record<string, string>;
-  setRunHistorySelection: React.Dispatch<
-    React.SetStateAction<Record<string, string>>
-  >;
+  setRunHistorySelection: React.Dispatch<React.SetStateAction<Record<string, string>>>;
   handleOpenRunDetail: (runId: string) => Promise<void>;
   handleResumeRun: (runId: string, mode: 'resume' | 'replay') => Promise<void>;
   handleCancelRun: (runId: string) => Promise<void>;
@@ -246,40 +220,26 @@ export interface UseAiPathsSettingsStateReturn {
   setNodeConfigDirty: React.Dispatch<React.SetStateAction<boolean>>;
   modelOptions: string[];
   parserSamples: Record<string, ParserSampleState>;
-  setParserSamples: React.Dispatch<
-    React.SetStateAction<Record<string, ParserSampleState>>
-  >;
+  setParserSamples: React.Dispatch<React.SetStateAction<Record<string, ParserSampleState>>>;
   parserSampleLoading: boolean;
   updaterSamples: Record<string, UpdaterSampleState>;
-  setUpdaterSamples: React.Dispatch<
-    React.SetStateAction<Record<string, UpdaterSampleState>>
-  >;
+  setUpdaterSamples: React.Dispatch<React.SetStateAction<Record<string, UpdaterSampleState>>>;
   updaterSampleLoading: boolean;
   pathDebugSnapshots: Record<string, PathDebugSnapshot>;
   updateSelectedNodeConfig: (config: NodeConfig) => void;
-  handleFetchParserSample: (
-    nodeId: string,
-    entityType: string,
-    entityId: string,
-  ) => Promise<void>;
+  handleFetchParserSample: (nodeId: string, entityType: string, entityId: string) => Promise<void>;
   handleFetchUpdaterSample: (
     nodeId: string,
     entityType: string,
     entityId: string,
-    options?: { notify?: boolean },
+    options?: { notify?: boolean }
   ) => Promise<void>;
   handleRunSimulation: (node: AiNode, triggerEvent?: string) => void;
   handlePauseActiveRun: () => void;
   handleResumeActiveRun: () => void;
   handleStepActiveRun: (triggerNode?: AiNode) => void;
   handleCancelActiveRun: () => void;
-  runtimeRunStatus:
-    | 'idle'
-    | 'running'
-    | 'paused'
-    | 'stepping'
-    | 'completed'
-    | 'failed';
+  runtimeRunStatus: 'idle' | 'running' | 'paused' | 'stepping' | 'completed' | 'failed';
   runtimeNodeStatuses: AiPathRuntimeNodeStatusMap;
   runtimeEvents: AiPathRuntimeEvent[];
   nodeDurations: Record<string, number>;
@@ -334,12 +294,12 @@ export interface UseAiPathsSettingsStateReturn {
   reportAiPathsError: (
     error: unknown,
     context: Record<string, unknown>,
-    fallbackMessage?: string,
+    fallbackMessage?: string
   ) => void;
   toast: (
     message: string,
     options?: {
       variant?: 'default' | 'success' | 'error' | 'warning' | 'info';
-    },
+    }
   ) => void;
 }

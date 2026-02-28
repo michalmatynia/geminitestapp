@@ -6,7 +6,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { notifyCriticalError } from '@/shared/lib/observability/critical-error-notifier';
 import { REDACTED_VALUE } from '@/shared/lib/observability/log-redaction';
 import { createSystemLog } from '@/shared/lib/observability/system-log-repository';
-import { logSystemEvent, normalizeErrorInfo, buildErrorFingerprint } from '@/shared/lib/observability/system-logger';
+import {
+  logSystemEvent,
+  normalizeErrorInfo,
+  buildErrorFingerprint,
+} from '@/shared/lib/observability/system-logger';
 
 vi.mock('@/shared/lib/observability/system-log-repository', () => ({
   createSystemLog: vi.fn().mockResolvedValue({ id: 'log-1', level: 'info', message: 'test' }),
@@ -53,13 +57,15 @@ describe('system-logger', () => {
       });
       await new Promise((resolve) => setTimeout(resolve, 0));
 
-      expect(createSystemLog).toHaveBeenCalledWith(expect.objectContaining({
-        context: expect.objectContaining({
-          password: REDACTED_VALUE,
-          token: REDACTED_VALUE,
-          safe: 'value',
-        }),
-      }));
+      expect(createSystemLog).toHaveBeenCalledWith(
+        expect.objectContaining({
+          context: expect.objectContaining({
+            password: REDACTED_VALUE,
+            token: REDACTED_VALUE,
+            safe: 'value',
+          }),
+        })
+      );
     });
   });
 
@@ -88,10 +94,12 @@ describe('system-logger', () => {
     it('should call createSystemLog with default info level', async () => {
       await logSystemEvent({ message: 'Hello' });
       await new Promise((resolve) => setTimeout(resolve, 0));
-      expect(createSystemLog).toHaveBeenCalledWith(expect.objectContaining({
-        level: 'info',
-        message: 'Hello',
-      }));
+      expect(createSystemLog).toHaveBeenCalledWith(
+        expect.objectContaining({
+          level: 'info',
+          message: 'Hello',
+        })
+      );
     });
 
     it('should notify critical errors', async () => {
@@ -106,7 +114,7 @@ describe('system-logger', () => {
 
       await logSystemEvent({ message: 'Circular', context });
       await new Promise((resolve) => setTimeout(resolve, 0));
-      
+
       const calls = (createSystemLog as any).mock.calls;
       const actualContext = calls[0][0].context;
       expect(actualContext.self.self).toBe('[Circular]');

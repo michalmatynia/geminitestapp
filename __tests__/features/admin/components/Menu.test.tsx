@@ -15,11 +15,12 @@ vi.mock('next/navigation', () => ({
   })),
 }));
 
-const createTestQueryClient = () => new QueryClient({
-  defaultOptions: {
-    queries: { retry: false },
-  },
-});
+const createTestQueryClient = () =>
+  new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+    },
+  });
 
 const renderMenu = () => {
   const queryClient = createTestQueryClient();
@@ -66,13 +67,13 @@ describe('Menu Component', () => {
     renderMenu();
     const commerceTrigger = screen.getByText('Commerce');
     fireEvent.click(commerceTrigger);
-    
+
     // Now "Products" should be visible
     expect(screen.getByText('Products')).toBeInTheDocument();
-    
+
     const productsTrigger = screen.getByText('Products');
     fireEvent.click(productsTrigger);
-    
+
     // Check if sub-items are visible
     expect(screen.getByText('All Products')).toBeInTheDocument();
     expect(screen.getByText('Drafts')).toBeInTheDocument();
@@ -82,29 +83,32 @@ describe('Menu Component', () => {
     renderMenu();
     const contentTrigger = await screen.findByText('Content');
     fireEvent.click(contentTrigger);
-    
+
     const cmsTrigger = await screen.findByText('CMS');
     fireEvent.click(cmsTrigger);
-    
+
     const createPageButton = await screen.findByText('Create Page');
     // Ensure we are clicking the actual link/button
     fireEvent.click(createPageButton.closest('a') || createPageButton);
-    
-    await waitFor(() => {
-      expect(mockPush).toHaveBeenCalledWith('/admin/cms/pages/create');
-    }, { timeout: 2000 });
+
+    await waitFor(
+      () => {
+        expect(mockPush).toHaveBeenCalledWith('/admin/cms/pages/create');
+      },
+      { timeout: 2000 }
+    );
   });
 
   it('contains correctly linked standalone sections', async () => {
     renderMenu();
-    
+
     const workspaceTrigger = screen.getByText('Workspace');
     fireEvent.click(workspaceTrigger);
-    
+
     // Use findByRole to wait for potential effects/updates
     const filesLink = await screen.findByRole('link', { name: /Files/i });
     expect(filesLink).toHaveAttribute('href', '/admin/files');
-    
+
     const systemTrigger = screen.getByText('System');
     fireEvent.click(systemTrigger);
     const systemLogsLink = await screen.findByRole('link', { name: /System Logs/i });

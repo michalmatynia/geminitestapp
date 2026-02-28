@@ -5,8 +5,11 @@ import { PlaywrightSettingsProvider } from '@/shared/lib/playwright/context/Play
 import { LoadingState } from '@/shared/ui';
 
 export function DynamicPlaywrightSettingsForm(): React.JSX.Element {
-  const { playwrightSettings, setPlaywrightSettings, handleSavePlaywrightSettings } = useIntegrationsContext();
-  const [Component, setComponent] = useState<React.ComponentType<{ onSave: () => void }> | null>(null);
+  const { playwrightSettings, setPlaywrightSettings, handleSavePlaywrightSettings } =
+    useIntegrationsContext();
+  const [Component, setComponent] = useState<React.ComponentType<{ onSave: () => void }> | null>(
+    null
+  );
 
   useEffect(() => {
     const loadComponent = async (): Promise<void> => {
@@ -21,11 +24,12 @@ export function DynamicPlaywrightSettingsForm(): React.JSX.Element {
   }
 
   return (
-    <PlaywrightSettingsProvider
-      settings={playwrightSettings}
-      setSettings={setPlaywrightSettings}
-    >
-      <Component onSave={() => { void handleSavePlaywrightSettings(); }} />
+    <PlaywrightSettingsProvider settings={playwrightSettings} setSettings={setPlaywrightSettings}>
+      <Component
+        onSave={() => {
+          void handleSavePlaywrightSettings();
+        }}
+      />
     </PlaywrightSettingsProvider>
   );
 }

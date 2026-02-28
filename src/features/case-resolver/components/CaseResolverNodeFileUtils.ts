@@ -1,6 +1,6 @@
-import type { 
-  CaseResolverFile, 
-  CaseResolverJoinMode, 
+import type {
+  CaseResolverFile,
+  CaseResolverJoinMode,
   CaseResolverScanSlot,
 } from '@/shared/contracts/case-resolver';
 import {
@@ -47,10 +47,7 @@ export type NodeFileDocumentFolderTree = {
 };
 
 export const normalizeSearchText = (value: string): string =>
-  value
-    .toLowerCase()
-    .replace(/\s+/g, ' ')
-    .trim();
+  value.toLowerCase().replace(/\s+/g, ' ').trim();
 
 export const normalizeFolderPathSegments = (folderPath: string): string[] =>
   folderPath
@@ -62,8 +59,7 @@ export const isFolderPathWithinScope = (
   candidateFolderPath: string,
   scopeFolderPath: string
 ): boolean =>
-  candidateFolderPath === scopeFolderPath ||
-  candidateFolderPath.startsWith(`${scopeFolderPath}/`);
+  candidateFolderPath === scopeFolderPath || candidateFolderPath.startsWith(`${scopeFolderPath}/`);
 
 export const resolvePartyReferenceSearchLabel = (
   reference: CaseResolverFile['addresser'] | CaseResolverFile['addressee']
@@ -175,11 +171,11 @@ export const isDocumentWysiwygContentPort = (port: string | null | undefined): b
 export const resolveOutputValueByPort = (
   outputs:
     | {
-      textfield: string;
-      plaintextContent: string;
-      plainText: string;
-      wysiwygContent: string;
-    }
+        textfield: string;
+        plaintextContent: string;
+        plainText: string;
+        wysiwygContent: string;
+      }
     | null
     | undefined,
   fromPort: string | null | undefined,

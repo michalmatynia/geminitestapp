@@ -1,10 +1,7 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import type { 
-  ProductWithImages, 
-  ProductDraftDto 
-} from '@/shared/contracts/products';
+import type { ProductWithImages, ProductDraftDto } from '@/shared/contracts/products';
 import { useIntegrationOperations } from '@/features/integrations/hooks/useIntegrationOperations';
 import type { Toast } from '@/shared/contracts/ui';
 
@@ -24,7 +21,7 @@ export function useProductListModals({
   toast: Toast;
 }) {
   const [createDraft, setCreateDraft] = useState<ProductDraftDto | null>(null);
-  
+
   const {
     integrationsProduct,
     setIntegrationsProduct,
@@ -47,16 +44,22 @@ export function useProductListModals({
     handleOpenCreateModal();
   }, [handleOpenCreateModal]);
 
-  const handleOpenIntegrationsModal = useCallback((product: ProductWithImages) => {
-    prefetchIntegrationSelectionData();
-    prefetchProductListingsData(product.id);
-    setIntegrationsProduct(product);
-  }, [prefetchIntegrationSelectionData, prefetchProductListingsData, setIntegrationsProduct]);
+  const handleOpenIntegrationsModal = useCallback(
+    (product: ProductWithImages) => {
+      prefetchIntegrationSelectionData();
+      prefetchProductListingsData(product.id);
+      setIntegrationsProduct(product);
+    },
+    [prefetchIntegrationSelectionData, prefetchProductListingsData, setIntegrationsProduct]
+  );
 
-  const handleOpenExportSettings = useCallback((product: ProductWithImages) => {
-    setExportSettingsProduct(product);
-    refreshProductListingsData(product.id);
-  }, [refreshProductListingsData, setExportSettingsProduct]);
+  const handleOpenExportSettings = useCallback(
+    (product: ProductWithImages) => {
+      setExportSettingsProduct(product);
+      refreshProductListingsData(product.id);
+    },
+    [refreshProductListingsData, setExportSettingsProduct]
+  );
 
   const handleCloseIntegrations = useCallback(() => {
     setIntegrationsProduct(null);
@@ -73,13 +76,19 @@ export function useProductListModals({
     baseHandleListProductSuccess();
   }, [setListProductPreset, baseHandleListProductSuccess]);
 
-  const handleStartListing = useCallback((integrationId: string, connectionId: string) => {
-    setListProductPreset({ integrationId, connectionId });
-    setShowListProductModal(true);
-  }, [setListProductPreset, setShowListProductModal]);
+  const handleStartListing = useCallback(
+    (integrationId: string, connectionId: string) => {
+      setListProductPreset({ integrationId, connectionId });
+      setShowListProductModal(true);
+    },
+    [setListProductPreset, setShowListProductModal]
+  );
 
   // Mass listing state
-  const [massListIntegration, setMassListIntegration] = useState<{ integrationId: string; connectionId: string } | null>(null);
+  const [massListIntegration, setMassListIntegration] = useState<{
+    integrationId: string;
+    connectionId: string;
+  } | null>(null);
   const [massListProductIds, setMassListProductIds] = useState<string[]>([]);
   const [isMassListing, setIsMassListing] = useState(false);
   const [showIntegrationModal, setShowIntegrationModal] = useState(false);
@@ -89,14 +98,17 @@ export function useProductListModals({
     setIsMassListing(false);
   }, []);
 
-  const handleSelectIntegrationFromModal = useCallback((integrationId: string, connectionId: string): void => {
-    setShowIntegrationModal(false);
-    if (isMassListing) {
-      const ids = Object.keys(rowSelection).filter((id: string) => rowSelection[id]);
-      setMassListProductIds(ids);
-      setMassListIntegration({ integrationId, connectionId });
-    }
-  }, [isMassListing, rowSelection]);
+  const handleSelectIntegrationFromModal = useCallback(
+    (integrationId: string, connectionId: string): void => {
+      setShowIntegrationModal(false);
+      if (isMassListing) {
+        const ids = Object.keys(rowSelection).filter((id: string) => rowSelection[id]);
+        setMassListProductIds(ids);
+        setMassListIntegration({ integrationId, connectionId });
+      }
+    },
+    [isMassListing, rowSelection]
+  );
 
   const handleCloseMassList = useCallback(() => {
     setMassListIntegration(null);

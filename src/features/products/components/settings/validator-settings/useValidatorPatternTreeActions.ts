@@ -7,7 +7,10 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 import { applyInternalMasterTreeDrop } from '@/shared/lib/foldertree/v2';
-import type { MasterTreeDropPosition, MasterTreeId } from '@/shared/utils/master-folder-tree-contract';
+import type {
+  MasterTreeDropPosition,
+  MasterTreeId,
+} from '@/shared/utils/master-folder-tree-contract';
 import { useToast } from '@/shared/ui';
 
 import { resolveValidatorPatternReorderUpdates } from './validator-pattern-master-tree';
@@ -82,10 +85,9 @@ export function useValidatorPatternTreeActions(args: {
             updateCount: updates.length,
           },
         });
-        toast(
-          error instanceof Error ? error.message : 'Failed to reorder patterns.',
-          { variant: 'error' }
-        );
+        toast(error instanceof Error ? error.message : 'Failed to reorder patterns.', {
+          variant: 'error',
+        });
       }
     },
     [reorderPatterns, toast]

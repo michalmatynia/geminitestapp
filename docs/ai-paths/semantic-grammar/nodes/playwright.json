@@ -18,13 +18,7 @@
     "entityType",
     "productId"
   ],
-  "outputs": [
-    "result",
-    "value",
-    "bundle",
-    "status",
-    "jobId"
-  ],
+  "outputs": ["result", "value", "bundle", "status", "jobId"],
   "configFields": [
     {
       "path": "playwright.personaId",
@@ -102,9 +96,7 @@
       "defaultValue": "false"
     }
   ],
-  "notes": [
-    "Built-in script templates are available in the Playwright node config dialog."
-  ],
+  "notes": ["Built-in script templates are available in the Playwright node config dialog."],
   "defaultConfig": {
     "playwright": {
       "personaId": "",
@@ -147,13 +139,7 @@
       "entityType",
       "productId"
     ],
-    "outputs": [
-      "result",
-      "value",
-      "bundle",
-      "status",
-      "jobId"
-    ],
+    "outputs": ["result", "value", "bundle", "status", "jobId"],
     "config": {
       "playwright": {
         "personaId": "",

@@ -48,11 +48,7 @@ export function VersionNodeMapProvider({
   value: VersionNodeMapContextValue;
   children: React.ReactNode;
 }): React.JSX.Element {
-  return (
-    <VersionNodeMapContext.Provider value={value}>
-      {children}
-    </VersionNodeMapContext.Provider>
-  );
+  return <VersionNodeMapContext.Provider value={value}>{children}</VersionNodeMapContext.Provider>;
 }
 
 export function useVersionNodeMapContext(): VersionNodeMapContextValue {

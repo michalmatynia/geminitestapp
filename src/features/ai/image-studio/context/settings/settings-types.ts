@@ -1,6 +1,9 @@
 'use client';
 
-import type { ImageStudioSettings, ImageStudioSequenceOperation } from '../../utils/studio-settings';
+import type {
+  ImageStudioSettings,
+  ImageStudioSequenceOperation,
+} from '@/shared/lib/ai/image-studio/utils/studio-settings';
 
 export type StudioSettingsTab = 'prompt' | 'generation' | 'validation' | 'maintenance';
 
@@ -65,7 +68,7 @@ export interface ImageStudioSettingsContextValue {
   modelAwareBackgroundOptions: SelectOption[];
   modelAwareFormatOptions: SelectOption[];
   selectedGenerationModel: string;
-  
+
   // Queries/Stores
   settingsStore: {
     isFetching: boolean;
@@ -87,6 +90,12 @@ export interface ImageStudioSettingsContextValue {
   resetStudioSettings: () => void;
   setGenerationModelAndPresets: (nextModel: string, nextPresets: string[]) => void;
   runCardBackfill: () => Promise<void>;
-  toggleProjectSequencingOperation: (operation: ImageStudioSequenceOperation, checked: boolean) => void;
-  moveProjectSequencingOperation: (operation: ImageStudioSequenceOperation, direction: -1 | 1) => void;
+  toggleProjectSequencingOperation: (
+    operation: ImageStudioSequenceOperation,
+    checked: boolean
+  ) => void;
+  moveProjectSequencingOperation: (
+    operation: ImageStudioSequenceOperation,
+    direction: -1 | 1
+  ) => void;
 }

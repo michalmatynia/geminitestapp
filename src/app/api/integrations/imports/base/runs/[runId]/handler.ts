@@ -16,30 +16,29 @@ export async function GET_handler(
   _ctx: ApiHandlerContext,
   params: { runId: string }
 ): Promise<Response> {
-  const parsed = querySchema.safeParse(
-    Object.fromEntries(new URL(req.url).searchParams.entries())
-  );
-  const statusesRaw = parsed.success ? parsed.data.statuses ?? '' : '';
+  const parsed = querySchema.safeParse(Object.fromEntries(new URL(req.url).searchParams.entries()));
+  const statusesRaw = parsed.success ? (parsed.data.statuses ?? '') : '';
   const statuses = statusesRaw
     .split(',')
     .map((value: string): string => value.trim())
     .filter((value: string): boolean => value.length > 0)
-    .filter((value: string): boolean =>
-      value === 'pending' ||
-      value === 'processing' ||
-      value === 'imported' ||
-      value === 'updated' ||
-      value === 'skipped' ||
-      value === 'failed'
+    .filter(
+      (value: string): boolean =>
+        value === 'pending' ||
+        value === 'processing' ||
+        value === 'imported' ||
+        value === 'updated' ||
+        value === 'skipped' ||
+        value === 'failed'
     ) as Array<'pending' | 'processing' | 'imported' | 'updated' | 'skipped' | 'failed'>;
   const includeItems =
-    parsed.success && parsed.data.includeItems
-      ? parsed.data.includeItems === 'true'
-      : undefined;
+    parsed.success && parsed.data.includeItems ? parsed.data.includeItems === 'true' : undefined;
   const detail = await getBaseImportRunDetailOrThrow(params.runId, {
     ...(statuses.length > 0 ? { statuses } : {}),
     ...(parsed.success && typeof parsed.data.page === 'number' ? { page: parsed.data.page } : {}),
-    ...(parsed.success && typeof parsed.data.pageSize === 'number' ? { pageSize: parsed.data.pageSize } : {}),
+    ...(parsed.success && typeof parsed.data.pageSize === 'number'
+      ? { pageSize: parsed.data.pageSize }
+      : {}),
     ...(typeof includeItems === 'boolean' ? { includeItems } : {}),
   });
   return NextResponse.json(detail, {

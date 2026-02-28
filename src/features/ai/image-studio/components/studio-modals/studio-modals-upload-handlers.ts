@@ -2,7 +2,7 @@ import type { ImageFileSelection } from '@/shared/contracts/files';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type { SlotsActions, SlotsState } from '../../context/SlotsContext';
 
-import { setImageStudioSlotImageLocked } from '../../utils/slot-image-lock';
+import { setImageStudioSlotImageLocked } from '@/shared/lib/ai/image-studio/utils/slot-image-lock';
 
 import type { EnvironmentReferenceDraftViewModel } from './slot-inline-edit-tab-types';
 
@@ -74,9 +74,7 @@ const toAssetDraft = (
   height: typeof primary.height === 'number' ? primary.height : null,
 });
 
-export const createUploadHandlers = (
-  deps: CreateUploadHandlersDeps
-): UploadHandlers => {
+export const createUploadHandlers = (deps: CreateUploadHandlersDeps): UploadHandlers => {
   const handleDriveSelection = async (files: ImageFileSelection[]): Promise<void> => {
     deps.setDriveImportOpen(false);
     if (files.length === 0) return;
@@ -182,7 +180,9 @@ export const createUploadHandlers = (
       ]);
       if (created[0]) deps.setSelectedSlotId(created[0].id);
     } catch (error: unknown) {
-      deps.toast(error instanceof Error ? error.message : 'Failed to create card', { variant: 'error' });
+      deps.toast(error instanceof Error ? error.message : 'Failed to create card', {
+        variant: 'error',
+      });
     }
   };
 

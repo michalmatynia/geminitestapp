@@ -5,7 +5,7 @@ import { ObjectId } from 'mongodb';
 import {
   type UserPreferences,
   type UserPreferencesUpdate as UserPreferencesData,
-  type JsonValue
+  type JsonValue,
 } from '@/shared/contracts/auth';
 import { operationFailedError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
@@ -31,8 +31,7 @@ type UserPreferencesDocument = {
   productListPageSize: number | null;
   productListThumbnailSource: 'file' | 'link' | 'base64' | null;
   productListFiltersCollapsedByDefault: boolean | null;
-  productListAdvancedFilterPresets:
-    UserPreferences['productListAdvancedFilterPresets'] | null;
+  productListAdvancedFilterPresets: UserPreferences['productListAdvancedFilterPresets'] | null;
   productListAppliedAdvancedFilter: string | null;
   productListAppliedAdvancedFilterPresetId: string | null;
   productListDraftIconColorMode: 'theme' | 'custom' | null;
@@ -75,13 +74,7 @@ const USER_PREFERENCES_CACHE_TTL_MS = parsePositiveInt(
   process.env['USER_PREFERENCES_CACHE_TTL_MS'],
   60_000
 );
-const IMMUTABLE_PREFERENCE_FIELDS = new Set([
-  'id',
-  '_id',
-  'userId',
-  'createdAt',
-  'updatedAt',
-]);
+const IMMUTABLE_PREFERENCE_FIELDS = new Set(['id', '_id', 'userId', 'createdAt', 'updatedAt']);
 
 type CachedUserPreferences = {
   value: UserPreferencesRecord;
@@ -91,8 +84,7 @@ type CachedUserPreferences = {
 const userPreferencesCache = new Map<string, CachedUserPreferences>();
 const userPreferencesInflight = new Map<string, Promise<UserPreferencesRecord>>();
 
-const getCanonicalPreferencesId = (userId: string): ObjectId | string =>
-  toMongoId(userId);
+const getCanonicalPreferencesId = (userId: string): ObjectId | string => toMongoId(userId);
 
 const getUserPreferencesCacheKey = (userId: string): string =>
   String(getCanonicalPreferencesId(userId));
@@ -164,8 +156,7 @@ const toUserPreferences = (doc: UserPreferencesDocument): UserPreferencesRecord 
   caseResolverCaseListSearchScope: doc.caseResolverCaseListSearchScope ?? 'all',
   caseResolverCaseListFiltersCollapsedByDefault:
     doc.caseResolverCaseListFiltersCollapsedByDefault ?? true,
-  caseResolverCaseListShowNestedContent:
-    doc.caseResolverCaseListShowNestedContent ?? true,
+  caseResolverCaseListShowNestedContent: doc.caseResolverCaseListShowNestedContent ?? true,
   adminMenuCollapsed: doc.adminMenuCollapsed ?? false,
   adminMenuFavorites: doc.adminMenuFavorites ?? [],
   adminMenuSectionColors: doc.adminMenuSectionColors ?? {},
@@ -315,11 +306,10 @@ export async function updateUserPreferences(
       ...insertDefaults,
     };
   }
-  const result = await collection.findOneAndUpdate(
-    { _id: canonicalId },
-    updateDoc,
-    { upsert: true, returnDocument: 'after' }
-  );
+  const result = await collection.findOneAndUpdate({ _id: canonicalId }, updateDoc, {
+    upsert: true,
+    returnDocument: 'after',
+  });
 
   if (result && 'value' in result && result.value) {
     const normalized = toUserPreferences(result.value as UserPreferencesDocument);
@@ -348,8 +338,6 @@ export async function updateUserPreferences(
 /**
  * Get or create preferences for user
  */
-export async function getOrCreatePreferences(
-  userId: string
-): Promise<UserPreferencesRecord> {
+export async function getOrCreatePreferences(userId: string): Promise<UserPreferencesRecord> {
   return getUserPreferences(userId);
 }

@@ -1,30 +1,20 @@
 'use client';
 
 import React from 'react';
-import { 
-  Breadcrumbs,
-  FormActions,
-} from '@/shared/ui';
-import { 
-  AdminFilemakerPersonEditPageProvider, 
-  useAdminFilemakerPersonEditPageContext 
+import { Breadcrumbs, FormActions } from '@/shared/ui';
+import {
+  AdminFilemakerPersonEditPageProvider,
+  useAdminFilemakerPersonEditPageContext,
 } from '../context/AdminFilemakerPersonEditPageContext';
 import { PersonBasicInfoSection } from '../components/page/PersonBasicInfoSection';
 import { PersonEmailsSection } from '../components/page/PersonEmailsSection';
 
 function AdminFilemakerPersonEditPageInner(): React.JSX.Element {
-  const { 
-    person, 
-    handleSave, 
-    updateSetting,
-    router
-  } = useAdminFilemakerPersonEditPageContext();
+  const { person, handleSave, updateSetting, router } = useAdminFilemakerPersonEditPageContext();
 
   if (!person) {
     return (
-      <div className='container mx-auto py-8 text-center text-gray-500'>
-        Person not found.
-      </div>
+      <div className='container mx-auto py-8 text-center text-gray-500'>Person not found.</div>
     );
   }
 
@@ -43,13 +33,11 @@ function AdminFilemakerPersonEditPageInner(): React.JSX.Element {
         <div className='space-y-6 lg:col-span-2'>
           <PersonBasicInfoSection />
           <PersonEmailsSection />
-          
+
           {/* More sections will be added here */}
         </div>
 
-        <div className='space-y-6'>
-          {/* Sidebar sections will be added here */}
-        </div>
+        <div className='space-y-6'>{/* Sidebar sections will be added here */}</div>
       </div>
 
       <FormActions

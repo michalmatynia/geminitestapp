@@ -5,10 +5,7 @@ import type {
   RuntimePortValues,
 } from '@/shared/contracts/ai-paths-runtime';
 
-import {
-  getValueAtMappingPath,
-  renderTemplate,
-} from '../../utils';
+import { getValueAtMappingPath, renderTemplate } from '../../utils';
 import {
   fetchWithOutboundUrlPolicy,
   OutboundUrlPolicyError,
@@ -33,11 +30,7 @@ export const handleHttp: NodeHandler = async ({
     responseMode: 'json',
     responsePath: '',
   };
-  const resolvedUrl: string = renderTemplate(
-    httpConfig.url ?? '',
-    nodeInputs,
-    '',
-  );
+  const resolvedUrl: string = renderTemplate(httpConfig.url ?? '', nodeInputs, '');
   if (!resolvedUrl) {
     return {
       value: null,
@@ -46,24 +39,18 @@ export const handleHttp: NodeHandler = async ({
   }
   let headers: Record<string, string> = {};
   try {
-    headers = httpConfig.headers
-      ? (JSON.parse(httpConfig.headers) as Record<string, string>)
-      : {};
+    headers = httpConfig.headers ? (JSON.parse(httpConfig.headers) as Record<string, string>) : {};
   } catch (error: unknown) {
     reportAiPathsError(
       error,
       { action: 'parseHeaders', nodeId: node.id },
-      'Invalid HTTP headers JSON:',
+      'Invalid HTTP headers JSON:'
     );
   }
   let body: BodyInit | undefined = undefined;
   if (httpConfig.method !== 'GET' && httpConfig.method !== 'DELETE') {
     const renderedBody: string = httpConfig.bodyTemplate
-      ? renderTemplate(
-        httpConfig.bodyTemplate,
-        nodeInputs,
-        '',
-      )
+      ? renderTemplate(httpConfig.bodyTemplate, nodeInputs, '')
       : '';
     if (renderedBody) {
       const trimmed: string = renderedBody.trim();
@@ -158,7 +145,7 @@ export const handleHttp: NodeHandler = async ({
     reportAiPathsError(
       error,
       { action: 'httpFetch', url: resolvedUrl, nodeId: node.id },
-      'HTTP fetch failed:',
+      'HTTP fetch failed:'
     );
     return {
       value: null,

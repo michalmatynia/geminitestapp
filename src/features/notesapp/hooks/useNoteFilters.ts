@@ -25,12 +25,12 @@ export type UseNoteFiltersResult = {
     tagId: string,
     setSelectedFolderId: (id: string | null) => void,
     setSelectedNote: (val: NoteWithRelations | null) => void,
-    setIsEditing: (val: boolean) => void,
+    setIsEditing: (val: boolean) => void
   ) => void;
   handleToggleFavoritesFilter: (
     setSelectedFolderId: (id: string | null) => void,
     setSelectedNote: (val: NoteWithRelations | null) => void,
-    setIsEditing: (val: boolean) => void,
+    setIsEditing: (val: boolean) => void
   ) => void;
 };
 
@@ -40,15 +40,9 @@ export function useNoteFilters({
 }: UseNoteFiltersProps): UseNoteFiltersResult {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
-  const [filterPinned, setFilterPinned] = useState<boolean | undefined>(
-    undefined,
-  );
-  const [filterArchived, setFilterArchived] = useState<boolean | undefined>(
-    undefined,
-  );
-  const [filterFavorite, setFilterFavorite] = useState<boolean | undefined>(
-    undefined,
-  );
+  const [filterPinned, setFilterPinned] = useState<boolean | undefined>(undefined);
+  const [filterArchived, setFilterArchived] = useState<boolean | undefined>(undefined);
+  const [filterFavorite, setFilterFavorite] = useState<boolean | undefined>(undefined);
   const [filterTagIds, setFilterTagIds] = useState<string[]>([]);
   const [highlightTagId, setHighlightTagId] = useState<string | null>(null);
 
@@ -90,7 +84,7 @@ export function useNoteFilters({
       tagId: string,
       setSelectedFolderId: (id: string | null) => void,
       setSelectedNote: (val: NoteWithRelations | null) => void,
-      setIsEditing: (val: boolean) => void,
+      setIsEditing: (val: boolean) => void
     ): void => {
       setSelectedFolderId(null);
       setFilterTagIds([tagId]);
@@ -100,24 +94,22 @@ export function useNoteFilters({
       setHighlightTagId(tagId);
       setPage(1);
     },
-    [],
+    []
   );
 
   const handleToggleFavoritesFilter = useCallback(
     (
       setSelectedFolderId: (id: string | null) => void,
       setSelectedNote: (val: NoteWithRelations | null) => void,
-      setIsEditing: (val: boolean) => void,
+      setIsEditing: (val: boolean) => void
     ): void => {
-      setFilterFavorite((prev: boolean | undefined) =>
-        prev ? undefined : true,
-      );
+      setFilterFavorite((prev: boolean | undefined) => (prev ? undefined : true));
       setSelectedFolderId(null);
       setSelectedNote(null);
       setIsEditing(false);
       setPage(1);
     },
-    [],
+    []
   );
 
   const setFilterPinnedWithPage = (v: boolean | undefined): void => {

@@ -33,7 +33,8 @@ export function FormSection({
   variant = 'subtle',
   id,
 }: FormSectionProps): React.JSX.Element {
-  const cardVariant = variant === 'glass' ? 'glass' : (variant?.startsWith('subtle') ? 'subtle' : 'default');
+  const cardVariant =
+    variant === 'glass' ? 'glass' : variant?.startsWith('subtle') ? 'subtle' : 'default';
   const cardPadding = variant?.endsWith('compact') ? 'sm' : 'default';
 
   return (
@@ -54,9 +55,7 @@ export function FormSection({
         />
       )}
       {children ? (
-        <div className={cn('grid grid-cols-1 gap-4', gridClassName)}>
-          {children}
-        </div>
+        <div className={cn('grid grid-cols-1 gap-4', gridClassName)}>{children}</div>
       ) : null}
     </Card>
   );
@@ -89,7 +88,13 @@ export function FormField({
         {label || actions ? (
           <div className='flex items-center justify-between gap-2'>
             {label ? (
-              <Label htmlFor={id} className={cn('text-[11px] font-medium uppercase tracking-wider text-gray-400', required && 'after:content-[\'*\'] after:ml-0.5 after:text-red-500')}>
+              <Label
+                htmlFor={id}
+                className={cn(
+                  'text-[11px] font-medium uppercase tracking-wider text-gray-400',
+                  required && "after:content-['*'] after:ml-0.5 after:text-red-500"
+                )}
+              >
                 {label}
               </Label>
             ) : (
@@ -98,7 +103,9 @@ export function FormField({
             {actions ? <div className='shrink-0'>{actions}</div> : null}
           </div>
         ) : null}
-        {description && <p className='text-[10px] text-gray-500 italic leading-relaxed'>{description}</p>}
+        {description && (
+          <p className='text-[10px] text-gray-500 italic leading-relaxed'>{description}</p>
+        )}
       </div>
       {children ?? null}
       {error && (

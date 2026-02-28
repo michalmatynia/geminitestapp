@@ -20,9 +20,7 @@ import {
   parseFilemakerEmailParserRulesFromPromptSettings,
   parseFilemakerDatabase,
 } from '../settings';
-import {
-  decodeRouteParam,
-} from '../pages/filemaker-page-utils';
+import { decodeRouteParam } from '../pages/filemaker-page-utils';
 
 import type {
   FilemakerEmail,
@@ -75,12 +73,9 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
 
   const countriesQuery = useCountries();
   const countries = countriesQuery.data ?? [];
-  
+
   const rawDatabase = settingsStore.get(FILEMAKER_DATABASE_KEY);
-  const database = useMemo(
-    () => parseFilemakerDatabase(rawDatabase),
-    [rawDatabase]
-  );
+  const database = useMemo(() => parseFilemakerDatabase(rawDatabase), [rawDatabase]);
 
   const person = useMemo(
     () => database.persons.find((p) => p.id === personId) ?? null,
@@ -95,7 +90,7 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
   useEffect(() => {
     if (person) {
       setPersonDraft(person);
-      
+
       const addressLinks = getFilemakerAddressLinksForOwner(database, 'person', person.id);
       const addresses = addressLinks.map((link) => {
         const addr = getFilemakerAddressById(database, link.addressId);
@@ -161,15 +156,21 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
     const promptSettings = settingsStore.get(FILEMAKER_EMAIL_PARSER_PROMPT_SETTINGS_KEY);
     const rules = parseFilemakerEmailParserRulesFromPromptSettings(promptSettings);
 
-    const { database: nextDatabase, createdEmailCount, linkedEmailCount } = 
-      parseAndUpsertFilemakerEmailsForParty(database, {
-        partyKind: 'person',
-        partyId: person.id,
-        text: emailExtractionText,
-        parserRules: rules,
-      });
+    const {
+      database: nextDatabase,
+      createdEmailCount,
+      linkedEmailCount,
+    } = parseAndUpsertFilemakerEmailsForParty(database, {
+      partyKind: 'person',
+      partyId: person.id,
+      text: emailExtractionText,
+      parserRules: rules,
+    });
 
-    await persistDatabase(nextDatabase, `Extracted ${createdEmailCount} new emails and linked ${linkedEmailCount} total.`);
+    await persistDatabase(
+      nextDatabase,
+      `Extracted ${createdEmailCount} new emails and linked ${linkedEmailCount} total.`
+    );
     setEmailExtractionText('');
   }, [database, person, emailExtractionText, persistDatabase, settingsStore]);
 

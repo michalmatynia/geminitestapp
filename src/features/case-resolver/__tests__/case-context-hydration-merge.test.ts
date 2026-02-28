@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { createCaseResolverFile, createDefaultCaseResolverWorkspace } from '@/features/case-resolver/settings';
+import {
+  createCaseResolverFile,
+  createDefaultCaseResolverWorkspace,
+} from '@/features/case-resolver/settings';
 import {
   resolvePreferredCaseResolverWorkspace,
   shouldAdoptIncomingWorkspace,

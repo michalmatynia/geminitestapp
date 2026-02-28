@@ -95,9 +95,7 @@ export const mongoCatalogRepository: CatalogRepository = {
     }
     const updateDoc: Partial<CatalogDocument> = {
       ...(input.name !== undefined ? { name: input.name } : null),
-      ...(input.description !== undefined
-        ? { description: input.description ?? null }
-        : null),
+      ...(input.description !== undefined ? { description: input.description ?? null } : null),
       ...(input.isDefault !== undefined ? { isDefault: input.isDefault } : null),
       ...(input.defaultLanguageId !== undefined
         ? { defaultLanguageId: input.defaultLanguageId ?? null }
@@ -105,12 +103,8 @@ export const mongoCatalogRepository: CatalogRepository = {
       ...(input.defaultPriceGroupId !== undefined
         ? { defaultPriceGroupId: input.defaultPriceGroupId ?? null }
         : null),
-      ...(input.languageIds !== undefined
-        ? { languageIds: input.languageIds }
-        : null),
-      ...(input.priceGroupIds !== undefined
-        ? { priceGroupIds: input.priceGroupIds }
-        : null),
+      ...(input.languageIds !== undefined ? { languageIds: input.languageIds } : null),
+      ...(input.priceGroupIds !== undefined ? { priceGroupIds: input.priceGroupIds } : null),
       updatedAt: new Date(),
     };
     const result = await db

@@ -22,13 +22,11 @@ export function ExplosionMetricsPanel(): React.JSX.Element {
         <div className='space-y-2 text-xs text-gray-300'>
           <div>
             Segments: {explosionMetrics.total} · avg confidence{' '}
-            {(explosionMetrics.avgConfidence * 100).toFixed(1)}% · low confidence (
-            {'<'}{explosionMetrics.lowConfidenceThreshold.toFixed(2)}):{' '}
+            {(explosionMetrics.avgConfidence * 100).toFixed(1)}% · low confidence ({'<'}
+            {explosionMetrics.lowConfidenceThreshold.toFixed(2)}):{' '}
             {explosionMetrics.lowConfidenceCount}
           </div>
-          <div>
-            Typed coverage: {(explosionMetrics.typedCoverage * 100).toFixed(1)}%
-          </div>
+          <div>Typed coverage: {(explosionMetrics.typedCoverage * 100).toFixed(1)}%</div>
           <div className='rounded border border-border/50 bg-card/20 p-2'>
             {Object.entries(explosionMetrics.typeCounts)
               .sort((left, right) => right[1] - left[1])

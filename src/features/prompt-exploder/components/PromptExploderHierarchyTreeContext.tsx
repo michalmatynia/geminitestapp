@@ -14,7 +14,8 @@ type PromptExploderHierarchyTreeContextValue = {
   }) => React.ReactNode;
 };
 
-const PromptExploderHierarchyTreeContext = React.createContext<PromptExploderHierarchyTreeContextValue | null>(null);
+const PromptExploderHierarchyTreeContext =
+  React.createContext<PromptExploderHierarchyTreeContextValue | null>(null);
 
 export function PromptExploderHierarchyTreeProvider({
   value,
@@ -33,7 +34,9 @@ export function PromptExploderHierarchyTreeProvider({
 export function usePromptExploderHierarchyTreeContext(): PromptExploderHierarchyTreeContextValue {
   const context = React.useContext(PromptExploderHierarchyTreeContext);
   if (!context) {
-    throw new Error('usePromptExploderHierarchyTreeContext must be used inside PromptExploderHierarchyTreeProvider');
+    throw new Error(
+      'usePromptExploderHierarchyTreeContext must be used inside PromptExploderHierarchyTreeProvider'
+    );
   }
   return context;
 }

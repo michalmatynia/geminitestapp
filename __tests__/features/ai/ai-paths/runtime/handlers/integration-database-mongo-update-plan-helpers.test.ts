@@ -48,7 +48,7 @@ describe('Mongo update plan helpers', () => {
         mode: 'mongo',
         collection: 'products',
         filter: { id: 'p-1' },
-      }),
+      })
     );
   });
 
@@ -70,7 +70,7 @@ describe('Mongo update plan helpers', () => {
   it('extracts missing template root ports while ignoring value/current', () => {
     const missing = extractMissingTemplatePorts(
       '{"a":"{{result.text}}","b":"{{value}}","c":"{{current}}","d":"{{missing.id}}"}',
-      { result: { text: 'ok' } },
+      { result: { text: 'ok' } }
     );
 
     expect(missing).toEqual(['missing']);

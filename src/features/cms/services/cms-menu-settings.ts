@@ -57,7 +57,7 @@ const readSettingValue = async (key: string): Promise<string | null> => {
 
 export const getCmsMenuSettings = async (domainId?: string | null): Promise<MenuSettings> => {
   const zoningEnabled = await isDomainZoningEnabled();
-  const scopedKey = getCmsMenuSettingsKey(zoningEnabled ? domainId ?? null : null);
+  const scopedKey = getCmsMenuSettingsKey(zoningEnabled ? (domainId ?? null) : null);
   const stored = await readSettingValue(scopedKey);
   const parsed = parseJsonSetting<Partial<MenuSettings> | null>(stored, null);
   if (stored) {

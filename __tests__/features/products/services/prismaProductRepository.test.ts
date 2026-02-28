@@ -6,7 +6,7 @@ import { prismaProductRepository } from '@/features/products/services/product-re
 import prisma from '@/shared/lib/db/prisma';
 
 const createAdvancedFilterGroup = (
-  rules: Array<Record<string, unknown>>,
+  rules: Array<Record<string, unknown>>
 ): Record<string, unknown> => ({
   type: 'group',
   id: `group-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -18,7 +18,7 @@ const createAdvancedFilterGroup = (
 const createAdvancedFilterCondition = (
   field: string,
   operator: string,
-  value?: unknown,
+  value?: unknown
 ): Record<string, unknown> => ({
   type: 'condition',
   id: `condition-${Math.random().toString(36).slice(2, 8)}`,
@@ -64,19 +64,30 @@ describe('prismaProductRepository', () => {
     };
     await prismaProductRepository.createProduct(data);
 
-    await expect(prismaProductRepository.createProduct(data)).rejects.toThrow('A product with this SKU already exists.');
+    await expect(prismaProductRepository.createProduct(data)).rejects.toThrow(
+      'A product with this SKU already exists.'
+    );
   });
 
   it('should update a product', async () => {
-    const created = await prismaProductRepository.createProduct({ name_en: 'Original', sku: 'SKU-UPDATE' });
+    const created = await prismaProductRepository.createProduct({
+      name_en: 'Original',
+      sku: 'SKU-UPDATE',
+    });
     const updated = await prismaProductRepository.updateProduct(created.id, { name_en: 'Updated' });
-    
+
     expect(updated?.name_en).toBe('Updated');
   });
 
   it('should allow clearing SKU to null on multiple products', async () => {
-    const first = await prismaProductRepository.createProduct({ name_en: 'First', sku: 'SKU-CLEAR-1' });
-    const second = await prismaProductRepository.createProduct({ name_en: 'Second', sku: 'SKU-CLEAR-2' });
+    const first = await prismaProductRepository.createProduct({
+      name_en: 'First',
+      sku: 'SKU-CLEAR-1',
+    });
+    const second = await prismaProductRepository.createProduct({
+      name_en: 'Second',
+      sku: 'SKU-CLEAR-2',
+    });
 
     const updatedFirst = await prismaProductRepository.updateProduct(first.id, { sku: null });
     const updatedSecond = await prismaProductRepository.updateProduct(second.id, { sku: null });
@@ -86,17 +97,24 @@ describe('prismaProductRepository', () => {
   });
 
   it('should delete a product', async () => {
-    const created = await prismaProductRepository.createProduct({ name_en: 'To Delete', sku: 'SKU-DELETE' });
+    const created = await prismaProductRepository.createProduct({
+      name_en: 'To Delete',
+      sku: 'SKU-DELETE',
+    });
     await prismaProductRepository.deleteProduct(created.id);
-    
+
     const found = await prismaProductRepository.getProductById(created.id);
     expect(found).toBeNull();
   });
 
   it('should find products with filters', async () => {
     await prismaProductRepository.createProduct({ name_en: 'Apple', price: 10, sku: 'SKU-APPLE' });
-    await prismaProductRepository.createProduct({ name_en: 'Banana', price: 20, sku: 'SKU-BANANA' });
-    
+    await prismaProductRepository.createProduct({
+      name_en: 'Banana',
+      price: 20,
+      sku: 'SKU-BANANA',
+    });
+
     const apple = await prismaProductRepository.getProducts({ search: 'apple' });
     expect(apple.length).toBe(1);
     expect(apple[0]?.name_en).toBe('Apple');
@@ -107,7 +125,10 @@ describe('prismaProductRepository', () => {
   });
 
   it('should filter products by exact id', async () => {
-    const first = await prismaProductRepository.createProduct({ name_en: 'First ID', sku: 'SKU-ID-1' });
+    const first = await prismaProductRepository.createProduct({
+      name_en: 'First ID',
+      sku: 'SKU-ID-1',
+    });
     await prismaProductRepository.createProduct({ name_en: 'Second ID', sku: 'SKU-ID-2' });
 
     const byId = await prismaProductRepository.getProducts({ id: first.id });
@@ -116,7 +137,10 @@ describe('prismaProductRepository', () => {
   });
 
   it('should filter products by partial id when requested', async () => {
-    const first = await prismaProductRepository.createProduct({ name_en: 'First Partial', sku: 'SKU-ID-P1' });
+    const first = await prismaProductRepository.createProduct({
+      name_en: 'First Partial',
+      sku: 'SKU-ID-P1',
+    });
     await prismaProductRepository.createProduct({ name_en: 'Second Partial', sku: 'SKU-ID-P2' });
 
     const partialToken = first.id.slice(0, Math.min(6, first.id.length));
@@ -128,7 +152,10 @@ describe('prismaProductRepository', () => {
   });
 
   it('should replace product images in submitted order', async () => {
-    const created = await prismaProductRepository.createProduct({ name_en: 'Image Sort', sku: 'IMG-SORT' });
+    const created = await prismaProductRepository.createProduct({
+      name_en: 'Image Sort',
+      sku: 'IMG-SORT',
+    });
     const imageA = await prisma.imageFile.create({
       data: {
         filename: 'img-a.jpg',
@@ -152,10 +179,7 @@ describe('prismaProductRepository', () => {
       where: { productId: created.id },
       orderBy: { assignedAt: 'asc' },
     });
-    expect(links.map((entry) => entry.imageFileId)).toEqual([
-      imageB.id,
-      imageA.id,
-    ]);
+    expect(links.map((entry) => entry.imageFileId)).toEqual([imageB.id, imageA.id]);
   });
 
   it('supports advanced relation and boolean filter fields', async () => {
@@ -266,14 +290,10 @@ describe('prismaProductRepository', () => {
     });
 
     const exportedFilterPayload = JSON.stringify(
-      createAdvancedFilterGroup([
-        createAdvancedFilterCondition('baseExported', 'eq', true),
-      ])
+      createAdvancedFilterGroup([createAdvancedFilterCondition('baseExported', 'eq', true)])
     );
     const unexportedFilterPayload = JSON.stringify(
-      createAdvancedFilterGroup([
-        createAdvancedFilterCondition('baseExported', 'eq', false),
-      ])
+      createAdvancedFilterGroup([createAdvancedFilterCondition('baseExported', 'eq', false)])
     );
 
     const exported = await prismaProductRepository.getProducts({

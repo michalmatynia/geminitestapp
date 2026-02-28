@@ -39,7 +39,7 @@ import {
 export const parseSnippetWiringAssertions = (
   snippetName: string,
   snippetText: string,
-  sourceHash: string,
+  sourceHash: string
 ): AiPathsDocAssertion[] => {
   const sourcePath = `src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts#${snippetName}`;
   const snippetSlug = snippetName.toLowerCase().replace(/[^a-z0-9_]+/g, '_');
@@ -48,9 +48,7 @@ export const parseSnippetWiringAssertions = (
     .map((line: string): string => line.trim())
     .filter((line: string): boolean => line.includes('\u2192') || line.includes('->'))
     .map((line: string): AiPathsDocAssertion[] | null => {
-      const normalized = line
-        .replace(/\s+/g, ' ')
-        .replace(/->/g, '\u2192');
+      const normalized = line.replace(/\s+/g, ' ').replace(/->/g, '\u2192');
       const [leftRaw, rightRaw] = normalized.split('\u2192').map((chunk) => chunk.trim());
       if (!leftRaw || !rightRaw) return null;
       const [fromLabelRaw, fromPortRaw] = leftRaw.split('.').map((chunk) => chunk.trim());
@@ -86,9 +84,10 @@ export const parseSnippetWiringAssertions = (
           },
         ],
       };
-      const reverseId = `snippet_wire_rev_${snippetSlug}_${toType}_${toPortRaw}_from_${fromType}_${fromPortRaw}`
-        .toLowerCase()
-        .replace(/[^a-z0-9_]+/g, '_');
+      const reverseId =
+        `snippet_wire_rev_${snippetSlug}_${toType}_${toPortRaw}_from_${fromType}_${fromPortRaw}`
+          .toLowerCase()
+          .replace(/[^a-z0-9_]+/g, '_');
       const reverseAssertion: AiPathsDocAssertion = {
         id: reverseId,
         title: `${toLabelRaw}.${toPortRaw} expects ${fromLabelRaw}.${fromPortRaw}`,
@@ -116,7 +115,7 @@ export const parseSnippetWiringAssertions = (
       return [forwardAssertion, reverseAssertion];
     })
     .flatMap((entry: AiPathsDocAssertion[] | null): AiPathsDocAssertion[] =>
-      Array.isArray(entry) ? entry : [],
+      Array.isArray(entry) ? entry : []
     );
   const seen = new Set<string>();
   return parsed.filter((assertion: AiPathsDocAssertion): boolean => {
@@ -129,7 +128,7 @@ export const parseSnippetWiringAssertions = (
 export const extractAiPathsAssertionsFromMarkdown = (
   markdown: string,
   sourcePath: string,
-  sourceHash: string,
+  sourceHash: string
 ): { assertions: AiPathsDocAssertion[]; warnings: string[] } => {
   const assertions: AiPathsDocAssertion[] = [];
   const warnings: string[] = [];
@@ -142,16 +141,12 @@ export const extractAiPathsAssertionsFromMarkdown = (
     try {
       parsed = JSON.parse(raw);
     } catch {
-      warnings.push(
-        `${sourcePath}: assertion block ${index + 1} is invalid JSON.`,
-      );
+      warnings.push(`${sourcePath}: assertion block ${index + 1} is invalid JSON.`);
       return;
     }
     const result = docAssertionSchema.safeParse(parsed);
     if (!result.success) {
-      warnings.push(
-        `${sourcePath}: assertion block ${index + 1} failed schema validation.`,
-      );
+      warnings.push(`${sourcePath}: assertion block ${index + 1} failed schema validation.`);
       return;
     }
     const value = result.data;
@@ -162,9 +157,7 @@ export const extractAiPathsAssertionsFromMarkdown = (
       severity: value.severity ?? 'warning',
       ...(value.description ? { description: value.description } : {}),
       ...(value.recommendation ? { recommendation: value.recommendation } : {}),
-      ...(value.appliesToNodeTypes?.length
-        ? { appliesToNodeTypes: value.appliesToNodeTypes }
-        : {}),
+      ...(value.appliesToNodeTypes?.length ? { appliesToNodeTypes: value.appliesToNodeTypes } : {}),
       ...(value.sequenceHint !== undefined ? { sequenceHint: value.sequenceHint } : {}),
       ...(value.weight !== undefined ? { weight: value.weight } : {}),
       ...(value.forceProbabilityIfFailed !== undefined
@@ -208,9 +201,7 @@ export const buildNodeDocsCatalogAssertions = (): AiPathsDocAssertion[] => {
           id: `catalog.${doc.type}.${normalizedPath}.non_empty`,
           title: `${doc.title}: ${field.path} should be configured`,
           module: toModuleFromNodeType(doc.type),
-          severity: /entityid|collection|modelid|event/i.test(field.path)
-            ? 'error'
-            : 'warning',
+          severity: /entityid|collection|modelid|event/i.test(field.path) ? 'error' : 'warning',
           description: field.description,
           recommendation: `Set ${conditionField} in ${doc.title} configuration.`,
           appliesToNodeTypes: [doc.type],
@@ -232,18 +223,19 @@ export const buildNodeDocsCatalogAssertions = (): AiPathsDocAssertion[] => {
       const enumValues = inferEnumListFromDescription(
         field.path,
         field.description,
-        field.defaultValue,
+        field.defaultValue
       );
       if (enumValues.length >= 2) {
         pushAssertion({
           id: `catalog.${doc.type}.${normalizedPath}.allowed_values`,
           title: `${doc.title}: ${field.path} uses documented values`,
           module: toModuleFromNodeType(doc.type),
-          severity: /(provider|event|operation|runtimeMode|failPolicy|actionCategory|action)$/i.test(
-            field.path,
-          )
-            ? 'error'
-            : 'warning',
+          severity:
+            /(provider|event|operation|runtimeMode|failPolicy|actionCategory|action)$/i.test(
+              field.path
+            )
+              ? 'error'
+              : 'warning',
           description: `${field.description} Allowed values inferred from docs: ${enumValues.join(', ')}.`,
           recommendation: `Set ${conditionField} to one of: ${enumValues.join(', ')}.`,
           appliesToNodeTypes: [doc.type],
@@ -292,7 +284,7 @@ export const buildNodeDocsCatalogAssertions = (): AiPathsDocAssertion[] => {
 };
 
 export const normalizeManifestSource = (
-  source: z.infer<typeof docsManifestSourceSchema>,
+  source: z.infer<typeof docsManifestSourceSchema>
 ): AiPathsDocsManifestSource => ({
   id: source.id.trim(),
   type: source.type,
@@ -303,14 +295,12 @@ export const normalizeManifestSource = (
       ? Math.max(0, Math.trunc(source.priority))
       : 100,
   tags: uniqueStringList(source.tags ?? []),
-  ...(source.snippetNames?.length
-    ? { snippetNames: uniqueStringList(source.snippetNames) }
-    : {}),
+  ...(source.snippetNames?.length ? { snippetNames: uniqueStringList(source.snippetNames) } : {}),
 });
 
 export const normalizeManifest = (
   raw: z.infer<typeof docsManifestSchema>,
-  warnings: string[],
+  warnings: string[]
 ): AiPathsDocsManifest => {
   const seenIds = new Set<string>();
   const sources: AiPathsDocsManifestSource[] = [];
@@ -318,7 +308,7 @@ export const normalizeManifest = (
     const normalized = normalizeManifestSource(source);
     if (seenIds.has(normalized.id)) {
       warnings.push(
-        `Manifest source id "${normalized.id}" is duplicated and later entries are ignored.`,
+        `Manifest source id "${normalized.id}" is duplicated and later entries are ignored.`
       );
       return;
     }
@@ -331,9 +321,7 @@ export const normalizeManifest = (
   };
 };
 
-export const readAiPathsDocsManifest = async (
-  warnings: string[],
-): Promise<AiPathsDocsManifest> => {
+export const readAiPathsDocsManifest = async (warnings: string[]): Promise<AiPathsDocsManifest> => {
   const absolutePath = path.resolve(process.cwd(), DOCS_MANIFEST_PATH);
   try {
     const manifestText = await readFile(absolutePath, 'utf8');
@@ -347,21 +335,21 @@ export const readAiPathsDocsManifest = async (
     const result = docsManifestSchema.safeParse(parsed);
     if (!result.success) {
       warnings.push(
-        `${DOCS_MANIFEST_PATH}: schema validation failed. Falling back to built-in sources.`,
+        `${DOCS_MANIFEST_PATH}: schema validation failed. Falling back to built-in sources.`
       );
       return LEGACY_FALLBACK_MANIFEST;
     }
     const normalized = normalizeManifest(result.data, warnings);
     if (normalized.sources.length === 0) {
       warnings.push(
-        `${DOCS_MANIFEST_PATH}: no valid sources enabled. Falling back to built-in sources.`,
+        `${DOCS_MANIFEST_PATH}: no valid sources enabled. Falling back to built-in sources.`
       );
       return LEGACY_FALLBACK_MANIFEST;
     }
     return normalized;
   } catch (error) {
     warnings.push(
-      `${DOCS_MANIFEST_PATH}: failed to read manifest (${error instanceof Error ? error.message : 'unknown error'}). Falling back to built-in sources.`,
+      `${DOCS_MANIFEST_PATH}: failed to read manifest (${error instanceof Error ? error.message : 'unknown error'}). Falling back to built-in sources.`
     );
     return LEGACY_FALLBACK_MANIFEST;
   }
@@ -384,7 +372,7 @@ export const buildMarkdownSourcePayload = async (args: {
     };
   } catch (error) {
     warnings.push(
-      `${source.path}: failed to read markdown source (${error instanceof Error ? error.message : 'unknown error'}).`,
+      `${source.path}: failed to read markdown source (${error instanceof Error ? error.message : 'unknown error'}).`
     );
     return {
       hash: hashText(`read_error:${source.path}`),
@@ -394,7 +382,7 @@ export const buildMarkdownSourcePayload = async (args: {
 };
 
 export const buildNodeCatalogSourcePayload = (
-  source: AiPathsDocsManifestSource,
+  source: AiPathsDocsManifestSource
 ): { hash: string; assertions: AiPathsDocAssertion[] } => {
   const sourceHash = hashText(JSON.stringify(AI_PATHS_NODE_DOCS));
   const assertions = buildNodeDocsCatalogAssertions().map(
@@ -403,7 +391,7 @@ export const buildNodeCatalogSourcePayload = (
       sourcePath: source.path,
       sourceHash,
       sourceType: 'node_docs_catalog',
-    }),
+    })
   );
   return {
     hash: sourceHash,
@@ -417,35 +405,28 @@ export const buildSnippetSourcePayload = (args: {
 }): { hash: string; assertions: AiPathsDocAssertion[]; snippetNames: string[] } => {
   const { source, warnings } = args;
   const snippetNames = uniqueStringList(
-    source.snippetNames?.length ? source.snippetNames : Object.keys(DOCS_SNIPPET_REGISTRY),
+    source.snippetNames?.length ? source.snippetNames : Object.keys(DOCS_SNIPPET_REGISTRY)
   );
   const validSnippetNames = snippetNames.filter((snippetName: string): boolean => {
     const exists = Boolean(DOCS_SNIPPET_REGISTRY[snippetName]);
     if (!exists) {
-      warnings.push(
-        `Snippet source "${source.id}" references unknown snippet "${snippetName}".`,
-      );
+      warnings.push(`Snippet source "${source.id}" references unknown snippet "${snippetName}".`);
     }
     return exists;
   });
   const snippetsRaw = validSnippetNames
-    .map(
-      (snippetName: string) =>
-        `${snippetName}\n${DOCS_SNIPPET_REGISTRY[snippetName] || ''}`,
-    )
+    .map((snippetName: string) => `${snippetName}\n${DOCS_SNIPPET_REGISTRY[snippetName] || ''}`)
     .join('\n');
   const hash = hashText(snippetsRaw);
   const assertions = validSnippetNames.flatMap((snippetName: string) =>
-    parseSnippetWiringAssertions(
-      snippetName,
-      DOCS_SNIPPET_REGISTRY[snippetName] || '',
-      hash,
-    ).map((assertion: AiPathsDocAssertion): AiPathsDocAssertion => ({
-      ...assertion,
-      sourcePath: source.path,
-      sourceType: 'docs_snippet',
-      sourceHash: hash,
-    })),
+    parseSnippetWiringAssertions(snippetName, DOCS_SNIPPET_REGISTRY[snippetName] || '', hash).map(
+      (assertion: AiPathsDocAssertion): AiPathsDocAssertion => ({
+        ...assertion,
+        sourcePath: source.path,
+        sourceType: 'docs_snippet',
+        sourceHash: hash,
+      })
+    )
   );
   return {
     hash,
@@ -465,9 +446,7 @@ export const buildSemanticNodesCatalogSourcePayload = async (args: {
     const parsed = JSON.parse(content) as unknown;
     const result = z.array(semanticNodeIndexRowSchema).safeParse(parsed);
     if (!result.success) {
-      warnings.push(
-        `${source.path}: semantic nodes catalog schema validation failed.`,
-      );
+      warnings.push(`${source.path}: semantic nodes catalog schema validation failed.`);
       return {
         hash: hashText(`parse_error:${source.path}`),
         assertions: [],
@@ -483,7 +462,7 @@ export const buildSemanticNodesCatalogSourcePayload = async (args: {
       const existingType = nodeTypesByHash.get(row.nodeHash);
       if (existingType && existingType !== row.nodeType) {
         warnings.push(
-          `${source.path}: semantic node hash collision between "${existingType}" and "${row.nodeType}".`,
+          `${source.path}: semantic node hash collision between "${existingType}" and "${row.nodeType}".`
         );
         return;
       }
@@ -498,8 +477,7 @@ export const buildSemanticNodesCatalogSourcePayload = async (args: {
         title: 'Node types are known in semantic catalog',
         module: 'graph',
         severity: 'error',
-        description:
-          `All node types in graph should resolve to known semantic catalog node definitions (catalog node hashes: ${nodeHashSet.size}).`,
+        description: `All node types in graph should resolve to known semantic catalog node definitions (catalog node hashes: ${nodeHashSet.size}).`,
         recommendation:
           'Replace unknown node types with supported node types listed in semantic grammar docs.',
         sequenceHint: 15,
@@ -523,8 +501,7 @@ export const buildSemanticNodesCatalogSourcePayload = async (args: {
         title: 'Node IDs are unique',
         module: 'graph',
         severity: 'error',
-        description:
-          'Semantic graph nodes should have unique IDs to avoid wiring collisions.',
+        description: 'Semantic graph nodes should have unique IDs to avoid wiring collisions.',
         recommendation: 'Regenerate or rename duplicated node IDs.',
         sequenceHint: 16,
         weight: 54,
@@ -546,8 +523,7 @@ export const buildSemanticNodesCatalogSourcePayload = async (args: {
         title: 'Edge IDs are unique',
         module: 'graph',
         severity: 'error',
-        description:
-          'Semantic graph edges should have unique IDs for deterministic graph updates.',
+        description: 'Semantic graph edges should have unique IDs for deterministic graph updates.',
         recommendation: 'Regenerate duplicated edge IDs or rebuild duplicated edges.',
         sequenceHint: 17,
         weight: 50,
@@ -591,7 +567,7 @@ export const buildSemanticNodesCatalogSourcePayload = async (args: {
     return { hash, assertions };
   } catch (error) {
     warnings.push(
-      `${source.path}: failed to read semantic nodes catalog (${error instanceof Error ? error.message : 'unknown error'}).`,
+      `${source.path}: failed to read semantic nodes catalog (${error instanceof Error ? error.message : 'unknown error'}).`
     );
     return {
       hash: hashText(`read_error:${source.path}`),
@@ -611,9 +587,7 @@ export const buildTooltipDocsCatalogSourcePayload = async (args: {
     const parsed = JSON.parse(content) as unknown;
     const result = z.array(tooltipCatalogEntrySchema).safeParse(parsed);
     if (!result.success) {
-      warnings.push(
-        `${source.path}: tooltip catalog schema validation failed.`,
-      );
+      warnings.push(`${source.path}: tooltip catalog schema validation failed.`);
       return {
         hash: hashText(`parse_error:${source.path}`),
         assertions: [],
@@ -669,7 +643,7 @@ export const buildTooltipDocsCatalogSourcePayload = async (args: {
     };
   } catch (error) {
     warnings.push(
-      `${source.path}: failed to read tooltip catalog (${error instanceof Error ? error.message : 'unknown error'}).`,
+      `${source.path}: failed to read tooltip catalog (${error instanceof Error ? error.message : 'unknown error'}).`
     );
     return {
       hash: hashText(`read_error:${source.path}`),
@@ -692,7 +666,7 @@ export const buildCoverageMatrixSourcePayload = async (args: {
         const result = coverageMatrixRowSchema.safeParse(row);
         if (!result.success) {
           warnings.push(
-            `${source.path}: coverage row ${index + 2} failed schema validation and was ignored.`,
+            `${source.path}: coverage row ${index + 2} failed schema validation and was ignored.`
           );
           return null;
         }
@@ -703,9 +677,7 @@ export const buildCoverageMatrixSourcePayload = async (args: {
     const docsBinding = source.path;
     const assertions: AiPathsDocAssertion[] = [];
     const seen = new Set<string>();
-    const nodeDocsByType = new Map(
-      AI_PATHS_NODE_DOCS.map((doc) => [doc.type as string, doc]),
-    );
+    const nodeDocsByType = new Map(AI_PATHS_NODE_DOCS.map((doc) => [doc.type as string, doc]));
 
     const pushAssertion = (assertion: AiPathsDocAssertion): void => {
       if (seen.has(assertion.id)) return;
@@ -749,7 +721,7 @@ export const buildCoverageMatrixSourcePayload = async (args: {
       const nodeDoc = nodeDocsByType.get(nodeType);
       if (!nodeDoc) {
         warnings.push(
-          `${source.path}: coverage row "${nodeType}" has no matching node docs entry.`,
+          `${source.path}: coverage row "${nodeType}" has no matching node docs entry.`
         );
         return;
       }
@@ -854,7 +826,7 @@ export const buildCoverageMatrixSourcePayload = async (args: {
       }
 
       const runtimeWaitField = nodeDoc.config.find(
-        (field) => field.path === 'runtime.waitForInputs',
+        (field) => field.path === 'runtime.waitForInputs'
       );
       if ((runtimeState === 'yes' || runtimeState === 'partial') && runtimeWaitField) {
         pushAssertion({
@@ -884,7 +856,7 @@ export const buildCoverageMatrixSourcePayload = async (args: {
 
       if (asyncState === 'yes' || asyncState === 'partial') {
         const asyncField = nodeDoc.config.find((field) =>
-          /(interval|maxattempts|maxsteps|timeout|waitforinputs)/i.test(field.path),
+          /(interval|maxattempts|maxsteps|timeout|waitforinputs)/i.test(field.path)
         );
         if (asyncField) {
           pushAssertion({
@@ -916,7 +888,7 @@ export const buildCoverageMatrixSourcePayload = async (args: {
       if (persistenceState === 'yes' || persistenceState === 'partial') {
         const persistenceFields = nodeDoc.config
           .filter((field) =>
-            /(dryrun|skipempty|trimstrings|updatetemplate|writesource)/i.test(field.path),
+            /(dryrun|skipempty|trimstrings|updatetemplate|writesource)/i.test(field.path)
           )
           .slice(0, 2);
         persistenceFields.forEach((field, index) => {
@@ -949,7 +921,7 @@ export const buildCoverageMatrixSourcePayload = async (args: {
     return { hash, assertions };
   } catch (error) {
     warnings.push(
-      `${source.path}: failed to read coverage matrix (${error instanceof Error ? error.message : 'unknown error'}).`,
+      `${source.path}: failed to read coverage matrix (${error instanceof Error ? error.message : 'unknown error'}).`
     );
     return {
       hash: hashText(`read_error:${source.path}`),

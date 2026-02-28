@@ -25,10 +25,7 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
         title: 'Trigger: Infer Parameters',
         description: `User trigger button (${PARAMETER_INFERENCE_TRIGGER_BUTTON_ID}).`,
         inputs: [],
-        outputs: [
-          'trigger',
-          'triggerName',
-        ],
+        outputs: ['trigger', 'triggerName'],
         config: {
           trigger: {
             event: PARAMETER_INFERENCE_TRIGGER_BUTTON_ID,
@@ -132,10 +129,7 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
               preset: 'by_id',
               field: 'id',
               idType: 'string',
-              queryTemplate:
-                '{\n' +
-                '  "catalogId": "{{bundle.catalogId}}"\n' +
-                '}',
+              queryTemplate: '{\n' + '  "catalogId": "{{bundle.catalogId}}"\n' + '}',
               limit: 200,
               sort: '',
               projection: '',
@@ -204,7 +198,8 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
       {
         type: 'validation_pattern',
         title: 'VP: JSON Cleaner',
-        description: 'Clean raw model JSON output by stripping markdown fences and surrounding text.',
+        description:
+          'Clean raw model JSON output by stripping markdown fences and surrounding text.',
         inputs: ['value', 'prompt', 'result', 'context'],
         outputs: ['value', 'result', 'context', 'valid', 'errors', 'bundle'],
         id: 'node-vp-template-params',
@@ -401,11 +396,7 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
             dryRun: false,
             distinctField: '',
             updateTemplate:
-              '{\n' +
-              '  "$set": {\n' +
-              '    "parameters": {{value}}\n' +
-              '  }\n' +
-              '}',
+              '{\n' + '  "$set": {\n' + '    "parameters": {{value}}\n' + '  }\n' + '}',
             skipEmpty: true,
             trimStrings: false,
             aiPrompt: '',
@@ -545,11 +536,7 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
             dryRun: false,
             distinctField: '',
             updateTemplate:
-              '{\n' +
-              '  "$set": {\n' +
-              '    "parameters": {{value}}\n' +
-              '  }\n' +
-              '}',
+              '{\n' + '  "$set": {\n' + '    "parameters": {{value}}\n' + '  }\n' + '}',
             skipEmpty: true,
             trimStrings: false,
             aiPrompt: '',
@@ -744,9 +731,7 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
   });
 };
 
-export const needsParameterInferenceConfigUpgrade = (
-  raw: string | undefined
-): boolean => {
+export const needsParameterInferenceConfigUpgrade = (raw: string | undefined): boolean => {
   if (!raw) return true;
   try {
     const parsed = JSON.parse(raw) as Record<string, unknown>;
@@ -789,56 +774,42 @@ export const needsParameterInferenceConfigUpgrade = (
 
     if (nodes.some((node) => node?.['id'] === 'node-sim-params')) return true;
 
-    const triggerNode = nodes.find(
-      (node) => node?.['id'] === 'node-trigger-params'
-    );
+    const triggerNode = nodes.find((node) => node?.['id'] === 'node-trigger-params');
     const triggerEvent =
       triggerNode &&
       typeof triggerNode === 'object' &&
       triggerNode['config'] &&
       typeof triggerNode['config'] === 'object' &&
       (triggerNode['config'] as Record<string, unknown>)['trigger'] &&
-      typeof (triggerNode['config'] as Record<string, unknown>)['trigger'] ===
-        'object'
+      typeof (triggerNode['config'] as Record<string, unknown>)['trigger'] === 'object'
         ? (
-          (triggerNode['config'] as Record<string, unknown>)[
-            'trigger'
-          ] as Record<string, unknown>
-        )['event']
+            (triggerNode['config'] as Record<string, unknown>)['trigger'] as Record<string, unknown>
+          )['event']
         : null;
     if (triggerEvent !== PARAMETER_INFERENCE_TRIGGER_BUTTON_ID) return true;
 
-    const updateNode = nodes.find(
-      (node) => node?.['id'] === 'node-update-params'
-    );
+    const updateNode = nodes.find((node) => node?.['id'] === 'node-update-params');
     const updateDatabase =
       updateNode &&
       typeof updateNode === 'object' &&
       updateNode['config'] &&
       typeof updateNode['config'] === 'object' &&
       (updateNode['config'] as Record<string, unknown>)['database'] &&
-      typeof (updateNode['config'] as Record<string, unknown>)['database'] ===
-        'object'
-        ? ((updateNode['config'] as Record<string, unknown>)[
-          'database'
-        ] as Record<string, unknown>)
+      typeof (updateNode['config'] as Record<string, unknown>)['database'] === 'object'
+        ? ((updateNode['config'] as Record<string, unknown>)['database'] as Record<string, unknown>)
         : null;
     const guardEnabled =
       updateDatabase &&
       typeof updateDatabase['parameterInferenceGuard'] === 'object' &&
       updateDatabase['parameterInferenceGuard'] !== null
-        ? (
-          updateDatabase['parameterInferenceGuard'] as Record<string, unknown>
-        )['enabled'] === true
+        ? (updateDatabase['parameterInferenceGuard'] as Record<string, unknown>)['enabled'] === true
         : false;
     if (!guardEnabled) return true;
     const guardTargetPath =
       updateDatabase &&
       typeof updateDatabase['parameterInferenceGuard'] === 'object' &&
       updateDatabase['parameterInferenceGuard'] !== null
-        ? (
-          updateDatabase['parameterInferenceGuard'] as Record<string, unknown>
-        )['targetPath']
+        ? (updateDatabase['parameterInferenceGuard'] as Record<string, unknown>)['targetPath']
         : null;
     if (guardTargetPath !== 'parameters') return true;
     const updateMappings = Array.isArray(updateDatabase?.['mappings'])
@@ -871,15 +842,11 @@ export const needsParameterInferenceConfigUpgrade = (
         : null;
     if (updateQueryMode !== 'custom') return true;
     const updateQueryTemplate =
-      updateQueryConfig &&
-      typeof updateQueryConfig['queryTemplate'] === 'string'
+      updateQueryConfig && typeof updateQueryConfig['queryTemplate'] === 'string'
         ? updateQueryConfig['queryTemplate'].trim()
         : '';
     if (!updateQueryTemplate) return true;
-    if (
-      !updateQueryTemplate.includes('"id"') ||
-      !updateQueryTemplate.includes('{{entityId}}')
-    ) {
+    if (!updateQueryTemplate.includes('"id"') || !updateQueryTemplate.includes('{{entityId}}')) {
       return true;
     }
     const updateTemplate =
@@ -904,22 +871,15 @@ export const needsParameterInferenceConfigUpgrade = (
       queryNode['config'] &&
       typeof queryNode['config'] === 'object' &&
       (queryNode['config'] as Record<string, unknown>)['database'] &&
-      typeof (queryNode['config'] as Record<string, unknown>)['database'] ===
-        'object'
-        ? ((queryNode['config'] as Record<string, unknown>)[
-          'database'
-        ] as Record<string, unknown>)
+      typeof (queryNode['config'] as Record<string, unknown>)['database'] === 'object'
+        ? ((queryNode['config'] as Record<string, unknown>)['database'] as Record<string, unknown>)
         : null;
     const queryConfig =
-      queryDatabase &&
-      typeof queryDatabase['query'] === 'object' &&
-      queryDatabase['query'] !== null
+      queryDatabase && typeof queryDatabase['query'] === 'object' && queryDatabase['query'] !== null
         ? (queryDatabase['query'] as Record<string, unknown>)
         : null;
     const queryMode =
-      queryConfig && typeof queryConfig['mode'] === 'string'
-        ? queryConfig['mode']
-        : null;
+      queryConfig && typeof queryConfig['mode'] === 'string' ? queryConfig['mode'] : null;
     if (queryMode !== 'custom') return true;
     const queryCollection =
       queryConfig && typeof queryConfig['collection'] === 'string'
@@ -945,13 +905,10 @@ export const needsParameterInferenceConfigUpgrade = (
       promptNode['config'] &&
       typeof promptNode['config'] === 'object' &&
       (promptNode['config'] as Record<string, unknown>)['prompt'] &&
-      typeof (promptNode['config'] as Record<string, unknown>)['prompt'] ===
-        'object'
-        ? (
-          (promptNode['config'] as Record<string, unknown>)[
-            'prompt'
-          ] as Record<string, unknown>
-        )['template']
+      typeof (promptNode['config'] as Record<string, unknown>)['prompt'] === 'object'
+        ? ((promptNode['config'] as Record<string, unknown>)['prompt'] as Record<string, unknown>)[
+            'template'
+          ]
         : null;
     if (
       typeof promptTemplate !== 'string' ||
@@ -961,50 +918,43 @@ export const needsParameterInferenceConfigUpgrade = (
       return true;
     }
 
-    const templatePromptNode = nodes.find(
-      (node) => node?.['id'] === 'node-prompt-template-params'
-    );
+    const templatePromptNode = nodes.find((node) => node?.['id'] === 'node-prompt-template-params');
     const templatePromptTemplate =
       templatePromptNode &&
       typeof templatePromptNode === 'object' &&
       templatePromptNode['config'] &&
       typeof templatePromptNode['config'] === 'object' &&
       (templatePromptNode['config'] as Record<string, unknown>)['prompt'] &&
-      typeof (templatePromptNode['config'] as Record<string, unknown>)[
-        'prompt'
-      ] === 'object'
+      typeof (templatePromptNode['config'] as Record<string, unknown>)['prompt'] === 'object'
         ? (
-          (templatePromptNode['config'] as Record<string, unknown>)[
-            'prompt'
-          ] as Record<string, unknown>
-        )['template']
+            (templatePromptNode['config'] as Record<string, unknown>)['prompt'] as Record<
+              string,
+              unknown
+            >
+          )['template']
         : null;
     if (
       typeof templatePromptTemplate !== 'string' ||
-      !templatePromptTemplate.includes(
-        '{"parameterId":"<id>","value":""}'
-      ) ||
+      !templatePromptTemplate.includes('{"parameterId":"<id>","value":""}') ||
       !templatePromptTemplate.includes('If input has no valid definitions')
     ) {
       return true;
     }
 
-    const templateRegexNode = nodes.find(
-      (node) => node?.['id'] === 'node-regex-template-params'
-    );
+    const templateRegexNode = nodes.find((node) => node?.['id'] === 'node-regex-template-params');
     const templateRegexMode =
       templateRegexNode &&
       typeof templateRegexNode === 'object' &&
       templateRegexNode['config'] &&
       typeof templateRegexNode['config'] === 'object' &&
       (templateRegexNode['config'] as Record<string, unknown>)['regex'] &&
-      typeof (templateRegexNode['config'] as Record<string, unknown>)['regex'] ===
-        'object'
+      typeof (templateRegexNode['config'] as Record<string, unknown>)['regex'] === 'object'
         ? (
-          (templateRegexNode['config'] as Record<string, unknown>)[
-            'regex'
-          ] as Record<string, unknown>
-        )['mode']
+            (templateRegexNode['config'] as Record<string, unknown>)['regex'] as Record<
+              string,
+              unknown
+            >
+          )['mode']
         : null;
     if (templateRegexMode !== 'extract') return true;
 
@@ -1016,16 +966,11 @@ export const needsParameterInferenceConfigUpgrade = (
       seedNode['config'] &&
       typeof seedNode['config'] === 'object' &&
       (seedNode['config'] as Record<string, unknown>)['database'] &&
-      typeof (seedNode['config'] as Record<string, unknown>)['database'] ===
-        'object'
-        ? ((seedNode['config'] as Record<string, unknown>)[
-          'database'
-        ] as Record<string, unknown>)
+      typeof (seedNode['config'] as Record<string, unknown>)['database'] === 'object'
+        ? ((seedNode['config'] as Record<string, unknown>)['database'] as Record<string, unknown>)
         : null;
     const seedQueryConfig =
-      seedDatabase &&
-      typeof seedDatabase['query'] === 'object' &&
-      seedDatabase['query'] !== null
+      seedDatabase && typeof seedDatabase['query'] === 'object' && seedDatabase['query'] !== null
         ? (seedDatabase['query'] as Record<string, unknown>)
         : null;
     const seedQueryCollection =
@@ -1056,10 +1001,7 @@ export const needsParameterInferenceConfigUpgrade = (
         ? seedDatabase['updatePayloadMode']
         : null;
     if (seedUpdatePayloadMode !== 'custom') return true;
-    const seedAction =
-      typeof seedDatabase?.['action'] === 'string'
-        ? seedDatabase['action']
-        : null;
+    const seedAction = typeof seedDatabase?.['action'] === 'string' ? seedDatabase['action'] : null;
     if (seedAction !== 'findOneAndUpdate') return true;
     const seedUpdateTemplate =
       typeof seedDatabase?.['updateTemplate'] === 'string'
@@ -1138,25 +1080,18 @@ export const needsParameterInferenceConfigUpgrade = (
     });
     if (hasLegacySeedDependencyEdgeToUpdater) return true;
 
-    const parserNode = nodes.find(
-      (node) => node?.['id'] === 'node-parser-params'
-    );
+    const parserNode = nodes.find((node) => node?.['id'] === 'node-parser-params');
     const parserMappings =
       parserNode &&
       typeof parserNode['config'] === 'object' &&
       parserNode['config'] !== null &&
-      typeof (parserNode['config'] as Record<string, unknown>)['parser'] ===
-        'object'
-        ? (
-          (parserNode['config'] as Record<string, unknown>)[
-            'parser'
-          ] as Record<string, unknown>
-        )['mappings']
+      typeof (parserNode['config'] as Record<string, unknown>)['parser'] === 'object'
+        ? ((parserNode['config'] as Record<string, unknown>)['parser'] as Record<string, unknown>)[
+            'mappings'
+          ]
         : null;
     const catalogIdMapping =
-      parserMappings &&
-      typeof parserMappings === 'object' &&
-      'catalogId' in (parserMappings)
+      parserMappings && typeof parserMappings === 'object' && 'catalogId' in parserMappings
         ? (parserMappings as Record<string, unknown>)['catalogId']
         : undefined;
     if (

@@ -1,14 +1,12 @@
 import { NextRequest } from 'next/server';
 
+import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
+import { streamBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
 import { runTeachingChat } from '@/features/ai/agentcreator/teaching/server/chat';
 import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
 import type { CmsCssAiRequestDto as CssAiRequest } from '@/shared/contracts/cms';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
-
-
-const OLLAMA_BASE_URL = process.env['OLLAMA_BASE_URL'] ?? 'http://localhost:11434';
-const OLLAMA_MODEL = process.env['OLLAMA_MODEL'] ?? '';
 
 const isValidMessages = (messages: ChatMessage[]): boolean =>
   messages.length > 0 &&
@@ -25,11 +23,15 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     throw badRequestError('Invalid JSON payload.');
   }
 
-  const provider = body.provider ?? 'model';
-  const messages = (Array.isArray(body.messages) ? body.messages : []);
+  const messages = Array.isArray(body.messages) ? body.messages : [];
   if (!isValidMessages(messages)) {
     throw badRequestError('Invalid messages payload.');
   }
+  const brainConfig = await resolveBrainExecutionConfigForCapability('cms.css_stream', {
+    defaultTemperature: 0.2,
+    defaultMaxTokens: 1200,
+    runtimeKind: 'stream',
+  });
 
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
@@ -39,104 +41,45 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
       };
 
       try {
-        if (provider === 'agent') {
-          const agentId = (body.agentId ?? '').trim();
-          if (!agentId) {
-            send({ error: 'Missing agentId.', done: true });
+        send({ brainApplied: brainConfig.brainApplied, done: false, meta: true });
+
+        if (brainConfig.provider === 'agent') {
+          if (!brainConfig.agentId) {
+            send({ error: 'Brain-assigned agentId is missing.', done: true });
             controller.close();
             return;
           }
-          const result = await runTeachingChat({ agentId, messages });
+          const result = await runTeachingChat({ agentId: brainConfig.agentId, messages });
           send({ delta: result.message, done: true });
           controller.close();
           return;
         }
 
-        const modelId = (body.modelId ?? '').trim() || OLLAMA_MODEL;
-        if (!modelId) {
-          send({ error: 'Missing modelId.', done: true });
-          controller.close();
-          return;
-        }
-
-        const upstreamController = new AbortController();
-        req.signal.addEventListener('abort', () => {
-          upstreamController.abort();
-          controller.close();
+        const upstream = await streamBrainChatCompletion({
+          modelId: brainConfig.modelId,
+          temperature: brainConfig.temperature,
+          maxTokens: brainConfig.maxTokens,
+          messages: messages.map((message: ChatMessage) => ({
+            role: message.role === 'assistant' || message.role === 'system' ? message.role : 'user',
+            content: message.content,
+          })),
         });
-
-        const res = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          signal: upstreamController.signal,
-          body: JSON.stringify({
-            model: modelId,
-            stream: true,
-            messages,
-          }),
-        });
-
-        if (!res.ok || !res.body) {
-          const text = await res.text().catch(() => '');
-          send({ error: `LLM error: ${text || res.statusText}` });
-          controller.close();
-          return;
-        }
-
-        const reader = res.body.getReader();
+        const reader = upstream.stream.getReader();
         const decoder = new TextDecoder();
-        let buffer = '';
-        let done = false;
+        req.signal.addEventListener('abort', () => {
+          void reader.cancel().catch(() => undefined);
+          controller.close();
+        });
 
-        while (!done) {
+        while (true) {
           const result = await reader.read();
-          done = result.done;
-          if (result.value) {
-            buffer += decoder.decode(result.value, { stream: true });
-            const lines = buffer.split('\n');
-            buffer = lines.pop() ?? '';
-            for (const line of lines) {
-              const trimmed = line.trim();
-              if (!trimmed) continue;
-              try {
-                const payload = JSON.parse(trimmed) as {
-                  message?: { content?: string };
-                  done?: boolean;
-                  error?: string;
-                };
-                if (payload.error) {
-                  send({ error: payload.error, done: true });
-                  controller.close();
-                  return;
-                }
-                const delta = payload.message?.content ?? '';
-                if (delta) {
-                  send({ delta, done: false });
-                }
-                if (payload.done) {
-                  send({ done: true });
-                  controller.close();
-                  return;
-                }
-              } catch {
-                // ignore parse errors on partial lines
-              }
-            }
+          if (result.done) break;
+          const delta = decoder.decode(result.value, { stream: true });
+          if (delta) {
+            send({ delta, done: false });
           }
         }
-
-        if (buffer.trim()) {
-          try {
-            const payload = JSON.parse(buffer.trim()) as { message?: { content?: string }; done?: boolean };
-            const delta = payload.message?.content ?? '';
-            if (delta) send({ delta, done: false });
-            if (payload.done) {
-              send({ done: true });
-            }
-          } catch {
-            // ignore
-          }
-        }
+        send({ done: true });
         controller.close();
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Streaming failed.';
@@ -154,4 +97,3 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     },
   });
 }
-

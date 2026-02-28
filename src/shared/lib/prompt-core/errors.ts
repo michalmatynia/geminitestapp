@@ -66,9 +66,5 @@ export const asPromptValidationIntegrationError = (
   details?: Record<string, unknown>
 ): PromptValidationIntegrationError => {
   if (error instanceof PromptValidationIntegrationError) return error;
-  return new PromptValidationRuntimeError(
-    fallbackMessage,
-    details,
-    error
-  );
+  return new PromptValidationRuntimeError(fallbackMessage, details, error);
 };

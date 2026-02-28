@@ -41,11 +41,19 @@ export const WRAP_OPTIONS = [
   { label: 'No wrap', value: 'nowrap' },
 ];
 
-export function colorSchemeField(key: string, label: string, defaultValue: string = 'scheme-1'): SettingsField {
+export function colorSchemeField(
+  key: string,
+  label: string,
+  defaultValue: string = 'scheme-1'
+): SettingsField {
   return { key, label, type: 'color-scheme', options: COLOR_SCHEME_OPTIONS, defaultValue };
 }
 
-export function colorSchemeFieldWithNone(key: string, label: string, defaultValue: string = 'none'): SettingsField {
+export function colorSchemeFieldWithNone(
+  key: string,
+  label: string,
+  defaultValue: string = 'none'
+): SettingsField {
   return {
     key,
     label,
@@ -92,7 +100,17 @@ export function layoutFields(): SettingsField[] {
 export function sectionStyleFields(): SettingsField[] {
   return [
     { key: 'background', label: 'Background', type: 'background', defaultValue: { type: 'none' } },
-    { key: 'sectionBorder', label: 'Border', type: 'border', defaultValue: { width: 0, style: 'none', color: '#4b5563', radius: 0 } },
-    { key: 'sectionShadow', label: 'Shadow', type: 'shadow', defaultValue: { x: 0, y: 0, blur: 0, spread: 0, color: '#00000000' } },
+    {
+      key: 'sectionBorder',
+      label: 'Border',
+      type: 'border',
+      defaultValue: { width: 0, style: 'none', color: '#4b5563', radius: 0 },
+    },
+    {
+      key: 'sectionShadow',
+      label: 'Shadow',
+      type: 'shadow',
+      defaultValue: { x: 0, y: 0, blur: 0, spread: 0, color: '#00000000' },
+    },
   ];
 }

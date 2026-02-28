@@ -12,9 +12,7 @@ export interface RelatedNoteItem {
 
 export interface NoteRelationsData {
   selectedRelatedNotes: RelatedNoteItem[];
-  setSelectedRelatedNotes: React.Dispatch<
-    React.SetStateAction<RelatedNoteItem[]>
-  >;
+  setSelectedRelatedNotes: React.Dispatch<React.SetStateAction<RelatedNoteItem[]>>;
   relatedNoteQuery: string;
   setRelatedNoteQuery: (query: string) => void;
   isRelatedDropdownOpen: boolean;
@@ -24,13 +22,10 @@ export interface NoteRelationsData {
   handleSelectRelatedNote: (noteId: string) => void;
 }
 
-export const NoteRelationsContext = createContext<NoteRelationsData | null>(
-  null,
-);
+export const NoteRelationsContext = createContext<NoteRelationsData | null>(null);
 
 export function useNoteRelations(): NoteRelationsData {
   const context = useContext(NoteRelationsContext);
-  if (!context)
-    throw new Error('useNoteRelations must be used within NoteFormProvider');
+  if (!context) throw new Error('useNoteRelations must be used within NoteFormProvider');
   return context;
 }

@@ -50,13 +50,10 @@ export function AdminFilemakerEmailsPage(): React.JSX.Element {
   const emails = useMemo(
     () =>
       [...database.emails]
-        .filter((email: FilemakerEmail) =>
-          includeQuery([
-            email.email,
-            email.status,
-          ], deferredQuery)
-        )
-        .sort((left: FilemakerEmail, right: FilemakerEmail) => left.email.localeCompare(right.email)),
+        .filter((email: FilemakerEmail) => includeQuery([email.email, email.status], deferredQuery))
+        .sort((left: FilemakerEmail, right: FilemakerEmail) =>
+          left.email.localeCompare(right.email)
+        ),
     [database.emails, deferredQuery]
   );
 
@@ -88,7 +85,9 @@ export function AdminFilemakerEmailsPage(): React.JSX.Element {
             <div className='space-y-0.5'>
               <div className='text-[11px] text-gray-500'>Total: {linkCount.total}</div>
               <div className='text-[11px] text-gray-500'>Persons: {linkCount.persons}</div>
-              <div className='text-[11px] text-gray-500'>Organizations: {linkCount.organizations}</div>
+              <div className='text-[11px] text-gray-500'>
+                Organizations: {linkCount.organizations}
+              </div>
             </div>
           );
         },
@@ -191,7 +190,11 @@ export function AdminFilemakerEmailsPage(): React.JSX.Element {
         emptyState={
           <EmptyState
             title={query ? 'No emails found' : 'No emails found in database.'}
-            description={query ? 'Try adjusting your search terms.' : 'Add your first email in Filemaker Database.'}
+            description={
+              query
+                ? 'Try adjusting your search terms.'
+                : 'Add your first email in Filemaker Database.'
+            }
           />
         }
       />

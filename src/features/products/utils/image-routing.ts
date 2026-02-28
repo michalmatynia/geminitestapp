@@ -1,6 +1,4 @@
-export const normalizeProductImageExternalBaseUrl = (
-  value: string | null | undefined
-): string => {
+export const normalizeProductImageExternalBaseUrl = (value: string | null | undefined): string => {
   const trimmed = value?.trim() ?? '';
   if (!trimmed) return '';
 

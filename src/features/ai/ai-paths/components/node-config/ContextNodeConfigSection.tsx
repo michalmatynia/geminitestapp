@@ -11,7 +11,16 @@ import {
   safeStringify,
   toggleContextTarget,
 } from '@/shared/lib/ai-paths';
-import { Button, Input, Textarea, SelectSimple, CopyButton, Label, Card, FormField } from '@/shared/ui';
+import {
+  Button,
+  Input,
+  Textarea,
+  SelectSimple,
+  CopyButton,
+  Label,
+  Card,
+  FormField,
+} from '@/shared/ui';
 
 import { useAiPathConfig } from '../AiPathConfigContext';
 
@@ -69,26 +78,25 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
     }
   };
   const receivedContext = sanitizePayload(receivedInputs['context'], hideLargeFields);
-  const sanitizedInputs = sanitizePayload(receivedInputs, hideLargeFields) as Record<string, unknown>;
-  const sanitizedOutputs = sanitizePayload(resolvedOutputs, hideLargeFields) as Record<string, unknown>;
+  const sanitizedInputs = sanitizePayload(receivedInputs, hideLargeFields) as Record<
+    string,
+    unknown
+  >;
+  const sanitizedOutputs = sanitizePayload(resolvedOutputs, hideLargeFields) as Record<
+    string,
+    unknown
+  >;
   const receivedContextText = stringifyPayload(receivedContext);
   const receivedInputsText = stringifyPayload(sanitizedInputs);
   const resolvedOutputsText = stringifyPayload(sanitizedOutputs);
   const resolvedEntityId =
-    typeof sanitizedOutputs?.['entityId'] === 'string'
-      ? (sanitizedOutputs['entityId'])
-      : '';
+    typeof sanitizedOutputs?.['entityId'] === 'string' ? sanitizedOutputs['entityId'] : '';
   const resolvedEntityType =
-    typeof sanitizedOutputs?.['entityType'] === 'string'
-      ? (sanitizedOutputs['entityType'])
-      : '';
+    typeof sanitizedOutputs?.['entityType'] === 'string' ? sanitizedOutputs['entityType'] : '';
   const diffInputs = sanitizedInputs ?? {};
   const diffOutputs = sanitizedOutputs ?? {};
   const diffKeys = Array.from(
-    new Set([
-      ...Object.keys(diffInputs ?? {}),
-      ...Object.keys(diffOutputs ?? {}),
-    ])
+    new Set([...Object.keys(diffInputs ?? {}), ...Object.keys(diffOutputs ?? {})])
   ).sort();
   const diff = diffKeys.reduce<{
     added: string[];
@@ -96,12 +104,15 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
     changed: string[];
     same: string[];
   }>(
-    (acc: {
-      added: string[];
-      removed: string[];
-      changed: string[];
-      same: string[];
-    }, key: string) => {
+    (
+      acc: {
+        added: string[];
+        removed: string[];
+        changed: string[];
+        same: string[];
+      },
+      key: string
+    ) => {
       const inInput = key in diffInputs;
       const inOutput = key in diffOutputs;
       if (!inInput && inOutput) {
@@ -126,21 +137,15 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
     { added: [], removed: [], changed: [], same: [] }
   );
   const diffLines = [
-    ...diff.added.map(
-      (key: string) => `+ ${key}: ${formatRuntimeValue(diffOutputs[key])}`
-    ),
-    ...diff.removed.map(
-      (key: string) => `- ${key}: ${formatRuntimeValue(diffInputs[key])}`
-    ),
+    ...diff.added.map((key: string) => `+ ${key}: ${formatRuntimeValue(diffOutputs[key])}`),
+    ...diff.removed.map((key: string) => `- ${key}: ${formatRuntimeValue(diffInputs[key])}`),
     ...diff.changed.map(
       (key: string) =>
         `~ ${key}: ${formatRuntimeValue(diffInputs[key])} -> ${formatRuntimeValue(
           diffOutputs[key]
         )}`
     ),
-    ...(!diffOnlyChanges
-      ? diff.same.map((key: string) => `= ${key}`)
-      : []),
+    ...(!diffOnlyChanges ? diff.same.map((key: string) => `= ${key}`) : []),
   ];
   const combinedPayload = {
     inputs: sanitizedInputs,
@@ -155,9 +160,8 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
   return (
     <div className='space-y-4'>
       <p className='text-[11px] text-gray-500'>
-        Connect Trigger <span className='text-gray-300'>context</span> into this
-        node to filter it. If left unconnected, the filter will fetch an
-        entity based on the settings below.
+        Connect Trigger <span className='text-gray-300'>context</span> into this node to filter it.
+        If left unconnected, the filter will fetch an entity based on the settings below.
       </p>
       <div className='flex flex-wrap items-center gap-2'>
         <div className='flex items-center gap-1'>
@@ -262,8 +266,8 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
           </pre>
         ) : (
           <p className='mt-2 text-[11px] text-gray-500'>
-            No context payload received yet. Fire the trigger or connect a
-            context input to inspect the payload.
+            No context payload received yet. Fire the trigger or connect a context input to inspect
+            the payload.
           </p>
         )}
       </Card>
@@ -274,9 +278,7 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
             {receivedInputsText}
           </pre>
         ) : (
-          <p className='mt-2 text-[11px] text-gray-500'>
-            No inputs recorded yet for this node.
-          </p>
+          <p className='mt-2 text-[11px] text-gray-500'>No inputs recorded yet for this node.</p>
         )}
       </Card>
       <Card variant='subtle-compact' padding='sm' className='border-border bg-card/60'>
@@ -293,9 +295,7 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
       </Card>
       {showDiff && (
         <Card variant='subtle-compact' padding='sm' className='border-border bg-card/60'>
-          <div className='text-[11px] text-gray-400'>
-            Diff (inputs vs outputs)
-          </div>
+          <div className='text-[11px] text-gray-400'>Diff (inputs vs outputs)</div>
           <div className='mt-2 flex flex-wrap gap-2 text-[10px] text-gray-300'>
             <span>Added: {diff.added.length}</span>
             <span>Removed: {diff.removed.length}</span>
@@ -307,15 +307,13 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
               {diffLines.join('\n')}
             </pre>
           ) : (
-            <p className='mt-2 text-[11px] text-gray-500'>
-              No differences detected yet.
-            </p>
+            <p className='mt-2 text-[11px] text-gray-500'>No differences detected yet.</p>
           )}
         </Card>
       )}
-      
-      <FormField 
-        label='Filter Role' 
+
+      <FormField
+        label='Filter Role'
         description='Optional label attached to the filtered context output.'
       >
         <Input
@@ -365,7 +363,8 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
           </Button>
         </div>
         <p className='mt-2 text-[11px] text-gray-500'>
-          Presets adjust scope to include curated fields for the selected entity (or a generic set when auto).
+          Presets adjust scope to include curated fields for the selected entity (or a generic set
+          when auto).
         </p>
       </div>
       <div className='grid gap-3 sm:grid-cols-2'>
@@ -388,9 +387,9 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
             variant='subtle'
           />
         </FormField>
-        
-        <FormField 
-          label='Scope Target' 
+
+        <FormField
+          label='Scope Target'
           description='Choose whether scope filters apply to the entity payload or the full context object.'
         >
           <SelectSimple
@@ -492,11 +491,8 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
           />
         </FormField>
       )}
-      
-      <FormField 
-        label='Data Scope' 
-        description='Use dot paths (e.g. priceGroups.default).'
-      >
+
+      <FormField label='Data Scope' description='Use dot paths (e.g. priceGroups.default).'>
         <SelectSimple
           size='sm'
           value={contextConfig.scopeMode ?? 'full'}
@@ -516,12 +512,13 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
           variant='subtle'
         />
       </FormField>
-      {(contextConfig.scopeMode === 'include' ||
-        contextConfig.scopeMode === 'exclude') && (
-        <FormField 
-          label={contextConfig.scopeMode === 'include'
-            ? 'Include paths (one per line)'
-            : 'Exclude paths (one per line)'}
+      {(contextConfig.scopeMode === 'include' || contextConfig.scopeMode === 'exclude') && (
+        <FormField
+          label={
+            contextConfig.scopeMode === 'include'
+              ? 'Include paths (one per line)'
+              : 'Exclude paths (one per line)'
+          }
         >
           <Textarea
             variant='subtle'
@@ -540,11 +537,11 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
                   includePaths:
                     contextConfig.scopeMode === 'include'
                       ? list
-                      : contextConfig.includePaths ?? [],
+                      : (contextConfig.includePaths ?? []),
                   excludePaths:
                     contextConfig.scopeMode === 'exclude'
                       ? list
-                      : contextConfig.excludePaths ?? [],
+                      : (contextConfig.excludePaths ?? []),
                 },
               });
             }}

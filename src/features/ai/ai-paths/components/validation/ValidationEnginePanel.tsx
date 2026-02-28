@@ -1,13 +1,7 @@
 'use client';
 
 import React from 'react';
-import {
-  Button,
-  Card,
-  Input,
-  Label,
-  SelectSimple,
-} from '@/shared/ui';
+import { Button, Card, Input, Label, SelectSimple } from '@/shared/ui';
 import { useAdminAiPathsValidationContext } from '../../context/AdminAiPathsValidationContext';
 
 const VALIDATION_POLICY_OPTIONS = [
@@ -35,20 +29,10 @@ export function ValidationEnginePanel(): React.JSX.Element {
       <div className='mb-4 flex flex-wrap items-center justify-between gap-2'>
         <h3 className='text-sm font-semibold text-white'>Validation Engine</h3>
         <div className='flex items-center gap-2'>
-          <Button
-            type='button'
-            variant='outline'
-            size='sm'
-            onClick={handleResetToDefaults}
-          >
+          <Button type='button' variant='outline' size='sm' onClick={handleResetToDefaults}>
             Reset To Defaults
           </Button>
-          <Button
-            type='button'
-            variant='outline'
-            size='sm'
-            onClick={handleRebuildRulesFromDocs}
-          >
+          <Button type='button' variant='outline' size='sm' onClick={handleRebuildRulesFromDocs}>
             Rebuild Rules From Docs
           </Button>
         </div>
@@ -59,9 +43,7 @@ export function ValidationEnginePanel(): React.JSX.Element {
           <SelectSimple
             size='sm'
             value={validationDraft.enabled === false ? 'disabled' : 'enabled'}
-            onValueChange={(value: string) =>
-              updateDraft({ enabled: value !== 'disabled' })
-            }
+            onValueChange={(value: string) => updateDraft({ enabled: value !== 'disabled' })}
             options={ENABLE_OPTIONS}
             className='mt-2'
           />

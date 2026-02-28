@@ -8,20 +8,14 @@ import { useProductListingsViewContext } from './context/ProductListingsViewCont
 import { ProductListingsSyncPanel } from './ProductListingsSyncPanel';
 
 export function ProductListingsEmpty(): React.JSX.Element {
-  const {
-    filterIntegrationSlug,
-    statusTargetLabel,
-    isBaseFilter,
-    showSync,
-  } = useProductListingsViewContext();
+  const { filterIntegrationSlug, statusTargetLabel, isBaseFilter, showSync } =
+    useProductListingsViewContext();
 
   return (
     <div className='space-y-4'>
       {filterIntegrationSlug ? (
         <Card variant='subtle' padding='lg' className='bg-card/50 text-center space-y-3'>
-          <div className='text-sm text-gray-300'>
-            {statusTargetLabel} status
-          </div>
+          <div className='text-sm text-gray-300'>{statusTargetLabel} status</div>
           <Card variant='subtle-compact' padding='sm' className='bg-card/60 text-xs text-gray-400'>
             Not connected.
           </Card>

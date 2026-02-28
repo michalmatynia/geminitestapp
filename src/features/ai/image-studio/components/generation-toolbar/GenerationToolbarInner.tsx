@@ -1,20 +1,16 @@
 'use client';
 
- 
-
 import React, { useMemo } from 'react';
+import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
 import { useGenerationToolbarState } from './GenerationToolbar.hooks';
-import {
-  UPSCALE_MAX_OUTPUT_SIDE,
-} from './GenerationToolbar.utils';
+import { UPSCALE_MAX_OUTPUT_SIDE } from './GenerationToolbar.utils';
 import {
   getObjectLayoutPresetValuesFromOption,
   saveObjectLayoutCustomPreset,
   deleteObjectLayoutCustomPreset,
   type ObjectLayoutPresetOptionValue,
-} from '../../utils/object-layout-presets';
-import { getImageStudioDocTooltip } from '../../utils/studio-docs';
-import { normalizeImageStudioModelPresets } from '../../utils/studio-settings';
+} from '@/shared/lib/ai/image-studio/utils/object-layout-presets';
+import { getImageStudioDocTooltip } from '@/shared/lib/ai/image-studio/utils/studio-docs';
 import { useGenerationToolbarHandlers } from './GenerationToolbar.handlers';
 import { type GenerationToolbarHandlers } from './GenerationToolbar.types';
 import { useGenerationToolbarEffects } from './useGenerationToolbarEffects';
@@ -26,6 +22,9 @@ import { GenerationToolbarMaskSection } from './GenerationToolbarMaskSection';
 import { GenerationToolbarUpscaleSection } from './GenerationToolbarUpscaleSection';
 
 export function GenerationToolbarInner(): React.JSX.Element {
+  const brainGenerationModel = useBrainModelOptions({
+    capability: 'image_studio.general',
+  });
   const state = useGenerationToolbarState();
   const {
     maskPreviewEnabled,
@@ -86,145 +85,158 @@ export function GenerationToolbarInner(): React.JSX.Element {
   });
 
   const maskGenerationBusy = maskGenLoading;
-  const maskGenerationLabel = maskGenerationBusy
-    ? 'Generating Mask...'
-    : 'Generate Mask';
+  const maskGenerationLabel = maskGenerationBusy ? 'Generating Mask...' : 'Generate Mask';
   const upscaleBusyLabel = useMemo(() => {
     if (!upscaleBusy) return 'Upscale';
     switch (upscaleStatus) {
-      case 'resolving': return 'Upscale: Resolving';
-      case 'preparing': return 'Upscale: Preparing';
-      case 'uploading': return 'Upscale: Uploading';
-      case 'processing': return 'Upscale: Processing';
-      case 'persisting': return 'Upscale: Persisting';
-      default: return 'Upscale';
+      case 'resolving':
+        return 'Upscale: Resolving';
+      case 'preparing':
+        return 'Upscale: Preparing';
+      case 'uploading':
+        return 'Upscale: Uploading';
+      case 'processing':
+        return 'Upscale: Processing';
+      case 'persisting':
+        return 'Upscale: Persisting';
+      default:
+        return 'Upscale';
     }
   }, [upscaleBusy, upscaleStatus]);
   const cropBusyLabel = useMemo(() => {
     if (!cropBusy) return 'Crop';
     switch (cropStatus) {
-      case 'resolving': return 'Crop: Resolving';
-      case 'preparing': return 'Crop: Preparing';
-      case 'uploading': return 'Crop: Uploading';
-      case 'processing': return 'Crop: Processing';
-      case 'persisting': return 'Crop: Persisting';
-      default: return 'Crop';
+      case 'resolving':
+        return 'Crop: Resolving';
+      case 'preparing':
+        return 'Crop: Preparing';
+      case 'uploading':
+        return 'Crop: Uploading';
+      case 'processing':
+        return 'Crop: Processing';
+      case 'persisting':
+        return 'Crop: Persisting';
+      default:
+        return 'Crop';
     }
   }, [cropBusy, cropStatus]);
   const centerBusyLabel = useMemo(() => {
     if (!centerBusy) return centerIsObjectLayoutMode ? 'Object Layouting' : 'Center Object';
     switch (centerStatus) {
-      case 'resolving': return centerIsObjectLayoutMode ? 'Layout: Resolving' : 'Center: Resolving';
-      case 'preparing': return centerIsObjectLayoutMode ? 'Layout: Preparing' : 'Center: Preparing';
-      case 'uploading': return centerIsObjectLayoutMode ? 'Layout: Uploading' : 'Center: Uploading';
-      case 'processing': return centerIsObjectLayoutMode ? 'Layout: Processing' : 'Center: Processing';
-      case 'persisting': return centerIsObjectLayoutMode ? 'Layout: Persisting' : 'Center: Persisting';
-      default: return centerIsObjectLayoutMode ? 'Object Layouting' : 'Center Object';
+      case 'resolving':
+        return centerIsObjectLayoutMode ? 'Layout: Resolving' : 'Center: Resolving';
+      case 'preparing':
+        return centerIsObjectLayoutMode ? 'Layout: Preparing' : 'Center: Preparing';
+      case 'uploading':
+        return centerIsObjectLayoutMode ? 'Layout: Uploading' : 'Center: Uploading';
+      case 'processing':
+        return centerIsObjectLayoutMode ? 'Layout: Processing' : 'Center: Processing';
+      case 'persisting':
+        return centerIsObjectLayoutMode ? 'Layout: Persisting' : 'Center: Persisting';
+      default:
+        return centerIsObjectLayoutMode ? 'Object Layouting' : 'Center Object';
     }
   }, [centerBusy, centerIsObjectLayoutMode, centerStatus]);
   const autoScaleBusyLabel = useMemo(() => {
     if (!autoScaleBusy) return 'Auto Scale';
     switch (autoScaleStatus) {
-      case 'resolving': return 'Auto Scale: Resolving';
-      case 'preparing': return 'Auto Scale: Preparing';
-      case 'uploading': return 'Auto Scale: Uploading';
-      case 'processing': return 'Auto Scale: Processing';
-      case 'persisting': return 'Auto Scale: Persisting';
-      default: return 'Auto Scale';
+      case 'resolving':
+        return 'Auto Scale: Resolving';
+      case 'preparing':
+        return 'Auto Scale: Preparing';
+      case 'uploading':
+        return 'Auto Scale: Uploading';
+      case 'processing':
+        return 'Auto Scale: Processing';
+      case 'persisting':
+        return 'Auto Scale: Persisting';
+      default:
+        return 'Auto Scale';
     }
   }, [autoScaleBusy, autoScaleStatus]);
   const analysisBusyLabel = useMemo(() => {
     if (!analysisBusy) return 'Run Analysis';
     switch (analysisStatus) {
-      case 'resolving': return 'Analyze: Resolving';
-      case 'processing': return 'Analyze: Processing';
-      default: return 'Run Analysis';
+      case 'resolving':
+        return 'Analyze: Resolving';
+      case 'processing':
+        return 'Analyze: Processing';
+      default:
+        return 'Run Analysis';
     }
   }, [analysisBusy, analysisStatus]);
 
-  const quickSwitchModels = useMemo(
-    () =>
-      normalizeImageStudioModelPresets(
-        studioSettings.targetAi.openai.modelPresets,
-        studioSettings.targetAi.openai.model,
-      ),
-    [studioSettings.targetAi.openai.modelPresets, studioSettings.targetAi.openai.model]
-  );
-  const modelOptions = useMemo(
-    () => quickSwitchModels.map((modelId) => ({ value: modelId, label: modelId })),
-    [quickSwitchModels]
-  );
   const imageCountOptions = useMemo(
     () => ['1', '2', '4'].map((value: string) => ({ value, label: value })),
     []
   );
   const maskModeOptions = useMemo(
-    () => ([
+    () => [
       { value: 'ai-polygon', label: 'AI Polygon' },
       { value: 'ai-bbox', label: 'AI Bounding Box' },
       { value: 'threshold', label: 'Threshold' },
       { value: 'edges', label: 'Edge Detection' },
-    ]),
+    ],
     []
   );
   const maskAttachModeOptions = useMemo(
-    () => ([
+    () => [
       { value: 'client_canvas_polygon', label: 'Option A: Canvas Polygon' },
       { value: 'server_polygon', label: 'Option C: Server Polygon' },
-    ]),
+    ],
     []
   );
   const upscaleModeOptions = useMemo(
-    () => ([
+    () => [
       { value: 'client_canvas', label: 'Upscale A: Canvas' },
       { value: 'server_sharp', label: 'Upscale Server: Sharp' },
-    ]),
+    ],
     []
   );
   const upscaleStrategyOptions = useMemo(
-    () => ([
+    () => [
       { value: 'scale', label: 'By Multiplier' },
       { value: 'target_resolution', label: 'By Resolution' },
-    ]),
+    ],
     []
   );
   const cropModeOptions = useMemo(
-    () => ([
+    () => [
       { value: 'client_bbox', label: 'Crop Client: Canvas' },
       { value: 'server_bbox', label: 'Crop Server: Sharp' },
-    ]),
+    ],
     []
   );
   const centerModeOptions = useMemo(
-    () => ([
+    () => [
       { value: 'client_alpha_bbox', label: 'Center Client: Canvas' },
       { value: 'server_alpha_bbox', label: 'Center Server: Sharp' },
       { value: 'client_object_layout_v1', label: 'Object Layouting Client (Experimental)' },
       { value: 'server_object_layout_v1', label: 'Object Layouting Server (Experimental)' },
-    ]),
+    ],
     []
   );
   const autoScaleModeOptions = useMemo(
-    () => ([
+    () => [
       { value: 'client_auto_scaler_v1', label: 'Auto Scaler Client: Canvas' },
       { value: 'server_auto_scaler_v1', label: 'Auto Scaler Server: Sharp' },
-    ]),
+    ],
     []
   );
   const shadowPolicyOptions = useMemo(
-    () => ([
+    () => [
       { value: 'auto', label: 'Shadow: Auto' },
       { value: 'include_shadow', label: 'Shadow: Include' },
       { value: 'exclude_shadow', label: 'Shadow: Exclude' },
-    ]),
+    ],
     []
   );
   const detectionModeOptions = useMemo(
-    () => ([
+    () => [
       { value: 'auto', label: 'Detection: Auto' },
       { value: 'white_bg_first_colored_pixel', label: 'Detection: White FG' },
       { value: 'alpha_bbox', label: 'Detection: Alpha BBox' },
-    ]),
+    ],
     []
   );
   const upscaleScaleOptions = useMemo(
@@ -232,11 +244,11 @@ export function GenerationToolbarInner(): React.JSX.Element {
     []
   );
   const upscaleSmoothingOptions = useMemo(
-    () => ([
+    () => [
       { value: 'high', label: 'Smoothing High' },
       { value: 'medium', label: 'Smoothing Medium' },
       { value: 'low', label: 'Smoothing Low' },
-    ]),
+    ],
     []
   );
 
@@ -248,15 +260,14 @@ export function GenerationToolbarInner(): React.JSX.Element {
   const analysisPlanSlotRecord =
     analysisPlanSlotId === ''
       ? null
-      : state.slots.find((slot) => (slot.id ?? '').trim() === analysisPlanSlotId) ?? null;
+      : (state.slots.find((slot) => (slot.id ?? '').trim() === analysisPlanSlotId) ?? null);
   const analysisPlanSlotMissing =
     state.analysisPlanAvailable && analysisPlanSlotId !== '' && !analysisPlanSlotRecord;
   const analysisPlanWillSwitchSlot =
     state.analysisPlanAvailable &&
     Boolean(analysisPlanSlotRecord) &&
     !state.analysisPlanMatchesWorkingSlot;
-  const analysisPlanSwitchSlotLabel =
-    analysisPlanSlotRecord?.name?.trim() || analysisPlanSlotId;
+  const analysisPlanSwitchSlotLabel = analysisPlanSlotRecord?.name?.trim() || analysisPlanSlotId;
   const cropTooltipsEnabled = studioSettings.helpTooltips.cropButtonsEnabled;
   const cropTooltipContent = useMemo(
     () => ({
@@ -292,27 +303,16 @@ export function GenerationToolbarInner(): React.JSX.Element {
     }),
     []
   );
-  const generationModel = studioSettings.targetAi.openai.model;
+  const generationModel =
+    brainGenerationModel.effectiveModelId.trim() ||
+    studioSettings.targetAi.openai.model.trim() ||
+    'Not configured in AI Brain';
   const generationImageCount = String(studioSettings.targetAi.openai.image.n ?? 1);
 
   return (
     <div className='space-y-3'>
       <GenerationToolbarDefaultsSection
         model={generationModel}
-        modelOptions={modelOptions}
-        onModelChange={(value: string) => {
-          setStudioSettings((prev) => ({
-            ...prev,
-            targetAi: {
-              ...prev.targetAi,
-              openai: {
-                ...prev.targetAi.openai,
-                api: 'images',
-                model: value,
-              },
-            },
-          }));
-        }}
         imageCount={generationImageCount}
         imageCountOptions={imageCountOptions}
         onImageCountChange={(value: string) => {
@@ -341,13 +341,14 @@ export function GenerationToolbarInner(): React.JSX.Element {
         maskPreviewEnabled={maskPreviewEnabled}
         onAttachMasks={() => {
           const action = async () => {
-             
             await attachMaskVariantsFromSelection();
           };
           void action();
         }}
         onGenerateMask={() => {
-          const action = async () => { await handleAiMaskGeneration(maskGenMode); };
+          const action = async () => {
+            await handleAiMaskGeneration(maskGenMode);
+          };
           void action();
         }}
         onMaskGenModeChange={(value: string) => {
@@ -365,7 +366,9 @@ export function GenerationToolbarInner(): React.JSX.Element {
 
       <GenerationToolbarCropSection
         cropBusyLabel={cropBusyLabel}
-        boundaryStatusLabel={state.hasShapeCropBoundary ? 'Boundary ready' : 'Move image outside canvas'}
+        boundaryStatusLabel={
+          state.hasShapeCropBoundary ? 'Boundary ready' : 'Move image outside canvas'
+        }
         cropModeOptions={cropModeOptions}
         cropTooltipContent={cropTooltipContent}
         cropTooltipsEnabled={cropTooltipsEnabled}
@@ -374,15 +377,21 @@ export function GenerationToolbarInner(): React.JSX.Element {
         onCancelCrop={handleCancelCrop}
         onCreateCropBox={handleCreateCropBox}
         onCrop={() => {
-          const action = async () => { await handleCrop(); };
+          const action = async () => {
+            await handleCrop();
+          };
           void action();
         }}
         onSquareCrop={() => {
-          const action = async () => { await handleSquareCrop(); };
+          const action = async () => {
+            await handleSquareCrop();
+          };
           void action();
         }}
         onViewCrop={() => {
-          const action = async () => { await handlePreviewViewCrop(); };
+          const action = async () => {
+            await handlePreviewViewCrop();
+          };
           void action();
         }}
       />
@@ -391,7 +400,9 @@ export function GenerationToolbarInner(): React.JSX.Element {
         hasSourceImage={hasSourceImage}
         onCancelUpscale={handleCancelUpscale}
         onUpscale={() => {
-          const action = async () => { await handleUpscale(); };
+          const action = async () => {
+            await handleUpscale();
+          };
           void action();
         }}
         upscaleBusyLabel={upscaleBusyLabel}
@@ -423,7 +434,9 @@ export function GenerationToolbarInner(): React.JSX.Element {
         centerLayoutPresetOptions={state.centerLayoutPresetOptions}
         centerLayoutCanDeletePreset={Boolean(state.selectedCenterCustomPresetId)}
         centerLayoutCanSavePreset={state.centerLayoutPresetDraftName.trim().length > 0}
-        centerLayoutSavePresetLabel={state.selectedCenterCustomPresetId ? 'Update Preset' : 'Save Preset'}
+        centerLayoutSavePresetLabel={
+          state.selectedCenterCustomPresetId ? 'Update Preset' : 'Save Preset'
+        }
         centerLayoutDetectionOptions={detectionModeOptions}
         centerLayoutProjectCanvasSize={projectCanvasSize}
         centerLayoutShadowPolicyOptions={shadowPolicyOptions}
@@ -433,7 +446,10 @@ export function GenerationToolbarInner(): React.JSX.Element {
         hasSourceImage={hasSourceImage}
         onCancelCenter={handleCancelCenter}
         onCenterLayoutPresetChange={(value: string) => {
-          const values = getObjectLayoutPresetValuesFromOption(value as ObjectLayoutPresetOptionValue, centerLayoutCustomPresets);
+          const values = getObjectLayoutPresetValuesFromOption(
+            value as ObjectLayoutPresetOptionValue,
+            centerLayoutCustomPresets
+          );
           if (!values) return;
           state.setCenterLayoutDetection(values.detection);
           state.setCenterLayoutShadowPolicy(values.shadowPolicy);
@@ -458,29 +474,36 @@ export function GenerationToolbarInner(): React.JSX.Element {
               setCenterLayoutPresetDraftName(saved.savedPreset.name);
               toast(`Saved preset "${saved.savedPreset.name}".`, { variant: 'success' });
             } catch (error) {
-              toast(error instanceof Error ? error.message : 'Failed to save custom preset.', { variant: 'error' });
+              toast(error instanceof Error ? error.message : 'Failed to save custom preset.', {
+                variant: 'error',
+              });
             }
           })();
         }}
         onCenterLayoutDeletePreset={() => {
           if (!state.selectedCenterCustomPresetId) return;
           const deletedName = state.selectedCenterCustomPreset?.name?.trim() ?? '';
-          const nextPresets = deleteObjectLayoutCustomPreset(activeProjectId, state.selectedCenterCustomPresetId);
+          const nextPresets = deleteObjectLayoutCustomPreset(
+            activeProjectId,
+            state.selectedCenterCustomPresetId
+          );
           setCenterLayoutCustomPresets(nextPresets);
           setCenterLayoutPresetDraftName('');
           toast(
-            deletedName
-              ? `Deleted preset "${deletedName}".`
-              : 'Deleted selected custom preset.',
+            deletedName ? `Deleted preset "${deletedName}".` : 'Deleted selected custom preset.',
             { variant: 'success' }
           );
         }}
         onRunAnalysis={() => {
-          const action = async () => { await handleRunAnalysisFromCenter(); };
+          const action = async () => {
+            await handleRunAnalysisFromCenter();
+          };
           void action();
         }}
         onCenterObject={() => {
-          const action = async () => { await handleCenterObject(); };
+          const action = async () => {
+            await handleCenterObject();
+          };
           void action();
         }}
         onToggleCenterLayoutAdvanced={() => {
@@ -516,18 +539,23 @@ export function GenerationToolbarInner(): React.JSX.Element {
         autoScaleModeOptions={autoScaleModeOptions}
         hasSourceImage={hasSourceImage}
         onAutoScale={() => {
-          const action = async () => { await handleAutoScale(); };
+          const action = async () => {
+            await handleAutoScale();
+          };
           void action();
         }}
         onRunAnalysis={() => {
-          const action = async () => { await handleRunAnalysisFromAutoScaler(); };
+          const action = async () => {
+            await handleRunAnalysisFromAutoScaler();
+          };
           void action();
         }}
         onCancelAutoScale={handleCancelAutoScale}
         onOpenSharedDetectionSettings={() => {
           state.setCenterLayoutAdvancedEnabled(true);
           const preferredCenterMode =
-            state.centerMode === 'client_alpha_bbox' || state.centerMode === 'client_object_layout_v1'
+            state.centerMode === 'client_alpha_bbox' ||
+            state.centerMode === 'client_object_layout_v1'
               ? 'client_object_layout_v1'
               : 'server_object_layout_v1';
           if (state.centerMode !== preferredCenterMode) {

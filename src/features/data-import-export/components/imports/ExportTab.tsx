@@ -15,9 +15,7 @@ export function ExportTab(): React.JSX.Element {
     <Card className='border-border/60 bg-card/40 p-4'>
       <div className='flex items-center justify-between'>
         <div>
-          <h2 className='text-lg font-semibold text-white'>
-            Base.com Export Settings
-          </h2>
+          <h2 className='text-lg font-semibold text-white'>Base.com Export Settings</h2>
           <p className='mt-1 text-sm text-gray-400'>
             Configure default export settings for Base.com product listings
           </p>
@@ -30,7 +28,7 @@ export function ExportTab(): React.JSX.Element {
 
       <div className='mt-6 space-y-4'>
         <ExportBaseConfigSection />
-        
+
         <ExportCategoryStatusSection />
 
         <ExportWarehouseConfigSection />
@@ -42,21 +40,13 @@ export function ExportTab(): React.JSX.Element {
           className='border-blue-900/50 bg-blue-900/20'
         >
           <ul className='list-disc space-y-1 pl-5 text-xs text-blue-300/70'>
+            <li>Exports use templates to map internal product fields to Base.com API parameters</li>
             <li>
-              Exports use templates to map internal product fields to Base.com
-              API parameters
+              Without a template, default field mappings are used (SKU, Name, Price, Stock, etc.)
             </li>
+            <li>Import and export templates are managed separately in the Templates tab</li>
             <li>
-              Without a template, default field mappings are used (SKU, Name,
-              Price, Stock, etc.)
-            </li>
-            <li>
-              Import and export templates are managed separately in the
-              Templates tab
-            </li>
-            <li>
-              Export to Base.com from Product List → Integrations → List
-              Products → Select Base.com
+              Export to Base.com from Product List → Integrations → List Products → Select Base.com
             </li>
             <li>
               Track export jobs in the{' '}

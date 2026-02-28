@@ -9,18 +9,12 @@ export const querySchema = z.object({
   limit: z.coerce.number().int().min(1).max(500).optional(),
 });
 
-export async function GET_handler(
-  _req: NextRequest,
-  ctx: ApiHandlerContext
-): Promise<Response> {
+export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const query = (ctx.query ?? {}) as z.infer<typeof querySchema>;
   const runs = await listProductSyncRuns({
     ...(query.profileId ? { profileId: query.profileId } : {}),
     ...(query.limit ? { limit: query.limit } : {}),
   });
 
-  return NextResponse.json(
-    { runs },
-    { headers: { 'Cache-Control': 'no-store' } }
-  );
+  return NextResponse.json({ runs }, { headers: { 'Cache-Control': 'no-store' } });
 }

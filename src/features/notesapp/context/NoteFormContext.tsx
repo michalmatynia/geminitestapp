@@ -43,30 +43,12 @@ import { useNoteMetadata } from '../hooks/useNoteMetadata';
 import { useNoteTags } from '../hooks/useNoteTags';
 import { autoformatMarkdown } from '../utils';
 
-import {
-  NoteContentContext,
-  type NoteContentData,
-} from './note-form/NoteContentContext';
-import {
-  NoteMetadataContext,
-  type NoteMetadataData,
-} from './note-form/NoteMetadataContext';
-import {
-  NoteEditorContext,
-  type NoteEditorData,
-} from './note-form/NoteEditorContext';
-import {
-  NoteFilesContext,
-  type NoteFilesData,
-} from './note-form/NoteFilesContext';
-import {
-  NoteTagsContext,
-  type NoteTagsData,
-} from './note-form/NoteTagsContext';
-import {
-  NoteFoldersContext,
-  type NoteFoldersData,
-} from './note-form/NoteFoldersContext';
+import { NoteContentContext, type NoteContentData } from './note-form/NoteContentContext';
+import { NoteMetadataContext, type NoteMetadataData } from './note-form/NoteMetadataContext';
+import { NoteEditorContext, type NoteEditorData } from './note-form/NoteEditorContext';
+import { NoteFilesContext, type NoteFilesData } from './note-form/NoteFilesContext';
+import { NoteTagsContext, type NoteTagsData } from './note-form/NoteTagsContext';
+import { NoteFoldersContext, type NoteFoldersData } from './note-form/NoteFoldersContext';
 import {
   NoteRelationsContext,
   type NoteRelationsData,
@@ -110,9 +92,7 @@ const NoteFormContext = createContext<NoteFormContextValue | null>(null);
 export function useNoteFormContext(): NoteFormContextValue {
   const context = useContext(NoteFormContext);
   if (!context) {
-    throw internalError(
-      'useNoteFormContext must be used within NoteFormProvider',
-    );
+    throw internalError('useNoteFormContext must be used within NoteFormProvider');
   }
   return context;
 }
@@ -209,23 +189,21 @@ export function NoteFormProvider({
     handleCreateTag,
     handleRemoveTag,
   } = useNoteTags(
-    note?.tags?.map(
-      (t: { tagId: string; tag: TagRecord }): string => t.tagId,
-    ) || [],
+    note?.tags?.map((t: { tagId: string; tag: TagRecord }): string => t.tagId) || [],
     availableTags,
     selectedNotebookId,
     note?.notebookId,
-    fetchTags,
+    fetchTags
   );
 
   const [selectedFolderId, setSelectedFolderId] = useState<string>(
-    note?.categories?.[0]?.categoryId || defaultFolderId || '',
+    note?.categories?.[0]?.categoryId || defaultFolderId || ''
   );
 
   const flattenFolderTree = useCallback(
     (
       folders: CategoryWithChildren[],
-      level: number = 0,
+      level: number = 0
     ): Array<{ id: string; name: string; level: number }> => {
       const result: Array<{ id: string; name: string; level: number }> = [];
       for (const folder of folders) {
@@ -236,13 +214,10 @@ export function NoteFormProvider({
       }
       return result;
     },
-    [],
+    []
   );
 
-  const flatFolders = useMemo(
-    () => flattenFolderTree(folderTree),
-    [folderTree, flattenFolderTree],
-  );
+  const flatFolders = useMemo(() => flattenFolderTree(folderTree), [folderTree, flattenFolderTree]);
 
   const initialCombinedRelations = useMemo((): RelatedNoteItem[] => {
     if (!note) return [];
@@ -257,40 +232,34 @@ export function NoteFormProvider({
         .map((rel: NoteRelationDto & { targetNote?: RelatedNote }) =>
           rel.targetNote
             ? {
-              id: rel.targetNote.id,
-              title: rel.targetNote.title,
-              color: rel.targetNote.color ?? null,
-              content: '',
-            }
-            : null,
+                id: rel.targetNote.id,
+                title: rel.targetNote.title,
+                color: rel.targetNote.color ?? null,
+                content: '',
+              }
+            : null
         )
-        .filter((item: RelatedNoteItem | null): item is RelatedNoteItem =>
-          Boolean(item),
-        ),
+        .filter((item: RelatedNoteItem | null): item is RelatedNoteItem => Boolean(item)),
       ...(note.relationsTo ?? [])
         .map((rel: NoteRelationDto & { sourceNote?: RelatedNote }) =>
           rel.sourceNote
             ? {
-              id: rel.sourceNote.id,
-              title: rel.sourceNote.title,
-              color: rel.sourceNote.color ?? null,
-              content: '',
-            }
-            : null,
+                id: rel.sourceNote.id,
+                title: rel.sourceNote.title,
+                color: rel.sourceNote.color ?? null,
+                content: '',
+              }
+            : null
         )
-        .filter((item: RelatedNoteItem | null): item is RelatedNoteItem =>
-          Boolean(item),
-        ),
+        .filter((item: RelatedNoteItem | null): item is RelatedNoteItem => Boolean(item)),
     ].filter(
       (item: RelatedNoteItem, index: number, array: RelatedNoteItem[]) =>
-        array.findIndex((entry: RelatedNoteItem) => entry.id === item.id) ===
-        index,
+        array.findIndex((entry: RelatedNoteItem) => entry.id === item.id) === index
     );
   }, [note]);
 
-  const [selectedRelatedNotes, setSelectedRelatedNotes] = useState<
-    RelatedNoteItem[]
-  >(initialCombinedRelations);
+  const [selectedRelatedNotes, setSelectedRelatedNotes] =
+    useState<RelatedNoteItem[]>(initialCombinedRelations);
 
   const relatedNotesQueries = useQueries({
     queries: selectedRelatedNotes.map((rel: RelatedNoteItem) => ({
@@ -301,23 +270,18 @@ export function NoteFormProvider({
   });
 
   useEffect(() => {
-    const updated = selectedRelatedNotes.map(
-      (item: RelatedNoteItem, index: number) => {
-        const q = relatedNotesQueries[index] as UseQueryResult<
-          NoteWithRelations,
-          Error
-        >;
-        if (q?.data) {
-          return {
-            ...item,
-            content: q.data.content ?? '',
-            title: q.data.title ?? item.title,
-            color: q.data.color ?? item.color ?? null,
-          };
-        }
-        return item;
-      },
-    );
+    const updated = selectedRelatedNotes.map((item: RelatedNoteItem, index: number) => {
+      const q = relatedNotesQueries[index] as UseQueryResult<NoteWithRelations, Error>;
+      if (q?.data) {
+        return {
+          ...item,
+          content: q.data.content ?? '',
+          title: q.data.title ?? item.title,
+          color: q.data.color ?? item.color ?? null,
+        };
+      }
+      return item;
+    });
     if (JSON.stringify(updated) !== JSON.stringify(selectedRelatedNotes)) {
       setSelectedRelatedNotes(updated);
     }
@@ -358,8 +322,7 @@ export function NoteFormProvider({
     },
   });
 
-  const { data: relatedNoteResults = [], isFetching: isRelatedLoading } =
-    relatedNoteSearchQuery;
+  const { data: relatedNoteResults = [], isFetching: isRelatedLoading } = relatedNoteSearchQuery;
 
   const handleSelectRelatedNote = useCallback(
     (noteId: string): void => {
@@ -368,15 +331,13 @@ export function NoteFormProvider({
       }
       void handleSelectNoteFromTree(noteId);
     },
-    [note, setIsCreating, handleSelectNoteFromTree],
+    [note, setIsCreating, handleSelectNoteFromTree]
   );
 
   const resolvedFolderTheme = note ? selectedNoteTheme : selectedFolderTheme;
   const effectiveTheme = (resolvedFolderTheme ?? FALLBACK_THEME) as ThemeRecord;
   const hasCustomColor: boolean = color !== '#ffffff';
-  const contentBackground: string = hasCustomColor
-    ? color
-    : effectiveTheme.backgroundColor;
+  const contentBackground: string = hasCustomColor ? color : effectiveTheme.backgroundColor;
   const contentTextColor: string = hasCustomColor
     ? getReadableTextColor(contentBackground)
     : effectiveTheme.textColor;
@@ -385,8 +346,7 @@ export function NoteFormProvider({
     (): React.CSSProperties => ({
       color: contentTextColor,
       ['--tw-prose-body' as never]: contentTextColor,
-      ['--tw-prose-headings' as never]:
-        effectiveTheme.markdownHeadingColor ?? contentTextColor,
+      ['--tw-prose-headings' as never]: effectiveTheme.markdownHeadingColor ?? contentTextColor,
       ['--tw-prose-lead' as never]: contentTextColor,
       ['--tw-prose-bold' as never]: contentTextColor,
       ['--tw-prose-counters' as never]: contentTextColor,
@@ -399,7 +359,7 @@ export function NoteFormProvider({
       ['--note-code-text' as never]: effectiveTheme.markdownCodeText,
       ['--note-inline-code-bg' as never]: effectiveTheme.markdownCodeBackground,
     }),
-    [contentTextColor, effectiveTheme],
+    [contentTextColor, effectiveTheme]
   );
 
   const createNoteMutation = useCreateNoteMutation();
@@ -409,7 +369,7 @@ export function NoteFormProvider({
 
   const getNextAvailableSlot = useCallback((): number | null => {
     const usedSlots: Set<number> = new Set(
-      noteFiles.map((f: NoteFileRecord): number => f.slotIndex),
+      noteFiles.map((f: NoteFileRecord): number => f.slotIndex)
     );
     for (let i: number = 0; i < MAX_SLOTS; i++) {
       if (!usedSlots.has(i)) return i;
@@ -417,10 +377,7 @@ export function NoteFormProvider({
     return null;
   }, [noteFiles, MAX_SLOTS]);
 
-  const isImageFile = useCallback(
-    (mimetype: string): boolean => mimetype.startsWith('image/'),
-    [],
-  );
+  const isImageFile = useCallback((mimetype: string): boolean => mimetype.startsWith('image/'), []);
 
   const formatFileSize = useCallback((bytes: number): string => {
     if (bytes < 1024) return `${bytes} B`;
@@ -431,7 +388,7 @@ export function NoteFormProvider({
   const handleFileUpload = async (
     slotIndex: number,
     file: File,
-    helpers?: { reportProgress: (loaded: number, total?: number) => void },
+    helpers?: { reportProgress: (loaded: number, total?: number) => void }
   ): Promise<void> => {
     if (!note?.id) {
       toast('Please save the note first before uploading files');
@@ -449,19 +406,12 @@ export function NoteFormProvider({
       const newFile = await createFileMutation.mutateAsync({
         slotIndex,
         file,
-        onProgress: (loaded: number, total?: number) =>
-          helpers?.reportProgress(loaded, total),
+        onProgress: (loaded: number, total?: number) => helpers?.reportProgress(loaded, total),
       });
       setNoteFiles((prev: NoteFileRecord[]): NoteFileRecord[] =>
-        [
-          ...prev.filter(
-            (f: NoteFileRecord): boolean => f.slotIndex !== slotIndex,
-          ),
-          newFile,
-        ].sort(
-          (a: NoteFileRecord, b: NoteFileRecord): number =>
-            a.slotIndex - b.slotIndex,
-        ),
+        [...prev.filter((f: NoteFileRecord): boolean => f.slotIndex !== slotIndex), newFile].sort(
+          (a: NoteFileRecord, b: NoteFileRecord): number => a.slotIndex - b.slotIndex
+        )
       );
       toast('File uploaded successfully');
     } catch (error: unknown) {
@@ -473,8 +423,7 @@ export function NoteFormProvider({
           slotIndex,
         },
       });
-      const message =
-        error instanceof Error ? error.message : 'Failed to upload file';
+      const message = error instanceof Error ? error.message : 'Failed to upload file';
       toast(message);
     } finally {
       removeUploadingSlot(slotIndex);
@@ -487,9 +436,7 @@ export function NoteFormProvider({
     try {
       await deleteFileMutation.mutateAsync(slotIndex);
       removeFile(
-        noteFiles.find(
-          (f: NoteFileRecord): boolean => f.slotIndex === slotIndex,
-        )?.id || '',
+        noteFiles.find((f: NoteFileRecord): boolean => f.slotIndex === slotIndex)?.id || ''
       );
       toast('File deleted successfully');
     } catch (error: unknown) {
@@ -505,9 +452,7 @@ export function NoteFormProvider({
     }
   };
 
-  const handlePaste = async (
-    e: React.ClipboardEvent<HTMLTextAreaElement>,
-  ): Promise<void> => {
+  const handlePaste = async (e: React.ClipboardEvent<HTMLTextAreaElement>): Promise<void> => {
     const uploadPastedImage = async (file: File): Promise<void> => {
       if (!note?.id) {
         toast('Please save the note first before pasting images');
@@ -534,13 +479,9 @@ export function NoteFormProvider({
       try {
         const timestamp: number = Date.now();
         const extension: string = file.type.split('/')[1] || 'png';
-        const renamedFile: File = new File(
-          [file],
-          `pasted-image-${timestamp}.${extension}`,
-          {
-            type: file.type,
-          },
-        );
+        const renamedFile: File = new File([file], `pasted-image-${timestamp}.${extension}`, {
+          type: file.type,
+        });
 
         const newFile = await createFileMutation.mutateAsync({
           slotIndex: nextSlot,
@@ -548,23 +489,15 @@ export function NoteFormProvider({
         });
 
         setNoteFiles((prev: NoteFileRecord[]): NoteFileRecord[] =>
-          [
-            ...prev.filter(
-              (f: NoteFileRecord): boolean => f.slotIndex !== nextSlot,
-            ),
-            newFile,
-          ].sort(
-            (a: NoteFileRecord, b: NoteFileRecord): number =>
-              a.slotIndex - b.slotIndex,
-          ),
+          [...prev.filter((f: NoteFileRecord): boolean => f.slotIndex !== nextSlot), newFile].sort(
+            (a: NoteFileRecord, b: NoteFileRecord): number => a.slotIndex - b.slotIndex
+          )
         );
 
         const altText: string = renamedFile.name;
         const reference: string = `![${altText}](${newFile.filepath})`;
         const nextValue: string =
-          content.slice(0, cursorPosition) +
-          reference +
-          content.slice(cursorPosition);
+          content.slice(0, cursorPosition) + reference + content.slice(cursorPosition);
         setContent(nextValue);
 
         toast('Image pasted and uploaded');
@@ -583,20 +516,16 @@ export function NoteFormProvider({
       }
     };
 
-    const pastedText: string | undefined =
-      e.clipboardData?.getData('text/plain');
+    const pastedText: string | undefined = e.clipboardData?.getData('text/plain');
     if (pastedText) {
       if (settings.autoformatOnPaste) {
         e.preventDefault();
         const formattedText: string = autoformatMarkdown(pastedText);
         const textarea: HTMLTextAreaElement | null = contentRef.current;
-        const selectionStart: number =
-          textarea?.selectionStart ?? content.length;
+        const selectionStart: number = textarea?.selectionStart ?? content.length;
         const selectionEnd: number = textarea?.selectionEnd ?? content.length;
         const newContent: string =
-          content.slice(0, selectionStart) +
-          formattedText +
-          content.slice(selectionEnd);
+          content.slice(0, selectionStart) + formattedText + content.slice(selectionEnd);
         setContent(newContent);
         setTimeout((): void => {
           if (textarea) {
@@ -637,7 +566,7 @@ export function NoteFormProvider({
 
   const handleMultiFileUpload = async (
     files: FileList | File[],
-    helpers?: { setProgress: (value: number) => void },
+    helpers?: { setProgress: (value: number) => void }
   ): Promise<void> => {
     const queue: File[] = Array.from(files);
     for (let index = 0; index < queue.length; index += 1) {
@@ -650,13 +579,8 @@ export function NoteFormProvider({
       await handleFileUpload(nextSlot, file, {
         reportProgress: (loaded: number, total?: number) => {
           if (!helpers || !total) return;
-          const pct = Math.min(
-            100,
-            Math.max(0, Math.round((loaded / total) * 100)),
-          );
-          const combined = Math.round(
-            ((index + pct / 100) / queue.length) * 100,
-          );
+          const pct = Math.min(100, Math.max(0, Math.round((loaded / total) * 100)));
+          const combined = Math.round(((index + pct / 100) / queue.length) * 100);
           helpers.setProgress(combined);
         },
       });
@@ -681,9 +605,7 @@ export function NoteFormProvider({
           isArchived,
           isFavorite,
           tagIds: selectedTagIds,
-          relatedNoteIds: selectedRelatedNotes.map(
-            (rel: { id: string }): string => rel.id,
-          ),
+          relatedNoteIds: selectedRelatedNotes.map((rel: { id: string }): string => rel.id),
           categoryIds: selectedFolderId ? [selectedFolderId] : [],
           notebookId: selectedNotebookId ?? note?.notebookId ?? null,
         };
@@ -703,8 +625,7 @@ export function NoteFormProvider({
         logClientError(error, {
           context: { source: 'NoteForm', action: 'saveNote', noteId: note?.id },
         });
-        const message =
-          error instanceof Error ? error.message : 'Failed to save note';
+        const message = error instanceof Error ? error.message : 'Failed to save note';
         toast(message, { variant: 'error' });
       }
     },
@@ -725,7 +646,7 @@ export function NoteFormProvider({
       createNoteMutation,
       toast,
       onSuccess,
-    ],
+    ]
   );
 
   useEffect((): void => {
@@ -743,7 +664,7 @@ export function NoteFormProvider({
       canUndo,
       canRedo,
     }),
-    [content, setContent, undo, redo, canUndo, canRedo],
+    [content, setContent, undo, redo, canUndo, canRedo]
   );
 
   const metadataValue = useMemo<NoteMetadataData>(
@@ -760,16 +681,7 @@ export function NoteFormProvider({
       setIsFavorite,
       getReadableTextColor,
     }),
-    [
-      title,
-      setTitle,
-      color,
-      setColor,
-      isPinned,
-      isArchived,
-      isFavorite,
-      getReadableTextColor,
-    ],
+    [title, setTitle, color, setColor, isPinned, isArchived, isFavorite, getReadableTextColor]
   );
 
   const editorValue = useMemo<NoteEditorData>(
@@ -817,7 +729,7 @@ export function NoteFormProvider({
       contentBackground,
       contentTextColor,
       previewTypographyStyle,
-    ],
+    ]
   );
 
   const filesValue = useMemo<NoteFilesData>(
@@ -856,7 +768,7 @@ export function NoteFormProvider({
       handlePaste,
       formatFileSize,
       isImageFile,
-    ],
+    ]
   );
 
   const tagsValue = useMemo<NoteTagsData>(
@@ -883,7 +795,7 @@ export function NoteFormProvider({
       handleRemoveTag,
       availableTags,
       handleFilterByTag,
-    ],
+    ]
   );
 
   const foldersValue = useMemo<NoteFoldersData>(
@@ -892,7 +804,7 @@ export function NoteFormProvider({
       setSelectedFolderId,
       flatFolders,
     }),
-    [selectedFolderId, setSelectedFolderId, flatFolders],
+    [selectedFolderId, setSelectedFolderId, flatFolders]
   );
 
   const relationsValue = useMemo<NoteRelationsData>(
@@ -914,7 +826,7 @@ export function NoteFormProvider({
       relatedNoteResults,
       isRelatedLoading,
       handleSelectRelatedNote,
-    ],
+    ]
   );
 
   const aggregatedValue: NoteFormContextValue = useMemo(
@@ -941,7 +853,7 @@ export function NoteFormProvider({
       note,
       setIsCreating,
       handleSubmit,
-    ],
+    ]
   );
 
   return (

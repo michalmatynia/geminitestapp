@@ -14,12 +14,8 @@ import { validateFormData } from '@/shared/validations/form-validation';
 import { useMassListProductModalViewContext } from '../mass-list-modal/context/MassListProductModalViewContext';
 
 export function useMassListForm() {
-  const {
-    productIds,
-    integrationId,
-    connectionId,
-    onSuccess,
-  } = useMassListProductModalViewContext();
+  const { productIds, integrationId, connectionId, onSuccess } =
+    useMassListProductModalViewContext();
 
   const {
     selectedConnectionId,
@@ -30,7 +26,11 @@ export function useMassListForm() {
   } = useListingSettingsContext();
 
   const [error, setError] = useState<string | null>(null);
-  const [progress, setProgress] = useState<{ current: number; total: number; errors: number } | null>(null);
+  const [progress, setProgress] = useState<{
+    current: number;
+    total: number;
+    errors: number;
+  } | null>(null);
   const [exportLogs, setExportLogs] = useState<CapturedLog[]>([]);
 
   const exportMutation = useGenericExportToBaseMutation();
@@ -93,7 +93,12 @@ export function useMassListForm() {
         }
       } catch (e: unknown) {
         logClientError(e, {
-          context: { source: 'MassListProductModal', action: 'listProduct', productId, integrationId },
+          context: {
+            source: 'MassListProductModal',
+            action: 'listProduct',
+            productId,
+            integrationId,
+          },
         });
         errors++;
       }

@@ -15,26 +15,18 @@ export const jobKeys = QUERY_KEYS.jobs;
 
 // Real-time job monitoring
 export function useRealtimeJobs(): UseQueryResult<unknown, Error> {
-  return useRealtimeQuery(
-    jobKeys.realtime(),
-    getJobStatus,
-    {
-      interval: 5000, // 5 second fallback
-      enabled: true,
-    }
-  );
+  return useRealtimeQuery(jobKeys.realtime(), getJobStatus, {
+    interval: 5000, // 5 second fallback
+    enabled: true,
+  });
 }
 
 // Individual job status with real-time updates
 export function useJobStatus(jobId: string): UseQueryResult<unknown, Error> {
-  return useRealtimeQuery(
-    jobKeys.status(jobId),
-    () => getJobStatusDetail(jobId),
-    {
-      interval: 2000, // 2 second fallback for individual jobs
-      enabled: !!jobId,
-    }
-  );
+  return useRealtimeQuery(jobKeys.status(jobId), () => getJobStatusDetail(jobId), {
+    interval: 2000, // 2 second fallback for individual jobs
+    enabled: !!jobId,
+  });
 }
 
 // Cancel job mutation

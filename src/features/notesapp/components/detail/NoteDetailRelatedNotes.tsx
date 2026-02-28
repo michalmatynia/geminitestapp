@@ -6,10 +6,7 @@ import { X } from 'lucide-react';
 import { useNotesLookup } from '@/features/notesapp/api/useNoteQueries';
 import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
 import { Button } from '@/shared/ui';
-import type {
-  RelatedNoteDto as RelatedNote,
-  NoteRelationDto,
-} from '@/shared/contracts/notes';
+import type { RelatedNoteDto as RelatedNote, NoteRelationDto } from '@/shared/contracts/notes';
 
 type NoteRelationWithTarget = NoteRelationDto & {
   targetNote?: RelatedNote | undefined;
@@ -20,19 +17,14 @@ type NoteRelationWithSource = NoteRelationDto & {
 };
 
 export function NoteDetailRelatedNotes(): React.JSX.Element | null {
-  const {
-    selectedNote,
-    selectedNoteTheme,
-    handleSelectNoteFromTree,
-    handleUnlinkRelatedNote,
-  } = useNotesAppContext();
+  const { selectedNote, selectedNoteTheme, handleSelectNoteFromTree, handleUnlinkRelatedNote } =
+    useNotesAppContext();
 
   const onSelectRelatedNote = (id: string): void => {
     void handleSelectNoteFromTree(id);
   };
 
-  const onUnlinkRelatedNote = (id: string): Promise<void> =>
-    handleUnlinkRelatedNote(id);
+  const onUnlinkRelatedNote = (id: string): Promise<void> => handleUnlinkRelatedNote(id);
 
   const relatedNotes = useMemo((): RelatedNote[] => {
     if (!selectedNote) return [];
@@ -43,7 +35,7 @@ export function NoteDetailRelatedNotes(): React.JSX.Element | null {
     const build = (
       id: string | undefined,
       title: string | undefined,
-      color: string | null | undefined,
+      color: string | null | undefined
     ): RelatedNote | null =>
       id ? { id, title: title ?? 'Untitled note', color: color ?? null } : null;
 
@@ -52,8 +44,8 @@ export function NoteDetailRelatedNotes(): React.JSX.Element | null {
         build(
           relation.targetNote?.id ?? relation.targetNoteId,
           relation.targetNote?.title,
-          relation.targetNote?.color,
-        ),
+          relation.targetNote?.color
+        )
       )
       .filter((item: RelatedNote | null): item is RelatedNote => Boolean(item));
 
@@ -62,8 +54,8 @@ export function NoteDetailRelatedNotes(): React.JSX.Element | null {
         build(
           relation.sourceNote?.id ?? relation.sourceNoteId,
           relation.sourceNote?.title,
-          relation.sourceNote?.color,
-        ),
+          relation.sourceNote?.color
+        )
       )
       .filter((item: RelatedNote | null): item is RelatedNote => Boolean(item));
 
@@ -76,9 +68,9 @@ export function NoteDetailRelatedNotes(): React.JSX.Element | null {
         .map((rel: RelatedNote) => rel.id)
         .filter(
           (id: string, index: number, array: string[]): boolean =>
-            array.findIndex((entry: string): boolean => entry === id) === index,
+            array.findIndex((entry: string): boolean => entry === id) === index
         ),
-    [relatedNotes],
+    [relatedNotes]
   );
 
   const { data: linkedDetails } = useNotesLookup(relationIds);
@@ -103,7 +95,7 @@ export function NoteDetailRelatedNotes(): React.JSX.Element | null {
       relatedNoteBackgroundColor: '#1f2937',
       relatedNoteTextColor: '#e5e7eb',
     }),
-    [],
+    []
   );
 
   const effectivePreviewTheme = selectedNoteTheme ?? fallbackTheme;
@@ -111,14 +103,11 @@ export function NoteDetailRelatedNotes(): React.JSX.Element | null {
   const relatedPreviewStyle = useMemo(
     () => ({
       borderWidth: `${effectivePreviewTheme.relatedNoteBorderWidth ?? 1}px`,
-      borderColor:
-        effectivePreviewTheme.relatedNoteBorderColor ?? 'rgba(15, 23, 42, 0.2)',
-      backgroundColor:
-        effectivePreviewTheme.relatedNoteBackgroundColor ??
-        'rgba(15, 23, 42, 0.05)',
+      borderColor: effectivePreviewTheme.relatedNoteBorderColor ?? 'rgba(15, 23, 42, 0.2)',
+      backgroundColor: effectivePreviewTheme.relatedNoteBackgroundColor ?? 'rgba(15, 23, 42, 0.05)',
       color: effectivePreviewTheme.relatedNoteTextColor ?? '#f8fafc',
     }),
-    [effectivePreviewTheme],
+    [effectivePreviewTheme]
   );
 
   if (!selectedNote || relatedNotes.length === 0) return null;
@@ -126,16 +115,12 @@ export function NoteDetailRelatedNotes(): React.JSX.Element | null {
   return (
     <div className='mt-6 space-y-4'>
       <div className='space-y-2'>
-        <div className='text-xs uppercase tracking-wide text-gray-400'>
-          Related Notes
-        </div>
+        <div className='text-xs uppercase tracking-wide text-gray-400'>Related Notes</div>
         <div className='flex flex-wrap gap-2'>
           {relatedNotes
             .filter(
               (noteItem: RelatedNote, index: number, array: RelatedNote[]) =>
-                array.findIndex(
-                  (item: RelatedNote) => item.id === noteItem.id,
-                ) === index,
+                array.findIndex((item: RelatedNote) => item.id === noteItem.id) === index
             )
             .map((related: RelatedNote) => {
               const relatedNote = relatedPreviewNotes[related.id];
@@ -147,9 +132,7 @@ export function NoteDetailRelatedNotes(): React.JSX.Element | null {
                   role='button'
                   tabIndex={0}
                   onClick={(): void => onSelectRelatedNote(related.id)}
-                  onKeyDown={(
-                    event: React.KeyboardEvent<HTMLDivElement>,
-                  ): void => {
+                  onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>): void => {
                     if (event.key === 'Enter' || event.key === ' ') {
                       event.preventDefault();
                       onSelectRelatedNote(related.id);
@@ -164,9 +147,7 @@ export function NoteDetailRelatedNotes(): React.JSX.Element | null {
                   </div>
                   <Button
                     type='button'
-                    onClick={(
-                      event: React.MouseEvent<HTMLButtonElement>,
-                    ): void => {
+                    onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
                       event.stopPropagation();
                       void onUnlinkRelatedNote(related.id);
                     }}

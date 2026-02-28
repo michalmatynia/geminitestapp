@@ -18,7 +18,9 @@ export function SpacingField(): React.ReactNode {
           <Input
             type='number'
             value={spacing[side] ?? 0}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update(side, Number(e.target.value))}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+              update(side, Number(e.target.value))
+            }
             className='text-xs h-7 px-1.5'
           />
         </div>

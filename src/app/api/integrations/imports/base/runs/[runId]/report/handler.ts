@@ -12,20 +12,14 @@ const REPORT_PAGE_SIZE = 1000;
 
 const escapeCsv = (value: unknown): string => {
   const raw =
-    value === null || value === undefined
-      ? ''
-      : typeof value === 'string'
-        ? value
-        : String(value);
+    value === null || value === undefined ? '' : typeof value === 'string' ? value : String(value);
   if (/[",\n]/.test(raw)) {
     return `"${raw.replace(/"/g, '""')}"`;
   }
   return raw;
 };
 
-const buildCsv = (
-  detail: Awaited<ReturnType<typeof getBaseImportRunDetailOrThrow>>
-): string => {
+const buildCsv = (detail: Awaited<ReturnType<typeof getBaseImportRunDetailOrThrow>>): string => {
   const header = [
     'itemId',
     'status',
@@ -110,22 +104,21 @@ export async function GET_handler(
   _ctx: ApiHandlerContext,
   params: { runId: string }
 ): Promise<Response> {
-  const parsed = querySchema.safeParse(
-    Object.fromEntries(new URL(req.url).searchParams.entries())
-  );
-  const format = parsed.success ? parsed.data.format ?? 'json' : 'json';
-  const statusesRaw = parsed.success ? parsed.data.statuses ?? '' : '';
+  const parsed = querySchema.safeParse(Object.fromEntries(new URL(req.url).searchParams.entries()));
+  const format = parsed.success ? (parsed.data.format ?? 'json') : 'json';
+  const statusesRaw = parsed.success ? (parsed.data.statuses ?? '') : '';
   const statuses = statusesRaw
     .split(',')
     .map((value: string): string => value.trim())
     .filter((value: string): boolean => value.length > 0)
-    .filter((value: string): boolean =>
-      value === 'pending' ||
-      value === 'processing' ||
-      value === 'imported' ||
-      value === 'updated' ||
-      value === 'skipped' ||
-      value === 'failed'
+    .filter(
+      (value: string): boolean =>
+        value === 'pending' ||
+        value === 'processing' ||
+        value === 'imported' ||
+        value === 'updated' ||
+        value === 'skipped' ||
+        value === 'failed'
     ) as Array<'pending' | 'processing' | 'imported' | 'updated' | 'skipped' | 'failed'>;
 
   const detail = await loadReportDetail({

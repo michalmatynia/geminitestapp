@@ -79,7 +79,7 @@ const {
   const mockUpdateMany = vi.fn();
   const mockUpdateOne = vi.fn();
   const mockFindOneAndUpdate = vi.fn();
-  
+
   const mockCollection = vi.fn(() => ({
     findOne: mockFindOne,
     find: mockFind,
@@ -131,7 +131,9 @@ describe('Integration Repository', () => {
     });
 
     it('listIntegrations calls prisma.integration.findMany', async () => {
-      const mockIntegrations = [{ id: '1', name: 'Int 1', slug: 'int-1', createdAt: now, updatedAt: now }];
+      const mockIntegrations = [
+        { id: '1', name: 'Int 1', slug: 'int-1', createdAt: now, updatedAt: now },
+      ];
       vi.mocked(prisma.integration.findMany).mockResolvedValue(mockIntegrations as any);
 
       const repo = await getIntegrationRepository();
@@ -164,7 +166,13 @@ describe('Integration Repository', () => {
     });
 
     it('upsertIntegration calls prisma.integration.upsert', async () => {
-      const mockIntegration = { id: '1', name: 'Updated', slug: 'int-1', createdAt: now, updatedAt: now };
+      const mockIntegration = {
+        id: '1',
+        name: 'Updated',
+        slug: 'int-1',
+        createdAt: now,
+        updatedAt: now,
+      };
       vi.mocked(prisma.integration.upsert).mockResolvedValue(mockIntegration as any);
 
       const repo = await getIntegrationRepository();
@@ -270,9 +278,7 @@ describe('Integration Repository', () => {
     });
 
     it('listIntegrations calls mongo collection find', async () => {
-      const mockDocs = [
-        { _id: '1', name: 'Int 1', slug: 'int-1', createdAt: now, updatedAt: now },
-      ];
+      const mockDocs = [{ _id: '1', name: 'Int 1', slug: 'int-1', createdAt: now, updatedAt: now }];
       mockFind.mockReturnValue({
         sort: vi.fn().mockReturnThis(),
         toArray: vi.fn().mockResolvedValue(mockDocs),

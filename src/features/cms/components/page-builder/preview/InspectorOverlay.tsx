@@ -25,13 +25,15 @@ const unregisterInspectorTooltip = (id: string): void => {
 };
 
 const getInspectorTooltipIndex = (id: string): number => inspectorTooltipOrder.indexOf(id);
-export const STYLE_KEY_REGEX = /(color|padding|margin|radius|border|shadow|align|font|size|width|height|spacing|background|opacity)/i;
+export const STYLE_KEY_REGEX =
+  /(color|padding|margin|radius|border|shadow|align|font|size|width|height|spacing|background|opacity)/i;
 
 export const formatSettingValue = (value: unknown): string => {
   if (value === null || value === undefined) return '';
   if (typeof value === 'string') return value;
   if (typeof value === 'number' || typeof value === 'boolean') return String(value);
-  if (Array.isArray(value)) return (value as unknown[]).map((item: unknown) => formatSettingValue(item)).join(', ');
+  if (Array.isArray(value))
+    return (value as unknown[]).map((item: unknown) => formatSettingValue(item)).join(', ');
   try {
     return JSON.stringify(value);
   } catch {
@@ -52,7 +54,10 @@ export const resolveNodeLabel = (fallback: string, value: unknown): string => {
 
 export const buildStyleEntries = (settings: Record<string, unknown>): InspectorEntry[] => {
   return Object.entries(settings)
-    .filter(([key, value]: [string, unknown]) => STYLE_KEY_REGEX.test(key) && value !== undefined && value !== null && value !== '')
+    .filter(
+      ([key, value]: [string, unknown]) =>
+        STYLE_KEY_REGEX.test(key) && value !== undefined && value !== null && value !== ''
+    )
     .map(([key, value]: [string, unknown]) => ({
       label: key,
       value: formatSettingValue(value),
@@ -65,7 +70,9 @@ export const renderInspectorEntries = (entries: InspectorEntry[]): React.ReactNo
   <div className='space-y-1'>
     {entries.map((entry: InspectorEntry) => (
       <div key={`${entry.label}-${entry.value}`} className='flex items-start gap-2'>
-        <Hint size='xxs' uppercase className='min-w-[110px] text-gray-400'>{entry.label}</Hint>
+        <Hint size='xxs' uppercase className='min-w-[110px] text-gray-400'>
+          {entry.label}
+        </Hint>
         <span className='text-[11px] text-gray-200 break-all'>
           {entry.value.length > 80 ? `${entry.value.slice(0, 80)}…` : entry.value}
         </span>
@@ -81,16 +88,22 @@ export const InspectorTooltip = ({
   title: string;
   sections: InspectorSection[];
 }): React.ReactNode => {
-  const visibleSections = sections.filter((section: InspectorSection) => section.entries.length > 0);
+  const visibleSections = sections.filter(
+    (section: InspectorSection) => section.entries.length > 0
+  );
   return (
     <div className='space-y-2 text-xs'>
-      <Hint size='xxs' uppercase className='text-blue-200'>{title}</Hint>
+      <Hint size='xxs' uppercase className='text-blue-200'>
+        {title}
+      </Hint>
       {visibleSections.length === 0 ? (
         <div className='text-[11px] text-gray-400'>No inspector details</div>
       ) : (
         visibleSections.map((section: InspectorSection) => (
           <div key={section.title} className='space-y-1'>
-            <Hint size='xxs' uppercase className='text-gray-500'>{section.title}</Hint>
+            <Hint size='xxs' uppercase className='text-gray-500'>
+              {section.title}
+            </Hint>
             {renderInspectorEntries(section.entries)}
           </div>
         ))
@@ -119,7 +132,7 @@ export const InspectorHover = ({
   className?: string | undefined;
 }): React.ReactNode => {
   const previewEditor = useOptionalPreviewEditor();
-  
+
   const enabled = propEnabled ?? previewEditor?.isInspecting ?? false;
   const showTooltip = propShowTooltip ?? previewEditor?.inspectorSettings?.showTooltip ?? true;
   const onHover = propOnHover ?? previewEditor?.onHoverNode;
@@ -141,12 +154,12 @@ export const InspectorHover = ({
   };
 
   const updateTooltipPosition = useCallback((): void => {
-    const viewport = typeof document !== 'undefined'
-      ? document.querySelector('[data-cms-canvas-viewport=\'true\']')
-      : null;
-    const canvas = typeof document !== 'undefined'
-      ? document.querySelector('[data-cms-canvas=\'true\']')
-      : null;
+    const viewport =
+      typeof document !== 'undefined'
+        ? document.querySelector("[data-cms-canvas-viewport='true']")
+        : null;
+    const canvas =
+      typeof document !== 'undefined' ? document.querySelector("[data-cms-canvas='true']") : null;
     const el = viewport ?? canvas ?? wrapperRef.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
@@ -218,18 +231,23 @@ export const InspectorHover = ({
       onMouseLeave={handleLeave}
     >
       {children}
-      {enabled && showTooltip && effectiveOpen && content && tooltipPos && typeof document !== 'undefined'
+      {enabled &&
+      showTooltip &&
+      effectiveOpen &&
+      content &&
+      tooltipPos &&
+      typeof document !== 'undefined'
         ? createPortal(
-          <Card
-            variant='subtle-compact'
-            padding='sm'
-            className='fixed z-[99999] -translate-x-full -translate-y-full border-gray-700 bg-gray-900/95 text-xs text-gray-200 shadow-lg pointer-events-none'
-            style={{ left: tooltipPos.left, top: tooltipPos.top, width: INSPECTOR_TOOLTIP_WIDTH }}
-          >
-            {content}
-          </Card>,
-          document.body
-        )
+            <Card
+              variant='subtle-compact'
+              padding='sm'
+              className='fixed z-[99999] -translate-x-full -translate-y-full border-gray-700 bg-gray-900/95 text-xs text-gray-200 shadow-lg pointer-events-none'
+              style={{ left: tooltipPos.left, top: tooltipPos.top, width: INSPECTOR_TOOLTIP_WIDTH }}
+            >
+              {content}
+            </Card>,
+            document.body
+          )
         : null}
     </div>
   );

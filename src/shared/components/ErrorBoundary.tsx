@@ -56,8 +56,8 @@ export class ErrorBoundary extends Component<Props, State> {
           <p className='text-sm text-rose-300 mb-6 max-w-md'>
             {this.state.error?.message || 'An unexpected error occurred in the user interface.'}
           </p>
-          <Button 
-            variant='outline' 
+          <Button
+            variant='outline'
             onClick={this.handleReset}
             className='border-rose-500/50 hover:bg-rose-500/20 text-rose-100'
           >

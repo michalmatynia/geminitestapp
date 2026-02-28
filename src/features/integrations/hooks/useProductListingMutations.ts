@@ -66,9 +66,7 @@ interface ProductListingAndJobsContext {
 }
 
 const toBadgeEntry = (value: unknown): MarketplaceBadgeEntry =>
-  value && typeof value === 'object'
-    ? (value as MarketplaceBadgeEntry)
-    : {};
+  value && typeof value === 'object' ? (value as MarketplaceBadgeEntry) : {};
 
 const setListingBadgeStatus = (
   queryClient: ReturnType<typeof useQueryClient>,
@@ -109,7 +107,7 @@ const removeListingBadgeStatus = (
 export function useGenericExportToBaseMutation(): UpdateMutation<
   ExportResponse,
   GenericExportToBaseVariables
-  > {
+> {
   const queryClient = useQueryClient();
   const mutationKey = listingBadgesQueryKey;
 
@@ -117,9 +115,7 @@ export function useGenericExportToBaseMutation(): UpdateMutation<
     mutationFn: async (vars: GenericExportToBaseVariables): Promise<ExportResponse> => {
       const { productId, requestId, ...payload } = vars;
       const requestKey = requestId?.trim();
-      const options = requestKey
-        ? { headers: { 'x-idempotency-key': requestKey } }
-        : undefined;
+      const options = requestKey ? { headers: { 'x-idempotency-key': requestKey } } : undefined;
       try {
         return await api.post<ExportResponse>(
           `/api/integrations/products/${productId}/export-to-base`,
@@ -147,7 +143,8 @@ export function useGenericExportToBaseMutation(): UpdateMutation<
     },
     onMutate: async (vars: GenericExportToBaseVariables): Promise<ListingBadgeContext> => {
       await queryClient.cancelQueries({ queryKey: listingBadgesQueryKey });
-      const previousListingBadges = queryClient.getQueryData<ListingBadgesPayload>(listingBadgesQueryKey);
+      const previousListingBadges =
+        queryClient.getQueryData<ListingBadgesPayload>(listingBadgesQueryKey);
       setListingBadgeStatus(queryClient, vars.productId, 'base', 'pending');
       return { previousListingBadges };
     },
@@ -171,11 +168,19 @@ export function useGenericExportToBaseMutation(): UpdateMutation<
 export function useGenericCreateListingMutation(): CreateMutation<
   Record<string, unknown>,
   { productId: string; integrationId: string; connectionId: string }
-  > {
+> {
   const queryClient = useQueryClient();
 
   return createCreateMutationV2({
-    mutationFn: ({ productId, integrationId, connectionId }: { productId: string; integrationId: string; connectionId: string }) => 
+    mutationFn: ({
+      productId,
+      integrationId,
+      connectionId,
+    }: {
+      productId: string;
+      integrationId: string;
+      connectionId: string;
+    }) =>
       api.post<Record<string, unknown>>(`/api/integrations/products/${productId}/listings`, {
         integrationId,
         connectionId,
@@ -189,13 +194,18 @@ export function useGenericCreateListingMutation(): CreateMutation<
       mutationKey: integrationJobsQueryKey,
       tags: ['integrations', 'listings', 'create'],
     },
-    onSuccess: (_: Record<string, unknown>, vars: { productId: string; integrationId: string; connectionId: string }): void => {
+    onSuccess: (
+      _: Record<string, unknown>,
+      vars: { productId: string; integrationId: string; connectionId: string }
+    ): void => {
       void invalidateProductListingsAndBadges(queryClient, vars.productId);
     },
   });
 }
 
-export function useDeleteFromBaseMutation(productId: string): UpdateMutation<
+export function useDeleteFromBaseMutation(
+  productId: string
+): UpdateMutation<
   { status?: string; message?: string; runId?: string | null },
   { listingId: string; inventoryId?: string }
 > {
@@ -203,7 +213,7 @@ export function useDeleteFromBaseMutation(productId: string): UpdateMutation<
   const listingQueryKey = getProductListingsQueryKey(productId);
 
   return createDeleteMutationV2({
-    mutationFn: ({ listingId, inventoryId }: { listingId: string; inventoryId?: string }) => 
+    mutationFn: ({ listingId, inventoryId }: { listingId: string; inventoryId?: string }) =>
       api.post<{ status?: string; message?: string; runId?: string | null }>(
         `/api/integrations/products/${productId}/listings/${listingId}/delete-from-base`,
         { inventoryId }
@@ -220,22 +230,21 @@ export function useDeleteFromBaseMutation(productId: string): UpdateMutation<
     onMutate: async ({ listingId }): Promise<ProductListingAndJobsContext> => {
       await cancelProductListingsAndJobs(queryClient, productId);
 
-      const previousListings = queryClient.getQueryData<ProductListingWithDetails[]>(
-        listingQueryKey
-      );
-      const previousIntegrationJobs = queryClient.getQueryData<ProductJob[]>(
-        integrationJobsQueryKey
-      );
+      const previousListings =
+        queryClient.getQueryData<ProductListingWithDetails[]>(listingQueryKey);
+      const previousIntegrationJobs =
+        queryClient.getQueryData<ProductJob[]>(integrationJobsQueryKey);
       const now = new Date();
       const nowIso = now.toISOString();
 
       if (previousListings) {
         queryClient.setQueryData<ProductListingWithDetails[]>(
           listingQueryKey,
-          previousListings.map((listing: ProductListingWithDetails): ProductListingWithDetails =>
-            listing.id === listingId
-              ? { ...listing, status: 'running', updatedAt: nowIso }
-              : listing
+          previousListings.map(
+            (listing: ProductListingWithDetails): ProductListingWithDetails =>
+              listing.id === listingId
+                ? { ...listing, status: 'running', updatedAt: nowIso }
+                : listing
           )
         );
       }
@@ -243,14 +252,16 @@ export function useDeleteFromBaseMutation(productId: string): UpdateMutation<
       if (previousIntegrationJobs) {
         queryClient.setQueryData<ProductJob[]>(
           integrationJobsQueryKey,
-          previousIntegrationJobs.map((job: ProductJob): ProductJob => ({
-            ...job,
-            listings: job.listings.map((listing) =>
-              listing.id === listingId
-                ? { ...listing, status: 'running', updatedAt: nowIso }
-                : listing
-            ),
-          }))
+          previousIntegrationJobs.map(
+            (job: ProductJob): ProductJob => ({
+              ...job,
+              listings: job.listings.map((listing) =>
+                listing.id === listingId
+                  ? { ...listing, status: 'running', updatedAt: nowIso }
+                  : listing
+              ),
+            })
+          )
         );
       }
 
@@ -278,7 +289,7 @@ export function usePurgeListingMutation(productId: string): DeleteMutation {
   const mutationKey = getProductListingsQueryKey(productId);
 
   return createDeleteMutationV2({
-    mutationFn: (listingId: string) => 
+    mutationFn: (listingId: string) =>
       api.delete<void>(`/api/integrations/products/${productId}/listings/${listingId}/purge`),
     mutationKey,
     meta: {
@@ -295,16 +306,18 @@ export function usePurgeListingMutation(productId: string): DeleteMutation {
   });
 }
 
-export function useUpdateListingInventoryIdMutation(productId: string): UpdateMutation<
-  Record<string, unknown>,
-  { listingId: string; inventoryId: string }
-> {
+export function useUpdateListingInventoryIdMutation(
+  productId: string
+): UpdateMutation<Record<string, unknown>, { listingId: string; inventoryId: string }> {
   const queryClient = useQueryClient();
   const mutationKey = getProductListingsQueryKey(productId);
 
   return createUpdateMutationV2({
-    mutationFn: ({ listingId, inventoryId }: { listingId: string; inventoryId: string }) => 
-      api.patch<Record<string, unknown>>(`/api/integrations/products/${productId}/listings/${listingId}`, { inventoryId }),
+    mutationFn: ({ listingId, inventoryId }: { listingId: string; inventoryId: string }) =>
+      api.patch<Record<string, unknown>>(
+        `/api/integrations/products/${productId}/listings/${listingId}`,
+        { inventoryId }
+      ),
     mutationKey,
     meta: {
       source: 'integrations.hooks.useUpdateListingInventoryIdMutation',
@@ -320,7 +333,9 @@ export function useUpdateListingInventoryIdMutation(productId: string): UpdateMu
   });
 }
 
-export function useSyncBaseImagesMutation(productId: string): UpdateMutation<
+export function useSyncBaseImagesMutation(
+  productId: string
+): UpdateMutation<
   { status: string; count: number; added: number },
   { listingId: string; inventoryId?: string }
 > {
@@ -328,8 +343,17 @@ export function useSyncBaseImagesMutation(productId: string): UpdateMutation<
   const mutationKey = getProductListingsQueryKey(productId);
 
   return createUpdateMutationV2({
-    mutationFn: async ({ listingId, inventoryId }: { listingId: string; inventoryId?: string }): Promise<{ status: string; count: number; added: number }> => {
-      const payload = await api.post<{ status?: string; count?: number; added?: number }>(`/api/integrations/products/${productId}/listings/${listingId}/sync-base-images`, { inventoryId });
+    mutationFn: async ({
+      listingId,
+      inventoryId,
+    }: {
+      listingId: string;
+      inventoryId?: string;
+    }): Promise<{ status: string; count: number; added: number }> => {
+      const payload = await api.post<{ status?: string; count?: number; added?: number }>(
+        `/api/integrations/products/${productId}/listings/${listingId}/sync-base-images`,
+        { inventoryId }
+      );
       return {
         status: payload.status ?? 'synced',
         count: payload.count ?? 0,
@@ -352,10 +376,9 @@ export function useSyncBaseImagesMutation(productId: string): UpdateMutation<
   });
 }
 
-export function useExportToBaseMutation(productId: string): UpdateMutation<
-  ExportResponse,
-  ExportToBaseVariables
-> {
+export function useExportToBaseMutation(
+  productId: string
+): UpdateMutation<ExportResponse, ExportToBaseVariables> {
   const queryClient = useQueryClient();
   const mutationKey = getProductListingsQueryKey(productId);
 
@@ -363,9 +386,7 @@ export function useExportToBaseMutation(productId: string): UpdateMutation<
     mutationFn: async (payload: ExportToBaseVariables): Promise<ExportResponse> => {
       const { requestId, ...body } = payload;
       const requestKey = requestId?.trim();
-      const options = requestKey
-        ? { headers: { 'x-idempotency-key': requestKey } }
-        : undefined;
+      const options = requestKey ? { headers: { 'x-idempotency-key': requestKey } } : undefined;
       try {
         return await api.post<ExportResponse>(
           `/api/integrations/products/${productId}/export-to-base`,
@@ -393,7 +414,8 @@ export function useExportToBaseMutation(productId: string): UpdateMutation<
     },
     onMutate: async (): Promise<ListingBadgeContext> => {
       await queryClient.cancelQueries({ queryKey: listingBadgesQueryKey });
-      const previousListingBadges = queryClient.getQueryData<ListingBadgesPayload>(listingBadgesQueryKey);
+      const previousListingBadges =
+        queryClient.getQueryData<ListingBadgesPayload>(listingBadgesQueryKey);
       setListingBadgeStatus(queryClient, productId, 'base', 'pending');
       return { previousListingBadges };
     },
@@ -448,12 +470,8 @@ export function useCreateListingMutation(productId: string): CreateMutation<
         integrationId,
         connectionId,
         ...(typeof durationHours === 'number' ? { durationHours } : {}),
-        ...(typeof autoRelistEnabled === 'boolean'
-          ? { autoRelistEnabled }
-          : {}),
-        ...(typeof autoRelistLeadMinutes === 'number'
-          ? { autoRelistLeadMinutes }
-          : {}),
+        ...(typeof autoRelistEnabled === 'boolean' ? { autoRelistEnabled } : {}),
+        ...(typeof autoRelistLeadMinutes === 'number' ? { autoRelistLeadMinutes } : {}),
         ...(templateId !== undefined ? { templateId } : {}),
       }),
     mutationKey,
@@ -466,8 +484,7 @@ export function useCreateListingMutation(productId: string): CreateMutation<
       tags: ['integrations', 'listings', 'create'],
     },
     onSuccess: (data): void => {
-      const queueName =
-        (data as { queue?: { name?: string } } | null)?.queue?.name ?? null;
+      const queueName = (data as { queue?: { name?: string } } | null)?.queue?.name ?? null;
       if (queueName === 'tradera-listings') {
         setListingBadgeStatus(queryClient, productId, 'tradera', 'queued');
       }
@@ -477,7 +494,11 @@ export function useCreateListingMutation(productId: string): CreateMutation<
 }
 
 export function useRelistTraderaMutation(productId: string): UpdateMutation<
-  { queued?: boolean; listingId?: string; queue?: { name?: string; jobId?: string; enqueuedAt?: string } },
+  {
+    queued?: boolean;
+    listingId?: string;
+    queue?: { name?: string; jobId?: string; enqueuedAt?: string };
+  },
   { listingId: string }
 > {
   const queryClient = useQueryClient();
@@ -485,10 +506,11 @@ export function useRelistTraderaMutation(productId: string): UpdateMutation<
 
   return createCreateMutationV2({
     mutationFn: ({ listingId }: { listingId: string }) =>
-      api.post<{ queued?: boolean; listingId?: string; queue?: { name?: string; jobId?: string; enqueuedAt?: string } }>(
-        `/api/integrations/products/${productId}/listings/${listingId}/relist`,
-        {}
-      ),
+      api.post<{
+        queued?: boolean;
+        listingId?: string;
+        queue?: { name?: string; jobId?: string; enqueuedAt?: string };
+      }>(`/api/integrations/products/${productId}/listings/${listingId}/relist`, {}),
     mutationKey,
     meta: {
       source: 'integrations.hooks.useRelistTraderaMutation',

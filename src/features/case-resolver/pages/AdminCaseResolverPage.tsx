@@ -1,7 +1,10 @@
 'use client';
 
 import React from 'react';
-import { AdminCaseResolverPageProvider, useAdminCaseResolverPageContext } from '../context/AdminCaseResolverPageContext';
+import {
+  AdminCaseResolverPageProvider,
+  useAdminCaseResolverPageContext,
+} from '../context/AdminCaseResolverPageContext';
 import { CaseResolverPageView } from '../components/CaseResolverPageView';
 import { CaseResolverViewProvider } from '../components/CaseResolverViewContext';
 

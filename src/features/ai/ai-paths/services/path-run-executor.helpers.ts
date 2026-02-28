@@ -78,15 +78,15 @@ export const parseRuntimeState = (value: unknown): RuntimeState => {
       const parsed = JSON.parse(value) as RuntimeState;
       return parsed && typeof parsed === 'object'
         ? {
-          ...EMPTY_RUNTIME_STATE,
-          ...parsed,
-          inputs: parsed.inputs ?? {},
-          outputs: parsed.outputs ?? {},
-          nodeOutputs: parsed.nodeOutputs ?? {},
-          nodeStatuses: parsed.nodeStatuses ?? {},
-          variables: parsed.variables ?? {},
-          events: parsed.events ?? [],
-        }
+            ...EMPTY_RUNTIME_STATE,
+            ...parsed,
+            inputs: parsed.inputs ?? {},
+            outputs: parsed.outputs ?? {},
+            nodeOutputs: parsed.nodeOutputs ?? {},
+            nodeStatuses: parsed.nodeStatuses ?? {},
+            variables: parsed.variables ?? {},
+            events: parsed.events ?? [],
+          }
         : EMPTY_RUNTIME_STATE;
     } catch {
       return EMPTY_RUNTIME_STATE;
@@ -111,9 +111,7 @@ export const parseRuntimeState = (value: unknown): RuntimeState => {
 export const isRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 
-export const extractNodeErrorOutputs = (
-  error: unknown
-): RuntimePortValues | null => {
+export const extractNodeErrorOutputs = (error: unknown): RuntimePortValues | null => {
   if (!isRecord(error)) return null;
   const maybeNodeOutput = error['nodeOutput'];
   if (!isRecord(maybeNodeOutput)) return null;
@@ -148,11 +146,7 @@ export const collectDroppedRuntimePorts = (
     total: 0,
     samples: [],
   };
-  const buckets: Array<'inputs' | 'outputs' | 'nodeOutputs'> = [
-    'inputs',
-    'outputs',
-    'nodeOutputs',
-  ];
+  const buckets: Array<'inputs' | 'outputs' | 'nodeOutputs'> = ['inputs', 'outputs', 'nodeOutputs'];
 
   buckets.forEach((bucket) => {
     const originalBucket = original[bucket] || {};

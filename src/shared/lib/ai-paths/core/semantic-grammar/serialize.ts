@@ -54,9 +54,7 @@ const toSemanticEdge = (edge: Edge): SemanticEdge => ({
   ...(toEdgeFromPort(edge) !== null ? { fromPort: toEdgeFromPort(edge) } : {}),
   ...(toEdgeToPort(edge) !== null ? { toPort: toEdgeToPort(edge) } : {}),
   ...(typeof edge.label === 'string' || edge.label === null ? { label: edge.label } : {}),
-  ...(typeof edge.type === 'string' && edge.type.trim().length > 0
-    ? { type: edge.type }
-    : {}),
+  ...(typeof edge.type === 'string' && edge.type.trim().length > 0 ? { type: edge.type } : {}),
   ...(edge.data && typeof edge.data === 'object' ? { data: edge.data } : {}),
   ...(typeof edge.createdAt === 'string' ? { createdAt: edge.createdAt } : {}),
   ...(typeof edge.updatedAt === 'string' || edge.updatedAt === null
@@ -71,14 +69,12 @@ const toPortBinding = (edge: SemanticEdge): SemanticPortBinding => ({
     ? { fromPort: edge.fromPort }
     : {}),
   toNodeId: edge.toNodeId,
-  ...(typeof edge.toPort === 'string' || edge.toPort === null
-    ? { toPort: edge.toPort }
-    : {}),
+  ...(typeof edge.toPort === 'string' || edge.toPort === null ? { toPort: edge.toPort } : {}),
 });
 
 const buildNodeConnections = (
   nodeIds: string[],
-  edges: SemanticEdge[],
+  edges: SemanticEdge[]
 ): Map<string, SemanticNodeConnections> => {
   const byNodeId = new Map<string, SemanticNodeConnections>();
   nodeIds.forEach((nodeId: string) => {
@@ -100,49 +96,41 @@ const buildNodeConnections = (
 const sortSemanticNodes = (nodes: SemanticNode[]): SemanticNode[] =>
   nodes
     .slice()
-    .sort((left: SemanticNode, right: SemanticNode): number =>
-      left.id.localeCompare(right.id),
-    );
+    .sort((left: SemanticNode, right: SemanticNode): number => left.id.localeCompare(right.id));
 
 const sortSemanticEdges = (edges: SemanticEdge[]): SemanticEdge[] =>
   edges
     .slice()
-    .sort((left: SemanticEdge, right: SemanticEdge): number =>
-      left.id.localeCompare(right.id),
-    );
+    .sort((left: SemanticEdge, right: SemanticEdge): number => left.id.localeCompare(right.id));
 
 export const serializePathConfigToSemanticCanvas = (
   pathConfig: PathConfig,
-  options?: SerializeSemanticCanvasOptions,
+  options?: SerializeSemanticCanvasOptions
 ): CanvasSemanticDocument => {
   const includeConnections = options?.includeConnections !== false;
   const sortById = options?.sortById !== false;
 
-  const semanticEdgesRaw = (pathConfig.edges ?? []).map((edge: Edge): SemanticEdge =>
-    toSemanticEdge(edge),
+  const semanticEdgesRaw = (pathConfig.edges ?? []).map(
+    (edge: Edge): SemanticEdge => toSemanticEdge(edge)
   );
-  const semanticEdges = sortById
-    ? sortSemanticEdges(semanticEdgesRaw)
-    : semanticEdgesRaw;
+  const semanticEdges = sortById ? sortSemanticEdges(semanticEdgesRaw) : semanticEdgesRaw;
 
   const nodeConnections = buildNodeConnections(
     (pathConfig.nodes ?? []).map((node: AiNode) => node.id),
-    semanticEdges,
+    semanticEdges
   );
 
   const semanticNodesRaw = (pathConfig.nodes ?? []).map((node: AiNode): SemanticNode => {
-    const nodeTypeId =
-      typeof node.nodeTypeId === 'string' ? node.nodeTypeId.trim() : '';
-    const instanceId =
-      typeof node.instanceId === 'string' ? node.instanceId.trim() : '';
+    const nodeTypeId = typeof node.nodeTypeId === 'string' ? node.nodeTypeId.trim() : '';
+    const instanceId = typeof node.instanceId === 'string' ? node.instanceId.trim() : '';
     const identityExtension =
       nodeTypeId.length > 0 || instanceId.length > 0
         ? {
-          aiPathsIdentity: {
-            ...(nodeTypeId.length > 0 ? { nodeTypeId } : {}),
-            instanceId: instanceId.length > 0 ? instanceId : node.id,
-          },
-        }
+            aiPathsIdentity: {
+              ...(nodeTypeId.length > 0 ? { nodeTypeId } : {}),
+              instanceId: instanceId.length > 0 ? instanceId : node.id,
+            },
+          }
         : null;
     return {
       id: node.id,
@@ -164,9 +152,7 @@ export const serializePathConfigToSemanticCanvas = (
       ...(identityExtension ? { extensions: identityExtension } : {}),
     };
   });
-  const semanticNodes = sortById
-    ? sortSemanticNodes(semanticNodesRaw)
-    : semanticNodesRaw;
+  const semanticNodes = sortById ? sortSemanticNodes(semanticNodesRaw) : semanticNodesRaw;
 
   return {
     specVersion: SEMANTIC_SPEC_VERSION,
@@ -204,17 +190,13 @@ export const serializePathConfigToSemanticCanvas = (
       !Array.isArray(pathConfig.updaterSamples)
         ? { updaterSamples: pathConfig.updaterSamples }
         : {}),
-      ...(pathConfig.runtimeState !== undefined
-        ? { runtimeState: pathConfig.runtimeState }
-        : {}),
+      ...(pathConfig.runtimeState !== undefined ? { runtimeState: pathConfig.runtimeState } : {}),
       ...(typeof pathConfig.lastRunAt === 'string' || pathConfig.lastRunAt === null
         ? { lastRunAt: pathConfig.lastRunAt }
         : {}),
       ...(typeof pathConfig.runCount === 'number' ? { runCount: pathConfig.runCount } : {}),
     },
-    ...(pathConfig.aiPathsValidation
-      ? { validation: pathConfig.aiPathsValidation }
-      : {}),
+    ...(pathConfig.aiPathsValidation ? { validation: pathConfig.aiPathsValidation } : {}),
     provenance: {
       source: 'ai-paths',
       exportedAt: options?.exportedAt ?? new Date().toISOString(),

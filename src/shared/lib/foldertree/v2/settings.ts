@@ -46,12 +46,8 @@ export const parseFolderTreeUiStateV2Entry = (
     const parsed = JSON.parse(raw) as Partial<FolderTreeUiStateV2Entry>;
     const expandedNodeIds = Array.isArray(parsed.expandedNodeIds)
       ? Array.from(
-        new Set(
-          parsed.expandedNodeIds
-            .map((value: string) => value.trim())
-            .filter(Boolean)
+          new Set(parsed.expandedNodeIds.map((value: string) => value.trim()).filter(Boolean))
         )
-      )
       : [];
     return {
       expandedNodeIds,
@@ -80,9 +76,7 @@ export const parseFolderTreeProfileV2Entry = (
   }
 };
 
-export const serializeFolderTreeUiStateV2Entry = (
-  value: FolderTreeUiStateV2Entry
-): string =>
+export const serializeFolderTreeUiStateV2Entry = (value: FolderTreeUiStateV2Entry): string =>
   JSON.stringify({
     expandedNodeIds: Array.from(
       new Set(value.expandedNodeIds.map((id: string) => id.trim()).filter(Boolean))
@@ -90,9 +84,8 @@ export const serializeFolderTreeUiStateV2Entry = (
     panelCollapsed: Boolean(value.panelCollapsed),
   });
 
-export const serializeFolderTreeProfileV2Entry = (
-  profile: FolderTreeProfileV2
-): string => JSON.stringify(profile);
+export const serializeFolderTreeProfileV2Entry = (profile: FolderTreeProfileV2): string =>
+  JSON.stringify(profile);
 
 export const buildFolderTreeV2MigrationPayload = ({
   rawProfilesV2,

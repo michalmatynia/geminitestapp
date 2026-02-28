@@ -38,9 +38,7 @@ describe('usePanelState', () => {
   });
 
   it('setPageSize updates page size and resets to page 1', () => {
-    const { result } = renderHook(() =>
-      usePanelState({ initialPage: 5 })
-    );
+    const { result } = renderHook(() => usePanelState({ initialPage: 5 }));
 
     act(() => {
       result.current.setPageSize(25);

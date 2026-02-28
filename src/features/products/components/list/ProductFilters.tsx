@@ -2,12 +2,8 @@
 
 import React, { memo, useCallback, useMemo, useState } from 'react';
 
-import {
-  useProductListFiltersContext,
-} from '@/features/products/context/ProductListContext';
-import {
-  AdvancedFilterModal,
-} from '@/features/products/components/list/advanced-filter';
+import { useProductListFiltersContext } from '@/features/products/context/ProductListContext';
+import { AdvancedFilterModal } from '@/features/products/components/list/advanced-filter';
 import { useProductCategories } from '@/features/products/hooks/useCategoryQueries';
 import {
   useCatalogs,
@@ -21,9 +17,7 @@ import type {
   ProductAdvancedFilterGroup,
   ProductCategory,
 } from '@/shared/contracts/products';
-import {
-  Button,
-} from '@/shared/ui';
+import { Button } from '@/shared/ui';
 import { FilterPanel } from '@/shared/ui/templates/FilterPanel';
 import type { FilterField } from '@/shared/ui/templates/panels';
 import {
@@ -89,7 +83,8 @@ export const ProductFilters = memo(function ProductFilters(): React.JSX.Element 
     const options = [{ value: '__all__', label: 'All categories' }];
     categories.forEach((category: ProductCategory) => {
       const localizedName = category[nameLocale];
-      const fallbackName = category.name_en || category.name || category.name_pl || category.name_de;
+      const fallbackName =
+        category.name_en || category.name || category.name_pl || category.name_de;
       options.push({
         value: category.id,
         label: localizedName || fallbackName || category.id,
@@ -117,85 +112,144 @@ export const ProductFilters = memo(function ProductFilters(): React.JSX.Element 
 
   const advancedFieldValueOptions = useMemo<
     Partial<Record<ProductAdvancedFilterField, Array<{ value: string; label: string }>>>
-  >(() => ({
-    catalogId: catalogs.map((catalog) => ({
-      value: catalog.id,
-      label: catalog.name || catalog.id,
-    })),
-    tagId: fallbackTagOptions.map((tag) => ({
-      value: tag.id,
-      label: tag.name || tag.id,
-    })),
-    producerId: producers.map((producer) => ({
-      value: producer.id,
-      label: producer.name || producer.id,
-    })),
-  }), [catalogs, fallbackTagOptions, producers]);
+  >(
+    () => ({
+      catalogId: catalogs.map((catalog) => ({
+        value: catalog.id,
+        label: catalog.name || catalog.id,
+      })),
+      tagId: fallbackTagOptions.map((tag) => ({
+        value: tag.id,
+        label: tag.name || tag.id,
+      })),
+      producerId: producers.map((producer) => ({
+        value: producer.id,
+        label: producer.name || producer.id,
+      })),
+    }),
+    [catalogs, fallbackTagOptions, producers]
+  );
 
   // Filter configuration
-  const filterConfig: FilterField[] = useMemo(() => [
-    { key: 'productId', label: 'Product ID', type: 'text', placeholder: 'Search by product ID...', width: '16rem' },
-    {
-      key: 'idMatchMode',
-      label: 'ID Match',
-      type: 'select',
-      placeholder: 'Choose match mode',
-      options: [
-        { value: 'exact', label: 'Exact' },
-        { value: 'partial', label: 'Partial' },
-      ],
-      width: '10rem',
-    },
-    { key: 'sku', label: 'SKU', type: 'text', placeholder: 'Search by SKU...', width: '14rem' },
-    { key: 'description', label: 'Description', type: 'text', placeholder: 'Search by description...', width: '16rem' },
-    { key: 'categoryId', label: 'Category', type: 'select', placeholder: 'All categories', options: categoryOptions, width: '16rem' },
-    {
-      key: 'baseExported',
-      label: 'Base.com Export',
-      type: 'select',
-      placeholder: 'All export statuses',
-      options: [
-        { value: '__all__', label: 'All export statuses' },
-        { value: 'true', label: 'Exported to Base.com' },
-        { value: 'false', label: 'Not exported to Base.com' },
-      ],
-      width: '16rem',
-    },
-    { key: 'minPrice', label: 'Min Price', type: 'number', placeholder: 'Min price', width: '9rem' },
-    { key: 'maxPrice', label: 'Max Price', type: 'number', placeholder: 'Max price', width: '9rem' },
-    {
-      key: 'stockOperator',
-      label: 'Stock Operator',
-      type: 'select',
-      placeholder: 'Choose operator',
-      options: [
-        { value: '__all__', label: 'Any' },
-        { value: 'gt', label: 'More than (>)' },
-        { value: 'gte', label: 'More than or equal (>=)' },
-        { value: 'lt', label: 'Less than (<)' },
-        { value: 'lte', label: 'Less than or equal (<=)' },
-        { value: 'eq', label: 'Equal (=)' },
-      ],
-      width: '13rem',
-    },
-    { key: 'stockValue', label: 'Stock Value', type: 'number', placeholder: 'Stock amount', width: '10rem' },
-    { key: 'createdAt', label: 'Date Range', type: 'dateRange', width: '22rem' },
-  ], [categoryOptions]);
+  const filterConfig: FilterField[] = useMemo(
+    () => [
+      {
+        key: 'productId',
+        label: 'Product ID',
+        type: 'text',
+        placeholder: 'Search by product ID...',
+        width: '16rem',
+      },
+      {
+        key: 'idMatchMode',
+        label: 'ID Match',
+        type: 'select',
+        placeholder: 'Choose match mode',
+        options: [
+          { value: 'exact', label: 'Exact' },
+          { value: 'partial', label: 'Partial' },
+        ],
+        width: '10rem',
+      },
+      { key: 'sku', label: 'SKU', type: 'text', placeholder: 'Search by SKU...', width: '14rem' },
+      {
+        key: 'description',
+        label: 'Description',
+        type: 'text',
+        placeholder: 'Search by description...',
+        width: '16rem',
+      },
+      {
+        key: 'categoryId',
+        label: 'Category',
+        type: 'select',
+        placeholder: 'All categories',
+        options: categoryOptions,
+        width: '16rem',
+      },
+      {
+        key: 'baseExported',
+        label: 'Base.com Export',
+        type: 'select',
+        placeholder: 'All export statuses',
+        options: [
+          { value: '__all__', label: 'All export statuses' },
+          { value: 'true', label: 'Exported to Base.com' },
+          { value: 'false', label: 'Not exported to Base.com' },
+        ],
+        width: '16rem',
+      },
+      {
+        key: 'minPrice',
+        label: 'Min Price',
+        type: 'number',
+        placeholder: 'Min price',
+        width: '9rem',
+      },
+      {
+        key: 'maxPrice',
+        label: 'Max Price',
+        type: 'number',
+        placeholder: 'Max price',
+        width: '9rem',
+      },
+      {
+        key: 'stockOperator',
+        label: 'Stock Operator',
+        type: 'select',
+        placeholder: 'Choose operator',
+        options: [
+          { value: '__all__', label: 'Any' },
+          { value: 'gt', label: 'More than (>)' },
+          { value: 'gte', label: 'More than or equal (>=)' },
+          { value: 'lt', label: 'Less than (<)' },
+          { value: 'lte', label: 'Less than or equal (<=)' },
+          { value: 'eq', label: 'Equal (=)' },
+        ],
+        width: '13rem',
+      },
+      {
+        key: 'stockValue',
+        label: 'Stock Value',
+        type: 'number',
+        placeholder: 'Stock amount',
+        width: '10rem',
+      },
+      { key: 'createdAt', label: 'Date Range', type: 'dateRange', width: '22rem' },
+    ],
+    [categoryOptions]
+  );
 
   // Filter values (combined date range into single object)
-  const filterValues = useMemo(() => ({
-    productId,
-    idMatchMode,
-    sku,
-    description,
-    categoryId,
-    baseExported,
-    minPrice,
-    maxPrice,
-    stockOperator,
-    stockValue,
-    createdAt: { from: startDate, to: endDate },
-  }), [productId, idMatchMode, sku, description, categoryId, baseExported, minPrice, maxPrice, stockOperator, stockValue, startDate, endDate]);
+  const filterValues = useMemo(
+    () => ({
+      productId,
+      idMatchMode,
+      sku,
+      description,
+      categoryId,
+      baseExported,
+      minPrice,
+      maxPrice,
+      stockOperator,
+      stockValue,
+      createdAt: { from: startDate, to: endDate },
+    }),
+    [
+      productId,
+      idMatchMode,
+      sku,
+      description,
+      categoryId,
+      baseExported,
+      minPrice,
+      maxPrice,
+      stockOperator,
+      stockValue,
+      startDate,
+      endDate,
+    ]
+  );
 
   // Handle filter changes
   const handleFilterChange = (key: string, value: unknown) => {
@@ -224,16 +278,12 @@ export const ProductFilters = memo(function ProductFilters(): React.JSX.Element 
         break;
       case 'minPrice':
         setMinPrice(
-          value === '' || value === null || value === undefined
-            ? undefined
-            : Number(value)
+          value === '' || value === null || value === undefined ? undefined : Number(value)
         );
         break;
       case 'maxPrice':
         setMaxPrice(
-          value === '' || value === null || value === undefined
-            ? undefined
-            : Number(value)
+          value === '' || value === null || value === undefined ? undefined : Number(value)
         );
         break;
       case 'stockOperator':
@@ -251,9 +301,7 @@ export const ProductFilters = memo(function ProductFilters(): React.JSX.Element 
         break;
       case 'stockValue':
         setStockValue(
-          value === '' || value === null || value === undefined
-            ? undefined
-            : Number(value)
+          value === '' || value === null || value === undefined ? undefined : Number(value)
         );
         break;
       case 'createdAt': {
@@ -265,20 +313,20 @@ export const ProductFilters = memo(function ProductFilters(): React.JSX.Element 
     }
   };
 
-  const handleSavePresetFromModal = useCallback(async (
-    name: string,
-    filter: ProductAdvancedFilterGroup
-  ): Promise<void> => {
-    const trimmedName = normalizePresetName(name);
-    if (!trimmedName) {
-      throw new Error('Preset name is required.');
-    }
-    if (hasPresetNameConflict(advancedFilterPresets, trimmedName)) {
-      throw new Error('Preset name already exists. Choose a unique name.');
-    }
-    const preset = createAdvancedPreset(trimmedName, filter);
-    await setAdvancedFilterPresets([...advancedFilterPresets, preset]);
-  }, [advancedFilterPresets, setAdvancedFilterPresets]);
+  const handleSavePresetFromModal = useCallback(
+    async (name: string, filter: ProductAdvancedFilterGroup): Promise<void> => {
+      const trimmedName = normalizePresetName(name);
+      if (!trimmedName) {
+        throw new Error('Preset name is required.');
+      }
+      if (hasPresetNameConflict(advancedFilterPresets, trimmedName)) {
+        throw new Error('Preset name already exists. Choose a unique name.');
+      }
+      const preset = createAdvancedPreset(trimmedName, filter);
+      await setAdvancedFilterPresets([...advancedFilterPresets, preset]);
+    },
+    [advancedFilterPresets, setAdvancedFilterPresets]
+  );
 
   return (
     <>

@@ -1,4 +1,9 @@
-import { productCreateSchema, productUpdateSchema, type ProductCreateInput, type ProductUpdateInput } from './schemas';
+import {
+  productCreateSchema,
+  productUpdateSchema,
+  type ProductCreateInput,
+  type ProductUpdateInput,
+} from './schemas';
 
 import type { ZodIssue } from 'zod';
 const reportValidationError = async (
@@ -6,7 +11,8 @@ const reportValidationError = async (
   context: Record<string, unknown> = {}
 ): Promise<void> => {
   try {
-    const { reportValidationError: report } = await import('@/shared/utils/observability/validation-reporter');
+    const { reportValidationError: report } =
+      await import('@/shared/utils/observability/validation-reporter');
     await report(message, context);
   } catch {
     const { logger } = await import('@/shared/utils/logger');
@@ -82,7 +88,7 @@ function createMetadata(startTime: number): ValidationMetadata {
 
 export async function validateProductCreate(
   data: unknown,
-  report: boolean = false,
+  report: boolean = false
 ): Promise<ValidationResult<ProductCreateInput>> {
   const startTime = performance.now();
   const result = productCreateSchema.safeParse(data);
@@ -94,8 +100,8 @@ export async function validateProductCreate(
       void reportValidationError('Product creation validation failed', {
         service: 'product-service',
         action: 'validateProductCreate',
-        errors: errors.map(e => ({ field: e.field, message: e.message })),
-        data: data // Consider redacting if it contains sensitive info
+        errors: errors.map((e) => ({ field: e.field, message: e.message })),
+        data: data, // Consider redacting if it contains sensitive info
       });
     }
     return { success: false, errors, metadata };
@@ -105,7 +111,7 @@ export async function validateProductCreate(
 
 export async function validateProductUpdate(
   data: unknown,
-  report: boolean = false,
+  report: boolean = false
 ): Promise<ValidationResult<ProductUpdateInput>> {
   const startTime = performance.now();
   const result = productUpdateSchema.safeParse(data);
@@ -117,8 +123,8 @@ export async function validateProductUpdate(
       void reportValidationError('Product update validation failed', {
         service: 'product-service',
         action: 'validateProductUpdate',
-        errors: errors.map(e => ({ field: e.field, message: e.message })),
-        data: data
+        errors: errors.map((e) => ({ field: e.field, message: e.message })),
+        data: data,
       });
     }
     return { success: false, errors, metadata };
@@ -129,7 +135,7 @@ export async function validateProductUpdate(
 export async function validateProductField(
   field: string,
   value: unknown,
-  context: 'create' | 'update' = 'create',
+  context: 'create' | 'update' = 'create'
 ): Promise<FieldValidationResult> {
   const partialData = { [field]: value };
   const result =
@@ -140,41 +146,38 @@ export async function validateProductField(
   return {
     field,
     isValid: result.success,
-    errors: result.success
-      ? []
-      : result.errors.filter((e) => e.field === field),
+    errors: result.success ? [] : result.errors.filter((e) => e.field === field),
     warnings: result.warnings?.filter((e) => e.field === field),
   };
 }
 
 export async function validateProductFields(
   fields: Record<string, unknown>,
-  context: 'create' | 'update' = 'create',
+  context: 'create' | 'update' = 'create'
 ): Promise<Record<string, FieldValidationResult>> {
   const results: Record<string, FieldValidationResult> = {};
   await Promise.all(
     Object.entries(fields).map(async ([field, value]) => {
       results[field] = await validateProductField(field, value, context);
-    }),
+    })
   );
   return results;
 }
 
 export async function validateProductsBatch(
   products: unknown[],
-  context: 'create' | 'update' = 'create',
+  context: 'create' | 'update' = 'create'
 ): Promise<{
   results: Array<{ index: number; result: ValidationResult<unknown> }>;
   summary: { total: number; successful: number; failed: number };
 }> {
-  const validate =
-    context === 'create' ? validateProductCreate : validateProductUpdate;
+  const validate = context === 'create' ? validateProductCreate : validateProductUpdate;
 
   const results = await Promise.all(
     products.map(async (product, index) => ({
       index,
       result: await validate(product),
-    })),
+    }))
   );
 
   const successful = results.filter((r) => r.result.success).length;
@@ -228,12 +231,16 @@ export function getValidationSummary(result: ValidationResult<unknown>): {
     fieldErrors[error.field]!.push(error);
   });
 
-  return { isValid: result.success, errorCount: errors.length, warningCount: warnings.length, criticalErrors, fieldErrors };
+  return {
+    isValid: result.success,
+    errorCount: errors.length,
+    warningCount: warnings.length,
+    criticalErrors,
+    fieldErrors,
+  };
 }
 
-export function mergeValidationResults<T>(
-  results: ValidationResult<T>[],
-): ValidationResult<T[]> {
+export function mergeValidationResults<T>(results: ValidationResult<T>[]): ValidationResult<T[]> {
   const allErrors: ValidationError[] = [];
   const allWarnings: ValidationError[] = [];
   const validData: T[] = [];

@@ -56,8 +56,8 @@ const { MongoClient } = require('mongodb');
           skippedInvalidJson: invalidJson,
         },
         null,
-        2,
-      ),
+        2
+      )
     );
   } finally {
     await client.close();

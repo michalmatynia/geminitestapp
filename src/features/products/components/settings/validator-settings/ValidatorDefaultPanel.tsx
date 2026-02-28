@@ -24,7 +24,9 @@ export function ValidatorDefaultPanel(): React.JSX.Element {
     try {
       await updateSettings.mutateAsync({ enabledByDefault: enabled });
     } catch (error) {
-      logClientError(error, { context: { source: 'ValidatorDefaultPanel', action: 'toggleDefault' } });
+      logClientError(error, {
+        context: { source: 'ValidatorDefaultPanel', action: 'toggleDefault' },
+      });
     }
   };
 
@@ -44,7 +46,7 @@ export function ValidatorDefaultPanel(): React.JSX.Element {
       description='Controls whether validator checks are ON by default and whether formatter auto-accept is enabled by default.'
       variant='subtle'
       className='p-4'
-      actions={(
+      actions={
         <ValidatorDocTooltip docId='validator.default.toggle'>
           <div className={cn(settingsBusy && 'pointer-events-none opacity-70')}>
             <ValidatorFormatterToggle
@@ -59,7 +61,7 @@ export function ValidatorDefaultPanel(): React.JSX.Element {
             />
           </div>
         </ValidatorDocTooltip>
-      )}
+      }
     />
   );
 }

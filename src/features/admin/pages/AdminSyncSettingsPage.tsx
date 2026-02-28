@@ -102,8 +102,12 @@ export function AdminSyncSettingsPage(): React.JSX.Element {
       offlineQueue.refresh();
       toast('Offline queue processed', { variant: 'success' });
     } catch (error) {
-      logClientError(error, { context: { source: 'AdminSyncSettingsPage', action: 'processQueue' } });
-      toast(error instanceof Error ? error.message : 'Failed to process queue', { variant: 'error' });
+      logClientError(error, {
+        context: { source: 'AdminSyncSettingsPage', action: 'processQueue' },
+      });
+      toast(error instanceof Error ? error.message : 'Failed to process queue', {
+        variant: 'error',
+      });
     }
   };
 
@@ -122,7 +126,7 @@ export function AdminSyncSettingsPage(): React.JSX.Element {
             items={[
               { label: 'Admin', href: '/admin' },
               { label: 'Settings', href: '/admin/settings' },
-              { label: 'Background Sync' }
+              { label: 'Background Sync' },
             ]}
             className='mb-2'
           />
@@ -155,16 +159,16 @@ export function AdminSyncSettingsPage(): React.JSX.Element {
             className='mb-4'
           />
 
-          <FormField
-            label='Interval (seconds)'
-          >
+          <FormField label='Interval (seconds)'>
             <Input
               id='sync-interval'
               type='number'
               min={10}
               max={3600}
               value={intervalSeconds}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setIntervalSeconds(Number(event.target.value))}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                setIntervalSeconds(Number(event.target.value))
+              }
             />
             <Hint className='mt-1'>Between 10 seconds and 1 hour.</Hint>
           </FormField>
@@ -181,7 +185,11 @@ export function AdminSyncSettingsPage(): React.JSX.Element {
             </Button>
           </FormActions>
 
-          <Card variant='subtle-compact' padding='md' className='border-border bg-muted/20 space-y-2'>
+          <Card
+            variant='subtle-compact'
+            padding='md'
+            className='border-border bg-muted/20 space-y-2'
+          >
             <PropertyRow
               label='Status'
               value={syncStatus.isOnline ? 'Online' : 'Offline'}
@@ -191,10 +199,7 @@ export function AdminSyncSettingsPage(): React.JSX.Element {
               label='Last sync'
               value={syncStatus.lastSync ? syncStatus.lastSync.toLocaleTimeString() : 'Never'}
             />
-            <PropertyRow
-              label='Active interval'
-              value={`${syncStatus.intervalSeconds}s`}
-            />
+            <PropertyRow label='Active interval' value={`${syncStatus.intervalSeconds}s`} />
           </Card>
         </FormSection>
 
@@ -211,18 +216,33 @@ export function AdminSyncSettingsPage(): React.JSX.Element {
           />
 
           <div className='flex flex-wrap gap-3 mb-4'>
-            <Button variant='outline' size='sm' onClick={(): void => { void handleProcessQueue(); }}>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={(): void => {
+                void handleProcessQueue();
+              }}
+            >
               Process Queue
             </Button>
             <Button variant='outline' size='sm' onClick={(): void => offlineQueue.refresh()}>
               Refresh
             </Button>
-            <Button variant='outline' size='sm' className='text-red-200 hover:text-red-100' onClick={() => setIsClearQueueConfirmOpen(true)}>
+            <Button
+              variant='outline'
+              size='sm'
+              className='text-red-200 hover:text-red-100'
+              onClick={() => setIsClearQueueConfirmOpen(true)}
+            >
               Clear Queue
             </Button>
           </div>
 
-          <Card variant='subtle-compact' padding='sm' className='max-h-60 space-y-2 overflow-y-auto border-border bg-muted/10 text-xs text-gray-300'>
+          <Card
+            variant='subtle-compact'
+            padding='sm'
+            className='max-h-60 space-y-2 overflow-y-auto border-border bg-muted/10 text-xs text-gray-300'
+          >
             {offlineQueue.items.length === 0 ? (
               <EmptyState
                 title='Queue Empty'
@@ -232,7 +252,12 @@ export function AdminSyncSettingsPage(): React.JSX.Element {
               />
             ) : (
               offlineQueue.items.map((item: OfflineQueueItem) => (
-                <Card key={item.id} variant='subtle-compact' padding='sm' className='border-white/10'>
+                <Card
+                  key={item.id}
+                  variant='subtle-compact'
+                  padding='sm'
+                  className='border-white/10'
+                >
                   <div className='truncate text-gray-200'>{JSON.stringify(item.queryKey)}</div>
                   <div className='mt-1 text-[10px] text-gray-500'>
                     {new Date(item.timestamp).toLocaleString()}

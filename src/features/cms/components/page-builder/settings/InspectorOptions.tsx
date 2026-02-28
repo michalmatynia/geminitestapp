@@ -10,14 +10,19 @@ export function InspectorOptions(): React.JSX.Element | null {
   const dispatch = usePageBuilderDispatch();
   const inspectorSettings = state.inspectorSettings;
 
-  const updateInspectorSetting = useCallback((patch: Partial<InspectorSettings>): void => 
-    dispatch({ type: 'UPDATE_INSPECTOR_SETTINGS', settings: patch }), [dispatch]);
+  const updateInspectorSetting = useCallback(
+    (patch: Partial<InspectorSettings>): void =>
+      dispatch({ type: 'UPDATE_INSPECTOR_SETTINGS', settings: patch }),
+    [dispatch]
+  );
 
   if (!state.inspectorEnabled) return null;
 
   return (
     <div className='border-b border-border px-4 py-3'>
-      <div className='text-[10px] uppercase tracking-wider text-gray-400 mb-2'>Inspector options</div>
+      <div className='text-[10px] uppercase tracking-wider text-gray-400 mb-2'>
+        Inspector options
+      </div>
       <div className='space-y-2'>
         <ToggleRow
           label='Enable tooltip'

@@ -8,10 +8,7 @@ import {
   useDeleteNoteTheme,
   useUpdateNoteTheme,
 } from '@/features/notesapp/api/useNoteMutations';
-import {
-  useNotebooks,
-  useNoteThemes,
-} from '@/features/notesapp/api/useNoteQueries';
+import { useNotebooks, useNoteThemes } from '@/features/notesapp/api/useNoteQueries';
 import { useNoteSettings } from '@/features/notesapp/hooks/NoteSettingsContext';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { NoteThemeDto as ThemeRecord } from '@/shared/contracts/notes';
@@ -152,10 +149,7 @@ export function AdminNotesThemesPage(): React.JSX.Element {
   };
 
   return (
-    <PageLayout
-      title='Note Themes'
-      description='Create and manage themes for your notes.'
-    >
+    <PageLayout title='Note Themes' description='Create and manage themes for your notes.'>
       <div className='max-w-5xl space-y-8'>
         <FormSection title='Create Theme' className='p-6'>
           <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
@@ -163,9 +157,7 @@ export function AdminNotesThemesPage(): React.JSX.Element {
               <Input
                 type='text'
                 value={form.name}
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, name: e.target.value }))
-                }
+                onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
                 placeholder='Enter theme name'
               />
             </FormField>
@@ -173,9 +165,7 @@ export function AdminNotesThemesPage(): React.JSX.Element {
               <Input
                 type='color'
                 value={form.textColor}
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, textColor: e.target.value }))
-                }
+                onChange={(e) => setForm((prev) => ({ ...prev, textColor: e.target.value }))}
                 className='h-10 p-1'
               />
             </FormField>
@@ -315,9 +305,7 @@ export function AdminNotesThemesPage(): React.JSX.Element {
         >
           <div className='space-y-4'>
             {themes.length === 0 ? (
-              <p className='text-sm text-gray-400 italic py-4'>
-                No themes created yet.
-              </p>
+              <p className='text-sm text-gray-400 italic py-4'>No themes created yet.</p>
             ) : (
               themes.map((theme) => {
                 const isEditing = editingId === theme.id;
@@ -329,14 +317,10 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                   >
                     <div className='flex flex-wrap items-center justify-between gap-3 mb-4'>
                       <div className='flex items-center gap-3'>
-                        <div className='text-lg font-semibold text-white'>
-                          {theme.name}
-                        </div>
+                        <div className='text-lg font-semibold text-white'>{theme.name}</div>
                         <div className='text-xs text-gray-500'>
                           Updated{' '}
-                          {theme.updatedAt
-                            ? new Date(theme.updatedAt).toLocaleString()
-                            : '—'}
+                          {theme.updatedAt ? new Date(theme.updatedAt).toLocaleString() : '—'}
                         </div>
                       </div>
                       <div className='flex items-center gap-2'>
@@ -349,11 +333,7 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                             >
                               {isUpdating ? 'Saving...' : 'Save'}
                             </Button>
-                            <Button
-                              onClick={handleEditCancel}
-                              variant='ghost'
-                              size='sm'
-                            >
+                            <Button onClick={handleEditCancel} variant='ghost' size='sm'>
                               Cancel
                             </Button>
                           </>

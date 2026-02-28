@@ -2,7 +2,7 @@ import { renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { api } from '@/shared/lib/api-client';
-import { loadImageStudioAnalysisPlanSnapshot } from '@/features/ai/image-studio/utils/analysis-bridge';
+import { loadImageStudioAnalysisPlanSnapshot } from '@/shared/lib/ai/image-studio/utils/analysis-bridge';
 import { useGenerationToolbarHandlers } from '../GenerationToolbar.handlers';
 import { type GenerationToolbarState } from '../GenerationToolbar.types';
 

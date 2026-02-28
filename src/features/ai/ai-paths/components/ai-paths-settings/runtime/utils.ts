@@ -16,9 +16,7 @@ import type {
   RuntimePortValues,
   UpdaterSampleState,
 } from '@/shared/lib/ai-paths';
-import {
-  STORAGE_VERSION,
-} from '@/shared/lib/ai-paths';
+import { STORAGE_VERSION } from '@/shared/lib/ai-paths';
 import { extractImageUrls } from '@/shared/lib/ai-paths/core/runtime/utils';
 
 /**
@@ -167,12 +165,12 @@ export const selectorEscape = (val: string): string => {
  */
 export const getDomSelector = (element: Element | null): string | null => {
   if (!element) return null;
-  
+
   const dataSelector =
     element.getAttribute('data-component') ||
     element.getAttribute('data-testid') ||
     element.getAttribute('data-node');
-    
+
   if (dataSelector) {
     const attr =
       element.getAttribute('data-component') !== null
@@ -182,11 +180,11 @@ export const getDomSelector = (element: Element | null): string | null => {
           : 'data-node';
     return `${element.tagName.toLowerCase()}[${attr}="${selectorEscape(dataSelector)}"]`;
   }
-  
+
   if (element.id) {
     return `#${selectorEscape(element.id)}`;
   }
-  
+
   const segments: string[] = [];
   let current: Element | null = element;
   while (current && current.tagName.toLowerCase() !== 'html' && segments.length < 5) {
@@ -210,13 +208,14 @@ export const getDomSelector = (element: Element | null): string | null => {
 /**
  * Extracts info from a mouse event target
  */
-export const getTargetInfo = (event?: React.MouseEvent | undefined): Record<string, unknown> | null => {
+export const getTargetInfo = (
+  event?: React.MouseEvent | undefined
+): Record<string, unknown> | null => {
   const target = event?.target as Element | null;
   if (!target) return null;
   const element =
-        target.closest(
-          '[data-component],[data-testid],[data-node],button,a,[role=\'button\']'
-        ) ?? target;  const rect = element.getBoundingClientRect();
+    target.closest("[data-component],[data-testid],[data-node],button,a,[role='button']") ?? target;
+  const rect = element.getBoundingClientRect();
   const dataset = element instanceof HTMLElement ? element.dataset : undefined;
   return {
     tagName: element.tagName.toLowerCase(),
@@ -261,64 +260,64 @@ export const buildTriggerContext = (args: {
   const nativeEvent = args.event?.nativeEvent;
   const pointer = nativeEvent
     ? {
-      clientX: nativeEvent.clientX,
-      clientY: nativeEvent.clientY,
-      pageX: nativeEvent.pageX,
-      pageY: nativeEvent.pageY,
-      screenX: nativeEvent.screenX,
-      screenY: nativeEvent.screenY,
-      offsetX: 'offsetX' in nativeEvent ? nativeEvent.offsetX : undefined,
-      offsetY: 'offsetY' in nativeEvent ? nativeEvent.offsetY : undefined,
-      button: nativeEvent.button,
-      buttons: nativeEvent.buttons,
-      altKey: nativeEvent.altKey,
-      ctrlKey: nativeEvent.ctrlKey,
-      shiftKey: nativeEvent.shiftKey,
-      metaKey: nativeEvent.metaKey,
-    }
+        clientX: nativeEvent.clientX,
+        clientY: nativeEvent.clientY,
+        pageX: nativeEvent.pageX,
+        pageY: nativeEvent.pageY,
+        screenX: nativeEvent.screenX,
+        screenY: nativeEvent.screenY,
+        offsetX: 'offsetX' in nativeEvent ? nativeEvent.offsetX : undefined,
+        offsetY: 'offsetY' in nativeEvent ? nativeEvent.offsetY : undefined,
+        button: nativeEvent.button,
+        buttons: nativeEvent.buttons,
+        altKey: nativeEvent.altKey,
+        ctrlKey: nativeEvent.ctrlKey,
+        shiftKey: nativeEvent.shiftKey,
+        metaKey: nativeEvent.metaKey,
+      }
     : undefined;
-    
+
   const targetInfo = getTargetInfo(args.event);
   const location =
     typeof window !== 'undefined'
       ? {
-        href: window.location.href,
-        origin: window.location.origin,
-        pathname: window.location.pathname,
-        search: window.location.search,
-        hash: window.location.hash,
-        referrer: document.referrer || undefined,
-      }
+          href: window.location.href,
+          origin: window.location.origin,
+          pathname: window.location.pathname,
+          search: window.location.search,
+          hash: window.location.hash,
+          referrer: document.referrer || undefined,
+        }
       : {};
-      
+
   const ui =
     typeof window !== 'undefined'
       ? {
-        viewport: {
-          width: window.innerWidth,
-          height: window.innerHeight,
-          devicePixelRatio: window.devicePixelRatio,
-        },
-        screen: {
-          width: window.screen?.width,
-          height: window.screen?.height,
-          availWidth: window.screen?.availWidth,
-          availHeight: window.screen?.availHeight,
-        },
-        userAgent: navigator.userAgent,
-        platform: navigator.platform,
-        language: navigator.language,
-        languages: navigator.languages,
-        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        documentTitle: document.title,
-        visibilityState: document.visibilityState,
-        scroll: {
-          x: window.scrollX,
-          y: window.scrollY,
-        },
-      }
+          viewport: {
+            width: window.innerWidth,
+            height: window.innerHeight,
+            devicePixelRatio: window.devicePixelRatio,
+          },
+          screen: {
+            width: window.screen?.width,
+            height: window.screen?.height,
+            availWidth: window.screen?.availWidth,
+            availHeight: window.screen?.availHeight,
+          },
+          userAgent: navigator.userAgent,
+          platform: navigator.platform,
+          language: navigator.language,
+          languages: navigator.languages,
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          documentTitle: document.title,
+          visibilityState: document.visibilityState,
+          scroll: {
+            x: window.scrollX,
+            y: window.scrollY,
+          },
+        }
       : {};
-      
+
   return {
     timestamp,
     location,
@@ -378,9 +377,7 @@ export const buildDebugSnapshot = (args: {
   const entries = args.nodes
     .filter((node: AiNode): boolean => node.type === 'database')
     .map((node: AiNode): PathDebugEntry | null => {
-      const output = args.state.outputs?.[node.id] as
-        | { debugPayload?: unknown }
-        | undefined;
+      const output = args.state.outputs?.[node.id] as { debugPayload?: unknown } | undefined;
       const debugPayload = output?.debugPayload;
       if (debugPayload === undefined || debugPayload === null) return null;
       return {
@@ -390,7 +387,7 @@ export const buildDebugSnapshot = (args: {
       };
     })
     .filter((entry: PathDebugEntry | null): entry is PathDebugEntry => entry !== null);
-    
+
   if (entries.length === 0) return null;
   return { pathId: args.pathId, runAt: args.runAt, entries };
 };

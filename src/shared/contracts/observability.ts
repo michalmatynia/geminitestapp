@@ -169,7 +169,12 @@ export const systemLogFilterFormValuesSchema = z.object({
 export type SystemLogFilterFormValues = z.infer<typeof systemLogFilterFormValuesSchema>;
 
 export const logTriagePresetSchema = z.object({
-  id: z.enum(['recent-errors-24h', 'http-500-last7d', 'client-errors-last7d', 'auth-anomalies-last3d']),
+  id: z.enum([
+    'recent-errors-24h',
+    'http-500-last7d',
+    'client-errors-last7d',
+    'auth-anomalies-last3d',
+  ]),
   label: z.string(),
   description: z.string(),
 });
@@ -289,15 +294,17 @@ export const suggestedActionSchema = z.object({
 
 export type SuggestedAction = z.infer<typeof suggestedActionSchema>;
 
-export const errorContextSchema = z.record(z.string(), z.unknown()).and(z.object({
-  service: z.string().nullable().optional(),
-  runId: z.string().nullable().optional(),
-  jobId: z.string().nullable().optional(),
-  productId: z.string().nullable().optional(),
-  errorId: z.string().nullable().optional(),
-  category: z.union([errorCategorySchema, z.string()]).nullable().optional(),
-  userMessage: z.string().nullable().optional(),
-}));
+export const errorContextSchema = z.record(z.string(), z.unknown()).and(
+  z.object({
+    service: z.string().nullable().optional(),
+    runId: z.string().nullable().optional(),
+    jobId: z.string().nullable().optional(),
+    productId: z.string().nullable().optional(),
+    errorId: z.string().nullable().optional(),
+    category: z.union([errorCategorySchema, z.string()]).nullable().optional(),
+    userMessage: z.string().nullable().optional(),
+  })
+);
 
 export type ErrorContext = z.infer<typeof errorContextSchema>;
 

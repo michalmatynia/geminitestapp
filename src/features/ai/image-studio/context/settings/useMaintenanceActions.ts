@@ -45,11 +45,14 @@ export function useMaintenanceActions({
     setBackfillResultText('');
 
     try {
-      const response = await api.post<{ result: BackfillResult }>('/api/image-studio/cards/backfill', {
-        projectId: backfillProjectId.trim() || null,
-        dryRun: backfillDryRun,
-        includeHeuristicGenerationLinks: backfillIncludeHeuristicGenerationLinks,
-      });
+      const response = await api.post<{ result: BackfillResult }>(
+        '/api/image-studio/cards/backfill',
+        {
+          projectId: backfillProjectId.trim() || null,
+          dryRun: backfillDryRun,
+          includeHeuristicGenerationLinks: backfillIncludeHeuristicGenerationLinks,
+        }
+      );
 
       const result = response.result;
       const summary = [
@@ -63,12 +66,17 @@ export function useMaintenanceActions({
         `Generation inferred: ${result.inferredGenerationBackfilled}`,
       ].join('\n');
 
-      const projectErrorCount = result.projects.reduce((count: number, project: BackfillProjectResult) => {
-        return count + (project.errors.length > 0 ? 1 : 0);
-      }, 0);
+      const projectErrorCount = result.projects.reduce(
+        (count: number, project: BackfillProjectResult) => {
+          return count + (project.errors.length > 0 ? 1 : 0);
+        },
+        0
+      );
 
       if (projectErrorCount > 0) {
-        toast(`Backfill finished with errors in ${projectErrorCount} project(s).`, { variant: 'error' });
+        toast(`Backfill finished with errors in ${projectErrorCount} project(s).`, {
+          variant: 'error',
+        });
       } else {
         toast(
           result.dryRun
@@ -80,24 +88,24 @@ export function useMaintenanceActions({
 
       const perProject = result.projects
         .map((project) => {
-          const errors = project.errors.length > 0 ? `\n  errors: ${project.errors.join(' | ')}` : '';
+          const errors =
+            project.errors.length > 0 ? `\n  errors: ${project.errors.join(' | ')}` : '';
           return `- ${project.projectId}: updated=${project.updatedCards}, link=${project.slotLinkBackfilled}, mask=${project.maskFolderBackfilled}, inferred=${project.inferredGenerationBackfilled}${errors}`;
         })
         .join('\n');
 
       setBackfillResultText(`${summary}\n\nPer project:\n${perProject || '- none'}`);
     } catch (error) {
-      logClientError(error, { context: { source: 'AdminImageStudioSettingsPage', action: 'runCardBackfill' } });
-      toast(error instanceof Error ? error.message : 'Failed to run card backfill.', { variant: 'error' });
+      logClientError(error, {
+        context: { source: 'AdminImageStudioSettingsPage', action: 'runCardBackfill' },
+      });
+      toast(error instanceof Error ? error.message : 'Failed to run card backfill.', {
+        variant: 'error',
+      });
     } finally {
       setBackfillRunning(false);
     }
-  }, [
-    backfillDryRun,
-    backfillIncludeHeuristicGenerationLinks,
-    backfillProjectId,
-    toast,
-  ]);
+  }, [backfillDryRun, backfillIncludeHeuristicGenerationLinks, backfillProjectId, toast]);
 
   return {
     backfillRunning,

@@ -1,10 +1,6 @@
 'use client';
 
-import type {
-  AiNode,
-  AiPathRunNodeRecord,
-  RuntimeHistoryEntry,
-} from '@/shared/lib/ai-paths';
+import type { AiNode, AiPathRunNodeRecord, RuntimeHistoryEntry } from '@/shared/lib/ai-paths';
 
 export type HistoryNodeOption = {
   id: string;

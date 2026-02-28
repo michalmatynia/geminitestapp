@@ -4,42 +4,39 @@ import fs from 'fs/promises';
 import path from 'path';
 
 import { ObjectId } from 'mongodb';
-import OpenAI from 'openai';
 
-import { resolveBrainModelExecutionConfig } from '@/features/ai/brain/server';
 import {
-  createMongoBackup,
-  createPostgresBackup,
-  runDatabaseSync,
-  type DatabaseSyncDirection,
-} from '@/features/database/server';
+  resolveBrainExecutionConfigForCapability,
+  resolveBrainModelExecutionConfig,
+} from '@/shared/lib/ai-brain/server';
+import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
+import { createMongoBackup, createPostgresBackup } from '@/shared/lib/db/services/database-backup';
+import { runDatabaseSync } from '@/shared/lib/db/services/database-sync';
+import { type DatabaseSyncDirection } from '@/shared/contracts';
 import {
   markDatabaseBackupJobFailed,
   markDatabaseBackupJobRunning,
   markDatabaseBackupJobSucceeded,
-} from '@/features/database/services/database-backup-scheduler';
+} from '@/shared/lib/db/services/database-backup-scheduler';
 import type { ImageFileRecord } from '@/shared/lib/files/services/image-file-service';
 import { getImageFileRepository } from '@/shared/lib/files/services/image-file-repository';
-import { listBaseListingsForSync, syncBaseImagesForListing } from '@/features/integrations/services/base-image-sync';
+import {
+  listBaseListingsForSync,
+  syncBaseImagesForListing,
+} from '@/features/integrations/services/base-image-sync';
 import { defaultLanguages } from '@/shared/lib/internationalization/server';
 import { getInternationalizationProvider } from '@/shared/lib/internationalization/services/internationalization-provider';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import {
-  generateProductDescription,
+  generateProductAiDescription,
   getProductRepository,
-  getSettingValue,
   translateProduct,
 } from '@/features/products/server';
 import { buildImageBase64Slots } from '@/features/products/services/image-base64';
 import type { ProductAiJobRecord } from '@/shared/contracts/jobs';
 import type { ProductCreateInputDto as ProductFormData } from '@/shared/contracts/products';
-import {
-  badRequestError,
-  configurationError,
-  notFoundError,
-  operationFailedError,
-} from '@/shared/errors/app-error';
+import { badRequestError, notFoundError, operationFailedError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 
@@ -74,66 +71,47 @@ export type Job = ProductAiJobRecord & {
   payload: JobPayload;
 };
 
-const OLLAMA_BASE_URL = process.env['OLLAMA_BASE_URL'] || 'http://localhost:11434';
-
-const getClient = (modelName: string, apiKey: string | null): { openai: OpenAI; isOllama: boolean } => {
-  const modelLower = modelName.toLowerCase();
-  const isOpenAI =
-    (modelLower.startsWith('gpt-') && !modelLower.includes('oss')) ||
-    modelLower.startsWith('ft:gpt-') ||
-    modelLower.startsWith('o1-');
-
-  if (isOpenAI) {
-    if (!apiKey) {
-      throw configurationError('OpenAI API key is missing for GPT model.');
-    }
-    return { openai: new OpenAI({ apiKey }), isOllama: false };
-  }
-
-  return {
-    openai: new OpenAI({
-      baseURL: `${OLLAMA_BASE_URL}/v1`,
-      apiKey: 'ollama',
-    }),
-    isOllama: true
-  };
-};
-
 const buildImageParts = async (imageUrls: string[]): Promise<ChatCompletionContentPart[]> => {
   if (!imageUrls.length) return [] as ChatCompletionContentPart[];
   const imageFileRepository = await getImageFileRepository();
   const imageFiles = await imageFileRepository.listImageFiles();
-  const imageFileMap = new Map<string, ImageFileRecord>(imageFiles.map((file: ImageFileRecord) => [file.filepath, file]));
+  const imageFileMap = new Map<string, ImageFileRecord>(
+    imageFiles.map((file: ImageFileRecord) => [file.filepath, file])
+  );
 
-  const imagePromises = imageUrls.map(async (item: string): Promise<ChatCompletionContentPart | null> => {
-    try {
-      let base64Image: string;
-      let mimetype = 'image/jpeg';
-      if (item.startsWith('http')) {
-        const res = await fetch(item);
-        if (!res.ok) return null;
-        const buffer = Buffer.from(await res.arrayBuffer());
-        base64Image = buffer.toString('base64');
-        mimetype = res.headers.get('content-type') || 'image/jpeg';
-      } else {
-        const normalized = item.startsWith('/') ? item.slice(1) : item;
-        const imagePath = path.join(process.cwd(), 'public', normalized);
-        const buffer = await fs.readFile(imagePath);
-        base64Image = buffer.toString('base64');
-        const record = imageFileMap.get(item);
-        if (record) mimetype = record.mimetype;
+  const imagePromises = imageUrls.map(
+    async (item: string): Promise<ChatCompletionContentPart | null> => {
+      try {
+        let base64Image: string;
+        let mimetype = 'image/jpeg';
+        if (item.startsWith('http')) {
+          const res = await fetch(item);
+          if (!res.ok) return null;
+          const buffer = Buffer.from(await res.arrayBuffer());
+          base64Image = buffer.toString('base64');
+          mimetype = res.headers.get('content-type') || 'image/jpeg';
+        } else {
+          const normalized = item.startsWith('/') ? item.slice(1) : item;
+          const imagePath = path.join(process.cwd(), 'public', normalized);
+          const buffer = await fs.readFile(imagePath);
+          base64Image = buffer.toString('base64');
+          const record = imageFileMap.get(item);
+          if (record) mimetype = record.mimetype;
+        }
+        return {
+          type: 'image_url' as const,
+          image_url: { url: `data:${mimetype};base64,${base64Image}` },
+        };
+      } catch {
+        return null;
       }
-      return {
-        type: 'image_url' as const,
-        image_url: { url: `data:${mimetype};base64,${base64Image}` },
-      };
-    } catch {
-      return null;
     }
-  });
+  );
 
   return (await Promise.all(imagePromises)).filter(
-    (img: ChatCompletionContentPart | null): img is Extract<ChatCompletionContentPart, { type: 'image_url' }> => Boolean(img)
+    (
+      img: ChatCompletionContentPart | null
+    ): img is Extract<ChatCompletionContentPart, { type: 'image_url' }> => Boolean(img)
   );
 };
 
@@ -147,15 +125,12 @@ export async function processGraphModel(job: Job): Promise<Record<string, unknow
     typeof payload.source === 'string' && payload.source.trim()
       ? payload.source.trim()
       : 'ai_paths';
-  const requestedModelId =
-    typeof payload.modelId === 'string' ? payload.modelId.trim() : '';
+  const requestedModelId = typeof payload.modelId === 'string' ? payload.modelId.trim() : '';
   const requestedTemperature =
     typeof payload.temperature === 'number' ? payload.temperature : undefined;
-  const requestedMaxTokens =
-    typeof payload.maxTokens === 'number' ? payload.maxTokens : undefined;
+  const requestedMaxTokens = typeof payload.maxTokens === 'number' ? payload.maxTokens : undefined;
   const requestedSystemPrompt =
-    typeof payload['systemPrompt'] === 'string' &&
-    payload['systemPrompt'].trim()
+    typeof payload['systemPrompt'] === 'string' && payload['systemPrompt'].trim()
       ? payload['systemPrompt'].trim()
       : '';
   let modelId: string;
@@ -164,7 +139,9 @@ export async function processGraphModel(job: Job): Promise<Record<string, unknow
   let systemMessage: string;
   let brainApplied: Record<string, unknown> | undefined;
   const imageUrls = Array.isArray(payload.imageUrls)
-    ? payload.imageUrls.filter((url: unknown): url is string => typeof url === 'string' && url.trim() !== '')
+    ? payload.imageUrls.filter(
+        (url: unknown): url is string => typeof url === 'string' && url.trim() !== ''
+      )
     : [];
   const attachImages = Boolean(payload.vision) && imageUrls.length > 0;
   if (source === 'ai_paths') {
@@ -200,80 +177,49 @@ export async function processGraphModel(job: Job): Promise<Record<string, unknow
       });
     }
   } else {
-    const visionFallback = (await getSettingValue('ai_vision_model'))?.trim() || '';
-    const textFallback = (await getSettingValue('openai_model'))?.trim() || '';
-    modelId =
-      requestedModelId ||
-      (payload.vision ? visionFallback : textFallback) ||
-      (payload.vision ? 'gemma3:27b' : 'gpt-4o');
-    temperature = requestedTemperature ?? 0.7;
-    maxTokens = requestedMaxTokens ?? 800;
-    systemMessage = requestedSystemPrompt || 'You are an AI assistant.';
+    const capability = payload.vision
+      ? 'product.description.vision'
+      : 'product.description.generation';
+    const brainConfig = await resolveBrainExecutionConfigForCapability(capability, {
+      defaultTemperature: requestedTemperature ?? 0.7,
+      defaultMaxTokens: requestedMaxTokens ?? 800,
+      defaultSystemPrompt: requestedSystemPrompt || 'You are an AI assistant.',
+      runtimeKind: payload.vision ? 'vision' : 'chat',
+    });
+    modelId = brainConfig.modelId;
+    temperature = brainConfig.temperature;
+    maxTokens = brainConfig.maxTokens;
+    systemMessage = brainConfig.systemPrompt;
+    brainApplied = brainConfig.brainApplied;
   }
-  const apiKey = (await getSettingValue('openai_api_key')) ?? process.env['OPENAI_API_KEY'] ?? null;
-  const modelLower = modelId.toLowerCase();
-  const isOpenAIModel =
-    (modelLower.startsWith('gpt-') && !modelLower.includes('oss')) ||
-    modelLower.startsWith('ft:gpt-') ||
-    modelLower.startsWith('o1-');
-  const isAnthropicModel =
-    modelLower.startsWith('claude-') || modelLower.startsWith('anthropic:');
-  const isGeminiModel =
-    modelLower.startsWith('gemini-') || modelLower.startsWith('models/gemini-');
-  if (source === 'ai_paths' && (isAnthropicModel || isGeminiModel)) {
-    throw configurationError(
-      `AI Paths graph_model nodes currently support only OpenAI or Ollama Brain models. Update /admin/settings/brain because "${modelId}" is not supported yet.`,
-    );
-  }
-  if (source !== 'ai_paths' && isOpenAIModel && !apiKey) {
-    const fallback = (await getSettingValue('ai_vision_model'))?.trim() || 'gemma3:27b';
-    modelId = fallback;
-  }
-  const { openai: client, isOllama } = getClient(modelId, apiKey);
   const content: ChatCompletionContentPart[] = [{ type: 'text', text: prompt }];
   if (attachImages) {
     const imageParts = await buildImageParts(imageUrls);
     content.push(...imageParts);
   }
 
-  try {
-    const completion = await client.chat.completions.create({
-      model: modelId,
-      messages: [
-        { role: 'system', content: systemMessage },
-        { role: 'user', content },
-      ],
-      temperature,
-      max_tokens: maxTokens,
-    });
-    const resultText = completion.choices[0]?.message.content?.trim() || '';
-    return {
-      result: resultText,
-      modelId,
-      prompt,
-      imageUrls,
-      temperature,
-      maxTokens,
-      source,
-      graph: payload.graph ?? undefined,
-      productId,
-      ...(brainApplied ? { brainApplied } : {}),
-    };
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    const isConnectionError = errorMessage.includes('ECONNREFUSED') ||
-                             errorMessage.includes('fetch failed') ||
-                             errorMessage.includes('failed to fetch');
-
-    if (isOllama && isConnectionError) {
-      throw operationFailedError(
-        `AI Path Node failed: Could not connect to Ollama server at ${OLLAMA_BASE_URL}. Please ensure the Ollama server is running and accessible.`,
-        undefined,
-        { originalError: errorMessage, url: OLLAMA_BASE_URL, model: modelId }
-      );
-    }
-    throw error;
-  }
+  const completion = await runBrainChatCompletion({
+    modelId,
+    temperature,
+    maxTokens,
+    messages: [
+      { role: 'system', content: systemMessage },
+      { role: 'user', content },
+    ],
+  });
+  const resultText = completion.text.trim() || '';
+  return {
+    result: resultText,
+    modelId,
+    prompt,
+    imageUrls,
+    temperature,
+    maxTokens,
+    source,
+    graph: payload.graph ?? undefined,
+    productId,
+    ...(brainApplied ? { brainApplied } : {}),
+  };
 }
 
 export async function processDatabaseSync(job: Job): Promise<Record<string, unknown>> {
@@ -410,9 +356,19 @@ const normalizeLanguageDoc = (doc: Record<string, unknown>): LanguageRecord | nu
   const rawCode = doc['code'] ?? doc['languageCode'] ?? doc['isoCode'];
   const rawName = doc['name'] ?? doc['languageName'];
 
-  const id = typeof rawId === 'string' ? rawId : (typeof rawId === 'number' ? String(rawId) : '');
-  const code = typeof rawCode === 'string' ? rawCode.trim() : (typeof rawCode === 'number' ? String(rawCode) : '');
-  const name = typeof rawName === 'string' ? rawName.trim() : (typeof rawName === 'number' ? String(rawName) : '');
+  const id = typeof rawId === 'string' ? rawId : typeof rawId === 'number' ? String(rawId) : '';
+  const code =
+    typeof rawCode === 'string'
+      ? rawCode.trim()
+      : typeof rawCode === 'number'
+        ? String(rawCode)
+        : '';
+  const name =
+    typeof rawName === 'string'
+      ? rawName.trim()
+      : typeof rawName === 'number'
+        ? String(rawName)
+        : '';
 
   if (!id || !code || !name) return null;
   return { id, code, name };
@@ -444,7 +400,9 @@ const fetchLanguagesByIds = async (ids: string[]): Promise<LanguageRecord[]> => 
         ],
       })
       .toArray();
-    return docs.map((doc: Record<string, unknown>) => normalizeLanguageDoc(doc)).filter(Boolean) as LanguageRecord[];
+    return docs
+      .map((doc: Record<string, unknown>) => normalizeLanguageDoc(doc))
+      .filter(Boolean) as LanguageRecord[];
   }
   const languages = await prisma.language.findMany({
     where: { id: { in: normalizedIds } },
@@ -460,11 +418,10 @@ const fetchAllLanguages = async (): Promise<LanguageRecord[]> => {
   const provider = await getInternationalizationProvider();
   if (provider === 'mongodb') {
     const mongo = await getMongoDb();
-    const docs = await mongo
-      .collection<Record<string, unknown>>('languages')
-      .find({})
-      .toArray();
-    return docs.map((doc: Record<string, unknown>) => normalizeLanguageDoc(doc)).filter(Boolean) as LanguageRecord[];
+    const docs = await mongo.collection<Record<string, unknown>>('languages').find({}).toArray();
+    return docs
+      .map((doc: Record<string, unknown>) => normalizeLanguageDoc(doc))
+      .filter(Boolean) as LanguageRecord[];
   }
   const languages = await prisma.language.findMany();
   return languages.map((lang: { id: string; code: string; name: string }) => ({
@@ -480,7 +437,7 @@ const resolveFallbackLanguages = async (): Promise<string[]> => {
     level: 'info',
     source: 'product-ai-processors',
     message: `Found ${allLanguages.length} available languages`,
-    context: { count: allLanguages.length }
+    context: { count: allLanguages.length },
   });
   const filtered = allLanguages.filter((lang: LanguageRecord) => lang.code.toUpperCase() !== 'EN');
   if (filtered.length > 0) {
@@ -493,7 +450,7 @@ const resolveFallbackLanguages = async (): Promise<string[]> => {
     level: 'info',
     source: 'product-ai-processors',
     message: 'Using default languages fallback',
-    context: { defaults }
+    context: { defaults },
   });
   return defaults;
 };
@@ -501,37 +458,9 @@ const resolveFallbackLanguages = async (): Promise<string[]> => {
 export async function processDescriptionGeneration(job: Job): Promise<{ description: string }> {
   const { productId, payload } = job;
 
-  let productData: ProductFormData;
   let allImageUrls: string[];
 
   if (payload.productData && payload.isTest) {
-    const rawData = payload.productData;
-    productData = {
-      name_en: rawData.name_en || '',
-      name_pl: rawData.name_pl || '',
-      name_de: rawData.name_de || '',
-      description_en: rawData.description_en || '',
-      description_pl: rawData.description_pl || '',
-      description_de: rawData.description_de || '',
-      sku: rawData.sku || '',
-      price: rawData.price || 0,
-      stock: rawData.stock || 0,
-      ean: rawData.ean || '',
-      gtin: rawData.gtin || '',
-      asin: rawData.asin || '',
-      supplierName: rawData.supplierName || '',
-      supplierLink: rawData.supplierLink || '',
-      priceComment: rawData.priceComment || '',
-      weight: rawData.weight || 0,
-      sizeLength: rawData.sizeLength || 0,
-      sizeWidth: rawData.sizeWidth || 0,
-      length: rawData.length || 0,
-      baseProductId: rawData.baseProductId || '',
-      defaultPriceGroupId: rawData.defaultPriceGroupId || '',
-      imageLinks: rawData.imageLinks || [],
-      imageBase64s: rawData.imageBase64s || [],
-      parameters: (rawData.parameters as Array<{ parameterId: string; value: string | null; }> | undefined) || [],
-    };
     allImageUrls = payload.imageUrls || [];
   } else {
     const productRepository = await getProductRepository();
@@ -540,37 +469,10 @@ export async function processDescriptionGeneration(job: Job): Promise<{ descript
     if (!product) {
       void ErrorSystem.logWarning(`Product not found for ID: "${productId}" (possibly a SKU)`, {
         service: 'product-ai-queue',
-        productId
+        productId,
       });
       throw notFoundError('Product not found', { productId });
     }
-
-    productData = {
-      name_en: product.name_en || '',
-      name_pl: product.name_pl || '',
-      name_de: product.name_de || '',
-      description_en: product.description_en || '',
-      description_pl: product.description_pl || '',
-      description_de: product.description_de || '',
-      sku: product.sku || '',
-      price: product.price || 0,
-      stock: product.stock || 0,
-      ean: product.ean || '',
-      gtin: product.gtin || '',
-      asin: product.asin || '',
-      supplierName: product.supplierName || '',
-      supplierLink: product.supplierLink || '',
-      priceComment: product.priceComment || '',
-      weight: product.weight || 0,
-      sizeLength: product.sizeLength || 0,
-      sizeWidth: product.sizeWidth || 0,
-      length: product.length || 0,
-      baseProductId: product.baseProductId || '',
-      defaultPriceGroupId: product.defaultPriceGroupId || '',
-      imageLinks: product.imageLinks || [],
-      imageBase64s: product.imageBase64s || [],
-      parameters: product.parameters || [],
-    };
 
     const uploadedImages = product.images
       .map((img: { imageFile?: { filepath: string } }) => img.imageFile?.filepath)
@@ -582,11 +484,13 @@ export async function processDescriptionGeneration(job: Job): Promise<{ descript
     allImageUrls = [...uploadedImages, ...uniqueExternalImages];
   }
 
-  const result = await generateProductDescription({
-    productData,
-    imageUrls: allImageUrls,
-    visionOutputEnabled: payload.visionOutputEnabled,
-    generationOutputEnabled: payload.generationOutputEnabled
+  const result = await generateProductAiDescription({
+    productId,
+    images: allImageUrls,
+    options: {
+      visionEnabled: payload.visionOutputEnabled,
+      generationEnabled: payload.generationOutputEnabled,
+    },
   });
 
   if (!payload.isTest) {
@@ -608,7 +512,7 @@ export async function processTranslation(job: Job): Promise<Record<string, unkno
   if (!product) {
     void ErrorSystem.logWarning(`Product not found for ID: "${productId}"`, {
       service: 'product-ai-queue-translation',
-      productId
+      productId,
     });
     throw notFoundError('Product not found', { productId });
   }
@@ -646,9 +550,11 @@ export async function processTranslation(job: Job): Promise<Record<string, unkno
     } else {
       let catalogIds: string[] = [];
       if (Array.isArray(product.catalogs)) {
-        catalogIds = product.catalogs.map((c: { catalogId?: string; catalog?: { id: string } }) => {
-          return c.catalogId || c.catalog?.id;
-        }).filter((id: string | undefined): id is string => Boolean(id));
+        catalogIds = product.catalogs
+          .map((c: { catalogId?: string; catalog?: { id: string } }) => {
+            return c.catalogId || c.catalog?.id;
+          })
+          .filter((id: string | undefined): id is string => Boolean(id));
       }
 
       if (catalogIds.length === 0) {
@@ -662,10 +568,10 @@ export async function processTranslation(job: Job): Promise<Record<string, unkno
         include: {
           languages: {
             include: {
-              language: true
-            }
-          }
-        }
+              language: true,
+            },
+          },
+        },
       });
 
       const languageSet = new Set<string>();

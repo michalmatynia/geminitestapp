@@ -8,11 +8,25 @@ import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settin
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { Badge, Button, FormField, FormSection, Input, SectionHeader, SelectSimple, Textarea, useToast, Breadcrumbs } from '@/shared/ui';
+import {
+  Badge,
+  Button,
+  FormField,
+  FormSection,
+  Input,
+  SectionHeader,
+  SelectSimple,
+  Textarea,
+  useToast,
+  Breadcrumbs,
+} from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 import { isLikelyCaseResolverOcrCapableModelId } from '../ocr-models';
-import { detectCaseResolverOcrProvider, resolveCaseResolverOcrProviderLabel } from '../ocr-provider';
+import {
+  detectCaseResolverOcrProvider,
+  resolveCaseResolverOcrProviderLabel,
+} from '../ocr-provider';
 import {
   CASE_RESOLVER_CONFIRM_DELETE_OPTIONS,
   CASE_RESOLVER_DEFAULT_DOCUMENT_FORMAT_KEY,
@@ -28,11 +42,7 @@ type CaseResolverOcrModelsResponse = {
   models?: string[];
   ollamaModels?: string[];
   otherModels?: string[];
-  keySource?:
-    | 'image_studio_openai_api_key'
-    | 'openai_api_key'
-    | 'env_openai_api_key'
-    | 'none';
+  keySource?: 'image_studio_openai_api_key' | 'openai_api_key' | 'env_openai_api_key' | 'none';
   warning?: {
     code?: string;
     message?: string;
@@ -43,9 +53,13 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
   const { toast } = useToast();
   const settingsQuery = useSettingsMap({ scope: 'light' });
   const updateSettingsBulk = useUpdateSettingsBulk();
-  const modelsQuery = createListQueryV2<CaseResolverOcrModelsResponse, CaseResolverOcrModelsResponse>({
+  const modelsQuery = createListQueryV2<
+    CaseResolverOcrModelsResponse,
+    CaseResolverOcrModelsResponse
+  >({
     queryKey: QUERY_KEYS.ai.chatbot.caseResolverOcrModels(),
-    queryFn: ({ signal }) => api.get<CaseResolverOcrModelsResponse>('/api/case-resolver/ocr/models', { signal }),
+    queryFn: ({ signal }) =>
+      api.get<CaseResolverOcrModelsResponse>('/api/case-resolver/ocr/models', { signal }),
     staleTime: 60_000,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
@@ -76,9 +90,9 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
       defaultDocumentFormat === parsedBase.defaultDocumentFormat
         ? parsedBase
         : {
-          ...parsedBase,
-          defaultDocumentFormat,
-        };
+            ...parsedBase,
+            defaultDocumentFormat,
+          };
     if (!parsed.ocrModel && openaiModelFallback) {
       return {
         ...parsed,
@@ -98,9 +112,8 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
   const modelOptions = useMemo(() => {
     const options: Array<{ value: string; label: string; description: string; group: string }> = [];
     const seen = new Set<string>();
-    const resolveModelGroup = (modelId: string): string => (
-      detectCaseResolverOcrProvider(modelId) === 'ollama' ? 'Ollama models' : 'Other models'
-    );
+    const resolveModelGroup = (modelId: string): string =>
+      detectCaseResolverOcrProvider(modelId) === 'ollama' ? 'Ollama models' : 'Other models';
     const append = (values: string[], source: string, group?: string): void => {
       values.forEach((value: string) => {
         const trimmed = value.trim();
@@ -124,7 +137,12 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
     }
 
     return options;
-  }, [draft?.ocrModel, modelsQuery.data?.ollamaModels, modelsQuery.data?.otherModels, openaiModelFallback]);
+  }, [
+    draft?.ocrModel,
+    modelsQuery.data?.ollamaModels,
+    modelsQuery.data?.otherModels,
+    openaiModelFallback,
+  ]);
 
   const ocrKeySourceLabel = useMemo((): string => {
     switch (modelsQuery.data?.keySource) {
@@ -145,10 +163,7 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
     return resolveCaseResolverOcrProviderLabel(model);
   }, [draft]);
 
-  const saveDisabled =
-    !draft ||
-    settingsQuery.isLoading ||
-    updateSettingsBulk.isPending;
+  const saveDisabled = !draft || settingsQuery.isLoading || updateSettingsBulk.isPending;
 
   const modelSummary = `${modelOptions.length} OCR-capable model(s) available`;
   const headerBreadcrumb = (
@@ -190,10 +205,9 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
       );
       toast('Case Resolver settings saved.', { variant: 'success' });
     } catch (error) {
-      toast(
-        error instanceof Error ? error.message : 'Failed to save Case Resolver settings.',
-        { variant: 'error' }
-      );
+      toast(error instanceof Error ? error.message : 'Failed to save Case Resolver settings.', {
+        variant: 'error',
+      });
     }
   };
 
@@ -215,7 +229,7 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
         eyebrow='AI · Case Resolver'
         title='Case Resolver Settings'
         subtitle={headerBreadcrumb}
-        actions={(
+        actions={
           <div className='flex flex-wrap items-center gap-2'>
             <Button
               type='button'
@@ -237,7 +251,7 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
               </Link>
             </Button>
           </div>
-        )}
+        }
       />
 
       <FormSection
@@ -245,21 +259,21 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
         description='Pick the model used for OCR extraction. The dropdown is divided into Ollama models and Other models.'
         variant='subtle'
         className='p-4'
-        actions={(
+        actions={
           <div className='flex items-center gap-2 text-xs text-gray-400'>
             <Settings2 className='size-3.5' />
             <span>{modelSummary}</span>
           </div>
-        )}
+        }
       >
         <div className='grid gap-3 md:grid-cols-2'>
           <FormField
             label='OCR Model'
-            actions={(
+            actions={
               <Badge variant='outline' className='px-1.5 py-0 text-[9px] uppercase tracking-wide'>
                 {detectedOcrProviderLabel}
               </Badge>
-            )}
+            }
             description={`OpenAI OCR calls use the Image Studio API key first. Key source: ${ocrKeySourceLabel}`}
           >
             <SelectSimple
@@ -268,15 +282,16 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
                 setDraft((previous: CaseResolverSettings | null) =>
                   previous
                     ? {
-                      ...previous,
-                      ocrModel: value,
-                    }
+                        ...previous,
+                        ocrModel: value,
+                      }
                     : previous
                 );
               }}
               options={modelOptions}
               placeholder='Select OCR model'
-            />            {modelsQuery.data?.warning?.message ? (
+            />{' '}
+            {modelsQuery.data?.warning?.message ? (
               <div className='mt-1 text-[11px] text-amber-300'>
                 {modelsQuery.data.warning.message}
               </div>
@@ -294,9 +309,9 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
                 setDraft((previous: CaseResolverSettings | null) =>
                   previous
                     ? {
-                      ...previous,
-                      ocrModel: value,
-                    }
+                        ...previous,
+                        ocrModel: value,
+                      }
                     : previous
                 );
               }}
@@ -312,13 +327,14 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
           >
             <Textarea
               value={draft.ocrPrompt}
-              onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => {                const value = event.target.value;
+              onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => {
+                const value = event.target.value;
                 setDraft((previous: CaseResolverSettings | null) =>
                   previous
                     ? {
-                      ...previous,
-                      ocrPrompt: value,
-                    }
+                        ...previous,
+                        ocrPrompt: value,
+                      }
                     : previous
                 );
               }}
@@ -342,13 +358,14 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
           >
             <SelectSimple
               value={draft.defaultDocumentFormat}
-              onValueChange={(value: string): void => {                if (value !== 'wysiwyg') return;
+              onValueChange={(value: string): void => {
+                if (value !== 'wysiwyg') return;
                 setDraft((previous: CaseResolverSettings | null) =>
                   previous
                     ? {
-                      ...previous,
-                      defaultDocumentFormat: 'wysiwyg',
-                    }
+                        ...previous,
+                        defaultDocumentFormat: 'wysiwyg',
+                      }
                     : previous
                 );
               }}
@@ -367,9 +384,9 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
                 setDraft((previous: CaseResolverSettings | null) =>
                   previous
                     ? {
-                      ...previous,
-                      confirmDeleteDocument: value !== 'off',
-                    }
+                        ...previous,
+                        confirmDeleteDocument: value !== 'off',
+                      }
                     : previous
                 );
               }}
@@ -383,13 +400,14 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
           >
             <SelectSimple
               value={draft.defaultAddresserPartyKind}
-              onValueChange={(value: string): void => {                if (value !== 'person' && value !== 'organization') return;
+              onValueChange={(value: string): void => {
+                if (value !== 'person' && value !== 'organization') return;
                 setDraft((previous: CaseResolverSettings | null) =>
                   previous
                     ? {
-                      ...previous,
-                      defaultAddresserPartyKind: value,
-                    }
+                        ...previous,
+                        defaultAddresserPartyKind: value,
+                      }
                     : previous
                 );
               }}
@@ -403,13 +421,14 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
           >
             <SelectSimple
               value={draft.defaultAddresseePartyKind}
-              onValueChange={(value: string): void => {                if (value !== 'person' && value !== 'organization') return;
+              onValueChange={(value: string): void => {
+                if (value !== 'person' && value !== 'organization') return;
                 setDraft((previous: CaseResolverSettings | null) =>
                   previous
                     ? {
-                      ...previous,
-                      defaultAddresseePartyKind: value,
-                    }
+                        ...previous,
+                        defaultAddresseePartyKind: value,
+                      }
                     : previous
                 );
               }}

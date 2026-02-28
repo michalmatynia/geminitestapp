@@ -25,20 +25,15 @@ export function Breadcrumbs({ items, className }: BreadcrumbsProps): React.JSX.E
     >
       {items.map((item, index) => {
         const isLast = index === items.length - 1;
-        
+
         return (
           <React.Fragment key={item.label + (item.href ?? '')}>
             {item.href && !isLast ? (
-              <Link 
-                href={item.href} 
-                className='transition-colors hover:text-gray-200'
-              >
+              <Link href={item.href} className='transition-colors hover:text-gray-200'>
                 {item.label}
               </Link>
             ) : (
-              <span className={cn(isLast && 'text-gray-300')}>
-                {item.label}
-              </span>
+              <span className={cn(isLast && 'text-gray-300')}>{item.label}</span>
             )}
             {!isLast && <span className='mx-0.5 text-gray-600'>/</span>}
           </React.Fragment>

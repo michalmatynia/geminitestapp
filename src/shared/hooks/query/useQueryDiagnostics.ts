@@ -22,50 +22,49 @@ type UseQueryDiagnosticsOptions = {
 
 const buildSnapshot = (queryClient: QueryClient): QueryDiagnosticsItem[] => {
   const cache = queryClient.getQueryCache();
-  return cache
-    .getAll()
-    .map((query: Query): QueryDiagnosticsItem => {
-      const key = query.queryKey;
-      const keyString = JSON.stringify(key);
-      const dataUpdatedAt = query.state.dataUpdatedAt;
-      const errorUpdatedAt = query.state.errorUpdatedAt;
-      const observers = query.getObserversCount();
-      const isInvalidated = Boolean(query.state.isInvalidated);
-      const isStale =
-        typeof (query as unknown as { isStale: () => boolean }).isStale === 'function'
-          ? (query as unknown as { isStale: () => boolean }).isStale()
-          : isInvalidated;
-      let dataSize: number | null = null;
-      if (query.state.data !== undefined) {
-        try {
-          dataSize = JSON.stringify(query.state.data).length;
-        } catch {
-          dataSize = null;
+  return (
+    cache
+      .getAll()
+      .map((query: Query): QueryDiagnosticsItem => {
+        const key = query.queryKey;
+        const keyString = JSON.stringify(key);
+        const dataUpdatedAt = query.state.dataUpdatedAt;
+        const errorUpdatedAt = query.state.errorUpdatedAt;
+        const observers = query.getObserversCount();
+        const isInvalidated = Boolean(query.state.isInvalidated);
+        const isStale =
+          typeof (query as unknown as { isStale: () => boolean }).isStale === 'function'
+            ? (query as unknown as { isStale: () => boolean }).isStale()
+            : isInvalidated;
+        let dataSize: number | null = null;
+        if (query.state.data !== undefined) {
+          try {
+            dataSize = JSON.stringify(query.state.data).length;
+          } catch {
+            dataSize = null;
+          }
         }
-      }
-      return {
-        key,
-        keyString,
-        status: query.state.status,
-        fetchStatus: query.state.fetchStatus,
-        dataUpdatedAt,
-        errorUpdatedAt,
-        observers,
-        isInvalidated,
-        isStale,
-        dataSize,
-      };
-    })
-    // Keep the snapshot stable so we can skip no-op updates.
-    .sort((a: QueryDiagnosticsItem, b: QueryDiagnosticsItem) =>
-      a.keyString.localeCompare(b.keyString)
-    );
+        return {
+          key,
+          keyString,
+          status: query.state.status,
+          fetchStatus: query.state.fetchStatus,
+          dataUpdatedAt,
+          errorUpdatedAt,
+          observers,
+          isInvalidated,
+          isStale,
+          dataSize,
+        };
+      })
+      // Keep the snapshot stable so we can skip no-op updates.
+      .sort((a: QueryDiagnosticsItem, b: QueryDiagnosticsItem) =>
+        a.keyString.localeCompare(b.keyString)
+      )
+  );
 };
 
-const snapshotsEqual = (
-  a: QueryDiagnosticsItem[],
-  b: QueryDiagnosticsItem[]
-): boolean => {
+const snapshotsEqual = (a: QueryDiagnosticsItem[], b: QueryDiagnosticsItem[]): boolean => {
   if (a === b) return true;
   if (a.length !== b.length) return false;
   for (let i = 0; i < a.length; i += 1) {
@@ -105,9 +104,7 @@ export function useQueryDiagnostics(options?: UseQueryDiagnosticsOptions): {
   refetchAll: () => void;
 };
 
-export function useQueryDiagnostics(
-  options: UseQueryDiagnosticsOptions = {}
-): {
+export function useQueryDiagnostics(options: UseQueryDiagnosticsOptions = {}): {
   queries: QueryDiagnosticsItem[];
   invalidate: (key: readonly unknown[]) => void;
   refetch: (key: readonly unknown[]) => void;
@@ -123,7 +120,7 @@ export function useQueryDiagnostics(
   );
   const pendingUpdateRef = useRef(false);
 
-  useEffect((): () => void => {
+  useEffect((): (() => void) => {
     if (!enabled) return () => {};
 
     const cache = queryClient.getQueryCache();
@@ -134,7 +131,9 @@ export function useQueryDiagnostics(
       timeoutId = setTimeout(() => {
         pendingUpdateRef.current = false;
         const snapshot = buildSnapshot(queryClient);
-        setQueries((prev: QueryDiagnosticsItem[]) => (snapshotsEqual(prev, snapshot) ? prev : snapshot));
+        setQueries((prev: QueryDiagnosticsItem[]) =>
+          snapshotsEqual(prev, snapshot) ? prev : snapshot
+        );
       }, 0);
     };
     const unsubscribe = cache.subscribe(update);

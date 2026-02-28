@@ -81,7 +81,9 @@ export function useDeadLetterRuns(): UseDeadLetterRunsReturn {
   const [retryFailedPending, setRetryFailedPending] = useState(false);
   const [showRetryFailedConfirm, setShowRetryFailedConfirm] = useState(false);
   const [expandedNodeIds, setExpandedNodeIds] = useState<Set<string>>(new Set());
-  const [streamStatus, setStreamStatus] = useState<'connecting' | 'live' | 'stopped' | 'paused'>('stopped');
+  const [streamStatus, setStreamStatus] = useState<'connecting' | 'live' | 'stopped' | 'paused'>(
+    'stopped'
+  );
   const [streamPaused, setStreamPaused] = useState(false);
   const [eventsOverflow, setEventsOverflow] = useState(false);
   const [eventsBatchLimit, setEventsBatchLimit] = useState<number | null>(null);
@@ -90,7 +92,10 @@ export function useDeadLetterRuns(): UseDeadLetterRunsReturn {
   const normalizedQuery = debouncedSearchQuery.trim();
   const offset = (page - 1) * pageSize;
 
-  const runsQuery = createListQueryV2<{ runs: AiPathRunRecord[]; total: number }, { runs: AiPathRunRecord[]; total: number }>({
+  const runsQuery = createListQueryV2<
+    { runs: AiPathRunRecord[]; total: number },
+    { runs: AiPathRunRecord[]; total: number }
+  >({
     queryKey: QUERY_KEYS.ai.aiPaths.deadLetter({
       status: 'dead_lettered',
       pathId: normalizedPathId,
@@ -147,7 +152,14 @@ export function useDeadLetterRuns(): UseDeadLetterRunsReturn {
 
   useEffect((): void => {
     if (!runsQuery.error) return;
-    logClientError(runsQuery.error, { context: { source: 'useDeadLetterRuns', action: 'loadRuns', pathId: normalizedPathId, query: normalizedQuery } });
+    logClientError(runsQuery.error, {
+      context: {
+        source: 'useDeadLetterRuns',
+        action: 'loadRuns',
+        pathId: normalizedPathId,
+        query: normalizedQuery,
+      },
+    });
     toast(
       runsQuery.error instanceof Error
         ? runsQuery.error.message
@@ -278,7 +290,7 @@ export function useDeadLetterRuns(): UseDeadLetterRunsReturn {
       const next = new Set(prev);
       const visibleSelectedCount = runs.filter((run) => prev.has(run.id)).length;
       const allVisibleSelected = runs.length > 0 && visibleSelectedCount === runs.length;
-      
+
       if (allVisibleSelected) {
         runs.forEach((run) => next.delete(run.id));
       } else {
@@ -295,7 +307,10 @@ export function useDeadLetterRuns(): UseDeadLetterRunsReturn {
     void
   >({
     mutationKey: QUERY_KEYS.ai.aiPaths.mutation('dead-letter.requeue-selected'),
-    mutationFn: async (): Promise<{ requeued: number; errors?: Array<{ runId: string; error: string }> }> => {
+    mutationFn: async (): Promise<{
+      requeued: number;
+      errors?: Array<{ runId: string; error: string }>;
+    }> => {
       const response = await runsApi.requeueDeadLetter({
         runIds: Array.from(selectedIds),
         mode: requeueMode,
@@ -303,7 +318,10 @@ export function useDeadLetterRuns(): UseDeadLetterRunsReturn {
       if (!response.ok) {
         throw new Error(response.error || 'Failed to requeue selected runs.');
       }
-      return response.data as { requeued: number; errors?: Array<{ runId: string; error: string }> };
+      return response.data as {
+        requeued: number;
+        errors?: Array<{ runId: string; error: string }>;
+      };
     },
     meta: {
       source: 'ai.ai-paths.dead-letter.requeue-selected',
@@ -312,13 +330,23 @@ export function useDeadLetterRuns(): UseDeadLetterRunsReturn {
       domain: 'global',
       tags: ['ai-paths', 'dead-letter', 'requeue'],
     },
-    onSuccess: (data: { requeued: number; errors?: Array<{ runId: string; error: string }> }): void => {
+    onSuccess: (data: {
+      requeued: number;
+      errors?: Array<{ runId: string; error: string }>;
+    }): void => {
       showRequeueResultToast(toast, requeueMode, data);
       clearSelection();
       void runsQuery.refetch();
     },
     onError: (error: Error): void => {
-      logClientError(error, { context: { source: 'useDeadLetterRuns', action: 'requeueSelected', count: selectedIds.size, mode: requeueMode } });
+      logClientError(error, {
+        context: {
+          source: 'useDeadLetterRuns',
+          action: 'requeueSelected',
+          count: selectedIds.size,
+          mode: requeueMode,
+        },
+      });
       toast(error instanceof Error ? error.message : 'Failed to requeue runs.', {
         variant: 'error',
       });
@@ -330,7 +358,10 @@ export function useDeadLetterRuns(): UseDeadLetterRunsReturn {
     void
   >({
     mutationKey: QUERY_KEYS.ai.aiPaths.mutation('dead-letter.requeue-all'),
-    mutationFn: async (): Promise<{ requeued: number; errors?: Array<{ runId: string; error: string }> }> => {
+    mutationFn: async (): Promise<{
+      requeued: number;
+      errors?: Array<{ runId: string; error: string }>;
+    }> => {
       const response = await runsApi.requeueDeadLetter({
         pathId: normalizedPathId || null,
         query: normalizedQuery || null,
@@ -339,7 +370,10 @@ export function useDeadLetterRuns(): UseDeadLetterRunsReturn {
       if (!response.ok) {
         throw new Error(response.error || 'Failed to requeue dead-letter runs.');
       }
-      return response.data as { requeued: number; errors?: Array<{ runId: string; error: string }> };
+      return response.data as {
+        requeued: number;
+        errors?: Array<{ runId: string; error: string }>;
+      };
     },
     meta: {
       source: 'ai.ai-paths.dead-letter.requeue-all',
@@ -348,45 +382,61 @@ export function useDeadLetterRuns(): UseDeadLetterRunsReturn {
       domain: 'global',
       tags: ['ai-paths', 'dead-letter', 'requeue'],
     },
-    onSuccess: (data: { requeued: number; errors?: Array<{ runId: string; error: string }> }): void => {
+    onSuccess: (data: {
+      requeued: number;
+      errors?: Array<{ runId: string; error: string }>;
+    }): void => {
       showRequeueResultToast(toast, requeueMode, data);
       clearSelection();
       void runsQuery.refetch();
     },
     onError: (error: Error): void => {
-      logClientError(error, { context: { source: 'useDeadLetterRuns', action: 'requeueAll', pathId: normalizedPathId, query: normalizedQuery, mode: requeueMode } });
+      logClientError(error, {
+        context: {
+          source: 'useDeadLetterRuns',
+          action: 'requeueAll',
+          pathId: normalizedPathId,
+          query: normalizedQuery,
+          mode: requeueMode,
+        },
+      });
       toast(error instanceof Error ? error.message : 'Failed to requeue runs.', {
         variant: 'error',
       });
     },
   });
 
-  const handleOpenDetail = useCallback(async (runId: string): Promise<void> => {
-    setDetailOpen(true);
-    setDetailLoading(true);
-    setStreamPaused(false);
-    try {
-      const response = await runsApi.get(runId);
-      if (!response.ok) {
-        throw new Error(response.error || 'Failed to load run details.');
-      }
-      setDetail(
-        response.data as {
-          run: AiPathRunRecord;
-          nodes: AiPathRunNodeRecord[];
-          events: AiPathRunEventRecord[];
+  const handleOpenDetail = useCallback(
+    async (runId: string): Promise<void> => {
+      setDetailOpen(true);
+      setDetailLoading(true);
+      setStreamPaused(false);
+      try {
+        const response = await runsApi.get(runId);
+        if (!response.ok) {
+          throw new Error(response.error || 'Failed to load run details.');
         }
-      );
-    } catch (error: unknown) {
-      logClientError(error, { context: { source: 'useDeadLetterRuns', action: 'loadDetail', runId } });
-      toast(error instanceof Error ? error.message : 'Failed to load run details.', {
-        variant: 'error',
-      });
-      setDetail(null);
-    } finally {
-      setDetailLoading(false);
-    }
-  }, [toast]);
+        setDetail(
+          response.data as {
+            run: AiPathRunRecord;
+            nodes: AiPathRunNodeRecord[];
+            events: AiPathRunEventRecord[];
+          }
+        );
+      } catch (error: unknown) {
+        logClientError(error, {
+          context: { source: 'useDeadLetterRuns', action: 'loadDetail', runId },
+        });
+        toast(error instanceof Error ? error.message : 'Failed to load run details.', {
+          variant: 'error',
+        });
+        setDetail(null);
+      } finally {
+        setDetailLoading(false);
+      }
+    },
+    [toast]
+  );
 
   const toggleNodeExpanded = useCallback((nodeId: string): void => {
     setExpandedNodeIds((prev: Set<string>) => {
@@ -400,24 +450,30 @@ export function useDeadLetterRuns(): UseDeadLetterRunsReturn {
     });
   }, []);
 
-  const handleRequeueSingle = useCallback(async (runId: string): Promise<void> => {
-    const response = await runsApi.resume(runId, requeueMode);
-    if (!response.ok) {
-      toast(response.error || 'Failed to requeue run.', { variant: 'error' });
-      return;
-    }
-    toast(`Run requeued (${requeueMode === 'resume' ? 'resume' : 'replay'}).`, {
-      variant: 'success',
-    });
-    void runsQuery.refetch();
-  }, [requeueMode, runsQuery, toast]);
+  const handleRequeueSingle = useCallback(
+    async (runId: string): Promise<void> => {
+      const response = await runsApi.resume(runId, requeueMode);
+      if (!response.ok) {
+        toast(response.error || 'Failed to requeue run.', { variant: 'error' });
+        return;
+      }
+      toast(`Run requeued (${requeueMode === 'resume' ? 'resume' : 'replay'}).`, {
+        variant: 'success',
+      });
+      void runsQuery.refetch();
+    },
+    [requeueMode, runsQuery, toast]
+  );
 
-  const retryNodeMutation = createMutationV2<
-    { run: unknown },
-    { runId: string; nodeId: string }
-  >({
+  const retryNodeMutation = createMutationV2<{ run: unknown }, { runId: string; nodeId: string }>({
     mutationKey: QUERY_KEYS.ai.aiPaths.mutation('dead-letter.retry-node'),
-    mutationFn: async ({ runId, nodeId }: { runId: string; nodeId: string }): Promise<{ run: unknown }> => {
+    mutationFn: async ({
+      runId,
+      nodeId,
+    }: {
+      runId: string;
+      nodeId: string;
+    }): Promise<{ run: unknown }> => {
       const response = await runsApi.retryNode(runId, nodeId);
       if (!response.ok) {
         throw new Error(response.error || 'Failed to retry node.');
@@ -439,7 +495,14 @@ export function useDeadLetterRuns(): UseDeadLetterRunsReturn {
       }
     },
     onError: (error: Error, variables: { runId: string; nodeId: string }): void => {
-      logClientError(error, { context: { source: 'useDeadLetterRuns', action: 'retryNode', runId: variables.runId, nodeId: variables.nodeId } });
+      logClientError(error, {
+        context: {
+          source: 'useDeadLetterRuns',
+          action: 'retryNode',
+          runId: variables.runId,
+          nodeId: variables.nodeId,
+        },
+      });
       toast(error instanceof Error ? error.message : 'Failed to retry node.', {
         variant: 'error',
       });
@@ -458,7 +521,9 @@ export function useDeadLetterRuns(): UseDeadLetterRunsReturn {
     setRetryFailedPending(true);
     try {
       const results = await Promise.all(
-        retryableNodes.map((node: AiPathRunNodeRecord) => runsApi.retryNode(detail.run.id, node.nodeId))
+        retryableNodes.map((node: AiPathRunNodeRecord) =>
+          runsApi.retryNode(detail.run.id, node.nodeId)
+        )
       );
       const failed = results.filter((result: { ok: boolean }) => !result.ok);
       const successCount = results.length - failed.length;
@@ -473,7 +538,9 @@ export function useDeadLetterRuns(): UseDeadLetterRunsReturn {
         void handleOpenDetail(detail.run.id);
       }
     } catch (error: unknown) {
-      logClientError(error, { context: { source: 'useDeadLetterRuns', action: 'retryFailedNodes', runId: detail.run.id } });
+      logClientError(error, {
+        context: { source: 'useDeadLetterRuns', action: 'retryFailedNodes', runId: detail.run.id },
+      });
       toast(error instanceof Error ? error.message : 'Failed to retry nodes.', {
         variant: 'error',
       });
@@ -514,7 +581,8 @@ export function useDeadLetterRuns(): UseDeadLetterRunsReturn {
     showRetryFailedConfirm,
     setShowRetryFailedConfirm,
     handleRetryFailedNodes,
-    retryNode: (nodeId: string) => detail?.run?.id && retryNodeMutation.mutate({ runId: detail.run.id, nodeId }),
+    retryNode: (nodeId: string) =>
+      detail?.run?.id && retryNodeMutation.mutate({ runId: detail.run.id, nodeId }),
     retryingNodeId: retryNodeMutation.isPending ? retryNodeMutation.variables?.nodeId : null,
     expandedNodeIds,
     toggleNodeExpanded,

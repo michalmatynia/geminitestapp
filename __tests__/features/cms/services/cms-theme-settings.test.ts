@@ -1,4 +1,3 @@
-
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { getCmsThemeSettings } from '@/features/cms/services/cms-theme-settings';
@@ -29,13 +28,17 @@ describe('getCmsThemeSettings Service', () => {
 
   it('should fetch theme settings from Prisma when provider is prisma', async () => {
     (getAppDbProvider as any).mockResolvedValue('prisma');
-    (prisma.setting.findUnique as any).mockResolvedValue({ value: JSON.stringify({ primaryColor: '#ff0000' }) });
+    (prisma.setting.findUnique as any).mockResolvedValue({
+      value: JSON.stringify({ primaryColor: '#ff0000' }),
+    });
 
     const settings = await getCmsThemeSettings();
 
-    expect(prisma.setting.findUnique).toHaveBeenCalledWith(expect.objectContaining({
-      where: { key: 'cms_theme_settings.v1' },
-    }));
+    expect(prisma.setting.findUnique).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { key: 'cms_theme_settings.v1' },
+      })
+    );
     expect(settings.primaryColor).toBe('#ff0000');
   });
 

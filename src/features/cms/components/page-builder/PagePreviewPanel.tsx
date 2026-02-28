@@ -8,12 +8,7 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 import type { Slug } from '@/shared/contracts/cms';
 import { buildColorSchemeMap } from '@/shared/contracts/cms-theme';
 import { useUserPreferences } from '@/shared/hooks/useUserPreferences';
-import {
-  Button,
-  SelectSimple,
-  useToast,
-  Badge,
-} from '@/shared/ui';
+import { Button, SelectSimple, useToast, Badge } from '@/shared/ui';
 
 import { MediaLibraryPanel } from './MediaLibraryPanel';
 import { PageSelectorBar } from './PageSelectorBar';
@@ -23,11 +18,18 @@ import { useThemeSettings } from './ThemeSettingsContext';
 import { VectorOverlay } from './VectorOverlay';
 import { useCmsDomainSelection } from '../../hooks/useCmsDomainSelection';
 import { useCmsSlugs, useUpdatePage } from '../../hooks/useCmsQueries';
-import { usePageBuilderState, usePageBuilderDispatch, useVectorOverlay } from '../../hooks/usePageBuilderContext';
+import {
+  usePageBuilderState,
+  usePageBuilderDispatch,
+  useVectorOverlay,
+} from '../../hooks/usePageBuilderContext';
 import { CmsPageProvider } from '../frontend/CmsPageContext';
 import { MediaStylesProvider } from '../frontend/media-styles-context';
-import { getHoverEffectVars, getMediaInlineStyles, getMediaStyleVars } from '../frontend/theme-styles';
-
+import {
+  getHoverEffectVars,
+  getMediaInlineStyles,
+  getMediaStyleVars,
+} from '../frontend/theme-styles';
 
 import type { PageZone, SectionInstance } from '../../types/page-builder';
 
@@ -65,7 +67,7 @@ export function PagePreviewPanel(): React.ReactNode {
   const [canvasScale, setCanvasScale] = useState(1);
   const [canvasWidth, setCanvasWidth] = useState<number | null>(null);
   const [canvasScaledHeight, setCanvasScaledHeight] = useState<number | null>(null);
-  
+
   const preferencesQuery = useUserPreferences();
   const userPreferences = preferencesQuery.data;
 
@@ -76,11 +78,16 @@ export function PagePreviewPanel(): React.ReactNode {
         : null,
     [slugsQuery.data]
   );
-  const colorSchemes = useMemo(() => (
-    theme.colorSchemes.length ? buildColorSchemeMap(theme) : undefined
-  ), [theme]);
+  const colorSchemes = useMemo(
+    () => (theme.colorSchemes.length ? buildColorSchemeMap(theme) : undefined),
+    [theme]
+  );
   const hoverVars = useMemo(
-    () => getHoverEffectVars(theme.enableAnimations ? theme.hoverEffect : undefined, theme.enableAnimations ? theme.hoverScale : undefined),
+    () =>
+      getHoverEffectVars(
+        theme.enableAnimations ? theme.hoverEffect : undefined,
+        theme.enableAnimations ? theme.hoverScale : undefined
+      ),
     [theme.enableAnimations, theme.hoverEffect, theme.hoverScale]
   );
   const mediaVars = useMemo(() => getMediaStyleVars(theme), [theme]);
@@ -118,7 +125,9 @@ export function PagePreviewPanel(): React.ReactNode {
     const currentHostname = window.location.hostname;
     const targetHost = activeDomain?.domain ?? currentHostname;
     const resolvedHost = targetHost === currentHostname ? currentHost : targetHost;
-    const path = selectedPreviewSlug.startsWith('/') ? selectedPreviewSlug : `/${selectedPreviewSlug}`;
+    const path = selectedPreviewSlug.startsWith('/')
+      ? selectedPreviewSlug
+      : `/${selectedPreviewSlug}`;
     return `${protocol}//${resolvedHost}${path}`;
   }, [selectedPreviewSlug, activeDomain]);
 
@@ -152,7 +161,9 @@ export function PagePreviewPanel(): React.ReactNode {
 
   const previewTargetLabel = useMemo((): string => {
     if (!selectedPreviewSlug) return '';
-    const path = selectedPreviewSlug.startsWith('/') ? selectedPreviewSlug : `/${selectedPreviewSlug}`;
+    const path = selectedPreviewSlug.startsWith('/')
+      ? selectedPreviewSlug
+      : `/${selectedPreviewSlug}`;
     const host = activeDomain?.domain ?? 'current';
     return `${host}${path}`;
   }, [selectedPreviewSlug, activeDomain]);
@@ -176,7 +187,7 @@ export function PagePreviewPanel(): React.ReactNode {
     (event: React.PointerEvent<HTMLDivElement>): void => {
       const target = event.target as HTMLElement | null;
       if (!target) return;
-      if (target.closest('[data-cms-canvas=\'true\']')) return;
+      if (target.closest("[data-cms-canvas='true']")) return;
       dispatch({ type: 'SELECT_NODE', nodeId: null });
     },
     [dispatch]
@@ -198,8 +209,7 @@ export function PagePreviewPanel(): React.ReactNode {
       onSelect: handleSelectNode,
       onHoverNode: handleHoverNode,
       onOpenMedia: handleOpenMedia,
-      onRemoveSection: (sectionId: string) =>
-        dispatch({ type: 'REMOVE_SECTION', sectionId }),
+      onRemoveSection: (sectionId: string) => dispatch({ type: 'REMOVE_SECTION', sectionId }),
       onToggleSectionVisibility: (sectionId: string, isHidden: boolean) =>
         dispatch({
           type: 'UPDATE_SECTION_SETTINGS',
@@ -220,7 +230,7 @@ export function PagePreviewPanel(): React.ReactNode {
       handleOpenMedia,
       dispatch,
       pauseSlideshowOnHoverInEditor,
-    ],
+    ]
   );
   const isVectorOverlayOpen = Boolean(vectorOverlay);
 
@@ -274,7 +284,8 @@ export function PagePreviewPanel(): React.ReactNode {
         return;
       }
       const isPublished = state.currentPage.status === 'published';
-      const shouldUseSlug = Boolean(previewUrl) && (isPublished || previewDraftsEnabled) && previewHostMatches;
+      const shouldUseSlug =
+        Boolean(previewUrl) && (isPublished || previewDraftsEnabled) && previewHostMatches;
       const targetUrl = shouldUseSlug ? previewUrl : previewFallbackUrl;
       if (!targetUrl) {
         toast('This page has no slug in the current zone.', { variant: 'error' });
@@ -285,10 +296,25 @@ export function PagePreviewPanel(): React.ReactNode {
       }
       previewWindow.location.href = targetUrl;
     } catch (error) {
-      logClientError(error, { context: { source: 'PagePreviewPanel', action: 'saveBeforePreview', pageId: state.currentPage.id } });
+      logClientError(error, {
+        context: {
+          source: 'PagePreviewPanel',
+          action: 'saveBeforePreview',
+          pageId: state.currentPage.id,
+        },
+      });
       toast('Save before preview failed. Try again.', { variant: 'error' });
     }
-  }, [handleSave, state.currentPage, toast, previewUrl, previewFallbackUrl, slugsQuery.isLoading, previewDraftsEnabled, previewHostMatches]);
+  }, [
+    handleSave,
+    state.currentPage,
+    toast,
+    previewUrl,
+    previewFallbackUrl,
+    slugsQuery.isLoading,
+    previewDraftsEnabled,
+    previewHostMatches,
+  ]);
 
   const handleMediaOpenChange = useCallback((open: boolean): void => {
     setMediaOpen(open);
@@ -384,10 +410,7 @@ export function PagePreviewPanel(): React.ReactNode {
   );
 
   const hasSections = state.sections.length > 0;
-  const previewWidthClass =
-    state.previewMode === 'mobile'
-      ? 'max-w-[420px]'
-      : 'w-full';
+  const previewWidthClass = state.previewMode === 'mobile' ? 'max-w-[420px]' : 'w-full';
   const previewFrameClass =
     state.previewMode === 'mobile'
       ? 'rounded-2xl border border-white/10 bg-gray-950/40 shadow-[0_0_0_1px_rgba(59,130,246,0.15)]'
@@ -396,12 +419,17 @@ export function PagePreviewPanel(): React.ReactNode {
   const basePadding = typeof theme.pagePadding === 'number' ? theme.pagePadding : 0;
   const baseMargin = typeof theme.pageMargin === 'number' ? theme.pageMargin : 0;
   const paddingTop = typeof theme.pagePaddingTop === 'number' ? theme.pagePaddingTop : basePadding;
-  const paddingRight = typeof theme.pagePaddingRight === 'number' ? theme.pagePaddingRight : basePadding;
-  const paddingBottom = typeof theme.pagePaddingBottom === 'number' ? theme.pagePaddingBottom : basePadding;
-  const paddingLeft = typeof theme.pagePaddingLeft === 'number' ? theme.pagePaddingLeft : basePadding;
+  const paddingRight =
+    typeof theme.pagePaddingRight === 'number' ? theme.pagePaddingRight : basePadding;
+  const paddingBottom =
+    typeof theme.pagePaddingBottom === 'number' ? theme.pagePaddingBottom : basePadding;
+  const paddingLeft =
+    typeof theme.pagePaddingLeft === 'number' ? theme.pagePaddingLeft : basePadding;
   const marginTop = typeof theme.pageMarginTop === 'number' ? theme.pageMarginTop : baseMargin;
-  const marginRight = typeof theme.pageMarginRight === 'number' ? theme.pageMarginRight : baseMargin;
-  const marginBottom = typeof theme.pageMarginBottom === 'number' ? theme.pageMarginBottom : baseMargin;
+  const marginRight =
+    typeof theme.pageMarginRight === 'number' ? theme.pageMarginRight : baseMargin;
+  const marginBottom =
+    typeof theme.pageMarginBottom === 'number' ? theme.pageMarginBottom : baseMargin;
   const marginLeft = typeof theme.pageMarginLeft === 'number' ? theme.pageMarginLeft : baseMargin;
   const pageRadius = typeof theme.borderRadius === 'number' ? theme.borderRadius : 0;
   const pageStyle: React.CSSProperties = {
@@ -423,22 +451,23 @@ export function PagePreviewPanel(): React.ReactNode {
   const shouldScaleCanvas = isDesktopPreview && canvasWidth !== null && canvasScale < 0.999;
   const scaledCanvasStyle: React.CSSProperties = shouldScaleCanvas
     ? {
-      width: `${canvasWidth}px`,
-      position: 'absolute',
-      left: '50%',
-      top: 0,
-      transform: `translateX(-50%) scale(${canvasScale})`,
-      transformOrigin: 'top center',
-    }
+        width: `${canvasWidth}px`,
+        position: 'absolute',
+        left: '50%',
+        top: 0,
+        transform: `translateX(-50%) scale(${canvasScale})`,
+        transformOrigin: 'top center',
+      }
     : {};
-  const scaledCanvasWrapperStyle: React.CSSProperties = shouldScaleCanvas && canvasScaledHeight
-    ? { height: `${canvasScaledHeight}px`, position: 'relative', overflow: 'hidden' }
-    : {};
+  const scaledCanvasWrapperStyle: React.CSSProperties =
+    shouldScaleCanvas && canvasScaledHeight
+      ? { height: `${canvasScaledHeight}px`, position: 'relative', overflow: 'hidden' }
+      : {};
 
   useEffect((): (() => void) | void => {
     if (!isDesktopPreview) return undefined;
     const viewport = canvasRef.current?.closest(
-      '[data-cms-canvas-viewport=\'true\']'
+      "[data-cms-canvas-viewport='true']"
     ) as HTMLDivElement | null;
     if (!viewport || typeof window === 'undefined') return undefined;
 
@@ -525,7 +554,7 @@ export function PagePreviewPanel(): React.ReactNode {
                   }
                   options={zoneSlugValues.map((slug: string) => ({
                     value: slug,
-                    label: `/${slug}`
+                    label: `/${slug}`,
                   }))}
                   placeholder='Preview slug'
                   triggerClassName='h-8 w-[200px] text-xs'
@@ -549,7 +578,9 @@ export function PagePreviewPanel(): React.ReactNode {
                 </Badge>
               )}
               <Button
-                onClick={(): void => { void handlePreview(); }}
+                onClick={(): void => {
+                  void handlePreview();
+                }}
                 size='sm'
                 variant='outline'
                 className='text-gray-300 hover:text-white'
@@ -579,7 +610,9 @@ export function PagePreviewPanel(): React.ReactNode {
                 <Redo2 className='size-4' />
               </Button>
               <Button
-                onClick={(): void => { void handleSave(); }}
+                onClick={(): void => {
+                  void handleSave();
+                }}
                 size='sm'
                 variant='solid'
                 disabled={!state.currentPage || updatePage.isPending}
@@ -598,16 +631,26 @@ export function PagePreviewPanel(): React.ReactNode {
         onPointerDown={handleCanvasPointerDown}
       >
         {!state.currentPage ? (
-          <div className='flex h-full items-center justify-center p-6 text-gray-500' data-testid='preview-no-page'>
+          <div
+            className='flex h-full items-center justify-center p-6 text-gray-500'
+            data-testid='preview-no-page'
+          >
             Select a page from the left panel to preview it
           </div>
         ) : !hasSections ? (
-          <div className='flex h-full items-center justify-center p-6 text-gray-500' data-testid='preview-empty'>
+          <div
+            className='flex h-full items-center justify-center p-6 text-gray-500'
+            data-testid='preview-empty'
+          >
             No sections yet. Use the left panel to add sections.
           </div>
         ) : (
           <>
-            <div className='p-0' style={scaledCanvasWrapperStyle} data-testid='preview-canvas-wrapper'>
+            <div
+              className='p-0'
+              style={scaledCanvasWrapperStyle}
+              data-testid='preview-canvas-wrapper'
+            >
               <div
                 data-cms-canvas='true'
                 data-testid='preview-canvas'
@@ -622,7 +665,10 @@ export function PagePreviewPanel(): React.ReactNode {
                   ...scaledCanvasStyle,
                 }}
               >
-                <div style={contentStyle} className={isVectorOverlayOpen ? 'pointer-events-none' : ''}>
+                <div
+                  style={contentStyle}
+                  className={isVectorOverlayOpen ? 'pointer-events-none' : ''}
+                >
                   <MediaStylesProvider value={mediaStyles ?? null}>
                     <CmsPageProvider colorSchemes={colorSchemes || {}} layout={previewLayout}>
                       <PreviewEditorProvider value={previewEditorValue}>
@@ -635,10 +681,7 @@ export function PagePreviewPanel(): React.ReactNode {
                               {/* Zone sections */}
                               <div>
                                 {zoneSections.map((section: SectionInstance) => (
-                                  <PreviewSection
-                                    key={section.id}
-                                    section={section}
-                                  />
+                                  <PreviewSection key={section.id} section={section} />
                                 ))}
                               </div>
                             </div>

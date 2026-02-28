@@ -2,7 +2,10 @@ import 'server-only';
 
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
-import { findAuthUserByEmail as repoFindByEmail, findAuthUserById as repoFindById } from './auth-user-repository';
+import {
+  findAuthUserByEmail as repoFindByEmail,
+  findAuthUserById as repoFindById,
+} from './auth-user-repository';
 
 export const findAuthUserByEmail = async (email: string) => {
   try {

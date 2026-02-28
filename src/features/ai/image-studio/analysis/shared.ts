@@ -31,7 +31,6 @@ export type {
   ImageStudioCenterShadowPolicy,
 };
 
-
 type PixelData = ArrayLike<number>;
 
 type WhiteBackgroundModel = {
@@ -266,7 +265,7 @@ export const resolveAlphaObjectBoundsFromRgba = (
 
   for (let y = 0; y < height; y += 1) {
     for (let x = 0; x < width; x += 1) {
-      const alpha = pixelData[((y * width) + x) * 4 + 3];
+      const alpha = pixelData[(y * width + x) * 4 + 3];
       if (typeof alpha !== 'number' || alpha <= alphaThreshold) continue;
       if (x < minX) minX = x;
       if (x > maxX) maxX = x;
@@ -298,7 +297,7 @@ const resolveWhiteBackgroundModel = (
   const samplesG: number[] = [];
   const samplesB: number[] = [];
   const chromaSamples: number[] = [];
-  const perimeter = Math.max(1, (width * 2) + (Math.max(0, height - 2) * 2));
+  const perimeter = Math.max(1, width * 2 + Math.max(0, height - 2) * 2);
   const step = Math.max(1, Math.floor(perimeter / WHITE_BACKGROUND_BORDER_TARGET_SAMPLES));
   let cursor = 0;
 
@@ -308,7 +307,7 @@ const resolveWhiteBackgroundModel = (
       return;
     }
     cursor += 1;
-    const offset = ((y * width) + x) * 4;
+    const offset = (y * width + x) * 4;
     const a = pixelData[offset + 3] ?? 0;
     if (a <= IMAGE_STUDIO_CENTER_ALPHA_THRESHOLD) return;
     const r = pixelData[offset] ?? 0;
@@ -376,7 +375,10 @@ const resolveWhiteBackgroundModel = (
       255,
       Math.max(chromaThreshold, Math.ceil(backgroundChroma + chromaDeltaMedian * 3 + 2))
     ),
-    chromaDeltaThreshold: Math.min(255, Math.max(chromaThreshold, Math.ceil(chromaDeltaMedian * 3 + 2))),
+    chromaDeltaThreshold: Math.min(
+      255,
+      Math.max(chromaThreshold, Math.ceil(chromaDeltaMedian * 3 + 2))
+    ),
   };
 };
 
@@ -446,7 +448,7 @@ const buildWhiteForegroundMasks = (
 
   for (let y = 0; y < height; y += 1) {
     for (let x = 0; x < width; x += 1) {
-      const index = (y * width) + x;
+      const index = y * width + x;
       const offset = index * 4;
       const r = pixelData[offset] ?? 0;
       const g = pixelData[offset + 1] ?? 0;
@@ -467,7 +469,7 @@ const buildWhiteForegroundMasks = (
       const intensity = (r + g + b) / 3;
       const strongAlpha = a > IMAGE_STUDIO_CENTER_ALPHA_THRESHOLD + 20;
       const darkerThanBackground =
-        intensity < (backgroundIntensity - Math.max(8, backgroundModel.whiteThreshold * 0.4));
+        intensity < backgroundIntensity - Math.max(8, backgroundModel.whiteThreshold * 0.4);
 
       const isCorePixel =
         distanceFromBackground > coreDistanceThreshold ||
@@ -496,11 +498,7 @@ const buildWhiteForegroundMasks = (
   };
 };
 
-const findLeadingHitIndex = (
-  hits: Uint32Array,
-  minHits: number,
-  minRunLength: number
-): number => {
+const findLeadingHitIndex = (hits: Uint32Array, minHits: number, minRunLength: number): number => {
   let runLength = 0;
   for (let index = 0; index < hits.length; index += 1) {
     if ((hits[index] ?? 0) >= minHits) {
@@ -515,11 +513,7 @@ const findLeadingHitIndex = (
   return -1;
 };
 
-const findTrailingHitIndex = (
-  hits: Uint32Array,
-  minHits: number,
-  minRunLength: number
-): number => {
+const findTrailingHitIndex = (hits: Uint32Array, minHits: number, minRunLength: number): number => {
   let runLength = 0;
   for (let index = hits.length - 1; index >= 0; index -= 1) {
     if ((hits[index] ?? 0) >= minHits) {
@@ -570,7 +564,7 @@ const resolveBoundsFromForegroundMask = (
 
   for (let y = 0; y < height; y += 1) {
     for (let x = 0; x < width; x += 1) {
-      const index = (y * width) + x;
+      const index = y * width + x;
       if ((mask[index] ?? 0) <= 0) continue;
       columnHits[x] = (columnHits[x] ?? 0) + 1;
       rowHits[y] = (rowHits[y] ?? 0) + 1;
@@ -603,7 +597,7 @@ const resolveConnectedComponents = (
   height: number
 ): ConnectedComponent[] => {
   if (width <= 0 || height <= 0) return [];
-  if ((width * height) > WHITE_FOREGROUND_COMPONENT_ANALYSIS_MAX_PIXELS) return [];
+  if (width * height > WHITE_FOREGROUND_COMPONENT_ANALYSIS_MAX_PIXELS) return [];
 
   const components: ConnectedComponent[] = [];
   const visited = new Uint8Array(mask.length);
@@ -630,7 +624,7 @@ const resolveConnectedComponents = (
       head += 1;
 
       const y = Math.floor(current / width);
-      const x = current - (y * width);
+      const x = current - y * width;
       if (x < minX) minX = x;
       if (x > maxX) maxX = x;
       if (y < minY) minY = y;
@@ -714,9 +708,10 @@ const selectBestConnectedComponent = (
     );
     const normalizedCenterDistance = centerDistance / maxCenterDistance;
     const borderPenalty = component.touchesBorder ? 0.86 : 1;
-    const score = component.pixelCount * borderPenalty * (
-      1 + density * 0.45 + dominance * 0.35 - normalizedCenterDistance * 0.25
-    );
+    const score =
+      component.pixelCount *
+      borderPenalty *
+      (1 + density * 0.45 + dominance * 0.35 - normalizedCenterDistance * 0.25);
     if (score > bestScore) {
       bestScore = score;
       bestComponent = component;
@@ -846,7 +841,8 @@ export const resolveWhiteForegroundObjectDetectionFromRgba = (
     };
   }
 
-  const fallbackMask = shadowPolicy === 'exclude_shadow' ? maskData.coreMask : maskData.foregroundMask;
+  const fallbackMask =
+    shadowPolicy === 'exclude_shadow' ? maskData.coreMask : maskData.foregroundMask;
   const fallbackSource: WhiteForegroundMaskSource =
     shadowPolicy === 'exclude_shadow' ? 'core' : 'foreground';
   const fallbackBounds = resolveBoundsFromForegroundMask(fallbackMask, width, height);
@@ -909,7 +905,11 @@ export const detectObjectBoundsForLayoutFromRgba = (
   pixelData: PixelData,
   width: number,
   height: number,
-  layout: NormalizedImageStudioAnalysisLayoutConfig | ImageStudioCenterLayoutConfig | null | undefined
+  layout:
+    | NormalizedImageStudioAnalysisLayoutConfig
+    | ImageStudioCenterLayoutConfig
+    | null
+    | undefined
 ): {
   bounds: ImageStudioCenterObjectBounds;
   detectionUsed: Exclude<ImageStudioCenterDetectionMode, 'auto'>;
@@ -924,39 +924,39 @@ export const detectObjectBoundsForLayoutFromRgba = (
     ? layout
     : normalizeImageStudioAnalysisLayoutConfig(layout);
 
-  const whiteCandidate = (
+  const whiteCandidate =
     normalizedLayout.detection === 'alpha_bbox'
       ? null
       : resolveWhiteForegroundObjectDetectionFromRgba(
-        pixelData,
-        width,
-        height,
-        normalizedLayout.whiteThreshold,
-        normalizedLayout.chromaThreshold,
-        normalizedLayout.shadowPolicy
-      )
-  );
+          pixelData,
+          width,
+          height,
+          normalizedLayout.whiteThreshold,
+          normalizedLayout.chromaThreshold,
+          normalizedLayout.shadowPolicy
+        );
 
-  const alphaBounds = normalizedLayout.detection === 'white_bg_first_colored_pixel'
-    ? null
-    : resolveAlphaObjectBoundsFromRgba(pixelData, width, height);
+  const alphaBounds =
+    normalizedLayout.detection === 'white_bg_first_colored_pixel'
+      ? null
+      : resolveAlphaObjectBoundsFromRgba(pixelData, width, height);
 
   const alphaCandidate = alphaBounds
     ? {
-      bounds: alphaBounds,
-      detectionUsed: 'alpha_bbox' as const,
-      confidence: computeAlphaDetectionConfidence(alphaBounds, width, height),
-      detectionDetails: null,
-    }
+        bounds: alphaBounds,
+        detectionUsed: 'alpha_bbox' as const,
+        confidence: computeAlphaDetectionConfidence(alphaBounds, width, height),
+        detectionDetails: null,
+      }
     : null;
 
   const whiteDetectionCandidate = whiteCandidate
     ? {
-      bounds: whiteCandidate.bounds,
-      detectionUsed: 'white_bg_first_colored_pixel' as const,
-      confidence: whiteCandidate.confidence,
-      detectionDetails: whiteCandidate.details,
-    }
+        bounds: whiteCandidate.bounds,
+        detectionUsed: 'white_bg_first_colored_pixel' as const,
+        confidence: whiteCandidate.confidence,
+        detectionDetails: whiteCandidate.details,
+      }
     : null;
 
   const decision: ImageStudioDetectionPolicyDecision<ImageStudioDetectionDetails> =
@@ -970,12 +970,12 @@ export const detectObjectBoundsForLayoutFromRgba = (
 
   const details = decision.selected.detectionDetails
     ? {
-      ...decision.selected.detectionDetails,
-      policyVersion: decision.policyVersion,
-      policyReason: decision.reason,
-      fallbackApplied: decision.fallbackApplied,
-      candidateDetections: decision.candidateDetections,
-    }
+        ...decision.selected.detectionDetails,
+        policyVersion: decision.policyVersion,
+        policyReason: decision.reason,
+        fallbackApplied: decision.fallbackApplied,
+        candidateDetections: decision.candidateDetections,
+      }
     : null;
 
   return {
@@ -1023,7 +1023,11 @@ export const analyzeImageObjectFromRgba = (params: {
   pixelData: PixelData;
   width: number;
   height: number;
-  layout: ImageStudioCenterLayoutConfig | NormalizedImageStudioAnalysisLayoutConfig | null | undefined;
+  layout:
+    | ImageStudioCenterLayoutConfig
+    | NormalizedImageStudioAnalysisLayoutConfig
+    | null
+    | undefined;
 }): ImageStudioObjectAnalysisResult | null => {
   const { width, height, pixelData } = params;
   const normalizedLayout = isNormalizedImageStudioAnalysisLayoutConfig(params.layout)
@@ -1032,12 +1036,7 @@ export const analyzeImageObjectFromRgba = (params: {
 
   if (!(width > 0 && height > 0)) return null;
 
-  const detected = detectObjectBoundsForLayoutFromRgba(
-    pixelData,
-    width,
-    height,
-    normalizedLayout
-  );
+  const detected = detectObjectBoundsForLayoutFromRgba(pixelData, width, height, normalizedLayout);
   if (!detected) return null;
 
   const whitespace = computeObjectWhitespaceMetrics(detected.bounds, width, height);
@@ -1100,7 +1099,11 @@ export const computeAutoScalePlanFromBounds = (params: {
   sourceObjectBounds: ImageStudioCenterObjectBounds;
   sourceWidth: number;
   sourceHeight: number;
-  layout: ImageStudioCenterLayoutConfig | NormalizedImageStudioAnalysisLayoutConfig | null | undefined;
+  layout:
+    | ImageStudioCenterLayoutConfig
+    | NormalizedImageStudioAnalysisLayoutConfig
+    | null
+    | undefined;
   preferTargetCanvas: boolean;
 }): ImageStudioAutoScalePlan => {
   const normalizedLayout = isNormalizedImageStudioAnalysisLayoutConfig(params.layout)
@@ -1162,7 +1165,11 @@ export const analyzeAndPlanAutoScaleFromRgba = (params: {
   pixelData: PixelData;
   width: number;
   height: number;
-  layout: ImageStudioCenterLayoutConfig | NormalizedImageStudioAnalysisLayoutConfig | null | undefined;
+  layout:
+    | ImageStudioCenterLayoutConfig
+    | NormalizedImageStudioAnalysisLayoutConfig
+    | null
+    | undefined;
   preferTargetCanvas: boolean;
 }): {
   analysis: ImageStudioObjectAnalysisResult;

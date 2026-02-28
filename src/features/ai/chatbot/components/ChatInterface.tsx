@@ -9,13 +9,7 @@ import { ChatMessageContent } from './ChatMessageContent';
 import { useChatbotMessages } from '../context/ChatbotContext';
 
 export function ChatInterface(): React.JSX.Element {
-  const {
-    messages,
-    input,
-    setInput,
-    isSending,
-    sendMessage,
-  } = useChatbotMessages();
+  const { messages, input, setInput, isSending, sendMessage } = useChatbotMessages();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -37,24 +31,24 @@ export function ChatInterface(): React.JSX.Element {
           </div>
         ) : (
           <div className='space-y-4'>
-            {messages.map((msg: ChatMessage, index: number): React.JSX.Element => (
-              <div
-                key={index}
-                className={`flex ${
-                  msg.role === 'user' ? 'justify-end' : 'justify-start'
-                }`}
-              >
+            {messages.map(
+              (msg: ChatMessage, index: number): React.JSX.Element => (
                 <div
-                  className={`max-w-[80%] rounded-lg p-3 ${
-                    msg.role === 'user'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted text-foreground'
-                  }`}
+                  key={index}
+                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
-                  <ChatMessageContent content={msg.content} />
+                  <div
+                    className={`max-w-[80%] rounded-lg p-3 ${
+                      msg.role === 'user'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted text-foreground'
+                    }`}
+                  >
+                    <ChatMessageContent content={msg.content} />
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            )}
             <div ref={messagesEndRef} />
           </div>
         )}

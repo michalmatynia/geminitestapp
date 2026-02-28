@@ -8,11 +8,7 @@ describe('DetailModal', () => {
     const onClose = vi.fn();
 
     render(
-      <DetailModal
-        isOpen={true}
-        onClose={onClose}
-        title='Details'
-      >
+      <DetailModal isOpen={true} onClose={onClose} title='Details'>
         <p>Detail content</p>
       </DetailModal>
     );
@@ -25,11 +21,7 @@ describe('DetailModal', () => {
     const onClose = vi.fn();
 
     const { container } = render(
-      <DetailModal
-        isOpen={false}
-        onClose={onClose}
-        title='Details'
-      >
+      <DetailModal isOpen={false} onClose={onClose} title='Details'>
         <p>Detail content</p>
       </DetailModal>
     );
@@ -58,12 +50,7 @@ describe('DetailModal', () => {
     const onClose = vi.fn();
 
     render(
-      <DetailModal
-        isOpen={true}
-        onClose={onClose}
-        title='Details'
-        subtitle='Additional info'
-      >
+      <DetailModal isOpen={true} onClose={onClose} title='Details' subtitle='Additional info'>
         <p>Detail content</p>
       </DetailModal>
     );

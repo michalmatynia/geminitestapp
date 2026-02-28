@@ -1,7 +1,4 @@
-import {
-  fetchSettingsCached,
-  invalidateSettingsCache,
-} from '@/shared/api/settings-client';
+import { fetchSettingsCached, invalidateSettingsCache } from '@/shared/api/settings-client';
 import type { SettingRecordDto } from '@/shared/contracts/settings';
 import type { ListQuery } from '@/shared/contracts/ui';
 import { useOfflineMutation } from '@/shared/hooks/offline/useOfflineMutation';
@@ -20,15 +17,16 @@ export interface SettingsOfflineHookResult {
 }
 
 export function useSettingsOffline(): SettingsOfflineHookResult {
-  const settingsQuery: ListQuery<SettingRecord, SettingRecord[]> = createListQueryV2<SettingRecord, SettingRecord[]>({
+  const settingsQuery: ListQuery<SettingRecord, SettingRecord[]> = createListQueryV2<
+    SettingRecord,
+    SettingRecord[]
+  >({
     queryKey: QUERY_KEYS.settings.scope('light'),
     queryFn: async (): Promise<SettingRecord[]> => {
       try {
         return await fetchSettingsCached({ scope: 'light' });
       } catch (error) {
-        throw error instanceof Error
-          ? error
-          : new Error('Failed to fetch settings');
+        throw error instanceof Error ? error : new Error('Failed to fetch settings');
       }
     },
     staleTime: 1000 * 60 * 30, // 30 minutes - longer for offline support
@@ -42,7 +40,12 @@ export function useSettingsOffline(): SettingsOfflineHookResult {
     },
   });
 
-  const updateSettingMutation = useOfflineMutation<SettingRecord, Error, { key: string; value: string }, SettingRecord[]>(
+  const updateSettingMutation = useOfflineMutation<
+    SettingRecord,
+    Error,
+    { key: string; value: string },
+    SettingRecord[]
+  >(
     async ({ key, value }: { key: string; value: string }): Promise<SettingRecord> => {
       const res = await fetch('/api/settings', {
         method: 'POST',
@@ -55,13 +58,16 @@ export function useSettingsOffline(): SettingsOfflineHookResult {
     },
     {
       queryKey: QUERY_KEYS.settings.scope('light'),
-      optimisticUpdate: (oldData: SettingRecord[] | undefined, { key, value }: { key: string; value: string }): SettingRecord[] => {
+      optimisticUpdate: (
+        oldData: SettingRecord[] | undefined,
+        { key, value }: { key: string; value: string }
+      ): SettingRecord[] => {
         if (!Array.isArray(oldData)) return oldData || [];
-        const updated = oldData.map((item: SettingRecord) => 
+        const updated = oldData.map((item: SettingRecord) =>
           item.key === key ? { ...item, value } : item
         );
-        return updated.some((item: SettingRecord) => item.key === key) 
-          ? updated 
+        return updated.some((item: SettingRecord) => item.key === key)
+          ? updated
           : [...updated, { key, value }];
       },
       successMessage: 'Setting updated successfully',

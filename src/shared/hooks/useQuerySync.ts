@@ -15,23 +15,28 @@ interface SyncConfig {
 export function useQuerySync(configs: SyncConfig[]): void {
   const queryClient = useQueryClient();
 
-  const handleStorageChange = useCallback((event: StorageEvent): void => {
-    if (event.key?.startsWith('tanstack-query-sync-')) {
-      const storageKey = event.key.replace('tanstack-query-sync-', '');
-      const matchingConfig = configs.find((config: SyncConfig) => 
-        JSON.stringify(config.queryKey) === storageKey
-      );
-      
-      if (matchingConfig && event.newValue) {
-        try {
-          const data = JSON.parse(event.newValue) as unknown;
-          queryClient.setQueryData(matchingConfig.queryKey, data);
-        } catch (error) {
-          logClientError(error instanceof Error ? error : new Error(String(error)), { context: { source: 'useQuerySync', action: 'syncQueryDataFailed', level: 'warn' } });
+  const handleStorageChange = useCallback(
+    (event: StorageEvent): void => {
+      if (event.key?.startsWith('tanstack-query-sync-')) {
+        const storageKey = event.key.replace('tanstack-query-sync-', '');
+        const matchingConfig = configs.find(
+          (config: SyncConfig) => JSON.stringify(config.queryKey) === storageKey
+        );
+
+        if (matchingConfig && event.newValue) {
+          try {
+            const data = JSON.parse(event.newValue) as unknown;
+            queryClient.setQueryData(matchingConfig.queryKey, data);
+          } catch (error) {
+            logClientError(error instanceof Error ? error : new Error(String(error)), {
+              context: { source: 'useQuerySync', action: 'syncQueryDataFailed', level: 'warn' },
+            });
+          }
         }
       }
-    }
-  }, [configs, queryClient]);
+    },
+    [configs, queryClient]
+  );
 
   useEffect((): (() => void) => {
     window.addEventListener('storage', handleStorageChange);

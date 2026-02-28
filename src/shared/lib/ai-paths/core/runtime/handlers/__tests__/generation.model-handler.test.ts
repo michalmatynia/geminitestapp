@@ -72,18 +72,16 @@ const createExecutedSets = () => ({
   mapper: new Set<string>(),
 });
 
-const buildContext = (
-  input: {
-    node: AiNode;
-    nodes: AiNode[];
-    edges: Edge[];
-    nodeInputs?: RuntimePortValues;
-    prevOutputs?: RuntimePortValues;
-    allOutputs?: Record<string, RuntimePortValues>;
-    allInputs?: Record<string, RuntimePortValues>;
-    executedAiIds?: string[];
-  }
-): NodeHandlerContext =>
+const buildContext = (input: {
+  node: AiNode;
+  nodes: AiNode[];
+  edges: Edge[];
+  nodeInputs?: RuntimePortValues;
+  prevOutputs?: RuntimePortValues;
+  allOutputs?: Record<string, RuntimePortValues>;
+  allInputs?: Record<string, RuntimePortValues>;
+  executedAiIds?: string[];
+}): NodeHandlerContext =>
   ({
     node: input.node,
     nodes: input.nodes,

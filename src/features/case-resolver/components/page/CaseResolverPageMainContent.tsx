@@ -3,10 +3,7 @@
 import { FileText } from 'lucide-react';
 import React from 'react';
 
-import {
-  Card,
-  EmptyState,
-} from '@/shared/ui';
+import { Card, EmptyState } from '@/shared/ui';
 import { useCaseResolverViewContext } from '../CaseResolverViewContext';
 import { CaseResolverScanFileEditor } from './CaseResolverScanFileEditor';
 import { CaseResolverDocumentEditor } from './CaseResolverDocumentEditor';
@@ -17,10 +14,7 @@ import { CaseResolverNodeFileWorkspace } from '../CaseResolverNodeFileWorkspace'
 import { CaseResolverRelationsWorkspace } from '../CaseResolverRelationsWorkspace';
 
 export function CaseResolverPageMainContent(): React.JSX.Element {
-  const {
-    state,
-    workspaceView,
-  } = useCaseResolverViewContext();
+  const { state, workspaceView } = useCaseResolverViewContext();
 
   const {
     workspace,
@@ -32,27 +26,25 @@ export function CaseResolverPageMainContent(): React.JSX.Element {
     selectedAsset,
   } = state;
   const selectedFile = selectedFileId
-    ? workspace.files.find((file): boolean => file.id === selectedFileId) ?? null
+    ? (workspace.files.find((file): boolean => file.id === selectedFileId) ?? null)
     : null;
-  const selectedCaseFile =
-    selectedFile?.fileType === 'case' ? selectedFile : null;
-  const activeCaseFile =
-    activeFile?.fileType === 'case' ? activeFile : null;
+  const selectedCaseFile = selectedFile?.fileType === 'case' ? selectedFile : null;
+  const activeCaseFile = activeFile?.fileType === 'case' ? activeFile : null;
   const resolvedCaseContextFile =
     selectedCaseFile ??
     activeCaseFile ??
     (activeCaseId
-      ? workspace.files.find(
-        (file): boolean => file.id === activeCaseId && file.fileType === 'case'
-      ) ?? null
+      ? (workspace.files.find(
+          (file): boolean => file.id === activeCaseId && file.fileType === 'case'
+        ) ?? null)
       : null);
   const showCaseOverviewWorkspace = Boolean(
     resolvedCaseContextFile &&
-      !selectedAssetId &&
-      !editingDocumentDraft &&
-      (selectedFile?.fileType === 'case' ||
-        activeFile?.fileType === 'case' ||
-        (!selectedFile && !activeFile))
+    !selectedAssetId &&
+    !editingDocumentDraft &&
+    (selectedFile?.fileType === 'case' ||
+      activeFile?.fileType === 'case' ||
+      (!selectedFile && !activeFile))
   );
   const isNodeFileMode = selectedAsset?.kind === 'node_file';
 
@@ -69,9 +61,7 @@ export function CaseResolverPageMainContent(): React.JSX.Element {
       ) : showCaseOverviewWorkspace ? (
         <CaseResolverCaseOverviewWorkspace />
       ) : workspaceView === 'relations' ? (
-        <CaseResolverRelationsWorkspace
-          focusCaseId={activeFile?.id ?? activeCaseId}
-        />
+        <CaseResolverRelationsWorkspace focusCaseId={activeFile?.id ?? activeCaseId} />
       ) : selectedAsset ? (
         <CaseResolverFileViewer />
       ) : editingDocumentDraft?.fileType === 'scanfile' ? (

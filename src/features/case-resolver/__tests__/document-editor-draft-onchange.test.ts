@@ -1,13 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
 import { createCaseResolverFile } from '@/features/case-resolver/settings';
-import {
-  hasCaseResolverDraftMeaningfulChanges,
-} from '@/features/case-resolver/hooks/useCaseResolverState.helpers';
+import { hasCaseResolverDraftMeaningfulChanges } from '@/features/case-resolver/hooks/useCaseResolverState.helpers';
 import { buildFileEditDraft } from '@/features/case-resolver/utils/caseResolverUtils';
-import {
-  applyCaseResolverWysiwygDraftContentChange,
-} from '@/features/case-resolver/hooks/useAdminCaseResolverDocumentActions';
+import { applyCaseResolverWysiwygDraftContentChange } from '@/features/case-resolver/hooks/useAdminCaseResolverDocumentActions';
 
 describe('case resolver document editor onchange reducer', () => {
   it('does not mutate draft for semantically empty wysiwyg markup', () => {

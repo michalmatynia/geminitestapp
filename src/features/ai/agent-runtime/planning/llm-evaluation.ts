@@ -1,8 +1,6 @@
 import 'server-only';
 
-import {
-  OLLAMA_BASE_URL,
-} from '@/features/ai/agent-runtime/core/config';
+import { OLLAMA_BASE_URL } from '@/features/ai/agent-runtime/core/config';
 import {
   buildBranchStepsFromAlternatives,
   buildPlanStepsFromSpecs,
@@ -122,17 +120,16 @@ export async function evaluatePlanWithLLM({
     const revisedHierarchy = parsed.revisedGoals
       ? normalizePlanHierarchy({ goals: parsed.revisedGoals })
       : null;
-    const revisedSpecs =
-      revisedHierarchy?.goals.length
-        ? flattenPlanHierarchy(revisedHierarchy)
-        : (parsed.revisedSteps ?? []);
+    const revisedSpecs = revisedHierarchy?.goals.length
+      ? flattenPlanHierarchy(revisedHierarchy)
+      : (parsed.revisedSteps ?? []);
     const revisedSteps = revisedSpecs.length
       ? buildPlanStepsFromSpecs(
-        normalizePlanStepSpecs(revisedSpecs),
-        meta,
-        true,
-        maxStepAttempts
-      ).slice(0, maxSteps)
+          normalizePlanStepSpecs(revisedSpecs),
+          meta,
+          true,
+          maxStepAttempts
+        ).slice(0, maxSteps)
       : [];
     if ('agentAuditLog' in prisma && runId) {
       await prisma.agentAuditLog.create({
@@ -200,7 +197,7 @@ export async function verifyPlanWithLLM({
           {
             role: 'system',
             content:
-              'You verify task completion. Return only JSON with keys: verdict (\'pass\'|\'partial\'|\'fail\'), evidence[], missing[], followUp. Evidence must reference observable facts from the context.',
+              "You verify task completion. Return only JSON with keys: verdict ('pass'|'partial'|'fail'), evidence[], missing[], followUp. Evidence must reference observable facts from the context.",
           },
           {
             role: 'user',
@@ -236,9 +233,7 @@ export async function verifyPlanWithLLM({
     } | null;
     if (!parsed) return null;
     const verdict =
-      parsed.verdict === 'pass' || parsed.verdict === 'partial'
-        ? parsed.verdict
-        : 'fail';
+      parsed.verdict === 'pass' || parsed.verdict === 'partial' ? parsed.verdict : 'fail';
     if ('agentAuditLog' in prisma && runId) {
       await prisma.agentAuditLog.create({
         data: {
@@ -358,8 +353,7 @@ export async function buildSelfImprovementReviewWithLLM({
       improvements: normalizeStringList(parsed.improvements),
       guardrails: normalizeStringList(parsed.guardrails),
       toolAdjustments: normalizeStringList(parsed.toolAdjustments),
-      confidence:
-        typeof parsed.confidence === 'number' ? parsed.confidence : undefined,
+      confidence: typeof parsed.confidence === 'number' ? parsed.confidence : undefined,
     };
   } catch (error) {
     void ErrorSystem.logWarning('[chatbot][agent][engine] Self-improvement review failed', {
@@ -584,8 +578,7 @@ export async function buildMidRunAdaptationWithLLM({
     const meta = normalizePlannerMeta(parsed);
     const hierarchy = normalizePlanHierarchy(parsed);
     const hierarchySteps = hierarchy ? flattenPlanHierarchy(hierarchy) : [];
-    const stepSpecs =
-      hierarchySteps.length > 0 ? hierarchySteps : (parsed.steps ?? []);
+    const stepSpecs = hierarchySteps.length > 0 ? hierarchySteps : (parsed.steps ?? []);
     let stepsResult = buildPlanStepsFromSpecs(
       normalizePlanStepSpecs(stepSpecs),
       meta,

@@ -4,12 +4,12 @@ import {
   imageStudioRunRequestSchema,
   resolveExpectedOutputCount,
   sanitizeImageStudioProjectId,
-} from '@/features/ai/image-studio/server/run-executor';
+} from '@/shared/lib/ai/image-studio/server/run-executor';
 import {
   createImageStudioRun,
   getImageStudioRunById,
   updateImageStudioRun,
-} from '@/features/ai/image-studio/server/run-repository';
+} from '@/shared/lib/ai/image-studio/server/run-repository';
 import {
   enqueueImageStudioRunJob,
   startImageStudioRunQueue,
@@ -73,8 +73,8 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     });
   }
 
-  const latestRun = (
-    await updateImageStudioRun(run.id, {
+  const latestRun =
+    (await updateImageStudioRun(run.id, {
       dispatchMode,
       appendHistoryEvents: [
         {
@@ -92,8 +92,9 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
           },
         },
       ],
-    })
-  ) ?? (await getImageStudioRunById(run.id)) ?? run;
+    })) ??
+    (await getImageStudioRunById(run.id)) ??
+    run;
 
   return NextResponse.json({
     runId: latestRun.id,

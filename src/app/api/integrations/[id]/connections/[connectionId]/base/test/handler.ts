@@ -1,5 +1,3 @@
-
-
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getIntegrationRepository } from '@/features/integrations/server';
@@ -19,26 +17,26 @@ type TestLogEntry = {
  * POST /api/integrations/[id]/connections/[connectionId]/base/test
  * Tests the Base.com API connection by verifying the token and fetching inventories.
  */
-export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; connectionId: string }): Promise<Response> {
+export async function POST_handler(
+  _req: NextRequest,
+  _ctx: ApiHandlerContext,
+  params: { id: string; connectionId: string }
+): Promise<Response> {
   const steps: TestLogEntry[] = [];
 
-  const pushStep = (
-    step: string,
-    status: 'pending' | 'ok' | 'failed',
-    detail: string
-  ) => {
+  const pushStep = (step: string, status: 'pending' | 'ok' | 'failed', detail: string) => {
     steps.push({
       step,
       status,
       detail,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   };
 
   const fail = async (step: string, detail: string, status = 400) => {
     const safeDetail = detail?.trim() ? detail : 'Unknown error';
     pushStep(step, 'failed', safeDetail);
-    
+
     throw mapStatusToAppError(safeDetail, status);
   };
 
@@ -117,7 +115,7 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, p
       try {
         await repo.updateConnection(connection.id, {
           baseApiToken: encryptSecret(baseToken),
-          baseTokenUpdatedAt: new Date().toISOString()
+          baseTokenUpdatedAt: new Date().toISOString(),
         });
         pushStep('Storing token', 'ok', 'API token saved to connection');
       } catch (error) {
@@ -127,7 +125,7 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, p
     } else {
       // Update the token timestamp
       await repo.updateConnection(connection.id, {
-        baseTokenUpdatedAt: new Date().toISOString()
+        baseTokenUpdatedAt: new Date().toISOString(),
       });
     }
 
@@ -136,7 +134,7 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, p
       pushStep('Storing default inventory', 'pending', 'Setting default inventory');
       try {
         await repo.updateConnection(connection.id, {
-          baseLastInventoryId: inventories[0]!.id
+          baseLastInventoryId: inventories[0]!.id,
         });
         pushStep(
           'Storing default inventory',
@@ -154,7 +152,7 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, p
       ok: true,
       steps,
       inventories: inventories.map((inv) => ({ id: inv.id, name: inv.name })),
-      inventoryCount: inventories.length
+      inventoryCount: inventories.length,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';

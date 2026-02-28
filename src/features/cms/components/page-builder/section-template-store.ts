@@ -21,16 +21,33 @@ export function normalizeSectionTemplates(input: unknown): SectionTemplateRecord
       const section = record.section;
       if (!section || typeof section !== 'object' || typeof section.type !== 'string') return null;
       return {
-        id: typeof record.id === 'string' && record.id.length > 0 ? record.id : `section-template-${index + 1}`,
-        name: typeof record.name === 'string' && record.name.trim().length > 0 ? record.name.trim() : `Section template ${index + 1}`,
+        id:
+          typeof record.id === 'string' && record.id.length > 0
+            ? record.id
+            : `section-template-${index + 1}`,
+        name:
+          typeof record.name === 'string' && record.name.trim().length > 0
+            ? record.name.trim()
+            : `Section template ${index + 1}`,
         description: typeof record.description === 'string' ? record.description : '',
-        category: typeof record.category === 'string' && record.category.trim().length > 0 ? record.category.trim() : 'Saved sections',
-        sectionType: typeof record.sectionType === 'string' && record.sectionType.length > 0 ? record.sectionType : section.type,
-        createdAt: typeof record.createdAt === 'string' && record.createdAt.length > 0 ? record.createdAt : new Date().toISOString(),
+        category:
+          typeof record.category === 'string' && record.category.trim().length > 0
+            ? record.category.trim()
+            : 'Saved sections',
+        sectionType:
+          typeof record.sectionType === 'string' && record.sectionType.length > 0
+            ? record.sectionType
+            : section.type,
+        createdAt:
+          typeof record.createdAt === 'string' && record.createdAt.length > 0
+            ? record.createdAt
+            : new Date().toISOString(),
         section,
       };
     })
-    .filter((record: SectionTemplateRecord | null): record is SectionTemplateRecord => Boolean(record));
+    .filter((record: SectionTemplateRecord | null): record is SectionTemplateRecord =>
+      Boolean(record)
+    );
 }
 
 export function cloneSectionTemplateSection(section: SectionInstance): SectionInstance {

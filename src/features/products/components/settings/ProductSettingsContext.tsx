@@ -2,7 +2,13 @@
 
 import React from 'react';
 
-import type { Catalog, PriceGroup, ProductCategoryWithChildren, ProductParameter, ProductTag } from '@/shared/contracts/products';
+import type {
+  Catalog,
+  PriceGroup,
+  ProductCategoryWithChildren,
+  ProductParameter,
+  ProductTag,
+} from '@/shared/contracts/products';
 
 type ProductSettingsContextValue = {
   loadingCatalogs: boolean;
@@ -45,9 +51,7 @@ export function ProductSettingsProvider({
   children: React.ReactNode;
 }): React.JSX.Element {
   return (
-    <ProductSettingsContext.Provider value={value}>
-      {children}
-    </ProductSettingsContext.Provider>
+    <ProductSettingsContext.Provider value={value}>{children}</ProductSettingsContext.Provider>
   );
 }
 

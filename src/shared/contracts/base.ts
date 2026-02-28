@@ -4,7 +4,14 @@ import { z } from 'zod';
  * Foundation schemas used across all contracts
  */
 
-export const statusSchema = z.enum(['pending', 'running', 'completed', 'failed', 'cancelled', 'canceled']);
+export const statusSchema = z.enum([
+  'pending',
+  'running',
+  'completed',
+  'failed',
+  'cancelled',
+  'canceled',
+]);
 export type StatusDto = z.infer<typeof statusSchema>;
 export type Status = StatusDto;
 

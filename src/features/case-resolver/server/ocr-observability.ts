@@ -29,10 +29,7 @@ export type CaseResolverOcrObservabilitySnapshot = {
 const percentile = (values: number[], ratio: number): number => {
   if (values.length === 0) return 0;
   const sorted = [...values].sort((a, b) => a - b);
-  const index = Math.min(
-    sorted.length - 1,
-    Math.max(0, Math.floor((sorted.length - 1) * ratio))
-  );
+  const index = Math.min(sorted.length - 1, Math.max(0, Math.floor((sorted.length - 1) * ratio)));
   return sorted[index] ?? 0;
 };
 
@@ -116,9 +113,7 @@ export const buildCaseResolverOcrObservabilitySnapshot = (
   const terminalCount = statuses.completed + statuses.failed;
   const successRate = terminalCount > 0 ? statuses.completed / terminalCount : 0;
   const retryRate = jobs.length > 0 ? retryJobs / jobs.length : 0;
-  const retryableFailureRate = totalFailures > 0
-    ? retryableFailures / totalFailures
-    : 0;
+  const retryableFailureRate = totalFailures > 0 ? retryableFailures / totalFailures : 0;
 
   return {
     generatedAt: new Date(nowMs).toISOString(),
@@ -134,9 +129,9 @@ export const buildCaseResolverOcrObservabilitySnapshot = (
   };
 };
 
-export const getCaseResolverOcrObservabilitySnapshot = async (
-  options?: { limit?: number }
-): Promise<CaseResolverOcrObservabilitySnapshot> => {
+export const getCaseResolverOcrObservabilitySnapshot = async (options?: {
+  limit?: number;
+}): Promise<CaseResolverOcrObservabilitySnapshot> => {
   const jobs = await listCaseResolverRecentOcrJobs(options?.limit);
   return buildCaseResolverOcrObservabilitySnapshot(jobs);
 };

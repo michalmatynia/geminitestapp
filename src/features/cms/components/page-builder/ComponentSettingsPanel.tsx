@@ -11,7 +11,10 @@ import { ConnectionsTab } from './settings/ConnectionsTab';
 import { ContentAiSection } from './settings/ContentAiSection';
 import { EventEffectsTab } from './settings/EventEffectsTab';
 import { PageSettingsTab } from './settings/PageSettingsTab';
-import { ComponentSettingsProvider, useComponentSettingsContext } from './context/ComponentSettingsContext';
+import {
+  ComponentSettingsProvider,
+  useComponentSettingsContext,
+} from './context/ComponentSettingsContext';
 import { usePageBuilderState, usePageBuilderSelection } from '../../hooks/usePageBuilderContext';
 
 import { InspectorHeader } from './settings/InspectorHeader';
@@ -21,16 +24,19 @@ import { ColumnSettingsTab } from './settings/ColumnSettingsTab';
 import { BlockSettingsTab } from './settings/BlockSettingsTab';
 import { CustomCssTab } from './settings/CustomCssTab';
 
-type TabValue = 'settings' | 'animation' | 'cssAnimation' | 'customCss' | 'events' | 'connections' | 'ai';
+type TabValue =
+  | 'settings'
+  | 'animation'
+  | 'cssAnimation'
+  | 'customCss'
+  | 'events'
+  | 'connections'
+  | 'ai';
 
 function ComponentSettingsPanelInner(): React.JSX.Element {
   const state = usePageBuilderState();
-  const {
-    selectedSection,
-    selectedBlock,
-    selectedColumn,
-  } = usePageBuilderSelection();
-  
+  const { selectedSection, selectedBlock, selectedColumn } = usePageBuilderSelection();
+
   const {
     activeTab,
     setActiveTab,
@@ -44,7 +50,9 @@ function ComponentSettingsPanelInner(): React.JSX.Element {
 
   const isGridSection = selectedSection?.type === 'Grid';
   const isBlockSection = selectedSection?.type === 'Block';
-  const showCustomCssTab = Boolean(isGridSection || isBlockSection || selectedColumn || selectedBlock);
+  const showCustomCssTab = Boolean(
+    isGridSection || isBlockSection || selectedColumn || selectedBlock
+  );
   const hasSelection = !!(selectedSection || selectedBlock || selectedColumn);
   const showConnectionsTab = state.inspectorEnabled;
   const showEventsTab = Boolean(selectedBlock || selectedSection);
@@ -79,15 +87,39 @@ function ComponentSettingsPanelInner(): React.JSX.Element {
         ) : !hasSelection ? (
           <PageSettingsTab />
         ) : (
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabValue)} className='flex min-h-0 flex-1 flex-col overflow-hidden'>
+          <Tabs
+            value={activeTab}
+            onValueChange={(v) => setActiveTab(v as TabValue)}
+            className='flex min-h-0 flex-1 flex-col overflow-hidden'
+          >
             <TabsList className='mx-4 mt-3 w-[calc(100%-2rem)]'>
-              <TabsTrigger value='settings' className='flex-1 text-xs'>Settings</TabsTrigger>
-              <TabsTrigger value='animation' className='flex-1 text-xs'>Anim</TabsTrigger>
-              <TabsTrigger value='cssAnimation' className='flex-1 text-xs'>CSS Anim</TabsTrigger>
-              {showCustomCssTab && <TabsTrigger value='customCss' className='flex-1 text-xs'>CSS</TabsTrigger>}
-              {showEventsTab && <TabsTrigger value='events' className='flex-1 text-xs'>Events</TabsTrigger>}
-              {showConnectionsTab && <TabsTrigger value='connections' className='flex-1 text-xs'>Conn</TabsTrigger>}
-              <TabsTrigger value='ai' className='flex-1 text-xs'>AI</TabsTrigger>
+              <TabsTrigger value='settings' className='flex-1 text-xs'>
+                Settings
+              </TabsTrigger>
+              <TabsTrigger value='animation' className='flex-1 text-xs'>
+                Anim
+              </TabsTrigger>
+              <TabsTrigger value='cssAnimation' className='flex-1 text-xs'>
+                CSS Anim
+              </TabsTrigger>
+              {showCustomCssTab && (
+                <TabsTrigger value='customCss' className='flex-1 text-xs'>
+                  CSS
+                </TabsTrigger>
+              )}
+              {showEventsTab && (
+                <TabsTrigger value='events' className='flex-1 text-xs'>
+                  Events
+                </TabsTrigger>
+              )}
+              {showConnectionsTab && (
+                <TabsTrigger value='connections' className='flex-1 text-xs'>
+                  Conn
+                </TabsTrigger>
+              )}
+              <TabsTrigger value='ai' className='flex-1 text-xs'>
+                AI
+              </TabsTrigger>
             </TabsList>
             <TabsContent value='settings' className='flex-1 overflow-y-auto p-4 mt-0'>
               <SectionSettingsTab />

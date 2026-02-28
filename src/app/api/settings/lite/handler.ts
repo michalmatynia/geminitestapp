@@ -52,9 +52,7 @@ const attachServerTiming = (
 const canUsePrismaSettings = (): boolean =>
   Boolean(process.env['DATABASE_URL']) && 'setting' in prisma;
 
-const isPrismaMissingTableError = (
-  error: unknown
-): error is Prisma.PrismaClientKnownRequestError =>
+const isPrismaMissingTableError = (error: unknown): error is Prisma.PrismaClientKnownRequestError =>
   error instanceof Prisma.PrismaClientKnownRequestError &&
   (error.code === 'P2021' || error.code === 'P2022');
 
@@ -82,7 +80,6 @@ const readMongoSettings = async (keys: readonly string[]): Promise<SettingRecord
   const docs = await mongo
     .collection<SettingDocument>(SETTINGS_COLLECTION)
     .find(
-       
       { $or: [{ key: { $in: keys as string[] } }, { _id: { $in: keys as string[] } }] },
       { projection: { _id: 1, key: 1, value: 1 } }
     )
@@ -106,9 +103,8 @@ const fetchLiteSettings = async (): Promise<SettingRecord[]> => {
     return readMongoSettings(LITE_SETTINGS_KEYS);
   }
 
-  const { rows: prismaSettings, missing: prismaMissing } = await readPrismaSettings(
-    LITE_SETTINGS_KEYS
-  );
+  const { rows: prismaSettings, missing: prismaMissing } =
+    await readPrismaSettings(LITE_SETTINGS_KEYS);
   if (prismaMissing) {
     throw internalError(
       'Prisma settings table is missing. Run migrations manually in Workflow Database -> Database Engine.'
@@ -127,14 +123,16 @@ export const isLiteSettingsKey = (key: string): boolean => {
   return (LITE_SETTINGS_KEYS as readonly string[]).includes(normalizedKey);
 };
 
-export const GET_handler = async (_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> => {
+export const GET_handler = async (
+  _req: NextRequest,
+  _ctx: ApiHandlerContext
+): Promise<Response> => {
   const requestStart = performance.now();
   const forceFresh = _req.nextUrl.searchParams.get('fresh') === '1';
   const now = Date.now();
   const currentCache = getLiteSettingsCache();
-  const staleCache = currentCache && now - currentCache.ts <= LITE_SETTINGS_STALE_TTL_MS
-    ? currentCache
-    : null;
+  const staleCache =
+    currentCache && now - currentCache.ts <= LITE_SETTINGS_STALE_TTL_MS ? currentCache : null;
 
   if (!forceFresh && currentCache && now - currentCache.ts <= LITE_SETTINGS_CACHE_TTL_MS) {
     const response = NextResponse.json(cloneLiteSettings(currentCache.data), {

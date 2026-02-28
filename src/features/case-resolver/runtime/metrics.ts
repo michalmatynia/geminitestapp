@@ -1,8 +1,6 @@
 import { logCaseResolverWorkspaceEvent } from '../workspace-persistence';
 
-type CounterMetricName =
-  | 'selector_recompute_count'
-  | 'context_state_transition_count';
+type CounterMetricName = 'selector_recompute_count' | 'context_state_transition_count';
 
 type DurationMetricName =
   | 'tree_scope_resolve_ms'
@@ -28,7 +26,7 @@ export const incrementCaseResolverCounterMetric = (
     count?: number;
     source?: string;
     forceFlush?: boolean;
-  },
+  }
 ): void => {
   const step = Math.max(1, Math.floor(options?.count ?? 1));
   const source = options?.source ?? 'case_view';
@@ -40,8 +38,7 @@ export const incrementCaseResolverCounterMetric = (
   };
   state.pending += step;
   const shouldFlush =
-    forceFlush ||
-    currentTimeMs - state.lastFlushedAtMs >= COUNTER_FLUSH_INTERVAL_MS;
+    forceFlush || currentTimeMs - state.lastFlushedAtMs >= COUNTER_FLUSH_INTERVAL_MS;
   if (!shouldFlush) {
     counterStateByMetric.set(metric, state);
     return;
@@ -65,7 +62,7 @@ export const logCaseResolverDurationMetric = (
     source?: string;
     message?: string;
     minDurationMs?: number;
-  },
+  }
 ): void => {
   if (!Number.isFinite(durationMs) || durationMs < 0) return;
   const minDurationMs = options?.minDurationMs ?? 0;

@@ -6,7 +6,10 @@ import { useEffect } from 'react';
 
 import { CLIENT_LOGGING_KEYS } from '@/features/observability/constants/client-logging';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { initClientErrorReporting, setClientErrorBaseContext } from '@/shared/utils/observability/client-error-logger';
+import {
+  initClientErrorReporting,
+  setClientErrorBaseContext,
+} from '@/shared/utils/observability/client-error-logger';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 export default function ClientErrorReporter(): null {
@@ -23,14 +26,8 @@ export default function ClientErrorReporter(): null {
   const tagsRaw = settingsStore.get(CLIENT_LOGGING_KEYS.tags);
 
   useEffect(() => {
-    const featureFlags = parseJsonSetting<Record<string, unknown> | null>(
-      featureFlagsRaw,
-      null
-    );
-    const tags = parseJsonSetting<Record<string, unknown> | null>(
-      tagsRaw,
-      null
-    );
+    const featureFlags = parseJsonSetting<Record<string, unknown> | null>(featureFlagsRaw, null);
+    const tags = parseJsonSetting<Record<string, unknown> | null>(tagsRaw, null);
     setClientErrorBaseContext({
       featureFlags,
       tags,
@@ -50,31 +47,30 @@ export default function ClientErrorReporter(): null {
       referrer: typeof document !== 'undefined' ? document.referrer : null,
       locale: typeof navigator !== 'undefined' ? navigator.language : null,
       timezone:
-        typeof Intl !== 'undefined'
-          ? Intl.DateTimeFormat().resolvedOptions().timeZone
-          : null,
+        typeof Intl !== 'undefined' ? Intl.DateTimeFormat().resolvedOptions().timeZone : null,
       device:
         typeof navigator !== 'undefined'
           ? {
-            platform: navigator.platform,
-            deviceMemory: (navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? null,
-            hardwareConcurrency: navigator.hardwareConcurrency ?? null,
-          }
+              platform: navigator.platform,
+              deviceMemory:
+                (navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? null,
+              hardwareConcurrency: navigator.hardwareConcurrency ?? null,
+            }
           : null,
       network:
         typeof navigator !== 'undefined'
           ? {
-            online: navigator.onLine,
-            effectiveType:
+              online: navigator.onLine,
+              effectiveType:
                 (navigator as Navigator & { connection?: { effectiveType?: string } }).connection
                   ?.effectiveType ?? null,
-            downlink:
+              downlink:
                 (navigator as Navigator & { connection?: { downlink?: number } }).connection
                   ?.downlink ?? null,
-            rtt:
+              rtt:
                 (navigator as Navigator & { connection?: { rtt?: number } }).connection?.rtt ??
                 null,
-          }
+            }
           : null,
       viewport:
         typeof window !== 'undefined'
@@ -82,7 +78,8 @@ export default function ClientErrorReporter(): null {
           : null,
       featureFlags:
         typeof window !== 'undefined'
-          ? (window as Window & { __FEATURE_FLAGS__?: Record<string, unknown> }).__FEATURE_FLAGS__ ??
+          ? ((window as Window & { __FEATURE_FLAGS__?: Record<string, unknown> })
+              .__FEATURE_FLAGS__ ??
             ((): Record<string, unknown> | null => {
               try {
                 const raw = window.localStorage.getItem('featureFlags');
@@ -90,12 +87,12 @@ export default function ClientErrorReporter(): null {
               } catch {
                 return null;
               }
-            })()
+            })())
           : null,
       tags:
         typeof window !== 'undefined'
-          ? (window as Window & { __CLIENT_LOG_TAGS__?: Record<string, unknown> })
-            .__CLIENT_LOG_TAGS__ ??
+          ? ((window as Window & { __CLIENT_LOG_TAGS__?: Record<string, unknown> })
+              .__CLIENT_LOG_TAGS__ ??
             ((): Record<string, unknown> | null => {
               try {
                 const raw = window.localStorage.getItem('clientLogTags');
@@ -103,18 +100,25 @@ export default function ClientErrorReporter(): null {
               } catch {
                 return null;
               }
-            })()
+            })())
           : null,
       user: session?.user
         ? {
-          id: session.user.id ?? null,
-          email: session.user.email ?? null,
-          role: session.user.role ?? null,
-        }
+            id: session.user.id ?? null,
+            email: session.user.email ?? null,
+            role: session.user.role ?? null,
+          }
         : null,
     };
     setClientErrorBaseContext(context);
-  }, [pathname, searchParams, session?.user, session?.user?.email, session?.user?.id, session?.user?.role]);
+  }, [
+    pathname,
+    searchParams,
+    session?.user,
+    session?.user?.email,
+    session?.user?.id,
+    session?.user?.role,
+  ]);
 
   return null;
 }

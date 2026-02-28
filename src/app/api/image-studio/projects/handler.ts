@@ -8,7 +8,7 @@ import {
   IMAGE_STUDIO_SETTINGS_KEY,
   getImageStudioProjectSettingsKey,
   parseImageStudioSettings,
-} from '@/features/ai/image-studio/utils/studio-settings';
+} from '@/shared/lib/ai/image-studio/studio-settings';
 import type { ImageStudioProjectRecord } from '@/shared/contracts/image-studio';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, operationFailedError } from '@/shared/errors/app-error';
@@ -22,8 +22,7 @@ const projectsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio');
 const PROJECT_METADATA_FILENAME = '.image-studio-project.json';
 const SETTINGS_COLLECTION = 'settings';
 
-const sanitizeProjectId = (value: string): string =>
-  value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
+const sanitizeProjectId = (value: string): string => value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
 
 const createProjectSchema = z.object({
   projectId: z.string().min(1).max(120),
@@ -50,7 +49,7 @@ const canUsePrismaSettings = (): boolean =>
 
 const readSettingValue = async (
   key: string,
-  provider: 'prisma' | 'mongodb',
+  provider: 'prisma' | 'mongodb'
 ): Promise<string | null> => {
   if (provider === 'mongodb') {
     if (!process.env['MONGODB_URI']) return null;
@@ -72,7 +71,7 @@ const readSettingValue = async (
 const upsertSettingValue = async (
   key: string,
   value: string,
-  provider: 'prisma' | 'mongodb',
+  provider: 'prisma' | 'mongodb'
 ): Promise<void> => {
   if (provider === 'mongodb') {
     if (!process.env['MONGODB_URI']) {
@@ -86,7 +85,7 @@ const upsertSettingValue = async (
         $set: { value, updatedAt: now },
         $setOnInsert: { createdAt: now },
       },
-      { upsert: true },
+      { upsert: true }
     );
     return;
   }
@@ -101,37 +100,27 @@ const upsertSettingValue = async (
   });
 };
 
-const ensureProjectScopedSettingsInitialized = async (
-  projectId: string,
-): Promise<string> => {
+const ensureProjectScopedSettingsInitialized = async (projectId: string): Promise<string> => {
   const projectSettingsKey = getImageStudioProjectSettingsKey(projectId);
   if (!projectSettingsKey) {
     throw badRequestError('Invalid project id for settings initialization.');
   }
   const provider = await getAppDbProvider();
-  const existingProjectSettings = await readSettingValue(
-    projectSettingsKey,
-    provider,
-  );
+  const existingProjectSettings = await readSettingValue(projectSettingsKey, provider);
   if (existingProjectSettings && existingProjectSettings.trim().length > 0) {
     return projectSettingsKey;
   }
 
-  const globalSettingsRaw = await readSettingValue(
-    IMAGE_STUDIO_SETTINGS_KEY,
-    provider,
-  );
+  const globalSettingsRaw = await readSettingValue(IMAGE_STUDIO_SETTINGS_KEY, provider);
   const seedSettings = parseImageStudioSettings(globalSettingsRaw);
-  await upsertSettingValue(
-    projectSettingsKey,
-    serializeSetting(seedSettings),
-    provider,
-  );
+  await upsertSettingValue(projectSettingsKey, serializeSetting(seedSettings), provider);
   clearSettingsCache();
   return projectSettingsKey;
 };
 
-const resolveProjectSummary = async (projectId: string): Promise<ImageStudioProjectRecord | null> => {
+const resolveProjectSummary = async (
+  projectId: string
+): Promise<ImageStudioProjectRecord | null> => {
   const projectDir = path.join(projectsRoot, projectId);
   const dirStats = await fs.stat(projectDir).catch(() => null);
   if (!dirStats?.isDirectory()) return null;
@@ -141,9 +130,7 @@ const resolveProjectSummary = async (projectId: string): Promise<ImageStudioProj
       ? dirStats.birthtimeMs
       : Date.now();
   const updatedMs =
-    Number.isFinite(dirStats.mtimeMs) && dirStats.mtimeMs > 0
-      ? dirStats.mtimeMs
-      : createdMs;
+    Number.isFinite(dirStats.mtimeMs) && dirStats.mtimeMs > 0 ? dirStats.mtimeMs : createdMs;
   const fallbackCreatedAt = new Date(createdMs).toISOString();
   const fallbackUpdatedAt = new Date(updatedMs).toISOString();
 
@@ -195,7 +182,7 @@ const upsertProjectSummary = async (
   options?: {
     canvasWidthPx?: number | null;
     canvasHeightPx?: number | null;
-  },
+  }
 ): Promise<ImageStudioProjectRecord> => {
   const existing = await resolveProjectSummary(projectId);
   const nowIso = new Date().toISOString();
@@ -232,7 +219,11 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
     .sort((left, right) => {
       const rightCreated = Date.parse(right.createdAt || '');
       const leftCreated = Date.parse(left.createdAt || '');
-      if (Number.isFinite(rightCreated) && Number.isFinite(leftCreated) && rightCreated !== leftCreated) {
+      if (
+        Number.isFinite(rightCreated) &&
+        Number.isFinite(leftCreated) &&
+        rightCreated !== leftCreated
+      ) {
         return rightCreated - leftCreated;
       }
       return left.id.localeCompare(right.id);
@@ -268,9 +259,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
       ? { canvasHeightPx: parsed.data.canvasHeightPx }
       : {}),
   });
-  const projectSettingsKey = await ensureProjectScopedSettingsInitialized(
-    sanitized,
-  );
+  const projectSettingsKey = await ensureProjectScopedSettingsInitialized(sanitized);
 
   return NextResponse.json({ projectId: sanitized, project, projectSettingsKey });
 }

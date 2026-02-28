@@ -7,7 +7,10 @@ import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
 } from '@/features/products/constants';
-import type { ImageStudioSlotRecord, SlotGenerationMetadata } from '@/shared/contracts/image-studio';
+import type {
+  ImageStudioSlotRecord,
+  SlotGenerationMetadata,
+} from '@/shared/contracts/image-studio';
 import type { VectorShape } from '@/shared/contracts/vector';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { api } from '@/shared/lib/api-client';
@@ -17,14 +20,20 @@ import type { VectorCanvasImageContentFrame, VectorCanvasViewCropRect } from '@/
 import { useToast } from '@/shared/ui';
 
 import { FocusModeTogglePortal } from './center-preview/FocusModeTogglePortal';
-import { CenterPreviewProvider, useCenterPreviewContext } from './center-preview/CenterPreviewContext';
+import {
+  CenterPreviewProvider,
+  useCenterPreviewContext,
+} from './center-preview/CenterPreviewContext';
 import { useCenterPreviewVariants } from './center-preview/useCenterPreviewVariants';
 import {
   deleteVariantFromCenterPreview,
   loadVariantIntoCanvas,
 } from './center-preview/variant-actions';
 import { VariantPanel } from './center-preview/VariantPanel';
-import { VariantPanelProvider, type VariantPanelContextValue } from './center-preview/VariantPanelContext';
+import {
+  VariantPanelProvider,
+  type VariantPanelContextValue,
+} from './center-preview/VariantPanelContext';
 import { VariantTooltipPortal } from './center-preview/VariantTooltipPortal';
 import { VersionNodeDetailsModal } from './VersionNodeDetailsModal';
 import { useGenerationActions, useGenerationState } from '../context/GenerationContext';
@@ -33,11 +42,8 @@ import { useProjectsState } from '../context/ProjectsContext';
 import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
 import { useUiActions, useUiState, type PreviewCanvasSize } from '../context/UiContext';
 import { useVersionGraphState } from '../context/VersionGraphContext';
-import { getImageStudioSlotImageSrc } from '../utils/image-src';
-import {
-  asObjectRecord,
-  type VariantThumbnailInfo,
-} from './center-preview/preview-utils';
+import { getImageStudioSlotImageSrc } from '@/shared/lib/ai/image-studio/utils/image-src';
+import { asObjectRecord, type VariantThumbnailInfo } from './center-preview/preview-utils';
 import {
   buildDetailsNodeForCenterPreview,
   isTreeRevealableCardSlot,
@@ -59,12 +65,8 @@ const REVEAL_IN_TREE_EVENT = 'image-studio:reveal-in-tree';
 const IMAGE_STUDIO_QUICK_ACTIONS_HOST_ID = 'image-studio-quick-actions-host';
 
 export function CenterPreviewInner(): React.JSX.Element {
-  const {
-    isFocusMode,
-    maskPreviewEnabled,
-    previewCanvasSize,
-    pendingSequenceThumbnail,
-  } = useUiState();
+  const { isFocusMode, maskPreviewEnabled, previewCanvasSize, pendingSequenceThumbnail } =
+    useUiState();
   const {
     toggleFocusMode,
     registerPreviewCanvasViewportCropResolver,
@@ -92,38 +94,27 @@ export function CenterPreviewInner(): React.JSX.Element {
   const { toast } = useToast();
   const { confirm, ConfirmationModal } = useConfirm();
   const queryClient = useQueryClient();
-  const {
-    landingSlots,
-    activeRunError,
-    activeRunId,
-    activeRunSourceSlotId,
-  } = useGenerationState();
+  const { landingSlots, activeRunError, activeRunId, activeRunSourceSlotId } = useGenerationState();
   const { clearActiveRunError } = useGenerationActions();
 
-  const {
-    tool,
-    maskShapes,
-    activeMaskId,
-    selectedPointIndex,
-    brushRadius,
-  } = useMaskingState();
+  const { tool, maskShapes, activeMaskId, selectedPointIndex, brushRadius } = useMaskingState();
 
-  const {
-    setTool,
-    setMaskShapes,
-    setActiveMaskId,
-    setSelectedPointIndex,
-  } = useMaskingActions();
+  const { setTool, setMaskShapes, setActiveMaskId, setSelectedPointIndex } = useMaskingActions();
 
   const {
     setScreenshotBusy,
-    singleVariantView, setSingleVariantView,
-    splitVariantView, setSplitVariantView,
+    singleVariantView,
+    setSingleVariantView,
+    splitVariantView,
+    setSplitVariantView,
     setLeftSplitZoom,
     setRightSplitZoom,
-    variantLoadingId, setVariantLoadingId,
-    variantTooltip, setVariantTooltip,
-    detailsSlotId, setDetailsSlotId,
+    variantLoadingId,
+    setVariantLoadingId,
+    variantTooltip,
+    setVariantTooltip,
+    detailsSlotId,
+    setDetailsSlotId,
   } = useCenterPreviewContext();
 
   const previewCanvasCropBindingRef = useRef<{
@@ -159,7 +150,9 @@ export function CenterPreviewInner(): React.JSX.Element {
 
   const { compositeResultCache } = useVersionGraphState();
   const isCompositeSlot = workingSlotMetadata?.role === 'composite';
-  const compositeResultImage = workingSlot?.id ? compositeResultCache.get(workingSlot.id) ?? null : null;
+  const compositeResultImage = workingSlot?.id
+    ? (compositeResultCache.get(workingSlot.id) ?? null)
+    : null;
 
   const sourceSlotId = useMemo(() => {
     const primarySourceSlotId =
@@ -168,8 +161,8 @@ export function CenterPreviewInner(): React.JSX.Element {
         : '';
     if (primarySourceSlotId) return primarySourceSlotId;
     if (!Array.isArray(workingSlotMetadata?.sourceSlotIds)) return null;
-    const fallbackSourceSlotId = workingSlotMetadata.sourceSlotIds.find((id): id is string =>
-      typeof id === 'string' && id.trim().length > 0
+    const fallbackSourceSlotId = workingSlotMetadata.sourceSlotIds.find(
+      (id): id is string => typeof id === 'string' && id.trim().length > 0
     );
     if (fallbackSourceSlotId) return fallbackSourceSlotId;
     return resolveSourceSlotIdFromGeneratedPath(workingSlot);
@@ -181,8 +174,8 @@ export function CenterPreviewInner(): React.JSX.Element {
         : '';
     if (primarySourceSlotId) return primarySourceSlotId;
     if (!Array.isArray(selectedSlotMetadata?.sourceSlotIds)) return null;
-    const fallbackSourceSlotId = selectedSlotMetadata.sourceSlotIds.find((id): id is string =>
-      typeof id === 'string' && id.trim().length > 0
+    const fallbackSourceSlotId = selectedSlotMetadata.sourceSlotIds.find(
+      (id): id is string => typeof id === 'string' && id.trim().length > 0
     );
     if (fallbackSourceSlotId) return fallbackSourceSlotId;
     return resolveSourceSlotIdFromGeneratedPath(selectedSlot);
@@ -200,7 +193,7 @@ export function CenterPreviewInner(): React.JSX.Element {
   const showVariantPanel = previewMode === 'image';
 
   const sourceSlot = useMemo(
-    () => (sourceSlotId ? slots.find((slot) => slot.id === sourceSlotId) ?? null : null),
+    () => (sourceSlotId ? (slots.find((slot) => slot.id === sourceSlotId) ?? null) : null),
     [sourceSlotId, slots]
   );
 
@@ -223,9 +216,7 @@ export function CenterPreviewInner(): React.JSX.Element {
   const canNavigateToSource = hasSourceSlotReference;
 
   const canCompareWithSource = useMemo(
-    () =>
-      hasSourceSlotReference &&
-      Boolean(workingSlotImageSrc && sourceSlotImageSrc),
+    () => hasSourceSlotReference && Boolean(workingSlotImageSrc && sourceSlotImageSrc),
     [hasSourceSlotReference, sourceSlotImageSrc, workingSlotImageSrc]
   );
   const {
@@ -290,9 +281,7 @@ export function CenterPreviewInner(): React.JSX.Element {
     [revealableCanvasSlot]
   );
   const activeProject = useMemo(
-    () =>
-      (projectsQuery.data ?? []).find((project) => project.id === projectId) ??
-      null,
+    () => (projectsQuery.data ?? []).find((project) => project.id === projectId) ?? null,
     [projectId, projectsQuery.data]
   );
   const projectCanvasSize = useMemo((): { width: number; height: number } | null => {
@@ -324,10 +313,7 @@ export function CenterPreviewInner(): React.JSX.Element {
   );
 
   const selectedEligibleMaskShapes = useMemo(
-    () =>
-      eligibleMaskShapes.filter(
-        (shape) => activeMaskId && shape.id === activeMaskId
-      ),
+    () => eligibleMaskShapes.filter((shape) => activeMaskId && shape.id === activeMaskId),
     [eligibleMaskShapes, activeMaskId]
   );
 
@@ -341,62 +327,71 @@ export function CenterPreviewInner(): React.JSX.Element {
     return exportMaskShapes;
   }, [maskPreviewEnabled, exportMaskShapes]);
 
-  const vectorContextValue = useMemo(() => ({
-    shapes: maskShapes,
-    tool,
-    activeShapeId: activeMaskId,
-    selectedPointIndex,
-    brushRadius,
-    imageSrc: activeCanvasImageSrc,
-    allowWithoutImage: true,
-    showEmptyState: false,
-    emptyStateLabel: '',
-    setShapes: setMaskShapes,
-    setTool,
-    setActiveShapeId: setActiveMaskId,
-    setSelectedPointIndex,
-    onClear: (): void => {
-      setMaskShapes([]);
-      setActiveMaskId(null);
+  const vectorContextValue = useMemo(
+    () => ({
+      shapes: maskShapes,
+      tool,
+      activeShapeId: activeMaskId,
+      selectedPointIndex,
+      brushRadius,
+      imageSrc: activeCanvasImageSrc,
+      allowWithoutImage: true,
+      showEmptyState: false,
+      emptyStateLabel: '',
+      setShapes: setMaskShapes,
+      setTool,
+      setActiveShapeId: setActiveMaskId,
+      setSelectedPointIndex,
+      onClear: (): void => {
+        setMaskShapes([]);
+        setActiveMaskId(null);
+      },
+      disableClear: maskShapes.length === 0,
+    }),
+    [
+      maskShapes,
+      tool,
+      activeMaskId,
+      selectedPointIndex,
+      brushRadius,
+      activeCanvasImageSrc,
+      setMaskShapes,
+      setTool,
+      setActiveMaskId,
+      setSelectedPointIndex,
+      maskShapes.length,
+    ]
+  );
+
+  const handlePreviewCanvasCropRectChange = useCallback(
+    (cropRect: VectorCanvasViewCropRect | null): void => {
+      const slotId = activeCanvasSlotId?.trim() ?? '';
+      if (!slotId || !cropRect) {
+        previewCanvasCropBindingRef.current = null;
+        return;
+      }
+      previewCanvasCropBindingRef.current = {
+        slotId,
+        cropRect,
+      };
     },
-    disableClear: maskShapes.length === 0,
-  }), [
-    maskShapes,
-    tool,
-    activeMaskId,
-    selectedPointIndex,
-    brushRadius,
-    activeCanvasImageSrc,
-    setMaskShapes,
-    setTool,
-    setActiveMaskId,
-    setSelectedPointIndex,
-    maskShapes.length,
-  ]);
+    [activeCanvasSlotId]
+  );
 
-  const handlePreviewCanvasCropRectChange = useCallback((cropRect: VectorCanvasViewCropRect | null): void => {
-    const slotId = activeCanvasSlotId?.trim() ?? '';
-    if (!slotId || !cropRect) {
-      previewCanvasCropBindingRef.current = null;
-      return;
-    }
-    previewCanvasCropBindingRef.current = {
-      slotId,
-      cropRect,
-    };
-  }, [activeCanvasSlotId]);
-
-  const handlePreviewCanvasImageFrameChange = useCallback((frame: VectorCanvasImageContentFrame | null): void => {
-    const slotId = activeCanvasSlotId?.trim() ?? '';
-    if (!slotId || !frame) {
-      previewCanvasImageFrameBindingRef.current = null;
-      return;
-    }
-    previewCanvasImageFrameBindingRef.current = {
-      slotId,
-      frame,
-    };
-  }, [activeCanvasSlotId]);
+  const handlePreviewCanvasImageFrameChange = useCallback(
+    (frame: VectorCanvasImageContentFrame | null): void => {
+      const slotId = activeCanvasSlotId?.trim() ?? '';
+      if (!slotId || !frame) {
+        previewCanvasImageFrameBindingRef.current = null;
+        return;
+      }
+      previewCanvasImageFrameBindingRef.current = {
+        slotId,
+        frame,
+      };
+    },
+    [activeCanvasSlotId]
+  );
 
   useEffect(() => {
     previewCanvasCropBindingRef.current = null;
@@ -466,60 +461,64 @@ export function CenterPreviewInner(): React.JSX.Element {
     return { left, top };
   }, [variantTooltip]);
 
-  const handleLoadVariantToCanvas = useCallback(async (variant: VariantThumbnailInfo): Promise<void> => {
-    if (variantLoadingId === variant.id) return;
-    setVariantLoadingId(variant.id);
+  const handleLoadVariantToCanvas = useCallback(
+    async (variant: VariantThumbnailInfo): Promise<void> => {
+      if (variantLoadingId === variant.id) return;
+      setVariantLoadingId(variant.id);
 
-    try {
-      await loadVariantIntoCanvas({
-        activeRunId,
-        projectId,
-        queryClient,
-        rootVariantSourceSlotId,
-        setPreviewMode,
-        setSelectedSlotId,
-        setSingleVariantView,
-        setSplitVariantView,
-        setTemporaryObjectUpload,
-        setWorkingSlotId,
-        slots,
-        toast,
-        variant,
-      });
-    } catch (error: unknown) {
-      toast(error instanceof Error ? error.message : 'Failed to load variant into canvas.', {
-        variant: 'error',
-      });
-    } finally {
-      setVariantLoadingId((current) => (current === variant.id ? null : current));
-    }
-  }, [
-    activeRunId,
-    projectId,
-    queryClient,
-    rootVariantSourceSlotId,
-    setPreviewMode,
-    setSelectedSlotId,
-    setSingleVariantView,
-    setSplitVariantView,
-    setTemporaryObjectUpload,
-    setWorkingSlotId,
-    slots,
-    toast,
-    variantLoadingId,
-  ]);
+      try {
+        await loadVariantIntoCanvas({
+          activeRunId,
+          projectId,
+          queryClient,
+          rootVariantSourceSlotId,
+          setPreviewMode,
+          setSelectedSlotId,
+          setSingleVariantView,
+          setSplitVariantView,
+          setTemporaryObjectUpload,
+          setWorkingSlotId,
+          slots,
+          toast,
+          variant,
+        });
+      } catch (error: unknown) {
+        toast(error instanceof Error ? error.message : 'Failed to load variant into canvas.', {
+          variant: 'error',
+        });
+      } finally {
+        setVariantLoadingId((current) => (current === variant.id ? null : current));
+      }
+    },
+    [
+      activeRunId,
+      projectId,
+      queryClient,
+      rootVariantSourceSlotId,
+      setPreviewMode,
+      setSelectedSlotId,
+      setSingleVariantView,
+      setSplitVariantView,
+      setTemporaryObjectUpload,
+      setWorkingSlotId,
+      slots,
+      toast,
+      variantLoadingId,
+    ]
+  );
 
   const resolveVariantSlotId = useCallback(
     (
       variant: VariantThumbnailInfo,
-      candidateSlots: ImageStudioSlotRecord[] = slots,
-    ): string | null => resolveVariantSlotIdForCenterPreview({
-      activeRunId,
-      candidateSlots,
-      rootVariantSourceSlotId,
-      variant,
-    }),
-    [activeRunId, rootVariantSourceSlotId, slots],
+      candidateSlots: ImageStudioSlotRecord[] = slots
+    ): string | null =>
+      resolveVariantSlotIdForCenterPreview({
+        activeRunId,
+        candidateSlots,
+        rootVariantSourceSlotId,
+        variant,
+      }),
+    [activeRunId, rootVariantSourceSlotId, slots]
   );
 
   const handleToggleSourceVariantView = useCallback((): void => {
@@ -559,91 +558,101 @@ export function CenterPreviewInner(): React.JSX.Element {
     }
     setSelectedSlotId(targetSlotId);
     if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent(REVEAL_IN_TREE_EVENT, { detail: { slotId: targetSlotId } }));
+      window.dispatchEvent(
+        new CustomEvent(REVEAL_IN_TREE_EVENT, { detail: { slotId: targetSlotId } })
+      );
     }
   }, [activeCanvasSlotId, setSelectedSlotId, toast]);
 
-  const handleVariantTooltipMove = useCallback((
-    event: React.MouseEvent<HTMLButtonElement>,
-    variant: VariantThumbnailInfo
-  ): void => {
-    if (!variant.output) {
-      setVariantTooltip(null);
-      return;
-    }
-    setVariantTooltip({
-      variant,
-      x: event.clientX,
-      y: event.clientY,
-    });
-  }, []);
-
-  const handleDeleteVariant = useCallback((variant: VariantThumbnailInfo): void => {
-    const variantLabel = variant.output?.filename?.trim() || `Variant ${variant.index}`;
-    confirm({
-      title: 'Delete Variant?',
-      message: `Delete variant "${variantLabel}"? This action cannot be undone.`,
-      confirmText: 'Delete',
-      isDangerous: true,
-      onConfirm: async () => {
-        await deleteVariantFromCenterPreview({
-          activeRunId,
-          buildVariantDismissKeys,
-          clearActiveRunError,
-          projectId,
-          queryClient,
-          rootVariantSourceSlotId,
-          setSelectedSlotId,
-          setWorkingSlotId,
-          setDismissedVariantKeys,
-          setVariantTooltip,
-          slots,
-          toast,
-          variant,
-        });
-        setCompareVariantIds((prev) => [
-          prev[0] === variant.id ? null : prev[0],
-          prev[1] === variant.id ? null : prev[1],
-        ]);
-        setCompareVariantLookup((prev) => {
-          if (!prev[variant.id]) return prev;
-          const next = { ...prev };
-          delete next[variant.id];
-          return next;
-        });
+  const handleVariantTooltipMove = useCallback(
+    (event: React.MouseEvent<HTMLButtonElement>, variant: VariantThumbnailInfo): void => {
+      if (!variant.output) {
+        setVariantTooltip(null);
+        return;
       }
-    });
-  }, [
-    activeRunId,
-    confirm,
-    buildVariantDismissKeys,
-    clearActiveRunError,
-    projectId,
-    queryClient,
-    rootVariantSourceSlotId,
-    setCompareVariantIds,
-    setCompareVariantLookup,
-    setDismissedVariantKeys,
-    setVariantTooltip,
-    slots,
-    toast,
-  ]);
+      setVariantTooltip({
+        variant,
+        x: event.clientX,
+        y: event.clientY,
+      });
+    },
+    []
+  );
 
-  const handleOpenVariantDetails = useCallback((variant: VariantThumbnailInfo): void => {
-    const slotId = resolveVariantSlotId(variant);
-    if (!slotId) {
-      toast('Variant details are unavailable until slot metadata finishes syncing.', { variant: 'info' });
-      return;
-    }
-    setDetailsSlotId(slotId);
-  }, [resolveVariantSlotId, toast]);
+  const handleDeleteVariant = useCallback(
+    (variant: VariantThumbnailInfo): void => {
+      const variantLabel = variant.output?.filename?.trim() || `Variant ${variant.index}`;
+      confirm({
+        title: 'Delete Variant?',
+        message: `Delete variant "${variantLabel}"? This action cannot be undone.`,
+        confirmText: 'Delete',
+        isDangerous: true,
+        onConfirm: async () => {
+          await deleteVariantFromCenterPreview({
+            activeRunId,
+            buildVariantDismissKeys,
+            clearActiveRunError,
+            projectId,
+            queryClient,
+            rootVariantSourceSlotId,
+            setSelectedSlotId,
+            setWorkingSlotId,
+            setDismissedVariantKeys,
+            setVariantTooltip,
+            slots,
+            toast,
+            variant,
+          });
+          setCompareVariantIds((prev) => [
+            prev[0] === variant.id ? null : prev[0],
+            prev[1] === variant.id ? null : prev[1],
+          ]);
+          setCompareVariantLookup((prev) => {
+            if (!prev[variant.id]) return prev;
+            const next = { ...prev };
+            delete next[variant.id];
+            return next;
+          });
+        },
+      });
+    },
+    [
+      activeRunId,
+      confirm,
+      buildVariantDismissKeys,
+      clearActiveRunError,
+      projectId,
+      queryClient,
+      rootVariantSourceSlotId,
+      setCompareVariantIds,
+      setCompareVariantLookup,
+      setDismissedVariantKeys,
+      setVariantTooltip,
+      slots,
+      toast,
+    ]
+  );
+
+  const handleOpenVariantDetails = useCallback(
+    (variant: VariantThumbnailInfo): void => {
+      const slotId = resolveVariantSlotId(variant);
+      if (!slotId) {
+        toast('Variant details are unavailable until slot metadata finishes syncing.', {
+          variant: 'info',
+        });
+        return;
+      }
+      setDetailsSlotId(slotId);
+    },
+    [resolveVariantSlotId, toast]
+  );
 
   const handleCloseVariantDetails = useCallback((): void => {
     setDetailsSlotId(null);
   }, []);
 
   const detailsSlot = useMemo(
-    () => (detailsSlotId ? slots.find((slot) => slot.id === detailsSlotId) ?? null : null),
+    () => (detailsSlotId ? (slots.find((slot) => slot.id === detailsSlotId) ?? null) : null),
     [detailsSlotId, slots]
   );
 
@@ -676,7 +685,10 @@ export function CenterPreviewInner(): React.JSX.Element {
 
     setScreenshotBusy(true);
     try {
-      const baseName = (workingSlot.name || workingSlot.id || 'slot').replace(/[^a-zA-Z0-9_-]/g, '_');
+      const baseName = (workingSlot.name || workingSlot.id || 'slot').replace(
+        /[^a-zA-Z0-9_-]/g,
+        '_'
+      );
       await api.post(`/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/screenshot`, {
         dataUrl,
         filename: `${baseName}-${Date.now()}.png`,
@@ -684,7 +696,9 @@ export function CenterPreviewInner(): React.JSX.Element {
       void invalidateImageStudioSlots(queryClient, projectId);
       toast('Screenshot saved and attached to slot.', { variant: 'success' });
     } catch (error) {
-      toast(error instanceof Error ? error.message : 'Failed to save screenshot.', { variant: 'error' });
+      toast(error instanceof Error ? error.message : 'Failed to save screenshot.', {
+        variant: 'error',
+      });
     } finally {
       setScreenshotBusy(false);
     }
@@ -740,20 +754,15 @@ export function CenterPreviewInner(): React.JSX.Element {
 
   return (
     <div className='order-2 relative flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border/60 bg-card/40 p-0'>
-      <CenterPreviewHeader onSaveScreenshot={() => { void handleSaveScreenshot(); }} />
-      <FocusModeTogglePortal
-        isFocusMode={isFocusMode}
-        onToggleFocusMode={toggleFocusMode}
+      <CenterPreviewHeader
+        onSaveScreenshot={() => {
+          void handleSaveScreenshot();
+        }}
       />
-      <VariantTooltipPortal
-        tooltip={variantTooltip}
-        position={variantTooltipPosition}
-      />
+      <FocusModeTogglePortal isFocusMode={isFocusMode} onToggleFocusMode={toggleFocusMode} />
+      <VariantTooltipPortal tooltip={variantTooltip} position={variantTooltipPosition} />
       <div className='flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 pb-3 pt-0'>
-        <div
-          className='grid content-start gap-3'
-          style={previewGridStyle}
-        >
+        <div className='grid content-start gap-3' style={previewGridStyle}>
           <CenterPreviewCanvas
             vectorContextValue={vectorContextValue}
             projectCanvasSize={projectCanvasSize}
@@ -782,7 +791,9 @@ export function CenterPreviewInner(): React.JSX.Element {
             </VariantPanelProvider>
           ) : null}
         </div>
-        {showVariantPanel ? <div id={IMAGE_STUDIO_QUICK_ACTIONS_HOST_ID} className='shrink-0' /> : null}
+        {showVariantPanel ? (
+          <div id={IMAGE_STUDIO_QUICK_ACTIONS_HOST_ID} className='shrink-0' />
+        ) : null}
       </div>
       <VersionNodeDetailsModal
         isOpen={Boolean(detailsNode)}

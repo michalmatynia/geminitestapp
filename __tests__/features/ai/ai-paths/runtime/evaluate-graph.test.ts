@@ -578,9 +578,7 @@ describe('evaluateGraph', () => {
     expect(mockFetchEntityByType).toHaveBeenCalledWith('product', 'product-77');
     expect(result.outputs['fetcher-1']?.['entityId']).toBe('product-77');
     expect(
-      (result.outputs['fetcher-1']?.['context'] as Record<string, unknown>)?.[
-        'contextSource'
-      ]
+      (result.outputs['fetcher-1']?.['context'] as Record<string, unknown>)?.['contextSource']
     ).toBe('trigger_fetcher');
   });
 
@@ -670,9 +668,7 @@ describe('evaluateGraph', () => {
     expect(mockFetchEntityByType).toHaveBeenCalledWith('product', 'product-88');
     expect(result.outputs['fetcher-1']?.['entityId']).toBe('product-88');
     expect(
-      (result.outputs['fetcher-1']?.['context'] as Record<string, unknown>)?.[
-        'contextSource'
-      ]
+      (result.outputs['fetcher-1']?.['context'] as Record<string, unknown>)?.['contextSource']
     ).toBe('simulation_fetcher');
     expect(result.outputs['context-1']?.['entityId']).toBe('product-88');
     expect(result.outputs['context-1']?.['entityJson']).toMatchObject(mockProduct);
@@ -832,7 +828,8 @@ describe('evaluateGraph', () => {
             temperature: 0.7,
             maxTokens: 1000,
             vision: false,
-          },        },
+          },
+        },
       },
     ];
     const edges: Edge[] = [
@@ -904,7 +901,8 @@ describe('evaluateGraph', () => {
             temperature: 0.7,
             maxTokens: 1000,
             vision: false,
-          },        },
+          },
+        },
       },
     ];
     const edges: Edge[] = [
@@ -962,8 +960,7 @@ describe('evaluateGraph', () => {
         position: { x: 0, y: 0 },
         config: {
           prompt: {
-            template:
-              'Analyze URL text only: https://example.com/image.png and return a title.',
+            template: 'Analyze URL text only: https://example.com/image.png and return a title.',
           },
           runtime: {
             waitForInputs: false,
@@ -994,7 +991,8 @@ describe('evaluateGraph', () => {
             temperature: 0.7,
             maxTokens: 1000,
             vision: false,
-          },        },
+          },
+        },
       },
     ];
     const edges: Edge[] = [
@@ -1061,7 +1059,8 @@ describe('evaluateGraph', () => {
             temperature: 0.7,
             maxTokens: 1000,
             vision: false,
-          },        },
+          },
+        },
       },
     ];
     const edges: Edge[] = [
@@ -1132,7 +1131,8 @@ describe('evaluateGraph', () => {
             temperature: 0.7,
             maxTokens: 1000,
             vision: false,
-          },        },
+          },
+        },
       },
     ];
     const edges: Edge[] = [
@@ -1249,9 +1249,7 @@ describe('evaluateGraph', () => {
         },
       },
     ];
-    const edges: Edge[] = [
-      { id: 'e1', from: 'n1', to: 'n1', fromPort: 'value', toPort: 'value' },
-    ];
+    const edges: Edge[] = [{ id: 'e1', from: 'n1', to: 'n1', fromPort: 'value', toPort: 'value' }];
 
     const result = await evaluateGraph({
       ...defaultOptions,
@@ -1384,7 +1382,7 @@ describe('evaluateGraph', () => {
           position: { x: 0, y: 0 },
           config: {
             constant: { valueType: 'string', value: 'initial' },
-            runtime: { cache: { mode: 'auto' } }
+            runtime: { cache: { mode: 'auto' } },
           },
         },
       ];
@@ -1430,13 +1428,13 @@ describe('evaluateGraph', () => {
           position: { x: 0, y: 0 },
           config: {
             constant: { valueType: 'string', value: 'initial' },
-            runtime: { cache: { mode: 'disabled' } }
+            runtime: { cache: { mode: 'disabled' } },
           },
         },
       ];
 
       const onNodeStart = vi.fn();
-      
+
       const result1 = await evaluateGraph({
         ...defaultOptions,
         nodes: [triggerNode, ...nodes],
@@ -1457,7 +1455,7 @@ describe('evaluateGraph', () => {
       });
 
       // trigger node always executes, and n1 is NOT cacheable (disabled), so both run.
-      const executedNodeIds = onNodeStart.mock.calls.map(args => args[0].node.id);
+      const executedNodeIds = onNodeStart.mock.calls.map((args) => args[0].node.id);
       expect(executedNodeIds).toContain('trigger');
       expect(executedNodeIds).toContain('n1');
     });

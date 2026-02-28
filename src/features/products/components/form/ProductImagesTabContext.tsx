@@ -6,7 +6,6 @@ import type { ProductImageManagerController } from '@/features/products/componen
 import type { ImageFileSelectionDto as ImageFileSelection } from '@/shared/contracts/files';
 import { internalError } from '@/shared/errors/app-error';
 
-
 export type ProductImagesTabContextValue = {
   showFileManager?: boolean;
   onShowFileManager?: (show: boolean) => void;
@@ -31,9 +30,7 @@ export function ProductImagesTabProvider({
   children,
 }: ProductImagesTabProviderProps): React.JSX.Element {
   return (
-    <ProductImagesTabContext.Provider value={value}>
-      {children}
-    </ProductImagesTabContext.Provider>
+    <ProductImagesTabContext.Provider value={value}>{children}</ProductImagesTabContext.Provider>
   );
 }
 

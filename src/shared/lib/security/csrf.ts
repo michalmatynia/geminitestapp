@@ -20,10 +20,7 @@ const toBase64Url = (bytes: Uint8Array): string => {
   bytes.forEach((byte: number) => {
     binary += String.fromCharCode(byte);
   });
-  const base64 =
-    typeof btoa === 'function'
-      ? btoa(binary)
-      : Buffer.from(bytes).toString('base64');
+  const base64 = typeof btoa === 'function' ? btoa(binary) : Buffer.from(bytes).toString('base64');
   return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
 };
 
@@ -43,9 +40,7 @@ export const getCsrfTokenFromRequest = (request: NextRequest): string | null =>
   request.cookies.get(CSRF_COOKIE_NAME)?.value ?? null;
 
 export const getCsrfTokenFromHeaders = (request: NextRequest): string | null =>
-  request.headers.get(CSRF_HEADER_NAME) ??
-  request.headers.get(CSRF_HEADER_FALLBACK) ??
-  null;
+  request.headers.get(CSRF_HEADER_NAME) ?? request.headers.get(CSRF_HEADER_FALLBACK) ?? null;
 
 export const isSameOriginRequest = (request: NextRequest): boolean => {
   const origin = request.headers.get('origin');
@@ -64,10 +59,7 @@ export const isSameOriginRequest = (request: NextRequest): boolean => {
   return true;
 };
 
-export const ensureCsrfCookie = (
-  response: NextResponse,
-  existingToken?: string | null
-): string => {
+export const ensureCsrfCookie = (response: NextResponse, existingToken?: string | null): string => {
   const token = existingToken && existingToken.length > 0 ? existingToken : generateCsrfToken();
   if (!existingToken) {
     response.cookies.set({

@@ -82,7 +82,9 @@ export function useIntegrationSelection(
   const loading = integrationsQuery.isPending && !integrationsQuery.data;
   const integrations = useMemo((): IntegrationWithConnections[] => {
     const data = integrationsQuery.data ?? [];
-    return Array.isArray(data) ? data.filter((i: IntegrationWithConnections) => i.connections.length > 0) : [];
+    return Array.isArray(data)
+      ? data.filter((i: IntegrationWithConnections) => i.connections.length > 0)
+      : [];
   }, [integrationsQuery.data]);
 
   const preferredConnectionId = preferredConnectionQuery.data?.connectionId ?? null;
@@ -146,7 +148,9 @@ export function useIntegrationSelection(
     selectedIntegrationId,
   ]);
 
-  const selectedIntegration = (integrations || []).find((i: IntegrationWithConnections) => i.id === selectedIntegrationId);
+  const selectedIntegration = (integrations || []).find(
+    (i: IntegrationWithConnections) => i.id === selectedIntegrationId
+  );
   const isBaseComIntegration = ['baselinker', 'base-com', 'base'].includes(
     selectedIntegration?.slug ?? ''
   );

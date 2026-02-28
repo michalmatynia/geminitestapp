@@ -39,7 +39,7 @@ export const ValidatedField = memo(function ValidatedField({
 
   const fieldNameKey = String(name);
   const error = errors[name]?.message;
-  const issues = validatorEnabled ? visibleFieldIssues[fieldNameKey] ?? [] : [];
+  const issues = validatorEnabled ? (visibleFieldIssues[fieldNameKey] ?? []) : [];
   const firstIssue = issues[0];
 
   const value = watch(name);
@@ -54,9 +54,7 @@ export const ValidatedField = memo(function ValidatedField({
     unit && 'pr-8',
     validatorEnabled &&
       firstIssue &&
-      (firstIssue.severity === 'warning'
-        ? 'border-amber-500/60'
-        : 'border-red-500/60')
+      (firstIssue.severity === 'warning' ? 'border-amber-500/60' : 'border-red-500/60')
   );
 
   return (

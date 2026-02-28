@@ -29,18 +29,15 @@ import type {
 import { EmptyState } from '@/shared/ui';
 
 import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
-import { 
-  CaseResolverRelationsWorkspaceProvider, 
-  useCaseResolverRelationsWorkspaceContext 
+import {
+  CaseResolverRelationsWorkspaceProvider,
+  useCaseResolverRelationsWorkspaceContext,
 } from './CaseResolverRelationsWorkspaceContext';
 import {
   buildCaseResolverRelationGraph,
   toCaseResolverRelationCaseNodeId,
 } from '../settings-relation-graph';
-import {
-  fromCaseResolverCaseNodeId,
-  fromCaseResolverFileNodeId,
-} from '../master-tree';
+import { fromCaseResolverCaseNodeId, fromCaseResolverFileNodeId } from '../master-tree';
 import { resolveCaseResolverTreeWorkspace } from './case-resolver-tree-workspace';
 
 type CompatEdge = {
@@ -124,7 +121,10 @@ const toRuntimeNodes = (nodes: CaseResolverRelationGraph['nodes']): AiNode[] =>
       const description = typeof node['description'] === 'string' ? node['description'] : '';
       const rawType = typeof node['type'] === 'string' ? node['type'].trim() : '';
       const type = rawType && hasKnownNodeType(rawType) ? rawType : 'template';
-      const positionRecord = isObjectRecord(node['position']) ? node['position'] : ({} as Record<string, unknown>);      const x =
+      const positionRecord = isObjectRecord(node['position'])
+        ? node['position']
+        : ({} as Record<string, unknown>);
+      const x =
         typeof positionRecord['x'] === 'number' && Number.isFinite(positionRecord['x'])
           ? positionRecord['x']
           : 0;
@@ -134,13 +134,13 @@ const toRuntimeNodes = (nodes: CaseResolverRelationGraph['nodes']): AiNode[] =>
           : 0;
       const inputs = Array.isArray(node['inputs'])
         ? node['inputs'].filter(
-          (port: unknown): port is string => typeof port === 'string' && port.trim().length > 0
-        )
+            (port: unknown): port is string => typeof port === 'string' && port.trim().length > 0
+          )
         : [];
       const outputs = Array.isArray(node['outputs'])
         ? node['outputs'].filter(
-          (port: unknown): port is string => typeof port === 'string' && port.trim().length > 0
-        )
+            (port: unknown): port is string => typeof port === 'string' && port.trim().length > 0
+          )
         : [];
       const config =
         node['config'] && typeof node['config'] === 'object' && !Array.isArray(node['config'])
@@ -150,11 +150,10 @@ const toRuntimeNodes = (nodes: CaseResolverRelationGraph['nodes']): AiNode[] =>
         (typeof node['createdAt'] === 'string' ? node['createdAt'] : undefined) ??
         new Date().toISOString();
       const updatedAt =
-        (typeof node['updatedAt'] === 'string' ? node['updatedAt'] : undefined) ??
-        createdAt;
+        (typeof node['updatedAt'] === 'string' ? node['updatedAt'] : undefined) ?? createdAt;
       const data =
         node['data'] && typeof node['data'] === 'object' && !Array.isArray(node['data'])
-          ? (node['data'])
+          ? node['data']
           : {};
       return {
         id,
@@ -183,10 +182,10 @@ const toStrictEdges = (inputEdges: Edge[]): CaseResolverRelationGraph['edges'] =
         from,
         to,
         ...(edge.label ? { label: edge.label } : {}),
-        ...(edge.fromPort ?? edge.sourceHandle
+        ...((edge.fromPort ?? edge.sourceHandle)
           ? { fromPort: (edge.fromPort ?? edge.sourceHandle) || undefined }
           : {}),
-        ...(edge.toPort ?? edge.targetHandle
+        ...((edge.toPort ?? edge.targetHandle)
           ? { toPort: (edge.toPort ?? edge.targetHandle) || undefined }
           : {}),
       };
@@ -219,9 +218,7 @@ const isCaseRelationNode = (
   return nodeId.startsWith('case:');
 };
 
-const readEdgeEndpoints = (
-  edge: unknown
-): { id: string; from: string; to: string } | null => {
+const readEdgeEndpoints = (edge: unknown): { id: string; from: string; to: string } | null => {
   if (!isObjectRecord(edge)) return null;
   const id = typeof edge['id'] === 'string' ? edge['id'].trim() : '';
   const from = typeof edge['from'] === 'string' ? edge['from'].trim() : '';
@@ -245,13 +242,11 @@ const projectCaseOnlyRelationGraph = (
     return true;
   });
 
-  const caseEdges = toStrictEdges(graph.edges as unknown as Edge[]).filter(
-    (edge): boolean => {
-      const endpoints = readEdgeEndpoints(edge);
-      if (!endpoints) return false;
-      return caseNodeIds.has(endpoints.from) && caseNodeIds.has(endpoints.to);
-    }
-  );
+  const caseEdges = toStrictEdges(graph.edges as unknown as Edge[]).filter((edge): boolean => {
+    const endpoints = readEdgeEndpoints(edge);
+    if (!endpoints) return false;
+    return caseNodeIds.has(endpoints.from) && caseNodeIds.has(endpoints.to);
+  });
 
   const caseNodeMeta: Record<string, CaseResolverRelationNodeMeta> = {};
   caseNodeIds.forEach((nodeId: string): void => {
@@ -285,16 +280,9 @@ const projectCaseOnlyRelationGraph = (
 };
 
 function CaseResolverRelationsWorkspaceInner(): React.JSX.Element {
-  const {
-    relationGraph,
-    focusCaseId,
-    workspaceSnapshot,
-  } = useCaseResolverRelationsWorkspaceContext();
-  const {
-    selectedFileId,
-    onSelectFile,
-    onRelationGraphChange,
-  } = useCaseResolverPageContext();
+  const { relationGraph, focusCaseId, workspaceSnapshot } =
+    useCaseResolverRelationsWorkspaceContext();
+  const { selectedFileId, onSelectFile, onRelationGraphChange } = useCaseResolverPageContext();
   const { nodes, edges } = useGraphState();
   const { setNodes, setEdges } = useGraphActions();
   const { selectedNodeId } = useSelectionState();
@@ -415,8 +403,7 @@ function CaseResolverRelationsWorkspaceInner(): React.JSX.Element {
     const meta = relationNodeMeta[selectedNodeId];
     if (!meta) return;
     const metaRecord = meta as unknown as Record<string, unknown>;
-    const entityType =
-      typeof metaRecord['entityType'] === 'string' ? metaRecord['entityType'] : '';
+    const entityType = typeof metaRecord['entityType'] === 'string' ? metaRecord['entityType'] : '';
     const sourceFileId =
       typeof metaRecord['sourceFileId'] === 'string' ? metaRecord['sourceFileId'].trim() : '';
     if (entityType !== 'case' || !sourceFileId || sourceFileId === selectedFileId) return;
@@ -462,29 +449,24 @@ export function CaseResolverRelationsWorkspace({
 
   const caseFiles = React.useMemo(
     (): CaseResolverFile[] =>
-      workspaceSnapshot.files.filter(
-        (file: CaseResolverFile): boolean => file.fileType === 'case'
-      ),
+      workspaceSnapshot.files.filter((file: CaseResolverFile): boolean => file.fileType === 'case'),
     [workspaceSnapshot.files]
   );
 
-  const relationGraph = React.useMemo(
-    (): CaseResolverRelationGraph => {
-      const nextGraph = buildCaseResolverRelationGraph({
-        source: workspaceSnapshot.relationGraphSource,
-        folders: workspaceSnapshot.folders,
-        files: workspaceSnapshot.files,
-        assets: workspaceSnapshot.assets,
-      });
-      return projectCaseOnlyRelationGraph(nextGraph);
-    },
-    [
-      workspaceSnapshot.assets,
-      workspaceSnapshot.files,
-      workspaceSnapshot.folders,
-      workspaceSnapshot.relationGraphSource,
-    ]
-  );
+  const relationGraph = React.useMemo((): CaseResolverRelationGraph => {
+    const nextGraph = buildCaseResolverRelationGraph({
+      source: workspaceSnapshot.relationGraphSource,
+      folders: workspaceSnapshot.folders,
+      files: workspaceSnapshot.files,
+      assets: workspaceSnapshot.assets,
+    });
+    return projectCaseOnlyRelationGraph(nextGraph);
+  }, [
+    workspaceSnapshot.assets,
+    workspaceSnapshot.files,
+    workspaceSnapshot.folders,
+    workspaceSnapshot.relationGraphSource,
+  ]);
 
   if (caseFiles.length === 0) {
     return (

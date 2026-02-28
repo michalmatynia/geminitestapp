@@ -1,9 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import {
-  getGsapFromVars,
-  getParallaxDefaults,
-} from '@/shared/lib/gsap/utils/presets';
+import { getGsapFromVars, getParallaxDefaults } from '@/shared/lib/gsap/utils/presets';
 
 describe('gsap presets', () => {
   describe('getGsapFromVars', () => {
@@ -22,7 +19,7 @@ describe('gsap presets', () => {
 
   describe('getParallaxDefaults', () => {
     it('should return default offset', () => {
-      // Assuming 'soft' or some valid preset exists in PARALLAX_DEFAULTS, 
+      // Assuming 'soft' or some valid preset exists in PARALLAX_DEFAULTS,
       // but since we don't import the type definition to check valid keys easily in this context,
       // we rely on the function implementation which falls back to { offset: 0 } if not found.
       // Let's test the fallback behavior first.

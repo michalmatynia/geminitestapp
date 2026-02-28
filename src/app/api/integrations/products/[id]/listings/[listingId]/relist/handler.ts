@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { isTraderaIntegrationSlug } from '@/features/integrations/constants/slugs';
-import { findProductListingByIdAcrossProviders, getIntegrationRepository } from '@/features/integrations/server';
+import {
+  findProductListingByIdAcrossProviders,
+  getIntegrationRepository,
+} from '@/features/integrations/server';
 import { enqueueTraderaListingJob } from '@/features/jobs/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';

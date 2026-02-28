@@ -4,11 +4,7 @@ import { MoreVertical } from 'lucide-react';
 import React, { type ReactNode } from 'react';
 
 import { Button } from '@/shared/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from '@/shared/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/shared/ui/dropdown-menu';
 import { cn } from '@/shared/utils';
 
 interface ActionMenuProps {

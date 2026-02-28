@@ -16,7 +16,6 @@ import prisma from '@/shared/lib/db/prisma';
 
 import type { Prisma } from '@prisma/client';
 
-
 const languageCreateSchema = z.object({
   code: z.string().trim().min(1),
   name: z.string().trim().min(1),
@@ -112,10 +111,10 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
       .find({})
       .sort({ code: 1 })
       .toArray();
-    const formattedLanguages = languages.map(lang => ({
+    const formattedLanguages = languages.map((lang) => ({
       ...lang,
       createdAt: lang.createdAt.toISOString(),
-      updatedAt: lang.updatedAt.toISOString()
+      updatedAt: lang.updatedAt.toISOString(),
     }));
     return NextResponse.json(formattedLanguages);
   }
@@ -136,19 +135,19 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
       },
     },
   });
-  const formattedLanguages = languages.map(lang => ({
+  const formattedLanguages = languages.map((lang) => ({
     ...lang,
     createdAt: lang.createdAt.toISOString(),
     updatedAt: lang.updatedAt.toISOString(),
-    countries: lang.countries.map(lc => ({
+    countries: lang.countries.map((lc) => ({
       ...lc,
       assignedAt: lc.assignedAt.toISOString(),
       country: {
         ...lc.country,
         createdAt: lc.country.createdAt.toISOString(),
-        updatedAt: lc.country.updatedAt.toISOString()
-      }
-    }))
+        updatedAt: lc.country.updatedAt.toISOString(),
+      },
+    })),
   }));
   return NextResponse.json(formattedLanguages);
 }
@@ -173,9 +172,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
       throw internalError('MongoDB is not configured.');
     }
     const mongo = await getMongoDb();
-    const existing = await mongo
-      .collection<LanguageDoc>(LANGUAGES_COLLECTION)
-      .findOne({ code });
+    const existing = await mongo.collection<LanguageDoc>(LANGUAGES_COLLECTION).findOne({ code });
     if (existing) {
       throw conflictError('Language code already exists.', { code });
     }
@@ -187,7 +184,9 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     if (uniqueIds.length > 0) {
       const countriesCollection = mongo.collection('countries');
       for (const countryId of uniqueIds) {
-        const country = (await countriesCollection.findOne({ id: countryId })) as unknown as CountryDoc | null;
+        const country = (await countriesCollection.findOne({
+          id: countryId,
+        })) as unknown as CountryDoc | null;
         if (country) {
           countries.push({
             countryId: country.id,
@@ -229,22 +228,22 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     select: { id: true },
   });
   const existingIds = new Set(existing.map((entry: { id: string }) => entry.id));
-  const validIds = uniqueIds.filter((countryId: string) =>
-    existingIds.has(countryId)
-  );
+  const validIds = uniqueIds.filter((countryId: string) => existingIds.has(countryId));
 
   const language = await prisma.language.create({
     data: {
       code,
       name: data.name,
       ...(data.nativeName !== undefined && { nativeName: data.nativeName }),
-      ...(validIds.length ? {
-        countries: {
-          createMany: {
-            data: validIds.map((countryId: string) => ({ countryId })),
-          },
-        },
-      } : {}),
+      ...(validIds.length
+        ? {
+            countries: {
+              createMany: {
+                data: validIds.map((countryId: string) => ({ countryId })),
+              },
+            },
+          }
+        : {}),
     },
     include: {
       countries: {
@@ -256,4 +255,3 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   });
   return NextResponse.json(language);
 }
-

@@ -1,6 +1,9 @@
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 
-import { logClientError, initClientErrorReporting } from '@/shared/utils/observability/client-error-logger';
+import {
+  logClientError,
+  initClientErrorReporting,
+} from '@/shared/utils/observability/client-error-logger';
 
 describe('Centralized Error Logging', () => {
   beforeEach(() => {
@@ -14,17 +17,20 @@ describe('Centralized Error Logging', () => {
       addEventListener: vi.fn(),
     });
     // Mock Blob since it's used in logClientError
-    vi.stubGlobal('Blob', class {
-      parts: any[];
-      options: any;
-      constructor(parts: any[], options: any) {
-        this.parts = parts;
-        this.options = options;
+    vi.stubGlobal(
+      'Blob',
+      class {
+        parts: any[];
+        options: any;
+        constructor(parts: any[], options: any) {
+          this.parts = parts;
+          this.options = options;
+        }
+        async text() {
+          return this.parts.join('');
+        }
       }
-      async text() {
-        return this.parts.join('');
-      }
-    });
+    );
   });
 
   afterEach(() => {
@@ -39,7 +45,7 @@ describe('Centralized Error Logging', () => {
     expect(navigator.sendBeacon).toHaveBeenCalled();
     const [url, blob] = (navigator.sendBeacon as any).mock.calls[0];
     expect(url).toBe('/api/client-errors');
-    
+
     // Convert blob back to text to verify payload
     const data = await (blob as Blob).text();
     const payload = JSON.parse(data);
@@ -71,18 +77,24 @@ describe('Centralized Error Logging', () => {
 
   it('should fall back to fetch if sendBeacon is unavailable or fails', () => {
     (navigator as any).sendBeacon = undefined;
-    
+
     logClientError('Fetch fallback test');
 
-    expect(fetch).toHaveBeenCalledWith('/api/client-errors', expect.objectContaining({
-      method: 'POST',
-      body: expect.any(String),
-    }));
+    expect(fetch).toHaveBeenCalledWith(
+      '/api/client-errors',
+      expect.objectContaining({
+        method: 'POST',
+        body: expect.any(String),
+      })
+    );
   });
 
   it('should attach global error listeners when initialized', () => {
     initClientErrorReporting();
     expect(window.addEventListener).toHaveBeenCalledWith('error', expect.any(Function));
-    expect(window.addEventListener).toHaveBeenCalledWith('unhandledrejection', expect.any(Function));
+    expect(window.addEventListener).toHaveBeenCalledWith(
+      'unhandledrejection',
+      expect.any(Function)
+    );
   });
 });

@@ -31,21 +31,32 @@ export function useNormalizedQuery<T extends { id: string }>(
   // Derived normalized state
   const normalized = useMemo(() => {
     if (!query.data) return undefined;
-    const byId = query.data.reduce((acc: Record<string, T>, item: T) => {
-      acc[item.id] = item;
-      return acc;
-    }, {} as Record<string, T>);
+    const byId = query.data.reduce(
+      (acc: Record<string, T>, item: T) => {
+        acc[item.id] = item;
+        return acc;
+      },
+      {} as Record<string, T>
+    );
     const allIds = query.data.map((item: T) => item.id);
     return { byId, allIds };
   }, [query.data]);
 
-  const selectById = useCallback((id: string): T | undefined => {
-    return normalized?.byId[id];
-  }, [normalized]);
+  const selectById = useCallback(
+    (id: string): T | undefined => {
+      return normalized?.byId[id];
+    },
+    [normalized]
+  );
 
-  const selectMany = useCallback((ids: string[]): T[] => {
-    return ids.map((id: string) => normalized?.byId[id]).filter((item): item is T => Boolean(item));
-  }, [normalized]);
+  const selectMany = useCallback(
+    (ids: string[]): T[] => {
+      return ids
+        .map((id: string) => normalized?.byId[id])
+        .filter((item): item is T => Boolean(item));
+    },
+    [normalized]
+  );
 
   return {
     ...query,
@@ -99,20 +110,20 @@ export function useAggregatedQuery<T, R>(
   );
 
   return useMemo(() => {
-    const allLoaded = queryResults.every(q => q.isSuccess);
-    const anyLoading = queryResults.some(q => q.isLoading);
-    const anyError = queryResults.some(q => q.isError);
+    const allLoaded = queryResults.every((q) => q.isSuccess);
+    const anyLoading = queryResults.some((q) => q.isLoading);
+    const anyError = queryResults.some((q) => q.isError);
 
     if (!allLoaded) {
       return {
         data: undefined,
         isLoading: anyLoading,
         isError: anyError,
-        error: queryResults.find(q => q.error)?.error,
+        error: queryResults.find((q) => q.error)?.error,
       };
     }
 
-    const aggregatedData = aggregator(queryResults.map(q => q.data));
+    const aggregatedData = aggregator(queryResults.map((q) => q.data));
 
     return {
       data: aggregatedData,

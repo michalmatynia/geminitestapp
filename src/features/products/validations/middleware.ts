@@ -35,7 +35,9 @@ export async function validateProductCreateMiddleware(
       if (!fieldErrors[err.field]) fieldErrors[err.field] = [];
       fieldErrors[err.field]!.push(err.message);
     });
-    const response = await createValidationErrorResponse(fieldErrors, { source: 'products.validation.create' });
+    const response = await createValidationErrorResponse(fieldErrors, {
+      source: 'products.validation.create',
+    });
     return { success: false, response };
   }
 
@@ -62,7 +64,9 @@ export async function validateProductUpdateMiddleware(
       if (!fieldErrors[err.field]) fieldErrors[err.field] = [];
       fieldErrors[err.field]!.push(err.message);
     });
-    const response = await createValidationErrorResponse(fieldErrors, { source: 'products.validation.update' });
+    const response = await createValidationErrorResponse(fieldErrors, {
+      source: 'products.validation.update',
+    });
     return { success: false, response };
   }
 

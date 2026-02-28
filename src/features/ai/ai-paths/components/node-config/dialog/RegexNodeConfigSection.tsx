@@ -19,12 +19,7 @@ import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
 import { getDocumentationTooltip } from '@/shared/lib/tooltip-engine';
 import { createListQueryV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/shared/ui';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 import {
@@ -60,20 +55,22 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
   const isRegexNode = true;
 
   const regexConfig = React.useMemo((): RegexConfig => {
-    return (isRegexNode ? selectedNode.config?.regex : undefined) ?? {
-      pattern: '',
-      flags: 'g',
-      mode: 'group',
-      matchMode: 'first',
-      groupBy: 'match',
-      outputMode: 'object',
-      includeUnmatched: true,
-      unmatchedKey: '__unmatched__',
-      splitLines: true,
-      sampleText: '',
-      aiPrompt: '',
-      jsonIntegrityPolicy: 'repair',
-    };
+    return (
+      (isRegexNode ? selectedNode.config?.regex : undefined) ?? {
+        pattern: '',
+        flags: 'g',
+        mode: 'group',
+        matchMode: 'first',
+        groupBy: 'match',
+        outputMode: 'object',
+        includeUnmatched: true,
+        unmatchedKey: '__unmatched__',
+        splitLines: true,
+        sampleText: '',
+        aiPrompt: '',
+        jsonIntegrityPolicy: 'repair',
+      }
+    );
   }, [isRegexNode, selectedNode.config?.regex]);
 
   const regexConfigRef = React.useRef(regexConfig);
@@ -100,18 +97,15 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
   const hasAiProposal = Boolean(regexConfig.aiProposal?.pattern?.trim());
   const placeholderTooltips = React.useMemo(
     () => ({
-      text: getDocumentationTooltip(
-        DOCUMENTATION_MODULE_IDS.aiPaths,
-        'regex_placeholder_text'
-      ) ?? 'Resolved sample text (from Preview Sample / runtime)',
-      lines: getDocumentationTooltip(
-        DOCUMENTATION_MODULE_IDS.aiPaths,
-        'regex_placeholder_lines'
-      ) ?? 'Resolved sample items array (lines)',
-      value: getDocumentationTooltip(
-        DOCUMENTATION_MODULE_IDS.aiPaths,
-        'regex_placeholder_value'
-      ) ?? 'Alias for current value (same as sample text)',
+      text:
+        getDocumentationTooltip(DOCUMENTATION_MODULE_IDS.aiPaths, 'regex_placeholder_text') ??
+        'Resolved sample text (from Preview Sample / runtime)',
+      lines:
+        getDocumentationTooltip(DOCUMENTATION_MODULE_IDS.aiPaths, 'regex_placeholder_lines') ??
+        'Resolved sample items array (lines)',
+      value:
+        getDocumentationTooltip(DOCUMENTATION_MODULE_IDS.aiPaths, 'regex_placeholder_value') ??
+        'Alias for current value (same as sample text)',
     }),
     []
   );
@@ -167,7 +161,8 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
     () => parseRegexTemplatesStore(globalTemplatesRaw).templates,
     [globalTemplatesRaw]
   );
-  const [globalTemplates, setGlobalTemplates] = React.useState<RegexTemplate[]>(parsedGlobalTemplates);
+  const [globalTemplates, setGlobalTemplates] =
+    React.useState<RegexTemplate[]>(parsedGlobalTemplates);
   const lastSyncedGlobalTemplatesRef = React.useRef<RegexTemplate[]>(parsedGlobalTemplates);
   const [activeTab, setActiveTab] = React.useState<'config' | 'templates'>('config');
   const [templateName, setTemplateName] = React.useState<string>('');
@@ -269,10 +264,11 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
 
   const updateGlobalTemplate = React.useCallback(
     (templateId: string, patch: Partial<RegexTemplate>): void => {
-      const next = globalTemplates.map((template: RegexTemplate): RegexTemplate =>
-        template.id === templateId
-          ? { ...template, ...patch, updatedAt: new Date().toISOString() }
-          : template
+      const next = globalTemplates.map(
+        (template: RegexTemplate): RegexTemplate =>
+          template.id === templateId
+            ? { ...template, ...patch, updatedAt: new Date().toISOString() }
+            : template
       );
       void persistGlobalTemplates(next);
     },
@@ -289,10 +285,11 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
 
   const updateRegexTemplate = React.useCallback(
     (templateId: string, patch: Partial<RegexTemplate>): void => {
-      const next = regexTemplates.map((template: RegexTemplate): RegexTemplate =>
-        template.id === templateId
-          ? { ...template, ...patch, updatedAt: new Date().toISOString() }
-          : template
+      const next = regexTemplates.map(
+        (template: RegexTemplate): RegexTemplate =>
+          template.id === templateId
+            ? { ...template, ...patch, updatedAt: new Date().toISOString() }
+            : template
       );
       updateRegex({ templates: next });
     },
@@ -315,8 +312,12 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
         updateRegex({
           activeVariant: 'ai',
           pattern: proposal.pattern,
-          ...(proposal.flags ?? regexConfig.flags ? { flags: proposal.flags ?? regexConfig.flags } : {}),
-          ...(proposal.groupBy ?? regexConfig.groupBy ? { groupBy: proposal.groupBy ?? regexConfig.groupBy } : {}),
+          ...((proposal.flags ?? regexConfig.flags)
+            ? { flags: proposal.flags ?? regexConfig.flags }
+            : {}),
+          ...((proposal.groupBy ?? regexConfig.groupBy)
+            ? { groupBy: proposal.groupBy ?? regexConfig.groupBy }
+            : {}),
         });
         return;
       }
@@ -325,8 +326,12 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
         updateRegex({
           activeVariant: 'manual',
           pattern: manual.pattern,
-          ...(manual.flags ?? regexConfig.flags ? { flags: manual.flags ?? regexConfig.flags } : {}),
-          ...(manual.groupBy ?? regexConfig.groupBy ? { groupBy: manual.groupBy ?? regexConfig.groupBy } : {}),
+          ...((manual.flags ?? regexConfig.flags)
+            ? { flags: manual.flags ?? regexConfig.flags }
+            : {}),
+          ...((manual.groupBy ?? regexConfig.groupBy)
+            ? { groupBy: manual.groupBy ?? regexConfig.groupBy }
+            : {}),
         });
         return;
       }
@@ -393,12 +398,14 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
         ? callbackValue
         : callbackValue !== undefined && callbackValue !== null
           ? ((): string => {
-            try {
-              return JSON.stringify(callbackValue, null, 2);
-            } catch {
-              return typeof callbackValue === 'object' ? '[Object]' : String(callbackValue as string | number | boolean);
-            }
-          })()
+              try {
+                return JSON.stringify(callbackValue, null, 2);
+              } catch {
+                return typeof callbackValue === 'object'
+                  ? '[Object]'
+                  : String(callbackValue as string | number | boolean);
+              }
+            })()
           : '';
     if (resolvedCallbackValue.trim().length === 0) return;
     if (resolvedCallbackValue === lastInjectedResponseRef.current) return;
@@ -412,7 +419,12 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
   const isPatternEmpty = !pattern.trim();
 
   const regexValidation = React.useMemo(() => {
-    if (isPatternEmpty) return { ok: false, error: 'Enter a regex pattern to preview.', regex: null as RegExp | null };
+    if (isPatternEmpty)
+      return {
+        ok: false,
+        error: 'Enter a regex pattern to preview.',
+        regex: null as RegExp | null,
+      };
     try {
       return {
         ok: true,
@@ -435,7 +447,9 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
     runtimeState.outputs?.[selectedNode.id]?.['prompt'] ??
     undefined;
 
-  const sampleSource = (regexConfig.sampleText ?? '').trim() ? regexConfig.sampleText : runtimeSample;
+  const sampleSource = (regexConfig.sampleText ?? '').trim()
+    ? regexConfig.sampleText
+    : runtimeSample;
   const splitLines = regexConfig.splitLines ?? true;
   const sampleLines = React.useMemo(
     (): string[] => buildRegexItems(sampleSource, splitLines),
@@ -460,10 +474,10 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
     const nextManual = regexConfig.manual?.pattern
       ? regexConfig.manual
       : {
-        pattern: regexConfig.pattern ?? '',
-        flags: regexConfig.flags ?? '',
-        groupBy: regexConfig.groupBy ?? 'match',
-      };
+          pattern: regexConfig.pattern ?? '',
+          flags: regexConfig.flags ?? '',
+          groupBy: regexConfig.groupBy ?? 'match',
+        };
     addAiProposal(candidate);
     updateRegex({
       pattern: candidate.pattern,
@@ -525,7 +539,9 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
     try {
       return JSON.stringify(sampleSource, null, 2);
     } catch {
-      return typeof sampleSource === 'object' ? '[Object]' : String(sampleSource as string | number | boolean);
+      return typeof sampleSource === 'object'
+        ? '[Object]'
+        : String(sampleSource as string | number | boolean);
     }
   }, [sampleSource]);
 
@@ -558,14 +574,18 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
             const nextManual = regexConfig.manual?.pattern
               ? regexConfig.manual
               : {
-                pattern: regexConfig.pattern ?? '',
-                flags: regexConfig.flags ?? '',
-                groupBy: regexConfig.groupBy ?? 'match',
-              };
+                  pattern: regexConfig.pattern ?? '',
+                  flags: regexConfig.flags ?? '',
+                  groupBy: regexConfig.groupBy ?? 'match',
+                };
             updateRegex({
               pattern: proposal.pattern,
-              ...(proposal.flags ?? normalizedFlags ? { flags: proposal.flags ?? normalizedFlags } : {}),
-              ...(proposal.groupBy ?? regexConfig.groupBy ? { groupBy: proposal.groupBy ?? regexConfig.groupBy } : {}),
+              ...((proposal.flags ?? normalizedFlags)
+                ? { flags: proposal.flags ?? normalizedFlags }
+                : {}),
+              ...((proposal.groupBy ?? regexConfig.groupBy)
+                ? { groupBy: proposal.groupBy ?? regexConfig.groupBy }
+                : {}),
               activeVariant: 'ai',
               manual: nextManual,
               aiProposal: {

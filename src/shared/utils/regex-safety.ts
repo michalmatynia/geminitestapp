@@ -12,11 +12,11 @@ type RegexSafetyFailureCode =
 export type RegexSafetyResult =
   | { ok: true; normalizedFlags: string | null }
   | {
-    ok: false;
-    code: RegexSafetyFailureCode;
-    message: string;
-    detail?: string | undefined;
-  };
+      ok: false;
+      code: RegexSafetyFailureCode;
+      message: string;
+      detail?: string | undefined;
+    };
 
 const POTENTIAL_BACKTRACKING_PATTERNS: RegExp[] = [
   /\((?:[^()[\]]|\.)*[+*](?:[^()[\]]|\.)*\)\s*(?:[+*]|\{\s*\d+\s*,\s*\})/,
@@ -83,8 +83,7 @@ export const validateRegexSafety = (
     return {
       ok: false,
       code: 'potential_backtracking',
-      message:
-        'Regex may cause catastrophic backtracking. Simplify nested quantified groups.',
+      message: 'Regex may cause catastrophic backtracking. Simplify nested quantified groups.',
     };
   }
 

@@ -4,11 +4,14 @@ import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { useMemo, useState, useEffect } from 'react';
 
 import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelection';
-import { useCmsDomains, useCmsSlug, useCmsSlugDomains, useUpdateSlug, useUpdateSlugDomains } from '@/features/cms/hooks/useCmsQueries';
 import {
-  cmsSlugDomainsUpdateSchema,
-  cmsSlugUpdateSchema,
-} from '@/features/cms/validations/api';
+  useCmsDomains,
+  useCmsSlug,
+  useCmsSlugDomains,
+  useUpdateSlug,
+  useUpdateSlugDomains,
+} from '@/features/cms/hooks/useCmsQueries';
+import { cmsSlugDomainsUpdateSchema, cmsSlugUpdateSchema } from '@/features/cms/validations/api';
 import type { CmsDomain, Slug } from '@/shared/contracts/cms';
 import {
   Input,
@@ -65,11 +68,11 @@ function EditSlugForm({
     if (!zoningEnabled) return;
     if (!slugDomainsQuery.data) return;
     if (domainSelection !== null) return;
-    
+
     const timer = setTimeout(() => {
       setDomainSelection(slugDomainsQuery.data.domainIds);
     }, 0);
-    
+
     return (): void => clearTimeout(timer);
   }, [slugDomainsQuery.data, domainSelection, zoningEnabled]);
 
@@ -83,7 +86,7 @@ function EditSlugForm({
         slug: slug.slug,
         isDefault: Boolean(slug.isDefault),
       },
-      'Slug form is invalid.',
+      'Slug form is invalid.'
     );
     if (!slugValidation.success) {
       setError(slugValidation.firstError);
@@ -94,7 +97,7 @@ function EditSlugForm({
       const domainsValidation = validateFormData(
         cmsSlugDomainsUpdateSchema,
         { domainIds: selectedDomainIds },
-        'Assign this slug to at least one zone.',
+        'Assign this slug to at least one zone.'
       );
       if (!domainsValidation.success) {
         setError(domainsValidation.firstError);
@@ -114,14 +117,16 @@ function EditSlugForm({
       input: slugInput,
     };
     if (domainId) updateData.domainId = domainId;
-    
+
     try {
       await updateSlug.mutateAsync(updateData);
       if (zoningEnabled) {
         await updateSlugDomains.mutateAsync({ id, domainIds: selectedDomainIds });
       }
       toast('Route path updated successfully.', { variant: 'success' });
-      const next = domainId ? `/admin/cms/slugs?domainId=${encodeURIComponent(domainId)}` : '/admin/cms/slugs';
+      const next = domainId
+        ? `/admin/cms/slugs?domainId=${encodeURIComponent(domainId)}`
+        : '/admin/cms/slugs';
       router.push(next);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Update failed.');
@@ -130,19 +135,23 @@ function EditSlugForm({
 
   return (
     <div className='container mx-auto py-10 max-w-2xl space-y-6'>
-      <SectionHeader 
-        title='Edit Route' 
+      <SectionHeader
+        title='Edit Route'
         description='Configure path behavior and cross-domain assignments.'
         eyebrow='CMS · Routing'
       />
-      
-      <form onSubmit={(e: React.FormEvent<HTMLFormElement>): void => { void handleSubmit(e); }}>
+
+      <form
+        onSubmit={(e: React.FormEvent<HTMLFormElement>): void => {
+          void handleSubmit(e);
+        }}
+      >
         <div className='space-y-6'>
           <FormSection title='Path Configuration' className='p-6'>
             <div className='space-y-4'>
-              <FormField 
-                label='Slug' 
-                error={error} 
+              <FormField
+                label='Slug'
+                error={error}
                 description='URL segment for this route.'
                 required
               >
@@ -165,25 +174,34 @@ function EditSlugForm({
           </FormSection>
 
           {zoningEnabled && (
-            <FormSection 
-              title='Zone Availability' 
+            <FormSection
+              title='Zone Availability'
               description='Assign this route to specific hostnames.'
               className='p-6'
             >
               <div className='space-y-3'>
                 <div className='flex justify-between items-center px-1'>
-                  <Hint uppercase variant='muted' className='font-semibold'>Assigned Domains</Hint>
-                  <Badge variant='secondary' className='text-[9px]'>{selectedDomainIds.length} selected</Badge>
+                  <Hint uppercase variant='muted' className='font-semibold'>
+                    Assigned Domains
+                  </Hint>
+                  <Badge variant='secondary' className='text-[9px]'>
+                    {selectedDomainIds.length} selected
+                  </Badge>
                 </div>
-                
+
                 <div className='max-h-48 overflow-y-auto rounded border border-border/60 bg-black/20 p-2 divide-y divide-white/5'>
                   {domains.length === 0 ? (
-                    <div className='py-8 text-center text-xs text-gray-600'>No domains available for assignment.</div>
+                    <div className='py-8 text-center text-xs text-gray-600'>
+                      No domains available for assignment.
+                    </div>
                   ) : (
                     domains.map((domain) => {
                       const checked = selectedDomainIds.includes(domain.id);
                       return (
-                        <label key={domain.id} className='flex items-center gap-3 p-2 hover:bg-white/5 cursor-pointer transition-colors'>
+                        <label
+                          key={domain.id}
+                          className='flex items-center gap-3 p-2 hover:bg-white/5 cursor-pointer transition-colors'
+                        >
                           <Checkbox
                             checked={checked}
                             onCheckedChange={() => {
@@ -198,7 +216,9 @@ function EditSlugForm({
                           <div className='flex flex-col'>
                             <span className='text-sm text-gray-300'>{domain.domain}</span>
                             {domain.aliasOf && (
-                              <span className='text-[10px] text-gray-500 italic'>Alias of {domains.find(d => d.id === domain.aliasOf)?.domain}</span>
+                              <span className='text-[10px] text-gray-500 italic'>
+                                Alias of {domains.find((d) => d.id === domain.aliasOf)?.domain}
+                              </span>
                             )}
                           </div>
                         </label>

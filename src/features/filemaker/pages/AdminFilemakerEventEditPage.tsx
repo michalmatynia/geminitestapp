@@ -61,11 +61,7 @@ const createId = (prefix: string): string => {
   return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
 };
 
-const toggleSelection = (
-  value: string,
-  checked: boolean,
-  previous: string[]
-): string[] => {
+const toggleSelection = (value: string, checked: boolean, previous: string[]): string[] => {
   if (!value.trim()) return previous;
   if (checked) {
     if (previous.includes(value)) return previous;
@@ -142,35 +138,30 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
           streetNumber: address.streetNumber,
           city: address.city,
           postalCode: address.postalCode,
-          countryId: resolveCountryId(
-            address.countryId,
-            address.country,
-            countries,
-            countryById
-          ),
+          countryId: resolveCountryId(address.countryId, address.country, countries, countryById),
           country: address.country,
           isDefault: link.isDefault,
         };
       })
       .filter((entry: EditableAddress | null): entry is EditableAddress => Boolean(entry));
 
-    const nextAddresses = linkedAddresses.length > 0
-      ? linkedAddresses
-      : [
-        {
-          addressId: event.addressId || createId('address'),
-          street: event.street,
-          streetNumber: event.streetNumber,
-          city: event.city,
-          postalCode: event.postalCode,
-          countryId: resolveCountryId(event.countryId, event.country, countries, countryById),
-          country: event.country,
-          isDefault: true,
-        },
-      ];
+    const nextAddresses =
+      linkedAddresses.length > 0
+        ? linkedAddresses
+        : [
+            {
+              addressId: event.addressId || createId('address'),
+              street: event.street,
+              streetNumber: event.streetNumber,
+              city: event.city,
+              postalCode: event.postalCode,
+              countryId: resolveCountryId(event.countryId, event.country, countries, countryById),
+              country: event.country,
+              isDefault: true,
+            },
+          ];
     let defaultAddressId =
-      nextAddresses.find((entry: EditableAddress): boolean => entry.isDefault)?.addressId ??
-      '';
+      nextAddresses.find((entry: EditableAddress): boolean => entry.isDefault)?.addressId ?? '';
     if (!defaultAddressId && nextAddresses[0]) {
       nextAddresses[0] = {
         ...nextAddresses[0],
@@ -191,9 +182,9 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
 
   const selectedAddress = useMemo(
     (): EditableAddress | null =>
-      addresses.find(
-        (entry: EditableAddress): boolean => entry.addressId === selectedAddressId
-      ) ?? addresses[0] ?? null,
+      addresses.find((entry: EditableAddress): boolean => entry.addressId === selectedAddressId) ??
+      addresses[0] ??
+      null,
     [addresses, selectedAddressId]
   );
   const defaultAddress = useMemo(
@@ -207,13 +198,14 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
       const targetId = selectedAddress?.addressId || selectedAddressId;
       if (!targetId) return;
       setAddresses((previous: EditableAddress[]) =>
-        previous.map((entry: EditableAddress): EditableAddress =>
-          entry.addressId === targetId
-            ? {
-              ...entry,
-              ...patch,
-            }
-            : entry
+        previous.map(
+          (entry: EditableAddress): EditableAddress =>
+            entry.addressId === targetId
+              ? {
+                  ...entry,
+                  ...patch,
+                }
+              : entry
         )
       );
     },
@@ -249,8 +241,7 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
     }
     setAddresses((previous: EditableAddress[]) => {
       const remaining = previous.filter(
-        (entry: EditableAddress): boolean =>
-          entry.addressId !== selectedAddress.addressId
+        (entry: EditableAddress): boolean => entry.addressId !== selectedAddress.addressId
       );
       if (remaining.length === 0) return remaining;
       if (!remaining.some((entry: EditableAddress): boolean => entry.isDefault)) {
@@ -263,8 +254,7 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
     setSelectedAddressId((previous: string) => {
       if (previous !== selectedAddress.addressId) return previous;
       const fallback = addresses.find(
-        (entry: EditableAddress): boolean =>
-          entry.addressId !== selectedAddress.addressId
+        (entry: EditableAddress): boolean => entry.addressId !== selectedAddress.addressId
       );
       return fallback?.addressId ?? '';
     });
@@ -276,10 +266,12 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
       return;
     }
     setAddresses((previous: EditableAddress[]) =>
-      previous.map((entry: EditableAddress): EditableAddress => ({
-        ...entry,
-        isDefault: entry.addressId === selectedAddress.addressId,
-      }))
+      previous.map(
+        (entry: EditableAddress): EditableAddress => ({
+          ...entry,
+          isDefault: entry.addressId === selectedAddress.addressId,
+        })
+      )
     );
   }, [selectedAddress, toast]);
 
@@ -320,14 +312,15 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
       };
     });
 
-    const hasInvalidAddress = preparedAddresses.some((address): boolean =>
-      !hasAddressFields(
-        address.street,
-        address.streetNumber,
-        address.city,
-        address.postalCode,
-        address.countryId
-      )
+    const hasInvalidAddress = preparedAddresses.some(
+      (address): boolean =>
+        !hasAddressFields(
+          address.street,
+          address.streetNumber,
+          address.city,
+          address.postalCode,
+          address.countryId
+        )
     );
     if (hasInvalidAddress) {
       toast(
@@ -357,9 +350,7 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
       return;
     }
 
-    const addressesById = new Map(
-      database.addresses.map((address) => [address.id, address])
-    );
+    const addressesById = new Map(database.addresses.map((address) => [address.id, address]));
     normalizedAddresses.forEach((address): void => {
       addressesById.set(
         address.addressId,
@@ -391,18 +382,18 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
       events: database.events.map((entry: FilemakerEvent) =>
         entry.id === event.id
           ? createFilemakerEvent({
-            id: entry.id,
-            eventName: normalizedEventName,
-            addressId: defaultAddress.addressId,
-            street: defaultAddress.street,
-            streetNumber: defaultAddress.streetNumber,
-            city: defaultAddress.city,
-            postalCode: defaultAddress.postalCode,
-            country: defaultAddress.country,
-            countryId: defaultAddress.countryId,
-            createdAt: entry.createdAt,
-            updatedAt: new Date().toISOString(),
-          })
+              id: entry.id,
+              eventName: normalizedEventName,
+              addressId: defaultAddress.addressId,
+              street: defaultAddress.street,
+              streetNumber: defaultAddress.streetNumber,
+              city: defaultAddress.city,
+              postalCode: defaultAddress.postalCode,
+              country: defaultAddress.country,
+              countryId: defaultAddress.countryId,
+              createdAt: entry.createdAt,
+              updatedAt: new Date().toISOString(),
+            })
           : entry
       ),
       addresses: Array.from(addressesById.values()),
@@ -433,10 +424,9 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
       toast('Event updated.', { variant: 'success' });
       router.push('/admin/filemaker/events');
     } catch (error: unknown) {
-      toast(
-        error instanceof Error ? error.message : 'Failed to update event.',
-        { variant: 'error' }
-      );
+      toast(error instanceof Error ? error.message : 'Failed to update event.', {
+        variant: 'error',
+      });
     }
   }, [
     addresses,
@@ -662,9 +652,7 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
                 });
               }}
               options={countryOptions}
-              placeholder={
-                countriesQuery.isLoading ? 'Loading countries...' : 'Select country'
-              }
+              placeholder={countriesQuery.isLoading ? 'Loading countries...' : 'Select country'}
               size='sm'
               disabled={!selectedAddress || countriesQuery.isLoading || countriesQuery.isError}
             />
@@ -690,9 +678,7 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
 
       <FormSection title='Linked Organizations' className='space-y-2 p-4'>
         {organizations.length === 0 ? (
-          <div className='text-xs text-gray-500'>
-            No organizations available in Filemaker.
-          </div>
+          <div className='text-xs text-gray-500'>No organizations available in Filemaker.</div>
         ) : (
           organizations.map((organization: FilemakerOrganization) => {
             const checked = linkedOrganizationIds.includes(organization.id);
@@ -710,9 +696,7 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
                   }}
                 />
                 <div className='min-w-0 flex-1'>
-                  <div className='text-xs font-medium text-white'>
-                    {organization.name}
-                  </div>
+                  <div className='text-xs font-medium text-white'>{organization.name}</div>
                   <div className='text-[11px] text-gray-400'>
                     {formatFilemakerAddress(organization)}
                   </div>

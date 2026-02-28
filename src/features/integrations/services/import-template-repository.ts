@@ -27,7 +27,7 @@ const getImportTemplateProvider = async (): Promise<ImportTemplateProvider> => {
     level: 'info',
     source: LOG_SOURCE,
     message: `Provider: ${provider}`,
-    context: { provider }
+    context: { provider },
   });
   return provider as ImportTemplateProvider;
 };
@@ -72,31 +72,31 @@ const parseTemplates = async (value: string | null): Promise<Template[]> => {
     if (!Array.isArray(parsed)) {
       void ErrorSystem.logWarning('[ImportTemplateRepository] Parsed value is not an array', {
         service: 'import-template-repository',
-        parsed
+        parsed,
       });
       return [];
     }
-    return parsed
-      .filter(Boolean)
-      .map((template: Template) => ({
-        ...template,
-        mappings: stripBasehostMappings(Array.isArray(template.mappings) ? template.mappings : []),
-        parameterImport: normalizeBaseImportParameterImportSettings(
-          template.parameterImport
-        ),
-      })) as Template[];
+    return parsed.filter(Boolean).map((template: Template) => ({
+      ...template,
+      mappings: stripBasehostMappings(Array.isArray(template.mappings) ? template.mappings : []),
+      parameterImport: normalizeBaseImportParameterImportSettings(template.parameterImport),
+    })) as Template[];
   } catch (error: unknown) {
     try {
       const { logSystemError } = await import('@/features/observability/server');
-      await logSystemError({ 
+      await logSystemError({
         message: '[ImportTemplateRepository] Failed to parse templates',
         error,
         source: 'import-template-repository',
-        context: { action: 'parseTemplates' }
+        context: { action: 'parseTemplates' },
       });
     } catch (logError) {
       const { logger } = await import('@/shared/utils/logger');
-      logger.error('[ImportTemplateRepository] Failed to parse templates (and logging failed):', logError, { originalError: error });
+      logger.error(
+        '[ImportTemplateRepository] Failed to parse templates (and logging failed):',
+        logError,
+        { originalError: error }
+      );
     }
     return [];
   }
@@ -110,21 +110,19 @@ const parseExportWarehouseMap = (value: string | null): Record<string, string> =
       return {};
     }
     const result: Record<string, string> = {};
-    Object.entries(parsed as Record<string, unknown>).forEach(
-      ([key, raw]: [string, unknown]) => {
-        const trimmedKey = key.trim();
-        if (!trimmedKey) return;
-        const normalized =
-          typeof raw === 'string'
-            ? raw.trim()
-            : (typeof raw === 'number' || typeof raw === 'boolean')
-              ? String(raw).trim()
-              : '';
-        if (normalized || normalized === EXPORT_WAREHOUSE_SKIP_VALUE) {
-          result[trimmedKey] = normalized;
-        }
+    Object.entries(parsed as Record<string, unknown>).forEach(([key, raw]: [string, unknown]) => {
+      const trimmedKey = key.trim();
+      if (!trimmedKey) return;
+      const normalized =
+        typeof raw === 'string'
+          ? raw.trim()
+          : typeof raw === 'number' || typeof raw === 'boolean'
+            ? String(raw).trim()
+            : '';
+      if (normalized || normalized === EXPORT_WAREHOUSE_SKIP_VALUE) {
+        result[trimmedKey] = normalized;
       }
-    );
+    });
     return result;
   } catch {
     return {};
@@ -137,9 +135,7 @@ const normalizeOptionalId = (value: unknown): string | null => {
   return trimmed.length > 0 ? trimmed : null;
 };
 
-const buildActiveTemplateScopeKey = (
-  scope?: ActiveTemplateScopeInput
-): string | null => {
+const buildActiveTemplateScopeKey = (scope?: ActiveTemplateScopeInput): string | null => {
   const connectionId = normalizeOptionalId(scope?.connectionId);
   const inventoryId = normalizeOptionalId(scope?.inventoryId);
   if (!connectionId || !inventoryId) return null;
@@ -224,17 +220,15 @@ const readTemplatesValue = async (): Promise<string | null> => {
   const provider = await getImportTemplateProvider();
   if (provider === 'mongodb') {
     const mongo = await getMongoDb();
-    const doc = await mongo
-      .collection('settings')
-      .findOne({
-        $or: [{ _id: SETTINGS_KEY }, { key: SETTINGS_KEY }],
-      } as Filter<Document>);
+    const doc = await mongo.collection('settings').findOne({
+      $or: [{ _id: SETTINGS_KEY }, { key: SETTINGS_KEY }],
+    } as Filter<Document>);
     const val = doc && typeof doc['value'] === 'string' ? doc['value'] : null;
     await logSystemEvent({
       level: 'info',
       source: LOG_SOURCE,
       message: 'Read templates (Mongo)',
-      context: { length: val ? val.length : 0 }
+      context: { length: val ? val.length : 0 },
     });
     return val;
   }
@@ -246,7 +240,7 @@ const readTemplatesValue = async (): Promise<string | null> => {
     level: 'info',
     source: LOG_SOURCE,
     message: 'Read templates (Prisma)',
-    context: { length: setting?.value ? setting.value.length : 0 }
+    context: { length: setting?.value ? setting.value.length : 0 },
   });
   return setting?.value ?? null;
 };
@@ -255,11 +249,9 @@ const readSampleProductValue = async (): Promise<string | null> => {
   const provider = await getImportTemplateProvider();
   if (provider === 'mongodb') {
     const mongo = await getMongoDb();
-    const doc = await mongo
-      .collection('settings')
-      .findOne({
-        $or: [{ _id: SAMPLE_PRODUCT_KEY }, { key: SAMPLE_PRODUCT_KEY }],
-      } as Filter<Document>);
+    const doc = await mongo.collection('settings').findOne({
+      $or: [{ _id: SAMPLE_PRODUCT_KEY }, { key: SAMPLE_PRODUCT_KEY }],
+    } as Filter<Document>);
     return doc && typeof doc['value'] === 'string' ? doc['value'] : null;
   }
   const setting = await prisma.setting.findUnique({
@@ -273,11 +265,9 @@ const readSampleInventoryValue = async (): Promise<string | null> => {
   const provider = await getImportTemplateProvider();
   if (provider === 'mongodb') {
     const mongo = await getMongoDb();
-    const doc = await mongo
-      .collection('settings')
-      .findOne({
-        $or: [{ _id: SAMPLE_INVENTORY_KEY }, { key: SAMPLE_INVENTORY_KEY }],
-      } as Filter<Document>);
+    const doc = await mongo.collection('settings').findOne({
+      $or: [{ _id: SAMPLE_INVENTORY_KEY }, { key: SAMPLE_INVENTORY_KEY }],
+    } as Filter<Document>);
     return doc && typeof doc['value'] === 'string' ? doc['value'] : null;
   }
   const setting = await prisma.setting.findUnique({
@@ -291,11 +281,9 @@ const readLastTemplateValue = async (): Promise<string | null> => {
   const provider = await getImportTemplateProvider();
   if (provider === 'mongodb') {
     const mongo = await getMongoDb();
-    const doc = await mongo
-      .collection('settings')
-      .findOne({
-        $or: [{ _id: LAST_TEMPLATE_KEY }, { key: LAST_TEMPLATE_KEY }],
-      } as Filter<Document>);
+    const doc = await mongo.collection('settings').findOne({
+      $or: [{ _id: LAST_TEMPLATE_KEY }, { key: LAST_TEMPLATE_KEY }],
+    } as Filter<Document>);
     return doc && typeof doc['value'] === 'string' ? doc['value'] : null;
   }
   const setting = await prisma.setting.findUnique({
@@ -309,11 +297,9 @@ const readActiveTemplateValue = async (): Promise<string | null> => {
   const provider = await getImportTemplateProvider();
   if (provider === 'mongodb') {
     const mongo = await getMongoDb();
-    const doc = await mongo
-      .collection('settings')
-      .findOne({
-        $or: [{ _id: ACTIVE_TEMPLATE_KEY }, { key: ACTIVE_TEMPLATE_KEY }],
-      } as Filter<Document>);
+    const doc = await mongo.collection('settings').findOne({
+      $or: [{ _id: ACTIVE_TEMPLATE_KEY }, { key: ACTIVE_TEMPLATE_KEY }],
+    } as Filter<Document>);
     return doc && typeof doc['value'] === 'string' ? doc['value'] : null;
   }
   const setting = await prisma.setting.findUnique({
@@ -327,11 +313,9 @@ const readParameterCacheValue = async (): Promise<string | null> => {
   const provider = await getImportTemplateProvider();
   if (provider === 'mongodb') {
     const mongo = await getMongoDb();
-    const doc = await mongo
-      .collection('settings')
-      .findOne({
-        $or: [{ _id: PARAMETER_CACHE_KEY }, { key: PARAMETER_CACHE_KEY }],
-      } as Filter<Document>);
+    const doc = await mongo.collection('settings').findOne({
+      $or: [{ _id: PARAMETER_CACHE_KEY }, { key: PARAMETER_CACHE_KEY }],
+    } as Filter<Document>);
     return doc && typeof doc['value'] === 'string' ? doc['value'] : null;
   }
   const setting = await prisma.setting.findUnique({
@@ -345,11 +329,9 @@ const readExportWarehouseValue = async (): Promise<string | null> => {
   const provider = await getImportTemplateProvider();
   if (provider === 'mongodb') {
     const mongo = await getMongoDb();
-    const doc = await mongo
-      .collection('settings')
-      .findOne({
-        $or: [{ _id: EXPORT_WAREHOUSE_KEY }, { key: EXPORT_WAREHOUSE_KEY }],
-      } as Filter<Document>);
+    const doc = await mongo.collection('settings').findOne({
+      $or: [{ _id: EXPORT_WAREHOUSE_KEY }, { key: EXPORT_WAREHOUSE_KEY }],
+    } as Filter<Document>);
     return doc && typeof doc['value'] === 'string' ? doc['value'] : null;
   }
   const setting = await prisma.setting.findUnique({
@@ -363,11 +345,9 @@ const readExportWarehouseMapValue = async (): Promise<string | null> => {
   const provider = await getImportTemplateProvider();
   if (provider === 'mongodb') {
     const mongo = await getMongoDb();
-    const doc = await mongo
-      .collection('settings')
-      .findOne({
-        $or: [{ _id: EXPORT_WAREHOUSE_MAP_KEY }, { key: EXPORT_WAREHOUSE_MAP_KEY }],
-      } as Filter<Document>);
+    const doc = await mongo.collection('settings').findOne({
+      $or: [{ _id: EXPORT_WAREHOUSE_MAP_KEY }, { key: EXPORT_WAREHOUSE_MAP_KEY }],
+    } as Filter<Document>);
     return doc && typeof doc['value'] === 'string' ? doc['value'] : null;
   }
   const setting = await prisma.setting.findUnique({
@@ -383,7 +363,7 @@ const writeTemplatesValue = async (value: string): Promise<void> => {
     level: 'info',
     source: LOG_SOURCE,
     message: 'Writing templates...',
-    context: { length: value.length, provider }
+    context: { length: value.length, provider },
   });
   if (provider === 'mongodb') {
     const mongo = await getMongoDb();
@@ -409,7 +389,7 @@ const writeTemplatesValue = async (value: string): Promise<void> => {
   await logSystemEvent({
     level: 'info',
     source: LOG_SOURCE,
-    message: 'Wrote templates (Prisma)'
+    message: 'Wrote templates (Prisma)',
   });
 };
 
@@ -493,7 +473,9 @@ const writeExportWarehouseMapValue = async (value: string): Promise<void> => {
   if (provider === 'mongodb') {
     const mongo = await getMongoDb();
     await mongo.collection('settings').updateOne(
-      { $or: [{ _id: EXPORT_WAREHOUSE_MAP_KEY }, { key: EXPORT_WAREHOUSE_MAP_KEY }] } as Filter<Document>,
+      {
+        $or: [{ _id: EXPORT_WAREHOUSE_MAP_KEY }, { key: EXPORT_WAREHOUSE_MAP_KEY }],
+      } as Filter<Document>,
       {
         $set: {
           value,
@@ -649,9 +631,7 @@ export const setImportActiveTemplateId = async (
   await writeActiveTemplateValue(stringifyActiveTemplateMap(current));
 };
 
-export const getExportWarehouseId = async (
-  inventoryId?: string | null
-): Promise<string | null> => {
+export const getExportWarehouseId = async (inventoryId?: string | null): Promise<string | null> => {
   const normalizedInventory = inventoryId?.trim() ?? '';
   if (normalizedInventory) {
     const rawMap = await readExportWarehouseMapValue();
@@ -727,9 +707,7 @@ export const setImportParameterCache = async (input: {
   await writeParameterCacheValue(JSON.stringify(payload));
 };
 
-export const getImportTemplate = async (
-  id: string
-): Promise<Template | null> => {
+export const getImportTemplate = async (id: string): Promise<Template | null> => {
   const templates = await listImportTemplates();
   return templates.find((template: Template) => template.id === id) ?? null;
 };
@@ -779,7 +757,7 @@ export const updateImportTemplate = async (
     parameterImport: normalizeBaseImportParameterImportSettings(
       input.parameterImport !== undefined
         ? input.parameterImport
-        : existing.parameterImport ?? defaultBaseImportParameterImportSettings
+        : (existing.parameterImport ?? defaultBaseImportParameterImportSettings)
     ),
     createdAt: existing.createdAt,
     updatedAt: new Date().toISOString(),

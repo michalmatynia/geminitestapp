@@ -71,17 +71,20 @@ module.exports = tseslint.config(
     rules: {
       ...js.configs.recommended.rules,
       // Custom rules and overrides
-      'indent': ['error', 2, { 'SwitchCase': 1 }],
+      indent: ['error', 2, { SwitchCase: 1 }],
       'linebreak-style': ['error', 'unix'],
-      'quotes': ['error', 'single'],
+      quotes: ['error', 'single'],
       'jsx-quotes': ['error', 'prefer-single'],
-      'semi': ['error', 'always'],
+      semi: ['error', 'always'],
       'no-unused-vars': 'off', // Prefer @typescript-eslint/no-unused-vars
-      '@typescript-eslint/no-unused-vars': ['warn', { 
-        argsIgnorePattern: '^_', 
-        varsIgnorePattern: '^_',
-        caughtErrorsIgnorePattern: '^_'
-      }],
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
       'no-redeclare': 'off',
       '@typescript-eslint/no-redeclare': ['error'],
       'no-dupe-class-members': 'off',
@@ -109,12 +112,17 @@ module.exports = tseslint.config(
       // Next.js specific rules
       '@next/next/no-img-element': 'warn', // Warn instead of error for <img>
       // Allow 'use client' and 'use server' directives
-      "no-restricted-imports": ["error", {
-        "patterns": [{
-          "group": ["use client", "use server"],
-          "message": "Prefer module-level directives over restricted imports."
-        }]
-      }]
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['use client', 'use server'],
+              message: 'Prefer module-level directives over restricted imports.',
+            },
+          ],
+        },
+      ],
     },
     settings: {
       react: {
@@ -135,29 +143,38 @@ module.exports = tseslint.config(
     // App layer must consume feature public/server entrypoints instead of bare barrels.
     files: ['src/app/**/*.{ts,tsx}'],
     rules: {
-      'no-restricted-imports': ['error', {
-        'patterns': [
-          {
-            'group': [
-              '@/features/*',
-              '!@/features/*/public',
-              '!@/features/*/server',
-              '!@/features/*/server/*',
-            ],
-            'message': 'Import features through "@/features/<feature>/public" (UI) or server entrypoints.',
-          },
-          {
-            'group': ['use client', 'use server'],
-            'message': 'Prefer module-level directives over restricted imports.',
-          },
-        ],
-      }],
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: [
+                '@/features/*',
+                '!@/features/*/public',
+                '!@/features/*/server',
+                '!@/features/*/server/*',
+              ],
+              message:
+                'Import features through "@/features/<feature>/public" (UI) or server entrypoints.',
+            },
+            {
+              group: ['use client', 'use server'],
+              message: 'Prefer module-level directives over restricted imports.',
+            },
+          ],
+        },
+      ],
     },
   },
   {
     // Configuration for client-side files (browser environment)
     files: ['src/**/*.{js,jsx,ts,tsx}'],
-    ignores: ['src/app/api/**', 'src/middleware.ts', 'src/instrumentation.ts', 'src/**/*.server.ts'],
+    ignores: [
+      'src/app/api/**',
+      'src/middleware.ts',
+      'src/instrumentation.ts',
+      'src/**/*.server.ts',
+    ],
     languageOptions: {
       globals: {
         ...require('globals').browser,
@@ -191,7 +208,12 @@ module.exports = tseslint.config(
   },
   {
     // Configuration for server-side files (Node.js environment)
-    files: ['src/app/api/**/*.{ts,tsx,js,jsx}', 'src/middleware.ts', 'src/instrumentation.ts', 'src/**/*.server.{ts,tsx,js,jsx}'],
+    files: [
+      'src/app/api/**/*.{ts,tsx,js,jsx}',
+      'src/middleware.ts',
+      'src/instrumentation.ts',
+      'src/**/*.server.{ts,tsx,js,jsx}',
+    ],
     languageOptions: {
       globals: {
         ...require('globals').node,
@@ -201,10 +223,10 @@ module.exports = tseslint.config(
         __filename: 'readonly',
       },
     },
-          rules: {
-            // Server-side specific rules
-            'no-console': 'warn', // Warn about console logs on the server
-            /*
+    rules: {
+      // Server-side specific rules
+      'no-console': 'warn', // Warn about console logs on the server
+      /*
             'import/no-restricted-paths': [
               'error',
               {
@@ -215,8 +237,7 @@ module.exports = tseslint.config(
               },
             ],
             */
-          },
-    
+    },
   },
   {
     // Configuration for test files
@@ -240,85 +261,92 @@ module.exports = tseslint.config(
     },
   },
   {
-    files: [
-      'src/**/*.{ts,tsx}',
-    ],
+    files: ['src/**/*.{ts,tsx}'],
     rules: {
-      'no-restricted-imports': ['error', {
-        'paths': [
-          {
-            'name': '@/shared/lib/api-hooks',
-            'message': 'Use explicit v2 factories from "@/shared/lib/query-factories-v2".',
-          },
-          {
-            'name': '@/shared/lib/mutation-factories',
-            'message': 'Use explicit v2 mutation factories from "@/shared/lib/query-factories-v2".',
-          },
-          {
-            'name': '@/shared/lib/query-factories',
-            'message': 'Use explicit v2 factories from "@/shared/lib/query-factories-v2".',
-          },
-          {
-            'name': '@/shared/lib/tanstack-factory-meta-inference',
-            'message': 'Define explicit v2 `meta` at call sites instead of using legacy inference.',
-          },
-          {
-            'name': '@/shared/lib/query-factories-v2',
-            'importNames': [
-              'createListQuery',
-              'createSingleQuery',
-              'createMutation',
-              'createCreateMutation',
-              'createUpdateMutation',
-              'createDeleteMutation',
-            ],
-            'message': 'Use explicit V2 factory exports (e.g. createListQueryV2/createMutationV2).',
-          },
-        ],
-      }],
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: '@/shared/lib/api-hooks',
+              message: 'Use explicit v2 factories from "@/shared/lib/query-factories-v2".',
+            },
+            {
+              name: '@/shared/lib/mutation-factories',
+              message: 'Use explicit v2 mutation factories from "@/shared/lib/query-factories-v2".',
+            },
+            {
+              name: '@/shared/lib/query-factories',
+              message: 'Use explicit v2 factories from "@/shared/lib/query-factories-v2".',
+            },
+            {
+              name: '@/shared/lib/tanstack-factory-meta-inference',
+              message: 'Define explicit v2 `meta` at call sites instead of using legacy inference.',
+            },
+            {
+              name: '@/shared/lib/query-factories-v2',
+              importNames: [
+                'createListQuery',
+                'createSingleQuery',
+                'createMutation',
+                'createCreateMutation',
+                'createUpdateMutation',
+                'createDeleteMutation',
+              ],
+              message: 'Use explicit V2 factory exports (e.g. createListQueryV2/createMutationV2).',
+            },
+          ],
+        },
+      ],
     },
   },
   {
-    files: [
-      'src/features/**/*.{ts,tsx}',
-    ],
+    files: ['src/features/**/*.{ts,tsx}'],
     rules: {
-      'no-restricted-imports': ['error', {
-        'paths': [
-          {
-            'name': '@/shared/lib/api-hooks',
-            'message': 'Use explicit v2 factories from "@/shared/lib/query-factories-v2" in feature code.',
-          },
-          {
-            'name': '@/shared/lib/mutation-factories',
-            'message': 'Use explicit v2 mutation factories from "@/shared/lib/query-factories-v2" in feature code.',
-          },
-          {
-            'name': '@/shared/lib/query-factories',
-            'message': 'Use explicit v2 factories from "@/shared/lib/query-factories-v2" in feature code.',
-          },
-          {
-            'name': '@/shared/lib/tanstack-factory-meta-inference',
-            'message': 'Define explicit v2 `meta` at call sites instead of using legacy inference.',
-          },
-          {
-            'name': '@/shared/lib/query-factories-v2',
-            'importNames': [
-              'createListQuery',
-              'createSingleQuery',
-              'createMutation',
-              'createCreateMutation',
-              'createUpdateMutation',
-              'createDeleteMutation',
-            ],
-            'message': 'Use explicit V2 factory exports (e.g. createListQueryV2/createMutationV2).',
-          },
-        ],
-        'patterns': [{
-          'group': ['use client', 'use server'],
-          'message': 'Prefer module-level directives over restricted imports.'
-        }]
-      }],
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: '@/shared/lib/api-hooks',
+              message:
+                'Use explicit v2 factories from "@/shared/lib/query-factories-v2" in feature code.',
+            },
+            {
+              name: '@/shared/lib/mutation-factories',
+              message:
+                'Use explicit v2 mutation factories from "@/shared/lib/query-factories-v2" in feature code.',
+            },
+            {
+              name: '@/shared/lib/query-factories',
+              message:
+                'Use explicit v2 factories from "@/shared/lib/query-factories-v2" in feature code.',
+            },
+            {
+              name: '@/shared/lib/tanstack-factory-meta-inference',
+              message: 'Define explicit v2 `meta` at call sites instead of using legacy inference.',
+            },
+            {
+              name: '@/shared/lib/query-factories-v2',
+              importNames: [
+                'createListQuery',
+                'createSingleQuery',
+                'createMutation',
+                'createCreateMutation',
+                'createUpdateMutation',
+                'createDeleteMutation',
+              ],
+              message: 'Use explicit V2 factory exports (e.g. createListQueryV2/createMutationV2).',
+            },
+          ],
+          patterns: [
+            {
+              group: ['use client', 'use server'],
+              message: 'Prefer module-level directives over restricted imports.',
+            },
+          ],
+        },
+      ],
       'no-restricted-syntax': [
         'error',
         {
@@ -330,7 +358,8 @@ module.exports = tseslint.config(
           message: 'Use QUERY_KEYS key factories instead of inline mutation key arrays.',
         },
         {
-          selector: "JSXOpeningElement[name.name='Tooltip'] > JSXAttribute[name.name='content'][value.type='Literal']",
+          selector:
+            "JSXOpeningElement[name.name='Tooltip'] > JSXAttribute[name.name='content'][value.type='Literal']",
           message:
             'Hardcoded Tooltip content is not allowed. Source tooltip copy via the documentation + tooltip-engine integration.',
         },
@@ -338,10 +367,7 @@ module.exports = tseslint.config(
     },
   },
   {
-    files: [
-      'src/shared/hooks/query/**/*.{ts,tsx}',
-      'src/shared/hooks/useQueryComposition.ts',
-    ],
+    files: ['src/shared/hooks/query/**/*.{ts,tsx}', 'src/shared/hooks/useQueryComposition.ts'],
     rules: {
       'no-restricted-syntax': [
         'error',

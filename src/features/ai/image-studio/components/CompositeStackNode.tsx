@@ -4,7 +4,11 @@ import React, { useCallback, useRef, useState } from 'react';
 
 import type { CompositeLayerConfig } from '@/shared/contracts/image-studio';
 
-import { NODE_WIDTH, COMPOSITE_LAYER_ROW_HEIGHT, getCompositeNodeHeight } from '../utils/version-graph';
+import {
+  NODE_WIDTH,
+  COMPOSITE_LAYER_ROW_HEIGHT,
+  getCompositeNodeHeight,
+} from '@/shared/lib/ai/image-studio/utils/version-graph';
 
 import type { VersionNode } from '../context/VersionGraphContext';
 
@@ -47,16 +51,13 @@ export function CompositeStackNode({
   const dragStartY = useRef<number>(0);
   const layerStartY = 56; // Below thumbnail area
 
-  const handlePointerDown = useCallback(
-    (e: React.PointerEvent, index: number) => {
-      e.stopPropagation();
-      setDragIndex(index);
-      setDropIndex(index);
-      dragStartY.current = e.clientY;
-      (e.target as SVGElement).setPointerCapture(e.pointerId);
-    },
-    [],
-  );
+  const handlePointerDown = useCallback((e: React.PointerEvent, index: number) => {
+    e.stopPropagation();
+    setDragIndex(index);
+    setDropIndex(index);
+    dragStartY.current = e.clientY;
+    (e.target as SVGElement).setPointerCapture(e.pointerId);
+  }, []);
 
   const handlePointerMove = useCallback(
     (e: React.PointerEvent) => {
@@ -67,7 +68,7 @@ export function CompositeStackNode({
       const clampedTarget = Math.max(0, Math.min(layers.length - 1, rawTarget));
       setDropIndex(clampedTarget);
     },
-    [dragIndex, layers.length, zoom],
+    [dragIndex, layers.length, zoom]
   );
 
   const handlePointerUp = useCallback(() => {
@@ -90,31 +91,15 @@ export function CompositeStackNode({
         ry={8}
         strokeWidth={isSelected ? 2 : 1}
         className={
-          isSelected
-            ? 'fill-card/80 stroke-yellow-400'
-            : 'fill-card/80 stroke-teal-400/60'
+          isSelected ? 'fill-card/80 stroke-yellow-400' : 'fill-card/80 stroke-teal-400/60'
         }
       />
 
       {/* Teal accent bar at top */}
-      <rect
-        x={0}
-        y={0}
-        width={NODE_WIDTH}
-        height={3}
-        rx={2}
-        fill='#14b8a6'
-        fillOpacity={0.7}
-      />
+      <rect x={0} y={0} width={NODE_WIDTH} height={3} rx={2} fill='#14b8a6' fillOpacity={0.7} />
 
       {/* "C" badge top-left */}
-      <text
-        x={LAYER_PADDING_X}
-        y={12}
-        fontSize={BADGE_FONT_SIZE}
-        fill='#14b8a6'
-        fontWeight='bold'
-      >
+      <text x={LAYER_PADDING_X} y={12} fontSize={BADGE_FONT_SIZE} fill='#14b8a6' fontWeight='bold'>
         C
       </text>
 
@@ -214,19 +199,11 @@ export function CompositeStackNode({
               fill='#9ca3af'
               fontSize={7}
             >
-              {label.length > LAYER_LABEL_MAX
-                ? `${label.slice(0, LAYER_LABEL_MAX - 1)}…`
-                : label}
+              {label.length > LAYER_LABEL_MAX ? `${label.slice(0, LAYER_LABEL_MAX - 1)}…` : label}
             </text>
 
             {/* Order number */}
-            <text
-              x={NODE_WIDTH - 8}
-              y={rowY + 13}
-              textAnchor='end'
-              fill='#6b7280'
-              fontSize={6}
-            >
+            <text x={NODE_WIDTH - 8} y={rowY + 13} textAnchor='end' fill='#6b7280' fontSize={6}>
               {index + 1}
             </text>
           </g>

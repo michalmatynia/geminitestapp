@@ -11,7 +11,6 @@ import EditProductPage from '@/features/products/components/EditProductForm';
 import { server } from '@/mocks/server';
 import { ToastProvider } from '@/shared/ui/toast';
 
-
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -50,28 +49,30 @@ describe('EditProductForm', () => {
   beforeEach(() => {
     queryClient.clear();
     server.use(
-      http.get('/api/languages', () => HttpResponse.json([
-        { id: 'l1', code: 'EN', name: 'English' },
-        { id: 'l2', code: 'PL', name: 'Polish' },
-      ])),
+      http.get('/api/languages', () =>
+        HttpResponse.json([
+          { id: 'l1', code: 'EN', name: 'English' },
+          { id: 'l2', code: 'PL', name: 'Polish' },
+        ])
+      ),
       http.get('/api/price-groups', () => HttpResponse.json([])),
-      http.get('/api/catalogs', () => HttpResponse.json([
-        { id: 'c1', name: 'Default', languageIds: ['l1', 'l2'], priceGroupIds: [] }
-      ])),
+      http.get('/api/catalogs', () =>
+        HttpResponse.json([
+          { id: 'c1', name: 'Default', languageIds: ['l1', 'l2'], priceGroupIds: [] },
+        ])
+      ),
       http.get('/api/products/categories', () => HttpResponse.json([])),
       http.get('/api/products/tags', () => HttpResponse.json([])),
       http.get('/api/products/parameters', () => HttpResponse.json([])),
       http.get('/api/products/validator-config', () => HttpResponse.json([])),
-      http.post('/api/client-errors', () => HttpResponse.json({ success: true })),
+      http.post('/api/client-errors', () => HttpResponse.json({ success: true }))
     );
   });
 
   const renderWithProviders = (ui: React.ReactElement) => {
     return render(
       <QueryClientProvider client={queryClient}>
-        <ToastProvider>
-          {ui}
-        </ToastProvider>
+        <ToastProvider>{ui}</ToastProvider>
       </QueryClientProvider>
     );
   };
@@ -80,11 +81,11 @@ describe('EditProductForm', () => {
     renderWithProviders(<EditProductPage product={mockProduct} />);
 
     expect(await screen.findByText('Edit Product')).toBeInTheDocument();
-    
+
     // Check for English Name input - using role to be specific
     const nameInput = await screen.findByRole('textbox', { name: /English Name/i });
     expect(nameInput).toHaveValue('Test Product');
-    
+
     expect(screen.getByLabelText(/SKU/i)).toHaveValue('TEST-123');
   });
 
@@ -98,13 +99,11 @@ describe('EditProductForm', () => {
     // Click on the 'Other' tab
     const otherTab = screen.getByRole('tab', { name: /Other/i });
     await user.click(otherTab);
-                                  
+
     // Check for Base Price input
     await screen.findByText(/Base Price/i);
     const priceInput = screen.getByLabelText(/Base Price/i);
     expect(priceInput).toHaveValue(100);
-                                  
-                            
   });
 
   it('renders other tabs navigation', async () => {

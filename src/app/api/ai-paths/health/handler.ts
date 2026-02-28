@@ -43,10 +43,7 @@ const JOB_STATUSES: ProductAiJobStatus[] = [
 const DEFAULT_HEALTH_CRITICAL_GRACE_MS = 15 * 60 * 1000;
 let criticalSloSinceMs: number | null = null;
 
-const parsePositiveInt = (
-  value: string | undefined,
-  fallback: number,
-): number => {
+const parsePositiveInt = (value: string | undefined, fallback: number): number => {
   const parsed = Number.parseInt(value ?? '', 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 };
@@ -58,10 +55,7 @@ const toIso = (value?: Date | string | null): string | null => {
   return date.toISOString();
 };
 
-export async function GET_handler(
-  _req: NextRequest,
-  _ctx: ApiHandlerContext,
-): Promise<Response> {
+export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await requireAiPathsAccess();
   startAiPathRunQueue();
   startAiInsightsQueue();
@@ -81,24 +75,17 @@ export async function GET_handler(
         AI_PATH_STATUSES.map(async (status) => {
           const result = await repo.listRuns({ status, limit: 1, offset: 0 });
           return [status, result.total] as const;
-        }),
+        })
       );
-      const byStatus = Object.fromEntries(byStatusEntries) as Record<
-        AiPathRunStatus,
-        number
-      >;
+      const byStatus = Object.fromEntries(byStatusEntries) as Record<AiPathRunStatus, number>;
 
       const all = await repo.listRuns({ limit: 1, offset: 0 });
       const latest = all.runs[0]
         ? {
-          id: String((all.runs[0] as Record<string, unknown>)['id']),
-          status: (all.runs[0] as Record<string, unknown>)[
-            'status'
-          ] as AiPathRunStatus,
-          createdAt: toIso(
-              (all.runs[0] as Record<string, unknown>)['createdAt'] as string,
-          ),
-        }
+            id: String((all.runs[0] as Record<string, unknown>)['id']),
+            status: (all.runs[0] as Record<string, unknown>)['status'] as AiPathRunStatus,
+            createdAt: toIso((all.runs[0] as Record<string, unknown>)['createdAt'] as string),
+          }
         : null;
       return {
         provider: aiPathsProvider,
@@ -108,9 +95,7 @@ export async function GET_handler(
       };
     } catch (error) {
       errors['aiPaths'] =
-        error instanceof Error
-          ? error.message
-          : 'Failed to load AI Paths counts.';
+        error instanceof Error ? error.message : 'Failed to load AI Paths counts.';
       return {
         provider: aiPathsProvider,
         total: null,
@@ -130,9 +115,8 @@ export async function GET_handler(
         const collection = db.collection('product_ai_jobs');
         const totals = await Promise.all(
           JOB_STATUSES.map(
-            async (status) =>
-              [status, await collection.countDocuments({ status })] as const,
-          ),
+            async (status) => [status, await collection.countDocuments({ status })] as const
+          )
         );
         const total = await collection.countDocuments({});
         const latest = await collection
@@ -147,7 +131,7 @@ export async function GET_handler(
                 productId: 1,
                 type: 1,
               },
-            },
+            }
           )
           .sort({ createdAt: -1 })
           .limit(1)
@@ -155,20 +139,16 @@ export async function GET_handler(
         return {
           provider,
           total,
-          byStatus: Object.fromEntries(totals) as Record<
-            ProductAiJobStatus,
-            number
-          >,
+          byStatus: Object.fromEntries(totals) as Record<ProductAiJobStatus, number>,
           latest: latest
             ? {
-              id:
-                  (latest as unknown as { id?: string; _id?: string }).id ??
-                  String(latest['_id']),
-              status: latest['status'] as ProductAiJobStatus,
-              createdAt: toIso(latest['createdAt'] as Date | string | null),
-              productId: latest['productId'] as string | null,
-              type: latest['type'] as string | null,
-            }
+                id:
+                  (latest as unknown as { id?: string; _id?: string }).id ?? String(latest['_id']),
+                status: latest['status'] as ProductAiJobStatus,
+                createdAt: toIso(latest['createdAt'] as Date | string | null),
+                productId: latest['productId'] as string | null,
+                type: latest['type'] as string | null,
+              }
             : null,
         };
       }
@@ -182,8 +162,8 @@ export async function GET_handler(
                 await prisma.productAiJob.count({
                   where: { status: status as PrismaJobStatus },
                 }),
-              ] as const,
-          ),
+              ] as const
+          )
         );
         const total = await prisma.productAiJob.count();
         const latest = await prisma.productAiJob.findFirst({
@@ -199,18 +179,15 @@ export async function GET_handler(
         return {
           provider,
           total,
-          byStatus: Object.fromEntries(totals) as Record<
-            ProductAiJobStatus,
-            number
-          >,
+          byStatus: Object.fromEntries(totals) as Record<ProductAiJobStatus, number>,
           latest: latest
             ? {
-              id: latest.id,
-              status: latest.status as ProductAiJobStatus,
-              createdAt: toIso(latest.createdAt),
-              productId: latest.productId ?? null,
-              type: latest.type ?? null,
-            }
+                id: latest.id,
+                status: latest.status as ProductAiJobStatus,
+                createdAt: toIso(latest.createdAt),
+                productId: latest.productId ?? null,
+                type: latest.type ?? null,
+              }
             : null,
         };
       }
@@ -222,10 +199,7 @@ export async function GET_handler(
         latest: null,
       };
     } catch (error) {
-      errors['aiJobs'] =
-        error instanceof Error
-          ? error.message
-          : 'Failed to load AI Jobs counts.';
+      errors['aiJobs'] = error instanceof Error ? error.message : 'Failed to load AI Jobs counts.';
       return {
         provider: getProductAiJobProvider() ?? 'unknown',
         total: null,
@@ -239,8 +213,7 @@ export async function GET_handler(
     try {
       return await getAiPathRunQueueStatus();
     } catch (error) {
-      errors['queue'] =
-        error instanceof Error ? error.message : 'Failed to load queue health.';
+      errors['queue'] = error instanceof Error ? error.message : 'Failed to load queue health.';
       return null;
     }
   })();
@@ -251,9 +224,7 @@ export async function GET_handler(
       return await getRuntimeAnalyticsSummary({ from, to, range: '24h' });
     } catch (error) {
       errors['runtime24h'] =
-        error instanceof Error
-          ? error.message
-          : 'Failed to load runtime analytics summary.';
+        error instanceof Error ? error.message : 'Failed to load runtime analytics summary.';
       return null;
     }
   })();
@@ -275,7 +246,7 @@ export async function GET_handler(
   const nowMs = Date.now();
   const criticalGraceMs = parsePositiveInt(
     process.env['AI_PATHS_HEALTH_CRITICAL_GRACE_MS'],
-    DEFAULT_HEALTH_CRITICAL_GRACE_MS,
+    DEFAULT_HEALTH_CRITICAL_GRACE_MS
   );
   const isCriticalNow = queue?.slo?.overall === 'critical';
   if (isCriticalNow) {
@@ -283,8 +254,7 @@ export async function GET_handler(
   } else {
     criticalSloSinceMs = null;
   }
-  const criticalForMs =
-    criticalSloSinceMs !== null ? Math.max(0, nowMs - criticalSloSinceMs) : 0;
+  const criticalForMs = criticalSloSinceMs !== null ? Math.max(0, nowMs - criticalSloSinceMs) : 0;
   const hasCriticalSlo = isCriticalNow && criticalForMs >= criticalGraceMs;
   const ok = Object.keys(errors).length === 0 && !hasCriticalSlo;
   const responseErrors = ok
@@ -292,10 +262,8 @@ export async function GET_handler(
     : Object.keys(errors).length > 0
       ? errors
       : {
-        slo: `Critical AI Paths SLO breach detected for ${Math.round(
-          criticalForMs / 1000,
-        )}s.`,
-      };
+          slo: `Critical AI Paths SLO breach detected for ${Math.round(criticalForMs / 1000)}s.`,
+        };
   return NextResponse.json(
     {
       ok,
@@ -307,14 +275,12 @@ export async function GET_handler(
       sloGate: {
         graceMs: criticalGraceMs,
         criticalSince:
-          criticalSloSinceMs !== null
-            ? new Date(criticalSloSinceMs).toISOString()
-            : null,
+          criticalSloSinceMs !== null ? new Date(criticalSloSinceMs).toISOString() : null,
         criticalForMs,
       },
       sloNotification,
       errors: responseErrors,
     },
-    { status: ok ? 200 : hasCriticalSlo ? 503 : 500 },
+    { status: ok ? 200 : hasCriticalSlo ? 503 : 500 }
   );
 }

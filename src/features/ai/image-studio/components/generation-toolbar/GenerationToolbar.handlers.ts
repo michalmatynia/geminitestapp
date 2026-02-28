@@ -1,7 +1,10 @@
 import { useCallback, useMemo } from 'react';
 import { api } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
-import { type StudioSlotsResponse, type ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
+import {
+  type StudioSlotsResponse,
+  type ImageStudioSlotRecord,
+} from '@/shared/contracts/image-studio';
 import { type VectorShape } from '@/shared/contracts/vector';
 import {
   CROP_REQUEST_TIMEOUT_MS,
@@ -50,12 +53,17 @@ import {
 import {
   saveImageStudioAnalysisPlanSnapshot,
   type ImageStudioAnalysisSharedLayout,
-} from '../../utils/analysis-bridge';
+} from '@/shared/lib/ai/image-studio/utils/analysis-bridge';
 import { createGenerationToolbarActionHandlers } from './generation-toolbar-action-handlers';
 import { studioKeys } from '../../hooks/useImageStudioQueries';
-import { type GenerationToolbarState, type GenerationToolbarHandlers } from './GenerationToolbar.types';
+import {
+  type GenerationToolbarState,
+  type GenerationToolbarHandlers,
+} from './GenerationToolbar.types';
 
-export function useGenerationToolbarHandlers(state: GenerationToolbarState): GenerationToolbarHandlers {
+export function useGenerationToolbarHandlers(
+  state: GenerationToolbarState
+): GenerationToolbarHandlers {
   const {
     activeProjectId,
     projectId,
@@ -120,7 +128,10 @@ export function useGenerationToolbarHandlers(state: GenerationToolbarState): Gen
     return frameBinding.frame as ImageContentFrame;
   }, [getPreviewCanvasImageFrame, workingSlot?.id]);
 
-  const resolveWorkingSourceDimensions = useCallback(async (): Promise<{ width: number; height: number }> => {
+  const resolveWorkingSourceDimensions = useCallback(async (): Promise<{
+    width: number;
+    height: number;
+  }> => {
     let sourceWidth = workingSlot?.imageFile?.width ?? 0;
     let sourceHeight = workingSlot?.imageFile?.height ?? 0;
     if (!(sourceWidth > 0 && sourceHeight > 0)) {
@@ -136,23 +147,34 @@ export function useGenerationToolbarHandlers(state: GenerationToolbarState): Gen
       width: sourceWidth,
       height: sourceHeight,
     };
-  }, [clientProcessingImageSrc, workingSlot?.imageFile?.height, workingSlot?.imageFile?.width, workingSlotImageSrc]);
+  }, [
+    clientProcessingImageSrc,
+    workingSlot?.imageFile?.height,
+    workingSlot?.imageFile?.width,
+    workingSlotImageSrc,
+  ]);
 
-  const resolveWorkingCropCanvasContext = useCallback(async (): Promise<CropCanvasContext | null> => {
-    const imageContentFrame = resolveWorkingSlotImageContentFrame();
-    if (!imageContentFrame) return null;
+  const resolveWorkingCropCanvasContext =
+    useCallback(async (): Promise<CropCanvasContext | null> => {
+      const imageContentFrame = resolveWorkingSlotImageContentFrame();
+      if (!imageContentFrame) return null;
 
-    const sourceDimensions = await resolveWorkingSourceDimensions();
-    const canvasWidth = projectCanvasSize?.width ?? sourceDimensions.width;
-    const canvasHeight = projectCanvasSize?.height ?? sourceDimensions.height;
-    if (!(canvasWidth > 0 && canvasHeight > 0)) return null;
+      const sourceDimensions = await resolveWorkingSourceDimensions();
+      const canvasWidth = projectCanvasSize?.width ?? sourceDimensions.width;
+      const canvasHeight = projectCanvasSize?.height ?? sourceDimensions.height;
+      if (!(canvasWidth > 0 && canvasHeight > 0)) return null;
 
-    return {
-      canvasWidth,
-      canvasHeight,
-      imageFrame: imageContentFrame,
-    };
-  }, [projectCanvasSize?.height, projectCanvasSize?.width, resolveWorkingSlotImageContentFrame, resolveWorkingSourceDimensions]);
+      return {
+        canvasWidth,
+        canvasHeight,
+        imageFrame: imageContentFrame,
+      };
+    }, [
+      projectCanvasSize?.height,
+      projectCanvasSize?.width,
+      resolveWorkingSlotImageContentFrame,
+      resolveWorkingSourceDimensions,
+    ]);
 
   const resolveCropRect = useCallback(async (): Promise<{
     cropRect: CropRect;
@@ -191,7 +213,15 @@ export function useGenerationToolbarHandlers(state: GenerationToolbarState): Gen
     }
 
     throw new Error('Set a valid crop boundary or move image outside canvas first.');
-  }, [activeMaskId, exportMaskShapes, projectCanvasSize?.height, projectCanvasSize?.width, resolveWorkingSlotImageContentFrame, resolveWorkingSourceDimensions, cropDiagnosticsRef]);
+  }, [
+    activeMaskId,
+    exportMaskShapes,
+    projectCanvasSize?.height,
+    projectCanvasSize?.width,
+    resolveWorkingSlotImageContentFrame,
+    resolveWorkingSourceDimensions,
+    cropDiagnosticsRef,
+  ]);
 
   const resolveCenteredSquareCropRect = useCallback(async (): Promise<CropRect> => {
     const { width: sourceWidth, height: sourceHeight } = await resolveWorkingSourceDimensions();
@@ -216,7 +246,10 @@ export function useGenerationToolbarHandlers(state: GenerationToolbarState): Gen
         id: shapeId,
         name: `Crop Box ${previous.length + 1}`,
         type: 'rect' as const,
-        points: [{ x: 0.1, y: 0.1 }, { x: 0.9, y: 0.9 }],
+        points: [
+          { x: 0.1, y: 0.1 },
+          { x: 0.9, y: 0.9 },
+        ],
         closed: true,
         visible: true,
         role: 'custom' as const,
@@ -229,14 +262,17 @@ export function useGenerationToolbarHandlers(state: GenerationToolbarState): Gen
     toast('Crop box created. Adjust the rectangle, then click Crop.', { variant: 'success' });
   }, [setActiveMaskId, setCanvasSelectionEnabled, setMaskShapes, state, toast]);
 
-  const fetchProjectSlots = useCallback(async (projectIdOverride?: string): Promise<ImageStudioSlotRecord[]> => {
-    const resolvedProjectId = projectIdOverride?.trim() ?? projectId?.trim() ?? '';
-    if (!resolvedProjectId) return [];
-    const response = await api.get<StudioSlotsResponse>(
-      `/api/image-studio/projects/${encodeURIComponent(resolvedProjectId)}/slots`
-    );
-    return Array.isArray(response.slots) ? response.slots : [];
-  }, [projectId]);
+  const fetchProjectSlots = useCallback(
+    async (projectIdOverride?: string): Promise<ImageStudioSlotRecord[]> => {
+      const resolvedProjectId = projectIdOverride?.trim() ?? projectId?.trim() ?? '';
+      if (!resolvedProjectId) return [];
+      const response = await api.get<StudioSlotsResponse>(
+        `/api/image-studio/projects/${encodeURIComponent(resolvedProjectId)}/slots`
+      );
+      return Array.isArray(response.slots) ? response.slots : [];
+    },
+    [projectId]
+  );
 
   const attachMaskVariantsFromSelection = useCallback(async (): Promise<void> => {
     if (!workingSlotImageSrc) {
@@ -269,7 +305,9 @@ export function useGenerationToolbarHandlers(state: GenerationToolbarState): Gen
         imageFrame: resolveWorkingSlotImageContentFrame(),
       });
       if (polygons.length === 0) {
-        toast('No closed polygon-compatible shapes are available for mask export.', { variant: 'info' });
+        toast('No closed polygon-compatible shapes are available for mask export.', {
+          variant: 'info',
+        });
         return;
       }
 
@@ -288,15 +326,15 @@ export function useGenerationToolbarHandlers(state: GenerationToolbarState): Gen
       const payloadMasks = variants.map(({ variant, inverted }) =>
         maskAttachMode === 'client_canvas_polygon'
           ? {
-            variant,
-            inverted,
-            dataUrl: renderMaskDataUrlFromPolygons(polygons, width, height, variant, inverted),
-          }
+              variant,
+              inverted,
+              dataUrl: renderMaskDataUrlFromPolygons(polygons, width, height, variant, inverted),
+            }
           : {
-            variant,
-            inverted,
-            polygons,
-          }
+              variant,
+              inverted,
+              polygons,
+            }
       );
 
       await api.post<{
@@ -316,53 +354,101 @@ export function useGenerationToolbarHandlers(state: GenerationToolbarState): Gen
 
       toast('Attached linked mask slots.', { variant: 'success' });
     } catch (error) {
-      toast(
-        error instanceof Error
-          ? error.message
-          : 'Failed to attach mask variants.',
-        { variant: 'error' }
-      );
+      toast(error instanceof Error ? error.message : 'Failed to attach mask variants.', {
+        variant: 'error',
+      });
     }
-  }, [exportMaskShapes, maskAttachMode, projectId, queryClient, resolveWorkingSlotImageContentFrame, toast, workingSlot?.id, workingSlot?.imageFile?.height, workingSlot?.imageFile?.width, workingSlotImageSrc]);
+  }, [
+    exportMaskShapes,
+    maskAttachMode,
+    projectId,
+    queryClient,
+    resolveWorkingSlotImageContentFrame,
+    toast,
+    workingSlot?.id,
+    workingSlot?.imageFile?.height,
+    workingSlot?.imageFile?.width,
+    workingSlotImageSrc,
+  ]);
 
-  const resolveUpscaleSourceDimensions = useCallback(async (): Promise<{ width: number; height: number }> => {
+  const resolveUpscaleSourceDimensions = useCallback(async (): Promise<{
+    width: number;
+    height: number;
+  }> => {
     return resolveWorkingSourceDimensions();
   }, [resolveWorkingSourceDimensions]);
 
-  const actionHandlers = useMemo(() => createGenerationToolbarActionHandlers({
-    clientProcessingImageSrc,
-    cropAbortControllerRef,
-    cropMode,
-    cropRequestInFlightRef,
-    cropRequestTimeoutMs: CROP_REQUEST_TIMEOUT_MS,
-    fetchProjectSlots,
-    getCropDiagnostics: (): CropRectResolutionDiagnostics | null => cropDiagnosticsRef.current,
-    hasCropBoundary: hasShapeCropBoundary || hasCanvasOverflowFromImageFrame(resolveWorkingSlotImageContentFrame()),
-    projectId,
-    queryClient,
-    resolveCropRect,
-    resolveCropCanvasContext: resolveWorkingCropCanvasContext,
-    resolveUpscaleSourceDimensions,
-    setCropBusy,
-    setCropStatus,
-    setSelectedSlotId,
-    setUpscaleBusy,
-    setUpscaleStatus,
-    setWorkingSlotId,
-    toast,
-    upscaleAbortControllerRef,
-    upscaleMaxOutputSide: UPSCALE_MAX_OUTPUT_SIDE,
-    upscaleMode,
-    upscaleRequestInFlightRef,
-    upscaleRequestTimeoutMs: UPSCALE_REQUEST_TIMEOUT_MS,
-    upscaleScale,
-    upscaleSmoothingQuality,
-    upscaleStrategy,
-    upscaleTargetHeight,
-    upscaleTargetWidth,
-    workingSlot,
-    workingSlotImageSrc,
-  }), [clientProcessingImageSrc, cropAbortControllerRef, cropMode, cropRequestInFlightRef, fetchProjectSlots, hasShapeCropBoundary, projectId, queryClient, resolveCropRect, resolveWorkingCropCanvasContext, resolveUpscaleSourceDimensions, setCropBusy, setCropStatus, setSelectedSlotId, setUpscaleBusy, setUpscaleStatus, setWorkingSlotId, toast, upscaleAbortControllerRef, upscaleMode, upscaleRequestInFlightRef, upscaleScale, upscaleSmoothingQuality, upscaleStrategy, upscaleTargetHeight, upscaleTargetWidth, workingSlot, workingSlotImageSrc, cropDiagnosticsRef, resolveWorkingSlotImageContentFrame]);
+  const actionHandlers = useMemo(
+    () =>
+      createGenerationToolbarActionHandlers({
+        clientProcessingImageSrc,
+        cropAbortControllerRef,
+        cropMode,
+        cropRequestInFlightRef,
+        cropRequestTimeoutMs: CROP_REQUEST_TIMEOUT_MS,
+        fetchProjectSlots,
+        getCropDiagnostics: (): CropRectResolutionDiagnostics | null => cropDiagnosticsRef.current,
+        hasCropBoundary:
+          hasShapeCropBoundary ||
+          hasCanvasOverflowFromImageFrame(resolveWorkingSlotImageContentFrame()),
+        projectId,
+        queryClient,
+        resolveCropRect,
+        resolveCropCanvasContext: resolveWorkingCropCanvasContext,
+        resolveUpscaleSourceDimensions,
+        setCropBusy,
+        setCropStatus,
+        setSelectedSlotId,
+        setUpscaleBusy,
+        setUpscaleStatus,
+        setWorkingSlotId,
+        toast,
+        upscaleAbortControllerRef,
+        upscaleMaxOutputSide: UPSCALE_MAX_OUTPUT_SIDE,
+        upscaleMode,
+        upscaleRequestInFlightRef,
+        upscaleRequestTimeoutMs: UPSCALE_REQUEST_TIMEOUT_MS,
+        upscaleScale,
+        upscaleSmoothingQuality,
+        upscaleStrategy,
+        upscaleTargetHeight,
+        upscaleTargetWidth,
+        workingSlot,
+        workingSlotImageSrc,
+      }),
+    [
+      clientProcessingImageSrc,
+      cropAbortControllerRef,
+      cropMode,
+      cropRequestInFlightRef,
+      fetchProjectSlots,
+      hasShapeCropBoundary,
+      projectId,
+      queryClient,
+      resolveCropRect,
+      resolveWorkingCropCanvasContext,
+      resolveUpscaleSourceDimensions,
+      setCropBusy,
+      setCropStatus,
+      setSelectedSlotId,
+      setUpscaleBusy,
+      setUpscaleStatus,
+      setWorkingSlotId,
+      toast,
+      upscaleAbortControllerRef,
+      upscaleMode,
+      upscaleRequestInFlightRef,
+      upscaleScale,
+      upscaleSmoothingQuality,
+      upscaleStrategy,
+      upscaleTargetHeight,
+      upscaleTargetWidth,
+      workingSlot,
+      workingSlotImageSrc,
+      cropDiagnosticsRef,
+      resolveWorkingSlotImageContentFrame,
+    ]
+  );
 
   const { handleUpscale, handleCrop } = actionHandlers;
 
@@ -392,9 +478,18 @@ export function useGenerationToolbarHandlers(state: GenerationToolbarState): Gen
       cropDiagnosticsRef.current = null;
       await handleCrop(squareCropRect, { includeCanvasContext: false });
     } catch (error) {
-      toast(error instanceof Error ? error.message : 'Failed to prepare square crop.', { variant: 'error' });
+      toast(error instanceof Error ? error.message : 'Failed to prepare square crop.', {
+        variant: 'error',
+      });
     }
-  }, [handleCrop, resolveCenteredSquareCropRect, toast, workingSlot?.id, workingSlotImageSrc, cropDiagnosticsRef]);
+  }, [
+    handleCrop,
+    resolveCenteredSquareCropRect,
+    toast,
+    workingSlot?.id,
+    workingSlotImageSrc,
+    cropDiagnosticsRef,
+  ]);
 
   const handlePreviewViewCrop = useCallback(async (): Promise<void> => {
     const activeSlotId = workingSlot?.id?.trim() ?? '';
@@ -415,9 +510,12 @@ export function useGenerationToolbarHandlers(state: GenerationToolbarState): Gen
       return;
     }
     if (previewCrop.slotId !== activeSlotId) {
-      toast('Preview Canvas is showing a different slot. Switch back to the working slot and try again.', {
-        variant: 'info',
-      });
+      toast(
+        'Preview Canvas is showing a different slot. Switch back to the working slot and try again.',
+        {
+          variant: 'info',
+        }
+      );
       return;
     }
 
@@ -440,9 +538,20 @@ export function useGenerationToolbarHandlers(state: GenerationToolbarState): Gen
 
       await handleCrop(previewCrop.cropRect, { includeCanvasContext: false });
     } catch (error) {
-      toast(error instanceof Error ? error.message : 'Failed to prepare crop from preview view.', { variant: 'error' });
+      toast(error instanceof Error ? error.message : 'Failed to prepare crop from preview view.', {
+        variant: 'error',
+      });
     }
-  }, [getPreviewCanvasViewportCrop, handleCrop, resolveWorkingCropCanvasContext, resolveWorkingSourceDimensions, toast, workingSlot?.id, workingSlotImageSrc, cropDiagnosticsRef]);
+  }, [
+    getPreviewCanvasViewportCrop,
+    handleCrop,
+    resolveWorkingCropCanvasContext,
+    resolveWorkingSourceDimensions,
+    toast,
+    workingSlot?.id,
+    workingSlotImageSrc,
+    cropDiagnosticsRef,
+  ]);
 
   const handleCenterObject = useCallback(async (): Promise<void> => {
     if (!workingSlot?.id) {
@@ -467,7 +576,9 @@ export function useGenerationToolbarHandlers(state: GenerationToolbarState): Gen
     setCenterBusy(true);
     setCenterStatus('resolving');
     const centerRequestId = buildCenterRequestId();
-    const buildValidatedCenterRequestPayload = (mode: ImageStudioCenterMode): {
+    const buildValidatedCenterRequestPayload = (
+      mode: ImageStudioCenterMode
+    ): {
       mode: ImageStudioCenterMode;
       requestId?: string;
       layout?: Record<string, unknown>;
@@ -511,37 +622,34 @@ export function useGenerationToolbarHandlers(state: GenerationToolbarState): Gen
           }
 
           setCenterStatus('uploading');
-           
-          response = await withCenterRetry(
-            () => {
-              const formData = new FormData();
-              formData.append('mode', centerMode);
-              formData.append('requestId', centerRequestId);
-              if (centerLayoutPayload) {
-                formData.append(
-                  'center',
-                  JSON.stringify({
-                    layout: centerLayoutPayload,
-                  })
-                );
-              }
-              formData.append('image', uploadBlob, `center-client-${Date.now()}.png`);
-              return api
-                .post<unknown>(
-                  `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/center`,
-                  formData,
-                  {
-                    signal: abortController.signal,
-                    timeout: 60000,
-                    headers: {
-                      'x-idempotency-key': centerRequestId,
-                    },
-                  }
-                )
-                .then((raw) => imageStudioCenterResponseSchema.parse(raw));
-            },
-            abortController.signal
-          );
+
+          response = await withCenterRetry(() => {
+            const formData = new FormData();
+            formData.append('mode', centerMode);
+            formData.append('requestId', centerRequestId);
+            if (centerLayoutPayload) {
+              formData.append(
+                'center',
+                JSON.stringify({
+                  layout: centerLayoutPayload,
+                })
+              );
+            }
+            formData.append('image', uploadBlob, `center-client-${Date.now()}.png`);
+            return api
+              .post<unknown>(
+                `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/center`,
+                formData,
+                {
+                  signal: abortController.signal,
+                  timeout: 60000,
+                  headers: {
+                    'x-idempotency-key': centerRequestId,
+                  },
+                }
+              )
+              .then((raw) => imageStudioCenterResponseSchema.parse(raw));
+          }, abortController.signal);
         } catch (error) {
           if (!isClientCenterCrossOriginError(error)) {
             throw error;
@@ -552,7 +660,7 @@ export function useGenerationToolbarHandlers(state: GenerationToolbarState): Gen
               ? 'server_object_layout_v1'
               : 'server_alpha_bbox';
           const fallbackRequestPayload = buildValidatedCenterRequestPayload(fallbackMode);
-           
+
           response = await withCenterRetry(
             () =>
               api
@@ -579,8 +687,10 @@ export function useGenerationToolbarHandlers(state: GenerationToolbarState): Gen
         }
       } else {
         setCenterStatus('processing');
-        const centerRequestPayload = buildValidatedCenterRequestPayload(centerMode as ImageStudioCenterMode);
-         
+        const centerRequestPayload = buildValidatedCenterRequestPayload(
+          centerMode as ImageStudioCenterMode
+        );
+
         response = await withCenterRetry(
           () =>
             api
@@ -606,14 +716,15 @@ export function useGenerationToolbarHandlers(state: GenerationToolbarState): Gen
         void invalidateImageStudioSlots(queryClient, normalizedProjectId);
         const slotsSnapshot = await fetchProjectSlots(normalizedProjectId);
         const createdSlotId = response.slot?.id ?? '';
-        const mergedSlots =
-          createdSlotId
-            ? [response.slot, ...slotsSnapshot.filter((slot: ImageStudioSlotRecord) => slot.id !== createdSlotId)]
-            : slotsSnapshot;
-        queryClient.setQueryData<StudioSlotsResponse>(
-          studioKeys.slots(normalizedProjectId),
-          { slots: mergedSlots }
-        );
+        const mergedSlots = createdSlotId
+          ? [
+              response.slot,
+              ...slotsSnapshot.filter((slot: ImageStudioSlotRecord) => slot.id !== createdSlotId),
+            ]
+          : slotsSnapshot;
+        queryClient.setQueryData<StudioSlotsResponse>(studioKeys.slots(normalizedProjectId), {
+          slots: mergedSlots,
+        });
       }
 
       if (response.slot?.id) {
@@ -627,19 +738,32 @@ export function useGenerationToolbarHandlers(state: GenerationToolbarState): Gen
         toast('Centering canceled.', { variant: 'info' });
         return;
       }
-      toast(
-        error instanceof Error
-          ? error.message
-          : 'Failed to center image object.',
-        { variant: 'error' }
-      );
+      toast(error instanceof Error ? error.message : 'Failed to center image object.', {
+        variant: 'error',
+      });
     } finally {
       centerRequestInFlightRef.current = false;
       centerAbortControllerRef.current = null;
       setCenterBusy(false);
       setCenterStatus('idle');
     }
-  }, [centerLayoutPayload, centerMode, clientProcessingImageSrc, fetchProjectSlots, projectId, queryClient, setCenterBusy, setCenterStatus, setSelectedSlotId, setWorkingSlotId, toast, workingSlot?.id, workingSlotImageSrc, centerAbortControllerRef, centerRequestInFlightRef]);
+  }, [
+    centerLayoutPayload,
+    centerMode,
+    clientProcessingImageSrc,
+    fetchProjectSlots,
+    projectId,
+    queryClient,
+    setCenterBusy,
+    setCenterStatus,
+    setSelectedSlotId,
+    setWorkingSlotId,
+    toast,
+    workingSlot?.id,
+    workingSlotImageSrc,
+    centerAbortControllerRef,
+    centerRequestInFlightRef,
+  ]);
 
   const handleCancelCenter = useCallback((): void => {
     const controller = centerAbortControllerRef.current;
@@ -682,11 +806,9 @@ export function useGenerationToolbarHandlers(state: GenerationToolbarState): Gen
         try {
           setAutoScaleStatus('preparing');
           const autoScaledDataUrl = (
-            await autoScaleCanvasImageObject(
-              sourceForClientAutoScale,
-              autoScaleLayoutPayload,
-              { preferTargetCanvas: true }
-            )
+            await autoScaleCanvasImageObject(sourceForClientAutoScale, autoScaleLayoutPayload, {
+              preferTargetCanvas: true,
+            })
           ).dataUrl;
           let uploadBlob: Blob;
           try {
@@ -696,35 +818,32 @@ export function useGenerationToolbarHandlers(state: GenerationToolbarState): Gen
           }
 
           setAutoScaleStatus('uploading');
-           
-          response = await withAutoScalerRetry(
-            () => {
-              const formData = new FormData();
-              formData.append('mode', autoScaleMode);
-              formData.append('requestId', autoScaleRequestId);
-              if (autoScaleLayoutPayload) {
-                formData.append('layout', JSON.stringify(autoScaleLayoutPayload));
-              }
-              formData.append('image', uploadBlob, `autoscale-client-${Date.now()}.png`);
-              return api
-                .post<unknown>(
-                  `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/autoscale`,
-                  formData,
-                  {
-                    signal: abortController.signal,
-                    timeout: 60000,
-                    headers: {
-                      'x-idempotency-key': autoScaleRequestId,
-                    },
-                  }
-                )
-                .then((raw) => imageStudioAutoScalerResponseSchema.parse(raw));
-            },
-            abortController.signal
-          );
+
+          response = await withAutoScalerRetry(() => {
+            const formData = new FormData();
+            formData.append('mode', autoScaleMode);
+            formData.append('requestId', autoScaleRequestId);
+            if (autoScaleLayoutPayload) {
+              formData.append('layout', JSON.stringify(autoScaleLayoutPayload));
+            }
+            formData.append('image', uploadBlob, `autoscale-client-${Date.now()}.png`);
+            return api
+              .post<unknown>(
+                `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/autoscale`,
+                formData,
+                {
+                  signal: abortController.signal,
+                  timeout: 60000,
+                  headers: {
+                    'x-idempotency-key': autoScaleRequestId,
+                  },
+                }
+              )
+              .then((raw) => imageStudioAutoScalerResponseSchema.parse(raw));
+          }, abortController.signal);
         } catch (_error) {
           setAutoScaleStatus('processing');
-           
+
           response = await withAutoScalerRetry(
             () =>
               api
@@ -750,7 +869,7 @@ export function useGenerationToolbarHandlers(state: GenerationToolbarState): Gen
         }
       } else {
         setAutoScaleStatus('processing');
-         
+
         response = await withAutoScalerRetry(
           () =>
             api
@@ -780,14 +899,15 @@ export function useGenerationToolbarHandlers(state: GenerationToolbarState): Gen
         void invalidateImageStudioSlots(queryClient, normalizedProjectId);
         const slotsSnapshot = await fetchProjectSlots(normalizedProjectId);
         const createdSlotId = response.slot?.id ?? '';
-        const mergedSlots =
-          createdSlotId
-            ? [response.slot, ...slotsSnapshot.filter((slot: ImageStudioSlotRecord) => slot.id !== createdSlotId)]
-            : slotsSnapshot;
-        queryClient.setQueryData<StudioSlotsResponse>(
-          studioKeys.slots(normalizedProjectId),
-          { slots: mergedSlots }
-        );
+        const mergedSlots = createdSlotId
+          ? [
+              response.slot,
+              ...slotsSnapshot.filter((slot: ImageStudioSlotRecord) => slot.id !== createdSlotId),
+            ]
+          : slotsSnapshot;
+        queryClient.setQueryData<StudioSlotsResponse>(studioKeys.slots(normalizedProjectId), {
+          slots: mergedSlots,
+        });
       }
 
       if (response.slot?.id) {
@@ -801,19 +921,32 @@ export function useGenerationToolbarHandlers(state: GenerationToolbarState): Gen
         toast('Auto scaler canceled.', { variant: 'info' });
         return;
       }
-      toast(
-        error instanceof Error
-          ? error.message
-          : 'Failed to auto scale image object.',
-        { variant: 'error' }
-      );
+      toast(error instanceof Error ? error.message : 'Failed to auto scale image object.', {
+        variant: 'error',
+      });
     } finally {
       autoScaleRequestInFlightRef.current = false;
       autoScaleAbortControllerRef.current = null;
       setAutoScaleBusy(false);
       setAutoScaleStatus('idle');
     }
-  }, [autoScaleLayoutPayload, autoScaleMode, clientProcessingImageSrc, fetchProjectSlots, projectId, queryClient, setAutoScaleBusy, setAutoScaleStatus, setSelectedSlotId, setWorkingSlotId, toast, workingSlot?.id, workingSlotImageSrc, autoScaleAbortControllerRef, autoScaleRequestInFlightRef]);
+  }, [
+    autoScaleLayoutPayload,
+    autoScaleMode,
+    clientProcessingImageSrc,
+    fetchProjectSlots,
+    projectId,
+    queryClient,
+    setAutoScaleBusy,
+    setAutoScaleStatus,
+    setSelectedSlotId,
+    setWorkingSlotId,
+    toast,
+    workingSlot?.id,
+    workingSlotImageSrc,
+    autoScaleAbortControllerRef,
+    autoScaleRequestInFlightRef,
+  ]);
 
   const handleCancelAutoScale = useCallback((): void => {
     const controller = autoScaleAbortControllerRef.current;
@@ -821,118 +954,118 @@ export function useGenerationToolbarHandlers(state: GenerationToolbarState): Gen
     controller.abort();
   }, [autoScaleAbortControllerRef]);
 
-  const handleAiMaskGeneration = useCallback(async (mode: 'ai-polygon' | 'ai-bbox' | 'threshold' | 'edges'): Promise<void> => {
-    await state.handleAiMaskGeneration(mode);
-  }, [state]);
+  const handleAiMaskGeneration = useCallback(
+    async (mode: 'ai-polygon' | 'ai-bbox' | 'threshold' | 'edges'): Promise<void> => {
+      await state.handleAiMaskGeneration(mode);
+    },
+    [state]
+  );
 
-  const runAnalysisFromToolbar = useCallback(async (
-    trigger: 'object_layout' | 'auto_scaler'
-  ): Promise<void> => {
-    const slotId = workingSlot?.id?.trim() ?? '';
-    if (!slotId) {
-      toast('No active source slot selected.', { variant: 'info' });
-      return;
-    }
-    if (!workingSlotImageSrc) {
-      toast('Select a slot image before analysis.', { variant: 'info' });
-      return;
-    }
-    if (!workingSourceSignature) {
-      toast('Unable to capture source signature for analysis. Reselect slot image and retry.', {
-        variant: 'info',
-      });
-      return;
-    }
-    if (analysisBusy) {
-      return;
-    }
+  const runAnalysisFromToolbar = useCallback(
+    async (trigger: 'object_layout' | 'auto_scaler'): Promise<void> => {
+      const slotId = workingSlot?.id?.trim() ?? '';
+      if (!slotId) {
+        toast('No active source slot selected.', { variant: 'info' });
+        return;
+      }
+      if (!workingSlotImageSrc) {
+        toast('Select a slot image before analysis.', { variant: 'info' });
+        return;
+      }
+      if (!workingSourceSignature) {
+        toast('Unable to capture source signature for analysis. Reselect slot image and retry.', {
+          variant: 'info',
+        });
+        return;
+      }
+      if (analysisBusy) {
+        return;
+      }
 
-    const toSharedLayout = (
-      layout: ImageStudioAnalysisResponse['analysis']['layout']
-    ): ImageStudioAnalysisSharedLayout => {
-      const splitAxes = Math.abs(layout.paddingXPercent - layout.paddingYPercent) >= 0.01;
-      return {
-        paddingPercent: layout.paddingPercent,
-        paddingXPercent: layout.paddingXPercent,
-        paddingYPercent: layout.paddingYPercent,
-        splitAxes,
-        fillMissingCanvasWhite: layout.fillMissingCanvasWhite,
-        targetCanvasWidth: layout.targetCanvasWidth,
-        targetCanvasHeight: layout.targetCanvasHeight,
-        whiteThreshold: layout.whiteThreshold,
-        chromaThreshold: layout.chromaThreshold,
-        shadowPolicy: layout.shadowPolicy,
-        detection: layout.detection,
+      const toSharedLayout = (
+        layout: ImageStudioAnalysisResponse['analysis']['layout']
+      ): ImageStudioAnalysisSharedLayout => {
+        const splitAxes = Math.abs(layout.paddingXPercent - layout.paddingYPercent) >= 0.01;
+        return {
+          paddingPercent: layout.paddingPercent,
+          paddingXPercent: layout.paddingXPercent,
+          paddingYPercent: layout.paddingYPercent,
+          splitAxes,
+          fillMissingCanvasWhite: layout.fillMissingCanvasWhite,
+          targetCanvasWidth: layout.targetCanvasWidth,
+          targetCanvasHeight: layout.targetCanvasHeight,
+          whiteThreshold: layout.whiteThreshold,
+          chromaThreshold: layout.chromaThreshold,
+          shadowPolicy: layout.shadowPolicy,
+          detection: layout.detection,
+        };
       };
-    };
-    const preferredObjectLayoutMode: ImageStudioCenterMode =
-      centerMode === 'client_alpha_bbox' || centerMode === 'client_object_layout_v1'
-        ? 'client_object_layout_v1'
-        : 'server_object_layout_v1';
+      const preferredObjectLayoutMode: ImageStudioCenterMode =
+        centerMode === 'client_alpha_bbox' || centerMode === 'client_object_layout_v1'
+          ? 'client_object_layout_v1'
+          : 'server_object_layout_v1';
 
-    const layoutPayload = trigger === 'object_layout'
-      ? centerLayoutPayload
-      : autoScaleLayoutPayload;
+      const layoutPayload =
+        trigger === 'object_layout' ? centerLayoutPayload : autoScaleLayoutPayload;
 
-    setAnalysisBusy(true);
-    setAnalysisStatus('resolving');
-    try {
-      setAnalysisStatus('processing');
-      const response = await api
-        .post<unknown>(
-          `/api/image-studio/slots/${encodeURIComponent(slotId)}/analysis`,
-          {
+      setAnalysisBusy(true);
+      setAnalysisStatus('resolving');
+      try {
+        setAnalysisStatus('processing');
+        const response = await api
+          .post<unknown>(`/api/image-studio/slots/${encodeURIComponent(slotId)}/analysis`, {
             mode: 'server_analysis_v1',
             layout: layoutPayload,
-          }
-        )
-        .then((raw) => imageStudioAnalysisResponseSchema.parse(raw));
+          })
+          .then((raw) => imageStudioAnalysisResponseSchema.parse(raw));
 
-      const sharedLayout = toSharedLayout(response.analysis.layout);
-      if (centerMode !== preferredObjectLayoutMode) {
-        state.setCenterMode(preferredObjectLayoutMode);
+        const sharedLayout = toSharedLayout(response.analysis.layout);
+        if (centerMode !== preferredObjectLayoutMode) {
+          state.setCenterMode(preferredObjectLayoutMode);
+        }
+        const snapshot = saveImageStudioAnalysisPlanSnapshot(activeProjectId, {
+          slotId,
+          sourceSignature: workingSourceSignature,
+          savedAt: new Date().toISOString(),
+          layout: sharedLayout,
+          effectiveMode: response.effectiveMode,
+          authoritativeSource: response.authoritativeSource,
+          detectionUsed: response.analysis.detectionUsed,
+          confidence: response.analysis.confidence,
+          policyVersion: response.analysis.policyVersion,
+          policyReason: response.analysis.policyReason,
+          fallbackApplied: response.analysis.fallbackApplied,
+        });
+        state.setAnalysisPlanSnapshot(snapshot);
+        state.applyAnalysisLayoutToCenter(sharedLayout, 'manual');
+        state.applyAnalysisLayoutToAutoScaler(sharedLayout, 'manual');
+        toast('Analysis completed and synced to Object Layouting + Auto Scaler controls.', {
+          variant: 'success',
+        });
+      } catch (error) {
+        toast(error instanceof Error ? error.message : 'Failed to analyze image.', {
+          variant: 'error',
+        });
+      } finally {
+        setAnalysisBusy(false);
+        setAnalysisStatus('idle');
       }
-      const snapshot = saveImageStudioAnalysisPlanSnapshot(activeProjectId, {
-        slotId,
-        sourceSignature: workingSourceSignature,
-        savedAt: new Date().toISOString(),
-        layout: sharedLayout,
-        effectiveMode: response.effectiveMode,
-        authoritativeSource: response.authoritativeSource,
-        detectionUsed: response.analysis.detectionUsed,
-        confidence: response.analysis.confidence,
-        policyVersion: response.analysis.policyVersion,
-        policyReason: response.analysis.policyReason,
-        fallbackApplied: response.analysis.fallbackApplied,
-      });
-      state.setAnalysisPlanSnapshot(snapshot);
-      state.applyAnalysisLayoutToCenter(sharedLayout, 'manual');
-      state.applyAnalysisLayoutToAutoScaler(sharedLayout, 'manual');
-      toast('Analysis completed and synced to Object Layouting + Auto Scaler controls.', {
-        variant: 'success',
-      });
-    } catch (error) {
-      toast(error instanceof Error ? error.message : 'Failed to analyze image.', {
-        variant: 'error',
-      });
-    } finally {
-      setAnalysisBusy(false);
-      setAnalysisStatus('idle');
-    }
-  }, [
-    activeProjectId,
-    analysisBusy,
-    autoScaleLayoutPayload,
-    centerLayoutPayload,
-    centerMode,
-    setAnalysisBusy,
-    setAnalysisStatus,
-    state,
-    toast,
-    workingSlot?.id,
-    workingSlotImageSrc,
-    workingSourceSignature,
-  ]);
+    },
+    [
+      activeProjectId,
+      analysisBusy,
+      autoScaleLayoutPayload,
+      centerLayoutPayload,
+      centerMode,
+      setAnalysisBusy,
+      setAnalysisStatus,
+      state,
+      toast,
+      workingSlot?.id,
+      workingSlotImageSrc,
+      workingSourceSignature,
+    ]
+  );
 
   const handleRunAnalysisFromCenter = useCallback(async (): Promise<void> => {
     await runAnalysisFromToolbar('object_layout');

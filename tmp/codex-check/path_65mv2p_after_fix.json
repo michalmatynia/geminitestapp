@@ -37,12 +37,8 @@
         "nodeTitle": "Simulation: Entity Modal",
         "message": "Recommended loop for simulation-driven tests.",
         "recommendation": "Wire Simulation.context to Trigger.context.",
-        "docsBindings": [
-          "docs/ai-paths/node-validator-simulation-patterns.md"
-        ],
-        "failedConditionIds": [
-          "simulation_outputs_to_trigger_context_wired_to_1"
-        ]
+        "docsBindings": ["docs/ai-paths/node-validator-simulation-patterns.md"],
+        "failedConditionIds": ["simulation_outputs_to_trigger_context_wired_to_1"]
       },
       {
         "id": "simulation_context_branch_exists:node-lwqwm72p",
@@ -54,9 +50,7 @@
         "nodeTitle": "Simulation: Entity Modal",
         "message": "Simulation context should feed context-processing branch.",
         "recommendation": "Connect Simulation.context to Context.context or Trigger.context branch.",
-        "docsBindings": [
-          "docs/ai-paths/node-validator-simulation-patterns.md"
-        ],
+        "docsBindings": ["docs/ai-paths/node-validator-simulation-patterns.md"],
         "failedConditionIds": [
           "simulation_context_branch_exists_wired_to_1",
           "simulation_context_branch_exists_wired_to_2"
@@ -72,12 +66,8 @@
         "nodeTitle": "Simulation: Entity Modal",
         "message": "Recommended simulation loop wiring.",
         "recommendation": "Connect Simulation.context -> Trigger.context.",
-        "docsBindings": [
-          "docs/ai-paths/node-validator-wiring-patterns.md"
-        ],
-        "failedConditionIds": [
-          "wiring_simulation_to_trigger_context_wired_to_1"
-        ]
+        "docsBindings": ["docs/ai-paths/node-validator-wiring-patterns.md"],
+        "failedConditionIds": ["wiring_simulation_to_trigger_context_wired_to_1"]
       },
       {
         "id": "wiring_context_to_parser:node-jprmv8",
@@ -89,12 +79,8 @@
         "nodeTitle": "Context Filter",
         "message": "Context branch should pass entityJson into parser.",
         "recommendation": "Connect Context.entityJson -> Parser.entityJson.",
-        "docsBindings": [
-          "docs/ai-paths/node-validator-wiring-patterns.md"
-        ],
-        "failedConditionIds": [
-          "wiring_context_to_parser_wired_to_1"
-        ]
+        "docsBindings": ["docs/ai-paths/node-validator-wiring-patterns.md"],
+        "failedConditionIds": ["wiring_context_to_parser_wired_to_1"]
       },
       {
         "id": "wiring_model_result_to_viewer:node-05y44u",
@@ -106,9 +92,7 @@
         "nodeTitle": "Model",
         "message": "Recommended observability path for model outputs.",
         "recommendation": "Connect Model.result -> Viewer.result.",
-        "docsBindings": [
-          "docs/ai-paths/node-validator-wiring-patterns.md"
-        ],
+        "docsBindings": ["docs/ai-paths/node-validator-wiring-patterns.md"],
         "failedConditionIds": [
           "wiring_model_result_to_viewer_wired_to_1",
           "wiring_model_result_to_viewer_wired_to_2"
@@ -124,12 +108,8 @@
         "nodeTitle": "Database Query",
         "message": "Database operations should expose result for troubleshooting.",
         "recommendation": "Connect Database.result -> Viewer.result.",
-        "docsBindings": [
-          "docs/ai-paths/node-validator-wiring-patterns.md"
-        ],
-        "failedConditionIds": [
-          "wiring_database_result_to_viewer_wired_to_1"
-        ]
+        "docsBindings": ["docs/ai-paths/node-validator-wiring-patterns.md"],
+        "failedConditionIds": ["wiring_database_result_to_viewer_wired_to_1"]
       },
       {
         "id": "catalog_context_context_entityid_non_empty:node-jprmv8",
@@ -141,12 +121,8 @@
         "nodeTitle": "Context Filter",
         "message": "Entity ID to fetch when entityIdSource is manual (or as a fallback when missing).",
         "recommendation": "Set config.context.entityId in Context Filter configuration.",
-        "docsBindings": [
-          "src/features/ai/ai-paths/lib/core/docs/node-docs.ts"
-        ],
-        "failedConditionIds": [
-          "catalog_context_context_entityid_non_empty_non_empty_1"
-        ]
+        "docsBindings": ["src/features/ai/ai-paths/lib/core/docs/node-docs.ts"],
+        "failedConditionIds": ["catalog_context_context_entityid_non_empty_non_empty_1"]
       },
       {
         "id": "catalog_context_runtime_cache_mode_allowed_values:node-jprmv8",
@@ -158,12 +134,8 @@
         "nodeTitle": "Context Filter",
         "message": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run. Allowed values inferred from docs: auto, force, disabled, preset, custom.",
         "recommendation": "Set config.runtime.cache.mode to one of: auto, force, disabled, preset, custom.",
-        "docsBindings": [
-          "src/features/ai/ai-paths/lib/core/docs/node-docs.ts"
-        ],
-        "failedConditionIds": [
-          "catalog_context_runtime_cache_mode_allowed_values_in_1"
-        ]
+        "docsBindings": ["src/features/ai/ai-paths/lib/core/docs/node-docs.ts"],
+        "failedConditionIds": ["catalog_context_runtime_cache_mode_allowed_values_in_1"]
       },
       {
         "id": "catalog_database_database_mode_allowed_values:node-nohy8q",
@@ -175,12 +147,8 @@
         "nodeTitle": "Database Query",
         "message": "Write mode: replace overwrites, append merges/extends (behavior depends on operation). Allowed values inferred from docs: merges, extends, preset, custom.",
         "recommendation": "Set config.database.mode to one of: merges, extends, preset, custom.",
-        "docsBindings": [
-          "src/features/ai/ai-paths/lib/core/docs/node-docs.ts"
-        ],
-        "failedConditionIds": [
-          "catalog_database_database_mode_allowed_values_in_1"
-        ]
+        "docsBindings": ["src/features/ai/ai-paths/lib/core/docs/node-docs.ts"],
+        "failedConditionIds": ["catalog_database_database_mode_allowed_values_in_1"]
       },
       {
         "id": "catalog_database_database_parameterinferenceguard_enforceoptionlabels_allowed_va:node-nohy8q",
@@ -192,12 +160,8 @@
         "nodeTitle": "Database Query",
         "message": "When true, radio/select/dropdown values must match optionLabels from definitions. Allowed values inferred from docs: radio, select, dropdown.",
         "recommendation": "Set config.database.parameterInferenceGuard.enforceOptionLabels to one of: radio, select, dropdown.",
-        "docsBindings": [
-          "src/features/ai/ai-paths/lib/core/docs/node-docs.ts"
-        ],
-        "failedConditionIds": [
-          "catalog_database_database_parameterinferenceguard_enforceoptionl"
-        ]
+        "docsBindings": ["src/features/ai/ai-paths/lib/core/docs/node-docs.ts"],
+        "failedConditionIds": ["catalog_database_database_parameterinferenceguard_enforceoptionl"]
       },
       {
         "id": "catalog_database_database_query_allowed_values:node-nohy8q",
@@ -209,12 +173,8 @@
         "nodeTitle": "Database Query",
         "message": "Query definition (provider/collection/preset/queryTemplate/sort/projection/etc). Allowed values inferred from docs: provider, collection, preset, queryTemplate, sort, projection, etc.",
         "recommendation": "Set config.database.query to one of: provider, collection, preset, queryTemplate, sort, projection, etc.",
-        "docsBindings": [
-          "src/features/ai/ai-paths/lib/core/docs/node-docs.ts"
-        ],
-        "failedConditionIds": [
-          "catalog_database_database_query_allowed_values_in_1"
-        ]
+        "docsBindings": ["src/features/ai/ai-paths/lib/core/docs/node-docs.ts"],
+        "failedConditionIds": ["catalog_database_database_query_allowed_values_in_1"]
       },
       {
         "id": "catalog_database_runtime_cache_mode_allowed_values:node-nohy8q",
@@ -226,12 +186,8 @@
         "nodeTitle": "Database Query",
         "message": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run. Allowed values inferred from docs: auto, force, disabled, preset, custom.",
         "recommendation": "Set config.runtime.cache.mode to one of: auto, force, disabled, preset, custom.",
-        "docsBindings": [
-          "src/features/ai/ai-paths/lib/core/docs/node-docs.ts"
-        ],
-        "failedConditionIds": [
-          "catalog_database_runtime_cache_mode_allowed_values_in_1"
-        ]
+        "docsBindings": ["src/features/ai/ai-paths/lib/core/docs/node-docs.ts"],
+        "failedConditionIds": ["catalog_database_runtime_cache_mode_allowed_values_in_1"]
       },
       {
         "id": "catalog_model_runtime_cache_mode_allowed_values:node-05y44u",
@@ -243,12 +199,8 @@
         "nodeTitle": "Model",
         "message": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run. Allowed values inferred from docs: auto, force, disabled, preset, custom.",
         "recommendation": "Set config.runtime.cache.mode to one of: auto, force, disabled, preset, custom.",
-        "docsBindings": [
-          "src/features/ai/ai-paths/lib/core/docs/node-docs.ts"
-        ],
-        "failedConditionIds": [
-          "catalog_model_runtime_cache_mode_allowed_values_in_1"
-        ]
+        "docsBindings": ["src/features/ai/ai-paths/lib/core/docs/node-docs.ts"],
+        "failedConditionIds": ["catalog_model_runtime_cache_mode_allowed_values_in_1"]
       },
       {
         "id": "catalog_model_runtime_cache_mode_allowed_values:node-gfrhnz",
@@ -260,12 +212,8 @@
         "nodeTitle": "Model",
         "message": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run. Allowed values inferred from docs: auto, force, disabled, preset, custom.",
         "recommendation": "Set config.runtime.cache.mode to one of: auto, force, disabled, preset, custom.",
-        "docsBindings": [
-          "src/features/ai/ai-paths/lib/core/docs/node-docs.ts"
-        ],
-        "failedConditionIds": [
-          "catalog_model_runtime_cache_mode_allowed_values_in_1"
-        ]
+        "docsBindings": ["src/features/ai/ai-paths/lib/core/docs/node-docs.ts"],
+        "failedConditionIds": ["catalog_model_runtime_cache_mode_allowed_values_in_1"]
       },
       {
         "id": "catalog_model_runtime_cache_mode_allowed_values:node-o8fdnje9",
@@ -277,12 +225,8 @@
         "nodeTitle": "Model",
         "message": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run. Allowed values inferred from docs: auto, force, disabled, preset, custom.",
         "recommendation": "Set config.runtime.cache.mode to one of: auto, force, disabled, preset, custom.",
-        "docsBindings": [
-          "src/features/ai/ai-paths/lib/core/docs/node-docs.ts"
-        ],
-        "failedConditionIds": [
-          "catalog_model_runtime_cache_mode_allowed_values_in_1"
-        ]
+        "docsBindings": ["src/features/ai/ai-paths/lib/core/docs/node-docs.ts"],
+        "failedConditionIds": ["catalog_model_runtime_cache_mode_allowed_values_in_1"]
       },
       {
         "id": "catalog_parser_parser_outputmode_allowed_values:node-2t655s",
@@ -294,12 +238,8 @@
         "nodeTitle": "JSON Parser",
         "message": "individual emits one port per mapping; bundle emits a single bundle output. Allowed values inferred from docs: individual, object, array.",
         "recommendation": "Set config.parser.outputMode to one of: individual, object, array.",
-        "docsBindings": [
-          "src/features/ai/ai-paths/lib/core/docs/node-docs.ts"
-        ],
-        "failedConditionIds": [
-          "catalog_parser_parser_outputmode_allowed_values_in_1"
-        ]
+        "docsBindings": ["src/features/ai/ai-paths/lib/core/docs/node-docs.ts"],
+        "failedConditionIds": ["catalog_parser_parser_outputmode_allowed_values_in_1"]
       },
       {
         "id": "catalog_parser_runtime_cache_mode_allowed_values:node-2t655s",
@@ -311,12 +251,8 @@
         "nodeTitle": "JSON Parser",
         "message": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run. Allowed values inferred from docs: auto, force, disabled, preset, custom.",
         "recommendation": "Set config.runtime.cache.mode to one of: auto, force, disabled, preset, custom.",
-        "docsBindings": [
-          "src/features/ai/ai-paths/lib/core/docs/node-docs.ts"
-        ],
-        "failedConditionIds": [
-          "catalog_parser_runtime_cache_mode_allowed_values_in_1"
-        ]
+        "docsBindings": ["src/features/ai/ai-paths/lib/core/docs/node-docs.ts"],
+        "failedConditionIds": ["catalog_parser_runtime_cache_mode_allowed_values_in_1"]
       },
       {
         "id": "catalog_prompt_runtime_cache_mode_allowed_values:node-07ywfx",
@@ -328,12 +264,8 @@
         "nodeTitle": "Prompt",
         "message": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run. Allowed values inferred from docs: auto, force, disabled, preset, custom.",
         "recommendation": "Set config.runtime.cache.mode to one of: auto, force, disabled, preset, custom.",
-        "docsBindings": [
-          "src/features/ai/ai-paths/lib/core/docs/node-docs.ts"
-        ],
-        "failedConditionIds": [
-          "catalog_prompt_runtime_cache_mode_allowed_values_in_1"
-        ]
+        "docsBindings": ["src/features/ai/ai-paths/lib/core/docs/node-docs.ts"],
+        "failedConditionIds": ["catalog_prompt_runtime_cache_mode_allowed_values_in_1"]
       },
       {
         "id": "catalog_prompt_runtime_cache_mode_allowed_values:node-bq516q",
@@ -345,12 +277,8 @@
         "nodeTitle": "Prompt",
         "message": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run. Allowed values inferred from docs: auto, force, disabled, preset, custom.",
         "recommendation": "Set config.runtime.cache.mode to one of: auto, force, disabled, preset, custom.",
-        "docsBindings": [
-          "src/features/ai/ai-paths/lib/core/docs/node-docs.ts"
-        ],
-        "failedConditionIds": [
-          "catalog_prompt_runtime_cache_mode_allowed_values_in_1"
-        ]
+        "docsBindings": ["src/features/ai/ai-paths/lib/core/docs/node-docs.ts"],
+        "failedConditionIds": ["catalog_prompt_runtime_cache_mode_allowed_values_in_1"]
       },
       {
         "id": "catalog_prompt_runtime_cache_mode_allowed_values:node-ozsf40xo",
@@ -362,12 +290,8 @@
         "nodeTitle": "Prompt",
         "message": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run. Allowed values inferred from docs: auto, force, disabled, preset, custom.",
         "recommendation": "Set config.runtime.cache.mode to one of: auto, force, disabled, preset, custom.",
-        "docsBindings": [
-          "src/features/ai/ai-paths/lib/core/docs/node-docs.ts"
-        ],
-        "failedConditionIds": [
-          "catalog_prompt_runtime_cache_mode_allowed_values_in_1"
-        ]
+        "docsBindings": ["src/features/ai/ai-paths/lib/core/docs/node-docs.ts"],
+        "failedConditionIds": ["catalog_prompt_runtime_cache_mode_allowed_values_in_1"]
       },
       {
         "id": "catalog_simulation_runtime_cache_mode_allowed_values:node-lwqwm72p",
@@ -379,12 +303,8 @@
         "nodeTitle": "Simulation: Entity Modal",
         "message": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run. Allowed values inferred from docs: auto, force, disabled, preset, custom.",
         "recommendation": "Set config.runtime.cache.mode to one of: auto, force, disabled, preset, custom.",
-        "docsBindings": [
-          "src/features/ai/ai-paths/lib/core/docs/node-docs.ts"
-        ],
-        "failedConditionIds": [
-          "catalog_simulation_runtime_cache_mode_allowed_values_in_1"
-        ]
+        "docsBindings": ["src/features/ai/ai-paths/lib/core/docs/node-docs.ts"],
+        "failedConditionIds": ["catalog_simulation_runtime_cache_mode_allowed_values_in_1"]
       },
       {
         "id": "catalog_trigger_runtime_cache_mode_allowed_values:node-nx558jai",
@@ -396,12 +316,8 @@
         "nodeTitle": "Trigger: Opis i Tytuł",
         "message": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run. Allowed values inferred from docs: auto, force, disabled, preset, custom.",
         "recommendation": "Set config.runtime.cache.mode to one of: auto, force, disabled, preset, custom.",
-        "docsBindings": [
-          "src/features/ai/ai-paths/lib/core/docs/node-docs.ts"
-        ],
-        "failedConditionIds": [
-          "catalog_trigger_runtime_cache_mode_allowed_values_in_1"
-        ]
+        "docsBindings": ["src/features/ai/ai-paths/lib/core/docs/node-docs.ts"],
+        "failedConditionIds": ["catalog_trigger_runtime_cache_mode_allowed_values_in_1"]
       },
       {
         "id": "catalog_trigger_trigger_event_allowed_values:node-nx558jai",
@@ -413,12 +329,8 @@
         "nodeTitle": "Trigger: Opis i Tytuł",
         "message": "What event fires this Trigger node. Use manual for UI-driven runs; scheduled_run for server/cron runs. Allowed values inferred from docs: server, cron, manual.",
         "recommendation": "Set config.trigger.event to one of: server, cron, manual.",
-        "docsBindings": [
-          "src/features/ai/ai-paths/lib/core/docs/node-docs.ts"
-        ],
-        "failedConditionIds": [
-          "catalog_trigger_trigger_event_allowed_values_in_1"
-        ]
+        "docsBindings": ["src/features/ai/ai-paths/lib/core/docs/node-docs.ts"],
+        "failedConditionIds": ["catalog_trigger_trigger_event_allowed_values_in_1"]
       },
       {
         "id": "catalog_context_runtime_waitforinputs_exists:node-jprmv8",
@@ -430,12 +342,8 @@
         "nodeTitle": "Context Filter",
         "message": "If true, wait until all connected input ports have values before executing the node. Documentation indicates this flag should be explicit for predictable runtime behavior.",
         "recommendation": "Set config.runtime.waitForInputs explicitly (true/false).",
-        "docsBindings": [
-          "src/features/ai/ai-paths/lib/core/docs/node-docs.ts"
-        ],
-        "failedConditionIds": [
-          "catalog_context_runtime_waitforinputs_exists_exists_1"
-        ]
+        "docsBindings": ["src/features/ai/ai-paths/lib/core/docs/node-docs.ts"],
+        "failedConditionIds": ["catalog_context_runtime_waitforinputs_exists_exists_1"]
       },
       {
         "id": "catalog_database_database_parameterinferenceguard_enabled_exists:node-nohy8q",
@@ -447,12 +355,8 @@
         "nodeTitle": "Database Query",
         "message": "When true, sanitizes inferred `parameters` updates against parameter definitions before write. Documentation indicates this flag should be explicit for predictable runtime behavior.",
         "recommendation": "Set config.database.parameterInferenceGuard.enabled explicitly (true/false).",
-        "docsBindings": [
-          "src/features/ai/ai-paths/lib/core/docs/node-docs.ts"
-        ],
-        "failedConditionIds": [
-          "catalog_database_database_parameterinferenceguard_enabled_exists"
-        ]
+        "docsBindings": ["src/features/ai/ai-paths/lib/core/docs/node-docs.ts"],
+        "failedConditionIds": ["catalog_database_database_parameterinferenceguard_enabled_exists"]
       },
       {
         "id": "catalog_model_runtime_waitforinputs_exists:node-05y44u",
@@ -464,12 +368,8 @@
         "nodeTitle": "Model",
         "message": "If true, wait until all connected input ports have values before executing the node. Documentation indicates this flag should be explicit for predictable runtime behavior.",
         "recommendation": "Set config.runtime.waitForInputs explicitly (true/false).",
-        "docsBindings": [
-          "src/features/ai/ai-paths/lib/core/docs/node-docs.ts"
-        ],
-        "failedConditionIds": [
-          "catalog_model_runtime_waitforinputs_exists_exists_1"
-        ]
+        "docsBindings": ["src/features/ai/ai-paths/lib/core/docs/node-docs.ts"],
+        "failedConditionIds": ["catalog_model_runtime_waitforinputs_exists_exists_1"]
       },
       {
         "id": "catalog_model_runtime_waitforinputs_exists:node-gfrhnz",
@@ -481,12 +381,8 @@
         "nodeTitle": "Model",
         "message": "If true, wait until all connected input ports have values before executing the node. Documentation indicates this flag should be explicit for predictable runtime behavior.",
         "recommendation": "Set config.runtime.waitForInputs explicitly (true/false).",
-        "docsBindings": [
-          "src/features/ai/ai-paths/lib/core/docs/node-docs.ts"
-        ],
-        "failedConditionIds": [
-          "catalog_model_runtime_waitforinputs_exists_exists_1"
-        ]
+        "docsBindings": ["src/features/ai/ai-paths/lib/core/docs/node-docs.ts"],
+        "failedConditionIds": ["catalog_model_runtime_waitforinputs_exists_exists_1"]
       },
       {
         "id": "catalog_model_runtime_waitforinputs_exists:node-o8fdnje9",
@@ -498,12 +394,8 @@
         "nodeTitle": "Model",
         "message": "If true, wait until all connected input ports have values before executing the node. Documentation indicates this flag should be explicit for predictable runtime behavior.",
         "recommendation": "Set config.runtime.waitForInputs explicitly (true/false).",
-        "docsBindings": [
-          "src/features/ai/ai-paths/lib/core/docs/node-docs.ts"
-        ],
-        "failedConditionIds": [
-          "catalog_model_runtime_waitforinputs_exists_exists_1"
-        ]
+        "docsBindings": ["src/features/ai/ai-paths/lib/core/docs/node-docs.ts"],
+        "failedConditionIds": ["catalog_model_runtime_waitforinputs_exists_exists_1"]
       },
       {
         "id": "catalog_parser_runtime_waitforinputs_exists:node-2t655s",
@@ -515,12 +407,8 @@
         "nodeTitle": "JSON Parser",
         "message": "If true, wait until all connected input ports have values before executing the node. Documentation indicates this flag should be explicit for predictable runtime behavior.",
         "recommendation": "Set config.runtime.waitForInputs explicitly (true/false).",
-        "docsBindings": [
-          "src/features/ai/ai-paths/lib/core/docs/node-docs.ts"
-        ],
-        "failedConditionIds": [
-          "catalog_parser_runtime_waitforinputs_exists_exists_1"
-        ]
+        "docsBindings": ["src/features/ai/ai-paths/lib/core/docs/node-docs.ts"],
+        "failedConditionIds": ["catalog_parser_runtime_waitforinputs_exists_exists_1"]
       },
       {
         "id": "catalog_prompt_runtime_waitforinputs_exists:node-07ywfx",
@@ -532,12 +420,8 @@
         "nodeTitle": "Prompt",
         "message": "If true, wait until all connected input ports have values before executing the node. Documentation indicates this flag should be explicit for predictable runtime behavior.",
         "recommendation": "Set config.runtime.waitForInputs explicitly (true/false).",
-        "docsBindings": [
-          "src/features/ai/ai-paths/lib/core/docs/node-docs.ts"
-        ],
-        "failedConditionIds": [
-          "catalog_prompt_runtime_waitforinputs_exists_exists_1"
-        ]
+        "docsBindings": ["src/features/ai/ai-paths/lib/core/docs/node-docs.ts"],
+        "failedConditionIds": ["catalog_prompt_runtime_waitforinputs_exists_exists_1"]
       },
       {
         "id": "catalog_prompt_runtime_waitforinputs_exists:node-bq516q",
@@ -549,12 +433,8 @@
         "nodeTitle": "Prompt",
         "message": "If true, wait until all connected input ports have values before executing the node. Documentation indicates this flag should be explicit for predictable runtime behavior.",
         "recommendation": "Set config.runtime.waitForInputs explicitly (true/false).",
-        "docsBindings": [
-          "src/features/ai/ai-paths/lib/core/docs/node-docs.ts"
-        ],
-        "failedConditionIds": [
-          "catalog_prompt_runtime_waitforinputs_exists_exists_1"
-        ]
+        "docsBindings": ["src/features/ai/ai-paths/lib/core/docs/node-docs.ts"],
+        "failedConditionIds": ["catalog_prompt_runtime_waitforinputs_exists_exists_1"]
       },
       {
         "id": "catalog_prompt_runtime_waitforinputs_exists:node-ozsf40xo",
@@ -566,12 +446,8 @@
         "nodeTitle": "Prompt",
         "message": "If true, wait until all connected input ports have values before executing the node. Documentation indicates this flag should be explicit for predictable runtime behavior.",
         "recommendation": "Set config.runtime.waitForInputs explicitly (true/false).",
-        "docsBindings": [
-          "src/features/ai/ai-paths/lib/core/docs/node-docs.ts"
-        ],
-        "failedConditionIds": [
-          "catalog_prompt_runtime_waitforinputs_exists_exists_1"
-        ]
+        "docsBindings": ["src/features/ai/ai-paths/lib/core/docs/node-docs.ts"],
+        "failedConditionIds": ["catalog_prompt_runtime_waitforinputs_exists_exists_1"]
       },
       {
         "id": "catalog_simulation_runtime_waitforinputs_exists:node-lwqwm72p",
@@ -583,12 +459,8 @@
         "nodeTitle": "Simulation: Entity Modal",
         "message": "If true, wait until all connected input ports have values before executing the node. Documentation indicates this flag should be explicit for predictable runtime behavior.",
         "recommendation": "Set config.runtime.waitForInputs explicitly (true/false).",
-        "docsBindings": [
-          "src/features/ai/ai-paths/lib/core/docs/node-docs.ts"
-        ],
-        "failedConditionIds": [
-          "catalog_simulation_runtime_waitforinputs_exists_exists_1"
-        ]
+        "docsBindings": ["src/features/ai/ai-paths/lib/core/docs/node-docs.ts"],
+        "failedConditionIds": ["catalog_simulation_runtime_waitforinputs_exists_exists_1"]
       },
       {
         "id": "catalog_trigger_runtime_waitforinputs_exists:node-nx558jai",
@@ -600,12 +472,8 @@
         "nodeTitle": "Trigger: Opis i Tytuł",
         "message": "If true, wait until all connected input ports have values before executing the node. Documentation indicates this flag should be explicit for predictable runtime behavior.",
         "recommendation": "Set config.runtime.waitForInputs explicitly (true/false).",
-        "docsBindings": [
-          "src/features/ai/ai-paths/lib/core/docs/node-docs.ts"
-        ],
-        "failedConditionIds": [
-          "catalog_trigger_runtime_waitforinputs_exists_exists_1"
-        ]
+        "docsBindings": ["src/features/ai/ai-paths/lib/core/docs/node-docs.ts"],
+        "failedConditionIds": ["catalog_trigger_runtime_waitforinputs_exists_exists_1"]
       },
       {
         "id": "coverage_database_wiring_has_outgoing:node-nohy8q",
@@ -617,12 +485,8 @@
         "nodeTitle": "Database Query",
         "message": "Coverage matrix downstream wiring signal for Database Query. Operation/query/update identity safety checks included",
         "recommendation": "Connect at least one outgoing edge from this node type.",
-        "docsBindings": [
-          "docs/ai-paths/node-validator-coverage-matrix.csv"
-        ],
-        "failedConditionIds": [
-          "coverage_database_wiring_has_outgoing_has_outgoing_port_1"
-        ]
+        "docsBindings": ["docs/ai-paths/node-validator-coverage-matrix.csv"],
+        "failedConditionIds": ["coverage_database_wiring_has_outgoing_has_outgoing_port_1"]
       },
       {
         "id": "coverage_simulation_wiring_has_outgoing:node-lwqwm72p",
@@ -634,12 +498,8 @@
         "nodeTitle": "Simulation: Entity Modal",
         "message": "Coverage matrix downstream wiring signal for Simulation: Entity Modal. Simulation pack includes identity and collection resolve checks",
         "recommendation": "Connect at least one outgoing edge from this node type.",
-        "docsBindings": [
-          "docs/ai-paths/node-validator-coverage-matrix.csv"
-        ],
-        "failedConditionIds": [
-          "coverage_simulation_wiring_has_outgoing_has_outgoing_port_1"
-        ]
+        "docsBindings": ["docs/ai-paths/node-validator-coverage-matrix.csv"],
+        "failedConditionIds": ["coverage_simulation_wiring_has_outgoing_has_outgoing_port_1"]
       },
       {
         "id": "coverage_context_runtime_wait_for_inputs_explicit:node-jprmv8",
@@ -651,12 +511,8 @@
         "nodeTitle": "Context Filter",
         "message": "Coverage matrix runtime-safety signal requires explicit wait-for-inputs behavior for deterministic execution.",
         "recommendation": "Set `config.runtime.waitForInputs` explicitly to true or false.",
-        "docsBindings": [
-          "docs/ai-paths/node-validator-coverage-matrix.csv"
-        ],
-        "failedConditionIds": [
-          "coverage_context_runtime_wait_for_inputs_explicit_exists_1"
-        ]
+        "docsBindings": ["docs/ai-paths/node-validator-coverage-matrix.csv"],
+        "failedConditionIds": ["coverage_context_runtime_wait_for_inputs_explicit_exists_1"]
       },
       {
         "id": "coverage_model_runtime_wait_for_inputs_explicit:node-05y44u",
@@ -668,12 +524,8 @@
         "nodeTitle": "Model",
         "message": "Coverage matrix runtime-safety signal requires explicit wait-for-inputs behavior for deterministic execution.",
         "recommendation": "Set `config.runtime.waitForInputs` explicitly to true or false.",
-        "docsBindings": [
-          "docs/ai-paths/node-validator-coverage-matrix.csv"
-        ],
-        "failedConditionIds": [
-          "coverage_model_runtime_wait_for_inputs_explicit_exists_1"
-        ]
+        "docsBindings": ["docs/ai-paths/node-validator-coverage-matrix.csv"],
+        "failedConditionIds": ["coverage_model_runtime_wait_for_inputs_explicit_exists_1"]
       },
       {
         "id": "coverage_model_runtime_wait_for_inputs_explicit:node-gfrhnz",
@@ -685,12 +537,8 @@
         "nodeTitle": "Model",
         "message": "Coverage matrix runtime-safety signal requires explicit wait-for-inputs behavior for deterministic execution.",
         "recommendation": "Set `config.runtime.waitForInputs` explicitly to true or false.",
-        "docsBindings": [
-          "docs/ai-paths/node-validator-coverage-matrix.csv"
-        ],
-        "failedConditionIds": [
-          "coverage_model_runtime_wait_for_inputs_explicit_exists_1"
-        ]
+        "docsBindings": ["docs/ai-paths/node-validator-coverage-matrix.csv"],
+        "failedConditionIds": ["coverage_model_runtime_wait_for_inputs_explicit_exists_1"]
       },
       {
         "id": "coverage_model_runtime_wait_for_inputs_explicit:node-o8fdnje9",
@@ -702,12 +550,8 @@
         "nodeTitle": "Model",
         "message": "Coverage matrix runtime-safety signal requires explicit wait-for-inputs behavior for deterministic execution.",
         "recommendation": "Set `config.runtime.waitForInputs` explicitly to true or false.",
-        "docsBindings": [
-          "docs/ai-paths/node-validator-coverage-matrix.csv"
-        ],
-        "failedConditionIds": [
-          "coverage_model_runtime_wait_for_inputs_explicit_exists_1"
-        ]
+        "docsBindings": ["docs/ai-paths/node-validator-coverage-matrix.csv"],
+        "failedConditionIds": ["coverage_model_runtime_wait_for_inputs_explicit_exists_1"]
       },
       {
         "id": "coverage_parser_runtime_wait_for_inputs_explicit:node-2t655s",
@@ -719,12 +563,8 @@
         "nodeTitle": "JSON Parser",
         "message": "Coverage matrix runtime-safety signal requires explicit wait-for-inputs behavior for deterministic execution.",
         "recommendation": "Set `config.runtime.waitForInputs` explicitly to true or false.",
-        "docsBindings": [
-          "docs/ai-paths/node-validator-coverage-matrix.csv"
-        ],
-        "failedConditionIds": [
-          "coverage_parser_runtime_wait_for_inputs_explicit_exists_1"
-        ]
+        "docsBindings": ["docs/ai-paths/node-validator-coverage-matrix.csv"],
+        "failedConditionIds": ["coverage_parser_runtime_wait_for_inputs_explicit_exists_1"]
       },
       {
         "id": "coverage_prompt_runtime_wait_for_inputs_explicit:node-07ywfx",
@@ -736,12 +576,8 @@
         "nodeTitle": "Prompt",
         "message": "Coverage matrix runtime-safety signal requires explicit wait-for-inputs behavior for deterministic execution.",
         "recommendation": "Set `config.runtime.waitForInputs` explicitly to true or false.",
-        "docsBindings": [
-          "docs/ai-paths/node-validator-coverage-matrix.csv"
-        ],
-        "failedConditionIds": [
-          "coverage_prompt_runtime_wait_for_inputs_explicit_exists_1"
-        ]
+        "docsBindings": ["docs/ai-paths/node-validator-coverage-matrix.csv"],
+        "failedConditionIds": ["coverage_prompt_runtime_wait_for_inputs_explicit_exists_1"]
       },
       {
         "id": "coverage_prompt_runtime_wait_for_inputs_explicit:node-bq516q",
@@ -753,12 +589,8 @@
         "nodeTitle": "Prompt",
         "message": "Coverage matrix runtime-safety signal requires explicit wait-for-inputs behavior for deterministic execution.",
         "recommendation": "Set `config.runtime.waitForInputs` explicitly to true or false.",
-        "docsBindings": [
-          "docs/ai-paths/node-validator-coverage-matrix.csv"
-        ],
-        "failedConditionIds": [
-          "coverage_prompt_runtime_wait_for_inputs_explicit_exists_1"
-        ]
+        "docsBindings": ["docs/ai-paths/node-validator-coverage-matrix.csv"],
+        "failedConditionIds": ["coverage_prompt_runtime_wait_for_inputs_explicit_exists_1"]
       },
       {
         "id": "coverage_prompt_runtime_wait_for_inputs_explicit:node-ozsf40xo",
@@ -770,12 +602,8 @@
         "nodeTitle": "Prompt",
         "message": "Coverage matrix runtime-safety signal requires explicit wait-for-inputs behavior for deterministic execution.",
         "recommendation": "Set `config.runtime.waitForInputs` explicitly to true or false.",
-        "docsBindings": [
-          "docs/ai-paths/node-validator-coverage-matrix.csv"
-        ],
-        "failedConditionIds": [
-          "coverage_prompt_runtime_wait_for_inputs_explicit_exists_1"
-        ]
+        "docsBindings": ["docs/ai-paths/node-validator-coverage-matrix.csv"],
+        "failedConditionIds": ["coverage_prompt_runtime_wait_for_inputs_explicit_exists_1"]
       },
       {
         "id": "coverage_simulation_runtime_wait_for_inputs_explicit:node-lwqwm72p",
@@ -787,12 +615,8 @@
         "nodeTitle": "Simulation: Entity Modal",
         "message": "Coverage matrix runtime-safety signal requires explicit wait-for-inputs behavior for deterministic execution.",
         "recommendation": "Set `config.runtime.waitForInputs` explicitly to true or false.",
-        "docsBindings": [
-          "docs/ai-paths/node-validator-coverage-matrix.csv"
-        ],
-        "failedConditionIds": [
-          "coverage_simulation_runtime_wait_for_inputs_explicit_exists_1"
-        ]
+        "docsBindings": ["docs/ai-paths/node-validator-coverage-matrix.csv"],
+        "failedConditionIds": ["coverage_simulation_runtime_wait_for_inputs_explicit_exists_1"]
       },
       {
         "id": "coverage_trigger_runtime_wait_for_inputs_explicit:node-nx558jai",
@@ -804,12 +628,8 @@
         "nodeTitle": "Trigger: Opis i Tytuł",
         "message": "Coverage matrix runtime-safety signal requires explicit wait-for-inputs behavior for deterministic execution.",
         "recommendation": "Set `config.runtime.waitForInputs` explicitly to true or false.",
-        "docsBindings": [
-          "docs/ai-paths/node-validator-coverage-matrix.csv"
-        ],
-        "failedConditionIds": [
-          "coverage_trigger_runtime_wait_for_inputs_explicit_exists_1"
-        ]
+        "docsBindings": ["docs/ai-paths/node-validator-coverage-matrix.csv"],
+        "failedConditionIds": ["coverage_trigger_runtime_wait_for_inputs_explicit_exists_1"]
       },
       {
         "id": "coverage_model_runtime_waitforinputs_async_non_empty:node-05y44u",
@@ -821,12 +641,8 @@
         "nodeTitle": "Model",
         "message": "Coverage matrix async-correctness signal requires explicit async control configuration.",
         "recommendation": "Set config.runtime.waitForInputs to a deterministic value.",
-        "docsBindings": [
-          "docs/ai-paths/node-validator-coverage-matrix.csv"
-        ],
-        "failedConditionIds": [
-          "coverage_model_runtime_waitforinputs_async_non_empty_non_empty_1"
-        ]
+        "docsBindings": ["docs/ai-paths/node-validator-coverage-matrix.csv"],
+        "failedConditionIds": ["coverage_model_runtime_waitforinputs_async_non_empty_non_empty_1"]
       },
       {
         "id": "coverage_model_runtime_waitforinputs_async_non_empty:node-gfrhnz",
@@ -838,12 +654,8 @@
         "nodeTitle": "Model",
         "message": "Coverage matrix async-correctness signal requires explicit async control configuration.",
         "recommendation": "Set config.runtime.waitForInputs to a deterministic value.",
-        "docsBindings": [
-          "docs/ai-paths/node-validator-coverage-matrix.csv"
-        ],
-        "failedConditionIds": [
-          "coverage_model_runtime_waitforinputs_async_non_empty_non_empty_1"
-        ]
+        "docsBindings": ["docs/ai-paths/node-validator-coverage-matrix.csv"],
+        "failedConditionIds": ["coverage_model_runtime_waitforinputs_async_non_empty_non_empty_1"]
       },
       {
         "id": "coverage_model_runtime_waitforinputs_async_non_empty:node-o8fdnje9",
@@ -855,12 +667,8 @@
         "nodeTitle": "Model",
         "message": "Coverage matrix async-correctness signal requires explicit async control configuration.",
         "recommendation": "Set config.runtime.waitForInputs to a deterministic value.",
-        "docsBindings": [
-          "docs/ai-paths/node-validator-coverage-matrix.csv"
-        ],
-        "failedConditionIds": [
-          "coverage_model_runtime_waitforinputs_async_non_empty_non_empty_1"
-        ]
+        "docsBindings": ["docs/ai-paths/node-validator-coverage-matrix.csv"],
+        "failedConditionIds": ["coverage_model_runtime_waitforinputs_async_non_empty_non_empty_1"]
       },
       {
         "id": "snippet_wire_docs_description_snippet_context_entityjson_to_parser_entityjson:node-jprmv8",
@@ -876,9 +684,7 @@
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts#DOCS_DESCRIPTION_SNIPPET",
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts"
         ],
-        "failedConditionIds": [
-          "snippet_wire_docs_description_snippet_context_entityjson_to_pars"
-        ]
+        "failedConditionIds": ["snippet_wire_docs_description_snippet_context_entityjson_to_pars"]
       },
       {
         "id": "snippet_wire_docs_description_snippet_database_result_to_viewer_result:node-nohy8q",
@@ -894,9 +700,7 @@
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts#DOCS_DESCRIPTION_SNIPPET",
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts"
         ],
-        "failedConditionIds": [
-          "snippet_wire_docs_description_snippet_database_result_to_viewer_"
-        ]
+        "failedConditionIds": ["snippet_wire_docs_description_snippet_database_result_to_viewer_"]
       },
       {
         "id": "snippet_wire_docs_description_snippet_parser_images_to_ai_description_images:node-2t655s",
@@ -912,9 +716,7 @@
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts#DOCS_DESCRIPTION_SNIPPET",
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts"
         ],
-        "failedConditionIds": [
-          "snippet_wire_docs_description_snippet_parser_images_to_ai_descri"
-        ]
+        "failedConditionIds": ["snippet_wire_docs_description_snippet_parser_images_to_ai_descri"]
       },
       {
         "id": "snippet_wire_docs_description_snippet_parser_productid_to_database_entityid:node-2t655s",
@@ -930,9 +732,7 @@
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts#DOCS_DESCRIPTION_SNIPPET",
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts"
         ],
-        "failedConditionIds": [
-          "snippet_wire_docs_description_snippet_parser_productid_to_databa"
-        ]
+        "failedConditionIds": ["snippet_wire_docs_description_snippet_parser_productid_to_databa"]
       },
       {
         "id": "snippet_wire_docs_description_snippet_parser_title_to_ai_description_title:node-2t655s",
@@ -948,9 +748,7 @@
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts#DOCS_DESCRIPTION_SNIPPET",
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts"
         ],
-        "failedConditionIds": [
-          "snippet_wire_docs_description_snippet_parser_title_to_ai_descrip"
-        ]
+        "failedConditionIds": ["snippet_wire_docs_description_snippet_parser_title_to_ai_descrip"]
       },
       {
         "id": "snippet_wire_docs_jobs_snippet_model_jobid_to_poll_jobid:node-05y44u",
@@ -966,9 +764,7 @@
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts#DOCS_JOBS_SNIPPET",
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts"
         ],
-        "failedConditionIds": [
-          "snippet_wire_docs_jobs_snippet_model_jobid_to_poll_jobid_wired_t"
-        ]
+        "failedConditionIds": ["snippet_wire_docs_jobs_snippet_model_jobid_to_poll_jobid_wired_t"]
       },
       {
         "id": "snippet_wire_docs_jobs_snippet_model_jobid_to_poll_jobid:node-gfrhnz",
@@ -984,9 +780,7 @@
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts#DOCS_JOBS_SNIPPET",
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts"
         ],
-        "failedConditionIds": [
-          "snippet_wire_docs_jobs_snippet_model_jobid_to_poll_jobid_wired_t"
-        ]
+        "failedConditionIds": ["snippet_wire_docs_jobs_snippet_model_jobid_to_poll_jobid_wired_t"]
       },
       {
         "id": "snippet_wire_docs_jobs_snippet_model_jobid_to_poll_jobid:node-o8fdnje9",
@@ -1002,9 +796,7 @@
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts#DOCS_JOBS_SNIPPET",
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts"
         ],
-        "failedConditionIds": [
-          "snippet_wire_docs_jobs_snippet_model_jobid_to_poll_jobid_wired_t"
-        ]
+        "failedConditionIds": ["snippet_wire_docs_jobs_snippet_model_jobid_to_poll_jobid_wired_t"]
       },
       {
         "id": "snippet_wire_docs_jobs_snippet_model_result_to_database_result:node-05y44u",
@@ -1020,9 +812,7 @@
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts#DOCS_JOBS_SNIPPET",
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts"
         ],
-        "failedConditionIds": [
-          "snippet_wire_docs_jobs_snippet_model_result_to_database_result_w"
-        ]
+        "failedConditionIds": ["snippet_wire_docs_jobs_snippet_model_result_to_database_result_w"]
       },
       {
         "id": "snippet_wire_docs_jobs_snippet_model_result_to_database_result:node-o8fdnje9",
@@ -1038,9 +828,7 @@
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts#DOCS_JOBS_SNIPPET",
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts"
         ],
-        "failedConditionIds": [
-          "snippet_wire_docs_jobs_snippet_model_result_to_database_result_w"
-        ]
+        "failedConditionIds": ["snippet_wire_docs_jobs_snippet_model_result_to_database_result_w"]
       },
       {
         "id": "snippet_wire_docs_jobs_snippet_model_result_to_viewer_result:node-05y44u",
@@ -1056,9 +844,7 @@
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts#DOCS_JOBS_SNIPPET",
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts"
         ],
-        "failedConditionIds": [
-          "snippet_wire_docs_jobs_snippet_model_result_to_viewer_result_wir"
-        ]
+        "failedConditionIds": ["snippet_wire_docs_jobs_snippet_model_result_to_viewer_result_wir"]
       },
       {
         "id": "snippet_wire_docs_jobs_snippet_model_result_to_viewer_result:node-gfrhnz",
@@ -1074,9 +860,7 @@
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts#DOCS_JOBS_SNIPPET",
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts"
         ],
-        "failedConditionIds": [
-          "snippet_wire_docs_jobs_snippet_model_result_to_viewer_result_wir"
-        ]
+        "failedConditionIds": ["snippet_wire_docs_jobs_snippet_model_result_to_viewer_result_wir"]
       },
       {
         "id": "snippet_wire_docs_jobs_snippet_model_result_to_viewer_result:node-o8fdnje9",
@@ -1092,9 +876,7 @@
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts#DOCS_JOBS_SNIPPET",
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts"
         ],
-        "failedConditionIds": [
-          "snippet_wire_docs_jobs_snippet_model_result_to_viewer_result_wir"
-        ]
+        "failedConditionIds": ["snippet_wire_docs_jobs_snippet_model_result_to_viewer_result_wir"]
       },
       {
         "id": "snippet_wire_docs_jobs_snippet_parser_productid_to_database_entityid:node-2t655s",
@@ -1110,9 +892,7 @@
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts#DOCS_JOBS_SNIPPET",
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts"
         ],
-        "failedConditionIds": [
-          "snippet_wire_docs_jobs_snippet_parser_productid_to_database_enti"
-        ]
+        "failedConditionIds": ["snippet_wire_docs_jobs_snippet_parser_productid_to_database_enti"]
       },
       {
         "id": "snippet_wire_docs_jobs_snippet_prompt_images_to_model_images:node-bq516q",
@@ -1128,9 +908,7 @@
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts#DOCS_JOBS_SNIPPET",
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts"
         ],
-        "failedConditionIds": [
-          "snippet_wire_docs_jobs_snippet_prompt_images_to_model_images_wir"
-        ]
+        "failedConditionIds": ["snippet_wire_docs_jobs_snippet_prompt_images_to_model_images_wir"]
       },
       {
         "id": "snippet_wire_docs_jobs_snippet_prompt_images_to_model_images:node-ozsf40xo",
@@ -1146,9 +924,7 @@
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts#DOCS_JOBS_SNIPPET",
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts"
         ],
-        "failedConditionIds": [
-          "snippet_wire_docs_jobs_snippet_prompt_images_to_model_images_wir"
-        ]
+        "failedConditionIds": ["snippet_wire_docs_jobs_snippet_prompt_images_to_model_images_wir"]
       },
       {
         "id": "snippet_wire_docs_wiring_snippet_context_entityjson_to_parser_entityjson:node-jprmv8",
@@ -1164,9 +940,7 @@
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts#DOCS_WIRING_SNIPPET",
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts"
         ],
-        "failedConditionIds": [
-          "snippet_wire_docs_wiring_snippet_context_entityjson_to_parser_en"
-        ]
+        "failedConditionIds": ["snippet_wire_docs_wiring_snippet_context_entityjson_to_parser_en"]
       },
       {
         "id": "snippet_wire_docs_wiring_snippet_simulation_context_to_trigger_context:node-lwqwm72p",
@@ -1182,9 +956,7 @@
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts#DOCS_WIRING_SNIPPET",
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts"
         ],
-        "failedConditionIds": [
-          "snippet_wire_docs_wiring_snippet_simulation_context_to_trigger_c"
-        ]
+        "failedConditionIds": ["snippet_wire_docs_wiring_snippet_simulation_context_to_trigger_c"]
       },
       {
         "id": "snippet_wire_docs_wiring_snippet_trigger_context_to_viewer_context:node-nx558jai",
@@ -1200,9 +972,7 @@
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts#DOCS_WIRING_SNIPPET",
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts"
         ],
-        "failedConditionIds": [
-          "snippet_wire_docs_wiring_snippet_trigger_context_to_viewer_conte"
-        ]
+        "failedConditionIds": ["snippet_wire_docs_wiring_snippet_trigger_context_to_viewer_conte"]
       },
       {
         "id": "snippet_wire_docs_wiring_snippet_trigger_meta_to_viewer_meta:node-nx558jai",
@@ -1218,9 +988,7 @@
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts#DOCS_WIRING_SNIPPET",
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts"
         ],
-        "failedConditionIds": [
-          "snippet_wire_docs_wiring_snippet_trigger_meta_to_viewer_meta_wir"
-        ]
+        "failedConditionIds": ["snippet_wire_docs_wiring_snippet_trigger_meta_to_viewer_meta_wir"]
       },
       {
         "id": "snippet_wire_docs_wiring_snippet_trigger_trigger_to_viewer_trigger:node-nx558jai",
@@ -1236,9 +1004,7 @@
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts#DOCS_WIRING_SNIPPET",
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts"
         ],
-        "failedConditionIds": [
-          "snippet_wire_docs_wiring_snippet_trigger_trigger_to_viewer_trigg"
-        ]
+        "failedConditionIds": ["snippet_wire_docs_wiring_snippet_trigger_trigger_to_viewer_trigg"]
       },
       {
         "id": "snippet_wire_docs_wiring_snippet_trigger_triggername_to_viewer_triggername:node-nx558jai",
@@ -1254,9 +1020,7 @@
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts#DOCS_WIRING_SNIPPET",
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts"
         ],
-        "failedConditionIds": [
-          "snippet_wire_docs_wiring_snippet_trigger_triggername_to_viewer_t"
-        ]
+        "failedConditionIds": ["snippet_wire_docs_wiring_snippet_trigger_triggername_to_viewer_t"]
       },
       {
         "id": "snippet_wire_rev_docs_description_snippet_database_content_en_from_ai_descriptio:node-nohy8q",
@@ -1272,9 +1036,7 @@
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts#DOCS_DESCRIPTION_SNIPPET",
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts"
         ],
-        "failedConditionIds": [
-          "snippet_wire_rev_docs_description_snippet_database_content_en_fr"
-        ]
+        "failedConditionIds": ["snippet_wire_rev_docs_description_snippet_database_content_en_fr"]
       },
       {
         "id": "snippet_wire_rev_docs_description_snippet_database_entityid_from_parser_producti:node-nohy8q",
@@ -1290,9 +1052,7 @@
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts#DOCS_DESCRIPTION_SNIPPET",
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts"
         ],
-        "failedConditionIds": [
-          "snippet_wire_rev_docs_description_snippet_database_entityid_from"
-        ]
+        "failedConditionIds": ["snippet_wire_rev_docs_description_snippet_database_entityid_from"]
       },
       {
         "id": "snippet_wire_rev_docs_description_snippet_parser_entityjson_from_context_entityj:node-2t655s",
@@ -1308,9 +1068,7 @@
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts#DOCS_DESCRIPTION_SNIPPET",
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts"
         ],
-        "failedConditionIds": [
-          "snippet_wire_rev_docs_description_snippet_parser_entityjson_from"
-        ]
+        "failedConditionIds": ["snippet_wire_rev_docs_description_snippet_parser_entityjson_from"]
       },
       {
         "id": "snippet_wire_rev_docs_jobs_snippet_database_entityid_from_parser_productid:node-nohy8q",
@@ -1326,9 +1084,7 @@
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts#DOCS_JOBS_SNIPPET",
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts"
         ],
-        "failedConditionIds": [
-          "snippet_wire_rev_docs_jobs_snippet_database_entityid_from_parser"
-        ]
+        "failedConditionIds": ["snippet_wire_rev_docs_jobs_snippet_database_entityid_from_parser"]
       },
       {
         "id": "snippet_wire_rev_docs_jobs_snippet_database_result_from_poll_result:node-nohy8q",
@@ -1344,9 +1100,7 @@
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts#DOCS_JOBS_SNIPPET",
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts"
         ],
-        "failedConditionIds": [
-          "snippet_wire_rev_docs_jobs_snippet_database_result_from_poll_res"
-        ]
+        "failedConditionIds": ["snippet_wire_rev_docs_jobs_snippet_database_result_from_poll_res"]
       },
       {
         "id": "snippet_wire_rev_docs_jobs_snippet_model_images_from_prompt_images:node-gfrhnz",
@@ -1362,9 +1116,7 @@
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts#DOCS_JOBS_SNIPPET",
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts"
         ],
-        "failedConditionIds": [
-          "snippet_wire_rev_docs_jobs_snippet_model_images_from_prompt_imag"
-        ]
+        "failedConditionIds": ["snippet_wire_rev_docs_jobs_snippet_model_images_from_prompt_imag"]
       },
       {
         "id": "snippet_wire_rev_docs_jobs_snippet_model_images_from_prompt_images:node-o8fdnje9",
@@ -1380,9 +1132,7 @@
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts#DOCS_JOBS_SNIPPET",
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts"
         ],
-        "failedConditionIds": [
-          "snippet_wire_rev_docs_jobs_snippet_model_images_from_prompt_imag"
-        ]
+        "failedConditionIds": ["snippet_wire_rev_docs_jobs_snippet_model_images_from_prompt_imag"]
       },
       {
         "id": "snippet_wire_rev_docs_wiring_snippet_parser_entityjson_from_context_entityjson:node-2t655s",
@@ -1398,9 +1148,7 @@
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts#DOCS_WIRING_SNIPPET",
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts"
         ],
-        "failedConditionIds": [
-          "snippet_wire_rev_docs_wiring_snippet_parser_entityjson_from_cont"
-        ]
+        "failedConditionIds": ["snippet_wire_rev_docs_wiring_snippet_parser_entityjson_from_cont"]
       },
       {
         "id": "snippet_wire_rev_docs_wiring_snippet_trigger_context_from_simulation_context:node-nx558jai",
@@ -1416,9 +1164,7 @@
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts#DOCS_WIRING_SNIPPET",
           "src/features/ai/ai-paths/components/ai-paths-settings/docs-snippets.ts"
         ],
-        "failedConditionIds": [
-          "snippet_wire_rev_docs_wiring_snippet_trigger_context_from_simula"
-        ]
+        "failedConditionIds": ["snippet_wire_rev_docs_wiring_snippet_trigger_context_from_simula"]
       }
     ]
   },

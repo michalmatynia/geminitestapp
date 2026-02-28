@@ -44,7 +44,7 @@ export const DOCS_COPY_TROUBLESHOOTING_LINES = [
 
 const buildNodeDocClipboardSection = (
   doc: AiPathsNodeDocEntry,
-  nodeJsonSnippetByType: Record<string, string>,
+  nodeJsonSnippetByType: Record<string, string>
 ): string => {
   const lines: string[] = [
     `## Node: ${doc.title} (${doc.type})`,
@@ -61,7 +61,7 @@ const buildNodeDocClipboardSection = (
   } else {
     doc.config.forEach((field) => {
       lines.push(
-        `- ${field.path}: ${field.description}${field.defaultValue !== undefined ? ` (default: ${field.defaultValue})` : ''}`,
+        `- ${field.path}: ${field.description}${field.defaultValue !== undefined ? ` (default: ${field.defaultValue})` : ''}`
       );
     });
   }
@@ -137,9 +137,9 @@ export const buildFullDocumentationClipboardText = (args: {
     '',
   ];
 
-  const nodeSections = AI_PATHS_NODE_DOCS
-    .map((doc) => buildNodeDocClipboardSection(doc, nodeJsonSnippetByType))
-    .join('\\n\\n');
+  const nodeSections = AI_PATHS_NODE_DOCS.map((doc) =>
+    buildNodeDocClipboardSection(doc, nodeJsonSnippetByType)
+  ).join('\\n\\n');
   sections.push(nodeSections);
   sections.push('');
   return sections.join('\\n');

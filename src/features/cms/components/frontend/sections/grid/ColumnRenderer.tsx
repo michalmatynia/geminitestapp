@@ -9,30 +9,28 @@ import { SectionLayoutProvider, useSectionLayout } from '../SectionLayoutContext
 import { BlockRenderContext } from '../../blocks/BlockContext';
 import { getSectionStyles, getTextAlign } from '../../theme-styles';
 import { getCustomCssSelector, buildScopedCustomCss } from '@/features/cms/utils/custom-css';
-import { 
-  SECTION_BLOCK_TYPES, 
-  getBlockMinHeight, 
-  getGapClass, 
-  getGapStyle, 
-  resolveGapValue, 
-  resolveJustifyContent, 
-  resolveAlignItems, 
-  isBackgroundModeImage 
+import {
+  SECTION_BLOCK_TYPES,
+  getBlockMinHeight,
+  getGapClass,
+  getGapStyle,
+  resolveGapValue,
+  resolveJustifyContent,
+  resolveAlignItems,
+  isBackgroundModeImage,
 } from './frontend-grid-utils';
 import { BackgroundImageLayer } from './BackgroundImageLayer';
 import { SectionBlockRenderer } from './SectionBlockRenderer';
 import type { CmsBlockInstanceDto as BlockInstance } from '@/shared/contracts/cms';
 
-export function ColumnRenderer({
-  column,
-}: {
-  column: BlockInstance;
-}): React.ReactNode {
+export function ColumnRenderer({ column }: { column: BlockInstance }): React.ReactNode {
   const children = column.blocks ?? [];
   const { colorSchemes } = useSectionData();
   const { rowHeightMode, rowHeight } = useSectionLayout();
 
-  const columnBackgroundModeImages = children.filter((b: BlockInstance) => isBackgroundModeImage(b, 'column'));
+  const columnBackgroundModeImages = children.filter((b: BlockInstance) =>
+    isBackgroundModeImage(b, 'column')
+  );
   const contentChildren = children.filter((b: BlockInstance) => {
     if (b.type !== 'ImageElement') return true;
     const bgTarget = (b.settings?.['backgroundTarget'] as string) || 'none';
@@ -42,8 +40,11 @@ export function ColumnRenderer({
   const isSingleBlock = contentChildren.length === 1;
   const columnHeightMode = (column.settings['heightMode'] as string) || 'inherit';
   const columnHeight = (column.settings['height'] as number) || 0;
-  const shouldStretch = isSingleBlock && (columnHeightMode === 'fixed' || rowHeightMode === 'fixed');
-  const columnBackgroundSettings = column.settings['backgroundImage'] as Record<string, unknown> | undefined;
+  const shouldStretch =
+    isSingleBlock && (columnHeightMode === 'fixed' || rowHeightMode === 'fixed');
+  const columnBackgroundSettings = column.settings['backgroundImage'] as
+    | Record<string, unknown>
+    | undefined;
   const hasColumnBackgroundSetting = Boolean((columnBackgroundSettings?.['src'] as string) || '');
   const hasColumnBackgroundMode = columnBackgroundModeImages.length > 0;
   const hasColumnBackground = hasColumnBackgroundSetting || hasColumnBackgroundMode;
@@ -66,7 +67,9 @@ export function ColumnRenderer({
   }
 
   return (
-    <BlockRenderContext.Provider value={{ block: column, mediaStyles: null, stretch: shouldStretch }}>
+    <BlockRenderContext.Provider
+      value={{ block: column, mediaStyles: null, stretch: shouldStretch }}
+    >
       <BlockSettingsContext.Provider value={column.settings}>
         <GsapAnimationWrapper>
           <CssAnimationWrapper>
@@ -74,13 +77,17 @@ export function ColumnRenderer({
               className={`relative cms-node-${column.id} ${hasColumnBackground ? 'overflow-hidden' : ''}`}
               style={{ ...columnStyles, ...columnStyle }}
             >
-              {columnCustomCss ? <style data-cms-custom-css={column.id}>{columnCustomCss}</style> : null}
+              {columnCustomCss ? (
+                <style data-cms-custom-css={column.id}>{columnCustomCss}</style>
+              ) : null}
               {columnBackgroundModeImages.map((block: BlockInstance) => (
                 <Fragment key={`col-bg-mode-${block.id}`}>
                   <BackgroundImageLayer settings={block.settings} />
                 </Fragment>
               ))}
-              {hasColumnBackgroundSetting && <BackgroundImageLayer settings={columnBackgroundSettings} />}
+              {hasColumnBackgroundSetting && (
+                <BackgroundImageLayer settings={columnBackgroundSettings} />
+              )}
               <div
                 className={`relative z-10 flex flex-col ${shouldStretch ? 'h-full' : columnGapClass}`}
                 style={{
@@ -98,7 +105,11 @@ export function ColumnRenderer({
                   };
                   if (SECTION_BLOCK_TYPES.has(block.type)) {
                     return (
-                      <div key={block.id} className={shouldStretch ? 'flex-1' : ''} style={wrapperStyle}>
+                      <div
+                        key={block.id}
+                        className={shouldStretch ? 'flex-1' : ''}
+                        style={wrapperStyle}
+                      >
                         <SectionLayoutProvider stretch={shouldStretch}>
                           <SectionBlockRenderer block={block} />
                         </SectionLayoutProvider>
@@ -106,7 +117,11 @@ export function ColumnRenderer({
                     );
                   }
                   return (
-                    <div key={block.id} className={shouldStretch ? 'flex-1' : ''} style={wrapperStyle}>
+                    <div
+                      key={block.id}
+                      className={shouldStretch ? 'flex-1' : ''}
+                      style={wrapperStyle}
+                    >
                       <SectionLayoutProvider stretch={shouldStretch}>
                         <FrontendBlockRenderer block={block} />
                       </SectionLayoutProvider>

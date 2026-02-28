@@ -4,17 +4,8 @@
   "nodeType": "iterator",
   "title": "Iterator",
   "purpose": "Iterate over an array and emit one item at a time (advance on callback).",
-  "inputs": [
-    "value",
-    "callback"
-  ],
-  "outputs": [
-    "value",
-    "index",
-    "total",
-    "done",
-    "status"
-  ],
+  "inputs": ["value", "callback"],
+  "outputs": ["value", "index", "total", "done", "status"],
   "configFields": [
     {
       "path": "iterator.autoContinue",
@@ -53,17 +44,8 @@
       "x": 100,
       "y": 100
     },
-    "inputs": [
-      "value",
-      "callback"
-    ],
-    "outputs": [
-      "value",
-      "index",
-      "total",
-      "done",
-      "status"
-    ],
+    "inputs": ["value", "callback"],
+    "outputs": ["value", "index", "total", "done", "status"],
     "config": {
       "iterator": {
         "autoContinue": true,

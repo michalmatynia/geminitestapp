@@ -26,9 +26,7 @@ export async function GET_handler(
   const detail = await getProductSyncRunDetail(params.runId, {
     ...(query.page !== undefined ? { page: query.page } : {}),
     ...(query.pageSize !== undefined ? { pageSize: query.pageSize } : {}),
-    ...(query.includeItems !== undefined
-      ? { includeItems: query.includeItems }
-      : {}),
+    ...(query.includeItems !== undefined ? { includeItems: query.includeItems } : {}),
   });
 
   if (!detail) {

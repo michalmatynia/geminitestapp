@@ -3,8 +3,14 @@ import { renderHook, waitFor } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { AGENT_PERSONA_SETTINGS_KEY, DEFAULT_AGENT_PERSONA_SETTINGS } from '@/features/ai/agentcreator/constants/personas';
-import { useAgentPersonas, useSaveAgentPersonasMutation } from '@/features/ai/agentcreator/hooks/useAgentPersonas';
+import {
+  AGENT_PERSONA_SETTINGS_KEY,
+  DEFAULT_AGENT_PERSONA_SETTINGS,
+} from '@/features/ai/agentcreator/constants/personas';
+import {
+  useAgentPersonas,
+  useSaveAgentPersonasMutation,
+} from '@/features/ai/agentcreator/hooks/useAgentPersonas';
 import { fetchAgentPersonas } from '@/features/ai/agentcreator/utils/personas';
 import { invalidateSettingsCache } from '@/shared/api/settings-client';
 import type { AgentPersona } from '@/shared/contracts/agents';
@@ -84,8 +90,10 @@ describe('useAgentPersonas hooks', () => {
       value: JSON.stringify(personas),
     });
     expect(invalidateSettingsCache).toHaveBeenCalledTimes(1);
-    await waitFor(() => expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: QUERY_KEYS.agentPersonas.lists(),
-    }));
+    await waitFor(() =>
+      expect(invalidateSpy).toHaveBeenCalledWith({
+        queryKey: QUERY_KEYS.agentPersonas.lists(),
+      })
+    );
   });
 });

@@ -1,6 +1,13 @@
 'use client';
 
-import React, { createContext, useContext, useReducer, useMemo, useCallback, type ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useReducer,
+  useMemo,
+  useCallback,
+  type ReactNode,
+} from 'react';
 
 import type { PageZone } from '@/shared/contracts/cms';
 
@@ -120,11 +127,7 @@ export function DragStateProvider({ children }: DragStateProviderProps) {
 
   const value = useMemo(() => ({ state, dispatch }), [state]);
 
-  return (
-    <DragStateContext.Provider value={value}>
-      {children}
-    </DragStateContext.Provider>
-  );
+  return <DragStateContext.Provider value={value}>{children}</DragStateContext.Provider>;
 }
 
 // ---------------------------------------------------------------------------

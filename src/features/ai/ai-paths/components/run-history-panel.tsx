@@ -2,10 +2,7 @@
 
 import React from 'react';
 
-import type { 
-  AiPathRunRecord,
-  RuntimeHistoryEntry,
-} from '@/shared/lib/ai-paths';
+import type { AiPathRunRecord, RuntimeHistoryEntry } from '@/shared/lib/ai-paths';
 import {
   Button,
   Label,
@@ -27,10 +24,7 @@ export type RunHistoryFilter = 'all' | 'active' | 'failed' | 'dead';
 export function RunHistoryPanel(): React.JSX.Element {
   const orchestrator = useAiPathsSettingsOrchestrator();
   const runHistoryState = useRunHistoryState();
-  const {
-    expandedRunHistory,
-    runHistorySelection,
-  } = runHistoryState;
+  const { expandedRunHistory, runHistorySelection } = runHistoryState;
   const {
     setRunFilter: setRunFilterContext,
     setExpandedRunHistory,
@@ -90,7 +84,9 @@ export function RunHistoryPanel(): React.JSX.Element {
   return (
     <Card variant='subtle' padding='md' className='bg-card/60'>
       <div className='mb-3 flex items-center justify-between'>
-        <Hint size='xs' uppercase={false} className='font-semibold text-white'>Run History</Hint>
+        <Hint size='xs' uppercase={false} className='font-semibold text-white'>
+          Run History
+        </Hint>
         <Button
           type='button'
           className='rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60'
@@ -106,20 +102,22 @@ export function RunHistoryPanel(): React.JSX.Element {
           { id: 'active', label: 'Active' },
           { id: 'failed', label: 'Failed' },
           { id: 'dead', label: 'Dead-letter' },
-        ].map((filter: { id: string; label: string }): React.JSX.Element => (
-          <Button
-            key={filter.id}
-            type='button'
-            className={`rounded-md border px-2 py-1 text-[10px] ${
-              runFilter === filter.id
-                ? 'border-emerald-500/50 text-emerald-200'
-                : 'text-gray-300 hover:bg-muted/60'
-            }`}
-            onClick={(): void => setRunFilter(filter.id as RunHistoryFilter)}
-          >
-            {filter.label}
-          </Button>
-        ))}
+        ].map(
+          (filter: { id: string; label: string }): React.JSX.Element => (
+            <Button
+              key={filter.id}
+              type='button'
+              className={`rounded-md border px-2 py-1 text-[10px] ${
+                runFilter === filter.id
+                  ? 'border-emerald-500/50 text-emerald-200'
+                  : 'text-gray-300 hover:bg-muted/60'
+              }`}
+              onClick={(): void => setRunFilter(filter.id as RunHistoryFilter)}
+            >
+              {filter.label}
+            </Button>
+          )
+        )}
       </div>
       {filteredRunList.length === 0 ? (
         <EmptyStateComponent
@@ -131,7 +129,9 @@ export function RunHistoryPanel(): React.JSX.Element {
       ) : (
         <div className='space-y-2 text-xs text-gray-300'>
           {filteredRunList.slice(0, 6).map((run: AiPathRunRecord): React.JSX.Element => {
-            const runHistory = (run.runtimeState as { history?: Record<string, RuntimeHistoryEntry[]> } | undefined)?.history;
+            const runHistory = (
+              run.runtimeState as { history?: Record<string, RuntimeHistoryEntry[]> } | undefined
+            )?.history;
             const runHistoryOptions = buildHistoryNodeOptions(
               runHistory,
               null,
@@ -143,34 +143,31 @@ export function RunHistoryPanel(): React.JSX.Element {
               (option: { id: string }) => option.id === rawSelectedHistoryNodeId
             )
               ? rawSelectedHistoryNodeId
-              : runHistoryOptions[0]?.id ?? null;
+              : (runHistoryOptions[0]?.id ?? null);
             const historyOpen = Boolean(expandedRunHistory[run.id]);
             const historyEntries =
-              selectedHistoryNodeId && runHistory
-                ? runHistory[selectedHistoryNodeId] ?? []
-                : [];
+              selectedHistoryNodeId && runHistory ? (runHistory[selectedHistoryNodeId] ?? []) : [];
             return (
-              <Card
-                key={run.id}
-                variant='subtle-compact'
-                padding='sm'
-                className='bg-card/70'
-              >
+              <Card key={run.id} variant='subtle-compact' padding='sm' className='bg-card/70'>
                 <div className='flex items-center justify-between'>
                   <div>
                     <StatusBadge status={run.status} size='sm' className='font-bold' />
                     {isScheduledRun ? (
                       <div className='mt-1'>
-                        <StatusBadge status='Scheduled' variant='warning' size='sm' className='font-bold' />
+                        <StatusBadge
+                          status='Scheduled'
+                          variant='warning'
+                          size='sm'
+                          className='font-bold'
+                        />
                       </div>
                     ) : null}
                     <div className='mt-1 text-[11px] text-gray-400'>
                       {run.createdAt ? new Date(run.createdAt).toLocaleString() : '-'}
                     </div>
-                    {typeof run.retryCount === 'number' &&
-                      typeof run.maxAttempts === 'number' && (
+                    {typeof run.retryCount === 'number' && typeof run.maxAttempts === 'number' && (
                       <div className='text-[10px] text-gray-500'>
-                          Retries: {run.retryCount}/{run.maxAttempts}
+                        Retries: {run.retryCount}/{run.maxAttempts}
                       </div>
                     )}
                     {run.nextRetryAt && (
@@ -251,7 +248,11 @@ export function RunHistoryPanel(): React.JSX.Element {
                   </Alert>
                 )}
                 {historyOpen && (
-                  <Card variant='subtle-compact' padding='sm' className='mt-2 border-border/70 bg-black/20'>
+                  <Card
+                    variant='subtle-compact'
+                    padding='sm'
+                    className='mt-2 border-border/70 bg-black/20'
+                  >
                     <div className='flex flex-wrap items-center gap-2'>
                       <Label className='text-[10px] uppercase text-gray-500'>History</Label>
                       {runHistory ? (
@@ -265,10 +266,12 @@ export function RunHistoryPanel(): React.JSX.Element {
                                 [run.id]: value,
                               }))
                             }
-                            options={runHistoryOptions.map((option: { id: string; label: string }) => ({
-                              value: option.id,
-                              label: option.label
-                            }))}
+                            options={runHistoryOptions.map(
+                              (option: { id: string; label: string }) => ({
+                                value: option.id,
+                                label: option.label,
+                              })
+                            )}
                             triggerClassName='h-7 w-[220px] border-border bg-card/70 text-[11px] text-white'
                             placeholder='Select node'
                           />

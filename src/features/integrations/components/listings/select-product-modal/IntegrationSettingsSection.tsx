@@ -1,7 +1,10 @@
 import React from 'react';
 
 import { useListingSettingsContext } from '@/features/integrations/context/ListingSettingsContext';
-import type { IntegrationConnectionBasic, IntegrationWithConnections } from '@/shared/contracts/integrations';
+import type {
+  IntegrationConnectionBasic,
+  IntegrationWithConnections,
+} from '@/shared/contracts/integrations';
 import { FormField, FormSection, SelectSimple, Alert, LoadingState } from '@/shared/ui';
 
 import { BaseListingSettings } from '../BaseListingSettings';
@@ -19,7 +22,9 @@ export function IntegrationSettingsSection(): React.JSX.Element {
     setSelectedConnectionId,
   } = useListingSettingsContext();
   const { error } = useSelectProductForListingModalContext();
-  const integrationsWithConnections = integrations.filter((i: IntegrationWithConnections) => i.connections.length > 0);
+  const integrationsWithConnections = integrations.filter(
+    (i: IntegrationWithConnections) => i.connections.length > 0
+  );
 
   return (
     <div className='space-y-4'>
@@ -60,11 +65,7 @@ export function IntegrationSettingsSection(): React.JSX.Element {
         )}
       </FormSection>
 
-      {error && (
-        <Alert variant='error'>
-          {error}
-        </Alert>
-      )}
+      {error && <Alert variant='error'>{error}</Alert>}
     </div>
   );
 }

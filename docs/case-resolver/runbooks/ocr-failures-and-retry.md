@@ -1,11 +1,11 @@
 ---
-owner: "Case Resolver Team"
-last_reviewed: "2026-02-20"
-status: "active"
+owner: 'Case Resolver Team'
+last_reviewed: '2026-02-20'
+status: 'active'
 related_components:
-  - "src/features/jobs/workers/caseResolverOcrQueue.ts"
-  - "src/app/api/case-resolver/ocr/jobs/handler.ts"
-  - "src/app/api/case-resolver/ocr/jobs/[jobId]/handler.ts"
+  - 'src/features/jobs/workers/caseResolverOcrQueue.ts'
+  - 'src/app/api/case-resolver/ocr/jobs/handler.ts'
+  - 'src/app/api/case-resolver/ocr/jobs/[jobId]/handler.ts'
 ---
 
 # Runbook: OCR Failures and Retry

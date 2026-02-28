@@ -23,7 +23,7 @@ const setPixel = (
   color: ColorRgba
 ): void => {
   if (!(x >= 0 && x < width && y >= 0 && y < height)) return;
-  const offset = ((y * width) + x) * 4;
+  const offset = (y * width + x) * 4;
   data[offset] = clampByte(color.r);
   data[offset + 1] = clampByte(color.g);
   data[offset + 2] = clampByte(color.b);
@@ -74,9 +74,9 @@ export const paintVerticalGradientBackground = (
   for (let y = 0; y < height; y += 1) {
     const t = y / span;
     const rowColor = {
-      r: topColor.r + ((bottomColor.r - topColor.r) * t),
-      g: topColor.g + ((bottomColor.g - topColor.g) * t),
-      b: topColor.b + ((bottomColor.b - topColor.b) * t),
+      r: topColor.r + (bottomColor.r - topColor.r) * t,
+      g: topColor.g + (bottomColor.g - topColor.g) * t,
+      b: topColor.b + (bottomColor.b - topColor.b) * t,
       a: topColor.a ?? bottomColor.a ?? 255,
     };
     for (let x = 0; x < width; x += 1) {

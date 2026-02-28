@@ -2,14 +2,19 @@
 import Link from 'next/link';
 import React from 'react';
 
-import {
-  useAgentCreatorModes,
-  useAgentCreatorOperations,
-} from '@/features/ai/agentcreator';
+import { useAgentCreatorModes, useAgentCreatorOperations } from '@/features/ai/agentcreator';
 import { AgentCreatorSettingsSection } from '@/features/ai/agentcreator/components/AgentCreatorSettingsSection';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { PlaywrightPersona } from '@/shared/contracts/playwright';
-import { Button, SelectSimple, useToast, FormSection, FormField, ToggleRow, FormActions } from '@/shared/ui';
+import {
+  Button,
+  SelectSimple,
+  useToast,
+  FormSection,
+  FormField,
+  ToggleRow,
+  FormActions,
+} from '@/shared/ui';
 
 import { useChatbotSettings } from '../context/ChatbotContext';
 
@@ -48,9 +53,10 @@ export function SettingsTab(): React.JSX.Element {
         setPersonas(stored);
       } catch (error: unknown) {
         if (!active) return;
-        logClientError(error, { context: { source: 'ChatbotSettingsTab', action: 'loadPersonas' } });
-        const message =
-          error instanceof Error ? error.message : 'Failed to load personas.';
+        logClientError(error, {
+          context: { source: 'ChatbotSettingsTab', action: 'loadPersonas' },
+        });
+        const message = error instanceof Error ? error.message : 'Failed to load personas.';
         toast(message, { variant: 'error' });
       } finally {
         if (active) setPersonasLoading(false);
@@ -89,7 +95,8 @@ export function SettingsTab(): React.JSX.Element {
             </div>
           </FormField>
           <FormField label='Search Provider'>
-            <SelectSimple size='sm'
+            <SelectSimple
+              size='sm'
               value={searchProvider}
               onValueChange={(value: string): void => setSearchProvider(value)}
               options={[
@@ -139,24 +146,23 @@ export function SettingsTab(): React.JSX.Element {
           {personasLoading ? (
             <p className='text-xs text-gray-500 mt-4'>Loading personas...</p>
           ) : personas.length === 0 ? (
-            <p className='text-xs text-gray-500 mt-4'>
-              No personas yet. Create one in settings.
-            </p>
+            <p className='text-xs text-gray-500 mt-4'>No personas yet. Create one in settings.</p>
           ) : (
             <div className='grid gap-4 md:grid-cols-2 mt-4'>
               <FormField
                 label='Persona'
                 description='Selecting a persona updates the headless setting.'
               >
-                <SelectSimple size='sm'
+                <SelectSimple
+                  size='sm'
                   value={playwrightPersonaId ?? 'custom'}
                   onValueChange={handlePersonaChange}
                   options={[
                     { value: 'custom', label: 'Custom' },
                     ...personas.map((persona: PlaywrightPersona) => ({
                       value: persona.id,
-                      label: persona.name
-                    }))
+                      label: persona.name,
+                    })),
                   ]}
                   placeholder='Select persona'
                 />
@@ -164,22 +170,15 @@ export function SettingsTab(): React.JSX.Element {
               <FormSection variant='subtle' className='p-3 text-xs text-gray-400'>
                 {selectedPersona ? (
                   <>
-                    <p className='text-xs font-semibold text-gray-200'>
-                      {selectedPersona.name}
-                    </p>
+                    <p className='text-xs font-semibold text-gray-200'>{selectedPersona.name}</p>
                     <p className='mt-1'>
-                      {selectedPersona.description ||
-                        'No description provided.'}
+                      {selectedPersona.description || 'No description provided.'}
                     </p>
                   </>
                 ) : (
                   <>
-                    <p className='text-xs font-semibold text-gray-200'>
-                      Custom settings
-                    </p>
-                    <p className='mt-1'>
-                      Pick a persona or keep your own agent preferences.
-                    </p>
+                    <p className='text-xs font-semibold text-gray-200'>Custom settings</p>
+                    <p className='mt-1'>Pick a persona or keep your own agent preferences.</p>
                   </>
                 )}
               </FormSection>
@@ -189,7 +188,9 @@ export function SettingsTab(): React.JSX.Element {
       )}
 
       <FormActions
-        onSave={() => { void saveChatbotSettings(); }}
+        onSave={() => {
+          void saveChatbotSettings();
+        }}
         saveText='Save Settings'
         isDisabled={!settingsDirty}
         isSaving={settingsSaving}

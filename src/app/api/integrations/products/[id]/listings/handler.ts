@@ -51,9 +51,13 @@ const resolveBaseListingLinkContext = async (): Promise<BaseListingLinkContext |
   const defaultConnectionId = (await getExportDefaultConnectionId())?.trim() || '';
   const preferredConnection =
     (defaultConnectionId
-      ? connections.find((connection: (typeof connections)[number]) => connection.id === defaultConnectionId)
+      ? connections.find(
+          (connection: (typeof connections)[number]) => connection.id === defaultConnectionId
+        )
       : null) ??
-    connections.find((connection: (typeof connections)[number]) => Boolean(connection.baseApiToken || connection.password)) ??
+    connections.find((connection: (typeof connections)[number]) =>
+      Boolean(connection.baseApiToken || connection.password)
+    ) ??
     connections[0] ??
     null;
   if (!preferredConnection?.id) return null;
@@ -70,7 +74,11 @@ const resolveBaseListingLinkContext = async (): Promise<BaseListingLinkContext |
  * GET /api/integrations/products/[id]/listings
  * Fetches all listings for a specific product.
  */
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
+export async function GET_handler(
+  _req: NextRequest,
+  _ctx: ApiHandlerContext,
+  params: { id: string }
+): Promise<Response> {
   try {
     const { id: productId } = params;
     if (!productId) {
@@ -84,8 +92,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, pa
     if (normalizedBaseProductId) {
       const baseListingsWithoutExternalId = listings.filter(
         (listing: (typeof listings)[number]) =>
-          isBaseIntegrationSlug(listing.integration.slug) &&
-          !(listing.externalListingId?.trim())
+          isBaseIntegrationSlug(listing.integration.slug) && !listing.externalListingId?.trim()
       );
 
       if (baseListingsWithoutExternalId.length > 0) {
@@ -93,10 +100,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, pa
           baseListingsWithoutExternalId.map(async (listing) => {
             const resolved = await findProductListingByIdAcrossProviders(listing.id);
             if (!resolved) return;
-            await resolved.repository.updateListingExternalId(
-              listing.id,
-              normalizedBaseProductId
-            );
+            await resolved.repository.updateListingExternalId(listing.id, normalizedBaseProductId);
             if ((resolved.listing.status ?? '').trim().length === 0) {
               await resolved.repository.updateListingStatus(listing.id, 'active');
             }
@@ -150,7 +154,11 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, pa
  * POST /api/integrations/products/[id]/listings
  * Creates a new listing for a product on a marketplace.
  */
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
+export async function POST_handler(
+  req: NextRequest,
+  _ctx: ApiHandlerContext,
+  params: { id: string }
+): Promise<Response> {
   try {
     const { id: productId } = params;
     if (!productId) {
@@ -158,16 +166,13 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, pa
     }
 
     const parsed = await parseJsonBody(req, createListingSchema, {
-      logPrefix: 'integrations.products.listings.POST'
+      logPrefix: 'integrations.products.listings.POST',
     });
     if (!parsed.ok) {
       return parsed.response;
     }
     const data = parsed.data;
-    const templateIdProvided = Object.prototype.hasOwnProperty.call(
-      data,
-      'templateId'
-    );
+    const templateIdProvided = Object.prototype.hasOwnProperty.call(data, 'templateId');
 
     // Verify product exists
     const productRepo = await getProductRepository();
@@ -181,7 +186,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, pa
     const integration = await integrationRepo.getIntegrationById(data.integrationId);
     if (!integration) {
       throw notFoundError('Integration not found', {
-        integrationId: data.integrationId
+        integrationId: data.integrationId,
       });
     }
 
@@ -191,10 +196,10 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, pa
       data.integrationId
     );
     if (!connection) {
-      throw notFoundError(
-        'Connection not found or does not belong to the integration',
-        { connectionId: data.connectionId, integrationId: data.integrationId }
-      );
+      throw notFoundError('Connection not found or does not belong to the integration', {
+        connectionId: data.connectionId,
+        integrationId: data.integrationId,
+      });
     }
 
     // Check if listing already exists
@@ -203,7 +208,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, pa
     if (exists) {
       throw conflictError('Product is already listed on this account', {
         productId,
-        connectionId: data.connectionId
+        connectionId: data.connectionId,
       });
     }
 
@@ -217,27 +222,17 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, pa
         : isBaseIntegrationSlug(integration.slug)
           ? { source: 'manual-listing', marketplace: 'base' }
           : { source: 'manual-listing' },
-      relistPolicy:
-        isTraderaIntegrationSlug(integration.slug)
-          ? {
-            enabled:
-                data.autoRelistEnabled ??
-                connection.traderaAutoRelistEnabled ??
-                true,
+      relistPolicy: isTraderaIntegrationSlug(integration.slug)
+        ? {
+            enabled: data.autoRelistEnabled ?? connection.traderaAutoRelistEnabled ?? true,
             leadMinutes:
-                data.autoRelistLeadMinutes ??
-                connection.traderaAutoRelistLeadMinutes ??
-                180,
-            durationHours:
-                data.durationHours ??
-                connection.traderaDefaultDurationHours ??
-                72,
-            templateId:
-                templateIdProvided
-                  ? (data.templateId ?? null)
-                  : (connection.traderaDefaultTemplateId ?? null),
+              data.autoRelistLeadMinutes ?? connection.traderaAutoRelistLeadMinutes ?? 180,
+            durationHours: data.durationHours ?? connection.traderaDefaultDurationHours ?? 72,
+            templateId: templateIdProvided
+              ? (data.templateId ?? null)
+              : (connection.traderaDefaultTemplateId ?? null),
           }
-          : null,
+        : null,
     });
 
     if (isTraderaIntegrationSlug(integration.slug)) {

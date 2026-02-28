@@ -1,9 +1,7 @@
 'use client';
 
 import React from 'react';
-import { 
-  ConfirmModal 
-} from '@/shared/ui';
+import { ConfirmModal } from '@/shared/ui';
 import { JobQueueProvider, useJobQueueContext } from './JobQueueContext';
 import { JobQueueControls } from './JobQueueControls';
 import { JobQueueOverview } from './job-queue-overview';

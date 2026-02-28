@@ -34,11 +34,15 @@ const toActivityDto = (log: SystemLog): ActivityLogDto => {
   };
 };
 
-const matchesEntityFilters = (contextValue: Prisma.JsonValue | null, filters: ActivityFilters): boolean => {
+const matchesEntityFilters = (
+  contextValue: Prisma.JsonValue | null,
+  filters: ActivityFilters
+): boolean => {
   if (!filters.entityId && !filters.entityType) return true;
   const context = toRecord(contextValue) ?? {};
   if (filters.entityId && toNullableString(context['entityId']) !== filters.entityId) return false;
-  if (filters.entityType && toNullableString(context['entityType']) !== filters.entityType) return false;
+  if (filters.entityType && toNullableString(context['entityType']) !== filters.entityType)
+    return false;
   return true;
 };
 

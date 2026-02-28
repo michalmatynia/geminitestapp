@@ -25,10 +25,7 @@ import {
 } from '@/features/products/components/list/advanced-filter';
 import { useBulkConvertImagesToBase64 } from '@/features/products/hooks/useProductsMutations';
 import { useUserPreferences } from '@/features/products/hooks/useUserPreferences';
-import type {
-  ProductAdvancedFilterPreset,
-  ProductWithImages,
-} from '@/shared/contracts/products';
+import type { ProductAdvancedFilterPreset, ProductWithImages } from '@/shared/contracts/products';
 import {
   ActionMenu,
   AppModal,
@@ -66,11 +63,8 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
     onDeleteSelected,
     onAddToMarketplace,
   } = useProductListSelectionContext();
-  const {
-    advancedFilter,
-    activeAdvancedFilterPresetId,
-    setAdvancedFilterState,
-  } = useProductListFiltersContext();
+  const { advancedFilter, activeAdvancedFilterPresetId, setAdvancedFilterState } =
+    useProductListFiltersContext();
   const { toast } = useToast();
   const { preferences, setAdvancedFilterPresets } = useUserPreferences();
   const [isPresetDialogOpen, setIsPresetDialogOpen] = useState(false);
@@ -82,10 +76,8 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
   const [importJsonText, setImportJsonText] = useState('');
   const [importingPresets, setImportingPresets] = useState(false);
   const importFileInputRef = useRef<HTMLInputElement>(null);
-  const {
-    mutateAsync: convertSelectedToBase64,
-    isPending: isConvertingSelected,
-  } = useBulkConvertImagesToBase64();
+  const { mutateAsync: convertSelectedToBase64, isPending: isConvertingSelected } =
+    useBulkConvertImagesToBase64();
   const advancedFilterPresets = preferences.advancedFilterPresets;
   const currentAdvancedFilterGroup = useMemo(
     () => parseAdvancedFilterPayload(advancedFilter),
@@ -109,9 +101,12 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
       toast('Base64 images generated for selected products.', { variant: 'success' });
       setRowSelection({});
     } catch (error) {
-      toast(error instanceof Error ? error.message : 'An error occurred during base64 conversion.', {
-        variant: 'error',
-      });
+      toast(
+        error instanceof Error ? error.message : 'An error occurred during base64 conversion.',
+        {
+          variant: 'error',
+        }
+      );
     }
   }, [convertSelectedToBase64, rowSelection, setRowSelection, toast]);
 
@@ -178,24 +173,25 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
     [applyPreset]
   );
 
-  const handleDeletePreset = useCallback(async (
-    preset: ProductAdvancedFilterPreset
-  ): Promise<void> => {
-    const nextPresets = advancedFilterPresets.filter(
-      (entry: ProductAdvancedFilterPreset) => entry.id !== preset.id
-    );
-    await setAdvancedFilterPresets(nextPresets);
-    if (activeAdvancedFilterPresetId === preset.id) {
-      setAdvancedFilterState('', null);
-    }
-    toast(`Deleted preset "${preset.name}".`, { variant: 'success' });
-  }, [
-    activeAdvancedFilterPresetId,
-    advancedFilterPresets,
-    setAdvancedFilterPresets,
-    setAdvancedFilterState,
-    toast,
-  ]);
+  const handleDeletePreset = useCallback(
+    async (preset: ProductAdvancedFilterPreset): Promise<void> => {
+      const nextPresets = advancedFilterPresets.filter(
+        (entry: ProductAdvancedFilterPreset) => entry.id !== preset.id
+      );
+      await setAdvancedFilterPresets(nextPresets);
+      if (activeAdvancedFilterPresetId === preset.id) {
+        setAdvancedFilterState('', null);
+      }
+      toast(`Deleted preset "${preset.name}".`, { variant: 'success' });
+    },
+    [
+      activeAdvancedFilterPresetId,
+      advancedFilterPresets,
+      setAdvancedFilterPresets,
+      setAdvancedFilterState,
+      toast,
+    ]
+  );
 
   const closeImportDialog = (): void => {
     setIsImportDialogOpen(false);
@@ -203,33 +199,36 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
     setImportingPresets(false);
   };
 
-  const importPresets = useCallback(async (
-    payload: unknown
-  ): Promise<void> => {
-    const parsedPresets = parsePresetImportPayload(payload);
-    if (!parsedPresets || parsedPresets.length === 0) {
-      throw new Error('Invalid preset payload. Provide a preset object, preset list, or bundle JSON.');
-    }
+  const importPresets = useCallback(
+    async (payload: unknown): Promise<void> => {
+      const parsedPresets = parsePresetImportPayload(payload);
+      if (!parsedPresets || parsedPresets.length === 0) {
+        throw new Error(
+          'Invalid preset payload. Provide a preset object, preset list, or bundle JSON.'
+        );
+      }
 
-    const mergedImportedPresets = mapImportedPresets(advancedFilterPresets, parsedPresets);
-    const nextPresets = [...advancedFilterPresets, ...mergedImportedPresets];
-    await setAdvancedFilterPresets(nextPresets);
-    toast(`Imported ${mergedImportedPresets.length} preset(s).`, { variant: 'success' });
-  }, [advancedFilterPresets, setAdvancedFilterPresets, toast]);
+      const mergedImportedPresets = mapImportedPresets(advancedFilterPresets, parsedPresets);
+      const nextPresets = [...advancedFilterPresets, ...mergedImportedPresets];
+      await setAdvancedFilterPresets(nextPresets);
+      toast(`Imported ${mergedImportedPresets.length} preset(s).`, { variant: 'success' });
+    },
+    [advancedFilterPresets, setAdvancedFilterPresets, toast]
+  );
 
   const handleExportAllPresets = (): void => {
     if (advancedFilterPresets.length === 0) {
       toast('No presets to export.', { variant: 'error' });
       return;
     }
-    downloadJsonFile('advanced-filter-presets.bundle.json', buildPresetBundle(advancedFilterPresets));
+    downloadJsonFile(
+      'advanced-filter-presets.bundle.json',
+      buildPresetBundle(advancedFilterPresets)
+    );
   };
 
   const handleExportSinglePreset = (preset: ProductAdvancedFilterPreset): void => {
-    downloadJsonFile(
-      `advanced-filter-preset-${slugifyPresetFilename(preset.name)}.json`,
-      preset
-    );
+    downloadJsonFile(`advanced-filter-preset-${slugifyPresetFilename(preset.name)}.json`, preset);
   };
 
   const handleCopyAllPresets = useCallback(async (): Promise<void> => {
@@ -247,18 +246,19 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
     }
   }, [advancedFilterPresets, toast]);
 
-  const handleCopyPreset = useCallback(async (
-    preset: ProductAdvancedFilterPreset
-  ): Promise<void> => {
-    try {
-      await writeToClipboard(JSON.stringify(preset, null, 2));
-      toast(`Copied preset "${preset.name}" JSON to clipboard.`, { variant: 'success' });
-    } catch (error) {
-      toast(error instanceof Error ? error.message : 'Failed to copy preset JSON.', {
-        variant: 'error',
-      });
-    }
-  }, [toast]);
+  const handleCopyPreset = useCallback(
+    async (preset: ProductAdvancedFilterPreset): Promise<void> => {
+      try {
+        await writeToClipboard(JSON.stringify(preset, null, 2));
+        toast(`Copied preset "${preset.name}" JSON to clipboard.`, { variant: 'success' });
+      } catch (error) {
+        toast(error instanceof Error ? error.message : 'Failed to copy preset JSON.', {
+          variant: 'error',
+        });
+      }
+    },
+    [toast]
+  );
 
   const handleImportFromDialog = async (): Promise<void> => {
     if (!importJsonText.trim()) {
@@ -280,24 +280,25 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
     }
   };
 
-  const handleImportFromFile = useCallback(async (
-    event: ChangeEvent<HTMLInputElement>
-  ): Promise<void> => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  const handleImportFromFile = useCallback(
+    async (event: ChangeEvent<HTMLInputElement>): Promise<void> => {
+      const file = event.target.files?.[0];
+      if (!file) return;
 
-    try {
-      const content = await file.text();
-      const parsedPayload: unknown = JSON.parse(content);
-      await importPresets(parsedPayload);
-    } catch (error) {
-      toast(error instanceof Error ? error.message : 'Failed to import presets from file.', {
-        variant: 'error',
-      });
-    } finally {
-      if (event.target) event.target.value = '';
-    }
-  }, [importPresets]);
+      try {
+        const content = await file.text();
+        const parsedPayload: unknown = JSON.parse(content);
+        await importPresets(parsedPayload);
+      } catch (error) {
+        toast(error instanceof Error ? error.message : 'Failed to import presets from file.', {
+          variant: 'error',
+        });
+      } finally {
+        if (event.target) event.target.value = '';
+      }
+    },
+    [importPresets]
+  );
 
   const handleSavePresetDialog = async (): Promise<void> => {
     const trimmedName = normalizePresetName(presetName);
@@ -340,9 +341,7 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
         }
         const now = new Date().toISOString();
         const nextPresets = advancedFilterPresets.map((preset: ProductAdvancedFilterPreset) =>
-          preset.id === editingPresetId
-            ? { ...preset, name: trimmedName, updatedAt: now }
-            : preset
+          preset.id === editingPresetId ? { ...preset, name: trimmedName, updatedAt: now } : preset
         );
         await setAdvancedFilterPresets(nextPresets);
         toast(`Renamed preset to "${trimmedName}".`, { variant: 'success' });
@@ -384,7 +383,9 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
               Add to Marketplace
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={() => { void handleConvertSelected(); }}
+              onClick={() => {
+                void handleConvertSelected();
+              }}
               className='cursor-pointer gap-2'
               disabled={isConvertingSelected}
             >

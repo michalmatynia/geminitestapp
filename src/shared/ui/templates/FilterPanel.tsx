@@ -7,7 +7,7 @@ import { FilterField } from '@/shared/contracts/ui';
 
 /**
  * FilterPanel - Enhanced filter container with context integration support
- * 
+ *
  * Wraps PanelFilters with additional features for feature-level consolidation:
  * - Context state management
  * - Preset filter templates
@@ -85,12 +85,11 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
     return true;
   };
 
-  const hasActiveFilters = Object.values(values).some(
-    (value) => isActiveFilterValue(value)
-  ) || search;
+  const hasActiveFilters =
+    Object.values(values).some((value) => isActiveFilterValue(value)) || search;
 
-  const activeFilterCount = Object.entries(values).filter(
-    ([, value]) => isActiveFilterValue(value)
+  const activeFilterCount = Object.entries(values).filter(([, value]) =>
+    isActiveFilterValue(value)
   ).length;
 
   return (
@@ -119,11 +118,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
       />
 
       {/* Children slot (e.g. tag lists) */}
-      {children && (
-        <div className='mt-3'>
-          {children}
-        </div>
-      )}
+      {children && <div className='mt-3'>{children}</div>}
 
       {/* Presets (if provided) */}
       {presets.length > 0 && (

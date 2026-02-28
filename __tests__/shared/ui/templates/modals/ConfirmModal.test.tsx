@@ -47,12 +47,7 @@ describe('ConfirmModal', () => {
     const onConfirm = vi.fn();
 
     render(
-      <ConfirmModal
-        isOpen={true}
-        onClose={onClose}
-        onConfirm={onConfirm}
-        title='Confirm Action'
-      />
+      <ConfirmModal isOpen={true} onClose={onClose} onConfirm={onConfirm} title='Confirm Action' />
     );
 
     const cancelButton = screen.getByText('Cancel');

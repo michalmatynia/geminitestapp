@@ -8,24 +8,13 @@ import type {
   NoteTagDto as TagRecord,
   NoteWithRelationsDto as NoteWithRelations,
 } from '@/shared/contracts/notes';
-import {
-  Button,
-  Input,
-  Label,
-  Checkbox,
-  SelectSimple,
-  Badge,
-  FormField,
-  Card,
-} from '@/shared/ui';
+import { Button, Input, Label, Checkbox, SelectSimple, Badge, FormField, Card } from '@/shared/ui';
 
 interface NoteMetadataProps {
   showTitle?: boolean;
 }
 
-export function NoteMetadata({
-  showTitle = true,
-}: NoteMetadataProps): React.JSX.Element {
+export function NoteMetadata({ showTitle = true }: NoteMetadataProps): React.JSX.Element {
   const {
     note,
     title,
@@ -82,9 +71,7 @@ export function NoteMetadata({
             type='text'
             placeholder='Enter note title'
             value={title}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-              setTitle(e.target.value)
-            }
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setTitle(e.target.value)}
             className='w-full rounded-lg border bg-card/40 px-4 py-2 text-white'
             required
           />
@@ -100,12 +87,10 @@ export function NoteMetadata({
           }
           options={[
             { value: '__none__', label: 'No Folder' },
-            ...flatFolders.map(
-              (folder: { id: string; name: string; level: number }) => ({
-                value: folder.id,
-                label: `${'  '.repeat(folder.level)}${folder.name}`,
-              }),
-            ),
+            ...flatFolders.map((folder: { id: string; name: string; level: number }) => ({
+              value: folder.id,
+              label: `${'  '.repeat(folder.level)}${folder.name}`,
+            })),
           ]}
           placeholder='Select folder'
           className='w-full'
@@ -117,9 +102,7 @@ export function NoteMetadata({
           <Input
             type='color'
             value={color}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-              setColor(e.target.value)
-            }
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setColor(e.target.value)}
             className='h-10 w-full cursor-pointer rounded-lg border bg-card/40 p-1'
           />
           <Button
@@ -169,11 +152,7 @@ export function NoteMetadata({
             <Input
               ref={tagInputRef}
               type='text'
-              placeholder={
-                selectedTagIds.length === 0
-                  ? 'Search or create tags...'
-                  : 'Add tag...'
-              }
+              placeholder={selectedTagIds.length === 0 ? 'Search or create tags...' : 'Add tag...'}
               value={tagInput}
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void => {
                 setTagInput(e.target.value);
@@ -210,26 +189,22 @@ export function NoteMetadata({
                 ))}
                 {tagInput &&
                   !filteredTags.find(
-                    (t: TagRecord) =>
-                      (t.name || '').toLowerCase() === tagInput.toLowerCase(),
+                    (t: TagRecord) => (t.name || '').toLowerCase() === tagInput.toLowerCase()
                   ) && (
-                  <li
-                    onClick={(): void => {
-                      void handleCreateTag();
-                    }}
-                    className='cursor-pointer px-4 py-2 text-blue-400 hover:bg-muted/50'
-                  >
+                    <li
+                      onClick={(): void => {
+                        void handleCreateTag();
+                      }}
+                      className='cursor-pointer px-4 py-2 text-blue-400 hover:bg-muted/50'
+                    >
                       Create &quot;{tagInput}&quot;
-                  </li>
-                )}
+                    </li>
+                  )}
               </ul>
             </Card>
           )}
           {isTagDropdownOpen && (
-            <div
-              className='fixed inset-0 z-0'
-              onClick={(): void => setIsTagDropdownOpen(false)}
-            />
+            <div className='fixed inset-0 z-0' onClick={(): void => setIsTagDropdownOpen(false)} />
           )}
         </div>
       </div>
@@ -238,12 +213,7 @@ export function NoteMetadata({
         <FormField label='Related Notes'>
           <div className='flex flex-wrap gap-2 mb-2'>
             {selectedRelatedNotes.map(
-              (related: {
-                id: string;
-                title: string;
-                color: string | null;
-                content: string;
-              }) => (
+              (related: { id: string; title: string; color: string | null; content: string }) => (
                 <div
                   key={related.id}
                   className='relative flex min-w-[180px] max-w-[240px] cursor-pointer flex-col gap-1 rounded-md border p-2 text-left transition'
@@ -251,18 +221,14 @@ export function NoteMetadata({
                   role='button'
                   tabIndex={0}
                   onClick={(): void => handleSelectRelatedNote(related.id)}
-                  onKeyDown={(
-                    event: React.KeyboardEvent<HTMLDivElement>,
-                  ): void => {
+                  onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>): void => {
                     if (event.key === 'Enter' || event.key === ' ') {
                       event.preventDefault();
                       handleSelectRelatedNote(related.id);
                     }
                   }}
                 >
-                  <div className='text-xs font-semibold truncate pr-4'>
-                    {related.title}
-                  </div>
+                  <div className='text-xs font-semibold truncate pr-4'>{related.title}</div>
                   <div className='text-[11px] leading-snug max-h-8 overflow-hidden opacity-80'>
                     {related.content ? related.content : 'No content'}
                   </div>
@@ -277,11 +243,8 @@ export function NoteMetadata({
                             title: string;
                             color: string | null;
                             content: string;
-                          }>,
-                        ) =>
-                          prev.filter(
-                            (item: { id: string }) => item.id !== related.id,
-                          ),
+                          }>
+                        ) => prev.filter((item: { id: string }) => item.id !== related.id)
                       );
                     }}
                     className='absolute right-1 top-1 h-5 w-5 p-0 opacity-70 hover:opacity-100 hover:bg-transparent'
@@ -291,7 +254,7 @@ export function NoteMetadata({
                     <X size={12} />
                   </Button>
                 </div>
-              ),
+              )
             )}
           </div>
           <div className='relative'>
@@ -314,22 +277,17 @@ export function NoteMetadata({
                 className='absolute z-10 mt-1 w-full border bg-card shadow-lg'
               >
                 <ul className='max-h-60 overflow-auto py-1 text-sm text-gray-300'>
-                  {isRelatedLoading && (
-                    <li className='px-4 py-2 text-gray-500'>Searching...</li>
-                  )}
+                  {isRelatedLoading && <li className='px-4 py-2 text-gray-500'>Searching...</li>}
                   {relatedNoteResults
                     .filter((candidate: NoteWithRelations) =>
-                      noteId ? candidate.id !== noteId : true,
+                      noteId ? candidate.id !== noteId : true
                     )
                     .filter(
                       (candidate: NoteWithRelations) =>
-                        candidate.title
-                          .toLowerCase()
-                          .includes(relatedNoteQuery.toLowerCase()) &&
+                        candidate.title.toLowerCase().includes(relatedNoteQuery.toLowerCase()) &&
                         !selectedRelatedNotes.some(
-                          (selected: { id: string }) =>
-                            selected.id === candidate.id,
-                        ),
+                          (selected: { id: string }) => selected.id === candidate.id
+                        )
                     )
                     .map((candidate: NoteWithRelations) => (
                       <li
@@ -342,7 +300,7 @@ export function NoteMetadata({
                                 title: string;
                                 color: string | null;
                                 content: string;
-                              }>,
+                              }>
                             ) => [
                               ...prev,
                               {
@@ -351,7 +309,7 @@ export function NoteMetadata({
                                 color: candidate.color ?? null,
                                 content: candidate.content ?? '',
                               },
-                            ],
+                            ]
                           );
                           setRelatedNoteQuery('');
                           setIsRelatedDropdownOpen(false);
@@ -365,16 +323,11 @@ export function NoteMetadata({
                     relatedNoteResults.filter(
                       (candidate: NoteWithRelations) =>
                         (noteId ? candidate.id !== noteId : true) &&
-                        candidate.title
-                          .toLowerCase()
-                          .includes(relatedNoteQuery.toLowerCase()) &&
+                        candidate.title.toLowerCase().includes(relatedNoteQuery.toLowerCase()) &&
                         !selectedRelatedNotes.some(
-                          (selected: { id: string }) =>
-                            selected.id === candidate.id,
-                        ),
-                    ).length === 0 && (
-                    <li className='px-4 py-2 text-gray-500'>No matches</li>
-                  )}
+                          (selected: { id: string }) => selected.id === candidate.id
+                        )
+                    ).length === 0 && <li className='px-4 py-2 text-gray-500'>No matches</li>}
                 </ul>
               </Card>
             )}
@@ -397,9 +350,7 @@ export function NoteMetadata({
             }
             className='rounded border-white/20'
           />
-          <span className='text-xs font-bold uppercase tracking-wider'>
-            Pinned
-          </span>
+          <span className='text-xs font-bold uppercase tracking-wider'>Pinned</span>
         </Label>
         <Label className='flex items-center gap-2 text-white cursor-pointer hover:text-blue-200 transition-colors'>
           <Checkbox
@@ -409,9 +360,7 @@ export function NoteMetadata({
             }
             className='rounded border-white/20'
           />
-          <span className='text-xs font-bold uppercase tracking-wider'>
-            Archived
-          </span>
+          <span className='text-xs font-bold uppercase tracking-wider'>Archived</span>
         </Label>
         <Label className='flex items-center gap-2 text-white cursor-pointer hover:text-blue-200 transition-colors'>
           <Checkbox
@@ -421,9 +370,7 @@ export function NoteMetadata({
             }
             className='rounded border-white/20'
           />
-          <span className='text-xs font-bold uppercase tracking-wider'>
-            Favorite
-          </span>
+          <span className='text-xs font-bold uppercase tracking-wider'>Favorite</span>
         </Label>
       </div>
     </div>

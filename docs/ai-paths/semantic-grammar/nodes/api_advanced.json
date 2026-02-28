@@ -15,16 +15,7 @@
     "cursor",
     "page"
   ],
-  "outputs": [
-    "value",
-    "bundle",
-    "status",
-    "headers",
-    "items",
-    "route",
-    "error",
-    "success"
-  ],
+  "outputs": ["value", "bundle", "status", "headers", "items", "route", "error", "success"],
   "configFields": [
     {
       "path": "apiAdvanced.url",
@@ -128,16 +119,7 @@
       "cursor",
       "page"
     ],
-    "outputs": [
-      "value",
-      "bundle",
-      "status",
-      "headers",
-      "items",
-      "route",
-      "error",
-      "success"
-    ],
+    "outputs": ["value", "bundle", "status", "headers", "items", "route", "error", "success"],
     "data": {},
     "connections": {
       "incoming": [],

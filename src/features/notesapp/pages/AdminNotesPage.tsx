@@ -6,21 +6,13 @@ import { CreateNoteModal } from '@/features/notesapp/components/CreateNoteModal'
 import { NoteDetailView } from '@/features/notesapp/components/NoteDetailView';
 import { NoteListView } from '@/features/notesapp/components/NoteListView';
 import { NotesAppFolderTree } from '@/features/notesapp/components/NotesAppFolderTree';
-import {
-  NotesAppProvider,
-  useNotesAppContext,
-} from '@/features/notesapp/hooks/NotesAppContext';
+import { NotesAppProvider, useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
 import { Card } from '@/shared/ui';
 
 function AdminNotesPageContent(): React.JSX.Element {
   const { isMenuCollapsed } = useAdminLayout();
-  const {
-    selectedNote,
-    isFolderTreeCollapsed,
-    isCreating,
-    setIsCreating,
-    handleCreateSuccess,
-  } = useNotesAppContext();
+  const { selectedNote, isFolderTreeCollapsed, isCreating, setIsCreating, handleCreateSuccess } =
+    useNotesAppContext();
 
   return (
     <div className='w-full'>

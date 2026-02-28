@@ -115,22 +115,17 @@ const shouldNotifyForLevel = (
 ): boolean => levelPriority[level] >= levelPriority[minLevel];
 
 const getNotificationConfig = async (): Promise<SloNotificationConfig> => {
-  const [enabledSetting, webhookSetting, minLevelSetting, cooldownSetting] =
-    await Promise.all([
-      readSettingValue(AI_PATHS_SLO_NOTIFICATION_KEYS.enabled),
-      readSettingValue(AI_PATHS_SLO_NOTIFICATION_KEYS.webhookUrl),
-      readSettingValue(AI_PATHS_SLO_NOTIFICATION_KEYS.minLevel),
-      readSettingValue(AI_PATHS_SLO_NOTIFICATION_KEYS.cooldownSeconds),
-    ]);
+  const [enabledSetting, webhookSetting, minLevelSetting, cooldownSetting] = await Promise.all([
+    readSettingValue(AI_PATHS_SLO_NOTIFICATION_KEYS.enabled),
+    readSettingValue(AI_PATHS_SLO_NOTIFICATION_KEYS.webhookUrl),
+    readSettingValue(AI_PATHS_SLO_NOTIFICATION_KEYS.minLevel),
+    readSettingValue(AI_PATHS_SLO_NOTIFICATION_KEYS.cooldownSeconds),
+  ]);
 
   const enabled =
-    parseBoolean(enabledSetting) ||
-    parseBoolean(process.env['AI_PATHS_SLO_NOTIFICATIONS_ENABLED']);
-  const webhookUrl =
-    webhookSetting ?? process.env['AI_PATHS_SLO_WEBHOOK_URL'] ?? null;
-  const minLevel = parseMinLevel(
-    minLevelSetting ?? process.env['AI_PATHS_SLO_MIN_LEVEL']
-  );
+    parseBoolean(enabledSetting) || parseBoolean(process.env['AI_PATHS_SLO_NOTIFICATIONS_ENABLED']);
+  const webhookUrl = webhookSetting ?? process.env['AI_PATHS_SLO_WEBHOOK_URL'] ?? null;
+  const minLevel = parseMinLevel(minLevelSetting ?? process.env['AI_PATHS_SLO_MIN_LEVEL']);
   const cooldownSeconds = parseNumber(
     cooldownSetting ?? process.env['AI_PATHS_SLO_COOLDOWN_SECONDS'],
     DEFAULT_COOLDOWN_SECONDS
@@ -169,10 +164,7 @@ const buildSignature = (status: AiPathRunQueueSloStatus): string => {
   return hash.digest('hex');
 };
 
-const shouldThrottleInMemory = (
-  signature: string,
-  cooldownSeconds: number
-): boolean => {
+const shouldThrottleInMemory = (signature: string, cooldownSeconds: number): boolean => {
   if (cooldownSeconds <= 0) return false;
   const cache = getCooldownCache();
   const now = Date.now();
@@ -209,7 +201,7 @@ const acquireRedisThrottle = async (
     void ErrorSystem.captureException(error, {
       service: 'ai-paths-slo-notifier',
       action: 'acquireRedisThrottle',
-      signature
+      signature,
     });
     return null;
   }
@@ -224,7 +216,7 @@ const releaseRedisThrottle = async (signature: string): Promise<void> => {
     void ErrorSystem.captureException(error, {
       service: 'ai-paths-slo-notifier',
       action: 'releaseRedisThrottle',
-      signature
+      signature,
     });
   }
 };
@@ -270,17 +262,14 @@ const releaseThrottleSlot = async (
   }
 };
 
-const buildPayload = (
-  input: NotifyAiPathsSloInput,
-  signature: string
-): Record<string, unknown> => {
+const buildPayload = (input: NotifyAiPathsSloInput, signature: string): Record<string, unknown> => {
   const status = input.status;
   const headline =
     status.breaches.length > 0
       ? status.breaches
-        .slice(0, 3)
-        .map((breach) => breach.message)
-        .join(' ')
+          .slice(0, 3)
+          .map((breach) => breach.message)
+          .join(' ')
       : 'No detailed breach messages were provided.';
   return {
     event: 'ai_paths_slo_breach',
@@ -312,8 +301,7 @@ export const notifyAiPathsSloBreach = async (
       };
     }
 
-    const alertLevel =
-      input.status.overall === 'critical' ? 'critical' : 'warning';
+    const alertLevel = input.status.overall === 'critical' ? 'critical' : 'warning';
     const config = await getNotificationConfig();
     if (!config.enabled) {
       return {
@@ -341,10 +329,7 @@ export const notifyAiPathsSloBreach = async (
     }
 
     signature = buildSignature(input.status);
-    const throttleState = await acquireThrottleSlot(
-      signature,
-      config.cooldownSeconds
-    );
+    const throttleState = await acquireThrottleSlot(signature, config.cooldownSeconds);
     throttleStorage = throttleState.storage;
     if (throttleState.throttled) {
       return {
@@ -406,7 +391,7 @@ export const notifyAiPathsSloBreach = async (
     }
     void ErrorSystem.captureException(error, {
       service: 'ai-paths-slo-notifier',
-      action: 'notifyAiPathsSloBreach'
+      action: 'notifyAiPathsSloBreach',
     });
     return {
       delivered: false,

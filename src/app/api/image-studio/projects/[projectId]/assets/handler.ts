@@ -11,8 +11,7 @@ import { badRequestError } from '@/shared/errors/app-error';
 
 const projectsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio');
 
-const sanitizeProjectId = (value: string): string =>
-  value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
+const sanitizeProjectId = (value: string): string => value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
 
 const toTimestamp = (value: string | Date | null | undefined): number => {
   if (value instanceof Date) return value.getTime();
@@ -235,18 +234,16 @@ export async function POST_handler(
     logger.warn(`[image-studio.assets.upload] ${failures.length} files failed to upload`, {
       projectId,
       failures: failures.slice(0, 5),
-      totalFailures: failures.length
+      totalFailures: failures.length,
     });
   }
 
   if (uploaded.length === 0) {
     const firstFailure = failures[0]?.error?.trim();
-    throw badRequestError(
-      firstFailure ? `Upload failed: ${firstFailure}` : 'Upload failed',
-      { failures }
-    );
+    throw badRequestError(firstFailure ? `Upload failed: ${firstFailure}` : 'Upload failed', {
+      failures,
+    });
   }
 
   return NextResponse.json({ uploaded, failures }, { status: 201 });
 }
-

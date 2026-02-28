@@ -1,7 +1,7 @@
 import type { CaseResolverCaptureProposalState } from '@/features/case-resolver-capture/proposals';
-import type { 
-  CaseResolverFile, 
-  CaseResolverAssetFile, 
+import type {
+  CaseResolverFile,
+  CaseResolverAssetFile,
   CaseResolverGraph,
   CaseResolverNodeMeta,
   CaseResolverEdgeMeta,
@@ -18,7 +18,7 @@ import type {
   CaseResolverAssetKind,
   CaseResolverFileEditDraft,
 } from '@/shared/contracts/case-resolver';
-  
+
 import type { FilemakerDatabase } from '@/shared/contracts/filemaker';
 import type { CountryOption } from '@/shared/contracts/internationalization';
 
@@ -27,9 +27,9 @@ import type {
   CaseResolverPromptExploderPendingPayload,
 } from './hooks/useCaseResolverState.prompt-exploder-sync';
 
-export type { 
-  CaseResolverFile, 
-  CaseResolverAssetFile, 
+export type {
+  CaseResolverFile,
+  CaseResolverAssetFile,
   CaseResolverGraph,
   CaseResolverNodeMeta,
   CaseResolverEdgeMeta,
@@ -79,9 +79,7 @@ export interface CaseResolverCompileResult {
 export type CaseResolverEditorMode = 'wysiwyg' | 'markdown' | 'code';
 
 export type CaseResolverRequestedCaseStatus = 'loading' | 'ready' | 'missing';
-export type CaseResolverRequestedCaseIssue =
-  | 'requested_file_missing'
-  | 'workspace_unavailable';
+export type CaseResolverRequestedCaseIssue = 'requested_file_missing' | 'workspace_unavailable';
 
 export type WorkspaceView = 'document' | 'relations';
 export type EditorDetailsTab = 'document' | 'relations' | 'metadata' | 'revisions';
@@ -119,7 +117,9 @@ export type CaseResolverStateValue = {
   editingDocumentDraft: CaseResolverFileEditDraft | null;
   editingDocumentNodeContext: CaseResolverEditorNodeContext | null;
   setEditingDocumentDraft: React.Dispatch<React.SetStateAction<CaseResolverFileEditDraft | null>>;
-  setEditingDocumentNodeContext: React.Dispatch<React.SetStateAction<CaseResolverEditorNodeContext | null>>;
+  setEditingDocumentNodeContext: React.Dispatch<
+    React.SetStateAction<CaseResolverEditorNodeContext | null>
+  >;
   isUploadingScanDraftFiles: boolean;
   setIsUploadingScanDraftFiles: React.Dispatch<React.SetStateAction<boolean>>;
   uploadingScanSlotId: string | null;
@@ -153,15 +153,25 @@ export type CaseResolverStateValue = {
   handleCreateDocumentFromText: (scanFileId: string) => void;
   handleUploadScanFiles: (fileId: string, files: File[]) => Promise<void>;
   handleRunScanFileOcr: (fileId: string) => Promise<void>;
-  handleUploadAssets: (files: File[], targetFolderPath: string | null) => Promise<CaseResolverAssetFile[]>;
-  handleAttachAssetFile: (assetId: string, file: File, options?: { expectedKind?: CaseResolverAssetKind | null }) => Promise<CaseResolverAssetFile>;
+  handleUploadAssets: (
+    files: File[],
+    targetFolderPath: string | null
+  ) => Promise<CaseResolverAssetFile[]>;
+  handleAttachAssetFile: (
+    assetId: string,
+    file: File,
+    options?: { expectedKind?: CaseResolverAssetKind | null }
+  ) => Promise<CaseResolverAssetFile>;
   handleDeleteFolder: (folderPath: string) => void;
   handleMoveFile: (fileId: string, targetFolder: string) => Promise<void>;
   handleMoveAsset: (assetId: string, targetFolder: string) => Promise<void>;
   handleRenameFile: (fileId: string, nextName: string) => Promise<void>;
   handleRenameAsset: (assetId: string, nextName: string) => Promise<void>;
   handleRenameFolder: (folderPath: string, nextFolderPath: string) => Promise<void>;
-  handleOpenFileEditor: (fileId: string, options?: { nodeContext?: CaseResolverEditorNodeContext | null }) => void;
+  handleOpenFileEditor: (
+    fileId: string,
+    options?: { nodeContext?: CaseResolverEditorNodeContext | null }
+  ) => void;
   activeFile: CaseResolverFile | null;
   selectedAsset: CaseResolverAssetFile | null;
   handleUpdateSelectedAsset: (
@@ -172,7 +182,9 @@ export type CaseResolverStateValue = {
       source?: string;
     }
   ) => void;
-  handleUpdateActiveFileParties: (patch: Partial<Pick<CaseResolverFile, 'addresser' | 'addressee' | 'referenceCaseIds'>>) => void;
+  handleUpdateActiveFileParties: (
+    patch: Partial<Pick<CaseResolverFile, 'addresser' | 'addressee' | 'referenceCaseIds'>>
+  ) => void;
   handleLinkRelatedFiles: (fileIdA: string, fileIdB: string) => void;
   handleUnlinkRelatedFile: (sourceFileId: string, targetFileId: string) => void;
   handleSaveFileEditor: () => void;
@@ -182,14 +194,26 @@ export type CaseResolverStateValue = {
   handleApplyPendingPromptExploderPayload: () => Promise<boolean>;
   handleDiscardPendingPromptExploderPayload: () => void;
   promptExploderPartyProposal: CaseResolverCaptureProposalState | null;
-  setPromptExploderPartyProposal: React.Dispatch<React.SetStateAction<CaseResolverCaptureProposalState | null>>;
+  setPromptExploderPartyProposal: React.Dispatch<
+    React.SetStateAction<CaseResolverCaptureProposalState | null>
+  >;
   promptExploderApplyDiagnostics: CaseResolverPromptExploderApplyUiDiagnostics | null;
   isPromptExploderPartyProposalOpen: boolean;
   setIsPromptExploderPartyProposalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   isApplyingPromptExploderPartyProposal: boolean;
-  setIsApplyingPromptExploderPartyProposal: (value: boolean | ((current: boolean) => boolean)) => void;
+  setIsApplyingPromptExploderPartyProposal: (
+    value: boolean | ((current: boolean) => boolean)
+  ) => void;
   refetchSettingsStore: () => void;
-  confirmAction: (options: { title: string; message: string; confirmText?: string; cancelText?: string; isDangerous?: boolean; onConfirm?: () => void | Promise<void>; onCancel?: () => void }) => void;
+  confirmAction: (options: {
+    title: string;
+    message: string;
+    confirmText?: string;
+    cancelText?: string;
+    isDangerous?: boolean;
+    onConfirm?: () => void | Promise<void>;
+    onCancel?: () => void;
+  }) => void;
   ConfirmationModal: React.ComponentType;
   PromptInputModal: React.ComponentType;
   filemakerDatabase: FilemakerDatabase;

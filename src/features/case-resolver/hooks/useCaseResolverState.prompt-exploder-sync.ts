@@ -6,7 +6,7 @@ import {
   deriveDocumentContentSync,
   ensureSafeDocumentHtml,
   toStorageDocumentValue,
-} from '@/features/document-editor/content-format';
+} from '@/shared/lib/document-editor/content-format';
 import {
   clearPromptExploderApplyPayload,
   consumePromptExploderApplyPromptForCaseResolver,
@@ -21,9 +21,7 @@ import type {
 } from '@/shared/contracts/case-resolver';
 
 import { createCaseResolverFile } from '../settings';
-import {
-  type PromptExploderTransferUiStatus,
-} from './prompt-exploder-transfer-lifecycle';
+import { type PromptExploderTransferUiStatus } from './prompt-exploder-transfer-lifecycle';
 import {
   buildCaseResolverFileComparableFingerprint,
   CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT,
@@ -32,8 +30,7 @@ import {
   buildFileEditDraft,
   createCaseResolverHistorySnapshotEntry,
   createId,
-} from '../utils/caseResolverUtils';
-
+} from '@/features/case-resolver/utils/caseResolverUtils';
 
 type UpdateWorkspaceOptions = {
   persistToast?: string;
@@ -47,7 +44,9 @@ type UpdateWorkspaceFn = (
   options?: UpdateWorkspaceOptions
 ) => void;
 
-type SetEditingDocumentDraftFn = React.Dispatch<React.SetStateAction<CaseResolverFileEditDraft | null>>;
+type SetEditingDocumentDraftFn = React.Dispatch<
+  React.SetStateAction<CaseResolverFileEditDraft | null>
+>;
 
 type FilemakerDatabase = Parameters<typeof buildCaseResolverCaptureProposalState>[2];
 type CaseResolverCaptureSettings = Parameters<typeof buildCaseResolverCaptureProposalState>[3];
@@ -91,9 +90,7 @@ export type CaseResolverPromptExploderApplyProposalReason =
   | 'no_capture_payload'
   | 'capture_disabled';
 
-export type CaseResolverPromptExploderApplyTargetResolutionStrategy =
-  | 'requested_id'
-  | 'unresolved';
+export type CaseResolverPromptExploderApplyTargetResolutionStrategy = 'requested_id' | 'unresolved';
 
 export interface CaseResolverPromptExploderApplyDiagnostics {
   applyAttemptId: string;
@@ -130,19 +127,19 @@ export interface CaseResolverPromptExploderApplyUiDiagnostics extends CaseResolv
 
 export type CaseResolverPromptExploderApplyResult =
   | {
-    applied: true;
-    payload: CaseResolverPromptExploderPendingPayload;
-    proposalState: CaseResolverCaptureProposalState | null;
-    workspaceChanged: boolean;
-    diagnostics: CaseResolverPromptExploderApplyDiagnostics;
-  }
+      applied: true;
+      payload: CaseResolverPromptExploderPendingPayload;
+      proposalState: CaseResolverCaptureProposalState | null;
+      workspaceChanged: boolean;
+      diagnostics: CaseResolverPromptExploderApplyDiagnostics;
+    }
   | {
-    applied: false;
-    payload: CaseResolverPromptExploderPendingPayload | null;
-    proposalState: null;
-    reason: CaseResolverPromptExploderApplyFailureReason;
-    diagnostics: CaseResolverPromptExploderApplyDiagnostics;
-  };
+      applied: false;
+      payload: CaseResolverPromptExploderPendingPayload | null;
+      proposalState: null;
+      reason: CaseResolverPromptExploderApplyFailureReason;
+      diagnostics: CaseResolverPromptExploderApplyDiagnostics;
+    };
 
 const normalizeCandidateId = (value: string | null | undefined): string | null => {
   if (typeof value !== 'string') return null;
@@ -194,8 +191,7 @@ const findWorkspaceFileByNormalizedId = (
   if (!normalizedCandidateId) return null;
   return (
     files.find(
-      (file: CaseResolverFile): boolean =>
-        normalizeCandidateId(file.id) === normalizedCandidateId
+      (file: CaseResolverFile): boolean => normalizeCandidateId(file.id) === normalizedCandidateId
     ) ?? null
   );
 };
@@ -203,23 +199,22 @@ const findWorkspaceFileByNormalizedId = (
 const normalizePayloadCreatedAt = (value: string | null | undefined): string =>
   normalizeCandidateId(value) ?? 'missing-created-at';
 
-const buildPromptExploderPayloadKey = (
-  payload: PromptExploderBridgePayload
-): string =>
+const buildPromptExploderPayloadKey = (payload: PromptExploderBridgePayload): string =>
   payload.transferId?.trim()
     ? payload.transferId.trim()
-    : (
-      [
+    : [
         normalizePayloadCreatedAt(payload.createdAt),
         payload.caseResolverContext?.fileId ?? '',
         payload.prompt,
         JSON.stringify(payload.caseResolverParties ?? null),
         JSON.stringify(payload.caseResolverMetadata ?? null),
-      ].join('|')
-    );
+      ].join('|');
 
 export const resolvePromptExploderPendingPayloadIdentity = (
-  payload: Pick<PromptExploderBridgePayload, 'transferId' | 'createdAt' | 'caseResolverContext' | 'prompt'>
+  payload: Pick<
+    PromptExploderBridgePayload,
+    'transferId' | 'createdAt' | 'caseResolverContext' | 'prompt'
+  >
 ): string =>
   [
     payload.transferId?.trim() || '',
@@ -239,56 +234,58 @@ const toCaseResolverPendingPayload = (
 };
 
 export const readCaseResolverPromptExploderPayloadState =
-(): CaseResolverPromptExploderPayloadReadState => {
-  const snapshot = readPromptExploderApplyPayloadSnapshot();
-  const payload = toCaseResolverPendingPayload(snapshot.payload);
-  if (!payload) {
+  (): CaseResolverPromptExploderPayloadReadState => {
+    const snapshot = readPromptExploderApplyPayloadSnapshot();
+    const payload = toCaseResolverPendingPayload(snapshot.payload);
+    if (!payload) {
+      return {
+        pendingPayload: null,
+        expiredPayload: null,
+        expiresAt: snapshot.expiresAt,
+      };
+    }
+    if (!payload.prompt.trim()) {
+      return {
+        pendingPayload: null,
+        expiredPayload: null,
+        expiresAt: snapshot.expiresAt,
+      };
+    }
+    if (snapshot.isExpired) {
+      return {
+        pendingPayload: null,
+        expiredPayload: payload,
+        expiresAt: snapshot.expiresAt,
+      };
+    }
     return {
-      pendingPayload: null,
+      pendingPayload: payload,
       expiredPayload: null,
       expiresAt: snapshot.expiresAt,
     };
-  }
-  if (!payload.prompt.trim()) {
-    return {
-      pendingPayload: null,
-      expiredPayload: null,
-      expiresAt: snapshot.expiresAt,
-    };
-  }
-  if (snapshot.isExpired) {
-    return {
-      pendingPayload: null,
-      expiredPayload: payload,
-      expiresAt: snapshot.expiresAt,
-    };
-  }
-  return {
-    pendingPayload: payload,
-    expiredPayload: null,
-    expiresAt: snapshot.expiresAt,
   };
-};
 
 export const readPendingCaseResolverPromptExploderPayload =
-(): CaseResolverPromptExploderPendingPayload | null => {
-  return readCaseResolverPromptExploderPayloadState().pendingPayload;
-};
+  (): CaseResolverPromptExploderPendingPayload | null => {
+    return readCaseResolverPromptExploderPayloadState().pendingPayload;
+  };
 
 export const discardPendingCaseResolverPromptExploderPayload =
-(): CaseResolverPromptExploderPendingPayload | null => {
-  const snapshot = readPromptExploderApplyPayloadSnapshot();
-  const snapshotPayload = toCaseResolverPendingPayload(snapshot.payload);
-  if (snapshotPayload && snapshot.isExpired) {
+  (): CaseResolverPromptExploderPendingPayload | null => {
+    const snapshot = readPromptExploderApplyPayloadSnapshot();
+    const snapshotPayload = toCaseResolverPendingPayload(snapshot.payload);
+    if (snapshotPayload && snapshot.isExpired) {
+      clearPromptExploderApplyPayload();
+      return snapshotPayload;
+    }
+    const consumed = toCaseResolverPendingPayload(
+      consumePromptExploderApplyPromptForCaseResolver()
+    );
+    if (consumed) return consumed;
+    if (!snapshotPayload) return null;
     clearPromptExploderApplyPayload();
     return snapshotPayload;
-  }
-  const consumed = toCaseResolverPendingPayload(consumePromptExploderApplyPromptForCaseResolver());
-  if (consumed) return consumed;
-  if (!snapshotPayload) return null;
-  clearPromptExploderApplyPayload();
-  return snapshotPayload;
-};
+  };
 
 export const applyPendingPromptExploderPayloadToCaseResolver = ({
   payload,
@@ -327,20 +324,22 @@ export const applyPendingPromptExploderPayloadToCaseResolver = ({
     workspaceFiles,
   });
   const buildDiagnostics = (
-    input: Partial<Pick<
-      CaseResolverPromptExploderApplyDiagnostics,
-      | 'precheckResolvedTargetFileId'
-      | 'precheckResolutionStrategy'
-      | 'precheckWorkspaceFileCount'
-      | 'mutationResolvedTargetFileId'
-      | 'mutationResolutionStrategy'
-      | 'mutationWorkspaceFileCount'
-      | 'resolvedTargetFileId'
-      | 'resolutionStrategy'
-      | 'proposalBuilt'
-      | 'proposalReason'
-      | 'mutationMissingAfterPrecheck'
-    >>
+    input: Partial<
+      Pick<
+        CaseResolverPromptExploderApplyDiagnostics,
+        | 'precheckResolvedTargetFileId'
+        | 'precheckResolutionStrategy'
+        | 'precheckWorkspaceFileCount'
+        | 'mutationResolvedTargetFileId'
+        | 'mutationResolutionStrategy'
+        | 'mutationWorkspaceFileCount'
+        | 'resolvedTargetFileId'
+        | 'resolutionStrategy'
+        | 'proposalBuilt'
+        | 'proposalReason'
+        | 'mutationMissingAfterPrecheck'
+      >
+    >
   ): CaseResolverPromptExploderApplyDiagnostics => ({
     applyAttemptId,
     transferId: payloadTransferId,
@@ -446,7 +445,7 @@ export const applyPendingPromptExploderPayloadToCaseResolver = ({
     return createCaseResolverFile({
       ...file,
       originalDocumentContent: file.originalDocumentContent ?? file.documentContent,
-    
+
       explodedDocumentContent: explodedStoredContent,
       activeDocumentVersion: 'exploded',
       editorType: canonicalExploded.mode,
@@ -486,8 +485,7 @@ export const applyPendingPromptExploderPayloadToCaseResolver = ({
   const mutationSourceFile =
     workspaceFiles.find(
       (file: CaseResolverFile): boolean => file.id === mutationResolvedTargetFileId
-    ) ??
-    findWorkspaceFileByNormalizedId(workspaceFiles, mutationResolvedTargetFileId);
+    ) ?? findWorkspaceFileByNormalizedId(workspaceFiles, mutationResolvedTargetFileId);
 
   if (mutationSourceFile?.isLocked) {
     return {
@@ -541,67 +539,68 @@ export const applyPendingPromptExploderPayloadToCaseResolver = ({
   let liveMutationAttempted = false;
   let liveMutationBlockedByLock = false;
 
-  updateWorkspace((current) => {
-    liveMutationAttempted = true;
-    const liveTargetFileId = mutationResolvedTargetFileId;
-    liveMutationWorkspaceFileCount = current.files.length;
-    liveMutationResolutionStrategy = liveTargetFileId ? 'requested_id' : 'unresolved';
-    liveMutationResolvedTargetFileId = liveTargetFileId;
-    if (!liveTargetFileId) return current;
+  updateWorkspace(
+    (current) => {
+      liveMutationAttempted = true;
+      const liveTargetFileId = mutationResolvedTargetFileId;
+      liveMutationWorkspaceFileCount = current.files.length;
+      liveMutationResolutionStrategy = liveTargetFileId ? 'requested_id' : 'unresolved';
+      liveMutationResolvedTargetFileId = liveTargetFileId;
+      if (!liveTargetFileId) return current;
 
-    const existingTarget =
-      current.files.find((file: CaseResolverFile): boolean => file.id === liveTargetFileId) ??
-      findWorkspaceFileByNormalizedId(current.files, liveTargetFileId);
-    if (!existingTarget) {
-      liveMutationResolvedTargetFileId = null;
-      liveMutationResolutionStrategy = 'unresolved';
-      return current;
-    }
-    if (existingTarget.isLocked) {
+      const existingTarget =
+        current.files.find((file: CaseResolverFile): boolean => file.id === liveTargetFileId) ??
+        findWorkspaceFileByNormalizedId(current.files, liveTargetFileId);
+      if (!existingTarget) {
+        liveMutationResolvedTargetFileId = null;
+        liveMutationResolutionStrategy = 'unresolved';
+        return current;
+      }
+      if (existingTarget.isLocked) {
+        liveMutationSourceFile = existingTarget;
+        liveMutationNextFile = existingTarget;
+        liveMutationChanged = false;
+        liveMutationBlockedByLock = true;
+        return current;
+      }
       liveMutationSourceFile = existingTarget;
-      liveMutationNextFile = existingTarget;
-      liveMutationChanged = false;
-      liveMutationBlockedByLock = true;
-      return current;
+      const candidate = buildExplodedFile(existingTarget);
+      liveMutationNextFile = candidate;
+
+      const existingTargetId = existingTarget.id;
+      const fileChangedFromExisting =
+        buildCaseResolverFileComparableFingerprint(existingTarget) !==
+        buildCaseResolverFileComparableFingerprint(candidate);
+      liveMutationChanged = fileChangedFromExisting;
+
+      let fileChanged = false;
+      let nextFiles = current.files;
+      if (fileChangedFromExisting) {
+        nextFiles = current.files.map(
+          (file: CaseResolverFile): CaseResolverFile =>
+            file.id === existingTargetId ? candidate : file
+        );
+        fileChanged = true;
+      }
+
+      const nextActiveFileId =
+        current.activeFileId === liveTargetFileId ? current.activeFileId : liveTargetFileId;
+      const activeFileChanged = nextActiveFileId !== current.activeFileId;
+      if (!fileChanged && !activeFileChanged) {
+        return current;
+      }
+
+      return {
+        ...current,
+        activeFileId: nextActiveFileId,
+        files: fileChanged ? nextFiles : current.files,
+      };
+    },
+    {
+      source: 'prompt_exploder_apply_manual',
+      skipNormalization: true,
     }
-    liveMutationSourceFile = existingTarget;
-    const candidate = buildExplodedFile(existingTarget);
-    liveMutationNextFile = candidate;
-
-    const existingTargetId = existingTarget.id;
-    const fileChangedFromExisting = (
-      buildCaseResolverFileComparableFingerprint(existingTarget) !==
-      buildCaseResolverFileComparableFingerprint(candidate)
-    );
-    liveMutationChanged = fileChangedFromExisting;
-
-    let fileChanged = false;
-    let nextFiles = current.files;
-    if (fileChangedFromExisting) {
-      nextFiles = current.files.map((file: CaseResolverFile): CaseResolverFile => (
-        file.id === existingTargetId ? candidate : file
-      ));
-      fileChanged = true;
-    }
-
-    const nextActiveFileId =
-      current.activeFileId === liveTargetFileId
-        ? current.activeFileId
-        : liveTargetFileId;
-    const activeFileChanged = nextActiveFileId !== current.activeFileId;
-    if (!fileChanged && !activeFileChanged) {
-      return current;
-    }
-
-    return {
-      ...current,
-      activeFileId: nextActiveFileId,
-      files: fileChanged ? nextFiles : current.files,
-    };
-  }, {
-    source: 'prompt_exploder_apply_manual',
-    skipNormalization: true,
-  });
+  );
 
   if (liveMutationBlockedByLock && liveMutationResolvedTargetFileId) {
     return {
@@ -642,23 +641,27 @@ export const applyPendingPromptExploderPayloadToCaseResolver = ({
     };
   }
 
-  const effectiveMutationSourceFile =
-    liveMutationAttempted ? liveMutationSourceFile : (liveMutationSourceFile ?? mutationSourceFile);
-  const effectiveMutationNextFile =
-    liveMutationAttempted ? liveMutationNextFile : (liveMutationNextFile ?? mutationNextFile);
+  const effectiveMutationSourceFile = liveMutationAttempted
+    ? liveMutationSourceFile
+    : (liveMutationSourceFile ?? mutationSourceFile);
+  const effectiveMutationNextFile = liveMutationAttempted
+    ? liveMutationNextFile
+    : (liveMutationNextFile ?? mutationNextFile);
   const effectiveMutationResolvedTargetFileId = liveMutationAttempted
     ? liveMutationResolvedTargetFileId
     : (liveMutationResolvedTargetFileId ?? mutationResolvedTargetFileId);
   const effectiveMutationResolutionStrategy = liveMutationAttempted
     ? liveMutationResolutionStrategy
-    : (
-      liveMutationResolvedTargetFileId
-        ? liveMutationResolutionStrategy
-        : mutationResolutionStrategy
-    );
+    : liveMutationResolvedTargetFileId
+      ? liveMutationResolutionStrategy
+      : mutationResolutionStrategy;
   const effectiveMutationWorkspaceFileCount = liveMutationWorkspaceFileCount;
 
-  if (!effectiveMutationResolvedTargetFileId || !effectiveMutationSourceFile || !effectiveMutationNextFile) {
+  if (
+    !effectiveMutationResolvedTargetFileId ||
+    !effectiveMutationSourceFile ||
+    !effectiveMutationNextFile
+  ) {
     const missingAfterPrecheck = Boolean(precheckTargetResolution.resolvedTargetFileId);
     return {
       applied: false,
@@ -678,10 +681,12 @@ export const applyPendingPromptExploderPayloadToCaseResolver = ({
     };
   }
 
-  setEditingDocumentDraft((current: CaseResolverFileEditDraft | null): CaseResolverFileEditDraft | null => {
-    if (current?.id !== effectiveMutationResolvedTargetFileId) return current;
-    return buildFileEditDraft(effectiveMutationNextFile);
-  });
+  setEditingDocumentDraft(
+    (current: CaseResolverFileEditDraft | null): CaseResolverFileEditDraft | null => {
+      if (current?.id !== effectiveMutationResolvedTargetFileId) return current;
+      return buildFileEditDraft(effectiveMutationNextFile);
+    }
+  );
 
   const primaryProposalState = buildCaseResolverCaptureProposalState(
     payloadToApply.caseResolverParties,

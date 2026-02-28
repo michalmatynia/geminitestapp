@@ -75,8 +75,8 @@ export const collectMetrics = async ({ root = process.cwd() } = {}) => {
     /^\s*['"]use client['"]\s*;?/m.test(record.content)
   );
 
-  const apiRouteRecords = sourceRecords.filter((record) =>
-    record.path.startsWith('src/app/api/') && /\/route\.tsx?$/.test(record.path)
+  const apiRouteRecords = sourceRecords.filter(
+    (record) => record.path.startsWith('src/app/api/') && /\/route\.tsx?$/.test(record.path)
   );
 
   const apiRoutesWithHandler = apiRouteRecords.filter((record) =>
@@ -120,7 +120,8 @@ export const collectMetrics = async ({ root = process.cwd() } = {}) => {
   );
   const appFeatureDeepImports = appRecords.reduce(
     (sum, record) =>
-      sum + countMatches(
+      sum +
+      countMatches(
         record.content,
         /from\s+['"]@\/features\/[^/'"\n]+\/(?!public(?:['"/])|server(?:['"/]))/g
       ),
@@ -206,8 +207,7 @@ export const collectMetrics = async ({ root = process.cwd() } = {}) => {
       appFeatureDeepImports,
       sharedToFeaturesStaticImports,
       sharedToFeaturesDynamicImports,
-      sharedToFeaturesTotalImports:
-        sharedToFeaturesStaticImports + sharedToFeaturesDynamicImports,
+      sharedToFeaturesTotalImports: sharedToFeaturesStaticImports + sharedToFeaturesDynamicImports,
     },
     architecture: {
       crossFeatureEdgePairs: crossFeatureEdges.length,
@@ -240,12 +240,8 @@ export const formatCompactSummary = (metrics) => {
   lines.push(
     `API explicit cache policy coverage: ${metrics.api.routesWithExplicitCachePolicy}/${metrics.api.totalRoutes}`
   );
-  lines.push(
-    `Cross-feature edge pairs: ${metrics.architecture.crossFeatureEdgePairs}`
-  );
-  lines.push(
-    `Shared -> features imports: ${metrics.imports.sharedToFeaturesTotalImports}`
-  );
+  lines.push(`Cross-feature edge pairs: ${metrics.architecture.crossFeatureEdgePairs}`);
+  lines.push(`Shared -> features imports: ${metrics.imports.sharedToFeaturesTotalImports}`);
   lines.push(`setInterval occurrences: ${metrics.runtime.setIntervalOccurrences}`);
   return lines.join('\n');
 };

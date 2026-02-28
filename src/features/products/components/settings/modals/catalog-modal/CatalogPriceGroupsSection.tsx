@@ -16,9 +16,7 @@ export function CatalogPriceGroupsSection(): React.JSX.Element {
 
   return (
     <div className='rounded-md border border-border bg-card/70 p-4 space-y-4'>
-      <Label className='text-sm font-semibold text-white'>
-        Price Groups
-      </Label>
+      <Label className='text-sm font-semibold text-white'>Price Groups</Label>
       {loadingGroups ? (
         <p className='text-xs text-gray-500'>Loading groups...</p>
       ) : (
@@ -33,8 +31,7 @@ export function CatalogPriceGroupsSection(): React.JSX.Element {
                   className='h-7 rounded-full px-3 text-xs cursor-pointer hover:bg-secondary/80'
                   onClick={() => togglePriceGroup(id)}
                 >
-                  {group?.name ?? id}{' '}
-                  <span className='ml-1 text-gray-500'>×</span>
+                  {group?.name ?? id} <span className='ml-1 text-gray-500'>×</span>
                 </Badge>
               );
             })}
@@ -51,19 +48,13 @@ export function CatalogPriceGroupsSection(): React.JSX.Element {
                 <span>
                   {group.name} ({group.currencyCode})
                 </span>
-                <span>
-                  {catalogPriceGroupIds.includes(group.id)
-                    ? 'Remove'
-                    : 'Add'}
-                </span>
+                <span>{catalogPriceGroupIds.includes(group.id) ? 'Remove' : 'Add'}</span>
               </Button>
             ))}
           </div>
 
           <div className='space-y-2'>
-            <Label className='text-xs text-gray-400'>
-              Default price group
-            </Label>
+            <Label className='text-xs text-gray-400'>Default price group</Label>
             <SelectSimple
               size='sm'
               value={catalogDefaultPriceGroupId}
@@ -74,7 +65,7 @@ export function CatalogPriceGroupsSection(): React.JSX.Element {
                 const group = priceGroups.find((g) => g.id === id);
                 return {
                   value: id,
-                  label: group?.name ?? id
+                  label: group?.name ?? id,
                 };
               })}
               triggerClassName='w-full bg-gray-900 border-border text-xs text-white h-9'

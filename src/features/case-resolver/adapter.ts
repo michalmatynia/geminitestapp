@@ -37,11 +37,19 @@ export const createCaseResolverMasterTreeAdapter = (
   createMasterFolderTreeAdapter({
     decodeNodeId: decodeCaseResolverMasterNodeId,
     handlers: {
-      onMove: async ({ operation, context, node, targetParent }): Promise<MasterTreeNode[] | void> => {
+      onMove: async ({
+        operation,
+        context,
+        node,
+        targetParent,
+      }): Promise<MasterTreeNode[] | void> => {
         const targetFolder =
           targetParent?.entity === 'folder'
             ? targetParent.id
-            : (resolveCaseResolverFolderTargetForNode(context.nextNodes, operation.targetParentId) ?? '');
+            : (resolveCaseResolverFolderTargetForNode(
+                context.nextNodes,
+                operation.targetParentId
+              ) ?? '');
 
         if (node.entity === 'file') {
           await operations.moveFile(node.id, targetFolder);
@@ -61,8 +69,10 @@ export const createCaseResolverMasterTreeAdapter = (
           (candidate: MasterTreeNode): boolean => candidate.id === operation.targetId
         );
         const targetFolder =
-          resolveCaseResolverFolderTargetForNode(context.previousNodes, targetNode?.parentId ?? null) ??
-          '';
+          resolveCaseResolverFolderTargetForNode(
+            context.previousNodes,
+            targetNode?.parentId ?? null
+          ) ?? '';
 
         if (node.entity === 'file') {
           await operations.moveFile(node.id, targetFolder);
@@ -90,9 +100,7 @@ export const createCaseResolverMasterTreeAdapter = (
           return context.nextNodes;
         }
 
-        const parentPath = node.id.includes('/')
-          ? node.id.slice(0, node.id.lastIndexOf('/'))
-          : '';
+        const parentPath = node.id.includes('/') ? node.id.slice(0, node.id.lastIndexOf('/')) : '';
         const nextPath = normalizeTreePath(
           parentPath ? `${parentPath}/${normalizedName}` : normalizedName
         );
@@ -109,12 +117,17 @@ export const createCaseResolverCasesMasterTreeAdapter = (
   createMasterFolderTreeAdapter({
     decodeNodeId: decodeCaseResolverCaseMasterNodeId,
     handlers: {
-      onMove: async ({ operation, context, node, targetParent }): Promise<MasterTreeNode[] | void> => {
+      onMove: async ({
+        operation,
+        context,
+        node,
+        targetParent,
+      }): Promise<MasterTreeNode[] | void> => {
         const targetParentCaseId =
           targetParent?.entity === 'case'
             ? targetParent.id
             : operation.targetParentId
-              ? decodeCaseResolverCaseMasterNodeId(operation.targetParentId)?.id ?? null
+              ? (decodeCaseResolverCaseMasterNodeId(operation.targetParentId)?.id ?? null)
               : null;
         await operations.moveCase(node.id, targetParentCaseId, operation.targetIndex);
         return context.nextNodes;

@@ -19,11 +19,7 @@ export function SettingsFormProvider({
   children: React.ReactNode;
 }) {
   const value = useMemo(() => ({ values, onChange }), [values, onChange]);
-  return (
-    <SettingsFormContext.Provider value={value}>
-      {children}
-    </SettingsFormContext.Provider>
-  );
+  return <SettingsFormContext.Provider value={value}>{children}</SettingsFormContext.Provider>;
 }
 
 export function useSettingsForm() {

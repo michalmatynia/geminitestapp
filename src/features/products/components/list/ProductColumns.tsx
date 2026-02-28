@@ -3,9 +3,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { ArrowUpDown, Download } from 'lucide-react';
 
-import {
-  TriggerButtonBar,
-} from '@/features/ai/ai-paths/components/trigger-buttons/TriggerButtonBar';
+import { TriggerButtonBar } from '@/features/ai/ai-paths/components/trigger-buttons/TriggerButtonBar';
 import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
 import {
   fetchProductListings,
@@ -14,28 +12,27 @@ import {
 import { ProductImageCell } from '@/features/products/components/cells/ProductImageCell';
 import { EditableCell } from '@/features/products/components/EditableCell';
 import { useProductListActionsContext } from '@/features/products/context/ProductListContext';
-import { getProductDetailQueryKey, productsListsQueryKey } from '@/features/products/hooks/productCache';
+import {
+  getProductDetailQueryKey,
+  productsListsQueryKey,
+} from '@/features/products/hooks/productCache';
 import { resolveProductImageUrl } from '@/shared/utils/image-routing';
-import { calculatePriceForCurrency, normalizeCurrencyCode } from '@/features/products/utils/priceCalculation';
+import {
+  calculatePriceForCurrency,
+  normalizeCurrencyCode,
+} from '@/features/products/utils/priceCalculation';
 import { getDocumentationTooltip } from '@/shared/lib/tooltip-engine';
 import type { ProductWithImages } from '@/shared/contracts/products';
-import {
-  Badge,
-  Button,
-  Checkbox,
-  ActionMenu,
-  DropdownMenuItem,
-  Tooltip,
-} from '@/shared/ui';
+import { Badge, Button, Checkbox, ActionMenu, DropdownMenuItem, Tooltip } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import type { ColumnDef, Row, Table, Column } from '@tanstack/react-table';
 
-import { 
-  getProductNameValue, 
-  getProductDisplayName, 
-  getImageFilepath, 
-  resolveProductCategoryId 
+import {
+  getProductNameValue,
+  getProductDisplayName,
+  getImageFilepath,
+  resolveProductCategoryId,
 } from './columns/product-column-utils';
 import { BaseQuickExportButton } from './columns/buttons/BaseQuickExportButton';
 import { TraderaStatusButton } from './columns/buttons/TraderaStatusButton';
@@ -85,15 +82,10 @@ interface ColumnActionsProps {
   row: Row<ProductWithImages>;
 }
 
-const ActionsCell: React.FC<ColumnActionsProps> = ({
-  row,
-}: ColumnActionsProps) => {
+const ActionsCell: React.FC<ColumnActionsProps> = ({ row }: ColumnActionsProps) => {
   const product: ProductWithImages = row.original;
-  const {
-    onProductEditClick,
-    onProductDeleteClick,
-    onDuplicateProduct,
-  } = useProductListActionsContext();
+  const { onProductEditClick, onProductDeleteClick, onDuplicateProduct } =
+    useProductListActionsContext();
 
   return (
     <div className='flex justify-end'>
@@ -136,17 +128,20 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
     header: ({ table }: { table: Table<ProductWithImages> }): React.JSX.Element => (
       <Checkbox
         checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && 'indeterminate')
+          table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate')
         }
-        onCheckedChange={(checked: boolean | 'indeterminate'): void => table.toggleAllPageRowsSelected(!!checked)}
+        onCheckedChange={(checked: boolean | 'indeterminate'): void =>
+          table.toggleAllPageRowsSelected(!!checked)
+        }
         aria-label='Select all'
       />
     ),
     cell: ({ row }: { row: Row<ProductWithImages> }): React.JSX.Element => (
       <Checkbox
         checked={row.getIsSelected()}
-        onCheckedChange={(checked: boolean | 'indeterminate'): void => row.toggleSelected(!!checked)}
+        onCheckedChange={(checked: boolean | 'indeterminate'): void =>
+          row.toggleSelected(!!checked)
+        }
         aria-label='Select row'
       />
     ),
@@ -160,7 +155,7 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
     cell: ({ row }: { row: Row<ProductWithImages> }): React.JSX.Element => {
       const product: ProductWithImages = row.original;
       const { thumbnailSource, imageExternalBaseUrl } = useProductListActionsContext();
-      
+
       const firstFileImage: string | undefined = product.images
         ?.map((img) => getImageFilepath(img.imageFile))
         .find((filepath): filepath is string => typeof filepath === 'string');
@@ -173,8 +168,10 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
         (link: string) => link && link.trim().length > 0
       );
 
-      const resolvedFileImage = resolveProductImageUrl(firstFileImage, imageExternalBaseUrl) ?? undefined;
-      const resolvedLinkImage = resolveProductImageUrl(firstLinkImage, imageExternalBaseUrl) ?? undefined;
+      const resolvedFileImage =
+        resolveProductImageUrl(firstFileImage, imageExternalBaseUrl) ?? undefined;
+      const resolvedLinkImage =
+        resolveProductImageUrl(firstLinkImage, imageExternalBaseUrl) ?? undefined;
 
       let imageUrl: string | undefined;
       if (thumbnailSource === 'link') {
@@ -204,12 +201,8 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
     ),
     cell: ({ row }: { row: Row<ProductWithImages> }): React.JSX.Element => {
       const product: ProductWithImages = row.original;
-      const {
-        productNameKey,
-        onProductNameClick,
-        queuedProductIds,
-        categoryNameById,
-      } = useProductListActionsContext();
+      const { productNameKey, onProductNameClick, queuedProductIds, categoryNameById } =
+        useProductListActionsContext();
 
       const nameKey = productNameKey ?? 'name_en';
       const nameValue =
@@ -246,18 +239,14 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
           </span>
 
           <div className='flex items-center gap-1.5 text-sm text-gray-500'>
-            <span
-              className={[
-                'select-text cursor-text',
-              ].join(' ')}
-            >
+            <span className={['select-text cursor-text'].join(' ')}>
               {normalizedSku || 'No SKU'}
             </span>
-            <span aria-hidden='true' className='text-gray-600'>|</span>
+            <span aria-hidden='true' className='text-gray-600'>
+              |
+            </span>
             <Tooltip content={categoryLabel}>
-              <span className='max-w-[14rem] truncate'>
-                {categoryLabel}
-              </span>
+              <span className='max-w-[14rem] truncate'>{categoryLabel}</span>
             </Tooltip>
             {isImported && (
               <Tooltip
@@ -269,10 +258,7 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
                 }
               >
                 <span>
-                  <Download
-                    className='size-3 text-blue-400'
-                    aria-label='Imported product'
-                  />
+                  <Download className='size-3 text-blue-400' aria-label='Imported product' />
                 </span>
               </Tooltip>
             )}
@@ -289,7 +275,13 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
 
   {
     accessorKey: 'price',
-    header: ({ column, table }: { column: Column<ProductWithImages, unknown>; table: Table<ProductWithImages> }): React.JSX.Element => {
+    header: ({
+      column,
+      table,
+    }: {
+      column: Column<ProductWithImages, unknown>;
+      table: Table<ProductWithImages>;
+    }): React.JSX.Element => {
       const meta = table.options.meta as { currencyCode?: string } | undefined;
       const currencyCode: string = meta?.currencyCode || '';
 
@@ -305,10 +297,7 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
     },
     cell: ({ row }: { row: Row<ProductWithImages> }): React.JSX.Element => {
       const product: ProductWithImages = row.original;
-      const {
-        currencyCode,
-        priceGroups,
-      } = useProductListActionsContext();
+      const { currencyCode, priceGroups } = useProductListActionsContext();
       const queryClient = useQueryClient();
 
       const {
@@ -333,9 +322,7 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
       if (hasConvertedPrice) {
         return (
           <div className='flex flex-col items-start'>
-            <span className='text-foreground'>
-              {displayPrice?.toFixed(2)}
-            </span>
+            <span className='text-foreground'>{displayPrice?.toFixed(2)}</span>
             <span className='text-xs text-muted-foreground'>
               Base: {product.price?.toFixed(2)} {baseCurrencyCode}
             </span>
@@ -371,9 +358,7 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
           />
           {showCurrencyIndicator && displayPrice !== product.price && (
             <Tooltip content={`Converted: ${displayPrice?.toFixed(2)} ${actualCurrency}`}>
-              <span className='text-xs text-muted-foreground'>
-                →{displayPrice?.toFixed(2)}
-              </span>
+              <span className='text-xs text-muted-foreground'>→{displayPrice?.toFixed(2)}</span>
             </Tooltip>
           )}
         </div>
@@ -449,14 +434,12 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
 
       if (!handleClick) return null;
       const showMarketplaceBadge: boolean =
-        (integrationBadgeIds?.has(product.id) ?? false) ||
-        Boolean(product.baseProductId?.trim());
+        (integrationBadgeIds?.has(product.id) ?? false) || Boolean(product.baseProductId?.trim());
       const status: string =
         integrationBadgeStatuses?.get(product.id) ??
         (product.baseProductId?.trim() ? 'active' : 'not_started');
       const showTraderaBadge: boolean = traderaBadgeIds?.has(product.id) ?? false;
-      const traderaStatus: string =
-        traderaBadgeStatuses?.get(product.id) ?? 'not_started';
+      const traderaStatus: string = traderaBadgeStatuses?.get(product.id) ?? 'not_started';
       const prefetchListings = (): void => {
         void queryClient.prefetchQuery({
           queryKey: productListingsQueryKey(product.id),
@@ -487,9 +470,7 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
             showMarketplaceBadge={showMarketplaceBadge}
             onOpenIntegrations={(): void => handleClick(product)}
             onOpenSettings={
-              handleOpenExportSettings
-                ? (): void => handleOpenExportSettings(product)
-                : undefined
+              handleOpenExportSettings ? (): void => handleOpenExportSettings(product) : undefined
             }
           />
           <TriggerButtonBar
@@ -516,11 +497,7 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
   {
     id: 'actions',
     cell: ({ row }: { row: Row<ProductWithImages> }): React.JSX.Element | null => {
-      return (
-        <ActionsCell
-          row={row}
-        />
-      );
+      return <ActionsCell row={row} />;
     },
   },
 ];

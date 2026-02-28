@@ -1,4 +1,3 @@
- 
 import {
   type FilemakerDatabase,
   type FilemakerAddressOwnerKind,
@@ -14,11 +13,7 @@ import {
   type FilemakerEvent,
   type FilemakerEventOrganizationLink,
 } from './types';
-import {
-  ensureUniqueId,
-  normalizeString,
-  toIdToken,
-} from './filemaker-settings.helpers';
+import { ensureUniqueId, normalizeString, toIdToken } from './filemaker-settings.helpers';
 import {
   createFilemakerAddressLink,
   createFilemakerEmailLink,
@@ -71,9 +66,7 @@ const isAddressOwnerPresentInDatabase = (
     return database.persons.some((person): boolean => person.id === ownerId);
   }
   if (ownerKind === 'organization') {
-    return database.organizations.some(
-      (organization): boolean => organization.id === ownerId
-    );
+    return database.organizations.some((organization): boolean => organization.id === ownerId);
   }
   return database.events.some((event): boolean => event.id === ownerId);
 };
@@ -92,20 +85,20 @@ export const setFilemakerDefaultAddressForOwner = (
 
   const hasLink = database.addressLinks.some(
     (link: FilemakerAddressLink): boolean =>
-      link.ownerKind === input.ownerKind &&
-      link.ownerId === ownerId &&
-      link.addressId === addressId
+      link.ownerKind === input.ownerKind && link.ownerId === ownerId && link.addressId === addressId
   );
   if (!hasLink) return database;
 
-  const nextLinks = database.addressLinks.map((link: FilemakerAddressLink): FilemakerAddressLink => {
-    if (link.ownerKind !== input.ownerKind || link.ownerId !== ownerId) return link;
-    return {
-      ...link,
-      isDefault: link.addressId === addressId,
-      updatedAt: new Date().toISOString(),
-    };
-  });
+  const nextLinks = database.addressLinks.map(
+    (link: FilemakerAddressLink): FilemakerAddressLink => {
+      if (link.ownerKind !== input.ownerKind || link.ownerId !== ownerId) return link;
+      return {
+        ...link,
+        isDefault: link.addressId === addressId,
+        updatedAt: new Date().toISOString(),
+      };
+    }
+  );
 
   return normalizeFilemakerDatabase({
     ...database,
@@ -137,9 +130,7 @@ export const linkFilemakerAddressToOwner = (
 
   const alreadyLinked = database.addressLinks.some(
     (link: FilemakerAddressLink): boolean =>
-      link.ownerKind === input.ownerKind &&
-      link.ownerId === ownerId &&
-      link.addressId === addressId
+      link.ownerKind === input.ownerKind && link.ownerId === ownerId && link.addressId === addressId
   );
   if (alreadyLinked) {
     if (!input.isDefault) return { database, created: false };
@@ -241,13 +232,10 @@ export const linkFilemakerPhoneNumberToParty = (
 
   const hasParty =
     input.partyKind === 'person'
-      ? database.persons.some(
-        (person: FilemakerPerson): boolean => person.id === partyId
-      )
+      ? database.persons.some((person: FilemakerPerson): boolean => person.id === partyId)
       : database.organizations.some(
-        (organization: FilemakerOrganization): boolean =>
-          organization.id === partyId
-      );
+          (organization: FilemakerOrganization): boolean => organization.id === partyId
+        );
   if (!hasParty) return { database, created: false };
 
   const alreadyLinked = database.phoneNumberLinks.some(
@@ -261,9 +249,7 @@ export const linkFilemakerPhoneNumberToParty = (
   }
 
   const usedIds = new Set<string>(
-    database.phoneNumberLinks.map(
-      (link: FilemakerPhoneNumberLink): string => link.id
-    )
+    database.phoneNumberLinks.map((link: FilemakerPhoneNumberLink): string => link.id)
   );
   const id = ensureUniqueId(
     defaultPhoneNumberLinkIdForValues(phoneNumberId, input.partyKind, partyId),
@@ -334,27 +320,20 @@ export const linkFilemakerEmailToParty = (
     return { database, created: false };
   }
 
-  const hasEmail = database.emails.some(
-    (email: FilemakerEmail): boolean => email.id === emailId
-  );
+  const hasEmail = database.emails.some((email: FilemakerEmail): boolean => email.id === emailId);
   if (!hasEmail) return { database, created: false };
 
   const hasParty =
     input.partyKind === 'person'
-      ? database.persons.some(
-        (person: FilemakerPerson): boolean => person.id === partyId
-      )
+      ? database.persons.some((person: FilemakerPerson): boolean => person.id === partyId)
       : database.organizations.some(
-        (organization: FilemakerOrganization): boolean =>
-          organization.id === partyId
-      );
+          (organization: FilemakerOrganization): boolean => organization.id === partyId
+        );
   if (!hasParty) return { database, created: false };
 
   const alreadyLinked = database.emailLinks.some(
     (link: FilemakerEmailLink): boolean =>
-      link.emailId === emailId &&
-      link.partyKind === input.partyKind &&
-      link.partyId === partyId
+      link.emailId === emailId && link.partyKind === input.partyKind && link.partyId === partyId
   );
   if (alreadyLinked) {
     return { database, created: false };
@@ -402,11 +381,7 @@ export const unlinkFilemakerEmailFromParty = (
 
   const nextEmailLinks = database.emailLinks.filter(
     (link: FilemakerEmailLink): boolean =>
-      !(
-        link.emailId === emailId &&
-        link.partyKind === input.partyKind &&
-        link.partyId === partyId
-      )
+      !(link.emailId === emailId && link.partyKind === input.partyKind && link.partyId === partyId)
   );
   if (nextEmailLinks.length === database.emailLinks.length) return database;
 
@@ -429,9 +404,7 @@ export const linkFilemakerEventToOrganization = (
     return { database, created: false };
   }
 
-  const hasEvent = database.events.some(
-    (event: FilemakerEvent): boolean => event.id === eventId
-  );
+  const hasEvent = database.events.some((event: FilemakerEvent): boolean => event.id === eventId);
   if (!hasEvent) return { database, created: false };
 
   const hasOrganization = database.organizations.some(
@@ -448,9 +421,7 @@ export const linkFilemakerEventToOrganization = (
   }
 
   const usedIds = new Set<string>(
-    database.eventOrganizationLinks.map(
-      (link: FilemakerEventOrganizationLink): string => link.id
-    )
+    database.eventOrganizationLinks.map((link: FilemakerEventOrganizationLink): string => link.id)
   );
   const id = ensureUniqueId(
     defaultEventOrganizationLinkIdForValues(eventId, organizationId),

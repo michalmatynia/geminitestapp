@@ -37,14 +37,14 @@ describe('AgentCreatorSettingsSection Component', () => {
 
   it('should show settings only when agent mode is enabled', () => {
     const { rerender } = render(<AgentCreatorSettingsSection />);
-    
+
     expect(screen.queryByText('Browser')).not.toBeInTheDocument();
 
     (useAgentCreatorSettings as Mock).mockReturnValue({
       ...defaultMockValues,
       agentModeEnabled: true,
     });
-    
+
     rerender(<AgentCreatorSettingsSection />);
     expect(screen.getByText('Browser')).toBeInTheDocument();
     expect(screen.getByRole('spinbutton', { name: /Max Steps/i })).toBeInTheDocument();
@@ -52,10 +52,10 @@ describe('AgentCreatorSettingsSection Component', () => {
 
   it('should call setAgentModeEnabled when checkbox is clicked', () => {
     render(<AgentCreatorSettingsSection />);
-    
+
     const checkbox = screen.getByLabelText(/Enable Agent Mode/i);
     fireEvent.click(checkbox);
-    
+
     expect(mockSetAgentModeEnabled).toHaveBeenCalledWith(true);
   });
 
@@ -65,10 +65,10 @@ describe('AgentCreatorSettingsSection Component', () => {
       agentModeEnabled: true,
     });
     render(<AgentCreatorSettingsSection />);
-    
+
     const input = screen.getByRole('spinbutton', { name: /Max Steps/i });
     fireEvent.change(input, { target: { value: '20' } });
-    
+
     expect(mockSetAgentMaxSteps).toHaveBeenCalledWith(20);
   });
 
@@ -78,10 +78,10 @@ describe('AgentCreatorSettingsSection Component', () => {
       agentModeEnabled: true,
     });
     render(<AgentCreatorSettingsSection />);
-    
+
     const checkbox = screen.getByLabelText(/Run Headless/i);
     fireEvent.click(checkbox);
-    
+
     expect(mockSetAgentRunHeadless).toHaveBeenCalledWith(false); // was true initially
   });
 });

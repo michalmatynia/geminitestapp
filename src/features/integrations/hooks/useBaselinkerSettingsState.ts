@@ -16,12 +16,12 @@ export function useBaselinkerSettingsState() {
   const baseTokenUpdatedAt = activeConnection?.baseTokenUpdatedAt
     ? new Date(activeConnection.baseTokenUpdatedAt).toLocaleString()
     : '—';
-  
+
   const settingsQuery = useSettings();
   const updateSettingMutation = useUpdateSetting();
   const defaultExportConnectionQuery = useDefaultExportConnection();
   const queryClient = useQueryClient();
-  
+
   const [syncIntervalMinutes, setSyncIntervalMinutes] = useState('10');
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
   const [defaultOneClickConnectionId, setDefaultOneClickConnectionId] = useState('');
@@ -32,7 +32,10 @@ export function useBaselinkerSettingsState() {
   useEffect(() => {
     let timer: NodeJS.Timeout | null = null;
     if (settingsQuery.data && !hasInitialized.current) {
-      const found = settingsQuery.data.find((setting: { key: string; value: string }) => setting.key === 'base_sync_poll_interval_minutes');
+      const found = settingsQuery.data.find(
+        (setting: { key: string; value: string }) =>
+          setting.key === 'base_sync_poll_interval_minutes'
+      );
       if (found?.value) {
         timer = setTimeout(() => {
           setSyncIntervalMinutes(found.value);
@@ -51,8 +54,7 @@ export function useBaselinkerSettingsState() {
       return;
     }
 
-    const persistedConnectionId =
-      defaultExportConnectionQuery.data?.connectionId?.trim() ?? '';
+    const persistedConnectionId = defaultExportConnectionQuery.data?.connectionId?.trim() ?? '';
     const persistedExists = connections.some(
       (connection) => connection.id === persistedConnectionId
     );
@@ -110,9 +112,7 @@ export function useBaselinkerSettingsState() {
       setDefaultConnectionMessage('Default OneClick connection saved.');
     } catch (error) {
       setDefaultConnectionMessage(
-        error instanceof Error
-          ? error.message
-          : 'Failed to save default OneClick connection.'
+        error instanceof Error ? error.message : 'Failed to save default OneClick connection.'
       );
     } finally {
       setSavingDefaultConnection(false);

@@ -13,22 +13,31 @@ import {
   useUpdateAuthUser,
   useUpdateAuthUserSecurity,
 } from '@/features/auth/hooks/useAuthQueries';
-import {
-  AUTH_SETTINGS_KEYS,
-  type AuthUserRoleMap,
-} from '@/features/auth/utils/auth-management';
-import type { 
+import { AUTH_SETTINGS_KEYS, type AuthUserRoleMap } from '@/features/auth/utils/auth-management';
+import type {
   RegisterResponse,
   AuthUserSecurityProfile,
   AuthUser as AuthUserSummary,
-  AuthRole
+  AuthRole,
 } from '@/shared/contracts/auth';
 import { invalidateUsers } from '@/shared/lib/query-invalidation';
 import { useToast } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
-type CreateUserForm = { name: string; email: string; password: string; roleId: string; verified: boolean };
-const EMPTY_CREATE: CreateUserForm = { name: '', email: '', password: '', roleId: 'none', verified: false };
+type CreateUserForm = {
+  name: string;
+  email: string;
+  password: string;
+  roleId: string;
+  verified: boolean;
+};
+const EMPTY_CREATE: CreateUserForm = {
+  name: '',
+  email: '',
+  password: '',
+  roleId: 'none',
+  verified: false,
+};
 
 export interface UseUsersStateReturn {
   users: AuthUserSummary[];
@@ -64,11 +73,43 @@ export interface UseUsersStateReturn {
   userSecurity: AuthUserSecurityProfile | undefined;
   loadingSecurity: boolean;
   mutations: {
-    updateUser: UseMutationResult<AuthUserSummary, Error, { userId: string; input: { name?: string | null; email?: string | null; emailVerified?: boolean | null } }>;
-    updateSecurity: UseMutationResult<AuthUserSecurityProfile, Error, { userId: string; input: { disabled?: boolean; banned?: boolean; allowedIps?: string[]; disableMfa?: boolean } }>;
+    updateUser: UseMutationResult<
+      AuthUserSummary,
+      Error,
+      {
+        userId: string;
+        input: { name?: string | null; email?: string | null; emailVerified?: boolean | null };
+      }
+    >;
+    updateSecurity: UseMutationResult<
+      AuthUserSecurityProfile,
+      Error,
+      {
+        userId: string;
+        input: {
+          disabled?: boolean;
+          banned?: boolean;
+          allowedIps?: string[];
+          disableMfa?: boolean;
+        };
+      }
+    >;
     deleteUser: UseMutationResult<{ id: string; deleted: boolean }, Error, { userId: string }>;
-    register: UseMutationResult<{ ok: boolean; payload: RegisterResponse }, Error, { email: string; password: string; name?: string | undefined; emailVerified?: boolean | undefined }>;
-    mockSignIn: UseMutationResult<{ ok: boolean; payload: { ok?: boolean; message?: string } }, Error, { email: string; password: string }>;
+    register: UseMutationResult<
+      { ok: boolean; payload: RegisterResponse },
+      Error,
+      {
+        email: string;
+        password: string;
+        name?: string | undefined;
+        emailVerified?: boolean | undefined;
+      }
+    >;
+    mockSignIn: UseMutationResult<
+      { ok: boolean; payload: { ok?: boolean; message?: string } },
+      Error,
+      { email: string; password: string }
+    >;
   };
 }
 
@@ -90,7 +131,7 @@ export function useUsersState(): UseUsersStateReturn {
   const [dirtyRoles, setDirtyRoles] = useState(false);
   const [editingUser, setEditingUser] = useState<AuthUserSummary | null>(null);
   const [userToDelete, setUserToDelete] = useState<AuthUserSummary | null>(null);
-  
+
   const [createOpen, setCreateOpen] = useState(false);
   const [createForm, setCreateForm] = useState<CreateUserForm>(EMPTY_CREATE);
 
@@ -100,7 +141,7 @@ export function useUsersState(): UseUsersStateReturn {
 
   const authUsersQuery = useAuthUsers(canReadUsers);
   const userSecurityQuery = useAuthUserSecurity(canManageSecurity ? editingUser?.id : null);
-  
+
   const updateAuthUserMutation = useUpdateAuthUser();
   const updateAuthUserSecurityMutation = useUpdateAuthUserSecurity();
   const deleteAuthUserMutation = useDeleteAuthUser();
@@ -116,15 +157,16 @@ export function useUsersState(): UseUsersStateReturn {
   const filteredUsers = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return users;
-    return users.filter(u => 
-      u.email?.toLowerCase().includes(q) || 
-      u.name?.toLowerCase().includes(q) || 
-      u.id.toLowerCase().includes(q)
+    return users.filter(
+      (u) =>
+        u.email?.toLowerCase().includes(q) ||
+        u.name?.toLowerCase().includes(q) ||
+        u.id.toLowerCase().includes(q)
     );
   }, [search, users]);
 
   const handleRoleChange = useCallback((userId: string, roleId: string) => {
-    setLocalUserRoles(prev => {
+    setLocalUserRoles((prev) => {
       const next = { ...prev };
       if (!roleId || roleId === 'none') delete next[userId];
       else next[userId] = roleId;
@@ -200,6 +242,6 @@ export function useUsersState(): UseUsersStateReturn {
       deleteUser: deleteAuthUserMutation,
       register: registerUserMutation,
       mockSignIn: mockSignInMutation,
-    }
+    },
   };
 }

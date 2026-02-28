@@ -28,23 +28,10 @@ export async function finalizeAgentRun(input: FinalizeRunInput): Promise<{
   verification: Awaited<ReturnType<typeof verifyPlanWithLLM>>;
   improvementReview: Awaited<ReturnType<typeof buildSelfImprovementReviewWithLLM>>;
 }> {
-  const {
-    context,
-    planSteps,
-    taskType,
-    overallOk,
-    requiresHuman,
-    lastError,
-    summaryCheckpoint,
-  } = input;
-  const {
-    run,
-    settings,
-    preferences,
-    memoryContext,
-    plannerModel,
-    memorySummarizationModel,
-  } = context;
+  const { context, planSteps, taskType, overallOk, requiresHuman, lastError, summaryCheckpoint } =
+    input;
+  const { run, settings, preferences, memoryContext, plannerModel, memorySummarizationModel } =
+    context;
   const status = requiresHuman ? 'waiting_human' : overallOk ? 'completed' : 'failed';
 
   await prisma.chatbotAgentRun.update({

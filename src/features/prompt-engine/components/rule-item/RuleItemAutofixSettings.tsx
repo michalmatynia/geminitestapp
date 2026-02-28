@@ -1,33 +1,23 @@
 'use client';
 
 import React from 'react';
-import {
-  Button,
-  Input,
-  FormField,
-  Card,
-  StatusBadge,
-  Hint,
-} from '@/shared/ui';
+import { Button, Input, FormField, Card, StatusBadge, Hint } from '@/shared/ui';
 import { useRuleItemContext } from '../context/RuleItemContext';
-import {
-  formatAutofixOperation,
-} from '../rule-item-utils';
+import { formatAutofixOperation } from '../rule-item-utils';
 import type { PromptAutofixOperation } from '../../settings';
 
 export function RuleItemAutofixSettings(): React.JSX.Element | null {
-  const { 
-    rule, 
-    patchRule,
-    addAutofixOperation,
-    updateAutofixOperation,
-    removeAutofixOperation,
-  } = useRuleItemContext();
+  const { rule, patchRule, addAutofixOperation, updateAutofixOperation, removeAutofixOperation } =
+    useRuleItemContext();
 
   if (!rule) return null;
 
   return (
-    <Card variant='subtle-compact' padding='sm' className='space-y-3 border-border/40 bg-foreground/5'>
+    <Card
+      variant='subtle-compact'
+      padding='sm'
+      className='space-y-3 border-border/40 bg-foreground/5'
+    >
       <div className='flex flex-wrap items-center justify-between gap-2'>
         <Hint size='xs' uppercase className='font-semibold text-gray-300'>
           Autofix Operations

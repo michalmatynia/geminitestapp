@@ -5,26 +5,16 @@ import type {
   CaseResolverCaptureProposal,
   CaseResolverCaptureProposalState,
 } from '@/features/case-resolver-capture/proposals';
-import {
-  stripAcceptedCaptureContentFromTextWithReport,
-} from '@/features/case-resolver-capture/proposals';
-import {
-  type CaseResolverCaptureAction,
-} from '@/features/case-resolver-capture/settings';
-import {
-  deriveDocumentContentSync,
-  toStorageDocumentValue,
-} from '@/features/document-editor';
+import { stripAcceptedCaptureContentFromTextWithReport } from '@/features/case-resolver-capture/proposals';
+import { type CaseResolverCaptureAction } from '@/features/case-resolver-capture/settings';
+import { deriveDocumentContentSync, toStorageDocumentValue } from '@/shared/lib/document-editor';
 import type { FilemakerDatabase } from '@/shared/contracts/filemaker';
 import {
   FILEMAKER_DATABASE_KEY,
   decodeFilemakerPartyReference,
   normalizeFilemakerDatabase,
 } from '@/features/filemaker/settings';
-import type {
-  CaseResolverFile,
-  CaseResolverWorkspace,
-} from '@/shared/contracts/case-resolver';
+import type { CaseResolverFile, CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 import { useToast } from '@/shared/ui';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import {
@@ -39,16 +29,15 @@ import {
 import {
   buildFileEditDraft,
   createCaseResolverHistorySnapshotEntry,
-} from '../utils/caseResolverUtils';
+} from '@/features/case-resolver/utils/caseResolverUtils';
 import { upsertFilemakerCaptureCandidate } from '@/features/case-resolver-capture/filemaker-upsert';
 import { resolveCaptureMappingApplyGuardReason } from '../capture-mapping-apply-guard';
 import { type CaseResolverFileEditDraft } from '../types';
 
-const readCaptureApplyNowMs = (): number => (
+const readCaptureApplyNowMs = (): number =>
   typeof performance !== 'undefined' && typeof performance.now === 'function'
     ? performance.now()
-    : Date.now()
-);
+    : Date.now();
 
 const resolveCaptureApplyDurationMs = (startAtMs: number | null): number | null => {
   if (startAtMs === null) return null;
@@ -85,14 +74,20 @@ export function useAdminCaseResolverCaptureActions({
   setEditingDocumentDraft: React.Dispatch<React.SetStateAction<CaseResolverFileEditDraft | null>>;
   updateWorkspace: (
     updater: (current: CaseResolverWorkspace) => CaseResolverWorkspace,
-    options?: { persistToast?: string; persistNow?: boolean; mutationId?: string; source?: string; skipNormalization?: boolean }
+    options?: {
+      persistToast?: string;
+      persistNow?: boolean;
+      mutationId?: string;
+      source?: string;
+      skipNormalization?: boolean;
+    }
   ) => void;
   refetchSettingsStore: () => void;
   setEditorContentRevisionSeed: React.Dispatch<React.SetStateAction<number>>;
 }) {
   const { toast } = useToast();
   const updateSetting = useUpdateSetting();
-  
+
   const [captureApplyDiagnostics, setCaptureApplyDiagnostics] = useState<{
     status: 'idle' | 'success' | 'failed';
     stage: 'precheck' | 'mutation' | 'rebase' | null;
@@ -106,14 +101,14 @@ export function useAdminCaseResolverCaptureActions({
     mutationDurationMs?: number | null;
     totalDurationMs?: number | null;
   } | null>(null);
-  
+
   const captureApplyInFlightRef = useRef(false);
   const captureMappingDismissedRef = useRef(false);
   const captureMappingDismissToastShownRef = useRef(false);
 
   const [promptExploderProposalDraft, setPromptExploderProposalDraft] =
     useState<CaseResolverCaptureProposalState | null>(null);
-    
+
   const captureProposalTargetFileName = useMemo(() => {
     if (!promptExploderProposalDraft) return null;
     const targetFile = workspace.files.find(
@@ -139,26 +134,26 @@ export function useAdminCaseResolverCaptureActions({
       targetFileId: promptExploderPartyProposal.targetFileId,
       addresser: promptExploderPartyProposal.addresser
         ? {
-          ...promptExploderPartyProposal.addresser,
-          candidate: { ...promptExploderPartyProposal.addresser.candidate },
-          existingReference: promptExploderPartyProposal.addresser.existingReference
-            ? { ...promptExploderPartyProposal.addresser.existingReference }
-            : null,
-        }
+            ...promptExploderPartyProposal.addresser,
+            candidate: { ...promptExploderPartyProposal.addresser.candidate },
+            existingReference: promptExploderPartyProposal.addresser.existingReference
+              ? { ...promptExploderPartyProposal.addresser.existingReference }
+              : null,
+          }
         : null,
       addressee: promptExploderPartyProposal.addressee
         ? {
-          ...promptExploderPartyProposal.addressee,
-          candidate: { ...promptExploderPartyProposal.addressee.candidate },
-          existingReference: promptExploderPartyProposal.addressee.existingReference
-            ? { ...promptExploderPartyProposal.addressee.existingReference }
-            : null,
-        }
+            ...promptExploderPartyProposal.addressee,
+            candidate: { ...promptExploderPartyProposal.addressee.candidate },
+            existingReference: promptExploderPartyProposal.addressee.existingReference
+              ? { ...promptExploderPartyProposal.addressee.existingReference }
+              : null,
+          }
         : null,
       documentDate: promptExploderPartyProposal.documentDate
         ? {
-          ...promptExploderPartyProposal.documentDate,
-        }
+            ...promptExploderPartyProposal.documentDate,
+          }
         : null,
     });
   }, [isPromptExploderPartyProposalOpen, promptExploderPartyProposal]);
@@ -279,16 +274,14 @@ export function useAdminCaseResolverCaptureActions({
         let mutationDurationMs: number | null = null;
         const requestedTargetFileId = promptExploderProposalDraft.targetFileId;
         const workspaceSnapshot = workspaceRef.current;
-        
-         
+
         const targetResolution = resolveCaptureTargetFile({
           workspaceFiles: workspaceSnapshot.files,
           proposalTargetFileId: requestedTargetFileId,
           contextFileId: null,
           editingDraftFileId: null,
         });
-        
-         
+
         const resolvedTargetFile = targetResolution.file;
         if (!resolvedTargetFile) {
           const precheckRevision = getCaseResolverWorkspaceRevision(workspaceSnapshot);
@@ -348,26 +341,26 @@ export function useAdminCaseResolverCaptureActions({
           targetFileId,
           addresser: promptExploderProposalDraft.addresser
             ? ({
-              ...promptExploderProposalDraft.addresser,
-              candidate: { ...promptExploderProposalDraft.addresser.candidate },
-              existingReference: promptExploderProposalDraft.addresser.existingReference
-                ? { ...promptExploderPartyProposal?.addresser?.existingReference ?? null }
-                : null,
-            } as CaseResolverCaptureProposal)
+                ...promptExploderProposalDraft.addresser,
+                candidate: { ...promptExploderProposalDraft.addresser.candidate },
+                existingReference: promptExploderProposalDraft.addresser.existingReference
+                  ? { ...(promptExploderPartyProposal?.addresser?.existingReference ?? null) }
+                  : null,
+              } as CaseResolverCaptureProposal)
             : null,
           addressee: promptExploderProposalDraft.addressee
             ? ({
-              ...promptExploderProposalDraft.addressee,
-              candidate: { ...promptExploderProposalDraft.addressee.candidate },
-              existingReference: promptExploderProposalDraft.addressee.existingReference
-                ? { ...promptExploderPartyProposal?.addressee?.existingReference ?? null }
-                : null,
-            } as CaseResolverCaptureProposal)
+                ...promptExploderProposalDraft.addressee,
+                candidate: { ...promptExploderProposalDraft.addressee.candidate },
+                existingReference: promptExploderProposalDraft.addressee.existingReference
+                  ? { ...(promptExploderPartyProposal?.addressee?.existingReference ?? null) }
+                  : null,
+              } as CaseResolverCaptureProposal)
             : null,
           documentDate: promptExploderProposalDraft.documentDate
             ? {
-              ...promptExploderProposalDraft.documentDate,
-            }
+                ...promptExploderProposalDraft.documentDate,
+              }
             : null,
         };
         const rolePatches: {
@@ -472,8 +465,7 @@ export function useAdminCaseResolverCaptureActions({
           if (!normalizedLeft && !normalizedRight) return true;
           if (!normalizedLeft || !normalizedRight) return false;
           return (
-            normalizedLeft.kind === normalizedRight.kind &&
-            normalizedLeft.id === normalizedRight.id
+            normalizedLeft.kind === normalizedRight.kind && normalizedLeft.id === normalizedRight.id
           );
         };
 
@@ -510,21 +502,18 @@ export function useAdminCaseResolverCaptureActions({
 
         const dateProposal = nextProposalState.documentDate;
         const shouldAcceptDate =
-          dateProposal?.action === 'useDetectedDate' &&
-          dateProposal.isoDate.trim().length > 0;
-        const acceptedDateValue = shouldAcceptDate
-          ? dateProposal.isoDate.trim()
-          : null;
+          dateProposal?.action === 'useDetectedDate' && dateProposal.isoDate.trim().length > 0;
+        const acceptedDateValue = shouldAcceptDate ? dateProposal.isoDate.trim() : null;
         const acceptedCityValue = shouldAcceptDate
           ? normalizeDocumentCity(dateProposal?.city ?? dateProposal?.cityHint ?? null)
           : null;
         const acceptedDocumentDateValue =
           acceptedDateValue && dateProposal
             ? {
-              ...dateProposal,
-              isoDate: acceptedDateValue,
-              city: acceptedCityValue ?? dateProposal.city ?? dateProposal.cityHint ?? null,
-            }
+                ...dateProposal,
+                isoDate: acceptedDateValue,
+                city: acceptedCityValue ?? dateProposal.city ?? dateProposal.cityHint ?? null,
+              }
             : null;
 
         const cleanupProposalState: CaseResolverCaptureProposalState = {
@@ -578,13 +567,12 @@ export function useAdminCaseResolverCaptureActions({
         })();
         const cleanupStartedAtMs = readCaptureApplyNowMs();
         const hasSourceExplodedContent = (sourceExplodedContent ?? '').trim().length > 0;
-        const cleanupResult =
-          hasSourceExplodedContent
-            ? stripAcceptedCaptureContentFromTextWithReport(
+        const cleanupResult = hasSourceExplodedContent
+          ? stripAcceptedCaptureContentFromTextWithReport(
               sourceExplodedContent ?? '',
               cleanupProposalState
             )
-            : {
+          : {
               text: sourceExplodedContent ?? '',
               report: {
                 changed: false,
@@ -607,16 +595,16 @@ export function useAdminCaseResolverCaptureActions({
             cleanupMissedAcceptedRoles.push('addressee');
           }
         }
-        
+
         const cleanedExplodedCanonical = hasExplodedCleanup
           ? deriveDocumentContentSync({
-            mode: 'wysiwyg',
-            value: (cleanedExplodedContent ?? ''),
-            previousMarkdown:
-              draftForTargetFile?.documentContentMarkdown ?? targetFile.documentContentMarkdown,
-            previousHtml:
-              draftForTargetFile?.documentContentHtml ?? targetFile.documentContentHtml,
-          })
+              mode: 'wysiwyg',
+              value: cleanedExplodedContent ?? '',
+              previousMarkdown:
+                draftForTargetFile?.documentContentMarkdown ?? targetFile.documentContentMarkdown,
+              previousHtml:
+                draftForTargetFile?.documentContentHtml ?? targetFile.documentContentHtml,
+            })
           : null;
         const cleanedExplodedStored = cleanedExplodedCanonical
           ? toStorageDocumentValue(cleanedExplodedCanonical)
@@ -629,7 +617,12 @@ export function useAdminCaseResolverCaptureActions({
           acceptedCityValue !== null ||
           hasExplodedCleanup;
         let captureApplyAttempts = 1;
-        let mutationResult: { ok: boolean; stage: CaseResolverFileMutationStage; fileFound: boolean; resolvedTargetFileId: string | null } | null = null;
+        let mutationResult: {
+          ok: boolean;
+          stage: CaseResolverFileMutationStage;
+          fileFound: boolean;
+          resolvedTargetFileId: string | null;
+        } | null = null;
         const mutationStartedAtMs = shouldAttemptPersistPatch ? readCaptureApplyNowMs() : null;
 
         if (shouldAttemptPersistPatch) {
@@ -642,8 +635,18 @@ export function useAdminCaseResolverCaptureActions({
             mutationTargetFileId: string;
             mutationSource: string;
             mutationPrecheckFiles: CaseResolverFile[];
-          }): { ok: boolean; stage: CaseResolverFileMutationStage; fileFound: boolean; resolvedTargetFileId: string | null } => {
-            let mutationResultInner!: { ok: boolean; stage: CaseResolverFileMutationStage; fileFound: boolean; resolvedTargetFileId: string | null };
+          }): {
+            ok: boolean;
+            stage: CaseResolverFileMutationStage;
+            fileFound: boolean;
+            resolvedTargetFileId: string | null;
+          } => {
+            let mutationResultInner!: {
+              ok: boolean;
+              stage: CaseResolverFileMutationStage;
+              fileFound: boolean;
+              resolvedTargetFileId: string | null;
+            };
             flushSync(() => {
               mutationResultInner = applyCaseResolverFileMutationAndRebaseDraft({
                 fileId: mutationTargetFileId,
@@ -668,10 +671,10 @@ export function useAdminCaseResolverCaptureActions({
                     normalizeDocumentDateIso(file.documentDate) !== acceptedDateValue;
                   const fileShouldPatchDocumentCity =
                     acceptedCityValue !== null &&
-                    normalizeDocumentCity(file.documentCity) !==
-                      acceptedCityValue;
+                    normalizeDocumentCity(file.documentCity) !== acceptedCityValue;
                   const fileShouldApplyExplodedCleanup =
-                    hasExplodedCleanup && Boolean(cleanedExplodedCanonical && cleanedExplodedStored);
+                    hasExplodedCleanup &&
+                    Boolean(cleanedExplodedCanonical && cleanedExplodedStored);
                   const fileShouldPersistPatch =
                     fileShouldPatchAddresser ||
                     fileShouldPatchAddressee ||
@@ -692,43 +695,49 @@ export function useAdminCaseResolverCaptureActions({
                   const nextContentVersion = file.documentContentVersion + 1;
                   const currentSnapshot = hasExplodedCleanup
                     ? createCaseResolverHistorySnapshotEntry({
-                      savedAt: now,
-                      documentContentVersion: file.documentContentVersion,
-                      activeDocumentVersion: file.activeDocumentVersion,
-                      editorType: file.editorType,
-                      documentContent: file.documentContent,
-                      documentContentMarkdown: file.documentContentMarkdown,
-                      documentContentHtml: file.documentContentHtml,
-                      documentContentPlainText: file.documentContentPlainText,
-                    })
+                        savedAt: now,
+                        documentContentVersion: file.documentContentVersion,
+                        activeDocumentVersion: file.activeDocumentVersion,
+                        editorType: file.editorType,
+                        documentContent: file.documentContent,
+                        documentContentMarkdown: file.documentContentMarkdown,
+                        documentContentHtml: file.documentContentHtml,
+                        documentContentPlainText: file.documentContentPlainText,
+                      })
                     : null;
                   const nextDocumentHistory = currentSnapshot
                     ? [currentSnapshot, ...file.documentHistory].slice(0, 120)
                     : file.documentHistory;
                   return {
-                    ...(fileShouldPatchAddresser ? { addresser: rolePatches.addresser ?? null } : {}),
-                    ...(fileShouldPatchAddressee ? { addressee: rolePatches.addressee ?? null } : {}),
+                    ...(fileShouldPatchAddresser
+                      ? { addresser: rolePatches.addresser ?? null }
+                      : {}),
+                    ...(fileShouldPatchAddressee
+                      ? { addressee: rolePatches.addressee ?? null }
+                      : {}),
                     ...(fileShouldPatchDocumentDate && acceptedDocumentDateValue
                       ? { documentDate: acceptedDocumentDateValue }
                       : {}),
                     ...(fileShouldPatchDocumentCity ? { documentCity: acceptedCityValue } : {}),
-                    ...(fileShouldApplyExplodedCleanup && cleanedExplodedCanonical && cleanedExplodedStored
+                    ...(fileShouldApplyExplodedCleanup &&
+                    cleanedExplodedCanonical &&
+                    cleanedExplodedStored
                       ? {
-                        explodedDocumentContent: cleanedExplodedStored,
-                        ...(file.activeDocumentVersion === 'exploded'
-                          ? {
-                            editorType: cleanedExplodedCanonical.mode,
-                            documentContentFormatVersion: 1,
-                            documentContent: cleanedExplodedStored,
-                            documentContentMarkdown: cleanedExplodedCanonical.markdown,
-                            documentContentHtml: cleanedExplodedCanonical.html,
-                            documentContentPlainText: cleanedExplodedCanonical.plainText,
-                            documentConversionWarnings: cleanedExplodedCanonical.warnings,
-                            lastContentConversionAt: now,
-                          }
-                          : {}),
-                        documentHistory: nextDocumentHistory,
-                      }
+                          explodedDocumentContent: cleanedExplodedStored,
+                          ...(file.activeDocumentVersion === 'exploded'
+                            ? {
+                                editorType: cleanedExplodedCanonical.mode,
+                                documentContentFormatVersion: 1,
+                                documentContent: cleanedExplodedStored,
+                                documentContentMarkdown: cleanedExplodedCanonical.markdown,
+                                documentContentHtml: cleanedExplodedCanonical.html,
+                                documentContentPlainText: cleanedExplodedCanonical.plainText,
+                                documentConversionWarnings: cleanedExplodedCanonical.warnings,
+                                lastContentConversionAt: now,
+                              }
+                            : {}),
+                          documentHistory: nextDocumentHistory,
+                        }
                       : {}),
                     documentContentVersion: nextContentVersion,
                     updatedAt: now,
@@ -748,17 +757,17 @@ export function useAdminCaseResolverCaptureActions({
 
           if (!mutationResult.ok && mutationResult.stage === 'mutation') {
             const retryWorkspaceSnapshot = workspaceRef.current;
-             
+
             const retryTargetResolution = resolveCaptureTargetFile({
               workspaceFiles: retryWorkspaceSnapshot.files,
               proposalTargetFileId: mutationTargetFileId,
               contextFileId: null,
               editingDraftFileId: null,
             });
-             
+
             if (retryTargetResolution.file) {
               captureApplyAttempts = 2;
-               
+
               mutationTargetFileId = retryTargetResolution.file.id;
               mutationResult = runCaptureMutation({
                 mutationTargetFileId,
@@ -772,7 +781,10 @@ export function useAdminCaseResolverCaptureActions({
             mutationDurationMs = resolveCaptureApplyDurationMs(mutationStartedAtMs);
             const failureStage = mutationResult.stage ?? 'mutation';
             const workspaceRevision = getCaseResolverWorkspaceRevision(workspaceRef.current);
-            const failureMessage = failureStage === 'precheck' ? 'Capture target missing during precheck.' : 'Capture target missing during workspace mutation.';
+            const failureMessage =
+              failureStage === 'precheck'
+                ? 'Capture target missing during precheck.'
+                : 'Capture target missing during workspace mutation.';
             setCaptureApplyDiagnostics({
               status: 'failed',
               stage: failureStage,
@@ -789,11 +801,9 @@ export function useAdminCaseResolverCaptureActions({
             toast(
               failureStage === 'precheck'
                 ? 'Capture mapping failed: target file missing (precheck).'
-                : (
-                  captureApplyAttempts > 1
-                    ? 'Capture mapping failed: target file missing during apply (after retry).'
-                    : 'Capture mapping failed: target file missing during apply.'
-                ),
+                : captureApplyAttempts > 1
+                  ? 'Capture mapping failed: target file missing during apply (after retry).'
+                  : 'Capture mapping failed: target file missing during apply.',
               {
                 variant: 'warning',
               }
@@ -823,7 +833,8 @@ export function useAdminCaseResolverCaptureActions({
           mutationDurationMs = resolveCaptureApplyDurationMs(mutationStartedAtMs);
         }
 
-        const postMutationFile = workspaceRef.current.files.find((f) => f.id === targetFileId) ?? null;
+        const postMutationFile =
+          workspaceRef.current.files.find((f) => f.id === targetFileId) ?? null;
         if (postMutationFile && postMutationFile.fileType !== 'case') {
           const freshDraft = buildFileEditDraft(postMutationFile);
           setEditingDocumentDraft(freshDraft);
@@ -849,10 +860,9 @@ export function useAdminCaseResolverCaptureActions({
         });
 
         if (failedRoles.length > 0) {
-          toast(
-            `Capture mapping partially applied. Could not apply: ${failedRoles.join(', ')}.`,
-            { variant: 'warning' }
-          );
+          toast(`Capture mapping partially applied. Could not apply: ${failedRoles.join(', ')}.`, {
+            variant: 'warning',
+          });
           return;
         }
 

@@ -6,13 +6,8 @@ import { Button, Badge, SimpleSettingsList } from '@/shared/ui';
 import { useProductSettingsContext } from '../ProductSettingsContext';
 
 export function CatalogsSettings(): React.JSX.Element {
-  const {
-    loadingCatalogs,
-    catalogs,
-    onOpenCatalogModal,
-    onEditCatalog,
-    onDeleteCatalog,
-  } = useProductSettingsContext();
+  const { loadingCatalogs, catalogs, onOpenCatalogModal, onEditCatalog, onDeleteCatalog } =
+    useProductSettingsContext();
   const { languages } = useInternationalizationContext();
   const getLanguageDisplay = (languageId: string): string => {
     const language = languages.find((l: Language) => l.id === languageId);
@@ -24,7 +19,7 @@ export function CatalogsSettings(): React.JSX.Element {
     if (language.code) languageIdMap.set(language.code, language.id);
   });
   const normalizeLanguageId = (value?: string | null): string | null =>
-    value ? languageIdMap.get(value) ?? null : null;
+    value ? (languageIdMap.get(value) ?? null) : null;
   const resolveCatalogLanguageIds = (catalog: Catalog): string[] => {
     const unique = Array.from(new Set(catalog.languageIds ?? []));
     const normalized = unique
@@ -59,11 +54,15 @@ export function CatalogsSettings(): React.JSX.Element {
               </div>
             ),
             description: catalog.description || 'No description',
-            original: catalog
+            original: catalog,
           }))}
           isLoading={loadingCatalogs}
-          onEdit={(item) => { onEditCatalog(item.original); }}
-          onDelete={(item) => { onDeleteCatalog(item.original); }}
+          onEdit={(item) => {
+            onEditCatalog(item.original);
+          }}
+          onDelete={(item) => {
+            onDeleteCatalog(item.original);
+          }}
           emptyMessage='No catalogs yet.'
           renderCustomContent={(item) => (
             <>
@@ -73,12 +72,16 @@ export function CatalogsSettings(): React.JSX.Element {
                     (languageId: string, index: number) => (
                       <Badge
                         key={languageId}
-                        variant={normalizeLanguageId(item.original.defaultLanguageId) === languageId ? 'success' : 'neutral'}
+                        variant={
+                          normalizeLanguageId(item.original.defaultLanguageId) === languageId
+                            ? 'success'
+                            : 'neutral'
+                        }
                         className='text-[9px]'
                       >
                         {index + 1}. {getLanguageDisplay(languageId)}
-                        {normalizeLanguageId(item.original.defaultLanguageId) ===
-                          languageId && ' (Default)'}
+                        {normalizeLanguageId(item.original.defaultLanguageId) === languageId &&
+                          ' (Default)'}
                       </Badge>
                     )
                   )}

@@ -4,12 +4,8 @@
   "nodeType": "mutator",
   "title": "Mutator",
   "purpose": "Mutate context values with templates.",
-  "inputs": [
-    "context"
-  ],
-  "outputs": [
-    "context"
-  ],
+  "inputs": ["context"],
+  "outputs": ["context"],
   "configFields": [
     {
       "path": "mutator.path",
@@ -40,12 +36,8 @@
       "x": 100,
       "y": 100
     },
-    "inputs": [
-      "context"
-    ],
-    "outputs": [
-      "context"
-    ],
+    "inputs": ["context"],
+    "outputs": ["context"],
     "data": {},
     "connections": {
       "incoming": [],

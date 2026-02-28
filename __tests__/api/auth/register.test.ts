@@ -61,7 +61,7 @@ describe('Auth Register API', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     process.env['MONGODB_URI'] = 'mongodb://mock';
-    
+
     // Set default mock return value
     vi.mocked(getAuthUserPageSettings).mockResolvedValue({
       allowSignup: true,

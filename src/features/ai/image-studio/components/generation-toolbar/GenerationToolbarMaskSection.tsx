@@ -59,7 +59,8 @@ export function GenerationToolbarMaskSection({
       </div>
 
       <div className='grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center'>
-        <SelectSimple size='sm'
+        <SelectSimple
+          size='sm'
           className='w-full'
           value={maskGenMode}
           onValueChange={onMaskGenModeChange}
@@ -69,7 +70,8 @@ export function GenerationToolbarMaskSection({
           disabled={maskGenLoading || !workingSlotPresent}
           ariaLabel='Smart mask mode'
         />
-        <Button size='xs'
+        <Button
+          size='xs'
           type='button'
           variant='outline'
           onClick={onGenerateMask}
@@ -83,7 +85,8 @@ export function GenerationToolbarMaskSection({
       </div>
 
       <div className='mt-2 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center'>
-        <SelectSimple size='sm'
+        <SelectSimple
+          size='sm'
           className='w-full'
           value={maskAttachMode}
           onValueChange={(val) => setMaskAttachMode(val as MaskAttachMode)}
@@ -91,7 +94,8 @@ export function GenerationToolbarMaskSection({
           triggerClassName='h-8 text-xs'
           ariaLabel='Mask attach mode'
         />
-        <Button size='xs'
+        <Button
+          size='xs'
           type='button'
           variant='outline'
           onClick={onAttachMasks}

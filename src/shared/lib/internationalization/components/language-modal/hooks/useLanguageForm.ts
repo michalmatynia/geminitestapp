@@ -10,7 +10,9 @@ type UseLanguageFormResult = {
     name: string;
     nativeName: string;
   };
-  setForm: (value: React.SetStateAction<{ code: string; name: string; nativeName: string }>) => void;
+  setForm: (
+    value: React.SetStateAction<{ code: string; name: string; nativeName: string }>
+  ) => void;
   selectedCountryIds: string[];
   toggleCountry: (id: string) => void;
   isSaving: boolean;

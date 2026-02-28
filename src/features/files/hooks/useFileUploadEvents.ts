@@ -54,7 +54,7 @@ const buildQueryParams = (filters: FileUploadEventsFilters): string => {
 };
 
 export function useFileUploadEvents(
-  filters: FileUploadEventsFilters,
+  filters: FileUploadEventsFilters
 ): SingleQuery<FileUploadEventsResponse> {
   const queryKey = QUERY_KEYS.system.uploadEvents.list(filters);
   return createSingleQueryV2<FileUploadEventsResponse>({

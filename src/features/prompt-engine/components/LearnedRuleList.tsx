@@ -42,10 +42,10 @@ export function LearnedRuleList(): React.JSX.Element {
 
       <ClientOnly>
         <Card variant='subtle' padding='md' className='bg-card/40'>
-          <Hint uppercase className='mb-1'>Tip</Hint>
-          <Hint>
-            Use the Image Studio prompt tools to suggest learned patterns automatically.
+          <Hint uppercase className='mb-1'>
+            Tip
           </Hint>
+          <Hint>Use the Image Studio prompt tools to suggest learned patterns automatically.</Hint>
         </Card>
       </ClientOnly>
     </div>

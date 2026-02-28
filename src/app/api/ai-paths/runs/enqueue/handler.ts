@@ -11,17 +11,11 @@ import {
   repairPathNodeIdentities,
   sanitizeEdges,
 } from '@/shared/lib/ai-paths';
-import {
-  enforceAiPathsRunRateLimit,
-  requireAiPathsRunAccess,
-} from '@/features/ai/ai-paths/server';
+import { enforceAiPathsRunRateLimit, requireAiPathsRunAccess } from '@/features/ai/ai-paths/server';
 import { enqueuePathRun } from '@/features/ai/ai-paths/services/path-run-service';
 import { startAiPathRunQueue } from '@/features/jobs/server';
 import { parseJsonBody } from '@/features/products/server';
-import { 
-  aiNodeSchema, 
-  edgeSchema, 
-} from '@/shared/contracts/ai-paths';
+import { aiNodeSchema, edgeSchema } from '@/shared/contracts/ai-paths';
 import type { Edge } from '@/shared/contracts/ai-paths';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
@@ -48,10 +42,7 @@ const enqueueSchema = z.object({
   meta: z.record(z.string(), z.unknown()).optional().nullable(),
 });
 
-export async function POST_handler(
-  req: NextRequest,
-  _ctx: ApiHandlerContext,
-): Promise<Response> {
+export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const access = await requireAiPathsRunAccess();
   await enforceAiPathsRunRateLimit(access);
   const parsed = await parseJsonBody(req, enqueueSchema, {
@@ -67,9 +58,7 @@ export async function POST_handler(
     const sourceValue = metaRecord['source'];
     if (sourceValue && typeof sourceValue === 'object') {
       const triggerEventId =
-        typeof metaRecord['triggerEventId'] === 'string'
-          ? metaRecord['triggerEventId']
-          : null;
+        typeof metaRecord['triggerEventId'] === 'string' ? metaRecord['triggerEventId'] : null;
       normalizedMeta = {
         ...metaRecord,
         sourceInfo: sourceValue,
@@ -81,10 +70,7 @@ export async function POST_handler(
     throw badRequestError('Nodes and edges are required to enqueue a run.');
   }
 
-  const migratedGraph = migrateTriggerToFetcherGraph(
-    normalizeNodes(nodes),
-    edges as Edge[],
-  );
+  const migratedGraph = migrateTriggerToFetcherGraph(normalizeNodes(nodes), edges as Edge[]);
   const identityRepair = repairPathNodeIdentities(
     {
       id: rest.pathId,
@@ -96,20 +82,13 @@ export async function POST_handler(
       edges: migratedGraph.edges,
       updatedAt: new Date().toISOString(),
     },
-    { palette },
+    { palette }
   );
   const normalizedNodes = normalizeNodes(identityRepair.config.nodes);
-  const normalizedEdges = sanitizeEdges(
-    normalizedNodes,
-    identityRepair.config.edges,
-  );
-  const metaRecord =
-    normalizedMeta && typeof normalizedMeta === 'object'
-      ? (normalizedMeta)
-      : {};
+  const normalizedEdges = sanitizeEdges(normalizedNodes, identityRepair.config.edges);
+  const metaRecord = normalizedMeta && typeof normalizedMeta === 'object' ? normalizedMeta : {};
   const validationConfig = normalizeAiPathsValidationConfig(
-    (metaRecord['aiPathsValidation'] as Record<string, unknown> | undefined) ??
-      undefined,
+    (metaRecord['aiPathsValidation'] as Record<string, unknown> | undefined) ?? undefined
   );
   const nodeValidationEnabled = validationConfig.enabled !== false;
   const validationReport = evaluateAiPathsValidationPreflight({
@@ -122,18 +101,18 @@ export async function POST_handler(
     throw badRequestError(
       finding
         ? `Validation blocked run: ${finding.ruleTitle}.`
-        : `Validation blocked run: score ${validationReport.score} below threshold ${validationReport.blockThreshold}.`,
+        : `Validation blocked run: score ${validationReport.score} below threshold ${validationReport.blockThreshold}.`
     );
   }
   normalizedMeta = {
     ...metaRecord,
     ...(identityRepair.warnings.length > 0
       ? {
-        identityRepair: {
-          warnings: identityRepair.warnings,
-          repairedAt: new Date().toISOString(),
-        },
-      }
+          identityRepair: {
+            warnings: identityRepair.warnings,
+            repairedAt: new Date().toISOString(),
+          },
+        }
       : {}),
     aiPathsValidation: validationConfig,
     validationPreflight: validationReport,
@@ -142,18 +121,14 @@ export async function POST_handler(
   const compileReport = nodeValidationEnabled
     ? compileGraph(normalizedNodes, normalizedEdges)
     : compileGraph(normalizedNodes, normalizedEdges, {
-      scopeMode: 'reachable_from_roots',
-      ...(rest.triggerNodeId
-        ? { scopeRootNodeIds: [rest.triggerNodeId] }
-        : {}),
-    });
+        scopeMode: 'reachable_from_roots',
+        ...(rest.triggerNodeId ? { scopeRootNodeIds: [rest.triggerNodeId] } : {}),
+      });
   if (nodeValidationEnabled && !compileReport.ok) {
-    const primaryError = compileReport.findings.find(
-      (finding) => finding.severity === 'error',
-    );
+    const primaryError = compileReport.findings.find((finding) => finding.severity === 'error');
     throw badRequestError(
       (primaryError ? `Graph compile failed: ${primaryError.message}` : null) ??
-        `Graph compile failed with ${compileReport.errors} blocking issue(s).`,
+        `Graph compile failed with ${compileReport.errors} blocking issue(s).`
     );
   }
   normalizedMeta = {
@@ -177,13 +152,9 @@ export async function POST_handler(
     triggerContext: rest.triggerContext ?? null,
     entityId: rest.entityId ?? null,
     entityType: rest.entityType ?? null,
-    ...(rest.maxAttempts !== undefined
-      ? { maxAttempts: rest.maxAttempts }
-      : {}),
+    ...(rest.maxAttempts !== undefined ? { maxAttempts: rest.maxAttempts } : {}),
     ...(rest.backoffMs !== undefined ? { backoffMs: rest.backoffMs } : {}),
-    ...(rest.backoffMaxMs !== undefined
-      ? { backoffMaxMs: rest.backoffMaxMs }
-      : {}),
+    ...(rest.backoffMaxMs !== undefined ? { backoffMaxMs: rest.backoffMaxMs } : {}),
     ...(rest.requestId ? { requestId: rest.requestId } : {}),
     meta: normalizedMeta,
   });

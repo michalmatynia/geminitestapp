@@ -1,10 +1,10 @@
-import pty from "node-pty";
+import pty from 'node-pty';
 
-const shell = process.env.SHELL || "/bin/zsh";
+const shell = process.env.SHELL || '/bin/zsh';
 
 // Run gemini via the shell so PATH/aliases work
-const p = pty.spawn(shell, ["-lc", "gemini"], {
-  name: "xterm-256color",
+const p = pty.spawn(shell, ['-lc', 'gemini'], {
+  name: 'xterm-256color',
   cols: process.stdout.columns ?? 120,
   rows: process.stdout.rows ?? 40,
   cwd: process.cwd(),
@@ -14,11 +14,10 @@ const p = pty.spawn(shell, ["-lc", "gemini"], {
 p.onData((data) => {
   process.stdout.write(data);
 
-  if (data.includes("We are currently experiencing high demand")) {
+  if (data.includes('We are currently experiencing high demand')) {
     // Usually "1" selects Keep trying, then Enter confirms
-    p.write("1\r");
+    p.write('1\r');
   }
 });
 
-process.on("SIGINT", () => p.kill("SIGINT"));
-
+process.on('SIGINT', () => p.kill('SIGINT'));

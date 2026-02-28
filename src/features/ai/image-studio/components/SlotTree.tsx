@@ -3,9 +3,7 @@
 import { Folder, FolderOpen, GripVertical, LayoutGrid } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
-import {
-  useMasterFolderTreeInstance,
-} from '@/shared/lib/foldertree';
+import { useMasterFolderTreeInstance } from '@/shared/lib/foldertree';
 import {
   FolderTreeViewportV2,
   applyInternalMasterTreeDrop,
@@ -22,9 +20,7 @@ import {
   getFirstDragValue,
   resolveVerticalDropPosition,
 } from '@/shared/utils/drag-drop';
-import {
-  normalizeTreePath,
-} from '@/shared/utils/tree-operations';
+import { normalizeTreePath } from '@/shared/utils/tree-operations';
 
 import { useSlotsState } from '../context/SlotsContext';
 import {
@@ -34,12 +30,12 @@ import {
   fromSlotMasterNodeId,
   toFolderMasterNodeId,
   toSlotMasterNodeId,
-} from '../utils/master-folder-tree';
-import { createImageStudioMasterTreeAdapter } from '../utils/studio-master-tree-adapter';
+} from '@/shared/lib/ai/image-studio/utils/master-folder-tree';
+import { createImageStudioMasterTreeAdapter } from '@/shared/lib/ai/image-studio/utils/studio-master-tree-adapter';
 import {
   canDropImageStudioExternalNode,
   resolveImageStudioExternalDropAction,
-} from '../utils/studio-master-tree-external-drop';
+} from '@/shared/lib/ai/image-studio/utils/studio-master-tree-external-drop';
 
 import { SlotTreeContext, type SlotTreeContextValue } from './slot-tree/SlotTreeContext';
 import { FolderNodeItem } from './slot-tree/FolderNodeItem';
@@ -64,9 +60,13 @@ const resolveExternalDraggedNodeId = (dataTransfer: DataTransfer): MasterTreeId 
   return null;
 };
 
-export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRevealRequest | null }): React.JSX.Element {
+export function SlotTree({
+  revealRequest = null,
+}: {
+  revealRequest?: SlotTreeRevealRequest | null;
+}): React.JSX.Element {
   const { slots, virtualFolders: folders, selectedFolder, selectedSlotId } = useSlotsState();
-  
+
   const masterNodes = useMemo(
     () => buildMasterNodesFromStudioTree(slots, folders),
     [slots, folders]
@@ -78,7 +78,10 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
     return toFolderMasterNodeId(normalizedSelectedFolder);
   }, [selectedFolder, selectedSlotId]);
   const slotById = useMemo(
-    () => new Map<string, ImageStudioSlotRecord>(slots.map((slot: ImageStudioSlotRecord) => [slot.id, slot])),
+    () =>
+      new Map<string, ImageStudioSlotRecord>(
+        slots.map((slot: ImageStudioSlotRecord) => [slot.id, slot])
+      ),
     [slots]
   );
 
@@ -135,7 +138,7 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
       }),
     [onMoveFolder, onRenameFolder, slotById, updateSlot, moveSlot]
   );
-  
+
   // Re-run the adapter hook manually since we need it for the controller
   useEffect(() => {
     if (controller && slotTreeAdapter) {
@@ -173,19 +176,22 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
     [resolveIcon]
   );
 
-  const canDropInternalNodeToRoot = useCallback((draggedNodeId: MasterTreeId): boolean => {
-    const folderPath = fromFolderMasterNodeId(draggedNodeId);
-    if (folderPath !== null) {
-      const normalizedFolderPath = normalizeTreePath(folderPath);
-      return normalizedFolderPath.includes('/');
-    }
+  const canDropInternalNodeToRoot = useCallback(
+    (draggedNodeId: MasterTreeId): boolean => {
+      const folderPath = fromFolderMasterNodeId(draggedNodeId);
+      if (folderPath !== null) {
+        const normalizedFolderPath = normalizeTreePath(folderPath);
+        return normalizedFolderPath.includes('/');
+      }
 
-    const slotId = fromSlotMasterNodeId(draggedNodeId);
-    if (!slotId) return false;
-    const slot = slotById.get(slotId);
-    if (!slot) return false;
-    return normalizeTreePath(slot.folderPath ?? '').length > 0;
-  }, [slotById]);
+      const slotId = fromSlotMasterNodeId(draggedNodeId);
+      if (!slotId) return false;
+      const slot = slotById.get(slotId);
+      if (!slot) return false;
+      return normalizeTreePath(slot.folderPath ?? '').length > 0;
+    },
+    [slotById]
+  );
 
   const treeRef = useRef<HTMLDivElement | null>(null);
   const lastHandledRevealNonceRef = useRef<number>(-1);
@@ -197,7 +203,8 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
       if (!container) return;
       const target = event.target;
       if (!(target instanceof Node)) return;
-      if (target instanceof Element && target.closest('[data-preserve-slot-selection="true"]')) return;
+      if (target instanceof Element && target.closest('[data-preserve-slot-selection="true"]'))
+        return;
       if (container.contains(target)) return;
       clearSelection();
     };
@@ -218,7 +225,9 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
     if (revealRequest.nonce === lastHandledRevealNonceRef.current) return;
 
     const targetNodeId = toSlotMasterNodeId(revealRequest.slotId);
-    const targetNodeExists = controller.nodes.some((node: MasterTreeNode) => node.id === targetNodeId);
+    const targetNodeExists = controller.nodes.some(
+      (node: MasterTreeNode) => node.id === targetNodeId
+    );
     if (!targetNodeExists) return;
     if (panelCollapsed) {
       setPanelCollapsed(false);
@@ -233,38 +242,67 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
     window.requestAnimationFrame(() => {
       const container = treeRef.current;
       if (!container) return;
-      const row = container.querySelector<HTMLButtonElement>(`button[data-slot-id="${revealRequest.slotId}"]`);
+      const row = container.querySelector<HTMLButtonElement>(
+        `button[data-slot-id="${revealRequest.slotId}"]`
+      );
       if (!row) return;
       row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       row.focus({ preventScroll: true });
     });
   }, [controller.nodes, controller.expandNode, panelCollapsed, revealRequest, setPanelCollapsed]);
 
-  const contextValue = useMemo<SlotTreeContextValue>(() => ({
-    controller,
-    slotById,
-    onSelectFolder,
-    onDeleteFolder,
-    onMoveFolder,
-    onRenameFolder,
-    onDeleteSlot,
-    onMoveSlot,
-    updateSlot,
-    setSelectedSlotId,
-    selectedSlotId,
-    clearSelection,
-    startFolderRename,
-    commitFolderRename,
-    startCardRename,
-    commitCardRename,
-    onSelectCardNode,
-    stickySelectionMode,
-    clearSelectionOnAwayClick,
-    profile,
-    placeholderClasses,
-    icons,
-    deleteSlotMutationPending,
-  }), [controller, slotById, onSelectFolder, onDeleteFolder, onMoveFolder, onRenameFolder, onDeleteSlot, onMoveSlot, updateSlot, setSelectedSlotId, selectedSlotId, clearSelection, startFolderRename, commitFolderRename, startCardRename, commitCardRename, onSelectCardNode, stickySelectionMode, clearSelectionOnAwayClick, profile, placeholderClasses, icons, deleteSlotMutationPending]);
+  const contextValue = useMemo<SlotTreeContextValue>(
+    () => ({
+      controller,
+      slotById,
+      onSelectFolder,
+      onDeleteFolder,
+      onMoveFolder,
+      onRenameFolder,
+      onDeleteSlot,
+      onMoveSlot,
+      updateSlot,
+      setSelectedSlotId,
+      selectedSlotId,
+      clearSelection,
+      startFolderRename,
+      commitFolderRename,
+      startCardRename,
+      commitCardRename,
+      onSelectCardNode,
+      stickySelectionMode,
+      clearSelectionOnAwayClick,
+      profile,
+      placeholderClasses,
+      icons,
+      deleteSlotMutationPending,
+    }),
+    [
+      controller,
+      slotById,
+      onSelectFolder,
+      onDeleteFolder,
+      onMoveFolder,
+      onRenameFolder,
+      onDeleteSlot,
+      onMoveSlot,
+      updateSlot,
+      setSelectedSlotId,
+      selectedSlotId,
+      clearSelection,
+      startFolderRename,
+      commitFolderRename,
+      startCardRename,
+      commitCardRename,
+      onSelectCardNode,
+      stickySelectionMode,
+      clearSelectionOnAwayClick,
+      profile,
+      placeholderClasses,
+      icons,
+      deleteSlotMutationPending,
+    ]
+  );
 
   return (
     <SlotTreeContext.Provider value={contextValue}>
@@ -296,9 +334,11 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
             );
             if (targetNode?.type === 'folder') return 'inside';
             const targetRect = event.currentTarget.getBoundingClientRect();
-            return resolveVerticalDropPosition(event.clientY, targetRect, {
-              thresholdRatio: 0.34,
-            }) ?? 'after';
+            return (
+              resolveVerticalDropPosition(event.clientY, targetRect, {
+                thresholdRatio: 0.34,
+              }) ?? 'after'
+            );
           }}
           resolveDraggedNodeId={(event: React.DragEvent<HTMLElement>): MasterTreeId | null =>
             resolveExternalDraggedNodeId(event.dataTransfer)

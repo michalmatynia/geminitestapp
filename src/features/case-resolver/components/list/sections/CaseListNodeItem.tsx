@@ -11,10 +11,7 @@ import {
   decodeCaseResolverCaseContentFolderNodeId,
   fromCaseResolverCaseNodeId,
 } from '@/features/case-resolver/master-tree';
-import { 
-  parseBoolean, 
-  formatCaseTimestamp 
-} from '../case-list-utils';
+import { parseBoolean, formatCaseTimestamp } from '../case-list-utils';
 
 type FolderIconComponent = React.ComponentType<{ className?: string }>;
 type CaseListNodeItemController = Pick<
@@ -92,15 +89,12 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem({
     : null;
   const caseStatus = caseFile?.caseStatus ?? 'pending';
   const createdAtLabel = formatCaseTimestamp(caseFile?.createdAt);
-  const modifiedAtLabel = formatCaseTimestamp(
-    caseFile?.updatedAt ?? caseFile?.createdAt
-  );
+  const modifiedAtLabel = formatCaseTimestamp(caseFile?.updatedAt ?? caseFile?.createdAt);
   const caseContentUpdatedAtLabel = formatCaseTimestamp(
     caseContentFile?.updatedAt ?? caseContentFile?.createdAt
   );
   const caseIdentifierLabel = caseFile?.caseIdentifierId
-    ? (caseIdentifierPathById.get(caseFile.caseIdentifierId) ??
-      caseFile.caseIdentifierId)
+    ? (caseIdentifierPathById.get(caseFile.caseIdentifierId) ?? caseFile.caseIdentifierId)
     : null;
   const isHeldCase = Boolean(caseFile) && heldCaseId === caseFile?.id;
   const isLocked =
@@ -108,21 +102,23 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem({
     caseContentFile?.isLocked === true ||
     parseBoolean(node.metadata?.['isLocked']);
   const isStatusToggleDisabled = !caseFile || isLocked;
-  const stateClassName = dropPosition === 'before'
-    ? 'bg-blue-500/10 text-gray-100 ring-1 ring-inset ring-blue-500/60'
-    : dropPosition === 'after'
-      ? 'bg-blue-500/10 text-gray-100 ring-1 ring-inset ring-cyan-400/60'
-      : isDragging
-        ? 'opacity-50 text-gray-200'
-        : isDropTarget
-          ? 'bg-cyan-500/10 text-cyan-100'
-          : 'text-gray-300 hover:bg-muted/50';
+  const stateClassName =
+    dropPosition === 'before'
+      ? 'bg-blue-500/10 text-gray-100 ring-1 ring-inset ring-blue-500/60'
+      : dropPosition === 'after'
+        ? 'bg-blue-500/10 text-gray-100 ring-1 ring-inset ring-cyan-400/60'
+        : isDragging
+          ? 'opacity-50 text-gray-200'
+          : isDropTarget
+            ? 'bg-cyan-500/10 text-cyan-100'
+            : 'text-gray-300 hover:bg-muted/50';
 
-  const iconNode = hasChildren && isExpanded ? (
-    <FolderOpenIcon className='size-4 shrink-0' />
-  ) : (
-    <FolderClosedIcon className='size-4 shrink-0' />
-  );
+  const iconNode =
+    hasChildren && isExpanded ? (
+      <FolderOpenIcon className='size-4 shrink-0' />
+    ) : (
+      <FolderClosedIcon className='size-4 shrink-0' />
+    );
 
   if (isCaseContentFolderNode) {
     return (
@@ -144,7 +140,9 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem({
             {isExpanded ? '▾' : '▸'}
           </button>
         ) : (
-          <span className='inline-flex size-4 items-center justify-center text-xs opacity-40'>•</span>
+          <span className='inline-flex size-4 items-center justify-center text-xs opacity-40'>
+            •
+          </span>
         )}
         {iconNode}
         <div className='min-w-0 flex flex-1 items-center gap-2'>
@@ -173,8 +171,7 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem({
   if (isCaseContentFileNode) {
     const fileId = caseContentFileRef?.fileId ?? '';
     const isScanFile =
-      caseContentFile?.fileType === 'scanfile' ||
-      node.kind === 'case_content_file_scan';
+      caseContentFile?.fileType === 'scanfile' || node.kind === 'case_content_file_scan';
     return (
       <div
         className={`group flex items-center gap-2 rounded px-2 py-1.5 text-sm transition ${stateClassName}`}
@@ -276,21 +273,19 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem({
                   {caseFile.name}
                 </button>
               ) : (
-                <span className='min-w-0 truncate font-medium'>
-                  {node.name}
-                </span>
+                <span className='min-w-0 truncate font-medium'>{node.name}</span>
               )}
               <span className='min-w-0 truncate text-[10px] opacity-70'>
-              Created: {createdAtLabel} · Modified: {modifiedAtLabel}
+                Created: {createdAtLabel} · Modified: {modifiedAtLabel}
               </span>
             </div>
             <button
               type='button'
-              className={
-                `${caseStatus === 'completed'
+              className={`${
+                caseStatus === 'completed'
                   ? 'border-emerald-500/40 bg-emerald-500/15 text-emerald-200'
-                  : 'border-amber-500/40 bg-amber-500/15 text-amber-200'} inline-flex items-center rounded border px-2 py-0.5 text-[11px] font-medium capitalize transition ${isStatusToggleDisabled ? 'cursor-not-allowed opacity-60' : 'hover:brightness-110'}`
-              }
+                  : 'border-amber-500/40 bg-amber-500/15 text-amber-200'
+              } inline-flex items-center rounded border px-2 py-0.5 text-[11px] font-medium capitalize transition ${isStatusToggleDisabled ? 'cursor-not-allowed opacity-60' : 'hover:brightness-110'}`}
               disabled={isStatusToggleDisabled}
               onClick={(event): void => {
                 event.preventDefault();
@@ -333,7 +328,11 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem({
                     : 'cursor-not-allowed border-blue-500/20 bg-blue-500/5 text-blue-200/50'
                 }`}
                 disabled={!canNestHeldHere}
-                title={canNestHeldHere ? 'Nest held case here' : (nestHeldDisabledReason ?? 'Cannot nest held case here')}
+                title={
+                  canNestHeldHere
+                    ? 'Nest held case here'
+                    : (nestHeldDisabledReason ?? 'Cannot nest held case here')
+                }
                 onClick={(event): void => {
                   event.preventDefault();
                   event.stopPropagation();
@@ -379,7 +378,7 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem({
               handleCreateCase(caseFile.id);
             }}
           >
-          Child
+            Child
           </Button>
           <Button
             variant='outline'
@@ -391,7 +390,7 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem({
               handleDeleteCase(caseId);
             }}
           >
-          Delete
+            Delete
           </Button>
         </div>
       ) : null}

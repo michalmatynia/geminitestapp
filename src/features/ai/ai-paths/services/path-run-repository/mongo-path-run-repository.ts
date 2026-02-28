@@ -335,7 +335,7 @@ const buildRunIdConstraint = (runIds: string[]): Record<string, unknown> => ({
 
 const appendRunIdConstraint = (
   filter: Record<string, unknown>,
-  runIds: string[],
+  runIds: string[]
 ): Record<string, unknown> => {
   const runIdConstraint = buildRunIdConstraint(runIds);
   const existingAnd = Array.isArray(filter['$and'])
@@ -350,14 +350,11 @@ const appendRunIdConstraint = (
 
 const resolveRunIdsForNodeFilter = async (
   db: Awaited<ReturnType<typeof getMongoDb>>,
-  nodeId: string,
+  nodeId: string
 ): Promise<string[]> => {
-  const runIds = await db
-    .collection<NodeDocument>(NODES_COLLECTION)
-    .distinct('runId', { nodeId });
+  const runIds = await db.collection<NodeDocument>(NODES_COLLECTION).distinct('runId', { nodeId });
   return runIds.filter(
-    (value: unknown): value is string =>
-      typeof value === 'string' && value.trim().length > 0,
+    (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0
   );
 };
 
@@ -450,16 +447,14 @@ export const mongoPathRunRepository: AiPathRunRepository = {
       updateData['finishedAt'] = new Date(updateData['finishedAt']);
     }
 
-    const result = await db
-      .collection<RunDocument>(RUNS_COLLECTION)
-      .findOneAndUpdate(
-        {
-          $or: [{ _id: runId }, { id: runId }],
-          status: { $in: statuses },
-        },
-        { $set: updateData },
-        { returnDocument: 'after' }
-      );
+    const result = await db.collection<RunDocument>(RUNS_COLLECTION).findOneAndUpdate(
+      {
+        $or: [{ _id: runId }, { id: runId }],
+        status: { $in: statuses },
+      },
+      { $set: updateData },
+      { returnDocument: 'after' }
+    );
     if (!result) return null;
     return toRunRecord(result);
   },
@@ -468,19 +463,17 @@ export const mongoPathRunRepository: AiPathRunRepository = {
     await ensureIndexes();
     const db = await getMongoDb();
     const now = new Date();
-    const result = await db
-      .collection<RunDocument>(RUNS_COLLECTION)
-      .findOneAndUpdate(
-        {
-          $and: [
-            { $or: [{ _id: runId }, { id: runId }] },
-            { status: 'queued' },
-            { $or: [{ nextRetryAt: null }, { nextRetryAt: { $lte: now } }] },
-          ],
-        },
-        { $set: { status: 'running', startedAt: now, updatedAt: now } },
-        { returnDocument: 'after' }
-      );
+    const result = await db.collection<RunDocument>(RUNS_COLLECTION).findOneAndUpdate(
+      {
+        $and: [
+          { $or: [{ _id: runId }, { id: runId }] },
+          { status: 'queued' },
+          { $or: [{ nextRetryAt: null }, { nextRetryAt: { $lte: now } }] },
+        ],
+      },
+      { $set: { status: 'running', startedAt: now, updatedAt: now } },
+      { returnDocument: 'after' }
+    );
     if (!result) return null;
     return toRunRecord(result);
   },
@@ -582,15 +575,13 @@ export const mongoPathRunRepository: AiPathRunRepository = {
     await ensureIndexes();
     const db = await getMongoDb();
     const now = new Date();
-    const next = await db
-      .collection<RunDocument>(RUNS_COLLECTION)
-      .findOne(
-        { status: 'queued', $or: [{ nextRetryAt: null }, { nextRetryAt: { $lte: now } }] },
-        {
-          projection: { _id: 1, id: 1 },
-          sort: { createdAt: 1 },
-        }
-      );
+    const next = await db.collection<RunDocument>(RUNS_COLLECTION).findOne(
+      { status: 'queued', $or: [{ nextRetryAt: null }, { nextRetryAt: { $lte: now } }] },
+      {
+        projection: { _id: 1, id: 1 },
+        sort: { createdAt: 1 },
+      }
+    );
     if (!next) return null;
     return mongoPathRunRepository.claimRunForProcessing(next.id || next._id);
   },
@@ -693,10 +684,7 @@ export const mongoPathRunRepository: AiPathRunRepository = {
     const nodeId = cursor.nodeId.trim();
     const filter: Record<string, unknown> = {
       runId,
-      $or: [
-        { updatedAt: { $gt: updatedAt } },
-        { updatedAt, nodeId: { $gt: nodeId } },
-      ],
+      $or: [{ updatedAt: { $gt: updatedAt } }, { updatedAt, nodeId: { $gt: nodeId } }],
     };
     const limit =
       typeof options.limit === 'number' && options.limit > 0
@@ -731,19 +719,13 @@ export const mongoPathRunRepository: AiPathRunRepository = {
     await db.collection<EventDocument>(EVENTS_COLLECTION).insertOne(document);
     return toEventRecord(document);
   },
-  async listRunEvents(
-    runId: string,
-    options: AiPathRunEventListOptions = {}
-  ) {
+  async listRunEvents(runId: string, options: AiPathRunEventListOptions = {}) {
     await ensureIndexes();
     const db = await getMongoDb();
     const filter: Record<string, unknown> = { runId };
     const sinceValue = options.since ? new Date(options.since) : null;
-    const since =
-      sinceValue && !Number.isNaN(sinceValue.getTime()) ? sinceValue : null;
-    const afterDateValue = options.after?.createdAt
-      ? new Date(options.after.createdAt)
-      : null;
+    const since = sinceValue && !Number.isNaN(sinceValue.getTime()) ? sinceValue : null;
+    const afterDateValue = options.after?.createdAt ? new Date(options.after.createdAt) : null;
     const afterDate =
       afterDateValue && !Number.isNaN(afterDateValue.getTime()) ? afterDateValue : null;
     const afterId =
@@ -776,18 +758,16 @@ export const mongoPathRunRepository: AiPathRunRepository = {
     await ensureIndexes();
     const db = await getMongoDb();
     const cutoff = new Date(Date.now() - maxAgeMs);
-    const result = await db
-      .collection<RunDocument>(RUNS_COLLECTION)
-      .updateMany(
-        { status: 'running', startedAt: { $lt: cutoff } },
-        {
-          $set: {
-            status: 'failed',
-            finishedAt: new Date(),
-            errorMessage: 'Run marked failed due to stale running state.',
-          },
-        }
-      );
+    const result = await db.collection<RunDocument>(RUNS_COLLECTION).updateMany(
+      { status: 'running', startedAt: { $lt: cutoff } },
+      {
+        $set: {
+          status: 'failed',
+          finishedAt: new Date(),
+          errorMessage: 'Run marked failed due to stale running state.',
+        },
+      }
+    );
     return { count: result.modifiedCount ?? 0 };
   },
 
@@ -803,7 +783,7 @@ export const mongoPathRunRepository: AiPathRunRepository = {
     await ensureIndexes();
     const db = await getMongoDb();
     const finishedAt = options?.finishedAt ? new Date(options.finishedAt) : new Date();
-    
+
     const bulkOps = [
       {
         updateOne: {
@@ -829,5 +809,4 @@ export const mongoPathRunRepository: AiPathRunRepository = {
       });
     }
   },
-
 };

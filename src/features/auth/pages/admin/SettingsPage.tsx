@@ -6,13 +6,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { disableMfa, setupMfa, verifyMfa } from '@/features/auth/api/mfa';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useAuthUserSecurity } from '@/features/auth/hooks/useAuthQueries';
-import {
-  AUTH_SETTINGS_KEYS,
-  type AuthRole,
-} from '@/features/auth/utils/auth-management';
-import {
-  type AuthSecurityPolicy,
-} from '@/features/auth/utils/auth-security';
+import { AUTH_SETTINGS_KEYS, type AuthRole } from '@/features/auth/utils/auth-management';
+import { type AuthSecurityPolicy } from '@/features/auth/utils/auth-security';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { ApiError } from '@/shared/lib/api-client';
 import { createMutationV2 } from '@/shared/lib/query-factories-v2';
@@ -44,9 +39,7 @@ export default function AuthSettingsPage(): React.JSX.Element {
 
   const [roles, setRoles] = useState<AuthRole[]>(contextRoles);
   const [defaultRole, setDefaultRole] = useState<string>(contextDefaultRole);
-  const [securityPolicy, setSecurityPolicy] = useState<AuthSecurityPolicy>(
-    contextSecurityPolicy
-  );
+  const [securityPolicy, setSecurityPolicy] = useState<AuthSecurityPolicy>(contextSecurityPolicy);
   const [defaultDirty, setDefaultDirty] = useState(false);
   const [securityDirty, setSecurityDirty] = useState(false);
   const [mfaEnabled, setMfaEnabled] = useState(false);
@@ -124,10 +117,9 @@ export default function AuthSettingsPage(): React.JSX.Element {
       toast('Default role saved.', { variant: 'success' });
     } catch (error) {
       logClientError(error, { context: { source: 'AuthSettingsPage', action: 'saveDefaultRole' } });
-      toast(
-        error instanceof Error ? error.message : 'Failed to save settings.',
-        { variant: 'error' }
-      );
+      toast(error instanceof Error ? error.message : 'Failed to save settings.', {
+        variant: 'error',
+      });
     }
   };
 
@@ -141,11 +133,12 @@ export default function AuthSettingsPage(): React.JSX.Element {
       await refetchSettings();
       toast('Security policy saved.', { variant: 'success' });
     } catch (error) {
-      logClientError(error, { context: { source: 'AuthSettingsPage', action: 'saveSecurityPolicy' } });
-      toast(
-        error instanceof Error ? error.message : 'Failed to save security policy.',
-        { variant: 'error' }
-      );
+      logClientError(error, {
+        context: { source: 'AuthSettingsPage', action: 'saveSecurityPolicy' },
+      });
+      toast(error instanceof Error ? error.message : 'Failed to save security policy.', {
+        variant: 'error',
+      });
     }
   };
 
@@ -164,10 +157,9 @@ export default function AuthSettingsPage(): React.JSX.Element {
       });
     } catch (error) {
       logClientError(error, { context: { source: 'AuthSettingsPage', action: 'handleMfaSetup' } });
-      toast(
-        error instanceof Error ? error.message : 'Failed to start MFA setup.',
-        { variant: 'error' }
-      );
+      toast(error instanceof Error ? error.message : 'Failed to start MFA setup.', {
+        variant: 'error',
+      });
     }
   };
 
@@ -215,7 +207,9 @@ export default function AuthSettingsPage(): React.JSX.Element {
       setMfaDisableCode('');
       toast('MFA disabled.', { variant: 'success' });
     } catch (error) {
-      logClientError(error, { context: { source: 'AuthSettingsPage', action: 'handleMfaDisable' } });
+      logClientError(error, {
+        context: { source: 'AuthSettingsPage', action: 'handleMfaDisable' },
+      });
       toast(error instanceof Error ? error.message : 'Failed to disable MFA.', {
         variant: 'error',
       });
@@ -264,14 +258,14 @@ export default function AuthSettingsPage(): React.JSX.Element {
         title='Security policy'
         description='Control password strength and login protection rules.'
         className='p-4'
-        actions={(
+        actions={
           <Button
             onClick={() => void saveSecurityPolicy()}
             disabled={!securityDirty || updateSetting.isPending}
           >
             {updateSetting.isPending ? 'Saving...' : 'Save security policy'}
           </Button>
-        )}
+        }
       >
         <div className='grid gap-4 md:grid-cols-2 mt-4'>
           <FormField label='Minimum password length'>
@@ -290,7 +284,10 @@ export default function AuthSettingsPage(): React.JSX.Element {
               className='bg-gray-900 border text-white'
             />
           </FormField>
-          <FormField label='Require strong password' description='Enforce uppercase, lowercase, number, and symbol.'>
+          <FormField
+            label='Require strong password'
+            description='Enforce uppercase, lowercase, number, and symbol.'
+          >
             <Checkbox
               checked={securityPolicy.requireStrongPassword}
               onCheckedChange={(checked: boolean | 'indeterminate') => {
@@ -465,7 +462,10 @@ export default function AuthSettingsPage(): React.JSX.Element {
                       placeholder='123456'
                     />
                   </FormField>
-                  <Button onClick={() => void handleMfaVerify()} disabled={mfaVerifyMutation.isPending}>
+                  <Button
+                    onClick={() => void handleMfaVerify()}
+                    disabled={mfaVerifyMutation.isPending}
+                  >
                     {mfaVerifyMutation.isPending ? 'Verifying...' : 'Verify & enable'}
                   </Button>
                 </div>
@@ -506,7 +506,8 @@ export default function AuthSettingsPage(): React.JSX.Element {
       </FormSection>
 
       <Alert variant='warning' className='p-4 text-sm'>
-        Go to Workflow Database -&gt; Database Engine to configure provider routing and strict fallback policy.
+        Go to Workflow Database -&gt; Database Engine to configure provider routing and strict
+        fallback policy.
       </Alert>
       <div>
         <Link

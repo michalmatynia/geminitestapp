@@ -32,9 +32,7 @@ export type MongoUpdatePlan = {
   updateDoc: unknown;
 };
 
-export type BuildMongoUpdatePlanResult =
-  | { output: RuntimePortValues }
-  | { plan: MongoUpdatePlan };
+export type BuildMongoUpdatePlanResult = { output: RuntimePortValues } | { plan: MongoUpdatePlan };
 
 export type BuildMongoUpdatePlanInput = {
   actionCategory: DatabaseActionCategory;
@@ -77,13 +75,18 @@ export async function buildMongoUpdatePlan({
   ensureExistingParameterTemplateContext,
   aiPrompt,
 }: BuildMongoUpdatePlanInput): Promise<BuildMongoUpdatePlanResult> {
-  const updatePayloadMode = dbConfig.updatePayloadMode ?? (dbConfig.mappings?.length ? 'mapping' : 'custom');
+  const updatePayloadMode =
+    dbConfig.updatePayloadMode ?? (dbConfig.mappings?.length ? 'mapping' : 'custom');
   const currentValueRaw: unknown = templateInputs['value'] ?? templateInputs['jobId'] ?? '';
   const currentValue = Array.isArray(currentValueRaw)
     ? (currentValueRaw as unknown[])[0]
     : currentValueRaw;
-  
-  if (updatePayloadMode !== 'custom' && updatePayloadMode !== 'mapping' && (updatePayloadMode as string) !== 'mongo') {
+
+  if (
+    updatePayloadMode !== 'custom' &&
+    updatePayloadMode !== 'mapping' &&
+    (updatePayloadMode as string) !== 'mongo'
+  ) {
     const error =
       'Unsupported update mode. Configure explicit filter and update document or use mappings.';
     reportAiPathsError(
@@ -117,10 +120,9 @@ export async function buildMongoUpdatePlan({
     queryTemplate: queryConfig.queryTemplate,
     parseJsonTemplate,
   });
-  
+
   const parameterTargetPath =
-    normalizeNonEmptyString(dbConfig.parameterInferenceGuard?.targetPath) ??
-    'parameters';
+    normalizeNonEmptyString(dbConfig.parameterInferenceGuard?.targetPath) ?? 'parameters';
 
   let updates: Record<string, unknown>;
   let updateDoc: unknown;
@@ -144,7 +146,7 @@ export async function buildMongoUpdatePlan({
           nodeId: node.id,
           guardrail: 'missing_update_template',
         },
-        'Database update blocked:',
+        'Database update blocked:'
       );
       toast(error, { variant: 'error' });
       return {
@@ -201,10 +203,7 @@ export async function buildMongoUpdatePlan({
     }
 
     const parsedUpdate: unknown = parseJsonTemplate(updateTemplate);
-    if (
-      !parsedUpdate ||
-      (typeof parsedUpdate !== 'object' && !Array.isArray(parsedUpdate))
-    ) {
+    if (!parsedUpdate || (typeof parsedUpdate !== 'object' && !Array.isArray(parsedUpdate))) {
       toast('Update template must be valid JSON.', { variant: 'error' });
       return {
         output: {
@@ -216,11 +215,11 @@ export async function buildMongoUpdatePlan({
             filter: resolvedFilter,
           },
           aiPrompt,
-        }
+        },
       };
     }
     updateDoc = parsedUpdate;
-    
+
     const extractUpdates = (value: unknown): Record<string, unknown> => {
       const record = toRecord(value);
       if (!record) return {};
@@ -291,9 +290,7 @@ export async function buildMongoUpdatePlan({
         output: {
           result: null,
           bundle: {
-            error:
-              guardResult.errorMessage ??
-              'Parameter inference guard blocked update.',
+            error: guardResult.errorMessage ?? 'Parameter inference guard blocked update.',
           },
           debugPayload,
           aiPrompt,
@@ -302,8 +299,7 @@ export async function buildMongoUpdatePlan({
     }
 
     const definitionsPort =
-      normalizeNonEmptyString(dbConfig.parameterInferenceGuard?.definitionsPort) ??
-      'result';
+      normalizeNonEmptyString(dbConfig.parameterInferenceGuard?.definitionsPort) ?? 'result';
     const definitionsPath =
       normalizeNonEmptyString(dbConfig.parameterInferenceGuard?.definitionsPath) ?? '';
     const materializeResult = materializeParameterInferenceUpdates({
@@ -337,10 +333,7 @@ export async function buildMongoUpdatePlan({
       ): unknown => {
         const record = toRecord(value);
         if (!record) return value;
-        const hasTarget = Object.prototype.hasOwnProperty.call(
-          nextUpdates,
-          targetPath
-        );
+        const hasTarget = Object.prototype.hasOwnProperty.call(nextUpdates, targetPath);
         const nextTargetValue = nextUpdates[targetPath];
         const setRecord = toRecord(record['$set']);
         if (setRecord) {
@@ -366,7 +359,7 @@ export async function buildMongoUpdatePlan({
     } else {
       updateDoc = { $set: updates };
     }
-    
+
     primaryTarget = Object.keys(updates)[0] ?? 'content_en';
 
     const isEmptyCustomUpdateDoc = (value: unknown): boolean => {

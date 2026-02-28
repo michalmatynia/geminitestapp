@@ -47,7 +47,8 @@ export const useCaseResolverStateSelectionActions = ({
   const activeFile = useMemo(
     (): CaseResolverFile | null =>
       workspace.activeFileId
-        ? workspace.files.find((file: CaseResolverFile) => file.id === workspace.activeFileId) ?? null
+        ? (workspace.files.find((file: CaseResolverFile) => file.id === workspace.activeFileId) ??
+          null)
         : null,
     [workspace.activeFileId, workspace.files]
   );
@@ -55,7 +56,8 @@ export const useCaseResolverStateSelectionActions = ({
   const selectedAsset = useMemo(
     (): CaseResolverAssetFile | null =>
       selectedAssetId
-        ? workspace.assets.find((asset: CaseResolverAssetFile) => asset.id === selectedAssetId) ?? null
+        ? (workspace.assets.find((asset: CaseResolverAssetFile) => asset.id === selectedAssetId) ??
+          null)
         : null,
     [selectedAssetId, workspace.assets]
   );
@@ -69,18 +71,21 @@ export const useCaseResolverStateSelectionActions = ({
       const resolvedOptions: UpdateWorkspaceOptions = options ?? {
         persistToast: treeSaveToast,
       };
-      updateWorkspace((current: CaseResolverWorkspace) => ({
-        ...current,
-        assets: current.assets.map((asset: CaseResolverAssetFile) =>
-          asset.id === selectedAssetId
-            ? {
-              ...asset,
-              ...patch,
-              updatedAt: new Date().toISOString(),
-            }
-            : asset
-        ),
-      }), resolvedOptions);
+      updateWorkspace(
+        (current: CaseResolverWorkspace) => ({
+          ...current,
+          assets: current.assets.map((asset: CaseResolverAssetFile) =>
+            asset.id === selectedAssetId
+              ? {
+                  ...asset,
+                  ...patch,
+                  updatedAt: new Date().toISOString(),
+                }
+              : asset
+          ),
+        }),
+        resolvedOptions
+      );
       if (resolvedOptions.source === 'node_file_manual_save') {
         logCaseResolverWorkspaceEvent({
           source: resolvedOptions.source,
@@ -93,20 +98,27 @@ export const useCaseResolverStateSelectionActions = ({
   );
 
   const handleUpdateActiveFileParties = useCallback(
-    (patch: Partial<Pick<CaseResolverFile, 'addresser' | 'addressee' | 'referenceCaseIds'>>): void => {
+    (
+      patch: Partial<Pick<CaseResolverFile, 'addresser' | 'addressee' | 'referenceCaseIds'>>
+    ): void => {
       if (!workspace.activeFileId) return;
-      updateWorkspace((current: CaseResolverWorkspace) => {
-        const activeFile = current.files.find((file: CaseResolverFile) => file.id === current.activeFileId) ?? null;
-        if (activeFile?.isLocked) return current;
-        return {
-          ...current,
-          files: current.files.map((file: CaseResolverFile) =>
-            file.id === current.activeFileId
-              ? { ...file, ...patch, updatedAt: new Date().toISOString() }
-              : file
-          ),
-        };
-      }, { persistToast: 'Parties updated.' });
+      updateWorkspace(
+        (current: CaseResolverWorkspace) => {
+          const activeFile =
+            current.files.find((file: CaseResolverFile) => file.id === current.activeFileId) ??
+            null;
+          if (activeFile?.isLocked) return current;
+          return {
+            ...current,
+            files: current.files.map((file: CaseResolverFile) =>
+              file.id === current.activeFileId
+                ? { ...file, ...patch, updatedAt: new Date().toISOString() }
+                : file
+            ),
+          };
+        },
+        { persistToast: 'Parties updated.' }
+      );
     },
     [updateWorkspace, workspace.activeFileId]
   );

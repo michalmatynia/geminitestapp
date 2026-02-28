@@ -11,9 +11,7 @@ import {
   type UseMasterFolderTreeOptions,
 } from '@/shared/contracts/master-folder-tree';
 import { defaultFolderTreeProfilesV2 } from '@/shared/utils/folder-tree-profiles-v2';
-import {
-  validateMasterTreeNodes,
-} from '@/shared/utils/master-folder-tree-engine';
+import { validateMasterTreeNodes } from '@/shared/utils/master-folder-tree-engine';
 
 import {
   buildRootsV2,
@@ -39,10 +37,7 @@ const toActionOk = (): MasterFolderTreeActionResult => ({
   ok: true,
 });
 
-const createErrorAction = (
-  code: string,
-  message?: string
-): MasterFolderTreeActionResult =>
+const createErrorAction = (code: string, message?: string): MasterFolderTreeActionResult =>
   toMasterFolderTreeActionFail(message ?? code, code);
 
 const areNodesEqual = (
@@ -91,9 +86,7 @@ const cloneUndoStack = (entries: FolderTreeState['undoStack']): FolderTreeState[
     expandedNodeIds: [...entry.expandedNodeIds],
   }));
 
-const createInitialState = (
-  options: UseMasterFolderTreeOptions
-): FolderTreeState => {
+const createInitialState = (options: UseMasterFolderTreeOptions): FolderTreeState => {
   const normalizedNodes = normalizeNodesV2(options.initialNodes);
   const validNodeIds = new Set(normalizedNodes.map((node) => node.id));
   const initialExpandedNodeIds = Array.from(
@@ -179,18 +172,21 @@ const toV3Adapter = (
     loadNodes?: (() => Promise<UseMasterFolderTreeOptions['initialNodes']>) | undefined;
     applyOperation?: (
       operation: MasterFolderTreePersistOperation,
-      context: { previousNodes: UseMasterFolderTreeOptions['initialNodes']; nextNodes: UseMasterFolderTreeOptions['initialNodes'] }
+      context: {
+        previousNodes: UseMasterFolderTreeOptions['initialNodes'];
+        nextNodes: UseMasterFolderTreeOptions['initialNodes'];
+      }
     ) => Promise<UseMasterFolderTreeOptions['initialNodes'] | void>;
   };
 
   return {
     ...(legacy.loadNodes
       ? {
-        fetchState: async (_instanceId?: string) => ({
-          nodes: (await legacy.loadNodes?.()) ?? [],
-          version: 0,
-        }),
-      }
+          fetchState: async (_instanceId?: string) => ({
+            nodes: (await legacy.loadNodes?.()) ?? [],
+            version: 0,
+          }),
+        }
       : {}),
     prepare: async (tx: FolderTreeTransaction): Promise<FolderTreePreparedTransaction> =>
       createPreparedTx(tx),
@@ -325,12 +321,9 @@ export function useFolderTreeInstanceV2(
 
       let stage: 'prepare' | 'apply' | 'commit' = 'prepare';
       try {
-        const prepared = adapter.prepare
-          ? await adapter.prepare(tx)
-          : createPreparedTx(tx);
+        const prepared = adapter.prepare ? await adapter.prepare(tx) : createPreparedTx(tx);
         stage = 'apply';
-        const applied =
-          (await adapter.apply(tx, prepared)) ?? createAppliedTx(tx);
+        const applied = (await adapter.apply(tx, prepared)) ?? createAppliedTx(tx);
         stage = 'commit';
         if (adapter.commit) {
           await adapter.commit(tx, applied);
@@ -390,11 +383,7 @@ export function useFolderTreeInstanceV2(
   );
 
   const canDropNode = useCallback(
-    (
-      nodeId: string,
-      targetId: string | null,
-      position: MasterTreeDropPositionDto = 'inside'
-    ) =>
+    (nodeId: string, targetId: string | null, position: MasterTreeDropPositionDto = 'inside') =>
       canDropNodeV2({
         nodes: store.getState().nodes,
         nodeId,
@@ -483,11 +472,7 @@ export function useFolderTreeInstanceV2(
 
   const expandAll = useCallback((): void => {
     const nodes = store.getState().nodes;
-    setExpandedNodeIds(
-      nodes
-        .filter((node) => node.type === 'folder')
-        .map((node) => node.id)
-    );
+    setExpandedNodeIds(nodes.filter((node) => node.type === 'folder').map((node) => node.id));
   }, [setExpandedNodeIds, store]);
 
   const collapseAll = useCallback((): void => {
@@ -543,9 +528,9 @@ export function useFolderTreeInstanceV2(
       const optimisticNodes = current.nodes.map((node) =>
         node.id === nodeId
           ? {
-            ...node,
-            name: rawName,
-          }
+              ...node,
+              name: rawName,
+            }
           : node
       );
 
@@ -588,10 +573,7 @@ export function useFolderTreeInstanceV2(
     (targetId: string | null, position: MasterTreeDropPositionDto = 'inside'): void => {
       store.patchState((prev: FolderTreeState) => {
         if (!prev.dragState) return prev;
-        if (
-          prev.dragState.targetId === targetId &&
-          prev.dragState.position === position
-        ) {
+        if (prev.dragState.targetId === targetId && prev.dragState.position === position) {
           return prev;
         }
         return {
@@ -751,9 +733,7 @@ export function useFolderTreeInstanceV2(
       return await replaceNodes(
         next.nodes,
         'refresh',
-        next.version !== undefined && Number.isFinite(next.version)
-          ? next.version
-          : undefined
+        next.version !== undefined && Number.isFinite(next.version) ? next.version : undefined
       );
     } catch (error) {
       const normalizedError = normalizeError('unknown', error);
@@ -803,12 +783,9 @@ export function useFolderTreeInstanceV2(
 
     let stage: 'prepare' | 'apply' | 'commit' = 'prepare';
     try {
-      const prepared = adapter.prepare
-        ? await adapter.prepare(tx)
-        : createPreparedTx(tx);
+      const prepared = adapter.prepare ? await adapter.prepare(tx) : createPreparedTx(tx);
       stage = 'apply';
-      const applied =
-        (await adapter.apply(tx, prepared)) ?? createAppliedTx(tx);
+      const applied = (await adapter.apply(tx, prepared)) ?? createAppliedTx(tx);
       stage = 'commit';
       if (adapter.commit) {
         await adapter.commit(tx, applied);
@@ -870,10 +847,7 @@ export function useFolderTreeInstanceV2(
     [clearDrag, dropNodeToRoot, moveNode, reorderNode, store]
   );
 
-  const expandedNodeSet = useMemo(
-    () => new Set(state.expandedNodeIds),
-    [state.expandedNodeIds]
-  );
+  const expandedNodeSet = useMemo(() => new Set(state.expandedNodeIds), [state.expandedNodeIds]);
   const selectedNode = useMemo(
     () => state.nodes.find((node) => node.id === state.selectedNodeId) ?? null,
     [state.nodes, state.selectedNodeId]

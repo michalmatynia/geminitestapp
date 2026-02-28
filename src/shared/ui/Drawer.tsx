@@ -58,11 +58,11 @@ export function Drawer({
   return (
     <div className='fixed inset-0 z-[70]'>
       {/* Backdrop */}
-      <div 
-        className='absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity' 
-        onClick={onClose} 
+      <div
+        className='absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity'
+        onClick={onClose}
       />
-      
+
       {/* Panel */}
       <aside
         className={cn(
@@ -73,13 +73,13 @@ export function Drawer({
         style={{ width: drawerWidth }}
       >
         {(title || showClose) && (
-          <div className={cn('flex items-center justify-between border-b border-border px-4 py-3', headerClassName)}>
-            <SectionHeader
-              title={title}
-              description={description}
-              size='xs'
-              className='flex-1'
-            />
+          <div
+            className={cn(
+              'flex items-center justify-between border-b border-border px-4 py-3',
+              headerClassName
+            )}
+          >
+            <SectionHeader title={title} description={description} size='xs' className='flex-1' />
             <div className='flex items-center gap-2 ml-4'>
               {actions}
               {showClose && (
@@ -97,9 +97,7 @@ export function Drawer({
           </div>
         )}
 
-        <div className={cn('flex-1 overflow-y-auto p-4', contentClassName)}>
-          {children}
-        </div>
+        <div className={cn('flex-1 overflow-y-auto p-4', contentClassName)}>{children}</div>
       </aside>
     </div>
   );

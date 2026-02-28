@@ -32,7 +32,7 @@ describe('runsApi.stream', () => {
     runsApi.stream('run_123', { since: '2026-02-21T19:00:00.000Z' });
 
     expect(eventSourceCtor).toHaveBeenCalledWith(
-      '/api/ai-paths/runs/run_123/stream?since=2026-02-21T19%3A00%3A00.000Z',
+      '/api/ai-paths/runs/run_123/stream?since=2026-02-21T19%3A00%3A00.000Z'
     );
   });
 });

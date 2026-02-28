@@ -81,7 +81,24 @@ export * from './templates/StandardDataTablePanel';
 export * from './templates/SettingsFormModal';
 export * from './templates/FilterPanel';
 export * from './templates/SimpleSettingsList';
-export { PanelHeader, PanelFilters, PanelPagination, PanelStats, PanelAlerts, usePanelState } from './templates/panels';
-export type { PanelStat, PanelAction, ColumnDef, PanelState, PanelCallbacks, PanelAlert, PanelConfig, UsePanelStateOptions, UsePanelStateReturn } from './templates/panels';
+export {
+  PanelHeader,
+  PanelFilters,
+  PanelPagination,
+  PanelStats,
+  PanelAlerts,
+  usePanelState,
+} from './templates/panels';
+export type {
+  PanelStat,
+  PanelAction,
+  ColumnDef,
+  PanelState,
+  PanelCallbacks,
+  PanelAlert,
+  PanelConfig,
+  UsePanelStateOptions,
+  UsePanelStateReturn,
+} from './templates/panels';
 export * from './templates/pickers';
 export * from './templates/modals';

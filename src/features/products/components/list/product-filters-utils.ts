@@ -1,12 +1,12 @@
-import { 
-  productAdvancedFilterPresetSchema, 
+import {
+  productAdvancedFilterPresetSchema,
   productAdvancedFilterPresetBundleSchema,
   type ProductAdvancedFilterPreset,
-  type ProductAdvancedFilterGroup
+  type ProductAdvancedFilterGroup,
 } from '@/shared/contracts/products';
-import { 
-  createRuleId, 
-  readAdvancedPresetBundle 
+import {
+  createRuleId,
+  readAdvancedPresetBundle,
 } from '@/features/products/components/list/advanced-filter';
 
 export const normalizePresetName = (name: string): string => name.trim();
@@ -38,9 +38,7 @@ export const createAdvancedPreset = (
   };
 };
 
-export const buildPresetBundle = (
-  presets: ProductAdvancedFilterPreset[]
-) => ({
+export const buildPresetBundle = (presets: ProductAdvancedFilterPreset[]) => ({
   version: 1 as const,
   exportedAt: new Date().toISOString(),
   presets,

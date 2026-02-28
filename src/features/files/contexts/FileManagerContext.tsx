@@ -2,10 +2,14 @@
 
 import React, { createContext, useContext, useState, useMemo, useCallback, ReactNode } from 'react';
 
-import { useFileQueries, useDeleteFile, useUpdateFileTags } from '@/features/files/hooks/useFileQueries';
+import {
+  useFileQueries,
+  useDeleteFile,
+  useUpdateFileTags,
+} from '@/features/files/hooks/useFileQueries';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { ExpandedImageFile } from '@/features/products';
-import { useAssets3D } from '@/features/viewer3d/hooks/useAsset3dQueries';
+import { useAssets3D } from '@/shared/lib/viewer3d/hooks/useAsset3dQueries';
 import type { ImageFileSelection } from '@/shared/contracts/files';
 import type { Asset3DRecord, Asset3DListFilters } from '@/shared/contracts/viewer3d';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
@@ -102,7 +106,13 @@ export const useFileManagerActions = () => {
 
 // --- Legacy Aggregator ---
 
-export interface FileManagerContextState extends FileManagerConfig, FileManagerSearch, FileManagerUIState, FileManagerData, FileManagerActions {}
+export interface FileManagerContextState
+  extends
+    FileManagerConfig,
+    FileManagerSearch,
+    FileManagerUIState,
+    FileManagerData,
+    FileManagerActions {}
 
 const FileManagerContext = createContext<FileManagerContextState | undefined>(undefined);
 
@@ -141,7 +151,9 @@ export function FileManagerProvider({
   const [localFolderFilter, setLocalFolderFilter] = useState<string | null>(null);
   const [previewFile, setPreviewFile] = useState<ExpandedImageFile | null>(null);
   const [previewAsset, setPreviewAsset] = useState<Asset3DRecord | null>(null);
-  const [activeTab, setActiveTab] = useState<'uploads' | 'links' | 'base64' | 'assets3d'>('uploads');
+  const [activeTab, setActiveTab] = useState<'uploads' | 'links' | 'base64' | 'assets3d'>(
+    'uploads'
+  );
   const [selectedFiles, setSelectedFiles] = useState<ImageFileSelection[]>([]);
 
   const { toast } = useToast();
@@ -185,28 +197,41 @@ export function FileManagerProvider({
       }
       return 'link';
     }
-    if (clean.includes('/uploads/') || clean.startsWith('/uploads/') || clean.startsWith('uploads/')) return 'upload';
+    if (
+      clean.includes('/uploads/') ||
+      clean.startsWith('/uploads/') ||
+      clean.startsWith('uploads/')
+    )
+      return 'upload';
     return 'other';
   }, []);
 
-  const resolveFolder = useCallback((filepath: string): string => {
-    const kind = getFileKind(filepath);
-    if (kind === 'base64') return 'base64';
-    if (kind === 'link') {
-      try { return new URL(filepath).hostname || 'link'; } catch { return 'link'; }
-    }
-    const clean = filepath.replace(/^\/+/, '');
-    const parts = clean.split('/');
-    if (parts.length === 0) return 'uploads';
-    if (parts[0] === 'uploads') return parts[1] ?? 'uploads';
-    return parts[0] || 'uploads';
-  }, [getFileKind]);
+  const resolveFolder = useCallback(
+    (filepath: string): string => {
+      const kind = getFileKind(filepath);
+      if (kind === 'base64') return 'base64';
+      if (kind === 'link') {
+        try {
+          return new URL(filepath).hostname || 'link';
+        } catch {
+          return 'link';
+        }
+      }
+      const clean = filepath.replace(/^\/+/, '');
+      const parts = clean.split('/');
+      if (parts.length === 0) return 'uploads';
+      if (parts[0] === 'uploads') return parts[1] ?? 'uploads';
+      return parts[0] || 'uploads';
+    },
+    [getFileKind]
+  );
 
   const uploadFiles = useMemo(
-    () => files.filter((file: ExpandedImageFile) => {
-      const kind = getFileKind(file.filepath);
-      return kind === 'upload' || kind === 'other';
-    }),
+    () =>
+      files.filter((file: ExpandedImageFile) => {
+        const kind = getFileKind(file.filepath);
+        return kind === 'upload' || kind === 'other';
+      }),
     [files, getFileKind]
   );
 
@@ -234,8 +259,10 @@ export function FileManagerProvider({
   }, [files]);
 
   const filterByTab = useMemo(() => {
-    if (activeTab === 'links') return (file: ExpandedImageFile) => getFileKind(file.filepath) === 'link';
-    if (activeTab === 'base64') return (file: ExpandedImageFile) => getFileKind(file.filepath) === 'base64';
+    if (activeTab === 'links')
+      return (file: ExpandedImageFile) => getFileKind(file.filepath) === 'link';
+    if (activeTab === 'base64')
+      return (file: ExpandedImageFile) => getFileKind(file.filepath) === 'base64';
     return (file: ExpandedImageFile) => {
       const kind = getFileKind(file.filepath);
       return kind === 'upload' || kind === 'other';
@@ -253,20 +280,24 @@ export function FileManagerProvider({
     return new Map(files.map((file: ExpandedImageFile) => [file.id, file]));
   }, [files]);
 
-  const handleToggleSelect = useCallback((file: ImageFileSelection): void => {
-    setSelectedFiles((prev) => {
-      const next = selectionMode === 'single'
-        ? [file]
-        : prev.some((f) => f.id === file.id)
-          ? prev.filter((f) => f.id !== file.id)
-          : [...prev, file];
-      
-      if (selectionMode === 'single' && autoConfirmSelection && onSelectFile) {
-        onSelectFile(next);
-      }
-      return next;
-    });
-  }, [selectionMode, autoConfirmSelection, onSelectFile]);
+  const handleToggleSelect = useCallback(
+    (file: ImageFileSelection): void => {
+      setSelectedFiles((prev) => {
+        const next =
+          selectionMode === 'single'
+            ? [file]
+            : prev.some((f) => f.id === file.id)
+              ? prev.filter((f) => f.id !== file.id)
+              : [...prev, file];
+
+        if (selectionMode === 'single' && autoConfirmSelection && onSelectFile) {
+          onSelectFile(next);
+        }
+        return next;
+      });
+    },
+    [selectionMode, autoConfirmSelection, onSelectFile]
+  );
 
   const handleConfirmSelection = useCallback((): void => {
     if (onSelectFile) onSelectFile(selectedFiles);
@@ -296,10 +327,16 @@ export function FileManagerProvider({
           setSelectedFiles([]);
           toast('Selected files deleted.', { variant: 'success' });
         } catch (error) {
-          logClientError(error, { context: { source: 'FileManager', action: 'deleteSelected', count: selectedFiles.length } });
+          logClientError(error, {
+            context: {
+              source: 'FileManager',
+              action: 'deleteSelected',
+              count: selectedFiles.length,
+            },
+          });
           toast('Failed to delete selected files.', { variant: 'error' });
         }
-      }
+      },
     });
   }, [selectedFiles, deleteFileMutation, toast, confirm]);
 
@@ -317,102 +354,161 @@ export function FileManagerProvider({
       await Promise.all(
         selectedFiles.map((file) => {
           const existing = fileById.get(file.id)?.tags ?? [];
-          const nextTags = bulkTagMode === 'replace'
-            ? tags
-            : Array.from(new Set([...existing, ...tags]));
+          const nextTags =
+            bulkTagMode === 'replace' ? tags : Array.from(new Set([...existing, ...tags]));
           return updateTagsMutation.mutateAsync({ id: file.id, tags: nextTags });
         })
       );
       toast('Tags updated.', { variant: 'success' });
       setBulkTagInput('');
     } catch (error) {
-      logClientError(error, { context: { source: 'FileManager', action: 'applyTags', count: selectedFiles.length } });
+      logClientError(error, {
+        context: { source: 'FileManager', action: 'applyTags', count: selectedFiles.length },
+      });
       toast('Failed to update tags.', { variant: 'error' });
     }
   }, [bulkTagInput, selectedFiles, bulkTagMode, fileById, updateTagsMutation, toast]);
 
-  const handleDelete = useCallback(async (fileId: string): Promise<void> => {
-    confirm({
-      title: 'Delete File?',
-      message: 'Are you sure you want to delete this file? This action cannot be undone.',
-      confirmText: 'Delete',
-      isDangerous: true,
-      onConfirm: async () => {
-        try {
-          await deleteFileMutation.mutateAsync(fileId);
-          toast('File deleted successfully.', { variant: 'success' });
-        } catch (error) {
-          logClientError(error, { context: { source: 'FileManager', action: 'deleteFile', fileId } });
-          toast('Failed to delete file.', { variant: 'error' });
-        }
-      }
-    });
-  }, [deleteFileMutation, toast, confirm]);
+  const handleDelete = useCallback(
+    async (fileId: string): Promise<void> => {
+      confirm({
+        title: 'Delete File?',
+        message: 'Are you sure you want to delete this file? This action cannot be undone.',
+        confirmText: 'Delete',
+        isDangerous: true,
+        onConfirm: async () => {
+          try {
+            await deleteFileMutation.mutateAsync(fileId);
+            toast('File deleted successfully.', { variant: 'success' });
+          } catch (error) {
+            logClientError(error, {
+              context: { source: 'FileManager', action: 'deleteFile', fileId },
+            });
+            toast('Failed to delete file.', { variant: 'error' });
+          }
+        },
+      });
+    },
+    [deleteFileMutation, toast, confirm]
+  );
 
-  const configValue = useMemo<FileManagerConfig>(() => ({
-    mode,
-    selectionMode,
-    autoConfirmSelection,
-    showFolderFilter,
-    defaultFolder,
-    showBulkActions,
-    showTagSearch,
-    onSelectFile,
-  }), [mode, selectionMode, autoConfirmSelection, showFolderFilter, defaultFolder, showBulkActions, showTagSearch, onSelectFile]);
+  const configValue = useMemo<FileManagerConfig>(
+    () => ({
+      mode,
+      selectionMode,
+      autoConfirmSelection,
+      showFolderFilter,
+      defaultFolder,
+      showBulkActions,
+      showTagSearch,
+      onSelectFile,
+    }),
+    [
+      mode,
+      selectionMode,
+      autoConfirmSelection,
+      showFolderFilter,
+      defaultFolder,
+      showBulkActions,
+      showTagSearch,
+      onSelectFile,
+    ]
+  );
 
-  const searchValue = useMemo<FileManagerSearch>(() => ({
-    filenameSearch,
-    setFilenameSearch,
-    productNameSearch,
-    setProductNameSearch,
-    tagSearch,
-    setTagSearch,
-  }), [filenameSearch, productNameSearch, tagSearch]);
+  const searchValue = useMemo<FileManagerSearch>(
+    () => ({
+      filenameSearch,
+      setFilenameSearch,
+      productNameSearch,
+      setProductNameSearch,
+      tagSearch,
+      setTagSearch,
+    }),
+    [filenameSearch, productNameSearch, tagSearch]
+  );
 
-  const uiStateValue = useMemo<FileManagerUIState>(() => ({
-    bulkTagInput,
-    setBulkTagInput,
-    bulkTagMode,
-    setBulkTagMode,
-    localFolderFilter,
-    setLocalFolderFilter,
-    previewFile,
-    setPreviewFile,
-    previewAsset,
-    setPreviewAsset,
-    activeTab,
-    setActiveTab,
-    selectedFiles,
-  }), [bulkTagInput, bulkTagMode, localFolderFilter, previewFile, previewAsset, activeTab, selectedFiles]);
+  const uiStateValue = useMemo<FileManagerUIState>(
+    () => ({
+      bulkTagInput,
+      setBulkTagInput,
+      bulkTagMode,
+      setBulkTagMode,
+      localFolderFilter,
+      setLocalFolderFilter,
+      previewFile,
+      setPreviewFile,
+      previewAsset,
+      setPreviewAsset,
+      activeTab,
+      setActiveTab,
+      selectedFiles,
+    }),
+    [
+      bulkTagInput,
+      bulkTagMode,
+      localFolderFilter,
+      previewFile,
+      previewAsset,
+      activeTab,
+      selectedFiles,
+    ]
+  );
 
-  const dataValue = useMemo<FileManagerData>(() => ({
-    files,
-    assets3d,
-    folderOptions,
-    tagOptions,
-    filteredFiles,
-    folderFilter,
-    isPending: updateTagsMutation.isPending || deleteFileMutation.isPending,
-  }), [files, assets3d, folderOptions, tagOptions, filteredFiles, folderFilter, updateTagsMutation.isPending, deleteFileMutation.isPending]);
+  const dataValue = useMemo<FileManagerData>(
+    () => ({
+      files,
+      assets3d,
+      folderOptions,
+      tagOptions,
+      filteredFiles,
+      folderFilter,
+      isPending: updateTagsMutation.isPending || deleteFileMutation.isPending,
+    }),
+    [
+      files,
+      assets3d,
+      folderOptions,
+      tagOptions,
+      filteredFiles,
+      folderFilter,
+      updateTagsMutation.isPending,
+      deleteFileMutation.isPending,
+    ]
+  );
 
-  const actionsValue = useMemo<FileManagerActions>(() => ({
-    handleToggleSelect,
-    handleConfirmSelection,
-    handleSelectAll,
-    handleClearSelection,
-    handleDeleteSelected,
-    handleApplyTags,
-    handleDelete,
-    ConfirmationModal,
-  }), [handleToggleSelect, handleConfirmSelection, handleSelectAll, handleClearSelection, handleDeleteSelected, handleApplyTags, handleDelete, ConfirmationModal]);
+  const actionsValue = useMemo<FileManagerActions>(
+    () => ({
+      handleToggleSelect,
+      handleConfirmSelection,
+      handleSelectAll,
+      handleClearSelection,
+      handleDeleteSelected,
+      handleApplyTags,
+      handleDelete,
+      ConfirmationModal,
+    }),
+    [
+      handleToggleSelect,
+      handleConfirmSelection,
+      handleSelectAll,
+      handleClearSelection,
+      handleDeleteSelected,
+      handleApplyTags,
+      handleDelete,
+      ConfirmationModal,
+    ]
+  );
 
-  const aggregatedValue = useMemo<FileManagerContextState>(() => ({
-    ...configValue,
-    ...searchValue,
-    ...uiStateValue,
-    ...dataValue,
-    ...actionsValue,
-  }), [configValue, searchValue, uiStateValue, dataValue, actionsValue]);
+  const aggregatedValue = useMemo<FileManagerContextState>(
+    () => ({
+      ...configValue,
+      ...searchValue,
+      ...uiStateValue,
+      ...dataValue,
+      ...actionsValue,
+    }),
+    [configValue, searchValue, uiStateValue, dataValue, actionsValue]
+  );
 
   return (
     <ConfigContext.Provider value={configValue}>

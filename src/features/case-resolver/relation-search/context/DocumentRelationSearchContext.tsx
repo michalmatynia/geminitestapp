@@ -3,8 +3,14 @@
 import React, { createContext, useContext, useState, useMemo, useEffect } from 'react';
 
 import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
-import type { NodeFileDocumentSearchRow, NodeFileDocumentSearchScope } from '../../components/CaseResolverNodeFileUtils';
-import { useCaseResolverViewContext, type SelectOption } from '../../components/CaseResolverViewContext';
+import type {
+  NodeFileDocumentSearchRow,
+  NodeFileDocumentSearchScope,
+} from '../../components/CaseResolverNodeFileUtils';
+import {
+  useCaseResolverViewContext,
+  type SelectOption,
+} from '../../components/CaseResolverViewContext';
 import {
   useDocumentRelationSearch,
   type DocumentRelationFileTypeFilter,
@@ -25,7 +31,7 @@ export interface DocumentRelationSearchContextValue {
   draftFileId: string;
   isLocked: boolean;
   onLinkFile: (fileId: string) => void;
-  
+
   // Search State
   documentSearchScope: NodeFileDocumentSearchScope;
   setDocumentSearchScope: (s: NodeFileDocumentSearchScope) => void;
@@ -41,7 +47,7 @@ export interface DocumentRelationSearchContextValue {
   setFileTypeFilter: (f: DocumentRelationFileTypeFilter) => void;
   sortMode: DocumentRelationSortMode;
   setSortMode: (m: DocumentRelationSortMode) => void;
-  
+
   // Filter options (from workspace context)
   caseTagOptions: SelectOption[];
   caseCategoryOptions: SelectOption[];
@@ -59,7 +65,7 @@ export interface DocumentRelationSearchContextValue {
   showFiltersBar: boolean;
   setShowFiltersBar: React.Dispatch<React.SetStateAction<boolean>>;
   filtersActiveCount: number;
-  
+
   // UI State
   resultHeight: ResultHeight;
   setResultHeight: (h: ResultHeight) => void;
@@ -67,7 +73,7 @@ export interface DocumentRelationSearchContextValue {
   setSelectedFileIds: React.Dispatch<React.SetStateAction<Set<string>>>;
   previewFileId: string | null;
   setPreviewFileId: (id: string | null) => void;
-  
+
   // Derived Data
   isCurrentCase: boolean;
   isAllCases: boolean;
@@ -84,7 +90,7 @@ export interface DocumentRelationSearchContextValue {
   someVisibleSelected: boolean;
   previewFile: CaseResolverFile | null;
   previewRow: NodeFileDocumentSearchRow | null;
-  
+
   // Handlers
   toggleFileSelection: (fileId: string) => void;
   selectAllVisible: () => void;
@@ -92,12 +98,16 @@ export interface DocumentRelationSearchContextValue {
   handleLinkAll: () => void;
 }
 
-const DocumentRelationSearchContext = createContext<DocumentRelationSearchContextValue | null>(null);
+const DocumentRelationSearchContext = createContext<DocumentRelationSearchContextValue | null>(
+  null
+);
 
 export function useDocumentRelationSearchContext(): DocumentRelationSearchContextValue {
   const context = useContext(DocumentRelationSearchContext);
   if (!context) {
-    throw new Error('useDocumentRelationSearchContext must be used within DocumentRelationSearchProvider');
+    throw new Error(
+      'useDocumentRelationSearchContext must be used within DocumentRelationSearchProvider'
+    );
   }
   return context;
 }
@@ -194,9 +204,7 @@ export function DocumentRelationSearchProvider({
 
   const visibleDrillRows = useMemo((): NodeFileDocumentSearchRow[] => {
     const q = normalizeSearchText(search.documentSearchQuery);
-    const rows = q
-      ? drillRows.filter((row) => row.searchable.includes(q))
-      : [...drillRows];
+    const rows = q ? drillRows.filter((row) => row.searchable.includes(q)) : [...drillRows];
     if (search.sortMode === 'name_asc') rows.sort((a, b) => a.file.name.localeCompare(b.file.name));
     else if (search.sortMode === 'folder_asc')
       rows.sort((a, b) => a.folderPath.localeCompare(b.folderPath));
@@ -232,7 +240,9 @@ export function DocumentRelationSearchProvider({
     if (!search.selectedDrillCaseId) return '';
     const caseRow = search.visibleCaseRows.find((r) => r.file.id === search.selectedDrillCaseId);
     if (caseRow) return caseRow.signatureLabel || caseRow.file.name;
-    const anyRow = search.documentSearchRows.find((r) => r.file.parentCaseId === search.selectedDrillCaseId);
+    const anyRow = search.documentSearchRows.find(
+      (r) => r.file.parentCaseId === search.selectedDrillCaseId
+    );
     return anyRow?.signatureLabel ?? search.selectedDrillCaseId;
   }, [search.selectedDrillCaseId, search.visibleCaseRows, search.documentSearchRows]);
 
@@ -272,85 +282,87 @@ export function DocumentRelationSearchProvider({
 
   // Preview resolution
   const previewFile = useMemo(
-    () => (previewFileId ? workspace.files.find((f) => f.id === previewFileId) ?? null : null),
+    () => (previewFileId ? (workspace.files.find((f) => f.id === previewFileId) ?? null) : null),
     [previewFileId, workspace.files]
   );
   const previewRow = useMemo(
     () =>
       previewFileId
-        ? search.documentSearchRows.find((r) => r.file.id === previewFileId) ?? null
+        ? (search.documentSearchRows.find((r) => r.file.id === previewFileId) ?? null)
         : null,
     [previewFileId, search.documentSearchRows]
   );
 
   // Header checkbox state
   const allVisibleSelected =
-    currentDocRows.length > 0 &&
-    currentDocRows.every((r) => selectedFileIds.has(r.file.id));
+    currentDocRows.length > 0 && currentDocRows.every((r) => selectedFileIds.has(r.file.id));
   const someVisibleSelected =
     currentDocRows.some((r) => selectedFileIds.has(r.file.id)) && !allVisibleSelected;
 
-  const value = useMemo((): DocumentRelationSearchContextValue => ({
-    draftFileId,
-    isLocked,
-    onLinkFile,
-    caseTagOptions,
-    caseCategoryOptions,
-    ...search,
-    showFiltersBar,
-    setShowFiltersBar,
-    filtersActiveCount,
-    resultHeight,
-    setResultHeight,
-    selectedFileIds,
-    setSelectedFileIds,
-    previewFileId,
-    setPreviewFileId,
-    isCurrentCase,
-    isAllCases,
-    isDrillMode,
-    showDocTable,
-    visibleDrillRows,
-    currentDocRows,
-    currentFolderPaths,
-    drillSignatureLabel,
-    allVisibleSelected,
-    someVisibleSelected,
-    previewFile,
-    previewRow,
-    toggleFileSelection,
-    selectAllVisible,
-    clearSelection,
-    handleLinkAll,
-  }), [
-    draftFileId,
-    isLocked,
-    onLinkFile,
-    caseTagOptions,
-    caseCategoryOptions,
-    search,
-    showFiltersBar,
-    filtersActiveCount,
-    resultHeight,
-    selectedFileIds,
-    previewFileId,
-    isCurrentCase,
-    isAllCases,
-    isDrillMode,
-    showDocTable,
-    visibleDrillRows,
-    currentDocRows,
-    currentFolderPaths,
-    drillSignatureLabel,
-    allVisibleSelected,
-    someVisibleSelected,
-    previewFile,
-    previewRow,
-    toggleFileSelection,
-    selectAllVisible,
-    clearSelection,
-    handleLinkAll,
-  ]);
+  const value = useMemo(
+    (): DocumentRelationSearchContextValue => ({
+      draftFileId,
+      isLocked,
+      onLinkFile,
+      caseTagOptions,
+      caseCategoryOptions,
+      ...search,
+      showFiltersBar,
+      setShowFiltersBar,
+      filtersActiveCount,
+      resultHeight,
+      setResultHeight,
+      selectedFileIds,
+      setSelectedFileIds,
+      previewFileId,
+      setPreviewFileId,
+      isCurrentCase,
+      isAllCases,
+      isDrillMode,
+      showDocTable,
+      visibleDrillRows,
+      currentDocRows,
+      currentFolderPaths,
+      drillSignatureLabel,
+      allVisibleSelected,
+      someVisibleSelected,
+      previewFile,
+      previewRow,
+      toggleFileSelection,
+      selectAllVisible,
+      clearSelection,
+      handleLinkAll,
+    }),
+    [
+      draftFileId,
+      isLocked,
+      onLinkFile,
+      caseTagOptions,
+      caseCategoryOptions,
+      search,
+      showFiltersBar,
+      filtersActiveCount,
+      resultHeight,
+      selectedFileIds,
+      previewFileId,
+      isCurrentCase,
+      isAllCases,
+      isDrillMode,
+      showDocTable,
+      visibleDrillRows,
+      currentDocRows,
+      currentFolderPaths,
+      drillSignatureLabel,
+      allVisibleSelected,
+      someVisibleSelected,
+      previewFile,
+      previewRow,
+      toggleFileSelection,
+      selectAllVisible,
+      clearSelection,
+      handleLinkAll,
+    ]
+  );
 
   return (
     <DocumentRelationSearchContext.Provider value={value}>

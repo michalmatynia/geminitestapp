@@ -6,7 +6,10 @@ import {
   sanitizeCaseResolverNodeFileAssetSnapshots,
   sanitizeCaseResolverGraphNodeFileRelations,
 } from '@/features/case-resolver/nodefile-relations';
-import { createCaseResolverAssetFile, createCaseResolverFile } from '@/features/case-resolver/settings';
+import {
+  createCaseResolverAssetFile,
+  createCaseResolverFile,
+} from '@/features/case-resolver/settings';
 import type { AiNode, CaseResolverGraph } from '@/shared/contracts/case-resolver';
 
 const createPromptNode = (id: string): AiNode => ({
@@ -40,12 +43,34 @@ describe('case-resolver nodefile relations', () => {
   it('builds document-to-nodefile relation indexes from valid graph mappings', () => {
     const files = [
       createCaseResolverFile({ id: 'case-a', fileType: 'case', name: 'Case A', folder: '' }),
-      createCaseResolverFile({ id: 'doc-1', fileType: 'document', name: 'Doc 1', folder: '', parentCaseId: 'case-a' }),
-      createCaseResolverFile({ id: 'scan-1', fileType: 'scanfile', name: 'Scan 1', folder: '', parentCaseId: 'case-a' }),
+      createCaseResolverFile({
+        id: 'doc-1',
+        fileType: 'document',
+        name: 'Doc 1',
+        folder: '',
+        parentCaseId: 'case-a',
+      }),
+      createCaseResolverFile({
+        id: 'scan-1',
+        fileType: 'scanfile',
+        name: 'Scan 1',
+        folder: '',
+        parentCaseId: 'case-a',
+      }),
     ];
     const assets = [
-      createCaseResolverAssetFile({ id: 'node-asset-1', name: 'Node 1', folder: '', kind: 'node_file' }),
-      createCaseResolverAssetFile({ id: 'node-asset-2', name: 'Node 2', folder: '', kind: 'node_file' }),
+      createCaseResolverAssetFile({
+        id: 'node-asset-1',
+        name: 'Node 1',
+        folder: '',
+        kind: 'node_file',
+      }),
+      createCaseResolverAssetFile({
+        id: 'node-asset-2',
+        name: 'Node 2',
+        folder: '',
+        kind: 'node_file',
+      }),
       createCaseResolverAssetFile({ id: 'img-asset', name: 'Image', folder: '', kind: 'image' }),
     ];
     const graph = createGraph({
@@ -83,7 +108,13 @@ describe('case-resolver nodefile relations', () => {
   it('prunes stale document/nodefile graph mappings against existing files/assets/nodes', () => {
     const files = [
       createCaseResolverFile({ id: 'case-a', fileType: 'case', name: 'Case A', folder: '' }),
-      createCaseResolverFile({ id: 'doc-1', fileType: 'document', name: 'Doc 1', folder: '', parentCaseId: 'case-a' }),
+      createCaseResolverFile({
+        id: 'doc-1',
+        fileType: 'document',
+        name: 'Doc 1',
+        folder: '',
+        parentCaseId: 'case-a',
+      }),
     ];
     const assets = [
       createCaseResolverAssetFile({
@@ -127,7 +158,13 @@ describe('case-resolver nodefile relations', () => {
   it('returns original graph reference when mappings are already valid', () => {
     const files = [
       createCaseResolverFile({ id: 'case-a', fileType: 'case', name: 'Case A', folder: '' }),
-      createCaseResolverFile({ id: 'doc-1', fileType: 'document', name: 'Doc 1', folder: '', parentCaseId: 'case-a' }),
+      createCaseResolverFile({
+        id: 'doc-1',
+        fileType: 'document',
+        name: 'Doc 1',
+        folder: '',
+        parentCaseId: 'case-a',
+      }),
     ];
     const assets = [
       createCaseResolverAssetFile({
@@ -164,8 +201,20 @@ describe('case-resolver nodefile relations', () => {
   it('drops node-file asset mapping when snapshot does not confirm source document relation', () => {
     const files = [
       createCaseResolverFile({ id: 'case-a', fileType: 'case', name: 'Case A', folder: '' }),
-      createCaseResolverFile({ id: 'doc-1', fileType: 'document', name: 'Doc 1', folder: '', parentCaseId: 'case-a' }),
-      createCaseResolverFile({ id: 'doc-2', fileType: 'document', name: 'Doc 2', folder: '', parentCaseId: 'case-a' }),
+      createCaseResolverFile({
+        id: 'doc-1',
+        fileType: 'document',
+        name: 'Doc 1',
+        folder: '',
+        parentCaseId: 'case-a',
+      }),
+      createCaseResolverFile({
+        id: 'doc-2',
+        fileType: 'document',
+        name: 'Doc 2',
+        folder: '',
+        parentCaseId: 'case-a',
+      }),
     ];
     const assets = [
       createCaseResolverAssetFile({

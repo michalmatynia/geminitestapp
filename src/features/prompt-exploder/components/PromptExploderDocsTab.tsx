@@ -68,7 +68,10 @@ export function PromptExploderDocsTab(): React.JSX.Element {
                 </Hint>
                 <div className='space-y-2'>
                   {entries.map((entry) => (
-                    <div key={entry.id} className='rounded border border-border/50 bg-card/30 p-2 text-xs'>
+                    <div
+                      key={entry.id}
+                      className='rounded border border-border/50 bg-card/30 p-2 text-xs'
+                    >
                       <div className='font-medium text-gray-100'>{entry.title}</div>
                       <div className='mt-1 text-gray-300'>{entry.summary}</div>
                       <div className='mt-1 text-[10px] text-gray-500'>

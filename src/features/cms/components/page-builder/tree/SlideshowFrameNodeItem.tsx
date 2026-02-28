@@ -3,13 +3,24 @@
 import { Trash2, Frame, GripVertical, type LucideIcon } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
-import { TreeRow, TreeCaret, TreeActionButton, TreeActionSlot, TreeContextMenu, type TreeContextMenuItem } from '@/shared/ui';
+import {
+  TreeRow,
+  TreeCaret,
+  TreeActionButton,
+  TreeActionSlot,
+  TreeContextMenu,
+  type TreeContextMenuItem,
+} from '@/shared/ui';
 import { DRAG_KEYS, hasDragType } from '@/shared/utils/drag-drop';
 
 import { useDragStateExtract } from '../../../hooks/useDragStateExtract';
 import { usePageBuilder } from '../../../hooks/usePageBuilderContext';
 import { useTreeActions } from '../../../hooks/useTreeActionsContext';
-import { readBlockDragData, readSectionDragData, setBlockDragData } from '../../../utils/page-builder-dnd';
+import {
+  readBlockDragData,
+  readSectionDragData,
+  setBlockDragData,
+} from '@/features/cms/utils/page-builder-dnd';
 import { ColumnBlockPicker } from '../ColumnBlockPicker';
 import { getBlockDefinition } from '../section-registry';
 import { BlockNodeItem } from './BlockNodeItem';
@@ -26,13 +37,7 @@ export function SlideshowFrameNodeItem({
 }: SlideshowFrameNodeItemProps): React.ReactNode {
   const sectionId = useTreeSectionId();
   const { state: pbState } = usePageBuilder();
-  const {
-    expandedIds,
-    selectNode,
-    toggleExpand,
-    blockActions,
-    sectionActions,
-  } = useTreeActions();
+  const { expandedIds, selectNode, toggleExpand, blockActions, sectionActions } = useTreeActions();
 
   const selectedNodeId = pbState.selectedNodeId;
 
@@ -92,7 +97,10 @@ export function SlideshowFrameNodeItem({
             });
             const dragId = blockDrag.id;
             // Check for section drag (for convertible sections like Block, TextElement, etc.)
-            const isSectionDrag = draggedSectionId && draggedSectionId !== sectionId && CONVERTIBLE_SECTION_TYPES.includes(draggedSectionType ?? '');
+            const isSectionDrag =
+              draggedSectionId &&
+              draggedSectionId !== sectionId &&
+              CONVERTIBLE_SECTION_TYPES.includes(draggedSectionType ?? '');
             // Accept block drag OR section drag
             if (!dragId && !hasBlockPayload && !isSectionDrag) return;
             if (dragId === frame.id) return; // Don't allow dropping on self
@@ -118,9 +126,18 @@ export function SlideshowFrameNodeItem({
             const sectionTypeToDrop = sectionDrag.type;
 
             // Handle section drop (convert section to block in frame)
-            if (sectionIdToDrop && sectionIdToDrop !== sectionId && CONVERTIBLE_SECTION_TYPES.includes(sectionTypeToDrop ?? '')) {
-            // Convert the section to a block inside the frame
-              sectionActions.dropToSlideshowFrame(sectionIdToDrop, sectionId, frame.id, (frame.blocks ?? []).length);
+            if (
+              sectionIdToDrop &&
+              sectionIdToDrop !== sectionId &&
+              CONVERTIBLE_SECTION_TYPES.includes(sectionTypeToDrop ?? '')
+            ) {
+              // Convert the section to a block inside the frame
+              sectionActions.dropToSlideshowFrame(
+                sectionIdToDrop,
+                sectionId,
+                frame.id,
+                (frame.blocks ?? []).length
+              );
               endSectionDrag();
               return;
             }
@@ -149,7 +166,15 @@ export function SlideshowFrameNodeItem({
               const fromColumn = blockDrag.fromColumnId ?? undefined;
               const fromParentBlock = blockDrag.fromParentBlockId ?? undefined;
               const frameBlockCount = (frame.blocks ?? []).length;
-              blockActions.dropToSlideshowFrame(dragId, fromSection, fromColumn, fromParentBlock, sectionId, frame.id, frameBlockCount);
+              blockActions.dropToSlideshowFrame(
+                dragId,
+                fromSection,
+                fromColumn,
+                fromParentBlock,
+                sectionId,
+                frame.id,
+                frameBlockCount
+              );
             } else {
               return;
             }
@@ -207,13 +232,13 @@ export function SlideshowFrameNodeItem({
           />
           <Icon className='size-3.5 shrink-0' />
           <span className='flex-1 truncate text-left'>{blockLabel}</span>
-          {isDragOver && (
-            <span className='text-[10px] text-emerald-300'>Drop here</span>
-          )}
+          {isDragOver && <span className='text-[10px] text-emerald-300'>Drop here</span>}
           <TreeActionSlot show='always' align='inline'>
             <div draggable={false} onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}>
               <ColumnBlockPicker
-                onSelect={(elemType: string) => blockActions.addElementToSectionBlock(sectionId, frame.id, elemType)}
+                onSelect={(elemType: string) =>
+                  blockActions.addElementToSectionBlock(sectionId, frame.id, elemType)
+                }
                 allowedBlockTypes={frameAllowedTypes}
               />
             </div>
@@ -275,7 +300,15 @@ export function SlideshowFrameNodeItem({
               const fromColumn = blockDrag.fromColumnId ?? undefined;
               const fromParentBlock = blockDrag.fromParentBlockId ?? undefined;
               const frameBlockCount = (frame.blocks ?? []).length;
-              blockActions.dropToSlideshowFrame(dragId, fromSection, fromColumn, fromParentBlock, sectionId, frame.id, frameBlockCount);
+              blockActions.dropToSlideshowFrame(
+                dragId,
+                fromSection,
+                fromColumn,
+                fromParentBlock,
+                sectionId,
+                frame.id,
+                frameBlockCount
+              );
             }
             endBlockDrag();
           }}
@@ -308,11 +341,7 @@ export function SlideshowFrameNodeItem({
                 }}
               >
                 <TreeParentBlockProvider parentBlockId={frame.id}>
-                  <BlockNodeItem
-                    block={child}
-                    index={childIndex}
-                    disableDrag
-                  />
+                  <BlockNodeItem block={child} index={childIndex} disableDrag />
                 </TreeParentBlockProvider>
               </div>
             ))

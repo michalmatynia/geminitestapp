@@ -32,26 +32,24 @@ const uniqueStringList = (values: string[]): string[] =>
     new Set(
       values
         .map((entry: string): string => entry.trim())
-        .filter((entry: string): boolean => entry.length > 0),
-    ),
+        .filter((entry: string): boolean => entry.length > 0)
+    )
   );
 
 const compileConditions = (
   ruleId: string,
-  assertion: AiPathsDocAssertion,
+  assertion: AiPathsDocAssertion
 ): AiPathsValidationCondition[] => {
   const usedConditionIds = new Set<string>();
   return assertion.conditions.map((condition, index): AiPathsValidationCondition => {
     const explicitConditionId =
-      typeof condition.id === 'string' && condition.id.trim().length > 0
-        ? condition.id.trim()
-        : '';
+      typeof condition.id === 'string' && condition.id.trim().length > 0 ? condition.id.trim() : '';
     const conditionId = explicitConditionId
       ? explicitConditionId
       : createAiPathsValidationConditionId(
-        `${ruleId}_${condition.operator}_${index + 1}`,
-        usedConditionIds,
-      );
+          `${ruleId}_${condition.operator}_${index + 1}`,
+          usedConditionIds
+        );
     usedConditionIds.add(conditionId);
     return {
       ...condition,
@@ -65,7 +63,7 @@ const compileRuleFromAssertion = (
   snapshot: AiPathsDocsSnapshot,
   existingRuleIds: Set<string>,
   status: NonNullable<AiPathsValidationRule['inference']>['status'],
-  nowIso: string,
+  nowIso: string
 ): AiPathsValidationRule => {
   const desiredBaseId = sanitizeAssertionIdToRuleId(assertion.id);
   const candidateId = desiredBaseId.length > 0 ? desiredBaseId : assertion.id.trim();
@@ -74,10 +72,7 @@ const compileRuleFromAssertion = (
     : candidateId;
   existingRuleIds.add(ruleId);
 
-  const docsBindings = uniqueStringList([
-    ...(assertion.docsBindings ?? []),
-    assertion.sourcePath,
-  ]);
+  const docsBindings = uniqueStringList([...(assertion.docsBindings ?? []), assertion.sourcePath]);
   const tags = uniqueStringList(assertion.tags ?? []);
   const deprecates = uniqueStringList(assertion.deprecates ?? []);
 
@@ -129,7 +124,7 @@ const compileRuleFromAssertion = (
 
 export const compileAiPathsValidationRulesFromDocsSnapshot = (
   snapshot: AiPathsDocsSnapshot,
-  options?: CompileAiPathsRulesFromDocsOptions,
+  options?: CompileAiPathsRulesFromDocsOptions
 ): AiPathsValidationRule[] => {
   const status = options?.status ?? 'candidate';
   const nowIso = options?.nowIso ?? new Date().toISOString();
@@ -154,15 +149,16 @@ export const compileAiPathsValidationRulesFromDocsSnapshot = (
       if (leftSequence !== rightSequence) return leftSequence - rightSequence;
       return left.id.localeCompare(right.id);
     })
-    .map((assertion: AiPathsDocAssertion): AiPathsValidationRule =>
-      compileRuleFromAssertion(assertion, snapshot, existingRuleIds, status, nowIso),
+    .map(
+      (assertion: AiPathsDocAssertion): AiPathsValidationRule =>
+        compileRuleFromAssertion(assertion, snapshot, existingRuleIds, status, nowIso)
     );
   return normalizeAiPathsValidationRules(compiled);
 };
 
 export const approveInferredAiPathsValidationRule = (
   rule: AiPathsValidationRule,
-  options?: { approvedBy?: string | undefined; approvedAt?: string | undefined },
+  options?: { approvedBy?: string | undefined; approvedAt?: string | undefined }
 ): AiPathsValidationRule => {
   const approvedAt = options?.approvedAt ?? new Date().toISOString();
   const approvedBy = options?.approvedBy?.trim() || 'ui';
@@ -181,7 +177,7 @@ export const approveInferredAiPathsValidationRule = (
 
 export const rejectInferredAiPathsValidationRule = (
   rule: AiPathsValidationRule,
-  reviewNote?: string | undefined,
+  reviewNote?: string | undefined
 ): AiPathsValidationRule => {
   const normalizedNote = reviewNote?.trim();
   return {

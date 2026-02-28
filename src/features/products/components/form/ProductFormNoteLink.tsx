@@ -18,9 +18,10 @@ function useNotesSearch(query: string): { notes: NoteWithRelations[]; loading: b
   const q = query.trim();
   const res = createListQueryV2<NoteWithRelations[], NoteWithRelations[]>({
     queryKey: QUERY_KEYS.notes.search(q),
-    queryFn: () => api.get<NoteWithRelations[]>('/api/notes', {
-      params: { truncateContent: 'true', searchScope: 'title', search: q }
-    }),
+    queryFn: () =>
+      api.get<NoteWithRelations[]>('/api/notes', {
+        params: { truncateContent: 'true', searchScope: 'title', search: q },
+      }),
     enabled: q.length >= 2,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
@@ -41,9 +42,10 @@ function useNotesLookup(noteIds: string[]): { notes: NotesLookupResult; loading:
   const ids = noteIds.filter(Boolean);
   const res = createListQueryV2<NotesLookupResult, NotesLookupResult>({
     queryKey: QUERY_KEYS.notes.lookup(ids),
-    queryFn: () => api.get<NotesLookupResult>('/api/notes/lookup', {
-      params: { ids: ids.join(',') }
-    }),
+    queryFn: () =>
+      api.get<NotesLookupResult>('/api/notes/lookup', {
+        params: { ids: ids.join(',') },
+      }),
     enabled: ids.length > 0,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
@@ -82,7 +84,10 @@ export default function ProductFormNoteLink(): React.JSX.Element {
 
   return (
     <div className='space-y-6'>
-      <FormSection title='Search & Attach' description='Find notes by title to link them with this product.'>
+      <FormSection
+        title='Search & Attach'
+        description='Find notes by title to link them with this product.'
+      >
         <div className='flex gap-2'>
           <Input
             id='note-link-search'
@@ -92,7 +97,14 @@ export default function ProductFormNoteLink(): React.JSX.Element {
             className='max-w-md h-9'
           />
           {query.trim() && (
-            <Button type='button' variant='outline' size='icon' onClick={() => setQuery('')} title='Clear search' className='h-9 w-9'>
+            <Button
+              type='button'
+              variant='outline'
+              size='icon'
+              onClick={() => setQuery('')}
+              title='Clear search'
+              className='h-9 w-9'
+            >
               <X className='size-4' />
             </Button>
           )}
@@ -100,7 +112,9 @@ export default function ProductFormNoteLink(): React.JSX.Element {
 
         <div className='mt-2 space-y-2 max-h-[300px] overflow-y-auto pr-1'>
           {query.trim().length < 2 ? (
-            <div className='text-xs text-muted-foreground italic py-4 text-center'>Start typing to search notes...</div>
+            <div className='text-xs text-muted-foreground italic py-4 text-center'>
+              Start typing to search notes...
+            </div>
           ) : searching ? (
             <LoadingState message='Searching...' className='py-4' size='sm' />
           ) : searchResults.length === 0 ? (
@@ -146,9 +160,13 @@ export default function ProductFormNoteLink(): React.JSX.Element {
         </div>
       </FormSection>
 
-      <FormSection 
-        title='Linked Notes' 
-        description={selectedNoteIds.length === 0 ? 'No notes linked yet.' : `${selectedNoteIds.length} note(s) attached.`}
+      <FormSection
+        title='Linked Notes'
+        description={
+          selectedNoteIds.length === 0
+            ? 'No notes linked yet.'
+            : `${selectedNoteIds.length} note(s) attached.`
+        }
       >
         <div className='flex justify-end'>
           <Button
@@ -160,12 +178,13 @@ export default function ProductFormNoteLink(): React.JSX.Element {
               if (selectedNoteIds.length === 0) return;
               confirm({
                 title: 'Unlink All Notes?',
-                message: 'Are you sure you want to remove all linked notes from this product? The notes themselves will not be deleted.',
+                message:
+                  'Are you sure you want to remove all linked notes from this product? The notes themselves will not be deleted.',
                 confirmText: 'Unlink All',
                 isDangerous: true,
                 onConfirm: () => {
                   selectedNoteIds.forEach((id: string) => removeNote(id));
-                }
+                },
               });
             }}
             disabled={selectedNoteIds.length === 0}
@@ -220,7 +239,10 @@ export default function ProductFormNoteLink(): React.JSX.Element {
           )}
           {selectedNoteIds.length > 0 && (
             <div className='pt-2 text-[10px] text-gray-500 text-center uppercase tracking-widest font-semibold'>
-              Manage all content in <Link href='/admin/notes' className='text-blue-400 hover:underline'>Notes App</Link>
+              Manage all content in{' '}
+              <Link href='/admin/notes' className='text-blue-400 hover:underline'>
+                Notes App
+              </Link>
             </div>
           )}
         </div>

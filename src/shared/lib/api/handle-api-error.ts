@@ -33,25 +33,29 @@ type ErrorFingerprintParams = {
 const logSystemEvent = async (params: LogSystemEventParams): Promise<void> => {
   try {
     // Dynamically import to avoid circular dependency (shared -> features -> shared)
-    const mod = await import('@/features/observability/server') as { 
+    const mod = (await import('@/features/observability/server')) as {
       logSystemEvent: (input: LogSystemEventParams) => Promise<void>;
       getErrorFingerprint: (input: ErrorFingerprintParams) => string;
     };
-    
+
     await mod.logSystemEvent(params);
   } catch (error) {
-    logger.error('Failed to log system event via observability feature', error, { context: params });
+    logger.error('Failed to log system event via observability feature', error, {
+      context: params,
+    });
   }
 };
 
 const getErrorFingerprint = async (params: ErrorFingerprintParams): Promise<string> => {
   try {
-    const mod = await import('@/features/observability/server') as {
+    const mod = (await import('@/features/observability/server')) as {
       getErrorFingerprint: (input: ErrorFingerprintParams) => string;
     };
     return mod.getErrorFingerprint(params);
   } catch (error) {
-    logger.error('Failed to get error fingerprint via observability feature', error, { context: params });
+    logger.error('Failed to get error fingerprint via observability feature', error, {
+      context: params,
+    });
     return `${params.source}-${params.statusCode}-${Date.now()}`;
   }
 };
@@ -69,7 +73,7 @@ type ApiErrorOptions = {
 const MAX_QUERY_KEYS = 20;
 
 const extractRequestDiagnostics = (
-  request: Request | undefined,
+  request: Request | undefined
 ): {
   route?: string;
   method?: string;
@@ -110,9 +114,7 @@ export const createErrorResponse = async (
   });
 
   const requestId =
-    options?.requestId ??
-    options?.request?.headers.get('x-request-id') ??
-    randomUUID();
+    options?.requestId ?? options?.request?.headers.get('x-request-id') ?? randomUUID();
 
   const fingerprint = await getErrorFingerprint({
     message: resolved.message,

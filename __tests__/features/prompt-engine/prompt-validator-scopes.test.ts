@@ -1,34 +1,38 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatProgrammaticPrompt } from '@/shared/lib/prompt-engine/prompt-formatter';
-import { validateProgrammaticPrompt } from '@/shared/lib/prompt-engine/prompt-validator';
-import type { PromptValidationRule, PromptValidationSettings } from '@/shared/lib/prompt-engine/settings';
+import { formatProgrammaticPrompt } from '@/features/prompt-engine';
+import { validateProgrammaticPrompt } from '@/features/prompt-engine';
+import type {
+  PromptValidationRule,
+  PromptValidationSettings,
+} from '@/features/prompt-engine/settings';
 
-const buildRegexRule = (overrides: Partial<PromptValidationRule> = {}): PromptValidationRule => ({
-  kind: 'regex',
-  id: 'rule.regex',
-  enabled: true,
-  severity: 'warning',
-  title: 'Regex rule',
-  description: null,
-  pattern: '^ALLOW$',
-  flags: 'm',
-  message: 'Prompt must equal ALLOW',
-  similar: [],
-  autofix: { enabled: true, operations: [] },
-  sequence: 10,
-  chainMode: 'continue',
-  maxExecutions: 1,
-  passOutputToNext: true,
-  appliesToScopes: ['image_studio_prompt', 'prompt_exploder', 'global'],
-  launchEnabled: false,
-  launchAppliesToScopes: ['image_studio_prompt', 'prompt_exploder', 'global'],
-  launchScopeBehavior: 'gate',
-  launchOperator: 'contains',
-  launchValue: null,
-  launchFlags: null,
-  ...overrides,
-} as PromptValidationRule);
+const buildRegexRule = (overrides: Partial<PromptValidationRule> = {}): PromptValidationRule =>
+  ({
+    kind: 'regex',
+    id: 'rule.regex',
+    enabled: true,
+    severity: 'warning',
+    title: 'Regex rule',
+    description: null,
+    pattern: '^ALLOW$',
+    flags: 'm',
+    message: 'Prompt must equal ALLOW',
+    similar: [],
+    autofix: { enabled: true, operations: [] },
+    sequence: 10,
+    chainMode: 'continue',
+    maxExecutions: 1,
+    passOutputToNext: true,
+    appliesToScopes: ['image_studio_prompt', 'prompt_exploder', 'global'],
+    launchEnabled: false,
+    launchAppliesToScopes: ['image_studio_prompt', 'prompt_exploder', 'global'],
+    launchScopeBehavior: 'gate',
+    launchOperator: 'contains',
+    launchValue: null,
+    launchFlags: null,
+    ...overrides,
+  }) as PromptValidationRule;
 
 const buildSettings = (rules: PromptValidationRule[]): PromptValidationSettings => ({
   enabled: true,
@@ -44,16 +48,12 @@ describe('prompt validator scope behavior', () => {
     });
     const settings = buildSettings([rule]);
 
-    const imageStudioIssues = validateProgrammaticPrompt(
-      'anything',
-      settings,
-      { scope: 'image_studio_prompt' }
-    );
-    const promptExploderIssues = validateProgrammaticPrompt(
-      'anything',
-      settings,
-      { scope: 'prompt_exploder' }
-    );
+    const imageStudioIssues = validateProgrammaticPrompt('anything', settings, {
+      scope: 'image_studio_prompt',
+    });
+    const promptExploderIssues = validateProgrammaticPrompt('anything', settings, {
+      scope: 'prompt_exploder',
+    });
 
     expect(imageStudioIssues).toHaveLength(0);
     expect(promptExploderIssues).toHaveLength(1);
@@ -118,16 +118,8 @@ describe('prompt validator scope behavior', () => {
     });
 
     const settings = buildSettings([exploderOnlyRule]);
-    const unchanged = formatProgrammaticPrompt(
-      'CAT',
-      settings,
-      { scope: 'image_studio_prompt' }
-    );
-    const changed = formatProgrammaticPrompt(
-      'CAT',
-      settings,
-      { scope: 'prompt_exploder' }
-    );
+    const unchanged = formatProgrammaticPrompt('CAT', settings, { scope: 'image_studio_prompt' });
+    const changed = formatProgrammaticPrompt('CAT', settings, { scope: 'prompt_exploder' });
 
     expect(unchanged.changed).toBe(false);
     expect(unchanged.prompt).toBe('CAT');

@@ -7,7 +7,7 @@ describe('FrontendBlockRenderer Component', () => {
     const block = {
       id: 'b1',
       type: 'Heading',
-      settings: { headingText: 'Hello World', headingSize: 'large' }
+      settings: { headingText: 'Hello World', headingSize: 'large' },
     };
 
     render(<FrontendBlockRenderer block={block as any} />);
@@ -20,7 +20,7 @@ describe('FrontendBlockRenderer Component', () => {
     const block = {
       id: 'b2',
       type: 'Text',
-      settings: { textContent: 'Some description here' }
+      settings: { textContent: 'Some description here' },
     };
 
     render(<FrontendBlockRenderer block={block as any} />);
@@ -31,7 +31,7 @@ describe('FrontendBlockRenderer Component', () => {
     const block = {
       id: 'b3',
       type: 'Button',
-      settings: { buttonLabel: 'Click Me', buttonLink: '/test-page' }
+      settings: { buttonLabel: 'Click Me', buttonLink: '/test-page' },
     };
 
     render(<FrontendBlockRenderer block={block as any} />);
@@ -43,7 +43,7 @@ describe('FrontendBlockRenderer Component', () => {
     const block = {
       id: 'b4',
       type: 'Image',
-      settings: { src: '/test.jpg', alt: 'Test Image', width: 50 }
+      settings: { src: '/test.jpg', alt: 'Test Image', width: 50 },
     };
 
     render(<FrontendBlockRenderer block={block as any} />);
@@ -57,7 +57,7 @@ describe('FrontendBlockRenderer Component', () => {
     const block = {
       id: 'b5',
       type: 'Image',
-      settings: { src: '' }
+      settings: { src: '' },
     };
 
     render(<FrontendBlockRenderer block={block as any} />);
@@ -68,12 +68,12 @@ describe('FrontendBlockRenderer Component', () => {
     const block = {
       id: 'b6',
       type: 'Button',
-      settings: { 
-        buttonLabel: 'Styled', 
-        textColor: 'rgb(255, 0, 0)', 
+      settings: {
+        buttonLabel: 'Styled',
+        textColor: 'rgb(255, 0, 0)',
         bgColor: 'rgb(0, 255, 0)',
-        borderRadius: 15
-      }
+        borderRadius: 15,
+      },
     };
 
     render(<FrontendBlockRenderer block={block as any} />);
@@ -81,7 +81,7 @@ describe('FrontendBlockRenderer Component', () => {
     expect(link).toHaveStyle({
       color: 'rgb(255, 0, 0)',
       backgroundColor: 'rgb(0, 255, 0)',
-      borderRadius: '15px'
+      borderRadius: '15px',
     });
   });
 
@@ -89,7 +89,7 @@ describe('FrontendBlockRenderer Component', () => {
     const block = {
       id: 'b7',
       type: 'Unknown',
-      settings: {}
+      settings: {},
     };
 
     const { container } = render(<FrontendBlockRenderer block={block as any} />);

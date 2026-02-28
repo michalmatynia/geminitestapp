@@ -59,4 +59,3 @@ describe('server execution mode migration', () => {
     expect(needsServerExecutionModeConfigUpgrade('{')).toBe(false);
   });
 });
-

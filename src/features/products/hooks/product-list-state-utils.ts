@@ -91,9 +91,9 @@ export const resolveProductCategoryId = (product: ProductWithImages): string => 
     if (!first) return '';
     return toTrimmedString(
       (first['categoryId'] as string | undefined) ||
-      (first['category_id'] as string | undefined) ||
-      (first['id'] as string | undefined) ||
-      (first['value'] as string | undefined)
+        (first['category_id'] as string | undefined) ||
+        (first['id'] as string | undefined) ||
+        (first['value'] as string | undefined)
     );
   }
 
@@ -101,9 +101,9 @@ export const resolveProductCategoryId = (product: ProductWithImages): string => 
     const obj = categories as Record<string, unknown>;
     return toTrimmedString(
       (obj['categoryId'] as string | undefined) ||
-      (obj['category_id'] as string | undefined) ||
-      (obj['id'] as string | undefined) ||
-      (obj['value'] as string | undefined)
+        (obj['category_id'] as string | undefined) ||
+        (obj['id'] as string | undefined) ||
+        (obj['value'] as string | undefined)
     );
   }
 
@@ -122,7 +122,7 @@ export const resolveProductCatalogId = (product: ProductWithImages): string => {
 
   return toTrimmedString(
     (first['catalogId'] as string | undefined) ||
-    ((first['catalog'] as Record<string, unknown> | undefined)?.['id'] as string | undefined) ||
-    (first['id'] as string | undefined)
+      ((first['catalog'] as Record<string, unknown> | undefined)?.['id'] as string | undefined) ||
+      (first['id'] as string | undefined)
   );
 };

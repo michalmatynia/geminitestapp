@@ -23,11 +23,7 @@ import {
 
 const buildEmptyStringPathCondition = (path: string): Filter<ProductDocument> =>
   ({
-    $or: [
-      { [path]: { $exists: false } },
-      { [path]: null },
-      { [path]: '' },
-    ],
+    $or: [{ [path]: { $exists: false } }, { [path]: null }, { [path]: '' }],
   }) as Filter<ProductDocument>;
 
 const buildNonEmptyStringPathCondition = (path: string): Filter<ProductDocument> =>
@@ -114,11 +110,7 @@ const buildMongoIdCondition = (
 ): Filter<ProductDocument> | null => {
   if (condition.operator === 'isEmpty') {
     return {
-      $or: [
-        { id: { $exists: false } },
-        { id: null },
-        { id: '' },
-      ],
+      $or: [{ id: { $exists: false } }, { id: null }, { id: '' }],
     } as Filter<ProductDocument>;
   }
 
@@ -192,19 +184,13 @@ const buildMongoCategoryCondition = (
   if (condition.operator === 'contains') {
     const regex = { $regex: escapeRegex(value), $options: 'i' };
     return {
-      $or: [
-        { categoryId: regex },
-        { 'categories.categoryId': regex },
-      ],
+      $or: [{ categoryId: regex }, { 'categories.categoryId': regex }],
     } as Filter<ProductDocument>;
   }
 
   if (condition.operator === 'eq') {
     return {
-      $or: [
-        { categoryId: value },
-        { 'categories.categoryId': value },
-      ],
+      $or: [{ categoryId: value }, { 'categories.categoryId': value }],
     } as Filter<ProductDocument>;
   }
 
@@ -278,10 +264,7 @@ const buildMongoNumericCondition = (
 ): Filter<ProductDocument> | null => {
   if (condition.operator === 'isEmpty') {
     return {
-      $or: [
-        { [field]: { $exists: false } },
-        { [field]: null },
-      ],
+      $or: [{ [field]: { $exists: false } }, { [field]: null }],
     } as Filter<ProductDocument>;
   }
 
@@ -332,9 +315,11 @@ const buildMongoCreatedAtCondition = (
   if (condition.operator === 'eq') return { createdAt: value } as Filter<ProductDocument>;
   if (condition.operator === 'neq') return { createdAt: { $ne: value } } as Filter<ProductDocument>;
   if (condition.operator === 'gt') return { createdAt: { $gt: value } } as Filter<ProductDocument>;
-  if (condition.operator === 'gte') return { createdAt: { $gte: value } } as Filter<ProductDocument>;
+  if (condition.operator === 'gte')
+    return { createdAt: { $gte: value } } as Filter<ProductDocument>;
   if (condition.operator === 'lt') return { createdAt: { $lt: value } } as Filter<ProductDocument>;
-  if (condition.operator === 'lte') return { createdAt: { $lte: value } } as Filter<ProductDocument>;
+  if (condition.operator === 'lte')
+    return { createdAt: { $lte: value } } as Filter<ProductDocument>;
 
   return null;
 };
@@ -359,11 +344,7 @@ export const buildMongoExportedByBaseProductIdCondition = (): Filter<ProductDocu
 
 export const buildMongoUnexportedByBaseProductIdCondition = (): Filter<ProductDocument> =>
   ({
-    $or: [
-      { baseProductId: { $exists: false } },
-      { baseProductId: null },
-      { baseProductId: '' },
-    ],
+    $or: [{ baseProductId: { $exists: false } }, { baseProductId: null }, { baseProductId: '' }],
   }) as Filter<ProductDocument>;
 
 export const buildMongoBaseExportedCondition = (
@@ -414,12 +395,20 @@ const compileAdvancedMongoCondition = (
 ): Filter<ProductDocument> | null => {
   if (condition.field === 'id') return buildMongoIdCondition(condition);
   if (condition.field === 'sku') return buildMongoStringFieldCondition(['sku'], condition);
-  if (condition.field === 'name') return buildMongoStringFieldCondition(['name_en', 'name_pl', 'name_de'], condition);
-  if (condition.field === 'description') return buildMongoStringFieldCondition(['description_en', 'description_pl', 'description_de'], condition);
+  if (condition.field === 'name')
+    return buildMongoStringFieldCondition(['name_en', 'name_pl', 'name_de'], condition);
+  if (condition.field === 'description')
+    return buildMongoStringFieldCondition(
+      ['description_en', 'description_pl', 'description_de'],
+      condition
+    );
   if (condition.field === 'categoryId') return buildMongoCategoryCondition(condition);
-  if (condition.field === 'catalogId') return buildMongoNestedIdArrayCondition('catalogs.catalogId', 'catalogs', condition);
-  if (condition.field === 'tagId') return buildMongoNestedIdArrayCondition('tags.tagId', 'tags', condition);
-  if (condition.field === 'producerId') return buildMongoNestedIdArrayCondition('producers.producerId', 'producers', condition);
+  if (condition.field === 'catalogId')
+    return buildMongoNestedIdArrayCondition('catalogs.catalogId', 'catalogs', condition);
+  if (condition.field === 'tagId')
+    return buildMongoNestedIdArrayCondition('tags.tagId', 'tags', condition);
+  if (condition.field === 'producerId')
+    return buildMongoNestedIdArrayCondition('producers.producerId', 'producers', condition);
   if (condition.field === 'price') return buildMongoNumericCondition('price', condition);
   if (condition.field === 'stock') return buildMongoNumericCondition('stock', condition);
   if (condition.field === 'published') return buildMongoBooleanCondition('published', condition);
@@ -430,7 +419,8 @@ const compileAdvancedMongoCondition = (
     if (condition.operator === 'neq') return buildMongoBaseExportedCondition(!value, context);
     return null;
   }
-  if (condition.field === 'baseProductId') return buildMongoStringFieldCondition(['baseProductId'], condition);
+  if (condition.field === 'baseProductId')
+    return buildMongoStringFieldCondition(['baseProductId'], condition);
   if (condition.field === 'createdAt') return buildMongoCreatedAtCondition(condition);
   return null;
 };
@@ -453,8 +443,8 @@ const compileAdvancedMongoRule = (
     compiledRules.length === 1
       ? compiledRules[0]!
       : ({
-        [rule.combinator === 'and' ? '$and' : '$or']: compiledRules,
-      } as Filter<ProductDocument>);
+          [rule.combinator === 'and' ? '$and' : '$or']: compiledRules,
+        } as Filter<ProductDocument>);
 
   if (!rule.not) return combined;
   return { $nor: [combined] } as Filter<ProductDocument>;
@@ -538,11 +528,7 @@ export const buildMongoWhere = async (
   if (filters.description) {
     const regex = { $regex: escapeRegex(filters.description), $options: 'i' };
     filter = appendAndCondition(filter, {
-      $or: [
-        { description_en: regex },
-        { description_pl: regex },
-        { description_de: regex },
-      ],
+      $or: [{ description_en: regex }, { description_pl: regex }, { description_de: regex }],
     } as Filter<ProductDocument>);
   }
 
@@ -596,21 +582,15 @@ export const buildMongoWhere = async (
 
   if (filters.categoryId) {
     filter = appendAndCondition(filter, {
-      $or: [
-        { categoryId: filters.categoryId },
-        { 'categories.categoryId': filters.categoryId },
-      ],
+      $or: [{ categoryId: filters.categoryId }, { 'categories.categoryId': filters.categoryId }],
     } as Filter<ProductDocument>);
   }
 
   if (filters.baseExported !== undefined || filters.advancedFilter) {
     const exportContext = await loadMongoBaseExportLookupContext();
-    
+
     if (filters.baseExported !== undefined) {
-      const baseCondition = buildMongoBaseExportedCondition(
-        filters.baseExported,
-        exportContext
-      );
+      const baseCondition = buildMongoBaseExportedCondition(filters.baseExported, exportContext);
       if (baseCondition) {
         filter = appendAndCondition(filter, baseCondition);
       }

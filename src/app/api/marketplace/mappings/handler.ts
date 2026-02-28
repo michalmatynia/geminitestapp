@@ -18,7 +18,10 @@ type CreateMappingRequest = {
  *   - connectionId (required): The integration connection ID
  *   - catalogId (optional): Filter by catalog ID
  */
-export async function GET_handler(request: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function GET_handler(
+  request: NextRequest,
+  _ctx: ApiHandlerContext
+): Promise<Response> {
   const { searchParams } = new URL(request.url);
   const connectionId = searchParams.get('connectionId');
   const catalogId = searchParams.get('catalogId') ?? undefined;
@@ -37,7 +40,10 @@ export async function GET_handler(request: NextRequest, _ctx: ApiHandlerContext)
  * POST /api/marketplace/mappings
  * Creates a new category mapping.
  */
-export async function POST_handler(request: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function POST_handler(
+  request: NextRequest,
+  _ctx: ApiHandlerContext
+): Promise<Response> {
   const body = (await request.json()) as CreateMappingRequest;
   const { connectionId, externalCategoryId, internalCategoryId, catalogId } = body;
 
@@ -50,11 +56,7 @@ export async function POST_handler(request: NextRequest, _ctx: ApiHandlerContext
   const repo = getCategoryMappingRepository();
 
   // Check if mapping already exists
-  const existing = await repo.getByExternalCategory(
-    connectionId,
-    externalCategoryId,
-    catalogId
-  );
+  const existing = await repo.getByExternalCategory(connectionId, externalCategoryId, catalogId);
 
   if (existing) {
     // Update existing mapping

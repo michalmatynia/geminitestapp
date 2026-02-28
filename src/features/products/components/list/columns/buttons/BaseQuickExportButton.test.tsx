@@ -23,7 +23,15 @@ vi.mock('@/shared/ui', () => ({
   Button: ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
     <button {...props}>{children}</button>
   ),
-  AppModal: ({ open, title, children }: { open?: boolean; title: React.ReactNode; children: React.ReactNode }) =>
+  AppModal: ({
+    open,
+    title,
+    children,
+  }: {
+    open?: boolean;
+    title: React.ReactNode;
+    children: React.ReactNode;
+  }) =>
     open ? (
       <div role='dialog'>
         <h2>{title}</h2>
@@ -160,14 +168,10 @@ describe('BaseQuickExportButton', () => {
 
     renderButton();
 
-    fireEvent.click(
-      screen.getByRole('button', { name: 'One-click export to Base.com' })
-    );
+    fireEvent.click(screen.getByRole('button', { name: 'One-click export to Base.com' }));
 
     await screen.findByRole('dialog');
-    expect(
-      screen.getByText('SKU already exists in Base.com')
-    ).toBeInTheDocument();
+    expect(screen.getByText('SKU already exists in Base.com')).toBeInTheDocument();
     expect(mutateAsyncMock).not.toHaveBeenCalled();
   });
 
@@ -195,9 +199,7 @@ describe('BaseQuickExportButton', () => {
 
     renderButton();
 
-    fireEvent.click(
-      screen.getByRole('button', { name: 'One-click export to Base.com' })
-    );
+    fireEvent.click(screen.getByRole('button', { name: 'One-click export to Base.com' }));
 
     await screen.findByRole('dialog');
 
@@ -239,9 +241,7 @@ describe('BaseQuickExportButton', () => {
 
     renderButton({ onOpenIntegrations });
 
-    fireEvent.click(
-      screen.getByRole('button', { name: 'One-click export to Base.com' })
-    );
+    fireEvent.click(screen.getByRole('button', { name: 'One-click export to Base.com' }));
 
     await screen.findByRole('dialog');
 
@@ -264,9 +264,7 @@ describe('BaseQuickExportButton', () => {
 
     renderButton();
 
-    fireEvent.click(
-      screen.getByRole('button', { name: 'One-click export to Base.com' })
-    );
+    fireEvent.click(screen.getByRole('button', { name: 'One-click export to Base.com' }));
 
     await waitFor(() => {
       expect(toastMock).toHaveBeenCalledWith('SKU check failed', {
@@ -294,9 +292,7 @@ describe('BaseQuickExportButton', () => {
 
     renderButton();
 
-    fireEvent.click(
-      screen.getByRole('button', { name: 'One-click export to Base.com' })
-    );
+    fireEvent.click(screen.getByRole('button', { name: 'One-click export to Base.com' }));
 
     await waitFor(() => {
       expect(mutateAsyncMock).toHaveBeenCalledWith(

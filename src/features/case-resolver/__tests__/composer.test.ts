@@ -106,7 +106,13 @@ describe('case-resolver composer', () => {
     const graph: CaseResolverGraph = {
       nodes: [
         createPromptNode({ id: 'focus', title: 'Focus', template: 'Quoted text', x: 0, y: 0 }),
-        createPromptNode({ id: 'other', title: 'Other', template: 'Should not be included', x: 0, y: 100 }),
+        createPromptNode({
+          id: 'other',
+          title: 'Other',
+          template: 'Should not be included',
+          x: 0,
+          y: 100,
+        }),
       ],
       edges: [],
       nodeMeta: {
@@ -133,13 +139,13 @@ describe('case-resolver composer', () => {
 
     const compiled = compileCaseResolverPrompt(graph, 'focus');
 
-    expect(compiled.prompt).toBe('<<\'Quoted text\'>>');
+    expect(compiled.prompt).toBe("<<'Quoted text'>>");
     expect(compiled.segments).toHaveLength(1);
-    expect(compiled.segments[0]?.text).toBe('<<\'Quoted text\'>>');
+    expect(compiled.segments[0]?.text).toBe("<<'Quoted text'>>");
     expect(compiled.outputsByNode['focus']).toEqual({
-      textfield: '<<\'Quoted text\'>>',
-      plaintextContent: '<<\'Quoted text\'>>',
-      plainText: '<<\'Quoted text\'>>',
+      textfield: "<<'Quoted text'>>",
+      plaintextContent: "<<'Quoted text'>>",
+      plainText: "<<'Quoted text'>>",
       wysiwygContent: '',
     });
   });
@@ -208,7 +214,13 @@ describe('case-resolver composer', () => {
     const graph: CaseResolverGraph = {
       nodes: [
         createPromptNode({ id: 'source', title: 'Source', template: 'Alpha', x: 0, y: 0 }),
-        createPromptNode({ id: 'target', title: 'Target', template: '<p>Fallback</p>', x: 150, y: 0 }),
+        createPromptNode({
+          id: 'target',
+          title: 'Target',
+          template: '<p>Fallback</p>',
+          x: 150,
+          y: 0,
+        }),
       ],
       edges: [
         createEdge({
@@ -268,7 +280,13 @@ describe('case-resolver composer', () => {
     const graph: CaseResolverGraph = {
       nodes: [
         createPromptNode({ id: 'source', title: 'Source', template: 'Upstream text', x: 0, y: 0 }),
-        createPromptNode({ id: 'scan-edit', title: 'Edit Scan', template: 'Existing markdown', x: 150, y: 0 }),
+        createPromptNode({
+          id: 'scan-edit',
+          title: 'Edit Scan',
+          template: 'Existing markdown',
+          x: 150,
+          y: 0,
+        }),
         createPromptNode({ id: 'next', title: 'Next', template: 'Tail', x: 300, y: 0 }),
       ],
       edges: [
@@ -344,7 +362,13 @@ describe('case-resolver composer', () => {
     const graph: CaseResolverGraph = {
       nodes: [
         createPromptNode({ id: 'source', title: 'Source', template: 'Upstream text', x: 0, y: 0 }),
-        createPromptNode({ id: 'note', title: 'Explanatory', template: 'Additional note', x: 150, y: 0 }),
+        createPromptNode({
+          id: 'note',
+          title: 'Explanatory',
+          template: 'Additional note',
+          x: 150,
+          y: 0,
+        }),
       ],
       edges: [
         createEdge({
@@ -397,7 +421,13 @@ describe('case-resolver composer', () => {
     const graph: CaseResolverGraph = {
       nodes: [
         createPromptNode({ id: 'source', title: 'Source', template: 'Input text', x: 0, y: 0 }),
-        createPromptNode({ id: 'note', title: 'Explanatory', template: 'Additional note', x: 150, y: 0 }),
+        createPromptNode({
+          id: 'note',
+          title: 'Explanatory',
+          template: 'Additional note',
+          x: 150,
+          y: 0,
+        }),
       ],
       edges: [
         createEdge({
@@ -451,7 +481,13 @@ describe('case-resolver composer', () => {
     const graph: CaseResolverGraph = {
       nodes: [
         createPromptNode({ id: 'source', title: 'Source', template: 'Alpha', x: 0, y: 0 }),
-        createPromptNode({ id: 'note', title: 'Explanatory', template: 'Additional note', x: 150, y: 0 }),
+        createPromptNode({
+          id: 'note',
+          title: 'Explanatory',
+          template: 'Additional note',
+          x: 150,
+          y: 0,
+        }),
       ],
       edges: [
         createEdge({
@@ -563,7 +599,13 @@ describe('case-resolver composer', () => {
     const graph: CaseResolverGraph = {
       nodes: [
         createPromptNode({ id: 'note-a', title: 'Note A', template: '<p>First</p>', x: 0, y: 0 }),
-        createPromptNode({ id: 'note-b', title: 'Note B', template: '<p>Second</p>', x: 180, y: 0 }),
+        createPromptNode({
+          id: 'note-b',
+          title: 'Note B',
+          template: '<p>Second</p>',
+          x: 180,
+          y: 0,
+        }),
       ],
       edges: [
         createEdge({
@@ -610,9 +652,7 @@ describe('case-resolver composer', () => {
 
   it('strips escaped HTML entities from plainText output', () => {
     const graph: CaseResolverGraph = {
-      nodes: [
-        createPromptNode({ id: 'source', title: 'Source', template: 'Alpha', x: 0, y: 0 }),
-      ],
+      nodes: [createPromptNode({ id: 'source', title: 'Source', template: 'Alpha', x: 0, y: 0 })],
       edges: [],
       nodeMeta: {
         source: {
@@ -644,9 +684,7 @@ describe('case-resolver composer', () => {
 
   it('applies node-level trailing newline and text color wrappers', () => {
     const graph: CaseResolverGraph = {
-      nodes: [
-        createPromptNode({ id: 'source', title: 'Source', template: 'Alpha', x: 0, y: 0 }),
-      ],
+      nodes: [createPromptNode({ id: 'source', title: 'Source', template: 'Alpha', x: 0, y: 0 })],
       edges: [],
       nodeMeta: {
         source: {

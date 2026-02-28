@@ -47,21 +47,33 @@ describe('product validations', () => {
 
     it('should handle imageLinks preprocessing (CSV/JSON/Array)', () => {
       // CSV
-      const csvResult = productCreateSchema.safeParse({ name_en: 'P', sku: 'S1', imageLinks: 'a.jpg, b.jpg' });
+      const csvResult = productCreateSchema.safeParse({
+        name_en: 'P',
+        sku: 'S1',
+        imageLinks: 'a.jpg, b.jpg',
+      });
       expect(csvResult.success).toBe(true);
       if (csvResult.success) {
         expect(csvResult.data.imageLinks).toEqual(['a.jpg', 'b.jpg']);
       }
 
       // JSON
-      const jsonResult = productCreateSchema.safeParse({ name_en: 'P', sku: 'S1', imageLinks: '["c.jpg", "d.jpg"]' });
+      const jsonResult = productCreateSchema.safeParse({
+        name_en: 'P',
+        sku: 'S1',
+        imageLinks: '["c.jpg", "d.jpg"]',
+      });
       expect(jsonResult.success).toBe(true);
       if (jsonResult.success) {
         expect(jsonResult.data.imageLinks).toEqual(['c.jpg', 'd.jpg']);
       }
 
       // Array
-      const arrayResult = productCreateSchema.safeParse({ name_en: 'P', sku: 'S1', imageLinks: ['e.jpg'] });
+      const arrayResult = productCreateSchema.safeParse({
+        name_en: 'P',
+        sku: 'S1',
+        imageLinks: ['e.jpg'],
+      });
       expect(arrayResult.success).toBe(true);
       if (arrayResult.success) {
         expect(arrayResult.data.imageLinks).toEqual(['e.jpg']);
@@ -69,11 +81,13 @@ describe('product validations', () => {
     });
 
     it('should handle parameters preprocessing', () => {
-      const params = [
-        { parameterId: 'p1', value: 'v1' }
-      ];
+      const params = [{ parameterId: 'p1', value: 'v1' }];
       const jsonParams = JSON.stringify(params);
-      const result = productCreateSchema.safeParse({ name_en: 'P', sku: 'S1', parameters: jsonParams });
+      const result = productCreateSchema.safeParse({
+        name_en: 'P',
+        sku: 'S1',
+        parameters: jsonParams,
+      });
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.data.parameters).toEqual(params);

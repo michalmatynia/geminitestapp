@@ -7,7 +7,6 @@ import { cn } from '@/shared/utils';
 
 import { usePickerSearch } from './usePickerSearch';
 
-
 /**
  * GenericGridPicker - Reusable grid-based picker component
  *
@@ -37,7 +36,7 @@ import { usePickerSearch } from './usePickerSearch';
  * />
  */
 export const GenericGridPicker = memo(function GenericGridPicker<
-  T extends GridPickerItem = GridPickerItem
+  T extends GridPickerItem = GridPickerItem,
 >({
   items,
   selectedId,
@@ -56,10 +55,9 @@ export const GenericGridPicker = memo(function GenericGridPicker<
   const [localFocused, setLocalFocused] = useState<string | null>(null);
 
   // Use search hook with custom matcher if provided
-  const { query, setQuery, filtered, clearSearch } = usePickerSearch(
-    items,
-    { ...(searchMatcher !== undefined ? { matcher: searchMatcher } : {}) }
-  );
+  const { query, setQuery, filtered, clearSearch } = usePickerSearch(items, {
+    ...(searchMatcher !== undefined ? { matcher: searchMatcher } : {}),
+  });
 
   const handleSelect = useCallback(
     (item: T) => {
@@ -118,10 +116,7 @@ export const GenericGridPicker = memo(function GenericGridPicker<
       {/* Grid Items */}
       {hasItems ? (
         <div
-          className={cn(
-            'grid gap-2 auto-rows-max',
-            gridClassName
-          )}
+          className={cn('grid gap-2 auto-rows-max', gridClassName)}
           style={{
             gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
             gap,
@@ -161,9 +156,7 @@ export const GenericGridPicker = memo(function GenericGridPicker<
         <div className='rounded border border-dashed border-border/40 p-6 text-center'>
           {emptyState || (
             <div className='text-sm text-gray-500'>
-              {searchable && query
-                ? 'No items found'
-                : 'No items available'}
+              {searchable && query ? 'No items found' : 'No items available'}
             </div>
           )}
         </div>

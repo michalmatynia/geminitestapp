@@ -1,4 +1,5 @@
-import { resolveBrainModelExecutionConfig } from '@/features/ai/brain/server';
+import type { ChatMessageRoleDto } from '@/shared/contracts/chatbot';
+import { resolveBrainModelExecutionConfig } from '@/shared/lib/ai-brain/server';
 import { runChatbotModel } from '@/features/ai/chatbot/server-model-runtime';
 import { chatbotJobRepository } from '@/features/ai/chatbot/services/chatbot-job-repository';
 import { chatbotSessionRepository } from '@/features/ai/chatbot/services/chatbot-session-repository';
@@ -27,7 +28,7 @@ export const processJob = async (jobId: string): Promise<void> => {
   }
   const messages = payload.messages.filter(
     (message: ChatPayloadMessage): boolean =>
-      typeof message?.role === 'string' && typeof message?.content === 'string',
+      typeof message?.role === 'string' && typeof message?.content === 'string'
   );
   if (messages.length !== payload.messages.length) {
     throw new Error('Invalid job payload.');
@@ -40,8 +41,10 @@ export const processJob = async (jobId: string): Promise<void> => {
   });
 
   const result = await runChatbotModel({
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
-    messages: messages as any,
+    messages: messages.map((m) => ({
+      ...m,
+      role: m.role as ChatMessageRoleDto,
+    })),
     modelId: brainConfig.modelId,
     temperature: brainConfig.temperature,
     maxTokens: brainConfig.maxTokens,

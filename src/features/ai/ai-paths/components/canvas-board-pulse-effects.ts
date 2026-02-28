@@ -1,13 +1,7 @@
 import React from 'react';
 
-import type {
-  AiNode,
-  AiPathRuntimeEvent,
-  Edge,
-} from '@/shared/lib/ai-paths';
-import {
-  hashRuntimeValue,
-} from '@/shared/lib/ai-paths';
+import type { AiNode, AiPathRuntimeEvent, Edge } from '@/shared/lib/ai-paths';
+import { hashRuntimeValue } from '@/shared/lib/ai-paths';
 
 type RuntimeHashes = {
   inputs: Record<string, Record<string, string>>;
@@ -24,11 +18,7 @@ type UseCanvasPulseEffectsInput = {
   edges: Edge[];
   runtimeEvents: AiPathRuntimeEvent[] | null | undefined;
   runtimeState: RuntimeSnapshot;
-  getPortValue: (
-    direction: 'input' | 'output',
-    nodeId: string,
-    port: string
-  ) => unknown;
+  getPortValue: (direction: 'input' | 'output', nodeId: string, port: string) => unknown;
   edgesByFromPort: Map<string, Edge[]>;
   edgesByToPort: Map<string, Edge[]>;
   incomingEdgeIdsByNode: Map<string, string[]>;

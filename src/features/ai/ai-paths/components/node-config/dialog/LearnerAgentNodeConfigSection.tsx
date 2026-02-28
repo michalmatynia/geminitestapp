@@ -6,16 +6,7 @@ import React from 'react';
 import { useTeachingAgents } from '@/features/ai/agentcreator/teaching/hooks/useAgentTeachingQueries';
 import type { LearnerAgentConfig } from '@/shared/lib/ai-paths';
 import type { AgentTeachingAgentRecord } from '@/shared/contracts/agent-teaching';
-import {
-  Button,
-  
-  SelectSimple,
-  Textarea,
-  LoadingState,
-  Card,
-  Alert,
-  FormField,
-} from '@/shared/ui';
+import { Button, SelectSimple, Textarea, LoadingState, Card, Alert, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -35,10 +26,9 @@ export function LearnerAgentNodeConfigSection(): React.JSX.Element | null {
 
   const agents = agentsQuery.data ?? [];
   const learnerConfig = selectedNode.config?.learnerAgent ?? DEFAULT_CONFIG;
-  const selectedAgent =
-    learnerConfig.agentId
-      ? agents.find((a: AgentTeachingAgentRecord) => a.id === learnerConfig.agentId) ?? null
-      : null;
+  const selectedAgent = learnerConfig.agentId
+    ? (agents.find((a: AgentTeachingAgentRecord) => a.id === learnerConfig.agentId) ?? null)
+    : null;
 
   const agentOptions = [
     { value: NO_AGENT_VALUE, label: 'None' },
@@ -50,21 +40,17 @@ export function LearnerAgentNodeConfigSection(): React.JSX.Element | null {
 
   return (
     <div className='space-y-4'>
-      <FormField 
-        label='Learner Agent' 
+      <FormField
+        label='Learner Agent'
         description='Answer using your embedding school (RAG).'
         actions={
-          <Button
-            asChild
-            variant='outline'
-            size='xs'
-            className='h-7'
-          >
+          <Button asChild variant='outline' size='xs' className='h-7'>
             <Link href='/admin/agentcreator/teaching/agents'>Manage Learner Agents</Link>
           </Button>
         }
       >
-        <SelectSimple size='sm'
+        <SelectSimple
+          size='sm'
           variant='subtle'
           value={learnerConfig.agentId ? learnerConfig.agentId : NO_AGENT_VALUE}
           onValueChange={(value: string): void =>
@@ -83,14 +69,14 @@ export function LearnerAgentNodeConfigSection(): React.JSX.Element | null {
       {agentsQuery.isLoading && (
         <LoadingState message='Loading learner agents...' size='sm' className='py-2' />
       )}
-      {agentsQuery.error && (
-        <Alert variant='warning'>
-          Failed to load learner agents.
-        </Alert>
-      )}
+      {agentsQuery.error && <Alert variant='warning'>Failed to load learner agents.</Alert>}
 
       {selectedAgent ? (
-        <Card variant='subtle-compact' padding='sm' className='border-border bg-card/60 text-[11px] text-gray-300'>
+        <Card
+          variant='subtle-compact'
+          padding='sm'
+          className='border-border bg-card/60 text-[11px] text-gray-300'
+        >
           <div className='text-gray-200'>{selectedAgent.name}</div>
           <div className='mt-1 text-gray-400'>
             LLM: {selectedAgent.llmModel} • Embed: {selectedAgent.embeddingModel} • Collections:{' '}
@@ -99,8 +85,8 @@ export function LearnerAgentNodeConfigSection(): React.JSX.Element | null {
         </Card>
       ) : null}
 
-      <FormField 
-        label='Prompt Template' 
+      <FormField
+        label='Prompt Template'
         description='Leave empty to use the incoming prompt or value input directly.'
       >
         <Textarea
@@ -120,7 +106,11 @@ export function LearnerAgentNodeConfigSection(): React.JSX.Element | null {
         />
       </FormField>
 
-      <Card variant='subtle-compact' padding='sm' className='flex items-center justify-between border-border bg-card/50 text-xs text-gray-300'>
+      <Card
+        variant='subtle-compact'
+        padding='sm'
+        className='flex items-center justify-between border-border bg-card/50 text-xs text-gray-300'
+      >
         <span>Include sources</span>
         <Button
           variant={learnerConfig.includeSources ? 'success' : 'default'}

@@ -28,8 +28,9 @@ export type ProductMetadataFieldContextValue = {
   producersLoading?: boolean;
 };
 
-const ProductMetadataFieldContext =
-  React.createContext<ProductMetadataFieldContextValue | null>(null);
+const ProductMetadataFieldContext = React.createContext<ProductMetadataFieldContextValue | null>(
+  null
+);
 
 export function ProductMetadataFieldProvider({
   value,
@@ -45,7 +46,6 @@ export function ProductMetadataFieldProvider({
   );
 }
 
-export function useOptionalProductMetadataFieldContext():
-  ProductMetadataFieldContextValue | null {
+export function useOptionalProductMetadataFieldContext(): ProductMetadataFieldContextValue | null {
   return React.useContext(ProductMetadataFieldContext);
 }

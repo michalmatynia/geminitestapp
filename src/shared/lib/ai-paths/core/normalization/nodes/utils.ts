@@ -1,18 +1,11 @@
-import {
-  type AiNode,
-} from '@/shared/contracts/ai-paths';
+import { type AiNode } from '@/shared/contracts/ai-paths';
 import {
   PLAYWRIGHT_INPUT_PORTS,
   PLAYWRIGHT_OUTPUT_PORTS,
   VIEWER_INPUT_PORTS,
 } from '../../constants';
-import {
-  normalizePlaywrightConfig,
-} from '../../playwright/default-config';
-import {
-  createViewerOutputs,
-  ensureUniquePorts,
-} from '../../utils';
+import { normalizePlaywrightConfig } from '../../playwright/default-config';
+import { createViewerOutputs, ensureUniquePorts } from '../../utils';
 
 export const normalizeValidatorNode = (node: AiNode): AiNode => {
   return {
@@ -59,9 +52,7 @@ export const normalizeTemplateNode = (node: AiNode): AiNode => {
     config: {
       ...node.config,
       template: {
-        template:
-        node.config?.template?.template ??
-        'Write a summary for {{context.entity.title}}',
+        template: node.config?.template?.template ?? 'Write a summary for {{context.entity.title}}',
       },
     },
   };

@@ -14,7 +14,9 @@ type VersionGraphCompareContextValue = {
   onExit: () => void;
 };
 
-const VersionGraphCompareContext = React.createContext<VersionGraphCompareContextValue | null>(null);
+const VersionGraphCompareContext = React.createContext<VersionGraphCompareContextValue | null>(
+  null
+);
 
 export function VersionGraphCompareProvider({
   value,
@@ -33,7 +35,9 @@ export function VersionGraphCompareProvider({
 export function useVersionGraphCompareContext(): VersionGraphCompareContextValue {
   const context = React.useContext(VersionGraphCompareContext);
   if (!context) {
-    throw new Error('useVersionGraphCompareContext must be used inside VersionGraphCompareProvider');
+    throw new Error(
+      'useVersionGraphCompareContext must be used inside VersionGraphCompareProvider'
+    );
   }
   return context;
 }

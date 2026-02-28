@@ -33,7 +33,10 @@ export function useGenerationToolbarResolution(state: GenerationToolbarState) {
     return frameBinding.frame as ImageContentFrame;
   }, [getPreviewCanvasImageFrame, workingSlot?.id]);
 
-  const resolveWorkingSourceDimensions = useCallback(async (): Promise<{ width: number; height: number }> => {
+  const resolveWorkingSourceDimensions = useCallback(async (): Promise<{
+    width: number;
+    height: number;
+  }> => {
     let sourceWidth = workingSlot?.imageFile?.width ?? 0;
     let sourceHeight = workingSlot?.imageFile?.height ?? 0;
     if (!(sourceWidth > 0 && sourceHeight > 0)) {
@@ -49,23 +52,34 @@ export function useGenerationToolbarResolution(state: GenerationToolbarState) {
       width: sourceWidth,
       height: sourceHeight,
     };
-  }, [clientProcessingImageSrc, workingSlot?.imageFile?.height, workingSlot?.imageFile?.width, workingSlotImageSrc]);
+  }, [
+    clientProcessingImageSrc,
+    workingSlot?.imageFile?.height,
+    workingSlot?.imageFile?.width,
+    workingSlotImageSrc,
+  ]);
 
-  const resolveWorkingCropCanvasContext = useCallback(async (): Promise<CropCanvasContext | null> => {
-    const imageContentFrame = resolveWorkingSlotImageContentFrame();
-    if (!imageContentFrame) return null;
+  const resolveWorkingCropCanvasContext =
+    useCallback(async (): Promise<CropCanvasContext | null> => {
+      const imageContentFrame = resolveWorkingSlotImageContentFrame();
+      if (!imageContentFrame) return null;
 
-    const sourceDimensions = await resolveWorkingSourceDimensions();
-    const canvasWidth = projectCanvasSize?.width ?? sourceDimensions.width;
-    const canvasHeight = projectCanvasSize?.height ?? sourceDimensions.height;
-    if (!(canvasWidth > 0 && canvasHeight > 0)) return null;
+      const sourceDimensions = await resolveWorkingSourceDimensions();
+      const canvasWidth = projectCanvasSize?.width ?? sourceDimensions.width;
+      const canvasHeight = projectCanvasSize?.height ?? sourceDimensions.height;
+      if (!(canvasWidth > 0 && canvasHeight > 0)) return null;
 
-    return {
-      canvasWidth,
-      canvasHeight,
-      imageFrame: imageContentFrame,
-    };
-  }, [projectCanvasSize?.height, projectCanvasSize?.width, resolveWorkingSlotImageContentFrame, resolveWorkingSourceDimensions]);
+      return {
+        canvasWidth,
+        canvasHeight,
+        imageFrame: imageContentFrame,
+      };
+    }, [
+      projectCanvasSize?.height,
+      projectCanvasSize?.width,
+      resolveWorkingSlotImageContentFrame,
+      resolveWorkingSourceDimensions,
+    ]);
 
   const resolveCropRect = useCallback(async (): Promise<{
     cropRect: CropRect;
@@ -93,10 +107,10 @@ export function useGenerationToolbarResolution(state: GenerationToolbarState) {
     }
     const overflowCropRect = imageContentFrame
       ? resolveCanvasOverflowCropRect({
-        canvasWidth,
-        canvasHeight,
-        imageFrame: imageContentFrame,
-      })
+          canvasWidth,
+          canvasHeight,
+          imageFrame: imageContentFrame,
+        })
       : null;
     if (overflowCropRect) {
       return {
@@ -106,7 +120,15 @@ export function useGenerationToolbarResolution(state: GenerationToolbarState) {
     }
 
     throw new Error('Set a valid crop boundary or move image outside canvas first.');
-  }, [activeMaskId, exportMaskShapes, projectCanvasSize?.height, projectCanvasSize?.width, resolveWorkingSlotImageContentFrame, resolveWorkingSourceDimensions, cropDiagnosticsRef]);
+  }, [
+    activeMaskId,
+    exportMaskShapes,
+    projectCanvasSize?.height,
+    projectCanvasSize?.width,
+    resolveWorkingSlotImageContentFrame,
+    resolveWorkingSourceDimensions,
+    cropDiagnosticsRef,
+  ]);
 
   const resolveCenteredSquareCropRect = useCallback(async (): Promise<CropRect> => {
     const { width: sourceWidth, height: sourceHeight } = await resolveWorkingSourceDimensions();

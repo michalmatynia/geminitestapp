@@ -1,7 +1,5 @@
-import {
-  defaultPromptEngineSettings,
-} from '@/shared/lib/prompt-engine/settings';
-import type { 
+import { defaultPromptEngineSettings } from '@/shared/lib/prompt-engine/settings';
+import type {
   PromptEngineSettings,
   PromptExploderRuleSegmentType,
   PromptValidationRule,
@@ -64,9 +62,7 @@ const isRegexRule = (
 };
 
 const coerceRuleId = (value: string): PromptExploderParserTuningRuleId | null => {
-  return PROMPT_EXPLODER_PARSER_TUNING_RULE_IDS.includes(
-    value as PromptExploderParserTuningRuleId
-  )
+  return PROMPT_EXPLODER_PARSER_TUNING_RULE_IDS.includes(value as PromptExploderParserTuningRuleId)
     ? (value as PromptExploderParserTuningRuleId)
     : null;
 };
@@ -181,9 +177,7 @@ export const buildPromptExploderParserTuningDrafts = (args: {
 }): PromptExploderParserTuningRuleDraft[] => {
   const scope = args.scope ?? 'prompt_exploder';
   const scopedRules = Array.isArray(args.scopedRules) ? args.scopedRules : [];
-  const patternPackRules = Array.isArray(args.patternPackRules)
-    ? args.patternPackRules
-    : [];
+  const patternPackRules = Array.isArray(args.patternPackRules) ? args.patternPackRules : [];
   const scopedById = new Map(
     scopedRules
       .filter(isRegexRule)
@@ -255,9 +249,7 @@ export const applyPromptExploderParserTuningDrafts = (args: {
     : defaultPromptEngineSettings;
   const nextRules = [...baseSettings.promptValidation.rules];
   const drafts = Array.isArray(args.drafts) ? args.drafts : [];
-  const patternPackRules = Array.isArray(args.patternPackRules)
-    ? args.patternPackRules
-    : [];
+  const patternPackRules = Array.isArray(args.patternPackRules) ? args.patternPackRules : [];
   const packById = new Map(
     patternPackRules
       .filter(isRegexRule)
@@ -284,10 +276,7 @@ export const applyPromptExploderParserTuningDrafts = (args: {
       appliesToScopes: normalizeScopes(baseRule.appliesToScopes, scope),
       launchAppliesToScopes: normalizeScopes(baseRule.launchAppliesToScopes, scope),
       promptExploderSegmentType: draft.promptExploderSegmentType,
-      promptExploderPriority: Math.min(
-        50,
-        Math.max(-50, Math.floor(draft.promptExploderPriority))
-      ),
+      promptExploderPriority: Math.min(50, Math.max(-50, Math.floor(draft.promptExploderPriority))),
       promptExploderConfidenceBoost: Math.min(
         0.5,
         Math.max(0, draft.promptExploderConfidenceBoost)

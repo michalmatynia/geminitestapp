@@ -6,7 +6,12 @@ import { useMaskingState, useMaskingActions } from '../../context/MaskingContext
 import { useProjectsState } from '../../context/ProjectsContext';
 import { useSettingsState, useSettingsActions } from '../../context/SettingsContext';
 import { useSlotsState, useSlotsActions } from '../../context/SlotsContext';
-import { useUiActions, useUiState, type PreviewCanvasViewportCrop, type PreviewCanvasImageFrameBinding } from '../../context/UiContext';
+import {
+  useUiActions,
+  useUiState,
+  type PreviewCanvasViewportCrop,
+  type PreviewCanvasImageFrameBinding,
+} from '../../context/UiContext';
 import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
@@ -14,13 +19,13 @@ import {
 import {
   buildImageStudioAnalysisSourceSignature,
   type ImageStudioAnalysisSharedLayout,
-} from '../../utils/analysis-bridge';
-import { getImageStudioSlotImageSrc } from '../../utils/image-src';
+} from '@/shared/lib/ai/image-studio/utils/analysis-bridge';
+import { getImageStudioSlotImageSrc } from '@/shared/lib/ai/image-studio/utils/image-src';
 import {
   loadObjectLayoutAdvancedDefaults,
   loadObjectLayoutCustomPresets,
   resolveObjectLayoutPresetOptionValue,
-} from '../../utils/object-layout-presets';
+} from '@/shared/lib/ai/image-studio/utils/object-layout-presets';
 import {
   resolveClientProcessingImageSrc,
   shapeHasUsableCropGeometry,
@@ -45,23 +50,13 @@ import { type GenerationToolbarState } from './GenerationToolbar.types';
 export function useGenerationToolbarState(): GenerationToolbarState {
   const { maskPreviewEnabled, centerGuidesEnabled } = useUiState();
   const uiActions = useUiActions();
-  const {
-    setMaskPreviewEnabled,
-    setCenterGuidesEnabled,
-    setCanvasSelectionEnabled,
-  } = uiActions;
+  const { setMaskPreviewEnabled, setCenterGuidesEnabled, setCanvasSelectionEnabled } = uiActions;
   const { projectId, projectsQuery } = useProjectsState();
   const { slots, slotSelectionLocked, workingSlot } = useSlotsState();
   const { setSelectedSlotId, setWorkingSlotId } = useSlotsActions();
   const settingsStore = useSettingsStore();
   const maskingState = useMaskingState();
-  const {
-    maskShapes,
-    activeMaskId,
-    maskInvert,
-    maskGenLoading,
-    maskGenMode,
-  } = maskingState;
+  const { maskShapes, activeMaskId, maskInvert, maskGenLoading, maskGenMode } = maskingState;
   const maskingActions = useMaskingActions();
   const {
     setTool,
@@ -117,33 +112,45 @@ export function useGenerationToolbarState(): GenerationToolbarState {
   const cropDiagnosticsRef = useRef<CropRectResolutionDiagnostics | null>(null);
 
   const centerLayoutWhiteThresholdValue = useMemo(
-    () => normalizeCenterThreshold(
-      centerLayoutWhiteThreshold,
-      CENTER_LAYOUT_MIN_WHITE_THRESHOLD,
-      CENTER_LAYOUT_MAX_WHITE_THRESHOLD,
-      CENTER_LAYOUT_DEFAULT_WHITE_THRESHOLD
-    ),
+    () =>
+      normalizeCenterThreshold(
+        centerLayoutWhiteThreshold,
+        CENTER_LAYOUT_MIN_WHITE_THRESHOLD,
+        CENTER_LAYOUT_MAX_WHITE_THRESHOLD,
+        CENTER_LAYOUT_DEFAULT_WHITE_THRESHOLD
+      ),
     [centerLayoutWhiteThreshold]
   );
 
   const centerLayoutChromaThresholdValue = useMemo(
-    () => normalizeCenterThreshold(
-      centerLayoutChromaThreshold,
-      CENTER_LAYOUT_MIN_CHROMA_THRESHOLD,
-      CENTER_LAYOUT_MAX_CHROMA_THRESHOLD,
-      CENTER_LAYOUT_DEFAULT_CHROMA_THRESHOLD
-    ),
+    () =>
+      normalizeCenterThreshold(
+        centerLayoutChromaThreshold,
+        CENTER_LAYOUT_MIN_CHROMA_THRESHOLD,
+        CENTER_LAYOUT_MAX_CHROMA_THRESHOLD,
+        CENTER_LAYOUT_DEFAULT_CHROMA_THRESHOLD
+      ),
     [centerLayoutChromaThreshold]
   );
 
   const centerLayoutPresetOptionValue = useMemo(
-    () => resolveObjectLayoutPresetOptionValue({
-      detection: centerLayoutDetection,
-      shadowPolicy: centerLayoutShadowPolicy,
-      whiteThreshold: centerLayoutWhiteThresholdValue,
-      chromaThreshold: centerLayoutChromaThresholdValue,
-    }, centerLayoutCustomPresets),
-    [centerLayoutDetection, centerLayoutShadowPolicy, centerLayoutWhiteThresholdValue, centerLayoutChromaThresholdValue, centerLayoutCustomPresets]
+    () =>
+      resolveObjectLayoutPresetOptionValue(
+        {
+          detection: centerLayoutDetection,
+          shadowPolicy: centerLayoutShadowPolicy,
+          whiteThreshold: centerLayoutWhiteThresholdValue,
+          chromaThreshold: centerLayoutChromaThresholdValue,
+        },
+        centerLayoutCustomPresets
+      ),
+    [
+      centerLayoutDetection,
+      centerLayoutShadowPolicy,
+      centerLayoutWhiteThresholdValue,
+      centerLayoutChromaThresholdValue,
+      centerLayoutCustomPresets,
+    ]
   );
 
   const selectedCenterCustomPresetId = useMemo(() => {
@@ -153,7 +160,7 @@ export function useGenerationToolbarState(): GenerationToolbarState {
 
   const selectedCenterCustomPreset = useMemo(() => {
     if (!selectedCenterCustomPresetId) return null;
-    return centerLayoutCustomPresets.find(p => p.id === selectedCenterCustomPresetId) ?? null;
+    return centerLayoutCustomPresets.find((p) => p.id === selectedCenterCustomPresetId) ?? null;
   }, [selectedCenterCustomPresetId, centerLayoutCustomPresets]);
 
   const centerIsObjectLayoutMode =
@@ -168,7 +175,8 @@ export function useGenerationToolbarState(): GenerationToolbarState {
     normalizedWorkingSlotId !== '' &&
     analysisPlanSlotId === normalizedWorkingSlotId;
 
-  const analysisPlanSourceSignature = toolbarContext.analysisPlanSnapshot?.sourceSignature?.trim() ?? '';
+  const analysisPlanSourceSignature =
+    toolbarContext.analysisPlanSnapshot?.sourceSignature?.trim() ?? '';
 
   const analysisSummaryData = useMemo((): ImageStudioAnalysisSummaryChipData | null => {
     if (!toolbarContext.analysisPlanSnapshot) return null;
@@ -183,10 +191,11 @@ export function useGenerationToolbarState(): GenerationToolbarState {
   }, [toolbarContext.analysisPlanSnapshot]);
 
   const centerLayoutPresetOptions = useMemo(
-    () => loadObjectLayoutCustomPresets(activeProjectId).map(p => ({
-      value: `user:${p.id}`,
-      label: `Preset: ${p.name}`
-    })),
+    () =>
+      loadObjectLayoutCustomPresets(activeProjectId).map((p) => ({
+        value: `user:${p.id}`,
+        label: `Preset: ${p.name}`,
+      })),
     [activeProjectId, centerLayoutCustomPresets]
   );
 
@@ -202,7 +211,7 @@ export function useGenerationToolbarState(): GenerationToolbarState {
       maskShapesForExport.filter(
         (shape) =>
           shape.visible &&
-          ((shape.type === 'rect' || shape.type === 'ellipse')
+          (shape.type === 'rect' || shape.type === 'ellipse'
             ? shape.points.length >= 2
             : shape.closed && shape.points.length >= 3)
       ),
@@ -210,10 +219,7 @@ export function useGenerationToolbarState(): GenerationToolbarState {
   );
 
   const selectedEligibleMaskShapes = useMemo<MaskShapeForExport[]>(
-    () =>
-      eligibleMaskShapes.filter(
-        (shape) => activeMaskId && shape.id === activeMaskId
-      ),
+    () => eligibleMaskShapes.filter((shape) => activeMaskId && shape.id === activeMaskId),
     [eligibleMaskShapes, activeMaskId]
   );
 
@@ -252,9 +258,7 @@ export function useGenerationToolbarState(): GenerationToolbarState {
     });
   }, [clientProcessingImageSrc, workingSlot, workingSlotImageSrc]);
   const analysisWorkingSourceMetadataMissing =
-    analysisPlanAvailable &&
-    analysisPlanMatchesWorkingSlot &&
-    !workingSourceSignature;
+    analysisPlanAvailable && analysisPlanMatchesWorkingSlot && !workingSourceSignature;
   const analysisPlanIsStale =
     analysisPlanAvailable &&
     analysisPlanMatchesWorkingSlot &&
@@ -262,9 +266,7 @@ export function useGenerationToolbarState(): GenerationToolbarState {
     analysisPlanSourceSignature !== workingSourceSignature;
 
   const activeProject = useMemo(
-    () =>
-      (projectsQuery.data ?? []).find((project) => project.id === projectId) ??
-      null,
+    () => (projectsQuery.data ?? []).find((project) => project.id === projectId) ?? null,
     [projectId, projectsQuery.data]
   );
   const projectCanvasSize = useMemo((): { width: number; height: number } | null => {
@@ -311,9 +313,9 @@ export function useGenerationToolbarState(): GenerationToolbarState {
       fillMissingCanvasWhite,
       ...(fillMissingCanvasWhite && projectCanvasSize
         ? {
-          targetCanvasWidth: projectCanvasSize.width,
-          targetCanvasHeight: projectCanvasSize.height,
-        }
+            targetCanvasWidth: projectCanvasSize.width,
+            targetCanvasHeight: projectCanvasSize.height,
+          }
         : {}),
       whiteThreshold: centerLayoutWhiteThresholdValue,
       chromaThreshold: centerLayoutChromaThresholdValue,
@@ -355,9 +357,9 @@ export function useGenerationToolbarState(): GenerationToolbarState {
       fillMissingCanvasWhite,
       ...(fillMissingCanvasWhite && projectCanvasSize
         ? {
-          targetCanvasWidth: projectCanvasSize.width,
-          targetCanvasHeight: projectCanvasSize.height,
-        }
+            targetCanvasWidth: projectCanvasSize.width,
+            targetCanvasHeight: projectCanvasSize.height,
+          }
         : {}),
       whiteThreshold: centerLayoutWhiteThresholdValue,
       chromaThreshold: centerLayoutChromaThresholdValue,
@@ -380,8 +382,7 @@ export function useGenerationToolbarState(): GenerationToolbarState {
   const getNormalizedTargetCanvasSide = (value: number | null | undefined): number | null =>
     typeof value === 'number' && Number.isFinite(value) ? Math.floor(value) : null;
 
-  const numericEquals = (left: number, right: number): boolean =>
-    Math.abs(left - right) < 0.01;
+  const numericEquals = (left: number, right: number): boolean => Math.abs(left - right) < 0.01;
 
   const buildConfigMismatchMessage = (fields: string[]): string | null => {
     if (fields.length === 0) return null;
@@ -389,15 +390,20 @@ export function useGenerationToolbarState(): GenerationToolbarState {
   };
 
   const centerAnalysisConfigMismatchMessage = useMemo(() => {
-    if (!analysisPlanAvailable || !analysisPlanMatchesWorkingSlot || analysisPlanIsStale) return null;
+    if (!analysisPlanAvailable || !analysisPlanMatchesWorkingSlot || analysisPlanIsStale)
+      return null;
     const planLayout = toolbarContext.analysisPlanSnapshot?.layout;
     if (!planLayout) return null;
 
     const mismatches: string[] = [];
-    if (Boolean(centerLayoutSplitAxes) !== Boolean(planLayout.splitAxes)) mismatches.push('split axes');
-    if (!numericEquals(centerLayoutPayload.paddingPercent, planLayout.paddingPercent)) mismatches.push('padding');
-    if (!numericEquals(centerLayoutPayload.paddingXPercent, planLayout.paddingXPercent)) mismatches.push('padding X');
-    if (!numericEquals(centerLayoutPayload.paddingYPercent, planLayout.paddingYPercent)) mismatches.push('padding Y');
+    if (Boolean(centerLayoutSplitAxes) !== Boolean(planLayout.splitAxes))
+      mismatches.push('split axes');
+    if (!numericEquals(centerLayoutPayload.paddingPercent, planLayout.paddingPercent))
+      mismatches.push('padding');
+    if (!numericEquals(centerLayoutPayload.paddingXPercent, planLayout.paddingXPercent))
+      mismatches.push('padding X');
+    if (!numericEquals(centerLayoutPayload.paddingYPercent, planLayout.paddingYPercent))
+      mismatches.push('padding Y');
     if (centerLayoutPayload.fillMissingCanvasWhite !== Boolean(planLayout.fillMissingCanvasWhite)) {
       mismatches.push('fill missing canvas');
     }
@@ -413,10 +419,13 @@ export function useGenerationToolbarState(): GenerationToolbarState {
     ) {
       mismatches.push('target canvas height');
     }
-    if (centerLayoutPayload.shadowPolicy !== planLayout.shadowPolicy) mismatches.push('shadow policy');
+    if (centerLayoutPayload.shadowPolicy !== planLayout.shadowPolicy)
+      mismatches.push('shadow policy');
     if (centerLayoutPayload.detection !== planLayout.detection) mismatches.push('detection');
-    if (centerLayoutPayload.whiteThreshold !== planLayout.whiteThreshold) mismatches.push('white threshold');
-    if (centerLayoutPayload.chromaThreshold !== planLayout.chromaThreshold) mismatches.push('chroma threshold');
+    if (centerLayoutPayload.whiteThreshold !== planLayout.whiteThreshold)
+      mismatches.push('white threshold');
+    if (centerLayoutPayload.chromaThreshold !== planLayout.chromaThreshold)
+      mismatches.push('chroma threshold');
 
     return buildConfigMismatchMessage(mismatches);
   }, [
@@ -429,16 +438,23 @@ export function useGenerationToolbarState(): GenerationToolbarState {
   ]);
 
   const autoScaleAnalysisConfigMismatchMessage = useMemo(() => {
-    if (!analysisPlanAvailable || !analysisPlanMatchesWorkingSlot || analysisPlanIsStale) return null;
+    if (!analysisPlanAvailable || !analysisPlanMatchesWorkingSlot || analysisPlanIsStale)
+      return null;
     const planLayout = toolbarContext.analysisPlanSnapshot?.layout;
     if (!planLayout) return null;
 
     const mismatches: string[] = [];
-    if (Boolean(autoScaleLayoutSplitAxes) !== Boolean(planLayout.splitAxes)) mismatches.push('split axes');
-    if (!numericEquals(autoScaleLayoutPayload.paddingPercent, planLayout.paddingPercent)) mismatches.push('padding');
-    if (!numericEquals(autoScaleLayoutPayload.paddingXPercent, planLayout.paddingXPercent)) mismatches.push('padding X');
-    if (!numericEquals(autoScaleLayoutPayload.paddingYPercent, planLayout.paddingYPercent)) mismatches.push('padding Y');
-    if (autoScaleLayoutPayload.fillMissingCanvasWhite !== Boolean(planLayout.fillMissingCanvasWhite)) {
+    if (Boolean(autoScaleLayoutSplitAxes) !== Boolean(planLayout.splitAxes))
+      mismatches.push('split axes');
+    if (!numericEquals(autoScaleLayoutPayload.paddingPercent, planLayout.paddingPercent))
+      mismatches.push('padding');
+    if (!numericEquals(autoScaleLayoutPayload.paddingXPercent, planLayout.paddingXPercent))
+      mismatches.push('padding X');
+    if (!numericEquals(autoScaleLayoutPayload.paddingYPercent, planLayout.paddingYPercent))
+      mismatches.push('padding Y');
+    if (
+      autoScaleLayoutPayload.fillMissingCanvasWhite !== Boolean(planLayout.fillMissingCanvasWhite)
+    ) {
       mismatches.push('fill missing canvas');
     }
     if (
@@ -453,10 +469,13 @@ export function useGenerationToolbarState(): GenerationToolbarState {
     ) {
       mismatches.push('target canvas height');
     }
-    if (autoScaleLayoutPayload.shadowPolicy !== planLayout.shadowPolicy) mismatches.push('shadow policy');
+    if (autoScaleLayoutPayload.shadowPolicy !== planLayout.shadowPolicy)
+      mismatches.push('shadow policy');
     if (autoScaleLayoutPayload.detection !== planLayout.detection) mismatches.push('detection');
-    if (autoScaleLayoutPayload.whiteThreshold !== planLayout.whiteThreshold) mismatches.push('white threshold');
-    if (autoScaleLayoutPayload.chromaThreshold !== planLayout.chromaThreshold) mismatches.push('chroma threshold');
+    if (autoScaleLayoutPayload.whiteThreshold !== planLayout.whiteThreshold)
+      mismatches.push('white threshold');
+    if (autoScaleLayoutPayload.chromaThreshold !== planLayout.chromaThreshold)
+      mismatches.push('chroma threshold');
 
     return buildConfigMismatchMessage(mismatches);
   }, [
@@ -501,9 +520,7 @@ export function useGenerationToolbarState(): GenerationToolbarState {
     mode: 'auto' | 'manual'
   ): void => {
     toolbarContext.setCenterLayoutSplitAxes(Boolean(layout.splitAxes));
-    toolbarContext.setCenterLayoutPadding(
-      normalizeAnalysisPercentString(layout.paddingPercent, 8)
-    );
+    toolbarContext.setCenterLayoutPadding(normalizeAnalysisPercentString(layout.paddingPercent, 8));
     toolbarContext.setCenterLayoutPaddingX(
       normalizeAnalysisPercentString(layout.paddingXPercent, layout.paddingPercent)
     );
@@ -559,8 +576,10 @@ export function useGenerationToolbarState(): GenerationToolbarState {
     setMaskPreviewEnabled,
     setCenterGuidesEnabled,
     setCanvasSelectionEnabled,
-    getPreviewCanvasViewportCrop: (): PreviewCanvasViewportCrop | null => uiActions.getPreviewCanvasViewportCrop(),
-    getPreviewCanvasImageFrame: (): PreviewCanvasImageFrameBinding | null => uiActions.getPreviewCanvasImageFrame(),
+    getPreviewCanvasViewportCrop: (): PreviewCanvasViewportCrop | null =>
+      uiActions.getPreviewCanvasViewportCrop(),
+    getPreviewCanvasImageFrame: (): PreviewCanvasImageFrameBinding | null =>
+      uiActions.getPreviewCanvasImageFrame(),
     projectId,
     projectsQuery,
     slots,
@@ -578,14 +597,20 @@ export function useGenerationToolbarState(): GenerationToolbarState {
     setMaskShapes,
     setActiveMaskId,
     setMaskInvert,
-    setMaskGenMode: (mode: 'ai-polygon' | 'ai-bbox' | 'threshold' | 'edges') => setMaskGenMode(mode),
-    handleAiMaskGeneration: async (mode: 'ai-polygon' | 'ai-bbox' | 'threshold' | 'edges'): Promise<void> => {
+    setMaskGenMode: (mode: 'ai-polygon' | 'ai-bbox' | 'threshold' | 'edges') =>
+      setMaskGenMode(mode),
+    handleAiMaskGeneration: async (
+      mode: 'ai-polygon' | 'ai-bbox' | 'threshold' | 'edges'
+    ): Promise<void> => {
       handleAiMaskGeneration(mode);
     },
     studioSettings,
     setStudioSettings,
-    toast: (message: string, options?: ToastOptions) => { toast(message, options); },
-    queryClient,    upscaleRequestInFlightRef,
+    toast: (message: string, options?: ToastOptions) => {
+      toast(message, options);
+    },
+    queryClient,
+    upscaleRequestInFlightRef,
     upscaleAbortControllerRef,
     cropRequestInFlightRef,
     cropAbortControllerRef,

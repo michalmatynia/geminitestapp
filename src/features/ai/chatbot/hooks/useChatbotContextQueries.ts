@@ -5,12 +5,15 @@ import { useQueryClient } from '@tanstack/react-query';
 import type { ChatbotContextSegmentDto } from '@/shared/contracts/chatbot';
 import type { SettingRecordDto as SettingRecord } from '@/shared/contracts/settings';
 import type { ListQuery, MutationResult } from '@/shared/contracts/ui';
-import { createCreateMutationV2, createListQueryV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
+import {
+  createCreateMutationV2,
+  createListQueryV2,
+  createUpdateMutationV2,
+} from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { FileUploadHelpers } from '@/shared/ui';
 
 import * as chatbotApi from '../api';
-
 
 export function useChatbotContextSettingsQuery(): ListQuery<SettingRecord> {
   const queryKey = QUERY_KEYS.ai.chatbot.settings.allSettings('global-context');
@@ -32,7 +35,7 @@ export function useChatbotContextSettingsQuery(): ListQuery<SettingRecord> {
 export function useSaveChatbotContextMutation(): MutationResult<
   SettingRecord,
   { key: string; value: string; errorLabel: string }
-  > {
+> {
   const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.ai.chatbot.mutation('save-context');
   return createUpdateMutationV2<SettingRecord, { key: string; value: string; errorLabel: string }>({
@@ -57,13 +60,12 @@ export function useSaveChatbotContextMutation(): MutationResult<
 export function useUploadChatbotContextPdfMutation(): MutationResult<
   { segments: ChatbotContextSegmentDto[] },
   { file: File; helpers?: FileUploadHelpers }
-  > {
+> {
   const mutationKey = QUERY_KEYS.ai.chatbot.mutation('upload-context-pdf');
   return createCreateMutationV2({
     mutationFn: ({ file, helpers }) =>
-      chatbotApi.uploadChatbotContextPdf(
-        file,
-        (loaded: number, total?: number) => helpers?.reportProgress(loaded, total)
+      chatbotApi.uploadChatbotContextPdf(file, (loaded: number, total?: number) =>
+        helpers?.reportProgress(loaded, total)
       ),
     mutationKey,
     meta: {

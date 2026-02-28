@@ -8,7 +8,6 @@ import { api } from '@/shared/lib/api-client';
 import { createDeleteMutationV2, createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
-
 export const chatbotMemoryKeys = {
   all: () => QUERY_KEYS.ai.chatbot.memory(),
   list: (params: string) => QUERY_KEYS.ai.chatbot.memory(params),
@@ -19,9 +18,7 @@ export function useChatbotMemory(params: string = ''): ListQuery<ChatbotMemoryIt
   return createListQueryV2({
     queryKey,
     queryFn: async (): Promise<ChatbotMemoryItem[]> => {
-      const queryParams = params
-        ? Object.fromEntries(new URLSearchParams(params).entries())
-        : null;
+      const queryParams = params ? Object.fromEntries(new URLSearchParams(params).entries()) : null;
       const data = await api.get<ChatbotMemoryItem[] | { items?: ChatbotMemoryItem[] }>(
         '/api/chatbot/memory',
         queryParams ? { params: queryParams } : undefined

@@ -40,10 +40,8 @@ import {
   triggers,
   triggerButtonsApi,
 } from '@/shared/lib/ai-paths';
-import {
-  updateAiPathsSetting,
-} from '@/shared/lib/ai-paths/settings-store-client';
-import { useBrainModelOptions } from '@/features/ai/brain/hooks/useBrainModelOptions';
+import { updateAiPathsSetting } from '@/shared/lib/ai-paths/settings-store-client';
+import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
@@ -69,9 +67,7 @@ import { useAiPathsSettingsModeActions } from './useAiPathsSettingsModeActions';
 import { useAiPathsSettingsPathActions } from './useAiPathsSettingsPathActions';
 import { useAiPathsSettingsSamples } from './useAiPathsSettingsSamples';
 import { buildRuntimePersistenceConfig } from './useAiPathsSettingsState.runtime';
-import {
-  buildPersistedRuntimeState,
-} from '../AiPathsSettingsUtils';
+import { buildPersistedRuntimeState } from '../AiPathsSettingsUtils';
 
 type AiPathsSettingsStateOptions = {
   activeTab: 'canvas' | 'paths' | 'docs';
@@ -91,53 +87,40 @@ export function useAiPathsSettingsState({
   const [nodes, setNodes] = useState<AiNode[]>(initialNodes);
   const [edges, setEdges] = useState<Edge[]>(initialEdges);
   const [paths, setPaths] = useState<PathMeta[]>([]);
-  const [pathConfigs, setPathConfigs] = useState<Record<string, PathConfig>>(
-    {},
-  );
+  const [pathConfigs, setPathConfigs] = useState<Record<string, PathConfig>>({});
   const [activePathId, setActivePathId] = useState<string | null>(null);
   const [isPathLocked, setIsPathLocked] = useState(false);
   const [isPathActive, setIsPathActive] = useState(true);
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(
-    initialNodes[0]?.id ?? null,
-  );
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(initialNodes[0]?.id ?? null);
   const [loading, setLoading] = useState(true);
   const [configOpen, setConfigOpen] = useState(false);
   const [nodeConfigDirty, setNodeConfigDirty] = useState(false);
-  const [simulationOpenNodeId, setSimulationOpenNodeId] = useState<
-    string | null
-  >(null);
+  const [simulationOpenNodeId, setSimulationOpenNodeId] = useState<string | null>(null);
   const [pathName, setPathName] = useState('AI Description Path');
   const [pathDescription, setPathDescription] = useState(
-    'Visual analysis + description generation with structured updates.',
+    'Visual analysis + description generation with structured updates.'
   );
   const [activeTrigger, setActiveTrigger] = useState(triggers[0] ?? '');
-  const [executionMode, setExecutionMode] =
-    useState<PathExecutionMode>('server');
-  const [flowIntensity, setFlowIntensity] =
-    useState<PathFlowIntensity>('medium');
+  const [executionMode, setExecutionMode] = useState<PathExecutionMode>('server');
+  const [flowIntensity, setFlowIntensity] = useState<PathFlowIntensity>('medium');
   const [runMode, setRunMode] = useState<PathRunMode>('manual');
   const [strictFlowMode, setStrictFlowMode] = useState<boolean>(true);
-  const [blockedRunPolicy, setBlockedRunPolicy] =
-    useState<PathBlockedRunPolicy>('fail_run');
-  const [aiPathsValidationState, setAiPathsValidationState] =
-    useState<AiPathsValidationConfig>(
-      normalizeAiPathsValidationConfig(DEFAULT_AI_PATHS_VALIDATION_CONFIG),
-    );
-  const [historyRetentionPasses, setHistoryRetentionPasses] = useState<number>(
-    AI_PATHS_HISTORY_RETENTION_DEFAULT,
+  const [blockedRunPolicy, setBlockedRunPolicy] = useState<PathBlockedRunPolicy>('fail_run');
+  const [aiPathsValidationState, setAiPathsValidationState] = useState<AiPathsValidationConfig>(
+    normalizeAiPathsValidationConfig(DEFAULT_AI_PATHS_VALIDATION_CONFIG)
   );
-  const [historyRetentionOptionsMax, setHistoryRetentionOptionsMax] =
-    useState<number>(AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_DEFAULT);
-  const [parserSamples, setParserSamples] = useState<
-    Record<string, ParserSampleState>
-  >({});
-  const [updaterSamples, setUpdaterSamples] = useState<
-    Record<string, UpdaterSampleState>
-  >({});
+  const [historyRetentionPasses, setHistoryRetentionPasses] = useState<number>(
+    AI_PATHS_HISTORY_RETENTION_DEFAULT
+  );
+  const [historyRetentionOptionsMax, setHistoryRetentionOptionsMax] = useState<number>(
+    AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_DEFAULT
+  );
+  const [parserSamples, setParserSamples] = useState<Record<string, ParserSampleState>>({});
+  const [updaterSamples, setUpdaterSamples] = useState<Record<string, UpdaterSampleState>>({});
   const [runtimeState, setRuntimeState] = useState<RuntimeState>(EMPTY_RUNTIME_STATE);
-  const [pathDebugSnapshots, setPathDebugSnapshots] = useState<
-    Record<string, PathDebugSnapshot>
-  >({});
+  const [pathDebugSnapshots, setPathDebugSnapshots] = useState<Record<string, PathDebugSnapshot>>(
+    {}
+  );
   const [lastRunAt, setLastRunAt] = useState<string | null>(null);
   const [lastError, setLastError] = useState<{
     message: string;
@@ -150,9 +133,7 @@ export function useAiPathsSettingsState({
     for (let index = nodes.length - 1; index >= 0; index -= 1) {
       const node = nodes[index];
       if (node?.type !== 'model') continue;
-      const output = runtimeState.outputs?.[node.id] as
-        | { debugPayload?: unknown }
-        | undefined;
+      const output = runtimeState.outputs?.[node.id] as { debugPayload?: unknown } | undefined;
       if (output?.debugPayload) {
         return output.debugPayload;
       }
@@ -171,27 +152,21 @@ export function useAiPathsSettingsState({
   const [loadNonce, setLoadNonce] = useState(0);
   const queryClient = useQueryClient();
 
-  const setAiPathsValidation: React.Dispatch<
-    React.SetStateAction<AiPathsValidationConfig>
-  > = useCallback(
-    (
-      nextValue: React.SetStateAction<AiPathsValidationConfig>,
-    ): void => {
-      setAiPathsValidationState(
-        (previous: AiPathsValidationConfig): AiPathsValidationConfig => {
+  const setAiPathsValidation: React.Dispatch<React.SetStateAction<AiPathsValidationConfig>> =
+    useCallback(
+      (nextValue: React.SetStateAction<AiPathsValidationConfig>): void => {
+        setAiPathsValidationState((previous: AiPathsValidationConfig): AiPathsValidationConfig => {
           const resolved =
             typeof nextValue === 'function'
-              ? (nextValue as (
-                prevState: AiPathsValidationConfig,
-              ) => AiPathsValidationConfig)(previous)
+              ? (nextValue as (prevState: AiPathsValidationConfig) => AiPathsValidationConfig)(
+                  previous
+                )
               : nextValue;
           const normalized = normalizeAiPathsValidationConfig(resolved);
           if (activePathId) {
             setPathConfigs(
               (prevConfigs: Record<string, PathConfig>): Record<string, PathConfig> => {
-                const base =
-                  prevConfigs[activePathId] ??
-                  createDefaultPathConfig(activePathId);
+                const base = prevConfigs[activePathId] ?? createDefaultPathConfig(activePathId);
                 return {
                   ...prevConfigs,
                   [activePathId]: {
@@ -199,32 +174,29 @@ export function useAiPathsSettingsState({
                     aiPathsValidation: normalized,
                   },
                 };
-              },
+              }
             );
           }
           return normalized;
-        },
-      );
-    },
-    [activePathId],
-  );
+        });
+      },
+      [activePathId]
+    );
 
   const updateAiPathsValidation = useCallback(
     (patch: Partial<AiPathsValidationConfig>): void => {
-      setAiPathsValidation((previous: AiPathsValidationConfig): AiPathsValidationConfig =>
-        normalizeAiPathsValidationConfig({
-          ...previous,
-          ...patch,
-        }),
+      setAiPathsValidation(
+        (previous: AiPathsValidationConfig): AiPathsValidationConfig =>
+          normalizeAiPathsValidationConfig({
+            ...previous,
+            ...patch,
+          })
       );
     },
-    [setAiPathsValidation],
+    [setAiPathsValidation]
   );
 
-  const triggerButtonsQuery = createListQueryV2<
-    AiTriggerButtonRecord[],
-    AiTriggerButtonRecord[]
-  >({
+  const triggerButtonsQuery = createListQueryV2<AiTriggerButtonRecord[], AiTriggerButtonRecord[]>({
     queryKey: QUERY_KEYS.ai.aiPaths.triggerButtons(),
     queryFn: async (): Promise<AiTriggerButtonRecord[]> => {
       const result = await triggerButtonsApi.list();
@@ -308,13 +280,10 @@ export function useAiPathsSettingsState({
 
   const persistLastError = useCallback(
     async (
-      payload: { message: string; time: string; pathId?: string | null } | null,
+      payload: { message: string; time: string; pathId?: string | null } | null
     ): Promise<void> => {
       try {
-        await updateAiPathsSetting(
-          AI_PATHS_LAST_ERROR_KEY,
-          payload ? JSON.stringify(payload) : '',
-        );
+        await updateAiPathsSetting(AI_PATHS_LAST_ERROR_KEY, payload ? JSON.stringify(payload) : '');
       } catch (error: unknown) {
         logClientError(error, {
           context: {
@@ -324,17 +293,12 @@ export function useAiPathsSettingsState({
         });
       }
     },
-    [],
+    []
   );
 
   const reportAiPathsError = useCallback(
-    (
-      error: unknown,
-      context: Record<string, unknown>,
-      fallbackMessage?: string,
-    ): void => {
-      const rawMessage =
-        error instanceof Error ? error.message : safeStringify(error);
+    (error: unknown, context: Record<string, unknown>, fallbackMessage?: string): void => {
+      const rawMessage = error instanceof Error ? error.message : safeStringify(error);
       const summary = (fallbackMessage ?? rawMessage).replace(/:$/, '');
       const logMessage = `[AI Paths] ${summary}`;
       const logError = new Error(logMessage);
@@ -363,14 +327,7 @@ export function useAiPathsSettingsState({
         },
       });
     },
-    [
-      activePathId,
-      activeTab,
-      edges.length,
-      nodes.length,
-      pathName,
-      persistLastError,
-    ],
+    [activePathId, activeTab, edges.length, nodes.length, pathName, persistLastError]
   );
 
   const brainModelOptions = useBrainModelOptions({
@@ -382,24 +339,12 @@ export function useAiPathsSettingsState({
     const savedModels = nodes
       .filter((node: AiNode): boolean => node.type === 'model')
       .map((node: AiNode): string | undefined => node.config?.model?.modelId)
-      .filter((modelId: string | undefined): modelId is string =>
-        Boolean(modelId?.trim()),
-      );
-    return Array.from(
-      new Set([
-        ...DEFAULT_MODELS,
-        ...apiModels,
-        ...savedModels,
-      ]),
-    );
+      .filter((modelId: string | undefined): modelId is string => Boolean(modelId?.trim()));
+    return Array.from(new Set([...DEFAULT_MODELS, ...apiModels, ...savedModels]));
   }, [brainModelOptions.models, nodes]);
 
   const pruneRuntimeInputs = useCallback(
-    (
-      state: RuntimeState,
-      removedEdges: Edge[],
-      remainingEdges: Edge[],
-    ): RuntimeState => {
+    (state: RuntimeState, removedEdges: Edge[], remainingEdges: Edge[]): RuntimeState => {
       if (removedEdges.length === 0) return state;
       const remainingTargets = new Set<string>();
       remainingEdges.forEach((edge: Edge) => {
@@ -433,18 +378,17 @@ export function useAiPathsSettingsState({
       if (!changed) return state;
       return { ...state, inputs: nextInputs };
     },
-    [],
+    []
   );
 
   const clearRuntimeInputsForEdges = useCallback(
     (removedEdges: Edge[], remainingEdges: Edge[]): void => {
       if (removedEdges.length === 0) return;
       setRuntimeState(
-        (prev: RuntimeState): RuntimeState =>
-          pruneRuntimeInputs(prev, removedEdges, remainingEdges),
+        (prev: RuntimeState): RuntimeState => pruneRuntimeInputs(prev, removedEdges, remainingEdges)
       );
     },
-    [pruneRuntimeInputs],
+    [pruneRuntimeInputs]
   );
 
   const clearRuntimeForNode = React.useCallback((nodeId: string): void => {
@@ -522,9 +466,8 @@ export function useAiPathsSettingsState({
   });
 
   const selectedNode = useMemo(
-    (): AiNode | null =>
-      nodes.find((node: AiNode): boolean => node.id === selectedNodeId) ?? null,
-    [nodes, selectedNodeId],
+    (): AiNode | null => nodes.find((node: AiNode): boolean => node.id === selectedNodeId) ?? null,
+    [nodes, selectedNodeId]
   );
 
   const {
@@ -679,14 +622,17 @@ export function useAiPathsSettingsState({
     handleRequeueDeadLetter,
   } = useAiPathsRunHistory({ activePathId, toast });
 
-  const handleCanonicalEdgesDetected = useCallback((nextEdges: Edge[]): void => {
-    setEdges((currentEdges: Edge[]): Edge[] => {
-      if (stableStringify(currentEdges) === stableStringify(nextEdges)) {
-        return currentEdges;
-      }
-      return nextEdges;
-    });
-  }, [setEdges]);
+  const handleCanonicalEdgesDetected = useCallback(
+    (nextEdges: Edge[]): void => {
+      setEdges((currentEdges: Edge[]): Edge[] => {
+        if (stableStringify(currentEdges) === stableStringify(nextEdges)) {
+          return currentEdges;
+        }
+        return nextEdges;
+      });
+    },
+    [setEdges]
+  );
 
   const {
     handleRunSimulation,
@@ -732,49 +678,44 @@ export function useAiPathsSettingsState({
     reportAiPathsError,
   });
 
-  const {
-    handleClearWires,
-    handleClearConnectorData,
-    handleClearHistory,
-    handleClearNodeHistory,
-  } = useAiPathsSettingsCleanupActions({
-    activePathId,
-    isPathLocked,
-    toast,
-    confirm,
-    runtimeState,
-    setRuntimeState,
-    resetRuntimeDiagnostics,
-    edges,
-    setEdges,
-    nodes,
-    pathName,
-    pathDescription,
-    activeTrigger,
-    executionMode,
-    flowIntensity,
-    runMode,
-    strictFlowMode,
-    blockedRunPolicy,
-    aiPathsValidation: aiPathsValidationState,
-    isPathActive,
-    parserSamples,
-    updaterSamples,
-    lastRunAt,
-    selectedNodeId,
-    configOpen,
-    pathConfigs,
-    setPathConfigs,
-    paths,
-    persistPathSettings: async (...args) => { await persistPathSettings(...args); },
-    reportAiPathsError,
-    pruneRuntimeInputs,
-  });
+  const { handleClearWires, handleClearConnectorData, handleClearHistory, handleClearNodeHistory } =
+    useAiPathsSettingsCleanupActions({
+      activePathId,
+      isPathLocked,
+      toast,
+      confirm,
+      runtimeState,
+      setRuntimeState,
+      resetRuntimeDiagnostics,
+      edges,
+      setEdges,
+      nodes,
+      pathName,
+      pathDescription,
+      activeTrigger,
+      executionMode,
+      flowIntensity,
+      runMode,
+      strictFlowMode,
+      blockedRunPolicy,
+      aiPathsValidation: aiPathsValidationState,
+      isPathActive,
+      parserSamples,
+      updaterSamples,
+      lastRunAt,
+      selectedNodeId,
+      configOpen,
+      pathConfigs,
+      setPathConfigs,
+      paths,
+      persistPathSettings: async (...args) => {
+        await persistPathSettings(...args);
+      },
+      reportAiPathsError,
+      pruneRuntimeInputs,
+    });
 
-  const updateSelectedNode = (
-    patch: Partial<AiNode>,
-    options?: { nodeId?: string },
-  ): void => {
+  const updateSelectedNode = (patch: Partial<AiNode>, options?: { nodeId?: string }): void => {
     const targetNodeId = options?.nodeId ?? selectedNodeId;
     if (!targetNodeId) return;
     if (isPathLocked) {
@@ -793,9 +734,7 @@ export function useAiPathsSettingsState({
         if (patch.config) {
           const currentConfig = node.config ?? {};
           const mergedConfig = { ...currentConfig };
-          for (const key of Object.keys(patch.config) as Array<
-            keyof NodeConfig
-          >) {
+          for (const key of Object.keys(patch.config) as Array<keyof NodeConfig>) {
             const patchValue = patch.config[key];
             const currentValue = currentConfig[key];
             if (
@@ -811,8 +750,7 @@ export function useAiPathsSettingsState({
                 ...patchValue,
               };
             } else {
-              (mergedConfig as Record<string, unknown>)[key] =
-                patchValue as unknown;
+              (mergedConfig as Record<string, unknown>)[key] = patchValue as unknown;
             }
           }
           nextNode.config = mergedConfig;
@@ -849,9 +787,7 @@ export function useAiPathsSettingsState({
       return;
     }
     setNodes((prev: AiNode[]): AiNode[] => {
-      const currentNode = prev.find(
-        (node: AiNode): boolean => node.id === selectedNodeId,
-      );
+      const currentNode = prev.find((node: AiNode): boolean => node.id === selectedNodeId);
       if (!currentNode) return prev;
       const next = prev.map((node: AiNode): AiNode => {
         if (node.id !== selectedNodeId) return node;
@@ -890,8 +826,8 @@ export function useAiPathsSettingsState({
     setPaths((prev: PathMeta[]): PathMeta[] =>
       prev.map(
         (path: PathMeta): PathMeta =>
-          path.id === activePathId ? { ...path, name, updatedAt } : path,
-      ),
+          path.id === activePathId ? { ...path, name, updatedAt } : path
+      )
     );
   };
 
@@ -937,7 +873,9 @@ export function useAiPathsSettingsState({
     paths,
     setPaths,
     setPathConfigs,
-    persistPathSettings: async (...args) => { await persistPathSettings(...args); },
+    persistPathSettings: async (...args) => {
+      await persistPathSettings(...args);
+    },
     persistSettingsBulk,
     reportAiPathsError,
     toast,
@@ -980,7 +918,9 @@ export function useAiPathsSettingsState({
     setConfigOpen,
     normalizeTriggerLabel,
     updateActivePathMeta,
-    persistPathSettings: async (...args) => { await persistPathSettings(...args); },
+    persistPathSettings: async (...args) => {
+      await persistPathSettings(...args);
+    },
     persistSettingsBulk,
     persistActivePathPreference,
     reportAiPathsError,
@@ -998,10 +938,7 @@ export function useAiPathsSettingsState({
     if (loading || !activePathId) return;
 
     const persistedNodes = pathConfigs[activePathId]?.nodes ?? nodes;
-    const runtimeSnapshot = buildPersistedRuntimeState(
-      runtimeState,
-      persistedNodes,
-    );
+    const runtimeSnapshot = buildPersistedRuntimeState(runtimeState, persistedNodes);
     const snapshotKey = `${activePathId}:${lastRunAt ?? ''}:${runtimeSnapshot}`;
     if (snapshotKey === runtimePersistenceKeyRef.current) return;
 
@@ -1016,38 +953,26 @@ export function useAiPathsSettingsState({
         lastRunAt,
       });
       if (!nextConfig) return;
-      setPathConfigs(
-        (prev: Record<string, PathConfig>): Record<string, PathConfig> => {
-          if (!prev[activePathId]) return prev;
-          return {
-            ...prev,
-            [activePathId]: nextConfig,
-          };
-        },
-      );
-      void persistRuntimePathState(activePathId, nextConfig).catch(
-        (error: unknown): void => {
-          logClientError(error, {
-            context: {
-              source: 'useAiPathsSettingsState',
-              action: 'autoPersistRuntimeState',
-              pathId: activePathId,
-            },
-          });
-        },
-      );
+      setPathConfigs((prev: Record<string, PathConfig>): Record<string, PathConfig> => {
+        if (!prev[activePathId]) return prev;
+        return {
+          ...prev,
+          [activePathId]: nextConfig,
+        };
+      });
+      void persistRuntimePathState(activePathId, nextConfig).catch((error: unknown): void => {
+        logClientError(error, {
+          context: {
+            source: 'useAiPathsSettingsState',
+            action: 'autoPersistRuntimeState',
+            pathId: activePathId,
+          },
+        });
+      });
     }, 750);
 
     return (): void => clearTimeout(timeout);
-  }, [
-    activePathId,
-    lastRunAt,
-    loading,
-    nodes,
-    pathConfigs,
-    persistRuntimePathState,
-    runtimeState,
-  ]);
+  }, [activePathId, lastRunAt, loading, nodes, pathConfigs, persistRuntimePathState, runtimeState]);
 
   const autoSaveLabel = loading
     ? 'Loading AI Paths...'
@@ -1067,10 +992,7 @@ export function useAiPathsSettingsState({
           ? 'border-sky-500/40 bg-sky-500/10 text-sky-200'
           : 'border bg-card/60 text-gray-300';
 
-  const pathFlagsById = useMemo((): Record<
-    string,
-    { isLocked: boolean; isActive: boolean }
-  > => {
+  const pathFlagsById = useMemo((): Record<string, { isLocked: boolean; isActive: boolean }> => {
     const next: Record<string, { isLocked: boolean; isActive: boolean }> = {};
     paths.forEach((meta: PathMeta) => {
       const config = pathConfigs[meta.id];

@@ -12,9 +12,7 @@ import { Card, useToast } from '@/shared/ui';
 
 import { useProjectsState } from '../context/ProjectsContext';
 import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
-import {
-  imageStudioAnalysisResponseSchema,
-} from '../contracts/analysis';
+import { imageStudioAnalysisResponseSchema } from '../contracts/analysis';
 import {
   analyzeCanvasImageObject,
   resolveClientProcessingImageSrc,
@@ -27,8 +25,8 @@ import {
   type ImageStudioAnalysisPlanSnapshot,
   type ImageStudioAnalysisSharedLayout,
   saveImageStudioAnalysisPlanSnapshot,
-} from '../utils/analysis-bridge';
-import { getImageStudioSlotImageSrc } from '../utils/image-src';
+} from '@/shared/lib/ai/image-studio/utils/analysis-bridge';
+import { getImageStudioSlotImageSrc } from '@/shared/lib/ai/image-studio/utils/image-src';
 import { useRightSidebarContext } from './RightSidebarContext';
 import {
   buildObjectLayoutPresetOptions,
@@ -43,13 +41,13 @@ import {
   saveObjectLayoutAdvancedDefaults,
   type ObjectLayoutCustomPreset,
   type ObjectLayoutPresetOptionValue,
-} from '../utils/object-layout-presets';
+} from '@/shared/lib/ai/image-studio/utils/object-layout-presets';
 
-import { 
-  type AnalysisMode, 
-  type AnalysisStatus, 
-  type ShadowPolicy, 
-  type DetectionMode, 
+import {
+  type AnalysisMode,
+  type AnalysisStatus,
+  type ShadowPolicy,
+  type DetectionMode,
   type AnalysisResult,
   PADDING_DEFAULT,
   WHITE_THRESHOLD_DEFAULT,
@@ -58,17 +56,16 @@ import {
   CHROMA_THRESHOLD_DEFAULT,
   CHROMA_THRESHOLD_MIN,
   CHROMA_THRESHOLD_MAX,
-  ANALYSIS_REQUEST_TIMEOUT_MS
+  ANALYSIS_REQUEST_TIMEOUT_MS,
 } from './analysis/analysis-types';
 import { AnalysisSettingsSection } from './analysis/sections/AnalysisSettingsSection';
 import { AnalysisResultSection } from './analysis/sections/AnalysisResultSection';
 import { AiPathAnalysisTriggerSection } from './analysis/sections/AiPathAnalysisTriggerSection';
+import { CustomTriggerButtonsSection } from './analysis/sections/CustomTriggerButtonsSection';
 import { useAiPathsObjectAnalysis } from '../hooks/useAiPathsObjectAnalysis';
 
-const sanitizePaddingInput = (value: string): string =>
-  value.replace(/[^0-9.]/g, '');
-const sanitizeThresholdInput = (value: string): string =>
-  value.replace(/[^0-9]/g, '');
+const sanitizePaddingInput = (value: string): string => value.replace(/[^0-9.]/g, '');
+const sanitizeThresholdInput = (value: string): string => value.replace(/[^0-9]/g, '');
 
 const normalizePaddingPercent = (value: string): number => {
   const parsed = Number(value);
@@ -76,12 +73,7 @@ const normalizePaddingPercent = (value: string): number => {
   return Math.max(0, Math.min(40, Number(parsed.toFixed(2))));
 };
 
-const normalizeThreshold = (
-  value: string,
-  min: number,
-  max: number,
-  fallback: number
-): number => {
+const normalizeThreshold = (value: string, min: number, max: number, fallback: number): number => {
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) return fallback;
   return Math.max(min, Math.min(max, Math.round(parsed)));
@@ -116,7 +108,8 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [resultSourceSlotId, setResultSourceSlotId] = useState('');
   const [resultSourceSignature, setResultSourceSignature] = useState('');
-  const [persistedPlanSnapshot, setPersistedPlanSnapshot] = useState<ImageStudioAnalysisPlanSnapshot | null>(null);
+  const [persistedPlanSnapshot, setPersistedPlanSnapshot] =
+    useState<ImageStudioAnalysisPlanSnapshot | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const skipAdvancedDefaultsSaveRef = useRef(true);
   const selectedCustomPresetIdRef = useRef<string | null>(null);
@@ -135,21 +128,15 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
     (slot: typeof workingSlot): string => {
       const slotId = slot?.id?.trim() ?? '';
       if (!slotId) return '';
-      const slotImageSrc = getImageStudioSlotImageSrc(
-        slot,
-        productImagesExternalBaseUrl
-      );
-      const slotClientProcessingImageSrc = resolveClientProcessingImageSrc(
-        slot,
-        slotImageSrc
-      );
+      const slotImageSrc = getImageStudioSlotImageSrc(slot, productImagesExternalBaseUrl);
+      const slotClientProcessingImageSrc = resolveClientProcessingImageSrc(slot, slotImageSrc);
       const hasSourceMetadata = Boolean(
         slot?.imageFileId ??
-          slot?.imageFile ??
-          slot?.imageUrl ??
-          slot?.imageBase64 ??
-          slotImageSrc ??
-          slotClientProcessingImageSrc
+        slot?.imageFile ??
+        slot?.imageUrl ??
+        slot?.imageBase64 ??
+        slotImageSrc ??
+        slotClientProcessingImageSrc
       );
       if (!hasSourceMetadata) return '';
       return buildImageStudioAnalysisSourceSignature({
@@ -166,9 +153,7 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
   );
 
   const activeProject = useMemo(
-    () =>
-      (projectsQuery.data ?? []).find((project) => project.id === projectId) ??
-      null,
+    () => (projectsQuery.data ?? []).find((project) => project.id === projectId) ?? null,
     [projectId, projectsQuery.data]
   );
   const activeProjectId = projectId?.trim() ?? '';
@@ -224,7 +209,10 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
     window.addEventListener(IMAGE_STUDIO_OBJECT_LAYOUT_PRESETS_CHANGED_EVENT, syncCustomPresets);
     window.addEventListener('storage', handleStorage);
     return () => {
-      window.removeEventListener(IMAGE_STUDIO_OBJECT_LAYOUT_PRESETS_CHANGED_EVENT, syncCustomPresets);
+      window.removeEventListener(
+        IMAGE_STUDIO_OBJECT_LAYOUT_PRESETS_CHANGED_EVENT,
+        syncCustomPresets
+      );
       window.removeEventListener('storage', handleStorage);
     };
   }, [activeProjectId]);
@@ -291,13 +279,7 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
         },
         layoutCustomPresets
       ),
-    [
-      chromaThreshold,
-      layoutCustomPresets,
-      layoutDetection,
-      layoutShadowPolicy,
-      whiteThreshold,
-    ]
+    [chromaThreshold, layoutCustomPresets, layoutDetection, layoutShadowPolicy, whiteThreshold]
   );
   const selectedCustomPresetId = useMemo(
     () => resolveCustomPresetIdFromOptionValue(layoutPresetOptionValue),
@@ -310,7 +292,8 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
   const layoutCanDeletePreset = Boolean(selectedCustomPresetId);
   const layoutCanSavePreset = layoutPresetDraftName.trim().length > 0;
   const layoutSavePresetLabel = selectedCustomPresetId ? 'Update Preset' : 'Save Preset';
-  const resolvedAnalysisSourceSlotId = resultSourceSlotId.trim() || persistedPlanSnapshot?.slotId?.trim() || '';
+  const resolvedAnalysisSourceSlotId =
+    resultSourceSlotId.trim() || persistedPlanSnapshot?.slotId?.trim() || '';
   const resolvedAnalysisSourceSignature =
     resultSourceSignature.trim() || persistedPlanSnapshot?.sourceSignature?.trim() || '';
   const analysisSourceSignatureMissing =
@@ -359,13 +342,7 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
       whiteThreshold,
       chromaThreshold,
     });
-  }, [
-    activeProjectId,
-    chromaThreshold,
-    layoutDetection,
-    layoutShadowPolicy,
-    whiteThreshold,
-  ]);
+  }, [activeProjectId, chromaThreshold, layoutDetection, layoutShadowPolicy, whiteThreshold]);
 
   const resolvedFillMissingCanvasWhite = layoutFillMissingCanvasWhite && Boolean(projectCanvasSize);
   const layoutPayload = {
@@ -374,16 +351,16 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
       : normalizePaddingPercent(layoutPadding),
     ...(layoutSplitAxes
       ? {
-        paddingXPercent,
-        paddingYPercent,
-      }
+          paddingXPercent,
+          paddingYPercent,
+        }
       : {}),
     fillMissingCanvasWhite: resolvedFillMissingCanvasWhite,
     ...(resolvedFillMissingCanvasWhite && projectCanvasSize
       ? {
-        targetCanvasWidth: projectCanvasSize.width,
-        targetCanvasHeight: projectCanvasSize.height,
-      }
+          targetCanvasWidth: projectCanvasSize.width,
+          targetCanvasHeight: projectCanvasSize.height,
+        }
       : {}),
     whiteThreshold,
     chromaThreshold,
@@ -442,9 +419,7 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
       toast('Analysis source signature is missing. Rerun analysis first.', { variant: 'info' });
       return;
     }
-    const analyzedSlotExists = slots.some(
-      (slot) => (slot.id ?? '').trim() === analyzedSlotId
-    );
+    const analyzedSlotExists = slots.some((slot) => (slot.id ?? '').trim() === analyzedSlotId);
     if (!analyzedSlotExists) {
       toast('Analyzed slot no longer exists. Run analysis again on an available slot.', {
         variant: 'info',
@@ -455,9 +430,7 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
       toast('Cannot apply while slot selection is locked.', { variant: 'info' });
       return;
     }
-    const analyzedSlot = slots.find(
-      (slot) => (slot.id ?? '').trim() === analyzedSlotId
-    );
+    const analyzedSlot = slots.find((slot) => (slot.id ?? '').trim() === analyzedSlotId);
     const currentAnalyzedSlotSignature = buildSlotSourceSignature(analyzedSlot ?? null);
     if (!currentAnalyzedSlotSignature) {
       toast('Analyzed slot source metadata is missing. Reselect slot image and rerun analysis.', {
@@ -465,9 +438,7 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
       });
       return;
     }
-    if (
-      analyzedSourceSignature !== currentAnalyzedSlotSignature
-    ) {
+    if (analyzedSourceSignature !== currentAnalyzedSlotSignature) {
       toast('Analysis plan is stale for this slot image. Run analysis again.', {
         variant: 'info',
       });
@@ -582,7 +553,9 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
         toast('Image analysis canceled.', { variant: 'info' });
         return;
       }
-      toast(error instanceof Error ? error.message : 'Failed to analyze image.', { variant: 'error' });
+      toast(error instanceof Error ? error.message : 'Failed to analyze image.', {
+        variant: 'error',
+      });
     } finally {
       abortControllerRef.current = null;
       setBusy(false);
@@ -602,27 +575,51 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
         <div>
           <div className='text-lg text-gray-100'>Image Analysis</div>
           <div className='text-xs text-gray-500'>
-            Detect object bounds from whitespace/foreground and preview auto-scaler plan using shared analysis logic.
+            Detect object bounds from whitespace/foreground and preview auto-scaler plan using
+            shared analysis logic.
           </div>
         </div>
+
+        <CustomTriggerButtonsSection
+          projectId={activeProjectId}
+          pathMetas={aiPathsAnalysis.pathMetas}
+          triggerAnalysisForPath={aiPathsAnalysis.triggerAnalysisForPath}
+          isRunning={
+            aiPathsAnalysis.status !== 'idle' &&
+            aiPathsAnalysis.status !== 'completed' &&
+            aiPathsAnalysis.status !== 'error'
+          }
+        />
 
         <AiPathAnalysisTriggerSection variant='full' analysis={aiPathsAnalysis} />
 
         <AnalysisSettingsSection
-          mode={mode} setMode={setMode}
-          layoutPadding={layoutPadding} setLayoutPadding={setLayoutPadding}
-          layoutPaddingX={layoutPaddingX} setLayoutPaddingX={setLayoutPaddingX}
-          layoutPaddingY={layoutPaddingY} setLayoutPaddingY={setLayoutPaddingY}
-          layoutSplitAxes={layoutSplitAxes} setLayoutSplitAxes={setLayoutSplitAxes}
-          layoutAdvancedEnabled={layoutAdvancedEnabled} setLayoutAdvancedEnabled={setLayoutAdvancedEnabled}
-          layoutDetection={layoutDetection} setLayoutDetection={setLayoutDetection}
-          layoutWhiteThreshold={layoutWhiteThreshold} setLayoutWhiteThreshold={setLayoutWhiteThreshold}
-          layoutChromaThreshold={layoutChromaThreshold} setLayoutChromaThreshold={setLayoutChromaThreshold}
-          layoutFillMissingCanvasWhite={layoutFillMissingCanvasWhite} setLayoutFillMissingCanvasWhite={setLayoutFillMissingCanvasWhite}
-          layoutShadowPolicy={layoutShadowPolicy} setLayoutShadowPolicy={setLayoutShadowPolicy}
+          mode={mode}
+          setMode={setMode}
+          layoutPadding={layoutPadding}
+          setLayoutPadding={setLayoutPadding}
+          layoutPaddingX={layoutPaddingX}
+          setLayoutPaddingX={setLayoutPaddingX}
+          layoutPaddingY={layoutPaddingY}
+          setLayoutPaddingY={setLayoutPaddingY}
+          layoutSplitAxes={layoutSplitAxes}
+          setLayoutSplitAxes={setLayoutSplitAxes}
+          layoutAdvancedEnabled={layoutAdvancedEnabled}
+          setLayoutAdvancedEnabled={setLayoutAdvancedEnabled}
+          layoutDetection={layoutDetection}
+          setLayoutDetection={setLayoutDetection}
+          layoutWhiteThreshold={layoutWhiteThreshold}
+          setLayoutWhiteThreshold={setLayoutWhiteThreshold}
+          layoutChromaThreshold={layoutChromaThreshold}
+          setLayoutChromaThreshold={setLayoutChromaThreshold}
+          layoutFillMissingCanvasWhite={layoutFillMissingCanvasWhite}
+          setLayoutFillMissingCanvasWhite={setLayoutFillMissingCanvasWhite}
+          layoutShadowPolicy={layoutShadowPolicy}
+          setLayoutShadowPolicy={setLayoutShadowPolicy}
           layoutPresetOptionValue={layoutPresetOptionValue}
           layoutPresetOptions={layoutPresetOptions}
-          layoutPresetDraftName={layoutPresetDraftName} setLayoutPresetDraftName={setLayoutPresetDraftName}
+          layoutPresetDraftName={layoutPresetDraftName}
+          setLayoutPresetDraftName={setLayoutPresetDraftName}
           onCenterLayoutPresetChange={(value: string) => {
             const presetValues = getObjectLayoutPresetValuesFromOption(
               value as unknown as ObjectLayoutPresetOptionValue,
@@ -650,19 +647,22 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
               setLayoutPresetDraftName(saved.savedPreset.name);
               toast(`Saved preset "${saved.savedPreset.name}".`, { variant: 'success' });
             } catch (error) {
-              toast(error instanceof Error ? error.message : 'Failed to save custom preset.', { variant: 'error' });
+              toast(error instanceof Error ? error.message : 'Failed to save custom preset.', {
+                variant: 'error',
+              });
             }
           }}
           onCenterLayoutDeletePreset={() => {
             if (!selectedCustomPresetId) return;
             const deletedName = selectedCustomPreset?.name?.trim() ?? '';
-            const nextPresets = deleteObjectLayoutCustomPreset(activeProjectId, selectedCustomPresetId);
+            const nextPresets = deleteObjectLayoutCustomPreset(
+              activeProjectId,
+              selectedCustomPresetId
+            );
             setLayoutCustomPresets(nextPresets);
             setLayoutPresetDraftName('');
             toast(
-              deletedName
-                ? `Deleted preset "${deletedName}".`
-                : 'Deleted selected custom preset.',
+              deletedName ? `Deleted preset "${deletedName}".` : 'Deleted selected custom preset.',
               { variant: 'success' }
             );
           }}
@@ -672,7 +672,9 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
           projectCanvasSize={projectCanvasSize}
           busy={busy}
           busyLabel={busyLabel}
-          handleAnalyze={() => { void handleAnalyze(); }}
+          handleAnalyze={() => {
+            void handleAnalyze();
+          }}
           handleCancel={handleCancel}
           workingSlotId={workingSlot?.id ?? null}
           workingSlotImageSrc={workingSlotImageSrc}

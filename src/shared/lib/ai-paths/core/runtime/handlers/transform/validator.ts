@@ -1,9 +1,13 @@
-import { formatProgrammaticPrompt } from '@/shared/lib/prompt-engine/prompt-formatter';
+import { formatProgrammaticPrompt } from '@/shared/lib/prompt-engine';
 import {
   preparePromptValidationRuntime,
   validateProgrammaticPromptWithRuntime,
-} from '@/shared/lib/prompt-engine/prompt-validator';
-import type { NodeHandler, NodeHandlerContext, RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
+} from '@/shared/lib/prompt-engine';
+import type {
+  NodeHandler,
+  NodeHandlerContext,
+  RuntimePortValues,
+} from '@/shared/contracts/ai-paths-runtime';
 import type {
   PromptAppliedFixDto,
   PromptValidationIssueDto,
@@ -17,10 +21,11 @@ import {
   safeStringify,
 } from '../../../utils';
 
-export const handleValidator: NodeHandler = ({ node, nodeInputs }: NodeHandlerContext): RuntimePortValues => {
-  const contextValue = coerceInput(nodeInputs['context']) as
-    | Record<string, unknown>
-    | undefined;
+export const handleValidator: NodeHandler = ({
+  node,
+  nodeInputs,
+}: NodeHandlerContext): RuntimePortValues => {
+  const contextValue = coerceInput(nodeInputs['context']) as Record<string, unknown> | undefined;
   if (!contextValue) {
     return {};
   }
@@ -39,9 +44,7 @@ export const handleValidator: NodeHandler = ({ node, nodeInputs }: NodeHandlerCo
     return false;
   });
   const valid =
-    validatorConfig.mode === 'any'
-      ? missing.length < required.length
-      : missing.length === 0;
+    validatorConfig.mode === 'any' ? missing.length < required.length : missing.length === 0;
   return {
     context: contextValue,
     valid,
@@ -176,12 +179,8 @@ export const handleValidationPattern: NodeHandler = ({
   const includeRuleIds = (config.includeRuleIds ?? [])
     .map((value: string): string => value.trim())
     .filter(Boolean);
-  const includeRuleIdSet =
-    includeRuleIds.length > 0 ? new Set<string>(includeRuleIds) : null;
-  const runtimeRules = normalizeValidationPatternRules(
-    config.rules,
-    includeRuleIdSet
-  );
+  const includeRuleIdSet = includeRuleIds.length > 0 ? new Set<string>(includeRuleIds) : null;
+  const runtimeRules = normalizeValidationPatternRules(config.rules, includeRuleIdSet);
   const runtimeLearnedRules =
     config.includeLearnedRules === false
       ? []
@@ -224,8 +223,7 @@ export const handleValidationPattern: NodeHandler = ({
       1,
       Math.min(
         10,
-        typeof config.maxAutofixPasses === 'number' &&
-        Number.isFinite(config.maxAutofixPasses)
+        typeof config.maxAutofixPasses === 'number' && Number.isFinite(config.maxAutofixPasses)
           ? Math.trunc(config.maxAutofixPasses)
           : 1
       )
@@ -258,8 +256,7 @@ export const handleValidationPattern: NodeHandler = ({
     const warningIssueCount = issues.filter(
       (issue: ValidationPatternIssue): boolean => issue.severity === 'warning'
     ).length;
-    const valid =
-      config.failPolicy === 'report_only' ? true : blockingIssueCount === 0;
+    const valid = config.failPolicy === 'report_only' ? true : blockingIssueCount === 0;
     const errors = summarizeValidationIssues(issues);
     const outputs = buildValidationPatternOutputPorts({
       outputPort: config.outputPort,

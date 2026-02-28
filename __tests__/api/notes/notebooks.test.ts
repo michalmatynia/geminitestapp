@@ -28,9 +28,7 @@ describe('Notes Notebooks API', () => {
       ];
       vi.mocked(noteService.getAllNotebooks).mockResolvedValue(mockNotebooks as any);
 
-      const res = await GET(
-        new NextRequest('http://localhost/api/notes/notebooks')
-      );
+      const res = await GET(new NextRequest('http://localhost/api/notes/notebooks'));
       const data = await res.json();
       expect(res.status).toEqual(200);
       expect(data).toHaveLength(2);
@@ -41,7 +39,11 @@ describe('Notes Notebooks API', () => {
   describe('POST /api/notes/notebooks', () => {
     it('should create a new notebook', async () => {
       const newNotebook = { name: 'My New Notebook', color: '#3b82f6' };
-      vi.mocked(noteService.createNotebook).mockResolvedValue({ id: 'nb1', name: 'New Notebook', color: '#3b82f6' } as any);
+      vi.mocked(noteService.createNotebook).mockResolvedValue({
+        id: 'nb1',
+        name: 'New Notebook',
+        color: '#3b82f6',
+      } as any);
 
       const res = await POST(
         new NextRequest('http://localhost/api/notes/notebooks', {
@@ -52,9 +54,11 @@ describe('Notes Notebooks API', () => {
       const data = await res.json();
       expect(res.status).toEqual(201);
       expect(data.name).toEqual('New Notebook'); // Based on mock return value
-      expect(noteService.createNotebook).toHaveBeenCalledWith(expect.objectContaining({
-        name: 'My New Notebook'
-      }));
+      expect(noteService.createNotebook).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'My New Notebook',
+        })
+      );
     });
 
     it('should return 400 for invalid data', async () => {

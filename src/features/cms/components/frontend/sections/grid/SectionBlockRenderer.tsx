@@ -18,11 +18,7 @@ import { getCustomCssSelector, buildScopedCustomCss } from '@/features/cms/utils
 import { resolveJustifyContent, resolveAlignItems } from './frontend-grid-utils';
 import type { CmsBlockInstanceDto as BlockInstance } from '@/shared/contracts/cms';
 
-export function SectionBlockRenderer({
-  block,
-}: {
-  block: BlockInstance;
-}): React.ReactNode {
+export function SectionBlockRenderer({ block }: { block: BlockInstance }): React.ReactNode {
   const children = block.blocks ?? [];
   const { stretch = false } = useSectionLayout();
   const stretchClass = stretch ? 'h-full' : '';
@@ -30,9 +26,7 @@ export function SectionBlockRenderer({
   const { colorSchemes } = useSectionData();
 
   const wrapInline = (node: React.ReactNode): React.ReactNode => (
-    <EventEffectsWrapper>
-      {node}
-    </EventEffectsWrapper>
+    <EventEffectsWrapper>{node}</EventEffectsWrapper>
   );
   const wrapEventsOnly = (node: React.ReactNode): React.ReactNode => (
     <EventEffectsWrapper>{node}</EventEffectsWrapper>
@@ -95,7 +89,8 @@ export function SectionBlockRenderer({
         ...getTextAlign(block.settings['contentAlignment']),
       };
       const alignment = (block.settings['contentAlignment'] as string) || 'left';
-      const blockGap = typeof block.settings['blockGap'] === 'number' ? block.settings['blockGap'] : 0;
+      const blockGap =
+        typeof block.settings['blockGap'] === 'number' ? block.settings['blockGap'] : 0;
       const direction = (block.settings['layoutDirection'] as string) || 'row';
       const wrap = (block.settings['wrap'] as string) || 'wrap';
       const justifySetting = (block.settings['justifyContent'] as string) || 'inherit';
@@ -104,7 +99,8 @@ export function SectionBlockRenderer({
         (alignment === 'center' ? 'center' : alignment === 'right' ? 'flex-end' : 'flex-start');
       const alignItems = resolveAlignItems(block.settings['alignItems']) ?? 'center';
       const flexDirClass = direction === 'column' ? 'flex-col' : 'flex-Allrow';
-      const wrapClass = direction === 'column' ? '' : wrap === 'nowrap' ? 'flex-nowrap' : 'flex-wrap';
+      const wrapClass =
+        direction === 'column' ? '' : wrap === 'nowrap' ? 'flex-nowrap' : 'flex-wrap';
       const shouldStretchChildren = stretch && children.length === 1;
       const linkUrl = (block.settings['linkUrl'] as string) || '';
       const linkTarget = (block.settings['linkTarget'] as string) || '_self';
@@ -131,7 +127,9 @@ export function SectionBlockRenderer({
                 style={{ ...sectionStyles, ...(stretchStyle ?? {}) }}
                 className={`${stretchClass} cms-node-${block.id}`.trim()}
               >
-                {blockCustomCss ? <style data-cms-custom-css={block.id}>{blockCustomCss}</style> : null}
+                {blockCustomCss ? (
+                  <style data-cms-custom-css={block.id}>{blockCustomCss}</style>
+                ) : null}
                 {linkUrl ? (
                   <a href={linkUrl} target={linkTarget} rel={linkRel} className='block w-full'>
                     {innerContent}
@@ -153,18 +151,16 @@ export function SectionBlockRenderer({
       const wrap = (block.settings['wrap'] as string) || 'wrap';
       const letters = (block.blocks ?? []).length
         ? (block.blocks ?? [])
-        : Array.from(text).map((char: string, index: number): BlockInstance => ({
-          id: `text-atom-${block.id}-${index}`,
-          type: 'TextAtomLetter',
-          settings: { textContent: char },
-        }));
+        : Array.from(text).map(
+            (char: string, index: number): BlockInstance => ({
+              id: `text-atom-${block.id}-${index}`,
+              type: 'TextAtomLetter',
+              settings: { textContent: char },
+            })
+          );
 
       const justifyContent =
-        alignment === 'center'
-          ? 'center'
-          : alignment === 'right'
-            ? 'flex-end'
-            : 'flex-start';
+        alignment === 'center' ? 'center' : alignment === 'right' ? 'flex-end' : 'flex-start';
 
       const containerStyle: React.CSSProperties = {
         display: 'flex',

@@ -1,11 +1,5 @@
 'use client';
 
- 
- 
- 
- 
- 
-
 import React, { createContext, useCallback, useMemo, useState } from 'react';
 
 import { PROMPT_ENGINE_SETTINGS_KEY } from '@/shared/contracts/prompt-engine';
@@ -30,7 +24,10 @@ import {
   parseCustomBenchmarkCasesDraft,
   upsertCustomBenchmarkCase,
 } from '../custom-benchmark-cases';
-import { promptExploderBenchmarkSuiteLabel, promptExploderClampNumber } from '../helpers/formatting';
+import {
+  promptExploderBenchmarkSuiteLabel,
+  promptExploderClampNumber,
+} from '../helpers/formatting';
 import {
   buildRuntimeRulesForReexplode,
   buildRuntimeTemplatesForReexplode,
@@ -41,10 +38,7 @@ import { PROMPT_EXPLODER_SETTINGS_KEY } from '../settings';
 import { useDocumentState, useDocumentActions } from './hooks/useDocument';
 import { useSettingsState, useSettingsActions } from './hooks/useSettings';
 
-import type {
-  PromptExploderBenchmarkSuggestion,
-  PromptExploderSegment,
-} from '../types';
+import type { PromptExploderBenchmarkSuggestion, PromptExploderSegment } from '../types';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -74,8 +68,12 @@ export interface BenchmarkActions {
   handleClearCustomBenchmarkCases: () => void;
   handleLoadCustomBenchmarkTemplate: (suite: 'default' | 'extended') => void;
   handleAppendBenchmarkTemplateToCustom: (suite: 'default' | 'extended') => void;
-  handleAddBenchmarkSuggestionRules: (suggestions: PromptExploderBenchmarkSuggestion[]) => Promise<void>;
-  handleAddBenchmarkSuggestionRule: (suggestion: PromptExploderBenchmarkSuggestion) => Promise<void>;
+  handleAddBenchmarkSuggestionRules: (
+    suggestions: PromptExploderBenchmarkSuggestion[]
+  ) => Promise<void>;
+  handleAddBenchmarkSuggestionRule: (
+    suggestion: PromptExploderBenchmarkSuggestion
+  ) => Promise<void>;
   handleDismissBenchmarkSuggestion: (suggestionId: string) => void;
   handleDismissAllVisibleBenchmarkSuggestions: () => void;
   handleResetDismissedBenchmarkSuggestions: () => void;
@@ -103,24 +101,28 @@ export function BenchmarkProvider({ children }: { children: React.ReactNode }): 
     templateMergeThreshold,
     sessionLearnedRules,
   } = useSettingsState();
-  const {
-    setSessionLearnedRules,
-    setSessionLearnedTemplates,
-    updateSetting,
-    updateSettingsBulk,
-  } = useSettingsActions();
+  const { setSessionLearnedRules, setSessionLearnedTemplates, updateSetting, updateSettingsBulk } =
+    useSettingsActions();
   const { promptText, documentState } = useDocumentState();
   const { setDocumentState, setManualBindings, setSelectedSegmentId } = useDocumentActions();
 
-  const [benchmarkReport, setBenchmarkReport] = useState<PromptExploderBenchmarkReport | null>(null);
-  const [benchmarkSuiteDraft, setBenchmarkSuiteDraft] = useState<'default' | 'extended' | 'custom'>('default');
-  const [benchmarkLowConfidenceThresholdDraft, setBenchmarkLowConfidenceThresholdDraft] =
-    useState(PROMPT_EXPLODER_DEFAULT_LOW_CONFIDENCE_THRESHOLD);
-  const [benchmarkSuggestionLimitDraft, setBenchmarkSuggestionLimitDraft] =
-    useState(PROMPT_EXPLODER_DEFAULT_SUGGESTION_LIMIT);
+  const [benchmarkReport, setBenchmarkReport] = useState<PromptExploderBenchmarkReport | null>(
+    null
+  );
+  const [benchmarkSuiteDraft, setBenchmarkSuiteDraft] = useState<'default' | 'extended' | 'custom'>(
+    'default'
+  );
+  const [benchmarkLowConfidenceThresholdDraft, setBenchmarkLowConfidenceThresholdDraft] = useState(
+    PROMPT_EXPLODER_DEFAULT_LOW_CONFIDENCE_THRESHOLD
+  );
+  const [benchmarkSuggestionLimitDraft, setBenchmarkSuggestionLimitDraft] = useState(
+    PROMPT_EXPLODER_DEFAULT_SUGGESTION_LIMIT
+  );
   const [customBenchmarkCasesDraft, setCustomBenchmarkCasesDraft] = useState('[]');
   const [customCaseDraftId, setCustomCaseDraftId] = useState('');
-  const [dismissedBenchmarkSuggestionIds, setDismissedBenchmarkSuggestionIds] = useState<string[]>([]);
+  const [dismissedBenchmarkSuggestionIds, setDismissedBenchmarkSuggestionIds] = useState<string[]>(
+    []
+  );
 
   // ── Derived ────────────────────────────────────────────────────────────────
 
@@ -146,7 +148,9 @@ export function BenchmarkProvider({ children }: { children: React.ReactNode }): 
     let customCases: PromptExploderBenchmarkCase[] | null = null;
     if (benchmarkSuiteDraft === 'custom') {
       if (!parsedCustomBenchmarkCases.ok) {
-        toast(`Custom benchmark JSON is invalid: ${parsedCustomBenchmarkCases.error}`, { variant: 'error' });
+        toast(`Custom benchmark JSON is invalid: ${parsedCustomBenchmarkCases.error}`, {
+          variant: 'error',
+        });
         return;
       }
       if (parsedCustomBenchmarkCases.cases.length === 0) {
@@ -207,9 +211,11 @@ export function BenchmarkProvider({ children }: { children: React.ReactNode }): 
     }
     const defaultCaseId = defaultCustomBenchmarkCaseIdFromPrompt(prompt);
     const caseId = customCaseDraftId.trim() || defaultCaseId;
-    const expectedTypes = (documentState?.segments.length
-      ? [...new Set(documentState.segments.map((segment: PromptExploderSegment) => segment.type))]
-      : ['assigned_text']) as PromptExploderSegment['type'][];
+    const expectedTypes = (
+      documentState?.segments.length
+        ? [...new Set(documentState.segments.map((segment: PromptExploderSegment) => segment.type))]
+        : ['assigned_text']
+    ) as PromptExploderSegment['type'][];
     const minSegments = Math.max(1, documentState?.segments.length ?? 1);
     const parsed = parseCustomBenchmarkCasesDraft(customBenchmarkCasesDraft);
     if (!parsed.ok) {
@@ -362,7 +368,12 @@ export function BenchmarkProvider({ children }: { children: React.ReactNode }): 
           });
         }
         setDismissedBenchmarkSuggestionIds((previous) => [
-          ...new Set([...previous, ...validSuggestions.map((suggestion) => suggestion.id).filter((id): id is string => Boolean(id))]),
+          ...new Set([
+            ...previous,
+            ...validSuggestions
+              .map((suggestion) => suggestion.id)
+              .filter((id): id is string => Boolean(id)),
+          ]),
         ]);
         const sourcePrompt = promptText.trim() || documentState?.sourcePrompt || '';
         if (sourcePrompt) {
@@ -409,9 +420,7 @@ export function BenchmarkProvider({ children }: { children: React.ReactNode }): 
         }
       } catch (error) {
         toast(
-          error instanceof Error
-            ? error.message
-            : 'Failed to add benchmark suggestion rule(s).',
+          error instanceof Error ? error.message : 'Failed to add benchmark suggestion rule(s).',
           { variant: 'error' }
         );
       }
@@ -456,7 +465,10 @@ export function BenchmarkProvider({ children }: { children: React.ReactNode }): 
   const handleDismissAllVisibleBenchmarkSuggestions = useCallback(() => {
     if (visibleBenchmarkSuggestions.length === 0) return;
     setDismissedBenchmarkSuggestionIds((previous) => [
-      ...new Set([...previous, ...visibleBenchmarkSuggestions.map((s) => s.id).filter((id): id is string => Boolean(id))]),
+      ...new Set([
+        ...previous,
+        ...visibleBenchmarkSuggestions.map((s) => s.id).filter((id): id is string => Boolean(id)),
+      ]),
     ]);
   }, [visibleBenchmarkSuggestions]);
 

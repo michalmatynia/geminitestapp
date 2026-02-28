@@ -5,9 +5,7 @@ import {
   type CaseResolverFolderRecord,
   type CaseResolverWorkspace,
 } from '@/shared/contracts/case-resolver';
-import {
-  CASE_RESOLVER_NORMALIZATION_FALLBACK_TIMESTAMP,
-} from './settings.constants';
+import { CASE_RESOLVER_NORMALIZATION_FALLBACK_TIMESTAMP } from './settings.constants';
 import {
   normalizeCaseResolverFileType,
   normalizeFolderPath,
@@ -17,10 +15,7 @@ import {
   normalizeWorkspaceRevision,
   sanitizeOptionalId,
 } from './settings.helpers';
-import {
-  createCaseResolverFile,
-  normalizeCaseResolverRelatedFileLinks,
-} from './settings.files';
+import { createCaseResolverFile, normalizeCaseResolverRelatedFileLinks } from './settings.files';
 import {
   sanitizeCaseResolverGraphNodeFileRelations,
   sanitizeCaseResolverNodeFileAssetSnapshots,
@@ -41,11 +36,12 @@ export type CaseResolverWorkspaceNormalizationDiagnostics = {
   droppedDuplicateCount: number;
 };
 
-const CASE_RESOLVER_WORKSPACE_NORMALIZATION_DIAGNOSTICS_EMPTY: CaseResolverWorkspaceNormalizationDiagnostics = {
-  ownershipRepairedCount: 0,
-  ownershipUnresolvedCount: 0,
-  droppedDuplicateCount: 0,
-};
+const CASE_RESOLVER_WORKSPACE_NORMALIZATION_DIAGNOSTICS_EMPTY: CaseResolverWorkspaceNormalizationDiagnostics =
+  {
+    ownershipRepairedCount: 0,
+    ownershipUnresolvedCount: 0,
+    droppedDuplicateCount: 0,
+  };
 
 const caseResolverWorkspaceNormalizationDiagnosticsByWorkspace = new WeakMap<
   CaseResolverWorkspace,
@@ -53,35 +49,26 @@ const caseResolverWorkspaceNormalizationDiagnosticsByWorkspace = new WeakMap<
 >();
 
 const normalizeCaseResolverWorkspaceDiagnostics = (
-  diagnostics: Partial<CaseResolverWorkspaceNormalizationDiagnostics> | null | undefined,
+  diagnostics: Partial<CaseResolverWorkspaceNormalizationDiagnostics> | null | undefined
 ): CaseResolverWorkspaceNormalizationDiagnostics => ({
-  ownershipRepairedCount: Math.max(
-    0,
-    Math.floor(diagnostics?.ownershipRepairedCount ?? 0),
-  ),
-  ownershipUnresolvedCount: Math.max(
-    0,
-    Math.floor(diagnostics?.ownershipUnresolvedCount ?? 0),
-  ),
-  droppedDuplicateCount: Math.max(
-    0,
-    Math.floor(diagnostics?.droppedDuplicateCount ?? 0),
-  ),
+  ownershipRepairedCount: Math.max(0, Math.floor(diagnostics?.ownershipRepairedCount ?? 0)),
+  ownershipUnresolvedCount: Math.max(0, Math.floor(diagnostics?.ownershipUnresolvedCount ?? 0)),
+  droppedDuplicateCount: Math.max(0, Math.floor(diagnostics?.droppedDuplicateCount ?? 0)),
 });
 
 const attachCaseResolverWorkspaceNormalizationDiagnostics = (
   workspace: CaseResolverWorkspace,
-  diagnostics: Partial<CaseResolverWorkspaceNormalizationDiagnostics> | null | undefined,
+  diagnostics: Partial<CaseResolverWorkspaceNormalizationDiagnostics> | null | undefined
 ): CaseResolverWorkspace => {
   caseResolverWorkspaceNormalizationDiagnosticsByWorkspace.set(
     workspace,
-    normalizeCaseResolverWorkspaceDiagnostics(diagnostics),
+    normalizeCaseResolverWorkspaceDiagnostics(diagnostics)
   );
   return workspace;
 };
 
 const buildFolderOwnerCaseIdsByPath = (
-  folderRecords: CaseResolverFolderRecord[],
+  folderRecords: CaseResolverFolderRecord[]
 ): Map<string, Set<string>> => {
   const ownerCaseIdsByPath = new Map<string, Set<string>>();
   folderRecords.forEach((record: CaseResolverFolderRecord): void => {
@@ -98,7 +85,7 @@ const buildFolderOwnerCaseIdsByPath = (
 
 const inferOwnerCaseIdFromFolderAncestors = (
   folderPath: string,
-  ownerCaseIdsByPath: Map<string, Set<string>>,
+  ownerCaseIdsByPath: Map<string, Set<string>>
 ): string | null => {
   const normalizedFolderPath = normalizeFolderPath(folderPath);
   if (!normalizedFolderPath) return null;
@@ -114,13 +101,11 @@ const inferOwnerCaseIdFromFolderAncestors = (
 };
 
 export const getCaseResolverWorkspaceNormalizationDiagnostics = (
-  workspace: CaseResolverWorkspace | null | undefined,
+  workspace: CaseResolverWorkspace | null | undefined
 ): CaseResolverWorkspaceNormalizationDiagnostics =>
   workspace
-    ? (
-      caseResolverWorkspaceNormalizationDiagnosticsByWorkspace.get(workspace) ??
-      CASE_RESOLVER_WORKSPACE_NORMALIZATION_DIAGNOSTICS_EMPTY
-    )
+    ? (caseResolverWorkspaceNormalizationDiagnosticsByWorkspace.get(workspace) ??
+      CASE_RESOLVER_WORKSPACE_NORMALIZATION_DIAGNOSTICS_EMPTY)
     : CASE_RESOLVER_WORKSPACE_NORMALIZATION_DIAGNOSTICS_EMPTY;
 
 const resolveSafeCaseParentId = (
@@ -152,25 +137,28 @@ export const createDefaultCaseResolverWorkspace = (): CaseResolverWorkspace => {
     files: [],
     assets: [],
   });
-  return attachCaseResolverWorkspaceNormalizationDiagnostics({
-    id: 'empty',
-    ownerId: 'system',
-    isPublic: false,
-    name: 'Default Empty Workspace',
-    version: 2,
-    workspaceRevision: 0,
-    lastMutationId: null,
-    lastMutationAt: null,
-    folders: [],
-    folderRecords: [],
-    folderTimestamps: {},
-    files: [],
-    assets: [],
-    relationGraph,
-    activeFileId: null,
-    createdAt: new Date().toISOString(),
-    updatedAt: null,
-  }, CASE_RESOLVER_WORKSPACE_NORMALIZATION_DIAGNOSTICS_EMPTY);
+  return attachCaseResolverWorkspaceNormalizationDiagnostics(
+    {
+      id: 'empty',
+      ownerId: 'system',
+      isPublic: false,
+      name: 'Default Empty Workspace',
+      version: 2,
+      workspaceRevision: 0,
+      lastMutationId: null,
+      lastMutationAt: null,
+      folders: [],
+      folderRecords: [],
+      folderTimestamps: {},
+      files: [],
+      assets: [],
+      relationGraph,
+      activeFileId: null,
+      createdAt: new Date().toISOString(),
+      updatedAt: null,
+    },
+    CASE_RESOLVER_WORKSPACE_NORMALIZATION_DIAGNOSTICS_EMPTY
+  );
 };
 
 export const normalizeCaseResolverWorkspaceWithDiagnostics = (
@@ -224,7 +212,7 @@ export const normalizeCaseResolverWorkspaceWithDiagnostics = (
           : normalizedRawFileType;
       const normalizedCreatedAt = normalizeTimestamp(
         file.createdAt,
-        CASE_RESOLVER_NORMALIZATION_FALLBACK_TIMESTAMP,
+        CASE_RESOLVER_NORMALIZATION_FALLBACK_TIMESTAMP
       );
       const normalizedUpdatedAt = normalizeTimestamp(file.updatedAt, normalizedCreatedAt);
       return createCaseResolverFile({
@@ -241,39 +229,41 @@ export const normalizeCaseResolverWorkspaceWithDiagnostics = (
   const caseFilesById = new Map<string, CaseResolverFile>(
     normalizedFilesBase
       .filter((file: CaseResolverFile): boolean => file.fileType === 'case')
-      .map((file: CaseResolverFile): [string, CaseResolverFile] => [file.id, file]),
+      .map((file: CaseResolverFile): [string, CaseResolverFile] => [file.id, file])
   );
   const sourceFolderRecordsForInference = parseCaseResolverFolderRecords(
     workspaceRecord['folderRecords'],
-    new Set<string>(caseFilesById.keys()),
+    new Set<string>(caseFilesById.keys())
   );
-  const folderOwnerCaseIdsByPath = buildFolderOwnerCaseIdsByPath(
-    sourceFolderRecordsForInference,
-  );
+  const folderOwnerCaseIdsByPath = buildFolderOwnerCaseIdsByPath(sourceFolderRecordsForInference);
   const validReferenceCaseIds = new Set<string>(caseFilesById.keys());
-  const normalizedFilesWithCaseRelations = normalizedFilesBase.map((file: CaseResolverFile): CaseResolverFile => {
-    const parentCaseId = resolveSafeCaseParentId(
-      file.id,
-      file.fileType,
-      file.parentCaseId ?? null,
-      caseFilesById,
-    );
-    const referenceCaseIds = file.referenceCaseIds
-      .filter((referenceId: string): boolean => referenceId !== file.id && validReferenceCaseIds.has(referenceId));
-    const uniqueReferenceCaseIds = Array.from(new Set(referenceCaseIds));
-    return {
-      ...file,
-      parentCaseId,
-      referenceCaseIds: uniqueReferenceCaseIds,
-    };
-  });
+  const normalizedFilesWithCaseRelations = normalizedFilesBase.map(
+    (file: CaseResolverFile): CaseResolverFile => {
+      const parentCaseId = resolveSafeCaseParentId(
+        file.id,
+        file.fileType,
+        file.parentCaseId ?? null,
+        caseFilesById
+      );
+      const referenceCaseIds = file.referenceCaseIds.filter(
+        (referenceId: string): boolean =>
+          referenceId !== file.id && validReferenceCaseIds.has(referenceId)
+      );
+      const uniqueReferenceCaseIds = Array.from(new Set(referenceCaseIds));
+      return {
+        ...file,
+        parentCaseId,
+        referenceCaseIds: uniqueReferenceCaseIds,
+      };
+    }
+  );
   const normalizedFiles = normalizedFilesWithCaseRelations.map(
     (file: CaseResolverFile): CaseResolverFile => {
       if (file.fileType === 'case') return file;
       if (file.parentCaseId) return file;
       const inferredOwnerCaseId = inferOwnerCaseIdFromFolderAncestors(
         file.folder,
-        folderOwnerCaseIdsByPath,
+        folderOwnerCaseIdsByPath
       );
       if (!inferredOwnerCaseId) return file;
       ownershipRepairedCount += 1;
@@ -281,7 +271,7 @@ export const normalizeCaseResolverWorkspaceWithDiagnostics = (
         ...file,
         parentCaseId: inferredOwnerCaseId,
       };
-    },
+    }
   );
   const rawAssets = Array.isArray(workspaceRecord['assets'])
     ? (workspaceRecord['assets'] as CaseResolverAssetFile[])
@@ -298,7 +288,7 @@ export const normalizeCaseResolverWorkspaceWithDiagnostics = (
       assetIds.add(id);
       const normalizedCreatedAt = normalizeTimestamp(
         asset.createdAt,
-        CASE_RESOLVER_NORMALIZATION_FALLBACK_TIMESTAMP,
+        CASE_RESOLVER_NORMALIZATION_FALLBACK_TIMESTAMP
       );
       const normalizedUpdatedAt = normalizeTimestamp(asset.updatedAt, normalizedCreatedAt);
       return createCaseResolverAssetFile({
@@ -316,20 +306,24 @@ export const normalizeCaseResolverWorkspaceWithDiagnostics = (
         updatedAt: normalizedUpdatedAt,
       });
     })
-    .filter((asset: CaseResolverAssetFile | null): asset is CaseResolverAssetFile => Boolean(asset));
+    .filter((asset: CaseResolverAssetFile | null): asset is CaseResolverAssetFile =>
+      Boolean(asset)
+    );
 
-  const filesWithSanitizedGraph = normalizedFiles.map((file: CaseResolverFile): CaseResolverFile => {
-    const sanitizedGraph = sanitizeCaseResolverGraphNodeFileRelations({
-      graph: file.graph || { nodes: [], edges: [], nodeMeta: {}, edgeMeta: {} },
-      assets,
-      files: normalizedFiles,
-    });
-    if (sanitizedGraph === file.graph) return file;
-    return {
-      ...file,
-      graph: sanitizedGraph,
-    };
-  });
+  const filesWithSanitizedGraph = normalizedFiles.map(
+    (file: CaseResolverFile): CaseResolverFile => {
+      const sanitizedGraph = sanitizeCaseResolverGraphNodeFileRelations({
+        graph: file.graph || { nodes: [], edges: [], nodeMeta: {}, edgeMeta: {} },
+        assets,
+        files: normalizedFiles,
+      });
+      if (sanitizedGraph === file.graph) return file;
+      return {
+        ...file,
+        graph: sanitizedGraph,
+      };
+    }
+  );
   const sanitizedAssets = sanitizeCaseResolverNodeFileAssetSnapshots({
     assets,
     files: filesWithSanitizedGraph,
@@ -351,12 +345,12 @@ export const normalizeCaseResolverWorkspaceWithDiagnostics = (
   const validCaseIds = new Set<string>(
     normalizedFilesWithRelatedLinks
       .filter((file: CaseResolverFile): boolean => file.fileType === 'case')
-      .map((file: CaseResolverFile): string => file.id),
+      .map((file: CaseResolverFile): string => file.id)
   );
 
   const sourceFolderRecords = parseCaseResolverFolderRecords(
     workspaceRecord['folderRecords'],
-    validCaseIds,
+    validCaseIds
   );
   const folderRecords = buildCaseResolverFolderRecords({
     sourceRecords: sourceFolderRecords,
@@ -391,11 +385,10 @@ export const normalizeCaseResolverWorkspaceWithDiagnostics = (
     activeCandidate &&
     normalizedFilesWithRelatedLinks.some((file: CaseResolverFile) => file.id === activeCandidate)
       ? activeCandidate
-      : normalizedFilesWithRelatedLinks[0]?.id ?? null;
+      : (normalizedFilesWithRelatedLinks[0]?.id ?? null);
 
   const ownershipUnresolvedCount = normalizedFilesWithRelatedLinks.filter(
-    (file: CaseResolverFile): boolean =>
-      file.fileType !== 'case' && !file.parentCaseId,
+    (file: CaseResolverFile): boolean => file.fileType !== 'case' && !file.parentCaseId
   ).length;
   const diagnostics: CaseResolverWorkspaceNormalizationDiagnostics = {
     ownershipRepairedCount,
@@ -424,7 +417,7 @@ export const normalizeCaseResolverWorkspaceWithDiagnostics = (
   return {
     workspace: attachCaseResolverWorkspaceNormalizationDiagnostics(
       normalizedWorkspace,
-      diagnostics,
+      diagnostics
     ),
     diagnostics,
   };
@@ -432,5 +425,4 @@ export const normalizeCaseResolverWorkspaceWithDiagnostics = (
 
 export const normalizeCaseResolverWorkspace = (
   workspace: CaseResolverWorkspace | null | undefined
-): CaseResolverWorkspace =>
-  normalizeCaseResolverWorkspaceWithDiagnostics(workspace).workspace;
+): CaseResolverWorkspace => normalizeCaseResolverWorkspaceWithDiagnostics(workspace).workspace;

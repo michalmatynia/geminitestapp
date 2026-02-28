@@ -2,9 +2,23 @@ import { Plus } from 'lucide-react';
 import { useState, useCallback } from 'react';
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { useSaveTagMutation, useDeleteTagMutation } from '@/features/products/hooks/useProductSettingsQueries';
+import {
+  useSaveTagMutation,
+  useDeleteTagMutation,
+} from '@/features/products/hooks/useProductSettingsQueries';
 import type { Catalog, ProductTag } from '@/shared/contracts/products';
-import { useToast, Button, SelectSimple, Input, FormModal, EmptyState, Tag as UiTag, FormSection, FormField, SimpleSettingsList } from '@/shared/ui';
+import {
+  useToast,
+  Button,
+  SelectSimple,
+  Input,
+  FormModal,
+  EmptyState,
+  Tag as UiTag,
+  FormSection,
+  FormField,
+  SimpleSettingsList,
+} from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 import { useProductSettingsContext } from './ProductSettingsContext';
@@ -90,9 +104,10 @@ export function TagsSettings(): React.JSX.Element {
       setShowModal(false);
       onRefresh();
     } catch (error) {
-      logClientError(error, { context: { source: 'TagsSettings', action: 'saveTag', tagId: editingTag?.id } });
-      const message =
-        error instanceof Error ? error.message : 'Failed to save tag.';
+      logClientError(error, {
+        context: { source: 'TagsSettings', action: 'saveTag', tagId: editingTag?.id },
+      });
+      const message = error instanceof Error ? error.message : 'Failed to save tag.';
       toast(message, { variant: 'error' });
     }
   };
@@ -108,9 +123,10 @@ export function TagsSettings(): React.JSX.Element {
       toast('Tag deleted.', { variant: 'success' });
       onRefresh();
     } catch (error) {
-      logClientError(error, { context: { source: 'TagsSettings', action: 'deleteTag', tagId: tagToDelete.id } });
-      const message =
-        error instanceof Error ? error.message : 'Failed to delete tag.';
+      logClientError(error, {
+        context: { source: 'TagsSettings', action: 'deleteTag', tagId: tagToDelete.id },
+      });
+      const message = error instanceof Error ? error.message : 'Failed to delete tag.';
       toast(message, { variant: 'error' });
     } finally {
       setTagToDelete(null);
@@ -127,12 +143,13 @@ export function TagsSettings(): React.JSX.Element {
         className='p-4'
       >
         <div className='w-full max-w-xs mt-4'>
-          <SelectSimple size='sm'
+          <SelectSimple
+            size='sm'
             value={selectedCatalogId || ''}
             onValueChange={onCatalogChange}
             options={catalogs.map((catalog: Catalog) => ({
               value: catalog.id,
-              label: `${catalog.name}${catalog.isDefault ? ' (Default)' : ''}`
+              label: `${catalog.name}${catalog.isDefault ? ' (Default)' : ''}`,
             }))}
             placeholder='Select a catalog...'
           />
@@ -142,31 +159,19 @@ export function TagsSettings(): React.JSX.Element {
       {selectedCatalogId && (
         <>
           <div className='flex justify-start'>
-            <Button
-              onClick={openCreateModal}
-              className='bg-white text-gray-900 hover:bg-gray-200'
-            >
+            <Button onClick={openCreateModal} className='bg-white text-gray-900 hover:bg-gray-200'>
               <Plus className='size-4 mr-2' />
               Add Tag
             </Button>
           </div>
 
-          <FormSection
-            title={`Tags for "${selectedCatalog?.name}"`}
-            className='p-4'
-          >
+          <FormSection title={`Tags for "${selectedCatalog?.name}"`} className='p-4'>
             <div className='mt-4'>
               <SimpleSettingsList
                 items={tags.map((tag: ProductTag) => ({
                   id: tag.id,
-                  title: (
-                    <UiTag
-                      label={tag.name}
-                      color={tag.color || '#38bdf8'}
-                      dot
-                    />
-                  ),
-                  original: tag
+                  title: <UiTag label={tag.name} color={tag.color || '#38bdf8'} dot />,
+                  original: tag,
                 }))}
                 isLoading={loading}
                 onEdit={(item) => openEditModal(item.original)}
@@ -200,7 +205,9 @@ export function TagsSettings(): React.JSX.Element {
           open={showModal}
           onClose={(): void => setShowModal(false)}
           title={editingTag ? 'Edit Tag' : 'Create Tag'}
-          onSave={(): void => { void handleSave(); }}
+          onSave={(): void => {
+            void handleSave();
+          }}
           isSaving={saveTagMutation.isPending}
           size='md'
         >
@@ -217,7 +224,8 @@ export function TagsSettings(): React.JSX.Element {
             </FormField>
 
             <FormField label='Catalog'>
-              <SelectSimple size='sm'
+              <SelectSimple
+                size='sm'
                 value={formData.catalogId}
                 onValueChange={(value: string): void =>
                   setFormData((prev: TagFormData) => ({
@@ -227,7 +235,7 @@ export function TagsSettings(): React.JSX.Element {
                 }
                 options={catalogs.map((catalog: Catalog) => ({
                   value: catalog.id,
-                  label: `${catalog.name}${catalog.isDefault ? ' (Default)' : ''}`
+                  label: `${catalog.name}${catalog.isDefault ? ' (Default)' : ''}`,
                 }))}
                 placeholder='Select catalog'
               />
@@ -260,4 +268,3 @@ export function TagsSettings(): React.JSX.Element {
     </div>
   );
 }
-            

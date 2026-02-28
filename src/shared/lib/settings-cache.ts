@@ -2,10 +2,7 @@ import 'server-only';
 
 import { LRUCache } from 'lru-cache';
 
-import type {
-  SettingRecordDto,
-  SettingsScopeDto,
-} from '@/shared/contracts/settings';
+import type { SettingRecordDto, SettingsScopeDto } from '@/shared/contracts/settings';
 
 export type SettingRecord = SettingRecordDto;
 export type SettingsScope = SettingsScopeDto;
@@ -26,8 +23,7 @@ const lastKnownSettings = new Map<string, { data: SettingRecord[]; fetchedAt: nu
 const normalizeScope = (scope?: SettingsScope | null): SettingsScope =>
   scope === 'heavy' || scope === 'light' || scope === 'all' ? scope : 'all';
 
-const cacheKey = (scope?: SettingsScope | null): string =>
-  `settings:${normalizeScope(scope)}`;
+const cacheKey = (scope?: SettingsScope | null): string => `settings:${normalizeScope(scope)}`;
 
 export const isSettingsCacheDebugEnabled = (): boolean =>
   process.env['NODE_ENV'] !== 'production' || process.env['DEBUG_SETTINGS'] === 'true';
@@ -50,7 +46,10 @@ export const getSettingsCacheStats = (): SettingsCacheStats => ({
   misses: settingsCacheMisses,
   inflight: Array.from(settingsInflight.keys()),
   staleAgeMs: Array.from(lastKnownSettings.entries()).reduce<Record<string, number>>(
-    (acc: Record<string, number>, [scope, entry]: [string, { data: SettingRecord[]; fetchedAt: number }]): Record<string, number> => {
+    (
+      acc: Record<string, number>,
+      [scope, entry]: [string, { data: SettingRecord[]; fetchedAt: number }]
+    ): Record<string, number> => {
       acc[scope] = Date.now() - entry.fetchedAt;
       return acc;
     },
@@ -68,7 +67,10 @@ export const getCachedSettings = (scope?: SettingsScope | null): SettingRecord[]
   return null;
 };
 
-export const setCachedSettings = (settings: SettingRecord[], scope?: SettingsScope | null): void => {
+export const setCachedSettings = (
+  settings: SettingRecord[],
+  scope?: SettingsScope | null
+): void => {
   const key = cacheKey(scope);
   settingsLru.set(key, settings);
   lastKnownSettings.set(key, { data: settings, fetchedAt: Date.now() });
@@ -89,8 +91,9 @@ export const clearSettingsCache = (scope?: SettingsScope | null): void => {
   settingsCacheMisses = 0;
 };
 
-export const getSettingsInflight = (scope?: SettingsScope | null): Promise<SettingRecord[]> | null =>
-  settingsInflight.get(cacheKey(scope)) ?? null;
+export const getSettingsInflight = (
+  scope?: SettingsScope | null
+): Promise<SettingRecord[]> | null => settingsInflight.get(cacheKey(scope)) ?? null;
 
 export const setSettingsInflight = (
   inflight: Promise<SettingRecord[]> | null,

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import React, { useState } from 'react';
 
-import { Button, SectionHeader,  useToast, Card } from '@/shared/ui';
+import { Button, SectionHeader, useToast, Card } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals/ConfirmModal';
 
 import { useSyncAllBaseImagesMutation } from '../../hooks/useIntegrationMutations';
@@ -11,8 +11,7 @@ import { useSyncAllBaseImagesMutation } from '../../hooks/useIntegrationMutation
 const marketplaces = [
   {
     name: 'Allegro',
-    description:
-      'Manage Allegro listings, connections, mappings, and templates.',
+    description: 'Manage Allegro listings, connections, mappings, and templates.',
     href: '/admin/integrations/marketplaces/allegro',
   },
   {
@@ -34,10 +33,9 @@ export default function MarketplacesPage(): React.JSX.Element {
       await syncMutation.mutateAsync();
       toast('Base.com image sync queued.', { variant: 'success' });
     } catch (error) {
-      toast(
-        error instanceof Error ? error.message : 'Failed to enqueue Base.com image sync',
-        { variant: 'error' }
-      );
+      toast(error instanceof Error ? error.message : 'Failed to enqueue Base.com image sync', {
+        variant: 'error',
+      });
     } finally {
       setShowSyncConfirm(false);
     }
@@ -53,22 +51,14 @@ export default function MarketplacesPage(): React.JSX.Element {
 
       <div className='grid gap-4 md:grid-cols-2'>
         {marketplaces.map((marketplace: { name: string; description: string; href: string }) => (
-          <Link
-            key={marketplace.name}
-            href={marketplace.href}
-            className='block group'
-          >
+          <Link key={marketplace.name} href={marketplace.href} className='block group'>
             <Card
               variant='subtle'
               padding='md'
               className='border-border bg-card/40 transition group-hover:border-primary/40 group-hover:bg-card/60 h-full'
             >
-              <h2 className='text-lg font-semibold text-white'>
-                {marketplace.name}
-              </h2>
-              <p className='mt-1 text-sm text-gray-400'>
-                {marketplace.description}
-              </p>
+              <h2 className='text-lg font-semibold text-white'>{marketplace.name}</h2>
+              <p className='mt-1 text-sm text-gray-400'>{marketplace.description}</p>
             </Card>
           </Link>
         ))}

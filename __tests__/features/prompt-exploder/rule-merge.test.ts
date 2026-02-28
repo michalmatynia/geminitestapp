@@ -16,7 +16,10 @@ describe('prompt exploder rule merge', () => {
   });
 
   it('dedupes merged variants and flattens top-level alternations', () => {
-    const merged = mergeRegexPatternsForRule('(?:\\bfoo\\b)|(?:\\bbar\\b)', '(?:\\bbar\\b)|(?:\\bbaz\\b)');
+    const merged = mergeRegexPatternsForRule(
+      '(?:\\bfoo\\b)|(?:\\bbar\\b)',
+      '(?:\\bbar\\b)|(?:\\bbaz\\b)'
+    );
     expect(merged).toBe('(?:\\bfoo\\b)|(?:\\bbar\\b)|(?:\\bbaz\\b)');
   });
 
@@ -25,4 +28,3 @@ describe('prompt exploder rule merge', () => {
     expect(merged).toBe('(?:\\bfoo\\|bar\\b)|(?:\\bbaz[|]qux\\b)');
   });
 });
-

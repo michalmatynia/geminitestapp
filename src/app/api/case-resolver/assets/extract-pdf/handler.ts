@@ -16,7 +16,7 @@ const CASE_RESOLVER_UPLOAD_DISK_PREFIX = path.join(
   process.cwd(),
   'public',
   'uploads',
-  'case-resolver',
+  'case-resolver'
 );
 
 const normalizePublicFilepath = (value: unknown): string | null => {
@@ -28,10 +28,7 @@ const normalizePublicFilepath = (value: unknown): string | null => {
   return withoutQuery.startsWith('/') ? withoutQuery : `/${withoutQuery}`;
 };
 
-export async function POST_handler(
-  req: NextRequest,
-  _ctx: ApiHandlerContext,
-): Promise<Response> {
+export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   let payload: ExtractPdfRequest;
   try {
     payload = (await req.json()) as ExtractPdfRequest;

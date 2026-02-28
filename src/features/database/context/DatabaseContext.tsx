@@ -98,45 +98,57 @@ export function DatabaseProvider({
   const enums = useMemo(() => data?.enums ?? [], [data]);
   const databaseSize = data?.databaseSize ?? '';
 
-  const configValue = useMemo<DatabaseConfig>(() => ({
-    dbType,
-    setDbType,
-    mode,
-    backupName,
-  }), [dbType, mode, backupName]);
+  const configValue = useMemo<DatabaseConfig>(
+    () => ({
+      dbType,
+      setDbType,
+      mode,
+      backupName,
+    }),
+    [dbType, mode, backupName]
+  );
 
-  const dataValue = useMemo<DatabaseData>(() => ({
-    tableDetails,
-    isLoading,
-    error: error?.message ?? null,
-    refresh: () => { void refetch(); },
-    groups,
-    tables,
-    tableRows,
-    enums,
-    databaseSize,
-  }), [tableDetails, isLoading, error, refetch, groups, tables, tableRows, enums, databaseSize]);
+  const dataValue = useMemo<DatabaseData>(
+    () => ({
+      tableDetails,
+      isLoading,
+      error: error?.message ?? null,
+      refresh: () => {
+        void refetch();
+      },
+      groups,
+      tables,
+      tableRows,
+      enums,
+      databaseSize,
+    }),
+    [tableDetails, isLoading, error, refetch, groups, tables, tableRows, enums, databaseSize]
+  );
 
-  const paginationValue = useMemo<DatabasePagination>(() => ({
-    page,
-    setPage,
-    pageSize,
-    setPageSize,
-  }), [page, pageSize]);
+  const paginationValue = useMemo<DatabasePagination>(
+    () => ({
+      page,
+      setPage,
+      pageSize,
+      setPageSize,
+    }),
+    [page, pageSize]
+  );
 
-  const aggregatedValue = useMemo<DatabaseContextType>(() => ({
-    ...configValue,
-    ...dataValue,
-    ...paginationValue,
-  }), [configValue, dataValue, paginationValue]);
+  const aggregatedValue = useMemo<DatabaseContextType>(
+    () => ({
+      ...configValue,
+      ...dataValue,
+      ...paginationValue,
+    }),
+    [configValue, dataValue, paginationValue]
+  );
 
   return (
     <ConfigContext.Provider value={configValue}>
       <DataContext.Provider value={dataValue}>
         <PaginationContext.Provider value={paginationValue}>
-          <DatabaseContext.Provider value={aggregatedValue}>
-            {children}
-          </DatabaseContext.Provider>
+          <DatabaseContext.Provider value={aggregatedValue}>{children}</DatabaseContext.Provider>
         </PaginationContext.Provider>
       </DataContext.Provider>
     </ConfigContext.Provider>

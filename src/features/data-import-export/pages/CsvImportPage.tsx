@@ -14,7 +14,9 @@ const CSVImportPage = (): React.JSX.Element => {
     setFile(files[0] || null);
   };
 
-  const handleSubmit = async (helpers?: { reportProgress: (loaded: number, total?: number) => void }): Promise<void> => {
+  const handleSubmit = async (helpers?: {
+    reportProgress: (loaded: number, total?: number) => void;
+  }): Promise<void> => {
     if (!file) {
       toast('Please select a file', { variant: 'error' });
       return;
@@ -36,7 +38,10 @@ const CSVImportPage = (): React.JSX.Element => {
     <div className='space-y-6'>
       <PanelHeader title='Import Products from CSV' />
       <div className='flex w-full max-w-sm items-center space-x-2'>
-        <FileUploadButton onFilesSelected={(files: File[]) => handleFileChange(files)} accept='.csv'>
+        <FileUploadButton
+          onFilesSelected={(files: File[]) => handleFileChange(files)}
+          accept='.csv'
+        >
           Choose CSV
         </FileUploadButton>
         <Button

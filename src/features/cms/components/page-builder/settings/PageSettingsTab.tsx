@@ -53,7 +53,9 @@ function PageSettingsTab(): React.ReactNode {
                 id='page-name'
                 ref={nameInputRef}
                 value={page.name}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>): void => handleNameChange(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  handleNameChange(e.target.value)
+                }
                 onBlur={(): void => setIsEditingName(false)}
                 onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>): void => {
                   if (event.key === 'Enter' || event.key === 'Escape') {
@@ -112,9 +114,15 @@ function PageSettingsTab(): React.ReactNode {
       </div>
 
       <TabsList className='mx-4 mt-3 w-[calc(100%-2rem)]'>
-        <TabsTrigger value='page' className='flex-1 text-xs'>Page</TabsTrigger>
-        <TabsTrigger value='seo' className='flex-1 text-xs'>SEO</TabsTrigger>
-        <TabsTrigger value='ai' className='flex-1 text-xs'>AI</TabsTrigger>
+        <TabsTrigger value='page' className='flex-1 text-xs'>
+          Page
+        </TabsTrigger>
+        <TabsTrigger value='seo' className='flex-1 text-xs'>
+          SEO
+        </TabsTrigger>
+        <TabsTrigger value='ai' className='flex-1 text-xs'>
+          AI
+        </TabsTrigger>
       </TabsList>
 
       <TabsContent value='page' className='flex-1 overflow-y-auto p-4 mt-0'>

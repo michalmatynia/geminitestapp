@@ -5,7 +5,6 @@ import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 
 import { postCenterSlotHandler } from './handler';
 
-export const POST = apiHandlerWithParams<{ slotId: string }>(
-  postCenterSlotHandler,
-  { source: 'image-studio.slots.[slotId].center.POST' }
-);
+export const POST = apiHandlerWithParams<{ slotId: string }>(postCenterSlotHandler, {
+  source: 'image-studio.slots.[slotId].center.POST',
+});

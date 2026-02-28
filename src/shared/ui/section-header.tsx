@@ -19,10 +19,12 @@ type SectionHeaderProps = {
   subtitle?: ReactNode | undefined;
   description?: ReactNode | undefined;
   actions?: ReactNode | undefined;
-  refresh?: {
-    onRefresh: () => void;
-    isRefreshing: boolean;
-  } | undefined;
+  refresh?:
+    | {
+        onRefresh: () => void;
+        isRefreshing: boolean;
+      }
+    | undefined;
   eyebrow?: ReactNode | undefined;
   icon?: ReactNode | undefined;
   size?: SectionHeaderSize | undefined;
@@ -57,7 +59,9 @@ export function SectionHeader({
         className
       )}
     >
-      <div className='space-y-2 flex-1 min-w-0'> {/* Added flex-1 and min-w-0 for better flex behavior */}
+      <div className='space-y-2 flex-1 min-w-0'>
+        {' '}
+        {/* Added flex-1 and min-w-0 for better flex behavior */}
         {eyebrow ? <div className='text-sm text-muted-foreground'>{eyebrow}</div> : null}
         <div className='flex items-center gap-3'>
           {icon ? <div className='shrink-0'>{icon}</div> : null}
@@ -72,47 +76,46 @@ export function SectionHeader({
               {title}
             </h1>
           ) : (
-            <div className={cn('font-bold tracking-tight text-white', titleSizes[size], titleClassName)}>
+            <div
+              className={cn(
+                'font-bold tracking-tight text-white',
+                titleSizes[size],
+                titleClassName
+              )}
+            >
               {title}
             </div>
           )}
         </div>
         {subtitle ? ( // Render subtitle if provided
           typeof subtitle === 'string' ? (
-            <h2 className={cn('text-sm text-gray-400', subtitleClassName)}>
-              {subtitle}
-            </h2>
+            <h2 className={cn('text-sm text-gray-400', subtitleClassName)}>{subtitle}</h2>
           ) : (
-            <div className={cn('text-sm text-gray-400', subtitleClassName)}>
-              {subtitle}
-            </div>
+            <div className={cn('text-sm text-gray-400', subtitleClassName)}>{subtitle}</div>
           )
         ) : null}
         {description ? (
           typeof description === 'string' ? (
-            <p className={cn('text-sm text-gray-400', descriptionClassName)}>
-              {description}
-            </p>
+            <p className={cn('text-sm text-gray-400', descriptionClassName)}>{description}</p>
           ) : (
-            <div className={cn('text-sm text-gray-400', descriptionClassName)}>
-              {description}
-            </div>
+            <div className={cn('text-sm text-gray-400', descriptionClassName)}>{description}</div>
           )
         ) : null}
       </div>
       {(actions || refresh) && (
-        <div className={cn('flex flex-wrap items-center gap-2 shrink-0', actionsClassName)}> {/* Added shrink-0 for actions */}
+        <div className={cn('flex flex-wrap items-center gap-2 shrink-0', actionsClassName)}>
+          {' '}
+          {/* Added shrink-0 for actions */}
           {refresh && (
-            <RefreshButton
-              onRefresh={refresh.onRefresh}
-              isRefreshing={refresh.isRefreshing}
-            />
+            <RefreshButton onRefresh={refresh.onRefresh} isRefreshing={refresh.isRefreshing} />
           )}
           {actions}
         </div>
       )}
       {children ? ( // Render children at the bottom, similar to TreeHeader
-        <div className={cn('w-full pt-4', children ? 'mt-3' : '')}> {/* Added w-full and pt-4 */}
+        <div className={cn('w-full pt-4', children ? 'mt-3' : '')}>
+          {' '}
+          {/* Added w-full and pt-4 */}
           {children}
         </div>
       ) : null}

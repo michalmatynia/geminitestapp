@@ -7,7 +7,6 @@ import { useQueryPerformance } from '@/shared/hooks/useQueryPerformance';
 
 import { Button, Card, CardContent, CardHeader, CardTitle, Input } from './';
 
-
 type QueryDevPanelProps = {
   isOnline: boolean;
   lastSync: Date | null;
@@ -166,10 +165,7 @@ export function QueryDevPanel({
                 <div className='text-center text-[11px] text-gray-400'>No queries</div>
               ) : (
                 filteredQueries.map((item) => (
-                  <div
-                    key={item.keyString}
-                    className='rounded border border-white/10 p-2'
-                  >
+                  <div key={item.keyString} className='rounded border border-white/10 p-2'>
                     <div className='flex items-start justify-between gap-2'>
                       <div className='min-w-0'>
                         <div className='truncate text-[11px] text-gray-200'>{item.keyString}</div>
@@ -177,9 +173,7 @@ export function QueryDevPanel({
                           <span>Status: {item.status}</span>
                           <span>Fetch: {item.fetchStatus}</span>
                           <span>Obs: {item.observers}</span>
-                          {item.dataSize !== null ? (
-                            <span>Size: {item.dataSize}b</span>
-                          ) : null}
+                          {item.dataSize !== null ? <span>Size: {item.dataSize}b</span> : null}
                         </div>
                       </div>
                       <div className='flex flex-col gap-1'>

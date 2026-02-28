@@ -3,18 +3,20 @@ import { NextRequest, NextResponse } from 'next/server';
 import { runAgentBrowserControl } from '@/features/ai/agent-runtime/server';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { badRequestError, internalError } from '@/shared/errors/app-error';
-import { apiHandlerWithParams, type ApiHandlerContext as _ApiHandlerContext } from '@/shared/lib/api/api-handler';
+import {
+  apiHandlerWithParams,
+  type ApiHandlerContext as _ApiHandlerContext,
+} from '@/shared/lib/api/api-handler';
 import prisma from '@/shared/lib/db/prisma';
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 
-async function POST_handler(req: NextRequest,
+async function POST_handler(
+  req: NextRequest,
   { params }: { params: Promise<{ runId: string }> }
 ): Promise<Response> {
   if (!('chatbotAgentRun' in prisma)) {
-    throw internalError(
-      'Agent runs not initialized. Run prisma generate/db push.'
-    );
+    throw internalError('Agent runs not initialized. Run prisma generate/db push.');
   }
   const { runId } = await params;
   let body: {

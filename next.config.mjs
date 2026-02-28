@@ -5,7 +5,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 /** @type {import('next').NextConfig} */
-const isDev = process.env.NODE_ENV !== "production";
+const isDev = process.env.NODE_ENV !== 'production';
 const csp = [
   "default-src 'self'",
   "base-uri 'self'",
@@ -14,11 +14,11 @@ const csp = [
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
   "style-src 'self' 'unsafe-inline'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''}`,
   "connect-src 'self' https: wss: ws:",
   "object-src 'none'",
   "worker-src 'self' blob:",
-].join("; ");
+].join('; ');
 
 const nextConfig = {
   reactStrictMode: true,
@@ -27,15 +27,15 @@ const nextConfig = {
   // when `next build` and `next dev` are triggered in parallel.
   distDir: process.env.NEXT_DIST_DIR || (isDev ? '.next-dev' : '.next'),
   compress: true, // Ensure gzip compression is enabled
-  output: "standalone", // Docker-friendly build output
+  output: 'standalone', // Docker-friendly build output
   outputFileTracingRoot: __dirname,
   compiler: {
-    removeConsole: process.env.NODE_ENV === "production",
+    removeConsole: process.env.NODE_ENV === 'production',
   },
   experimental: {
     // Default proxy body clone limit (~10MB) is too low for multi-image product forms.
     // Raise it so multipart requests don't fail before route handlers read formData().
-    proxyClientMaxBodySize: "50mb",
+    proxyClientMaxBodySize: '50mb',
     optimizePackageImports: [
       'lucide-react',
       '@radix-ui/react-alert-dialog',
@@ -82,7 +82,10 @@ const nextConfig = {
   webpack: (config) => {
     config.resolve ??= {};
     config.resolve.alias ??= {};
-    config.resolve.alias['stats-gl/node_modules/three'] = path.resolve(__dirname, 'node_modules/three');
+    config.resolve.alias['stats-gl/node_modules/three'] = path.resolve(
+      __dirname,
+      'node_modules/three'
+    );
     return config;
   },
   images: {
@@ -115,8 +118,8 @@ const nextConfig = {
   async redirects() {
     return [
       {
-        source: "/admin/products/constructor",
-        destination: "/admin/products/settings",
+        source: '/admin/products/constructor',
+        destination: '/admin/products/settings',
         permanent: false,
       },
     ];
@@ -124,46 +127,46 @@ const nextConfig = {
   async headers() {
     return [
       {
-        source: "/:path*",
+        source: '/:path*',
         headers: [
           {
-            key: "Content-Security-Policy",
+            key: 'Content-Security-Policy',
             value: csp,
           },
           {
-            key: "X-Content-Type-Options",
-            value: "nosniff",
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
           },
           {
-            key: "X-Frame-Options",
-            value: "SAMEORIGIN",
+            key: 'X-Frame-Options',
+            value: 'SAMEORIGIN',
           },
           {
-            key: "X-XSS-Protection",
-            value: "0",
+            key: 'X-XSS-Protection',
+            value: '0',
           },
           {
-            key: "Referrer-Policy",
-            value: "strict-origin-when-cross-origin",
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin',
           },
           {
-            key: "Permissions-Policy",
-            value: "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
           },
           {
-            key: "Cross-Origin-Resource-Policy",
-            value: "same-origin",
+            key: 'Cross-Origin-Resource-Policy',
+            value: 'same-origin',
           },
           {
-            key: "Cross-Origin-Opener-Policy",
-            value: "same-origin",
+            key: 'Cross-Origin-Opener-Policy',
+            value: 'same-origin',
           },
           ...(isDev
             ? []
             : [
                 {
-                  key: "Strict-Transport-Security",
-                  value: "max-age=15552000; includeSubDomains",
+                  key: 'Strict-Transport-Security',
+                  value: 'max-age=15552000; includeSubDomains',
                 },
               ]),
         ],

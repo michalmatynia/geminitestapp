@@ -6,7 +6,6 @@ import type { ChatbotMemoryItem } from '@/shared/contracts/chatbot';
 
 import { useChatbotMemory } from '../hooks/useChatbotMemoryQueries';
 
-
 // ChatbotMemoryItem already includes memoryKey, content, summary, tags, etc.
 // ExtendedMemoryItem just re-uses the base type as-is.
 export type ExtendedMemoryItem = ChatbotMemoryItem;
@@ -47,7 +46,7 @@ export function useChatbotMemoryState(): UseChatbotMemoryStateReturn {
   }, [memoryKey, tag, query, limit]);
 
   const memoryQuery = useChatbotMemory(queryString);
-  const items = (memoryQuery.data ?? []);
+  const items = memoryQuery.data ?? [];
 
   const toggleExpanded = useCallback((id: string) => {
     setExpanded((prev) => ({

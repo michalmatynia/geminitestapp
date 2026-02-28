@@ -72,7 +72,7 @@ function findMatchingBrace(input: string, startIndex: number): number {
     }
 
     if (state.inSingle) {
-      if (!state.escaped && char === '\'') state.inSingle = false;
+      if (!state.escaped && char === "'") state.inSingle = false;
       state.escaped = !state.escaped && char === '\\';
       continue;
     }
@@ -98,7 +98,7 @@ function findMatchingBrace(input: string, startIndex: number): number {
       continue;
     }
 
-    if (char === '\'') {
+    if (char === "'") {
       state.inSingle = true;
       state.escaped = false;
       continue;
@@ -161,7 +161,7 @@ function segmentizeJsLikeText(input: string): Segment[] {
 
     if (kind === 'single_string') {
       buf += char;
-      if (!state.escaped && char === '\'') {
+      if (!state.escaped && char === "'") {
         state.inSingle = false;
         flush();
         kind = 'code';
@@ -209,12 +209,12 @@ function segmentizeJsLikeText(input: string): Segment[] {
       index += 1;
       continue;
     }
-    if (char === '\'') {
+    if (char === "'") {
       flush();
       kind = 'single_string';
       state.inSingle = true;
       state.escaped = false;
-      buf = '\'';
+      buf = "'";
       continue;
     }
     if (char === '"') {
@@ -251,7 +251,13 @@ function normalizeParamsObject(rawObjectText: string): string {
     if (segment.kind === 'single_string') {
       const inner = segment.text.slice(1, -1);
       // Best-effort safety: only convert simple single-quoted strings.
-      if (!inner || inner.includes('\n') || inner.includes('\r') || inner.includes('\\') || inner.includes('"')) {
+      if (
+        !inner ||
+        inner.includes('\n') ||
+        inner.includes('\r') ||
+        inner.includes('\\') ||
+        inner.includes('"')
+      ) {
         return segment.text;
       }
       return `"${inner}"`;
@@ -335,17 +341,12 @@ export function formatProgrammaticPrompt(
   options: FormatPromptOptions = {}
 ): FormatPromptResult {
   const startedAt = performance.now();
-  const mergedRules: PromptValidationRule[] = [
-    ...settings.rules,
-    ...(settings.learnedRules ?? []),
-  ];
+  const mergedRules: PromptValidationRule[] = [...settings.rules, ...(settings.learnedRules ?? [])];
   const validationSettings = { ...settings, enabled: true, rules: mergedRules };
   const runtime =
-    options.preparedRuntime ??
-    preparePromptValidationRuntime(validationSettings, context);
+    options.preparedRuntime ?? preparePromptValidationRuntime(validationSettings, context);
   const issuesBeforeList =
-    options.precomputedIssuesBefore ??
-    validateProgrammaticPromptWithRuntime(prompt, runtime);
+    options.precomputedIssuesBefore ?? validateProgrammaticPromptWithRuntime(prompt, runtime);
   const issuesBefore = issuesBeforeList.length;
   if (issuesBefore === 0) {
     recordPromptValidationTiming('formatter_ms', performance.now() - startedAt, {
@@ -449,9 +450,7 @@ export function formatProgrammaticPrompt(
   let issuesAfter = issuesBefore;
   if (changed) {
     const shouldUseIncremental =
-      options.enableIncrementalValidation !== false &&
-      !wideImpactFix &&
-      impactedRuleIds.size > 0;
+      options.enableIncrementalValidation !== false && !wideImpactFix && impactedRuleIds.size > 0;
     if (shouldUseIncremental) {
       const afterTouchedIssues = validateProgrammaticPromptWithRuntime(nextPrompt, runtime, {
         includeRuleIds: impactedRuleIds,

@@ -8,9 +8,11 @@ import {
 
 describe('base-import-service-shared', () => {
   it('normalizes selected ids by trimming and deduping', () => {
-    expect(
-      normalizeSelectedIds([' 1001 ', '1002', '', '1001', '   ', '1003'])
-    ).toEqual(['1001', '1002', '1003']);
+    expect(normalizeSelectedIds([' 1001 ', '1002', '', '1001', '   ', '1003'])).toEqual([
+      '1001',
+      '1002',
+      '1003',
+    ]);
   });
 
   it('applies unique-only filter when enabled and no explicit selection', () => {

@@ -130,12 +130,7 @@ export type UpdateProductAiJobDto = z.infer<typeof updateProductAiJobSchema>;
  * Product AI Job Repository Types
  */
 
-export type ProductAiJobStatus =
-  | 'pending'
-  | 'running'
-  | 'completed'
-  | 'failed'
-  | 'canceled';
+export type ProductAiJobStatus = 'pending' | 'running' | 'completed' | 'failed' | 'canceled';
 
 export type ProductAiJobRecord = {
   id: string;
@@ -154,13 +149,7 @@ export type ProductAiJobRecord = {
 export type ProductAiJobUpdate = Partial<
   Pick<
     ProductAiJobRecord,
-    | 'status'
-    | 'type'
-    | 'payload'
-    | 'result'
-    | 'errorMessage'
-    | 'startedAt'
-    | 'finishedAt'
+    'status' | 'type' | 'payload' | 'result' | 'errorMessage' | 'startedAt' | 'finishedAt'
   >
 > & {
   productId?: string;
@@ -174,15 +163,8 @@ export type FindProductAiJobsOptions = {
 };
 
 export type ProductAiJobRepository = {
-  createJob(
-    productId: string,
-    type: string,
-    payload: unknown
-  ): Promise<ProductAiJobRecord>;
-  findJobs(
-    productId?: string,
-    options?: FindProductAiJobsOptions
-  ): Promise<ProductAiJobRecord[]>;
+  createJob(productId: string, type: string, payload: unknown): Promise<ProductAiJobRecord>;
+  findJobs(productId?: string, options?: FindProductAiJobsOptions): Promise<ProductAiJobRecord[]>;
   findJobById(jobId: string): Promise<ProductAiJobRecord | null>;
   findNextPendingJob(): Promise<ProductAiJobRecord | null>;
   findAnyPendingJob(): Promise<ProductAiJobRecord | null>;
@@ -205,7 +187,12 @@ export type QueueConfig<TJobData = unknown> = {
   workerOptions?: Record<string, unknown>; // Omit<WorkerOptions, 'connection' | 'concurrency'>
   processor: (data: TJobData, jobId: string) => Promise<unknown>;
   onCompleted?: (jobId: string, result: unknown, data: TJobData) => Promise<void>;
-  onFailed?: (jobId: string, error: Error, data: TJobData, context?: Record<string, unknown>) => Promise<void>;
+  onFailed?: (
+    jobId: string,
+    error: Error,
+    data: TJobData,
+    context?: Record<string, unknown>
+  ) => Promise<void>;
 };
 
 export type ManagedQueue<TJobData = unknown> = {

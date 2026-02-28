@@ -17,20 +17,14 @@ const RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
 
 const keyRuns = (
   status: 'all' | 'queued' | 'started' | 'completed' | 'failed' | 'canceled' | 'dead_lettered'
-): string =>
-  `${KEY_PREFIX}:runs:${status}`;
+): string => `${KEY_PREFIX}:runs:${status}`;
 const keyDurations = (): string => `${KEY_PREFIX}:runs:durations`;
 const keyNodes = (status: string): string => `${KEY_PREFIX}:nodes:${status}`;
 const keyBrain = (scope: 'all' | 'analytics' | 'logs' | 'warning' | 'error'): string =>
   `${KEY_PREFIX}:brain:${scope}`;
 const keyTotals = (): string => `${KEY_PREFIX}:totals`;
 
-const parseEnvNumber = (
-  name: string,
-  fallback: number,
-  min: number,
-  max: number
-): number => {
+const parseEnvNumber = (name: string, fallback: number, min: number, max: number): number => {
   const raw = process.env[name];
   if (!raw) return fallback;
   const parsed = Number.parseInt(raw, 10);
@@ -108,14 +102,21 @@ const clampRate = (value: number): number => {
   return Math.max(0, Math.min(100, value));
 };
 
-const withTimeout = async <T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> => {
+const withTimeout = async <T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  label: string
+): Promise<T> => {
   if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) return promise;
   let timer: NodeJS.Timeout | null = null;
   try {
     return await Promise.race<T>([
       promise,
       new Promise<T>((_resolve, reject) => {
-        timer = setTimeout(() => reject(new Error(`${label} timed out after ${timeoutMs}ms`)), timeoutMs);
+        timer = setTimeout(
+          () => reject(new Error(`${label} timed out after ${timeoutMs}ms`)),
+          timeoutMs
+        );
       }),
     ]);
   } finally {
@@ -143,10 +144,7 @@ const pruneSummaryCache = (now: number): void => {
   });
 };
 
-const readCachedSummary = (
-  cacheKey: string,
-  now: number
-): AiPathRuntimeAnalyticsSummary | null => {
+const readCachedSummary = (cacheKey: string, now: number): AiPathRuntimeAnalyticsSummary | null => {
   const cached = summaryCache.get(cacheKey);
   if (!cached) return null;
   if (cached.expiresAt <= now) {
@@ -327,16 +325,15 @@ export const summarizeRuntimeTraceAnalytics = (input: {
   durations.sort((a: number, b: number): number => a - b);
   const avgDurationMs =
     durations.length > 0
-      ? Math.round(durations.reduce((sum: number, value: number) => sum + value, 0) / durations.length)
+      ? Math.round(
+          durations.reduce((sum: number, value: number) => sum + value, 0) / durations.length
+        )
       : null;
   const p95DurationMs =
     durations.length > 0
       ? durations[
-        Math.min(
-          durations.length - 1,
-          Math.max(0, Math.ceil(durations.length * 0.95) - 1)
-        )
-      ]!
+          Math.min(durations.length - 1, Math.max(0, Math.ceil(durations.length * 0.95) - 1))
+        ]!
       : null;
   const topSlowNodes = Array.from(nodeAggregates.values())
     .filter((aggregate) => aggregate.durationCount > 0)
@@ -404,7 +401,7 @@ const loadRuntimeTraceAnalytics = async (input: {
         offset: 0,
       }),
       SUMMARY_QUERY_TIMEOUT_MS,
-      'ai-paths runtime trace analytics query',
+      'ai-paths runtime trace analytics query'
     );
     return summarizeRuntimeTraceAnalytics({
       runs: result.runs,
@@ -419,7 +416,11 @@ const loadRuntimeTraceAnalytics = async (input: {
   }
 };
 
-const emptySummary = (from: Date, to: Date, range: AiPathRuntimeAnalyticsRange | 'custom'): AiPathRuntimeAnalyticsSummary => ({
+const emptySummary = (
+  from: Date,
+  to: Date,
+  range: AiPathRuntimeAnalyticsRange | 'custom'
+): AiPathRuntimeAnalyticsSummary => ({
   from: from.toISOString(),
   to: to.toISOString(),
   range,
@@ -485,8 +486,16 @@ export const recordRuntimeRunQueued = async (input: {
     const timestampMs = toTimestampMs(input.timestamp);
     const pruneTo = pruneBefore(timestampMs);
     const multi = redis.multi();
-    multi.zadd(keyRuns('all'), String(timestampMs), buildEventMember('run_queued', input.runId, timestampMs));
-    multi.zadd(keyRuns('queued'), String(timestampMs), buildEventMember('queued', input.runId, timestampMs));
+    multi.zadd(
+      keyRuns('all'),
+      String(timestampMs),
+      buildEventMember('run_queued', input.runId, timestampMs)
+    );
+    multi.zadd(
+      keyRuns('queued'),
+      String(timestampMs),
+      buildEventMember('queued', input.runId, timestampMs)
+    );
     multi.zremrangebyscore(keyRuns('all'), 0, pruneTo);
     multi.zremrangebyscore(keyRuns('queued'), 0, pruneTo);
     multi.hincrby(keyTotals(), 'runs_total', 1);
@@ -511,7 +520,11 @@ export const recordRuntimeRunStarted = async (input: {
     const timestampMs = toTimestampMs(input.timestamp);
     const pruneTo = pruneBefore(timestampMs);
     const multi = redis.multi();
-    multi.zadd(keyRuns('started'), String(timestampMs), buildEventMember('started', input.runId, timestampMs));
+    multi.zadd(
+      keyRuns('started'),
+      String(timestampMs),
+      buildEventMember('started', input.runId, timestampMs)
+    );
     multi.zremrangebyscore(keyRuns('started'), 0, pruneTo);
     multi.hincrby(keyTotals(), 'runs_started', 1);
     await multi.exec();
@@ -537,7 +550,11 @@ export const recordRuntimeRunFinished = async (input: {
     const pruneTo = pruneBefore(timestampMs);
     const runStatusKey = keyRuns(input.status);
     const multi = redis.multi();
-    multi.zadd(runStatusKey, String(timestampMs), buildEventMember(input.status, input.runId, timestampMs));
+    multi.zadd(
+      runStatusKey,
+      String(timestampMs),
+      buildEventMember(input.status, input.runId, timestampMs)
+    );
     multi.zremrangebyscore(runStatusKey, 0, pruneTo);
     multi.hincrby(keyTotals(), `runs_${input.status}`, 1);
 
@@ -546,7 +563,11 @@ export const recordRuntimeRunFinished = async (input: {
         ? Math.max(0, Math.round(input.durationMs))
         : null;
     if (durationMs !== null) {
-      multi.zadd(keyDurations(), String(timestampMs), buildDurationMember(input.runId, durationMs, timestampMs));
+      multi.zadd(
+        keyDurations(),
+        String(timestampMs),
+        buildDurationMember(input.runId, durationMs, timestampMs)
+      );
       multi.zremrangebyscore(keyDurations(), 0, pruneTo);
       multi.hincrby(keyTotals(), 'runs_duration_count', 1);
       multi.hincrby(keyTotals(), 'runs_duration_total_ms', durationMs);
@@ -621,19 +642,35 @@ export const recordBrainInsightAnalytics = async (input: {
     const status = typeof input.status === 'string' ? input.status.trim().toLowerCase() : '';
 
     const multi = redis.multi();
-    multi.zadd(typeKey, String(timestampMs), buildEventMember(input.type, randomUUID(), timestampMs));
-    multi.zadd(keyBrain('all'), String(timestampMs), buildEventMember('all', randomUUID(), timestampMs));
+    multi.zadd(
+      typeKey,
+      String(timestampMs),
+      buildEventMember(input.type, randomUUID(), timestampMs)
+    );
+    multi.zadd(
+      keyBrain('all'),
+      String(timestampMs),
+      buildEventMember('all', randomUUID(), timestampMs)
+    );
     multi.zremrangebyscore(typeKey, 0, pruneTo);
     multi.zremrangebyscore(keyBrain('all'), 0, pruneTo);
     multi.hincrby(keyTotals(), `brain_${input.type}_reports`, 1);
     multi.hincrby(keyTotals(), 'brain_reports_total', 1);
 
     if (status === 'warning') {
-      multi.zadd(keyBrain('warning'), String(timestampMs), buildEventMember('warning', randomUUID(), timestampMs));
+      multi.zadd(
+        keyBrain('warning'),
+        String(timestampMs),
+        buildEventMember('warning', randomUUID(), timestampMs)
+      );
       multi.zremrangebyscore(keyBrain('warning'), 0, pruneTo);
       multi.hincrby(keyTotals(), 'brain_warning_reports', 1);
     } else if (status === 'error') {
-      multi.zadd(keyBrain('error'), String(timestampMs), buildEventMember('error', randomUUID(), timestampMs));
+      multi.zadd(
+        keyBrain('error'),
+        String(timestampMs),
+        buildEventMember('error', randomUUID(), timestampMs)
+      );
       multi.zremrangebyscore(keyBrain('error'), 0, pruneTo);
       multi.hincrby(keyTotals(), 'brain_error_reports', 1);
     }
@@ -693,14 +730,7 @@ export const getRuntimeAnalyticsSummary = async (input: {
       pipeline.zcount(keyBrain('all'), fromMs, toMs);
       pipeline.zcount(keyBrain('warning'), fromMs, toMs);
       pipeline.zcount(keyBrain('error'), fromMs, toMs);
-      pipeline.zrangebyscore(
-        keyDurations(),
-        fromMs,
-        toMs,
-        'LIMIT',
-        0,
-        DURATION_SAMPLE_LIMIT
-      );
+      pipeline.zrangebyscore(keyDurations(), fromMs, toMs, 'LIMIT', 0, DURATION_SAMPLE_LIMIT);
 
       const results =
         (await withTimeout(
@@ -716,9 +746,7 @@ export const getRuntimeAnalyticsSummary = async (input: {
 
       const readCountAt = (index: number): number =>
         toPipelineCount(Array.isArray(results[index]) ? results[index]?.[1] : 0);
-      const durationMembers = toPipelineStrings(
-        Array.isArray(results[20]) ? results[20]?.[1] : []
-      );
+      const durationMembers = toPipelineStrings(Array.isArray(results[20]) ? results[20]?.[1] : []);
       const durations = durationMembers
         .map(parseDurationMember)
         .filter((value: number | null): value is number => value !== null)
@@ -726,18 +754,14 @@ export const getRuntimeAnalyticsSummary = async (input: {
       const avgDurationMs =
         durations.length > 0
           ? Math.round(
-            durations.reduce((sum: number, value: number) => sum + value, 0) /
-                durations.length
-          )
+              durations.reduce((sum: number, value: number) => sum + value, 0) / durations.length
+            )
           : null;
       const p95DurationMs =
         durations.length > 0
           ? durations[
-            Math.min(
-              durations.length - 1,
-              Math.max(0, Math.ceil(durations.length * 0.95) - 1)
-            )
-          ]!
+              Math.min(durations.length - 1, Math.max(0, Math.ceil(durations.length * 0.95) - 1))
+            ]!
           : null;
 
       const runsCompleted = readCountAt(3);

@@ -10,7 +10,7 @@ export const updateSimilarInRule = (
   rule: PromptValidationRule | null,
   patchRule: PatchRule,
   index: number,
-  patch: Partial<PromptValidationSimilarPattern>,
+  patch: Partial<PromptValidationSimilarPattern>
 ): void => {
   if (!rule) return;
   const next = [...(rule.similar ?? [])];
@@ -23,7 +23,7 @@ export const updateSimilarInRule = (
 export const removeSimilarFromRule = (
   rule: PromptValidationRule | null,
   patchRule: PatchRule,
-  index: number,
+  index: number
 ): void => {
   if (!rule) return;
   patchRule({
@@ -31,10 +31,7 @@ export const removeSimilarFromRule = (
   });
 };
 
-export const addSimilarToRule = (
-  rule: PromptValidationRule | null,
-  patchRule: PatchRule,
-): void => {
+export const addSimilarToRule = (rule: PromptValidationRule | null, patchRule: PatchRule): void => {
   if (!rule) return;
   patchRule({
     similar: [
@@ -53,7 +50,7 @@ export const updateAutofixOperationInRule = (
   rule: PromptValidationRule | null,
   patchRule: PatchRule,
   index: number,
-  operation: PromptAutofixOperation,
+  operation: PromptAutofixOperation
 ): void => {
   if (!rule) return;
   const currentOps = rule.autofix?.operations ?? [];
@@ -71,7 +68,7 @@ export const updateAutofixOperationInRule = (
 export const removeAutofixOperationFromRule = (
   rule: PromptValidationRule | null,
   patchRule: PatchRule,
-  index: number,
+  index: number
 ): void => {
   if (!rule) return;
   const currentOps = rule.autofix?.operations ?? [];
@@ -86,7 +83,7 @@ export const removeAutofixOperationFromRule = (
 export const addAutofixOperationToRule = (
   rule: PromptValidationRule | null,
   patchRule: PatchRule,
-  kind: PromptAutofixOperation['kind'],
+  kind: PromptAutofixOperation['kind']
 ): void => {
   if (!rule) return;
   const currentOps = rule.autofix?.operations ?? [];
@@ -94,12 +91,12 @@ export const addAutofixOperationToRule = (
     kind === 'params_json'
       ? { kind: 'params_json', comment: null }
       : {
-        kind: 'replace',
-        pattern: '',
-        flags: '',
-        replacement: '',
-        comment: null,
-      };
+          kind: 'replace',
+          pattern: '',
+          flags: '',
+          replacement: '',
+          comment: null,
+        };
 
   patchRule({
     autofix: {

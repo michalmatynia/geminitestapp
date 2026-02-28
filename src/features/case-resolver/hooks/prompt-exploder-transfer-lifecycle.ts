@@ -31,7 +31,13 @@ const PROMPT_EXPLODER_TRANSFER_ALLOWED_TRANSITIONS: Record<
     'expired',
   ]),
   blocked: new Set<PromptExploderTransferUiStatus>(['blocked', 'pending', 'discarded', 'expired']),
-  capture_review: new Set<PromptExploderTransferUiStatus>(['capture_review', 'applied', 'dismissed', 'failed', 'discarded']),
+  capture_review: new Set<PromptExploderTransferUiStatus>([
+    'capture_review',
+    'applied',
+    'dismissed',
+    'failed',
+    'discarded',
+  ]),
   applied: new Set<PromptExploderTransferUiStatus>(['applied', 'pending']),
   failed: new Set<PromptExploderTransferUiStatus>(['failed', 'pending', 'discarded', 'expired']),
   dismissed: new Set<PromptExploderTransferUiStatus>(['dismissed', 'pending']),
@@ -82,15 +88,15 @@ export const canTransitionPromptExploderTransferStatus = (
 export const applyPromptExploderTransferLifecycleUpdate = <
   T extends PromptExploderTransferLifecycleRecord,
 >(
-    current: T | null,
-    input: {
+  current: T | null,
+  input: {
     nextStatus: PromptExploderTransferUiStatus;
     reason?: string | null;
     at?: string;
     force?: boolean;
     patch?: Partial<T>;
   }
-  ): T | null => {
+): T | null => {
   if (!current) return current;
   const nextStatus = input.nextStatus;
   const transitionAllowed =
@@ -124,8 +130,7 @@ export const resolvePromptExploderTransferExpiry = (input: {
   const createdAtMs = toIsoMillis(input.createdAt ?? null);
   const explicitExpiresAtMs = toIsoMillis(input.expiresAt ?? null);
   const fallbackExpiresAtMs =
-    explicitExpiresAtMs ??
-    (createdAtMs !== null ? createdAtMs + ttlMs : null);
+    explicitExpiresAtMs ?? (createdAtMs !== null ? createdAtMs + ttlMs : null);
   const ageMs = createdAtMs !== null ? Math.max(0, nowMs - createdAtMs) : null;
   if (fallbackExpiresAtMs === null) {
     return {

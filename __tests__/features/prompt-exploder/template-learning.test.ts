@@ -83,8 +83,7 @@ describe('prompt exploder template learning', () => {
       title: 'NON-NEGOTIABLE GOAL (all must be true)',
       sourceText:
         'NON-NEGOTIABLE GOAL Product integrity must remain truthful and background pure white.',
-      sampleText:
-        'Product integrity must remain truthful and background must be pure white.',
+      sampleText: 'Product integrity must remain truthful and background must be pure white.',
       similarityThreshold: 0.63,
       minApprovalsForMatching: 1,
       autoActivateLearnedTemplates: true,

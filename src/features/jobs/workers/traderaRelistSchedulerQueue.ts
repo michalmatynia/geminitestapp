@@ -76,10 +76,7 @@ export const startTraderaRelistSchedulerQueue = (): void => {
 
   void (async (): Promise<void> => {
     const rawInterval = await getSettingValue(TRADERA_SETTINGS_KEYS.schedulerIntervalMs);
-    const intervalMs = parseMs(
-      rawInterval,
-      DEFAULT_TRADERA_SYSTEM_SETTINGS.schedulerIntervalMs
-    );
+    const intervalMs = parseMs(rawInterval, DEFAULT_TRADERA_SYSTEM_SETTINGS.schedulerIntervalMs);
     await queue.enqueue(
       { type: 'scheduled-tick' },
       {

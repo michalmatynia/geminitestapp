@@ -16,7 +16,7 @@ import {
 } from '@/shared/lib/ai-paths/core/playwright/script-templates';
 import { usePlaywrightPersonas } from '@/shared/lib/playwright/hooks/usePlaywrightPersonas';
 import { playwrightSettingsSchema } from '@/shared/contracts/playwright';
-import { Button, Input,  LoadingState, SelectSimple, Textarea, FormField } from '@/shared/ui';
+import { Button, Input, LoadingState, SelectSimple, Textarea, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -82,16 +82,13 @@ export function PlaywrightNodeConfigSection(): React.JSX.Element | null {
   const playwrightConfig: PlaywrightConfig = useMemo(
     () =>
       normalizePlaywrightConfig(
-        selectedNode?.type === 'playwright'
-          ? selectedNode.config?.playwright
-          : undefined
+        selectedNode?.type === 'playwright' ? selectedNode.config?.playwright : undefined
       ),
     [selectedNode?.config?.playwright, selectedNode?.type]
   );
-  const selectedPersona =
-    playwrightConfig.personaId
-      ? (personasQuery.data ?? []).find((persona) => persona.id === playwrightConfig.personaId)
-      : null;
+  const selectedPersona = playwrightConfig.personaId
+    ? (personasQuery.data ?? []).find((persona) => persona.id === playwrightConfig.personaId)
+    : null;
   const personaOptions = [
     { value: RUNTIME_PERSONA_VALUE, label: 'Default (runtime settings)' },
     ...(personasQuery.data ?? []).map((persona) => ({
@@ -119,14 +116,14 @@ export function PlaywrightNodeConfigSection(): React.JSX.Element | null {
     () =>
       selectedPersona
         ? [
-          `Headless: ${selectedPersona.settings.headless ? 'on' : 'off'}`,
-          `SlowMo: ${selectedPersona.settings.slowMo}ms`,
-          `Timeout: ${selectedPersona.settings.timeout}ms`,
-          selectedPersona.settings.emulateDevice && selectedPersona.settings.deviceName
-            ? `Device: ${selectedPersona.settings.deviceName}`
-            : 'Device: none',
-          selectedPersona.settings.humanizeMouse ? 'Humanized input: on' : 'Humanized input: off',
-        ]
+            `Headless: ${selectedPersona.settings.headless ? 'on' : 'off'}`,
+            `SlowMo: ${selectedPersona.settings.slowMo}ms`,
+            `Timeout: ${selectedPersona.settings.timeout}ms`,
+            selectedPersona.settings.emulateDevice && selectedPersona.settings.deviceName
+              ? `Device: ${selectedPersona.settings.deviceName}`
+              : 'Device: none',
+            selectedPersona.settings.humanizeMouse ? 'Humanized input: on' : 'Humanized input: off',
+          ]
         : null,
     [selectedPersona]
   );
@@ -159,9 +156,7 @@ export function PlaywrightNodeConfigSection(): React.JSX.Element | null {
     if (!parsed.success) {
       const issue = parsed.error.issues[0];
       const pathLabel =
-        issue?.path && issue.path.length > 0
-          ? issue.path.join('.')
-          : 'settingsOverrides';
+        issue?.path && issue.path.length > 0 ? issue.path.join('.') : 'settingsOverrides';
       return {
         value: {},
         error: `Invalid override for "${pathLabel}".`,
@@ -214,16 +209,11 @@ export function PlaywrightNodeConfigSection(): React.JSX.Element | null {
 
   return (
     <div className='space-y-4' data-testid='playwright-node-config'>
-      <FormField 
-        label='Playwright Persona' 
+      <FormField
+        label='Playwright Persona'
         description='Choose an existing persona to steer browser fidelity and behavior defaults.'
         actions={
-          <Button
-            asChild
-            variant='outline'
-            size='xs'
-            className='h-7'
-          >
+          <Button asChild variant='outline' size='xs' className='h-7'>
             <Link href='/admin/settings/playwright'>Manage Personas</Link>
           </Button>
         }
@@ -262,10 +252,15 @@ export function PlaywrightNodeConfigSection(): React.JSX.Element | null {
           className='rounded-md border border-sky-500/30 bg-sky-500/10 px-3 py-2'
           data-testid='playwright-persona-fidelity'
         >
-          <div className='text-[10px] uppercase tracking-wide font-semibold text-sky-200'>Persona Fidelity</div>
+          <div className='text-[10px] uppercase tracking-wide font-semibold text-sky-200'>
+            Persona Fidelity
+          </div>
           <div className='mt-1.5 flex flex-wrap gap-2 text-[11px] text-sky-100'>
             {selectedPersonaFidelity.map((entry) => (
-              <span key={entry} className='rounded border border-sky-400/40 bg-sky-500/10 px-2 py-0.5'>
+              <span
+                key={entry}
+                className='rounded border border-sky-400/40 bg-sky-500/10 px-2 py-0.5'
+              >
                 {entry}
               </span>
             ))}
@@ -333,7 +328,7 @@ export function PlaywrightNodeConfigSection(): React.JSX.Element | null {
       </div>
 
       <div className='rounded-md border border-border/70 bg-card/40 p-3'>
-        <FormField 
+        <FormField
           label='Script Template'
           description='Start from a tested automation pattern and customize it.'
           actions={
@@ -375,8 +370,8 @@ export function PlaywrightNodeConfigSection(): React.JSX.Element | null {
         )}
       </div>
 
-      <FormField 
-        label='Script' 
+      <FormField
+        label='Script'
         description='Script must export a default async function. Use emit("result", value) to publish outputs.'
       >
         <Textarea
@@ -417,8 +412,8 @@ export function PlaywrightNodeConfigSection(): React.JSX.Element | null {
         </FormField>
       </div>
 
-      <FormField 
-        label='Settings Overrides (JSON)' 
+      <FormField
+        label='Settings Overrides (JSON)'
         description='Merges into selected persona settings at runtime.'
         error={parsedSettingsOverrides.error ?? undefined}
         actions={
@@ -448,7 +443,9 @@ export function PlaywrightNodeConfigSection(): React.JSX.Element | null {
       </FormField>
 
       <div className='space-y-3 pt-2 border-t border-border/20'>
-        <div className='text-xs font-semibold text-gray-400 uppercase tracking-wider'>Capture Artifacts</div>
+        <div className='text-xs font-semibold text-gray-400 uppercase tracking-wider'>
+          Capture Artifacts
+        </div>
         <div className='grid gap-2 sm:grid-cols-2'>
           {CAPTURE_OPTIONS.map((option) => {
             const enabled = captureConfig[option.key] === true;

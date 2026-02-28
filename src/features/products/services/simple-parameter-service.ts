@@ -2,16 +2,12 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 
-import {
-  PRODUCT_SIMPLE_PARAMETERS_SETTING_KEY,
-} from '@/features/products/constants';
+import { PRODUCT_SIMPLE_PARAMETERS_SETTING_KEY } from '@/features/products/constants';
 import { getProductDataProvider } from '@/features/products/services/product-provider';
 import type { ProductSimpleParameter } from '@/shared/contracts/products';
 import { conflictError, notFoundError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-
-
 
 import type { Filter } from 'mongodb';
 
@@ -42,10 +38,9 @@ type ListSimpleParametersInput = {
   search?: string;
 };
 
-const toMongoSettingFilter = (key: string): Filter<MongoSettingDoc> =>
-  ({
-    $or: [{ _id: key }, { key }],
-  });
+const toMongoSettingFilter = (key: string): Filter<MongoSettingDoc> => ({
+  $or: [{ _id: key }, { key }],
+});
 
 const toTrimmedString = (value: unknown): string => {
   if (typeof value !== 'string') return '';
@@ -152,9 +147,7 @@ const writeSimpleParameters = async (items: ProductSimpleParameter[]): Promise<v
   await writeSimpleParametersRaw(JSON.stringify(items));
 };
 
-const sortSimpleParameters = (
-  items: ProductSimpleParameter[]
-): ProductSimpleParameter[] =>
+const sortSimpleParameters = (items: ProductSimpleParameter[]): ProductSimpleParameter[] =>
   [...items].sort((a: ProductSimpleParameter, b: ProductSimpleParameter) =>
     a.name_en.localeCompare(b.name_en, undefined, { sensitivity: 'base' })
   );
@@ -170,11 +163,7 @@ export async function listSimpleParameters(
   const filtered = all.filter((parameter: ProductSimpleParameter) => {
     if (parameter.catalogId !== catalogId) return false;
     if (!search) return true;
-    const values = [
-      parameter.name_en,
-      parameter.name_pl ?? '',
-      parameter.name_de ?? '',
-    ];
+    const values = [parameter.name_en, parameter.name_pl ?? '', parameter.name_de ?? ''];
     return values.some((value: string) => value.toLowerCase().includes(search));
   });
   return sortSimpleParameters(filtered);
@@ -192,21 +181,19 @@ export async function createSimpleParameter(
   const all = await readSimpleParameters();
   const duplicate = all.find(
     (item: ProductSimpleParameter): boolean =>
-      item.catalogId === catalogId &&
-      normalizeNameKey(item.name_en) === normalizeNameKey(nameEn)
+      item.catalogId === catalogId && normalizeNameKey(item.name_en) === normalizeNameKey(nameEn)
   );
   if (duplicate) {
-    throw conflictError(
-      'A parameter with this name already exists in this catalog',
-      { catalogId, name_en: nameEn }
-    );
+    throw conflictError('A parameter with this name already exists in this catalog', {
+      catalogId,
+      name_en: nameEn,
+    });
   }
 
   const now = new Date().toISOString();
   const created: ProductSimpleParameter = {
     id:
-      typeof globalThis.crypto !== 'undefined' &&
-      typeof globalThis.crypto.randomUUID === 'function'
+      typeof globalThis.crypto !== 'undefined' && typeof globalThis.crypto.randomUUID === 'function'
         ? globalThis.crypto.randomUUID()
         : randomUUID(),
     name: nameEn,
@@ -232,9 +219,7 @@ export async function updateSimpleParameter(
   }
 
   const all = await readSimpleParameters();
-  const current = all.find(
-    (item: ProductSimpleParameter): boolean => item.id === normalizedId
-  );
+  const current = all.find((item: ProductSimpleParameter): boolean => item.id === normalizedId);
   if (!current) {
     throw notFoundError('Parameter not found', { parameterId: normalizedId });
   }
@@ -255,27 +240,24 @@ export async function updateSimpleParameter(
       normalizeNameKey(item.name_en) === normalizeNameKey(nextNameEn)
   );
   if (duplicate) {
-    throw conflictError(
-      'A parameter with this name already exists in this catalog',
-      { catalogId: nextCatalogId, name_en: nextNameEn }
-    );
+    throw conflictError('A parameter with this name already exists in this catalog', {
+      catalogId: nextCatalogId,
+      name_en: nextNameEn,
+    });
   }
 
   const updated: ProductSimpleParameter = {
     ...current,
     catalogId: nextCatalogId,
     name_en: nextNameEn,
-    ...(input.name_pl !== undefined
-      ? { name_pl: toNullableTrimmedString(input.name_pl) }
-      : {}),
-    ...(input.name_de !== undefined
-      ? { name_de: toNullableTrimmedString(input.name_de) }
-      : {}),
+    ...(input.name_pl !== undefined ? { name_pl: toNullableTrimmedString(input.name_pl) } : {}),
+    ...(input.name_de !== undefined ? { name_de: toNullableTrimmedString(input.name_de) } : {}),
     updatedAt: new Date().toISOString(),
   };
 
-  const next = all.map((item: ProductSimpleParameter): ProductSimpleParameter =>
-    item.id === normalizedId ? updated : item
+  const next = all.map(
+    (item: ProductSimpleParameter): ProductSimpleParameter =>
+      item.id === normalizedId ? updated : item
   );
   await writeSimpleParameters(next);
   return updated;
@@ -288,15 +270,11 @@ export async function deleteSimpleParameter(id: string): Promise<void> {
   }
 
   const all = await readSimpleParameters();
-  const exists = all.some(
-    (item: ProductSimpleParameter): boolean => item.id === normalizedId
-  );
+  const exists = all.some((item: ProductSimpleParameter): boolean => item.id === normalizedId);
   if (!exists) {
     throw notFoundError('Parameter not found', { parameterId: normalizedId });
   }
 
-  const next = all.filter(
-    (item: ProductSimpleParameter): boolean => item.id !== normalizedId
-  );
+  const next = all.filter((item: ProductSimpleParameter): boolean => item.id !== normalizedId);
   await writeSimpleParameters(next);
 }

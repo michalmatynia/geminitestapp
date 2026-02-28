@@ -1,4 +1,3 @@
-
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { mongoCmsRepository } from '@/features/cms/services/cms-repository/mongo-cms-repository';
@@ -48,10 +47,12 @@ describe('Mongo CMS Repository', () => {
 
     it('should create a page', async () => {
       await mongoCmsRepository.createPage({ name: 'New Page' });
-      expect(mockCollection.insertOne).toHaveBeenCalledWith(expect.objectContaining({
-        name: 'New Page',
-        status: 'draft',
-      }));
+      expect(mockCollection.insertOne).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'New Page',
+          status: 'draft',
+        })
+      );
     });
 
     it('should update a page', async () => {
@@ -71,16 +72,28 @@ describe('Mongo CMS Repository', () => {
   describe('Slugs', () => {
     it('should create a slug', async () => {
       await mongoCmsRepository.createSlug({ slug: 'test' });
-      expect(mockCollection.insertOne).toHaveBeenCalledWith(expect.objectContaining({
-        slug: 'test',
-        isDefault: false,
-      }));
+      expect(mockCollection.insertOne).toHaveBeenCalledWith(
+        expect.objectContaining({
+          slug: 'test',
+          isDefault: false,
+        })
+      );
     });
   });
 
   describe('Themes', () => {
     it('should get all themes', async () => {
-      const mockThemes = [{ id: 't1', name: 'Theme 1', colors: {}, typography: {}, spacing: {}, createdAt: new Date(), updatedAt: new Date() }];
+      const mockThemes = [
+        {
+          id: 't1',
+          name: 'Theme 1',
+          colors: {},
+          typography: {},
+          spacing: {},
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ];
       mockCollection.toArray.mockResolvedValue(mockThemes);
 
       const themes = await mongoCmsRepository.getThemes();

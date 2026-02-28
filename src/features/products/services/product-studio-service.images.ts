@@ -20,9 +20,7 @@ export const MIME_BY_EXTENSION: Record<string, string> = {
 
 export const DATA_URL_REGEX = /^data:([^;]+);base64,(.+)$/i;
 
-export const toProductImageFileSource = (
-  value: unknown,
-): ProductImageFileSource | null => {
+export const toProductImageFileSource = (value: unknown): ProductImageFileSource | null => {
   const record = asRecord(value);
   if (!record) return null;
 

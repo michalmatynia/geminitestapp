@@ -1,9 +1,6 @@
 import { z } from 'zod';
 
-import {
-  folderTreeInstanceValues,
-  type FolderTreeInstance,
-} from './folder-tree-profiles-v2';
+import { folderTreeInstanceValues, type FolderTreeInstance } from './folder-tree-profiles-v2';
 
 export { type FolderTreeInstance };
 

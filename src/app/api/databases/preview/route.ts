@@ -5,7 +5,4 @@ import { apiHandler } from '@/shared/lib/api/api-handler';
 
 import { postDatabasesPreviewHandler } from './handler';
 
-export const POST = apiHandler(
-  postDatabasesPreviewHandler,
-  { source: 'databases.preview.POST' }
-);
+export const POST = apiHandler(postDatabasesPreviewHandler, { source: 'databases.preview.POST' });

@@ -45,10 +45,7 @@ export async function PATCH_handler(
     return parsed.response;
   }
   const body = parsed.data;
-  const note = await noteService.update(
-    id,
-    removeUndefined(body) as NoteUpdateInput
-  );
+  const note = await noteService.update(id, removeUndefined(body) as NoteUpdateInput);
 
   return NextResponse.json(note);
 }

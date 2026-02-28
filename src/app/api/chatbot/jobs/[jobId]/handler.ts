@@ -3,11 +3,7 @@ import { z } from 'zod';
 
 import { chatbotJobRepository } from '@/features/ai/chatbot/services/chatbot-job-repository';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import {
-  badRequestError,
-  conflictError,
-  notFoundError,
-} from '@/shared/errors/app-error';
+import { badRequestError, conflictError, notFoundError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { logger } from '@/shared/utils/logger';
 
@@ -42,7 +38,7 @@ export async function POST_handler(
   if (!result.ok) {
     return result.response;
   }
-  
+
   const { data } = result;
   if (data.action !== 'cancel') {
     throw badRequestError('Unsupported action.');
@@ -59,9 +55,9 @@ export async function POST_handler(
     finishedAt: new Date(),
   });
   if (DEBUG_CHATBOT) {
-    logger.info('[chatbot][jobs][POST] Canceled', { 
+    logger.info('[chatbot][jobs][POST] Canceled', {
       jobId,
-      requestId: ctx.requestId 
+      requestId: ctx.requestId,
     });
   }
   return NextResponse.json({ status: updated?.status });
@@ -89,9 +85,9 @@ export async function DELETE_handler(
   }
   await chatbotJobRepository.delete(jobId);
   if (DEBUG_CHATBOT) {
-    logger.info('[chatbot][jobs][DELETE] Deleted', { 
+    logger.info('[chatbot][jobs][DELETE] Deleted', {
       jobId,
-      requestId: ctx.requestId 
+      requestId: ctx.requestId,
     });
   }
   return NextResponse.json({ deleted: true });

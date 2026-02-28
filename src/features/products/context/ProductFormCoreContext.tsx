@@ -20,15 +20,8 @@ import {
   UseFormReturn,
 } from 'react-hook-form';
 
-import {
-  productCreateSchema,
-  productUpdateSchema,
-} from '@/features/products/validations/schemas';
-import {
-  ProductFormData,
-  ProductWithImages,
-  ProductDraft,
-} from '@/shared/contracts/products';
+import { productCreateSchema, productUpdateSchema } from '@/features/products/validations/schemas';
+import { ProductFormData, ProductWithImages, ProductDraft } from '@/shared/contracts/products';
 import { internalError } from '@/shared/errors/app-error';
 
 export interface ProductFormCoreContextType {
@@ -47,9 +40,7 @@ export interface ProductFormCoreContextType {
   draft?: ProductDraft | null | undefined;
   ConfirmationModal: React.ComponentType;
   methods: UseFormReturn<ProductFormData>;
-  setHandleSubmit: (
-    fn: (e?: BaseSyntheticEvent) => Promise<void>
-  ) => void;
+  setHandleSubmit: (fn: (e?: BaseSyntheticEvent) => Promise<void>) => void;
   setConfirmationModal: (component: React.ComponentType) => void;
   setHasUnsavedChanges: (value: boolean) => void;
   uploading: boolean;
@@ -60,8 +51,7 @@ export interface ProductFormCoreContextType {
   setUploadSuccess: (value: boolean) => void;
 }
 
-export const ProductFormCoreContext =
-  createContext<ProductFormCoreContextType | null>(null);
+export const ProductFormCoreContext = createContext<ProductFormCoreContextType | null>(null);
 
 export function ProductFormCoreProvider({
   children,
@@ -76,8 +66,7 @@ export function ProductFormCoreProvider({
   requireSku?: boolean;
   initialSku?: string;
 }) {
-  const formSchema =
-    product || !requireSku ? productUpdateSchema : productCreateSchema;
+  const formSchema = product || !requireSku ? productUpdateSchema : productCreateSchema;
   const methods = useForm<ProductFormData>({
     resolver: zodResolver(formSchema) as Resolver<ProductFormData>,
     defaultValues: {
@@ -86,10 +75,8 @@ export function ProductFormCoreProvider({
       name_de: product?.name_de || draft?.name_de || '',
       price: product?.price ?? draft?.price ?? 0,
       sku: product?.sku || initialSku || draft?.sku || '',
-      defaultPriceGroupId:
-        product?.defaultPriceGroupId ?? draft?.defaultPriceGroupId ?? undefined,
-      baseProductId:
-        product?.baseProductId ?? draft?.baseProductId ?? undefined,
+      defaultPriceGroupId: product?.defaultPriceGroupId ?? draft?.defaultPriceGroupId ?? undefined,
+      baseProductId: product?.baseProductId ?? draft?.baseProductId ?? undefined,
       ean: product?.ean || draft?.ean || '',
       gtin: product?.gtin || draft?.gtin || '',
       asin: product?.asin || draft?.asin || '',
@@ -112,29 +99,21 @@ export function ProductFormCoreProvider({
   );
   const [generationError, setGenerationError] = useState<string | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [handleSubmitFn, setHandleSubmitFn] = useState<
-    (e?: BaseSyntheticEvent) => Promise<void>
-      >(() => async () => {});
-  const [ConfirmationModal, setConfirmationModal] = useState<
-    React.ComponentType
-  >(() => () => null);
+  const [handleSubmitFn, setHandleSubmitFn] = useState<(e?: BaseSyntheticEvent) => Promise<void>>(
+    () => async () => {}
+  );
+  const [ConfirmationModal, setConfirmationModal] = useState<React.ComponentType>(() => () => null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
 
-  const updateHandleSubmit = useCallback(
-    (fn: (e?: BaseSyntheticEvent) => Promise<void>): void => {
-      setHandleSubmitFn(() => fn);
-    },
-    []
-  );
+  const updateHandleSubmit = useCallback((fn: (e?: BaseSyntheticEvent) => Promise<void>): void => {
+    setHandleSubmitFn(() => fn);
+  }, []);
 
-  const updateConfirmationModal = useCallback(
-    (component: React.ComponentType): void => {
-      setConfirmationModal(() => component);
-    },
-    []
-  );
+  const updateConfirmationModal = useCallback((component: React.ComponentType): void => {
+    setConfirmationModal(() => component);
+  }, []);
 
   const toggleNote = (noteId: string): void => {
     const id = noteId.trim();
@@ -147,9 +126,7 @@ export function ProductFormCoreProvider({
   const removeNote = (noteId: string): void => {
     const id = noteId.trim();
     if (!id) return;
-    setSelectedNoteIds((prev: string[]) =>
-      prev.filter((n: string) => n !== id)
-    );
+    setSelectedNoteIds((prev: string[]) => prev.filter((n: string) => n !== id));
   };
 
   const value = useMemo(
@@ -206,9 +183,7 @@ export function ProductFormCoreProvider({
 export const useProductFormCore = (): ProductFormCoreContextType => {
   const context = useContext(ProductFormCoreContext);
   if (!context) {
-    throw internalError(
-      'useProductFormCore must be used within a ProductFormCoreProvider'
-    );
+    throw internalError('useProductFormCore must be used within a ProductFormCoreProvider');
   }
   return context;
 };

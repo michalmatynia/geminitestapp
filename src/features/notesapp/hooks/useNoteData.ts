@@ -1,10 +1,6 @@
 'use client';
 
-import {
-  useQueryClient,
-  type UseQueryResult,
-  type UseMutationResult,
-} from '@tanstack/react-query';
+import { useQueryClient, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
 import { useRef, useEffect, useMemo, useCallback } from 'react';
 
 import {
@@ -89,47 +85,38 @@ function toFetchNotesParams(filters: NoteFilters): FetchNotesParams {
 
 export const useNotes = (
   filters: NoteFilters,
-  options?: QueryOptions,
+  options?: QueryOptions
 ): UseQueryResult<NoteWithRelations[], Error> => {
   const debouncedFilters = useDebounce(filters, NOTES_QUERY_DEBOUNCE_MS);
-  return useNotesQuery(
-    toFetchNotesParams(debouncedFilters),
-    options,
-  ) as UseQueryResult<NoteWithRelations[], Error>;
-};
-
-export const useNote = (
-  noteId: string,
-  options?: QueryOptions,
-): UseQueryResult<NoteWithRelations, Error> => {
-  return useNoteQuery(noteId || null, options) as UseQueryResult<
-    NoteWithRelations,
+  return useNotesQuery(toFetchNotesParams(debouncedFilters), options) as UseQueryResult<
+    NoteWithRelations[],
     Error
   >;
 };
 
-export const useNoteTree = (
-  options?: QueryOptions,
-): UseQueryResult<NotebookRecord[], Error> => {
+export const useNote = (
+  noteId: string,
+  options?: QueryOptions
+): UseQueryResult<NoteWithRelations, Error> => {
+  return useNoteQuery(noteId || null, options) as UseQueryResult<NoteWithRelations, Error>;
+};
+
+export const useNoteTree = (options?: QueryOptions): UseQueryResult<NotebookRecord[], Error> => {
   return useNotebooksQuery(undefined, options);
 };
 
-export const useNoteTags = (
-  options?: QueryOptions,
-): UseQueryResult<TagRecord[], Error> => {
+export const useNoteTags = (options?: QueryOptions): UseQueryResult<TagRecord[], Error> => {
   return useNoteTagsQuery(undefined, options);
 };
 
 export const useNoteCategories = (
   notebookId?: string | null,
-  options?: QueryOptions,
+  options?: QueryOptions
 ): UseQueryResult<CategoryRecord[], Error> => {
   return useNoteCategoriesQuery(notebookId, options);
 };
 
-export const useNoteThemes = (
-  options?: QueryOptions,
-): UseQueryResult<ThemeRecord[], Error> => {
+export const useNoteThemes = (options?: QueryOptions): UseQueryResult<ThemeRecord[], Error> => {
   return useNoteThemesQuery(undefined, options);
 };
 
@@ -151,11 +138,7 @@ export const useUpdateNoteMutation = (): UseMutationResult<
   return useUpdateNote();
 };
 
-export const useDeleteNoteMutation = (): UseMutationResult<
-  DeleteResponse,
-  Error,
-  string
-> => {
+export const useDeleteNoteMutation = (): UseMutationResult<DeleteResponse, Error, string> => {
   return useDeleteNote();
 };
 
@@ -175,19 +158,11 @@ export const useUpdateNotebookMutation = (): UseMutationResult<
   return useUpdateNotebook();
 };
 
-export const useDeleteNotebookMutation = (): UseMutationResult<
-  DeleteResponse,
-  Error,
-  string
-> => {
+export const useDeleteNotebookMutation = (): UseMutationResult<DeleteResponse, Error, string> => {
   return useDeleteNotebook();
 };
 
-export const useCreateTagMutation = (): UseMutationResult<
-  TagRecord,
-  Error,
-  TagCreateInput
-> => {
+export const useCreateTagMutation = (): UseMutationResult<TagRecord, Error, TagCreateInput> => {
   return useCreateNoteTag();
 };
 
@@ -199,11 +174,7 @@ export const useUpdateTagMutation = (): UseMutationResult<
   return useUpdateNoteTag();
 };
 
-export const useDeleteTagMutation = (): UseMutationResult<
-  DeleteResponse,
-  Error,
-  string
-> => {
+export const useDeleteTagMutation = (): UseMutationResult<DeleteResponse, Error, string> => {
   return useDeleteNoteTag();
 };
 
@@ -223,11 +194,7 @@ export const useUpdateCategoryMutation = (): UseMutationResult<
   return useUpdateNoteFolder();
 };
 
-export const useDeleteCategoryMutation = (): UseMutationResult<
-  DeleteResponse,
-  Error,
-  string
-> => {
+export const useDeleteCategoryMutation = (): UseMutationResult<DeleteResponse, Error, string> => {
   return useDeleteNoteFolder();
 };
 
@@ -247,11 +214,7 @@ export const useUpdateThemeMutation = (): UseMutationResult<
   return useUpdateNoteTheme();
 };
 
-export const useDeleteThemeMutation = (): UseMutationResult<
-  DeleteResponse,
-  Error,
-  string
-> => {
+export const useDeleteThemeMutation = (): UseMutationResult<DeleteResponse, Error, string> => {
   return useDeleteNoteTheme();
 };
 
@@ -265,8 +228,7 @@ export const useUpdateNoteRelationsMutation = (noteId: string) => {
       relationsTo?: string[];
     }
   >({
-    mutationFn: (variables) =>
-      api.put<void>(`/api/notes/${noteId}/relations`, variables),
+    mutationFn: (variables) => api.put<void>(`/api/notes/${noteId}/relations`, variables),
     mutationKey,
     meta: {
       source: 'notes.hooks.useUpdateNoteRelationsMutation',
@@ -291,52 +253,51 @@ export const useCreateNoteFileMutation = (noteId?: string) => {
       slotIndex: number;
       file: File;
       onProgress?: (loaded: number, total?: number) => void;
-        }
-        >({
-          mutationFn: async ({
-            slotIndex,
-            file,
-            onProgress,
-          }: {
+    }
+  >({
+    mutationFn: async ({
+      slotIndex,
+      file,
+      onProgress,
+    }: {
       slotIndex: number;
       file: File;
       onProgress?: (loaded: number, total?: number) => void;
     }): Promise<NoteFileRecord> => {
-            if (!noteId)
-              throw new ApiError('Note ID is required for file upload', 400);
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('slotIndex', slotIndex.toString());
+      if (!noteId) throw new ApiError('Note ID is required for file upload', 400);
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('slotIndex', slotIndex.toString());
 
-            const { uploadWithProgress } =
-        await import('@/shared/utils/upload-with-progress');
-            const result = await uploadWithProgress<
-        NoteFileRecord | { error?: string }
-      >(`/api/notes/${noteId}/files`, {
-        formData,
-        onProgress,
-      });
-            if (!result.ok) {
-              const error = result.data as { error?: string };
-              throw new ApiError(error.error || 'Failed to upload note file', 400);
-            }
-            return result.data as NoteFileRecord;
-          },
-          mutationKey,
-          meta: {
-            source: 'notes.hooks.useCreateNoteFileMutation',
-            operation: 'upload',
-            resource: 'notes.files',
-            domain: 'global',
-            mutationKey,
-            tags: ['notes', 'files', 'upload'],
-          },
-          onSuccess: () => {
-            if (noteId) {
-              void invalidateNoteDetail(queryClient, noteId);
-            }
-          },
-        });
+      const { uploadWithProgress } = await import('@/shared/utils/upload-with-progress');
+      const result = await uploadWithProgress<NoteFileRecord | { error?: string }>(
+        `/api/notes/${noteId}/files`,
+        {
+          formData,
+          onProgress,
+        }
+      );
+      if (!result.ok) {
+        const error = result.data as { error?: string };
+        throw new ApiError(error.error || 'Failed to upload note file', 400);
+      }
+      return result.data as NoteFileRecord;
+    },
+    mutationKey,
+    meta: {
+      source: 'notes.hooks.useCreateNoteFileMutation',
+      operation: 'upload',
+      resource: 'notes.files',
+      domain: 'global',
+      mutationKey,
+      tags: ['notes', 'files', 'upload'],
+    },
+    onSuccess: () => {
+      if (noteId) {
+        void invalidateNoteDetail(queryClient, noteId);
+      }
+    },
+  });
 };
 
 export const useDeleteNoteFileMutation = (noteId?: string) => {
@@ -344,11 +305,8 @@ export const useDeleteNoteFileMutation = (noteId?: string) => {
   const mutationKey = QUERY_KEYS.notes.detail(noteId ?? 'none');
   return createDeleteMutationV2<DeleteResponse, number>({
     mutationFn: (slotIndex) => {
-      if (!noteId)
-        throw new ApiError('Note ID is required for file deletion', 400);
-      return api.delete<DeleteResponse>(
-        `/api/notes/${noteId}/files/${slotIndex}`,
-      );
+      if (!noteId) throw new ApiError('Note ID is required for file deletion', 400);
+      return api.delete<DeleteResponse>(`/api/notes/${noteId}/files/${slotIndex}`);
     },
     mutationKey,
     meta: {
@@ -372,9 +330,7 @@ export const useDeleteNoteFileMutation = (noteId?: string) => {
 export interface UseNoteDataResult {
   notes: NoteWithRelations[];
   setNotes: (
-    updater:
-      | NoteWithRelations[]
-      | ((prev: NoteWithRelations[] | undefined) => NoteWithRelations[]),
+    updater: NoteWithRelations[] | ((prev: NoteWithRelations[] | undefined) => NoteWithRelations[])
   ) => void;
   tags: TagRecord[];
   themes: ThemeRecord[];
@@ -426,7 +382,7 @@ export function useNoteData({
       filterTagIds,
       selectedFolderId,
       selectedNotebookId,
-    ],
+    ]
   );
 
   const notesQuery = useNotes(filters);
@@ -438,22 +394,14 @@ export function useNoteData({
 
   // Derived state
   const notes = useMemo(() => notesQuery.data || [], [notesQuery.data]);
-  const notebooks = useMemo(
-    () => notebooksQuery.data || [],
-    [notebooksQuery.data],
-  );
+  const notebooks = useMemo(() => notebooksQuery.data || [], [notebooksQuery.data]);
   const tags = tagsQuery.data || [];
   const themes = themesQuery.data || [];
-  const categories = useMemo(
-    () => categoriesQuery.data || [],
-    [categoriesQuery.data],
-  );
+  const categories = useMemo(() => categoriesQuery.data || [], [categoriesQuery.data]);
 
   const notebook = useMemo(
-    () =>
-      notebooks.find((n: NotebookRecord) => n.id === selectedNotebookId) ||
-      null,
-    [notebooks, selectedNotebookId],
+    () => notebooks.find((n: NotebookRecord) => n.id === selectedNotebookId) || null,
+    [notebooks, selectedNotebookId]
   );
 
   // Sync refs for imperative access
@@ -516,14 +464,11 @@ export function useNoteData({
     (
       updater:
         | NoteWithRelations[]
-        | ((prev: NoteWithRelations[] | undefined) => NoteWithRelations[]),
+        | ((prev: NoteWithRelations[] | undefined) => NoteWithRelations[])
     ): void => {
-      queryClient.setQueryData(
-        QUERY_KEYS.notes.list(toFetchNotesParams(filters)),
-        updater,
-      );
+      queryClient.setQueryData(QUERY_KEYS.notes.list(toFetchNotesParams(filters)), updater);
     },
-    [queryClient, filters],
+    [queryClient, filters]
   );
 
   const setNotebook = useCallback(
@@ -533,14 +478,12 @@ export function useNoteData({
         QUERY_KEYS.notes.notebooks(),
         (old: NotebookRecord[] | undefined) => {
           if (!old) return [newNotebook];
-          return old.map((n: NotebookRecord) =>
-            n.id === newNotebook.id ? newNotebook : n,
-          );
-        },
+          return old.map((n: NotebookRecord) => (n.id === newNotebook.id ? newNotebook : n));
+        }
       );
       // And possibly selected notebook state if needed, but that's passed in
     },
-    [queryClient],
+    [queryClient]
   );
 
   // Initial selection

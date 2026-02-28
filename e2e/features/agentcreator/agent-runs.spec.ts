@@ -9,10 +9,10 @@ test.describe('Agent Runs', () => {
 
   test('should display agent runs page with search and refresh', async ({ page }) => {
     await expect(page.getByRole('heading', { name: 'Agent Runs' })).toBeVisible();
-    
+
     // Check for search input
     await expect(page.getByPlaceholder('Search runs...')).toBeVisible();
-    
+
     // Check for Refresh and Delete buttons
     await expect(page.getByRole('button', { name: 'Refresh' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Delete completed agent runs' })).toBeVisible();
@@ -52,13 +52,13 @@ test.describe('Agent Runs', () => {
     // Check if delete button is enabled (it might be disabled if no runs are selected/completed)
     // For now, we'll just simulate the click and confirmation
     await expect(page.getByRole('button', { name: 'Delete completed agent runs' })).toBeVisible();
-    
+
     // Simulate clicking the delete button.
     // In a real scenario, you'd want to have at least one completed run visible to select/target for deletion.
     // For this example, we'll just simulate the action and the confirmation dialog.
-    
+
     // Mock the dialog confirmation
-    page.once('dialog', async dialog => {
+    page.once('dialog', async (dialog) => {
       expect(dialog.type()).toBe('confirm'); // Ensure it's a confirmation dialog
       expect(dialog.message()).toContain('Are you sure you want to delete'); // Check confirmation message
       await dialog.accept(); // Confirm deletion

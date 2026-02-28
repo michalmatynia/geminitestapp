@@ -65,25 +65,15 @@ export function ResourceCard({
           <div className={cn('relative overflow-hidden rounded-md', mediaClassName)}>
             {media}
             {/* Overlay Badges */}
-            {badges && (
-              <div className='absolute inset-0 pointer-events-none p-2'>
-                {badges}
-              </div>
-            )}
+            {badges && <div className='absolute inset-0 pointer-events-none p-2'>{badges}</div>}
           </div>
         )}
 
         {/* Content Body */}
-        <div className='flex-1 mt-3'>
-          {children}
-        </div>
+        <div className='flex-1 mt-3'>{children}</div>
 
         {/* Footer Area */}
-        {footer && (
-          <div className='mt-3 border-t border-white/5 pt-3'>
-            {footer}
-          </div>
-        )}
+        {footer && <div className='mt-3 border-t border-white/5 pt-3'>{footer}</div>}
       </div>
     </Card>
   );

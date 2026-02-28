@@ -10,9 +10,7 @@ export default function AuthPublicLayout({
 }): React.JSX.Element {
   return (
     <AuthProvider mode='public'>
-      <QueryErrorBoundary>
-        {children}
-      </QueryErrorBoundary>
+      <QueryErrorBoundary>{children}</QueryErrorBoundary>
     </AuthProvider>
   );
 }

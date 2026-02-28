@@ -124,10 +124,15 @@ export const legacyListSystemLogsInputSchema = z.object({
 export type LegacyListSystemLogsInputDto = z.infer<typeof legacyListSystemLogsInputSchema>;
 
 export const legacyListSystemLogsResultSchema = z.object({
-  logs: z.array(z.intersection(legacySystemLogInputSchema, z.object({
-    id: z.string(),
-    timestamp: z.string(),
-  }))),
+  logs: z.array(
+    z.intersection(
+      legacySystemLogInputSchema,
+      z.object({
+        id: z.string(),
+        timestamp: z.string(),
+      })
+    )
+  ),
   total: z.number(),
 });
 
@@ -147,10 +152,12 @@ export const migrationBatchResultSchema = z.object({
   processed: z.number(),
   successful: z.number(),
   failed: z.number(),
-  errors: z.array(z.object({
-    id: z.string(),
-    error: z.string(),
-  })),
+  errors: z.array(
+    z.object({
+      id: z.string(),
+      error: z.string(),
+    })
+  ),
 });
 
 export type MigrationBatchResultDto = z.infer<typeof migrationBatchResultSchema>;

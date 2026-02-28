@@ -79,9 +79,7 @@ const normalizeForHash = (value: unknown, seen: WeakSet<object>): unknown => {
     const entries = Array.from(value.entries()).map(([key, val]: [unknown, unknown]) => {
       const normalizedKey = normalizeForHash(key, new WeakSet<object>());
       const keyString =
-        typeof key === 'string'
-          ? key
-          : JSON.stringify(normalizedKey) ?? String(key);
+        typeof key === 'string' ? key : (JSON.stringify(normalizedKey) ?? String(key));
       return [keyString, normalizeForHash(val, seen)] as [string, unknown];
     });
     entries.sort((a: [string, unknown], b: [string, unknown]) => a[0].localeCompare(b[0]));

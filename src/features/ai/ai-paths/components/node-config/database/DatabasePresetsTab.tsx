@@ -11,19 +11,14 @@ import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 import { useDatabasePresetsTabContext } from './DatabasePresetsTabContext';
 import { useAiPathPresets } from '../../AiPathConfigContext';
 
-
 export function DatabasePresetsTab(): React.JSX.Element {
-  const {
-    builtInPresets,
-    onApplyBuiltInPreset,
-    onRenameQueryPreset,
-    onDeleteQueryPreset,
-  } = useDatabasePresetsTabContext();
+  const { builtInPresets, onApplyBuiltInPreset, onRenameQueryPreset, onDeleteQueryPreset } =
+    useDatabasePresetsTabContext();
   const { dbQueryPresets } = useAiPathPresets();
   const [queryNameDrafts, setQueryNameDrafts] = React.useState<Record<string, string>>({});
   const [viewPresetId, setViewPresetId] = React.useState<string | null>(null);
   const activePreset = viewPresetId
-    ? dbQueryPresets.find((preset: DbQueryPreset): boolean => preset.id === viewPresetId) ?? null
+    ? (dbQueryPresets.find((preset: DbQueryPreset): boolean => preset.id === viewPresetId) ?? null)
     : null;
 
   React.useEffect((): void => {
@@ -57,34 +52,37 @@ export function DatabasePresetsTab(): React.JSX.Element {
           <div className='flex items-center justify-between'>
             <Label className='text-xs text-gray-400'>Built-in Presets</Label>
             <span className='text-[10px] text-gray-500'>
-              {builtInPresets.filter((p: DatabasePresetOption): boolean => p.id !== 'custom').length} presets
+              {
+                builtInPresets.filter((p: DatabasePresetOption): boolean => p.id !== 'custom')
+                  .length
+              }{' '}
+              presets
             </span>
           </div>
           <div className='mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2'>
             {builtInPresets
               .filter((p: DatabasePresetOption): boolean => p.id !== 'custom')
-              .map((preset: DatabasePresetOption): React.JSX.Element => (
-                <div
-                  key={preset.id}
-                  className='rounded-md border border-border bg-card/60 p-2'
-                >
-                  <div className='flex flex-col gap-1'>
-                    <div className='flex items-center justify-between'>
-                      <span className='text-xs font-medium text-white'>{preset.label}</span>
-                      {onApplyBuiltInPreset && (
-                        <Button
-                          type='button'
-                          className='h-6 rounded-md border border-emerald-500/40 px-2 text-[10px] text-emerald-200 hover:bg-emerald-500/10'
-                          onClick={(): void => onApplyBuiltInPreset(preset.id)}
-                        >
-                          Apply
-                        </Button>
-                      )}
+              .map(
+                (preset: DatabasePresetOption): React.JSX.Element => (
+                  <div key={preset.id} className='rounded-md border border-border bg-card/60 p-2'>
+                    <div className='flex flex-col gap-1'>
+                      <div className='flex items-center justify-between'>
+                        <span className='text-xs font-medium text-white'>{preset.label}</span>
+                        {onApplyBuiltInPreset && (
+                          <Button
+                            type='button'
+                            className='h-6 rounded-md border border-emerald-500/40 px-2 text-[10px] text-emerald-200 hover:bg-emerald-500/10'
+                            onClick={(): void => onApplyBuiltInPreset(preset.id)}
+                          >
+                            Apply
+                          </Button>
+                        )}
+                      </div>
+                      <span className='text-[10px] text-gray-400'>{preset.description}</span>
                     </div>
-                    <span className='text-[10px] text-gray-400'>{preset.description}</span>
                   </div>
-                </div>
-              ))}
+                )
+              )}
           </div>
         </div>
       )}
@@ -93,9 +91,7 @@ export function DatabasePresetsTab(): React.JSX.Element {
       <div className='rounded-md border border-border bg-card/50 p-3'>
         <div className='flex items-center justify-between'>
           <Label className='text-xs text-gray-400'>Saved Query Presets</Label>
-          <span className='text-[10px] text-gray-500'>
-            {dbQueryPresets.length} presets
-          </span>
+          <span className='text-[10px] text-gray-500'>{dbQueryPresets.length} presets</span>
         </div>
         {dbQueryPresets.length === 0 ? (
           <div className='mt-3 text-xs text-gray-500'>No query presets saved.</div>
@@ -105,19 +101,18 @@ export function DatabasePresetsTab(): React.JSX.Element {
               const draftName = queryNameDrafts[preset.id] ?? preset.name;
               const nameChanged = draftName.trim() !== preset.name.trim();
               return (
-                <div
-                  key={preset.id}
-                  className='rounded-md border border-border bg-card/60 p-2'
-                >
+                <div key={preset.id} className='rounded-md border border-border bg-card/60 p-2'>
                   <div className='flex flex-wrap items-center gap-2'>
                     <Input
                       className='h-7 flex-1 rounded-md border border-border bg-card/70 text-xs text-white'
                       value={draftName}
                       onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                        setQueryNameDrafts((prev: Record<string, string>): Record<string, string> => ({
-                          ...prev,
-                          [preset.id]: event.target.value,
-                        }))
+                        setQueryNameDrafts(
+                          (prev: Record<string, string>): Record<string, string> => ({
+                            ...prev,
+                            [preset.id]: event.target.value,
+                          })
+                        )
                       }
                       onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>): void => {
                         if (event.key === 'Enter') {
@@ -177,7 +172,9 @@ export function DatabasePresetsTab(): React.JSX.Element {
             <Label className='text-xs text-gray-400'>Update Document</Label>
             <Textarea
               className='min-h-[120px] w-full rounded-md border border-border bg-card/70 text-xs text-white'
-              value={activePreset?.updateTemplate?.trim() ? activePreset.updateTemplate : '// Not set'}
+              value={
+                activePreset?.updateTemplate?.trim() ? activePreset.updateTemplate : '// Not set'
+              }
               readOnly
             />
           </div>

@@ -84,9 +84,7 @@ describe('useProductMetadata', () => {
     const product = {
       ...buildProduct({
         categoryId: null,
-        catalogs: [
-          { catalogId: 'catalog-a' },
-        ] as ProductWithImages['catalogs'],
+        catalogs: [{ catalogId: 'catalog-a' }] as ProductWithImages['catalogs'],
       }),
       categories: [{ categoryId: 'cat-legacy' }],
     } as unknown as ProductWithImages;

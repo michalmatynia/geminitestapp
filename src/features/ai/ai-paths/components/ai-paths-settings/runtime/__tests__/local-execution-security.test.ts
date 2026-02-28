@@ -136,8 +136,6 @@ describe('evaluateLocalExecutionSecurity', () => {
 
     const issues = evaluateLocalExecutionSecurity(nodes);
     expect(issues).toHaveLength(3);
-    expect(issues.every((issue) => issue.nodeId === 'playwright-secrets')).toBe(
-      true
-    );
+    expect(issues.every((issue) => issue.nodeId === 'playwright-secrets')).toBe(true);
   });
 });

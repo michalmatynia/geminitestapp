@@ -14,9 +14,7 @@ import {
 import { ValidatorDocTooltip } from './ValidatorDocsTooltips';
 import { useValidatorSettingsContext } from './ValidatorSettingsContext';
 import type { PatternFormData } from '@/shared/contracts/products';
-import {
-  CHAIN_MODE_OPTIONS,
-} from './validator-pattern-modal-options';
+import { CHAIN_MODE_OPTIONS } from './validator-pattern-modal-options';
 
 import { ValidatorPatternModalBasicSection } from './modal/ValidatorPatternModalBasicSection';
 import { ValidatorPatternModalLaunchSection } from './modal/ValidatorPatternModalLaunchSection';
@@ -67,7 +65,9 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
       open={showModal}
       onClose={closeModal}
       title={editingPattern ? 'Edit Validator Pattern' : 'Create Validator Pattern'}
-      onSave={(): void => { void handleSave(); }}
+      onSave={(): void => {
+        void handleSave();
+      }}
       isSaving={createPatternPending || updatePatternPending}
       size='lg'
     >
@@ -108,7 +108,8 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
 
         <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
           <FormField label='Chain Mode'>
-            <SelectSimple size='sm'
+            <SelectSimple
+              size='sm'
               value={formData.chainMode}
               onValueChange={(value: string): void =>
                 setFormData((prev: PatternFormData) => ({

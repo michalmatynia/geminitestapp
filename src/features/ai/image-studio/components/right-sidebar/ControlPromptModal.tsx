@@ -13,18 +13,18 @@ import { useSlotsState } from '../../context/SlotsContext';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { cloneSerializableValue } from './right-sidebar-utils';
-import { 
-  serializeImageStudioProjectSession, 
-  getImageStudioProjectSessionKey, 
+import {
+  serializeImageStudioProjectSession,
+  getImageStudioProjectSessionKey,
   saveImageStudioProjectSessionLocal,
-  type ImageStudioProjectSession
-} from '../../utils/project-session';
-import { 
-  parsePromptEngineSettings, 
-  PROMPT_ENGINE_SETTINGS_KEY 
+  type ImageStudioProjectSession,
+} from '@/shared/lib/ai/image-studio/utils/project-session';
+import {
+  parsePromptEngineSettings,
+  PROMPT_ENGINE_SETTINGS_KEY,
 } from '@/shared/lib/prompt-engine/settings';
-import { validateProgrammaticPrompt } from '@/shared/lib/prompt-engine/prompt-validator';
-import { formatProgrammaticPrompt } from '@/shared/lib/prompt-engine/prompt-formatter';
+import { validateProgrammaticPrompt } from '@/shared/lib/prompt-engine';
+import { formatProgrammaticPrompt } from '@/shared/lib/prompt-engine';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { savePromptExploderDraftPrompt } from '@/features/prompt-exploder/bridge';
 import { useRouter } from 'next/navigation';
@@ -44,8 +44,15 @@ export function ControlPromptModal({
   const { setPromptText, setExtractReviewOpen, setExtractDraftPrompt } = usePromptActions();
   const { validatorEnabled, formatterEnabled } = useUiState();
   const { setValidatorEnabled, setFormatterEnabled } = useUiActions();
-  const { generationBusy, sequenceRunBusy, modelSupportsSequenceGeneration, onRunGeneration, onRunSequenceGeneration } = useRightSidebarContext();
-  const { selectedFolder, selectedSlotId, workingSlotId, compositeAssetIds, previewMode } = useSlotsState();
+  const {
+    generationBusy,
+    sequenceRunBusy,
+    modelSupportsSequenceGeneration,
+    onRunGeneration,
+    onRunSequenceGeneration,
+  } = useRightSidebarContext();
+  const { selectedFolder, selectedSlotId, workingSlotId, compositeAssetIds, previewMode } =
+    useSlotsState();
   const updateSetting = useUpdateSetting();
   const settingsStore = useSettingsStore();
   const [promptSaveBusy, setPromptSaveBusy] = useState(false);
@@ -136,7 +143,21 @@ export function ControlPromptModal({
       .finally(() => {
         setPromptSaveBusy(false);
       });
-  }, [projectId, promptSaveBusy, selectedFolder, selectedSlotId, workingSlotId, compositeAssetIds, previewMode, promptText, paramsState, paramSpecs, paramUiOverrides, updateSetting, toast]);
+  }, [
+    projectId,
+    promptSaveBusy,
+    selectedFolder,
+    selectedSlotId,
+    workingSlotId,
+    compositeAssetIds,
+    previewMode,
+    promptText,
+    paramsState,
+    paramSpecs,
+    paramUiOverrides,
+    updateSetting,
+    toast,
+  ]);
 
   const preparePromptForExtraction = (): string => {
     const trimmedPrompt = promptText.trim();
@@ -145,11 +166,9 @@ export function ControlPromptModal({
 
     let nextPrompt = promptText;
     try {
-      const beforeIssues = validateProgrammaticPrompt(
-        nextPrompt,
-        promptValidationSettings,
-        { scope: 'image_studio_prompt' }
-      );
+      const beforeIssues = validateProgrammaticPrompt(nextPrompt, promptValidationSettings, {
+        scope: 'image_studio_prompt',
+      });
       if (!formatterEnabled) {
         if (beforeIssues.length === 0) {
           toast('Prompt validation passed.', { variant: 'success' });
@@ -178,7 +197,11 @@ export function ControlPromptModal({
       return nextPrompt;
     } catch (error) {
       logClientError(error, {
-        context: { source: 'ControlPromptModal', action: 'preparePromptForExtraction', level: 'error' },
+        context: {
+          source: 'ControlPromptModal',
+          action: 'preparePromptForExtraction',
+          level: 'error',
+        },
       });
       toast(
         error instanceof Error
@@ -237,7 +260,8 @@ export function ControlPromptModal({
       <div className='space-y-4 text-sm text-gray-200'>
         <div className='space-y-2'>
           <Label className='text-xs text-gray-400'>Prompt</Label>
-          <Textarea size='sm'
+          <Textarea
+            size='sm'
             value={promptText}
             onChange={(event) => setPromptText(event.target.value)}
             className='h-44 font-mono text-[11px]'
@@ -282,7 +306,8 @@ export function ControlPromptModal({
             <Play className='mr-2 size-4' />
             Generate From Prompt
           </Button>
-          <Button size='xs'
+          <Button
+            size='xs'
             variant='outline'
             title='Extract functions and selectors from prompt'
             aria-label='Extract functions and selectors from prompt'

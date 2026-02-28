@@ -1,16 +1,8 @@
 'use client';
 
 import React from 'react';
-import { 
-  NODE_WIDTH, 
-  PORT_SIZE, 
-  getPortOffsetY,
-  type AiNode
-} from '@/shared/lib/ai-paths';
-import { 
-  INPUT_CONNECTOR_COLORS, 
-  OUTPUT_CONNECTOR_COLORS 
-} from './canvas-svg-node-utils';
+import { NODE_WIDTH, PORT_SIZE, getPortOffsetY, type AiNode } from '@/shared/lib/ai-paths';
+import { INPUT_CONNECTOR_COLORS, OUTPUT_CONNECTOR_COLORS } from './canvas-svg-node-utils';
 import { formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
 import { type SvgConnectorTooltipState } from '../../CanvasBoard.utils';
 import { type ConnectorInfo } from '../../canvas-board-connectors';
@@ -23,14 +15,34 @@ export interface CanvasSvgNodePortsProps {
   connectorHitRadius: number;
   showPortLabels: boolean;
   buildConnectorKey: (direction: 'input' | 'output', nodeId: string, portName: string) => string;
-  onReconnectInput: (event: React.PointerEvent, nodeId: string, portName: string) => void | Promise<void>;
-  onCompleteConnection: (event: React.PointerEvent, node: AiNode, portName: string) => void | Promise<void>;
-  onDisconnectPort: (direction: 'input' | 'output', nodeId: string, portName: string) => void | Promise<void>;
-  onStartConnection: (event: React.PointerEvent, node: AiNode, portName: string) => void | Promise<void>;
+  onReconnectInput: (
+    event: React.PointerEvent,
+    nodeId: string,
+    portName: string
+  ) => void | Promise<void>;
+  onCompleteConnection: (
+    event: React.PointerEvent,
+    node: AiNode,
+    portName: string
+  ) => void | Promise<void>;
+  onDisconnectPort: (
+    direction: 'input' | 'output',
+    nodeId: string,
+    portName: string
+  ) => void | Promise<void>;
+  onStartConnection: (
+    event: React.PointerEvent,
+    node: AiNode,
+    portName: string
+  ) => void | Promise<void>;
   setHoveredConnectorKey: (key: string | null) => void;
   onConnectorHover?: (state: SvgConnectorTooltipState) => void;
   onConnectorLeave?: () => void;
-  getConnectorInfo: (direction: 'input' | 'output', nodeId: string, portName: string) => ConnectorInfo;
+  getConnectorInfo: (
+    direction: 'input' | 'output',
+    nodeId: string,
+    portName: string
+  ) => ConnectorInfo;
   setPinnedConnectorKey: (key: string | null) => void;
 }
 
@@ -72,9 +84,7 @@ export function CanvasSvgNodePorts({
               r={isHovered || isPinned ? PORT_SIZE / 2 + 1.5 : PORT_SIZE / 2}
               pointerEvents='all'
               fill={
-                isConnected
-                  ? INPUT_CONNECTOR_COLORS.fillConnected
-                  : INPUT_CONNECTOR_COLORS.fill
+                isConnected ? INPUT_CONNECTOR_COLORS.fillConnected : INPUT_CONNECTOR_COLORS.fill
               }
               stroke={INPUT_CONNECTOR_COLORS.stroke}
               strokeWidth={isHovered || isPinned ? 2 : 1}

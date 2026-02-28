@@ -15,7 +15,7 @@ export async function getIntegrationJobs(): Promise<ProductJob[]> {
  */
 export async function getProductAiJobs(scope: string = 'all'): Promise<{ jobs: ProductAiJob[] }> {
   return api.get<{ jobs: ProductAiJob[] }>('/api/products/ai-jobs', {
-    params: { scope }
+    params: { scope },
   });
 }
 
@@ -29,7 +29,10 @@ export async function getProductAiJob(jobId: string): Promise<{ job: ProductAiJo
 /**
  * Perform action on product AI job
  */
-export async function performProductAiJobAction(jobId: string, action: 'retry' | 'cancel'): Promise<unknown> {
+export async function performProductAiJobAction(
+  jobId: string,
+  action: 'retry' | 'cancel'
+): Promise<unknown> {
   return api.post<unknown>(`/api/products/ai-jobs/${jobId}`, { action });
 }
 
@@ -38,14 +41,17 @@ export async function performProductAiJobAction(jobId: string, action: 'retry' |
  */
 export async function getChatbotJobs(scope: string = 'all'): Promise<{ jobs: unknown[] }> {
   return api.get<{ jobs: unknown[] }>('/api/chatbot/jobs', {
-    params: { scope }
+    params: { scope },
   });
 }
 
 /**
  * Update a product AI job status
  */
-export async function updateProductAiJob(jobId: string, data: Partial<ProductAiJob>): Promise<{ success: boolean; job: ProductAiJob }> {
+export async function updateProductAiJob(
+  jobId: string,
+  data: Partial<ProductAiJob>
+): Promise<{ success: boolean; job: ProductAiJob }> {
   return api.put<{ success: boolean; job: ProductAiJob }>(`/api/products/ai-jobs/${jobId}`, data);
 }
 
@@ -59,16 +65,21 @@ export async function deleteProductAiJob(jobId: string): Promise<{ success: bool
 /**
  * Clear product AI jobs by scope
  */
-export async function clearProductAiJobs(scope: string = 'all'): Promise<{ success: boolean; count: number }> {
+export async function clearProductAiJobs(
+  scope: string = 'all'
+): Promise<{ success: boolean; count: number }> {
   return api.delete<{ success: boolean; count: number }>('/api/products/ai-jobs', {
-    params: { scope }
+    params: { scope },
   });
 }
 
 /**
  * Update a chatbot job
  */
-export async function updateChatbotJob(jobId: string, action: 'retry' | 'cancel'): Promise<unknown> {
+export async function updateChatbotJob(
+  jobId: string,
+  action: 'retry' | 'cancel'
+): Promise<unknown> {
   return api.post<unknown>(`/api/chatbot/jobs/${jobId}`, { action });
 }
 
@@ -84,9 +95,11 @@ export async function deleteChatbotJob(jobId: string, force?: boolean): Promise<
 /**
  * Clear chatbot jobs by scope
  */
-export async function clearChatbotJobs(scope: string = 'all'): Promise<{ success: boolean; count: number }> {
+export async function clearChatbotJobs(
+  scope: string = 'all'
+): Promise<{ success: boolean; count: number }> {
   return api.delete<{ success: boolean; count: number }>('/api/chatbot/jobs', {
-    params: { scope }
+    params: { scope },
   });
 }
 
@@ -130,7 +143,5 @@ export type TraderaQueueHealthResponse = {
 };
 
 export async function getTraderaQueueHealth(): Promise<TraderaQueueHealthResponse> {
-  return api.get<TraderaQueueHealthResponse>(
-    '/api/integrations/queues/tradera'
-  );
+  return api.get<TraderaQueueHealthResponse>('/api/integrations/queues/tradera');
 }

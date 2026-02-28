@@ -3,24 +3,13 @@
 import { ArrowLeft, Sparkles } from 'lucide-react';
 import React, { useMemo, useCallback } from 'react';
 
-import {
-  Button,
-  SelectSimple,
-  SearchInput,
-  DataTable,
-} from '@/shared/ui';
+import { Button, SelectSimple, SearchInput, DataTable } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 import type { AiNode, CaseResolverFile } from '@/shared/contracts/case-resolver';
 
-import {
-  buildNode,
-  createNodeId,
-} from './case-resolver-canvas-utils';
+import { buildNode, createNodeId } from './case-resolver-canvas-utils';
 import { useNodeFileWorkspaceContext } from './NodeFileWorkspaceContext';
-import {
-  normalizeSearchText,
-  type NodeFileDocumentSearchRow,
-} from './CaseResolverNodeFileUtils';
+import { normalizeSearchText, type NodeFileDocumentSearchRow } from './CaseResolverNodeFileUtils';
 import { getNodeFileDocumentColumns, getNodeFileCaseColumns } from './CaseResolverNodeFileColumns';
 
 const DRAG_FILE_ID_TYPE = 'application/case-resolver-file-id';
@@ -67,8 +56,7 @@ export function NodeFileDocumentSearchPanel({
   const drillRows = useMemo((): NodeFileDocumentSearchRow[] => {
     if (!selectedDrillCaseId) return [];
     return documentSearchRows.filter(
-      (row: NodeFileDocumentSearchRow): boolean =>
-        row.file.parentCaseId === selectedDrillCaseId
+      (row: NodeFileDocumentSearchRow): boolean => row.file.parentCaseId === selectedDrillCaseId
     );
   }, [documentSearchRows, selectedDrillCaseId]);
 
@@ -98,9 +86,7 @@ export function NodeFileDocumentSearchPanel({
     if (!selectedDrillCaseId) return '';
     const caseRow = visibleCaseRows.find((r) => r.file.id === selectedDrillCaseId);
     if (caseRow) return caseRow.signatureLabel || caseRow.file.name;
-    const anyRow = documentSearchRows.find(
-      (r) => r.file.parentCaseId === selectedDrillCaseId
-    );
+    const anyRow = documentSearchRows.find((r) => r.file.parentCaseId === selectedDrillCaseId);
     return anyRow?.signatureLabel ?? selectedDrillCaseId;
   }, [selectedDrillCaseId, visibleCaseRows, documentSearchRows]);
 
@@ -326,7 +312,9 @@ export function NodeFileDocumentSearchPanel({
             data={currentDocRows}
             className='border-none'
             getRowId={(row) => row.file.id}
-            getRowClassName={() => 'cursor-grab border-border/20 transition-colors hover:bg-card/50 active:cursor-grabbing'}
+            getRowClassName={() =>
+              'cursor-grab border-border/20 transition-colors hover:bg-card/50 active:cursor-grabbing'
+            }
             stickyHeader
             meta={{
               onDragStart: handleRowDragStart,

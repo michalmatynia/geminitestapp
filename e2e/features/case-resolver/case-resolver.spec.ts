@@ -135,12 +135,11 @@ async function mockAuthAndSettings(
       const record = workspace as { files?: unknown };
       if (!Array.isArray(record.files)) return null;
       return (
-        record.files.find((file: unknown): boolean => (
-          Boolean(file) &&
-          typeof file === 'object' &&
-          (file as { id?: unknown }).id === fileId
-        )) as Record<string, unknown> | undefined
-      ) ?? null;
+        (record.files.find(
+          (file: unknown): boolean =>
+            Boolean(file) && typeof file === 'object' && (file as { id?: unknown }).id === fileId
+        ) as Record<string, unknown> | undefined) ?? null
+      );
     },
   };
 }
@@ -315,55 +314,72 @@ test.describe('Case Resolver', () => {
       }
     );
 
-    await page.goto('/admin/case-resolver?openEditor=1&fileId=doc-1&promptExploderSessionId=session-1', {
-      waitUntil: 'networkidle',
-    });
+    await page.goto(
+      '/admin/case-resolver?openEditor=1&fileId=doc-1&promptExploderSessionId=session-1',
+      {
+        waitUntil: 'networkidle',
+      }
+    );
 
     const applyMappingButton = page.getByRole('button', { name: 'Apply Mapping' });
     await expect(applyMappingButton).toBeVisible();
     await applyMappingButton.click();
     await expect(applyMappingButton).toBeHidden({ timeout: 10_000 });
 
-    await expect.poll(() => {
-      const doc = settingsHarness.readWorkspaceDocument('doc-1');
-      if (!doc) return null;
-      const addresser = doc['addresser'] as { id?: string } | null | undefined;
-      return addresser?.id ?? null;
-    }).toBe('org-addresser');
-    await expect.poll(() => {
-      const doc = settingsHarness.readWorkspaceDocument('doc-1');
-      if (!doc) return null;
-      const addressee = doc['addressee'] as { id?: string } | null | undefined;
-      return addressee?.id ?? null;
-    }).toBe('org-addressee');
-    await expect.poll(() => {
-      const doc = settingsHarness.readWorkspaceDocument('doc-1');
-      return typeof doc?.['documentDate'] === 'string' ? doc['documentDate'] : null;
-    }).toBe('2026-01-25');
-    await expect.poll(() => {
-      const doc = settingsHarness.readWorkspaceDocument('doc-1');
-      return typeof doc?.['documentContentPlainText'] === 'string'
-        ? doc['documentContentPlainText']
-        : '';
-    }).toContain('Treść główna dokumentu.');
-    await expect.poll(() => {
-      const doc = settingsHarness.readWorkspaceDocument('doc-1');
-      return typeof doc?.['documentContentPlainText'] === 'string'
-        ? doc['documentContentPlainText']
-        : '';
-    }).not.toContain('Nadawca Sp z o.o.');
-    await expect.poll(() => {
-      const doc = settingsHarness.readWorkspaceDocument('doc-1');
-      return typeof doc?.['documentContentPlainText'] === 'string'
-        ? doc['documentContentPlainText']
-        : '';
-    }).not.toContain('Inspektorat ZUS w Gryficach');
-    await expect.poll(() => {
-      const doc = settingsHarness.readWorkspaceDocument('doc-1');
-      return typeof doc?.['documentContentPlainText'] === 'string'
-        ? doc['documentContentPlainText']
-        : '';
-    }).not.toContain('25.01.2026');
+    await expect
+      .poll(() => {
+        const doc = settingsHarness.readWorkspaceDocument('doc-1');
+        if (!doc) return null;
+        const addresser = doc['addresser'] as { id?: string } | null | undefined;
+        return addresser?.id ?? null;
+      })
+      .toBe('org-addresser');
+    await expect
+      .poll(() => {
+        const doc = settingsHarness.readWorkspaceDocument('doc-1');
+        if (!doc) return null;
+        const addressee = doc['addressee'] as { id?: string } | null | undefined;
+        return addressee?.id ?? null;
+      })
+      .toBe('org-addressee');
+    await expect
+      .poll(() => {
+        const doc = settingsHarness.readWorkspaceDocument('doc-1');
+        return typeof doc?.['documentDate'] === 'string' ? doc['documentDate'] : null;
+      })
+      .toBe('2026-01-25');
+    await expect
+      .poll(() => {
+        const doc = settingsHarness.readWorkspaceDocument('doc-1');
+        return typeof doc?.['documentContentPlainText'] === 'string'
+          ? doc['documentContentPlainText']
+          : '';
+      })
+      .toContain('Treść główna dokumentu.');
+    await expect
+      .poll(() => {
+        const doc = settingsHarness.readWorkspaceDocument('doc-1');
+        return typeof doc?.['documentContentPlainText'] === 'string'
+          ? doc['documentContentPlainText']
+          : '';
+      })
+      .not.toContain('Nadawca Sp z o.o.');
+    await expect
+      .poll(() => {
+        const doc = settingsHarness.readWorkspaceDocument('doc-1');
+        return typeof doc?.['documentContentPlainText'] === 'string'
+          ? doc['documentContentPlainText']
+          : '';
+      })
+      .not.toContain('Inspektorat ZUS w Gryficach');
+    await expect
+      .poll(() => {
+        const doc = settingsHarness.readWorkspaceDocument('doc-1');
+        return typeof doc?.['documentContentPlainText'] === 'string'
+          ? doc['documentContentPlainText']
+          : '';
+      })
+      .not.toContain('25.01.2026');
   });
 
   test('dismisses capture mapping without mutating mapped fields or cleanup', async ({ page }) => {
@@ -390,49 +406,64 @@ test.describe('Case Resolver', () => {
       }
     );
 
-    await page.goto('/admin/case-resolver?openEditor=1&fileId=doc-1&promptExploderSessionId=session-1', {
-      waitUntil: 'networkidle',
-    });
+    await page.goto(
+      '/admin/case-resolver?openEditor=1&fileId=doc-1&promptExploderSessionId=session-1',
+      {
+        waitUntil: 'networkidle',
+      }
+    );
 
     const dismissButton = page.getByRole('button', { name: 'Dismiss (No Mapping)' });
     await expect(dismissButton).toBeVisible();
     await dismissButton.click();
     await expect(dismissButton).toBeHidden({ timeout: 10_000 });
 
-    await expect.poll(() => {
-      const doc = settingsHarness.readWorkspaceDocument('doc-1');
-      if (!doc) return null;
-      const addresser = doc['addresser'] as { id?: string } | null | undefined;
-      return addresser?.id ?? null;
-    }).toBeNull();
-    await expect.poll(() => {
-      const doc = settingsHarness.readWorkspaceDocument('doc-1');
-      if (!doc) return null;
-      const addressee = doc['addressee'] as { id?: string } | null | undefined;
-      return addressee?.id ?? null;
-    }).toBeNull();
-    await expect.poll(() => {
-      const doc = settingsHarness.readWorkspaceDocument('doc-1');
-      return typeof doc?.['documentDate'] === 'string' ? doc['documentDate'] : null;
-    }).toBe('');
-    await expect.poll(() => {
-      const doc = settingsHarness.readWorkspaceDocument('doc-1');
-      return typeof doc?.['documentContentPlainText'] === 'string'
-        ? doc['documentContentPlainText']
-        : '';
-    }).toContain('Nadawca Sp z o.o.');
-    await expect.poll(() => {
-      const doc = settingsHarness.readWorkspaceDocument('doc-1');
-      return typeof doc?.['documentContentPlainText'] === 'string'
-        ? doc['documentContentPlainText']
-        : '';
-    }).toContain('Inspektorat ZUS w Gryficach');
-    await expect.poll(() => {
-      const doc = settingsHarness.readWorkspaceDocument('doc-1');
-      return typeof doc?.['documentContentPlainText'] === 'string'
-        ? doc['documentContentPlainText']
-        : '';
-    }).toContain('25.01.2026');
+    await expect
+      .poll(() => {
+        const doc = settingsHarness.readWorkspaceDocument('doc-1');
+        if (!doc) return null;
+        const addresser = doc['addresser'] as { id?: string } | null | undefined;
+        return addresser?.id ?? null;
+      })
+      .toBeNull();
+    await expect
+      .poll(() => {
+        const doc = settingsHarness.readWorkspaceDocument('doc-1');
+        if (!doc) return null;
+        const addressee = doc['addressee'] as { id?: string } | null | undefined;
+        return addressee?.id ?? null;
+      })
+      .toBeNull();
+    await expect
+      .poll(() => {
+        const doc = settingsHarness.readWorkspaceDocument('doc-1');
+        return typeof doc?.['documentDate'] === 'string' ? doc['documentDate'] : null;
+      })
+      .toBe('');
+    await expect
+      .poll(() => {
+        const doc = settingsHarness.readWorkspaceDocument('doc-1');
+        return typeof doc?.['documentContentPlainText'] === 'string'
+          ? doc['documentContentPlainText']
+          : '';
+      })
+      .toContain('Nadawca Sp z o.o.');
+    await expect
+      .poll(() => {
+        const doc = settingsHarness.readWorkspaceDocument('doc-1');
+        return typeof doc?.['documentContentPlainText'] === 'string'
+          ? doc['documentContentPlainText']
+          : '';
+      })
+      .toContain('Inspektorat ZUS w Gryficach');
+    await expect
+      .poll(() => {
+        const doc = settingsHarness.readWorkspaceDocument('doc-1');
+        return typeof doc?.['documentContentPlainText'] === 'string'
+          ? doc['documentContentPlainText']
+          : '';
+      })
+      .toContain('25.01.2026');
   });
 
   test('discards duplicate transfer replay before document mutation', async ({ page }) => {
@@ -463,19 +494,29 @@ test.describe('Case Resolver', () => {
       }
     );
 
-    await page.goto('/admin/case-resolver?openEditor=1&fileId=doc-1&promptExploderSessionId=session-1', {
-      waitUntil: 'networkidle',
-    });
+    await page.goto(
+      '/admin/case-resolver?openEditor=1&fileId=doc-1&promptExploderSessionId=session-1',
+      {
+        waitUntil: 'networkidle',
+      }
+    );
 
-    await expect.poll(async () =>
-      page.evaluate((storageKey: string) => window.localStorage.getItem(storageKey), PROMPT_EXPLODER_APPLY_TO_STUDIO_KEY)
-    ).toBeNull();
-    await expect.poll(() => {
-      const doc = settingsHarness.readWorkspaceDocument('doc-1');
-      return typeof doc?.['documentContentPlainText'] === 'string'
-        ? doc['documentContentPlainText']
-        : '';
-    }).toBe('');
+    await expect
+      .poll(async () =>
+        page.evaluate(
+          (storageKey: string) => window.localStorage.getItem(storageKey),
+          PROMPT_EXPLODER_APPLY_TO_STUDIO_KEY
+        )
+      )
+      .toBeNull();
+    await expect
+      .poll(() => {
+        const doc = settingsHarness.readWorkspaceDocument('doc-1');
+        return typeof doc?.['documentContentPlainText'] === 'string'
+          ? doc['documentContentPlainText']
+          : '';
+      })
+      .toBe('');
   });
 
   test('shows expired transfer recovery and clears stale payload on discard', async ({ page }) => {
@@ -506,21 +547,31 @@ test.describe('Case Resolver', () => {
       }
     );
 
-    await page.goto('/admin/case-resolver?openEditor=1&fileId=doc-1&promptExploderSessionId=session-1', {
-      waitUntil: 'networkidle',
-    });
+    await page.goto(
+      '/admin/case-resolver?openEditor=1&fileId=doc-1&promptExploderSessionId=session-1',
+      {
+        waitUntil: 'networkidle',
+      }
+    );
 
     await expect(page.getByText('This transfer expired before apply.')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Apply Prompt Exploder Output' })).toBeHidden();
     await page.getByRole('button', { name: 'Discard Pending Output' }).click();
-    await expect.poll(async () =>
-      page.evaluate((storageKey: string) => window.localStorage.getItem(storageKey), PROMPT_EXPLODER_APPLY_TO_STUDIO_KEY)
-    ).toBeNull();
-    await expect.poll(() => {
-      const doc = settingsHarness.readWorkspaceDocument('doc-1');
-      return typeof doc?.['documentContentPlainText'] === 'string'
-        ? doc['documentContentPlainText']
-        : '';
-    }).toBe('');
+    await expect
+      .poll(async () =>
+        page.evaluate(
+          (storageKey: string) => window.localStorage.getItem(storageKey),
+          PROMPT_EXPLODER_APPLY_TO_STUDIO_KEY
+        )
+      )
+      .toBeNull();
+    await expect
+      .poll(() => {
+        const doc = settingsHarness.readWorkspaceDocument('doc-1');
+        return typeof doc?.['documentContentPlainText'] === 'string'
+          ? doc['documentContentPlainText']
+          : '';
+      })
+      .toBe('');
   });
 });

@@ -37,7 +37,7 @@ export function ToggleRow({
   children,
 }: ToggleRowProps): React.JSX.Element {
   const generatedId = id || React.useId();
-  
+
   const Control = type === 'switch' ? Switch : Checkbox;
 
   return (
@@ -54,23 +54,21 @@ export function ToggleRow({
       <div id={id} className='relative z-10 flex-1 space-y-0.5'>
         <div className='flex items-center gap-1.5'>
           {icon ? <span className='shrink-0'>{icon}</span> : null}
-          <Label 
+          <Label
             htmlFor={generatedId}
             className={cn('text-sm font-medium text-gray-200 cursor-pointer', labelClassName)}
           >
             {label}
           </Label>
         </div>
-        {description && (
-          <p className='text-[11px] text-gray-500 leading-tight'>
-            {description}
-          </p>
-        )}
+        {description && <p className='text-[11px] text-gray-500 leading-tight'>{description}</p>}
       </div>
       <Control
         id={generatedId}
         checked={checked}
-        onCheckedChange={(val: boolean | 'indeterminate') => onCheckedChange(type === 'switch' ? Boolean(val) : val === true)}
+        onCheckedChange={(val: boolean | 'indeterminate') =>
+          onCheckedChange(type === 'switch' ? Boolean(val) : val === true)
+        }
         disabled={disabled}
       />
     </Card>

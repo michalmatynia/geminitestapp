@@ -17,7 +17,11 @@ export function ClusterPresetsPanel(): React.JSX.Element {
   // --- Context Hooks ---
   const orchestrator = useAiPathsSettingsOrchestrator();
   const { presetDraft: presetDraftContext, editingPresetId, clusterPresets } = usePresetsState();
-  const { setPresetDraft: setPresetDraftContext, resetPresetDraft, loadPresetIntoDraft } = usePresetsActions();
+  const {
+    setPresetDraft: setPresetDraftContext,
+    resetPresetDraft,
+    loadPresetIntoDraft,
+  } = usePresetsActions();
 
   const presetDraft = presetDraftContext;
   const setPresetDraft = setPresetDraftContext;
@@ -71,19 +75,23 @@ export function ClusterPresetsPanel(): React.JSX.Element {
             className='mt-2 min-h-[64px] w-full rounded-md border border-border bg-card/70 text-xs text-white'
             value={presetDraft.description}
             onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
-              setPresetDraft((prev: ClusterPresetDraft) => ({ ...prev, description: event.target.value }))
+              setPresetDraft((prev: ClusterPresetDraft) => ({
+                ...prev,
+                description: event.target.value,
+              }))
             }
           />
         </div>
         <div>
-          <Label className='text-[10px] uppercase text-gray-500'>
-            Bundle Ports (one per line)
-          </Label>
+          <Label className='text-[10px] uppercase text-gray-500'>Bundle Ports (one per line)</Label>
           <Textarea
             className='mt-2 min-h-[90px] w-full rounded-md border border-border bg-card/70 text-xs text-white'
             value={presetDraft.bundlePorts}
             onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
-              setPresetDraft((prev: ClusterPresetDraft) => ({ ...prev, bundlePorts: event.target.value }))
+              setPresetDraft((prev: ClusterPresetDraft) => ({
+                ...prev,
+                bundlePorts: event.target.value,
+              }))
             }
           />
         </div>
@@ -93,7 +101,10 @@ export function ClusterPresetsPanel(): React.JSX.Element {
             className='mt-2 min-h-[90px] w-full rounded-md border border-border bg-card/70 text-xs text-white'
             value={presetDraft.template}
             onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
-              setPresetDraft((prev: ClusterPresetDraft) => ({ ...prev, template: event.target.value }))
+              setPresetDraft((prev: ClusterPresetDraft) => ({
+                ...prev,
+                template: event.target.value,
+              }))
             }
           />
         </div>
@@ -107,14 +118,14 @@ export function ClusterPresetsPanel(): React.JSX.Element {
       </div>
       <div className='mt-4 space-y-2 text-xs text-gray-400'>
         <div className='text-[11px] uppercase text-gray-500'>Library</div>
-        
+
         <SimpleSettingsList
           items={clusterPresets.map((preset: ClusterPreset) => ({
             id: preset.id,
             title: preset.name,
             description: preset.description,
             subtitle: `Updated: ${new Date(preset.updatedAt).toLocaleString()}`,
-            original: preset
+            original: preset,
           }))}
           emptyMessage='No presets yet. Save a bundle + template pair to reuse across apps.'
           renderActions={(item) => (
@@ -135,7 +146,9 @@ export function ClusterPresetsPanel(): React.JSX.Element {
               </Button>
             </div>
           )}
-          onDelete={(item) => { handleDeletePreset(item.original.id); }}
+          onDelete={(item) => {
+            handleDeletePreset(item.original.id);
+          }}
         />
         <Button
           type='button'

@@ -109,17 +109,8 @@
       },
       "description": "User trigger button (11d19fd4-4086-4d1c-9ec1-55f5a9c2f1e8).",
       "id": "node-trigger-translate-en-pl",
-      "inputs": [
-        "context"
-      ],
-      "outputs": [
-        "trigger",
-        "triggerName",
-        "context",
-        "meta",
-        "entityId",
-        "entityType"
-      ],
+      "inputs": ["context"],
+      "outputs": ["trigger", "triggerName", "context", "meta", "entityId", "entityType"],
       "position": {
         "x": 47.28313893611276,
         "y": 324.9222995918841
@@ -134,12 +125,7 @@
           "entityIdSource": "simulation",
           "entityType": "auto",
           "excludePaths": [],
-          "includePaths": [
-            "id",
-            "description_en",
-            "content_en",
-            "parameters"
-          ],
+          "includePaths": ["id", "description_en", "content_en", "parameters"],
           "role": "entity",
           "scopeMode": "include",
           "scopeTarget": "entity"
@@ -150,15 +136,8 @@
       },
       "description": "Resolve product context and entity payload.",
       "id": "node-context-translate-en-pl",
-      "inputs": [
-        "context"
-      ],
-      "outputs": [
-        "context",
-        "entityId",
-        "entityType",
-        "entityJson"
-      ],
+      "inputs": ["context"],
+      "outputs": ["context", "entityId", "entityType", "entityJson"],
       "position": {
         "x": 360,
         "y": 360
@@ -184,13 +163,8 @@
       },
       "description": "Extract source English description + parameters into one bundle.",
       "id": "node-parser-translate-en-pl",
-      "inputs": [
-        "entityJson",
-        "context"
-      ],
-      "outputs": [
-        "bundle"
-      ],
+      "inputs": ["entityJson", "context"],
+      "outputs": ["bundle"],
       "position": {
         "x": 740,
         "y": 360
@@ -209,17 +183,8 @@
       },
       "description": "Single-call deterministic translator for description + parameters.",
       "id": "node-prompt-translate-en-pl",
-      "inputs": [
-        "bundle",
-        "title",
-        "images",
-        "result",
-        "entityId"
-      ],
-      "outputs": [
-        "prompt",
-        "images"
-      ],
+      "inputs": ["bundle", "title", "images", "result", "entityId"],
+      "outputs": ["prompt", "images"],
       "position": {
         "x": 1123.9643736933358,
         "y": 352.5840243644326
@@ -242,15 +207,8 @@
       },
       "description": "Single economical local call.",
       "id": "node-model-translate-en-pl",
-      "inputs": [
-        "prompt",
-        "images",
-        "context"
-      ],
-      "outputs": [
-        "result",
-        "jobId"
-      ],
+      "inputs": ["prompt", "images", "context"],
+      "outputs": ["result", "jobId"],
       "position": {
         "x": 1540.1460231307549,
         "y": 360.1460231307549
@@ -281,17 +239,8 @@
       },
       "description": "Extract JSON object from model output.",
       "id": "node-regex-translate-en-pl",
-      "inputs": [
-        "value",
-        "prompt",
-        "regexCallback"
-      ],
-      "outputs": [
-        "grouped",
-        "matches",
-        "value",
-        "aiPrompt"
-      ],
+      "inputs": ["value", "prompt", "regexCallback"],
+      "outputs": ["grouped", "matches", "value", "aiPrompt"],
       "position": {
         "x": 1939.8492664456726,
         "y": 359.84926644567236
@@ -366,12 +315,7 @@
         "schema",
         "aiQuery"
       ],
-      "outputs": [
-        "result",
-        "bundle",
-        "content_en",
-        "aiPrompt"
-      ],
+      "outputs": ["result", "bundle", "content_en", "aiPrompt"],
       "position": {
         "x": 2360,
         "y": 360
@@ -481,15 +425,8 @@
       "data": {},
       "description": "Simulate a modal action by Entity ID.",
       "id": "node-f2qfiiyi",
-      "inputs": [
-        "trigger"
-      ],
-      "outputs": [
-        "context",
-        "entityId",
-        "entityType",
-        "productId"
-      ],
+      "inputs": ["trigger"],
+      "outputs": ["context", "entityId", "entityType", "productId"],
       "position": {
         "x": 157.45668467316221,
         "y": 117.24642706438661

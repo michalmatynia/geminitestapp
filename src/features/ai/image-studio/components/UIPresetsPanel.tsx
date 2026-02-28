@@ -3,12 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
-import {
-  Button,
-  Label,
-  SelectSimple,
-  useToast,
-} from '@/shared/ui';
+import { Button, Label, SelectSimple, useToast } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 import { usePromptState, usePromptActions } from '../context/PromptContext';
@@ -16,7 +11,7 @@ import {
   IMAGE_STUDIO_PROMPT_LIBRARY_KEY,
   parseImageStudioPromptLibrary,
   type ImageStudioPromptEntry,
-} from '../utils/prompt-library';
+} from '@/shared/lib/ai/image-studio/utils/prompt-library';
 
 const CUSTOM_OPTION_VALUE = '__custom__';
 
@@ -27,7 +22,9 @@ function createPromptId(): string {
 }
 
 function createDefaultPromptName(entries: ImageStudioPromptEntry[]): string {
-  const existing = new Set(entries.map((entry: ImageStudioPromptEntry) => entry.name.trim().toLowerCase()));
+  const existing = new Set(
+    entries.map((entry: ImageStudioPromptEntry) => entry.name.trim().toLowerCase())
+  );
   let index = entries.length + 1;
   while (existing.has(`prompt ${index}`)) {
     index += 1;
@@ -52,20 +49,21 @@ export function UIPresetsPanel(): React.JSX.Element {
   );
 
   const promptOptions = useMemo(
-    () => ([
+    () => [
       ...(customPromptSnapshot !== null ? [{ value: CUSTOM_OPTION_VALUE, label: 'Custom' }] : []),
       ...promptLibrary.map((entry: ImageStudioPromptEntry) => ({
         value: entry.id,
         label: entry.name,
       })),
-    ]),
+    ],
     [customPromptSnapshot, promptLibrary]
   );
 
   useEffect(() => {
     if (!selectedPromptId) return;
     if (selectedPromptId === CUSTOM_OPTION_VALUE) return;
-    if (promptLibrary.some((entry: ImageStudioPromptEntry) => entry.id === selectedPromptId)) return;
+    if (promptLibrary.some((entry: ImageStudioPromptEntry) => entry.id === selectedPromptId))
+      return;
     setSelectedPromptId('');
   }, [promptLibrary, selectedPromptId]);
 
@@ -113,9 +111,7 @@ export function UIPresetsPanel(): React.JSX.Element {
     <div className='grid grid-cols-1 gap-2 rounded border border-border/60 bg-card/40 p-2'>
       <div className='flex items-center justify-between gap-2'>
         <Label className='text-[11px] text-gray-300'>Prompt</Label>
-        <span className='text-[10px] text-gray-500'>
-          {promptLibrary.length} saved
-        </span>
+        <span className='text-[10px] text-gray-500'>{promptLibrary.length} saved</span>
       </div>
       <SelectSimple
         size='sm'
@@ -129,7 +125,9 @@ export function UIPresetsPanel(): React.JSX.Element {
             return;
           }
 
-          const selected = promptLibrary.find((entry: ImageStudioPromptEntry) => entry.id === value);
+          const selected = promptLibrary.find(
+            (entry: ImageStudioPromptEntry) => entry.id === value
+          );
           if (!selected) {
             setSelectedPromptId('');
             return;

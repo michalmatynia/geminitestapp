@@ -40,11 +40,7 @@ type ParsedNodeFileSnapshot = {
 
 type CaseResolverNodeFileMetaEntry = ParsedNodeFileSnapshot['nodeFileMeta'][string];
 
-const addUnique = (
-  target: Record<string, string[]>,
-  key: string,
-  value: string
-): void => {
+const addUnique = (target: Record<string, string[]>, key: string, value: string): void => {
   const normalizedKey = key.trim();
   const normalizedValue = value.trim();
   if (!normalizedKey || !normalizedValue) return;
@@ -73,21 +69,15 @@ const normalizeRecord = (input: Record<string, string> | undefined): Record<stri
   return normalized;
 };
 
-const recordsEqual = (
-  left: Record<string, string>,
-  right: Record<string, string>
-): boolean => {
+const recordsEqual = (left: Record<string, string>, right: Record<string, string>): boolean => {
   const leftKeys = Object.keys(left);
   const rightKeys = Object.keys(right);
   if (leftKeys.length !== rightKeys.length) return false;
   return leftKeys.every((key: string): boolean => left[key] === right[key]);
 };
 
-const buildLegacyBindingKey = (
-  assetId: string,
-  nodeId: string,
-  fileId: string
-): string => `${assetId}::${nodeId}::${fileId}`;
+const buildLegacyBindingKey = (assetId: string, nodeId: string, fileId: string): string =>
+  `${assetId}::${nodeId}::${fileId}`;
 
 const buildValidLegacyBindingKeySetFromFiles = (
   files: CaseResolverFile[] | null | undefined
@@ -97,7 +87,8 @@ const buildValidLegacyBindingKeySetFromFiles = (
 
   files.forEach((file: CaseResolverFile): void => {
     const sourceByNode = normalizeRecord(file.graph?.documentSourceFileIdByNode);
-    const nodeFileByNode = normalizeRecord(file.graph?.nodeFileAssetIdByNode);    Object.entries(nodeFileByNode).forEach(([nodeId, assetId]: [string, string]): void => {
+    const nodeFileByNode = normalizeRecord(file.graph?.nodeFileAssetIdByNode);
+    Object.entries(nodeFileByNode).forEach(([nodeId, assetId]: [string, string]): void => {
       const documentFileId = sourceByNode[nodeId] ?? '';
       if (!documentFileId) return;
       keySet.add(buildLegacyBindingKey(assetId, nodeId, documentFileId));
@@ -107,68 +98,68 @@ const buildValidLegacyBindingKeySetFromFiles = (
   return keySet;
 };
 
-const normalizeNodeFileMetaRecord = (
-  input: unknown
-): ParsedNodeFileSnapshot['nodeFileMeta'] => {
+const normalizeNodeFileMetaRecord = (input: unknown): ParsedNodeFileSnapshot['nodeFileMeta'] => {
   const normalized: ParsedNodeFileSnapshot['nodeFileMeta'] = {};
   if (!input || typeof input !== 'object' || Array.isArray(input)) {
     return normalized;
   }
 
-  Object.entries(input as Record<string, unknown>).forEach(([nodeId, rawMeta]: [string, unknown]): void => {
-    const normalizedNodeId = nodeId.trim();
-    if (!normalizedNodeId) return;
-    if (!rawMeta || typeof rawMeta !== 'object' || Array.isArray(rawMeta)) return;
-    const metaRecord = rawMeta as Record<string, unknown>;
-    const fileId = typeof metaRecord['fileId'] === 'string' ? metaRecord['fileId'].trim() : '';
-    if (!fileId) return;
-    const fileType = metaRecord['fileType'] === 'scanfile' ? 'scanfile' : 'document';
-    const fileName =
-      typeof metaRecord['fileName'] === 'string' && metaRecord['fileName'].trim().length > 0
-        ? metaRecord['fileName'].trim()
-        : 'Linked document';
-    normalized[normalizedNodeId] = {
-      fileId,
-      fileType,
-      fileName,
-    };
-  });
+  Object.entries(input as Record<string, unknown>).forEach(
+    ([nodeId, rawMeta]: [string, unknown]): void => {
+      const normalizedNodeId = nodeId.trim();
+      if (!normalizedNodeId) return;
+      if (!rawMeta || typeof rawMeta !== 'object' || Array.isArray(rawMeta)) return;
+      const metaRecord = rawMeta as Record<string, unknown>;
+      const fileId = typeof metaRecord['fileId'] === 'string' ? metaRecord['fileId'].trim() : '';
+      if (!fileId) return;
+      const fileType = metaRecord['fileType'] === 'scanfile' ? 'scanfile' : 'document';
+      const fileName =
+        typeof metaRecord['fileName'] === 'string' && metaRecord['fileName'].trim().length > 0
+          ? metaRecord['fileName'].trim()
+          : 'Linked document';
+      normalized[normalizedNodeId] = {
+        fileId,
+        fileType,
+        fileName,
+      };
+    }
+  );
 
   return normalized;
 };
 
-const normalizePromptNodeMetaRecord = (
-  input: unknown
-): ParsedNodeFileSnapshot['nodeMeta'] => {
+const normalizePromptNodeMetaRecord = (input: unknown): ParsedNodeFileSnapshot['nodeMeta'] => {
   const normalized: ParsedNodeFileSnapshot['nodeMeta'] = {};
   if (!input || typeof input !== 'object' || Array.isArray(input)) {
     return normalized;
   }
 
-  Object.entries(input as Record<string, unknown>).forEach(([nodeId, rawMeta]: [string, unknown]): void => {
-    const normalizedNodeId = nodeId.trim();
-    if (!normalizedNodeId) return;
-    if (!rawMeta || typeof rawMeta !== 'object' || Array.isArray(rawMeta)) return;
-    normalized[normalizedNodeId] = rawMeta as CaseResolverNodeMeta;
-  });
+  Object.entries(input as Record<string, unknown>).forEach(
+    ([nodeId, rawMeta]: [string, unknown]): void => {
+      const normalizedNodeId = nodeId.trim();
+      if (!normalizedNodeId) return;
+      if (!rawMeta || typeof rawMeta !== 'object' || Array.isArray(rawMeta)) return;
+      normalized[normalizedNodeId] = rawMeta as CaseResolverNodeMeta;
+    }
+  );
 
   return normalized;
 };
 
-const normalizeEdgeMetaRecord = (
-  input: unknown
-): ParsedNodeFileSnapshot['edgeMeta'] => {
+const normalizeEdgeMetaRecord = (input: unknown): ParsedNodeFileSnapshot['edgeMeta'] => {
   const normalized: ParsedNodeFileSnapshot['edgeMeta'] = {};
   if (!input || typeof input !== 'object' || Array.isArray(input)) {
     return normalized;
   }
 
-  Object.entries(input as Record<string, unknown>).forEach(([edgeId, rawMeta]: [string, unknown]): void => {
-    const normalizedEdgeId = edgeId.trim();
-    if (!normalizedEdgeId) return;
-    if (!rawMeta || typeof rawMeta !== 'object' || Array.isArray(rawMeta)) return;
-    normalized[normalizedEdgeId] = rawMeta as CaseResolverEdgeMeta;
-  });
+  Object.entries(input as Record<string, unknown>).forEach(
+    ([edgeId, rawMeta]: [string, unknown]): void => {
+      const normalizedEdgeId = edgeId.trim();
+      if (!normalizedEdgeId) return;
+      if (!rawMeta || typeof rawMeta !== 'object' || Array.isArray(rawMeta)) return;
+      normalized[normalizedEdgeId] = rawMeta as CaseResolverEdgeMeta;
+    }
+  );
 
   return normalized;
 };
@@ -196,14 +187,12 @@ const normalizeLegacyNodeFileSnapshotRecord = (
       : '';
   const resolvedLegacyNodeId =
     legacyNodeId ||
-    (
-      legacyNodes[0] &&
-      typeof legacyNodes[0].id === 'string' &&
-      legacyNodes[0].id.trim().length > 0
-        ? legacyNodes[0].id.trim()
-        : ''
-    );
-  const legacyEdges = (Array.isArray(record['connectedEdges']) ? record['connectedEdges'] : []) as Edge[];
+    (legacyNodes[0] && typeof legacyNodes[0].id === 'string' && legacyNodes[0].id.trim().length > 0
+      ? legacyNodes[0].id.trim()
+      : '');
+  const legacyEdges = (
+    Array.isArray(record['connectedEdges']) ? record['connectedEdges'] : []
+  ) as Edge[];
   const sourceFileId =
     typeof record['sourceFileId'] === 'string' ? record['sourceFileId'].trim() : '';
   const sourceFileType: 'document' | 'scanfile' =
@@ -303,8 +292,7 @@ const parseNodeFileSnapshotFromAsset = (
     if (!legacyNodeId || !legacySourceFileId) {
       return null;
     }
-    const legacyFileType =
-      record['sourceFileType'] === 'scanfile' ? 'scanfile' : 'document';
+    const legacyFileType = record['sourceFileType'] === 'scanfile' ? 'scanfile' : 'document';
     const legacyFileName =
       typeof record['sourceFileName'] === 'string' && record['sourceFileName'].trim().length > 0
         ? record['sourceFileName'].trim()
@@ -339,9 +327,7 @@ export const buildCaseResolverNodeFileRelationIndex = ({
 }): CaseResolverNodeFileRelationIndex => {
   const validNodeIds = new Set<string>(
     graph.nodes
-      .map((node): string =>
-        typeof node.id === 'string' ? node.id.trim() : ''
-      )
+      .map((node): string => (typeof node.id === 'string' ? node.id.trim() : ''))
       .filter(Boolean)
   );
   const validNodeFileAssetIds = new Set<string>(
@@ -352,11 +338,11 @@ export const buildCaseResolverNodeFileRelationIndex = ({
   );
   const validDocumentFileIds = files
     ? new Set(
-      files
-        .filter((file: CaseResolverFile): boolean => file.fileType !== 'case')
-        .map((file: CaseResolverFile): string => file.id.trim())
-        .filter(Boolean)
-    )
+        files
+          .filter((file: CaseResolverFile): boolean => file.fileType !== 'case')
+          .map((file: CaseResolverFile): string => file.id.trim())
+          .filter(Boolean)
+      )
     : null;
 
   const sourceByNode = normalizeRecord(graph.documentSourceFileIdByNode);
@@ -411,11 +397,11 @@ export const buildCaseResolverNodeFileRelationIndexFromAssets = ({
 }): CaseResolverNodeFileRelationIndex => {
   const validDocumentFileIds = files
     ? new Set<string>(
-      files
-        .filter((file: CaseResolverFile): boolean => file.fileType !== 'case')
-        .map((file: CaseResolverFile): string => file.id.trim())
-        .filter(Boolean)
-    )
+        files
+          .filter((file: CaseResolverFile): boolean => file.fileType !== 'case')
+          .map((file: CaseResolverFile): string => file.id.trim())
+          .filter(Boolean)
+      )
     : null;
   const validLegacyBindingKeySet =
     files && files.length > 0 ? buildValidLegacyBindingKeySetFromFiles(files) : null;
@@ -517,10 +503,12 @@ export const sanitizeCaseResolverNodeFileAssetSnapshots = ({
 
     if (hasCanonicalMeta) {
       const canonicalMeta = normalizeNodeFileMetaRecord(record['nodeFileMeta']);
-      Object.entries(canonicalMeta).forEach(([nodeId, meta]: [string, CaseResolverNodeFileMetaEntry]): void => {
-        if (!validDocumentFileIds.has(meta.fileId)) return;
-        normalizedNodeFileMeta[nodeId] = meta;
-      });
+      Object.entries(canonicalMeta).forEach(
+        ([nodeId, meta]: [string, CaseResolverNodeFileMetaEntry]): void => {
+          if (!validDocumentFileIds.has(meta.fileId)) return;
+          normalizedNodeFileMeta[nodeId] = meta;
+        }
+      );
     } else {
       const normalizedLegacy = normalizeLegacyNodeFileSnapshotRecord(
         record,
@@ -591,9 +579,7 @@ export const sanitizeCaseResolverGraphNodeFileRelations = ({
 }): CaseResolverGraph => {
   const validNodeIds = new Set<string>(
     graph.nodes
-      .map((node): string =>
-        typeof node.id === 'string' ? node.id.trim() : ''
-      )
+      .map((node): string => (typeof node.id === 'string' ? node.id.trim() : ''))
       .filter(Boolean)
   );
   const validNodeFileAssetIds = new Set<string>(

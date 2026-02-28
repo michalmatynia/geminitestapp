@@ -26,9 +26,14 @@ export function ExternalLink({
   onClick,
 }: ExternalLinkProps): React.JSX.Element {
   const isExternal = href.startsWith('http') || href.startsWith('mailto:');
-  
+
   const icon = showIcon ? (
-    <ExternalLinkIcon className={cn('size-3.5 opacity-70 group-hover:opacity-100 transition-opacity', iconClassName)} />
+    <ExternalLinkIcon
+      className={cn(
+        'size-3.5 opacity-70 group-hover:opacity-100 transition-opacity',
+        iconClassName
+      )}
+    />
   ) : null;
 
   const content = (

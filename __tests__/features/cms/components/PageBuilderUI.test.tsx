@@ -21,7 +21,7 @@ vi.mock('next/navigation', () => ({
   }),
 }));
 
-vi.mock('@/features/foldertree', () => ({
+vi.mock('@/shared/lib/foldertree', () => ({
   MasterFolderTree: ({ controller, renderNode }: any) => (
     <div>
       {controller.roots.map((node: any) => (
@@ -63,11 +63,13 @@ vi.mock('@/features/foldertree', () => ({
     </div>
   ),
   useMasterFolderTreeInstance: ({ nodes, initiallyExpandedNodeIds }: any) => {
-    const buildTree = (parentId: string | null) => 
-      nodes.filter((n: any) => n.parentId === parentId).map((node: any) => ({
-        ...node,
-        children: buildTree(node.id)
-      }));
+    const buildTree = (parentId: string | null) =>
+      nodes
+        .filter((n: any) => n.parentId === parentId)
+        .map((node: any) => ({
+          ...node,
+          children: buildTree(node.id),
+        }));
     const roots = buildTree(null);
     return {
       profile: {
@@ -93,7 +95,7 @@ vi.mock('@/features/foldertree', () => ({
 }));
 
 vi.mock('@/features/admin/context/AdminLayoutContext', async (importOriginal) => {
-  const actual = await importOriginal() as any;
+  const actual = (await importOriginal()) as any;
   return {
     ...actual,
     useAdminLayout: () => ({
@@ -103,7 +105,7 @@ vi.mock('@/features/admin/context/AdminLayoutContext', async (importOriginal) =>
 });
 
 vi.mock('@/features/cms/hooks/useCmsQueries', async (importOriginal) => {
-  const actual = await importOriginal() as any;
+  const actual = (await importOriginal()) as any;
   return {
     ...actual,
     useCmsPages: vi.fn(),
@@ -123,7 +125,13 @@ vi.mock('@/features/cms/hooks/useDragStateContext', () => ({
   DragStateProvider: ({ children }: any) => <div>{children}</div>,
   useDragState: vi.fn(() => ({
     state: {
-      block: { id: null, type: null, fromSectionId: null, fromColumnId: null, fromParentBlockId: null },
+      block: {
+        id: null,
+        type: null,
+        fromSectionId: null,
+        fromColumnId: null,
+        fromParentBlockId: null,
+      },
       section: { id: null, type: null, index: null, zone: null },
     },
     isDraggingBlock: false,
@@ -142,7 +150,7 @@ vi.mock('@/shared/hooks/useUserPreferences', () => ({
 }));
 
 vi.mock('@/shared/ui', async (importOriginal) => {
-  const actual = await importOriginal() as any;
+  const actual = (await importOriginal()) as any;
   return {
     ...actual,
     useToast: () => ({
@@ -177,9 +185,7 @@ const queryClient = new QueryClient({
 const wrapper = ({ children }: { children: React.ReactNode }) => (
   <QueryClientProvider client={queryClient}>
     <AdminLayoutProvider>
-      <ToastProvider>
-        {children}
-      </ToastProvider>
+      <ToastProvider>{children}</ToastProvider>
     </AdminLayoutProvider>
   </QueryClientProvider>
 );
@@ -210,7 +216,7 @@ describe('PageBuilder UI Integration', () => {
 
   it('should allow adding a section and see it in the preview', async () => {
     render(<PageBuilderLayout initialState={testInitialState} />, { wrapper });
-    
+
     // 1. Initial state: No sections
     expect(screen.getByTestId('preview-empty')).toBeInTheDocument();
 
@@ -232,11 +238,11 @@ describe('PageBuilder UI Integration', () => {
 
   it('should handle undo/redo operations', async () => {
     render(<PageBuilderLayout initialState={testInitialState} />, { wrapper });
-    
+
     // 1. Add a section
     fireEvent.click(screen.getAllByRole('button', { name: /Add section/i })[1]!);
     fireEvent.click(screen.getByText('RichText'));
-    
+
     await waitFor(() => {
       expect(screen.getByText('RichText')).toBeInTheDocument();
     });
@@ -260,12 +266,12 @@ describe('PageBuilder UI Integration', () => {
 
   it('should switch between desktop and mobile previews', async () => {
     render(<PageBuilderLayout initialState={testInitialState} />, { wrapper });
-    
+
     // Default is desktop.
     screen.getByTestId('preview-empty');
-    // Initially desktop has no max-w-[420px] on the wrapper (which is inside if hasSections, 
+    // Initially desktop has no max-w-[420px] on the wrapper (which is inside if hasSections,
     // but here we have empty preview).
-    
+
     // Let's add a section to see the canvas
     fireEvent.click(screen.getAllByRole('button', { name: /Add section/i })[1]!);
     fireEvent.click(screen.getByText('RichText'));
@@ -280,7 +286,7 @@ describe('PageBuilder UI Integration', () => {
     // Switch to mobile
     const mobileBtn = screen.getByLabelText(/Mobile preview/i);
     fireEvent.click(mobileBtn);
-    
+
     await waitFor(() => {
       expect(canvas).toHaveClass('max-w-[420px]');
     });
@@ -288,7 +294,7 @@ describe('PageBuilder UI Integration', () => {
     // Switch back to desktop
     const desktopBtn = screen.getByLabelText(/Desktop preview/i);
     fireEvent.click(desktopBtn);
-    
+
     await waitFor(() => {
       expect(canvas).not.toHaveClass('max-w-[420px]');
     });

@@ -1,12 +1,6 @@
 'use client';
 
-import {
-  createContext,
-  useContext,
-  useState,
-  useMemo,
-  type ReactNode,
-} from 'react';
+import { createContext, useContext, useState, useMemo, type ReactNode } from 'react';
 
 import type {
   AiPathRunRecord,
@@ -61,18 +55,24 @@ export interface RunHistoryActions {
   // Detail panel actions
   setRunDetailOpen: (open: boolean) => void;
   setRunDetailLoading: (loading: boolean) => void;
-  setRunDetail: (detail: RunDetailData | null | ((prev: RunDetailData | null) => RunDetailData | null)) => void;
+  setRunDetail: (
+    detail: RunDetailData | null | ((prev: RunDetailData | null) => RunDetailData | null)
+  ) => void;
   clearRunDetail: () => void;
 
   // Filter actions
   setRunFilter: (filter: RunHistoryFilter | ((prev: RunHistoryFilter) => RunHistoryFilter)) => void;
 
   // Expansion state
-  setExpandedRunHistory: (expanded: Record<string, boolean> | ((prev: Record<string, boolean>) => Record<string, boolean>)) => void;
+  setExpandedRunHistory: (
+    expanded: Record<string, boolean> | ((prev: Record<string, boolean>) => Record<string, boolean>)
+  ) => void;
   toggleRunExpanded: (runId: string) => void;
 
   // Selection state
-  setRunHistorySelection: (selection: Record<string, string> | ((prev: Record<string, string>) => Record<string, string>)) => void;
+  setRunHistorySelection: (
+    selection: Record<string, string> | ((prev: Record<string, string>) => Record<string, string>)
+  ) => void;
 
   // History node selection
   setRunHistoryNodeId: (nodeId: string | null) => void;
@@ -102,9 +102,7 @@ interface RunHistoryProviderProps {
   children: ReactNode;
 }
 
-export function RunHistoryProvider({
-  children,
-}: RunHistoryProviderProps): React.ReactNode {
+export function RunHistoryProvider({ children }: RunHistoryProviderProps): React.ReactNode {
   // Detail panel state
   const [runDetailOpen, setRunDetailOpenInternal] = useState(false);
   const [runDetailLoading, setRunDetailLoadingInternal] = useState(false);
@@ -113,7 +111,9 @@ export function RunHistoryProvider({
   // Filter & UI state
   const [runFilter, setRunFilterInternal] = useState<RunHistoryFilter>('all');
   const [expandedRunHistory, setExpandedRunHistoryInternal] = useState<Record<string, boolean>>({});
-  const [runHistorySelection, setRunHistorySelectionInternal] = useState<Record<string, string>>({});
+  const [runHistorySelection, setRunHistorySelectionInternal] = useState<Record<string, string>>(
+    {}
+  );
 
   // History node selection
   const [runHistoryNodeId, setRunHistoryNodeIdInternal] = useState<string | null>(null);
@@ -219,9 +219,7 @@ export function RunHistoryProvider({
 
   return (
     <RunHistoryActionsContext.Provider value={actions}>
-      <RunHistoryStateContext.Provider value={state}>
-        {children}
-      </RunHistoryStateContext.Provider>
+      <RunHistoryStateContext.Provider value={state}>{children}</RunHistoryStateContext.Provider>
     </RunHistoryActionsContext.Provider>
   );
 }

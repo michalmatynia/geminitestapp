@@ -12,9 +12,7 @@ export const tryEnterPromptRuntimeScope = (
   return true;
 };
 
-export const leavePromptRuntimeScope = (
-  scope: PromptExploderRuntimeValidationScope
-): void => {
+export const leavePromptRuntimeScope = (scope: PromptExploderRuntimeValidationScope): void => {
   const inflight = inflightByScope.get(scope) ?? 0;
   if (inflight <= 1) {
     inflightByScope.delete(scope);
@@ -40,4 +38,3 @@ export const getPromptRuntimeLoadSnapshot = (): {
 export const resetPromptRuntimeLoadSnapshot = (): void => {
   inflightByScope.clear();
 };
-

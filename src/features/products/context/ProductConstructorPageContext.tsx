@@ -18,8 +18,9 @@ type ProductConstructorPageContextValue = {
   parameters: ProductConstructorParametersSection;
 };
 
-const ProductConstructorPageContext =
-  createContext<ProductConstructorPageContextValue | null>(null);
+const ProductConstructorPageContext = createContext<ProductConstructorPageContextValue | null>(
+  null
+);
 
 export function ProductConstructorPageProvider({
   value,

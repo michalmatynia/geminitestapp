@@ -4,11 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 
 import { createProduct, updateProduct, deleteProduct } from '@/features/products/api/products';
 import type { ProductWithImages } from '@/shared/contracts/products';
-import type { 
-  CreateMutation, 
-  UpdateMutation, 
-  DeleteMutation 
-} from '@/shared/contracts/ui';
+import type { CreateMutation, UpdateMutation, DeleteMutation } from '@/shared/contracts/ui';
 import { operationFailedError } from '@/shared/errors/app-error';
 import { api } from '@/shared/lib/api-client';
 import {
@@ -97,9 +93,7 @@ export function useBulkDeleteProducts(): DeleteMutation<void, string[]> {
 
   return createDeleteMutationV2({
     mutationFn: async (ids: string[]): Promise<void> => {
-      const responses = await Promise.all(
-        ids.map((id: string) => deleteProduct(id))
-      );
+      const responses = await Promise.all(ids.map((id: string) => deleteProduct(id)));
       if (responses.some((response: { success: boolean }) => !response.success)) {
         throw operationFailedError('Failed to delete some products');
       }
@@ -186,7 +180,10 @@ export function useDuplicateProduct(): CreateMutation<{ id: string }, { id: stri
   });
 }
 
-export function useUpdateProductField(): UpdateMutation<void, { id: string; field: string; value: unknown }> {
+export function useUpdateProductField(): UpdateMutation<
+  void,
+  { id: string; field: string; value: unknown }
+> {
   const queryClient = useQueryClient();
 
   return createUpdateMutationV2({

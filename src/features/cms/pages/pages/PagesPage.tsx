@@ -104,17 +104,14 @@ export default function PagesPage(): React.ReactNode {
 
   const pages = useMemo((): PageSummary[] => pagesQuery.data ?? [], [pagesQuery.data]);
   const domainSlugs = useMemo((): Slug[] => slugsQuery.data ?? [], [slugsQuery.data]);
-  const domainSlugSet = useMemo(
-    (): Set<string> | null => {
-      if (!domainSlugs.length) return null;
-      const values = domainSlugs
-        .map((slug: Slug): string => (typeof slug.slug === 'string' ? slug.slug.trim() : ''))
-        .filter((slugValue: string): boolean => slugValue.length > 0);
-      return values.length ? new Set(values) : null;
-    },
-    [domainSlugs]
-  );
-  
+  const domainSlugSet = useMemo((): Set<string> | null => {
+    if (!domainSlugs.length) return null;
+    const values = domainSlugs
+      .map((slug: Slug): string => (typeof slug.slug === 'string' ? slug.slug.trim() : ''))
+      .filter((slugValue: string): boolean => slugValue.length > 0);
+    return values.length ? new Set(values) : null;
+  }, [domainSlugs]);
+
   const filteredPages = useMemo((): PageSummary[] => {
     if (statusFilter === 'all') return pages;
     return pages.filter((page: PageSummary) => (page.status ?? 'draft') === statusFilter);
@@ -125,7 +122,9 @@ export default function PagesPage(): React.ReactNode {
     try {
       await deletePage.mutateAsync(pageToDelete.id);
     } catch (error: unknown) {
-      logClientError(error, { context: { source: 'PagesPage.handleConfirmDelete', pageId: pageToDelete.id } });
+      logClientError(error, {
+        context: { source: 'PagesPage.handleConfirmDelete', pageId: pageToDelete.id },
+      });
     } finally {
       setPageToDelete(null);
     }
@@ -148,124 +147,132 @@ export default function PagesPage(): React.ReactNode {
     window.open(`${protocol}//${resolvedHost}${path}`, '_blank', 'noopener,noreferrer');
   };
 
-  const columns = useMemo<ColumnDef<PageSummary>[]>(() => [
-    {
-      accessorKey: 'name',
-      header: 'Page Name',
-      cell: ({ row }) => (
-        <div className='flex flex-col gap-1'>
-          <Link 
-            href={`/admin/cms/builder?pageId=${row.original.id}`}
-            className='font-medium text-gray-200 hover:text-blue-300 transition-colors'
-          >
-            {row.original.name}
-          </Link>
-          <div className='flex flex-wrap gap-1'>
-            {normalizePageSlugLinks(row.original.slugs).map((s: NormalizedPageSlugLink) => {
-              const isOutOfZone = domainSlugSet && !domainSlugSet.has(s.slug);
-              return (
-                <Badge 
-                  key={s.id} 
-                  variant='outline' 
-                  className={`text-[9px] px-1 py-0 ${isOutOfZone ? 'border-amber-500/30 text-amber-400 bg-amber-500/5' : 'text-gray-500'}`}
-                >
-                  /{s.slug}
-                </Badge>
-              );
-            })}
+  const columns = useMemo<ColumnDef<PageSummary>[]>(
+    () => [
+      {
+        accessorKey: 'name',
+        header: 'Page Name',
+        cell: ({ row }) => (
+          <div className='flex flex-col gap-1'>
+            <Link
+              href={`/admin/cms/builder?pageId=${row.original.id}`}
+              className='font-medium text-gray-200 hover:text-blue-300 transition-colors'
+            >
+              {row.original.name}
+            </Link>
+            <div className='flex flex-wrap gap-1'>
+              {normalizePageSlugLinks(row.original.slugs).map((s: NormalizedPageSlugLink) => {
+                const isOutOfZone = domainSlugSet && !domainSlugSet.has(s.slug);
+                return (
+                  <Badge
+                    key={s.id}
+                    variant='outline'
+                    className={`text-[9px] px-1 py-0 ${isOutOfZone ? 'border-amber-500/30 text-amber-400 bg-amber-500/5' : 'text-gray-500'}`}
+                  >
+                    /{s.slug}
+                  </Badge>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      ),
-    },
-    {
-      accessorKey: 'status',
-      header: 'Status',
-      cell: ({ row }) => <StatusBadge status={row.original.status ?? 'draft'} className='text-[10px]' />,
-      size: 100,
-    },
-    {
-      id: 'preview',
-      header: 'Live Preview',
-      cell: ({ row }) => {
-        const page = row.original;
-        const slugValues = normalizePageSlugLinks(page.slugs).map(
-          (slugLink: NormalizedPageSlugLink): string => slugLink.slug
-        );
-        const zoneSlugs = domainSlugSet
-          ? slugValues.filter((value: string) => domainSlugSet.has(value))
-          : [];
-        const selectedSlugCandidate = previewSelections[page.id];
-        const previewSlug = zoneSlugs.length
-          ? (selectedSlugCandidate && zoneSlugs.includes(selectedSlugCandidate)
-            ? selectedSlugCandidate
-            : zoneSlugs[0])
-          : null;
+        ),
+      },
+      {
+        accessorKey: 'status',
+        header: 'Status',
+        cell: ({ row }) => (
+          <StatusBadge status={row.original.status ?? 'draft'} className='text-[10px]' />
+        ),
+        size: 100,
+      },
+      {
+        id: 'preview',
+        header: 'Live Preview',
+        cell: ({ row }) => {
+          const page = row.original;
+          const slugValues = normalizePageSlugLinks(page.slugs).map(
+            (slugLink: NormalizedPageSlugLink): string => slugLink.slug
+          );
+          const zoneSlugs = domainSlugSet
+            ? slugValues.filter((value: string) => domainSlugSet.has(value))
+            : [];
+          const selectedSlugCandidate = previewSelections[page.id];
+          const previewSlug = zoneSlugs.length
+            ? selectedSlugCandidate && zoneSlugs.includes(selectedSlugCandidate)
+              ? selectedSlugCandidate
+              : zoneSlugs[0]
+            : null;
 
-        if (!previewSlug) return <span className='text-[10px] text-gray-600 uppercase font-bold'>No route</span>;
+          if (!previewSlug)
+            return <span className='text-[10px] text-gray-600 uppercase font-bold'>No route</span>;
 
-        return (
-          <div className='flex items-center gap-2'>
-            {zoneSlugs.length > 1 ? (
-              <SelectSimple
+          return (
+            <div className='flex items-center gap-2'>
+              {zoneSlugs.length > 1 ? (
+                <SelectSimple
+                  size='xs'
+                  value={previewSlug}
+                  onValueChange={(val) =>
+                    setPreviewSelections((prev) => ({ ...prev, [page.id]: val }))
+                  }
+                  options={zoneSlugs.map((s) => ({ value: s, label: `/${s}` }))}
+                  className='h-7 w-28 text-[10px]'
+                />
+              ) : (
+                <span className='text-[10px] text-blue-400 font-mono'>/{previewSlug}</span>
+              )}
+              <Button
+                variant='ghost'
                 size='xs'
-                value={previewSlug}
-                onValueChange={(val) => setPreviewSelections(prev => ({ ...prev, [page.id]: val }))}
-                options={zoneSlugs.map(s => ({ value: s, label: `/${s}` }))}
-                className='h-7 w-28 text-[10px]'
-              />
-            ) : (
-              <span className='text-[10px] text-blue-400 font-mono'>/{previewSlug}</span>
-            )}
-            <Button
-              variant='ghost'
-              size='xs'
-              className='h-7 w-7 p-0'
-              onClick={() => handlePreview(previewSlug)}
-              title={`Preview on ${activeDomain?.domain ?? 'current'}`}
-            >
-              <Eye className='size-3.5' />
-            </Button>
+                className='h-7 w-7 p-0'
+                onClick={() => handlePreview(previewSlug)}
+                title={`Preview on ${activeDomain?.domain ?? 'current'}`}
+              >
+                <Eye className='size-3.5' />
+              </Button>
+            </div>
+          );
+        },
+      },
+      {
+        id: 'actions',
+        header: () => <div className='text-right'>Actions</div>,
+        cell: ({ row }) => (
+          <div className='flex justify-end'>
+            <ActionMenu ariaLabel={`Actions for page ${row.original.name}`}>
+              <DropdownMenuItem
+                onSelect={(event: Event): void => {
+                  event.preventDefault();
+                  router.push(`/admin/cms/builder?pageId=${row.original.id}`);
+                }}
+              >
+                Open in Builder
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={(event: Event): void => {
+                  event.preventDefault();
+                  router.push(`/admin/cms/pages/${row.original.id}/edit`);
+                }}
+              >
+                Edit Settings
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className='text-destructive focus:text-destructive'
+                onSelect={(event: Event): void => {
+                  event.preventDefault();
+                  setPageToDelete(row.original);
+                }}
+              >
+                Delete
+              </DropdownMenuItem>
+            </ActionMenu>
           </div>
-        );
-      }
-    },
-    {
-      id: 'actions',
-      header: () => <div className='text-right'>Actions</div>,
-      cell: ({ row }) => (
-        <div className='flex justify-end'>
-          <ActionMenu ariaLabel={`Actions for page ${row.original.name}`}>
-            <DropdownMenuItem
-              onSelect={(event: Event): void => {
-                event.preventDefault();
-                router.push(`/admin/cms/builder?pageId=${row.original.id}`);
-              }}
-            >
-              Open in Builder
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onSelect={(event: Event): void => {
-                event.preventDefault();
-                router.push(`/admin/cms/pages/${row.original.id}/edit`);
-              }}
-            >
-              Edit Settings
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              className='text-destructive focus:text-destructive'
-              onSelect={(event: Event): void => {
-                event.preventDefault();
-                setPageToDelete(row.original);
-              }}
-            >
-              Delete
-            </DropdownMenuItem>
-          </ActionMenu>
-        </div>
-      )
-    }
-  ], [domainSlugSet, previewSelections, activeDomain]);
+        ),
+      },
+    ],
+    [domainSlugSet, previewSelections, activeDomain]
+  );
 
   const header = (
     <SectionHeader
@@ -276,7 +283,7 @@ export default function PagesPage(): React.ReactNode {
           items={[
             { label: 'Admin', href: '/admin' },
             { label: 'CMS', href: '/admin/cms' },
-            { label: 'Pages' }
+            { label: 'Pages' },
           ]}
           className='mb-2'
         />
@@ -323,7 +330,9 @@ export default function PagesPage(): React.ReactNode {
       <ConfirmModal
         isOpen={!!pageToDelete}
         onClose={() => setPageToDelete(null)}
-        onConfirm={() => { void handleConfirmDelete(); }}
+        onConfirm={() => {
+          void handleConfirmDelete();
+        }}
         title='Permanently Delete Page?'
         message={`This will destroy "${pageToDelete?.name}" and all its block configurations. This cannot be undone.`}
         confirmText='Destroy Page'

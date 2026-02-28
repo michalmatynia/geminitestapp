@@ -133,9 +133,7 @@ export const createRuleId = (): string => {
   return `rule_${Date.now()}_${Math.floor(Math.random() * 100_000)}`;
 };
 
-export const getFieldConfig = (
-  field: ProductAdvancedFilterField
-): AdvancedFilterFieldConfig => {
+export const getFieldConfig = (field: ProductAdvancedFilterField): AdvancedFilterFieldConfig => {
   const found = ADVANCED_FILTER_FIELD_CONFIGS.find(
     (config: AdvancedFilterFieldConfig) => config.field === field
   );
@@ -184,9 +182,8 @@ export const parseAdvancedFilterPayloadOrDefault = (
   return parseAdvancedFilterPayload(payload) ?? createEmptyGroup();
 };
 
-export const serializeAdvancedFilterPayload = (
-  group: ProductAdvancedFilterGroup
-): string => JSON.stringify(group);
+export const serializeAdvancedFilterPayload = (group: ProductAdvancedFilterGroup): string =>
+  JSON.stringify(group);
 
 export const supportsOperator = (
   field: ProductAdvancedFilterField,
@@ -195,19 +192,15 @@ export const supportsOperator = (
   return getFieldConfig(field).operators.includes(operator);
 };
 
-export const isValueRequired = (
-  operator: ProductAdvancedFilterOperator
-): boolean => {
+export const isValueRequired = (operator: ProductAdvancedFilterOperator): boolean => {
   return operator !== 'isEmpty' && operator !== 'isNotEmpty';
 };
 
-export const isSecondValueRequired = (
-  operator: ProductAdvancedFilterOperator
-): boolean => operator === 'between';
+export const isSecondValueRequired = (operator: ProductAdvancedFilterOperator): boolean =>
+  operator === 'between';
 
-export const isMultiValueOperator = (
-  operator: ProductAdvancedFilterOperator
-): boolean => operator === 'in' || operator === 'notIn';
+export const isMultiValueOperator = (operator: ProductAdvancedFilterOperator): boolean =>
+  operator === 'in' || operator === 'notIn';
 
 export const normalizeConditionValue = (
   kind: AdvancedFieldKind,

@@ -46,15 +46,17 @@ export function AllegroApiConsole(): React.JSX.Element {
         error: allegroApiError,
         response: allegroApiResponse
           ? {
-            status: allegroApiResponse.status,
-            statusText: allegroApiResponse.statusText,
-            data: allegroApiResponse.data,
-            ...(allegroApiResponse.refreshed !== undefined && {
-              refreshed: allegroApiResponse.refreshed,
-            }),
-          }
+              status: allegroApiResponse.status,
+              statusText: allegroApiResponse.statusText,
+              data: allegroApiResponse.data,
+              ...(allegroApiResponse.refreshed !== undefined && {
+                refreshed: allegroApiResponse.refreshed,
+              }),
+            }
           : null,
-        onRequest: () => { void handleAllegroApiRequest(); },
+        onRequest: () => {
+          void handleAllegroApiRequest();
+        },
         isConnected,
       }}
     >
@@ -64,9 +66,11 @@ export function AllegroApiConsole(): React.JSX.Element {
         presets={allegroApiPresets}
         bodyOrParamsLabel='JSON body'
         connectionWarning='Connect Allegro to enable API requests.'
-        baseUrl={activeConnection?.allegroUseSandbox
-          ? 'https://api.allegro.pl.allegrosandbox.pl'
-          : 'https://api.allegro.pl'}
+        baseUrl={
+          activeConnection?.allegroUseSandbox
+            ? 'https://api.allegro.pl.allegrosandbox.pl'
+            : 'https://api.allegro.pl'
+        }
         methodType='select'
       />
     </ApiConsoleProvider>

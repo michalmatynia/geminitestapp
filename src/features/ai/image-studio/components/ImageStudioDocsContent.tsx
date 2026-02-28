@@ -1,4 +1,3 @@
- 
 'use client';
 
 import React, { useMemo, useState } from 'react';
@@ -19,9 +18,9 @@ import {
   IMAGE_STUDIO_OBJECT_LAYOUT_DOC_KEYS,
   IMAGE_STUDIO_SEQUENCE_DOC_KEYS,
   IMAGE_STUDIO_VERSION_GRAPH_DOC_KEYS,
-} from '../utils/studio-docs';
-import { IMAGE_STUDIO_TREE_KEY_PREFIX } from '../utils/studio-tree';
-import { IMAGE_STUDIO_OPENAI_API_KEY_KEY } from '../utils/studio-settings';
+} from '@/shared/lib/ai/image-studio/utils/studio-docs';
+import { IMAGE_STUDIO_TREE_KEY_PREFIX } from '@/shared/lib/ai/image-studio/utils/studio-tree';
+import { IMAGE_STUDIO_OPENAI_API_KEY_KEY } from '@/shared/lib/ai/image-studio/utils/studio-settings';
 
 import { useDocsSnapshots } from './docs/useDocsSnapshots';
 import { DocsRuntimeStateSection } from './docs/sections/DocsRuntimeStateSection';
@@ -96,7 +95,11 @@ export function ImageStudioDocsContent(): React.JSX.Element {
   const query = docsQuery.trim().toLowerCase();
   const includeByQuery = (parts: Array<string | number | boolean | null | undefined>): boolean => {
     if (!query) return true;
-    return parts.some((part) => String(part ?? '').toLowerCase().includes(query));
+    return parts.some((part) =>
+      String(part ?? '')
+        .toLowerCase()
+        .includes(query)
+    );
   };
 
   const apiKeyRaw =
@@ -270,19 +273,22 @@ export function ImageStudioDocsContent(): React.JSX.Element {
       {
         path: 'helpTooltips.cropButtonsEnabled',
         label: 'Crop/Object Layout button tooltips',
-        description: 'Enables crop and object-layout control tooltips in Studio UI, sourced from Image Studio Docs.',
+        description:
+          'Enables crop and object-layout control tooltips in Studio UI, sourced from Image Studio Docs.',
         value: metricValue(studioSettings.helpTooltips.cropButtonsEnabled),
       },
       {
         path: 'helpTooltips.sequencerFieldsEnabled',
         label: 'Sequencer field tooltips',
-        description: 'Enables sequencer field tooltips in Studio UI, sourced from Image Studio Docs.',
+        description:
+          'Enables sequencer field tooltips in Studio UI, sourced from Image Studio Docs.',
         value: metricValue(studioSettings.helpTooltips.sequencerFieldsEnabled),
       },
       {
         path: 'helpTooltips.versionGraphButtonsEnabled',
         label: 'Version graph button tooltips',
-        description: 'Enables Version Graph button tooltips in Studio UI, sourced from Image Studio Docs.',
+        description:
+          'Enables Version Graph button tooltips in Studio UI, sourced from Image Studio Docs.',
         value: metricValue(studioSettings.helpTooltips.versionGraphButtonsEnabled),
       },
       {
@@ -475,26 +481,56 @@ export function ImageStudioDocsContent(): React.JSX.Element {
   const filteredSettingsRows = settingsRows.filter((row) =>
     includeByQuery([row.path, row.label, row.description, row.value])
   );
-  const filteredCropControlDocs = IMAGE_STUDIO_CROP_DOC_KEYS
-    .map((key) => IMAGE_STUDIO_DOCS[key])
-    .filter((entry) =>
-      includeByQuery(['crop', 'tooltips', entry.title, entry.description, entry.key])
-    );
-  const filteredSequenceFieldDocs = IMAGE_STUDIO_SEQUENCE_DOC_KEYS
-    .map((key) => IMAGE_STUDIO_DOCS[key])
-    .filter((entry) =>
-      includeByQuery(['sequencer', 'sequence', 'field', 'numeric', 'tooltips', entry.title, entry.description, entry.key])
-    );
-  const filteredObjectLayoutDocs = IMAGE_STUDIO_OBJECT_LAYOUT_DOC_KEYS
-    .map((key) => IMAGE_STUDIO_DOCS[key])
-    .filter((entry) =>
-      includeByQuery(['object layout', 'center', 'padding', 'white background', 'tooltips', entry.title, entry.description, entry.key])
-    );
-  const filteredVersionGraphDocs = IMAGE_STUDIO_VERSION_GRAPH_DOC_KEYS
-    .map((key) => IMAGE_STUDIO_DOCS[key])
-    .filter((entry) =>
-      includeByQuery(['version graph', 'graph', 'toolbar', 'filter', 'inspector', 'compare', 'context menu', 'tooltips', entry.title, entry.description, entry.key])
-    );
+  const filteredCropControlDocs = IMAGE_STUDIO_CROP_DOC_KEYS.map(
+    (key) => IMAGE_STUDIO_DOCS[key]
+  ).filter((entry) =>
+    includeByQuery(['crop', 'tooltips', entry.title, entry.description, entry.key])
+  );
+  const filteredSequenceFieldDocs = IMAGE_STUDIO_SEQUENCE_DOC_KEYS.map(
+    (key) => IMAGE_STUDIO_DOCS[key]
+  ).filter((entry) =>
+    includeByQuery([
+      'sequencer',
+      'sequence',
+      'field',
+      'numeric',
+      'tooltips',
+      entry.title,
+      entry.description,
+      entry.key,
+    ])
+  );
+  const filteredObjectLayoutDocs = IMAGE_STUDIO_OBJECT_LAYOUT_DOC_KEYS.map(
+    (key) => IMAGE_STUDIO_DOCS[key]
+  ).filter((entry) =>
+    includeByQuery([
+      'object layout',
+      'center',
+      'padding',
+      'white background',
+      'tooltips',
+      entry.title,
+      entry.description,
+      entry.key,
+    ])
+  );
+  const filteredVersionGraphDocs = IMAGE_STUDIO_VERSION_GRAPH_DOC_KEYS.map(
+    (key) => IMAGE_STUDIO_DOCS[key]
+  ).filter((entry) =>
+    includeByQuery([
+      'version graph',
+      'graph',
+      'toolbar',
+      'filter',
+      'inspector',
+      'compare',
+      'context menu',
+      'tooltips',
+      entry.title,
+      entry.description,
+      entry.key,
+    ])
+  );
 
   const noResults =
     query.length > 0 &&
@@ -511,14 +547,17 @@ export function ImageStudioDocsContent(): React.JSX.Element {
         title='Image Studio Docs'
         description='Live documentation of the current Image Studio runtime state and every persisted setting used by generation, extraction, validation, presets, and folder-tree behavior.'
         className='p-5'
-        actions={(
-          <Input size='sm'
+        actions={
+          <Input
+            size='sm'
             value={docsQuery}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>) => setDocsQuery(event.target.value)}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+              setDocsQuery(event.target.value)
+            }
             placeholder='Search state, setting path, value...'
             className='h-9 w-full max-w-[360px] bg-card/70'
           />
-        )}
+        }
       />
 
       {includeByQuery(['runtime state', 'project', 'slot', 'prompt', 'mask', 'generation']) ? (
@@ -565,9 +604,18 @@ export function ImageStudioDocsContent(): React.JSX.Element {
           <h3 className='text-base font-semibold text-white'>Settings Reference</h3>
           <div className='grid gap-2'>
             {filteredSettingsRows.map((row) => (
-              <Card key={row.path} variant='subtle-compact' padding='sm' className='border-border/60 bg-card/40'>
-                <Hint size='xxs' uppercase className='text-gray-500'>{row.path}</Hint>
-                <div className='mt-1 text-sm text-gray-100'>{row.label}: {row.value}</div>
+              <Card
+                key={row.path}
+                variant='subtle-compact'
+                padding='sm'
+                className='border-border/60 bg-card/40'
+              >
+                <Hint size='xxs' uppercase className='text-gray-500'>
+                  {row.path}
+                </Hint>
+                <div className='mt-1 text-sm text-gray-100'>
+                  {row.label}: {row.value}
+                </div>
                 <div className='mt-1 text-xs text-gray-400'>{row.description}</div>
               </Card>
             ))}
@@ -580,8 +628,15 @@ export function ImageStudioDocsContent(): React.JSX.Element {
           <h3 className='text-base font-semibold text-white'>Crop Controls Reference</h3>
           <div className='grid gap-2'>
             {filteredCropControlDocs.map((entry) => (
-              <Card key={entry.key} variant='subtle-compact' padding='sm' className='border-border/60 bg-card/40'>
-                <Hint size='xxs' uppercase className='text-gray-500'>crop.{entry.key}</Hint>
+              <Card
+                key={entry.key}
+                variant='subtle-compact'
+                padding='sm'
+                className='border-border/60 bg-card/40'
+              >
+                <Hint size='xxs' uppercase className='text-gray-500'>
+                  crop.{entry.key}
+                </Hint>
                 <div className='mt-1 text-sm text-gray-100'>{entry.title}</div>
                 <div className='mt-1 text-xs text-gray-400'>{entry.description}</div>
               </Card>
@@ -595,8 +650,15 @@ export function ImageStudioDocsContent(): React.JSX.Element {
           <h3 className='text-base font-semibold text-white'>Sequencer Field Reference</h3>
           <div className='grid gap-2'>
             {filteredSequenceFieldDocs.map((entry) => (
-              <Card key={entry.key} variant='subtle-compact' padding='sm' className='border-border/60 bg-card/40'>
-                <Hint size='xxs' uppercase className='text-gray-500'>sequence.{entry.key}</Hint>
+              <Card
+                key={entry.key}
+                variant='subtle-compact'
+                padding='sm'
+                className='border-border/60 bg-card/40'
+              >
+                <Hint size='xxs' uppercase className='text-gray-500'>
+                  sequence.{entry.key}
+                </Hint>
                 <div className='mt-1 text-sm text-gray-100'>{entry.title}</div>
                 <div className='mt-1 text-xs text-gray-400'>{entry.description}</div>
               </Card>
@@ -610,8 +672,15 @@ export function ImageStudioDocsContent(): React.JSX.Element {
           <h3 className='text-base font-semibold text-white'>Object Layout Controls Reference</h3>
           <div className='grid gap-2'>
             {filteredObjectLayoutDocs.map((entry) => (
-              <Card key={entry.key} variant='subtle-compact' padding='sm' className='border-border/60 bg-card/40'>
-                <Hint size='xxs' uppercase className='text-gray-500'>object_layout.{entry.key}</Hint>
+              <Card
+                key={entry.key}
+                variant='subtle-compact'
+                padding='sm'
+                className='border-border/60 bg-card/40'
+              >
+                <Hint size='xxs' uppercase className='text-gray-500'>
+                  object_layout.{entry.key}
+                </Hint>
                 <div className='mt-1 text-sm text-gray-100'>{entry.title}</div>
                 <div className='mt-1 text-xs text-gray-400'>{entry.description}</div>
               </Card>
@@ -625,8 +694,15 @@ export function ImageStudioDocsContent(): React.JSX.Element {
           <h3 className='text-base font-semibold text-white'>Version Graph Controls Reference</h3>
           <div className='grid gap-2'>
             {filteredVersionGraphDocs.map((entry) => (
-              <Card key={entry.key} variant='subtle-compact' padding='sm' className='border-border/60 bg-card/40'>
-                <Hint size='xxs' uppercase className='text-gray-500'>{entry.key}</Hint>
+              <Card
+                key={entry.key}
+                variant='subtle-compact'
+                padding='sm'
+                className='border-border/60 bg-card/40'
+              >
+                <Hint size='xxs' uppercase className='text-gray-500'>
+                  {entry.key}
+                </Hint>
                 <div className='mt-1 text-sm text-gray-100'>{entry.title}</div>
                 <div className='mt-1 text-xs text-gray-400'>{entry.description}</div>
               </Card>
@@ -661,7 +737,9 @@ export function ImageStudioDocsContent(): React.JSX.Element {
 
       {noResults ? (
         <Card variant='subtle' padding='lg' className='border-border/60 bg-card/40'>
-          <div className='text-sm text-gray-400'>No documentation sections match "{docsQuery}".</div>
+          <div className='text-sm text-gray-400'>
+            No documentation sections match "{docsQuery}".
+          </div>
         </Card>
       ) : null}
 
@@ -676,10 +754,20 @@ export function ImageStudioDocsContent(): React.JSX.Element {
         <DocumentationSection title='Docs Coverage'>
           <ul className='mt-2 list-disc space-y-1 pl-5 text-sm'>
             <li>Live runtime state for projects, slots, prompt, masks, and generation.</li>
-            <li>All Image Studio settings from <code>image_studio_settings</code>.</li>
-            <li>Crop, object layout, sequencer, and version graph tooltip copy sourced from the Image Studio docs index.</li>
-            <li>API key status, UI preset state, prompt validation rule summary, and folder-tree persistence.</li>
-            <li>Raw JSON snapshots so you can audit exactly what the application is currently using.</li>
+            <li>
+              All Image Studio settings from <code>image_studio_settings</code>.
+            </li>
+            <li>
+              Crop, object layout, sequencer, and version graph tooltip copy sourced from the Image
+              Studio docs index.
+            </li>
+            <li>
+              API key status, UI preset state, prompt validation rule summary, and folder-tree
+              persistence.
+            </li>
+            <li>
+              Raw JSON snapshots so you can audit exactly what the application is currently using.
+            </li>
           </ul>
         </DocumentationSection>
       ) : null}

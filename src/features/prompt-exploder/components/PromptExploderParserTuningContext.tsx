@@ -22,7 +22,8 @@ type PromptExploderParserTuningContextValue = {
   isBusy: boolean;
 };
 
-const PromptExploderParserTuningContext = React.createContext<PromptExploderParserTuningContextValue | null>(null);
+const PromptExploderParserTuningContext =
+  React.createContext<PromptExploderParserTuningContextValue | null>(null);
 
 export function PromptExploderParserTuningProvider({
   value,
@@ -72,7 +73,9 @@ export function PromptExploderParserTuningProvider({
 export function usePromptExploderParserTuningContext(): PromptExploderParserTuningContextValue {
   const context = React.useContext(PromptExploderParserTuningContext);
   if (!context) {
-    throw new Error('usePromptExploderParserTuningContext must be used inside PromptExploderParserTuningProvider');
+    throw new Error(
+      'usePromptExploderParserTuningContext must be used inside PromptExploderParserTuningProvider'
+    );
   }
   return context;
 }

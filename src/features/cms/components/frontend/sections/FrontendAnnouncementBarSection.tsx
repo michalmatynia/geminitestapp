@@ -1,4 +1,3 @@
-
 'use client';
 
 import { getSectionContainerClass, getSectionStyles, getTextAlign } from '../theme-styles';
@@ -25,7 +24,12 @@ export function FrontendAnnouncementBarSection(): React.ReactNode {
 
   return (
     <section className='w-full' style={sectionStyles}>
-      <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth, maxWidthClass: 'max-w-6xl' })}>
+      <div
+        className={getSectionContainerClass({
+          fullWidth: layout?.fullWidth,
+          maxWidthClass: 'max-w-6xl',
+        })}
+      >
         <div className={`flex flex-wrap items-center gap-3 ${alignmentClass}`}>
           {blocks.length === 0 ? (
             <p className='text-sm text-gray-400'>Announcement bar</p>

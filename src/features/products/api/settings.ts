@@ -12,24 +12,23 @@ import type {
 export type ImportValidationPatternsPayload = ProductValidatorImportRequest;
 export type ImportValidationPatternsResult = ProductValidatorImportResult;
 
-import { 
-  Catalog, 
+import {
+  Catalog,
   CatalogRecord,
-  PriceGroup, 
-  ProductCategory, 
+  PriceGroup,
+  ProductCategory,
   ProductCategoryWithChildren,
-  ProductTag, 
+  ProductTag,
   ProductParameter,
 } from '@/shared/contracts/products';
 import { api } from '@/shared/lib/api-client';
-
 
 export async function getPriceGroups(): Promise<PriceGroup[]> {
   try {
     return await api.get<PriceGroup[]>('/api/price-groups');
   } catch (error) {
     logClientError(error instanceof Error ? error : new Error('Failed to load price groups'), {
-      context: { source: 'products-api-settings', action: 'getPriceGroups' }
+      context: { source: 'products-api-settings', action: 'getPriceGroups' },
     });
     return [];
   }
@@ -43,7 +42,10 @@ export async function deletePriceGroup(id: string): Promise<void> {
   return api.delete(`/api/price-groups/${id}`);
 }
 
-export async function savePriceGroup(id: string | undefined, data: Partial<PriceGroup>): Promise<PriceGroup> {
+export async function savePriceGroup(
+  id: string | undefined,
+  data: Partial<PriceGroup>
+): Promise<PriceGroup> {
   if (id) {
     return api.put<PriceGroup>(`/api/price-groups/${id}`, data);
   }
@@ -66,14 +68,16 @@ export async function updateCatalog(id: string, data: Partial<Catalog>): Promise
   return api.put<Catalog>(`/api/catalogs/${id}`, data);
 }
 
-export async function getCategories(catalogId: string | null): Promise<ProductCategoryWithChildren[]> {
+export async function getCategories(
+  catalogId: string | null
+): Promise<ProductCategoryWithChildren[]> {
   try {
     return await api.get<ProductCategoryWithChildren[]>('/api/products/categories/tree', {
-      params: { catalogId: catalogId || undefined }
+      params: { catalogId: catalogId || undefined },
     });
   } catch (error) {
     logClientError(error instanceof Error ? error : new Error('Failed to load categories'), {
-      context: { source: 'products-api-settings', action: 'getCategories', catalogId }
+      context: { source: 'products-api-settings', action: 'getCategories', catalogId },
     });
     return [];
   }
@@ -82,11 +86,11 @@ export async function getCategories(catalogId: string | null): Promise<ProductCa
 export async function getCategoriesFlat(catalogId: string | null): Promise<ProductCategory[]> {
   try {
     return await api.get<ProductCategory[]>('/api/products/categories', {
-      params: { catalogId: catalogId || undefined }
+      params: { catalogId: catalogId || undefined },
     });
   } catch (error) {
     logClientError(error instanceof Error ? error : new Error('Failed to load flat categories'), {
-      context: { source: 'products-api-settings', action: 'getCategoriesFlat', catalogId }
+      context: { source: 'products-api-settings', action: 'getCategoriesFlat', catalogId },
     });
     return [];
   }
@@ -96,7 +100,10 @@ export async function createCategory(data: Partial<ProductCategory>): Promise<Pr
   return api.post<ProductCategory>('/api/products/categories', data);
 }
 
-export async function updateCategory(id: string, data: Partial<ProductCategory>): Promise<ProductCategory> {
+export async function updateCategory(
+  id: string,
+  data: Partial<ProductCategory>
+): Promise<ProductCategory> {
   return api.put<ProductCategory>(`/api/products/categories/${id}`, data);
 }
 
@@ -108,9 +115,7 @@ export type ReorderCategoryPayload = {
   catalogId?: string;
 };
 
-export async function reorderCategory(
-  payload: ReorderCategoryPayload
-): Promise<ProductCategory> {
+export async function reorderCategory(payload: ReorderCategoryPayload): Promise<ProductCategory> {
   return api.post<ProductCategory>('/api/products/categories/reorder', payload);
 }
 
@@ -120,7 +125,7 @@ export async function deleteCategory(id: string): Promise<void> {
 
 export async function getTags(catalogId: string | null): Promise<ProductTag[]> {
   return api.get<ProductTag[]>('/api/products/tags', {
-    params: { catalogId: catalogId || undefined }
+    params: { catalogId: catalogId || undefined },
   });
 }
 
@@ -138,7 +143,7 @@ export async function deleteTag(id: string): Promise<void> {
 
 export async function getParameters(catalogId: string | null): Promise<ProductParameter[]> {
   return api.get<ProductParameter[]>('/api/products/parameters', {
-    params: { catalogId: catalogId || undefined }
+    params: { catalogId: catalogId || undefined },
   });
 }
 
@@ -146,7 +151,10 @@ export async function createParameter(data: Partial<ProductParameter>): Promise<
   return api.post<ProductParameter>('/api/products/parameters', data);
 }
 
-export async function updateParameter(id: string, data: Partial<ProductParameter>): Promise<ProductParameter> {
+export async function updateParameter(
+  id: string,
+  data: Partial<ProductParameter>
+): Promise<ProductParameter> {
   return api.put<ProductParameter>(`/api/products/parameters/${id}`, data);
 }
 
@@ -168,9 +176,16 @@ export async function getValidationPatterns(): Promise<ProductValidationPattern[
   return api.get<ProductValidationPattern[]>('/api/products/validator-patterns');
 }
 
-export type CreateValidationPatternPayload =
-  Pick<ProductValidationPattern, 'label' | 'target' | 'regex' | 'message'> &
-  Partial<Omit<ProductValidationPattern, 'id' | 'createdAt' | 'updatedAt' | 'label' | 'target' | 'regex' | 'message'>>;
+export type CreateValidationPatternPayload = Pick<
+  ProductValidationPattern,
+  'label' | 'target' | 'regex' | 'message'
+> &
+  Partial<
+    Omit<
+      ProductValidationPattern,
+      'id' | 'createdAt' | 'updatedAt' | 'label' | 'target' | 'regex' | 'message'
+    >
+  >;
 
 export async function createValidationPattern(
   data: CreateValidationPatternPayload
@@ -178,10 +193,11 @@ export async function createValidationPattern(
   return api.post<ProductValidationPattern>('/api/products/validator-patterns', data);
 }
 
-export type UpdateValidationPatternPayload =
-  Partial<Omit<ProductValidationPattern, 'id' | 'createdAt' | 'updatedAt'>> & {
-    expectedUpdatedAt?: string | null;
-  };
+export type UpdateValidationPatternPayload = Partial<
+  Omit<ProductValidationPattern, 'id' | 'createdAt' | 'updatedAt'>
+> & {
+  expectedUpdatedAt?: string | null;
+};
 
 export async function updateValidationPattern(
   id: string,
@@ -215,13 +231,12 @@ export async function reorderValidationPatterns(payload: {
 export async function importValidationPatterns(
   payload: ProductValidatorImportRequest
 ): Promise<ProductValidatorImportResult> {
-  return api.post<ProductValidatorImportResult>(
-    '/api/products/validator-patterns/import',
-    payload
-  );
+  return api.post<ProductValidatorImportResult>('/api/products/validator-patterns/import', payload);
 }
 
-export async function getProductValidatorConfig(includeDisabled: boolean = false): Promise<ProductValidatorConfig> {
+export async function getProductValidatorConfig(
+  includeDisabled: boolean = false
+): Promise<ProductValidatorConfig> {
   if (includeDisabled) {
     return api.get<ProductValidatorConfig>('/api/products/validator-config', {
       params: { includeDisabled: true },

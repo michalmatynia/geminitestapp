@@ -1,7 +1,12 @@
 'use client';
 
 import type { DatabaseInfo } from '@/shared/contracts/database';
-import { ActionMenu, DataTableSortableHeader, DropdownMenuItem, DropdownMenuSeparator } from '@/shared/ui';
+import {
+  ActionMenu,
+  DataTableSortableHeader,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from '@/shared/ui';
 
 import { useDatabaseBackupsContext } from '../context/DatabaseBackupsContext';
 
@@ -18,8 +23,7 @@ const toLocale = (value: string | null | undefined): string => {
   return ts > 0 ? new Date(ts).toLocaleString() : '—';
 };
 
-const resolveLastModifiedAt = (row: DatabaseInfo): string =>
-  row.lastModifiedAt ?? row.createdAt;
+const resolveLastModifiedAt = (row: DatabaseInfo): string => row.lastModifiedAt ?? row.createdAt;
 
 const resolveLastRestored = (row: DatabaseInfo): string => row.lastRestored ?? 'Never';
 
@@ -31,22 +35,18 @@ const toSizeNumber = (value: unknown): number => {
 };
 
 function DatabaseActionsCell({ backup }: { backup: DatabaseInfo }): React.JSX.Element {
-  const {
-    handlePreview,
-    handleRestoreRequest,
-    handleDeleteRequest,
-    backupMaintenanceAllowed,
-  } = useDatabaseBackupsContext();
+  const { handlePreview, handleRestoreRequest, handleDeleteRequest, backupMaintenanceAllowed } =
+    useDatabaseBackupsContext();
 
   return (
     <div className='flex justify-end'>
       <ActionMenu>
-        <DropdownMenuItem onClick={() => handlePreview(backup.name)}>
-          Preview
-        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handlePreview(backup.name)}>Preview</DropdownMenuItem>
         <DropdownMenuItem
           disabled={!backupMaintenanceAllowed}
-          title={!backupMaintenanceAllowed ? 'Disabled by Database Engine operation controls' : undefined}
+          title={
+            !backupMaintenanceAllowed ? 'Disabled by Database Engine operation controls' : undefined
+          }
           onClick={() => handleRestoreRequest(backup)}
         >
           Restore
@@ -55,7 +55,9 @@ function DatabaseActionsCell({ backup }: { backup: DatabaseInfo }): React.JSX.El
         <DropdownMenuItem
           className='text-destructive focus:text-destructive'
           disabled={!backupMaintenanceAllowed}
-          title={!backupMaintenanceAllowed ? 'Disabled by Database Engine operation controls' : undefined}
+          title={
+            !backupMaintenanceAllowed ? 'Disabled by Database Engine operation controls' : undefined
+          }
           onClick={() => handleDeleteRequest(backup.name)}
         >
           Delete
@@ -68,33 +70,25 @@ function DatabaseActionsCell({ backup }: { backup: DatabaseInfo }): React.JSX.El
 export const getDatabaseColumns = (): ColumnDef<DatabaseInfo>[] => [
   {
     accessorKey: 'name',
-    header: ({ column }) => (
-      <DataTableSortableHeader label='Name' column={column} />
-    ),
+    header: ({ column }) => <DataTableSortableHeader label='Name' column={column} />,
   },
   {
     accessorKey: 'size',
-    header: ({ column }) => (
-      <DataTableSortableHeader label='Size' column={column} />
-    ),
+    header: ({ column }) => <DataTableSortableHeader label='Size' column={column} />,
     sortingFn: (rowA: Row<DatabaseInfo>, rowB: Row<DatabaseInfo>, columnId: string): number =>
       toSizeNumber(rowA.getValue(columnId)) - toSizeNumber(rowB.getValue(columnId)),
   },
   {
     id: 'createdAt',
     accessorFn: (row: DatabaseInfo): number => toTimestamp(row.createdAt),
-    header: ({ column }) => (
-      <DataTableSortableHeader label='Created' column={column} />
-    ),
+    header: ({ column }) => <DataTableSortableHeader label='Created' column={column} />,
     cell: ({ row }: { row: { original: DatabaseInfo } }): React.ReactNode =>
       toLocale(row.original.createdAt),
   },
   {
     id: 'lastModifiedAt',
     accessorFn: (row: DatabaseInfo): number => toTimestamp(resolveLastModifiedAt(row)),
-    header: ({ column }) => (
-      <DataTableSortableHeader label='Last Modified' column={column} />
-    ),
+    header: ({ column }) => <DataTableSortableHeader label='Last Modified' column={column} />,
     cell: ({ row }: { row: { original: DatabaseInfo } }): React.ReactNode =>
       toLocale(resolveLastModifiedAt(row.original)),
   },
@@ -111,4 +105,3 @@ export const getDatabaseColumns = (): ColumnDef<DatabaseInfo>[] => [
     ),
   },
 ];
-

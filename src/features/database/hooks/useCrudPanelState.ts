@@ -127,7 +127,9 @@ export function useCrudPanelState(props: {
             totalRows = Number(firstRow?.['total'] ?? totalRows);
           }
         } catch (error) {
-          logClientError(error, { context: { source: 'useCrudPanelState', action: 'fetchCount', table: selectedTable } });
+          logClientError(error, {
+            context: { source: 'useCrudPanelState', action: 'fetchCount', table: selectedTable },
+          });
         }
 
         return { rows: rowsResult.rows, totalRows };
@@ -189,7 +191,6 @@ export function useCrudPanelState(props: {
       { collection: selectedTable, operation: 'create', provider: dbType, data },
       {
         onSuccess: (result) => {
-  
           if (result.error) setMutationError(result.error);
           else {
             setShowAddModal(false);
@@ -198,7 +199,9 @@ export function useCrudPanelState(props: {
           }
         },
         onError: (err) => {
-          logClientError(err, { context: { source: 'useCrudPanelState', action: 'insertRow', table: selectedTable } });
+          logClientError(err, {
+            context: { source: 'useCrudPanelState', action: 'insertRow', table: selectedTable },
+          });
           setMutationError(err.message);
         },
       }
@@ -216,7 +219,6 @@ export function useCrudPanelState(props: {
         provider: dbType,
         data,
         filter: getPrimaryKey(editingRow),
-        
       },
       {
         onSuccess: (result) => {
@@ -228,7 +230,9 @@ export function useCrudPanelState(props: {
           }
         },
         onError: (err) => {
-          logClientError(err, { context: { source: 'useCrudPanelState', action: 'updateRow', table: selectedTable } });
+          logClientError(err, {
+            context: { source: 'useCrudPanelState', action: 'updateRow', table: selectedTable },
+          });
           setMutationError(err.message);
         },
       }
@@ -245,7 +249,6 @@ export function useCrudPanelState(props: {
         operation: 'delete',
         provider: dbType,
         filter: getPrimaryKey(deletingRow),
-        
       },
       {
         onSuccess: (result) => {
@@ -257,21 +260,31 @@ export function useCrudPanelState(props: {
           }
         },
         onError: (err) => {
-          logClientError(err, { context: { source: 'useCrudPanelState', action: 'deleteRow', table: selectedTable } });
+          logClientError(err, {
+            context: { source: 'useCrudPanelState', action: 'deleteRow', table: selectedTable },
+          });
           setMutationError(err.message);
         },
       }
     );
   };
   return {
-    selectedTable, setSelectedTable,
-    page, setPage,
-    pageSize, setPageSize,
-    mutationError, setMutationError,
-    successMessage, setSuccessMessage,
-    showAddModal, setShowAddModal,
-    editingRow, setEditingRow,
-    deletingRow, setDeletingRow,
+    selectedTable,
+    setSelectedTable,
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    mutationError,
+    setMutationError,
+    successMessage,
+    setSuccessMessage,
+    showAddModal,
+    setShowAddModal,
+    editingRow,
+    setEditingRow,
+    deletingRow,
+    setDeletingRow,
     tableDetail,
     rows: rowsQuery.data?.rows ?? [],
     totalRows: rowsQuery.data?.totalRows ?? 0,

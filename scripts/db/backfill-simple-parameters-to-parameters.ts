@@ -112,8 +112,7 @@ const parseOptions = (argv: string[]): CliOptions => {
 const resolveProvider = (options: CliOptions): Provider => {
   if (options.provider) return options.provider;
 
-  const envProvider = toTrimmedString(process.env['PRODUCT_DB_PROVIDER'] ?? '')
-    .toLowerCase();
+  const envProvider = toTrimmedString(process.env['PRODUCT_DB_PROVIDER'] ?? '').toLowerCase();
   if (envProvider === 'prisma' || envProvider === 'mongodb') {
     return envProvider;
   }
@@ -161,9 +160,7 @@ const parseSimpleParameterDefinitions = (
   }
 };
 
-const normalizeValuesByLanguage = (
-  input: unknown
-): Record<string, string> | undefined => {
+const normalizeValuesByLanguage = (input: unknown): Record<string, string> | undefined => {
   if (!input || typeof input !== 'object' || Array.isArray(input)) {
     return undefined;
   }
@@ -347,9 +344,7 @@ const replaceLegacyParameterIds = (args: {
   };
 };
 
-const runPrismaBackfill = async (
-  options: CliOptions
-): Promise<BackfillSummary> => {
+const runPrismaBackfill = async (options: CliOptions): Promise<BackfillSummary> => {
   const prisma = new PrismaClient();
   const summary: BackfillSummary = {
     provider: 'prisma',
@@ -384,9 +379,7 @@ const runPrismaBackfill = async (
       return summary;
     }
 
-    const catalogIds = Array.from(
-      new Set(definitions.map((definition) => definition.catalogId))
-    );
+    const catalogIds = Array.from(new Set(definitions.map((definition) => definition.catalogId)));
 
     const existingParameters = await prisma.productParameter.findMany({
       where: { catalogId: { in: catalogIds } },
@@ -394,14 +387,9 @@ const runPrismaBackfill = async (
     });
     const mappingBySimpleId = new Map<string, string>();
     const existingByName = new Map<string, string>();
-    const realParameterIds = new Set<string>(
-      existingParameters.map((parameter) => parameter.id)
-    );
+    const realParameterIds = new Set<string>(existingParameters.map((parameter) => parameter.id));
     existingParameters.forEach((parameter) => {
-      existingByName.set(
-        normalizeNameKey(parameter.catalogId, parameter.name_en),
-        parameter.id
-      );
+      existingByName.set(normalizeNameKey(parameter.catalogId, parameter.name_en), parameter.id);
     });
 
     for (const definition of definitions) {
@@ -496,11 +484,7 @@ const runPrismaBackfill = async (
       });
     }
 
-    if (
-      !options.dryRun &&
-      options.clearSimpleParameterSetting &&
-      simpleSetting?.value
-    ) {
+    if (!options.dryRun && options.clearSimpleParameterSetting && simpleSetting?.value) {
       await prisma.setting.update({
         where: { key: SIMPLE_PARAMETER_SETTING_KEY },
         data: { value: '[]' },
@@ -514,9 +498,7 @@ const runPrismaBackfill = async (
   }
 };
 
-const runMongoBackfill = async (
-  options: CliOptions
-): Promise<BackfillSummary> => {
+const runMongoBackfill = async (options: CliOptions): Promise<BackfillSummary> => {
   const uri = process.env['MONGODB_URI'];
   if (!uri) {
     throw new Error('MONGODB_URI is required for MongoDB backfill.');
@@ -564,12 +546,8 @@ const runMongoBackfill = async (
       return summary;
     }
 
-    const catalogIds = Array.from(
-      new Set(definitions.map((definition) => definition.catalogId))
-    );
-    const parameterCollection = db.collection<MongoProductParameterDocument>(
-      'product_parameters'
-    );
+    const catalogIds = Array.from(new Set(definitions.map((definition) => definition.catalogId)));
+    const parameterCollection = db.collection<MongoProductParameterDocument>('product_parameters');
     const existingParameters = await parameterCollection
       .find({ catalogId: { $in: catalogIds } })
       .toArray();
@@ -580,10 +558,7 @@ const runMongoBackfill = async (
     existingParameters.forEach((parameter) => {
       const id = String(parameter._id);
       realParameterIds.add(id);
-      existingByName.set(
-        normalizeNameKey(parameter.catalogId, parameter.name_en),
-        id
-      );
+      existingByName.set(normalizeNameKey(parameter.catalogId, parameter.name_en), id);
     });
 
     for (const definition of definitions) {
@@ -705,17 +680,12 @@ async function main(): Promise<void> {
   const options = parseOptions(process.argv.slice(2));
   const provider = resolveProvider(options);
   const summary =
-    provider === 'prisma'
-      ? await runPrismaBackfill(options)
-      : await runMongoBackfill(options);
+    provider === 'prisma' ? await runPrismaBackfill(options) : await runMongoBackfill(options);
 
   console.log(JSON.stringify(summary, null, 2));
 }
 
 void main().catch((error: unknown) => {
-  console.error(
-    'Failed to backfill legacy simple parameters into product parameters:',
-    error
-  );
+  console.error('Failed to backfill legacy simple parameters into product parameters:', error);
   process.exit(1);
 });

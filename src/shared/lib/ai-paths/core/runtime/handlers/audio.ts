@@ -1,7 +1,4 @@
-import type {
-  AudioWaveform,
-  RuntimePortValues,
-} from '@/shared/contracts/ai-paths';
+import type { AudioWaveform, RuntimePortValues } from '@/shared/contracts/ai-paths';
 import type { NodeHandler, NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 
 import { coerceInput } from '../../utils';
@@ -66,7 +63,11 @@ const buildOscillatorSignal = (
   fallback: OscillatorSignal = DEFAULT_OSCILLATOR_SIGNAL
 ): OscillatorSignal => {
   const waveform = normalizeWaveform(raw?.waveform, fallback.waveform);
-  const frequencyHz = clampNumber(toFiniteNumber(raw?.frequencyHz, fallback.frequencyHz), 20, 20_000);
+  const frequencyHz = clampNumber(
+    toFiniteNumber(raw?.frequencyHz, fallback.frequencyHz),
+    20,
+    20_000
+  );
   const gain = clampNumber(toFiniteNumber(raw?.gain, fallback.gain), 0, 1);
   const durationMs = clampNumber(toFiniteNumber(raw?.durationMs, fallback.durationMs), 30, 10_000);
   return {
@@ -96,7 +97,10 @@ const hasWebAudio = (): boolean => {
     AudioContext?: typeof AudioContext;
     webkitAudioContext?: typeof AudioContext;
   };
-  return typeof candidate.AudioContext === 'function' || typeof candidate.webkitAudioContext === 'function';
+  return (
+    typeof candidate.AudioContext === 'function' ||
+    typeof candidate.webkitAudioContext === 'function'
+  );
 };
 
 const getAudioState = (): AudioPlaybackState => {
@@ -258,9 +262,15 @@ export const handleAudioSpeaker: NodeHandler = async ({
   const providedSignal = parseOscillatorSignal(coerceInput(nodeInputs['audioSignal']));
   const fallbackSignal = buildOscillatorSignal({
     waveform: normalizeWaveform(coerceInput(nodeInputs['waveform'])),
-    frequencyHz: toFiniteNumber(coerceInput(nodeInputs['frequency']), DEFAULT_OSCILLATOR_SIGNAL.frequencyHz),
+    frequencyHz: toFiniteNumber(
+      coerceInput(nodeInputs['frequency']),
+      DEFAULT_OSCILLATOR_SIGNAL.frequencyHz
+    ),
     gain: toFiniteNumber(coerceInput(nodeInputs['gain']), DEFAULT_OSCILLATOR_SIGNAL.gain),
-    durationMs: toFiniteNumber(coerceInput(nodeInputs['durationMs']), DEFAULT_OSCILLATOR_SIGNAL.durationMs),
+    durationMs: toFiniteNumber(
+      coerceInput(nodeInputs['durationMs']),
+      DEFAULT_OSCILLATOR_SIGNAL.durationMs
+    ),
   });
   const hasExplicitSignal =
     providedSignal !== null ||
@@ -306,4 +316,3 @@ export const handleAudioSpeaker: NodeHandler = async ({
     durationMs: signal.durationMs,
   };
 };
-

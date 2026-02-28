@@ -1,8 +1,5 @@
 'use client';
 
-
-
-
 import React from 'react';
 
 import type { AiNode, Edge, PromptConfig } from '@/shared/lib/ai-paths';
@@ -48,11 +45,16 @@ export function PromptNodeConfigSection(): React.JSX.Element | null {
     const currentTemplate = promptConfig.template ?? '';
     const textArea = promptTemplateRef.current;
     const selectionStart =
-      typeof textArea?.selectionStart === 'number' ? textArea.selectionStart : currentTemplate.length;
+      typeof textArea?.selectionStart === 'number'
+        ? textArea.selectionStart
+        : currentTemplate.length;
     const selectionEnd =
       typeof textArea?.selectionEnd === 'number' ? textArea.selectionEnd : currentTemplate.length;
     const rangeStart = Math.max(0, Math.min(selectionStart, selectionEnd, currentTemplate.length));
-    const rangeEnd = Math.max(rangeStart, Math.min(Math.max(selectionStart, selectionEnd), currentTemplate.length));
+    const rangeEnd = Math.max(
+      rangeStart,
+      Math.min(Math.max(selectionStart, selectionEnd), currentTemplate.length)
+    );
     const prefix = currentTemplate.slice(0, rangeStart);
     const needsSeparator = prefix.length > 0 && !prefix.endsWith(' ') && !prefix.endsWith('\n');
     const separator = needsSeparator ? ' ' : '';
@@ -77,9 +79,7 @@ export function PromptNodeConfigSection(): React.JSX.Element | null {
     const fromNode = nodes.find((node: AiNode) => node.id === edge.from);
     if (!fromNode) return;
     if (fromNode.type === 'parser') {
-      const mappings =
-        fromNode.config?.parser?.mappings ??
-        createParserMappings(fromNode.outputs);
+      const mappings = fromNode.config?.parser?.mappings ?? createParserMappings(fromNode.outputs);
       Object.keys(mappings).forEach((key: string) => {
         const trimmed = key.trim();
         if (trimmed) bundleKeys.add(trimmed);
@@ -93,8 +93,7 @@ export function PromptNodeConfigSection(): React.JSX.Element | null {
       });
     }
     if (fromNode.type === 'mapper') {
-      const mapperOutputs =
-        fromNode.config?.mapper?.outputs ?? fromNode.outputs;
+      const mapperOutputs = fromNode.config?.mapper?.outputs ?? fromNode.outputs;
       mapperOutputs.forEach((output: string) => {
         const trimmed = output.trim();
         if (trimmed) bundleKeys.add(trimmed);
@@ -147,8 +146,7 @@ export function PromptNodeConfigSection(): React.JSX.Element | null {
           id: `bundle-${key}-${index}`,
           label: key,
           token: `{{${key}}}`,
-          resolvesTo:
-            resolved !== undefined ? formatRuntimeValue(resolved) : `Bundle key: ${key}`,
+          resolvesTo: resolved !== undefined ? formatRuntimeValue(resolved) : `Bundle key: ${key}`,
         });
       });
     }
@@ -162,8 +160,7 @@ export function PromptNodeConfigSection(): React.JSX.Element | null {
     }
 
     const currentValue = runtimeInputs['result'] ?? runtimeInputs['value'];
-    const currentResolved =
-      currentValue !== undefined ? formatRuntimeValue(currentValue) : '—';
+    const currentResolved = currentValue !== undefined ? formatRuntimeValue(currentValue) : '—';
     groups.push({
       id: 'special',
       title: 'Current Value',
@@ -191,8 +188,8 @@ export function PromptNodeConfigSection(): React.JSX.Element | null {
 
   return (
     <div className='space-y-4'>
-      <FormField 
-        label='Prompt Template' 
+      <FormField
+        label='Prompt Template'
         description='Images are passed separately via the Prompt images output and the Model images input, so no images placeholder is needed in the prompt text.'
       >
         <Textarea
@@ -242,8 +239,7 @@ export function PromptNodeConfigSection(): React.JSX.Element | null {
           </div>
         ) : (
           <div className='mt-2 text-[11px] text-gray-500'>
-            Connect a Parser or Bundle node to the bundle input to surface
-            placeholder hints.
+            Connect a Parser or Bundle node to the bundle input to surface placeholder hints.
           </div>
         )}
         {directPlaceholders.length > 0 && (
@@ -280,10 +276,8 @@ export function PromptNodeConfigSection(): React.JSX.Element | null {
         targetOptions={[{ value: 'prompt', label: 'Prompt template' }]}
         onInsert={(token: string, _target: PlaceholderTarget) => insertPromptPlaceholder(token)}
       />
-      {(() : React.JSX.Element => {
-        const outgoingEdges = edges.filter(
-          (edge: Edge) => edge.from === selectedNode.id
-        );
+      {((): React.JSX.Element => {
+        const outgoingEdges = edges.filter((edge: Edge) => edge.from === selectedNode.id);
         const aiEdge = outgoingEdges.find((edge: Edge) => {
           const targetNode = nodes.find((n: AiNode) => n.id === edge.to);
           return targetNode?.type === 'model';
@@ -313,7 +307,9 @@ export function PromptNodeConfigSection(): React.JSX.Element | null {
                     onClick={() => {
                       if (!onSendToAi) return;
                       if (!resolvedPrompt.trim() || resolvedPrompt === 'Prompt: (no template)') {
-                        toast('Resolved prompt is empty. Run the graph or provide inputs first.', { variant: 'error' });
+                        toast('Resolved prompt is empty. Run the graph or provide inputs first.', {
+                          variant: 'error',
+                        });
                         return;
                       }
                       void onSendToAi(selectedNode.id, resolvedPrompt);
@@ -326,21 +322,20 @@ export function PromptNodeConfigSection(): React.JSX.Element | null {
             ) : (
               <Alert variant='warning' className='py-2'>
                 <div className='flex items-center gap-2'>
-                  <span className='text-[11px] text-amber-100'>
-                    Not connected to AI Model
-                  </span>
+                  <span className='text-[11px] text-amber-100'>Not connected to AI Model</span>
                 </div>
               </Alert>
             )}
             <p className='text-[11px] text-gray-500'>
-              Connect this node&apos;s <span className='text-gray-300'>prompt</span> output to an AI Model node to enable direct sending.
+              Connect this node&apos;s <span className='text-gray-300'>prompt</span> output to an AI
+              Model node to enable direct sending.
             </p>
           </div>
         );
       })()}
 
       <div className='mt-4'>
-        <FormField 
+        <FormField
           label='Resolved Prompt'
           description='Uses incoming ports (including result) to substitute placeholders. Use {{value}} or {{result}}.'
           actions={
@@ -375,14 +370,15 @@ export function PromptNodeConfigSection(): React.JSX.Element | null {
         </FormField>
       </div>
 
-      {(() : React.JSX.Element => {
-        const resultValue = runtimeState.inputs?.[selectedNode.id]?.['result']
-          ?? runtimeState.outputs?.[selectedNode.id]?.['result'];
+      {((): React.JSX.Element => {
+        const resultValue =
+          runtimeState.inputs?.[selectedNode.id]?.['result'] ??
+          runtimeState.outputs?.[selectedNode.id]?.['result'];
         const hasResult = resultValue !== undefined && resultValue !== null;
         const displayValue = hasResult
-          ? (typeof resultValue === 'string'
+          ? typeof resultValue === 'string'
             ? resultValue
-            : formatRuntimeValue(resultValue))
+            : formatRuntimeValue(resultValue)
           : '';
         const resultEdge = incomingEdges.find((edge: Edge) => edge.toPort === 'result');
         const resultSourceNode = resultEdge
@@ -396,11 +392,11 @@ export function PromptNodeConfigSection(): React.JSX.Element | null {
         const resultSourceModelHasPoll =
           resultSourceNode?.type === 'model'
             ? edges.some((edge: Edge): boolean => {
-              if (edge.from !== resultSourceNode.id) return false;
-              if (edge.fromPort !== 'jobId') return false;
-              const target = nodes.find((node: AiNode): boolean => node.id === edge.to);
-              return target?.type === 'poll';
-            })
+                if (edge.from !== resultSourceNode.id) return false;
+                if (edge.fromPort !== 'jobId') return false;
+                const target = nodes.find((node: AiNode): boolean => node.id === edge.to);
+                return target?.type === 'poll';
+              })
             : false;
         const resultSourceModelWaits =
           resultSourceNode?.type === 'model'
@@ -409,7 +405,7 @@ export function PromptNodeConfigSection(): React.JSX.Element | null {
 
         return (
           <div className='mt-4'>
-            <FormField 
+            <FormField
               label='Result Input'
               description='Shows the value passed through the result input port.'
             >
@@ -422,26 +418,36 @@ export function PromptNodeConfigSection(): React.JSX.Element | null {
                 placeholder='No result received yet. Connect a node to the result input and run the graph.'
               />
             </FormField>
-            {!hasResult && resultSourceNode?.type === 'model' && resultSourceModelHasPoll && !resultSourceModelWaits && resultSourcePort === 'result' && (
-              <Alert variant='warning' className='mt-2 py-2 text-[11px]'>
-                This Prompt is connected to <span className='text-amber-200'>Model.result</span>, but that Model has a{' '}
-                <span className='text-amber-200'>Poll</span> connected and{' '}
-                <span className='text-amber-200'>Wait for result</span> is disabled, so the Model emits only{' '}
-                <span className='text-amber-200'>jobId</span>. Connect{' '}
-                <span className='text-amber-200'>Poll.result</span> instead, or enable{' '}
-                <span className='text-amber-200'>Wait for result</span> on the Model node.
-              </Alert>
-            )}
-            {!hasResult && resultSourceNode?.type === 'poll' && resultSourcePollStatus === 'polling' && (
-              <Alert variant='info' className='mt-2 py-2 text-[11px]'>
-                Poll is still running. The <span className='text-sky-200'>result</span> will populate when polling completes.
-              </Alert>
-            )}
-            {!hasResult && resultSourceNode?.type === 'poll' && resultSourcePollStatus === 'failed' && (
-              <Alert variant='error' className='mt-2 py-2 text-[11px]'>
-                Poll failed. Check the Poll node output for an error, or verify the job/database query configuration.
-              </Alert>
-            )}
+            {!hasResult &&
+              resultSourceNode?.type === 'model' &&
+              resultSourceModelHasPoll &&
+              !resultSourceModelWaits &&
+              resultSourcePort === 'result' && (
+                <Alert variant='warning' className='mt-2 py-2 text-[11px]'>
+                  This Prompt is connected to <span className='text-amber-200'>Model.result</span>,
+                  but that Model has a <span className='text-amber-200'>Poll</span> connected and{' '}
+                  <span className='text-amber-200'>Wait for result</span> is disabled, so the Model
+                  emits only <span className='text-amber-200'>jobId</span>. Connect{' '}
+                  <span className='text-amber-200'>Poll.result</span> instead, or enable{' '}
+                  <span className='text-amber-200'>Wait for result</span> on the Model node.
+                </Alert>
+              )}
+            {!hasResult &&
+              resultSourceNode?.type === 'poll' &&
+              resultSourcePollStatus === 'polling' && (
+                <Alert variant='info' className='mt-2 py-2 text-[11px]'>
+                  Poll is still running. The <span className='text-sky-200'>result</span> will
+                  populate when polling completes.
+                </Alert>
+              )}
+            {!hasResult &&
+              resultSourceNode?.type === 'poll' &&
+              resultSourcePollStatus === 'failed' && (
+                <Alert variant='error' className='mt-2 py-2 text-[11px]'>
+                  Poll failed. Check the Poll node output for an error, or verify the job/database
+                  query configuration.
+                </Alert>
+              )}
           </div>
         );
       })()}

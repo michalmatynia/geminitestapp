@@ -64,10 +64,7 @@ const NETWORK_ERROR_CODES = new Set([
   'ECONNABORTED',
 ]);
 
-export const mapErrorToAppError = (
-  error: unknown,
-  fallbackMessage?: string
-): AppError | null => {
+export const mapErrorToAppError = (error: unknown, fallbackMessage?: string): AppError | null => {
   if (isAppError(error)) return error;
 
   if (error && typeof error === 'object') {

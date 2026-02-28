@@ -9,9 +9,8 @@ export const MAX_SELF_CHECKS = 4;
 export const LOOP_GUARD_THRESHOLD = 2;
 export const LOOP_BACKOFF_BASE_MS = 2000;
 export const LOOP_BACKOFF_MAX_MS = 12000;
-export const OLLAMA_BASE_URL =
-  process.env['OLLAMA_BASE_URL'] ?? 'http://localhost:11434';
-export const DEFAULT_OLLAMA_MODEL = process.env['OLLAMA_MODEL'] ?? 'qwen3-vl:30b';
+export const OLLAMA_BASE_URL = process.env['OLLAMA_BASE_URL'] ?? 'http://localhost:11434';
+export const DEFAULT_OLLAMA_MODEL = 'qwen3-vl:30b';
 export const DEFAULT_AGENT_SETTINGS: AgentPlanSettings = {
   maxSteps: MAX_PLAN_STEPS,
   maxStepAttempts: MAX_STEP_ATTEMPTS,
@@ -23,36 +22,20 @@ export const DEFAULT_AGENT_SETTINGS: AgentPlanSettings = {
   loopBackoffMaxMs: LOOP_BACKOFF_MAX_MS,
 };
 
-export const clampInt = (
-  value: unknown,
-  min: number,
-  max: number,
-  fallback: number
-): number => {
+export const clampInt = (value: unknown, min: number, max: number, fallback: number): number => {
   const numeric =
-    typeof value === 'number'
-      ? value
-      : typeof value === 'string'
-        ? Number(value)
-        : NaN;
+    typeof value === 'number' ? value : typeof value === 'string' ? Number(value) : NaN;
   if (!Number.isFinite(numeric)) return fallback;
   return Math.min(Math.max(Math.round(numeric), min), max);
 };
 
-export function resolveAgentPlanSettings(
-  planState: unknown
-): AgentPlanSettings {
+export function resolveAgentPlanSettings(planState: unknown): AgentPlanSettings {
   const rawSettings =
     planState && typeof planState === 'object'
       ? (planState as { settings?: Partial<AgentPlanSettings> }).settings
       : null;
   return {
-    maxSteps: clampInt(
-      rawSettings?.maxSteps,
-      1,
-      20,
-      DEFAULT_AGENT_SETTINGS.maxSteps
-    ),
+    maxSteps: clampInt(rawSettings?.maxSteps, 1, 20, DEFAULT_AGENT_SETTINGS.maxSteps),
     maxStepAttempts: clampInt(
       rawSettings?.maxStepAttempts,
       1,
@@ -71,12 +54,7 @@ export function resolveAgentPlanSettings(
       10,
       DEFAULT_AGENT_SETTINGS.replanEverySteps
     ),
-    maxSelfChecks: clampInt(
-      rawSettings?.maxSelfChecks,
-      0,
-      8,
-      DEFAULT_AGENT_SETTINGS.maxSelfChecks
-    ),
+    maxSelfChecks: clampInt(rawSettings?.maxSelfChecks, 0, 8, DEFAULT_AGENT_SETTINGS.maxSelfChecks),
     loopGuardThreshold: clampInt(
       rawSettings?.loopGuardThreshold,
       1,
@@ -98,9 +76,7 @@ export function resolveAgentPlanSettings(
   };
 }
 
-export function resolveAgentPreferences(
-  planState: unknown
-): AgentPlanPreferences {
+export function resolveAgentPreferences(planState: unknown): AgentPlanPreferences {
   const rawPreferences =
     planState && typeof planState === 'object'
       ? (planState as { preferences?: AgentPlanPreferences }).preferences
@@ -113,9 +89,7 @@ export function resolveAgentPreferences(
         ? rawPreferences.memoryValidationModel
         : undefined,
     plannerModel:
-      typeof rawPreferences?.plannerModel === 'string'
-        ? rawPreferences.plannerModel
-        : undefined,
+      typeof rawPreferences?.plannerModel === 'string' ? rawPreferences.plannerModel : undefined,
     selfCheckModel:
       typeof rawPreferences?.selfCheckModel === 'string'
         ? rawPreferences.selfCheckModel

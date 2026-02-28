@@ -6,7 +6,6 @@ import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 import type { IndexSpecification } from 'mongodb';
 
-
 type IndexInfo = {
   name?: string;
   key: IndexSpecification;
@@ -41,10 +40,7 @@ const buildDiagnostics = async (db: Awaited<ReturnType<typeof getMongoDb>>) => {
     let existing: IndexInfo[] = [];
     let errorMessage: string | undefined;
     try {
-      const existingIndexes = await db
-        .collection(collectionName)
-        .listIndexes()
-        .toArray();
+      const existingIndexes = await db.collection(collectionName).listIndexes().toArray();
       existing = existingIndexes.map((index) => {
         const doc = index as { name: string; key: IndexSpecification };
         return {
@@ -60,8 +56,7 @@ const buildDiagnostics = async (db: Awaited<ReturnType<typeof getMongoDb>>) => {
 
     const missing = expected.filter((item) => !existingSet.has(serializeKey(item.key)));
     const extra = existing.filter(
-      (item) =>
-        item.name !== '_id_' && !expectedSet.has(serializeKey(item.key))
+      (item) => item.name !== '_id_' && !expectedSet.has(serializeKey(item.key))
     );
 
     collections.push({

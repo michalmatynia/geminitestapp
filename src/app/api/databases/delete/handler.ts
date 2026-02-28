@@ -9,8 +9,8 @@ import {
   mongoBackupsDir,
   assertValidMongoBackupName,
 } from '@/features/database/server';
-import { assertDatabaseEngineManageAccess } from '@/features/database/services/database-engine-access';
-import { assertDatabaseEngineOperationEnabled } from '@/features/database/services/database-engine-operation-guards';
+import { assertDatabaseEngineManageAccess } from '@/shared/lib/db/services/database-engine-access';
+import { assertDatabaseEngineOperationEnabled } from '@/shared/lib/db/services/database-engine-operation-guards';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 

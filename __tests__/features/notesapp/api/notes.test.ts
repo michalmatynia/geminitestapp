@@ -1,11 +1,4 @@
-import {
-  Note,
-  Tag,
-  Category,
-  NoteTag,
-  NoteCategory,
-  NoteRelation,
-} from '@prisma/client';
+import { Note, Tag, Category, NoteTag, NoteCategory, NoteRelation } from '@prisma/client';
 import { NextRequest } from 'next/server';
 import { describe, it, expect, beforeEach, vi, afterAll, beforeAll } from 'vitest';
 
@@ -21,7 +14,6 @@ import { noteService, invalidateNoteRepositoryCache } from '@/features/notesapp/
 import { invalidateAppDbProviderCache } from '@/shared/lib/db/app-db-provider';
 import prisma from '@/shared/lib/db/prisma';
 
-
 type NoteWithRelations = Note & {
   tags: (NoteTag & { tag: Tag })[];
   categories: (NoteCategory & { category: Category })[];
@@ -34,7 +26,9 @@ const createTag = async (name: string) => {
 };
 const createCategory = async (name: string, parentId?: string | null) => {
   const notebook = await noteService.getOrCreateDefaultNotebook();
-  return prisma.category.create({ data: { name, parentId: parentId ?? null, notebookId: notebook.id } });
+  return prisma.category.create({
+    data: { name, parentId: parentId ?? null, notebookId: notebook.id },
+  });
 };
 
 const createNote = async (data: {
@@ -87,7 +81,7 @@ describe('Notes API', () => {
     await prisma.tag.deleteMany({});
     await prisma.category.deleteMany({});
     await prisma.notebook.deleteMany({});
-    
+
     await noteService.invalidateDefaultNotebookCache();
   });
 
@@ -124,9 +118,7 @@ describe('Notes API', () => {
     await createNote({ title: 'Gamma', content: 'Alpha', isArchived: true });
 
     const res = await GET_NOTES(
-      new NextRequest(
-        'http://localhost/api/notes?search=Alpha&searchScope=title&isPinned=true'
-      )
+      new NextRequest('http://localhost/api/notes?search=Alpha&searchScope=title&isPinned=true')
     );
     const notes = (await res.json()) as NoteWithRelations[];
 
@@ -149,9 +141,7 @@ describe('Notes API', () => {
     await createNote({ title: 'Other', content: 'No relations' });
 
     const res = await GET_NOTES(
-      new NextRequest(
-        `http://localhost/api/notes?tagIds=${tag.id}&categoryIds=${category.id}`
-      )
+      new NextRequest(`http://localhost/api/notes?tagIds=${tag.id}&categoryIds=${category.id}`)
     );
     const notes = (await res.json()) as NoteWithRelations[];
 

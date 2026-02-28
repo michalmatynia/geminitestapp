@@ -19,7 +19,13 @@ import type {
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 
-type SettingDoc = { _id: string | ObjectId; key?: string; value?: string; updatedAt?: Date; createdAt?: Date };
+type SettingDoc = {
+  _id: string | ObjectId;
+  key?: string;
+  value?: string;
+  updatedAt?: Date;
+  createdAt?: Date;
+};
 
 const toMongoId = (id: string): string | ObjectId => {
   if (ObjectId.isValid(id) && id.length === 24) return new ObjectId(id);
@@ -35,7 +41,7 @@ const getExportTemplateProvider = async (): Promise<ExportTemplateProvider> => {
     level: 'info',
     source: LOG_SOURCE,
     message: `Provider: ${provider}`,
-    context: { provider }
+    context: { provider },
   });
   return provider as ExportTemplateProvider;
 };
@@ -77,28 +83,30 @@ const parseTemplates = async (value: string | null): Promise<Template[]> => {
     if (!Array.isArray(parsed)) {
       void ErrorSystem.logWarning('[ExportTemplateRepository] Parsed value is not an array', {
         service: 'export-template-repository',
-        parsed
+        parsed,
       });
       return [];
     }
-    return parsed
-      .filter(Boolean)
-      .map((template: Template) => ({
-        ...template,
-        mappings: stripBasehostMappings(Array.isArray(template.mappings) ? template.mappings : []),
-      })) as Template[];
+    return parsed.filter(Boolean).map((template: Template) => ({
+      ...template,
+      mappings: stripBasehostMappings(Array.isArray(template.mappings) ? template.mappings : []),
+    })) as Template[];
   } catch (error) {
     try {
       const { logSystemError } = await import('@/features/observability/server');
-      await logSystemError({ 
+      await logSystemError({
         message: '[ExportTemplateRepository] Failed to parse templates',
         error,
         source: 'export-template-repository',
-        context: { action: 'parseTemplates' }
+        context: { action: 'parseTemplates' },
       });
     } catch (logError) {
       const { logger } = await import('@/shared/utils/logger');
-      logger.error('[ExportTemplateRepository] Failed to parse templates (and logging failed):', logError, { originalError: error });
+      logger.error(
+        '[ExportTemplateRepository] Failed to parse templates (and logging failed):',
+        logError,
+        { originalError: error }
+      );
     }
     return [];
   }
@@ -110,9 +118,7 @@ const normalizeOptionalId = (value: unknown): string | null => {
   return trimmed.length > 0 ? trimmed : null;
 };
 
-const buildActiveTemplateScopeKey = (
-  scope?: ActiveTemplateScopeInput
-): string | null => {
+const buildActiveTemplateScopeKey = (scope?: ActiveTemplateScopeInput): string | null => {
   const connectionId = normalizeOptionalId(scope?.connectionId);
   const inventoryId = normalizeOptionalId(scope?.inventoryId);
   if (!connectionId || !inventoryId) return null;
@@ -197,17 +203,15 @@ const readTemplatesValue = async (): Promise<string | null> => {
   const provider = await getExportTemplateProvider();
   if (provider === 'mongodb') {
     const mongo = await getMongoDb();
-    const doc = await mongo
-      .collection<SettingDoc>('settings')
-      .findOne({
-        $or: [{ _id: toMongoId(SETTINGS_KEY) }, { key: SETTINGS_KEY }],
-      });
+    const doc = await mongo.collection<SettingDoc>('settings').findOne({
+      $or: [{ _id: toMongoId(SETTINGS_KEY) }, { key: SETTINGS_KEY }],
+    });
     const val = typeof doc?.value === 'string' ? doc.value : null;
     await logSystemEvent({
       level: 'info',
       source: LOG_SOURCE,
       message: 'Read templates (Mongo)',
-      context: { length: val ? val.length : 0 }
+      context: { length: val ? val.length : 0 },
     });
     return val;
   }
@@ -219,7 +223,7 @@ const readTemplatesValue = async (): Promise<string | null> => {
     level: 'info',
     source: LOG_SOURCE,
     message: 'Read templates (Prisma)',
-    context: { length: setting?.value ? setting.value.length : 0 }
+    context: { length: setting?.value ? setting.value.length : 0 },
   });
   return setting?.value ?? null;
 };
@@ -228,11 +232,9 @@ const readActiveTemplateValue = async (): Promise<string | null> => {
   const provider = await getExportTemplateProvider();
   if (provider === 'mongodb') {
     const mongo = await getMongoDb();
-    const doc = await mongo
-      .collection<SettingDoc>('settings')
-      .findOne({
-        $or: [{ _id: toMongoId(ACTIVE_TEMPLATE_KEY) }, { key: ACTIVE_TEMPLATE_KEY }],
-      });
+    const doc = await mongo.collection<SettingDoc>('settings').findOne({
+      $or: [{ _id: toMongoId(ACTIVE_TEMPLATE_KEY) }, { key: ACTIVE_TEMPLATE_KEY }],
+    });
     return typeof doc?.value === 'string' ? doc.value : null;
   }
   const setting = await prisma.setting.findUnique({
@@ -246,11 +248,9 @@ const readDefaultInventoryValue = async (): Promise<string | null> => {
   const provider = await getExportTemplateProvider();
   if (provider === 'mongodb') {
     const mongo = await getMongoDb();
-    const doc = await mongo
-      .collection<SettingDoc>('settings')
-      .findOne({
-        $or: [{ _id: toMongoId(DEFAULT_INVENTORY_KEY) }, { key: DEFAULT_INVENTORY_KEY }],
-      });
+    const doc = await mongo.collection<SettingDoc>('settings').findOne({
+      $or: [{ _id: toMongoId(DEFAULT_INVENTORY_KEY) }, { key: DEFAULT_INVENTORY_KEY }],
+    });
     return typeof doc?.value === 'string' ? doc.value : null;
   }
   const setting = await prisma.setting.findUnique({
@@ -264,11 +264,9 @@ const readStockFallbackValue = async (): Promise<string | null> => {
   const provider = await getExportTemplateProvider();
   if (provider === 'mongodb') {
     const mongo = await getMongoDb();
-    const doc = await mongo
-      .collection<SettingDoc>('settings')
-      .findOne({
-        $or: [{ _id: toMongoId(STOCK_FALLBACK_KEY) }, { key: STOCK_FALLBACK_KEY }],
-      });
+    const doc = await mongo.collection<SettingDoc>('settings').findOne({
+      $or: [{ _id: toMongoId(STOCK_FALLBACK_KEY) }, { key: STOCK_FALLBACK_KEY }],
+    });
     return typeof doc?.value === 'string' ? doc.value : null;
   }
   const setting = await prisma.setting.findUnique({
@@ -282,11 +280,9 @@ const readDefaultConnectionValue = async (): Promise<string | null> => {
   const provider = await getExportTemplateProvider();
   if (provider === 'mongodb') {
     const mongo = await getMongoDb();
-    const doc = await mongo
-      .collection<SettingDoc>('settings')
-      .findOne({
-        $or: [{ _id: toMongoId(DEFAULT_CONNECTION_KEY) }, { key: DEFAULT_CONNECTION_KEY }],
-      });
+    const doc = await mongo.collection<SettingDoc>('settings').findOne({
+      $or: [{ _id: toMongoId(DEFAULT_CONNECTION_KEY) }, { key: DEFAULT_CONNECTION_KEY }],
+    });
     return typeof doc?.value === 'string' ? doc.value : null;
   }
   const setting = await prisma.setting.findUnique({
@@ -300,11 +296,9 @@ const readImageRetryPresetsValue = async (): Promise<string | null> => {
   const provider = await getExportTemplateProvider();
   if (provider === 'mongodb') {
     const mongo = await getMongoDb();
-    const doc = await mongo
-      .collection<SettingDoc>('settings')
-      .findOne({
-        $or: [{ _id: toMongoId(IMAGE_RETRY_PRESETS_KEY) }, { key: IMAGE_RETRY_PRESETS_KEY }],
-      });
+    const doc = await mongo.collection<SettingDoc>('settings').findOne({
+      $or: [{ _id: toMongoId(IMAGE_RETRY_PRESETS_KEY) }, { key: IMAGE_RETRY_PRESETS_KEY }],
+    });
     return typeof doc?.value === 'string' ? doc.value : null;
   }
   const setting = await prisma.setting.findUnique({
@@ -320,7 +314,7 @@ const writeTemplatesValue = async (value: string): Promise<void> => {
     level: 'info',
     source: LOG_SOURCE,
     message: 'Writing templates...',
-    context: { length: value.length, provider }
+    context: { length: value.length, provider },
   });
   if (provider === 'mongodb') {
     const mongo = await getMongoDb();
@@ -346,7 +340,7 @@ const writeTemplatesValue = async (value: string): Promise<void> => {
   await logSystemEvent({
     level: 'info',
     source: LOG_SOURCE,
-    message: 'Wrote templates (Prisma)'
+    message: 'Wrote templates (Prisma)',
   });
 };
 
@@ -480,9 +474,7 @@ export const listExportTemplates = async (): Promise<Template[]> => {
   return await parseTemplates(raw);
 };
 
-export const getExportTemplate = async (
-  id: string
-): Promise<Template | null> => {
+export const getExportTemplate = async (id: string): Promise<Template | null> => {
   const templates = await listExportTemplates();
   return templates.find((template: Template) => template.id === id) ?? null;
 };
@@ -529,7 +521,10 @@ export const updateExportTemplate = async (
     name: input.name ?? existing.name,
     description: input.description !== undefined ? input.description : existing.description,
     mappings: input.mappings ?? existing.mappings,
-    exportImagesAsBase64: input.exportImagesAsBase64 !== undefined ? input.exportImagesAsBase64 : (existing.exportImagesAsBase64 ?? false),
+    exportImagesAsBase64:
+      input.exportImagesAsBase64 !== undefined
+        ? input.exportImagesAsBase64
+        : (existing.exportImagesAsBase64 ?? false),
     createdAt: existing.createdAt,
     updatedAt: new Date().toISOString(),
   } as Template;
@@ -614,15 +609,19 @@ export const getExportImageRetryPresets = async (): Promise<ImageRetryPreset[]> 
   } catch (error) {
     try {
       const { logSystemError } = await import('@/features/observability/server');
-      await logSystemError({ 
+      await logSystemError({
         message: '[ExportTemplateRepository] Failed to parse image presets',
         error,
         source: 'export-template-repository',
-        context: { action: 'getExportImageRetryPresets' }
+        context: { action: 'getExportImageRetryPresets' },
       });
     } catch (logError) {
       const { logger } = await import('@/shared/utils/logger');
-      logger.error('[ExportTemplateRepository] Failed to parse image presets (and logging failed):', logError, { originalError: error });
+      logger.error(
+        '[ExportTemplateRepository] Failed to parse image presets (and logging failed):',
+        logError,
+        { originalError: error }
+      );
     }
     return getDefaultImageRetryPresets();
   }

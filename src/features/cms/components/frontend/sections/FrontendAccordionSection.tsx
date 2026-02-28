@@ -21,7 +21,10 @@ export function FrontendAccordionSection(): React.ReactNode {
   let i = 0;
   while (i < blocks.length) {
     const current = blocks[i];
-    if (!current) { i += 1; continue; }
+    if (!current) {
+      i += 1;
+      continue;
+    }
     if (current.type === 'Heading') {
       const next = blocks[i + 1];
       if (next?.type === 'Text') {
@@ -53,7 +56,12 @@ export function FrontendAccordionSection(): React.ReactNode {
 
   return (
     <section style={sectionStyles}>
-      <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth, maxWidthClass: 'max-w-3xl' })}>
+      <div
+        className={getSectionContainerClass({
+          fullWidth: layout?.fullWidth,
+          maxWidthClass: 'max-w-3xl',
+        })}
+      >
         <div className='divide-y divide-gray-700/50'>
           {items.map((item: { heading: BlockInstance; text?: BlockInstance }, index: number) => (
             <AccordionItem key={item.heading.id} item={item} defaultOpen={index === 0} />

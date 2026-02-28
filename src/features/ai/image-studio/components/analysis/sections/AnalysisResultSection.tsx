@@ -4,7 +4,7 @@ import React from 'react';
 import { Button, Card } from '@/shared/ui';
 import { ImageStudioAnalysisSummaryChip } from '../../ImageStudioAnalysisSummaryChip';
 import type { AnalysisResult } from '../analysis-types';
-import type { ImageStudioAnalysisPlanSnapshot } from '../../../utils/analysis-bridge';
+import type { ImageStudioAnalysisPlanSnapshot } from '@/shared/lib/ai/image-studio/utils/analysis-bridge';
 
 export interface AnalysisResultSectionProps {
   result: AnalysisResult | null;
@@ -16,7 +16,10 @@ export interface AnalysisResultSectionProps {
   analysisSourceSignatureMissing: boolean;
   analysisCurrentSourceMetadataMissing: boolean;
   analysisPlanIsStale: boolean;
-  queueAnalysisApplyIntent: (target: 'object_layout' | 'auto_scaler', options?: { runAfterApply?: boolean }) => void;
+  queueAnalysisApplyIntent: (
+    target: 'object_layout' | 'auto_scaler',
+    options?: { runAfterApply?: boolean }
+  ) => void;
 }
 
 export function AnalysisResultSection({
@@ -38,8 +41,7 @@ export function AnalysisResultSection({
     (slot) => slot.id.trim() === resolvedSourceSlotId
   );
   const sourceSlotExists = Boolean(availableSourceSlot);
-  const sourceSlotLabel =
-    availableSourceSlot?.label?.trim() || resolvedSourceSlotId;
+  const sourceSlotLabel = availableSourceSlot?.label?.trim() || resolvedSourceSlotId;
   const applyDisabledReason = !resolvedSourceSlotId
     ? 'Analysis slot context is missing. Run analysis first.'
     : slotSelectionLocked
@@ -104,7 +106,8 @@ export function AnalysisResultSection({
         Apply + Run Auto Scaler
       </Button>
       <span className='text-[10px] text-gray-500'>
-        Applies this analysis plan to Studio controls; optional run executes automatically after apply.
+        Applies this analysis plan to Studio controls; optional run executes automatically after
+        apply.
       </span>
     </div>
   );
@@ -141,7 +144,9 @@ export function AnalysisResultSection({
             </Card>
             <Card variant='subtle-compact' padding='sm' className='border-border/50 bg-card/30'>
               <div className='text-[10px] uppercase tracking-wide text-gray-500'>Shadow Policy</div>
-              <div>{result.detectionDetails?.shadowPolicyApplied ?? result.layout.shadowPolicy}</div>
+              <div>
+                {result.detectionDetails?.shadowPolicyApplied ?? result.layout.shadowPolicy}
+              </div>
             </Card>
             <Card variant='subtle-compact' padding='sm' className='border-border/50 bg-card/30'>
               <div className='text-[10px] uppercase tracking-wide text-gray-500'>Object Area</div>
@@ -161,20 +166,20 @@ export function AnalysisResultSection({
             </Card>
             <Card variant='subtle-compact' padding='sm' className='border-border/50 bg-card/30'>
               <div className='text-[10px] uppercase tracking-wide text-gray-500'>Output Canvas</div>
-              <div>{result.suggestedPlan.outputWidth}x{result.suggestedPlan.outputHeight}</div>
+              <div>
+                {result.suggestedPlan.outputWidth}x{result.suggestedPlan.outputHeight}
+              </div>
             </Card>
             <Card variant='subtle-compact' padding='sm' className='border-border/50 bg-card/30'>
-              <div className='text-[10px] uppercase tracking-wide text-gray-500'>Suggested Scale</div>
+              <div className='text-[10px] uppercase tracking-wide text-gray-500'>
+                Suggested Scale
+              </div>
               <div>{result.suggestedPlan.scale.toFixed(6)}</div>
             </Card>
           </div>
 
           {applyActions}
-          {routingNotice ? (
-            <div className='text-[11px] text-sky-200'>
-              {routingNotice}
-            </div>
-          ) : null}
+          {routingNotice ? <div className='text-[11px] text-sky-200'>{routingNotice}</div> : null}
           {slotSelectionLocked ? (
             <Card variant='warning' padding='sm' className='text-[11px] text-amber-100'>
               Slot selection is currently locked by sequencing. Unlock it before applying this plan.
@@ -203,23 +208,37 @@ export function AnalysisResultSection({
 
           {result.fallbackApplied || result.confidence < 0.35 ? (
             <Card variant='warning' padding='sm' className='text-[11px] text-amber-100'>
-              Detection confidence is low or fallback arbitration was applied. Adjust detection mode or thresholds and rerun analysis.
+              Detection confidence is low or fallback arbitration was applied. Adjust detection mode
+              or thresholds and rerun analysis.
             </Card>
           ) : null}
 
           {result.detectionDetails ? (
-            <Card variant='subtle-compact' padding='sm' className='border-border/50 bg-card/30 text-[11px] text-gray-300'>
-              <div className='mb-1 text-[10px] uppercase tracking-wide text-gray-500'>Detection Details</div>
-              <div>
-                components: {result.detectionDetails.componentCount} | core components: {result.detectionDetails.coreComponentCount} | mask: {result.detectionDetails.maskSource}
+            <Card
+              variant='subtle-compact'
+              padding='sm'
+              className='border-border/50 bg-card/30 text-[11px] text-gray-300'
+            >
+              <div className='mb-1 text-[10px] uppercase tracking-wide text-gray-500'>
+                Detection Details
               </div>
               <div>
-                selected coverage: {(result.detectionDetails.selectedComponentCoverage * 100).toFixed(2)}% | border touch: {result.detectionDetails.touchesBorder ? 'yes' : 'no'}
+                components: {result.detectionDetails.componentCount} | core components:{' '}
+                {result.detectionDetails.coreComponentCount} | mask:{' '}
+                {result.detectionDetails.maskSource}
               </div>
               <div>
-                candidates: alpha {result.candidateDetections.alpha_bbox
+                selected coverage:{' '}
+                {(result.detectionDetails.selectedComponentCoverage * 100).toFixed(2)}% | border
+                touch: {result.detectionDetails.touchesBorder ? 'yes' : 'no'}
+              </div>
+              <div>
+                candidates: alpha{' '}
+                {result.candidateDetections.alpha_bbox
                   ? `${(result.candidateDetections.alpha_bbox.confidence * 100).toFixed(2)}% / area ${result.candidateDetections.alpha_bbox.area}`
-                  : 'n/a'} | white {result.candidateDetections.white_bg_first_colored_pixel
+                  : 'n/a'}{' '}
+                | white{' '}
+                {result.candidateDetections.white_bg_first_colored_pixel
                   ? `${(result.candidateDetections.white_bg_first_colored_pixel.confidence * 100).toFixed(2)}% / area ${result.candidateDetections.white_bg_first_colored_pixel.area}`
                   : 'n/a'}
               </div>
@@ -228,30 +247,48 @@ export function AnalysisResultSection({
 
           <div className='grid gap-2 sm:grid-cols-2'>
             <Card variant='subtle-compact' padding='sm' className='border-border/50 bg-card/30'>
-              <div className='mb-1 text-[10px] uppercase tracking-wide text-gray-500'>Source Object Bounds</div>
+              <div className='mb-1 text-[10px] uppercase tracking-wide text-gray-500'>
+                Source Object Bounds
+              </div>
               <div>
-                x: {result.sourceObjectBounds.left}, y: {result.sourceObjectBounds.top}, w: {result.sourceObjectBounds.width}, h: {result.sourceObjectBounds.height}
+                x: {result.sourceObjectBounds.left}, y: {result.sourceObjectBounds.top}, w:{' '}
+                {result.sourceObjectBounds.width}, h: {result.sourceObjectBounds.height}
               </div>
             </Card>
             <Card variant='subtle-compact' padding='sm' className='border-border/50 bg-card/30'>
-              <div className='mb-1 text-[10px] uppercase tracking-wide text-gray-500'>Target Object Bounds</div>
+              <div className='mb-1 text-[10px] uppercase tracking-wide text-gray-500'>
+                Target Object Bounds
+              </div>
               <div>
-                x: {result.suggestedPlan.targetObjectBounds.left}, y: {result.suggestedPlan.targetObjectBounds.top}, w: {result.suggestedPlan.targetObjectBounds.width}, h: {result.suggestedPlan.targetObjectBounds.height}
+                x: {result.suggestedPlan.targetObjectBounds.left}, y:{' '}
+                {result.suggestedPlan.targetObjectBounds.top}, w:{' '}
+                {result.suggestedPlan.targetObjectBounds.width}, h:{' '}
+                {result.suggestedPlan.targetObjectBounds.height}
               </div>
             </Card>
           </div>
 
           <div className='grid gap-2 sm:grid-cols-2'>
             <Card variant='subtle-compact' padding='sm' className='border-border/50 bg-card/30'>
-              <div className='mb-1 text-[10px] uppercase tracking-wide text-gray-500'>Whitespace Before (%)</div>
+              <div className='mb-1 text-[10px] uppercase tracking-wide text-gray-500'>
+                Whitespace Before (%)
+              </div>
               <div>
-                L {result.whitespace.percent.left.toFixed(3)} | R {result.whitespace.percent.right.toFixed(3)} | T {result.whitespace.percent.top.toFixed(3)} | B {result.whitespace.percent.bottom.toFixed(3)}
+                L {result.whitespace.percent.left.toFixed(3)} | R{' '}
+                {result.whitespace.percent.right.toFixed(3)} | T{' '}
+                {result.whitespace.percent.top.toFixed(3)} | B{' '}
+                {result.whitespace.percent.bottom.toFixed(3)}
               </div>
             </Card>
             <Card variant='subtle-compact' padding='sm' className='border-border/50 bg-card/30'>
-              <div className='mb-1 text-[10px] uppercase tracking-wide text-gray-500'>Whitespace After (%)</div>
+              <div className='mb-1 text-[10px] uppercase tracking-wide text-gray-500'>
+                Whitespace After (%)
+              </div>
               <div>
-                L {result.suggestedPlan.whitespace.percent.left.toFixed(3)} | R {result.suggestedPlan.whitespace.percent.right.toFixed(3)} | T {result.suggestedPlan.whitespace.percent.top.toFixed(3)} | B {result.suggestedPlan.whitespace.percent.bottom.toFixed(3)}
+                L {result.suggestedPlan.whitespace.percent.left.toFixed(3)} | R{' '}
+                {result.suggestedPlan.whitespace.percent.right.toFixed(3)} | T{' '}
+                {result.suggestedPlan.whitespace.percent.top.toFixed(3)} | B{' '}
+                {result.suggestedPlan.whitespace.percent.bottom.toFixed(3)}
               </div>
             </Card>
           </div>
@@ -269,11 +306,7 @@ export function AnalysisResultSection({
             label='Retained Analysis Summary'
           />
           {applyActions}
-          {routingNotice ? (
-            <div className='text-[11px] text-sky-200'>
-              {routingNotice}
-            </div>
-          ) : null}
+          {routingNotice ? <div className='text-[11px] text-sky-200'>{routingNotice}</div> : null}
           {slotSelectionLocked ? (
             <Card variant='warning' padding='sm' className='text-[11px] text-amber-100'>
               Slot selection is currently locked by sequencing. Unlock it before applying this plan.
@@ -300,12 +333,14 @@ export function AnalysisResultSection({
             </Card>
           ) : null}
           <div className='text-[11px] text-gray-500'>
-            Retained summary loaded from saved analysis plan. Run analysis again to view full metrics.
+            Retained summary loaded from saved analysis plan. Run analysis again to view full
+            metrics.
           </div>
         </div>
       ) : (
         <div className='text-xs text-gray-500'>
-          Run analysis to inspect detected object bounds, whitespace metrics, and suggested auto-scaler fit plan.
+          Run analysis to inspect detected object bounds, whitespace metrics, and suggested
+          auto-scaler fit plan.
         </div>
       )}
     </Card>

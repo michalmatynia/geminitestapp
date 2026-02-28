@@ -2,28 +2,19 @@
 
 import React from 'react';
 
-import type {
-  AiNode,
-  Edge,
-} from '@/shared/contracts/ai-paths';
-import {
-  NODE_MIN_HEIGHT,
-  NODE_WIDTH,
-  PORT_SIZE,
-} from '@/shared/lib/ai-paths/core/constants';
+import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
+import { NODE_MIN_HEIGHT, NODE_WIDTH, PORT_SIZE } from '@/shared/lib/ai-paths/core/constants';
 
-import {
-  buildConnectorInfo,
-} from './canvas-board-connectors';
+import { buildConnectorInfo } from './canvas-board-connectors';
 import { useCanvasBoardUI } from './CanvasBoardUIContext';
 
-import { 
+import {
   BLOCKER_PROCESSING_STATUSES,
   formatRuntimeStatusLabel,
   resolveNodePalette,
   statusPalette,
   resolveNodeDiagnosticsBadgePalette,
-  mergeRuntimePayload
+  mergeRuntimePayload,
 } from './canvas/node/canvas-svg-node-utils';
 import { CanvasSvgNodePorts } from './canvas/node/CanvasSvgNodePorts';
 
@@ -90,23 +81,22 @@ export function CanvasSvgNode({ node }: CanvasSvgNodeProps): React.JSX.Element {
       const history = runtimeState.history?.[nodeId];
       if (!Array.isArray(history) || history.length === 0) return directValue;
       const lastEntry = history[history.length - 1];
-      const fallbackSource =
-        (direction === 'input' ? lastEntry?.['inputs'] : lastEntry?.['outputs']);
+      const fallbackSource = direction === 'input' ? lastEntry?.['inputs'] : lastEntry?.['outputs'];
       return fallbackSource?.[port];
     },
     [runtimeState]
   );
 
   const getNodeRuntimeData = React.useCallback(
-    (nodeId: string): {
+    (
+      nodeId: string
+    ): {
       inputs: Record<string, unknown> | undefined;
       outputs: Record<string, unknown> | undefined;
     } => {
       const history = runtimeState.history?.[nodeId];
       const lastEntry =
-        Array.isArray(history) && history.length > 0
-          ? history[history.length - 1]
-          : null;
+        Array.isArray(history) && history.length > 0 ? history[history.length - 1] : null;
       return {
         inputs: mergeRuntimePayload(runtimeState.inputs?.[nodeId], lastEntry?.['inputs']),
         outputs: mergeRuntimePayload(runtimeState.outputs?.[nodeId], lastEntry?.['outputs']),
@@ -166,21 +156,17 @@ export function CanvasSvgNode({ node }: CanvasSvgNodeProps): React.JSX.Element {
       ? runtimeNodeStatusRaw.trim().toLowerCase()
       : null;
   const runtimeStatusColors = statusPalette(runtimeNodeStatus);
-  const runtimeStatusLabel = runtimeNodeStatus
-    ? formatRuntimeStatusLabel(runtimeNodeStatus)
-    : null;
+  const runtimeStatusLabel = runtimeNodeStatus ? formatRuntimeStatusLabel(runtimeNodeStatus) : null;
   const nodeDiagnosticsSummary = nodeDiagnosticsById[node.id];
-  const nodeDiagnosticsBadge =
-    resolveNodeDiagnosticsBadgePalette(nodeDiagnosticsSummary);
-  const nodeDiagnosticsBadgeX =
-    node.type === 'trigger' ? NODE_WIDTH - 146 : NODE_WIDTH - 60;
+  const nodeDiagnosticsBadge = resolveNodeDiagnosticsBadgePalette(nodeDiagnosticsSummary);
+  const nodeDiagnosticsBadgeX = node.type === 'trigger' ? NODE_WIDTH - 146 : NODE_WIDTH - 60;
   const isBlockerProcessing =
     (node.type === 'model' ||
       node.type === 'agent' ||
       node.type === 'learner_agent' ||
       node.type === 'poll' ||
       node.type === 'delay') &&
-                Boolean(runtimeNodeStatus && BLOCKER_PROCESSING_STATUSES.has(runtimeNodeStatus));
+    Boolean(runtimeNodeStatus && BLOCKER_PROCESSING_STATUSES.has(runtimeNodeStatus));
   const inputPulse = inputPulseNodes.has(node.id);
   const outputPulse = outputPulseNodes.has(node.id);
   const typeBadge = node.type.toUpperCase();
@@ -188,8 +174,7 @@ export function CanvasSvgNode({ node }: CanvasSvgNodeProps): React.JSX.Element {
   const runtimeBadgeWidth = runtimeStatusLabel
     ? Math.max(64, runtimeStatusLabel.length * 6 + 16)
     : 0;
-  const showNodePorts =
-    detailLevel !== 'skeleton' || isSelected || isPrimarySelected;
+  const showNodePorts = detailLevel !== 'skeleton' || isSelected || isPrimarySelected;
   const titleFontSize = detailLevel === 'skeleton' ? 11 : 12;
   const titleY = detailLevel === 'skeleton' ? 17 : 18;
   const titleText =
@@ -197,11 +182,8 @@ export function CanvasSvgNode({ node }: CanvasSvgNodeProps): React.JSX.Element {
       ? `${node.title.slice(0, 23)}...`
       : node.title;
   const showNodeAnimations =
-    enableNodeAnimations &&
-    (detailLevel !== 'skeleton' || isSelected || isPrimarySelected);
-  const handleNodeDoubleClick = (
-    event: React.MouseEvent<SVGGElement | SVGRectElement>
-  ): void => {
+    enableNodeAnimations && (detailLevel !== 'skeleton' || isSelected || isPrimarySelected);
+  const handleNodeDoubleClick = (event: React.MouseEvent<SVGGElement | SVGRectElement>): void => {
     event.stopPropagation();
     void onSelectNode(node.id);
     onOpenNodeConfig();
@@ -252,8 +234,7 @@ export function CanvasSvgNode({ node }: CanvasSvgNodeProps): React.JSX.Element {
           onPointerUpNode(event, node.id);
         }}
         onClick={(event: React.MouseEvent<SVGRectElement>) => {
-          const isToggleSelection =
-            event.shiftKey || event.metaKey || event.ctrlKey;
+          const isToggleSelection = event.shiftKey || event.metaKey || event.ctrlKey;
           void onSelectNode(node.id, {
             toggle: isToggleSelection,
           });
@@ -316,9 +297,7 @@ export function CanvasSvgNode({ node }: CanvasSvgNodeProps): React.JSX.Element {
 
       {showRuntimeBadges && runtimeStatusLabel && (
         <g
-          transform={`translate(${NODE_WIDTH - runtimeBadgeWidth - 10} ${
-            NODE_MIN_HEIGHT - 26
-          })`}
+          transform={`translate(${NODE_WIDTH - runtimeBadgeWidth - 10} ${NODE_MIN_HEIGHT - 26})`}
           pointerEvents='none'
         >
           {runtimeStatusColors && (
@@ -405,10 +384,7 @@ export function CanvasSvgNode({ node }: CanvasSvgNodeProps): React.JSX.Element {
       ) : null}
 
       {node.type === 'trigger' && (
-        <g
-          transform={`translate(${NODE_WIDTH - 92} 6)`}
-          pointerEvents='none'
-        >
+        <g transform={`translate(${NODE_WIDTH - 92} 6)`} pointerEvents='none'>
           <rect
             data-node-action='fire-trigger'
             data-node-id={node.id}
@@ -417,7 +393,9 @@ export function CanvasSvgNode({ node }: CanvasSvgNodeProps): React.JSX.Element {
             width={82}
             height={16}
             rx={5}
-            fill={triggerConnected.has(node.id) ? 'rgba(16, 185, 129, 0.2)' : 'rgba(244, 63, 94, 0.14)'}
+            fill={
+              triggerConnected.has(node.id) ? 'rgba(16, 185, 129, 0.2)' : 'rgba(244, 63, 94, 0.14)'
+            }
             stroke={triggerConnected.has(node.id) ? '#10b981' : '#f43f5e'}
             strokeWidth='1'
             style={{ cursor: 'pointer', pointerEvents: 'all' }}

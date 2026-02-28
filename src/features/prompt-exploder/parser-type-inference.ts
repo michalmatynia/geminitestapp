@@ -97,10 +97,7 @@ const diceSimilarity = (left: string, right: string): number => {
   return (2 * overlap) / (leftBigrams.size + rightBigrams.size);
 };
 
-const anchorCoverageScore = (
-  segmentText: string,
-  anchorTokens: string[]
-): number => {
+const anchorCoverageScore = (segmentText: string, anchorTokens: string[]): number => {
   const anchors = anchorTokens
     .map((token: string) => normalizedSimilarityText(token))
     .filter(Boolean);
@@ -116,17 +113,28 @@ const anchorCoverageScore = (
 const segmentSimilaritySource = (segment: PromptExploderSegment): string => {
   const lines: string[] = [segment.title || ''];
   if (segment.listItems && segment.listItems.length > 0) {
-    lines.push(segment.listItems.slice(0, 3).map((item: PromptExploderListItem) => item.text || '').join(' '));
+    lines.push(
+      segment.listItems
+        .slice(0, 3)
+        .map((item: PromptExploderListItem) => item.text || '')
+        .join(' ')
+    );
   }
   if (segment.subsections && segment.subsections.length > 0) {
     const subsection = segment.subsections[0];
     if (subsection) {
       lines.push(subsection.title || '');
       if (subsection.items && subsection.items.length > 0) {
-        lines.push(subsection.items.slice(0, 2).map((item: PromptExploderListItem) => item.text || '').join(' '));
+        lines.push(
+          subsection.items
+            .slice(0, 2)
+            .map((item: PromptExploderListItem) => item.text || '')
+            .join(' ')
+        );
       }
     }
-  }  if (segment.text) {
+  }
+  if (segment.text) {
     lines.push(segment.text.slice(0, 180));
   }
   return lines.join(' ');
@@ -147,11 +155,7 @@ export const shouldKeepEmptyTitleForCaseResolver = (
   matchedPatternIds: string[],
   sourceText = ''
 ): boolean => {
-  if (
-    matchedPatternIds.some((patternId) =>
-      CASE_RESOLVER_EMPTY_TITLE_PATTERN_IDS.has(patternId)
-    )
-  ) {
+  if (matchedPatternIds.some((patternId) => CASE_RESOLVER_EMPTY_TITLE_PATTERN_IDS.has(patternId))) {
     return true;
   }
   if (!matchedPatternIds.includes(CASE_RESOLVER_SUBJECT_OR_SECTION_PATTERN_ID)) {
@@ -253,11 +257,12 @@ export const inferTypeFromLearnedTemplates = (
     );
     const sampleScore = template.sampleText
       ? Math.max(
-        diceSimilarity(sourceText, template.sampleText),
-        jaccardSimilarity(sourceText, template.sampleText)
-      )
+          diceSimilarity(sourceText, template.sampleText),
+          jaccardSimilarity(sourceText, template.sampleText)
+        )
       : 0;
-    const anchorScore = anchorCoverageScore(sourceText, template.anchorTokens || []);    const totalScore = Math.max(titleScore, sampleScore * 0.8 + anchorScore * 0.2);
+    const anchorScore = anchorCoverageScore(sourceText, template.anchorTokens || []);
+    const totalScore = Math.max(titleScore, sampleScore * 0.8 + anchorScore * 0.2);
 
     if (totalScore > bestScore) {
       bestScore = totalScore;
@@ -278,8 +283,7 @@ export const inferTypeFromLearnedTemplates = (
   const matchedType = isPromptExploderSegmentType(matchedTypeCandidate)
     ? matchedTypeCandidate
     : segment.type;
-  const matchedTemplateId =
-    typeof matchedTemplate.id === 'string' ? matchedTemplate.id : null;
+  const matchedTemplateId = typeof matchedTemplate.id === 'string' ? matchedTemplate.id : null;
 
   return {
     type: matchedType,

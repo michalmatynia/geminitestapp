@@ -29,12 +29,7 @@ export function useMarkdownEditor({
       const start = textarea.selectionStart;
       const end = textarea.selectionEnd;
       const selected = content.slice(start, end) || placeholder;
-      const nextValue =
-        content.slice(0, start) +
-        prefix +
-        selected +
-        suffix +
-        content.slice(end);
+      const nextValue = content.slice(0, start) + prefix + selected + suffix + content.slice(end);
       setContent(nextValue);
       requestAnimationFrame((): void => {
         const cursor = start + prefix.length + selected.length + suffix.length;
@@ -42,7 +37,7 @@ export function useMarkdownEditor({
         textarea.setSelectionRange(cursor, cursor);
       });
     },
-    [content, setContent, contentRef],
+    [content, setContent, contentRef]
   );
 
   const insertAtCursor = useCallback(
@@ -59,7 +54,7 @@ export function useMarkdownEditor({
         textarea.setSelectionRange(cursor, cursor);
       });
     },
-    [content, setContent, contentRef],
+    [content, setContent, contentRef]
   );
 
   const applyLinePrefix = useCallback(
@@ -74,19 +69,16 @@ export function useMarkdownEditor({
       const block = content.slice(blockStart, blockEnd);
       const updated = block
         .split(/\r?\n/)
-        .map((line: string): string =>
-          line.trim().length ? `${prefix}${line}` : line,
-        )
+        .map((line: string): string => (line.trim().length ? `${prefix}${line}` : line))
         .join('\n');
-      const nextValue =
-        content.slice(0, blockStart) + updated + content.slice(blockEnd);
+      const nextValue = content.slice(0, blockStart) + updated + content.slice(blockEnd);
       setContent(nextValue);
       requestAnimationFrame((): void => {
         textarea.focus();
         textarea.setSelectionRange(blockStart, blockStart + updated.length);
       });
     },
-    [content, setContent, contentRef],
+    [content, setContent, contentRef]
   );
 
   const applySpanStyle = useCallback(
@@ -103,23 +95,19 @@ export function useMarkdownEditor({
       if (fontValue && fontValue !== 'inherit') {
         styleParts.push(`font-family: ${fontValue}`);
       }
-      const styleAttribute =
-        styleParts.length > 0 ? ` style=" ${styleParts.join('; ')}"` : '';
+      const styleAttribute = styleParts.length > 0 ? ` style=" ${styleParts.join('; ')}"` : '';
       const openingTag = `<span${styleAttribute}>`;
       const closingTag = '</span>';
       const wrapped = `${openingTag}${selected}${closingTag}`;
       const nextValue = content.slice(0, start) + wrapped + content.slice(end);
       setContent(nextValue);
       requestAnimationFrame((): void => {
-        const cursor =
-          selected.length > 0
-            ? start + wrapped.length
-            : start + openingTag.length;
+        const cursor = selected.length > 0 ? start + wrapped.length : start + openingTag.length;
         textarea.focus();
         textarea.setSelectionRange(cursor, cursor);
       });
     },
-    [content, setContent, contentRef],
+    [content, setContent, contentRef]
   );
 
   const applyBulletList = useCallback(() => {
@@ -146,12 +134,9 @@ export function useMarkdownEditor({
     const block = content.slice(blockStart, blockEnd);
     const updated = block
       .split(/\r?\n/)
-      .map((line: string): string =>
-        line.trim().startsWith('- ') ? line : `- ${line}`,
-      )
+      .map((line: string): string => (line.trim().startsWith('- ') ? line : `- ${line}`))
       .join('\n');
-    const nextValue =
-      content.slice(0, blockStart) + updated + content.slice(blockEnd);
+    const nextValue = content.slice(0, blockStart) + updated + content.slice(blockEnd);
     setContent(nextValue);
     requestAnimationFrame((): void => {
       textarea.focus();
@@ -170,12 +155,9 @@ export function useMarkdownEditor({
     const block = content.slice(blockStart, blockEnd);
     const updated = block
       .split(/\r?\n/)
-      .map((line: string): string =>
-        line.trim().startsWith('- [') ? line : `- [ ] ${line}`,
-      )
+      .map((line: string): string => (line.trim().startsWith('- [') ? line : `- [ ] ${line}`))
       .join('\n');
-    const nextValue =
-      content.slice(0, blockStart) + updated + content.slice(blockEnd);
+    const nextValue = content.slice(0, blockStart) + updated + content.slice(blockEnd);
     setContent(nextValue);
     requestAnimationFrame((): void => {
       textarea.focus();

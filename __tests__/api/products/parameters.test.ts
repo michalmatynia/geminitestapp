@@ -19,7 +19,7 @@ vi.mock('@/shared/lib/db/prisma', () => ({
 
 // Mock data provider
 vi.mock('@/features/products/server', async (importOriginal) => {
-  const actual = await importOriginal() as any;
+  const actual = (await importOriginal()) as any;
   return {
     ...actual,
     getProductDataProvider: vi.fn().mockResolvedValue('prisma'),
@@ -28,7 +28,10 @@ vi.mock('@/features/products/server', async (importOriginal) => {
         const body = await req.json();
         const result = schema.safeParse(body);
         if (!result.success) {
-          return { ok: false, response: new Response(JSON.stringify(result.error), { status: 400 }) };
+          return {
+            ok: false,
+            response: new Response(JSON.stringify(result.error), { status: 400 }),
+          };
         }
         return { ok: true, data: result.data };
       } catch {
@@ -52,7 +55,9 @@ describe('Product Parameters API', () => {
   describe('GET /api/products/parameters', () => {
     it('should return parameters for a given catalogId', async () => {
       const now = new Date();
-      const mockParams = [{ id: '1', name_en: 'Param 1', catalogId: 'cat1', createdAt: now, updatedAt: now }];
+      const mockParams = [
+        { id: '1', name_en: 'Param 1', catalogId: 'cat1', createdAt: now, updatedAt: now },
+      ];
       vi.mocked(prisma.productParameter.findMany).mockResolvedValue(mockParams as any);
 
       const res = await GET(

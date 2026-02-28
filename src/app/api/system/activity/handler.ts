@@ -15,7 +15,7 @@ type ListQuery = z.infer<typeof commonListQuerySchema>;
 export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const query = ctx.query as ListQuery;
   const repository = await getActivityRepository();
-  
+
   const filters: ActivityFilters = {
     limit: query.pageSize,
     offset: (query.page - 1) * query.pageSize,
@@ -29,14 +29,17 @@ export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Pr
     repository.countActivity(filters),
   ]);
 
-  return NextResponse.json({
-    data: logs,
-    total,
-    page: query.page,
-    pageSize: query.pageSize,
-  }, {
-    headers: {
-      'Cache-Control': 'no-store',
+  return NextResponse.json(
+    {
+      data: logs,
+      total,
+      page: query.page,
+      pageSize: query.pageSize,
     },
-  });
+    {
+      headers: {
+        'Cache-Control': 'no-store',
+      },
+    }
+  );
 }

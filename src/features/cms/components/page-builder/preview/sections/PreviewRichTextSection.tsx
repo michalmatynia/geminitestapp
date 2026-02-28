@@ -15,7 +15,7 @@ import { EmptyState } from '@/shared/ui';
 
 export function PreviewRichTextSection() {
   const { colorSchemes, layout } = useCmsPageContext();
-  const { 
+  const {
     section,
     selectedRing,
     renderSectionActions,
@@ -25,10 +25,7 @@ export function PreviewRichTextSection() {
     PreviewBlockItem,
   } = usePreviewSectionContext();
 
-  const { 
-    inspectorSettings, 
-    onOpenMedia,
-  } = usePreviewEditor();
+  const { inspectorSettings, onOpenMedia } = usePreviewEditor();
 
   const showEditorChrome = inspectorSettings.showEditorChrome ?? false;
   const sectionStyles = getSectionStyles(section.settings, colorSchemes);
@@ -84,6 +81,6 @@ export function PreviewRichTextSection() {
           )}
         </div>
       </div>
-    </div>,
+    </div>
   );
 }

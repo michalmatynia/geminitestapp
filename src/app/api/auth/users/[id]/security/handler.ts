@@ -1,18 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import {
-  updateAuthSecurityProfile,
-  getAuthSecurityProfile,
-} from '@/features/auth/server';
+import { updateAuthSecurityProfile, getAuthSecurityProfile } from '@/features/auth/server';
 import { auth } from '@/features/auth/server';
 import { logAuthEvent } from '@/features/auth/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import {
-  internalError,
-  authError,
-  badRequestError,
-} from '@/shared/errors/app-error';
+import { internalError, authError, badRequestError } from '@/shared/errors/app-error';
 
 export const updateSchema = z.object({
   disabled: z.boolean().optional(),
@@ -24,12 +17,11 @@ export const updateSchema = z.object({
 export async function GET_handler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
-  params: { id: string },
+  params: { id: string }
 ): Promise<Response> {
   const session = await auth();
   const hasAccess =
-    session?.user?.isElevated ||
-    session?.user?.permissions?.includes('auth.users.write');
+    session?.user?.isElevated || session?.user?.permissions?.includes('auth.users.write');
   if (!hasAccess) {
     throw authError('Unauthorized.');
   }
@@ -50,12 +42,11 @@ export async function GET_handler(
 export async function PATCH_handler(
   req: NextRequest,
   ctx: ApiHandlerContext,
-  params: { id: string },
+  params: { id: string }
 ): Promise<Response> {
   const session = await auth();
   const hasAccess =
-    session?.user?.isElevated ||
-    session?.user?.permissions?.includes('auth.users.write');
+    session?.user?.isElevated || session?.user?.permissions?.includes('auth.users.write');
   if (!hasAccess) {
     throw authError('Unauthorized.');
   }
@@ -89,9 +80,7 @@ export async function PATCH_handler(
       ? { bannedAt: updates.banned ? now.toISOString() : null }
       : {}),
     ...(allowedIps ? { allowedIps } : {}),
-    ...(updates.disableMfa
-      ? { mfaEnabled: false, mfaSecret: null, recoveryCodes: [] }
-      : {}),
+    ...(updates.disableMfa ? { mfaEnabled: false, mfaSecret: null, recoveryCodes: [] } : {}),
   });
 
   await logAuthEvent({

@@ -3,11 +3,7 @@ import { z } from 'zod';
 
 import { getCurrencyRepository } from '@/shared/lib/internationalization/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import {
-  badRequestError,
-  notFoundError,
-  duplicateEntryError,
-} from '@/shared/errors/app-error';
+import { badRequestError, notFoundError, duplicateEntryError } from '@/shared/errors/app-error';
 
 export const currencySchema = z.object({
   code: z.enum(['USD', 'EUR', 'PLN', 'GBP', 'SEK']),
@@ -29,7 +25,7 @@ export async function PUT_handler(
 
   const repository = await getCurrencyRepository();
   const existing = await repository.getCurrencyById(id);
-  
+
   if (!existing) {
     throw notFoundError('Currency not found');
   }
@@ -63,7 +59,7 @@ export async function DELETE_handler(
 ): Promise<Response> {
   const id = params.id;
   const repository = await getCurrencyRepository();
-  
+
   const inUse = await repository.isCurrencyInUse(id);
   if (inUse) {
     throw badRequestError('Currency is in use and cannot be deleted');

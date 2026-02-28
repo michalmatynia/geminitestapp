@@ -1,21 +1,9 @@
 'use client';
 
 import React from 'react';
-import {
-  Button,
-  Card,
-  Hint,
-  Label,
-  SearchInput,
-  Textarea,
-  useToast,
-} from '@/shared/ui';
-import {
-  AI_PATHS_NODE_DOCS as NODE_DOCS_LIST,
-} from '@/shared/lib/ai-paths/core/docs/node-docs';
-import {
-  DEFAULT_AI_PATHS_VALIDATION_DOC_SOURCES,
-} from '@/shared/lib/ai-paths/core/validation-engine';
+import { Button, Card, Hint, Label, SearchInput, Textarea, useToast } from '@/shared/ui';
+import { AI_PATHS_NODE_DOCS as NODE_DOCS_LIST } from '@/shared/lib/ai-paths/core/docs/node-docs';
+import { DEFAULT_AI_PATHS_VALIDATION_DOC_SOURCES } from '@/shared/lib/ai-paths/core/validation-engine';
 import { useAdminAiPathsValidationContext } from '../../context/AdminAiPathsValidationContext';
 import { parseDocsSourcesText } from '../../pages/AdminAiPathsValidationUtils';
 
@@ -78,7 +66,11 @@ export function DocsConnectionsPanel(): React.JSX.Element {
         placeholder='Search node docs by type, title, ports...'
         className='mt-2 h-9'
       />
-      <Card variant='subtle-compact' padding='sm' className='mt-3 max-h-56 space-y-2 overflow-y-auto border-border/60 bg-card/30'>
+      <Card
+        variant='subtle-compact'
+        padding='sm'
+        className='mt-3 max-h-56 space-y-2 overflow-y-auto border-border/60 bg-card/30'
+      >
         {filteredNodeDocs.map((doc) => {
           const sourceId = `ai-paths:node-docs:${doc.type}`;
           const docsSet = new Set(parseDocsSourcesText(docsSourcesDraft));

@@ -38,7 +38,8 @@ export interface DraftCreatorBasicInfo {
 const BasicInfoContext = createContext<DraftCreatorBasicInfo | null>(null);
 export const useDraftCreatorBasicInfo = () => {
   const context = useContext(BasicInfoContext);
-  if (!context) throw new Error('useDraftCreatorBasicInfo must be used within DraftCreatorFormProvider');
+  if (!context)
+    throw new Error('useDraftCreatorBasicInfo must be used within DraftCreatorFormProvider');
   return context;
 };
 
@@ -90,7 +91,8 @@ export interface DraftCreatorProductData {
 const ProductDataContext = createContext<DraftCreatorProductData | null>(null);
 export const useDraftCreatorProductData = () => {
   const context = useContext(ProductDataContext);
-  if (!context) throw new Error('useDraftCreatorProductData must be used within DraftCreatorFormProvider');
+  if (!context)
+    throw new Error('useDraftCreatorProductData must be used within DraftCreatorFormProvider');
   return context;
 };
 
@@ -115,7 +117,8 @@ export interface DraftCreatorMetadata {
 const MetadataContext = createContext<DraftCreatorMetadata | null>(null);
 export const useDraftCreatorMetadata = () => {
   const context = useContext(MetadataContext);
-  if (!context) throw new Error('useDraftCreatorMetadata must be used within DraftCreatorFormProvider');
+  if (!context)
+    throw new Error('useDraftCreatorMetadata must be used within DraftCreatorFormProvider');
   return context;
 };
 
@@ -129,7 +132,8 @@ export interface DraftCreatorImages {
 const ImagesContext = createContext<DraftCreatorImages | null>(null);
 export const useDraftCreatorImages = () => {
   const context = useContext(ImagesContext);
-  if (!context) throw new Error('useDraftCreatorImages must be used within DraftCreatorFormProvider');
+  if (!context)
+    throw new Error('useDraftCreatorImages must be used within DraftCreatorFormProvider');
   return context;
 };
 
@@ -146,13 +150,15 @@ export interface DraftCreatorParameters {
 const ParametersContext = createContext<DraftCreatorParameters | null>(null);
 export const useDraftCreatorParameters = () => {
   const context = useContext(ParametersContext);
-  if (!context) throw new Error('useDraftCreatorParameters must be used within DraftCreatorFormProvider');
+  if (!context)
+    throw new Error('useDraftCreatorParameters must be used within DraftCreatorFormProvider');
   return context;
 };
 
 // --- Legacy Aggregator ---
 export interface DraftCreatorFormContextValue
-  extends DraftCreatorBasicInfo,
+  extends
+    DraftCreatorBasicInfo,
     DraftCreatorProductData,
     DraftCreatorMetadata,
     DraftCreatorImages,
@@ -167,106 +173,121 @@ export function DraftCreatorFormProvider({
   value: DraftCreatorFormContextValue;
   children: React.ReactNode;
 }): React.JSX.Element {
-  const basicInfo = useMemo(() => ({
-    name: value.name,
-    setName: value.setName,
-    description: value.description,
-    setDescription: value.setDescription,
-    validatorEnabled: value.validatorEnabled,
-    setValidatorEnabled: value.setValidatorEnabled,
-    formatterEnabled: value.formatterEnabled,
-    setFormatterEnabled: value.setFormatterEnabled,
-    icon: value.icon,
-    setIcon: value.setIcon,
-    iconColorMode: value.iconColorMode,
-    setIconColorMode: value.setIconColorMode,
-    iconColor: value.iconColor,
-    setIconColor: value.setIconColor,
-    openProductFormTab: value.openProductFormTab,
-    setOpenProductFormTab: value.setOpenProductFormTab,
-    resolvedIconColor: value.resolvedIconColor,
-    openIconLibrary: value.openIconLibrary,
-  }), [value]);
+  const basicInfo = useMemo(
+    () => ({
+      name: value.name,
+      setName: value.setName,
+      description: value.description,
+      setDescription: value.setDescription,
+      validatorEnabled: value.validatorEnabled,
+      setValidatorEnabled: value.setValidatorEnabled,
+      formatterEnabled: value.formatterEnabled,
+      setFormatterEnabled: value.setFormatterEnabled,
+      icon: value.icon,
+      setIcon: value.setIcon,
+      iconColorMode: value.iconColorMode,
+      setIconColorMode: value.setIconColorMode,
+      iconColor: value.iconColor,
+      setIconColor: value.setIconColor,
+      openProductFormTab: value.openProductFormTab,
+      setOpenProductFormTab: value.setOpenProductFormTab,
+      resolvedIconColor: value.resolvedIconColor,
+      openIconLibrary: value.openIconLibrary,
+    }),
+    [value]
+  );
 
-  const productData = useMemo(() => ({
-    sku: value.sku,
-    setSku: value.setSku,
-    identifierType: value.identifierType,
-    setIdentifierType: value.setIdentifierType,
-    ean: value.ean,
-    setEan: value.setEan,
-    gtin: value.gtin,
-    setGtin: value.setGtin,
-    asin: value.asin,
-    setAsin: value.setAsin,
-    weight: value.weight,
-    setWeight: value.setWeight,
-    sizeLength: value.sizeLength,
-    setSizeLength: value.setSizeLength,
-    sizeWidth: value.sizeWidth,
-    setSizeWidth: value.setSizeWidth,
-    length: value.length,
-    setLength: value.setLength,
-    nameEn: value.nameEn,
-    setNameEn: value.setNameEn,
-    namePl: value.namePl,
-    setNamePl: value.setNamePl,
-    nameDe: value.nameDe,
-    setNameDe: value.setNameDe,
-    descEn: value.descEn,
-    setDescEn: value.setDescEn,
-    descPl: value.descPl,
-    setDescPl: value.setDescPl,
-    descDe: value.descDe,
-    setDescDe: value.setDescDe,
-    price: value.price,
-    setPrice: value.setPrice,
-    stock: value.stock,
-    setStock: value.setStock,
-    supplierName: value.supplierName,
-    setSupplierName: value.setSupplierName,
-    supplierLink: value.supplierLink,
-    setSupplierLink: value.setSupplierLink,
-    priceComment: value.priceComment,
-    setPriceComment: value.setPriceComment,
-    baseProductId: value.baseProductId,
-    setBaseProductId: value.setBaseProductId,
-  }), [value]);
+  const productData = useMemo(
+    () => ({
+      sku: value.sku,
+      setSku: value.setSku,
+      identifierType: value.identifierType,
+      setIdentifierType: value.setIdentifierType,
+      ean: value.ean,
+      setEan: value.setEan,
+      gtin: value.gtin,
+      setGtin: value.setGtin,
+      asin: value.asin,
+      setAsin: value.setAsin,
+      weight: value.weight,
+      setWeight: value.setWeight,
+      sizeLength: value.sizeLength,
+      setSizeLength: value.setSizeLength,
+      sizeWidth: value.sizeWidth,
+      setSizeWidth: value.setSizeWidth,
+      length: value.length,
+      setLength: value.setLength,
+      nameEn: value.nameEn,
+      setNameEn: value.setNameEn,
+      namePl: value.namePl,
+      setNamePl: value.setNamePl,
+      nameDe: value.nameDe,
+      setNameDe: value.setNameDe,
+      descEn: value.descEn,
+      setDescEn: value.setDescEn,
+      descPl: value.descPl,
+      setDescPl: value.setDescPl,
+      descDe: value.descDe,
+      setDescDe: value.setDescDe,
+      price: value.price,
+      setPrice: value.setPrice,
+      stock: value.stock,
+      setStock: value.setStock,
+      supplierName: value.supplierName,
+      setSupplierName: value.setSupplierName,
+      supplierLink: value.supplierLink,
+      setSupplierLink: value.setSupplierLink,
+      priceComment: value.priceComment,
+      setPriceComment: value.setPriceComment,
+      baseProductId: value.baseProductId,
+      setBaseProductId: value.setBaseProductId,
+    }),
+    [value]
+  );
 
-  const metadata = useMemo(() => ({
-    catalogs: value.catalogs,
-    selectedCatalogIds: value.selectedCatalogIds,
-    setSelectedCatalogIds: value.setSelectedCatalogIds,
-    categories: value.categories,
-    categoryLoading: value.categoryLoading,
-    selectedCategoryId: value.selectedCategoryId,
-    setSelectedCategoryId: value.setSelectedCategoryId,
-    tags: value.tags,
-    tagLoading: value.tagLoading,
-    selectedTagIds: value.selectedTagIds,
-    setSelectedTagIds: value.setSelectedTagIds,
-    producers: value.producers,
-    producersLoading: value.producersLoading,
-    selectedProducerIds: value.selectedProducerIds,
-    setSelectedProducerIds: value.setSelectedProducerIds,
-  }), [value]);
+  const metadata = useMemo(
+    () => ({
+      catalogs: value.catalogs,
+      selectedCatalogIds: value.selectedCatalogIds,
+      setSelectedCatalogIds: value.setSelectedCatalogIds,
+      categories: value.categories,
+      categoryLoading: value.categoryLoading,
+      selectedCategoryId: value.selectedCategoryId,
+      setSelectedCategoryId: value.setSelectedCategoryId,
+      tags: value.tags,
+      tagLoading: value.tagLoading,
+      selectedTagIds: value.selectedTagIds,
+      setSelectedTagIds: value.setSelectedTagIds,
+      producers: value.producers,
+      producersLoading: value.producersLoading,
+      selectedProducerIds: value.selectedProducerIds,
+      setSelectedProducerIds: value.setSelectedProducerIds,
+    }),
+    [value]
+  );
 
-  const images = useMemo(() => ({
-    showFileManager: value.showFileManager,
-    setShowFileManager: value.setShowFileManager,
-    handleMultiFileSelect: value.handleMultiFileSelect,
-    imageManagerController: value.imageManagerController,
-  }), [value]);
+  const images = useMemo(
+    () => ({
+      showFileManager: value.showFileManager,
+      setShowFileManager: value.setShowFileManager,
+      handleMultiFileSelect: value.handleMultiFileSelect,
+      imageManagerController: value.imageManagerController,
+    }),
+    [value]
+  );
 
-  const parameters = useMemo(() => ({
-    parameters: value.parameters,
-    parametersLoading: value.parametersLoading,
-    parameterValues: value.parameterValues,
-    addParameterValue: value.addParameterValue,
-    updateParameterId: value.updateParameterId,
-    updateParameterValue: value.updateParameterValue,
-    removeParameterValue: value.removeParameterValue,
-  }), [value]);
+  const parameters = useMemo(
+    () => ({
+      parameters: value.parameters,
+      parametersLoading: value.parametersLoading,
+      parameterValues: value.parameterValues,
+      addParameterValue: value.addParameterValue,
+      updateParameterId: value.updateParameterId,
+      updateParameterValue: value.updateParameterValue,
+      removeParameterValue: value.removeParameterValue,
+    }),
+    [value]
+  );
 
   return (
     <BasicInfoContext.Provider value={basicInfo}>

@@ -45,15 +45,9 @@ interface NoteSettingsContextType {
   resetToDefaults: () => void;
 }
 
-const NoteSettingsContext = createContext<NoteSettingsContextType | undefined>(
-  undefined,
-);
+const NoteSettingsContext = createContext<NoteSettingsContextType | undefined>(undefined);
 
-export function NoteSettingsProvider({
-  children,
-}: {
-  children: ReactNode;
-}): React.JSX.Element {
+export function NoteSettingsProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const [settings, setSettings] = useState<NoteSettings>(DEFAULT_NOTE_SETTINGS);
   const [isInitialized, setIsInitialized] = useState(false);
   const previousFolderIdRef = useRef<string | null>(null);
@@ -73,9 +67,7 @@ export function NoteSettingsProvider({
       const stored = window.localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored) as Partial<NoteSettings>;
-        setSettings(
-          (prev: NoteSettings): NoteSettings => ({ ...prev, ...parsed }),
-        );
+        setSettings((prev: NoteSettings): NoteSettings => ({ ...prev, ...parsed }));
         previousFolderIdRef.current = parsed.selectedFolderId ?? null;
         previousNotebookIdRef.current = parsed.selectedNotebookId ?? null;
         previousAutoformatRef.current = parsed.autoformatOnPaste ?? false;
@@ -128,9 +120,7 @@ export function NoteSettingsProvider({
 
       if (
         dbEditorMode &&
-        (dbEditorMode === 'markdown' ||
-          dbEditorMode === 'wysiwyg' ||
-          dbEditorMode === 'code')
+        (dbEditorMode === 'markdown' || dbEditorMode === 'wysiwyg' || dbEditorMode === 'code')
       ) {
         if (dbEditorMode !== prev.editorMode) {
           next.editorMode = dbEditorMode;
@@ -206,9 +196,7 @@ export function NoteSettingsProvider({
   }, [settings.editorMode, isInitialized, updateSetting]);
 
   const updateSettings = useCallback((updates: Partial<NoteSettings>): void => {
-    setSettings(
-      (prev: NoteSettings): NoteSettings => ({ ...prev, ...updates }),
-    );
+    setSettings((prev: NoteSettings): NoteSettings => ({ ...prev, ...updates }));
   }, []);
 
   const resetToDefaults = useCallback((): void => {
@@ -221,9 +209,7 @@ export function NoteSettingsProvider({
   }, [updateSetting]);
 
   return (
-    <NoteSettingsContext.Provider
-      value={{ settings, updateSettings, resetToDefaults }}
-    >
+    <NoteSettingsContext.Provider value={{ settings, updateSettings, resetToDefaults }}>
       {children}
     </NoteSettingsContext.Provider>
   );
@@ -232,9 +218,7 @@ export function NoteSettingsProvider({
 export function useNoteSettings(): NoteSettingsContextType {
   const context = useContext(NoteSettingsContext);
   if (context === undefined) {
-    throw internalError(
-      'useNoteSettings must be used within a NoteSettingsProvider',
-    );
+    throw internalError('useNoteSettings must be used within a NoteSettingsProvider');
   }
   return context;
 }

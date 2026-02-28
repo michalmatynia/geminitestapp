@@ -1,7 +1,7 @@
 'use client';
 
 import type { CompareConfig } from '@/shared/lib/ai-paths';
-import { Button, Input,  SelectSimple, FormField } from '@/shared/ui';
+import { Button, Input, SelectSimple, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -34,7 +34,8 @@ export function CompareNodeConfigSection(): React.JSX.Element | null {
   return (
     <div className='space-y-4'>
       <FormField label='Operator'>
-        <SelectSimple size='sm'
+        <SelectSimple
+          size='sm'
           variant='subtle'
           value={compareConfig.operator}
           onValueChange={(value: string): void =>

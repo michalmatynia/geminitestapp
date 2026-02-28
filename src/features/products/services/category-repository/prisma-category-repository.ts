@@ -1,17 +1,11 @@
 import { Prisma, ProductCategory as PrismaProductCategory } from '@prisma/client';
 
-import type { 
-  CategoryRepository, 
-  CategoryFilters 
+import type { CategoryRepository, CategoryFilters } from '@/shared/contracts/products';
+import type {
+  CreateProductCategoryDto,
+  UpdateProductCategoryDto,
 } from '@/shared/contracts/products';
-import type { 
-  CreateProductCategoryDto, 
-  UpdateProductCategoryDto 
-} from '@/shared/contracts/products';
-import type { 
-  ProductCategory, 
-  ProductCategoryWithChildren 
-} from '@/shared/contracts/products';
+import type { ProductCategory, ProductCategoryWithChildren } from '@/shared/contracts/products';
 import { notFoundError } from '@/shared/errors/app-error';
 import prisma from '@/shared/lib/db/prisma';
 
@@ -106,10 +100,12 @@ const toCategoryDomain = (category: PrismaProductCategory): ProductCategory => (
   updatedAt: category.updatedAt.toISOString(),
 });
 
-const toCategoryWithChildrenDomain = (category: PrismaCategoryWithChildren): ProductCategoryWithChildren => ({
+const toCategoryWithChildrenDomain = (
+  category: PrismaCategoryWithChildren
+): ProductCategoryWithChildren => ({
   ...toCategoryDomain(category),
-  children: Array.isArray(category.children) 
-    ? category.children.map(toCategoryWithChildrenDomain) 
+  children: Array.isArray(category.children)
+    ? category.children.map(toCategoryWithChildrenDomain)
     : [],
 });
 
@@ -157,18 +153,20 @@ export const prismaCategoryRepository: CategoryRepository = {
       }
     });
 
-    const sortTree = (
-      nodes: ProductCategoryWithChildren[]
-    ): ProductCategoryWithChildren[] =>
+    const sortTree = (nodes: ProductCategoryWithChildren[]): ProductCategoryWithChildren[] =>
       nodes
-        .sort((a: ProductCategoryWithChildren, b: ProductCategoryWithChildren): number => compareBySortIndexThenName(
-          { sortIndex: a.sortIndex ?? 0, name: a.name },
-          { sortIndex: b.sortIndex ?? 0, name: b.name }
-        ))
-        .map((node: ProductCategoryWithChildren): ProductCategoryWithChildren => ({
-          ...node,
-          children: sortTree(node.children),
-        }));
+        .sort((a: ProductCategoryWithChildren, b: ProductCategoryWithChildren): number =>
+          compareBySortIndexThenName(
+            { sortIndex: a.sortIndex ?? 0, name: a.name },
+            { sortIndex: b.sortIndex ?? 0, name: b.name }
+          )
+        )
+        .map(
+          (node: ProductCategoryWithChildren): ProductCategoryWithChildren => ({
+            ...node,
+            children: sortTree(node.children),
+          })
+        );
 
     return sortTree(roots);
   },
@@ -181,7 +179,7 @@ export const prismaCategoryRepository: CategoryRepository = {
   },
 
   async getCategoryWithChildren(id: string): Promise<ProductCategoryWithChildren | null> {
-    const category = await prisma.productCategory.findUnique({
+    const category = (await prisma.productCategory.findUnique({
       where: { id },
       include: {
         children: {
@@ -190,7 +188,7 @@ export const prismaCategoryRepository: CategoryRepository = {
           },
         },
       },
-    }) as PrismaCategoryWithChildren | null;
+    })) as PrismaCategoryWithChildren | null;
     return category ? toCategoryWithChildrenDomain(category) : null;
   },
 
@@ -230,11 +228,9 @@ export const prismaCategoryRepository: CategoryRepository = {
       }
 
       const nextCatalogId = data.catalogId ?? current.catalogId;
-      const nextParentId =
-        data.parentId !== undefined ? data.parentId : current.parentId ?? null;
+      const nextParentId = data.parentId !== undefined ? data.parentId : (current.parentId ?? null);
       const movedBucket =
-        nextCatalogId !== current.catalogId ||
-        nextParentId !== (current.parentId ?? null);
+        nextCatalogId !== current.catalogId || nextParentId !== (current.parentId ?? null);
 
       const category = await tx.productCategory.update({
         where: { id },
@@ -244,16 +240,14 @@ export const prismaCategoryRepository: CategoryRepository = {
           ...(data.color !== undefined && { color: data.color }),
           ...(data.parentId !== undefined && data.parentId !== null && { parentId: data.parentId }),
           ...(data.catalogId !== undefined && { catalogId: data.catalogId }),
-          ...(data.sortIndex !== undefined && data.sortIndex !== null ? { sortIndex: data.sortIndex } : {}),
+          ...(data.sortIndex !== undefined && data.sortIndex !== null
+            ? { sortIndex: data.sortIndex }
+            : {}),
         },
       });
 
       if (movedBucket) {
-        await normalizeSiblingOrder(
-          tx,
-          current.catalogId,
-          current.parentId ?? null
-        );
+        await normalizeSiblingOrder(tx, current.catalogId, current.parentId ?? null);
       }
 
       if (data.sortIndex !== undefined || movedBucket) {
@@ -286,7 +280,11 @@ export const prismaCategoryRepository: CategoryRepository = {
     });
   },
 
-  async findByName(catalogId: string, name: string, parentId: string | null = null): Promise<ProductCategory | null> {
+  async findByName(
+    catalogId: string,
+    name: string,
+    parentId: string | null = null
+  ): Promise<ProductCategory | null> {
     const category = await prisma.productCategory.findFirst({
       where: {
         catalogId,

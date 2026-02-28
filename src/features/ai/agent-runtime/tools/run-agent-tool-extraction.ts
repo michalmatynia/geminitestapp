@@ -28,13 +28,8 @@ import {
   parseExtractionRequest,
 } from './utils';
 
-import type {
-  AgentToolLog,
-  AgentToolResult,
-  ExtractionPlan,
-} from './tool-types';
+import type { AgentToolLog, AgentToolResult, ExtractionPlan } from './tool-types';
 import type { Page } from 'playwright';
-
 
 type LLMContext = {
   model: string;
@@ -131,40 +126,32 @@ export async function runExtractionRequest({
         type: extractionRequest.type,
         domTextSample: domSample,
         uiInventory,
-      }, 
+      },
       selectorInferenceModel
     );
 
     if (extractionRequest.type === 'emails') {
       // Email extraction logic
       const rawText =
-            domText ||
-            (await page.evaluate(
-              () => document.body?.innerText || document.documentElement?.innerText || ''
-            ));
+        domText ||
+        (await page.evaluate(
+          () => document.body?.innerText || document.documentElement?.innerText || ''
+        ));
       const domEmails = normalizeEmailCandidates(await extractEmailsFromDom(page));
-      const emailMatches = rawText.match(
-        /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi
-      );
-      const extractedEmails = normalizeEmailCandidates([
-        ...domEmails,
-        ...(emailMatches ?? []),
-      ]);
+      const emailMatches = rawText.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi);
+      const extractedEmails = normalizeEmailCandidates([...domEmails, ...(emailMatches ?? [])]);
       const emailEvidence = buildEvidenceSnippets(extractedEmails, rawText);
-        
-      const emailValidation = await validateExtractionWithLLM(
-        llmContext,
-        {
-          prompt: prompt ?? '',
-          url: finalUrl,
-          extractionType: 'emails',
-          requiredCount,
-          items: extractedEmails,
-          domTextSample: rawText.slice(0, 2000),
-          targetHostname,
-          evidence: emailEvidence,
-        }
-      );
+
+      const emailValidation = await validateExtractionWithLLM(llmContext, {
+        prompt: prompt ?? '',
+        url: finalUrl,
+        extractionType: 'emails',
+        requiredCount,
+        items: extractedEmails,
+        domTextSample: rawText.slice(0, 2000),
+        targetHostname,
+        evidence: emailEvidence,
+      });
 
       // Record validation
       const metadata = {
@@ -207,15 +194,13 @@ export async function runExtractionRequest({
           rejectedItems: emailValidation.rejectedItems,
           issues: emailValidation.issues,
         });
-            
-        const normalizedEmails = await normalizeExtractionItemsWithLLM(
-          llmContext,
-          {
-            prompt: prompt ?? '',
-            extractionType: 'emails',
-            items: emailValidation.acceptedItems,
-            normalizationModel: outputNormalizationModel
-          });
+
+        const normalizedEmails = await normalizeExtractionItemsWithLLM(llmContext, {
+          prompt: prompt ?? '',
+          extractionType: 'emails',
+          items: emailValidation.acceptedItems,
+          normalizationModel: outputNormalizationModel,
+        });
         const fallbackNormalizedEmails = normalizeEmailCandidates(normalizedEmails);
         return {
           ok: false,
@@ -234,28 +219,21 @@ export async function runExtractionRequest({
       const validatedEmails = emailValidation.acceptedItems.length
         ? emailValidation.acceptedItems
         : extractedEmails;
-      const normalizedEmails = await normalizeExtractionItemsWithLLM(
-        llmContext,
-        {
-          prompt: prompt ?? '',
-          extractionType: 'emails',
-          items: validatedEmails,
-          normalizationModel: outputNormalizationModel
-        });
+      const normalizedEmails = await normalizeExtractionItemsWithLLM(llmContext, {
+        prompt: prompt ?? '',
+        extractionType: 'emails',
+        items: validatedEmails,
+        normalizationModel: outputNormalizationModel,
+      });
       const fallbackNormalizedEmails = normalizeEmailCandidates(normalizedEmails);
       const extractedTotal = fallbackNormalizedEmails.length;
-      const limitedEmails = fallbackNormalizedEmails.slice(
-        0,
-        Math.max(requiredCount, 10)
-      );
+      const limitedEmails = fallbackNormalizedEmails.slice(0, Math.max(requiredCount, 10));
 
       await prisma.agentAuditLog.create({
         data: {
           runId,
           level: extractedTotal ? 'info' : 'warning',
-          message: extractedTotal
-            ? 'Extracted emails.'
-            : 'No emails extracted.',
+          message: extractedTotal ? 'Extracted emails.' : 'No emails extracted.',
           metadata: {
             stepId: activeStepId ?? null,
             stepLabel: stepLabel ?? null,
@@ -309,7 +287,7 @@ export async function runExtractionRequest({
           },
           selectorInferenceModel
         );
-            
+
         if (recoveryPlan?.clickSelector) {
           try {
             const clickTarget = page.locator(recoveryPlan.clickSelector).first();
@@ -325,29 +303,30 @@ export async function runExtractionRequest({
         }
         const listingUrls = Array.isArray(recoveryPlan?.listingUrls)
           ? recoveryPlan.listingUrls.filter(
-            (url: unknown): url is string => typeof url === 'string'
-          )
+              (url: unknown): url is string => typeof url === 'string'
+            )
           : [];
         if (listingUrls.length > 0) {
           const recoveryUrls = targetHostname
-            ? listingUrls.filter((url: string) =>
-              isAllowedUrl(url, targetHostname)
-            )
+            ? listingUrls.filter((url: string) => isAllowedUrl(url, targetHostname))
             : listingUrls;
           for (const url of recoveryUrls.slice(0, 3)) {
             try {
               await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 20000 });
               await dismissConsent(page, 'email-recovery-navigation', log, activeStepId);
-              await captureSnapshot(page, runId, runDir, 'email-recovery-navigation', log, activeStepId);
+              await captureSnapshot(
+                page,
+                runId,
+                runDir,
+                'email-recovery-navigation',
+                log,
+                activeStepId
+              );
               const updatedText = await page.evaluate(
                 () => document.body?.innerText || document.documentElement?.innerText || ''
               );
-              const updatedDomEmails = normalizeEmailCandidates(
-                await extractEmailsFromDom(page)
-              );
-              const updatedMatches = updatedText.match(
-                /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi
-              );
+              const updatedDomEmails = normalizeEmailCandidates(await extractEmailsFromDom(page));
+              const updatedMatches = updatedText.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi);
               const updatedEmails = normalizeEmailCandidates([
                 ...updatedDomEmails,
                 ...(updatedMatches ?? []),
@@ -359,10 +338,7 @@ export async function runExtractionRequest({
                   output: {
                     url: page.url(),
                     domText: updatedText,
-                    extractedItems: updatedEmails.slice(
-                      0,
-                      Math.max(requiredCount, 10)
-                    ),
+                    extractedItems: updatedEmails.slice(0, Math.max(requiredCount, 10)),
                     extractedTotal: updatedEmails.length,
                     extractionType: 'emails',
                     extractionPlan,
@@ -409,7 +385,7 @@ export async function runExtractionRequest({
     await waitForProductContent(page);
     const cleanProductNames = (items: string[]): string[] => normalizeProductNames(items);
     let extractedNames = cleanProductNames(await extractProductNames(page));
-    
+
     if (extractedNames.length === 0) {
       await log('warning', 'No product names found on first pass; scrolling.', {
         url: finalUrl,
@@ -476,7 +452,7 @@ export async function runExtractionRequest({
         'product-extraction',
         selectorInferenceModel
       );
-        
+
       // Try plans selectors first
       const planSelectors = extractionPlan?.primarySelectors ?? [];
       if (planSelectors.length > 0 && extractedNames.length === 0) {
@@ -497,27 +473,21 @@ export async function runExtractionRequest({
       }
 
       // Try fallback selectors
-      if (
-        extractedNames.length === 0 &&
-            (extractionPlan?.fallbackSelectors ?? []).length > 0
-      ) {
+      if (extractedNames.length === 0 && (extractionPlan?.fallbackSelectors ?? []).length > 0) {
         extractedNames = cleanProductNames(
-          await extractProductNamesFromSelectors(
-            page,
-            (extractionPlan?.fallbackSelectors ?? [])
-          )
+          await extractProductNamesFromSelectors(page, extractionPlan?.fallbackSelectors ?? [])
         );
       }
-        
+
       // Try generic headings
       if (extractedNames.length === 0) {
         const headingSelectors = [
           'h1',
           'h2',
           'h3',
-          '[class*=\'title\' i]',
-          '[class*=\'name\' i]',
-          '[class*=\'heading\' i]',
+          "[class*='title' i]",
+          "[class*='name' i]",
+          "[class*='heading' i]",
         ];
         extractedNames = cleanProductNames(
           await extractProductNamesFromSelectors(page, headingSelectors)
@@ -540,11 +510,11 @@ export async function runExtractionRequest({
         activeStepId ?? undefined
       );
       const recoveryType =
-            (extractionPlan?.primarySelectors ?? []).length > 0 ||
-            (extractionPlan?.fallbackSelectors ?? []).length > 0
-              ? 'bad_selectors'
-              : 'missing_extraction';
-        
+        (extractionPlan?.primarySelectors ?? []).length > 0 ||
+        (extractionPlan?.fallbackSelectors ?? []).length > 0
+          ? 'bad_selectors'
+          : 'missing_extraction';
+
       const recoveryPlan = await buildFailureRecoveryPlan(
         llmContext,
         {
@@ -587,15 +557,11 @@ export async function runExtractionRequest({
       }
 
       const listingUrls = Array.isArray(recoveryPlan?.listingUrls)
-        ? recoveryPlan.listingUrls.filter(
-          (url: unknown): url is string => typeof url === 'string'
-        )
+        ? recoveryPlan.listingUrls.filter((url: unknown): url is string => typeof url === 'string')
         : [];
       if (extractedNames.length === 0 && listingUrls.length > 0) {
         const recoveryUrls = targetHostname
-          ? listingUrls.filter((url: string) =>
-            isAllowedUrl(url, targetHostname)
-          )
+          ? listingUrls.filter((url: string) => isAllowedUrl(url, targetHostname))
           : listingUrls;
         for (const url of recoveryUrls.slice(0, 3)) {
           try {
@@ -626,27 +592,24 @@ export async function runExtractionRequest({
         }
       }
     }
-    
+
     const productDomText =
       domText ||
       (await page.evaluate(
         () => document.body?.innerText || document.documentElement?.innerText || ''
       ));
     const productEvidence = buildEvidenceSnippets(extractedNames, productDomText);
-    
-    const productValidation = await validateExtractionWithLLM(
-      llmContext,
-      {
-        prompt: prompt ?? '',
-        url: finalUrl,
-        extractionType: 'product_names',
-        requiredCount,
-        items: extractedNames,
-        domTextSample: productDomText.slice(0, 2000),
-        targetHostname,
-        evidence: productEvidence,
-      }
-    );
+
+    const productValidation = await validateExtractionWithLLM(llmContext, {
+      prompt: prompt ?? '',
+      url: finalUrl,
+      extractionType: 'product_names',
+      requiredCount,
+      items: extractedNames,
+      domTextSample: productDomText.slice(0, 2000),
+      targetHostname,
+      evidence: productEvidence,
+    });
 
     // Log validation record
     const metadata = {
@@ -684,14 +647,12 @@ export async function runExtractionRequest({
         rejectedItems: productValidation.rejectedItems,
         issues: productValidation.issues,
       });
-      const normalizedNames = await normalizeExtractionItemsWithLLM(
-        llmContext,
-        {
-          prompt: prompt ?? '',
-          extractionType: 'product_names',
-          items: productValidation.acceptedItems,
-          normalizationModel: outputNormalizationModel
-        });
+      const normalizedNames = await normalizeExtractionItemsWithLLM(llmContext, {
+        prompt: prompt ?? '',
+        extractionType: 'product_names',
+        items: productValidation.acceptedItems,
+        normalizationModel: outputNormalizationModel,
+      });
       const fallbackNormalizedNames = normalizeProductNames(normalizedNames);
       return {
         ok: false,
@@ -711,28 +672,21 @@ export async function runExtractionRequest({
     const validatedNames = productValidation.acceptedItems.length
       ? productValidation.acceptedItems
       : extractedNames;
-    const normalizedNames = await normalizeExtractionItemsWithLLM(
-      llmContext,
-      {
-        prompt: prompt ?? '',
-        extractionType: 'product_names',
-        items: validatedNames,
-        normalizationModel: outputNormalizationModel
-      });
+    const normalizedNames = await normalizeExtractionItemsWithLLM(llmContext, {
+      prompt: prompt ?? '',
+      extractionType: 'product_names',
+      items: validatedNames,
+      normalizationModel: outputNormalizationModel,
+    });
     const fallbackNormalizedNames = normalizeProductNames(normalizedNames);
     const extractedTotal = fallbackNormalizedNames.length;
-    const limitedNames = fallbackNormalizedNames.slice(
-      0,
-      Math.max(requiredCount, 10)
-    );
+    const limitedNames = fallbackNormalizedNames.slice(0, Math.max(requiredCount, 10));
 
     await prisma.agentAuditLog.create({
       data: {
         runId,
         level: extractedTotal ? 'info' : 'warning',
-        message: extractedTotal
-          ? 'Extracted product names.'
-          : 'No product names extracted.',
+        message: extractedTotal ? 'Extracted product names.' : 'No product names extracted.',
         metadata: {
           stepId: activeStepId ?? null,
           stepLabel: stepLabel ?? null,
@@ -761,7 +715,7 @@ export async function runExtractionRequest({
         url: finalUrl,
       }
     );
-    
+
     if (extractedTotal === 0) {
       return {
         ok: false,

@@ -39,4 +39,3 @@ describe('parser port normalization', () => {
     expect(normalized?.config?.parser?.mappings).not.toHaveProperty('images (urls)');
   });
 });
-

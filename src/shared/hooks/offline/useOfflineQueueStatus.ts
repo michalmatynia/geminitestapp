@@ -20,12 +20,16 @@ const readQueueFromStorage = (): OfflineQueueItem[] => {
     const parsed = JSON.parse(raw) as Array<Partial<OfflineQueueItem>>;
     if (!Array.isArray(parsed)) return [];
     return parsed
-      .filter((item: Partial<OfflineQueueItem>): boolean => item !== null && typeof item.id === 'string')
-      .map((item: Partial<OfflineQueueItem>): OfflineQueueItem => ({
-        id: item.id as string,
-        queryKey: Array.isArray(item.queryKey) ? item.queryKey : [],
-        timestamp: typeof item.timestamp === 'number' ? item.timestamp : Date.now(),
-      }));
+      .filter(
+        (item: Partial<OfflineQueueItem>): boolean => item !== null && typeof item.id === 'string'
+      )
+      .map(
+        (item: Partial<OfflineQueueItem>): OfflineQueueItem => ({
+          id: item.id as string,
+          queryKey: Array.isArray(item.queryKey) ? item.queryKey : [],
+          timestamp: typeof item.timestamp === 'number' ? item.timestamp : Date.now(),
+        })
+      );
   } catch {
     return [];
   }
@@ -36,8 +40,10 @@ export function useOfflineQueueStatus(): {
   count: number;
   refresh: () => void;
   clear: () => void;
-  } {
-  const [items, setItems] = useState<OfflineQueueItem[]>((): OfflineQueueItem[] => readQueueFromStorage());
+} {
+  const [items, setItems] = useState<OfflineQueueItem[]>((): OfflineQueueItem[] =>
+    readQueueFromStorage()
+  );
 
   const refresh = useCallback((): void => {
     setItems(readQueueFromStorage());
@@ -51,7 +57,7 @@ export function useOfflineQueueStatus(): {
     setItems([]);
   }, []);
 
-  useEffect((): () => void => {
+  useEffect((): (() => void) => {
     const intervalId = setInterval(refresh, 5000);
     const onStorage = (event: StorageEvent): void => {
       if (event.key === STORAGE_KEY) {

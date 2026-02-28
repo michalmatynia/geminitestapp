@@ -10,10 +10,7 @@ import type {
   PathConfig,
   PathMeta,
 } from '@/shared/lib/ai-paths';
-import {
-  PATH_CONFIG_PREFIX,
-  PATH_INDEX_KEY,
-} from '@/shared/lib/ai-paths/core/constants';
+import { PATH_CONFIG_PREFIX, PATH_INDEX_KEY } from '@/shared/lib/ai-paths/core/constants';
 import {
   AI_PATHS_NODE_DOCS as NODE_DOCS_LIST,
   type AiPathsNodeDoc,
@@ -54,26 +51,23 @@ export function useAdminAiPathsValidationState() {
 
   const parsedSettings = useMemo(
     () => parseAiPathsSettings(settingsQuery.data ?? []),
-    [settingsQuery.data],
+    [settingsQuery.data]
   );
 
   const [selectedPathId, setSelectedPathId] = useState<string>('');
-  const [validationDraft, setValidationDraft] =
-    useState<AiPathsValidationConfig>(
-      normalizeAiPathsValidationConfig(undefined),
-    );
+  const [validationDraft, setValidationDraft] = useState<AiPathsValidationConfig>(
+    normalizeAiPathsValidationConfig(undefined)
+  );
   const [docsSourcesDraft, setDocsSourcesDraft] = useState<string>('');
   const [collectionMapDraft, setCollectionMapDraft] = useState<string>('');
   const [rulesDraft, setRulesDraft] = useState<string>('[]');
   const [rulesDraftError, setRulesDraftError] = useState<string | null>(null);
   const [docsSearch, setDocsSearch] = useState<string>('');
   const [candidateTagFilter, setCandidateTagFilter] = useState<string>('all');
-  const [candidateModuleFilter, setCandidateModuleFilter] =
-    useState<string>('all');
+  const [candidateModuleFilter, setCandidateModuleFilter] = useState<string>('all');
   const [saving, setSaving] = useState<boolean>(false);
   const [syncingCentralDocs, setSyncingCentralDocs] = useState<boolean>(false);
-  const [centralSnapshot, setCentralSnapshot] =
-    useState<CentralDocsSnapshotPayload | null>(null);
+  const [centralSnapshot, setCentralSnapshot] = useState<CentralDocsSnapshotPayload | null>(null);
 
   useEffect(() => {
     if (parsedSettings.pathMetas.length === 0) {
@@ -90,31 +84,23 @@ export function useAdminAiPathsValidationState() {
   }, [parsedSettings.pathConfigs, parsedSettings.pathMetas, requestedPathId]);
 
   const selectedPathConfig = useMemo(
-    () =>
-      selectedPathId
-        ? (parsedSettings.pathConfigs[selectedPathId] ?? null)
-        : null,
-    [parsedSettings.pathConfigs, selectedPathId],
+    () => (selectedPathId ? (parsedSettings.pathConfigs[selectedPathId] ?? null) : null),
+    [parsedSettings.pathConfigs, selectedPathId]
   );
   const persistedValidation = useMemo(
-    () =>
-      normalizeAiPathsValidationConfig(selectedPathConfig?.aiPathsValidation),
-    [selectedPathConfig],
+    () => normalizeAiPathsValidationConfig(selectedPathConfig?.aiPathsValidation),
+    [selectedPathConfig]
   );
   const persistedSignature = useMemo(
     () => JSON.stringify(persistedValidation),
-    [persistedValidation],
+    [persistedValidation]
   );
 
   useEffect(() => {
     if (!selectedPathConfig) return;
     setValidationDraft(persistedValidation);
-    setDocsSourcesDraft(
-      serializeDocsSources(persistedValidation.docsSources ?? []),
-    );
-    setCollectionMapDraft(
-      serializeCollectionMap(persistedValidation.collectionMap ?? {}),
-    );
+    setDocsSourcesDraft(serializeDocsSources(persistedValidation.docsSources ?? []));
+    setCollectionMapDraft(serializeCollectionMap(persistedValidation.collectionMap ?? {}));
     setRulesDraft(JSON.stringify(persistedValidation.rules ?? [], null, 2));
     setRulesDraftError(null);
     setCentralSnapshot(null);
@@ -126,7 +112,7 @@ export function useAdminAiPathsValidationState() {
         value: meta.id,
         label: `${meta.name} (${meta.id.slice(0, 8)})`,
       })),
-    [parsedSettings.pathMetas],
+    [parsedSettings.pathMetas]
   );
 
   const validationPolicyValue = useMemo(() => {
@@ -153,8 +139,7 @@ export function useAdminAiPathsValidationState() {
         doc.outputs.join(' '),
         doc.config
           .map(
-            (entry: { path: string; description: string }) =>
-              `${entry.path} ${entry.description}`,
+            (entry: { path: string; description: string }) => `${entry.path} ${entry.description}`
           )
           .join(' '),
       ]
@@ -167,10 +152,8 @@ export function useAdminAiPathsValidationState() {
   const sortedRules = useMemo(() => {
     const rules = [...(validationDraft.rules ?? [])];
     rules.sort((left, right) => {
-      const leftSequence =
-        typeof left.sequence === 'number' ? left.sequence : 0;
-      const rightSequence =
-        typeof right.sequence === 'number' ? right.sequence : 0;
+      const leftSequence = typeof left.sequence === 'number' ? left.sequence : 0;
+      const rightSequence = typeof right.sequence === 'number' ? right.sequence : 0;
       if (leftSequence !== rightSequence) return leftSequence - rightSequence;
       return left.id.localeCompare(right.id);
     });
@@ -180,15 +163,14 @@ export function useAdminAiPathsValidationState() {
   const filteredRules = useMemo(() => {
     if (!focusNodeType) return sortedRules;
     return sortedRules.filter((rule: AiPathsValidationRule) => {
-      if (!rule.appliesToNodeTypes || rule.appliesToNodeTypes.length === 0)
-        return true;
+      if (!rule.appliesToNodeTypes || rule.appliesToNodeTypes.length === 0) return true;
       return rule.appliesToNodeTypes.includes(focusNodeType);
     });
   }, [focusNodeType, sortedRules]);
 
   const inferredCandidates = useMemo(
     () => [...(validationDraft.inferredCandidates ?? [])],
-    [validationDraft.inferredCandidates],
+    [validationDraft.inferredCandidates]
   );
   const centralRuleByAssertionId = useMemo(() => {
     const map = new Map<string, AiPathsValidationRule>();
@@ -215,11 +197,7 @@ export function useAdminAiPathsValidationState() {
       }
       const nextSourceHash = getSourceHashFromRule(rule);
       const previousSourceHash = getSourceHashFromRule(existing);
-      if (
-        nextSourceHash &&
-        previousSourceHash &&
-        nextSourceHash !== previousSourceHash
-      ) {
+      if (nextSourceHash && previousSourceHash && nextSourceHash !== previousSourceHash) {
         map.set(rule.id, 'changed');
         return;
       }
@@ -232,11 +210,7 @@ export function useAdminAiPathsValidationState() {
     () => [
       { value: 'all', label: 'All Modules' },
       ...Array.from(
-        new Set(
-          inferredCandidates.map(
-            (rule: AiPathsValidationRule): string => rule.module,
-          ),
-        ),
+        new Set(inferredCandidates.map((rule: AiPathsValidationRule): string => rule.module))
       )
         .sort((left: string, right: string) => left.localeCompare(right))
         .map((module: string) => ({
@@ -244,7 +218,7 @@ export function useAdminAiPathsValidationState() {
           label: module,
         })),
     ],
-    [inferredCandidates],
+    [inferredCandidates]
   );
 
   const candidateTagOptions = useMemo(
@@ -253,9 +227,9 @@ export function useAdminAiPathsValidationState() {
       ...Array.from(
         new Set(
           inferredCandidates.flatMap((rule: AiPathsValidationRule): string[] =>
-            getCandidateTags(rule),
-          ),
-        ),
+            getCandidateTags(rule)
+          )
+        )
       )
         .sort((left: string, right: string) => left.localeCompare(right))
         .map((tag: string) => ({
@@ -263,7 +237,7 @@ export function useAdminAiPathsValidationState() {
           label: tag,
         })),
     ],
-    [inferredCandidates],
+    [inferredCandidates]
   );
 
   const candidateRules = useMemo(
@@ -271,7 +245,7 @@ export function useAdminAiPathsValidationState() {
       inferredCandidates
         .filter(
           (rule: AiPathsValidationRule): boolean =>
-            (rule.inference?.status ?? 'candidate') === 'candidate',
+            (rule.inference?.status ?? 'candidate') === 'candidate'
         )
         .filter((rule: AiPathsValidationRule): boolean => {
           if (candidateModuleFilter === 'all') return true;
@@ -282,17 +256,17 @@ export function useAdminAiPathsValidationState() {
           return getCandidateTags(rule).includes(candidateTagFilter);
         })
         .sort((left, right) => left.id.localeCompare(right.id)),
-    [candidateModuleFilter, candidateTagFilter, inferredCandidates],
+    [candidateModuleFilter, candidateTagFilter, inferredCandidates]
   );
   const rejectedCandidates = useMemo(
     () =>
       inferredCandidates
         .filter(
           (rule: AiPathsValidationRule): boolean =>
-            (rule.inference?.status ?? 'candidate') === 'rejected',
+            (rule.inference?.status ?? 'candidate') === 'rejected'
         )
         .sort((left, right) => left.id.localeCompare(right.id)),
-    [inferredCandidates],
+    [inferredCandidates]
   );
 
   const candidateChangeStats = useMemo(() => {
@@ -310,12 +284,12 @@ export function useAdminAiPathsValidationState() {
       .filter((rule: AiPathsValidationRule): boolean => rule.enabled !== false)
       .forEach((rule: AiPathsValidationRule) => {
         (rule.appliesToNodeTypes ?? []).forEach((nodeType: string) =>
-          coveredNodeTypes.add(nodeType),
+          coveredNodeTypes.add(nodeType)
         );
       });
     const docsNodeTypes = NODE_DOCS_LIST.map((doc: AiPathsNodeDoc) => doc.type);
     const uncoveredNodeTypes = docsNodeTypes.filter(
-      (nodeType: string): boolean => !coveredNodeTypes.has(nodeType),
+      (nodeType: string): boolean => !coveredNodeTypes.has(nodeType)
     );
     return {
       coveredCount: coveredNodeTypes.size,
@@ -334,23 +308,17 @@ export function useAdminAiPathsValidationState() {
     });
   }, [selectedPathConfig, validationDraft]);
 
-  const draftSignature = useMemo(
-    () => JSON.stringify(validationDraft),
-    [validationDraft],
-  );
+  const draftSignature = useMemo(() => JSON.stringify(validationDraft), [validationDraft]);
   const isDirty = draftSignature !== persistedSignature;
 
-  const updateDraft = useCallback(
-    (patch: Partial<AiPathsValidationConfig>): void => {
-      setValidationDraft((previous: AiPathsValidationConfig) =>
-        normalizeAiPathsValidationConfig({
-          ...previous,
-          ...patch,
-        }),
-      );
-    },
-    [],
-  );
+  const updateDraft = useCallback((patch: Partial<AiPathsValidationConfig>): void => {
+    setValidationDraft((previous: AiPathsValidationConfig) =>
+      normalizeAiPathsValidationConfig({
+        ...previous,
+        ...patch,
+      })
+    );
+  }, []);
 
   const setDraftRules = useCallback(
     (nextRules: AiPathsValidationRule[]): void => {
@@ -358,7 +326,7 @@ export function useAdminAiPathsValidationState() {
       setRulesDraft(JSON.stringify(nextRules, null, 2));
       setRulesDraftError(null);
     },
-    [updateDraft],
+    [updateDraft]
   );
 
   const applyDocsSources = useCallback(
@@ -367,7 +335,7 @@ export function useAdminAiPathsValidationState() {
       setDocsSourcesDraft(serializeDocsSources(normalized));
       updateDraft({ docsSources: normalized });
     },
-    [updateDraft],
+    [updateDraft]
   );
 
   const handleApplyDocsSources = useCallback((): void => {
@@ -417,9 +385,7 @@ export function useAdminAiPathsValidationState() {
     const defaultConfig = normalizeAiPathsValidationConfig(undefined);
     setValidationDraft(defaultConfig);
     setDocsSourcesDraft(serializeDocsSources(defaultConfig.docsSources ?? []));
-    setCollectionMapDraft(
-      serializeCollectionMap(defaultConfig.collectionMap ?? {}),
-    );
+    setCollectionMapDraft(serializeCollectionMap(defaultConfig.collectionMap ?? {}));
     setRulesDraft(JSON.stringify(defaultConfig.rules ?? [], null, 2));
     setRulesDraftError(null);
     toast('Reset draft to default AI-Paths validator profile.', {
@@ -429,28 +395,24 @@ export function useAdminAiPathsValidationState() {
 
   const handleToggleRuleEnabled = useCallback(
     (ruleId: string): void => {
-      const nextRules = (validationDraft.rules ?? []).map(
-        (rule: AiPathsValidationRule) =>
-          rule.id === ruleId
-            ? { ...rule, enabled: rule.enabled === false }
-            : rule,
+      const nextRules = (validationDraft.rules ?? []).map((rule: AiPathsValidationRule) =>
+        rule.id === ruleId ? { ...rule, enabled: rule.enabled === false } : rule
       );
       setDraftRules(nextRules);
     },
-    [setDraftRules, validationDraft.rules],
+    [setDraftRules, validationDraft.rules]
   );
 
   const handleRuleSequenceBlur = useCallback(
     (ruleId: string, rawValue: string): void => {
       const parsed = Number.parseInt(rawValue, 10);
       if (!Number.isFinite(parsed)) return;
-      const nextRules = (validationDraft.rules ?? []).map(
-        (rule: AiPathsValidationRule) =>
-          rule.id === ruleId ? { ...rule, sequence: parsed } : rule,
+      const nextRules = (validationDraft.rules ?? []).map((rule: AiPathsValidationRule) =>
+        rule.id === ruleId ? { ...rule, sequence: parsed } : rule
       );
       setDraftRules(nextRules);
     },
-    [setDraftRules, validationDraft.rules],
+    [setDraftRules, validationDraft.rules]
   );
 
   const handleSyncFromCentralDocs = useCallback(async (): Promise<void> => {
@@ -471,18 +433,14 @@ export function useAdminAiPathsValidationState() {
 
       const rejectedAssertionIds = new Set<string>(
         (validationDraft.inferredCandidates ?? [])
-          .filter(
-            (rule: AiPathsValidationRule): boolean =>
-              rule.inference?.status === 'rejected',
-          )
+          .filter((rule: AiPathsValidationRule): boolean => rule.inference?.status === 'rejected')
           .map((rule: AiPathsValidationRule): string | null => {
             const assertionId = rule.inference?.assertionId;
-            return typeof assertionId === 'string' &&
-              assertionId.trim().length > 0
+            return typeof assertionId === 'string' && assertionId.trim().length > 0
               ? assertionId.trim()
               : null;
           })
-          .filter((value: string | null): value is string => Boolean(value)),
+          .filter((value: string | null): value is string => Boolean(value))
       );
 
       const mergedCandidates = payload.inferredCandidates.map(
@@ -493,9 +451,9 @@ export function useAdminAiPathsValidationState() {
           }
           return rejectInferredAiPathsValidationRule(
             candidate,
-            'Previously rejected during docs sync review.',
+            'Previously rejected during docs sync review.'
           );
-        },
+        }
       );
 
       const incomingByAssertionId = new Map<string, AiPathsValidationRule>();
@@ -511,15 +469,13 @@ export function useAdminAiPathsValidationState() {
       const staleWarnings: string[] = [];
 
       mergedCandidates.forEach((candidate: AiPathsValidationRule) => {
-        const deprecates = uniqueStringList(
-          candidate.inference?.deprecates ?? [],
-        );
+        const deprecates = uniqueStringList(candidate.inference?.deprecates ?? []);
         if (deprecates.length === 0) return;
         const assertionId = getAssertionIdFromRule(candidate) ?? candidate.id;
         deprecates.forEach((deprecatedAssertionId: string) => {
           const index = nextRules.findIndex(
             (rule: AiPathsValidationRule): boolean =>
-              getAssertionIdFromRule(rule) === deprecatedAssertionId,
+              getAssertionIdFromRule(rule) === deprecatedAssertionId
           );
           if (index < 0) return;
           const targetRule = nextRules[index];
@@ -536,7 +492,7 @@ export function useAdminAiPathsValidationState() {
             },
           };
           staleWarnings.push(
-            `Rule "${targetRule.title}" is deprecated by central assertion "${assertionId}".`,
+            `Rule "${targetRule.title}" is deprecated by central assertion "${assertionId}".`
           );
         });
       });
@@ -549,7 +505,7 @@ export function useAdminAiPathsValidationState() {
         if (!incoming) {
           if (!autoDeprecatedRuleIds.has(rule.id)) {
             staleWarnings.push(
-              `Rule "${rule.title}" is no longer present in central docs snapshot.`,
+              `Rule "${rule.title}" is no longer present in central docs snapshot.`
             );
           }
           return;
@@ -558,15 +514,12 @@ export function useAdminAiPathsValidationState() {
         const incomingHash = getSourceHashFromRule(incoming);
         if (previousHash && incomingHash && previousHash !== incomingHash) {
           staleWarnings.push(
-            `Rule "${rule.title}" changed in central docs and should be reviewed.`,
+            `Rule "${rule.title}" changed in central docs and should be reviewed.`
           );
         }
       });
 
-      const combinedWarnings = uniqueStringList([
-        ...payload.snapshot.warnings,
-        ...staleWarnings,
-      ]);
+      const combinedWarnings = uniqueStringList([...payload.snapshot.warnings, ...staleWarnings]);
 
       if (JSON.stringify(nextRules) !== JSON.stringify(previousRules)) {
         setDraftRules(nextRules);
@@ -583,17 +536,15 @@ export function useAdminAiPathsValidationState() {
           sourceCount: payload.snapshot.sources.length,
           candidateCount: mergedCandidates.filter(
             (rule: AiPathsValidationRule): boolean =>
-              (rule.inference?.status ?? 'candidate') === 'candidate',
+              (rule.inference?.status ?? 'candidate') === 'candidate'
           ).length,
         },
       });
-      toast(
-        `Synced ${mergedCandidates.length} inferred validation candidates from central docs.`,
-        { variant: combinedWarnings.length > 0 ? 'warning' : 'success' },
-      );
+      toast(`Synced ${mergedCandidates.length} inferred validation candidates from central docs.`, {
+        variant: combinedWarnings.length > 0 ? 'warning' : 'success',
+      });
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Failed to sync central docs.';
+      const message = error instanceof Error ? error.message : 'Failed to sync central docs.';
       updateDraft({
         docsSyncState: {
           ...(validationDraft.docsSyncState ?? {}),
@@ -618,13 +569,13 @@ export function useAdminAiPathsValidationState() {
     (candidateRuleId: string): void => {
       const candidates = validationDraft.inferredCandidates ?? [];
       const candidate = candidates.find(
-        (rule: AiPathsValidationRule): boolean => rule.id === candidateRuleId,
+        (rule: AiPathsValidationRule): boolean => rule.id === candidateRuleId
       );
       if (!candidate) return;
       const approved = approveInferredAiPathsValidationRule(candidate);
       const nextRules = [...(validationDraft.rules ?? [])];
       const existingRuleIndex = nextRules.findIndex(
-        (rule: AiPathsValidationRule): boolean => rule.id === approved.id,
+        (rule: AiPathsValidationRule): boolean => rule.id === approved.id
       );
       if (existingRuleIndex >= 0) {
         nextRules[existingRuleIndex] = approved;
@@ -632,7 +583,7 @@ export function useAdminAiPathsValidationState() {
         nextRules.push(approved);
       }
       const nextCandidates = candidates.filter(
-        (rule: AiPathsValidationRule): boolean => rule.id !== candidateRuleId,
+        (rule: AiPathsValidationRule): boolean => rule.id !== candidateRuleId
       );
       setDraftRules(nextRules);
       updateDraft({
@@ -641,7 +592,7 @@ export function useAdminAiPathsValidationState() {
           ...(validationDraft.docsSyncState ?? {}),
           candidateCount: nextCandidates.filter(
             (rule: AiPathsValidationRule): boolean =>
-              (rule.inference?.status ?? 'candidate') === 'candidate',
+              (rule.inference?.status ?? 'candidate') === 'candidate'
           ).length,
         },
       });
@@ -656,16 +607,14 @@ export function useAdminAiPathsValidationState() {
       validationDraft.docsSyncState,
       validationDraft.inferredCandidates,
       validationDraft.rules,
-    ],
+    ]
   );
 
   const handleRejectCandidate = useCallback(
     (candidateRuleId: string): void => {
       const nextCandidates = (validationDraft.inferredCandidates ?? []).map(
         (rule: AiPathsValidationRule): AiPathsValidationRule =>
-          rule.id === candidateRuleId
-            ? rejectInferredAiPathsValidationRule(rule)
-            : rule,
+          rule.id === candidateRuleId ? rejectInferredAiPathsValidationRule(rule) : rule
       );
       updateDraft({
         inferredCandidates: nextCandidates,
@@ -673,33 +622,27 @@ export function useAdminAiPathsValidationState() {
           ...(validationDraft.docsSyncState ?? {}),
           candidateCount: nextCandidates.filter(
             (rule: AiPathsValidationRule): boolean =>
-              (rule.inference?.status ?? 'candidate') === 'candidate',
+              (rule.inference?.status ?? 'candidate') === 'candidate'
           ).length,
         },
       });
       toast('Candidate marked as rejected.', { variant: 'info' });
     },
-    [
-      updateDraft,
-      validationDraft.docsSyncState,
-      validationDraft.inferredCandidates,
-      toast,
-    ],
+    [updateDraft, validationDraft.docsSyncState, validationDraft.inferredCandidates, toast]
   );
 
   const handleApproveAllCandidates = useCallback((): void => {
     if (candidateRules.length === 0) return;
     const approvedRules = candidateRules.map((rule: AiPathsValidationRule) =>
-      approveInferredAiPathsValidationRule(rule),
+      approveInferredAiPathsValidationRule(rule)
     );
     const approvedRuleIds = new Set<string>(
-      approvedRules.map((rule: AiPathsValidationRule): string => rule.id),
+      approvedRules.map((rule: AiPathsValidationRule): string => rule.id)
     );
     const nextRules = [...(validationDraft.rules ?? [])];
     approvedRules.forEach((approvedRule: AiPathsValidationRule) => {
       const index = nextRules.findIndex(
-        (existingRule: AiPathsValidationRule): boolean =>
-          existingRule.id === approvedRule.id,
+        (existingRule: AiPathsValidationRule): boolean => existingRule.id === approvedRule.id
       );
       if (index >= 0) {
         nextRules[index] = approvedRule;
@@ -708,7 +651,7 @@ export function useAdminAiPathsValidationState() {
       }
     });
     const nextCandidates = (validationDraft.inferredCandidates ?? []).filter(
-      (rule: AiPathsValidationRule): boolean => !approvedRuleIds.has(rule.id),
+      (rule: AiPathsValidationRule): boolean => !approvedRuleIds.has(rule.id)
     );
     setDraftRules(nextRules);
     updateDraft({
@@ -733,11 +676,7 @@ export function useAdminAiPathsValidationState() {
 
   const handleSave = useCallback(async (): Promise<void> => {
     if (!selectedPathConfig || !selectedPathId) return;
-    const normalizedRulesText = JSON.stringify(
-      validationDraft.rules ?? [],
-      null,
-      2,
-    ).trim();
+    const normalizedRulesText = JSON.stringify(validationDraft.rules ?? [], null, 2).trim();
     const rulesDraftText = rulesDraft.trim();
     const rulesFromDraft =
       rulesDraftText.length > 0 && rulesDraftText !== normalizedRulesText
@@ -765,16 +704,14 @@ export function useAdminAiPathsValidationState() {
       updatedAt: now,
       aiPathsValidation: nextValidation,
     };
-    const nextPathMetas = parsedSettings.pathMetas.map(
-      (meta: PathMeta): PathMeta => {
-        if (meta.id !== selectedPathId) return meta;
-        return {
-          ...meta,
-          name: nextPathConfig.name,
-          updatedAt: now,
-        };
-      },
-    );
+    const nextPathMetas = parsedSettings.pathMetas.map((meta: PathMeta): PathMeta => {
+      if (meta.id !== selectedPathId) return meta;
+      return {
+        ...meta,
+        name: nextPathConfig.name,
+        updatedAt: now,
+      };
+    });
 
     setSaving(true);
     try {
@@ -792,12 +729,10 @@ export function useAdminAiPathsValidationState() {
       toast('AI-Paths Node Validator settings saved.', { variant: 'success' });
     } catch (error) {
       toast(
-        error instanceof Error
-          ? error.message
-          : 'Failed to save AI-Paths validator settings.',
+        error instanceof Error ? error.message : 'Failed to save AI-Paths validator settings.',
         {
           variant: 'error',
-        },
+        }
       );
     } finally {
       setSaving(false);

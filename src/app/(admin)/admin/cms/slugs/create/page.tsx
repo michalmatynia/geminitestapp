@@ -5,9 +5,7 @@ import { LoadingState } from '@/shared/ui';
 
 export default function Page(): JSX.Element {
   return (
-    <Suspense
-      fallback={<LoadingState message='Loading editor...' className='h-64' />}
-    >
+    <Suspense fallback={<LoadingState message='Loading editor...' className='h-64' />}>
       <CreateSlugPage />
     </Suspense>
   );

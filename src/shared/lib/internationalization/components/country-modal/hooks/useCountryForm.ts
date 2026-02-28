@@ -42,7 +42,7 @@ export function useCountryForm({
     if (country) {
       setForm({ code: country.code, name: country.name });
       setSelectedCurrencyIds(
-        country.currencies?.map((c: { currencyId: string }) => c.currencyId) ?? [],
+        country.currencies?.map((c: { currencyId: string }) => c.currencyId) ?? []
       );
     } else {
       setForm({
@@ -60,13 +60,14 @@ export function useCountryForm({
     }
 
     try {
-      const payload: { id?: string; data: { code: string; name: string; currencyIds: string[] } } = {
-        data: {
-          code: form.code.trim().toUpperCase(),
-          name: form.name.trim(),
-          currencyIds: selectedCurrencyIds,
-        },
-      };
+      const payload: { id?: string; data: { code: string; name: string; currencyIds: string[] } } =
+        {
+          data: {
+            code: form.code.trim().toUpperCase(),
+            name: form.name.trim(),
+            currencyIds: selectedCurrencyIds,
+          },
+        };
       if (country?.id) {
         payload.id = country.id;
       }
@@ -75,7 +76,9 @@ export function useCountryForm({
 
       toast('Country saved.', { variant: 'success' });
     } catch (err) {
-      logClientError(err, { context: { source: 'CountryModal', action: 'saveCountry', countryId: country?.id } });
+      logClientError(err, {
+        context: { source: 'CountryModal', action: 'saveCountry', countryId: country?.id },
+      });
       toast('Failed to save country.', { variant: 'error' });
     }
   };

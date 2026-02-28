@@ -2,10 +2,7 @@
 
 import { useCallback, useRef } from 'react';
 import { api } from '@/shared/lib/api-client';
-import type { 
-  SequenceRunStatus, 
-  SequenceRunDetailResponse, 
-} from './sequencing-types';
+import type { SequenceRunStatus, SequenceRunDetailResponse } from './sequencing-types';
 
 const POLL_INTERVAL_MS = 1500;
 const ENABLE_SEQUENCE_SSE = process.env['NEXT_PUBLIC_IMAGE_STUDIO_SEQUENCE_SSE'] !== 'false';
@@ -43,7 +40,7 @@ export function useSequenceMonitor({
       try {
         const response = await api.get<SequenceRunDetailResponse>(
           `/api/image-studio/sequences/${encodeURIComponent(runId)}`,
-          { cache: 'no-store', logError: false },
+          { cache: 'no-store', logError: false }
         );
         if (!response.run) return null;
         return response;
@@ -53,7 +50,7 @@ export function useSequenceMonitor({
         return null;
       }
     },
-    [onSetActiveSequenceStatus, onSetSequenceError],
+    [onSetActiveSequenceStatus, onSetSequenceError]
   );
 
   const pollRun = useCallback(
@@ -75,7 +72,7 @@ export function useSequenceMonitor({
         void tick();
       }, POLL_INTERVAL_MS);
     },
-    [fetchRunSnapshot, onApplyRunSnapshot, stopPolling, stopStreaming],
+    [fetchRunSnapshot, onApplyRunSnapshot, stopPolling, stopStreaming]
   );
 
   const monitorRun = useCallback(
@@ -90,9 +87,7 @@ export function useSequenceMonitor({
 
       let source: EventSource;
       try {
-        source = new EventSource(
-          `/api/image-studio/sequences/${encodeURIComponent(runId)}/stream`,
-        );
+        source = new EventSource(`/api/image-studio/sequences/${encodeURIComponent(runId)}/stream`);
       } catch {
         pollRun(runId);
         return;
@@ -133,7 +128,7 @@ export function useSequenceMonitor({
         fallbackToPolling();
       };
     },
-    [fetchRunSnapshot, onApplyRunSnapshot, pollRun, stopPolling, stopStreaming],
+    [fetchRunSnapshot, onApplyRunSnapshot, pollRun, stopPolling, stopStreaming]
   );
 
   return {

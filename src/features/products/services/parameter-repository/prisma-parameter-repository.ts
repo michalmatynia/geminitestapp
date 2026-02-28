@@ -1,14 +1,12 @@
 import { Prisma, ProductParameter as PrismaProductParameter } from '@prisma/client';
 
-import type { 
-  ParameterRepository, 
+import type {
+  ParameterRepository,
   ParameterFilters,
   ParameterCreateInput,
   ParameterUpdateInput,
 } from '@/shared/contracts/products';
-import type { 
-  ProductParameter 
-} from '@/shared/contracts/products';
+import type { ProductParameter } from '@/shared/contracts/products';
 import prisma from '@/shared/lib/db/prisma';
 
 const ALLOWED_SELECTOR_TYPES = new Set<ProductParameter['selectorType']>([
@@ -50,8 +48,12 @@ const toParameterDomain = (param: PrismaProductParameter): ProductParameter => (
   name_pl: param.name_pl ?? null,
   name_de: param.name_de ?? null,
   catalogId: param.catalogId,
-  selectorType: normalizeSelectorType((param as unknown as Record<string, unknown>)['selectorType']),
-  optionLabels: normalizeOptionLabels((param as unknown as Record<string, unknown>)['optionLabels']),
+  selectorType: normalizeSelectorType(
+    (param as unknown as Record<string, unknown>)['selectorType']
+  ),
+  optionLabels: normalizeOptionLabels(
+    (param as unknown as Record<string, unknown>)['optionLabels']
+  ),
   createdAt: param.createdAt.toISOString(),
   updatedAt: param.updatedAt.toISOString(),
 });

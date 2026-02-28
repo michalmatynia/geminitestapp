@@ -4,18 +4,28 @@ import { type UseQueryResult, type UseMutationResult } from '@tanstack/react-que
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
-import { useClearLogsMutation, useRebuildIndexesMutation, useRunLogInsight, useInterpretLog } from '@/features/observability/hooks/useLogMutations';
-import { useSystemLogs, useSystemLogMetrics, useMongoDiagnostics, useLogInsights } from '@/features/observability/hooks/useLogQueries';
+import {
+  useClearLogsMutation,
+  useRebuildIndexesMutation,
+  useRunLogInsight,
+  useInterpretLog,
+} from '@/features/observability/hooks/useLogMutations';
+import {
+  useSystemLogs,
+  useSystemLogMetrics,
+  useMongoDiagnostics,
+  useLogInsights,
+} from '@/features/observability/hooks/useLogQueries';
 import { readSystemLogUrlState, writeSystemLogUrlState } from '../lib/system-log-filter-url-state';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { AiInsightRecordDto as AiInsightRecord } from '@/shared/contracts/ai-insights';
-import type { 
+import type {
   MongoCollectionIndexStatusDto as MongoCollectionIndexStatus,
-  SystemLogLevelDto as SystemLogLevel
+  SystemLogLevelDto as SystemLogLevel,
 } from '@/shared/contracts/observability';
-import type { 
+import type {
   SystemLogRecordDto as SystemLogRecord,
-  SystemLogMetricsDto as SystemLogMetrics
+  SystemLogMetricsDto as SystemLogMetrics,
 } from '@/shared/contracts/observability';
 import { internalError } from '@/shared/errors/app-error';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
@@ -94,7 +104,15 @@ type SystemLogsContextValue = {
   diagnostics: MongoCollectionIndexStatus[];
   diagnosticsUpdatedAt: string | null;
   logInterpretations: Record<string, AiInsightRecord>;
-  logsQuery: UseQueryResult<{ logs?: SystemLogRecord[] | undefined; total?: number | undefined; page?: number | undefined; pageSize?: number | undefined }, Error>;
+  logsQuery: UseQueryResult<
+    {
+      logs?: SystemLogRecord[] | undefined;
+      total?: number | undefined;
+      page?: number | undefined;
+      pageSize?: number | undefined;
+    },
+    Error
+  >;
   metricsQuery: UseQueryResult<{ metrics?: SystemLogMetrics | undefined }, Error>;
   mongoDiagnosticsQuery: UseQueryResult<unknown, Error>;
   insightsQuery: UseQueryResult<{ insights: AiInsightRecord[] }, Error>;
@@ -211,7 +229,21 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
       from: formatDateParam(fromDate),
       to: formatDateParam(toDate, true),
     }),
-    [page, pageSize, level, query, source, method, statusCode, requestId, userId, fingerprint, category, fromDate, toDate]
+    [
+      page,
+      pageSize,
+      level,
+      query,
+      source,
+      method,
+      statusCode,
+      requestId,
+      userId,
+      fingerprint,
+      category,
+      fromDate,
+      toDate,
+    ]
   );
 
   const metricsFilters = useMemo(
@@ -228,7 +260,19 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
       from: formatDateParam(fromDate),
       to: formatDateParam(toDate, true),
     }),
-    [level, query, source, method, statusCode, requestId, userId, fingerprint, category, fromDate, toDate]
+    [
+      level,
+      query,
+      source,
+      method,
+      statusCode,
+      requestId,
+      userId,
+      fingerprint,
+      category,
+      fromDate,
+      toDate,
+    ]
   );
 
   const logsQuery = useSystemLogs(filters);
@@ -246,7 +290,9 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
       }
     } catch (error) {
       logClientError(error, { context: { source: 'SystemLogsContext', action: 'runInsight' } });
-      toast(error instanceof Error ? error.message : 'Failed to generate log insight.', { variant: 'error' });
+      toast(error instanceof Error ? error.message : 'Failed to generate log insight.', {
+        variant: 'error',
+      });
     }
   };
 
@@ -256,7 +302,7 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
     try {
       const data = await interpretLogMutation.mutateAsync(logId);
       if (!data.insight) return;
-      const context = (data.insight.metadata || {});
+      const context = data.insight.metadata || {};
       const key = typeof context['logId'] === 'string' ? context['logId'] : data.insight.id;
       setLogInterpretations((prev: Record<string, AiInsightRecord>) => ({
         ...prev,
@@ -264,8 +310,12 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
       }));
       toast('AI interpretation added.', { variant: 'success' });
     } catch (error) {
-      logClientError(error, { context: { source: 'SystemLogsContext', action: 'interpretLog', logId } });
-      toast(error instanceof Error ? error.message : 'Failed to interpret log.', { variant: 'error' });
+      logClientError(error, {
+        context: { source: 'SystemLogsContext', action: 'interpretLog', logId },
+      });
+      toast(error instanceof Error ? error.message : 'Failed to interpret log.', {
+        variant: 'error',
+      });
     }
   };
 
@@ -274,21 +324,27 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
 
   useEffect(() => {
     if (logsQuery.error) {
-      logClientError(logsQuery.error, { context: { source: 'SystemLogsContext', action: 'loadLogs' } });
+      logClientError(logsQuery.error, {
+        context: { source: 'SystemLogsContext', action: 'loadLogs' },
+      });
       toast(logsQuery.error.message, { variant: 'error' });
     }
   }, [logsQuery.error, toast]);
 
   useEffect(() => {
     if (metricsQuery.error) {
-      logClientError(metricsQuery.error, { context: { source: 'SystemLogsContext', action: 'loadMetrics' } });
+      logClientError(metricsQuery.error, {
+        context: { source: 'SystemLogsContext', action: 'loadMetrics' },
+      });
       toast(metricsQuery.error.message, { variant: 'error' });
     }
   }, [metricsQuery.error, toast]);
 
   useEffect(() => {
     if (mongoDiagnosticsQuery.error) {
-      logClientError(mongoDiagnosticsQuery.error, { context: { source: 'SystemLogsContext', action: 'loadDiagnostics' } });
+      logClientError(mongoDiagnosticsQuery.error, {
+        context: { source: 'SystemLogsContext', action: 'loadDiagnostics' },
+      });
       toast(mongoDiagnosticsQuery.error.message, { variant: 'error' });
     }
   }, [mongoDiagnosticsQuery.error, toast]);
@@ -300,7 +356,8 @@ export function SystemLogsProvider({ children }: { children: React.ReactNode }):
     const data = mongoDiagnosticsQuery.data as MongoDiagnosticsData | undefined;
     return data?.collections ?? [];
   }, [mongoDiagnosticsQuery.data]);
-  const diagnosticsUpdatedAt = (mongoDiagnosticsQuery.data as MongoDiagnosticsData | undefined)?.generatedAt ?? null;
+  const diagnosticsUpdatedAt =
+    (mongoDiagnosticsQuery.data as MongoDiagnosticsData | undefined)?.generatedAt ?? null;
   const logsJson = useMemo(() => JSON.stringify(logs, null, 2), [logs]);
 
   const totalPages: number = useMemo((): number => {

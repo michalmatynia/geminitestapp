@@ -40,8 +40,9 @@ describe('tanstack telemetry', () => {
 
   it('normalizes metadata fields to transport-safe limits', () => {
     const longText = 'x'.repeat(400);
-    const tags = Array.from({ length: 40 }, (_, index: number) =>
-      `tag-${index}-${'y'.repeat(140)}`
+    const tags = Array.from(
+      { length: 40 },
+      (_, index: number) => `tag-${index}-${'y'.repeat(140)}`
     );
     const resolved = resolveTanstackFactoryMeta({
       source: ` ${longText} `,

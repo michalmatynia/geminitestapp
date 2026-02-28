@@ -2,11 +2,7 @@
 
 import React from 'react';
 
-import {
-  Button,
-  SelectSimple,
-  EmptyState,
-} from '@/shared/ui';
+import { Button, SelectSimple, EmptyState } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
 export type PlaceholderTarget = 'query' | 'aiPrompt' | 'prompt' | 'template';
@@ -59,11 +55,13 @@ export function PlaceholderMatrixDialog({
   const resolvedTargets: PlaceholderTargetOption[] = targetOptions?.length
     ? targetOptions
     : [
-      { value: 'query', label: 'Query template' },
-      { value: 'aiPrompt', label: 'AI prompt' },
-    ];
+        { value: 'query', label: 'Query template' },
+        { value: 'aiPrompt', label: 'AI prompt' },
+      ];
   const hasMultipleTargets = resolvedTargets.length > 1;
-  const selectedTarget = resolvedTargets.find((option: PlaceholderTargetOption) => option.value === target);
+  const selectedTarget = resolvedTargets.find(
+    (option: PlaceholderTargetOption) => option.value === target
+  );
 
   return (
     <DetailModal
@@ -123,10 +121,7 @@ export function PlaceholderMatrixDialog({
               </div>
               <div className='grid grid-cols-1 gap-2'>
                 {group.entries.map((entry: PlaceholderEntry) => (
-                  <div
-                    key={entry.id}
-                    className='rounded-md border border-border/70 bg-card/60 p-3'
-                  >
+                  <div key={entry.id} className='rounded-md border border-border/70 bg-card/60 p-3'>
                     <div className='flex flex-wrap items-start justify-between gap-3'>
                       <div className='space-y-1'>
                         <div className='text-xs font-medium text-gray-100'>{entry.label}</div>

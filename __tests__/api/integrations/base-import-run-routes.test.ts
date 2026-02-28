@@ -42,22 +42,24 @@ type BaseImportRunStartResponse = {
 describe('base import run routes', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    toStartResponseMock.mockImplementation((run: {
-      id: string;
-      status: string;
-      queueJobId?: string | null;
-      summaryMessage?: string | null;
-    }) => ({
-      runId: run.id,
-      status: run.status,
-      preflight: {
-        ok: true,
-        issues: [],
-        checkedAt: '2026-02-16T12:00:00.000Z',
-      },
-      queueJobId: run.queueJobId ?? null,
-      summaryMessage: run.summaryMessage ?? null,
-    }));
+    toStartResponseMock.mockImplementation(
+      (run: {
+        id: string;
+        status: string;
+        queueJobId?: string | null;
+        summaryMessage?: string | null;
+      }) => ({
+        runId: run.id,
+        status: run.status,
+        preflight: {
+          ok: true,
+          issues: [],
+          checkedAt: '2026-02-16T12:00:00.000Z',
+        },
+        queueJobId: run.queueJobId ?? null,
+        summaryMessage: run.summaryMessage ?? null,
+      })
+    );
   });
 
   it('parses run detail query with includeItems=false and forwards typed filters', async () => {
@@ -112,32 +114,23 @@ describe('base import run routes', () => {
     });
 
     const response = await resumePost(
-      new NextRequest(
-        'http://localhost/api/integrations/imports/base/runs/run-resume-1/resume',
-        {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ statuses: ['failed', 'pending'] }),
-        }
-      ),
+      new NextRequest('http://localhost/api/integrations/imports/base/runs/run-resume-1/resume', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ statuses: ['failed', 'pending'] }),
+      }),
       { params: Promise.resolve({ runId: 'run-resume-1' }) }
     );
     const payload = (await response.json()) as BaseImportRunStartResponse;
 
     expect(response.status).toBe(200);
-    expect(resumeBaseImportRunMock).toHaveBeenCalledWith('run-resume-1', [
-      'failed',
-      'pending',
-    ]);
+    expect(resumeBaseImportRunMock).toHaveBeenCalledWith('run-resume-1', ['failed', 'pending']);
     expect(enqueueBaseImportRunJobMock).toHaveBeenCalledWith({
       runId: 'run-resume-1',
       reason: 'resume',
       statuses: ['pending'],
     });
-    expect(updateBaseImportRunQueueJobMock).toHaveBeenCalledWith(
-      'run-resume-1',
-      'queue-resume-1'
-    );
+    expect(updateBaseImportRunQueueJobMock).toHaveBeenCalledWith('run-resume-1', 'queue-resume-1');
     expect(payload).toMatchObject({
       runId: 'run-resume-1',
       status: 'queued',
@@ -154,14 +147,11 @@ describe('base import run routes', () => {
     });
 
     const response = await cancelPost(
-      new NextRequest(
-        'http://localhost/api/integrations/imports/base/runs/run-cancel-1/cancel',
-        {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({}),
-        }
-      ),
+      new NextRequest('http://localhost/api/integrations/imports/base/runs/run-cancel-1/cancel', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({}),
+      }),
       { params: Promise.resolve({ runId: 'run-cancel-1' }) }
     );
     const payload = (await response.json()) as BaseImportRunStartResponse;

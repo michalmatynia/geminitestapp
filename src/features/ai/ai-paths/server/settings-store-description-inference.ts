@@ -1,13 +1,9 @@
 export const DESCRIPTION_INFERENCE_LITE_PATH_ID = 'path_descv3lite';
 export const DESCRIPTION_INFERENCE_LITE_PATH_NAME = 'Description Inference v3 Lite';
-export const DESCRIPTION_INFERENCE_LITE_TRIGGER_BUTTON_ID =
-  '4c07d35b-ea92-4d1f-b86b-c586359f68de';
-export const DESCRIPTION_INFERENCE_LITE_TRIGGER_BUTTON_NAME =
-  'Infer Description Lite';
+export const DESCRIPTION_INFERENCE_LITE_TRIGGER_BUTTON_ID = '4c07d35b-ea92-4d1f-b86b-c586359f68de';
+export const DESCRIPTION_INFERENCE_LITE_TRIGGER_BUTTON_NAME = 'Infer Description Lite';
 
-export const buildDescriptionInferenceLitePathConfigValue = (
-  timestamp: string
-): string =>
+export const buildDescriptionInferenceLitePathConfigValue = (timestamp: string): string =>
   JSON.stringify({
     id: DESCRIPTION_INFERENCE_LITE_PATH_ID,
     version: 4,
@@ -370,34 +366,202 @@ export const buildDescriptionInferenceLitePathConfigValue = (
       },
     ],
     edges: [
-      { id: 'edge-desc-lite-00', from: 'node-trigger-desc-lite', to: 'node-fetcher-desc-lite', fromPort: 'trigger', toPort: 'trigger' },
-      { id: 'edge-desc-lite-01', from: 'node-fetcher-desc-lite', to: 'node-parser-desc-lite', fromPort: 'context', toPort: 'context' },
-      { id: 'edge-desc-lite-02', from: 'node-parser-desc-lite', to: 'node-metadata-desc-lite', fromPort: 'bundle', toPort: 'bundle' },
-      { id: 'edge-desc-lite-03', from: 'node-parser-desc-lite', to: 'node-bundle-desc-lite', fromPort: 'bundle', toPort: 'bundle' },
-      { id: 'edge-desc-lite-04', from: 'node-metadata-desc-lite', to: 'node-bundle-desc-lite', fromPort: 'value', toPort: 'result' },
-      { id: 'edge-desc-lite-05', from: 'node-controls-desc-lite', to: 'node-bundle-desc-lite', fromPort: 'value', toPort: 'value' },
-      { id: 'edge-desc-lite-06', from: 'node-fetcher-desc-lite', to: 'node-bundle-desc-lite', fromPort: 'meta', toPort: 'meta' },
-      { id: 'edge-desc-lite-07', from: 'node-fetcher-desc-lite', to: 'node-bundle-desc-lite', fromPort: 'entityId', toPort: 'entityId' },
-      { id: 'edge-desc-lite-08', from: 'node-fetcher-desc-lite', to: 'node-bundle-desc-lite', fromPort: 'entityType', toPort: 'entityType' },
-      { id: 'edge-desc-lite-09', from: 'node-bundle-desc-lite', to: 'node-prompt-desc-lite', fromPort: 'bundle', toPort: 'bundle' },
-      { id: 'edge-desc-lite-10', from: 'node-parser-desc-lite', to: 'node-prompt-desc-lite', fromPort: 'images', toPort: 'images' },
-      { id: 'edge-desc-lite-11', from: 'node-parser-desc-lite', to: 'node-prompt-desc-lite', fromPort: 'title', toPort: 'title' },
-      { id: 'edge-desc-lite-12', from: 'node-fetcher-desc-lite', to: 'node-prompt-desc-lite', fromPort: 'entityId', toPort: 'entityId' },
-      { id: 'edge-desc-lite-13', from: 'node-prompt-desc-lite', to: 'node-model-desc-lite', fromPort: 'prompt', toPort: 'prompt' },
-      { id: 'edge-desc-lite-14', from: 'node-prompt-desc-lite', to: 'node-model-desc-lite', fromPort: 'images', toPort: 'images' },
-      { id: 'edge-desc-lite-15', from: 'node-model-desc-lite', to: 'node-regex-desc-lite', fromPort: 'result', toPort: 'value' },
-      { id: 'edge-desc-lite-16', from: 'node-regex-desc-lite', to: 'node-mapper-desc-lite', fromPort: 'value', toPort: 'value' },
-      { id: 'edge-desc-lite-17', from: 'node-mapper-desc-lite', to: 'node-compare-desc-lite', fromPort: 'value', toPort: 'value' },
-      { id: 'edge-desc-lite-18', from: 'node-mapper-desc-lite', to: 'node-update-desc-lite', fromPort: 'result', toPort: 'result' },
-      { id: 'edge-desc-lite-19', from: 'node-fetcher-desc-lite', to: 'node-update-desc-lite', fromPort: 'entityId', toPort: 'entityId' },
-      { id: 'edge-desc-lite-20', from: 'node-fetcher-desc-lite', to: 'node-update-desc-lite', fromPort: 'entityType', toPort: 'entityType' },
-      { id: 'edge-desc-lite-21', from: 'node-regex-desc-lite', to: 'node-view-desc-lite', fromPort: 'value', toPort: 'bundle' },
-      { id: 'edge-desc-lite-22', from: 'node-mapper-desc-lite', to: 'node-view-desc-lite', fromPort: 'result', toPort: 'result' },
-      { id: 'edge-desc-lite-23', from: 'node-mapper-desc-lite', to: 'node-view-desc-lite', fromPort: 'value', toPort: 'value' },
-      { id: 'edge-desc-lite-24', from: 'node-mapper-desc-lite', to: 'node-view-desc-lite', fromPort: 'bundle', toPort: 'context' },
-      { id: 'edge-desc-lite-25', from: 'node-compare-desc-lite', to: 'node-view-desc-lite', fromPort: 'valid', toPort: 'valid' },
-      { id: 'edge-desc-lite-26', from: 'node-compare-desc-lite', to: 'node-view-desc-lite', fromPort: 'errors', toPort: 'errors' },
-      { id: 'edge-desc-lite-27', from: 'node-update-desc-lite', to: 'node-view-desc-lite', fromPort: 'result', toPort: 'meta' },
+      {
+        id: 'edge-desc-lite-00',
+        from: 'node-trigger-desc-lite',
+        to: 'node-fetcher-desc-lite',
+        fromPort: 'trigger',
+        toPort: 'trigger',
+      },
+      {
+        id: 'edge-desc-lite-01',
+        from: 'node-fetcher-desc-lite',
+        to: 'node-parser-desc-lite',
+        fromPort: 'context',
+        toPort: 'context',
+      },
+      {
+        id: 'edge-desc-lite-02',
+        from: 'node-parser-desc-lite',
+        to: 'node-metadata-desc-lite',
+        fromPort: 'bundle',
+        toPort: 'bundle',
+      },
+      {
+        id: 'edge-desc-lite-03',
+        from: 'node-parser-desc-lite',
+        to: 'node-bundle-desc-lite',
+        fromPort: 'bundle',
+        toPort: 'bundle',
+      },
+      {
+        id: 'edge-desc-lite-04',
+        from: 'node-metadata-desc-lite',
+        to: 'node-bundle-desc-lite',
+        fromPort: 'value',
+        toPort: 'result',
+      },
+      {
+        id: 'edge-desc-lite-05',
+        from: 'node-controls-desc-lite',
+        to: 'node-bundle-desc-lite',
+        fromPort: 'value',
+        toPort: 'value',
+      },
+      {
+        id: 'edge-desc-lite-06',
+        from: 'node-fetcher-desc-lite',
+        to: 'node-bundle-desc-lite',
+        fromPort: 'meta',
+        toPort: 'meta',
+      },
+      {
+        id: 'edge-desc-lite-07',
+        from: 'node-fetcher-desc-lite',
+        to: 'node-bundle-desc-lite',
+        fromPort: 'entityId',
+        toPort: 'entityId',
+      },
+      {
+        id: 'edge-desc-lite-08',
+        from: 'node-fetcher-desc-lite',
+        to: 'node-bundle-desc-lite',
+        fromPort: 'entityType',
+        toPort: 'entityType',
+      },
+      {
+        id: 'edge-desc-lite-09',
+        from: 'node-bundle-desc-lite',
+        to: 'node-prompt-desc-lite',
+        fromPort: 'bundle',
+        toPort: 'bundle',
+      },
+      {
+        id: 'edge-desc-lite-10',
+        from: 'node-parser-desc-lite',
+        to: 'node-prompt-desc-lite',
+        fromPort: 'images',
+        toPort: 'images',
+      },
+      {
+        id: 'edge-desc-lite-11',
+        from: 'node-parser-desc-lite',
+        to: 'node-prompt-desc-lite',
+        fromPort: 'title',
+        toPort: 'title',
+      },
+      {
+        id: 'edge-desc-lite-12',
+        from: 'node-fetcher-desc-lite',
+        to: 'node-prompt-desc-lite',
+        fromPort: 'entityId',
+        toPort: 'entityId',
+      },
+      {
+        id: 'edge-desc-lite-13',
+        from: 'node-prompt-desc-lite',
+        to: 'node-model-desc-lite',
+        fromPort: 'prompt',
+        toPort: 'prompt',
+      },
+      {
+        id: 'edge-desc-lite-14',
+        from: 'node-prompt-desc-lite',
+        to: 'node-model-desc-lite',
+        fromPort: 'images',
+        toPort: 'images',
+      },
+      {
+        id: 'edge-desc-lite-15',
+        from: 'node-model-desc-lite',
+        to: 'node-regex-desc-lite',
+        fromPort: 'result',
+        toPort: 'value',
+      },
+      {
+        id: 'edge-desc-lite-16',
+        from: 'node-regex-desc-lite',
+        to: 'node-mapper-desc-lite',
+        fromPort: 'value',
+        toPort: 'value',
+      },
+      {
+        id: 'edge-desc-lite-17',
+        from: 'node-mapper-desc-lite',
+        to: 'node-compare-desc-lite',
+        fromPort: 'value',
+        toPort: 'value',
+      },
+      {
+        id: 'edge-desc-lite-18',
+        from: 'node-mapper-desc-lite',
+        to: 'node-update-desc-lite',
+        fromPort: 'result',
+        toPort: 'result',
+      },
+      {
+        id: 'edge-desc-lite-19',
+        from: 'node-fetcher-desc-lite',
+        to: 'node-update-desc-lite',
+        fromPort: 'entityId',
+        toPort: 'entityId',
+      },
+      {
+        id: 'edge-desc-lite-20',
+        from: 'node-fetcher-desc-lite',
+        to: 'node-update-desc-lite',
+        fromPort: 'entityType',
+        toPort: 'entityType',
+      },
+      {
+        id: 'edge-desc-lite-21',
+        from: 'node-regex-desc-lite',
+        to: 'node-view-desc-lite',
+        fromPort: 'value',
+        toPort: 'bundle',
+      },
+      {
+        id: 'edge-desc-lite-22',
+        from: 'node-mapper-desc-lite',
+        to: 'node-view-desc-lite',
+        fromPort: 'result',
+        toPort: 'result',
+      },
+      {
+        id: 'edge-desc-lite-23',
+        from: 'node-mapper-desc-lite',
+        to: 'node-view-desc-lite',
+        fromPort: 'value',
+        toPort: 'value',
+      },
+      {
+        id: 'edge-desc-lite-24',
+        from: 'node-mapper-desc-lite',
+        to: 'node-view-desc-lite',
+        fromPort: 'bundle',
+        toPort: 'context',
+      },
+      {
+        id: 'edge-desc-lite-25',
+        from: 'node-compare-desc-lite',
+        to: 'node-view-desc-lite',
+        fromPort: 'valid',
+        toPort: 'valid',
+      },
+      {
+        id: 'edge-desc-lite-26',
+        from: 'node-compare-desc-lite',
+        to: 'node-view-desc-lite',
+        fromPort: 'errors',
+        toPort: 'errors',
+      },
+      {
+        id: 'edge-desc-lite-27',
+        from: 'node-update-desc-lite',
+        to: 'node-view-desc-lite',
+        fromPort: 'result',
+        toPort: 'meta',
+      },
     ],
     updatedAt: timestamp,
     isLocked: false,
@@ -406,9 +570,7 @@ export const buildDescriptionInferenceLitePathConfigValue = (
     updaterSamples: {},
   });
 
-export const needsDescriptionInferenceLiteConfigUpgrade = (
-  raw: string | undefined
-): boolean => {
+export const needsDescriptionInferenceLiteConfigUpgrade = (raw: string | undefined): boolean => {
   if (!raw) return true;
   try {
     const parsed = JSON.parse(raw) as Record<string, unknown>;

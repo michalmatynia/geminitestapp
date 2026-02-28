@@ -22,10 +22,7 @@ export function CaseTableBody(): React.JSX.Element {
     [setSelectedDrillCaseId, setDocumentSearchQuery, setSelectedSearchFolderPath]
   );
 
-  const columns = useMemo(
-    () => getCaseTableColumns({ onDrillInto }),
-    [onDrillInto]
-  );
+  const columns = useMemo(() => getCaseTableColumns({ onDrillInto }), [onDrillInto]);
 
   return (
     <DataTable

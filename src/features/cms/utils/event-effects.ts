@@ -59,7 +59,9 @@ const coerceScale = (value: unknown): number => {
 
 const coerceString = (value: unknown): string => (typeof value === 'string' ? value : '');
 
-export const getEventEffectsConfig = (settings: Record<string, unknown>): CmsEventEffectsConfig => ({
+export const getEventEffectsConfig = (
+  settings: Record<string, unknown>
+): CmsEventEffectsConfig => ({
   hoverEffect: coerceHoverEffect(settings['eventHoverEffect']),
   hoverScale: coerceScale(settings['eventHoverScale']),
   clickAction: coerceClickAction(settings['eventClickAction']),

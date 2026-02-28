@@ -34,9 +34,7 @@ const PRODUCT_STUDIO_CONFIG_KEY_PREFIX = 'product_studio_config_';
 const canUsePrismaSettings = (): boolean =>
   Boolean(process.env['DATABASE_URL']) && 'setting' in prisma;
 
-const isPrismaMissingTableError = (
-  error: unknown
-): error is Prisma.PrismaClientKnownRequestError =>
+const isPrismaMissingTableError = (error: unknown): error is Prisma.PrismaClientKnownRequestError =>
   error instanceof Prisma.PrismaClientKnownRequestError &&
   (error.code === 'P2021' || error.code === 'P2022');
 
@@ -122,9 +120,7 @@ const toConfig = (raw: string | null): ProductStudioConfig => {
 
     return {
       projectId: normalizeProjectId(
-        typeof objectValue['projectId'] === 'string'
-          ? objectValue['projectId']
-          : null
+        typeof objectValue['projectId'] === 'string' ? objectValue['projectId'] : null
       ),
       sourceSlotByImageIndex: normalizeSourceSlotByImageIndex(
         objectValue['sourceSlotByImageIndex'] as Record<string, unknown> | null
@@ -169,17 +165,12 @@ const readMongoSetting = async (key: string): Promise<string | null> => {
   const mongo = await getMongoDb();
   const row = await mongo
     .collection<SettingDocument>(SETTINGS_COLLECTION)
-    .findOne(
-      { $or: [{ key }, { _id: key }] },
-      { projection: { value: 1 } }
-    );
+    .findOne({ $or: [{ key }, { _id: key }] }, { projection: { value: 1 } });
 
   return typeof row?.value === 'string' ? row.value : null;
 };
 
-const readSettingWithProviderFallback = async (
-  key: string
-): Promise<string | null> => {
+const readSettingWithProviderFallback = async (key: string): Promise<string | null> => {
   const provider = await getAppDbProvider();
 
   if (provider === 'mongodb') {
@@ -265,12 +256,12 @@ const listPrismaProductStudioConfigs = async (): Promise<Array<{ key: string; va
         value: true,
       },
     });
-    return rows
-      .filter((row): row is { key: string; value: string } =>
+    return rows.filter(
+      (row): row is { key: string; value: string } =>
         typeof row.key === 'string' &&
         row.key.startsWith(PRODUCT_STUDIO_CONFIG_KEY_PREFIX) &&
         typeof row.value === 'string'
-      );
+    );
   } catch (error) {
     if (isPrismaMissingTableError(error)) return [];
     throw error;
@@ -295,18 +286,14 @@ const listMongoProductStudioConfigs = async (): Promise<Array<{ key: string; val
           key: 1,
           value: 1,
         },
-      },
+      }
     )
     .toArray();
 
   return rows
     .map((row) => {
       const keyCandidate =
-        typeof row.key === 'string'
-          ? row.key
-          : typeof row._id === 'string'
-            ? row._id
-            : '';
+        typeof row.key === 'string' ? row.key : typeof row._id === 'string' ? row._id : '';
       const key = keyCandidate.trim();
       if (!key.startsWith(PRODUCT_STUDIO_CONFIG_KEY_PREFIX)) return null;
       if (typeof row.value !== 'string') return null;
@@ -318,7 +305,9 @@ const listMongoProductStudioConfigs = async (): Promise<Array<{ key: string; val
     .filter((entry): entry is { key: string; value: string } => Boolean(entry));
 };
 
-const listProductStudioConfigSettings = async (): Promise<Array<{ key: string; value: string }>> => {
+const listProductStudioConfigSettings = async (): Promise<
+  Array<{ key: string; value: string }>
+> => {
   const provider = await getAppDbProvider();
   const [mongoEntries, prismaEntries] = await Promise.all([
     listMongoProductStudioConfigs().catch(() => []),
@@ -338,9 +327,7 @@ const listProductStudioConfigSettings = async (): Promise<Array<{ key: string; v
   return Array.from(mergedByKey.entries()).map(([key, value]) => ({ key, value }));
 };
 
-export async function getProductStudioConfig(
-  productId: string
-): Promise<ProductStudioConfig> {
+export async function getProductStudioConfig(productId: string): Promise<ProductStudioConfig> {
   const key = buildConfigKey(productId);
   const raw = await readSettingWithProviderFallback(key);
   return toConfig(raw);
@@ -354,9 +341,7 @@ export async function setProductStudioConfig(
   const existing = await getProductStudioConfig(productId);
 
   const nextProjectId =
-    input.projectId !== undefined
-      ? normalizeProjectId(input.projectId)
-      : existing.projectId;
+    input.projectId !== undefined ? normalizeProjectId(input.projectId) : existing.projectId;
   const projectChanged = nextProjectId !== existing.projectId;
 
   const nextSourceSlotByImageIndex =
@@ -407,8 +392,7 @@ export async function setProductStudioSourceSlot(
     ...existing.sourceSlotHistoryByImageIndex,
   };
 
-  const normalizedSlotId =
-    typeof sourceSlotId === 'string' ? sourceSlotId.trim() : '';
+  const normalizedSlotId = typeof sourceSlotId === 'string' ? sourceSlotId.trim() : '';
   const historyKey = String(normalizedIndex);
   if (!normalizedSlotId) {
     delete nextSourceMap[historyKey];
@@ -456,7 +440,7 @@ export async function pruneProductStudioSourceSlotsForProject(params: {
     (Array.isArray(params.deletedSlotIds) ? params.deletedSlotIds : [])
       .filter((value): value is string => typeof value === 'string')
       .map((value: string) => value.trim())
-      .filter(Boolean),
+      .filter(Boolean)
   );
   if (deletedSlotIdSet.size === 0) {
     return {

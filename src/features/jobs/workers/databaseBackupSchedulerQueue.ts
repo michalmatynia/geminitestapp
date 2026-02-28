@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { tickDatabaseBackupScheduler } from '@/features/database/services/database-backup-scheduler';
+import { tickDatabaseBackupScheduler } from '@/shared/lib/db/services/database-backup-scheduler';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { getDatabaseEngineBackupSchedule } from '@/shared/lib/db/database-engine-policy';
 import { createManagedQueue } from '@/shared/lib/queue';
@@ -20,12 +20,12 @@ const parseMsFromEnv = (raw: string | undefined, fallback: number, min: number):
 export const DATABASE_BACKUP_SCHEDULER_REPEAT_EVERY_MS = parseMsFromEnv(
   process.env['DATABASE_BACKUP_SCHEDULER_REPEAT_EVERY_MS'],
   60_000,
-  30_000,
+  30_000
 );
 const DATABASE_BACKUP_SCHEDULER_LOCK_DURATION_MS = parseMsFromEnv(
   process.env['DATABASE_BACKUP_SCHEDULER_LOCK_DURATION_MS'],
   60_000,
-  30_000,
+  30_000
 );
 
 type DatabaseBackupSchedulerQueueState = {
@@ -82,7 +82,7 @@ const unregisterRepeatScheduler = async (): Promise<void> => {
       await bullQueue.removeRepeatable(
         SCHEDULER_QUEUE_NAME,
         { every: DATABASE_BACKUP_SCHEDULER_REPEAT_EVERY_MS },
-        SCHEDULER_REPEAT_JOB_ID,
+        SCHEDULER_REPEAT_JOB_ID
       );
     }
   } catch (error) {
@@ -115,7 +115,7 @@ const syncRepeatSchedulerRegistration = (): void => {
         {
           repeat: { every: DATABASE_BACKUP_SCHEDULER_REPEAT_EVERY_MS },
           jobId: SCHEDULER_REPEAT_JOB_ID,
-        },
+        }
       );
       queueState.schedulerRegistered = true;
     } catch (error) {
@@ -145,7 +145,7 @@ export const startDatabaseBackupSchedulerQueue = (): void => {
           jobId: STARTUP_TICK_JOB_ID,
           removeOnComplete: true,
           removeOnFail: true,
-        },
+        }
       )
       .catch((error) => {
         queueState.startupTickQueued = false;

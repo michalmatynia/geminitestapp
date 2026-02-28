@@ -1,14 +1,11 @@
-import { } from 'lucide-react';
+import {} from 'lucide-react';
 import Image from 'next/image';
 import React from 'react';
 
 import { Button, TabsContent, Hint, LoadingState } from '@/shared/ui';
 
 import { InlineImagePreviewCanvas } from './InlineImagePreviewCanvas';
-import { 
-  formatBytes,
-  formatLinkedVariantTimestamp,
-} from './slot-inline-edit-utils';
+import { formatBytes, formatLinkedVariantTimestamp } from './slot-inline-edit-utils';
 import { useStudioInlineEdit } from './StudioInlineEditContext';
 
 export function SlotInlineEditGenerationsTab(): React.JSX.Element {
@@ -24,10 +21,11 @@ export function SlotInlineEditGenerationsTab(): React.JSX.Element {
     slotNameDraft,
   } = useStudioInlineEdit();
 
-  const linkedRunsErrorMessage = linkedRunsQuery.error instanceof Error
-    ? linkedRunsQuery.error.message
-    : 'Failed to load linked variants.';
-  
+  const linkedRunsErrorMessage =
+    linkedRunsQuery.error instanceof Error
+      ? linkedRunsQuery.error.message
+      : 'Failed to load linked variants.';
+
   const linkedRunsIsError = linkedRunsQuery.isError;
   const linkedRunsIsFetching = linkedRunsQuery.isFetching;
   const linkedRunsIsLoading = linkedRunsQuery.isLoading;
@@ -39,7 +37,9 @@ export function SlotInlineEditGenerationsTab(): React.JSX.Element {
       <div className='space-y-3 rounded-lg border border-border/60 bg-card/35 p-3'>
         <div className='flex flex-wrap items-center justify-between gap-2'>
           <div className='space-y-0.5'>
-            <Hint size='xxs' uppercase className='text-gray-500'>Generation Preview</Hint>
+            <Hint size='xxs' uppercase className='text-gray-500'>
+              Generation Preview
+            </Hint>
             <div className='text-xs text-gray-200'>
               {selectedGenerationPreview
                 ? `Run ${selectedGenerationPreview.runId.slice(0, 8)} • Variant ${selectedGenerationPreview.outputIndex}/${selectedGenerationPreview.outputCount}`
@@ -54,11 +54,12 @@ export function SlotInlineEditGenerationsTab(): React.JSX.Element {
             disabled={linkedRunsIsFetching}
             loading={linkedRunsIsFetching}
           >
-                        Refresh
+            Refresh
           </Button>
         </div>
-          
-        <InlineImagePreviewCanvas          imageSrc={selectedGenerationPreview?.imageSrc ?? null}
+
+        <InlineImagePreviewCanvas
+          imageSrc={selectedGenerationPreview?.imageSrc ?? null}
           imageAlt={
             selectedGenerationPreview?.output.filename ||
             `${slotNameDraft.trim() || selectedSlotName || 'Card'} generation preview`
@@ -81,7 +82,8 @@ export function SlotInlineEditGenerationsTab(): React.JSX.Element {
               <span className='font-mono text-[10px]'>{selectedGenerationPreview.output.id}</span>
             </div>
             <div>
-              <span className='text-gray-500'>Dimensions:</span> {selectedGenerationPreviewDimensions}
+              <span className='text-gray-500'>Dimensions:</span>{' '}
+              {selectedGenerationPreviewDimensions}
             </div>
             <div>
               <span className='text-gray-500'>Filename:</span>{' '}

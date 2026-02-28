@@ -1,14 +1,19 @@
 'use client';
 
 import React, { createContext, useContext } from 'react';
-import { 
+import {
   useAdminFilemakerPersonEditPageState,
-  type AdminFilemakerPersonEditPageContextValue 
+  type AdminFilemakerPersonEditPageContextValue,
 } from '../hooks/useAdminFilemakerPersonEditPageState';
 
-const AdminFilemakerPersonEditPageContext = createContext<AdminFilemakerPersonEditPageContextValue | null>(null);
+const AdminFilemakerPersonEditPageContext =
+  createContext<AdminFilemakerPersonEditPageContextValue | null>(null);
 
-export function AdminFilemakerPersonEditPageProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
+export function AdminFilemakerPersonEditPageProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}): React.JSX.Element {
   const value = useAdminFilemakerPersonEditPageState();
   return (
     <AdminFilemakerPersonEditPageContext.Provider value={value}>
@@ -20,7 +25,9 @@ export function AdminFilemakerPersonEditPageProvider({ children }: { children: R
 export function useAdminFilemakerPersonEditPageContext(): AdminFilemakerPersonEditPageContextValue {
   const context = useContext(AdminFilemakerPersonEditPageContext);
   if (!context) {
-    throw new Error('useAdminFilemakerPersonEditPageContext must be used within AdminFilemakerPersonEditPageProvider');
+    throw new Error(
+      'useAdminFilemakerPersonEditPageContext must be used within AdminFilemakerPersonEditPageProvider'
+    );
   }
   return context;
 }

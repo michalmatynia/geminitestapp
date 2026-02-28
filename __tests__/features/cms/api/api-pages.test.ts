@@ -1,7 +1,11 @@
 import { NextRequest } from 'next/server';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
-import { GET as getPage, PUT as updatePage, DELETE as deletePage } from '@/app/api/cms/pages/[id]/route';
+import {
+  GET as getPage,
+  PUT as updatePage,
+  DELETE as deletePage,
+} from '@/app/api/cms/pages/[id]/route';
 import { GET as listPages, POST as createPage } from '@/app/api/cms/pages/route';
 import { getCmsRepository } from '@/features/cms/services/cms-repository';
 
@@ -50,7 +54,9 @@ describe('CMS Pages API', () => {
       const mockPage = { id: '123', name: 'Single Page' };
       mockRepo.getPageById.mockResolvedValue(mockPage);
 
-      const res = await getPage(new NextRequest('http://localhost'), { params: Promise.resolve({ id: '123' }) } as any);
+      const res = await getPage(new NextRequest('http://localhost'), {
+        params: Promise.resolve({ id: '123' }),
+      } as any);
       const data = await res.json();
 
       expect(res.status).toBe(200);
@@ -59,7 +65,9 @@ describe('CMS Pages API', () => {
 
     it('should return 404 if page not found', async () => {
       mockRepo.getPageById.mockResolvedValue(null);
-      const res = await getPage(new NextRequest('http://localhost'), { params: Promise.resolve({ id: '999' }) } as any);
+      const res = await getPage(new NextRequest('http://localhost'), {
+        params: Promise.resolve({ id: '999' }),
+      } as any);
       expect(res.status).toBe(404);
     });
   });
@@ -90,7 +98,7 @@ describe('CMS Pages API', () => {
       const updateData = {
         name: 'Updated Page',
         slugIds: ['s1'],
-        components: [{ type: 'Hero', content: {}, order: 0 }]
+        components: [{ type: 'Hero', content: {}, order: 0 }],
       };
       const updatedPage = { id: '123', name: 'Updated Page' };
       mockRepo.updatePage.mockResolvedValue(updatedPage);
@@ -105,7 +113,10 @@ describe('CMS Pages API', () => {
 
       expect(res.status).toBe(200);
       expect(data).toEqual(updatedPage);
-      expect(mockRepo.updatePage).toHaveBeenCalledWith('123', expect.objectContaining({ name: 'Updated Page' }));
+      expect(mockRepo.updatePage).toHaveBeenCalledWith(
+        '123',
+        expect.objectContaining({ name: 'Updated Page' })
+      );
       expect(mockRepo.replacePageSlugs).toHaveBeenCalledWith('123', ['s1']);
     });
   });
@@ -113,7 +124,9 @@ describe('CMS Pages API', () => {
   describe('DELETE /api/cms/pages/[id]', () => {
     it('should delete a page', async () => {
       mockRepo.deletePage.mockResolvedValue({ id: '123' });
-      const res = await deletePage(new NextRequest('http://localhost'), { params: Promise.resolve({ id: '123' }) } as any);
+      const res = await deletePage(new NextRequest('http://localhost'), {
+        params: Promise.resolve({ id: '123' }),
+      } as any);
       expect(res.status).toBe(204);
       expect(mockRepo.deletePage).toHaveBeenCalledWith('123');
     });

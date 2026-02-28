@@ -32,11 +32,12 @@ export function useIntegrationJobs(): ListQuery<ProductJob> {
         'processing',
         'in_progress',
       ]);
-      const hasActiveListings = data.some((job) =>
-        Array.isArray(job.listings) &&
-        job.listings.some((listing: { status?: string }) =>
-          activeStatuses.has((listing.status ?? '').trim().toLowerCase())
-        )
+      const hasActiveListings = data.some(
+        (job) =>
+          Array.isArray(job.listings) &&
+          job.listings.some((listing: { status?: string }) =>
+            activeStatuses.has((listing.status ?? '').trim().toLowerCase())
+          )
       );
       return hasActiveListings ? 2500 : false;
     },

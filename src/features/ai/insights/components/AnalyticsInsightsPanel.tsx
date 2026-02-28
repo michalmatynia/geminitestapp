@@ -31,7 +31,7 @@ export function AnalyticsInsightsPanel(): React.JSX.Element {
         {analyticsQuery.isLoading ? (
           <LoadingState message='Loading insights...' size='sm' className='py-4' />
         ) : analyticsQuery.error ? (
-          <div className='text-xs text-red-400'>{(analyticsQuery.error).message}</div>
+          <div className='text-xs text-red-400'>{analyticsQuery.error.message}</div>
         ) : (analyticsQuery.data?.insights?.length ?? 0) === 0 ? (
           <EmptyState
             title='No insights yet'

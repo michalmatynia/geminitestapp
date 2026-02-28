@@ -10,12 +10,7 @@ export {
   deleteChatbotSessions,
   persistSessionMessage,
 } from './sessions';
-export {
-  fetchChatbotSettings,
-  saveChatbotSettings,
-  fetchSettings,
-  saveSetting,
-} from './settings';
+export { fetchChatbotSettings, saveChatbotSettings, fetchSettings, saveSetting } from './settings';
 export { fetchOllamaModels, fetchChatbotModels } from './models';
 export { fetchChatbotMemory } from './memory';
 export { uploadChatbotContextPdf } from './context';

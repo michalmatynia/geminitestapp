@@ -1,19 +1,8 @@
-import {
-  Hand,
-  Layers,
-  MousePointer2,
-  RotateCw,
-} from 'lucide-react';
+import { Hand, Layers, MousePointer2, RotateCw } from 'lucide-react';
 import React, { useCallback } from 'react';
 
-import type {
-  DragAxis,
-} from '@/shared/lib/gsap';
-import {
-  DEFAULT_ANIMATION_CONFIG,
-  DRAG_AXES,
-  OBSERVER_TYPES,
-} from '@/shared/lib/gsap';
+import type { DragAxis } from '@/shared/lib/gsap';
+import { DEFAULT_ANIMATION_CONFIG, DRAG_AXES, OBSERVER_TYPES } from '@/shared/lib/gsap';
 import {
   Button,
   Checkbox,
@@ -32,9 +21,9 @@ const observerTypeIcons: Record<string, React.ReactNode> = {
       <Hand className='size-3.5' />
     </span>
   ),
-  'wheel': <RotateCw className='size-3.5' />,
-  'touch': <Hand className='size-3.5' />,
-  'pointer': <MousePointer2 className='size-3.5' />,
+  wheel: <RotateCw className='size-3.5' />,
+  touch: <Hand className='size-3.5' />,
+  pointer: <MousePointer2 className='size-3.5' />,
   'wheel,touch,pointer': <Layers className='size-3.5' />,
 };
 
@@ -42,12 +31,15 @@ export function AdvancedObserverMagnetSection(): React.JSX.Element {
   const { config, onChange } = useAnimationConfigContext();
   const observerEnabledValue =
     config.observerEnabled ?? DEFAULT_ANIMATION_CONFIG.observerEnabled ?? false;
-  const observerTypeValue = config.observerType ?? DEFAULT_ANIMATION_CONFIG.observerType ?? 'wheel,touch';
+  const observerTypeValue =
+    config.observerType ?? DEFAULT_ANIMATION_CONFIG.observerType ?? 'wheel,touch';
   const observerAxisValue = config.observerAxis ?? DEFAULT_ANIMATION_CONFIG.observerAxis ?? 'y';
   const observerSpeedValue = config.observerSpeed ?? DEFAULT_ANIMATION_CONFIG.observerSpeed ?? 1;
 
-  const magnetEnabledValue = config.magnetEnabled ?? DEFAULT_ANIMATION_CONFIG.magnetEnabled ?? false;
-  const magnetStrengthValue = config.magnetStrength ?? DEFAULT_ANIMATION_CONFIG.magnetStrength ?? 0.35;
+  const magnetEnabledValue =
+    config.magnetEnabled ?? DEFAULT_ANIMATION_CONFIG.magnetEnabled ?? false;
+  const magnetStrengthValue =
+    config.magnetStrength ?? DEFAULT_ANIMATION_CONFIG.magnetStrength ?? 0.35;
   const magnetRadiusValue = config.magnetRadius ?? DEFAULT_ANIMATION_CONFIG.magnetRadius ?? 140;
   const magnetAxisValue = config.magnetAxis ?? DEFAULT_ANIMATION_CONFIG.magnetAxis ?? 'x,y';
   const magnetReturnValue = config.magnetReturn ?? DEFAULT_ANIMATION_CONFIG.magnetReturn ?? 0.35;
@@ -125,7 +117,9 @@ export function AdvancedObserverMagnetSection(): React.JSX.Element {
       <FormSection
         title='Observer (Events)'
         variant='subtle-compact'
-        actions={<Checkbox checked={observerEnabledValue} onCheckedChange={handleObserverEnabledChange} />}
+        actions={
+          <Checkbox checked={observerEnabledValue} onCheckedChange={handleObserverEnabledChange} />
+        }
         className='p-3 space-y-4'
       >
         {observerEnabledValue && (
@@ -134,7 +128,9 @@ export function AdvancedObserverMagnetSection(): React.JSX.Element {
               <div className='space-y-2'>
                 <Input
                   value={observerTypeValue}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange({ ...config, observerType: e.target.value })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    onChange({ ...config, observerType: e.target.value })
+                  }
                   placeholder='wheel,touch,pointer'
                   className='h-9'
                 />
@@ -146,7 +142,10 @@ export function AdvancedObserverMagnetSection(): React.JSX.Element {
                         size='sm'
                         variant={observerTypeValue.includes(option.value) ? 'secondary' : 'outline'}
                         onClick={(): void => {
-                          const types = observerTypeValue.split(',').map((t: string) => t.trim()).filter(Boolean);
+                          const types = observerTypeValue
+                            .split(',')
+                            .map((t: string) => t.trim())
+                            .filter(Boolean);
                           const next = types.includes(option.value)
                             ? types.filter((t: string) => t !== option.value)
                             : [...types, option.value];
@@ -165,7 +164,8 @@ export function AdvancedObserverMagnetSection(): React.JSX.Element {
 
             <div className='grid gap-3 sm:grid-cols-2'>
               <FormField label='Axis'>
-                <SelectSimple size='sm'
+                <SelectSimple
+                  size='sm'
                   value={observerAxisValue}
                   onValueChange={handleObserverAxisChange}
                   options={DRAG_AXES}
@@ -190,7 +190,9 @@ export function AdvancedObserverMagnetSection(): React.JSX.Element {
       <FormSection
         title='Magnet'
         variant='subtle-compact'
-        actions={<Checkbox checked={magnetEnabledValue} onCheckedChange={handleMagnetEnabledChange} />}
+        actions={
+          <Checkbox checked={magnetEnabledValue} onCheckedChange={handleMagnetEnabledChange} />
+        }
         className='p-3 space-y-4'
       >
         {magnetEnabledValue && (
@@ -222,7 +224,8 @@ export function AdvancedObserverMagnetSection(): React.JSX.Element {
 
             <div className='grid gap-3 sm:grid-cols-2'>
               <FormField label='Axis'>
-                <SelectSimple size='sm'
+                <SelectSimple
+                  size='sm'
                   value={magnetAxisValue}
                   onValueChange={handleMagnetAxisChange}
                   options={DRAG_AXES}

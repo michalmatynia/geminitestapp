@@ -75,10 +75,7 @@ describe('AI Paths run delete handlers', () => {
     const payload = (await response.json()) as { deleted: boolean; runId: string };
 
     expect(response.status).toBe(200);
-    expect(enforceAiPathsActionRateLimitMock).toHaveBeenCalledWith(
-      expect.anything(),
-      'run-delete'
-    );
+    expect(enforceAiPathsActionRateLimitMock).toHaveBeenCalledWith(expect.anything(), 'run-delete');
     expect(deletePathRunWithRepositoryMock).toHaveBeenCalledWith(repoMock, 'run-delete-1');
     expect(payload).toMatchObject({
       deleted: true,
@@ -99,10 +96,7 @@ describe('AI Paths run delete handlers', () => {
     const payload = (await response.json()) as { deleted: number; scope: string };
 
     expect(response.status).toBe(200);
-    expect(enforceAiPathsActionRateLimitMock).toHaveBeenCalledWith(
-      expect.anything(),
-      'runs-clear'
-    );
+    expect(enforceAiPathsActionRateLimitMock).toHaveBeenCalledWith(expect.anything(), 'runs-clear');
     expect(deletePathRunsWithRepositoryMock).toHaveBeenCalledWith(
       repoMock,
       expect.objectContaining({

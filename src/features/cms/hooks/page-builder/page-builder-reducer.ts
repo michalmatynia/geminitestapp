@@ -29,7 +29,10 @@ function makeSnapshot(state: PageBuilderState): PageBuilderSnapshot {
   };
 }
 
-export function pageBuilderReducer(state: PageBuilderState, action: PageBuilderAction): PageBuilderState {
+export function pageBuilderReducer(
+  state: PageBuilderState,
+  action: PageBuilderAction
+): PageBuilderState {
   if (action.type === 'UNDO') {
     if (state.history.past.length === 0) return state;
     const previous = state.history.past[state.history.past.length - 1]!;

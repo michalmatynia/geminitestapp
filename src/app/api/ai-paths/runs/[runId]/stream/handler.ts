@@ -1,42 +1,30 @@
 import { NextRequest } from 'next/server';
 
-import {
-  assertAiPathRunAccess,
-  requireAiPathsRunAccess,
-} from '@/features/ai/ai-paths/server';
+import { assertAiPathRunAccess, requireAiPathsRunAccess } from '@/features/ai/ai-paths/server';
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { notFoundError } from '@/shared/errors/app-error';
-import {
-  getRedisSubscriber,
-  isSubscriberConnected,
-} from '@/shared/lib/redis-pubsub';
+import { getRedisSubscriber, isSubscriberConnected } from '@/shared/lib/redis-pubsub';
 
-const TERMINAL_STATUSES = new Set([
-  'completed',
-  'failed',
-  'canceled',
-  'dead_lettered',
-]);
+const TERMINAL_STATUSES = new Set(['completed', 'failed', 'canceled', 'dead_lettered']);
 const normalizeLimit = (value: number, fallback: number): number => {
   if (!Number.isFinite(value) || value <= 0) return fallback;
   return Math.floor(value);
 };
 const EVENT_BATCH_LIMIT = normalizeLimit(
   Number(process.env['AI_PATHS_STREAM_EVENT_LIMIT'] ?? '200'),
-  200,
+  200
 );
 const NODE_BATCH_LIMIT = normalizeLimit(
   Number(process.env['AI_PATHS_STREAM_NODE_LIMIT'] ?? '200'),
-  200,
+  200
 );
 const PUBSUB_IDLE_TIMEOUT_MS = 30_000;
 const PUBSUB_CATCHUP_INTERVAL_MS = 10_000;
 const POLL_INTERVAL_MS = 500;
 
-const sleep = (ms: number): Promise<void> =>
-  new Promise((resolve) => setTimeout(resolve, ms));
+const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
 const toISOStringSafe = (value?: Date | string | null): string | null => {
   if (!value) return null;
@@ -73,7 +61,7 @@ async function sendCatchUp(
     lastRunUpdatedAt: string | null;
     lastNodeCursor: { ts: string; nodeId: string } | null;
     lastEventCursor: { createdAt: string; id: string } | null;
-  },
+  }
 ): Promise<{
   terminal: boolean;
   lastRunUpdatedAt: string | null;
@@ -94,9 +82,7 @@ async function sendCatchUp(
     };
   }
 
-  const nextRunUpdatedAt = toISOStringSafe(
-    nextRun.updatedAt ?? nextRun.createdAt,
-  );
+  const nextRunUpdatedAt = toISOStringSafe(nextRun.updatedAt ?? nextRun.createdAt);
   if (nextRunUpdatedAt && nextRunUpdatedAt !== lastRunUpdatedAt) {
     send('run', nextRun);
     lastRunUpdatedAt = nextRunUpdatedAt;
@@ -104,17 +90,15 @@ async function sendCatchUp(
 
   const changedNodes = lastNodeCursor
     ? await repo.listRunNodesSince(
-      runId,
-      { updatedAt: lastNodeCursor.ts, nodeId: lastNodeCursor.nodeId },
-      { limit: NODE_BATCH_LIMIT },
-    )
+        runId,
+        { updatedAt: lastNodeCursor.ts, nodeId: lastNodeCursor.nodeId },
+        { limit: NODE_BATCH_LIMIT }
+      )
     : await repo.listRunNodes(runId);
   if (changedNodes.length > 0) {
     send('nodes', changedNodes);
     const latestNode = changedNodes[changedNodes.length - 1];
-    const latestNodeTs = toISOStringSafe(
-      latestNode?.updatedAt ?? latestNode?.createdAt,
-    );
+    const latestNodeTs = toISOStringSafe(latestNode?.updatedAt ?? latestNode?.createdAt);
     if (latestNodeTs && latestNode) {
       lastNodeCursor = { ts: latestNodeTs, nodeId: latestNode.nodeId };
     }
@@ -155,7 +139,7 @@ async function streamWithPubSub(
     lastNodeCursor: { ts: string; nodeId: string } | null;
     lastEventCursor: { createdAt: string; id: string } | null;
   },
-  isCancelled: () => boolean,
+  isCancelled: () => boolean
 ): Promise<void> {
   const sub = getRedisSubscriber();
   if (!sub || !isSubscriberConnected()) {
@@ -280,7 +264,7 @@ async function streamWithPolling(
     lastNodeCursor: { ts: string; nodeId: string } | null;
     lastEventCursor: { createdAt: string; id: string } | null;
   },
-  isCancelled: () => boolean,
+  isCancelled: () => boolean
 ): Promise<void> {
   let cursors = { ...initialCursors };
 
@@ -299,7 +283,7 @@ async function streamWithPolling(
 export async function getAiPathRunStreamHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
-  params: { runId: string },
+  params: { runId: string }
 ): Promise<Response> {
   const { runId } = params;
   const access = await requireAiPathsRunAccess();
@@ -323,8 +307,7 @@ export async function getAiPathRunStreamHandler(
     async start(controller) {
       const send = (event: string, data: unknown): void => {
         if (cancelled) return;
-        const payload =
-          `event: ${event}\n` + `data: ${JSON.stringify(data)}\n\n`;
+        const payload = `event: ${event}\n` + `data: ${JSON.stringify(data)}\n\n`;
         controller.enqueue(encoder.encode(payload));
       };
 
@@ -332,9 +315,7 @@ export async function getAiPathRunStreamHandler(
       send('run', initialRun);
 
       const initialCursors = {
-        lastRunUpdatedAt: toISOStringSafe(
-          initialRun.updatedAt ?? initialRun.createdAt,
-        ),
+        lastRunUpdatedAt: toISOStringSafe(initialRun.updatedAt ?? initialRun.createdAt),
         lastNodeCursor: null as { ts: string; nodeId: string } | null,
         lastEventCursor: initialSince
           ? { createdAt: initialSince.toISOString(), id: '' }

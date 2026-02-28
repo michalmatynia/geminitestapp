@@ -1,14 +1,6 @@
-
 'use client';
 
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type SetStateAction,
-} from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type SetStateAction } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import * as productsApi from '@/features/products/api/products';
@@ -75,16 +67,10 @@ const extractNameEnSegment = (value: string, segmentIndex: number): string => {
   return parts[segmentIndex] ?? '';
 };
 
-const escapeRegexSegment = (value: string): string =>
-  value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const escapeRegexSegment = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-const resolveBooleanStateAction = (
-  next: SetStateAction<boolean>,
-  current: boolean
-): boolean =>
-  typeof next === 'function'
-    ? (next as (prev: boolean) => boolean)(current)
-    : next;
+const resolveBooleanStateAction = (next: SetStateAction<boolean>, current: boolean): boolean =>
+  typeof next === 'function' ? (next as (prev: boolean) => boolean)(current) : next;
 
 // --- Hook Interface ---
 
@@ -112,35 +98,55 @@ export interface UseProductFormValidatorResult {
 
 export function useProductFormValidator(scopeOverride?: string): UseProductFormValidatorResult {
   const { product, draft } = useProductFormContext();
-  const {
-    categories,
-    selectedCategoryId,
-    setCategoryId,
-    selectedCatalogIds,
-  } = useProductFormMetadata();
+  const { categories, selectedCategoryId, setCategoryId, selectedCatalogIds } =
+    useProductFormMetadata();
   const { watch, getValues, setValue } = useFormContext<ProductFormData>();
 
   const validatorConfigQuery = useProductValidatorConfig();
 
   const [
-    nameEn, namePl, nameDe,
-    descEn, descPl, descDe,
-    sku, price, stock,
-    weight, sizeLength, sizeWidth, formLength,
-    supplierName, supplierLink, priceComment,
+    nameEn,
+    namePl,
+    nameDe,
+    descEn,
+    descPl,
+    descDe,
+    sku,
+    price,
+    stock,
+    weight,
+    sizeLength,
+    sizeWidth,
+    formLength,
+    supplierName,
+    supplierLink,
+    priceComment,
     formCategoryId,
   ] = watch([
-    'name_en', 'name_pl', 'name_de',
-    'description_en', 'description_pl', 'description_de',
-    'sku', 'price', 'stock',
-    'weight', 'sizeLength', 'sizeWidth', 'length',
-    'supplierName', 'supplierLink', 'priceComment',
+    'name_en',
+    'name_pl',
+    'name_de',
+    'description_en',
+    'description_pl',
+    'description_de',
+    'sku',
+    'price',
+    'stock',
+    'weight',
+    'sizeLength',
+    'sizeWidth',
+    'length',
+    'supplierName',
+    'supplierLink',
+    'priceComment',
     'categoryId',
   ]);
 
-  const [validatorEnabled, setValidatorEnabledState] = useState<boolean>(() => draft?.validatorEnabled ?? true);
-  const [formatterEnabled, setFormatterEnabledState] = useState<boolean>(
-    () => ((draft?.validatorEnabled ?? true) ? (draft?.formatterEnabled ?? false) : false)
+  const [validatorEnabled, setValidatorEnabledState] = useState<boolean>(
+    () => draft?.validatorEnabled ?? true
+  );
+  const [formatterEnabled, setFormatterEnabledState] = useState<boolean>(() =>
+    (draft?.validatorEnabled ?? true) ? (draft?.formatterEnabled ?? false) : false
   );
   const [validatorInitialized, setValidatorInitialized] = useState<boolean>(
     () => typeof draft?.validatorEnabled === 'boolean'
@@ -148,56 +154,56 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
   const [validatorManuallyChanged, setValidatorManuallyChanged] = useState(false);
   const updateValidatorSettingsMutation = useUpdateValidatorSettingsMutation();
 
-  const setValidatorEnabled = useCallback((enabled: SetStateAction<boolean>): void => {
-    const nextEnabled = Boolean(resolveBooleanStateAction(enabled, validatorEnabled));
-    setValidatorManuallyChanged(true);
-    setValidatorInitialized(true);
-    setValidatorEnabledState(nextEnabled);
-    if (!nextEnabled) {
-      setFormatterEnabledState(false);
-    }
-    void updateValidatorSettingsMutation
-      .mutateAsync(
-        nextEnabled
-          ? { enabledByDefault: true }
-          : { enabledByDefault: false, formatterEnabledByDefault: false }
-      )
-      .catch((error: unknown) => {
-        logClientError(
-          error instanceof Error ? error : new Error(String(error)),
-          {
+  const setValidatorEnabled = useCallback(
+    (enabled: SetStateAction<boolean>): void => {
+      const nextEnabled = Boolean(resolveBooleanStateAction(enabled, validatorEnabled));
+      setValidatorManuallyChanged(true);
+      setValidatorInitialized(true);
+      setValidatorEnabledState(nextEnabled);
+      if (!nextEnabled) {
+        setFormatterEnabledState(false);
+      }
+      void updateValidatorSettingsMutation
+        .mutateAsync(
+          nextEnabled
+            ? { enabledByDefault: true }
+            : { enabledByDefault: false, formatterEnabledByDefault: false }
+        )
+        .catch((error: unknown) => {
+          logClientError(error instanceof Error ? error : new Error(String(error)), {
             context: {
               source: 'ProductForm',
               action: 'setValidatorEnabledDefault',
               nextEnabled,
             },
-          }
-        );
-      });
-  }, [updateValidatorSettingsMutation, validatorEnabled]);
+          });
+        });
+    },
+    [updateValidatorSettingsMutation, validatorEnabled]
+  );
 
-  const setFormatterEnabled = useCallback((enabled: SetStateAction<boolean>): void => {
-    const nextEnabled = validatorEnabled
-      ? Boolean(resolveBooleanStateAction(enabled, formatterEnabled))
-      : false;
-    setValidatorManuallyChanged(true);
-    setValidatorInitialized(true);
-    setFormatterEnabledState(nextEnabled);
-    void updateValidatorSettingsMutation
-      .mutateAsync({ formatterEnabledByDefault: nextEnabled })
-      .catch((error: unknown) => {
-        logClientError(
-          error instanceof Error ? error : new Error(String(error)),
-          {
+  const setFormatterEnabled = useCallback(
+    (enabled: SetStateAction<boolean>): void => {
+      const nextEnabled = validatorEnabled
+        ? Boolean(resolveBooleanStateAction(enabled, formatterEnabled))
+        : false;
+      setValidatorManuallyChanged(true);
+      setValidatorInitialized(true);
+      setFormatterEnabledState(nextEnabled);
+      void updateValidatorSettingsMutation
+        .mutateAsync({ formatterEnabledByDefault: nextEnabled })
+        .catch((error: unknown) => {
+          logClientError(error instanceof Error ? error : new Error(String(error)), {
             context: {
               source: 'ProductForm',
               action: 'setFormatterEnabledDefault',
               nextEnabled,
             },
-          }
-        );
-      });
-  }, [formatterEnabled, updateValidatorSettingsMutation, validatorEnabled]);
+          });
+        });
+    },
+    [formatterEnabled, updateValidatorSettingsMutation, validatorEnabled]
+  );
 
   const [validationDenyBehaviorOverrides, setValidationDenyBehaviorOverrides] = useState<
     Partial<Record<ProductValidationInstanceScope, ProductValidationDenyBehavior>>
@@ -209,7 +215,8 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
       const parsed = JSON.parse(raw) as unknown;
       if (!parsed || typeof parsed !== 'object') return {};
       const source = parsed as Partial<Record<ProductValidationInstanceScope, unknown>>;
-      const next: Partial<Record<ProductValidationInstanceScope, ProductValidationDenyBehavior>> = {};
+      const next: Partial<Record<ProductValidationInstanceScope, ProductValidationDenyBehavior>> =
+        {};
       if (source['draft_template'] !== undefined) {
         next['draft_template'] = normalizeProductValidationDenyBehavior(source['draft_template']);
       }
@@ -233,7 +240,9 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
       const parsed = JSON.parse(raw) as unknown;
       if (!Array.isArray(parsed)) return new Set<string>();
       return new Set(
-        parsed.filter((entry: unknown): entry is string => typeof entry === 'string' && entry.length > 0)
+        parsed.filter(
+          (entry: unknown): entry is string => typeof entry === 'string' && entry.length > 0
+        )
       );
     } catch {
       return new Set<string>();
@@ -248,7 +257,9 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
       const parsed = JSON.parse(raw) as unknown;
       if (!Array.isArray(parsed)) return new Set<string>();
       return new Set(
-        parsed.filter((entry: unknown): entry is string => typeof entry === 'string' && entry.length > 0)
+        parsed.filter(
+          (entry: unknown): entry is string => typeof entry === 'string' && entry.length > 0
+        )
       );
     } catch {
       return new Set<string>();
@@ -260,8 +271,7 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
     const existing = window.sessionStorage.getItem(VALIDATION_DENY_SESSION_ID_KEY);
     if (existing) return existing;
     const nextId =
-      typeof globalThis.crypto !== 'undefined' &&
-      typeof globalThis.crypto.randomUUID === 'function'
+      typeof globalThis.crypto !== 'undefined' && typeof globalThis.crypto.randomUUID === 'function'
         ? globalThis.crypto.randomUUID()
         : `validator-session-${Date.now().toString(36)}`;
     window.sessionStorage.setItem(VALIDATION_DENY_SESSION_ID_KEY, nextId);
@@ -269,15 +279,13 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
   });
 
   const [draftValidationInstanceId] = useState<string>(() =>
-    typeof globalThis.crypto !== 'undefined' &&
-    typeof globalThis.crypto.randomUUID === 'function'
+    typeof globalThis.crypto !== 'undefined' && typeof globalThis.crypto.randomUUID === 'function'
       ? globalThis.crypto.randomUUID()
       : `draft-validation-${Date.now().toString(36)}`
   );
 
   const [productCreateValidationInstanceId] = useState<string>(() =>
-    typeof globalThis.crypto !== 'undefined' &&
-    typeof globalThis.crypto.randomUUID === 'function'
+    typeof globalThis.crypto !== 'undefined' && typeof globalThis.crypto.randomUUID === 'function'
       ? globalThis.crypto.randomUUID()
       : `product-create-validation-${Date.now().toString(36)}`
   );
@@ -333,15 +341,11 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
 
   const selectedCategoryName = useMemo((): string => {
     if (!selectedCategoryId) return '';
-    const category =
-      categories.find((item) => item.id === selectedCategoryId) ?? null;
+    const category = categories.find((item) => item.id === selectedCategoryId) ?? null;
     return category?.name?.trim() ?? '';
   }, [categories, selectedCategoryId]);
 
-  const nameEnSegment4 = useMemo(
-    () => extractNameEnSegment(String(nameEn ?? ''), 3),
-    [nameEn]
-  );
+  const nameEnSegment4 = useMemo(() => extractNameEnSegment(String(nameEn ?? ''), 3), [nameEn]);
 
   const nameEnSegment4RegexEscaped = useMemo(
     () => escapeRegexSegment(nameEnSegment4),
@@ -373,11 +377,22 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
       nameEnSegment4RegexEscaped,
     }),
     [
-      nameEn, namePl, nameDe,
-      descEn, descPl, descDe,
-      sku, price, stock,
-      weight, sizeLength, sizeWidth, formLength,
-      supplierName, supplierLink, priceComment,
+      nameEn,
+      namePl,
+      nameDe,
+      descEn,
+      descPl,
+      descDe,
+      sku,
+      price,
+      stock,
+      weight,
+      sizeLength,
+      sizeWidth,
+      formLength,
+      supplierName,
+      supplierLink,
+      priceComment,
       formCategoryId,
       nameEnSegment4,
       nameEnSegment4RegexEscaped,
@@ -417,7 +432,8 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
   const latestProductValues = useMemo((): Record<string, unknown> | null => {
     const list = latestProductsQuery.data ?? [];
     if (list.length === 0) return null;
-    const preferred = list.find((item: ProductWithImages) => item.id !== product?.id) ?? list[0] ?? null;
+    const preferred =
+      list.find((item: ProductWithImages) => item.id !== product?.id) ?? list[0] ?? null;
     return preferred as unknown as Record<string, unknown>;
   }, [latestProductsQuery.data, product?.id]);
 
@@ -451,9 +467,9 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
     setValidatorEnabledState(enabledByDefault);
     setFormatterEnabledState(
       enabledByDefault
-        ? (typeof formatterEnabledByDefault === 'boolean'
+        ? typeof formatterEnabledByDefault === 'boolean'
           ? formatterEnabledByDefault
-          : false)
+          : false
         : false
     );
     setValidatorInitialized(true);
@@ -569,28 +585,32 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
   }, [validationInstanceScope, validationScopeKey]);
 
   const setValidationDenyBehavior = useCallback(
-    (next: ProductValidationDenyBehavior | ((prev: ProductValidationDenyBehavior) => ProductValidationDenyBehavior)): void => {
-      setValidationDenyBehaviorOverrides((
-        prev: Partial<Record<ProductValidationInstanceScope, ProductValidationDenyBehavior>>
-      ) => {
-        const current =
-          prev[validationInstanceScope] ??
-          configuredInstanceDenyBehavior[validationInstanceScope];
-        const resolved =
-          typeof next === 'function'
-            ? (next as (prev: ProductValidationDenyBehavior) => ProductValidationDenyBehavior)(
-              current
-            )
-            : next;
-        const normalized = normalizeProductValidationDenyBehavior(resolved);
-        if (normalized === current && prev[validationInstanceScope] === normalized) {
-          return prev;
+    (
+      next:
+        | ProductValidationDenyBehavior
+        | ((prev: ProductValidationDenyBehavior) => ProductValidationDenyBehavior)
+    ): void => {
+      setValidationDenyBehaviorOverrides(
+        (prev: Partial<Record<ProductValidationInstanceScope, ProductValidationDenyBehavior>>) => {
+          const current =
+            prev[validationInstanceScope] ??
+            configuredInstanceDenyBehavior[validationInstanceScope];
+          const resolved =
+            typeof next === 'function'
+              ? (next as (prev: ProductValidationDenyBehavior) => ProductValidationDenyBehavior)(
+                  current
+                )
+              : next;
+          const normalized = normalizeProductValidationDenyBehavior(resolved);
+          if (normalized === current && prev[validationInstanceScope] === normalized) {
+            return prev;
+          }
+          return {
+            ...prev,
+            [validationInstanceScope]: normalized,
+          };
         }
-        return {
-          ...prev,
-          [validationInstanceScope]: normalized,
-        };
-      });
+      );
     },
     [configuredInstanceDenyBehavior, validationInstanceScope]
   );
@@ -599,9 +619,7 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
     (patternId: string): ProductValidationDenyBehavior => {
       const normalizedPatternId = patternId.trim();
       if (!normalizedPatternId) return effectiveValidationDenyBehavior;
-      const override = patternDenyBehaviorOverrideById.get(
-        normalizedPatternId
-      );
+      const override = patternDenyBehaviorOverrideById.get(normalizedPatternId);
       return override ?? effectiveValidationDenyBehavior;
     },
     [effectiveValidationDenyBehavior, patternDenyBehaviorOverrideById]
@@ -636,10 +654,7 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
     isIssueAccepted,
     resolveChangedAt: (fieldName: string, timestamps: Record<string, number>): number => {
       if (fieldName === 'categoryId') {
-        return Math.max(
-          timestamps['categoryId'] ?? 0,
-          timestamps['name_en'] ?? 0
-        );
+        return Math.max(timestamps['categoryId'] ?? 0, timestamps['name_en'] ?? 0);
       }
       return timestamps[fieldName] ?? 0;
     },
@@ -664,40 +679,35 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
       }
 
       try {
-        await api.post<Record<string, unknown>>('/api/products/validator-decisions', {
-          action: 'deny',
-          productId: product?.id ?? null,
-          draftId: draft?.id ?? null,
-          patternId,
-          fieldName,
-          denyBehavior: issueDenyBehavior,
-          message: input.message ?? null,
-          replacementValue: input.replacementValue ?? null,
-          sessionId: validationSessionId || null,
-        }, {
-          logError: false,
-        });
-      } catch (error: unknown) {
-        logClientError(
-          error instanceof Error ? error : new Error(String(error)),
+        await api.post<Record<string, unknown>>(
+          '/api/products/validator-decisions',
           {
-            context: {
-              source: 'ProductForm',
-              action: 'denyValidatorIssue',
-              fieldName,
-              patternId,
-            },
+            action: 'deny',
+            productId: product?.id ?? null,
+            draftId: draft?.id ?? null,
+            patternId,
+            fieldName,
+            denyBehavior: issueDenyBehavior,
+            message: input.message ?? null,
+            replacementValue: input.replacementValue ?? null,
+            sessionId: validationSessionId || null,
+          },
+          {
+            logError: false,
           }
         );
+      } catch (error: unknown) {
+        logClientError(error instanceof Error ? error : new Error(String(error)), {
+          context: {
+            source: 'ProductForm',
+            action: 'denyValidatorIssue',
+            fieldName,
+            patternId,
+          },
+        });
       }
     },
-    [
-      buildIssueDecisionKey,
-      draft?.id,
-      getIssueDenyBehavior,
-      product?.id,
-      validationSessionId,
-    ]
+    [buildIssueDecisionKey, draft?.id, getIssueDenyBehavior, product?.id, validationSessionId]
   );
 
   const acceptIssue = useCallback(
@@ -722,39 +732,35 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
       });
 
       try {
-        await api.post<Record<string, unknown>>('/api/products/validator-decisions', {
-          action: 'accept',
-          productId: product?.id ?? null,
-          draftId: draft?.id ?? null,
-          patternId,
-          fieldName,
-          denyBehavior: null,
-          message: input.message ?? null,
-          replacementValue: input.replacementValue ?? null,
-          sessionId: validationSessionId || null,
-        }, {
-          logError: false,
-        });
-      } catch (error: unknown) {
-        logClientError(
-          error instanceof Error ? error : new Error(String(error)),
+        await api.post<Record<string, unknown>>(
+          '/api/products/validator-decisions',
           {
-            context: {
-              source: 'ProductForm',
-              action: 'acceptValidatorIssue',
-              fieldName,
-              patternId,
-            },
+            action: 'accept',
+            productId: product?.id ?? null,
+            draftId: draft?.id ?? null,
+            patternId,
+            fieldName,
+            denyBehavior: null,
+            message: input.message ?? null,
+            replacementValue: input.replacementValue ?? null,
+            sessionId: validationSessionId || null,
+          },
+          {
+            logError: false,
           }
         );
+      } catch (error: unknown) {
+        logClientError(error instanceof Error ? error : new Error(String(error)), {
+          context: {
+            source: 'ProductForm',
+            action: 'acceptValidatorIssue',
+            fieldName,
+            patternId,
+          },
+        });
       }
     },
-    [
-      buildIssueDecisionKey,
-      draft?.id,
-      product?.id,
-      validationSessionId,
-    ]
+    [buildIssueDecisionKey, draft?.id, product?.id, validationSessionId]
   );
 
   const applyAutoReplacementToField = useCallback(

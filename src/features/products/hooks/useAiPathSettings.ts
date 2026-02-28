@@ -11,18 +11,12 @@ import {
   migrateTriggerToFetcherGraph,
   normalizeNodes,
 } from '@/shared/lib/ai-paths/core/normalization';
-import {
-  createDefaultPathConfig,
-} from '@/shared/lib/ai-paths/core/utils/factory';
+import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factory';
 import { sanitizeEdges } from '@/shared/lib/ai-paths/core/utils/graph';
 import { repairPathNodeIdentities } from '@/shared/lib/ai-paths/core/utils/node-identity';
 import { safeParseJson } from '@/shared/lib/ai-paths/core/utils/runtime';
 import { fetchAiPathsSettingsCached } from '@/shared/lib/ai-paths/settings-store-client';
-import type {
-  AiNode,
-  PathConfig,
-  PathMeta,
-} from '@/shared/contracts/ai-paths';
+import type { AiNode, PathConfig, PathMeta } from '@/shared/contracts/ai-paths';
 import { api } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
@@ -34,8 +28,7 @@ const USER_PREFERENCES_STALE_MS = 5 * 60_000;
 const resolvePreferredActivePathId = (
   data: { aiPathsActivePathId?: unknown } | null | undefined
 ): string | null =>
-  typeof data?.aiPathsActivePathId === 'string' &&
-  data.aiPathsActivePathId.trim().length > 0
+  typeof data?.aiPathsActivePathId === 'string' && data.aiPathsActivePathId.trim().length > 0
     ? data.aiPathsActivePathId.trim()
     : null;
 
@@ -71,9 +64,7 @@ const sanitizeLoadedPathConfig = (config: PathConfig): PathConfig => {
   };
 };
 
-export async function fetchPathSettings(
-  queryClient: QueryClient,
-): Promise<PathSettingsResult> {
+export async function fetchPathSettings(queryClient: QueryClient): Promise<PathSettingsResult> {
   let settingsData: Array<{ key: string; value: string }>;
   try {
     settingsData = await queryClient.fetchQuery({
@@ -130,7 +121,9 @@ export async function fetchPathSettings(
       if (Array.isArray(parsedIndex)) {
         settingsPathOrder = parsedIndex
           .map((meta: PathMeta) => meta?.id)
-          .filter((id: string | undefined): id is string => typeof id === 'string' && id.length > 0);
+          .filter(
+            (id: string | undefined): id is string => typeof id === 'string' && id.length > 0
+          );
         parsedIndex.forEach((meta: PathMeta) => {
           if (!meta?.id) return;
           const configRaw = map.get(`${PATH_CONFIG_PREFIX}${meta.id}`);
@@ -166,8 +159,8 @@ export async function fetchPathSettings(
   const configsList: PathConfig[] = Object.values(configs);
   const orderedConfigs: PathConfig[] = settingsPathOrder.length
     ? settingsPathOrder
-      .map((id: string) => configs[id])
-      .filter((config: PathConfig | undefined): config is PathConfig => Boolean(config))
+        .map((id: string) => configs[id])
+        .filter((config: PathConfig | undefined): config is PathConfig => Boolean(config))
     : configsList;
 
   return {
@@ -184,10 +177,10 @@ export function findTriggerPath(
   uiState: Record<string, unknown> | null,
   preferredActivePathId: string | null,
   triggerEvent: string,
-  options?: FindTriggerPathOptions,
+  options?: FindTriggerPathOptions
 ): PathConfig | undefined {
   const fallbackTriggerEventId =
-    options?.defaultTriggerEventId ?? ((TRIGGER_EVENTS[0]?.id as string) ?? 'manual');
+    options?.defaultTriggerEventId ?? (TRIGGER_EVENTS[0]?.id as string) ?? 'manual';
   const fallbackToAnyPath = options?.fallbackToAnyPath !== false;
   const preferServerExecution = options?.preferServerExecution === true;
   const requireServerExecution = options?.requireServerExecution === true;
@@ -217,22 +210,21 @@ export function findTriggerPath(
   const triggerCandidates: PathConfig[] = orderedConfigs.filter((config: PathConfig) =>
     Array.isArray(config?.nodes)
       ? config.nodes.some(
-        (node: AiNode) =>
-          node.type === 'trigger' &&
+          (node: AiNode) =>
+            node.type === 'trigger' &&
             (node.config?.trigger?.event ?? fallbackTriggerEventId) === triggerEvent
-      )
+        )
       : false
   );
   const serverTriggerCandidates = triggerCandidates.filter(
     (config: PathConfig): boolean => config.executionMode !== 'local'
   );
-  const selectedTriggerCandidate =
-    requireServerExecution
-      ? pickPreferredCandidate(serverTriggerCandidates)
-      : preferServerExecution
-        ? pickPreferredCandidate(serverTriggerCandidates) ??
-          pickPreferredCandidate(triggerCandidates)
-        : pickPreferredCandidate(triggerCandidates);
+  const selectedTriggerCandidate = requireServerExecution
+    ? pickPreferredCandidate(serverTriggerCandidates)
+    : preferServerExecution
+      ? (pickPreferredCandidate(serverTriggerCandidates) ??
+        pickPreferredCandidate(triggerCandidates))
+      : pickPreferredCandidate(triggerCandidates);
   if (selectedTriggerCandidate) return selectedTriggerCandidate;
 
   if (!fallbackToAnyPath) return undefined;
@@ -240,7 +232,7 @@ export function findTriggerPath(
     (config: PathConfig): boolean => config.executionMode !== 'local'
   );
   return requireServerExecution || preferServerExecution
-    ? pickPreferredCandidate(serverFallbackCandidates) ??
-      (requireServerExecution ? undefined : pickPreferredCandidate(orderedConfigs))
+    ? (pickPreferredCandidate(serverFallbackCandidates) ??
+        (requireServerExecution ? undefined : pickPreferredCandidate(orderedConfigs)))
     : pickPreferredCandidate(orderedConfigs);
 }

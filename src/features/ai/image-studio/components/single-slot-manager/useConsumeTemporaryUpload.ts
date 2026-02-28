@@ -4,19 +4,19 @@ import { useCallback, useRef } from 'react';
 import { api } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 import { studioKeys } from '../../hooks/useImageStudioQueries';
-import { 
-  slotHasRenderableImage, 
-  resolveSlotIdCandidates, 
-  REVEAL_IN_TREE_EVENT 
+import {
+  slotHasRenderableImage,
+  resolveSlotIdCandidates,
+  REVEAL_IN_TREE_EVENT,
 } from './single-slot-manager-utils';
-import { 
-  isImageStudioSlotImageLocked, 
-  setImageStudioSlotImageLocked 
-} from '../../utils/slot-image-lock';
-import type { 
-  ImageStudioSlotDto as ImageStudioSlot, 
-  ImageStudioAssetDto as ImageStudioUploadedAsset, 
-  UpdateImageStudioSlotDto 
+import {
+  isImageStudioSlotImageLocked,
+  setImageStudioSlotImageLocked,
+} from '@/shared/lib/ai/image-studio/utils/slot-image-lock';
+import type {
+  ImageStudioSlotDto as ImageStudioSlot,
+  ImageStudioAssetDto as ImageStudioUploadedAsset,
+  UpdateImageStudioSlotDto,
 } from '@/shared/contracts/image-studio';
 import type { QueryClient, UseMutationResult } from '@tanstack/react-query';
 
@@ -25,7 +25,11 @@ interface ConsumeTemporaryUploadProps {
   projectId: string;
   objectSlot: ImageStudioSlot | null;
   queryClient: QueryClient;
-  updateSlotMutation: UseMutationResult<ImageStudioSlot, Error, { id: string; data: UpdateImageStudioSlotDto }>;
+  updateSlotMutation: UseMutationResult<
+    ImageStudioSlot,
+    Error,
+    { id: string; data: UpdateImageStudioSlotDto }
+  >;
   setTemporaryObjectUpload: React.Dispatch<React.SetStateAction<ImageStudioUploadedAsset | null>>;
   setSelectedSlotId: (id: string | null) => void;
   setWorkingSlotId: (id: string | null) => void;
@@ -72,14 +76,17 @@ export function useConsumeTemporaryUpload({
         setWorkingSlotId(lastConsumedSlotId);
         setPreviewMode('image');
         if (typeof window !== 'undefined') {
-          window.dispatchEvent(new CustomEvent(REVEAL_IN_TREE_EVENT, { detail: { slotId: lastConsumedSlotId } }));
+          window.dispatchEvent(
+            new CustomEvent(REVEAL_IN_TREE_EVENT, { detail: { slotId: lastConsumedSlotId } })
+          );
         }
         return true;
       }
 
       if (
         consumeTemporaryUploadInFlightRef.current &&
-        consumeTemporaryUploadInFlightIdRef.current === (currentTemporaryUploadId || normalizedTemporaryFilepath)
+        consumeTemporaryUploadInFlightIdRef.current ===
+          (currentTemporaryUploadId || normalizedTemporaryFilepath)
       ) {
         return consumeTemporaryUploadInFlightRef.current;
       }
@@ -103,7 +110,8 @@ export function useConsumeTemporaryUpload({
           const findMatchingSlot = (slotsToScan: ImageStudioSlot[]): ImageStudioSlot | null => {
             const matches = slotsToScan.filter((slot) => {
               const slotImageFileId = slot.imageFileId?.trim() ?? '';
-              if (currentTemporaryUploadId && slotImageFileId === currentTemporaryUploadId) return true;
+              if (currentTemporaryUploadId && slotImageFileId === currentTemporaryUploadId)
+                return true;
               if (!normalizedTemporaryFilepath) return false;
               const slotPath = (slot.imageFile?.url ?? slot.imageUrl ?? '').trim();
               return slotPath === normalizedTemporaryFilepath;
@@ -113,7 +121,9 @@ export function useConsumeTemporaryUpload({
 
           const resolveFallbackSlot = async (): Promise<ImageStudioSlot | null> => {
             await invalidateImageStudioSlots(queryClient, normalizedProjectId);
-            const refreshed = queryClient.getQueryData<{ slots: ImageStudioSlot[] }>(studioKeys.slots(normalizedProjectId));
+            const refreshed = queryClient.getQueryData<{ slots: ImageStudioSlot[] }>(
+              studioKeys.slots(normalizedProjectId)
+            );
             const refreshedSlots = refreshed?.slots ?? [];
             const existingMatch = findMatchingSlot(refreshedSlots);
             if (existingMatch) {
@@ -149,7 +159,9 @@ export function useConsumeTemporaryUpload({
                     name: asset.filename?.trim() || `Card ${Date.now()}`,
                     ...(getFolderForNewSlot() ? { folderPath: getFolderForNewSlot() } : {}),
                     ...(currentTemporaryUploadId ? { imageFileId: currentTemporaryUploadId } : {}),
-                    ...(normalizedTemporaryFilepath ? { imageUrl: normalizedTemporaryFilepath } : {}),
+                    ...(normalizedTemporaryFilepath
+                      ? { imageUrl: normalizedTemporaryFilepath }
+                      : {}),
                     imageBase64: null,
                   },
                 ],
@@ -210,9 +222,7 @@ export function useConsumeTemporaryUpload({
                 return { slots: ensuredSlot ? [ensuredSlot] : [] };
               }
               if (!ensuredSlot) return current;
-              const existingIndex = current.slots.findIndex(
-                (slot) => slot.id === ensuredSlot.id
-              );
+              const existingIndex = current.slots.findIndex((slot) => slot.id === ensuredSlot.id);
               if (existingIndex < 0) {
                 return {
                   ...current,
@@ -233,7 +243,9 @@ export function useConsumeTemporaryUpload({
           setWorkingSlotId(targetSlotId);
           setPreviewMode('image');
           if (typeof window !== 'undefined') {
-            window.dispatchEvent(new CustomEvent(REVEAL_IN_TREE_EVENT, { detail: { slotId: targetSlotId } }));
+            window.dispatchEvent(
+              new CustomEvent(REVEAL_IN_TREE_EVENT, { detail: { slotId: targetSlotId } })
+            );
           }
 
           if (currentTemporaryUploadId) {
@@ -244,13 +256,16 @@ export function useConsumeTemporaryUpload({
           return true;
         } catch (error) {
           setTemporaryObjectUpload((current) => current ?? asset);
-          setUploadError(error instanceof Error ? error.message : 'Failed to create card from temporary upload');
+          setUploadError(
+            error instanceof Error ? error.message : 'Failed to create card from temporary upload'
+          );
           return false;
         }
       })();
 
       consumeTemporaryUploadInFlightRef.current = consumePromise;
-      consumeTemporaryUploadInFlightIdRef.current = currentTemporaryUploadId || normalizedTemporaryFilepath;
+      consumeTemporaryUploadInFlightIdRef.current =
+        currentTemporaryUploadId || normalizedTemporaryFilepath;
 
       try {
         return await consumePromise;

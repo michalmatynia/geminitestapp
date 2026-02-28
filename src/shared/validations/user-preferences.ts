@@ -43,20 +43,14 @@ export const userPreferencesUpdateSchema = z.object({
   imageStudioLastProjectId: nullableIdSchema,
   caseResolverCaseListViewMode: z.enum(['hierarchy', 'list']).optional().nullable(),
   caseResolverCaseListSortBy: z
-    .enum([
-      'updated',
-      'created',
-      'happeningDate',
-      'name',
-      'status',
-      'signature',
-      'locked',
-      'sent',
-    ])
+    .enum(['updated', 'created', 'happeningDate', 'name', 'status', 'signature', 'locked', 'sent'])
     .optional()
     .nullable(),
   caseResolverCaseListSortOrder: z.enum(['asc', 'desc']).optional().nullable(),
-  caseResolverCaseListSearchScope: z.enum(['all', 'name', 'folder', 'content']).optional().nullable(),
+  caseResolverCaseListSearchScope: z
+    .enum(['all', 'name', 'folder', 'content'])
+    .optional()
+    .nullable(),
   caseResolverCaseListFiltersCollapsedByDefault: z.boolean().optional().nullable(),
   caseResolverCaseListShowNestedContent: z.boolean().optional().nullable(),
   adminMenuCollapsed: z.boolean().optional().nullable(),
@@ -83,13 +77,15 @@ export const userPreferencesResponseSchema = z
     productListPageSize: z.number().int().optional().nullable(),
     productListThumbnailSource: z.enum(['file', 'link', 'base64']).optional().nullable(),
     productListFiltersCollapsedByDefault: z.boolean().optional().nullable(),
-    productListAdvancedFilterPresets: z
-      .array(productAdvancedFilterPresetSchema)
-      .optional(),
+    productListAdvancedFilterPresets: z.array(productAdvancedFilterPresetSchema).optional(),
     productListAppliedAdvancedFilter: z.string().optional().nullable(),
     productListAppliedAdvancedFilterPresetId: z.string().optional().nullable(),
     productListDraftIconColorMode: z.enum(['theme', 'custom']).optional().nullable(),
-    productListDraftIconColor: z.string().regex(USER_PREFERENCES_HEX_COLOR_PATTERN).optional().nullable(),
+    productListDraftIconColor: z
+      .string()
+      .regex(USER_PREFERENCES_HEX_COLOR_PATTERN)
+      .optional()
+      .nullable(),
     aiPathsActivePathId: z.string().optional().nullable(),
     imageStudioLastProjectId: z.string().optional().nullable(),
     caseResolverCaseListViewMode: z.enum(['hierarchy', 'list']).optional().nullable(),
@@ -107,7 +103,10 @@ export const userPreferencesResponseSchema = z
       .optional()
       .nullable(),
     caseResolverCaseListSortOrder: z.enum(['asc', 'desc']).optional().nullable(),
-    caseResolverCaseListSearchScope: z.enum(['all', 'name', 'folder', 'content']).optional().nullable(),
+    caseResolverCaseListSearchScope: z
+      .enum(['all', 'name', 'folder', 'content'])
+      .optional()
+      .nullable(),
     caseResolverCaseListFiltersCollapsedByDefault: z.boolean().optional().nullable(),
     caseResolverCaseListShowNestedContent: z.boolean().optional().nullable(),
     adminMenuCollapsed: z.boolean().optional().nullable(),
@@ -125,17 +124,13 @@ export const userPreferencesResponseSchema = z
   })
   .passthrough();
 
-const normalizeNullableString = (
-  value: string | null
-): string | null => {
+const normalizeNullableString = (value: string | null): string | null => {
   if (value === null) return null;
   const normalized = value.trim();
   return normalized.length > 0 ? normalized : null;
 };
 
-const normalizeStringArray = (
-  value: string[] | null
-): string[] => {
+const normalizeStringArray = (value: string[] | null): string[] => {
   if (value === null) return [];
   const normalized = value
     .map((entry: string) => entry.trim())
@@ -167,8 +162,7 @@ export const normalizeUserPreferencesUpdatePayload = (
     normalized.productListFiltersCollapsedByDefault = payload.productListFiltersCollapsedByDefault;
   }
   if (payload.productListAdvancedFilterPresets !== undefined) {
-    normalized.productListAdvancedFilterPresets =
-      payload.productListAdvancedFilterPresets ?? [];
+    normalized.productListAdvancedFilterPresets = payload.productListAdvancedFilterPresets ?? [];
   }
   if (payload.productListAppliedAdvancedFilter !== undefined) {
     normalized.productListAppliedAdvancedFilter = normalizeNullableString(
@@ -249,8 +243,7 @@ export const normalizeUserPreferencesUpdatePayload = (
     normalized.cmsPreviewEnabled = payload.cmsPreviewEnabled;
   }
   if (payload.cmsSlideshowPauseOnHoverInEditor !== undefined) {
-    normalized.cmsSlideshowPauseOnHoverInEditor =
-      payload.cmsSlideshowPauseOnHoverInEditor;
+    normalized.cmsSlideshowPauseOnHoverInEditor = payload.cmsSlideshowPauseOnHoverInEditor;
   }
 
   return normalized;
@@ -263,9 +256,7 @@ export const parseUserPreferencesUpdatePayload = (
   return normalizeUserPreferencesUpdatePayload(parsed);
 };
 
-export const normalizeUserPreferencesResponse = (
-  payload: unknown
-): Partial<UserPreferences> => {
+export const normalizeUserPreferencesResponse = (payload: unknown): Partial<UserPreferences> => {
   const parsed = userPreferencesResponseSchema.safeParse(payload);
   if (!parsed.success) return {};
   return parsed.data as Partial<UserPreferences>;

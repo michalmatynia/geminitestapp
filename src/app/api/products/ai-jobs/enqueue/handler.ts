@@ -37,8 +37,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   });
 
   const inlineJobs =
-    process.env['AI_JOBS_INLINE'] === 'true' ||
-    process.env['NODE_ENV'] !== 'production';
+    process.env['AI_JOBS_INLINE'] === 'true' || process.env['NODE_ENV'] !== 'production';
 
   if (inlineJobs) {
     // WORKAROUND: In serverless/development, immediately process this job

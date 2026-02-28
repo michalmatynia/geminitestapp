@@ -134,7 +134,8 @@ describe('ProductListHeader Component', () => {
     categoryNameById: new Map(),
     thumbnailSource: 'file',
     imageExternalBaseUrl: '',
-    isCreateOpen: false,    isPromptOpen: false,
+    isCreateOpen: false,
+    isPromptOpen: false,
     setIsPromptOpen: vi.fn(),
     handleConfirmSku: vi.fn(),
     initialSku: '',
@@ -168,9 +169,7 @@ describe('ProductListHeader Component', () => {
   const renderWithContext = (ui: React.ReactNode, contextValue = mockContextValue) => {
     return render(
       <AdminLayoutProvider>
-        <ProductListProvider value={contextValue}>
-          {ui}
-        </ProductListProvider>
+        <ProductListProvider value={contextValue}>{ui}</ProductListProvider>
       </AdminLayoutProvider>
     );
   };
@@ -200,7 +199,7 @@ describe('ProductListHeader Component', () => {
     // though Pagination component might handle disabled states.
     // Here we just check calls.
     renderWithContext(<ProductListHeader />, { ...mockContextValue, page: 2 });
-    
+
     // Check for previous button. Note: The exact label/text depends on the Pagination component implementation.
     // Assuming standard accessible labels or text.
     const [prevButton] = screen.getAllByLabelText('Previous page'); // Adjust selector if needed based on Pagination component

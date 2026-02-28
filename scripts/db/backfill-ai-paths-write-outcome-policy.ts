@@ -59,9 +59,7 @@ const parsePathConfig = (raw: string): PathConfig | null => {
   }
 };
 
-const withWriteOutcomePolicy = (
-  node: AiNode
-): { node: AiNode; changed: boolean } => {
+const withWriteOutcomePolicy = (node: AiNode): { node: AiNode; changed: boolean } => {
   if (node.type !== 'database') return { node, changed: false };
   if (!node.config || typeof node.config !== 'object') return { node, changed: false };
   const databaseConfig = node.config.database as DatabaseConfig | undefined;
@@ -171,4 +169,3 @@ void main().catch((error) => {
   console.error('Failed to backfill AI Paths write outcome policy:', error);
   process.exit(1);
 });
-

@@ -8,11 +8,16 @@ import {
   recordBrainInsightAnalytics,
   resolveRuntimeAnalyticsRangeWindow,
 } from '@/features/ai/ai-paths/services/runtime-analytics-service';
-import { getBrainAssignmentForFeature } from '@/features/ai/brain/server';
-import { listAnalyticsEvents, getAnalyticsSummary } from '@/features/analytics/server';
+import { getBrainAssignmentForFeature } from '@/shared/lib/ai-brain/server';
+import { listAnalyticsEvents, getAnalyticsSummary } from '@/shared/lib/analytics/server';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { listSystemLogs, getSystemLogMetrics } from '@/shared/lib/observability/system-logger';
-import type { AiInsightRecordDto as AiInsightRecord, AiInsightSourceDto as AiInsightSource, AiInsightStatusDto as AiInsightStatus, AiInsightTypeDto as AiInsightType } from '@/shared/contracts/ai-insights';
+import type {
+  AiInsightRecordDto as AiInsightRecord,
+  AiInsightSourceDto as AiInsightSource,
+  AiInsightStatusDto as AiInsightStatus,
+  AiInsightTypeDto as AiInsightType,
+} from '@/shared/contracts/ai-insights';
 import type { AiPathRuntimeAnalyticsRangeDto as AiPathRuntimeAnalyticsRange } from '@/shared/contracts/ai-paths';
 import type { AnalyticsEventDto, AnalyticsSummaryDto } from '@/shared/contracts/analytics';
 import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
@@ -32,11 +37,11 @@ import {
 const OLLAMA_BASE_URL = process.env['OLLAMA_BASE_URL'] || 'http://localhost:11434';
 const AI_INSIGHTS_MODEL_MAX_RETRIES = Math.max(
   0,
-  Number(process.env['AI_INSIGHTS_MODEL_MAX_RETRIES'] ?? 2),
+  Number(process.env['AI_INSIGHTS_MODEL_MAX_RETRIES'] ?? 2)
 );
 const AI_INSIGHTS_MODEL_RETRY_BASE_MS = Math.max(
   100,
-  Number(process.env['AI_INSIGHTS_MODEL_RETRY_BASE_MS'] ?? 750),
+  Number(process.env['AI_INSIGHTS_MODEL_RETRY_BASE_MS'] ?? 750)
 );
 
 type SettingDoc = { key?: string; value?: string; _id?: string };
@@ -112,7 +117,11 @@ const parseBooleanSetting = (value: string | null | undefined, fallback: boolean
   return value === 'true' || value === '1';
 };
 
-const parseNumberSetting = (value: string | null | undefined, fallback: number, min: number = 1): number => {
+const parseNumberSetting = (
+  value: string | null | undefined,
+  fallback: number,
+  min: number = 1
+): number => {
   const parsed = Number(value);
   if (!Number.isFinite(parsed) || parsed < min) return fallback;
   return parsed;
@@ -128,9 +137,7 @@ const LEGACY_INSIGHT_SCHEDULE_KEYS = {
   logsAutoOnError: 'ai_logs_auto_on_error',
 } as const;
 
-const readSettingWithFallback = async (
-  keys: readonly string[]
-): Promise<string | null> => {
+const readSettingWithFallback = async (keys: readonly string[]): Promise<string | null> => {
   for (const key of keys) {
     const value = await readInsightSettingValue(key);
     if (value !== null) return value;
@@ -138,7 +145,9 @@ const readSettingWithFallback = async (
   return null;
 };
 
-const sanitizeEvents = (events: AnalyticsSummaryDto['recent'] | undefined): Record<string, unknown>[] =>
+const sanitizeEvents = (
+  events: AnalyticsSummaryDto['recent'] | undefined
+): Record<string, unknown>[] =>
   (events ?? []).map((event: AnalyticsEventDto) => ({
     id: event.id,
     ts: event.ts,
@@ -161,12 +170,14 @@ const sanitizeLogs = (logs: SystemLogRecord[]): Record<string, unknown>[] =>
     path: log.path ?? null,
     method: log.method ?? null,
     statusCode: log.statusCode ?? null,
-    context: log.context ? { fingerprint: (log.context as { fingerprint?: unknown }).fingerprint } : null,
+    context: log.context
+      ? { fingerprint: (log.context as { fingerprint?: unknown }).fingerprint }
+      : null,
   }));
 
 const getClient = (
   modelName: string,
-  apiKey: string | null,
+  apiKey: string | null
 ): { openai: OpenAI; isOllama: boolean } => {
   const modelLower = modelName.toLowerCase();
   const isOpenAI =
@@ -193,15 +204,15 @@ const getClient = (
 const isAnthropicModel = (modelName: string): boolean =>
   modelName.toLowerCase().startsWith('claude');
 
-const isGeminiModel = (modelName: string): boolean =>
-  modelName.toLowerCase().startsWith('gemini');
+const isGeminiModel = (modelName: string): boolean => modelName.toLowerCase().startsWith('gemini');
 
 const runAnthropicChat = async (params: {
   model: string;
   apiKey: string;
   messages: ChatMessage[];
 }): Promise<string> => {
-  const system = params.messages.find((message: ChatMessage) => message.role === 'system')?.content ?? '';
+  const system =
+    params.messages.find((message: ChatMessage) => message.role === 'system')?.content ?? '';
   const conversation = params.messages
     .filter((message: ChatMessage) => message.role !== 'system')
     .map((message: ChatMessage) => ({ role: message.role, content: message.content }));
@@ -227,7 +238,10 @@ const runAnthropicChat = async (params: {
   const data = (await res.json()) as {
     content?: Array<{ text?: string }>;
   };
-  const text = data.content?.map((part: { text?: string }) => part.text ?? '').join('').trim();
+  const text = data.content
+    ?.map((part: { text?: string }) => part.text ?? '')
+    .join('')
+    .trim();
   return text ?? '';
 };
 
@@ -236,9 +250,12 @@ const runGeminiChat = async (params: {
   apiKey: string;
   messages: ChatMessage[];
 }): Promise<string> => {
-  const system = params.messages.find((message: ChatMessage) => message.role === 'system')?.content ?? '';
+  const system =
+    params.messages.find((message: ChatMessage) => message.role === 'system')?.content ?? '';
   const userMessages = params.messages.filter((message: ChatMessage) => message.role === 'user');
-  const assistantMessages = params.messages.filter((message: ChatMessage) => message.role === 'assistant');
+  const assistantMessages = params.messages.filter(
+    (message: ChatMessage) => message.role === 'assistant'
+  );
   const contents = [
     ...userMessages.map((message: ChatMessage) => ({
       role: 'user',
@@ -271,14 +288,20 @@ const runGeminiChat = async (params: {
   const data = (await res.json()) as {
     candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
   };
-  const text = data.candidates?.[0]?.content?.parts?.map((part: { text?: string }) => part.text ?? '').join('').trim();
+  const text = data.candidates?.[0]?.content?.parts
+    ?.map((part: { text?: string }) => part.text ?? '')
+    .join('')
+    .trim();
   return text ?? '';
 };
 
 const stripCodeFence = (value: string): string => {
   const trimmed = value.trim();
   if (trimmed.startsWith('```')) {
-    return trimmed.replace(/^```[a-zA-Z]*\n?/, '').replace(/```$/, '').trim();
+    return trimmed
+      .replace(/^```[a-zA-Z]*\n?/, '')
+      .replace(/```$/, '')
+      .trim();
   }
   return trimmed;
 };
@@ -349,7 +372,7 @@ const isTransientModelConnectionError = (error: unknown): boolean => {
 
 const withTransientModelRetry = async <T>(
   action: () => Promise<T>,
-  context: { provider: 'openai' | 'anthropic' | 'gemini' | 'ollama'; modelId: string },
+  context: { provider: 'openai' | 'anthropic' | 'gemini' | 'ollama'; modelId: string }
 ): Promise<T> => {
   let lastError: unknown;
   for (let attempt = 0; attempt <= AI_INSIGHTS_MODEL_MAX_RETRIES; attempt += 1) {
@@ -369,19 +392,20 @@ const withTransientModelRetry = async <T>(
           attempt: attempt + 1,
           maxRetries: AI_INSIGHTS_MODEL_MAX_RETRIES,
           delayMs,
-          error:
-            error instanceof Error
-              ? error.message
-              : String(error),
+          error: error instanceof Error ? error.message : String(error),
         },
       });
       await sleep(delayMs);
     }
   }
-  throw lastError instanceof Error ? lastError : new Error(String(lastError ?? 'Unknown model error'));
+  throw lastError instanceof Error
+    ? lastError
+    : new Error(String(lastError ?? 'Unknown model error'));
 };
 
-const parseInsightPayload = (raw: string): {
+const parseInsightPayload = (
+  raw: string
+): {
   status: AiInsightStatus;
   summary: string;
   warnings: string[];
@@ -419,11 +443,12 @@ const OUTPUT_FORMAT_INSTRUCTION =
   'Be concise and actionable. If nothing looks wrong, status should be ok and warnings empty.';
 
 const resolveInsightSystemPrompt = async (type: AiInsightType): Promise<string> => {
-  const key = type === 'analytics'
-    ? AI_INSIGHTS_SETTINGS_KEYS.analyticsPromptSystem
-    : type === 'runtime_analytics'
-      ? AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsPromptSystem
-      : AI_INSIGHTS_SETTINGS_KEYS.logsPromptSystem;
+  const key =
+    type === 'analytics'
+      ? AI_INSIGHTS_SETTINGS_KEYS.analyticsPromptSystem
+      : type === 'runtime_analytics'
+        ? AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsPromptSystem
+        : AI_INSIGHTS_SETTINGS_KEYS.logsPromptSystem;
   const configured = (await readInsightSettingValue(key))?.trim();
   if (configured) return configured;
   if (type === 'analytics') return DEFAULT_ANALYTICS_INSIGHT_SYSTEM_PROMPT;
@@ -436,11 +461,12 @@ const buildInsightMessages = async (params: {
   payload: Record<string, unknown>;
 }): Promise<ChatMessage[]> => {
   const systemPrompt = await resolveInsightSystemPrompt(params.type);
-  const title = params.type === 'analytics'
-    ? 'Page analytics snapshot'
-    : params.type === 'runtime_analytics'
-      ? 'Runtime analytics snapshot'
-      : 'System log snapshot';
+  const title =
+    params.type === 'analytics'
+      ? 'Page analytics snapshot'
+      : params.type === 'runtime_analytics'
+        ? 'Runtime analytics snapshot'
+        : 'System log snapshot';
   const now = new Date().toISOString();
   return [
     {
@@ -485,7 +511,9 @@ const runInsightModel = async (params: {
   if (!modelId) throw new Error('Model id is required.');
   if (isAnthropicModel(modelId)) {
     const anthropicKey =
-      (await readInsightSettingValue('anthropic_api_key')) ?? process.env['ANTHROPIC_API_KEY'] ?? null;
+      (await readInsightSettingValue('anthropic_api_key')) ??
+      process.env['ANTHROPIC_API_KEY'] ??
+      null;
     if (!anthropicKey) {
       throw new Error('Anthropic API key is missing.');
     }
@@ -536,8 +564,12 @@ export const generateAnalyticsInsight = async (params: {
     throw new Error('AI Brain is disabled for Analytics.');
   }
   const provider = brainAssignment.provider;
-  const modelId = brainAssignment.modelId || (await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.analyticsModel));
-  const agentId = brainAssignment.agentId || (await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.analyticsAgentId));
+  const modelId =
+    brainAssignment.modelId ||
+    (await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.analyticsModel));
+  const agentId =
+    brainAssignment.agentId ||
+    (await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.analyticsAgentId));
 
   const rangeHours = params.rangeHours ?? 24;
   const to = new Date();
@@ -581,10 +613,7 @@ export const generateAnalyticsInsight = async (params: {
     status: parsed.status,
   });
 
-  await setAiInsightsMeta(
-    AI_INSIGHTS_SETTINGS_KEYS.analyticsLastRunAt,
-    new Date().toISOString()
-  );
+  await setAiInsightsMeta(AI_INSIGHTS_SETTINGS_KEYS.analyticsLastRunAt, new Date().toISOString());
 
   if (parsed.status !== 'ok' || parsed.warnings.length > 0) {
     await appendAiInsightNotification({
@@ -627,8 +656,11 @@ export const generateLogsInsight = async (params: {
     throw new Error('AI Brain is disabled for System Logs.');
   }
   const provider = brainAssignment.provider;
-  const modelId = brainAssignment.modelId || (await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.logsModel));
-  const agentId = brainAssignment.agentId || (await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.logsAgentId));
+  const modelId =
+    brainAssignment.modelId || (await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.logsModel));
+  const agentId =
+    brainAssignment.agentId ||
+    (await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.logsAgentId));
   const windowHours = params.windowHours ?? 24;
   const to = new Date();
   const from = new Date(to.getTime() - windowHours * 60 * 60 * 1000);
@@ -667,10 +699,7 @@ export const generateLogsInsight = async (params: {
     status: parsed.status,
   });
 
-  await setAiInsightsMeta(
-    AI_INSIGHTS_SETTINGS_KEYS.logsLastRunAt,
-    new Date().toISOString()
-  );
+  await setAiInsightsMeta(AI_INSIGHTS_SETTINGS_KEYS.logsLastRunAt, new Date().toISOString());
 
   if (parsed.status !== 'ok' || parsed.warnings.length > 0) {
     await appendAiInsightNotification({
@@ -713,8 +742,12 @@ export const generateRuntimeAnalyticsInsight = async (params: {
     throw new Error('AI Brain is disabled for Runtime Analytics.');
   }
   const provider = brainAssignment.provider;
-  const modelId = brainAssignment.modelId || (await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsModel));
-  const agentId = brainAssignment.agentId || (await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsAgentId));
+  const modelId =
+    brainAssignment.modelId ||
+    (await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsModel));
+  const agentId =
+    brainAssignment.agentId ||
+    (await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsAgentId));
   const range = params.range ?? '24h';
   const { from, to } = resolveRuntimeAnalyticsRangeWindow(range);
   const runtimeSummary = await getRuntimeAnalyticsSummary({ from, to, range });
@@ -746,7 +779,11 @@ export const generateRuntimeAnalyticsInsight = async (params: {
     content: payload as Record<string, unknown>,
     metadata: {
       model: { provider, modelId, agentId },
-      window: { from: runtimeSummary.from, to: runtimeSummary.to, scope: String(runtimeSummary.range) },
+      window: {
+        from: runtimeSummary.from,
+        to: runtimeSummary.to,
+        scope: String(runtimeSummary.range),
+      },
     },
   });
 
@@ -803,8 +840,11 @@ export const generateLogInterpretation = async (params: {
     throw new Error('AI Brain is disabled for Error Logs.');
   }
   const provider = brainAssignment.provider;
-  const modelId = brainAssignment.modelId || (await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.logsModel));
-  const agentId = brainAssignment.agentId || (await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.logsAgentId));
+  const modelId =
+    brainAssignment.modelId || (await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.logsModel));
+  const agentId =
+    brainAssignment.agentId ||
+    (await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.logsAgentId));
 
   const payload = {
     log: {
@@ -873,37 +913,36 @@ export const getScheduleSettings = async (): Promise<{
     logsEnabledRaw,
     logsMinutesRaw,
     logsAutoRaw,
-  ] =
-    await Promise.all([
-      readSettingWithFallback([
-        AI_INSIGHTS_SETTINGS_KEYS.analyticsScheduleEnabled,
-        LEGACY_INSIGHT_SCHEDULE_KEYS.analyticsScheduleEnabled,
-      ]),
-      readSettingWithFallback([
-        AI_INSIGHTS_SETTINGS_KEYS.analyticsScheduleMinutes,
-        LEGACY_INSIGHT_SCHEDULE_KEYS.analyticsScheduleMinutes,
-      ]),
-      readSettingWithFallback([
-        AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsScheduleEnabled,
-        LEGACY_INSIGHT_SCHEDULE_KEYS.runtimeAnalyticsScheduleEnabled,
-      ]),
-      readSettingWithFallback([
-        AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsScheduleMinutes,
-        LEGACY_INSIGHT_SCHEDULE_KEYS.runtimeAnalyticsScheduleMinutes,
-      ]),
-      readSettingWithFallback([
-        AI_INSIGHTS_SETTINGS_KEYS.logsScheduleEnabled,
-        LEGACY_INSIGHT_SCHEDULE_KEYS.logsScheduleEnabled,
-      ]),
-      readSettingWithFallback([
-        AI_INSIGHTS_SETTINGS_KEYS.logsScheduleMinutes,
-        LEGACY_INSIGHT_SCHEDULE_KEYS.logsScheduleMinutes,
-      ]),
-      readSettingWithFallback([
-        AI_INSIGHTS_SETTINGS_KEYS.logsAutoOnError,
-        LEGACY_INSIGHT_SCHEDULE_KEYS.logsAutoOnError,
-      ]),
-    ]);
+  ] = await Promise.all([
+    readSettingWithFallback([
+      AI_INSIGHTS_SETTINGS_KEYS.analyticsScheduleEnabled,
+      LEGACY_INSIGHT_SCHEDULE_KEYS.analyticsScheduleEnabled,
+    ]),
+    readSettingWithFallback([
+      AI_INSIGHTS_SETTINGS_KEYS.analyticsScheduleMinutes,
+      LEGACY_INSIGHT_SCHEDULE_KEYS.analyticsScheduleMinutes,
+    ]),
+    readSettingWithFallback([
+      AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsScheduleEnabled,
+      LEGACY_INSIGHT_SCHEDULE_KEYS.runtimeAnalyticsScheduleEnabled,
+    ]),
+    readSettingWithFallback([
+      AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsScheduleMinutes,
+      LEGACY_INSIGHT_SCHEDULE_KEYS.runtimeAnalyticsScheduleMinutes,
+    ]),
+    readSettingWithFallback([
+      AI_INSIGHTS_SETTINGS_KEYS.logsScheduleEnabled,
+      LEGACY_INSIGHT_SCHEDULE_KEYS.logsScheduleEnabled,
+    ]),
+    readSettingWithFallback([
+      AI_INSIGHTS_SETTINGS_KEYS.logsScheduleMinutes,
+      LEGACY_INSIGHT_SCHEDULE_KEYS.logsScheduleMinutes,
+    ]),
+    readSettingWithFallback([
+      AI_INSIGHTS_SETTINGS_KEYS.logsAutoOnError,
+      LEGACY_INSIGHT_SCHEDULE_KEYS.logsAutoOnError,
+    ]),
+  ]);
 
   return {
     analyticsEnabled: parseBooleanSetting(analyticsEnabledRaw, false),
@@ -916,14 +955,11 @@ export const getScheduleSettings = async (): Promise<{
   };
 };
 
-const SCHEDULED_INSIGHT_SOURCES = new Set<string>([
-  'scheduled',
-  'scheduled_job',
-]);
+const SCHEDULED_INSIGHT_SOURCES = new Set<string>(['scheduled', 'scheduled_job']);
 
 const assertScheduledInsightEnabled = async (
   source: AiInsightSource | string,
-  type: 'analytics' | 'runtime_analytics' | 'logs',
+  type: 'analytics' | 'runtime_analytics' | 'logs'
 ): Promise<void> => {
   if (!SCHEDULED_INSIGHT_SOURCES.has(String(source))) return;
   const schedule = await getScheduleSettings();

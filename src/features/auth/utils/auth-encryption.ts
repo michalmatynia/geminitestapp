@@ -10,7 +10,9 @@ const FALLBACK_KEY_ENV = 'INTEGRATION_ENCRYPTION_KEY';
 const getKey = (): Buffer => {
   const raw = process.env[AUTH_KEY_ENV] || process.env[FALLBACK_KEY_ENV];
   if (!raw) {
-    throw configurationError(`${AUTH_KEY_ENV} (or ${FALLBACK_KEY_ENV}) is required for auth secrets`);
+    throw configurationError(
+      `${AUTH_KEY_ENV} (or ${FALLBACK_KEY_ENV}) is required for auth secrets`
+    );
   }
   const key = Buffer.from(raw, 'base64');
   if (key.length !== 32) {
@@ -25,11 +27,7 @@ export const encryptAuthSecret = (value: string): string => {
   const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
   const encrypted = Buffer.concat([cipher.update(value, 'utf8'), cipher.final()]);
   const tag = cipher.getAuthTag();
-  return [
-    iv.toString('base64'),
-    tag.toString('base64'),
-    encrypted.toString('base64'),
-  ].join(':');
+  return [iv.toString('base64'), tag.toString('base64'), encrypted.toString('base64')].join(':');
 };
 
 export const decryptAuthSecret = (payload: string): string => {

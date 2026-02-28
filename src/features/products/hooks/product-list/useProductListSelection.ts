@@ -51,32 +51,35 @@ export function useProductListSelection({
     setRowSelection(newSelection);
   }, [data, rowSelection]);
 
-  const handleSelectAllGlobal = useCallback(async (filters: ProductFilters) => {
-    setLoadingGlobalSelection(true);
-    try {
-      const allProducts = await queryClient.fetchQuery({
-        queryKey: normalizeQueryKey(getProductListQueryKey({ scope: 'all', ...filters })),
-        queryFn: () => getProducts(filters)
-      });
+  const handleSelectAllGlobal = useCallback(
+    async (filters: ProductFilters) => {
+      setLoadingGlobalSelection(true);
+      try {
+        const allProducts = await queryClient.fetchQuery({
+          queryKey: normalizeQueryKey(getProductListQueryKey({ scope: 'all', ...filters })),
+          queryFn: () => getProducts(filters),
+        });
 
-      const newSelection: RowSelectionState = {};
-      allProducts.forEach((p: ProductWithImages) => {
-        newSelection[p.id] = true;
-      });
-      setRowSelection(newSelection);
-      toast(`Selected ${allProducts.length} products.`, { variant: 'success' });
-    } catch (error) {
-      logClientError(error, { context: { source: 'useProductListSelection', action: 'selectAllGlobal' } });
-      toast('Failed to select all products', { variant: 'error' });
-    } finally {
-      setLoadingGlobalSelection(false);
-    }
-  }, [queryClient, toast]);
+        const newSelection: RowSelectionState = {};
+        allProducts.forEach((p: ProductWithImages) => {
+          newSelection[p.id] = true;
+        });
+        setRowSelection(newSelection);
+        toast(`Selected ${allProducts.length} products.`, { variant: 'success' });
+      } catch (error) {
+        logClientError(error, {
+          context: { source: 'useProductListSelection', action: 'selectAllGlobal' },
+        });
+        toast('Failed to select all products', { variant: 'error' });
+      } finally {
+        setLoadingGlobalSelection(false);
+      }
+    },
+    [queryClient, toast]
+  );
 
   const handleMassDelete = useCallback(async () => {
-    const selectedProductIds = Object.keys(rowSelection).filter(
-      (id: string) => rowSelection[id]
-    );
+    const selectedProductIds = Object.keys(rowSelection).filter((id: string) => rowSelection[id]);
 
     if (selectedProductIds.length === 0) return;
 
@@ -90,7 +93,13 @@ export function useProductListSelection({
         setRefreshTrigger((prev: number) => prev + 1);
       }
     } catch (error) {
-      logClientError(error, { context: { source: 'useProductListSelection', action: 'massDelete', productIds: selectedProductIds } });
+      logClientError(error, {
+        context: {
+          source: 'useProductListSelection',
+          action: 'massDelete',
+          productIds: selectedProductIds,
+        },
+      });
       setActionError(error instanceof Error ? error.message : 'An error occurred during deletion.');
     }
   }, [rowSelection, setActionError, toast, bulkDeleteMutation, setRefreshTrigger]);
@@ -107,7 +116,9 @@ export function useProductListSelection({
         setRefreshTrigger((prev: number) => prev + 1);
       }
     } catch (error) {
-      logClientError(error, { context: { source: 'useProductListSelection', action: 'singleDelete', productId: targetId } });
+      logClientError(error, {
+        context: { source: 'useProductListSelection', action: 'singleDelete', productId: targetId },
+      });
       setActionError(error instanceof Error ? error.message : 'An error occurred during deletion.');
     }
   }, [productToDelete, setActionError, toast, bulkDeleteMutation, setRefreshTrigger]);

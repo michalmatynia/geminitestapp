@@ -13,7 +13,7 @@ export const producerUpdateSchema = z.object({
 export async function PUT_handler(
   _req: NextRequest,
   ctx: ApiHandlerContext,
-  params: { id: string },
+  params: { id: string }
 ): Promise<Response> {
   const id = params.id;
   const data = ctx.body as z.infer<typeof producerUpdateSchema>;
@@ -21,7 +21,7 @@ export async function PUT_handler(
 
   const repository = await getProducerRepository();
   const current = await repository.getProducerById(id);
-  
+
   if (!current) {
     throw notFoundError('Producer not found', { producerId: id });
   }
@@ -40,14 +40,14 @@ export async function PUT_handler(
     ...(name !== undefined && { name }),
     ...(data.website !== undefined && { website: data.website }),
   });
-  
+
   return NextResponse.json(updated);
 }
 
 export async function DELETE_handler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
-  params: { id: string },
+  params: { id: string }
 ): Promise<Response> {
   const repository = await getProducerRepository();
   await repository.deleteProducer(params.id);

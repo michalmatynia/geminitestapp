@@ -1,10 +1,10 @@
 ---
-owner: "Case Resolver Team"
-last_reviewed: "2026-02-20"
-status: "active"
+owner: 'Case Resolver Team'
+last_reviewed: '2026-02-20'
+status: 'active'
 related_components:
-  - "src/features/case-resolver"
-  - "src/app/api/case-resolver"
+  - 'src/features/case-resolver'
+  - 'src/app/api/case-resolver'
 ---
 
 # Case Resolver Changelog

@@ -2,9 +2,7 @@ import { NextRequest } from 'next/server';
 import sharp from 'sharp';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import {
-  IMAGE_STUDIO_AUTOSCALER_ERROR_CODES,
-} from '@/features/ai/image-studio/contracts/autoscaler';
+import { IMAGE_STUDIO_AUTOSCALER_ERROR_CODES } from '@/features/ai/image-studio/contracts/autoscaler';
 
 const {
   mkdirMock,
@@ -39,9 +37,13 @@ const {
   validateAutoScalerSourceDimensionsMock: vi.fn(),
   getImageStudioSlotLinkBySourceAndRelationMock: vi.fn(),
   upsertImageStudioSlotLinkMock: vi.fn(),
-  createImageStudioSlotsMock: vi.fn<
-    (projectId: string, slots: Array<Record<string, unknown>>) => Promise<Array<Record<string, unknown>>>
-  >(),
+  createImageStudioSlotsMock:
+    vi.fn<
+      (
+        projectId: string,
+        slots: Array<Record<string, unknown>>
+      ) => Promise<Array<Record<string, unknown>>>
+    >(),
   getImageStudioSlotByIdMock: vi.fn(),
   loadSourceBufferFromSlotMock: vi.fn(),
   parseImageDataUrlMock: vi.fn(),
@@ -59,7 +61,7 @@ vi.mock('fs/promises', () => ({
   writeFile: writeFileMock,
 }));
 
-vi.mock('@/features/ai/image-studio/server/auto-scaler-utils', () => ({
+vi.mock('@/shared/lib/ai/image-studio/server/auto-scaler-utils', () => ({
   autoScaleObjectByAnalysis: autoScaleObjectByAnalysisMock,
   buildAutoScalerFingerprint: buildAutoScalerFingerprintMock,
   buildAutoScalerFingerprintRelationType: buildAutoScalerFingerprintRelationTypeMock,
@@ -70,17 +72,17 @@ vi.mock('@/features/ai/image-studio/server/auto-scaler-utils', () => ({
   validateAutoScalerSourceDimensions: validateAutoScalerSourceDimensionsMock,
 }));
 
-vi.mock('@/features/ai/image-studio/server/slot-link-repository', () => ({
+vi.mock('@/shared/lib/ai/image-studio/server/slot-link-repository', () => ({
   getImageStudioSlotLinkBySourceAndRelation: getImageStudioSlotLinkBySourceAndRelationMock,
   upsertImageStudioSlotLink: upsertImageStudioSlotLinkMock,
 }));
 
-vi.mock('@/features/ai/image-studio/server/slot-repository', () => ({
+vi.mock('@/shared/lib/ai/image-studio/server/slot-repository', () => ({
   createImageStudioSlots: createImageStudioSlotsMock,
   getImageStudioSlotById: getImageStudioSlotByIdMock,
 }));
 
-vi.mock('@/features/ai/image-studio/server/source-image-utils', () => ({
+vi.mock('@/shared/lib/ai/image-studio/server/source-image-utils', () => ({
   loadSourceBufferFromSlot: loadSourceBufferFromSlotMock,
   parseImageDataUrl: parseImageDataUrlMock,
 }));
@@ -121,7 +123,10 @@ const buildSlot = (overrides: Record<string, unknown> = {}): Record<string, unkn
   ...overrides,
 });
 
-const buildRequest = (body: Record<string, unknown>, headers?: Record<string, string>): NextRequest =>
+const buildRequest = (
+  body: Record<string, unknown>,
+  headers?: Record<string, string>
+): NextRequest =>
   new NextRequest('http://localhost/api/image-studio/slots/source-slot/autoscale', {
     method: 'POST',
     headers: {
@@ -257,7 +262,8 @@ describe('image-studio autoscale handler', () => {
     createImageFileMock.mockResolvedValue({
       id: 'image-file-output-1',
       filename: 'autoscale-server_auto_scaler_v1.png',
-      filepath: '/uploads/studio/autoscale/project-1/source-slot/autoscale-server_auto_scaler_v1.png',
+      filepath:
+        '/uploads/studio/autoscale/project-1/source-slot/autoscale-server_auto_scaler_v1.png',
       mimetype: 'image/png',
       size: outputBuffer.length,
       width: 40,
@@ -273,7 +279,8 @@ describe('image-studio autoscale handler', () => {
         projectId: 'project-1',
         name: 'Source • Auto Scaled',
         imageFileId: 'image-file-output-1',
-        imageUrl: '/uploads/studio/autoscale/project-1/source-slot/autoscale-server_auto_scaler_v1.png',
+        imageUrl:
+          '/uploads/studio/autoscale/project-1/source-slot/autoscale-server_auto_scaler_v1.png',
       }),
     ]);
     upsertImageStudioSlotLinkMock.mockResolvedValue({
@@ -566,9 +573,7 @@ describe('image-studio autoscale handler', () => {
         ? (createSlotPayload['metadata'] as Record<string, unknown>)
         : null;
     const autoscaleMetadata =
-      metadata &&
-      typeof metadata['autoscale'] === 'object' &&
-      !Array.isArray(metadata['autoscale'])
+      metadata && typeof metadata['autoscale'] === 'object' && !Array.isArray(metadata['autoscale'])
         ? (metadata['autoscale'] as Record<string, unknown>)
         : null;
     const autoscaleLayout =
@@ -669,18 +674,28 @@ describe('image-studio autoscale handler', () => {
     const payload = (await response.json()) as Record<string, unknown>;
     const responseLayout = payload['layout'] as Record<string, unknown>;
     const responseDetectionDetails = payload['detectionDetails'] as Record<string, unknown>;
-    const responseCandidates = responseDetectionDetails['candidateDetections'] as Record<string, unknown>;
+    const responseCandidates = responseDetectionDetails['candidateDetections'] as Record<
+      string,
+      unknown
+    >;
 
     expect(response.status).toBe(201);
     expect(payload['detectionUsed']).toBe('alpha_bbox');
     expect(payload['confidenceBefore']).toBe(0.39);
     expect(responseLayout['layoutPolicyVersion']).toBe('v2');
-    expect(responseLayout['detectionPolicyDecision']).toBe('auto_white_low_confidence_fallback_alpha');
+    expect(responseLayout['detectionPolicyDecision']).toBe(
+      'auto_white_low_confidence_fallback_alpha'
+    );
     expect(responseDetectionDetails['policyVersion']).toBe('v2');
-    expect(responseDetectionDetails['policyReason']).toBe('auto_white_low_confidence_fallback_alpha');
+    expect(responseDetectionDetails['policyReason']).toBe(
+      'auto_white_low_confidence_fallback_alpha'
+    );
     expect(responseDetectionDetails['fallbackApplied']).toBe(true);
     expect(responseCandidates['alpha_bbox']).toEqual({ confidence: 0.39, area: 49 });
-    expect(responseCandidates['white_bg_first_colored_pixel']).toEqual({ confidence: 0.2, area: 31 });
+    expect(responseCandidates['white_bg_first_colored_pixel']).toEqual({
+      confidence: 0.2,
+      area: 31,
+    });
 
     const createSlotPayload = createImageStudioSlotsMock.mock.calls[0]?.[1]?.[0];
     const metadata =
@@ -690,9 +705,7 @@ describe('image-studio autoscale handler', () => {
         ? (createSlotPayload['metadata'] as Record<string, unknown>)
         : null;
     const autoscaleMetadata =
-      metadata &&
-      typeof metadata['autoscale'] === 'object' &&
-      !Array.isArray(metadata['autoscale'])
+      metadata && typeof metadata['autoscale'] === 'object' && !Array.isArray(metadata['autoscale'])
         ? (metadata['autoscale'] as Record<string, unknown>)
         : null;
     const autoscaleLayout =
@@ -715,12 +728,19 @@ describe('image-studio autoscale handler', () => {
         : null;
 
     expect(autoscaleLayout?.['layoutPolicyVersion']).toBe('v2');
-    expect(autoscaleLayout?.['detectionPolicyDecision']).toBe('auto_white_low_confidence_fallback_alpha');
+    expect(autoscaleLayout?.['detectionPolicyDecision']).toBe(
+      'auto_white_low_confidence_fallback_alpha'
+    );
     expect(autoscaleDetectionDetails?.['policyVersion']).toBe('v2');
-    expect(autoscaleDetectionDetails?.['policyReason']).toBe('auto_white_low_confidence_fallback_alpha');
+    expect(autoscaleDetectionDetails?.['policyReason']).toBe(
+      'auto_white_low_confidence_fallback_alpha'
+    );
     expect(autoscaleDetectionDetails?.['fallbackApplied']).toBe(true);
     expect(autoscaleCandidates?.['alpha_bbox']).toEqual({ confidence: 0.39, area: 49 });
-    expect(autoscaleCandidates?.['white_bg_first_colored_pixel']).toEqual({ confidence: 0.2, area: 31 });
+    expect(autoscaleCandidates?.['white_bg_first_colored_pixel']).toEqual({
+      confidence: 0.2,
+      area: 31,
+    });
   });
 
   it('supports fingerprint dedupe mode when enabled via env flag', async () => {
@@ -855,7 +875,8 @@ describe('image-studio autoscale handler', () => {
         projectId: 'project-1',
         name: 'Source • Auto Scaled',
         imageFileId: 'image-file-output-1',
-        imageUrl: '/uploads/studio/autoscale/project-1/source-slot/autoscale-server_auto_scaler_v1.png',
+        imageUrl:
+          '/uploads/studio/autoscale/project-1/source-slot/autoscale-server_auto_scaler_v1.png',
       }),
     ]);
 

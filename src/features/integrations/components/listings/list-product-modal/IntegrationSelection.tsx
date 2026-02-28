@@ -1,7 +1,10 @@
 import React from 'react';
 
 import { useListingSettingsContext } from '@/features/integrations/context/ListingSettingsContext';
-import type { IntegrationWithConnections, IntegrationConnectionBasic } from '@/shared/contracts/integrations';
+import type {
+  IntegrationWithConnections,
+  IntegrationConnectionBasic,
+} from '@/shared/contracts/integrations';
 import { FormField, FormSection } from '@/shared/ui';
 import { SelectSimple } from '@/shared/ui';
 
@@ -15,7 +18,9 @@ export function IntegrationSelection(): React.JSX.Element {
     setSelectedIntegrationId,
     setSelectedConnectionId,
   } = useListingSettingsContext();
-  const integrationsWithConnections = integrations.filter((i: IntegrationWithConnections) => i.connections.length > 0);
+  const integrationsWithConnections = integrations.filter(
+    (i: IntegrationWithConnections) => i.connections.length > 0
+  );
 
   if (loading) {
     return <p className='text-sm text-gray-400'>Loading integrations...</p>;
@@ -23,7 +28,10 @@ export function IntegrationSelection(): React.JSX.Element {
 
   if (integrationsWithConnections.length === 0) {
     return (
-      <FormSection variant='subtle' className='border-yellow-500/40 bg-yellow-500/10 p-6 text-center'>
+      <FormSection
+        variant='subtle'
+        className='border-yellow-500/40 bg-yellow-500/10 p-6 text-center'
+      >
         <p className='text-sm text-yellow-200'>No integrations with configured accounts found.</p>
         <p className='mt-2 text-xs text-yellow-300/70'>
           Please set up an integration with at least one account first.

@@ -29,8 +29,12 @@ export const resolveManualBindingSegmentIds = (args: {
 
   const firstId = args.segments[0]?.id ?? '';
   const secondId = args.segments[1]?.id ?? firstId;
-  const hasFrom = args.segments.some((segment: PromptExploderSegment) => segment.id === args.fromSegmentId);
-  const hasTo = args.segments.some((segment: PromptExploderSegment) => segment.id === args.toSegmentId);
+  const hasFrom = args.segments.some(
+    (segment: PromptExploderSegment) => segment.id === args.fromSegmentId
+  );
+  const hasTo = args.segments.some(
+    (segment: PromptExploderSegment) => segment.id === args.toSegmentId
+  );
 
   return {
     fromSegmentId: hasFrom ? args.fromSegmentId : firstId,
@@ -49,15 +53,15 @@ export const resolveManualBindingSubsectionIds = (args: {
   const toSegment = args.segmentById.get(args.toSegmentId);
   const fromSubsectionValid = Boolean(
     !args.fromSubsectionId ||
-      fromSegment?.subsections.some(
-        (subsection: PromptExploderSubsection) => subsection.id === args.fromSubsectionId
-      )
+    fromSegment?.subsections.some(
+      (subsection: PromptExploderSubsection) => subsection.id === args.fromSubsectionId
+    )
   );
   const toSubsectionValid = Boolean(
     !args.toSubsectionId ||
-      toSegment?.subsections.some(
-        (subsection: PromptExploderSubsection) => subsection.id === args.toSubsectionId
-      )
+    toSegment?.subsections.some(
+      (subsection: PromptExploderSubsection) => subsection.id === args.toSubsectionId
+    )
   );
 
   return {
@@ -77,15 +81,17 @@ type ManualBindingBuildSuccess = {
   binding: PromptExploderBinding;
 };
 
-export type ManualBindingBuildResult =
-  | ManualBindingBuildError
-  | ManualBindingBuildSuccess;
+export type ManualBindingBuildResult = ManualBindingBuildError | ManualBindingBuildSuccess;
 
 const findSubsectionById = (
   segment: PromptExploderSegment,
   subsectionId: string
 ): PromptExploderSubsection | null => {
-  return segment.subsections.find((subsection: PromptExploderSubsection) => subsection.id === subsectionId) ?? null;
+  return (
+    segment.subsections.find(
+      (subsection: PromptExploderSubsection) => subsection.id === subsectionId
+    ) ?? null
+  );
 };
 
 export const buildManualBindingFromDraft = (args: {
@@ -143,12 +149,10 @@ export const buildManualBindingFromDraft = (args: {
     };
   }
 
-  const defaultSourceLabel = (fromSubsection
-    ? args.formatSubsectionLabel(fromSubsection)
-    : fromSegment.title) || '';
-  const defaultTargetLabel = (toSubsection
-    ? args.formatSubsectionLabel(toSubsection)
-    : toSegment.title) || '';
+  const defaultSourceLabel =
+    (fromSubsection ? args.formatSubsectionLabel(fromSubsection) : fromSegment.title) || '';
+  const defaultTargetLabel =
+    (toSubsection ? args.formatSubsectionLabel(toSubsection) : toSegment.title) || '';
 
   return {
     ok: true,

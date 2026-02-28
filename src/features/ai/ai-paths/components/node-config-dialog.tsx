@@ -2,19 +2,9 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import type {
-  AiNode,
-  NodeConfig,
-} from '@/shared/lib/ai-paths';
+import type { AiNode, NodeConfig } from '@/shared/lib/ai-paths';
 import { stableStringify } from '@/shared/lib/ai-paths';
-import {
-  Button,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-  ConfirmModal,
-} from '@/shared/ui';
+import { Button, Tabs, TabsContent, TabsList, TabsTrigger, ConfirmModal } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
 import { AiPathConfigProviderWithContext, useAiPathConfig } from './AiPathConfigContext';
@@ -112,19 +102,17 @@ function NodeConfigDialogContent(): React.JSX.Element | null {
   const draftSelectedNode = draftNode ?? selectedNodeSafe;
   const resolvedNodeTypeId =
     typeof draftSelectedNode.nodeTypeId === 'string' &&
-      draftSelectedNode.nodeTypeId.trim().length > 0
+    draftSelectedNode.nodeTypeId.trim().length > 0
       ? draftSelectedNode.nodeTypeId
       : draftSelectedNode.type;
   const resolvedInstanceId =
     typeof draftSelectedNode.instanceId === 'string' &&
-      draftSelectedNode.instanceId.trim().length > 0
+    draftSelectedNode.instanceId.trim().length > 0
       ? draftSelectedNode.instanceId
       : draftSelectedNode.id;
   const nodesForConfig = useMemo((): AiNode[] => {
     if (!draftNode) return nodes;
-    return nodes.map((node: AiNode): AiNode =>
-      node.id === draftNode.id ? draftNode : node
-    );
+    return nodes.map((node: AiNode): AiNode => (node.id === draftNode.id ? draftNode : node));
   }, [nodes, draftNode]);
 
   const updateDraftNode = useCallback(
@@ -233,11 +221,11 @@ function NodeConfigDialogContent(): React.JSX.Element | null {
               disabled={!hasUnsavedChanges || isPathLocked}
               onClick={handleUpdateNode}
             >
-                Update Node
+              Update Node
             </Button>
             {isScheduledTrigger ? (
               <span className='rounded-full border border-amber-400/60 bg-amber-500/15 px-2 py-[1px] text-[10px] uppercase text-amber-200'>
-                  Scheduled
+                Scheduled
               </span>
             ) : null}
           </div>
@@ -286,7 +274,7 @@ function NodeConfigDialogContent(): React.JSX.Element | null {
                 );
               }}
             >
-                Copy
+              Copy
             </Button>
           </div>
           <div className='flex items-center justify-end gap-2'>
@@ -306,11 +294,12 @@ function NodeConfigDialogContent(): React.JSX.Element | null {
                 );
               }}
             >
-                Copy
+              Copy
             </Button>
           </div>
         </div>
-      </DetailModal>      <ConfirmModal
+      </DetailModal>{' '}
+      <ConfirmModal
         isOpen={closePromptOpen}
         onClose={() => setClosePromptOpen(false)}
         title='Unsaved Changes'

@@ -6,7 +6,7 @@ import {
   getImageStudioSlotById,
   updateImageStudioSlot,
   type ImageStudioSlotRecord,
-} from '@/features/ai/image-studio/server/slot-repository';
+} from '@/shared/lib/ai/image-studio/server/slot-repository';
 import { uploadFile } from '@/shared/lib/files/file-uploader';
 import { DEFAULT_IMAGE_SLOT_COUNT } from '@/shared/lib/image-slots';
 import { getProductStudioConfig } from '@/features/products/services/product-studio-config';
@@ -16,25 +16,15 @@ import {
   type ProductStudioSequencingConfig,
   type ProductWithImages,
 } from '@/shared/contracts/products';
-import {
-  badRequestError,
-  notFoundError,
-  operationFailedError,
-} from '@/shared/errors/app-error';
+import { badRequestError, notFoundError, operationFailedError } from '@/shared/errors/app-error';
 
 import {
   appendFilenameSuffix,
   buildUpscaledImage,
   resolveBufferFromImagePath,
 } from './product-studio-service.io';
-import {
-  toProductImageFileSource,
-} from './product-studio-service.images';
-import {
-  asRecord,
-  normalizeImageSlotIndex,
-  trimString,
-} from './product-studio-service.helpers';
+import { toProductImageFileSource } from './product-studio-service.images';
+import { asRecord, normalizeImageSlotIndex, trimString } from './product-studio-service.helpers';
 import {
   ensureProduct,
   resolveProductAndStudioTarget,
@@ -52,9 +42,7 @@ const createUpscaledAcceptedProductImage = async (params: {
     trimString(params.generationSlot.imageFile?.filepath) ??
     trimString(params.generationSlot.imageUrl);
   if (!sourcePath) {
-    throw badRequestError(
-      'Selected generation card has no image path to upscale.',
-    );
+    throw badRequestError('Selected generation card has no image path to upscale.');
   }
 
   const sourceFilename =
@@ -63,16 +51,9 @@ const createUpscaledAcceptedProductImage = async (params: {
     `product-${params.product.id}-slot-${params.imageSlotIndex + 1}`;
 
   const { buffer } = await resolveBufferFromImagePath(sourcePath);
-  const upscaled = await buildUpscaledImage(
-    buffer,
-    params.sequencing.upscaleScale,
-  );
+  const upscaled = await buildUpscaledImage(buffer, params.sequencing.upscaleScale);
   const scaleLabel = `${upscaled.scale.toFixed(2).replace(/\.00$/, '')}x`;
-  const targetFilename = appendFilenameSuffix(
-    sourceFilename,
-    `-upscaled-${scaleLabel}`,
-    '.png',
-  );
+  const targetFilename = appendFilenameSuffix(sourceFilename, `-upscaled-${scaleLabel}`, '.png');
 
   const file = new File([new Uint8Array(upscaled.buffer)], targetFilename, {
     type: 'image/png',
@@ -104,22 +85,16 @@ export async function acceptProductStudioVariant(params: {
 
   const generationSlot = await getImageStudioSlotById(generationSlotId);
   if (generationSlot?.projectId !== resolved.projectId) {
-    throw notFoundError(
-      'Generation slot not found in selected Studio project.',
-      {
-        generationSlotId,
-        projectId: resolved.projectId,
-      },
-    );
+    throw notFoundError('Generation slot not found in selected Studio project.', {
+      generationSlotId,
+      projectId: resolved.projectId,
+    });
   }
 
   const generationImageFileId =
-    trimString(generationSlot.imageFileId) ??
-    trimString(generationSlot.imageFile?.id);
+    trimString(generationSlot.imageFileId) ?? trimString(generationSlot.imageFile?.id);
   if (!generationImageFileId) {
-    throw badRequestError(
-      'Selected generation card has no image file to accept.',
-    );
+    throw badRequestError('Selected generation card has no image file to accept.');
   }
 
   const { sequencing } = await resolveStudioSettingsBundle(resolved.projectId);
@@ -148,18 +123,11 @@ export async function acceptProductStudioVariant(params: {
   const compactedImageIds = nextImageFileIds.filter((id) => id.length > 0);
 
   const productRepository = await getProductRepository();
-  await productRepository.replaceProductImages(
-    resolved.product.id,
-    compactedImageIds,
-  );
+  await productRepository.replaceProductImages(resolved.product.id, compactedImageIds);
 
-  const updatedProduct = await productService.getProductById(
-    resolved.product.id,
-  );
+  const updatedProduct = await productService.getProductById(resolved.product.id);
   if (!updatedProduct) {
-    throw operationFailedError(
-      'Product image was updated, but failed to reload product.',
-    );
+    throw operationFailedError('Product image was updated, but failed to reload product.');
   }
 
   return updatedProduct;
@@ -172,9 +140,7 @@ export async function rotateProductStudioImageSlot(params: {
 }): Promise<ProductWithImages> {
   const imageSlotIndex = normalizeImageSlotIndex(params.imageSlotIndex);
   const product = await ensureProduct(params.productId);
-  const sourceImage = toProductImageFileSource(
-    product.images[imageSlotIndex]?.imageFile,
-  );
+  const sourceImage = toProductImageFileSource(product.images[imageSlotIndex]?.imageFile);
 
   if (!sourceImage) {
     throw badRequestError('Selected product image slot has no uploaded source image.');
@@ -189,14 +155,11 @@ export async function rotateProductStudioImageSlot(params: {
     trimString(sourceImage.filename) ?? `product-image-${imageSlotIndex + 1}.png`;
   const { buffer } = await resolveBufferFromImagePath(sourcePath);
   const rotationDegrees = params.direction === 'left' ? -90 : 90;
-  const rotatedBuffer = await sharp(buffer)
-    .rotate(rotationDegrees)
-    .png()
-    .toBuffer();
+  const rotatedBuffer = await sharp(buffer).rotate(rotationDegrees).png().toBuffer();
   const targetFilename = appendFilenameSuffix(
     sourceFilename,
     params.direction === 'left' ? '-rotl90' : '-rotr90',
-    '.png',
+    '.png'
   );
 
   const file = new File([new Uint8Array(rotatedBuffer)], targetFilename, {
@@ -246,9 +209,7 @@ export async function rotateProductStudioImageSlot(params: {
 
   const updatedProduct = await productService.getProductById(product.id);
   if (!updatedProduct) {
-    throw operationFailedError(
-      'Product image was rotated, but failed to reload product.',
-    );
+    throw operationFailedError('Product image was rotated, but failed to reload product.');
   }
 
   return updatedProduct;

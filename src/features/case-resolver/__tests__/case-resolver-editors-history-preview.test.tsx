@@ -14,7 +14,7 @@ vi.mock('next/image', () => ({
   default: () => <div data-testid='mock-next-image' />,
 }));
 
-vi.mock('@/features/document-editor', () => ({
+vi.mock('@/shared/lib/document-editor', () => ({
   DocumentWysiwygEditor: () => <div data-testid='mock-wysiwyg-editor' />,
 }));
 
@@ -30,7 +30,7 @@ const handleUseHistoryEntryMock = vi.fn();
 const setEditorDetailsTabMock = vi.fn();
 
 const buildHistoryEntry = (
-  overrides: Partial<CaseResolverDocumentHistoryEntry> = {},
+  overrides: Partial<CaseResolverDocumentHistoryEntry> = {}
 ): CaseResolverDocumentHistoryEntry => ({
   id: 'history-1',
   savedAt: '2026-02-25T10:00:00.000Z',
@@ -46,7 +46,7 @@ const buildHistoryEntry = (
 
 const buildDraft = (
   fileType: 'document' | 'scanfile',
-  history: CaseResolverDocumentHistoryEntry[],
+  history: CaseResolverDocumentHistoryEntry[]
 ): CaseResolverFileEditDraft => ({
   id: `${fileType}-1`,
   name: `${fileType} file`,
@@ -87,7 +87,9 @@ vi.mock('@/features/case-resolver/components/CaseResolverViewContext', () => ({
   useCaseResolverViewContext: (): CaseResolverViewContextValue => viewContextMock,
 }));
 
-const createContextMock = (editingDocumentDraft: CaseResolverFileEditDraft): CaseResolverViewContextValue => {
+const createContextMock = (
+  editingDocumentDraft: CaseResolverFileEditDraft
+): CaseResolverViewContextValue => {
   const state = {
     workspace: {
       id: 'workspace-1',

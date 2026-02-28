@@ -1,6 +1,4 @@
-import {
-  VALIDATOR_FUNCTION_DOC_IDS,
-} from '../../src/features/products/components/settings/validator-settings/validator-docs-catalog';
+import { VALIDATOR_FUNCTION_DOC_IDS } from '../../src/features/products/components/settings/validator-settings/validator-docs-catalog';
 
 import { collectValidatorExportedCallables } from './validator-docs-utils';
 
@@ -8,7 +6,9 @@ const workspaceRoot = process.cwd();
 const exportedCallables = collectValidatorExportedCallables(workspaceRoot);
 
 const missingJsDoc = exportedCallables.filter((entry) => !entry.hasJsDoc);
-const missingCatalog = exportedCallables.filter((entry) => !VALIDATOR_FUNCTION_DOC_IDS.has(entry.id));
+const missingCatalog = exportedCallables.filter(
+  (entry) => !VALIDATOR_FUNCTION_DOC_IDS.has(entry.id)
+);
 
 if (missingJsDoc.length > 0 || missingCatalog.length > 0) {
   if (missingJsDoc.length > 0) {
@@ -28,4 +28,6 @@ if (missingJsDoc.length > 0 || missingCatalog.length > 0) {
   process.exit(1);
 }
 
-console.log(`Validator docs coverage check passed for ${exportedCallables.length} exported callables.`);
+console.log(
+  `Validator docs coverage check passed for ${exportedCallables.length} exported callables.`
+);

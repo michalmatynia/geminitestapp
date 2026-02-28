@@ -21,10 +21,7 @@ export function BlockPicker({ sectionType, onSelect }: BlockPickerProps): React.
   const settingsStore = useSettingsStore();
   const enabledEmbedsRaw = settingsStore.get(APP_EMBED_SETTING_KEY);
   const enabledEmbeds = useMemo<AppEmbedId[]>(() => {
-    return parseJsonSetting<AppEmbedId[]>(
-      enabledEmbedsRaw,
-      []
-    );
+    return parseJsonSetting<AppEmbedId[]>(enabledEmbedsRaw, []);
   }, [enabledEmbedsRaw]);
   const hasAppEmbeds = enabledEmbeds.length > 0;
   const blockTypes = getAllowedBlockTypes(sectionType).filter((def: BlockDefinition) => {
@@ -32,15 +29,20 @@ export function BlockPicker({ sectionType, onSelect }: BlockPickerProps): React.
     return hasAppEmbeds;
   });
 
-  const groups = useMemo(() => [
-    {
-      label: 'Blocks',
-      options: blockTypes.map((def: BlockDefinition): PickerOption => ({
-        key: def.type,
-        label: def.label,
-      })),
-    },
-  ], [blockTypes]);
+  const groups = useMemo(
+    () => [
+      {
+        label: 'Blocks',
+        options: blockTypes.map(
+          (def: BlockDefinition): PickerOption => ({
+            key: def.type,
+            label: def.label,
+          })
+        ),
+      },
+    ],
+    [blockTypes]
+  );
 
   if (blockTypes.length === 0) return null;
 

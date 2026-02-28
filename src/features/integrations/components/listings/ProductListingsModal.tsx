@@ -7,7 +7,10 @@ import {
   BASE_INTEGRATION_SLUGS,
   TRADERA_INTEGRATION_SLUGS,
 } from '@/features/integrations/constants/slugs';
-import { ProductListingsProvider, useProductListingsContext } from '@/features/integrations/context/ProductListingsContext';
+import {
+  ProductListingsProvider,
+  useProductListingsContext,
+} from '@/features/integrations/context/ProductListingsContext';
 import type { ProductListingWithDetails } from '@/shared/contracts/integrations';
 import type { ProductWithImagesDto as ProductWithImages } from '@/shared/contracts/products';
 import type { EntityModalProps } from '@/shared/contracts/ui';
@@ -71,13 +74,15 @@ function ProductListingsModalContent(): React.JSX.Element {
   const filteredListings: ProductListingWithDetails[] = useMemo(() => {
     return filterIntegrationSlug
       ? listings.filter((listing: ProductListingWithDetails): boolean =>
-        matchesIntegrationSlug(listing.integration.slug, filterIntegrationSlug)
-      )
+          matchesIntegrationSlug(listing.integration.slug, filterIntegrationSlug)
+        )
       : listings;
   }, [listings, filterIntegrationSlug]);
 
   const isBaseFilter = BASE_INTEGRATION_SLUGS.has(normalizeSlug(filterIntegrationSlug));
-  const statusTargetLabel: string = isBaseFilter ? 'Base.com' : filterIntegrationSlug ?? 'integration';
+  const statusTargetLabel: string = isBaseFilter
+    ? 'Base.com'
+    : (filterIntegrationSlug ?? 'integration');
   const canStartListing: boolean = Boolean(onStartListing) && !filterIntegrationSlug;
   const productListingsViewContextValue: ProductListingsViewContextValue = useMemo(
     () => ({
@@ -87,23 +92,13 @@ function ProductListingsModalContent(): React.JSX.Element {
       isBaseFilter,
       showSync: Boolean(filterIntegrationSlug),
     }),
-    [
-      filterIntegrationSlug,
-      filteredListings,
-      isBaseFilter,
-      statusTargetLabel,
-    ]
+    [filterIntegrationSlug, filteredListings, isBaseFilter, statusTargetLabel]
   );
 
   return (
-    <DetailModal
-      isOpen={true}
-      onClose={onClose}
-      title={`Integrations - ${productName}`}
-      size='xl'
-    >
+    <DetailModal isOpen={true} onClose={onClose} title={`Integrations - ${productName}`} size='xl'>
       <ProductListingsConfirmDialogs />
-      
+
       <div className='space-y-4'>
         {isLoading ? (
           <ProductListingsLoading />
@@ -122,7 +117,7 @@ function ProductListingsModalContent(): React.JSX.Element {
             </div>
           </ProductListingsViewProvider>
         )}
-        
+
         {exportLogs.length > 0 && (
           <div className='mt-4 border-t border pt-4'>
             <ExportLogViewer />
@@ -134,13 +129,8 @@ function ProductListingsModalContent(): React.JSX.Element {
 }
 
 function ProductListingsModalProviders(): React.JSX.Element {
-  const {
-    product,
-    onListingsUpdated,
-    onClose,
-    onStartListing,
-    filterIntegrationSlug,
-  } = useProductListingsModalViewContext();
+  const { product, onListingsUpdated, onClose, onStartListing, filterIntegrationSlug } =
+    useProductListingsModalViewContext();
 
   return (
     <ProductListingsProvider

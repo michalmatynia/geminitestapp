@@ -4,24 +4,20 @@ import { COMMON_RUNTIME_FIELDS, dbQueryFields } from '../node-docs.constants';
 export const databaseDocs: NodeConfigDocField[] = [
   {
     path: 'database.operation',
-    description:
-      'Operation category: query/update/insert/delete.',
+    description: 'Operation category: query/update/insert/delete.',
   },
   {
     path: 'database.entityType',
-    description:
-      'Collection/entity type to operate on (product/note/custom).',
+    description: 'Collection/entity type to operate on (product/note/custom).',
   },
   {
     path: 'database.idField',
-    description:
-      'Primary key field when using preset queries (example: _id or id).',
+    description: 'Primary key field when using preset queries (example: _id or id).',
     defaultValue: '_id',
   },
   {
     path: 'database.query',
-    description:
-      'Query definition (provider/collection/preset/queryTemplate/sort/projection/etc).',
+    description: 'Query definition (provider/collection/preset/queryTemplate/sort/projection/etc).',
   },
   ...dbQueryFields('database.query'),
   {
@@ -31,8 +27,7 @@ export const databaseDocs: NodeConfigDocField[] = [
   },
   {
     path: 'database.updateTemplate',
-    description:
-      'Template JSON for updates (when using custom update templates).',
+    description: 'Template JSON for updates (when using custom update templates).',
   },
   {
     path: 'database.mode',
@@ -41,8 +36,7 @@ export const databaseDocs: NodeConfigDocField[] = [
   },
   {
     path: 'database.updateStrategy',
-    description:
-      'When updating: one vs many (for multi-match updates).',
+    description: 'When updating: one vs many (for multi-match updates).',
   },
   {
     path: 'database.useMongoActions',
@@ -51,28 +45,23 @@ export const databaseDocs: NodeConfigDocField[] = [
   },
   {
     path: 'database.actionCategory',
-    description:
-      'Provider action category: create/read/update/delete/(aggregate for MongoDB).',
+    description: 'Provider action category: create/read/update/delete/(aggregate for MongoDB).',
   },
   {
     path: 'database.action',
-    description:
-      'Provider action command (MongoDB or Prisma-mapped command labels).',
+    description: 'Provider action command (MongoDB or Prisma-mapped command labels).',
   },
   {
     path: 'database.distinctField',
-    description:
-      'Field for distinct action.',
+    description: 'Field for distinct action.',
   },
   {
     path: 'database.writeSource',
-    description:
-      'Which incoming port to write from (example: result/bundle/context).',
+    description: 'Which incoming port to write from (example: result/bundle/context).',
   },
   {
     path: 'database.writeSourcePath',
-    description:
-      'Optional JSON path within writeSource to write (example: \'result.items[0]\').',
+    description: "Optional JSON path within writeSource to write (example: 'result.items[0]').",
   },
   {
     path: 'database.writeOutcomePolicy.onZeroAffected',
@@ -88,56 +77,47 @@ export const databaseDocs: NodeConfigDocField[] = [
   },
   {
     path: 'database.dryRun',
-    description:
-      'When true, does not persist changes; returns computed payload only.',
+    description: 'When true, does not persist changes; returns computed payload only.',
     defaultValue: 'false',
   },
   {
     path: 'database.skipEmpty',
-    description:
-      'When true, empty strings/nulls are skipped when building updates.',
+    description: 'When true, empty strings/nulls are skipped when building updates.',
     defaultValue: 'false',
   },
   {
     path: 'database.trimStrings',
-    description:
-      'When true, trim all string values before writing.',
+    description: 'When true, trim all string values before writing.',
     defaultValue: 'false',
   },
   {
     path: 'database.aiPrompt',
-    description:
-      'Optional AI prompt template used by Database AI assistants.',
+    description: 'Optional AI prompt template used by Database AI assistants.',
     defaultValue: '""',
   },
   {
     path: 'database.validationRuleIds',
-    description:
-      'Optional list of validation rule IDs to apply before writing.',
+    description: 'Optional list of validation rule IDs to apply before writing.',
     defaultValue: '[]',
   },
   {
     path: 'database.parameterInferenceGuard.enabled',
-    description:
-      'When enabled, validate/sanitize updated payload against parameter definitions.',
+    description: 'When enabled, validate/sanitize updated payload against parameter definitions.',
     defaultValue: 'false',
   },
   {
     path: 'database.parameterInferenceGuard.targetPath',
-    description:
-      'Update field to sanitize (default: parameters).',
+    description: 'Update field to sanitize (default: parameters).',
     defaultValue: 'parameters',
   },
   {
     path: 'database.parameterInferenceGuard.definitionsPort',
-    description:
-      'Input port carrying parameter definitions used for validation (default: result).',
+    description: 'Input port carrying parameter definitions used for validation (default: result).',
     defaultValue: 'result',
   },
   {
     path: 'database.parameterInferenceGuard.definitionsPath',
-    description:
-      'Optional JSON path inside definitionsPort payload to locate definition rows.',
+    description: 'Optional JSON path inside definitionsPort payload to locate definition rows.',
     defaultValue: '""',
   },
   {
@@ -148,8 +128,7 @@ export const databaseDocs: NodeConfigDocField[] = [
   },
   {
     path: 'database.parameterInferenceGuard.allowUnknownParameterIds',
-    description:
-      'When true, keeps inferred parameterIds missing from definitions.',
+    description: 'When true, keeps inferred parameterIds missing from definitions.',
     defaultValue: 'false',
   },
   ...COMMON_RUNTIME_FIELDS,
@@ -198,33 +177,26 @@ export const viewerDocs: NodeConfigDocField[] = [
   },
   {
     path: 'viewer.showImagesAsJson',
-    description:
-      'When true, image lists render as JSON instead of thumbnails.',
+    description: 'When true, image lists render as JSON instead of thumbnails.',
     defaultValue: 'false',
   },
   ...COMMON_RUNTIME_FIELDS,
 ];
 
-export const notificationDocs: NodeConfigDocField[] = [
-  ...COMMON_RUNTIME_FIELDS,
-];
+export const notificationDocs: NodeConfigDocField[] = [...COMMON_RUNTIME_FIELDS];
 
 export const aiDescriptionDocs: NodeConfigDocField[] = [
   {
     path: 'description.visionOutputEnabled',
-    description:
-      'When enabled, include image-based analysis output.',
+    description: 'When enabled, include image-based analysis output.',
     defaultValue: 'true',
   },
   {
     path: 'description.generationOutputEnabled',
-    description:
-      'When enabled, include generated text output.',
+    description: 'When enabled, include generated text output.',
     defaultValue: 'true',
   },
   ...COMMON_RUNTIME_FIELDS,
 ];
 
-export const descriptionUpdaterDocs: NodeConfigDocField[] = [
-  ...COMMON_RUNTIME_FIELDS,
-];
+export const descriptionUpdaterDocs: NodeConfigDocField[] = [...COMMON_RUNTIME_FIELDS];

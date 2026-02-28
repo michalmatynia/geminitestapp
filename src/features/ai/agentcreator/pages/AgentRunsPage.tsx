@@ -4,11 +4,11 @@ import { useQueryClient } from '@tanstack/react-query';
 import React, { useCallback } from 'react';
 
 import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
-import { 
-  Button, 
-  MetadataItem, 
-  PropertyRow, 
-  Hint, 
+import {
+  Button,
+  MetadataItem,
+  PropertyRow,
+  Hint,
   Breadcrumbs,
   StatusBadge,
   Badge,
@@ -53,7 +53,7 @@ function AgentRunsContent(): React.JSX.Element {
             items={[
               { label: 'Admin', href: '/admin' },
               { label: 'Agent Creator', href: '/admin/agentcreator' },
-              { label: 'Runs' }
+              { label: 'Runs' },
             ]}
             className='mb-2'
           />
@@ -72,24 +72,45 @@ function AgentRunsContent(): React.JSX.Element {
               <div className='flex items-start justify-between gap-4'>
                 <div className='min-w-0 flex-1 space-y-3'>
                   <div className='flex items-center justify-between'>
-                    <Hint uppercase variant='muted' className='font-semibold'>Agent Run</Hint>
-                    <StatusBadge status={job.status} size='sm' className='h-5 uppercase font-bold' />
+                    <Hint uppercase variant='muted' className='font-semibold'>
+                      Agent Run
+                    </Hint>
+                    <StatusBadge
+                      status={job.status}
+                      size='sm'
+                      className='h-5 uppercase font-bold'
+                    />
                   </div>
 
                   <div className='space-y-1'>
                     <PropertyRow label='Model' value={job.model || 'Default'} />
-                    <PropertyRow label='Created' value={job.createdAt ? new Date(job.createdAt).toLocaleString() : '—'} />
+                    <PropertyRow
+                      label='Created'
+                      value={job.createdAt ? new Date(job.createdAt).toLocaleString() : '—'}
+                    />
                   </div>
 
-                  <Card variant='subtle-compact' padding='sm' className='space-y-2 border-white/5 bg-black/20 text-xs'>
-                    <p className='text-gray-300 line-clamp-2 italic'>
-                      "{job.prompt}"
-                    </p>
+                  <Card
+                    variant='subtle-compact'
+                    padding='sm'
+                    className='space-y-2 border-white/5 bg-black/20 text-xs'
+                  >
+                    <p className='text-gray-300 line-clamp-2 italic'>"{job.prompt}"</p>
                     <div className='flex flex-wrap gap-x-3 gap-y-1 border-t border-white/5 pt-2'>
-                      <MetadataItem label='Snapshots' value={job._count?.['browserSnapshots'] ?? 0} variant='minimal' />
-                      <MetadataItem label='Logs' value={job._count?.['browserLogs'] ?? 0} variant='minimal' />
+                      <MetadataItem
+                        label='Snapshots'
+                        value={job._count?.['browserSnapshots'] ?? 0}
+                        variant='minimal'
+                      />
+                      <MetadataItem
+                        label='Logs'
+                        value={job._count?.['browserLogs'] ?? 0}
+                        variant='minimal'
+                      />
                       {job.requiresHumanIntervention && (
-                        <Badge variant='warning' className='h-4 px-1 text-[9px] uppercase'>Needs Input</Badge>
+                        <Badge variant='warning' className='h-4 px-1 text-[9px] uppercase'>
+                          Needs Input
+                        </Badge>
                       )}
                     </div>
                   </Card>
@@ -102,12 +123,10 @@ function AgentRunsContent(): React.JSX.Element {
                 </div>
               </div>
               <div className='flex items-center justify-between border-t border-white/5 pt-3'>
-                <Hint className='text-[10px] font-mono' variant='muted'>ID: {job.id.slice(0, 8)}...</Hint>
-                <Button
-                  variant='outline'
-                  size='xs'
-                  onClick={() => setSelectedAgentRunId(job.id)}
-                >
+                <Hint className='text-[10px] font-mono' variant='muted'>
+                  ID: {job.id.slice(0, 8)}...
+                </Hint>
+                <Button variant='outline' size='xs' onClick={() => setSelectedAgentRunId(job.id)}>
                   View details
                 </Button>
               </div>

@@ -12,10 +12,7 @@ import type {
 import { ApiError } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import {
-  findTreeNodeById,
-  findTreeNodeParentId,
-} from '@/shared/utils/tree-operations';
+import { findTreeNodeById, findTreeNodeParentId } from '@/shared/utils/tree-operations';
 
 type NoteRelationWithTarget = NoteRelationDto & {
   targetNote?: RelatedNote | undefined;
@@ -50,23 +47,14 @@ export function useNoteOperations({
   handleDuplicateNote: (noteId: string) => Promise<void>;
   handleDeleteNoteFromTree: (noteId: string) => Promise<void>;
   handleRenameNote: (noteId: string, newTitle: string) => Promise<void>;
-  handleMoveNoteToFolder: (
-    noteId: string,
-    folderId: string | null,
-  ) => Promise<void>;
-  handleMoveFolderToFolder: (
-    folderId: string,
-    targetParentId: string | null,
-  ) => Promise<void>;
+  handleMoveNoteToFolder: (noteId: string, folderId: string | null) => Promise<void>;
+  handleMoveFolderToFolder: (folderId: string, targetParentId: string | null) => Promise<void>;
   handleReorderFolder: (
     folderId: string,
     targetId: string,
-    position: 'before' | 'after',
+    position: 'before' | 'after'
   ) => Promise<void>;
-  handleRelateNotes: (
-    sourceNoteId: string,
-    targetNoteId: string,
-  ) => Promise<void>;
+  handleRelateNotes: (sourceNoteId: string, targetNoteId: string) => Promise<void>;
 } {
   const queryClient = useQueryClient();
   const createCategoryMutation = useCreateCategoryMutation();
@@ -108,13 +96,7 @@ export function useNoteOperations({
         },
       });
     },
-    [
-      selectedNotebookId,
-      createCategoryMutation,
-      setSelectedFolderId,
-      toast,
-      promptAction,
-    ],
+    [selectedNotebookId, createCategoryMutation, setSelectedFolderId, toast, promptAction]
   );
 
   const handleDeleteFolder = useCallback(
@@ -141,14 +123,14 @@ export function useNoteOperations({
         },
       });
     },
-    [deleteCategoryMutation, toast, confirmAction],
+    [deleteCategoryMutation, toast, confirmAction]
   );
 
   const handleRenameFolder = useCallback(
     async (folderId: string, newName: string): Promise<void> => {
       const currentFolder = findTreeNodeById<CategoryWithChildren>(
         folderTreeRef.current || [],
-        folderId,
+        folderId
       );
       const previousName = (currentFolder?.name as string) ?? '';
       try {
@@ -180,7 +162,7 @@ export function useNoteOperations({
         toast('Failed to rename folder', { variant: 'error' });
       }
     },
-    [folderTreeRef, updateCategoryMutation, setUndoStack, toast],
+    [folderTreeRef, updateCategoryMutation, setUndoStack, toast]
   );
 
   const handleDuplicateNote = useCallback(
@@ -190,8 +172,7 @@ export function useNoteOperations({
           queryKey: QUERY_KEYS.notes.detail(noteId),
           queryFn: async (): Promise<NoteWithRelations> => {
             const response = await fetch(`/api/notes/${noteId}`);
-            if (!response.ok)
-              throw new ApiError('Failed to fetch note', response.status);
+            if (!response.ok) throw new ApiError('Failed to fetch note', response.status);
             return response.json() as Promise<NoteWithRelations>;
           },
           staleTime: NOTES_STALE_MS,
@@ -201,8 +182,7 @@ export function useNoteOperations({
         let newTitle = `${baseTitle} (1)`;
 
         const existingNotes = (notesRef.current || []).filter(
-          (n: NoteWithRelations) =>
-            n.title.startsWith(baseTitle) && n.title !== note.title,
+          (n: NoteWithRelations) => n.title.startsWith(baseTitle) && n.title !== note.title
         );
         if (existingNotes.length > 0) {
           const numbers = existingNotes
@@ -229,12 +209,8 @@ export function useNoteOperations({
           isArchived: note.isArchived,
           isFavorite: note.isFavorite,
           tagIds: note.tags?.map((t: { tagId: string }) => t.tagId) || [],
-          categoryIds:
-            note.categories?.map((c: { categoryId: string }) => c.categoryId) ||
-            [],
-          relatedNoteIds: (note.relations ?? []).map(
-            (related: { id: string }) => related.id,
-          ),
+          categoryIds: note.categories?.map((c: { categoryId: string }) => c.categoryId) || [],
+          relatedNoteIds: (note.relations ?? []).map((related: { id: string }) => related.id),
           notebookId: note.notebookId ?? selectedNotebookId ?? null,
         });
 
@@ -246,7 +222,7 @@ export function useNoteOperations({
         toast('Failed to duplicate note', { variant: 'error' });
       }
     },
-    [selectedNotebookId, notesRef, createNoteMutation, toast, queryClient],
+    [selectedNotebookId, notesRef, createNoteMutation, toast, queryClient]
   );
 
   const handleDeleteNoteFromTree = useCallback(
@@ -275,13 +251,13 @@ export function useNoteOperations({
         },
       });
     },
-    [deleteNoteMutation, selectedNote, setSelectedNote, toast, confirmAction],
+    [deleteNoteMutation, selectedNote, setSelectedNote, toast, confirmAction]
   );
 
   const handleRenameNote = useCallback(
     async (noteId: string, newTitle: string): Promise<void> => {
       const currentNote = (notesRef.current || []).find(
-        (note: NoteWithRelations) => note.id === noteId,
+        (note: NoteWithRelations) => note.id === noteId
       );
       const previousTitle = currentNote?.title ?? '';
       try {
@@ -317,20 +293,13 @@ export function useNoteOperations({
         toast('Failed to rename note', { variant: 'error' });
       }
     },
-    [
-      notesRef,
-      updateNoteMutation,
-      setUndoStack,
-      selectedNote,
-      setSelectedNote,
-      toast,
-    ],
+    [notesRef, updateNoteMutation, setUndoStack, selectedNote, setSelectedNote, toast]
   );
 
   const handleMoveNoteToFolder = useCallback(
     async (noteId: string, folderId: string | null): Promise<void> => {
       const currentNote = (notesRef.current || []).find(
-        (note: NoteWithRelations) => note.id === noteId,
+        (note: NoteWithRelations) => note.id === noteId
       );
       const previousFolderId = currentNote?.categories?.[0]?.categoryId ?? null;
       try {
@@ -362,14 +331,14 @@ export function useNoteOperations({
         toast('Failed to move note', { variant: 'error' });
       }
     },
-    [notesRef, updateNoteMutation, setUndoStack, toast],
+    [notesRef, updateNoteMutation, setUndoStack, toast]
   );
 
   const handleMoveFolderToFolder = useCallback(
     async (folderId: string, targetParentId: string | null): Promise<void> => {
       const previousParentId = findTreeNodeParentId<CategoryWithChildren>(
         folderTreeRef.current || [],
-        folderId,
+        folderId
       );
       try {
         await updateCategoryMutation.mutateAsync({
@@ -400,30 +369,17 @@ export function useNoteOperations({
         toast('Failed to move folder', { variant: 'error' });
       }
     },
-    [folderTreeRef, updateCategoryMutation, setUndoStack, toast],
+    [folderTreeRef, updateCategoryMutation, setUndoStack, toast]
   );
 
   const handleReorderFolder = useCallback(
-    async (
-      folderId: string,
-      targetId: string,
-      position: 'before' | 'after',
-    ): Promise<void> => {
+    async (folderId: string, targetId: string, position: 'before' | 'after'): Promise<void> => {
       const tree = folderTreeRef.current || [];
-      const draggedFolder = findTreeNodeById<CategoryWithChildren>(
-        tree,
-        folderId,
-      );
+      const draggedFolder = findTreeNodeById<CategoryWithChildren>(tree, folderId);
       if (!draggedFolder) return;
 
-      const targetParentId = findTreeNodeParentId<CategoryWithChildren>(
-        tree,
-        targetId,
-      );
-      const draggedParentId = findTreeNodeParentId<CategoryWithChildren>(
-        tree,
-        folderId,
-      );
+      const targetParentId = findTreeNodeParentId<CategoryWithChildren>(tree, targetId);
+      const draggedParentId = findTreeNodeParentId<CategoryWithChildren>(tree, folderId);
 
       const getSiblings = (parentId: string | null): CategoryWithChildren[] => {
         if (!parentId) return tree;
@@ -432,11 +388,9 @@ export function useNoteOperations({
       };
 
       const siblings = getSiblings(targetParentId);
-      const filtered = siblings.filter(
-        (sibling: CategoryWithChildren) => sibling.id !== folderId,
-      );
+      const filtered = siblings.filter((sibling: CategoryWithChildren) => sibling.id !== folderId);
       const targetIndex = filtered.findIndex(
-        (sibling: CategoryWithChildren) => sibling.id === targetId,
+        (sibling: CategoryWithChildren) => sibling.id === targetId
       );
       if (targetIndex === -1) return;
 
@@ -458,7 +412,7 @@ export function useNoteOperations({
                 ? { parentId: targetParentId }
                 : {}),
             });
-          }),
+          })
         );
         toast('Folder reordered successfully');
       } catch (error: unknown) {
@@ -473,7 +427,7 @@ export function useNoteOperations({
         toast('Failed to reorder folder', { variant: 'error' });
       }
     },
-    [folderTreeRef, updateCategoryMutation, toast],
+    [folderTreeRef, updateCategoryMutation, toast]
   );
 
   const handleRelateNotes = useCallback(
@@ -486,8 +440,7 @@ export function useNoteOperations({
             queryKey: QUERY_KEYS.notes.detail(sourceNoteId),
             queryFn: async (): Promise<NoteWithRelations> => {
               const res = await fetch(`/api/notes/${sourceNoteId}`);
-              if (!res.ok)
-                throw new ApiError('Failed to fetch source note', 400);
+              if (!res.ok) throw new ApiError('Failed to fetch source note', 400);
               return res.json() as Promise<NoteWithRelations>;
             },
             staleTime: NOTES_STALE_MS,
@@ -496,8 +449,7 @@ export function useNoteOperations({
             queryKey: QUERY_KEYS.notes.detail(targetNoteId),
             queryFn: async (): Promise<NoteWithRelations> => {
               const res = await fetch(`/api/notes/${targetNoteId}`);
-              if (!res.ok)
-                throw new ApiError('Failed to fetch target note', 400);
+              if (!res.ok) throw new ApiError('Failed to fetch target note', 400);
               return res.json() as Promise<NoteWithRelations>;
             },
             staleTime: NOTES_STALE_MS,
@@ -514,17 +466,13 @@ export function useNoteOperations({
           return;
         }
 
-        const nextSourceIds = Array.from(
-          new Set([...sourceRelatedIds, targetNoteId]),
-        );
+        const nextSourceIds = Array.from(new Set([...sourceRelatedIds, targetNoteId]));
 
         const targetRelatedIds =
           targetNote.relationsFrom
             ?.map((rel: NoteRelationWithTarget) => rel.targetNote?.id)
             .filter((rid: string | undefined): rid is string => !!rid) || [];
-        const nextTargetIds = Array.from(
-          new Set([...targetRelatedIds, sourceNoteId]),
-        );
+        const nextTargetIds = Array.from(new Set([...targetRelatedIds, sourceNoteId]));
 
         await Promise.all([
           updateNoteMutation.mutateAsync({
@@ -549,7 +497,7 @@ export function useNoteOperations({
         toast('Failed to link notes', { variant: 'error' });
       }
     },
-    [updateNoteMutation, toast, queryClient],
+    [updateNoteMutation, toast, queryClient]
   );
 
   return {

@@ -40,7 +40,9 @@ interface AdvancedFilterValueOption {
 interface AdvancedFilterBuilderProps {
   group: ProductAdvancedFilterGroup;
   onChange: (group: ProductAdvancedFilterGroup) => void;
-  fieldValueOptions?: Partial<Record<ProductAdvancedFilterField, AdvancedFilterValueOption[]>> | undefined;
+  fieldValueOptions?:
+    | Partial<Record<ProductAdvancedFilterField, AdvancedFilterValueOption[]>>
+    | undefined;
 }
 
 interface GroupEditorProps {
@@ -54,7 +56,9 @@ interface GroupEditorProps {
   canMoveDown?: boolean | undefined;
   isRoot?: boolean | undefined;
   depth?: number | undefined;
-  fieldValueOptions?: Partial<Record<ProductAdvancedFilterField, AdvancedFilterValueOption[]>> | undefined;
+  fieldValueOptions?:
+    | Partial<Record<ProductAdvancedFilterField, AdvancedFilterValueOption[]>>
+    | undefined;
 }
 
 interface ConditionEditorProps {
@@ -75,12 +79,10 @@ const COMBINATOR_OPTIONS: SelectSimpleOption[] = [
   { value: 'or', label: 'OR' },
 ];
 
-const FIELD_OPTIONS: SelectSimpleOption[] = ADVANCED_FILTER_FIELD_CONFIGS.map(
-  (config) => ({
-    value: config.field,
-    label: config.label,
-  })
-);
+const FIELD_OPTIONS: SelectSimpleOption[] = ADVANCED_FILTER_FIELD_CONFIGS.map((config) => ({
+  value: config.field,
+  label: config.label,
+}));
 
 const stripConditionValues = (
   condition: ProductAdvancedFilterCondition
@@ -96,9 +98,7 @@ const stripConditionValueTo = (
   return rest as ProductAdvancedFilterCondition;
 };
 
-const duplicateRuleWithNewIds = (
-  rule: ProductAdvancedFilterRule
-): ProductAdvancedFilterRule => {
+const duplicateRuleWithNewIds = (rule: ProductAdvancedFilterRule): ProductAdvancedFilterRule => {
   if (rule.type === 'condition') {
     return {
       ...rule,
@@ -129,9 +129,7 @@ const buildConditionValidationMessage = (
     }
     if (
       valueKind === 'number' &&
-      condition.value.some(
-        (value: unknown) => typeof value !== 'number' || !Number.isFinite(value)
-      )
+      condition.value.some((value: unknown) => typeof value !== 'number' || !Number.isFinite(value))
     ) {
       return 'All values must be numbers.';
     }
@@ -210,7 +208,8 @@ const AdvancedFilterConditionEditor = memo(function AdvancedFilterConditionEdito
       })),
     [fieldConfig.operators]
   );
-  const inputType = fieldConfig.kind === 'number' ? 'number' : fieldConfig.kind === 'date' ? 'date' : 'text';
+  const inputType =
+    fieldConfig.kind === 'number' ? 'number' : fieldConfig.kind === 'date' ? 'date' : 'text';
   const useMultiValueInput = isMultiValueOperator(condition.operator);
   const dataListId = `advanced-filter-value-options-${condition.id}`;
 
@@ -223,10 +222,7 @@ const AdvancedFilterConditionEditor = memo(function AdvancedFilterConditionEdito
   const valueTo =
     condition.valueTo === undefined || condition.valueTo === null ? '' : String(condition.valueTo);
 
-  const validationMessage = useMemo(
-    () => buildConditionValidationMessage(condition),
-    [condition]
-  );
+  const validationMessage = useMemo(() => buildConditionValidationMessage(condition), [condition]);
 
   const handleFieldChange = (nextFieldValue: string): void => {
     if (!nextFieldValue) return;
@@ -364,7 +360,9 @@ const AdvancedFilterConditionEditor = memo(function AdvancedFilterConditionEdito
         </div>
 
         <div className='space-y-1'>
-          <Label className='text-[10px] uppercase tracking-wide text-muted-foreground'>Operator</Label>
+          <Label className='text-[10px] uppercase tracking-wide text-muted-foreground'>
+            Operator
+          </Label>
           <SelectSimple
             size='sm'
             value={condition.operator}
@@ -382,7 +380,13 @@ const AdvancedFilterConditionEditor = memo(function AdvancedFilterConditionEdito
             {fieldConfig.kind === 'boolean' && !useMultiValueInput ? (
               <SelectSimple
                 size='sm'
-                value={condition.value === true ? 'true' : condition.value === false ? 'false' : undefined}
+                value={
+                  condition.value === true
+                    ? 'true'
+                    : condition.value === false
+                      ? 'false'
+                      : undefined
+                }
                 onValueChange={handleBooleanValueChange}
                 options={ADVANCED_BOOLEAN_OPTIONS}
                 placeholder='Select value'
@@ -392,7 +396,11 @@ const AdvancedFilterConditionEditor = memo(function AdvancedFilterConditionEdito
               <>
                 <Input
                   type={inputType}
-                  list={valueOptions && valueOptions.length > 0 && fieldConfig.kind === 'string' ? dataListId : undefined}
+                  list={
+                    valueOptions && valueOptions.length > 0 && fieldConfig.kind === 'string'
+                      ? dataListId
+                      : undefined
+                  }
                   value={value}
                   onChange={(event) => handleValueChange(event.target.value)}
                   className='h-8'
@@ -487,9 +495,7 @@ const AdvancedFilterConditionEditor = memo(function AdvancedFilterConditionEdito
       </div>
 
       {validationMessage ? (
-        <p className='mt-2 text-xs text-destructive'>
-          {validationMessage}
-        </p>
+        <p className='mt-2 text-xs text-destructive'>{validationMessage}</p>
       ) : null}
     </div>
   );
@@ -527,7 +533,9 @@ const AdvancedFilterGroupEditor = memo(function AdvancedFilterGroupEditor({
   };
 
   const handleMoveRule = (ruleId: string, direction: -1 | 1): void => {
-    const currentIndex = group.rules.findIndex((rule: ProductAdvancedFilterRule) => rule.id === ruleId);
+    const currentIndex = group.rules.findIndex(
+      (rule: ProductAdvancedFilterRule) => rule.id === ruleId
+    );
     if (currentIndex < 0) return;
     const targetIndex = currentIndex + direction;
     if (targetIndex < 0 || targetIndex >= group.rules.length) return;
@@ -540,7 +548,9 @@ const AdvancedFilterGroupEditor = memo(function AdvancedFilterGroupEditor({
   };
 
   const handleDuplicateRule = (ruleId: string): void => {
-    const currentIndex = group.rules.findIndex((rule: ProductAdvancedFilterRule) => rule.id === ruleId);
+    const currentIndex = group.rules.findIndex(
+      (rule: ProductAdvancedFilterRule) => rule.id === ruleId
+    );
     if (currentIndex < 0) return;
 
     const sourceRule = group.rules[currentIndex];

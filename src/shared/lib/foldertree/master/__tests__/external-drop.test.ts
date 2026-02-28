@@ -1,8 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  resolveRootTopReorderAnchor,
-} from '@/shared/lib/foldertree/master/external-drop';
+import { resolveRootTopReorderAnchor } from '@/shared/lib/foldertree/master/external-drop';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 const rootNode = (id: string): Pick<MasterTreeNode, 'id'> => ({ id });

@@ -1,10 +1,6 @@
 'use client';
 
-import {
-  ArrowLeft,
-  Plus,
-  Save,
-} from 'lucide-react';
+import { ArrowLeft, Plus, Save } from 'lucide-react';
 import Link from 'next/link';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -185,18 +181,15 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
     [lists, parsedPatternLists]
   );
 
-  const handleListChange = useCallback(
-    (id: string, patch: Partial<ValidatorPatternList>): void => {
-      const now = new Date().toISOString();
-      setLists((current: ValidatorPatternList[]) =>
-        current.map((list: ValidatorPatternList) => {
-          if (list.id !== id) return list;
-          return { ...list, ...patch, updatedAt: now };
-        })
-      );
-    },
-    []
-  );
+  const handleListChange = useCallback((id: string, patch: Partial<ValidatorPatternList>): void => {
+    const now = new Date().toISOString();
+    setLists((current: ValidatorPatternList[]) =>
+      current.map((list: ValidatorPatternList) => {
+        if (list.id !== id) return list;
+        return { ...list, ...patch, updatedAt: now };
+      })
+    );
+  }, []);
 
   const handleAddList = useCallback((): void => {
     const normalizedName = newListName.trim();
@@ -284,12 +277,9 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
       setLists(normalized);
       toast('Validation pattern lists saved.', { variant: 'success' });
     } catch (error: unknown) {
-      toast(
-        error instanceof Error
-          ? error.message
-          : 'Failed to save validation pattern lists.',
-        { variant: 'error' }
-      );
+      toast(error instanceof Error ? error.message : 'Failed to save validation pattern lists.', {
+        variant: 'error',
+      });
     }
   }, [lists, toast, updateSetting]);
 
@@ -358,12 +348,9 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
   }, [editorState, handleListChange, toast]);
 
   // Drag-drop reorder: merge visible reorder back into full list
-  const handleReorder = useCallback(
-    (reorderedVisible: ValidatorPatternList[]): void => {
-      setLists((current) => mergeReorderedVisible(current, reorderedVisible));
-    },
-    []
-  );
+  const handleReorder = useCallback((reorderedVisible: ValidatorPatternList[]): void => {
+    setLists((current) => mergeReorderedVisible(current, reorderedVisible));
+  }, []);
 
   const handleToggleLock = useCallback(
     (listId: string): void => {
@@ -380,7 +367,7 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
         eyebrow='AI · Global Validator'
         title='Validation Pattern List Manager'
         description='Create, manage, and enter validation pattern lists.'
-        actions={(
+        actions={
           <div className='flex flex-wrap items-center gap-2'>
             <Button type='button' variant='outline' size='xs' asChild>
               <Link href='/admin/validator'>
@@ -391,14 +378,16 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
             <Button
               type='button'
               size='xs'
-              onClick={(): void => { void handleSave(); }}
+              onClick={(): void => {
+                void handleSave();
+              }}
               disabled={!isDirty || updateSetting.isPending}
             >
               <Save className='mr-2 size-4' />
               Save Lists
             </Button>
           </div>
-        )}
+        }
       />
 
       <FormSection
@@ -444,14 +433,18 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
         title='Available Lists'
         description='Drag to reorder. Click Enter to manage patterns. Reset or Save when done.'
         className='p-4'
-        actions={(
+        actions={
           <div className='flex flex-wrap items-center gap-2'>
             <div className='max-w-sm'>
               <SearchInput
                 placeholder='Search lists...'
                 value={query}
-                onChange={(event) => { setQuery(event.target.value); }}
-                onClear={() => { setQuery(''); }}
+                onChange={(event) => {
+                  setQuery(event.target.value);
+                }}
+                onClear={() => {
+                  setQuery('');
+                }}
                 size='sm'
               />
             </div>
@@ -473,7 +466,7 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
               Reset
             </Button>
           </div>
-        )}
+        }
       >
         <div className='mt-3'>
           {lists.length === 0 ? (

@@ -8,19 +8,21 @@ import {
   type ImageStudioAnalysisMode,
   type ImageStudioAnalysisRequest,
 } from '@/features/ai/image-studio/contracts/analysis';
-import { analyzeImageByAutoScalerLayout } from '@/features/ai/image-studio/server/auto-scaler-utils';
-import { getImageStudioSlotById } from '@/features/ai/image-studio/server/slot-repository';
+import { analyzeImageByAutoScalerLayout } from '@/shared/lib/ai/image-studio/server/auto-scaler-utils';
+import { getImageStudioSlotById } from '@/shared/lib/ai/image-studio/server/slot-repository';
 import {
   loadSourceBufferFromSlot,
   parseImageDataUrl,
-} from '@/features/ai/image-studio/server/source-image-utils';
-import { logSystemEvent } from '@/features/observability/server';
+} from '@/shared/lib/ai/image-studio/server/source-image-utils';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, isAppError, notFoundError } from '@/shared/errors/app-error';
 
 const SOURCE_FETCH_TIMEOUT_MS = 15_000;
-const ANALYSIS_PIPELINE_VERSION = process.env['IMAGE_STUDIO_ANALYSIS_PIPELINE_VERSION']?.trim() || 'v1';
-const STRICT_SERVER_ANALYSIS_ENABLED = process.env['IMAGE_STUDIO_ANALYSIS_SERVER_AUTHORITATIVE'] !== 'false';
+const ANALYSIS_PIPELINE_VERSION =
+  process.env['IMAGE_STUDIO_ANALYSIS_PIPELINE_VERSION']?.trim() || 'v1';
+const STRICT_SERVER_ANALYSIS_ENABLED =
+  process.env['IMAGE_STUDIO_ANALYSIS_SERVER_AUTHORITATIVE'] !== 'false';
 
 type StudioSlotRecord = NonNullable<Awaited<ReturnType<typeof getImageStudioSlotById>>>;
 type UploadedClientAnalysisImage = {
@@ -48,7 +50,7 @@ const analysisBadRequest = (
 const isClientAnalysisMode = (mode: ImageStudioAnalysisMode): boolean =>
   mode === 'client_analysis_v1';
 
-const parseJsonFormValue = <T,>(value: FormDataEntryValue | null): T | undefined => {
+const parseJsonFormValue = <T>(value: FormDataEntryValue | null): T | undefined => {
   if (typeof value !== 'string') return undefined;
   const normalized = value.trim();
   if (!normalized) return undefined;
@@ -111,7 +113,8 @@ async function resolveAnalysisSource(input: {
   uploadedClientImage: UploadedClientAnalysisImage | null;
 }): Promise<AnalysisSource> {
   const { payload, sourceSlot, uploadedClientImage } = input;
-  const preferAuthoritativeSource = STRICT_SERVER_ANALYSIS_ENABLED || payload.mode === 'server_analysis_v1';
+  const preferAuthoritativeSource =
+    STRICT_SERVER_ANALYSIS_ENABLED || payload.mode === 'server_analysis_v1';
 
   let sourceBuffer: Buffer | null = null;
   let sourceMimeHint: string | null = null;
@@ -158,9 +161,9 @@ async function resolveAnalysisSource(input: {
     throw sourceLoadError instanceof Error
       ? sourceLoadError
       : analysisBadRequest(
-        IMAGE_STUDIO_ANALYSIS_ERROR_CODES.SOURCE_IMAGE_MISSING,
-        'Server analysis requires a resolvable source image.'
-      );
+          IMAGE_STUDIO_ANALYSIS_ERROR_CODES.SOURCE_IMAGE_MISSING,
+          'Server analysis requires a resolvable source image.'
+        );
   }
 
   if (uploadedClientImage) {
@@ -193,7 +196,10 @@ export async function postAnalyzeSlotHandler(
 ): Promise<Response> {
   const slotId = params.slotId?.trim() ?? '';
   if (!slotId) {
-    throw analysisBadRequest(IMAGE_STUDIO_ANALYSIS_ERROR_CODES.INVALID_PAYLOAD, 'Slot id is required.');
+    throw analysisBadRequest(
+      IMAGE_STUDIO_ANALYSIS_ERROR_CODES.INVALID_PAYLOAD,
+      'Slot id is required.'
+    );
   }
 
   const startedAt = Date.now();
@@ -202,7 +208,8 @@ export async function postAnalyzeSlotHandler(
     body && typeof body === 'object' && !Array.isArray(body)
       ? { ...(body as Record<string, unknown>) }
       : {};
-  const normalizedMode = typeof normalizedBody['mode'] === 'string' ? normalizedBody['mode'].trim() : '';
+  const normalizedMode =
+    typeof normalizedBody['mode'] === 'string' ? normalizedBody['mode'].trim() : '';
   if (!normalizedMode) {
     normalizedBody['mode'] = 'server_analysis_v1';
   }
@@ -236,9 +243,7 @@ export async function postAnalyzeSlotHandler(
     });
     const durationMs = Date.now() - startedAt;
     const effectiveMode =
-      source.sourceKind === 'source_slot'
-        ? 'server_analysis_v1'
-        : 'client_analysis_v1';
+      source.sourceKind === 'source_slot' ? 'server_analysis_v1' : 'client_analysis_v1';
 
     void logSystemEvent({
       level: 'info',

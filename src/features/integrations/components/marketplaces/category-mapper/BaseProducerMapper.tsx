@@ -31,18 +31,24 @@ export function BaseProducerMapper(): React.JSX.Element {
   const fetchMutation = useFetchExternalProducersMutation();
   const saveMutation = useSaveProducerMappingsMutation();
 
-
   const internalProducers = useMemo(
     (): Producer[] => producersQuery.data ?? [],
     [producersQuery.data]
   );
 
   const mappings = useMemo(
-    (): ProducerMapping[] => (mappingsQuery.data ?? []).map((m: { internalProducerId: string; externalProducerId: string | null; isActive: boolean }) => ({
-      internalProducerId: m.internalProducerId,
-      externalProducerId: m.externalProducerId,
-      isActive: Boolean(m.isActive)
-    })),
+    (): ProducerMapping[] =>
+      (mappingsQuery.data ?? []).map(
+        (m: {
+          internalProducerId: string;
+          externalProducerId: string | null;
+          isActive: boolean;
+        }) => ({
+          internalProducerId: m.internalProducerId,
+          externalProducerId: m.externalProducerId,
+          isActive: Boolean(m.isActive),
+        })
+      ),
     [mappingsQuery.data]
   );
 

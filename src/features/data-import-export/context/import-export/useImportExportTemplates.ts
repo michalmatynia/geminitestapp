@@ -2,10 +2,10 @@
 
 import { useCallback, useState } from 'react';
 import type { Template, TemplateMapping } from '@/shared/contracts/data-import-export';
-import { 
-  defaultBaseImportParameterImportSettings, 
+import {
+  defaultBaseImportParameterImportSettings,
   normalizeBaseImportParameterImportSettings,
-  type BaseImportParameterImportSettings 
+  type BaseImportParameterImportSettings,
 } from '@/shared/contracts/integrations';
 import { useTemplateMutation } from '@/features/data-import-export/hooks/useImportQueries';
 import type { useToast } from '@/shared/ui';
@@ -27,16 +27,20 @@ export function useImportExportTemplates({
   const [exportTemplateName, setExportTemplateName] = useState('');
   const [importTemplateDescription, setImportTemplateDescription] = useState('');
   const [exportTemplateDescription, setExportTemplateDescription] = useState('');
-  const [importTemplateMappings, setImportTemplateMappings] = useState<TemplateMapping[]>([{ sourceKey: '', targetField: '' }]);
+  const [importTemplateMappings, setImportTemplateMappings] = useState<TemplateMapping[]>([
+    { sourceKey: '', targetField: '' },
+  ]);
   const [importTemplateParameterImport, setImportTemplateParameterImport] =
-    useState<BaseImportParameterImportSettings>(
-      defaultBaseImportParameterImportSettings
-    );
-  const [exportTemplateMappings, setExportTemplateMappings] = useState<TemplateMapping[]>([{ sourceKey: '', targetField: '' }]);
+    useState<BaseImportParameterImportSettings>(defaultBaseImportParameterImportSettings);
+  const [exportTemplateMappings, setExportTemplateMappings] = useState<TemplateMapping[]>([
+    { sourceKey: '', targetField: '' },
+  ]);
   const [exportImagesAsBase64, setExportImagesAsBase64] = useState(false);
 
   const applyTemplate = useCallback((template: Template, scope: 'import' | 'export'): void => {
-    const nextMappings = template.mappings?.length ? template.mappings : [{ sourceKey: '', targetField: '' }];
+    const nextMappings = template.mappings?.length
+      ? template.mappings
+      : [{ sourceKey: '', targetField: '' }];
     if (scope === 'import') {
       setImportActiveTemplateId(template.id);
       setImportTemplateName(template.name);
@@ -65,9 +69,7 @@ export function useImportExportTemplates({
       setImportTemplateName('');
       setImportTemplateDescription('');
       setImportTemplateMappings([{ sourceKey: '', targetField: '' }]);
-      setImportTemplateParameterImport(
-        defaultBaseImportParameterImportSettings
-      );
+      setImportTemplateParameterImport(defaultBaseImportParameterImportSettings);
     } else {
       setExportActiveTemplateId('');
       setExportTemplateName('');
@@ -86,7 +88,7 @@ export function useImportExportTemplates({
     }
 
     const sourceTemplate = (isImport ? importTemplates : exportTemplates).find(
-      (template: Template) => template.id === activeId,
+      (template: Template) => template.id === activeId
     );
     if (!sourceTemplate) {
       toast('Selected template is missing.', { variant: 'error' });
@@ -111,14 +113,13 @@ export function useImportExportTemplates({
           mappings: cleanMappings,
           ...(isImport
             ? {
-              parameterImport: normalizeBaseImportParameterImportSettings(
-                sourceTemplate.parameterImport
-              ),
-            }
+                parameterImport: normalizeBaseImportParameterImportSettings(
+                  sourceTemplate.parameterImport
+                ),
+              }
             : {
-              exportImagesAsBase64:
-                  sourceTemplate.exportImagesAsBase64 ?? false,
-            }),
+                exportImagesAsBase64: sourceTemplate.exportImagesAsBase64 ?? false,
+              }),
         },
       })) as Template;
       applyTemplate(duplicated, isImport ? 'import' : 'export');
@@ -149,9 +150,7 @@ export function useImportExportTemplates({
         sourceKey: mapping.sourceKey?.trim() ?? '',
         targetField: mapping.targetField?.trim() ?? '',
       }))
-      .filter(
-        (mapping: TemplateMapping) => mapping.sourceKey && mapping.targetField
-      );
+      .filter((mapping: TemplateMapping) => mapping.sourceKey && mapping.targetField);
 
     const baseName = (sourceTemplate.name || 'Template').trim();
     const exportTemplateNameCandidate = baseName.toLowerCase().includes('export')
@@ -186,22 +185,27 @@ export function useImportExportTemplates({
     const name = isImport ? importTemplateName : exportTemplateName;
     const desc = isImport ? importTemplateDescription : exportTemplateDescription;
     const mappings = isImport ? importTemplateMappings : exportTemplateMappings;
-    const activeTemplateId = (
-      isImport ? importActiveTemplateId : exportActiveTemplateId
-    ).trim();
-    
+    const activeTemplateId = (isImport ? importActiveTemplateId : exportActiveTemplateId).trim();
+
     if (!name.trim()) {
       toast('Template name is required.', { variant: 'error' });
       return;
     }
 
     const cleanedMappings = mappings
-      .map((m: TemplateMapping) => ({ sourceKey: m.sourceKey.trim(), targetField: m.targetField.trim() }))
+      .map((m: TemplateMapping) => ({
+        sourceKey: m.sourceKey.trim(),
+        targetField: m.targetField.trim(),
+      }))
       .filter((m: TemplateMapping) => m.sourceKey && m.targetField);
 
     const mutation = isImport
-      ? (activeTemplateId ? saveImportTemplateMutation : createImportTemplateMutation)
-      : (activeTemplateId ? saveExportTemplateMutation : createExportTemplateMutation);
+      ? activeTemplateId
+        ? saveImportTemplateMutation
+        : createImportTemplateMutation
+      : activeTemplateId
+        ? saveExportTemplateMutation
+        : createExportTemplateMutation;
 
     try {
       const res = (await mutation.mutateAsync({
@@ -211,12 +215,12 @@ export function useImportExportTemplates({
           mappings: cleanedMappings,
           ...(isImport
             ? {
-              parameterImport: normalizeBaseImportParameterImportSettings(
-                importTemplateParameterImport
-              ),
-            }
+                parameterImport: normalizeBaseImportParameterImportSettings(
+                  importTemplateParameterImport
+                ),
+              }
             : { exportImagesAsBase64 }),
-        }
+        },
       })) as Template;
       applyTemplate(res, isImport ? 'import' : 'export');
       toast('Template saved.', { variant: 'success' });
@@ -230,7 +234,7 @@ export function useImportExportTemplates({
     const isImport = templateScope === 'import';
     const activeId = isImport ? importActiveTemplateId : exportActiveTemplateId;
     if (!activeId) return;
-    
+
     const mutation = isImport ? saveImportTemplateMutation : saveExportTemplateMutation;
     try {
       await mutation.mutateAsync({ isDelete: true });
@@ -243,16 +247,26 @@ export function useImportExportTemplates({
   };
 
   return {
-    importActiveTemplateId, setImportActiveTemplateId,
-    exportActiveTemplateId, setExportActiveTemplateId,
-    importTemplateName, setImportTemplateName,
-    exportTemplateName, setExportTemplateName,
-    importTemplateDescription, setImportTemplateDescription,
-    exportTemplateDescription, setExportTemplateDescription,
-    importTemplateMappings, setImportTemplateMappings,
-    importTemplateParameterImport, setImportTemplateParameterImport,
-    exportTemplateMappings, setExportTemplateMappings,
-    exportImagesAsBase64, setExportImagesAsBase64,
+    importActiveTemplateId,
+    setImportActiveTemplateId,
+    exportActiveTemplateId,
+    setExportActiveTemplateId,
+    importTemplateName,
+    setImportTemplateName,
+    exportTemplateName,
+    setExportTemplateName,
+    importTemplateDescription,
+    setImportTemplateDescription,
+    exportTemplateDescription,
+    setExportTemplateDescription,
+    importTemplateMappings,
+    setImportTemplateMappings,
+    importTemplateParameterImport,
+    setImportTemplateParameterImport,
+    exportTemplateMappings,
+    setExportTemplateMappings,
+    exportImagesAsBase64,
+    setExportImagesAsBase64,
     applyTemplate,
     saveImportTemplateMutation,
     saveExportTemplateMutation,

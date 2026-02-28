@@ -19,7 +19,7 @@ export function TraderaListingSettings(): React.JSX.Element {
 
   return (
     <div className='space-y-4'>
-      <FormField 
+      <FormField
         label='Template ID (Optional)'
         description='Optional listing template identifier for Tradera automation mapping.'
       >
@@ -58,7 +58,7 @@ export function TraderaListingSettings(): React.JSX.Element {
         type='checkbox'
       />
 
-      <FormField 
+      <FormField
         label='Relist Lead Time (Minutes)'
         description='The relist job starts this many minutes before expiry.'
       >
@@ -82,4 +82,3 @@ export function TraderaListingSettings(): React.JSX.Element {
     </div>
   );
 }
-

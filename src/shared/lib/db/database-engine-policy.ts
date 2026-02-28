@@ -29,18 +29,19 @@ const readPositiveIntegerEnv = (key: string, fallback: number): number => {
   return parsed;
 };
 
-const CACHE_TTL_MS = readPositiveIntegerEnv(
-  'DATABASE_ENGINE_POLICY_CACHE_TTL_MS',
-  5 * 60_000
-);
+const CACHE_TTL_MS = readPositiveIntegerEnv('DATABASE_ENGINE_POLICY_CACHE_TTL_MS', 5 * 60_000);
 
 type CachedValue<T> = { value: T; ts: number };
 
 let policyCache: CachedValue<DatabaseEnginePolicy> | null = null;
 let policyInflight: Promise<DatabaseEnginePolicy> | null = null;
 
-let serviceRouteMapCache: CachedValue<Partial<Record<DatabaseEngineServiceRoute, DatabaseEngineProvider>>> | null = null;
-let serviceRouteMapInflight: Promise<Partial<Record<DatabaseEngineServiceRoute, DatabaseEngineProvider>>> | null = null;
+let serviceRouteMapCache: CachedValue<
+  Partial<Record<DatabaseEngineServiceRoute, DatabaseEngineProvider>>
+> | null = null;
+let serviceRouteMapInflight: Promise<
+  Partial<Record<DatabaseEngineServiceRoute, DatabaseEngineProvider>>
+> | null = null;
 
 let collectionRouteMapCache: CachedValue<Record<string, DatabaseEngineProvider>> | null = null;
 let collectionRouteMapInflight: Promise<Record<string, DatabaseEngineProvider>> | null = null;
@@ -80,9 +81,7 @@ const parsePolicy = (raw: unknown): DatabaseEnginePolicy => {
   if (!parsed) return { ...DEFAULT_DATABASE_ENGINE_POLICY };
 
   const boolOrDefault = (key: keyof DatabaseEnginePolicy): boolean =>
-    typeof parsed[key] === 'boolean'
-      ? Boolean(parsed[key])
-      : DEFAULT_DATABASE_ENGINE_POLICY[key];
+    typeof parsed[key] === 'boolean' ? Boolean(parsed[key]) : DEFAULT_DATABASE_ENGINE_POLICY[key];
 
   return {
     requireExplicitServiceRouting: boolOrDefault('requireExplicitServiceRouting'),
@@ -187,7 +186,7 @@ export async function getDatabaseEnginePolicy(): Promise<DatabaseEnginePolicy> {
 
 export async function getDatabaseEngineServiceRouteMap(): Promise<
   Partial<Record<DatabaseEngineServiceRoute, DatabaseEngineProvider>>
-  > {
+> {
   const now = Date.now();
   if (serviceRouteMapCache && now - serviceRouteMapCache.ts < CACHE_TTL_MS) {
     return serviceRouteMapCache.value;
@@ -212,7 +211,9 @@ export async function getDatabaseEngineServiceRouteMap(): Promise<
   }
 }
 
-export async function getDatabaseEngineCollectionRouteMap(): Promise<Record<string, DatabaseEngineProvider>> {
+export async function getDatabaseEngineCollectionRouteMap(): Promise<
+  Record<string, DatabaseEngineProvider>
+> {
   const now = Date.now();
   if (collectionRouteMapCache && now - collectionRouteMapCache.ts < CACHE_TTL_MS) {
     return collectionRouteMapCache.value;

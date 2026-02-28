@@ -168,9 +168,7 @@ export function useCaseResolverStateWorkspaceHydration({
 
   useEffect((): (() => void) | void => {
     const hasWorkspaceData =
-      workspace.files.length > 0 ||
-      workspace.assets.length > 0 ||
-      workspace.folders.length > 0;
+      workspace.files.length > 0 || workspace.assets.length > 0 || workspace.folders.length > 0;
     if (hasWorkspaceData) return;
     if (heavySettingsIsFetching || heavySettingsIsLoading) return;
     const refreshTimer = window.setTimeout((): void => {
@@ -231,4 +229,3 @@ export function useCaseResolverStateWorkspaceHydration({
     };
   }, []);
 }
-

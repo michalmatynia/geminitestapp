@@ -138,7 +138,10 @@ describe('Agent Runtime - Tools', () => {
     });
 
     expect(playwrightBrowser.launchBrowser).toHaveBeenCalled();
-    expect(mockPage.goto).toHaveBeenCalledWith(expect.stringContaining('example.com'), expect.anything());
+    expect(mockPage.goto).toHaveBeenCalledWith(
+      expect.stringContaining('example.com'),
+      expect.anything()
+    );
     expect(result.ok).toBe(true);
     expect(result.output?.url).toBe('http://example.com');
   });
@@ -162,7 +165,7 @@ describe('Agent Runtime - Tools', () => {
       acceptedItems: ['Product A', 'Product B'],
       rejectedItems: [],
       missingCount: 0,
-      issues: []
+      issues: [],
     });
     (llmTools.normalizeExtractionItemsWithLLM as any).mockResolvedValue(['Product A', 'Product B']);
     (llmTools.buildExtractionPlan as any).mockResolvedValue({
@@ -170,7 +173,7 @@ describe('Agent Runtime - Tools', () => {
       fields: ['name'],
       primarySelectors: ['.product'],
       fallbackSelectors: [],
-      notes: null
+      notes: null,
     });
 
     const result = await runAgentTool({
@@ -192,22 +195,22 @@ describe('Agent Runtime - Tools', () => {
     (playwrightExtraction.waitForProductContent as any).mockResolvedValue(undefined);
     (playwrightExtraction.findProductListingUrls as any).mockResolvedValue([]);
     (playwrightExtraction.extractProductNamesFromSelectors as any).mockResolvedValue([]);
-     
+
     (llmTools.buildExtractionPlan as any).mockResolvedValue({
       target: 'products',
       fields: ['name'],
       primarySelectors: ['.product'],
       fallbackSelectors: [],
-      notes: null
+      notes: null,
     });
     (llmTools.inferSelectorsFromLLM as any).mockResolvedValue([]);
-     
+
     (llmTools.validateExtractionWithLLM as any).mockResolvedValue({
       valid: true,
       acceptedItems: [],
       rejectedItems: [],
       missingCount: 1,
-      issues: []
+      issues: [],
     });
     (llmTools.normalizeExtractionItemsWithLLM as any).mockResolvedValue([]);
 
@@ -225,7 +228,7 @@ describe('Agent Runtime - Tools', () => {
         browser: 'chromium',
       },
     });
-    
+
     expect(llmTools.buildFailureRecoveryPlan).toHaveBeenCalled();
     expect(result.ok).toBe(false);
     expect(result.error).toContain('No product names extracted');

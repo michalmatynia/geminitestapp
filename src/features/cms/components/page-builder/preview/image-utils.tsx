@@ -85,7 +85,10 @@ export function buildImageElementPresentation(
     }
   }
 
-  Object.assign(wrapperStyles, buildTransparencyMaskStyles(transparencyMode, transparencyDirection, transparencyStrength));
+  Object.assign(
+    wrapperStyles,
+    buildTransparencyMaskStyles(transparencyMode, transparencyDirection, transparencyStrength)
+  );
 
   const filters: string[] = [];
   if (blur > 0) filters.push(`blur(${blur}px)`);

@@ -3,18 +3,21 @@
 import { RefreshCcw } from 'lucide-react';
 import React, { useState } from 'react';
 
-import {
-  Button,
-  Input,
-  Label,
-  SectionHeader,
-  Textarea,
-  SelectSimple,
-} from '@/shared/ui';
+import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
+import { Button, Input, Label, SectionHeader, Textarea, SelectSimple } from '@/shared/ui';
 
 import { useSettings } from '../context/SettingsContext';
 
 export function StudioSettingsContent(): React.JSX.Element {
+  const promptExtractModel = useBrainModelOptions({
+    capability: 'image_studio.prompt_extract',
+  });
+  const uiExtractorModel = useBrainModelOptions({
+    capability: 'image_studio.ui_extractor',
+  });
+  const generationModel = useBrainModelOptions({
+    capability: 'image_studio.general',
+  });
   const {
     studioSettings,
     setStudioSettings,
@@ -37,7 +40,10 @@ export function StudioSettingsContent(): React.JSX.Element {
         setAdvancedOverridesError(null);
         setStudioSettings((prev) => ({
           ...prev,
-          targetAi: { ...prev.targetAi, openai: { ...prev.targetAi.openai, advanced_overrides: null } },
+          targetAi: {
+            ...prev.targetAi,
+            openai: { ...prev.targetAi.openai, advanced_overrides: null },
+          },
         }));
         return;
       }
@@ -50,7 +56,10 @@ export function StudioSettingsContent(): React.JSX.Element {
         ...prev,
         targetAi: {
           ...prev.targetAi,
-          openai: { ...prev.targetAi.openai, advanced_overrides: parsed as Record<string, unknown> },
+          openai: {
+            ...prev.targetAi.openai,
+            advanced_overrides: parsed as Record<string, unknown>,
+          },
         },
       }));
     } catch {
@@ -64,7 +73,7 @@ export function StudioSettingsContent(): React.JSX.Element {
         title='Studio Settings'
         size='xs'
         className='p-3 border-b border-border'
-        actions={(
+        actions={
           <div className='flex items-center gap-2'>
             <Button
               variant='outline'
@@ -75,11 +84,7 @@ export function StudioSettingsContent(): React.JSX.Element {
               <RefreshCcw className='mr-2 size-4' />
               Refresh
             </Button>
-            <Button
-              variant='outline'
-              size='xs'
-              onClick={resetStudioSettings}
-            >
+            <Button variant='outline' size='xs' onClick={resetStudioSettings}>
               Reset
             </Button>
             <Button
@@ -92,13 +97,11 @@ export function StudioSettingsContent(): React.JSX.Element {
               Save
             </Button>
           </div>
-        )}
+        }
       />
 
       <div className='p-3 space-y-4'>
-        {!settingsLoaded ? (
-          <div className='text-xs text-gray-500'>Loading settings…</div>
-        ) : null}
+        {!settingsLoaded ? <div className='text-xs text-gray-500'>Loading settings…</div> : null}
 
         <div className='space-y-2'>
           <Label className='text-xs text-gray-400'>Prompt Extraction</Label>
@@ -129,18 +132,15 @@ export function StudioSettingsContent(): React.JSX.Element {
             <div className='space-y-1'>
               <div className='text-[11px] text-gray-500'>Model</div>
               <Input
-                value={studioSettings.promptExtraction.gpt.model}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setStudioSettings((prev) => ({
-                    ...prev,
-                    promptExtraction: {
-                      ...prev.promptExtraction,
-                      gpt: { ...prev.promptExtraction.gpt, model: e.target.value },
-                    },
-                  }))
+                value={
+                  promptExtractModel.effectiveModelId.trim() ||
+                  studioSettings.promptExtraction.gpt.model.trim() ||
+                  'Not configured in AI Brain'
                 }
+                readOnly
+                disabled
                 size='sm'
-                placeholder='e.g. gpt-4o-mini'
+                placeholder='Not configured in AI Brain'
               />
             </div>
           </div>
@@ -228,15 +228,15 @@ export function StudioSettingsContent(): React.JSX.Element {
             <div className='space-y-1'>
               <div className='text-[11px] text-gray-500'>Model</div>
               <Input
-                value={studioSettings.uiExtractor.model}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setStudioSettings((prev) => ({
-                    ...prev,
-                    uiExtractor: { ...prev.uiExtractor, model: e.target.value },
-                  }))
+                value={
+                  uiExtractorModel.effectiveModelId.trim() ||
+                  studioSettings.uiExtractor.model.trim() ||
+                  'Not configured in AI Brain'
                 }
+                readOnly
+                disabled
                 size='sm'
-                placeholder='e.g. gpt-4o-mini'
+                placeholder='Not configured in AI Brain'
               />
             </div>
           </div>
@@ -253,7 +253,13 @@ export function StudioSettingsContent(): React.JSX.Element {
                 onValueChange={(value: string) =>
                   setStudioSettings((prev) => ({
                     ...prev,
-                    targetAi: { ...prev.targetAi, openai: { ...prev.targetAi.openai, api: value === 'responses' ? 'responses' : 'images' } },
+                    targetAi: {
+                      ...prev.targetAi,
+                      openai: {
+                        ...prev.targetAi.openai,
+                        api: value === 'responses' ? 'responses' : 'images',
+                      },
+                    },
                   }))
                 }
                 options={[
@@ -267,14 +273,15 @@ export function StudioSettingsContent(): React.JSX.Element {
             <div className='space-y-1'>
               <div className='text-[11px] text-gray-500'>Model</div>
               <Input
-                value={studioSettings.targetAi.openai.model}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setStudioSettings((prev) => ({
-                    ...prev,
-                    targetAi: { ...prev.targetAi, openai: { ...prev.targetAi.openai, model: e.target.value } },
-                  }))
+                value={
+                  generationModel.effectiveModelId.trim() ||
+                  studioSettings.targetAi.openai.model.trim() ||
+                  'Not configured in AI Brain'
                 }
+                readOnly
+                disabled
                 size='sm'
+                placeholder='Not configured in AI Brain'
               />
             </div>
           </div>
@@ -284,7 +291,9 @@ export function StudioSettingsContent(): React.JSX.Element {
           <div className='text-[11px] text-gray-500'>Advanced Overrides (JSON)</div>
           <Textarea
             value={advancedOverridesText}
-            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleAdvancedOverridesChange(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+              handleAdvancedOverridesChange(e.target.value)
+            }
             className='h-28 font-mono text-[11px]'
             size='sm'
           />

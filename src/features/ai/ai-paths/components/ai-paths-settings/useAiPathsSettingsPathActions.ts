@@ -51,7 +51,7 @@ type ToastFn = (
   message: string,
   options?: {
     variant?: 'info' | 'success' | 'warning' | 'error';
-  },
+  }
 ) => void;
 
 type UseAiPathsSettingsPathActionsInput = {
@@ -72,15 +72,9 @@ type UseAiPathsSettingsPathActionsInput = {
   setRunMode: React.Dispatch<React.SetStateAction<PathRunMode>>;
   setStrictFlowMode: React.Dispatch<React.SetStateAction<boolean>>;
   setBlockedRunPolicy: React.Dispatch<React.SetStateAction<PathBlockedRunPolicy>>;
-  setAiPathsValidation: React.Dispatch<
-    React.SetStateAction<AiPathsValidationConfig>
-  >;
-  setParserSamples: React.Dispatch<
-    React.SetStateAction<Record<string, ParserSampleState>>
-  >;
-  setUpdaterSamples: React.Dispatch<
-    React.SetStateAction<Record<string, UpdaterSampleState>>
-  >;
+  setAiPathsValidation: React.Dispatch<React.SetStateAction<AiPathsValidationConfig>>;
+  setParserSamples: React.Dispatch<React.SetStateAction<Record<string, ParserSampleState>>>;
+  setUpdaterSamples: React.Dispatch<React.SetStateAction<Record<string, UpdaterSampleState>>>;
   setRuntimeState: React.Dispatch<React.SetStateAction<RuntimeState>>;
   setLastRunAt: React.Dispatch<React.SetStateAction<string | null>>;
   setIsPathLocked: React.Dispatch<React.SetStateAction<boolean>>;
@@ -92,14 +86,14 @@ type UseAiPathsSettingsPathActionsInput = {
   persistPathSettings: (
     nextPaths: PathMeta[],
     nextActivePathId: string,
-    nextConfig: PathConfig,
+    nextConfig: PathConfig
   ) => Promise<void>;
   persistSettingsBulk: (entries: Array<{ key: string; value: string }>) => Promise<void>;
   persistActivePathPreference: (pathId: string) => Promise<void>;
   reportAiPathsError: (
     error: unknown,
     context: Record<string, unknown>,
-    fallbackMessage?: string,
+    fallbackMessage?: string
   ) => void;
   confirm: ConfirmFn;
   toast: ToastFn;
@@ -158,7 +152,7 @@ export function useAiPathsSettingsPathActions({
         paths
           .map((path: PathMeta): string => path.name?.trim() || '')
           .filter((name: string): boolean => name.length > 0)
-          .map((name: string): string => name.toLowerCase()),
+          .map((name: string): string => name.toLowerCase())
       );
       const firstCandidate = `${baseName} (Copy)`;
       if (!names.has(firstCandidate.toLowerCase())) {
@@ -174,7 +168,7 @@ export function useAiPathsSettingsPathActions({
       }
       return `${baseName} (Copy ${Date.now().toString(36)})`;
     },
-    [paths],
+    [paths]
   );
 
   const applyPathConfigState = useCallback(
@@ -207,13 +201,9 @@ export function useAiPathsSettingsPathActions({
       );
       setStrictFlowMode(config.strictFlowMode !== false);
       setBlockedRunPolicy(
-        config.blockedRunPolicy === 'complete_with_warning'
-          ? 'complete_with_warning'
-          : 'fail_run'
+        config.blockedRunPolicy === 'complete_with_warning' ? 'complete_with_warning' : 'fail_run'
       );
-      setAiPathsValidation(
-        normalizeAiPathsValidationConfig(config.aiPathsValidation)
-      );
+      setAiPathsValidation(normalizeAiPathsValidationConfig(config.aiPathsValidation));
       setParserSamples(normalizeParserSamples(config.parserSamples));
       setUpdaterSamples(normalizeUpdaterSamples(config.updaterSamples));
       setRuntimeState(parseRuntimeState(config.runtimeState));
@@ -223,8 +213,7 @@ export function useAiPathsSettingsPathActions({
 
       const preferredNodeId = config.uiState?.selectedNodeId ?? null;
       const resolvedNodeId =
-        preferredNodeId &&
-        normalized.some((node: AiNode): boolean => node.id === preferredNodeId)
+        preferredNodeId && normalized.some((node: AiNode): boolean => node.id === preferredNodeId)
           ? preferredNodeId
           : (normalized[0]?.id ?? null);
       setSelectedNodeId(resolvedNodeId);
@@ -251,7 +240,7 @@ export function useAiPathsSettingsPathActions({
       setRuntimeState,
       setSelectedNodeId,
       setUpdaterSamples,
-    ],
+    ]
   );
 
   const handleReset = useCallback((): void => {
@@ -265,10 +254,12 @@ export function useAiPathsSettingsPathActions({
 
     const resetConfig = createDefaultPathConfig(activePathId);
     applyPathConfigState(resetConfig);
-    setPathConfigs((prev: Record<string, PathConfig>): Record<string, PathConfig> => ({
-      ...prev,
-      [activePathId]: resetConfig,
-    }));
+    setPathConfigs(
+      (prev: Record<string, PathConfig>): Record<string, PathConfig> => ({
+        ...prev,
+        [activePathId]: resetConfig,
+      })
+    );
     updateActivePathMeta(resetConfig.name);
   }, [
     activePathId,
@@ -293,9 +284,7 @@ export function useAiPathsSettingsPathActions({
       flowIntensity: 'medium',
       runMode: 'manual',
       strictFlowMode: true,
-      aiPathsValidation: normalizeAiPathsValidationConfig(
-        DEFAULT_AI_PATHS_VALIDATION_CONFIG
-      ),
+      aiPathsValidation: normalizeAiPathsValidationConfig(DEFAULT_AI_PATHS_VALIDATION_CONFIG),
       nodes: [],
       edges: [],
       updatedAt: now,
@@ -318,10 +307,12 @@ export function useAiPathsSettingsPathActions({
       updatedAt: now,
     };
     setPaths((prev: PathMeta[]): PathMeta[] => [...prev, meta]);
-    setPathConfigs((prev: Record<string, PathConfig>): Record<string, PathConfig> => ({
-      ...prev,
-      [id]: config,
-    }));
+    setPathConfigs(
+      (prev: Record<string, PathConfig>): Record<string, PathConfig> => ({
+        ...prev,
+        [id]: config,
+      })
+    );
     setActivePathId(id);
     applyPathConfigState(config);
   }, [applyPathConfigState, paths.length, setActivePathId, setPathConfigs, setPaths]);
@@ -337,33 +328,40 @@ export function useAiPathsSettingsPathActions({
       updatedAt: now,
     };
     setPaths((prev: PathMeta[]): PathMeta[] => [...prev, meta]);
-    setPathConfigs((prev: Record<string, PathConfig>): Record<string, PathConfig> => ({
-      ...prev,
-      [id]: config,
-    }));
+    setPathConfigs(
+      (prev: Record<string, PathConfig>): Record<string, PathConfig> => ({
+        ...prev,
+        [id]: config,
+      })
+    );
     setActivePathId(id);
     applyPathConfigState(config);
     toast('AI Description Path created.', { variant: 'success' });
   }, [applyPathConfigState, setActivePathId, setPathConfigs, setPaths, toast]);
 
-  const handleCreateFromTemplate = useCallback((templateId: string): void => {
-    const template = PATH_TEMPLATES.find((t) => t.templateId === templateId);
-    if (!template) {
-      toast(`Path template "${templateId}" not found.`, { variant: 'error' });
-      return;
-    }
-    const id = createPathId();
-    const config = buildPathConfigFromTemplate(id, template);
-    const meta = createPathMeta(config);
-    setPaths((prev: PathMeta[]): PathMeta[] => [...prev, meta]);
-    setPathConfigs((prev: Record<string, PathConfig>): Record<string, PathConfig> => ({
-      ...prev,
-      [id]: config,
-    }));
-    setActivePathId(id);
-    applyPathConfigState(config);
-    toast(`Path "${template.name}" created from template.`, { variant: 'success' });
-  }, [applyPathConfigState, setActivePathId, setPathConfigs, setPaths, toast]);
+  const handleCreateFromTemplate = useCallback(
+    (templateId: string): void => {
+      const template = PATH_TEMPLATES.find((t) => t.templateId === templateId);
+      if (!template) {
+        toast(`Path template "${templateId}" not found.`, { variant: 'error' });
+        return;
+      }
+      const id = createPathId();
+      const config = buildPathConfigFromTemplate(id, template);
+      const meta = createPathMeta(config);
+      setPaths((prev: PathMeta[]): PathMeta[] => [...prev, meta]);
+      setPathConfigs(
+        (prev: Record<string, PathConfig>): Record<string, PathConfig> => ({
+          ...prev,
+          [id]: config,
+        })
+      );
+      setActivePathId(id);
+      applyPathConfigState(config);
+      toast(`Path "${template.name}" created from template.`, { variant: 'success' });
+    },
+    [applyPathConfigState, setActivePathId, setPathConfigs, setPaths, toast]
+  );
 
   const handleDuplicatePath = useCallback(
     (pathId?: string): void => {
@@ -415,10 +413,12 @@ export function useAiPathsSettingsPathActions({
       };
 
       setPaths((prev: PathMeta[]): PathMeta[] => [...prev, duplicateMeta]);
-      setPathConfigs((prev: Record<string, PathConfig>): Record<string, PathConfig> => ({
-        ...prev,
-        [duplicateId]: duplicateConfig,
-      }));
+      setPathConfigs(
+        (prev: Record<string, PathConfig>): Record<string, PathConfig> => ({
+          ...prev,
+          [duplicateId]: duplicateConfig,
+        })
+      );
       setActivePathId(duplicateId);
       applyPathConfigState(duplicateConfig);
       toast('Path duplicated.', { variant: 'success' });
@@ -433,7 +433,7 @@ export function useAiPathsSettingsPathActions({
       setPathConfigs,
       setPaths,
       toast,
-    ],
+    ]
   );
 
   const handleDeletePath = useCallback(
@@ -449,9 +449,7 @@ export function useAiPathsSettingsPathActions({
         confirmText: 'Delete Path',
         isDangerous: true,
         onConfirm: async () => {
-          const nextPaths = paths.filter(
-            (path: PathMeta): boolean => path.id !== targetId,
-          );
+          const nextPaths = paths.filter((path: PathMeta): boolean => path.id !== targetId);
           if (nextPaths.length === 0) {
             const fallbackId = 'default';
             const fallback = createDefaultPathConfig(fallbackId);
@@ -478,7 +476,7 @@ export function useAiPathsSettingsPathActions({
               reportAiPathsError(
                 error,
                 { action: 'deleteLastPathFallback', pathId: targetId },
-                'Failed to persist fallback path:',
+                'Failed to persist fallback path:'
               );
               toast('Failed to persist fallback path.', { variant: 'error' });
             }
@@ -519,7 +517,7 @@ export function useAiPathsSettingsPathActions({
             reportAiPathsError(
               error,
               { action: 'deletePath', pathId: targetId },
-              'Failed to update path index:',
+              'Failed to update path index:'
             );
             toast('Failed to update path index.', { variant: 'error' });
           }
@@ -539,7 +537,7 @@ export function useAiPathsSettingsPathActions({
       setPathConfigs,
       setPaths,
       toast,
-    ],
+    ]
   );
 
   const handleSwitchPath = useCallback(
@@ -550,7 +548,7 @@ export function useAiPathsSettingsPathActions({
       void persistActivePathPreference(value);
       applyPathConfigState(config);
     },
-    [applyPathConfigState, pathConfigs, persistActivePathPreference, setActivePathId],
+    [applyPathConfigState, pathConfigs, persistActivePathPreference, setActivePathId]
   );
 
   return {

@@ -4,7 +4,12 @@ import type { RedisOverviewDto } from '@/shared/contracts/database';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { getRedisClient } from '@/shared/lib/redis';
 
-const parsePositiveInt = (value: string | null, fallback: number, min: number, max: number): number => {
+const parsePositiveInt = (
+  value: string | null,
+  fallback: number,
+  min: number,
+  max: number
+): number => {
   const parsed = Number.parseInt(value ?? '', 10);
   if (!Number.isFinite(parsed)) return fallback;
   return Math.min(Math.max(parsed, min), max);

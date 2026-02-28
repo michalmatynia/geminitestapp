@@ -56,7 +56,6 @@ import { SqlQueryConsole } from '../components/SqlQueryConsole';
 import { DatabaseProvider } from '../context/DatabaseContext';
 import { useDatabasePreviewState } from '../hooks/useDatabasePreviewState';
 
-
 import type { ColumnDef } from '@tanstack/react-table';
 
 const groupIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -98,7 +97,7 @@ function TableDetailCard({
     <CollapsibleSection
       open={expanded}
       onOpenChange={setExpanded}
-      title={(
+      title={
         <div className='flex flex-1 items-center gap-3'>
           <TableIcon className='size-4 text-emerald-300' />
           <span className='text-sm font-semibold text-gray-200'>{detail.name}</span>
@@ -106,8 +105,8 @@ function TableDetailCard({
             {detail.rowEstimate.toLocaleString()} rows • {detail.sizeFormatted}
           </Hint>
         </div>
-      )}
-      actions={(
+      }
+      actions={
         <div className='flex items-center gap-2'>
           {onQueryTable && (
             <Button
@@ -138,7 +137,7 @@ function TableDetailCard({
             </Button>
           )}
         </div>
-      )}
+      }
       variant='card'
       className='bg-card/60'
       headerClassName='px-4 py-3'
@@ -184,141 +183,156 @@ function TableDetailCard({
 }
 
 function ColumnsTab({ columns }: { columns: DatabaseColumnInfo[] }): React.JSX.Element {
-  const tableColumns = useMemo<ColumnDef<DatabaseColumnInfo>[]>(() => [
-    {
-      accessorKey: 'name',
-      header: 'Column',
-      cell: ({ row }) => <span className='font-mono font-medium text-emerald-200'>{row.original.name}</span>,
-    },
-    {
-      accessorKey: 'type',
-      header: 'Type',
-      cell: ({ row }) => <span className='font-mono text-blue-300'>{row.original.type}</span>,
-    },
-    {
-      accessorKey: 'nullable',
-      header: 'Nullable',
-      cell: ({ row }) => (
-        <span className={row.original.nullable ? 'text-amber-400' : 'text-gray-500'}>
-          {row.original.nullable ? 'YES' : 'NO'}
-        </span>
-      ),
-    },
-    {
-      accessorKey: 'defaultValue',
-      header: 'Default',
-      cell: ({ row }) => {
-        const val = row.original.defaultValue;
-        const rendered = val === null || val === undefined 
-          ? '—' 
-          : (typeof val === 'object' ? JSON.stringify(val) : String(val));
-        return <span className='font-mono text-gray-400'>{rendered}</span>;
+  const tableColumns = useMemo<ColumnDef<DatabaseColumnInfo>[]>(
+    () => [
+      {
+        accessorKey: 'name',
+        header: 'Column',
+        cell: ({ row }) => (
+          <span className='font-mono font-medium text-emerald-200'>{row.original.name}</span>
+        ),
       },
-    },
-    {
-      id: 'key',
-      header: 'Key',
-      cell: ({ row }) => row.original.isPrimaryKey && (
-        <StatusBadge
-          status='PK'
-          variant='pending'
-          icon={<KeyIcon />}
-          size='sm'
-          className='font-bold'
-        />
-      ),
-    },
-  ], []);
+      {
+        accessorKey: 'type',
+        header: 'Type',
+        cell: ({ row }) => <span className='font-mono text-blue-300'>{row.original.type}</span>,
+      },
+      {
+        accessorKey: 'nullable',
+        header: 'Nullable',
+        cell: ({ row }) => (
+          <span className={row.original.nullable ? 'text-amber-400' : 'text-gray-500'}>
+            {row.original.nullable ? 'YES' : 'NO'}
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'defaultValue',
+        header: 'Default',
+        cell: ({ row }) => {
+          const val = row.original.defaultValue;
+          const rendered =
+            val === null || val === undefined
+              ? '—'
+              : typeof val === 'object'
+                ? JSON.stringify(val)
+                : String(val);
+          return <span className='font-mono text-gray-400'>{rendered}</span>;
+        },
+      },
+      {
+        id: 'key',
+        header: 'Key',
+        cell: ({ row }) =>
+          row.original.isPrimaryKey && (
+            <StatusBadge
+              status='PK'
+              variant='pending'
+              icon={<KeyIcon />}
+              size='sm'
+              className='font-bold'
+            />
+          ),
+      },
+    ],
+    []
+  );
 
   return (
     <div className='p-2'>
-      <StandardDataTablePanel
-        columns={tableColumns}
-        data={columns}
-        variant='flat'
-      />
+      <StandardDataTablePanel columns={tableColumns} data={columns} variant='flat' />
     </div>
   );
 }
 
 function IndexesTab({ indexes }: { indexes: DatabaseIndexInfo[] }): React.JSX.Element {
-  const tableColumns = useMemo<ColumnDef<DatabaseIndexInfo>[]>(() => [
-    {
-      accessorKey: 'name',
-      header: 'Index',
-      cell: ({ row }) => <span className='font-mono text-emerald-200'>{row.original.name}</span>,
-    },
-    {
-      accessorKey: 'columns',
-      header: 'Columns',
-      cell: ({ row }) => <span className='font-mono text-blue-300'>{row.original.columns.join(', ')}</span>,
-    },
-    {
-      accessorKey: 'isUnique',
-      header: 'Unique',
-      cell: ({ row }) => row.original.isUnique ? (
-        <StatusBadge status='UNIQUE' variant='success' className='text-[9px]' />
-      ) : <span className='text-gray-500'>—</span>,
-    },
-    {
-      accessorKey: 'definition',
-      header: 'Definition',
-      cell: ({ row }) => (
-        <div className='max-w-[300px] truncate font-mono text-gray-400 text-[10px]' title={row.original.definition}>
-          {row.original.definition}
-        </div>
-      ),
-    },
-  ], []);
+  const tableColumns = useMemo<ColumnDef<DatabaseIndexInfo>[]>(
+    () => [
+      {
+        accessorKey: 'name',
+        header: 'Index',
+        cell: ({ row }) => <span className='font-mono text-emerald-200'>{row.original.name}</span>,
+      },
+      {
+        accessorKey: 'columns',
+        header: 'Columns',
+        cell: ({ row }) => (
+          <span className='font-mono text-blue-300'>{row.original.columns.join(', ')}</span>
+        ),
+      },
+      {
+        accessorKey: 'isUnique',
+        header: 'Unique',
+        cell: ({ row }) =>
+          row.original.isUnique ? (
+            <StatusBadge status='UNIQUE' variant='success' className='text-[9px]' />
+          ) : (
+            <span className='text-gray-500'>—</span>
+          ),
+      },
+      {
+        accessorKey: 'definition',
+        header: 'Definition',
+        cell: ({ row }) => (
+          <div
+            className='max-w-[300px] truncate font-mono text-gray-400 text-[10px]'
+            title={row.original.definition}
+          >
+            {row.original.definition}
+          </div>
+        ),
+      },
+    ],
+    []
+  );
 
   return (
     <div className='p-2'>
-      <StandardDataTablePanel
-        columns={tableColumns}
-        data={indexes}
-        variant='flat'
-      />
+      <StandardDataTablePanel columns={tableColumns} data={indexes} variant='flat' />
     </div>
   );
 }
 
-function ForeignKeysTab({ foreignKeys }: { foreignKeys: DatabaseForeignKeyInfo[] }): React.JSX.Element {
-  const tableColumns = useMemo<ColumnDef<DatabaseForeignKeyInfo>[]>(() => [
-    {
-      accessorKey: 'name',
-      header: 'Constraint',
-      cell: ({ row }) => <span className='font-mono text-emerald-200'>{row.original.name}</span>,
-    },
-    {
-      accessorKey: 'column',
-      header: 'Column',
-      cell: ({ row }) => <span className='font-mono text-blue-300'>{row.original.column}</span>,
-    },
-    {
-      id: 'references',
-      header: 'References',
-      cell: ({ row }) => (
-        <div className='font-mono text-gray-200'>
-          <span className='text-emerald-300'>{row.original.referencedTable}</span>
-          <span className='text-gray-500'>.</span>
-          <span className='text-blue-300'>{row.original.referencedColumn}</span>
-        </div>
-      ),
-    },
-    {
-      accessorKey: 'onDelete',
-      header: 'On Delete',
-      cell: ({ row }) => <span className='text-gray-400'>{row.original.onDelete}</span>,
-    },
-  ], []);
+function ForeignKeysTab({
+  foreignKeys,
+}: {
+  foreignKeys: DatabaseForeignKeyInfo[];
+}): React.JSX.Element {
+  const tableColumns = useMemo<ColumnDef<DatabaseForeignKeyInfo>[]>(
+    () => [
+      {
+        accessorKey: 'name',
+        header: 'Constraint',
+        cell: ({ row }) => <span className='font-mono text-emerald-200'>{row.original.name}</span>,
+      },
+      {
+        accessorKey: 'column',
+        header: 'Column',
+        cell: ({ row }) => <span className='font-mono text-blue-300'>{row.original.column}</span>,
+      },
+      {
+        id: 'references',
+        header: 'References',
+        cell: ({ row }) => (
+          <div className='font-mono text-gray-200'>
+            <span className='text-emerald-300'>{row.original.referencedTable}</span>
+            <span className='text-gray-500'>.</span>
+            <span className='text-blue-300'>{row.original.referencedColumn}</span>
+          </div>
+        ),
+      },
+      {
+        accessorKey: 'onDelete',
+        header: 'On Delete',
+        cell: ({ row }) => <span className='text-gray-400'>{row.original.onDelete}</span>,
+      },
+    ],
+    []
+  );
 
   return (
     <div className='p-2'>
-      <StandardDataTablePanel
-        columns={tableColumns}
-        data={foreignKeys}
-        variant='flat'
-      />
+      <StandardDataTablePanel columns={tableColumns} data={foreignKeys} variant='flat' />
     </div>
   );
 }
@@ -329,18 +343,24 @@ function DataTab({
   tableRows: DatabaseTablePreviewData | undefined;
 }): React.JSX.Element {
   const { page, pageSize } = useDatabasePreviewState();
-  
+
   const columns = useMemo(() => {
     if (!tableRows || tableRows.rows.length === 0) return [];
-    return Object.keys(tableRows.rows[0] ?? {}).map(col => ({
-      accessorKey: col,
-      header: col,
-      cell: ({ row }: { row: { original: Record<string, unknown> } }) => (
-        <span className='max-w-[200px] truncate font-mono block' title={formatCellValue(row.original[col])}>
-          {formatCellValue(row.original[col])}
-        </span>
-      )
-    } as ColumnDef<Record<string, unknown>>));
+    return Object.keys(tableRows.rows[0] ?? {}).map(
+      (col) =>
+        ({
+          accessorKey: col,
+          header: col,
+          cell: ({ row }: { row: { original: Record<string, unknown> } }) => (
+            <span
+              className='max-w-[200px] truncate font-mono block'
+              title={formatCellValue(row.original[col])}
+            >
+              {formatCellValue(row.original[col])}
+            </span>
+          ),
+        }) as ColumnDef<Record<string, unknown>>
+    );
   }, [tableRows]);
 
   if (!tableRows || tableRows.rows.length === 0) {
@@ -359,7 +379,8 @@ function DataTab({
   return (
     <div className='p-2 space-y-2'>
       <Hint size='xxs' uppercase className='px-2 font-bold text-gray-500'>
-        Rows {startRow}–{startRow + tableRows.rows.length - 1} of {tableRows.totalRows.toLocaleString()}
+        Rows {startRow}–{startRow + tableRows.rows.length - 1} of{' '}
+        {tableRows.totalRows.toLocaleString()}
       </Hint>
       <StandardDataTablePanel
         columns={columns}
@@ -427,11 +448,14 @@ function DatabasePreviewContent(): React.JSX.Element {
             ? `Source: ${backupName}`
             : 'No source selected.'
       }
-      eyebrow={(
-        <Link href='/admin/databases/engine' className='text-blue-300 hover:text-blue-200 transition-colors'>
+      eyebrow={
+        <Link
+          href='/admin/databases/engine'
+          className='text-blue-300 hover:text-blue-200 transition-colors'
+        >
           ← Back to databases
         </Link>
-      )}
+      }
       refresh={{
         onRefresh: () => window.location.reload(),
         isRefreshing: false,
@@ -567,15 +591,24 @@ function DatabasePreviewContent(): React.JSX.Element {
                         <span className='flex items-center gap-2 text-xs font-semibold text-gray-200'>
                           <Icon className='size-4 text-sky-300' />
                           {group.type}
-                          <Badge variant='outline' className='text-[9px] bg-sky-500/5'>{group.objects.length}</Badge>
+                          <Badge variant='outline' className='text-[9px] bg-sky-500/5'>
+                            {group.objects.length}
+                          </Badge>
                         </span>
-                        {isExpanded ? <ChevronDownIcon className='size-4 text-gray-500' /> : <ChevronRightIcon className='size-4 text-gray-500' />}
+                        {isExpanded ? (
+                          <ChevronDownIcon className='size-4 text-gray-500' />
+                        ) : (
+                          <ChevronRightIcon className='size-4 text-gray-500' />
+                        )}
                       </button>
                       {isExpanded && (
                         <div className='border-t border-border/40 p-3 bg-black/20'>
                           <div className='flex flex-wrap gap-2'>
-                            {group.objects.map(obj => (
-                              <span key={obj} className='font-mono text-[10px] text-gray-400 bg-white/5 px-1.5 py-0.5 rounded'>
+                            {group.objects.map((obj) => (
+                              <span
+                                key={obj}
+                                className='font-mono text-[10px] text-gray-400 bg-white/5 px-1.5 py-0.5 rounded'
+                              >
                                 {obj}
                               </span>
                             ))}
@@ -598,10 +631,7 @@ function DatabasePreviewContent(): React.JSX.Element {
                 onOpenChange={setShowConsole}
                 className='p-6'
               >
-                <SqlQueryConsole
-                  defaultDbType='postgresql'
-                  initialSql={consoleSql}
-                />
+                <SqlQueryConsole defaultDbType='postgresql' initialSql={consoleSql} />
               </CollapsibleSection>
             </div>
           )}
@@ -612,22 +642,14 @@ function DatabasePreviewContent(): React.JSX.Element {
               <FormSection
                 title='Row Management'
                 actions={
-                  <Button
-                    variant='outline'
-                    size='xs'
-                    onClick={() => setShowCrud(false)}
-                  >
+                  <Button variant='outline' size='xs' onClick={() => setShowCrud(false)}>
                     Exit Manager
                   </Button>
                 }
                 className='p-6 border-emerald-500/20'
               >
                 <div className='mt-4'>
-                  <CrudPanel
-                    tableDetails={tableDetails}
-                    defaultTable={crudTable}
-                    dbType={dbType}
-                  />
+                  <CrudPanel tableDetails={tableDetails} defaultTable={crudTable} dbType={dbType} />
                 </div>
               </FormSection>
             </div>
@@ -643,8 +665,7 @@ function DatabasePreviewPageInner(): React.JSX.Element {
   const backupName = searchParams.get('backup') ?? '';
   const mode = searchParams.get('mode') ?? 'backup';
   const previewType = searchParams.get('type') ?? 'postgresql';
-  const previewMode: DatabasePreviewMode =
-    mode === 'current' ? 'current' : 'backup';
+  const previewMode: DatabasePreviewMode = mode === 'current' ? 'current' : 'backup';
 
   return (
     <DatabaseProvider
@@ -659,7 +680,11 @@ function DatabasePreviewPageInner(): React.JSX.Element {
 
 export default function DatabasePreviewPage(): React.JSX.Element {
   return (
-    <Suspense fallback={<LoadingState message='Mounting database preview environment...' className='py-12' />}>
+    <Suspense
+      fallback={
+        <LoadingState message='Mounting database preview environment...' className='py-12' />
+      }
+    >
       <DatabasePreviewPageInner />
     </Suspense>
   );

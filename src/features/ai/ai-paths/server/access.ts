@@ -43,26 +43,14 @@ const RUN_RATE_WINDOW_SECONDS = parseNumber(
   process.env['AI_PATHS_RUN_RATE_LIMIT_WINDOW_SECONDS'],
   60
 );
-const RUN_RATE_MAX = parseNumber(
-  process.env['AI_PATHS_RUN_RATE_LIMIT_MAX'],
-  20
-);
-const RUN_ACTIVE_MAX = parseNumber(
-  process.env['AI_PATHS_RUN_ACTIVE_LIMIT'],
-  5
-);
-const RUN_GLOBAL_QUEUED_MAX = parseNumber(
-  process.env['AI_PATHS_RUN_GLOBAL_QUEUED_LIMIT'],
-  500
-);
+const RUN_RATE_MAX = parseNumber(process.env['AI_PATHS_RUN_RATE_LIMIT_MAX'], 20);
+const RUN_ACTIVE_MAX = parseNumber(process.env['AI_PATHS_RUN_ACTIVE_LIMIT'], 5);
+const RUN_GLOBAL_QUEUED_MAX = parseNumber(process.env['AI_PATHS_RUN_GLOBAL_QUEUED_LIMIT'], 500);
 const ACTION_RATE_WINDOW_SECONDS = parseNumber(
   process.env['AI_PATHS_ACTION_RATE_LIMIT_WINDOW_SECONDS'],
   60
 );
-const ACTION_RATE_MAX = parseNumber(
-  process.env['AI_PATHS_ACTION_RATE_LIMIT_MAX'],
-  120
-);
+const ACTION_RATE_MAX = parseNumber(process.env['AI_PATHS_ACTION_RATE_LIMIT_MAX'], 120);
 const ACTION_RATE_BUCKET_PREFIX = 'ai_paths:action-rate:v1';
 
 const actionBuckets = new Map<string, { count: number; resetAt: number }>();
@@ -136,23 +124,17 @@ export const ensureAiPathsPermission = (
   }
 };
 
-export const canAccessGlobalAiPathRuns = (
-  access: AiPathsAccessContext
-): boolean => access.isElevated || access.permissions.includes(AI_PATHS_PERMISSION);
+export const canAccessGlobalAiPathRuns = (access: AiPathsAccessContext): boolean =>
+  access.isElevated || access.permissions.includes(AI_PATHS_PERMISSION);
 
-export const assertAiPathRunAccess = (
-  access: AiPathsAccessContext,
-  run: AiPathRunRecord
-): void => {
+export const assertAiPathRunAccess = (access: AiPathsAccessContext, run: AiPathRunRecord): void => {
   if (canAccessGlobalAiPathRuns(access)) return;
   if (!run.userId || run.userId !== access.userId) {
     throw forbiddenError('Run access denied.');
   }
 };
 
-export const enforceAiPathsRunRateLimit = async (
-  access: AiPathsAccessContext
-): Promise<void> => {
+export const enforceAiPathsRunRateLimit = async (access: AiPathsAccessContext): Promise<void> => {
   const repo = await getPathRunRepository();
   const now = Date.now();
   const windowMs = RUN_RATE_WINDOW_SECONDS * 1000;
@@ -162,28 +144,25 @@ export const enforceAiPathsRunRateLimit = async (
   const [recent, active, queueStats] = await Promise.all([
     RUN_RATE_MAX > 0
       ? repo.listRuns({
-        userId: access.userId,
-        createdAfter: new Date(now - windowMs).toISOString(),
-        limit: 1,
-        offset: 0,
-      })
+          userId: access.userId,
+          createdAfter: new Date(now - windowMs).toISOString(),
+          limit: 1,
+          offset: 0,
+        })
       : null,
     RUN_ACTIVE_MAX > 0
       ? repo.listRuns({
-        userId: access.userId,
-        statuses: activeStatuses,
-        limit: 1,
-        offset: 0,
-      })
+          userId: access.userId,
+          statuses: activeStatuses,
+          limit: 1,
+          offset: 0,
+        })
       : null,
     RUN_GLOBAL_QUEUED_MAX > 0 ? repo.getQueueStats() : null,
   ]);
 
   if (recent && recent.total >= RUN_RATE_MAX) {
-    throw rateLimitedError(
-      'Too many runs queued. Please wait before trying again.',
-      windowMs
-    );
+    throw rateLimitedError('Too many runs queued. Please wait before trying again.', windowMs);
   }
   if (active && active.total >= RUN_ACTIVE_MAX) {
     throw rateLimitedError(
@@ -213,12 +192,7 @@ const consumeRedisActionRateLimit = async (
   const key = `${ACTION_RATE_BUCKET_PREFIX}:${userId}:${action}`;
   const ttlSeconds = Math.max(1, Math.ceil(windowMs / 1000));
   try {
-    const response = await redis
-      .multi()
-      .incr(key)
-      .expire(key, ttlSeconds, 'NX')
-      .ttl(key)
-      .exec();
+    const response = await redis.multi().incr(key).expire(key, ttlSeconds, 'NX').ttl(key).exec();
     if (!response || response.length < 3) return null;
 
     const count = Number((response[0] as [Error | null, number])[1] ?? 0);
@@ -239,11 +213,7 @@ export const enforceAiPathsActionRateLimit = async (
 ): Promise<void> => {
   if (ACTION_RATE_MAX <= 0) return;
   const windowMs = ACTION_RATE_WINDOW_SECONDS * 1000;
-  const redisBucket = await consumeRedisActionRateLimit(
-    access.userId,
-    action,
-    windowMs
-  );
+  const redisBucket = await consumeRedisActionRateLimit(access.userId, action, windowMs);
   if (redisBucket) {
     if (redisBucket.count > ACTION_RATE_MAX) {
       const retryAfter = Math.max(redisBucket.resetAt - Date.now(), 1000);

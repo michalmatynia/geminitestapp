@@ -23,18 +23,20 @@ import type { BlockInstance } from '../../../types/page-builder';
 // To avoid circular imports, we use a late-binding pattern.
 let _PreviewBlockItem: React.ComponentType<PreviewBlockItemProps> | null = null;
 
-export function registerPreviewBlockItem(component: React.ComponentType<PreviewBlockItemProps>): void {
+export function registerPreviewBlockItem(
+  component: React.ComponentType<PreviewBlockItemProps>
+): void {
   _PreviewBlockItem = component;
 }
 
 function PreviewBlockItemProxy(props: PreviewBlockItemProps): React.ReactNode {
   if (!_PreviewBlockItem) {
-    throw new Error('PreviewBlockItem has not been registered. Call registerPreviewBlockItem first.');
+    throw new Error(
+      'PreviewBlockItem has not been registered. Call registerPreviewBlockItem first.'
+    );
   }
 
-  return (
-    <_PreviewBlockItem {...props} />
-  );
+  return <_PreviewBlockItem {...props} />;
 }
 
 // ---------------------------------------------------------------------------
@@ -45,12 +47,10 @@ export function PreviewImageWithTextBlock({
   block,
   stretch = false,
 }: PreviewBlockProps): React.ReactNode {
-  const {
-    inspectorSettings,
-  } = usePreviewEditor();
+  const { inspectorSettings } = usePreviewEditor();
   const { mediaStyles, stretch: contextStretch } = useBlockContext();
   const resolvedStretch = stretch ?? contextStretch ?? false;
-  
+
   const placement = block.settings['desktopImagePlacement'] as string | undefined;
   const imageFirst = placement !== 'image-second';
   const children = block.blocks ?? [];
@@ -85,10 +85,7 @@ export function PreviewImageWithTextBlock({
         {children.length > 0 ? (
           <BlockContextProvider value={{ contained: true }}>
             {children.map((child: BlockInstance) => (
-              <PreviewBlockItemProxy
-                key={child.id}
-                block={child}
-              />
+              <PreviewBlockItemProxy key={child.id} block={child} />
             ))}
           </BlockContextProvider>
         ) : showEditorChrome ? (
@@ -103,10 +100,7 @@ export function PreviewImageWithTextBlock({
 // Hero block preview (inside columns)
 // ---------------------------------------------------------------------------
 
-export function PreviewHeroBlock({
-  block,
-  stretch = false,
-}: PreviewBlockProps): React.ReactNode {
+export function PreviewHeroBlock({ block, stretch = false }: PreviewBlockProps): React.ReactNode {
   const { mediaStyles, stretch: contextStretch } = useBlockContext();
   const resolvedStretch = stretch ?? contextStretch ?? false;
   const children = block.blocks ?? [];
@@ -133,10 +127,7 @@ export function PreviewHeroBlock({
         {children.length > 0 ? (
           <BlockContextProvider value={{ contained: true }}>
             {children.map((child: BlockInstance) => (
-              <PreviewBlockItemProxy
-                key={child.id}
-                block={child}
-              />
+              <PreviewBlockItemProxy key={child.id} block={child} />
             ))}
           </BlockContextProvider>
         ) : (
@@ -175,10 +166,7 @@ export function PreviewRichTextBlock({
       {children.length > 0 ? (
         <BlockContextProvider value={{ contained: true }}>
           {children.map((child: BlockInstance) => (
-            <PreviewBlockItemProxy
-              key={child.id}
-              block={child}
-            />
+            <PreviewBlockItemProxy key={child.id} block={child} />
           ))}
         </BlockContextProvider>
       ) : showEditorChrome ? (
@@ -215,7 +203,8 @@ export function PreviewBlockSectionBlock({
     (alignment === 'center' ? 'center' : alignment === 'right' ? 'flex-end' : 'flex-start');
   const alignItems = resolveAlignItems(block.settings['alignItems']) ?? 'center';
   const flexDirClass = direction === 'column' ? 'flex-col' : 'flex-row';
-  const wrapClass = direction === 'column' ? '' : wrapSetting === 'nowrap' ? 'flex-nowrap' : 'flex-wrap';
+  const wrapClass =
+    direction === 'column' ? '' : wrapSetting === 'nowrap' ? 'flex-nowrap' : 'flex-wrap';
   const shouldStretchChildren = resolvedStretch && children.length === 1;
   const blockSelector = getCustomCssSelector(block.id);
   const blockCustomCss = buildScopedCustomCss(block.settings['customCss'], blockSelector);
@@ -228,7 +217,11 @@ export function PreviewBlockSectionBlock({
     >
       {blockCustomCss ? <style data-cms-custom-css={block.id}>{blockCustomCss}</style> : null}
       {children.length === 0 && showEditorChrome ? (
-        <Card variant='subtle-compact' padding='none' className='flex min-h-[48px] items-center justify-center border-dashed border-gray-700/50 bg-card/20 text-[10px] uppercase tracking-wider text-gray-600'>
+        <Card
+          variant='subtle-compact'
+          padding='none'
+          className='flex min-h-[48px] items-center justify-center border-dashed border-gray-700/50 bg-card/20 text-[10px] uppercase tracking-wider text-gray-600'
+        >
           Empty block
         </Card>
       ) : (
@@ -238,10 +231,7 @@ export function PreviewBlockSectionBlock({
         >
           <BlockContextProvider value={{ contained: true, stretch: shouldStretchChildren }}>
             {children.map((child: BlockInstance) => (
-              <PreviewBlockItemProxy
-                key={child.id}
-                block={child}
-              />
+              <PreviewBlockItemProxy key={child.id} block={child} />
             ))}
           </BlockContextProvider>
         </div>
@@ -269,18 +259,16 @@ export function PreviewTextAtomBlock({
   const wrap = (block.settings['wrap'] as string) || 'wrap';
   const letters = (block.blocks ?? []).length
     ? (block.blocks ?? [])
-    : Array.from(text).map((char: string, index: number): BlockInstance => ({
-      id: `text-atom-${block.id}-${index}`,
-      type: 'TextAtomLetter',
-      settings: { textContent: char },
-    }));
+    : Array.from(text).map(
+        (char: string, index: number): BlockInstance => ({
+          id: `text-atom-${block.id}-${index}`,
+          type: 'TextAtomLetter',
+          settings: { textContent: char },
+        })
+      );
 
   const justifyContent =
-    alignment === 'center'
-      ? 'center'
-      : alignment === 'right'
-        ? 'flex-end'
-        : 'flex-start';
+    alignment === 'center' ? 'center' : alignment === 'right' ? 'flex-end' : 'flex-start';
   const stretchStyle = resolvedStretch ? { height: '100%' } : undefined;
   const containerStyle: React.CSSProperties = {
     display: 'flex',
@@ -304,10 +292,7 @@ export function PreviewTextAtomBlock({
       {letters.length > 0 ? (
         <BlockContextProvider value={{ contained: true }}>
           {letters.map((child: BlockInstance) => (
-            <PreviewBlockItemProxy
-              key={child.id}
-              block={child}
-            />
+            <PreviewBlockItemProxy key={child.id} block={child} />
           ))}
         </BlockContextProvider>
       ) : showEditorChrome ? (

@@ -2,10 +2,16 @@
 
 import React, { createContext, useContext, useState, useMemo } from 'react';
 
-import type { ObjectLayoutCustomPreset } from '../../utils/object-layout-presets';
-import type { ImageStudioAnalysisPlanSnapshot, ImageStudioAnalysisApplyTarget } from '../../utils/analysis-bridge';
+import type { ObjectLayoutCustomPreset } from '@/shared/lib/ai/image-studio/utils/object-layout-presets';
+import type {
+  ImageStudioAnalysisPlanSnapshot,
+  ImageStudioAnalysisApplyTarget,
+} from '@/shared/lib/ai/image-studio/utils/analysis-bridge';
 import type { UpscaleSmoothingQuality } from './GenerationToolbarImageUtils';
-import type { ImageStudioCenterDetectionMode, ImageStudioCenterShadowPolicy } from '../../contracts/center';
+import type {
+  ImageStudioCenterDetectionMode,
+  ImageStudioCenterShadowPolicy,
+} from '../../contracts/center';
 
 export type MaskAttachMode = 'client_canvas_polygon' | 'server_polygon';
 export type UpscaleMode = 'client_canvas' | 'server_sharp';
@@ -16,14 +22,36 @@ export type CenterMode =
   | 'server_alpha_bbox'
   | 'client_object_layout_v1'
   | 'server_object_layout_v1';
-export type AutoScalerMode =
-  | 'client_auto_scaler_v1'
-  | 'server_auto_scaler_v1';
+export type AutoScalerMode = 'client_auto_scaler_v1' | 'server_auto_scaler_v1';
 
-export type CropStatus = 'idle' | 'resolving' | 'preparing' | 'uploading' | 'processing' | 'persisting';
-export type CenterStatus = 'idle' | 'resolving' | 'preparing' | 'uploading' | 'processing' | 'persisting';
-export type UpscaleStatus = 'idle' | 'resolving' | 'preparing' | 'uploading' | 'processing' | 'persisting';
-export type AutoScaleStatus = 'idle' | 'resolving' | 'preparing' | 'uploading' | 'processing' | 'persisting';
+export type CropStatus =
+  | 'idle'
+  | 'resolving'
+  | 'preparing'
+  | 'uploading'
+  | 'processing'
+  | 'persisting';
+export type CenterStatus =
+  | 'idle'
+  | 'resolving'
+  | 'preparing'
+  | 'uploading'
+  | 'processing'
+  | 'persisting';
+export type UpscaleStatus =
+  | 'idle'
+  | 'resolving'
+  | 'preparing'
+  | 'uploading'
+  | 'processing'
+  | 'persisting';
+export type AutoScaleStatus =
+  | 'idle'
+  | 'resolving'
+  | 'preparing'
+  | 'uploading'
+  | 'processing'
+  | 'persisting';
 export type AnalysisStatus = 'idle' | 'resolving' | 'processing';
 
 export interface GenerationToolbarContextValue {
@@ -122,7 +150,11 @@ export interface GenerationToolbarContextValue {
 
 const GenerationToolbarContext = createContext<GenerationToolbarContextValue | null>(null);
 
-export function GenerationToolbarProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
+export function GenerationToolbarProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}): React.JSX.Element {
   const [maskAttachMode, setMaskAttachMode] = useState<MaskAttachMode>('client_canvas_polygon');
   const [upscaleMode, setUpscaleMode] = useState<UpscaleMode>('client_canvas');
   const [upscaleStrategy, setUpscaleStrategy] = useState<UpscaleStrategy>('scale');
@@ -135,28 +167,38 @@ export function GenerationToolbarProvider({ children }: { children: React.ReactN
   const [centerLayoutPaddingY, setCenterLayoutPaddingY] = useState('8');
   const [centerLayoutSplitAxes, setCenterLayoutSplitAxes] = useState(false);
   const [centerLayoutAdvancedEnabled, setCenterLayoutAdvancedEnabled] = useState(false);
-  const [centerLayoutDetection, setCenterLayoutDetection] = useState<ImageStudioCenterDetectionMode>('auto');
+  const [centerLayoutDetection, setCenterLayoutDetection] =
+    useState<ImageStudioCenterDetectionMode>('auto');
   const [centerLayoutWhiteThreshold, setCenterLayoutWhiteThreshold] = useState('16');
   const [centerLayoutChromaThreshold, setCenterLayoutChromaThreshold] = useState('10');
-  const [centerLayoutFillMissingCanvasWhite, setCenterLayoutFillMissingCanvasWhite] = useState(false);
-  const [centerLayoutShadowPolicy, setCenterLayoutShadowPolicy] = useState<ImageStudioCenterShadowPolicy>('auto');
-  const [centerLayoutCustomPresets, setCenterLayoutCustomPresets] = useState<ObjectLayoutCustomPreset[]>([]);
+  const [centerLayoutFillMissingCanvasWhite, setCenterLayoutFillMissingCanvasWhite] =
+    useState(false);
+  const [centerLayoutShadowPolicy, setCenterLayoutShadowPolicy] =
+    useState<ImageStudioCenterShadowPolicy>('auto');
+  const [centerLayoutCustomPresets, setCenterLayoutCustomPresets] = useState<
+    ObjectLayoutCustomPreset[]
+  >([]);
   const [centerLayoutPresetDraftName, setCenterLayoutPresetDraftName] = useState('');
 
-  const [analysisPlanSnapshot, setAnalysisPlanSnapshot] = useState<ImageStudioAnalysisPlanSnapshot | null>(null);
-  const [queuedAnalysisRunTarget, setQueuedAnalysisRunTarget] = useState<ImageStudioAnalysisApplyTarget | null>(null);
+  const [analysisPlanSnapshot, setAnalysisPlanSnapshot] =
+    useState<ImageStudioAnalysisPlanSnapshot | null>(null);
+  const [queuedAnalysisRunTarget, setQueuedAnalysisRunTarget] =
+    useState<ImageStudioAnalysisApplyTarget | null>(null);
 
   const [autoScaleLayoutPadding, setAutoScaleLayoutPadding] = useState('8');
   const [autoScaleLayoutPaddingX, setAutoScaleLayoutPaddingX] = useState('8');
   const [autoScaleLayoutPaddingY, setAutoScaleLayoutPaddingY] = useState('8');
   const [autoScaleLayoutSplitAxes, setAutoScaleLayoutSplitAxes] = useState(false);
-  const [autoScaleLayoutFillMissingCanvasWhite, setAutoScaleLayoutFillMissingCanvasWhite] = useState(false);
-  const [autoScaleLayoutShadowPolicy, setAutoScaleLayoutShadowPolicy] = useState<ImageStudioCenterShadowPolicy>('auto');
+  const [autoScaleLayoutFillMissingCanvasWhite, setAutoScaleLayoutFillMissingCanvasWhite] =
+    useState(false);
+  const [autoScaleLayoutShadowPolicy, setAutoScaleLayoutShadowPolicy] =
+    useState<ImageStudioCenterShadowPolicy>('auto');
 
   const [upscaleScale, setUpscaleScale] = useState('2');
   const [upscaleTargetWidth, setUpscaleTargetWidth] = useState('');
   const [upscaleTargetHeight, setUpscaleTargetHeight] = useState('');
-  const [upscaleSmoothingQuality, setUpscaleSmoothingQuality] = useState<UpscaleSmoothingQuality>('high');
+  const [upscaleSmoothingQuality, setUpscaleSmoothingQuality] =
+    useState<UpscaleSmoothingQuality>('high');
 
   const [upscaleBusy, setUpscaleBusy] = useState(false);
   const [upscaleStatus, setUpscaleStatus] = useState<UpscaleStatus>('idle');
@@ -169,64 +211,135 @@ export function GenerationToolbarProvider({ children }: { children: React.ReactN
   const [analysisBusy, setAnalysisBusy] = useState(false);
   const [analysisStatus, setAnalysisStatus] = useState<AnalysisStatus>('idle');
 
-  const value = useMemo((): GenerationToolbarContextValue => ({
-    maskAttachMode, setMaskAttachMode,
-    upscaleMode, setUpscaleMode,
-    upscaleStrategy, setUpscaleStrategy,
-    cropMode, setCropMode,
-    centerMode, setCenterMode,
-    autoScaleMode, setAutoScaleMode,
-    centerLayoutPadding, setCenterLayoutPadding,
-    centerLayoutPaddingX, setCenterLayoutPaddingX,
-    centerLayoutPaddingY, setCenterLayoutPaddingY,
-    centerLayoutSplitAxes, setCenterLayoutSplitAxes,
-    centerLayoutAdvancedEnabled, setCenterLayoutAdvancedEnabled,
-    centerLayoutDetection, setCenterLayoutDetection,
-    centerLayoutWhiteThreshold, setCenterLayoutWhiteThreshold,
-    centerLayoutChromaThreshold, setCenterLayoutChromaThreshold,
-    centerLayoutFillMissingCanvasWhite, setCenterLayoutFillMissingCanvasWhite,
-    centerLayoutShadowPolicy, setCenterLayoutShadowPolicy,
-    centerLayoutCustomPresets, setCenterLayoutCustomPresets,
-    centerLayoutPresetDraftName, setCenterLayoutPresetDraftName,
-    analysisPlanSnapshot, setAnalysisPlanSnapshot,
-    queuedAnalysisRunTarget, setQueuedAnalysisRunTarget,
-    autoScaleLayoutPadding, setAutoScaleLayoutPadding,
-    autoScaleLayoutPaddingX, setAutoScaleLayoutPaddingX,
-    autoScaleLayoutPaddingY, setAutoScaleLayoutPaddingY,
-    autoScaleLayoutSplitAxes, setAutoScaleLayoutSplitAxes,
-    autoScaleLayoutFillMissingCanvasWhite, setAutoScaleLayoutFillMissingCanvasWhite,
-    autoScaleLayoutShadowPolicy, setAutoScaleLayoutShadowPolicy,
-    upscaleScale, setUpscaleScale,
-    upscaleTargetWidth, setUpscaleTargetWidth,
-    upscaleTargetHeight, setUpscaleTargetHeight,
-    upscaleSmoothingQuality, setUpscaleSmoothingQuality,
-    upscaleBusy, setUpscaleBusy,
-    upscaleStatus, setUpscaleStatus,
-    cropBusy, setCropBusy,
-    cropStatus, setCropStatus,
-    centerBusy, setCenterBusy,
-    centerStatus, setCenterStatus,
-    autoScaleBusy, setAutoScaleBusy,
-    autoScaleStatus, setAutoScaleStatus,
-    analysisBusy, setAnalysisBusy,
-    analysisStatus, setAnalysisStatus,
-  }), [
-    maskAttachMode, upscaleMode, upscaleStrategy, cropMode, centerMode, autoScaleMode,
-    centerLayoutPadding, centerLayoutPaddingX, centerLayoutPaddingY, centerLayoutSplitAxes,
-    centerLayoutAdvancedEnabled, centerLayoutDetection, centerLayoutWhiteThreshold,
-    centerLayoutChromaThreshold, centerLayoutFillMissingCanvasWhite, centerLayoutShadowPolicy,
-    centerLayoutCustomPresets, centerLayoutPresetDraftName, analysisPlanSnapshot,
-    queuedAnalysisRunTarget, autoScaleLayoutPadding, autoScaleLayoutPaddingX,
-    autoScaleLayoutPaddingY, autoScaleLayoutSplitAxes, autoScaleLayoutFillMissingCanvasWhite,
-    autoScaleLayoutShadowPolicy, upscaleScale, upscaleTargetWidth, upscaleTargetHeight,
-    upscaleSmoothingQuality, upscaleBusy, upscaleStatus, cropBusy, cropStatus,
-    centerBusy, centerStatus, autoScaleBusy, autoScaleStatus, analysisBusy, analysisStatus,
-  ]);
+  const value = useMemo(
+    (): GenerationToolbarContextValue => ({
+      maskAttachMode,
+      setMaskAttachMode,
+      upscaleMode,
+      setUpscaleMode,
+      upscaleStrategy,
+      setUpscaleStrategy,
+      cropMode,
+      setCropMode,
+      centerMode,
+      setCenterMode,
+      autoScaleMode,
+      setAutoScaleMode,
+      centerLayoutPadding,
+      setCenterLayoutPadding,
+      centerLayoutPaddingX,
+      setCenterLayoutPaddingX,
+      centerLayoutPaddingY,
+      setCenterLayoutPaddingY,
+      centerLayoutSplitAxes,
+      setCenterLayoutSplitAxes,
+      centerLayoutAdvancedEnabled,
+      setCenterLayoutAdvancedEnabled,
+      centerLayoutDetection,
+      setCenterLayoutDetection,
+      centerLayoutWhiteThreshold,
+      setCenterLayoutWhiteThreshold,
+      centerLayoutChromaThreshold,
+      setCenterLayoutChromaThreshold,
+      centerLayoutFillMissingCanvasWhite,
+      setCenterLayoutFillMissingCanvasWhite,
+      centerLayoutShadowPolicy,
+      setCenterLayoutShadowPolicy,
+      centerLayoutCustomPresets,
+      setCenterLayoutCustomPresets,
+      centerLayoutPresetDraftName,
+      setCenterLayoutPresetDraftName,
+      analysisPlanSnapshot,
+      setAnalysisPlanSnapshot,
+      queuedAnalysisRunTarget,
+      setQueuedAnalysisRunTarget,
+      autoScaleLayoutPadding,
+      setAutoScaleLayoutPadding,
+      autoScaleLayoutPaddingX,
+      setAutoScaleLayoutPaddingX,
+      autoScaleLayoutPaddingY,
+      setAutoScaleLayoutPaddingY,
+      autoScaleLayoutSplitAxes,
+      setAutoScaleLayoutSplitAxes,
+      autoScaleLayoutFillMissingCanvasWhite,
+      setAutoScaleLayoutFillMissingCanvasWhite,
+      autoScaleLayoutShadowPolicy,
+      setAutoScaleLayoutShadowPolicy,
+      upscaleScale,
+      setUpscaleScale,
+      upscaleTargetWidth,
+      setUpscaleTargetWidth,
+      upscaleTargetHeight,
+      setUpscaleTargetHeight,
+      upscaleSmoothingQuality,
+      setUpscaleSmoothingQuality,
+      upscaleBusy,
+      setUpscaleBusy,
+      upscaleStatus,
+      setUpscaleStatus,
+      cropBusy,
+      setCropBusy,
+      cropStatus,
+      setCropStatus,
+      centerBusy,
+      setCenterBusy,
+      centerStatus,
+      setCenterStatus,
+      autoScaleBusy,
+      setAutoScaleBusy,
+      autoScaleStatus,
+      setAutoScaleStatus,
+      analysisBusy,
+      setAnalysisBusy,
+      analysisStatus,
+      setAnalysisStatus,
+    }),
+    [
+      maskAttachMode,
+      upscaleMode,
+      upscaleStrategy,
+      cropMode,
+      centerMode,
+      autoScaleMode,
+      centerLayoutPadding,
+      centerLayoutPaddingX,
+      centerLayoutPaddingY,
+      centerLayoutSplitAxes,
+      centerLayoutAdvancedEnabled,
+      centerLayoutDetection,
+      centerLayoutWhiteThreshold,
+      centerLayoutChromaThreshold,
+      centerLayoutFillMissingCanvasWhite,
+      centerLayoutShadowPolicy,
+      centerLayoutCustomPresets,
+      centerLayoutPresetDraftName,
+      analysisPlanSnapshot,
+      queuedAnalysisRunTarget,
+      autoScaleLayoutPadding,
+      autoScaleLayoutPaddingX,
+      autoScaleLayoutPaddingY,
+      autoScaleLayoutSplitAxes,
+      autoScaleLayoutFillMissingCanvasWhite,
+      autoScaleLayoutShadowPolicy,
+      upscaleScale,
+      upscaleTargetWidth,
+      upscaleTargetHeight,
+      upscaleSmoothingQuality,
+      upscaleBusy,
+      upscaleStatus,
+      cropBusy,
+      cropStatus,
+      centerBusy,
+      centerStatus,
+      autoScaleBusy,
+      autoScaleStatus,
+      analysisBusy,
+      analysisStatus,
+    ]
+  );
 
   return (
-    <GenerationToolbarContext.Provider value={value}>
-      {children}
-    </GenerationToolbarContext.Provider>
+    <GenerationToolbarContext.Provider value={value}>{children}</GenerationToolbarContext.Provider>
   );
 }
 

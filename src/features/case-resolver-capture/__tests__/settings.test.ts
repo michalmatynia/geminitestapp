@@ -7,9 +7,7 @@ import {
 
 describe('case-resolver-capture settings', () => {
   it('falls back to defaults for invalid payloads', () => {
-    expect(parseCaseResolverCaptureSettings(null)).toEqual(
-      DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS
-    );
+    expect(parseCaseResolverCaptureSettings(null)).toEqual(DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS);
 
     expect(parseCaseResolverCaptureSettings(JSON.stringify([]))).toEqual(
       DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS
@@ -62,7 +60,6 @@ describe('case-resolver-capture settings', () => {
       targetPath: 'addressee',
       required: true,
     });
-    
   });
 
   it('rejects deprecated action aliases and falls back to defaults', () => {

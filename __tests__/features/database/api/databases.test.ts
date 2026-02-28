@@ -14,7 +14,7 @@ import { POST as POST_DELETE } from '@/app/api/databases/delete/route';
 import { POST as POST_RESTORE } from '@/app/api/databases/restore/route';
 import { POST as POST_UPLOAD } from '@/app/api/databases/upload/route';
 import { auth } from '@/features/auth/server';
-import { execFileAsync } from '@/features/database/utils/postgres';
+import { execFileAsync } from '@/shared/lib/db/utils/postgres';
 import {
   enqueueProductAiJob,
   enqueueProductAiJobToQueue,
@@ -23,9 +23,8 @@ import {
 import { getDatabaseEngineOperationControls } from '@/shared/lib/db/database-engine-policy';
 import prisma from '@/shared/lib/db/prisma';
 
-
-vi.mock('@/features/database/utils/postgres', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/features/database/utils/postgres')>();
+vi.mock('@/shared/lib/db/utils/postgres', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/lib/db/utils/postgres')>();
   return {
     ...actual,
     execFileAsync: vi.fn().mockResolvedValue({ stdout: 'stdout', stderr: 'stderr' }),
@@ -118,7 +117,7 @@ describe('Databases API', () => {
         'job-backup-1',
         'system',
         'db_backup',
-        expect.any(Object),
+        expect.any(Object)
       );
     });
   });

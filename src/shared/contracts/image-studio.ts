@@ -69,12 +69,15 @@ export type ImageStudioCropCanvasContext = z.infer<typeof imageStudioCropCanvasC
 export const imageStudioCropDiagnosticsSchema = z.object({
   rawCanvasBounds: imageStudioCropRectSchema.nullable().optional(),
   mappedImageBounds: imageStudioCropRectSchema.nullable().optional(),
-  imageContentFrame: z.object({
-    x: z.number().finite(),
-    y: z.number().finite(),
-    width: z.number().finite().positive(),
-    height: z.number().finite().positive(),
-  }).nullable().optional(),
+  imageContentFrame: z
+    .object({
+      x: z.number().finite(),
+      y: z.number().finite(),
+      width: z.number().finite().positive(),
+      height: z.number().finite().positive(),
+    })
+    .nullable()
+    .optional(),
   usedImageContentFrameMapping: z.boolean().optional(),
 });
 export type ImageStudioCropDiagnostics = z.infer<typeof imageStudioCropDiagnosticsSchema>;
@@ -146,44 +149,47 @@ export type ImageStudioUpscaleStrategy = z.infer<typeof imageStudioUpscaleStrate
 export type ImageStudioUpscaleStrategyDto = ImageStudioUpscaleStrategy;
 
 export const imageStudioUpscaleSmoothingQualitySchema = z.enum(['low', 'medium', 'high']);
-export type ImageStudioUpscaleSmoothingQuality = z.infer<typeof imageStudioUpscaleSmoothingQualitySchema>;
+export type ImageStudioUpscaleSmoothingQuality = z.infer<
+  typeof imageStudioUpscaleSmoothingQualitySchema
+>;
 export type ImageStudioUpscaleSmoothingQualityDto = ImageStudioUpscaleSmoothingQuality;
 
+export const imageStudioUpscaleRequestSchema = z
+  .object({
+    mode: imageStudioUpscaleModeSchema.default('server_sharp'),
+    strategy: imageStudioUpscaleStrategySchema.optional(),
+    scale: z.number().finite().gt(1).max(8).optional(),
+    targetWidth: z.number().int().positive().optional(),
+    targetHeight: z.number().int().positive().optional(),
+    smoothingQuality: imageStudioUpscaleSmoothingQualitySchema.optional(),
+    dataUrl: z.string().trim().min(1).optional(),
+    name: z.string().trim().min(1).max(180).optional(),
+    requestId: z.string().trim().min(8).max(160).optional(),
+  })
+  .superRefine((value, ctx) => {
+    const inferredStrategy =
+      value.strategy ??
+      (typeof value.targetWidth === 'number' || typeof value.targetHeight === 'number'
+        ? 'target_resolution'
+        : 'scale');
 
-export const imageStudioUpscaleRequestSchema = z.object({
-  mode: imageStudioUpscaleModeSchema.default('server_sharp'),
-  strategy: imageStudioUpscaleStrategySchema.optional(),
-  scale: z.number().finite().gt(1).max(8).optional(),
-  targetWidth: z.number().int().positive().optional(),
-  targetHeight: z.number().int().positive().optional(),
-  smoothingQuality: imageStudioUpscaleSmoothingQualitySchema.optional(),
-  dataUrl: z.string().trim().min(1).optional(),
-  name: z.string().trim().min(1).max(180).optional(),
-  requestId: z.string().trim().min(8).max(160).optional(),
-}).superRefine((value, ctx) => {
-  const inferredStrategy =
-    value.strategy ??
-    ((typeof value.targetWidth === 'number' || typeof value.targetHeight === 'number')
-      ? 'target_resolution'
-      : 'scale');
-
-  if (inferredStrategy === 'target_resolution') {
-    if (typeof value.targetWidth !== 'number') {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['targetWidth'],
-        message: 'targetWidth is required when strategy is target_resolution.',
-      });
+    if (inferredStrategy === 'target_resolution') {
+      if (typeof value.targetWidth !== 'number') {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['targetWidth'],
+          message: 'targetWidth is required when strategy is target_resolution.',
+        });
+      }
+      if (typeof value.targetHeight !== 'number') {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['targetHeight'],
+          message: 'targetHeight is required when strategy is target_resolution.',
+        });
+      }
     }
-    if (typeof value.targetHeight !== 'number') {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['targetHeight'],
-        message: 'targetHeight is required when strategy is target_resolution.',
-      });
-    }
-  }
-});
+  });
 
 export type ImageStudioUpscaleRequest = z.infer<typeof imageStudioUpscaleRequestSchema>;
 export type ImageStudioUpscaleRequestDto = ImageStudioUpscaleRequest;
@@ -327,10 +333,7 @@ export const IMAGE_STUDIO_ANALYSIS_ERROR_CODES = {
 export type ImageStudioAnalysisErrorCode =
   (typeof IMAGE_STUDIO_ANALYSIS_ERROR_CODES)[keyof typeof IMAGE_STUDIO_ANALYSIS_ERROR_CODES];
 
-export const imageStudioAnalysisModeSchema = z.enum([
-  'client_analysis_v1',
-  'server_analysis_v1',
-]);
+export const imageStudioAnalysisModeSchema = z.enum(['client_analysis_v1', 'server_analysis_v1']);
 export type ImageStudioAnalysisMode = z.infer<typeof imageStudioAnalysisModeSchema>;
 
 export const imageStudioAnalysisRequestSchema = z.object({
@@ -397,64 +400,78 @@ export const slotGenerationMetadataSchema = z.object({
   generationOutputCount: z.number().optional(),
   sourceSlotIds: z.array(z.string()).optional(),
   sourceReferenceIds: z.array(z.string()).optional(),
-  outputFile: z.object({
-    id: z.string(),
-    filename: z.string(),
-    filepath: z.string(),
-    mimetype: z.string(),
-    size: z.number(),
-    width: z.number().nullable(),
-    height: z.number().nullable(),
-    tags: z.array(z.string()),
-  }).optional(),
+  outputFile: z
+    .object({
+      id: z.string(),
+      filename: z.string(),
+      filepath: z.string(),
+      mimetype: z.string(),
+      size: z.number(),
+      width: z.number().nullable(),
+      height: z.number().nullable(),
+      tags: z.array(z.string()),
+    })
+    .optional(),
   generationRequest: z.record(z.string(), z.unknown()).optional(),
   generationSettings: z.record(z.string(), z.unknown()).optional(),
   crop: z.record(z.string(), z.unknown()).optional(),
   center: z.record(z.string(), z.unknown()).optional(),
   upscale: z.record(z.string(), z.unknown()).optional(),
   autoscale: z.record(z.string(), z.unknown()).optional(),
-  generationCosts: z.object({
-    currency: z.literal('USD'),
-    estimated: z.literal(true),
-    promptTokens: z.number(),
-    promptCostUsdTotal: z.number(),
-    promptCostUsdPerOutput: z.number(),
-    imageCostUsdPerOutput: z.number(),
-    totalCostUsdPerOutput: z.number(),
-    outputCount: z.number(),
-    actualCostUsd: z.number().optional(),
-    tokenCostUsd: z.number().optional(),
-  }).optional(),
-  maskData: z.object({
-    shapes: z.array(z.object({
-      type: z.string(),
-      points: z.array(z.object({ x: z.number(), y: z.number() })),
-      closed: z.boolean(),
-    })),
-    invert: z.boolean(),
-    feather: z.number(),
-    attachedAt: z.string(),
-  }).optional(),
+  generationCosts: z
+    .object({
+      currency: z.literal('USD'),
+      estimated: z.literal(true),
+      promptTokens: z.number(),
+      promptCostUsdTotal: z.number(),
+      promptCostUsdPerOutput: z.number(),
+      imageCostUsdPerOutput: z.number(),
+      totalCostUsdPerOutput: z.number(),
+      outputCount: z.number(),
+      actualCostUsd: z.number().optional(),
+      tokenCostUsd: z.number().optional(),
+    })
+    .optional(),
+  maskData: z
+    .object({
+      shapes: z.array(
+        z.object({
+          type: z.string(),
+          points: z.array(z.object({ x: z.number(), y: z.number() })),
+          closed: z.boolean(),
+        })
+      ),
+      invert: z.boolean(),
+      feather: z.number(),
+      attachedAt: z.string(),
+    })
+    .optional(),
   variant: z.string().optional(),
   inverted: z.boolean().optional(),
   generationMode: z.string().optional(),
   polygonCount: z.number().optional(),
-  generationParams: z.object({
-    prompt: z.string().optional(),
-    model: z.string().optional(),
-    timestamp: z.string().optional(),
-    runId: z.string().optional(),
-    outputIndex: z.number().optional(),
-    outputCount: z.number().optional(),
-  }).optional(),
+  generationParams: z
+    .object({
+      prompt: z.string().optional(),
+      model: z.string().optional(),
+      timestamp: z.string().optional(),
+      runId: z.string().optional(),
+      outputIndex: z.number().optional(),
+      outputCount: z.number().optional(),
+    })
+    .optional(),
   annotation: z.string().optional(),
-  sequence: z.object({
-    runId: z.string().optional(),
-  }).optional(),
-  compositeConfig: z.object({
-    layers: z.array(compositeLayerConfigSchema),
-    flattenedSlotId: z.string().optional(),
-  }).optional(),
+  sequence: z
+    .object({
+      runId: z.string().optional(),
+    })
+    .optional(),
+  compositeConfig: z
+    .object({
+      layers: z.array(compositeLayerConfigSchema),
+      flattenedSlotId: z.string().optional(),
+    })
+    .optional(),
 });
 
 export type SlotGenerationMetadata = z.infer<typeof slotGenerationMetadataSchema>;
@@ -536,10 +553,7 @@ export const studioSlotsResponseSchema = z.object({
 
 export type StudioSlotsResponse = z.infer<typeof studioSlotsResponseSchema>;
 
-const imageStudioObjectDetectionUsedSchema = z.enum([
-  'alpha_bbox',
-  'white_bg_first_colored_pixel',
-]);
+const imageStudioObjectDetectionUsedSchema = z.enum(['alpha_bbox', 'white_bg_first_colored_pixel']);
 
 export const imageStudioWhitespaceMetricsSchema = z.object({
   px: z.object({
@@ -571,7 +585,9 @@ export const imageStudioNormalizedCenterLayoutSchema = z.object({
   detection: imageStudioCenterDetectionModeSchema,
 });
 
-export type ImageStudioNormalizedCenterLayout = z.infer<typeof imageStudioNormalizedCenterLayoutSchema>;
+export type ImageStudioNormalizedCenterLayout = z.infer<
+  typeof imageStudioNormalizedCenterLayoutSchema
+>;
 
 export const imageStudioCenterLayoutMetadataSchema = z.object({
   paddingPercent: z.number().finite(),
@@ -605,7 +621,9 @@ export const imageStudioAutoScalerLayoutMetadataSchema = z.object({
   detectionPolicyDecision: z.string().trim().min(1).nullable().optional(),
 });
 
-export type ImageStudioAutoScalerLayoutMetadata = z.infer<typeof imageStudioAutoScalerLayoutMetadataSchema>;
+export type ImageStudioAutoScalerLayoutMetadata = z.infer<
+  typeof imageStudioAutoScalerLayoutMetadataSchema
+>;
 
 export const imageStudioOperationLifecycleSchema = z.object({
   state: z.enum(['analyzed', 'persisted']),
@@ -619,14 +637,18 @@ export const imageStudioDetectionCandidateScoreSchema = z.object({
   area: z.number().int().positive(),
 });
 
-export type ImageStudioDetectionCandidateScore = z.infer<typeof imageStudioDetectionCandidateScoreSchema>;
+export type ImageStudioDetectionCandidateScore = z.infer<
+  typeof imageStudioDetectionCandidateScoreSchema
+>;
 
 export const imageStudioDetectionCandidateSummarySchema = z.object({
   alpha_bbox: imageStudioDetectionCandidateScoreSchema.nullable(),
   white_bg_first_colored_pixel: imageStudioDetectionCandidateScoreSchema.nullable(),
 });
 
-export type ImageStudioDetectionCandidateSummary = z.infer<typeof imageStudioDetectionCandidateSummarySchema>;
+export type ImageStudioDetectionCandidateSummary = z.infer<
+  typeof imageStudioDetectionCandidateSummarySchema
+>;
 
 export const imageStudioDetectionDetailsSchema = z.object({
   shadowPolicyRequested: imageStudioCenterShadowPolicySchema,
@@ -685,15 +707,17 @@ export const imageStudioAnalysisResponseSchema = z.object({
 
 export type ImageStudioAnalysisResponse = z.infer<typeof imageStudioAnalysisResponseSchema>;
 
-const imageStudioOutputImageSchema = z.object({
-  id: z.string(),
-  filename: z.string(),
-  filepath: z.string(),
-  mimetype: z.string(),
-  size: z.number().finite().nonnegative(),
-  width: z.number().finite().optional(),
-  height: z.number().finite().optional(),
-}).passthrough();
+const imageStudioOutputImageSchema = z
+  .object({
+    id: z.string(),
+    filename: z.string(),
+    filepath: z.string(),
+    mimetype: z.string(),
+    size: z.number().finite().nonnegative(),
+    width: z.number().finite().optional(),
+    height: z.number().finite().optional(),
+  })
+  .passthrough();
 
 export const imageStudioCropResponseSchema = z.object({
   sourceSlotId: z.string().optional(),
@@ -783,3 +807,46 @@ export const imageStudioAutoScalerResponseSchema = z.object({
 });
 
 export type ImageStudioAutoScalerResponse = z.infer<typeof imageStudioAutoScalerResponseSchema>;
+
+export interface RunStudioPayload {
+  projectId: string;
+  operation?: 'generate' | 'center_object' | undefined;
+  asset?: { filepath: string; id?: string | undefined } | undefined;
+  referenceAssets?: Array<{ filepath: string; id?: string | undefined }> | undefined;
+  prompt: string;
+  mask?:
+    | {
+        type: 'polygons';
+        polygons: Array<Array<{ x: number; y: number }>>;
+        invert?: boolean | undefined;
+        feather?: number | undefined;
+      }
+    | null
+    | undefined;
+  center?:
+    | {
+        mode:
+          | 'client_alpha_bbox'
+          | 'server_alpha_bbox'
+          | 'client_object_layout_v1'
+          | 'server_object_layout_v1';
+        dataUrl?: string | undefined;
+        layout?:
+          | {
+              paddingPercent?: number | undefined;
+              paddingXPercent?: number | undefined;
+              paddingYPercent?: number | undefined;
+              fillMissingCanvasWhite?: boolean | undefined;
+              targetCanvasWidth?: number | undefined;
+              targetCanvasHeight?: number | undefined;
+              whiteThreshold?: number | undefined;
+              chromaThreshold?: number | undefined;
+              detection?: 'auto' | 'alpha_bbox' | 'white_bg_first_colored_pixel' | undefined;
+            }
+          | undefined;
+      }
+    | undefined;
+  studioSettings?: Record<string, unknown> | undefined;
+}
+
+export type ImageStudioRunStatus = 'queued' | 'running' | 'completed' | 'failed';

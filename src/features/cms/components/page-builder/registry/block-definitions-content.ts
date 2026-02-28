@@ -14,10 +14,32 @@ import {
 import type { BlockDefinition } from '../../../types/page-builder';
 
 // Content blocks that can be placed inside a CarouselFrame
-export const CAROUSEL_FRAME_ALLOWED_BLOCK_TYPES = ['ImageElement', 'TextElement', 'TextAtom', 'Block', 'Button', 'Heading', 'Text', 'VideoEmbed', 'Divider', 'SocialLinks', 'Icon'];
+export const CAROUSEL_FRAME_ALLOWED_BLOCK_TYPES = [
+  'ImageElement',
+  'TextElement',
+  'TextAtom',
+  'Block',
+  'Button',
+  'Heading',
+  'Text',
+  'VideoEmbed',
+  'Divider',
+  'SocialLinks',
+  'Icon',
+];
 
 // Content blocks that can be placed inside a SlideshowFrame
-export const SLIDESHOW_FRAME_ALLOWED_BLOCK_TYPES = ['ImageElement', 'Image', 'Heading', 'Text', 'TextElement', 'TextAtom', 'Block', 'Button', 'AppEmbed'];
+export const SLIDESHOW_FRAME_ALLOWED_BLOCK_TYPES = [
+  'ImageElement',
+  'Image',
+  'Heading',
+  'Text',
+  'TextElement',
+  'TextAtom',
+  'Block',
+  'Button',
+  'AppEmbed',
+];
 
 export const contentBlockDefinitions: Record<string, BlockDefinition> = {
   Block: {
@@ -132,7 +154,14 @@ export const contentBlockDefinitions: Record<string, BlockDefinition> = {
       height: 400,
     },
     settingsSchema: [
-      { key: 'frameCount', label: 'Number of frames', type: 'range', defaultValue: 3, min: 1, max: 10 },
+      {
+        key: 'frameCount',
+        label: 'Number of frames',
+        type: 'range',
+        defaultValue: 3,
+        min: 1,
+        max: 10,
+      },
       {
         key: 'autoPlay',
         label: 'Auto play',
@@ -143,7 +172,14 @@ export const contentBlockDefinitions: Record<string, BlockDefinition> = {
         ],
         defaultValue: 'true',
       },
-      { key: 'autoPlaySpeed', label: 'Auto play speed (ms)', type: 'range', defaultValue: 5000, min: 1000, max: 15000 },
+      {
+        key: 'autoPlaySpeed',
+        label: 'Auto play speed (ms)',
+        type: 'range',
+        defaultValue: 5000,
+        min: 1000,
+        max: 15000,
+      },
       {
         key: 'loop',
         label: 'Loop',
@@ -185,7 +221,14 @@ export const contentBlockDefinitions: Record<string, BlockDefinition> = {
         ],
         defaultValue: 'slide',
       },
-      { key: 'transitionDuration', label: 'Transition duration (ms)', type: 'range', defaultValue: 500, min: 100, max: 2000 },
+      {
+        key: 'transitionDuration',
+        label: 'Transition duration (ms)',
+        type: 'range',
+        defaultValue: 500,
+        min: 100,
+        max: 2000,
+      },
       {
         key: 'pauseOnHover',
         label: 'Pause on hover',
@@ -206,7 +249,14 @@ export const contentBlockDefinitions: Record<string, BlockDefinition> = {
         ],
         defaultValue: 'auto',
       },
-      { key: 'height', label: 'Fixed height (px)', type: 'range', defaultValue: 400, min: 100, max: 800 },
+      {
+        key: 'height',
+        label: 'Fixed height (px)',
+        type: 'range',
+        defaultValue: 400,
+        min: 100,
+        max: 800,
+      },
     ],
   },
   CarouselFrame: {
@@ -269,8 +319,22 @@ export const contentBlockDefinitions: Record<string, BlockDefinition> = {
         ],
         defaultValue: 'fade-in',
       },
-      { key: 'animationDuration', label: 'Animation duration (ms)', type: 'range', defaultValue: 500, min: 100, max: 2000 },
-      { key: 'animationDelay', label: 'Animation delay (ms)', type: 'range', defaultValue: 0, min: 0, max: 2000 },
+      {
+        key: 'animationDuration',
+        label: 'Animation duration (ms)',
+        type: 'range',
+        defaultValue: 500,
+        min: 100,
+        max: 2000,
+      },
+      {
+        key: 'animationDelay',
+        label: 'Animation delay (ms)',
+        type: 'range',
+        defaultValue: 0,
+        min: 0,
+        max: 2000,
+      },
       {
         key: 'animationEasing',
         label: 'Animation easing',
@@ -361,8 +425,22 @@ export const contentBlockDefinitions: Record<string, BlockDefinition> = {
         ],
         defaultValue: 'inherit',
       },
-      { key: 'animationDuration', label: 'Animation duration (ms)', type: 'range', defaultValue: 500, min: 100, max: 2000 },
-      { key: 'animationDelay', label: 'Animation delay (ms)', type: 'range', defaultValue: 0, min: 0, max: 2000 },
+      {
+        key: 'animationDuration',
+        label: 'Animation duration (ms)',
+        type: 'range',
+        defaultValue: 500,
+        min: 100,
+        max: 2000,
+      },
+      {
+        key: 'animationDelay',
+        label: 'Animation delay (ms)',
+        type: 'range',
+        defaultValue: 0,
+        min: 0,
+        max: 2000,
+      },
       {
         key: 'animationEasing',
         label: 'Animation easing',
@@ -382,7 +460,17 @@ export const contentBlockDefinitions: Record<string, BlockDefinition> = {
     type: 'Heading',
     label: 'Heading',
     icon: 'Heading',
-    defaultSettings: { headingText: 'Heading', headingSize: 'medium', textDecoration: 'none', textTransform: 'none', textAlign: 'left', textShadowX: 0, textShadowY: 0, textShadowBlur: 0, textShadowColor: '#00000000' },
+    defaultSettings: {
+      headingText: 'Heading',
+      headingSize: 'medium',
+      textDecoration: 'none',
+      textTransform: 'none',
+      textAlign: 'left',
+      textShadowX: 0,
+      textShadowY: 0,
+      textShadowBlur: 0,
+      textShadowColor: '#00000000',
+    },
     settingsSchema: [
       { key: 'headingText', label: 'Heading text', type: 'text', defaultValue: 'Heading' },
       {
@@ -429,14 +517,29 @@ export const contentBlockDefinitions: Record<string, BlockDefinition> = {
       { key: 'textShadowX', label: 'Text shadow X (px)', type: 'number', defaultValue: 0 },
       { key: 'textShadowY', label: 'Text shadow Y (px)', type: 'number', defaultValue: 0 },
       { key: 'textShadowBlur', label: 'Text shadow blur (px)', type: 'number', defaultValue: 0 },
-      { key: 'textShadowColor', label: 'Text shadow color', type: 'color', defaultValue: '#00000000' },
+      {
+        key: 'textShadowColor',
+        label: 'Text shadow color',
+        type: 'color',
+        defaultValue: '#00000000',
+      },
     ],
   },
   Text: {
     type: 'Text',
     label: 'Text',
     icon: 'AlignLeft',
-    defaultSettings: { textContent: '', textDecoration: 'none', textTransform: 'none', textAlign: 'left', wordSpacing: 0, textShadowX: 0, textShadowY: 0, textShadowBlur: 0, textShadowColor: '#00000000' },
+    defaultSettings: {
+      textContent: '',
+      textDecoration: 'none',
+      textTransform: 'none',
+      textAlign: 'left',
+      wordSpacing: 0,
+      textShadowX: 0,
+      textShadowY: 0,
+      textShadowBlur: 0,
+      textShadowColor: '#00000000',
+    },
     settingsSchema: [
       { key: 'textContent', label: 'Text', type: 'text', defaultValue: '' },
       { key: 'fontFamily', label: 'Font family', type: 'font-family', defaultValue: '' },
@@ -471,7 +574,12 @@ export const contentBlockDefinitions: Record<string, BlockDefinition> = {
       { key: 'textShadowX', label: 'Text shadow X (px)', type: 'number', defaultValue: 0 },
       { key: 'textShadowY', label: 'Text shadow Y (px)', type: 'number', defaultValue: 0 },
       { key: 'textShadowBlur', label: 'Text shadow blur (px)', type: 'number', defaultValue: 0 },
-      { key: 'textShadowColor', label: 'Text shadow color', type: 'color', defaultValue: '#00000000' },
+      {
+        key: 'textShadowColor',
+        label: 'Text shadow color',
+        type: 'color',
+        defaultValue: '#00000000',
+      },
     ],
   },
   TextElement: {
@@ -498,7 +606,12 @@ export const contentBlockDefinitions: Record<string, BlockDefinition> = {
     },
     settingsSchema: [
       { key: 'textContent', label: 'Text', type: 'text', defaultValue: 'Text element' },
-      { key: 'fontFamily', label: 'Font family', type: 'font-family', defaultValue: 'Inter, sans-serif' },
+      {
+        key: 'fontFamily',
+        label: 'Font family',
+        type: 'font-family',
+        defaultValue: 'Inter, sans-serif',
+      },
       { key: 'fontSize', label: 'Font size (px)', type: 'number', defaultValue: 0 },
       { key: 'fontWeight', label: 'Font weight', type: 'font-weight', defaultValue: '400' },
       {
@@ -542,7 +655,12 @@ export const contentBlockDefinitions: Record<string, BlockDefinition> = {
       { key: 'textShadowX', label: 'Text shadow X (px)', type: 'number', defaultValue: 0 },
       { key: 'textShadowY', label: 'Text shadow Y (px)', type: 'number', defaultValue: 0 },
       { key: 'textShadowBlur', label: 'Text shadow blur (px)', type: 'number', defaultValue: 0 },
-      { key: 'textShadowColor', label: 'Text shadow color', type: 'color', defaultValue: '#00000000' },
+      {
+        key: 'textShadowColor',
+        label: 'Text shadow color',
+        type: 'color',
+        defaultValue: '#00000000',
+      },
     ],
   },
   TextAtom: {
@@ -593,7 +711,12 @@ export const contentBlockDefinitions: Record<string, BlockDefinition> = {
       textColor: '',
     },
     settingsSchema: [
-      { key: 'fontFamily', label: 'Font family', type: 'font-family', defaultValue: 'Inter, sans-serif' },
+      {
+        key: 'fontFamily',
+        label: 'Font family',
+        type: 'font-family',
+        defaultValue: 'Inter, sans-serif',
+      },
       { key: 'fontSize', label: 'Font size (px)', type: 'number', defaultValue: 0 },
       { key: 'fontWeight', label: 'Font weight', type: 'font-weight', defaultValue: '400' },
       {
@@ -693,10 +816,7 @@ export const contentBlockDefinitions: Record<string, BlockDefinition> = {
       paddingTop: 36,
       paddingBottom: 36,
     },
-    settingsSchema: [
-      colorSchemeField('colorScheme', 'Color scheme'),
-      ...paddingFields(),
-    ],
+    settingsSchema: [colorSchemeField('colorScheme', 'Color scheme'), ...paddingFields()],
   },
   Hero: {
     type: 'Hero',

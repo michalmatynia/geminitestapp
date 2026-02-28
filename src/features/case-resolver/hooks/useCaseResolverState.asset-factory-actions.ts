@@ -1,10 +1,7 @@
 'use client';
 
 import React, { useCallback } from 'react';
-import { 
-  CASE_RESOLVER_SETTINGS_KEY, 
-  parseCaseResolverSettings 
-} from '../settings';
+import { CASE_RESOLVER_SETTINGS_KEY, parseCaseResolverSettings } from '../settings';
 import type { SettingsStoreValue } from '@/shared/providers/SettingsStoreProvider';
 import type { Toast } from '@/shared/contracts/ui';
 
@@ -27,29 +24,40 @@ export function useCaseResolverAssetFactoryActions({
   setSelectedAssetId: React.Dispatch<React.SetStateAction<string | null>>;
   treeSaveToast: string;
 }) {
-  const handleCreateScanFile = useCallback((targetFolderPath: string | null): void => {
-    const rawSettings = settingsStoreRef.current.get(CASE_RESOLVER_SETTINGS_KEY);
-    parseCaseResolverSettings(rawSettings);
-    
-    if (!activeCaseId) {
-      toast(
-        requestedCaseStatus === 'loading'
-          ? 'Case context is still loading. Please wait.'
-          : 'Cannot create image file without a selected case.',
-        { variant: 'warning' }
-      );
-      return;
-    }
+  const handleCreateScanFile = useCallback(
+    (targetFolderPath: string | null): void => {
+      const rawSettings = settingsStoreRef.current.get(CASE_RESOLVER_SETTINGS_KEY);
+      parseCaseResolverSettings(rawSettings);
 
-    const name = `New Scan File ${new Date().toLocaleTimeString()}`;
-    const id = `scan-file-${Date.now()}`;
+      if (!activeCaseId) {
+        toast(
+          requestedCaseStatus === 'loading'
+            ? 'Case context is still loading. Please wait.'
+            : 'Cannot create image file without a selected case.',
+          { variant: 'warning' }
+        );
+        return;
+      }
 
-    toast(`${treeSaveToast}: ${name} created.`, { variant: 'success' });
-    setSelectedFileId(id);
-    if (targetFolderPath) {
-      setSelectedFolderPath(targetFolderPath);
-    }
-  }, [activeCaseId, requestedCaseStatus, setSelectedFileId, setSelectedFolderPath, settingsStoreRef, toast, treeSaveToast]);
+      const name = `New Scan File ${new Date().toLocaleTimeString()}`;
+      const id = `scan-file-${Date.now()}`;
+
+      toast(`${treeSaveToast}: ${name} created.`, { variant: 'success' });
+      setSelectedFileId(id);
+      if (targetFolderPath) {
+        setSelectedFolderPath(targetFolderPath);
+      }
+    },
+    [
+      activeCaseId,
+      requestedCaseStatus,
+      setSelectedFileId,
+      setSelectedFolderPath,
+      settingsStoreRef,
+      toast,
+      treeSaveToast,
+    ]
+  );
 
   const handleCreateAsset = useCallback((): void => {
     if (!activeCaseId) {

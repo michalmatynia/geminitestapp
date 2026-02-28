@@ -58,31 +58,44 @@ describe('CMS Repository (Prisma)', () => {
       const result = await prismaCmsRepository.getPages();
 
       expect(prisma.page.findMany).toHaveBeenCalled();
-      expect(result).toEqual([expect.objectContaining({
-        id: '1',
-        name: 'Home',
-        createdAt: now.toISOString(),
-        updatedAt: now.toISOString(),
-      })]);
+      expect(result).toEqual([
+        expect.objectContaining({
+          id: '1',
+          name: 'Home',
+          createdAt: now.toISOString(),
+          updatedAt: now.toISOString(),
+        }),
+      ]);
     });
 
     it('should get page by id with inclusions', async () => {
       const now = new Date();
-      const mockPage = { id: '1', name: 'Home', components: [], slugs: [], createdAt: now, updatedAt: now };
+      const mockPage = {
+        id: '1',
+        name: 'Home',
+        components: [],
+        slugs: [],
+        createdAt: now,
+        updatedAt: now,
+      };
       (prisma.page.findUnique as any).mockResolvedValue(mockPage);
 
       const result = await prismaCmsRepository.getPageById('1');
 
-      expect(prisma.page.findUnique).toHaveBeenCalledWith(expect.objectContaining({
-        where: { id: '1' },
-        include: expect.any(Object),
-      }));
-      expect(result).toEqual(expect.objectContaining({
-        id: '1',
-        name: 'Home',
-        createdAt: now.toISOString(),
-        updatedAt: now.toISOString(),
-      }));
+      expect(prisma.page.findUnique).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: '1' },
+          include: expect.any(Object),
+        })
+      );
+      expect(result).toEqual(
+        expect.objectContaining({
+          id: '1',
+          name: 'Home',
+          createdAt: now.toISOString(),
+          updatedAt: now.toISOString(),
+        })
+      );
     });
 
     it('should create a new page', async () => {
@@ -92,15 +105,19 @@ describe('CMS Repository (Prisma)', () => {
 
       const result = await prismaCmsRepository.createPage({ name: 'New Page' });
 
-      expect(prisma.page.create).toHaveBeenCalledWith(expect.objectContaining({
-        data: { name: 'New Page', themeId: null },
-      }));
-      expect(result).toEqual(expect.objectContaining({
-        id: '1',
-        name: 'New Page',
-        createdAt: now.toISOString(),
-        updatedAt: now.toISOString(),
-      }));
+      expect(prisma.page.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: { name: 'New Page', themeId: null },
+        })
+      );
+      expect(result).toEqual(
+        expect.objectContaining({
+          id: '1',
+          name: 'New Page',
+          createdAt: now.toISOString(),
+          updatedAt: now.toISOString(),
+        })
+      );
     });
 
     it('should delete a page', async () => {
@@ -110,13 +127,17 @@ describe('CMS Repository (Prisma)', () => {
 
       const result = await prismaCmsRepository.deletePage('1');
 
-      expect(prisma.page.delete).toHaveBeenCalledWith(expect.objectContaining({ where: { id: '1' } }));
-      expect(result).toEqual(expect.objectContaining({
-        id: '1',
-        name: 'Deleted',
-        createdAt: now.toISOString(),
-        updatedAt: now.toISOString(),
-      }));
+      expect(prisma.page.delete).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: '1' } })
+      );
+      expect(result).toEqual(
+        expect.objectContaining({
+          id: '1',
+          name: 'Deleted',
+          createdAt: now.toISOString(),
+          updatedAt: now.toISOString(),
+        })
+      );
     });
 
     it('should update a page', async () => {
@@ -127,16 +148,20 @@ describe('CMS Repository (Prisma)', () => {
 
       const result = await prismaCmsRepository.updatePage('1', { name: 'Updated' });
 
-      expect(prisma.page.update).toHaveBeenCalledWith(expect.objectContaining({
-        where: { id: '1' },
-        data: expect.objectContaining({ name: 'Updated' }),
-      }));
-      expect(result).toEqual(expect.objectContaining({
-        id: '1',
-        name: 'Updated',
-        createdAt: now.toISOString(),
-        updatedAt: now.toISOString(),
-      }));
+      expect(prisma.page.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: '1' },
+          data: expect.objectContaining({ name: 'Updated' }),
+        })
+      );
+      expect(result).toEqual(
+        expect.objectContaining({
+          id: '1',
+          name: 'Updated',
+          createdAt: now.toISOString(),
+          updatedAt: now.toISOString(),
+        })
+      );
     });
 
     it('should replace page components', async () => {
@@ -169,12 +194,14 @@ describe('CMS Repository (Prisma)', () => {
       const result = await prismaCmsRepository.getSlugs();
 
       expect(prisma.slug.findMany).toHaveBeenCalled();
-      expect(result).toEqual([expect.objectContaining({
-        id: '1',
-        slug: 'home',
-        createdAt: now.toISOString(),
-        updatedAt: now.toISOString(),
-      })]);
+      expect(result).toEqual([
+        expect.objectContaining({
+          id: '1',
+          slug: 'home',
+          createdAt: now.toISOString(),
+          updatedAt: now.toISOString(),
+        }),
+      ]);
     });
 
     it('should create a slug', async () => {
@@ -184,15 +211,19 @@ describe('CMS Repository (Prisma)', () => {
 
       const result = await prismaCmsRepository.createSlug({ slug: 'test' });
 
-      expect(prisma.slug.create).toHaveBeenCalledWith(expect.objectContaining({
-        data: { slug: 'test' },
-      }));
-      expect(result).toEqual(expect.objectContaining({
-        id: '1',
-        slug: 'test',
-        createdAt: now.toISOString(),
-        updatedAt: now.toISOString(),
-      }));
+      expect(prisma.slug.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: { slug: 'test' },
+        })
+      );
+      expect(result).toEqual(
+        expect.objectContaining({
+          id: '1',
+          slug: 'test',
+          createdAt: now.toISOString(),
+          updatedAt: now.toISOString(),
+        })
+      );
     });
   });
 

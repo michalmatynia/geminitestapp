@@ -9,12 +9,9 @@ interface ChatMessageContentProps {
 export function ChatMessageContent({ content }: ChatMessageContentProps): React.JSX.Element {
   const renderInline = (text: string): React.ReactNode[] => {
     const parts = text.split('**');
-    return parts.map((part: string, index: number): React.ReactNode =>
-      index % 2 === 1 ? (
-        <strong key={index}>{part}</strong>
-      ) : (
-        <span key={index}>{part}</span>
-      )
+    return parts.map(
+      (part: string, index: number): React.ReactNode =>
+        index % 2 === 1 ? <strong key={index}>{part}</strong> : <span key={index}>{part}</span>
     );
   };
 
@@ -26,9 +23,11 @@ export function ChatMessageContent({ content }: ChatMessageContentProps): React.
     if (listItems.length === 0) return;
     blocks.push(
       <ul key={key} className='list-disc space-y-1 pl-5'>
-        {listItems.map((item: string, index: number): React.JSX.Element => (
-          <li key={`${key}-item-${index}`}>{renderInline(item)}</li>
-        ))}
+        {listItems.map(
+          (item: string, index: number): React.JSX.Element => (
+            <li key={`${key}-item-${index}`}>{renderInline(item)}</li>
+          )
+        )}
       </ul>
     );
     listItems = [];

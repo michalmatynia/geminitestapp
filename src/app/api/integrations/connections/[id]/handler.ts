@@ -53,14 +53,18 @@ const deleteConnectionSchema = z.object({
  * PUT /api/integrations/connections/[id]
  * Updates an integration connection.
  */
-export async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
+export async function PUT_handler(
+  req: NextRequest,
+  _ctx: ApiHandlerContext,
+  params: { id: string }
+): Promise<Response> {
   const { id } = params;
   if (!id) {
     throw badRequestError('Connection id is required');
   }
 
   const parsed = await parseJsonBody(req, connectionSchema, {
-    logPrefix: 'integrations.connection.PUT'
+    logPrefix: 'integrations.connection.PUT',
   });
   if (!parsed.ok) {
     return parsed.response;
@@ -89,9 +93,7 @@ export async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, par
 
   const connection = await repo.updateConnection(id, {
     name: data.name,
-    ...(typeof normalizedUsername === 'string'
-      ? { username: normalizedUsername }
-      : {}),
+    ...(typeof normalizedUsername === 'string' ? { username: normalizedUsername } : {}),
     ...(data.password ? { password: encryptSecret(data.password) } : {}),
 
     ...(typeof data.playwrightHeadless === 'boolean'
@@ -139,13 +141,10 @@ export async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, par
     ...(typeof data.playwrightProxyUsername === 'string'
       ? { playwrightProxyUsername: data.playwrightProxyUsername }
       : {}),
-    ...(typeof data.playwrightProxyPassword === 'string' &&
-    data.playwrightProxyPassword.trim()
+    ...(typeof data.playwrightProxyPassword === 'string' && data.playwrightProxyPassword.trim()
       ? {
-        playwrightProxyPassword: encryptSecret(
-          data.playwrightProxyPassword.trim()
-        )
-      }
+          playwrightProxyPassword: encryptSecret(data.playwrightProxyPassword.trim()),
+        }
       : {}),
     ...(typeof data.playwrightEmulateDevice === 'boolean'
       ? { playwrightEmulateDevice: data.playwrightEmulateDevice }
@@ -153,15 +152,13 @@ export async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, par
     ...(typeof data.playwrightDeviceName === 'string'
       ? { playwrightDeviceName: data.playwrightDeviceName }
       : {}),
-    ...(typeof data.playwrightPersonaId === 'string' ||
-    data.playwrightPersonaId === null
+    ...(typeof data.playwrightPersonaId === 'string' || data.playwrightPersonaId === null
       ? { playwrightPersonaId: data.playwrightPersonaId ?? null }
       : {}),
     ...(typeof data.allegroUseSandbox === 'boolean'
       ? { allegroUseSandbox: data.allegroUseSandbox }
       : {}),
-    ...(typeof data.traderaDefaultTemplateId === 'string' ||
-    data.traderaDefaultTemplateId === null
+    ...(typeof data.traderaDefaultTemplateId === 'string' || data.traderaDefaultTemplateId === null
       ? { traderaDefaultTemplateId: data.traderaDefaultTemplateId ?? null }
       : {}),
     ...(typeof data.traderaDefaultDurationHours === 'number'
@@ -173,28 +170,23 @@ export async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, par
     ...(typeof data.traderaAutoRelistLeadMinutes === 'number'
       ? { traderaAutoRelistLeadMinutes: data.traderaAutoRelistLeadMinutes }
       : {}),
-    ...(typeof data.traderaApiAppId === 'number'
-      ? { traderaApiAppId: data.traderaApiAppId }
-      : {}),
-    ...(typeof data.traderaApiAppKey === 'string' &&
-    data.traderaApiAppKey.trim()
+    ...(typeof data.traderaApiAppId === 'number' ? { traderaApiAppId: data.traderaApiAppId } : {}),
+    ...(typeof data.traderaApiAppKey === 'string' && data.traderaApiAppKey.trim()
       ? {
-        traderaApiAppKey: encryptSecret(data.traderaApiAppKey.trim())
-      }
+          traderaApiAppKey: encryptSecret(data.traderaApiAppKey.trim()),
+        }
       : {}),
-    ...(typeof data.traderaApiPublicKey === 'string' ||
-    data.traderaApiPublicKey === null
+    ...(typeof data.traderaApiPublicKey === 'string' || data.traderaApiPublicKey === null
       ? { traderaApiPublicKey: data.traderaApiPublicKey ?? null }
       : {}),
     ...(typeof data.traderaApiUserId === 'number'
       ? { traderaApiUserId: data.traderaApiUserId }
       : {}),
-    ...(typeof data.traderaApiToken === 'string' &&
-    data.traderaApiToken.trim()
+    ...(typeof data.traderaApiToken === 'string' && data.traderaApiToken.trim()
       ? {
-        traderaApiToken: encryptSecret(data.traderaApiToken.trim()),
-        traderaApiTokenUpdatedAt: new Date()
-      }
+          traderaApiToken: encryptSecret(data.traderaApiToken.trim()),
+          traderaApiTokenUpdatedAt: new Date(),
+        }
       : {}),
     ...(typeof data.traderaApiSandbox === 'boolean'
       ? { traderaApiSandbox: data.traderaApiSandbox }
@@ -250,7 +242,11 @@ export async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, par
  * DELETE /api/integrations/connections/[id]
  * Deletes an integration connection.
  */
-export async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
+export async function DELETE_handler(
+  req: NextRequest,
+  _ctx: ApiHandlerContext,
+  params: { id: string }
+): Promise<Response> {
   const { id } = params;
   if (!id) {
     throw badRequestError('Connection id is required');
@@ -274,10 +270,7 @@ export async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext, 
     throw authError('Unable to verify password for this account.');
   }
 
-  const isPasswordValid = await bcrypt.compare(
-    parsed.data.userPassword,
-    user.passwordHash
-  );
+  const isPasswordValid = await bcrypt.compare(parsed.data.userPassword, user.passwordHash);
   if (!isPasswordValid) {
     throw authError('Invalid password.');
   }

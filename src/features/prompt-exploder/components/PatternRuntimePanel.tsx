@@ -1,14 +1,20 @@
 'use client';
 
- 
- 
- 
- 
-
 import React from 'react';
 
 import { getPromptValidationObservabilitySnapshot } from '@/shared/lib/prompt-core/runtime-observability';
-import { Button, FormSection, Input, Label, StatusToggle, SelectSimple, EmptyState, Card, Badge, Hint } from '@/shared/ui';
+import {
+  Button,
+  FormSection,
+  Input,
+  Label,
+  StatusToggle,
+  SelectSimple,
+  EmptyState,
+  Card,
+  Badge,
+  Hint,
+} from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { useBenchmarkState } from '../context/hooks/useBenchmark';
@@ -33,7 +39,9 @@ const looksLikeCaseResolverPrompt = (value: string): boolean => {
   if (/(^|\n)\s*uzasadnienie\b/imu.test(text)) score += 2;
   if (/(^|\n)\s*na\s+zakończenie\b/imu.test(text)) score += 1;
   if (/\b\d{2}-\d{3}\s+[A-Za-zĄĆĘŁŃÓŚŹŻąćęłńóśźż]/u.test(text)) score += 1;
-  if (/(^|\n)\s*[A-Za-zĄĆĘŁŃÓŚŹŻąćęłńóśźż][^\n]{1,50}\s+\d{1,2}[./-]\d{1,2}[./-]\d{4}\b/u.test(text)) {
+  if (
+    /(^|\n)\s*[A-Za-zĄĆĘŁŃÓŚŹŻąćęłńóśźż][^\n]{1,50}\s+\d{1,2}[./-]\d{1,2}[./-]\d{4}\b/u.test(text)
+  ) {
     score += 1;
   }
   return score >= 3;
@@ -96,12 +104,8 @@ export function PatternRuntimePanel(): React.JSX.Element {
       observability.errors.scope_resolution +
       observability.errors.rule_compile +
       observability.errors.runtime_execution;
-    const cacheHitRate =
-      cacheHits + cacheMisses > 0
-        ? cacheHits / (cacheHits + cacheMisses)
-        : 0;
-    const fallbackRate =
-      selectionTotal > 0 ? fallbackTotal / selectionTotal : 0;
+    const cacheHitRate = cacheHits + cacheMisses > 0 ? cacheHits / (cacheHits + cacheMisses) : 0;
+    const fallbackRate = selectionTotal > 0 ? fallbackTotal / selectionTotal : 0;
     const errorRate = selectionTotal > 0 ? totalErrors / selectionTotal : 0;
     const toPercent = (value: number): string => `${(value * 100).toFixed(1)}%`;
     const pipelineP95 =
@@ -135,32 +139,23 @@ export function PatternRuntimePanel(): React.JSX.Element {
     () => buildPromptExploderValidationRuleStackOptions(validatorPatternLists),
     [validatorPatternLists]
   );
-  const activeStackLabel = React.useMemo(
-    () => {
-      const optionLabel = validationStackOptions.find(
-        (option) => option.value === activeValidationRuleStack
-      )?.label;
-      if (optionLabel) return optionLabel;
-      return typeof activeValidationRuleStack === 'string'
-        ? activeValidationRuleStack
-        : activeValidationRuleStack?.name || activeValidationRuleStack?.id || 'anonymous';
-    },
-    [activeValidationRuleStack, validationStackOptions]
-  );
+  const activeStackLabel = React.useMemo(() => {
+    const optionLabel = validationStackOptions.find(
+      (option) => option.value === activeValidationRuleStack
+    )?.label;
+    if (optionLabel) return optionLabel;
+    return typeof activeValidationRuleStack === 'string'
+      ? activeValidationRuleStack
+      : activeValidationRuleStack?.name || activeValidationRuleStack?.id || 'anonymous';
+  }, [activeValidationRuleStack, validationStackOptions]);
   const isCaseResolverStack = React.useMemo(
     () =>
-      promptExploderValidatorScopeFromStack(
-        activeValidationRuleStack,
-        validatorPatternLists
-      ) === 'case-resolver-prompt-exploder',
+      promptExploderValidatorScopeFromStack(activeValidationRuleStack, validatorPatternLists) ===
+      'case-resolver-prompt-exploder',
     [activeValidationRuleStack, validatorPatternLists]
   );
   const caseResolverStack = React.useMemo(
-    () =>
-      promptExploderValidationStackFromBridgeSource(
-        'case-resolver',
-        validatorPatternLists
-      ),
+    () => promptExploderValidationStackFromBridgeSource('case-resolver', validatorPatternLists),
     [validatorPatternLists]
   );
   const shouldSuggestCaseResolverStack = React.useMemo(
@@ -189,7 +184,11 @@ export function PatternRuntimePanel(): React.JSX.Element {
       }
     >
       {shouldSuggestCaseResolverStack ? (
-        <Card variant='warning' padding='sm' className='mt-3 flex flex-col gap-2 border-amber-500/40 bg-amber-500/10 sm:flex-row sm:items-center sm:justify-between'>
+        <Card
+          variant='warning'
+          padding='sm'
+          className='mt-3 flex flex-col gap-2 border-amber-500/40 bg-amber-500/10 sm:flex-row sm:items-center sm:justify-between'
+        >
           <div className='text-amber-100'>
             This prompt looks like a Case Resolver document, but the active stack is{' '}
             <span className='font-medium'>{activeStackLabel}</span>.
@@ -217,56 +216,91 @@ export function PatternRuntimePanel(): React.JSX.Element {
       ) : null}
       <div className='mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4'>
         <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/20'>
-          <Hint size='xxs' uppercase className='text-gray-500'>Validation Stack</Hint>
+          <Hint size='xxs' uppercase className='text-gray-500'>
+            Validation Stack
+          </Hint>
           <div className='mt-1 text-gray-100 break-words'>{activeStackLabel}</div>
         </Card>
         <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/20'>
-          <Hint size='xxs' uppercase className='text-gray-500'>Runtime Profile</Hint>
+          <Hint size='xxs' uppercase className='text-gray-500'>
+            Runtime Profile
+          </Hint>
           <div className='mt-1 text-gray-100'>{learningDraft.runtimeRuleProfile}</div>
         </Card>
         <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/20'>
-          <Hint size='xxs' uppercase className='text-gray-500'>Learned Templates</Hint>
+          <Hint size='xxs' uppercase className='text-gray-500'>
+            Learned Templates
+          </Hint>
           <div className='mt-1 text-gray-100'>{effectiveLearnedTemplates.length}</div>
         </Card>
         <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/20'>
-          <Hint size='xxs' uppercase className='text-gray-500'>Runtime Templates</Hint>
+          <Hint size='xxs' uppercase className='text-gray-500'>
+            Runtime Templates
+          </Hint>
           <div className='mt-1 text-gray-100'>{runtimeLearnedTemplates.length}</div>
         </Card>
         <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/20'>
-          <Hint size='xxs' uppercase className='text-gray-500'>Merge Threshold</Hint>
+          <Hint size='xxs' uppercase className='text-gray-500'>
+            Merge Threshold
+          </Hint>
           <div className='mt-1 text-gray-100'>{templateMergeThreshold.toFixed(2)}</div>
         </Card>
         <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/20'>
-          <Hint size='xxs' uppercase className='text-gray-500'>Benchmark Suite</Hint>
+          <Hint size='xxs' uppercase className='text-gray-500'>
+            Benchmark Suite
+          </Hint>
           <div className='mt-1 text-gray-100'>{String(benchmarkSuiteDraft)}</div>
-        </Card>        <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/20'>
-          <Hint size='xxs' uppercase className='text-gray-500'>Low Confidence</Hint>
+        </Card>{' '}
+        <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/20'>
+          <Hint size='xxs' uppercase className='text-gray-500'>
+            Low Confidence
+          </Hint>
           <div className='mt-1 text-gray-100'>
             {promptExploderClampNumber(benchmarkLowConfidenceThresholdDraft, 0.3, 0.9).toFixed(2)}
           </div>
         </Card>
         <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/20'>
-          <Hint size='xxs' uppercase className='text-gray-500'>Suggestion Cap</Hint>
+          <Hint size='xxs' uppercase className='text-gray-500'>
+            Suggestion Cap
+          </Hint>
           <div className='mt-1 text-gray-100'>
             {promptExploderClampNumber(Math.floor(benchmarkSuggestionLimitDraft), 1, 20)}
           </div>
         </Card>
-        <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/20 sm:col-span-2 xl:col-span-4'>
-          <Hint size='xxs' uppercase className='text-gray-500'>Benchmark Template Upsert</Hint>
+        <Card
+          variant='subtle-compact'
+          padding='sm'
+          className='border-border/60 bg-card/20 sm:col-span-2 xl:col-span-4'
+        >
+          <Hint size='xxs' uppercase className='text-gray-500'>
+            Benchmark Template Upsert
+          </Hint>
           <div className='mt-1 text-gray-100'>
             {learningDraft.benchmarkSuggestionUpsertTemplates ? 'on' : 'off'}
           </div>
         </Card>
-        <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/20 sm:col-span-2 xl:col-span-4'>
-          <Hint size='xxs' uppercase className='text-gray-500'>Fallback Policy</Hint>
+        <Card
+          variant='subtle-compact'
+          padding='sm'
+          className='border-border/60 bg-card/20 sm:col-span-2 xl:col-span-4'
+        >
+          <Hint size='xxs' uppercase className='text-gray-500'>
+            Fallback Policy
+          </Hint>
           <div className='mt-1 text-gray-100'>
             {promptExploderSettings.runtime.allowValidationStackFallback
               ? 'validation stack fallback enabled'
               : 'validation stack fallback blocked'}
           </div>
         </Card>
-        <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/20 sm:col-span-2 xl:col-span-4'>
-          <Hint size='xxs' uppercase className='text-gray-500'>Case Resolver Capture Mode</Hint>
+        <Card
+          variant='subtle-compact'
+          padding='sm'
+          className='border-border/60 bg-card/20 sm:col-span-2 xl:col-span-4'
+        >
+          <Hint size='xxs' uppercase className='text-gray-500'>
+            Case Resolver Capture Mode
+          </Hint>
           <div className='mt-1 text-gray-100'>
             {promptExploderSettings.runtime.caseResolverCaptureMode === 'rules_only'
               ? 'rules only (UI-defined capture rules)'
@@ -279,7 +313,11 @@ export function PatternRuntimePanel(): React.JSX.Element {
           <Label className='text-[11px] text-gray-400'>Validation Stack</Label>
           <SelectSimple
             size='sm'
-            value={typeof learningDraft.runtimeValidationRuleStack === 'string' ? learningDraft.runtimeValidationRuleStack : (learningDraft.runtimeValidationRuleStack?.id || '')}
+            value={
+              typeof learningDraft.runtimeValidationRuleStack === 'string'
+                ? learningDraft.runtimeValidationRuleStack
+                : learningDraft.runtimeValidationRuleStack?.id || ''
+            }
             onValueChange={(value: string) => {
               setLearningDraft((previous: LearningDraft) => ({
                 ...previous,
@@ -287,13 +325,15 @@ export function PatternRuntimePanel(): React.JSX.Element {
               }));
             }}
             options={validationStackOptions.map((option) => ({
-              value: typeof option.value === 'string' ? option.value : (option.value.id || ''),
+              value: typeof option.value === 'string' ? option.value : option.value.id || '',
               label: option.label,
             }))}
-          />        </div>
+          />{' '}
+        </div>
         <div className='min-w-0 space-y-1'>
           <Label className='text-[11px] text-gray-400'>Runtime Rule Profile</Label>
-          <SelectSimple size='sm'
+          <SelectSimple
+            size='sm'
             value={learningDraft.runtimeRuleProfile}
             onValueChange={(value: string) => {
               setLearningDraft((previous: LearningDraft) => ({
@@ -416,8 +456,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
               onToggle={() => {
                 setLearningDraft((previous: LearningDraft) => ({
                   ...previous,
-                  benchmarkSuggestionUpsertTemplates:
-                    !previous.benchmarkSuggestionUpsertTemplates,
+                  benchmarkSuggestionUpsertTemplates: !previous.benchmarkSuggestionUpsertTemplates,
                 }));
               }}
             />
@@ -455,10 +494,15 @@ export function PatternRuntimePanel(): React.JSX.Element {
             Bench upsert {learningDraft.benchmarkSuggestionUpsertTemplates ? 'on' : 'off'}
           </Badge>
           <Badge variant='neutral' className='border-border/60 bg-card/20 font-normal'>
-                            Suite {String(benchmarkSuiteDraft)}
-          </Badge>        </div>
+            Suite {String(benchmarkSuiteDraft)}
+          </Badge>{' '}
+        </div>
       </div>
-      <Card variant='subtle-compact' padding='sm' className='mt-3 border-border/60 bg-card/20 text-xs text-gray-300'>
+      <Card
+        variant='subtle-compact'
+        padding='sm'
+        className='mt-3 border-border/60 bg-card/20 text-xs text-gray-300'
+      >
         <Hint size='xxs' uppercase className='mb-2 text-gray-400'>
           Runtime Health
         </Hint>
@@ -513,15 +557,16 @@ export function PatternRuntimePanel(): React.JSX.Element {
             onChange={(event) => setSnapshotDraftName(event.target.value)}
             placeholder='Snapshot name (optional)'
           />
-          <SelectSimple size='sm'
+          <SelectSimple
+            size='sm'
             value={selectedSnapshotId}
             onValueChange={setSelectedSnapshotId}
             options={
               availableSnapshots.length > 0
                 ? availableSnapshots.map((snapshot) => ({
-                  value: snapshot.id,
-                  label: `${snapshot.name} (${snapshot.ruleCount})`,
-                }))
+                    value: snapshot.id,
+                    label: `${snapshot.name} (${snapshot.ruleCount})`,
+                  }))
                 : [{ value: '', label: 'No snapshots' }]
             }
           />
@@ -560,12 +605,11 @@ export function PatternRuntimePanel(): React.JSX.Element {
         </div>
         {selectedSnapshot ? (
           <div className='mt-2 text-xs text-gray-500'>
-            Selected snapshot: {selectedSnapshot.name} · created {selectedSnapshot.createdAt} · rules {selectedSnapshot.ruleCount}
+            Selected snapshot: {selectedSnapshot.name} · created {selectedSnapshot.createdAt} ·
+            rules {selectedSnapshot.ruleCount}
           </div>
         ) : (
-          <div className='mt-2 text-xs text-gray-500'>
-            No snapshot selected.
-          </div>
+          <div className='mt-2 text-xs text-gray-500'>No snapshot selected.</div>
         )}
       </Card>
       <Card variant='subtle-compact' padding='sm' className='mt-4 border-border/60 bg-card/20'>
@@ -582,18 +626,24 @@ export function PatternRuntimePanel(): React.JSX.Element {
         ) : (
           <div className='max-h-[220px] space-y-2 overflow-auto'>
             {effectiveLearnedTemplates.slice(0, 20).map((template) => (
-              <Card key={template.id} variant='subtle-compact' padding='sm' className='border-border/50 bg-card/30'>
+              <Card
+                key={template.id}
+                variant='subtle-compact'
+                padding='sm'
+                className='border-border/50 bg-card/30'
+              >
                 <div className='flex items-center justify-between gap-2'>
-                  <div className='truncate text-xs text-gray-200'>
-                    {template.title}
-                  </div>
+                  <div className='truncate text-xs text-gray-200'>{template.title}</div>
                   <div className='text-[10px] text-gray-500'>
-                    {template.segmentType} · approvals {typeof template.approvals === 'number' ? template.approvals : 0}
+                    {template.segmentType} · approvals{' '}
+                    {typeof template.approvals === 'number' ? template.approvals : 0}
                   </div>
                 </div>
                 <div className='mt-1 flex items-center justify-between gap-2'>
-                  <SelectSimple size='sm'
-                    value={(template.state as string) || 'candidate'}                    onValueChange={(value: string) => {
+                  <SelectSimple
+                    size='sm'
+                    value={(template.state as string) || 'candidate'}
+                    onValueChange={(value: string) => {
                       void handleTemplateStateChange(
                         template.id,
                         value as PromptExploderLearnedTemplate['state']

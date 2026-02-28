@@ -6,17 +6,22 @@ import { useEffect, useState } from 'react';
 
 import { FileUploadEventsPanel } from '@/features/files/components/FileUploadEventsPanel';
 import ProductListingJobsPanel from '@/features/jobs/components/ProductListingJobsPanel';
-import { Badge, Button, ListPanel, Tabs, TabsContent, TabsList, TabsTrigger, Breadcrumbs, Hint } from '@/shared/ui';
+import {
+  Badge,
+  Button,
+  ListPanel,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+  Breadcrumbs,
+  Hint,
+} from '@/shared/ui';
 
 import { ImageStudioRunsQueuePanel } from '../components/ImageStudioRunsQueuePanel';
 import { JobQueuePanel } from '../components/job-queue-panel';
 
-type QueueTab =
-  | 'paths-all'
-  | 'paths'
-  | 'paths-external'
-  | 'file-uploads'
-  | 'image-studio';
+type QueueTab = 'paths-all' | 'paths' | 'paths-external' | 'file-uploads' | 'image-studio';
 
 const QUEUE_TABS: Array<{
   id: QueueTab;
@@ -105,7 +110,9 @@ export function AdminAiPathsQueuePage(): React.JSX.Element {
                     className='h-11 justify-start gap-2 px-3 text-left'
                   >
                     <Icon className='size-3.5' />
-                    <Hint size='xs' uppercase className='font-semibold'>{tab.label}</Hint>
+                    <Hint size='xs' uppercase className='font-semibold'>
+                      {tab.label}
+                    </Hint>
                   </TabsTrigger>
                 );
               })}
@@ -117,7 +124,11 @@ export function AdminAiPathsQueuePage(): React.JSX.Element {
                 <Button size='xs' variant='outline' onClick={() => scrollToSection('export-jobs')}>
                   Jump to Export Jobs
                 </Button>
-                <Button size='xs' variant='outline' onClick={() => scrollToSection('image-studio-jobs')}>
+                <Button
+                  size='xs'
+                  variant='outline'
+                  onClick={() => scrollToSection('image-studio-jobs')}
+                >
                   Jump to Image Studio Jobs
                 </Button>
               </div>

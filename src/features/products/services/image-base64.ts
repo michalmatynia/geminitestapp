@@ -46,7 +46,7 @@ const fetchAsDataUrl = async (url: string): Promise<string | null> => {
 
 const readLocalAsDataUrl = async (
   publicPath: string,
-  mimetype?: string | null,
+  mimetype?: string | null
 ): Promise<string | null> => {
   const diskPath = getDiskPathFromPublicPath(publicPath);
   const buffer = await fs.readFile(diskPath);
@@ -63,10 +63,7 @@ const normalizeImageLinks = (links?: string[] | null): string[] => {
   return next;
 };
 
-const normalizeImageBase64s = (
-  base64s?: string[] | null,
-  links?: string[] | null,
-): string[] => {
+const normalizeImageBase64s = (base64s?: string[] | null, links?: string[] | null): string[] => {
   const next: string[] = new Array<string>(TOTAL_IMAGE_SLOTS).fill('');
   if (Array.isArray(base64s)) {
     base64s.slice(0, TOTAL_IMAGE_SLOTS).forEach((value: string, index: number) => {
@@ -92,7 +89,7 @@ export type ProductImageBase64Source = {
 };
 
 export const buildImageBase64Slots = async (
-  product: ProductImageBase64Source,
+  product: ProductImageBase64Source
 ): Promise<{ imageBase64s: string[]; imageLinks: string[] }> => {
   const imageBase64s = normalizeImageBase64s(product.imageBase64s, product.imageLinks);
   const imageLinks = normalizeImageLinks(product.imageLinks);

@@ -65,61 +65,60 @@ export function AdminFilemakerEventsPage(): React.JSX.Element {
     [database.events, deferredQuery]
   );
 
-  const columns = useMemo<ColumnDef<FilemakerEvent>[]>(() => [
-    {
-      id: 'event',
-      header: 'Event',
-      cell: ({ row }) => {
-        const event = row.original;
-        return (
-          <div className='min-w-0 flex-1 space-y-1'>
-            <div className='text-sm font-semibold text-white'>
-              {event.eventName}
+  const columns = useMemo<ColumnDef<FilemakerEvent>[]>(
+    () => [
+      {
+        id: 'event',
+        header: 'Event',
+        cell: ({ row }) => {
+          const event = row.original;
+          return (
+            <div className='min-w-0 flex-1 space-y-1'>
+              <div className='text-sm font-semibold text-white'>{event.eventName}</div>
+              <div className='text-xs text-gray-300'>{formatFilemakerAddress(event)}</div>
             </div>
-            <div className='text-xs text-gray-300'>
-              {formatFilemakerAddress(event)}
-            </div>
-          </div>
-        );
+          );
+        },
       },
-    },
-    {
-      id: 'linkedOrganizations',
-      header: 'Linked Organizations',
-      cell: ({ row }) => (
-        <span className='text-[11px] text-gray-500'>
-          {organizationsCountByEventId.get(row.original.id) ?? 0}
-        </span>
-      ),
-    },
-    {
-      accessorKey: 'updatedAt',
-      header: 'Updated',
-      cell: ({ row }) => (
-        <span className='text-[10px] text-gray-600'>
-          {formatTimestamp(row.original.updatedAt)}
-        </span>
-      ),
-    },
-    {
-      id: 'actions',
-      header: () => <div className='text-right'>Actions</div>,
-      cell: ({ row }) => (
-        <div className='flex justify-end'>
-          <ActionMenu ariaLabel={`Actions for event ${row.original.eventName}`}>
-            <DropdownMenuItem
-              onSelect={(event: Event): void => {
-                event.preventDefault();
-                router.push(`/admin/filemaker/events/${encodeURIComponent(row.original.id)}`);
-              }}
-            >
-              Edit Details
-            </DropdownMenuItem>
-          </ActionMenu>
-        </div>
-      ),
-    },
-  ], [organizationsCountByEventId, router]);
+      {
+        id: 'linkedOrganizations',
+        header: 'Linked Organizations',
+        cell: ({ row }) => (
+          <span className='text-[11px] text-gray-500'>
+            {organizationsCountByEventId.get(row.original.id) ?? 0}
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'updatedAt',
+        header: 'Updated',
+        cell: ({ row }) => (
+          <span className='text-[10px] text-gray-600'>
+            {formatTimestamp(row.original.updatedAt)}
+          </span>
+        ),
+      },
+      {
+        id: 'actions',
+        header: () => <div className='text-right'>Actions</div>,
+        cell: ({ row }) => (
+          <div className='flex justify-end'>
+            <ActionMenu ariaLabel={`Actions for event ${row.original.eventName}`}>
+              <DropdownMenuItem
+                onSelect={(event: Event): void => {
+                  event.preventDefault();
+                  router.push(`/admin/filemaker/events/${encodeURIComponent(row.original.id)}`);
+                }}
+              >
+                Edit Details
+              </DropdownMenuItem>
+            </ActionMenu>
+          </div>
+        ),
+      },
+    ],
+    [organizationsCountByEventId, router]
+  );
 
   return (
     <div className='container mx-auto space-y-6 py-8'>
@@ -191,7 +190,9 @@ export function AdminFilemakerEventsPage(): React.JSX.Element {
         emptyState={
           <EmptyState
             title={query ? 'No events found' : 'No events found in database.'}
-            description={query ? 'Try adjusting your search terms.' : 'Add your first event to the database.'}
+            description={
+              query ? 'Try adjusting your search terms.' : 'Add your first event to the database.'
+            }
           />
         }
       />

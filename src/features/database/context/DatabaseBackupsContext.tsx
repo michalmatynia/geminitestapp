@@ -8,14 +8,16 @@ type DatabaseBackupsContextValue = ReturnType<typeof useDatabaseBackupsState>;
 
 const DatabaseBackupsContext = createContext<DatabaseBackupsContextValue | null>(null);
 
-export function DatabaseBackupsProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
+export function DatabaseBackupsProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}): React.JSX.Element {
   const state = useDatabaseBackupsState();
   const value = useMemo(() => state, [state]);
 
   return (
-    <DatabaseBackupsContext.Provider value={value}>
-      {children}
-    </DatabaseBackupsContext.Provider>
+    <DatabaseBackupsContext.Provider value={value}>{children}</DatabaseBackupsContext.Provider>
   );
 }
 

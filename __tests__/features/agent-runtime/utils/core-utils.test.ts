@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
 
-import { 
-  jsonValueToRecord, 
-  reminderList, 
-  buildSelfImprovementPlaybook 
+import {
+  jsonValueToRecord,
+  reminderList,
+  buildSelfImprovementPlaybook,
 } from '@/features/ai/agent-runtime/core/utils';
 
 describe('Agent Runtime - Core Utils', () => {
@@ -37,17 +37,17 @@ describe('Agent Runtime - Core Utils', () => {
           summary: 'First learn',
           metadata: {
             mistakes: ['Error 1'],
-            improvements: ['Better A']
-          }
+            improvements: ['Better A'],
+          },
         },
         {
           summary: 'Second learn',
           metadata: {
             mistakes: ['Error 2'],
             improvements: ['Better B'],
-            guardrails: ['Guard 1']
-          }
-        }
+            guardrails: ['Guard 1'],
+          },
+        },
       ];
 
       const result = buildSelfImprovementPlaybook(items);
@@ -60,7 +60,7 @@ describe('Agent Runtime - Core Utils', () => {
     it('should return null for empty items', () => {
       expect(buildSelfImprovementPlaybook([])).toBeNull();
     });
-    
+
     it('should handle missing metadata fields', () => {
       const result = buildSelfImprovementPlaybook([{ summary: 'Simple' }]);
       expect(result).toContain('Recent learning: Simple');

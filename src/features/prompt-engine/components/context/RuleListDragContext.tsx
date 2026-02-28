@@ -21,11 +21,7 @@ export function RuleListDragProvider({
   value,
   children,
 }: RuleListDragProviderProps): React.JSX.Element {
-  return (
-    <RuleListDragContext.Provider value={value}>
-      {children}
-    </RuleListDragContext.Provider>
-  );
+  return <RuleListDragContext.Provider value={value}>{children}</RuleListDragContext.Provider>;
 }
 
 export function useRuleListDragContext(): RuleListDragContextValue {
@@ -45,13 +41,8 @@ export type RuleItemDragState = {
 };
 
 export function useRuleItemDragState(uid: string): RuleItemDragState {
-  const {
-    draggableEnabled,
-    draggedUid,
-    dragOverKey,
-    setDraggedUid,
-    setDragOverKey,
-  } = useRuleListDragContext();
+  const { draggableEnabled, draggedUid, dragOverKey, setDraggedUid, setDragOverKey } =
+    useRuleListDragContext();
 
   return {
     draggableEnabled,

@@ -3,79 +3,80 @@
 ## 📦 What Was Added
 
 ### Core Setup (2 files)
+
 - `lib/query-client.ts` - QueryClient configuration
 - `components/providers/QueryProvider.tsx` - Provider wrapper in root layout
 
 ### Product Hooks (2 files)
+
 - `lib/hooks/useProductsQuery.ts` - Query hooks (fetch, count, both)
 - `lib/hooks/useProductsMutations.ts` - Mutation hooks (create, update, delete)
 
 ### Enhanced Hook (1 file)
+
 - `app/(admin)/admin/products/hooks/useProductDataWithQuery.ts` - Drop-in replacement
 
 ### Documentation (1 file)
+
 - `app/(admin)/admin/products/TANSTACK_QUERY_INTEGRATION.md` - Full guide
 
 ## 🚀 Quick Start
 
 ### Install DevTools (Optional)
+
 ```bash
 npm install @tanstack/react-query-devtools
 ```
 
 ### Add to Layout
+
 Already done! Just import hooks.
 
 ## 💡 Usage Examples
 
 ### Fetch Products
+
 ```tsx
-import { useProducts } from "@/lib/hooks/useProductsQuery";
+import { useProducts } from '@/lib/hooks/useProductsQuery';
 
 const { data, isPending } = useProducts({
-  search: "laptop",
+  search: 'laptop',
   page: 1,
-  pageSize: 24
+  pageSize: 24,
 });
 ```
 
 ### Create Product
+
 ```tsx
-import { useCreateProduct } from "@/lib/hooks/useProductsMutations";
+import { useCreateProduct } from '@/lib/hooks/useProductsMutations';
 
 const mutation = useCreateProduct();
 
 await mutation.mutateAsync({
-  name_en: "Product",
-  sku: "SKU123",
-  price: 100
+  name_en: 'Product',
+  sku: 'SKU123',
+  price: 100,
 });
 ```
 
 ### Use Enhanced Hook
-```tsx
-import { useProductDataWithQuery } from "./hooks/useProductDataWithQuery";
 
-const {
-  data,
-  total,
-  isLoading,
-  isFetching,
-  page,
-  setPage,
-  refetch
-} = useProductDataWithQuery();
+```tsx
+import { useProductDataWithQuery } from './hooks/useProductDataWithQuery';
+
+const { data, total, isLoading, isFetching, page, setPage, refetch } = useProductDataWithQuery();
 ```
 
 ## 🎯 Key Concepts
 
-| Concept | Meaning |
-|---------|---------|
-| **staleTime** | How long data is fresh (5 min) |
-| **gcTime** | How long to keep cached data (10 min) |
-| **isLoading** | Initial fetch in progress |
-| **isFetching** | Any fetch in progress |
-| **refetch()** | Manually trigger update |
+| Concept        | Meaning                               |
+| -------------- | ------------------------------------- |
+| **staleTime**  | How long data is fresh (5 min)        |
+| **gcTime**     | How long to keep cached data (10 min) |
+| **isLoading**  | Initial fetch in progress             |
+| **isFetching** | Any fetch in progress                 |
+| **refetch()**  | Manually trigger update               |
 | **invalidate** | Mark cache as stale, triggers refetch |
 
 ## 📝 Query States
@@ -116,6 +117,7 @@ Idle → Loading → Success/Error → Idle (can retry)
 ```
 
 ### Mutation Result
+
 ```tsx
 {
   isPending: boolean,        // mutation in progress
@@ -131,6 +133,7 @@ Idle → Loading → Success/Error → Idle (can retry)
 ## 📊 Cache Behavior
 
 ### Same Query, Multiple Calls
+
 ```tsx
 // All use same cache, only 1 API call
 useProducts(filters);
@@ -139,13 +142,15 @@ useProducts(filters);
 ```
 
 ### Different Filters
+
 ```tsx
 // Each gets own cache entry
-useProducts({ search: "a" });
-useProducts({ search: "b" });
+useProducts({ search: 'a' });
+useProducts({ search: 'b' });
 ```
 
 ### Mutation Auto-Invalidation
+
 ```tsx
 // Create product → invalidates products cache → auto-refetch
 const createMutation = useCreateProduct();
@@ -156,6 +161,7 @@ await createMutation.mutateAsync(data);
 ## ⚠️ Common Mistakes
 
 ❌ **Don't:** Call hooks conditionally
+
 ```tsx
 if (condition) {
   const { data } = useProducts(filters); // ❌ WRONG
@@ -163,21 +169,24 @@ if (condition) {
 ```
 
 ✅ **Do:** Use enabled option
+
 ```tsx
 const { data } = useProducts(filters, {
-  enabled: condition // ✅ RIGHT
+  enabled: condition, // ✅ RIGHT
 });
 ```
 
 ---
 
 ❌ **Don't:** Duplicate mutation calls
+
 ```tsx
 const result = mutation.mutateAsync(data);
 const result2 = mutation.mutateAsync(data); // ❌ Fires twice
 ```
 
 ✅ **Do:** Await mutation
+
 ```tsx
 await mutation.mutateAsync(data); // ✅ Wait for completion
 ```
@@ -185,11 +194,13 @@ await mutation.mutateAsync(data); // ✅ Wait for completion
 ---
 
 ❌ **Don't:** Ignore loading states
+
 ```tsx
 return <ProductTable products={data} />; // ❌ data may be undefined
 ```
 
 ✅ **Do:** Handle loading
+
 ```tsx
 if (isLoading) return <Skeleton />;
 return <ProductTable products={data} />;
@@ -198,37 +209,41 @@ return <ProductTable products={data} />;
 ## 🛠️ Advanced
 
 ### Manual Invalidation
+
 ```tsx
 const queryClient = useQueryClient();
 
 queryClient.invalidateQueries({
-  queryKey: ["products"]
+  queryKey: ['products'],
 });
 ```
 
 ### Prefetch
+
 ```tsx
 const queryClient = useQueryClient();
 
 queryClient.prefetchQuery({
-  queryKey: ["products", { ...filters, page: 2 }],
+  queryKey: ['products', { ...filters, page: 2 }],
   queryFn: () => getProducts({ ...filters, page: 2 }),
 });
 ```
 
 ### Manual Cache Update
+
 ```tsx
 const queryClient = useQueryClient();
 
-queryClient.setQueryData(
-  ["products", filters],
-  (old) => ({...old, products: [newProduct, ...old.products]})
-);
+queryClient.setQueryData(['products', filters], (old) => ({
+  ...old,
+  products: [newProduct, ...old.products],
+}));
 ```
 
 ## 📱 DevTools
 
 Browser DevTools → React → Query tab → See:
+
 - All active queries
 - Query state (fresh/stale/error)
 - Cache content
@@ -237,13 +252,13 @@ Browser DevTools → React → Query tab → See:
 
 ## 🚨 Troubleshooting
 
-| Issue | Solution |
-|-------|----------|
+| Issue                          | Solution                                     |
+| ------------------------------ | -------------------------------------------- |
 | Data not updating after create | Check mutation has correct invalidateQueries |
-| Stale data showing | Reduce staleTime in query-client.ts |
-| Too many API calls | Check for duplicate queries |
-| Cache never clears | Check gcTime setting (default 10min) |
-| TypeScript errors | Ensure filters match UseProductsFilters type |
+| Stale data showing             | Reduce staleTime in query-client.ts          |
+| Too many API calls             | Check for duplicate queries                  |
+| Cache never clears             | Check gcTime setting (default 10min)         |
+| TypeScript errors              | Ensure filters match UseProductsFilters type |
 
 ## 📚 More Info
 

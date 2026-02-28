@@ -1,8 +1,10 @@
 import { z } from 'zod';
 
-const captureException = async (error: unknown, context: { source: string; context?: Record<string, unknown>; critical?: boolean }): Promise<void> => {
+const captureException = async (
+  error: unknown,
+  context: { source: string; context?: Record<string, unknown>; critical?: boolean }
+): Promise<void> => {
   try {
-     
     const mod = await import('@/features/observability/server');
     await mod.ErrorSystem.captureException(error, {
       service: context.source,
@@ -68,19 +70,19 @@ function getEnv() {
   if (!result.success) {
     const issues = result.error.flatten().fieldErrors;
     const missing = Object.keys(issues).join(', ');
-    
+
     void captureException(new Error(`Invalid environment variables: ${missing}`), {
       source: 'env-validation',
       context: { missing, issues },
       critical: true,
     });
-    
+
     if (process.env['NODE_ENV'] === 'production') {
       throw new Error(`Critical environment variables missing or invalid: ${missing}`);
     }
-    
+
     // In dev, we return partially valid env to allow starting
-    return (process.env as unknown) as z.infer<typeof envSchema>;
+    return process.env as unknown as z.infer<typeof envSchema>;
   }
 
   return result.data;

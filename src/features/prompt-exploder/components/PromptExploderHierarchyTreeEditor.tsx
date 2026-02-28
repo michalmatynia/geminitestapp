@@ -2,10 +2,7 @@
 
 import React, { useEffect, useMemo, useRef } from 'react';
 
-import {
-  FolderTreeViewportV2,
-  useFolderTreeInstanceV2,
-} from '@/shared/lib/foldertree/v2';
+import { FolderTreeViewportV2, useFolderTreeInstanceV2 } from '@/shared/lib/foldertree/v2';
 import { Button, Input, Label } from '@/shared/ui';
 
 import { usePromptExploderHierarchyTreeContext } from './PromptExploderHierarchyTreeContext';
@@ -34,9 +31,7 @@ const extractRgbLiteral = (text: string): [number, number, number] | null => {
 };
 
 const rgbToHex = ([red, green, blue]: [number, number, number]): string =>
-  `#${[red, green, blue]
-    .map((value) => clampRgb(value).toString(16).padStart(2, '0'))
-    .join('')}`;
+  `#${[red, green, blue].map((value) => clampRgb(value).toString(16).padStart(2, '0')).join('')}`;
 
 const hexToRgb = (value: string): [number, number, number] | null => {
   const match = /^#?([a-f0-9]{6})$/i.exec(value.trim());
@@ -50,10 +45,7 @@ const hexToRgb = (value: string): [number, number, number] | null => {
 };
 
 const replaceRgbLiteral = (text: string, rgb: [number, number, number]): string =>
-  text.replace(
-    RGB_LITERAL_RE,
-    `RGB(${clampRgb(rgb[0])},${clampRgb(rgb[1])},${clampRgb(rgb[2])})`
-  );
+  text.replace(RGB_LITERAL_RE, `RGB(${clampRgb(rgb[0])},${clampRgb(rgb[1])},${clampRgb(rgb[2])})`);
 
 const createListItem = (text = 'New item'): PromptExploderListItem => ({
   id: `item_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
@@ -67,17 +59,15 @@ const createListItem = (text = 'New item'): PromptExploderListItem => ({
 });
 
 export function PromptExploderHierarchyTreeEditor(): React.JSX.Element {
-  const { items, onChange, emptyLabel, renderLogicalEditor } = usePromptExploderHierarchyTreeContext();
+  const { items, onChange, emptyLabel, renderLogicalEditor } =
+    usePromptExploderHierarchyTreeContext();
 
   const itemsRef = useRef(items);
   useEffect(() => {
     itemsRef.current = items;
   }, [items]);
 
-  const masterNodes = useMemo(
-    () => buildPromptExploderMasterNodes(items),
-    [items]
-  );
+  const masterNodes = useMemo(() => buildPromptExploderMasterNodes(items), [items]);
   const treeRevision = useMemo(
     () =>
       masterNodes
@@ -85,10 +75,7 @@ export function PromptExploderHierarchyTreeEditor(): React.JSX.Element {
         .join('|'),
     [masterNodes]
   );
-  const expandedNodeIds = useMemo(
-    () => masterNodes.map((node) => node.id),
-    [masterNodes]
-  );
+  const expandedNodeIds = useMemo(() => masterNodes.map((node) => node.id), [masterNodes]);
 
   const controller = useFolderTreeInstanceV2({
     instanceId: 'prompt_exploder_hierarchy',
@@ -253,13 +240,14 @@ export function PromptExploderHierarchyTreeEditor(): React.JSX.Element {
                 ) : null}
               </div>
             );
-          })()}          {renderLogicalEditor
+          })()}{' '}
+          {renderLogicalEditor
             ? renderLogicalEditor({
-              item: selectedItem,
-              onChange: (updater) => {
-                updateSelectedItem((current) => updater(current));
-              },
-            })
+                item: selectedItem,
+                onChange: (updater) => {
+                  updateSelectedItem((current) => updater(current));
+                },
+              })
             : null}
         </div>
       ) : null}

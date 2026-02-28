@@ -15,9 +15,9 @@ describe('playwright script templates', () => {
       PLAYWRIGHT_SCRIPT_TEMPLATES.every((template) =>
         Boolean(
           template.id.trim() &&
-            template.name.trim() &&
-            template.description.trim() &&
-            template.script.trim()
+          template.name.trim() &&
+          template.description.trim() &&
+          template.script.trim()
         )
       )
     ).toBe(true);
@@ -26,9 +26,7 @@ describe('playwright script templates', () => {
   it('finds templates by id', () => {
     const first = PLAYWRIGHT_SCRIPT_TEMPLATES[0];
     expect(first).toBeDefined();
-    const resolved = first
-      ? findPlaywrightScriptTemplate(first.id)
-      : null;
+    const resolved = first ? findPlaywrightScriptTemplate(first.id) : null;
     expect(resolved?.id).toBe(first?.id);
     expect(findPlaywrightScriptTemplate('missing')).toBeNull();
   });

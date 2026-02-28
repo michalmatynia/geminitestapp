@@ -1,18 +1,12 @@
 'use client';
 
-import { 
-  UserPlusIcon, 
-  ShieldAlertIcon, 
-  ShieldCheck,
-  Key,
-  Users
-} from 'lucide-react';
+import { UserPlusIcon, ShieldAlertIcon, ShieldCheck, Key, Users } from 'lucide-react';
 import React, { useMemo } from 'react';
 
 import type { AuthUser as AuthUserSummary } from '@/shared/contracts/auth';
-import { 
-  StandardDataTablePanel, 
-  SelectSimple, 
+import {
+  StandardDataTablePanel,
+  SelectSimple,
   StatusBadge,
   PanelHeader,
   SearchInput,
@@ -28,8 +22,7 @@ import { UserCreateModal } from '../../components/admin/UserCreateModal';
 import { UserEditModal } from '../../components/admin/UserEditModal';
 import { UsersProvider, useUsers } from '../../context/UsersContext';
 
-
-import type { AuthRole } from '../../utils/auth-management';
+import type { AuthRole } from '@/features/auth/utils/auth-management';
 import type { ColumnDef } from '@tanstack/react-table';
 
 export default function AuthUsersPage(): React.JSX.Element {
@@ -63,81 +56,86 @@ function AuthUsersPageContent(): React.JSX.Element {
     isLoading,
   } = useUsers();
 
-  const columns = useMemo<ColumnDef<AuthUserSummary>[]>(() => [
-    {
-      accessorKey: 'name',
-      header: 'User',
-      cell: ({ row }: { row: { original: AuthUserSummary } }) => (
-        <div className='flex flex-col'>
-          <span className='font-medium text-gray-200'>{row.original.name || 'Unnamed User'}</span>
-          <span className='text-[10px] text-gray-500 font-mono'>{row.original.id}</span>
-        </div>
-      ),
-    },
-    {
-      accessorKey: 'email',
-      header: 'Email',
-      cell: ({ row }: { row: { original: AuthUserSummary } }) => <span className='text-xs text-gray-400'>{row.original.email}</span>,
-    },
-    {
-      accessorKey: 'emailVerified',
-      header: 'Verified',
-      cell: ({ row }: { row: { original: AuthUserSummary } }) => (
-        <StatusBadge 
-          status={row.original.emailVerified ? 'Verified' : 'Pending'} 
-          variant={row.original.emailVerified ? 'success' : 'warning'} 
-          className='text-[9px]' 
-        />
-      ),
-    },
-    {
-      id: 'role',
-      header: 'Access Role',
-      cell: ({ row }: { row: { original: AuthUserSummary } }) => {
-        const currentRoleId = localUserRoles[row.original.id];
-        return (
-          <SelectSimple
-            size='xs'
-            value={currentRoleId ?? 'none'}
-            onValueChange={(val) => handleRoleChange(row.original.id, val)}
-            options={[
-              { value: 'none', label: 'Unassigned' },
-              ...roles.map((r: AuthRole) => ({ value: r.id, label: r.name }))
-            ]}
-            className='h-7 w-32 text-[10px]'
-          />
-        );
+  const columns = useMemo<ColumnDef<AuthUserSummary>[]>(
+    () => [
+      {
+        accessorKey: 'name',
+        header: 'User',
+        cell: ({ row }: { row: { original: AuthUserSummary } }) => (
+          <div className='flex flex-col'>
+            <span className='font-medium text-gray-200'>{row.original.name || 'Unnamed User'}</span>
+            <span className='text-[10px] text-gray-500 font-mono'>{row.original.id}</span>
+          </div>
+        ),
       },
-    },
-    {
-      id: 'actions',
-      header: () => <div className='text-right'>Tools</div>,
-      cell: ({ row }: { row: { original: AuthUserSummary } }) => (
-        <div className='flex justify-end'>
-          <ActionMenu ariaLabel={`Actions for user ${row.original.email}`}>
-            <DropdownMenuItem
-              onSelect={(event: Event): void => {
-                event.preventDefault();
-                setEditingUser(row.original);
-              }}
-            >
-              Edit Identity
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              className='text-destructive focus:text-destructive'
-              onSelect={(event: Event): void => {
-                event.preventDefault();
-                setUserToDelete(row.original);
-              }}
-            >
-              Destroy Record
-            </DropdownMenuItem>
-          </ActionMenu>
-        </div>
-      ),
-    },
-  ], [roles, localUserRoles, handleRoleChange, setEditingUser, setUserToDelete]);
+      {
+        accessorKey: 'email',
+        header: 'Email',
+        cell: ({ row }: { row: { original: AuthUserSummary } }) => (
+          <span className='text-xs text-gray-400'>{row.original.email}</span>
+        ),
+      },
+      {
+        accessorKey: 'emailVerified',
+        header: 'Verified',
+        cell: ({ row }: { row: { original: AuthUserSummary } }) => (
+          <StatusBadge
+            status={row.original.emailVerified ? 'Verified' : 'Pending'}
+            variant={row.original.emailVerified ? 'success' : 'warning'}
+            className='text-[9px]'
+          />
+        ),
+      },
+      {
+        id: 'role',
+        header: 'Access Role',
+        cell: ({ row }: { row: { original: AuthUserSummary } }) => {
+          const currentRoleId = localUserRoles[row.original.id];
+          return (
+            <SelectSimple
+              size='xs'
+              value={currentRoleId ?? 'none'}
+              onValueChange={(val) => handleRoleChange(row.original.id, val)}
+              options={[
+                { value: 'none', label: 'Unassigned' },
+                ...roles.map((r: AuthRole) => ({ value: r.id, label: r.name })),
+              ]}
+              className='h-7 w-32 text-[10px]'
+            />
+          );
+        },
+      },
+      {
+        id: 'actions',
+        header: () => <div className='text-right'>Tools</div>,
+        cell: ({ row }: { row: { original: AuthUserSummary } }) => (
+          <div className='flex justify-end'>
+            <ActionMenu ariaLabel={`Actions for user ${row.original.email}`}>
+              <DropdownMenuItem
+                onSelect={(event: Event): void => {
+                  event.preventDefault();
+                  setEditingUser(row.original);
+                }}
+              >
+                Edit Identity
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className='text-destructive focus:text-destructive'
+                onSelect={(event: Event): void => {
+                  event.preventDefault();
+                  setUserToDelete(row.original);
+                }}
+              >
+                Destroy Record
+              </DropdownMenuItem>
+            </ActionMenu>
+          </div>
+        ),
+      },
+    ],
+    [roles, localUserRoles, handleRoleChange, setEditingUser, setUserToDelete]
+  );
 
   if (!canReadUsers) {
     return (
@@ -180,8 +178,10 @@ function AuthUsersPageContent(): React.JSX.Element {
             label: dirtyRoles ? 'Save Changes' : 'Permissions Up-to-date',
             icon: <ShieldCheck className='size-3.5' />,
             disabled: !dirtyRoles,
-            onClick: () => { void saveRoles(); },
-          }
+            onClick: () => {
+              void saveRoles();
+            },
+          },
         ]}
       />
 
@@ -209,7 +209,11 @@ function AuthUsersPageContent(): React.JSX.Element {
         emptyState={
           <EmptyState
             title={search ? 'No users found' : 'Directory empty'}
-            description={search ? 'Try adjusting your search terms.' : 'No users have been provisioned in the current directory.'}
+            description={
+              search
+                ? 'Try adjusting your search terms.'
+                : 'No users have been provisioned in the current directory.'
+            }
           />
         }
       />

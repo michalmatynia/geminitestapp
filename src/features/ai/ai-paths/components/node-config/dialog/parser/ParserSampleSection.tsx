@@ -32,7 +32,8 @@ export function ParserSampleSection({
   return (
     <FormField label='Sample JSON'>
       <div className='grid gap-2 sm:grid-cols-[160px_1fr_auto] sm:items-center'>
-        <SelectSimple size='sm'
+        <SelectSimple
+          size='sm'
           value={sampleState.entityType}
           onValueChange={(value: string) =>
             setParserSamples((prev) => ({
@@ -69,12 +70,11 @@ export function ParserSampleSection({
             placeholder='Entity ID'
           />
           {simulationOptions.length > 0 && (
-            <SelectSimple size='sm'
+            <SelectSimple
+              size='sm'
               value={sampleState.simulationId ?? ''}
               onValueChange={(value: string) => {
-                const option = simulationOptions.find(
-                  (item) => item.id === value
-                );
+                const option = simulationOptions.find((item) => item.id === value);
                 if (!option) return;
                 setParserSamples((prev) => ({
                   ...prev,
@@ -126,7 +126,8 @@ export function ParserSampleSection({
         placeholder='{ "id": "123", "title": "Sample" }'
       />
       <div className='mt-2 flex flex-wrap gap-2'>
-        <SelectSimple size='sm'
+        <SelectSimple
+          size='sm'
           value={sampleState.mappingMode}
           onValueChange={(value: string) =>
             setParserSamples((prev) => ({
@@ -143,7 +144,8 @@ export function ParserSampleSection({
           ]}
           className='w-[180px]'
         />
-        <SelectSimple size='sm'
+        <SelectSimple
+          size='sm'
           value={String(sampleState.depth)}
           onValueChange={(value: string) =>
             setParserSamples((prev) => ({
@@ -177,7 +179,8 @@ export function ParserSampleSection({
           {sampleState.includeContainers ? 'Containers: On' : 'Containers: Off'}
         </Button>
         {sampleState.mappingMode === 'flatten' && (
-          <SelectSimple size='sm'
+          <SelectSimple
+            size='sm'
             value={sampleState.keyStyle}
             onValueChange={(value: string) =>
               setParserSamples((prev) => ({
@@ -197,9 +200,7 @@ export function ParserSampleSection({
         )}
       </div>
       {parsedSampleError ? (
-        <p className='mt-2 text-[11px] text-rose-300'>
-          {parsedSampleError}
-        </p>
+        <p className='mt-2 text-[11px] text-rose-300'>{parsedSampleError}</p>
       ) : null}
       <div className='mt-3 flex flex-wrap gap-2'>
         {sampleMappingsLength > 0 && (

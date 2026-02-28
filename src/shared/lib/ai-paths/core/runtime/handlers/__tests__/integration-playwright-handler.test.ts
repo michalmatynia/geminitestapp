@@ -34,7 +34,7 @@ const buildNode = (patch: Partial<AiNode> = {}): AiNode =>
         script:
           'export default async function run({ page, input, emit }) {\n' +
           '  await page.goto(input?.prompt || "https://example.com");\n' +
-          '  emit(\'result\', \'ok\');\n' +
+          "  emit('result', 'ok');\n" +
           '  return { ok: true };\n' +
           '}',
         waitForResult: true,
@@ -55,10 +55,7 @@ const buildNode = (patch: Partial<AiNode> = {}): AiNode =>
     ...(patch as Record<string, unknown>),
   }) as AiNode;
 
-const buildContext = (
-  node: AiNode,
-  nodeInputs: RuntimePortValues
-): NodeHandlerContext =>
+const buildContext = (node: AiNode, nodeInputs: RuntimePortValues): NodeHandlerContext =>
   ({
     node,
     nodeInputs,
@@ -102,8 +99,9 @@ describe('handlePlaywright', () => {
     enqueueMock.mockReset();
     pollMock.mockReset();
     artifactUrlFromPathMock.mockReset();
-    artifactUrlFromPathMock.mockImplementation((relativePath: string) =>
-      `/api/ai-paths/playwright/artifact/${encodeURIComponent(relativePath)}`
+    artifactUrlFromPathMock.mockImplementation(
+      (relativePath: string) =>
+        `/api/ai-paths/playwright/artifact/${encodeURIComponent(relativePath)}`
     );
   });
 
@@ -144,7 +142,7 @@ describe('handlePlaywright', () => {
     });
     const context = buildContext(node, {});
 
-    const result = await handlePlaywright(context);
+    const result = (await handlePlaywright(context)) as unknown as RuntimePortValues;
 
     expect(enqueueMock).not.toHaveBeenCalled();
     expect(result['status']).toBe('failed');
@@ -184,7 +182,7 @@ describe('handlePlaywright', () => {
     });
     const context = buildContext(node, { prompt: 'https://example.com' });
 
-    const result = await handlePlaywright(context);
+    const result = (await handlePlaywright(context)) as unknown as RuntimePortValues;
 
     expect(enqueueMock).toHaveBeenCalledTimes(1);
     expect(pollMock).not.toHaveBeenCalled();
@@ -240,9 +238,7 @@ describe('handlePlaywright', () => {
     });
     const node = buildNode();
 
-    const result = await handlePlaywright(
-      buildContext(node, { prompt: 'https://example.com' })
-    );
+    const result = await handlePlaywright(buildContext(node, { prompt: 'https://example.com' }));
 
     expect(enqueueMock).toHaveBeenCalledTimes(1);
     expect(pollMock).toHaveBeenCalledTimes(1);
@@ -259,9 +255,7 @@ describe('handlePlaywright', () => {
     );
     const bundle = result['bundle'] as Record<string, unknown>;
     const artifacts = bundle['artifacts'] as Array<Record<string, unknown>>;
-    expect(artifacts[0]?.['url']).toBe(
-      '/api/ai-paths/playwright/artifact/run-100%2Ffinal.png'
-    );
+    expect(artifacts[0]?.['url']).toBe('/api/ai-paths/playwright/artifact/run-100%2Ffinal.png');
   });
 
   it('reports and returns failure when enqueue fails', async () => {
@@ -271,7 +265,7 @@ describe('handlePlaywright', () => {
     });
     const context = buildContext(buildNode(), {});
 
-    const result = await handlePlaywright(context);
+    const result = (await handlePlaywright(context)) as unknown as RuntimePortValues;
 
     expect(result['status']).toBe('failed');
     expect(result['bundle']).toEqual(

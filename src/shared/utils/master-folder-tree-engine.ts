@@ -1,4 +1,3 @@
- 
 import type {
   MasterTreeViewNodeDto,
   MasterTreeValidationIssueCodeDto,
@@ -11,10 +10,7 @@ import type {
   MasterTreeMutationResultDto,
 } from '@/shared/contracts/master-folder-tree';
 
-import {
-  canNestTreeNodeV2,
-  type FolderTreeProfileV2,
-} from './folder-tree-profiles-v2';
+import { canNestTreeNodeV2, type FolderTreeProfileV2 } from './folder-tree-profiles-v2';
 import {
   compareMasterTreeNodes,
   normalizeMasterTreeKind,
@@ -97,7 +93,9 @@ const sanitizeMasterTreeNode = (node: MasterTreeNode): MasterTreeNode => {
 const sanitizeMasterTreeNodes = (nodes: MasterTreeNode[]): MasterTreeNode[] =>
   nodes.map((node: MasterTreeNode) => sanitizeMasterTreeNode(node));
 
-export const guardAgainstMasterTreeCycles = (nodes: MasterTreeNode[]): MasterTreeCycleGuardResult => {
+export const guardAgainstMasterTreeCycles = (
+  nodes: MasterTreeNode[]
+): MasterTreeCycleGuardResult => {
   const byId = createNodeMap(nodes);
   const visited = new Set<string>();
   const cycleIds = new Set<string>();
@@ -192,9 +190,9 @@ const detachInvalidParentsAndCycles = (nodes: MasterTreeNode[]): MasterTreeNode[
   next = next.map((node: MasterTreeNode) =>
     cycleSet.has(node.id)
       ? {
-        ...node,
-        parentId: null,
-      }
+          ...node,
+          parentId: null,
+        }
       : node
   );
 
@@ -437,10 +435,7 @@ export function canDropMasterTreeNode({
     };
   }
 
-  if (
-    resolvedParentId &&
-    isMasterTreeNodeInSubtree(normalized, nodeId, resolvedParentId)
-  ) {
+  if (resolvedParentId && isMasterTreeNodeInSubtree(normalized, nodeId, resolvedParentId)) {
     return {
       ok: false,
       reason: 'TARGET_IN_SUBTREE',
@@ -517,11 +512,7 @@ export function moveMasterTreeNode({
 
   const withoutDragged = normalized.filter((node: MasterTreeNode) => node.id !== nodeId);
   const siblingIds = getSortedSiblingIds(withoutDragged, targetParentId);
-  const insertIndex = clampIndex(
-    targetIndex ?? siblingIds.length,
-    0,
-    siblingIds.length
-  );
+  const insertIndex = clampIndex(targetIndex ?? siblingIds.length, 0, siblingIds.length);
   siblingIds.splice(insertIndex, 0, nodeId);
 
   const previousParentId = draggedNode.parentId;

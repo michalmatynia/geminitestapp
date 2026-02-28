@@ -25,10 +25,7 @@ const extractReferenceCodes = (value: string): string[] => {
   return [...matches];
 };
 
-const collectParamPaths = (
-  objectValue: Record<string, unknown> | null,
-  prefix = ''
-): string[] => {
+const collectParamPaths = (objectValue: Record<string, unknown> | null, prefix = ''): string[] => {
   if (!objectValue) return [];
   const out: string[] = [];
   Object.entries(objectValue).forEach(([key, value]) => {
@@ -76,22 +73,29 @@ const normalizeManualBindings = (
   segments: PromptExploderSegment[]
 ): PromptExploderBinding[] => {
   if (!bindings.length) return [];
-  const segmentById = new Map(segments.map((segment: PromptExploderSegment) => [segment.id, segment]));
+  const segmentById = new Map(
+    segments.map((segment: PromptExploderSegment) => [segment.id, segment])
+  );
   return bindings
     .filter((binding: PromptExploderBinding) => {
       const fromSegment = segmentById.get(binding.fromSegmentId || '');
-      const toSegment = segmentById.get(binding.toSegmentId || '');      if (!fromSegment || !toSegment) return false;
+      const toSegment = segmentById.get(binding.toSegmentId || '');
+      if (!fromSegment || !toSegment) return false;
       const fromSubsectionId = binding.fromSubsectionId ?? null;
       const toSubsectionId = binding.toSubsectionId ?? null;
       if (
         fromSubsectionId &&
-        !fromSegment.subsections.some((subsection: PromptExploderSubsection) => subsection.id === fromSubsectionId)
+        !fromSegment.subsections.some(
+          (subsection: PromptExploderSubsection) => subsection.id === fromSubsectionId
+        )
       ) {
         return false;
       }
       if (
         toSubsectionId &&
-        !toSegment.subsections.some((subsection: PromptExploderSubsection) => subsection.id === toSubsectionId)
+        !toSegment.subsections.some(
+          (subsection: PromptExploderSubsection) => subsection.id === toSubsectionId
+        )
       ) {
         return false;
       }
@@ -142,7 +146,8 @@ const detectAutoBindings = ({
         toSubsectionId: target.subsectionId,
         sourceLabel: sourceLabel || '',
         targetLabel: `${target.code} ${target.label}`.trim(),
-        origin: 'auto',      });
+        origin: 'auto',
+      });
     });
 
     if (!paramsSegment || paramsSegment.id === segment.id) {
@@ -165,7 +170,7 @@ const detectAutoBindings = ({
         referencedParams.add(paramPath);
       });
     });
-    
+
     referencedParams.forEach((paramPath: string) => {
       bindings.push({
         id: createBindingId(),
@@ -178,7 +183,8 @@ const detectAutoBindings = ({
         targetLabel: `params.${paramPath}`,
         origin: 'auto',
       });
-    });  });
+    });
+  });
 
   return bindings;
 };
@@ -213,9 +219,7 @@ const dedupeBindings = (bindings: PromptExploderBinding[]): PromptExploderBindin
     if (!existing) {
       deduped.set(
         key,
-        binding.origin === 'auto'
-          ? { ...binding, id: `auto_${hashBindingKey(key)}` }
-          : binding
+        binding.origin === 'auto' ? { ...binding, id: `auto_${hashBindingKey(key)}` } : binding
       );
       return;
     }

@@ -1,14 +1,11 @@
 'use client';
 
-
-
-
 import Image from 'next/image';
 
 import type { AiNode, Edge } from '@/shared/lib/ai-paths';
 import { createViewerOutputs, formatRuntimeValue } from '@/shared/lib/ai-paths';
 import { extractImageUrls, formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
-import { Button,  Textarea, FormField } from '@/shared/ui';
+import { Button, Textarea, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -31,7 +28,9 @@ export function ViewerNodeConfigSection(): React.JSX.Element | null {
   const showImagesAsJson = viewerConfig.showImagesAsJson ?? false;
   const connections = edges.filter((edge: Edge): boolean => edge.to === selectedNode.id);
   const isConnectedToTrigger = ((): boolean => {
-    const triggerIds = nodes.filter((node: AiNode): boolean => node.type === 'trigger').map((node: AiNode): string => node.id);
+    const triggerIds = nodes
+      .filter((node: AiNode): boolean => node.type === 'trigger')
+      .map((node: AiNode): string => node.id);
     if (triggerIds.length === 0) return false;
     const adjacency = new Map<string, Set<string>>();
     edges.forEach((edge: Edge): void => {
@@ -45,7 +44,9 @@ export function ViewerNodeConfigSection(): React.JSX.Element | null {
     });
     const visited = new Set<string>();
     const queue = [...triggerIds];
-    triggerIds.forEach((id: string): void => { visited.add(id); });
+    triggerIds.forEach((id: string): void => {
+      visited.add(id);
+    });
     while (queue.length) {
       const current = queue.shift();
       if (!current) continue;
@@ -98,9 +99,7 @@ export function ViewerNodeConfigSection(): React.JSX.Element | null {
   return (
     <div className='space-y-4'>
       <div className='flex items-center justify-between gap-3'>
-        <div className='text-xs text-gray-400'>
-          Review outputs that flow into this node.
-        </div>
+        <div className='text-xs text-gray-400'>Review outputs that flow into this node.</div>
         <div className='flex items-center gap-2'>
           <Button
             type='button'
@@ -139,8 +138,8 @@ export function ViewerNodeConfigSection(): React.JSX.Element | null {
       </div>
       {!isConnectedToTrigger && (
         <div className='rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-100'>
-          This Result Viewer is not connected to a Trigger path, so it will not update when you fire triggers.
-          Connect it to the same path as a Trigger (directly or through other nodes).
+          This Result Viewer is not connected to a Trigger path, so it will not update when you fire
+          triggers. Connect it to the same path as a Trigger (directly or through other nodes).
         </div>
       )}
       {selectedNode.inputs.map((input: string): React.JSX.Element => {
@@ -155,19 +154,19 @@ export function ViewerNodeConfigSection(): React.JSX.Element | null {
           .filter(Boolean)
           .join(', ');
         const runtimeValue = resolvedRuntimeInputs[input];
-        const imageUrls =
-          input === 'images' ? extractImageUrls(runtimeValue) : [];
-        const hasImagePreview =
-          input === 'images' && imageUrls.length > 0 && !showImagesAsJson;
+        const imageUrls = input === 'images' ? extractImageUrls(runtimeValue) : [];
+        const hasImagePreview = input === 'images' && imageUrls.length > 0 && !showImagesAsJson;
         return (
-          <FormField 
-            key={input} 
+          <FormField
+            key={input}
             label={formatPortLabel(input)}
-            actions={connectedSources ? (
-              <span className='text-[10px] text-gray-500 font-mono'>
-                Connected: {connectedSources}
-              </span>
-            ) : undefined}
+            actions={
+              connectedSources ? (
+                <span className='text-[10px] text-gray-500 font-mono'>
+                  Connected: {connectedSources}
+                </span>
+              ) : undefined
+            }
           >
             {runtimeValue !== undefined && (
               <div className='mb-2 rounded-md border border-emerald-500/30 bg-emerald-500/5 px-3 py-2 text-[11px] text-emerald-100'>
@@ -181,21 +180,23 @@ export function ViewerNodeConfigSection(): React.JSX.Element | null {
                       {imageUrls.length === 1 ? '' : 's'}
                     </div>
                     <div className='mt-2 grid grid-cols-3 gap-2'>
-                      {imageUrls.map((url: string, index: number): React.JSX.Element => (
-                        <div
-                          key={`${url}-${index}`}
-                          className='overflow-hidden rounded border border-emerald-500/30 bg-black/30'
-                        >
-                          <Image
-                            src={url}
-                            alt={`Image ${index + 1}`}
-                            className='h-20 w-full object-cover'
-                            loading='lazy'
-                            width={80}
-                            height={80}
-                          />
-                        </div>
-                      ))}
+                      {imageUrls.map(
+                        (url: string, index: number): React.JSX.Element => (
+                          <div
+                            key={`${url}-${index}`}
+                            className='overflow-hidden rounded border border-emerald-500/30 bg-black/30'
+                          >
+                            <Image
+                              src={url}
+                              alt={`Image ${index + 1}`}
+                              className='h-20 w-full object-cover'
+                              loading='lazy'
+                              width={80}
+                              height={80}
+                            />
+                          </div>
+                        )
+                      )}
                     </div>
                   </>
                 ) : (

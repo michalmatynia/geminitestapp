@@ -62,7 +62,7 @@ export function useVectorDrawingState({
       seededRef.current = true;
       history.reset(shapes);
     }
-  }, []);  
+  }, []);
 
   const handleChange = useCallback(
     (nextShapes: VectorShape[]) => {
@@ -120,15 +120,21 @@ export function useVectorDrawingState({
   const resolvedActiveShapeId = activeShapeId ?? internalActiveShapeId;
   const resolvedSelectedPointIndex = selectedPointIndex ?? internalSelectedPointIndex;
 
-  const handleSelectShape = useCallback((id: string | null) => {
-    setInternalActiveShapeId(id);
-    onSelectShape?.(id);
-  }, [onSelectShape]);
+  const handleSelectShape = useCallback(
+    (id: string | null) => {
+      setInternalActiveShapeId(id);
+      onSelectShape?.(id);
+    },
+    [onSelectShape]
+  );
 
-  const handleSelectPoint = useCallback((index: number | null) => {
-    setInternalSelectedPointIndex(index);
-    onSelectPoint?.(index);
-  }, [onSelectPoint]);
+  const handleSelectPoint = useCallback(
+    (index: number | null) => {
+      setInternalSelectedPointIndex(index);
+      onSelectPoint?.(index);
+    },
+    [onSelectPoint]
+  );
 
   return {
     shapes,

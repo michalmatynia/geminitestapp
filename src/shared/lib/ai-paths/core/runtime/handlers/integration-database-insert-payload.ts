@@ -1,16 +1,7 @@
-import type {
-  DatabaseConfig,
-  DbQueryConfig,
-  RuntimePortValues,
-} from '@/shared/contracts/ai-paths';
+import type { DatabaseConfig, DbQueryConfig, RuntimePortValues } from '@/shared/contracts/ai-paths';
 import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 
-import {
-  coerceInput,
-  getValueAtMappingPath,
-  parseJsonSafe,
-  renderJsonTemplate,
-} from '../../utils';
+import { coerceInput, getValueAtMappingPath, parseJsonSafe, renderJsonTemplate } from '../../utils';
 import {
   createWriteTemplateGuardrailOutput,
   resolveWriteTemplateGuardrail,
@@ -32,11 +23,11 @@ export type ResolveDatabaseInsertPayloadInput = {
 export type ResolveDatabaseInsertPayloadResult =
   | { output: RuntimePortValues }
   | {
-    payload: Record<string, unknown>;
-    entityType: string;
-    configuredCollection: string;
-    forceCollectionInsert: boolean;
-  };
+      payload: Record<string, unknown>;
+      entityType: string;
+      configuredCollection: string;
+      forceCollectionInsert: boolean;
+    };
 
 export function resolveDatabaseInsertPayload({
   node,
@@ -89,12 +80,12 @@ export function resolveDatabaseInsertPayload({
     }
   }
   const parsedTemplatePayload: unknown = insertTemplate
-    ? parseJsonSafe(
-      renderJsonTemplate(insertTemplate, templateContext, templateInputValue ?? ''),
-    )
+    ? parseJsonSafe(renderJsonTemplate(insertTemplate, templateContext, templateInputValue ?? ''))
     : null;
   const templatePayload: unknown =
-    parsedTemplatePayload && typeof parsedTemplatePayload === 'object' && !Array.isArray(parsedTemplatePayload)
+    parsedTemplatePayload &&
+    typeof parsedTemplatePayload === 'object' &&
+    !Array.isArray(parsedTemplatePayload)
       ? parsedTemplatePayload
       : null;
   const rawPayload = templatePayload ?? coerceInput(nodeInputs[writeSource]);
@@ -122,11 +113,7 @@ export function resolveDatabaseInsertPayload({
   }
 
   // Callback injection for insert: if callback is an object, merge it or use it as payload.
-  if (
-    callbackInput &&
-    typeof callbackInput === 'object' &&
-    !Array.isArray(callbackInput)
-  ) {
+  if (callbackInput && typeof callbackInput === 'object' && !Array.isArray(callbackInput)) {
     payload = {
       ...(payload ?? {}),
       ...(callbackInput as Record<string, unknown>),
@@ -136,9 +123,7 @@ export function resolveDatabaseInsertPayload({
   if (!payload) {
     const nodeTitle = node.title?.trim();
     const nodeLabel = nodeTitle ? `"${nodeTitle}"` : `node ${node.id}`;
-    const writeSourceLabel = writeSourcePath
-      ? `${writeSource}.${writeSourcePath}`
-      : writeSource;
+    const writeSourceLabel = writeSourcePath ? `${writeSource}.${writeSourcePath}` : writeSource;
     reportAiPathsError(
       new Error('Database insert missing payload'),
       {
@@ -148,12 +133,11 @@ export function resolveDatabaseInsertPayload({
         writeSource,
         writeSourcePath,
       },
-      'Database insert missing payload:',
+      'Database insert missing payload:'
     );
-    toast(
-      `Database insert payload missing for ${nodeLabel} (write source: ${writeSourceLabel}).`,
-      { variant: 'error' },
-    );
+    toast(`Database insert payload missing for ${nodeLabel} (write source: ${writeSourceLabel}).`, {
+      variant: 'error',
+    });
     return {
       output: {
         result: null,

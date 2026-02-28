@@ -1,8 +1,6 @@
 import { z } from 'zod';
- 
 
 import { dtoBaseSchema } from './base';
-
 
 export const databaseTypeSchema = z.enum(['postgresql', 'mongodb']);
 export type DatabaseType = z.infer<typeof databaseTypeSchema>;
@@ -10,7 +8,14 @@ export type DatabaseType = z.infer<typeof databaseTypeSchema>;
 export const databaseSyncDirectionSchema = z.enum(['mongo_to_prisma', 'prisma_to_mongo']);
 export type DatabaseSyncDirection = z.infer<typeof databaseSyncDirectionSchema>;
 
-export const databasePreviewModeSchema = z.enum(['full', 'stats', 'tables', 'counts', 'current', 'backup']);
+export const databasePreviewModeSchema = z.enum([
+  'full',
+  'stats',
+  'tables',
+  'counts',
+  'current',
+  'backup',
+]);
 export type DatabasePreviewMode = z.infer<typeof databasePreviewModeSchema>;
 
 export const databasePreviewGroupSchema = z.object({
@@ -187,7 +192,13 @@ export type DatabaseEngineProvider = z.infer<typeof databaseEngineProviderSchema
 export const databaseEnginePrimaryProviderSchema = z.enum(['mongodb', 'prisma']);
 export type DatabaseEnginePrimaryProvider = z.infer<typeof databaseEnginePrimaryProviderSchema>;
 
-export const databaseEngineServiceSchema = z.enum(['app', 'auth', 'product', 'integrations', 'cms']);
+export const databaseEngineServiceSchema = z.enum([
+  'app',
+  'auth',
+  'product',
+  'integrations',
+  'cms',
+]);
 export type DatabaseEngineService = z.infer<typeof databaseEngineServiceSchema>;
 
 export const databaseEnginePolicySchema = z.object({
@@ -227,7 +238,9 @@ export const databaseEngineBackupTargetScheduleSchema = z.object({
   nextDueAt: z.string().nullable(),
 });
 
-export type DatabaseEngineBackupTargetSchedule = z.infer<typeof databaseEngineBackupTargetScheduleSchema>;
+export type DatabaseEngineBackupTargetSchedule = z.infer<
+  typeof databaseEngineBackupTargetScheduleSchema
+>;
 
 export const databaseEngineBackupScheduleSchema = z.object({
   schedulerEnabled: z.boolean(),
@@ -372,7 +385,10 @@ export const databaseEngineOperationJobSchema = dtoBaseSchema.extend({
   source: z.string().nullable().optional(),
   payload: z.record(z.string(), z.unknown()).optional(),
   result: z.record(z.string(), z.unknown()).nullable().optional(),
-  resultSummary: z.union([z.string(), z.record(z.string(), z.unknown())]).nullable().optional(),
+  resultSummary: z
+    .union([z.string(), z.record(z.string(), z.unknown())])
+    .nullable()
+    .optional(),
   errorMessage: z.string().nullable().optional(),
   progress: z.number().optional(),
   startedAt: z.string().nullable().optional(),
@@ -390,7 +406,13 @@ export const databaseEngineOperationsJobsSchema = z.object({
 
 export type DatabaseEngineOperationsJobs = z.infer<typeof databaseEngineOperationsJobsSchema>;
 
-export type DatabaseEngineWorkspaceView = 'engine' | 'operations' | 'backups' | 'redis' | 'preview' | 'crud';
+export type DatabaseEngineWorkspaceView =
+  | 'engine'
+  | 'operations'
+  | 'backups'
+  | 'redis'
+  | 'preview'
+  | 'crud';
 
 export interface UnifiedCollection {
   name: string;
@@ -411,7 +433,9 @@ export const databaseEngineCollectionProviderPreviewItemSchema = z.object({
   error: z.string().nullable(),
 });
 
-export type DatabaseEngineCollectionProviderPreviewItem = z.infer<typeof databaseEngineCollectionProviderPreviewItemSchema>;
+export type DatabaseEngineCollectionProviderPreviewItem = z.infer<
+  typeof databaseEngineCollectionProviderPreviewItemSchema
+>;
 
 export const databaseEngineProviderPreviewSchema = z.object({
   timestamp: z.string().optional(),
@@ -419,16 +443,18 @@ export const databaseEngineProviderPreviewSchema = z.object({
   appProvider: z.string().nullable().optional(),
   appProviderError: z.string().nullable().optional(),
   provider: z.string().optional(),
-  collections: z.array(z.object({
-    name: z.string().optional(),
-    collection: z.string().optional(),
-    count: z.number().optional(),
-    sizeBytes: z.number().nullable().optional(),
-    configuredProvider: z.string().nullable().optional(),
-    effectiveProvider: z.string().nullable().optional(),
-    source: z.string().optional(),
-    error: z.string().nullable().optional(),
-  })),
+  collections: z.array(
+    z.object({
+      name: z.string().optional(),
+      collection: z.string().optional(),
+      count: z.number().optional(),
+      sizeBytes: z.number().nullable().optional(),
+      configuredProvider: z.string().nullable().optional(),
+      effectiveProvider: z.string().nullable().optional(),
+      source: z.string().optional(),
+      error: z.string().nullable().optional(),
+    })
+  ),
 });
 
 export type DatabaseEngineProviderPreview = z.infer<typeof databaseEngineProviderPreviewSchema>;
@@ -437,17 +463,23 @@ export type CollectionCopyResult = DatabaseSyncCollectionResult;
 
 export const databaseEngineBackupRunNowResponseSchema = z.object({
   success: z.boolean(),
-  queued: z.array(z.object({
-    dbType: z.enum(['mongodb', 'postgresql']),
-    jobId: z.string(),
-  })),
-  inlineProcessed: z.array(z.object({
-    dbType: z.enum(['mongodb', 'postgresql']),
-    jobId: z.string(),
-  })),
+  queued: z.array(
+    z.object({
+      dbType: z.enum(['mongodb', 'postgresql']),
+      jobId: z.string(),
+    })
+  ),
+  inlineProcessed: z.array(
+    z.object({
+      dbType: z.enum(['mongodb', 'postgresql']),
+      jobId: z.string(),
+    })
+  ),
 });
 
-export type DatabaseEngineBackupRunNowResponse = z.infer<typeof databaseEngineBackupRunNowResponseSchema>;
+export type DatabaseEngineBackupRunNowResponse = z.infer<
+  typeof databaseEngineBackupRunNowResponseSchema
+>;
 
 export const databaseEngineBackupSchedulerStatusSchema = z.object({
   timestamp: z.string().optional(),
@@ -463,22 +495,30 @@ export const databaseEngineBackupSchedulerStatusSchema = z.object({
   targets: z.record(z.string(), z.unknown()).optional(),
 });
 
-export type DatabaseEngineBackupSchedulerStatus = z.infer<typeof databaseEngineBackupSchedulerStatusSchema>;
+export type DatabaseEngineBackupSchedulerStatus = z.infer<
+  typeof databaseEngineBackupSchedulerStatusSchema
+>;
 
 export const databaseEngineBackupSchedulerTickResultSchema = z.object({
   checkedAt: z.string(),
   schedulerEnabled: z.boolean(),
-  triggered: z.array(z.object({
-    dbType: z.string(),
-    jobId: z.string(),
-  })),
-  skipped: z.array(z.object({
-    dbType: z.string(),
-    reason: z.string(),
-  })),
+  triggered: z.array(
+    z.object({
+      dbType: z.string(),
+      jobId: z.string(),
+    })
+  ),
+  skipped: z.array(
+    z.object({
+      dbType: z.string(),
+      reason: z.string(),
+    })
+  ),
 });
 
-export type DatabaseEngineBackupSchedulerTickResult = z.infer<typeof databaseEngineBackupSchedulerTickResultSchema>;
+export type DatabaseEngineBackupSchedulerTickResult = z.infer<
+  typeof databaseEngineBackupSchedulerTickResultSchema
+>;
 export type DatabaseBackupSchedulerTickResult = DatabaseEngineBackupSchedulerTickResult;
 
 export const databaseEngineBackupSchedulerTickResponseSchema = z.object({
@@ -486,7 +526,9 @@ export const databaseEngineBackupSchedulerTickResponseSchema = z.object({
   jobsQueued: z.number(),
 });
 
-export type DatabaseEngineBackupSchedulerTickResponse = z.infer<typeof databaseEngineBackupSchedulerTickResponseSchema>;
+export type DatabaseEngineBackupSchedulerTickResponse = z.infer<
+  typeof databaseEngineBackupSchedulerTickResponseSchema
+>;
 
 /**
  * Database Engine Status DTOs
@@ -497,10 +539,12 @@ export const databaseEngineCollectionStatusSchema = z.object({
   configuredCount: z.number(),
   missingExplicitRoutes: z.array(z.string()),
   orphanedRoutes: z.array(z.string()),
-  unavailableConfiguredRoutes: z.array(z.object({
-    collection: z.string(),
-    provider: z.string(),
-  })),
+  unavailableConfiguredRoutes: z.array(
+    z.object({
+      collection: z.string(),
+      provider: z.string(),
+    })
+  ),
 });
 
 export type DatabaseEngineCollectionStatus = z.infer<typeof databaseEngineCollectionStatusSchema>;
@@ -626,13 +670,15 @@ export type SchemaResponseDto = SchemaResponse;
 export type SchemaResponsePayloadDto = SchemaResponse;
 export type DatabaseEngineOperationJobDto = DatabaseEngineOperationJob;
 export type DatabaseEngineOperationsJobsDto = DatabaseEngineOperationsJobs;
-export type DatabaseEngineCollectionProviderPreviewItemDto = DatabaseEngineCollectionProviderPreviewItem;
+export type DatabaseEngineCollectionProviderPreviewItemDto =
+  DatabaseEngineCollectionProviderPreviewItem;
 export type DatabaseEngineProviderPreviewDto = DatabaseEngineProviderPreview;
 export type CollectionCopyResultDto = CollectionCopyResult;
 export type DatabaseEngineBackupRunNowResponseDto = DatabaseEngineBackupRunNowResponse;
 export type DatabaseEngineBackupSchedulerStatusDto = DatabaseEngineBackupSchedulerStatus;
 export type DatabaseEngineBackupSchedulerTickResultDto = DatabaseEngineBackupSchedulerTickResult;
-export type DatabaseEngineBackupSchedulerTickResponseDto = DatabaseEngineBackupSchedulerTickResponse;
+export type DatabaseEngineBackupSchedulerTickResponseDto =
+  DatabaseEngineBackupSchedulerTickResponse;
 export type DatabaseEngineCollectionStatusDto = DatabaseEngineCollectionStatus;
 export type DatabaseEngineServiceStatusDto = DatabaseEngineServiceStatus;
 export type DatabaseEngineStatusDto = DatabaseEngineStatus;

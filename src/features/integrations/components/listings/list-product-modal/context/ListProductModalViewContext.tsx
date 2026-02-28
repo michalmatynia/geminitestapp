@@ -12,7 +12,9 @@ type ListProductModalViewContextValue = {
   hasPresetSelection: boolean;
 };
 
-const ListProductModalViewContext = React.createContext<ListProductModalViewContextValue | null>(null);
+const ListProductModalViewContext = React.createContext<ListProductModalViewContextValue | null>(
+  null
+);
 
 type ListProductModalViewProviderProps = {
   value: ListProductModalViewContextValue;
@@ -33,7 +35,9 @@ export function ListProductModalViewProvider({
 export function useListProductModalViewContext(): ListProductModalViewContextValue {
   const context = React.useContext(ListProductModalViewContext);
   if (!context) {
-    throw internalError('useListProductModalViewContext must be used within ListProductModalViewProvider');
+    throw internalError(
+      'useListProductModalViewContext must be used within ListProductModalViewProvider'
+    );
   }
   return context;
 }

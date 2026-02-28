@@ -24,11 +24,7 @@ import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 import { CaseResolverIdentifierModal } from '../components/modals/CaseResolverIdentifierModal';
-import {
-  CASE_RESOLVER_IDENTIFIERS_KEY,
-  parseCaseResolverIdentifiers,
-} from '../settings';
-
+import { CASE_RESOLVER_IDENTIFIERS_KEY, parseCaseResolverIdentifiers } from '../settings';
 
 type CaseIdentifierFormData = {
   name: string;
@@ -53,12 +49,10 @@ const buildCaseIdentifierPathOptions = (
   identifiers: CaseResolverIdentifier[]
 ): CaseIdentifierPathOption[] => {
   const byId = new Map<string, CaseResolverIdentifier>(
-    identifiers.map(
-      (identifier: CaseResolverIdentifier): [string, CaseResolverIdentifier] => [
-        identifier.id,
-        identifier,
-      ]
-    )
+    identifiers.map((identifier: CaseResolverIdentifier): [string, CaseResolverIdentifier] => [
+      identifier.id,
+      identifier,
+    ])
   );
   const cache = new Map<string, { ids: string[]; names: string[] }>();
 
@@ -88,7 +82,8 @@ const buildCaseIdentifierPathOptions = (
     const fullPath = {
       ids: [...parentPath.ids, identifier.id],
       names: [...parentPath.names, identifier.name ?? identifier.value],
-    };    cache.set(caseIdentifierId, fullPath);
+    };
+    cache.set(caseIdentifierId, fullPath);
     return fullPath;
   };
 
@@ -136,8 +131,9 @@ export function AdminCaseResolverIdentifiersPage(): React.JSX.Element {
   );
 
   const [showModal, setShowModal] = useState(false);
-  const [editingCaseIdentifier, setEditingCaseIdentifier] =
-    useState<CaseResolverIdentifier | null>(null);
+  const [editingCaseIdentifier, setEditingCaseIdentifier] = useState<CaseResolverIdentifier | null>(
+    null
+  );
   const [caseIdentifierToDelete, setCaseIdentifierToDelete] =
     useState<CaseResolverIdentifier | null>(null);
   const [formData, setFormData] = useState<CaseIdentifierFormData>({
@@ -146,36 +142,27 @@ export function AdminCaseResolverIdentifiersPage(): React.JSX.Element {
     parentId: null,
   });
   const caseIdentifierPathOptions = useMemo(
-    (): CaseIdentifierPathOption[] =>
-      buildCaseIdentifierPathOptions(caseIdentifiers),
+    (): CaseIdentifierPathOption[] => buildCaseIdentifierPathOptions(caseIdentifiers),
     [caseIdentifiers]
   );
   const caseIdentifierPathById = useMemo(() => {
     const map = new Map<string, string>();
-    caseIdentifierPathOptions.forEach(
-      (option: CaseIdentifierPathOption): void => {
-        map.set(option.id, option.label);
-      }
-    );
+    caseIdentifierPathOptions.forEach((option: CaseIdentifierPathOption): void => {
+      map.set(option.id, option.label);
+    });
     return map;
   }, [caseIdentifierPathOptions]);
   const blockedParentIds = useMemo(
     () =>
       editingCaseIdentifier
-        ? collectDescendantCaseIdentifierIds(
-          caseIdentifiers,
-          editingCaseIdentifier.id
-        )
+        ? collectDescendantCaseIdentifierIds(caseIdentifiers, editingCaseIdentifier.id)
         : new Set<string>(),
     [editingCaseIdentifier, caseIdentifiers]
   );
   const parentCaseIdentifierOptions = useMemo(
     () =>
       caseIdentifierPathOptions
-        .filter(
-          (option: CaseIdentifierPathOption): boolean =>
-            !blockedParentIds.has(option.id)
-        )
+        .filter((option: CaseIdentifierPathOption): boolean => !blockedParentIds.has(option.id))
         .map((option: CaseIdentifierPathOption) => ({
           value: option.id,
           label: option.label,
@@ -213,28 +200,26 @@ export function AdminCaseResolverIdentifiersPage(): React.JSX.Element {
         : null;
     const nextCaseIdentifier: CaseResolverIdentifier = editingCaseIdentifier
       ? {
-        ...editingCaseIdentifier,
-        name: normalizedName,
-        parentId: normalizedParentId,
-        color: formData.color.trim() || '#f59e0b',
-        updatedAt: now,
-      }
+          ...editingCaseIdentifier,
+          name: normalizedName,
+          parentId: normalizedParentId,
+          color: formData.color.trim() || '#f59e0b',
+          updatedAt: now,
+        }
       : {
-        id: createCaseIdentifierId(),
-        type: 'custom',
-        value: normalizedName,
-        name: normalizedName,
-        parentId: normalizedParentId,
-        color: formData.color.trim() || '#f59e0b',
-        createdAt: now,
-        updatedAt: now,
-      };
+          id: createCaseIdentifierId(),
+          type: 'custom',
+          value: normalizedName,
+          name: normalizedName,
+          parentId: normalizedParentId,
+          color: formData.color.trim() || '#f59e0b',
+          createdAt: now,
+          updatedAt: now,
+        };
     const nextCaseIdentifiers = editingCaseIdentifier
       ? caseIdentifiers.map((caseIdentifier: CaseResolverIdentifier) =>
-        caseIdentifier.id === editingCaseIdentifier.id
-          ? nextCaseIdentifier
-          : caseIdentifier
-      )
+          caseIdentifier.id === editingCaseIdentifier.id ? nextCaseIdentifier : caseIdentifier
+        )
       : [...caseIdentifiers, nextCaseIdentifier];
 
     try {
@@ -242,12 +227,9 @@ export function AdminCaseResolverIdentifiersPage(): React.JSX.Element {
         key: CASE_RESOLVER_IDENTIFIERS_KEY,
         value: serializeSetting(nextCaseIdentifiers),
       });
-      toast(
-        editingCaseIdentifier
-          ? 'Case identifier updated.'
-          : 'Case identifier created.',
-        { variant: 'success' }
-      );
+      toast(editingCaseIdentifier ? 'Case identifier updated.' : 'Case identifier created.', {
+        variant: 'success',
+      });
       setShowModal(false);
     } catch (error) {
       logClientError(error, {
@@ -257,12 +239,9 @@ export function AdminCaseResolverIdentifiersPage(): React.JSX.Element {
           caseIdentifierId: editingCaseIdentifier?.id,
         },
       });
-      toast(
-        error instanceof Error
-          ? error.message
-          : 'Failed to save case identifier.',
-        { variant: 'error' }
-      );
+      toast(error instanceof Error ? error.message : 'Failed to save case identifier.', {
+        variant: 'error',
+      });
     }
   }, [
     caseIdentifiers,
@@ -279,17 +258,16 @@ export function AdminCaseResolverIdentifiersPage(): React.JSX.Element {
     const now = new Date().toISOString();
     const nextCaseIdentifiers = caseIdentifiers
       .filter(
-        (caseIdentifier: CaseResolverIdentifier) =>
-          caseIdentifier.id !== caseIdentifierToDelete.id
+        (caseIdentifier: CaseResolverIdentifier) => caseIdentifier.id !== caseIdentifierToDelete.id
       )
       .map(
         (caseIdentifier: CaseResolverIdentifier): CaseResolverIdentifier =>
           caseIdentifier.parentId === caseIdentifierToDelete.id
             ? {
-              ...caseIdentifier,
-              parentId: null,
-              updatedAt: now,
-            }
+                ...caseIdentifier,
+                parentId: null,
+                updatedAt: now,
+              }
             : caseIdentifier
       );
     try {
@@ -306,12 +284,9 @@ export function AdminCaseResolverIdentifiersPage(): React.JSX.Element {
           caseIdentifierId: caseIdentifierToDelete.id,
         },
       });
-      toast(
-        error instanceof Error
-          ? error.message
-          : 'Failed to delete case identifier.',
-        { variant: 'error' }
-      );
+      toast(error instanceof Error ? error.message : 'Failed to delete case identifier.', {
+        variant: 'error',
+      });
     } finally {
       setCaseIdentifierToDelete(null);
     }
@@ -321,15 +296,15 @@ export function AdminCaseResolverIdentifiersPage(): React.JSX.Element {
     <div className='container mx-auto space-y-6 py-8'>
       <SectionHeader
         title='Case Resolver Case Identifiers'
-        subtitle={(
+        subtitle={
           <Breadcrumbs
             items={[
               { label: 'Admin', href: '/admin' },
               { label: 'Case Resolver', href: '/admin/case-resolver' },
-              { label: 'Case Identifiers' }
+              { label: 'Case Identifiers' },
             ]}
           />
-        )}
+        }
       />
 
       <div className='flex justify-start'>
@@ -355,12 +330,12 @@ export function AdminCaseResolverIdentifiersPage(): React.JSX.Element {
             <EmptyState
               title='No case identifiers yet'
               description='Create case identifiers to classify Case Resolver documents.'
-              action={(
+              action={
                 <Button onClick={openCreateModal} variant='outline'>
                   <Plus className='mr-2 size-4' />
                   Create First Case Identifier
                 </Button>
-              )}
+              }
             />
           ) : (
             <div className='space-y-2'>
@@ -375,13 +350,20 @@ export function AdminCaseResolverIdentifiersPage(): React.JSX.Element {
                       color={caseIdentifier.color || '#f59e0b'}
                       dot
                     />
-                    <PropertyRow label='Path' value={caseIdentifierPathById.get(caseIdentifier.id) ?? caseIdentifier.name} className='mt-1' />
+                    <PropertyRow
+                      label='Path'
+                      value={caseIdentifierPathById.get(caseIdentifier.id) ?? caseIdentifier.name}
+                      className='mt-1'
+                    />
                   </div>
                   <ActionMenu ariaLabel={`Actions for identifier ${caseIdentifier.name}`}>
                     <DropdownMenuItem onSelect={() => openEditModal(caseIdentifier)}>
                       Edit
                     </DropdownMenuItem>
-                    <DropdownMenuItem className='text-destructive focus:text-destructive' onSelect={() => setCaseIdentifierToDelete(caseIdentifier)}>
+                    <DropdownMenuItem
+                      className='text-destructive focus:text-destructive'
+                      onSelect={() => setCaseIdentifierToDelete(caseIdentifier)}
+                    >
                       Delete
                     </DropdownMenuItem>
                   </ActionMenu>

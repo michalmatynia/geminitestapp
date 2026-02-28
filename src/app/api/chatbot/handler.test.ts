@@ -29,11 +29,11 @@ vi.mock('fs/promises', () => ({
   },
 }));
 
-vi.mock('@/features/ai/brain/server-model-catalog', () => ({
+vi.mock('@/shared/lib/ai-brain/server-model-catalog', () => ({
   listBrainModels: listBrainModelsMock,
 }));
 
-vi.mock('@/features/ai/brain/server', () => ({
+vi.mock('@/shared/lib/ai-brain/server', () => ({
   resolveBrainModelExecutionConfig: resolveBrainModelExecutionConfigMock,
 }));
 
@@ -84,7 +84,7 @@ describe('chatbot handler', () => {
 
     const response = await GET_handler(
       new Request('http://localhost/api/chatbot') as Parameters<typeof GET_handler>[0],
-      { requestId: 'req-1' } as Parameters<typeof GET_handler>[1],
+      { requestId: 'req-1' } as Parameters<typeof GET_handler>[1]
     );
     const payload = (await response.json()) as {
       models: string[];
@@ -132,7 +132,7 @@ describe('chatbot handler', () => {
           ],
         }),
       }) as Parameters<typeof POST_handler>[0],
-      { requestId: 'req-2' } as Parameters<typeof POST_handler>[1],
+      { requestId: 'req-2' } as Parameters<typeof POST_handler>[1]
     );
 
     const payload = (await response.json()) as {

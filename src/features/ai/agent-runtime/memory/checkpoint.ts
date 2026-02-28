@@ -20,29 +20,18 @@ export function parseCheckpoint(payload: unknown): AgentCheckpoint | null {
     resumeRequestedAt: raw.resumeRequestedAt ?? null,
     resumeProcessedAt: raw.resumeProcessedAt ?? null,
     approvalRequestedStepId:
-      typeof raw.approvalRequestedStepId === 'string'
-        ? raw.approvalRequestedStepId
-        : null,
+      typeof raw.approvalRequestedStepId === 'string' ? raw.approvalRequestedStepId : null,
     approvalGrantedStepId:
-      typeof raw.approvalGrantedStepId === 'string'
-        ? raw.approvalGrantedStepId
-        : null,
-    checkpointBrief:
-      typeof raw.checkpointBrief === 'string' ? raw.checkpointBrief : null,
+      typeof raw.approvalGrantedStepId === 'string' ? raw.approvalGrantedStepId : null,
+    checkpointBrief: typeof raw.checkpointBrief === 'string' ? raw.checkpointBrief : null,
     checkpointNextActions: Array.isArray(raw.checkpointNextActions)
       ? raw.checkpointNextActions
       : null,
-    checkpointRisks: Array.isArray(raw.checkpointRisks)
-      ? raw.checkpointRisks
-      : null,
-    checkpointStepId:
-      typeof raw.checkpointStepId === 'string' ? raw.checkpointStepId : null,
+    checkpointRisks: Array.isArray(raw.checkpointRisks) ? raw.checkpointRisks : null,
+    checkpointStepId: typeof raw.checkpointStepId === 'string' ? raw.checkpointStepId : null,
     checkpointCreatedAt:
-      typeof raw.checkpointCreatedAt === 'string'
-        ? raw.checkpointCreatedAt
-        : null,
-    summaryCheckpoint:
-      typeof raw.summaryCheckpoint === 'number' ? raw.summaryCheckpoint : null,
+      typeof raw.checkpointCreatedAt === 'string' ? raw.checkpointCreatedAt : null,
+    summaryCheckpoint: typeof raw.summaryCheckpoint === 'number' ? raw.summaryCheckpoint : null,
     settings: raw.settings ?? null,
     preferences: raw.preferences ?? null,
     updatedAt: raw.updatedAt ?? new Date().toISOString(),

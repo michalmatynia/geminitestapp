@@ -3,23 +3,11 @@ export const dynamic = 'force-dynamic';
 
 import { apiHandler } from '@/shared/lib/api/api-handler';
 
-import {
-  getUserPreferencesHandler,
-  patchUserPreferencesHandler,
-} from './handler';
+import { getUserPreferencesHandler, patchUserPreferencesHandler } from './handler';
 
-export const GET = apiHandler(
-  getUserPreferencesHandler,
-  { source: 'user.preferences.GET' }
-);
+export const GET = apiHandler(getUserPreferencesHandler, { source: 'user.preferences.GET' });
 
-export const PATCH = apiHandler(
-  patchUserPreferencesHandler,
-  { source: 'user.preferences.PATCH' }
-);
+export const PATCH = apiHandler(patchUserPreferencesHandler, { source: 'user.preferences.PATCH' });
 
 // POST handler for sendBeacon (used during page unload to save AI Paths settings)
-export const POST = apiHandler(
-  patchUserPreferencesHandler,
-  { source: 'user.preferences.POST' }
-);
+export const POST = apiHandler(patchUserPreferencesHandler, { source: 'user.preferences.POST' });

@@ -1,25 +1,15 @@
-import {
-  type AiNode,
-} from '@/shared/contracts/ai-paths';
-import {
-  PARSER_PRESETS,
-  REGEX_INPUT_PORTS,
-  REGEX_OUTPUT_PORTS,
-} from '../../constants';
-import {
-  createParserMappings,
-  ensureUniquePorts,
-  normalizePortName,
-} from '../../utils';
+import { type AiNode } from '@/shared/contracts/ai-paths';
+import { PARSER_PRESETS, REGEX_INPUT_PORTS, REGEX_OUTPUT_PORTS } from '../../constants';
+import { createParserMappings, ensureUniquePorts, normalizePortName } from '../../utils';
 
 export const normalizeMapperNode = (node: AiNode): AiNode => {
   const mapperConfig = node.config?.mapper;
-  const outputs = 
-  mapperConfig?.outputs && mapperConfig.outputs.length > 0
-    ? mapperConfig.outputs
-    : node.outputs.length > 0
-      ? node.outputs
-      : ['value', 'result'];
+  const outputs =
+    mapperConfig?.outputs && mapperConfig.outputs.length > 0
+      ? mapperConfig.outputs
+      : node.outputs.length > 0
+        ? node.outputs
+        : ['value', 'result'];
   return {
     ...node,
     inputs: ensureUniquePorts(node.inputs ?? [], ['context', 'result', 'bundle', 'value']),
@@ -45,10 +35,7 @@ export const normalizeParserNode = (node: AiNode): AiNode => {
     parserConfig?.mappings ??
     (normalizedNodeOutputs.length > 0 ? createParserMappings(normalizedNodeOutputs) : {});
   const canonicalMappings = Object.entries(baseMappings).reduce<Record<string, string>>(
-    (
-      acc: Record<string, string>,
-      [rawKey, rawPath]: [string, string]
-    ): Record<string, string> => {
+    (acc: Record<string, string>, [rawKey, rawPath]: [string, string]): Record<string, string> => {
       const key = normalizePortName(rawKey).trim();
       if (!key) return acc;
       const path = typeof rawPath === 'string' ? rawPath : '';
@@ -65,13 +52,12 @@ export const normalizeParserNode = (node: AiNode): AiNode => {
   const outputsFromMappings = mappingKeys.length > 0 ? mappingKeys : normalizedNodeOutputs;
   const outputMode = parserConfig?.outputMode ?? 'individual';
   const hasImagesOutput = outputsFromMappings.some(
-    (key: string): boolean =>
-      key.toLowerCase() === 'images' || key.toLowerCase() === 'imageurls'
+    (key: string): boolean => key.toLowerCase() === 'images' || key.toLowerCase() === 'imageurls'
   );
-  const outputs = 
-  outputMode === 'bundle'
-    ? ['bundle', ...(hasImagesOutput ? ['images'] : [])]
-    : outputsFromMappings;
+  const outputs =
+    outputMode === 'bundle'
+      ? ['bundle', ...(hasImagesOutput ? ['images'] : [])]
+      : outputsFromMappings;
   return {
     ...node,
     outputs,

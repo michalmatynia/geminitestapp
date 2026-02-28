@@ -10,7 +10,11 @@ export function TextBlock(): React.ReactNode {
   const text = (settings['textContent'] as string) || '';
   if (!text) return null;
   const typoStyles = getBlockTypographyStyles(settings);
-  return <p className='text-base leading-relaxed text-gray-300 md:text-lg' style={typoStyles}>{text}</p>;
+  return (
+    <p className='text-base leading-relaxed text-gray-300 md:text-lg' style={typoStyles}>
+      {text}
+    </p>
+  );
 }
 
 export function TextElementBlock(): React.ReactNode {
@@ -18,5 +22,9 @@ export function TextElementBlock(): React.ReactNode {
   const text = (settings['textContent'] as string) || '';
   if (!text) return null;
   const typoStyles = getBlockTypographyStyles(settings);
-  return <p className='m-0 p-0 text-base leading-relaxed text-gray-200' style={typoStyles}>{text}</p>;
+  return (
+    <p className='m-0 p-0 text-base leading-relaxed text-gray-200' style={typoStyles}>
+      {text}
+    </p>
+  );
 }

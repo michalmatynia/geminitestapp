@@ -25,11 +25,7 @@ export function SectionLayoutProvider({
     [rowHeightMode, rowHeight, stretch]
   );
 
-  return (
-    <SectionLayoutContext.Provider value={value}>
-      {children}
-    </SectionLayoutContext.Provider>
-  );
+  return <SectionLayoutContext.Provider value={value}>{children}</SectionLayoutContext.Provider>;
 }
 
 export function useSectionLayout(): SectionLayoutData {

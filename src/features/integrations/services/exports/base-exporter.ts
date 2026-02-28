@@ -3,17 +3,14 @@ import 'server-only';
 import { callBaseApi } from '@/features/integrations/services/imports/base-client';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type { ImportExportTemplateMapping as ExportTemplateMapping } from '@/shared/contracts/data-import-export';
-import type { 
+import type {
   BaseProductRecord,
   ImageExportDiagnostics,
-  ImageUrlDiagnostic
+  ImageUrlDiagnostic,
 } from '@/shared/contracts/integrations';
 import type { ProductWithImagesDto as ProductWithImages } from '@/shared/contracts/products';
 
-import {
-  getAllImageUrls,
-  getProductImagesAsBase64,
-} from './base-exporter-images';
+import { getAllImageUrls, getProductImagesAsBase64 } from './base-exporter-images';
 import {
   applyExportTemplateMappings,
   toNumberValue,
@@ -38,22 +35,14 @@ export type {
 } from './base-exporter-images';
 export type { ImageExportDiagnostics, ImageUrlDiagnostic };
 
-const IMAGE_EXPORT_ALIASES = new Set([
-  'images_all',
-  'image_slots_all',
-  'image_links_all',
-]);
+const IMAGE_EXPORT_ALIASES = new Set(['images_all', 'image_slots_all', 'image_links_all']);
 
 const PRODUCT_PARAMETER_MAPPING_PREFIX = 'parameter:';
 
 const normalizeParameterPrefixedBaseField = (value: string): string => {
   const trimmed = value.trim();
   if (!trimmed) return trimmed;
-  if (
-    !trimmed
-      .toLowerCase()
-      .startsWith(PRODUCT_PARAMETER_MAPPING_PREFIX)
-  ) {
+  if (!trimmed.toLowerCase().startsWith(PRODUCT_PARAMETER_MAPPING_PREFIX)) {
     return trimmed;
   }
 
@@ -149,11 +138,7 @@ const mergeTextFields = (
 ): void => {
   const nextTextFields: Record<string, unknown> = {};
 
-  const setNestedValue = (
-    target: Record<string, unknown>,
-    path: string,
-    value: string
-  ): void => {
+  const setNestedValue = (target: Record<string, unknown>, path: string, value: string): void => {
     const parts = path
       .split('.')
       .map((part) => part.trim())
@@ -245,9 +230,7 @@ const mergeNumericFields = (
 
   const existing = templateData[fieldName];
   if (existing && typeof existing === 'object' && !Array.isArray(existing)) {
-    for (const [key, value] of Object.entries(
-      existing as Record<string, unknown>
-    )) {
+    for (const [key, value] of Object.entries(existing as Record<string, unknown>)) {
       const normalized = normalizeKey ? normalizeKey(key) : key.trim();
       if (!normalized) continue;
       const numeric = toNumberValue(value);
@@ -491,19 +474,20 @@ export async function exportProductToBase(
     // Extract product ID from response
     // Baselinker API returns { status: "SUCCESS", product_id: "..." }
     const productIdValue = response['product_id'];
-    const productId = (typeof productIdValue === 'string' || typeof productIdValue === 'number')
-      ? String(productIdValue)
-      : null;
+    const productId =
+      typeof productIdValue === 'string' || typeof productIdValue === 'number'
+        ? String(productIdValue)
+        : null;
 
     return {
       success: true,
       ...(productId ? { productId } : {}),
     };
   } catch (error) {
-    void ErrorSystem.captureException(error, { 
+    void ErrorSystem.captureException(error, {
       service: 'base-exporter',
-      action: 'exportProductToBase', 
-      productId: product.id 
+      action: 'exportProductToBase',
+      productId: product.id,
     });
     return {
       success: false,
@@ -528,7 +512,9 @@ export async function exportProductImagesToBase(
   try {
     const productData = await buildBaseProductData(product, [], null, {
       imageBaseUrl: options?.imageBaseUrl ?? null,
-      ...(options?.exportImagesAsBase64 !== undefined ? { exportImagesAsBase64: options.exportImagesAsBase64 } : {}),
+      ...(options?.exportImagesAsBase64 !== undefined
+        ? { exportImagesAsBase64: options.exportImagesAsBase64 }
+        : {}),
       ...(options?.imageDiagnostics ? { imageDiagnostics: options.imageDiagnostics } : {}),
       ...(options?.imageBase64Mode ? { imageBase64Mode: options.imageBase64Mode } : {}),
       imageTransform: options?.imageTransform ?? null,
@@ -544,20 +530,21 @@ export async function exportProductImagesToBase(
     // Base updates existing inventory products via addInventoryProduct when product_id is provided.
     const response = await callBaseApi(token, 'addInventoryProduct', apiParams);
     const productIdValue = response['product_id'];
-    const productId = (typeof productIdValue === 'string' || typeof productIdValue === 'number')
-      ? String(productIdValue)
-      : externalProductId;
+    const productId =
+      typeof productIdValue === 'string' || typeof productIdValue === 'number'
+        ? String(productIdValue)
+        : externalProductId;
 
     return {
       success: true,
       productId,
     };
   } catch (error) {
-    void ErrorSystem.captureException(error, { 
+    void ErrorSystem.captureException(error, {
       service: 'base-exporter',
-      action: 'exportProductImagesToBase', 
-      productId: product.id, 
-      externalProductId 
+      action: 'exportProductImagesToBase',
+      productId: product.id,
+      externalProductId,
     });
     return {
       success: false,

@@ -23,7 +23,7 @@ export class RateLimiter {
       keyGenerator: (req: NextRequest): string => this.getClientIP(req),
       skipSuccessfulRequests: false,
       skipFailedRequests: false,
-      ...config
+      ...config,
     };
   }
 
@@ -38,12 +38,12 @@ export class RateLimiter {
     const windowStart: number = now - this.config.windowMs;
 
     let entry: RateLimitEntry | undefined = this.store.get(key);
-    
+
     if (!entry) {
       entry = {
         count: 0,
         resetTime: now + this.config.windowMs,
-        requests: []
+        requests: [],
       };
       this.store.set(key, entry);
     }
@@ -58,7 +58,7 @@ export class RateLimiter {
     }
 
     const allowed: boolean = entry.count < this.config.maxRequests;
-    
+
     if (allowed) {
       entry.requests.push(now);
       entry.count++;
@@ -68,7 +68,7 @@ export class RateLimiter {
       allowed,
       remaining: Math.max(0, this.config.maxRequests - entry.count),
       resetTime: entry.resetTime,
-      totalHits: entry.count
+      totalHits: entry.count,
     };
   }
 
@@ -78,7 +78,7 @@ export class RateLimiter {
 
     const key: string = this.config.keyGenerator(req);
     const entry: RateLimitEntry | undefined = this.store.get(key);
-    
+
     if (entry) {
       entry.requests.push(Date.now());
       entry.count = entry.requests.length;
@@ -88,16 +88,16 @@ export class RateLimiter {
   private getClientIP(req: NextRequest): string {
     const forwarded: string | null = req.headers.get('x-forwarded-for');
     const realIP: string | null = req.headers.get('x-real-ip');
-    
+
     if (forwarded) {
       const firstIp: string | undefined = forwarded.split(',')[0];
       return firstIp ? firstIp.trim() : 'unknown';
     }
-    
+
     if (realIP) {
       return realIP;
     }
-    
+
     // Fallback if req.ip is not available or is undefined
     return (req as unknown as { ip?: string }).ip || 'unknown';
   }
@@ -114,10 +114,10 @@ export class RateLimiter {
   getStats(): {
     totalKeys: number;
     memoryUsage: number;
-    } {
+  } {
     return {
       totalKeys: this.store.size,
-      memoryUsage: JSON.stringify([...this.store.entries()]).length
+      memoryUsage: JSON.stringify([...this.store.entries()]).length,
     };
   }
 
@@ -131,33 +131,33 @@ export const rateLimiters = {
   // General API endpoints
   api: new RateLimiter({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    maxRequests: 100
+    maxRequests: 100,
   }),
 
   // Product creation (more restrictive)
   productCreate: new RateLimiter({
     windowMs: 60 * 1000, // 1 minute
-    maxRequests: 5
+    maxRequests: 5,
   }),
 
   // Image upload (very restrictive)
   imageUpload: new RateLimiter({
     windowMs: 60 * 1000, // 1 minute
-    maxRequests: 3
+    maxRequests: 3,
   }),
 
   // Search endpoints
   search: new RateLimiter({
     windowMs: 60 * 1000, // 1 minute
-    maxRequests: 30
+    maxRequests: 30,
   }),
 
   // Authentication endpoints
   auth: new RateLimiter({
     windowMs: 15 * 60 * 1000, // 15 minutes
     maxRequests: 5,
-    skipSuccessfulRequests: true
-  })
+    skipSuccessfulRequests: true,
+  }),
 } satisfies Record<string, RateLimiter>;
 
 // Rate limiting middleware
@@ -167,7 +167,9 @@ export function withRateLimit(limiter: RateLimiter): (req: NextRequest) => Promi
   status?: number;
   message?: string;
 }> {
-  return (req: NextRequest): Promise<{
+  return (
+    req: NextRequest
+  ): Promise<{
     allowed: boolean;
     headers: Record<string, string>;
     status?: number;
@@ -175,12 +177,12 @@ export function withRateLimit(limiter: RateLimiter): (req: NextRequest) => Promi
   }> => {
     const result = limiter.checkLimit(req);
     const config = limiter.getConfig();
-    
+
     const headers: Record<string, string> = {
       'X-RateLimit-Limit': config.maxRequests.toString(),
       'X-RateLimit-Remaining': result.remaining.toString(),
       'X-RateLimit-Reset': new Date(result.resetTime).toISOString(),
-      'X-RateLimit-Window': config.windowMs.toString()
+      'X-RateLimit-Window': config.windowMs.toString(),
     };
 
     if (!result.allowed) {
@@ -188,23 +190,26 @@ export function withRateLimit(limiter: RateLimiter): (req: NextRequest) => Promi
         allowed: false,
         headers: {
           ...headers,
-          'Retry-After': Math.ceil((result.resetTime - Date.now()) / 1000).toString()
+          'Retry-After': Math.ceil((result.resetTime - Date.now()) / 1000).toString(),
         },
         status: 429,
-        message: 'Too many requests'
+        message: 'Too many requests',
       });
     }
 
     return Promise.resolve({
       allowed: true,
-      headers
+      headers,
     });
   };
 }
 
 // Cleanup task (run periodically)
 if (typeof setInterval !== 'undefined') {
-  setInterval((): void => {
-    Object.values(rateLimiters).forEach((limiter: RateLimiter): void => limiter.cleanup());
-  }, 5 * 60 * 1000); // Every 5 minutes
+  setInterval(
+    (): void => {
+      Object.values(rateLimiters).forEach((limiter: RateLimiter): void => limiter.cleanup());
+    },
+    5 * 60 * 1000
+  ); // Every 5 minutes
 }

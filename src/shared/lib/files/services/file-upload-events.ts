@@ -93,10 +93,7 @@ const isMissingPrismaTable = (error: unknown): boolean =>
 
 const normalizeRecord = (record: FileUploadEventRecord): FileUploadEventRecord => ({
   ...record,
-  createdAt:
-    record.createdAt instanceof Date
-      ? record.createdAt
-      : new Date(record.createdAt),
+  createdAt: record.createdAt instanceof Date ? record.createdAt : new Date(record.createdAt),
 });
 
 const toRecord = (doc: MongoFileUploadEventDoc): FileUploadEventRecord => ({
@@ -163,7 +160,7 @@ const buildMongoFilter = (input: ListFileUploadEventsInput): Record<string, unkn
 };
 
 export async function createFileUploadEvent(
-  input: FileUploadEventInput,
+  input: FileUploadEventInput
 ): Promise<FileUploadEventRecord> {
   const provider = await getAppDbProvider();
   const payload: FileUploadEventRecord = {
@@ -242,7 +239,7 @@ export async function createFileUploadEvent(
 }
 
 export async function listFileUploadEvents(
-  input: ListFileUploadEventsInput,
+  input: ListFileUploadEventsInput
 ): Promise<ListFileUploadEventsResult> {
   const provider = await getAppDbProvider();
   const page = Math.max(1, input.page ?? 1);
@@ -294,7 +291,7 @@ export async function listFileUploadEvents(
         userId: row.userId ?? null,
         meta: (row.meta as Record<string, unknown> | null) ?? null,
         createdAt: row.createdAt,
-      }),
+      })
     );
 
     return { events, total, page, pageSize };

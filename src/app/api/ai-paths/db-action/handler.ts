@@ -41,21 +41,13 @@ const actionSchema = z.object({
   ]),
   filter: z.record(z.string(), z['unknown']()).optional(),
   update: z
-    .union([
-      z.record(z.string(), z['unknown']()),
-      z.array(z.record(z.string(), z['unknown']())),
-    ])
+    .union([z.record(z.string(), z['unknown']()), z.array(z.record(z.string(), z['unknown']()))])
     .optional(),
   pipeline: z.array(z.record(z.string(), z['unknown']())).optional(),
   document: z.record(z.string(), z['unknown']()).optional(),
   documents: z.array(z.record(z.string(), z['unknown']())).optional(),
   projection: z.record(z.string(), z['unknown']()).optional(),
-  sort: z
-    .record(
-      z.string(),
-      z.union([z.number(), z.literal('asc'), z.literal('desc')]),
-    )
-    .optional(),
+  sort: z.record(z.string(), z.union([z.number(), z.literal('asc'), z.literal('desc')])).optional(),
   limit: z.number().int().min(1).max(200).optional(),
   idType: z.enum(['string', 'objectId']).optional(),
   distinctField: z.string().optional(),
@@ -78,12 +70,11 @@ const coerceQuery = (value: unknown): Record<string, unknown> => {
   return {};
 };
 
-const looksLikeObjectId = (value: string): boolean =>
-  /^[0-9a-fA-F]{24}$/.test(value);
+const looksLikeObjectId = (value: string): boolean => /^[0-9a-fA-F]{24}$/.test(value);
 
 const normalizeObjectId = (
   query: Record<string, unknown>,
-  idType?: string,
+  idType?: string
 ): Record<string, unknown> => {
   if (idType !== 'objectId') return query;
   const next = { ...query };
@@ -93,9 +84,7 @@ const normalizeObjectId = (
   return next;
 };
 
-const normalizeUpdateDoc = (
-  update: unknown,
-): Record<string, unknown> | unknown[] | null => {
+const normalizeUpdateDoc = (update: unknown): Record<string, unknown> | unknown[] | null => {
   if (Array.isArray(update)) return update as unknown[];
   if (update && typeof update === 'object') {
     const keys = Object.keys(update as Record<string, unknown>);
@@ -139,8 +128,7 @@ const PRISMA_COLLECTION_DELEGATES: Record<string, string> = {
   auth_login_challenges: 'authLoginChallenge',
 };
 
-const normalizeCollectionKey = (value: string): string =>
-  value.trim().toLowerCase();
+const normalizeCollectionKey = (value: string): string => value.trim().toLowerCase();
 
 const resolvePrismaCollectionKey = (collection: string): string | null => {
   if (!collection) return null;
@@ -166,23 +154,16 @@ type PrismaDelegate = {
 const getPrismaDelegate = (collection: string): PrismaDelegate | null => {
   const delegateName = PRISMA_COLLECTION_DELEGATES[collection];
   if (!delegateName) return null;
-  const delegate = (prisma as unknown as Record<string, PrismaDelegate>)[
-    delegateName
-  ];
+  const delegate = (prisma as unknown as Record<string, PrismaDelegate>)[delegateName];
   return delegate ?? null;
 };
 
 const normalizePrismaSelect = (
-  projection?: Record<string, unknown>,
+  projection?: Record<string, unknown>
 ): Record<string, unknown> | undefined => {
-  if (
-    !projection ||
-    typeof projection !== 'object' ||
-    Array.isArray(projection)
-  )
-    return undefined;
+  if (!projection || typeof projection !== 'object' || Array.isArray(projection)) return undefined;
   const hasNested = Object.values(projection).some(
-    (value: unknown) => value !== null && typeof value === 'object',
+    (value: unknown) => value !== null && typeof value === 'object'
   );
   if (hasNested) return projection;
   const select: Record<string, boolean> = {};
@@ -194,10 +175,9 @@ const normalizePrismaSelect = (
 };
 
 const normalizePrismaOrderBy = (
-  sort?: Record<string, unknown>,
+  sort?: Record<string, unknown>
 ): Record<string, 'asc' | 'desc'> | undefined => {
-  if (!sort || typeof sort !== 'object' || Array.isArray(sort))
-    return undefined;
+  if (!sort || typeof sort !== 'object' || Array.isArray(sort)) return undefined;
   const orderBy: Record<string, 'asc' | 'desc'> = {};
   for (const [key, value] of Object.entries(sort)) {
     if (value === 'desc' || value === -1) {
@@ -210,17 +190,10 @@ const normalizePrismaOrderBy = (
 };
 
 /** Extract flat key-value updates from a MongoDB-style update doc ({$set: {...}} or plain). */
-const extractFlatUpdates = (
-  update: unknown,
-): Record<string, unknown> | null => {
-  if (!update || typeof update !== 'object' || Array.isArray(update))
-    return null;
+const extractFlatUpdates = (update: unknown): Record<string, unknown> | null => {
+  if (!update || typeof update !== 'object' || Array.isArray(update)) return null;
   const doc = update as Record<string, unknown>;
-  if (
-    doc['$set'] &&
-    typeof doc['$set'] === 'object' &&
-    !Array.isArray(doc['$set'])
-  ) {
+  if (doc['$set'] && typeof doc['$set'] === 'object' && !Array.isArray(doc['$set'])) {
     return doc['$set'] as Record<string, unknown>;
   }
   const hasOperators = Object.keys(doc).some((key) => key.startsWith('$'));
@@ -228,9 +201,7 @@ const extractFlatUpdates = (
   return doc;
 };
 
-const normalizeReplaceDoc = (
-  update: unknown,
-): Record<string, unknown> | null => {
+const normalizeReplaceDoc = (update: unknown): Record<string, unknown> | null => {
   if (update && typeof update === 'object' && !Array.isArray(update)) {
     const keys = Object.keys(update as Record<string, unknown>);
     if (keys.some((key: string) => key.startsWith('$'))) {
@@ -253,11 +224,7 @@ class ProviderResolutionError extends Error {
   public readonly code: ProviderResolutionErrorCode;
   public readonly provider: DbProvider;
 
-  constructor(
-    code: ProviderResolutionErrorCode,
-    provider: DbProvider,
-    message: string,
-  ) {
+  constructor(code: ProviderResolutionErrorCode, provider: DbProvider, message: string) {
     super(message);
     this.name = 'ProviderResolutionError';
     this.code = code;
@@ -265,9 +232,8 @@ class ProviderResolutionError extends Error {
   }
 }
 
-const isProviderResolutionError = (
-  error: unknown,
-): error is ProviderResolutionError => error instanceof ProviderResolutionError;
+const isProviderResolutionError = (error: unknown): error is ProviderResolutionError =>
+  error instanceof ProviderResolutionError;
 
 const isPrismaRecordNotFoundError = (error: unknown): boolean => {
   if (!error || typeof error !== 'object') return false;
@@ -276,10 +242,7 @@ const isPrismaRecordNotFoundError = (error: unknown): boolean => {
     return true;
   }
   const message = (error as { message?: unknown })['message'];
-  return (
-    typeof message === 'string' &&
-    message.toLowerCase().includes('record not found')
-  );
+  return typeof message === 'string' && message.toLowerCase().includes('record not found');
 };
 
 const FALLBACK_ON_RECORD_NOT_FOUND_ACTIONS = new Set<string>([
@@ -293,7 +256,7 @@ const FALLBACK_ON_RECORD_NOT_FOUND_ACTIONS = new Set<string>([
 const withProviderPayload = (
   provider: DbProvider,
   requestedProvider: DbActionRequestedProvider,
-  payload: Record<string, unknown>,
+  payload: Record<string, unknown>
 ): Record<string, unknown> => ({
   ...payload,
   provider,
@@ -303,7 +266,7 @@ const withProviderPayload = (
 
 export async function postAiPathsDbActionHandler(
   req: NextRequest,
-  _ctx: ApiHandlerContext,
+  _ctx: ApiHandlerContext
 ): Promise<Response> {
   const { access, isInternal } = await requireAiPathsAccessOrInternal(req);
   if (!isInternal) {
@@ -337,7 +300,7 @@ export async function postAiPathsDbActionHandler(
   const explicitCollectionMap = normalizeAiPathsCollectionMap(collectionMap);
   const collectionResolution = resolveAiPathsCollectionName(
     requestedCollection,
-    explicitCollectionMap,
+    explicitCollectionMap
   );
   const resolvedCollection = collectionResolution.collection;
 
@@ -345,19 +308,10 @@ export async function postAiPathsDbActionHandler(
     throw internalError('Collection not allowlisted');
   }
 
-  const runActionWithProvider = async (
-    provider: DbProvider,
-  ): Promise<Record<string, unknown>> => {
-    const providerActionError = getUnsupportedProviderActionMessage(
-      provider,
-      action,
-    );
+  const runActionWithProvider = async (provider: DbProvider): Promise<Record<string, unknown>> => {
+    const providerActionError = getUnsupportedProviderActionMessage(provider, action);
     if (providerActionError) {
-      throw new ProviderResolutionError(
-        'action_not_supported',
-        provider,
-        providerActionError,
-      );
+      throw new ProviderResolutionError('action_not_supported', provider, providerActionError);
     }
 
     if (provider === 'prisma') {
@@ -365,18 +319,16 @@ export async function postAiPathsDbActionHandler(
         throw new ProviderResolutionError(
           'provider_not_configured',
           provider,
-          'Prisma is not configured',
+          'Prisma is not configured'
         );
       }
       const prismaCollection = resolvePrismaCollectionKey(resolvedCollection);
-      const delegate = prismaCollection
-        ? getPrismaDelegate(prismaCollection)
-        : null;
+      const delegate = prismaCollection ? getPrismaDelegate(prismaCollection) : null;
       if (!delegate) {
         throw new ProviderResolutionError(
           'collection_not_available',
           provider,
-          `Collection "${resolvedCollection}" is not available for Prisma.`,
+          `Collection "${resolvedCollection}" is not available for Prisma.`
         );
       }
       const where = coerceQuery(filter);
@@ -428,9 +380,7 @@ export async function postAiPathsDbActionHandler(
         });
         const values = rows
           .map((row: unknown) =>
-            row && typeof row === 'object'
-              ? (row as Record<string, unknown>)[field]
-              : undefined,
+            row && typeof row === 'object' ? (row as Record<string, unknown>)[field] : undefined
           )
           .filter((value: unknown) => value !== undefined);
         return withProviderPayload(provider, requestedProvider, {
@@ -440,17 +390,13 @@ export async function postAiPathsDbActionHandler(
       }
 
       if (action === 'aggregate') {
-        throw badRequestError(
-          'Action "aggregate" is not supported for Prisma in DB Action.',
-        );
+        throw badRequestError('Action "aggregate" is not supported for Prisma in DB Action.');
       }
 
       if (action === 'updateOne') {
         const flatUpdates = extractFlatUpdates(update);
         if (!flatUpdates || Object.keys(flatUpdates).length === 0) {
-          throw badRequestError(
-            'Update data is required (plain object or $set)',
-          );
+          throw badRequestError('Update data is required (plain object or $set)');
         }
         if (!where || Object.keys(where).length === 0) {
           throw badRequestError('Filter is required for updateOne');
@@ -466,9 +412,7 @@ export async function postAiPathsDbActionHandler(
       if (action === 'updateMany') {
         const flatUpdates = extractFlatUpdates(update);
         if (!flatUpdates || Object.keys(flatUpdates).length === 0) {
-          throw badRequestError(
-            'Update data is required (plain object or $set)',
-          );
+          throw badRequestError('Update data is required (plain object or $set)');
         }
         const result = await delegate.updateMany({ where, data: flatUpdates });
         return withProviderPayload(provider, requestedProvider, {
@@ -480,9 +424,7 @@ export async function postAiPathsDbActionHandler(
       if (action === 'findOneAndUpdate') {
         const flatUpdates = extractFlatUpdates(update);
         if (!flatUpdates || Object.keys(flatUpdates).length === 0) {
-          throw badRequestError(
-            'Update data is required (plain object or $set)',
-          );
+          throw badRequestError('Update data is required (plain object or $set)');
         }
         if (!where || Object.keys(where).length === 0) {
           throw badRequestError('Filter is required for findOneAndUpdate');
@@ -512,9 +454,7 @@ export async function postAiPathsDbActionHandler(
 
       if (action === 'insertOne') {
         const doc =
-          document && typeof document === 'object' && !Array.isArray(document)
-            ? document
-            : null;
+          document && typeof document === 'object' && !Array.isArray(document) ? document : null;
         if (!doc) {
           throw badRequestError('Document is required');
         }
@@ -579,7 +519,7 @@ export async function postAiPathsDbActionHandler(
       throw new ProviderResolutionError(
         'provider_not_configured',
         provider,
-        'MongoDB is not configured',
+        'MongoDB is not configured'
       );
     }
 
@@ -603,10 +543,7 @@ export async function postAiPathsDbActionHandler(
     }
 
     if (action === 'find') {
-      const cursor = collectionRef.find(
-        normalizedFilter,
-        projection ? { projection } : undefined,
-      );
+      const cursor = collectionRef.find(normalizedFilter, projection ? { projection } : undefined);
       if (sort) {
         cursor.sort(sort as Sort);
       }
@@ -620,7 +557,7 @@ export async function postAiPathsDbActionHandler(
     if (action === 'findOne') {
       const item = await collectionRef.findOne(
         normalizedFilter,
-        projection ? { projection } : undefined,
+        projection ? { projection } : undefined
       );
       return withProviderPayload(provider, requestedProvider, {
         item,
@@ -658,9 +595,7 @@ export async function postAiPathsDbActionHandler(
 
     if (action === 'insertOne') {
       const doc =
-        document && typeof document === 'object' && !Array.isArray(document)
-          ? document
-          : null;
+        document && typeof document === 'object' && !Array.isArray(document) ? document : null;
       if (!doc) {
         throw badRequestError('Document is required');
       }
@@ -681,9 +616,7 @@ export async function postAiPathsDbActionHandler(
       if (!docs || docs.length === 0) {
         throw badRequestError('Documents array is required');
       }
-      const result = await collectionRef.insertMany(
-        docs as Record<string, unknown>[],
-      );
+      const result = await collectionRef.insertMany(docs as Record<string, unknown>[]);
       return withProviderPayload(provider, requestedProvider, {
         insertedIds: result.insertedIds,
         insertedCount: result.insertedCount,
@@ -695,13 +628,9 @@ export async function postAiPathsDbActionHandler(
       if (!replacement) {
         throw badRequestError('Replacement document is required');
       }
-      const result = await collectionRef.replaceOne(
-        normalizedFilter,
-        replacement,
-        {
-          upsert: !!upsert,
-        },
-      );
+      const result = await collectionRef.replaceOne(normalizedFilter, replacement, {
+        upsert: !!upsert,
+      });
       return withProviderPayload(provider, requestedProvider, {
         matchedCount: result.matchedCount,
         modifiedCount: result.modifiedCount,
@@ -714,11 +643,11 @@ export async function postAiPathsDbActionHandler(
       if (!updateDoc) {
         throw badRequestError('Update document is required');
       }
-      const result = await collectionRef.findOneAndUpdate(
-        normalizedFilter,
-        updateDoc,
-        { returnDocument, upsert: !!upsert, includeResultMetadata: true },
-      );
+      const result = await collectionRef.findOneAndUpdate(normalizedFilter, updateDoc, {
+        returnDocument,
+        upsert: !!upsert,
+        includeResultMetadata: true,
+      });
       return withProviderPayload(provider, requestedProvider, {
         value: result.value ?? null,
         ok: result.ok ?? 1,
@@ -733,11 +662,11 @@ export async function postAiPathsDbActionHandler(
       const result =
         action === 'updateOne'
           ? await collectionRef.updateOne(normalizedFilter, updateDoc, {
-            upsert: !!upsert,
-          })
+              upsert: !!upsert,
+            })
           : await collectionRef.updateMany(normalizedFilter, updateDoc, {
-            upsert: !!upsert,
-          });
+              upsert: !!upsert,
+            });
       return withProviderPayload(provider, requestedProvider, {
         matchedCount: result.matchedCount,
         modifiedCount: result.modifiedCount,
@@ -770,10 +699,9 @@ export async function postAiPathsDbActionHandler(
 
   const primaryProvider = await resolveCollectionProviderForRequest(
     resolvedCollection,
-    requestedProvider,
+    requestedProvider
   );
-  const canAttemptFallback =
-    requestedProvider !== 'mongodb' && requestedProvider !== 'prisma';
+  const canAttemptFallback = requestedProvider !== 'mongodb' && requestedProvider !== 'prisma';
 
   try {
     const result = await runActionWithProvider(primaryProvider);
@@ -798,8 +726,7 @@ export async function postAiPathsDbActionHandler(
       throw primaryError;
     }
 
-    const fallbackProvider: DbProvider =
-      primaryProvider === 'prisma' ? 'mongodb' : 'prisma';
+    const fallbackProvider: DbProvider = primaryProvider === 'prisma' ? 'mongodb' : 'prisma';
     const fallbackCode: ProviderFallbackCode = isResolutionError
       ? primaryError.code
       : 'record_not_found';

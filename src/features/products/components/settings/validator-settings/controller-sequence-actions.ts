@@ -3,9 +3,7 @@ import type {
   CreateValidationPatternPayload,
   UpdateValidationPatternPayload,
 } from '@/features/products/api/settings';
-import {
-  encodeDynamicReplacementRecipe,
-} from '@/features/products/utils/validator-replacement-recipe';
+import { encodeDynamicReplacementRecipe } from '@/features/products/utils/validator-replacement-recipe';
 import type { ProductValidationPattern } from '@/shared/contracts/products';
 import type { SequenceGroupDraft } from '@/shared/contracts/products';
 import { api } from '@/shared/lib/api-client';
@@ -18,7 +16,6 @@ import {
   isLatestFieldMirrorPattern,
   isNameSecondSegmentDimensionPattern,
 } from './helpers';
-
 
 export type CreatePatternMutation = {
   mutateAsync: (payload: CreateValidationPatternPayload) => Promise<unknown>;
@@ -207,9 +204,7 @@ export function createSequenceActions(args: SequenceActionInput): SequenceAction
         },
       });
       notifyError(
-        error instanceof Error
-          ? error.message
-          : 'Failed to create SKU auto-increment sequence.'
+        error instanceof Error ? error.message : 'Failed to create SKU auto-increment sequence.'
       );
     }
   };
@@ -346,9 +341,7 @@ export function createSequenceActions(args: SequenceActionInput): SequenceAction
         },
       });
       notifyError(
-        error instanceof Error
-          ? error.message
-          : 'Failed to create latest price & stock sequence.'
+        error instanceof Error ? error.message : 'Failed to create latest price & stock sequence.'
       );
     }
   };
@@ -490,8 +483,7 @@ export function createSequenceActions(args: SequenceActionInput): SequenceAction
         await createNameSecondSegmentDimensionPattern({
           target: 'length',
           labelBase: 'Name Segment #2 -> Height',
-          message:
-            'Propose Height (length) from Name segment #2 (between first and second "|").',
+          message: 'Propose Height (length) from Name segment #2 (between first and second "|").',
           replacementField: 'length',
           sequence: maxSequence + 20,
         });
@@ -546,9 +538,7 @@ export function createSequenceActions(args: SequenceActionInput): SequenceAction
         },
       });
       notifyError(
-        error instanceof Error
-          ? error.message
-          : 'Failed to create name segment category pattern.'
+        error instanceof Error ? error.message : 'Failed to create name segment category pattern.'
       );
     }
   };
@@ -610,9 +600,7 @@ export function createSequenceActions(args: SequenceActionInput): SequenceAction
     const firstSequence = maxSequence + 10;
 
     const mirrorBaseLabel = 'Mirror Name EN to Name PL';
-    const shouldCreateMirrorPattern = !existingLabels.has(
-      mirrorBaseLabel.toLowerCase()
-    );
+    const shouldCreateMirrorPattern = !existingLabels.has(mirrorBaseLabel.toLowerCase());
     const mirrorLabel = shouldCreateMirrorPattern
       ? buildUniqueLabel(mirrorBaseLabel, existingLabels)
       : mirrorBaseLabel;
@@ -665,8 +653,7 @@ export function createSequenceActions(args: SequenceActionInput): SequenceAction
           locale: 'pl',
           regex: '^.*$',
           flags: null,
-          message:
-            'Mirror English name into Polish name before running Polish replacement rules.',
+          message: 'Mirror English name into Polish name before running Polish replacement rules.',
           severity: 'warning',
           enabled: true,
           replacementEnabled: true,
@@ -745,9 +732,7 @@ export function createSequenceActions(args: SequenceActionInput): SequenceAction
         },
       });
       notifyError(
-        error instanceof Error
-          ? error.message
-          : 'Failed to create Name EN -> PL mirror sequence.'
+        error instanceof Error ? error.message : 'Failed to create Name EN -> PL mirror sequence.'
       );
     }
   };
@@ -755,7 +740,7 @@ export function createSequenceActions(args: SequenceActionInput): SequenceAction
   const handleSaveSequenceGroup = async (groupId: string): Promise<void> => {
     const group = args.sequenceGroups.get(groupId);
     if (!group || group.patternIds.length === 0) return;
-     
+
     const draft = args.getGroupDraft(groupId);
     const label = draft.label.trim() || 'Sequence / Group';
     const parsedDebounce = Number(draft.debounceMs);
@@ -777,7 +762,7 @@ export function createSequenceActions(args: SequenceActionInput): SequenceAction
         ...prev,
         [groupId]: { label, debounceMs: String(debounceMs) },
       }));
-       
+
       notifySuccess('Sequence group settings saved.');
     } catch (error) {
       logClientError(error, {
@@ -787,9 +772,7 @@ export function createSequenceActions(args: SequenceActionInput): SequenceAction
           groupId,
         },
       });
-      notifyError(
-        error instanceof Error ? error.message : 'Failed to save sequence group.'
-      );
+      notifyError(error instanceof Error ? error.message : 'Failed to save sequence group.');
     }
   };
 
@@ -821,9 +804,7 @@ export function createSequenceActions(args: SequenceActionInput): SequenceAction
           groupId,
         },
       });
-      notifyError(
-        error instanceof Error ? error.message : 'Failed to ungroup sequence.'
-      );
+      notifyError(error instanceof Error ? error.message : 'Failed to ungroup sequence.');
     }
   };
 
@@ -842,7 +823,9 @@ export function createSequenceActions(args: SequenceActionInput): SequenceAction
         [groupId]: { ...getGroupDraft(groupId), debounceMs: String(debounceMs) },
       }));
     } catch (error) {
-      logClientError(error, { context: { source: 'controller-sequence-actions', action: 'updateGroupDebounce', groupId } });
+      logClientError(error, {
+        context: { source: 'controller-sequence-actions', action: 'updateGroupDebounce', groupId },
+      });
       notifyError('Failed to update group debounce.');
     }
   };
@@ -870,7 +853,14 @@ export function createSequenceActions(args: SequenceActionInput): SequenceAction
       });
       notifySuccess('Moved to group.');
     } catch (error) {
-      logClientError(error, { context: { source: 'controller-sequence-actions', action: 'moveToGroup', patternId, groupId } });
+      logClientError(error, {
+        context: {
+          source: 'controller-sequence-actions',
+          action: 'moveToGroup',
+          patternId,
+          groupId,
+        },
+      });
       notifyError('Failed to move to group.');
     }
   };
@@ -887,7 +877,9 @@ export function createSequenceActions(args: SequenceActionInput): SequenceAction
       });
       notifySuccess('Removed from group.');
     } catch (error) {
-      logClientError(error, { context: { source: 'controller-sequence-actions', action: 'removeFromGroup', patternId } });
+      logClientError(error, {
+        context: { source: 'controller-sequence-actions', action: 'removeFromGroup', patternId },
+      });
       notifyError('Failed to remove from group.');
     }
   };
@@ -908,7 +900,9 @@ export function createSequenceActions(args: SequenceActionInput): SequenceAction
       }
       notifySuccess('Group created.');
     } catch (error) {
-      logClientError(error, { context: { source: 'controller-sequence-actions', action: 'createGroup', patternIds } });
+      logClientError(error, {
+        context: { source: 'controller-sequence-actions', action: 'createGroup', patternIds },
+      });
       notifyError('Failed to create group.');
     }
   };
@@ -929,7 +923,9 @@ export function createSequenceActions(args: SequenceActionInput): SequenceAction
       }));
       notifySuccess('Group renamed.');
     } catch (error) {
-      logClientError(error, { context: { source: 'controller-sequence-actions', action: 'renameGroup', groupId } });
+      logClientError(error, {
+        context: { source: 'controller-sequence-actions', action: 'renameGroup', groupId },
+      });
       notifyError('Failed to rename group.');
     }
   };

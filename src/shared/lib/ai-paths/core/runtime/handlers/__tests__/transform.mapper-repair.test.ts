@@ -27,9 +27,7 @@ const buildMapperNode = (): AiNode =>
     },
   }) as AiNode;
 
-const buildContext = (
-  overrides: Partial<NodeHandlerContext> = {},
-): NodeHandlerContext =>
+const buildContext = (overrides: Partial<NodeHandlerContext> = {}): NodeHandlerContext =>
   ({
     node: buildMapperNode(),
     nodeInputs: {},
@@ -147,7 +145,7 @@ describe('handleMapper malformed-object repair', () => {
           parseState: 'unparseable',
           repairApplied: false,
         }),
-      ]),
+      ])
     );
   });
 
@@ -184,7 +182,7 @@ describe('handleMapper malformed-object repair', () => {
           truncationDetected: true,
           repairApplied: true,
         }),
-      ]),
+      ])
     );
   });
 });

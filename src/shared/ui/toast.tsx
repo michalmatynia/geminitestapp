@@ -1,14 +1,7 @@
 'use client';
 
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle, type LucideIcon } from 'lucide-react';
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react';
 
 import type { Toast, ToastVariant, ToastOptions } from '@/shared/contracts/ui';
 
@@ -98,7 +91,10 @@ const accentStyles: Record<
   },
 };
 
-const getToastClasses = (variant: ToastVariant, accent: ToastSettings['accent']): { container: string; icon: string } => {
+const getToastClasses = (
+  variant: ToastVariant,
+  accent: ToastSettings['accent']
+): { container: string; icon: string } => {
   if (variant === 'error') {
     return {
       container: 'border-red-500/40 bg-red-500/10 text-red-100',
@@ -142,11 +138,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }): Reac
     try {
       const parsed = JSON.parse(stored) as ToastSettings;
       const position =
-        parsed.position in positionStyles
-          ? parsed.position
-          : defaultSettings.position;
-      const accent =
-        parsed.accent in accentStyles ? parsed.accent : defaultSettings.accent;
+        parsed.position in positionStyles ? parsed.position : defaultSettings.position;
+      const accent = parsed.accent in accentStyles ? parsed.accent : defaultSettings.accent;
       return { ...defaultSettings, position, accent };
     } catch {
       return defaultSettings;
@@ -183,7 +176,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }): Reac
 
       if (variant === 'error') {
         logClientError(error || new Error(message), {
-          context: { source: 'toast-notification' }
+          context: { source: 'toast-notification' },
         });
       }
 
@@ -199,10 +192,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }): Reac
   }, []);
 
   const value = useMemo(() => ({ toast }), [toast]);
-  const settingsValue = useMemo(
-    () => ({ settings, updateSettings }),
-    [settings, updateSettings]
-  );
+  const settingsValue = useMemo(() => ({ settings, updateSettings }), [settings, updateSettings]);
 
   return (
     <ToastContext.Provider value={value}>

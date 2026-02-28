@@ -1,13 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import * as api from '@/shared/lib/ai-paths/api';
-import { 
-  handleTrigger, 
-  handleNotification, 
-  handlePoll, 
-  handleHttp, 
+import {
+  handleTrigger,
+  handleNotification,
+  handlePoll,
+  handleHttp,
   handleDatabase,
-  handleDbSchema
+  handleDbSchema,
 } from '@/shared/lib/ai-paths/core/runtime/handlers/integration';
 
 import { createMockContext } from '../../test-utils';
@@ -37,7 +37,7 @@ describe('Integration Handlers', () => {
     vi.clearAllMocks();
     vi.mocked(api.dbApi.action).mockResolvedValue({
       ok: true,
-      data: { modifiedCount: 1, matchedCount: 1 }
+      data: { modifiedCount: 1, matchedCount: 1 },
     } as any);
   });
 
@@ -47,7 +47,7 @@ describe('Integration Handlers', () => {
         node: { id: 't1', title: 'Start' } as any,
         triggerNodeId: 't1',
         triggerEvent: 'manual',
-        triggerContext: { entityId: 'p1', entityType: 'product' }
+        triggerContext: { entityId: 'p1', entityType: 'product' },
       });
       const result = await handleTrigger(ctx);
       expect(result['trigger']).toBe(true);
@@ -61,7 +61,7 @@ describe('Integration Handlers', () => {
   describe('handleNotification', () => {
     it('should call toast with message', async () => {
       const ctx = createMockContext({
-        nodeInputs: { value: 'Operation successful' }
+        nodeInputs: { value: 'Operation successful' },
       });
       await handleNotification(ctx);
       expect(ctx.toast).toHaveBeenCalledWith('Operation successful', expect.anything());
@@ -72,25 +72,25 @@ describe('Integration Handlers', () => {
     it('should perform database query', async () => {
       vi.mocked(api.dbApi.query).mockResolvedValue({
         ok: true,
-        data: { items: [{ id: 1, name: 'Item 1' }], count: 1 }
+        data: { items: [{ id: 1, name: 'Item 1' }], count: 1 },
       } as any);
 
       const ctx = createMockContext({
         node: {
           id: 'n1',
           type: 'database',
-          config: { 
-            database: { 
-              operation: 'query', 
+          config: {
+            database: {
+              operation: 'query',
               query: {
                 collection: 'products',
                 mode: 'custom',
                 queryTemplate: '{"id":"{{value}}"}',
-              }
-            } 
-          }
+              },
+            },
+          },
         } as any,
-        nodeInputs: { value: 'test' }
+        nodeInputs: { value: 'test' },
       });
       const result = await handleDatabase(ctx);
       expect(result['result']).toEqual([{ id: 1, name: 'Item 1' }]);
@@ -100,7 +100,7 @@ describe('Integration Handlers', () => {
     it('should resolve placeholders in query input string payload', async () => {
       vi.mocked(api.dbApi.query).mockResolvedValue({
         ok: true,
-        data: { item: { id: 'p-1', name_en: 'Product 1' }, count: 1 }
+        data: { item: { id: 'p-1', name_en: 'Product 1' }, count: 1 },
       } as any);
 
       const ctx = createMockContext({
@@ -115,21 +115,21 @@ describe('Integration Handlers', () => {
                 collection: 'products',
                 mode: 'custom',
                 queryTemplate: '{}',
-                single: true
-              }
-            }
-          }
+                single: true,
+              },
+            },
+          },
         } as any,
         nodeInputs: {
           query: '{\n  "id": "{{value}}"\n}',
-          value: 'p-1'
-        }
+          value: 'p-1',
+        },
       });
 
       const result = await handleDatabase(ctx);
       expect(api.dbApi.query).toHaveBeenCalledWith(
         expect.objectContaining({
-          query: { id: 'p-1' }
+          query: { id: 'p-1' },
         })
       );
       expect(result['result']).toEqual({ id: 'p-1', name_en: 'Product 1' });
@@ -138,7 +138,7 @@ describe('Integration Handlers', () => {
     it('should resolve placeholders in query input object payload', async () => {
       vi.mocked(api.dbApi.query).mockResolvedValue({
         ok: true,
-        data: { item: { id: 'p-2', name_en: 'Product 2' }, count: 1 }
+        data: { item: { id: 'p-2', name_en: 'Product 2' }, count: 1 },
       } as any);
 
       const ctx = createMockContext({
@@ -153,23 +153,23 @@ describe('Integration Handlers', () => {
                 collection: 'products',
                 mode: 'custom',
                 queryTemplate: '{}',
-                single: true
-              }
-            }
-          }
+                single: true,
+              },
+            },
+          },
         } as any,
         nodeInputs: {
           query: {
-            id: '{{value}}'
+            id: '{{value}}',
           },
-          value: 'p-2'
-        }
+          value: 'p-2',
+        },
       });
 
       const result = await handleDatabase(ctx);
       expect(api.dbApi.query).toHaveBeenCalledWith(
         expect.objectContaining({
-          query: { id: 'p-2' }
+          query: { id: 'p-2' },
         })
       );
       expect(result['result']).toEqual({ id: 'p-2', name_en: 'Product 2' });
@@ -719,21 +719,21 @@ describe('Integration Handlers', () => {
       global.fetch = vi.fn().mockResolvedValue({
         ok: true,
         status: 200,
-        json: () => Promise.resolve({ data: 'success' })
+        json: () => Promise.resolve({ data: 'success' }),
       } as any);
 
       const ctx = createMockContext({
         node: {
           id: 'n1',
           type: 'http',
-          config: { 
-            http: { 
+          config: {
+            http: {
               url: 'https://api.example.com',
               method: 'GET',
-              responseMode: 'json'
-            } 
-          }
-        } as any
+              responseMode: 'json',
+            },
+          },
+        } as any,
       });
       const result = await handleHttp(ctx);
       expect(result['value']).toEqual({ data: 'success' });
@@ -745,9 +745,7 @@ describe('Integration Handlers', () => {
     it('should fetch and format database schema', async () => {
       const mockSchema = {
         provider: 'mongodb',
-        collections: [
-          { name: 'products', fields: [{ name: 'id', type: 'string' }] }
-        ]
+        collections: [{ name: 'products', fields: [{ name: 'id', type: 'string' }] }],
       };
       vi.mocked(api.dbApi.schema).mockResolvedValue({ ok: true, data: mockSchema } as any);
 
@@ -755,14 +753,14 @@ describe('Integration Handlers', () => {
         node: {
           id: 'n1',
           type: 'db_schema',
-          config: { 
-            db_schema: { 
-              mode: 'all', 
+          config: {
+            db_schema: {
+              mode: 'all',
               formatAs: 'text',
-              includeFields: true
-            } 
-          }
-        } as any
+              includeFields: true,
+            },
+          },
+        } as any,
       });
       const result = await handleDbSchema(ctx);
       expect((result['context'] as any).schemaText).toContain('DATABASE SCHEMA');
@@ -774,7 +772,7 @@ describe('Integration Handlers', () => {
     it('should poll for job completion', async () => {
       vi.mocked(api.aiJobsApi.poll).mockResolvedValue({
         ok: true,
-        data: { status: 'completed', result: 'Job done' }
+        data: { status: 'completed', result: 'Job done' },
       } as any);
 
       const ctx = createMockContext({
@@ -782,8 +780,8 @@ describe('Integration Handlers', () => {
         node: {
           id: 'n1',
           type: 'poll',
-          config: { poll: { mode: 'job', intervalMs: 10, maxAttempts: 5 } }
-        } as any
+          config: { poll: { mode: 'job', intervalMs: 10, maxAttempts: 5 } },
+        } as any,
       });
       const result = await handlePoll(ctx);
       expect(result['status']).toBe('completed');

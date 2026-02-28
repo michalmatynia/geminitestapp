@@ -14,16 +14,9 @@ import type { AiPathRunRepository } from '@/shared/contracts/ai-paths';
 import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
-const TERMINAL_STATUSES = new Set([
-  'completed',
-  'failed',
-  'canceled',
-  'dead_lettered',
-]);
+const TERMINAL_STATUSES = new Set(['completed', 'failed', 'canceled', 'dead_lettered']);
 
-const resolveFallbackRepository = (
-  primary: AiPathRunRepository,
-): AiPathRunRepository | null => {
+const resolveFallbackRepository = (primary: AiPathRunRepository): AiPathRunRepository | null => {
   if (primary === prismaPathRunRepository) {
     return process.env['MONGODB_URI'] ? mongoPathRunRepository : null;
   }
@@ -36,7 +29,7 @@ const resolveFallbackRepository = (
 export async function POST_handler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
-  params: { runId: string },
+  params: { runId: string }
 ): Promise<Response> {
   const access = await requireAiPathsAccess();
   await enforceAiPathsActionRateLimit(access, 'run-cancel');
@@ -60,8 +53,7 @@ export async function POST_handler(
       run: null,
       canceled: false,
       runId,
-      message:
-        'Run already missing. Queue entry (if present) has been removed.',
+      message: 'Run already missing. Queue entry (if present) has been removed.',
     });
   }
   assertAiPathRunAccess(access, existing);

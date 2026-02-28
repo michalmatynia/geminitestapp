@@ -5,11 +5,8 @@ import { cn } from '@/shared/utils';
 import { useDocumentRelationSearchContext } from '../../context/DocumentRelationSearchContext';
 
 export function FolderChips(): React.JSX.Element | null {
-  const {
-    currentFolderPaths,
-    selectedSearchFolderPath,
-    setSelectedSearchFolderPath,
-  } = useDocumentRelationSearchContext();
+  const { currentFolderPaths, selectedSearchFolderPath, setSelectedSearchFolderPath } =
+    useDocumentRelationSearchContext();
 
   if (currentFolderPaths.length === 0) return null;
   return (

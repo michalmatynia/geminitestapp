@@ -1,31 +1,21 @@
 'use client';
 
 import React from 'react';
-import { 
-  ChevronDown, 
-  ChevronRight, 
-  Lock, 
-  Unlock, 
-  Trash2, 
-  GitBranch 
-} from 'lucide-react';
+import { ChevronDown, ChevronRight, Lock, Unlock, Trash2, GitBranch } from 'lucide-react';
 
 import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/v2';
 import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
-import { 
+import {
   useCaseResolverFolderTreeContext,
   isCaseResolverVirtualSectionNode,
   isUnassignedNode,
 } from '../context/CaseResolverFolderTreeContext';
-import { 
+import {
   fromCaseResolverFolderNodeId,
   fromCaseResolverFileNodeId,
   fromCaseResolverAssetNodeId,
 } from '../master-tree';
-import { 
-  parseString,
-  isCaseResolverDraggableFileNode
-} from './CaseResolverFolderTree.helpers';
+import { parseString, isCaseResolverDraggableFileNode } from './CaseResolverFolderTree.helpers';
 
 export type CaseResolverTreeNodeProps = FolderTreeViewportRenderNodeInput & {
   armDragHandle: (nodeId: string) => void;
@@ -102,19 +92,13 @@ export function CaseResolverTreeNode({
   const fileType = parseString(node.metadata?.['fileType']);
   const nodeEntity = parseString(node.metadata?.['entity']);
   const isCaseFileKind = node.kind.startsWith('case_file');
-  const isCaseEntryNode =
-    node.kind === 'case_entry' || nodeEntity === 'case';
+  const isCaseEntryNode = node.kind === 'case_entry' || nodeEntity === 'case';
   const isCaseFile =
-    Boolean(fileId) &&
-    (isCaseFileKind ||
-      fileType === 'document' ||
-      fileType === 'scanfile');
+    Boolean(fileId) && (isCaseFileKind || fileType === 'document' || fileType === 'scanfile');
   const isScanCaseFile =
-    Boolean(fileId) &&
-    (node.kind === 'case_file_scan' || fileType === 'scanfile');
+    Boolean(fileId) && (node.kind === 'case_file_scan' || fileType === 'scanfile');
   const isCanvasCaseFile = Boolean(fileId) && isCaseFile;
-  const isNodeFileAsset =
-    Boolean(assetId) && node.kind === 'node_file';
+  const isNodeFileAsset = Boolean(assetId) && node.kind === 'node_file';
   const isVirtualSectionNode = isCaseResolverVirtualSectionNode(node);
   const isUnassignedSectionNode = isUnassignedNode(node);
   const isDraggableFileNode = isCaseResolverDraggableFileNode({
@@ -122,28 +106,16 @@ export function CaseResolverTreeNode({
     fileType,
     isVirtualSectionNode,
   });
-  const isHighlightedNodeFile = Boolean(
-    assetId && highlightedNodeFileAssetIdSet.has(assetId),
-  );
-  const isFileLocked = fileId
-    ? fileLockById.get(fileId) === true
-    : false;
+  const isHighlightedNodeFile = Boolean(assetId && highlightedNodeFileAssetIdSet.has(assetId));
+  const isFileLocked = fileId ? fileLockById.get(fileId) === true : false;
   const isFolder = folderPath !== null;
-  const folderStats = folderPath
-    ? (folderCaseFileStatsByPath.get(folderPath) ?? null)
-    : null;
-  const folderHasCaseFiles = Boolean(
-    folderStats && folderStats.total > 0,
-  );
-  const folderHasLockedFiles = Boolean(
-    folderStats && folderStats.locked > 0,
-  );
+  const folderStats = folderPath ? (folderCaseFileStatsByPath.get(folderPath) ?? null) : null;
+  const folderHasCaseFiles = Boolean(folderStats && folderStats.total > 0);
+  const folderHasLockedFiles = Boolean(folderStats && folderStats.locked > 0);
   const isFolderLocked = Boolean(
-    folderStats &&
-    folderStats.total > 0 &&
-    folderStats.total === folderStats.locked,
+    folderStats && folderStats.total > 0 && folderStats.total === folderStats.locked
   );
-  
+
   const nodeOwnerCaseIds = (() => {
     if (isVirtualSectionNode) return [];
     if (folderPath !== null) {
@@ -159,34 +131,26 @@ export function CaseResolverTreeNode({
     }
     return [];
   })();
-  
+
   const childOwnerCaseIds = nodeOwnerCaseIds.filter((caseId: string): boolean =>
-    childCaseIdSet.has(caseId),
+    childCaseIdSet.has(caseId)
   );
   const childOwnerCaseNames = Array.from(
-    new Set(
-      childOwnerCaseIds.map(
-        (caseId: string): string => caseNameById.get(caseId) ?? caseId,
-      ),
-    ),
+    new Set(childOwnerCaseIds.map((caseId: string): string => caseNameById.get(caseId) ?? caseId))
   );
   const isChildOwnedStructureNode = childOwnerCaseNames.length > 0;
   const childStructureHint =
     childOwnerCaseNames.length === 1
       ? `Child case structure: ${childOwnerCaseNames[0]}`
       : `Child case structure: ${childOwnerCaseNames.join(', ')}`;
-  
-  const hoverOnlyControlClass = isSelected
-    ? 'opacity-100'
-    : 'opacity-0 group-hover:opacity-100';
-  
+
+  const hoverOnlyControlClass = isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100';
+
   const canToggle = isFolder && hasChildren;
-  
+
   const Icon = (() => {
     if (isFolder) {
-      return canToggle && isExpanded
-        ? FolderOpenIcon
-        : FolderClosedIcon;
+      return canToggle && isExpanded ? FolderOpenIcon : FolderClosedIcon;
     }
     if (node.kind === 'node_file') {
       return NodeFileIcon;
@@ -265,11 +229,9 @@ export function CaseResolverTreeNode({
       tabIndex={0}
       title={
         isVirtualSectionNode
-          ? (
-            isUnassignedSectionNode
-              ? 'Unassigned ownership'
-              : 'Children cases folder structure'
-          )
+          ? isUnassignedSectionNode
+            ? 'Unassigned ownership'
+            : 'Children cases folder structure'
           : isNodeFileAsset
             ? 'Canvas file — click to open'
             : isCanvasCaseFile
@@ -303,15 +265,17 @@ export function CaseResolverTreeNode({
         }}
         onMouseUp={releaseDragHandle}
         className={`inline-flex size-5 shrink-0 items-center justify-center rounded ${
-          isDraggableFileNode ? `cursor-grab active:cursor-grabbing ${hoverOnlyControlClass}` : 'cursor-default'
+          isDraggableFileNode
+            ? `cursor-grab active:cursor-grabbing ${hoverOnlyControlClass}`
+            : 'cursor-default'
         }`}
       >
         <DragHandleIcon
           className={`size-3 ${
             isDraggableFileNode
-              ? (isNodeFileAsset
+              ? isNodeFileAsset
                 ? 'text-violet-400/80'
-                : 'text-sky-300/90')
+                : 'text-sky-300/90'
               : 'text-gray-500'
           }`}
         />
@@ -402,13 +366,19 @@ export function CaseResolverTreeNode({
           </>
         )}
       </div>
-      
+
       {!isRenaming && isFolder && folderPath !== null && !isVirtualSectionNode ? (
         <div className={`flex shrink-0 items-center gap-1 transition ${hoverOnlyControlClass}`}>
           <button
             type='button'
             className='inline-flex size-6 items-center justify-center rounded border border-border/60 bg-card/60 text-gray-300 transition hover:bg-muted/60 hover:text-white disabled:cursor-not-allowed disabled:opacity-50'
-            title={!folderHasCaseFiles ? 'No case files in folder' : isFolderLocked ? 'Unlock folder files' : 'Lock folder files'}
+            title={
+              !folderHasCaseFiles
+                ? 'No case files in folder'
+                : isFolderLocked
+                  ? 'Unlock folder files'
+                  : 'Lock folder files'
+            }
             disabled={!folderHasCaseFiles}
             onClick={(event): void => {
               event.preventDefault();
@@ -433,7 +403,7 @@ export function CaseResolverTreeNode({
           </button>
         </div>
       ) : null}
-      
+
       {!isRenaming && isCaseFile && fileId ? (
         <div className={`flex shrink-0 items-center gap-1 transition ${hoverOnlyControlClass}`}>
           <button
@@ -467,7 +437,7 @@ export function CaseResolverTreeNode({
           </button>
         </div>
       ) : null}
-      
+
       {!isRenaming && isNodeFileAsset && assetId ? (
         <div className={`flex shrink-0 items-center gap-1 transition ${hoverOnlyControlClass}`}>
           <button

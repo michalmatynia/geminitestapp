@@ -7,10 +7,7 @@ import { ClearLogsResponseDto as ClearLogsResponse } from '@/shared/contracts/ob
 import type { UpdateMutation } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import { createCreateMutationV2, createDeleteMutationV2 } from '@/shared/lib/query-factories-v2';
-import {
-  invalidateSystemDiagnostics,
-  invalidateSystemLogs,
-} from '@/shared/lib/query-invalidation';
+import { invalidateSystemDiagnostics, invalidateSystemLogs } from '@/shared/lib/query-invalidation';
 import { logsKeys, diagnosticsKeys } from '@/shared/lib/query-key-exports';
 
 export function useClearLogsMutation(): UpdateMutation<ClearLogsResponse, void> {
@@ -70,7 +67,7 @@ export function useRunLogInsight(): UpdateMutation<{ insight: AiInsightRecord },
 
 export function useInterpretLog(): UpdateMutation<{ insight: AiInsightRecord }, string> {
   return createCreateMutationV2({
-    mutationFn: (logId: string) => 
+    mutationFn: (logId: string) =>
       api.post<{ insight: AiInsightRecord }>('/api/system/logs/interpret', { logId }),
     mutationKey: logsKeys.all,
     meta: {

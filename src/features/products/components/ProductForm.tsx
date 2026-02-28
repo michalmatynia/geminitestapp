@@ -50,19 +50,14 @@ export default function ProductForm({
   skuRequired: _skuRequired = false,
   validationInstanceScopeOverride,
 }: ProductFormProps): React.JSX.Element {
-  const {
-    handleSubmit,
-    product,
-    draft,
-    ConfirmationModal,
-  } = useProductFormContext();
+  const { handleSubmit, product, draft, ConfirmationModal } = useProductFormContext();
 
   const searchParams = useSearchParams();
   const [isDebugOpen, setIsDebugOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<ProductDraftOpenFormTab>(() =>
     normalizeProductFormTab(draft?.openProductFormTab)
   );
-  
+
   const [mountedTabs, setMountedTabs] = useState<Set<ProductDraftOpenFormTab>>(() => {
     const initial = new Set<ProductDraftOpenFormTab>(['general']);
     const startTab = normalizeProductFormTab(draft?.openProductFormTab);
@@ -88,7 +83,12 @@ export default function ProductForm({
   }, [draft?.id, draft?.openProductFormTab, searchParams]);
 
   return (
-    <form onSubmit={(e: React.FormEvent) => { void handleSubmit(e); }} className='relative min-h-[400px] pb-10'>
+    <form
+      onSubmit={(e: React.FormEvent) => {
+        void handleSubmit(e);
+      }}
+      className='relative min-h-[400px] pb-10'
+    >
       {isDebugOpen && <DebugPanel />}
       <ProductValidationSettingsProvider
         value={{
@@ -98,7 +98,9 @@ export default function ProductForm({
           setValidatorEnabled: validator.setValidatorEnabled,
           setFormatterEnabled: validator.setFormatterEnabled,
           validationDenyBehavior: validator.validationDenyBehavior,
-          setValidationDenyBehavior: (behavior: React.SetStateAction<ProductValidationDenyBehavior>): void => {
+          setValidationDenyBehavior: (
+            behavior: React.SetStateAction<ProductValidationDenyBehavior>
+          ): void => {
             if (typeof behavior === 'string') {
               validator.setValidationDenyBehavior(behavior);
             }
@@ -128,9 +130,7 @@ export default function ProductForm({
           }}
           className='w-full'
         >
-          <TabsList
-            className='grid w-full grid-cols-4 md:grid-cols-8'
-          >
+          <TabsList className='grid w-full grid-cols-4 md:grid-cols-8'>
             <TabsTrigger value='general'>General</TabsTrigger>
             <TabsTrigger value='other'>Other</TabsTrigger>
             <TabsTrigger value='parameters'>Parameters</TabsTrigger>

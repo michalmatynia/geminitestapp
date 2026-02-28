@@ -17,7 +17,7 @@ import { EmptyState } from '@/shared/ui';
 export function PreviewHeroSection() {
   const { colorSchemes, layout } = useCmsPageContext();
   const mediaStyles = useMediaStyles();
-  const { 
+  const {
     section,
     selectedRing,
     renderSectionActions,
@@ -27,10 +27,7 @@ export function PreviewHeroSection() {
     PreviewBlockItem,
   } = usePreviewSectionContext();
 
-  const { 
-    inspectorSettings, 
-    onOpenMedia,
-  } = usePreviewEditor();
+  const { inspectorSettings, onOpenMedia } = usePreviewEditor();
 
   const showEditorChrome = inspectorSettings.showEditorChrome ?? false;
   const sectionStyles = getSectionStyles(section.settings, colorSchemes);
@@ -111,6 +108,6 @@ export function PreviewHeroSection() {
           )}
         </div>
       </div>
-    </div>,
+    </div>
   );
 }

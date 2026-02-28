@@ -7,7 +7,7 @@ test.describe('Databases', () => {
 
   test('should display databases page with PostgreSQL as default', async ({ page }) => {
     await expect(page.getByRole('heading', { name: /Databases - PostgreSQL/i })).toBeVisible();
-    
+
     // Check for action buttons
     await expect(page.getByRole('button', { name: 'Create Backup' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Upload Backup' })).toBeVisible();
@@ -16,7 +16,7 @@ test.describe('Databases', () => {
 
   test('should switch to MongoDB tab', async ({ page }) => {
     await page.getByRole('button', { name: 'MongoDB', exact: true }).click();
-    
+
     await expect(page.getByRole('heading', { name: /Databases - MongoDB/i })).toBeVisible();
     await expect(page.getByText('Full database dumps with BSON format')).toBeVisible();
   });

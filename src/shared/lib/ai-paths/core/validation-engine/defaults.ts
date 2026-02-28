@@ -9,21 +9,20 @@ import type {
 const VALIDATION_SEVERITIES: ReadonlySet<AiPathsValidationSeverity> =
   new Set<AiPathsValidationSeverity>(['error', 'warning', 'info']);
 
-const VALIDATION_MODULES: ReadonlySet<AiPathsValidationModule> =
-  new Set<AiPathsValidationModule>([
-    'graph',
-    'trigger',
-    'simulation',
-    'context',
-    'parser',
-    'database',
-    'model',
-    'poll',
-    'router',
-    'gate',
-    'validation_pattern',
-    'custom',
-  ]);
+const VALIDATION_MODULES: ReadonlySet<AiPathsValidationModule> = new Set<AiPathsValidationModule>([
+  'graph',
+  'trigger',
+  'simulation',
+  'context',
+  'parser',
+  'database',
+  'model',
+  'poll',
+  'router',
+  'gate',
+  'validation_pattern',
+  'custom',
+]);
 
 const VALIDATION_RULE_INFERENCE_SOURCE_TYPES: ReadonlySet<string> = new Set([
   'manual',
@@ -38,8 +37,7 @@ const VALIDATION_RULE_INFERENCE_STATUSES: ReadonlySet<string> = new Set([
 ]);
 
 export const AI_PATHS_VALIDATION_SCHEMA_VERSION = 2;
-export const DEFAULT_AI_PATHS_VALIDATION_SCHEMA_VERSION =
-  AI_PATHS_VALIDATION_SCHEMA_VERSION;
+export const DEFAULT_AI_PATHS_VALIDATION_SCHEMA_VERSION = AI_PATHS_VALIDATION_SCHEMA_VERSION;
 
 const sanitizeStringArray = (value: unknown): string[] => {
   if (!Array.isArray(value)) return [];
@@ -47,17 +45,16 @@ const sanitizeStringArray = (value: unknown): string[] => {
     new Set(
       value
         .filter(
-          (entry: unknown): entry is string =>
-            typeof entry === 'string' && entry.trim().length > 0,
+          (entry: unknown): entry is string => typeof entry === 'string' && entry.trim().length > 0
         )
-        .map((entry: string): string => entry.trim()),
-    ),
+        .map((entry: string): string => entry.trim())
+    )
   );
 };
 
 const sanitizeCondition = (
   rawCondition: AiPathsValidationCondition,
-  index: number,
+  index: number
 ): AiPathsValidationCondition | null => {
   const id =
     typeof rawCondition.id === 'string' && rawCondition.id.trim().length > 0
@@ -73,23 +70,18 @@ const sanitizeCondition = (
 };
 
 const sanitizeRuleInference = (
-  value: AiPathsValidationRule['inference'] | null | undefined,
+  value: AiPathsValidationRule['inference'] | null | undefined
 ): AiPathsValidationRule['inference'] | undefined => {
   if (!value || typeof value !== 'object') return undefined;
   const record = value as Record<string, unknown>;
   const sourceType =
     typeof record['sourceType'] === 'string' &&
     VALIDATION_RULE_INFERENCE_SOURCE_TYPES.has(record['sourceType'])
-      ? (record['sourceType'] as NonNullable<
-          AiPathsValidationRule['inference']
-        >['sourceType'])
+      ? (record['sourceType'] as NonNullable<AiPathsValidationRule['inference']>['sourceType'])
       : undefined;
   const status =
-    typeof record['status'] === 'string' &&
-    VALIDATION_RULE_INFERENCE_STATUSES.has(record['status'])
-      ? (record['status'] as NonNullable<
-          AiPathsValidationRule['inference']
-        >['status'])
+    typeof record['status'] === 'string' && VALIDATION_RULE_INFERENCE_STATUSES.has(record['status'])
+      ? (record['status'] as NonNullable<AiPathsValidationRule['inference']>['status'])
       : undefined;
   const assertionId =
     typeof record['assertionId'] === 'string' && record['assertionId'].trim().length > 0
@@ -104,8 +96,7 @@ const sanitizeRuleInference = (
       ? record['sourceHash'].trim()
       : undefined;
   const docsSnapshotHash =
-    typeof record['docsSnapshotHash'] === 'string' &&
-    record['docsSnapshotHash'].trim().length > 0
+    typeof record['docsSnapshotHash'] === 'string' && record['docsSnapshotHash'].trim().length > 0
       ? record['docsSnapshotHash'].trim()
       : undefined;
   const confidence =
@@ -113,8 +104,7 @@ const sanitizeRuleInference = (
       ? Math.max(0, Math.min(1, record['confidence']))
       : undefined;
   const compilerVersion =
-    typeof record['compilerVersion'] === 'string' &&
-    record['compilerVersion'].trim().length > 0
+    typeof record['compilerVersion'] === 'string' && record['compilerVersion'].trim().length > 0
       ? record['compilerVersion'].trim()
       : undefined;
   const inferredAt =
@@ -157,38 +147,31 @@ const sanitizeRuleInference = (
 
 const sanitizeRule = (
   rawRule: AiPathsValidationRule,
-  index: number,
+  index: number
 ): AiPathsValidationRule | null => {
   const id =
-    typeof rawRule.id === 'string' && rawRule.id.trim().length > 0
-      ? rawRule.id.trim()
-      : '';
+    typeof rawRule.id === 'string' && rawRule.id.trim().length > 0 ? rawRule.id.trim() : '';
   const title =
     typeof rawRule.title === 'string' && rawRule.title.trim().length > 0
       ? rawRule.title.trim()
       : '';
   if (!id || !title) return null;
 
-  const module = VALIDATION_MODULES.has(rawRule.module)
-    ? rawRule.module
-    : 'custom';
-  const severity = VALIDATION_SEVERITIES.has(rawRule.severity)
-    ? rawRule.severity
-    : 'warning';
+  const module = VALIDATION_MODULES.has(rawRule.module) ? rawRule.module : 'custom';
+  const severity = VALIDATION_SEVERITIES.has(rawRule.severity) ? rawRule.severity : 'warning';
   const sequence =
     typeof rawRule.sequence === 'number' && Number.isFinite(rawRule.sequence)
       ? Math.trunc(rawRule.sequence)
       : (index + 1) * 10;
   const conditions = Array.isArray(rawRule.conditions)
     ? rawRule.conditions
-      .map((condition: AiPathsValidationCondition, conditionIndex: number) =>
-        sanitizeCondition(condition, conditionIndex),
-      )
-      .filter(
-        (
-          condition: AiPathsValidationCondition | null,
-        ): condition is AiPathsValidationCondition => Boolean(condition),
-      )
+        .map((condition: AiPathsValidationCondition, conditionIndex: number) =>
+          sanitizeCondition(condition, conditionIndex)
+        )
+        .filter(
+          (condition: AiPathsValidationCondition | null): condition is AiPathsValidationCondition =>
+            Boolean(condition)
+        )
     : [];
 
   if (conditions.length === 0) return null;
@@ -206,8 +189,7 @@ const sanitizeRule = (
     severity,
     sequence,
     conditionMode: rawRule.conditionMode === 'any' ? 'any' : 'all',
-    appliesToNodeTypes:
-      appliesToNodeTypes.length > 0 ? appliesToNodeTypes : undefined,
+    appliesToNodeTypes: appliesToNodeTypes.length > 0 ? appliesToNodeTypes : undefined,
     docsBindings: docsBindings.length > 0 ? docsBindings : undefined,
     ...(inference ? { inference } : {}),
     conditions,
@@ -227,22 +209,17 @@ const dedupeRuleIds = (rules: AiPathsValidationRule[]): AiPathsValidationRule[] 
 const sanitizeRules = (rules: AiPathsValidationRule[]): AiPathsValidationRule[] =>
   dedupeRuleIds(
     rules
-      .map((rule: AiPathsValidationRule, index: number) =>
-        sanitizeRule(rule, index),
-      )
-      .filter(
-        (rule: AiPathsValidationRule | null): rule is AiPathsValidationRule =>
-          Boolean(rule),
-      ),
+      .map((rule: AiPathsValidationRule, index: number) => sanitizeRule(rule, index))
+      .filter((rule: AiPathsValidationRule | null): rule is AiPathsValidationRule => Boolean(rule))
   );
 
 export const normalizeAiPathsValidationRules = (
-  rules: AiPathsValidationRule[] | null | undefined,
+  rules: AiPathsValidationRule[] | null | undefined
 ): AiPathsValidationRule[] =>
   Array.isArray(rules) && rules.length > 0 ? sanitizeRules(rules) : [];
 
 const sanitizeDocsSyncState = (
-  value: AiPathsValidationConfig['docsSyncState'] | null | undefined,
+  value: AiPathsValidationConfig['docsSyncState'] | null | undefined
 ): AiPathsValidationConfig['docsSyncState'] => {
   if (!value || typeof value !== 'object') {
     return {
@@ -254,13 +231,11 @@ const sanitizeDocsSyncState = (
   }
   const record = value as Record<string, unknown>;
   const lastSnapshotHash =
-    typeof record['lastSnapshotHash'] === 'string' &&
-    record['lastSnapshotHash'].trim().length > 0
+    typeof record['lastSnapshotHash'] === 'string' && record['lastSnapshotHash'].trim().length > 0
       ? record['lastSnapshotHash'].trim()
       : undefined;
   const lastSyncedAt =
-    typeof record['lastSyncedAt'] === 'string' &&
-    record['lastSyncedAt'].trim().length > 0
+    typeof record['lastSyncedAt'] === 'string' && record['lastSyncedAt'].trim().length > 0
       ? record['lastSyncedAt'].trim()
       : undefined;
   const lastSyncStatus =
@@ -277,8 +252,7 @@ const sanitizeDocsSyncState = (
       ? Math.max(0, Math.trunc(record['sourceCount']))
       : 0;
   const candidateCount =
-    typeof record['candidateCount'] === 'number' &&
-    Number.isFinite(record['candidateCount'])
+    typeof record['candidateCount'] === 'number' && Number.isFinite(record['candidateCount'])
       ? Math.max(0, Math.trunc(record['candidateCount']))
       : 0;
   const lastSyncWarnings = sanitizeStringArray(record['lastSyncWarnings']);
@@ -294,7 +268,7 @@ const sanitizeDocsSyncState = (
 
 export const createAiPathsValidationRuleId = (
   title: string,
-  existingRuleIds: Iterable<string>,
+  existingRuleIds: Iterable<string>
 ): string => {
   const normalizedBase = title
     .toLowerCase()
@@ -323,7 +297,7 @@ export const createAiPathsValidationRuleId = (
 
 export const createAiPathsValidationConditionId = (
   operator: string,
-  existingConditionIds: Iterable<string>,
+  existingConditionIds: Iterable<string>
 ): string => {
   const normalizedOperator = operator
     .toLowerCase()
@@ -476,7 +450,7 @@ const buildCoreRules = (): AiPathsValidationRule[] => [
 ];
 
 export const buildAiPathsValidationRulesFromDocs = (
-  docsSources: string[] = DEFAULT_AI_PATHS_VALIDATION_DOC_SOURCES,
+  docsSources: string[] = DEFAULT_AI_PATHS_VALIDATION_DOC_SOURCES
 ): AiPathsValidationRule[] => {
   const scopedDocsSources = sanitizeStringArray(docsSources);
   const rules = buildCoreRules().map(
@@ -486,7 +460,7 @@ export const buildAiPathsValidationRulesFromDocs = (
         scopedDocsSources.length > 0
           ? Array.from(new Set([...(rule.docsBindings ?? []), ...scopedDocsSources]))
           : rule.docsBindings,
-    }),
+    })
   );
   return sanitizeRules(rules);
 };
@@ -511,7 +485,7 @@ export const DEFAULT_AI_PATHS_VALIDATION_CONFIG: AiPathsValidationConfig = {
 };
 
 export const normalizeAiPathsValidationConfig = (
-  value: AiPathsValidationConfig | null | undefined,
+  value: AiPathsValidationConfig | null | undefined
 ): AiPathsValidationConfig => {
   const source = value ?? {};
   const legacySchemaVersion =
@@ -536,36 +510,29 @@ export const normalizeAiPathsValidationConfig = (
 
   const parsedDocsSources = sanitizeStringArray(source.docsSources);
   const docsSources =
-    parsedDocsSources.length > 0
-      ? parsedDocsSources
-      : [...DEFAULT_AI_PATHS_VALIDATION_DOC_SOURCES];
+    parsedDocsSources.length > 0 ? parsedDocsSources : [...DEFAULT_AI_PATHS_VALIDATION_DOC_SOURCES];
 
   const collectionMap =
     source.collectionMap && typeof source.collectionMap === 'object'
       ? (Object.fromEntries(
-        Object.entries(source.collectionMap as Record<string, unknown>).filter(
-          ([key, val]: [string, unknown]): boolean =>
-            typeof key === 'string' &&
+          Object.entries(source.collectionMap as Record<string, unknown>).filter(
+            ([key, val]: [string, unknown]): boolean =>
+              typeof key === 'string' &&
               key.trim().length > 0 &&
               typeof val === 'string' &&
-              val.trim().length > 0,
-        ),
-      ) as Record<string, string>)
+              val.trim().length > 0
+          )
+        ) as Record<string, string>)
       : { ...DEFAULT_AI_PATHS_ENTITY_COLLECTION_MAP };
 
   const sanitizedRules = normalizeAiPathsValidationRules(source.rules);
   const rules =
-    sanitizedRules.length > 0
-      ? sanitizedRules
-      : buildAiPathsValidationRulesFromDocs(docsSources);
-  const inferredCandidates = normalizeAiPathsValidationRules(
-    source.inferredCandidates,
-  );
+    sanitizedRules.length > 0 ? sanitizedRules : buildAiPathsValidationRulesFromDocs(docsSources);
+  const inferredCandidates = normalizeAiPathsValidationRules(source.inferredCandidates);
   const docsSyncState = sanitizeDocsSyncState(source.docsSyncState);
 
   const lastEvaluatedAt =
-    typeof source.lastEvaluatedAt === 'string' &&
-    source.lastEvaluatedAt.trim().length > 0
+    typeof source.lastEvaluatedAt === 'string' && source.lastEvaluatedAt.trim().length > 0
       ? source.lastEvaluatedAt
       : null;
 
@@ -587,8 +554,6 @@ export const normalizeAiPathsValidationConfig = (
     inferredCandidates,
     docsSyncState,
     lastEvaluatedAt:
-      legacySchemaVersion < AI_PATHS_VALIDATION_SCHEMA_VERSION
-        ? null
-        : lastEvaluatedAt,
+      legacySchemaVersion < AI_PATHS_VALIDATION_SCHEMA_VERSION ? null : lastEvaluatedAt,
   };
 };

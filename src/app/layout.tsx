@@ -1,7 +1,7 @@
 import { SessionProvider } from 'next-auth/react';
 import { Suspense } from 'react';
 
-import PageAnalyticsTracker from '@/features/analytics/components/PageAnalyticsTracker';
+import PageAnalyticsTracker from '@/shared/lib/analytics/components/PageAnalyticsTracker';
 import { MasterFolderTreeRuntimeProvider } from '@/shared/lib/foldertree/v2/runtime/MasterFolderTreeRuntimeProvider';
 import ClientErrorReporter from '@/features/observability/components/ClientErrorReporter';
 import { AppFontProvider } from '@/shared/providers/AppFontProvider';
@@ -54,9 +54,7 @@ export default function RootLayout({
                       <Suspense fallback={<></>}>
                         <PageAnalyticsTracker />
                       </Suspense>
-                      <AppErrorBoundary source='RootLayout'>
-                        {children}
-                      </AppErrorBoundary>
+                      <AppErrorBoundary source='RootLayout'>{children}</AppErrorBoundary>
                     </ThemeProvider>
                   </SessionProvider>
                 </BackgroundSyncProvider>

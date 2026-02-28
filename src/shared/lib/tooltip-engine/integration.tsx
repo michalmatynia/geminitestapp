@@ -64,12 +64,7 @@ export function createDocsTooltipIntegration({
     };
 
     return (
-      <DocumentationTooltip
-        moduleId={moduleId}
-        docId={docId}
-        enabled={enabled}
-        {...optionalProps}
-      >
+      <DocumentationTooltip moduleId={moduleId} docId={docId} enabled={enabled} {...optionalProps}>
         {children}
       </DocumentationTooltip>
     );

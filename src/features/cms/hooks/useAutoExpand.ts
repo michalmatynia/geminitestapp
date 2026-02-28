@@ -21,9 +21,7 @@ import { useCallback, type Dispatch, type SetStateAction } from 'react';
  * }
  * ```
  */
-export function useAutoExpand(
-  setExpandedIds: Dispatch<SetStateAction<Set<string>>>
-) {
+export function useAutoExpand(setExpandedIds: Dispatch<SetStateAction<Set<string>>>) {
   /**
    * Adds one or more node IDs to the expanded set.
    * Accepts a single ID, an array of IDs, or multiple IDs as rest parameters.

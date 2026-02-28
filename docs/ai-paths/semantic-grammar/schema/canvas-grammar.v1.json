@@ -66,15 +66,7 @@
         "connections": { "$ref": "#/$defs/SemanticNodeConnections" },
         "extensions": { "type": "object", "additionalProperties": true }
       },
-      "required": [
-        "id",
-        "type",
-        "title",
-        "description",
-        "position",
-        "inputs",
-        "outputs"
-      ],
+      "required": ["id", "type", "title", "description", "position", "inputs", "outputs"],
       "additionalProperties": false
     },
     "SemanticEdge": {
@@ -195,14 +187,7 @@
         "provenance": { "$ref": "#/$defs/SemanticProvenance" },
         "extensions": { "type": "object", "additionalProperties": true }
       },
-      "required": [
-        "specVersion",
-        "kind",
-        "selectedNodeIds",
-        "nodes",
-        "edges",
-        "boundary"
-      ],
+      "required": ["specVersion", "kind", "selectedNodeIds", "nodes", "edges", "boundary"],
       "additionalProperties": false
     }
   }

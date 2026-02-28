@@ -5,11 +5,11 @@ import { useRouter } from 'next/navigation';
 import React, { useDeferredValue, useMemo, useState } from 'react';
 
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { 
-  Badge, 
-  Button, 
-  StandardDataTablePanel, 
-  PanelHeader, 
+import {
+  Badge,
+  Button,
+  StandardDataTablePanel,
+  PanelHeader,
   SearchInput,
   Tabs,
   TabsList,
@@ -113,122 +113,135 @@ export function AdminFilemakerListPage(): React.JSX.Element {
     [database.events, deferredQuery]
   );
 
-  const personColumns = useMemo<ColumnDef<FilemakerPerson>[]>(() => [
-    {
-      id: 'person',
-      header: 'Person',
-      cell: ({ row }) => {
-        const person = row.original;
-        return (
-          <div className='min-w-0 space-y-1'>
-            <div className='text-sm font-semibold text-white'>
-              {person.firstName} {person.lastName}
+  const personColumns = useMemo<ColumnDef<FilemakerPerson>[]>(
+    () => [
+      {
+        id: 'person',
+        header: 'Person',
+        cell: ({ row }) => {
+          const person = row.original;
+          return (
+            <div className='min-w-0 space-y-1'>
+              <div className='text-sm font-semibold text-white'>
+                {person.firstName} {person.lastName}
+              </div>
+              <div className='text-xs text-gray-300'>{formatFilemakerAddress(person)}</div>
             </div>
-            <div className='text-xs text-gray-300'>{formatFilemakerAddress(person)}</div>
-          </div>
-        );
+          );
+        },
       },
-    },
-    {
-      id: 'contact',
-      header: 'Contact',
-      cell: ({ row }) => {
-        const person = row.original;
-        return (
-          <div className='text-[11px] text-gray-500 space-y-0.5'>
-            <div>NIP: {person.nip || 'n/a'}</div>
-            <div>Phones: {person.phoneNumbers.length > 0 ? person.phoneNumbers.join(', ') : 'n/a'}</div>
-          </div>
-        );
+      {
+        id: 'contact',
+        header: 'Contact',
+        cell: ({ row }) => {
+          const person = row.original;
+          return (
+            <div className='text-[11px] text-gray-500 space-y-0.5'>
+              <div>NIP: {person.nip || 'n/a'}</div>
+              <div>
+                Phones: {person.phoneNumbers.length > 0 ? person.phoneNumbers.join(', ') : 'n/a'}
+              </div>
+            </div>
+          );
+        },
       },
-    },
-    {
-      id: 'actions',
-      header: () => <div className='text-right'>Actions</div>,
-      cell: ({ row }) => (
-        <div className='flex justify-end'>
-          <Button 
-            type='button' 
-            variant='outline' 
-            size='xs'
-            onClick={() => router.push(`/admin/filemaker/persons/${encodeURIComponent(row.original.id)}`)}
-          >
-            <Edit2 className='mr-1.5 size-3.5' />
-            Edit
-          </Button>
-        </div>
-      ),
-    },
-  ], [router]);
+      {
+        id: 'actions',
+        header: () => <div className='text-right'>Actions</div>,
+        cell: ({ row }) => (
+          <div className='flex justify-end'>
+            <Button
+              type='button'
+              variant='outline'
+              size='xs'
+              onClick={() =>
+                router.push(`/admin/filemaker/persons/${encodeURIComponent(row.original.id)}`)
+              }
+            >
+              <Edit2 className='mr-1.5 size-3.5' />
+              Edit
+            </Button>
+          </div>
+        ),
+      },
+    ],
+    [router]
+  );
 
-  const orgColumns = useMemo<ColumnDef<FilemakerOrganization>[]>(() => [
-    {
-      id: 'organization',
-      header: 'Organization',
-      cell: ({ row }) => {
-        const organization = row.original;
-        return (
-          <div className='min-w-0 space-y-1'>
-            <div className='text-sm font-semibold text-white'>{organization.name}</div>
-            <div className='text-xs text-gray-300'>
-              {formatFilemakerAddress(organization)}
+  const orgColumns = useMemo<ColumnDef<FilemakerOrganization>[]>(
+    () => [
+      {
+        id: 'organization',
+        header: 'Organization',
+        cell: ({ row }) => {
+          const organization = row.original;
+          return (
+            <div className='min-w-0 space-y-1'>
+              <div className='text-sm font-semibold text-white'>{organization.name}</div>
+              <div className='text-xs text-gray-300'>{formatFilemakerAddress(organization)}</div>
             </div>
-          </div>
-        );
+          );
+        },
       },
-    },
-    {
-      id: 'actions',
-      header: () => <div className='text-right'>Actions</div>,
-      cell: ({ row }) => (
-        <div className='flex justify-end'>
-          <Button 
-            type='button' 
-            variant='outline' 
-            size='xs'
-            onClick={() => router.push(`/admin/filemaker/organizations/${encodeURIComponent(row.original.id)}`)}
-          >
-            <Edit2 className='mr-1.5 size-3.5' />
-            Edit
-          </Button>
-        </div>
-      ),
-    },
-  ], [router]);
-  const eventColumns = useMemo<ColumnDef<FilemakerEvent>[]>(() => [
-    {
-      id: 'event',
-      header: 'Event',
-      cell: ({ row }) => {
-        const event = row.original;
-        return (
-          <div className='min-w-0 space-y-1'>
-            <div className='text-sm font-semibold text-white'>{event.eventName}</div>
-            <div className='text-xs text-gray-300'>
-              {formatFilemakerAddress(event)}
+      {
+        id: 'actions',
+        header: () => <div className='text-right'>Actions</div>,
+        cell: ({ row }) => (
+          <div className='flex justify-end'>
+            <Button
+              type='button'
+              variant='outline'
+              size='xs'
+              onClick={() =>
+                router.push(`/admin/filemaker/organizations/${encodeURIComponent(row.original.id)}`)
+              }
+            >
+              <Edit2 className='mr-1.5 size-3.5' />
+              Edit
+            </Button>
+          </div>
+        ),
+      },
+    ],
+    [router]
+  );
+  const eventColumns = useMemo<ColumnDef<FilemakerEvent>[]>(
+    () => [
+      {
+        id: 'event',
+        header: 'Event',
+        cell: ({ row }) => {
+          const event = row.original;
+          return (
+            <div className='min-w-0 space-y-1'>
+              <div className='text-sm font-semibold text-white'>{event.eventName}</div>
+              <div className='text-xs text-gray-300'>{formatFilemakerAddress(event)}</div>
             </div>
-          </div>
-        );
+          );
+        },
       },
-    },
-    {
-      id: 'actions',
-      header: () => <div className='text-right'>Actions</div>,
-      cell: ({ row }) => (
-        <div className='flex justify-end'>
-          <Button
-            type='button'
-            variant='outline'
-            size='xs'
-            onClick={() => router.push(`/admin/filemaker/events/${encodeURIComponent(row.original.id)}`)}
-          >
-            <Edit2 className='mr-1.5 size-3.5' />
-            Edit
-          </Button>
-        </div>
-      ),
-    },
-  ], [router]);
+      {
+        id: 'actions',
+        header: () => <div className='text-right'>Actions</div>,
+        cell: ({ row }) => (
+          <div className='flex justify-end'>
+            <Button
+              type='button'
+              variant='outline'
+              size='xs'
+              onClick={() =>
+                router.push(`/admin/filemaker/events/${encodeURIComponent(row.original.id)}`)
+              }
+            >
+              <Edit2 className='mr-1.5 size-3.5' />
+              Edit
+            </Button>
+          </div>
+        ),
+      },
+    ],
+    [router]
+  );
 
   return (
     <div className='container mx-auto space-y-6 py-8'>
@@ -270,7 +283,7 @@ export function AdminFilemakerListPage(): React.JSX.Element {
             label: 'Manage Database',
             icon: <Database className='size-4' />,
             onClick: () => router.push('/admin/filemaker'),
-          }
+          },
         ]}
       />
 
@@ -289,17 +302,27 @@ export function AdminFilemakerListPage(): React.JSX.Element {
             Events
           </TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value='persons' className='m-0'>
           <StandardDataTablePanel
             filters={
               <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
                 <div className='flex items-center gap-2'>
-                  <Badge variant='outline' className='text-[10px]'>Persons: {persons.length}</Badge>
-                  <Badge variant='outline' className='text-[10px]'>Organizations: {organizations.length}</Badge>
-                  <Badge variant='outline' className='text-[10px]'>Events: {events.length}</Badge>
-                  <Badge variant='outline' className='text-[10px]'>Emails: {database.emails.length}</Badge>
-                  <Badge variant='outline' className='text-[10px]'>Addresses: {database.addresses.length}</Badge>
+                  <Badge variant='outline' className='text-[10px]'>
+                    Persons: {persons.length}
+                  </Badge>
+                  <Badge variant='outline' className='text-[10px]'>
+                    Organizations: {organizations.length}
+                  </Badge>
+                  <Badge variant='outline' className='text-[10px]'>
+                    Events: {events.length}
+                  </Badge>
+                  <Badge variant='outline' className='text-[10px]'>
+                    Emails: {database.emails.length}
+                  </Badge>
+                  <Badge variant='outline' className='text-[10px]'>
+                    Addresses: {database.addresses.length}
+                  </Badge>
                 </div>
                 <div className='w-full max-w-sm'>
                   <SearchInput
@@ -321,22 +344,36 @@ export function AdminFilemakerListPage(): React.JSX.Element {
             emptyState={
               <EmptyState
                 title={query ? 'No persons found' : 'No persons yet'}
-                description={query ? 'Try adjusting your search terms.' : 'Add your first person to the database.'}
+                description={
+                  query
+                    ? 'Try adjusting your search terms.'
+                    : 'Add your first person to the database.'
+                }
               />
             }
           />
         </TabsContent>
-        
+
         <TabsContent value='organizations' className='m-0'>
           <StandardDataTablePanel
             filters={
               <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
                 <div className='flex items-center gap-2'>
-                  <Badge variant='outline' className='text-[10px]'>Persons: {persons.length}</Badge>
-                  <Badge variant='outline' className='text-[10px]'>Organizations: {organizations.length}</Badge>
-                  <Badge variant='outline' className='text-[10px]'>Events: {events.length}</Badge>
-                  <Badge variant='outline' className='text-[10px]'>Emails: {database.emails.length}</Badge>
-                  <Badge variant='outline' className='text-[10px]'>Addresses: {database.addresses.length}</Badge>
+                  <Badge variant='outline' className='text-[10px]'>
+                    Persons: {persons.length}
+                  </Badge>
+                  <Badge variant='outline' className='text-[10px]'>
+                    Organizations: {organizations.length}
+                  </Badge>
+                  <Badge variant='outline' className='text-[10px]'>
+                    Events: {events.length}
+                  </Badge>
+                  <Badge variant='outline' className='text-[10px]'>
+                    Emails: {database.emails.length}
+                  </Badge>
+                  <Badge variant='outline' className='text-[10px]'>
+                    Addresses: {database.addresses.length}
+                  </Badge>
                 </div>
                 <div className='w-full max-w-sm'>
                   <SearchInput
@@ -358,7 +395,11 @@ export function AdminFilemakerListPage(): React.JSX.Element {
             emptyState={
               <EmptyState
                 title={query ? 'No organizations found' : 'No organizations yet'}
-                description={query ? 'Try adjusting your search terms.' : 'Add your first organization to the database.'}
+                description={
+                  query
+                    ? 'Try adjusting your search terms.'
+                    : 'Add your first organization to the database.'
+                }
               />
             }
           />
@@ -369,14 +410,24 @@ export function AdminFilemakerListPage(): React.JSX.Element {
             filters={
               <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
                 <div className='flex items-center gap-2'>
-                  <Badge variant='outline' className='text-[10px]'>Persons: {persons.length}</Badge>
-                  <Badge variant='outline' className='text-[10px]'>Organizations: {organizations.length}</Badge>
-                  <Badge variant='outline' className='text-[10px]'>Events: {events.length}</Badge>
-                  <Badge variant='outline' className='text-[10px]'>Emails: {database.emails.length}</Badge>
+                  <Badge variant='outline' className='text-[10px]'>
+                    Persons: {persons.length}
+                  </Badge>
+                  <Badge variant='outline' className='text-[10px]'>
+                    Organizations: {organizations.length}
+                  </Badge>
+                  <Badge variant='outline' className='text-[10px]'>
+                    Events: {events.length}
+                  </Badge>
+                  <Badge variant='outline' className='text-[10px]'>
+                    Emails: {database.emails.length}
+                  </Badge>
                   <Badge variant='outline' className='text-[10px]'>
                     Event Links: {database.eventOrganizationLinks.length}
                   </Badge>
-                  <Badge variant='outline' className='text-[10px]'>Addresses: {database.addresses.length}</Badge>
+                  <Badge variant='outline' className='text-[10px]'>
+                    Addresses: {database.addresses.length}
+                  </Badge>
                 </div>
                 <div className='w-full max-w-sm'>
                   <SearchInput
@@ -398,7 +449,11 @@ export function AdminFilemakerListPage(): React.JSX.Element {
             emptyState={
               <EmptyState
                 title={query ? 'No events found' : 'No events yet'}
-                description={query ? 'Try adjusting your search terms.' : 'Add your first event to the database.'}
+                description={
+                  query
+                    ? 'Try adjusting your search terms.'
+                    : 'Add your first event to the database.'
+                }
               />
             }
           />

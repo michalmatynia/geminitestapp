@@ -14,17 +14,13 @@ type ToastFn = (
   message: string,
   options?: {
     variant?: 'info' | 'success' | 'warning' | 'error';
-  },
+  }
 ) => void;
 
 type UseAiPathsSettingsSamplesInput = {
   queryClient: QueryClient;
-  setParserSamples: React.Dispatch<
-    React.SetStateAction<Record<string, ParserSampleState>>
-  >;
-  setUpdaterSamples: React.Dispatch<
-    React.SetStateAction<Record<string, UpdaterSampleState>>
-  >;
+  setParserSamples: React.Dispatch<React.SetStateAction<Record<string, ParserSampleState>>>;
+  setUpdaterSamples: React.Dispatch<React.SetStateAction<Record<string, UpdaterSampleState>>>;
   toast: ToastFn;
 };
 
@@ -47,16 +43,12 @@ type FetchUpdaterSampleResult = {
 export type UseAiPathsSettingsSamplesReturn = {
   parserSampleLoading: boolean;
   updaterSampleLoading: boolean;
-  handleFetchParserSample: (
-    nodeId: string,
-    entityType: string,
-    entityId: string,
-  ) => Promise<void>;
+  handleFetchParserSample: (nodeId: string, entityType: string, entityId: string) => Promise<void>;
   handleFetchUpdaterSample: (
     nodeId: string,
     entityType: string,
     entityId: string,
-    options?: { notify?: boolean },
+    options?: { notify?: boolean }
   ) => Promise<void>;
 };
 
@@ -90,11 +82,7 @@ export function useAiPathsSettingsSamples({
       }
       const normalized = entityType.trim().toLowerCase();
       const resolvedType =
-        normalized === 'products'
-          ? 'product'
-          : normalized === 'notes'
-            ? 'note'
-            : normalized;
+        normalized === 'products' ? 'product' : normalized === 'notes' ? 'note' : normalized;
       let sample: Record<string, unknown> | null = null;
       if (resolvedType === 'product') {
         sample = await queryClient.fetchQuery({
@@ -152,10 +140,9 @@ export function useAiPathsSettingsSamples({
       }));
     },
     onError: (error: Error): void => {
-      toast(
-        error instanceof Error ? error.message : 'Failed to fetch sample.',
-        { variant: 'error' },
-      );
+      toast(error instanceof Error ? error.message : 'Failed to fetch sample.', {
+        variant: 'error',
+      });
     },
   });
 
@@ -163,9 +150,7 @@ export function useAiPathsSettingsSamples({
     FetchUpdaterSampleResult,
     FetchUpdaterSampleVariables
   >({
-    mutationKey: QUERY_KEYS.ai.aiPaths.mutation(
-      'settings.fetch-updater-sample',
-    ),
+    mutationKey: QUERY_KEYS.ai.aiPaths.mutation('settings.fetch-updater-sample'),
     mutationFn: async ({
       nodeId,
       entityType,
@@ -184,12 +169,11 @@ export function useAiPathsSettingsSamples({
       }
       let sample: unknown;
       let fetchedId = entityId;
-      
-      const isObjectId = (value: string): boolean =>
-        /^[0-9a-fA-F]{24}$/.test(value);
+
+      const isObjectId = (value: string): boolean => /^[0-9a-fA-F]{24}$/.test(value);
       const fetchViaDbQuery = async (
         collection: string,
-        id?: string,
+        id?: string
       ): Promise<{ sample: unknown | null; fetchedId: string }> => {
         const queries: Array<{
           query: Record<string, unknown>;
@@ -226,8 +210,7 @@ export function useAiPathsSettingsSamples({
             const rawId =
               (resolvedSample as Record<string, unknown>)?.['_id'] ??
               (resolvedSample as Record<string, unknown>)?.['id'];
-            const nextId =
-              (rawId as { toString?: () => string })?.toString?.() ?? id ?? '';
+            const nextId = (rawId as { toString?: () => string })?.toString?.() ?? id ?? '';
             return { sample: resolvedSample, fetchedId: nextId };
           }
         }
@@ -298,18 +281,20 @@ export function useAiPathsSettingsSamples({
         }
         return;
       }
-      setUpdaterSamples((prev: Record<string, UpdaterSampleState>): Record<string, UpdaterSampleState> => ({
-        ...prev,
-        [nodeId]: {
-          entityType,
-          entityId,
-          json: JSON.stringify(sample, null, 2),
-          mappingMode: prev[nodeId]?.mappingMode ?? 'top',
-          depth: prev[nodeId]?.depth ?? 2,
-          keyStyle: prev[nodeId]?.keyStyle ?? 'path',
-          includeContainers: prev[nodeId]?.includeContainers ?? false,
-        },
-      }));
+      setUpdaterSamples(
+        (prev: Record<string, UpdaterSampleState>): Record<string, UpdaterSampleState> => ({
+          ...prev,
+          [nodeId]: {
+            entityType,
+            entityId,
+            json: JSON.stringify(sample, null, 2),
+            mappingMode: prev[nodeId]?.mappingMode ?? 'top',
+            depth: prev[nodeId]?.depth ?? 2,
+            keyStyle: prev[nodeId]?.keyStyle ?? 'path',
+            includeContainers: prev[nodeId]?.includeContainers ?? false,
+          },
+        })
+      );
       if (notify) {
         toast('Sample fetched.', { variant: 'success' });
       }
@@ -318,10 +303,9 @@ export function useAiPathsSettingsSamples({
       if (variables?.notify === false) {
         return;
       }
-      toast(
-        error instanceof Error ? error.message : 'Failed to fetch sample.',
-        { variant: 'error' },
-      );
+      toast(error instanceof Error ? error.message : 'Failed to fetch sample.', {
+        variant: 'error',
+      });
     },
   });
 
@@ -331,7 +315,7 @@ export function useAiPathsSettingsSamples({
   const handleFetchParserSample = async (
     nodeId: string,
     entityType: string,
-    entityId: string,
+    entityId: string
   ): Promise<void> => {
     await fetchParserSampleMutation.mutateAsync({
       nodeId,
@@ -344,7 +328,7 @@ export function useAiPathsSettingsSamples({
     nodeId: string,
     entityType: string,
     entityId: string,
-    options?: { notify?: boolean },
+    options?: { notify?: boolean }
   ): Promise<void> => {
     await fetchUpdaterSampleMutation.mutateAsync({
       nodeId,

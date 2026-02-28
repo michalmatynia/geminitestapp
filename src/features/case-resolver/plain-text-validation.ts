@@ -1,10 +1,13 @@
 import { type ValidatorPatternList } from '@/shared/contracts/admin';
-import { formatProgrammaticPrompt } from '@/shared/lib/prompt-engine/prompt-formatter';
-import { type PromptEngineSettings, type PromptValidationRule } from '@/shared/lib/prompt-engine/settings';
+import { formatProgrammaticPrompt } from '@/shared/lib/prompt-engine';
+import {
+  type PromptEngineSettings,
+  type PromptValidationRule,
+} from '@/shared/lib/prompt-engine/settings';
 import {
   preparePromptValidationRuntime,
   validateProgrammaticPromptWithRuntime,
-} from '@/shared/lib/prompt-engine/prompt-validator';
+} from '@/shared/lib/prompt-engine';
 import { type CaseResolverNodeMeta } from '@/shared/contracts/case-resolver';
 import { type PromptValidationScopeDto as PromptValidationScope } from '@/shared/contracts/prompt-engine';
 
@@ -25,10 +28,7 @@ const normalizePromptValidationScopes = (
   return deduped;
 };
 
-const ruleAppliesToScope = (
-  rule: PromptValidationRule,
-  scope: PromptValidationScope
-): boolean => {
+const ruleAppliesToScope = (rule: PromptValidationRule, scope: PromptValidationScope): boolean => {
   const appliesToScopes = normalizePromptValidationScopes(rule.appliesToScopes);
   return appliesToScopes.includes(scope) || appliesToScopes.includes('global');
 };
@@ -39,8 +39,9 @@ const resolveScopedRules = (
   rules: PromptValidationRule[];
   learnedRules: PromptValidationRule[];
 } => {
-  const rules = (settings.promptValidation.rules ?? []).filter((rule: PromptValidationRule): boolean =>
-    ruleAppliesToScope(rule, CASE_RESOLVER_PLAIN_TEXT_PROMPT_SCOPE)
+  const rules = (settings.promptValidation.rules ?? []).filter(
+    (rule: PromptValidationRule): boolean =>
+      ruleAppliesToScope(rule, CASE_RESOLVER_PLAIN_TEXT_PROMPT_SCOPE)
   );
   const learnedRules = (settings.promptValidation.learnedRules ?? []).filter(
     (rule: PromptValidationRule): boolean =>
@@ -75,12 +76,11 @@ export const applyCaseResolverPlainTextValidation = (
 ): string => {
   const sourceText = typeof args.input === 'string' ? args.input : '';
   if (!sourceText) return sourceText;
-  const validationEnabled =
-    args.forceEnabled ?? (args.nodeMeta.plainTextValidationEnabled ?? true);
+  const validationEnabled = args.forceEnabled ?? args.nodeMeta.plainTextValidationEnabled ?? true;
   if (!validationEnabled) return sourceText;
 
   const formatterEnabled =
-    args.forceFormatterEnabled ?? (args.nodeMeta.plainTextFormatterEnabled ?? true);
+    args.forceFormatterEnabled ?? args.nodeMeta.plainTextFormatterEnabled ?? true;
   const stackOptions = listCaseResolverPlainTextStacks(args.patternLists);
   const stackId = args.nodeMeta.plainTextValidationStackId?.trim() ?? '';
   const hasValidStack =
@@ -120,4 +120,3 @@ export const applyCaseResolverPlainTextValidation = (
   );
   return formatted.prompt;
 };
-

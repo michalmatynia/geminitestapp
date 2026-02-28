@@ -18,7 +18,7 @@ import {
   CardTitle,
   CardDescription,
   CardContent,
-  CardFooter
+  CardFooter,
 } from '@/shared/ui';
 
 export default function RegisterPage(): React.JSX.Element {
@@ -55,14 +55,17 @@ function RegisterForm({ allowSignup }: { allowSignup: boolean }): React.JSX.Elem
       const response = await registerUserMutation.mutateAsync(registerInput);
 
       if (!response.ok) {
-        const payload = response.payload as
-          | { error?: string; details?: { issues?: string[] } }
-          | null;
+        const payload = response.payload as {
+          error?: string;
+          details?: { issues?: string[] };
+        } | null;
         const details = payload?.details?.issues?.join(' ') ?? '';
         const message = payload?.error
           ? `${payload.error}${details ? ` ${details}` : ''}`
           : 'Failed to create account.';
-        logClientError(new Error(message), { context: { source: 'RegisterPage', action: 'registerUser', email } });
+        logClientError(new Error(message), {
+          context: { source: 'RegisterPage', action: 'registerUser', email },
+        });
         setError(message);
         return;
       }
@@ -76,15 +79,12 @@ function RegisterForm({ allowSignup }: { allowSignup: boolean }): React.JSX.Elem
       } catch (error) {
         logClientError(error, { context: { source: 'RegisterPage', action: 'signIn', email } });
         const message =
-          error instanceof Error
-            ? error.message
-            : 'Sign-in failed. Please try again.';
+          error instanceof Error ? error.message : 'Sign-in failed. Please try again.';
         setError(message);
       }
     } catch (error) {
       logClientError(error, { context: { source: 'RegisterPage', action: 'handleSubmit', email } });
-      const message =
-        error instanceof Error ? error.message : 'Failed to create account.';
+      const message = error instanceof Error ? error.message : 'Failed to create account.';
       setError(message);
     } finally {
       setIsSubmitting(false);
@@ -109,7 +109,10 @@ function RegisterForm({ allowSignup }: { allowSignup: boolean }): React.JSX.Elem
               Self-service registration is disabled. Please contact an administrator.
             </Alert>
           ) : null}
-          <form className='space-y-4' onSubmit={(e: React.FormEvent<HTMLFormElement>) => void handleSubmit(e)}>
+          <form
+            className='space-y-4'
+            onSubmit={(e: React.FormEvent<HTMLFormElement>) => void handleSubmit(e)}
+          >
             <div className='space-y-2'>
               <Label className='text-sm text-gray-300' htmlFor='name'>
                 Name (optional)
@@ -119,7 +122,9 @@ function RegisterForm({ allowSignup }: { allowSignup: boolean }): React.JSX.Elem
                 type='text'
                 className='w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-white'
                 value={name}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>) => setName(event.target.value)}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                  setName(event.target.value)
+                }
                 disabled={!allowSignup}
               />
             </div>
@@ -132,7 +137,9 @@ function RegisterForm({ allowSignup }: { allowSignup: boolean }): React.JSX.Elem
                 type='email'
                 className='w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-white'
                 value={email}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>) => setEmail(event.target.value)}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                  setEmail(event.target.value)
+                }
                 required
                 disabled={!allowSignup}
               />
@@ -146,7 +153,9 @@ function RegisterForm({ allowSignup }: { allowSignup: boolean }): React.JSX.Elem
                 type='password'
                 className='w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-white'
                 value={password}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>) => setPassword(event.target.value)}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                  setPassword(event.target.value)
+                }
                 required
                 minLength={DEFAULT_AUTH_SECURITY_POLICY.minPasswordLength}
                 disabled={!allowSignup}

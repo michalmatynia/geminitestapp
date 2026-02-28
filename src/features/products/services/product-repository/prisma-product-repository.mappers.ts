@@ -7,11 +7,7 @@ import {
   ProductCatalog as PrismaProductCatalog,
 } from '@prisma/client';
 import type { ImageFileRecord } from '@/shared/contracts/files';
-import {
-  CatalogRecord,
-  ProductWithImages,
-  ProductImageRecord,
-} from '@/shared/contracts/products';
+import { CatalogRecord, ProductWithImages, ProductImageRecord } from '@/shared/contracts/products';
 import { normalizeProductParameterValues } from './prisma-product-repository.helpers';
 
 export const toImageFileRecord = (imageFile: PrismaImageFile): ImageFileRecord => ({
@@ -28,7 +24,7 @@ export const toImageFileRecord = (imageFile: PrismaImageFile): ImageFileRecord =
 });
 
 export const toCatalogRecord = (
-  catalog: PrismaCatalog & { languages?: { languageId: string }[] },
+  catalog: PrismaCatalog & { languages?: { languageId: string }[] }
 ): CatalogRecord => ({
   id: catalog.id,
   name: catalog.name,
@@ -43,7 +39,7 @@ export const toCatalogRecord = (
 });
 
 export const toProductImageRecord = (
-  image: PrismaProductImage & { imageFile?: PrismaImageFile | null },
+  image: PrismaProductImage & { imageFile?: PrismaImageFile | null }
 ): ProductImageRecord | null => {
   if (!image.imageFile) return null;
 
@@ -72,12 +68,11 @@ const toTrimmedString = (value: unknown): string => {
 
 export const resolveCategoryId = (product: FullPrismaProduct): string | null => {
   const direct = toTrimmedString(
-    (product as FullPrismaProduct & { categoryId?: unknown }).categoryId,
+    (product as FullPrismaProduct & { categoryId?: unknown }).categoryId
   );
   if (direct) return direct;
 
-  const relation = (product as FullPrismaProduct & { categories?: unknown })
-    .categories;
+  const relation = (product as FullPrismaProduct & { categories?: unknown }).categories;
   if (Array.isArray(relation)) {
     for (const entry of relation) {
       if (!entry || typeof entry !== 'object') continue;
@@ -148,10 +143,7 @@ export const toProductRecord = (product: FullPrismaProduct): ProductWithImages =
     weight: product.weight ?? null,
     length: product.length ?? null,
     published: (product.published as boolean | null | undefined) ?? true,
-    catalogId:
-      (product.catalogId as string | null | undefined) ??
-      catalogs[0]?.catalogId ??
-      '',
+    catalogId: (product.catalogId as string | null | undefined) ?? catalogs[0]?.catalogId ?? '',
     parameters: normalizeProductParameterValues(product.parameters),
     imageLinks: product.imageLinks ?? [],
     imageBase64s: [],
@@ -171,10 +163,10 @@ export const toProductRecord = (product: FullPrismaProduct): ProductWithImages =
         producerId: p.producerId,
         assignedAt: p.assignedAt.toISOString(),
       })) ?? [],
-    images: (product.images
-      ?.map(toProductImageRecord)
-      .filter((i): i is ProductImageRecord => i !== null) ??
-      []),
+    images:
+      product.images
+        ?.map(toProductImageRecord)
+        .filter((i): i is ProductImageRecord => i !== null) ?? [],
     catalogs,
   };
 };

@@ -3,7 +3,10 @@
 import React from 'react';
 
 import { useInternationalizationContext } from '@/shared/lib/internationalization/context/InternationalizationContext';
-import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
+import {
+  SettingsPanelBuilder,
+  type SettingsField,
+} from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import { useCurrencyForm } from './hooks/useCurrencyForm';
 
@@ -38,14 +41,15 @@ const FIELDS: SettingsField<CurrencyFormState>[] = [
 ];
 
 export function CurrencyModal(): React.JSX.Element | null {
-  const { 
-    isCurrencyModalOpen, 
-    handleCloseCurrencyModal, 
-    activeCurrency 
-  } = useInternationalizationContext();
+  const { isCurrencyModalOpen, handleCloseCurrencyModal, activeCurrency } =
+    useInternationalizationContext();
 
-  const { form, setForm, saveMutation, handleSubmit: handleFormSubmit } =
-    useCurrencyForm({ currency: activeCurrency ?? null });
+  const {
+    form,
+    setForm,
+    saveMutation,
+    handleSubmit: handleFormSubmit,
+  } = useCurrencyForm({ currency: activeCurrency ?? null });
 
   if (!isCurrencyModalOpen) return null;
 
@@ -59,7 +63,7 @@ export function CurrencyModal(): React.JSX.Element | null {
     if (values.code) {
       values.code = values.code.toUpperCase();
     }
-    setForm(prev => ({ ...prev, ...values }));
+    setForm((prev) => ({ ...prev, ...values }));
   };
 
   return (

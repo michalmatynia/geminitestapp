@@ -11,15 +11,13 @@ interface CmsPageContextValue {
 
 const CmsPageContext = createContext<CmsPageContextValue | null>(null);
 
-export function CmsPageProvider({ 
-  colorSchemes, 
-  layout, 
-  children 
+export function CmsPageProvider({
+  colorSchemes,
+  layout,
+  children,
 }: CmsPageContextValue & { children: React.ReactNode }) {
   return (
-    <CmsPageContext.Provider value={{ colorSchemes, layout }}>
-      {children}
-    </CmsPageContext.Provider>
+    <CmsPageContext.Provider value={{ colorSchemes, layout }}>{children}</CmsPageContext.Provider>
   );
 }
 

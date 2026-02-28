@@ -13,7 +13,10 @@ import type { FolderTreeProfileV2 } from '@/shared/contracts/master-folder-tree'
 import type { SequenceGroupDraft } from '@/shared/contracts/products';
 import { Button, FormField, Input } from '@/shared/ui';
 
-import { buildValidatorPatternMasterNodes, fromSeqGroupMasterNodeId } from './validator-pattern-master-tree';
+import {
+  buildValidatorPatternMasterNodes,
+  fromSeqGroupMasterNodeId,
+} from './validator-pattern-master-tree';
 import { ValidatorPatternTreeContext } from './ValidatorPatternTreeContext';
 import { useValidatorPatternTreeActions } from './useValidatorPatternTreeActions';
 import { useValidatorSettingsContext } from './ValidatorSettingsContext';
@@ -184,29 +187,22 @@ export function ValidatorPatternTree(): React.JSX.Element {
     instanceId: 'validator_pattern_tree',
     profile: VALIDATOR_PATTERN_TREE_PROFILE,
     initialNodes: masterNodes,
-    initiallyExpandedNodeIds: masterNodes
-      .filter((n) => n.type === 'folder')
-      .map((n) => n.id),
+    initiallyExpandedNodeIds: masterNodes.filter((n) => n.type === 'folder').map((n) => n.id),
   });
 
   // Keep controller in sync with server-driven data changes
   useEffect(() => {
     void controller.replaceNodes(masterNodes, 'external_sync');
     // controller is a stable object; masterNodes changes are the trigger
-     
   }, [masterNodes]);
 
   const { onNodeDrop } = useValidatorPatternTreeActions({
     reorderPatterns: reorderPatternsMutation,
   });
 
-  const patternById = useMemo(
-    () => new Map(patterns.map((p) => [p.id, p])),
-    [patterns]
-  );
+  const patternById = useMemo(() => new Map(patterns.map((p) => [p.id, p])), [patterns]);
 
-  const isPending =
-    patternActionsPending || reorderPending || reorderPatternsMutation.isPending;
+  const isPending = patternActionsPending || reorderPending || reorderPatternsMutation.isPending;
 
   const contextValue = useMemo(
     () => ({
@@ -241,28 +237,10 @@ export function ValidatorPatternTree(): React.JSX.Element {
     ]
   );
 
-  const renderNode = useCallback(
-    (input: FolderTreeViewportRenderNodeInput): React.ReactNode => {
-      if (input.node.type === 'folder') {
-        return (
-          <SequenceGroupFolderNodeItem
-            node={input.node}
-            depth={input.depth}
-            hasChildren={input.hasChildren}
-            isExpanded={input.isExpanded}
-            isSelected={input.isSelected}
-            isRenaming={input.isRenaming}
-            isDragging={input.isDragging}
-            isDropTarget={input.isDropTarget}
-            dropPosition={input.dropPosition}
-            select={input.select}
-            toggleExpand={input.toggleExpand}
-            startRename={input.startRename}
-          />
-        );
-      }
+  const renderNode = useCallback((input: FolderTreeViewportRenderNodeInput): React.ReactNode => {
+    if (input.node.type === 'folder') {
       return (
-        <PatternNodeItem
+        <SequenceGroupFolderNodeItem
           node={input.node}
           depth={input.depth}
           hasChildren={input.hasChildren}
@@ -274,19 +252,32 @@ export function ValidatorPatternTree(): React.JSX.Element {
           dropPosition={input.dropPosition}
           select={input.select}
           toggleExpand={input.toggleExpand}
+          startRename={input.startRename}
         />
       );
-    },
-    []
-  );
+    }
+    return (
+      <PatternNodeItem
+        node={input.node}
+        depth={input.depth}
+        hasChildren={input.hasChildren}
+        isExpanded={input.isExpanded}
+        isSelected={input.isSelected}
+        isRenaming={input.isRenaming}
+        isDragging={input.isDragging}
+        isDropTarget={input.isDropTarget}
+        dropPosition={input.dropPosition}
+        select={input.select}
+        toggleExpand={input.toggleExpand}
+      />
+    );
+  }, []);
 
   // Show group settings panel below tree when a sequence-group folder is selected
   const selectedGroupId = controller.selectedNodeId
     ? fromSeqGroupMasterNodeId(controller.selectedNodeId)
     : null;
-  const selectedGroupDraft = selectedGroupId
-    ? getGroupDraft(selectedGroupId)
-    : null;
+  const selectedGroupDraft = selectedGroupId ? getGroupDraft(selectedGroupId) : null;
 
   return (
     <MasterFolderTreeRuntimeProvider>
@@ -303,8 +294,12 @@ export function ValidatorPatternTree(): React.JSX.Element {
             groupId={selectedGroupId}
             draft={selectedGroupDraft}
             setGroupDrafts={setGroupDrafts}
-            onSave={(): void => { void handleSaveSequenceGroup(selectedGroupId); }}
-            onUngroup={(): void => { void handleUngroup(selectedGroupId); }}
+            onSave={(): void => {
+              void handleSaveSequenceGroup(selectedGroupId);
+            }}
+            onUngroup={(): void => {
+              void handleUngroup(selectedGroupId);
+            }}
             isPending={isPending}
           />
         )}

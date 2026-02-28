@@ -3,17 +3,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { normalizeAuthEmail } from '@/features/auth/server';
-import {
-  getAuthSecurityPolicy,
-  validatePasswordStrength,
-} from '@/features/auth/server';
+import { getAuthSecurityPolicy, validatePasswordStrength } from '@/features/auth/server';
 import { getAuthUserPageSettings } from '@/features/auth/server';
-import {
-  getAuthDataProvider,
-  requireAuthProvider,
-} from '@/features/auth/server';
+import { getAuthDataProvider, requireAuthProvider } from '@/features/auth/server';
 import { logAuthEvent } from '@/features/auth/server';
-import { logActivity } from '@/features/observability/server';
+import { logActivity } from '@/shared/utils/observability/activity-service';
 import { ActivityTypes } from '@/shared/constants/observability';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import {
@@ -44,10 +38,7 @@ type MongoUserDoc = {
   updatedAt: Date;
 };
 
-export async function POST_handler(
-  req: NextRequest,
-  ctx: ApiHandlerContext,
-): Promise<Response> {
+export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const data = ctx.body as z.infer<typeof registerSchema> | undefined;
   if (!data) throw badRequestError('Invalid payload');
   await logAuthEvent({
@@ -115,19 +106,14 @@ export async function POST_handler(
     }).catch((error: Error) => {
       logger.warn('Failed to log registration activity', { error });
     });
-    return NextResponse.json(
-      { id: user.id, email: user.email, name: user.name },
-      { status: 201 },
-    );
+    return NextResponse.json({ id: user.id, email: user.email, name: user.name }, { status: 201 });
   }
 
   if (!process.env['MONGODB_URI']) {
     throw internalError('MongoDB is not configured.');
   }
   const db = await getMongoDb();
-  const existing = await db
-    .collection<MongoUserDoc>('users')
-    .findOne({ email });
+  const existing = await db.collection<MongoUserDoc>('users').findOne({ email });
   if (existing) {
     throw conflictError('User already exists.', { email });
   }
@@ -162,6 +148,6 @@ export async function POST_handler(
   });
   return NextResponse.json(
     { id: result.insertedId.toString(), email: doc.email, name: doc.name },
-    { status: 201 },
+    { status: 201 }
   );
 }

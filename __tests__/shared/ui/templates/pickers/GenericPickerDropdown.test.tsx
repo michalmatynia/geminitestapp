@@ -26,11 +26,7 @@ describe('GenericPickerDropdown', () => {
   it('renders trigger button', () => {
     const onSelect = vi.fn();
     render(
-      <GenericPickerDropdown
-        groups={mockGroups}
-        onSelect={onSelect}
-        ariaLabel='Select section'
-      />
+      <GenericPickerDropdown groups={mockGroups} onSelect={onSelect} ariaLabel='Select section' />
     );
 
     const trigger = screen.getByRole('button', { name: /select section/i });
@@ -39,12 +35,7 @@ describe('GenericPickerDropdown', () => {
 
   it('opens dropdown on click', async () => {
     const onSelect = vi.fn();
-    render(
-      <GenericPickerDropdown
-        groups={mockGroups}
-        onSelect={onSelect}
-      />
-    );
+    render(<GenericPickerDropdown groups={mockGroups} onSelect={onSelect} />);
 
     const trigger = screen.getByRole('button', { name: /add item/i });
     await userEvent.click(trigger);
@@ -55,12 +46,7 @@ describe('GenericPickerDropdown', () => {
 
   it('calls onSelect when option clicked', async () => {
     const onSelect = vi.fn();
-    render(
-      <GenericPickerDropdown
-        groups={mockGroups}
-        onSelect={onSelect}
-      />
-    );
+    render(<GenericPickerDropdown groups={mockGroups} onSelect={onSelect} />);
 
     const trigger = screen.getByRole('button', { name: /add item/i });
     await userEvent.click(trigger);
@@ -68,23 +54,16 @@ describe('GenericPickerDropdown', () => {
     const gridOption = screen.getByRole('button', { name: /grid/i });
     await userEvent.click(gridOption);
 
-    expect(onSelect).toHaveBeenCalledWith(
-      expect.objectContaining({ key: 'grid', label: 'Grid' })
-    );
+    expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ key: 'grid', label: 'Grid' }));
   });
 
   it('closes dropdown after selection', async () => {
     const onSelect = vi.fn();
-    render(
-      <GenericPickerDropdown
-        groups={mockGroups}
-        onSelect={onSelect}
-      />
-    );
+    render(<GenericPickerDropdown groups={mockGroups} onSelect={onSelect} />);
 
     const trigger = screen.getByRole('button', { name: /add item/i });
     await userEvent.click(trigger);
-    
+
     const gridOption = screen.getByRole('button', { name: /grid/i });
     await userEvent.click(gridOption);
 
@@ -95,12 +74,7 @@ describe('GenericPickerDropdown', () => {
 
   it('closes dropdown on escape key', async () => {
     const onSelect = vi.fn();
-    render(
-      <GenericPickerDropdown
-        groups={mockGroups}
-        onSelect={onSelect}
-      />
-    );
+    render(<GenericPickerDropdown groups={mockGroups} onSelect={onSelect} />);
 
     const trigger = screen.getByRole('button', { name: /add item/i });
     await userEvent.click(trigger);
@@ -116,13 +90,7 @@ describe('GenericPickerDropdown', () => {
 
   it('filters options when search enabled', async () => {
     const onSelect = vi.fn();
-    render(
-      <GenericPickerDropdown
-        groups={mockGroups}
-        onSelect={onSelect}
-        searchable
-      />
-    );
+    render(<GenericPickerDropdown groups={mockGroups} onSelect={onSelect} searchable />);
 
     const trigger = screen.getByRole('button', { name: /add item/i });
     await userEvent.click(trigger);
@@ -136,13 +104,7 @@ describe('GenericPickerDropdown', () => {
 
   it('highlights selected option', async () => {
     const onSelect = vi.fn();
-    render(
-      <GenericPickerDropdown
-        groups={mockGroups}
-        onSelect={onSelect}
-        selectedKey='grid'
-      />
-    );
+    render(<GenericPickerDropdown groups={mockGroups} onSelect={onSelect} selectedKey='grid' />);
 
     const trigger = screen.getByRole('button', { name: /add item/i });
     await userEvent.click(trigger);
@@ -153,13 +115,7 @@ describe('GenericPickerDropdown', () => {
 
   it('disables picker when disabled prop is true', () => {
     const onSelect = vi.fn();
-    render(
-      <GenericPickerDropdown
-        groups={mockGroups}
-        onSelect={onSelect}
-        disabled
-      />
-    );
+    render(<GenericPickerDropdown groups={mockGroups} onSelect={onSelect} disabled />);
 
     const trigger = screen.getByRole('button', { name: /add item/i });
     expect(trigger).toHaveAttribute('aria-disabled', 'true');
@@ -167,12 +123,7 @@ describe('GenericPickerDropdown', () => {
 
   it('returns null when no options', () => {
     const onSelect = vi.fn();
-    const { container } = render(
-      <GenericPickerDropdown
-        groups={[]}
-        onSelect={onSelect}
-      />
-    );
+    const { container } = render(<GenericPickerDropdown groups={[]} onSelect={onSelect} />);
 
     expect(container.firstChild).toBeNull();
   });
@@ -181,19 +132,9 @@ describe('GenericPickerDropdown', () => {
     const onSelect = vi.fn();
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
-    const { rerender } = render(
-      <GenericPickerDropdown
-        groups={mockGroups}
-        onSelect={onSelect}
-      />
-    );
+    const { rerender } = render(<GenericPickerDropdown groups={mockGroups} onSelect={onSelect} />);
 
-    rerender(
-      <GenericPickerDropdown
-        groups={[]}
-        onSelect={onSelect}
-      />
-    );
+    rerender(<GenericPickerDropdown groups={[]} onSelect={onSelect} />);
 
     expect(errorSpy).not.toHaveBeenCalledWith(
       expect.stringContaining('React has detected a change in the order of Hooks called')

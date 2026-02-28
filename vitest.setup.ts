@@ -1,16 +1,16 @@
-import "dotenv/config";
-import "@testing-library/jest-dom/vitest";
-import { vi, beforeAll, afterEach, afterAll } from "vitest";
-import React from "react";
-import { server } from "./src/mocks/server";
+import 'dotenv/config';
+import '@testing-library/jest-dom/vitest';
+import { vi, beforeAll, afterEach, afterAll } from 'vitest';
+import React from 'react';
+import { server } from './src/mocks/server';
 
 // Force Prisma as the database provider for tests to ensure consistency with cleanup logic
-process.env['APP_DB_PROVIDER'] = "prisma";
-process.env['MONGODB_URI'] = "mongodb://localhost:27017/test";
-process.env['MONGODB_DB'] = "test";
+process.env['APP_DB_PROVIDER'] = 'prisma';
+process.env['MONGODB_URI'] = 'mongodb://localhost:27017/test';
+process.env['MONGODB_DB'] = 'test';
 
 // Define mock models inside vi.mock factory to avoid hoisting issues
-vi.mock("@/shared/lib/db/prisma", () => {
+vi.mock('@/shared/lib/db/prisma', () => {
   const store: Record<string, any[]> = {};
 
   const getModelStore = (model: string) => {
@@ -21,33 +21,46 @@ vi.mock("@/shared/lib/db/prisma", () => {
   const mockPrismaModel = (modelName: string) => ({
     findUnique: vi.fn().mockImplementation((args) => {
       const s = getModelStore(modelName);
-      return Promise.resolve(s.find(item => item.id === args.where.id || item.key === args.where.key) || null);
+      return Promise.resolve(
+        s.find((item) => item.id === args.where.id || item.key === args.where.key) || null
+      );
     }),
     findMany: vi.fn().mockImplementation((args) => {
       let s = [...getModelStore(modelName)];
       if (args?.where?.slug?.$in) {
-        s = s.filter(item => args.where.slug.$in.includes(item.slug));
+        s = s.filter((item) => args.where.slug.$in.includes(item.slug));
       }
       return Promise.resolve(s);
     }),
-    findFirst: vi.fn().mockImplementation((_args) => {      const s = getModelStore(modelName);
+    findFirst: vi.fn().mockImplementation((_args) => {
+      const s = getModelStore(modelName);
       return Promise.resolve(s[0] || null);
     }),
     create: vi.fn().mockImplementation((args) => {
       const s = getModelStore(modelName);
-      const newItem = { id: 'mock-id-' + Math.random().toString(36).slice(2, 9), createdAt: new Date(), updatedAt: new Date(), ...args.data };
+      const newItem = {
+        id: 'mock-id-' + Math.random().toString(36).slice(2, 9),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        ...args.data,
+      };
       s.push(newItem);
       return Promise.resolve(newItem);
     }),
     createMany: vi.fn().mockImplementation((args) => {
       const s = getModelStore(modelName);
-      const newItems = args.data.map((d: any) => ({ id: 'mock-id-' + Math.random().toString(36).slice(2, 9), createdAt: new Date(), updatedAt: new Date(), ...d }));
+      const newItems = args.data.map((d: any) => ({
+        id: 'mock-id-' + Math.random().toString(36).slice(2, 9),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        ...d,
+      }));
       s.push(...newItems);
       return Promise.resolve({ count: newItems.length });
     }),
     update: vi.fn().mockImplementation((args) => {
       const s = getModelStore(modelName);
-      const index = s.findIndex(item => item.id === args.where.id);
+      const index = s.findIndex((item) => item.id === args.where.id);
       if (index !== -1) {
         s[index] = { ...s[index], ...args.data, updatedAt: new Date() };
         return Promise.resolve(s[index]);
@@ -57,7 +70,7 @@ vi.mock("@/shared/lib/db/prisma", () => {
     updateMany: vi.fn().mockResolvedValue({ count: 1 }),
     delete: vi.fn().mockImplementation((args) => {
       const s = getModelStore(modelName);
-      const index = s.findIndex(item => item.id === args.where.id);
+      const index = s.findIndex((item) => item.id === args.where.id);
       let deleted = { id: args.where.id };
       if (index !== -1) {
         deleted = s[index];
@@ -73,19 +86,24 @@ vi.mock("@/shared/lib/db/prisma", () => {
     }),
     upsert: vi.fn().mockImplementation((args) => {
       const s = getModelStore(modelName);
-      const index = s.findIndex(item => item.id === args.where.id);
+      const index = s.findIndex((item) => item.id === args.where.id);
       if (index !== -1) {
         s[index] = { ...s[index], ...args.update, updatedAt: new Date() };
         return Promise.resolve(s[index]);
       } else {
-        const newItem = { id: args.where.id || 'mock-id', createdAt: new Date(), updatedAt: new Date(), ...args.create };
+        const newItem = {
+          id: args.where.id || 'mock-id',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          ...args.create,
+        };
         s.push(newItem);
         return Promise.resolve(newItem);
       }
     }),
     count: vi.fn().mockImplementation(() => Promise.resolve(getModelStore(modelName).length)),
   });
-  
+
   const prismaMock: any = {
     $transaction: vi.fn().mockImplementation((cb) => cb(proxy)),
     $disconnect: vi.fn().mockResolvedValue(undefined),
@@ -97,8 +115,8 @@ vi.mock("@/shared/lib/db/prisma", () => {
     $on: vi.fn(),
     $use: vi.fn(),
     $resetAll: () => {
-      Object.keys(store).forEach(key => delete store[key]);
-    }
+      Object.keys(store).forEach((key) => delete store[key]);
+    },
   };
 
   const modelMocks: Record<string, any> = {};
@@ -133,24 +151,22 @@ vi.mock("@/shared/lib/db/prisma", () => {
   };
 });
 
-vi.mock("@/shared/lib/db/app-db-provider", async (importOriginal) => {
-  const actual = await importOriginal() as any;
-  return {
-    ...actual,
-    getAppDbProvider: vi.fn().mockImplementation(() => actual.getAppDbProvider()),
-    getAppDbProviderSetting: vi.fn().mockImplementation(() => actual.getAppDbProviderSetting()),
-  };
-});
+vi.mock('@/shared/lib/db/app-db-provider', () => ({
+  getAppDbProvider: vi.fn().mockResolvedValue('prisma'),
+  getAppDbProviderSetting: vi.fn().mockResolvedValue('prisma'),
+  invalidateAppDbProviderCache: vi.fn(),
+  APP_DB_PROVIDER_SETTING_KEY: 'app_db_provider',
+}));
 
-vi.mock("@/shared/lib/db/collection-provider-map", () => ({
-  getCollectionProvider: vi.fn().mockResolvedValue("prisma"),
+vi.mock('@/shared/lib/db/collection-provider-map', () => ({
+  getCollectionProvider: vi.fn().mockResolvedValue('prisma'),
   getCollectionProviderMap: vi.fn().mockResolvedValue({}),
   getCollectionRouteMap: vi.fn().mockResolvedValue({}),
-  resolveCollectionProviderForRequest: vi.fn().mockResolvedValue("prisma"),
+  resolveCollectionProviderForRequest: vi.fn().mockResolvedValue('prisma'),
   invalidateCollectionProviderMapCache: vi.fn(),
 }));
 
-vi.mock("@/shared/lib/db/mongo-client", () => {
+vi.mock('@/shared/lib/db/mongo-client', () => {
   const mockMongoDb = {
     collection: vi.fn().mockReturnThis(),
     findOne: vi.fn().mockResolvedValue(null),
@@ -174,43 +190,52 @@ vi.mock("@/shared/lib/db/mongo-client", () => {
 
 // Mock observability server module
 vi.mock('@/features/observability/server', async (importOriginal) => {
-  const actual = await importOriginal() as any;
+  const actual = (await importOriginal()) as any;
   return {
     ...actual,
     logSystemEvent: vi.fn().mockResolvedValue(undefined),
     logSystemError: vi.fn().mockResolvedValue(undefined),
-    logActivity: vi.fn().mockImplementation((data) => Promise.resolve({
-      id: 'mock-activity-id',
-      createdAt: new Date().toISOString(),
-      ...data
-    })),
+    logActivity: vi.fn().mockImplementation((data) =>
+      Promise.resolve({
+        id: 'mock-activity-id',
+        createdAt: new Date().toISOString(),
+        ...data,
+      })
+    ),
     getErrorFingerprint: vi.fn().mockResolvedValue('test-fingerprint'),
     ErrorSystem: {
       logInfo: vi.fn().mockResolvedValue(undefined),
       logWarning: vi.fn().mockResolvedValue(undefined),
       logError: vi.fn().mockResolvedValue(undefined),
       captureException: vi.fn().mockResolvedValue(undefined),
-    }
+    },
   };
 });
 
 // Mock next/image
-vi.mock("next/image", () => ({
+vi.mock('next/image', () => ({
   __esModule: true,
   default: (props: { alt?: string }) => {
-    return React.createElement("img", { alt: props.alt ?? "" });
+    return React.createElement('img', { alt: props.alt ?? '' });
   },
 }));
 
 // Mock next/link
-vi.mock("next/link", () => ({
+vi.mock('next/link', () => ({
   __esModule: true,
-  default: ({ href, children, ...props }: { href: string; children: React.ReactNode; [key: string]: any }) =>
-    React.createElement("a", { href, ...props }, children),
+  default: ({
+    href,
+    children,
+    ...props
+  }: {
+    href: string;
+    children: React.ReactNode;
+    [key: string]: any;
+  }) => React.createElement('a', { href, ...props }, children),
 }));
 
 // Mock next/server (for NextRequest/NextResponse in API routes)
-vi.mock("next/server", () => {
+vi.mock('next/server', () => {
   class MockRequest extends Request {
     constructor(input: RequestInfo, init?: RequestInit) {
       const url = typeof input === 'string' ? `http://localhost${input}` : input;
@@ -244,73 +269,107 @@ vi.mock("next/server", () => {
 vi.mock('@/shared/lib/api/api-handler', () => {
   const { NextResponse } = require('next/server');
   return {
-    apiHandler: (handler: any, options: any) => async (req: any) => {
-      try {
-        const clonedReq = req.clone ? req.clone() : req;
-        const body = clonedReq.body && typeof clonedReq.json === 'function' ? await clonedReq.json().catch(() => ({})) : {};
-        let query = Object.fromEntries(new URL(req.url, 'http://localhost').searchParams.entries());
-        
-        if (options?.querySchema) {
-          query = options.querySchema.parse(query);
-        }
+    apiHandler:
+      (handler: (req: any, ctx: any) => Promise<Response>, options: any) =>
+      async (req: Request) => {
+        try {
+          const clonedReq = req.clone ? req.clone() : req;
+          let body = {};
+          if (clonedReq.body) {
+            try {
+              const json = await clonedReq.json();
+              body = json || {};
+            } catch {
+              body = {};
+            }
+          }
+          let query = Object.fromEntries(
+            new URL(req.url, 'http://localhost').searchParams.entries()
+          );
 
-        return await handler(req, { requestId: 'global-test-id', body, query, getElapsedMs: () => 0 });
-      } catch (error: any) {
-        const status = 
-          (error.name === 'AppError' && error.code === 'NOT_FOUND') || 
-          (error.name === 'PrismaClientKnownRequestError' && error.code === 'P2025')
-            ? 404 : (
-          (error.name === 'AppError' && error.code === 'VALIDATION_ERROR') || 
-          error.code === 'BAD_REQUEST' || 
-          error.name === 'PrismaClientValidationError' ||
-          error.name === 'ZodError'
-            ? 400 : (error.httpStatus || 500));
-        return NextResponse.json(
-          { error: error.message, code: error.code, errorId: 'mock-error-id' },
-          { status }
-        );
-      }
-    },
-    apiHandlerWithParams: (handler: any, options: any) => async (req: any, ctx: any) => {
-      try {
-        const clonedReq = req.clone ? req.clone() : req;
-        const body = clonedReq.body && typeof clonedReq.json === 'function' ? await clonedReq.json().catch(() => ({})) : {};
-        let query = Object.fromEntries(new URL(req.url, 'http://localhost').searchParams.entries());
-        
-        if (options?.querySchema) {
-          query = options.querySchema.parse(query);
-        }
+          if (options?.querySchema) {
+            query = options.querySchema.parse(query);
+          }
 
-        const context = {
-          ...ctx,
-          requestId: 'global-test-id',
-          body,
-          query,
-          getElapsedMs: () => 0,
-        };
-        const resolvedParams = ctx?.params && typeof ctx.params.then === 'function' ? await ctx.params : (ctx?.params ?? {});
-        
-        if (options?.paramsSchema) {
-          options.paramsSchema.parse(resolvedParams);
+          return await handler(req as any, {
+            requestId: 'global-test-id',
+            body,
+            query,
+            getElapsedMs: () => 0,
+          });
+        } catch (error: any) {
+          const status =
+            (error.name === 'AppError' && error.code === 'NOT_FOUND') ||
+            (error.name === 'PrismaClientKnownRequestError' && error.code === 'P2025')
+              ? 404
+              : (error.name === 'AppError' && error.code === 'VALIDATION_ERROR') ||
+                  error.code === 'BAD_REQUEST' ||
+                  error.name === 'PrismaClientValidationError' ||
+                  error.name === 'ZodError'
+                ? 400
+                : error.httpStatus || 500;
+          return NextResponse.json(
+            { error: error.message, code: error.code, errorId: 'mock-error-id', stack: error.stack },
+            { status }
+          );
         }
+      },
+    apiHandlerWithParams:
+      (handler: (req: any, ctx: any, params: any) => Promise<Response>, options: any) =>
+      async (req: Request, ctx: { params: Promise<any> | any }) => {
+        try {
+          const clonedReq = req.clone ? req.clone() : req;
+          let body = {};
+          if (clonedReq.body) {
+            try {
+              const json = await clonedReq.json();
+              body = json || {};
+            } catch {
+              body = {};
+            }
+          }
+          let query = Object.fromEntries(
+            new URL(req.url, 'http://localhost').searchParams.entries()
+          );
 
-        return await handler(req, context, resolvedParams);
-      } catch (error: any) {
-        const status = 
-          (error.name === 'AppError' && error.code === 'NOT_FOUND') || 
-          (error.name === 'PrismaClientKnownRequestError' && error.code === 'P2025')
-            ? 404 : (
-          (error.name === 'AppError' && error.code === 'VALIDATION_ERROR') || 
-          error.code === 'BAD_REQUEST' || 
-          error.name === 'PrismaClientValidationError' ||
-          error.name === 'ZodError'
-            ? 400 : (error.httpStatus || 500));
-        return NextResponse.json(
-          { error: error.message, code: error.code, errorId: 'mock-error-id' },
-          { status }
-        );
-      }
-    },
+          if (options?.querySchema) {
+            query = options.querySchema.parse(query);
+          }
+
+          const context = {
+            ...ctx,
+            requestId: 'global-test-id',
+            body,
+            query,
+            getElapsedMs: () => 0,
+          };
+          const resolvedParams =
+            ctx?.params && typeof ctx.params.then === 'function'
+              ? await ctx.params
+              : (ctx?.params ?? {});
+
+          if (options?.paramsSchema) {
+            options.paramsSchema.parse(resolvedParams);
+          }
+
+          return await handler(req as any, context, resolvedParams);
+        } catch (error: any) {
+          const status =
+            (error.name === 'AppError' && error.code === 'NOT_FOUND') ||
+            (error.name === 'PrismaClientKnownRequestError' && error.code === 'P2025')
+              ? 404
+              : (error.name === 'AppError' && error.code === 'VALIDATION_ERROR') ||
+                  error.code === 'BAD_REQUEST' ||
+                  error.name === 'PrismaClientValidationError' ||
+                  error.name === 'ZodError'
+                ? 400
+                : error.httpStatus || 500;
+          return NextResponse.json(
+            { error: error.message, code: error.code, errorId: 'mock-error-id', stack: error.stack },
+            { status }
+          );
+        }
+      },
     getQueryParams: (req: any) => new URL(req.url, 'http://localhost').searchParams,
     getRequiredParam: (searchParams: URLSearchParams, name: string) => {
       const val = searchParams.get(name);
@@ -348,7 +407,7 @@ if (!global.crypto) {
 }
 if (!global.crypto.randomUUID) {
   // @ts-expect-error - polyfill for randomUUID
-  global.crypto.randomUUID = () => "mock-random-uuid";
+  global.crypto.randomUUID = () => 'mock-random-uuid';
 }
 
 // Polyfill pointer capture methods (Radix UI needs these)
@@ -372,11 +431,11 @@ if (typeof window !== 'undefined') {
 
 // Polyfill for window.matchMedia (GSAP needs this)
 if (typeof window !== 'undefined') {
-  Object.defineProperty(window, "isSecureContext", {
+  Object.defineProperty(window, 'isSecureContext', {
     writable: true,
     value: true,
   });
-  Object.defineProperty(window, "matchMedia", {
+  Object.defineProperty(window, 'matchMedia', {
     writable: true,
     value: vi.fn().mockImplementation((query) => ({
       matches: false,
@@ -399,8 +458,20 @@ vi.mock('@/features/observability/context/SystemLogsContext', () => ({
       isPending: false,
       data: {
         logs: [
-          { id: '1', level: 'error', message: 'Test Error', createdAt: new Date().toISOString(), source: 'api' },
-          { id: '2', level: 'info', message: 'Test Info', createdAt: new Date().toISOString(), source: 'client' },
+          {
+            id: '1',
+            level: 'error',
+            message: 'Test Error',
+            createdAt: new Date().toISOString(),
+            source: 'api',
+          },
+          {
+            id: '2',
+            level: 'info',
+            message: 'Test Info',
+            createdAt: new Date().toISOString(),
+            source: 'client',
+          },
         ],
         total: 2,
       },
@@ -428,8 +499,20 @@ vi.mock('@/features/observability/context/SystemLogsContext', () => ({
     handleFilterChange: vi.fn(),
     handleResetFilters: vi.fn(),
     logs: [
-      { id: '1', level: 'error', message: 'Test Error', createdAt: new Date().toISOString(), source: 'api' },
-      { id: '2', level: 'info', message: 'Test Info', createdAt: new Date().toISOString(), source: 'client' },
+      {
+        id: '1',
+        level: 'error',
+        message: 'Test Error',
+        createdAt: new Date().toISOString(),
+        source: 'api',
+      },
+      {
+        id: '2',
+        level: 'info',
+        message: 'Test Info',
+        createdAt: new Date().toISOString(),
+        source: 'client',
+      },
     ],
     total: 2,
     totalPages: 1,
@@ -494,27 +577,33 @@ beforeAll(() => {
   server.use(
     http.get('http://localhost/api/settings/lite', () => {
       return HttpResponse.json([
-        { key: 'auth_user_pages', value: JSON.stringify({ allowSignup: true, allowSocialLogin: true }) },
+        {
+          key: 'auth_user_pages',
+          value: JSON.stringify({ allowSignup: true, allowSocialLogin: true }),
+        },
       ]);
     }),
     http.get('http://localhost/api/settings', () => {
       return HttpResponse.json([
-        { key: 'auth_user_pages', value: JSON.stringify({ allowSignup: true, allowSocialLogin: true }) },
+        {
+          key: 'auth_user_pages',
+          value: JSON.stringify({ allowSignup: true, allowSocialLogin: true }),
+        },
       ]);
     })
   );
   // Start the MSW server before all tests
   server.listen({
-    onUnhandledRequest: "warn",
+    onUnhandledRequest: 'warn',
   });
 });
 
 afterEach(async () => {
   // Reset handlers after each test to ensure test isolation
   server.resetHandlers();
-  
+
   // Reset Prisma mock store
-  const { default: prisma } = await import("@/shared/lib/db/prisma");
+  const { default: prisma } = await import('@/shared/lib/db/prisma');
   if ((prisma as any).$resetAll) {
     (prisma as any).$resetAll();
   }

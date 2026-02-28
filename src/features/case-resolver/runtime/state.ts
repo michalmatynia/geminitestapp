@@ -9,7 +9,7 @@ export const createEmptyCaseResolverWorkspace = (): CaseResolverWorkspace => ({
 });
 
 export const createInitialCaseResolverRuntimeState = (
-  workspace: CaseResolverWorkspace,
+  workspace: CaseResolverWorkspace
 ): CaseResolverRuntimeState => ({
   workspace: {
     value: workspace,

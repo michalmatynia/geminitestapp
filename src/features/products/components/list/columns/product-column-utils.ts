@@ -56,8 +56,7 @@ export const resolveProductCategoryId = (product: ProductWithImages): string => 
   return '';
 };
 
-export const normalizeMarketplaceStatus = (value: string): string =>
-  value.trim().toLowerCase();
+export const normalizeMarketplaceStatus = (value: string): string => value.trim().toLowerCase();
 
 export const SUCCESS_STATUSES = new Set(['active', 'success', 'completed', 'listed', 'ok']);
 export const WARNING_STATUSES = new Set([
@@ -69,7 +68,13 @@ export const WARNING_STATUSES = new Set([
   'in_progress',
   'running',
 ]);
-export const FAILURE_STATUSES = new Set(['failed', 'error', 'removed', 'needs_login', 'auth_required']);
+export const FAILURE_STATUSES = new Set([
+  'failed',
+  'error',
+  'removed',
+  'needs_login',
+  'auth_required',
+]);
 
 export const getStatusToneClass = (value: string): string => {
   const normalized = normalizeMarketplaceStatus(value);

@@ -1,6 +1,14 @@
 'use client';
 
-import React, { createContext, useContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useUserPreferences } from '@/features/auth/hooks/useUserPreferences';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import {
@@ -10,6 +18,7 @@ import {
   parsePromptValidationRules,
 } from '@/shared/lib/prompt-engine/settings';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
+import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
@@ -25,11 +34,11 @@ import {
   normalizeImageStudioModelPresets,
   parseImageStudioSettings,
   type ImageStudioSettings,
-} from '../utils/studio-settings';
+} from '@/shared/lib/ai/image-studio/utils/studio-settings';
 
-import { 
-  type StudioSettingsTab, 
-  type ImageStudioSettingsContextValue 
+import {
+  type StudioSettingsTab,
+  type ImageStudioSettingsContextValue,
 } from './settings/settings-types';
 import { useSettingsHydration } from './settings/useSettingsHydration';
 import { useModelAwareSettings } from './settings/useModelAwareSettings';
@@ -37,10 +46,10 @@ import { useMaintenanceActions } from './settings/useMaintenanceActions';
 
 const ImageStudioSettingsContext = createContext<ImageStudioSettingsContextValue | null>(null);
 
-export function ImageStudioSettingsProvider({ 
+export function ImageStudioSettingsProvider({
   children,
-  onSaved 
-}: { 
+  onSaved,
+}: {
   children: React.ReactNode;
   onSaved?: () => void;
 }): React.JSX.Element {
@@ -69,7 +78,8 @@ export function ImageStudioSettingsProvider({
   const [promptValidationRulesError, setPromptValidationRulesError] = useState<string | null>(null);
   const [backfillProjectId, setBackfillProjectId] = useState<string>('');
   const [backfillDryRun, setBackfillDryRun] = useState<boolean>(true);
-  const [backfillIncludeHeuristicGenerationLinks, setBackfillIncludeHeuristicGenerationLinks] = useState<boolean>(true);
+  const [backfillIncludeHeuristicGenerationLinks, setBackfillIncludeHeuristicGenerationLinks] =
+    useState<boolean>(true);
   const [modelToAdd, setModelToAdd] = useState<string>('');
   const hydratedSignatureRef = useRef<string | null>(null);
   const presetPersistSignatureRef = useRef<string | null>(null);
@@ -81,6 +91,15 @@ export function ImageStudioSettingsProvider({
     [promptEngineRaw]
   );
   const heavyMap = heavySettings.data ?? new Map<string, string>();
+  const promptExtractModel = useBrainModelOptions({
+    capability: 'image_studio.prompt_extract',
+  });
+  const uiExtractorModel = useBrainModelOptions({
+    capability: 'image_studio.ui_extractor',
+  });
+  const generationModel = useBrainModelOptions({
+    capability: 'image_studio.general',
+  });
   const liveProjectId = selectedProjectId.trim();
   const activeProjectIdFromPreferences =
     typeof userPreferencesQuery.data?.imageStudioLastProjectId === 'string'
@@ -89,11 +108,11 @@ export function ImageStudioSettingsProvider({
   const activeProjectId = liveProjectId || activeProjectIdFromPreferences;
   const projectSettingsKey = getImageStudioProjectSettingsKey(activeProjectId);
   const globalStudioSettingsRaw = heavyMap.get(IMAGE_STUDIO_SETTINGS_KEY);
-  const projectStudioSettingsRaw =
-    projectSettingsKey ? heavyMap.get(projectSettingsKey) : null;
+  const projectStudioSettingsRaw = projectSettingsKey ? heavyMap.get(projectSettingsKey) : null;
   const studioSettingsRaw = projectStudioSettingsRaw ?? globalStudioSettingsRaw;
   const openaiModelFallback = settingsStore.get('openai_model');
-  const apiKeyFallback = settingsStore.get(IMAGE_STUDIO_OPENAI_API_KEY_KEY) ?? settingsStore.get('openai_api_key') ?? '';
+  const apiKeyFallback =
+    settingsStore.get(IMAGE_STUDIO_OPENAI_API_KEY_KEY) ?? settingsStore.get('openai_api_key') ?? '';
   const hydrationSignature = `${projectSettingsKey ?? IMAGE_STUDIO_SETTINGS_KEY}:${studioSettingsRaw ?? ''}:${openaiModelFallback ?? ''}:${apiKeyFallback}:${promptEngineRaw ?? ''}`;
 
   useSettingsHydration({
@@ -133,7 +152,10 @@ export function ImageStudioSettingsProvider({
         setAdvancedOverridesError(null);
         setStudioSettings((prev) => ({
           ...prev,
-          targetAi: { ...prev.targetAi, openai: { ...prev.targetAi.openai, advanced_overrides: null } },
+          targetAi: {
+            ...prev.targetAi,
+            openai: { ...prev.targetAi.openai, advanced_overrides: null },
+          },
         }));
         return;
       }
@@ -146,7 +168,10 @@ export function ImageStudioSettingsProvider({
         ...prev,
         targetAi: {
           ...prev.targetAi,
-          openai: { ...prev.targetAi.openai, advanced_overrides: parsed as Record<string, unknown> },
+          openai: {
+            ...prev.targetAi.openai,
+            advanced_overrides: parsed as Record<string, unknown>,
+          },
         },
       }));
     } catch {
@@ -174,35 +199,55 @@ export function ImageStudioSettingsProvider({
       return;
     }
 
+    const effectivePromptExtractModel =
+      promptExtractModel.effectiveModelId.trim() ||
+      studioSettings.promptExtraction.gpt.model.trim();
     if (
-      (studioSettings.promptExtraction.mode === 'gpt' || studioSettings.promptExtraction.mode === 'hybrid') &&
-      !studioSettings.promptExtraction.gpt.model.trim()
+      (studioSettings.promptExtraction.mode === 'gpt' ||
+        studioSettings.promptExtraction.mode === 'hybrid') &&
+      !effectivePromptExtractModel
     ) {
-      toast('Prompt extract model is required when prompt extraction mode is GPT.', { variant: 'error' });
+      toast('Configure Image Studio Prompt Extract in AI Brain first.', {
+        variant: 'error',
+      });
       return;
     }
 
+    const effectiveUiExtractorModel =
+      uiExtractorModel.effectiveModelId.trim() || studioSettings.uiExtractor.model.trim();
     if (
       (studioSettings.uiExtractor.mode === 'ai' || studioSettings.uiExtractor.mode === 'both') &&
-      !studioSettings.uiExtractor.model.trim()
+      !effectiveUiExtractorModel
     ) {
-      toast('UI extractor model is required when UI extractor mode uses AI.', { variant: 'error' });
+      toast('Configure Image Studio UI Extractor in AI Brain first.', { variant: 'error' });
       return;
     }
 
-    const activeGenerationModel = studioSettings.targetAi.openai.model.trim();
+    const activeGenerationModel =
+      generationModel.effectiveModelId.trim() || studioSettings.targetAi.openai.model.trim();
     if (!activeGenerationModel) {
-      toast('Target AI model is required.', { variant: 'error' });
+      toast('Configure Image Studio Image Generation in AI Brain first.', { variant: 'error' });
       return;
     }
 
     const normalizedModelPresets = normalizeImageStudioModelPresets(
       studioSettings.targetAi.openai.modelPresets,
-      activeGenerationModel,
+      activeGenerationModel
     );
 
     const nextStudioSettings: ImageStudioSettings = {
       ...studioSettings,
+      promptExtraction: {
+        ...studioSettings.promptExtraction,
+        gpt: {
+          ...studioSettings.promptExtraction.gpt,
+          model: effectivePromptExtractModel,
+        },
+      },
+      uiExtractor: {
+        ...studioSettings.uiExtractor,
+        model: effectiveUiExtractorModel,
+      },
       targetAi: {
         ...studioSettings.targetAi,
         openai: {
@@ -252,13 +297,17 @@ export function ImageStudioSettingsProvider({
       );
       onSaved?.();
     } catch (error) {
-      logClientError(error, { context: { source: 'AdminImageStudioSettingsPage', action: 'saveSettings' } });
+      logClientError(error, {
+        context: { source: 'AdminImageStudioSettingsPage', action: 'saveSettings' },
+      });
       toast('Failed to save Image Studio settings.', { variant: 'error' });
     }
   }, [
     advancedOverridesError,
+    generationModel.effectiveModelId,
     promptValidationEnabled,
     promptValidationRulesError,
+    promptExtractModel.effectiveModelId,
     studioSettings,
     imageStudioApiKey,
     selectedProjectId,
@@ -267,16 +316,21 @@ export function ImageStudioSettingsProvider({
     promptEngineSettings,
     toast,
     updateSetting,
+    uiExtractorModel.effectiveModelId,
     onSaved,
     heavySettings,
   ]);
 
   const resetStudioSettings = useCallback((): void => {
     setStudioSettings(defaultImageStudioSettings);
-    setAdvancedOverridesText(JSON.stringify(defaultImageStudioSettings.targetAi.openai.advanced_overrides ?? {}, null, 2));
+    setAdvancedOverridesText(
+      JSON.stringify(defaultImageStudioSettings.targetAi.openai.advanced_overrides ?? {}, null, 2)
+    );
     setAdvancedOverridesError(null);
     setPromptValidationEnabled(defaultPromptEngineSettings.promptValidation.enabled);
-    setPromptValidationRulesText(JSON.stringify(defaultPromptEngineSettings.promptValidation.rules, null, 2));
+    setPromptValidationRulesText(
+      JSON.stringify(defaultPromptEngineSettings.promptValidation.rules, null, 2)
+    );
     setPromptValidationRulesError(null);
     setModelToAdd('');
   }, []);
@@ -294,7 +348,7 @@ export function ImageStudioSettingsProvider({
       const persistedModel = persistedSettings.targetAi.openai.model.trim();
       const persistedPresets = normalizeImageStudioModelPresets(
         persistedSettings.targetAi.openai.modelPresets,
-        persistedModel,
+        persistedModel
       );
 
       const presetsChanged =
@@ -326,23 +380,19 @@ export function ImageStudioSettingsProvider({
             },
           },
         };
-        void updateSetting.mutateAsync({
-          key: targetSettingsKey,
-          value: serializeSetting(nextPersistedSettings),
-        }).catch(() => {
-          if (presetPersistSignatureRef.current === persistSignature) {
-            presetPersistSignatureRef.current = null;
-          }
-        });
+        void updateSetting
+          .mutateAsync({
+            key: targetSettingsKey,
+            value: serializeSetting(nextPersistedSettings),
+          })
+          .catch(() => {
+            if (presetPersistSignatureRef.current === persistSignature) {
+              presetPersistSignatureRef.current = null;
+            }
+          });
       }, 350);
     },
-    [
-      activeProjectId,
-      heavyMap,
-      selectedProjectId,
-      studioSettingsRaw,
-      updateSetting,
-    ]
+    [activeProjectId, heavyMap, selectedProjectId, studioSettingsRaw, updateSetting]
   );
 
   const setGenerationModelAndPresets = useCallback(
@@ -446,9 +496,7 @@ export function ImageStudioSettingsProvider({
 
   const settingsSource = useMemo(() => {
     const hasProjectSpecificSettings = Boolean(
-      projectSettingsKey &&
-      projectStudioSettingsRaw &&
-      projectStudioSettingsRaw.trim().length > 0
+      projectSettingsKey && projectStudioSettingsRaw && projectStudioSettingsRaw.trim().length > 0
     );
     if (hasProjectSpecificSettings && activeProjectId) {
       return `project (${activeProjectId})`;
@@ -457,15 +505,10 @@ export function ImageStudioSettingsProvider({
       return globalStudioSettingsRaw ? `global fallback (${activeProjectId})` : 'defaults';
     }
     return globalStudioSettingsRaw ? 'global settings' : 'defaults';
-  }, [
-    activeProjectId,
-    globalStudioSettingsRaw,
-    projectSettingsKey,
-    projectStudioSettingsRaw,
-  ]);
+  }, [activeProjectId, globalStudioSettingsRaw, projectSettingsKey, projectStudioSettingsRaw]);
 
   useEffect(() => {
-    if (modelToAdd && addableGenerationModelOptions.some(opt => opt.value === modelToAdd)) return;
+    if (modelToAdd && addableGenerationModelOptions.some((opt) => opt.value === modelToAdd)) return;
     setModelToAdd(addableGenerationModelOptions[0]?.value ?? '');
   }, [addableGenerationModelOptions, modelToAdd]);
 
@@ -540,7 +583,9 @@ export function ImageStudioSettingsProvider({
 export function useImageStudioSettingsContext(): ImageStudioSettingsContextValue {
   const context = useContext(ImageStudioSettingsContext);
   if (!context) {
-    throw internalError('useImageStudioSettingsContext must be used within ImageStudioSettingsProvider');
+    throw internalError(
+      'useImageStudioSettingsContext must be used within ImageStudioSettingsProvider'
+    );
   }
   return context;
 }

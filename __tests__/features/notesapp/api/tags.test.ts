@@ -4,18 +4,11 @@ import { describe, it, expect, beforeEach, vi, afterAll, beforeAll } from 'vites
 
 vi.unmock('@/shared/lib/db/prisma');
 
-import {
-  PATCH as PATCH_TAG,
-  DELETE as DELETE_TAG,
-} from '@/app/api/notes/tags/[id]/route';
-import {
-  GET as GET_TAGS,
-  POST as POST_TAG,
-} from '@/app/api/notes/tags/route';
+import { PATCH as PATCH_TAG, DELETE as DELETE_TAG } from '@/app/api/notes/tags/[id]/route';
+import { GET as GET_TAGS, POST as POST_TAG } from '@/app/api/notes/tags/route';
 import { noteService, invalidateNoteRepositoryCache } from '@/features/notesapp/services/notes';
 import { invalidateAppDbProviderCache } from '@/shared/lib/db/app-db-provider';
 import prisma from '@/shared/lib/db/prisma';
-
 
 describe('Notes Tags API', () => {
   beforeAll(() => {
@@ -32,7 +25,7 @@ describe('Notes Tags API', () => {
     await prisma.note.deleteMany({});
     await prisma.tag.deleteMany({});
     await prisma.notebook.deleteMany({});
-    
+
     await noteService.invalidateDefaultNotebookCache();
   });
 
@@ -45,12 +38,13 @@ describe('Notes Tags API', () => {
 
     const notebook = await noteService.getOrCreateDefaultNotebook();
     await prisma.tag.createMany({
-      data: [{ name: 'Beta', notebookId: notebook.id }, { name: 'Alpha', notebookId: notebook.id }],
+      data: [
+        { name: 'Beta', notebookId: notebook.id },
+        { name: 'Alpha', notebookId: notebook.id },
+      ],
     });
 
-    const res = await GET_TAGS(
-      new NextRequest('http://localhost/api/notes/tags')
-    );
+    const res = await GET_TAGS(new NextRequest('http://localhost/api/notes/tags'));
     const tags = (await res.json()) as Tag[];
 
     expect(res.status).toBe(200);

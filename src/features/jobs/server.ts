@@ -14,7 +14,11 @@ export {
   processSingleRun,
   enqueuePathRunJob,
 } from './workers/aiPathRunQueue';
-export { startChatbotJobQueue, stopChatbotJobQueue, enqueueChatbotJob } from './workers/chatbotJobQueue';
+export {
+  startChatbotJobQueue,
+  stopChatbotJobQueue,
+  enqueueChatbotJob,
+} from './workers/chatbotJobQueue';
 export {
   startProductAiJobQueue,
   getQueueStatus,

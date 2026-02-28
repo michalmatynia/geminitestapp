@@ -196,8 +196,7 @@ const parseJson = <T>(value: string | null | undefined): T | null => {
 };
 
 const isValidAppField = (value: unknown): value is ProductSyncAppField =>
-  typeof value === 'string' &&
-  (PRODUCT_SYNC_APP_FIELDS as string[]).includes(value);
+  typeof value === 'string' && (PRODUCT_SYNC_APP_FIELDS as string[]).includes(value);
 
 const normalizeFieldRules = (rules: unknown): ProductSyncFieldRule[] => {
   const items = Array.isArray(rules) ? rules : [];
@@ -207,11 +206,7 @@ const normalizeFieldRules = (rules: unknown): ProductSyncFieldRule[] => {
       const record = entry as Record<string, unknown>;
       if (!isValidAppField(record['appField'])) return null;
       const direction = toTrimmedString(record['direction']);
-      if (
-        direction !== 'disabled' &&
-        direction !== 'base_to_app' &&
-        direction !== 'app_to_base'
-      ) {
+      if (direction !== 'disabled' && direction !== 'base_to_app' && direction !== 'app_to_base') {
         return null;
       }
       const baseField = toTrimmedString(record['baseField']);
@@ -247,8 +242,7 @@ const normalizeProfile = (
   if (!id || !connectionId || !inventoryId) return null;
 
   const conflictPolicyRaw = toTrimmedString(record['conflictPolicy']);
-  const conflictPolicy: ProductSyncConflictPolicy =
-    conflictPolicyRaw === 'skip' ? 'skip' : 'skip';
+  const conflictPolicy: ProductSyncConflictPolicy = conflictPolicyRaw === 'skip' ? 'skip' : 'skip';
 
   return {
     id,
@@ -257,12 +251,7 @@ const normalizeProfile = (
     connectionId,
     inventoryId,
     catalogId: toTrimmedString(record['catalogId']) || null,
-    scheduleIntervalMinutes: toBoundedInt(
-      record['scheduleIntervalMinutes'],
-      30,
-      1,
-      24 * 60
-    ),
+    scheduleIntervalMinutes: toBoundedInt(record['scheduleIntervalMinutes'], 30, 1, 24 * 60),
     batchSize: toBoundedInt(record['batchSize'], 100, 1, 500),
     conflictPolicy,
     fieldRules: normalizeFieldRules(record['fieldRules']),
@@ -315,12 +304,7 @@ export const createProductSyncProfile = async (
     connectionId: toTrimmedString(input.connectionId),
     inventoryId: toTrimmedString(input.inventoryId),
     catalogId: toTrimmedString(input.catalogId) || null,
-    scheduleIntervalMinutes: toBoundedInt(
-      input.scheduleIntervalMinutes,
-      30,
-      1,
-      24 * 60
-    ),
+    scheduleIntervalMinutes: toBoundedInt(input.scheduleIntervalMinutes, 30, 1, 24 * 60),
     batchSize: toBoundedInt(input.batchSize, 100, 1, 500),
     conflictPolicy: 'skip',
     fieldRules: normalizeFieldRules(input.fieldRules),
@@ -363,18 +347,18 @@ export const updateProductSyncProfile = async (
       : {}),
     ...(patch.scheduleIntervalMinutes !== undefined
       ? {
-        scheduleIntervalMinutes: toBoundedInt(
-          patch.scheduleIntervalMinutes,
-          existing.scheduleIntervalMinutes,
-          1,
-          24 * 60
-        ),
-      }
+          scheduleIntervalMinutes: toBoundedInt(
+            patch.scheduleIntervalMinutes,
+            existing.scheduleIntervalMinutes,
+            1,
+            24 * 60
+          ),
+        }
       : {}),
     ...(patch.batchSize !== undefined
       ? {
-        batchSize: toBoundedInt(patch.batchSize, existing.batchSize, 1, 500),
-      }
+          batchSize: toBoundedInt(patch.batchSize, existing.batchSize, 1, 500),
+        }
       : {}),
     ...(patch.fieldRules !== undefined
       ? { fieldRules: normalizeFieldRules(patch.fieldRules) }
@@ -415,8 +399,7 @@ export const listEnabledProductSyncProfiles = async (): Promise<ProductSyncProfi
 };
 
 const runKey = (runId: string): string => `${RUN_KEY_PREFIX}${runId}`;
-const itemKey = (runId: string, itemId: string): string =>
-  `${ITEM_KEY_PREFIX}${runId}:${itemId}`;
+const itemKey = (runId: string, itemId: string): string => `${ITEM_KEY_PREFIX}${runId}:${itemId}`;
 
 const initialRunStats = (): ProductSyncRunStats => ({
   total: 0,
@@ -436,10 +419,7 @@ const sortRunsByCreatedAtDesc = (
   right: ProductSyncRunRecord
 ): number => {
   const leftTimestamp =
-    toTimestamp(left.createdAt) ??
-    toTimestamp(left.updatedAt) ??
-    toTimestamp(left.startedAt) ??
-    0;
+    toTimestamp(left.createdAt) ?? toTimestamp(left.updatedAt) ?? toTimestamp(left.startedAt) ?? 0;
   const rightTimestamp =
     toTimestamp(right.createdAt) ??
     toTimestamp(right.updatedAt) ??
@@ -449,9 +429,7 @@ const sortRunsByCreatedAtDesc = (
 };
 
 const getRunLastActivityTimestamp = (run: ProductSyncRunRecord): number | null =>
-  toTimestamp(run.updatedAt) ??
-  toTimestamp(run.startedAt) ??
-  toTimestamp(run.createdAt);
+  toTimestamp(run.updatedAt) ?? toTimestamp(run.startedAt) ?? toTimestamp(run.createdAt);
 
 type ProductSyncStaleRecoveryResult = {
   checkedRuns: number;
@@ -486,9 +464,7 @@ export const createProductSyncRun = async (input: {
   return run;
 };
 
-export const getProductSyncRun = async (
-  runId: string
-): Promise<ProductSyncRunRecord | null> => {
+export const getProductSyncRun = async (runId: string): Promise<ProductSyncRunRecord | null> => {
   const raw = await readSettingValue(runKey(runId));
   return parseJson<ProductSyncRunRecord>(raw);
 };
@@ -556,8 +532,8 @@ export const listProductSyncRuns = async (options?: {
 
 export const hasActiveProductSyncRun = async (profileId: string): Promise<boolean> => {
   const runs = await listProductSyncRuns({ profileId, limit: 200 });
-  return runs.some((run: ProductSyncRunRecord) =>
-    run.status === 'queued' || run.status === 'running'
+  return runs.some(
+    (run: ProductSyncRunRecord) => run.status === 'queued' || run.status === 'running'
   );
 };
 
@@ -588,7 +564,9 @@ export const listProductSyncRunItems = async (
 
   return values
     .map((value: string) => parseJson<ProductSyncRunItemRecord>(value))
-    .filter((entry: ProductSyncRunItemRecord | null): entry is ProductSyncRunItemRecord => Boolean(entry))
+    .filter((entry: ProductSyncRunItemRecord | null): entry is ProductSyncRunItemRecord =>
+      Boolean(entry)
+    )
     .sort((a: ProductSyncRunItemRecord, b: ProductSyncRunItemRecord) =>
       a.itemId.localeCompare(b.itemId)
     );
@@ -672,9 +650,7 @@ export const recomputeProductSyncRunStats = async (
 export const deleteProductSyncRunItems = async (runId: string): Promise<void> => {
   const items = await listProductSyncRunItems(runId);
   await Promise.all(
-    items.map((item: ProductSyncRunItemRecord) =>
-      deleteSettingByKey(itemKey(runId, item.itemId))
-    )
+    items.map((item: ProductSyncRunItemRecord) => deleteSettingByKey(itemKey(runId, item.itemId)))
   );
 };
 
@@ -692,18 +668,11 @@ export const pruneProductSyncRunsForProfile = async (input: {
   const profileId = toTrimmedString(input.profileId);
   if (!profileId) return 0;
 
-  const keep = toBoundedInt(
-    input.keep,
-    PRODUCT_SYNC_RUN_HISTORY_KEEP,
-    10,
-    MAX_RUN_SCAN_LIMIT
-  );
+  const keep = toBoundedInt(input.keep, PRODUCT_SYNC_RUN_HISTORY_KEEP, 10, MAX_RUN_SCAN_LIMIT);
   const runs = await listProductSyncRuns({ profileId, limit: MAX_RUN_SCAN_LIMIT });
   if (runs.length <= keep) return 0;
 
-  const obsoleteRuns = [...runs]
-    .sort(sortRunsByCreatedAtDesc)
-    .slice(keep);
+  const obsoleteRuns = [...runs].sort(sortRunsByCreatedAtDesc).slice(keep);
 
   for (const run of obsoleteRuns) {
     await deleteProductSyncRun(run.id);
@@ -737,9 +706,7 @@ export const recoverStaleProductSyncRuns = async (options?: {
   );
 
   const runs = await listProductSyncRuns({
-    ...(options?.profileId
-      ? { profileId: toTrimmedString(options.profileId) }
-      : {}),
+    ...(options?.profileId ? { profileId: toTrimmedString(options.profileId) } : {}),
     limit,
   });
 
@@ -793,10 +760,7 @@ export const findDueProductSyncProfiles = async (
   const runs = await listProductSyncRuns({ limit: 500 });
   const activeProfileIds = new Set(
     runs
-      .filter(
-        (run: ProductSyncRunRecord) =>
-          run.status === 'queued' || run.status === 'running'
-      )
+      .filter((run: ProductSyncRunRecord) => run.status === 'queued' || run.status === 'running')
       .map((run: ProductSyncRunRecord) => run.profileId)
   );
   const nowMs = now.getTime();

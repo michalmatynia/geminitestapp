@@ -18,15 +18,15 @@ import {
   buildMasterNodesFromNotesFolderTree,
   toFolderMasterNodeId,
   toNoteMasterNodeId,
-} from '../utils/master-folder-tree';
+} from '@/features/notesapp/utils/master-folder-tree';
 import {
   createNotesMasterTreeAdapter,
   resolveNotesFolderTargetForNode,
-} from '../utils/notes-master-tree-adapter';
+} from '@/features/notesapp/utils/notes-master-tree-adapter';
 import {
   canDropNotesNode,
   resolveNotesExternalDropAction,
-} from '../utils/notes-master-tree-external-drop';
+} from '@/features/notesapp/utils/notes-master-tree-external-drop';
 import { NotesAppTreeHeader } from './tree/NotesAppTreeHeader';
 import { NotesAppTreeNode } from './tree/NotesAppTreeNode';
 
@@ -44,14 +44,14 @@ export function NotesAppFolderTree(): React.JSX.Element {
 
   const masterNodes = useMemo(
     (): MasterTreeNode[] => buildMasterNodesFromNotesFolderTree(folderTree),
-    [folderTree],
+    [folderTree]
   );
   const initialExpandedFolderNodeIds = useMemo(
     () =>
       masterNodes
         .filter((node: MasterTreeNode) => node.type === 'folder')
         .map((node: MasterTreeNode) => node.id),
-    [masterNodes],
+    [masterNodes]
   );
   const selectedMasterNodeId = useMemo((): MasterTreeId | null => {
     if (selectedNote?.id) return toNoteMasterNodeId(selectedNote.id);
@@ -59,10 +59,7 @@ export function NotesAppFolderTree(): React.JSX.Element {
     return null;
   }, [selectedNote?.id, selectedFolderId]);
 
-  const notesAdapter = useMemo(
-    () => createNotesMasterTreeAdapter(operations),
-    [operations],
-  );
+  const notesAdapter = useMemo(() => createNotesMasterTreeAdapter(operations), [operations]);
   const {
     appearance: { rootDropUi, resolveIcon },
     controller,
@@ -90,42 +87,38 @@ export function NotesAppFolderTree(): React.JSX.Element {
 
   const selectedFolderForCreate = useMemo(
     (): string | null =>
-      resolveNotesFolderTargetForNode(
-        controller.nodes,
-        controller.selectedNodeId,
-      ),
-    [controller.nodes, controller.selectedNodeId],
+      resolveNotesFolderTargetForNode(controller.nodes, controller.selectedNodeId),
+    [controller.nodes, controller.selectedNodeId]
   );
 
-  const { FolderClosedIcon, FolderOpenIcon, FileIcon, DragHandleIcon } =
-    useMemo(
-      () => ({
-        FolderClosedIcon: resolveIcon({
-          slot: 'folderClosed',
-          kind: 'folder',
-          fallback: Folder,
-          fallbackId: 'Folder',
-        }),
-        FolderOpenIcon: resolveIcon({
-          slot: 'folderOpen',
-          kind: 'folder',
-          fallback: FolderOpen,
-          fallbackId: 'FolderOpen',
-        }),
-        FileIcon: resolveIcon({
-          slot: 'file',
-          kind: 'note',
-          fallback: FileText,
-          fallbackId: 'FileText',
-        }),
-        DragHandleIcon: resolveIcon({
-          slot: 'dragHandle',
-          fallback: GripVertical,
-          fallbackId: 'GripVertical',
-        }),
+  const { FolderClosedIcon, FolderOpenIcon, FileIcon, DragHandleIcon } = useMemo(
+    () => ({
+      FolderClosedIcon: resolveIcon({
+        slot: 'folderClosed',
+        kind: 'folder',
+        fallback: Folder,
+        fallbackId: 'Folder',
       }),
-      [resolveIcon],
-    );
+      FolderOpenIcon: resolveIcon({
+        slot: 'folderOpen',
+        kind: 'folder',
+        fallback: FolderOpen,
+        fallbackId: 'FolderOpen',
+      }),
+      FileIcon: resolveIcon({
+        slot: 'file',
+        kind: 'note',
+        fallback: FileText,
+        fallbackId: 'FileText',
+      }),
+      DragHandleIcon: resolveIcon({
+        slot: 'dragHandle',
+        fallback: GripVertical,
+        fallbackId: 'GripVertical',
+      }),
+    }),
+    [resolveIcon]
+  );
 
   return (
     <FolderTreePanel
@@ -144,9 +137,7 @@ export function NotesAppFolderTree(): React.JSX.Element {
         <FolderTreeViewportV2
           controller={controller}
           rootDropUi={rootDropUi}
-          resolveDraggedNodeId={(
-            event: React.DragEvent<HTMLElement>,
-          ): string | null => {
+          resolveDraggedNodeId={(event: React.DragEvent<HTMLElement>): string | null => {
             const noteId = getNoteDragId(event.dataTransfer, draggedNoteId);
             if (noteId) return toNoteMasterNodeId(noteId);
             const folderId = getFolderDragId(event.dataTransfer);
@@ -162,12 +153,9 @@ export function NotesAppFolderTree(): React.JSX.Element {
           }}
           onNodeDrop={async (
             { draggedNodeId, targetId, position, rootDropZone },
-            ctlr,
+            ctlr
           ): Promise<void> => {
-            const isInternalDrag = isInternalMasterTreeNode(
-              ctlr.nodes,
-              draggedNodeId,
-            );
+            const isInternalDrag = isInternalMasterTreeNode(ctlr.nodes, draggedNodeId);
 
             if (isInternalDrag) {
               await applyInternalMasterTreeDrop({
@@ -190,31 +178,22 @@ export function NotesAppFolderTree(): React.JSX.Element {
             if (!action) return;
 
             if (action.type === 'relate_notes') {
-              await operations.handleRelateNotes(
-                action.noteId,
-                action.targetNoteId,
-              );
+              await operations.handleRelateNotes(action.noteId, action.targetNoteId);
               return;
             }
             if (action.type === 'move_note') {
-              await operations.handleMoveNoteToFolder(
-                action.noteId,
-                action.targetFolderId,
-              );
+              await operations.handleMoveNoteToFolder(action.noteId, action.targetFolderId);
               return;
             }
             if (action.type === 'reorder_folder_root_top') {
               await operations.handleReorderFolder(
                 action.folderId,
                 action.anchorFolderId,
-                'before',
+                'before'
               );
               return;
             }
-            await operations.handleMoveFolderToFolder(
-              action.folderId,
-              action.targetFolderId,
-            );
+            await operations.handleMoveFolderToFolder(action.folderId, action.targetFolderId);
           }}
           renderNode={(nodeProps) => (
             <NotesAppTreeNode

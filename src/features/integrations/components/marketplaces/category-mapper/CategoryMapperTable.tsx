@@ -38,7 +38,7 @@ export function CategoryMapperTable(): React.JSX.Element {
   // Sync expanded state
   const expanded = useMemo(() => {
     const state: ExpandedState = {};
-    expandedIds.forEach(id => {
+    expandedIds.forEach((id) => {
       state[id] = true;
     });
     return state;
@@ -52,52 +52,55 @@ export function CategoryMapperTable(): React.JSX.Element {
   const isSavePending = saveMutation.isPending;
   const pendingCount = pendingMappings.size;
 
-  const columns = useMemo<ColumnDef<CategoryRow>[]>(() => [
-    {
-      accessorKey: 'name',
-      header: 'External Category',
-      cell: ({ row }) => {
-        const currentMapping = getMappingForExternal(row.original.id);
-        const hasPendingChange = pendingMappings.has(row.original.id);
-        
-        return (
-          <CategoryMapperNameCell
-            name={row.original.name}
-            depth={row.depth}
-            canExpand={row.getCanExpand()}
-            isExpanded={row.getIsExpanded()}
-            onToggleExpand={() => toggleExpand(row.original.id)}
-            isMapped={!!currentMapping}
-            hasPendingChange={hasPendingChange}
-          />
-        );
+  const columns = useMemo<ColumnDef<CategoryRow>[]>(
+    () => [
+      {
+        accessorKey: 'name',
+        header: 'External Category',
+        cell: ({ row }) => {
+          const currentMapping = getMappingForExternal(row.original.id);
+          const hasPendingChange = pendingMappings.has(row.original.id);
+
+          return (
+            <CategoryMapperNameCell
+              name={row.original.name}
+              depth={row.depth}
+              canExpand={row.getCanExpand()}
+              isExpanded={row.getIsExpanded()}
+              onToggleExpand={() => toggleExpand(row.original.id)}
+              isMapped={!!currentMapping}
+              hasPendingChange={hasPendingChange}
+            />
+          );
+        },
       },
-    },
-    {
-      id: 'mapping',
-      header: 'Internal Category',
-      cell: ({ row }) => {
-        const currentMapping = getMappingForExternal(row.original.id);
-        
-        return (
-          <CategoryMapperSelectCell
-            value={currentMapping}
-            onChange={(value) => handleMappingChange(row.original.id, value)}
-            options={internalCategoryOptions}
-            disabled={internalCategoriesLoading || !selectedCatalogId}
-          />
-        );
+      {
+        id: 'mapping',
+        header: 'Internal Category',
+        cell: ({ row }) => {
+          const currentMapping = getMappingForExternal(row.original.id);
+
+          return (
+            <CategoryMapperSelectCell
+              value={currentMapping}
+              onChange={(value) => handleMappingChange(row.original.id, value)}
+              options={internalCategoryOptions}
+              disabled={internalCategoriesLoading || !selectedCatalogId}
+            />
+          );
+        },
       },
-    },
-  ], [
-    getMappingForExternal,
-    pendingMappings,
-    toggleExpand,
-    handleMappingChange,
-    internalCategoriesLoading,
-    selectedCatalogId,
-    internalCategoryOptions
-  ]);
+    ],
+    [
+      getMappingForExternal,
+      pendingMappings,
+      toggleExpand,
+      handleMappingChange,
+      internalCategoriesLoading,
+      selectedCatalogId,
+      internalCategoryOptions,
+    ]
+  );
 
   const isLoading = externalCategoriesLoading || mappingsLoading;
 
@@ -116,7 +119,7 @@ export function CategoryMapperTable(): React.JSX.Element {
     <StandardDataTablePanel
       title='Marketplace Categories'
       description={`Connection: ${connectionName}`}
-      headerActions={(
+      headerActions={
         <CategoryMapperTableHeaderActions
           onFetch={() => void handleFetchFromBase()}
           isFetching={isFetchPending}
@@ -124,12 +127,12 @@ export function CategoryMapperTable(): React.JSX.Element {
           isSaving={isSavePending}
           pendingCount={pendingCount}
         />
-      )}
-      filters={(
+      }
+      filters={
         <div className='mb-2'>
           <CategoryMapperCatalogSelector />
         </div>
-      )}
+      }
       alerts={<CategoryMapperStats />}
       isLoading={isLoading}
       variant='flat'

@@ -4,17 +4,26 @@ import { Upload, FolderOpen } from 'lucide-react';
 import NextImage from 'next/image';
 import React, { useState } from 'react';
 
-import { Viewer3D } from '@/features/viewer3d';
-import { Asset3DPreviewModal } from '@/features/viewer3d';
-import { useAsset3DById } from '@/features/viewer3d/hooks/useAsset3dQueries';
+import { Viewer3D } from '@/shared/lib/viewer3d';
+import { Asset3DPreviewModal } from '@/shared/lib/viewer3d';
+import { useAsset3DById } from '@/shared/lib/viewer3d/hooks/useAsset3dQueries';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
-import { Input, SelectSimple, Checkbox, Button, useToast, FileUploadButton, FormField, LoadingState, type FileUploadHelpers } from '@/shared/ui';
+import {
+  Input,
+  SelectSimple,
+  Checkbox,
+  Button,
+  useToast,
+  FileUploadButton,
+  FormField,
+  LoadingState,
+  type FileUploadHelpers,
+} from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { Asset3DPickerModal } from './Asset3DPickerModal';
 import { MediaLibraryPanel } from './MediaLibraryPanel';
 import { useUploadCmsMedia } from '../../hooks/useCmsQueries';
-
 
 interface FieldProps<T> {
   label?: string;
@@ -84,7 +93,9 @@ export function ImagePickerField({
             className='text-xs'
             accept='image/*'
             disabled={disabled || isUploading}
-            onFilesSelected={(files: File[], helpers?: FileUploadHelpers) => handleFileUpload(files, helpers)}
+            onFilesSelected={(files: File[], helpers?: FileUploadHelpers) =>
+              handleFileUpload(files, helpers)
+            }
           >
             <Upload className='mr-1.5 size-3' />
             {value ? 'Replace' : 'Upload'}
@@ -237,10 +248,12 @@ export function ColorField({
   return (
     <FormField label={label} className={className}>
       <div className='flex items-center gap-2 mt-1'>
-        <label className={cn(
-          'relative flex size-7 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded border border-border/50',
-          disabled && 'cursor-not-allowed opacity-50'
-        )}>
+        <label
+          className={cn(
+            'relative flex size-7 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded border border-border/50',
+            disabled && 'cursor-not-allowed opacity-50'
+          )}
+        >
           <input
             type='color'
             value={value || '#ffffff'}
@@ -248,10 +261,7 @@ export function ColorField({
             className='absolute inset-0 size-full cursor-pointer opacity-0'
             disabled={disabled}
           />
-          <div
-            className='size-full rounded'
-            style={{ backgroundColor: value || '#ffffff' }}
-          />
+          <div className='size-full rounded' style={{ backgroundColor: value || '#ffffff' }} />
         </label>
         <Input
           value={value || '#ffffff'}
@@ -275,7 +285,12 @@ export function NumberField({
   min,
   max,
   step,
-}: FieldProps<number> & { suffix?: string; min?: number; max?: number; step?: number }): React.JSX.Element {
+}: FieldProps<number> & {
+  suffix?: string;
+  min?: number;
+  max?: number;
+  step?: number;
+}): React.JSX.Element {
   return (
     <FormField label={label} className={className}>
       <div className='flex items-center gap-1.5 mt-1'>
@@ -285,7 +300,9 @@ export function NumberField({
           min={min}
           max={max}
           step={step}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange(Number(e.target.value))}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+            onChange(Number(e.target.value))
+          }
           className='h-7 flex-1 bg-card/40 text-xs'
           disabled={disabled}
         />
@@ -305,17 +322,33 @@ export function RangeField({
   max,
   step,
   suffix,
-}: FieldProps<number> & { min: number; max: number; step?: number; suffix?: string }): React.JSX.Element {
+}: FieldProps<number> & {
+  min: number;
+  max: number;
+  step?: number;
+  suffix?: string;
+}): React.JSX.Element {
   const safeValue = Number.isFinite(value) ? value : min;
   return (
-    <FormField label={label} className={className} actions={<span className='text-[11px] text-gray-300'>{safeValue}{suffix}</span>}>
+    <FormField
+      label={label}
+      className={className}
+      actions={
+        <span className='text-[11px] text-gray-300'>
+          {safeValue}
+          {suffix}
+        </span>
+      }
+    >
       <input
         type='range'
         min={min}
         max={max}
         step={step}
         value={safeValue}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange(Number(e.target.value))}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+          onChange(Number(e.target.value))
+        }
         className={cn('w-full accent-blue-500 mt-1', disabled && 'opacity-50 cursor-not-allowed')}
         disabled={disabled}
       />
@@ -331,10 +364,14 @@ export function SelectField({
   className,
   disabled,
   placeholder,
-}: FieldProps<string> & { options: { label: string; value: string }[]; placeholder?: string }): React.JSX.Element {
+}: FieldProps<string> & {
+  options: { label: string; value: string }[];
+  placeholder?: string;
+}): React.JSX.Element {
   return (
     <FormField label={label} className={className}>
-      <SelectSimple size='sm'
+      <SelectSimple
+        size='sm'
         value={value}
         onValueChange={onChange}
         disabled={disabled || false}
@@ -360,7 +397,13 @@ export function CheckboxField({
   disabled?: boolean;
 }): React.JSX.Element {
   return (
-    <label className={cn('flex items-center gap-2 cursor-pointer', disabled && 'cursor-not-allowed opacity-50', className)}>
+    <label
+      className={cn(
+        'flex items-center gap-2 cursor-pointer',
+        disabled && 'cursor-not-allowed opacity-50',
+        className
+      )}
+    >
       <Checkbox
         checked={checked}
         onCheckedChange={(v: boolean | 'indeterminate'): void => onChange(v === true)}

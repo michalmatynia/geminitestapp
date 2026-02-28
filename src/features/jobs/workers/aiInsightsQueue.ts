@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { getBrainAssignmentForFeature } from '@/features/ai/brain/server';
+import { getBrainAssignmentForFeature } from '@/shared/lib/ai-brain/server';
 import { getScheduleSettings } from '@/features/ai/insights/generator';
 import { tick } from '@/features/jobs/processors/ai-insights-processor';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
@@ -19,12 +19,12 @@ const parseMsFromEnv = (raw: string | undefined, fallback: number, min: number):
 const AI_INSIGHTS_REPEAT_EVERY_MS = parseMsFromEnv(
   process.env['AI_INSIGHTS_REPEAT_EVERY_MS'],
   180_000,
-  60_000,
+  60_000
 );
 const AI_INSIGHTS_LOCK_DURATION_MS = parseMsFromEnv(
   process.env['AI_INSIGHTS_LOCK_DURATION_MS'],
   180_000,
-  60_000,
+  60_000
 );
 
 type AiInsightsQueueState = {
@@ -87,7 +87,7 @@ type RepeatableJobEntry = {
 };
 
 const hasRepeatableQueueApi = (
-  value: unknown,
+  value: unknown
 ): value is {
   getRepeatableJobs: () => Promise<RepeatableJobEntry[]>;
   removeRepeatableByKey: (key: string) => Promise<void>;
@@ -102,14 +102,15 @@ const removeInsightsTickRepeatJobs = async (): Promise<void> => {
   if (!hasRepeatableQueueApi(bullQueueUnknown)) return;
   const bullQueue = bullQueueUnknown;
   const repeatableJobs = await bullQueue.getRepeatableJobs();
-  const targets = repeatableJobs.filter((job) =>
-    job.id === 'ai-insights-tick' ||
-    (job.name === 'ai-insights' && job.every === AI_INSIGHTS_REPEAT_EVERY_MS)
+  const targets = repeatableJobs.filter(
+    (job) =>
+      job.id === 'ai-insights-tick' ||
+      (job.name === 'ai-insights' && job.every === AI_INSIGHTS_REPEAT_EVERY_MS)
   );
   await Promise.all(
     targets.map(async (job) => {
       await bullQueue.removeRepeatableByKey(job.key);
-    }),
+    })
   );
 };
 
@@ -155,14 +156,14 @@ export const startAiInsightsQueue = (): void => {
       }
       await queue.enqueue(
         { type: 'scheduled-tick' },
-        { repeat: { every: AI_INSIGHTS_REPEAT_EVERY_MS }, jobId: 'ai-insights-tick' },
+        { repeat: { every: AI_INSIGHTS_REPEAT_EVERY_MS }, jobId: 'ai-insights-tick' }
       );
     })
     .catch(async (error) => {
       aiInsightsQueueState.schedulerRegistered = false;
       void ErrorSystem.captureException(error, {
         service: 'ai-insights-queue',
-        action: 'registerScheduler'
+        action: 'registerScheduler',
       });
     });
 };

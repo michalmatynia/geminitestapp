@@ -3,13 +3,13 @@ import 'server-only';
 import {
   executeImageStudioSequenceStep,
   resolveSequenceStepsForExecution,
-} from '@/features/ai/image-studio/server/sequence-executor';
+} from '@/shared/lib/ai/image-studio/server/sequence-executor';
 import {
   getImageStudioSequenceRunById,
   updateImageStudioSequenceRun,
   type ImageStudioSequenceMaskContext,
   type ImageStudioSequenceRunRecord,
-} from '@/features/ai/image-studio/server/sequence-run-repository';
+} from '@/shared/lib/ai/image-studio/server/sequence-run-repository';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { createManagedQueue, isRedisAvailable } from '@/shared/lib/queue';
@@ -23,11 +23,10 @@ type ImageStudioSequenceJobData = {
 
 export type ImageStudioSequenceDispatchMode = 'queued' | 'inline';
 
-const sleep = (ms: number): Promise<void> =>
-  new Promise((resolve) => setTimeout(resolve, ms));
+const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
 const toMaskContext = (
-  value: ImageStudioSequenceMaskContext | null | undefined,
+  value: ImageStudioSequenceMaskContext | null | undefined
 ): ImageStudioSequenceMaskContext => {
   if (!value || !Array.isArray(value.polygons) || value.polygons.length === 0) {
     return null;
@@ -42,8 +41,7 @@ const toMaskContext = (
   };
 };
 
-const getSequenceEventChannel = (runId: string): string =>
-  `image-studio:sequence:${runId}`;
+const getSequenceEventChannel = (runId: string): string => `image-studio:sequence:${runId}`;
 
 const appendUniqueIds = (source: string[], next: string[]): string[] => {
   const unique = new Set(source);
@@ -58,7 +56,7 @@ const appendUniqueIds = (source: string[], next: string[]): string[] => {
 
 const markSequenceCancelled = async (
   run: ImageStudioSequenceRunRecord,
-  reason: string,
+  reason: string
 ): Promise<ImageStudioSequenceRunRecord | null> => {
   const finishedAt = new Date().toISOString();
   const next = await updateImageStudioSequenceRun(run.id, {
@@ -95,9 +93,7 @@ const markSequenceCancelled = async (
   return next;
 };
 
-const maybeRefreshRun = async (
-  runId: string,
-): Promise<ImageStudioSequenceRunRecord | null> => {
+const maybeRefreshRun = async (runId: string): Promise<ImageStudioSequenceRunRecord | null> => {
   return await getImageStudioSequenceRunById(runId);
 };
 
@@ -125,11 +121,7 @@ const queue = createManagedQueue<ImageStudioSequenceJobData>({
       return;
     }
 
-    if (
-      run.status === 'completed' ||
-      run.status === 'failed' ||
-      run.status === 'cancelled'
-    ) {
+    if (run.status === 'completed' || run.status === 'failed' || run.status === 'cancelled') {
       await logSystemEvent({
         level: 'info',
         source: LOG_SOURCE,
@@ -193,9 +185,7 @@ const queue = createManagedQueue<ImageStudioSequenceJobData>({
         const stepInputSource = step.inputSource === 'source' ? 'source' : 'previous';
         const preStepCurrentSlotId = currentSlotId;
         const stepInputSlotId =
-          stepInputSource === 'source'
-            ? run.sourceSlotId
-            : preStepCurrentSlotId;
+          stepInputSource === 'source' ? run.sourceSlotId : preStepCurrentSlotId;
 
         const maybeCancelledRun = await maybeRefreshRun(run.id);
         if (!maybeCancelledRun) {
@@ -267,9 +257,7 @@ const queue = createManagedQueue<ImageStudioSequenceJobData>({
             });
 
             currentSlotId =
-              result.producedSlotIds.length > 0
-                ? result.nextSlotId
-                : preStepCurrentSlotId;
+              result.producedSlotIds.length > 0 ? result.nextSlotId : preStepCurrentSlotId;
             outputSlotIds = appendUniqueIds(outputSlotIds, result.producedSlotIds);
             runtimeMask = toMaskContext(result.runtimeMask);
 
@@ -327,10 +315,7 @@ const queue = createManagedQueue<ImageStudioSequenceJobData>({
 
             completed = true;
           } catch (error) {
-            const message =
-              error instanceof Error
-                ? error.message
-                : `Step ${step.type} failed.`;
+            const message = error instanceof Error ? error.message : `Step ${step.type} failed.`;
 
             if (attempt < attempts) {
               const waitMs = Math.max(0, step.retryBackoffMs) * attempt;
@@ -489,10 +474,7 @@ const queue = createManagedQueue<ImageStudioSequenceJobData>({
         outputCount: outputSlotIds.length,
       };
     } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : 'Image Studio sequence failed.';
+      const message = error instanceof Error ? error.message : 'Image Studio sequence failed.';
       const finishedAt = new Date().toISOString();
 
       await updateImageStudioSequenceRun(run.id, {
@@ -557,7 +539,7 @@ export const startImageStudioSequenceQueue = (): void => {
 };
 
 export const enqueueImageStudioSequenceJob = async (
-  runId: string,
+  runId: string
 ): Promise<ImageStudioSequenceDispatchMode> => {
   if (!isRedisAvailable()) {
     await logSystemEvent({
@@ -580,10 +562,7 @@ export const enqueueImageStudioSequenceJob = async (
       message: `Queue enqueue failed for sequence run ${runId}; falling back to inline processing`,
       context: {
         runId,
-        error:
-          enqueueError instanceof Error
-            ? enqueueError.message
-            : String(enqueueError),
+        error: enqueueError instanceof Error ? enqueueError.message : String(enqueueError),
       },
     });
 

@@ -11,8 +11,7 @@ import {
   useSelectionActions,
   useSelectionState,
 } from '@/features/ai/ai-paths/context';
-import {
-} from '@/shared/lib/ai-paths';
+import {} from '@/shared/lib/ai-paths';
 import type {
   AiNode,
   CaseResolverNodeMeta,
@@ -36,10 +35,7 @@ export type UseNodeFileWorkspaceStateProps = {
   ) => void;
 };
 
-const renderNodeTemplate = (
-  template: string,
-  variables: Record<string, string>
-): string =>
+const renderNodeTemplate = (template: string, variables: Record<string, string>): string =>
   template.replace(
     /{{\s*([^}]+)\s*}}|\[\s*([A-Za-z0-9_.$:-]+)\s*\]/g,
     (_match: string, curlyToken: string | undefined, bracketToken: string | undefined) => {
@@ -55,12 +51,8 @@ export function useNodeFileWorkspaceState({
   snapshot,
   onSnapshotChange,
 }: UseNodeFileWorkspaceStateProps) {
-  const {
-    workspace,
-    activeCaseId,
-    caseResolverIdentifiers,
-    onSelectFile,
-  } = useCaseResolverPageContext();
+  const { workspace, activeCaseId, caseResolverIdentifiers, onSelectFile } =
+    useCaseResolverPageContext();
   const { viewportRef, canvasRef } = useCanvasRefs();
   const { view } = useCanvasState();
   const { setView } = useCanvasActions();
@@ -68,7 +60,9 @@ export function useNodeFileWorkspaceState({
   const { addNode, setNodes, updateNode, setEdges } = useGraphActions();
   const { selectedNodeId, selectedEdgeId, configOpen } = useSelectionState();
   const { selectNode, setConfigOpen } = useSelectionActions();
-  const [newNodeType, setNewNodeType] = useState<'prompt' | 'model' | 'template' | 'database' | 'viewer'>('prompt');
+  const [newNodeType, setNewNodeType] = useState<
+    'prompt' | 'model' | 'template' | 'database' | 'viewer'
+  >('prompt');
   const [isSidePanelVisible, setIsSidePanelVisible] = useState(false);
   const [isNodeInspectorOpen, setIsNodeInspectorOpen] = useState(false);
   const [isLinkedPreviewOpen, setIsLinkedPreviewOpen] = useState(false);
@@ -127,7 +121,7 @@ export function useNodeFileWorkspaceState({
 
   const graphCompileIndex = useMemo(() => {
     const nodesById = new Map<string, AiNode>(
-      nodes.map((node: AiNode): [string, AiNode] => [node.id, node]),
+      nodes.map((node: AiNode): [string, AiNode] => [node.id, node])
     );
     const incomingEdgesByNodeId = new Map<string, typeof edges>();
     edges.forEach((edge): void => {
@@ -207,25 +201,23 @@ export function useNodeFileWorkspaceState({
   }, [graphCompileIndex]);
 
   const selectedNode = useMemo(
-    () => (selectedNodeId ? nodes.find((n) => n.id === selectedNodeId) ?? null : null),
+    () => (selectedNodeId ? (nodes.find((n) => n.id === selectedNodeId) ?? null) : null),
     [nodes, selectedNodeId]
   );
 
   const selectedNodeMeta = useMemo(
-    () => (selectedNodeId ? nodeMetaByNode[selectedNodeId] ?? null : null),
+    () => (selectedNodeId ? (nodeMetaByNode[selectedNodeId] ?? null) : null),
     [nodeMetaByNode, selectedNodeId]
   );
 
-  const selectedNodeFileMeta = useMemo(
-    (): CaseResolverNodeFileMeta | null => {
-      if (!selectedNodeId) return null;
-      return (nodeFileMetaRef.current[selectedNodeId] as CaseResolverNodeFileMeta) ?? null;
-    },
-    [selectedNodeId]
-  );
+  const selectedNodeFileMeta = useMemo((): CaseResolverNodeFileMeta | null => {
+    if (!selectedNodeId) return null;
+    return (nodeFileMetaRef.current[selectedNodeId] as CaseResolverNodeFileMeta) ?? null;
+  }, [selectedNodeId]);
 
   const selectedFile = useMemo(
-    (): CaseResolverFile | null => (selectedNodeFileMeta?.fileId ? filesById.get(selectedNodeFileMeta.fileId) ?? null : null),
+    (): CaseResolverFile | null =>
+      selectedNodeFileMeta?.fileId ? (filesById.get(selectedNodeFileMeta.fileId) ?? null) : null,
     [filesById, selectedNodeFileMeta]
   );
 
@@ -283,28 +275,26 @@ export function useNodeFileWorkspaceState({
       action: 'node_file_snapshot_manual_save',
       message: `asset_id=${assetId}`,
     });
-  }, [
-    assetId,
-    buildCurrentSnapshot,
-    hasPendingSnapshotChanges,
-    onSnapshotChange,
-  ]);
+  }, [assetId, buildCurrentSnapshot, hasPendingSnapshotChanges, onSnapshotChange]);
 
   // Actions
-  const handleAddNode = useCallback((node: AiNode) => {
-    addNode(node);
-  }, [addNode]);
-
-  const handleUpdateNode = useCallback((nodeId: string, patch: Partial<AiNode>) => {
-    updateNode(nodeId, patch);
-  }, [updateNode]);
-
-  const handleSetNodeFileMeta = useCallback(
-    (nodeId: string, meta: CaseResolverNodeFileMeta) => {
-      nodeFileMetaRef.current = { ...nodeFileMetaRef.current, [nodeId]: meta };
+  const handleAddNode = useCallback(
+    (node: AiNode) => {
+      addNode(node);
     },
-    []
+    [addNode]
   );
+
+  const handleUpdateNode = useCallback(
+    (nodeId: string, patch: Partial<AiNode>) => {
+      updateNode(nodeId, patch);
+    },
+    [updateNode]
+  );
+
+  const handleSetNodeFileMeta = useCallback((nodeId: string, meta: CaseResolverNodeFileMeta) => {
+    nodeFileMetaRef.current = { ...nodeFileMetaRef.current, [nodeId]: meta };
+  }, []);
 
   return {
     assetId,

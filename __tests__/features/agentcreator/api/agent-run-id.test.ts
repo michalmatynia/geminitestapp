@@ -52,8 +52,14 @@ describe('Agent Run [runId] API', () => {
 
   describe('POST actions', () => {
     it('stops a running agent', async () => {
-      vi.mocked(prisma.chatbotAgentRun.findUnique).mockResolvedValue({ id: 'test-run-123', status: 'running' } as any);
-      vi.mocked(prisma.chatbotAgentRun.update).mockResolvedValue({ id: 'test-run-123', status: 'stopped' } as any);
+      vi.mocked(prisma.chatbotAgentRun.findUnique).mockResolvedValue({
+        id: 'test-run-123',
+        status: 'running',
+      } as any);
+      vi.mocked(prisma.chatbotAgentRun.update).mockResolvedValue({
+        id: 'test-run-123',
+        status: 'stopped',
+      } as any);
 
       const req = new NextRequest('http://localhost/api/agentcreator/agent/test-run-123', {
         method: 'POST',
@@ -65,14 +71,22 @@ describe('Agent Run [runId] API', () => {
 
       expect(res.status).toBe(200);
       expect(data.status).toBe('stopped');
-      expect(prisma.chatbotAgentRun.update).toHaveBeenCalledWith(expect.objectContaining({
-        data: expect.objectContaining({ status: 'stopped' })
-      }));
+      expect(prisma.chatbotAgentRun.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ status: 'stopped' }),
+        })
+      );
     });
 
     it('resumes a stopped agent', async () => {
-      vi.mocked(prisma.chatbotAgentRun.findUnique).mockResolvedValue({ id: 'test-run-123', status: 'stopped' } as any);
-      vi.mocked(prisma.chatbotAgentRun.update).mockResolvedValue({ id: 'test-run-123', status: 'queued' } as any);
+      vi.mocked(prisma.chatbotAgentRun.findUnique).mockResolvedValue({
+        id: 'test-run-123',
+        status: 'stopped',
+      } as any);
+      vi.mocked(prisma.chatbotAgentRun.update).mockResolvedValue({
+        id: 'test-run-123',
+        status: 'queued',
+      } as any);
 
       const req = new NextRequest('http://localhost/api/agentcreator/agent/test-run-123', {
         method: 'POST',
@@ -86,12 +100,15 @@ describe('Agent Run [runId] API', () => {
     });
 
     it('retries a specific step', async () => {
-      vi.mocked(prisma.chatbotAgentRun.findUnique).mockResolvedValue({ 
-        id: 'test-run-123', 
+      vi.mocked(prisma.chatbotAgentRun.findUnique).mockResolvedValue({
+        id: 'test-run-123',
         status: 'failed',
-        planState: { steps: [{ id: 'step-1', status: 'failed' }] }
+        planState: { steps: [{ id: 'step-1', status: 'failed' }] },
       } as any);
-      vi.mocked(prisma.chatbotAgentRun.update).mockResolvedValue({ id: 'test-run-123', status: 'queued' } as any);
+      vi.mocked(prisma.chatbotAgentRun.update).mockResolvedValue({
+        id: 'test-run-123',
+        status: 'queued',
+      } as any);
 
       const req = new NextRequest('http://localhost/api/agentcreator/agent/test-run-123', {
         method: 'POST',
@@ -100,18 +117,23 @@ describe('Agent Run [runId] API', () => {
 
       const res = await POST(req, ctx);
       expect(res.status).toBe(200);
-      expect(prisma.chatbotAgentRun.update).toHaveBeenCalledWith(expect.objectContaining({
-        data: expect.objectContaining({
-          activeStepId: 'step-1',
-          status: 'queued'
+      expect(prisma.chatbotAgentRun.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            activeStepId: 'step-1',
+            status: 'queued',
+          }),
         })
-      }));
+      );
     });
   });
 
   describe('DELETE', () => {
     it('deletes a non-running agent', async () => {
-      vi.mocked(prisma.chatbotAgentRun.findUnique).mockResolvedValue({ id: 'test-run-123', status: 'completed' } as any);
+      vi.mocked(prisma.chatbotAgentRun.findUnique).mockResolvedValue({
+        id: 'test-run-123',
+        status: 'completed',
+      } as any);
 
       const req = new NextRequest('http://localhost/api/agentcreator/agent/test-run-123', {
         method: 'DELETE',
@@ -123,7 +145,10 @@ describe('Agent Run [runId] API', () => {
     });
 
     it('returns 409 when trying to delete a running agent without force', async () => {
-      vi.mocked(prisma.chatbotAgentRun.findUnique).mockResolvedValue({ id: 'test-run-123', status: 'running' } as any);
+      vi.mocked(prisma.chatbotAgentRun.findUnique).mockResolvedValue({
+        id: 'test-run-123',
+        status: 'running',
+      } as any);
 
       const req = new NextRequest('http://localhost/api/agentcreator/agent/test-run-123', {
         method: 'DELETE',

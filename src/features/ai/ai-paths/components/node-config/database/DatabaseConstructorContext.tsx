@@ -55,7 +55,9 @@ export type DatabaseConstructorContextValue = {
   insertAiPromptPlaceholder: (placeholder: string) => void;
 };
 
-const DatabaseConstructorContext = React.createContext<DatabaseConstructorContextValue | null>(null);
+const DatabaseConstructorContext = React.createContext<DatabaseConstructorContextValue | null>(
+  null
+);
 
 export function DatabaseConstructorContextProvider({
   value,
@@ -74,7 +76,9 @@ export function DatabaseConstructorContextProvider({
 export function useDatabaseConstructorContext(): DatabaseConstructorContextValue {
   const context = React.useContext(DatabaseConstructorContext);
   if (!context) {
-    throw new Error('useDatabaseConstructorContext must be used within DatabaseConstructorContextProvider');
+    throw new Error(
+      'useDatabaseConstructorContext must be used within DatabaseConstructorContextProvider'
+    );
   }
   return context;
 }

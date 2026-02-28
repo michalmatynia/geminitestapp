@@ -71,8 +71,7 @@ class PromptExploderErrorBoundary extends React.Component<
 const PROMPT_EXPLODER_ACTIVE_TAB_KEY = 'prompt_exploder:active_tab';
 
 export function AdminPromptExploderPage(): React.JSX.Element {
-  const { docsTooltipsEnabled, setDocsTooltipsEnabled } =
-    usePromptExploderDocsTooltips();
+  const { docsTooltipsEnabled, setDocsTooltipsEnabled } = usePromptExploderDocsTooltips();
   const [activeTab, setActiveTab] = useState<'workspace' | 'docs'>('workspace');
   const [mounted, setMounted] = useState(false);
 
@@ -100,12 +99,12 @@ export function AdminPromptExploderPage(): React.JSX.Element {
   if (!mounted) {
     return (
       <ListPanel
-        header={(
+        header={
           <div className='space-y-1'>
             <h1 className='text-lg font-semibold text-white'>Prompt Exploder</h1>
             <p className='text-sm text-gray-400'>Loading workspace…</p>
           </div>
-        )}
+        }
       >
         <div className='grid grid-cols-1 gap-4 xl:grid-cols-[minmax(380px,0.85fr)_minmax(640px,1.15fr)]'>
           <div className='space-y-4'>
@@ -128,17 +127,21 @@ export function AdminPromptExploderPage(): React.JSX.Element {
       <PromptExploderProvider>
         <div id='prompt-exploder-docs-root'>
           <ListPanel
-            header={(
+            header={
               <PromptExploderHeaderBar
                 docsTooltipsEnabled={docsTooltipsEnabled}
                 onDocsTooltipsChange={setDocsTooltipsEnabled}
               />
-            )}
+            }
           >
             <Tabs value={activeTab} onValueChange={handleTabChange} className='w-full space-y-4'>
               <TabsList className='grid h-auto w-full grid-cols-2 gap-2 border border-border/60 bg-card/30 p-2'>
-                <TabsTrigger value='workspace' className='h-10'>Workspace</TabsTrigger>
-                <TabsTrigger value='docs' className='h-10'>Docs</TabsTrigger>
+                <TabsTrigger value='workspace' className='h-10'>
+                  Workspace
+                </TabsTrigger>
+                <TabsTrigger value='docs' className='h-10'>
+                  Docs
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value='workspace' className='space-y-4'>

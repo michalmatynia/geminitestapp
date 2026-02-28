@@ -17,12 +17,18 @@ export function useSystemSync({ enabled = true, interval = 60000 }: SystemSyncOp
 } {
   const queryClient = useQueryClient();
   const { processQueue } = useOfflineSync();
-  const [isOnline, setIsOnline] = useState<boolean>(typeof navigator !== 'undefined' ? navigator.onLine : true);
+  const [isOnline, setIsOnline] = useState<boolean>(
+    typeof navigator !== 'undefined' ? navigator.onLine : true
+  );
   const [lastSync, setLastSync] = useState<Date | null>(null);
 
   const performSync = useCallback(async (): Promise<void> => {
     await queryClient.refetchQueries({
-      predicate: (query: { queryKey: unknown; isStale: () => boolean; options?: { queryFn?: unknown } }) =>
+      predicate: (query: {
+        queryKey: unknown;
+        isStale: () => boolean;
+        options?: { queryFn?: unknown };
+      }) =>
         Array.isArray(query.queryKey) &&
         query.isStale() &&
         typeof query.options?.queryFn === 'function',
@@ -34,7 +40,7 @@ export function useSystemSync({ enabled = true, interval = 60000 }: SystemSyncOp
   }, [isOnline, queryClient, processQueue]);
 
   // Monitor online/offline status
-  useEffect((): () => void => {
+  useEffect((): (() => void) => {
     const handleOnline = (): void => setIsOnline(true);
     const handleOffline = (): void => setIsOnline(false);
 
@@ -59,37 +65,53 @@ export function useSystemSync({ enabled = true, interval = 60000 }: SystemSyncOp
   }, [isOnline, enabled, performSync]);
 
   // Periodic sync for critical data
-  useEffect((): () => void => {
+  useEffect((): (() => void) => {
     if (!enabled || !isOnline) return (): void => {};
 
     const syncCriticalData = (): void => {
-      const canRefetch = (query: { queryKey: unknown; options?: { queryFn?: unknown }; isStale?: () => boolean }): boolean =>
+      const canRefetch = (query: {
+        queryKey: unknown;
+        options?: { queryFn?: unknown };
+        isStale?: () => boolean;
+      }): boolean =>
         Array.isArray(query.queryKey) &&
         typeof query.options?.queryFn === 'function' &&
         (typeof query.isStale !== 'function' || query.isStale());
 
       // Sync job statuses
       void queryClient.refetchQueries({
-        predicate: (query: { queryKey: unknown; options?: { queryFn?: unknown }; isStale?: () => boolean }) =>
+        predicate: (query: {
+          queryKey: unknown;
+          options?: { queryFn?: unknown };
+          isStale?: () => boolean;
+        }) =>
           canRefetch(query) &&
           Array.isArray(query.queryKey) &&
           query.queryKey[0] === QUERY_KEYS.jobs.all[0],
       });
       // Sync user preferences
       void queryClient.refetchQueries({
-        predicate: (query: { queryKey: unknown; options?: { queryFn?: unknown }; isStale?: () => boolean }) =>
+        predicate: (query: {
+          queryKey: unknown;
+          options?: { queryFn?: unknown };
+          isStale?: () => boolean;
+        }) =>
           canRefetch(query) &&
           Array.isArray(query.queryKey) &&
           query.queryKey[0] === QUERY_KEYS.userPreferences.all[0],
       });
       // Sync settings
       void queryClient.refetchQueries({
-        predicate: (query: { queryKey: unknown; options?: { queryFn?: unknown }; isStale?: () => boolean }) =>
+        predicate: (query: {
+          queryKey: unknown;
+          options?: { queryFn?: unknown };
+          isStale?: () => boolean;
+        }) =>
           canRefetch(query) &&
           Array.isArray(query.queryKey) &&
           query.queryKey[0] === QUERY_KEYS.settings.all[0],
       });
-      
+
       setLastSync(new Date());
     };
 

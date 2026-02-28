@@ -90,9 +90,7 @@ export interface UseChatbotLogicReturn {
   localContext: string;
   setLocalContext: React.Dispatch<React.SetStateAction<string>>;
   localContextMode: 'override' | 'append';
-  setLocalContextMode: React.Dispatch<
-    React.SetStateAction<'override' | 'append'>
-  >;
+  setLocalContextMode: React.Dispatch<React.SetStateAction<'override' | 'append'>>;
   settingsDirty: boolean;
   setSettingsDirty: React.Dispatch<React.SetStateAction<boolean>>;
   settingsSaving: boolean;

@@ -60,7 +60,13 @@ describe('Agent Runtime - Utils', () => {
     });
 
     it('should filter out hex IDs and prices', () => {
-      const input = ['Real Product', 'abcdef0123456789', '0123456789abcdef0123456789abcdef', '$19.99', '123.45'];
+      const input = [
+        'Real Product',
+        'abcdef0123456789',
+        '0123456789abcdef0123456789abcdef',
+        '$19.99',
+        '123.45',
+      ];
       const output = normalizeProductNames(input);
       expect(output).toEqual(['Real Product']);
     });
@@ -79,7 +85,7 @@ describe('Agent Runtime - Utils', () => {
       const txt = 'User-agent: *\nDisallow: /admin\nAllow: /admin/login\nDisallow: /private';
       const rulesMap = parseRobotsRules(txt);
       const rules = rulesMap.get('*' as string)!;
-      
+
       expect(evaluateRobotsRules(rules, '/public').allowed).toBe(true);
       expect(evaluateRobotsRules(rules, '/admin').allowed).toBe(false);
       expect(evaluateRobotsRules(rules, '/admin/login').allowed).toBe(true);
@@ -91,7 +97,7 @@ describe('Agent Runtime - Utils', () => {
     it('should parse email and password', () => {
       expect(parseCredentials('Login with email: user@test.com password: secret123')).toEqual({
         email: 'user@test.com',
-        password: 'secret123'
+        password: 'secret123',
       });
     });
 
@@ -104,14 +110,14 @@ describe('Agent Runtime - Utils', () => {
     it('should detect product extraction with count', () => {
       expect(parseExtractionRequest('Extract 20 products')).toEqual({
         type: 'product_names',
-        count: 20
+        count: 20,
       });
     });
 
     it('should detect email extraction', () => {
       expect(parseExtractionRequest('Find emails on this page')).toEqual({
         type: 'emails',
-        count: null
+        count: null,
       });
     });
   });

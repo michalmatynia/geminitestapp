@@ -1,6 +1,11 @@
 'use client';
 
-import { CSRF_HEADER_NAME, CSRF_SAFE_METHODS, getClientCsrfToken, isSameOriginUrl } from '@/shared/lib/security/csrf-client';
+import {
+  CSRF_HEADER_NAME,
+  CSRF_SAFE_METHODS,
+  getClientCsrfToken,
+  isSameOriginUrl,
+} from '@/shared/lib/security/csrf-client';
 
 export type UploadWithProgressOptions = {
   method?: string | undefined;
@@ -28,65 +33,60 @@ const safeJsonParse = <T>(raw: string): T => {
 
 export async function uploadWithProgress<T>(
   url: string,
-  options: UploadWithProgressOptions,
+  options: UploadWithProgressOptions
 ): Promise<UploadWithProgressResult<T>> {
-  const {
-    method = 'POST',
-    formData,
-    headers,
-    onProgress,
-    withCredentials,
-    timeoutMs,
-  } = options;
+  const { method = 'POST', formData, headers, onProgress, withCredentials, timeoutMs } = options;
 
-  return new Promise<UploadWithProgressResult<T>>((resolve: (value: UploadWithProgressResult<T>) => void, reject: (reason?: Error) => void) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open(method, url, true);
-    if (withCredentials) xhr.withCredentials = true;
-    if (typeof timeoutMs === 'number' && timeoutMs > 0) {
-      xhr.timeout = timeoutMs;
-    }
-
-    const finalHeaders: Record<string, string> = { ...(headers ?? {}) };
-    const methodUpper = method.toUpperCase();
-    if (!CSRF_SAFE_METHODS.has(methodUpper) && isSameOriginUrl(url)) {
-      const token = getClientCsrfToken();
-      if (token && !finalHeaders[CSRF_HEADER_NAME]) {
-        finalHeaders[CSRF_HEADER_NAME] = token;
+  return new Promise<UploadWithProgressResult<T>>(
+    (resolve: (value: UploadWithProgressResult<T>) => void, reject: (reason?: Error) => void) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open(method, url, true);
+      if (withCredentials) xhr.withCredentials = true;
+      if (typeof timeoutMs === 'number' && timeoutMs > 0) {
+        xhr.timeout = timeoutMs;
       }
-    }
-    Object.entries(finalHeaders).forEach(([key, value]: [string, string]) => {
-      xhr.setRequestHeader(key, value);
-    });
 
-    xhr.upload.onprogress = (event: ProgressEvent): void => {
-      if (!onProgress) return;
-      if (event.lengthComputable) {
-        onProgress(event.loaded, event.total);
-      } else {
-        onProgress(event.loaded);
+      const finalHeaders: Record<string, string> = { ...(headers ?? {}) };
+      const methodUpper = method.toUpperCase();
+      if (!CSRF_SAFE_METHODS.has(methodUpper) && isSameOriginUrl(url)) {
+        const token = getClientCsrfToken();
+        if (token && !finalHeaders[CSRF_HEADER_NAME]) {
+          finalHeaders[CSRF_HEADER_NAME] = token;
+        }
       }
-    };
-
-    xhr.onload = (): void => {
-      const raw = typeof xhr.responseText === 'string' ? xhr.responseText : '';
-      const data = safeJsonParse<T>(raw);
-      resolve({
-        ok: xhr.status >= 200 && xhr.status < 300,
-        status: xhr.status,
-        data,
-        raw,
+      Object.entries(finalHeaders).forEach(([key, value]: [string, string]) => {
+        xhr.setRequestHeader(key, value);
       });
-    };
 
-    xhr.onerror = (): void => {
-      reject(new Error('Upload failed'));
-    };
+      xhr.upload.onprogress = (event: ProgressEvent): void => {
+        if (!onProgress) return;
+        if (event.lengthComputable) {
+          onProgress(event.loaded, event.total);
+        } else {
+          onProgress(event.loaded);
+        }
+      };
 
-    xhr.ontimeout = (): void => {
-      reject(new Error('Upload timed out'));
-    };
+      xhr.onload = (): void => {
+        const raw = typeof xhr.responseText === 'string' ? xhr.responseText : '';
+        const data = safeJsonParse<T>(raw);
+        resolve({
+          ok: xhr.status >= 200 && xhr.status < 300,
+          status: xhr.status,
+          data,
+          raw,
+        });
+      };
 
-    xhr.send(formData);
-  });
+      xhr.onerror = (): void => {
+        reject(new Error('Upload failed'));
+      };
+
+      xhr.ontimeout = (): void => {
+        reject(new Error('Upload timed out'));
+      };
+
+      xhr.send(formData);
+    }
+  );
 }

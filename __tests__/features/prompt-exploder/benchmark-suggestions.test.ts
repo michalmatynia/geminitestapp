@@ -46,7 +46,10 @@ describe('prompt exploder benchmark suggestions', () => {
       buildSuggestion('valid', { segmentTitle: 'Valid', suggestedRulePattern: '  \\bqa\\b  ' }),
       buildSuggestion('empty', { segmentTitle: 'Empty', suggestedRulePattern: '   ' }),
       buildSuggestion('invalid', { segmentTitle: 'Invalid', suggestedRulePattern: '(' }),
-      buildSuggestion('valid', { segmentTitle: 'Duplicate Valid', suggestedRulePattern: '\\bother\\b' }),
+      buildSuggestion('valid', {
+        segmentTitle: 'Duplicate Valid',
+        suggestedRulePattern: '\\bother\\b',
+      }),
     ];
 
     const prepared = prepareBenchmarkSuggestionsForApply(suggestions);

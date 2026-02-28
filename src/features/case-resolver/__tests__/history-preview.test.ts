@@ -4,7 +4,7 @@ import type { CaseResolverDocumentHistoryEntry } from '@/shared/contracts/case-r
 import { resolveCaseResolverHistoryEntryPreview } from '@/features/case-resolver/utils/caseResolverUtils';
 
 const buildHistoryEntry = (
-  overrides: Partial<CaseResolverDocumentHistoryEntry> = {},
+  overrides: Partial<CaseResolverDocumentHistoryEntry> = {}
 ): CaseResolverDocumentHistoryEntry => ({
   id: 'history-1',
   savedAt: '2026-02-24T12:00:00.000Z',

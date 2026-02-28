@@ -5,7 +5,10 @@ import React from 'react';
 import { useInternationalizationContext } from '@/shared/lib/internationalization/context/InternationalizationContext';
 import { countryCodeOptions } from '@/shared/constants/internationalization';
 import { Checkbox, Label, LoadingState, Hint } from '@/shared/ui';
-import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
+import {
+  SettingsPanelBuilder,
+  type SettingsField,
+} from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import { useCountryForm } from './hooks/useCountryForm';
 
@@ -15,12 +18,12 @@ type CountryFormState = {
 };
 
 export function CountryModal(): React.JSX.Element | null {
-  const { 
-    isCountryModalOpen, 
-    handleCloseCountryModal, 
+  const {
+    isCountryModalOpen,
+    handleCloseCountryModal,
     activeCountry,
     currencies: currencyOptions,
-    loadingCurrencies 
+    loadingCurrencies,
   } = useInternationalizationContext();
 
   const defaultOption = countryCodeOptions[0];
@@ -40,7 +43,7 @@ export function CountryModal(): React.JSX.Element | null {
 
   const toggleCurrency = (id: string): void => {
     setSelectedCurrencyIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
     );
   };
 
@@ -49,9 +52,9 @@ export function CountryModal(): React.JSX.Element | null {
       key: 'code',
       label: 'Code',
       type: 'select',
-      options: countryCodeOptions.map(opt => ({
+      options: countryCodeOptions.map((opt) => ({
         value: opt.code,
-        label: `${opt.code} · ${opt.name}`
+        label: `${opt.code} · ${opt.name}`,
       })),
       required: true,
     },
@@ -72,26 +75,30 @@ export function CountryModal(): React.JSX.Element | null {
           ) : (
             <div className='mt-2 grid grid-cols-2 gap-2 max-h-48 overflow-y-auto rounded-md border border-border bg-card/50 p-3'>
               {currencyOptions.length === 0 ? (
-                <Hint size='xs' italic className='col-span-2 py-4 text-center'>No currencies available.</Hint>
-              ) : currencyOptions.map((curr) => (
-                <Label
-                  key={curr.id}
-                  className='flex items-center gap-2 cursor-pointer hover:bg-muted/50 p-1.5 rounded transition-colors'
-                >
-                  <Checkbox
-                    checked={selectedCurrencyIds.includes(curr.id)}
-                    onCheckedChange={() => toggleCurrency(curr.id)}
-                  />
-                  <span className='text-xs text-gray-200'>
-                    {curr.code} ({curr.name})
-                  </span>
-                </Label>
-              ))}
+                <Hint size='xs' italic className='col-span-2 py-4 text-center'>
+                  No currencies available.
+                </Hint>
+              ) : (
+                currencyOptions.map((curr) => (
+                  <Label
+                    key={curr.id}
+                    className='flex items-center gap-2 cursor-pointer hover:bg-muted/50 p-1.5 rounded transition-colors'
+                  >
+                    <Checkbox
+                      checked={selectedCurrencyIds.includes(curr.id)}
+                      onCheckedChange={() => toggleCurrency(curr.id)}
+                    />
+                    <span className='text-xs text-gray-200'>
+                      {curr.code} ({curr.name})
+                    </span>
+                  </Label>
+                ))
+              )}
             </div>
           )}
         </div>
-      )
-    }
+      ),
+    },
   ];
 
   const handleChange = (values: Partial<CountryFormState>) => {

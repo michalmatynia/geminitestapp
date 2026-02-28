@@ -101,9 +101,7 @@ export const createCaseResolverCanvasDropHandlers = ({
   ) => void;
   showDocumentNodeInCanvas: (fileId: string, preferredNodeId?: string | null) => void;
 } => {
-  const toCaseResolverEdge = (
-    edge: AiEdge
-  ): CaseResolverGraph['edges'][number] | null => {
+  const toCaseResolverEdge = (edge: AiEdge): CaseResolverGraph['edges'][number] | null => {
     const legacyEdge = edge as AiEdge & {
       from?: string;
       to?: string;
@@ -119,10 +117,10 @@ export const createCaseResolverCanvasDropHandlers = ({
       from,
       to,
       ...(legacyEdge.label ? { label: legacyEdge.label } : {}),
-      ...(legacyEdge.fromPort ?? edge.sourceHandle
+      ...((legacyEdge.fromPort ?? edge.sourceHandle)
         ? { fromPort: legacyEdge.fromPort ?? edge.sourceHandle ?? undefined }
         : {}),
-      ...(legacyEdge.toPort ?? edge.targetHandle
+      ...((legacyEdge.toPort ?? edge.targetHandle)
         ? { toPort: legacyEdge.toPort ?? edge.targetHandle ?? undefined }
         : {}),
     };
@@ -169,7 +167,10 @@ export const createCaseResolverCanvasDropHandlers = ({
       const payload = (await response.json()) as PdfExtractResponse;
       return typeof payload.text === 'string' ? payload.text : '';
     } catch (error) {
-      throw new Error(`PDF extraction failed: ${error instanceof Error ? error.message : 'Unknown error'}`, { cause: error });
+      throw new Error(
+        `PDF extraction failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        { cause: error }
+      );
     }
   };
 
@@ -233,7 +234,12 @@ export const createCaseResolverCanvasDropHandlers = ({
         'PDF_TEXT_END',
       ].join('\n');
 
-      const pdfNodeBase = buildNode(templateDefinition, basePosition, pdfNodeId, `PDF Node: ${asset.name}`);
+      const pdfNodeBase = buildNode(
+        templateDefinition,
+        basePosition,
+        pdfNodeId,
+        `PDF Node: ${asset.name}`
+      );
       const pdfNodeTemplateConfig = resolveTemplateConfig(pdfNodeBase);
       const pdfNode: AiNode = {
         ...pdfNodeBase,
@@ -264,9 +270,19 @@ export const createCaseResolverCanvasDropHandlers = ({
         },
       };
 
-      const modelNode = buildNode(modelDefinition, modelPosition, modelNodeId, `AI Model: ${asset.name}`);
+      const modelNode = buildNode(
+        modelDefinition,
+        modelPosition,
+        modelNodeId,
+        `AI Model: ${asset.name}`
+      );
 
-      const outputPromptBase = buildNode(promptDefinition, outputPosition, outputNodeId, `WYSIWYG Output: ${asset.name}`);
+      const outputPromptBase = buildNode(
+        promptDefinition,
+        outputPosition,
+        outputNodeId,
+        `WYSIWYG Output: ${asset.name}`
+      );
       const outputPromptConfig = resolvePromptConfig(outputPromptBase);
       const outputNode: AiNode = ensureDocumentPromptPorts({
         ...outputPromptBase,
@@ -563,10 +579,7 @@ export const createCaseResolverCanvasDropHandlers = ({
     );
   };
 
-  const showDocumentNodeInCanvas = (
-    fileId: string,
-    preferredNodeId?: string | null
-  ): void => {
+  const showDocumentNodeInCanvas = (fileId: string, preferredNodeId?: string | null): void => {
     const normalizedFileId = fileId.trim();
     if (!normalizedFileId) return;
 

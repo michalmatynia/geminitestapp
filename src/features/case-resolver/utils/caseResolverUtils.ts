@@ -3,7 +3,7 @@
 import {
   ensureHtmlForPreview,
   ensureSafeDocumentHtml,
-} from '@/features/document-editor/content-format';
+} from '@/shared/lib/document-editor/content-format';
 import type {
   CaseResolverDocumentHistoryEntry,
   CaseResolverFile,
@@ -22,7 +22,6 @@ import type {
 
 import { normalizeCaseResolverComparable } from '../party-matching';
 import { normalizeFolderPath } from '../settings';
-
 
 export const createId = (prefix: string): string => {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -66,7 +65,10 @@ export const isPathWithinFolder = (candidatePath: string, folderPath: string): b
   );
 };
 
-export const createUniqueFolderPath = (existingFolders: string[], targetFolderPath: string | null): string => {
+export const createUniqueFolderPath = (
+  existingFolders: string[],
+  targetFolderPath: string | null
+): string => {
   const parent = normalizeFolderPath(targetFolderPath ?? '');
   const existing = new Set(existingFolders.map((folder: string) => normalizeFolderPath(folder)));
   const baseName = 'new-folder';
@@ -74,17 +76,24 @@ export const createUniqueFolderPath = (existingFolders: string[], targetFolderPa
   let index = 1;
   while (index < 10000) {
     const candidateName = index === 1 ? baseName : `${baseName}-${index}`;
-    const candidatePath = normalizeFolderPath(parent ? `${parent}/${candidateName}` : candidateName);
+    const candidatePath = normalizeFolderPath(
+      parent ? `${parent}/${candidateName}` : candidateName
+    );
     if (candidatePath && !existing.has(candidatePath)) {
       return candidatePath;
     }
     index += 1;
   }
 
-  return normalizeFolderPath(parent ? `${parent}/${baseName}-${Date.now()}` : `${baseName}-${Date.now()}`);
+  return normalizeFolderPath(
+    parent ? `${parent}/${baseName}-${Date.now()}` : `${baseName}-${Date.now()}`
+  );
 };
 
-export const createUniqueDocumentName = (existingFiles: CaseResolverFile[], baseName: string): string => {
+export const createUniqueDocumentName = (
+  existingFiles: CaseResolverFile[],
+  baseName: string
+): string => {
   const normalizedBase = baseName.trim() || 'Exploded Document';
   const existingNames = new Set(
     existingFiles.map((file: CaseResolverFile): string => file.name.trim().toLowerCase())
@@ -106,10 +115,12 @@ export const createUniqueDocumentName = (existingFiles: CaseResolverFile[], base
 };
 
 export const toNormalizedSearchValue = (...parts: Array<string | null | undefined>): string =>
-  normalizeCaseResolverComparable(parts
-    .map((value: string | null | undefined): string => value?.trim() ?? '')
-    .filter((value: string): boolean => value.length > 0)
-    .join(' '));
+  normalizeCaseResolverComparable(
+    parts
+      .map((value: string | null | undefined): string => value?.trim() ?? '')
+      .filter((value: string): boolean => value.length > 0)
+      .join(' ')
+  );
 
 export const buildFilemakerAddressLabel = ({
   street,
@@ -158,7 +169,10 @@ export const buildCaseResolverDocumentHash = (id: string, createdAt: string): st
 };
 
 const normalizeHistoryEditorType = (
-  value: CaseResolverFileEditDraft['editorType'] | CaseResolverDocumentHistoryEntry['editorType'] | undefined
+  value:
+    | CaseResolverFileEditDraft['editorType']
+    | CaseResolverDocumentHistoryEntry['editorType']
+    | undefined
 ): CaseResolverDocumentHistoryEntry['editorType'] => {
   if (value === 'markdown' || value === 'code') {
     return value;
@@ -167,8 +181,14 @@ const normalizeHistoryEditorType = (
 };
 
 const toComparableHistoryPayload = (input: {
-  activeDocumentVersion: CaseResolverDocumentHistoryEntry['activeDocumentVersion'] | CaseResolverFileEditDraft['activeDocumentVersion'] | undefined;
-  editorType: CaseResolverDocumentHistoryEntry['editorType'] | CaseResolverFileEditDraft['editorType'] | undefined;
+  activeDocumentVersion:
+    | CaseResolverDocumentHistoryEntry['activeDocumentVersion']
+    | CaseResolverFileEditDraft['activeDocumentVersion']
+    | undefined;
+  editorType:
+    | CaseResolverDocumentHistoryEntry['editorType']
+    | CaseResolverFileEditDraft['editorType']
+    | undefined;
   documentContent: string | null | undefined;
   documentContentMarkdown: string | null | undefined;
   documentContentHtml: string | null | undefined;
@@ -184,27 +204,28 @@ const toComparableHistoryPayload = (input: {
   } as const;
 };
 
-const stripHtmlToComparablePlainText = (value: string): string => value
-  .replace(/<style[\s\S]*?<\/style>/gi, ' ')
-  .replace(/<script[\s\S]*?<\/script>/gi, ' ')
-  .replace(/<br\s*\/?>/gi, '\n')
-  .replace(/<\/(p|div|li|h1|h2|h3|h4|h5|h6|tr)>/gi, '\n')
-  .replace(/<[^>]+>/g, ' ')
-  .replace(/&nbsp;/gi, ' ')
-  .replace(/&amp;/gi, '&')
-  .replace(/&lt;/gi, '<')
-  .replace(/&gt;/gi, '>')
-  .replace(/&quot;/gi, '"')
-  .replace(/&#39;|&apos;/gi, '\'')
-  .replace(/\s+/g, ' ')
-  .trim();
+const stripHtmlToComparablePlainText = (value: string): string =>
+  value
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/(p|div|li|h1|h2|h3|h4|h5|h6|tr)>/gi, '\n')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/\s+/g, ' ')
+    .trim();
 
 const HISTORY_PREVIEW_ENTITY_MAP: Record<string, string> = {
   amp: '&',
   lt: '<',
   gt: '>',
   quot: '"',
-  apos: '\'',
+  apos: "'",
   nbsp: ' ',
 };
 
@@ -258,7 +279,7 @@ const truncateHistoryPreview = (value: string, maxChars: number): string => {
 
 const resolveHistoryPreviewFromCandidate = (
   value: string,
-  candidateType: 'plainText' | 'markdown' | 'html' | 'content',
+  candidateType: 'plainText' | 'markdown' | 'html' | 'content'
 ): string => {
   const normalizedValue = value.trim();
   if (!normalizedValue) return '';
@@ -281,12 +302,10 @@ const resolveHistoryPreviewFromCandidate = (
 
 export const resolveCaseResolverHistoryEntryPreview = (
   entry: CaseResolverDocumentHistoryEntry | null | undefined,
-  maxChars = 240,
+  maxChars = 240
 ): string => {
   if (!entry) return '';
-  const normalizedMaxChars = Number.isFinite(maxChars)
-    ? Math.max(1, Math.floor(maxChars))
-    : 240;
+  const normalizedMaxChars = Number.isFinite(maxChars) ? Math.max(1, Math.floor(maxChars)) : 240;
 
   const candidates: Array<{
     value: string | null | undefined;
@@ -327,7 +346,7 @@ const hasMeaningfulComparableHistoryPayload = (
 
 const areComparableHistoryPayloadsEqual = (
   left: ReturnType<typeof toComparableHistoryPayload>,
-  right: ReturnType<typeof toComparableHistoryPayload>,
+  right: ReturnType<typeof toComparableHistoryPayload>
 ): boolean =>
   left.activeDocumentVersion === right.activeDocumentVersion &&
   left.editorType === right.editorType &&
@@ -339,8 +358,14 @@ const areComparableHistoryPayloadsEqual = (
 export const createCaseResolverHistorySnapshotEntry = (input: {
   savedAt: string;
   documentContentVersion: number | null | undefined;
-  activeDocumentVersion: CaseResolverDocumentHistoryEntry['activeDocumentVersion'] | CaseResolverFileEditDraft['activeDocumentVersion'] | undefined;
-  editorType: CaseResolverDocumentHistoryEntry['editorType'] | CaseResolverFileEditDraft['editorType'] | undefined;
+  activeDocumentVersion:
+    | CaseResolverDocumentHistoryEntry['activeDocumentVersion']
+    | CaseResolverFileEditDraft['activeDocumentVersion']
+    | undefined;
+  editorType:
+    | CaseResolverDocumentHistoryEntry['editorType']
+    | CaseResolverFileEditDraft['editorType']
+    | undefined;
   documentContent: string | null | undefined;
   documentContentMarkdown: string | null | undefined;
   documentContentHtml: string | null | undefined;
@@ -361,7 +386,8 @@ export const createCaseResolverHistorySnapshotEntry = (input: {
     id: createId('case-doc-history'),
     savedAt: input.savedAt,
     documentContentVersion:
-      typeof input.documentContentVersion === 'number' && Number.isFinite(input.documentContentVersion)
+      typeof input.documentContentVersion === 'number' &&
+      Number.isFinite(input.documentContentVersion)
         ? Math.max(0, Math.trunc(input.documentContentVersion))
         : 0,
     activeDocumentVersion: comparable.activeDocumentVersion,
@@ -512,12 +538,13 @@ export const buildDocumentPdfMarkup = ({
           <div class="meta-value">${escapeHtml(normalizedAddressee)}</div>
         </article>`
     : '';
-  const metaSectionHtml = hasAddresser || hasAddressee
-    ? `<section class="meta">
+  const metaSectionHtml =
+    hasAddresser || hasAddressee
+      ? `<section class="meta">
         ${addresserHtml}
         ${addresseeHtml}
       </section>`
-    : '';
+      : '';
 
   return `<!doctype html>
 <html lang="en">
@@ -734,7 +761,9 @@ export const buildCaseResolverFilemakerPartySearchOptions = (
     .sort((left, right) => left.label.localeCompare(right.label));
 };
 
-const encodeFilemakerPartyReference = (ref: CaseResolverPartyReference | null | undefined): string => {
+const encodeFilemakerPartyReference = (
+  ref: CaseResolverPartyReference | null | undefined
+): string => {
   if (!ref) return '';
   return `${ref.kind}:${ref.id}`;
 };
@@ -776,7 +805,8 @@ export const buildCaseResolverTagPickerOptions = (
     const path = {
       ids: [...parentPath.ids, tag.id],
       names: [...parentPath.names, tag.label],
-    };    cache.set(tagId, path);
+    };
+    cache.set(tagId, path);
     return path;
   };
 
@@ -792,9 +822,7 @@ export const buildCaseResolverTagPickerOptions = (
         searchLabel: label.toLowerCase(),
       };
     })
-    .sort((left, right) =>
-      left.label.localeCompare(right.label)
-    );
+    .sort((left, right) => left.label.localeCompare(right.label));
 };
 
 const normalizeDraftDocumentDate = (value: unknown): CaseResolverFileEditDraft['documentDate'] => {
@@ -854,16 +882,14 @@ const normalizeDraftDocumentCity = (value: unknown): string | null => {
 export const buildFileEditDraft = (file: CaseResolverFile): CaseResolverFileEditDraft => {
   const originalDocumentContent = file.originalDocumentContent ?? file.documentContent;
   const explodedDocumentContent = file.explodedDocumentContent ?? '';
-  const requestedVersion: CaseResolverDocumentVersion = file.activeDocumentVersion === 'exploded'
-    ? 'exploded'
-    : 'original';
+  const requestedVersion: CaseResolverDocumentVersion =
+    file.activeDocumentVersion === 'exploded' ? 'exploded' : 'original';
   const activeDocumentVersion: CaseResolverDocumentVersion =
     requestedVersion === 'exploded' && explodedDocumentContent.trim().length === 0
       ? 'original'
       : requestedVersion;
-  const activeDocumentContent = activeDocumentVersion === 'exploded'
-    ? explodedDocumentContent
-    : originalDocumentContent;
+  const activeDocumentContent =
+    activeDocumentVersion === 'exploded' ? explodedDocumentContent : originalDocumentContent;
   const resolvedDraftEditorType: CaseResolverFileEditDraft['editorType'] =
     file.fileType === 'scanfile' ? 'markdown' : 'wysiwyg';
   const resolvedDraftMarkdown = (() => {
@@ -882,12 +908,13 @@ export const buildFileEditDraft = (file: CaseResolverFile): CaseResolverFileEdit
     return activeDocumentContent;
   })();
   const resolvedDraftHtml = (() => {
-    if (typeof file.documentContentHtml === 'string' && file.documentContentHtml.trim().length > 0) {
+    if (
+      typeof file.documentContentHtml === 'string' &&
+      file.documentContentHtml.trim().length > 0
+    ) {
       return file.documentContentHtml;
     }
-    if (
-      resolvedDraftMarkdown.trim().length > 0
-    ) {
+    if (resolvedDraftMarkdown.trim().length > 0) {
       return ensureHtmlForPreview(resolvedDraftMarkdown, 'markdown');
     }
     return ensureSafeDocumentHtml(activeDocumentContent);

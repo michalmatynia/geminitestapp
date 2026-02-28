@@ -4,9 +4,7 @@ import type {
   PromptExploderBindingDto as PromptExploderBinding,
   PromptExploderDocumentDto as PromptExploderDocument,
 } from '@/shared/contracts/prompt-exploder';
-import {
-  promptExploderDocumentSchema,
-} from '@/shared/contracts/prompt-exploder';
+import { promptExploderDocumentSchema } from '@/shared/contracts/prompt-exploder';
 
 export const PROMPT_EXPLODER_LIBRARY_KEY = 'image_studio_prompt_exploder_library';
 
@@ -93,9 +91,9 @@ export const buildPromptExploderLibraryItem = (args: {
     derivePromptExploderLibraryItemName(args.prompt);
   const documentSnapshot = args.documentState
     ? clonePromptExploderDocument({
-      ...args.documentState,
-      sourcePrompt: args.prompt,
-    })
+        ...args.documentState,
+        sourcePrompt: args.prompt,
+      })
     : null;
 
   return {
@@ -140,5 +138,7 @@ export const hydratePromptExploderLibraryDocument = (
 export function getManualBindingsFromDocument(
   document: PromptExploderDocument | null
 ): PromptExploderBinding[] {
-  return (document?.bindings ?? []).filter((binding: PromptExploderBinding) => binding.origin === 'manual');
+  return (document?.bindings ?? []).filter(
+    (binding: PromptExploderBinding) => binding.origin === 'manual'
+  );
 }

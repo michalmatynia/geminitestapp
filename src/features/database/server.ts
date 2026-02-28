@@ -1,10 +1,10 @@
 import 'server-only';
 
-export * from './services/database-backup';
-export * from './services/database-sync';
-export * from './services/database-json-backup';
-export * from './services/database-collection-copy';
-export * from './services/sync-utils';
+export * from '@/shared/lib/db/services/database-backup';
+export * from '@/shared/lib/db/services/database-sync';
+export * from '@/shared/lib/db/services/database-json-backup';
+export * from '@/shared/lib/db/services/database-collection-copy';
+export * from '@/shared/lib/db/services/sync-utils';
 export * from '@/shared/contracts/database';
 
 export {
@@ -17,7 +17,7 @@ export {
   getPgRestoreCommand,
   execFileAsync as pgExecFileAsync,
   assertValidBackupName as assertValidPgBackupName,
-} from './utils/postgres';
+} from '@/shared/lib/db/utils/postgres';
 
 export {
   backupsDir as mongoBackupsDir,
@@ -28,4 +28,4 @@ export {
   getMongoRestoreCommand,
   execFileAsync as mongoExecFileAsync,
   assertValidBackupName as assertValidMongoBackupName,
-} from './utils/mongo';
+} from '@/shared/lib/db/utils/mongo';

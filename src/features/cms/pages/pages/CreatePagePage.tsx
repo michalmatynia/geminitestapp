@@ -9,7 +9,20 @@ import { useCmsAllSlugs, useCmsSlugs, useCreatePage } from '@/features/cms/hooks
 import { cmsPageCreateSchema } from '@/features/cms/validations/api';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { Slug } from '@/shared/contracts/cms';
-import { Input, SectionHeader, Checkbox, ToggleRow, FormSection, FormField, Badge, Alert, StatusBadge, FormActions, Hint, Breadcrumbs } from '@/shared/ui';
+import {
+  Input,
+  SectionHeader,
+  Checkbox,
+  ToggleRow,
+  FormSection,
+  FormField,
+  Badge,
+  Alert,
+  StatusBadge,
+  FormActions,
+  Hint,
+  Breadcrumbs,
+} from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
 
 export default function CreatePagePage(): React.JSX.Element {
@@ -26,7 +39,10 @@ export default function CreatePagePage(): React.JSX.Element {
 
   const domainSlugs = useMemo(() => slugsQuery.data ?? [], [slugsQuery.data]);
   const allSlugs = allSlugsQuery.data ?? [];
-  const domainSlugIds = useMemo((): Set<string> => new Set(domainSlugs.map((slug: Slug) => slug.id)), [domainSlugs]);
+  const domainSlugIds = useMemo(
+    (): Set<string> => new Set(domainSlugs.map((slug: Slug) => slug.id)),
+    [domainSlugs]
+  );
   const visibleSlugs = includeAllZones ? allSlugs : domainSlugs;
   const filteredSlugs = visibleSlugs.filter((slug: Slug): boolean =>
     slug.slug.toLowerCase().includes(search.trim().toLowerCase())
@@ -37,7 +53,7 @@ export default function CreatePagePage(): React.JSX.Element {
     const validation = validateFormData(
       cmsPageCreateSchema,
       { name, slugIds },
-      'Page form is invalid.',
+      'Page form is invalid.'
     );
     if (!validation.success) {
       setError(validation.firstError);
@@ -52,15 +68,17 @@ export default function CreatePagePage(): React.JSX.Element {
       });
       router.push('/admin/cms/pages');
     } catch (submitError: unknown) {
-      logClientError(submitError, { context: { source: 'CreatePagePage', action: 'createPage', name } });
+      logClientError(submitError, {
+        context: { source: 'CreatePagePage', action: 'createPage', name },
+      });
       setError(submitError instanceof Error ? submitError.message : 'Failed to create page.');
     }
   };
 
   return (
     <div className='container mx-auto py-10 max-w-3xl space-y-6'>
-      <SectionHeader 
-        title='Create Page' 
+      <SectionHeader
+        title='Create Page'
         description='Provision a new content page and map it to URL routes.'
         eyebrow={
           <Breadcrumbs
@@ -68,15 +86,19 @@ export default function CreatePagePage(): React.JSX.Element {
               { label: 'Admin', href: '/admin' },
               { label: 'CMS', href: '/admin/cms' },
               { label: 'Pages', href: '/admin/cms/pages' },
-              { label: 'Create' }
+              { label: 'Create' },
             ]}
             className='mb-2'
           />
         }
         actions={<CmsDomainSelector />}
       />
-      
-      <form onSubmit={(e: React.FormEvent<HTMLFormElement>): void => { void handleSubmit(e); }}>
+
+      <form
+        onSubmit={(e: React.FormEvent<HTMLFormElement>): void => {
+          void handleSubmit(e);
+        }}
+      >
         <div className='space-y-6'>
           {error && (
             <Alert variant='error' className='mb-6'>
@@ -96,8 +118,8 @@ export default function CreatePagePage(): React.JSX.Element {
             </FormField>
           </FormSection>
 
-          <FormSection 
-            title='Route Mapping' 
+          <FormSection
+            title='Route Mapping'
             description='Select which URL paths should resolve to this page.'
             actions={
               <ToggleRow
@@ -117,22 +139,31 @@ export default function CreatePagePage(): React.JSX.Element {
                 placeholder='Filter available routes...'
                 className='h-8 text-xs'
               />
-              
+
               <div className='space-y-2'>
                 <div className='flex justify-between items-center px-1'>
-                  <Hint uppercase variant='muted' className='font-semibold'>Available Slugs</Hint>
-                  <Badge variant='secondary' className='text-[9px]'>{slugIds.length} selected</Badge>
+                  <Hint uppercase variant='muted' className='font-semibold'>
+                    Available Slugs
+                  </Hint>
+                  <Badge variant='secondary' className='text-[9px]'>
+                    {slugIds.length} selected
+                  </Badge>
                 </div>
 
                 <div className='max-h-56 overflow-y-auto rounded border border-border/60 bg-black/20 p-2 divide-y divide-white/5'>
                   {filteredSlugs.length === 0 ? (
-                    <div className='py-8 text-center text-xs text-gray-600'>No routes found matching your criteria.</div>
+                    <div className='py-8 text-center text-xs text-gray-600'>
+                      No routes found matching your criteria.
+                    </div>
                   ) : (
                     filteredSlugs.map((slug) => {
                       const checked = slugIds.includes(slug.id);
                       const isCrossZone = includeAllZones && !domainSlugIds.has(slug.id);
                       return (
-                        <label key={slug.id} className='flex items-center gap-3 p-2 hover:bg-white/5 cursor-pointer transition-colors'>
+                        <label
+                          key={slug.id}
+                          className='flex items-center gap-3 p-2 hover:bg-white/5 cursor-pointer transition-colors'
+                        >
                           <Checkbox
                             checked={checked}
                             onCheckedChange={() => {
@@ -144,7 +175,12 @@ export default function CreatePagePage(): React.JSX.Element {
                           <div className='flex flex-1 items-center justify-between'>
                             <span className='text-sm text-gray-300'>/{slug.slug}</span>
                             {isCrossZone && (
-                              <StatusBadge status='Cross-Zone' variant='warning' size='sm' className='font-bold' />
+                              <StatusBadge
+                                status='Cross-Zone'
+                                variant='warning'
+                                size='sm'
+                                className='font-bold'
+                              />
                             )}
                           </div>
                         </label>

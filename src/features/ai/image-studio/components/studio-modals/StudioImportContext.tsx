@@ -35,11 +35,7 @@ export function StudioImportProvider({
   value: StudioImportContextValue;
   children: React.ReactNode;
 }): React.JSX.Element {
-  return (
-    <StudioImportContext.Provider value={value}>
-      {children}
-    </StudioImportContext.Provider>
-  );
+  return <StudioImportContext.Provider value={value}>{children}</StudioImportContext.Provider>;
 }
 
 export function useStudioImportContext(): StudioImportContextValue {

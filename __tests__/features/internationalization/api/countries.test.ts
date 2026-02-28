@@ -41,7 +41,7 @@ describe('Countries API', () => {
       // Verify seeding
       const dbCountries = await prisma.country.findMany();
       expect(dbCountries.length).toBeGreaterThan(0);
-      
+
       const dbCurrencies = await prisma.currency.findMany();
       expect(dbCurrencies.length).toBeGreaterThan(0);
 
@@ -102,13 +102,13 @@ describe('Countries API', () => {
     it('should create a country with currencies', async () => {
       // Need to create currency first
       const currency = await prisma.currency.create({
-        data: { code: 'EUR', name: 'Euro', symbol: '€' }
+        data: { code: 'EUR', name: 'Euro', symbol: '€' },
       });
 
       const newCountry = {
         code: 'DE',
         name: 'Germany with Euro',
-        currencyIds: [currency.id]
+        currencyIds: [currency.id],
       };
 
       const req = new NextRequest('http://localhost/api/countries', {

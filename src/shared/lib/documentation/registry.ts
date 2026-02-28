@@ -1,12 +1,6 @@
-import {
-  DOCUMENTATION_CATALOG,
-} from './catalogs';
+import { DOCUMENTATION_CATALOG } from './catalogs';
 
-import type {
-  DocumentationEntry,
-  DocumentationEntryKey,
-  DocumentationModuleId,
-} from './types';
+import type { DocumentationEntry, DocumentationEntryKey, DocumentationModuleId } from './types';
 
 const normalize = (value: string): string =>
   value
@@ -32,11 +26,7 @@ for (const entry of DOCUMENTATION_CATALOG) {
   DOCS_BY_MODULE.set(entry.moduleId, moduleDocs);
 
   const moduleAliases = DOCS_BY_ALIAS.get(entry.moduleId) ?? new Map<string, DocumentationEntry>();
-  const aliases = [
-    entry.id,
-    entry.title,
-    ...entry.keywords,
-  ];
+  const aliases = [entry.id, entry.title, ...entry.keywords];
   for (const alias of aliases) {
     const normalizedAlias = normalize(alias);
     if (!normalizedAlias) continue;
@@ -62,9 +52,7 @@ export function getDocumentationEntriesByModule(
   return DOCS_BY_MODULE.get(moduleId) ?? [];
 }
 
-export function getDocumentationEntryByKey(
-  key: DocumentationEntryKey
-): DocumentationEntry | null {
+export function getDocumentationEntryByKey(key: DocumentationEntryKey): DocumentationEntry | null {
   return DOCS_BY_KEY.get(key) ?? null;
 }
 
@@ -146,13 +134,15 @@ export function searchDocumentationEntries(
   if (!normalizedQuery) return source;
 
   return source.filter((entry) => {
-    const haystack = normalize([
-      entry.id,
-      entry.title,
-      entry.content,
-      entry.keywords.join(' '),
-      entry.relatedLinks?.join(' ') ?? '',
-    ].join(' '));
+    const haystack = normalize(
+      [
+        entry.id,
+        entry.title,
+        entry.content,
+        entry.keywords.join(' '),
+        entry.relatedLinks?.join(' ') ?? '',
+      ].join(' ')
+    );
     return haystack.includes(normalizedQuery);
   });
 }

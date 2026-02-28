@@ -30,9 +30,7 @@ const printRow = (label, current, max, status) => {
   console.log(`${status.padEnd(6, ' ')} ${paddedLabel} current=${currentText} max=${maxText}`);
 };
 
-const informationalKeys = new Set([
-  'api.delegatedServerRoutes',
-]);
+const informationalKeys = new Set(['api.delegatedServerRoutes']);
 
 const readBaseline = async () => {
   const raw = await fs.readFile(baselinePath, 'utf8');
@@ -64,7 +62,9 @@ const run = async () => {
   try {
     baseline = await readBaseline();
   } catch {
-    console.error('Guardrail baseline is missing. Run: node scripts/architecture/check-guardrails.mjs --update-baseline');
+    console.error(
+      'Guardrail baseline is missing. Run: node scripts/architecture/check-guardrails.mjs --update-baseline'
+    );
     process.exit(1);
     return;
   }

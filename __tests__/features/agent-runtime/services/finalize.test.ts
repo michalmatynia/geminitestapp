@@ -62,7 +62,9 @@ describe('Agent Runtime - Finalize', () => {
       summaryCheckpoint: 0,
     };
 
-    (browserContextModule.getBrowserContextSummary as any).mockResolvedValue({ url: 'http://test.com' });
+    (browserContextModule.getBrowserContextSummary as any).mockResolvedValue({
+      url: 'http://test.com',
+    });
     (llmPlanning.verifyPlanWithLLM as any).mockResolvedValue({ verdict: 'pass' });
     (llmPlanning.buildSelfImprovementReviewWithLLM as any).mockResolvedValue({
       summary: 'Good',
@@ -70,15 +72,17 @@ describe('Agent Runtime - Finalize', () => {
       improvements: ['Better'],
       guardrails: [],
       toolAdjustments: [],
-      confidence: 90
+      confidence: 90,
     });
 
     const result = await finalizeAgentRun(input);
 
-    expect(prisma.chatbotAgentRun.update).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: 'run-1' },
-      data: expect.objectContaining({ status: 'completed' })
-    }));
+    expect(prisma.chatbotAgentRun.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'run-1' },
+        data: expect.objectContaining({ status: 'completed' }),
+      })
+    );
     expect(llmPlanning.verifyPlanWithLLM).toHaveBeenCalled();
     expect(llmPlanning.buildSelfImprovementReviewWithLLM).toHaveBeenCalled();
     expect(result.verification?.verdict).toBe('pass');

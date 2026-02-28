@@ -1,7 +1,7 @@
 'use client';
 
 import { DB_COLLECTION_OPTIONS } from '@/shared/lib/ai-paths';
-import { Button, Input,  SelectSimple, Card, FormField } from '@/shared/ui';
+import { Button, Input, SelectSimple, Card, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -16,28 +16,26 @@ export function SimulationNodeConfigSection(): React.JSX.Element | null {
     entityId: '',
     runBehavior: 'before_connected_trigger',
   };
-  const simulationEntityValue =
-    simulationConfig.entityId?.trim()
-      ? simulationConfig.entityId
-      : simulationConfig.productId ?? '';
+  const simulationEntityValue = simulationConfig.entityId?.trim()
+    ? simulationConfig.entityId
+    : (simulationConfig.productId ?? '');
   const trimmedEntityId = simulationEntityValue.trim();
   const looksLikeUuid = trimmedEntityId.includes('-');
   const idLength = trimmedEntityId.length;
-  const showIdHint =
-    Boolean(trimmedEntityId) &&
-    (looksLikeUuid ? idLength !== 36 : false);
+  const showIdHint = Boolean(trimmedEntityId) && (looksLikeUuid ? idLength !== 36 : false);
 
-  const collectionOptions = DB_COLLECTION_OPTIONS
-    .filter((opt: { value: string }): boolean => opt.value !== 'custom')
-    .map((opt: { value: string; label: string }) => ({
-      value: opt.value,
-      label: opt.label,
-    }));
+  const collectionOptions = DB_COLLECTION_OPTIONS.filter(
+    (opt: { value: string }): boolean => opt.value !== 'custom'
+  ).map((opt: { value: string; label: string }) => ({
+    value: opt.value,
+    label: opt.label,
+  }));
 
   return (
     <div className='space-y-4'>
       <FormField label='Collection Type'>
-        <SelectSimple size='sm'
+        <SelectSimple
+          size='sm'
           variant='subtle'
           value={simulationConfig.entityType ?? 'products'}
           onValueChange={(value: string): void =>
@@ -52,7 +50,7 @@ export function SimulationNodeConfigSection(): React.JSX.Element | null {
           placeholder='Select collection'
         />
       </FormField>
-      
+
       <FormField label='Document ID'>
         <Input
           variant='subtle'
@@ -101,16 +99,18 @@ export function SimulationNodeConfigSection(): React.JSX.Element | null {
           placeholder='Select run behavior'
         />
       </FormField>
-      
+
       <p className='text-[11px] text-gray-500 italic'>
         Used to simulate {simulationConfig.entityType ?? 'products'} collection context.
       </p>
-      
+
       <Button
         className='w-full'
         variant='outline'
         type='button'
-        onClick={() => { void handleRunSimulation(selectedNode); }}
+        onClick={() => {
+          void handleRunSimulation(selectedNode);
+        }}
       >
         Run Simulation
       </Button>

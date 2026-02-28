@@ -74,7 +74,8 @@ export function useIntegrationTabs(): UseIntegrationTabsResult {
     connections[0] ??
     null;
   const selectedPersona =
-    playwrightPersonas.find((persona: PlaywrightPersona) => persona.id === playwrightPersonaId) ?? null;
+    playwrightPersonas.find((persona: PlaywrightPersona) => persona.id === playwrightPersonaId) ??
+    null;
 
   return {
     activeTab,

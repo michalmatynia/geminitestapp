@@ -24,7 +24,10 @@ export async function PATCH_handler(
   if (!parsed.ok) {
     return parsed.response;
   }
-  const notebook = await noteService.updateNotebook(id, removeUndefined(parsed.data) as Partial<UpdateNotebookDto>);
+  const notebook = await noteService.updateNotebook(
+    id,
+    removeUndefined(parsed.data) as Partial<UpdateNotebookDto>
+  );
   return NextResponse.json(notebook);
 }
 

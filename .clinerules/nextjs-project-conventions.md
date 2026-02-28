@@ -1,7 +1,9 @@
 ## Brief overview
+
 Project-specific coding conventions and architecture patterns for a Next.js 15 application with TypeScript, Prisma, Tailwind CSS, and shadcn/ui components. This application features a complex admin/CMS system with product management, file handling, and database operations.
 
 ## Tech stack preferences
+
 - Use Next.js 15 with App Router architecture
 - TypeScript with strict configuration (noImplicitAny, strictNullChecks enabled)
 - Prisma ORM with SQLite database for development
@@ -12,6 +14,7 @@ Project-specific coding conventions and architecture patterns for a Next.js 15 a
 - ImageKit for image management and optimization
 
 ## Architecture patterns
+
 - Implement service layer pattern for business logic (e.g., `productService.ts`)
 - Use React Context providers for complex state management
 - Organize routes using Next.js route groups: `(admin)` and `(frontend)`
@@ -21,6 +24,7 @@ Project-specific coding conventions and architecture patterns for a Next.js 15 a
 - Abstract file operations into utility services
 
 ## Code organization
+
 - Place business logic in `lib/services/` directory
 - Store validation schemas in `lib/validations/` directory
 - Keep utility functions in `lib/utils/` directory
@@ -30,6 +34,7 @@ Project-specific coding conventions and architecture patterns for a Next.js 15 a
 - Place database schema in `prisma/schema.prisma`
 
 ## Naming conventions
+
 - Use camelCase for variables, functions, and object properties
 - Use PascalCase for React components, types, and interfaces
 - Use kebab-case for file names and directory names
@@ -38,6 +43,7 @@ Project-specific coding conventions and architecture patterns for a Next.js 15 a
 - Use meaningful JSDoc comments for service functions
 
 ## Database design patterns
+
 - Use `cuid()` for primary keys in Prisma models
 - Include `createdAt` and `updatedAt` timestamps on all models
 - Implement join tables for many-to-many relationships (e.g., `ProductImage`, `PageSlug`)
@@ -46,6 +52,7 @@ Project-specific coding conventions and architecture patterns for a Next.js 15 a
 - Use nullable fields with `?` for optional database columns
 
 ## API conventions
+
 - Implement RESTful API routes with proper HTTP methods (GET, POST, PUT, DELETE)
 - Use NextResponse for consistent API responses
 - Implement comprehensive error handling with try-catch blocks
@@ -54,6 +61,7 @@ Project-specific coding conventions and architecture patterns for a Next.js 15 a
 - Validate request data using Zod schemas before processing
 
 ## Component patterns
+
 - Use "use client" directive for client-side components that need interactivity
 - Implement proper TypeScript interfaces for component props
 - Use React.forwardRef for components that need ref forwarding
@@ -62,6 +70,7 @@ Project-specific coding conventions and architecture patterns for a Next.js 15 a
 - Use controlled components with React Hook Form for forms
 
 ## Styling conventions
+
 - Use Tailwind CSS utility classes for styling
 - Implement the `cn()` utility function for conditional className merging
 - Use CSS custom properties for theme colors (e.g., `hsl(var(--primary))`)
@@ -70,6 +79,7 @@ Project-specific coding conventions and architecture patterns for a Next.js 15 a
 - Implement dark mode support using next-themes
 
 ## Validation approach
+
 - Use Zod schemas for all data validation
 - Implement coercion for number fields (e.g., `z.coerce.number()`)
 - Use `.nullish()` for optional fields that can be null or undefined
@@ -77,6 +87,7 @@ Project-specific coding conventions and architecture patterns for a Next.js 15 a
 - Validate both client-side and server-side data
 
 ## Error handling
+
 - Implement try-catch blocks in all API routes
 - Return appropriate HTTP status codes (400, 404, 500)
 - Provide user-friendly error messages in UI components
@@ -84,6 +95,7 @@ Project-specific coding conventions and architecture patterns for a Next.js 15 a
 - Handle both known and unknown error types gracefully
 
 ## Testing conventions
+
 - Use Jest with TypeScript configuration
 - Place tests in `__tests__/` directory mirroring source structure
 - Test API routes using supertest and node-mocks-http

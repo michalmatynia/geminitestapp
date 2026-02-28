@@ -58,9 +58,7 @@ export const parseCustomBenchmarkCasesDraft = (
     return { ok: false, error: 'Custom benchmark cases must be an array.' };
   }
   const parsedArray = parsed as unknown[];
-  const allowedTypes = new Set<PromptExploderSegmentType>(
-    PROMPT_EXPLODER_SEGMENT_TYPES
-  );
+  const allowedTypes = new Set<PromptExploderSegmentType>(PROMPT_EXPLODER_SEGMENT_TYPES);
   const knownIds = new Set<string>();
 
   const cases: PromptExploderBenchmarkCase[] = [];
@@ -75,14 +73,9 @@ export const parseCustomBenchmarkCasesDraft = (
       : [];
     const id = typeof value['id'] === 'string' ? value['id'].trim() : '';
     const prompt = typeof value['prompt'] === 'string' ? value['prompt'].trim() : '';
-    const expectedTypes = rawExpectedTypes.filter(
-      (type): type is PromptExploderSegmentType => {
-        return (
-          typeof type === 'string' &&
-          allowedTypes.has(type as PromptExploderSegmentType)
-        );
-      }
-    );
+    const expectedTypes = rawExpectedTypes.filter((type): type is PromptExploderSegmentType => {
+      return typeof type === 'string' && allowedTypes.has(type as PromptExploderSegmentType);
+    });
     const minSegments =
       typeof value['minSegments'] === 'number' && Number.isFinite(value['minSegments'])
         ? clampNumber(Math.floor(value['minSegments']), 1, 200)

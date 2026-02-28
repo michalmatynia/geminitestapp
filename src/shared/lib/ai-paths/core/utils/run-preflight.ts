@@ -14,14 +14,8 @@ import {
   type DataContractPreflightMode,
   type DataContractPreflightReport,
 } from './data-contract-preflight';
-import {
-  inspectPathDependencies,
-  type DependencyReport,
-} from './dependency-inspector';
-import {
-  compileGraph,
-  type GraphCompileReport,
-} from './graph';
+import { inspectPathDependencies, type DependencyReport } from './dependency-inspector';
+import { compileGraph, type GraphCompileReport } from './graph';
 
 export type RunPreflightBlockReason =
   | 'validation'
@@ -60,9 +54,7 @@ export type EvaluateRunPreflightArgs = {
   mode?: DataContractPreflightMode | undefined;
 };
 
-export const evaluateRunPreflight = (
-  args: EvaluateRunPreflightArgs
-): RunPreflightReport => {
+export const evaluateRunPreflight = (args: EvaluateRunPreflightArgs): RunPreflightReport => {
   const validationConfig = normalizeAiPathsValidationConfig(args.aiPathsValidation);
   const nodeValidationEnabled = validationConfig.enabled !== false;
   const strictFlowMode = args.strictFlowMode !== false;
@@ -79,15 +71,15 @@ export const evaluateRunPreflight = (
   const compileReport = nodeValidationEnabled
     ? compileGraph(args.nodes, args.edges)
     : compileGraph(args.nodes, args.edges, {
-      scopeMode,
-      ...(scopeRootNodeIds ? { scopeRootNodeIds } : {}),
-    });
+        scopeMode,
+        ...(scopeRootNodeIds ? { scopeRootNodeIds } : {}),
+      });
 
   const dependencyReport = strictFlowMode
     ? inspectPathDependencies(args.nodes, args.edges, {
-      scopeMode,
-      ...(scopeRootNodeIds ? { scopeRootNodeIds } : {}),
-    })
+        scopeMode,
+        ...(scopeRootNodeIds ? { scopeRootNodeIds } : {}),
+      })
     : null;
 
   const dataContractReport = evaluateDataContractPreflight({
@@ -134,16 +126,13 @@ export const evaluateRunPreflight = (
   ) {
     shouldBlock = true;
     blockReason = 'dependency';
-    blockMessage =
-      `Strict flow blocked run: ${dependencyReport.errors} dependency error(s) detected.`;
+    blockMessage = `Strict flow blocked run: ${dependencyReport.errors} dependency error(s) detected.`;
   }
 
   if (!shouldBlock && nodeValidationEnabled && dataContractReport.errors > 0) {
     shouldBlock = true;
     blockReason = 'data_contract';
-    const firstErrorIssue = dataContractReport.issues.find(
-      (issue) => issue.severity === 'error'
-    );
+    const firstErrorIssue = dataContractReport.issues.find((issue) => issue.severity === 'error');
     blockMessage =
       firstErrorIssue?.message ??
       `Data contract preflight blocked run: ${dataContractReport.errors} issue(s) detected.`;

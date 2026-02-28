@@ -5,10 +5,10 @@ import { useRouter } from 'next/navigation';
 import React, { useDeferredValue, useMemo, useState } from 'react';
 
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { 
-  Badge, 
-  StandardDataTablePanel, 
-  PanelHeader, 
+import {
+  Badge,
+  StandardDataTablePanel,
+  PanelHeader,
   SearchInput,
   EmptyState,
   ActionMenu,
@@ -57,52 +57,53 @@ export function AdminFilemakerOrganizationsPage(): React.JSX.Element {
     [database.organizations, deferredQuery]
   );
 
-  const columns = useMemo<ColumnDef<FilemakerOrganization>[]>(() => [
-    {
-      id: 'organization',
-      header: 'Organization',
-      cell: ({ row }) => {
-        const organization = row.original;
-        return (
-          <div className='min-w-0 flex-1 space-y-1'>
-            <div className='text-sm font-semibold text-white'>
-              {organization.name}
+  const columns = useMemo<ColumnDef<FilemakerOrganization>[]>(
+    () => [
+      {
+        id: 'organization',
+        header: 'Organization',
+        cell: ({ row }) => {
+          const organization = row.original;
+          return (
+            <div className='min-w-0 flex-1 space-y-1'>
+              <div className='text-sm font-semibold text-white'>{organization.name}</div>
+              <div className='text-xs text-gray-300'>{formatFilemakerAddress(organization)}</div>
             </div>
-            <div className='text-xs text-gray-300'>
-              {formatFilemakerAddress(organization)}
-            </div>
-          </div>
-        );
+          );
+        },
       },
-    },
-    {
-      accessorKey: 'updatedAt',
-      header: 'Updated',
-      cell: ({ row }) => (
-        <span className='text-[10px] text-gray-600'>
-          {formatTimestamp(row.original.updatedAt)}
-        </span>
-      ),
-    },
-    {
-      id: 'actions',
-      header: () => <div className='text-right'>Actions</div>,
-      cell: ({ row }) => (
-        <div className='flex justify-end'>
-          <ActionMenu ariaLabel={`Actions for organization ${row.original.name}`}>
-            <DropdownMenuItem
-              onSelect={(event: Event): void => {
-                event.preventDefault();
-                router.push(`/admin/filemaker/organizations/${encodeURIComponent(row.original.id)}`);
-              }}
-            >
-              Edit Details
-            </DropdownMenuItem>
-          </ActionMenu>
-        </div>
-      ),
-    },
-  ], [router]);
+      {
+        accessorKey: 'updatedAt',
+        header: 'Updated',
+        cell: ({ row }) => (
+          <span className='text-[10px] text-gray-600'>
+            {formatTimestamp(row.original.updatedAt)}
+          </span>
+        ),
+      },
+      {
+        id: 'actions',
+        header: () => <div className='text-right'>Actions</div>,
+        cell: ({ row }) => (
+          <div className='flex justify-end'>
+            <ActionMenu ariaLabel={`Actions for organization ${row.original.name}`}>
+              <DropdownMenuItem
+                onSelect={(event: Event): void => {
+                  event.preventDefault();
+                  router.push(
+                    `/admin/filemaker/organizations/${encodeURIComponent(row.original.id)}`
+                  );
+                }}
+              >
+                Edit Details
+              </DropdownMenuItem>
+            </ActionMenu>
+          </div>
+        ),
+      },
+    ],
+    [router]
+  );
 
   return (
     <div className='container mx-auto space-y-6 py-8'>
@@ -137,7 +138,7 @@ export function AdminFilemakerOrganizationsPage(): React.JSX.Element {
             label: 'Manage Database',
             icon: <Database className='size-4' />,
             onClick: () => router.push('/admin/filemaker'),
-          }
+          },
         ]}
       />
 
@@ -171,7 +172,11 @@ export function AdminFilemakerOrganizationsPage(): React.JSX.Element {
         emptyState={
           <EmptyState
             title={query ? 'No organizations found' : 'No organizations found in database.'}
-            description={query ? 'Try adjusting your search terms.' : 'Add your first organization to the database.'}
+            description={
+              query
+                ? 'Try adjusting your search terms.'
+                : 'Add your first organization to the database.'
+            }
           />
         }
       />

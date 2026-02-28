@@ -3,10 +3,8 @@ import type {
   CaseResolverFileEditDraft,
   CaseResolverWorkspace,
 } from '@/shared/contracts/case-resolver';
-import {
-  createCaseResolverFile,
-} from '../settings';
-import { buildFileEditDraft } from '../utils/caseResolverUtils';
+import { createCaseResolverFile } from '../settings';
+import { buildFileEditDraft } from '@/features/case-resolver/utils/caseResolverUtils';
 import { buildCaseResolverFileComparableFingerprint } from './useCaseResolverState.helpers.canonical';
 
 export type CaseResolverRequestedCaseStatus = 'loading' | 'ready' | 'missing';
@@ -45,9 +43,10 @@ export const resolveCaseResolverFileById = (
   if (!normalizedCandidateId) return null;
   return (
     files.find((file: CaseResolverFile): boolean => file.id === candidateId) ??
-    files.find((file: CaseResolverFile): boolean => (
-      normalizeCaseResolverFileId(file.id) === normalizedCandidateId
-    )) ??
+    files.find(
+      (file: CaseResolverFile): boolean =>
+        normalizeCaseResolverFileId(file.id) === normalizedCandidateId
+    ) ??
     null
   );
 };
@@ -136,22 +135,17 @@ const applyCaseResolverFilePatch = ({
   createCaseResolverFile({
     ...baseFile,
     ...patch,
-    parentCaseId:
-      patch.parentCaseId === undefined
-        ? baseFile.parentCaseId
-        : patch.parentCaseId,
+    parentCaseId: patch.parentCaseId === undefined ? baseFile.parentCaseId : patch.parentCaseId,
     createdAt:
       typeof patch.createdAt === 'string'
         ? patch.createdAt
-        : (baseFile.createdAt || new Date().toISOString()),
+        : baseFile.createdAt || new Date().toISOString(),
     updatedAt:
       typeof patch.updatedAt === 'string'
         ? patch.updatedAt
-        : (
-          typeof baseFile.updatedAt === 'string'
-            ? baseFile.updatedAt
-            : (baseFile.createdAt || new Date().toISOString())
-        ),
+        : typeof baseFile.updatedAt === 'string'
+          ? baseFile.updatedAt
+          : baseFile.createdAt || new Date().toISOString(),
   });
 
 export const applyCaseResolverFileMutationAndRebaseDraft = ({
@@ -217,8 +211,10 @@ export const applyCaseResolverFileMutationAndRebaseDraft = ({
     let localFileFound = false;
     let localChanged = false;
     let localNextFile: CaseResolverFile | null = null;
-    const mutationTarget =
-      resolveCaseResolverFileById(current.files, resolvedTargetFileId ?? fileId);
+    const mutationTarget = resolveCaseResolverFileById(
+      current.files,
+      resolvedTargetFileId ?? fileId
+    );
     let matchedFileId: string | null = mutationTarget?.id ?? null;
     let nextFiles = current.files;
 
@@ -236,9 +232,10 @@ export const applyCaseResolverFileMutationAndRebaseDraft = ({
         ) {
           localChanged = true;
           localNextFile = normalizedNextFile;
-          nextFiles = current.files.map((file: CaseResolverFile): CaseResolverFile => (
-            file.id === mutationTarget.id ? normalizedNextFile : file
-          ));
+          nextFiles = current.files.map(
+            (file: CaseResolverFile): CaseResolverFile =>
+              file.id === mutationTarget.id ? normalizedNextFile : file
+          );
         }
       }
     }
@@ -301,7 +298,8 @@ export const applyCaseResolverFileMutationAndRebaseDraft = ({
       const rebasedDraft = buildFileEditDraft(rebasedBase);
       return {
         ...rebasedDraft,
-      };    });
+      };
+    });
   }
 
   if (!fileFound) {

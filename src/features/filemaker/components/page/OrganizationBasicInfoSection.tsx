@@ -14,7 +14,12 @@ export function OrganizationBasicInfoSection(): React.JSX.Element {
         <FormField label='Organization Name'>
           <Input
             value={orgDraft.name ?? ''}
-            onChange={(e) => setOrgDraft((prev: Partial<FilemakerOrganization>) => ({ ...prev, name: e.target.value }))}
+            onChange={(e) =>
+              setOrgDraft((prev: Partial<FilemakerOrganization>) => ({
+                ...prev,
+                name: e.target.value,
+              }))
+            }
             placeholder='e.g. Acme Corp'
           />
         </FormField>

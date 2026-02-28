@@ -20,10 +20,7 @@ export const isTreePathWithin = (value: string, parentPath: string): boolean => 
   const normalizedValue = normalizeTreePath(value);
   const normalizedParent = normalizeTreePath(parentPath);
   if (!normalizedParent) return false;
-  return (
-    normalizedValue === normalizedParent ||
-    normalizedValue.startsWith(`${normalizedParent}/`)
-  );
+  return normalizedValue === normalizedParent || normalizedValue.startsWith(`${normalizedParent}/`);
 };
 
 export const canMoveTreePath = (sourcePath: string, targetPath: string): boolean => {
@@ -35,11 +32,7 @@ export const canMoveTreePath = (sourcePath: string, targetPath: string): boolean
   return true;
 };
 
-export const rebaseTreePath = (
-  value: string,
-  sourcePath: string,
-  targetPath: string,
-): string => {
+export const rebaseTreePath = (value: string, sourcePath: string, targetPath: string): string => {
   const source = normalizeTreePath(sourcePath);
   const target = normalizeTreePath(targetPath);
   const normalizedValue = normalizeTreePath(value);
@@ -52,9 +45,7 @@ export const rebaseTreePath = (
   return normalizedValue;
 };
 
-export const collectTreeNodeIds = <T extends TreeNodeRecord<T>>(
-  nodes: T[],
-): string[] => {
+export const collectTreeNodeIds = <T extends TreeNodeRecord<T>>(nodes: T[]): string[] => {
   const ids: string[] = [];
   const walk = (items: T[]): void => {
     items.forEach((item: T) => {
@@ -66,10 +57,7 @@ export const collectTreeNodeIds = <T extends TreeNodeRecord<T>>(
   return ids;
 };
 
-export const findTreeNodeById = <T extends TreeNodeRecord<T>>(
-  nodes: T[],
-  id: string,
-): T | null => {
+export const findTreeNodeById = <T extends TreeNodeRecord<T>>(nodes: T[], id: string): T | null => {
   for (const node of nodes) {
     if (node.id === id) return node;
     const found = findTreeNodeById(node.children, id);
@@ -81,7 +69,7 @@ export const findTreeNodeById = <T extends TreeNodeRecord<T>>(
 export const findTreeNodeParentId = <T extends TreeNodeRecord<T>>(
   nodes: T[],
   id: string,
-  parentId: string | null = null,
+  parentId: string | null = null
 ): string | null => {
   for (const node of nodes) {
     if (node.id === id) return parentId;
@@ -91,10 +79,7 @@ export const findTreeNodeParentId = <T extends TreeNodeRecord<T>>(
   return null;
 };
 
-const isNodeIdInSubtree = <T extends TreeNodeRecord<T>>(
-  node: T,
-  targetId: string,
-): boolean => {
+const isNodeIdInSubtree = <T extends TreeNodeRecord<T>>(node: T, targetId: string): boolean => {
   if (node.id === targetId) return true;
   return node.children.some((child: T) => isNodeIdInSubtree(child, targetId));
 };
@@ -102,7 +87,7 @@ const isNodeIdInSubtree = <T extends TreeNodeRecord<T>>(
 export const isTreeNodeIdInSubtree = <T extends TreeNodeRecord<T>>(
   nodes: T[],
   rootNodeId: string,
-  targetId: string,
+  targetId: string
 ): boolean => {
   const root = findTreeNodeById(nodes, rootNodeId);
   if (!root) return false;

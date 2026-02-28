@@ -9,8 +9,12 @@ describe('Agent Runtime - Audit Logging', () => {
   });
 
   it('should create an audit log entry with metadata', async () => {
-    const metadata = { step: 'test', timestamp: new Date('2026-01-30T12:00:00Z'), big: BigInt(123) };
-    
+    const metadata = {
+      step: 'test',
+      timestamp: new Date('2026-01-30T12:00:00Z'),
+      big: BigInt(123),
+    };
+
     await logAgentAudit('run-123', 'info', 'Test message', metadata);
 
     expect(prisma.agentAuditLog.create).toHaveBeenCalledWith({
@@ -41,7 +45,7 @@ describe('Agent Runtime - Audit Logging', () => {
 
   it('should gracefully handle database errors', async () => {
     (prisma.agentAuditLog.create as any).mockRejectedValue(new Error('DB Down'));
-    
+
     // Should not throw
     await expect(logAgentAudit('run-1', 'error', 'Fail')).resolves.not.toThrow();
   });

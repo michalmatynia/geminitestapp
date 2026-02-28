@@ -31,7 +31,9 @@ export function FrontendSlideshowSection({
         className={`w-full relative overflow-hidden${sectionId ? ` cms-node-${sectionId}` : ''}`}
         style={sectionStyles}
       >
-        {sectionCustomCss ? <style data-cms-custom-css={sectionId}>{sectionCustomCss}</style> : null}
+        {sectionCustomCss ? (
+          <style data-cms-custom-css={sectionId}>{sectionCustomCss}</style>
+        ) : null}
         <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth })}>
           <div className='slideshow-container relative w-full'>
             {blocks.map((block: BlockInstance) => (

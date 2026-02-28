@@ -5,9 +5,7 @@ import { type Query } from '@tanstack/react-query';
 import type { ProductListingWithDetails } from '@/shared/contracts/integrations';
 import type { ListQuery } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
-import {
-  createListQueryV2,
-} from '@/shared/lib/query-factories-v2';
+import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { integrationKeys } from '@/shared/lib/query-key-exports';
 
 const PRODUCT_LISTINGS_STALE_TIME_MS = 30_000;
@@ -26,7 +24,12 @@ export function useProductListings(productId: string): ListQuery<ProductListingW
     enabled: Boolean(productId),
     staleTime: PRODUCT_LISTINGS_STALE_TIME_MS,
     refetchInterval: (
-      query: Query<ProductListingWithDetails[], Error, ProductListingWithDetails[], readonly unknown[]>
+      query: Query<
+        ProductListingWithDetails[],
+        Error,
+        ProductListingWithDetails[],
+        readonly unknown[]
+      >
     ) => {
       const data = query.state.data;
       if (!Array.isArray(data)) return false;

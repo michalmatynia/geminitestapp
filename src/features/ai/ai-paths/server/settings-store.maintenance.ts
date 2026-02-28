@@ -8,13 +8,8 @@ import {
   type AiPathsMaintenanceReport,
   type AiPathsSettingRecord,
 } from './settings-store.constants';
-import {
-  compactPathConfigValue,
-} from './settings-store.compaction';
-import {
-  parsePathConfigFlags,
-  parsePathMetas,
-} from './settings-store.parsing';
+import { compactPathConfigValue } from './settings-store.compaction';
+import { parsePathConfigFlags, parsePathMetas } from './settings-store.parsing';
 import {
   BASE_EXPORT_BLWO_PATH_ID,
   needsBaseExportBlwoConfigUpgrade,
@@ -46,7 +41,10 @@ export const buildTriggerButtonDisplay = (name: string): Record<string, unknown>
 });
 
 export const logSeedRewriteFlags = (input: {
-  actionId: 'ensure_parameter_inference_defaults' | 'ensure_description_inference_defaults' | 'ensure_base_export_defaults';
+  actionId:
+    | 'ensure_parameter_inference_defaults'
+    | 'ensure_description_inference_defaults'
+    | 'ensure_base_export_defaults';
   pathId: string;
   previousRaw: string | undefined;
   nextRaw: string;
@@ -85,7 +83,9 @@ export const countPendingPathConfigCompactions = (records: AiPathsSettingRecord[
   }, 0);
 };
 
-export const countPendingServerExecutionModeUpgrades = (records: AiPathsSettingRecord[]): number => {
+export const countPendingServerExecutionModeUpgrades = (
+  records: AiPathsSettingRecord[]
+): number => {
   if (records.length === 0) return 0;
   return records.reduce((count: number, entry: AiPathsSettingRecord): number => {
     if (!entry.key.startsWith(AI_PATHS_CONFIG_KEY_PREFIX)) return count;
@@ -93,7 +93,9 @@ export const countPendingServerExecutionModeUpgrades = (records: AiPathsSettingR
   }, 0);
 };
 
-export const countPendingRuntimeInputContractUpgrades = (records: AiPathsSettingRecord[]): number => {
+export const countPendingRuntimeInputContractUpgrades = (
+  records: AiPathsSettingRecord[]
+): number => {
   if (records.length === 0) return 0;
   return records.reduce((count: number, entry: AiPathsSettingRecord): number => {
     if (!entry.key.startsWith(AI_PATHS_CONFIG_KEY_PREFIX)) return count;
@@ -147,7 +149,7 @@ export const repairPathIndexFromConfigs = (records: AiPathsSettingRecord[]): str
   const indexEntry = records.find((r) => r.key === AI_PATHS_INDEX_KEY);
   const metas = parsePathMetas(indexEntry?.value);
   const configRecords = records.filter((r) => r.key.startsWith(AI_PATHS_CONFIG_KEY_PREFIX));
-  
+
   const nextMetas = [...metas];
   configRecords.forEach((record) => {
     const id = record.key.replace(AI_PATHS_CONFIG_KEY_PREFIX, '');
@@ -169,16 +171,16 @@ export const resolveRequestedMaintenanceActionIds = (
   requestedIds: string[] | undefined
 ): AiPathsMaintenanceActionId[] => {
   if (!requestedIds || requestedIds.length === 0) {
-    return report.actions
-      .filter((a) => a.status === 'pending')
-      .map((a) => a.id);
+    return report.actions.filter((a) => a.status === 'pending').map((a) => a.id);
   }
-  return requestedIds.filter((id): id is AiPathsMaintenanceActionId => 
+  return requestedIds.filter((id): id is AiPathsMaintenanceActionId =>
     AI_PATHS_MAINTENANCE_ACTION_IDS.includes(id as AiPathsMaintenanceActionId)
   );
 };
 
-export const buildAiPathsMaintenanceReport = (records: AiPathsSettingRecord[]): AiPathsMaintenanceReport => {
+export const buildAiPathsMaintenanceReport = (
+  records: AiPathsSettingRecord[]
+): AiPathsMaintenanceReport => {
   const actions: AiPathsMaintenanceActionReport[] = [];
 
   const compactionCount = countPendingPathConfigCompactions(records);
@@ -197,7 +199,8 @@ export const buildAiPathsMaintenanceReport = (records: AiPathsSettingRecord[]): 
     actions.push({
       id: 'repair_path_index',
       title: 'Repair Path Index Consistency',
-      description: 'Synchronize the global path index with existing configuration records to recover missing references.',
+      description:
+        'Synchronize the global path index with existing configuration records to recover missing references.',
       blocking: true,
       status: 'pending',
       affectedRecords: 1,
@@ -338,9 +341,13 @@ export const runMaintenanceAction = (args: {
       const indexEntry = args.records.find((r) => r.key === AI_PATHS_INDEX_KEY);
       const metas = parsePathMetas(indexEntry?.value);
       const baseExportPath = metas.find((m) => m.id === BASE_EXPORT_BLWO_PATH_ID);
-      const baseExportConfigEntry = args.records.find((r) => r.key === `${AI_PATHS_CONFIG_KEY_PREFIX}${BASE_EXPORT_BLWO_PATH_ID}`);
+      const baseExportConfigEntry = args.records.find(
+        (r) => r.key === `${AI_PATHS_CONFIG_KEY_PREFIX}${BASE_EXPORT_BLWO_PATH_ID}`
+      );
 
-      const needsUpgrade = baseExportConfigEntry ? needsBaseExportBlwoConfigUpgrade(baseExportConfigEntry.value) : true;
+      const needsUpgrade = baseExportConfigEntry
+        ? needsBaseExportBlwoConfigUpgrade(baseExportConfigEntry.value)
+        : true;
 
       if (!baseExportPath || needsUpgrade) {
         // Logic to add/upgrade base export path would go here
@@ -354,9 +361,13 @@ export const runMaintenanceAction = (args: {
       const indexEntry = args.records.find((r) => r.key === AI_PATHS_INDEX_KEY);
       const metas = parsePathMetas(indexEntry?.value);
       const descInfPath = metas.find((m) => m.id === DESCRIPTION_INFERENCE_LITE_PATH_ID);
-      const descInfConfigEntry = args.records.find((r) => r.key === `${AI_PATHS_CONFIG_KEY_PREFIX}${DESCRIPTION_INFERENCE_LITE_PATH_ID}`);
+      const descInfConfigEntry = args.records.find(
+        (r) => r.key === `${AI_PATHS_CONFIG_KEY_PREFIX}${DESCRIPTION_INFERENCE_LITE_PATH_ID}`
+      );
 
-      const needsUpgrade = descInfConfigEntry ? needsDescriptionInferenceLiteConfigUpgrade(descInfConfigEntry.value) : true;
+      const needsUpgrade = descInfConfigEntry
+        ? needsDescriptionInferenceLiteConfigUpgrade(descInfConfigEntry.value)
+        : true;
 
       if (!descInfPath || needsUpgrade) {
         affectedCount = 1;
@@ -369,9 +380,13 @@ export const runMaintenanceAction = (args: {
       const indexEntry = args.records.find((r) => r.key === AI_PATHS_INDEX_KEY);
       const metas = parsePathMetas(indexEntry?.value);
       const paramInfPath = metas.find((m) => m.id === PARAMETER_INFERENCE_PATH_ID);
-      const paramInfConfigEntry = args.records.find((r) => r.key === `${AI_PATHS_CONFIG_KEY_PREFIX}${PARAMETER_INFERENCE_PATH_ID}`);
+      const paramInfConfigEntry = args.records.find(
+        (r) => r.key === `${AI_PATHS_CONFIG_KEY_PREFIX}${PARAMETER_INFERENCE_PATH_ID}`
+      );
 
-      const needsUpgrade = paramInfConfigEntry ? needsParameterInferenceConfigUpgrade(paramInfConfigEntry.value) : true;
+      const needsUpgrade = paramInfConfigEntry
+        ? needsParameterInferenceConfigUpgrade(paramInfConfigEntry.value)
+        : true;
 
       if (!paramInfPath || needsUpgrade) {
         affectedCount = 1;
@@ -384,9 +399,13 @@ export const runMaintenanceAction = (args: {
       const indexEntry = args.records.find((r) => r.key === AI_PATHS_INDEX_KEY);
       const metas = parsePathMetas(indexEntry?.value);
       const transPath = metas.find((m) => m.id === TRANSLATION_EN_PL_PATH_ID);
-      const transConfigEntry = args.records.find((r) => r.key === `${AI_PATHS_CONFIG_KEY_PREFIX}${TRANSLATION_EN_PL_PATH_ID}`);
+      const transConfigEntry = args.records.find(
+        (r) => r.key === `${AI_PATHS_CONFIG_KEY_PREFIX}${TRANSLATION_EN_PL_PATH_ID}`
+      );
 
-      const needsUpgrade = transConfigEntry ? needsTranslationEnPlConfigUpgrade(transConfigEntry.value) : true;
+      const needsUpgrade = transConfigEntry
+        ? needsTranslationEnPlConfigUpgrade(transConfigEntry.value)
+        : true;
 
       if (!transPath || needsUpgrade) {
         affectedCount = 1;

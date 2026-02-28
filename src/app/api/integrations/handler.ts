@@ -7,7 +7,7 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const integrationSchema = z.object({
   name: z.string().trim().min(1),
-  slug: z.string().trim().min(1)
+  slug: z.string().trim().min(1),
 });
 
 /**
@@ -29,7 +29,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
  */
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, integrationSchema, {
-    logPrefix: 'integrations.POST'
+    logPrefix: 'integrations.POST',
   });
   if (!parsed.ok) {
     return parsed.response;

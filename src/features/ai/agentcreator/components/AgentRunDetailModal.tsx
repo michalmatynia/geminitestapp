@@ -15,22 +15,13 @@ export function AgentRunDetailModal({
   isOpen,
   onClose,
 }: AgentRunDetailModalProps): React.JSX.Element | null {
-  const {
-    selectedAgentRun,
-    agentSnapshots,
-    agentBrowserLogs,
-    agentAuditLogs,
-  } = useAgentRunsContext();
+  const { selectedAgentRun, agentSnapshots, agentBrowserLogs, agentAuditLogs } =
+    useAgentRunsContext();
 
   if (!isOpen || !selectedAgentRun) return null;
 
   return (
-    <DetailModal
-      isOpen={isOpen}
-      onClose={onClose}
-      title='Agent job details'
-      size='xl'
-    >
+    <DetailModal isOpen={isOpen} onClose={onClose} title='Agent job details' size='xl'>
       <Tabs defaultValue='summary' className='w-full'>
         <TabsList className='grid w-full grid-cols-7'>
           <TabsTrigger value='summary'>Summary</TabsTrigger>
@@ -41,7 +32,7 @@ export function AgentRunDetailModal({
           <TabsTrigger value='context'>Context</TabsTrigger>
           <TabsTrigger value='elements'>Elements</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value='summary' className='space-y-4 pt-4'>
           <Card variant='subtle-compact' padding='md' className='border-border/60 bg-card/35'>
             <h3 className='text-sm font-medium text-white mb-2'>Run Information</h3>
@@ -63,7 +54,7 @@ export function AgentRunDetailModal({
         </TabsContent>
 
         <TabsContent value='logs' className='space-y-2 pt-4'>
-          <LogList 
+          <LogList
             logs={agentBrowserLogs.map((log, i) => ({
               id: String(i),
               timestamp: log.createdAt || new Date().toISOString(),
@@ -76,9 +67,11 @@ export function AgentRunDetailModal({
         </TabsContent>
 
         <TabsContent value='preview' className='pt-4'>
-          <p className='text-xs text-gray-500'>Preview content placeholder (Snapshots: {agentSnapshots.length})</p>
+          <p className='text-xs text-gray-500'>
+            Preview content placeholder (Snapshots: {agentSnapshots.length})
+          </p>
         </TabsContent>
-        
+
         <TabsContent value='dom' className='pt-4'>
           <p className='text-xs text-gray-500'>DOM content placeholder</p>
         </TabsContent>
@@ -88,7 +81,9 @@ export function AgentRunDetailModal({
         </TabsContent>
 
         <TabsContent value='context' className='pt-4'>
-          <p className='text-xs text-gray-500'>Context content placeholder (Audit Logs: {agentAuditLogs.length})</p>
+          <p className='text-xs text-gray-500'>
+            Context content placeholder (Audit Logs: {agentAuditLogs.length})
+          </p>
         </TabsContent>
 
         <TabsContent value='elements' className='pt-4'>

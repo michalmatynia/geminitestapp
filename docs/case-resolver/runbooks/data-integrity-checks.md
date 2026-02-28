@@ -1,11 +1,11 @@
 ---
-owner: "Case Resolver Team"
-last_reviewed: "2026-02-20"
-status: "active"
+owner: 'Case Resolver Team'
+last_reviewed: '2026-02-20'
+status: 'active'
 related_components:
-  - "src/features/case-resolver/settings.ts"
-  - "src/features/case-resolver/settings-relation-graph.ts"
-  - "src/features/case-resolver/server/ocr-runtime-job-store.ts"
+  - 'src/features/case-resolver/settings.ts'
+  - 'src/features/case-resolver/settings-relation-graph.ts'
+  - 'src/features/case-resolver/server/ocr-runtime-job-store.ts'
 ---
 
 # Runbook: Data Integrity Checks

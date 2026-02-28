@@ -5,15 +5,9 @@ import { Button, Alert } from '@/shared/ui';
 import { useProductImageManagerUI } from './ProductImageManagerUIContext';
 
 export function ProductImageManagerHeader() {
-  const { 
-    showDebug, 
-    setShowDebug, 
-    debugInfo, 
-    controller, 
-    convertAllSlotsToBase64,
-    minimalUi,
-  } = useProductImageManagerUI();
-  
+  const { showDebug, setShowDebug, debugInfo, controller, convertAllSlotsToBase64, minimalUi } =
+    useProductImageManagerUI();
+
   const { imageSlots, uploadError } = controller;
 
   if (minimalUi) {
@@ -67,7 +61,9 @@ export function ProductImageManagerHeader() {
           {uploadError && <div>Upload error: {uploadError}</div>}
           {debugInfo && (
             <div className='space-y-1 mt-2'>
-              <div>Debug: {debugInfo.action} — {debugInfo.message}</div>
+              <div>
+                Debug: {debugInfo.action} — {debugInfo.message}
+              </div>
               <div className='text-[11px] text-red-300/80'>
                 {debugInfo.timestamp}
                 {debugInfo.slotIndex !== undefined ? ` · slot ${debugInfo.slotIndex + 1}` : ''}

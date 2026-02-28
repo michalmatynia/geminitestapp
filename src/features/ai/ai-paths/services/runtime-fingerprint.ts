@@ -16,18 +16,11 @@ const buildRuntimeFingerprintValue = (): string => {
     'SOURCE_VERSION',
     'RAILWAY_GIT_COMMIT_SHA',
   ]);
-  const buildId = pickFirstEnv([
-    'NEXT_BUILD_ID',
-    'VERCEL_URL',
-  ]);
+  const buildId = pickFirstEnv(['NEXT_BUILD_ID', 'VERCEL_URL']);
   const appVersion = pickFirstEnv(['npm_package_version']) ?? 'dev';
   const nodeVersion = process.versions?.node ?? 'unknown';
 
-  const parts = [
-    'ai-paths-runtime',
-    `app:${appVersion}`,
-    `node:${nodeVersion}`,
-  ];
+  const parts = ['ai-paths-runtime', `app:${appVersion}`, `node:${nodeVersion}`];
   if (revision) parts.push(`rev:${revision.slice(0, 16)}`);
   if (buildId) parts.push(`build:${buildId.slice(0, 24)}`);
   return parts.join('|');

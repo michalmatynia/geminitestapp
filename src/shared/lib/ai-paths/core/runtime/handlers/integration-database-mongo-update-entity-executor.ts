@@ -71,8 +71,7 @@ export async function executeMongoEntityUpdate({
     updateDocRecord && !Object.keys(updateDocRecord).some((key) => key.startsWith('$'))
       ? updateDocRecord
       : null;
-  let updatesForEntity =
-    updateSet ?? updatePlain ?? updates;
+  let updatesForEntity = updateSet ?? updatePlain ?? updates;
   const mergeForEntityResult = mergeParameterInferenceUpdates({
     targetPath: parameterTargetPath,
     updates: updatesForEntity,
@@ -85,7 +84,9 @@ export async function executeMongoEntityUpdate({
       typeof debugPayload['parameterInferenceGuard'] === 'object'
     ) {
       (debugPayload['parameterInferenceGuard'] as Record<string, unknown>)['writePlan'] = {
-        ...((debugPayload['parameterInferenceGuard'] as Record<string, unknown>)['writePlan'] as Record<string, unknown> | undefined),
+        ...((debugPayload['parameterInferenceGuard'] as Record<string, unknown>)['writePlan'] as
+          | Record<string, unknown>
+          | undefined),
         ...(mergeForEntityResult.meta ?? {}),
       };
     }
@@ -103,7 +104,7 @@ export async function executeMongoEntityUpdate({
         nodeId: node.id,
         provider: queryPayload['provider'],
       },
-      'Database update skipped:',
+      'Database update skipped:'
     );
     toast('Database update skipped: missing entity ID.', { variant: 'error' });
     return {
@@ -124,7 +125,7 @@ export async function executeMongoEntityUpdate({
     reportAiPathsError(
       new Error(updateResult.error),
       { action: 'updateEntity', collection, nodeId: node.id },
-      'Database update failed:',
+      'Database update failed:'
     );
     toast('Database update failed.', { variant: 'error' });
     return {
@@ -142,8 +143,7 @@ export async function executeMongoEntityUpdate({
   });
   const writeOutcome = writeOutcomeEvaluation.writeOutcome;
   if (writeOutcomeEvaluation.isZeroAffected) {
-    const message =
-      writeOutcome.message ?? 'Database write affected 0 records for update.';
+    const message = writeOutcome.message ?? 'Database write affected 0 records for update.';
     if (writeOutcome.status === 'failed') {
       reportAiPathsError(
         new Error(message),
@@ -153,7 +153,7 @@ export async function executeMongoEntityUpdate({
           nodeId: node.id,
           writeOutcome,
         },
-        'Database update failed:',
+        'Database update failed:'
       );
       toast(message, { variant: 'error' });
       throw new Error(message);
@@ -168,10 +168,7 @@ export async function executeMongoEntityUpdate({
     debugPayload['parameterInferenceGuard'] &&
     typeof debugPayload['parameterInferenceGuard'] === 'object'
   ) {
-    const writeTarget = resolveObjectPathValue(
-      toRecord(updatesForEntity),
-      parameterTargetPath,
-    );
+    const writeTarget = resolveObjectPathValue(toRecord(updatesForEntity), parameterTargetPath);
     (debugPayload['parameterInferenceGuard'] as Record<string, unknown>)['written'] = {
       targetPath: parameterTargetPath,
       count: coerceArrayLike(writeTarget).length,
@@ -181,15 +178,14 @@ export async function executeMongoEntityUpdate({
   if (writeOutcome.status !== 'warning') {
     toast(
       `Entity updated in ${collection} (${modifiedCount} row${modifiedCount === 1 ? '' : 's'}).`,
-      { variant: 'success' },
+      { variant: 'success' }
     );
   }
   const primaryValue: unknown = updates[primaryTarget];
   return {
     content_en:
       primaryTarget === 'content_en'
-        ? ((primaryValue as string | undefined) ??
-          (nodeInputs['content_en'] as string | undefined))
+        ? ((primaryValue as string | undefined) ?? (nodeInputs['content_en'] as string | undefined))
         : (nodeInputs['content_en'] as string | undefined),
     result: updateResult.data,
     bundle: {

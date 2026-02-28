@@ -1,12 +1,7 @@
 import { Prisma, Producer as PrismaProducer } from '@prisma/client';
 
-import type { 
-  ProducerRepository, 
-  ProducerFilters 
-} from '@/shared/contracts/products';
-import type { 
-  Producer 
-} from '@/shared/contracts/products';
+import type { ProducerRepository, ProducerFilters } from '@/shared/contracts/products';
+import type { Producer } from '@/shared/contracts/products';
 import prisma from '@/shared/lib/db/prisma';
 
 const toProducerDomain = (producer: PrismaProducer): Producer => ({
@@ -52,7 +47,10 @@ export const prismaProducerRepository: ProducerRepository = {
     return toProducerDomain(producer);
   },
 
-  async updateProducer(id: string, data: { name?: string; website?: string | null }): Promise<Producer> {
+  async updateProducer(
+    id: string,
+    data: { name?: string; website?: string | null }
+  ): Promise<Producer> {
     const producer = await prisma.producer.update({
       where: { id },
       data: {

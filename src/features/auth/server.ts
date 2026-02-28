@@ -6,7 +6,10 @@ export * from './services/auth-login-challenge';
 export { getAuthDataProvider, requireAuthProvider } from './services/auth-provider';
 export type { AuthDbProvider } from './services/auth-provider';
 export * from './services/auth-security';
-export { getAuthSecurityProfile, updateAuthSecurityProfile } from './services/auth-security-profile';
+export {
+  getAuthSecurityProfile,
+  updateAuthSecurityProfile,
+} from './services/auth-security-profile';
 export type { AuthSecurityProfile } from './services/auth-security-profile';
 export { invalidateAuthSecurityProfileCache } from './services/auth-security-profile';
 export * from './services/auth-settings';

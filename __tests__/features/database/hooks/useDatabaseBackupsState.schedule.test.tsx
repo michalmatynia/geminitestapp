@@ -4,7 +4,7 @@ import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useDatabaseBackupsState } from '@/features/database/hooks/useDatabaseBackupsState';
-import { localHmToUtcHm } from '@/features/database/utils/backup-schedule-time';
+import { localHmToUtcHm } from '@/shared/lib/db/utils/backup-schedule-time';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import {
   DATABASE_ENGINE_BACKUP_SCHEDULE_KEY,
@@ -115,9 +115,7 @@ describe('useDatabaseBackupsState schedule persistence', () => {
   });
 
   const wrapper = ({ children }: { children: React.ReactNode }): React.JSX.Element => (
-    <QueryClientProvider client={createTestQueryClient()}>
-      {children}
-    </QueryClientProvider>
+    <QueryClientProvider client={createTestQueryClient()}>{children}</QueryClientProvider>
   );
 
   it('saves MongoDB daily 2:00 local schedule and keeps PostgreSQL target untouched', async () => {

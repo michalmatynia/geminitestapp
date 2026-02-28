@@ -15,7 +15,6 @@ import { server } from '@/mocks/server';
 import type { NoteWithRelations, TagRecord, CategoryRecord } from '@/shared/contracts/notes';
 import { ToastProvider } from '@/shared/ui/toast';
 
-
 const now = new Date().toISOString();
 
 const queryClient = new QueryClient({
@@ -117,7 +116,7 @@ const renderNotesPage = () => {
 
 describe('Notes page UI', () => {
   let notes: NoteWithRelations[] = [];
-  
+
   beforeEach(() => {
     window.localStorage.clear();
     notes = [makeNote(), makeNote({ id: 'note-2', title: 'Beta' })];
@@ -145,10 +144,12 @@ describe('Notes page UI', () => {
           ...category,
           children: [],
           notes: notes
-            .filter((note: any) =>
-              note.categories?.some((cat: any) => cat.categoryId === category.id)
+            .filter((note: NoteWithRelations) =>
+              note.categories?.some(
+                (cat: any) => (cat as { categoryId: string }).categoryId === category.id
+              )
             )
-            .map((note: any) => ({
+            .map((note: NoteWithRelations) => ({
               id: note.id,
               title: note.title,
               content: note.content,
@@ -162,7 +163,14 @@ describe('Notes page UI', () => {
         return HttpResponse.json(tree);
       }),
       http.post('/api/notes', async ({ request }) => {
-        const body = (await request.json()) as any;
+        const body = (await request.json()) as {
+          title?: string;
+          content?: string;
+          isPinned?: boolean;
+          isArchived?: boolean;
+          tagIds?: string[];
+          categoryIds?: string[];
+        };
         const tagIds = Array.isArray(body.tagIds) ? body.tagIds : [];
         const categoryIds = Array.isArray(body.categoryIds) ? body.categoryIds : [];
         const newNote = makeNote({
@@ -193,14 +201,14 @@ describe('Notes page UI', () => {
 
         if (search) {
           filtered = filtered.filter((note) => {
-            return note.title.toLowerCase().includes(search.toLowerCase()) || 
-                   note.content.toLowerCase().includes(search.toLowerCase());
+            return (
+              note.title.toLowerCase().includes(search.toLowerCase()) ||
+              note.content.toLowerCase().includes(search.toLowerCase())
+            );
           });
         }
         if (tagIds.length > 0 && tagIds[0]) {
-          filtered = filtered.filter((note) =>
-            note.tagIds.some((id) => tagIds.includes(id))
-          );
+          filtered = filtered.filter((note) => note.tagIds.some((id) => tagIds.includes(id)));
         }
         return HttpResponse.json(filtered);
       })
@@ -222,22 +230,22 @@ describe('Notes page UI', () => {
     renderNotesPage();
     const user = userEvent.setup();
 
-    await user.type(
-      await screen.findByPlaceholderText('Search notes...'),
-      'Alpha'
-    );
+    await user.type(await screen.findByPlaceholderText('Search notes...'), 'Alpha');
 
     // Wait for multiple layers of debouncing (400ms + 250ms + 300ms)
     await new Promise((resolve) => setTimeout(resolve, 1200));
 
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: 'Alpha' })).toBeInTheDocument();
-      expect(screen.queryByRole('heading', { name: 'Beta' })).not.toBeInTheDocument();
-    }, { timeout: 3000 });
+    await waitFor(
+      () => {
+        expect(screen.getByRole('heading', { name: 'Alpha' })).toBeInTheDocument();
+        expect(screen.queryByRole('heading', { name: 'Beta' })).not.toBeInTheDocument();
+      },
+      { timeout: 3000 }
+    );
 
     const tagFilter = screen.getByRole('button', { name: /Filter by tags.../i });
     await user.click(tagFilter);
-    
+
     // MultiSelect items are CheckboxItems in DropdownMenu
     const workOption = await screen.findByRole('menuitemcheckbox', { name: /Work/i });
     await user.click(workOption);
@@ -259,6 +267,8 @@ describe('Notes page UI', () => {
     );
     await user.click(screen.getByRole('button', { name: 'Create' }));
 
-    expect(await screen.findByRole('heading', { name: 'Gamma' }, { timeout: 3000 })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'Gamma' }, { timeout: 3000 })
+    ).toBeInTheDocument();
   });
 });

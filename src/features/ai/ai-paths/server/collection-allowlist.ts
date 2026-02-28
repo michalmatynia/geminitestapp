@@ -38,8 +38,7 @@ const parseAllowlist = (raw: string): string[] =>
     .map((value: string) => value.trim())
     .filter(Boolean);
 
-const normalizeCollectionName = (value: string): string =>
-  value.trim().toLowerCase();
+const normalizeCollectionName = (value: string): string => value.trim().toLowerCase();
 
 type AllowlistConfig = {
   allowAll: boolean;
@@ -67,20 +66,19 @@ const buildAllowlist = (): AllowlistConfig => {
   const allowed = new Set<string>();
   if (includeDefault) {
     DEFAULT_COLLECTION_ALLOWLIST.forEach((collection: string) =>
-      allowed.add(normalizeCollectionName(collection)),
+      allowed.add(normalizeCollectionName(collection))
     );
   }
 
   tokens.forEach((token: string) => {
     const normalized = normalizeCollectionName(token);
-    if (normalized === '*' || normalized === 'all' || normalized === 'default')
-      return;
+    if (normalized === '*' || normalized === 'all' || normalized === 'default') return;
     allowed.add(normalized);
   });
 
   if (!allowAll && allowed.size === 0) {
     DEFAULT_COLLECTION_ALLOWLIST.forEach((collection: string) =>
-      allowed.add(normalizeCollectionName(collection)),
+      allowed.add(normalizeCollectionName(collection))
     );
   }
 

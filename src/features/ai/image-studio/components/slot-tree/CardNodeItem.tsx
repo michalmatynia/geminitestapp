@@ -6,7 +6,7 @@ import { TreeCaret, TreeContextMenu, TreeRow } from '@/shared/ui';
 import { cn, type MasterTreeNode } from '@/shared/utils';
 import { canNestTreeNodeV2 } from '@/shared/utils';
 import { useSlotTreeContext } from './SlotTreeContext';
-import { fromSlotMasterNodeId } from '../../utils/master-folder-tree';
+import { fromSlotMasterNodeId } from '@/shared/lib/ai/image-studio/utils/master-folder-tree';
 
 export interface CardNodeItemProps {
   node: MasterTreeNode;
@@ -45,13 +45,11 @@ export function CardNodeItem({
   } = useSlotTreeContext();
 
   const slotId = fromSlotMasterNodeId(node.id);
-  const card = slotId ? slotById.get(slotId) ?? null : null;
+  const card = slotId ? (slotById.get(slotId) ?? null) : null;
   if (!card || !slotId) return null;
 
   const roleLabel =
-    typeof node.metadata?.['roleLabel'] === 'string'
-      ? node.metadata['roleLabel']
-      : null;
+    typeof node.metadata?.['roleLabel'] === 'string' ? node.metadata['roleLabel'] : null;
   const allowMoveCardToRoot = canNestTreeNodeV2({
     profile,
     nodeType: 'file',
@@ -77,12 +75,12 @@ export function CardNodeItem({
         },
         ...(card.folderPath && allowMoveCardToRoot
           ? [
-            {
-              id: 'move-card-root',
-              label: 'Move to root',
-              onSelect: (): void => onMoveSlot(card, ''),
-            },
-          ]
+              {
+                id: 'move-card-root',
+                label: 'Move to root',
+                onSelect: (): void => onMoveSlot(card, ''),
+              },
+            ]
           : []),
         {
           id: 'delete-card',

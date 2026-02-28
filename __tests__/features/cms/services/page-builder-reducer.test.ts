@@ -14,7 +14,7 @@ describe('Page Builder Reducer', () => {
     const action = { type: 'TOGGLE_LEFT_PANEL' as const };
     const nextState = pageBuilderReducer(initialState, action);
     expect(nextState.leftPanelCollapsed).toBe(true);
-    
+
     const nextState2 = pageBuilderReducer(nextState, action);
     expect(nextState2.leftPanelCollapsed).toBe(false);
   });
@@ -29,13 +29,16 @@ describe('Page Builder Reducer', () => {
     expect(state.history.past).toHaveLength(0);
 
     // 3. Add section (should add to history)
-    // Note: ADD_SECTION depends on registry, let's use a simpler one if possible 
-    // or mock the registry if needed. 
+    // Note: ADD_SECTION depends on registry, let's use a simpler one if possible
+    // or mock the registry if needed.
     // Actually, SET_PAGE_STATUS is simpler.
     const statusAction = { type: 'SET_PAGE_STATUS' as const, status: 'published' as const };
-    const stateWithPage = { ...state, currentPage: { id: '1', name: 'Test', components: [] } } as any;
+    const stateWithPage = {
+      ...state,
+      currentPage: { id: '1', name: 'Test', components: [] },
+    } as any;
     state = pageBuilderReducer(stateWithPage, statusAction);
-    
+
     expect(state.history.past).toHaveLength(1);
     expect(state.currentPage?.status).toBe('published');
 
@@ -50,10 +53,10 @@ describe('Page Builder Reducer', () => {
   it('should handle SET_CURRENT_PAGE and reset history', () => {
     const page = { id: '1', name: 'Home', components: [] };
     const action = { type: 'SET_CURRENT_PAGE' as const, page: page as any };
-    
+
     const stateWithHistory: PageBuilderState = {
       ...initialState,
-      history: { past: [{} as any], future: [] }
+      history: { past: [{} as any], future: [] },
     };
 
     const nextState = pageBuilderReducer(stateWithHistory, action);
@@ -64,7 +67,7 @@ describe('Page Builder Reducer', () => {
   it('should handle ADD_SECTION', () => {
     const action = { type: 'ADD_SECTION' as const, sectionType: 'Hero', zone: 'template' as const };
     const nextState = pageBuilderReducer(initialState, action);
-    
+
     expect(nextState.sections).toHaveLength(1);
     expect(nextState.sections[0]!.type).toBe('Hero');
     expect(nextState.sections[0]!.zone).toBe('template');
@@ -73,7 +76,11 @@ describe('Page Builder Reducer', () => {
 
   it('should handle ADD_BLOCK', () => {
     // 1. Add section first
-    const sectionAction = { type: 'ADD_SECTION' as const, sectionType: 'RichText', zone: 'template' as const };
+    const sectionAction = {
+      type: 'ADD_SECTION' as const,
+      sectionType: 'RichText',
+      zone: 'template' as const,
+    };
     let state = pageBuilderReducer(initialState, sectionAction);
     const sectionId = state.sections[0]!.id;
 
@@ -87,7 +94,11 @@ describe('Page Builder Reducer', () => {
   });
 
   it('should handle REMOVE_SECTION', () => {
-    const sectionAction = { type: 'ADD_SECTION' as const, sectionType: 'RichText', zone: 'template' as const };
+    const sectionAction = {
+      type: 'ADD_SECTION' as const,
+      sectionType: 'RichText',
+      zone: 'template' as const,
+    };
     let state = pageBuilderReducer(initialState, sectionAction);
     const sectionId = state.sections[0]!.id;
 
@@ -97,14 +108,18 @@ describe('Page Builder Reducer', () => {
   });
 
   it('should handle UPDATE_SECTION_SETTINGS', () => {
-    const sectionAction = { type: 'ADD_SECTION' as const, sectionType: 'Hero', zone: 'template' as const };
+    const sectionAction = {
+      type: 'ADD_SECTION' as const,
+      sectionType: 'Hero',
+      zone: 'template' as const,
+    };
     let state = pageBuilderReducer(initialState, sectionAction);
     const sectionId = state.sections[0]!.id;
 
-    state = pageBuilderReducer(state, { 
-      type: 'UPDATE_SECTION_SETTINGS', 
-      sectionId, 
-      settings: { imageHeight: 'small' } 
+    state = pageBuilderReducer(state, {
+      type: 'UPDATE_SECTION_SETTINGS',
+      sectionId,
+      settings: { imageHeight: 'small' },
     });
 
     expect(state.sections[0]!.settings['imageHeight']).toBe('small');
@@ -112,22 +127,34 @@ describe('Page Builder Reducer', () => {
 
   it('should handle MOVE_BLOCK', () => {
     // 1. Setup two sections
-    let state = pageBuilderReducer(initialState, { type: 'ADD_SECTION', sectionType: 'RichText', zone: 'template' });
+    let state = pageBuilderReducer(initialState, {
+      type: 'ADD_SECTION',
+      sectionType: 'RichText',
+      zone: 'template',
+    });
     const fromSectionId = state.sections[0]!.id;
-    state = pageBuilderReducer(state, { type: 'ADD_SECTION', sectionType: 'RichText', zone: 'template' });
+    state = pageBuilderReducer(state, {
+      type: 'ADD_SECTION',
+      sectionType: 'RichText',
+      zone: 'template',
+    });
     const toSectionId = state.sections[1]!.id;
 
     // 2. Add block to first section
-    state = pageBuilderReducer(state, { type: 'ADD_BLOCK', sectionId: fromSectionId, blockType: 'Heading' });
+    state = pageBuilderReducer(state, {
+      type: 'ADD_BLOCK',
+      sectionId: fromSectionId,
+      blockType: 'Heading',
+    });
     const blockId = state.sections[0]!.blocks[0]!.id;
 
     // 3. Move block to second section
-    state = pageBuilderReducer(state, { 
-      type: 'MOVE_BLOCK', 
-      blockId, 
-      fromSectionId, 
-      toSectionId, 
-      toIndex: 0 
+    state = pageBuilderReducer(state, {
+      type: 'MOVE_BLOCK',
+      blockId,
+      fromSectionId,
+      toSectionId,
+      toIndex: 0,
     });
 
     expect(state.sections[0]!.blocks).toHaveLength(0);
@@ -136,7 +163,11 @@ describe('Page Builder Reducer', () => {
   });
 
   it('should handle REORDER_BLOCKS', () => {
-    let state = pageBuilderReducer(initialState, { type: 'ADD_SECTION', sectionType: 'RichText', zone: 'template' });
+    let state = pageBuilderReducer(initialState, {
+      type: 'ADD_SECTION',
+      sectionType: 'RichText',
+      zone: 'template',
+    });
     const sectionId = state.sections[0]!.id;
 
     state = pageBuilderReducer(state, { type: 'ADD_BLOCK', sectionId, blockType: 'Heading' });
@@ -148,22 +179,31 @@ describe('Page Builder Reducer', () => {
     expect(state.sections[0]!.blocks[0]!.id).toBe(id1);
 
     // Reorder: move index 0 to index 1
-    state = pageBuilderReducer(state, { type: 'REORDER_BLOCKS', sectionId, fromIndex: 0, toIndex: 1 });
+    state = pageBuilderReducer(state, {
+      type: 'REORDER_BLOCKS',
+      sectionId,
+      fromIndex: 0,
+      toIndex: 1,
+    });
     expect(state.sections[0]!.blocks[0]!.id).toBe(id2);
     expect(state.sections[0]!.blocks[1]!.id).toBe(id1);
   });
 
   it('should handle UPDATE_BLOCK_SETTINGS', () => {
-    let state = pageBuilderReducer(initialState, { type: 'ADD_SECTION', sectionType: 'RichText', zone: 'template' });
+    let state = pageBuilderReducer(initialState, {
+      type: 'ADD_SECTION',
+      sectionType: 'RichText',
+      zone: 'template',
+    });
     const sectionId = state.sections[0]!.id;
     state = pageBuilderReducer(state, { type: 'ADD_BLOCK', sectionId, blockType: 'Heading' });
     const blockId = state.sections[0]!.blocks[0]!.id;
 
-    state = pageBuilderReducer(state, { 
-      type: 'UPDATE_BLOCK_SETTINGS', 
-      sectionId, 
-      blockId, 
-      settings: { content: 'Updated Content' } 
+    state = pageBuilderReducer(state, {
+      type: 'UPDATE_BLOCK_SETTINGS',
+      sectionId,
+      blockId,
+      settings: { content: 'Updated Content' },
     });
 
     expect(state.sections[0]!.blocks[0]!.settings['content']).toBe('Updated Content');
@@ -171,13 +211,17 @@ describe('Page Builder Reducer', () => {
 
   describe('Grid Operations', () => {
     it('should handle SET_GRID_COLUMNS', () => {
-      const sectionAction = { type: 'ADD_SECTION' as const, sectionType: 'Grid', zone: 'template' as const };
+      const sectionAction = {
+        type: 'ADD_SECTION' as const,
+        sectionType: 'Grid',
+        zone: 'template' as const,
+      };
       let state = pageBuilderReducer(initialState, sectionAction);
       const sectionId = state.sections[0]!.id;
 
       // Initial grid should have 2 columns (default)
       expect(state.sections[0]!.settings['columns']).toBe(2);
-      
+
       state = pageBuilderReducer(state, { type: 'SET_GRID_COLUMNS', sectionId, columnCount: 4 });
       expect(state.sections[0]!.settings['columns']).toBe(4);
       // It should have 1 row with 4 columns
@@ -186,7 +230,11 @@ describe('Page Builder Reducer', () => {
     });
 
     it('should handle ADD_GRID_ROW', () => {
-      const sectionAction = { type: 'ADD_SECTION' as const, sectionType: 'Grid', zone: 'template' as const };
+      const sectionAction = {
+        type: 'ADD_SECTION' as const,
+        sectionType: 'Grid',
+        zone: 'template' as const,
+      };
       let state = pageBuilderReducer(initialState, sectionAction);
       const sectionId = state.sections[0]!.id;
 
@@ -198,7 +246,11 @@ describe('Page Builder Reducer', () => {
 
   describe('Copy/Paste', () => {
     it('should handle COPY_SECTION and PASTE_SECTION', () => {
-      const sectionAction = { type: 'ADD_SECTION' as const, sectionType: 'Hero', zone: 'template' as const };
+      const sectionAction = {
+        type: 'ADD_SECTION' as const,
+        sectionType: 'Hero',
+        zone: 'template' as const,
+      };
       let state = pageBuilderReducer(initialState, sectionAction);
       const sectionId = state.sections[0]!.id;
 
@@ -217,18 +269,26 @@ describe('Page Builder Reducer', () => {
   describe('Conversion', () => {
     it('should handle CONVERT_SECTION_TO_BLOCK', () => {
       // Create source section
-      let state = pageBuilderReducer(initialState, { type: 'ADD_SECTION', sectionType: 'TextElement', zone: 'template' });
+      let state = pageBuilderReducer(initialState, {
+        type: 'ADD_SECTION',
+        sectionType: 'TextElement',
+        zone: 'template',
+      });
       const sourceId = state.sections[0]!.id;
 
       // Create target section
-      state = pageBuilderReducer(state, { type: 'ADD_SECTION', sectionType: 'RichText', zone: 'template' });
+      state = pageBuilderReducer(state, {
+        type: 'ADD_SECTION',
+        sectionType: 'RichText',
+        zone: 'template',
+      });
       const targetId = state.sections[1]!.id;
 
-      state = pageBuilderReducer(state, { 
-        type: 'CONVERT_SECTION_TO_BLOCK', 
-        sectionId: sourceId, 
-        toSectionId: targetId, 
-        toIndex: 0 
+      state = pageBuilderReducer(state, {
+        type: 'CONVERT_SECTION_TO_BLOCK',
+        sectionId: sourceId,
+        toSectionId: targetId,
+        toIndex: 0,
       });
 
       expect(state.sections).toHaveLength(1); // Source section removed

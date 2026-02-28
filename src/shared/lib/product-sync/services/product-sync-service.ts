@@ -9,7 +9,10 @@ import {
   findProductListingByProductAndConnectionAcrossProviders,
 } from '@/features/integrations/server';
 import { resolveBaseConnectionToken } from '@/features/integrations/services/base-token-resolver';
-import { callBaseApi, fetchBaseProductDetails } from '@/features/integrations/services/imports/base-client';
+import {
+  callBaseApi,
+  fetchBaseProductDetails,
+} from '@/features/integrations/services/imports/base-client';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import {
   getProductSyncProfile,
@@ -108,11 +111,7 @@ const normalizeFieldValue = (
   return stringValue || null;
 };
 
-const valuesEqual = (
-  appField: ProductSyncAppField,
-  left: unknown,
-  right: unknown
-): boolean => {
+const valuesEqual = (appField: ProductSyncAppField, left: unknown, right: unknown): boolean => {
   const normalizedLeft = normalizeFieldValue(appField, left);
   const normalizedRight = normalizeFieldValue(appField, right);
 
@@ -120,10 +119,7 @@ const valuesEqual = (
   return normalizedLeft === normalizedRight;
 };
 
-const getProductFieldValue = (
-  product: ProductWithImages,
-  field: ProductSyncAppField
-): unknown => {
+const getProductFieldValue = (product: ProductWithImages, field: ProductSyncAppField): unknown => {
   if (field === 'name_en') return product.name_en;
   if (field === 'description_en') return product.description_en;
   if (field === 'stock') return product.stock;
@@ -207,11 +203,7 @@ const resolveBaseValueByRule = (
   return resolveDefaultBaseValue(rule.appField, record);
 };
 
-const setPathValue = (
-  target: Record<string, unknown>,
-  path: string,
-  value: unknown
-): void => {
+const setPathValue = (target: Record<string, unknown>, path: string, value: unknown): void => {
   const normalizedPath = toTrimmedString(path);
   if (!normalizedPath) return;
 
@@ -248,7 +240,10 @@ const resolveBaseConnectionContext = async (
   }
 
   const integration = await integrationRepo.getIntegrationById(connection.integrationId);
-  if (!integration || !BASE_INTEGRATION_SLUGS.has(toTrimmedString(integration.slug).toLowerCase())) {
+  if (
+    !integration ||
+    !BASE_INTEGRATION_SLUGS.has(toTrimmedString(integration.slug).toLowerCase())
+  ) {
     throw new Error('Selected connection is not a Base.com integration.');
   }
 
@@ -272,9 +267,7 @@ const fetchBaseDetailsMap = async (
 ): Promise<Map<string, Record<string, unknown>>> => {
   const uniqueIds = Array.from(
     new Set(
-      baseProductIds
-        .map((id: string) => toTrimmedString(id))
-        .filter((id: string) => id.length > 0)
+      baseProductIds.map((id: string) => toTrimmedString(id)).filter((id: string) => id.length > 0)
     )
   );
 
@@ -317,17 +310,11 @@ const ensureBaseListingLink = async (input: {
   if (existing) {
     let changed = false;
     if (existing.listing.externalListingId !== input.baseProductId) {
-      await existing.repository.updateListingExternalId(
-        existing.listing.id,
-        input.baseProductId
-      );
+      await existing.repository.updateListingExternalId(existing.listing.id, input.baseProductId);
       changed = true;
     }
     if ((existing.listing.inventoryId ?? '') !== input.inventoryId) {
-      await existing.repository.updateListingInventoryId(
-        existing.listing.id,
-        input.inventoryId
-      );
+      await existing.repository.updateListingInventoryId(existing.listing.id, input.inventoryId);
       changed = true;
     }
     if (toTrimmedString(existing.listing.status).toLowerCase() !== 'active') {
@@ -453,7 +440,8 @@ const syncSingleLinkedProduct = async (input: {
     const updated = await productRepository.updateProduct(
       input.product.id,
       localPatch as UpdateProductInput
-    );    if (!updated) {
+    );
+    if (!updated) {
       return {
         status: 'failed',
         localChanges,
@@ -491,9 +479,7 @@ const syncSingleLinkedProduct = async (input: {
   };
 };
 
-export const processProductSyncRun = async (
-  runId: string
-): Promise<ProductSyncRunRecord> => {
+export const processProductSyncRun = async (runId: string): Promise<ProductSyncRunRecord> => {
   const run = await getProductSyncRun(runId);
   if (!run) {
     throw new Error(`Product sync run not found: ${runId}`);
@@ -652,9 +638,7 @@ export const processProductSyncRun = async (
               baseChanges: [],
               message: null,
               errorMessage:
-                error instanceof Error
-                  ? error.message
-                  : 'Unexpected synchronization error.',
+                error instanceof Error ? error.message : 'Unexpected synchronization error.',
               createdAt: nowIso(),
               updatedAt: nowIso(),
             };
@@ -738,8 +722,7 @@ export const runBaseListingBackfill = async (options?: {
   }
 
   const preferredConnectionId =
-    toTrimmedString(options?.connectionId) ||
-    toTrimmedString(await getExportDefaultConnectionId());
+    toTrimmedString(options?.connectionId) || toTrimmedString(await getExportDefaultConnectionId());
 
   const connection =
     (preferredConnectionId
@@ -753,8 +736,7 @@ export const runBaseListingBackfill = async (options?: {
   }
 
   const inventoryId =
-    toTrimmedString(options?.inventoryId) ||
-    toTrimmedString(connection.baseLastInventoryId);
+    toTrimmedString(options?.inventoryId) || toTrimmedString(connection.baseLastInventoryId);
 
   if (!inventoryId) {
     throw new Error('Inventory ID is required for link backfill.');
@@ -777,7 +759,9 @@ export const runBaseListingBackfill = async (options?: {
     const products = await productRepository.getProducts({
       page,
       pageSize,
-      ...(toTrimmedString(options?.catalogId) ? { catalogId: toTrimmedString(options?.catalogId) } : {}),
+      ...(toTrimmedString(options?.catalogId)
+        ? { catalogId: toTrimmedString(options?.catalogId) }
+        : {}),
     });
 
     if (products.length === 0) break;

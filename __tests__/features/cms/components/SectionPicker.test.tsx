@@ -69,7 +69,7 @@ describe('SectionPicker Component', () => {
 
     // Open the dialog by clicking the trigger
     fireEvent.click(screen.getByRole('button', { name: /Add section/i }));
-    
+
     const richTextOption = screen.getByText('Rich text');
     fireEvent.click(richTextOption);
 

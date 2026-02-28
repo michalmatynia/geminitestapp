@@ -50,9 +50,7 @@ export type FolderTreeViewportV2Props = {
   emptyLabel?: string | undefined;
   renderToolbar?: ((controller: MasterFolderTreeController) => React.ReactNode) | undefined;
   renderNode?: ((input: FolderTreeViewportRenderNodeInput) => React.ReactNode) | undefined;
-  resolveDraggedNodeId?:
-    | ((event: React.DragEvent<HTMLElement>) => MasterTreeId | null)
-    | undefined;
+  resolveDraggedNodeId?: ((event: React.DragEvent<HTMLElement>) => MasterTreeId | null) | undefined;
   canDrop?:
     | ((
         input: {
@@ -220,10 +218,10 @@ export function FolderTreeViewportV2({
   const useFallbackRows = virtualItems.length === 0 && rows.length > 0;
   const renderedRows = useFallbackRows
     ? rows.map((_, index) => ({
-      key: `fallback-${index}`,
-      index,
-      start: index * 34,
-    }))
+        key: `fallback-${index}`,
+        index,
+        start: index * 34,
+      }))
     : virtualItems;
   const totalSize = useFallbackRows ? rows.length * 34 : rowVirtualizer.getTotalSize();
 
@@ -232,9 +230,7 @@ export function FolderTreeViewportV2({
     setRootDropHoverZone(null);
   };
 
-  const resolveDraggedNode = (
-    event: React.DragEvent<HTMLElement>
-  ): MasterTreeId | null => {
+  const resolveDraggedNode = (event: React.DragEvent<HTMLElement>): MasterTreeId | null => {
     if (controller.dragState?.draggedNodeId) {
       return controller.dragState.draggedNodeId;
     }
@@ -295,11 +291,7 @@ export function FolderTreeViewportV2({
       'inside';
 
     const insideAllowed = resolveDropAllowance(draggedNodeId, targetNode.id, 'inside');
-    const requestedAllowed = resolveDropAllowance(
-      draggedNodeId,
-      targetNode.id,
-      requestedPosition
-    );
+    const requestedAllowed = resolveDropAllowance(draggedNodeId, targetNode.id, requestedPosition);
 
     if (
       !resolveDropPosition &&
@@ -307,7 +299,8 @@ export function FolderTreeViewportV2({
       targetNode.type === 'folder' &&
       insideAllowed
     ) {
-      const draggedNode = controller.nodes.find((candidate) => candidate.id === draggedNodeId) ?? null;
+      const draggedNode =
+        controller.nodes.find((candidate) => candidate.id === draggedNodeId) ?? null;
       if (!draggedNode || draggedNode.type === 'file') {
         return 'inside';
       }
@@ -320,7 +313,7 @@ export function FolderTreeViewportV2({
 
   const canDropToRoot = Boolean(
     controller.dragState?.draggedNodeId &&
-      resolveDropAllowance(controller.dragState.draggedNodeId, null, 'inside')
+    resolveDropAllowance(controller.dragState.draggedNodeId, null, 'inside')
   );
 
   const showRootDropZones = enableDnd && rootDropEnabled && canDropToRoot;
@@ -363,40 +356,40 @@ export function FolderTreeViewportV2({
         onDragOver={
           enableDnd
             ? (event: React.DragEvent<HTMLDivElement>): void => {
-              const draggedNodeId = resolveDraggedNode(event);
-              if (!draggedNodeId) return;
-              if (!resolveDropAllowance(draggedNodeId, null, 'inside')) return;
-              event.preventDefault();
-              event.dataTransfer.dropEffect = 'move';
-            }
+                const draggedNodeId = resolveDraggedNode(event);
+                if (!draggedNodeId) return;
+                if (!resolveDropAllowance(draggedNodeId, null, 'inside')) return;
+                event.preventDefault();
+                event.dataTransfer.dropEffect = 'move';
+              }
             : undefined
         }
         onDrop={
           enableDnd
             ? (event: React.DragEvent<HTMLDivElement>): void => {
-              const draggedNodeId = resolveDraggedNode(event);
-              if (!draggedNodeId) return;
-              if (!resolveDropAllowance(draggedNodeId, null, 'inside')) return;
-              event.preventDefault();
-              void (async (): Promise<void> => {
-                try {
-                  if (onNodeDrop) {
-                    await onNodeDrop(
-                      {
-                        draggedNodeId,
-                        targetId: null,
-                        position: 'inside',
-                      },
-                      controller
-                    );
-                  } else {
-                    await controller.dropNodeToRoot(draggedNodeId);
+                const draggedNodeId = resolveDraggedNode(event);
+                if (!draggedNodeId) return;
+                if (!resolveDropAllowance(draggedNodeId, null, 'inside')) return;
+                event.preventDefault();
+                void (async (): Promise<void> => {
+                  try {
+                    if (onNodeDrop) {
+                      await onNodeDrop(
+                        {
+                          draggedNodeId,
+                          targetId: null,
+                          position: 'inside',
+                        },
+                        controller
+                      );
+                    } else {
+                      await controller.dropNodeToRoot(draggedNodeId);
+                    }
+                  } finally {
+                    clearDragState();
                   }
-                } finally {
-                  clearDragState();
-                }
-              })();
-            }
+                })();
+              }
             : undefined
         }
       >
@@ -471,9 +464,7 @@ export function FolderTreeViewportV2({
                 const isDragging = controller.dragState?.draggedNodeId === node.id;
                 const isDropTarget = controller.dragState?.targetId === node.id;
                 const dropPosition =
-                  controller.dragState?.targetId === node.id
-                    ? controller.dragState.position
-                    : null;
+                  controller.dragState?.targetId === node.id ? controller.dragState.position : null;
 
                 const rowNode = renderNode ? (
                   renderNode({
@@ -524,8 +515,8 @@ export function FolderTreeViewportV2({
                     onDragStart={
                       enableDnd
                         ? (event: React.DragEvent<HTMLDivElement>): void => {
-                          if (
-                            canStartDrag &&
+                            if (
+                              canStartDrag &&
                               !canStartDrag(
                                 {
                                   node: viewNode,
@@ -533,91 +524,99 @@ export function FolderTreeViewportV2({
                                 },
                                 controller
                               )
-                          ) {
-                            event.preventDefault();
-                            event.stopPropagation();
-                            return;
-                          }
+                            ) {
+                              event.preventDefault();
+                              event.stopPropagation();
+                              return;
+                            }
 
-                          try {
-                            event.dataTransfer.setData(MASTER_TREE_DRAG_NODE_ID, node.id);
-                            event.dataTransfer.setData('text/plain', node.id);
-                          } catch {
-                            // no-op
+                            try {
+                              event.dataTransfer.setData(MASTER_TREE_DRAG_NODE_ID, node.id);
+                              event.dataTransfer.setData('text/plain', node.id);
+                            } catch {
+                              // no-op
+                            }
+                            event.dataTransfer.effectAllowed = 'move';
+                            setTimeout((): void => {
+                              controller.startDrag(node.id);
+                              onNodeDragStart?.(
+                                {
+                                  node: viewNode,
+                                  event,
+                                },
+                                controller
+                              );
+                            }, 0);
                           }
-                          event.dataTransfer.effectAllowed = 'move';
-                          setTimeout((): void => {
-                            controller.startDrag(node.id);
-                            onNodeDragStart?.(
-                              {
-                                node: viewNode,
-                                event,
-                              },
-                              controller
-                            );
-                          }, 0);
-                        }
                         : undefined
                     }
                     onDragEnd={
                       enableDnd
                         ? (): void => {
-                          clearDragState();
-                        }
+                            clearDragState();
+                          }
                         : undefined
                     }
                     onDragOver={
                       enableDnd
                         ? (event: React.DragEvent<HTMLDivElement>): void => {
-                          const draggedNodeId = resolveDraggedNode(event);
-                          if (!draggedNodeId) return;
-                          const resolvedPosition = resolveNodeDropPosition(event, draggedNodeId, viewNode);
-                          if (!resolvedPosition) return;
-                          event.preventDefault();
-                          event.stopPropagation();
-                          setRootDropHoverZone(null);
-                          controller.updateDragTarget(node.id, resolvedPosition);
-                          event.dataTransfer.dropEffect = 'move';
-                        }
+                            const draggedNodeId = resolveDraggedNode(event);
+                            if (!draggedNodeId) return;
+                            const resolvedPosition = resolveNodeDropPosition(
+                              event,
+                              draggedNodeId,
+                              viewNode
+                            );
+                            if (!resolvedPosition) return;
+                            event.preventDefault();
+                            event.stopPropagation();
+                            setRootDropHoverZone(null);
+                            controller.updateDragTarget(node.id, resolvedPosition);
+                            event.dataTransfer.dropEffect = 'move';
+                          }
                         : undefined
                     }
                     onDrop={
                       enableDnd
                         ? (event: React.DragEvent<HTMLDivElement>): void => {
-                          const draggedNodeId = resolveDraggedNode(event);
-                          if (!draggedNodeId) return;
-                          const resolvedPosition = resolveNodeDropPosition(event, draggedNodeId, viewNode);
-                          if (!resolvedPosition) return;
-                          event.preventDefault();
-                          event.stopPropagation();
+                            const draggedNodeId = resolveDraggedNode(event);
+                            if (!draggedNodeId) return;
+                            const resolvedPosition = resolveNodeDropPosition(
+                              event,
+                              draggedNodeId,
+                              viewNode
+                            );
+                            if (!resolvedPosition) return;
+                            event.preventDefault();
+                            event.stopPropagation();
 
-                          void (async (): Promise<void> => {
-                            try {
-                              if (onNodeDrop) {
-                                await onNodeDrop(
-                                  {
+                            void (async (): Promise<void> => {
+                              try {
+                                if (onNodeDrop) {
+                                  await onNodeDrop(
+                                    {
+                                      draggedNodeId,
+                                      targetId: node.id,
+                                      position: resolvedPosition,
+                                    },
+                                    controller
+                                  );
+                                  return;
+                                }
+                                if (resolvedPosition === 'inside') {
+                                  await controller.moveNode(draggedNodeId, node.id);
+                                } else {
+                                  await controller.reorderNode(
                                     draggedNodeId,
-                                    targetId: node.id,
-                                    position: resolvedPosition,
-                                  },
-                                  controller
-                                );
-                                return;
+                                    node.id,
+                                    resolvedPosition
+                                  );
+                                }
+                              } finally {
+                                clearDragState();
                               }
-                              if (resolvedPosition === 'inside') {
-                                await controller.moveNode(draggedNodeId, node.id);
-                              } else {
-                                await controller.reorderNode(
-                                  draggedNodeId,
-                                  node.id,
-                                  resolvedPosition
-                                );
-                              }
-                            } finally {
-                              clearDragState();
-                            }
-                          })();
-                        }
+                            })();
+                          }
                         : undefined
                     }
                   >
@@ -679,9 +678,7 @@ export function FolderTreeViewportV2({
               })();
             }}
             className={`flex h-8 items-center justify-center rounded-md border border-dashed text-[10px] font-medium uppercase tracking-[0.08em] transition-all duration-150 ${
-              rootDropHoverZone === 'bottom'
-                ? rootDropActiveClassName
-                : rootDropIdleClassName
+              rootDropHoverZone === 'bottom' ? rootDropActiveClassName : rootDropIdleClassName
             }`}
           >
             {rootDropLabel}

@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { defaultPromptEngineSettings, type PromptValidationRule } from '@/shared/lib/prompt-engine/settings';
+import {
+  defaultPromptEngineSettings,
+  type PromptValidationRule,
+} from '@/features/prompt-engine/settings';
 import {
   applyPromptExploderParserTuningDrafts,
   buildPromptExploderParserTuningDrafts,
@@ -25,9 +28,7 @@ describe('prompt exploder parser tuning', () => {
       patternPackRules: PROMPT_EXPLODER_PATTERN_PACK,
     });
 
-    expect(drafts.map((draft) => draft.id)).toEqual(
-      PROMPT_EXPLODER_PARSER_TUNING_RULE_IDS
-    );
+    expect(drafts.map((draft) => draft.id)).toEqual(PROMPT_EXPLODER_PARSER_TUNING_RULE_IDS);
     expect(drafts.every((draft) => draft.pattern.trim().length > 0)).toBe(true);
   });
 
@@ -56,13 +57,13 @@ describe('prompt exploder parser tuning', () => {
       }).map((draft) =>
         draft.id === 'segment.boundary.pipeline'
           ? {
-            ...draft,
-            pattern: '^\\s*WORKSTEPS\\b',
-            flags: 'mi',
-            promptExploderSegmentType: 'hierarchical_list',
-            promptExploderPriority: 31,
-            promptExploderConfidenceBoost: 0.2,
-          }
+              ...draft,
+              pattern: '^\\s*WORKSTEPS\\b',
+              flags: 'mi',
+              promptExploderSegmentType: 'hierarchical_list',
+              promptExploderPriority: 31,
+              promptExploderConfidenceBoost: 0.2,
+            }
           : draft
       );
 
@@ -71,10 +72,7 @@ describe('prompt exploder parser tuning', () => {
       drafts,
       patternPackRules: PROMPT_EXPLODER_PATTERN_PACK,
     });
-    const rule = getRuleById(
-      nextSettings.promptValidation.rules,
-      'segment.boundary.pipeline'
-    );
+    const rule = getRuleById(nextSettings.promptValidation.rules, 'segment.boundary.pipeline');
     expect(rule).toBeTruthy();
     expect(rule?.pattern).toBe('^\\s*WORKSTEPS\\b');
     expect(rule?.promptExploderSegmentType).toBe('hierarchical_list');
@@ -97,10 +95,7 @@ describe('prompt exploder parser tuning', () => {
       scope: 'case_resolver_prompt_exploder',
     });
 
-    const rule = getRuleById(
-      nextSettings.promptValidation.rules,
-      'segment.boundary.pipeline'
-    );
+    const rule = getRuleById(nextSettings.promptValidation.rules, 'segment.boundary.pipeline');
     expect(rule).toBeTruthy();
     expect(rule?.appliesToScopes?.includes('case_resolver_prompt_exploder')).toBe(true);
     expect(rule?.launchAppliesToScopes?.includes('case_resolver_prompt_exploder')).toBe(true);

@@ -22,10 +22,7 @@ export const productSimpleParameterCreateSchema = z.object({
  * - catalogId: Filter by catalog (required)
  * - search: Optional search phrase
  */
-export async function GET_handler(
-  req: NextRequest,
-  _ctx: ApiHandlerContext
-): Promise<Response> {
+export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const { searchParams } = new URL(req.url);
   const catalogId = searchParams.get('catalogId')?.trim() ?? '';
   const search = searchParams.get('search')?.trim() ?? '';
@@ -45,10 +42,7 @@ export async function GET_handler(
  * POST /api/products/simple-parameters
  * Creates a new simple product parameter.
  */
-export async function POST_handler(
-  _req: NextRequest,
-  ctx: ApiHandlerContext
-): Promise<Response> {
+export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const data = ctx.body as z.infer<typeof productSimpleParameterCreateSchema>;
   const created = await createSimpleParameter({
     name_en: data.name_en,

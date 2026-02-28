@@ -2,7 +2,20 @@
 
 import React, { useState } from 'react';
 
-import { Button, SelectSimple, useToast, useToastSettings, SectionHeader, FormSection, FormField, Breadcrumbs, FormActions, Hint, PropertyRow, Tooltip } from '@/shared/ui';
+import {
+  Button,
+  SelectSimple,
+  useToast,
+  useToastSettings,
+  SectionHeader,
+  FormSection,
+  FormField,
+  Breadcrumbs,
+  FormActions,
+  Hint,
+  PropertyRow,
+  Tooltip,
+} from '@/shared/ui';
 
 const positionOptions = [
   { value: 'top-right', label: 'Top Right', description: 'Corner top right' },
@@ -58,23 +71,25 @@ export function AdminNotificationsSettingsPage(): React.JSX.Element {
   };
 
   const preview = positionPreview[position];
-  const accentColor = accentOptions.find((option: { value: string; color: string }) => option.value === accent)?.color ?? 'bg-emerald-500';
+  const accentColor =
+    accentOptions.find((option: { value: string; color: string }) => option.value === accent)
+      ?.color ?? 'bg-emerald-500';
 
   return (
     <div className='container mx-auto py-10'>
       <SectionHeader
         title='Notifications'
         description='Customize toast position, accent color, and preview behavior.'
-        eyebrow={(
+        eyebrow={
           <Breadcrumbs
             items={[
               { label: 'Admin', href: '/admin' },
               { label: 'Settings', href: '/admin/settings' },
-              { label: 'Notifications' }
+              { label: 'Notifications' },
             ]}
             className='mb-2'
           />
-        )}
+        }
         className='mb-8'
       />
 
@@ -88,14 +103,17 @@ export function AdminNotificationsSettingsPage(): React.JSX.Element {
                 label='Toast Position'
                 description='Choose where notifications appear on your screen.'
               >
-                <SelectSimple size='sm'
+                <SelectSimple
+                  size='sm'
                   value={position}
                   onValueChange={(val: string) => setPosition(val as PositionType)}
-                  options={positionOptions.map((opt: { value: string; label: string; description: string }) => ({
-                    value: opt.value,
-                    label: opt.label,
-                    description: opt.description
-                  }))}
+                  options={positionOptions.map(
+                    (opt: { value: string; label: string; description: string }) => ({
+                      value: opt.value,
+                      label: opt.label,
+                      description: opt.description,
+                    })
+                  )}
                   placeholder='Select position'
                 />
               </FormField>
@@ -105,14 +123,17 @@ export function AdminNotificationsSettingsPage(): React.JSX.Element {
                 label='Accent Color'
                 description='Select the primary color for success notifications.'
               >
-                <SelectSimple size='sm'
+                <SelectSimple
+                  size='sm'
                   value={accent}
                   onValueChange={(val: string) => setAccent(val as AccentType)}
-                  options={accentOptions.map((opt: { value: string; label: string; color: string }) => ({
-                    value: opt.value,
-                    label: opt.label,
-                    description: opt.value === accent ? 'Currently selected' : undefined
-                  }))}
+                  options={accentOptions.map(
+                    (opt: { value: string; label: string; color: string }) => ({
+                      value: opt.value,
+                      label: opt.label,
+                      description: opt.value === accent ? 'Currently selected' : undefined,
+                    })
+                  )}
                   placeholder='Select accent color'
                 />
               </FormField>
@@ -178,15 +199,12 @@ export function AdminNotificationsSettingsPage(): React.JSX.Element {
             <FormSection variant='subtle-compact' className='mt-4 space-y-2 bg-card/40 p-3'>
               <p className='text-xs font-medium text-gray-300'>Current Settings:</p>
               <div className='space-y-1.5'>
-                <PropertyRow
-                  label='Position'
-                  value={position}
-                  valueClassName='capitalize'
-                  mono
-                />
+                <PropertyRow label='Position' value={position} valueClassName='capitalize' mono />
                 <PropertyRow
                   label='Accent'
-                  icon={<span className={`size-2 rounded-full ${accentColor}`} aria-hidden='true' />}
+                  icon={
+                    <span className={`size-2 rounded-full ${accentColor}`} aria-hidden='true' />
+                  }
                   value={accent}
                   valueClassName='capitalize'
                   mono
@@ -194,7 +212,11 @@ export function AdminNotificationsSettingsPage(): React.JSX.Element {
               </div>
             </FormSection>
 
-            <Hint variant='info' className='mt-4 rounded-md border border-blue-500/20 bg-blue-500/5 p-3 italic' size='xs'>
+            <Hint
+              variant='info'
+              className='mt-4 rounded-md border border-blue-500/20 bg-blue-500/5 p-3 italic'
+              size='xs'
+            >
               💡 Click the preview buttons to see how notifications appear with your settings.
             </Hint>
           </FormSection>

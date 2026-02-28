@@ -24,14 +24,11 @@ export function useAdminCaseResolverEditorUiState({
     setEditorContentRevisionSeed((value) => value + 1);
   }, [editingDocumentDraft?.id]);
 
-  const preserveWorkspaceView = useCallback(
-    (view: WorkspaceView): void => {
-      window.setTimeout((): void => {
-        setWorkspaceView((current) => (current === view ? current : view));
-      }, 0);
-    },
-    []
-  );
+  const preserveWorkspaceView = useCallback((view: WorkspaceView): void => {
+    window.setTimeout((): void => {
+      setWorkspaceView((current) => (current === view ? current : view));
+    }, 0);
+  }, []);
 
   return {
     workspaceView,

@@ -20,58 +20,30 @@ describe('case resolver OCR runtime path helpers', () => {
   });
 
   it('accepts only case resolver image file paths', () => {
-    expect(
-      isCaseResolverImageFilepath('/uploads/case-resolver/images/scan.png')
-    ).toBe(true);
-    expect(
-      isCaseResolverImageFilepath('/uploads/case-resolver/images/scan.pdf')
-    ).toBe(false);
+    expect(isCaseResolverImageFilepath('/uploads/case-resolver/images/scan.png')).toBe(true);
+    expect(isCaseResolverImageFilepath('/uploads/case-resolver/images/scan.pdf')).toBe(false);
     expect(isCaseResolverImageFilepath('/uploads/notes/note.png')).toBe(false);
   });
 
   it('accepts OCR paths for case resolver images and PDFs', () => {
-    expect(
-      isCaseResolverOcrFilepath('/uploads/case-resolver/images/scan.png')
-    ).toBe(true);
-    expect(
-      isCaseResolverOcrFilepath('/uploads/case-resolver/pdfs/scan.pdf')
-    ).toBe(true);
-    expect(
-      isCaseResolverOcrFilepath('/uploads/case-resolver/files/readme.txt')
-    ).toBe(false);
+    expect(isCaseResolverOcrFilepath('/uploads/case-resolver/images/scan.png')).toBe(true);
+    expect(isCaseResolverOcrFilepath('/uploads/case-resolver/pdfs/scan.pdf')).toBe(true);
+    expect(isCaseResolverOcrFilepath('/uploads/case-resolver/files/readme.txt')).toBe(false);
   });
 
   it('resolves valid OCR file paths to disk and rejects invalid paths', () => {
-    const diskPath = resolveCaseResolverImageDiskPath(
-      '/uploads/case-resolver/images/scan.png'
-    );
+    const diskPath = resolveCaseResolverImageDiskPath('/uploads/case-resolver/images/scan.png');
     expect(diskPath).toBe(
-      path.resolve(
-        process.cwd(),
-        'public',
-        'uploads',
-        'case-resolver',
-        'images',
-        'scan.png'
-      )
+      path.resolve(process.cwd(), 'public', 'uploads', 'case-resolver', 'images', 'scan.png')
     );
 
-    const pdfPath = resolveCaseResolverOcrDiskPath(
-      '/uploads/case-resolver/pdfs/scan.pdf'
-    );
+    const pdfPath = resolveCaseResolverOcrDiskPath('/uploads/case-resolver/pdfs/scan.pdf');
     expect(pdfPath.kind).toBe('pdf');
     expect(pdfPath.diskPath).toBe(
-      path.resolve(
-        process.cwd(),
-        'public',
-        'uploads',
-        'case-resolver',
-        'pdfs',
-        'scan.pdf'
-      )
+      path.resolve(process.cwd(), 'public', 'uploads', 'case-resolver', 'pdfs', 'scan.pdf')
     );
-    expect(() =>
-      resolveCaseResolverImageDiskPath('/uploads/notes/scan.png')
-    ).toThrow('Only Case Resolver uploaded files are supported.');
+    expect(() => resolveCaseResolverImageDiskPath('/uploads/notes/scan.png')).toThrow(
+      'Only Case Resolver uploaded files are supported.'
+    );
   });
 });

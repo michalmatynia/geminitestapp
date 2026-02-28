@@ -4,18 +4,21 @@ import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Button, Input, Label } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 import { cn } from '@/shared/utils';
-import { 
-  CANVAS_RESIZE_DIRECTION_OPTIONS, 
-  CANVAS_RESIZE_MIN_PX, 
+import {
+  CANVAS_RESIZE_DIRECTION_OPTIONS,
+  CANVAS_RESIZE_MIN_PX,
   CANVAS_RESIZE_MAX_PX,
-  parseCanvasDimensionInput
+  parseCanvasDimensionInput,
 } from './right-sidebar-utils';
 import { useRightSidebarContext } from '../RightSidebarContext';
 import { useProjectsState, useProjectsActions } from '../../context/ProjectsContext';
 import { useSlotsState } from '../../context/SlotsContext';
 import { useUiState, useUiActions } from '../../context/UiContext';
 import { useMaskingState, useMaskingActions } from '../../context/MaskingContext';
-import { applyCanvasResizeLocalTransform, type CanvasResizeDirection } from '../../utils/canvas-resize';
+import {
+  applyCanvasResizeLocalTransform,
+  type CanvasResizeDirection,
+} from '@/shared/lib/ai/image-studio/utils/canvas-resize';
 import { useToast } from '@/shared/ui';
 
 export function CanvasResizeModal({
@@ -33,17 +36,17 @@ export function CanvasResizeModal({
   const { canvasImageOffset } = useUiState();
   const { setCanvasImageOffset, getPreviewCanvasImageFrame } = useUiActions();
   const { toast } = useToast();
-  const { 
-    canvasSizeLabel,
-    canvasSizePresetValue,
-  } = useRightSidebarContext();
+  const { canvasSizeLabel, canvasSizePresetValue } = useRightSidebarContext();
 
   const [widthDraft, setWidthDraft] = useState('');
   const [heightDraft, setHeightDraft] = useState('');
   const [direction, setDirection] = useState<CanvasResizeDirection>('down-right');
 
   const fallbackCanvasWidthPx = useMemo(() => workingSlot?.imageFile?.width ?? 1024, [workingSlot]);
-  const fallbackCanvasHeightPx = useMemo(() => workingSlot?.imageFile?.height ?? 1024, [workingSlot]);
+  const fallbackCanvasHeightPx = useMemo(
+    () => workingSlot?.imageFile?.height ?? 1024,
+    [workingSlot]
+  );
 
   useEffect(() => {
     if (isOpen) {
@@ -58,7 +61,9 @@ export function CanvasResizeModal({
   const heightValue = useMemo(() => parseCanvasDimensionInput(heightDraft), [heightDraft]);
 
   const directionMeta = useMemo(
-    () => CANVAS_RESIZE_DIRECTION_OPTIONS.find(d => d.value === direction) ?? CANVAS_RESIZE_DIRECTION_OPTIONS[8]!,
+    () =>
+      CANVAS_RESIZE_DIRECTION_OPTIONS.find((d) => d.value === direction) ??
+      CANVAS_RESIZE_DIRECTION_OPTIONS[8]!,
     [direction]
   );
 
@@ -82,9 +87,10 @@ export function CanvasResizeModal({
       direction,
       currentImageOffset: canvasImageOffset,
       currentImageFrame: getPreviewCanvasImageFrame()?.frame,
-      sourceAspectRatio: (workingSlot?.imageFile?.width && workingSlot?.imageFile?.height) 
-        ? workingSlot.imageFile.width / workingSlot.imageFile.height 
-        : null,
+      sourceAspectRatio:
+        workingSlot?.imageFile?.width && workingSlot?.imageFile?.height
+          ? workingSlot.imageFile.width / workingSlot.imageFile.height
+          : null,
     });
 
     try {
@@ -97,9 +103,28 @@ export function CanvasResizeModal({
       setCanvasImageOffset(transform.imageOffset);
       onClose();
     } catch (error) {
-      toast(error instanceof Error ? error.message : 'Failed to resize canvas.', { variant: 'error' });
+      toast(error instanceof Error ? error.message : 'Failed to resize canvas.', {
+        variant: 'error',
+      });
     }
-  }, [canSubmit, widthValue, heightValue, projectId, maskShapes, fallbackCanvasWidthPx, fallbackCanvasHeightPx, direction, canvasImageOffset, getPreviewCanvasImageFrame, workingSlot, handleResizeProjectCanvas, setMaskShapes, setCanvasImageOffset, onClose, toast]);
+  }, [
+    canSubmit,
+    widthValue,
+    heightValue,
+    projectId,
+    maskShapes,
+    fallbackCanvasWidthPx,
+    fallbackCanvasHeightPx,
+    direction,
+    canvasImageOffset,
+    getPreviewCanvasImageFrame,
+    workingSlot,
+    handleResizeProjectCanvas,
+    setMaskShapes,
+    setCanvasImageOffset,
+    onClose,
+    toast,
+  ]);
 
   return (
     <DetailModal
@@ -121,7 +146,9 @@ export function CanvasResizeModal({
           <Button
             size='xs'
             type='button'
-            onClick={() => { void handleSubmit(); }}
+            onClick={() => {
+              void handleSubmit();
+            }}
             disabled={!canSubmit}
             loading={resizeProjectCanvasMutation.isPending}
             loadingText='Applying...'
@@ -132,9 +159,7 @@ export function CanvasResizeModal({
       }
     >
       <div className='space-y-4 text-sm text-gray-200'>
-        <div className='text-xs text-gray-400'>
-          Current canvas: {canvasSizeLabel}
-        </div>
+        <div className='text-xs text-gray-400'>Current canvas: {canvasSizeLabel}</div>
 
         <div className='grid grid-cols-2 gap-3'>
           <div className='space-y-1'>
@@ -148,7 +173,12 @@ export function CanvasResizeModal({
               value={widthDraft}
               onChange={(e) => setWidthDraft(e.target.value)}
               className={cn('h-9', widthValue === null && 'border-red-400/60')}
-              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); void handleSubmit(); } }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  void handleSubmit();
+                }
+              }}
             />
           </div>
           <div className='space-y-1'>
@@ -162,7 +192,12 @@ export function CanvasResizeModal({
               value={heightDraft}
               onChange={(e) => setHeightDraft(e.target.value)}
               className={cn('h-9', heightValue === null && 'border-red-400/60')}
-              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); void handleSubmit(); } }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  void handleSubmit();
+                }
+              }}
             />
           </div>
         </div>
@@ -181,7 +216,8 @@ export function CanvasResizeModal({
                   onClick={() => setDirection(opt.value)}
                   className={cn(
                     'h-10 px-2 text-xs',
-                    selected && 'border-cyan-400/70 bg-cyan-500/20 text-cyan-100 hover:bg-cyan-500/30'
+                    selected &&
+                      'border-cyan-400/70 bg-cyan-500/20 text-cyan-100 hover:bg-cyan-500/30'
                   )}
                   title={opt.label}
                   aria-label={opt.label}
@@ -191,9 +227,7 @@ export function CanvasResizeModal({
               );
             })}
           </div>
-          <div className='text-[11px] text-gray-500'>
-            {directionMeta.description}
-          </div>
+          <div className='text-[11px] text-gray-500'>{directionMeta.description}</div>
         </div>
 
         <div className='rounded border border-border/60 bg-card/30 p-3 text-xs text-gray-400'>
@@ -203,9 +237,7 @@ export function CanvasResizeModal({
               ? `${widthValue} x ${heightValue}`
               : 'Invalid dimensions'}
           </div>
-          <div className='mt-1'>
-            Direction: {directionMeta.label}
-          </div>
+          <div className='mt-1'>Direction: {directionMeta.label}</div>
         </div>
       </div>
     </DetailModal>

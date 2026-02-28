@@ -24,10 +24,16 @@ interface VectorOverlayProps {
   className?: string;
 }
 
-export function VectorOverlay({ request, onClose, className }: VectorOverlayProps): React.JSX.Element {
+export function VectorOverlay({
+  request,
+  onClose,
+  className,
+}: VectorOverlayProps): React.JSX.Element {
   const [tool, setTool] = useState<VectorToolMode>('select');
   const [shapes, setShapes] = useState<VectorShape[]>(request.initialShapes ?? []);
-  const [activeShapeId, setActiveShapeId] = useState<string | null>(request.initialShapes?.[0]?.id ?? null);
+  const [activeShapeId, setActiveShapeId] = useState<string | null>(
+    request.initialShapes?.[0]?.id ?? null
+  );
   const [selectedPointIndex, setSelectedPointIndex] = useState<number | null>(null);
   const [brushRadius] = useState<number>(8);
 
@@ -62,7 +68,9 @@ export function VectorOverlay({ request, onClose, className }: VectorOverlayProp
     if (!activeShapeId) return;
     setShapes((prev: VectorShape[]) =>
       prev.map((shape: VectorShape) =>
-        shape.id === activeShapeId ? { ...shape, points: shape.points.slice(0, -1), closed: false } : shape
+        shape.id === activeShapeId
+          ? { ...shape, points: shape.points.slice(0, -1), closed: false }
+          : shape
       )
     );
   }, [activeShapeId]);
@@ -115,45 +123,48 @@ export function VectorOverlay({ request, onClose, className }: VectorOverlayProp
     );
   }, [activeShapeId]);
 
-  const contextValue = useMemo(() => ({
-    shapes,
-    tool,
-    activeShapeId,
-    selectedPointIndex,
-    brushRadius,
-    imageSrc: null,
-    allowWithoutImage: true,
-    showEmptyState: false,
-    emptyStateLabel: '',
-    setShapes,
-    setTool,
-    setActiveShapeId,
-    setSelectedPointIndex,
-    onSmooth: handleSmooth,
-    onSimplify: handleSimplify,
-    onUndo: handleUndo,
-    onClear: handleClear,
-    onCloseShape: handleCloseShape,
-    onDetach: handleDetach,
-    disableUndo: !activeShapeId,
-    disableClose: !activeShapeId,
-    disableDetach: !activeShapeId,
-    disableClear: shapes.length === 0,
-    disableSmooth: !activeShapeId,
-    disableSimplify: !activeShapeId,
-  }), [
-    shapes,
-    tool,
-    activeShapeId,
-    selectedPointIndex,
-    brushRadius,
-    handleSmooth,
-    handleSimplify,
-    handleUndo,
-    handleClear,
-    handleCloseShape,
-    handleDetach,
-  ]);
+  const contextValue = useMemo(
+    () => ({
+      shapes,
+      tool,
+      activeShapeId,
+      selectedPointIndex,
+      brushRadius,
+      imageSrc: null,
+      allowWithoutImage: true,
+      showEmptyState: false,
+      emptyStateLabel: '',
+      setShapes,
+      setTool,
+      setActiveShapeId,
+      setSelectedPointIndex,
+      onSmooth: handleSmooth,
+      onSimplify: handleSimplify,
+      onUndo: handleUndo,
+      onClear: handleClear,
+      onCloseShape: handleCloseShape,
+      onDetach: handleDetach,
+      disableUndo: !activeShapeId,
+      disableClose: !activeShapeId,
+      disableDetach: !activeShapeId,
+      disableClear: shapes.length === 0,
+      disableSmooth: !activeShapeId,
+      disableSimplify: !activeShapeId,
+    }),
+    [
+      shapes,
+      tool,
+      activeShapeId,
+      selectedPointIndex,
+      brushRadius,
+      handleSmooth,
+      handleSimplify,
+      handleUndo,
+      handleClear,
+      handleCloseShape,
+      handleDetach,
+    ]
+  );
 
   return (
     <VectorDrawingProvider value={contextValue}>
@@ -163,9 +174,7 @@ export function VectorOverlay({ request, onClose, className }: VectorOverlayProp
           className
         )}
       >
-        <VectorDrawingCanvas
-          className='absolute inset-0 border-0 bg-transparent'
-        />
+        <VectorDrawingCanvas className='absolute inset-0 border-0 bg-transparent' />
 
         <div className='absolute left-4 top-4 z-10 flex max-w-[70%] flex-col gap-1 rounded-xl border border-border/60 bg-slate-950/80 px-3 py-2 text-xs text-gray-200 shadow-lg'>
           <div className='flex items-center gap-2'>
@@ -188,14 +197,23 @@ export function VectorOverlay({ request, onClose, className }: VectorOverlayProp
           <Button type='button' size='sm' onClick={handleApply} disabled={!hasPath}>
             Apply Path
           </Button>
-          <Button type='button' size='icon' variant='ghost' onClick={handleCancel} aria-label='Close'>
+          <Button
+            type='button'
+            size='icon'
+            variant='ghost'
+            onClick={handleCancel}
+            aria-label='Close'
+          >
             <X className='size-4' />
           </Button>
         </div>
 
         <div className='absolute right-4 bottom-4 z-10 max-w-[40%] rounded-xl border border-border/60 bg-slate-950/80 px-3 py-2 text-[10px] text-gray-300 shadow-lg'>
           <div className='text-[10px] uppercase tracking-[0.2em] text-gray-500'>Path Preview</div>
-          <div className='mt-1 truncate' title={hasPath ? pathPreview : 'Draw a path to generate SVG data.'}>
+          <div
+            className='mt-1 truncate'
+            title={hasPath ? pathPreview : 'Draw a path to generate SVG data.'}
+          >
             {hasPath ? pathPreview : 'Draw a path to generate SVG data.'}
           </div>
         </div>

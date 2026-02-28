@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { PromptValidationRule } from '@/shared/lib/prompt-engine/settings';
+import type { PromptValidationRule } from '@/features/prompt-engine/settings';
 import {
   promptExploderCreateListItem as createListItem,
   promptExploderAddBlankListItem as addBlankListItem,
@@ -13,30 +13,33 @@ import {
 } from '@/features/prompt-exploder/helpers/segment-helpers';
 import type { PromptExploderSegment } from '@/shared/contracts/prompt-exploder';
 
-const makeSegment = (overrides: Partial<PromptExploderSegment> & { id: string }): PromptExploderSegment => ({
-  type: 'assigned_text',
-  title: overrides.id,
-  includeInOutput: true,
-  text: '',
-  raw: '',
-  code: null,
-  condition: null,
-  items: [],
-  listItems: [],
-  subsections: [],
-  paramsText: '',
-  paramsObject: null,
-  paramUiControls: {},
-  paramComments: {},
-  paramDescriptions: {},
-  matchedPatternIds: [],
-  matchedPatternLabels: [],
-  matchedSequenceLabels: [],
-  confidence: 1,
-  validationResults: [],
-  segments: [],
-  ...overrides,
-}) as any;
+const makeSegment = (
+  overrides: Partial<PromptExploderSegment> & { id: string }
+): PromptExploderSegment =>
+  ({
+    type: 'assigned_text',
+    title: overrides.id,
+    includeInOutput: true,
+    text: '',
+    raw: '',
+    code: null,
+    condition: null,
+    items: [],
+    listItems: [],
+    subsections: [],
+    paramsText: '',
+    paramsObject: null,
+    paramUiControls: {},
+    paramComments: {},
+    paramDescriptions: {},
+    matchedPatternIds: [],
+    matchedPatternLabels: [],
+    matchedSequenceLabels: [],
+    confidence: 1,
+    validationResults: [],
+    segments: [],
+    ...overrides,
+  }) as any;
 
 describe('createListItem', () => {
   it('creates item with default text', () => {
@@ -99,21 +102,33 @@ describe('createManualBindingId', () => {
 
 describe('formatSubsectionLabel', () => {
   it('returns title for subsection without code', () => {
-    expect(formatSubsectionLabel({ id: '1', title: 'My Section', code: null, items: [], condition: null })).toBe(
-      'My Section'
-    );
+    expect(
+      formatSubsectionLabel({
+        id: '1',
+        title: 'My Section',
+        code: null,
+        items: [],
+        condition: null,
+      })
+    ).toBe('My Section');
   });
 
   it('includes code prefix when present', () => {
-    expect(formatSubsectionLabel({ id: '1', title: 'My Section', code: 'A1', items: [], condition: null })).toBe(
-      '[A1] My Section'
-    );
+    expect(
+      formatSubsectionLabel({
+        id: '1',
+        title: 'My Section',
+        code: 'A1',
+        items: [],
+        condition: null,
+      })
+    ).toBe('[A1] My Section');
   });
 
   it('uses fallback for empty title', () => {
-    expect(formatSubsectionLabel({ id: '1', title: '', code: null, items: [], condition: null })).toBe(
-      'Untitled subsection'
-    );
+    expect(
+      formatSubsectionLabel({ id: '1', title: '', code: null, items: [], condition: null })
+    ).toBe('Untitled subsection');
   });
 });
 
@@ -167,7 +182,10 @@ describe('createApprovalDraftFromSegment', () => {
 
 describe('isPromptExploderManagedRule', () => {
   it('returns true for rules scoped to prompt_exploder', () => {
-    const rule = { id: 'test', appliesToScopes: ['prompt_exploder'] } as unknown as PromptValidationRule;
+    const rule = {
+      id: 'test',
+      appliesToScopes: ['prompt_exploder'],
+    } as unknown as PromptValidationRule;
     expect(isPromptExploderManagedRule(rule)).toBe(true);
   });
 

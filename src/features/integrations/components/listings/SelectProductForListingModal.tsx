@@ -8,7 +8,10 @@ import { FormModal } from '@/shared/ui';
 
 import { useProductSelectionForm } from './hooks/useProductSelectionForm';
 import { SelectProductForListingModalProvider } from './select-product-modal/context/SelectProductForListingModalContext';
-import { SelectProductForListingModalViewProvider, useSelectProductForListingModalView } from './select-product-modal/context/SelectProductForListingModalViewContext';
+import {
+  SelectProductForListingModalViewProvider,
+  useSelectProductForListingModalView,
+} from './select-product-modal/context/SelectProductForListingModalViewContext';
 import { IntegrationSettingsSection } from './select-product-modal/IntegrationSettingsSection';
 import { ProductListSection } from './select-product-modal/ProductListSection';
 import { ListingSettingsProvider } from '../../context/ListingSettingsContext';
@@ -69,14 +72,10 @@ function SelectProductForListingModalContent(): React.JSX.Element {
   );
 }
 
-export function SelectProductForListingModal(props: SelectProductForListingModalProps): React.JSX.Element | null {
-  const {
-    isOpen,
-    initialIntegrationId,
-    initialConnectionId,
-    onClose,
-    onSuccess,
-  } = props;
+export function SelectProductForListingModal(
+  props: SelectProductForListingModalProps
+): React.JSX.Element | null {
+  const { isOpen, initialIntegrationId, initialConnectionId, onClose, onSuccess } = props;
 
   if (!isOpen) return null;
 

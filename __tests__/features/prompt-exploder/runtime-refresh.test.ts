@@ -1,4 +1,4 @@
-import type { PromptValidationRule } from '@/shared/lib/prompt-engine/settings';
+import type { PromptValidationRule } from '@/features/prompt-engine/settings';
 import {
   buildRuntimeRulesForReexplode,
   buildRuntimeTemplatesForReexplode,
@@ -105,10 +105,7 @@ describe('prompt exploder runtime refresh', () => {
   });
 
   it('builds runtime rules with profile-aware inclusion of applied rules', () => {
-    const baseRules = [
-      buildRegexRule('base.a', '\\ba\\b'),
-      buildRegexRule('base.b', '\\bb\\b'),
-    ];
+    const baseRules = [buildRegexRule('base.a', '\\ba\\b'), buildRegexRule('base.b', '\\bb\\b')];
     const applied = [buildRegexRule('base.b', '\\bnew-b\\b')];
 
     const patternPackOnly = buildRuntimeRulesForReexplode({

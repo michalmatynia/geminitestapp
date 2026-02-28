@@ -17,8 +17,21 @@ import {
   getIssueReplacementPreview,
   type FieldValidatorIssue,
 } from '@/features/products/validation-engine/core';
-import { ProductFormData, CatalogRecord, PriceGroupWithDetails, ProductCategory } from '@/shared/contracts/products';
-import { Button, SelectSimple, FormSection, FormField, StandardDataTablePanel, StatusBadge, Alert } from '@/shared/ui';
+import {
+  ProductFormData,
+  CatalogRecord,
+  PriceGroupWithDetails,
+  ProductCategory,
+} from '@/shared/contracts/products';
+import {
+  Button,
+  SelectSimple,
+  FormSection,
+  FormField,
+  StandardDataTablePanel,
+  StatusBadge,
+  Alert,
+} from '@/shared/ui';
 
 import { ValidatedField } from './ValidatedField';
 import { ValidatorIssueHint } from './ValidatorIssueHint';
@@ -62,7 +75,7 @@ const CategoryIssueHintRow = memo(function CategoryIssueHintRow({
     if (!nextValue || nextValue === currentValue) return;
     setCategoryId(nextValue);
   }, [acceptIssue, issue, selectedCategoryId, setCategoryId]);
-  
+
   const onDeny = useCallback((): void => {
     void denyIssue({
       fieldName: 'categoryId',
@@ -97,9 +110,7 @@ export default function ProductFormOther(): React.JSX.Element {
     filteredPriceGroups,
   } = useProductFormMetadata();
 
-  const {
-    product,
-  } = useProductFormCore();
+  const { product } = useProductFormCore();
 
   // Subscribe only to the fields this component needs — avoids cascade re-renders
   // triggered by unrelated fields (name, description, etc.).
@@ -152,7 +163,9 @@ export default function ProductFormOther(): React.JSX.Element {
       };
     }
 
-    const sourceGroup = filteredPriceGroups.find((g: PriceGroupWithDetails) => g.id === group.sourceGroupId);
+    const sourceGroup = filteredPriceGroups.find(
+      (g: PriceGroupWithDetails) => g.id === group.sourceGroupId
+    );
     if (!sourceGroup) {
       return {
         ...group,
@@ -196,16 +209,19 @@ export default function ProductFormOther(): React.JSX.Element {
             id='defaultPriceGroupId'
             description={isPriceGroupAutoAssigned ? 'Auto-assigned from catalog' : undefined}
           >
-            <SelectSimple size='sm'
-              onValueChange={(value: string) => setValue('defaultPriceGroupId', value, {
-                shouldDirty: true,
-                shouldTouch: true,
-              })}
+            <SelectSimple
+              size='sm'
+              onValueChange={(value: string) =>
+                setValue('defaultPriceGroupId', value, {
+                  shouldDirty: true,
+                  shouldTouch: true,
+                })
+              }
               value={selectedDefaultPriceGroupId || ''}
               disabled={isPriceGroupAutoAssigned}
               options={filteredPriceGroups.map((group: PriceGroupWithDetails) => ({
                 value: group.id,
-                label: `${group.name}${group.isDefault ? ' (Default)' : ''} (${group.currency?.code ?? group.currencyCode})`
+                label: `${group.name}${group.isDefault ? ' (Default)' : ''} (${group.currency?.code ?? group.currencyCode})`,
               }))}
               placeholder='Select default price group'
               triggerClassName={isPriceGroupAutoAssigned ? 'cursor-not-allowed opacity-60' : ''}
@@ -223,7 +239,13 @@ export default function ProductFormOther(): React.JSX.Element {
                     header: 'Price Group',
                     cell: ({ row }: { row: { original: PriceGroupWithCalculatedPrice } }) => (
                       <div className='flex items-center gap-2'>
-                        <span className={row.original.id === selectedDefaultPriceGroupId ? 'font-semibold text-white' : 'text-gray-300'}>
+                        <span
+                          className={
+                            row.original.id === selectedDefaultPriceGroupId
+                              ? 'font-semibold text-white'
+                              : 'text-gray-300'
+                          }
+                        >
                           {row.original.name}
                         </span>
                         {row.original.id === selectedDefaultPriceGroupId && (
@@ -240,12 +262,16 @@ export default function ProductFormOther(): React.JSX.Element {
                           </span>
                         )}
                       </div>
-                    )
+                    ),
                   },
                   {
                     accessorKey: 'currencyCode',
                     header: 'Currency',
-                    cell: ({ row }: { row: { original: PriceGroupWithCalculatedPrice } }) => <span className='text-gray-500'>{row.original.currency?.code ?? row.original.currencyCode}</span>
+                    cell: ({ row }: { row: { original: PriceGroupWithCalculatedPrice } }) => (
+                      <span className='text-gray-500'>
+                        {row.original.currency?.code ?? row.original.currencyCode}
+                      </span>
+                    ),
                   },
                   {
                     accessorKey: 'calculatedPrice',
@@ -253,15 +279,17 @@ export default function ProductFormOther(): React.JSX.Element {
                     cell: ({ row }: { row: { original: PriceGroupWithCalculatedPrice } }) => (
                       <div className='text-right font-mono'>
                         {row.original.calculatedPrice !== null ? (
-                          <span className={row.original.isCalculated ? 'text-blue-400' : 'text-white'}>
+                          <span
+                            className={row.original.isCalculated ? 'text-blue-400' : 'text-white'}
+                          >
                             {row.original.calculatedPrice.toFixed(2)}
                           </span>
                         ) : (
                           <span className='text-gray-600'>-</span>
                         )}
                       </div>
-                    )
-                  }
+                    ),
+                  },
                 ]}
                 data={priceGroupPrices}
                 variant='flat'
@@ -272,17 +300,9 @@ export default function ProductFormOther(): React.JSX.Element {
       )}
 
       <FormSection title='Organization' gridClassName='md:grid-cols-2'>
-        <ValidatedField
-          name='supplierName'
-          label='Supplier Name'
-          placeholder='e.g. Acme Corp'
-        />
+        <ValidatedField name='supplierName' label='Supplier Name' placeholder='e.g. Acme Corp' />
 
-        <ValidatedField
-          name='supplierLink'
-          label='Supplier Link'
-          placeholder='https://...'
-        />
+        <ValidatedField name='supplierLink' label='Supplier Link' placeholder='https://...' />
 
         <ValidatedField
           name='priceComment'
@@ -290,19 +310,12 @@ export default function ProductFormOther(): React.JSX.Element {
           placeholder='Internal notes about pricing'
         />
 
-        <ValidatedField
-          name='stock'
-          label='Stock'
-          type='number'
-          placeholder='0'
-        />
+        <ValidatedField name='stock' label='Stock' type='number' placeholder='0' />
       </FormSection>
 
       <FormSection title='Relationships' gridClassName='md:grid-cols-2'>
         <div className='space-y-4 md:col-span-2'>
-          <CatalogMultiSelectField
-            emptyMessage={catalogsError || 'No catalogs found'}
-          />
+          <CatalogMultiSelectField emptyMessage={catalogsError || 'No catalogs found'} />
 
           <CategorySingleSelectField
             disabled={!hasCatalogs}
@@ -312,10 +325,12 @@ export default function ProductFormOther(): React.JSX.Element {
             categoryIssueList.map((issue: FieldValidatorIssue) => {
               const currentCategoryLabel =
                 selectedCategoryName ||
-                (selectedCategoryId ? categoryNameById.get(selectedCategoryId) ?? selectedCategoryId : '(none)');
+                (selectedCategoryId
+                  ? (categoryNameById.get(selectedCategoryId) ?? selectedCategoryId)
+                  : '(none)');
               const replacementId = issue.replacementValue?.trim() ?? '';
               const proposedCategoryLabel = replacementId
-                ? categoryNameById.get(replacementId) ?? replacementId
+                ? (categoryNameById.get(replacementId) ?? replacementId)
                 : null;
               return (
                 <CategoryIssueHintRow
@@ -345,8 +360,7 @@ export default function ProductFormOther(): React.JSX.Element {
             placeholder={hasCatalogs ? 'Select tags' : 'Select a catalog first'}
           />
 
-          <ProducerMultiSelectField
-          />
+          <ProducerMultiSelectField />
         </div>
       </FormSection>
     </div>

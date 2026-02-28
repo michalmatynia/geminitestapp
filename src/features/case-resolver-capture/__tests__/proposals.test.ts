@@ -84,7 +84,8 @@ const createDatabase = (): FilemakerDatabase => ({
   emails: [],
   emailLinks: [],
   eventOrganizationLinks: [],
-});const createAddresserCandidate = (): PromptExploderCaseResolverPartyCandidate => ({
+});
+const createAddresserCandidate = (): PromptExploderCaseResolverPartyCandidate => ({
   id: 'cand-1',
   name: 'Michał Matynia',
   score: 1,
@@ -145,10 +146,12 @@ describe('case-resolver-capture proposals', () => {
     expect(state?.addresser?.sourceRole).toBe('addresser');
     expect(state?.addresser?.action).toBe('useMatched');
     expect(state?.addresser?.matchKind).toBe('party_and_address');
-    expect(state?.addresser?.existingReference).toEqual(expect.objectContaining({ 
-      kind: 'person', 
-      id: 'p-1',
-    }));
+    expect(state?.addresser?.existingReference).toEqual(
+      expect.objectContaining({
+        kind: 'person',
+        id: 'p-1',
+      })
+    );
     expect(state?.addresser?.existingAddressId).toBe('addr-1');
     expect(state?.addressee).toBeNull();
   });
@@ -189,12 +192,7 @@ describe('case-resolver-capture proposals', () => {
     settings.enabled = false;
 
     expect(
-      buildCaseResolverCaptureProposalState(
-        payload,
-        'file-1',
-        createDatabase(),
-        settings
-      )
+      buildCaseResolverCaptureProposalState(payload, 'file-1', createDatabase(), settings)
     ).toBeNull();
   });
 
@@ -299,10 +297,12 @@ describe('case-resolver-capture proposals', () => {
     );
 
     expect(state?.addresser?.action).toBe('useMatched');
-    expect(state?.addresser?.existingReference).toEqual(expect.objectContaining({ 
-      kind: 'person', 
-      id: 'p-1',
-    }));
+    expect(state?.addresser?.existingReference).toEqual(
+      expect.objectContaining({
+        kind: 'person',
+        id: 'p-1',
+      })
+    );
     expect(state?.addressee?.action).toBe('createInFilemaker');
     expect(state?.addressee?.existingReference).toBeNull();
   });
@@ -314,7 +314,8 @@ describe('case-resolver-capture proposals', () => {
       score: 1,
       role: 'addresser',
       displayName: 'Zakład Ubezpieczeń Społecznych Oddział w Szczecinie',
-      rawText: 'Zakład Ubezpieczeń Społecznych Oddział w Szczecinie\nul. Matejki 22\n70-530 Szczecin',
+      rawText:
+        'Zakład Ubezpieczeń Społecznych Oddział w Szczecinie\nul. Matejki 22\n70-530 Szczecin',
       kind: 'organization',
       organizationName: 'Zakład Ubezpieczeń Społecznych Oddział w Szczecinie',
       sourcePatternLabels: ['Case Resolver Extract: Addresser Organization Name'],
@@ -458,11 +459,9 @@ describe('case-resolver-capture proposals', () => {
       }
     );
 
-    expect(stripAcceptedDateLineFromText(sourceText, state)).toBe([
-      'Michał Matynia',
-      '',
-      'Wniosek o ponowne rozpatrzenie sprawy',
-    ].join('\n'));
+    expect(stripAcceptedDateLineFromText(sourceText, state)).toBe(
+      ['Michał Matynia', '', 'Wniosek o ponowne rozpatrzenie sprawy'].join('\n')
+    );
   });
 
   it('keeps detected date line when date action is keepText', () => {
@@ -623,12 +622,14 @@ describe('case-resolver-capture proposals', () => {
       }
     );
 
-    expect(stripAcceptedDateLineFromText(sourceText, state)).toBe([
-      'Michał Matynia',
-      '',
-      'Wniosek o ponowne rozpatrzenie sprawy',
-      'W dniu 25.01.2026 r. otrzymano pismo.',
-    ].join('\n'));
+    expect(stripAcceptedDateLineFromText(sourceText, state)).toBe(
+      [
+        'Michał Matynia',
+        '',
+        'Wniosek o ponowne rozpatrzenie sprawy',
+        'W dniu 25.01.2026 r. otrzymano pismo.',
+      ].join('\n')
+    );
   });
 
   it('removes accepted capture lines from HTML source text and reports cleanup stats', () => {
@@ -846,11 +847,9 @@ describe('case-resolver-capture proposals', () => {
     );
 
     const result = stripAcceptedCaptureContentFromTextWithReport(sourceText, state);
-    expect(result.text).toBe([
-      ...longPreface,
-      '',
-      'Wniosek o ponowne rozpatrzenie sprawy',
-    ].join('\n'));
+    expect(result.text).toBe(
+      [...longPreface, '', 'Wniosek o ponowne rozpatrzenie sprawy'].join('\n')
+    );
     expect(result.report.removedAddresserLineCount).toBeGreaterThanOrEqual(4);
     expect(result.report.removedAddressLineCount).toBeGreaterThanOrEqual(4);
   });

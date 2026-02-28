@@ -1,4 +1,3 @@
- 
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
@@ -12,17 +11,25 @@ interface QueryBatchConfig {
 
 // Hook for batching multiple queries into single requests
 export function useQueryBatching(config: QueryBatchConfig = {}): {
-  batchQuery: <TData = unknown>(queryKey: unknown[], queryFn: () => Promise<TData>) => Promise<TData>;
+  batchQuery: <TData = unknown>(
+    queryKey: unknown[],
+    queryFn: () => Promise<TData>
+  ) => Promise<TData>;
 } {
   const queryClient = useQueryClient();
-  const batchQueue = useRef<Map<string, {
-    queryKey: unknown[];
-    queryFn: () => Promise<unknown>;
-    resolve: (data: unknown) => void;
-    reject: (error: Error) => void;
-      }>>(new Map());
+  const batchQueue = useRef<
+    Map<
+      string,
+      {
+        queryKey: unknown[];
+        queryFn: () => Promise<unknown>;
+        resolve: (data: unknown) => void;
+        reject: (error: Error) => void;
+      }
+    >
+  >(new Map());
   const batchTimeout = useRef<NodeJS.Timeout | null>(null);
-  
+
   const maxBatchSize = config.maxBatchSize || 10;
   const batchDelay = config.batchDelay || 50;
 
@@ -33,12 +40,15 @@ export function useQueryBatching(config: QueryBatchConfig = {}): {
     batchQueue.current.clear();
 
     // Group by similar query patterns
-    const groups = batch.reduce((acc: Record<string, typeof batch>, item) => {
-      const pattern = JSON.stringify(item.queryKey).replace(/["'][^"']*["']/g, '""');
-      if (!acc[pattern]) acc[pattern] = [];
-      acc[pattern].push(item);
-      return acc;
-    }, {} as Record<string, typeof batch>);
+    const groups = batch.reduce(
+      (acc: Record<string, typeof batch>, item) => {
+        const pattern = JSON.stringify(item.queryKey).replace(/["'][^"']*["']/g, '""');
+        if (!acc[pattern]) acc[pattern] = [];
+        acc[pattern].push(item);
+        return acc;
+      },
+      {} as Record<string, typeof batch>
+    );
 
     // Process each group
     await Promise.all(
@@ -46,9 +56,9 @@ export function useQueryBatching(config: QueryBatchConfig = {}): {
         try {
           // For similar queries, batch them into a single request
           if (group.length > 1) {
-            const ids = group.map(item => 
-              String(item.queryKey[item.queryKey.length - 1])
-            ).filter(id => id && id !== 'undefined');
+            const ids = group
+              .map((item) => String(item.queryKey[item.queryKey.length - 1]))
+              .filter((id) => id && id !== 'undefined');
 
             const type = group[0]?.queryKey[0];
 
@@ -59,7 +69,7 @@ export function useQueryBatching(config: QueryBatchConfig = {}): {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ids, type }),
               });
-              const batchResult = await res.json() as Record<string, unknown>;
+              const batchResult = (await res.json()) as Record<string, unknown>;
 
               // Resolve individual queries
               group.forEach((item, index) => {
@@ -85,40 +95,40 @@ export function useQueryBatching(config: QueryBatchConfig = {}): {
             }
           }
         } catch (error) {
-          group.forEach(item => item.reject(error as Error));
+          group.forEach((item) => item.reject(error as Error));
         }
       })
     );
   }, [queryClient]);
 
-  const batchQuery = useCallback(<TData = unknown>(
-    queryKey: unknown[],
-    queryFn: () => Promise<TData>
-  ): Promise<TData> => {
-    return new Promise<TData>((resolve, reject) => {
-      const key = JSON.stringify(queryKey);
-      batchQueue.current.set(key, { 
-        queryKey, 
-        queryFn, 
-        resolve: resolve as (data: unknown) => void, 
-        reject 
-      });
+  const batchQuery = useCallback(
+    <TData = unknown>(queryKey: unknown[], queryFn: () => Promise<TData>): Promise<TData> => {
+      return new Promise<TData>((resolve, reject) => {
+        const key = JSON.stringify(queryKey);
+        batchQueue.current.set(key, {
+          queryKey,
+          queryFn,
+          resolve: resolve as (data: unknown) => void,
+          reject,
+        });
 
-      // Clear existing timeout
-      if (batchTimeout.current) {
-        clearTimeout(batchTimeout.current);
-      }
+        // Clear existing timeout
+        if (batchTimeout.current) {
+          clearTimeout(batchTimeout.current);
+        }
 
-      // Process batch when full or after delay
-      if (batchQueue.current.size >= maxBatchSize) {
-        void processBatch();
-      } else {
-        batchTimeout.current = setTimeout(() => {
+        // Process batch when full or after delay
+        if (batchQueue.current.size >= maxBatchSize) {
           void processBatch();
-        }, batchDelay);
-      }
-    });
-  }, [processBatch, maxBatchSize, batchDelay]);
+        } else {
+          batchTimeout.current = setTimeout(() => {
+            void processBatch();
+          }, batchDelay);
+        }
+      });
+    },
+    [processBatch, maxBatchSize, batchDelay]
+  );
 
   useEffect((): (() => void) => {
     return (): void => {
@@ -133,30 +143,33 @@ export function useQueryBatching(config: QueryBatchConfig = {}): {
 
 // Hook for query deduplication
 export function useQueryDeduplication(): {
-  deduplicatedQuery: <TData = unknown>(queryKey: unknown[], queryFn: () => Promise<TData>) => Promise<TData>;
-  } {
-  const activeQueries = useRef<Map<string, Promise<unknown>>>(new Map());
-
-  const deduplicatedQuery = useCallback(async <TData = unknown>(
+  deduplicatedQuery: <TData = unknown>(
     queryKey: unknown[],
     queryFn: () => Promise<TData>
-  ): Promise<TData> => {
-    const key = JSON.stringify(queryKey);
-    
-    // Return existing promise if query is already running
-    const existing = activeQueries.current.get(key);
-    if (existing) {
-      return existing as Promise<TData>;
-    }
+  ) => Promise<TData>;
+} {
+  const activeQueries = useRef<Map<string, Promise<unknown>>>(new Map());
 
-    // Create new promise and store it
-    const promise = queryFn().finally(() => {
-      activeQueries.current.delete(key);
-    });
+  const deduplicatedQuery = useCallback(
+    async <TData = unknown>(queryKey: unknown[], queryFn: () => Promise<TData>): Promise<TData> => {
+      const key = JSON.stringify(queryKey);
 
-    activeQueries.current.set(key, promise);
-    return promise;
-  }, []);
+      // Return existing promise if query is already running
+      const existing = activeQueries.current.get(key);
+      if (existing) {
+        return existing as Promise<TData>;
+      }
+
+      // Create new promise and store it
+      const promise = queryFn().finally(() => {
+        activeQueries.current.delete(key);
+      });
+
+      activeQueries.current.set(key, promise);
+      return promise;
+    },
+    []
+  );
 
   return { deduplicatedQuery };
 }

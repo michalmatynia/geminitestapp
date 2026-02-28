@@ -19,10 +19,19 @@ export function normalizeGridTemplates(input: unknown): GridTemplateRecord[] {
       const section = record.section;
       if (!section || typeof section !== 'object' || section.type !== 'Grid') return null;
       return {
-        id: typeof record.id === 'string' && record.id.length > 0 ? record.id : `grid-template-${index + 1}`,
-        name: typeof record.name === 'string' && record.name.trim().length > 0 ? record.name.trim() : `Grid template ${index + 1}`,
+        id:
+          typeof record.id === 'string' && record.id.length > 0
+            ? record.id
+            : `grid-template-${index + 1}`,
+        name:
+          typeof record.name === 'string' && record.name.trim().length > 0
+            ? record.name.trim()
+            : `Grid template ${index + 1}`,
         description: typeof record.description === 'string' ? record.description : '',
-        createdAt: typeof record.createdAt === 'string' && record.createdAt.length > 0 ? record.createdAt : new Date().toISOString(),
+        createdAt:
+          typeof record.createdAt === 'string' && record.createdAt.length > 0
+            ? record.createdAt
+            : new Date().toISOString(),
         section,
       };
     })

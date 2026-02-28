@@ -36,7 +36,9 @@ export function AllegroSettings(): React.JSX.Element {
           <Checkbox
             className='h-4 w-4 accent-emerald-400'
             checked={Boolean(activeConnection?.allegroUseSandbox)}
-            onCheckedChange={(checked: boolean) => { void handleAllegroSandboxToggle(Boolean(checked)); }}
+            onCheckedChange={(checked: boolean) => {
+              void handleAllegroSandboxToggle(Boolean(checked));
+            }}
             disabled={!activeConnection || savingAllegroSandbox}
           />
         </div>
@@ -61,17 +63,15 @@ export function AllegroSettings(): React.JSX.Element {
             </p>
           </FormSection>
           <div className='flex flex-wrap items-center gap-3'>
-            <Button
-              type='button'
-              variant='default'
-              onClick={handleAllegroAuthorize}
-            >
+            <Button type='button' variant='default' onClick={handleAllegroAuthorize}>
               {allegroConnected ? 'Reauthorize' : 'Connect Allegro'}
             </Button>
             <Button
               type='button'
               variant='outline'
-              onClick={() => { void handleAllegroSandboxConnect(); }}
+              onClick={() => {
+                void handleAllegroSandboxConnect();
+              }}
               className='border-amber-500/50 text-amber-200 hover:border-amber-400'
               disabled={savingAllegroSandbox}
             >
@@ -86,7 +86,9 @@ export function AllegroSettings(): React.JSX.Element {
               <Button
                 type='button'
                 variant='outline'
-                onClick={() => { void handleAllegroDisconnect(); }}
+                onClick={() => {
+                  void handleAllegroDisconnect();
+                }}
               >
                 Disconnect
               </Button>

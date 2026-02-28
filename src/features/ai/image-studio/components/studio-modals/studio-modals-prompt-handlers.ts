@@ -1,7 +1,6 @@
 import type { Toast } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 
-
 import {
   buildHeuristicControls,
   type PromptDiffLine,
@@ -10,8 +9,8 @@ import {
   type PromptExtractValidationIssue,
   type UiExtractorSuggestion,
 } from './prompt-extract-utils';
-import { isParamUiControl, type ParamUiControl } from '../../utils/param-ui';
-import { flattenParams, inferParamSpecs } from '../../utils/prompt-params';
+import { isParamUiControl, type ParamUiControl } from '@/shared/lib/ai/image-studio/utils/param-ui';
+import { flattenParams, inferParamSpecs } from '@/shared/lib/ai/image-studio/utils/prompt-params';
 import { type ParamSpec } from '@/shared/contracts/prompt-engine';
 
 import type { Dispatch, SetStateAction } from 'react';
@@ -45,10 +44,12 @@ type PromptExtractionHandlersDeps = {
   setPreviewControls: (value: Record<string, ParamUiControl>) => void;
   setPreviewParams: (value: Record<string, unknown> | null) => void;
   setPreviewSpecs: (value: Record<string, ParamSpec> | null) => void;
-  setPreviewValidation: (value: {
-    before: PromptExtractValidationIssue[];
-    after: PromptExtractValidationIssue[];
-  } | null) => void;
+  setPreviewValidation: (
+    value: {
+      before: PromptExtractValidationIssue[];
+      after: PromptExtractValidationIssue[];
+    } | null
+  ) => void;
   setPromptText: (prompt: string) => void;
   setSelectedExtractHistoryId: (value: string | null) => void;
   studioSettings: StudioPromptExtractionSettings;
@@ -120,8 +121,7 @@ export const createPromptExtractionHandlers = (
         modeRequested: result.modeRequested ?? 'programmatic',
         fallbackUsed: Boolean(result.fallbackUsed),
         autofixApplied:
-          Boolean(result.diagnostics?.autofixApplied) ||
-          result.source === 'programmatic_autofix',
+          Boolean(result.diagnostics?.autofixApplied) || result.source === 'programmatic_autofix',
         promptBefore,
         promptAfter,
         validationBeforeCount: before.length,
@@ -174,11 +174,10 @@ export const createPromptExtractionHandlers = (
       appendExtractHistoryEntry({
         runKind: 'smart',
         source: result.source ?? null,
-        modeRequested: result.modeRequested ?? (deps.studioSettings.promptExtraction.mode),
+        modeRequested: result.modeRequested ?? deps.studioSettings.promptExtraction.mode,
         fallbackUsed: Boolean(result.fallbackUsed),
         autofixApplied:
-          Boolean(result.diagnostics?.autofixApplied) ||
-          result.source === 'programmatic_autofix',
+          Boolean(result.diagnostics?.autofixApplied) || result.source === 'programmatic_autofix',
         promptBefore,
         promptAfter,
         validationBeforeCount: before.length,
@@ -245,8 +244,7 @@ export const createPromptExtractionHandlers = (
         modeRequested: result.modeRequested ?? 'gpt',
         fallbackUsed: Boolean(result.fallbackUsed),
         autofixApplied:
-          Boolean(result.diagnostics?.autofixApplied) ||
-          result.source === 'programmatic_autofix',
+          Boolean(result.diagnostics?.autofixApplied) || result.source === 'programmatic_autofix',
         promptBefore,
         promptAfter,
         validationBeforeCount: before.length,
@@ -283,20 +281,21 @@ export const createPromptExtractionHandlers = (
 
       if (mode === 'ai' || mode === 'both') {
         const flattened = flattenParams(deps.previewParams).filter((leaf) => Boolean(leaf.path));
-        const response = await api.post<{ suggestions?: Array<{ path?: string; control?: string }> }>(
-          '/api/image-studio/ui-extractor',
-          {
-            prompt: deps.extractDraftPrompt,
-            params: flattened.map((leaf) => ({
-              path: leaf.path,
-              value: leaf.value,
-              spec: deps.previewSpecs?.[leaf.path] ?? null,
-            })),
-            mode,
-          }
-        );
+        const response = await api.post<{
+          suggestions?: Array<{ path?: string; control?: string }>;
+        }>('/api/image-studio/ui-extractor', {
+          prompt: deps.extractDraftPrompt,
+          params: flattened.map((leaf) => ({
+            path: leaf.path,
+            value: leaf.value,
+            spec: deps.previewSpecs?.[leaf.path] ?? null,
+          })),
+          mode,
+        });
         aiSuggestions = (response.suggestions ?? [])
-          .filter((item): item is { path: string; control: string } => Boolean(item?.path && item?.control))
+          .filter((item): item is { path: string; control: string } =>
+            Boolean(item?.path && item?.control)
+          )
           .map((item) => ({ path: item.path, control: item.control as ParamUiControl }))
           .filter((item) => isParamUiControl(item.control));
       }
@@ -343,10 +342,7 @@ export const createPromptExtractionHandlers = (
   };
 };
 
-export const copyCardIdToClipboard = async (
-  cardId: string,
-  toast: Toast
-): Promise<void> => {
+export const copyCardIdToClipboard = async (cardId: string, toast: Toast): Promise<void> => {
   const normalizedCardId = cardId.trim();
   if (!normalizedCardId) return;
   if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) {
@@ -361,6 +357,4 @@ export const copyCardIdToClipboard = async (
   }
 };
 
-export const toPromptDiffLines = (
-  lines: PromptDiffLine[]
-): PromptDiffLine[] => lines;
+export const toPromptDiffLines = (lines: PromptDiffLine[]): PromptDiffLine[] => lines;

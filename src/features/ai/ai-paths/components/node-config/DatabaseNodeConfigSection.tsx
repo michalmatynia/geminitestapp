@@ -8,12 +8,7 @@ import {
   isProviderActionCategorySupported,
   resolveProviderAction,
 } from '@/shared/lib/ai-paths/core/utils/provider-actions';
-import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger, 
-} from '@/shared/ui';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui';
 
 import { DatabaseConstructorContextProvider } from './database/DatabaseConstructorContext';
 import { DatabaseConstructorTab } from './database/DatabaseConstructorTab';
@@ -35,7 +30,7 @@ import {
   type QueryValidationResult,
 } from './database/query-utils';
 import { useDatabaseNodeConfigState } from '../../hooks/useDatabaseNodeConfigState';
-import { resolveNodeLabel } from '../../utils/ui-utils';
+import { resolveNodeLabel } from '@/features/ai/ai-paths/utils/ui-utils';
 
 import type { DatabaseConstructorContextValue } from './database/DatabaseConstructorContext';
 import type { DatabaseQueryInputControlsContextValue } from './database/DatabaseQueryInputControlsContext';
@@ -76,7 +71,8 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
     : state.queryTemplateValue;
   const queryPlaceholder = state.isUpdateAction
     ? getUpdatePlaceholderByAction(resolvedAction)
-    : getQueryPlaceholderByAction(resolvedAction) || getQueryPlaceholderByOperation(state.operation);
+    : getQueryPlaceholderByAction(resolvedAction) ||
+      getQueryPlaceholderByOperation(state.operation);
   const filterPlaceholder = getQueryPlaceholderByAction(resolvedAction);
   const validationTargetTemplate = activeQueryTemplateValue;
   const queryValidation: QueryValidationResult = React.useMemo(() => {
@@ -113,7 +109,7 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
     schemaSyncing: state.schemaSyncMutation.isPending,
     schemaLoading: state.schemaQuery.isFetching,
     mapInputsToTargets: state.mapInputsToTargets,
-    bundleKeys: state.bundleKeys, 
+    bundleKeys: state.bundleKeys,
     aiPromptRef: state.aiPromptRef,
     mappings: state.mappings,
     updateMapping: state.updateMapping,
@@ -144,7 +140,10 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
     filterPlaceholder,
     onFilterChange: (val) => state.updateQueryConfig({ queryTemplate: val }),
     runDry: state.databaseConfig.dryRun || false,
-    onToggleRunDry: () => state.updateSelectedNodeConfig({ database: { ...state.databaseConfig, dryRun: !state.databaseConfig.dryRun } }),
+    onToggleRunDry: () =>
+      state.updateSelectedNodeConfig({
+        database: { ...state.databaseConfig, dryRun: !state.databaseConfig.dryRun },
+      }),
     queryValidation,
     queryFormatterEnabled: state.queryFormatterEnabled,
     queryValidatorEnabled: state.queryValidatorEnabled,
@@ -160,12 +159,12 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
         state.resolvedProvider === 'mongodb'
           ? formatAndFixMongoQuery(targetValue)
           : (() => {
-            try {
-              return JSON.stringify(JSON.parse(targetValue), null, 2);
-            } catch {
-              return targetValue;
-            }
-          })();
+              try {
+                return JSON.stringify(JSON.parse(targetValue), null, 2);
+              } catch {
+                return targetValue;
+              }
+            })();
       if (state.isUpdateAction) {
         state.updateSelectedNodeConfig({
           database: {
@@ -186,7 +185,9 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
       );
     },
     onToggleValidator: () => state.setQueryValidatorEnabled(!state.queryValidatorEnabled),
-    onRunQuery: () => { void state.handleRunQuery(); },
+    onRunQuery: () => {
+      void state.handleRunQuery();
+    },
     onQueryChange: (val) => {
       if (state.isUpdateAction) {
         state.updateSelectedNodeConfig({
@@ -217,13 +218,19 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
           <div className='space-y-4'>
             <div className='flex flex-wrap items-center justify-between gap-2'>
               <h3 className='text-sm font-medium text-white'>
-              Database Node: {resolveNodeLabel(selectedNode.type, (selectedNode.config?.database as { label?: string } | undefined)?.label)}
+                Database Node:{' '}
+                {resolveNodeLabel(
+                  selectedNode.type,
+                  (selectedNode.config?.database as { label?: string } | undefined)?.label
+                )}
               </h3>
             </div>
 
             <Tabs
               value={state.databaseTab}
-              onValueChange={(value: string) => state.setDatabaseTab(value as 'settings' | 'constructor' | 'presets')}
+              onValueChange={(value: string) =>
+                state.setDatabaseTab(value as 'settings' | 'constructor' | 'presets')
+              }
               className='space-y-4'
             >
               <TabsList className='justify-start border border-border bg-card/60'>
@@ -242,29 +249,37 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
               </TabsContent>
 
               <TabsContent value='presets'>
-                <DatabasePresetsTabContextProvider value={{
-                  builtInPresets: state.presetOptions,
-                  onApplyBuiltInPreset: state.applyDatabasePreset,
-                  onRenameQueryPreset: state.handleRenameQueryPreset,
-                  onDeleteQueryPreset: state.handleDeleteQueryPresetById,
-                }}>
+                <DatabasePresetsTabContextProvider
+                  value={{
+                    builtInPresets: state.presetOptions,
+                    onApplyBuiltInPreset: state.applyDatabasePreset,
+                    onRenameQueryPreset: state.handleRenameQueryPreset,
+                    onDeleteQueryPreset: state.handleDeleteQueryPresetById,
+                  }}
+                >
                   <DatabasePresetsTab />
                 </DatabasePresetsTabContextProvider>
               </TabsContent>
             </Tabs>
 
-            <DatabaseSaveQueryPresetDialogContextProvider value={{
-              open: state.saveQueryPresetModalOpen,
-              onOpenChange: (open) => { if (!open) state.closeSaveQueryPresetModal(); },
-              newQueryPresetName: state.newQueryPresetName,
-              setNewQueryPresetName: state.setNewQueryPresetName,
-              queryTemplateValue: state.queryTemplateValue,
-              onCancel: state.closeSaveQueryPresetModal,
-              onSave: () => { void state.handleSaveQueryPreset(); },
-            }}>
+            <DatabaseSaveQueryPresetDialogContextProvider
+              value={{
+                open: state.saveQueryPresetModalOpen,
+                onOpenChange: (open) => {
+                  if (!open) state.closeSaveQueryPresetModal();
+                },
+                newQueryPresetName: state.newQueryPresetName,
+                setNewQueryPresetName: state.setNewQueryPresetName,
+                queryTemplateValue: state.queryTemplateValue,
+                onCancel: state.closeSaveQueryPresetModal,
+                onSave: () => {
+                  void state.handleSaveQueryPreset();
+                },
+              }}
+            >
               <DatabaseSaveQueryPresetDialog />
             </DatabaseSaveQueryPresetDialogContextProvider>
-          
+
             <state.ConfirmationModal />
           </div>
         </DatabaseConstructorContextProvider>

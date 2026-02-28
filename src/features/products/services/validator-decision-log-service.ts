@@ -2,9 +2,7 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 
-import {
-  PRODUCT_VALIDATOR_DECISION_LOG_SETTING_KEY,
-} from '@/features/products/constants';
+import { PRODUCT_VALIDATOR_DECISION_LOG_SETTING_KEY } from '@/features/products/constants';
 import { getProductDataProvider } from '@/features/products/services/product-provider';
 import type { ProductValidationDenyBehavior } from '@/shared/contracts/products';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
@@ -50,15 +48,14 @@ const parseDecisionLog = (value: string | null): ProductValidationDecisionRecord
     const parsed = JSON.parse(value) as unknown;
     if (!Array.isArray(parsed)) return [];
     return parsed
-      .filter(
-        (entry: unknown): entry is ProductValidationDecisionRecord =>
-          Boolean(
-            entry &&
-              typeof entry === 'object' &&
-              typeof (entry as Record<string, unknown>)['id'] === 'string' &&
-              typeof (entry as Record<string, unknown>)['patternId'] === 'string' &&
-              typeof (entry as Record<string, unknown>)['fieldName'] === 'string'
-          )
+      .filter((entry: unknown): entry is ProductValidationDecisionRecord =>
+        Boolean(
+          entry &&
+          typeof entry === 'object' &&
+          typeof (entry as Record<string, unknown>)['id'] === 'string' &&
+          typeof (entry as Record<string, unknown>)['patternId'] === 'string' &&
+          typeof (entry as Record<string, unknown>)['fieldName'] === 'string'
+        )
       )
       .slice(0, DECISION_LOG_MAX_ENTRIES);
   } catch {
@@ -126,8 +123,7 @@ export async function appendProductValidationDecision(
   const existing = parseDecisionLog(await readDecisionLogValue());
   const record: ProductValidationDecisionRecord = {
     id:
-      typeof globalThis.crypto !== 'undefined' &&
-      typeof globalThis.crypto.randomUUID === 'function'
+      typeof globalThis.crypto !== 'undefined' && typeof globalThis.crypto.randomUUID === 'function'
         ? globalThis.crypto.randomUUID()
         : randomUUID(),
     action: input.action,

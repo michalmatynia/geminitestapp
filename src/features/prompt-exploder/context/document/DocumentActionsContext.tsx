@@ -1,7 +1,11 @@
 'use client';
 
 import { createContext, useContext } from 'react';
-import type { PromptExploderDocument, PromptExploderBinding, PromptExploderSegment } from '../../types';
+import type {
+  PromptExploderDocument,
+  PromptExploderBinding,
+  PromptExploderSegment,
+} from '../../types';
 
 export interface DocumentActions {
   setPromptText: (text: string) => void;

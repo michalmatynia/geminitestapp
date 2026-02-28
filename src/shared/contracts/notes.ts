@@ -99,9 +99,10 @@ export type NoteCategoryRecordWithChildrenDto = NoteCategoryDto & {
   _count?: { notes: number };
 };
 
-export const noteCategoryRecordWithChildrenSchema: z.ZodType<NoteCategoryRecordWithChildrenDto> = noteCategorySchema.extend({
-  children: z.array(z.lazy(() => noteCategoryRecordWithChildrenSchema)),
-});
+export const noteCategoryRecordWithChildrenSchema: z.ZodType<NoteCategoryRecordWithChildrenDto> =
+  noteCategorySchema.extend({
+    children: z.array(z.lazy(() => noteCategoryRecordWithChildrenSchema)),
+  });
 
 /**
  * Note Tag Contract
@@ -171,7 +172,13 @@ export type CategoryWithChildren = NoteCategoryRecordWithChildrenDto & {
 /**
  * Note Contract
  */
-export const noteEditorTypeSchema = z.enum(['markdown', 'rich-text', 'plain-text', 'code', 'wysiwyg']);
+export const noteEditorTypeSchema = z.enum([
+  'markdown',
+  'rich-text',
+  'plain-text',
+  'code',
+  'wysiwyg',
+]);
 export type NoteEditorType = z.infer<typeof noteEditorTypeSchema>;
 
 export const noteSchema = dtoBaseSchema.extend({
@@ -203,14 +210,16 @@ export const noteSchema = dtoBaseSchema.extend({
 export type NoteDto = z.infer<typeof noteSchema>;
 export type NoteRecord = NoteDto;
 
-export const createNoteSchema = noteSchema.omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-}).extend({
-  editorType: noteEditorTypeSchema.optional(),
-  notebookId: z.string().nullable().optional(),
-});
+export const createNoteSchema = noteSchema
+  .omit({
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+  })
+  .extend({
+    editorType: noteEditorTypeSchema.optional(),
+    notebookId: z.string().nullable().optional(),
+  });
 
 export type CreateNoteDto = z.input<typeof createNoteSchema>;
 export type NoteCreateInput = CreateNoteDto;
@@ -263,30 +272,45 @@ export type RelatedNoteDto = z.infer<typeof relatedNoteSchema>;
 export type RelatedNote = RelatedNoteDto;
 
 export const noteWithRelationsSchema = noteSchema.extend({
-  tags: z.array(z.object({
-    noteId: z.string().optional(),
-    tagId: z.string(),
-    assignedAt: z.string().optional(),
-    tag: noteTagSchema,
-  })).optional(),
-  category: z.object({
-    noteId: z.string().optional(),
-    categoryId: z.string(),
-    assignedAt: z.string().optional(),
-    category: noteCategorySchema,
-  }).nullable().optional(),
-  categories: z.array(z.object({
-    noteId: z.string().optional(),
-    categoryId: z.string(),
-    assignedAt: z.string().optional(),
-    category: noteCategorySchema,
-  })).optional(),
+  tags: z
+    .array(
+      z.object({
+        noteId: z.string().optional(),
+        tagId: z.string(),
+        assignedAt: z.string().optional(),
+        tag: noteTagSchema,
+      })
+    )
+    .optional(),
+  category: z
+    .object({
+      noteId: z.string().optional(),
+      categoryId: z.string(),
+      assignedAt: z.string().optional(),
+      category: noteCategorySchema,
+    })
+    .nullable()
+    .optional(),
+  categories: z
+    .array(
+      z.object({
+        noteId: z.string().optional(),
+        categoryId: z.string(),
+        assignedAt: z.string().optional(),
+        category: noteCategorySchema,
+      })
+    )
+    .optional(),
   notebook: notebookSchema.nullable().optional(),
   theme: noteThemeSchema.nullable().optional(),
   files: z.array(noteFileSchema).optional(),
   relations: z.array(relatedNoteSchema).optional(),
-  relationsFrom: z.array(noteRelationSchema.extend({ targetNote: relatedNoteSchema.optional() })).optional(),
-  relationsTo: z.array(noteRelationSchema.extend({ sourceNote: relatedNoteSchema.optional() })).optional(),
+  relationsFrom: z
+    .array(noteRelationSchema.extend({ targetNote: relatedNoteSchema.optional() }))
+    .optional(),
+  relationsTo: z
+    .array(noteRelationSchema.extend({ sourceNote: relatedNoteSchema.optional() }))
+    .optional(),
 });
 
 export type NoteWithRelationsDto = z.infer<typeof noteWithRelationsSchema>;
@@ -333,7 +357,9 @@ export const noteSettingsSchema = z.object({
   selectedNotebookId: z.string().nullable().optional(),
   searchScope: z.enum(['both', 'title', 'content']).default('both'),
   gridDensity: z.number().default(4),
-  editorMode: z.enum(['markdown', 'rich-text', 'plain-text', 'code', 'wysiwyg']).default('markdown'),
+  editorMode: z
+    .enum(['markdown', 'rich-text', 'plain-text', 'code', 'wysiwyg'])
+    .default('markdown'),
   autoformatOnPaste: z.boolean().default(true),
 });
 
@@ -369,7 +395,7 @@ export interface UseNoteOperationsProps {
   setUndoStack: React.Dispatch<React.SetStateAction<UndoAction[]>>;
   toast: (
     message: string,
-    options?: { variant?: 'success' | 'error' | 'info'; duration?: number },
+    options?: { variant?: 'success' | 'error' | 'info'; duration?: number }
   ) => void;
   setSelectedFolderId: (id: string | null) => void;
   setSelectedNote: (note: NoteWithRelations | null) => void;

@@ -82,53 +82,39 @@ export const buildLookupValues = (ids: string[]): Array<string | ObjectId> => {
   return values;
 };
 
-export const normalizeProductParameterValues = (
-  input: unknown
-): ProductParameterValue[] => {
+export const normalizeProductParameterValues = (input: unknown): ProductParameterValue[] => {
   if (!Array.isArray(input)) return [];
-  return input.reduce(
-    (
-      acc: ProductParameterValue[],
-      raw: unknown
-    ) => {
-      if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return acc;
-      const record = raw as Record<string, unknown>;
-      const parameterIdRaw =
-        typeof record['parameterId'] === 'string'
-          ? record['parameterId'].trim()
-          : '';
-      const parameterId = decodeSimpleParameterStorageId(parameterIdRaw);
-      if (!parameterId) return acc;
-      const value =
-        typeof record['value'] === 'string' ? record['value'] : '';
-      const valuesByLanguageRaw = record['valuesByLanguage'];
-      const valuesByLanguage =
-        valuesByLanguageRaw &&
-        typeof valuesByLanguageRaw === 'object' &&
-        !Array.isArray(valuesByLanguageRaw)
-          ? Object.entries(valuesByLanguageRaw as Record<string, unknown>).reduce(
+  return input.reduce((acc: ProductParameterValue[], raw: unknown) => {
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return acc;
+    const record = raw as Record<string, unknown>;
+    const parameterIdRaw =
+      typeof record['parameterId'] === 'string' ? record['parameterId'].trim() : '';
+    const parameterId = decodeSimpleParameterStorageId(parameterIdRaw);
+    if (!parameterId) return acc;
+    const value = typeof record['value'] === 'string' ? record['value'] : '';
+    const valuesByLanguageRaw = record['valuesByLanguage'];
+    const valuesByLanguage =
+      valuesByLanguageRaw &&
+      typeof valuesByLanguageRaw === 'object' &&
+      !Array.isArray(valuesByLanguageRaw)
+        ? Object.entries(valuesByLanguageRaw as Record<string, unknown>).reduce(
             (map: Record<string, string>, [lang, langValue]: [string, unknown]) => {
               const normalizedLang = lang.trim().toLowerCase();
-              const normalizedValue =
-                typeof langValue === 'string' ? langValue.trim() : '';
+              const normalizedValue = typeof langValue === 'string' ? langValue.trim() : '';
               if (!normalizedLang || !normalizedValue) return map;
               map[normalizedLang] = normalizedValue;
               return map;
             },
             {} as Record<string, string>
           )
-          : {};
-      acc.push({
-        parameterId,
-        value,
-        ...(Object.keys(valuesByLanguage).length > 0
-          ? { valuesByLanguage }
-          : {}),
-      });
-      return acc;
-    },
-    [] as ProductParameterValue[]
-  );
+        : {};
+    acc.push({
+      parameterId,
+      value,
+      ...(Object.keys(valuesByLanguage).length > 0 ? { valuesByLanguage } : {}),
+    });
+    return acc;
+  }, [] as ProductParameterValue[]);
 };
 
 export const normalizeImageFileIds = (imageFileIds: string[]): string[] => {
@@ -141,8 +127,7 @@ export const normalizeImageFileIds = (imageFileIds: string[]): string[] => {
   return Array.from(unique);
 };
 
-export const escapeRegex = (value: string): string =>
-  value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+export const escapeRegex = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 export const parseAdvancedFilterGroup = (
   payload: string | undefined
@@ -208,16 +193,12 @@ export const toAdvancedStringArrayValues = (value: unknown): string[] => {
 
 export const resolveLookupDocumentId = (doc: Document | null | undefined): string =>
   normalizeLookupId(
-    (doc as { id?: unknown; _id?: unknown } | null)?.id ??
-      (doc as { _id?: unknown } | null)?._id
+    (doc as { id?: unknown; _id?: unknown } | null)?.id ?? (doc as { _id?: unknown } | null)?._id
   );
 
 export const buildProductIdFilter = (id: string): Filter<ProductDocument> => {
   const normalized = id.trim();
-  const conditions: Array<Record<string, unknown>> = [
-    { id: normalized },
-    { _id: normalized },
-  ];
+  const conditions: Array<Record<string, unknown>> = [{ id: normalized }, { _id: normalized }];
   if (ObjectId.isValid(normalized)) {
     conditions.push({ _id: new ObjectId(normalized) });
   }
@@ -226,10 +207,7 @@ export const buildProductIdFilter = (id: string): Filter<ProductDocument> => {
 
 export const buildCategoryLookupFilter = (id: string): Filter<Document> => {
   const normalized = id.trim();
-  const conditions: Array<Record<string, unknown>> = [
-    { id: normalized },
-    { _id: normalized },
-  ];
+  const conditions: Array<Record<string, unknown>> = [{ id: normalized }, { _id: normalized }];
   if (ObjectId.isValid(normalized)) {
     conditions.push({ _id: new ObjectId(normalized) });
   }
@@ -239,9 +217,7 @@ export const buildCategoryLookupFilter = (id: string): Filter<Document> => {
 export const buildLookupFilterForIds = (ids: string[]): Filter<Document> => {
   const normalizedIds = Array.from(
     new Set(
-      ids
-        .map((id: string): string => id.trim())
-        .filter((id: string): boolean => id.length > 0)
+      ids.map((id: string): string => id.trim()).filter((id: string): boolean => id.length > 0)
     )
   );
   const objectIds = normalizedIds
@@ -286,10 +262,7 @@ export const loadMongoBaseExportLookupContext = async (): Promise<BaseExportLook
   const db = await getMongoDb();
   const integrations = await db
     .collection<IntegrationSlugDocument>(integrationCollectionName)
-    .find(
-      { slug: { $in: [...BASE_INTEGRATION_SLUGS] } },
-      { projection: { _id: 1 } }
-    )
+    .find({ slug: { $in: [...BASE_INTEGRATION_SLUGS] } }, { projection: { _id: 1 } })
     .toArray();
 
   const integrationIds = integrations

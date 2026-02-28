@@ -3,12 +3,12 @@
 import { useQueries, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 
-import { 
+import {
   countProducts,
-  createProduct, 
+  createProduct,
   getProducts,
-  updateProduct, 
-  deleteProduct 
+  updateProduct,
+  deleteProduct,
 } from '@/features/products/api';
 import {
   type UseProductsFilters,
@@ -16,7 +16,10 @@ import {
   useProducts as useProductsQuery,
   useProductsCount as useProductsCountQuery,
 } from '@/features/products/hooks/useProductsQuery';
-import { addQueuedProductId, removeQueuedProductId } from '@/features/products/state/queued-product-ops';
+import {
+  addQueuedProductId,
+  removeQueuedProductId,
+} from '@/features/products/state/queued-product-ops';
 import {
   productAdvancedFilterGroupSchema,
   type ProductWithImages,
@@ -52,33 +55,24 @@ const isValidAdvancedFilterPayload = (payload: string): boolean => {
 
 export type { UseProductsFilters };
 
-export function useProducts(
-  filters: UseProductsFilters,
-  options: UseProductsOptions = {}
-) {
+export function useProducts(filters: UseProductsFilters, options: UseProductsOptions = {}) {
   return useProductsQuery(filters, options);
 }
 
-export function useProductsCount(
-  filters: UseProductsFilters,
-  options: UseProductsOptions = {}
-) {
+export function useProductsCount(filters: UseProductsFilters, options: UseProductsOptions = {}) {
   return useProductsCountQuery(filters, options);
 }
 
 // --- Mutations ---
 
 export function useCreateProductMutation(): UseMutationResult<unknown, Error, FormData, unknown> {
-  return useOfflineMutation(
-    (formData: FormData) => createProduct(formData),
-    {
-      queryKey: productsAllQueryKey,
-      extraInvalidateKeys: [productsCountsQueryKey],
-      queuedMessage: 'Product creation queued in runtime queue.',
-      processedMessage: 'Queued product creation completed.',
-      errorMessage: 'Failed to create product',
-    }
-  );
+  return useOfflineMutation((formData: FormData) => createProduct(formData), {
+    queryKey: productsAllQueryKey,
+    extraInvalidateKeys: [productsCountsQueryKey],
+    queuedMessage: 'Product creation queued in runtime queue.',
+    processedMessage: 'Queued product creation completed.',
+    errorMessage: 'Failed to create product',
+  });
 }
 
 export function useUpdateProductMutation(): UseMutationResult<
@@ -86,7 +80,7 @@ export function useUpdateProductMutation(): UseMutationResult<
   Error,
   { id: string; data: Partial<ProductWithImages> | FormData; originalSku?: string | null },
   unknown
-  > {
+> {
   const parseUpdateError = async (response: Response): Promise<string> => {
     const errorData = (await response.json().catch(() => ({}))) as {
       error?: string;
@@ -108,19 +102,20 @@ export function useUpdateProductMutation(): UseMutationResult<
   };
 
   const resolveProductIdBySku = async (originalSku?: string | null): Promise<string | null> => {
-    const normalizedSku =
-      typeof originalSku === 'string' ? originalSku.trim().toUpperCase() : '';
+    const normalizedSku = typeof originalSku === 'string' ? originalSku.trim().toUpperCase() : '';
     if (!normalizedSku) return null;
 
-    const products = await api.get<ProductWithImages[]>(
-      `/api/products?sku=${encodeURIComponent(normalizedSku)}`,
-      { cache: 'no-store', logError: false }
-    ).catch(() => null);
+    const products = await api
+      .get<
+        ProductWithImages[]
+      >(`/api/products?sku=${encodeURIComponent(normalizedSku)}`, { cache: 'no-store', logError: false })
+      .catch(() => null);
 
     if (!products) return null;
 
-    const exactMatches = products.filter((product: ProductWithImages): boolean =>
-      typeof product.sku === 'string' && product.sku.trim().toUpperCase() === normalizedSku
+    const exactMatches = products.filter(
+      (product: ProductWithImages): boolean =>
+        typeof product.sku === 'string' && product.sku.trim().toUpperCase() === normalizedSku
     );
 
     return exactMatches.length === 1 ? exactMatches[0]!.id : null;
@@ -153,10 +148,9 @@ export function useUpdateProductMutation(): UseMutationResult<
             });
           } catch (error) {
             if (controller.signal.aborted) {
-              throw new Error(
-                `Request timeout after ${PRODUCT_UPDATE_FORM_TIMEOUT_MS}ms`,
-                { cause: error }
-              );
+              throw new Error(`Request timeout after ${PRODUCT_UPDATE_FORM_TIMEOUT_MS}ms`, {
+                cause: error,
+              });
             }
             throw error;
           } finally {
@@ -211,27 +205,32 @@ export function useUpdateProductMutation(): UseMutationResult<
   );
 }
 
-export function useDeleteProductMutation(): UseMutationResult<DeleteResponse | null, Error, string, unknown> {
-  return useOfflineMutation(
-    (id: string) => deleteProduct(id) as Promise<DeleteResponse>,
-    {
-      queryKey: productsAllQueryKey,
-      extraInvalidateKeys: [productsCountsQueryKey],
-      queuedMessage: 'Product deletion queued in runtime queue.',
-      processedMessage: 'Queued product deletion completed.',
-      errorMessage: 'Failed to delete product',
-      onQueued: (id: string) => addQueuedProductId(id),
-      onProcessed: (id: string) => removeQueuedProductId(id),
-    }
-  );
+export function useDeleteProductMutation(): UseMutationResult<
+  DeleteResponse | null,
+  Error,
+  string,
+  unknown
+> {
+  return useOfflineMutation((id: string) => deleteProduct(id) as Promise<DeleteResponse>, {
+    queryKey: productsAllQueryKey,
+    extraInvalidateKeys: [productsCountsQueryKey],
+    queuedMessage: 'Product deletion queued in runtime queue.',
+    processedMessage: 'Queued product deletion completed.',
+    errorMessage: 'Failed to delete product',
+    onQueued: (id: string) => addQueuedProductId(id),
+    onProcessed: (id: string) => removeQueuedProductId(id),
+  });
 }
 
-export function useBulkDeleteProductsMutation(): UseMutationResult<{ success: boolean } | null, Error, string[], unknown> {
+export function useBulkDeleteProductsMutation(): UseMutationResult<
+  { success: boolean } | null,
+  Error,
+  string[],
+  unknown
+> {
   return useOfflineMutation(
     async (ids: string[]): Promise<{ success: boolean }> => {
-      const responses = await Promise.all(
-        ids.map((id: string) => deleteProduct(id))
-      );
+      const responses = await Promise.all(ids.map((id: string) => deleteProduct(id)));
       if (responses.some((r: { success: boolean }) => !r.success)) {
         throw operationFailedError('Failed to delete some products');
       }
@@ -318,7 +317,7 @@ export function useProductData({
   searchLanguage,
 }: UseProductDataProps): ProductDataHookResult {
   const queryClient = useQueryClient();
-  
+
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(initialPageSize || 20);
   const [search, setSearch] = useState('');
@@ -330,14 +329,13 @@ export function useProductData({
   const [minPrice, setMinPrice] = useState<number | undefined>(undefined);
   const [maxPrice, setMaxPrice] = useState<number | undefined>(undefined);
   const [stockValue, setStockValue] = useState<number | undefined>(undefined);
-  const [stockOperator, setStockOperator] = useState<
-    '' | 'gt' | 'gte' | 'lt' | 'lte' | 'eq'
-  >('');
+  const [stockOperator, setStockOperator] = useState<'' | 'gt' | 'gte' | 'lt' | 'lte' | 'eq'>('');
   const [startDate, setStartDate] = useState<string | undefined>(undefined);
   const [endDate, setEndDate] = useState<string | undefined>(undefined);
   const [advancedFilter, setAdvancedFilter] = useState('');
-  const [activeAdvancedFilterPresetId, setActiveAdvancedFilterPresetId] =
-    useState<string | null>(null);
+  const [activeAdvancedFilterPresetId, setActiveAdvancedFilterPresetId] = useState<string | null>(
+    null
+  );
   const [catalogFilter, setCatalogFilter] = useState(initialCatalogFilter || 'all');
   const [baseExported, setBaseExported] = useState<'' | 'true' | 'false'>('');
   const hasInitialized = useRef(false);
@@ -378,40 +376,56 @@ export function useProductData({
 
   const queriesEnabled = preferencesLoaded && filtersInitialized;
 
-  const filters: UseProductsFilters = useMemo(() => ({
-    search: search || undefined,
-    id: productId || undefined,
-    idMatchMode: productId ? idMatchMode : undefined,
-    sku: sku || undefined,
-    description: description || undefined,
-    categoryId: categoryId || undefined,
-    minPrice,
-    maxPrice,
-    stockValue,
-    stockOperator: stockValue !== undefined
-      ? (stockOperator || 'eq')
-      : undefined,
-    startDate: startDate || undefined,
-    endDate: endDate || undefined,
-    advancedFilter: advancedFilter || undefined,
-    page,
-    pageSize,
-    catalogId: catalogFilter === 'all' ? undefined : catalogFilter,
-    searchLanguage: searchLanguage || undefined,
-    baseExported:
-      baseExported === 'true'
-        ? true
-        : baseExported === 'false'
-          ? false
-          : undefined,
-  }), [search, productId, idMatchMode, sku, description, categoryId, minPrice, maxPrice, stockValue, stockOperator, startDate, endDate, advancedFilter, page, pageSize, catalogFilter, searchLanguage, baseExported]);
+  const filters: UseProductsFilters = useMemo(
+    () => ({
+      search: search || undefined,
+      id: productId || undefined,
+      idMatchMode: productId ? idMatchMode : undefined,
+      sku: sku || undefined,
+      description: description || undefined,
+      categoryId: categoryId || undefined,
+      minPrice,
+      maxPrice,
+      stockValue,
+      stockOperator: stockValue !== undefined ? stockOperator || 'eq' : undefined,
+      startDate: startDate || undefined,
+      endDate: endDate || undefined,
+      advancedFilter: advancedFilter || undefined,
+      page,
+      pageSize,
+      catalogId: catalogFilter === 'all' ? undefined : catalogFilter,
+      searchLanguage: searchLanguage || undefined,
+      baseExported: baseExported === 'true' ? true : baseExported === 'false' ? false : undefined,
+    }),
+    [
+      search,
+      productId,
+      idMatchMode,
+      sku,
+      description,
+      categoryId,
+      minPrice,
+      maxPrice,
+      stockValue,
+      stockOperator,
+      startDate,
+      endDate,
+      advancedFilter,
+      page,
+      pageSize,
+      catalogFilter,
+      searchLanguage,
+      baseExported,
+    ]
+  );
 
   // Use parallel queries
   const results = useQueries({
     queries: [
       {
         queryKey: normalizeQueryKey(getProductListQueryKey(filters)),
-        queryFn: ({ signal }: { signal?: AbortSignal }): Promise<ProductWithImages[]> => getProducts(filters, signal),
+        queryFn: ({ signal }: { signal?: AbortSignal }): Promise<ProductWithImages[]> =>
+          getProducts(filters, signal),
         enabled: queriesEnabled,
         staleTime: 10_000,
         refetchOnMount: true,
@@ -420,7 +434,8 @@ export function useProductData({
       },
       {
         queryKey: normalizeQueryKey(getProductCountQueryKey(filters)),
-        queryFn: ({ signal }: { signal?: AbortSignal }): Promise<number> => countProducts(filters, signal),
+        queryFn: ({ signal }: { signal?: AbortSignal }): Promise<number> =>
+          countProducts(filters, signal),
         enabled: queriesEnabled,
         staleTime: 10_000,
         refetchOnMount: true,
@@ -441,7 +456,24 @@ export function useProductData({
   // Keep pagination valid when filters change.
   useEffect(() => {
     setPage(1);
-  }, [search, productId, idMatchMode, sku, description, categoryId, minPrice, maxPrice, stockValue, stockOperator, startDate, endDate, advancedFilter, catalogFilter, baseExported, pageSize]);
+  }, [
+    search,
+    productId,
+    idMatchMode,
+    sku,
+    description,
+    categoryId,
+    minPrice,
+    maxPrice,
+    stockValue,
+    stockOperator,
+    startDate,
+    endDate,
+    advancedFilter,
+    catalogFilter,
+    baseExported,
+    pageSize,
+  ]);
 
   // Clamp page when current page no longer exists after count change.
   useEffect(() => {
@@ -483,9 +515,12 @@ export function useProductData({
     setAdvancedFilter(normalizedValue);
     setActiveAdvancedFilterPresetId(normalizedValue.length > 0 ? presetId : null);
   }, []);
-  const handleSetAdvancedFilter = useCallback((value: string) => {
-    handleSetAdvancedFilterState(value, null);
-  }, [handleSetAdvancedFilterState]);
+  const handleSetAdvancedFilter = useCallback(
+    (value: string) => {
+      handleSetAdvancedFilterState(value, null);
+    },
+    [handleSetAdvancedFilterState]
+  );
   const handleSetCatalogFilter = useCallback((f: string) => setCatalogFilter(f), []);
   const handleSetBaseExported = useCallback(
     (value: '' | 'true' | 'false') => setBaseExported(value),

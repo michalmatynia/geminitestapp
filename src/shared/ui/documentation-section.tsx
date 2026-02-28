@@ -18,9 +18,7 @@ export function DocumentationSection({
   return (
     <div className={cn('rounded-lg border border-border/60 bg-card/40 p-5', className)}>
       <h3 className='text-base font-semibold text-white'>{title}</h3>
-      <div className='mt-3 text-gray-400'>
-        {children}
-      </div>
+      <div className='mt-3 text-gray-400'>{children}</div>
     </div>
   );
 }

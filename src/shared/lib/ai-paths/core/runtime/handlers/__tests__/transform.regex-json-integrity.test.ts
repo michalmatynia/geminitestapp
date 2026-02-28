@@ -32,10 +32,7 @@ const buildRegexNode = (jsonIntegrityPolicy: 'repair' | 'strict'): AiNode =>
     },
   }) as AiNode;
 
-const buildContext = (
-  node: AiNode,
-  value: unknown
-): NodeHandlerContext =>
+const buildContext = (node: AiNode, value: unknown): NodeHandlerContext =>
   ({
     node,
     nodeInputs: { value },

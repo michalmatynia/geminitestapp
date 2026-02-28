@@ -32,12 +32,8 @@ export function useFolderTreeProfiles(): FolderTreeProfilesV2Map {
   const productCategoriesProfileRaw = settingsStore.get(
     getFolderTreeProfileV2Key('product_categories')
   );
-  const cmsPageBuilderProfileRaw = settingsStore.get(
-    getFolderTreeProfileV2Key('cms_page_builder')
-  );
-  const caseResolverProfileRaw = settingsStore.get(
-    getFolderTreeProfileV2Key('case_resolver')
-  );
+  const cmsPageBuilderProfileRaw = settingsStore.get(getFolderTreeProfileV2Key('cms_page_builder'));
+  const caseResolverProfileRaw = settingsStore.get(getFolderTreeProfileV2Key('case_resolver'));
   const caseResolverCasesProfileRaw = settingsStore.get(
     getFolderTreeProfileV2Key('case_resolver_cases')
   );

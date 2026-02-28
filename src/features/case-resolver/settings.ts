@@ -4,9 +4,7 @@ import {
   type CaseResolverSettings,
 } from '@/shared/contracts/case-resolver';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
-import {
-  DEFAULT_CASE_RESOLVER_SETTINGS,
-} from './settings.constants';
+import { DEFAULT_CASE_RESOLVER_SETTINGS } from './settings.constants';
 import {
   normalizeCaseResolverDefaultDocumentFormatValue,
   normalizeCaseResolverPartySearchKindValue,
@@ -87,13 +85,9 @@ const normalizeCaseResolverSettings = (input: unknown): CaseResolverSettings => 
   }
   const record = input as Record<string, unknown>;
   const ocrModel = typeof record['ocrModel'] === 'string' ? record['ocrModel'].trim() : '';
-  const ocrPrompt = typeof record['ocrPrompt'] === 'string'
-    ? record['ocrPrompt'].trim()
-    : '';
+  const ocrPrompt = typeof record['ocrPrompt'] === 'string' ? record['ocrPrompt'].trim() : '';
   const rawFormatCandidate =
-    typeof record['defaultDocumentFormat'] === 'string'
-      ? record['defaultDocumentFormat']
-      : null;
+    typeof record['defaultDocumentFormat'] === 'string' ? record['defaultDocumentFormat'] : null;
   const defaultDocumentFormat =
     normalizeCaseResolverDefaultDocumentFormatValue(rawFormatCandidate) ??
     DEFAULT_CASE_RESOLVER_SETTINGS.defaultDocumentFormat;
@@ -115,26 +109,24 @@ const normalizeCaseResolverSettings = (input: unknown): CaseResolverSettings => 
 };
 
 export const parseCaseResolverSettings = (raw: string | null | undefined): CaseResolverSettings => {
-  return normalizeCaseResolverSettings(parseJsonSetting<unknown>(raw, DEFAULT_CASE_RESOLVER_SETTINGS));
+  return normalizeCaseResolverSettings(
+    parseJsonSetting<unknown>(raw, DEFAULT_CASE_RESOLVER_SETTINGS)
+  );
 };
 
-export const hasCaseResolverWorkspaceFilesArray = (
-  raw: string | null | undefined,
-): boolean => {
+export const hasCaseResolverWorkspaceFilesArray = (raw: string | null | undefined): boolean => {
   const parsed = parseJsonSetting<unknown>(raw, null);
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return false;
   const record = parsed as Record<string, unknown>;
   return Array.isArray(record['files']);
 };
 
-export const parseCaseResolverWorkspace = (
-  raw: string | null | undefined,
-): CaseResolverWorkspace =>
+export const parseCaseResolverWorkspace = (raw: string | null | undefined): CaseResolverWorkspace =>
   normalizeCaseResolverWorkspace(
     parseJsonSetting<unknown>(raw, createDefaultCaseResolverWorkspace()) as
       | CaseResolverWorkspace
       | null
-      | undefined,
+      | undefined
   );
 
 const parseDateTokenToIso = (token: string): string | null => {
@@ -161,12 +153,12 @@ const parseDateTokenToIso = (token: string): string | null => {
 };
 
 export const extractCaseResolverDocumentDate = (
-  content: string | null | undefined,
+  content: string | null | undefined
 ): string | null => {
   if (typeof content !== 'string') return null;
 
   const candidates = content.match(
-    /\b\d{4}-\d{2}-\d{2}\b|\b\d{1,2}\.\d{1,2}\.\d{4}\b|\b\d{1,2}\/\d{1,2}\/\d{4}\b/g,
+    /\b\d{4}-\d{2}-\d{2}\b|\b\d{1,2}\.\d{1,2}\.\d{4}\b|\b\d{1,2}\/\d{1,2}\/\d{4}\b/g
   );
   if (!candidates || candidates.length === 0) return null;
 

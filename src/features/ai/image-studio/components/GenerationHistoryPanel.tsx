@@ -89,7 +89,8 @@ export function GenerationHistoryPanel({
                 )}
 
                 <div className='flex items-center gap-1'>
-                  <Button size='xs'
+                  <Button
+                    size='xs'
                     type='button'
                     variant='outline'
                     className='h-6 text-[10px]'

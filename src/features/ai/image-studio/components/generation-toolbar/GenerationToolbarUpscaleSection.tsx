@@ -2,7 +2,11 @@ import React from 'react';
 
 import { Button, SelectSimple } from '@/shared/ui';
 
-import { useGenerationToolbarContext, type UpscaleMode, type UpscaleStrategy } from './GenerationToolbarContext';
+import {
+  useGenerationToolbarContext,
+  type UpscaleMode,
+  type UpscaleStrategy,
+} from './GenerationToolbarContext';
 import type { UpscaleSmoothingQuality } from './GenerationToolbarImageUtils';
 
 type SelectOption = {
@@ -34,12 +38,18 @@ export function GenerationToolbarUpscaleSection({
   upscaleStrategyOptions,
 }: GenerationToolbarUpscaleSectionProps): React.JSX.Element {
   const {
-    upscaleMode, setUpscaleMode,
-    upscaleStrategy, setUpscaleStrategy,
-    upscaleScale, setUpscaleScale,
-    upscaleTargetWidth, setUpscaleTargetWidth,
-    upscaleTargetHeight, setUpscaleTargetHeight,
-    upscaleSmoothingQuality, setUpscaleSmoothingQuality,
+    upscaleMode,
+    setUpscaleMode,
+    upscaleStrategy,
+    setUpscaleStrategy,
+    upscaleScale,
+    setUpscaleScale,
+    upscaleTargetWidth,
+    setUpscaleTargetWidth,
+    upscaleTargetHeight,
+    setUpscaleTargetHeight,
+    upscaleSmoothingQuality,
+    setUpscaleSmoothingQuality,
     upscaleBusy,
   } = useGenerationToolbarContext();
 
@@ -47,7 +57,8 @@ export function GenerationToolbarUpscaleSection({
     <div className='rounded border border-border/60 bg-card/40 p-3'>
       <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>Upscale</div>
       <div className='grid gap-2 sm:grid-cols-2'>
-        <SelectSimple size='sm'
+        <SelectSimple
+          size='sm'
           className='w-full'
           value={upscaleMode}
           onValueChange={(val) => setUpscaleMode(val as UpscaleMode)}
@@ -55,7 +66,8 @@ export function GenerationToolbarUpscaleSection({
           triggerClassName='h-8 text-xs'
           ariaLabel='Upscale mode'
         />
-        <SelectSimple size='sm'
+        <SelectSimple
+          size='sm'
           className='w-full'
           value={upscaleStrategy}
           onValueChange={(val) => setUpscaleStrategy(val as UpscaleStrategy)}
@@ -66,7 +78,8 @@ export function GenerationToolbarUpscaleSection({
       </div>
       <div className='mt-2'>
         {upscaleStrategy === 'scale' ? (
-          <SelectSimple size='sm'
+          <SelectSimple
+            size='sm'
             className='w-full sm:w-[130px]'
             value={upscaleScale}
             onValueChange={setUpscaleScale}
@@ -110,7 +123,8 @@ export function GenerationToolbarUpscaleSection({
       </div>
       {upscaleMode === 'client_canvas' ? (
         <div className='mt-2'>
-          <SelectSimple size='sm'
+          <SelectSimple
+            size='sm'
             className='w-full sm:w-[180px]'
             value={upscaleSmoothingQuality}
             onValueChange={(val) => setUpscaleSmoothingQuality(val as UpscaleSmoothingQuality)}
@@ -121,7 +135,8 @@ export function GenerationToolbarUpscaleSection({
         </div>
       ) : null}
       <div className='mt-2 flex flex-wrap items-center gap-2'>
-        <Button size='xs'
+        <Button
+          size='xs'
           type='button'
           variant='outline'
           onClick={onUpscale}

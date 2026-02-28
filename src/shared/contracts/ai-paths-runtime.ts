@@ -145,7 +145,14 @@ export const aiPathRuntimeEventSchema = z.object({
 
 export type AiPathRuntimeEvent = z.infer<typeof aiPathRuntimeEventSchema>;
 
-export const runStatusSchema = z.enum(['idle', 'running', 'paused', 'stepping', 'completed', 'failed']);
+export const runStatusSchema = z.enum([
+  'idle',
+  'running',
+  'paused',
+  'stepping',
+  'completed',
+  'failed',
+]);
 export type RunStatus = z.infer<typeof runStatusSchema>;
 export type RunStatusDto = RunStatus;
 
@@ -306,7 +313,13 @@ export const aiPathRuntimeProfileEventSchema = z.discriminatedUnion('type', [
     waitingOnPorts: z.array(z.string()).optional(),
     sideEffectPolicy: z.enum(['per_run', 'per_activation']).optional(),
     sideEffectDecision: z
-      .enum(['executed', 'skipped_duplicate', 'skipped_policy', 'skipped_missing_idempotency', 'failed'])
+      .enum([
+        'executed',
+        'skipped_duplicate',
+        'skipped_policy',
+        'skipped_missing_idempotency',
+        'failed',
+      ])
       .optional(),
     activationHash: z.string().optional(),
     idempotencyKey: z.string().optional(),
@@ -481,23 +494,26 @@ export interface NodeHandlerContext {
     entityType: string,
     entityId: string
   ) => Promise<Record<string, unknown> | null>;
-  reportAiPathsError: (
-    error: unknown,
-    meta: Record<string, unknown>,
-    summary?: string
-  ) => void;
+  reportAiPathsError: (error: unknown, meta: Record<string, unknown>, summary?: string) => void;
   toast: ToastFn;
   simulationEntityType: string | null;
   simulationEntityId: string | null;
   resolvedEntity: Record<string, unknown> | null;
   fallbackEntityId: string | null;
   strictFlowMode: boolean;
-  sideEffectControl?: {
-    policy: 'per_run' | 'per_activation';
-    decision: 'executed' | 'skipped_duplicate' | 'skipped_policy' | 'skipped_missing_idempotency' | 'failed';
-    activationHash: string | null;
-    idempotencyKey: string | null;
-  } | undefined;
+  sideEffectControl?:
+    | {
+        policy: 'per_run' | 'per_activation';
+        decision:
+          | 'executed'
+          | 'skipped_duplicate'
+          | 'skipped_policy'
+          | 'skipped_missing_idempotency'
+          | 'failed';
+        activationHash: string | null;
+        idempotencyKey: string | null;
+      }
+    | undefined;
   executed: {
     notification: Set<string>;
     updater: Set<string>;
@@ -510,4 +526,6 @@ export interface NodeHandlerContext {
   };
 }
 
-export type NodeHandler = (context: NodeHandlerContext) => Promise<Record<string, unknown>> | Record<string, unknown>;
+export type NodeHandler = (
+  context: NodeHandlerContext
+) => Promise<Record<string, unknown>> | Record<string, unknown>;

@@ -7,10 +7,14 @@ import { cn } from '@/shared/utils';
 import { useProductStudioContext } from '../../../context/ProductStudioContext';
 
 export function StudioSourceImageSelector(): React.JSX.Element {
-  const { imageSlotPreviews, selectedImageIndex, setSelectedImageIndex } = useProductStudioContext();
+  const { imageSlotPreviews, selectedImageIndex, setSelectedImageIndex } =
+    useProductStudioContext();
 
   return (
-    <FormSection title='Product Images' description='Select which product image slot should be generated.'>
+    <FormSection
+      title='Product Images'
+      description='Select which product image slot should be generated.'
+    >
       {imageSlotPreviews.length === 0 ? (
         <p className='text-sm text-gray-400'>No uploaded product images found.</p>
       ) : (
@@ -24,7 +28,9 @@ export function StudioSourceImageSelector(): React.JSX.Element {
                 onClick={() => setSelectedImageIndex(preview.index)}
                 className={cn(
                   'group relative overflow-hidden rounded border p-1 text-left transition h-32',
-                  isSelected ? 'border-emerald-400/80 bg-emerald-500/10' : 'border-border/60 hover:border-emerald-400/40'
+                  isSelected
+                    ? 'border-emerald-400/80 bg-emerald-500/10'
+                    : 'border-border/60 hover:border-emerald-400/40'
                 )}
               >
                 <Image

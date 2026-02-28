@@ -1,25 +1,22 @@
-
-
 import fs from 'fs/promises';
 import path from 'path';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { removeImageStudioRunOutputs } from '@/features/ai/image-studio/server/run-repository';
+import { removeImageStudioRunOutputs } from '@/shared/lib/ai/image-studio/server/run-repository';
 import {
   deleteImageStudioSlotCascade,
   listImageStudioSlots,
-} from '@/features/ai/image-studio/server/slot-repository';
-import { deleteImageStudioVariant } from '@/features/ai/image-studio/server/variant-delete';
+} from '@/shared/lib/ai/image-studio/server/slot-repository';
+import { deleteImageStudioVariant } from '@/shared/lib/ai/image-studio/server/variant-delete';
 import { getImageFileRepository } from '@/features/files/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
 const uploadsRoot = path.join(process.cwd(), 'public', 'uploads');
 
-const sanitizeProjectId = (value: string): string =>
-  value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
+const sanitizeProjectId = (value: string): string => value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
 
 const isProjectScopedStudioPath = (filepath: string, projectId: string): boolean => {
   const scopes = [
@@ -149,7 +146,8 @@ async function deleteGenerationSlotsLinkedToAsset(params: {
   const normalizedRunId = asTrimmedString(params.generationRunId);
   const outputIndex = asFiniteNumber(params.generationOutputIndex);
   const sourceSlotIdCandidates = resolveSlotIdAliases(params.sourceSlotId ?? '');
-  if (!params.assetId && !normalizedFilepath && slotIdCandidates.length === 0 && !normalizedRunId) return;
+  if (!params.assetId && !normalizedFilepath && slotIdCandidates.length === 0 && !normalizedRunId)
+    return;
 
   const slots = await listImageStudioSlots(params.projectId);
   const matchedSlots = slots.filter((slot) => {
@@ -201,7 +199,9 @@ async function deleteGenerationSlotsLinkedToAsset(params: {
   const deletedSlotIds = new Set<string>();
   for (const slot of matchedSlots) {
     if (deletedSlotIds.has(slot.id)) continue;
-    const result = await deleteImageStudioSlotCascade(slot.id).catch(() => ({ deletedSlotIds: [] }));
+    const result = await deleteImageStudioSlotCascade(slot.id).catch(() => ({
+      deletedSlotIds: [],
+    }));
     (result.deletedSlotIds ?? []).forEach((deletedSlotId) => {
       deletedSlotIds.add(deletedSlotId);
     });
@@ -223,10 +223,10 @@ export async function POST_handler(
   }
 
   const shouldUseVariantDeleteFlow = Boolean(
-    parsed.data.slotId?.trim()
-      || parsed.data.generationRunId?.trim()
-      || parsed.data.sourceSlotId?.trim()
-      || parsed.data.generationOutputIndex !== undefined,
+    parsed.data.slotId?.trim() ||
+    parsed.data.generationRunId?.trim() ||
+    parsed.data.sourceSlotId?.trim() ||
+    parsed.data.generationOutputIndex !== undefined
   );
   if (shouldUseVariantDeleteFlow) {
     const result = await deleteImageStudioVariant({

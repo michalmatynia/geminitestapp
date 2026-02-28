@@ -22,9 +22,7 @@ export const buildPlaywrightSettings = (
   ...(settings ?? {}),
 });
 
-export const normalizePlaywrightPersonas = (
-  value: unknown
-): PlaywrightPersona[] => {
+export const normalizePlaywrightPersonas = (value: unknown): PlaywrightPersona[] => {
   if (!Array.isArray(value)) return [];
 
   return value
@@ -34,22 +32,15 @@ export const normalizePlaywrightPersonas = (
       const name = typeof raw.name === 'string' ? raw.name.trim() : '';
       if (!name) return null;
 
-      const id =
-        typeof raw.id === 'string' && raw.id.trim()
-          ? raw.id
-          : createPlaywrightPersonaId();
+      const id = typeof raw.id === 'string' && raw.id.trim() ? raw.id : createPlaywrightPersonaId();
       const createdAt =
-        typeof raw.createdAt === 'string'
-          ? raw.createdAt
-          : new Date().toISOString();
-      const updatedAt =
-        typeof raw.updatedAt === 'string' ? raw.updatedAt : createdAt;
+        typeof raw.createdAt === 'string' ? raw.createdAt : new Date().toISOString();
+      const updatedAt = typeof raw.updatedAt === 'string' ? raw.updatedAt : createdAt;
       const settings =
         raw.settings && typeof raw.settings === 'object'
           ? buildPlaywrightSettings(raw.settings as Partial<PlaywrightSettings>)
           : buildPlaywrightSettings();
-      const description =
-        typeof raw.description === 'string' ? raw.description : null;
+      const description = typeof raw.description === 'string' ? raw.description : null;
 
       return {
         id,
@@ -68,9 +59,7 @@ export const arePlaywrightSettingsEqual = (
   right: PlaywrightSettings
 ): boolean => {
   const proxyPasswordEqual =
-    !left.proxyPassword || !right.proxyPassword
-      ? true
-      : left.proxyPassword === right.proxyPassword;
+    !left.proxyPassword || !right.proxyPassword ? true : left.proxyPassword === right.proxyPassword;
   return (
     left.headless === right.headless &&
     left.slowMo === right.slowMo &&

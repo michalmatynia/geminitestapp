@@ -1,4 +1,3 @@
-
 import { getBlockTypographyStyles } from '../theme-styles';
 import { useSectionBlockData } from './SectionBlockContext';
 

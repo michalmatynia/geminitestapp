@@ -29,14 +29,19 @@ interface UseGenerationToolbarAutoScaleProps {
   clientProcessingImageSrc: string | null;
   autoScaleRequestInFlightRef: React.MutableRefObject<boolean>;
   setAutoScaleBusy: (busy: boolean) => void;
-  setAutoScaleStatus: (status: 'idle' | 'resolving' | 'preparing' | 'uploading' | 'processing' | 'persisting') => void;
+  setAutoScaleStatus: (
+    status: 'idle' | 'resolving' | 'preparing' | 'uploading' | 'processing' | 'persisting'
+  ) => void;
   autoScaleLayoutPayload?: Record<string, unknown> | null;
   autoScaleAbortControllerRef: React.MutableRefObject<AbortController | null>;
   projectId: string;
   queryClient: QueryClient;
   setSelectedSlotId: (id: string | null) => void;
   setWorkingSlotId: (id: string | null) => void;
-  toast: (message: string, options?: { variant?: 'default' | 'destructive' | 'success' | 'error' | 'info' | 'warning' }) => void;
+  toast: (
+    message: string,
+    options?: { variant?: 'default' | 'destructive' | 'success' | 'error' | 'info' | 'warning' }
+  ) => void;
 }
 
 export function useGenerationToolbarAutoScale({
@@ -78,7 +83,9 @@ export function useGenerationToolbarAutoScale({
     setAutoScaleBusy(true);
     setAutoScaleStatus('resolving');
     const autoScaleRequestId = buildAutoScalerRequestId();
-    const buildValidatedAutoScaleRequestPayload = (mode: ImageStudioAutoScalerMode): {
+    const buildValidatedAutoScaleRequestPayload = (
+      mode: ImageStudioAutoScalerMode
+    ): {
       mode: ImageStudioAutoScalerMode;
       requestId: string;
       layout?: Record<string, unknown>;
@@ -112,11 +119,9 @@ export function useGenerationToolbarAutoScale({
         try {
           setAutoScaleStatus('preparing');
           const autoScaledDataUrl = (
-            await autoScaleCanvasImageObject(
-              sourceForClientAutoScale,
-              autoScaleLayoutPayload,
-              { preferTargetCanvas: true }
-            )
+            await autoScaleCanvasImageObject(sourceForClientAutoScale, autoScaleLayoutPayload, {
+              preferTargetCanvas: true,
+            })
           ).dataUrl;
           let uploadBlob: Blob;
           try {
@@ -127,31 +132,28 @@ export function useGenerationToolbarAutoScale({
 
           setAutoScaleStatus('uploading');
           const autoScaleRequestPayload = buildValidatedAutoScaleRequestPayload(requestedMode);
-          response = await withAutoScalerRetry(
-            () => {
-              const formData = new FormData();
-              formData.append('mode', autoScaleRequestPayload.mode);
-              formData.append('requestId', autoScaleRequestPayload.requestId);
-              if (autoScaleRequestPayload.layout) {
-                formData.append('layout', JSON.stringify(autoScaleRequestPayload.layout));
-              }
-              formData.append('image', uploadBlob, `autoscale-client-${Date.now()}.png`);
-              return api
-                .post<unknown>(
-                  `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/autoscale`,
-                  formData,
-                  {
-                    signal: abortController.signal,
-                    timeout: 60000,
-                    headers: {
-                      'x-idempotency-key': autoScaleRequestId,
-                    },
-                  }
-                )
-                .then((raw) => imageStudioAutoScalerResponseSchema.parse(raw));
-            },
-            abortController.signal
-          );
+          response = await withAutoScalerRetry(() => {
+            const formData = new FormData();
+            formData.append('mode', autoScaleRequestPayload.mode);
+            formData.append('requestId', autoScaleRequestPayload.requestId);
+            if (autoScaleRequestPayload.layout) {
+              formData.append('layout', JSON.stringify(autoScaleRequestPayload.layout));
+            }
+            formData.append('image', uploadBlob, `autoscale-client-${Date.now()}.png`);
+            return api
+              .post<unknown>(
+                `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/autoscale`,
+                formData,
+                {
+                  signal: abortController.signal,
+                  timeout: 60000,
+                  headers: {
+                    'x-idempotency-key': autoScaleRequestId,
+                  },
+                }
+              )
+              .then((raw) => imageStudioAutoScalerResponseSchema.parse(raw));
+          }, abortController.signal);
         } catch (error) {
           const fallbackDueToCrossOrigin = isClientAutoScalerCrossOriginError(error);
           const fallbackDueToInvalidPayload = shouldFallbackToServerAutoScaler(error);
@@ -221,10 +223,7 @@ export function useGenerationToolbarAutoScale({
               if (!old) return old;
               return {
                 ...old,
-                slots: [
-                  responseSlot,
-                  ...(old.slots || []).filter((s) => s.id !== responseSlotId)
-                ]
+                slots: [responseSlot, ...(old.slots || []).filter((s) => s.id !== responseSlotId)],
               };
             }
           );
@@ -239,20 +238,16 @@ export function useGenerationToolbarAutoScale({
       const createdLabel = response.slot?.name?.trim() || 'Auto-scaled variant';
       const effectiveMode = response.effectiveMode ?? resolvedMode;
       const modeLabel =
-        effectiveMode === 'client_auto_scaler_v1'
-          ? 'Client auto scaler'
-          : 'Server auto scaler';
+        effectiveMode === 'client_auto_scaler_v1' ? 'Client auto scaler' : 'Server auto scaler';
       const sourceBounds = response.sourceObjectBounds ?? null;
       const targetBounds = response.targetObjectBounds ?? null;
       const autoScaleShiftedObject = Boolean(
         sourceBounds &&
         targetBounds &&
-        (
-          sourceBounds.left !== targetBounds.left ||
+        (sourceBounds.left !== targetBounds.left ||
           sourceBounds.top !== targetBounds.top ||
           sourceBounds.width !== targetBounds.width ||
-          sourceBounds.height !== targetBounds.height
-        )
+          sourceBounds.height !== targetBounds.height)
       );
       if (autoScaleShiftedObject) {
         toast(`Created ${createdLabel} (${modeLabel}).`, { variant: 'success' });
@@ -262,7 +257,8 @@ export function useGenerationToolbarAutoScale({
         });
       }
       if (response.detectionDetails?.fallbackApplied) {
-        const reason = response.detectionDetails.policyReason ?? response.layout?.detectionPolicyDecision;
+        const reason =
+          response.detectionDetails.policyReason ?? response.layout?.detectionPolicyDecision;
         toast(
           reason
             ? `Auto scaler policy fallback applied (${reason}).`
@@ -283,19 +279,31 @@ export function useGenerationToolbarAutoScale({
         toast('Auto scaler canceled.', { variant: 'info' });
         return;
       }
-      toast(
-        error instanceof Error
-          ? error.message
-          : 'Failed to auto scale image object.',
-        { variant: 'error' }
-      );
+      toast(error instanceof Error ? error.message : 'Failed to auto scale image object.', {
+        variant: 'error',
+      });
     } finally {
       autoScaleRequestInFlightRef.current = false;
       autoScaleAbortControllerRef.current = null;
       setAutoScaleBusy(false);
       setAutoScaleStatus('idle');
     }
-  }, [autoScaleLayoutPayload, autoScaleMode, clientProcessingImageSrc, projectId, queryClient, setAutoScaleBusy, setAutoScaleStatus, setSelectedSlotId, setWorkingSlotId, toast, workingSlot?.id, workingSlotImageSrc, autoScaleAbortControllerRef, autoScaleRequestInFlightRef]);
+  }, [
+    autoScaleLayoutPayload,
+    autoScaleMode,
+    clientProcessingImageSrc,
+    projectId,
+    queryClient,
+    setAutoScaleBusy,
+    setAutoScaleStatus,
+    setSelectedSlotId,
+    setWorkingSlotId,
+    toast,
+    workingSlot?.id,
+    workingSlotImageSrc,
+    autoScaleAbortControllerRef,
+    autoScaleRequestInFlightRef,
+  ]);
 
   return { handleAutoScale };
 }

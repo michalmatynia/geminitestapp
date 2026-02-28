@@ -17,8 +17,7 @@ const FileManager = dynamic(() => import('@/features/files/components/FileManage
 export function ProductImagesTabContent(): React.JSX.Element {
   const formImages = useProductFormImages();
   const imagesTabContext = useOptionalProductImagesTabContext();
-  const showFileManager =
-    imagesTabContext?.showFileManager ?? formImages?.showFileManager ?? false;
+  const showFileManager = imagesTabContext?.showFileManager ?? formImages?.showFileManager ?? false;
   const onShowFileManager =
     imagesTabContext?.onShowFileManager ?? formImages?.setShowFileManager ?? null;
   const resolvedOnSelectFiles = imagesTabContext?.onSelectFiles;
@@ -28,12 +27,9 @@ export function ProductImagesTabContent(): React.JSX.Element {
   const sectionDescription =
     imagesTabContext?.sectionDescription ??
     'Upload directly from any slot (single or multi-select), or pick existing files from the platform library.';
-  const chooseButtonLabel =
-    imagesTabContext?.chooseButtonLabel ??
-    'Choose from File Manager';
+  const chooseButtonLabel = imagesTabContext?.chooseButtonLabel ?? 'Choose from File Manager';
   const chooseButtonAriaLabel =
-    imagesTabContext?.chooseButtonAriaLabel ??
-    'Choose multiple existing images for the product';
+    imagesTabContext?.chooseButtonAriaLabel ?? 'Choose multiple existing images for the product';
 
   if (!onShowFileManager) {
     throw internalError(
@@ -45,11 +41,7 @@ export function ProductImagesTabContent(): React.JSX.Element {
     return (
       <div className='space-y-4'>
         <div className='flex justify-end'>
-          <Button
-            type='button'
-            variant='outline'
-            onClick={(): void => onShowFileManager(false)}
-          >
+          <Button type='button' variant='outline' onClick={(): void => onShowFileManager(false)}>
             Back to Images
           </Button>
         </div>

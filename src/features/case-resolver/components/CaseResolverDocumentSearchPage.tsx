@@ -10,13 +10,20 @@ import type {
   CaseResolverIdentifier,
   CaseResolverTag,
 } from '@/shared/contracts/case-resolver';
-import { Button, EmptyState, Pagination, SearchInput, SelectSimple, Card, Badge } from '@/shared/ui';
+import {
+  Button,
+  EmptyState,
+  Pagination,
+  SearchInput,
+  SelectSimple,
+  Card,
+  Badge,
+} from '@/shared/ui';
 
 import {
   CaseResolverPageContextValue,
   useCaseResolverPageContext,
 } from '../context/CaseResolverPageContext';
-
 
 type SortKey = 'updated' | 'created' | 'name';
 type SortOrder = 'asc' | 'desc';
@@ -55,7 +62,9 @@ const toDateLabel = (value: string | null | undefined): string => {
   }).format(date);
 };
 
-const buildPathLabelMap = <T extends { id: string; name: string; parentId?: string | null | undefined }>(
+const buildPathLabelMap = <
+  T extends { id: string; name: string; parentId?: string | null | undefined },
+>(
   items: T[]
 ): Map<string, string> => {
   const byId = new Map<string, T>(items.map((item: T): [string, T] => [item.id, item]));
@@ -115,9 +124,12 @@ export function CaseResolverDocumentSearchPage(): React.JSX.Element {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(24);
 
-  const tagPathById = useMemo(() => buildPathLabelMap(tags.map(t => ({ ...t, name: t.label || t.id }))), [tags]);
+  const tagPathById = useMemo(
+    () => buildPathLabelMap(tags.map((t) => ({ ...t, name: t.label || t.id }))),
+    [tags]
+  );
   const caseIdentifierPathById = useMemo(
-    () => buildPathLabelMap(identifiers.map(i => ({ ...i, name: i.name || i.label || i.id }))),
+    () => buildPathLabelMap(identifiers.map((i) => ({ ...i, name: i.name || i.label || i.id }))),
     [identifiers]
   );
   const categoryPathById = useMemo(() => buildPathLabelMap(categories), [categories]);
@@ -136,7 +148,11 @@ export function CaseResolverDocumentSearchPage(): React.JSX.Element {
       { value: '__all__', label: 'All case identifiers' },
       ...identifiers.map((identifier: CaseResolverIdentifier) => ({
         value: identifier.id,
-        label: caseIdentifierPathById.get(identifier.id) || identifier.name || identifier.label || identifier.id,
+        label:
+          caseIdentifierPathById.get(identifier.id) ||
+          identifier.name ||
+          identifier.label ||
+          identifier.id,
       })),
     ],
     [caseIdentifierPathById, identifiers]
@@ -154,22 +170,26 @@ export function CaseResolverDocumentSearchPage(): React.JSX.Element {
 
   const indexedRows = useMemo(
     (): FileSearchRow[] =>
-      files.map((file: CaseResolverFile): FileSearchRow => ({
-        file,
-        normalizedName: file.name.toLowerCase(),
-        normalizedFolder: file.folder.toLowerCase(),
-        normalizedTag: (file.tagId ? (tagPathById.get(file.tagId) ?? '') : '').toLowerCase(),
-        normalizedCaseIdentifier: (file.caseIdentifierId
-          ? (caseIdentifierPathById.get(file.caseIdentifierId) ?? '')
-          : ''
-        ).toLowerCase(),
-        normalizedCategory: (file.categoryId ? (categoryPathById.get(file.categoryId) ?? '') : '').toLowerCase(),
-        normalizedContent: (
-          file.documentContentPlainText.trim().length > 0
+      files.map(
+        (file: CaseResolverFile): FileSearchRow => ({
+          file,
+          normalizedName: file.name.toLowerCase(),
+          normalizedFolder: file.folder.toLowerCase(),
+          normalizedTag: (file.tagId ? (tagPathById.get(file.tagId) ?? '') : '').toLowerCase(),
+          normalizedCaseIdentifier: (file.caseIdentifierId
+            ? (caseIdentifierPathById.get(file.caseIdentifierId) ?? '')
+            : ''
+          ).toLowerCase(),
+          normalizedCategory: (file.categoryId
+            ? (categoryPathById.get(file.categoryId) ?? '')
+            : ''
+          ).toLowerCase(),
+          normalizedContent: (file.documentContentPlainText.trim().length > 0
             ? file.documentContentPlainText
             : stripHtml(file.documentContent)
-        ).toLowerCase(),
-      })),
+          ).toLowerCase(),
+        })
+      ),
     [caseIdentifierPathById, categoryPathById, files, tagPathById]
   );
 
@@ -184,7 +204,8 @@ export function CaseResolverDocumentSearchPage(): React.JSX.Element {
       .filter((row: FileSearchRow): boolean => {
         if (selectedFileType !== 'all' && row.file.fileType !== selectedFileType) return false;
         if (tagFilter && row.file.tagId !== tagFilter) return false;
-        if (caseIdentifierFilter && row.file.caseIdentifierId !== caseIdentifierFilter) return false;
+        if (caseIdentifierFilter && row.file.caseIdentifierId !== caseIdentifierFilter)
+          return false;
         if (categoryFilter && row.file.categoryId !== categoryFilter) return false;
         if (!query) return true;
         return (
@@ -205,7 +226,9 @@ export function CaseResolverDocumentSearchPage(): React.JSX.Element {
       } else if (sortBy === 'created') {
         delta = new Date(left.createdAt || 0).getTime() - new Date(right.createdAt || 0).getTime();
       } else {
-        delta = new Date(left.updatedAt || left.createdAt || 0).getTime() - new Date(right.updatedAt || right.createdAt || 0).getTime();
+        delta =
+          new Date(left.updatedAt || left.createdAt || 0).getTime() -
+          new Date(right.updatedAt || right.createdAt || 0).getTime();
       }
       return sortOrder === 'asc' ? delta : -delta;
     });
@@ -248,7 +271,7 @@ export function CaseResolverDocumentSearchPage(): React.JSX.Element {
   return (
     <DocumentSearchPage
       title='Document Search'
-      startAdornment={(
+      startAdornment={
         <>
           <Button
             type='button'
@@ -260,13 +283,13 @@ export function CaseResolverDocumentSearchPage(): React.JSX.Element {
             <Plus className='size-5' />
           </Button>
         </>
-      )}
-      titleAdornment={(
+      }
+      titleAdornment={
         <Badge variant='neutral' className='bg-card/40 font-normal'>
           {filteredFiles.length} result{filteredFiles.length === 1 ? '' : 's'}
         </Badge>
-      )}
-      endAdornment={(
+      }
+      endAdornment={
         <Pagination
           page={page}
           totalPages={totalPages}
@@ -277,8 +300,8 @@ export function CaseResolverDocumentSearchPage(): React.JSX.Element {
           showPageSize
           variant='compact'
         />
-      )}
-      filters={(
+      }
+      filters={
         <div className='space-y-3'>
           <SearchInput
             value={searchQuery}
@@ -348,27 +371,31 @@ export function CaseResolverDocumentSearchPage(): React.JSX.Element {
               className='h-9 border-border bg-card/60 text-xs text-gray-200 hover:bg-muted/60'
               title={`Sorting ${sortOrder === 'asc' ? 'ascending' : 'descending'}`}
             >
-              {sortOrder === 'asc' ? <ArrowUp className='mr-1.5 size-3.5' /> : <ArrowDown className='mr-1.5 size-3.5' />}
+              {sortOrder === 'asc' ? (
+                <ArrowUp className='mr-1.5 size-3.5' />
+              ) : (
+                <ArrowDown className='mr-1.5 size-3.5' />
+              )}
               {sortOrder === 'asc' ? 'Ascending' : 'Descending'}
             </Button>
           </div>
         </div>
-      )}
+      }
       loading={false}
       hasResults={filteredFiles.length > 0}
-      emptyState={(
+      emptyState={
         <EmptyState
           title='No documents found'
           description='Adjust search filters or create a new document.'
           icon={<FolderOpen className='size-10' />}
-          action={(
+          action={
             <Button type='button' onClick={onCreateDocumentFromSearch}>
               <Plus className='mr-2 size-4' />
               Create Document
             </Button>
-          )}
+          }
         />
-      )}
+      }
     >
       <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-3'>
         {pagedFiles.map((file: CaseResolverFile) => {
@@ -377,11 +404,13 @@ export function CaseResolverDocumentSearchPage(): React.JSX.Element {
               ? file.documentContentPlainText
               : stripHtml(file.documentContent)
           ).slice(0, 220);
-          const tagLabel = file.tagId ? tagPathById.get(file.tagId) ?? 'Unknown tag' : 'No tag';
+          const tagLabel = file.tagId ? (tagPathById.get(file.tagId) ?? 'Unknown tag') : 'No tag';
           const caseIdentifierLabel = file.caseIdentifierId
-            ? caseIdentifierPathById.get(file.caseIdentifierId) ?? 'Unknown case identifier'
+            ? (caseIdentifierPathById.get(file.caseIdentifierId) ?? 'Unknown case identifier')
             : 'No case identifier';
-          const categoryLabel = file.categoryId ? categoryPathById.get(file.categoryId) ?? 'Unknown category' : 'No category';
+          const categoryLabel = file.categoryId
+            ? (categoryPathById.get(file.categoryId) ?? 'Unknown category')
+            : 'No category';
           return (
             <Card key={file.id} variant='subtle' padding='md' className='bg-card/45'>
               <div className='mb-1 flex items-start justify-between gap-2'>
@@ -394,7 +423,10 @@ export function CaseResolverDocumentSearchPage(): React.JSX.Element {
                 >
                   {file.name}
                 </button>
-                <Badge variant='neutral' className='shrink-0 border-border/60 bg-black/30 font-normal uppercase'>
+                <Badge
+                  variant='neutral'
+                  className='shrink-0 border-border/60 bg-black/30 font-normal uppercase'
+                >
                   {file.fileType}
                 </Badge>
               </div>

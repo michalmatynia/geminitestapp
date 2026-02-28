@@ -6,12 +6,9 @@ import {
   stripHtmlToPlainText,
   toStorageDocumentValue,
   type DocumentContentCanonical,
-} from '@/features/document-editor/content-format';
-import type {
-  CaseResolverFile,
-  CaseResolverFileEditDraft,
-} from '@/shared/contracts/case-resolver';
-import { buildFileEditDraft } from '../utils/caseResolverUtils';
+} from '@/shared/lib/document-editor/content-format';
+import type { CaseResolverFile, CaseResolverFileEditDraft } from '@/shared/contracts/case-resolver';
+import { buildFileEditDraft } from '@/features/case-resolver/utils/caseResolverUtils';
 import { stableStringify } from '../../ai/ai-paths/lib';
 
 export type CaseResolverDraftCanonicalState = {
@@ -134,13 +131,12 @@ export const buildCaseResolverDraftCanonicalState = (
   };
 };
 
-const normalizeComparableReferenceCaseIds = (
-  value: string[] | null | undefined
-): string[] => [...(value ?? [])].sort();
+const normalizeComparableReferenceCaseIds = (value: string[] | null | undefined): string[] =>
+  [...(value ?? [])].sort();
 
-const normalizeComparableWarnings = (
-  value: string[] | null | undefined
-): string[] => [...(value ?? [])];
+const normalizeComparableWarnings = (value: string[] | null | undefined): string[] => [
+  ...(value ?? []),
+];
 
 const normalizeComparablePartyReference = (
   value: CaseResolverFileEditDraft['addresser'] | null | undefined
@@ -258,9 +254,8 @@ const buildCaseResolverDraftComparableSnapshot = (
   };
 };
 
-export const buildCaseResolverFileComparableFingerprint = (
-  file: CaseResolverFile
-): string => stableStringify(buildCaseResolverFileComparableSnapshot(file));
+export const buildCaseResolverFileComparableFingerprint = (file: CaseResolverFile): string =>
+  stableStringify(buildCaseResolverFileComparableSnapshot(file));
 
 export const buildCaseResolverDraftComparableFingerprint = (
   draft: CaseResolverFileEditDraft,

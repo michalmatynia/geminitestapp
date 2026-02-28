@@ -19,10 +19,7 @@ vi.mock('@/features/products/services/validation-pattern-runtime-cache', () => (
   invalidateValidationPatternRuntimeCache: invalidateRuntimeCacheMock,
 }));
 
-const buildPattern = (
-  id: string,
-  updatedAt: string
-): ProductValidationPattern => ({
+const buildPattern = (id: string, updatedAt: string): ProductValidationPattern => ({
   id,
   label: `Pattern ${id}`,
   target: 'sku',
@@ -95,7 +92,7 @@ describe('validator-patterns/reorder route', () => {
             },
           ],
         }),
-      }),
+      })
     );
     const data = await response.json();
 
@@ -123,7 +120,7 @@ describe('validator-patterns/reorder route', () => {
             },
           ],
         }),
-      }),
+      })
     );
     const data = await response.json();
 

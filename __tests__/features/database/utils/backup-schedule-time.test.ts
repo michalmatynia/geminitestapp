@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { localHmToUtcHm, utcHmToLocalHm } from '@/features/database/utils/backup-schedule-time';
+import { localHmToUtcHm, utcHmToLocalHm } from '@/shared/lib/db/utils/backup-schedule-time';
 
 describe('backup schedule time conversion helpers', () => {
   const referenceDate = new Date('2026-02-27T12:00:00.000Z');
@@ -34,4 +34,3 @@ describe('backup schedule time conversion helpers', () => {
     expect(localHmToUtcHm(localLate ?? '', referenceDate)).toBe('23:59');
   });
 });
-

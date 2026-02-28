@@ -28,7 +28,7 @@ const paintRect = (
   const bottom = Math.min(height, rect.top + rect.height);
   for (let y = Math.max(0, rect.top); y < bottom; y += 1) {
     for (let x = Math.max(0, rect.left); x < right; x += 1) {
-      const offset = ((y * width) + x) * 4;
+      const offset = (y * width + x) * 4;
       data[offset] = color.r;
       data[offset + 1] = color.g;
       data[offset + 2] = color.b;
@@ -64,9 +64,21 @@ describe('image-studio analysis shared', () => {
     const rgba = createWhiteCanvas(width, height);
 
     // Soft gray shadow region around the product object.
-    paintRect(rgba, width, height, { left: 5, top: 5, width: 7, height: 7 }, { r: 255, g: 242, b: 255 });
+    paintRect(
+      rgba,
+      width,
+      height,
+      { left: 5, top: 5, width: 7, height: 7 },
+      { r: 255, g: 242, b: 255 }
+    );
     // High-chroma product core.
-    paintRect(rgba, width, height, { left: 6, top: 6, width: 5, height: 5 }, { r: 220, g: 15, b: 15 });
+    paintRect(
+      rgba,
+      width,
+      height,
+      { left: 6, top: 6, width: 5, height: 5 },
+      { r: 220, g: 15, b: 15 }
+    );
 
     const includeShadow = detectObjectBoundsForLayoutFromRgba(rgba, width, height, {
       detection: 'white_bg_first_colored_pixel',
@@ -99,7 +111,13 @@ describe('image-studio analysis shared', () => {
     const width = 16;
     const height = 16;
     const rgba = createWhiteCanvas(width, height);
-    paintRect(rgba, width, height, { left: 4, top: 3, width: 8, height: 9 }, { r: 25, g: 140, b: 240 });
+    paintRect(
+      rgba,
+      width,
+      height,
+      { left: 4, top: 3, width: 8, height: 9 },
+      { r: 25, g: 140, b: 240 }
+    );
 
     const analysis = analyzeImageObjectFromRgba({
       pixelData: rgba,

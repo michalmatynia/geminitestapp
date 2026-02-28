@@ -50,7 +50,12 @@ export function UserNav(): React.ReactNode {
 
   if (!session) {
     return (
-      <Button variant='ghost' onClick={() => { void signIn(); }}>
+      <Button
+        variant='ghost'
+        onClick={() => {
+          void signIn();
+        }}
+      >
         <LogIn className='mr-2 h-4 w-4' />
         Log In
       </Button>
@@ -75,9 +80,7 @@ export function UserNav(): React.ReactNode {
         <DropdownMenuLabel className='font-normal'>
           <div className='flex flex-col space-y-1'>
             <p className='text-sm font-medium leading-none'>{session.user?.name}</p>
-            <p className='text-xs leading-none text-muted-foreground'>
-              {session.user?.email}
-            </p>
+            <p className='text-xs leading-none text-muted-foreground'>{session.user?.email}</p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
@@ -98,14 +101,18 @@ export function UserNav(): React.ReactNode {
           <ToggleRow
             label='Enable Panel'
             checked={queryPanelEnabled}
-            onCheckedChange={(checked: boolean): void => setQueryPanelSetting('query_status_panel_enabled', checked)}
+            onCheckedChange={(checked: boolean): void =>
+              setQueryPanelSetting('query_status_panel_enabled', checked)
+            }
             className='bg-transparent border-none p-0 hover:bg-transparent'
             labelClassName='text-sm font-normal normal-case tracking-normal'
           />
           <ToggleRow
             label='Open Panel'
             checked={queryPanelOpen}
-            onCheckedChange={(checked: boolean): void => setQueryPanelSetting('query_status_panel_open', checked)}
+            onCheckedChange={(checked: boolean): void =>
+              setQueryPanelSetting('query_status_panel_open', checked)
+            }
             disabled={!queryPanelEnabled}
             className='bg-transparent border-none p-0 hover:bg-transparent'
             labelClassName='text-sm font-normal normal-case tracking-normal'
@@ -132,7 +139,11 @@ export function UserNav(): React.ReactNode {
           <ThemeToggleComponent />
         </div>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => { void signOut(); }}>
+        <DropdownMenuItem
+          onClick={() => {
+            void signOut();
+          }}
+        >
           <LogOut className='mr-2 h-4 w-4' />
           <span>Log out</span>
         </DropdownMenuItem>

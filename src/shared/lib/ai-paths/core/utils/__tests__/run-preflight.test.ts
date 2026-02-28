@@ -259,9 +259,7 @@ describe('evaluateRunPreflight', () => {
     expect(disabledReport.shouldBlock).toBe(false);
     expect(disabledReport.dependencyReport?.errors ?? 0).toBe(0);
     expect(
-      disabledReport.warnings.some(
-        (warning) => warning.code === 'dependency_errors_non_blocking'
-      )
+      disabledReport.warnings.some((warning) => warning.code === 'dependency_errors_non_blocking')
     ).toBe(false);
   });
 });

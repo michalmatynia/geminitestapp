@@ -1,24 +1,15 @@
 import { createMasterFolderTreeAdapter } from '@/shared/lib/foldertree';
 import type { MasterTreeId, MasterTreeNode } from '@/shared/utils';
 
-import {
-  decodeNotesMasterNodeId,
-  fromFolderMasterNodeId,
-} from './master-folder-tree';
+import { decodeNotesMasterNodeId, fromFolderMasterNodeId } from './master-folder-tree';
 
 export type NotesMasterTreeOperations = {
-  handleMoveNoteToFolder: (
-    noteId: string,
-    folderId: string | null,
-  ) => Promise<void>;
-  handleMoveFolderToFolder: (
-    folderId: string,
-    targetParentId: string | null,
-  ) => Promise<void>;
+  handleMoveNoteToFolder: (noteId: string, folderId: string | null) => Promise<void>;
+  handleMoveFolderToFolder: (folderId: string, targetParentId: string | null) => Promise<void>;
   handleReorderFolder: (
     folderId: string,
     targetId: string,
-    position: 'before' | 'after',
+    position: 'before' | 'after'
   ) => Promise<void>;
   handleRenameNote: (noteId: string, newTitle: string) => Promise<void>;
   handleRenameFolder: (folderId: string, newName: string) => Promise<void>;
@@ -26,7 +17,7 @@ export type NotesMasterTreeOperations = {
 
 export const resolveNotesFolderTargetForNode = (
   nodes: MasterTreeNode[],
-  nodeId: MasterTreeId | null,
+  nodeId: MasterTreeId | null
 ): string | null => {
   if (!nodeId) return null;
   const folderId = fromFolderMasterNodeId(nodeId);
@@ -36,25 +27,15 @@ export const resolveNotesFolderTargetForNode = (
   return resolveNotesFolderTargetForNode(nodes, node.parentId);
 };
 
-export const createNotesMasterTreeAdapter = (
-  operations: NotesMasterTreeOperations,
-) =>
+export const createNotesMasterTreeAdapter = (operations: NotesMasterTreeOperations) =>
   createMasterFolderTreeAdapter({
     decodeNodeId: decodeNotesMasterNodeId,
     handlers: {
-      onMove: async ({
-        operation,
-        context,
-        node,
-        targetParent,
-      }): Promise<void> => {
+      onMove: async ({ operation, context, node, targetParent }): Promise<void> => {
         const targetFolderId =
           targetParent?.entity === 'folder'
             ? targetParent.id
-            : resolveNotesFolderTargetForNode(
-              context.nextNodes,
-              operation.targetParentId,
-            );
+            : resolveNotesFolderTargetForNode(context.nextNodes, operation.targetParentId);
 
         if (node.entity === 'note') {
           await operations.handleMoveNoteToFolder(node.id, targetFolderId);
@@ -64,45 +45,25 @@ export const createNotesMasterTreeAdapter = (
         if (operation.targetParentId === null && operation.targetIndex === 0) {
           const firstRootFolderId =
             context.nextNodes
-              .filter(
-                (entry: MasterTreeNode) =>
-                  entry.type === 'folder' && entry.parentId === null,
-              )
+              .filter((entry: MasterTreeNode) => entry.type === 'folder' && entry.parentId === null)
               .sort(
-                (left: MasterTreeNode, right: MasterTreeNode) =>
-                  left.sortOrder - right.sortOrder,
+                (left: MasterTreeNode, right: MasterTreeNode) => left.sortOrder - right.sortOrder
               )
-              .map((entry: MasterTreeNode): string | null =>
-                fromFolderMasterNodeId(entry.id),
-              )
+              .map((entry: MasterTreeNode): string | null => fromFolderMasterNodeId(entry.id))
               .find(
-                (folderId: string | null): boolean =>
-                  Boolean(folderId) && folderId !== node.id,
+                (folderId: string | null): boolean => Boolean(folderId) && folderId !== node.id
               ) ?? null;
           if (firstRootFolderId) {
-            await operations.handleReorderFolder(
-              node.id,
-              firstRootFolderId,
-              'before',
-            );
+            await operations.handleReorderFolder(node.id, firstRootFolderId, 'before');
             return;
           }
         }
 
         await operations.handleMoveFolderToFolder(node.id, targetFolderId);
       },
-      onReorder: async ({
-        operation,
-        context,
-        node,
-        target,
-      }): Promise<void> => {
+      onReorder: async ({ operation, context, node, target }): Promise<void> => {
         if (node.entity === 'folder' && target.entity === 'folder') {
-          await operations.handleReorderFolder(
-            node.id,
-            target.id,
-            operation.position,
-          );
+          await operations.handleReorderFolder(node.id, target.id, operation.position);
           return;
         }
 
@@ -110,10 +71,7 @@ export const createNotesMasterTreeAdapter = (
           const targetFolderId =
             target.entity === 'folder'
               ? target.id
-              : resolveNotesFolderTargetForNode(
-                context.nextNodes,
-                operation.targetId,
-              );
+              : resolveNotesFolderTargetForNode(context.nextNodes, operation.targetId);
           await operations.handleMoveNoteToFolder(node.id, targetFolderId);
         }
       },

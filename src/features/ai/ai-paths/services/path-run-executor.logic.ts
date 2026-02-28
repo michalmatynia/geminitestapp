@@ -145,17 +145,18 @@ export const buildRuntimeProfileSnapshot = (input: {
   summary: RuntimeProfileSummaryDto | null;
   nodeSpans: RuntimeProfileNodeSpan[];
 }): RuntimeProfileSnapshot => {
-  const hottestNodes = input.summary?.hottestNodes.slice(0, 5).map((node) => ({
-    nodeId: node.nodeId,
-    nodeType: node.nodeType,
-    count: node.count,
-    totalMs: node.totalMs,
-    maxMs: node.maxMs,
-    avgMs: node.avgMs,
-    errorCount: node.errorCount,
-    cachedCount: node.cachedCount,
-    skippedCount: node.skippedCount,
-  })) ?? [];
+  const hottestNodes =
+    input.summary?.hottestNodes.slice(0, 5).map((node) => ({
+      nodeId: node.nodeId,
+      nodeType: node.nodeType,
+      count: node.count,
+      totalMs: node.totalMs,
+      maxMs: node.maxMs,
+      avgMs: node.avgMs,
+      errorCount: node.errorCount,
+      cachedCount: node.cachedCount,
+      skippedCount: node.skippedCount,
+    })) ?? [];
   return {
     traceId: input.traceId,
     recordedAt: new Date().toISOString(),
@@ -164,22 +165,19 @@ export const buildRuntimeProfileSnapshot = (input: {
     droppedEventCount: Math.max(input.eventCount - input.sampledHighlights.length, 0),
     summary: input.summary
       ? {
-        durationMs: input.summary.durationMs,
-        iterationCount: input.summary.iterationCount,
-        nodeCount: input.summary.nodeCount,
-        edgeCount: input.summary.edgeCount,
-        hottestNodes,
-      }
+          durationMs: input.summary.durationMs,
+          iterationCount: input.summary.iterationCount,
+          nodeCount: input.summary.nodeCount,
+          edgeCount: input.summary.edgeCount,
+          hottestNodes,
+        }
       : null,
     highlights: input.sampledHighlights.slice(0, RUNTIME_PROFILE_HIGHLIGHT_LIMIT),
     nodeSpans: input.nodeSpans,
   };
 };
 
-export const computeDownstreamNodes = (
-  edges: Edge[],
-  startNodes: Set<string>
-): Set<string> => {
+export const computeDownstreamNodes = (edges: Edge[], startNodes: Set<string>): Set<string> => {
   const adjacency = new Map<string, Set<string>>();
   edges.forEach((edge: Edge) => {
     if (!edge.from || !edge.to) return;
@@ -214,8 +212,8 @@ export const resolveTriggerNodeId = (
   if (triggerNodes.length === 0) return undefined;
   const matching = triggerEvent
     ? triggerNodes.filter(
-      (node: AiNode) => (node.config?.trigger?.event ?? '').trim() === triggerEvent
-    )
+        (node: AiNode) => (node.config?.trigger?.event ?? '').trim() === triggerEvent
+      )
     : triggerNodes;
   const candidates = matching.length > 0 ? matching : triggerNodes;
   const connected = candidates.find((node: AiNode) =>
@@ -238,10 +236,7 @@ export const buildSkipSet = (
 
   const completed = new Set(
     Array.from(nodeStatusMap.entries())
-      .filter(
-        ([, status]: [string, string]) =>
-          status === 'completed' || status === 'cached'
-      )
+      .filter(([, status]: [string, string]) => status === 'completed' || status === 'cached')
       .map(([nodeId]: [string, string]) => nodeId)
   );
   if (mode === 'resume') {

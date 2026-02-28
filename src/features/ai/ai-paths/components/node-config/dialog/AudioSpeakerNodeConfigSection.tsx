@@ -84,9 +84,9 @@ export function AudioSpeakerNodeConfigSection(): React.JSX.Element | null {
       </FormField>
 
       <Hint italic>
-        Web Audio playback is available in local execution mode. Some browsers require a user interaction first.
+        Web Audio playback is available in local execution mode. Some browsers require a user
+        interaction first.
       </Hint>
     </div>
   );
 }
-

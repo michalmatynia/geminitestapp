@@ -1,7 +1,4 @@
-import type {
-  PromptExploderListItem,
-  PromptExploderSegment,
-} from '../types';
+import type { PromptExploderListItem, PromptExploderSegment } from '../types';
 
 export const reorderListItemsForDrop = (
   items: PromptExploderListItem[],
@@ -18,11 +15,7 @@ export const reorderListItemsForDrop = (
   const targetBaseIndex = fromIndex < toIndex ? toIndex - 1 : toIndex;
   const insertIndex =
     position === 'after' ? Math.min(targetBaseIndex + 1, remaining.length) : targetBaseIndex;
-  return [
-    ...remaining.slice(0, insertIndex),
-    dragged,
-    ...remaining.slice(insertIndex),
-  ];
+  return [...remaining.slice(0, insertIndex), dragged, ...remaining.slice(insertIndex)];
 };
 
 export const reorderSegmentsForDrop = (
@@ -38,11 +31,7 @@ export const reorderSegmentsForDrop = (
   const targetIndex = remaining.findIndex((segment) => segment.id === targetId);
   if (targetIndex < 0) return segments;
   const insertIndex = position === 'after' ? targetIndex + 1 : targetIndex;
-  return [
-    ...remaining.slice(0, insertIndex),
-    dragged,
-    ...remaining.slice(insertIndex),
-  ];
+  return [...remaining.slice(0, insertIndex), dragged, ...remaining.slice(insertIndex)];
 };
 
 export const resolveDropPosition = (

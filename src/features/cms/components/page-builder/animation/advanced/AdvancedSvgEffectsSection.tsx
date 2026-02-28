@@ -2,14 +2,7 @@
 
 import React from 'react';
 import { PenLine, Trash2 } from 'lucide-react';
-import {
-  Button,
-  Checkbox,
-  Input,
-  Tooltip,
-  FormSection,
-  FormField,
-} from '@/shared/ui';
+import { Button, Checkbox, Input, Tooltip, FormSection, FormField } from '@/shared/ui';
 import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
 import { getDocumentationTooltip } from '@/shared/lib/tooltip-engine';
 import { DEFAULT_ANIMATION_CONFIG } from '@/shared/lib/gsap';
@@ -21,26 +14,30 @@ const EMPTY_SHAPES: VectorShape[] = [];
 
 export function AdvancedSvgEffectsSection(): React.JSX.Element {
   const { config, onChange, openVectorOverlay } = useAnimationConfigContext();
-  
-  const drawPathTooltip = getDocumentationTooltip(
-    DOCUMENTATION_MODULE_IDS.cms,
-    'animation_draw_path_canvas'
-  ) ?? 'Draw path on canvas';
-  const clearPathTooltip = getDocumentationTooltip(
-    DOCUMENTATION_MODULE_IDS.cms,
-    'animation_clear_path_canvas'
-  ) ?? 'Clear path';
 
-  const svgDrawEnabledValue = config.svgDrawEnabled ?? DEFAULT_ANIMATION_CONFIG.svgDrawEnabled ?? false;
-  const svgDrawSelectorValue = config.svgDrawSelector ?? DEFAULT_ANIMATION_CONFIG.svgDrawSelector ?? 'path';
+  const drawPathTooltip =
+    getDocumentationTooltip(DOCUMENTATION_MODULE_IDS.cms, 'animation_draw_path_canvas') ??
+    'Draw path on canvas';
+  const clearPathTooltip =
+    getDocumentationTooltip(DOCUMENTATION_MODULE_IDS.cms, 'animation_clear_path_canvas') ??
+    'Clear path';
+
+  const svgDrawEnabledValue =
+    config.svgDrawEnabled ?? DEFAULT_ANIMATION_CONFIG.svgDrawEnabled ?? false;
+  const svgDrawSelectorValue =
+    config.svgDrawSelector ?? DEFAULT_ANIMATION_CONFIG.svgDrawSelector ?? 'path';
   const svgDrawFromValue = config.svgDrawFrom ?? DEFAULT_ANIMATION_CONFIG.svgDrawFrom ?? 0;
   const svgDrawToValue = config.svgDrawTo ?? DEFAULT_ANIMATION_CONFIG.svgDrawTo ?? 100;
   const svgDrawPathValue = config.svgDrawPath ?? DEFAULT_ANIMATION_CONFIG.svgDrawPath ?? '';
-  const svgDrawShapesValue = config.svgDrawShapes ?? DEFAULT_ANIMATION_CONFIG.svgDrawShapes ?? EMPTY_SHAPES;
-  const svgMorphEnabledValue = config.svgMorphEnabled ?? DEFAULT_ANIMATION_CONFIG.svgMorphEnabled ?? false;
-  const svgMorphSelectorValue = config.svgMorphSelector ?? DEFAULT_ANIMATION_CONFIG.svgMorphSelector ?? 'path';
+  const svgDrawShapesValue =
+    config.svgDrawShapes ?? DEFAULT_ANIMATION_CONFIG.svgDrawShapes ?? EMPTY_SHAPES;
+  const svgMorphEnabledValue =
+    config.svgMorphEnabled ?? DEFAULT_ANIMATION_CONFIG.svgMorphEnabled ?? false;
+  const svgMorphSelectorValue =
+    config.svgMorphSelector ?? DEFAULT_ANIMATION_CONFIG.svgMorphSelector ?? 'path';
   const svgMorphToValue = config.svgMorphTo ?? DEFAULT_ANIMATION_CONFIG.svgMorphTo ?? '';
-  const svgMorphShapesValue = config.svgMorphShapes ?? DEFAULT_ANIMATION_CONFIG.svgMorphShapes ?? EMPTY_SHAPES;
+  const svgMorphShapesValue =
+    config.svgMorphShapes ?? DEFAULT_ANIMATION_CONFIG.svgMorphShapes ?? EMPTY_SHAPES;
 
   const handleSvgDrawCanvas = (): void => {
     openVectorOverlay({
@@ -68,7 +65,10 @@ export function AdvancedSvgEffectsSection(): React.JSX.Element {
     <FormSection title='SVG Effects' variant='subtle-compact' className='p-3 space-y-4'>
       <div className='space-y-4 mt-4'>
         <div className='flex items-center gap-2'>
-          <Checkbox checked={svgDrawEnabledValue} onCheckedChange={(v) => onChange({ ...config, svgDrawEnabled: v === true })} />
+          <Checkbox
+            checked={svgDrawEnabledValue}
+            onCheckedChange={(v) => onChange({ ...config, svgDrawEnabled: v === true })}
+          />
           <span className='text-xs text-gray-300'>Draw SVG strokes</span>
         </div>
         {svgDrawEnabledValue && (
@@ -90,7 +90,13 @@ export function AdvancedSvgEffectsSection(): React.JSX.Element {
                   className='flex-1 text-xs font-mono h-9'
                 />
                 <Tooltip content={drawPathTooltip}>
-                  <Button type='button' size='icon' variant='outline' onClick={handleSvgDrawCanvas} className='h-9 w-9'>
+                  <Button
+                    type='button'
+                    size='icon'
+                    variant='outline'
+                    onClick={handleSvgDrawCanvas}
+                    className='h-9 w-9'
+                  >
                     <PenLine className='size-4' />
                   </Button>
                 </Tooltip>
@@ -118,7 +124,8 @@ export function AdvancedSvgEffectsSection(): React.JSX.Element {
                   value={svgDrawFromValue}
                   onChange={(e) => {
                     const val = parseFloat(e.target.value);
-                    if (!isNaN(val)) onChange({ ...config, svgDrawFrom: Math.max(0, Math.min(100, val)) });
+                    if (!isNaN(val))
+                      onChange({ ...config, svgDrawFrom: Math.max(0, Math.min(100, val)) });
                   }}
                   className='h-9'
                 />
@@ -132,7 +139,8 @@ export function AdvancedSvgEffectsSection(): React.JSX.Element {
                   value={svgDrawToValue}
                   onChange={(e) => {
                     const val = parseFloat(e.target.value);
-                    if (!isNaN(val)) onChange({ ...config, svgDrawTo: Math.max(0, Math.min(100, val)) });
+                    if (!isNaN(val))
+                      onChange({ ...config, svgDrawTo: Math.max(0, Math.min(100, val)) });
                   }}
                   className='h-9'
                 />
@@ -142,7 +150,10 @@ export function AdvancedSvgEffectsSection(): React.JSX.Element {
         )}
 
         <div className='flex items-center gap-2'>
-          <Checkbox checked={svgMorphEnabledValue} onCheckedChange={(v) => onChange({ ...config, svgMorphEnabled: v === true })} />
+          <Checkbox
+            checked={svgMorphEnabledValue}
+            onCheckedChange={(v) => onChange({ ...config, svgMorphEnabled: v === true })}
+          />
           <span className='text-xs text-gray-300'>Morph SVG path (basic)</span>
         </div>
         {svgMorphEnabledValue && (
@@ -164,7 +175,13 @@ export function AdvancedSvgEffectsSection(): React.JSX.Element {
                   className='flex-1 text-xs font-mono h-9'
                 />
                 <Tooltip content={drawPathTooltip}>
-                  <Button type='button' size='icon' variant='outline' onClick={handleSvgMorphDraw} className='h-9 w-9'>
+                  <Button
+                    type='button'
+                    size='icon'
+                    variant='outline'
+                    onClick={handleSvgMorphDraw}
+                    className='h-9 w-9'
+                  >
                     <PenLine className='size-4' />
                   </Button>
                 </Tooltip>

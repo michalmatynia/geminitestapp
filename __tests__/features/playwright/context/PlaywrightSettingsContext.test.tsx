@@ -1,7 +1,10 @@
 import { render, screen, act } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 
-import { PlaywrightSettingsProvider, usePlaywrightSettings } from '@/shared/lib/playwright/context/PlaywrightSettingsContext';
+import {
+  PlaywrightSettingsProvider,
+  usePlaywrightSettings,
+} from '@/shared/lib/playwright/context/PlaywrightSettingsContext';
 import { buildPlaywrightSettings } from '@/shared/lib/playwright/utils/personas';
 
 const TestComponent = () => {
@@ -52,7 +55,7 @@ describe('PlaywrightSettingsContext', () => {
     });
 
     expect(setSettings).toHaveBeenCalled();
-    
+
     // Rerender with new settings to simulate parent state update
     rerender(
       <PlaywrightSettingsProvider settings={currentSettings} setSettings={setSettings}>
@@ -66,9 +69,11 @@ describe('PlaywrightSettingsContext', () => {
   it('throws error when used outside of provider', () => {
     // Suppress console.error for this test as we expect an error
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    
-    expect(() => render(<TestComponent />)).toThrow('usePlaywrightSettings must be used within a PlaywrightSettingsProvider');
-    
+
+    expect(() => render(<TestComponent />)).toThrow(
+      'usePlaywrightSettings must be used within a PlaywrightSettingsProvider'
+    );
+
     consoleSpy.mockRestore();
   });
 });

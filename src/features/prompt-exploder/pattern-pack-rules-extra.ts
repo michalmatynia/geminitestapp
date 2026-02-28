@@ -53,7 +53,8 @@ const createRegexRule = (rule: {
   passOutputToNext: true,
   appliesToScopes: rule.appliesToScopes ?? [...PROMPT_EXPLODER_SCOPE],
   launchEnabled: false,
-  launchAppliesToScopes: rule.launchAppliesToScopes ?? rule.appliesToScopes ?? [...PROMPT_EXPLODER_SCOPE],
+  launchAppliesToScopes: rule.launchAppliesToScopes ??
+    rule.appliesToScopes ?? [...PROMPT_EXPLODER_SCOPE],
   launchScopeBehavior: 'gate',
   launchOperator: 'contains',
   launchValue: null,
@@ -210,7 +211,8 @@ export const PROMPT_EXPLODER_PATTERN_PACK_EXTRA: PromptValidationRule[] = [
     id: 'segment.infer.qa_matrix.validation_module',
     title: 'Infer QA Matrix: Validation Module',
     description: 'Recognizes validation/checklist modules with pass/fail style outcomes.',
-    pattern: '(\\[VALIDATION_MODULE\\]|VALIDATION\\s+MODULE|FINAL\\s+QA)[\\s\\S]{0,260}(PASS|FAIL|Sanity checks)',
+    pattern:
+      '(\\[VALIDATION_MODULE\\]|VALIDATION\\s+MODULE|FINAL\\s+QA)[\\s\\S]{0,260}(PASS|FAIL|Sanity checks)',
     flags: 'mi',
     message: 'Likely validation QA segment.',
     sequence: 240,
@@ -225,7 +227,8 @@ export const PROMPT_EXPLODER_PATTERN_PACK_EXTRA: PromptValidationRule[] = [
     id: 'segment.infer.sequence.data_model',
     title: 'Infer Sequence: Data Model',
     description: 'Recognizes DATA MODEL and schema-style definition sections.',
-    pattern: '(\\[DATA\\s*MODEL\\]|DATA\\s*MODEL)\\b|\\bProductRecord\\b|\\bMarketplaceListingRecord\\b|\\bZeroStockMappingRecord\\b',
+    pattern:
+      '(\\[DATA\\s*MODEL\\]|DATA\\s*MODEL)\\b|\\bProductRecord\\b|\\bMarketplaceListingRecord\\b|\\bZeroStockMappingRecord\\b',
     flags: 'mi',
     message: 'Likely data model sequence segment.',
     sequence: 250,
@@ -240,7 +243,8 @@ export const PROMPT_EXPLODER_PATTERN_PACK_EXTRA: PromptValidationRule[] = [
     id: 'segment.infer.conditional_list.dry_run',
     title: 'Infer Conditional: DRY_RUN Flow',
     description: 'Recognizes DRY_RUN if/else behavior segments.',
-    pattern: '(\\[DRY_RUN_BEHAVIOR\\]|DRY[_\\s]RUN)[\\s\\S]{0,260}(If\\s+\\[?DRY_RUN\\]?\\s*=\\s*true|If\\s+\\[?DRY_RUN\\]?\\s*=\\s*false)',
+    pattern:
+      '(\\[DRY_RUN_BEHAVIOR\\]|DRY[_\\s]RUN)[\\s\\S]{0,260}(If\\s+\\[?DRY_RUN\\]?\\s*=\\s*true|If\\s+\\[?DRY_RUN\\]?\\s*=\\s*false)',
     flags: 'mi',
     message: 'Likely DRY_RUN conditional segment.',
     sequence: 260,
@@ -270,7 +274,8 @@ export const PROMPT_EXPLODER_PATTERN_PACK_EXTRA: PromptValidationRule[] = [
     id: 'segment.infer.sequence.error_handling',
     title: 'Infer Sequence: Error Handling',
     description: 'Recognizes error handling sections and retry policies.',
-    pattern: '(\\[ERROR_HANDLING\\]|ERROR\\s+HANDLING)\\b[\\s\\S]{0,220}(retry|auth_error|network_error|ambiguous_match)',
+    pattern:
+      '(\\[ERROR_HANDLING\\]|ERROR\\s+HANDLING)\\b[\\s\\S]{0,220}(retry|auth_error|network_error|ambiguous_match)',
     flags: 'mi',
     message: 'Likely error-handling sequence segment.',
     sequence: 280,
@@ -285,7 +290,8 @@ export const PROMPT_EXPLODER_PATTERN_PACK_EXTRA: PromptValidationRule[] = [
     id: 'segment.infer.sequence.security_notes',
     title: 'Infer Sequence: Security Notes',
     description: 'Recognizes security notes and credential-handling constraints.',
-    pattern: '(\\[SECURITY_NOTES\\]|SECURITY\\s+NOTES)\\b[\\s\\S]{0,220}(credentials|token|cookie|mfa|secret)',
+    pattern:
+      '(\\[SECURITY_NOTES\\]|SECURITY\\s+NOTES)\\b[\\s\\S]{0,220}(credentials|token|cookie|mfa|secret)',
     flags: 'mi',
     message: 'Likely security-notes sequence segment.',
     sequence: 290,

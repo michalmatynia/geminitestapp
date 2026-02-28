@@ -55,13 +55,19 @@ const parseNumber = (
 
 const parseArgs = (argv: string[]): CliOptions => {
   const options: CliOptions = {
-    source: normalizeString(process.env['FILE_STORAGE_SOURCE']) === 'fastcomet' ? 'fastcomet' : 'local',
+    source:
+      normalizeString(process.env['FILE_STORAGE_SOURCE']) === 'fastcomet' ? 'fastcomet' : 'local',
     uploadEndpoint: normalizeString(process.env['FASTCOMET_STORAGE_UPLOAD_URL']),
     baseUrl: normalizeString(process.env['FASTCOMET_STORAGE_BASE_URL']),
     deleteEndpoint: normalizeString(process.env['FASTCOMET_STORAGE_DELETE_URL']),
     authToken: normalizeString(process.env['FASTCOMET_STORAGE_AUTH_TOKEN']),
     keepLocalCopy: parseBoolean(process.env['FASTCOMET_STORAGE_KEEP_LOCAL_COPY'], true),
-    timeoutMs: parseNumber(process.env['FASTCOMET_STORAGE_TIMEOUT_MS'], DEFAULT_TIMEOUT_MS, 1_000, 120_000),
+    timeoutMs: parseNumber(
+      process.env['FASTCOMET_STORAGE_TIMEOUT_MS'],
+      DEFAULT_TIMEOUT_MS,
+      1_000,
+      120_000
+    ),
     dryRun: false,
   };
 
@@ -102,7 +108,12 @@ const parseArgs = (argv: string[]): CliOptions => {
       return;
     }
     if (arg.startsWith('--timeout-ms=')) {
-      options.timeoutMs = parseNumber(arg.slice('--timeout-ms='.length), DEFAULT_TIMEOUT_MS, 1_000, 120_000);
+      options.timeoutMs = parseNumber(
+        arg.slice('--timeout-ms='.length),
+        DEFAULT_TIMEOUT_MS,
+        1_000,
+        120_000
+      );
     }
   });
 
@@ -134,7 +145,12 @@ const buildPayloads = (options: CliOptions): SettingPayload[] => {
 const writeMongoSettings = async (payloads: SettingPayload[]): Promise<void> => {
   if (!process.env['MONGODB_URI']) return;
   const db = await getMongoDb();
-  const collection = db.collection<{ key: string; value: string; updatedAt?: Date; createdAt?: Date }>('settings');
+  const collection = db.collection<{
+    key: string;
+    value: string;
+    updatedAt?: Date;
+    createdAt?: Date;
+  }>('settings');
   const now = new Date();
 
   for (const payload of payloads) {
@@ -180,9 +196,10 @@ async function main(): Promise<void> {
           provider,
           payloads: payloads.map((payload) => ({
             key: payload.key,
-            valuePreview: payload.key === FASTCOMET_STORAGE_CONFIG_SETTING_KEY
-              ? `${payload.value.slice(0, 120)}...`
-              : payload.value,
+            valuePreview:
+              payload.key === FASTCOMET_STORAGE_CONFIG_SETTING_KEY
+                ? `${payload.value.slice(0, 120)}...`
+                : payload.value,
           })),
         },
         null,

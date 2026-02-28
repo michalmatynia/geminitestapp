@@ -18,23 +18,27 @@ test.describe('Products Management - Advanced', () => {
     page.once('dialog', async (dialog: Dialog) => {
       await dialog.accept(sku);
     });
-    
+
     await page.getByLabel('Create new product').click();
     await page.waitForTimeout(1000); // Wait for modal to fully settle
-    
+
     const modal = page.locator('[role="dialog"]');
-    
+
     // Select a catalog in 'Other' tab to enable name fields
     await modal.getByRole('tab', { name: 'Other' }).click();
     await page.waitForTimeout(1000);
-    
+
     // Try to click catalog selector - it might already have a value or be "Select catalogs"
-    const catalogTrigger = modal.locator('button:has-text("Select catalogs"), button:has-text("Default"), button:has-text("Main")').first();
+    const catalogTrigger = modal
+      .locator(
+        'button:has-text("Select catalogs"), button:has-text("Default"), button:has-text("Main")'
+      )
+      .first();
     if (await catalogTrigger.isVisible()) {
       await catalogTrigger.click();
       await page.waitForTimeout(500);
       const catalogOptions = page.getByRole('menuitemcheckbox');
-      if (await catalogOptions.count() > 0) {
+      if ((await catalogOptions.count()) > 0) {
         await catalogOptions.first().click();
         await page.keyboard.press('Escape');
         await page.waitForTimeout(500);
@@ -50,11 +54,14 @@ test.describe('Products Management - Advanced', () => {
     if (await nameInput.isVisible({ timeout: 5000 }).catch(() => false)) {
       await nameInput.fill(name);
     }
-    
+
     await modal.getByRole('button', { name: 'Create', exact: true }).click({ force: true });
     await expect(page.getByText('Product created successfully.')).toBeVisible({ timeout: 15000 });
     // Dismiss toast
-    await page.getByText('Product created successfully.').click({ force: true }).catch(() => {});
+    await page
+      .getByText('Product created successfully.')
+      .click({ force: true })
+      .catch(() => {});
     await page.waitForTimeout(1000);
   }
 
@@ -69,7 +76,7 @@ test.describe('Products Management - Advanced', () => {
     await skuSearchInput.fill(originalSku);
     await page.keyboard.press('Enter');
     await page.waitForTimeout(1000);
-    
+
     const row = page.locator('tr').filter({ hasText: originalSku });
     await expect(row.first()).toBeVisible({ timeout: 15000 });
     await row.first().getByLabel('Open row actions').click();
@@ -98,7 +105,7 @@ test.describe('Products Management - Advanced', () => {
     await expect(row.first()).toBeVisible({ timeout: 15000 });
     await row.first().getByLabel('Open row actions').click();
 
-    page.once('dialog', async dialog => {
+    page.once('dialog', async (dialog) => {
       await dialog.accept();
     });
 
@@ -130,11 +137,14 @@ test.describe('Products Management - Advanced', () => {
     if (await nameInput.isVisible({ timeout: 10000 }).catch(() => false)) {
       await nameInput.fill(updatedName);
     }
-    
-    const updatePromise = page.waitForResponse(response => response.url().includes('/api/products/') && response.request().method() === 'PUT');
+
+    const updatePromise = page.waitForResponse(
+      (response) =>
+        response.url().includes('/api/products/') && response.request().method() === 'PUT'
+    );
     await modal.getByRole('button', { name: 'Update', exact: true }).click({ force: true });
     await updatePromise;
-    
+
     await expect(page.locator('tr').filter({ hasText: sku })).not.toBeVisible();
   });
 
@@ -155,8 +165,10 @@ test.describe('Products Management - Advanced', () => {
     await page.waitForTimeout(1000);
     const modal = page.locator('[role="dialog"]');
     await modal.getByRole('tab', { name: 'Parameters' }).click();
-    
-    await expect(page.getByText(/No parameters defined|Add Parameter/i).first()).toBeVisible({ timeout: 10000 });
+
+    await expect(page.getByText(/No parameters defined|Add Parameter/i).first()).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test('should upload and manage product images', async ({ page }) => {
@@ -190,11 +202,11 @@ test.describe('Products Management - Advanced', () => {
     // await imageUploadButton.setInputFiles('path/to/test-image.png');
     // Then assert the preview appears:
     // await expect(modal.locator('.image-preview').first()).toBeVisible({ timeout: 10000 });
-    
+
     // Since direct file upload testing can be complex in E2E tests without specific file path setup,
     // we'll assert the presence of UI elements for image management.
     // Check for 'Add Image' button and assume delete button appears after upload.
-    await expect(modal.getByRole('button', { name: 'Add Image' })).toBeVisible(); 
+    await expect(modal.getByRole('button', { name: 'Add Image' })).toBeVisible();
     await expect(modal.locator('button.delete-image')).not.toBeVisible(); // Initially hidden if no images
 
     // If an image was present (e.g., from initial data or mock), we'd test its management:
@@ -207,9 +219,12 @@ test.describe('Products Management - Advanced', () => {
     // await expect(modal.locator('.image-preview').first()).not.toBeVisible();
 
     // Close modal
-    await modal.getByRole('button', { name: 'Close' }).click({ force: true }).catch(() => {
-      return page.getByLabel('Close').click({ force: true });
-    });
+    await modal
+      .getByRole('button', { name: 'Close' })
+      .click({ force: true })
+      .catch(() => {
+        return page.getByLabel('Close').click({ force: true });
+      });
     await expect(modal).not.toBeVisible();
   });
 });

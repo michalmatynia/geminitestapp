@@ -9,12 +9,7 @@ import { ValidatorSettings } from '@/features/products/components/settings/Valid
 import { ValidatorDocsTooltipsProvider } from '@/features/products/components/settings/validator-settings/ValidatorDocsTooltips';
 import { AdminPromptEngineValidationPatternsPage } from '@/features/prompt-engine';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
-import {
-  Button,
-  ClientOnly,
-  FormSection,
-  SectionHeader,
-} from '@/shared/ui';
+import { Button, ClientOnly, FormSection, SectionHeader } from '@/shared/ui';
 
 import {
   parseValidatorPatternLists,
@@ -44,19 +39,14 @@ export function AdminGlobalValidatorPage(): React.JSX.Element {
     return patternLists[0] ?? null;
   }, [patternLists, searchParams]);
 
-  const renderScopePanel = (
-    scope: ValidatorScope,
-    description: string
-  ): React.JSX.Element => {
+  const renderScopePanel = (scope: ValidatorScope, description: string): React.JSX.Element => {
     const resolvedDescription = description.trim() || VALIDATOR_SCOPE_DESCRIPTIONS[scope];
 
     if (scope === 'products') {
       return (
         <>
           <FormSection variant='subtle' className='p-4'>
-            <p className='text-sm text-gray-300'>
-              {resolvedDescription}
-            </p>
+            <p className='text-sm text-gray-300'>{resolvedDescription}</p>
           </FormSection>
           <ValidatorDocsTooltipsProvider>
             <ValidatorSettings />
@@ -69,9 +59,7 @@ export function AdminGlobalValidatorPage(): React.JSX.Element {
       return (
         <>
           <FormSection variant='subtle' className='p-4'>
-            <p className='text-sm text-gray-300'>
-              {resolvedDescription}
-            </p>
+            <p className='text-sm text-gray-300'>{resolvedDescription}</p>
           </FormSection>
           <AdminImageStudioValidationPatternsPage embedded />
         </>
@@ -82,9 +70,7 @@ export function AdminGlobalValidatorPage(): React.JSX.Element {
       return (
         <>
           <FormSection variant='subtle' className='p-4'>
-            <p className='text-sm text-gray-300'>
-              {resolvedDescription}
-            </p>
+            <p className='text-sm text-gray-300'>{resolvedDescription}</p>
           </FormSection>
           <AdminPromptEngineValidationPatternsPage
             embedded
@@ -102,9 +88,7 @@ export function AdminGlobalValidatorPage(): React.JSX.Element {
       return (
         <>
           <FormSection variant='subtle' className='p-4'>
-            <p className='text-sm text-gray-300'>
-              {resolvedDescription}
-            </p>
+            <p className='text-sm text-gray-300'>{resolvedDescription}</p>
           </FormSection>
           <AdminPromptEngineValidationPatternsPage
             embedded
@@ -122,9 +106,7 @@ export function AdminGlobalValidatorPage(): React.JSX.Element {
       return (
         <>
           <FormSection variant='subtle' className='p-4'>
-            <p className='text-sm text-gray-300'>
-              {resolvedDescription}
-            </p>
+            <p className='text-sm text-gray-300'>{resolvedDescription}</p>
           </FormSection>
           <AdminPromptEngineValidationPatternsPage
             embedded
@@ -141,9 +123,7 @@ export function AdminGlobalValidatorPage(): React.JSX.Element {
     return (
       <>
         <FormSection variant='subtle' className='p-4'>
-          <p className='text-sm text-gray-300'>
-            {resolvedDescription}
-          </p>
+          <p className='text-sm text-gray-300'>{resolvedDescription}</p>
         </FormSection>
         <AdminPromptEngineValidationPatternsPage
           embedded
@@ -161,8 +141,11 @@ export function AdminGlobalValidatorPage(): React.JSX.Element {
     <div className='container mx-auto space-y-6 py-10'>
       <SectionHeader
         title='Validation Pattern Lists'
-        subtitle={(
-          <nav aria-label='Breadcrumb' className='flex flex-wrap items-center gap-1 text-xs text-gray-400'>
+        subtitle={
+          <nav
+            aria-label='Breadcrumb'
+            className='flex flex-wrap items-center gap-1 text-xs text-gray-400'
+          >
             <Link href='/admin' className='hover:text-gray-200 transition-colors'>
               Admin
             </Link>
@@ -173,12 +156,12 @@ export function AdminGlobalValidatorPage(): React.JSX.Element {
             <span>/</span>
             <span className='text-gray-300'>Validation Pattern Lists</span>
           </nav>
-        )}
-        actions={(
+        }
+        actions={
           <Button type='button' variant='outline' size='xs' asChild>
             <Link href='/admin/validator/lists'>Manage Lists</Link>
           </Button>
-        )}
+        }
       />
 
       <ClientOnly

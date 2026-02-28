@@ -28,16 +28,15 @@ type CmsDomainSelectionResult = {
   setActiveDomainId: (domainId: string | null) => void;
 };
 
-export function useCmsDomainSelection(options: CmsDomainSelectionOptions = {}): CmsDomainSelectionResult {
+export function useCmsDomainSelection(
+  options: CmsDomainSelectionOptions = {}
+): CmsDomainSelectionResult {
   const { initialDomainId = null, persist = true } = options;
   const settingsQuery = useSettingsMap();
   const settingsStore = useSettingsStore();
   const domainSettingsRaw = settingsStore.get(CMS_DOMAIN_SETTINGS_KEY);
   const domainSettings = useMemo(
-    () =>
-      normalizeCmsDomainSettings(
-        parseJsonSetting(domainSettingsRaw, null)
-      ),
+    () => normalizeCmsDomainSettings(parseJsonSetting(domainSettingsRaw, null)),
     [domainSettingsRaw]
   );
   const zoningEnabled = domainSettings.zoningEnabled;
@@ -75,7 +74,10 @@ export function useCmsDomainSelection(options: CmsDomainSelectionOptions = {}): 
   }, [preferredDomainId, hostDomainId, domains, zoningEnabled]);
 
   const activeDomain = useMemo(
-    () => (zoningEnabled ? domains.find((item: CmsDomain) => item.id === activeDomainId) ?? null : null),
+    () =>
+      zoningEnabled
+        ? (domains.find((item: CmsDomain) => item.id === activeDomainId) ?? null)
+        : null,
     [domains, activeDomainId, zoningEnabled]
   );
 
@@ -86,7 +88,10 @@ export function useCmsDomainSelection(options: CmsDomainSelectionOptions = {}): 
   }, [domains, activeDomain, zoningEnabled]);
 
   const sharedWithDomains = useMemo(
-    () => (zoningEnabled && activeDomainId ? domains.filter((item: CmsDomain) => item.aliasOf === activeDomainId) : []),
+    () =>
+      zoningEnabled && activeDomainId
+        ? domains.filter((item: CmsDomain) => item.aliasOf === activeDomainId)
+        : [],
     [domains, activeDomainId, zoningEnabled]
   );
 
@@ -97,10 +102,16 @@ export function useCmsDomainSelection(options: CmsDomainSelectionOptions = {}): 
       if (domainId === activeDomainId) return;
       if (domainId === userPreferences?.cmsActiveDomainId) return;
       if (updatePreferencesMutation.isPending) return;
-      
+
       updatePreferencesMutation.mutate({ cmsActiveDomainId: domainId });
     },
-    [activeDomainId, persist, userPreferences?.cmsActiveDomainId, updatePreferencesMutation, zoningEnabled]
+    [
+      activeDomainId,
+      persist,
+      userPreferences?.cmsActiveDomainId,
+      updatePreferencesMutation,
+      zoningEnabled,
+    ]
   );
 
   return {

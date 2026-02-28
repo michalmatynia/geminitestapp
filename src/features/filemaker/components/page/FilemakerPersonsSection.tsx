@@ -3,12 +3,7 @@
 import { Edit2, Plus, Trash2 } from 'lucide-react';
 import React from 'react';
 
-import {
-  Button,
-  FormSection,
-  Card,
-  EmptyState,
-} from '@/shared/ui';
+import { Button, FormSection, Card, EmptyState } from '@/shared/ui';
 import { useAdminFilemakerPageContext } from '../../context/AdminFilemakerPageContext';
 import { formatFilemakerAddress } from '../../settings';
 import type { FilemakerPerson } from '../../types';
@@ -21,13 +16,8 @@ const formatTimestamp = (value: string | null | undefined): string => {
 };
 
 export function FilemakerPersonsSection(): React.JSX.Element {
-  const {
-    database,
-    openCreatePerson,
-    handleStartEditPerson,
-    handleDeletePerson,
-    updateSetting,
-  } = useAdminFilemakerPageContext();
+  const { database, openCreatePerson, handleStartEditPerson, handleDeletePerson, updateSetting } =
+    useAdminFilemakerPageContext();
 
   const { persons } = database;
 
@@ -35,7 +25,7 @@ export function FilemakerPersonsSection(): React.JSX.Element {
     <FormSection
       title='Persons'
       className='space-y-4 p-4'
-      actions={(
+      actions={
         <Button
           type='button'
           onClick={openCreatePerson}
@@ -45,7 +35,7 @@ export function FilemakerPersonsSection(): React.JSX.Element {
           <Plus className='mr-1.5 size-3.5' />
           Add Person
         </Button>
-      )}
+      }
     >
       <div className='space-y-2'>
         {persons.length === 0 ? (
@@ -57,7 +47,12 @@ export function FilemakerPersonsSection(): React.JSX.Element {
           />
         ) : (
           persons.map((person: FilemakerPerson) => (
-            <Card key={person.id} variant='subtle-compact' padding='md' className='border-border/60 bg-card/35'>
+            <Card
+              key={person.id}
+              variant='subtle-compact'
+              padding='md'
+              className='border-border/60 bg-card/35'
+            >
               <div className='flex flex-wrap items-start justify-between gap-3'>
                 <div className='min-w-0 flex-1 space-y-1'>
                   <div className='text-sm font-semibold text-white'>
@@ -68,7 +63,8 @@ export function FilemakerPersonsSection(): React.JSX.Element {
                     NIP: {person.nip || 'n/a'} | REGON: {person.regon || 'n/a'}
                   </div>
                   <div className='text-[11px] text-gray-500'>
-                    Phones: {person.phoneNumbers.length > 0 ? person.phoneNumbers.join(', ') : 'n/a'}
+                    Phones:{' '}
+                    {person.phoneNumbers.length > 0 ? person.phoneNumbers.join(', ') : 'n/a'}
                   </div>
                   <div className='text-[10px] text-gray-600'>
                     Updated: {formatTimestamp(person.updatedAt ?? undefined)}

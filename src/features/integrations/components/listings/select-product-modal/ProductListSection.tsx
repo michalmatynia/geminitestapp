@@ -36,7 +36,9 @@ export function ProductListSection(): React.JSX.Element {
               type='button'
               onClick={() => setSelectedProductId(product.id)}
               className={`w-full flex items-center justify-between p-3 text-left transition-colors border-b border-border last:border-0 ${
-                selectedProductId === product.id ? 'bg-primary/10 border-l-2 border-l-primary' : 'hover:bg-muted/50'
+                selectedProductId === product.id
+                  ? 'bg-primary/10 border-l-2 border-l-primary'
+                  : 'hover:bg-muted/50'
               }`}
             >
               <div>
@@ -45,7 +47,9 @@ export function ProductListSection(): React.JSX.Element {
                 </p>
                 <p className='text-xs text-gray-500'>SKU: {product.sku || '—'}</p>
               </div>
-              {selectedProductId === product.id && <div className='size-2 rounded-full bg-primary' />}
+              {selectedProductId === product.id && (
+                <div className='size-2 rounded-full bg-primary' />
+              )}
             </button>
           ))
         )}

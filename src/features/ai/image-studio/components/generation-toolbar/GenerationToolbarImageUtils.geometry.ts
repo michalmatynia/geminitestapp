@@ -17,9 +17,7 @@ type ShapeBounds = {
   maxY: number;
 };
 
-const resolveContextImageFrame = (
-  context: CropCanvasContext
-): ImageContentFrame | null => {
+const resolveContextImageFrame = (context: CropCanvasContext): ImageContentFrame | null => {
   const normalizedFrame = normalizeImageContentFrame(
     context.imageFrame ?? context.imageContentFrame
   );
@@ -87,7 +85,9 @@ export const resolveCropRectFromShapesWithDiagnostics = (
     (shape) =>
       shape.visible &&
       (activeShapeId ? shape.id === activeShapeId : true) &&
-      (shape.type === 'rect' || shape.type === 'ellipse' || (shape.closed && shape.points.length >= 3))
+      (shape.type === 'rect' ||
+        shape.type === 'ellipse' ||
+        (shape.closed && shape.points.length >= 3))
   );
 
   if (eligibleShapes.length === 0) {
@@ -125,12 +125,11 @@ export const resolveCropRectFromShapesWithDiagnostics = (
   const isUnitNormalized = eligibleShapes.every(shapePointsAreUnitNormalized);
 
   if (normalizedFrame) {
-    const mapped = mapCanvasRectToImageRect(
-      canvasCropRect,
-      imageWidth,
-      imageHeight,
-      { canvasWidth, canvasHeight, imageFrame: normalizedFrame }
-    );
+    const mapped = mapCanvasRectToImageRect(canvasCropRect, imageWidth, imageHeight, {
+      canvasWidth,
+      canvasHeight,
+      imageFrame: normalizedFrame,
+    });
     if (mapped) {
       return {
         cropRect: mapped,
@@ -154,12 +153,16 @@ export const resolveCropRectFromShapesWithDiagnostics = (
   }
 
   if (isUnitNormalized) {
-    const mapped = clampRectToBounds({
-      x: Math.floor(shapeBounds.minX * imageWidth),
-      y: Math.floor(shapeBounds.minY * imageHeight),
-      width: Math.ceil((shapeBounds.maxX - shapeBounds.minX) * imageWidth),
-      height: Math.ceil((shapeBounds.maxY - shapeBounds.minY) * imageHeight),
-    }, imageWidth, imageHeight);
+    const mapped = clampRectToBounds(
+      {
+        x: Math.floor(shapeBounds.minX * imageWidth),
+        y: Math.floor(shapeBounds.minY * imageHeight),
+        width: Math.ceil((shapeBounds.maxX - shapeBounds.minX) * imageWidth),
+        height: Math.ceil((shapeBounds.maxY - shapeBounds.minY) * imageHeight),
+      },
+      imageWidth,
+      imageHeight
+    );
     if (!mapped) {
       return {
         cropRect: canvasCropRect,
@@ -228,12 +231,16 @@ export const mapCanvasRectToImageRect = (
     return null;
   }
 
-  return clampRectToBounds({
-    x: Math.round(relX * imageWidth),
-    y: Math.round(relY * imageHeight),
-    width: Math.round(relW * imageWidth),
-    height: Math.round(relH * imageHeight),
-  }, imageWidth, imageHeight);
+  return clampRectToBounds(
+    {
+      x: Math.round(relX * imageWidth),
+      y: Math.round(relY * imageHeight),
+      width: Math.round(relW * imageWidth),
+      height: Math.round(relH * imageHeight),
+    },
+    imageWidth,
+    imageHeight
+  );
 };
 
 export const mapImageCropRectToCanvasRect = (
@@ -262,17 +269,19 @@ export const mapImageCropRectToCanvasRect = (
     return null;
   }
 
-  return clampRectToBounds({
-    x: Math.round(imageFrame.x + relX * imageFrame.width),
-    y: Math.round(imageFrame.y + relY * imageFrame.height),
-    width: Math.round(relW * imageFrame.width),
-    height: Math.round(relH * imageFrame.height),
-  }, context.canvasWidth, context.canvasHeight);
+  return clampRectToBounds(
+    {
+      x: Math.round(imageFrame.x + relX * imageFrame.width),
+      y: Math.round(imageFrame.y + relY * imageFrame.height),
+      width: Math.round(relW * imageFrame.width),
+      height: Math.round(relH * imageFrame.height),
+    },
+    context.canvasWidth,
+    context.canvasHeight
+  );
 };
 
-export const resolveCanvasOverflowCropRect = (
-  context: CropCanvasContext
-): CropRect | null => {
+export const resolveCanvasOverflowCropRect = (context: CropCanvasContext): CropRect | null => {
   const { canvasWidth, canvasHeight } = context;
   if (!(canvasWidth > 0 && canvasHeight > 0)) return null;
   const imageFrame = resolveContextImageFrame(context);
@@ -296,12 +305,16 @@ export const resolveCanvasOverflowCropRect = (
     return null;
   }
 
-  return clampRectToBounds({
-    x: intersectX,
-    y: intersectY,
-    width: intersectMaxX - intersectX,
-    height: intersectMaxY - intersectY,
-  }, canvasWidth, canvasHeight);
+  return clampRectToBounds(
+    {
+      x: intersectX,
+      y: intersectY,
+      width: intersectMaxX - intersectX,
+      height: intersectMaxY - intersectY,
+    },
+    canvasWidth,
+    canvasHeight
+  );
 };
 
 export const hasCanvasOverflowFromImageFrame = (

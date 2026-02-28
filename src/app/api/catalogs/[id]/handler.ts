@@ -23,7 +23,11 @@ const catalogUpdateSchema = z.object({
  * PUT /api/catalogs/[id]
  * Updates a catalog.
  */
-export async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
+export async function PUT_handler(
+  req: NextRequest,
+  _ctx: ApiHandlerContext,
+  params: { id: string }
+): Promise<Response> {
   const { id } = params;
   if (!id) {
     throw badRequestError('Catalog id is required');
@@ -51,35 +55,33 @@ export async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, par
     !normalizedLanguages.defaultLanguageId ||
     !normalizedLanguages.languageIds.includes(normalizedLanguages.defaultLanguageId)
   ) {
-    throw badRequestError(
-      'Default language must be one of the selected languages.',
-      { field: 'defaultLanguageId' }
-    );
+    throw badRequestError('Default language must be one of the selected languages.', {
+      field: 'defaultLanguageId',
+    });
   }
   if (!data.priceGroupIds || data.priceGroupIds.length === 0) {
     throw badRequestError('Select at least one price group.', {
       field: 'priceGroupIds',
     });
   }
-  if (
-    !data.defaultPriceGroupId ||
-    !data.priceGroupIds.includes(data.defaultPriceGroupId)
-  ) {
-    throw badRequestError(
-      'Default price group must be one of the selected price groups.',
-      { field: 'defaultPriceGroupId' }
-    );
+  if (!data.defaultPriceGroupId || !data.priceGroupIds.includes(data.defaultPriceGroupId)) {
+    throw badRequestError('Default price group must be one of the selected price groups.', {
+      field: 'defaultPriceGroupId',
+    });
   }
   const catalogRepository = await getCatalogRepository(provider);
-  const catalog = await catalogRepository.updateCatalog(id, removeUndefined({
-    name: data.name,
-    description: data.description,
-    isDefault: data.isDefault,
-    languageIds: normalizedLanguages.languageIds,
-    defaultLanguageId: normalizedLanguages.defaultLanguageId,
-    priceGroupIds: data.priceGroupIds,
-    defaultPriceGroupId: data.defaultPriceGroupId,
-  }));
+  const catalog = await catalogRepository.updateCatalog(
+    id,
+    removeUndefined({
+      name: data.name,
+      description: data.description,
+      isDefault: data.isDefault,
+      languageIds: normalizedLanguages.languageIds,
+      defaultLanguageId: normalizedLanguages.defaultLanguageId,
+      priceGroupIds: data.priceGroupIds,
+      defaultPriceGroupId: data.defaultPriceGroupId,
+    })
+  );
   if (!catalog) {
     throw notFoundError('Catalog not found', { catalogId: id });
   }
@@ -90,7 +92,11 @@ export async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, par
  * DELETE /api/catalogs/[id]
  * Deletes a catalog.
  */
-export async function DELETE_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
+export async function DELETE_handler(
+  _req: NextRequest,
+  _ctx: ApiHandlerContext,
+  params: { id: string }
+): Promise<Response> {
   const { id } = params;
   if (!id) {
     throw badRequestError('Catalog id is required');

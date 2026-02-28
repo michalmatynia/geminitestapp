@@ -7,6 +7,7 @@
 ---
 
 ## Table of Contents
+
 1. [General Principles](#general-principles)
 2. [FilterPanel Best Practices](#filterpanel-best-practices)
 3. [Picker Best Practices](#picker-best-practices)
@@ -23,6 +24,7 @@
 ### 1. Prefer Configuration Over Customization
 
 ✅ **Good:** Use built-in props and config objects
+
 ```typescript
 const filterConfig: FilterField[] = [
   { key: 'status', label: 'Status', type: 'select', options: [...] },
@@ -31,6 +33,7 @@ const filterConfig: FilterField[] = [
 ```
 
 ❌ **Avoid:** Creating wrapper components for minor customizations
+
 ```typescript
 export function CustomFilterPanel(props) {
   return <FilterPanel {...props} className="custom" />;
@@ -40,6 +43,7 @@ export function CustomFilterPanel(props) {
 ### 2. Keep Concerns Separated
 
 ✅ **Good:** Separate filter logic from display logic
+
 ```typescript
 // FilterPanel handles: search, filtering, sorting
 <FilterPanel filters={filterConfig} onChange={handleChange} />
@@ -49,6 +53,7 @@ export function CustomFilterPanel(props) {
 ```
 
 ❌ **Avoid:** Mixing everything into FilterPanel
+
 ```typescript
 // Don't try to force everything into FilterPanel
 <FilterPanel filters={[...viewModeSettings, ...filterSettings]} />
@@ -57,6 +62,7 @@ export function CustomFilterPanel(props) {
 ### 3. Callback-Based APIs Over Context
 
 ✅ **Good:** Use `onChange` callbacks for state management
+
 ```typescript
 const handleFilterChange = (key: string, value: any) => {
   updateFilters({ [key]: value });
@@ -65,6 +71,7 @@ const handleFilterChange = (key: string, value: any) => {
 ```
 
 ❌ **Avoid:** Assuming component manages own state
+
 ```typescript
 // Components don't provide context, they're pure
 <FilterPanel defaultValues={filters} />  // No effect
@@ -107,9 +114,9 @@ const handleFilterChange = (key: string, value: any) => {
   // - { from?: string, to?: string } (dateRange)
   // - boolean (checkbox)
 
-  setFilters(prev => ({
+  setFilters((prev) => ({
     ...prev,
-    [key]: value === '' ? undefined : value,  // Clear empty values
+    [key]: value === '' ? undefined : value, // Clear empty values
   }));
 };
 ```
@@ -160,6 +167,7 @@ const filterConfig = useMemo<FilterField[]>(() => {
 ### 5. Preset Patterns
 
 **Good:** Define presets that make sense for common workflows
+
 ```typescript
 const presets = [
   {
@@ -193,8 +201,7 @@ const presets = [
 const searchMatcher = (item: Item, query: string) => {
   if (!query) return true;
   // Only search high-value fields
-  return item.name.toLowerCase().includes(query) ||
-         item.id.toString().includes(query);
+  return item.name.toLowerCase().includes(query) || item.id.toString().includes(query);
 };
 
 const { filtered } = usePickerSearch({
@@ -241,11 +248,11 @@ export function MyPicker() {
 const groups = [
   {
     label: 'Recent',
-    options: recentItems,  // 5-10 items
+    options: recentItems, // 5-10 items
   },
   {
     label: 'All Presets',
-    options: allPresets,   // 100+ items
+    options: allPresets, // 100+ items
   },
 ];
 
@@ -303,6 +310,7 @@ export function ItemPicker({ items, loading, error }) {
 ### 1. Use Context for Global Filter State
 
 ✅ **Good:** Share filter state via React Context
+
 ```typescript
 const FilterContext = createContext();
 
@@ -328,6 +336,7 @@ const { filters, updateFilter } = useContext(FilterContext);
 ### 2. Sync Filters with URL Params
 
 ✅ **Good:** Persist filters in URL for shareability
+
 ```typescript
 function useFilterSync() {
   const router = useRouter();
@@ -353,6 +362,7 @@ function useFilterSync() {
 ### 3. Debounce Search Input
 
 ✅ **Good:** Reduce API calls with debounced search
+
 ```typescript
 function useSearchDebounce(delay = 300) {
   const [search, setSearch] = useState('');
@@ -431,7 +441,7 @@ import { FixedSizeGrid } from 'react-window';
 ```typescript
 const categoryOptions = useMemo(
   () =>
-    categories.map(c => ({
+    categories.map((c) => ({
       value: c.id,
       label: c.name,
     })),
@@ -486,6 +496,7 @@ const filterConfig = useMemo(
 ### 2. Support Keyboard Navigation
 
 ✅ Built-in for FilterPanel and pickers (no action needed)
+
 - Tab: Move between fields
 - Enter/Space: Select from picker
 - Escape: Close dropdown
@@ -662,6 +673,7 @@ it('calls onSelect when item is selected', async () => {
 ## Quick Reference Checklist
 
 **Before Using FilterPanel:**
+
 - [ ] Identified all filter fields needed
 - [ ] Mapped field types (text, select, date, etc.)
 - [ ] Memoized filter configuration
@@ -669,6 +681,7 @@ it('calls onSelect when item is selected', async () => {
 - [ ] Implemented onReset callback
 
 **Before Using Picker:**
+
 - [ ] Decided on picker type (Dropdown vs Grid)
 - [ ] Prepared items/groups
 - [ ] Implemented search matcher if needed
@@ -676,6 +689,7 @@ it('calls onSelect when item is selected', async () => {
 - [ ] Tested with expected data volume
 
 **Before Deploying:**
+
 - [ ] All tests passing
 - [ ] TypeScript strict mode check
 - [ ] ESLint compliance

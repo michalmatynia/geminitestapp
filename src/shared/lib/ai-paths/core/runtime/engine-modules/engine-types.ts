@@ -1,8 +1,4 @@
-import type {
-  AiNode,
-  Edge,
-  RuntimePortValues,
-} from '@/shared/contracts/ai-paths';
+import type { AiNode, Edge, RuntimePortValues } from '@/shared/contracts/ai-paths';
 import type {
   AiPathRuntimeProfileEventDto,
   RuntimeProfileNodeStatsDto,

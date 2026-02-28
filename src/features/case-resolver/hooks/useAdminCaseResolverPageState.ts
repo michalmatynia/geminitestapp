@@ -3,16 +3,10 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useCallback, useMemo, useRef, useEffect } from 'react';
 
-import {
-  stableStringify,
-} from '@/shared/lib/ai-paths';
+import { stableStringify } from '@/shared/lib/ai-paths';
 import type { FilemakerPartyKind } from '@/features/filemaker';
-import {
-  resolveFilemakerPartyLabel,
-} from '@/features/filemaker/settings';
-import {
-  DEFAULT_CASE_RESOLVER_NODE_META,
-} from '@/shared/contracts/case-resolver';
+import { resolveFilemakerPartyLabel } from '@/features/filemaker/settings';
+import { DEFAULT_CASE_RESOLVER_NODE_META } from '@/shared/contracts/case-resolver';
 import type {
   AiNode,
   CaseResolverFile,
@@ -22,17 +16,10 @@ import type {
 import { useToast } from '@/shared/ui';
 
 import { useCaseResolverState } from './useCaseResolverState';
-import {
-  hasCaseResolverDraftMeaningfulChanges,
-} from './useCaseResolverState.helpers';
+import { hasCaseResolverDraftMeaningfulChanges } from './useCaseResolverState.helpers';
 import { stripCaseContextQueryParams } from './useCaseResolverState.helpers.requested-context';
-import {
-  type CaseResolverFileEditDraft,
-  type CaseResolverStateValue,
-} from '../types';
-import {
-  isPathWithinFolder,
-} from '../utils/caseResolverUtils';
+import { type CaseResolverFileEditDraft, type CaseResolverStateValue } from '../types';
+import { isPathWithinFolder } from '@/features/case-resolver/utils/caseResolverUtils';
 import { logCaseResolverDurationMetric } from '../runtime';
 
 import { useAdminCaseResolverCaptureActions } from './useAdminCaseResolverCaptureActions';
@@ -46,7 +33,7 @@ export function useAdminCaseResolverPageState() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
-  
+
   const {
     workspace,
     workspaceRef,
@@ -92,7 +79,7 @@ export function useAdminCaseResolverPageState() {
   const openEditorFromQueryHandledRef = useRef<string | null>(null);
   const autoClearRequestKeyHandledRef = useRef<string | null>(null);
   const editorDirtyEvalDurationMsRef = useRef<number | null>(null);
-  
+
   useEffect(() => {
     if (!shouldOpenEditorFromQuery || !requestedFileId) {
       openEditorFromQueryHandledRef.current = null;
@@ -172,7 +159,7 @@ export function useAdminCaseResolverPageState() {
   });
 
   const activeCaseFile = useMemo(
-    () => workspace.files.find(f => f.id === state.activeCaseId) ?? null,
+    () => workspace.files.find((f) => f.id === state.activeCaseId) ?? null,
     [state.activeCaseId, workspace.files]
   );
 
@@ -202,10 +189,12 @@ export function useAdminCaseResolverPageState() {
     if (!editingDocumentDraft) return completeDirtyEval(false);
     const currentFile = workspace.files.find((file) => file.id === editingDocumentDraft.id);
     if (!currentFile) return completeDirtyEval(false);
-    return completeDirtyEval(hasCaseResolverDraftMeaningfulChanges({
-      draft: editingDocumentDraft,
-      file: currentFile,
-    }));
+    return completeDirtyEval(
+      hasCaseResolverDraftMeaningfulChanges({
+        draft: editingDocumentDraft,
+        file: currentFile,
+      })
+    );
   }, [editingDocumentDraft, workspace.files]);
 
   useEffect((): void => {
@@ -222,13 +211,15 @@ export function useAdminCaseResolverPageState() {
     (reference: { kind: string; id: string } | null | undefined): string => {
       if (!reference) return 'None';
       return (
-        resolveFilemakerPartyLabel(filemakerDatabase, { ...reference, kind: reference.kind as FilemakerPartyKind }) ??
-              `${reference.kind}:${reference.id}`
+        resolveFilemakerPartyLabel(filemakerDatabase, {
+          ...reference,
+          kind: reference.kind as FilemakerPartyKind,
+        }) ?? `${reference.kind}:${reference.id}`
       );
     },
     [filemakerDatabase]
   );
-      
+
   const normalizeNodeTextColor = useCallback((value: string | null | undefined): string => {
     if (typeof value !== 'string') return '';
     const normalized = value.trim();
@@ -236,7 +227,14 @@ export function useAdminCaseResolverPageState() {
     return /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(normalized) ? normalized : '';
   }, []);
 
-  const editingDocumentNodeMeta = useMemo((): (CaseResolverNodeMeta & { nodeId: string; nodeTitle: string; canvasFileId: string; canvasFileName: string }) | null => {
+  const editingDocumentNodeMeta = useMemo(():
+    | (CaseResolverNodeMeta & {
+        nodeId: string;
+        nodeTitle: string;
+        canvasFileId: string;
+        canvasFileName: string;
+      })
+    | null => {
     if (!editingDocumentDraft || !editingDocumentNodeContext?.nodeId) return null;
     const canvasFile = workspace.files.find(
       (file: CaseResolverFile) => file.id === editingDocumentNodeContext.fileId
@@ -247,8 +245,9 @@ export function useAdminCaseResolverPageState() {
     );
     if (!canvasNode) return null;
     const rawNodeMeta =
-      (canvasFile.graph.nodeMeta as Record<string, CaseResolverNodeMeta>)?.[editingDocumentNodeContext.nodeId] ??
-      DEFAULT_CASE_RESOLVER_NODE_META;
+      (canvasFile.graph.nodeMeta as Record<string, CaseResolverNodeMeta>)?.[
+        editingDocumentNodeContext.nodeId
+      ] ?? DEFAULT_CASE_RESOLVER_NODE_META;
     return {
       ...DEFAULT_CASE_RESOLVER_NODE_META,
       ...rawNodeMeta,
@@ -258,12 +257,7 @@ export function useAdminCaseResolverPageState() {
       canvasFileId: canvasFile.id,
       canvasFileName: canvasFile.name,
     };
-  }, [
-    editingDocumentDraft,
-    editingDocumentNodeContext,
-    normalizeNodeTextColor,
-    workspace.files,
-  ]);
+  }, [editingDocumentDraft, editingDocumentNodeContext, normalizeNodeTextColor, workspace.files]);
 
   const updateEditingDocumentNodeMeta = useCallback(
     (patch: Partial<CaseResolverNodeMeta>): void => {
@@ -271,7 +265,9 @@ export function useAdminCaseResolverPageState() {
       const canvasFileId = editingDocumentNodeContext.fileId;
       const nodeId = editingDocumentNodeContext.nodeId;
       updateWorkspace((current: CaseResolverWorkspace) => {
-        const canvasFileIndex = current.files.findIndex((file: CaseResolverFile) => file.id === canvasFileId);
+        const canvasFileIndex = current.files.findIndex(
+          (file: CaseResolverFile) => file.id === canvasFileId
+        );
         if (canvasFileIndex < 0) return current;
         const canvasFile = current.files[canvasFileIndex];
         if (!canvasFile?.graph) return current;
@@ -280,7 +276,8 @@ export function useAdminCaseResolverPageState() {
         if (!hasNode) return current;
 
         const rawNodeMeta =
-          (canvasFile.graph.nodeMeta as Record<string, CaseResolverNodeMeta>)?.[nodeId] ?? DEFAULT_CASE_RESOLVER_NODE_META;
+          (canvasFile.graph.nodeMeta as Record<string, CaseResolverNodeMeta>)?.[nodeId] ??
+          DEFAULT_CASE_RESOLVER_NODE_META;
         const currentNodeMeta: CaseResolverNodeMeta = {
           ...DEFAULT_CASE_RESOLVER_NODE_META,
           ...rawNodeMeta,
@@ -314,9 +311,9 @@ export function useAdminCaseResolverPageState() {
         } as CaseResolverFile;
         return {
           ...current,
-          files: current.files.map((file, index) => (
+          files: current.files.map((file, index) =>
             index === canvasFileIndex ? nextCanvasFile : file
-          )),
+          ),
         };
       });
     },
@@ -325,10 +322,12 @@ export function useAdminCaseResolverPageState() {
 
   const updateEditingDocumentDraft = useCallback(
     (patch: Partial<CaseResolverFileEditDraft>): void => {
-      setEditingDocumentDraft((current: CaseResolverFileEditDraft | null): CaseResolverFileEditDraft | null => {
-        if (!current || current.isLocked) return current;
-        return { ...current, ...patch };
-      });
+      setEditingDocumentDraft(
+        (current: CaseResolverFileEditDraft | null): CaseResolverFileEditDraft | null => {
+          if (!current || current.isLocked) return current;
+          return { ...current, ...patch };
+        }
+      );
     },
     [setEditingDocumentDraft]
   );
@@ -338,7 +337,9 @@ export function useAdminCaseResolverPageState() {
       const sourceFolderName = folderPath.includes('/')
         ? folderPath.slice(folderPath.lastIndexOf('/') + 1)
         : folderPath;
-      const nextRootFolder = targetFolder ? `${targetFolder}/${sourceFolderName}` : sourceFolderName;
+      const nextRootFolder = targetFolder
+        ? `${targetFolder}/${sourceFolderName}`
+        : sourceFolderName;
       if (nextRootFolder === folderPath) return;
       await handleRenameFolder(folderPath, nextRootFolder);
     },
@@ -398,10 +399,10 @@ export function useAdminCaseResolverPageState() {
           const nextFiles = current.files.map((file) =>
             file.id === fileId
               ? {
-                ...file,
-                isLocked: nextLocked,
-                updatedAt: now,
-              }
+                  ...file,
+                  isLocked: nextLocked,
+                  updatedAt: now,
+                }
               : file
           );
           return {
@@ -437,7 +438,9 @@ export function useAdminCaseResolverPageState() {
         return;
       }
       if (target.isLocked) {
-        toast('Document is locked. Unlock it in Case Resolver before removing.', { variant: 'warning' });
+        toast('Document is locked. Unlock it in Case Resolver before removing.', {
+          variant: 'warning',
+        });
         return;
       }
 
@@ -625,7 +628,7 @@ export function useAdminCaseResolverPageState() {
       setActiveMainView('workspace');
       handleSelectFile(id);
     },
-    [handleSelectFile, setActiveMainView],
+    [handleSelectFile, setActiveMainView]
   );
 
   const handleEditFileFromSearch = useCallback(
@@ -633,26 +636,35 @@ export function useAdminCaseResolverPageState() {
       setActiveMainView('workspace');
       handleOpenFileEditor(id);
     },
-    [handleOpenFileEditor, setActiveMainView],
+    [handleOpenFileEditor, setActiveMainView]
   );
 
-  const handleScanDraftDragEnter = useCallback((event: React.DragEvent<HTMLDivElement>): void => {
-    event.preventDefault();
-    event.stopPropagation();
-    editorUi.setIsScanDraftDropActive(true);
-  }, [editorUi]);
+  const handleScanDraftDragEnter = useCallback(
+    (event: React.DragEvent<HTMLDivElement>): void => {
+      event.preventDefault();
+      event.stopPropagation();
+      editorUi.setIsScanDraftDropActive(true);
+    },
+    [editorUi]
+  );
 
-  const handleScanDraftDragOver = useCallback((event: React.DragEvent<HTMLDivElement>): void => {
-    event.preventDefault();
-    event.stopPropagation();
-    editorUi.setIsScanDraftDropActive(true);
-  }, [editorUi]);
+  const handleScanDraftDragOver = useCallback(
+    (event: React.DragEvent<HTMLDivElement>): void => {
+      event.preventDefault();
+      event.stopPropagation();
+      editorUi.setIsScanDraftDropActive(true);
+    },
+    [editorUi]
+  );
 
-  const handleScanDraftDragLeave = useCallback((event: React.DragEvent<HTMLDivElement>): void => {
-    event.preventDefault();
-    event.stopPropagation();
-    editorUi.setIsScanDraftDropActive(false);
-  }, [editorUi]);
+  const handleScanDraftDragLeave = useCallback(
+    (event: React.DragEvent<HTMLDivElement>): void => {
+      event.preventDefault();
+      event.stopPropagation();
+      editorUi.setIsScanDraftDropActive(false);
+    },
+    [editorUi]
+  );
 
   const handleScanDraftDrop = useCallback(
     (event: React.DragEvent<HTMLDivElement>): void => {

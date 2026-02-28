@@ -89,9 +89,7 @@ export const createPatternSchema = z.object({
     .optional(),
   launchValue: z.string().nullable().optional(),
   launchFlags: z.string().trim().nullable().optional(),
-  appliesToScopes: z
-    .array(z.enum(['draft_template', 'product_create', 'product_edit']))
-    .optional(),
+  appliesToScopes: z.array(z.enum(['draft_template', 'product_create', 'product_edit'])).optional(),
 });
 
 const assertValidRegex = (regexSource: string, flags: string | null | undefined): void => {
@@ -119,7 +117,7 @@ const assertValidRegex = (regexSource: string, flags: string | null | undefined)
 
 const assertValidReplacementRecipe = (
   replacementEnabled: boolean,
-  replacementValue: string | null,
+  replacementValue: string | null
 ): void => {
   if (!replacementEnabled || !replacementValue) return;
   const recipe = parseDynamicReplacementRecipe(replacementValue);
@@ -164,11 +162,7 @@ const canResolveReplacementAtRuntime = ({
   replacementValue: string | null;
   runtimeEnabled: boolean;
   runtimeType: 'none' | 'database_query' | 'ai_prompt';
-}): boolean =>
-  replacementEnabled &&
-  !replacementValue &&
-  runtimeEnabled &&
-  runtimeType !== 'none';
+}): boolean => replacementEnabled && !replacementValue && runtimeEnabled && runtimeType !== 'none';
 
 const normalizeReplacementFields = (fields: string[] | undefined): string[] => {
   if (!Array.isArray(fields) || fields.length === 0) return [];
@@ -210,10 +204,11 @@ export async function getValidatorPatternsHandler(
   const dimensionEntries = indexedPatterns.filter(({ pattern }) =>
     isNameSecondSegmentDimensionPattern(pattern)
   );
-  const staleDimensionEntries = dimensionEntries.filter(({ pattern }) =>
-    Boolean(pattern.sequenceGroupId?.trim()) ||
-    Boolean(pattern.sequenceGroupLabel?.trim()) ||
-    (pattern.sequenceGroupDebounceMs ?? 0) !== 0
+  const staleDimensionEntries = dimensionEntries.filter(
+    ({ pattern }) =>
+      Boolean(pattern.sequenceGroupId?.trim()) ||
+      Boolean(pattern.sequenceGroupLabel?.trim()) ||
+      (pattern.sequenceGroupDebounceMs ?? 0) !== 0
   );
 
   const mirrorEntries = indexedPatterns.filter(({ pattern }) => {
@@ -224,16 +219,20 @@ export async function getValidatorPatternsHandler(
   const mirrorWindow =
     mirrorEntries.length > 1
       ? {
-        min: Math.min(...mirrorEntries.map(({ pattern, index }) => getPatternSequence(pattern, index))),
-        max: Math.max(...mirrorEntries.map(({ pattern, index }) => getPatternSequence(pattern, index))),
-      }
+          min: Math.min(
+            ...mirrorEntries.map(({ pattern, index }) => getPatternSequence(pattern, index))
+          ),
+          max: Math.max(
+            ...mirrorEntries.map(({ pattern, index }) => getPatternSequence(pattern, index))
+          ),
+        }
       : null;
 
   const interleavedDimensionEntries = mirrorWindow
     ? dimensionEntries.filter(({ pattern, index }) => {
-      const sequence = getPatternSequence(pattern, index);
-      return sequence > mirrorWindow.min && sequence < mirrorWindow.max;
-    })
+        const sequence = getPatternSequence(pattern, index);
+        return sequence > mirrorWindow.min && sequence < mirrorWindow.max;
+      })
     : [];
 
   if (staleDimensionEntries.length === 0 && interleavedDimensionEntries.length === 0) {
@@ -269,7 +268,8 @@ export async function getValidatorPatternsHandler(
     let nextSequence = maxSequence + 10;
     const sortedInterleaved = [...interleavedDimensionEntries].sort(
       (left, right) =>
-        getPatternSequence(left.pattern, left.index) - getPatternSequence(right.pattern, right.index)
+        getPatternSequence(left.pattern, left.index) -
+        getPatternSequence(right.pattern, right.index)
     );
     for (const { pattern } of sortedInterleaved) {
       const existing = updates.get(pattern.id) ?? {};
@@ -357,7 +357,9 @@ export async function postValidatorPatternsHandler(
     );
   }
   if (launchEnabled && launchSourceMode !== 'current_field' && !launchSourceField) {
-    throw badRequestError('launchSourceField is required when launchSourceMode is not current_field');
+    throw badRequestError(
+      'launchSourceField is required when launchSourceMode is not current_field'
+    );
   }
 
   assertValidRegex(regex, flags);

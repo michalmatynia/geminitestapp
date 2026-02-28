@@ -27,7 +27,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
 
   const repository = await getTagRepository();
   const tags = await repository.listTags({ catalogId });
-  
+
   return NextResponse.json(tags);
 }
 
@@ -41,12 +41,9 @@ export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): P
 
   const repository = await getTagRepository();
   const existing = await repository.findByName(catalogId, name);
-  
+
   if (existing) {
-    throw conflictError(
-      'A tag with this name already exists in this catalog',
-      { name, catalogId }
-    );
+    throw conflictError('A tag with this name already exists in this catalog', { name, catalogId });
   }
 
   const tag = await repository.createTag({

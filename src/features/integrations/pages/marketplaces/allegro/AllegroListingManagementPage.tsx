@@ -9,14 +9,14 @@ export default function AllegroListingManagementPage(): React.JSX.Element {
       <SectionHeader
         title='Listing Management'
         description='Track listing status, syncs, and actions for Allegro.'
-        eyebrow={(
+        eyebrow={
           <Link
             href='/admin/integrations/marketplaces/allegro'
             className='text-blue-300 hover:text-blue-200'
           >
             ← Allegro
           </Link>
-        )}
+        }
         className='mb-6'
       />
 

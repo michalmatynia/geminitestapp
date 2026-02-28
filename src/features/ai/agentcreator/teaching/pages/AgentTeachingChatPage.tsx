@@ -3,7 +3,11 @@
 import Link from 'next/link';
 import React from 'react';
 
-import type { AgentTeachingAgentRecord, AgentTeachingChatSource, AgentTeachingEmbeddingCollectionRecord } from '@/shared/contracts/agent-teaching';
+import type {
+  AgentTeachingAgentRecord,
+  AgentTeachingChatSource,
+  AgentTeachingEmbeddingCollectionRecord,
+} from '@/shared/contracts/agent-teaching';
 import type { SimpleChatMessage } from '@/shared/contracts/chatbot';
 import { Button, SectionHeader, Textarea, useToast, FormSection, FormField } from '@/shared/ui';
 
@@ -22,10 +26,9 @@ export function AgentTeachingChatPage(): React.JSX.Element {
 
   const sending = chatMutation.isPending;
 
-  const selectedAgent: AgentTeachingAgentRecord | null =
-    selectedAgentId
-      ? agents.find((a: AgentTeachingAgentRecord) => a.id === selectedAgentId) ?? null
-      : null;
+  const selectedAgent: AgentTeachingAgentRecord | null = selectedAgentId
+    ? (agents.find((a: AgentTeachingAgentRecord) => a.id === selectedAgentId) ?? null)
+    : null;
 
   const resolveCollectionName = (id: string): string => {
     const found = collections.find((c: AgentTeachingEmbeddingCollectionRecord) => c.id === id);
@@ -46,12 +49,21 @@ export function AgentTeachingChatPage(): React.JSX.Element {
     setLastSources([]);
 
     try {
-      const data = await chatMutation.mutateAsync({ agentId: selectedAgentId, messages: nextMessages });
-      setMessages((prev: SimpleChatMessage[]) => [...prev, { role: 'assistant', content: data.message }]);
+      const data = await chatMutation.mutateAsync({
+        agentId: selectedAgentId,
+        messages: nextMessages,
+      });
+      setMessages((prev: SimpleChatMessage[]) => [
+        ...prev,
+        { role: 'assistant', content: data.message },
+      ]);
       setLastSources(Array.isArray(data.sources) ? data.sources : []);
     } catch (error) {
       toast(error instanceof Error ? error.message : 'Chat failed.', { variant: 'error' });
-      setMessages((prev: SimpleChatMessage[]) => [...prev, { role: 'assistant', content: 'Error: failed to generate response.' }]);
+      setMessages((prev: SimpleChatMessage[]) => [
+        ...prev,
+        { role: 'assistant', content: 'Error: failed to generate response.' },
+      ]);
     }
   };
 
@@ -60,11 +72,11 @@ export function AgentTeachingChatPage(): React.JSX.Element {
       <SectionHeader
         title='Learner Chat'
         description='Chat with a learner agent. The response is generated with retrieved embedded sources.'
-        eyebrow={(
+        eyebrow={
           <Link href='/admin/agentcreator/teaching' className='text-blue-300 hover:text-blue-200'>
             ← Back to learners
           </Link>
-        )}
+        }
       />
 
       <div className='grid gap-6 lg:grid-cols-3'>
@@ -72,9 +84,7 @@ export function AgentTeachingChatPage(): React.JSX.Element {
           {loadingAgents ? (
             <div className='text-sm text-gray-400'>Loading agents…</div>
           ) : agents.length === 0 ? (
-            <div className='text-sm text-gray-400'>
-              No learner agents yet. Create one first.
-            </div>
+            <div className='text-sm text-gray-400'>No learner agents yet. Create one first.</div>
           ) : (
             <div className='space-y-2'>
               {agents.map((agent: AgentTeachingAgentRecord) => (
@@ -97,7 +107,8 @@ export function AgentTeachingChatPage(): React.JSX.Element {
                     LLM: {agent.llmModel} • Embed: {agent.embeddingModel}
                   </div>
                   <div className='mt-1 text-[11px] text-gray-500'>
-                    Collections: {(agent.collectionIds ?? []).map(resolveCollectionName).join(', ') || '—'}
+                    Collections:{' '}
+                    {(agent.collectionIds ?? []).map(resolveCollectionName).join(', ') || '—'}
                   </div>
                 </button>
               ))}
@@ -105,7 +116,11 @@ export function AgentTeachingChatPage(): React.JSX.Element {
           )}
         </FormSection>
 
-        <FormSection title='Chat' description={selectedAgent ? `Agent: ${selectedAgent.name}` : 'Select an agent to start'} className='p-4 lg:col-span-2 space-y-4'>
+        <FormSection
+          title='Chat'
+          description={selectedAgent ? `Agent: ${selectedAgent.name}` : 'Select an agent to start'}
+          className='p-4 lg:col-span-2 space-y-4'
+        >
           <div className='flex items-center justify-between gap-3'>
             <div className='text-sm font-semibold text-white'>Chat</div>
             <Button
@@ -124,7 +139,8 @@ export function AgentTeachingChatPage(): React.JSX.Element {
           <div className='h-[360px] overflow-auto rounded-md border border-border bg-card/30 p-3 mt-4'>
             {messages.length === 0 ? (
               <div className='text-sm text-gray-400'>
-                Start chatting. The server will embed your question, retrieve top sources, and answer with citations.
+                Start chatting. The server will embed your question, retrieve top sources, and
+                answer with citations.
               </div>
             ) : (
               <div className='space-y-3'>
@@ -147,7 +163,11 @@ export function AgentTeachingChatPage(): React.JSX.Element {
               disabled={sending || !selectedAgentId}
             />
             <div className='flex justify-end gap-2 mt-2'>
-              <Button type='button' onClick={() => void handleSend()} disabled={sending || !selectedAgentId || !input.trim()}>
+              <Button
+                type='button'
+                onClick={() => void handleSend()}
+                disabled={sending || !selectedAgentId || !input.trim()}
+              >
                 {sending ? 'Thinking…' : 'Send'}
               </Button>
             </div>
@@ -161,7 +181,10 @@ export function AgentTeachingChatPage(): React.JSX.Element {
             ) : (
               <div className='mt-2 space-y-2'>
                 {lastSources.map((src: AgentTeachingChatSource) => (
-                  <div key={src.documentId} className='rounded-md border border-border bg-card/50 p-2'>
+                  <div
+                    key={src.documentId}
+                    className='rounded-md border border-border bg-card/50 p-2'
+                  >
                     <div className='flex items-center justify-between gap-2'>
                       <div className='text-xs text-gray-300'>
                         [doc:{src.documentId}] • {resolveCollectionName(src.collectionId)}
@@ -169,7 +192,9 @@ export function AgentTeachingChatPage(): React.JSX.Element {
                       <div className='text-[11px] text-gray-500'>score {src.score.toFixed(3)}</div>
                     </div>
                     {src.metadata?.title ? (
-                      <div className='mt-1 text-[11px] text-gray-400'>Title: {src.metadata.title}</div>
+                      <div className='mt-1 text-[11px] text-gray-400'>
+                        Title: {src.metadata.title}
+                      </div>
                     ) : null}
                     <div className='mt-2 max-h-28 overflow-auto whitespace-pre-wrap text-xs text-gray-200'>
                       {src.text}

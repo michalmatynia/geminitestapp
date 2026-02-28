@@ -3,13 +3,7 @@
 import { Plus, Trash2 } from 'lucide-react';
 import React from 'react';
 
-import {
-  Button,
-  Input,
-  Label,
-  SelectSimple,
-  Card,
-} from '@/shared/ui';
+import { Button, Input, Label, SelectSimple, Card } from '@/shared/ui';
 
 import { useDocumentState } from '../context/hooks/useDocument';
 import { promptExploderSafeJsonStringify } from '../helpers/formatting';
@@ -40,12 +34,12 @@ function normalizeLogicalConditionList(
   const baseConditions = sourceConditions.length
     ? sourceConditions
     : [
-      createLogicalCondition({
-        id: `${item.id}_condition_1`,
-        comparator: fallbackComparator,
-        value: null,
-      }),
-    ];
+        createLogicalCondition({
+          id: `${item.id}_condition_1`,
+          comparator: fallbackComparator,
+          value: null,
+        }),
+      ];
 
   return baseConditions.map((condition, index) => {
     const comparator = condition.comparator ?? fallbackComparator;
@@ -53,14 +47,8 @@ function normalizeLogicalConditionList(
       id: condition.id || `${item.id}_condition_${index + 1}`,
       paramPath: (condition.paramPath ?? '').trim(),
       comparator,
-      value:
-        comparator === 'truthy' || comparator === 'falsy'
-          ? null
-          : condition.value ?? null,
-      joinWithPrevious:
-        index === 0
-          ? null
-          : (condition.joinWithPrevious === 'or' ? 'or' : 'and'),
+      value: comparator === 'truthy' || comparator === 'falsy' ? null : (condition.value ?? null),
+      joinWithPrevious: index === 0 ? null : condition.joinWithPrevious === 'or' ? 'or' : 'and',
     });
   });
 }
@@ -108,11 +96,7 @@ function normalizeListItemLogicalState(
       ? (override.logicalConditions ?? [])
       : (next.logicalConditions ?? []);
 
-  const logicalConditions = normalizeLogicalConditionList(
-    next,
-    sourcedConditions,
-    logicalOperator
-  );
+  const logicalConditions = normalizeLogicalConditionList(next, sourcedConditions, logicalOperator);
 
   const firstConfiguredCondition =
     logicalConditions.find((condition) => condition.paramPath.trim().length > 0) ?? null;
@@ -125,8 +109,8 @@ function normalizeListItemLogicalState(
     referencedComparator: firstConfiguredCondition?.comparator ?? null,
     referencedValue:
       firstConfiguredCondition &&
-        firstConfiguredCondition.comparator !== 'truthy' &&
-        firstConfiguredCondition.comparator !== 'falsy'
+      firstConfiguredCondition.comparator !== 'truthy' &&
+      firstConfiguredCondition.comparator !== 'falsy'
         ? firstConfiguredCondition.value
         : null,
   };
@@ -139,8 +123,7 @@ export function SegmentEditorListItemLogicalEditor(args: {
   const { item, onChange } = args;
   const { listParamOptions, listParamEntryByPath } = useDocumentState();
   const operatorValue = item.logicalOperator ?? 'none';
-  const logicalConditions =
-    operatorValue === 'none' ? [] : getEditableLogicalConditions(item);
+  const logicalConditions = operatorValue === 'none' ? [] : getEditableLogicalConditions(item);
 
   const applyPatch = (patch: Partial<PromptExploderListItem>): void => {
     onChange((current) => normalizeListItemLogicalState(current, patch));
@@ -181,10 +164,15 @@ export function SegmentEditorListItemLogicalEditor(args: {
   };
 
   return (
-    <Card variant='subtle-compact' padding='sm' className='mt-2 space-y-2 border-border/50 bg-card/20'>
+    <Card
+      variant='subtle-compact'
+      padding='sm'
+      className='mt-2 space-y-2 border-border/50 bg-card/20'
+    >
       <div className='space-y-1'>
         <Label className='text-[10px] text-gray-500'>Logical Operator</Label>
-        <SelectSimple size='sm'
+        <SelectSimple
+          size='sm'
           value={operatorValue}
           onValueChange={(next: string) => {
             if (next === 'none') {
@@ -224,7 +212,7 @@ export function SegmentEditorListItemLogicalEditor(args: {
               comparatorValue !== 'falsy';
             const paramOptions =
               selectedParamPath &&
-                !listParamOptions.some((option) => option.value === selectedParamPath)
+              !listParamOptions.some((option) => option.value === selectedParamPath)
                 ? [{ value: selectedParamPath, label: selectedParamPath }, ...listParamOptions]
                 : listParamOptions;
 
@@ -236,11 +224,16 @@ export function SegmentEditorListItemLogicalEditor(args: {
                 <div className='space-y-1'>
                   <Label className='text-[10px] text-gray-500'>Join</Label>
                   {conditionIndex === 0 ? (
-                    <Card variant='subtle-compact' padding='none' className='h-9 flex items-center border-dashed border-border/60 bg-card/20 px-2 text-[11px] text-gray-500'>
+                    <Card
+                      variant='subtle-compact'
+                      padding='none'
+                      className='h-9 flex items-center border-dashed border-border/60 bg-card/20 px-2 text-[11px] text-gray-500'
+                    >
                       START
                     </Card>
                   ) : (
-                    <SelectSimple size='sm'
+                    <SelectSimple
+                      size='sm'
                       value={condition.joinWithPrevious === 'or' ? 'or' : 'and'}
                       onValueChange={(next: string) => {
                         if (!isLogicalJoin(next)) return;
@@ -258,7 +251,8 @@ export function SegmentEditorListItemLogicalEditor(args: {
 
                 <div className='space-y-1'>
                   <Label className='text-[10px] text-gray-500'>Referenced Param</Label>
-                  <SelectSimple size='sm'
+                  <SelectSimple
+                    size='sm'
                     value={selectedParamPath}
                     onValueChange={(next: string) => {
                       updateCondition(conditionIndex, {
@@ -275,16 +269,15 @@ export function SegmentEditorListItemLogicalEditor(args: {
 
                 <div className='space-y-1'>
                   <Label className='text-[10px] text-gray-500'>Comparator</Label>
-                  <SelectSimple size='sm'
+                  <SelectSimple
+                    size='sm'
                     value={comparatorValue}
                     onValueChange={(next: string) => {
                       if (!isLogicalComparator(next)) return;
                       updateCondition(conditionIndex, {
                         comparator: next,
                         value:
-                          next === 'truthy' || next === 'falsy'
-                            ? null
-                            : condition.value ?? null,
+                          next === 'truthy' || next === 'falsy' ? null : (condition.value ?? null),
                       });
                     }}
                     options={PROMPT_EXPLODER_LOGICAL_COMPARATOR_OPTIONS.map((option) => ({
@@ -298,7 +291,8 @@ export function SegmentEditorListItemLogicalEditor(args: {
                   <Label className='text-[10px] text-gray-500'>Value</Label>
                   {needsValue ? (
                     selectedParamEntry?.spec?.kind === 'boolean' ? (
-                      <SelectSimple size='sm'
+                      <SelectSimple
+                        size='sm'
                         value={String(Boolean(condition.value))}
                         onValueChange={(next: string) => {
                           updateCondition(conditionIndex, {
@@ -312,60 +306,64 @@ export function SegmentEditorListItemLogicalEditor(args: {
                       />
                     ) : selectedParamEntry?.spec?.kind === 'enum' &&
                       selectedParamEntry.spec.enumOptions ? (
-                        <SelectSimple size='sm'
-                          value={String(condition.value ?? selectedParamEntry.spec.enumOptions[0] ?? '')}
-                          onValueChange={(next: string) => {
+                      <SelectSimple
+                        size='sm'
+                        value={String(
+                          condition.value ?? selectedParamEntry.spec.enumOptions[0] ?? ''
+                        )}
+                        onValueChange={(next: string) => {
+                          updateCondition(conditionIndex, {
+                            value: next,
+                          });
+                        }}
+                        options={selectedParamEntry.spec.enumOptions.map((value) => ({
+                          value,
+                          label: value,
+                        }))}
+                      />
+                    ) : selectedParamEntry?.spec?.kind === 'number' ? (
+                      <Input
+                        type='number'
+                        value={String(condition.value ?? '')}
+                        onChange={(event) => {
+                          const next = Number(event.target.value);
+                          if (!Number.isFinite(next)) return;
+                          updateCondition(conditionIndex, {
+                            value: next,
+                          });
+                        }}
+                      />
+                    ) : (
+                      <Input
+                        value={
+                          typeof condition.value === 'string'
+                            ? condition.value
+                            : promptExploderSafeJsonStringify(condition.value ?? '')
+                        }
+                        onChange={(event) => {
+                          const rawValue = event.target.value;
+                          if (
+                            selectedParamEntry?.spec?.kind === 'rgb' ||
+                            selectedParamEntry?.spec?.kind === 'tuple2' ||
+                            selectedParamEntry?.spec?.kind === 'json'
+                          ) {
                             updateCondition(conditionIndex, {
-                              value: next,
+                              value: sanitizeParamJsonValue(rawValue, condition.value),
                             });
-                          }}
-                          options={selectedParamEntry.spec.enumOptions.map((value) => ({
-                            value,
-                            label: value,
-                          }))}
-                        />
-                      ) : selectedParamEntry?.spec?.kind === 'number' ? (
-                        <Input
-                          type='number'
-                          value={String(condition.value ?? '')}
-                          onChange={(event) => {
-                            const next = Number(event.target.value);
-                            if (!Number.isFinite(next)) return;
-                            updateCondition(conditionIndex, {
-                              value: next,
-                            });
-                          }}
-                        />
-                      ) : (
-                        <Input
-                          value={
-                            typeof condition.value === 'string'
-                              ? condition.value
-                              : promptExploderSafeJsonStringify(condition.value ?? '')
+                            return;
                           }
-                          onChange={(event) => {
-                            const rawValue = event.target.value;
-                            if (
-                              selectedParamEntry?.spec?.kind === 'rgb' ||
-                              selectedParamEntry?.spec?.kind === 'tuple2' ||
-                              selectedParamEntry?.spec?.kind === 'json'
-                            ) {
-                              updateCondition(conditionIndex, {
-                                value: sanitizeParamJsonValue(
-                                  rawValue,
-                                  condition.value
-                                ),
-                              });
-                              return;
-                            }
-                            updateCondition(conditionIndex, {
-                              value: rawValue,
-                            });
-                          }}
-                        />
-                      )
+                          updateCondition(conditionIndex, {
+                            value: rawValue,
+                          });
+                        }}
+                      />
+                    )
                   ) : (
-                    <Card variant='subtle-compact' padding='none' className='h-9 flex items-center border-dashed border-border/60 bg-card/20 px-2 text-[11px] text-gray-500'>
+                    <Card
+                      variant='subtle-compact'
+                      padding='none'
+                      className='h-9 flex items-center border-dashed border-border/60 bg-card/20 px-2 text-[11px] text-gray-500'
+                    >
                       {selectedParamPath ? 'Value not needed' : 'Select parameter'}
                     </Card>
                   )}
@@ -401,7 +399,11 @@ export function SegmentEditorListItemLogicalEditor(args: {
           </div>
         </div>
       ) : (
-        <Card variant='subtle-compact' padding='none' className='h-9 flex items-center border-dashed border-border/60 bg-card/20 px-2 text-[11px] text-gray-500'>
+        <Card
+          variant='subtle-compact'
+          padding='none'
+          className='h-9 flex items-center border-dashed border-border/60 bg-card/20 px-2 text-[11px] text-gray-500'
+        >
           No condition
         </Card>
       )}

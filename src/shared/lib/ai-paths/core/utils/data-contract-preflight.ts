@@ -73,8 +73,7 @@ export type EvaluateDataContractPreflightArgs = {
   scopeRootNodeIds?: string[] | Set<string> | undefined;
 };
 
-const TEMPLATE_TOKEN_REGEX: RegExp =
-  /{{\s*([^}]+)\s*}}|\[\s*([A-Za-z0-9_.$:-]+)\s*\]/g;
+const TEMPLATE_TOKEN_REGEX: RegExp = /{{\s*([^}]+)\s*}}|\[\s*([A-Za-z0-9_.$:-]+)\s*\]/g;
 
 const TEMPLATE_SYSTEM_ROOT_PREFIXES = ['Date:', 'DB Provider:', 'Collection:'];
 
@@ -98,9 +97,7 @@ const resolveEdgeToPort = (edge: Edge): string | null =>
 
 const resolveNodeLabel = (node: AiNode | undefined, fallbackNodeId: string): string => {
   const title =
-    typeof node?.title === 'string' && node.title.trim().length > 0
-      ? node.title.trim()
-      : null;
+    typeof node?.title === 'string' && node.title.trim().length > 0 ? node.title.trim() : null;
   return title ?? fallbackNodeId;
 };
 
@@ -346,10 +343,7 @@ const resolvePortRuntimeValue = (args: {
   return undefined;
 };
 
-const resolveTemplateTokenValue = (
-  token: string,
-  context: Record<string, unknown>
-): unknown => {
+const resolveTemplateTokenValue = (token: string, context: Record<string, unknown>): unknown => {
   const normalizedToken = token.trim();
   if (!normalizedToken) return undefined;
   if (normalizedToken === 'value' || normalizedToken === 'current') {
@@ -362,13 +356,7 @@ const pushIssue = (
   issuesByKey: Map<string, DataContractPreflightIssue>,
   issue: Omit<DataContractPreflightIssue, 'id'>
 ): void => {
-  const keyParts = [
-    issue.code,
-    issue.nodeId,
-    issue.port ?? '',
-    issue.token ?? '',
-    issue.message,
-  ];
+  const keyParts = [issue.code, issue.nodeId, issue.port ?? '', issue.token ?? '', issue.message];
   const key = keyParts.join('|');
   if (issuesByKey.has(key)) return;
   issuesByKey.set(key, {
@@ -422,8 +410,7 @@ const resolveTokenRootCandidates = (token: string): string[] => {
 
 const hasNodeInputPort = (node: AiNode, port: string): boolean =>
   node.inputs.some(
-    (inputPort: string): boolean =>
-      normalizePortName(inputPort) === normalizePortName(port)
+    (inputPort: string): boolean => normalizePortName(inputPort) === normalizePortName(port)
   );
 
 const shouldDeferMissingTemplateTokenIssue = (args: {
@@ -489,10 +476,10 @@ export const evaluateDataContractPreflight = (
     scopeMode === 'reachable_from_roots'
       ? buildReachableScope(args.nodes, sanitizedEdges, args.scopeRootNodeIds)
       : {
-        nodes: args.nodes,
-        edges: sanitizedEdges,
-        reachableNodeIds: new Set(args.nodes.map((node: AiNode): string => node.id)),
-      };
+          nodes: args.nodes,
+          edges: sanitizedEdges,
+          reachableNodeIds: new Set(args.nodes.map((node: AiNode): string => node.id)),
+        };
 
   const nodes = scoped.nodes;
   const edges = scoped.edges;
@@ -547,7 +534,10 @@ export const evaluateDataContractPreflight = (
     }
 
     const runtimeOutputValue = getRuntimeOutputValue(runtimeState, fromNodeId, fromPort);
-    if (runtimeOutputValue !== undefined && !isValueCompatibleWithTypes(runtimeOutputValue, toTypes)) {
+    if (
+      runtimeOutputValue !== undefined &&
+      !isValueCompatibleWithTypes(runtimeOutputValue, toTypes)
+    ) {
       const actualType = getValueTypeLabel(runtimeOutputValue);
       const severity: DataContractIssueSeverity =
         mode === 'full' && getNodeInputPortContract(toNode, toPort).required === true
@@ -695,9 +685,7 @@ export const evaluateDataContractPreflight = (
         const parsed = parseJsonSafe(candidate);
         if (isPlainRecord(parsed)) return;
         const severity: DataContractIssueSeverity =
-          queryInputValue.includes('{{') || queryInputValue.includes('[')
-            ? 'warning'
-            : 'error';
+          queryInputValue.includes('{{') || queryInputValue.includes('[') ? 'warning' : 'error';
         pushIssue(issuesByKey, {
           nodeId: node.id,
           nodeType: node.type,
@@ -719,8 +707,7 @@ export const evaluateDataContractPreflight = (
         code: 'database_query_input_shape_mismatch',
         port: queryPort,
         message: `Database ${queryPort} received ${getValueTypeLabel(queryInputValue)}; expected object query input.`,
-        recommendation:
-          'Map this input to an object query shape or pass a JSON object string.',
+        recommendation: 'Map this input to an object query shape or pass a JSON object string.',
       });
     });
 

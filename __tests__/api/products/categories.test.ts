@@ -19,11 +19,23 @@ describe('Product Categories API', () => {
       const now = new Date();
       // Provide a flat list - the repository builds the tree.
       const mockCategories = [
-        { 
-          id: '1', name: 'Parent', catalogId: 'cat1', parentId: null, createdAt: now, updatedAt: now, sortIndex: 0
+        {
+          id: '1',
+          name: 'Parent',
+          catalogId: 'cat1',
+          parentId: null,
+          createdAt: now,
+          updatedAt: now,
+          sortIndex: 0,
         },
-        { 
-          id: '2', name: 'Child', catalogId: 'cat1', parentId: '1', createdAt: now, updatedAt: now, sortIndex: 0
+        {
+          id: '2',
+          name: 'Child',
+          catalogId: 'cat1',
+          parentId: '1',
+          createdAt: now,
+          updatedAt: now,
+          sortIndex: 0,
         },
       ];
       vi.mocked(prisma.productCategory.findMany).mockResolvedValue(mockCategories as any);

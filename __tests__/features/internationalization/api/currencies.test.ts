@@ -17,7 +17,7 @@ describe('Currencies API', () => {
   beforeEach(async () => {
     // Only run if DATABASE_URL is available
     if (!process.env['DATABASE_URL']) return;
-    
+
     await prisma.product.deleteMany({});
     await prisma.priceGroup.deleteMany({});
     await prisma.countryCurrency.deleteMany({});

@@ -86,9 +86,7 @@ const toTrimmedString = (value: unknown): string => {
   return value.trim();
 };
 
-const normalizeInternalCategoryId = (
-  value: string | null | undefined
-): string | null => {
+const normalizeInternalCategoryId = (value: string | null | undefined): string | null => {
   const trimmed = value?.trim();
   return trimmed ? trimmed : null;
 };
@@ -106,9 +104,7 @@ const parseDryRunArg = (): boolean => {
   return argDryRun || envDryRun;
 };
 
-const withMongoDb = async <T>(
-  operation: (db: Db) => Promise<T>
-): Promise<T> => {
+const withMongoDb = async <T>(operation: (db: Db) => Promise<T>): Promise<T> => {
   const uri = process.env['MONGODB_URI'];
   if (!uri) {
     throw new Error('MONGODB_URI not set');
@@ -160,9 +156,7 @@ const scoreNameAlignment = (
   return score;
 };
 
-const chooseKeeper = <TId>(
-  candidates: MappingCandidate<TId>[]
-): MappingCandidate<TId> | null => {
+const chooseKeeper = <TId>(candidates: MappingCandidate<TId>[]): MappingCandidate<TId> | null => {
   const validCandidates = candidates.filter((candidate) => candidate.externalCategoryExists);
   if (validCandidates.length === 0) return null;
 
@@ -216,9 +210,7 @@ const groupByInternalCategoryScope = <TId>(
   return groups;
 };
 
-const reconcilePrismaMappings = async (
-  dryRun: boolean
-): Promise<ReconcileSummary> => {
+const reconcilePrismaMappings = async (dryRun: boolean): Promise<ReconcileSummary> => {
   if (!process.env['DATABASE_URL']) {
     console.log(`${LOG_PREFIX} Prisma skipped (DATABASE_URL not set)`);
     return {
@@ -342,8 +334,7 @@ const reconcilePrismaMappings = async (
       skipped: false,
     };
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : 'Unknown Prisma reconciliation error';
+    const message = error instanceof Error ? error.message : 'Unknown Prisma reconciliation error';
     console.warn(`${LOG_PREFIX} Prisma skipped: ${message}`);
     return {
       provider: 'prisma',
@@ -367,9 +358,7 @@ const reconcilePrismaMappings = async (
   }
 };
 
-const reconcileMongoMappings = async (
-  dryRun: boolean
-): Promise<ReconcileSummary> => {
+const reconcileMongoMappings = async (dryRun: boolean): Promise<ReconcileSummary> => {
   if (!process.env['MONGODB_URI']) {
     console.log(`${LOG_PREFIX} Mongo skipped (MONGODB_URI not set)`);
     return {
@@ -387,66 +376,61 @@ const reconcileMongoMappings = async (
 
   try {
     return await withMongoDb(async (db) => {
-      const mappingCollection =
-        db.collection<MongoCategoryMappingDoc>(CATEGORY_MAPPING_COLLECTION);
+      const mappingCollection = db.collection<MongoCategoryMappingDoc>(CATEGORY_MAPPING_COLLECTION);
 
       const mappingDocs = await mappingCollection.find({}).toArray();
-    const normalizedMappings = mappingDocs
-      .map((doc) => {
-        const internalCategoryId = normalizeInternalCategoryId(doc.internalCategoryId);
-        if (!internalCategoryId) return null;
-        return {
-          ...doc,
-          internalCategoryId,
-        };
-      })
-      .filter(
-        (
-          doc
-        ): doc is MongoCategoryMappingDoc & { internalCategoryId: string } =>
+      const normalizedMappings = mappingDocs
+        .map((doc) => {
+          const internalCategoryId = normalizeInternalCategoryId(doc.internalCategoryId);
+          if (!internalCategoryId) return null;
+          return {
+            ...doc,
+            internalCategoryId,
+          };
+        })
+        .filter((doc): doc is MongoCategoryMappingDoc & { internalCategoryId: string } =>
           Boolean(doc)
+        );
+
+      const internalCategoryIds = Array.from(
+        new Set(normalizedMappings.map((doc) => doc.internalCategoryId))
+      );
+      const externalCategoryIds = Array.from(
+        new Set(normalizedMappings.map((doc) => toTrimmedString(doc.externalCategoryId)))
+      ).filter(Boolean);
+
+      const internalDocs = await db
+        .collection<MongoProductCategoryDoc>(PRODUCT_CATEGORY_COLLECTION)
+        .find({ _id: { $in: internalCategoryIds } })
+        .toArray();
+      const internalById = new Map<string, MongoProductCategoryDoc>(
+        internalDocs.map((doc) => [doc._id.toString(), doc])
       );
 
-    const internalCategoryIds = Array.from(
-      new Set(normalizedMappings.map((doc) => doc.internalCategoryId))
-    );
-    const externalCategoryIds = Array.from(
-      new Set(normalizedMappings.map((doc) => toTrimmedString(doc.externalCategoryId)))
-    ).filter(Boolean);
-
-    const internalDocs = await db
-      .collection<MongoProductCategoryDoc>(PRODUCT_CATEGORY_COLLECTION)
-      .find({ _id: { $in: internalCategoryIds } })
-      .toArray();
-    const internalById = new Map<string, MongoProductCategoryDoc>(
-      internalDocs.map((doc) => [doc._id.toString(), doc])
-    );
-
-    const externalById = new Map<string, MongoExternalCategoryDoc>();
-    if (externalCategoryIds.length > 0) {
-      const docsById = await db
-        .collection<MongoExternalCategoryDoc>(EXTERNAL_CATEGORY_COLLECTION)
-        .find({ _id: { $in: externalCategoryIds } })
-        .toArray();
-      docsById.forEach((doc) => {
-        externalById.set(doc._id.toString(), doc);
-      });
-
-      const unresolvedIds = externalCategoryIds.filter((id) => !externalById.has(id));
-      if (unresolvedIds.length > 0) {
-        const docsByExternalId = await db
+      const externalById = new Map<string, MongoExternalCategoryDoc>();
+      if (externalCategoryIds.length > 0) {
+        const docsById = await db
           .collection<MongoExternalCategoryDoc>(EXTERNAL_CATEGORY_COLLECTION)
-          .find({ externalId: { $in: unresolvedIds } })
+          .find({ _id: { $in: externalCategoryIds } })
           .toArray();
-        docsByExternalId.forEach((doc) => {
-          externalById.set(doc.externalId, doc);
+        docsById.forEach((doc) => {
           externalById.set(doc._id.toString(), doc);
         });
-      }
-    }
 
-    const candidates: MappingCandidate<string | ObjectId>[] = normalizedMappings.map(
-      (doc) => {
+        const unresolvedIds = externalCategoryIds.filter((id) => !externalById.has(id));
+        if (unresolvedIds.length > 0) {
+          const docsByExternalId = await db
+            .collection<MongoExternalCategoryDoc>(EXTERNAL_CATEGORY_COLLECTION)
+            .find({ externalId: { $in: unresolvedIds } })
+            .toArray();
+          docsByExternalId.forEach((doc) => {
+            externalById.set(doc.externalId, doc);
+            externalById.set(doc._id.toString(), doc);
+          });
+        }
+      }
+
+      const candidates: MappingCandidate<string | ObjectId>[] = normalizedMappings.map((doc) => {
         const externalKey = toTrimmedString(doc.externalCategoryId);
         const externalDoc = externalById.get(externalKey) ?? null;
         const internalDoc = internalById.get(doc.internalCategoryId) ?? null;
@@ -456,8 +440,7 @@ const reconcileMongoMappings = async (
           connectionId: doc.connectionId,
           catalogId: doc.catalogId,
           internalCategoryId: doc.internalCategoryId,
-          internalCategoryName:
-            toTrimmedString(internalDoc?.name) || doc.internalCategoryId,
+          internalCategoryName: toTrimmedString(internalDoc?.name) || doc.internalCategoryId,
           externalCategoryId: doc.externalCategoryId,
           externalCategoryName: toTrimmedString(externalDoc?.name),
           externalCategoryPath: toTrimmedString(externalDoc?.path),
@@ -466,81 +449,80 @@ const reconcileMongoMappings = async (
           createdAt: doc.createdAt,
           updatedAt: doc.updatedAt,
         } satisfies MappingCandidate<string | ObjectId>;
-      }
-    );
+      });
 
-    const groups = groupByInternalCategoryScope(candidates);
-    const idsToActivate: Array<string | ObjectId> = [];
-    const idsToDeactivate: Array<string | ObjectId> = [];
-    let changedGroups = 0;
+      const groups = groupByInternalCategoryScope(candidates);
+      const idsToActivate: Array<string | ObjectId> = [];
+      const idsToDeactivate: Array<string | ObjectId> = [];
+      let changedGroups = 0;
 
-    for (const [scopeKey, scopedCandidates] of groups.entries()) {
-      const keeper = chooseKeeper(scopedCandidates);
-      let groupChanged = false;
+      for (const [scopeKey, scopedCandidates] of groups.entries()) {
+        const keeper = chooseKeeper(scopedCandidates);
+        let groupChanged = false;
 
-      for (const candidate of scopedCandidates) {
-        const shouldBeActive = keeper ? candidate.idString === keeper.idString : false;
-        if (candidate.isActive && !shouldBeActive) {
-          idsToDeactivate.push(candidate.id);
-          groupChanged = true;
-        }
-        if (!candidate.isActive && shouldBeActive) {
-          idsToActivate.push(candidate.id);
-          groupChanged = true;
-        }
-      }
-
-      if (groupChanged) {
-        changedGroups += 1;
-        console.log(
-          `${LOG_PREFIX} Mongo ${scopeKey} -> keep=${keeper?.externalCategoryId ?? 'NONE'} keepName=${keeper?.externalCategoryName || 'N/A'} activate=${scopedCandidates.filter((c) => !c.isActive && keeper && c.idString === keeper.idString).length} deactivate=${scopedCandidates.filter((c) => c.isActive && (!keeper || c.idString !== keeper.idString)).length}`
-        );
-      }
-    }
-
-    let activated = idsToActivate.length;
-    let deactivated = idsToDeactivate.length;
-    if (!dryRun) {
-      if (idsToDeactivate.length > 0) {
-        const result = await mappingCollection.updateMany(
-          {
-            _id: { $in: idsToDeactivate },
-            isActive: true,
-          },
-          {
-            $set: {
-              isActive: false,
-              updatedAt: new Date(),
-            },
+        for (const candidate of scopedCandidates) {
+          const shouldBeActive = keeper ? candidate.idString === keeper.idString : false;
+          if (candidate.isActive && !shouldBeActive) {
+            idsToDeactivate.push(candidate.id);
+            groupChanged = true;
           }
-        );
-        deactivated = result.modifiedCount ?? 0;
-      } else {
-        deactivated = 0;
+          if (!candidate.isActive && shouldBeActive) {
+            idsToActivate.push(candidate.id);
+            groupChanged = true;
+          }
+        }
+
+        if (groupChanged) {
+          changedGroups += 1;
+          console.log(
+            `${LOG_PREFIX} Mongo ${scopeKey} -> keep=${keeper?.externalCategoryId ?? 'NONE'} keepName=${keeper?.externalCategoryName || 'N/A'} activate=${scopedCandidates.filter((c) => !c.isActive && keeper && c.idString === keeper.idString).length} deactivate=${scopedCandidates.filter((c) => c.isActive && (!keeper || c.idString !== keeper.idString)).length}`
+          );
+        }
       }
 
-      if (idsToActivate.length > 0) {
-        const result = await mappingCollection.updateMany(
-          {
-            _id: { $in: idsToActivate },
-            isActive: false,
-          },
-          {
-            $set: {
+      let activated = idsToActivate.length;
+      let deactivated = idsToDeactivate.length;
+      if (!dryRun) {
+        if (idsToDeactivate.length > 0) {
+          const result = await mappingCollection.updateMany(
+            {
+              _id: { $in: idsToDeactivate },
               isActive: true,
-              updatedAt: new Date(),
             },
-          }
-        );
-        activated = result.modifiedCount ?? 0;
-      } else {
-        activated = 0;
-      }
-    }
+            {
+              $set: {
+                isActive: false,
+                updatedAt: new Date(),
+              },
+            }
+          );
+          deactivated = result.modifiedCount ?? 0;
+        } else {
+          deactivated = 0;
+        }
 
-    console.log(
-      `${LOG_PREFIX} Mongo ${dryRun ? 'dry-run' : 'applied'}: scanned=${candidates.length} groups=${groups.size} changedGroups=${changedGroups} ${dryRun ? 'wouldActivate' : 'activated'}=${activated} ${dryRun ? 'wouldDeactivate' : 'deactivated'}=${deactivated}`
-    );
+        if (idsToActivate.length > 0) {
+          const result = await mappingCollection.updateMany(
+            {
+              _id: { $in: idsToActivate },
+              isActive: false,
+            },
+            {
+              $set: {
+                isActive: true,
+                updatedAt: new Date(),
+              },
+            }
+          );
+          activated = result.modifiedCount ?? 0;
+        } else {
+          activated = 0;
+        }
+      }
+
+      console.log(
+        `${LOG_PREFIX} Mongo ${dryRun ? 'dry-run' : 'applied'}: scanned=${candidates.length} groups=${groups.size} changedGroups=${changedGroups} ${dryRun ? 'wouldActivate' : 'activated'}=${activated} ${dryRun ? 'wouldDeactivate' : 'deactivated'}=${deactivated}`
+      );
 
       return {
         provider: 'mongodb',
@@ -580,8 +562,7 @@ async function main() {
 
   const totalActivated = prismaSummary.activated + mongoSummary.activated;
   const totalDeactivated = prismaSummary.deactivated + mongoSummary.deactivated;
-  const totalChangedGroups =
-    prismaSummary.changedGroups + mongoSummary.changedGroups;
+  const totalChangedGroups = prismaSummary.changedGroups + mongoSummary.changedGroups;
 
   console.log(
     `${LOG_PREFIX} Finished: changedGroups=${totalChangedGroups} ${dryRun ? 'wouldActivate' : 'activated'}=${totalActivated} ${dryRun ? 'wouldDeactivate' : 'deactivated'}=${totalDeactivated}`

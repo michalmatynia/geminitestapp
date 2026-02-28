@@ -51,8 +51,8 @@ async function main(): Promise<void> {
         historySummary,
       },
       null,
-      2,
-    ),
+      2
+    )
   );
 }
 

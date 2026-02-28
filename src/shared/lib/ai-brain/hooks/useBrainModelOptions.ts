@@ -1,0 +1,92 @@
+'use client';
+
+import { useMemo } from 'react';
+
+import {
+  AI_BRAIN_SETTINGS_KEY,
+  getBrainCapabilityDefinition,
+  parseBrainSettings,
+  resolveBrainAssignment,
+  resolveBrainCapabilityAssignment,
+  type AiBrainAssignment,
+  type AiBrainCapabilityKey,
+  type AiBrainFeature,
+} from '@/shared/lib/ai-brain/settings';
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+
+import { useBrainModels } from './useBrainQueries';
+
+type UseBrainModelOptionsInput = {
+  feature?: AiBrainFeature;
+  capability?: AiBrainCapabilityKey;
+  enabled?: boolean;
+};
+
+type UseBrainModelOptionsResult = {
+  models: string[];
+  isLoading: boolean;
+  assignment: AiBrainAssignment;
+  effectiveModelId: string;
+  sourceWarnings: string[];
+  refresh: () => void;
+};
+
+const normalizeUnique = (values: string[]): string[] => {
+  const seen = new Set<string>();
+  const output: string[] = [];
+  values.forEach((value: string): void => {
+    const normalized = value.trim();
+    if (!normalized || seen.has(normalized)) return;
+    seen.add(normalized);
+    output.push(normalized);
+  });
+  return output;
+};
+
+export function useBrainModelOptions({
+  feature,
+  capability,
+  enabled = true,
+}: UseBrainModelOptionsInput): UseBrainModelOptionsResult {
+  const settingsStore = useSettingsStore();
+  const rawBrainSettings = settingsStore.get(AI_BRAIN_SETTINGS_KEY);
+  const brainSettings = useMemo(() => parseBrainSettings(rawBrainSettings), [rawBrainSettings]);
+  const assignment = useMemo(() => {
+    if (capability) {
+      return resolveBrainCapabilityAssignment(brainSettings, capability);
+    }
+    if (feature) {
+      return resolveBrainAssignment(brainSettings, feature);
+    }
+    throw new Error('useBrainModelOptions requires a feature or capability.');
+  }, [brainSettings, capability, feature]);
+  const modelsQuery = useBrainModels({ enabled });
+  const targetFamily = capability ? getBrainCapabilityDefinition(capability).modelFamily : null;
+
+  const models = useMemo((): string[] => {
+    const discovered = Array.isArray(modelsQuery.data?.models)
+      ? (modelsQuery.data?.models ?? []).filter((modelId) => {
+          if (!targetFamily) return true;
+          const descriptor = modelsQuery.data?.descriptors?.[modelId];
+          return descriptor?.family === targetFamily;
+        })
+      : [];
+    return normalizeUnique([...discovered, ...(assignment.modelId ? [assignment.modelId] : [])]);
+  }, [assignment.modelId, modelsQuery.data?.descriptors, modelsQuery.data?.models, targetFamily]);
+
+  const sourceWarnings = useMemo((): string[] => {
+    const message = modelsQuery.data?.warning?.message?.trim() ?? '';
+    return message ? [message] : [];
+  }, [modelsQuery.data?.warning?.message]);
+
+  return {
+    models,
+    isLoading: modelsQuery.isLoading || settingsStore.isLoading,
+    assignment,
+    effectiveModelId: assignment.modelId?.trim() ?? '',
+    sourceWarnings,
+    refresh: (): void => {
+      void modelsQuery.refetch();
+    },
+  };
+}

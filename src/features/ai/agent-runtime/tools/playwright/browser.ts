@@ -8,7 +8,6 @@ import prisma from '@/shared/lib/db/prisma';
 
 import { toDataUrl } from '../utils';
 
-
 import type { Browser, BrowserContext, Page, Cookie } from 'playwright';
 
 const getPlaywright = (): {
@@ -33,11 +32,7 @@ export const launchBrowser = async (
 ): Promise<Browser> => {
   const { chromium, firefox, webkit } = getPlaywright();
   const browserType =
-    browserName === 'firefox'
-      ? firefox
-      : browserName === 'webkit'
-        ? webkit
-        : chromium;
+    browserName === 'firefox' ? firefox : browserName === 'webkit' ? webkit : chromium;
   return browserType.launch({ headless });
 };
 
@@ -174,9 +169,9 @@ export const captureSnapshot = async (
       stepId: activeStepId ?? null,
     });
   }
-  
-  // Note: collectUiInventory and captureSessionContext calls removed from here 
-  // to avoid circular dependency and keep functions focused. 
+
+  // Note: collectUiInventory and captureSessionContext calls removed from here
+  // to avoid circular dependency and keep functions focused.
   // Caller should call them if needed.
 
   return { domText, domHtml, url: snapshotUrl };

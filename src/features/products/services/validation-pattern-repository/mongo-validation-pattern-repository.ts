@@ -181,10 +181,7 @@ const parseBooleanSetting = (
 const readStringSetting = async (key: string): Promise<string | null> => {
   const db = await getMongoDb();
   const setting = await db.collection<SettingDoc>(SETTINGS_COLLECTION).findOne({
-    $or: [
-      { key },
-      { _id: key },
-    ],
+    $or: [{ key }, { _id: key }],
   } as Filter<SettingDoc>);
   return typeof setting?.value === 'string' ? setting.value : null;
 };
@@ -194,10 +191,7 @@ const writeStringSetting = async (key: string, value: string): Promise<void> => 
   const now = new Date();
   await db.collection<SettingDoc>(SETTINGS_COLLECTION).updateOne(
     {
-      $or: [
-        { key },
-        { _id: key },
-      ],
+      $or: [{ key }, { _id: key }],
     } as Filter<SettingDoc>,
     {
       $set: {
@@ -342,9 +336,7 @@ const toDomain = (doc: ProductValidationPatternDoc): ProductValidationPattern =>
     doc.launchAppliesToScopes,
     doc.appliesToScopes
   ),
-  launchScopeBehavior: normalizeProductValidationLaunchScopeBehavior(
-    doc.launchScopeBehavior
-  ),
+  launchScopeBehavior: normalizeProductValidationLaunchScopeBehavior(doc.launchScopeBehavior),
   launchSourceMode: normalizeLaunchSourceMode(doc.launchSourceMode),
   launchSourceField:
     typeof doc.launchSourceField === 'string' && doc.launchSourceField.trim()
@@ -353,9 +345,7 @@ const toDomain = (doc: ProductValidationPatternDoc): ProductValidationPattern =>
   launchOperator: normalizeLaunchOperator(doc.launchOperator),
   launchValue: typeof doc.launchValue === 'string' ? doc.launchValue : null,
   launchFlags:
-    typeof doc.launchFlags === 'string' && doc.launchFlags.trim()
-      ? doc.launchFlags.trim()
-      : null,
+    typeof doc.launchFlags === 'string' && doc.launchFlags.trim() ? doc.launchFlags.trim() : null,
   appliesToScopes: normalizeProductValidationPatternScopes(doc.appliesToScopes),
   createdAt: doc.createdAt?.toISOString() ?? new Date().toISOString(),
   updatedAt: doc.updatedAt?.toISOString() ?? new Date().toISOString(),
@@ -385,7 +375,9 @@ export const mongoValidationPatternRepository: ProductValidationPatternRepositor
     return row ? toDomain(row) : null;
   },
 
-  async createPattern(data: CreateProductValidationPatternInput): Promise<ProductValidationPattern> {
+  async createPattern(
+    data: CreateProductValidationPatternInput
+  ): Promise<ProductValidationPattern> {
     const db = await getMongoDb();
     await ensureIndexes(db);
     const now = new Date();
@@ -440,9 +432,7 @@ export const mongoValidationPatternRepository: ProductValidationPatternRepositor
         data.launchAppliesToScopes,
         data.appliesToScopes
       ),
-      launchScopeBehavior: normalizeProductValidationLaunchScopeBehavior(
-        data.launchScopeBehavior
-      ),
+      launchScopeBehavior: normalizeProductValidationLaunchScopeBehavior(data.launchScopeBehavior),
       launchSourceMode: normalizeLaunchSourceMode(data.launchSourceMode),
       launchSourceField: data.launchSourceField?.trim() || null,
       launchOperator: normalizeLaunchOperator(data.launchOperator),
@@ -452,12 +442,17 @@ export const mongoValidationPatternRepository: ProductValidationPatternRepositor
       createdAt: now,
       updatedAt: now,
     };
-    const result = await db.collection<ProductValidationPatternInsert>(COLLECTION).insertOne(payload);
+    const result = await db
+      .collection<ProductValidationPatternInsert>(COLLECTION)
+      .insertOne(payload);
     const inserted: ProductValidationPatternDoc = { ...payload, _id: result.insertedId };
     return toDomain(inserted);
   },
 
-  async updatePattern(id: string, data: UpdateProductValidationPatternInput): Promise<ProductValidationPattern> {
+  async updatePattern(
+    id: string,
+    data: UpdateProductValidationPatternInput
+  ): Promise<ProductValidationPattern> {
     if (!ObjectId.isValid(id)) {
       throw badRequestError('Invalid pattern ID', { patternId: id });
     }
@@ -488,13 +483,15 @@ export const mongoValidationPatternRepository: ProductValidationPatternRepositor
     }
     if (data.enabled !== undefined) set.enabled = data.enabled;
     if (data.replacementEnabled !== undefined) set.replacementEnabled = data.replacementEnabled;
-    if (data.replacementAutoApply !== undefined) set.replacementAutoApply = data.replacementAutoApply;
+    if (data.replacementAutoApply !== undefined)
+      set.replacementAutoApply = data.replacementAutoApply;
     if (data.skipNoopReplacementProposal !== undefined) {
       set.skipNoopReplacementProposal = normalizeProductValidationSkipNoopReplacementProposal(
         data.skipNoopReplacementProposal
       );
     }
-    if (data.replacementValue !== undefined) set.replacementValue = data.replacementValue?.trim() || null;
+    if (data.replacementValue !== undefined)
+      set.replacementValue = data.replacementValue?.trim() || null;
     if (data.replacementFields !== undefined) {
       set.replacementFields = normalizeReplacementFields(data.replacementFields);
     }
@@ -582,10 +579,9 @@ export const mongoValidationPatternRepository: ProductValidationPatternRepositor
       _id: toObjectId(id),
       ...(expectedUpdatedAt ? { updatedAt: expectedUpdatedAt } : {}),
     };
-    const updateResult = await db.collection<ProductValidationPatternDoc>(COLLECTION).updateOne(
-      filter,
-      { $set: set } as UpdateFilter<ProductValidationPatternDoc>
-    );
+    const updateResult = await db
+      .collection<ProductValidationPatternDoc>(COLLECTION)
+      .updateOne(filter, { $set: set } as UpdateFilter<ProductValidationPatternDoc>);
     if (updateResult.matchedCount === 0) {
       const existing = await db
         .collection<ProductValidationPatternDoc>(COLLECTION)
@@ -622,10 +618,7 @@ export const mongoValidationPatternRepository: ProductValidationPatternRepositor
   },
 
   async setEnabledByDefault(enabled: boolean): Promise<boolean> {
-    await writeStringSetting(
-      PRODUCT_VALIDATOR_ENABLED_BY_DEFAULT_SETTING_KEY,
-      String(enabled)
-    );
+    await writeStringSetting(PRODUCT_VALIDATOR_ENABLED_BY_DEFAULT_SETTING_KEY, String(enabled));
     return enabled;
   },
 
@@ -637,10 +630,7 @@ export const mongoValidationPatternRepository: ProductValidationPatternRepositor
   },
 
   async setFormatterEnabledByDefault(enabled: boolean): Promise<boolean> {
-    await writeStringSetting(
-      PRODUCT_FORMATTER_ENABLED_BY_DEFAULT_SETTING_KEY,
-      String(enabled)
-    );
+    await writeStringSetting(PRODUCT_FORMATTER_ENABLED_BY_DEFAULT_SETTING_KEY, String(enabled));
     return enabled;
   },
 

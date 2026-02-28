@@ -13,7 +13,7 @@ export function usePrefetchQueries(configs: PrefetchConfig[]): void {
 
   useEffect(() => {
     const timeouts: NodeJS.Timeout[] = [];
-    
+
     configs.forEach(({ queryKey, queryFn, condition, delay = 0 }: PrefetchConfig): void => {
       if (condition && !condition()) return;
 
@@ -33,15 +33,24 @@ export function usePrefetchQueries(configs: PrefetchConfig[]): void {
 }
 
 export interface SmartPrefetchResult {
-  prefetchOnHover: (queryKey: unknown[], queryFn: () => Promise<unknown>) => { onMouseEnter: () => void };
-  prefetchOnFocus: (queryKey: unknown[], queryFn: () => Promise<unknown>) => { onFocus: () => void };
+  prefetchOnHover: (
+    queryKey: unknown[],
+    queryFn: () => Promise<unknown>
+  ) => { onMouseEnter: () => void };
+  prefetchOnFocus: (
+    queryKey: unknown[],
+    queryFn: () => Promise<unknown>
+  ) => { onFocus: () => void };
 }
 
 // Smart prefetching based on user behavior
 export function useSmartPrefetch(): SmartPrefetchResult {
   const queryClient = useQueryClient();
 
-  const prefetchOnHover = (queryKey: unknown[], queryFn: () => Promise<unknown>): { onMouseEnter: () => void } => {
+  const prefetchOnHover = (
+    queryKey: unknown[],
+    queryFn: () => Promise<unknown>
+  ): { onMouseEnter: () => void } => {
     return {
       onMouseEnter: (): void => {
         void queryClient.prefetchQuery({ queryKey, queryFn });
@@ -49,7 +58,10 @@ export function useSmartPrefetch(): SmartPrefetchResult {
     };
   };
 
-  const prefetchOnFocus = (queryKey: unknown[], queryFn: () => Promise<unknown>): { onFocus: () => void } => {
+  const prefetchOnFocus = (
+    queryKey: unknown[],
+    queryFn: () => Promise<unknown>
+  ): { onFocus: () => void } => {
     return {
       onFocus: (): void => {
         void queryClient.prefetchQuery({ queryKey, queryFn });

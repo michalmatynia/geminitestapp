@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest';
 
-import { 
-  parsePlanJson, 
-  normalizeStringList, 
-  buildPlan, 
+import {
+  parsePlanJson,
+  normalizeStringList,
+  buildPlan,
   decideNextAction,
-  isExtractionStep
+  isExtractionStep,
 } from '@/features/ai/agent-runtime/planning/utils';
 
 describe('Agent Runtime Planning Utils', () => {

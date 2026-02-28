@@ -4,9 +4,11 @@ import { Suspense, useEffect, useState } from 'react';
 
 import { IntegrationList } from '@/features/integrations/components/connections/IntegrationList';
 import { IntegrationModal } from '@/features/integrations/components/connections/IntegrationModal';
-import { IntegrationsProvider, useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
+import {
+  IntegrationsProvider,
+  useIntegrationsContext,
+} from '@/features/integrations/context/IntegrationsContext';
 import { Button, DetailModal, Input, LoadingState } from '@/shared/ui';
-
 
 function IntegrationsContent(): React.JSX.Element {
   const {
@@ -50,11 +52,7 @@ function IntegrationsContent(): React.JSX.Element {
         isOpen={Boolean(connectionToDelete)}
         onClose={handleCloseDeleteModal}
         title='Delete connection'
-        subtitle={
-          connectionToDelete
-            ? `Delete "${connectionToDelete.name}"`
-            : undefined
-        }
+        subtitle={connectionToDelete ? `Delete "${connectionToDelete.name}"` : undefined}
         size='sm'
         footer={
           <div className='flex justify-end gap-2'>
@@ -81,7 +79,8 @@ function IntegrationsContent(): React.JSX.Element {
       >
         <div className='space-y-3'>
           <p className='text-sm text-red-300'>
-            This action is permanent and will also remove all related product synchronizations and listing links.
+            This action is permanent and will also remove all related product synchronizations and
+            listing links.
           </p>
           <div className='space-y-1'>
             <label className='text-xs font-medium text-gray-300'>
@@ -100,9 +99,7 @@ function IntegrationsContent(): React.JSX.Element {
       </DetailModal>
       <IntegrationList />
 
-      {isModalOpen && activeIntegration && (
-        <IntegrationModal />
-      )}
+      {isModalOpen && activeIntegration && <IntegrationModal />}
     </div>
   );
 }

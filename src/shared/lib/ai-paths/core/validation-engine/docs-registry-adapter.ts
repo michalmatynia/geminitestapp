@@ -1,9 +1,6 @@
 import 'server-only';
 
-import {
-  addAssertionsWithDedup,
-  hashText,
-} from './docs-registry-adapter.helpers';
+import { addAssertionsWithDedup, hashText } from './docs-registry-adapter.helpers';
 import {
   buildCoverageMatrixSourcePayload,
   buildMarkdownSourcePayload,
@@ -27,7 +24,7 @@ export const buildAiPathsValidationDocsSnapshot = async (): Promise<AiPathsDocsS
   const sources: AiPathsDocsSnapshotSource[] = [];
   const assertionById = new Map<string, AiPathsDocAssertion>();
   const manifest = await readAiPathsDocsManifest(warnings);
-  
+
   const enabledSources = manifest.sources
     .filter((source: AiPathsDocsManifestSource): boolean => source.enabled)
     .sort((left, right) => {
@@ -203,7 +200,7 @@ export const buildAiPathsValidationDocsSnapshot = async (): Promise<AiPathsDocsS
         sourcePath: assertion.sourcePath,
         sourceHash: assertion.sourceHash,
       })),
-    }),
+    })
   );
 
   return {

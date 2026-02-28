@@ -22,16 +22,21 @@ export function ProductListingsConfirmDialogs(): React.JSX.Element {
     listings,
   } = useProductListingsContext();
 
-  const baseListing = listings.find(
-    (listing) => ['baselinker', 'base-com', 'base'].includes(normalizeIntegrationSlug(listing.integration.slug))
-  ) ?? null;
+  const baseListing =
+    listings.find((listing) =>
+      ['baselinker', 'base-com', 'base'].includes(
+        normalizeIntegrationSlug(listing.integration.slug)
+      )
+    ) ?? null;
 
   const confirmDialogs = [
     {
       id: 'delete-from-base',
       open: !!listingToDelete,
       onOpenChange: (open: boolean) => !open && setListingToDelete(null),
-      onConfirm: () => { if (listingToDelete) void handleDeleteFromBase(listingToDelete); },
+      onConfirm: () => {
+        if (listingToDelete) void handleDeleteFromBase(listingToDelete);
+      },
       title: 'Delete from Base.com',
       description: 'Delete this product from Base.com? This cannot be undone.',
       confirmText: 'Delete',
@@ -41,9 +46,12 @@ export function ProductListingsConfirmDialogs(): React.JSX.Element {
       id: 'purge-listing',
       open: !!listingToPurge,
       onOpenChange: (open: boolean) => !open && setListingToPurge(null),
-      onConfirm: () => { if (listingToPurge) void handlePurgeListing(listingToPurge); },
+      onConfirm: () => {
+        if (listingToPurge) void handlePurgeListing(listingToPurge);
+      },
       title: 'Remove History',
-      description: 'Remove this integration connection and its history? This will NOT delete the product from the marketplace.',
+      description:
+        'Remove this integration connection and its history? This will NOT delete the product from the marketplace.',
       confirmText: 'Remove',
       isDestructive: true,
     },
@@ -51,9 +59,12 @@ export function ProductListingsConfirmDialogs(): React.JSX.Element {
       id: 'sync-images',
       open: isSyncImagesConfirmOpen,
       onOpenChange: (open: boolean) => setIsSyncImagesConfirmOpen(open),
-      onConfirm: () => { void handleSyncBaseImages(baseListing); },
+      onConfirm: () => {
+        void handleSyncBaseImages(baseListing);
+      },
       title: 'Sync Images from Base.com',
-      description: 'Sync image URLs from Base.com into this product? This will overwrite existing image links in the corresponding slots.',
+      description:
+        'Sync image URLs from Base.com into this product? This will overwrite existing image links in the corresponding slots.',
       confirmText: 'Sync Images',
     },
   ];

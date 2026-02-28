@@ -1,5 +1,3 @@
-
-
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -81,10 +79,10 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
 
     if (!res.ok) {
       const errorText = await res.text();
-      throw externalServiceError(
-        `Search provider error: ${errorText || res.statusText}`,
-        { provider: 'brave', statusCode: res.status }
-      );
+      throw externalServiceError(`Search provider error: ${errorText || res.statusText}`, {
+        provider: 'brave',
+        statusCode: res.status,
+      });
     }
 
     const data = (await res.json()) as BraveResponse;
@@ -95,11 +93,14 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
         description: item.description || '',
       })) || [];
 
-    return NextResponse.json({ results }, {
-      headers: {
-        'Cache-Control': 'no-store',
-      },
-    });
+    return NextResponse.json(
+      { results },
+      {
+        headers: {
+          'Cache-Control': 'no-store',
+        },
+      }
+    );
   }
 
   if (provider === 'google') {
@@ -118,10 +119,10 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     const res = await fetch(url.toString());
     if (!res.ok) {
       const errorText = await res.text();
-      throw externalServiceError(
-        `Search provider error: ${errorText || res.statusText}`,
-        { provider: 'google', statusCode: res.status }
-      );
+      throw externalServiceError(`Search provider error: ${errorText || res.statusText}`, {
+        provider: 'google',
+        statusCode: res.status,
+      });
     }
 
     const data = (await res.json()) as GoogleSearchResponse;
@@ -132,11 +133,14 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
         description: item.snippet || '',
       })) || [];
 
-    return NextResponse.json({ results }, {
-      headers: {
-        'Cache-Control': 'no-store',
-      },
-    });
+    return NextResponse.json(
+      { results },
+      {
+        headers: {
+          'Cache-Control': 'no-store',
+        },
+      }
+    );
   }
 
   if (provider === 'serpapi') {
@@ -153,10 +157,10 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     const res = await fetch(url.toString());
     if (!res.ok) {
       const errorText = await res.text();
-      throw externalServiceError(
-        `Search provider error: ${errorText || res.statusText}`,
-        { provider: 'serpapi', statusCode: res.status }
-      );
+      throw externalServiceError(`Search provider error: ${errorText || res.statusText}`, {
+        provider: 'serpapi',
+        statusCode: res.status,
+      });
     }
 
     const data = (await res.json()) as {
@@ -174,13 +178,15 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
         description: item.snippet || '',
       })) || [];
 
-    return NextResponse.json({ results }, {
-      headers: {
-        'Cache-Control': 'no-store',
-      },
-    });
+    return NextResponse.json(
+      { results },
+      {
+        headers: {
+          'Cache-Control': 'no-store',
+        },
+      }
+    );
   }
 
   throw badRequestError('Unsupported search provider', { provider });
 }
-

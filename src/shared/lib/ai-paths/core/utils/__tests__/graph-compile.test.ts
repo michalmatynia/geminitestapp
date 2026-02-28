@@ -114,9 +114,7 @@ describe('compileGraph', () => {
     ];
 
     const report = compileGraph(nodes, edges);
-    expect(
-      report.findings.some((finding) => finding.code === 'fan_in_single_port')
-    ).toBe(false);
+    expect(report.findings.some((finding) => finding.code === 'fan_in_single_port')).toBe(false);
   });
 
   it('blocks nodes with required inputs that are not wired', () => {
@@ -256,9 +254,7 @@ describe('compileGraph', () => {
     const report = compileGraph(nodes, []);
     expect(
       report.findings.some(
-        (finding) =>
-          finding.code === 'context_cache_scope_risk' &&
-          finding.nodeId === 'fetcher-1'
+        (finding) => finding.code === 'context_cache_scope_risk' && finding.nodeId === 'fetcher-1'
       )
     ).toBe(true);
   });
@@ -487,9 +483,7 @@ describe('compileGraph', () => {
 
     const report = compileGraph(nodes, edges);
     expect(report.ok).toBe(false);
-    expect(
-      report.findings.some((finding) => finding.code === 'unsupported_cycle')
-    ).toBe(true);
+    expect(report.findings.some((finding) => finding.code === 'unsupported_cycle')).toBe(true);
   });
 
   it('keeps allowed loop constructs as warnings', () => {
@@ -525,9 +519,7 @@ describe('compileGraph', () => {
     ];
 
     const report = compileGraph(nodes, edges);
-    const cycleFinding = report.findings.find(
-      (finding) => finding.code === 'cycle_detected'
-    );
+    const cycleFinding = report.findings.find((finding) => finding.code === 'cycle_detected');
     expect(report.ok).toBe(true);
     expect(cycleFinding).toBeDefined();
     expect(cycleFinding?.message).toContain('Detected a circular loop across 2 node(s)');
@@ -535,9 +527,7 @@ describe('compileGraph', () => {
     expect(cycleFinding?.metadata?.['nodeIds']).toEqual(
       expect.arrayContaining(['iter-1', 'delay-1'])
     );
-    expect(
-      report.findings.some((finding) => finding.code === 'unsupported_cycle')
-    ).toBe(false);
+    expect(report.findings.some((finding) => finding.code === 'unsupported_cycle')).toBe(false);
   });
 
   it('reports the trigger-simulation handshake cycle pattern as explicit warning', () => {
@@ -573,20 +563,16 @@ describe('compileGraph', () => {
     ];
 
     const report = compileGraph(nodes, edges);
-    const cycleFinding = report.findings.find(
-      (finding) => finding.code === 'cycle_detected'
-    );
+    const cycleFinding = report.findings.find((finding) => finding.code === 'cycle_detected');
     expect(report.ok).toBe(true);
     expect(cycleFinding).toBeDefined();
     expect(cycleFinding?.message).toContain('Trigger/Simulation handshake loop');
     expect(cycleFinding?.message).toContain('Trigger -> Fetcher -> Context Filter');
     expect(cycleFinding?.metadata?.['legacyTriggerSimulationHandshake']).toBe(true);
-    expect(
-      report.findings.some((finding) => finding.code === 'unsupported_cycle')
-    ).toBe(false);
-    expect(
-      report.findings.some((finding) => finding.code === 'cycle_wait_deadlock_risk')
-    ).toBe(false);
+    expect(report.findings.some((finding) => finding.code === 'unsupported_cycle')).toBe(false);
+    expect(report.findings.some((finding) => finding.code === 'cycle_wait_deadlock_risk')).toBe(
+      false
+    );
   });
 
   it('warns when trigger requires simulation context but no simulation edge exists', () => {
@@ -609,9 +595,7 @@ describe('compileGraph', () => {
 
     const report = compileGraph(nodes, edges);
     const finding = report.findings.find(
-      (item) =>
-        item.code === 'trigger_context_resolution_risk' &&
-        item.nodeId === 'trigger-1'
+      (item) => item.code === 'trigger_context_resolution_risk' && item.nodeId === 'trigger-1'
     );
     expect(finding).toBeDefined();
     expect(finding?.message).toContain('requires simulation context');
@@ -661,9 +645,7 @@ describe('compileGraph', () => {
 
     const report = compileGraph(nodes, edges);
     const finding = report.findings.find(
-      (item) =>
-        item.code === 'trigger_context_resolution_risk' &&
-        item.nodeId === 'trigger-1'
+      (item) => item.code === 'trigger_context_resolution_risk' && item.nodeId === 'trigger-1'
     );
     expect(finding).toBeDefined();
     expect(finding?.message).toContain('manual-only');
@@ -713,9 +695,7 @@ describe('compileGraph', () => {
 
     const report = compileGraph(nodes, edges);
     expect(
-      report.findings.some(
-        (finding) => finding.code === 'trigger_context_resolution_risk'
-      )
+      report.findings.some((finding) => finding.code === 'trigger_context_resolution_risk')
     ).toBe(false);
   });
 
@@ -761,9 +741,7 @@ describe('compileGraph', () => {
 
     const report = compileGraph(nodes, edges);
     expect(
-      report.findings.some(
-        (finding) => finding.code === 'trigger_context_resolution_risk'
-      )
+      report.findings.some((finding) => finding.code === 'trigger_context_resolution_risk')
     ).toBe(false);
   });
 
@@ -807,9 +785,7 @@ describe('compileGraph', () => {
 
     const report = compileGraph(nodes, edges);
     const finding = report.findings.find(
-      (item) =>
-        item.code === 'trigger_context_resolution_risk' &&
-        item.nodeId === 'trigger-1'
+      (item) => item.code === 'trigger_context_resolution_risk' && item.nodeId === 'trigger-1'
     );
     expect(finding).toBeDefined();
     expect(finding?.message).toContain('no simulation-capable source');
@@ -1020,7 +996,9 @@ describe('compileGraph', () => {
     );
     expect(report.ok).toBe(true);
     expect(deadlockFinding).toBeDefined();
-    expect(deadlockFinding?.message).toContain('Fix: provide at least one required input from outside the loop');
+    expect(deadlockFinding?.message).toContain(
+      'Fix: provide at least one required input from outside the loop'
+    );
   });
 
   it('does not warn deadlock risk when at least one wait node has an external required source', () => {
@@ -1087,9 +1065,9 @@ describe('compileGraph', () => {
 
     const report = compileGraph(nodes, edges);
     expect(report.ok).toBe(true);
-    expect(
-      report.findings.some((finding) => finding.code === 'cycle_wait_deadlock_risk')
-    ).toBe(false);
+    expect(report.findings.some((finding) => finding.code === 'cycle_wait_deadlock_risk')).toBe(
+      false
+    );
   });
 
   it('flags model prompt deadlock risk when model prompt is cycle-internal and required', () => {
@@ -1141,9 +1119,7 @@ describe('compileGraph', () => {
     ];
 
     const report = compileGraph(nodes, edges);
-    const finding = report.findings.find(
-      (item) => item.code === 'model_prompt_deadlock_risk'
-    );
+    const finding = report.findings.find((item) => item.code === 'model_prompt_deadlock_risk');
     expect(finding).toBeDefined();
     expect(finding?.message).toContain('Model prompt may never resolve');
   });

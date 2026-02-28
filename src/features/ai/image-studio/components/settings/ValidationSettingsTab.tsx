@@ -2,13 +2,7 @@
 
 import React from 'react';
 
-import {
-  FormField,
-  FormSection,
-  SelectSimple,
-  Textarea,
-  ToggleRow,
-} from '@/shared/ui';
+import { FormField, FormSection, SelectSimple, Textarea, ToggleRow } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { useImageStudioSettingsContext } from '../../context/ImageStudioSettingsContext';
@@ -31,9 +25,9 @@ export function ValidationSettingsTab(): React.JSX.Element {
         ...prev.targetAi,
         openai: {
           ...prev.targetAi.openai,
-          image: { 
-            ...prev.targetAi.openai.image, 
-            moderation: val === '__null__' ? null : (val as 'auto' | 'low') 
+          image: {
+            ...prev.targetAi.openai.image,
+            moderation: val === '__null__' ? null : (val as 'auto' | 'low'),
           },
         },
       },
@@ -55,13 +49,18 @@ export function ValidationSettingsTab(): React.JSX.Element {
           />
           <FormField label='Validation Rules (JSON)'>
             <Textarea
-              className={cn('min-h-[240px] font-mono text-xs', promptValidationRulesError && 'border-rose-500/60 focus:border-rose-500')}
+              className={cn(
+                'min-h-[240px] font-mono text-xs',
+                promptValidationRulesError && 'border-rose-500/60 focus:border-rose-500'
+              )}
               value={promptValidationRulesText}
               onChange={(e) => handlePromptValidationRulesChange(e.target.value)}
               spellCheck={false}
             />
             {promptValidationRulesError && (
-              <p className='text-xs font-medium text-rose-400'>{String(promptValidationRulesError)}</p>
+              <p className='text-xs font-medium text-rose-400'>
+                {String(promptValidationRulesError)}
+              </p>
             )}
           </FormField>
         </div>
@@ -72,7 +71,10 @@ export function ValidationSettingsTab(): React.JSX.Element {
         description='Configure built-in safety filters for generated content.'
       >
         <div className='space-y-4'>
-          <FormField label='Moderation Level' description='Controls the strictness of the generation safety filter.'>
+          <FormField
+            label='Moderation Level'
+            description='Controls the strictness of the generation safety filter.'
+          >
             <SelectSimple
               value={studioSettings.targetAi.openai.image.moderation ?? '__null__'}
               onValueChange={handleModerationChange}

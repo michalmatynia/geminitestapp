@@ -8,13 +8,11 @@ import {
   resolveFolderTargetPathForMasterNode,
   toFolderMasterNodeId,
   toSlotMasterNodeId,
-} from '@/features/ai/image-studio/utils/master-folder-tree';
+} from '@/shared/lib/ai/image-studio/utils/master-folder-tree';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
-const createSlot = (
-  overrides: Partial<ImageStudioSlotRecord>
-): ImageStudioSlotRecord => ({
+const createSlot = (overrides: Partial<ImageStudioSlotRecord>): ImageStudioSlotRecord => ({
   id: 'slot-1',
   createdAt: '',
   updatedAt: null,
@@ -44,7 +42,10 @@ describe('image-studio master-folder-tree utils', () => {
           id: 'derived',
           name: 'Derived',
           folderPath: 'variants',
-          metadata: { sourceSlotId: 'base', role: 'variant' } as unknown as ImageStudioSlotRecord['metadata'],
+          metadata: {
+            sourceSlotId: 'base',
+            role: 'variant',
+          } as unknown as ImageStudioSlotRecord['metadata'],
         }),
       ],
       ['variants']
@@ -71,7 +72,10 @@ describe('image-studio master-folder-tree utils', () => {
           id: 'derived',
           name: 'Derived',
           folderPath: 'root/sub',
-          metadata: { sourceSlotId: 'base', role: 'version' } as unknown as ImageStudioSlotRecord['metadata'],
+          metadata: {
+            sourceSlotId: 'base',
+            role: 'version',
+          } as unknown as ImageStudioSlotRecord['metadata'],
         }),
       ],
       ['root/sub']

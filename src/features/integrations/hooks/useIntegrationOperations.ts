@@ -25,7 +25,9 @@ export function useIntegrationOperations(): {
   showListProductModal: boolean;
   setShowListProductModal: Dispatch<SetStateAction<boolean>>;
   listProductPreset: { integrationId: string; connectionId: string } | null;
-  setListProductPreset: Dispatch<SetStateAction<{ integrationId: string; connectionId: string } | null>>;
+  setListProductPreset: Dispatch<
+    SetStateAction<{ integrationId: string; connectionId: string } | null>
+  >;
   integrationBadgeIds: Set<string>;
   integrationBadgeStatuses: Map<string, string>;
   traderaBadgeIds: Set<string>;
@@ -34,28 +36,30 @@ export function useIntegrationOperations(): {
   setExportSettingsProduct: Dispatch<SetStateAction<ProductWithImages | null>>;
   refreshListingBadges: () => Promise<void>;
   handleListProductSuccess: () => void;
-  } {
+} {
   const queryClient = useQueryClient();
-  
+
   // Integrations state
   const [integrationsProduct, setIntegrationsProduct] = useState<ProductWithImages | null>(null);
   const [showListProductModal, setShowListProductModal] = useState(false);
-  const [listProductPreset, setListProductPreset] = useState<{ integrationId: string; connectionId: string } | null>(null);
+  const [listProductPreset, setListProductPreset] = useState<{
+    integrationId: string;
+    connectionId: string;
+  } | null>(null);
 
   // Export settings state - opens ListProductModal directly for products with existing listings
-  const [exportSettingsProduct, setExportSettingsProduct] = useState<ProductWithImages | null>(null);
+  const [exportSettingsProduct, setExportSettingsProduct] = useState<ProductWithImages | null>(
+    null
+  );
 
   // Load listing badges using query factory
   const listingsBadgeQuery = createListQueryV2<MarketplaceBadgeEntry, ListingBadgesPayload>({
     queryKey: listingBadgesQueryKey,
     queryFn: async (): Promise<ListingBadgesPayload> => {
       try {
-        return await api.get<ListingBadgesPayload>(
-          '/api/integrations/product-listings',
-          {
-            cache: 'no-store',
-          }
-        );
+        return await api.get<ListingBadgesPayload>('/api/integrations/product-listings', {
+          cache: 'no-store',
+        });
       } catch {
         return {};
       }
@@ -73,8 +77,8 @@ export function useIntegrationOperations(): {
         'in_progress',
       ]);
       const hasInFlight = Object.values(data).some((entry) =>
-        Object.values(toMarketplaceEntry(entry)).some((status) =>
-          typeof status === 'string' && activeStatuses.has(status.trim().toLowerCase())
+        Object.values(toMarketplaceEntry(entry)).some(
+          (status) => typeof status === 'string' && activeStatuses.has(status.trim().toLowerCase())
         )
       );
       return hasInFlight ? 2500 : false;
@@ -99,18 +103,14 @@ export function useIntegrationOperations(): {
   for (const [productId, rawMarketplaces] of Object.entries(payload)) {
     const marketplaces = toMarketplaceEntry(rawMarketplaces);
     const baseStatus =
-      typeof marketplaces?.base === 'string'
-        ? marketplaces.base.trim().toLowerCase()
-        : '';
+      typeof marketplaces?.base === 'string' ? marketplaces.base.trim().toLowerCase() : '';
     if (baseStatus) {
       integrationBadgeIds.add(productId);
       integrationBadgeStatuses.set(productId, baseStatus);
     }
 
     const traderaStatus =
-      typeof marketplaces?.tradera === 'string'
-        ? marketplaces.tradera.trim().toLowerCase()
-        : '';
+      typeof marketplaces?.tradera === 'string' ? marketplaces.tradera.trim().toLowerCase() : '';
     if (traderaStatus) {
       traderaBadgeIds.add(productId);
       traderaBadgeStatuses.set(productId, traderaStatus);

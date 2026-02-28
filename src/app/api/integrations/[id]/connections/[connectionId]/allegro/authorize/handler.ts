@@ -6,8 +6,7 @@ import { getIntegrationRepository } from '@/features/integrations/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
-const PROD_AUTH_URL =
-  process.env['ALLEGRO_AUTH_URL'] ?? 'https://allegro.pl/auth/oauth/authorize';
+const PROD_AUTH_URL = process.env['ALLEGRO_AUTH_URL'] ?? 'https://allegro.pl/auth/oauth/authorize';
 const SANDBOX_AUTH_URL =
   process.env['ALLEGRO_SANDBOX_AUTH_URL'] ??
   'https://allegro.pl.allegrosandbox.pl/auth/oauth/authorize';

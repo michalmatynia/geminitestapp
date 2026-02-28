@@ -13,43 +13,62 @@ import type { InspectorSettings } from '@/shared/contracts/cms';
 export function InspectorHeader(): React.JSX.Element {
   const state = usePageBuilderState();
   const dispatch = usePageBuilderDispatch();
-  const { 
-    selectedTitle,
-    activeTab,
-    setActiveTab,
-  } = useComponentSettingsContext();
+  const { selectedTitle, activeTab, setActiveTab } = useComponentSettingsContext();
 
   const inspectorSettings = state.inspectorSettings;
 
-  const updateInspectorSetting = useCallback((patch: Partial<InspectorSettings>): void => 
-    dispatch({ type: 'UPDATE_INSPECTOR_SETTINGS', settings: patch }), [dispatch]);
+  const updateInspectorSetting = useCallback(
+    (patch: Partial<InspectorSettings>): void =>
+      dispatch({ type: 'UPDATE_INSPECTOR_SETTINGS', settings: patch }),
+    [dispatch]
+  );
 
   const handleToggleInspector = useCallback((): void => {
-    const next = !state.inspectorEnabled; 
+    const next = !state.inspectorEnabled;
     dispatch({ type: 'TOGGLE_INSPECTOR' });
-    if (next) setActiveTab('connections'); 
+    if (next) setActiveTab('connections');
     else if (activeTab === 'connections') setActiveTab('settings');
   }, [activeTab, dispatch, state.inspectorEnabled, setActiveTab]);
 
   const headerTooltips = useMemo(
     () => ({
-      hideRightPanel: getDocumentationTooltip(DOCUMENTATION_MODULE_IDS.cms, 'component_settings_hide_right_panel') ?? 'Hide right panel',
-      toggleInspector: getDocumentationTooltip(DOCUMENTATION_MODULE_IDS.cms, 'component_settings_toggle_inspector') ?? 'Toggle inspector',
-      desktopPreview: getDocumentationTooltip(DOCUMENTATION_MODULE_IDS.cms, 'component_settings_desktop_preview') ?? 'Desktop preview',
-      mobilePreview: getDocumentationTooltip(DOCUMENTATION_MODULE_IDS.cms, 'component_settings_mobile_preview') ?? 'Mobile preview',
-      toggleEditorChrome: getDocumentationTooltip(DOCUMENTATION_MODULE_IDS.cms, 'component_settings_toggle_editor_chrome') ?? 'Toggle editor chrome',
+      hideRightPanel:
+        getDocumentationTooltip(
+          DOCUMENTATION_MODULE_IDS.cms,
+          'component_settings_hide_right_panel'
+        ) ?? 'Hide right panel',
+      toggleInspector:
+        getDocumentationTooltip(
+          DOCUMENTATION_MODULE_IDS.cms,
+          'component_settings_toggle_inspector'
+        ) ?? 'Toggle inspector',
+      desktopPreview:
+        getDocumentationTooltip(
+          DOCUMENTATION_MODULE_IDS.cms,
+          'component_settings_desktop_preview'
+        ) ?? 'Desktop preview',
+      mobilePreview:
+        getDocumentationTooltip(
+          DOCUMENTATION_MODULE_IDS.cms,
+          'component_settings_mobile_preview'
+        ) ?? 'Mobile preview',
+      toggleEditorChrome:
+        getDocumentationTooltip(
+          DOCUMENTATION_MODULE_IDS.cms,
+          'component_settings_toggle_editor_chrome'
+        ) ?? 'Toggle editor chrome',
     }),
     []
   );
 
   return (
     <SectionHeader
-      title={selectedTitle} 
+      title={selectedTitle}
       size='xs'
-      className='p-3 flex-row-reverse' 
-      titleClassName='text-right' 
+      className='p-3 flex-row-reverse'
+      titleClassName='text-right'
       actionsClassName='justify-start'
-      actions={(
+      actions={
         <div className='flex items-center gap-1'>
           <Tooltip content={headerTooltips.hideRightPanel}>
             <Button
@@ -104,7 +123,9 @@ export function InspectorHeader(): React.JSX.Element {
               type='button'
               size='icon'
               variant='ghost'
-              onClick={() => updateInspectorSetting({ showEditorChrome: !inspectorSettings.showEditorChrome })}
+              onClick={() =>
+                updateInspectorSetting({ showEditorChrome: !inspectorSettings.showEditorChrome })
+              }
               className={`h-6 w-6 p-0 ${inspectorSettings.showEditorChrome ? 'text-blue-300 bg-blue-500/10' : 'text-gray-500 hover:text-gray-300'}`}
               aria-label='Toggle editor chrome'
             >
@@ -112,7 +133,7 @@ export function InspectorHeader(): React.JSX.Element {
             </Button>
           </Tooltip>
         </div>
-      )}
+      }
     />
   );
 }

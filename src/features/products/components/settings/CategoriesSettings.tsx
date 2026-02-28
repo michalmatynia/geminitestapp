@@ -1,16 +1,9 @@
 'use client';
 
-import {
-  ChevronLeft,
-  ChevronRight,
-  GripVertical,
-  Plus,
-} from 'lucide-react';
+import { ChevronLeft, ChevronRight, GripVertical, Plus } from 'lucide-react';
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 
-import {
-  useMasterFolderTreeInstance,
-} from '@/shared/lib/foldertree';
+import { useMasterFolderTreeInstance } from '@/shared/lib/foldertree';
 import { FolderTreeViewportV2 } from '@/shared/lib/foldertree/v2';
 import { resolveVerticalDropPosition } from '@/shared/utils/drag-drop';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -21,12 +14,15 @@ import {
   useDeleteCategoryMutation,
   useReorderCategoryMutation,
 } from '@/features/products/hooks/useProductSettingsQueries';
-import type { ProductCategoryWithChildren, Catalog, ProductCategory } from '@/shared/contracts/products';
+import type {
+  ProductCategoryWithChildren,
+  Catalog,
+  ProductCategory,
+} from '@/shared/contracts/products';
 import {
   Button,
   EmptyState,
   FolderTreePanel,
-  
   Skeleton,
   TreeActionButton,
   TreeActionSlot,
@@ -36,27 +32,21 @@ import {
   Card,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
-import {
-  cn,
-  type MasterTreeNode,
-} from '@/shared/utils';
+import { cn, type MasterTreeNode } from '@/shared/utils';
 
-import {
-  buildMasterNodesFromCategoryTree,
-  fromCategoryMasterNodeId,
-} from './category-master-tree';
+import { buildMasterNodesFromCategoryTree, fromCategoryMasterNodeId } from './category-master-tree';
 import { createCategoryMasterTreeAdapter } from './category-master-tree-adapter';
 import { CategoryForm } from './CategoryForm';
 import { CategoryFormProvider, type CategoryFormData } from './CategoryFormContext';
 import { useProductSettingsContext } from './ProductSettingsContext';
 
-const cloneCategoryTree = (
-  nodes: ProductCategoryWithChildren[]
-): ProductCategoryWithChildren[] =>
-  nodes.map((node: ProductCategoryWithChildren): ProductCategoryWithChildren => ({
-    ...node,
-    children: cloneCategoryTree(node.children),
-  }));
+const cloneCategoryTree = (nodes: ProductCategoryWithChildren[]): ProductCategoryWithChildren[] =>
+  nodes.map(
+    (node: ProductCategoryWithChildren): ProductCategoryWithChildren => ({
+      ...node,
+      children: cloneCategoryTree(node.children),
+    })
+  );
 
 export function CategoriesSettings(): React.JSX.Element {
   const {
@@ -70,8 +60,7 @@ export function CategoriesSettings(): React.JSX.Element {
 
   const { toast } = useToast();
   const [showModal, setShowModal] = useState<boolean>(false);
-  const [editingCategory, setEditingCategory] =
-    useState<ProductCategoryWithChildren | null>(null);
+  const [editingCategory, setEditingCategory] = useState<ProductCategoryWithChildren | null>(null);
   const [formData, setFormData] = useState<CategoryFormData>({
     name: '',
     description: '',
@@ -79,7 +68,9 @@ export function CategoriesSettings(): React.JSX.Element {
     parentId: null,
     catalogId: '',
   });
-  const [categoryToDelete, setCategoryToDelete] = useState<ProductCategoryWithChildren | null>(null);
+  const [categoryToDelete, setCategoryToDelete] = useState<ProductCategoryWithChildren | null>(
+    null
+  );
 
   const saveCategoryMutation = useSaveCategoryMutation();
   const deleteCategoryMutation = useDeleteCategoryMutation();
@@ -87,9 +78,12 @@ export function CategoriesSettings(): React.JSX.Element {
   const reorderCategory = reorderCategoryMutation.mutateAsync;
 
   const [modalCatalogId, setModalCatalogId] = useState<string | null>(null);
-  const [treeData, setTreeData] = useState<ProductCategoryWithChildren[]>(() => cloneCategoryTree(categories));
+  const [treeData, setTreeData] = useState<ProductCategoryWithChildren[]>(() =>
+    cloneCategoryTree(categories)
+  );
 
-  const { data: fetchedModalCategories, isLoading: modalLoadingCategories } = useProductCategoryTree(modalCatalogId || undefined);
+  const { data: fetchedModalCategories, isLoading: modalLoadingCategories } =
+    useProductCategoryTree(modalCatalogId || undefined);
 
   useEffect((): void => {
     setTreeData(cloneCategoryTree(categories));
@@ -129,8 +123,7 @@ export function CategoriesSettings(): React.JSX.Element {
             payload,
           },
         });
-        const message: string =
-          error instanceof Error ? error.message : 'Failed to move category';
+        const message: string = error instanceof Error ? error.message : 'Failed to move category';
         toast(message, { variant: 'error' });
         throw error;
       }
@@ -201,13 +194,21 @@ export function CategoriesSettings(): React.JSX.Element {
   const handleConfirmDelete = async (): Promise<void> => {
     if (!categoryToDelete) return;
     try {
-      await deleteCategoryMutation.mutateAsync({ id: categoryToDelete.id, catalogId: selectedCatalogId });
+      await deleteCategoryMutation.mutateAsync({
+        id: categoryToDelete.id,
+        catalogId: selectedCatalogId,
+      });
       toast('Category deleted successfully', { variant: 'success' });
       onRefresh();
     } catch (error: unknown) {
-      logClientError(error, { context: { source: 'CategoriesSettings', action: 'deleteCategory', categoryId: categoryToDelete.id } });
-      const message: string =
-        error instanceof Error ? error.message : 'Failed to delete category';
+      logClientError(error, {
+        context: {
+          source: 'CategoriesSettings',
+          action: 'deleteCategory',
+          categoryId: categoryToDelete.id,
+        },
+      });
+      const message: string = error instanceof Error ? error.message : 'Failed to delete category';
       toast(message, { variant: 'error' });
     } finally {
       setCategoryToDelete(null);
@@ -220,7 +221,8 @@ export function CategoriesSettings(): React.JSX.Element {
       return;
     }
 
-    const targetCatalogId: string | undefined = (formData.catalogId || selectedCatalogId) || undefined;
+    const targetCatalogId: string | undefined =
+      formData.catalogId || selectedCatalogId || undefined;
     if (!targetCatalogId && !editingCategory) {
       toast('Please select a catalog first', { variant: 'error' });
       return;
@@ -240,36 +242,36 @@ export function CategoriesSettings(): React.JSX.Element {
         data: payload,
       });
 
-      toast(
-        editingCategory
-          ? 'Category updated successfully'
-          : 'Category created successfully',
-        { variant: 'success' }
-      );
+      toast(editingCategory ? 'Category updated successfully' : 'Category created successfully', {
+        variant: 'success',
+      });
       setShowModal(false);
       onRefresh();
     } catch (error) {
-      logClientError(error, { context: { source: 'CategoriesSettings', action: 'saveCategory', categoryId: editingCategory?.id } });
-      const message: string =
-        error instanceof Error ? error.message : 'Failed to save category';
+      logClientError(error, {
+        context: {
+          source: 'CategoriesSettings',
+          action: 'saveCategory',
+          categoryId: editingCategory?.id,
+        },
+      });
+      const message: string = error instanceof Error ? error.message : 'Failed to save category';
       toast(message, { variant: 'error' });
     }
   };
 
-  const selectedCatalog: Catalog | undefined = catalogs.find((c: Catalog): boolean => c.id === selectedCatalogId);
-  const modalCatalog: Catalog | undefined = catalogs.find((c: Catalog): boolean => c.id === modalCatalogId);
+  const selectedCatalog: Catalog | undefined = catalogs.find(
+    (c: Catalog): boolean => c.id === selectedCatalogId
+  );
+  const modalCatalog: Catalog | undefined = catalogs.find(
+    (c: Catalog): boolean => c.id === modalCatalogId
+  );
 
   const findCategory = useCallback(
-    (
-      cats: ProductCategoryWithChildren[],
-      id: string
-    ): ProductCategoryWithChildren | null => {
+    (cats: ProductCategoryWithChildren[], id: string): ProductCategoryWithChildren | null => {
       for (const cat of cats) {
         if (cat.id === id) return cat;
-        const found: ProductCategoryWithChildren | null = findCategory(
-          cat.children,
-          id
-        );
+        const found: ProductCategoryWithChildren | null = findCategory(cat.children, id);
         if (found) return found;
       }
       return null;
@@ -297,7 +299,11 @@ export function CategoriesSettings(): React.JSX.Element {
     return ids;
   }, []);
 
-  const categoryOptions: { id: string; name: string; level: number }[] = useMemo((): { id: string; name: string; level: number }[] => {
+  const categoryOptions: { id: string; name: string; level: number }[] = useMemo((): {
+    id: string;
+    name: string;
+    level: number;
+  }[] => {
     const flatten = (
       cats: ProductCategoryWithChildren[],
       level: number = 0
@@ -319,20 +325,26 @@ export function CategoriesSettings(): React.JSX.Element {
     if (modalCatalogId && editingCategory.catalogId !== modalCatalogId) {
       return new Set<string>();
     }
-    const current: ProductCategoryWithChildren | null = findCategory(modalCategories, editingCategory.id);
+    const current: ProductCategoryWithChildren | null = findCategory(
+      modalCategories,
+      editingCategory.id
+    );
     if (!current) return new Set<string>();
     return new Set([editingCategory.id, ...collectDescendantIds(current)]);
   }, [editingCategory, modalCatalogId, modalCategories, findCategory, collectDescendantIds]);
 
   const parentOptions: { id: string; name: string; level: number }[] = useMemo(
-    (): { id: string; name: string; level: number }[] => categoryOptions.filter((opt: { id: string }): boolean => !excludedParentIds.has(opt.id)),
+    (): { id: string; name: string; level: number }[] =>
+      categoryOptions.filter((opt: { id: string }): boolean => !excludedParentIds.has(opt.id)),
     [categoryOptions, excludedParentIds]
   );
 
   useEffect((): void => {
     if (!showModal) return;
     if (!formData.parentId) return;
-    const stillValid: boolean = parentOptions.some((opt: { id: string }): boolean => opt.id === formData.parentId);
+    const stillValid: boolean = parentOptions.some(
+      (opt: { id: string }): boolean => opt.id === formData.parentId
+    );
     if (!stillValid) {
       setFormData((prev: CategoryFormData) => ({ ...prev, parentId: null }));
     }
@@ -367,15 +379,16 @@ export function CategoriesSettings(): React.JSX.Element {
         <Card variant='subtle' padding='md' className='border-border/60 bg-card/40'>
           <p className='text-sm font-semibold text-white mb-3'>Select Catalog</p>
           <p className='text-xs text-gray-400 mb-3'>
-          Each catalog has its own category tree. Select a catalog to manage its categories.
+            Each catalog has its own category tree. Select a catalog to manage its categories.
           </p>
           <div className='w-full max-w-xs'>
-            <SelectSimple size='sm'
+            <SelectSimple
+              size='sm'
               value={selectedCatalogId || ''}
               onValueChange={onCatalogChange}
               options={catalogs.map((catalog: Catalog) => ({
                 value: catalog.id,
-                label: `${catalog.name}${catalog.isDefault ? ' (Default)' : ''}`
+                label: `${catalog.name}${catalog.isDefault ? ' (Default)' : ''}`,
               }))}
               placeholder='Select a catalog...'
             />
@@ -392,13 +405,13 @@ export function CategoriesSettings(): React.JSX.Element {
                 className='flex items-center gap-2'
               >
                 <Plus className='size-4' />
-              Add Category
+                Add Category
               </Button>
             </div>
 
             <Card variant='subtle' padding='md' className='border-border/60 bg-card/40'>
               <p className='text-sm font-semibold text-white mb-4'>
-              Category Tree for &quot;{selectedCatalog?.name}&quot;
+                Category Tree for &quot;{selectedCatalog?.name}&quot;
               </p>
 
               {loading && treeData.length === 0 ? (
@@ -414,7 +427,7 @@ export function CategoriesSettings(): React.JSX.Element {
                   action={
                     <Button onClick={(): void => handleOpenCreateModal(null)} variant='outline'>
                       <Plus className='size-4 mr-2' />
-                    Add Category
+                      Add Category
                     </Button>
                   }
                 />
@@ -436,12 +449,12 @@ export function CategoriesSettings(): React.JSX.Element {
                       {panelCollapsed ? (
                         <>
                           <ChevronRight className='mr-1 size-3.5 -scale-x-100' />
-                        Show Tree
+                          Show Tree
                         </>
                       ) : (
                         <>
                           <ChevronLeft className='mr-1 size-3.5' />
-                        Collapse
+                          Collapse
                         </>
                       )}
                     </Button>
@@ -487,7 +500,9 @@ export function CategoriesSettings(): React.JSX.Element {
                               className={cn(
                                 'group flex w-full select-none items-center gap-1 rounded px-2 py-1.5 text-left text-sm transition',
                                 'text-gray-200 hover:bg-muted/40',
-                                dropPosition === 'inside' ? 'bg-blue-500/10 ring-1 ring-inset ring-blue-500/45' : ''
+                                dropPosition === 'inside'
+                                  ? 'bg-blue-500/10 ring-1 ring-inset ring-blue-500/45'
+                                  : ''
                               )}
                               style={{ paddingLeft: `${depth * 16 + 8}px` }}
                               title={category.name}
@@ -501,11 +516,15 @@ export function CategoriesSettings(): React.JSX.Element {
                                 onToggle={
                                   hasChildren
                                     ? (): void => {
-                                      toggleExpand();
-                                    }
+                                        toggleExpand();
+                                      }
                                     : undefined
                                 }
-                                ariaLabel={isExpanded ? `Collapse ${category.name}` : `Expand ${category.name}`}
+                                ariaLabel={
+                                  isExpanded
+                                    ? `Collapse ${category.name}`
+                                    : `Expand ${category.name}`
+                                }
                                 placeholderClassName='w-4'
                                 buttonClassName='hover:bg-gray-700'
                                 iconClassName='size-3.5'
@@ -523,7 +542,7 @@ export function CategoriesSettings(): React.JSX.Element {
                                   className='px-1.5 text-[11px]'
                                   title='Add subcategory'
                                 >
-                                Add
+                                  Add
                                 </TreeActionButton>
                                 <TreeActionButton
                                   onClick={(event: React.MouseEvent): void => {
@@ -535,7 +554,7 @@ export function CategoriesSettings(): React.JSX.Element {
                                   className='px-1.5 text-[11px]'
                                   title='Edit category'
                                 >
-                                Edit
+                                  Edit
                                 </TreeActionButton>
                                 <TreeActionButton
                                   onClick={(event: React.MouseEvent): void => {
@@ -547,7 +566,7 @@ export function CategoriesSettings(): React.JSX.Element {
                                   className='px-1.5 text-[11px]'
                                   title='Delete category'
                                 >
-                                Delete
+                                  Delete
                                 </TreeActionButton>
                               </TreeActionSlot>
                             </div>
@@ -562,7 +581,7 @@ export function CategoriesSettings(): React.JSX.Element {
           </>
         )}
       </div>
-                              
+
       {!selectedCatalogId && catalogs.length === 0 && (
         <EmptyState
           title='No catalogs found'
@@ -591,7 +610,9 @@ export function CategoriesSettings(): React.JSX.Element {
           isEditing: !!editingCategory,
           formData,
           onFormDataChange: setFormData,
-          onSave: (): void => { void handleSave(); },
+          onSave: (): void => {
+            void handleSave();
+          },
           saving: saveCategoryMutation.isPending,
           catalogs,
           onCatalogChange: setModalCatalogId,

@@ -28,7 +28,7 @@ type ToastFn = (
   message: string,
   options?: {
     variant?: 'info' | 'success' | 'warning' | 'error';
-  },
+  }
 ) => void;
 
 type UseAiPathsSettingsCleanupActionsInput = {
@@ -63,17 +63,17 @@ type UseAiPathsSettingsCleanupActionsInput = {
   persistPathSettings: (
     nextPaths: PathMeta[],
     nextActivePathId: string,
-    nextConfig: PathConfig,
+    nextConfig: PathConfig
   ) => Promise<void>;
   reportAiPathsError: (
     error: unknown,
     context: Record<string, unknown>,
-    fallbackMessage?: string,
+    fallbackMessage?: string
   ) => void;
   pruneRuntimeInputs: (
     state: RuntimeState,
     removedEdges: Edge[],
-    remainingEdges: Edge[],
+    remainingEdges: Edge[]
   ) => RuntimeState;
 };
 
@@ -213,11 +213,7 @@ export function useAiPathsSettingsCleanupActions({
           await persistPathSettings(paths, activePathId, config);
           toast('Wires cleared.', { variant: 'success' });
         } catch (error) {
-          reportAiPathsError(
-            error,
-            { action: 'clearWires' },
-            'Failed to clear wires:',
-          );
+          reportAiPathsError(error, { action: 'clearWires' }, 'Failed to clear wires:');
           toast('Failed to clear wires.', { variant: 'error' });
         }
       },
@@ -316,7 +312,7 @@ export function useAiPathsSettingsCleanupActions({
           reportAiPathsError(
             error,
             { action: 'clearConnectorData', pathId: activePathId },
-            'Failed to clear connector data:',
+            'Failed to clear connector data:'
           );
           toast('Failed to clear connector data.', { variant: 'error' });
         }
@@ -417,7 +413,7 @@ export function useAiPathsSettingsCleanupActions({
           reportAiPathsError(
             error,
             { action: 'clearHistory', pathId: activePathId },
-            'Failed to clear history:',
+            'Failed to clear history:'
           );
           toast('Failed to clear history.', { variant: 'error' });
         }
@@ -454,101 +450,104 @@ export function useAiPathsSettingsCleanupActions({
     updaterSamples,
   ]);
 
-  const handleClearNodeHistory = useCallback(async (nodeId: string): Promise<void> => {
-    if (!activePathId) return;
-    if (isPathLocked) {
-      toast('This path is locked. Unlock it to clear history.', {
-        variant: 'info',
-      });
-      return;
-    }
-    const currentHistory = runtimeState.history ?? {};
-    if (!currentHistory[nodeId] || currentHistory[nodeId].length === 0) {
-      toast('No history recorded for this node yet.', { variant: 'info' });
-      return;
-    }
-    const nextHistory = { ...currentHistory };
-    delete nextHistory[nodeId];
-    const nextRuntimeState: RuntimeState = { ...runtimeState };
-    if (Object.keys(nextHistory).length > 0) {
-      nextRuntimeState.history = nextHistory;
-    } else {
-      delete nextRuntimeState.history;
-    }
-    const updatedAt = new Date().toISOString();
-    const config: PathConfig = {
-      id: activePathId,
-      version: STORAGE_VERSION,
-      name: pathName,
-      description: pathDescription,
-      trigger: activeTrigger,
+  const handleClearNodeHistory = useCallback(
+    async (nodeId: string): Promise<void> => {
+      if (!activePathId) return;
+      if (isPathLocked) {
+        toast('This path is locked. Unlock it to clear history.', {
+          variant: 'info',
+        });
+        return;
+      }
+      const currentHistory = runtimeState.history ?? {};
+      if (!currentHistory[nodeId] || currentHistory[nodeId].length === 0) {
+        toast('No history recorded for this node yet.', { variant: 'info' });
+        return;
+      }
+      const nextHistory = { ...currentHistory };
+      delete nextHistory[nodeId];
+      const nextRuntimeState: RuntimeState = { ...runtimeState };
+      if (Object.keys(nextHistory).length > 0) {
+        nextRuntimeState.history = nextHistory;
+      } else {
+        delete nextRuntimeState.history;
+      }
+      const updatedAt = new Date().toISOString();
+      const config: PathConfig = {
+        id: activePathId,
+        version: STORAGE_VERSION,
+        name: pathName,
+        description: pathDescription,
+        trigger: activeTrigger,
+        executionMode,
+        flowIntensity,
+        runMode,
+        strictFlowMode,
+        blockedRunPolicy,
+        aiPathsValidation,
+        nodes,
+        edges,
+        updatedAt,
+        isLocked: isPathLocked,
+        isActive: isPathActive,
+        parserSamples,
+        updaterSamples,
+        runtimeState: nextRuntimeState,
+        lastRunAt,
+        runCount:
+          typeof pathConfigs[activePathId]?.runCount === 'number' &&
+          Number.isFinite(pathConfigs[activePathId]?.runCount)
+            ? Math.max(0, Math.trunc(pathConfigs[activePathId]?.runCount ?? 0))
+            : 0,
+        uiState: {
+          selectedNodeId,
+          configOpen,
+        },
+      };
+      setRuntimeState(nextRuntimeState);
+      const nextConfigs = { ...pathConfigs, [activePathId]: config };
+      setPathConfigs(nextConfigs);
+      try {
+        await persistPathSettings(paths, activePathId, config);
+        toast('Node history cleared.', { variant: 'success' });
+      } catch (error) {
+        reportAiPathsError(
+          error,
+          { action: 'clearNodeHistory', pathId: activePathId, nodeId },
+          'Failed to clear node history:'
+        );
+        toast('Failed to clear node history.', { variant: 'error' });
+      }
+    },
+    [
+      activePathId,
+      activeTrigger,
+      configOpen,
+      edges,
       executionMode,
       flowIntensity,
+      isPathActive,
+      isPathLocked,
+      lastRunAt,
+      nodes,
+      parserSamples,
+      pathConfigs,
+      pathDescription,
+      pathName,
+      paths,
+      persistPathSettings,
+      reportAiPathsError,
       runMode,
       strictFlowMode,
-      blockedRunPolicy,
       aiPathsValidation,
-      nodes,
-      edges,
-      updatedAt,
-      isLocked: isPathLocked,
-      isActive: isPathActive,
-      parserSamples,
+      runtimeState,
+      selectedNodeId,
+      setPathConfigs,
+      setRuntimeState,
+      toast,
       updaterSamples,
-      runtimeState: nextRuntimeState,
-      lastRunAt,
-      runCount:
-        typeof pathConfigs[activePathId]?.runCount === 'number' &&
-        Number.isFinite(pathConfigs[activePathId]?.runCount)
-          ? Math.max(0, Math.trunc(pathConfigs[activePathId]?.runCount ?? 0))
-          : 0,
-      uiState: {
-        selectedNodeId,
-        configOpen,
-      },
-    };
-    setRuntimeState(nextRuntimeState);
-    const nextConfigs = { ...pathConfigs, [activePathId]: config };
-    setPathConfigs(nextConfigs);
-    try {
-      await persistPathSettings(paths, activePathId, config);
-      toast('Node history cleared.', { variant: 'success' });
-    } catch (error) {
-      reportAiPathsError(
-        error,
-        { action: 'clearNodeHistory', pathId: activePathId, nodeId },
-        'Failed to clear node history:',
-      );
-      toast('Failed to clear node history.', { variant: 'error' });
-    }
-  }, [
-    activePathId,
-    activeTrigger,
-    configOpen,
-    edges,
-    executionMode,
-    flowIntensity,
-    isPathActive,
-    isPathLocked,
-    lastRunAt,
-    nodes,
-    parserSamples,
-    pathConfigs,
-    pathDescription,
-    pathName,
-    paths,
-    persistPathSettings,
-    reportAiPathsError,
-    runMode,
-    strictFlowMode,
-    aiPathsValidation,
-    runtimeState,
-    selectedNodeId,
-    setPathConfigs,
-    setRuntimeState,
-    toast,
-    updaterSamples,
-  ]);
+    ]
+  );
 
   return {
     handleClearWires,

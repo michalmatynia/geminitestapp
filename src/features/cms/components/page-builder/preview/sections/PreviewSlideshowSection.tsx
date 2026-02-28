@@ -2,23 +2,21 @@
 
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 
-import { 
-  getSectionContainerClass, 
+import {
+  getSectionContainerClass,
   getSectionStyles,
 } from '@/features/cms/components/frontend/theme-styles';
 import { useCmsPageContext } from '@/features/cms/components/frontend/CmsPageContext';
 import { BlockContextProvider } from '@/features/cms/components/page-builder/preview/context/BlockContext';
 import { usePreviewEditor } from '@/features/cms/components/page-builder/preview/context/PreviewEditorContext';
 import { usePreviewSectionContext } from '@/features/cms/components/page-builder/preview/context/PreviewSectionContext';
-import { 
-  normalizeSlideshowAnimationType,
-} from '@/features/cms/components/page-builder/preview/preview-utils';
+import { normalizeSlideshowAnimationType } from '@/features/cms/components/page-builder/preview/preview-utils';
 import type { BlockInstance } from '@/shared/contracts/cms';
 import { EmptyState } from '@/shared/ui';
 
 export function PreviewSlideshowSection() {
   const { colorSchemes } = useCmsPageContext();
-  const { 
+  const {
     section,
     selectedRing,
     renderSectionActions,
@@ -28,10 +26,7 @@ export function PreviewSlideshowSection() {
     PreviewBlockItem,
   } = usePreviewSectionContext();
 
-  const { 
-    inspectorSettings,
-    pauseSlideshowOnHoverInEditor 
-  } = usePreviewEditor();
+  const { inspectorSettings, pauseSlideshowOnHoverInEditor } = usePreviewEditor();
 
   const showEditorChrome = inspectorSettings.showEditorChrome ?? false;
   const sectionStyles = getSectionStyles(section.settings, colorSchemes);
@@ -43,12 +38,16 @@ export function PreviewSlideshowSection() {
   const slideshowPauseOnHover = (section.settings['pauseOnHover'] as string) !== 'no';
   const slideshowAllowPauseOnHover = slideshowPauseOnHover && pauseSlideshowOnHoverInEditor;
   const slideshowLoop = (section.settings['loop'] as string) !== 'no';
-  
-  const slideshowElementAnimationType = (section.settings['elementAnimationType'] as string) || 'fade-in';
-  const slideshowElementAnimationDuration = (section.settings['elementAnimationDuration'] as number) || 400;
+
+  const slideshowElementAnimationType =
+    (section.settings['elementAnimationType'] as string) || 'fade-in';
+  const slideshowElementAnimationDuration =
+    (section.settings['elementAnimationDuration'] as number) || 400;
   const slideshowElementAnimationDelay = (section.settings['elementAnimationDelay'] as number) || 0;
-  const slideshowElementAnimationEasing = (section.settings['elementAnimationEasing'] as string) || 'ease-out';
-  const slideshowElementAnimationStagger = (section.settings['elementAnimationStagger'] as number) || 100;
+  const slideshowElementAnimationEasing =
+    (section.settings['elementAnimationEasing'] as string) || 'ease-out';
+  const slideshowElementAnimationStagger =
+    (section.settings['elementAnimationStagger'] as number) || 100;
 
   const [slideshowIndex, setSlideshowIndex] = useState(0);
   const [slideshowPaused, setSlideshowPaused] = useState(false);
@@ -97,9 +96,7 @@ export function PreviewSlideshowSection() {
   const heightMode = (section.settings['heightMode'] as string) || 'auto';
   const height = (section.settings['height'] as number) || 360;
   const slideHeightStyle: React.CSSProperties | undefined =
-    heightMode === 'fixed' && height > 0
-      ? { height: `${height}px` }
-      : undefined;
+    heightMode === 'fixed' && height > 0 ? { height: `${height}px` } : undefined;
 
   return wrapInspector(
     <div
@@ -136,41 +133,56 @@ export function PreviewSlideshowSection() {
             className='relative overflow-hidden min-h-[300px]'
             style={slideHeightStyle}
             onMouseEnter={
-              slideshowAllowPauseOnHover
-                ? (): void => setSlideshowPaused(true)
-                : undefined
+              slideshowAllowPauseOnHover ? (): void => setSlideshowPaused(true) : undefined
             }
             onMouseLeave={
-              slideshowAllowPauseOnHover
-                ? (): void => setSlideshowPaused(false)
-                : undefined
+              slideshowAllowPauseOnHover ? (): void => setSlideshowPaused(false) : undefined
             }
           >
             {slideshowFrames.map((frame: BlockInstance, idx: number) => {
-              const frameSettings = (frame.settings ?? {});
+              const frameSettings = frame.settings ?? {};
               const backgroundColor = (frameSettings['backgroundColor'] as string) || '';
               const contentAlignment = (frameSettings['contentAlignment'] as string) || 'center';
               const verticalAlignment = (frameSettings['verticalAlignment'] as string) || 'center';
-              const fillContent = frameSettings['fillContent'] === true || frameSettings['fillContent'] === 'yes';
+              const fillContent =
+                frameSettings['fillContent'] === true || frameSettings['fillContent'] === 'yes';
               const paddingTop = (frameSettings['paddingTop'] as number) || 0;
               const paddingBottom = (frameSettings['paddingBottom'] as number) || 0;
               const paddingLeft = (frameSettings['paddingLeft'] as number) || 0;
               const paddingRight = (frameSettings['paddingRight'] as number) || 0;
-              
+
               const frameStyle: React.CSSProperties = {
                 backgroundColor: backgroundColor || undefined,
                 padding: `${paddingTop}px ${paddingRight}px ${paddingBottom}px ${paddingLeft}px`,
-                alignItems: contentAlignment === 'center' ? 'center' : contentAlignment === 'right' ? 'flex-end' : 'flex-start',
-                justifyContent: verticalAlignment === 'center' ? 'center' : verticalAlignment === 'bottom' ? 'flex-end' : 'flex-start',
+                alignItems:
+                  contentAlignment === 'center'
+                    ? 'center'
+                    : contentAlignment === 'right'
+                      ? 'flex-end'
+                      : 'flex-start',
+                justifyContent:
+                  verticalAlignment === 'center'
+                    ? 'center'
+                    : verticalAlignment === 'bottom'
+                      ? 'flex-end'
+                      : 'flex-start',
               };
 
               const frameAnimType = frameSettings['animationType'] as string | undefined;
-              const animationType = frameAnimType === 'inherit' || !frameAnimType ? slideshowElementAnimationType : frameAnimType;
+              const animationType =
+                frameAnimType === 'inherit' || !frameAnimType
+                  ? slideshowElementAnimationType
+                  : frameAnimType;
               const resolvedAnimationType = normalizeSlideshowAnimationType(animationType);
-              const animationDuration = (frameSettings['animationDuration'] as number) ?? slideshowElementAnimationDuration;
-              const animationDelay = (frameSettings['animationDelay'] as number) ?? slideshowElementAnimationDelay;
+              const animationDuration =
+                (frameSettings['animationDuration'] as number) ?? slideshowElementAnimationDuration;
+              const animationDelay =
+                (frameSettings['animationDelay'] as number) ?? slideshowElementAnimationDelay;
               const frameAnimEasing = frameSettings['animationEasing'] as string | undefined;
-              const animationEasing = frameAnimEasing === 'inherit' || !frameAnimEasing ? slideshowElementAnimationEasing : frameAnimEasing;
+              const animationEasing =
+                frameAnimEasing === 'inherit' || !frameAnimEasing
+                  ? slideshowElementAnimationEasing
+                  : frameAnimEasing;
               const stagger = slideshowElementAnimationStagger;
               const isActiveFrame = idx === currentSlideshowIndex;
               const frameBlocks = frame.blocks ?? [];
@@ -182,14 +194,14 @@ export function PreviewSlideshowSection() {
                   style={
                     slideshowTransition === 'fade'
                       ? {
-                        opacity: isActiveFrame ? 1 : 0,
-                        pointerEvents: isActiveFrame ? 'auto' : 'none',
-                        transitionDuration: `${slideshowTransitionDuration}ms`,
-                      }
+                          opacity: isActiveFrame ? 1 : 0,
+                          pointerEvents: isActiveFrame ? 'auto' : 'none',
+                          transitionDuration: `${slideshowTransitionDuration}ms`,
+                        }
                       : {
-                        transform: `translateX(${(idx - currentSlideshowIndex) * 100}%)`,
-                        transitionDuration: `${slideshowTransitionDuration}ms`,
-                      }
+                          transform: `translateX(${(idx - currentSlideshowIndex) * 100}%)`,
+                          transitionDuration: `${slideshowTransitionDuration}ms`,
+                        }
                   }
                 >
                   <div className='flex h-full w-full flex-col' style={frameStyle}>
@@ -199,17 +211,28 @@ export function PreviewSlideshowSection() {
                         const animationStyle: React.CSSProperties =
                           isActiveFrame && resolvedAnimationType !== 'none'
                             ? {
-                              animation: `cms-anim-${resolvedAnimationType} ${animationDuration}ms ${animationEasing} ${blockDelay}ms both`,
-                            }
+                                animation: `cms-anim-${resolvedAnimationType} ${animationDuration}ms ${animationEasing} ${blockDelay}ms both`,
+                              }
                             : {};
-                        const shouldFillBlock = fillContent && (child.type === 'Image' || child.type === 'ImageElement');
+                        const shouldFillBlock =
+                          fillContent && (child.type === 'Image' || child.type === 'ImageElement');
                         const wrapperStyle: React.CSSProperties = shouldFillBlock
-                          ? { ...animationStyle, width: '100%', height: '100%', alignSelf: 'stretch' }
+                          ? {
+                              ...animationStyle,
+                              width: '100%',
+                              height: '100%',
+                              alignSelf: 'stretch',
+                            }
                           : animationStyle;
-                        
+
                         return (
-                          <div key={`${child.id}-${currentSlideshowIndex}-${blockIdx}`} style={wrapperStyle}>
-                            <BlockContextProvider value={{ contained: true, stretch: shouldFillBlock }}>
+                          <div
+                            key={`${child.id}-${currentSlideshowIndex}-${blockIdx}`}
+                            style={wrapperStyle}
+                          >
+                            <BlockContextProvider
+                              value={{ contained: true, stretch: shouldFillBlock }}
+                            >
                               <PreviewBlockItem block={child} />
                             </BlockContextProvider>
                           </div>
@@ -237,7 +260,12 @@ export function PreviewSlideshowSection() {
                   className='rounded-full border border-gray-600 p-2 text-gray-400 hover:text-white transition'
                 >
                   <svg className='size-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
-                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M15 19l-7-7 7-7' />
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      strokeWidth={2}
+                      d='M15 19l-7-7 7-7'
+                    />
                   </svg>
                 </button>
               )}
@@ -260,7 +288,12 @@ export function PreviewSlideshowSection() {
                   className='rounded-full border border-gray-600 p-2 text-gray-400 hover:text-white transition'
                 >
                   <svg className='size-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
-                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 5l7 7-7 7' />
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      strokeWidth={2}
+                      d='M9 5l7 7-7 7'
+                    />
                   </svg>
                 </button>
               )}
@@ -268,6 +301,6 @@ export function PreviewSlideshowSection() {
           )}
         </div>
       )}
-    </div>,
+    </div>
   );
 }

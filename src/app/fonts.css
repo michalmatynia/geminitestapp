@@ -7,8 +7,8 @@
 
 /* Bebas Neue */
 @font-face {
-  font-family: "Bebas Neue";
-  src: url("/fonts/BebasNeue-Regular.woff2") format("woff2");
+  font-family: 'Bebas Neue';
+  src: url('/fonts/BebasNeue-Regular.woff2') format('woff2');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -16,22 +16,22 @@
 
 /* DM Sans */
 @font-face {
-  font-family: "DM Sans";
-  src: url("/fonts/DMSans-Regular.woff2") format("woff2");
+  font-family: 'DM Sans';
+  src: url('/fonts/DMSans-Regular.woff2') format('woff2');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: "DM Sans";
-  src: url("/fonts/DMSans-Medium.woff2") format("woff2");
+  font-family: 'DM Sans';
+  src: url('/fonts/DMSans-Medium.woff2') format('woff2');
   font-weight: 500;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: "DM Sans";
-  src: url("/fonts/DMSans-Bold.woff2") format("woff2");
+  font-family: 'DM Sans';
+  src: url('/fonts/DMSans-Bold.woff2') format('woff2');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
@@ -39,29 +39,29 @@
 
 /* Manrope */
 @font-face {
-  font-family: "Manrope";
-  src: url("/fonts/Manrope-Regular.woff2") format("woff2");
+  font-family: 'Manrope';
+  src: url('/fonts/Manrope-Regular.woff2') format('woff2');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: "Manrope";
-  src: url("/fonts/Manrope-Medium.woff2") format("woff2");
+  font-family: 'Manrope';
+  src: url('/fonts/Manrope-Medium.woff2') format('woff2');
   font-weight: 500;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: "Manrope";
-  src: url("/fonts/Manrope-SemiBold.woff2") format("woff2");
+  font-family: 'Manrope';
+  src: url('/fonts/Manrope-SemiBold.woff2') format('woff2');
   font-weight: 600;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: "Manrope";
-  src: url("/fonts/Manrope-Bold.woff2") format("woff2");
+  font-family: 'Manrope';
+  src: url('/fonts/Manrope-Bold.woff2') format('woff2');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
@@ -69,29 +69,29 @@
 
 /* Outfit */
 @font-face {
-  font-family: "Outfit";
-  src: url("/fonts/Outfit-Regular.woff2") format("woff2");
+  font-family: 'Outfit';
+  src: url('/fonts/Outfit-Regular.woff2') format('woff2');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: "Outfit";
-  src: url("/fonts/Outfit-Medium.woff2") format("woff2");
+  font-family: 'Outfit';
+  src: url('/fonts/Outfit-Medium.woff2') format('woff2');
   font-weight: 500;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: "Outfit";
-  src: url("/fonts/Outfit-SemiBold.woff2") format("woff2");
+  font-family: 'Outfit';
+  src: url('/fonts/Outfit-SemiBold.woff2') format('woff2');
   font-weight: 600;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: "Outfit";
-  src: url("/fonts/Outfit-Bold.woff2") format("woff2");
+  font-family: 'Outfit';
+  src: url('/fonts/Outfit-Bold.woff2') format('woff2');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
@@ -99,29 +99,29 @@
 
 /* Plus Jakarta Sans */
 @font-face {
-  font-family: "Plus Jakarta Sans";
-  src: url("/fonts/PlusJakartaSans-Regular.woff2") format("woff2");
+  font-family: 'Plus Jakarta Sans';
+  src: url('/fonts/PlusJakartaSans-Regular.woff2') format('woff2');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: "Plus Jakarta Sans";
-  src: url("/fonts/PlusJakartaSans-Medium.woff2") format("woff2");
+  font-family: 'Plus Jakarta Sans';
+  src: url('/fonts/PlusJakartaSans-Medium.woff2') format('woff2');
   font-weight: 500;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: "Plus Jakarta Sans";
-  src: url("/fonts/PlusJakartaSans-SemiBold.woff2") format("woff2");
+  font-family: 'Plus Jakarta Sans';
+  src: url('/fonts/PlusJakartaSans-SemiBold.woff2') format('woff2');
   font-weight: 600;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: "Plus Jakarta Sans";
-  src: url("/fonts/PlusJakartaSans-Bold.woff2") format("woff2");
+  font-family: 'Plus Jakarta Sans';
+  src: url('/fonts/PlusJakartaSans-Bold.woff2') format('woff2');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
@@ -129,29 +129,29 @@
 
 /* Space Grotesk */
 @font-face {
-  font-family: "Space Grotesk";
-  src: url("/fonts/SpaceGrotesk-Regular.woff2") format("woff2");
+  font-family: 'Space Grotesk';
+  src: url('/fonts/SpaceGrotesk-Regular.woff2') format('woff2');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: "Space Grotesk";
-  src: url("/fonts/SpaceGrotesk-Medium.woff2") format("woff2");
+  font-family: 'Space Grotesk';
+  src: url('/fonts/SpaceGrotesk-Medium.woff2') format('woff2');
   font-weight: 500;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: "Space Grotesk";
-  src: url("/fonts/SpaceGrotesk-SemiBold.woff2") format("woff2");
+  font-family: 'Space Grotesk';
+  src: url('/fonts/SpaceGrotesk-SemiBold.woff2') format('woff2');
   font-weight: 600;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: "Space Grotesk";
-  src: url("/fonts/SpaceGrotesk-Bold.woff2") format("woff2");
+  font-family: 'Space Grotesk';
+  src: url('/fonts/SpaceGrotesk-Bold.woff2') format('woff2');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
@@ -159,31 +159,30 @@
 
 /* Sora */
 @font-face {
-  font-family: "Sora";
-  src: url("/fonts/Sora-Regular.woff2") format("woff2");
+  font-family: 'Sora';
+  src: url('/fonts/Sora-Regular.woff2') format('woff2');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: "Sora";
-  src: url("/fonts/Sora-Medium.woff2") format("woff2");
+  font-family: 'Sora';
+  src: url('/fonts/Sora-Medium.woff2') format('woff2');
   font-weight: 500;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: "Sora";
-  src: url("/fonts/Sora-SemiBold.woff2") format("woff2");
+  font-family: 'Sora';
+  src: url('/fonts/Sora-SemiBold.woff2') format('woff2');
   font-weight: 600;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: "Sora";
-  src: url("/fonts/Sora-Bold.woff2") format("woff2");
+  font-family: 'Sora';
+  src: url('/fonts/Sora-Bold.woff2') format('woff2');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
-

@@ -3,9 +3,7 @@
 import type { ConnectionFormState } from '@/features/integrations/context/integrations-context-types';
 import type { IntegrationConnection } from '@/shared/contracts/integrations';
 
-export const toConnectionFormState = (
-  connection: IntegrationConnection
-): ConnectionFormState => ({
+export const toConnectionFormState = (connection: IntegrationConnection): ConnectionFormState => ({
   name: connection.name,
   username: connection.username ?? '',
   password: '',
@@ -14,15 +12,11 @@ export const toConnectionFormState = (
   traderaAutoRelistEnabled: connection.traderaAutoRelistEnabled ?? true,
   traderaAutoRelistLeadMinutes: connection.traderaAutoRelistLeadMinutes ?? 180,
   traderaApiAppId:
-    typeof connection.traderaApiAppId === 'number'
-      ? String(connection.traderaApiAppId)
-      : '',
+    typeof connection.traderaApiAppId === 'number' ? String(connection.traderaApiAppId) : '',
   traderaApiAppKey: '',
   traderaApiPublicKey: connection.traderaApiPublicKey ?? '',
   traderaApiUserId:
-    typeof connection.traderaApiUserId === 'number'
-      ? String(connection.traderaApiUserId)
-      : '',
+    typeof connection.traderaApiUserId === 'number' ? String(connection.traderaApiUserId) : '',
   traderaApiToken: '',
   traderaApiSandbox: connection.traderaApiSandbox ?? false,
 });

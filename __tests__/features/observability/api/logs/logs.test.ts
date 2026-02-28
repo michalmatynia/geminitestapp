@@ -53,10 +53,12 @@ describe('System Logs API', () => {
     expect(res.status).toBe(200);
     expect(data.total).toBe(100);
     expect(data.logs).toHaveLength(1);
-    expect(prisma.systemLog.findMany).toHaveBeenCalledWith(expect.objectContaining({
-      skip: 0,
-      take: 10,
-    }));
+    expect(prisma.systemLog.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        skip: 0,
+        take: 10,
+      })
+    );
   });
 
   it('GET /api/system/logs should support advanced triage filters', async () => {

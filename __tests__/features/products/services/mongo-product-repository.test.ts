@@ -109,22 +109,19 @@ describe('mongoProductRepository.replaceProductCategory', () => {
     await mongoProductRepository.replaceProductCategory('product-1', categoryId);
 
     expect(mocks.categoryFindOne).toHaveBeenCalledOnce();
-    expect(mocks.productUpdateOne).toHaveBeenCalledWith(
-      expect.any(Object),
-      {
-        $set: {
-          categories: [
-            {
-              productId: 'product-1',
-              categoryId,
-              assignedAt: expect.any(String),
-            },
-          ],
-          categoryId,
-          updatedAt: expect.any(Date),
-        },
-      }
-    );
+    expect(mocks.productUpdateOne).toHaveBeenCalledWith(expect.any(Object), {
+      $set: {
+        categories: [
+          {
+            productId: 'product-1',
+            categoryId,
+            assignedAt: expect.any(String),
+          },
+        ],
+        categoryId,
+        updatedAt: expect.any(Date),
+      },
+    });
   });
 
   it('retains tags by Mongo _id when tag docs have no id field', async () => {
@@ -134,21 +131,18 @@ describe('mongoProductRepository.replaceProductCategory', () => {
 
     await mongoProductRepository.replaceProductTags('product-1', [tagId]);
 
-    expect(mocks.productUpdateOne).toHaveBeenCalledWith(
-      expect.any(Object),
-      {
-        $set: {
-          tags: [
-            {
-              productId: 'product-1',
-              tagId,
-              assignedAt: expect.any(String),
-            },
-          ],
-          updatedAt: expect.any(Date),
-        },
-      }
-    );
+    expect(mocks.productUpdateOne).toHaveBeenCalledWith(expect.any(Object), {
+      $set: {
+        tags: [
+          {
+            productId: 'product-1',
+            tagId,
+            assignedAt: expect.any(String),
+          },
+        ],
+        updatedAt: expect.any(Date),
+      },
+    });
   });
 
   it('retains producers by Mongo _id when producer docs have no id field', async () => {
@@ -158,21 +152,18 @@ describe('mongoProductRepository.replaceProductCategory', () => {
 
     await mongoProductRepository.replaceProductProducers('product-1', [producerId]);
 
-    expect(mocks.productUpdateOne).toHaveBeenCalledWith(
-      expect.any(Object),
-      {
-        $set: {
-          producers: [
-            {
-              productId: 'product-1',
-              producerId,
-              assignedAt: expect.any(String),
-            },
-          ],
-          updatedAt: expect.any(Date),
-        },
-      }
-    );
+    expect(mocks.productUpdateOne).toHaveBeenCalledWith(expect.any(Object), {
+      $set: {
+        producers: [
+          {
+            productId: 'product-1',
+            producerId,
+            assignedAt: expect.any(String),
+          },
+        ],
+        updatedAt: expect.any(Date),
+      },
+    });
   });
 
   it('returns product images when image metadata is embedded in product document', async () => {
@@ -279,7 +270,10 @@ describe('mongoProductRepository.replaceProductCategory', () => {
 
     expect(mocks.productAggregate).toHaveBeenCalledOnce();
     const pipeline = mocks.productAggregate.mock.calls[0]?.[0] as Array<Record<string, unknown>>;
-    const match = pipeline?.find((stage) => '$match' in stage)?.['$match'] as Record<string, unknown>;
+    const match = pipeline?.find((stage) => '$match' in stage)?.['$match'] as Record<
+      string,
+      unknown
+    >;
     const serializedMatch = JSON.stringify(match);
 
     expect(serializedMatch).toContain('catalogs.catalogId');
@@ -297,9 +291,7 @@ describe('mongoProductRepository.replaceProductCategory', () => {
       id: 'root',
       combinator: 'and',
       not: false,
-      rules: [
-        { type: 'condition', id: 'c1', field: 'baseExported', operator: 'eq', value: true },
-      ],
+      rules: [{ type: 'condition', id: 'c1', field: 'baseExported', operator: 'eq', value: true }],
     });
 
     await mongoProductRepository.getProducts({ advancedFilter });
@@ -307,7 +299,10 @@ describe('mongoProductRepository.replaceProductCategory', () => {
     expect(mocks.integrationToArray).toHaveBeenCalledOnce();
     expect(mocks.listingDistinct).toHaveBeenCalledOnce();
     const pipeline = mocks.productAggregate.mock.calls[0]?.[0] as Array<Record<string, unknown>>;
-    const match = pipeline?.find((stage) => '$match' in stage)?.['$match'] as Record<string, unknown>;
+    const match = pipeline?.find((stage) => '$match' in stage)?.['$match'] as Record<
+      string,
+      unknown
+    >;
     const serializedMatch = JSON.stringify(match);
 
     expect(serializedMatch).toContain('baseProductId');

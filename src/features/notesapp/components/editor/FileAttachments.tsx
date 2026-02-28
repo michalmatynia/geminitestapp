@@ -37,8 +37,7 @@ export function FileAttachments(): React.JSX.Element {
         padding='md'
         className='border-dashed border-border/60 bg-card/30 text-center text-sm text-gray-400'
       >
-        Save the note first to enable file attachments ({maxSlots} slots
-        available)
+        Save the note first to enable file attachments ({maxSlots} slots available)
       </Card>
     );
   }
@@ -78,10 +77,9 @@ export function FileAttachments(): React.JSX.Element {
                   <FileUploadTrigger
                     multiple
                     asChild
-                    onFilesSelected={(
-                      files: File[],
-                      helpers?: FileUploadHelpers,
-                    ) => onMultiFileUpload(files, helpers)}
+                    onFilesSelected={(files: File[], helpers?: FileUploadHelpers) =>
+                      onMultiFileUpload(files, helpers)
+                    }
                   >
                     <span className='flex h-full w-full flex-col items-center justify-center'>
                       <Upload size={14} />
@@ -117,9 +115,7 @@ export function FileAttachments(): React.JSX.Element {
                 <div className='flex h-full flex-col items-center justify-center p-2'>
                   <FileIcon className='h-6 w-6 text-gray-400' />
                   <span className='mt-1 text-[10px] text-gray-400 truncate w-full text-center'>
-                    {file.filename.length > 12
-                      ? file.filename.slice(0, 10) + '...'
-                      : file.filename}
+                    {file.filename.length > 12 ? file.filename.slice(0, 10) + '...' : file.filename}
                   </span>
                 </div>
               )}

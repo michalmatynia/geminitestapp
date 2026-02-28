@@ -51,12 +51,30 @@ import type { PlaywrightPersonaDto as PlaywrightPersona } from '@/shared/contrac
 import { internalError } from '@/shared/errors/app-error';
 import { useToast } from '@/shared/ui';
 
-import { IntegrationsDataContext, type IntegrationsData } from './integrations/IntegrationsDataContext';
-import { IntegrationsFormContext, type IntegrationsForm } from './integrations/IntegrationsFormContext';
-import { IntegrationsTestingContext, type IntegrationsTesting } from './integrations/IntegrationsTestingContext';
-import { IntegrationsSessionContext, type IntegrationsSession } from './integrations/IntegrationsSessionContext';
-import { IntegrationsApiConsoleContext, type IntegrationsApiConsole } from './integrations/IntegrationsApiConsoleContext';
-import { IntegrationsActionsContext, type IntegrationsActions } from './integrations/IntegrationsActionsContext';
+import {
+  IntegrationsDataContext,
+  type IntegrationsData,
+} from './integrations/IntegrationsDataContext';
+import {
+  IntegrationsFormContext,
+  type IntegrationsForm,
+} from './integrations/IntegrationsFormContext';
+import {
+  IntegrationsTestingContext,
+  type IntegrationsTesting,
+} from './integrations/IntegrationsTestingContext';
+import {
+  IntegrationsSessionContext,
+  type IntegrationsSession,
+} from './integrations/IntegrationsSessionContext';
+import {
+  IntegrationsApiConsoleContext,
+  type IntegrationsApiConsole,
+} from './integrations/IntegrationsApiConsoleContext';
+import {
+  IntegrationsActionsContext,
+  type IntegrationsActions,
+} from './integrations/IntegrationsActionsContext';
 
 export { useIntegrationsData } from './integrations/IntegrationsDataContext';
 export { useIntegrationsForm } from './integrations/IntegrationsFormContext';
@@ -131,7 +149,9 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
   // Session State
   const [showSessionModal, setShowSessionModal] = useState(false);
   const activeConnection =
-    connections.find((connection: IntegrationConnection) => connection.id === editingConnectionId) ??
+    connections.find(
+      (connection: IntegrationConnection) => connection.id === editingConnectionId
+    ) ??
     connections[0] ??
     null;
 
@@ -143,8 +163,8 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
   const sessionOrigins = sessionPayload?.origins ?? [];
   const sessionUpdatedAt = sessionPayload?.updatedAt ?? null;
   const sessionError = sessionQuery.isError
-    ? sessionQuery.error?.message ?? 'Failed to load session cookies.'
-    : sessionPayload?.error ?? null;
+    ? (sessionQuery.error?.message ?? 'Failed to load session cookies.')
+    : (sessionPayload?.error ?? null);
 
   // Playwright State
   const [playwrightSettings, setPlaywrightSettings] = useState(defaultPlaywrightSettings);
@@ -191,12 +211,12 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
 
   useEffect(() => {
     if (!integrationsQuery.isError) return;
-    toast((integrationsQuery.error)?.message ?? 'Failed to load integrations.', { variant: 'error' });
+    toast(integrationsQuery.error?.message ?? 'Failed to load integrations.', { variant: 'error' });
   }, [integrationsQuery.error, integrationsQuery.isError, toast]);
 
   useEffect(() => {
     if (!connectionsQuery.isError) return;
-    toast((connectionsQuery.error)?.message ?? 'Failed to load connections.', { variant: 'error' });
+    toast(connectionsQuery.error?.message ?? 'Failed to load connections.', { variant: 'error' });
   }, [connectionsQuery.error, connectionsQuery.isError, toast]);
 
   useEffect(() => {
@@ -205,9 +225,12 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
     setActiveIntegration(null);
   }, [activeIntegration, integrations]);
 
-  const refreshConnections = useCallback((integrationId: string): void => {
-    void invalidateIntegrationConnections(queryClient, integrationId);
-  }, [queryClient]);
+  const refreshConnections = useCallback(
+    (integrationId: string): void => {
+      void invalidateIntegrationConnections(queryClient, integrationId);
+    },
+    [queryClient]
+  );
 
   useEffect(() => {
     if (connections.length === 0) {
@@ -229,15 +252,18 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
       headless: connection.playwrightHeadless ?? defaultPlaywrightSettings.headless,
       slowMo: connection.playwrightSlowMo ?? defaultPlaywrightSettings.slowMo,
       timeout: connection.playwrightTimeout ?? defaultPlaywrightSettings.timeout,
-      navigationTimeout: connection.playwrightNavigationTimeout ?? defaultPlaywrightSettings.navigationTimeout,
+      navigationTimeout:
+        connection.playwrightNavigationTimeout ?? defaultPlaywrightSettings.navigationTimeout,
       humanizeMouse: connection.playwrightHumanizeMouse ?? defaultPlaywrightSettings.humanizeMouse,
       mouseJitter: connection.playwrightMouseJitter ?? defaultPlaywrightSettings.mouseJitter,
       clickDelayMin: connection.playwrightClickDelayMin ?? defaultPlaywrightSettings.clickDelayMin,
       clickDelayMax: connection.playwrightClickDelayMax ?? defaultPlaywrightSettings.clickDelayMax,
       inputDelayMin: connection.playwrightInputDelayMin ?? defaultPlaywrightSettings.inputDelayMin,
       inputDelayMax: connection.playwrightInputDelayMax ?? defaultPlaywrightSettings.inputDelayMax,
-      actionDelayMin: connection.playwrightActionDelayMin ?? defaultPlaywrightSettings.actionDelayMin,
-      actionDelayMax: connection.playwrightActionDelayMax ?? defaultPlaywrightSettings.actionDelayMax,
+      actionDelayMin:
+        connection.playwrightActionDelayMin ?? defaultPlaywrightSettings.actionDelayMin,
+      actionDelayMax:
+        connection.playwrightActionDelayMax ?? defaultPlaywrightSettings.actionDelayMax,
       proxyEnabled: connection.playwrightProxyEnabled ?? defaultPlaywrightSettings.proxyEnabled,
       proxyServer: connection.playwrightProxyServer ?? defaultPlaywrightSettings.proxyServer,
       proxyUsername: connection.playwrightProxyUsername ?? defaultPlaywrightSettings.proxyUsername,
@@ -306,15 +332,12 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
 
     const formData = options.formData;
     const isTraderaIntegration = isTraderaIntegrationSlug(activeIntegration.slug);
-    const isTraderaApiIntegration = isTraderaApiIntegrationSlug(
-      activeIntegration.slug
-    );
+    const isTraderaApiIntegration = isTraderaApiIntegrationSlug(activeIntegration.slug);
     const isBaselinkerIntegration = activeIntegration.slug === 'baselinker';
     const requestedConnectionId = options.connectionId?.trim() || null;
     const resolvedConnectionId = requestedConnectionId ?? editingConnectionId;
     const isCreateMode =
-      options.mode === 'create' ||
-      (options.mode !== 'update' && !resolvedConnectionId);
+      options.mode === 'create' || (options.mode !== 'update' && !resolvedConnectionId);
     const normalizedName = formData.name.trim();
     const normalizedUsername = formData.username.trim();
 
@@ -356,48 +379,36 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
     const normalizedTraderaApiAppKey = formData.traderaApiAppKey.trim();
     const normalizedTraderaApiToken = formData.traderaApiToken.trim();
     const traderaApiAppId = Number.parseInt(formData.traderaApiAppId, 10);
-    const traderaApiUserId = Number.parseInt(
-      formData.traderaApiUserId,
-      10
-    );
+    const traderaApiUserId = Number.parseInt(formData.traderaApiUserId, 10);
     const payload = {
       name: normalizedName,
       username: normalizedUsername,
       ...(normalizedPassword ? { password: normalizedPassword } : {}),
       ...(isTraderaIntegration
         ? {
-          traderaDefaultTemplateId:
-              formData.traderaDefaultTemplateId.trim() || null,
-          traderaDefaultDurationHours:
-              Math.max(
-                1,
-                Math.min(720, Math.floor(formData.traderaDefaultDurationHours))
-              ),
-          traderaAutoRelistEnabled: formData.traderaAutoRelistEnabled,
-          traderaAutoRelistLeadMinutes: Math.max(
-            0,
-            Math.min(10080, Math.floor(formData.traderaAutoRelistLeadMinutes))
-          ),
-        }
+            traderaDefaultTemplateId: formData.traderaDefaultTemplateId.trim() || null,
+            traderaDefaultDurationHours: Math.max(
+              1,
+              Math.min(720, Math.floor(formData.traderaDefaultDurationHours))
+            ),
+            traderaAutoRelistEnabled: formData.traderaAutoRelistEnabled,
+            traderaAutoRelistLeadMinutes: Math.max(
+              0,
+              Math.min(10080, Math.floor(formData.traderaAutoRelistLeadMinutes))
+            ),
+          }
         : {}),
       ...(isTraderaApiIntegration
         ? {
-          ...(Number.isFinite(traderaApiAppId) && traderaApiAppId > 0
-            ? { traderaApiAppId }
-            : {}),
-          ...(normalizedTraderaApiAppKey
-            ? { traderaApiAppKey: normalizedTraderaApiAppKey }
-            : {}),
-          traderaApiPublicKey:
-            formData.traderaApiPublicKey.trim() || null,
-          ...(Number.isFinite(traderaApiUserId) && traderaApiUserId > 0
-            ? { traderaApiUserId }
-            : {}),
-          ...(normalizedTraderaApiToken
-            ? { traderaApiToken: normalizedTraderaApiToken }
-            : {}),
-          traderaApiSandbox: formData.traderaApiSandbox,
-        }
+            ...(Number.isFinite(traderaApiAppId) && traderaApiAppId > 0 ? { traderaApiAppId } : {}),
+            ...(normalizedTraderaApiAppKey ? { traderaApiAppKey: normalizedTraderaApiAppKey } : {}),
+            traderaApiPublicKey: formData.traderaApiPublicKey.trim() || null,
+            ...(Number.isFinite(traderaApiUserId) && traderaApiUserId > 0
+              ? { traderaApiUserId }
+              : {}),
+            ...(normalizedTraderaApiToken ? { traderaApiToken: normalizedTraderaApiToken } : {}),
+            traderaApiSandbox: formData.traderaApiSandbox,
+          }
         : {}),
     };
     try {
@@ -446,96 +457,120 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
     }
   };
 
-  const handleConnectionTest = React.useCallback(async (
-    connection: IntegrationConnection,
-    type: 'test' | 'base/test' | 'allegro/test',
-    title: string,
-    options?: {
-      body?: Record<string, unknown>;
-      timeoutMs?: number;
-    }
-  ): Promise<void> => {
-    if (!activeIntegration) return;
-    setIsTesting(true);
-    setTestLog([]);
-    setSelectedStep(null);
-    setShowTestLogModal(false);
-    setShowTestErrorModal(false);
-    setTestError(null);
-    setTestErrorMeta(null);
-    setShowTestSuccessModal(false);
-    setTestSuccessMessage(null);
-
-    const requestUrl = `/api/integrations/${activeIntegration.id}/connections/${connection.id}/${type}`;
-    const startedAt = performance.now();
-
-    try {
-      const payload = (await testConnectionMutation.mutateAsync({
-        integrationId: activeIntegration.id,
-        connectionId: connection.id,
-        type,
-        ...(options?.body ? { body: options.body } : {}),
-        ...(typeof options?.timeoutMs === 'number'
-          ? { timeoutMs: options.timeoutMs }
-          : {}),
-      }));
-
-      const normalizedSteps = normalizeSteps((payload.steps as unknown[]) || []);
-      if (normalizedSteps.length) setTestLog(normalizedSteps);
-
-      const durationMs = Math.round(performance.now() - startedAt);
-      let extraInfo = '';
-      if (type === 'base/test' && payload['inventoryCount'] !== undefined) {
-        extraInfo = `\nInventories found: ${String(payload['inventoryCount'])}`;
-      } else if (type === 'allegro/test' && payload.profile) {
-        const profile = payload.profile as Record<string, unknown>;
-        const login = (profile['login'] as string) ?? '';
-        const name = (profile['name'] as string) ?? '';
-        const identifier = name || login;
-        if (identifier) extraInfo = `\nAccount: ${identifier}`;
+  const handleConnectionTest = React.useCallback(
+    async (
+      connection: IntegrationConnection,
+      type: 'test' | 'base/test' | 'allegro/test',
+      title: string,
+      options?: {
+        body?: Record<string, unknown>;
+        timeoutMs?: number;
       }
+    ): Promise<void> => {
+      if (!activeIntegration) return;
+      setIsTesting(true);
+      setTestLog([]);
+      setSelectedStep(null);
+      setShowTestLogModal(false);
+      setShowTestErrorModal(false);
+      setTestError(null);
+      setTestErrorMeta(null);
+      setShowTestSuccessModal(false);
+      setTestSuccessMessage(null);
 
-      setTestSuccessMessage(`${title} succeeded.\nURL: ${requestUrl}\nDuration: ${durationMs}ms${extraInfo}`);
-      setShowTestSuccessModal(true);
-      refreshConnections(activeIntegration.id);
-    } catch (error: unknown) {
-      const durationMs = Math.round(performance.now() - startedAt);
-      const message = (error as Error)?.message ?? 'Unknown error';
-      const data = (error as Record<string, unknown>)['data'] as Record<string, unknown> | undefined;
-      
-      let errorMessage = `${title} failed.\nURL: ${requestUrl}\nDuration: ${durationMs}ms\nError: ${message}`;
-      
-      if (data) {
-        const normalizedSteps = normalizeSteps((data['steps'] as unknown[]) || []);
-        const failedStep = normalizedSteps.find((s: TestLogEntry) => s.status === 'failed');
-        const failedStepDetail = failedStep?.detail || '';
-        const errorBody = (data['error'] as string) || failedStepDetail || 'No response body';
-        errorMessage = `${title} failed.\nURL: ${requestUrl}\nDuration: ${durationMs}ms\n\nResponse:\n${errorBody}`;
+      const requestUrl = `/api/integrations/${activeIntegration.id}/connections/${connection.id}/${type}`;
+      const startedAt = performance.now();
 
-        const steps = normalizedSteps.length
-          ? normalizedSteps.map((s: TestLogEntry) => s.status === 'failed' && !s.detail ? { ...s, detail: errorMessage } : s)
-          : [{ step: `${title} failed`, status: 'failed' as const, timestamp: new Date().toISOString(), detail: errorMessage }];
-          
-        setTestLog(steps);
-        setTestErrorMeta({
-          errorId: data['errorId'] as string,
-          integrationId: data['integrationId'] as string,
-          connectionId: data['connectionId'] as string,
+      try {
+        const payload = await testConnectionMutation.mutateAsync({
+          integrationId: activeIntegration.id,
+          connectionId: connection.id,
+          type,
+          ...(options?.body ? { body: options.body } : {}),
+          ...(typeof options?.timeoutMs === 'number' ? { timeoutMs: options.timeoutMs } : {}),
         });
-      } else {
-        setTestLog([{ step: `${title} failed`, status: 'failed' as const, timestamp: new Date().toISOString(), detail: errorMessage }]);
+
+        const normalizedSteps = normalizeSteps((payload.steps as unknown[]) || []);
+        if (normalizedSteps.length) setTestLog(normalizedSteps);
+
+        const durationMs = Math.round(performance.now() - startedAt);
+        let extraInfo = '';
+        if (type === 'base/test' && payload['inventoryCount'] !== undefined) {
+          extraInfo = `\nInventories found: ${String(payload['inventoryCount'])}`;
+        } else if (type === 'allegro/test' && payload.profile) {
+          const profile = payload.profile as Record<string, unknown>;
+          const login = (profile['login'] as string) ?? '';
+          const name = (profile['name'] as string) ?? '';
+          const identifier = name || login;
+          if (identifier) extraInfo = `\nAccount: ${identifier}`;
+        }
+
+        setTestSuccessMessage(
+          `${title} succeeded.\nURL: ${requestUrl}\nDuration: ${durationMs}ms${extraInfo}`
+        );
+        setShowTestSuccessModal(true);
+        refreshConnections(activeIntegration.id);
+      } catch (error: unknown) {
+        const durationMs = Math.round(performance.now() - startedAt);
+        const message = (error as Error)?.message ?? 'Unknown error';
+        const data = (error as Record<string, unknown>)['data'] as
+          | Record<string, unknown>
+          | undefined;
+
+        let errorMessage = `${title} failed.\nURL: ${requestUrl}\nDuration: ${durationMs}ms\nError: ${message}`;
+
+        if (data) {
+          const normalizedSteps = normalizeSteps((data['steps'] as unknown[]) || []);
+          const failedStep = normalizedSteps.find((s: TestLogEntry) => s.status === 'failed');
+          const failedStepDetail = failedStep?.detail || '';
+          const errorBody = (data['error'] as string) || failedStepDetail || 'No response body';
+          errorMessage = `${title} failed.\nURL: ${requestUrl}\nDuration: ${durationMs}ms\n\nResponse:\n${errorBody}`;
+
+          const steps = normalizedSteps.length
+            ? normalizedSteps.map((s: TestLogEntry) =>
+                s.status === 'failed' && !s.detail ? { ...s, detail: errorMessage } : s
+              )
+            : [
+                {
+                  step: `${title} failed`,
+                  status: 'failed' as const,
+                  timestamp: new Date().toISOString(),
+                  detail: errorMessage,
+                },
+              ];
+
+          setTestLog(steps);
+          setTestErrorMeta({
+            errorId: data['errorId'] as string,
+            integrationId: data['integrationId'] as string,
+            connectionId: data['connectionId'] as string,
+          });
+        } else {
+          setTestLog([
+            {
+              step: `${title} failed`,
+              status: 'failed' as const,
+              timestamp: new Date().toISOString(),
+              detail: errorMessage,
+            },
+          ]);
+        }
+
+        setTestError(errorMessage);
+        setShowTestErrorModal(true);
+      } finally {
+        setIsTesting(false);
       }
+    },
+    [activeIntegration, testConnectionMutation, refreshConnections]
+  );
 
-      setTestError(errorMessage);
-      setShowTestErrorModal(true);
-    } finally {
-      setIsTesting(false);
-    }
-  }, [activeIntegration, testConnectionMutation, refreshConnections]);
-
-  const handleBaselinkerTest = (c: IntegrationConnection) => handleConnectionTest(c, 'base/test', 'Baselinker connection test');
-  const handleAllegroTest = (c: IntegrationConnection) => handleConnectionTest(c, 'allegro/test', 'Allegro connection test');
-  const handleTestConnection = (c: IntegrationConnection) => handleConnectionTest(c, 'test', 'Connection test');
+  const handleBaselinkerTest = (c: IntegrationConnection) =>
+    handleConnectionTest(c, 'base/test', 'Baselinker connection test');
+  const handleAllegroTest = (c: IntegrationConnection) =>
+    handleConnectionTest(c, 'allegro/test', 'Allegro connection test');
+  const handleTestConnection = (c: IntegrationConnection) =>
+    handleConnectionTest(c, 'test', 'Connection test');
   const handleTraderaManualLogin = (c: IntegrationConnection) =>
     handleConnectionTest(c, 'test', 'Manual login test', {
       body: { mode: 'manual', manualTimeoutMs: 240000 },
@@ -572,7 +607,9 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
       });
       toast('Playwright settings saved.', { variant: 'success' });
     } catch (error: unknown) {
-      toast((error as Error)?.message ?? 'Failed to save Playwright settings.', { variant: 'error' });
+      toast((error as Error)?.message ?? 'Failed to save Playwright settings.', {
+        variant: 'error',
+      });
     }
   };
 
@@ -593,7 +630,9 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
       });
       toast('Allegro disconnected.', { variant: 'success' });
     } catch (error: unknown) {
-      logClientError(error, { context: { source: 'IntegrationsContext', action: 'disconnectAllegro' } });
+      logClientError(error, {
+        context: { source: 'IntegrationsContext', action: 'disconnectAllegro' },
+      });
       toast('Failed to disconnect Allegro.', { variant: 'error' });
     }
   };
@@ -614,7 +653,9 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
       });
       toast('Allegro sandbox setting updated.', { variant: 'success' });
     } catch (error: unknown) {
-      toast((error as Error)?.message ?? 'Failed to update Allegro sandbox setting.', { variant: 'error' });
+      toast((error as Error)?.message ?? 'Failed to update Allegro sandbox setting.', {
+        variant: 'error',
+      });
     } finally {
       setSavingAllegroSandbox(false);
     }
@@ -711,110 +752,188 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
   const onCloseModal = () => setIsModalOpen(false);
   const onOpenSessionModal = () => setShowSessionModal(true);
 
-  const dataValue = useMemo<IntegrationsData>(() => ({
-    integrations,
-    integrationsLoading,
-    activeIntegration,
-    setActiveIntegration,
-    connections,
-    connectionsLoading,
-    playwrightPersonas,
-    playwrightPersonasLoading,
-  }), [integrations, integrationsLoading, activeIntegration, connections, connectionsLoading, playwrightPersonas, playwrightPersonasLoading]);
+  const dataValue = useMemo<IntegrationsData>(
+    () => ({
+      integrations,
+      integrationsLoading,
+      activeIntegration,
+      setActiveIntegration,
+      connections,
+      connectionsLoading,
+      playwrightPersonas,
+      playwrightPersonasLoading,
+    }),
+    [
+      integrations,
+      integrationsLoading,
+      activeIntegration,
+      connections,
+      connectionsLoading,
+      playwrightPersonas,
+      playwrightPersonasLoading,
+    ]
+  );
 
-  const formValue = useMemo<IntegrationsForm>(() => ({
-    isModalOpen,
-    setIsModalOpen,
-    editingConnectionId,
-    setEditingConnectionId,
-    connectionToDelete,
-    setConnectionToDelete,
-    playwrightSettings,
-    setPlaywrightSettings,
-    playwrightPersonaId,
-    savingAllegroSandbox,
-  }), [isModalOpen, editingConnectionId, connectionToDelete, playwrightSettings, playwrightPersonaId, savingAllegroSandbox]);
+  const formValue = useMemo<IntegrationsForm>(
+    () => ({
+      isModalOpen,
+      setIsModalOpen,
+      editingConnectionId,
+      setEditingConnectionId,
+      connectionToDelete,
+      setConnectionToDelete,
+      playwrightSettings,
+      setPlaywrightSettings,
+      playwrightPersonaId,
+      savingAllegroSandbox,
+    }),
+    [
+      isModalOpen,
+      editingConnectionId,
+      connectionToDelete,
+      playwrightSettings,
+      playwrightPersonaId,
+      savingAllegroSandbox,
+    ]
+  );
 
-  const testingValue = useMemo<IntegrationsTesting>(() => ({
-    isTesting,
-    testLog,
-    showTestLogModal,
-    setShowTestLogModal,
-    selectedStep,
-    setSelectedStep,
-    showTestErrorModal,
-    setShowTestErrorModal,
-    testError,
-    testErrorMeta,
-    showTestSuccessModal,
-    setShowTestSuccessModal,
-    testSuccessMessage,
-  }), [isTesting, testLog, showTestLogModal, selectedStep, showTestErrorModal, testError, testErrorMeta, showTestSuccessModal, testSuccessMessage]);
+  const testingValue = useMemo<IntegrationsTesting>(
+    () => ({
+      isTesting,
+      testLog,
+      showTestLogModal,
+      setShowTestLogModal,
+      selectedStep,
+      setSelectedStep,
+      showTestErrorModal,
+      setShowTestErrorModal,
+      testError,
+      testErrorMeta,
+      showTestSuccessModal,
+      setShowTestSuccessModal,
+      testSuccessMessage,
+    }),
+    [
+      isTesting,
+      testLog,
+      showTestLogModal,
+      selectedStep,
+      showTestErrorModal,
+      testError,
+      testErrorMeta,
+      showTestSuccessModal,
+      testSuccessMessage,
+    ]
+  );
 
-  const sessionValue = useMemo<IntegrationsSession>(() => ({
-    showSessionModal,
-    setShowSessionModal,
-    sessionLoading: sessionQuery.isFetching,
-    sessionError,
-    sessionCookies,
-    sessionOrigins,
-    sessionUpdatedAt,
-  }), [showSessionModal, sessionQuery.isFetching, sessionError, sessionCookies, sessionOrigins, sessionUpdatedAt]);
+  const sessionValue = useMemo<IntegrationsSession>(
+    () => ({
+      showSessionModal,
+      setShowSessionModal,
+      sessionLoading: sessionQuery.isFetching,
+      sessionError,
+      sessionCookies,
+      sessionOrigins,
+      sessionUpdatedAt,
+    }),
+    [
+      showSessionModal,
+      sessionQuery.isFetching,
+      sessionError,
+      sessionCookies,
+      sessionOrigins,
+      sessionUpdatedAt,
+    ]
+  );
 
-  const apiConsoleValue = useMemo<IntegrationsApiConsole>(() => ({
-    baseApiMethod,
-    setBaseApiMethod,
-    baseApiParams,
-    setBaseApiParams,
-    baseApiLoading,
-    baseApiError,
-    baseApiResponse,
-    allegroApiMethod,
-    setAllegroApiMethod,
-    allegroApiPath,
-    setAllegroApiPath,
-    allegroApiBody,
-    setAllegroApiBody,
-    allegroApiLoading,
-    allegroApiError,
-    allegroApiResponse,
-  }), [baseApiMethod, baseApiParams, baseApiLoading, baseApiError, baseApiResponse, allegroApiMethod, allegroApiPath, allegroApiBody, allegroApiLoading, allegroApiError, allegroApiResponse]);
+  const apiConsoleValue = useMemo<IntegrationsApiConsole>(
+    () => ({
+      baseApiMethod,
+      setBaseApiMethod,
+      baseApiParams,
+      setBaseApiParams,
+      baseApiLoading,
+      baseApiError,
+      baseApiResponse,
+      allegroApiMethod,
+      setAllegroApiMethod,
+      allegroApiPath,
+      setAllegroApiPath,
+      allegroApiBody,
+      setAllegroApiBody,
+      allegroApiLoading,
+      allegroApiError,
+      allegroApiResponse,
+    }),
+    [
+      baseApiMethod,
+      baseApiParams,
+      baseApiLoading,
+      baseApiError,
+      baseApiResponse,
+      allegroApiMethod,
+      allegroApiPath,
+      allegroApiBody,
+      allegroApiLoading,
+      allegroApiError,
+      allegroApiResponse,
+    ]
+  );
 
-  const actionsValue = useMemo<IntegrationsActions>(() => ({
-    handleIntegrationClick,
-    handleSaveConnection,
-    handleDeleteConnection,
-    handleConfirmDeleteConnection,
-    handleBaselinkerTest,
-    handleAllegroTest,
-    handleTestConnection,
-    handleTraderaManualLogin,
-    handleSelectPlaywrightPersona,
-    handleSavePlaywrightSettings,
-    handleAllegroAuthorize,
-    handleAllegroDisconnect,
-    handleAllegroSandboxToggle,
-    handleAllegroSandboxConnect,
-    handleBaseApiRequest,
-    handleAllegroApiRequest,
-    onCloseModal,
-    onOpenSessionModal,
-  }), [
-    handleIntegrationClick, handleSaveConnection, handleDeleteConnection, handleConfirmDeleteConnection,
-    handleBaselinkerTest, handleAllegroTest, handleTestConnection, handleTraderaManualLogin,
-    handleSelectPlaywrightPersona, handleSavePlaywrightSettings, handleAllegroAuthorize,
-    handleAllegroDisconnect, handleAllegroSandboxToggle, handleAllegroSandboxConnect,
-    handleBaseApiRequest, handleAllegroApiRequest, onCloseModal, onOpenSessionModal
-  ]);
+  const actionsValue = useMemo<IntegrationsActions>(
+    () => ({
+      handleIntegrationClick,
+      handleSaveConnection,
+      handleDeleteConnection,
+      handleConfirmDeleteConnection,
+      handleBaselinkerTest,
+      handleAllegroTest,
+      handleTestConnection,
+      handleTraderaManualLogin,
+      handleSelectPlaywrightPersona,
+      handleSavePlaywrightSettings,
+      handleAllegroAuthorize,
+      handleAllegroDisconnect,
+      handleAllegroSandboxToggle,
+      handleAllegroSandboxConnect,
+      handleBaseApiRequest,
+      handleAllegroApiRequest,
+      onCloseModal,
+      onOpenSessionModal,
+    }),
+    [
+      handleIntegrationClick,
+      handleSaveConnection,
+      handleDeleteConnection,
+      handleConfirmDeleteConnection,
+      handleBaselinkerTest,
+      handleAllegroTest,
+      handleTestConnection,
+      handleTraderaManualLogin,
+      handleSelectPlaywrightPersona,
+      handleSavePlaywrightSettings,
+      handleAllegroAuthorize,
+      handleAllegroDisconnect,
+      handleAllegroSandboxToggle,
+      handleAllegroSandboxConnect,
+      handleBaseApiRequest,
+      handleAllegroApiRequest,
+      onCloseModal,
+      onOpenSessionModal,
+    ]
+  );
 
-  const aggregatedValue = useMemo<IntegrationsContextType>(() => ({
-    ...dataValue,
-    ...formValue,
-    ...testingValue,
-    ...sessionValue,
-    ...apiConsoleValue,
-    ...actionsValue,
-  }), [dataValue, formValue, testingValue, sessionValue, apiConsoleValue, actionsValue]);
+  const aggregatedValue = useMemo<IntegrationsContextType>(
+    () => ({
+      ...dataValue,
+      ...formValue,
+      ...testingValue,
+      ...sessionValue,
+      ...apiConsoleValue,
+      ...actionsValue,
+    }),
+    [dataValue, formValue, testingValue, sessionValue, apiConsoleValue, actionsValue]
+  );
 
   return (
     <IntegrationsDataContext.Provider value={dataValue}>

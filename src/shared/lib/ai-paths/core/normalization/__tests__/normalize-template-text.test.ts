@@ -4,9 +4,7 @@ import { normalizeTemplateText } from '@/shared/lib/ai-paths/core/normalization'
 
 describe('normalizeTemplateText', () => {
   it('decodes escaped newlines for JSON-like templates', () => {
-    expect(normalizeTemplateText('{\\n  "id": "{{value}}"\\n}')).toBe(
-      '{\n  "id": "{{value}}"\n}'
-    );
+    expect(normalizeTemplateText('{\\n  "id": "{{value}}"\\n}')).toBe('{\n  "id": "{{value}}"\n}');
   });
 
   it('does not modify templates that already contain real newlines', () => {

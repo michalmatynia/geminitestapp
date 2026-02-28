@@ -9,10 +9,7 @@ import {
   parseCaseResolverCaptureSettings,
   type CaseResolverCaptureSettings as CaseResolverCaptureSettingsType,
 } from '@/features/case-resolver-capture/settings';
-import {
-  FILEMAKER_DATABASE_KEY,
-  parseFilemakerDatabase,
-} from '@/features/filemaker/settings';
+import { FILEMAKER_DATABASE_KEY, parseFilemakerDatabase } from '@/features/filemaker/settings';
 import { useCountries } from '@/shared/lib/internationalization/hooks/useInternationalizationQueries';
 import type {
   CaseResolverCategory,
@@ -44,23 +41,21 @@ import {
   parseCaseResolverTags,
   parseCaseResolverWorkspace,
 } from '../settings';
-import {
-  fromCaseResolverCaseNodeId,
-  fromCaseResolverFileNodeId,
-} from '../master-tree';
-import {
-  type CaseResolverFileEditDraft,
-  type CaseResolverStateValue,
-} from '../types';
+import { fromCaseResolverCaseNodeId, fromCaseResolverFileNodeId } from '../master-tree';
+import { type CaseResolverFileEditDraft, type CaseResolverStateValue } from '../types';
 import { useCaseResolverStateFolderActions } from './useCaseResolverState.folder-actions';
 import { useCaseResolverStateAssetActions } from './useCaseResolverState.asset-actions';
 import { serializeWorkspaceForUnsavedChangesCheck } from './useCaseResolverState.helpers';
-import {
-  resolvePreferredCaseResolverWorkspace,
-} from './useCaseResolverState.helpers.hydration';
+import { resolvePreferredCaseResolverWorkspace } from './useCaseResolverState.helpers.hydration';
 import { useCaseResolverStateSelectionActions } from './useCaseResolverState.selection-actions';
-import { useCaseResolverPersistence, type UseCaseResolverPersistenceValue } from './useCaseResolverState.persistence-actions';
-import { useCaseResolverPromptExploder, type UseCaseResolverPromptExploderValue } from './useCaseResolverState.prompt-exploder-actions';
+import {
+  useCaseResolverPersistence,
+  type UseCaseResolverPersistenceValue,
+} from './useCaseResolverState.persistence-actions';
+import {
+  useCaseResolverPromptExploder,
+  type UseCaseResolverPromptExploderValue,
+} from './useCaseResolverState.prompt-exploder-actions';
 import { useCaseResolverStateEditorActions } from './useCaseResolverState.editor-actions';
 import { useCaseResolverStateRelatedFilesActions } from './useCaseResolverState.related-files-actions';
 import { useCaseResolverStateCreationActions } from './useCaseResolverState.creation-actions';
@@ -96,14 +91,13 @@ export function useCaseResolverState(): CaseResolverStateValue {
     return normalizedRequestedFileId;
   }, [requestedFileIdRaw]);
   const shouldOpenEditorFromQuery = searchParams.get('openEditor') === '1';
-  const requestedPromptExploderSessionId = searchParams.get('promptExploderSessionId')?.trim() ?? '';
+  const requestedPromptExploderSessionId =
+    searchParams.get('promptExploderSessionId')?.trim() ?? '';
 
   const rawWorkspaceFromStore = settingsStore.get(CASE_RESOLVER_WORKSPACE_KEY) ?? null;
   const rawWorkspaceFromHeavyScope = useMemo((): string | null => {
     const records = heavySettingsQuery.data ?? [];
-    const record = records.find(
-      (entry): boolean => entry.key === CASE_RESOLVER_WORKSPACE_KEY,
-    );
+    const record = records.find((entry): boolean => entry.key === CASE_RESOLVER_WORKSPACE_KEY);
     return typeof record?.value === 'string' ? record.value : null;
   }, [heavySettingsQuery.data]);
   const rawCaseResolverTags = settingsStore.get(CASE_RESOLVER_TAGS_KEY);
@@ -115,22 +109,22 @@ export function useCaseResolverState(): CaseResolverStateValue {
   );
   const rawFilemakerDatabase = settingsStore.get(FILEMAKER_DATABASE_KEY);
   const rawCaseResolverCaptureSettings = settingsStore.get(CASE_RESOLVER_CAPTURE_SETTINGS_KEY);
-  
+
   const hasWorkspaceFromStore = useMemo(
     (): boolean => hasCaseResolverWorkspaceFilesArray(rawWorkspaceFromStore),
-    [rawWorkspaceFromStore],
+    [rawWorkspaceFromStore]
   );
   const hasWorkspaceFromHeavyScope = useMemo(
     (): boolean => hasCaseResolverWorkspaceFilesArray(rawWorkspaceFromHeavyScope),
-    [rawWorkspaceFromHeavyScope],
+    [rawWorkspaceFromHeavyScope]
   );
   const parsedWorkspaceFromStore = useMemo(
     (): CaseResolverWorkspace => parseCaseResolverWorkspace(rawWorkspaceFromStore),
-    [rawWorkspaceFromStore],
+    [rawWorkspaceFromStore]
   );
   const parsedWorkspaceFromHeavyScope = useMemo(
     (): CaseResolverWorkspace => parseCaseResolverWorkspace(rawWorkspaceFromHeavyScope),
-    [rawWorkspaceFromHeavyScope],
+    [rawWorkspaceFromHeavyScope]
   );
   const preferredWorkspaceSelection = useMemo(
     () =>
@@ -147,7 +141,7 @@ export function useCaseResolverState(): CaseResolverStateValue {
       parsedWorkspaceFromHeavyScope,
       parsedWorkspaceFromStore,
       requestedFileId,
-    ],
+    ]
   );
   const parsedWorkspace = preferredWorkspaceSelection.workspace;
   const canHydrateWorkspaceFromStore = preferredWorkspaceSelection.source !== 'none';
@@ -180,10 +174,11 @@ export function useCaseResolverState(): CaseResolverStateValue {
     [rawFilemakerDatabase]
   );
   const caseResolverCaptureSettings = useMemo(
-    (): CaseResolverCaptureSettingsType => parseCaseResolverCaptureSettings(rawCaseResolverCaptureSettings),
+    (): CaseResolverCaptureSettingsType =>
+      parseCaseResolverCaptureSettings(rawCaseResolverCaptureSettings),
     [rawCaseResolverCaptureSettings]
   );
-  
+
   const countriesQuery = useCountries();
   const countries = countriesQuery.data ?? [];
 
@@ -208,19 +203,16 @@ export function useCaseResolverState(): CaseResolverStateValue {
 
   const [workspace, setWorkspace] = useState<CaseResolverWorkspace>(initialWorkspaceState);
   const workspaceRef = useRef<CaseResolverWorkspace>(initialWorkspaceState);
-  const [editingDocumentDraft, setEditingDocumentDraft] = useState<CaseResolverFileEditDraft | null>(null);
+  const [editingDocumentDraft, setEditingDocumentDraft] =
+    useState<CaseResolverFileEditDraft | null>(null);
   const [editingDocumentNodeContext, setEditingDocumentNodeContext] =
     useState<CaseResolverEditorNodeContext | null>(null);
   const [isUploadingScanDraftFiles, setIsUploadingScanDraftFiles] = useState(false);
   const [uploadingScanSlotId, setUploadingScanSlotId] = useState<string | null>(null);
 
-  const [, setPersistedWorkspaceSnapshot] = useState<string>(
-    JSON.stringify(initialWorkspaceState)
-  );
+  const [, setPersistedWorkspaceSnapshot] = useState<string>(JSON.stringify(initialWorkspaceState));
   const [persistedWorkspaceComparableSnapshot, setPersistedWorkspaceComparableSnapshot] =
-    useState<string>(() =>
-      serializeWorkspaceForUnsavedChangesCheck(initialWorkspaceState)
-    );
+    useState<string>(() => serializeWorkspaceForUnsavedChangesCheck(initialWorkspaceState));
 
   const handledRequestedFileIdRef = useRef<string | null>(null);
 
@@ -232,8 +224,7 @@ export function useCaseResolverState(): CaseResolverStateValue {
     setPersistedWorkspaceComparableSnapshot,
   });
   const syncPersistedWorkspaceTracking = persistence.syncPersistedWorkspaceTracking;
-  const clearQueuedWorkspacePersistMutation =
-    persistence.clearQueuedWorkspacePersistMutation;
+  const clearQueuedWorkspacePersistMutation = persistence.clearQueuedWorkspacePersistMutation;
   const isMountedRef = useRef(true);
   const requestedContext = useCaseResolverStateRequestedContext({
     requestedFileId,
@@ -263,15 +254,10 @@ export function useCaseResolverState(): CaseResolverStateValue {
     requestedCaseStatus,
     initialWorkspaceState,
     syncPersistedWorkspaceTracking: persistence.syncPersistedWorkspaceTracking,
-    clearQueuedWorkspacePersistMutation:
-      persistence.clearQueuedWorkspacePersistMutation,
+    clearQueuedWorkspacePersistMutation: persistence.clearQueuedWorkspacePersistMutation,
     handledRequestedFileIdRef,
   });
-  const {
-    setSelectedFileId,
-    setSelectedAssetId,
-    setSelectedFolderPath,
-  } = viewState;
+  const { setSelectedFileId, setSelectedAssetId, setSelectedFolderPath } = viewState;
   const workspaceDiagnostics = useCaseResolverStateWorkspaceDiagnostics({
     workspace,
     activeCaseId: viewState.activeCaseId,
@@ -318,8 +304,7 @@ export function useCaseResolverState(): CaseResolverStateValue {
     hasWorkspaceFromStore,
     hasWorkspaceFromHeavyScope,
     parsedWorkspace,
-    isApplyingPromptExploderPartyProposal:
-      promptExploder.isApplyingPromptExploderPartyProposal,
+    isApplyingPromptExploderPartyProposal: promptExploder.isApplyingPromptExploderPartyProposal,
     heavySettingsIsFetching: heavySettingsQuery.isFetching,
     heavySettingsIsLoading: heavySettingsQuery.isLoading,
     refetchHeavySettings: heavySettingsQuery.refetch,
@@ -391,13 +376,14 @@ export function useCaseResolverState(): CaseResolverStateValue {
     setSelectedFileId(null);
     setSelectedAssetId(null);
     setSelectedFolderPath(null);
-    setWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace =>
-      current.activeFileId === null
-        ? current
-        : {
-          ...current,
-          activeFileId: null,
-        },
+    setWorkspace(
+      (current: CaseResolverWorkspace): CaseResolverWorkspace =>
+        current.activeFileId === null
+          ? current
+          : {
+              ...current,
+              activeFileId: null,
+            }
     );
   }, [
     resetRequestedContextState,

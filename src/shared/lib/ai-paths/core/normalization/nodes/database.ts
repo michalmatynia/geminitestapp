@@ -1,18 +1,7 @@
-import {
-  type AiNode,
-  type DatabaseConfig,
-  type DbQueryConfig,
-} from '@/shared/contracts/ai-paths';
-import {
-  DATABASE_INPUT_PORTS,
-} from '../../constants';
-import {
-  ensureUniquePorts,
-} from '../../utils';
-import {
-  migrateLegacyDbQueryProvider,
-  normalizeTemplateText,
-} from '../normalization.helpers';
+import { type AiNode, type DatabaseConfig, type DbQueryConfig } from '@/shared/contracts/ai-paths';
+import { DATABASE_INPUT_PORTS } from '../../constants';
+import { ensureUniquePorts } from '../../utils';
+import { migrateLegacyDbQueryProvider, normalizeTemplateText } from '../normalization.helpers';
 
 export const normalizeDatabaseNode = (node: AiNode): AiNode => {
   const defaultQuery = {
@@ -31,39 +20,34 @@ export const normalizeDatabaseNode = (node: AiNode): AiNode => {
   const legacyDbQuery = (node.config as Record<string, unknown> | undefined)?.['dbQuery'];
   const queryConfig = {
     ...defaultQuery,
-    ...(
-      node.config?.database?.query ??
+    ...(node.config?.database?.query ??
       (legacyDbQuery && typeof legacyDbQuery === 'object'
         ? (legacyDbQuery as Record<string, unknown>)
-        : {})
-    ),
+        : {})),
   };
-  const migratedQueryConfig = migrateLegacyDbQueryProvider(
-    queryConfig as DbQueryConfig
-  );
+  const migratedQueryConfig = migrateLegacyDbQueryProvider(queryConfig as DbQueryConfig);
   const databaseConfig: DatabaseConfig = node.config?.database ?? { operation: 'query' };
   const mappings = databaseConfig.mappings ?? [];
   const forcedInputs = ['result', 'content_en', 'productId', 'entityId'];
   const inferredUseMongoActions =
-  databaseConfig.useMongoActions ??
-  Boolean(databaseConfig.actionCategory || databaseConfig.action);
+    databaseConfig.useMongoActions ??
+    Boolean(databaseConfig.actionCategory || databaseConfig.action);
   const parameterInferenceGuard = databaseConfig.parameterInferenceGuard
     ? {
-      enabled: databaseConfig.parameterInferenceGuard.enabled ?? false,
-      targetPath: databaseConfig.parameterInferenceGuard.targetPath ?? 'parameters',
-      definitionsPort: databaseConfig.parameterInferenceGuard.definitionsPort ?? 'result',
-      definitionsPath: databaseConfig.parameterInferenceGuard.definitionsPath ?? '',
-      enforceOptionLabels:
-        databaseConfig.parameterInferenceGuard.enforceOptionLabels ?? true,
-      allowUnknownParameterIds:
-        databaseConfig.parameterInferenceGuard.allowUnknownParameterIds ?? false,
-    }
+        enabled: databaseConfig.parameterInferenceGuard.enabled ?? false,
+        targetPath: databaseConfig.parameterInferenceGuard.targetPath ?? 'parameters',
+        definitionsPort: databaseConfig.parameterInferenceGuard.definitionsPort ?? 'result',
+        definitionsPath: databaseConfig.parameterInferenceGuard.definitionsPath ?? '',
+        enforceOptionLabels: databaseConfig.parameterInferenceGuard.enforceOptionLabels ?? true,
+        allowUnknownParameterIds:
+          databaseConfig.parameterInferenceGuard.allowUnknownParameterIds ?? false,
+      }
     : undefined;
   const runtimeConfig = node.config?.runtime
     ? {
-      ...node.config.runtime,
-      ...(node.config.runtime.waitForInputs === undefined ? { waitForInputs: true } : {}),
-    }
+        ...node.config.runtime,
+        ...(node.config.runtime.waitForInputs === undefined ? { waitForInputs: true } : {}),
+      }
     : { waitForInputs: true };
   return {
     ...node,
@@ -91,17 +75,14 @@ export const normalizeDatabaseNode = (node: AiNode): AiNode => {
         writeSourcePath: databaseConfig.writeSourcePath ?? '',
         dryRun: databaseConfig.dryRun ?? false,
         writeOutcomePolicy: {
-          onZeroAffected:
-            databaseConfig.writeOutcomePolicy?.onZeroAffected ?? 'fail',
+          onZeroAffected: databaseConfig.writeOutcomePolicy?.onZeroAffected ?? 'fail',
         },
         ...(databaseConfig.presetId ? { presetId: databaseConfig.presetId } : {}),
         skipEmpty: databaseConfig.skipEmpty ?? false,
         trimStrings: databaseConfig.trimStrings ?? false,
         aiPrompt: databaseConfig.aiPrompt ?? '',
         validationRuleIds: databaseConfig.validationRuleIds ?? [],
-        ...(parameterInferenceGuard
-          ? { parameterInferenceGuard }
-          : {}),
+        ...(parameterInferenceGuard ? { parameterInferenceGuard } : {}),
       },
     },
   };

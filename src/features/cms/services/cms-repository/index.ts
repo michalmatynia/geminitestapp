@@ -61,7 +61,7 @@ export async function getCmsRepository(): Promise<CmsRepository> {
         level: 'info',
         source: LOG_SOURCE,
         message: 'repository',
-        context: { provider: 'mongodb' }
+        context: { provider: 'mongodb' },
       });
     }
     return cachedRepository;
@@ -75,7 +75,7 @@ export async function getCmsRepository(): Promise<CmsRepository> {
         level: 'info',
         source: LOG_SOURCE,
         message: 'repository',
-        context: { provider: 'prisma' }
+        context: { provider: 'prisma' },
       });
     }
     return cachedRepository;

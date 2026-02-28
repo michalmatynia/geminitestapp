@@ -46,7 +46,10 @@ function getPreviewVars(preset: AnimationPreset): { from: gsap.TweenVars; to: gs
     case 'skew':
       return { from: { skewX: 12, opacity: 0 }, to: { skewX: 0, opacity: 1, ...baseTo } };
     case 'blurIn':
-      return { from: { filter: 'blur(4px)', opacity: 0 }, to: { filter: 'blur(0px)', opacity: 1, ...baseTo } };
+      return {
+        from: { filter: 'blur(4px)', opacity: 0 },
+        to: { filter: 'blur(0px)', opacity: 1, ...baseTo },
+      };
     case 'rotate':
       return { from: { rotation: -20, opacity: 0 }, to: { rotation: 0, opacity: 1, ...baseTo } };
     case 'rotateX':
@@ -87,7 +90,10 @@ function getPreviewVars(preset: AnimationPreset): { from: gsap.TweenVars; to: gs
         to: { rotation: 0, x: 0, opacity: 1, ...baseTo },
       };
     case 'bounce':
-      return { from: { y: -8, opacity: 0 }, to: { y: 0, opacity: 1, duration: 0.7, ease: 'bounce.out' } };
+      return {
+        from: { y: -8, opacity: 0 },
+        to: { y: 0, opacity: 1, duration: 0.7, ease: 'bounce.out' },
+      };
     default:
       return { from: {}, to: baseTo };
   }
@@ -97,15 +103,7 @@ function getPreviewKeyframes(preset: AnimationPreset): gsap.TweenVars | null {
   switch (preset) {
     case 'shake':
       return {
-        keyframes: [
-          { x: -4 },
-          { x: 4 },
-          { x: -3 },
-          { x: 3 },
-          { x: -2 },
-          { x: 2 },
-          { x: 0 },
-        ],
+        keyframes: [{ x: -4 }, { x: 4 }, { x: -3 }, { x: 3 }, { x: -2 }, { x: 2 }, { x: 0 }],
         ease: 'none',
       };
     case 'wobble':
@@ -135,7 +133,11 @@ function getPreviewKeyframes(preset: AnimationPreset): gsap.TweenVars | null {
   }
 }
 
-export function AnimationPreviewIcon({ preset, active = false, className }: AnimationPreviewIconProps): React.JSX.Element {
+export function AnimationPreviewIcon({
+  preset,
+  active = false,
+  className,
+}: AnimationPreviewIconProps): React.JSX.Element {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

@@ -23,11 +23,11 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
 
   const tree = forceFresh
     ? await (async () => {
-      const primaryProvider = await getProductDataProvider();
-      const repository = await getCategoryRepository(primaryProvider);
-      return repository.getCategoryTree(catalogId);
-    })()
+        const primaryProvider = await getProductDataProvider();
+        const repository = await getCategoryRepository(primaryProvider);
+        return repository.getCategoryTree(catalogId);
+      })()
     : await CachedProductService.getCategoryTree(catalogId);
-  
+
   return NextResponse.json(tree);
 }

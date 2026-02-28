@@ -11,22 +11,17 @@ interface LogModalProps extends EntityModalProps<string> {
   size?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
-export const LogModal = ({ 
-  isOpen, 
-  onClose, 
-  item: content, 
+export const LogModal = ({
+  isOpen,
+  onClose,
+  item: content,
   title = 'Operation Log',
   size = 'md',
 }: LogModalProps): React.JSX.Element | null => {
   if (!isOpen || content === undefined) return null;
 
   return (
-    <ContentDisplayModal
-      open={isOpen}
-      onClose={onClose}
-      title={title}
-      size={size}
-    >
+    <ContentDisplayModal open={isOpen} onClose={onClose} title={title} size={size}>
       <SyntaxHighlighter
         language='bash'
         style={atomDark}

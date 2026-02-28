@@ -27,11 +27,7 @@ export const TRADERA_ERROR_SELECTOR = [
   '.text-red-500',
 ].join(', ');
 
-type FailHandler = (
-  step: string,
-  detail: string,
-  status?: number
-) => Promise<never>;
+type FailHandler = (step: string, detail: string, status?: number) => Promise<never>;
 
 export const createTraderaBrowserTestUtils = (input: {
   page: Page;
@@ -84,10 +80,7 @@ export const createTraderaBrowserTestUtils = (input: {
     }
   };
 
-  const safeIsVisible = async (
-    locator: Locator,
-    label: string
-  ): Promise<boolean> => {
+  const safeIsVisible = async (locator: Locator, label: string): Promise<boolean> => {
     try {
       return await locator.isVisible();
     } catch (error) {
@@ -105,11 +98,7 @@ export const createTraderaBrowserTestUtils = (input: {
     }
   };
 
-  const safeGoto = async (
-    url: string,
-    options: Parameters<Page['goto']>[1],
-    label: string
-  ) => {
+  const safeGoto = async (url: string, options: Parameters<Page['goto']>[1], label: string) => {
     try {
       return await input.page.goto(url, options);
     } catch (error) {
@@ -158,9 +147,7 @@ export const createTraderaBrowserTestUtils = (input: {
       const prefix = `${input.connectionId}-${now}-${safeLabel || 'debug'}`;
       const screenshotPath = path.join(baseDir, `${prefix}.png`);
       const htmlPath = path.join(baseDir, `${prefix}.html`);
-      await input.page
-        .screenshot({ path: screenshotPath, fullPage: true })
-        .catch(() => undefined);
+      await input.page.screenshot({ path: screenshotPath, fullPage: true }).catch(() => undefined);
       const html = await input.page.content().catch(() => '');
       if (html) {
         await writeFile(htmlPath, html, 'utf8');
@@ -171,11 +158,7 @@ export const createTraderaBrowserTestUtils = (input: {
     }
   };
 
-  const failWithDebug = async (
-    step: string,
-    detail: string,
-    status = 400
-  ): Promise<never> => {
+  const failWithDebug = async (step: string, detail: string, status = 400): Promise<never> => {
     const debugInfo = await captureDebugArtifacts(step);
     const combined = debugInfo ? `${detail}\n\nDebug:\n${debugInfo}` : detail;
     return input.fail(step, combined, status);

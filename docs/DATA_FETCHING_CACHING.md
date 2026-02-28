@@ -18,39 +18,39 @@ We use three primary caching semantics provided by Next.js:
 
 These routes handle data that changes frequently or is specific to the authenticated user.
 
-| Path | Rationale |
-| :--- | :--- |
-| `/api/chatbot/*` | Chat messages and sessions are highly dynamic and user-specific. |
-| `/api/auth/*` | Session and user data must always be fresh for security. |
-| `/api/analytics/*` | Event logs and summaries need to reflect the latest data. |
-| `/api/search/*` | Search results depend on the query and must be fresh. |
-| `/api/ai-paths/runs/*` | Run statuses and logs are real-time. |
-| `/api/system/*` | Health checks and system diagnostics must be real-time. |
-| `/api/settings` (with `debug=1`) | Debug info must never be cached. |
+| Path                             | Rationale                                                        |
+| :------------------------------- | :--------------------------------------------------------------- |
+| `/api/chatbot/*`                 | Chat messages and sessions are highly dynamic and user-specific. |
+| `/api/auth/*`                    | Session and user data must always be fresh for security.         |
+| `/api/analytics/*`               | Event logs and summaries need to reflect the latest data.        |
+| `/api/search/*`                  | Search results depend on the query and must be fresh.            |
+| `/api/ai-paths/runs/*`           | Run statuses and logs are real-time.                             |
+| `/api/system/*`                  | Health checks and system diagnostics must be real-time.          |
+| `/api/settings` (with `debug=1`) | Debug info must never be cached.                                 |
 
 ### 2. Semi-Static Content (`next.revalidate`)
 
 These routes handle content that changes occasionally but can tolerate some staleness for performance gains.
 
-| Path | Revalidate | Rationale |
-| :--- | :--- | :--- |
-| `/api/products` | 60s | Product listings are frequently updated but benefit from a short cache. |
-| `/api/notes` | 60s | Personal notes are updated by the user, but a short cache helps performance. |
-| `/api/cms/pages` | 300s | CMS pages change less frequently than products. |
-| `/api/cms/blocks` | 300s | CMS components are reused across pages. |
-| `/api/assets3d` | 60s | 3D asset metadata is semi-static. |
-| `/api/settings` (GET) | 120s | App settings are cached with a background revalidation. |
+| Path                  | Revalidate | Rationale                                                                    |
+| :-------------------- | :--------- | :--------------------------------------------------------------------------- |
+| `/api/products`       | 60s        | Product listings are frequently updated but benefit from a short cache.      |
+| `/api/notes`          | 60s        | Personal notes are updated by the user, but a short cache helps performance. |
+| `/api/cms/pages`      | 300s       | CMS pages change less frequently than products.                              |
+| `/api/cms/blocks`     | 300s       | CMS components are reused across pages.                                      |
+| `/api/assets3d`       | 60s        | 3D asset metadata is semi-static.                                            |
+| `/api/settings` (GET) | 120s       | App settings are cached with a background revalidation.                      |
 
 ### 3. Static Metadata (`force-cache`)
 
 These routes handle data that rarely, if ever, changes.
 
-| Path | Revalidate | Rationale |
-| :--- | :--- | :--- |
-| `/api/languages` | 3600s | Available languages are almost static. |
-| `/api/countries` | 3600s | Country lists are static. |
-| `/api/currencies` | 3600s | Currency definitions change very rarely. |
-| `/api/catalogs` | 600s | Product catalogs are mostly static configuration. |
+| Path              | Revalidate | Rationale                                         |
+| :---------------- | :--------- | :------------------------------------------------ |
+| `/api/languages`  | 3600s      | Available languages are almost static.            |
+| `/api/countries`  | 3600s      | Country lists are static.                         |
+| `/api/currencies` | 3600s      | Currency definitions change very rarely.          |
+| `/api/catalogs`   | 600s       | Product catalogs are mostly static configuration. |
 
 ---
 
@@ -58,9 +58,9 @@ These routes handle data that rarely, if ever, changes.
 
 While the API routes provide the server-side caching semantics, the client-side uses TanStack Query with its own `staleTime` and `gcTime` settings.
 
-*   **Standard fresh data**: `staleTime: 5 * 60 * 1000` (5 minutes).
-*   **Real-time data**: `staleTime: 0`.
-*   **Long-term data**: `staleTime: 60 * 60 * 1000` (1 hour).
+- **Standard fresh data**: `staleTime: 5 * 60 * 1000` (5 minutes).
+- **Real-time data**: `staleTime: 0`.
+- **Long-term data**: `staleTime: 60 * 60 * 1000` (1 hour).
 
 ## Manual Invalidation
 

@@ -104,10 +104,10 @@ export const isImageStudioRuleFromScopes = (
 ): boolean =>
   Boolean(
     rule &&
-      (rule.id.toLowerCase().includes('image_studio') ||
-        rule.id.toLowerCase().includes('image-studio') ||
-        hasOnlyImageStudioScopes(appliesToScopes) ||
-        hasOnlyImageStudioScopes(launchAppliesToScopes))
+    (rule.id.toLowerCase().includes('image_studio') ||
+      rule.id.toLowerCase().includes('image-studio') ||
+      hasOnlyImageStudioScopes(appliesToScopes) ||
+      hasOnlyImageStudioScopes(launchAppliesToScopes))
   );
 
 export const normalizeRuleKind = (value: string): PromptValidationRule['kind'] =>

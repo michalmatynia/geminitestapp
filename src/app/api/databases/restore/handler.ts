@@ -18,8 +18,8 @@ import {
   getMongoRestoreCommand,
   mongoExecFileAsync,
 } from '@/features/database/server';
-import { assertDatabaseEngineManageAccess } from '@/features/database/services/database-engine-access';
-import { assertDatabaseEngineOperationEnabled } from '@/features/database/services/database-engine-operation-guards';
+import { assertDatabaseEngineManageAccess } from '@/shared/lib/db/services/database-engine-access';
+import { assertDatabaseEngineOperationEnabled } from '@/shared/lib/db/services/database-engine-operation-guards';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, internalError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
@@ -48,7 +48,7 @@ export async function postDatabasesRestoreHandler(
   const { searchParams } = new URL(req.url);
   const type = searchParams.get('type') || 'postgresql';
 
-  const body = await req.json() as {
+  const body = (await req.json()) as {
     backupName: string;
     truncateBeforeRestore?: boolean;
   };
@@ -110,7 +110,9 @@ export async function postDatabasesRestoreHandler(
       const logContent = `command:\n${commandString}\n\nstdout:\n${stdout}\n\nstderr:\n${stderr}`;
       await fs.writeFile(logPath, logContent);
       throw internalError('Failed to restore backup', {
-        stage, backupName, log: logContent
+        stage,
+        backupName,
+        log: logContent,
       });
     }
 
@@ -123,10 +125,7 @@ export async function postDatabasesRestoreHandler(
 
     try {
       const logFile = await fs.readFile(restoreLogPath, 'utf-8');
-      logData = JSON.parse(logFile) as Record<
-        string,
-        { date: string; logFile: string }
-      >;
+      logData = JSON.parse(logFile) as Record<string, { date: string; logFile: string }>;
     } catch (error) {
       const { ErrorSystem } = await import('@/features/observability/server');
       void ErrorSystem.logWarning('Failed to load restore-log.json', { error, stage, backupName });
@@ -155,13 +154,8 @@ export async function postDatabasesRestoreHandler(
     // Data-only restore requires empty tables to avoid FK constraint violations.
     // Always truncate before restoring PostgreSQL data.
     const dbUrl = process.env['DATABASE_URL'] ?? '';
-    if (
-      !dbUrl.startsWith('postgres://') &&
-      !dbUrl.startsWith('postgresql://')
-    ) {
-      throw badRequestError(
-        'Truncate before restore is only supported for PostgreSQL.'
-      );
+    if (!dbUrl.startsWith('postgres://') && !dbUrl.startsWith('postgresql://')) {
+      throw badRequestError('Truncate before restore is only supported for PostgreSQL.');
     }
 
     const tables = (
@@ -175,13 +169,9 @@ export async function postDatabasesRestoreHandler(
       .filter(Boolean);
 
     if (tables.length > 0) {
-      const quotedTables = tables
-        .map((name: string) => `"${name.replace(/"/g, '""')}"`)
-        .join(', ');
+      const quotedTables = tables.map((name: string) => `"${name.replace(/"/g, '""')}"`).join(', ');
 
-      await prisma.$executeRawUnsafe(
-        `TRUNCATE TABLE ${quotedTables} RESTART IDENTITY CASCADE`
-      );
+      await prisma.$executeRawUnsafe(`TRUNCATE TABLE ${quotedTables} RESTART IDENTITY CASCADE`);
     }
 
     stage = 'pg_restore';
@@ -221,7 +211,9 @@ export async function postDatabasesRestoreHandler(
         ? ' Try using JSON Restore as an alternative.'
         : '';
       throw internalError(`Failed to restore backup.${hint}`, {
-        stage, backupName, log: logContent
+        stage,
+        backupName,
+        log: logContent,
       });
     }
 
@@ -249,9 +241,14 @@ export async function postDatabasesRestoreHandler(
       `);
     } catch (error) {
       const { ErrorSystem } = await import('@/features/observability/server');
-      void ErrorSystem.logWarning('Sequence reset failed after restore', { error, stage, backupName });
+      void ErrorSystem.logWarning('Sequence reset failed after restore', {
+        error,
+        stage,
+        backupName,
+      });
       // Sequence reset is best-effort; log but don't fail the restore
-      stderr += '\n[WARNING] Sequence reset failed. Auto-increment columns may need manual adjustment.';
+      stderr +=
+        '\n[WARNING] Sequence reset failed. Auto-increment columns may need manual adjustment.';
     }
 
     const logContent = `command:\n${commandString}\n\nstdout:\n${stdout}\n\nstderr:\n${stderr}`;
@@ -263,10 +260,7 @@ export async function postDatabasesRestoreHandler(
 
     try {
       const logFile = await fs.readFile(restoreLogPath, 'utf-8');
-      logData = JSON.parse(logFile) as Record<
-        string,
-        { date: string; logFile: string }
-      >;
+      logData = JSON.parse(logFile) as Record<string, { date: string; logFile: string }>;
     } catch (error) {
       const { ErrorSystem } = await import('@/features/observability/server');
       void ErrorSystem.logWarning('Failed to load restore-log.json', { error, stage, backupName });

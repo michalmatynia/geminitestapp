@@ -87,7 +87,9 @@ const buildState = (): CanvasBoardState =>
     selectedNodeIdSet: new Set<string>(),
     selectEdge: noop,
     setConfigOpen: noop,
-    setEdgeRoutingMode: noop as unknown as React.Dispatch<React.SetStateAction<'bezier' | 'orthogonal'>>,
+    setEdgeRoutingMode: noop as unknown as React.Dispatch<
+      React.SetStateAction<'bezier' | 'orthogonal'>
+    >,
     handlePointerDownNode: noop,
     handlePointerMoveNode: noop,
     handlePointerUpNode: noop,
@@ -96,10 +98,26 @@ const buildState = (): CanvasBoardState =>
     handlePanEnd: noop as unknown as (event: React.PointerEvent) => void,
     handleWheel: noop as unknown as (event: React.WheelEvent) => void,
     handleRemoveEdge: noop,
-    handleDisconnectPort: noop as unknown as (direction: 'input' | 'output', nodeId: string, port: string) => void,
-    handleStartConnection: noop as unknown as (event: React.PointerEvent<Element>, node: AiNode, port: string) => void,
-    handleCompleteConnection: noop as unknown as (event: React.PointerEvent<Element>, node: AiNode, port: string) => void,
-    handleReconnectInput: noop as unknown as (event: React.PointerEvent<Element>, nodeId: string, port: string) => void,
+    handleDisconnectPort: noop as unknown as (
+      direction: 'input' | 'output',
+      nodeId: string,
+      port: string
+    ) => void,
+    handleStartConnection: noop as unknown as (
+      event: React.PointerEvent<Element>,
+      node: AiNode,
+      port: string
+    ) => void,
+    handleCompleteConnection: noop as unknown as (
+      event: React.PointerEvent<Element>,
+      node: AiNode,
+      port: string
+    ) => void,
+    handleReconnectInput: noop as unknown as (
+      event: React.PointerEvent<Element>,
+      nodeId: string,
+      port: string
+    ) => void,
     handleSelectNode: noop,
     handleDrop: noop as unknown as (event: React.DragEvent<HTMLDivElement>) => void,
     handleDragOver: noop as unknown as (event: React.DragEvent<HTMLDivElement>) => void,
@@ -116,11 +134,13 @@ const buildState = (): CanvasBoardState =>
     pinnedConnectorKey: null,
     setPinnedConnectorKey: noop as unknown as React.Dispatch<React.SetStateAction<string | null>>,
     svgConnectorTooltip: null,
-    setSvgConnectorTooltip:
-      noop as unknown as React.Dispatch<React.SetStateAction<SvgConnectorTooltipState | null>>,
+    setSvgConnectorTooltip: noop as unknown as React.Dispatch<
+      React.SetStateAction<SvgConnectorTooltipState | null>
+    >,
     svgNodeDiagnosticsTooltip: null,
-    setSvgNodeDiagnosticsTooltip:
-      noop as unknown as React.Dispatch<React.SetStateAction<SvgNodeDiagnosticsTooltipState | null>>,
+    setSvgNodeDiagnosticsTooltip: noop as unknown as React.Dispatch<
+      React.SetStateAction<SvgNodeDiagnosticsTooltipState | null>
+    >,
     rendererMode: 'svg',
     setRendererMode: noop as unknown as React.Dispatch<React.SetStateAction<'legacy' | 'svg'>>,
     showMinimap: false,

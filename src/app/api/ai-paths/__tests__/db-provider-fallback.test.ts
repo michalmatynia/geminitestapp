@@ -96,9 +96,7 @@ describe('AI Paths DB provider fallback', () => {
     });
     resolveCollectionProviderForRequestMock.mockResolvedValueOnce('prisma');
 
-    const updateOneMock = vi
-      .fn()
-      .mockResolvedValue({ matchedCount: 1, modifiedCount: 1 });
+    const updateOneMock = vi.fn().mockResolvedValue({ matchedCount: 1, modifiedCount: 1 });
     getMongoDbMock.mockResolvedValue({
       collection: vi.fn().mockReturnValue({
         updateOne: updateOneMock,
@@ -110,10 +108,8 @@ describe('AI Paths DB provider fallback', () => {
     process.env['MONGODB_URI'] = 'mongodb://localhost/test';
 
     const response = await postAiPathsDbUpdateHandler(
-      createRequest('/api/ai-paths/db-update') as Parameters<
-        typeof postAiPathsDbUpdateHandler
-      >[0],
-      {} as Parameters<typeof postAiPathsDbUpdateHandler>[1],
+      createRequest('/api/ai-paths/db-update') as Parameters<typeof postAiPathsDbUpdateHandler>[0],
+      {} as Parameters<typeof postAiPathsDbUpdateHandler>[1]
     );
     const body = (await response.json()) as Record<string, unknown>;
 
@@ -126,11 +122,11 @@ describe('AI Paths DB provider fallback', () => {
         used: true,
         attemptedProvider: 'prisma',
         resolvedProvider: 'mongodb',
-      }),
+      })
     );
     expect(updateOneMock).toHaveBeenCalledWith(
       { id: 'product-1' },
-      { $set: { name_en: 'Updated name' } },
+      { $set: { name_en: 'Updated name' } }
     );
   });
 
@@ -146,17 +142,15 @@ describe('AI Paths DB provider fallback', () => {
         idType: 'string',
       },
     });
-    isCollectionAllowedMock.mockImplementation(
-      (value: string) => value === 'products',
-    );
+    isCollectionAllowedMock.mockImplementation((value: string) => value === 'products');
 
     await expect(
       postAiPathsDbUpdateHandler(
         createRequest('/api/ai-paths/db-update') as Parameters<
           typeof postAiPathsDbUpdateHandler
         >[0],
-        {} as Parameters<typeof postAiPathsDbUpdateHandler>[1],
-      ),
+        {} as Parameters<typeof postAiPathsDbUpdateHandler>[1]
+      )
     ).rejects.toThrow('Collection not allowlisted');
 
     expect(isCollectionAllowedMock).toHaveBeenCalledWith('Product');
@@ -178,14 +172,10 @@ describe('AI Paths DB provider fallback', () => {
         idType: 'string',
       },
     });
-    isCollectionAllowedMock.mockImplementation(
-      (value: string) => value === 'products',
-    );
+    isCollectionAllowedMock.mockImplementation((value: string) => value === 'products');
     resolveCollectionProviderForRequestMock.mockResolvedValueOnce('mongodb');
 
-    const updateOneMock = vi
-      .fn()
-      .mockResolvedValue({ matchedCount: 1, modifiedCount: 1 });
+    const updateOneMock = vi.fn().mockResolvedValue({ matchedCount: 1, modifiedCount: 1 });
     const mongoCollectionMock = vi.fn().mockReturnValue({
       updateOne: updateOneMock,
       updateMany: vi.fn(),
@@ -197,18 +187,13 @@ describe('AI Paths DB provider fallback', () => {
     process.env['MONGODB_URI'] = 'mongodb://localhost/test';
 
     const response = await postAiPathsDbUpdateHandler(
-      createRequest('/api/ai-paths/db-update') as Parameters<
-        typeof postAiPathsDbUpdateHandler
-      >[0],
-      {} as Parameters<typeof postAiPathsDbUpdateHandler>[1],
+      createRequest('/api/ai-paths/db-update') as Parameters<typeof postAiPathsDbUpdateHandler>[0],
+      {} as Parameters<typeof postAiPathsDbUpdateHandler>[1]
     );
     const body = (await response.json()) as Record<string, unknown>;
 
     expect(isCollectionAllowedMock).toHaveBeenCalledWith('products');
-    expect(resolveCollectionProviderForRequestMock).toHaveBeenCalledWith(
-      'products',
-      'auto',
-    );
+    expect(resolveCollectionProviderForRequestMock).toHaveBeenCalledWith('products', 'auto');
     expect(mongoCollectionMock).toHaveBeenCalledWith('products');
     expect(body['collection']).toBe('products');
     expect(body['requestedCollection']).toBe('Product');
@@ -227,12 +212,8 @@ describe('AI Paths DB provider fallback', () => {
     });
     resolveCollectionProviderForRequestMock.mockResolvedValueOnce('prisma');
 
-    const aggregateToArrayMock = vi
-      .fn()
-      .mockResolvedValue([{ id: 'product-1' }]);
-    const aggregateMock = vi
-      .fn()
-      .mockReturnValue({ toArray: aggregateToArrayMock });
+    const aggregateToArrayMock = vi.fn().mockResolvedValue([{ id: 'product-1' }]);
+    const aggregateMock = vi.fn().mockReturnValue({ toArray: aggregateToArrayMock });
     getMongoDbMock.mockResolvedValue({
       collection: vi.fn().mockReturnValue({
         aggregate: aggregateMock,
@@ -243,10 +224,8 @@ describe('AI Paths DB provider fallback', () => {
     process.env['MONGODB_URI'] = 'mongodb://localhost/test';
 
     const response = await postAiPathsDbActionHandler(
-      createRequest('/api/ai-paths/db-action') as Parameters<
-        typeof postAiPathsDbActionHandler
-      >[0],
-      {} as Parameters<typeof postAiPathsDbActionHandler>[1],
+      createRequest('/api/ai-paths/db-action') as Parameters<typeof postAiPathsDbActionHandler>[0],
+      {} as Parameters<typeof postAiPathsDbActionHandler>[1]
     );
     const body = (await response.json()) as Record<string, unknown>;
 
@@ -260,11 +239,9 @@ describe('AI Paths DB provider fallback', () => {
         attemptedProvider: 'prisma',
         resolvedProvider: 'mongodb',
         code: 'action_not_supported',
-      }),
+      })
     );
-    expect(aggregateMock).toHaveBeenCalledWith([
-      { $match: { id: 'product-1' } },
-    ]);
+    expect(aggregateMock).toHaveBeenCalledWith([{ $match: { id: 'product-1' } }]);
     expect(aggregateToArrayMock).toHaveBeenCalledTimes(1);
   });
 
@@ -283,16 +260,12 @@ describe('AI Paths DB provider fallback', () => {
 
     const prismaUpdateMock = vi
       .fn()
-      .mockRejectedValue(
-        Object.assign(new Error('Record not found'), { code: 'P2025' }),
-      );
+      .mockRejectedValue(Object.assign(new Error('Record not found'), { code: 'P2025' }));
     prismaMock['product'] = {
       update: prismaUpdateMock,
     };
 
-    const updateOneMock = vi
-      .fn()
-      .mockResolvedValue({ matchedCount: 1, modifiedCount: 1 });
+    const updateOneMock = vi.fn().mockResolvedValue({ matchedCount: 1, modifiedCount: 1 });
     getMongoDbMock.mockResolvedValue({
       collection: vi.fn().mockReturnValue({
         updateOne: updateOneMock,
@@ -303,10 +276,8 @@ describe('AI Paths DB provider fallback', () => {
     process.env['MONGODB_URI'] = 'mongodb://localhost/test';
 
     const response = await postAiPathsDbActionHandler(
-      createRequest('/api/ai-paths/db-action') as Parameters<
-        typeof postAiPathsDbActionHandler
-      >[0],
-      {} as Parameters<typeof postAiPathsDbActionHandler>[1],
+      createRequest('/api/ai-paths/db-action') as Parameters<typeof postAiPathsDbActionHandler>[0],
+      {} as Parameters<typeof postAiPathsDbActionHandler>[1]
     );
     const body = (await response.json()) as Record<string, unknown>;
 
@@ -317,7 +288,7 @@ describe('AI Paths DB provider fallback', () => {
     expect(updateOneMock).toHaveBeenCalledWith(
       { id: 'product-1' },
       { $set: { name_en: 'Updated name' } },
-      { upsert: false },
+      { upsert: false }
     );
     expect(body['provider']).toBe('mongodb');
     expect(body['resolvedProvider']).toBe('mongodb');
@@ -327,7 +298,7 @@ describe('AI Paths DB provider fallback', () => {
         attemptedProvider: 'prisma',
         resolvedProvider: 'mongodb',
         code: 'record_not_found',
-      }),
+      })
     );
   });
 });

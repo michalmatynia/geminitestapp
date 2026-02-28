@@ -1,21 +1,13 @@
 'use client';
 
-import {
-  ChevronDown,
-  ChevronUp,
-  Columns2,
-  Copy,
-  GitBranchPlus,
-  Focus,
-  Layers,
-} from 'lucide-react';
+import { ChevronDown, ChevronUp, Columns2, Copy, GitBranchPlus, Focus, Layers } from 'lucide-react';
 import React from 'react';
 
 import { Card } from '@/shared/ui';
 
 import { useVersionGraphContextMenuContext } from './VersionGraphContextMenuContext';
 import { useSettingsState } from '../context/SettingsContext';
-import { getImageStudioDocTooltip } from '../utils/studio-docs';
+import { getImageStudioDocTooltip } from '@/shared/lib/ai/image-studio/utils/studio-docs';
 
 // ── Component ────────────────────────────────────────────────────────────────
 
@@ -88,9 +80,13 @@ export function VersionGraphContextMenu(): React.JSX.Element {
             }}
           >
             {collapsedNodeIds.has(menu.nodeId) ? (
-              <><ChevronDown className='size-3' /> Expand</>
+              <>
+                <ChevronDown className='size-3' /> Expand
+              </>
             ) : (
-              <><ChevronUp className='size-3' /> Collapse</>
+              <>
+                <ChevronUp className='size-3' /> Collapse
+              </>
             )}
           </button>
         ) : null}

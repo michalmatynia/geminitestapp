@@ -56,7 +56,7 @@ export function useImageStudioRuns() {
   });
 
   const runs = useMemo(() => runsQuery.data?.runs ?? [], [runsQuery.data]);
-  
+
   const stats = useMemo(() => {
     const runningCount = runs.filter((run) => run.status === 'running').length;
     const queuedCount = runs.filter((run) => run.status === 'queued').length;

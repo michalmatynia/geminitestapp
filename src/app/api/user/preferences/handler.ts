@@ -7,7 +7,7 @@ import {
   warmUserPreferencesCache,
 } from '@/features/auth/server';
 import { auth } from '@/features/auth/server';
-import { logSystemEvent } from '@/features/observability/server';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import type { UpdateUserPreferencesInput as UserPreferencesData } from '@/shared/contracts/auth';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { parseUserPreferencesUpdatePayload } from '@/shared/validations/user-preferences';
@@ -26,11 +26,15 @@ const USER_PREFERENCES_REPOSITORY_TIMEOUT_MS = parsePositiveInt(
   3500
 );
 
-const withTimeout = async <T,>(label: string, fn: () => Promise<T>): Promise<T> => {
+const withTimeout = async <T>(label: string, fn: () => Promise<T>): Promise<T> => {
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
   const timeoutPromise = new Promise<T>((_, reject) => {
     timeoutId = setTimeout(() => {
-      reject(new Error(`[user-preferences] ${label} timed out after ${USER_PREFERENCES_REPOSITORY_TIMEOUT_MS}ms`));
+      reject(
+        new Error(
+          `[user-preferences] ${label} timed out after ${USER_PREFERENCES_REPOSITORY_TIMEOUT_MS}ms`
+        )
+      );
     }, USER_PREFERENCES_REPOSITORY_TIMEOUT_MS);
   });
 
@@ -51,10 +55,8 @@ const buildUserPreferencesResponse = (
   productListPageSize: preferences?.productListPageSize ?? 12,
   productListThumbnailSource: preferences?.productListThumbnailSource ?? 'file',
   productListFiltersCollapsedByDefault: preferences?.productListFiltersCollapsedByDefault ?? false,
-  productListAdvancedFilterPresets:
-    preferences?.productListAdvancedFilterPresets ?? [],
-  productListAppliedAdvancedFilter:
-    preferences?.productListAppliedAdvancedFilter ?? null,
+  productListAdvancedFilterPresets: preferences?.productListAdvancedFilterPresets ?? [],
+  productListAppliedAdvancedFilter: preferences?.productListAppliedAdvancedFilter ?? null,
   productListAppliedAdvancedFilterPresetId:
     preferences?.productListAppliedAdvancedFilterPresetId ?? null,
   productListDraftIconColorMode: preferences?.productListDraftIconColorMode ?? 'theme',
@@ -67,8 +69,7 @@ const buildUserPreferencesResponse = (
   caseResolverCaseListSearchScope: preferences?.caseResolverCaseListSearchScope ?? 'all',
   caseResolverCaseListFiltersCollapsedByDefault:
     preferences?.caseResolverCaseListFiltersCollapsedByDefault ?? true,
-  caseResolverCaseListShowNestedContent:
-    preferences?.caseResolverCaseListShowNestedContent ?? true,
+  caseResolverCaseListShowNestedContent: preferences?.caseResolverCaseListShowNestedContent ?? true,
   adminMenuCollapsed: preferences?.adminMenuCollapsed ?? false,
   cmsLastPageId: preferences?.cmsLastPageId ?? null,
   cmsActiveDomainId: preferences?.cmsActiveDomainId ?? null,
@@ -79,11 +80,11 @@ const buildUserPreferencesResponse = (
   cmsSlideshowPauseOnHoverInEditor: preferences?.cmsSlideshowPauseOnHoverInEditor ?? false,
   ...(includeAdminMenu
     ? {
-      adminMenuFavorites: preferences?.adminMenuFavorites ?? [],
-      adminMenuSectionColors: preferences?.adminMenuSectionColors ?? {},
-      adminMenuCustomEnabled: preferences?.adminMenuCustomEnabled ?? false,
-      adminMenuCustomNav: preferences?.adminMenuCustomNav ?? [],
-    }
+        adminMenuFavorites: preferences?.adminMenuFavorites ?? [],
+        adminMenuSectionColors: preferences?.adminMenuSectionColors ?? {},
+        adminMenuCustomEnabled: preferences?.adminMenuCustomEnabled ?? false,
+        adminMenuCustomNav: preferences?.adminMenuCustomNav ?? [],
+      }
     : {}),
 });
 
@@ -106,7 +107,7 @@ export async function getUserPreferencesHandler(
   const logTiming = shouldLogTiming();
   const timings: Record<string, number> = {};
   const totalStart = performance.now();
-  const withTiming = async <T,>(label: string, fn: () => Promise<T>): Promise<T> => {
+  const withTiming = async <T>(label: string, fn: () => Promise<T>): Promise<T> => {
     const start = performance.now();
     const result = await fn();
     timings[label] = performance.now() - start;
@@ -114,7 +115,10 @@ export async function getUserPreferencesHandler(
   };
 
   const include = _req.nextUrl.searchParams.get('include') ?? '';
-  const includeAdminMenu = include.split(',').map((value: string) => value.trim()).includes('admin-menu');
+  const includeAdminMenu = include
+    .split(',')
+    .map((value: string) => value.trim())
+    .includes('admin-menu');
   const session = await withTiming('auth', () => auth());
   const userId = session?.user?.id ?? DEFAULT_USER_ID;
   if (!isDatabaseConfigured) {
@@ -130,10 +134,7 @@ export async function getUserPreferencesHandler(
       headers: { 'x-user-preferences-fallback': 'true' },
     });
   }
-  const cachedPreferences = await withTiming(
-    'cache',
-    async () => peekUserPreferencesCache(userId)
-  );
+  const cachedPreferences = await withTiming('cache', async () => peekUserPreferencesCache(userId));
   if (cachedPreferences) {
     const response = NextResponse.json(
       buildUserPreferencesResponse(cachedPreferences, includeAdminMenu),
@@ -164,15 +165,12 @@ export async function getUserPreferencesHandler(
   } catch (error) {
     const staleCached = peekUserPreferencesCache(userId, { allowStale: true });
     if (staleCached) {
-      return NextResponse.json(
-        buildUserPreferencesResponse(staleCached, includeAdminMenu),
-        {
-          headers: {
-            'x-user-preferences-fallback': 'true',
-            'x-user-preferences-cache': 'stale',
-          },
-        }
-      );
+      return NextResponse.json(buildUserPreferencesResponse(staleCached, includeAdminMenu), {
+        headers: {
+          'x-user-preferences-fallback': 'true',
+          'x-user-preferences-cache': 'stale',
+        },
+      });
     }
     if (logTiming) {
       timings['total'] = performance.now() - totalStart;
@@ -213,7 +211,7 @@ export async function patchUserPreferencesHandler(
   const logTiming = shouldLogTiming();
   const timings: Record<string, number> = {};
   const totalStart = performance.now();
-  const withTiming = async <T,>(label: string, fn: () => Promise<T>): Promise<T> => {
+  const withTiming = async <T>(label: string, fn: () => Promise<T>): Promise<T> => {
     const start = performance.now();
     const result = await fn();
     timings[label] = performance.now() - start;

@@ -1,7 +1,4 @@
-import type {
-  DatabaseConfig,
-  RuntimePortValues,
-} from '@/shared/contracts/ai-paths';
+import type { DatabaseConfig, RuntimePortValues } from '@/shared/contracts/ai-paths';
 import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 import type { CollectionSchema } from '@/shared/contracts/database';
 
@@ -12,10 +9,7 @@ import {
   toRecord,
 } from './database-parameter-inference';
 import { DB_PROVIDER_PLACEHOLDERS } from '../../constants';
-import {
-  coerceInput,
-  renderTemplate,
-} from '../../utils';
+import { coerceInput, renderTemplate } from '../../utils';
 
 import type { SchemaResponse } from '../../../api/client';
 
@@ -46,19 +40,26 @@ const normalizeSchemaType = (value: string): string => {
   const normalized = value.trim();
   const lower = normalized.toLowerCase();
   if (lower === 'string') return 'string';
-  if (lower === 'int' || lower === 'float' || lower === 'decimal' || lower === 'number') return 'number';
+  if (lower === 'int' || lower === 'float' || lower === 'decimal' || lower === 'number')
+    return 'number';
   if (lower === 'boolean' || lower === 'bool') return 'boolean';
   if (lower === 'datetime' || lower === 'date') return 'string';
   if (lower === 'json') return 'Record<string, unknown>';
   return normalized || 'unknown';
 };
 
-const formatCollectionSchema = (collectionName: string, fields: Array<{ name: string; type: string }> = []): string => {
+const formatCollectionSchema = (
+  collectionName: string,
+  fields: Array<{ name: string; type: string }> = []
+): string => {
   const interfaceName = toTitleCase(singularize(collectionName));
   if (!fields.length) {
     return `interface ${interfaceName} {}`;
   }
-  const lines = fields.map((field: { name: string; type: string }) => `  ${field.name}: ${normalizeSchemaType(field.type)};`);
+  const lines = fields.map(
+    (field: { name: string; type: string }) =>
+      `  ${field.name}: ${normalizeSchemaType(field.type)};`
+  );
   return `interface ${interfaceName} {\n${lines.join('\n')}\n}`;
 };
 
@@ -81,24 +82,16 @@ const resolveCatalogIdFromCatalogs = (value: unknown): string | null => {
       normalizeNonEmptyString(record['id']) ??
       normalizeNonEmptyString(record['_id']) ??
       (record['catalog'] && typeof record['catalog'] === 'object'
-        ? normalizeNonEmptyString(
-          (record['catalog'] as Record<string, unknown>)['catalogId']
-        ) ??
-          normalizeNonEmptyString(
-            (record['catalog'] as Record<string, unknown>)['id']
-          ) ??
-          normalizeNonEmptyString(
-            (record['catalog'] as Record<string, unknown>)['_id']
-          )
+        ? (normalizeNonEmptyString((record['catalog'] as Record<string, unknown>)['catalogId']) ??
+          normalizeNonEmptyString((record['catalog'] as Record<string, unknown>)['id']) ??
+          normalizeNonEmptyString((record['catalog'] as Record<string, unknown>)['_id']))
         : null);
     if (nested) return nested;
   }
   return null;
 };
 
-const resolveCatalogIdFromRecord = (
-  record: Record<string, unknown> | null
-): string | null => {
+const resolveCatalogIdFromRecord = (record: Record<string, unknown> | null): string | null => {
   if (!record) return null;
   return (
     normalizeNonEmptyString(record['catalogId']) ??
@@ -118,9 +111,7 @@ const resolveCatalogIdFromRecord = (
   );
 };
 
-const resolveCatalogIdFromTemplateInputs = (
-  templateInputs: RuntimePortValues
-): string | null => {
+const resolveCatalogIdFromTemplateInputs = (templateInputs: RuntimePortValues): string | null => {
   const direct =
     normalizeNonEmptyString(templateInputs['catalogId']) ??
     resolveCatalogIdFromRecord(toRecord(templateInputs));
@@ -159,9 +150,7 @@ const applyCatalogIdAliases = ({
   if (contextRecord) {
     const nextContext: Record<string, unknown> = {
       ...contextRecord,
-      catalogId:
-        normalizeNonEmptyString(contextRecord['catalogId']) ??
-        catalogId,
+      catalogId: normalizeNonEmptyString(contextRecord['catalogId']) ?? catalogId,
       entity: withCatalogId(contextRecord['entity'], catalogId),
       entityJson: withCatalogId(contextRecord['entityJson'], catalogId),
       product: withCatalogId(contextRecord['product'], catalogId),
@@ -216,10 +205,14 @@ export function prepareDatabaseTemplateContext({
   DB_PROVIDER_PLACEHOLDERS.forEach((provider: string) => {
     placeholderContext[`DB Provider: ${provider}`] = provider;
   });
-  const collectionsRaw = (schemaData?.collections 
-    ? (Array.isArray(schemaData.collections) ? schemaData.collections : Object.values(schemaData.collections))
-    : []);
-  const collections: CollectionSchema[] = Array.from(collectionsRaw as unknown as CollectionSchema[]);
+  const collectionsRaw = schemaData?.collections
+    ? Array.isArray(schemaData.collections)
+      ? schemaData.collections
+      : Object.values(schemaData.collections)
+    : [];
+  const collections: CollectionSchema[] = Array.from(
+    collectionsRaw as unknown as CollectionSchema[]
+  );
   if (collections.length) {
     collections.forEach((collection: CollectionSchema) => {
       const schemaText = formatCollectionSchema(collection.name, collection.fields ?? []);
@@ -229,7 +222,8 @@ export function prepareDatabaseTemplateContext({
         placeholderContext[`Collection: ${name}`] = schemaText;
       });
     });
-  }  const templateInputs: RuntimePortValues = {
+  }
+  const templateInputs: RuntimePortValues = {
     ...resolvedInputs,
   };
   if (templateInputs['result'] === undefined && templateInputs['value'] !== undefined) {
@@ -253,9 +247,7 @@ export function prepareDatabaseTemplateContext({
   };
   syncCatalogId();
 
-  const ensureExistingParameterTemplateContext = async (
-    targetPath: string
-  ): Promise<void> => {
+  const ensureExistingParameterTemplateContext = async (targetPath: string): Promise<void> => {
     if (!targetPath) return;
     const existingFromInputs = normalizeParameterEntries(
       resolveExistingParameterValueFromInputs(templateInputs, targetPath),
@@ -278,10 +270,10 @@ export function prepareDatabaseTemplateContext({
 
     const entityType = normalizeRuntimeEntityType(
       normalizeNonEmptyString(templateInputs['entityType']) ??
-      normalizeNonEmptyString(resolvedInputs['entityType']) ??
-      normalizeNonEmptyString(dbConfig.entityType) ??
-      simulationEntityType ??
-      'product'
+        normalizeNonEmptyString(resolvedInputs['entityType']) ??
+        normalizeNonEmptyString(dbConfig.entityType) ??
+        simulationEntityType ??
+        'product'
     );
     if (!entityType) {
       return;
@@ -299,15 +291,11 @@ export function prepareDatabaseTemplateContext({
       entity: fetchedRecord,
       entityJson: fetchedRecord,
       ...(entityType === 'product' ? { product: fetchedRecord } : {}),
-      entityId:
-        normalizeNonEmptyString(contextRecord['entityId']) ??
-        entityId,
+      entityId: normalizeNonEmptyString(contextRecord['entityId']) ?? entityId,
       productId:
         normalizeNonEmptyString(contextRecord['productId']) ??
         (entityType === 'product' ? entityId : undefined),
-      entityType:
-        normalizeNonEmptyString(contextRecord['entityType']) ??
-        entityType,
+      entityType: normalizeNonEmptyString(contextRecord['entityType']) ?? entityType,
     };
     if (templateInputs['entityId'] === undefined) {
       templateInputs['entityId'] = entityId;

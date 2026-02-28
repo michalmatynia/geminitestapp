@@ -69,8 +69,8 @@ export function TreeRow({
   const mergedClassName = cn(
     'group relative flex items-center gap-2 rounded px-2 py-1.5 transition',
     toneClasses.base,
-    selected ? selectedClassName ?? toneClasses.selected : '',
-    dragOver ? dragOverClassName ?? toneClasses.dragOver : '',
+    selected ? (selectedClassName ?? toneClasses.selected) : '',
+    dragOver ? (dragOverClassName ?? toneClasses.dragOver) : '',
     className
   );
   const mergedStyle: React.CSSProperties | undefined = disableIndent

@@ -3,20 +3,12 @@
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
-import {
-  useMasterFolderTreeInstance,
-} from '@/shared/lib/foldertree';
+import { useMasterFolderTreeInstance } from '@/shared/lib/foldertree';
 import { FolderTreeViewportV2 } from '@/shared/lib/foldertree/v2';
-import type { 
-  PageZone, 
-  SectionInstance,
-} from '@/shared/contracts/cms';
+import type { PageZone, SectionInstance } from '@/shared/contracts/cms';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Button, FolderTreePanel, TreeHeader, EmptyState } from '@/shared/ui';
-import {
-  canNestTreeNodeV2,
-  type MasterTreeNode,
-} from '@/shared/utils';
+import { canNestTreeNodeV2, type MasterTreeNode } from '@/shared/utils';
 
 import {
   PAGE_BUILDER_SHOW_EXTRACT_PLACEHOLDER_KEY,
@@ -49,7 +41,9 @@ export function ComponentTreePanel(): React.ReactNode {
   const settingsStore = useSettingsStore();
 
   const extractPlaceholderValue = settingsStore.get(PAGE_BUILDER_SHOW_EXTRACT_PLACEHOLDER_KEY);
-  const sectionDropPlaceholderValue = settingsStore.get(PAGE_BUILDER_SHOW_SECTION_DROP_PLACEHOLDER_KEY);
+  const sectionDropPlaceholderValue = settingsStore.get(
+    PAGE_BUILDER_SHOW_SECTION_DROP_PLACEHOLDER_KEY
+  );
   const showExtractPlaceholder = extractPlaceholderValue === 'true';
   const showSectionDropPlaceholder = sectionDropPlaceholderValue !== 'false';
 
@@ -107,7 +101,9 @@ export function ComponentTreePanel(): React.ReactNode {
   );
   const applySectionMoveByZoneIndex = React.useCallback(
     (sectionId: string, zone: PageZone, toIndex: number): void => {
-      const section = state.sections.find((item: SectionInstance): boolean => item.id === sectionId);
+      const section = state.sections.find(
+        (item: SectionInstance): boolean => item.id === sectionId
+      );
       if (!section) return;
 
       if (section.zone === zone) {
@@ -145,7 +141,11 @@ export function ComponentTreePanel(): React.ReactNode {
     externalRevision: structureRevision,
     adapter: cmsTreeAdapter,
   });
-  const { moveNode: moveMasterNode, startDrag: startMasterDrag, clearDrag: clearMasterDrag } = structureController;
+  const {
+    moveNode: moveMasterNode,
+    startDrag: startMasterDrag,
+    clearDrag: clearMasterDrag,
+  } = structureController;
   const draggedMasterSectionId = useMemo((): string | null => {
     const draggedNodeId = structureController.dragState?.draggedNodeId;
     if (!draggedNodeId) return null;
@@ -233,11 +233,11 @@ export function ComponentTreePanel(): React.ReactNode {
           className='flex-1 min-h-0'
           bodyClassName='flex-1 min-h-0 overflow-y-auto'
           masterInstance='cms_page_builder'
-          header={(
+          header={
             <TreeHeader
               title='Structure'
               subtitle={state.currentPage ? `${sectionCount} sections` : 'No page loaded'}
-              actions={(
+              actions={
                 <Button
                   type='button'
                   size='sm'
@@ -249,9 +249,9 @@ export function ComponentTreePanel(): React.ReactNode {
                 >
                   {panelCollapsed ? 'Show Tree' : 'Collapse'}
                 </Button>
-              )}
+              }
             />
-          )}
+          }
         >
           {!state.currentPage ? (
             <div className='p-4' data-testid='empty-page-state' />
@@ -287,7 +287,9 @@ export function ComponentTreePanel(): React.ReactNode {
                         )}
                         <span>{CMS_ZONE_LABELS[zoneFromNode]}</span>
                         {zoneSections.length > 0 ? (
-                          <span className='ml-1 text-[10px] text-gray-500'>({zoneSections.length})</span>
+                          <span className='ml-1 text-[10px] text-gray-500'>
+                            ({zoneSections.length})
+                          </span>
                         ) : null}
                       </button>
                     </div>
@@ -302,10 +304,7 @@ export function ComponentTreePanel(): React.ReactNode {
                   return (
                     <div className='px-2'>
                       <SectionDropTarget zone={section.zone} toIndex={sectionIndex} />
-                      <SectionNodeItem
-                        section={section}
-                        sectionIndex={sectionIndex}
-                      />
+                      <SectionNodeItem section={section} sectionIndex={sectionIndex} />
                     </div>
                   );
                 }

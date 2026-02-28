@@ -4,7 +4,7 @@ import { z } from 'zod';
 import {
   deleteImageStudioSlotCascade,
   updateImageStudioSlot,
-} from '@/features/ai/image-studio/server/slot-repository';
+} from '@/shared/lib/ai/image-studio/server/slot-repository';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
@@ -67,12 +67,20 @@ export async function PATCH_handler(
 
   const data = {
     ...(parsed.data.name ? { name: parsed.data.name } : {}),
-    ...(parsed.data.folderPath !== undefined ? { folderPath: sanitizeFolderPath(parsed.data.folderPath ?? '') } : {}),
+    ...(parsed.data.folderPath !== undefined
+      ? { folderPath: sanitizeFolderPath(parsed.data.folderPath ?? '') }
+      : {}),
     ...(parsed.data.imageUrl !== undefined ? { imageUrl: parsed.data.imageUrl ?? null } : {}),
-    ...(parsed.data.imageBase64 !== undefined ? { imageBase64: parsed.data.imageBase64 ?? null } : {}),
-    ...(parsed.data.imageFileId !== undefined ? { imageFileId: parsed.data.imageFileId ?? null } : {}),
+    ...(parsed.data.imageBase64 !== undefined
+      ? { imageBase64: parsed.data.imageBase64 ?? null }
+      : {}),
+    ...(parsed.data.imageFileId !== undefined
+      ? { imageFileId: parsed.data.imageFileId ?? null }
+      : {}),
     ...(parsed.data.asset3dId !== undefined ? { asset3dId: parsed.data.asset3dId ?? null } : {}),
-    ...(parsed.data.screenshotFileId !== undefined ? { screenshotFileId: parsed.data.screenshotFileId ?? null } : {}),
+    ...(parsed.data.screenshotFileId !== undefined
+      ? { screenshotFileId: parsed.data.screenshotFileId ?? null }
+      : {}),
     ...(parsed.data.metadata !== undefined ? { metadata: parsed.data.metadata ?? null } : {}),
   };
 

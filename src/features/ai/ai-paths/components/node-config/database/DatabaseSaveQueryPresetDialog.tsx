@@ -24,18 +24,10 @@ export function DatabaseSaveQueryPresetDialog(): React.JSX.Element {
       size='sm'
       footer={
         <div className='flex justify-end gap-2'>
-          <Button
-            type='button'
-            variant='outline'
-            onClick={(): void => onCancel()}
-          >
+          <Button type='button' variant='outline' onClick={(): void => onCancel()}>
             Cancel
           </Button>
-          <Button
-            type='button'
-            variant='default'
-            onClick={(): void => onSave()}
-          >
+          <Button type='button' variant='default' onClick={(): void => onSave()}>
             Save preset
           </Button>
         </div>
@@ -46,16 +38,14 @@ export function DatabaseSaveQueryPresetDialog(): React.JSX.Element {
           <Input
             id='preset-name'
             value={newQueryPresetName}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setNewQueryPresetName(event.target.value)}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+              setNewQueryPresetName(event.target.value)
+            }
             placeholder='My query preset'
           />
         </FormField>
         <FormField label='Query preview'>
-          <Textarea
-            readOnly
-            className='min-h-[120px] text-xs'
-            value={queryTemplateValue}
-          />
+          <Textarea readOnly className='min-h-[120px] text-xs' value={queryTemplateValue} />
         </FormField>
       </div>
     </DetailModal>

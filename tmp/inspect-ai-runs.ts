@@ -16,22 +16,24 @@ async function main() {
   ];
 
   for (const id of ids) {
-    const run = await db
-      .collection('ai_path_runs')
-      .findOne({ $or: [{ id }, { _id: id }] });
+    const run = await db.collection('ai_path_runs').findOne({ $or: [{ id }, { _id: id }] });
 
-    console.log('\nRUN', id, run
-      ? {
-          status: run['status'],
-          pathId: run['pathId'],
-          pathName: run['pathName'],
-          entityId: run['entityId'],
-          entityType: run['entityType'],
-          errorMessage: run['errorMessage'],
-          createdAt: run['createdAt'],
-          meta: run['meta'],
-        }
-      : null);
+    console.log(
+      '\nRUN',
+      id,
+      run
+        ? {
+            status: run['status'],
+            pathId: run['pathId'],
+            pathName: run['pathName'],
+            entityId: run['entityId'],
+            entityType: run['entityType'],
+            errorMessage: run['errorMessage'],
+            createdAt: run['createdAt'],
+            meta: run['meta'],
+          }
+        : null
+    );
 
     const nodes = await db
       .collection('ai_path_run_nodes')

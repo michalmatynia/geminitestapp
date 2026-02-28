@@ -107,7 +107,9 @@ export function CaseListSorting({
           variant='outline'
           size='sm'
           className='h-8 shrink-0'
-          onClick={() => { void handleSaveDefaults(); }}
+          onClick={() => {
+            void handleSaveDefaults();
+          }}
           disabled={isSavingDefaults}
         >
           <Save className='mr-1 size-3.5' />

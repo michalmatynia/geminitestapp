@@ -14,7 +14,7 @@ type ToastFn = (
   message: string,
   options?: {
     variant?: 'info' | 'success' | 'warning' | 'error';
-  },
+  }
 ) => void;
 
 type UseAiPathsNodeSwitchConfirmInput = {
@@ -46,8 +46,7 @@ export function useAiPathsNodeSwitchConfirm({
       return new Promise((resolve) => {
         confirm({
           title: 'Unsaved Changes',
-          message:
-            'You have unsaved changes for this node. Discard them and switch?',
+          message: 'You have unsaved changes for this node. Discard them and switch?',
           confirmText: 'Discard & Switch',
           cancelText: 'Keep Editing',
           isDangerous: true,
@@ -62,14 +61,7 @@ export function useAiPathsNodeSwitchConfirm({
         });
       });
     },
-    [
-      configOpen,
-      confirm,
-      nodeConfigDirty,
-      selectedNodeId,
-      setNodeConfigDirty,
-      toast,
-    ],
+    [configOpen, confirm, nodeConfigDirty, selectedNodeId, setNodeConfigDirty, toast]
   );
 
   return { confirmNodeSwitch };

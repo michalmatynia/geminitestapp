@@ -21,7 +21,7 @@ export function BaseListingSettings(): React.JSX.Element {
 
   return (
     <div className='space-y-4'>
-      <FormField 
+      <FormField
         label={`Base.com Inventory ${loadingInventories ? '(Loading...)' : ''}`}
         id='inventory'
       >
@@ -33,7 +33,7 @@ export function BaseListingSettings(): React.JSX.Element {
             .filter((inventory: BaseInventory): boolean => !!inventory.id)
             .map((inventory: BaseInventory) => ({
               value: inventory.id,
-              label: inventory.name
+              label: inventory.name,
             }))}
           placeholder='Select inventory...'
         />
@@ -44,8 +44,8 @@ export function BaseListingSettings(): React.JSX.Element {
         )}
       </FormField>
 
-      <FormField 
-        label='Template (Optional)' 
+      <FormField
+        label='Template (Optional)'
         id='template'
         description='Templates define how product fields map to Base.com fields.'
       >
@@ -58,8 +58,8 @@ export function BaseListingSettings(): React.JSX.Element {
               .filter((template: Template): boolean => !!template.id)
               .map((template: Template) => ({
                 value: template.id,
-                label: template.name
-              }))
+                label: template.name,
+              })),
           ]}
           placeholder='No template (use defaults)'
         />

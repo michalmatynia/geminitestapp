@@ -103,11 +103,7 @@ describe('integrations/products/[id]/base/sku-check POST handler', () => {
   });
 
   it('returns exists=false when SKU is missing in Base.com inventory', async () => {
-    const response = await POST_handler(
-      {} as NextRequest,
-      buildContext(),
-      { id: 'product-1' }
-    );
+    const response = await POST_handler({} as NextRequest, buildContext(), { id: 'product-1' });
 
     const body = (await response.json()) as Record<string, unknown>;
 
@@ -118,11 +114,7 @@ describe('integrations/products/[id]/base/sku-check POST handler', () => {
       existingProductId: null,
     });
 
-    expect(checkBaseSkuExistsMock).toHaveBeenCalledWith(
-      'token-123',
-      'inv-main',
-      'SKU-001'
-    );
+    expect(checkBaseSkuExistsMock).toHaveBeenCalledWith('token-123', 'inv-main', 'SKU-001');
   });
 
   it('returns exists=true and existingProductId when SKU exists in Base.com', async () => {
@@ -131,11 +123,7 @@ describe('integrations/products/[id]/base/sku-check POST handler', () => {
       productId: '  base-prod-88  ',
     });
 
-    const response = await POST_handler(
-      {} as NextRequest,
-      buildContext(),
-      { id: 'product-1' }
-    );
+    const response = await POST_handler({} as NextRequest, buildContext(), { id: 'product-1' });
     const body = (await response.json()) as Record<string, unknown>;
 
     expect(response.status).toBe(200);

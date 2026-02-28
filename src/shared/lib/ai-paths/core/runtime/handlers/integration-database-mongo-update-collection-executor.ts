@@ -58,7 +58,7 @@ export async function executeMongoCollectionUpdate({
       reportAiPathsError(
         new Error('Database update missing filter'),
         { action: 'dbUpdate', collection, nodeId: node.id, provider: queryPayload['provider'] },
-        'Database update skipped:',
+        'Database update skipped:'
       );
       toast('Database update skipped: missing query filter.', { variant: 'error' });
       return {
@@ -71,16 +71,18 @@ export async function executeMongoCollectionUpdate({
   }
 
   const updateResult: ApiResponse<unknown> = await dbApi.action({
-    ...(queryPayload['provider'] ? { provider: queryPayload['provider'] as 'auto' | 'mongodb' | 'prisma' } : {}),
-    ...(queryPayload['collectionMap'] ? { collectionMap: queryPayload['collectionMap'] as Record<string, string> } : {}),
+    ...(queryPayload['provider']
+      ? { provider: queryPayload['provider'] as 'auto' | 'mongodb' | 'prisma' }
+      : {}),
+    ...(queryPayload['collectionMap']
+      ? { collectionMap: queryPayload['collectionMap'] as Record<string, string> }
+      : {}),
     action,
     collection,
     filter: nextResolvedFilter,
     update: updateDoc,
     ...(idType !== undefined ? { idType: idType as string } : {}),
-    ...(action === 'findOneAndUpdate'
-      ? { returnDocument: 'after' as const }
-      : {}),
+    ...(action === 'findOneAndUpdate' ? { returnDocument: 'after' as const } : {}),
   });
   executed.updater.add(node.id);
   if (!updateResult.ok) {
@@ -91,7 +93,7 @@ export async function executeMongoCollectionUpdate({
     reportAiPathsError(
       new Error(updateErrorMessage),
       { action: 'dbUpdate', collection, nodeId: node.id },
-      'Database update failed:',
+      'Database update failed:'
     );
     toast(updateErrorMessage || 'Database update failed.', { variant: 'error' });
     return {
@@ -111,8 +113,7 @@ export async function executeMongoCollectionUpdate({
   const writeOutcome = writeOutcomeEvaluation.writeOutcome;
   if (writeOutcomeEvaluation.isZeroAffected) {
     const message =
-      writeOutcome.message ??
-      `Database write affected 0 records for update (${action}).`;
+      writeOutcome.message ?? `Database write affected 0 records for update (${action}).`;
     if (writeOutcome.status === 'failed') {
       reportAiPathsError(
         new Error(message),
@@ -122,7 +123,7 @@ export async function executeMongoCollectionUpdate({
           nodeId: node.id,
           writeOutcome,
         },
-        'Database update failed:',
+        'Database update failed:'
       );
       toast(message, { variant: 'error' });
       throw new Error(message);
@@ -147,15 +148,14 @@ export async function executeMongoCollectionUpdate({
   if (writeOutcome.status !== 'warning') {
     toast(
       `Entity updated in ${collection} (${modifiedCount} row${modifiedCount === 1 ? '' : 's'}).`,
-      { variant: 'success' },
+      { variant: 'success' }
     );
   }
   const primaryValue: unknown = updates[primaryTarget];
   return {
     content_en:
       primaryTarget === 'content_en'
-        ? ((primaryValue as string | undefined) ??
-          (nodeInputs['content_en'] as string | undefined))
+        ? ((primaryValue as string | undefined) ?? (nodeInputs['content_en'] as string | undefined))
         : (nodeInputs['content_en'] as string | undefined),
     result: updateResult.data,
     bundle: {

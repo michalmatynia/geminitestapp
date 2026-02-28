@@ -121,7 +121,7 @@ describe('AI Paths db-query API', () => {
           single: true,
           idType: 'string',
         }),
-      }),
+      })
     );
 
     const payload = await res.json();
@@ -131,8 +131,8 @@ describe('AI Paths db-query API', () => {
       count: 1,
     });
     expect(findOne).toHaveBeenCalledTimes(2);
-    const firstFilter = (findOne).mock.calls[0]?.[0] as Record<string, unknown>;
-    const secondFilter = (findOne).mock.calls[1]?.[0] as Record<string, unknown>;
+    const firstFilter = findOne.mock.calls[0]?.[0] as Record<string, unknown>;
+    const secondFilter = findOne.mock.calls[1]?.[0] as Record<string, unknown>;
     expect(firstFilter['_id']).toBe('507f1f77bcf86cd799439011');
     expect(secondFilter['_id']).toBeInstanceOf(ObjectId);
   });
@@ -151,7 +151,7 @@ describe('AI Paths db-query API', () => {
           limit: 2,
           single: false,
         }),
-      }),
+      })
     );
 
     const payload = await res.json();
@@ -179,7 +179,7 @@ describe('AI Paths db-query API', () => {
           query: { id: 'p-1' },
           single: true,
         }),
-      }),
+      })
     );
 
     const payload = await res.json();
@@ -216,7 +216,7 @@ describe('AI Paths db-query API', () => {
           single: false,
           limit: 5,
         }),
-      }),
+      })
     );
 
     if (originalDatabaseUrl === undefined) {

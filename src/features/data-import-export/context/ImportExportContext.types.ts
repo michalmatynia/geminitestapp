@@ -10,7 +10,7 @@ import type {
   DebugWarehouses,
   CatalogOption,
 } from '@/shared/contracts/data-import-export';
-import type { 
+import type {
   BaseImportParameterImportSettings,
   BaseImportMode,
   IntegrationConnectionBasic,
@@ -58,9 +58,7 @@ export interface ImportExportContextType {
   importTemplateMappings: TemplateMapping[];
   setImportTemplateMappings: Dispatch<SetStateAction<TemplateMapping[]>>;
   importTemplateParameterImport: BaseImportParameterImportSettings;
-  setImportTemplateParameterImport: Dispatch<
-    SetStateAction<BaseImportParameterImportSettings>
-  >;
+  setImportTemplateParameterImport: Dispatch<SetStateAction<BaseImportParameterImportSettings>>;
   exportTemplateMappings: TemplateMapping[];
   setExportTemplateMappings: Dispatch<SetStateAction<TemplateMapping[]>>;
   exportImagesAsBase64: boolean;

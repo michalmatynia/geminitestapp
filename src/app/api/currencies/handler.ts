@@ -20,9 +20,7 @@ export const currencySchema = z.object({
  * Fetches all currencies (and ensures defaults exist).
  */
 export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const readCurrencies = async (
-    provider: InternationalizationProvider
-  ): Promise<unknown[]> => {
+  const readCurrencies = async (provider: InternationalizationProvider): Promise<unknown[]> => {
     const repository = await getCurrencyRepository(provider);
     await repository.ensureDefaultCurrencies();
     return await repository.listCurrencies();
@@ -43,7 +41,7 @@ export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): P
 
   const repository = await getCurrencyRepository();
   const existing = await repository.getCurrencyByCode(data.code);
-  
+
   if (existing) {
     throw conflictError('Currency code already exists.', { code: data.code });
   }

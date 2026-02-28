@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import {
-  clearSystemLogs,
-  createSystemLog,
-  listSystemLogs,
-} from '@/features/observability/server';
+import { clearSystemLogs, createSystemLog, listSystemLogs } from '@/features/observability/server';
 import { parseJsonBody } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { validationError } from '@/shared/errors/app-error';
@@ -51,8 +47,7 @@ const parseCreateBody = async (
   req: NextRequest,
   ctx: ApiHandlerContext
 ): Promise<
-  | { ok: true; data: z.infer<typeof createSchema> }
-  | { ok: false; response: Response }
+  { ok: true; data: z.infer<typeof createSchema> } | { ok: false; response: Response }
 > => {
   if (ctx.body !== undefined) {
     const parsed = createSchema.safeParse(ctx.body);

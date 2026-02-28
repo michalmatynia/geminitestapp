@@ -1,16 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import {
-  createImportTemplate,
-  listImportTemplates
-} from '@/features/integrations/server';
+import { createImportTemplate, listImportTemplates } from '@/features/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const mappingSchema = z.object({
   sourceKey: z.string().trim().min(1),
-  targetField: z.string().trim().min(1)
+  targetField: z.string().trim().min(1),
 });
 
 const parameterImportSchema = z.object({
@@ -36,7 +33,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, templateSchema, {
-    logPrefix: 'import-templates.POST'
+    logPrefix: 'import-templates.POST',
   });
   if (!parsed.ok) {
     return parsed.response;

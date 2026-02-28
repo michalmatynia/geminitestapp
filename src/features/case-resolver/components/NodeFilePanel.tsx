@@ -2,15 +2,10 @@
 
 import React from 'react';
 import { ScanLine, FileText, ExternalLink } from 'lucide-react';
-import { 
-  Card, 
-  PanelHeader, 
-  Hint, 
-  Button 
-} from '@/shared/ui';
-import type { 
-  CaseResolverFile, 
-  CaseResolverSnapshotNodeMeta as CaseResolverNodeFileMeta 
+import { Card, PanelHeader, Hint, Button } from '@/shared/ui';
+import type {
+  CaseResolverFile,
+  CaseResolverSnapshotNodeMeta as CaseResolverNodeFileMeta,
 } from '@/shared/contracts/case-resolver';
 import { resolveContentPreview } from './CaseResolverNodeFileUtils';
 
@@ -52,24 +47,18 @@ export function NodeFilePanel({ meta, file, onOpen }: NodeFilePanelProps): React
               {preview}
             </Card>
           ) : (
-            <Hint size='xs' italic className='text-[11px]'>No text content yet.</Hint>
+            <Hint size='xs' italic className='text-[11px]'>
+              No text content yet.
+            </Hint>
           )}
         </div>
       ) : (
-        <p className='text-[11px] text-amber-400'>
-          File no longer exists in this workspace.
-        </p>
+        <p className='text-[11px] text-amber-400'>File no longer exists in this workspace.</p>
       )}
 
       {/* Open button */}
       {file ? (
-        <Button
-          type='button'
-          onClick={onOpen}
-          variant='outline'
-          size='sm'
-          className='h-8 w-full'
-        >
+        <Button type='button' onClick={onOpen} variant='outline' size='sm' className='h-8 w-full'>
           <ExternalLink className='mr-1.5 size-3.5' />
           Open &ldquo;{meta.fileName}&rdquo;
         </Button>

@@ -2,12 +2,12 @@ import { describe, it, expect, beforeEach, vi, afterAll } from 'vitest';
 
 vi.unmock('@/shared/lib/db/prisma');
 
-import { 
-  createDraft, 
-  getDraft, 
-  listDrafts, 
-  updateDraft, 
-  deleteDraft 
+import {
+  createDraft,
+  getDraft,
+  listDrafts,
+  updateDraft,
+  deleteDraft,
 } from '@/features/drafter/services/draft-repository';
 import prisma from '@/shared/lib/db/prisma';
 
@@ -43,7 +43,7 @@ describe('DraftRepository (Prisma)', () => {
 
     await createDraft({ name: 'Draft 1' });
     // Small delay to ensure distinct createdAt
-    await new Promise(resolve => setTimeout(resolve, 10));
+    await new Promise((resolve) => setTimeout(resolve, 10));
     await createDraft({ name: 'Draft 2' });
 
     const drafts = await listDrafts();
@@ -58,9 +58,9 @@ describe('DraftRepository (Prisma)', () => {
 
     const draft = await createDraft({ name: 'Old Name' });
     const updated = await updateDraft(draft.id, { name: 'New Name' });
-    
+
     expect(updated?.name).toBe('New Name');
-    
+
     const retrieved = await getDraft(draft.id);
     expect(retrieved?.name).toBe('New Name');
   });
@@ -70,7 +70,7 @@ describe('DraftRepository (Prisma)', () => {
 
     const draft = await createDraft({ name: 'To Delete' });
     await deleteDraft(draft.id);
-    
+
     const retrieved = await getDraft(draft.id);
     expect(retrieved).toBeNull();
   });
@@ -86,9 +86,9 @@ describe('DraftRepository (Prisma)', () => {
     if (!process.env['DATABASE_URL']) return;
 
     const catalogIds = ['cat1', 'cat2'];
-    const draft = await createDraft({ 
+    const draft = await createDraft({
       name: 'Catalog Draft',
-      catalogIds 
+      catalogIds,
     });
 
     const retrieved = await getDraft(draft.id);

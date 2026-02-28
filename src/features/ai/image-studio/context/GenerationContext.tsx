@@ -1,7 +1,15 @@
 'use client';
 
 import { useQueryClient, type UseMutationResult } from '@tanstack/react-query';
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import {
   useRunStudio,
@@ -20,7 +28,7 @@ import { useProjectsState } from './ProjectsContext';
 import { usePromptState, usePromptActions } from './PromptContext';
 import { useSettingsState } from './SettingsContext';
 import { useSlotsState, useSlotsActions } from './SlotsContext';
-import { buildRunRequestPreview } from '../utils/run-request-preview';
+import { buildRunRequestPreview } from '@/shared/lib/ai/image-studio/utils/run-request-preview';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -137,7 +145,10 @@ const normalizeExpectedOutputs = (value: unknown, fallback = 1): number => {
   return Math.max(1, Math.min(10, Math.floor(parsed)));
 };
 
-const buildPendingLandingSlots = (runId: string, expectedOutputs: number): GenerationLandingSlot[] => {
+const buildPendingLandingSlots = (
+  runId: string,
+  expectedOutputs: number
+): GenerationLandingSlot[] => {
   const count = normalizeExpectedOutputs(expectedOutputs, 1);
   return Array.from({ length: count }, (_value, index) => ({
     id: `${runId}:${index + 1}`,
@@ -172,9 +183,10 @@ const cloneLandingSlots = (slots: GenerationLandingSlot[]): GenerationLandingSlo
 const markLandingSlotsAsFailed = (
   slots: GenerationLandingSlot[],
   runId: string,
-  expectedOutputs: number,
+  expectedOutputs: number
 ): GenerationLandingSlot[] => {
-  const baseSlots = slots.length > 0 ? cloneLandingSlots(slots) : buildPendingLandingSlots(runId, expectedOutputs);
+  const baseSlots =
+    slots.length > 0 ? cloneLandingSlots(slots) : buildPendingLandingSlots(runId, expectedOutputs);
   return baseSlots.map((slot) => ({
     ...slot,
     status: slot.output ? 'completed' : 'failed',
@@ -186,17 +198,18 @@ const toGenerationRecordFromRun = (run: ImageStudioRunRecord): GenerationRecord 
   if (outputs.length === 0) return null;
 
   const requestMask = run.request?.mask;
-  const maskShapeCount = requestMask?.type === 'polygons'
-    ? (Array.isArray(requestMask.polygons) ? requestMask.polygons.length : 0)
-    : requestMask?.type === 'polygon'
-      ? (Array.isArray(requestMask.points) && requestMask.points.length >= 3 ? 1 : 0)
-      : 0;
-  const maskInvert = requestMask?.type === 'polygons'
-    ? Boolean(requestMask.invert)
-    : false;
-  const maskFeather = requestMask?.type === 'polygons'
-    ? Number(requestMask.feather ?? 0) || 0
-    : 0;
+  const maskShapeCount =
+    requestMask?.type === 'polygons'
+      ? Array.isArray(requestMask.polygons)
+        ? requestMask.polygons.length
+        : 0
+      : requestMask?.type === 'polygon'
+        ? Array.isArray(requestMask.points) && requestMask.points.length >= 3
+          ? 1
+          : 0
+        : 0;
+  const maskInvert = requestMask?.type === 'polygons' ? Boolean(requestMask.invert) : false;
+  const maskFeather = requestMask?.type === 'polygons' ? Number(requestMask.feather ?? 0) || 0 : 0;
 
   return {
     id: run.id,
@@ -207,10 +220,7 @@ const toGenerationRecordFromRun = (run: ImageStudioRunRecord): GenerationRecord 
     maskFeather,
     outputs,
     slotId: run.request?.asset?.id ?? '',
-    slotName:
-      run.request?.asset?.id ??
-      run.request?.asset?.filepath ??
-      run.id,
+    slotName: run.request?.asset?.id ?? run.request?.asset?.filepath ?? run.id,
   };
 };
 
@@ -246,7 +256,14 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
   generationHistoryRef.current = generationHistory;
 
   const maskEligibleCount = useMemo(
-    () => maskShapes.filter((s) => s.visible && s.closed && (s.type === 'polygon' || s.type === 'lasso') && s.points.length >= 3).length,
+    () =>
+      maskShapes.filter(
+        (s) =>
+          s.visible &&
+          s.closed &&
+          (s.type === 'polygon' || s.type === 'lasso') &&
+          s.points.length >= 3
+      ).length,
     [maskShapes]
   );
 
@@ -326,11 +343,15 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
         setActiveRunStatus(run.status);
         setActiveRunError(run.errorMessage ?? null);
 
-        const expectedOutputs = normalizeExpectedOutputs(run.expectedOutputs, params.expectedOutputs);
+        const expectedOutputs = normalizeExpectedOutputs(
+          run.expectedOutputs,
+          params.expectedOutputs
+        );
         if (run.status === 'completed') {
           const outputs = Array.isArray(run.outputs) ? run.outputs : [];
           if (outputs.length === 0) {
-            const message = run.errorMessage?.trim() || 'Generation completed but returned no images.';
+            const message =
+              run.errorMessage?.trim() || 'Generation completed but returned no images.';
             setActiveRunStatus('failed');
             setActiveRunError(message);
             setRunOutputs([]);
@@ -349,10 +370,12 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
           if (generatedSourceSlotId && shouldPromoteGeneratedSource) {
             setPendingSourceSlotId(generatedSourceSlotId);
           }
-          setLandingSlots(buildLandingSlotsFromRun({
-            ...run,
-            expectedOutputs,
-          }));
+          setLandingSlots(
+            buildLandingSlotsFromRun({
+              ...run,
+              expectedOutputs,
+            })
+          );
 
           const record: GenerationRecord = {
             id: run.id,
@@ -399,7 +422,9 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
 
       if (typeof EventSource !== 'undefined') {
         try {
-          const source = new EventSource(`/api/image-studio/runs/${encodeURIComponent(params.runId)}/stream`);
+          const source = new EventSource(
+            `/api/image-studio/runs/${encodeURIComponent(params.runId)}/stream`
+          );
           token.eventSource = source;
 
           source.onopen = () => {
@@ -442,8 +467,7 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
         // Skip the HTTP fetch when SSE already handled this status window to
         // avoid sending duplicate requests while SSE is the active channel.
         const sseHandledRecently =
-          sseConnected &&
-          Date.now() - lastSseHandledAtRef.current < SSE_FALLBACK_POLL_INTERVAL_MS;
+          sseConnected && Date.now() - lastSseHandledAtRef.current < SSE_FALLBACK_POLL_INTERVAL_MS;
 
         if (!sseHandledRecently) {
           try {
@@ -453,9 +477,12 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
             }
           } catch (error) {
             if (attempt === 0 && !sseConnected) {
-              toast(error instanceof Error ? error.message : 'Failed to receive generation callback.', {
-                variant: 'error',
-              });
+              toast(
+                error instanceof Error ? error.message : 'Failed to receive generation callback.',
+                {
+                  variant: 'error',
+                }
+              );
             }
           }
         }
@@ -534,26 +561,30 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
         setActiveRunId(latestRun.id);
         setActiveRunSourceSlotId(latestRun.request?.asset?.id?.trim() || null);
         setActiveRunStatus(latestRun.status);
-        const latestSelectedRunInFlight = latestRun.status === 'queued' || latestRun.status === 'running';
-        setActiveRunError(latestSelectedRunInFlight ? latestRun.errorMessage ?? null : null);
+        const latestSelectedRunInFlight =
+          latestRun.status === 'queued' || latestRun.status === 'running';
+        setActiveRunError(latestSelectedRunInFlight ? (latestRun.errorMessage ?? null) : null);
 
         if (!latestSelectedRunInFlight) {
           return;
         }
 
         const requestMask = latestRun.request?.mask;
-        const maskShapeCount = requestMask?.type === 'polygons'
-          ? (Array.isArray(requestMask.polygons) ? requestMask.polygons.length : 0)
-          : requestMask?.type === 'polygon'
-            ? (Array.isArray(requestMask.points) && requestMask.points.length >= 3 ? 1 : 0)
-            : 0;
+        const maskShapeCount =
+          requestMask?.type === 'polygons'
+            ? Array.isArray(requestMask.polygons)
+              ? requestMask.polygons.length
+              : 0
+            : requestMask?.type === 'polygon'
+              ? Array.isArray(requestMask.points) && requestMask.points.length >= 3
+                ? 1
+                : 0
+              : 0;
 
-        const submittedMaskInvert = requestMask?.type === 'polygons'
-          ? Boolean(requestMask.invert)
-          : false;
-        const submittedMaskFeather = requestMask?.type === 'polygons'
-          ? Number(requestMask.feather ?? 0) || 0
-          : 0;
+        const submittedMaskInvert =
+          requestMask?.type === 'polygons' ? Boolean(requestMask.invert) : false;
+        const submittedMaskFeather =
+          requestMask?.type === 'polygons' ? Number(requestMask.feather ?? 0) || 0 : 0;
 
         void pollRunUntilFinishedRef.current({
           runId: latestRun.id,
@@ -563,9 +594,7 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
           submittedMaskFeather,
           submittedSlotId: latestRun.request?.asset?.id ?? '',
           submittedSlotName:
-            latestRun.request?.asset?.id ??
-            latestRun.request?.asset?.filepath ??
-            latestRun.id,
+            latestRun.request?.asset?.id ?? latestRun.request?.asset?.filepath ?? latestRun.id,
           submittedSlotFolderPath: '',
           expectedOutputs: normalizeExpectedOutputs(latestRun.expectedOutputs, 1),
         });
@@ -654,7 +683,9 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
         setActiveRunStatus('failed');
         setActiveRunError(error.message || 'Generation failed.');
         setRunOutputs([]);
-        setLandingSlots((previous) => markLandingSlotsAsFailed(previous, 'pending', expectedOutputs));
+        setLandingSlots((previous) =>
+          markLandingSlotsAsFailed(previous, 'pending', expectedOutputs)
+        );
         toast(error.message || 'Generation failed.', { variant: 'error' });
       },
     });
@@ -710,14 +741,11 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
         await Promise.allSettled(
           record.outputs.map((output) =>
             api
-              .post(
-                `/api/image-studio/projects/${encodeURIComponent(projectId)}/variants/delete`,
-                {
-                  assetId: output.id,
-                  generationRunId: record.id,
-                  sourceSlotId: record.slotId,
-                }
-              )
+              .post(`/api/image-studio/projects/${encodeURIComponent(projectId)}/variants/delete`, {
+                assetId: output.id,
+                generationRunId: record.id,
+                sourceSlotId: record.slotId,
+              })
               .catch(() => {})
           )
         );
@@ -762,9 +790,7 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
 
   return (
     <GenerationActionsContext.Provider value={actions}>
-      <GenerationStateContext.Provider value={state}>
-        {children}
-      </GenerationStateContext.Provider>
+      <GenerationStateContext.Provider value={state}>{children}</GenerationStateContext.Provider>
     </GenerationActionsContext.Provider>
   );
 }

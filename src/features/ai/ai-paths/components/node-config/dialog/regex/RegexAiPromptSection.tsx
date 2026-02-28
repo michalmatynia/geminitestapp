@@ -55,7 +55,9 @@ export function RegexAiPromptSection({
       <Textarea
         className='min-h-[120px] w-full rounded-md border border-border bg-card/70 text-sm text-white'
         value={regexConfig.aiPrompt ?? ''}
-        onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => onUpdateRegex({ aiPrompt: event.target.value })}
+        onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
+          onUpdateRegex({ aiPrompt: event.target.value })
+        }
         onKeyDown={(event: React.KeyboardEvent<HTMLTextAreaElement>): void => {
           if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
             event.preventDefault();
@@ -69,13 +71,19 @@ export function RegexAiPromptSection({
       <div className='flex flex-wrap items-center gap-2 text-[11px] text-gray-400'>
         <span>Placeholders:</span>
         <Tooltip content={placeholderTooltips.text} side='bottom'>
-          <span className='rounded-full border px-2 py-0.5 text-[10px] text-gray-200'>{'{{text}}'}</span>
+          <span className='rounded-full border px-2 py-0.5 text-[10px] text-gray-200'>
+            {'{{text}}'}
+          </span>
         </Tooltip>
         <Tooltip content={placeholderTooltips.lines} side='bottom'>
-          <span className='rounded-full border px-2 py-0.5 text-[10px] text-gray-200'>{'{{lines}}'}</span>
+          <span className='rounded-full border px-2 py-0.5 text-[10px] text-gray-200'>
+            {'{{lines}}'}
+          </span>
         </Tooltip>
         <Tooltip content={placeholderTooltips.value} side='bottom'>
-          <span className='rounded-full border px-2 py-0.5 text-[10px] text-gray-200'>{'{{value}}'}</span>
+          <span className='rounded-full border px-2 py-0.5 text-[10px] text-gray-200'>
+            {'{{value}}'}
+          </span>
         </Tooltip>
       </div>
 

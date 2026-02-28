@@ -7,20 +7,18 @@ import type {
   RunStudioEnqueueResult,
   RunStudioPayload,
 } from '@/features/ai/image-studio/hooks/useImageStudioMutations';
-import type { ImageStudioSettings } from '../../utils/studio-settings';
-import { 
-  PROMPT_ENGINE_SETTINGS_KEY, 
-  parsePromptEngineSettings 
+import type { ImageStudioSettings } from '@/shared/lib/ai/image-studio/utils/studio-settings';
+import {
+  PROMPT_ENGINE_SETTINGS_KEY,
+  parsePromptEngineSettings,
 } from '@/shared/lib/prompt-engine/settings';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
-import { 
-  parseImageStudioFolderTree
-} from '../../utils/studio-tree';
-import { 
-  IMAGE_STUDIO_UI_ACTIVE_KEY, 
-  IMAGE_STUDIO_UI_PRESETS_KEY, 
-  parseImageStudioUiPresets 
-} from '../../utils/ui-presets';
+import { parseImageStudioFolderTree } from '@/shared/lib/ai/image-studio/utils/studio-tree';
+import {
+  IMAGE_STUDIO_UI_ACTIVE_KEY,
+  IMAGE_STUDIO_UI_PRESETS_KEY,
+  parseImageStudioUiPresets,
+} from '@/shared/lib/ai/image-studio/utils/ui-presets';
 
 interface UseDocsSnapshotsProps {
   projectId: string;
@@ -142,8 +140,8 @@ export function useDocsSnapshots({
   const validationRules = promptEngineSettings.promptValidation.rules ?? [];
   const learnedValidationRules = promptEngineSettings.promptValidation.learnedRules ?? [];
   const enabledValidationRuleCount = validationRules.filter((rule) => rule.enabled).length;
-  const formatterRuleCount = validationRules.filter(
-    (rule) => Boolean(rule.autofix?.enabled && (rule.autofix.operations?.length ?? 0) > 0)
+  const formatterRuleCount = validationRules.filter((rule) =>
+    Boolean(rule.autofix?.enabled && (rule.autofix.operations?.length ?? 0) > 0)
   ).length;
 
   const persistedTree = useMemo(

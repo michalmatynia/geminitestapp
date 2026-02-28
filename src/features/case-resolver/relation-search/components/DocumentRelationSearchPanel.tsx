@@ -4,16 +4,12 @@ import React from 'react';
 
 import { cn } from '@/shared/utils';
 
-import {
-  type DocumentRelationSortMode,
-} from '../hooks/useDocumentRelationSearch';
+import { type DocumentRelationSortMode } from '../hooks/useDocumentRelationSearch';
 import {
   DocumentRelationSearchProvider,
   useDocumentRelationSearchContext,
 } from '../context/DocumentRelationSearchContext';
-import {
-  type NodeFileDocumentSearchScope,
-} from '../../components/CaseResolverNodeFileUtils';
+import { type NodeFileDocumentSearchScope } from '../../components/CaseResolverNodeFileUtils';
 
 import { RESULT_HEIGHT_MAP } from './sections/document-relation-search-utils';
 import { ScopeBar } from './sections/ScopeBar';
@@ -32,19 +28,12 @@ function DocumentRelationSearchInner({
   showSortControl?: boolean;
   showFileTypeFilter?: boolean;
 }): React.JSX.Element {
-  const {
-    showFiltersBar,
-    showDocTable,
-    resultHeight,
-  } = useDocumentRelationSearchContext();
+  const { showFiltersBar, showDocTable, resultHeight } = useDocumentRelationSearchContext();
 
   return (
     <>
       <div className='flex flex-col overflow-hidden rounded-md border border-border/60 bg-card/20'>
-        <ScopeBar
-          showFileTypeFilter={showFileTypeFilter}
-          showSortControl={showSortControl}
-        />
+        <ScopeBar showFileTypeFilter={showFileTypeFilter} showSortControl={showSortControl} />
 
         {showFiltersBar && <FilterBar />}
 
@@ -55,11 +44,7 @@ function DocumentRelationSearchInner({
         <BulkActionBar />
 
         <div className={cn('overflow-auto', RESULT_HEIGHT_MAP[resultHeight])}>
-          {showDocTable ? (
-            <DocumentTableBody />
-          ) : (
-            <CaseTableBody />
-          )}
+          {showDocTable ? <DocumentTableBody /> : <CaseTableBody />}
         </div>
       </div>
 

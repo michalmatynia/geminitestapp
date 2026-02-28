@@ -11,14 +11,8 @@ import { Button, Card, Badge } from '@/shared/ui';
 import { useFileManager } from '../../contexts/FileManagerContext';
 
 export function FileManagerGrid(): React.JSX.Element {
-  const {
-    filteredFiles,
-    selectedFiles,
-    mode,
-    handleToggleSelect,
-    setPreviewFile,
-    handleDelete,
-  } = useFileManager();
+  const { filteredFiles, selectedFiles, mode, handleToggleSelect, setPreviewFile, handleDelete } =
+    useFileManager();
 
   const getFileKind = useCallback((filepath: string) => {
     const clean = (filepath || '').trim();
@@ -33,22 +27,34 @@ export function FileManagerGrid(): React.JSX.Element {
       }
       return 'link';
     }
-    if (clean.includes('/uploads/') || clean.startsWith('/uploads/') || clean.startsWith('uploads/')) return 'upload';
+    if (
+      clean.includes('/uploads/') ||
+      clean.startsWith('/uploads/') ||
+      clean.startsWith('uploads/')
+    )
+      return 'upload';
     return 'other';
   }, []);
 
-  const resolveFolder = useCallback((filepath: string): string => {
-    const kind = getFileKind(filepath);
-    if (kind === 'base64') return 'base64';
-    if (kind === 'link') {
-      try { return new URL(filepath).hostname || 'link'; } catch { return 'link'; }
-    }
-    const clean = filepath.replace(/^\/+/, '');
-    const parts = clean.split('/');
-    if (parts.length === 0) return 'uploads';
-    if (parts[0] === 'uploads') return parts[1] ?? 'uploads';
-    return parts[0] || 'uploads';
-  }, [getFileKind]);
+  const resolveFolder = useCallback(
+    (filepath: string): string => {
+      const kind = getFileKind(filepath);
+      if (kind === 'base64') return 'base64';
+      if (kind === 'link') {
+        try {
+          return new URL(filepath).hostname || 'link';
+        } catch {
+          return 'link';
+        }
+      }
+      const clean = filepath.replace(/^\/+/, '');
+      const parts = clean.split('/');
+      if (parts.length === 0) return 'uploads';
+      if (parts[0] === 'uploads') return parts[1] ?? 'uploads';
+      return parts[0] || 'uploads';
+    },
+    [getFileKind]
+  );
 
   const handleClick = (file: ExpandedImageFile): void => {
     if (mode === 'select') {
@@ -70,16 +76,14 @@ export function FileManagerGrid(): React.JSX.Element {
           }`}
           onClick={(): void => handleClick(file)}
         >
-          <Badge variant='neutral' className='absolute left-2 top-2 bg-gray-900/80 text-[10px] font-bold uppercase tracking-wide z-10'>
+          <Badge
+            variant='neutral'
+            className='absolute left-2 top-2 bg-gray-900/80 text-[10px] font-bold uppercase tracking-wide z-10'
+          >
             {resolveFolder(file.filepath)}
           </Badge>
           <div className='aspect-square relative w-full'>
-            <Image
-              src={file.filepath}
-              alt={file.filename}
-              fill
-              className='object-cover'
-            />
+            <Image src={file.filepath} alt={file.filename} fill className='object-cover' />
           </div>
           <div className='p-2'>
             <p className='text-center text-sm truncate font-medium' title={file.filename}>

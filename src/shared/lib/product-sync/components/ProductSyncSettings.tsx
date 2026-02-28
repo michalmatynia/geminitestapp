@@ -150,8 +150,7 @@ export function ProductSyncSettings(): React.JSX.Element {
   const profiles = profilesQuery.data ?? EMPTY_PROFILES;
   const [selectedProfileId, setSelectedProfileId] = useState<string>('');
   const [draft, setDraft] = useState<ProductSyncProfileDraft>(defaultDraft());
-  const [applyingConnectionDefaults, setApplyingConnectionDefaults] =
-    useState(false);
+  const [applyingConnectionDefaults, setApplyingConnectionDefaults] = useState(false);
 
   const runsQuery = useProductSyncRuns(selectedProfileId || null, 50);
   const runs = runsQuery.data ?? [];
@@ -195,7 +194,9 @@ export function ProductSyncSettings(): React.JSX.Element {
       return;
     }
 
-    const selected = profiles.find((profile: ProductSyncProfile) => profile.id === selectedProfileId);
+    const selected = profiles.find(
+      (profile: ProductSyncProfile) => profile.id === selectedProfileId
+    );
     if (selected) {
       setDraft(profileToDraft(selected));
       return;
@@ -211,8 +212,7 @@ export function ProductSyncSettings(): React.JSX.Element {
     setDraft(profileToDraft(first));
   }, [profiles, selectedProfileId, newProfileDefaults]);
 
-  const isSaving =
-    createProfileMutation.isPending || updateProfileMutation.isPending;
+  const isSaving = createProfileMutation.isPending || updateProfileMutation.isPending;
 
   const handleNewProfile = (): void => {
     setSelectedProfileId('');
@@ -266,7 +266,7 @@ export function ProductSyncSettings(): React.JSX.Element {
 
   const handleDelete = async (): Promise<void> => {
     if (!selectedProfileId) return;
-    
+
     confirm({
       title: 'Delete Sync Profile?',
       message: 'Are you sure you want to delete this sync profile? This action cannot be undone.',
@@ -283,7 +283,7 @@ export function ProductSyncSettings(): React.JSX.Element {
             variant: 'error',
           });
         }
-      }
+      },
     });
   };
 
@@ -336,18 +336,13 @@ export function ProductSyncSettings(): React.JSX.Element {
       return;
     }
 
-    const selectedConnection = baseConnections.find(
-      (connection) => connection.id === connectionId
-    );
+    const selectedConnection = baseConnections.find((connection) => connection.id === connectionId);
     const connectionLabel = selectedConnection?.name || connectionId;
-    const profilesToUpdate = profiles.filter(
-      (profile) => profile.connectionId !== connectionId
-    );
+    const profilesToUpdate = profiles.filter((profile) => profile.connectionId !== connectionId);
 
     confirm({
       title: 'Apply connection to Base.com settings?',
-      message:
-        `Set "${connectionLabel}" as default import/export connection and update ${profilesToUpdate.length} sync profile(s) to use it.`,
+      message: `Set "${connectionLabel}" as default import/export connection and update ${profilesToUpdate.length} sync profile(s) to use it.`,
       confirmText: 'Apply',
       onConfirm: async () => {
         setApplyingConnectionDefaults(true);
@@ -362,21 +357,15 @@ export function ProductSyncSettings(): React.JSX.Element {
               data: { connectionId },
             });
           }
-          await Promise.all([
-            profilesQuery.refetch(),
-            defaultExportConnectionQuery.refetch(),
-          ]);
+          await Promise.all([profilesQuery.refetch(), defaultExportConnectionQuery.refetch()]);
           toast(
             `Applied "${connectionLabel}" to default Base.com settings and ${profilesToUpdate.length} sync profile(s).`,
             { variant: 'success' }
           );
         } catch (error) {
-          toast(
-            error instanceof Error
-              ? error.message
-              : 'Failed to apply Base.com connection.',
-            { variant: 'error' }
-          );
+          toast(error instanceof Error ? error.message : 'Failed to apply Base.com connection.', {
+            variant: 'error',
+          });
         } finally {
           setApplyingConnectionDefaults(false);
         }
@@ -384,10 +373,7 @@ export function ProductSyncSettings(): React.JSX.Element {
     });
   };
 
-  const updateRule = (
-    id: string,
-    patch: Partial<ProductSyncFieldRule>
-  ): void => {
+  const updateRule = (id: string, patch: Partial<ProductSyncFieldRule>): void => {
     setDraft((prev: ProductSyncProfileDraft) => ({
       ...prev,
       fieldRules: prev.fieldRules.map((rule: ProductSyncFieldRule) =>
@@ -432,7 +418,8 @@ export function ProductSyncSettings(): React.JSX.Element {
         <div className='mt-4 grid gap-3 md:grid-cols-[240px_1fr]'>
           <div className='space-y-2 rounded-md border border-border/60 bg-card/40 p-2'>
             {profiles.map((profile: ProductSyncProfile) => (
-              <Button size='xs'
+              <Button
+                size='xs'
                 key={profile.id}
                 type='button'
                 variant='ghost'
@@ -446,7 +433,8 @@ export function ProductSyncSettings(): React.JSX.Element {
                 {profile.name}
               </Button>
             ))}
-            <Button size='xs'
+            <Button
+              size='xs'
               type='button'
               variant='secondary'
               onClick={handleNewProfile}
@@ -566,10 +554,7 @@ export function ProductSyncSettings(): React.JSX.Element {
                   onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                     setDraft((prev: ProductSyncProfileDraft) => ({
                       ...prev,
-                      batchSize: Math.max(
-                        1,
-                        Math.min(500, Number(event.target.value) || 100)
-                      ),
+                      batchSize: Math.max(1, Math.min(500, Number(event.target.value) || 100)),
                     }))
                   }
                 />
@@ -589,8 +574,11 @@ export function ProductSyncSettings(): React.JSX.Element {
             />
 
             <FormActions
-              onSave={(): void => { void handleSave(); }}
-              saveText='Save Profile'              isSaving={isSaving}
+              onSave={(): void => {
+                void handleSave();
+              }}
+              saveText='Save Profile'
+              isSaving={isSaving}
               className='justify-start'
             >
               <Button
@@ -722,9 +710,10 @@ export function ProductSyncSettings(): React.JSX.Element {
                   </Badge>
                 </div>
               ),
-              description: run.summaryMessage || `Processed ${run.stats.processed}/${run.stats.total} items.`,
+              description:
+                run.summaryMessage || `Processed ${run.stats.processed}/${run.stats.total} items.`,
               subtitle: `${new Date(run.createdAt || 0).toLocaleString()} · success ${run.stats.success} · skipped ${run.stats.skipped} · failed ${run.stats.failed}`,
-              original: run
+              original: run,
             }))}
             emptyMessage='No sync runs yet.'
           />

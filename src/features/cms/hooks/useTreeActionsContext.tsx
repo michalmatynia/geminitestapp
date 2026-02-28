@@ -32,13 +32,54 @@ export interface TreeActionsContextValue {
   blockActions: {
     add: (sectionId: string, blockType: string) => void;
     addToColumn: (sectionId: string, columnId: string, blockType: string) => void;
-    addElementToNestedBlock: (sectionId: string, columnId: string, parentBlockId: string, elementType: string) => void;
-    addElementToSectionBlock: (sectionId: string, parentBlockId: string, elementType: string) => void;
+    addElementToNestedBlock: (
+      sectionId: string,
+      columnId: string,
+      parentBlockId: string,
+      elementType: string
+    ) => void;
+    addElementToSectionBlock: (
+      sectionId: string,
+      parentBlockId: string,
+      elementType: string
+    ) => void;
     drop: (blockId: string, fromSectionId: string, toSectionId: string, toIndex: number) => void;
-    dropToColumn: (blockId: string, fromSectionId: string, fromColumnId: string | undefined, toSectionId: string, toColumnId: string, toIndex: number, fromParentBlockId?: string, toParentBlockId?: string) => void;
-    dropToSection: (blockId: string, fromSectionId: string, fromColumnId: string | undefined, toSectionId: string, toIndex: number, fromParentBlockId?: string) => void;
-    dropToRow: (blockId: string, fromSectionId: string, fromColumnId: string | undefined, toSectionId: string, toRowId: string, toIndex: number, fromParentBlockId?: string) => void;
-    dropToSlideshowFrame: (blockId: string, fromSectionId: string, fromColumnId: string | undefined, fromParentBlockId: string | undefined, toSectionId: string, toFrameId: string, toIndex: number) => void;
+    dropToColumn: (
+      blockId: string,
+      fromSectionId: string,
+      fromColumnId: string | undefined,
+      toSectionId: string,
+      toColumnId: string,
+      toIndex: number,
+      fromParentBlockId?: string,
+      toParentBlockId?: string
+    ) => void;
+    dropToSection: (
+      blockId: string,
+      fromSectionId: string,
+      fromColumnId: string | undefined,
+      toSectionId: string,
+      toIndex: number,
+      fromParentBlockId?: string
+    ) => void;
+    dropToRow: (
+      blockId: string,
+      fromSectionId: string,
+      fromColumnId: string | undefined,
+      toSectionId: string,
+      toRowId: string,
+      toIndex: number,
+      fromParentBlockId?: string
+    ) => void;
+    dropToSlideshowFrame: (
+      blockId: string,
+      fromSectionId: string,
+      fromColumnId: string | undefined,
+      fromParentBlockId: string | undefined,
+      toSectionId: string,
+      toFrameId: string,
+      toIndex: number
+    ) => void;
     remove: (sectionId: string, blockId: string, columnId?: string, parentBlockId?: string) => void;
   };
 
@@ -48,10 +89,28 @@ export interface TreeActionsContextValue {
     remove: (sectionId: string) => void;
     toggleVisibility: (sectionId: string, isHidden: boolean) => void;
     dropInZone: (sectionId: string, zone: PageZone, toIndex: number) => void;
-    dropToColumn: (sectionId: string, toSectionId: string, toColumnId: string, toIndex: number, toParentBlockId?: string) => void;
-    dropToSlideshowFrame: (sectionId: string, toSectionId: string, toFrameId: string, toIndex: number) => void;
+    dropToColumn: (
+      sectionId: string,
+      toSectionId: string,
+      toColumnId: string,
+      toIndex: number,
+      toParentBlockId?: string
+    ) => void;
+    dropToSlideshowFrame: (
+      sectionId: string,
+      toSectionId: string,
+      toFrameId: string,
+      toIndex: number
+    ) => void;
     convertToBlock: (sectionId: string, toSectionId: string, toIndex: number) => void;
-    promoteBlockToSection: (blockId: string, fromSectionId: string, fromColumnId: string | undefined, fromParentBlockId: string | undefined, toZone: PageZone, toIndex: number) => void;
+    promoteBlockToSection: (
+      blockId: string,
+      fromSectionId: string,
+      fromColumnId: string | undefined,
+      fromParentBlockId: string | undefined,
+      toZone: PageZone,
+      toIndex: number
+    ) => void;
     paste: (zone: PageZone) => void;
   };
 
@@ -121,7 +180,13 @@ export function TreeActionsProvider({
 
   const addElementToNestedBlock = useCallback(
     (sectionId: string, columnId: string, parentBlockId: string, elementType: string) => {
-      dispatch({ type: 'ADD_ELEMENT_TO_NESTED_BLOCK', sectionId, columnId, parentBlockId, elementType });
+      dispatch({
+        type: 'ADD_ELEMENT_TO_NESTED_BLOCK',
+        sectionId,
+        columnId,
+        parentBlockId,
+        elementType,
+      });
       autoExpand(sectionId, columnId, parentBlockId);
     },
     [dispatch, autoExpand]
@@ -150,7 +215,16 @@ export function TreeActionsProvider({
   );
 
   const dropBlockToColumn = useCallback(
-    (blockId: string, fromSectionId: string, fromColumnId: string | undefined, toSectionId: string, toColumnId: string, toIndex: number, fromParentBlockId?: string, toParentBlockId?: string) => {
+    (
+      blockId: string,
+      fromSectionId: string,
+      fromColumnId: string | undefined,
+      toSectionId: string,
+      toColumnId: string,
+      toIndex: number,
+      fromParentBlockId?: string,
+      toParentBlockId?: string
+    ) => {
       dispatch({
         type: 'MOVE_BLOCK_TO_COLUMN',
         blockId,
@@ -168,7 +242,14 @@ export function TreeActionsProvider({
   );
 
   const dropBlockToSection = useCallback(
-    (blockId: string, fromSectionId: string, fromColumnId: string | undefined, toSectionId: string, toIndex: number, fromParentBlockId?: string) => {
+    (
+      blockId: string,
+      fromSectionId: string,
+      fromColumnId: string | undefined,
+      toSectionId: string,
+      toIndex: number,
+      fromParentBlockId?: string
+    ) => {
       dispatch({
         type: 'MOVE_BLOCK_TO_SECTION',
         blockId,
@@ -184,7 +265,15 @@ export function TreeActionsProvider({
   );
 
   const dropBlockToRow = useCallback(
-    (blockId: string, fromSectionId: string, fromColumnId: string | undefined, toSectionId: string, toRowId: string, toIndex: number, fromParentBlockId?: string) => {
+    (
+      blockId: string,
+      fromSectionId: string,
+      fromColumnId: string | undefined,
+      toSectionId: string,
+      toRowId: string,
+      toIndex: number,
+      fromParentBlockId?: string
+    ) => {
       dispatch({
         type: 'MOVE_BLOCK_TO_ROW',
         blockId,
@@ -201,7 +290,15 @@ export function TreeActionsProvider({
   );
 
   const dropBlockToSlideshowFrame = useCallback(
-    (blockId: string, fromSectionId: string, fromColumnId: string | undefined, fromParentBlockId: string | undefined, toSectionId: string, toFrameId: string, toIndex: number) => {
+    (
+      blockId: string,
+      fromSectionId: string,
+      fromColumnId: string | undefined,
+      fromParentBlockId: string | undefined,
+      toSectionId: string,
+      toFrameId: string,
+      toIndex: number
+    ) => {
       dispatch({
         type: 'MOVE_BLOCK_TO_SLIDESHOW_FRAME',
         blockId,
@@ -287,14 +384,25 @@ export function TreeActionsProvider({
         if (fromIndex === -1 || fromIndex === toIndex) return;
         dispatch({ type: 'REORDER_SECTIONS', zone, fromIndex, toIndex });
       } else {
-        dispatch({ type: 'MOVE_SECTION_TO_ZONE', sectionId: droppedSectionId, toZone: zone, toIndex });
+        dispatch({
+          type: 'MOVE_SECTION_TO_ZONE',
+          sectionId: droppedSectionId,
+          toZone: zone,
+          toIndex,
+        });
       }
     },
     [state.sections, dispatch]
   );
 
   const dropSectionToColumn = useCallback(
-    (sectionId: string, toSectionId: string, toColumnId: string, toIndex: number, toParentBlockId?: string) => {
+    (
+      sectionId: string,
+      toSectionId: string,
+      toColumnId: string,
+      toIndex: number,
+      toParentBlockId?: string
+    ) => {
       dispatch({
         type: 'MOVE_SECTION_TO_COLUMN',
         sectionId,
@@ -474,22 +582,10 @@ export function TreeActionsProvider({
       sectionActions,
       gridActions,
     }),
-    [
-      expandedIds,
-      selectNode,
-      toggleExpand,
-      autoExpand,
-      blockActions,
-      sectionActions,
-      gridActions,
-    ]
+    [expandedIds, selectNode, toggleExpand, autoExpand, blockActions, sectionActions, gridActions]
   );
 
-  return (
-    <TreeActionsContext.Provider value={value}>
-      {children}
-    </TreeActionsContext.Provider>
-  );
+  return <TreeActionsContext.Provider value={value}>{children}</TreeActionsContext.Provider>;
 }
 
 // ---------------------------------------------------------------------------

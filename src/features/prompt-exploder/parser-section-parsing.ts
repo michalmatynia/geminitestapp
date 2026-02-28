@@ -2,10 +2,7 @@ import { DEFAULT_PATTERN_IDS } from './parser-default-patterns';
 import { resolveBoundaryRegexOptional, type PatternRuntime } from './parser-runtime-patterns';
 import { normalizeHeadingLabel, toLine } from './parser-text-utils';
 
-import type {
-  PromptExploderListItem,
-  PromptExploderSubsection,
-} from './types';
+import type { PromptExploderListItem, PromptExploderSubsection } from './types';
 
 export type ParseCursor = {
   lines: string[];
@@ -67,10 +64,7 @@ const consumeTailBlock = (cursor: ParseCursor): string[] => {
   return cursor.lines.slice(start);
 };
 
-export const consumeQaBlock = (
-  cursor: ParseCursor,
-  runtime?: PatternRuntime
-): string[] => {
+export const consumeQaBlock = (cursor: ParseCursor, runtime?: PatternRuntime): string[] => {
   const start = cursor.index;
   for (let i = start + 1; i < cursor.lines.length; i += 1) {
     const trimmed = toLine(cursor.lines[i]).trim();
@@ -110,10 +104,7 @@ export const consumeBlockUntilBoundary = (
   return cursor.lines.slice(start);
 };
 
-export const consumeParamsBlock = (
-  cursor: ParseCursor,
-  runtime?: PatternRuntime
-): string[] => {
+export const consumeParamsBlock = (cursor: ParseCursor, runtime?: PatternRuntime): string[] => {
   const start = cursor.index;
   let i = start;
   while (i < cursor.lines.length && !/^\s*params\s*=\s*\{/i.test(toLine(cursor.lines[i]))) {
@@ -226,9 +217,7 @@ export const parseSequenceSubsections = (args: {
       const alphaCode = (alphaMatch[1] ?? '').trim();
       const alphaTitle = (alphaMatch[2] ?? '').trim();
       currentTitle =
-        alphaCode && alphaTitle
-          ? `${alphaCode}) ${alphaTitle}`
-          : normalizedHeading || trimmed;
+        alphaCode && alphaTitle ? `${alphaCode}) ${alphaTitle}` : normalizedHeading || trimmed;
       currentCode = null;
       currentCondition = null;
       currentGuidance = null;

@@ -12,7 +12,10 @@ export const parseAdminMenuJson = <T>(value: string | undefined, fallback: T): T
   }
 };
 
-export const parseAdminMenuBoolean = (value: string | undefined | null, fallback = false): boolean => {
+export const parseAdminMenuBoolean = (
+  value: string | undefined | null,
+  fallback = false
+): boolean => {
   if (value === undefined || value === null || value === '') return fallback;
   const normalized = value.trim().toLowerCase();
   if (normalized === 'true' || normalized === '1') return true;

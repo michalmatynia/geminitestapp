@@ -2,15 +2,12 @@
 
 import { useEffect, useState } from 'react';
 
-
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { AUTH_SETTINGS_KEYS } from '@/features/auth/utils/auth-management';
-import {
-  type AuthUserPageSettings,
-} from '@/features/auth/utils/auth-user-pages';
+import { type AuthUserPageSettings } from '@/features/auth/utils/auth-user-pages';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
-import { useToast,  FormSection, ToggleRow, FormActions, LoadingState } from '@/shared/ui';
+import { useToast, FormSection, ToggleRow, FormActions, LoadingState } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 export default function AuthUserPagesPage(): React.JSX.Element {
@@ -99,23 +96,31 @@ function AuthUserPagesForm({
               ['allowSignup', 'Allow sign-up', 'Enable self-service user registration.'],
               ['allowPasswordReset', 'Allow password reset', 'Enable forgot-password flow.'],
               ['allowSocialLogin', 'Allow social login', 'Show OAuth providers on login.'],
-              ['requireEmailVerification', 'Require email verification', 'Block access until email is verified.'],
+              [
+                'requireEmailVerification',
+                'Require email verification',
+                'Block access until email is verified.',
+              ],
             ] as const
-          ).map(([key, title, description]: readonly [keyof AuthUserPageSettings, string, string]) => (
-            <ToggleRow
-              key={key}
-              label={title}
-              description={description}
-              checked={settings[key]}
-              onCheckedChange={() => handleToggle(key)}
-              type='switch'
-            />
-          ))}
+          ).map(
+            ([key, title, description]: readonly [keyof AuthUserPageSettings, string, string]) => (
+              <ToggleRow
+                key={key}
+                label={title}
+                description={description}
+                checked={settings[key]}
+                onCheckedChange={() => handleToggle(key)}
+                type='switch'
+              />
+            )
+          )}
         </div>
       </FormSection>
 
       <FormActions
-        onSave={() => { void handleSave(); }}
+        onSave={() => {
+          void handleSave();
+        }}
         saveText='Save user page settings'
         isDisabled={!dirty || updateSetting.isPending}
         isSaving={updateSetting.isPending}

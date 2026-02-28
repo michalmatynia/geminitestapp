@@ -18,8 +18,7 @@ const parseBody = async (
   req: NextRequest,
   ctx: ApiHandlerContext
 ): Promise<
-  | { ok: true; data: z.infer<typeof cmsPageUpdateSchema> }
-  | { ok: false; response: Response }
+  { ok: true; data: z.infer<typeof cmsPageUpdateSchema> } | { ok: false; response: Response }
 > => {
   if (ctx.body !== undefined) {
     const parsed = cmsPageUpdateSchema.safeParse(ctx.body);
@@ -41,7 +40,11 @@ const parseBody = async (
  * GET /api/cms/pages/[id]
  * Fetches a single page by its ID.
  */
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: Params): Promise<NextResponse | Response> {
+export async function GET_handler(
+  _req: NextRequest,
+  _ctx: ApiHandlerContext,
+  params: Params
+): Promise<NextResponse | Response> {
   const { id } = params;
   const cmsRepository = await getCmsRepository();
   const page = await cmsRepository.getPageById(id);
@@ -57,14 +60,31 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, pa
  * PUT /api/cms/pages/[id]
  * Updates a page.
  */
-export async function PUT_handler(req: NextRequest, ctx: ApiHandlerContext, params: Params): Promise<NextResponse | Response> {
+export async function PUT_handler(
+  req: NextRequest,
+  ctx: ApiHandlerContext,
+  params: Params
+): Promise<NextResponse | Response> {
   const { id } = params;
 
   const parsed = await parseBody(req, ctx);
   if (!parsed.ok) {
     return parsed.response;
   }
-  const { name, status, publishedAt, seoTitle, seoDescription, seoOgImage, seoCanonical, robotsMeta, themeId, slugIds, components, showMenu } = parsed.data;
+  const {
+    name,
+    status,
+    publishedAt,
+    seoTitle,
+    seoDescription,
+    seoOgImage,
+    seoCanonical,
+    robotsMeta,
+    themeId,
+    slugIds,
+    components,
+    showMenu,
+  } = parsed.data;
 
   const cmsRepository = await getCmsRepository();
 
@@ -111,10 +131,14 @@ export async function PUT_handler(req: NextRequest, ctx: ApiHandlerContext, para
  * DELETE /api/cms/pages/[id]
  * Deletes a page.
  */
-export async function DELETE_handler(_req: NextRequest, ctx: ApiHandlerContext, params: Params): Promise<NextResponse | Response> {
+export async function DELETE_handler(
+  _req: NextRequest,
+  ctx: ApiHandlerContext,
+  params: Params
+): Promise<NextResponse | Response> {
   const { id } = params;
   const cmsRepository = await getCmsRepository();
-  
+
   const page = await cmsRepository.getPageById(id);
   await cmsRepository.deletePage(id);
 

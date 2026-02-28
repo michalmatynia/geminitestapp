@@ -53,9 +53,7 @@ describe('api/integrations/exports/base/default-connection handler', () => {
 
   it('keeps stored connection when it exists and has Base credentials', async () => {
     getExportDefaultConnectionIdMock.mockResolvedValue('conn-valid');
-    listIntegrationsMock.mockResolvedValue([
-      { id: 'integration-base', slug: 'base-com' },
-    ]);
+    listIntegrationsMock.mockResolvedValue([{ id: 'integration-base', slug: 'base-com' }]);
     listConnectionsMock.mockResolvedValue([
       { id: 'conn-valid', integrationId: 'integration-base', baseApiToken: 'token', password: '' },
       { id: 'conn-other', integrationId: 'integration-base', baseApiToken: null, password: '' },
@@ -76,12 +74,15 @@ describe('api/integrations/exports/base/default-connection handler', () => {
 
   it('recovers stale stored connection by falling back to an available Base connection', async () => {
     getExportDefaultConnectionIdMock.mockResolvedValue('conn-stale');
-    listIntegrationsMock.mockResolvedValue([
-      { id: 'integration-base', slug: 'base-com' },
-    ]);
+    listIntegrationsMock.mockResolvedValue([{ id: 'integration-base', slug: 'base-com' }]);
     listConnectionsMock.mockResolvedValue([
       { id: 'conn-no-token', integrationId: 'integration-base', baseApiToken: null, password: '' },
-      { id: 'conn-fallback', integrationId: 'integration-base', baseApiToken: 'token', password: '' },
+      {
+        id: 'conn-fallback',
+        integrationId: 'integration-base',
+        baseApiToken: 'token',
+        password: '',
+      },
     ]);
 
     const response = await GET_handler(

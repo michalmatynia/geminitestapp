@@ -1,29 +1,23 @@
 'use client';
 
-import {
-  FileCode2,
-} from 'lucide-react';
+import { FileCode2 } from 'lucide-react';
 import React, { useCallback, useMemo } from 'react';
 
 import { CanvasBoard } from '@/features/ai/ai-paths/components/canvas-board';
-import {
-  AiPathsProvider,
-} from '@/features/ai/ai-paths/context';
+import { AiPathsProvider } from '@/features/ai/ai-paths/context';
 import { type AiNode } from '@/shared/contracts/case-resolver';
-import {
-  type CaseResolverNodeFileSnapshot,
-} from '@/shared/contracts/case-resolver';
+import { type CaseResolverNodeFileSnapshot } from '@/shared/contracts/case-resolver';
 import { EmptyState, Card } from '@/shared/ui';
 
 import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
 import { parseNodeFileSnapshot, serializeNodeFileSnapshot } from '../settings';
-import {
-  buildNode,
-  createNodeId,
-} from './case-resolver-canvas-utils';
+import { buildNode, createNodeId } from './case-resolver-canvas-utils';
 import { CaseResolverNodeInspectorModal } from './CaseResolverNodeInspectorModal';
 import { NodeFileWorkspaceProvider, useNodeFileWorkspaceContext } from './NodeFileWorkspaceContext';
-import { useNodeFileWorkspaceState, type UseNodeFileWorkspaceStateProps } from '../hooks/useNodeFileWorkspaceState';
+import {
+  useNodeFileWorkspaceState,
+  type UseNodeFileWorkspaceStateProps,
+} from '../hooks/useNodeFileWorkspaceState';
 import { NodeFilePanel } from './NodeFilePanel';
 import { NodeFileDocumentSearchPanel } from './NodeFileDocumentSearchPanel';
 
@@ -255,14 +249,8 @@ export function CaseResolverNodeFileWorkspace(): React.JSX.Element {
   );
 
   const handleSnapshotChange = useCallback(
-    (
-      updated: CaseResolverNodeFileSnapshot,
-      options?: NodeFileSnapshotPersistOptions
-    ): void => {
-      onUpdateSelectedAsset(
-        { textContent: serializeNodeFileSnapshot(updated) },
-        options
-      );
+    (updated: CaseResolverNodeFileSnapshot, options?: NodeFileSnapshotPersistOptions): void => {
+      onUpdateSelectedAsset({ textContent: serializeNodeFileSnapshot(updated) }, options);
     },
     [onUpdateSelectedAsset]
   );
@@ -277,12 +265,14 @@ export function CaseResolverNodeFileWorkspace(): React.JSX.Element {
     );
   }
 
-  const initialNodes: AiNode[] = snapshot.nodes.map((node: AiNode): AiNode => ({
-    ...node,
-    createdAt: node.createdAt ?? new Date().toISOString(),
-    updatedAt: node.updatedAt ?? new Date().toISOString(),
-    data: node.data ?? {},
-  }));
+  const initialNodes: AiNode[] = snapshot.nodes.map(
+    (node: AiNode): AiNode => ({
+      ...node,
+      createdAt: node.createdAt ?? new Date().toISOString(),
+      updatedAt: node.updatedAt ?? new Date().toISOString(),
+      data: node.data ?? {},
+    })
+  );
 
   return (
     <AiPathsProvider

@@ -65,10 +65,7 @@ const resolveRunStartedAt = (run: AiPathRunRecord): string | null => {
   return run.startedAt;
 };
 
-const dispatchRun = async (
-  runId: string,
-  options?: { delayMs?: number }
-): Promise<void> => {
+const dispatchRun = async (runId: string, options?: { delayMs?: number }): Promise<void> => {
   try {
     await enqueuePathRunJob(runId, options);
   } catch (queueError) {
@@ -121,16 +118,16 @@ const cleanupRunQueueEntriesBatch = async (runIds: string[]): Promise<void> => {
   }
 };
 
-const withIdempotencyLock = async <T>(
-  key: string,
-  task: () => Promise<T>
-): Promise<T> => {
+const withIdempotencyLock = async <T>(key: string, task: () => Promise<T>): Promise<T> => {
   const previous = enqueueIdempotencyLocks.get(key) ?? Promise.resolve();
   let release!: () => void;
   const current = new Promise<void>((resolve) => {
     release = resolve;
   });
-  enqueueIdempotencyLocks.set(key, previous.then(() => current));
+  enqueueIdempotencyLocks.set(
+    key,
+    previous.then(() => current)
+  );
 
   await previous;
   try {
@@ -162,14 +159,14 @@ const buildIdentityRepairSeed = (
   id: input.pathId,
   version: 1,
   name:
-    (typeof input.pathName === 'string' && input.pathName.trim().length > 0
+    typeof input.pathName === 'string' && input.pathName.trim().length > 0
       ? input.pathName.trim()
-      : input.pathId),
+      : input.pathId,
   description: '',
   trigger:
-    (typeof input.triggerEvent === 'string' && input.triggerEvent.trim().length > 0
+    typeof input.triggerEvent === 'string' && input.triggerEvent.trim().length > 0
       ? input.triggerEvent.trim()
-      : 'manual'),
+      : 'manual',
   nodes,
   edges,
   updatedAt: new Date().toISOString(),
@@ -177,9 +174,7 @@ const buildIdentityRepairSeed = (
 
 export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunRecord> => {
   const requestId = resolveRequestId(input);
-  const lockKey = requestId
-    ? `${input.userId ?? 'anon'}:${input.pathId}:${requestId}`
-    : null;
+  const lockKey = requestId ? `${input.userId ?? 'anon'}:${input.pathId}:${requestId}` : null;
 
   const execute = async (): Promise<AiPathRunRecord> => {
     const repo = await getPathRunRepository();
@@ -205,10 +200,7 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
         offset: 0,
       });
       const matched = existingByScan.runs.find((run: AiPathRunRecord) => {
-        const meta =
-          run.meta && typeof run.meta === 'object'
-            ? (run.meta)
-            : null;
+        const meta = run.meta && typeof run.meta === 'object' ? run.meta : null;
         return meta?.['requestId'] === requestId;
       });
       if (matched) {
@@ -243,10 +235,7 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
       mode: 'full',
     });
     if (runPreflight.shouldBlock) {
-      throw new Error(
-        runPreflight.blockMessage ??
-          'Run blocked by preflight validation checks.'
-      );
+      throw new Error(runPreflight.blockMessage ?? 'Run blocked by preflight validation checks.');
     }
     const policyReport = evaluateDisabledNodeTypesPolicy(nodes);
     if (policyReport.violations.length > 0) {
@@ -258,20 +247,20 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
       ...(requestId ? { requestId } : {}),
       ...(identityRepair.warnings.length > 0
         ? {
-          identityRepair: {
-            warnings: identityRepair.warnings,
-            repairedAt: new Date().toISOString(),
-          },
-        }
+            identityRepair: {
+              warnings: identityRepair.warnings,
+              repairedAt: new Date().toISOString(),
+            },
+          }
         : {}),
       backoffMs: input.backoffMs ?? undefined,
       backoffMaxMs: input.backoffMaxMs ?? undefined,
       nodePolicy:
         policyReport.disabledNodeTypes.length > 0
           ? {
-            disabledNodeTypes: policyReport.disabledNodeTypes,
-            blockedCount: policyReport.violations.length,
-          }
+              disabledNodeTypes: policyReport.disabledNodeTypes,
+              blockedCount: policyReport.violations.length,
+            }
           : undefined,
       graphCompile: {
         errors: runPreflight.compileReport.errors,
@@ -284,10 +273,10 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
         validation: runPreflight.validationReport,
         dependency: runPreflight.dependencyReport
           ? {
-            errors: runPreflight.dependencyReport.errors,
-            warnings: runPreflight.dependencyReport.warnings,
-            strictReady: runPreflight.dependencyReport.strictReady,
-          }
+              errors: runPreflight.dependencyReport.errors,
+              warnings: runPreflight.dependencyReport.warnings,
+              strictReady: runPreflight.dependencyReport.strictReady,
+            }
           : null,
         dataContract: {
           errors: runPreflight.dataContractReport.errors,
@@ -422,7 +411,7 @@ export const resumePathRun = async (
       }
       return latest;
     }
-    
+
     try {
       await Promise.all([
         repo.createRunEvent({
@@ -470,8 +459,7 @@ export const retryPathRunNode = async (runId: string, nodeId: string): Promise<A
       }
       return run;
     }
-    const nodeInfo =
-      run.graph?.nodes?.find((node: AiNode) => node.id === nodeId) ?? null;
+    const nodeInfo = run.graph?.nodes?.find((node: AiNode) => node.id === nodeId) ?? null;
     const runtimeFingerprint = getAiPathsRuntimeFingerprint();
     const meta = withRuntimeFingerprintMeta({
       ...(run.meta ?? {}),
@@ -522,12 +510,15 @@ export const retryPathRunNode = async (runId: string, nodeId: string): Promise<A
         recordRuntimeRunQueued({ runId: updated.id }),
       ]);
     } catch (auxError) {
-      void ErrorSystem.logWarning(`Non-critical retry logging failure for run ${runId}, node ${nodeId}`, {
-        service: 'ai-paths-service',
-        error: auxError,
-        runId,
-        nodeId,
-      });
+      void ErrorSystem.logWarning(
+        `Non-critical retry logging failure for run ${runId}, node ${nodeId}`,
+        {
+          service: 'ai-paths-service',
+          error: auxError,
+          runId,
+          nodeId,
+        }
+      );
     }
 
     await dispatchRun(updated.id);
@@ -608,10 +599,7 @@ export const cancelPathRunWithRepository = async (
     }
     const wasInFlight = run.status === 'running' || run.status === 'paused';
     const finishedAt = new Date();
-    const startedAtMs =
-      typeof run.startedAt === 'string'
-        ? Date.parse(run.startedAt)
-        : Number.NaN;
+    const startedAtMs = typeof run.startedAt === 'string' ? Date.parse(run.startedAt) : Number.NaN;
     const durationMs = Number.isFinite(startedAtMs)
       ? Math.max(0, finishedAt.getTime() - startedAtMs)
       : null;

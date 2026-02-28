@@ -42,10 +42,13 @@ export function useUserPreferences(): SingleQuery<UserPreferences> {
     id: 'current-user-preferences',
     queryKey: userPreferencesQueryKey,
     queryFn: ({ signal }) =>
-      api.get<unknown>('/api/user/preferences', { signal })
+      api
+        .get<unknown>('/api/user/preferences', { signal })
         .then((data: unknown) => normalizeUserPreferencesResponse(data) as UserPreferences)
-        .catch(error => {
-          logClientError(error instanceof Error ? error : new Error(String(error)), { context: { source: 'useUserPreferences', action: 'loadUserPreferences', level: 'warn' } });
+        .catch((error) => {
+          logClientError(error instanceof Error ? error : new Error(String(error)), {
+            context: { source: 'useUserPreferences', action: 'loadUserPreferences', level: 'warn' },
+          });
           return {} as UserPreferences;
         }),
     staleTime: 1000 * 60 * 5, // 5 minutes
@@ -74,7 +77,8 @@ export function useUpdateUserPreferences(): MutationResult<UserPreferences, User
         throw new Error('Invalid user preferences payload.');
       }
       const payload = normalizeUserPreferencesUpdatePayload(validation.data);
-      const current = queryClient.getQueryData<UserPreferences>(userPreferencesQueryKey) ?? undefined;
+      const current =
+        queryClient.getQueryData<UserPreferences>(userPreferencesQueryKey) ?? undefined;
       const changedPayload = Object.fromEntries(
         Object.entries(payload).filter(([key, value]) => hasPreferenceChanged(current, key, value))
       ) as UserPreferencesUpdate;

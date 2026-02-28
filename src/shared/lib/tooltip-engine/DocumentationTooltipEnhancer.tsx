@@ -2,14 +2,11 @@
 
 import React from 'react';
 
-import {
-  type DocumentationModuleId,
-} from '@/shared/lib/documentation';
+import { type DocumentationModuleId } from '@/shared/lib/documentation';
 
 import { getDocumentationTooltipForElement } from './tooltip-content';
 
-const INTERACTIVE_SELECTOR =
-  'button,[role="button"],input,textarea,select,a[href]';
+const INTERACTIVE_SELECTOR = 'button,[role="button"],input,textarea,select,a[href]';
 const ORIGINAL_TITLE_ATTR = 'data-docs-tooltip-original-title';
 const MANAGED_ATTR = 'data-docs-tooltip-managed';
 const OBSERVED_ATTRIBUTE_FILTER = [

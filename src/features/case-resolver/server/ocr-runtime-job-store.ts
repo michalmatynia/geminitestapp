@@ -58,9 +58,7 @@ const isCaseResolverOcrJobDispatchMode = (
   return value === 'queued' || value === 'inline';
 };
 
-const isCaseResolverOcrErrorCategory = (
-  value: unknown
-): value is CaseResolverOcrErrorCategory => {
+const isCaseResolverOcrErrorCategory = (value: unknown): value is CaseResolverOcrErrorCategory => {
   return (
     value === 'timeout' ||
     value === 'rate_limit' ||
@@ -105,17 +103,11 @@ const parseCaseResolverOcrJobRecord = (value: unknown): CaseResolverOcrJobRecord
   const maxAttempts = Math.max(1, maxAttemptsRaw);
 
   const dispatchModeRaw = record['dispatchMode'];
-  const dispatchMode = isCaseResolverOcrJobDispatchMode(dispatchModeRaw)
-    ? dispatchModeRaw
-    : null;
+  const dispatchMode = isCaseResolverOcrJobDispatchMode(dispatchModeRaw) ? dispatchModeRaw : null;
   const errorCategoryRaw = record['errorCategory'];
-  const errorCategory = isCaseResolverOcrErrorCategory(errorCategoryRaw)
-    ? errorCategoryRaw
-    : null;
+  const errorCategory = isCaseResolverOcrErrorCategory(errorCategoryRaw) ? errorCategoryRaw : null;
   const retryableErrorRaw = record['retryableError'];
-  const retryableError = typeof retryableErrorRaw === 'boolean'
-    ? retryableErrorRaw
-    : null;
+  const retryableError = typeof retryableErrorRaw === 'boolean' ? retryableErrorRaw : null;
   const createdAt =
     typeof record['createdAt'] === 'string' && record['createdAt'].trim().length > 0
       ? record['createdAt']
@@ -146,10 +138,7 @@ const parseCaseResolverOcrJobRecord = (value: unknown): CaseResolverOcrJobRecord
       typeof record['finishedAt'] === 'string' && record['finishedAt'].trim().length > 0
         ? record['finishedAt']
         : null,
-    resultText:
-      typeof record['resultText'] === 'string'
-        ? record['resultText']
-        : null,
+    resultText: typeof record['resultText'] === 'string' ? record['resultText'] : null,
     errorMessage:
       typeof record['errorMessage'] === 'string' && record['errorMessage'].trim().length > 0
         ? record['errorMessage']
@@ -231,7 +220,8 @@ const persistRecentJobIdInRedis = async (jobId: string): Promise<boolean> => {
   const redis = getRedisConnection();
   if (!redis) return false;
   try {
-    await redis.multi()
+    await redis
+      .multi()
       .lrem(OCR_RUNTIME_JOB_RECENT_IDS_KEY, 0, jobId)
       .lpush(OCR_RUNTIME_JOB_RECENT_IDS_KEY, jobId)
       .ltrim(OCR_RUNTIME_JOB_RECENT_IDS_KEY, 0, OCR_RUNTIME_JOB_RECENT_LIMIT - 1)
@@ -441,9 +431,8 @@ export const markCaseResolverOcrJobFailed = async (
       ? Math.max(1, Math.floor(options.maxAttempts))
       : undefined;
   const errorCategory = options?.errorCategory;
-  const retryableError = typeof options?.retryableError === 'boolean'
-    ? options.retryableError
-    : undefined;
+  const retryableError =
+    typeof options?.retryableError === 'boolean' ? options.retryableError : undefined;
   return updateCaseResolverOcrJob(jobId, {
     status: 'failed',
     errorMessage: errorMessage.trim() || 'OCR runtime job failed.',
@@ -473,9 +462,8 @@ export const markCaseResolverOcrJobQueuedForRetry = async (
       ? Math.max(1, Math.floor(options.maxAttempts))
       : undefined;
   const errorCategory = options?.errorCategory;
-  const retryableError = typeof options?.retryableError === 'boolean'
-    ? options.retryableError
-    : undefined;
+  const retryableError =
+    typeof options?.retryableError === 'boolean' ? options.retryableError : undefined;
   return updateCaseResolverOcrJob(jobId, {
     status: 'queued',
     ...(typeof attemptsMade === 'number' ? { attemptsMade } : {}),
@@ -490,13 +478,13 @@ export const listCaseResolverRecentOcrJobs = async (
   limit = 120
 ): Promise<CaseResolverOcrJobRecord[]> => {
   const normalizedLimit =
-    Number.isFinite(limit) && limit > 0
-      ? Math.min(400, Math.max(1, Math.floor(limit)))
-      : 120;
+    Number.isFinite(limit) && limit > 0 ? Math.min(400, Math.max(1, Math.floor(limit))) : 120;
   const redisIds = await readRecentJobIdsFromRedis(normalizedLimit);
   const fallbackIds = readInMemoryRecentJobIds(normalizedLimit);
-  const candidateIds = (redisIds && redisIds.length > 0 ? redisIds : fallbackIds)
-    .slice(0, normalizedLimit);
+  const candidateIds = (redisIds && redisIds.length > 0 ? redisIds : fallbackIds).slice(
+    0,
+    normalizedLimit
+  );
   const uniqueIds = new Set<string>();
   const records: CaseResolverOcrJobRecord[] = [];
   for (const id of candidateIds) {

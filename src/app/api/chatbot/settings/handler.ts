@@ -20,9 +20,7 @@ const settingsSchema = z.object({
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();
   if (!('chatbotSettings' in prisma)) {
-    throw internalError(
-      'Chatbot settings not initialized. Run prisma generate/db push.'
-    );
+    throw internalError('Chatbot settings not initialized. Run prisma generate/db push.');
   }
   const url = new URL(req.url);
   const key = url.searchParams.get('key')?.trim() || DEFAULT_SETTINGS_KEY;
@@ -42,9 +40,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();
   if (!('chatbotSettings' in prisma)) {
-    throw internalError(
-      'Chatbot settings not initialized. Run prisma generate/db push.'
-    );
+    throw internalError('Chatbot settings not initialized. Run prisma generate/db push.');
   }
   const parsed = await parseJsonBody(req, settingsSchema, {
     logPrefix: 'chatbot.settings.POST',

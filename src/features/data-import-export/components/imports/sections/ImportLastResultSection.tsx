@@ -2,24 +2,15 @@
 
 import React from 'react';
 import { useImportExport } from '@/features/data-import-export/context/ImportExportContext';
-import {
-  FormSection,
-  Hint,
-} from '@/shared/ui';
+import { FormSection, Hint } from '@/shared/ui';
 
 export function ImportLastResultSection(): React.JSX.Element | null {
-  const {
-    lastResult,
-    activeImportRunId,
-  } = useImportExport();
+  const { lastResult, activeImportRunId } = useImportExport();
 
   if (!lastResult) return null;
 
   return (
-    <FormSection
-      title='Last import summary'
-      className='p-4'
-    >
+    <FormSection title='Last import summary' className='p-4'>
       <p className='mt-1 text-sm text-gray-300'>
         Run {lastResult.runId} is {lastResult.status}.
       </p>
@@ -34,9 +25,7 @@ export function ImportLastResultSection(): React.JSX.Element | null {
         </div>
       ) : null}
       {activeImportRunId ? (
-        <Hint className='mt-2 font-mono'>
-          Active run: {activeImportRunId}
-        </Hint>
+        <Hint className='mt-2 font-mono'>Active run: {activeImportRunId}</Hint>
       ) : null}
     </FormSection>
   );

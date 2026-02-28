@@ -73,10 +73,7 @@ export const readSystemLogUrlState = (search: string): SystemLogUrlState => {
   };
 };
 
-export const writeSystemLogUrlState = (
-  baseSearch: string,
-  state: SystemLogUrlState,
-): string => {
+export const writeSystemLogUrlState = (baseSearch: string, state: SystemLogUrlState): string => {
   const params = new URLSearchParams(baseSearch);
   MANAGED_PARAM_KEYS.forEach((key) => params.delete(key));
 

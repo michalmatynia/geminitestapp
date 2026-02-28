@@ -30,8 +30,14 @@ export interface UseCanvasInteractionsClipboardValue {
   handleDuplicateSelection: () => void;
   buildClipboardPayloadFromSelection: () => SubgraphClipboardPayload | null;
   writeClipboardPayload: (payload: SubgraphClipboardPayload) => Promise<void>;
-  removeNodesAndConnectedEdges: (nodeIds: string[]) => { removedNodeCount: number; removedEdgeCount: number };
-  pasteClipboardPayload: (payload: SubgraphClipboardPayload) => { pastedNodeCount: number; pastedEdgeCount: number };
+  removeNodesAndConnectedEdges: (nodeIds: string[]) => {
+    removedNodeCount: number;
+    removedEdgeCount: number;
+  };
+  pasteClipboardPayload: (payload: SubgraphClipboardPayload) => {
+    pastedNodeCount: number;
+    pastedEdgeCount: number;
+  };
   readClipboardPayload: () => Promise<SubgraphClipboardPayload | null>;
 }
 
@@ -64,7 +70,11 @@ export function useCanvasInteractionsClipboard({
   setNodeSelection: (nodeIds: string[]) => void;
   selectEdge: (edgeId: string | null) => void;
   setRuntimeState: (state: RuntimeState | ((prev: RuntimeState) => RuntimeState)) => void;
-  pruneRuntimeInputsInternal: (state: RuntimeState, removedEdges: Edge[], remainingEdges: Edge[]) => RuntimeState;
+  pruneRuntimeInputsInternal: (
+    state: RuntimeState,
+    removedEdges: Edge[],
+    remainingEdges: Edge[]
+  ) => RuntimeState;
   resolveActiveNodeSelectionIds: () => string[];
   viewportRef: React.RefObject<HTMLDivElement | null>;
   lastPointerCanvasPosRef: React.MutableRefObject<{ x: number; y: number } | null>;
@@ -77,20 +87,11 @@ export function useCanvasInteractionsClipboard({
     const selectedIdSet = new Set(selectedIds);
     const copiedNodes = nodes.filter((node: AiNode): boolean => selectedIdSet.has(node.id));
     if (copiedNodes.length === 0) return null;
-    const copiedEdges = edges.filter(
-      (edge: Edge): boolean =>
-        Boolean(
-          edge.from &&
-          edge.to &&
-          selectedIdSet.has(edge.from) &&
-          selectedIdSet.has(edge.to)
-        )
+    const copiedEdges = edges.filter((edge: Edge): boolean =>
+      Boolean(edge.from && edge.to && selectedIdSet.has(edge.from) && selectedIdSet.has(edge.to))
     );
     const bounds = copiedNodes.reduce(
-      (
-        acc: { minX: number; minY: number; maxX: number; maxY: number },
-        node: AiNode
-      ) => ({
+      (acc: { minX: number; minY: number; maxX: number; maxY: number }, node: AiNode) => ({
         minX: Math.min(acc.minX, node.position.x),
         minY: Math.min(acc.minY, node.position.y),
         maxX: Math.max(acc.maxX, node.position.x + NODE_WIDTH),
@@ -117,10 +118,7 @@ export function useCanvasInteractionsClipboard({
     async (payload: SubgraphClipboardPayload): Promise<void> => {
       inMemorySubgraphClipboard = payload;
       try {
-        window.localStorage.setItem(
-          SUBGRAPH_CLIPBOARD_STORAGE_KEY,
-          JSON.stringify(payload)
-        );
+        window.localStorage.setItem(SUBGRAPH_CLIPBOARD_STORAGE_KEY, JSON.stringify(payload));
       } catch {
         // Ignore localStorage write failures.
       }
@@ -153,26 +151,20 @@ export function useCanvasInteractionsClipboard({
         return { removedNodeCount: 0, removedEdgeCount: 0 };
       }
       const nodeIdSet = new Set(resolvedNodeIds);
-      const removedEdges = edges.filter(
-        (edge: Edge): boolean =>
-          Boolean(
-            (edge.from && nodeIdSet.has(edge.from)) ||
-            (edge.to && nodeIdSet.has(edge.to))
-          )
+      const removedEdges = edges.filter((edge: Edge): boolean =>
+        Boolean((edge.from && nodeIdSet.has(edge.from)) || (edge.to && nodeIdSet.has(edge.to)))
       );
       const remainingEdges = edges.filter(
         (edge: Edge): boolean =>
-          !(
-            (edge.from && nodeIdSet.has(edge.from)) ||
-            (edge.to && nodeIdSet.has(edge.to))
-          )
+          !((edge.from && nodeIdSet.has(edge.from)) || (edge.to && nodeIdSet.has(edge.to)))
       );
       setNodes((prev: AiNode[]): AiNode[] =>
         prev.filter((node: AiNode): boolean => !nodeIdSet.has(node.id))
       );
       setEdges(remainingEdges);
-      setRuntimeState((prev: RuntimeState): RuntimeState =>
-        pruneRuntimeInputsInternal(prev, removedEdges, remainingEdges)
+      setRuntimeState(
+        (prev: RuntimeState): RuntimeState =>
+          pruneRuntimeInputsInternal(prev, removedEdges, remainingEdges)
       );
       const nextSelection = resolveActiveNodeSelectionIds().filter(
         (nodeId: string): boolean => !nodeIdSet.has(nodeId)
@@ -197,9 +189,7 @@ export function useCanvasInteractionsClipboard({
   );
 
   const pasteClipboardPayload = useCallback(
-    (
-      payload: SubgraphClipboardPayload
-    ): { pastedNodeCount: number; pastedEdgeCount: number } => {
+    (payload: SubgraphClipboardPayload): { pastedNodeCount: number; pastedEdgeCount: number } => {
       if (payload.nodes.length === 0) {
         return { pastedNodeCount: 0, pastedEdgeCount: 0 };
       }
@@ -243,10 +233,7 @@ export function useCanvasInteractionsClipboard({
         oldToNewNodeId.set(node.id, newNodeId);
         const relativeX = node.position.x - payload.bounds.minX;
         const relativeY = node.position.y - payload.bounds.minY;
-        const nextX = Math.min(
-          Math.max(offsetX + relativeX, 16),
-          CANVAS_WIDTH - NODE_WIDTH - 16
-        );
+        const nextX = Math.min(Math.max(offsetX + relativeX, 16), CANVAS_WIDTH - NODE_WIDTH - 16);
         const nextY = Math.min(
           Math.max(offsetY + relativeY, 16),
           CANVAS_HEIGHT - NODE_MIN_HEIGHT - 16
@@ -339,9 +326,7 @@ export function useCanvasInteractionsClipboard({
       ) {
         const clipboardText = await navigator.clipboard.readText();
         if (clipboardText.trim()) {
-          const parsed = parseSubgraphClipboardPayload(
-            JSON.parse(clipboardText) as unknown
-          );
+          const parsed = parseSubgraphClipboardPayload(JSON.parse(clipboardText) as unknown);
           if (parsed) {
             inMemorySubgraphClipboard = parsed;
             return cloneValue(parsed);
@@ -369,13 +354,7 @@ export function useCanvasInteractionsClipboard({
       `Pasted ${pastedNodeCount} node${pastedNodeCount === 1 ? '' : 's'} and ${pastedEdgeCount} wire${pastedEdgeCount === 1 ? '' : 's'}.`,
       { variant: 'success' }
     );
-  }, [
-    isPathLocked,
-    notifyLocked,
-    pasteClipboardPayload,
-    readClipboardPayload,
-    toast,
-  ]);
+  }, [isPathLocked, notifyLocked, pasteClipboardPayload, readClipboardPayload, toast]);
 
   const handleCutSelection = useCallback(async (): Promise<void> => {
     if (isPathLocked) {
@@ -389,8 +368,7 @@ export function useCanvasInteractionsClipboard({
     }
     await writeClipboardPayload(payload);
     const selectedIds = resolveActiveNodeSelectionIds();
-    const { removedNodeCount, removedEdgeCount } =
-      removeNodesAndConnectedEdges(selectedIds);
+    const { removedNodeCount, removedEdgeCount } = removeNodesAndConnectedEdges(selectedIds);
     toast(
       `Cut ${removedNodeCount} node${removedNodeCount === 1 ? '' : 's'} and ${removedEdgeCount} wire${removedEdgeCount === 1 ? '' : 's'}.`,
       { variant: 'success' }

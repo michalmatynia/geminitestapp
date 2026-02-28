@@ -17,12 +17,5 @@ export type SystemSetting = SettingRecordDto;
 export const settingsScopeSchema = z.enum(['all', 'light', 'heavy']);
 export type SettingsScopeDto = z.infer<typeof settingsScopeSchema>;
 
-export {
-  adminSettingsSchema,
-  createAdminSettingsSchema,
-} from './admin';
-export type {
-  AdminSettings,
-  CreateAdminSettings,
-  UpdateAdminSettings,
-} from './admin';
+export { adminSettingsSchema, createAdminSettingsSchema } from './admin';
+export type { AdminSettings, CreateAdminSettings, UpdateAdminSettings } from './admin';

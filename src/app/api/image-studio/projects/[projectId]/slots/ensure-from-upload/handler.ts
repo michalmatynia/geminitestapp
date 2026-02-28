@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { ensureImageStudioSlotFromUploadedAsset } from '@/features/ai/image-studio/server/ensure-slot-from-upload';
+import { ensureImageStudioSlotFromUploadedAsset } from '@/shared/lib/ai/image-studio/server/ensure-slot-from-upload';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 
-const sanitizeProjectId = (value: string): string =>
-  value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
+const sanitizeProjectId = (value: string): string => value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
 
 const ensureFromUploadSchema = z.object({
   uploadId: z.string().trim().optional().nullable(),

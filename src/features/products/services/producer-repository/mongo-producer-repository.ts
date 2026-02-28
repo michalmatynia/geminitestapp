@@ -1,13 +1,7 @@
 import { ObjectId } from 'mongodb';
 
-
-import type { 
-  ProducerRepository, 
-  ProducerFilters 
-} from '@/shared/contracts/products';
-import type { 
-  Producer 
-} from '@/shared/contracts/products';
+import type { ProducerRepository, ProducerFilters } from '@/shared/contracts/products';
+import type { Producer } from '@/shared/contracts/products';
 import { internalError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
@@ -42,7 +36,11 @@ export const mongoProducerRepository: ProducerRepository = {
       ] as Filter<ProducerDoc>[];
     }
 
-    const producers = await db.collection<ProducerDoc>(COLLECTION).find(query).sort({ name: 1 }).toArray();
+    const producers = await db
+      .collection<ProducerDoc>(COLLECTION)
+      .find(query)
+      .sort({ name: 1 })
+      .toArray();
     return producers.map(toProducerDomain);
   },
 
@@ -65,21 +63,23 @@ export const mongoProducerRepository: ProducerRepository = {
     return toProducerDomain({ ...doc, _id: result.insertedId } as ProducerDoc);
   },
 
-  async updateProducer(id: string, data: { name?: string; website?: string | null }): Promise<Producer> {
+  async updateProducer(
+    id: string,
+    data: { name?: string; website?: string | null }
+  ): Promise<Producer> {
     const db = await getMongoDb();
-    
+
     const set: Partial<ProducerDoc> = {
       updatedAt: new Date(),
     };
-    
+
     if (data.name !== undefined) set.name = data.name;
     if (data.website !== undefined) set.website = data.website;
 
-    await db.collection<ProducerDoc>(COLLECTION).updateOne(
-      { _id: new ObjectId(id) }, 
-      { $set: set } as UpdateFilter<ProducerDoc>
-    );
-    
+    await db
+      .collection<ProducerDoc>(COLLECTION)
+      .updateOne({ _id: new ObjectId(id) }, { $set: set } as UpdateFilter<ProducerDoc>);
+
     const updated = await this.getProducerById(id);
     if (!updated) throw internalError('Failed to update producer', { producerId: id });
     return updated;

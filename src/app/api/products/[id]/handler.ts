@@ -1,5 +1,3 @@
-
-
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -10,7 +8,6 @@ import { validateProductUpdateMiddleware } from '@/features/products/validations
 import type { ProductRecord, ProductWithImages } from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError, payloadTooLargeError } from '@/shared/errors/app-error';
-
 
 const isLikelyPayloadTooLarge = (error: unknown): boolean => {
   const message = error instanceof Error ? error.message : String(error ?? '');
@@ -78,8 +75,12 @@ export async function PUT_handler(
   }
 
   const options = _ctx.userId ? { userId: _ctx.userId } : {};
-  const product: ProductWithImages | null = await productService.updateProduct(id, formData, options);
-  
+  const product: ProductWithImages | null = await productService.updateProduct(
+    id,
+    formData,
+    options
+  );
+
   if (!product) {
     throw notFoundError('Product not found', { productId: id });
   }
@@ -116,8 +117,12 @@ export async function PATCH_handler(
   if (data.stock !== undefined) updateData.stock = data.stock;
 
   const options = _ctx.userId ? { userId: _ctx.userId } : {};
-  const product: ProductWithImages | null = await productService.updateProduct(id, updateData, options);
-  
+  const product: ProductWithImages | null = await productService.updateProduct(
+    id,
+    updateData,
+    options
+  );
+
   if (!product) {
     throw notFoundError('Product not found', { productId: id });
   }
@@ -138,7 +143,7 @@ export async function DELETE_handler(
   const id = params.id;
   const options = _ctx.userId ? { userId: _ctx.userId } : {};
   const product: ProductRecord | null = await productService.deleteProduct(id, options);
-  
+
   if (!product) {
     throw notFoundError('Product not found', { productId: id });
   }

@@ -3,7 +3,13 @@
 import { Box, Trash2, Lock, GripVertical } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
-import { TreeRow, TreeActionButton, TreeActionSlot, TreeContextMenu, type TreeContextMenuItem } from '@/shared/ui';
+import {
+  TreeRow,
+  TreeActionButton,
+  TreeActionSlot,
+  TreeContextMenu,
+  type TreeContextMenuItem,
+} from '@/shared/ui';
 import { DRAG_KEYS, hasDragType } from '@/shared/utils/drag-drop';
 
 import { BLOCK_ICONS, resolveBlockLabel } from './tree-constants';
@@ -13,7 +19,7 @@ import { useTreeSectionId } from './TreeSectionContext';
 import { useDragStateExtract } from '../../../hooks/useDragStateExtract';
 import { usePageBuilder } from '../../../hooks/usePageBuilderContext';
 import { useTreeActions } from '../../../hooks/useTreeActionsContext';
-import { readBlockDragData, setBlockDragData } from '../../../utils/page-builder-dnd';
+import { readBlockDragData, setBlockDragData } from '@/features/cms/utils/page-builder-dnd';
 
 import type { BlockNodeItemProps } from './tree-types';
 
@@ -26,10 +32,7 @@ export function BlockNodeItem({
   const columnId = useOptionalTreeColumnId();
   const resolvedParentBlockId = useOptionalTreeParentBlockId();
   const { state: pbState } = usePageBuilder();
-  const {
-    selectNode,
-    blockActions,
-  } = useTreeActions();
+  const { selectNode, blockActions } = useTreeActions();
 
   const selectedNodeId = pbState.selectedNodeId;
 
@@ -50,8 +53,9 @@ export function BlockNodeItem({
   const blockLabel = resolveBlockLabel(block, block.type);
 
   // Check if this is an ImageElement in background mode (locked/immovable)
-  const isBackgroundMode = block.type === 'ImageElement' &&
-    (block.settings?.['backgroundTarget'] as string || 'none') !== 'none';
+  const isBackgroundMode =
+    block.type === 'ImageElement' &&
+    ((block.settings?.['backgroundTarget'] as string) || 'none') !== 'none';
   const backgroundTarget = (block.settings?.['backgroundTarget'] as string) || 'none';
   const canDrag = !disableDrag && !isBackgroundMode;
 
@@ -64,7 +68,8 @@ export function BlockNodeItem({
         tone: 'danger',
         disabled: isBackgroundMode,
         onSelect: (): void => {
-          if (!isBackgroundMode) blockActions.remove(sectionId, block.id, columnId, resolvedParentBlockId);
+          if (!isBackgroundMode)
+            blockActions.remove(sectionId, block.id, columnId, resolvedParentBlockId);
         },
       },
     ],
@@ -117,7 +122,8 @@ export function BlockNodeItem({
             ...(draggedBlockType !== undefined ? { type: draggedBlockType } : {}),
           });
           const dragId = blockDrag.id;
-          if ((!dragId && !hasBlockPayload) || draggedBlockId === block.id || dragId === block.id) return;
+          if ((!dragId && !hasBlockPayload) || draggedBlockId === block.id || dragId === block.id)
+            return;
           e.preventDefault();
           e.stopPropagation();
           setIsDragOver(true);
@@ -137,7 +143,9 @@ export function BlockNodeItem({
             ...(draggedBlockType !== undefined ? { type: draggedBlockType } : {}),
             fromSectionId: draggedFromSectionId,
             ...(draggedFromColumnId !== undefined ? { fromColumnId: draggedFromColumnId } : {}),
-            ...(draggedFromParentBlockId !== undefined ? { fromParentBlockId: draggedFromParentBlockId } : {}),
+            ...(draggedFromParentBlockId !== undefined
+              ? { fromParentBlockId: draggedFromParentBlockId }
+              : {}),
           });
           const dragId = blockDrag.id;
           if (!dragId || dragId === block.id) return;
@@ -235,9 +243,7 @@ export function BlockNodeItem({
         {isBackgroundMode && (
           <span className='text-[9px] text-amber-500/70 uppercase'>{backgroundTarget} bg</span>
         )}
-        {isDragOver && (
-          <span className='text-[10px] text-emerald-300'>Insert here</span>
-        )}
+        {isDragOver && <span className='text-[10px] text-emerald-300'>Insert here</span>}
         {/* Delete button - visible on hover when selected or always visible on hover */}
         {!isDragOver && !isBackgroundMode && (
           <TreeActionSlot show='hover' align='end'>

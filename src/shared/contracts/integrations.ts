@@ -218,7 +218,8 @@ export interface ProductListing {
   failureReason: string | null;
   exportHistory: ProductListingExportEvent[] | null;
   createdAt: string;
-  updatedAt: string | null;}
+  updatedAt: string | null;
+}
 
 export const productListingWithDetailsSchema = productListingSchema.extend({
   integration: z.object({
@@ -319,9 +320,10 @@ export interface ExternalCategoryWithChildren extends ExternalCategory {
   children: ExternalCategoryWithChildren[];
 }
 
-export const externalCategoryWithChildrenSchema: z.ZodType<ExternalCategoryWithChildren> = externalCategorySchema.extend({
-  children: z.array(z.lazy(() => externalCategoryWithChildrenSchema)),
-});
+export const externalCategoryWithChildrenSchema: z.ZodType<ExternalCategoryWithChildren> =
+  externalCategorySchema.extend({
+    children: z.array(z.lazy(() => externalCategoryWithChildrenSchema)),
+  });
 
 export const baseCategoryFromApiSchema = z.object({
   category_id: z.union([z.number(), z.string()]),
@@ -611,15 +613,19 @@ export const fetchMarketplaceCategoriesRequestSchema = z.object({
   connectionId: z.string(),
 });
 
-export type FetchMarketplaceCategoriesRequest = z.infer<typeof fetchMarketplaceCategoriesRequestSchema>;
+export type FetchMarketplaceCategoriesRequest = z.infer<
+  typeof fetchMarketplaceCategoriesRequestSchema
+>;
 
 export const bulkCategoryMappingRequestSchema = z.object({
   connectionId: z.string(),
   catalogId: z.string(),
-  mappings: z.array(z.object({
-    externalCategoryId: z.string(),
-    internalCategoryId: z.string().nullable(),
-  })),
+  mappings: z.array(
+    z.object({
+      externalCategoryId: z.string(),
+      internalCategoryId: z.string().nullable(),
+    })
+  ),
 });
 
 export type BulkCategoryMappingRequest = z.infer<typeof bulkCategoryMappingRequestSchema>;
@@ -659,11 +665,7 @@ export const baseImportItemActionSchema = z.enum([
 ]);
 export type BaseImportItemAction = z.infer<typeof baseImportItemActionSchema>;
 
-export const baseImportModeSchema = z.enum([
-  'create_only',
-  'upsert_on_base_id',
-  'upsert_on_sku',
-]);
+export const baseImportModeSchema = z.enum(['create_only', 'upsert_on_base_id', 'upsert_on_sku']);
 export type BaseImportMode = z.infer<typeof baseImportModeSchema>;
 
 export const baseImportErrorCodeSchema = z.enum([
@@ -701,12 +703,17 @@ export const baseImportParameterImportSummarySchema = z.object({
   created: z.number(),
   written: z.number(),
 });
-export type BaseImportParameterImportSummary = z.infer<typeof baseImportParameterImportSummarySchema>;
+export type BaseImportParameterImportSummary = z.infer<
+  typeof baseImportParameterImportSummarySchema
+>;
 
-export const baseImportRunParameterImportSummarySchema = baseImportParameterImportSummarySchema.extend({
-  itemsApplied: z.number(),
-});
-export type BaseImportRunParameterImportSummary = z.infer<typeof baseImportRunParameterImportSummarySchema>;
+export const baseImportRunParameterImportSummarySchema =
+  baseImportParameterImportSummarySchema.extend({
+    itemsApplied: z.number(),
+  });
+export type BaseImportRunParameterImportSummary = z.infer<
+  typeof baseImportRunParameterImportSummarySchema
+>;
 
 export const baseImportRunStatsSchema = z.object({
   total: z.number(),
@@ -810,12 +817,14 @@ export type BaseImportStartResponse = z.infer<typeof baseImportStartResponseSche
 export const baseImportRunDetailResponseSchema = z.object({
   run: baseImportRunRecordSchema,
   items: z.array(baseImportItemRecordSchema),
-  pagination: z.object({
-    page: z.number(),
-    pageSize: z.number(),
-    totalItems: z.number(),
-    totalPages: z.number(),
-  }).optional(),
+  pagination: z
+    .object({
+      page: z.number(),
+      pageSize: z.number(),
+      totalItems: z.number(),
+      totalPages: z.number(),
+    })
+    .optional(),
 });
 export type BaseImportRunDetailResponse = z.infer<typeof baseImportRunDetailResponseSchema>;
 
@@ -854,7 +863,9 @@ export const baseImportParameterImportModeSchema = z.enum(['all', 'mapped']);
 export type BaseImportParameterImportMode = z.infer<typeof baseImportParameterImportModeSchema>;
 
 export const baseImportParameterLanguageScopeSchema = z.enum(['catalog_languages', 'default_only']);
-export type BaseImportParameterLanguageScope = z.infer<typeof baseImportParameterLanguageScopeSchema>;
+export type BaseImportParameterLanguageScope = z.infer<
+  typeof baseImportParameterLanguageScopeSchema
+>;
 
 export const baseImportParameterMatchBySchema = z.enum(['base_id_then_name', 'name_only']);
 export type BaseImportParameterMatchBy = z.infer<typeof baseImportParameterMatchBySchema>;
@@ -868,30 +879,54 @@ export const baseImportParameterImportSettingsSchema = z.object({
   matchBy: baseImportParameterMatchBySchema,
 });
 
-export type BaseImportParameterImportSettings = z.infer<typeof baseImportParameterImportSettingsSchema>;
+export type BaseImportParameterImportSettings = z.infer<
+  typeof baseImportParameterImportSettingsSchema
+>;
 
-export const DEFAULT_BASE_IMPORT_PARAMETER_IMPORT_SETTINGS: BaseImportParameterImportSettings =
-  {
-    enabled: false,
-    mode: 'all',
-    languageScope: 'catalog_languages',
-    createMissingParameters: true,
-    overwriteExistingValues: false,
-    matchBy: 'base_id_then_name',
-  };
+export const DEFAULT_BASE_IMPORT_PARAMETER_IMPORT_SETTINGS: BaseImportParameterImportSettings = {
+  enabled: false,
+  mode: 'all',
+  languageScope: 'catalog_languages',
+  createMissingParameters: true,
+  overwriteExistingValues: false,
+  matchBy: 'base_id_then_name',
+};
 
-export const defaultBaseImportParameterImportSettings = DEFAULT_BASE_IMPORT_PARAMETER_IMPORT_SETTINGS;
+export const defaultBaseImportParameterImportSettings =
+  DEFAULT_BASE_IMPORT_PARAMETER_IMPORT_SETTINGS;
 
-export function normalizeBaseImportParameterImportSettings(input: unknown): BaseImportParameterImportSettings {
+export function normalizeBaseImportParameterImportSettings(
+  input: unknown
+): BaseImportParameterImportSettings {
   if (input && typeof input === 'object' && !Array.isArray(input)) {
     const record = input as Record<string, unknown>;
     return {
-      enabled: typeof record['enabled'] === 'boolean' ? record['enabled'] : DEFAULT_BASE_IMPORT_PARAMETER_IMPORT_SETTINGS.enabled,
-      mode: typeof record['mode'] === 'string' && ['all', 'mapped'].includes(record['mode']) ? (record['mode'] as BaseImportParameterImportMode) : DEFAULT_BASE_IMPORT_PARAMETER_IMPORT_SETTINGS.mode,
-      languageScope: typeof record['languageScope'] === 'string' && ['catalog_languages', 'default_only'].includes(record['languageScope']) ? (record['languageScope'] as BaseImportParameterLanguageScope) : DEFAULT_BASE_IMPORT_PARAMETER_IMPORT_SETTINGS.languageScope,
-      createMissingParameters: typeof record['createMissingParameters'] === 'boolean' ? record['createMissingParameters'] : DEFAULT_BASE_IMPORT_PARAMETER_IMPORT_SETTINGS.createMissingParameters,
-      overwriteExistingValues: typeof record['overwriteExistingValues'] === 'boolean' ? record['overwriteExistingValues'] : DEFAULT_BASE_IMPORT_PARAMETER_IMPORT_SETTINGS.overwriteExistingValues,
-      matchBy: typeof record['matchBy'] === 'string' && ['base_id_then_name', 'name_only'].includes(record['matchBy']) ? (record['matchBy'] as BaseImportParameterMatchBy) : DEFAULT_BASE_IMPORT_PARAMETER_IMPORT_SETTINGS.matchBy,
+      enabled:
+        typeof record['enabled'] === 'boolean'
+          ? record['enabled']
+          : DEFAULT_BASE_IMPORT_PARAMETER_IMPORT_SETTINGS.enabled,
+      mode:
+        typeof record['mode'] === 'string' && ['all', 'mapped'].includes(record['mode'])
+          ? (record['mode'] as BaseImportParameterImportMode)
+          : DEFAULT_BASE_IMPORT_PARAMETER_IMPORT_SETTINGS.mode,
+      languageScope:
+        typeof record['languageScope'] === 'string' &&
+        ['catalog_languages', 'default_only'].includes(record['languageScope'])
+          ? (record['languageScope'] as BaseImportParameterLanguageScope)
+          : DEFAULT_BASE_IMPORT_PARAMETER_IMPORT_SETTINGS.languageScope,
+      createMissingParameters:
+        typeof record['createMissingParameters'] === 'boolean'
+          ? record['createMissingParameters']
+          : DEFAULT_BASE_IMPORT_PARAMETER_IMPORT_SETTINGS.createMissingParameters,
+      overwriteExistingValues:
+        typeof record['overwriteExistingValues'] === 'boolean'
+          ? record['overwriteExistingValues']
+          : DEFAULT_BASE_IMPORT_PARAMETER_IMPORT_SETTINGS.overwriteExistingValues,
+      matchBy:
+        typeof record['matchBy'] === 'string' &&
+        ['base_id_then_name', 'name_only'].includes(record['matchBy'])
+          ? (record['matchBy'] as BaseImportParameterMatchBy)
+          : DEFAULT_BASE_IMPORT_PARAMETER_IMPORT_SETTINGS.matchBy,
     };
   }
   return DEFAULT_BASE_IMPORT_PARAMETER_IMPORT_SETTINGS;
@@ -954,14 +989,16 @@ export const testLogEntrySchema = z.object({
 
 export type TestLogEntry = z.infer<typeof testLogEntrySchema>;
 
-export const testConnectionResponseSchema = z.object({
-  error: z.string().optional(),
-  errorId: z.string().optional(),
-  integrationId: z.string().nullable().optional(),
-  connectionId: z.string().nullable().optional(),
-  steps: z.unknown().optional(),
-  profile: z.unknown().optional(),
-}).catchall(z.unknown());
+export const testConnectionResponseSchema = z
+  .object({
+    error: z.string().optional(),
+    errorId: z.string().optional(),
+    integrationId: z.string().nullable().optional(),
+    connectionId: z.string().nullable().optional(),
+    steps: z.unknown().optional(),
+    profile: z.unknown().optional(),
+  })
+  .catchall(z.unknown());
 
 export type TestConnectionResponse = z.infer<typeof testConnectionResponseSchema>;
 
@@ -1005,10 +1042,12 @@ export const imageExportDiagnosticsSchema = z.object({
   successful: z.number(),
   failed: z.number(),
   skipped: z.number(),
-  errors: z.array(z.object({
-    imageId: z.string(),
-    error: z.string(),
-  })),
+  errors: z.array(
+    z.object({
+      imageId: z.string(),
+      error: z.string(),
+    })
+  ),
 });
 
 export type ImageExportDiagnostics = z.infer<typeof imageExportDiagnosticsSchema>;
@@ -1084,9 +1123,11 @@ export type ExportJobDetail = z.infer<typeof exportJobDetailSchema>;
 export const baseProductRecordSchema = z.record(z.string(), z.unknown());
 export type BaseProductRecord = z.infer<typeof baseProductRecordSchema>;
 
-export const baseApiRawResultSchema = z.object({
-  status: z.string(),
-}).catchall(z.unknown());
+export const baseApiRawResultSchema = z
+  .object({
+    status: z.string(),
+  })
+  .catchall(z.unknown());
 
 export type BaseApiRawResult = z.infer<typeof baseApiRawResultSchema>;
 
@@ -1098,11 +1139,13 @@ export const importParameterCacheSchema = z.object({
 
 export type ImportParameterCache = z.infer<typeof importParameterCacheSchema>;
 
-export const baseApiResponseSchema = z.object({
-  status: z.string().optional(),
-  error_code: z.string().optional(),
-  error_message: z.string().optional(),
-}).catchall(z.unknown());
+export const baseApiResponseSchema = z
+  .object({
+    status: z.string().optional(),
+    error_code: z.string().optional(),
+    error_message: z.string().optional(),
+  })
+  .catchall(z.unknown());
 
 export type BaseApiResponse = z.infer<typeof baseApiResponseSchema>;
 
@@ -1238,7 +1281,10 @@ export type IntegrationRecord = Omit<Integration, 'createdAt' | 'updatedAt'> & {
   updatedAt: string | Date | null;
 };
 
-export type IntegrationConnectionRecord = Omit<IntegrationConnection, 'createdAt' | 'updatedAt' | 'playwrightStorageStateUpdatedAt' | 'traderaApiTokenUpdatedAt'> & {
+export type IntegrationConnectionRecord = Omit<
+  IntegrationConnection,
+  'createdAt' | 'updatedAt' | 'playwrightStorageStateUpdatedAt' | 'traderaApiTokenUpdatedAt'
+> & {
   createdAt: string | Date;
   updatedAt: string | Date | null;
   playwrightStorageStateUpdatedAt?: string | Date | null;
@@ -1251,9 +1297,18 @@ export type IntegrationRepository = {
   getIntegrationById: (id: string) => Promise<IntegrationRecord | null>;
   listConnections: (integrationId: string) => Promise<IntegrationConnectionRecord[]>;
   getConnectionById: (id: string) => Promise<IntegrationConnectionRecord | null>;
-  getConnectionByIdAndIntegration: (id: string, integrationId: string) => Promise<IntegrationConnectionRecord | null>;
-  createConnection: (integrationId: string, input: Record<string, unknown>) => Promise<IntegrationConnectionRecord>;
-  updateConnection: (id: string, input: Partial<IntegrationConnectionRecord>) => Promise<IntegrationConnectionRecord>;
+  getConnectionByIdAndIntegration: (
+    id: string,
+    integrationId: string
+  ) => Promise<IntegrationConnectionRecord | null>;
+  createConnection: (
+    integrationId: string,
+    input: Record<string, unknown>
+  ) => Promise<IntegrationConnectionRecord>;
+  updateConnection: (
+    id: string,
+    input: Partial<IntegrationConnectionRecord>
+  ) => Promise<IntegrationConnectionRecord>;
   deleteConnection: (
     id: string,
     options?: { replacementConnectionId?: string | null }
@@ -1261,7 +1316,9 @@ export type IntegrationRepository = {
 };
 
 export type ExternalCategoryRepository = {
-  listCategories: (integrationId: string) => Promise<{ category_id: string; name: string; parent_id: string }[]>;
+  listCategories: (
+    integrationId: string
+  ) => Promise<{ category_id: string; name: string; parent_id: string }[]>;
   syncCategories: (integrationId: string) => Promise<void>;
 };
 
@@ -1270,7 +1327,10 @@ export type CategoryMappingRepository = {
   saveMapping: (categoryId: string, integrationId: string, externalId: string) => Promise<void>;
 };
 
-export type CreateProductListingInput = Omit<CreateProductListing, 'listedAt' | 'expiresAt' | 'nextRelistAt' | 'lastRelistedAt' | 'lastStatusCheckAt'> & {
+export type CreateProductListingInput = Omit<
+  CreateProductListing,
+  'listedAt' | 'expiresAt' | 'nextRelistAt' | 'lastRelistedAt' | 'lastStatusCheckAt'
+> & {
   listedAt?: string | Date | null;
   expiresAt?: string | Date | null;
   nextRelistAt?: string | Date | null;
@@ -1278,7 +1338,10 @@ export type CreateProductListingInput = Omit<CreateProductListing, 'listedAt' | 
   lastStatusCheckAt?: string | Date | null;
 };
 
-export type ProductListingExportEventRecord = Omit<ProductListingExportEvent, 'exportedAt' | 'expiresAt'> & {
+export type ProductListingExportEventRecord = Omit<
+  ProductListingExportEvent,
+  'exportedAt' | 'expiresAt'
+> & {
   exportedAt: string | Date;
   expiresAt?: string | Date | null | undefined;
 };
@@ -1296,7 +1359,9 @@ export type ProductListingRepository = {
   listingExists: (productId: string, connectionId: string) => Promise<boolean>;
   getListingsByProductIds: (productIds: string[]) => Promise<ProductListing[]>;
   getListingsByConnection: (connectionId: string) => Promise<ProductListing[]>;
-  listAllListings: () => Promise<Array<Pick<ProductListing, 'productId' | 'status' | 'integrationId' | 'marketplaceData'>>>;
+  listAllListings: () => Promise<
+    Array<Pick<ProductListing, 'productId' | 'status' | 'integrationId' | 'marketplaceData'>>
+  >;
 };
 
 /**

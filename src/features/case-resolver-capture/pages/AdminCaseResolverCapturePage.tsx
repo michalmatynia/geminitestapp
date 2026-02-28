@@ -5,7 +5,15 @@ import Link from 'next/link';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
-import { Button, FormSection, SectionHeader, SelectSimple, useToast, FormActions, FormField } from '@/shared/ui';
+import {
+  Button,
+  FormSection,
+  SectionHeader,
+  SelectSimple,
+  useToast,
+  FormActions,
+  FormField,
+} from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 import {
@@ -90,9 +98,7 @@ export function AdminCaseResolverCapturePage(): React.JSX.Element {
       toast('Case Resolver Capture settings saved.', { variant: 'success' });
     } catch (error) {
       toast(
-        error instanceof Error
-          ? error.message
-          : 'Failed to save Case Resolver Capture settings.',
+        error instanceof Error ? error.message : 'Failed to save Case Resolver Capture settings.',
         { variant: 'error' }
       );
     }
@@ -145,7 +151,7 @@ export function AdminCaseResolverCapturePage(): React.JSX.Element {
         eyebrow='AI · Case Resolver Capture'
         title='Case Resolver Capture'
         subtitle={headerBreadcrumb}
-        actions={(
+        actions={
           <div className='flex flex-wrap items-center gap-2'>
             <Button
               type='button'
@@ -166,7 +172,7 @@ export function AdminCaseResolverCapturePage(): React.JSX.Element {
               </Link>
             </Button>
           </div>
-        )}
+        }
       />
 
       <FormSection
@@ -183,9 +189,9 @@ export function AdminCaseResolverCapturePage(): React.JSX.Element {
                 setDraft((current: CaseResolverCaptureSettings | null) =>
                   current
                     ? {
-                      ...current,
-                      enabled: fromBooleanOptionValue(value),
-                    }
+                        ...current,
+                        enabled: fromBooleanOptionValue(value),
+                      }
                     : current
                 );
               }}
@@ -199,9 +205,9 @@ export function AdminCaseResolverCapturePage(): React.JSX.Element {
                 setDraft((current: CaseResolverCaptureSettings | null) =>
                   current
                     ? {
-                      ...current,
-                      autoOpenProposalModal: fromBooleanOptionValue(value),
-                    }
+                        ...current,
+                        autoOpenProposalModal: fromBooleanOptionValue(value),
+                      }
                     : current
                 );
               }}
@@ -220,12 +226,12 @@ export function AdminCaseResolverCapturePage(): React.JSX.Element {
             description={roleDescription(role)}
             variant='subtle'
             className='p-4'
-            actions={(
+            actions={
               <div className='flex items-center gap-2 text-xs text-gray-400'>
                 <Settings2 className='size-3.5' />
                 <span>Source role: {role}</span>
               </div>
-            )}
+            }
           >
             <div className='grid gap-3 md:grid-cols-2'>
               <FormField label='Role Mapping Enabled' id={`mapping-enabled-${role}`}>
@@ -257,9 +263,7 @@ export function AdminCaseResolverCapturePage(): React.JSX.Element {
                     updateRoleMapping(
                       role,
                       'defaultAction',
-                      value === 'createInFilemaker' ||
-                        value === 'keepText' ||
-                        value === 'ignore'
+                      value === 'createInFilemaker' || value === 'keepText' || value === 'ignore'
                         ? value
                         : 'useMatched'
                     );
@@ -271,12 +275,20 @@ export function AdminCaseResolverCapturePage(): React.JSX.Element {
                 <SelectSimple
                   value={toBooleanOptionValue(mapping.autoMatchPartyReference ?? false)}
                   onValueChange={(value: string): void => {
-                    updateRoleMapping(role, 'autoMatchPartyReference', fromBooleanOptionValue(value));
+                    updateRoleMapping(
+                      role,
+                      'autoMatchPartyReference',
+                      fromBooleanOptionValue(value)
+                    );
                   }}
                   options={BOOLEAN_OPTIONS}
                 />
               </FormField>
-              <FormField label='Auto-match Filemaker Address' id={`auto-match-address-${role}`} className='md:col-span-2'>
+              <FormField
+                label='Auto-match Filemaker Address'
+                id={`auto-match-address-${role}`}
+                className='md:col-span-2'
+              >
                 <SelectSimple
                   value={toBooleanOptionValue(mapping.autoMatchAddress ?? false)}
                   onValueChange={(value: string): void => {
@@ -292,7 +304,9 @@ export function AdminCaseResolverCapturePage(): React.JSX.Element {
 
       <FormActions
         onCancel={handleReset}
-        onSave={() => { void handleSave(); }}
+        onSave={() => {
+          void handleSave();
+        }}
         cancelText='Reset to Defaults'
         saveText='Save Capture Settings'
         cancelVariant='outline'

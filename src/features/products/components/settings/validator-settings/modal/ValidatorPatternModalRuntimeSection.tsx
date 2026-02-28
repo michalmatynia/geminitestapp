@@ -1,25 +1,14 @@
 'use client';
 
 import React from 'react';
-import {
-  Textarea,
-  SelectSimple,
-  StatusToggle,
-  FormField,
-  FormSection,
-} from '@/shared/ui';
-import {
-  RUNTIME_TYPE_OPTIONS,
-} from '../validator-pattern-modal-options';
+import { Textarea, SelectSimple, StatusToggle, FormField, FormSection } from '@/shared/ui';
+import { RUNTIME_TYPE_OPTIONS } from '../validator-pattern-modal-options';
 import { ValidatorDocTooltip } from '../ValidatorDocsTooltips';
 import { useValidatorSettingsContext } from '../ValidatorSettingsContext';
 import type { PatternFormData, ProductValidationRuntimeType } from '@/shared/contracts/products';
 
 export function ValidatorPatternModalRuntimeSection(): React.JSX.Element {
-  const {
-    formData,
-    setFormData,
-  } = useValidatorSettingsContext();
+  const { formData, setFormData } = useValidatorSettingsContext();
 
   return (
     <FormSection
@@ -27,7 +16,7 @@ export function ValidatorPatternModalRuntimeSection(): React.JSX.Element {
       description='Execute DB or AI runtime checks before showing validation advice.'
       variant='subtle'
       className='border border-fuchsia-500/25 bg-fuchsia-500/5 p-3 space-y-4'
-      actions={(
+      actions={
         <ValidatorDocTooltip docId='validator.modal.runtime.toggle'>
           <StatusToggle
             enabled={formData.runtimeEnabled}
@@ -46,12 +35,13 @@ export function ValidatorPatternModalRuntimeSection(): React.JSX.Element {
             }
           />
         </ValidatorDocTooltip>
-      )}
+      }
     >
       {formData.runtimeEnabled && (
         <div className='mt-4 space-y-4'>
           <FormField label='Runtime Type'>
-            <SelectSimple size='sm'
+            <SelectSimple
+              size='sm'
               value={formData.runtimeType}
               onValueChange={(value: string): void =>
                 setFormData((prev: PatternFormData) => ({

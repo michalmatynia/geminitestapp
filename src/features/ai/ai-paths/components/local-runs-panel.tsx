@@ -31,7 +31,10 @@ type LocalRunsPanelProps = {
   sourceMode?: 'include' | 'exclude' | undefined;
 };
 
-const getPanelLabel = (sourceFilter?: string | null | undefined, sourceMode?: 'include' | 'exclude' | undefined): string => {
+const getPanelLabel = (
+  sourceFilter?: string | null | undefined,
+  sourceMode?: 'include' | 'exclude' | undefined
+): string => {
   if (sourceFilter === 'ai_paths_ui' && sourceMode === 'exclude') return 'External Local Runs';
   if (sourceFilter === 'ai_paths_ui') return 'Local Runs';
   return 'Local Runs';
@@ -41,15 +44,10 @@ export function LocalRunsPanel({
   sourceFilter,
   sourceMode,
 }: LocalRunsPanelProps): React.JSX.Element {
-  const {
-    runs,
-    metrics,
-    isLoading,
-    isFetching,
-    isUpdating,
-    refetch,
-    clearRuns,
-  } = useLocalRuns({ sourceFilter, sourceMode });
+  const { runs, metrics, isLoading, isFetching, isUpdating, refetch, clearRuns } = useLocalRuns({
+    sourceFilter,
+    sourceMode,
+  });
 
   const tableProps = useLocalRunsTableProps(runs, isLoading);
   const [clearScope, setClearScope] = React.useState<LocalRunsScope | null>(null);
@@ -92,11 +90,38 @@ export function LocalRunsPanel({
         }
         alerts={
           <div className='grid gap-3 grid-cols-2 lg:grid-cols-5 mb-4'>
-            <MetadataItem label='Runs' value={metrics.total} variant='minimal' hint='Visible in this tab' />
-            <MetadataItem label='Success' value={metrics.success} variant='minimal' valueClassName='text-emerald-200' hint={`${metrics.successRate}% success rate`} />
-            <MetadataItem label='Errors' value={metrics.error} variant='minimal' valueClassName='text-rose-200' hint='Failures in this list' />
-            <MetadataItem label='Avg Duration' value={formatDuration(metrics.avgDuration)} variant='minimal' hint={`p95 ${formatDuration(metrics.p95Duration)}`} />
-            <MetadataItem label='Last Run' value={formatDate(metrics.lastRunAt)} variant='minimal' hint='Newest execution' />
+            <MetadataItem
+              label='Runs'
+              value={metrics.total}
+              variant='minimal'
+              hint='Visible in this tab'
+            />
+            <MetadataItem
+              label='Success'
+              value={metrics.success}
+              variant='minimal'
+              valueClassName='text-emerald-200'
+              hint={`${metrics.successRate}% success rate`}
+            />
+            <MetadataItem
+              label='Errors'
+              value={metrics.error}
+              variant='minimal'
+              valueClassName='text-rose-200'
+              hint='Failures in this list'
+            />
+            <MetadataItem
+              label='Avg Duration'
+              value={formatDuration(metrics.avgDuration)}
+              variant='minimal'
+              hint={`p95 ${formatDuration(metrics.p95Duration)}`}
+            />
+            <MetadataItem
+              label='Last Run'
+              value={formatDate(metrics.lastRunAt)}
+              variant='minimal'
+              hint='Newest execution'
+            />
           </div>
         }
         {...tableProps}

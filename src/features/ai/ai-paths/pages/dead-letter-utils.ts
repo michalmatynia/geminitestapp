@@ -31,7 +31,9 @@ export const formatTimestamp = (value?: Date | string | null): string => {
   return date.toLocaleString();
 };
 
-export const calculateNodeStatusSummary = (detail: RunDetail): {
+export const calculateNodeStatusSummary = (
+  detail: RunDetail
+): {
   counts: Record<string, number>;
   totalNodes: number;
   completed: number;

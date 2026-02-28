@@ -9,14 +9,14 @@ export default function AllegroParameterMappingPage(): React.JSX.Element {
       <SectionHeader
         title='Parameter Mapping'
         description='Define how product fields map to Allegro listing parameters.'
-        eyebrow={(
+        eyebrow={
           <Link
             href='/admin/integrations/marketplaces/allegro'
             className='text-blue-300 hover:text-blue-200'
           >
             ← Allegro
           </Link>
-        )}
+        }
         className='mb-6'
       />
 

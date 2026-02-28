@@ -66,18 +66,12 @@ describe('inspectPathDependencies', () => {
     const report = inspectPathDependencies(nodes, []);
     expect(report.errors).toBeGreaterThan(0);
     expect(report.strictReady).toBe(false);
+    expect(report.risks.some((risk) => risk.category === 'parser_entity_fallback')).toBe(true);
     expect(
-      report.risks.some((risk) => risk.category === 'parser_entity_fallback')
+      report.risks.some((risk) => risk.category === 'database_write_missing_identity_inputs')
     ).toBe(true);
     expect(
-      report.risks.some(
-        (risk) => risk.category === 'database_write_missing_identity_inputs',
-      )
-    ).toBe(true);
-    expect(
-      report.risks.some(
-        (risk) => risk.category === 'database_update_mode_mapping_disallowed',
-      )
+      report.risks.some((risk) => risk.category === 'database_update_mode_mapping_disallowed')
     ).toBe(true);
   });
 
@@ -196,9 +190,7 @@ describe('inspectPathDependencies', () => {
 
     const report = inspectPathDependencies(nodes, []);
     expect(
-      report.risks.some(
-        (risk) => risk.category === 'database_query_mode_preset_disallowed',
-      )
+      report.risks.some((risk) => risk.category === 'database_query_mode_preset_disallowed')
     ).toBe(true);
     expect(report.strictReady).toBe(false);
   });
@@ -244,9 +236,7 @@ describe('inspectPathDependencies', () => {
     ];
 
     const report = inspectPathDependencies(nodes, edges);
-    expect(
-      report.risks.some((risk) => risk.category === 'parser_entity_fallback')
-    ).toBe(false);
+    expect(report.risks.some((risk) => risk.category === 'parser_entity_fallback')).toBe(false);
   });
 
   it('allows scoped inspection when dependency errors are only outside trigger reachability', () => {
@@ -395,9 +385,7 @@ describe('inspectPathDependencies', () => {
     });
     expect(scopedReport.errors).toBeGreaterThan(0);
     expect(
-      scopedReport.risks.some(
-        (risk) => risk.category === 'database_update_mode_mapping_disallowed',
-      )
+      scopedReport.risks.some((risk) => risk.category === 'database_update_mode_mapping_disallowed')
     ).toBe(true);
   });
 
@@ -449,9 +437,7 @@ describe('inspectPathDependencies', () => {
 
     const report = inspectPathDependencies(nodes, edges);
     expect(
-      report.risks.some(
-        (risk) => risk.category === 'database_write_template_missing_wiring',
-      )
+      report.risks.some((risk) => risk.category === 'database_write_template_missing_wiring')
     ).toBe(true);
   });
 
@@ -488,9 +474,7 @@ describe('inspectPathDependencies', () => {
 
     const report = inspectPathDependencies(nodes, []);
     expect(
-      report.risks.some(
-        (risk) => risk.category === 'database_write_template_missing_wiring',
-      )
+      report.risks.some((risk) => risk.category === 'database_write_template_missing_wiring')
     ).toBe(false);
   });
 });

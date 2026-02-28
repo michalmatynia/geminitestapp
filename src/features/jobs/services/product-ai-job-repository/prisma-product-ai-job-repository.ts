@@ -40,9 +40,7 @@ export const prismaProductAiJobRepository: ProductAiJobRepository = {
 
   async findJobs(productId?: string, options?: FindProductAiJobsOptions) {
     const statuses =
-      options?.statuses && options.statuses.length > 0
-        ? options.statuses
-        : undefined;
+      options?.statuses && options.statuses.length > 0 ? options.statuses : undefined;
     const jobs = await prisma.productAiJob.findMany({
       where: {
         ...(productId ? { productId } : {}),

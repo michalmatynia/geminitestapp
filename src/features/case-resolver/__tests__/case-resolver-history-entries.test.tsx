@@ -5,7 +5,7 @@ import type { CaseResolverDocumentHistoryEntry } from '@/shared/contracts/case-r
 import { CaseResolverHistoryEntries } from '@/features/case-resolver/components/page/CaseResolverHistoryEntries';
 
 const buildHistoryEntry = (
-  overrides: Partial<CaseResolverDocumentHistoryEntry> = {},
+  overrides: Partial<CaseResolverDocumentHistoryEntry> = {}
 ): CaseResolverDocumentHistoryEntry => ({
   id: 'history-1',
   savedAt: '2026-02-24T12:00:00.000Z',
@@ -31,7 +31,7 @@ describe('CaseResolverHistoryEntries', () => {
         formatTimestamp={(value: string): string => `TS:${value}`}
         onRestore={vi.fn()}
         isRestoreDisabled={false}
-      />,
+      />
     );
 
     expect(screen.getByText('TS:2026-02-24T12:00:00.000Z')).toBeInTheDocument();
@@ -45,7 +45,7 @@ describe('CaseResolverHistoryEntries', () => {
         formatTimestamp={(value: string): string => value}
         onRestore={vi.fn()}
         isRestoreDisabled={false}
-      />,
+      />
     );
 
     expect(screen.getByText('No preview text.')).toBeInTheDocument();
@@ -61,7 +61,7 @@ describe('CaseResolverHistoryEntries', () => {
         formatTimestamp={(value: string): string => value}
         onRestore={onRestore}
         isRestoreDisabled={false}
-      />,
+      />
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Restore' }));

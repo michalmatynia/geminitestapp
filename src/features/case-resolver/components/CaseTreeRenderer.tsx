@@ -2,35 +2,32 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { 
-  Eye, 
-  Plus, 
-  Edit2, 
-  Trash2, 
-  ChevronRight, 
-  ChevronDown, 
-  Lock, 
+import {
+  Eye,
+  Plus,
+  Edit2,
+  Trash2,
+  ChevronRight,
+  ChevronDown,
+  Lock,
   Folder,
   Star,
 } from 'lucide-react';
-import { 
-  Button, 
-  Badge, 
-  Card, 
-  FormField, 
-  Input, 
-  SelectSimple,
-} from '@/shared/ui';
+import { Button, Badge, Card, FormField, Input, SelectSimple } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 import { buildCaseResolverCaseHref } from './list/case-list-utils';
 import { useAdminCaseResolverCases } from '../context/AdminCaseResolverCasesContext';
 import { useAdminCaseResolverCasesState } from '../hooks/useAdminCaseResolverCasesState';
 import { CaseTreeNode } from '../pages/AdminCaseResolverCasesUtils';
-import type { 
-  CaseResolverFile, 
-} from '@/shared/contracts/case-resolver';
+import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
 
-export function CaseTreeRenderer({ nodes, depth = 0 }: { nodes: CaseTreeNode[]; depth?: number }): React.JSX.Element {
+export function CaseTreeRenderer({
+  nodes,
+  depth = 0,
+}: {
+  nodes: CaseTreeNode[];
+  depth?: number;
+}): React.JSX.Element {
   const router = useRouter();
   const {
     collapsedCaseIds,
@@ -111,7 +108,9 @@ export function CaseTreeRenderer({ nodes, depth = 0 }: { nodes: CaseTreeNode[]; 
         const hasChildren = node.children.length > 0;
         const isCollapsed = collapsedCaseIds.has(file.id);
         const tag = file.tagId ? caseTagById.get(file.tagId) : null;
-        const identifier = file.caseIdentifierId ? caseIdentifierById.get(file.caseIdentifierId) : null;
+        const identifier = file.caseIdentifierId
+          ? caseIdentifierById.get(file.caseIdentifierId)
+          : null;
         const category = file.categoryId ? caseCategoryById.get(file.categoryId) : null;
 
         return (
@@ -135,8 +134,12 @@ export function CaseTreeRenderer({ nodes, depth = 0 }: { nodes: CaseTreeNode[]; 
                       />
                     </FormField>
                     <div className='flex items-end gap-2'>
-                      <Button size='sm' onClick={handleSaveCase}>Save</Button>
-                      <Button size='sm' variant='ghost' onClick={() => setEditingCaseId(null)}>Cancel</Button>
+                      <Button size='sm' onClick={handleSaveCase}>
+                        Save
+                      </Button>
+                      <Button size='sm' variant='ghost' onClick={() => setEditingCaseId(null)}>
+                        Cancel
+                      </Button>
                     </div>
                   </div>
 
@@ -145,8 +148,13 @@ export function CaseTreeRenderer({ nodes, depth = 0 }: { nodes: CaseTreeNode[]; 
                       <SelectSimple
                         size='sm'
                         value={editingCaseParentId || '__none__'}
-                        onValueChange={(val) => setEditingCaseParentId(val === '__none__' ? null : val)}
-                        options={[{ value: '__none__', label: '(No parent)' }, ...parentCaseOptions.filter(o => o.value !== file.id)]}
+                        onValueChange={(val) =>
+                          setEditingCaseParentId(val === '__none__' ? null : val)
+                        }
+                        options={[
+                          { value: '__none__', label: '(No parent)' },
+                          ...parentCaseOptions.filter((o) => o.value !== file.id),
+                        ]}
                         triggerClassName='bg-black/40'
                       />
                     </FormField>
@@ -154,8 +162,13 @@ export function CaseTreeRenderer({ nodes, depth = 0 }: { nodes: CaseTreeNode[]; 
                       <SelectSimple
                         size='sm'
                         value={editingCaseTagId || '__none__'}
-                        onValueChange={(val) => setEditingCaseTagId(val === '__none__' ? null : val)}
-                        options={[{ value: '__none__', label: '(No tag)' }, ...caseResolverTagOptions]}
+                        onValueChange={(val) =>
+                          setEditingCaseTagId(val === '__none__' ? null : val)
+                        }
+                        options={[
+                          { value: '__none__', label: '(No tag)' },
+                          ...caseResolverTagOptions,
+                        ]}
                         triggerClassName='bg-black/40'
                       />
                     </FormField>
@@ -163,8 +176,13 @@ export function CaseTreeRenderer({ nodes, depth = 0 }: { nodes: CaseTreeNode[]; 
                       <SelectSimple
                         size='sm'
                         value={editingCaseCategoryId || '__none__'}
-                        onValueChange={(val) => setEditingCaseCategoryId(val === '__none__' ? null : val)}
-                        options={[{ value: '__none__', label: '(No category)' }, ...caseResolverCategoryOptions]}
+                        onValueChange={(val) =>
+                          setEditingCaseCategoryId(val === '__none__' ? null : val)
+                        }
+                        options={[
+                          { value: '__none__', label: '(No category)' },
+                          ...caseResolverCategoryOptions,
+                        ]}
                         triggerClassName='bg-black/40'
                       />
                     </FormField>
@@ -181,17 +199,22 @@ export function CaseTreeRenderer({ nodes, depth = 0 }: { nodes: CaseTreeNode[]; 
                         !hasChildren && 'pointer-events-none opacity-0'
                       )}
                     >
-                      {isCollapsed ? <ChevronRight className='size-3.5' /> : <ChevronDown className='size-3.5' />}
+                      {isCollapsed ? (
+                        <ChevronRight className='size-3.5' />
+                      ) : (
+                        <ChevronDown className='size-3.5' />
+                      )}
                     </button>
 
                     <div className='min-w-0 flex-1 space-y-1'>
                       <div className='flex flex-wrap items-center gap-2'>
-                        <span className='text-sm font-semibold text-white'>
-                          {file.name}
-                        </span>
+                        <span className='text-sm font-semibold text-white'>{file.name}</span>
                         {file.isLocked && <Lock className='size-3 text-amber-400/80' />}
                         {tag && (
-                          <Badge variant='outline' className='bg-blue-500/5 text-blue-300 border-blue-500/20'>
+                          <Badge
+                            variant='outline'
+                            className='bg-blue-500/5 text-blue-300 border-blue-500/20'
+                          >
                             {tag.label}
                           </Badge>
                         )}
@@ -224,16 +247,36 @@ export function CaseTreeRenderer({ nodes, depth = 0 }: { nodes: CaseTreeNode[]; 
                   </div>
 
                   <div className='flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100'>
-                    <Button variant='outline' size='xs' className='h-7' onClick={() => handleViewCase(file.id)}>
+                    <Button
+                      variant='outline'
+                      size='xs'
+                      className='h-7'
+                      onClick={() => handleViewCase(file.id)}
+                    >
                       <Eye className='mr-1 size-3' /> View
                     </Button>
-                    <Button variant='outline' size='xs' className='h-7' onClick={() => handleOpenCreateCaseModal(file.id)}>
+                    <Button
+                      variant='outline'
+                      size='xs'
+                      className='h-7'
+                      onClick={() => handleOpenCreateCaseModal(file.id)}
+                    >
                       <Plus className='mr-1 size-3' /> Child
                     </Button>
-                    <Button variant='outline' size='xs' className='h-7' onClick={() => handleStartEditCase(file)}>
+                    <Button
+                      variant='outline'
+                      size='xs'
+                      className='h-7'
+                      onClick={() => handleStartEditCase(file)}
+                    >
                       <Edit2 className='mr-1 size-3' /> Edit
                     </Button>
-                    <Button variant='outline' size='xs' className='h-7 text-rose-400 hover:text-rose-300' onClick={() => handleDeleteCase(file.id)}>
+                    <Button
+                      variant='outline'
+                      size='xs'
+                      className='h-7 text-rose-400 hover:text-rose-300'
+                      onClick={() => handleDeleteCase(file.id)}
+                    >
                       <Trash2 className='mr-1 size-3' /> Delete
                     </Button>
                   </div>
@@ -241,13 +284,17 @@ export function CaseTreeRenderer({ nodes, depth = 0 }: { nodes: CaseTreeNode[]; 
               )}
               <button
                 type='button'
-                onClick={() => { void handleCopyCaseId(file.id); }}
+                onClick={() => {
+                  void handleCopyCaseId(file.id);
+                }}
                 className='absolute bottom-2 right-2 rounded border border-border/60 bg-black/20 px-2 py-0.5 font-mono text-[10px] text-gray-300 opacity-0 transition-all hover:bg-black/40 group-hover:opacity-100'
               >
                 ID: {file.id}
               </button>
             </Card>
-            {hasChildren && !isCollapsed && <CaseTreeRenderer nodes={node.children} depth={depth + 1} />}
+            {hasChildren && !isCollapsed && (
+              <CaseTreeRenderer nodes={node.children} depth={depth + 1} />
+            )}
           </div>
         );
       })}

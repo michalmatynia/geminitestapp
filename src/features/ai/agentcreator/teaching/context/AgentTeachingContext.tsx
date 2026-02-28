@@ -2,8 +2,11 @@
 
 import React, { createContext, useContext, ReactNode, useMemo } from 'react';
 
-import { useBrainModelOptions } from '@/features/ai/brain/hooks/useBrainModelOptions';
-import type { AgentTeachingAgentRecord, AgentTeachingEmbeddingCollectionRecord } from '@/shared/contracts/agent-teaching';
+import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
+import type {
+  AgentTeachingAgentRecord,
+  AgentTeachingEmbeddingCollectionRecord,
+} from '@/shared/contracts/agent-teaching';
 
 import { useTeachingAgents, useTeachingCollections } from '../hooks/useAgentTeachingQueries';
 
@@ -11,6 +14,8 @@ interface AgentTeachingContextType {
   agents: AgentTeachingAgentRecord[];
   collections: AgentTeachingEmbeddingCollectionRecord[];
   modelOptions: string[];
+  chatModelId: string;
+  embeddingModelId: string;
   isLoading: boolean;
   refetchAgents: () => Promise<unknown>;
   refetchCollections: () => Promise<unknown>;
@@ -47,31 +52,63 @@ export const useAgentTeachingQueriesContext = (): AgentTeachingContextType => {
 };
 
 export function AgentTeachingProvider({ children }: { children: ReactNode }): React.JSX.Element {
-  const { data: agents = [], isLoading: loadingAgents, refetch: refetchAgents } = useTeachingAgents();
-  const { data: collections = [], isLoading: loadingCollections, refetch: refetchCollections } = useTeachingCollections();
-  const brainModelOptions = useBrainModelOptions({
-    feature: 'prompt_engine',
+  const {
+    data: agents = [],
+    isLoading: loadingAgents,
+    refetch: refetchAgents,
+  } = useTeachingAgents();
+  const {
+    data: collections = [],
+    isLoading: loadingCollections,
+    refetch: refetchCollections,
+  } = useTeachingCollections();
+  const chatModelOptions = useBrainModelOptions({
+    capability: 'agent_teaching.chat',
   });
+  const embeddingModelOptions = useBrainModelOptions({
+    capability: 'agent_teaching.embeddings',
+  });
+  const chatModelId = chatModelOptions.effectiveModelId.trim();
+  const embeddingModelId = embeddingModelOptions.effectiveModelId.trim();
   const modelOptions = useMemo(
-    () => normalizeModelOptions(brainModelOptions.models),
-    [brainModelOptions.models],
+    () =>
+      normalizeModelOptions([
+        ...chatModelOptions.models,
+        ...embeddingModelOptions.models,
+        chatModelId,
+        embeddingModelId,
+      ]),
+    [chatModelId, chatModelOptions.models, embeddingModelId, embeddingModelOptions.models]
   );
 
   const isLoading =
-    loadingAgents || loadingCollections || brainModelOptions.isLoading;
+    loadingAgents ||
+    loadingCollections ||
+    chatModelOptions.isLoading ||
+    embeddingModelOptions.isLoading;
 
-  const value = useMemo((): AgentTeachingContextType => ({
-    agents,
-    collections,
-    modelOptions,
-    isLoading,
-    refetchAgents,
-    refetchCollections,
-  }), [agents, collections, modelOptions, isLoading, refetchAgents, refetchCollections]);
-
-  return (
-    <AgentTeachingContext.Provider value={value}>
-      {children}
-    </AgentTeachingContext.Provider>
+  const value = useMemo(
+    (): AgentTeachingContextType => ({
+      agents,
+      collections,
+      modelOptions,
+      chatModelId,
+      embeddingModelId,
+      isLoading,
+      refetchAgents,
+      refetchCollections,
+    }),
+    [
+      agents,
+      collections,
+      modelOptions,
+      chatModelId,
+      embeddingModelId,
+      isLoading,
+      refetchAgents,
+      refetchCollections,
+    ]
   );
+
+  return <AgentTeachingContext.Provider value={value}>{children}</AgentTeachingContext.Provider>;
 }

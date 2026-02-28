@@ -6,7 +6,6 @@ import { FormModal } from '../FormModal';
 
 import type { ReactNode } from 'react';
 
-
 export interface SettingsFormModalProps extends Omit<ModalStateProps, 'isOpen'> {
   open: boolean;
   onSave: () => Promise<void>;
@@ -57,9 +56,7 @@ export function SettingsFormModal({
       {...(subtitle !== undefined ? { subtitle } : {})}
       {...(formRef !== undefined ? { formRef } : {})}
     >
-      <div className={isLoading ? 'opacity-50 pointer-events-none' : ''}>
-        {children}
-      </div>
+      <div className={isLoading ? 'opacity-50 pointer-events-none' : ''}>{children}</div>
     </FormModal>
   );
 }

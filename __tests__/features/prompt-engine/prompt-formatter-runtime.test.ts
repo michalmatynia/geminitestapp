@@ -1,41 +1,42 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatProgrammaticPrompt } from '@/shared/lib/prompt-engine/prompt-formatter';
+import { formatProgrammaticPrompt } from '@/features/prompt-engine';
 import {
   preparePromptValidationRuntime,
   validateProgrammaticPrompt,
-} from '@/shared/lib/prompt-engine/prompt-validator';
+} from '@/features/prompt-engine';
 import type {
   PromptValidationRule,
   PromptValidationSettings,
-} from '@/shared/lib/prompt-engine/settings';
+} from '@/features/prompt-engine/settings';
 
-const buildRule = (overrides: Partial<PromptValidationRule> = {}): PromptValidationRule => ({
-  kind: 'regex',
-  id: 'rule.base',
-  enabled: true,
-  severity: 'warning',
-  title: 'Rule',
-  description: null,
-  pattern: 'DOG',
-  flags: 'g',
-  message: 'DOG required',
-  similar: [],
-  autofix: {
+const buildRule = (overrides: Partial<PromptValidationRule> = {}): PromptValidationRule =>
+  ({
+    kind: 'regex',
+    id: 'rule.base',
     enabled: true,
-    operations: [
-      {
-        kind: 'replace',
-        pattern: 'CAT',
-        flags: 'g',
-        replacement: 'DOG',
-        comment: null,
-      },
-    ],
-  },
-  appliesToScopes: ['prompt_exploder'],
-  ...overrides,
-} as PromptValidationRule);
+    severity: 'warning',
+    title: 'Rule',
+    description: null,
+    pattern: 'DOG',
+    flags: 'g',
+    message: 'DOG required',
+    similar: [],
+    autofix: {
+      enabled: true,
+      operations: [
+        {
+          kind: 'replace',
+          pattern: 'CAT',
+          flags: 'g',
+          replacement: 'DOG',
+          comment: null,
+        },
+      ],
+    },
+    appliesToScopes: ['prompt_exploder'],
+    ...overrides,
+  }) as PromptValidationRule;
 
 const buildSettings = (rules: PromptValidationRule[]): PromptValidationSettings => ({
   enabled: true,
@@ -64,16 +65,11 @@ describe('prompt formatter runtime integration', () => {
     expect(issuesBefore).toHaveLength(2);
 
     const preparedRuntime = preparePromptValidationRuntime(settings, context);
-    const result = formatProgrammaticPrompt(
-      prompt,
-      settings,
-      context,
-      {
-        precomputedIssuesBefore: issuesBefore,
-        preparedRuntime,
-        enableIncrementalValidation: true,
-      }
-    );
+    const result = formatProgrammaticPrompt(prompt, settings, context, {
+      precomputedIssuesBefore: issuesBefore,
+      preparedRuntime,
+      enableIncrementalValidation: true,
+    });
 
     expect(result.prompt).toBe('DOG');
     expect(result.changed).toBe(true);
@@ -81,4 +77,3 @@ describe('prompt formatter runtime integration', () => {
     expect(result.issuesAfter).toBe(1);
   });
 });
-

@@ -51,19 +51,18 @@ export function getColorSchemeStyle(
 // Hover effect vars
 // ---------------------------------------------------------------------------
 
-export function getHoverEffectVars(
-  effect?: string,
-  scale?: number
-): React.CSSProperties {
+export function getHoverEffectVars(effect?: string, scale?: number): React.CSSProperties {
   if (!effect && !scale) return {};
   const normalized = effect === 'lift-3d' ? 'lift-3d' : 'vertical-lift';
   const safeScale = typeof scale === 'number' && scale > 0 ? scale : 1;
-  const transform = normalized === 'lift-3d'
-    ? `translateY(-6px) rotateX(6deg) rotateY(-4deg) scale(${safeScale})`
-    : `translateY(-4px) scale(${safeScale})`;
-  const shadow = normalized === 'lift-3d'
-    ? '0 18px 30px rgba(0, 0, 0, 0.35)'
-    : '0 12px 20px rgba(0, 0, 0, 0.25)';
+  const transform =
+    normalized === 'lift-3d'
+      ? `translateY(-6px) rotateX(6deg) rotateY(-4deg) scale(${safeScale})`
+      : `translateY(-4px) scale(${safeScale})`;
+  const shadow =
+    normalized === 'lift-3d'
+      ? '0 18px 30px rgba(0, 0, 0, 0.35)'
+      : '0 12px 20px rgba(0, 0, 0, 0.25)';
   const perspective = normalized === 'lift-3d' ? '900px' : 'none';
 
   return {
@@ -82,13 +81,15 @@ const clampNumber = (value: number, min: number, max: number): number =>
 
 const withOpacity = (hex: unknown, opacityPercent: unknown): string => {
   const safeHex = typeof hex === 'string' ? hex : '#000000';
-  const safeOpacity = typeof opacityPercent === 'number' && Number.isFinite(opacityPercent)
-    ? opacityPercent
-    : 100;
+  const safeOpacity =
+    typeof opacityPercent === 'number' && Number.isFinite(opacityPercent) ? opacityPercent : 100;
   const normalized = safeHex.replace('#', '').trim();
   const expanded =
     normalized.length === 3
-      ? normalized.split('').map((c: string) => c + c).join('')
+      ? normalized
+          .split('')
+          .map((c: string) => c + c)
+          .join('')
       : normalized;
   if (expanded.length !== 6 || Number.isNaN(Number.parseInt(expanded, 16))) {
     return safeHex;
@@ -101,11 +102,12 @@ const withOpacity = (hex: unknown, opacityPercent: unknown): string => {
 };
 
 const buildMediaShadow = (theme: ThemeSettings): string => {
-  const opacity = clampNumber(
-    typeof theme.imageShadowOpacity === 'number' ? theme.imageShadowOpacity : 0,
-    0,
-    100
-  ) / 100;
+  const opacity =
+    clampNumber(
+      typeof theme.imageShadowOpacity === 'number' ? theme.imageShadowOpacity : 0,
+      0,
+      100
+    ) / 100;
   if (opacity <= 0) return 'none';
   const x = theme.imageShadowX ?? 0;
   const y = theme.imageShadowY ?? 0;
@@ -263,8 +265,10 @@ export function getBlockTypographyStyles(settings: Record<string, unknown>): Rea
   if (letterSpacing) styles.letterSpacing = `${letterSpacing}px`;
   if (textColor) styles.color = textColor;
   if (textDecoration && textDecoration !== 'none') styles.textDecoration = textDecoration;
-  if (textTransform && textTransform !== 'none') styles.textTransform = textTransform as React.CSSProperties['textTransform'];
-  if (textAlign && textAlign !== 'left') styles.textAlign = textAlign as React.CSSProperties['textAlign'];
+  if (textTransform && textTransform !== 'none')
+    styles.textTransform = textTransform as React.CSSProperties['textTransform'];
+  if (textAlign && textAlign !== 'left')
+    styles.textAlign = textAlign as React.CSSProperties['textAlign'];
   if (wordSpacing && wordSpacing !== 0) styles.wordSpacing = `${wordSpacing}px`;
   const hasShadow = textShadowX || textShadowY || textShadowBlur;
   if (hasShadow) {
@@ -358,8 +362,14 @@ export function getBlockBackgroundStyles(settings: Record<string, unknown>): Rea
         }
         appliedBackground = true;
       } else if (type === 'gradient') {
-        const from = resolveColorWithOpacity(background['gradientFrom'], background['gradientFromOpacity']);
-        const to = resolveColorWithOpacity(background['gradientTo'], background['gradientToOpacity']);
+        const from = resolveColorWithOpacity(
+          background['gradientFrom'],
+          background['gradientFromOpacity']
+        );
+        const to = resolveColorWithOpacity(
+          background['gradientTo'],
+          background['gradientToOpacity']
+        );
         const angleRaw = background['gradientAngle'];
         const angle =
           typeof angleRaw === 'number' && Number.isFinite(angleRaw)

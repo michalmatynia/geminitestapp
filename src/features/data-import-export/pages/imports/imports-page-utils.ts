@@ -8,11 +8,7 @@ export type ParsedParameterTarget = {
 export const parseParameterTarget = (value: string): ParsedParameterTarget | null => {
   const trimmed = value.trim();
   if (!trimmed) return null;
-  if (
-    !trimmed
-      .toLowerCase()
-      .startsWith(PRODUCT_PARAMETER_TARGET_PREFIX)
-  ) {
+  if (!trimmed.toLowerCase().startsWith(PRODUCT_PARAMETER_TARGET_PREFIX)) {
     return null;
   }
 

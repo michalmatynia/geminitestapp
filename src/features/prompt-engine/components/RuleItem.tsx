@@ -2,16 +2,11 @@
 
 import React from 'react';
 
-import {
-  Card,
-  Textarea,
-} from '@/shared/ui';
+import { Card, Textarea } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { useRuleItemDragState } from './context/RuleListDragContext';
-import {
-  normalizeRuleScopes,
-} from './rule-item-utils';
+import { normalizeRuleScopes } from './rule-item-utils';
 import { RuleItemSimilarPatternsSection } from './RuleItemSimilarPatternsSection';
 import { usePromptEngine } from '../context/PromptEngineContext';
 import { type RuleDraft } from '../context/prompt-engine-context-utils';
@@ -38,22 +33,11 @@ export function RuleItem(props: RuleItemProps): React.JSX.Element {
   );
 }
 
-function RuleItemInner({
-  collapsed,
-  onCollapsedChange,
-}: RuleItemProps): React.JSX.Element {
-  const {
-    draft,
-    rule,
-  } = useRuleItemContext();
-  const {
-    isDragging,
-    isDragTarget,
-  } = useRuleItemDragState(draft.uid);
-  const {
-    handleRuleTextChange,
-  } = usePromptEngine();
-  
+function RuleItemInner({ collapsed, onCollapsedChange }: RuleItemProps): React.JSX.Element {
+  const { draft, rule } = useRuleItemContext();
+  const { isDragging, isDragTarget } = useRuleItemDragState(draft.uid);
+  const { handleRuleTextChange } = usePromptEngine();
+
   const [internalCollapsed, setInternalCollapsed] = React.useState(true);
   const isCollapsed = collapsed ?? internalCollapsed;
   const setCollapsed = onCollapsedChange ?? setInternalCollapsed;

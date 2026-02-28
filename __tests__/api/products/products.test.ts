@@ -16,11 +16,13 @@ vi.mock('@/shared/lib/db/prisma', () => {
       count: vi.fn(),
     },
     activityLog: {
-      create: vi.fn().mockImplementation((args) => Promise.resolve({
-        id: 'mock-activity-id',
-        createdAt: new Date(),
-        ...args.data
-      })),
+      create: vi.fn().mockImplementation((args) =>
+        Promise.resolve({
+          id: 'mock-activity-id',
+          createdAt: new Date(),
+          ...args.data,
+        })
+      ),
       findMany: vi.fn().mockResolvedValue([]),
       count: vi.fn().mockResolvedValue(0),
     },
@@ -120,7 +122,7 @@ describe('Products API', () => {
     // Default mock implementations
     vi.mocked(prisma.product.findMany).mockResolvedValue([]);
     vi.mocked(prisma.product.findUnique).mockResolvedValue(null);
-    
+
     // Using any-casts to satisfy Prisma client return types which are complex
     (prisma.product.create as any).mockImplementation((args: any) => {
       const data = args.data;
@@ -192,9 +194,7 @@ describe('Products API', () => {
       ];
       vi.mocked(prisma.product.findMany).mockResolvedValue(mockProducts as any);
 
-      const res = await GET_LIST(
-        new NextRequest('http://localhost/api/products'),
-      );
+      const res = await GET_LIST(new NextRequest('http://localhost/api/products'));
       const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(2);
@@ -203,9 +203,7 @@ describe('Products API', () => {
     it('should return an empty array if no products exist', async () => {
       vi.mocked(prisma.product.findMany).mockResolvedValue([]);
 
-      const res = await GET_LIST(
-        new NextRequest('http://localhost/api/products'),
-      );
+      const res = await GET_LIST(new NextRequest('http://localhost/api/products'));
       const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products).toEqual([]);
@@ -215,9 +213,7 @@ describe('Products API', () => {
       const mockProducts = [createMockProductData({ name_en: 'Laptop' })];
       vi.mocked(prisma.product.findMany).mockResolvedValue(mockProducts as any);
 
-      const res = await GET_LIST(
-        new NextRequest('http://localhost/api/products?search=lap'),
-      );
+      const res = await GET_LIST(new NextRequest('http://localhost/api/products?search=lap'));
       const products = (await res.json()) as Product[];
       expect(res.status).toEqual(200);
       expect(products.length).toEqual(1);
@@ -272,9 +268,7 @@ describe('Products API', () => {
         weight: 1000,
         length: 30,
       });
-      (prisma.product.create as any).mockResolvedValue(
-        mockCreatedProduct
-      );
+      (prisma.product.create as any).mockResolvedValue(mockCreatedProduct);
       vi.mocked(prisma.product.findUnique)
         .mockResolvedValueOnce(null) // SKU check
         .mockResolvedValue(mockCreatedProduct as any); // getProductById
@@ -315,12 +309,9 @@ describe('Products API', () => {
     it('should return 404 when deleting a non-existent product', async () => {
       vi.mocked(prisma.product.findUnique).mockResolvedValue(null);
 
-      const req = new NextRequest(
-        'http://localhost/api/products/non-existent-id',
-        {
-          method: 'DELETE',
-        },
-      );
+      const req = new NextRequest('http://localhost/api/products/non-existent-id', {
+        method: 'DELETE',
+      });
       const res = await DELETE(req, {
         params: Promise.resolve({ id: 'non-existent-id' }),
       });
@@ -338,9 +329,7 @@ describe('Products API', () => {
         id: productId,
         name_en: 'Product 1 (EN)',
       });
-      vi.mocked(prisma.product.findUnique).mockResolvedValue(
-        mockProduct as any,
-      );
+      vi.mocked(prisma.product.findUnique).mockResolvedValue(mockProduct as any);
 
       const req = new NextRequest(`http://localhost/api/products/${productId}`);
       const res = await GET_PUBLIC(req, {
@@ -356,13 +345,10 @@ describe('Products API', () => {
     it('should return 404 when product does not exist', async () => {
       vi.mocked(prisma.product.findUnique).mockResolvedValue(null);
 
-      const req = new NextRequest(
-        'http://localhost/api/products/non-existent-id/duplicate',
-        {
-          method: 'POST',
-          body: JSON.stringify({ sku: 'NEW123' }),
-        },
-      );
+      const req = new NextRequest('http://localhost/api/products/non-existent-id/duplicate', {
+        method: 'POST',
+        body: JSON.stringify({ sku: 'NEW123' }),
+      });
       const res = await POST_DUPLICATE(req, {
         params: Promise.resolve({ id: 'non-existent-id' }),
       });

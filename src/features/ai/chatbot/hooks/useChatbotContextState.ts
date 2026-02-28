@@ -5,10 +5,10 @@ import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 
 import { useToast, type FileUploadHelpers } from '@/shared/ui';
 
-import { 
-  useChatbotContextSettingsQuery, 
-  useSaveChatbotContextMutation, 
-  useUploadChatbotContextPdfMutation 
+import {
+  useChatbotContextSettingsQuery,
+  useSaveChatbotContextMutation,
+  useUploadChatbotContextPdfMutation,
 } from './useChatbotContextQueries';
 
 export type ContextItem = {
@@ -24,9 +24,7 @@ export type ContextDraft = ContextItem & {
   active: boolean;
 };
 
-const buildContextItems = (
-  rawItems?: string
-): ContextItem[] => {
+const buildContextItems = (rawItems?: string): ContextItem[] => {
   if (rawItems) {
     try {
       const parsed: unknown = JSON.parse(rawItems);
@@ -59,7 +57,7 @@ export function useChatbotContextState() {
   const searchParams = useSearchParams();
   const initializedFilters = useRef(false);
   const hasInitializedData = useRef(false);
-  
+
   const [contexts, setContexts] = useState<ContextItem[]>([]);
   const [activeIds, setActiveIds] = useState<string[]>([]);
   const [tagQuery, setTagQuery] = useState<string>('');
@@ -76,12 +74,8 @@ export function useChatbotContextState() {
     if (!contextSettingsQuery.data || hasInitializedData.current) return;
 
     const data = contextSettingsQuery.data as Array<{ key: string; value?: string }>;
-    const storedItems = data.find(
-      (item) => item.key === 'chatbot_global_context_items'
-    );
-    const storedActive = data.find(
-      (item) => item.key === 'chatbot_global_context_active'
-    );
+    const storedItems = data.find((item) => item.key === 'chatbot_global_context_items');
+    const storedActive = data.find((item) => item.key === 'chatbot_global_context_active');
 
     const items = buildContextItems(storedItems?.value);
     const active = buildActiveIds(storedActive?.value, items);
@@ -95,7 +89,10 @@ export function useChatbotContextState() {
       const queryFromUrl = searchParams.get('q') || '';
       const tagsFromUrl = searchParams.get('tags');
       const parsedTags = tagsFromUrl
-        ? tagsFromUrl.split(',').map((tag) => tag.trim()).filter(Boolean)
+        ? tagsFromUrl
+            .split(',')
+            .map((tag) => tag.trim())
+            .filter(Boolean)
         : [];
       setTagQuery(queryFromUrl);
       setTagFilters(parsedTags);
@@ -118,15 +115,18 @@ export function useChatbotContextState() {
     setIsModalOpen(true);
   }, []);
 
-  const openEditModal = useCallback((item: ContextItem) => {
-    setModalDraft({
-      ...item,
-      tags: item.tags || [],
-      active: activeIds.includes(item.id),
-    });
-    setTagDraft('');
-    setIsModalOpen(true);
-  }, [activeIds]);
+  const openEditModal = useCallback(
+    (item: ContextItem) => {
+      setModalDraft({
+        ...item,
+        tags: item.tags || [],
+        active: activeIds.includes(item.id),
+      });
+      setTagDraft('');
+      setIsModalOpen(true);
+    },
+    [activeIds]
+  );
 
   const closeModal = useCallback(() => {
     setIsModalOpen(false);
@@ -134,13 +134,16 @@ export function useChatbotContextState() {
     setTagDraft('');
   }, []);
 
-  const handleDeleteContext = useCallback((id: string) => {
-    setContexts((prev) => prev.filter((item) => item.id !== id));
-    setActiveIds((prev) => prev.filter((item) => item !== id));
-    if (modalDraft?.id === id) {
-      closeModal();
-    }
-  }, [modalDraft?.id, closeModal]);
+  const handleDeleteContext = useCallback(
+    (id: string) => {
+      setContexts((prev) => prev.filter((item) => item.id !== id));
+      setActiveIds((prev) => prev.filter((item) => item !== id));
+      if (modalDraft?.id === id) {
+        closeModal();
+      }
+    },
+    [modalDraft?.id, closeModal]
+  );
 
   const handleSaveDraft = useCallback(() => {
     if (!modalDraft) return;
@@ -169,9 +172,9 @@ export function useChatbotContextState() {
 
   const handlePdfUpload = async (file: File, helpers?: FileUploadHelpers) => {
     try {
-      const data = await uploadPdfMutation.mutateAsync({ 
-        file, 
-        ...(helpers !== undefined && { helpers }) 
+      const data = await uploadPdfMutation.mutateAsync({
+        file,
+        ...(helpers !== undefined && { helpers }),
       });
       if (data.segments.length === 0) {
         toast('No text found in PDF.', { variant: 'info' });
@@ -200,12 +203,12 @@ export function useChatbotContextState() {
       await saveMutation.mutateAsync({
         key: 'chatbot_global_context_items',
         value: JSON.stringify(contexts),
-        errorLabel: 'Failed to save contexts.'
+        errorLabel: 'Failed to save contexts.',
       });
       await saveMutation.mutateAsync({
         key: 'chatbot_global_context_active',
         value: JSON.stringify(activeIds),
-        errorLabel: 'Failed to save active contexts.'
+        errorLabel: 'Failed to save active contexts.',
       });
       toast('Global contexts saved', { variant: 'success' });
     } catch (error: unknown) {
@@ -214,9 +217,9 @@ export function useChatbotContextState() {
     }
   };
 
-  const uniqueTags = useMemo(() => 
-    Array.from(new Set(contexts.flatMap((item) => item.tags || []))), 
-  [contexts]
+  const uniqueTags = useMemo(
+    () => Array.from(new Set(contexts.flatMap((item) => item.tags || []))),
+    [contexts]
   );
 
   const filteredContexts = useMemo(() => {
@@ -228,16 +231,13 @@ export function useChatbotContextState() {
         item.content.toLowerCase().includes(normalizedQuery) ||
         (item.tags || []).some((tag) => tag.toLowerCase().includes(normalizedQuery));
       const matchesTags =
-        tagFilters.length === 0 ||
-        tagFilters.some((tag) => (item.tags || []).includes(tag));
+        tagFilters.length === 0 || tagFilters.some((tag) => (item.tags || []).includes(tag));
       return matchesQuery && matchesTags;
     });
   }, [contexts, tagQuery, tagFilters]);
 
   const toggleActive = useCallback((id: string, active: boolean) => {
-    setActiveIds((prev) => 
-      active ? [...prev, id] : prev.filter((item) => item !== id)
-    );
+    setActiveIds((prev) => (active ? [...prev, id] : prev.filter((item) => item !== id)));
   }, []);
 
   return {

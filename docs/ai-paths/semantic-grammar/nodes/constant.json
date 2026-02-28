@@ -5,9 +5,7 @@
   "title": "Constant",
   "purpose": "Emit a constant value as a signal.",
   "inputs": [],
-  "outputs": [
-    "value"
-  ],
+  "outputs": ["value"],
   "configFields": [
     {
       "path": "constant.valueType",
@@ -41,9 +39,7 @@
       "y": 100
     },
     "inputs": [],
-    "outputs": [
-      "value"
-    ],
+    "outputs": ["value"],
     "data": {},
     "connections": {
       "incoming": [],

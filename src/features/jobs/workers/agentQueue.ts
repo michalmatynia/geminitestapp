@@ -1,6 +1,10 @@
 import 'server-only';
 
-import { processAgentRun, processNextQueuedAgentRun, recoverStuckRuns } from '@/features/jobs/processors/agent-processor';
+import {
+  processAgentRun,
+  processNextQueuedAgentRun,
+  recoverStuckRuns,
+} from '@/features/jobs/processors/agent-processor';
 import { createManagedQueue } from '@/shared/lib/queue';
 
 type AgentJobData = {
@@ -42,7 +46,7 @@ export function startAgentQueue(): void {
   // Schedule stuck-run recovery as a repeatable job every 2 minutes
   void queue.enqueue(
     { runId: '__recovery__', type: 'recovery' },
-    { repeat: { every: 120_000 }, jobId: 'agent-recovery' },
+    { repeat: { every: 120_000 }, jobId: 'agent-recovery' }
   );
 }
 

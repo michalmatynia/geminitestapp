@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { GET, POST, DELETE, PATCH } from '@/app/api/chatbot/sessions/route';
 import { chatbotSessionRepository } from '@/features/ai/chatbot/server';
+import type { ChatbotSessionDto as ChatSession } from '@/shared/contracts/chatbot';
 
 vi.mock('@/features/ai/chatbot/server', () => ({
   chatbotSessionRepository: {
@@ -13,37 +14,44 @@ vi.mock('@/features/ai/chatbot/server', () => ({
   },
 }));
 
-vi.mock('@/shared/lib/api/api-handler', () => ({
-  apiHandler: (handler: any) => async (req: any) => {
-    try {
-      const body = req.body ? await req.json().catch(() => ({})) : {};
-      return await handler(req, { requestId: 'test', body });
-    } catch (error: any) {
-      return NextResponse.json({ error: error.message }, { status: error.httpStatus || 500 });
-    }
-  },
-}));
-
 describe('Chatbot Sessions API', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it('GET: returns all sessions', async () => {
-    const mockSessions = [{ id: 's1', title: 'Session 1' }];
-    vi.mocked(chatbotSessionRepository.findAll).mockResolvedValue(mockSessions as any);
+    const mockSessions: ChatSession[] = [
+      {
+        id: 's1',
+        title: 'Session 1',
+        userId: null,
+        messages: [],
+        messageCount: 0,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+    ];
+    vi.mocked(chatbotSessionRepository.findAll).mockResolvedValue(mockSessions);
 
     const req = new NextRequest('http://localhost/api/chatbot/sessions');
     const res = await GET(req);
-    const data = await res.json();
+    const data = (await res.json()) as { sessions: ChatSession[] };
 
     expect(res.status).toBe(200);
     expect(data.sessions).toEqual(mockSessions);
   });
 
   it('POST: creates a new session', async () => {
-    const mockSession = { id: 'new-id', title: 'New Session' };
-    vi.mocked(chatbotSessionRepository.create).mockResolvedValue(mockSession as any);
+    const mockSession: ChatSession = {
+      id: 'new-id',
+      title: 'New Session',
+      userId: null,
+      messages: [],
+      messageCount: 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    vi.mocked(chatbotSessionRepository.create).mockResolvedValue(mockSession);
 
     const req = new NextRequest('http://localhost/api/chatbot/sessions', {
       method: 'POST',
@@ -51,18 +59,28 @@ describe('Chatbot Sessions API', () => {
     });
 
     const res = await POST(req);
-    const data = await res.json();
+    const data = (await res.json()) as { sessionId: string };
 
     expect(res.status).toBe(201);
     expect(data.sessionId).toBe('new-id');
-    expect(chatbotSessionRepository.create).toHaveBeenCalledWith(expect.objectContaining({
-      title: 'New Session'
-    }));
+    expect(chatbotSessionRepository.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'New Session',
+      })
+    );
   });
 
   it('PATCH: updates a session title', async () => {
-    const mockSession = { id: 's1', title: 'Updated Title' };
-    vi.mocked(chatbotSessionRepository.update).mockResolvedValue(mockSession as any);
+    const mockSession: ChatSession = {
+      id: 's1',
+      title: 'Updated Title',
+      userId: null,
+      messages: [],
+      messageCount: 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    vi.mocked(chatbotSessionRepository.update).mockResolvedValue(mockSession);
 
     const req = new NextRequest('http://localhost/api/chatbot/sessions', {
       method: 'PATCH',
@@ -70,7 +88,7 @@ describe('Chatbot Sessions API', () => {
     });
 
     const res = await PATCH(req);
-    const data = await res.json();
+    const data = (await res.json()) as { session: ChatSession };
 
     expect(res.status).toBe(200);
     expect(data.session.title).toBe('Updated Title');
@@ -85,7 +103,7 @@ describe('Chatbot Sessions API', () => {
     });
 
     const res = await DELETE(req);
-    const data = await res.json();
+    const data = (await res.json()) as { success: boolean };
 
     expect(res.status).toBe(200);
     expect(data.success).toBe(true);

@@ -5,10 +5,7 @@ import {
 } from '@/features/products/services/product-studio-config';
 import { productService } from '@/features/products/services/productService';
 import { type ProductWithImages } from '@/shared/contracts/products';
-import {
-  badRequestError,
-  notFoundError,
-} from '@/shared/errors/app-error';
+import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import {
   normalizeImageSlotIndex,
   normalizeProjectId,
@@ -50,9 +47,7 @@ export const resolveProductAndStudioTarget = async (params: {
 
   const projectId = normalizeProjectId(config.projectId);
   if (!projectId) {
-    throw badRequestError(
-      'Image Studio project is not selected for this product.',
-    );
+    throw badRequestError('Image Studio project is not selected for this product.');
   }
 
   return {
@@ -65,7 +60,7 @@ export const resolveProductAndStudioTarget = async (params: {
 
 export const resolveSourceSlotIdForIndex = (
   config: ProductStudioConfig,
-  imageSlotIndex: number,
+  imageSlotIndex: number
 ): string | null => {
   return trimString(config.sourceSlotByImageIndex[String(imageSlotIndex)]);
 };

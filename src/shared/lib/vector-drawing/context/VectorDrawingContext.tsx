@@ -53,10 +53,9 @@ export interface VectorDrawingProviderProps {
   value: VectorDrawingContextValue;
 }
 
-export function VectorDrawingProvider({ children, value }: VectorDrawingProviderProps): React.JSX.Element {
-  return (
-    <VectorDrawingContext.Provider value={value}>
-      {children}
-    </VectorDrawingContext.Provider>
-  );
+export function VectorDrawingProvider({
+  children,
+  value,
+}: VectorDrawingProviderProps): React.JSX.Element {
+  return <VectorDrawingContext.Provider value={value}>{children}</VectorDrawingContext.Provider>;
 }

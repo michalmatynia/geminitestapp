@@ -1,15 +1,6 @@
-import {
-  type AiNode,
-} from '@/shared/contracts/ai-paths';
-import {
-  CONTEXT_INPUT_PORTS,
-  CONTEXT_OUTPUT_PORTS,
-  DEFAULT_CONTEXT_ROLE,
-} from '../../constants';
-import {
-  ensureUniquePorts,
-  normalizePortName,
-} from '../../utils';
+import { type AiNode } from '@/shared/contracts/ai-paths';
+import { CONTEXT_INPUT_PORTS, CONTEXT_OUTPUT_PORTS, DEFAULT_CONTEXT_ROLE } from '../../constants';
+import { ensureUniquePorts, normalizePortName } from '../../utils';
 
 export const normalizeContextNode = (node: AiNode): AiNode => {
   const contextConfig = node.config?.context;

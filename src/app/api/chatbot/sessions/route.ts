@@ -3,12 +3,7 @@ export const dynamic = 'force-dynamic';
 
 import { apiHandler } from '@/shared/lib/api/api-handler';
 
-import {
-  DELETE_handler,
-  GET_handler,
-  PATCH_handler,
-  POST_handler,
-} from './handler';
+import { DELETE_handler, GET_handler, PATCH_handler, POST_handler } from './handler';
 
 export const POST = apiHandler(POST_handler, { source: 'chatbot.sessions.POST' });
 

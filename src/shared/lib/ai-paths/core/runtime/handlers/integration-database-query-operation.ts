@@ -1,12 +1,9 @@
-import type {
-  DbQueryConfig,
-  RuntimePortValues,
-} from '@/shared/contracts/ai-paths';
+import type { DbQueryConfig, RuntimePortValues } from '@/shared/contracts/ai-paths';
 import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 
 import { executeDatabaseQuery } from './integration-database-query-execution';
 import { resolveDatabaseQuery } from './integration-database-query-resolution';
-import { getAiPathsCollectionMapFromInputs } from '../../utils/collection-mapping';
+import { getAiPathsCollectionMapFromInputs } from '@/shared/lib/ai-paths/core/utils/collection-mapping';
 
 export type HandleDatabaseQueryOperationInput = {
   nodeInputs: RuntimePortValues;

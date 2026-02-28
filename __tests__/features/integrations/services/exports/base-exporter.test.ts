@@ -67,10 +67,9 @@ describe('buildBaseProductData producer mapping', () => {
 
   it('falls back to producer id when lookup is unavailable', async () => {
     const product = createProduct();
-    const payload = await buildBaseProductData(
-      product,
-      [{ sourceKey: 'producer', targetField: 'producerIds' }]
-    );
+    const payload = await buildBaseProductData(product, [
+      { sourceKey: 'producer', targetField: 'producerIds' },
+    ]);
 
     expect(payload['producer_id']).toBe('producer-local-1');
   });

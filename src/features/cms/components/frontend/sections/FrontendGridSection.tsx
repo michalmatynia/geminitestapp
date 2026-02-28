@@ -16,16 +16,16 @@ import { BlockRenderContext } from '../blocks/BlockContext';
 
 import type { BlockInstance } from '../../../types/page-builder';
 
-import { 
-  SECTION_BLOCK_TYPES, 
-  getBlockMinHeight, 
-  getGapClass, 
-  getGapStyle, 
-  resolveGapValue, 
-  resolveJustifyContent, 
-  resolveAlignItems, 
-  isBackgroundModeImage, 
-  collectBackgroundImages 
+import {
+  SECTION_BLOCK_TYPES,
+  getBlockMinHeight,
+  getGapClass,
+  getGapStyle,
+  resolveGapValue,
+  resolveJustifyContent,
+  resolveAlignItems,
+  isBackgroundModeImage,
+  collectBackgroundImages,
 } from './grid/frontend-grid-utils';
 import { BackgroundImageLayer } from './grid/BackgroundImageLayer';
 import { ColumnRenderer } from './grid/ColumnRenderer';
@@ -39,7 +39,13 @@ export function FrontendGridSection(): React.ReactNode {
   const sectionCustomCss = buildScopedCustomCss(settings['customCss'], sectionSelector);
   const rowBlocks = blocks.filter((b: BlockInstance) => b.type === 'Row');
   const directColumns = blocks.filter((b: BlockInstance) => b.type === 'Column');
-  const gridImageBlocks = blocks.filter((b: BlockInstance) => b.type === 'ImageElement' && !isBackgroundModeImage(b, 'grid') && !isBackgroundModeImage(b, 'row') && !isBackgroundModeImage(b, 'column'));
+  const gridImageBlocks = blocks.filter(
+    (b: BlockInstance) =>
+      b.type === 'ImageElement' &&
+      !isBackgroundModeImage(b, 'grid') &&
+      !isBackgroundModeImage(b, 'row') &&
+      !isBackgroundModeImage(b, 'column')
+  );
   const gridBackgroundModeImages = collectBackgroundImages(blocks, 'grid');
   const sectionGap = (settings['gap'] as string) || 'medium';
   const rowGapSetting = settings['rowGap'] as string | undefined;
@@ -75,14 +81,18 @@ export function FrontendGridSection(): React.ReactNode {
 
   return (
     <SectionDataProvider settings={settings}>
-      <BlockRenderContext.Provider value={{ block: sectionBlock, mediaStyles: null, stretch: false }}>
+      <BlockRenderContext.Provider
+        value={{ block: sectionBlock, mediaStyles: null, stretch: false }}
+      >
         <BlockSettingsContext.Provider value={settings}>
           <EventEffectsWrapper>
             <section
               style={sectionStyles}
               className={`relative${sectionId ? ` cms-node-${sectionId}` : ''} ${hasGridBackground ? 'overflow-hidden' : ''}`}
             >
-              {sectionCustomCss ? <style data-cms-custom-css={sectionId}>{sectionCustomCss}</style> : null}
+              {sectionCustomCss ? (
+                <style data-cms-custom-css={sectionId}>{sectionCustomCss}</style>
+              ) : null}
               {gridImageBlocks.map((block: BlockInstance) => (
                 <Fragment key={`grid-background-${block.id}`}>
                   <BackgroundImageLayer settings={block.settings} />
@@ -93,7 +103,9 @@ export function FrontendGridSection(): React.ReactNode {
                   <BackgroundImageLayer settings={block.settings} />
                 </Fragment>
               ))}
-              {hasGridBackgroundSetting && <BackgroundImageLayer settings={gridBackgroundSettings} />}
+              {hasGridBackgroundSetting && (
+                <BackgroundImageLayer settings={gridBackgroundSettings} />
+              )}
               <div className='relative z-10'>
                 <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth })}>
                   <div className={`flex flex-col ${sectionGapClass}`} style={sectionGapStyle}>
@@ -105,7 +117,9 @@ export function FrontendGridSection(): React.ReactNode {
                       const rowGapClass = getGapClass(rowGapValue);
                       const rowGapPxRaw = row.settings?.['gapPx'];
                       const rowGapPx =
-                        typeof rowGapPxRaw === 'number' && Number.isFinite(rowGapPxRaw) && rowGapPxRaw > 0
+                        typeof rowGapPxRaw === 'number' &&
+                        Number.isFinite(rowGapPxRaw) &&
+                        rowGapPxRaw > 0
                           ? rowGapPxRaw
                           : columnGapPx;
                       const rowGapStyle = getGapStyle(rowGapPx);
@@ -116,13 +130,22 @@ export function FrontendGridSection(): React.ReactNode {
                       const rowHeightMode = (row.settings?.['heightMode'] as string) || 'inherit';
                       const rowHeight = (row.settings?.['height'] as number) || 0;
                       const rowHeightStyle =
-                        rowHeightMode === 'fixed' && rowHeight > 0 ? { height: `${rowHeight}px` } : undefined;
-                      const rowBackgroundSettings = row.settings?.['backgroundImage'] as Record<string, unknown> | undefined;
-                      const hasRowBackgroundSetting = Boolean((rowBackgroundSettings?.['src'] as string) || '');
+                        rowHeightMode === 'fixed' && rowHeight > 0
+                          ? { height: `${rowHeight}px` }
+                          : undefined;
+                      const rowBackgroundSettings = row.settings?.['backgroundImage'] as
+                        | Record<string, unknown>
+                        | undefined;
+                      const hasRowBackgroundSetting = Boolean(
+                        (rowBackgroundSettings?.['src'] as string) || ''
+                      );
                       const hasRowBackgroundMode = rowBackgroundModeImages.length > 0;
                       const hasRowBackground = hasRowBackgroundSetting || hasRowBackgroundMode;
                       const rowSelector = getCustomCssSelector(row.id);
-                      const rowCustomCss = buildScopedCustomCss(row.settings?.['customCss'], rowSelector);
+                      const rowCustomCss = buildScopedCustomCss(
+                        row.settings?.['customCss'],
+                        rowSelector
+                      );
                       const direction = (row.settings?.['direction'] as string) || 'horizontal';
                       const isVertical = direction === 'vertical';
                       const rowWrapClass = !isVertical
@@ -132,24 +155,35 @@ export function FrontendGridSection(): React.ReactNode {
                         : '';
 
                       return (
-                        <BlockSettingsContext.Provider key={`grid-row-${row.id}-${rowIndex}`} value={row.settings ?? {}}>
-                          <BlockRenderContext.Provider value={{ block: row, mediaStyles: null, stretch: false }}>
+                        <BlockSettingsContext.Provider
+                          key={`grid-row-${row.id}-${rowIndex}`}
+                          value={row.settings ?? {}}
+                        >
+                          <BlockRenderContext.Provider
+                            value={{ block: row, mediaStyles: null, stretch: false }}
+                          >
                             <CssAnimationWrapper>
                               <div
                                 className={`relative cms-node-${row.id} ${hasRowBackground ? 'overflow-hidden' : ''}`}
                                 style={{ ...rowStyles, ...(rowHeightStyle ?? {}) }}
                               >
-                                {rowCustomCss ? <style data-cms-custom-css={row.id}>{rowCustomCss}</style> : null}
+                                {rowCustomCss ? (
+                                  <style data-cms-custom-css={row.id}>{rowCustomCss}</style>
+                                ) : null}
                                 {rowBackgroundModeImages.map((block: BlockInstance) => (
                                   <Fragment key={`row-bg-mode-${block.id}`}>
                                     <BackgroundImageLayer settings={block.settings} />
                                   </Fragment>
                                 ))}
-                                {hasRowBackgroundSetting && <BackgroundImageLayer settings={rowBackgroundSettings} />}
+                                {hasRowBackgroundSetting && (
+                                  <BackgroundImageLayer settings={rowBackgroundSettings} />
+                                )}
                                 <div
                                   className={`relative z-10 flex ${isVertical ? 'flex-col' : 'flex-row'} ${rowWrapClass} ${rowGapClass}`}
                                   style={{
-                                    ...(rowHeightMode === 'fixed' && rowHeight > 0 ? { height: '100%' } : {}),
+                                    ...(rowHeightMode === 'fixed' && rowHeight > 0
+                                      ? { height: '100%' }
+                                      : {}),
                                     ...(rowGapStyle ?? {}),
                                     ...(rowJustify ? { justifyContent: rowJustify } : {}),
                                     ...(rowAlign ? { alignItems: rowAlign } : {}),
@@ -157,13 +191,17 @@ export function FrontendGridSection(): React.ReactNode {
                                 >
                                   {rowChildren.map((child: BlockInstance) => {
                                     if (child.type === 'ImageElement') {
-                                      const bgTarget = (child.settings?.['backgroundTarget'] as string) || 'none';
+                                      const bgTarget =
+                                        (child.settings?.['backgroundTarget'] as string) || 'none';
                                       if (bgTarget === 'grid' || bgTarget === 'row') return null;
                                     }
 
                                     if (child.type === 'Column') {
                                       return (
-                                        <div key={child.id} className={isVertical ? 'w-full' : 'flex-1 min-w-0'}>
+                                        <div
+                                          key={child.id}
+                                          className={isVertical ? 'w-full' : 'flex-1 min-w-0'}
+                                        >
                                           <SectionLayoutProvider
                                             rowHeightMode={rowHeightMode}
                                             rowHeight={rowHeight}
@@ -180,7 +218,11 @@ export function FrontendGridSection(): React.ReactNode {
                                     };
                                     if (SECTION_BLOCK_TYPES.has(child.type)) {
                                       return (
-                                        <div key={child.id} className={isVertical ? 'w-full' : ''} style={wrapperStyle}>
+                                        <div
+                                          key={child.id}
+                                          className={isVertical ? 'w-full' : ''}
+                                          style={wrapperStyle}
+                                        >
                                           <SectionLayoutProvider
                                             rowHeightMode={rowHeightMode}
                                             rowHeight={rowHeight}
@@ -191,7 +233,11 @@ export function FrontendGridSection(): React.ReactNode {
                                       );
                                     }
                                     return (
-                                      <div key={child.id} className={isVertical ? 'w-full' : ''} style={wrapperStyle}>
+                                      <div
+                                        key={child.id}
+                                        className={isVertical ? 'w-full' : ''}
+                                        style={wrapperStyle}
+                                      >
                                         <SectionLayoutProvider
                                           rowHeightMode={rowHeightMode}
                                           rowHeight={rowHeight}

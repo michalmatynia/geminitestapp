@@ -2,7 +2,17 @@
 
 import React from 'react';
 
-import { Button, Input, Textarea, Alert, SelectSimple, StatusBadge, Badge, Card, FormField } from '@/shared/ui';
+import {
+  Button,
+  Input,
+  Textarea,
+  Alert,
+  SelectSimple,
+  StatusBadge,
+  Badge,
+  Card,
+  FormField,
+} from '@/shared/ui';
 
 export interface ApiPreset {
   label: string;
@@ -86,14 +96,7 @@ export function GenericApiConsole({
     connectionWarning,
   } = config;
 
-  const {
-    method,
-    path,
-    bodyOrParams,
-    loading,
-    error,
-    response,
-  } = state;
+  const { method, path, bodyOrParams, loading, error, response } = state;
 
   const methodOptions = [
     { value: 'GET', label: 'GET' },
@@ -108,7 +111,9 @@ export function GenericApiConsole({
     if (onSetPath && preset.path) {
       onSetPath(preset.path);
     }
-    const val = preset.body || (typeof preset.params === 'object' ? JSON.stringify(preset.params, null, 2) : preset.params);
+    const val =
+      preset.body ||
+      (typeof preset.params === 'object' ? JSON.stringify(preset.params, null, 2) : preset.params);
     onSetBodyOrParams(val || '{}');
   };
 
@@ -183,26 +188,19 @@ export function GenericApiConsole({
             size='sm'
             className='h-32 font-mono'
             value={bodyOrParams}
-            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => onSetBodyOrParams(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+              onSetBodyOrParams(e.target.value)
+            }
           />
         </FormField>
       </div>
 
       {/* Send Button & Base URL */}
       <div className='mt-3 flex items-center gap-3'>
-        <Button
-          type='button'
-          disabled={loading || !isConnected}
-          onClick={onRequest}
-          size='sm'
-        >
+        <Button type='button' disabled={loading || !isConnected} onClick={onRequest} size='sm'>
           {loading ? 'Sending...' : 'Send request'}
         </Button>
-        {baseUrl && (
-          <span className='text-xs text-gray-500'>
-            Base URL: {baseUrl}
-          </span>
-        )}
+        {baseUrl && <span className='text-xs text-gray-500'>Base URL: {baseUrl}</span>}
       </div>
 
       {/* Error Alert */}

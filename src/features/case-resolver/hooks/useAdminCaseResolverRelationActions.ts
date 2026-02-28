@@ -5,17 +5,13 @@ import type {
   CaseResolverRelationGraph,
   CaseResolverWorkspace,
 } from '@/shared/contracts/case-resolver';
-import {
-  stableStringify,
-} from '@/shared/lib/ai-paths';
+import { stableStringify } from '@/shared/lib/ai-paths';
 import {
   createCaseResolverAssetFile,
   normalizeFolderPath,
   normalizeFolderPaths,
 } from '../settings';
-import {
-  createId,
-} from '../utils/caseResolverUtils';
+import { createId } from '@/features/case-resolver/utils/caseResolverUtils';
 
 export function useAdminCaseResolverRelationActions({
   workspace: _workspace,
@@ -24,15 +20,17 @@ export function useAdminCaseResolverRelationActions({
   workspace: CaseResolverWorkspace;
   updateWorkspace: (
     updater: (current: CaseResolverWorkspace) => CaseResolverWorkspace,
-    options?: { persistToast?: string; persistNow?: boolean; mutationId?: string; source?: string; skipNormalization?: boolean }
+    options?: {
+      persistToast?: string;
+      persistNow?: boolean;
+      mutationId?: string;
+      source?: string;
+      skipNormalization?: boolean;
+    }
   ) => void;
 }) {
   const createUniqueNodeFileAssetName = useCallback(
-    (
-      assets: CaseResolverAssetFile[],
-      folder: string,
-      baseName: string
-    ): string => {
+    (assets: CaseResolverAssetFile[], folder: string, baseName: string): string => {
       const normalizedFolder = normalizeFolderPath(folder);
       const normalizedBaseName = baseName.trim() || 'New Node File';
       const namesInFolder = new Set(
@@ -64,19 +62,16 @@ export function useAdminCaseResolverRelationActions({
       sourceFolder: string | null;
       activeCanvasFileId: string;
     }): string => {
-      const targetNode =
-        input.graph.nodes.find((node) => node.id === input.nodeId) ?? null;
+      const targetNode = input.graph.nodes.find((node) => node.id === input.nodeId) ?? null;
       const connectedEdges = input.graph.edges
         .filter((edge): boolean => edge.from === input.nodeId || edge.to === input.nodeId)
         .sort((left, right) => left.id.localeCompare(right.id));
       const relatedNodeIds = Array.from(
-        new Set(
-          connectedEdges.flatMap((edge): string[] => [edge.from ?? '', edge.to ?? ''])
-        )
+        new Set(connectedEdges.flatMap((edge): string[] => [edge.from ?? '', edge.to ?? '']))
       )
         .filter((nodeId: string): boolean => nodeId !== input.nodeId && nodeId.length > 0)
         .sort((left: string, right: string) => left.localeCompare(right));
-        
+
       const nodeFileMeta = (() => {
         if (!input.sourceFileId || !input.nodeId) return {};
         return {
@@ -127,7 +122,9 @@ export function useAdminCaseResolverRelationActions({
         const nextNodeIds = new Set(
           nextGraph.nodes
             .map((node) => node.id)
-            .filter((nodeId: string): boolean => typeof nodeId === 'string' && nodeId.trim().length > 0)
+            .filter(
+              (nodeId: string): boolean => typeof nodeId === 'string' && nodeId.trim().length > 0
+            )
         );
         const filesById = new Map(current.files.map((file) => [file.id, file]));
         const existingNodeFileMap = activeGraph.nodeFileAssetIdByNode ?? {};
@@ -146,9 +143,10 @@ export function useAdminCaseResolverRelationActions({
         const createNodeFileAssetForNode = (nodeId: string, sourceFileId: string): void => {
           if (nextNodeFileMap[nodeId]) return;
           const sourceFile = filesById.get(sourceFileId) ?? null;
-          const normalizedFolder = normalizeFolderPath(sourceFile?.folder ?? activeFileLocal.folder ?? '');
-          const baseName =
-            `${(sourceFile?.name ?? 'Document').trim() || 'Document'} Node File`;
+          const normalizedFolder = normalizeFolderPath(
+            sourceFile?.folder ?? activeFileLocal.folder ?? ''
+          );
+          const baseName = `${(sourceFile?.name ?? 'Document').trim() || 'Document'} Node File`;
           const name = createUniqueNodeFileAssetName(nextAssets, normalizedFolder, baseName);
           const createdAssetId = createId('asset');
           const snapshot = buildNodeFileSnapshotText({
@@ -174,39 +172,42 @@ export function useAdminCaseResolverRelationActions({
           assetsChanged = true;
         };
 
-        Object.entries(nextSourceFileIdByNode).forEach(([nodeId, sourceFileId]: [string, string]): void => {
-          if (!nextNodeIds.has(nodeId)) return;
-          const normalizedSourceFileId =
-            typeof sourceFileId === 'string' ? sourceFileId.trim() : '';
-          if (!normalizedSourceFileId) return;
-          const hadPreviousSource = Boolean(previousSourceFileIdByNode[nodeId]?.trim());
-          if (hadPreviousSource) return;
-          createNodeFileAssetForNode(nodeId, normalizedSourceFileId);
-        });
+        Object.entries(nextSourceFileIdByNode).forEach(
+          ([nodeId, sourceFileId]: [string, string]): void => {
+            if (!nextNodeIds.has(nodeId)) return;
+            const normalizedSourceFileId =
+              typeof sourceFileId === 'string' ? sourceFileId.trim() : '';
+            if (!normalizedSourceFileId) return;
+            const hadPreviousSource = Boolean(previousSourceFileIdByNode[nodeId]?.trim());
+            if (hadPreviousSource) return;
+            createNodeFileAssetForNode(nodeId, normalizedSourceFileId);
+          }
+        );
 
-        Object.entries({ ...nextNodeFileMap }).forEach(([nodeId, assetId]: [string, string]): void => {
-          const normalizedNodeId = typeof nodeId === 'string' ? nodeId.trim() : '';
-          const normalizedAssetId = typeof assetId === 'string' ? assetId.trim() : '';
-          if (!normalizedNodeId || !normalizedAssetId) {
-            delete nextNodeFileMap[nodeId];
-            return;
+        Object.entries({ ...nextNodeFileMap }).forEach(
+          ([nodeId, assetId]: [string, string]): void => {
+            const normalizedNodeId = typeof nodeId === 'string' ? nodeId.trim() : '';
+            const normalizedAssetId = typeof assetId === 'string' ? assetId.trim() : '';
+            if (!normalizedNodeId || !normalizedAssetId) {
+              delete nextNodeFileMap[nodeId];
+              return;
+            }
+            if (!nextNodeIds.has(normalizedNodeId)) {
+              delete nextNodeFileMap[nodeId];
+              return;
+            }
+            const hasMappedAsset = nextAssets.some(
+              (asset: CaseResolverAssetFile): boolean =>
+                asset.id === normalizedAssetId && asset.kind === 'node_file'
+            );
+            if (!hasMappedAsset) {
+              delete nextNodeFileMap[nodeId];
+            }
           }
-          if (!nextNodeIds.has(normalizedNodeId)) {
-            delete nextNodeFileMap[nodeId];
-            return;
-          }
-          const hasMappedAsset = nextAssets.some(
-            (asset: CaseResolverAssetFile): boolean =>
-              asset.id === normalizedAssetId && asset.kind === 'node_file'
-          );
-          if (!hasMappedAsset) {
-            delete nextNodeFileMap[nodeId];
-          }
-        });
+        );
 
         const nextNodeFileMapKeys = Object.keys(nextNodeFileMap);
-        const normalizedNodeFileMap =
-          nextNodeFileMapKeys.length > 0 ? nextNodeFileMap : undefined;
+        const normalizedNodeFileMap = nextNodeFileMapKeys.length > 0 ? nextNodeFileMap : undefined;
         const currentComparableGraph = {
           ...activeGraph,
           ...(activeGraph.nodeFileAssetIdByNode &&
@@ -225,13 +226,13 @@ export function useAdminCaseResolverRelationActions({
 
         const nextFiles = graphChanged
           ? current.files.map((file) => {
-            if (file.id !== activeFileLocal.id) return file;
-            return {
-              ...file,
-              graph: nextComparableGraph,
-              updatedAt: now,
-            };
-          })
+              if (file.id !== activeFileLocal.id) return file;
+              return {
+                ...file,
+                graph: nextComparableGraph,
+                updatedAt: now,
+              };
+            })
           : current.files;
 
         return {
@@ -240,9 +241,9 @@ export function useAdminCaseResolverRelationActions({
           assets: assetsChanged ? nextAssets : current.assets,
           folders: assetsChanged
             ? normalizeFolderPaths([
-              ...current.folders,
-              ...nextAssets.map((asset: CaseResolverAssetFile): string => asset.folder),
-            ])
+                ...current.folders,
+                ...nextAssets.map((asset: CaseResolverAssetFile): string => asset.folder),
+              ])
             : current.folders,
         };
       });

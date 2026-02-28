@@ -1,2 +1,1 @@
-// Public entrypoint for app-layer imports.
-export * from './index';
+export * from '@/shared/lib/prompt-engine/settings';

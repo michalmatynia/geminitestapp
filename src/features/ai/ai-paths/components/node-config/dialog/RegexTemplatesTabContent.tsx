@@ -47,7 +47,10 @@ export function RegexTemplatesTabContent({
         ) : (
           <div className='space-y-4'>
             {regexTemplates.map((template: RegexTemplate) => (
-              <div key={template.id} className='rounded-md border border-border bg-card/60 p-3 space-y-3'>
+              <div
+                key={template.id}
+                className='rounded-md border border-border bg-card/60 p-3 space-y-3'
+              >
                 <div className='flex flex-wrap items-center justify-between gap-3'>
                   <div className='min-w-[220px] flex-1'>
                     <FormField label='Template Name'>
@@ -113,7 +116,8 @@ export function RegexTemplatesTabContent({
 
                 <div className='grid grid-cols-1 gap-3 md:grid-cols-3'>
                   <FormField label='Mode'>
-                    <SelectSimple size='sm'
+                    <SelectSimple
+                      size='sm'
                       value={template.mode ?? 'group'}
                       onValueChange={(value: string): void =>
                         onUpdateNodeTemplate(template.id, { mode: value as RegexConfig['mode'] })
@@ -129,10 +133,13 @@ export function RegexTemplatesTabContent({
                     />
                   </FormField>
                   <FormField label='Match Mode'>
-                    <SelectSimple size='sm'
+                    <SelectSimple
+                      size='sm'
                       value={template.matchMode ?? 'first'}
                       onValueChange={(value: string): void =>
-                        onUpdateNodeTemplate(template.id, { matchMode: value as RegexConfig['matchMode'] })
+                        onUpdateNodeTemplate(template.id, {
+                          matchMode: value as RegexConfig['matchMode'],
+                        })
                       }
                       placeholder='Select mode'
                       triggerClassName='mt-1 h-8 w-full border-border bg-card/70 text-xs text-white'
@@ -145,10 +152,13 @@ export function RegexTemplatesTabContent({
                     />
                   </FormField>
                   <FormField label='Output Mode'>
-                    <SelectSimple size='sm'
+                    <SelectSimple
+                      size='sm'
                       value={template.outputMode ?? 'object'}
                       onValueChange={(value: string): void =>
-                        onUpdateNodeTemplate(template.id, { outputMode: value as RegexConfig['outputMode'] })
+                        onUpdateNodeTemplate(template.id, {
+                          outputMode: value as RegexConfig['outputMode'],
+                        })
                       }
                       placeholder='Select output'
                       triggerClassName='mt-1 h-8 w-full border-border bg-card/70 text-xs text-white'
@@ -193,8 +203,11 @@ export function RegexTemplatesTabContent({
                 </FormField>
 
                 <div className='text-[10px] text-gray-500'>
-                  Created: {template.createdAt ? new Date(template.createdAt).toLocaleString() : '—'}
-                  {template.updatedAt ? ` • Updated: ${new Date(template.updatedAt).toLocaleString()}` : ''}
+                  Created:{' '}
+                  {template.createdAt ? new Date(template.createdAt).toLocaleString() : '—'}
+                  {template.updatedAt
+                    ? ` • Updated: ${new Date(template.updatedAt).toLocaleString()}`
+                    : ''}
                 </div>
               </div>
             ))}
@@ -224,7 +237,10 @@ export function RegexTemplatesTabContent({
         ) : (
           <div className='space-y-4'>
             {globalTemplates.map((template: RegexTemplate) => (
-              <div key={template.id} className='rounded-md border border-border bg-card/60 p-3 space-y-3'>
+              <div
+                key={template.id}
+                className='rounded-md border border-border bg-card/60 p-3 space-y-3'
+              >
                 <div className='flex flex-wrap items-center justify-between gap-3'>
                   <div className='min-w-[220px] flex-1'>
                     <FormField label='Template Name'>
@@ -290,7 +306,8 @@ export function RegexTemplatesTabContent({
 
                 <div className='grid grid-cols-1 gap-3 md:grid-cols-3'>
                   <FormField label='Mode'>
-                    <SelectSimple size='sm'
+                    <SelectSimple
+                      size='sm'
                       value={template.mode ?? 'group'}
                       onValueChange={(value: string): void =>
                         onUpdateGlobalTemplate(template.id, { mode: value as RegexConfig['mode'] })
@@ -306,10 +323,13 @@ export function RegexTemplatesTabContent({
                     />
                   </FormField>
                   <FormField label='Match Mode'>
-                    <SelectSimple size='sm'
+                    <SelectSimple
+                      size='sm'
                       value={template.matchMode ?? 'first'}
                       onValueChange={(value: string): void =>
-                        onUpdateGlobalTemplate(template.id, { matchMode: value as RegexConfig['matchMode'] })
+                        onUpdateGlobalTemplate(template.id, {
+                          matchMode: value as RegexConfig['matchMode'],
+                        })
                       }
                       placeholder='Select mode'
                       triggerClassName='mt-1 h-8 w-full border-border bg-card/70 text-xs text-white'
@@ -322,10 +342,13 @@ export function RegexTemplatesTabContent({
                     />
                   </FormField>
                   <FormField label='Output Mode'>
-                    <SelectSimple size='sm'
+                    <SelectSimple
+                      size='sm'
                       value={template.outputMode ?? 'object'}
                       onValueChange={(value: string): void =>
-                        onUpdateGlobalTemplate(template.id, { outputMode: value as RegexConfig['outputMode'] })
+                        onUpdateGlobalTemplate(template.id, {
+                          outputMode: value as RegexConfig['outputMode'],
+                        })
                       }
                       placeholder='Select output'
                       triggerClassName='mt-1 h-8 w-full border-border bg-card/70 text-xs text-white'
@@ -370,8 +393,11 @@ export function RegexTemplatesTabContent({
                 </FormField>
 
                 <div className='text-[10px] text-gray-500'>
-                  Created: {template.createdAt ? new Date(template.createdAt).toLocaleString() : '—'}
-                  {template.updatedAt ? ` • Updated: ${new Date(template.updatedAt).toLocaleString()}` : ''}
+                  Created:{' '}
+                  {template.createdAt ? new Date(template.createdAt).toLocaleString() : '—'}
+                  {template.updatedAt
+                    ? ` • Updated: ${new Date(template.updatedAt).toLocaleString()}`
+                    : ''}
                 </div>
               </div>
             ))}

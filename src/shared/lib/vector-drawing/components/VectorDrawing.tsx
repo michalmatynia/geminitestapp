@@ -2,7 +2,10 @@
 
 import React, { useMemo } from 'react';
 
-import { VectorDrawingProvider, type VectorDrawingContextValue } from '../context/VectorDrawingContext';
+import {
+  VectorDrawingProvider,
+  type VectorDrawingContextValue,
+} from '../context/VectorDrawingContext';
 import { VectorDrawingCanvas } from './VectorDrawingCanvas';
 import { VectorDrawingToolbar, type VectorDrawingToolbarVariant } from './VectorDrawingToolbar';
 import { useVectorDrawingShortcuts } from '../hooks/useVectorDrawingShortcuts';
@@ -73,54 +76,55 @@ export function VectorDrawing(props: VectorDrawingProps): React.JSX.Element {
     onToolChange: handleToolChange,
   });
 
-  const contextValue = useMemo<VectorDrawingContextValue>(() => ({
-    shapes,
-    tool: currentTool,
-    activeShapeId: resolvedActiveShapeId,
-    selectedPointIndex: resolvedSelectedPointIndex,
-    brushRadius: brushRadius ?? 6,
-    imageSrc: imageSrc ?? null,
-    allowWithoutImage: allowWithoutImage ?? false,
-    showEmptyState: showEmptyState ?? true,
-    emptyStateLabel: emptyStateLabel ?? 'Select an image slot to preview.',
-    setShapes: handleChange,
-    setTool: handleToolChange,
-    setActiveShapeId: handleSelectShape,
-    setSelectedPointIndex: handleSelectPoint,
-    onSmooth: handleSmooth,
-    onSimplify: handleSimplify,
-    onUndo: handleUndo,
-    onRedo: handleRedo,
-    disableUndo: !canUndo,
-    disableRedo: !canRedo,
-  }), [
-    shapes,
-    currentTool,
-    resolvedActiveShapeId,
-    resolvedSelectedPointIndex,
-    brushRadius,
-    imageSrc,
-    allowWithoutImage,
-    showEmptyState,
-    emptyStateLabel,
-    handleChange,
-    handleToolChange,
-    handleSelectShape,
-    handleSelectPoint,
-    handleSmooth,
-    handleSimplify,
-    handleUndo,
-    handleRedo,
-    canUndo,
-    canRedo,
-  ]);
+  const contextValue = useMemo<VectorDrawingContextValue>(
+    () => ({
+      shapes,
+      tool: currentTool,
+      activeShapeId: resolvedActiveShapeId,
+      selectedPointIndex: resolvedSelectedPointIndex,
+      brushRadius: brushRadius ?? 6,
+      imageSrc: imageSrc ?? null,
+      allowWithoutImage: allowWithoutImage ?? false,
+      showEmptyState: showEmptyState ?? true,
+      emptyStateLabel: emptyStateLabel ?? 'Select an image slot to preview.',
+      setShapes: handleChange,
+      setTool: handleToolChange,
+      setActiveShapeId: handleSelectShape,
+      setSelectedPointIndex: handleSelectPoint,
+      onSmooth: handleSmooth,
+      onSimplify: handleSimplify,
+      onUndo: handleUndo,
+      onRedo: handleRedo,
+      disableUndo: !canUndo,
+      disableRedo: !canRedo,
+    }),
+    [
+      shapes,
+      currentTool,
+      resolvedActiveShapeId,
+      resolvedSelectedPointIndex,
+      brushRadius,
+      imageSrc,
+      allowWithoutImage,
+      showEmptyState,
+      emptyStateLabel,
+      handleChange,
+      handleToolChange,
+      handleSelectShape,
+      handleSelectPoint,
+      handleSmooth,
+      handleSimplify,
+      handleUndo,
+      handleRedo,
+      canUndo,
+      canRedo,
+    ]
+  );
 
   return (
     <VectorDrawingProvider value={contextValue}>
       <div className={className}>
-        <VectorDrawingCanvas
-          {...(canvasClassName ? { className: canvasClassName } : {})}
-        />
+        <VectorDrawingCanvas {...(canvasClassName ? { className: canvasClassName } : {})} />
         <VectorDrawingToolbar
           {...(toolbarClassName ? { className: toolbarClassName } : {})}
           variant={toolbarVariant}

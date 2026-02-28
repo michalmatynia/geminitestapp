@@ -19,10 +19,7 @@ export function DatabaseAiQueryReviewSection(): React.JSX.Element | null {
     queryConfig,
   } = useDatabaseConstructorContext();
 
-  const {
-    updateSelectedNodeConfig,
-    toast,
-  } = useAiPathConfig();
+  const { updateSelectedNodeConfig, toast } = useAiPathConfig();
 
   if (!pendingAiQuery) {
     return null;

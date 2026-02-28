@@ -207,8 +207,8 @@ describe('evaluateGraph trigger cache guardrail', () => {
       seedHashes: first.hashes,
       seedHashTimestamps: first.hashTimestamps,
       seedHistory: first.history,
-      seedRunId: (first.runId as string | undefined),
-      seedRunStartedAt: (first.runStartedAt as string | undefined),
+      seedRunId: first.runId as string | undefined,
+      seedRunStartedAt: first.runStartedAt as string | undefined,
       fetchEntityByType,
       reportAiPathsError,
       toast,
@@ -350,8 +350,9 @@ describe('evaluateGraph trigger cache guardrail', () => {
     });
 
     expect(second.outputs?.['fetcher-1']?.['entityId']).toBe('entity-b');
-    const fetcherFinishCall = (secondFinish.mock.calls as Array<[{ node: AiNode; cached?: boolean }]>)
-      .find((call) => call[0]?.node?.id === 'fetcher-1');
+    const fetcherFinishCall = (
+      secondFinish.mock.calls as Array<[{ node: AiNode; cached?: boolean }]>
+    ).find((call) => call[0]?.node?.id === 'fetcher-1');
     expect(fetcherFinishCall?.[0]?.cached).not.toBe(true);
   });
 

@@ -1,7 +1,7 @@
 ---
-owner: "Platform Team"
-last_reviewed: "2026-02-20"
-status: "active"
+owner: 'Platform Team'
+last_reviewed: '2026-02-20'
+status: 'active'
 ---
 
 # Central Documentation Index

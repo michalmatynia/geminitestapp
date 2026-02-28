@@ -15,15 +15,8 @@ export function DatabaseAiPromptConnectionStatus({
   aiPrompt,
   updateQueryConfig,
 }: DatabaseAiPromptConnectionStatusProps): React.JSX.Element {
-  const {
-    edges,
-    nodes,
-    selectedNode,
-    runtimeState,
-    sendingToAi,
-    onSendToAi,
-    toast,
-  } = useAiPathConfig();
+  const { edges, nodes, selectedNode, runtimeState, sendingToAi, onSendToAi, toast } =
+    useAiPathConfig();
 
   if (!selectedNode) return <></>;
   const selectedNodeId = selectedNode.id;
@@ -37,15 +30,17 @@ export function DatabaseAiPromptConnectionStatus({
 
   const aiNode =
     aiPromptEdges.length > 0
-      ? nodes.find((node: AiNode): boolean => node.id === aiPromptEdges[0]?.to && node.type === 'model')
+      ? nodes.find(
+          (node: AiNode): boolean => node.id === aiPromptEdges[0]?.to && node.type === 'model'
+        )
       : null;
 
   const aiModelId = aiNode?.config?.['model']?.['modelId'];
   const hasValidConnection = aiNode && callbackEdges.length > 0;
 
   const callbackValue =
-    (runtimeState.inputs?.[selectedNodeId])?.['queryCallback'] ??
-    (runtimeState.outputs?.[selectedNodeId])?.['queryCallback'];
+    runtimeState.inputs?.[selectedNodeId]?.['queryCallback'] ??
+    runtimeState.outputs?.[selectedNodeId]?.['queryCallback'];
   const hasAiResponse = typeof callbackValue === 'string' && callbackValue.trim().length > 0;
 
   return (
@@ -55,7 +50,8 @@ export function DatabaseAiPromptConnectionStatus({
           <div className='flex items-center gap-2'>
             <div className='h-2 w-2 rounded-full bg-emerald-400'></div>
             <span className='text-[11px] text-emerald-100'>
-              Connected to AI Model: <span className='font-medium text-emerald-200'>{aiModelId || 'Unknown'}</span>
+              Connected to AI Model:{' '}
+              <span className='font-medium text-emerald-200'>{aiModelId || 'Unknown'}</span>
             </span>
           </div>
           {hasAiResponse && (
@@ -101,9 +97,9 @@ export function DatabaseAiPromptConnectionStatus({
         </div>
       )}
       <p className='text-[11px] text-gray-500'>
-        Connect this node&apos;s <span className='text-gray-300'>aiPrompt</span> output to an AI Node, then connect
-        the AI&apos;s <span className='text-gray-300'>result</span> back to this node&apos;s{' '}
-        <span className='text-gray-300'>queryCallback</span> input.
+        Connect this node&apos;s <span className='text-gray-300'>aiPrompt</span> output to an AI
+        Node, then connect the AI&apos;s <span className='text-gray-300'>result</span> back to this
+        node&apos;s <span className='text-gray-300'>queryCallback</span> input.
       </p>
     </div>
   );

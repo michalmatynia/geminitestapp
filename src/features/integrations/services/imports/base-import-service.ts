@@ -161,9 +161,7 @@ const resolveRunItems = async (input: {
 }): Promise<string[]> => {
   const selected = normalizeSelectedIds(input.selectedIds);
   let ids =
-    selected.length > 0
-      ? selected
-      : await fetchBaseProductIds(input.token, input.inventoryId);
+    selected.length > 0 ? selected : await fetchBaseProductIds(input.token, input.inventoryId);
 
   if (selected.length === 0 && typeof input.limit === 'number' && input.limit > 0) {
     ids = ids.slice(0, input.limit);
@@ -207,9 +205,7 @@ export const prepareBaseImportRun = async (
     ...(normalizedConnectionId ? { connectionId: normalizedConnectionId } : {}),
     ...(normalizedTemplateId ? { templateId: normalizedTemplateId } : {}),
     ...(normalizedLimit !== null ? { limit: normalizedLimit } : {}),
-    ...(normalizedSelectedIds.length > 0
-      ? { selectedIds: normalizedSelectedIds }
-      : {}),
+    ...(normalizedSelectedIds.length > 0 ? { selectedIds: normalizedSelectedIds } : {}),
     ...(normalizedRequestId ? { requestId: normalizedRequestId } : {}),
   };
 
@@ -230,12 +226,8 @@ export const prepareBaseImportRun = async (
     token: connection.token,
     inventoryId: normalizedParams.inventoryId,
     uniqueOnly: normalizedParams.uniqueOnly,
-    ...(normalizedParams.selectedIds
-      ? { selectedIds: normalizedParams.selectedIds }
-      : {}),
-    ...(typeof normalizedParams.limit === 'number'
-      ? { limit: normalizedParams.limit }
-      : {}),
+    ...(normalizedParams.selectedIds ? { selectedIds: normalizedParams.selectedIds } : {}),
+    ...(typeof normalizedParams.limit === 'number' ? { limit: normalizedParams.limit } : {}),
   });
 
   const idempotencyKey = createRunIdempotencyKey(normalizedParams, ids);
@@ -367,7 +359,8 @@ export const processBaseImportRun = async (
       : ['pending']
   );
   const ownerId =
-    options?.jobId?.trim() || `worker-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    options?.jobId?.trim() ||
+    `worker-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
   const lease = await acquireBaseImportRunLease({
     runId,
     ownerId,
@@ -434,9 +427,7 @@ export const processBaseImportRun = async (
         code: 'MISSING_CONNECTION',
         errorClass: 'configuration',
         retryable: false,
-        message:
-          connection.issue?.message ??
-          'Base.com connection or token is missing.',
+        message: connection.issue?.message ?? 'Base.com connection or token is missing.',
       });
       return updateBaseImportRunStatus(runId, 'failed', {
         summaryMessage: 'Import failed: Base.com connection is not available.',
@@ -479,9 +470,7 @@ export const processBaseImportRun = async (
       });
     }
 
-    const template = run.params.templateId
-      ? await getImportTemplate(run.params.templateId)
-      : null;
+    const template = run.params.templateId ? await getImportTemplate(run.params.templateId) : null;
     const templateMappings = Array.isArray(template?.mappings) ? template.mappings : [];
     const templateParameterImportSettings = normalizeBaseImportParameterImportSettings(
       template?.parameterImport
@@ -489,27 +478,22 @@ export const processBaseImportRun = async (
     const lookups = await resolveProducerAndTagLookups(connection.connectionId);
     const productRepository = await getProductRepository();
     const parameterRepository = await getParameterRepository();
-    
+
     // Performance optimization: pre-fetch catalog context once per run
     const [prefetchedParameters, prefetchedLinks] = await Promise.all([
       parameterRepository.listParameters({ catalogId: targetCatalog.id }),
       templateParameterImportSettings.matchBy === 'base_id_then_name'
         ? getCatalogParameterLinks({
-          catalogId: targetCatalog.id,
-          connectionId: connection.connectionId,
-          inventoryId: run.params.inventoryId,
-        })
+            catalogId: targetCatalog.id,
+            connectionId: connection.connectionId,
+            inventoryId: run.params.inventoryId,
+          })
         : Promise.resolve({}),
     ]);
 
-    const catalogLanguageContext = await resolveCatalogLanguageContext(
-      provider,
-      targetCatalog
-    );
+    const catalogLanguageContext = await resolveCatalogLanguageContext(provider, targetCatalog);
     const maxAttempts =
-      typeof run.maxAttempts === 'number' &&
-      Number.isFinite(run.maxAttempts) &&
-      run.maxAttempts > 0
+      typeof run.maxAttempts === 'number' && Number.isFinite(run.maxAttempts) && run.maxAttempts > 0
         ? Math.floor(run.maxAttempts)
         : BASE_IMPORT_MAX_ATTEMPTS;
 
@@ -584,9 +568,7 @@ export const processBaseImportRun = async (
         batchBaseProductIds.length > 0
           ? productRepository.findProductsByBaseIds(batchBaseProductIds)
           : Promise.resolve([]),
-        batchSkus.length > 0
-          ? productRepository.getProductsBySkus(batchSkus)
-          : Promise.resolve([]),
+        batchSkus.length > 0 ? productRepository.getProductsBySkus(batchSkus) : Promise.resolve([]),
       ]);
 
       const prefetchedProductsByBaseId = new Map<string, ProductWithImages>(
@@ -595,9 +577,7 @@ export const processBaseImportRun = async (
           .map((p) => [p.baseProductId!, p as ProductWithImages])
       );
       const prefetchedProductsBySku = new Map<string, ProductWithImages>(
-        existingBySkuList
-          .filter((p) => p.sku)
-          .map((p) => [p.sku!, p as ProductWithImages])
+        existingBySkuList.filter((p) => p.sku).map((p) => [p.sku!, p as ProductWithImages])
       );
 
       // Performance optimization: pre-fetch listings for this batch
@@ -608,9 +588,9 @@ export const processBaseImportRun = async (
       const prefetchedListings =
         allProductIdsForBatch.size > 0
           ? await findProductListingsByProductsAndConnectionAcrossProviders(
-            Array.from(allProductIdsForBatch),
-            connection.connectionId
-          )
+              Array.from(allProductIdsForBatch),
+              connection.connectionId
+            )
           : new Map<string, { listing: ProductListing; repository: ProductListingRepository }>();
 
       for (const item of dueItems) {
@@ -888,9 +868,7 @@ export const updateBaseImportRunQueueJob = async (
   });
 };
 
-export const cancelBaseImportRun = async (
-  runId: string
-): Promise<BaseImportRunRecord> => {
+export const cancelBaseImportRun = async (runId: string): Promise<BaseImportRunRecord> => {
   const run = await getBaseImportRun(runId);
   if (!run) {
     throw notFoundError('Base import run not found.', { runId });

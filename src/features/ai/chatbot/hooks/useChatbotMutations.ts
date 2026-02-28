@@ -2,9 +2,18 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 
-import type { ChatMessageDto as ChatMessage, ChatbotSettingsDto as ChatbotSettingsPayload, ChatbotSessionDto as ChatSession, ChatbotSessionListItem } from '@/shared/contracts/chatbot';
+import type {
+  ChatMessageDto as ChatMessage,
+  ChatbotSettingsDto as ChatbotSettingsPayload,
+  ChatbotSessionDto as ChatSession,
+  ChatbotSessionListItem,
+} from '@/shared/contracts/chatbot';
 import type { CreateMutation, UpdateMutation } from '@/shared/contracts/ui';
-import { createCreateMutationV2, createDeleteMutationV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
+import {
+  createCreateMutationV2,
+  createDeleteMutationV2,
+  createUpdateMutationV2,
+} from '@/shared/lib/query-factories-v2';
 import {
   invalidateChatbotSession,
   invalidateChatbotSessions,
@@ -22,11 +31,13 @@ import {
   saveChatbotSettings,
 } from '../api';
 
-
 /**
  * Mutation hook for creating a new chatbot session
  */
-export function useCreateChatbotSession(): CreateMutation<{ sessionId: string; session?: ChatSession }, { title?: string; settings?: ChatSession['settings'] }> {
+export function useCreateChatbotSession(): CreateMutation<
+  { sessionId: string; session?: ChatSession },
+  { title?: string; settings?: ChatSession['settings'] }
+> {
   const queryClient = useQueryClient();
   const mutationKey = chatbotQueryKeys.mutation('create-session');
 
@@ -50,7 +61,10 @@ export function useCreateChatbotSession(): CreateMutation<{ sessionId: string; s
 /**
  * Mutation hook for updating a session title
  */
-export function useUpdateSessionTitle(): UpdateMutation<ChatbotSessionListItem, { sessionId: string; title: string }> {
+export function useUpdateSessionTitle(): UpdateMutation<
+  ChatbotSessionListItem,
+  { sessionId: string; title: string }
+> {
   const queryClient = useQueryClient();
   const mutationKey = chatbotQueryKeys.mutation('update-session-title');
 
@@ -66,7 +80,10 @@ export function useUpdateSessionTitle(): UpdateMutation<ChatbotSessionListItem, 
       mutationKey,
       tags: ['chatbot', 'sessions', 'update-title'],
     },
-    onSuccess: (_data: ChatbotSessionListItem, { sessionId }: { sessionId: string; title: string }): Promise<void> => {
+    onSuccess: (
+      _data: ChatbotSessionListItem,
+      { sessionId }: { sessionId: string; title: string }
+    ): Promise<void> => {
       void invalidateChatbotSessions(queryClient);
       return invalidateChatbotSession(queryClient, sessionId);
     },
@@ -165,7 +182,10 @@ export function usePersistSessionMessage(): UpdateMutation<void, PersistSessionM
 /**
  * Mutation hook for sending a chat message
  */
-export function useSendChatMessage(): UpdateMutation<{ message?: string }, { messages: ChatMessage[]; model?: string; sessionId?: string | null }> {
+export function useSendChatMessage(): UpdateMutation<
+  { message?: string },
+  { messages: ChatMessage[]; model?: string; sessionId?: string | null }
+> {
   const mutationKey = chatbotQueryKeys.mutation('send-message');
   return createUpdateMutationV2({
     mutationFn: sendChatbotMessage,
@@ -187,13 +207,17 @@ export function useSendChatMessage(): UpdateMutation<{ message?: string }, { mes
 export function useSaveChatbotSettings(): UpdateMutation<
   { settings?: { settings?: ChatbotSettingsPayload } },
   SaveChatbotSettingsVariables
-  > {
+> {
   const queryClient = useQueryClient();
   const mutationKey = chatbotQueryKeys.mutation('save-settings');
 
   return createUpdateMutationV2({
-    mutationFn: ({ key, settings }: SaveChatbotSettingsVariables): Promise<{ settings?: { settings?: ChatbotSettingsPayload } }> =>
-      saveChatbotSettings(key, settings),
+    mutationFn: ({
+      key,
+      settings,
+    }: SaveChatbotSettingsVariables): Promise<{
+      settings?: { settings?: ChatbotSettingsPayload };
+    }> => saveChatbotSettings(key, settings),
     mutationKey,
     meta: {
       source: 'chatbot.hooks.useSaveChatbotSettings',
@@ -203,7 +227,10 @@ export function useSaveChatbotSettings(): UpdateMutation<
       mutationKey,
       tags: ['chatbot', 'settings', 'save'],
     },
-    onSuccess: (_data: { settings?: { settings?: ChatbotSettingsPayload } }, { key }: SaveChatbotSettingsVariables): Promise<void> => {
+    onSuccess: (
+      _data: { settings?: { settings?: ChatbotSettingsPayload } },
+      { key }: SaveChatbotSettingsVariables
+    ): Promise<void> => {
       return invalidateSettingsScope(queryClient, key);
     },
   });

@@ -8,19 +8,14 @@ import { useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import { useChatbotSessions } from './useChatbotQueries';
-import {
-  useCreateChatbotSession,
-  useDeleteChatbotSession,
-} from './useChatbotMutations';
+import { useCreateChatbotSession, useDeleteChatbotSession } from './useChatbotMutations';
 
 export interface UseChatbotSessionManagerReturn {
   sessions: ChatSession[];
   currentSessionId: string | null;
   sessionId: string | null;
   sessionsLoading: boolean;
-  createNewSession: (
-    initialSettings?: Partial<ChatSession['settings']>,
-  ) => Promise<void>;
+  createNewSession: (initialSettings?: Partial<ChatSession['settings']>) => Promise<void>;
   deleteSession: (id: string) => Promise<void>;
   selectSession: React.Dispatch<React.SetStateAction<string | null>>;
 }
@@ -49,9 +44,7 @@ export function useChatbotSessionManager(): UseChatbotSessionManagerReturn {
   }, [currentSessionId, sessions]);
 
   const createNewSession = useCallback(
-    async (
-      initialSettings?: Partial<ChatSession['settings']>,
-    ): Promise<void> => {
+    async (initialSettings?: Partial<ChatSession['settings']>): Promise<void> => {
       try {
         const data = await createMutation.mutateAsync({
           title: `Chat ${new Date().toLocaleString()}`,
@@ -65,7 +58,7 @@ export function useChatbotSessionManager(): UseChatbotSessionManagerReturn {
         toast('Failed to create new chat session', { variant: 'error' });
       }
     },
-    [createMutation, toast],
+    [createMutation, toast]
   );
 
   const deleteSession = useCallback(
@@ -85,7 +78,7 @@ export function useChatbotSessionManager(): UseChatbotSessionManagerReturn {
         toast('Failed to delete chat session', { variant: 'error' });
       }
     },
-    [currentSessionId, sessions, deleteMutation, toast],
+    [currentSessionId, sessions, deleteMutation, toast]
   );
 
   return {

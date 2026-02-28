@@ -70,7 +70,7 @@ describe('ImageFileRepository (Prisma)', () => {
     it('lists all files with optional filters', async () => {
       (prisma.imageFile.findMany as any).mockResolvedValue([mockImageFile]);
       const result = await prismaImageFileRepository.listImageFiles({ filename: 'test' });
-      
+
       expect(prisma.imageFile.findMany).toHaveBeenCalledWith({
         where: expect.objectContaining({
           filename: { contains: 'test', mode: 'insensitive' },
@@ -82,7 +82,10 @@ describe('ImageFileRepository (Prisma)', () => {
 
   describe('updateImageFilePath', () => {
     it('updates filepath', async () => {
-      (prisma.imageFile.update as any).mockResolvedValue({ ...mockImageFile, filepath: '/new/path.jpg' });
+      (prisma.imageFile.update as any).mockResolvedValue({
+        ...mockImageFile,
+        filepath: '/new/path.jpg',
+      });
       const result = await prismaImageFileRepository.updateImageFilePath('img-1', '/new/path.jpg');
       expect(result?.filepath).toBe('/new/path.jpg');
     });

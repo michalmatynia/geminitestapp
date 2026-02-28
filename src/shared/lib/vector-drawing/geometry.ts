@@ -34,7 +34,10 @@ export const smoothPoints = (points: VectorPoint[], iterations: number = 1): Vec
   return result;
 };
 
-export const simplifyPoints = (points: VectorPoint[], tolerance: number = 0.0025): VectorPoint[] => {
+export const simplifyPoints = (
+  points: VectorPoint[],
+  tolerance: number = 0.0025
+): VectorPoint[] => {
   if (points.length < 3) return points;
   const tolSq = tolerance * tolerance;
 

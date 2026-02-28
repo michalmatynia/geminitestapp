@@ -16,7 +16,7 @@ import {
   fetchBaseCategoriesFromPayload,
   toStringId,
 } from './base-client-parsers';
-import type { 
+import type {
   BaseApiResponse,
   BaseCategory,
   BaseInventory,
@@ -120,7 +120,7 @@ const estimatePayloadSizeBytes = (parameters: Record<string, unknown>): number =
       else if (typeof val === 'boolean') total += 4;
       else if (val && typeof val === 'object') {
         // Fallback for complex nested objects, but keep it shallow or limited
-        total += 100; 
+        total += 100;
       }
     }
     return total;
@@ -262,7 +262,6 @@ export async function callBaseApiRaw(
   let payload: BaseApiResponse;
   try {
     payload = (await response.json()) as BaseApiResponse;
-  
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Invalid JSON payload.';
     return {
@@ -319,7 +318,13 @@ export async function fetchBaseInventories(token: string): Promise<BaseInventory
   return [];
 }
 
-export async function fetchBaseInventoriesDebug(token: string): Promise<BaseApiRawResult & { inventories: BaseInventory[]; method: string; parameters: Record<string, unknown> }> {
+export async function fetchBaseInventoriesDebug(token: string): Promise<
+  BaseApiRawResult & {
+    inventories: BaseInventory[];
+    method: string;
+    parameters: Record<string, unknown>;
+  }
+> {
   const methods = ['getInventories', 'getInventory', 'getInventoryList'];
   let lastResult: BaseApiRawResult | null = null;
   for (const method of methods) {
@@ -348,7 +353,10 @@ export async function fetchBaseInventoriesDebug(token: string): Promise<BaseApiR
   };
 }
 
-export async function fetchBaseWarehouses(token: string, inventoryId: string): Promise<BaseWarehouse[]> {
+export async function fetchBaseWarehouses(
+  token: string,
+  inventoryId: string
+): Promise<BaseWarehouse[]> {
   const methods = ['getInventoryWarehouses'];
   let lastError: Error | null = null;
   for (const method of methods) {
@@ -370,7 +378,16 @@ export async function fetchBaseWarehouses(token: string, inventoryId: string): P
   return [];
 }
 
-export async function fetchBaseWarehousesDebug(token: string, inventoryId: string): Promise<BaseApiRawResult & { warehouses: BaseWarehouse[]; method: string; parameters: Record<string, unknown> }> {
+export async function fetchBaseWarehousesDebug(
+  token: string,
+  inventoryId: string
+): Promise<
+  BaseApiRawResult & {
+    warehouses: BaseWarehouse[];
+    method: string;
+    parameters: Record<string, unknown>;
+  }
+> {
   const method = 'getInventoryWarehouses';
   const parameters = { inventory_id: inventoryId };
   const result = await callBaseApiRaw(token, method, parameters);
@@ -403,7 +420,13 @@ export async function fetchBaseAllWarehouses(token: string): Promise<BaseWarehou
   return [];
 }
 
-export async function fetchBaseAllWarehousesDebug(token: string): Promise<BaseApiRawResult & { warehouses: BaseWarehouse[]; method: string; parameters: Record<string, unknown> }> {
+export async function fetchBaseAllWarehousesDebug(token: string): Promise<
+  BaseApiRawResult & {
+    warehouses: BaseWarehouse[];
+    method: string;
+    parameters: Record<string, unknown>;
+  }
+> {
   const method = 'getWarehouses';
   const parameters = {};
   const result = await callBaseApiRaw(token, method, parameters);
@@ -468,7 +491,7 @@ export async function fetchBaseProductDetails(
   ];
 
   const results: BaseProductRecord[] = [];
-  
+
   // Process chunks with limited concurrency
   for (let i = 0; i < chunks.length; i += CONCURRENCY) {
     const batch = chunks.slice(i, i + CONCURRENCY);
@@ -501,8 +524,7 @@ export async function fetchBaseProducts(
   limit?: number
 ): Promise<BaseProductRecord[]> {
   const ids = await fetchBaseProductIds(token, inventoryId);
-  const targetIds =
-    typeof limit === 'number' && limit > 0 ? ids.slice(0, limit) : ids;
+  const targetIds = typeof limit === 'number' && limit > 0 ? ids.slice(0, limit) : ids;
 
   if (targetIds.length === 0) return [];
 
@@ -580,15 +602,18 @@ export async function checkBaseSkuExists(
   } catch (error: unknown) {
     try {
       const { logSystemError } = await import('@/features/observability/server');
-      await logSystemError({ 
+      await logSystemError({
         message: '[base-client] Error checking SKU existence',
         error,
         source: 'base-client',
-        context: { action: 'checkBaseSkuExists', sku }
+        context: { action: 'checkBaseSkuExists', sku },
       });
     } catch (logError) {
       const { logger } = await import('@/shared/utils/logger');
-      logger.error('[base-client] Error checking SKU existence (and logging failed):', logError, { originalError: error, sku });
+      logger.error('[base-client] Error checking SKU existence (and logging failed):', logError, {
+        originalError: error,
+        sku,
+      });
     }
     // On error, assume SKU doesn't exist to avoid blocking export
     return { exists: false };
@@ -766,12 +791,9 @@ type FetchBaseCategoriesOptions = {
 const hasCategoryHierarchy = (categories: BaseCategory[]): boolean =>
   categories.some((category: BaseCategory): boolean => Boolean(category.parentId));
 
-const scoreCategories = (
-  categories: BaseCategory[],
-): { total: number; withParent: number } => {
+const scoreCategories = (categories: BaseCategory[]): { total: number; withParent: number } => {
   const withParent = categories.reduce(
-    (count: number, category: BaseCategory): number =>
-      count + (category.parentId ? 1 : 0),
+    (count: number, category: BaseCategory): number => count + (category.parentId ? 1 : 0),
     0
   );
   return {
@@ -782,7 +804,7 @@ const scoreCategories = (
 
 const isBetterCategoryCandidate = (
   candidate: BaseCategory[],
-  currentBest: BaseCategory[],
+  currentBest: BaseCategory[]
 ): boolean => {
   const candidateScore = scoreCategories(candidate);
   const bestScore = scoreCategories(currentBest);
@@ -813,10 +835,7 @@ export async function fetchBaseCategories(
   const considerCandidate = (categories: BaseCategory[]): void => {
     const deduped = dedupeCategories(categories);
     if (deduped.length === 0) return;
-    if (
-      bestCategories.length === 0
-      || isBetterCategoryCandidate(deduped, bestCategories)
-    ) {
+    if (bestCategories.length === 0 || isBetterCategoryCandidate(deduped, bestCategories)) {
       bestCategories = deduped;
     }
   };
@@ -886,7 +905,13 @@ export async function fetchBaseCategories(
 /**
  * Fetches categories with debug information.
  */
-export async function fetchBaseCategoriesDebug(token: string): Promise<BaseApiRawResult & { categories: BaseCategory[]; method: string; parameters: Record<string, unknown> }> {
+export async function fetchBaseCategoriesDebug(token: string): Promise<
+  BaseApiRawResult & {
+    categories: BaseCategory[];
+    method: string;
+    parameters: Record<string, unknown>;
+  }
+> {
   const method = 'getInventoryCategories';
   const parameters = {};
   const result = await callBaseApiRaw(token, method, parameters);

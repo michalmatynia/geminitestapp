@@ -5,7 +5,7 @@ import {
   loadImageStudioAnalysisApplyIntent,
   saveImageStudioAnalysisApplyIntent,
   saveImageStudioAnalysisPlanSnapshot,
-} from '@/features/ai/image-studio/utils/analysis-bridge';
+} from '@/shared/lib/ai/image-studio/utils/analysis-bridge';
 
 import { useGenerationToolbarEffects } from '../useGenerationToolbarEffects';
 import { type GenerationToolbarState } from '../GenerationToolbar.types';
@@ -24,34 +24,35 @@ const BASE_LAYOUT = {
   detection: 'auto',
 } as const;
 
-const createState = (overrides?: Record<string, unknown>): GenerationToolbarState => ({
-  activeProjectId: 'project-alpha',
-  centerLayoutDetection: 'auto',
-  centerLayoutShadowPolicy: 'auto',
-  centerLayoutWhiteThresholdValue: 16,
-  centerLayoutChromaThresholdValue: 10,
-  skipCenterAdvancedDefaultsSaveRef: { current: true },
-  setAnalysisPlanSnapshot: vi.fn(),
-  slots: [{ id: 'slot-1' }, { id: 'slot-2' }],
-  slotSelectionLocked: false,
-  workingSlot: { id: 'slot-1' },
-  setSelectedSlotId: vi.fn(),
-  setWorkingSlotId: vi.fn(),
-  centerMode: 'server_object_layout_v1',
-  setCenterMode: vi.fn(),
-  toast: vi.fn(),
-  workingSourceSignature: 'signature_slot_1_v1',
-  applyAnalysisLayoutToCenter: vi.fn(),
-  applyAnalysisLayoutToAutoScaler: vi.fn(),
-  lastConsumedAnalysisIntentRef: { current: null },
-  queuedAnalysisRunTarget: null,
-  setQueuedAnalysisRunTarget: vi.fn(),
-  centerBusy: false,
-  centerRequestInFlightRef: { current: false },
-  autoScaleBusy: false,
-  autoScaleRequestInFlightRef: { current: false },
-  ...(overrides ?? {}),
-} as unknown as GenerationToolbarState);
+const createState = (overrides?: Record<string, unknown>): GenerationToolbarState =>
+  ({
+    activeProjectId: 'project-alpha',
+    centerLayoutDetection: 'auto',
+    centerLayoutShadowPolicy: 'auto',
+    centerLayoutWhiteThresholdValue: 16,
+    centerLayoutChromaThresholdValue: 10,
+    skipCenterAdvancedDefaultsSaveRef: { current: true },
+    setAnalysisPlanSnapshot: vi.fn(),
+    slots: [{ id: 'slot-1' }, { id: 'slot-2' }],
+    slotSelectionLocked: false,
+    workingSlot: { id: 'slot-1' },
+    setSelectedSlotId: vi.fn(),
+    setWorkingSlotId: vi.fn(),
+    centerMode: 'server_object_layout_v1',
+    setCenterMode: vi.fn(),
+    toast: vi.fn(),
+    workingSourceSignature: 'signature_slot_1_v1',
+    applyAnalysisLayoutToCenter: vi.fn(),
+    applyAnalysisLayoutToAutoScaler: vi.fn(),
+    lastConsumedAnalysisIntentRef: { current: null },
+    queuedAnalysisRunTarget: null,
+    setQueuedAnalysisRunTarget: vi.fn(),
+    centerBusy: false,
+    centerRequestInFlightRef: { current: false },
+    autoScaleBusy: false,
+    autoScaleRequestInFlightRef: { current: false },
+    ...(overrides ?? {}),
+  }) as unknown as GenerationToolbarState;
 
 const createActions = () => ({
   handleCenterObject: vi.fn(async () => {}),

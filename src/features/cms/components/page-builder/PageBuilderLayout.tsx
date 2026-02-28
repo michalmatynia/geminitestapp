@@ -21,7 +21,7 @@ function PageBuilderInner(): React.JSX.Element {
   const { state, dispatch } = usePageBuilder();
   const { setIsProgrammaticallyCollapsed } = useAdminLayout();
   useBuilderKeyboardShortcuts();
-  
+
   const isViewing = state.leftPanelCollapsed && state.rightPanelCollapsed;
   const autoCollapsedRightRef = useRef(false);
   const wasNarrowRef = useRef<boolean | null>(null);
@@ -103,7 +103,11 @@ function PageBuilderInner(): React.JSX.Element {
   );
 }
 
-export function PageBuilderLayout({ initialState }: { initialState?: PageBuilderState | undefined }): React.JSX.Element {
+export function PageBuilderLayout({
+  initialState,
+}: {
+  initialState?: PageBuilderState | undefined;
+}): React.JSX.Element {
   return (
     <PageBuilderProvider {...(initialState ? { initialState } : {})}>
       <DragStateProvider>

@@ -19,7 +19,8 @@ export interface CaseResolverRelationsWorkspaceContextValue {
   };
 }
 
-const CaseResolverRelationsWorkspaceContext = createContext<CaseResolverRelationsWorkspaceContextValue | null>(null);
+const CaseResolverRelationsWorkspaceContext =
+  createContext<CaseResolverRelationsWorkspaceContextValue | null>(null);
 
 export function CaseResolverRelationsWorkspaceProvider({
   children,
@@ -38,7 +39,9 @@ export function CaseResolverRelationsWorkspaceProvider({
 export function useCaseResolverRelationsWorkspaceContext() {
   const context = useContext(CaseResolverRelationsWorkspaceContext);
   if (!context) {
-    throw new Error('useCaseResolverRelationsWorkspaceContext must be used within CaseResolverRelationsWorkspaceProvider');
+    throw new Error(
+      'useCaseResolverRelationsWorkspaceContext must be used within CaseResolverRelationsWorkspaceProvider'
+    );
   }
   return context;
 }

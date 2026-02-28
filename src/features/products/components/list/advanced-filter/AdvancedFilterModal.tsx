@@ -23,9 +23,9 @@ interface AdvancedFilterModalProps {
   onApply: (payload: string) => void;
   onClear: () => void;
   onSavePreset?: (name: string, filter: ProductAdvancedFilterGroup) => Promise<void> | void;
-  fieldValueOptions?: Partial<
-    Record<ProductAdvancedFilterField, Array<{ value: string; label: string }>>
-  > | undefined;
+  fieldValueOptions?:
+    | Partial<Record<ProductAdvancedFilterField, Array<{ value: string; label: string }>>>
+    | undefined;
 }
 
 export function AdvancedFilterModal({
@@ -75,7 +75,8 @@ export function AdvancedFilterModal({
     }
     const parsed = productAdvancedFilterGroupSchema.safeParse(group);
     if (!parsed.success) {
-      const message = parsed.error.issues[0]?.message ?? 'Cannot save preset because the filter is invalid.';
+      const message =
+        parsed.error.issues[0]?.message ?? 'Cannot save preset because the filter is invalid.';
       toast(message, { variant: 'error' });
       return;
     }

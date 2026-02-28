@@ -5,10 +5,10 @@ import { useRouter } from 'next/navigation';
 import React, { useDeferredValue, useMemo, useState } from 'react';
 
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { 
-  Badge, 
-  StandardDataTablePanel, 
-  PanelHeader, 
+import {
+  Badge,
+  StandardDataTablePanel,
+  PanelHeader,
   SearchInput,
   EmptyState,
   ActionMenu,
@@ -56,76 +56,77 @@ export function AdminFilemakerPersonsPage(): React.JSX.Element {
           )
         )
         .sort((left: FilemakerPerson, right: FilemakerPerson) =>
-          `${left.lastName} ${left.firstName}`.localeCompare(
-            `${right.lastName} ${right.firstName}`
-          )
+          `${left.lastName} ${left.firstName}`.localeCompare(`${right.lastName} ${right.firstName}`)
         ),
     [database.persons, deferredQuery]
   );
 
-  const columns = useMemo<ColumnDef<FilemakerPerson>[]>(() => [
-    {
-      id: 'person',
-      header: 'Person',
-      cell: ({ row }) => {
-        const person = row.original;
-        return (
-          <div className='min-w-0 flex-1 space-y-1'>
-            <div className='text-sm font-semibold text-white'>
-              {person.firstName} {person.lastName}
+  const columns = useMemo<ColumnDef<FilemakerPerson>[]>(
+    () => [
+      {
+        id: 'person',
+        header: 'Person',
+        cell: ({ row }) => {
+          const person = row.original;
+          return (
+            <div className='min-w-0 flex-1 space-y-1'>
+              <div className='text-sm font-semibold text-white'>
+                {person.firstName} {person.lastName}
+              </div>
+              <div className='text-xs text-gray-300'>{formatFilemakerAddress(person)}</div>
             </div>
-            <div className='text-xs text-gray-300'>
-              {formatFilemakerAddress(person)}
-            </div>
-          </div>
-        );
+          );
+        },
       },
-    },
-    {
-      id: 'details',
-      header: 'Details',
-      cell: ({ row }) => {
-        const person = row.original;
-        return (
-          <div className='space-y-0.5'>
-            <div className='text-[11px] text-gray-500'>
-              NIP: {person.nip || 'n/a'} | REGON: {person.regon || 'n/a'}
+      {
+        id: 'details',
+        header: 'Details',
+        cell: ({ row }) => {
+          const person = row.original;
+          return (
+            <div className='space-y-0.5'>
+              <div className='text-[11px] text-gray-500'>
+                NIP: {person.nip || 'n/a'} | REGON: {person.regon || 'n/a'}
+              </div>
+              <div className='text-[11px] text-gray-500'>
+                Phones: {person.phoneNumbers.length > 0 ? person.phoneNumbers.join(', ') : 'n/a'}
+              </div>
             </div>
-            <div className='text-[11px] text-gray-500'>
-              Phones: {person.phoneNumbers.length > 0 ? person.phoneNumbers.join(', ') : 'n/a'}
-            </div>
-          </div>
-        );
+          );
+        },
       },
-    },
-    {
-      accessorKey: 'updatedAt',
-      header: 'Updated',
-      cell: ({ row }) => (
-        <span className='text-[10px] text-gray-600'>
-          {formatTimestamp(row.original.updatedAt)}
-        </span>
-      ),
-    },
-    {
-      id: 'actions',
-      header: () => <div className='text-right'>Actions</div>,
-      cell: ({ row }) => (
-        <div className='flex justify-end'>
-          <ActionMenu ariaLabel={`Actions for person ${row.original.firstName} ${row.original.lastName}`}>
-            <DropdownMenuItem
-              onSelect={(event: Event): void => {
-                event.preventDefault();
-                router.push(`/admin/filemaker/persons/${encodeURIComponent(row.original.id)}`);
-              }}
+      {
+        accessorKey: 'updatedAt',
+        header: 'Updated',
+        cell: ({ row }) => (
+          <span className='text-[10px] text-gray-600'>
+            {formatTimestamp(row.original.updatedAt)}
+          </span>
+        ),
+      },
+      {
+        id: 'actions',
+        header: () => <div className='text-right'>Actions</div>,
+        cell: ({ row }) => (
+          <div className='flex justify-end'>
+            <ActionMenu
+              ariaLabel={`Actions for person ${row.original.firstName} ${row.original.lastName}`}
             >
-              Edit Details
-            </DropdownMenuItem>
-          </ActionMenu>
-        </div>
-      ),
-    },
-  ], [router]);
+              <DropdownMenuItem
+                onSelect={(event: Event): void => {
+                  event.preventDefault();
+                  router.push(`/admin/filemaker/persons/${encodeURIComponent(row.original.id)}`);
+                }}
+              >
+                Edit Details
+              </DropdownMenuItem>
+            </ActionMenu>
+          </div>
+        ),
+      },
+    ],
+    [router]
+  );
 
   return (
     <div className='container mx-auto space-y-6 py-8'>
@@ -160,7 +161,7 @@ export function AdminFilemakerPersonsPage(): React.JSX.Element {
             label: 'Manage Database',
             icon: <Database className='size-4' />,
             onClick: () => router.push('/admin/filemaker'),
-          }
+          },
         ]}
       />
 
@@ -194,7 +195,9 @@ export function AdminFilemakerPersonsPage(): React.JSX.Element {
         emptyState={
           <EmptyState
             title={query ? 'No persons found' : 'No persons found in database.'}
-            description={query ? 'Try adjusting your search terms.' : 'Add your first person to the database.'}
+            description={
+              query ? 'Try adjusting your search terms.' : 'Add your first person to the database.'
+            }
           />
         }
       />

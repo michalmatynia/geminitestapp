@@ -1,11 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { type ParamSpec } from '@/shared/lib/prompt-engine/prompt-params';
+import { type ParamSpec } from '@/shared/lib/prompt-engine';
 import type { VectorShape, VectorToolMode } from '@/shared/lib/vector-drawing';
 
-import { areStringArraysEqual, cloneSerializableValue, type StudioActionHistoryEntry, type StudioActionHistorySnapshot } from './right-sidebar-utils';
+import {
+  areStringArraysEqual,
+  cloneSerializableValue,
+  type StudioActionHistoryEntry,
+  type StudioActionHistorySnapshot,
+} from './right-sidebar-utils';
 
-import type { ParamUiControl } from '../../utils/param-ui';
+import type { ParamUiControl } from '@/shared/lib/ai/image-studio/utils/param-ui';
 
 type BuildActionHistorySnapshotInput = {
   activeMaskId: string | null;
@@ -68,14 +73,18 @@ const buildActionHistorySnapshot = (
   canvasBackgroundColor: input.canvasBackgroundColor,
   maskShapes: cloneSerializableValue(input.maskShapes),
   activeMaskId: typeof input.activeMaskId === 'string' ? String(input.activeMaskId) : null,
-  selectedPointIndex: Number.isFinite(input.selectedPointIndex) ? Number(input.selectedPointIndex) : null,
+  selectedPointIndex: Number.isFinite(input.selectedPointIndex)
+    ? Number(input.selectedPointIndex)
+    : null,
   maskInvert: input.maskInvert,
   maskFeather: input.maskFeather,
   brushRadius: input.brushRadius,
   promptText: input.promptText,
   paramsState: cloneSerializableValue(input.paramsState),
   paramSpecs: cloneSerializableValue((input.paramSpecs ?? null) as Record<string, unknown> | null),
-  paramUiOverrides: cloneSerializableValue((input.paramUiOverrides ?? {}) as Record<string, unknown>),
+  paramUiOverrides: cloneSerializableValue(
+    (input.paramUiOverrides ?? {}) as Record<string, unknown>
+  ),
   validatorEnabled: input.validatorEnabled,
   formatterEnabled: input.formatterEnabled,
   studioSettings: cloneSerializableValue(input.studioSettings),
@@ -89,7 +98,8 @@ const resolveActionHistoryLabel = (
   if (previous.promptText !== next.promptText) return 'Control prompt updated';
   if (previous.tool !== next.tool) return 'Drawing tool changed';
   if (previous.canvasSelectionEnabled !== next.canvasSelectionEnabled) return 'Select tool toggled';
-  if (previous.imageTransformMode !== next.imageTransformMode) return 'Image transform tool changed';
+  if (previous.imageTransformMode !== next.imageTransformMode)
+    return 'Image transform tool changed';
   if (
     previous.canvasImageOffset.x !== next.canvasImageOffset.x ||
     previous.canvasImageOffset.y !== next.canvasImageOffset.y
@@ -105,8 +115,12 @@ const resolveActionHistoryLabel = (
   if (previous.maskShapes.length !== next.maskShapes.length) {
     return next.maskShapes.length > previous.maskShapes.length ? 'Shape added' : 'Shape removed';
   }
-  if (JSON.stringify(previous.maskShapes) !== JSON.stringify(next.maskShapes)) return 'Shape edited';
-  if (previous.activeMaskId !== next.activeMaskId || previous.selectedPointIndex !== next.selectedPointIndex) {
+  if (JSON.stringify(previous.maskShapes) !== JSON.stringify(next.maskShapes))
+    return 'Shape edited';
+  if (
+    previous.activeMaskId !== next.activeMaskId ||
+    previous.selectedPointIndex !== next.selectedPointIndex
+  ) {
     return 'Shape selection changed';
   }
   if (
@@ -160,11 +174,14 @@ export function useRightSidebarActionHistory({
   const actionHistoryEntriesRef = useRef<StudioActionHistoryEntry[]>([]);
   const activeActionHistoryIndexRef = useRef(-1);
 
-  const applyActionHistoryEntry = useCallback((entry: StudioActionHistoryEntry): void => {
-    isApplyingActionHistoryRef.current = true;
-    applyingActionHistorySignatureRef.current = entry.signature;
-    applySnapshot(entry.snapshot);
-  }, [applySnapshot]);
+  const applyActionHistoryEntry = useCallback(
+    (entry: StudioActionHistoryEntry): void => {
+      isApplyingActionHistoryRef.current = true;
+      applyingActionHistorySignatureRef.current = entry.signature;
+      applySnapshot(entry.snapshot);
+    },
+    [applySnapshot]
+  );
 
   useEffect(() => {
     actionHistoryEntriesRef.current = actionHistoryEntries;
@@ -259,8 +276,7 @@ export function useRightSidebarActionHistory({
     actionHistoryItems: actionHistoryEntries.map((entry, index) => ({ entry, index })).reverse(),
     activeActionHistoryIndex,
     canRedoAction:
-      activeActionHistoryIndex >= 0 &&
-      activeActionHistoryIndex < actionHistoryEntries.length - 1,
+      activeActionHistoryIndex >= 0 && activeActionHistoryIndex < actionHistoryEntries.length - 1,
     canUndoAction: activeActionHistoryIndex > 0,
     handleRedoAction,
     handleRestoreActionStep,

@@ -9,16 +9,13 @@ export function useIntegrationList() {
   const hasIntegrations = integrations.length > 0;
 
   const traderaDefinition =
-    integrationDefinitions.find((definition) => definition.slug === 'tradera') ??
-    null;
+    integrationDefinitions.find((definition) => definition.slug === 'tradera') ?? null;
   const traderaApiDefinition =
-    integrationDefinitions.find((definition) => definition.slug === 'tradera-api') ??
-    null;
+    integrationDefinitions.find((definition) => definition.slug === 'tradera-api') ?? null;
   const allegroDefinition =
     integrationDefinitions.find((definition) => definition.slug === 'allegro') ?? null;
   const baselinkerDefinition =
-    integrationDefinitions.find((definition) => definition.slug === 'baselinker') ??
-    null;
+    integrationDefinitions.find((definition) => definition.slug === 'baselinker') ?? null;
 
   return {
     integrations,

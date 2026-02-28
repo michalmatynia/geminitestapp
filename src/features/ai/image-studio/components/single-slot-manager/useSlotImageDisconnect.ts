@@ -4,14 +4,14 @@ import { useCallback } from 'react';
 import { api } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 import { studioKeys } from '../../hooks/useImageStudioQueries';
-import { 
-  OBJECT_SLOT_INDEX, 
-  slotHasRenderableImage, 
-  resolveSlotIdCandidates 
+import {
+  OBJECT_SLOT_INDEX,
+  slotHasRenderableImage,
+  resolveSlotIdCandidates,
 } from './single-slot-manager-utils';
-import type { 
-  ImageStudioSlotDto as ImageStudioSlot, 
-  ImageStudioAssetDto as ImageStudioUploadedAsset 
+import type {
+  ImageStudioSlotDto as ImageStudioSlot,
+  ImageStudioAssetDto as ImageStudioUploadedAsset,
 } from '@/shared/contracts/image-studio';
 import type { QueryClient } from '@tanstack/react-query';
 
@@ -57,9 +57,7 @@ export function useSlotImageDisconnect({
       setUploadError(null);
       const previousTemporaryUpload = temporaryObjectUpload;
       const selectedSlotImageLocked = Boolean(
-        objectSlot &&
-        !previousTemporaryUpload &&
-        slotHasRenderableImage(objectSlot)
+        objectSlot && !previousTemporaryUpload && slotHasRenderableImage(objectSlot)
       );
       try {
         let clearedCardImage = false;
@@ -142,10 +140,11 @@ export function useSlotImageDisconnect({
           ]);
           await Promise.all(
             Array.from(followupCandidateIds)
-              .filter((candidate): candidate is string => Boolean(candidate) && candidate !== patchedSlot?.id)
-              .map((candidate) =>
-                patchBySlotId(candidate).catch(() => null)
+              .filter(
+                (candidate): candidate is string =>
+                  Boolean(candidate) && candidate !== patchedSlot?.id
               )
+              .map((candidate) => patchBySlotId(candidate).catch(() => null))
           );
 
           if (projectId.trim()) {

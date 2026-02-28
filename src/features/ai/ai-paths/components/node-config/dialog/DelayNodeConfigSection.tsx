@@ -1,9 +1,7 @@
 'use client';
 
-
-
 import { toNumber } from '@/shared/lib/ai-paths';
-import { Input,  FormField } from '@/shared/ui';
+import { Input, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -32,9 +30,7 @@ export function DelayNodeConfigSection(): React.JSX.Element | null {
           }
         />
       </FormField>
-      <p className='text-[11px] text-gray-500'>
-        Adds a pause before passing inputs downstream.
-      </p>
+      <p className='text-[11px] text-gray-500'>Adds a pause before passing inputs downstream.</p>
     </div>
   );
 }

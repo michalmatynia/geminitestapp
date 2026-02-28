@@ -2,34 +2,20 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import type {
-  AiNode,
-  Edge,
-  RuntimeState,
-} from '@/shared/lib/ai-paths';
-import {
-  normalizeNodes,
-  sanitizeEdges,
-  aiJobsApi,
-} from '@/shared/lib/ai-paths';
+import type { AiNode, Edge, RuntimeState } from '@/shared/lib/ai-paths';
+import { normalizeNodes, sanitizeEdges, aiJobsApi } from '@/shared/lib/ai-paths';
 
 import { useAiPathsLocalExecution } from './runtime/useAiPathsLocalExecution';
 import { useAiPathsRuntimeState } from './runtime/useAiPathsRuntimeState';
 import { useAiPathsServerExecution } from './runtime/useAiPathsServerExecution';
 import { useAiPathsSimulation } from './runtime/useAiPathsSimulation';
-import { 
-  createRunId, 
-} from './runtime/utils';
+import { createRunId } from './runtime/utils';
 
-import type { 
-  UseAiPathsRuntimeArgs, 
-  UseAiPathsRuntimeResult, 
-  QueuedRun 
-} from './runtime/types';
+import type { UseAiPathsRuntimeArgs, UseAiPathsRuntimeResult, QueuedRun } from './runtime/types';
 
 export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntimeResult {
   const [sendingToAi, setSendingToAi] = useState(false);
-  
+
   // Shared refs
   const runtimeStateRef = useRef<RuntimeState>(args.runtimeState);
   const runInFlightRef = useRef(false);
@@ -43,9 +29,9 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
   const currentRunIdRef = useRef<string | null>(null);
   const currentRunStartedAtRef = useRef<string | null>(null);
   const currentRunStartedAtMsRef = useRef<number | null>(null);
-  const fetchEntityByTypeRef = useRef<(entityType: string, entityId: string) => Promise<Record<string, unknown> | null>>(
-    async () => null
-  );
+  const fetchEntityByTypeRef = useRef<
+    (entityType: string, entityId: string) => Promise<Record<string, unknown> | null>
+  >(async () => null);
 
   // 1. Centralized State
   const state = useAiPathsRuntimeState();
@@ -81,7 +67,7 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
     sanitizedEdges,
     runtimeStateRef,
     currentRunIdRef,
-    currentRunStartedAtRef
+    currentRunStartedAtRef,
   });
 
   // 3. Local execution engine
@@ -105,7 +91,7 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
     triggerContextRef,
     sessionUser: null,
     hasPendingIteratorAdvance,
-    fetchEntityByType
+    fetchEntityByType,
   });
 
   // 4. Simulation logic
@@ -114,7 +100,7 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
     normalizedNodes,
     sanitizedEdges,
     runtimeStateRef,
-    runGraphForTrigger: local.runGraphForTrigger
+    runGraphForTrigger: local.runGraphForTrigger,
   });
   fetchEntityByTypeRef.current = simulation.fetchEntityByType;
 
@@ -229,7 +215,11 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
       });
       args.toast('AI response received.', { variant: 'success' });
     } catch (error) {
-      args.reportAiPathsError(error, { action: 'sendToAi', nodeId: sourceNodeId }, 'Send to AI failed:');
+      args.reportAiPathsError(
+        error,
+        { action: 'sendToAi', nodeId: sourceNodeId },
+        'Send to AI failed:'
+      );
       args.toast('Send to AI failed.', { variant: 'error' });
     } finally {
       setSendingToAi(false);
@@ -298,8 +288,12 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
     handleRunSimulation: simulation.handleRunSimulation,
     handleFireTrigger,
     handleFireTriggerPersistent,
-    handlePauseRun: () => { pauseRequestedRef.current = true; },
-    handleResumeRun: () => { void local.runLocalLoop('run'); },
+    handlePauseRun: () => {
+      pauseRequestedRef.current = true;
+    },
+    handleResumeRun: () => {
+      void local.runLocalLoop('run');
+    },
     handleStepRun: (triggerNode?: AiNode) => {
       if (triggerNode) {
         void local.runGraphForTrigger(triggerNode, undefined, undefined, { mode: 'step' });

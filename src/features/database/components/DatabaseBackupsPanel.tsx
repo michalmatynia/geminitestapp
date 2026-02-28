@@ -1,12 +1,6 @@
 'use client';
 
-import {
-  DatabaseIcon,
-  ServerIcon,
-  UploadIcon,
-  EyeIcon,
-  PlusIcon,
-} from 'lucide-react';
+import { DatabaseIcon, ServerIcon, UploadIcon, EyeIcon, PlusIcon } from 'lucide-react';
 
 import type { DatabaseType } from '@/shared/contracts/database';
 import {
@@ -29,8 +23,10 @@ import { cn } from '@/shared/utils';
 import { getDatabaseColumns } from './DatabaseColumns';
 import { LogModal } from './LogModal';
 import { RestoreModal } from './RestoreModal';
-import { DatabaseBackupsProvider, useDatabaseBackupsContext } from '../context/DatabaseBackupsContext';
-
+import {
+  DatabaseBackupsProvider,
+  useDatabaseBackupsContext,
+} from '../context/DatabaseBackupsContext';
 
 type BackupDatabaseOption = {
   id: string;
@@ -132,7 +128,8 @@ function DatabaseBackupsPanelInner(): React.JSX.Element {
     <>
       {isProd && (
         <Alert variant='warning'>
-          Backups are disabled in production. Create or upload backups in a non-production environment.
+          Backups are disabled in production. Create or upload backups in a non-production
+          environment.
         </Alert>
       )}
 
@@ -152,15 +149,24 @@ function DatabaseBackupsPanelInner(): React.JSX.Element {
           title: option.label,
           description: option.description,
           icon: (
-            <div className={cn(
-              'rounded-md border p-2',
-              activeTab === option.value ? 'border-emerald-400/40 bg-emerald-500/20' : 'border-white/10 bg-white/5'
-            )}>
-              <DatabaseIcon className={cn('size-4', activeTab === option.value ? 'text-emerald-200' : 'text-gray-400')} />
+            <div
+              className={cn(
+                'rounded-md border p-2',
+                activeTab === option.value
+                  ? 'border-emerald-400/40 bg-emerald-500/20'
+                  : 'border-white/10 bg-white/5'
+              )}
+            >
+              <DatabaseIcon
+                className={cn(
+                  'size-4',
+                  activeTab === option.value ? 'text-emerald-200' : 'text-gray-400'
+                )}
+              />
             </div>
           ),
           subtitle: `Expected format: ${option.extension}`,
-          original: option
+          original: option,
         }))}
         selectedId={activeTab}
         onSelect={(item) => setActiveTab(item.original.value)}
@@ -168,7 +174,11 @@ function DatabaseBackupsPanelInner(): React.JSX.Element {
         padding='md'
       />
 
-      <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/20 text-xs text-gray-300'>
+      <Card
+        variant='subtle-compact'
+        padding='sm'
+        className='border-border/60 bg-card/20 text-xs text-gray-300'
+      >
         Active source: <span className='font-semibold text-white'>{selectedDatabase.label}</span>
       </Card>
 
@@ -207,9 +217,7 @@ function DatabaseBackupsPanelInner(): React.JSX.Element {
                 handleActiveTargetTimeLocalChange(event.target.value);
               }}
               disabled={
-                isBackupScheduleSaving ||
-                !schedulerEnabledDraft ||
-                !activeTargetEnabledDraft
+                isBackupScheduleSaving || !schedulerEnabledDraft || !activeTargetEnabledDraft
               }
             />
           </FormField>
@@ -223,29 +231,31 @@ function DatabaseBackupsPanelInner(): React.JSX.Element {
           onCheckedChange={handleRepeatSchedulerTickDraftChange}
           className='border-border/60 bg-card/20'
         />
-        <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/20 text-[11px] text-gray-300'>
+        <Card
+          variant='subtle-compact'
+          padding='sm'
+          className='border-border/60 bg-card/20 text-[11px] text-gray-300'
+        >
           If app starts after missed scheduled time, one catch-up run is queued in background.
         </Card>
         {!activeTargetTimeLocalDraftValid && (
-          <Alert variant='warning'>
-            Enter a valid time in HH:MM format.
-          </Alert>
+          <Alert variant='warning'>Enter a valid time in HH:MM format.</Alert>
         )}
         {!schedulerEnabledDraft && (
-          <Alert variant='warning'>
-            Scheduled backups are currently disabled.
-          </Alert>
+          <Alert variant='warning'>Scheduled backups are currently disabled.</Alert>
         )}
-        <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/20 text-[11px] text-gray-300'>
+        <Card
+          variant='subtle-compact'
+          padding='sm'
+          className='border-border/60 bg-card/20 text-[11px] text-gray-300'
+        >
           Changes apply only to the selected source tab ({activeTargetKey}).
         </Card>
         <Button
           size='sm'
           variant='secondary'
           disabled={
-            isBackupScheduleSaving ||
-            !isBackupScheduleDirty ||
-            !activeTargetTimeLocalDraftValid
+            isBackupScheduleSaving || !isBackupScheduleDirty || !activeTargetTimeLocalDraftValid
           }
           onClick={(): void => {
             void saveDailySchedule();
@@ -255,9 +265,7 @@ function DatabaseBackupsPanelInner(): React.JSX.Element {
         </Button>
         {(schedulerEnabled !== schedulerEnabledDraft ||
           repeatSchedulerTickEnabled !== repeatTickEnabledDraft) && (
-          <Alert variant='info'>
-            Save schedule changes to apply the latest scheduler toggles.
-          </Alert>
+          <Alert variant='info'>Save schedule changes to apply the latest scheduler toggles.</Alert>
         )}
       </div>
     </div>
@@ -285,7 +293,9 @@ function DatabaseBackupsPanelInner(): React.JSX.Element {
       <FileUploadButton
         size='sm'
         variant='outline'
-        onFilesSelected={(files: File[], helpers?: FileUploadHelpers) => handleUpload(files, helpers)}
+        onFilesSelected={(files: File[], helpers?: FileUploadHelpers) =>
+          handleUpload(files, helpers)
+        }
         accept={activeTab === 'postgresql' ? '.dump' : '.archive'}
         disabled={isProd || !backupMaintenanceAllowed}
         title={

@@ -6,7 +6,6 @@ import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract'
 
 import type React from 'react';
 
-
 export type PaletteEntry = {
   id: string;
   label: string;

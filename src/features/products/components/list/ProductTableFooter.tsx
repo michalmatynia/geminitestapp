@@ -4,7 +4,10 @@ import { Trash2, Image as ImageIcon } from 'lucide-react';
 import React, { JSX, memo, useState } from 'react';
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { useBulkDeleteProducts, useBulkConvertImagesToBase64 } from '@/features/products/hooks/useProductsMutations';
+import {
+  useBulkDeleteProducts,
+  useBulkConvertImagesToBase64,
+} from '@/features/products/hooks/useProductsMutations';
 import { ProductWithImages } from '@/shared/contracts/products';
 import { Button, useToast } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
@@ -53,7 +56,9 @@ export const ProductTableFooter = memo(function ProductTableFooter<TData>({
       setRefreshTrigger((prev: number) => prev + 1); // Refresh the product list
       setShowDeleteConfirm(false);
     } catch (error) {
-      logClientError(error, { context: { source: 'ProductTableFooter', action: 'handleMassDelete' } });
+      logClientError(error, {
+        context: { source: 'ProductTableFooter', action: 'handleMassDelete' },
+      });
       setActionError(error instanceof Error ? error.message : 'An error occurred during deletion.');
       toast('An error occurred during deletion', {
         variant: 'error',
@@ -81,8 +86,12 @@ export const ProductTableFooter = memo(function ProductTableFooter<TData>({
       setRefreshTrigger((prev: number) => prev + 1);
       setShowBase64Confirm(false);
     } catch (error) {
-      logClientError(error, { context: { source: 'ProductTableFooter', action: 'handleMassBase64' } });
-      setActionError(error instanceof Error ? error.message : 'An error occurred during base64 conversion.');
+      logClientError(error, {
+        context: { source: 'ProductTableFooter', action: 'handleMassBase64' },
+      });
+      setActionError(
+        error instanceof Error ? error.message : 'An error occurred during base64 conversion.'
+      );
       toast('An error occurred during base64 conversion', {
         variant: 'error',
       });
@@ -94,8 +103,10 @@ export const ProductTableFooter = memo(function ProductTableFooter<TData>({
       <div className='space-y-3 border-t bg-muted/50 px-4 py-4'>
         <div className='flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center'>
           <div className='text-sm text-muted-foreground'>
-            <span className='font-medium text-foreground'>{selectedCount}</span>{' '}
-            of <span className='font-medium text-foreground'>{table.getFilteredRowModel().rows.length}</span>{' '}
+            <span className='font-medium text-foreground'>{selectedCount}</span> of{' '}
+            <span className='font-medium text-foreground'>
+              {table.getFilteredRowModel().rows.length}
+            </span>{' '}
             row(s) selected.
           </div>
           <Button

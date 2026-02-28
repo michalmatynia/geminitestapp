@@ -4,8 +4,14 @@ import { Queue } from 'bullmq';
 
 import { resolveAiPathsStaleRunningCleanupIntervalMs } from '@/features/ai/ai-paths/services/path-run-recovery-service';
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
-import { getRuntimeAnalyticsSummary, recordRuntimeRunStarted } from '@/features/ai/ai-paths/services/runtime-analytics-service';
-import { processRun, processStaleRunRecovery } from '@/features/jobs/processors/ai-path-run-processor';
+import {
+  getRuntimeAnalyticsSummary,
+  recordRuntimeRunStarted,
+} from '@/features/ai/ai-paths/services/runtime-analytics-service';
+import {
+  processRun,
+  processStaleRunRecovery,
+} from '@/features/jobs/processors/ai-path-run-processor';
 import { getAiInsightsQueueStatus } from '@/features/jobs/workers/aiInsightsQueue';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import type {
@@ -37,7 +43,7 @@ const debugQueueLog = (message: string, context?: Record<string, unknown>): void
     level: 'info',
     source: LOG_SOURCE,
     message,
-    context: context ?? null
+    context: context ?? null,
   });
 };
 
@@ -47,7 +53,7 @@ const debugQueueWarn = (message: string, context?: Record<string, unknown>): voi
     level: 'warn',
     source: LOG_SOURCE,
     message,
-    context: context ?? null
+    context: context ?? null,
   });
 };
 
@@ -79,7 +85,12 @@ const parseEnvNumber = (name: string, fallback: number, min: number = 0): number
   return Math.max(min, parsed);
 };
 
-const parseEnvFloat = (name: string, fallback: number, min: number = 0, max: number = 100): number => {
+const parseEnvFloat = (
+  name: string,
+  fallback: number,
+  min: number = 0,
+  max: number = 100
+): number => {
   const raw = process.env[name];
   if (!raw) return fallback;
   const parsed = Number.parseFloat(raw);
@@ -95,7 +106,12 @@ const resolveQueueSloThresholds = (): QueueSloThresholds => ({
   deadLetterRateWarningPct: parseEnvFloat('AI_PATHS_SLO_DEAD_LETTER_RATE_WARNING_PCT', 1, 0, 100),
   deadLetterRateCriticalPct: parseEnvFloat('AI_PATHS_SLO_DEAD_LETTER_RATE_CRITICAL_PCT', 3, 0, 100),
   brainErrorRateWarningPct: parseEnvFloat('AI_PATHS_SLO_BRAIN_ERROR_RATE_WARNING_PCT', 5, 0, 100),
-  brainErrorRateCriticalPct: parseEnvFloat('AI_PATHS_SLO_BRAIN_ERROR_RATE_CRITICAL_PCT', 15, 0, 100),
+  brainErrorRateCriticalPct: parseEnvFloat(
+    'AI_PATHS_SLO_BRAIN_ERROR_RATE_CRITICAL_PCT',
+    15,
+    0,
+    100
+  ),
   minTerminalSamples: parseEnvNumber('AI_PATHS_SLO_MIN_TERMINAL_SAMPLES', 10, 1),
   minBrainSamples: parseEnvNumber('AI_PATHS_SLO_MIN_BRAIN_SAMPLES', 20, 1),
 });
@@ -131,14 +147,16 @@ export const computeAiPathRunQueueSlo = (
 ): AiPathRunQueueSloStatus => {
   const breaches: AiPathRunQueueSloStatus['breaches'] = [];
 
-  const workerHealthLevel: SloLevel =
-    !input.queueRunning ? 'critical' : input.queueHealthy ? 'ok' : 'warning';
-  const workerHealthMessage =
-    !input.queueRunning
-      ? 'Worker is stopped.'
-      : input.queueHealthy
-        ? 'Worker is healthy.'
-        : 'Worker is running but not healthy.';
+  const workerHealthLevel: SloLevel = !input.queueRunning
+    ? 'critical'
+    : input.queueHealthy
+      ? 'ok'
+      : 'warning';
+  const workerHealthMessage = !input.queueRunning
+    ? 'Worker is stopped.'
+    : input.queueHealthy
+      ? 'Worker is healthy.'
+      : 'Worker is running but not healthy.';
   if (workerHealthLevel !== 'ok') {
     breaches.push({
       indicator: 'workerHealth',
@@ -152,10 +170,10 @@ export const computeAiPathRunQueueSlo = (
     input.queueLagMs === null
       ? 'ok'
       : classifyGreaterIsWorse(
-        lagValue,
-        thresholds.queueLagWarningMs,
-        thresholds.queueLagCriticalMs
-      );
+          lagValue,
+          thresholds.queueLagWarningMs,
+          thresholds.queueLagCriticalMs
+        );
   const queueLagMessage =
     input.queueLagMs === null
       ? 'No queued runs.'
@@ -171,10 +189,10 @@ export const computeAiPathRunQueueSlo = (
   const hasTerminalSample = input.terminalRuns24h >= thresholds.minTerminalSamples;
   const successRateLevel = hasTerminalSample
     ? classifyLowerIsWorse(
-      input.successRate24h,
-      thresholds.successRateWarningPct,
-      thresholds.successRateCriticalPct
-    )
+        input.successRate24h,
+        thresholds.successRateWarningPct,
+        thresholds.successRateCriticalPct
+      )
     : 'ok';
   const successRateMessage = hasTerminalSample
     ? `Success ${input.successRate24h.toFixed(2)}% over ${input.terminalRuns24h} terminal runs.`
@@ -189,10 +207,10 @@ export const computeAiPathRunQueueSlo = (
 
   const deadLetterLevel = hasTerminalSample
     ? classifyGreaterIsWorse(
-      input.deadLetterRate24h,
-      thresholds.deadLetterRateWarningPct,
-      thresholds.deadLetterRateCriticalPct
-    )
+        input.deadLetterRate24h,
+        thresholds.deadLetterRateWarningPct,
+        thresholds.deadLetterRateCriticalPct
+      )
     : 'ok';
   const deadLetterMessage = hasTerminalSample
     ? `Dead-letter rate ${input.deadLetterRate24h.toFixed(2)}% over ${input.terminalRuns24h} terminal runs.`
@@ -208,10 +226,10 @@ export const computeAiPathRunQueueSlo = (
   const hasBrainSample = input.brainTotalReports24h >= thresholds.minBrainSamples;
   const brainErrorLevel = hasBrainSample
     ? classifyGreaterIsWorse(
-      input.brainErrorRate24h,
-      thresholds.brainErrorRateWarningPct,
-      thresholds.brainErrorRateCriticalPct
-    )
+        input.brainErrorRate24h,
+        thresholds.brainErrorRateWarningPct,
+        thresholds.brainErrorRateCriticalPct
+      )
     : 'ok';
   const brainErrorMessage = hasBrainSample
     ? `Brain error rate ${input.brainErrorRate24h.toFixed(2)}% over ${input.brainTotalReports24h} reports.`
@@ -299,9 +317,7 @@ const queue = createManagedQueue<AiPathRunJobData>({
         );
         return;
       }
-      debugQueueLog(
-        `[aiPathRunQueue] Run ${data.runId} has status "${latest.status}", skipping`
-      );
+      debugQueueLog(`[aiPathRunQueue] Run ${data.runId} has status "${latest.status}", skipping`);
       return;
     }
     await recordRuntimeRunStarted({ runId: run.id });
@@ -322,7 +338,7 @@ const queue = createManagedQueue<AiPathRunJobData>({
         level: 'error',
         source: LOG_SOURCE,
         message: 'Fatal queue error',
-        error
+        error,
       });
     }
   },
@@ -372,11 +388,7 @@ type AiPathRunQueueStatus = {
   slo: AiPathRunQueueSloStatus;
 };
 
-const QUEUE_STATUS_CACHE_TTL_MS = parseEnvNumber(
-  'AI_PATHS_QUEUE_STATUS_CACHE_TTL_MS',
-  2_000,
-  250
-);
+const QUEUE_STATUS_CACHE_TTL_MS = parseEnvNumber('AI_PATHS_QUEUE_STATUS_CACHE_TTL_MS', 2_000, 250);
 
 let queueStatusCache: { value: AiPathRunQueueStatus; expiresAt: number } | null = null;
 let queueStatusInFlight: Promise<AiPathRunQueueStatus> | null = null;
@@ -413,9 +425,9 @@ export const getAiPathRunQueueStatus = async (): Promise<AiPathRunQueueStatus> =
     const brainErrorRate24h =
       brainTotalReports24h > 0
         ? Math.max(
-          0,
-          Math.min(100, (runtimeAnalyticsSummary.brain.errorReports / brainTotalReports24h) * 100)
-        )
+            0,
+            Math.min(100, (runtimeAnalyticsSummary.brain.errorReports / brainTotalReports24h) * 100)
+          )
         : 0;
     const slo = computeAiPathRunQueueSlo({
       queueRunning: health.running ?? false,
@@ -502,7 +514,7 @@ export const processSingleRun = async (runId: string): Promise<void> => {
         level: 'error',
         source: LOG_SOURCE,
         message: 'Fatal inline execution error',
-        error
+        error,
       });
     }
     throw error;
@@ -515,17 +527,20 @@ const scheduleLocalFallbackRun = (runId: string, delayMs: number): void => {
     clearTimeout(existing);
     localFallbackTimers.delete(runId);
   }
-  const timeout = setTimeout(() => {
-    localFallbackTimers.delete(runId);
-    void processSingleRun(runId).catch((error: unknown) => {
-      void logSystemEvent({
-        level: 'error',
-        source: LOG_SOURCE,
-        message: `[aiPathRunQueue] Local fallback execution failed for run ${runId}`,
-        error,
+  const timeout = setTimeout(
+    () => {
+      localFallbackTimers.delete(runId);
+      void processSingleRun(runId).catch((error: unknown) => {
+        void logSystemEvent({
+          level: 'error',
+          source: LOG_SOURCE,
+          message: `[aiPathRunQueue] Local fallback execution failed for run ${runId}`,
+          error,
+        });
       });
-    });
-  }, Math.max(0, delayMs));
+    },
+    Math.max(0, delayMs)
+  );
   localFallbackTimers.set(runId, timeout);
 };
 
@@ -534,7 +549,10 @@ const normalizeDelayMs = (value?: number): number => {
   return Math.floor(value);
 };
 
-const hasSameDelay = async (job: Awaited<ReturnType<Queue['getJob']>>, delayMs: number): Promise<boolean> => {
+const hasSameDelay = async (
+  job: Awaited<ReturnType<Queue['getJob']>>,
+  delayMs: number
+): Promise<boolean> => {
   if (!job) return false;
   const state = await job.getState();
   if (state !== 'delayed') {

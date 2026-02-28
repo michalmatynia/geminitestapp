@@ -12,20 +12,18 @@ export function FrontendTextAtomSection(): React.ReactNode {
   const wrap = (settings['wrap'] as string) || 'wrap';
   const letters = blocks.length
     ? blocks
-    : Array.from(text).map((char: string, index: number): BlockInstance => ({
-      id: `text-atom-section-${index}`,
-      type: 'TextAtomLetter',
-      settings: { textContent: char },
-    }));
+    : Array.from(text).map(
+        (char: string, index: number): BlockInstance => ({
+          id: `text-atom-section-${index}`,
+          type: 'TextAtomLetter',
+          settings: { textContent: char },
+        })
+      );
 
   if (!letters.length) return null;
 
   const justifyContent =
-    alignment === 'center'
-      ? 'center'
-      : alignment === 'right'
-        ? 'flex-end'
-        : 'flex-start';
+    alignment === 'center' ? 'center' : alignment === 'right' ? 'flex-end' : 'flex-start';
 
   const containerStyle: React.CSSProperties = {
     display: 'flex',

@@ -10,7 +10,6 @@ import { useChatbotLogic } from '@/features/ai/chatbot/hooks/useChatbotLogic';
 import { SettingsStoreProvider } from '@/shared/providers/SettingsStoreProvider';
 import { ToastProvider } from '@/shared/ui/toast';
 
-
 // Mock the APIs
 vi.mock('@/features/ai/chatbot/api', () => ({
   fetchChatbotSessions: vi.fn(),
@@ -69,11 +68,12 @@ vi.mock('@/features/ai/agentcreator', () => ({
   },
 }));
 
-const createTestQueryClient = () => new QueryClient({
-  defaultOptions: {
-    queries: { retry: false },
-  },
-});
+const createTestQueryClient = () =>
+  new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+    },
+  });
 
 const wrapper = ({ children }: { children: React.ReactNode }) => {
   const queryClient = createTestQueryClient();
@@ -96,7 +96,7 @@ describe('useChatbotLogic', () => {
 
   it('initializes with default values', async () => {
     const { result } = renderHook(() => useChatbotLogic(), { wrapper });
-    
+
     expect(result.current.messages).toEqual([]);
     expect(result.current.input).toBe('');
     expect(result.current.isSending).toBe(false);

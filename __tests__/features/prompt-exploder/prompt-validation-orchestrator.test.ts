@@ -2,10 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { parseValidatorPatternLists } from '@/features/admin/pages/validator-scope';
 import { PromptValidationRuleCompileError } from '@/shared/lib/prompt-core/errors';
-import type {
-  PromptValidationRule,
-  PromptEngineSettings,
-} from '@/shared/lib/prompt-engine/settings';
+import type { PromptValidationRule, PromptEngineSettings } from '@/features/prompt-engine/settings';
 import {
   explodePromptText,
   getPromptExploderRuntimePatternCacheSnapshot,
@@ -16,24 +13,23 @@ import {
   resetPromptValidationRuntimeSelectionCache,
   resolvePromptValidationRuntime,
 } from '@/features/prompt-exploder/prompt-validation-orchestrator';
-import {
-  defaultPromptExploderSettings,
-} from '@/features/prompt-exploder/settings';
+import { defaultPromptExploderSettings } from '@/features/prompt-exploder/settings';
 
-const buildRegexRule = (overrides: Partial<PromptValidationRule> = {}): PromptValidationRule => ({
-  kind: 'regex',
-  id: 'rule.prompt.scope',
-  enabled: true,
-  severity: 'warning',
-  title: 'Prompt scope rule',
-  description: null,
-  pattern: '^ALLOW$',
-  flags: 'm',
-  message: 'Prompt must equal ALLOW',
-  similar: [],
-  appliesToScopes: ['prompt_exploder'],
-  ...overrides,
-} as PromptValidationRule);
+const buildRegexRule = (overrides: Partial<PromptValidationRule> = {}): PromptValidationRule =>
+  ({
+    kind: 'regex',
+    id: 'rule.prompt.scope',
+    enabled: true,
+    severity: 'warning',
+    title: 'Prompt scope rule',
+    description: null,
+    pattern: '^ALLOW$',
+    flags: 'm',
+    message: 'Prompt must equal ALLOW',
+    similar: [],
+    appliesToScopes: ['prompt_exploder'],
+    ...overrides,
+  }) as PromptValidationRule;
 
 const buildPromptSettings = (rule: PromptValidationRule): PromptEngineSettings => ({
   version: 1,
@@ -98,9 +94,7 @@ describe('prompt validation orchestrator runtime', () => {
     });
 
     const updatedLists = lists.map((list, index) =>
-      index === 0
-        ? { ...list, updatedAt: '2026-02-16T12:00:00.000Z' }
-        : list
+      index === 0 ? { ...list, updatedAt: '2026-02-16T12:00:00.000Z' } : list
     );
     const runtimeB = resolvePromptValidationRuntime({
       promptSettings: promptSettingsA,
@@ -211,9 +205,7 @@ describe('prompt validation orchestrator runtime', () => {
     expect(before.keyedKeys).toContain(runtimeA.identity.cacheKey);
 
     const updatedLists = lists.map((list, index) =>
-      index === 0
-        ? { ...list, updatedAt: '2026-02-16T22:00:00.000Z' }
-        : list
+      index === 0 ? { ...list, updatedAt: '2026-02-16T22:00:00.000Z' } : list
     );
     resolvePromptValidationRuntime({
       promptSettings: promptSettingsA,

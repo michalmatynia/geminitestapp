@@ -22,7 +22,7 @@ test.describe('Admin Navigation and Layout', () => {
     const sidebar = page.locator('aside');
     // The toggle button is the only one without text content in the sidebar header area
     const toggleButton = sidebar.locator('button').first();
-    
+
     // Initially expanded (default width is 64 / w-64)
     await expect(sidebar).toHaveClass(/w-64/);
     await expect(page.getByRole('link', { name: 'Admin' })).toBeVisible();
@@ -50,7 +50,7 @@ test.describe('Admin Navigation and Layout', () => {
     // Test navigation to Front Manage
     await page.getByText('Front Manage').click({ force: true });
     await expect(page).toHaveURL(/\/admin\/front-manage/, { timeout: 10000 });
-    
+
     // Test navigation to Files
     await page.getByText('Files').click({ force: true });
     await expect(page).toHaveURL(/\/admin\/files/, { timeout: 10000 });
@@ -59,11 +59,11 @@ test.describe('Admin Navigation and Layout', () => {
   test('should open collapsible menu items', async ({ page }) => {
     // Click on Products section
     await page.getByText('Products', { exact: true }).click();
-    
+
     // Should see sub-links
     await expect(page.getByRole('link', { name: 'All Products' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Drafts' })).toBeVisible();
-    
+
     // Navigate to All Products
     await page.getByRole('link', { name: 'All Products' }).click();
     await expect(page).toHaveURL(/\/admin\/products/);

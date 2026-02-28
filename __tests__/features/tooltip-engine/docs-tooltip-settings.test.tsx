@@ -26,9 +26,7 @@ describe('docs-tooltip-settings', () => {
       throw new Error('quota exceeded');
     });
 
-    const { result } = renderHook(() =>
-      useDocsTooltipsSetting('docs-key', false),
-    );
+    const { result } = renderHook(() => useDocsTooltipsSetting('docs-key', false));
 
     expect(result.current.enabled).toBe(false);
 

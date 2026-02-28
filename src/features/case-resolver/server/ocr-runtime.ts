@@ -41,9 +41,7 @@ export const isCaseResolverPdfFilepath = (filepath: string): boolean => {
   return CASE_RESOLVER_PDF_EXTENSION_PATTERN.test(normalized);
 };
 
-export const inferCaseResolverOcrFileKind = (
-  filepath: string
-): CaseResolverOcrFileKind | null => {
+export const inferCaseResolverOcrFileKind = (filepath: string): CaseResolverOcrFileKind | null => {
   if (isCaseResolverImageFilepath(filepath)) return 'image';
   if (isCaseResolverPdfFilepath(filepath)) return 'pdf';
   return null;

@@ -71,10 +71,7 @@ export function PromptModal({
           <Button variant='outline' onClick={onClose} disabled={isLoading}>
             {cancelText}
           </Button>
-          <Button 
-            onClick={handleConfirm} 
-            disabled={isLoading || (required && !value.trim())}
-          >
+          <Button onClick={handleConfirm} disabled={isLoading || (required && !value.trim())}>
             {isLoading ? 'Processing...' : confirmText}
           </Button>
         </div>

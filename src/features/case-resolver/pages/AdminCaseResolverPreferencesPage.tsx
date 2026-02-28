@@ -76,8 +76,7 @@ const normalizeCaseResolverCaseListPreferences = (
       : 'all',
   caseResolverCaseListFiltersCollapsedByDefault:
     preferences?.caseResolverCaseListFiltersCollapsedByDefault ?? true,
-  caseResolverCaseListShowNestedContent:
-    preferences?.caseResolverCaseListShowNestedContent ?? true,
+  caseResolverCaseListShowNestedContent: preferences?.caseResolverCaseListShowNestedContent ?? true,
 });
 
 export function AdminCaseResolverPreferencesPage(): React.JSX.Element {
@@ -90,10 +89,7 @@ export function AdminCaseResolverPreferencesPage(): React.JSX.Element {
     () => normalizeCaseResolverCaseListPreferences(preferencesQuery.data),
     [preferencesQuery.data]
   );
-  const hydrationSignature = useMemo(
-    () => JSON.stringify(savedPreferences),
-    [savedPreferences]
-  );
+  const hydrationSignature = useMemo(() => JSON.stringify(savedPreferences), [savedPreferences]);
 
   const [draft, setDraft] = useState<CaseResolverCaseListPreferences>(
     DEFAULT_CASE_RESOLVER_CASE_LIST_PREFERENCES
@@ -115,32 +111,27 @@ export function AdminCaseResolverPreferencesPage(): React.JSX.Element {
         caseResolverCaseListSearchScope: draft.caseResolverCaseListSearchScope,
         caseResolverCaseListFiltersCollapsedByDefault:
           draft.caseResolverCaseListFiltersCollapsedByDefault,
-        caseResolverCaseListShowNestedContent:
-          draft.caseResolverCaseListShowNestedContent,
+        caseResolverCaseListShowNestedContent: draft.caseResolverCaseListShowNestedContent,
       });
       toast('Case Resolver preferences saved.', { variant: 'success' });
       router.push('/admin/case-resolver/cases');
     } catch (error) {
-      toast(
-        error instanceof Error ? error.message : 'Failed to save Case Resolver preferences.',
-        { variant: 'error' }
-      );
+      toast(error instanceof Error ? error.message : 'Failed to save Case Resolver preferences.', {
+        variant: 'error',
+      });
     }
   };
 
   const handleReset = async (): Promise<void> => {
     try {
-      await updatePreferencesMutation.mutateAsync(
-        DEFAULT_CASE_RESOLVER_CASE_LIST_PREFERENCES
-      );
+      await updatePreferencesMutation.mutateAsync(DEFAULT_CASE_RESOLVER_CASE_LIST_PREFERENCES);
       setDraft(DEFAULT_CASE_RESOLVER_CASE_LIST_PREFERENCES);
       setLoadedFrom(JSON.stringify(DEFAULT_CASE_RESOLVER_CASE_LIST_PREFERENCES));
       toast('Case Resolver preferences reset to defaults.', { variant: 'success' });
     } catch (error) {
-      toast(
-        error instanceof Error ? error.message : 'Failed to reset Case Resolver preferences.',
-        { variant: 'error' }
-      );
+      toast(error instanceof Error ? error.message : 'Failed to reset Case Resolver preferences.', {
+        variant: 'error',
+      });
     }
   };
 
@@ -162,7 +153,7 @@ export function AdminCaseResolverPreferencesPage(): React.JSX.Element {
             items={[
               { label: 'Admin', href: '/admin' },
               { label: 'Case Resolver', href: '/admin/case-resolver' },
-              { label: 'Preferences' }
+              { label: 'Preferences' },
             ]}
             className='mb-2'
           />
@@ -202,10 +193,7 @@ export function AdminCaseResolverPreferencesPage(): React.JSX.Element {
             />
           </FormField>
 
-          <FormField
-            label='Default Sort By'
-            description='Choose the initial sort field for Cases.'
-          >
+          <FormField label='Default Sort By' description='Choose the initial sort field for Cases.'>
             <SelectSimple
               size='sm'
               value={draft.caseResolverCaseListSortBy}
@@ -268,9 +256,7 @@ export function AdminCaseResolverPreferencesPage(): React.JSX.Element {
                 setDraft((current: CaseResolverCaseListPreferences) => ({
                   ...current,
                   caseResolverCaseListSearchScope:
-                    value === 'name' || value === 'folder' || value === 'content'
-                      ? value
-                      : 'all',
+                    value === 'name' || value === 'folder' || value === 'content' ? value : 'all',
                 }));
               }}
               options={[
@@ -325,10 +311,14 @@ export function AdminCaseResolverPreferencesPage(): React.JSX.Element {
       </FormSection>
 
       <FormActions
-        onCancel={() => { void handleReset(); }}
+        onCancel={() => {
+          void handleReset();
+        }}
         cancelText='Reset to Defaults'
         cancelVariant='outline'
-        onSave={() => { void handleSave(); }}
+        onSave={() => {
+          void handleSave();
+        }}
         saveText='Save Preferences'
         isSaving={updatePreferencesMutation.isPending}
         className='justify-start'

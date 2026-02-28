@@ -10,7 +10,9 @@ const safeJson = async <T>(res: Response): Promise<T> => {
   }
 };
 
-export const verifyCredentials = async (input: Login): Promise<{ ok: boolean; payload: VerifyCredentialsResponse }> => {
+export const verifyCredentials = async (
+  input: Login
+): Promise<{ ok: boolean; payload: VerifyCredentialsResponse }> => {
   const res = await fetch('/api/auth/verify-credentials', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

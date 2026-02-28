@@ -3,7 +3,13 @@
 import React, { useState } from 'react';
 
 import type { DatabaseConfig } from '@/shared/contracts/ai-paths-core';
-import type { AiNode, ClusterPreset, DbNodePreset, DbQueryPreset, Edge } from '@/shared/contracts/ai-paths';
+import type {
+  AiNode,
+  ClusterPreset,
+  DbNodePreset,
+  DbQueryPreset,
+  Edge,
+} from '@/shared/contracts/ai-paths';
 import {
   BUNDLE_INPUT_PORTS,
   CLUSTER_PRESETS_KEY,
@@ -19,7 +25,10 @@ import { ConfirmConfig } from '@/shared/hooks/ui/useConfirm';
 
 import type { ClusterPresetDraft } from '../cluster-presets-panel';
 
-type ToastFn = (message: string, options?: Partial<{ variant: 'success' | 'error' | 'info'; duration: number }>) => void;
+type ToastFn = (
+  message: string,
+  options?: Partial<{ variant: 'success' | 'error' | 'info'; duration: number }>
+) => void;
 
 type UseAiPathsPresetsArgs = {
   nodes: AiNode[];
@@ -130,7 +139,11 @@ export function useAiPathsPresets({
     try {
       await updateAiPathsSetting(DB_NODE_PRESETS_KEY, JSON.stringify(nextPresets));
     } catch (error: unknown) {
-      reportAiPathsError(error, { action: 'saveDbNodePresets' }, 'Failed to save database presets:');
+      reportAiPathsError(
+        error,
+        { action: 'saveDbNodePresets' },
+        'Failed to save database presets:'
+      );
       toast('Failed to save database presets.', { variant: 'error' });
     }
   };
@@ -173,8 +186,7 @@ export function useAiPathsPresets({
     const migratedConfig = migrationResult.databaseConfig ?? baseConfig;
     return {
       id: raw.id && typeof raw.id === 'string' ? raw.id : createPresetId(),
-      name:
-        typeof raw.name === 'string' && raw.name.trim() ? raw.name.trim() : 'Database Preset',
+      name: typeof raw.name === 'string' && raw.name.trim() ? raw.name.trim() : 'Database Preset',
       description: typeof raw.description === 'string' ? raw.description : '',
       config: migratedConfig,
       createdAt: raw.createdAt ?? now,
@@ -247,11 +259,9 @@ export function useAiPathsPresets({
   };
 
   const handleDeletePreset = async (presetId: string): Promise<void> => {
-    const target = clusterPresets.find(
-      (preset: ClusterPreset): boolean => preset.id === presetId
-    );
+    const target = clusterPresets.find((preset: ClusterPreset): boolean => preset.id === presetId);
     if (!target) return;
-    
+
     confirm({
       title: 'Delete Preset?',
       message: `Are you sure you want to delete preset "${target.name}"? This action cannot be undone.`,
@@ -268,7 +278,7 @@ export function useAiPathsPresets({
           setPresetDraft(DEFAULT_PRESET_DRAFT);
         }
         toast('Preset deleted.', { variant: 'success' });
-      }
+      },
     });
   };
 
@@ -342,17 +352,21 @@ export function useAiPathsPresets({
     const performImport = async () => {
       try {
         const parsed = JSON.parse(presetsJson) as unknown;
-        const list = (Array.isArray(parsed)
-          ? parsed
-          : parsed && typeof parsed === 'object' && 'presets' in (parsed as Record<string, unknown>)
-            ? (parsed as Record<string, unknown>)['presets']
-            : null) as unknown[] | null;
+        const list = (
+          Array.isArray(parsed)
+            ? parsed
+            : parsed &&
+                typeof parsed === 'object' &&
+                'presets' in (parsed as Record<string, unknown>)
+              ? (parsed as Record<string, unknown>)['presets']
+              : null
+        ) as unknown[] | null;
         if (!list) {
           toast('Invalid presets JSON. Expected an array.', { variant: 'error' });
           return;
         }
-        const normalized = list.map((item: unknown): ClusterPreset =>
-          normalizePreset(item as Partial<ClusterPreset>)
+        const normalized = list.map(
+          (item: unknown): ClusterPreset => normalizePreset(item as Partial<ClusterPreset>)
         );
         let nextPresets = mode === 'replace' ? [] : [...clusterPresets];
         const existingIds = new Set(nextPresets.map((preset: ClusterPreset): string => preset.id));
@@ -378,7 +392,7 @@ export function useAiPathsPresets({
         message: 'Replace existing presets? This cannot be undone.',
         confirmText: 'Replace All',
         isDangerous: true,
-        onConfirm: performImport
+        onConfirm: performImport,
       });
       return;
     }

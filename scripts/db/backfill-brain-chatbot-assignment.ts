@@ -8,7 +8,7 @@ import {
   parseBrainSettings,
   sanitizeBrainAssignment,
   defaultBrainAssignment,
-} from '@/features/ai/brain/settings';
+} from '@/shared/lib/ai-brain/settings';
 import type { AiBrainSettings } from '@/shared/contracts/ai-brain';
 import type { ChatbotSettingsDto as ChatbotSettings } from '@/shared/contracts/chatbot';
 
@@ -86,7 +86,7 @@ const writeBrainSettings = async (settings: AiBrainSettings): Promise<void> => {
           _id: AI_BRAIN_SETTINGS_KEY,
         },
       },
-      { upsert: true },
+      { upsert: true }
     );
     return;
   }
@@ -165,8 +165,8 @@ async function main(): Promise<void> {
         nextAssignment,
       },
       null,
-      2,
-    ),
+      2
+    )
   );
 }
 

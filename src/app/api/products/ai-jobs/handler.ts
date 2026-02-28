@@ -1,9 +1,14 @@
 import { Prisma } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getProductAiJobs, deleteTerminalProductAiJobs, deleteAllProductAiJobs, cleanupStaleRunningProductAiJobs } from '@/features/jobs/server';
+import {
+  getProductAiJobs,
+  deleteTerminalProductAiJobs,
+  deleteAllProductAiJobs,
+  cleanupStaleRunningProductAiJobs,
+} from '@/features/jobs/server';
 import { startProductAiJobQueue, getQueueStatus } from '@/features/jobs/server';
-import { logSystemEvent } from '@/features/observability/server';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 
@@ -28,11 +33,14 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
         message: '[api/products/ai-jobs] Queue status',
         context: { status },
       });
-      return NextResponse.json({ status }, {
-        headers: {
-          'Cache-Control': 'no-store',
-        },
-      });
+      return NextResponse.json(
+        { status },
+        {
+          headers: {
+            'Cache-Control': 'no-store',
+          },
+        }
+      );
     }
 
     const productId = searchParams.get('productId') || undefined;
@@ -47,11 +55,14 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
         startProductAiJobQueue();
       }
     }
-    return NextResponse.json({ jobs }, {
-      headers: {
-        'Cache-Control': 'no-store',
-      },
-    });
+    return NextResponse.json(
+      { jobs },
+      {
+        headers: {
+          'Cache-Control': 'no-store',
+        },
+      }
+    );
   } catch (error: unknown) {
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&

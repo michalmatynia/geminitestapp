@@ -25,9 +25,7 @@ const createMockCategory = (
 });
 
 const mockFolders: CategoryWithChildren[] = [
-  createMockCategory('f1', 'Folder 1', null, [
-    createMockCategory('f1.1', 'Folder 1.1', 'f1'),
-  ]),
+  createMockCategory('f1', 'Folder 1', null, [createMockCategory('f1.1', 'Folder 1.1', 'f1')]),
   createMockCategory('f2', 'Folder 2'),
 ];
 

@@ -1,10 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { AI_PATHS_NODE_DOCS } from '@/shared/lib/ai-paths/core/docs/node-docs';
-import {
-  DOCUMENTATION_MODULE_IDS,
-  getDocumentationEntry,
-} from '@/shared/lib/documentation';
+import { DOCUMENTATION_MODULE_IDS, getDocumentationEntry } from '@/shared/lib/documentation';
 
 import { AI_PATHS_DOC_CATALOG } from '../ai-paths';
 

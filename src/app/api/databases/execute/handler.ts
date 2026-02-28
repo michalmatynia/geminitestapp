@@ -1,5 +1,3 @@
-
-
 import { NextRequest, NextResponse } from 'next/server';
 import { Client } from 'pg';
 
@@ -15,12 +13,19 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     throw forbiddenError('Database operations are disabled in production.');
   }
 
-  const parsed = await req.json() as {
+  const parsed = (await req.json()) as {
     sql?: string;
     type?: 'postgresql' | 'mongodb' | 'auto';
     // MongoDB fields
     collection?: string;
-    operation?: 'find' | 'insertOne' | 'updateOne' | 'deleteOne' | 'deleteMany' | 'aggregate' | 'countDocuments';
+    operation?:
+      | 'find'
+      | 'insertOne'
+      | 'updateOne'
+      | 'deleteOne'
+      | 'deleteMany'
+      | 'aggregate'
+      | 'countDocuments';
     filter?: Record<string, unknown>;
     document?: Record<string, unknown>;
     update?: Record<string, unknown>;
@@ -34,11 +39,11 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
 
   const hasMongoIntent = Boolean(
     parsed.collection ||
-      parsed.operation ||
-      parsed.filter ||
-      parsed.document ||
-      parsed.update ||
-      parsed.pipeline
+    parsed.operation ||
+    parsed.filter ||
+    parsed.document ||
+    parsed.update ||
+    parsed.pipeline
   );
 
   if (requestedType === 'mongodb') {
@@ -54,7 +59,11 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
         } catch (error) {
           try {
             const { ErrorSystem } = await import('@/features/observability/server');
-            void ErrorSystem.captureException(error, { service: 'api/databases/execute', provider: 'mongodb', collection: parsed.collection });
+            void ErrorSystem.captureException(error, {
+              service: 'api/databases/execute',
+              provider: 'mongodb',
+              collection: parsed.collection,
+            });
           } catch {
             // Ignore error capture failures
           }
@@ -76,7 +85,11 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   } catch (error) {
     try {
       const { ErrorSystem } = await import('@/features/observability/server');
-      void ErrorSystem.captureException(error, { service: 'api/databases/execute', provider: 'postgresql', sql: parsed.sql });
+      void ErrorSystem.captureException(error, {
+        service: 'api/databases/execute',
+        provider: 'postgresql',
+        sql: parsed.sql,
+      });
     } catch {
       // Ignore error capture failures
     }
@@ -119,16 +132,14 @@ async function handlePostgresQuery(sql: string | undefined): Promise<Response> {
   }
 }
 
-async function handleMongoOperation(
-  parsed: {
-    collection?: string;
-    operation?: string;
-    filter?: Record<string, unknown>;
-    document?: Record<string, unknown>;
-    update?: Record<string, unknown>;
-    pipeline?: Record<string, unknown>[];
-  }
-): Promise<Response> {
+async function handleMongoOperation(parsed: {
+  collection?: string;
+  operation?: string;
+  filter?: Record<string, unknown>;
+  document?: Record<string, unknown>;
+  update?: Record<string, unknown>;
+  pipeline?: Record<string, unknown>[];
+}): Promise<Response> {
   const { collection: collName, operation, filter, document, update, pipeline } = parsed;
 
   if (!collName) {
@@ -149,7 +160,10 @@ async function handleMongoOperation(
 
   switch (operation) {
     case 'find': {
-      const docs = await collection.find(filter ?? {}).limit(200).toArray();
+      const docs = await collection
+        .find(filter ?? {})
+        .limit(200)
+        .toArray();
       result = docs;
       rowCount = docs.length;
       break;
@@ -168,7 +182,9 @@ async function handleMongoOperation(
         throw badRequestError('Update object is required for updateOne.');
       }
       const updateResult = await collection.updateOne(filter ?? {}, update);
-      result = [{ matchedCount: updateResult.matchedCount, modifiedCount: updateResult.modifiedCount }];
+      result = [
+        { matchedCount: updateResult.matchedCount, modifiedCount: updateResult.modifiedCount },
+      ];
       rowCount = updateResult.modifiedCount;
       break;
     }
@@ -212,4 +228,3 @@ async function handleMongoOperation(
     duration,
   });
 }
-

@@ -29,8 +29,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
 
   const uniqueCatalogIds = Array.from(new Set(data.catalogIds));
   const catalogRepository = await getCatalogRepository();
-  const existingCatalogs =
-    await catalogRepository.getCatalogsByIds(uniqueCatalogIds);
+  const existingCatalogs = await catalogRepository.getCatalogsByIds(uniqueCatalogIds);
   const existingIds = new Set(existingCatalogs.map((entry: { id: string }) => entry.id));
   const validCatalogIds = uniqueCatalogIds.filter((id: string) => existingIds.has(id));
   if (validCatalogIds.length === 0) {
@@ -43,20 +42,11 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   const productRepository = await getProductRepository();
 
   if (mode === 'replace') {
-    await productRepository.bulkReplaceProductCatalogs(
-      uniqueProductIds,
-      validCatalogIds
-    );
+    await productRepository.bulkReplaceProductCatalogs(uniqueProductIds, validCatalogIds);
   } else if (mode === 'remove') {
-    await productRepository.bulkRemoveProductCatalogs(
-      uniqueProductIds,
-      validCatalogIds
-    );
+    await productRepository.bulkRemoveProductCatalogs(uniqueProductIds, validCatalogIds);
   } else {
-    await productRepository.bulkAddProductCatalogs(
-      uniqueProductIds,
-      validCatalogIds
-    );
+    await productRepository.bulkAddProductCatalogs(uniqueProductIds, validCatalogIds);
   }
 
   return NextResponse.json({

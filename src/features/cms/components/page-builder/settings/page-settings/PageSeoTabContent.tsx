@@ -21,55 +21,75 @@ export function PageSeoTabContent(): React.JSX.Element {
       </div>
 
       <div className='space-y-1.5'>
-        <Label htmlFor='seo-title' className='text-xs text-gray-400'>Page title</Label>
+        <Label htmlFor='seo-title' className='text-xs text-gray-400'>
+          Page title
+        </Label>
         <Input
           id='seo-title'
           value={page.seoTitle ?? ''}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>): void => handleSeoChange('seoTitle', e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+            handleSeoChange('seoTitle', e.target.value)
+          }
           placeholder={page.name}
           className='h-8 text-xs'
         />
       </div>
 
       <div className='space-y-1.5'>
-        <Label htmlFor='seo-desc' className='text-xs text-gray-400'>Meta description</Label>
+        <Label htmlFor='seo-desc' className='text-xs text-gray-400'>
+          Meta description
+        </Label>
         <Input
           id='seo-desc'
           value={page.seoDescription ?? ''}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>): void => handleSeoChange('seoDescription', e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+            handleSeoChange('seoDescription', e.target.value)
+          }
           placeholder='Page description for search engines'
           className='h-8 text-xs'
         />
       </div>
 
       <div className='space-y-1.5'>
-        <Label htmlFor='seo-canonical' className='text-xs text-gray-400'>Canonical URL</Label>
+        <Label htmlFor='seo-canonical' className='text-xs text-gray-400'>
+          Canonical URL
+        </Label>
         <Input
           id='seo-canonical'
           value={page.seoCanonical ?? ''}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>): void => handleSeoChange('seoCanonical', e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+            handleSeoChange('seoCanonical', e.target.value)
+          }
           placeholder='https://example.com/page'
           className='h-8 text-xs'
         />
       </div>
 
       <div className='space-y-1.5'>
-        <Label htmlFor='seo-og' className='text-xs text-gray-400'>OG Image URL</Label>
+        <Label htmlFor='seo-og' className='text-xs text-gray-400'>
+          OG Image URL
+        </Label>
         <Input
           id='seo-og'
           value={page.seoOgImage ?? ''}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>): void => handleSeoChange('seoOgImage', e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+            handleSeoChange('seoOgImage', e.target.value)
+          }
           placeholder='https://example.com/image.png'
           className='h-8 text-xs'
         />
       </div>
 
       <div className='space-y-1.5'>
-        <Label htmlFor='seo-robots' className='text-xs text-gray-400'>Robots meta</Label>
+        <Label htmlFor='seo-robots' className='text-xs text-gray-400'>
+          Robots meta
+        </Label>
         <Input
           id='seo-robots'
           value={page.robotsMeta ?? 'index,follow'}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>): void => handleSeoChange('robotsMeta', e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+            handleSeoChange('robotsMeta', e.target.value)
+          }
           placeholder='index,follow'
           className='h-8 text-xs'
         />
@@ -77,10 +97,10 @@ export function PageSeoTabContent(): React.JSX.Element {
 
       {/* SEO Preview */}
       <div className='space-y-1.5 rounded border border-border/30 bg-gray-800/20 p-3'>
-        <p className='text-[10px] font-medium uppercase tracking-wide text-gray-500'>Search preview</p>
-        <p className='text-sm font-medium text-blue-400 truncate'>
-          {page.seoTitle || page.name}
+        <p className='text-[10px] font-medium uppercase tracking-wide text-gray-500'>
+          Search preview
         </p>
+        <p className='text-sm font-medium text-blue-400 truncate'>{page.seoTitle || page.name}</p>
         <p className='text-xs text-gray-400 line-clamp-2'>
           {page.seoDescription || 'No description set'}
         </p>

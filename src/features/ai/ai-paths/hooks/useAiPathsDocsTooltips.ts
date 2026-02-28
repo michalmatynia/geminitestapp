@@ -1,9 +1,6 @@
 'use client';
 
-import {
-  readDocsTooltipsEnabled,
-  useDocsTooltipsSetting,
-} from '@/shared/lib/tooltip-engine';
+import { readDocsTooltipsEnabled, useDocsTooltipsSetting } from '@/shared/lib/tooltip-engine';
 
 export const AI_PATHS_DOCS_TOOLTIP_KEY = 'ai_paths:docs_tooltips_enabled';
 
@@ -16,10 +13,7 @@ type AiPathsDocsTooltipsState = {
 };
 
 export function useAiPathsDocsTooltips(): AiPathsDocsTooltipsState {
-  const { enabled, setEnabled } = useDocsTooltipsSetting(
-    AI_PATHS_DOCS_TOOLTIP_KEY,
-    false,
-  );
+  const { enabled, setEnabled } = useDocsTooltipsSetting(AI_PATHS_DOCS_TOOLTIP_KEY, false);
 
   return {
     docsTooltipsEnabled: enabled,

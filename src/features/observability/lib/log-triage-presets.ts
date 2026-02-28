@@ -1,6 +1,6 @@
-import type { 
+import type {
   SystemLogFilterFormValues,
-  LogTriagePreset as LogTriagePresetBase
+  LogTriagePreset as LogTriagePresetBase,
 } from '@/shared/contracts/observability';
 
 export type { SystemLogFilterFormValues };
@@ -83,12 +83,12 @@ export const SYSTEM_LOG_TRIAGE_PRESETS: LogTriagePreset[] = [
 
 export const resolveSystemLogPresetFilters = (
   preset: LogTriagePreset,
-  now: Date = new Date(),
+  now: Date = new Date()
 ): Partial<SystemLogFilterFormValues> => preset.resolve(now);
 
 export const isSystemLogPresetActive = (
   current: SystemLogFilterFormValues,
-  presetFilters: Partial<SystemLogFilterFormValues>,
+  presetFilters: Partial<SystemLogFilterFormValues>
 ): boolean => {
   const keys = Object.keys(SYSTEM_LOG_FILTER_DEFAULTS) as Array<keyof SystemLogFilterFormValues>;
   for (const key of keys) {

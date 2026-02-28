@@ -6,10 +6,28 @@ import { useMemo, useState } from 'react';
 import { CmsDomainSelector } from '@/features/cms';
 import CmsEditorLayout from '@/features/cms/components/CmsEditorLayout';
 import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelection';
-import { useCmsAllSlugs, useCmsPage, useCmsSlugs, useUpdatePage } from '@/features/cms/hooks/useCmsQueries';
+import {
+  useCmsAllSlugs,
+  useCmsPage,
+  useCmsSlugs,
+  useUpdatePage,
+} from '@/features/cms/hooks/useCmsQueries';
 import { cmsPageUpdateSchema } from '@/features/cms/validations/api';
 import type { Page, Slug } from '@/shared/contracts/cms';
-import { Checkbox, Input, SectionHeader, ToggleRow, FormSection, Badge, Alert, StatusBadge, LoadingState, FormActions, Breadcrumbs, Hint } from '@/shared/ui';
+import {
+  Checkbox,
+  Input,
+  SectionHeader,
+  ToggleRow,
+  FormSection,
+  Badge,
+  Alert,
+  StatusBadge,
+  LoadingState,
+  FormActions,
+  Breadcrumbs,
+  Hint,
+} from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
 
 export default function EditPagePageLoader(): React.JSX.Element {
@@ -23,7 +41,13 @@ export default function EditPagePageLoader(): React.JSX.Element {
   return <EditPageContent key={pageQuery.data.id} initialPage={pageQuery.data} id={id as string} />;
 }
 
-function EditPageContent({ initialPage, id }: { initialPage: Page; id: string }): React.JSX.Element {
+function EditPageContent({
+  initialPage,
+  id,
+}: {
+  initialPage: Page;
+  id: string;
+}): React.JSX.Element {
   const page = initialPage;
   const { activeDomainId } = useCmsDomainSelection();
   const slugsQuery = useCmsSlugs(activeDomainId);
@@ -58,7 +82,10 @@ function EditPageContent({ initialPage, id }: { initialPage: Page; id: string })
 
   const selectedSlugIds = manualSelectedSlugIds ?? initialSelectedSlugIds;
 
-  const domainSlugIds = useMemo((): Set<string> => new Set(domainSlugs.map((slug: Slug) => slug.id)), [domainSlugs]);
+  const domainSlugIds = useMemo(
+    (): Set<string> => new Set(domainSlugs.map((slug: Slug) => slug.id)),
+    [domainSlugs]
+  );
   const selectedSlugs = useMemo((): Slug[] => {
     const byId = new Map(allSlugs.map((slug: Slug) => [slug.id, slug]));
     const isSlug = (value: Slug | undefined): value is Slug => Boolean(value);
@@ -96,7 +123,7 @@ function EditPageContent({ initialPage, id }: { initialPage: Page; id: string })
         components: page.components,
         slugIds: selectedSlugIds,
       },
-      'Page form is invalid.',
+      'Page form is invalid.'
     );
     if (!validation.success) {
       setError(validation.firstError);
@@ -114,8 +141,8 @@ function EditPageContent({ initialPage, id }: { initialPage: Page; id: string })
   return (
     <CmsEditorLayout>
       <div className='mx-auto flex w-full max-w-3xl flex-col gap-6 py-10'>
-        <SectionHeader 
-          title={page.name} 
+        <SectionHeader
+          title={page.name}
           description='Map content to URL routes and manage cross-zone availability.'
           eyebrow={
             <Breadcrumbs
@@ -123,7 +150,7 @@ function EditPageContent({ initialPage, id }: { initialPage: Page; id: string })
                 { label: 'Admin', href: '/admin' },
                 { label: 'CMS', href: '/admin/cms' },
                 { label: 'Pages', href: '/admin/cms/pages' },
-                { label: 'Edit' }
+                { label: 'Edit' },
               ]}
               className='mb-2'
             />
@@ -154,8 +181,8 @@ function EditPageContent({ initialPage, id }: { initialPage: Page; id: string })
             <CmsDomainSelector />
           </FormSection>
 
-          <FormSection 
-            title='Route Configuration' 
+          <FormSection
+            title='Route Configuration'
             description='Select which URL paths should resolve to this page.'
             actions={
               <ToggleRow
@@ -175,22 +202,31 @@ function EditPageContent({ initialPage, id }: { initialPage: Page; id: string })
                 placeholder='Filter routes...'
                 className='h-8 text-xs'
               />
-              
+
               <div className='space-y-2'>
                 <div className='flex justify-between items-center px-1'>
-                  <Hint uppercase variant='muted' className='font-semibold'>Available Slugs</Hint>
-                  <Badge variant='secondary' className='text-[9px]'>{selectedSlugIds.length} selected</Badge>
+                  <Hint uppercase variant='muted' className='font-semibold'>
+                    Available Slugs
+                  </Hint>
+                  <Badge variant='secondary' className='text-[9px]'>
+                    {selectedSlugIds.length} selected
+                  </Badge>
                 </div>
 
                 <div className='max-h-64 overflow-y-auto rounded border border-border/60 bg-black/20 p-2 divide-y divide-white/5'>
                   {filteredDomainSlugs.length === 0 ? (
-                    <div className='py-8 text-center text-xs text-gray-600'>No routes found matching your criteria.</div>
+                    <div className='py-8 text-center text-xs text-gray-600'>
+                      No routes found matching your criteria.
+                    </div>
                   ) : (
                     filteredDomainSlugs.map((slug) => {
                       const checked = selectedSlugIds.includes(slug.id);
                       const isCrossZone = !domainSlugIds.has(slug.id);
                       return (
-                        <label key={slug.id} className='flex items-center gap-3 p-2 hover:bg-white/5 cursor-pointer transition-colors'>
+                        <label
+                          key={slug.id}
+                          className='flex items-center gap-3 p-2 hover:bg-white/5 cursor-pointer transition-colors'
+                        >
                           <Checkbox
                             checked={checked}
                             onCheckedChange={() => {
@@ -205,7 +241,12 @@ function EditPageContent({ initialPage, id }: { initialPage: Page; id: string })
                           <div className='flex flex-1 items-center justify-between'>
                             <span className='text-sm text-gray-300'>/{slug.slug}</span>
                             {isCrossZone && (
-                              <StatusBadge status='Cross-Zone' variant='warning' size='sm' className='font-bold' />
+                              <StatusBadge
+                                status='Cross-Zone'
+                                variant='warning'
+                                size='sm'
+                                className='font-bold'
+                              />
                             )}
                           </div>
                         </label>
@@ -218,8 +259,8 @@ function EditPageContent({ initialPage, id }: { initialPage: Page; id: string })
           </FormSection>
 
           {crossZoneSlugs.length > 0 && (
-            <FormSection 
-              title='External Assignments' 
+            <FormSection
+              title='External Assignments'
               description='Routes from other zones currently pointing to this page.'
               className='p-6'
             >

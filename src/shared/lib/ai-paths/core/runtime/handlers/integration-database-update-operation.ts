@@ -1,25 +1,13 @@
-import type {
-  DatabaseConfig,
-  DbQueryConfig,
-  RuntimePortValues,
-} from '@/shared/contracts/ai-paths';
+import type { DatabaseConfig, DbQueryConfig, RuntimePortValues } from '@/shared/contracts/ai-paths';
 import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 
-import {
-  parseJsonSafe,
-  renderJsonTemplate,
-} from '../../utils';
-import {
-  buildDbQueryPayload,
-  resolveEntityIdFromInputs,
-} from '../utils';
+import { parseJsonSafe, renderJsonTemplate } from '../../utils';
+import { buildDbQueryPayload, resolveEntityIdFromInputs } from '../utils';
 import {
   createWriteTemplateGuardrailOutput,
   resolveWriteTemplateGuardrail,
 } from './integration-database-write-guardrails';
-import {
-  resolveDatabaseUpdateMappings,
-} from './integration-database-update-mapping-resolution';
+import { resolveDatabaseUpdateMappings } from './integration-database-update-mapping-resolution';
 import { executeDatabaseUpdate } from './integration-database-update-execution';
 
 export type HandleDatabaseUpdateOperationInput = {
@@ -72,7 +60,8 @@ export async function handleDatabaseUpdateOperation({
   aiPrompt,
   ensureExistingParameterTemplateContext: _ensureExistingParameterTemplateContext,
 }: HandleDatabaseUpdateOperationInput): Promise<RuntimePortValues> {
-  const updatePayloadMode = dbConfig.updatePayloadMode ?? (dbConfig.mappings?.length ? 'mapping' : 'custom');
+  const updatePayloadMode =
+    dbConfig.updatePayloadMode ?? (dbConfig.mappings?.length ? 'mapping' : 'custom');
 
   const updateStrategy: 'one' | 'many' = dbConfig.updateStrategy ?? 'one';
   const entityType = (dbConfig.entityType ?? 'product').trim().toLowerCase();
@@ -88,7 +77,7 @@ export async function handleDatabaseUpdateOperation({
     resolvedInputs,
     idField,
     simulationEntityType,
-    simulationEntityId,
+    simulationEntityId
   );
 
   if (updatePayloadMode === 'mapping') {
@@ -182,7 +171,7 @@ export async function handleDatabaseUpdateOperation({
         nodeId: node.id,
         guardrail: 'missing_update_template',
       },
-      'Database update blocked:',
+      'Database update blocked:'
     );
     toast(error, { variant: 'error' });
     return {
@@ -230,7 +219,7 @@ export async function handleDatabaseUpdateOperation({
         nodeId: node.id,
         guardrailMeta: templateGuardrail.guardrailMeta,
       },
-      'Database update blocked:',
+      'Database update blocked:'
     );
     toast(error, { variant: 'error' });
     return createWriteTemplateGuardrailOutput({
@@ -240,16 +229,9 @@ export async function handleDatabaseUpdateOperation({
     });
   }
 
-  const renderedUpdate = renderJsonTemplate(
-    updateTemplate,
-    templateInputs,
-    currentValue,
-  );
+  const renderedUpdate = renderJsonTemplate(updateTemplate, templateInputs, currentValue);
   const parsedUpdate = parseJsonSafe(renderedUpdate);
-  if (
-    !parsedUpdate ||
-    (typeof parsedUpdate !== 'object' && !Array.isArray(parsedUpdate))
-  ) {
+  if (!parsedUpdate || (typeof parsedUpdate !== 'object' && !Array.isArray(parsedUpdate))) {
     const error = 'Update template must be valid JSON.';
     toast(error, { variant: 'error' });
     return {
@@ -278,7 +260,7 @@ export async function handleDatabaseUpdateOperation({
         nodeId: node.id,
         guardrail: 'missing_query_filter',
       },
-      'Database update blocked:',
+      'Database update blocked:'
     );
     toast(error, { variant: 'error' });
     return {
@@ -357,15 +339,11 @@ export async function handleDatabaseUpdateOperation({
       filter: customFilter,
       update: customUpdateDoc,
       ...(executionResult.executionMeta ?? {}),
-      ...(executionResult.writeOutcome
-        ? { writeOutcome: executionResult.writeOutcome }
-        : {}),
+      ...(executionResult.writeOutcome ? { writeOutcome: executionResult.writeOutcome } : {}),
     },
     result: updateResult,
     debugPayload,
-    ...(executionResult.writeOutcome
-      ? { writeOutcome: executionResult.writeOutcome }
-      : {}),
+    ...(executionResult.writeOutcome ? { writeOutcome: executionResult.writeOutcome } : {}),
     aiPrompt,
   };
 }

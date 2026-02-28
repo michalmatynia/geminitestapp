@@ -2,10 +2,7 @@ import {
   type ImageContentFrame,
   type MaskShapeForExport,
 } from './GenerationToolbarImageUtils.types';
-import {
-  clamp01,
-  normalizeImageContentFrame,
-} from './GenerationToolbarImageUtils.helpers';
+import { clamp01, normalizeImageContentFrame } from './GenerationToolbarImageUtils.helpers';
 
 const toNormalizedUnit = (value: number, sourceSize: number): number | null => {
   if (!Number.isFinite(value)) return null;
@@ -108,12 +105,14 @@ export const normalizeShapeToPolygons = (
     const minY = clamp01(Math.min(...ys));
     const maxY = clamp01(Math.max(...ys));
     if (!(maxX > minX && maxY > minY)) return [];
-    return [[
-      { x: minX, y: minY },
-      { x: maxX, y: minY },
-      { x: maxX, y: maxY },
-      { x: minX, y: maxY },
-    ]];
+    return [
+      [
+        { x: minX, y: minY },
+        { x: maxX, y: minY },
+        { x: maxX, y: maxY },
+        { x: minX, y: maxY },
+      ],
+    ];
   }
 
   if (shape.type === 'ellipse') {
@@ -184,9 +183,7 @@ const resolveMaskColors = (
 ): { background: '#000000' | '#ffffff'; fill: '#000000' | '#ffffff' } => {
   const preferWhite = variant === 'white';
   const background =
-    (preferWhite && !inverted) || (!preferWhite && inverted)
-      ? '#000000'
-      : '#ffffff';
+    (preferWhite && !inverted) || (!preferWhite && inverted) ? '#000000' : '#ffffff';
   const fill = background === '#000000' ? '#ffffff' : '#000000';
   return { background, fill };
 };

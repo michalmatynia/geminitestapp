@@ -20,7 +20,6 @@ import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { DataTable } from '@/shared/ui';
 import { ToastProvider } from '@/shared/ui/toast';
 
-
 const createTestQueryClient = (): QueryClient =>
   new QueryClient({
     defaultOptions: {
@@ -251,9 +250,7 @@ const renderProductTable = (
 
 const clickFirstOneClickExport = async (): Promise<void> => {
   const user = userEvent.setup();
-  const quickExportButtons = await screen.findAllByLabelText(
-    'One-click export to Base.com'
-  );
+  const quickExportButtons = await screen.findAllByLabelText('One-click export to Base.com');
   await user.click(quickExportButtons[0]!);
 };
 
@@ -269,7 +266,7 @@ describe('Admin Products List UI', () => {
       productListThumbnailSource: 'file',
       productListFiltersCollapsedByDefault: false,
     });
-    
+
     server.use(
       http.get('/api/products', () => {
         return HttpResponse.json(mockProducts);
@@ -282,7 +279,9 @@ describe('Admin Products List UI', () => {
       }),
       http.get('/api/products/validator-config', () => HttpResponse.json([])),
       http.get('/api/integrations/with-connections', () => HttpResponse.json([])),
-      http.get('/api/integrations/exports/base/default-connection', () => HttpResponse.json({ connectionId: null })),
+      http.get('/api/integrations/exports/base/default-connection', () =>
+        HttpResponse.json({ connectionId: null })
+      ),
       http.get('/api/integrations/products/:id/listings', () => HttpResponse.json([])),
       http.get('/api/ai-paths/trigger-buttons', () => HttpResponse.json([])),
       http.post('/api/query-telemetry', () => HttpResponse.json({ ok: true })),
@@ -403,8 +402,7 @@ describe('Admin Products List UI', () => {
   });
 
   it('uses scoped active template with explicit connection and inventory for OneClick export', async () => {
-    let capturedTemplateScope: { connectionId: string; inventoryId: string } | null =
-      null;
+    let capturedTemplateScope: { connectionId: string; inventoryId: string } | null = null;
     let exportPayload: Record<string, unknown> | null = null;
 
     server.use(

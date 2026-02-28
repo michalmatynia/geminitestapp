@@ -1,17 +1,14 @@
 'use client';
 
-import type { ImageStudioProjectRecord, StudioProjectsResponse, StudioSlotsResponse } from '@/shared/contracts/image-studio';
-import type { 
-  ListQuery, 
-  SingleQuery 
-} from '@/shared/contracts/ui';
+import type {
+  ImageStudioProjectRecord,
+  StudioProjectsResponse,
+  StudioSlotsResponse,
+} from '@/shared/contracts/image-studio';
+import type { ListQuery, SingleQuery } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
-import {
-  createListQueryV2,
-  createSingleQueryV2,
-} from '@/shared/lib/query-factories-v2';
+import { createListQueryV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { studioKeys } from '@/shared/lib/query-key-exports';
-
 
 export { studioKeys };
 
@@ -21,9 +18,7 @@ export type StudioImageModelsResponse = {
   warning?: string;
 };
 
-const normalizeProjectRecord = (
-  entry: unknown
-): ImageStudioProjectRecord | null => {
+const normalizeProjectRecord = (entry: unknown): ImageStudioProjectRecord | null => {
   const normalizeCanvasDimension = (value: unknown): number | null => {
     if (typeof value !== 'number' || !Number.isFinite(value)) return null;
     const parsed = Math.floor(value);
@@ -101,7 +96,9 @@ export function useStudioProjects(): ListQuery<ImageStudioProjectRecord> {
 export function useStudioSlots(projectId: string): SingleQuery<StudioSlotsResponse> {
   const queryKey = studioKeys.slots(projectId);
   const queryFn = async (): Promise<StudioSlotsResponse> =>
-    api.get<StudioSlotsResponse>(`/api/image-studio/projects/${encodeURIComponent(projectId)}/slots`);
+    api.get<StudioSlotsResponse>(
+      `/api/image-studio/projects/${encodeURIComponent(projectId)}/slots`
+    );
 
   return createSingleQueryV2({
     id: projectId,

@@ -79,13 +79,19 @@ export function GenerationToolbarAutoScalerSection({
   onToggleAutoScaleLayoutSplitAxes,
 }: GenerationToolbarAutoScalerSectionProps): React.JSX.Element {
   const {
-    autoScaleMode, setAutoScaleMode,
-    autoScaleLayoutShadowPolicy, setAutoScaleLayoutShadowPolicy,
-    autoScaleLayoutPadding, setAutoScaleLayoutPadding,
+    autoScaleMode,
+    setAutoScaleMode,
+    autoScaleLayoutShadowPolicy,
+    setAutoScaleLayoutShadowPolicy,
+    autoScaleLayoutPadding,
+    setAutoScaleLayoutPadding,
     autoScaleLayoutSplitAxes,
-    autoScaleLayoutPaddingX, setAutoScaleLayoutPaddingX,
-    autoScaleLayoutPaddingY, setAutoScaleLayoutPaddingY,
-    autoScaleLayoutFillMissingCanvasWhite, setAutoScaleLayoutFillMissingCanvasWhite,
+    autoScaleLayoutPaddingX,
+    setAutoScaleLayoutPaddingX,
+    autoScaleLayoutPaddingY,
+    setAutoScaleLayoutPaddingY,
+    autoScaleLayoutFillMissingCanvasWhite,
+    setAutoScaleLayoutFillMissingCanvasWhite,
     autoScaleBusy,
   } = useGenerationToolbarContext();
 
@@ -134,7 +140,8 @@ export function GenerationToolbarAutoScalerSection({
       ) : null}
       {analysisPlanWillSwitchSlot ? (
         <div className='mb-2 rounded border border-sky-500/30 bg-sky-500/10 px-2 py-1 text-[10px] text-sky-100'>
-          Latest saved analysis plan targets a different slot{analysisPlanSwitchSlotLabel ? `: ${analysisPlanSwitchSlotLabel}` : ''}.
+          Latest saved analysis plan targets a different slot
+          {analysisPlanSwitchSlotLabel ? `: ${analysisPlanSwitchSlotLabel}` : ''}.
         </div>
       ) : null}
       {analysisPlanIsStale ? (
@@ -154,7 +161,8 @@ export function GenerationToolbarAutoScalerSection({
       ) : null}
       {slotSelectionLocked ? (
         <div className='mb-2 rounded border border-amber-500/40 bg-amber-500/10 px-2 py-1 text-[10px] text-amber-100'>
-          Slot selection is locked by sequencing. Existing saved plans cannot switch slots until unlocked.
+          Slot selection is locked by sequencing. Existing saved plans cannot switch slots until
+          unlocked.
         </div>
       ) : null}
       {analysisPlanSlotMissing ? (
@@ -183,7 +191,11 @@ export function GenerationToolbarAutoScalerSection({
             type='button'
             variant='outline'
             onClick={onToggleAutoScaleLayoutSplitAxes}
-            title={autoScaleTooltipsEnabled ? autoScaleTooltipContent.paddingAxes : 'Toggle separate horizontal and vertical padding'}
+            title={
+              autoScaleTooltipsEnabled
+                ? autoScaleTooltipContent.paddingAxes
+                : 'Toggle separate horizontal and vertical padding'
+            }
           >
             {autoScaleLayoutSplitAxes ? 'Linked X/Y' : 'Split X/Y'}
           </Button>
@@ -196,7 +208,9 @@ export function GenerationToolbarAutoScalerSection({
             size='sm'
             className='w-full'
             value={autoScaleLayoutShadowPolicy}
-            onValueChange={(val) => setAutoScaleLayoutShadowPolicy(val as ImageStudioCenterShadowPolicy)}
+            onValueChange={(val) =>
+              setAutoScaleLayoutShadowPolicy(val as ImageStudioCenterShadowPolicy)
+            }
             options={autoScaleShadowPolicyOptions}
             triggerClassName='h-8 text-xs'
             ariaLabel='Auto scaler shadow policy'
@@ -333,7 +347,11 @@ export function GenerationToolbarAutoScalerSection({
             onClick={onAutoScale}
             disabled={!hasSourceImage || autoScaleBusy}
             loading={autoScaleBusy}
-            title={autoScaleTooltipsEnabled ? autoScaleTooltipContent.apply : 'Create an auto-scaled linked variant'}
+            title={
+              autoScaleTooltipsEnabled
+                ? autoScaleTooltipContent.apply
+                : 'Create an auto-scaled linked variant'
+            }
           >
             {autoScaleBusyLabel}
           </Button>

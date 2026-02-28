@@ -29,9 +29,7 @@ describe('Products Count API', () => {
     it('should return the total count of products', async () => {
       vi.mocked(prisma.product.count).mockResolvedValue(10);
 
-      const res = await GET(
-        new NextRequest('http://localhost/api/products/count')
-      );
+      const res = await GET(new NextRequest('http://localhost/api/products/count'));
       const data = (await res.json()) as { count: number };
       expect(res.status).toEqual(200);
       expect(data.count).toEqual(10);

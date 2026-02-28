@@ -1,4 +1,9 @@
-import { DRAG_KEYS, getFirstDragValue, parseDragIndex, setDragData } from '@/shared/utils/drag-drop';
+import {
+  DRAG_KEYS,
+  getFirstDragValue,
+  parseDragIndex,
+  setDragData,
+} from '@/shared/utils/drag-drop';
 
 export type SectionDragData = {
   id: string | null;
@@ -66,7 +71,7 @@ export const readSectionDragData = (
     [DRAG_KEYS.SECTION_INDEX],
     fallback?.index !== undefined && fallback?.index !== null ? String(fallback.index) : null
   );
-  const index = rawIndex ? parseDragIndex(rawIndex) : fallback?.index ?? null;
+  const index = rawIndex ? parseDragIndex(rawIndex) : (fallback?.index ?? null);
   return { id, type, zone, index };
 };
 

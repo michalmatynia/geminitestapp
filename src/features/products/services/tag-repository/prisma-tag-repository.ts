@@ -1,12 +1,7 @@
 import { Prisma, ProductTag as PrismaProductTag } from '@prisma/client';
 
-import type { 
-  TagRepository, 
-  TagFilters 
-} from '@/shared/contracts/products';
-import type { 
-  ProductTag 
-} from '@/shared/contracts/products';
+import type { TagRepository, TagFilters } from '@/shared/contracts/products';
+import type { ProductTag } from '@/shared/contracts/products';
 import prisma from '@/shared/lib/db/prisma';
 
 const toTagDomain = (tag: PrismaProductTag): ProductTag => ({
@@ -41,7 +36,11 @@ export const prismaTagRepository: TagRepository = {
     return tag ? toTagDomain(tag) : null;
   },
 
-  async createTag(data: { name: string; color?: string | null; catalogId: string }): Promise<ProductTag> {
+  async createTag(data: {
+    name: string;
+    color?: string | null;
+    catalogId: string;
+  }): Promise<ProductTag> {
     const tag = await prisma.productTag.create({
       data: {
         name: data.name,

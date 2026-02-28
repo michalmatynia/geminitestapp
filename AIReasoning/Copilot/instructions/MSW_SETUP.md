@@ -1,11 +1,13 @@
 # MSW 2.0 Setup Guide
 
 ## Overview
+
 Mock Service Worker (MSW) is a library for mocking HTTP requests during development and testing. MSW 2.0 has been installed and configured for your Next.js application.
 
 ## Installation
 
 MSW 2.0 has been installed as a dev dependency:
+
 ```bash
 npm install msw@2.0.0 --save-dev --legacy-peer-deps
 ```
@@ -24,6 +26,7 @@ mocks/
 ## Configuration
 
 ### 1. Handlers (`mocks/handlers.ts`)
+
 Defines all mock API responses:
 
 ```typescript
@@ -31,13 +34,16 @@ import { http, HttpResponse } from 'msw';
 
 export const handlers = [
   http.get('/api/products', () => {
-    return HttpResponse.json({ /* mock data */ });
+    return HttpResponse.json({
+      /* mock data */
+    });
   }),
   // ... more handlers
 ];
 ```
 
 **Available HTTP methods:**
+
 - `http.get()`
 - `http.post()`
 - `http.put()`
@@ -46,6 +52,7 @@ export const handlers = [
 - `http.head()`
 
 ### 2. Browser Setup (`mocks/browser.ts`)
+
 For development:
 
 ```typescript
@@ -56,6 +63,7 @@ export const worker = setupWorker(...handlers);
 ```
 
 ### 3. Server Setup (`mocks/server.ts`)
+
 For Node.js testing:
 
 ```typescript
@@ -66,6 +74,7 @@ export const server = setupServer(...handlers);
 ```
 
 ### 4. Vitest Integration (`vitest.setup.ts`)
+
 Automatically starts the MSW server:
 
 ```typescript
@@ -90,7 +99,7 @@ describe('API Tests', () => {
   it('should fetch products', async () => {
     const response = await fetch('/api/products');
     const data = await response.json();
-    
+
     expect(response.status).toBe(200);
     expect(data.data).toBeDefined();
   });
@@ -106,7 +115,7 @@ it('should handle custom response', async () => {
       return HttpResponse.json({ custom: 'data' });
     })
   );
-  
+
   const response = await fetch('/api/products');
   // Uses the overridden handler
 });
@@ -118,13 +127,10 @@ it('should handle custom response', async () => {
 it('should handle errors', async () => {
   server.use(
     http.get('/api/products', () => {
-      return HttpResponse.json(
-        { error: 'Server error' },
-        { status: 500 }
-      );
+      return HttpResponse.json({ error: 'Server error' }, { status: 500 });
     })
   );
-  
+
   const response = await fetch('/api/products');
   expect(response.status).toBe(500);
 });
@@ -135,6 +141,7 @@ it('should handle errors', async () => {
 The default handlers include mock data for:
 
 ### Products
+
 - 2 sample products with multilingual names
 - CRUD operations (GET, POST, PUT, DELETE)
 
@@ -150,6 +157,7 @@ The default handlers include mock data for:
 ```
 
 ### Catalogs
+
 - 2 sample catalogs
 - GET single and multiple
 
@@ -162,6 +170,7 @@ The default handlers include mock data for:
 ```
 
 ### Settings
+
 - 2 sample settings
 - GET and POST operations
 
@@ -204,30 +213,34 @@ http.get('/api/new-endpoint', () => {
 ## Handler Patterns
 
 ### Path Parameters
+
 ```typescript
 http.get('/api/products/:id', ({ params }) => {
   return HttpResponse.json({ id: params.id });
-})
+});
 ```
 
 ### Query Parameters
+
 ```typescript
 http.get('/api/products', ({ request }) => {
   const url = new URL(request.url);
   const page = url.searchParams.get('page');
   return HttpResponse.json({ page });
-})
+});
 ```
 
 ### Request Body
+
 ```typescript
 http.post('/api/products', async ({ request }) => {
   const body = await request.json();
   return HttpResponse.json({ created: body });
-})
+});
 ```
 
 ### Custom Headers
+
 ```typescript
 http.get('/api/products', () => {
   return HttpResponse.json(
@@ -239,41 +252,41 @@ http.get('/api/products', () => {
       },
     }
   );
-})
+});
 ```
 
 ## Advanced Features
 
 ### Delayed Responses
+
 ```typescript
 http.get('/api/products', async () => {
-  await new Promise(resolve => setTimeout(resolve, 1000));
+  await new Promise((resolve) => setTimeout(resolve, 1000));
   return HttpResponse.json({ data: [] });
-})
+});
 ```
 
 ### Conditional Responses
+
 ```typescript
 http.get('/api/products/:id', ({ params }) => {
   if (params.id === 'error') {
-    return HttpResponse.json(
-      { error: 'Not found' },
-      { status: 404 }
-    );
+    return HttpResponse.json({ error: 'Not found' }, { status: 404 });
   }
   return HttpResponse.json({ id: params.id });
-})
+});
 ```
 
 ### Request Inspection
+
 ```typescript
 http.post('/api/products', async ({ request }) => {
   const body = await request.json();
   const headers = Object.fromEntries(request.headers);
-  
+
   console.log('Request:', { body, headers });
   return HttpResponse.json({ success: true });
-})
+});
 ```
 
 ## Best Practices
@@ -301,17 +314,21 @@ http.post('/api/products', async ({ request }) => {
 ## Troubleshooting
 
 ### "No unhandled request" Error
+
 The handler isn't defined. Add it to `mocks/handlers.ts`
 
 ### Handler Not Being Used
+
 Check if it's defined before the test runs. Handlers registered with `server.use()` override default handlers.
 
 ### Tests Hanging
+
 Make sure the MSW server starts before tests. It's configured in `vitest.setup.ts`
 
 ## Example Test Suite
 
 See `mocks/__tests__/handlers.test.ts` for a complete example including:
+
 - GET single resource
 - GET multiple resources
 - POST (create)

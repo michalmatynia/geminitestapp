@@ -2,14 +2,7 @@
 
 import React from 'react';
 import { PenLine, Trash2 } from 'lucide-react';
-import {
-  Button,
-  Checkbox,
-  Input,
-  Tooltip,
-  FormSection,
-  FormField,
-} from '@/shared/ui';
+import { Button, Checkbox, Input, Tooltip, FormSection, FormField } from '@/shared/ui';
 import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
 import { getDocumentationTooltip } from '@/shared/lib/tooltip-engine';
 import { DEFAULT_ANIMATION_CONFIG } from '@/shared/lib/gsap';
@@ -21,26 +14,33 @@ const EMPTY_SHAPES: VectorShape[] = [];
 
 export function AdvancedMotionPathSection(): React.JSX.Element {
   const { config, onChange, openVectorOverlay } = useAnimationConfigContext();
-  
-  const drawPathTooltip = getDocumentationTooltip(
-    DOCUMENTATION_MODULE_IDS.cms,
-    'animation_draw_path_canvas'
-  ) ?? 'Draw path on canvas';
-  const clearPathTooltip = getDocumentationTooltip(
-    DOCUMENTATION_MODULE_IDS.cms,
-    'animation_clear_path_canvas'
-  ) ?? 'Clear path';
 
-  const motionPathEnabledValue = config.motionPathEnabled ?? DEFAULT_ANIMATION_CONFIG.motionPathEnabled ?? false;
-  const motionPathPathValue = config.motionPathPath ?? DEFAULT_ANIMATION_CONFIG.motionPathPath ?? '';
-  const motionPathAlignValue = config.motionPathAlign ?? DEFAULT_ANIMATION_CONFIG.motionPathAlign ?? true;
-  const motionPathAutoRotateValue = config.motionPathAutoRotate ?? DEFAULT_ANIMATION_CONFIG.motionPathAutoRotate ?? true;
-  const motionPathRotateOffsetValue = config.motionPathRotateOffset ?? DEFAULT_ANIMATION_CONFIG.motionPathRotateOffset ?? 0;
-  const motionPathStartValue = config.motionPathStart ?? DEFAULT_ANIMATION_CONFIG.motionPathStart ?? 0;
+  const drawPathTooltip =
+    getDocumentationTooltip(DOCUMENTATION_MODULE_IDS.cms, 'animation_draw_path_canvas') ??
+    'Draw path on canvas';
+  const clearPathTooltip =
+    getDocumentationTooltip(DOCUMENTATION_MODULE_IDS.cms, 'animation_clear_path_canvas') ??
+    'Clear path';
+
+  const motionPathEnabledValue =
+    config.motionPathEnabled ?? DEFAULT_ANIMATION_CONFIG.motionPathEnabled ?? false;
+  const motionPathPathValue =
+    config.motionPathPath ?? DEFAULT_ANIMATION_CONFIG.motionPathPath ?? '';
+  const motionPathAlignValue =
+    config.motionPathAlign ?? DEFAULT_ANIMATION_CONFIG.motionPathAlign ?? true;
+  const motionPathAutoRotateValue =
+    config.motionPathAutoRotate ?? DEFAULT_ANIMATION_CONFIG.motionPathAutoRotate ?? true;
+  const motionPathRotateOffsetValue =
+    config.motionPathRotateOffset ?? DEFAULT_ANIMATION_CONFIG.motionPathRotateOffset ?? 0;
+  const motionPathStartValue =
+    config.motionPathStart ?? DEFAULT_ANIMATION_CONFIG.motionPathStart ?? 0;
   const motionPathEndValue = config.motionPathEnd ?? DEFAULT_ANIMATION_CONFIG.motionPathEnd ?? 1;
-  const motionPathFollowValue = config.motionPathFollow ?? DEFAULT_ANIMATION_CONFIG.motionPathFollow ?? false;
-  const motionPathSpacingValue = config.motionPathSpacing ?? DEFAULT_ANIMATION_CONFIG.motionPathSpacing ?? 0.08;
-  const motionPathShapesValue = config.motionPathShapes ?? DEFAULT_ANIMATION_CONFIG.motionPathShapes ?? EMPTY_SHAPES;
+  const motionPathFollowValue =
+    config.motionPathFollow ?? DEFAULT_ANIMATION_CONFIG.motionPathFollow ?? false;
+  const motionPathSpacingValue =
+    config.motionPathSpacing ?? DEFAULT_ANIMATION_CONFIG.motionPathSpacing ?? 0.08;
+  const motionPathShapesValue =
+    config.motionPathShapes ?? DEFAULT_ANIMATION_CONFIG.motionPathShapes ?? EMPTY_SHAPES;
 
   const handleEnabledChange = (checked: boolean | 'indeterminate') => {
     onChange({ ...config, motionPathEnabled: checked === true });
@@ -56,7 +56,12 @@ export function AdvancedMotionPathSection(): React.JSX.Element {
       description: 'Draw the motion path directly on the preview canvas.',
       initialShapes: motionPathShapesValue,
       onApply: ({ shapes, path }: VectorOverlayResult) => {
-        onChange({ ...config, motionPathEnabled: true, motionPathPath: path, motionPathShapes: shapes });
+        onChange({
+          ...config,
+          motionPathEnabled: true,
+          motionPathPath: path,
+          motionPathShapes: shapes,
+        });
       },
     });
   };
@@ -118,7 +123,8 @@ export function AdvancedMotionPathSection(): React.JSX.Element {
                 value={motionPathStartValue}
                 onChange={(e) => {
                   const val = parseFloat(e.target.value);
-                  if (!isNaN(val)) onChange({ ...config, motionPathStart: Math.max(0, Math.min(1, val)) });
+                  if (!isNaN(val))
+                    onChange({ ...config, motionPathStart: Math.max(0, Math.min(1, val)) });
                 }}
                 className='h-9'
               />
@@ -132,7 +138,8 @@ export function AdvancedMotionPathSection(): React.JSX.Element {
                 value={motionPathEndValue}
                 onChange={(e) => {
                   const val = parseFloat(e.target.value);
-                  if (!isNaN(val)) onChange({ ...config, motionPathEnd: Math.max(0, Math.min(1, val)) });
+                  if (!isNaN(val))
+                    onChange({ ...config, motionPathEnd: Math.max(0, Math.min(1, val)) });
                 }}
                 className='h-9'
               />
@@ -141,11 +148,21 @@ export function AdvancedMotionPathSection(): React.JSX.Element {
 
           <div className='grid gap-3 sm:grid-cols-2'>
             <div className='flex items-center gap-2'>
-              <Checkbox checked={motionPathAlignValue} onCheckedChange={(checked) => onChange({ ...config, motionPathAlign: checked === true })} />
+              <Checkbox
+                checked={motionPathAlignValue}
+                onCheckedChange={(checked) =>
+                  onChange({ ...config, motionPathAlign: checked === true })
+                }
+              />
               <span className='text-xs text-gray-300'>Align to path</span>
             </div>
             <div className='flex items-center gap-2'>
-              <Checkbox checked={motionPathAutoRotateValue} onCheckedChange={(checked) => onChange({ ...config, motionPathAutoRotate: checked === true })} />
+              <Checkbox
+                checked={motionPathAutoRotateValue}
+                onCheckedChange={(checked) =>
+                  onChange({ ...config, motionPathAutoRotate: checked === true })
+                }
+              />
               <span className='text-xs text-gray-300'>Auto rotate</span>
             </div>
           </div>
@@ -160,7 +177,11 @@ export function AdvancedMotionPathSection(): React.JSX.Element {
                 value={motionPathRotateOffsetValue}
                 onChange={(e) => {
                   const val = parseFloat(e.target.value);
-                  if (!isNaN(val)) onChange({ ...config, motionPathRotateOffset: Math.max(-360, Math.min(360, val)) });
+                  if (!isNaN(val))
+                    onChange({
+                      ...config,
+                      motionPathRotateOffset: Math.max(-360, Math.min(360, val)),
+                    });
                 }}
                 className='h-9'
               />
@@ -169,7 +190,12 @@ export function AdvancedMotionPathSection(): React.JSX.Element {
 
           <div className='grid gap-3 sm:grid-cols-2 items-end'>
             <div className='flex items-center gap-2 mb-2'>
-              <Checkbox checked={motionPathFollowValue} onCheckedChange={(checked) => onChange({ ...config, motionPathFollow: checked === true })} />
+              <Checkbox
+                checked={motionPathFollowValue}
+                onCheckedChange={(checked) =>
+                  onChange({ ...config, motionPathFollow: checked === true })
+                }
+              />
               <span className='text-xs text-gray-300'>Follow path (multi)</span>
             </div>
             {motionPathFollowValue && (
@@ -182,7 +208,8 @@ export function AdvancedMotionPathSection(): React.JSX.Element {
                   value={motionPathSpacingValue}
                   onChange={(e) => {
                     const val = parseFloat(e.target.value);
-                    if (!isNaN(val)) onChange({ ...config, motionPathSpacing: Math.max(0, Math.min(1, val)) });
+                    if (!isNaN(val))
+                      onChange({ ...config, motionPathSpacing: Math.max(0, Math.min(1, val)) });
                   }}
                   className='h-9'
                 />

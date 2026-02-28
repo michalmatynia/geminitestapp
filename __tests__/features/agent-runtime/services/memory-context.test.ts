@@ -24,20 +24,27 @@ describe('Agent Runtime - Memory Context', () => {
 
     await addProblemSolutionMemory(params);
 
-    expect(memoryModule.validateAndAddAgentLongTermMemory).toHaveBeenCalledWith(expect.objectContaining({
-      memoryKey: 'key-1',
-      content: 'Problem: Element not clickable \u00b7 Countermeasure: Scroll into view',
-      tags: ['problem-solution', 'playwright'],
-      metadata: expect.objectContaining({
-        problem: 'Element not clickable',
-        countermeasure: 'Scroll into view',
-        selector: '.btn',
-      }),
-    }));
+    expect(memoryModule.validateAndAddAgentLongTermMemory).toHaveBeenCalledWith(
+      expect.objectContaining({
+        memoryKey: 'key-1',
+        content: 'Problem: Element not clickable \u00b7 Countermeasure: Scroll into view',
+        tags: ['problem-solution', 'playwright'],
+        metadata: expect.objectContaining({
+          problem: 'Element not clickable',
+          countermeasure: 'Scroll into view',
+          selector: '.btn',
+        }),
+      })
+    );
   });
 
   it('should do nothing if required params are missing', async () => {
-    await addProblemSolutionMemory({ memoryKey: '', runId: '1', problem: 'P', countermeasure: 'C' });
+    await addProblemSolutionMemory({
+      memoryKey: '',
+      runId: '1',
+      problem: 'P',
+      countermeasure: 'C',
+    });
     expect(memoryModule.validateAndAddAgentLongTermMemory).not.toHaveBeenCalled();
   });
 });

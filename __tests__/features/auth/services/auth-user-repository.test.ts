@@ -1,6 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-import { findAuthUserByEmail, findAuthUserById, normalizeAuthEmail } from '@/features/auth/services/auth-user-repository';
+import {
+  findAuthUserByEmail,
+  findAuthUserById,
+  normalizeAuthEmail,
+} from '@/features/auth/services/auth-user-repository';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 vi.mock('@/shared/lib/db/mongo-client', () => ({
@@ -67,19 +71,19 @@ describe('Auth User Repository', () => {
         collection: vi.fn().mockReturnValue(mockCollection),
       };
       vi.mocked(getMongoDb).mockResolvedValue(mockDb as any);
-      
+
       // We need to mock ObjectId if the implementation imports it dynamically or uses a global
       // The implementation does: const { ObjectId } = await import("mongodb");
       // Since we are in node environment (vitest), actual mongodb import works.
       // But we need to ensure the ID passed is compatible or mocked.
-      // Ideally we'd mock the dynamic import, but let's try with a valid mongo ID format string first, 
+      // Ideally we'd mock the dynamic import, but let's try with a valid mongo ID format string first,
       // or rely on the fact that findAuthUserById checks ObjectId.isValid.
-      
+
       // Let's use a real-looking ObjectId string to pass validation
       const validId = '507f1f77bcf86cd799439011';
-      
+
       const result = await findAuthUserById(validId);
-      
+
       expect(mockDb.collection).toHaveBeenCalledWith('users');
       // check if findOne was called. We can't easily match the exact ObjectId instance in call arguments without more mocking,
       // but we can check it was called.

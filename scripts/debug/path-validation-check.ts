@@ -17,27 +17,40 @@ async function main(): Promise<void> {
   }
   const parsed = JSON.parse(rec.value) as Record<string, unknown>;
   const nodes = normalizeNodes(Array.isArray(parsed['nodes']) ? (parsed['nodes'] as never[]) : []);
-  const edges = sanitizeEdges(nodes, Array.isArray(parsed['edges']) ? (parsed['edges'] as never[]) : []);
+  const edges = sanitizeEdges(
+    nodes,
+    Array.isArray(parsed['edges']) ? (parsed['edges'] as never[]) : []
+  );
   const report = evaluateAiPathsValidationPreflight({
     nodes,
     edges,
-    config: normalizeAiPathsValidationConfig(parsed['aiPathsValidation'] as Record<string, unknown> | undefined),
+    config: normalizeAiPathsValidationConfig(
+      parsed['aiPathsValidation'] as Record<string, unknown> | undefined
+    ),
   });
-  console.log(JSON.stringify({
-    pathId,
-    enabled: report.enabled,
-    blocked: report.blocked,
-    shouldWarn: report.shouldWarn,
-    score: report.score,
-    policy: report.policy,
-    warnThreshold: report.warnThreshold,
-    blockThreshold: report.blockThreshold,
-    failedRules: report.failedRules,
-    findings: report.findings.slice(0, 10),
-  }, null, 2));
+  console.log(
+    JSON.stringify(
+      {
+        pathId,
+        enabled: report.enabled,
+        blocked: report.blocked,
+        shouldWarn: report.shouldWarn,
+        score: report.score,
+        policy: report.policy,
+        warnThreshold: report.warnThreshold,
+        blockThreshold: report.blockThreshold,
+        failedRules: report.failedRules,
+        findings: report.findings.slice(0, 10),
+      },
+      null,
+      2
+    )
+  );
 }
 
-void main().then(() => process.exit(0)).catch((error) => {
-  console.error(error);
-  process.exit(1);
-});
+void main()
+  .then(() => process.exit(0))
+  .catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });

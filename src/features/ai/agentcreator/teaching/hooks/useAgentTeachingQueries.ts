@@ -2,18 +2,14 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 
-import type { 
-  AgentTeachingAgentDto as AgentTeachingAgentRecord, 
-  AgentTeachingCollectionDto as AgentTeachingEmbeddingCollectionRecord, 
-  AgentTeachingDocumentDto as AgentTeachingEmbeddingDocumentListItem, 
-  AgentTeachingChatSourceDto as AgentTeachingChatSource 
+import type {
+  AgentTeachingAgentDto as AgentTeachingAgentRecord,
+  AgentTeachingCollectionDto as AgentTeachingEmbeddingCollectionRecord,
+  AgentTeachingDocumentDto as AgentTeachingEmbeddingDocumentListItem,
+  AgentTeachingChatSourceDto as AgentTeachingChatSource,
 } from '@/shared/contracts/agent-teaching';
 import type { ChatMessageDto as ChatMessage, SimpleChatMessage } from '@/shared/contracts/chatbot';
-import type { 
-  ListQuery, 
-  SingleQuery, 
-  MutationResult 
-} from '@/shared/contracts/ui';
+import type { ListQuery, SingleQuery, MutationResult } from '@/shared/contracts/ui';
 import {
   createDeleteMutationV2,
   createListQueryV2,
@@ -23,9 +19,9 @@ import {
 } from '@/shared/lib/query-factories-v2';
 import { agentTeachingKeys } from '@/shared/lib/query-key-exports';
 
-import { 
-  getTeachingAgents, 
-  upsertTeachingAgent, 
+import {
+  getTeachingAgents,
+  upsertTeachingAgent,
   deleteTeachingAgent,
   getEmbeddingCollections,
   upsertEmbeddingCollection,
@@ -34,7 +30,7 @@ import {
   addEmbeddingDocument,
   deleteEmbeddingDocument,
   searchEmbeddingCollection,
-  teachingChat
+  teachingChat,
 } from '../api';
 
 export { agentTeachingKeys };
@@ -42,10 +38,23 @@ export { agentTeachingKeys };
 export function useSearchEmbeddingCollectionMutation(): MutationResult<
   AgentTeachingChatSource[],
   { collectionId: string; queryText: string; topK?: number; minScore?: number }
-  > {
+> {
   const mutationKey = agentTeachingKeys.collections();
-  return createCreateMutationV2<AgentTeachingChatSource[], { collectionId: string; queryText: string; topK?: number; minScore?: number }>({
-    mutationFn: ({ collectionId, queryText, topK, minScore }: { collectionId: string; queryText: string; topK?: number; minScore?: number }) => {
+  return createCreateMutationV2<
+    AgentTeachingChatSource[],
+    { collectionId: string; queryText: string; topK?: number; minScore?: number }
+  >({
+    mutationFn: ({
+      collectionId,
+      queryText,
+      topK,
+      minScore,
+    }: {
+      collectionId: string;
+      queryText: string;
+      topK?: number;
+      minScore?: number;
+    }) => {
       const payload: Parameters<typeof searchEmbeddingCollection>[1] = { queryText };
       if (topK !== undefined) payload.topK = topK;
       if (minScore !== undefined) payload.minScore = minScore;
@@ -66,10 +75,14 @@ export function useSearchEmbeddingCollectionMutation(): MutationResult<
 export function useTeachingChatMutation(): MutationResult<
   { message: string; sources: AgentTeachingChatSource[] },
   { agentId: string; messages: SimpleChatMessage[] }
-  > {
+> {
   const mutationKey = agentTeachingKeys.agents();
-  return createCreateMutationV2<{ message: string; sources: AgentTeachingChatSource[] }, { agentId: string; messages: SimpleChatMessage[] }>({
-    mutationFn: ({ agentId, messages }: { agentId: string; messages: SimpleChatMessage[] }) => teachingChat(agentId, messages as ChatMessage[]),
+  return createCreateMutationV2<
+    { message: string; sources: AgentTeachingChatSource[] },
+    { agentId: string; messages: SimpleChatMessage[] }
+  >({
+    mutationFn: ({ agentId, messages }: { agentId: string; messages: SimpleChatMessage[] }) =>
+      teachingChat(agentId, messages as ChatMessage[]),
     mutationKey,
     meta: {
       source: 'agentTeaching.hooks.useTeachingChatMutation',
@@ -82,7 +95,9 @@ export function useTeachingChatMutation(): MutationResult<
   });
 }
 
-export function useTeachingAgents(options?: { enabled?: boolean }): ListQuery<AgentTeachingAgentRecord> {
+export function useTeachingAgents(options?: {
+  enabled?: boolean;
+}): ListQuery<AgentTeachingAgentRecord> {
   const queryKey = agentTeachingKeys.agents();
   return createListQueryV2<AgentTeachingAgentRecord>({
     queryKey,
@@ -118,10 +133,13 @@ export function useTeachingCollections(): ListQuery<AgentTeachingEmbeddingCollec
 export function useUpsertTeachingAgentMutation(): MutationResult<
   AgentTeachingAgentRecord,
   Partial<AgentTeachingAgentRecord> & { name: string }
-  > {
+> {
   const qc = useQueryClient();
   const mutationKey = agentTeachingKeys.agents();
-  return createUpdateMutationV2<AgentTeachingAgentRecord, Partial<AgentTeachingAgentRecord> & { name: string }>({
+  return createUpdateMutationV2<
+    AgentTeachingAgentRecord,
+    Partial<AgentTeachingAgentRecord> & { name: string }
+  >({
     mutationFn: upsertTeachingAgent,
     mutationKey,
     meta: {
@@ -138,10 +156,7 @@ export function useUpsertTeachingAgentMutation(): MutationResult<
   });
 }
 
-export function useDeleteTeachingAgentMutation(): MutationResult<
-  void,
-  { id: string }
-  > {
+export function useDeleteTeachingAgentMutation(): MutationResult<void, { id: string }> {
   const qc = useQueryClient();
   const mutationKey = agentTeachingKeys.agents();
   return createDeleteMutationV2<void, { id: string }>({
@@ -164,10 +179,13 @@ export function useDeleteTeachingAgentMutation(): MutationResult<
 export function useUpsertEmbeddingCollectionMutation(): MutationResult<
   AgentTeachingEmbeddingCollectionRecord,
   Partial<AgentTeachingEmbeddingCollectionRecord> & { name: string }
-  > {
+> {
   const qc = useQueryClient();
   const mutationKey = agentTeachingKeys.collections();
-  return createUpdateMutationV2<AgentTeachingEmbeddingCollectionRecord, Partial<AgentTeachingEmbeddingCollectionRecord> & { name: string }>({
+  return createUpdateMutationV2<
+    AgentTeachingEmbeddingCollectionRecord,
+    Partial<AgentTeachingEmbeddingCollectionRecord> & { name: string }
+  >({
     mutationFn: upsertEmbeddingCollection,
     mutationKey,
     meta: {
@@ -184,10 +202,7 @@ export function useUpsertEmbeddingCollectionMutation(): MutationResult<
   });
 }
 
-export function useDeleteEmbeddingCollectionMutation(): MutationResult<
-  void,
-  { id: string }
-  > {
+export function useDeleteEmbeddingCollectionMutation(): MutationResult<void, { id: string }> {
   const qc = useQueryClient();
   const mutationKey = agentTeachingKeys.collections();
   return createDeleteMutationV2<void, { id: string }>({
@@ -208,10 +223,18 @@ export function useDeleteEmbeddingCollectionMutation(): MutationResult<
   });
 }
 
-export function useEmbeddingDocuments(collectionId: string | null): SingleQuery<{ items: AgentTeachingEmbeddingDocumentListItem[]; total: number } | null> {
-  return createSingleQueryV2<{ items: AgentTeachingEmbeddingDocumentListItem[]; total: number } | null>({
+export function useEmbeddingDocuments(
+  collectionId: string | null
+): SingleQuery<{ items: AgentTeachingEmbeddingDocumentListItem[]; total: number } | null> {
+  return createSingleQueryV2<{
+    items: AgentTeachingEmbeddingDocumentListItem[];
+    total: number;
+  } | null>({
     id: collectionId,
-    queryKey: (id: string) => id !== 'none' ? agentTeachingKeys.documents(id) : [...agentTeachingKeys.all, 'detail', 'documents', 'none'],
+    queryKey: (id: string) =>
+      id !== 'none'
+        ? agentTeachingKeys.documents(id)
+        : [...agentTeachingKeys.all, 'detail', 'documents', 'none'],
     queryFn: async () => {
       if (!collectionId) return null;
       return fetchEmbeddingDocs(collectionId);
@@ -229,12 +252,39 @@ export function useEmbeddingDocuments(collectionId: string | null): SingleQuery<
 
 export function useAddEmbeddingDocumentMutation(): MutationResult<
   AgentTeachingEmbeddingDocumentListItem,
-  { collectionId: string; text: string; title?: string | null; source?: string | null; tags?: string[] }
-  > {
+  {
+    collectionId: string;
+    text: string;
+    title?: string | null;
+    source?: string | null;
+    tags?: string[];
+  }
+> {
   const qc = useQueryClient();
   const mutationKey = agentTeachingKeys.collections();
-  return createCreateMutationV2<AgentTeachingEmbeddingDocumentListItem, { collectionId: string; text: string; title?: string | null; source?: string | null; tags?: string[] }>({
-    mutationFn: ({ collectionId, text, title, source, tags }: { collectionId: string; text: string; title?: string | null; source?: string | null; tags?: string[] }) => {
+  return createCreateMutationV2<
+    AgentTeachingEmbeddingDocumentListItem,
+    {
+      collectionId: string;
+      text: string;
+      title?: string | null;
+      source?: string | null;
+      tags?: string[];
+    }
+  >({
+    mutationFn: ({
+      collectionId,
+      text,
+      title,
+      source,
+      tags,
+    }: {
+      collectionId: string;
+      text: string;
+      title?: string | null;
+      source?: string | null;
+      tags?: string[];
+    }) => {
       const payload: Parameters<typeof addEmbeddingDocument>[1] = { text };
       if (title !== undefined) payload.title = title;
       if (source !== undefined) payload.source = source;
@@ -252,18 +302,19 @@ export function useAddEmbeddingDocumentMutation(): MutationResult<
     },
     onSuccess: (_item, vars: { collectionId: string }) => {
       void qc.invalidateQueries({ queryKey: agentTeachingKeys.documents(vars.collectionId) });
-    }
+    },
   });
 }
 
 export function useDeleteEmbeddingDocumentMutation(): MutationResult<
   void,
   { collectionId: string; documentId: string }
-  > {
+> {
   const qc = useQueryClient();
   const mutationKey = agentTeachingKeys.collections();
   return createDeleteMutationV2<void, { collectionId: string; documentId: string }>({
-    mutationFn: ({ collectionId, documentId }: { collectionId: string; documentId: string }) => deleteEmbeddingDocument(collectionId, documentId),
+    mutationFn: ({ collectionId, documentId }: { collectionId: string; documentId: string }) =>
+      deleteEmbeddingDocument(collectionId, documentId),
     mutationKey,
     meta: {
       source: 'agentTeaching.hooks.useDeleteEmbeddingDocumentMutation',
@@ -275,6 +326,6 @@ export function useDeleteEmbeddingDocumentMutation(): MutationResult<
     },
     onSuccess: (_item, vars: { collectionId: string }) => {
       void qc.invalidateQueries({ queryKey: agentTeachingKeys.documents(vars.collectionId) });
-    }
+    },
   });
 }

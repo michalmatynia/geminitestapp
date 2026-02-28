@@ -7,7 +7,7 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
 const updateListingSchema = z.object({
-  inventoryId: z.string().trim().min(1).nullable()
+  inventoryId: z.string().trim().min(1).nullable(),
 });
 
 /**
@@ -59,7 +59,7 @@ export async function PATCH_handler(
   }
 
   const parsed = await parseJsonBody(req, updateListingSchema, {
-    logPrefix: 'integrations.products.listings.PATCH'
+    logPrefix: 'integrations.products.listings.PATCH',
   });
   if (!parsed.ok) {
     return parsed.response;

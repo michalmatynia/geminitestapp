@@ -23,15 +23,7 @@ const OPERATION_EXPECTATIONS = {
 const STRICT_ALIAS_OPERATION = process.env.CHECK_FACTORY_META_STRICT_ALIAS === '1';
 const STRICT_GENERIC_ACTION = process.env.CHECK_FACTORY_META_STRICT_GENERIC_ACTION !== '0';
 
-const IGNORED_DIRS = new Set([
-  'node_modules',
-  '.next',
-  '.git',
-  'dist',
-  'build',
-  'tmp',
-  'public',
-]);
+const IGNORED_DIRS = new Set(['node_modules', '.next', '.git', 'dist', 'build', 'tmp', 'public']);
 
 const propertyNameText = (nameNode) => {
   if (!nameNode) return null;
@@ -166,7 +158,8 @@ const inspectCallExpression = (callExpression, sourceFile, relFilePath, issues) 
       file: relFilePath,
       line,
       callName,
-      message: "createMutationV2 must use meta.operation: 'action'. Use operation-specific aliases for create/update/delete.",
+      message:
+        "createMutationV2 must use meta.operation: 'action'. Use operation-specific aliases for create/update/delete.",
     });
     return;
   }

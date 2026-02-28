@@ -51,10 +51,7 @@ type JobQueueRunCardProps = {
   run: AiPathRunRecord;
 };
 
-export function JobQueueRunCard({
-  runId,
-  run,
-}: JobQueueRunCardProps): React.JSX.Element {
+export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX.Element {
   const {
     expandedRunIds,
     runDetails,
@@ -82,22 +79,26 @@ export function JobQueueRunCard({
   const isScheduledRun = detailRun.triggerEvent === 'scheduled_run';
   const streamStatus: StreamConnectionStatus = pausedStreams.has(runId)
     ? 'paused'
-    : streamStatuses[runId] ?? 'stopped';
+    : (streamStatuses[runId] ?? 'stopped');
   const canCancel = ['queued', 'running', 'paused'].includes(detailRun.status);
-  
+
   const nodes = normalizeRunNodes(detail?.nodes);
   const events = normalizeRunEvents(detail?.events);
-  const history = (detailRun.runtimeState as { history?: Record<string, RuntimeHistoryEntry[]> } | undefined)?.history;
+  const history = (
+    detailRun.runtimeState as { history?: Record<string, RuntimeHistoryEntry[]> } | undefined
+  )?.history;
   const historyOptions = buildHistoryNodeOptions(history, nodes, detailRun.graph?.nodes ?? null);
-  
+
   const selectedHistoryNodeId = React.useMemo(() => {
     if (!historyOptions.length) return null;
     const existing = historySelection[runId];
-    if (existing && historyOptions.some((option: { id: string }) => option.id === existing)) return existing;
+    if (existing && historyOptions.some((option: { id: string }) => option.id === existing))
+      return existing;
     return historyOptions[0]?.id ?? null;
   }, [historyOptions, historySelection, runId]);
 
-  const historyEntries = selectedHistoryNodeId && history ? history[selectedHistoryNodeId] ?? [] : [];
+  const historyEntries =
+    selectedHistoryNodeId && history ? (history[selectedHistoryNodeId] ?? []) : [];
 
   const onToggleRun = () => toggleRun(runId);
   const onToggleStream = () => toggleStream(runId);
@@ -132,12 +133,7 @@ export function JobQueueRunCard({
           </div>
           {isScheduledRun ? (
             <div className='mt-1'>
-              <StatusBadge
-                status='Scheduled'
-                variant='warning'
-                size='sm'
-                className='font-bold'
-              />
+              <StatusBadge status='Scheduled' variant='warning' size='sm' className='font-bold' />
             </div>
           ) : null}
           <div className='mt-1 flex flex-wrap items-center gap-1'>
@@ -171,12 +167,8 @@ export function JobQueueRunCard({
           <div className='text-[11px] text-gray-400'>
             Run ID: <span className='font-mono'>{detailRun.id}</span>
           </div>
-          <div className='text-[11px] text-gray-500'>
-            Created {formatDate(detailRun.createdAt)}
-          </div>
-          <div className='text-[11px] text-gray-500'>
-            Stream: {streamStatus}
-          </div>
+          <div className='text-[11px] text-gray-500'>Created {formatDate(detailRun.createdAt)}</div>
+          <div className='text-[11px] text-gray-500'>Stream: {streamStatus}</div>
           {(detailRun.entityType || detailRun.entityId) && (
             <div className='text-[11px] text-gray-500'>
               Entity: {detailRun.entityType ?? '?'} {detailRun.entityId ?? ''}
@@ -344,7 +336,11 @@ export function JobQueueRunCard({
               </CollapsibleSection>
 
               <CollapsibleSection
-                title={<span className='text-[11px] uppercase text-gray-400'>Nodes ({nodes.length})</span>}
+                title={
+                  <span className='text-[11px] uppercase text-gray-400'>
+                    Nodes ({nodes.length})
+                  </span>
+                }
                 variant='subtle'
                 className='border-border/70 bg-black/20'
               >
@@ -362,13 +358,13 @@ export function JobQueueRunCard({
                       return (
                         <CollapsibleSection
                           key={node.id}
-                          title={(
+                          title={
                             <span className='text-[11px] text-gray-300'>
                               {node.nodeTitle ?? node.nodeId}{' '}
                               {node.nodeType ? `(${node.nodeType})` : ''}
                               <span className='ml-2 text-gray-500'>{node.status}</span>
                             </span>
-                          )}
+                          }
                           className='border-border/60 bg-black/30'
                           variant='subtle'
                         >
@@ -437,7 +433,11 @@ export function JobQueueRunCard({
               </CollapsibleSection>
 
               <CollapsibleSection
-                title={<span className='text-[11px] uppercase text-gray-400'>Events ({events.length})</span>}
+                title={
+                  <span className='text-[11px] uppercase text-gray-400'>
+                    Events ({events.length})
+                  </span>
+                }
                 variant='subtle'
                 className='border-border/70 bg-black/20'
               >
@@ -480,13 +480,19 @@ export function JobQueueRunCard({
                     <Textarea
                       className='mt-1 min-h-[120px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
                       readOnly
-                      value={safePrettyJson((detailRun.runtimeState as Record<string, unknown>)?.[ 'inputs' ])}                    />
+                      value={safePrettyJson(
+                        (detailRun.runtimeState as Record<string, unknown>)?.['inputs']
+                      )}
+                    />
                   </FormField>
                   <FormField label='Outputs'>
                     <Textarea
                       className='mt-1 min-h-[120px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
                       readOnly
-                      value={safePrettyJson((detailRun.runtimeState as Record<string, unknown>)?.[ 'outputs' ])}                    />
+                      value={safePrettyJson(
+                        (detailRun.runtimeState as Record<string, unknown>)?.['outputs']
+                      )}
+                    />
                   </FormField>
                 </div>
                 <div className='mt-3'>
@@ -494,7 +500,10 @@ export function JobQueueRunCard({
                     <Textarea
                       className='mt-1 min-h-[80px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
                       readOnly
-                      value={safePrettyJson((detailRun.runtimeState as Record<string, unknown>)?.[ 'hashes' ])}                    />
+                      value={safePrettyJson(
+                        (detailRun.runtimeState as Record<string, unknown>)?.['hashes']
+                      )}
+                    />
                   </FormField>
                 </div>
               </CollapsibleSection>

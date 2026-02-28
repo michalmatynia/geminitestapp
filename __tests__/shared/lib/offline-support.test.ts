@@ -1,10 +1,7 @@
 import { QueryClient } from '@tanstack/react-query';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const {
-  createSyncStoragePersisterMock,
-  persistQueryClientMock,
-} = vi.hoisted(() => ({
+const { createSyncStoragePersisterMock, persistQueryClientMock } = vi.hoisted(() => ({
   createSyncStoragePersisterMock: vi.fn(() => ({
     persistClient: vi.fn(),
     restoreClient: vi.fn(),
@@ -21,11 +18,7 @@ vi.mock('@tanstack/react-query-persist-client', () => ({
   persistQueryClient: persistQueryClientMock,
 }));
 
-import {
-  offlineQueries,
-  isOfflineQuery,
-  setupOfflineSupport,
-} from '@/shared/lib/offline-support';
+import { offlineQueries, isOfflineQuery, setupOfflineSupport } from '@/shared/lib/offline-support';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 describe('offline-support', () => {

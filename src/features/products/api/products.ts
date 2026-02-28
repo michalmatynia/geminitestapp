@@ -5,26 +5,29 @@ const PRODUCT_READ_TIMEOUT_MS = 60_000;
 const PRODUCT_WRITE_TIMEOUT_MS = 60_000;
 
 // This function fetches a list of products from the API.
-export async function getProducts(filters: {
-  search?: string | undefined;
-  id?: string | undefined;
-  idMatchMode?: 'exact' | 'partial' | undefined;
-  sku?: string | undefined;
-  description?: string | undefined;
-  categoryId?: string | undefined;
-  minPrice?: number | undefined;
-  maxPrice?: number | undefined;
-  stockValue?: number | undefined;
-  stockOperator?: 'gt' | 'gte' | 'lt' | 'lte' | 'eq' | undefined;
-  startDate?: string | undefined;
-  endDate?: string | undefined;
-  advancedFilter?: string | undefined;
-  page?: number | undefined;
-  pageSize?: number | undefined;
-  catalogId?: string | undefined;
-  searchLanguage?: string | undefined;
-  baseExported?: boolean | undefined;
-}, signal?: AbortSignal): Promise<ProductWithImages[]> {
+export async function getProducts(
+  filters: {
+    search?: string | undefined;
+    id?: string | undefined;
+    idMatchMode?: 'exact' | 'partial' | undefined;
+    sku?: string | undefined;
+    description?: string | undefined;
+    categoryId?: string | undefined;
+    minPrice?: number | undefined;
+    maxPrice?: number | undefined;
+    stockValue?: number | undefined;
+    stockOperator?: 'gt' | 'gte' | 'lt' | 'lte' | 'eq' | undefined;
+    startDate?: string | undefined;
+    endDate?: string | undefined;
+    advancedFilter?: string | undefined;
+    page?: number | undefined;
+    pageSize?: number | undefined;
+    catalogId?: string | undefined;
+    searchLanguage?: string | undefined;
+    baseExported?: boolean | undefined;
+  },
+  signal?: AbortSignal
+): Promise<ProductWithImages[]> {
   const options: ApiClientOptions = {
     params: {
       fresh: 1,
@@ -54,24 +57,27 @@ export async function getProducts(filters: {
   return api.get<ProductWithImages[]>('/api/products', options);
 }
 
-export async function countProducts(filters: {
-  search?: string | undefined;
-  id?: string | undefined;
-  idMatchMode?: 'exact' | 'partial' | undefined;
-  sku?: string | undefined;
-  description?: string | undefined;
-  categoryId?: string | undefined;
-  minPrice?: number | undefined;
-  maxPrice?: number | undefined;
-  stockValue?: number | undefined;
-  stockOperator?: 'gt' | 'gte' | 'lt' | 'lte' | 'eq' | undefined;
-  startDate?: string | undefined;
-  endDate?: string | undefined;
-  advancedFilter?: string | undefined;
-  catalogId?: string | undefined;
-  searchLanguage?: string | undefined;
-  baseExported?: boolean | undefined;
-}, signal?: AbortSignal): Promise<number> {
+export async function countProducts(
+  filters: {
+    search?: string | undefined;
+    id?: string | undefined;
+    idMatchMode?: 'exact' | 'partial' | undefined;
+    sku?: string | undefined;
+    description?: string | undefined;
+    categoryId?: string | undefined;
+    minPrice?: number | undefined;
+    maxPrice?: number | undefined;
+    stockValue?: number | undefined;
+    stockOperator?: 'gt' | 'gte' | 'lt' | 'lte' | 'eq' | undefined;
+    startDate?: string | undefined;
+    endDate?: string | undefined;
+    advancedFilter?: string | undefined;
+    catalogId?: string | undefined;
+    searchLanguage?: string | undefined;
+    baseExported?: boolean | undefined;
+  },
+  signal?: AbortSignal
+): Promise<number> {
   try {
     const options: ApiClientOptions = {
       params: {
@@ -175,7 +181,7 @@ export async function createProduct(formData: FormData): Promise<ProductWithImag
 
 export async function updateProduct(
   id: string,
-  data: Partial<ProductWithImages> | FormData,
+  data: Partial<ProductWithImages> | FormData
 ): Promise<ProductWithImages> {
   return api.put<ProductWithImages>(`/api/products/${id}`, data, {
     timeout: PRODUCT_WRITE_TIMEOUT_MS,

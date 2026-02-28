@@ -56,7 +56,9 @@ export function StudioInlineEditPanels(): React.JSX.Element {
         onClose={() => setSlotInlineEditOpen(false)}
         onSuccess={() => {}}
         item={selectedSlot}
-        onCopyId={(id) => { void onCopyCardId(id); }}
+        onCopyId={(id) => {
+          void onCopyCardId(id);
+        }}
         header={editCardModalHeader}
       >
         <Tabs
@@ -75,11 +77,21 @@ export function StudioInlineEditPanels(): React.JSX.Element {
           className='space-y-4'
         >
           <TabsList className='grid w-full grid-cols-5 bg-card/50'>
-            <TabsTrigger value='card' className='text-xs'>Card</TabsTrigger>
-            <TabsTrigger value='generations' className='text-xs'>Generations</TabsTrigger>
-            <TabsTrigger value='environment' className='text-xs'>Environment</TabsTrigger>
-            <TabsTrigger value='masks' className='text-xs'>Masks</TabsTrigger>
-            <TabsTrigger value='composites' className='text-xs'>Composites</TabsTrigger>
+            <TabsTrigger value='card' className='text-xs'>
+              Card
+            </TabsTrigger>
+            <TabsTrigger value='generations' className='text-xs'>
+              Generations
+            </TabsTrigger>
+            <TabsTrigger value='environment' className='text-xs'>
+              Environment
+            </TabsTrigger>
+            <TabsTrigger value='masks' className='text-xs'>
+              Masks
+            </TabsTrigger>
+            <TabsTrigger value='composites' className='text-xs'>
+              Composites
+            </TabsTrigger>
           </TabsList>
           <SlotInlineEditCardTab />
           <SlotInlineEditGenerationsTab />

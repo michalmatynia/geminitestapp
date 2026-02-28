@@ -6,17 +6,24 @@ import { Button, Input } from '@/shared/ui';
 import { SelectModal, type SelectOption } from '@/shared/ui/templates/modals/SelectModal';
 import { useCmsSlugs } from '../../../../hooks/useCmsQueries';
 
-export function LinkField({ value, onChange }: { value: string; onChange: (v: string) => void }): React.ReactNode {
+export function LinkField({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}): React.ReactNode {
   const [open, setOpen] = useState(false);
   const { data: slugs = [] } = useCmsSlugs();
 
-  const options = useMemo<SelectOption<string>[]>(() =>
-    slugs.map(s => ({
-      id: s.id,
-      label: `/${s.slug}`,
-      value: `/${s.slug}`,
-    })),
-  [slugs]
+  const options = useMemo<SelectOption<string>[]>(
+    () =>
+      slugs.map((s) => ({
+        id: s.id,
+        label: `/${s.slug}`,
+        value: `/${s.slug}`,
+      })),
+    [slugs]
   );
 
   return (
@@ -27,7 +34,12 @@ export function LinkField({ value, onChange }: { value: string; onChange: (v: st
         placeholder='URL or pick a slug...'
         className='h-8 text-xs'
       />
-      <Button size='icon' variant='outline' className='h-8 w-8 shrink-0' onClick={() => setOpen(true)}>
+      <Button
+        size='icon'
+        variant='outline'
+        className='h-8 w-8 shrink-0'
+        onClick={() => setOpen(true)}
+      >
         <Link2 className='size-3.5' />
       </Button>
       <SelectModal

@@ -36,14 +36,18 @@ export function useLocalRunsTableProps(runs: AiPathLocalRunRecord[], isLoading: 
       {
         accessorKey: 'startedAt',
         header: 'Started',
-        cell: ({ getValue }) => <span className='text-xs text-gray-300'>{formatDate(getValue() as string)}</span>,
+        cell: ({ getValue }) => (
+          <span className='text-xs text-gray-300'>{formatDate(getValue() as string)}</span>
+        ),
       },
       {
         accessorKey: 'pathName',
         header: 'Path',
         cell: ({ row }) => (
           <div className='text-xs'>
-            <div className='font-medium text-gray-100'>{row.original.pathName ?? 'Untitled path'}</div>
+            <div className='font-medium text-gray-100'>
+              {row.original.pathName ?? 'Untitled path'}
+            </div>
             <div className='text-[10px] text-gray-500'>{row.original.pathId ?? '-'}</div>
           </div>
         ),
@@ -53,7 +57,9 @@ export function useLocalRunsTableProps(runs: AiPathLocalRunRecord[], isLoading: 
         header: 'Trigger',
         cell: ({ row }) => (
           <div className='text-xs'>
-            <div className='font-medium text-gray-100'>{row.original.triggerLabel ?? row.original.triggerEvent ?? '-'}</div>
+            <div className='font-medium text-gray-100'>
+              {row.original.triggerLabel ?? row.original.triggerEvent ?? '-'}
+            </div>
             <div className='text-[10px] text-gray-500'>{row.original.triggerEvent ?? '-'}</div>
           </div>
         ),
@@ -61,7 +67,9 @@ export function useLocalRunsTableProps(runs: AiPathLocalRunRecord[], isLoading: 
       {
         id: 'entity',
         header: 'Entity',
-        cell: ({ row }) => <span className='text-xs text-gray-300'>{formatEntity(row.original)}</span>,
+        cell: ({ row }) => (
+          <span className='text-xs text-gray-300'>{formatEntity(row.original)}</span>
+        ),
       },
       {
         accessorKey: 'status',
@@ -79,7 +87,9 @@ export function useLocalRunsTableProps(runs: AiPathLocalRunRecord[], isLoading: 
       {
         accessorKey: 'durationMs',
         header: 'Duration',
-        cell: ({ getValue }) => <span className='text-xs text-gray-300'>{formatDuration(getValue() as number)}</span>,
+        cell: ({ getValue }) => (
+          <span className='text-xs text-gray-300'>{formatDuration(getValue() as number)}</span>
+        ),
       },
     ],
     []

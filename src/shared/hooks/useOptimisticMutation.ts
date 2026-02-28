@@ -1,6 +1,11 @@
 'use client';
 
-import { useQueryClient, type MutationFunctionContext, type QueryKey, type UseMutationResult } from '@tanstack/react-query';
+import {
+  useQueryClient,
+  type MutationFunctionContext,
+  type QueryKey,
+  type UseMutationResult,
+} from '@tanstack/react-query';
 import { useCallback } from 'react';
 
 import { createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
@@ -39,8 +44,9 @@ export function useOptimisticMutation<TData, TError, TVariables, TCacheData = TD
       const previousData = queryClient.getQueryData<TCacheData>(config.queryKey);
 
       // Optimistically update
-      queryClient.setQueryData<TCacheData>(config.queryKey, (old: TCacheData | undefined): TCacheData => 
-        config.updateFn(old, variables)
+      queryClient.setQueryData<TCacheData>(
+        config.queryKey,
+        (old: TCacheData | undefined): TCacheData => config.updateFn(old, variables)
       );
 
       return { previousData };
@@ -56,17 +62,16 @@ export function useOptimisticMutation<TData, TError, TVariables, TCacheData = TD
         queryClient.setQueryData(config.queryKey, onMutateResult.previousData);
       }
     },
-    onSettled: (
-      _data,
-      _error,
-      _variables,
-      _onMutateResult,
-      _mutationContext
-    ) => {
+    onSettled: (_data, _error, _variables, _onMutateResult, _mutationContext) => {
       // Always refetch after mutation
       void queryClient.invalidateQueries({ queryKey: config.queryKey });
     },
-  }) as unknown as UseMutationResult<TData, TError, TVariables, { previousData: TCacheData | undefined }>;
+  }) as unknown as UseMutationResult<
+    TData,
+    TError,
+    TVariables,
+    { previousData: TCacheData | undefined }
+  >;
 }
 
 // Hook for batch mutations with progress tracking
@@ -78,34 +83,39 @@ export function useBatchMutation<TData, TError, TVariables>(
     onBatchError?: (errors: TError[]) => void;
   }
 ) {
-  const executeBatch = useCallback(async (items: TVariables[]): Promise<{
-    results: TData[];
-    errors: TError[];
-  }> => {
-    const results: TData[] = [];
-    const errors: TError[] = [];
+  const executeBatch = useCallback(
+    async (
+      items: TVariables[]
+    ): Promise<{
+      results: TData[];
+      errors: TError[];
+    }> => {
+      const results: TData[] = [];
+      const errors: TError[] = [];
 
-    let count = 0;
-    for (const item of items) {
-      try {
-        const result = await mutationFn(item);
-        results.push(result);
-        count++;
-        options?.onProgress?.(count, items.length);
-      } catch (error) {
-        errors.push(error as TError);
+      let count = 0;
+      for (const item of items) {
+        try {
+          const result = await mutationFn(item);
+          results.push(result);
+          count++;
+          options?.onProgress?.(count, items.length);
+        } catch (error) {
+          errors.push(error as TError);
+        }
       }
-    }
 
-    if (results.length > 0) {
-      options?.onBatchComplete?.(results);
-    }
-    if (errors.length > 0) {
-      options?.onBatchError?.(errors);
-    }
+      if (results.length > 0) {
+        options?.onBatchComplete?.(results);
+      }
+      if (errors.length > 0) {
+        options?.onBatchError?.(errors);
+      }
 
-    return { results, errors };
-  }, [mutationFn, options]);
+      return { results, errors };
+    },
+    [mutationFn, options]
+  );
 
   return { executeBatch };
 }

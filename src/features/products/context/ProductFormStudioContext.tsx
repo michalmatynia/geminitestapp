@@ -1,13 +1,6 @@
 'use client';
 
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import { PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY } from '@/features/products/constants';
 import { ProductWithImages } from '@/shared/contracts/products';
@@ -45,19 +38,14 @@ const normalizeStudioProjectId = (value: unknown): string | null => {
   return trimmed ? trimmed : null;
 };
 
-const setCachedStudioProjectId = (
-  productId: string,
-  projectId: string | null
-): void => {
+const setCachedStudioProjectId = (productId: string, projectId: string | null): void => {
   productStudioConfigCache.set(productId, {
     projectId,
     expiresAt: Date.now() + PRODUCT_STUDIO_CONFIG_CACHE_TTL_MS,
   });
 };
 
-const loadStudioProjectId = async (
-  productId: string
-): Promise<string | null> => {
+const loadStudioProjectId = async (productId: string): Promise<string | null> => {
   const cached = productStudioConfigCache.get(productId);
   const now = Date.now();
   if (cached && cached.expiresAt > now) {
@@ -70,13 +58,10 @@ const loadStudioProjectId = async (
   }
 
   const request = api
-    .get<ProductStudioConfigResponse>(
-      `/api/products/${encodeURIComponent(productId)}/studio`,
-      {
-        cache: 'no-store',
-        logError: false,
-      }
-    )
+    .get<ProductStudioConfigResponse>(`/api/products/${encodeURIComponent(productId)}/studio`, {
+      cache: 'no-store',
+      logError: false,
+    })
     .then((response) => normalizeStudioProjectId(response.config?.projectId))
     .then((projectId) => {
       setCachedStudioProjectId(productId, projectId);
@@ -90,8 +75,7 @@ const loadStudioProjectId = async (
   return request;
 };
 
-export const ProductFormStudioContext =
-  createContext<ProductFormStudioContextType | null>(null);
+export const ProductFormStudioContext = createContext<ProductFormStudioContextType | null>(null);
 
 export function ProductFormStudioProvider({
   children,
@@ -104,14 +88,9 @@ export function ProductFormStudioProvider({
   const settingsStore = useSettingsStore();
   const defaultStudioProjectIdSettingRaw =
     settingsStore.get(PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY) ?? '';
-  const defaultStudioProjectId =
-    defaultStudioProjectIdSettingRaw.trim() || null;
-  const [studioProjectId, setStudioProjectIdState] = useState<string | null>(
-    null
-  );
-  const [studioConfigLoading, setStudioConfigLoading] = useState<boolean>(
-    Boolean(product?.id)
-  );
+  const defaultStudioProjectId = defaultStudioProjectIdSettingRaw.trim() || null;
+  const [studioProjectId, setStudioProjectIdState] = useState<string | null>(null);
+  const [studioConfigLoading, setStudioConfigLoading] = useState<boolean>(Boolean(product?.id));
   const [studioConfigSaving, setStudioConfigSaving] = useState<boolean>(false);
   const studioConfigSaveRequestRef = useRef(0);
   const persistedStudioProjectRef = useRef<string | null>(null);
@@ -179,9 +158,7 @@ export function ProductFormStudioProvider({
       )
       .then((response) => {
         if (studioConfigSaveRequestRef.current !== requestId) return;
-        const persistedProjectId = normalizeStudioProjectId(
-          response.config?.projectId
-        );
+        const persistedProjectId = normalizeStudioProjectId(response.config?.projectId);
         setCachedStudioProjectId(productId, persistedProjectId);
         persistedStudioProjectRef.current = persistedProjectId;
         currentStudioProjectRef.current = persistedProjectId;
@@ -221,18 +198,14 @@ export function ProductFormStudioProvider({
   );
 
   return (
-    <ProductFormStudioContext.Provider value={value}>
-      {children}
-    </ProductFormStudioContext.Provider>
+    <ProductFormStudioContext.Provider value={value}>{children}</ProductFormStudioContext.Provider>
   );
 }
 
 export const useProductFormStudio = (): ProductFormStudioContextType => {
   const context = useContext(ProductFormStudioContext);
   if (!context) {
-    throw internalError(
-      'useProductFormStudio must be used within a ProductFormStudioProvider'
-    );
+    throw internalError('useProductFormStudio must be used within a ProductFormStudioProvider');
   }
   return context;
 };

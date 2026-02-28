@@ -1,4 +1,8 @@
-import type { NodeHandler, NodeHandlerContext, RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
+import type {
+  NodeHandler,
+  NodeHandlerContext,
+  RuntimePortValues,
+} from '@/shared/contracts/ai-paths-runtime';
 import { coerceInput } from '../../../utils';
 import { resolveContextPayload } from '../../utils';
 
@@ -13,9 +17,7 @@ export const handleContext: NodeHandler = async ({
 }: NodeHandlerContext): Promise<RuntimePortValues> => {
   const rawContext = coerceInput(nodeInputs['context']);
   const inputContext =
-    rawContext && typeof rawContext === 'object'
-      ? (rawContext as Record<string, unknown>)
-      : null;
+    rawContext && typeof rawContext === 'object' ? (rawContext as Record<string, unknown>) : null;
   const payload = await resolveContextPayload(
     node.config?.context ?? { role: 'entity' },
     inputContext,

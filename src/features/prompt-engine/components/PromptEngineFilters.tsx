@@ -7,13 +7,19 @@ import { FilterPanel } from '@/shared/ui/templates/FilterPanel';
 import type { FilterField } from '@/shared/ui/templates/panels';
 
 import { usePromptEngine } from '../context/PromptEngineContext';
-import { type ExploderPatternSubTab, type PatternCollectionTab } from '../context/prompt-engine/PromptEngineConfigContext';
-import { type ScopeFilter, type SeverityFilter } from '../context/prompt-engine/PromptEngineFiltersContext';
+import {
+  type ExploderPatternSubTab,
+  type PatternCollectionTab,
+} from '../context/prompt-engine/PromptEngineConfigContext';
+import {
+  type ScopeFilter,
+  type SeverityFilter,
+} from '../context/prompt-engine/PromptEngineFiltersContext';
 import { PROMPT_VALIDATION_SCOPE_LABELS, PROMPT_VALIDATION_SCOPE_VALUES } from '../settings';
 
 /**
  * REFACTORED: PromptEngineFilters using FilterPanel template
- * 
+ *
  * Before: 50 LOC
  * After: 22 LOC
  * Savings: 56% reduction
@@ -60,10 +66,9 @@ export function PromptEngineFilters(): React.JSX.Element {
         { value: 'info', label: 'Info' },
       ],
     },
-    ...(
-      scopeLocked
-        ? []
-        : [
+    ...(scopeLocked
+      ? []
+      : [
           {
             key: 'scope',
             label: 'Scope',
@@ -76,8 +81,7 @@ export function PromptEngineFilters(): React.JSX.Element {
               })),
             ],
           } satisfies FilterField,
-        ]
-    ),
+        ]),
     {
       key: 'includeDisabled',
       label: 'Include Disabled',
@@ -95,12 +99,8 @@ export function PromptEngineFilters(): React.JSX.Element {
           }}
         >
           <TabsList className='grid w-full max-w-md grid-cols-2'>
-            <TabsTrigger value='core'>
-              Core Patterns
-            </TabsTrigger>
-            <TabsTrigger value='prompt_exploder'>
-              Exploder
-            </TabsTrigger>
+            <TabsTrigger value='core'>Core Patterns</TabsTrigger>
+            <TabsTrigger value='prompt_exploder'>Exploder</TabsTrigger>
           </TabsList>
         </Tabs>
       ) : null}
@@ -112,28 +112,20 @@ export function PromptEngineFilters(): React.JSX.Element {
           }}
         >
           <TabsList className='grid w-full max-w-2xl grid-cols-3'>
-            <TabsTrigger value='prompt_exploder_rules'>
-              Prompt Exploder
-            </TabsTrigger>
-            <TabsTrigger value='image_studio_rules'>
-              Image Studio
-            </TabsTrigger>
-            <TabsTrigger value='case_resolver_rules'>
-              Case Resolver
-            </TabsTrigger>
+            <TabsTrigger value='prompt_exploder_rules'>Prompt Exploder</TabsTrigger>
+            <TabsTrigger value='image_studio_rules'>Image Studio</TabsTrigger>
+            <TabsTrigger value='case_resolver_rules'>Case Resolver</TabsTrigger>
           </TabsList>
         </Tabs>
       ) : null}
 
       <div className='text-xs text-gray-400'>
         Showing <span className='text-gray-200'>{filteredDrafts.length}</span> pattern(s) in{' '}
-        <span className='text-gray-200'>{activeTabLabel}</span>{' '}
-        list.
+        <span className='text-gray-200'>{activeTabLabel}</span> list.
         {scopeLocked && scope !== 'all' ? (
           <>
-            {' '}Scope:
             {' '}
-            <span className='text-gray-200'>{PROMPT_VALIDATION_SCOPE_LABELS[scope]}</span>.
+            Scope: <span className='text-gray-200'>{PROMPT_VALIDATION_SCOPE_LABELS[scope]}</span>.
           </>
         ) : null}
       </div>

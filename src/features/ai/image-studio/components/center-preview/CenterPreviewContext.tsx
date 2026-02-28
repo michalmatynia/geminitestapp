@@ -34,7 +34,11 @@ export interface CenterPreviewContextValue {
 
 const CenterPreviewContext = createContext<CenterPreviewContextValue | null>(null);
 
-export function CenterPreviewProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
+export function CenterPreviewProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}): React.JSX.Element {
   const [screenshotBusy, setScreenshotBusy] = useState(false);
   const [singleVariantView, setSingleVariantView] = useState<'variant' | 'source'>('variant');
   const [splitVariantView, setSplitVariantView] = useState(false);
@@ -58,43 +62,42 @@ export function CenterPreviewProvider({ children }: { children: React.ReactNode 
     else setRightSplitZoom(1);
   }, []);
 
-  const value = useMemo((): CenterPreviewContextValue => ({
-    screenshotBusy,
-    singleVariantView,
-    splitVariantView,
-    leftSplitZoom,
-    rightSplitZoom,
-    variantLoadingId,
-    variantTooltip,
-    detailsSlotId,
-    setScreenshotBusy,
-    setSingleVariantView,
-    setSplitVariantView,
-    setLeftSplitZoom,
-    setRightSplitZoom,
-    setVariantLoadingId,
-    setVariantTooltip,
-    setDetailsSlotId,
-    adjustSplitZoom,
-    resetSplitZoom,
-  }), [
-    screenshotBusy,
-    singleVariantView,
-    splitVariantView,
-    leftSplitZoom,
-    rightSplitZoom,
-    variantLoadingId,
-    variantTooltip,
-    detailsSlotId,
-    adjustSplitZoom,
-    resetSplitZoom,
-  ]);
-
-  return (
-    <CenterPreviewContext.Provider value={value}>
-      {children}
-    </CenterPreviewContext.Provider>
+  const value = useMemo(
+    (): CenterPreviewContextValue => ({
+      screenshotBusy,
+      singleVariantView,
+      splitVariantView,
+      leftSplitZoom,
+      rightSplitZoom,
+      variantLoadingId,
+      variantTooltip,
+      detailsSlotId,
+      setScreenshotBusy,
+      setSingleVariantView,
+      setSplitVariantView,
+      setLeftSplitZoom,
+      setRightSplitZoom,
+      setVariantLoadingId,
+      setVariantTooltip,
+      setDetailsSlotId,
+      adjustSplitZoom,
+      resetSplitZoom,
+    }),
+    [
+      screenshotBusy,
+      singleVariantView,
+      splitVariantView,
+      leftSplitZoom,
+      rightSplitZoom,
+      variantLoadingId,
+      variantTooltip,
+      detailsSlotId,
+      adjustSplitZoom,
+      resetSplitZoom,
+    ]
   );
+
+  return <CenterPreviewContext.Provider value={value}>{children}</CenterPreviewContext.Provider>;
 }
 
 export function useCenterPreviewContext(): CenterPreviewContextValue {

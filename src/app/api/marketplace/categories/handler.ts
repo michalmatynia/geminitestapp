@@ -11,7 +11,10 @@ import { badRequestError } from '@/shared/errors/app-error';
  *   - connectionId (required): The integration connection ID
  *   - tree (optional): If "true", returns categories as a hierarchical tree
  */
-export async function GET_handler(request: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function GET_handler(
+  request: NextRequest,
+  _ctx: ApiHandlerContext
+): Promise<Response> {
   const { searchParams } = new URL(request.url);
   const connectionId = searchParams.get('connectionId');
   const tree = searchParams.get('tree') === 'true';

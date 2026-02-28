@@ -6,7 +6,7 @@ import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 import { useNodeFileWorkspaceContext } from './NodeFileWorkspaceContext';
 
 export function CaseResolverLinkedPreviewModal(): React.JSX.Element {
-  const { 
+  const {
     isLinkedPreviewOpen: open,
     setIsLinkedPreviewOpen: onOpenChange,
     compiled,
@@ -24,7 +24,10 @@ export function CaseResolverLinkedPreviewModal(): React.JSX.Element {
         <div className='mb-3 max-h-56 overflow-auto rounded border border-border/60 bg-card/30 p-2 text-xs text-gray-300'>
           {compiled.segments.length > 0 ? (
             compiled.segments.map((segment) => (
-              <div key={segment.nodeId} className='mb-2 rounded border border-border/40 bg-card/30 p-2 last:mb-0'>
+              <div
+                key={segment.nodeId}
+                className='mb-2 rounded border border-border/40 bg-card/30 p-2 last:mb-0'
+              >
                 <div className='flex items-center justify-between gap-2 text-[11px]'>
                   <span className='font-medium text-gray-100'>{segment.title}</span>
                   <span className='uppercase text-[10px] text-gray-400'>{segment.role}</span>

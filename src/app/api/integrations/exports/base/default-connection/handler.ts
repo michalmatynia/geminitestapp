@@ -4,19 +4,19 @@ import { z } from 'zod';
 import {
   getExportDefaultConnectionId,
   getIntegrationRepository,
-  setExportDefaultConnectionId
+  setExportDefaultConnectionId,
 } from '@/features/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
-import type { 
-  IntegrationRecord as Integration, 
-  IntegrationConnectionRecord as IntegrationConnection 
+import type {
+  IntegrationRecord as Integration,
+  IntegrationConnectionRecord as IntegrationConnection,
 } from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);
 
 const postSchema = z.object({
-  connectionId: z.string().nullable()
+  connectionId: z.string().nullable(),
 });
 
 const normalizeOptionalId = (value: string | null | undefined): string | null => {
@@ -40,7 +40,7 @@ const resolveFallbackBaseConnectionId = async (
 ): Promise<string | null> => {
   const integrationRepository = await getIntegrationRepository();
   const integrations = await integrationRepository.listIntegrations();
-  const baseIntegrations = integrations.filter( (integration: Integration) =>
+  const baseIntegrations = integrations.filter((integration: Integration) =>
     BASE_INTEGRATION_SLUGS.has((integration.slug ?? '').trim().toLowerCase())
   );
 
@@ -48,7 +48,7 @@ const resolveFallbackBaseConnectionId = async (
 
   const baseConnections = (
     await Promise.all(
-      baseIntegrations.map( (integration: Integration) =>
+      baseIntegrations.map((integration: Integration) =>
         integrationRepository.listConnections(integration.id)
       )
     )
@@ -57,14 +57,16 @@ const resolveFallbackBaseConnectionId = async (
   if (baseConnections.length === 0) return null;
 
   const currentConnection =
-    baseConnections.find( (connection: IntegrationConnection) => connection.id === currentConnectionId) ??
-    null;
+    baseConnections.find(
+      (connection: IntegrationConnection) => connection.id === currentConnectionId
+    ) ?? null;
   if (currentConnection && hasBaseCredentials(currentConnection)) {
     return currentConnection.id;
   }
 
   const credentialedConnection =
-    baseConnections.find( (connection: IntegrationConnection) => hasBaseCredentials(connection)) ?? null;
+    baseConnections.find((connection: IntegrationConnection) => hasBaseCredentials(connection)) ??
+    null;
   if (credentialedConnection) {
     return credentialedConnection.id;
   }
@@ -87,9 +89,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
   }
 
   try {
-    const resolvedConnectionId = await resolveFallbackBaseConnectionId(
-      storedConnectionId
-    );
+    const resolvedConnectionId = await resolveFallbackBaseConnectionId(storedConnectionId);
     if (!resolvedConnectionId) {
       return NextResponse.json({ connectionId: null });
     }
@@ -109,7 +109,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
  */
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, postSchema, {
-    logPrefix: 'exports.base.default-connection.POST'
+    logPrefix: 'exports.base.default-connection.POST',
   });
   if (!parsed.ok) {
     return parsed.response;

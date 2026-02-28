@@ -6,7 +6,10 @@ import { useInternationalizationContext } from '@/shared/lib/internationalizatio
 import type { Catalog, PriceGroup } from '@/shared/contracts/products';
 import type { EntityModalProps } from '@/shared/contracts/ui';
 import { Alert } from '@/shared/ui';
-import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
+import {
+  SettingsPanelBuilder,
+  type SettingsField,
+} from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import { CatalogLanguagesSection } from './CatalogLanguagesSection';
 import { CatalogPriceGroupsSection } from './CatalogPriceGroupsSection';
@@ -27,11 +30,7 @@ export function CatalogModal({
   loading: loadingGroups = false,
   defaultId: defaultGroupId = '',
 }: CatalogModalProps): React.JSX.Element {
-  const {
-    languages,
-    languagesLoading,
-    languagesError,
-  } = useInternationalizationContext();
+  const { languages, languagesLoading, languagesError } = useInternationalizationContext();
 
   const {
     form,
@@ -57,42 +56,27 @@ export function CatalogModal({
     defaultGroupId,
   });
 
-  const availableLanguages = React.useMemo(
-    () => {
-      const query = languageQuery.trim().toLowerCase();
-      const selectedSet = new Set(
-        selectedLanguageIds
-          .map((id: string) => canonicalizeLanguageId(id))
-          .filter((id: string) => Boolean(id))
-      );
-      return languages.filter(
-        (l) =>
-          !selectedSet.has(l.id) &&
-          (!query ||
-            l.name.toLowerCase().includes(query) ||
-            l.code.toLowerCase().includes(query)),
-      );
-    },
-    [languages, selectedLanguageIds, languageQuery, canonicalizeLanguageId]
-  );
+  const availableLanguages = React.useMemo(() => {
+    const query = languageQuery.trim().toLowerCase();
+    const selectedSet = new Set(
+      selectedLanguageIds
+        .map((id: string) => canonicalizeLanguageId(id))
+        .filter((id: string) => Boolean(id))
+    );
+    return languages.filter(
+      (l) =>
+        !selectedSet.has(l.id) &&
+        (!query || l.name.toLowerCase().includes(query) || l.code.toLowerCase().includes(query))
+    );
+  }, [languages, selectedLanguageIds, languageQuery, canonicalizeLanguageId]);
 
   const handleToggleLanguage = React.useCallback(
     (id: string): void => {
       setSelectedLanguageIds(
-        toggleLanguage(
-          selectedLanguageIds,
-          id,
-          defaultLanguageId,
-          setDefaultLanguageId
-        )
+        toggleLanguage(selectedLanguageIds, id, defaultLanguageId, setDefaultLanguageId)
       );
     },
-    [
-      defaultLanguageId,
-      selectedLanguageIds,
-      setDefaultLanguageId,
-      setSelectedLanguageIds,
-    ]
+    [defaultLanguageId, selectedLanguageIds, setDefaultLanguageId, setSelectedLanguageIds]
   );
 
   const handleMoveLanguage = React.useCallback(
@@ -175,7 +159,7 @@ export function CatalogModal({
   };
 
   const handleChange = (vals: Partial<typeof form>) => {
-    setForm(prev => ({ ...prev, ...vals }));
+    setForm((prev) => ({ ...prev, ...vals }));
   };
 
   const fields: SettingsField<typeof form>[] = [
@@ -202,8 +186,8 @@ export function CatalogModal({
             <CatalogPriceGroupsSection />
           </div>
         </CatalogModalProvider>
-      )
-    }
+      ),
+    },
   ];
 
   return (

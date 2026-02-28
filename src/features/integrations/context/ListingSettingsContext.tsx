@@ -1,16 +1,12 @@
 'use client';
 
-import React, {
-  createContext,
-  useContext,
-  ReactNode,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import React, { createContext, useContext, ReactNode, useEffect, useMemo, useState } from 'react';
 
 import { DEFAULT_TRADERA_SYSTEM_SETTINGS } from '@/features/integrations/constants/tradera';
-import type { IntegrationWithConnections, IntegrationConnectionBasic } from '@/shared/contracts/integrations';
+import type {
+  IntegrationWithConnections,
+  IntegrationConnectionBasic,
+} from '@/shared/contracts/integrations';
 import type { BaseInventory, Template } from '@/shared/contracts/integrations';
 import { internalError } from '@/shared/errors/app-error';
 
@@ -51,7 +47,8 @@ export interface ListingBaseComSettings {
 const BaseComSettingsContext = createContext<ListingBaseComSettings | null>(null);
 export const useListingBaseComSettings = () => {
   const context = useContext(BaseComSettingsContext);
-  if (!context) throw new Error('useListingBaseComSettings must be used within ListingSettingsProvider');
+  if (!context)
+    throw new Error('useListingBaseComSettings must be used within ListingSettingsProvider');
   return context;
 };
 
@@ -68,13 +65,15 @@ export interface ListingTraderaSettings {
 const TraderaSettingsContext = createContext<ListingTraderaSettings | null>(null);
 export const useListingTraderaSettings = () => {
   const context = useContext(TraderaSettingsContext);
-  if (!context) throw new Error('useListingTraderaSettings must be used within ListingSettingsProvider');
+  if (!context)
+    throw new Error('useListingTraderaSettings must be used within ListingSettingsProvider');
   return context;
 };
 
 // --- Legacy Aggregator ---
 
-interface ListingSettingsContextType extends ListingSelection, ListingBaseComSettings, ListingTraderaSettings {}
+interface ListingSettingsContextType
+  extends ListingSelection, ListingBaseComSettings, ListingTraderaSettings {}
 
 const ListingSettingsContext = createContext<ListingSettingsContextType | null>(null);
 
@@ -102,16 +101,18 @@ export function ListingSettingsProvider({
   initialConnectionId,
 }: ListingSettingsProviderProps): React.JSX.Element {
   const selection = useIntegrationSelection(initialIntegrationId, initialConnectionId);
-  const baseComSettings = useBaseComSettings(selection.isBaseComIntegration, selection.selectedConnectionId);
+  const baseComSettings = useBaseComSettings(
+    selection.isBaseComIntegration,
+    selection.selectedConnectionId
+  );
   const [selectedTraderaDurationHours, setSelectedTraderaDurationHours] = useState<number>(
     DEFAULT_TRADERA_SYSTEM_SETTINGS.defaultDurationHours
   );
   const [selectedTraderaAutoRelistEnabled, setSelectedTraderaAutoRelistEnabled] = useState<boolean>(
     DEFAULT_TRADERA_SYSTEM_SETTINGS.autoRelistEnabled
   );
-  const [selectedTraderaAutoRelistLeadMinutes, setSelectedTraderaAutoRelistLeadMinutes] = useState<number>(
-    DEFAULT_TRADERA_SYSTEM_SETTINGS.autoRelistLeadMinutes
-  );
+  const [selectedTraderaAutoRelistLeadMinutes, setSelectedTraderaAutoRelistLeadMinutes] =
+    useState<number>(DEFAULT_TRADERA_SYSTEM_SETTINGS.autoRelistLeadMinutes);
   const [selectedTraderaTemplateId, setSelectedTraderaTemplateId] = useState<string>('none');
 
   const selectedTraderaConnection = useMemo(() => {
@@ -143,33 +144,45 @@ export function ListingSettingsProvider({
       selectedTraderaConnection?.traderaAutoRelistLeadMinutes ??
         DEFAULT_TRADERA_SYSTEM_SETTINGS.autoRelistLeadMinutes
     );
-    setSelectedTraderaTemplateId(
-      selectedTraderaConnection?.traderaDefaultTemplateId ?? 'none'
-    );
+    setSelectedTraderaTemplateId(selectedTraderaConnection?.traderaDefaultTemplateId ?? 'none');
   }, [selection.isTraderaIntegration, selectedTraderaConnection]);
 
-  const selectionValue = useMemo<ListingSelection>(() => ({
-    ...selection,
-    selectedIntegration: selection.selectedIntegration ?? null,
-    loadingIntegrations: selection.loading,
-  }), [selection]);
+  const selectionValue = useMemo<ListingSelection>(
+    () => ({
+      ...selection,
+      selectedIntegration: selection.selectedIntegration ?? null,
+      loadingIntegrations: selection.loading,
+    }),
+    [selection]
+  );
 
-  const traderaValue = useMemo<ListingTraderaSettings>(() => ({
-    selectedTraderaDurationHours,
-    setSelectedTraderaDurationHours,
-    selectedTraderaAutoRelistEnabled,
-    setSelectedTraderaAutoRelistEnabled,
-    selectedTraderaAutoRelistLeadMinutes,
-    setSelectedTraderaAutoRelistLeadMinutes,
-    selectedTraderaTemplateId,
-    setSelectedTraderaTemplateId,
-  }), [selectedTraderaDurationHours, selectedTraderaAutoRelistEnabled, selectedTraderaAutoRelistLeadMinutes, selectedTraderaTemplateId]);
+  const traderaValue = useMemo<ListingTraderaSettings>(
+    () => ({
+      selectedTraderaDurationHours,
+      setSelectedTraderaDurationHours,
+      selectedTraderaAutoRelistEnabled,
+      setSelectedTraderaAutoRelistEnabled,
+      selectedTraderaAutoRelistLeadMinutes,
+      setSelectedTraderaAutoRelistLeadMinutes,
+      selectedTraderaTemplateId,
+      setSelectedTraderaTemplateId,
+    }),
+    [
+      selectedTraderaDurationHours,
+      selectedTraderaAutoRelistEnabled,
+      selectedTraderaAutoRelistLeadMinutes,
+      selectedTraderaTemplateId,
+    ]
+  );
 
-  const aggregatedValue = useMemo<ListingSettingsContextType>(() => ({
-    ...selectionValue,
-    ...baseComSettings,
-    ...traderaValue,
-  }), [selectionValue, baseComSettings, traderaValue]);
+  const aggregatedValue = useMemo<ListingSettingsContextType>(
+    () => ({
+      ...selectionValue,
+      ...baseComSettings,
+      ...traderaValue,
+    }),
+    [selectionValue, baseComSettings, traderaValue]
+  );
 
   return (
     <SelectionContext.Provider value={selectionValue}>

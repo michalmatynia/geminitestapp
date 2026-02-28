@@ -1,6 +1,10 @@
 import 'server-only';
 
-import type { CreateActivityLogDto, ActivityLogDto, ActivityFilters } from '@/shared/contracts/system';
+import type {
+  CreateActivityLogDto,
+  ActivityLogDto,
+  ActivityFilters,
+} from '@/shared/contracts/system';
 
 import { getActivityRepository } from '../../lib/observability/activity-repository';
 import { logSystemEvent } from '../../lib/observability/system-logger';
@@ -52,4 +56,3 @@ export async function listActivity(filters: ActivityFilters = {}): Promise<Activ
   const repository = await getActivityRepository();
   return repository.listActivity(filters);
 }
-

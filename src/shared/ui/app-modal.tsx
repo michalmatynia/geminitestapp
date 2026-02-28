@@ -120,9 +120,7 @@ export function AppModal({
         onEscapeKeyDown={handleEscapeKeyDown}
       >
         <DialogTitle className='sr-only'>{title}</DialogTitle>
-        <DialogDescription className='sr-only'>
-          {dialogDescription}
-        </DialogDescription>
+        <DialogDescription className='sr-only'>{dialogDescription}</DialogDescription>
         <div
           className={cn(
             'pointer-events-auto w-full rounded-lg border flex flex-col',
@@ -161,20 +159,20 @@ export function AppModal({
           </div>
 
           {/* Body */}
-          <div className={cn(
-            bodyHeightClass, 
-            'overflow-y-auto', 
-            padding === 'default' && 'p-6',
-            bodyClassName ?? ''
-          )}>
+          <div
+            className={cn(
+              bodyHeightClass,
+              'overflow-y-auto',
+              padding === 'default' && 'p-6',
+              bodyClassName ?? ''
+            )}
+          >
             {children}
           </div>
 
           {/* Footer */}
           {footer ? (
-            <div className='p-6 pt-4 border-t border-white/5 flex justify-end gap-2'>
-              {footer}
-            </div>
+            <div className='p-6 pt-4 border-t border-white/5 flex justify-end gap-2'>{footer}</div>
           ) : null}
         </div>
       </DialogContent>

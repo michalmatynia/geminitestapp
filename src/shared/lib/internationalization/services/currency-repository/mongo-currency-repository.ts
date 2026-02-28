@@ -1,4 +1,3 @@
-
 import { ObjectId, type Document, type AnyBulkWriteOperation, type UpdateFilter } from 'mongodb';
 
 import { defaultCurrencies } from '@/shared/lib/internationalization/server';
@@ -6,7 +5,6 @@ import type { CurrencyRecord } from '@/shared/contracts/internationalization';
 import type { CurrencyRepository } from '@/shared/contracts/internationalization';
 import { notFoundError, internalError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-
 
 const COLLECTION = 'currencies';
 
@@ -42,7 +40,11 @@ const toCurrencyDomain = (doc: CurrencyDoc): CurrencyRecord => ({
 export const mongoCurrencyRepository: CurrencyRepository = {
   async listCurrencies(): Promise<CurrencyRecord[]> {
     const db = await getMongoDb();
-    const currencies = await db.collection<CurrencyDoc>(COLLECTION).find({}).sort({ code: 1 }).toArray();
+    const currencies = await db
+      .collection<CurrencyDoc>(COLLECTION)
+      .find({})
+      .sort({ code: 1 })
+      .toArray();
     return currencies.map(toCurrencyDomain);
   },
 
@@ -58,7 +60,11 @@ export const mongoCurrencyRepository: CurrencyRepository = {
     return doc ? toCurrencyDomain(doc) : null;
   },
 
-  async createCurrency(data: { code: string; name: string; symbol?: string | null }): Promise<CurrencyRecord> {
+  async createCurrency(data: {
+    code: string;
+    name: string;
+    symbol?: string | null;
+  }): Promise<CurrencyRecord> {
     const db = await getMongoDb();
     const now = new Date();
     const doc: CurrencyDoc = {
@@ -76,25 +82,27 @@ export const mongoCurrencyRepository: CurrencyRepository = {
     return toCurrencyDomain(doc);
   },
 
-  async updateCurrency(id: string, data: { code?: string; name?: string; symbol?: string | null }): Promise<CurrencyRecord> {
+  async updateCurrency(
+    id: string,
+    data: { code?: string; name?: string; symbol?: string | null }
+  ): Promise<CurrencyRecord> {
     const db = await getMongoDb();
     const collection = db.collection<CurrencyDoc>(COLLECTION);
     const existing = await collection.findOne({ id });
     if (!existing) throw notFoundError('Currency not found', { id });
 
     const now = new Date();
-    
+
     if (data.code && data.code !== id) {
       // Update related collections
-      await db.collection(PRICE_GROUPS_COLLECTION).updateMany({ currencyId: id }, { $set: { currencyId: data.code } });
-      await db.collection(COUNTRIES_COLLECTION).updateMany(
-        { currencyIds: id },
-        {
-          $pull: { currencyIds: id },
-          $addToSet: { currencyIds: data.code },
-          $set: { updatedAt: now },
-        } as unknown as UpdateFilter<Document>
-      );
+      await db
+        .collection(PRICE_GROUPS_COLLECTION)
+        .updateMany({ currencyId: id }, { $set: { currencyId: data.code } });
+      await db.collection(COUNTRIES_COLLECTION).updateMany({ currencyIds: id }, {
+        $pull: { currencyIds: id },
+        $addToSet: { currencyIds: data.code },
+        $set: { updatedAt: now },
+      } as unknown as UpdateFilter<Document>);
     }
 
     const set: Partial<CurrencyDoc> = { updatedAt: now };
@@ -128,7 +136,7 @@ export const mongoCurrencyRepository: CurrencyRepository = {
   async ensureDefaultCurrencies(): Promise<void> {
     const db = await getMongoDb();
     const now = new Date();
-    const operations: AnyBulkWriteOperation<CurrencyDoc>[] = defaultCurrencies.map(currency => ({
+    const operations: AnyBulkWriteOperation<CurrencyDoc>[] = defaultCurrencies.map((currency) => ({
       updateOne: {
         filter: { id: currency.code },
         update: {

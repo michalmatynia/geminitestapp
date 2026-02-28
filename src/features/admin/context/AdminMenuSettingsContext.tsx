@@ -1,10 +1,15 @@
 'use client';
 
-import React, { createContext, useContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { 
-  AdminMenuCustomNode,
-  AdminNavLeaf,
-} from '@/shared/contracts/admin';
+import React, {
+  createContext,
+  useContext,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import type { AdminMenuCustomNode, AdminNavLeaf } from '@/shared/contracts/admin';
 import {
   NavItem,
   buildAdminMenuFromCustomNav,
@@ -84,12 +89,12 @@ const flattenCustomNav = (
 const flattenAdminNavNodes = (items: NavItem[], parents: string[] = []): AdminNavNodeEntry[] => {
   const entries: AdminNavNodeEntry[] = [];
   items.forEach((item: NavItem) => {
-    entries.push({ 
-      id: item.id, 
-      label: item.label, 
-      parents, 
+    entries.push({
+      id: item.id,
+      label: item.label,
+      parents,
       item,
-      ...(item.href ? { href: item.href } : {})
+      ...(item.href ? { href: item.href } : {}),
     });
     const children = item.children;
     if (children && children.length > 0) {
@@ -113,7 +118,10 @@ const collectCustomIds = (
   return ids;
 };
 
-const getNodeAtPath = (items: AdminMenuCustomNode[], path: number[]): AdminMenuCustomNode | null => {
+const getNodeAtPath = (
+  items: AdminMenuCustomNode[],
+  path: number[]
+): AdminMenuCustomNode | null => {
   let current: AdminMenuCustomNode | null = null;
   let cursor: AdminMenuCustomNode[] = items;
   for (const index of path) {
@@ -131,7 +139,7 @@ const getParentAtPath = (
   if (path.length === 0) return null;
   const parentPath = path.slice(0, -1);
   const parentNode = parentPath.length ? getNodeAtPath(items, parentPath) : null;
-  const parent = parentPath.length ? parentNode?.children ?? null : items;
+  const parent = parentPath.length ? (parentNode?.children ?? null) : items;
   if (!parent) return null;
   return { parent, index: path[path.length - 1] as number };
 };
@@ -145,8 +153,8 @@ const stripUsedIds = (
   const nodeChildren = node.children;
   const children = nodeChildren
     ? nodeChildren
-      .map((child: AdminMenuCustomNode) => stripUsedIds(child, usedIds))
-      .filter((child: AdminMenuCustomNode | null): child is AdminMenuCustomNode => Boolean(child))
+        .map((child: AdminMenuCustomNode) => stripUsedIds(child, usedIds))
+        .filter((child: AdminMenuCustomNode | null): child is AdminMenuCustomNode => Boolean(child))
     : undefined;
   return {
     ...node,
@@ -155,7 +163,11 @@ const stripUsedIds = (
 };
 
 const normalize = (value: string): string =>
-  value.toLowerCase().replace(/[_/-]+/g, ' ').replace(/\s+/g, ' ').trim();
+  value
+    .toLowerCase()
+    .replace(/[_/-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 
 // ── Context ──────────────────────────────────────────────────────────────────
 
@@ -169,7 +181,7 @@ export interface AdminMenuSettingsContextValue {
   libraryQuery: string;
   draggedPath: number[] | null;
   dragOver: { path: number[]; position: 'above' | 'below' } | null;
-  
+
   // Derived
   sections: Array<{ id: string; label: string }>;
   flattened: AdminNavLeaf[];
@@ -190,7 +202,9 @@ export interface AdminMenuSettingsContextValue {
   setLibraryQuery: (q: string) => void;
   setCustomEnabled: (enabled: boolean) => void;
   setDraggedPath: React.Dispatch<React.SetStateAction<number[] | null>>;
-  setDragOver: React.Dispatch<React.SetStateAction<{ path: number[]; position: 'above' | 'below' } | null>>;
+  setDragOver: React.Dispatch<
+    React.SetStateAction<{ path: number[]; position: 'above' | 'below' } | null>
+  >;
   handleToggleFavorite: (id: string, checked: boolean) => void;
   moveFavorite: (id: string, direction: 'up' | 'down') => void;
   updateSectionColor: (sectionId: string, value: string) => void;
@@ -209,7 +223,11 @@ export interface AdminMenuSettingsContextValue {
 
 const AdminMenuSettingsContext = createContext<AdminMenuSettingsContextValue | null>(null);
 
-export function AdminMenuSettingsProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
+export function AdminMenuSettingsProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}): React.JSX.Element {
   const { toast } = useToast();
   const settingsQuery = useSettingsMap({ scope: 'light' });
   const updateSettingsBulk = useUpdateSettingsBulk();
@@ -221,7 +239,9 @@ export function AdminMenuSettingsProvider({ children }: { children: React.ReactN
   const [customNav, setCustomNav] = useState<AdminMenuCustomNode[]>([]);
   const [libraryQuery, setLibraryQuery] = useState('');
   const [draggedPath, setDraggedPath] = useState<number[] | null>(null);
-  const [dragOver, setDragOver] = useState<{ path: number[]; position: 'above' | 'below' } | null>(null);
+  const [dragOver, setDragOver] = useState<{ path: number[]; position: 'above' | 'below' } | null>(
+    null
+  );
 
   const noopClick = useCallback((event: React.MouseEvent<HTMLAnchorElement>): void => {
     event.preventDefault();
@@ -256,10 +276,7 @@ export function AdminMenuSettingsProvider({ children }: { children: React.ReactN
       map.get(ADMIN_MENU_SECTION_COLORS_KEY),
       null
     );
-    const customEnabledValue = parseAdminMenuBoolean(
-      map.get(ADMIN_MENU_CUSTOM_ENABLED_KEY),
-      false
-    );
+    const customEnabledValue = parseAdminMenuBoolean(map.get(ADMIN_MENU_CUSTOM_ENABLED_KEY), false);
     const customNavRaw = parseAdminMenuJson<AdminMenuCustomNode[]>(
       map.get(ADMIN_MENU_CUSTOM_NAV_KEY),
       []
@@ -295,9 +312,7 @@ export function AdminMenuSettingsProvider({ children }: { children: React.ReactN
     setFavorites(settingsValues.favorites);
     setSectionColors(settingsValues.sectionColors);
     setCustomEnabled(settingsValues.customEnabled);
-    setCustomNav(
-      settingsValues.customNav.length > 0 ? settingsValues.customNav : defaultCustomNav
-    );
+    setCustomNav(settingsValues.customNav.length > 0 ? settingsValues.customNav : defaultCustomNav);
   }, [defaultCustomNav, settingsQuery.isFetched, settingsSnapshot, settingsValues]);
 
   const menuNav = useMemo(
@@ -309,9 +324,10 @@ export function AdminMenuSettingsProvider({ children }: { children: React.ReactN
   const flattened = useMemo(() => flattenAdminNav(menuNav), [menuNav]);
   const favoritesSet = useMemo(() => new Set(favorites), [favorites]);
   const favoritesList = useMemo(
-    () => favorites
-      .map((id: string) => flattened.find((item: AdminNavLeaf) => item.id === id))
-      .filter((item: AdminNavLeaf | undefined): item is AdminNavLeaf => item !== undefined),
+    () =>
+      favorites
+        .map((id: string) => flattened.find((item: AdminNavLeaf) => item.id === id))
+        .filter((item: AdminNavLeaf | undefined): item is AdminNavLeaf => item !== undefined),
     [favorites, flattened]
   );
 
@@ -340,7 +356,9 @@ export function AdminMenuSettingsProvider({ children }: { children: React.ReactN
       const searchable = [item.label, href, ...item.parents].join(' ');
       return normalize(searchable).includes(normalizedQuery);
     });
-    return items.sort((a: AdminNavNodeEntry, b: AdminNavNodeEntry) => a.label.localeCompare(b.label));
+    return items.sort((a: AdminNavNodeEntry, b: AdminNavNodeEntry) =>
+      a.label.localeCompare(b.label)
+    );
   }, [libraryItems, libraryQuery]);
 
   const defaultPayload = useMemo(
@@ -419,35 +437,32 @@ export function AdminMenuSettingsProvider({ children }: { children: React.ReactN
   const isSamePath = (a: number[], b: number[]): boolean =>
     a.length === b.length && a.every((value: number, index: number) => value === b[index]);
   const isPathPrefix = (parent: number[], child: number[]): boolean =>
-    parent.length <= child.length && parent.every((value: number, index: number) => value === child[index]);
+    parent.length <= child.length &&
+    parent.every((value: number, index: number) => value === child[index]);
 
-  const moveCustomNodeTo = useCallback((
-    dragged: number[],
-    target: number[],
-    position: 'above' | 'below'
-  ): void => {
-    if (isSamePath(dragged, target)) return;
-    setCustomNav((prev: AdminMenuCustomNode[]) => {
-      const next = cloneCustomNav(prev);
-      const draggedInfo = getParentAtPath(next, dragged);
-      const targetInfo = getParentAtPath(next, target);
-      if (!draggedInfo || !targetInfo) return prev;
-      const targetParentPath = target.slice(0, -1);
-      if (isPathPrefix(dragged, targetParentPath)) return prev;
-      const [node] = draggedInfo.parent.splice(draggedInfo.index, 1);
-      if (!node) return prev;
+  const moveCustomNodeTo = useCallback(
+    (dragged: number[], target: number[], position: 'above' | 'below'): void => {
+      if (isSamePath(dragged, target)) return;
+      setCustomNav((prev: AdminMenuCustomNode[]) => {
+        const next = cloneCustomNav(prev);
+        const draggedInfo = getParentAtPath(next, dragged);
+        const targetInfo = getParentAtPath(next, target);
+        if (!draggedInfo || !targetInfo) return prev;
+        const targetParentPath = target.slice(0, -1);
+        if (isPathPrefix(dragged, targetParentPath)) return prev;
+        const [node] = draggedInfo.parent.splice(draggedInfo.index, 1);
+        if (!node) return prev;
 
-      let insertIndex = position === 'above' ? targetInfo.index : targetInfo.index + 1;
-      if (
-        draggedInfo.parent === targetInfo.parent &&
-        draggedInfo.index < insertIndex
-      ) {
-        insertIndex -= 1;
-      }
-      targetInfo.parent.splice(insertIndex, 0, node);
-      return next;
-    });
-  }, []);
+        let insertIndex = position === 'above' ? targetInfo.index : targetInfo.index + 1;
+        if (draggedInfo.parent === targetInfo.parent && draggedInfo.index < insertIndex) {
+          insertIndex -= 1;
+        }
+        targetInfo.parent.splice(insertIndex, 0, node);
+        return next;
+      });
+    },
+    []
+  );
 
   const updateCustomLabel = useCallback((path: number[], value: string): void => {
     setCustomNav((prev: AdminMenuCustomNode[]) => {
@@ -493,10 +508,13 @@ export function AdminMenuSettingsProvider({ children }: { children: React.ReactN
     });
   }, []);
 
-  const handleAddRootNode = useCallback((kind: 'link' | 'group'): void => {
-    setCustomEnabled(true);
-    addCustomNodeAt(kind);
-  }, [addCustomNodeAt]);
+  const handleAddRootNode = useCallback(
+    (kind: 'link' | 'group'): void => {
+      setCustomEnabled(true);
+      addCustomNodeAt(kind);
+    },
+    [addCustomNodeAt]
+  );
 
   const addBuiltInNode = useCallback((entry: AdminNavNodeEntry): void => {
     setCustomNav((prev: AdminMenuCustomNode[]) => {
@@ -553,10 +571,14 @@ export function AdminMenuSettingsProvider({ children }: { children: React.ReactN
 
   const handleSave = useCallback(async (): Promise<void> => {
     try {
-      const validFavorites = favorites.filter((id: string) => flattened.some((item: AdminNavLeaf) => item.id === id));
+      const validFavorites = favorites.filter((id: string) =>
+        flattened.some((item: AdminNavLeaf) => item.id === id)
+      );
       const sectionIds = new Set(sections.map((section: { id: string }) => section.id));
       const validSectionColors = Object.fromEntries(
-        Object.entries(sectionColors).filter(([sectionId]: [string, string]) => sectionIds.has(sectionId))
+        Object.entries(sectionColors).filter(([sectionId]: [string, string]) =>
+          sectionIds.has(sectionId)
+        )
       );
       await updateSettingsBulk.mutateAsync([
         { key: ADMIN_MENU_FAVORITES_KEY, value: JSON.stringify(validFavorites) },
@@ -567,9 +589,20 @@ export function AdminMenuSettingsProvider({ children }: { children: React.ReactN
       toast('Admin menu settings saved.', { variant: 'success' });
     } catch (error) {
       logClientError(error, { context: { source: 'AdminMenuSettingsPage', action: 'save' } });
-      toast(error instanceof Error ? error.message : 'Failed to save admin menu settings.', { variant: 'error' });
+      toast(error instanceof Error ? error.message : 'Failed to save admin menu settings.', {
+        variant: 'error',
+      });
     }
-  }, [customEnabled, favorites, flattened, normalizedCustomNav, sectionColors, sections, toast, updateSettingsBulk]);
+  }, [
+    customEnabled,
+    favorites,
+    flattened,
+    normalizedCustomNav,
+    sectionColors,
+    sections,
+    toast,
+    updateSettingsBulk,
+  ]);
 
   const handleReset = useCallback((): void => {
     setFavorites([]);
@@ -578,89 +611,90 @@ export function AdminMenuSettingsProvider({ children }: { children: React.ReactN
     setCustomNav(defaultCustomNav);
   }, [defaultCustomNav]);
 
-  const value = useMemo(() => ({
-    favorites,
-    sectionColors,
-    customEnabled,
-    customNav,
-    query,
-    libraryQuery,
-    draggedPath,
-    dragOver,
-    sections,
-    flattened,
-    favoritesSet,
-    favoritesList,
-    filteredItems,
-    flattenedCustomNav,
-    libraryItems,
-    libraryItemMap,
-    customIds,
-    filteredLibraryItems,
-    isDirty,
-    isDefaultState,
-    isSaving: updateSettingsBulk.isPending,
-    setQuery,
-    setLibraryQuery,
-    setCustomEnabled,
-    setDraggedPath,
-    setDragOver,
-    handleToggleFavorite,
-    moveFavorite,
-    updateSectionColor,
-    moveCustomNodeTo,
-    updateCustomLabel,
-    updateCustomHref,
-    handleAddRootNode,
-    addCustomNodeAt,
-    addBuiltInNode,
-    removeCustomNode,
-    indentCustomNode,
-    outdentCustomNode,
-    handleSave,
-    handleReset,
-  }), [
-    favorites,
-    sectionColors,
-    customEnabled,
-    customNav,
-    query,
-    libraryQuery,
-    draggedPath,
-    dragOver,
-    sections,
-    flattened,
-    favoritesSet,
-    favoritesList,
-    filteredItems,
-    flattenedCustomNav,
-    libraryItems,
-    libraryItemMap,
-    customIds,
-    filteredLibraryItems,
-    isDirty,
-    isDefaultState,
-    updateSettingsBulk.isPending,
-    handleToggleFavorite,
-    moveFavorite,
-    updateSectionColor,
-    moveCustomNodeTo,
-    updateCustomLabel,
-    updateCustomHref,
-    handleAddRootNode,
-    addCustomNodeAt,
-    addBuiltInNode,
-    removeCustomNode,
-    indentCustomNode,
-    outdentCustomNode,
-    handleSave,
-    handleReset,
-  ]);
+  const value = useMemo(
+    () => ({
+      favorites,
+      sectionColors,
+      customEnabled,
+      customNav,
+      query,
+      libraryQuery,
+      draggedPath,
+      dragOver,
+      sections,
+      flattened,
+      favoritesSet,
+      favoritesList,
+      filteredItems,
+      flattenedCustomNav,
+      libraryItems,
+      libraryItemMap,
+      customIds,
+      filteredLibraryItems,
+      isDirty,
+      isDefaultState,
+      isSaving: updateSettingsBulk.isPending,
+      setQuery,
+      setLibraryQuery,
+      setCustomEnabled,
+      setDraggedPath,
+      setDragOver,
+      handleToggleFavorite,
+      moveFavorite,
+      updateSectionColor,
+      moveCustomNodeTo,
+      updateCustomLabel,
+      updateCustomHref,
+      handleAddRootNode,
+      addCustomNodeAt,
+      addBuiltInNode,
+      removeCustomNode,
+      indentCustomNode,
+      outdentCustomNode,
+      handleSave,
+      handleReset,
+    }),
+    [
+      favorites,
+      sectionColors,
+      customEnabled,
+      customNav,
+      query,
+      libraryQuery,
+      draggedPath,
+      dragOver,
+      sections,
+      flattened,
+      favoritesSet,
+      favoritesList,
+      filteredItems,
+      flattenedCustomNav,
+      libraryItems,
+      libraryItemMap,
+      customIds,
+      filteredLibraryItems,
+      isDirty,
+      isDefaultState,
+      updateSettingsBulk.isPending,
+      handleToggleFavorite,
+      moveFavorite,
+      updateSectionColor,
+      moveCustomNodeTo,
+      updateCustomLabel,
+      updateCustomHref,
+      handleAddRootNode,
+      addCustomNodeAt,
+      addBuiltInNode,
+      removeCustomNode,
+      indentCustomNode,
+      outdentCustomNode,
+      handleSave,
+      handleReset,
+    ]
+  );
 
   return (
-    <AdminMenuSettingsContext.Provider value={value}>
-      {children}
-    </AdminMenuSettingsContext.Provider>
+    <AdminMenuSettingsContext.Provider value={value}>{children}</AdminMenuSettingsContext.Provider>
   );
 }
 

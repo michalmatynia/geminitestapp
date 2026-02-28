@@ -2,7 +2,7 @@
 
 /**
  * Type Deduplication Analysis Script
- * 
+ *
  * This script analyzes the codebase for duplicate type definitions
  * and provides recommendations for consolidation.
  */
@@ -15,12 +15,12 @@ const DUPLICATE_PATTERNS = [
   /updatedAt:\s*string/g,
   /name:\s*string/g,
   /description:\s*string/g,
-  
+
   // Status patterns
   /'pending'\s*\|\s*'running'\s*\|\s*'completed'\s*\|\s*'failed'/g,
   /'draft'\s*\|\s*'published'/g,
   /'active'\s*\|\s*'inactive'/g,
-  
+
   // Common interface patterns
   /interface\s+\w*Entity/g,
   /interface\s+\w*Dto/g,
@@ -31,14 +31,14 @@ const DUPLICATE_PATTERNS = [
 const TYPE_CLUSTERS = {
   base: [
     'BaseEntity',
-    'NamedEntity', 
+    'NamedEntity',
     'CategorizedEntity',
     'TaggedEntity',
     'PublishableEntity',
     'HierarchicalEntity',
     'MetadataEntity',
     'UserOwnedEntity',
-    'AuditableEntity'
+    'AuditableEntity',
   ],
   content: [
     'ContentEntity',
@@ -50,7 +50,7 @@ const TYPE_CLUSTERS = {
     'MenuEntity',
     'ComponentEntity',
     'BlockEntity',
-    'SectionEntity'
+    'SectionEntity',
   ],
   commerce: [
     'ProductEntity',
@@ -62,7 +62,7 @@ const TYPE_CLUSTERS = {
     'OrderEntity',
     'OrderItemEntity',
     'CustomerEntity',
-    'AddressEntity'
+    'AddressEntity',
   ],
   workflow: [
     'WorkflowEntity',
@@ -74,7 +74,7 @@ const TYPE_CLUSTERS = {
     'JobEntity',
     'TaskEntity',
     'IntegrationEntity',
-    'TriggerEntity'
+    'TriggerEntity',
   ],
   communication: [
     'ChatSessionEntity',
@@ -85,8 +85,8 @@ const TYPE_CLUSTERS = {
     'NotificationEntity',
     'ActivityEntity',
     'TeamEntity',
-    'WorkspaceEntity'
-  ]
+    'WorkspaceEntity',
+  ],
 };
 
 // Duplicate type definitions found across the codebase
@@ -97,29 +97,29 @@ const KNOWN_DUPLICATES = {
     'src/features/auth/types/index.ts',
     'src/features/cms/types/index.ts',
     'src/features/chatbot/types/api.ts',
-    'src/shared/types/notes.ts'
+    'src/shared/types/notes.ts',
   ],
-  
+
   // Job status types
   jobStatus: [
     'src/shared/types/jobs.ts',
     'src/features/ai-paths/types/path-run-repository.ts',
-    'src/features/integrations/types/integrations.ts'
+    'src/features/integrations/types/integrations.ts',
   ],
-  
+
   // Pagination types
   pagination: [
     'src/shared/types/api.ts',
     'src/features/products/types/products-ui.ts',
-    'src/features/cms/types/page-builder.ts'
+    'src/features/cms/types/page-builder.ts',
   ],
-  
+
   // Configuration types
   config: [
     'src/shared/types/ai-paths.ts',
     'src/features/integrations/types/integrations.ts',
-    'src/features/agentcreator/types/index.ts'
-  ]
+    'src/features/agentcreator/types/index.ts',
+  ],
 };
 
 // Migration recommendations
@@ -128,26 +128,26 @@ const MIGRATION_RECOMMENDATIONS = [
     pattern: 'BaseEntity pattern (id, createdAt, updatedAt)',
     files: KNOWN_DUPLICATES.baseEntity,
     replacement: 'import { BaseEntity } from "@/shared/types/base"',
-    description: 'Replace with BaseEntity interface'
+    description: 'Replace with BaseEntity interface',
   },
   {
     pattern: 'Job status enums',
     files: KNOWN_DUPLICATES.jobStatus,
     replacement: 'import { JobStatus } from "@/shared/types/base"',
-    description: 'Use centralized JobStatus type'
+    description: 'Use centralized JobStatus type',
   },
   {
     pattern: 'Pagination interfaces',
     files: KNOWN_DUPLICATES.pagination,
     replacement: 'import { PaginationParams, PaginatedResponse } from "@/shared/types/base"',
-    description: 'Use centralized pagination types'
+    description: 'Use centralized pagination types',
   },
   {
     pattern: 'Configuration objects',
     files: KNOWN_DUPLICATES.config,
     replacement: 'import { ConfigEntity } from "@/shared/types/base"',
-    description: 'Extend ConfigEntity for configuration objects'
-  }
+    description: 'Extend ConfigEntity for configuration objects',
+  },
 ];
 
 console.log('🔍 Type Deduplication Analysis Report');
@@ -164,7 +164,7 @@ MIGRATION_RECOMMENDATIONS.forEach((rec, index) => {
   console.log(`   Description: ${rec.description}`);
   console.log(`   Replacement: ${rec.replacement}`);
   console.log(`   Files affected: ${rec.files.length}`);
-  rec.files.forEach(file => console.log(`     - ${file}`));
+  rec.files.forEach((file) => console.log(`     - ${file}`));
 });
 
 console.log('\n✅ Benefits of Type Organization:');
@@ -185,5 +185,5 @@ module.exports = {
   DUPLICATE_PATTERNS,
   TYPE_CLUSTERS,
   KNOWN_DUPLICATES,
-  MIGRATION_RECOMMENDATIONS
+  MIGRATION_RECOMMENDATIONS,
 };

@@ -6,7 +6,7 @@ import type { ColumnDef, Row } from '@tanstack/react-table';
 
 import { Checkbox, Tooltip } from '@/shared/ui';
 import type { NodeFileDocumentSearchRow } from '../../../components/CaseResolverNodeFileUtils';
-import { getCaseResolverDocTooltip } from '../../utils/docs';
+import { getCaseResolverDocTooltip } from '@/features/case-resolver/relation-search/utils/docs';
 import { FileTypeIcon, formatShortDate } from './document-relation-search-utils';
 
 export interface DocumentTableColumnProps {
@@ -84,10 +84,7 @@ export const getDocumentTableColumns = ({
       accessorKey: 'folderPath',
       header: 'Folder',
       cell: ({ row }: { row: Row<NodeFileDocumentSearchRow> }): React.JSX.Element => (
-        <span
-          className='block truncate text-gray-400'
-          title={row.original.folderPath || '—'}
-        >
+        <span className='block truncate text-gray-400' title={row.original.folderPath || '—'}>
           {row.original.folderPath || '—'}
         </span>
       ),
@@ -124,10 +121,7 @@ export const getDocumentTableColumns = ({
       accessorKey: 'addresserLabel',
       header: 'From',
       cell: ({ row }: { row: Row<NodeFileDocumentSearchRow> }): React.JSX.Element => (
-        <span
-          className='block truncate text-gray-400'
-          title={row.original.addresserLabel || '—'}
-        >
+        <span className='block truncate text-gray-400' title={row.original.addresserLabel || '—'}>
           {row.original.addresserLabel || '—'}
         </span>
       ),
@@ -136,10 +130,7 @@ export const getDocumentTableColumns = ({
       accessorKey: 'addresseeLabel',
       header: 'To',
       cell: ({ row }: { row: Row<NodeFileDocumentSearchRow> }): React.JSX.Element => (
-        <span
-          className='block truncate text-gray-400'
-          title={row.original.addresseeLabel || '—'}
-        >
+        <span className='block truncate text-gray-400' title={row.original.addresseeLabel || '—'}>
           {row.original.addresseeLabel || '—'}
         </span>
       ),
@@ -147,13 +138,12 @@ export const getDocumentTableColumns = ({
     {
       id: 'locked',
       header: '',
-      cell: ({ row }: { row: Row<NodeFileDocumentSearchRow> }): React.JSX.Element | null => (
+      cell: ({ row }: { row: Row<NodeFileDocumentSearchRow> }): React.JSX.Element | null =>
         row.original.file.isLocked ? (
           <Tooltip content={getCaseResolverDocTooltip('lockedIndicator')} side='left'>
             <Lock className='size-3 text-amber-400/70' />
           </Tooltip>
-        ) : null
-      ),
+        ) : null,
       size: 30,
     },
     {

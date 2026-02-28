@@ -1,10 +1,6 @@
 'use client';
 
-import {
-  useQueries,
-  useQueryClient,
-  type UseQueryResult,
-} from '@tanstack/react-query';
+import { useQueries, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 
 import { getLanguages } from '@/shared/lib/internationalization/api';
 import type { Language } from '@/shared/contracts/internationalization';
@@ -18,11 +14,7 @@ import type {
   ProductSimpleParameter,
   ProductTag,
 } from '@/shared/contracts/products';
-import type { 
-  ListQuery, 
-  SaveMutation, 
-  DeleteMutation 
-} from '@/shared/contracts/ui';
+import type { ListQuery, SaveMutation, DeleteMutation } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import {
   createListQueryV2,
@@ -132,7 +124,9 @@ export function useMultiTags(catalogIds: string[]): UseQueryResult<ProductTag[]>
     queries: catalogIds.map((catalogId) => ({
       queryKey: normalizeQueryKey(productMetadataKeys.tags(catalogId)),
       queryFn: async (): Promise<ProductTag[]> =>
-        await api.get<ProductTag[]>(`/api/products/tags?catalogId=${encodeURIComponent(catalogId)}`),
+        await api.get<ProductTag[]>(
+          `/api/products/tags?catalogId=${encodeURIComponent(catalogId)}`
+        ),
     })),
   });
 }
@@ -153,7 +147,10 @@ export function useProducers(): ListQuery<Producer> {
   });
 }
 
-export function useSaveProducerMutation(): SaveMutation<Producer, { id: string | undefined; data: { name: string; website: string | null } }> {
+export function useSaveProducerMutation(): SaveMutation<
+  Producer,
+  { id: string | undefined; data: { name: string; website: string | null } }
+> {
   const queryClient = useQueryClient();
   const mutationKey = productMetadataKeys.producers();
   return createMutationV2({
@@ -218,18 +215,14 @@ export function useParameters(catalogId?: string): ListQuery<ProductParameter> {
   });
 }
 
-export function useSimpleParameters(
-  catalogId?: string
-): ListQuery<ProductSimpleParameter> {
+export function useSimpleParameters(catalogId?: string): ListQuery<ProductSimpleParameter> {
   const queryKey = productMetadataKeys.simpleParameters(catalogId ?? null);
   return createListQueryV2({
     queryKey,
     queryFn: async (): Promise<ProductSimpleParameter[]> => {
       if (!catalogId) return [];
       return await api.get<ProductSimpleParameter[]>(
-        `/api/products/simple-parameters?catalogId=${encodeURIComponent(
-          catalogId
-        )}`
+        `/api/products/simple-parameters?catalogId=${encodeURIComponent(catalogId)}`
       );
     },
     enabled: Boolean(catalogId),

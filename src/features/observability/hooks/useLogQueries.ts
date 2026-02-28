@@ -1,7 +1,7 @@
 'use client';
 
 import type { AiInsightRecord } from '@/shared/contracts';
-import type { 
+import type {
   SystemLogsResponseDto as SystemLogsResponse,
   SystemActivityResponseDto as SystemActivityResponse,
   SystemLogMetricsResponseDto as SystemLogMetricsResponse,
@@ -9,9 +9,7 @@ import type {
 } from '@/shared/contracts/observability';
 import type { SingleQuery } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
-import {
-  createSingleQueryV2,
-} from '@/shared/lib/query-factories-v2';
+import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { logsKeys, activityKeys, diagnosticsKeys } from '@/shared/lib/query-key-exports';
 
 export type { LogFilters, SystemLogsResponse, SystemActivityResponse, SystemLogMetricsResponse };
@@ -21,7 +19,7 @@ export function useSystemLogs(filters: LogFilters): SingleQuery<SystemLogsRespon
   return createSingleQueryV2({
     id: 'system-logs',
     queryKey,
-    queryFn: () => 
+    queryFn: () =>
       api.get<SystemLogsResponse>('/api/system/logs', {
         params: {
           page: filters.page,
@@ -37,7 +35,7 @@ export function useSystemLogs(filters: LogFilters): SingleQuery<SystemLogsRespon
           category: filters.category?.trim() || undefined,
           from: filters.from || undefined,
           to: filters.to || undefined,
-        }
+        },
       }),
     meta: {
       source: 'observability.hooks.useSystemLogs',
@@ -49,15 +47,17 @@ export function useSystemLogs(filters: LogFilters): SingleQuery<SystemLogsRespon
   });
 }
 
-export function useSystemActivity(params: { page?: number; pageSize?: number; search?: string } = {}): SingleQuery<SystemActivityResponse> {
+export function useSystemActivity(
+  params: { page?: number; pageSize?: number; search?: string } = {}
+): SingleQuery<SystemActivityResponse> {
   const { page = 1, pageSize = 10, search } = params;
   const queryKey = activityKeys.list({ page, pageSize, search });
   return createSingleQueryV2({
     id: 'system-activity',
     queryKey,
-    queryFn: () => 
+    queryFn: () =>
       api.get<SystemActivityResponse>('/api/system/activity', {
-        params: { page, pageSize, search }
+        params: { page, pageSize, search },
       }),
     meta: {
       source: 'observability.hooks.useSystemActivity',
@@ -69,12 +69,14 @@ export function useSystemActivity(params: { page?: number; pageSize?: number; se
   });
 }
 
-export function useSystemLogMetrics(filters: Omit<LogFilters, 'page' | 'pageSize'>): SingleQuery<SystemLogMetricsResponse> {
+export function useSystemLogMetrics(
+  filters: Omit<LogFilters, 'page' | 'pageSize'>
+): SingleQuery<SystemLogMetricsResponse> {
   const queryKey = logsKeys.metrics(filters);
   return createSingleQueryV2({
     id: 'system-log-metrics',
     queryKey,
-    queryFn: () => 
+    queryFn: () =>
       api.get<SystemLogMetricsResponse>('/api/system/logs/metrics', {
         params: {
           level: filters.level || undefined,
@@ -88,7 +90,7 @@ export function useSystemLogMetrics(filters: Omit<LogFilters, 'page' | 'pageSize
           category: filters.category?.trim() || undefined,
           from: filters.from || undefined,
           to: filters.to || undefined,
-        }
+        },
       }),
     meta: {
       source: 'observability.hooks.useSystemLogMetrics',
@@ -116,14 +118,16 @@ export function useMongoDiagnostics(): SingleQuery<unknown> {
   });
 }
 
-export function useLogInsights(options: { limit?: number; enabled?: boolean } = {}): SingleQuery<{ insights: AiInsightRecord[] }> {
+export function useLogInsights(
+  options: { limit?: number; enabled?: boolean } = {}
+): SingleQuery<{ insights: AiInsightRecord[] }> {
   const queryKey = logsKeys.insights(options.limit);
   return createSingleQueryV2({
     id: 'log-insights',
     queryKey,
-    queryFn: () => 
+    queryFn: () =>
       api.get<{ insights: AiInsightRecord[] }>('/api/system/logs/insights', {
-        params: { limit: options.limit ?? 5 }
+        params: { limit: options.limit ?? 5 },
       }),
     enabled: options.enabled ?? true,
     meta: {

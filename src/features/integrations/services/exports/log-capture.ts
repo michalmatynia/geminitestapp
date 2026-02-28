@@ -66,7 +66,12 @@ export class LogCapture {
       message = 'Log data';
       context = firstArg as Record<string, unknown>;
     } else {
-      message = firstArg === null ? 'null' : (typeof firstArg === 'symbol' ? firstArg.toString() : String(firstArg as unknown));
+      message =
+        firstArg === null
+          ? 'null'
+          : typeof firstArg === 'symbol'
+            ? firstArg.toString()
+            : String(firstArg as unknown);
     }
 
     this.logs.push({
@@ -97,9 +102,7 @@ export class LogCapture {
   exportAsText(): string {
     return this.logs
       .map((log: CapturedLog) => {
-        const contextStr = log.context
-          ? `\n  ${JSON.stringify(log.context)}`
-          : '';
+        const contextStr = log.context ? `\n  ${JSON.stringify(log.context)}` : '';
         return `[${log.timestamp}] [${log.level.toUpperCase()}] ${log.message}${contextStr}`;
       })
       .join('\n');

@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { useIntegrationList } from '@/features/integrations/hooks/useIntegrationList';
 import { Button, ListPanel, StatusBadge, Badge, Card } from '@/shared/ui';
 
-
 export function IntegrationList(): React.JSX.Element {
   const {
     handleIntegrationClick,
@@ -38,46 +37,48 @@ export function IntegrationList(): React.JSX.Element {
 
         <div className='relative mx-auto flex min-h-[420px] max-w-5xl items-center justify-center'>
           <div className='relative z-10 flex flex-col items-center gap-6'>
-            <Card variant='subtle' padding='lg' className='border-emerald-400/40 bg-emerald-500/10 text-center shadow-lg rounded-2xl'>
-              <p className='text-xs uppercase tracking-[0.3em] text-emerald-200'>
-                Core
-              </p>
+            <Card
+              variant='subtle'
+              padding='lg'
+              className='border-emerald-400/40 bg-emerald-500/10 text-center shadow-lg rounded-2xl'
+            >
+              <p className='text-xs uppercase tracking-[0.3em] text-emerald-200'>Core</p>
               <p className='mt-2 text-xl font-semibold text-white'>Stardb Hub</p>
             </Card>
             <div className='flex flex-wrap items-center justify-center gap-3'>
               {[
-                { 
-                  slug: 'tradera', 
-                  label: 'Tradera', 
-                  type: 'Browser', 
-                  variant: 'warning' as const, 
+                {
+                  slug: 'tradera',
+                  label: 'Tradera',
+                  type: 'Browser',
+                  variant: 'warning' as const,
                   color: 'info' as const,
-                  definition: traderaDefinition 
+                  definition: traderaDefinition,
                 },
-                { 
-                  slug: 'tradera-api', 
-                  label: 'Tradera API', 
-                  type: 'API', 
-                  variant: 'info' as const, 
+                {
+                  slug: 'tradera-api',
+                  label: 'Tradera API',
+                  type: 'API',
+                  variant: 'info' as const,
                   color: 'info' as const,
-                  definition: traderaApiDefinition 
+                  definition: traderaApiDefinition,
                 },
-                { 
-                  slug: 'allegro', 
-                  label: 'Allegro', 
-                  type: 'API', 
-                  variant: 'info' as const, 
+                {
+                  slug: 'allegro',
+                  label: 'Allegro',
+                  type: 'API',
+                  variant: 'info' as const,
                   color: 'warning' as const,
-                  definition: allegroDefinition 
+                  definition: allegroDefinition,
                 },
-                { 
-                  slug: 'baselinker', 
-                  label: 'Baselinker', 
-                  type: 'Platform', 
-                  variant: 'processing' as const, 
+                {
+                  slug: 'baselinker',
+                  label: 'Baselinker',
+                  type: 'Platform',
+                  variant: 'processing' as const,
                   color: 'active' as const,
-                  definition: baselinkerDefinition 
-                }
+                  definition: baselinkerDefinition,
+                },
               ].map((item) => {
                 if (!integrationSlugs.includes(item.slug)) return null;
 
@@ -87,7 +88,12 @@ export function IntegrationList(): React.JSX.Element {
                     variant={item.color}
                     className='flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-normal'
                   >
-                    <StatusBadge status={item.type} variant={item.variant} size='sm' className='h-4 font-bold' />
+                    <StatusBadge
+                      status={item.type}
+                      variant={item.variant}
+                      size='sm'
+                      className='h-4 font-bold'
+                    />
                     <span className='font-medium'>{item.label}</span>
                     <Button
                       type='button'
@@ -105,9 +111,7 @@ export function IntegrationList(): React.JSX.Element {
                 );
               })}
               {!hasIntegrations && (
-                <div className='text-xs text-gray-500'>
-                  No integrations added yet.
-                </div>
+                <div className='text-xs text-gray-500'>No integrations added yet.</div>
               )}
             </div>
           </div>

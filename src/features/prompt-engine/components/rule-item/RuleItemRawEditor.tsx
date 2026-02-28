@@ -1,11 +1,7 @@
 'use client';
 
 import React from 'react';
-import {
-  Textarea,
-  CollapsibleSection,
-  Hint,
-} from '@/shared/ui';
+import { Textarea, CollapsibleSection, Hint } from '@/shared/ui';
 import { useRuleItemContext } from '../context/RuleItemContext';
 import { usePromptEngine } from '../../context/PromptEngineContext';
 
@@ -15,7 +11,11 @@ export function RuleItemRawEditor(): React.JSX.Element {
 
   return (
     <CollapsibleSection
-      title={<Hint size='xs' uppercase={false} className='font-medium text-gray-200'>Raw JSON editor</Hint>}
+      title={
+        <Hint size='xs' uppercase={false} className='font-medium text-gray-200'>
+          Raw JSON editor
+        </Hint>
+      }
       variant='subtle'
       className='mt-2'
     >
@@ -27,9 +27,7 @@ export function RuleItemRawEditor(): React.JSX.Element {
             handleRuleTextChange(draft.uid, event.target.value)
           }
         />
-        {draft.error ? (
-          <div className='text-xs text-red-300'>{draft.error}</div>
-        ) : null}
+        {draft.error ? <div className='text-xs text-red-300'>{draft.error}</div> : null}
       </div>
     </CollapsibleSection>
   );

@@ -6,18 +6,18 @@ import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { GET } from '@/app/api/databases/engine/provider-preview/route';
-import { getDatabaseEngineProviderPreview } from '@/features/database/services/database-engine-provider-preview';
+import { getDatabaseEngineProviderPreview } from '@/shared/lib/db/services/database-engine-provider-preview';
 
 vi.mock('@/shared/lib/api/api-handler', () => ({
   apiHandler:
     (handler: (req: NextRequest, ctx: unknown) => Promise<Response>) =>
-      async (req: NextRequest): Promise<Response> =>
-        handler(req, {
-          requestId: 'test-request-id',
-        }),
+    async (req: NextRequest): Promise<Response> =>
+      handler(req, {
+        requestId: 'test-request-id',
+      }),
 }));
 
-vi.mock('@/features/database/services/database-engine-provider-preview', () => ({
+vi.mock('@/shared/lib/db/services/database-engine-provider-preview', () => ({
   getDatabaseEngineProviderPreview: vi.fn(),
 }));
 

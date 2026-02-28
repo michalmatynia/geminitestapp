@@ -121,13 +121,11 @@ const parseCaseSearchQuery = (query: string): ParsedCaseSearchToken[] => {
           rawField === 'text' ||
           rawField === 'content' ||
           rawField === 'id'
-            ? (
-              rawField === 'content'
-                ? 'text'
-                : rawField === 'references'
-                  ? 'refs'
-                  : rawField
-            )
+            ? rawField === 'content'
+              ? 'text'
+              : rawField === 'references'
+                ? 'refs'
+                : rawField
             : 'any';
 
         if (rawValue.length > 0) {
@@ -152,7 +150,7 @@ const toSearchText = (value: string | null | undefined): string =>
 const resolveCaseRowMatchesToken = (
   row: IndexedCaseSearchRow,
   token: ParsedCaseSearchToken,
-  scope: CaseSearchScope,
+  scope: CaseSearchScope
 ): boolean => {
   const includes = (value: string): boolean => value.includes(token.value);
 
@@ -202,10 +200,10 @@ const buildSearchIndex = ({
 }): BuiltSearchIndex => {
   const indexes = getCachedCaseResolverRuntimeIndexes(workspace);
   const caseFiles = workspace.files.filter(
-    (file: CaseResolverFile): boolean => file.fileType === 'case',
+    (file: CaseResolverFile): boolean => file.fileType === 'case'
   );
   const caseFilesById = new Map<string, CaseResolverFile>(
-    caseFiles.map((file: CaseResolverFile): [string, CaseResolverFile] => [file.id, file]),
+    caseFiles.map((file: CaseResolverFile): [string, CaseResolverFile] => [file.id, file])
   );
 
   const indexedRows = caseFiles.map((caseFile: CaseResolverFile): IndexedCaseSearchRow => {
@@ -227,13 +225,11 @@ const buildSearchIndex = ({
 
       const subtreeAssets = indexes.assetsByOwnerCaseId.get(subtreeCaseId) ?? [];
       subtreeAssets.forEach((asset: CaseResolverAssetFile): void => {
-        const assetTextContent =
-          typeof asset.textContent === 'string' ? asset.textContent : '';
+        const assetTextContent = typeof asset.textContent === 'string' ? asset.textContent : '';
         if (assetTextContent.trim().length > 0) {
           textFragments.push(assetTextContent);
         }
-        const assetDescription =
-          typeof asset.description === 'string' ? asset.description : '';
+        const assetDescription = typeof asset.description === 'string' ? asset.description : '';
         if (assetDescription.trim().length > 0) {
           textFragments.push(assetDescription);
         }
@@ -244,7 +240,7 @@ const buildSearchIndex = ({
     const hasReferences =
       Array.isArray(caseFile.referenceCaseIds) &&
       caseFile.referenceCaseIds.some(
-        (referenceCaseId: string): boolean => referenceCaseId.trim().length > 0,
+        (referenceCaseId: string): boolean => referenceCaseId.trim().length > 0
       );
 
     return {
@@ -252,28 +248,28 @@ const buildSearchIndex = ({
       normalizedName: toSearchText(caseFile.name),
       normalizedFolder: toSearchText(caseFile.folder),
       normalizedTag: toSearchText(
-        caseFile.tagId ? (caseTagPathById.get(caseFile.tagId) ?? '') : '',
+        caseFile.tagId ? (caseTagPathById.get(caseFile.tagId) ?? '') : ''
       ),
       normalizedIdentifier: toSearchText(
         caseFile.caseIdentifierId
           ? (caseIdentifierPathById.get(caseFile.caseIdentifierId) ?? '')
-          : '',
+          : ''
       ),
       normalizedCategory: toSearchText(
-        caseFile.categoryId ? (caseCategoryPathById.get(caseFile.categoryId) ?? '') : '',
+        caseFile.categoryId ? (caseCategoryPathById.get(caseFile.categoryId) ?? '') : ''
       ),
       normalizedStatus: toSearchText(caseFile.caseStatus ?? 'pending'),
       normalizedLocked: toSearchText(
-        caseFile.isLocked === true ? 'locked true yes' : 'unlocked false no',
+        caseFile.isLocked === true ? 'locked true yes' : 'unlocked false no'
       ),
       normalizedSent: toSearchText(
-        caseFile.isSent === true ? 'sent true yes' : 'not_sent unsent false no',
+        caseFile.isSent === true ? 'sent true yes' : 'not_sent unsent false no'
       ),
       normalizedParent: toSearchText(hasParentCase ? 'child with_parent' : 'root'),
       normalizedRefs: toSearchText(
         hasReferences
           ? 'with_references with_refs has yes true'
-          : 'without_references no_refs no false',
+          : 'without_references no_refs no false'
       ),
       normalizedId: toSearchText(caseFile.id),
       normalizedText: toSearchText(textFragments.join(' ')),
@@ -317,23 +313,20 @@ export function useCaseResolverCaseSearchIndex({
         caseIdentifierPathById,
         caseCategoryPathById,
       }),
-    [caseCategoryPathById, caseIdentifierPathById, caseTagPathById, workspace],
+    [caseCategoryPathById, caseIdentifierPathById, caseTagPathById, workspace]
   );
 
   const searchTokens = useMemo(
     (): ParsedCaseSearchToken[] => parseCaseSearchQuery(deferredCaseSearchQuery),
-    [deferredCaseSearchQuery],
+    [deferredCaseSearchQuery]
   );
 
   const tagFilterSet = useMemo(() => new Set(caseFilterTagIds), [caseFilterTagIds]);
   const identifierFilterSet = useMemo(
     () => new Set(caseFilterCaseIdentifierIds),
-    [caseFilterCaseIdentifierIds],
+    [caseFilterCaseIdentifierIds]
   );
-  const categoryFilterSet = useMemo(
-    () => new Set(caseFilterCategoryIds),
-    [caseFilterCategoryIds],
-  );
+  const categoryFilterSet = useMemo(() => new Set(caseFilterCategoryIds), [caseFilterCategoryIds]);
 
   const matchedCaseIds = useMemo((): Set<string> => {
     const searchFilterStartedAtMs =
@@ -348,10 +341,7 @@ export function useCaseResolverCaseSearchIndex({
       if (caseFilterFolder !== '__all__' && row.file.folder !== caseFilterFolder) {
         return;
       }
-      if (
-        caseFilterStatus !== 'all' &&
-        (row.file.caseStatus ?? 'pending') !== caseFilterStatus
-      ) {
+      if (caseFilterStatus !== 'all' && (row.file.caseStatus ?? 'pending') !== caseFilterStatus) {
         return;
       }
       if (caseFilterLocked === 'locked' && row.file.isLocked !== true) {
@@ -381,7 +371,7 @@ export function useCaseResolverCaseSearchIndex({
       const hasReferences =
         Array.isArray(row.file.referenceCaseIds) &&
         row.file.referenceCaseIds.some(
-          (referenceCaseId: string): boolean => referenceCaseId.trim().length > 0,
+          (referenceCaseId: string): boolean => referenceCaseId.trim().length > 0
         );
       if (caseFilterReferences === 'with_references' && !hasReferences) {
         return;
@@ -409,8 +399,8 @@ export function useCaseResolverCaseSearchIndex({
         searchTokens.length === 0
           ? true
           : searchTokens.every((token: ParsedCaseSearchToken): boolean =>
-            resolveCaseRowMatchesToken(row, token, caseSearchScope),
-          );
+              resolveCaseRowMatchesToken(row, token, caseSearchScope)
+            );
       if (!searchMatches) return;
 
       nextMatchedCaseIds.add(row.file.id);

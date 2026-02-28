@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   listImageStudioSequenceRuns,
   type ImageStudioSequenceRunStatus,
-} from '@/features/ai/image-studio/server/sequence-run-repository';
+} from '@/shared/lib/ai/image-studio/server/sequence-run-repository';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const RUN_STATUSES = new Set<ImageStudioSequenceRunStatus>([
@@ -26,9 +26,10 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   const projectId = searchParams.get('projectId')?.trim() || null;
   const sourceSlotId = searchParams.get('sourceSlotId')?.trim() || null;
   const statusParam = searchParams.get('status')?.trim().toLowerCase() || null;
-  const status = statusParam && RUN_STATUSES.has(statusParam as ImageStudioSequenceRunStatus)
-    ? (statusParam as ImageStudioSequenceRunStatus)
-    : null;
+  const status =
+    statusParam && RUN_STATUSES.has(statusParam as ImageStudioSequenceRunStatus)
+      ? (statusParam as ImageStudioSequenceRunStatus)
+      : null;
   const limit = parsePositiveInteger(searchParams.get('limit'), 50);
   const offset = parsePositiveInteger(searchParams.get('offset'), 0);
 

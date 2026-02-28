@@ -9,21 +9,17 @@ const parseTimeout = (value: string | undefined, fallback: number, min: number):
 const DEFAULT_NODE_TIMEOUT_MS = parseTimeout(
   process.env['AI_PATHS_NODE_TIMEOUT_MS'],
   120_000,
-  5_000,
+  5_000
 );
 
 const DEFAULT_BLOCKING_AI_NODE_TIMEOUT_MS = Math.max(
   DEFAULT_NODE_TIMEOUT_MS,
-  parseTimeout(
-    process.env['AI_PATHS_BLOCKING_AI_NODE_TIMEOUT_MS'],
-    300_000,
-    30_000,
-  ),
+  parseTimeout(process.env['AI_PATHS_BLOCKING_AI_NODE_TIMEOUT_MS'], 300_000, 30_000)
 );
 
 export const DEFAULT_RETRY_BACKOFF_MS = Math.max(
   250,
-  Number.parseInt(process.env['AI_PATHS_NODE_RETRY_BACKOFF_MS'] ?? '', 10) || 750,
+  Number.parseInt(process.env['AI_PATHS_NODE_RETRY_BACKOFF_MS'] ?? '', 10) || 750
 );
 
 export const resolveNodeTimeoutMs = (node: AiNode): number => {
@@ -46,27 +42,22 @@ export const nowMs = (): number =>
     : Date.now();
 
 const sleep = (ms: number): Promise<void> =>
-  new Promise((resolve: (value: void | PromiseLike<void>) => void) =>
-    setTimeout(resolve, ms),
-  );
+  new Promise((resolve: (value: void | PromiseLike<void>) => void) => setTimeout(resolve, ms));
 
 export const withTimeout = async <T>(
   promise: Promise<T>,
   timeoutMs: number,
-  label: string,
+  label: string
 ): Promise<T> => {
   if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) return promise;
   let timer: NodeJS.Timeout | null = null;
   const timeoutPromise = new Promise<never>(
-    (
-      _resolve: (value: PromiseLike<never>) => void,
-      reject: (reason?: unknown) => void,
-    ) => {
+    (_resolve: (value: PromiseLike<never>) => void, reject: (reason?: unknown) => void) => {
       timer = setTimeout(
         () => reject(new Error(`${label} timed out after ${timeoutMs}ms`)),
-        timeoutMs,
+        timeoutMs
       );
-    },
+    }
   );
   try {
     return await Promise.race([promise, timeoutPromise]);
@@ -80,7 +71,7 @@ export const withRetries = async <T>(
   attempts: number,
   backoffMs: number,
   label: string,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<T> => {
   let lastError: unknown = null;
   const maxAttempts = Math.max(1, attempts);

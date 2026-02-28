@@ -6,8 +6,8 @@ import { cn } from '@/shared/utils';
 import { useComponentTreePanelContext } from './ComponentTreePanelContext';
 import { useDragState } from '../../../hooks/useDragStateContext';
 import { useTreeActions } from '../../../hooks/useTreeActionsContext';
-import { readSectionDragData } from '../../../utils/page-builder-dnd';
-import { isCmsSectionSamePositionDrop } from '../utils/cms-tree-external-drop';
+import { readSectionDragData } from '@/features/cms/utils/page-builder-dnd';
+import { isCmsSectionSamePositionDrop } from '@/features/cms/components/page-builder/utils/cms-tree-external-drop';
 
 const PROMOTABLE_BLOCK_TYPES = [
   'ImageElement',
@@ -24,10 +24,7 @@ interface SectionDropTargetProps {
   toIndex: number;
 }
 
-export function SectionDropTarget({
-  zone,
-  toIndex,
-}: SectionDropTargetProps): React.ReactNode {
+export function SectionDropTarget({ zone, toIndex }: SectionDropTargetProps): React.ReactNode {
   const {
     showExtractPlaceholder,
     showSectionDropPlaceholder,
@@ -52,7 +49,8 @@ export function SectionDropTarget({
   const draggedSectionIndex = dragState.section.index;
 
   const isDraggingBlock = Boolean(draggedBlockId);
-  const isDraggingSection = showSectionDropPlaceholder && canDropSectionsAtRoot && Boolean(draggedSectionId);
+  const isDraggingSection =
+    showSectionDropPlaceholder && canDropSectionsAtRoot && Boolean(draggedSectionId);
   const canPromoteBlock =
     showExtractPlaceholder &&
     canDropBlocksAtRoot &&
@@ -131,9 +129,7 @@ export function SectionDropTarget({
           endBlockDrag();
         }
       }}
-      className={`relative z-10 overflow-hidden transition-[height] ${
-        isDragging ? 'h-8' : 'h-0'
-      }`}
+      className={`relative z-10 overflow-hidden transition-[height] ${isDragging ? 'h-8' : 'h-0'}`}
     >
       <div
         className={`absolute inset-x-1 top-1/2 flex -translate-y-1/2 items-center justify-center rounded border-2 border-dashed transition ${
@@ -147,7 +143,9 @@ export function SectionDropTarget({
         }`}
       >
         {canPromoteBlock ? (
-          <span className={`text-[9px] font-medium ${isOver ? 'text-emerald-200' : 'text-emerald-400'}`}>
+          <span
+            className={`text-[9px] font-medium ${isOver ? 'text-emerald-200' : 'text-emerald-400'}`}
+          >
             {isOver ? 'Release to extract' : 'Drop here to extract'}
           </span>
         ) : null}

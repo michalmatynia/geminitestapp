@@ -20,20 +20,20 @@ type TraderaSoapService = 'public' | 'restricted';
 
 const DEFAULT_API_BASE_URL = 'https://api.tradera.com/v3';
 const DEFAULT_TIMEOUT_MS = 25_000;
-const TRADERA_API_BASE_URL = (
-  process.env['TRADERA_API_BASE_URL'] || DEFAULT_API_BASE_URL
-).replace(/\/+$/, '');
+const TRADERA_API_BASE_URL = (process.env['TRADERA_API_BASE_URL'] || DEFAULT_API_BASE_URL).replace(
+  /\/+$/,
+  ''
+);
 const DEFAULT_MAX_RESULT_AGE_SECONDS = 300;
 
-const normalizeText = (value: string | null | undefined): string =>
-  (value ?? '').trim();
+const normalizeText = (value: string | null | undefined): string => (value ?? '').trim();
 
 const decodeXmlEntities = (value: string): string =>
   value
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"')
-    .replace(/&apos;/g, '\'')
+    .replace(/&apos;/g, "'")
     .replace(/&amp;/g, '&');
 
 const escapeXml = (value: string): string =>
@@ -57,10 +57,7 @@ const toPositiveInt = (value: unknown): number | null => {
   return null;
 };
 
-const extractFirstTagValue = (
-  xml: string,
-  tagName: string
-): string | null => {
+const extractFirstTagValue = (xml: string, tagName: string): string | null => {
   const regex = new RegExp(
     `<(?:\\w+:)?${tagName}\\b[^>]*>([\\s\\S]*?)<\\/(?:\\w+:)?${tagName}>`,
     'i'
@@ -129,9 +126,7 @@ const resolveServiceUrl = (service: TraderaSoapService): string =>
     ? `${TRADERA_API_BASE_URL}/restrictedservice.asmx`
     : `${TRADERA_API_BASE_URL}/publicservice.asmx`;
 
-const validateCredentials = (
-  credentials: TraderaApiCredentials
-): void => {
+const validateCredentials = (credentials: TraderaApiCredentials): void => {
   if (!toPositiveInt(credentials.appId)) {
     throw configurationError('Tradera API App ID is missing or invalid.');
   }
@@ -186,32 +181,25 @@ const callTraderaSoap = async ({
           service === 'restricted'
             ? 'RestrictedService access is denied for this Tradera application key (method disabled or not approved).'
             : 'PublicService access is denied for this Tradera application key.';
-        throw externalServiceError(
-          `Tradera API ${method} failed: ${detail}. ${permissionHint}`,
-          { status: response.status }
-        );
+        throw externalServiceError(`Tradera API ${method} failed: ${detail}. ${permissionHint}`, {
+          status: response.status,
+        });
       }
       const detail =
         faultMessage ||
         normalizeText(text).slice(0, 600) ||
         `${response.status} ${response.statusText}`;
-      throw externalServiceError(
-        `Tradera API ${method} failed: ${detail}`,
-        { status: response.status }
-      );
+      throw externalServiceError(`Tradera API ${method} failed: ${detail}`, {
+        status: response.status,
+      });
     }
     if (faultMessage) {
       throw externalServiceError(`Tradera API ${method} failed: ${faultMessage}`);
     }
     return text;
   } catch (error) {
-    if (
-      error instanceof Error &&
-      error.name === 'AbortError'
-    ) {
-      throw externalServiceError(
-        `Tradera API ${method} timed out after ${timeoutMs}ms.`
-      );
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw externalServiceError(`Tradera API ${method} timed out after ${timeoutMs}ms.`);
     }
     throw error;
   } finally {
@@ -230,7 +218,9 @@ const parseRequestResultBlock = (
       const block = match[1] ?? '';
       const id = extractFirstTagValue(block, 'RequestId');
       return toPositiveInt(id) === requestId;
-    })?.[1] ?? blocks[0]?.[1] ?? '';
+    })?.[1] ??
+    blocks[0]?.[1] ??
+    '';
   if (!selectedBlock) {
     return { code: null, message: null };
   }
@@ -240,8 +230,7 @@ const parseRequestResultBlock = (
   };
 };
 
-const wait = async (ms: number): Promise<void> =>
-  new Promise((resolve) => setTimeout(resolve, ms));
+const wait = async (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
 const pollRequestResult = async ({
   requestId,
@@ -287,8 +276,7 @@ export const getTraderaUserInfo = async (
     bodyXml: '',
     credentials,
   });
-  const userInfoBlock =
-    extractFirstTagValue(response, 'GetUserInfoResult') ?? response;
+  const userInfoBlock = extractFirstTagValue(response, 'GetUserInfoResult') ?? response;
   const resolvedUserId = toPositiveInt(extractFirstTagValue(userInfoBlock, 'Id')) ?? userId;
   return {
     userId: resolvedUserId,
@@ -310,10 +298,7 @@ export const addTraderaShopItem = async ({
   const safeDescription = normalizeText(input.description);
   const categoryId = toPositiveInt(input.categoryId);
   const quantity = Math.max(1, toPositiveInt(input.quantity) ?? 1);
-  const acceptedBuyerId = Math.max(
-    0,
-    toPositiveInt(input.acceptedBuyerId ?? 0) ?? 0
-  );
+  const acceptedBuyerId = Math.max(0, toPositiveInt(input.acceptedBuyerId ?? 0) ?? 0);
   if (!safeTitle) {
     throw configurationError('Tradera item title is required.');
   }
@@ -347,9 +332,7 @@ export const addTraderaShopItem = async ({
   const itemId = toPositiveInt(extractFirstTagValue(response, 'ItemId'));
   const requestId = toPositiveInt(extractFirstTagValue(response, 'RequestId'));
   if (!itemId) {
-    throw externalServiceError(
-      'Tradera API did not return a valid item ID for AddShopItem.'
-    );
+    throw externalServiceError('Tradera API did not return a valid item ID for AddShopItem.');
   }
 
   if (!requestId) {
@@ -366,14 +349,9 @@ export const addTraderaShopItem = async ({
     credentials,
   });
   const code = normalizeText(requestResult.code);
-  if (
-    code &&
-    !['Ok', 'WaitingToBeProcessed', 'Processing'].includes(code)
-  ) {
+  if (code && !['Ok', 'WaitingToBeProcessed', 'Processing'].includes(code)) {
     const detail = normalizeText(requestResult.message) || 'Unknown Tradera API error.';
-    throw externalServiceError(
-      `Tradera request ${requestId} failed (${code}): ${detail}`
-    );
+    throw externalServiceError(`Tradera request ${requestId} failed (${code}): ${detail}`);
   }
 
   return {

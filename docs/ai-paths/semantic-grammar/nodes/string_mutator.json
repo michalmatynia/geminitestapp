@@ -4,14 +4,8 @@
   "nodeType": "string_mutator",
   "title": "String Mutator",
   "purpose": "Transform text with chained string operations.",
-  "inputs": [
-    "value",
-    "prompt",
-    "result"
-  ],
-  "outputs": [
-    "value"
-  ],
+  "inputs": ["value", "prompt", "result"],
+  "outputs": ["value"],
   "configFields": [
     {
       "path": "stringMutator.operations",
@@ -65,14 +59,8 @@
       "x": 100,
       "y": 100
     },
-    "inputs": [
-      "value",
-      "prompt",
-      "result"
-    ],
-    "outputs": [
-      "value"
-    ],
+    "inputs": ["value", "prompt", "result"],
+    "outputs": ["value"],
     "data": {},
     "connections": {
       "incoming": [],

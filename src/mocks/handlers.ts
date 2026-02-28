@@ -208,7 +208,9 @@ export const handlers = [
   }),
 
   http.get('/api/settings/:key', ({ params }: ParamsContext) => {
-    const setting = mockSettings.find((s: (typeof mockSettings)[number]) => s.key === params['key']);
+    const setting = mockSettings.find(
+      (s: (typeof mockSettings)[number]) => s.key === params['key']
+    );
     if (!setting) {
       return HttpResponse.json({ error: 'Setting not found' }, { status: 404 });
     }
@@ -232,15 +234,21 @@ export const handlers = [
 
     let filtered = [...mockNotes];
     if (search) {
-      filtered = filtered.filter((n: (typeof mockNotes)[number]) =>
-        n.title.toLowerCase().includes(search.toLowerCase()) || n.content.toLowerCase().includes(search.toLowerCase())
+      filtered = filtered.filter(
+        (n: (typeof mockNotes)[number]) =>
+          n.title.toLowerCase().includes(search.toLowerCase()) ||
+          n.content.toLowerCase().includes(search.toLowerCase())
       );
     }
     if (isPinned !== null && isPinned !== undefined) {
-      filtered = filtered.filter((n: (typeof mockNotes)[number]) => String(n.isPinned) === isPinned);
+      filtered = filtered.filter(
+        (n: (typeof mockNotes)[number]) => String(n.isPinned) === isPinned
+      );
     }
     if (isArchived !== null && isArchived !== undefined) {
-      filtered = filtered.filter((n: (typeof mockNotes)[number]) => String(n.isArchived) === isArchived);
+      filtered = filtered.filter(
+        (n: (typeof mockNotes)[number]) => String(n.isArchived) === isArchived
+      );
     }
 
     return HttpResponse.json(filtered);
@@ -283,7 +291,10 @@ export const handlers = [
       children: [],
       notes: mockNotes
         .filter((note: (typeof mockNotes)[number]) =>
-          note.categories.some((cat: (typeof mockNotes)[number]['categories'][number]) => cat.categoryId === category.id)
+          note.categories.some(
+            (cat: (typeof mockNotes)[number]['categories'][number]) =>
+              cat.categoryId === category.id
+          )
         )
         .map((note: (typeof mockNotes)[number]) => ({
           id: note.id,
@@ -309,7 +320,7 @@ export const handlers = [
         currencyId: 'curr-1',
         currency: { id: 'curr-1', code: 'USD', name: 'US Dollar' },
         isDefault: true,
-      }
+      },
     ]);
   }),
 

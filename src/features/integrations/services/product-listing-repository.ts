@@ -136,11 +136,14 @@ const toListingRecord = (doc: ProductListingDocument): ProductListingRecord => (
   lastStatusCheckAt: normalizeIsoDate(doc.lastStatusCheckAt),
   marketplaceData: doc.marketplaceData ?? null,
   failureReason: doc.failureReason ?? null,
-  exportHistory: ((doc.exportHistory as unknown as Record<string, unknown>[]) ?? []).map((event) => ({
-    ...event,
-    exportedAt: normalizeIsoDate(event?.['exportedAt'] as string | Date) ?? new Date().toISOString(),
-    expiresAt: normalizeIsoDate(event?.['expiresAt'] as string | Date) ?? null,
-  })),
+  exportHistory: ((doc.exportHistory as unknown as Record<string, unknown>[]) ?? []).map(
+    (event) => ({
+      ...event,
+      exportedAt:
+        normalizeIsoDate(event?.['exportedAt'] as string | Date) ?? new Date().toISOString(),
+      expiresAt: normalizeIsoDate(event?.['expiresAt'] as string | Date) ?? null,
+    })
+  ),
   createdAt: doc.createdAt.toISOString(),
   updatedAt: doc.updatedAt.toISOString(),
 });
@@ -163,21 +166,21 @@ const toDetailsRecord = (listing: EnrichedPrismaListing): ProductListingWithDeta
   listedAt: normalizeIsoDate(listing.listedAt),
   expiresAt: normalizeIsoDate(listing.expiresAt),
   nextRelistAt: normalizeIsoDate(listing.nextRelistAt),
-  relistPolicy: (listing.relistPolicy ??
-    null) as ProductListingWithDetails['relistPolicy'],
+  relistPolicy: (listing.relistPolicy ?? null) as ProductListingWithDetails['relistPolicy'],
   relistAttempts: listing.relistAttempts ?? 0,
   lastRelistedAt: normalizeIsoDate(listing.lastRelistedAt),
   lastStatusCheckAt: normalizeIsoDate(listing.lastStatusCheckAt),
   marketplaceData: (listing.marketplaceData ??
     null) as ProductListingWithDetails['marketplaceData'],
   failureReason: listing.failureReason ?? null,
-  exportHistory: (
-    (listing.exportHistory as unknown as Record<string, unknown>[] | null) ?? []
-  ).map((event: Record<string, unknown>) => ({
-    ...event,
-    exportedAt: normalizeIsoDate(event?.['exportedAt'] as string | Date) ?? new Date().toISOString(),
-    expiresAt: normalizeIsoDate(event?.['expiresAt'] as string | Date) ?? null,
-  })),
+  exportHistory: ((listing.exportHistory as unknown as Record<string, unknown>[] | null) ?? []).map(
+    (event: Record<string, unknown>) => ({
+      ...event,
+      exportedAt:
+        normalizeIsoDate(event?.['exportedAt'] as string | Date) ?? new Date().toISOString(),
+      expiresAt: normalizeIsoDate(event?.['expiresAt'] as string | Date) ?? null,
+    })
+  ),
   createdAt: listing.createdAt.toISOString(),
   updatedAt: listing.updatedAt.toISOString(),
   integration: listing.integration,
@@ -290,11 +293,14 @@ const prismaRepository: ProductListingRepository = {
     });
   },
 
-  appendExportHistory: async (id: string, event: ProductListingExportEventRecord): Promise<void> => {
+  appendExportHistory: async (
+    id: string,
+    event: ProductListingExportEventRecord
+  ): Promise<void> => {
     const listing = await prisma.productListing.findUnique({ where: { id } });
     if (!listing) return;
     const history = (listing.exportHistory as unknown as ProductListingExportEvent[] | null) ?? [];
-    
+
     const normalizedEvent: ProductListingExportEvent = {
       ...event,
       exportedAt: normalizeIsoDate(event.exportedAt) ?? new Date().toISOString(),
@@ -383,25 +389,21 @@ const mongoRepository: ProductListingRepository = {
     const integrations =
       integrationLookup.length > 0
         ? await db
-          .collection('integrations')
-          .find(
-            { _id: { $in: integrationLookup } } as unknown as Filter<Document>
-          )
-          .toArray()
+            .collection('integrations')
+            .find({ _id: { $in: integrationLookup } } as unknown as Filter<Document>)
+            .toArray()
         : [];
 
     const connections =
       connectionLookup.length > 0
         ? await db
-          .collection('integration_connections')
-          .find(
-            { _id: { $in: connectionLookup } } as unknown as Filter<Document>
-          )
-          .toArray()
+            .collection('integration_connections')
+            .find({ _id: { $in: connectionLookup } } as unknown as Filter<Document>)
+            .toArray()
         : [];
     const integrationMap = new Map(integrations.map((i) => [i._id.toString(), i]));
     const connectionMap = new Map(connections.map((c) => [c._id.toString(), c]));
-    
+
     return docs.map((doc) => {
       const integrationId = normalizeLookupIdOrFallback(doc.integrationId);
       const connectionId = normalizeLookupIdOrFallback(doc.connectionId);
@@ -420,7 +422,6 @@ const mongoRepository: ProductListingRepository = {
         },
       };
     });
-    
   },
 
   getListingById: async (id: string): Promise<ProductListingRecord | null> => {
@@ -443,43 +444,68 @@ const mongoRepository: ProductListingRepository = {
       status: input.status ?? 'pending',
       externalListingId: input.externalListingId ?? null,
       inventoryId: input.inventoryId ?? null,
-      listedAt: input.listedAt instanceof Date ? input.listedAt : input.listedAt ? new Date(input.listedAt) : null,
-      expiresAt: input.expiresAt instanceof Date ? input.expiresAt : input.expiresAt ? new Date(input.expiresAt) : null,
-      nextRelistAt: input.nextRelistAt instanceof Date ? input.nextRelistAt : input.nextRelistAt ? new Date(input.nextRelistAt) : null,
-      relistPolicy: (input.relistPolicy ?? null) as unknown as ProductListingDocument['relistPolicy'],
+      listedAt:
+        input.listedAt instanceof Date
+          ? input.listedAt
+          : input.listedAt
+            ? new Date(input.listedAt)
+            : null,
+      expiresAt:
+        input.expiresAt instanceof Date
+          ? input.expiresAt
+          : input.expiresAt
+            ? new Date(input.expiresAt)
+            : null,
+      nextRelistAt:
+        input.nextRelistAt instanceof Date
+          ? input.nextRelistAt
+          : input.nextRelistAt
+            ? new Date(input.nextRelistAt)
+            : null,
+      relistPolicy: (input.relistPolicy ??
+        null) as unknown as ProductListingDocument['relistPolicy'],
       relistAttempts: input.relistAttempts ?? 0,
-      lastRelistedAt: input.lastRelistedAt instanceof Date ? input.lastRelistedAt : input.lastRelistedAt ? new Date(input.lastRelistedAt) : null,
-      lastStatusCheckAt: input.lastStatusCheckAt instanceof Date ? input.lastStatusCheckAt : input.lastStatusCheckAt ? new Date(input.lastStatusCheckAt) : null,
-      marketplaceData: (input.marketplaceData ?? null) as unknown as ProductListingDocument['marketplaceData'],
+      lastRelistedAt:
+        input.lastRelistedAt instanceof Date
+          ? input.lastRelistedAt
+          : input.lastRelistedAt
+            ? new Date(input.lastRelistedAt)
+            : null,
+      lastStatusCheckAt:
+        input.lastStatusCheckAt instanceof Date
+          ? input.lastStatusCheckAt
+          : input.lastStatusCheckAt
+            ? new Date(input.lastStatusCheckAt)
+            : null,
+      marketplaceData: (input.marketplaceData ??
+        null) as unknown as ProductListingDocument['marketplaceData'],
       failureReason: input.failureReason ?? null,
       exportHistory: input.exportHistory ?? [],
       createdAt: now,
       updatedAt: now,
     };
     await db.collection<ProductListingDocument>(LISTING_COLLECTION).insertOne(doc);
-    return mongoRepository.getListingsByProductId(input.productId).then((list) => list.find((l) => l.id === id)!);
+    return mongoRepository
+      .getListingsByProductId(input.productId)
+      .then((list) => list.find((l) => l.id === id)!);
   },
-      
+
   updateListingExternalId: async (id: string, externalListingId: string | null): Promise<void> => {
     const db = await getMongoDb();
     await db
       .collection<ProductListingDocument>(LISTING_COLLECTION)
-      .updateOne(
-        buildLookupFilter('_id', id),
-        { $set: { externalListingId, updatedAt: new Date() } }
-      );
+      .updateOne(buildLookupFilter('_id', id), {
+        $set: { externalListingId, updatedAt: new Date() },
+      });
   },
-      
+
   updateListingStatus: async (id: string, status: string): Promise<void> => {
     const db = await getMongoDb();
     await db
       .collection<ProductListingDocument>(LISTING_COLLECTION)
-      .updateOne(
-        buildLookupFilter('_id', id),
-        { $set: { status, updatedAt: new Date() } }
-      );
+      .updateOne(buildLookupFilter('_id', id), { $set: { status, updatedAt: new Date() } });
   },
-      
+
   updateListing: async (id: string, input: Partial<CreateProductListingInput>): Promise<void> => {
     const db = await getMongoDb();
     const updateData: Record<string, unknown> = { ...input, updatedAt: new Date() };
@@ -487,43 +513,43 @@ const mongoRepository: ProductListingRepository = {
     delete updateData['productId'];
     delete updateData['integrationId'];
     delete updateData['connectionId'];
-                
+
     // Map dates
     if (input.listedAt) updateData['listedAt'] = new Date(input.listedAt);
     if (input.expiresAt) updateData['expiresAt'] = new Date(input.expiresAt);
     if (input.nextRelistAt) updateData['nextRelistAt'] = new Date(input.nextRelistAt);
     if (input.lastRelistedAt) updateData['lastRelistedAt'] = new Date(input.lastRelistedAt);
-    if (input.lastStatusCheckAt) updateData['lastStatusCheckAt'] = new Date(input.lastStatusCheckAt);
-      
+    if (input.lastStatusCheckAt)
+      updateData['lastStatusCheckAt'] = new Date(input.lastStatusCheckAt);
+
     await db
       .collection<ProductListingDocument>(LISTING_COLLECTION)
-      .updateOne(
-        buildLookupFilter('_id', id),
-        { $set: updateData as unknown as UpdateFilter<ProductListingDocument> }
-      );
+      .updateOne(buildLookupFilter('_id', id), {
+        $set: updateData as unknown as UpdateFilter<ProductListingDocument>,
+      });
   },
   updateListingInventoryId: async (id: string, inventoryId: string | null): Promise<void> => {
     const db = await getMongoDb();
     await db
       .collection<ProductListingDocument>(LISTING_COLLECTION)
-      .updateOne(
-        buildLookupFilter('_id', id),
-        { $set: { inventoryId, updatedAt: new Date() } }
-      );
+      .updateOne(buildLookupFilter('_id', id), { $set: { inventoryId, updatedAt: new Date() } });
   },
 
-  appendExportHistory: async (id: string, event: ProductListingExportEventRecord): Promise<void> => {
+  appendExportHistory: async (
+    id: string,
+    event: ProductListingExportEventRecord
+  ): Promise<void> => {
     const db = await getMongoDb();
-    
+
     const normalizedEvent: ProductListingExportEvent = {
       ...event,
       exportedAt: normalizeIsoDate(event.exportedAt) ?? new Date().toISOString(),
       expiresAt: normalizeIsoDate(event.expiresAt) ?? null,
     };
 
-    await db.collection<ProductListingDocument>(LISTING_COLLECTION).updateOne(
-      buildLookupFilter('_id', id),
-      {
+    await db
+      .collection<ProductListingDocument>(LISTING_COLLECTION)
+      .updateOne(buildLookupFilter('_id', id), {
         $push: {
           exportHistory: {
             $each: [normalizedEvent],
@@ -532,8 +558,7 @@ const mongoRepository: ProductListingRepository = {
           },
         },
         $set: { updatedAt: new Date() },
-      } as unknown as UpdateFilter<ProductListingDocument>
-    );
+      } as unknown as UpdateFilter<ProductListingDocument>);
   },
   deleteListing: async (id: string): Promise<void> => {
     const db = await getMongoDb();
@@ -544,14 +569,12 @@ const mongoRepository: ProductListingRepository = {
 
   listingExists: async (productId: string, connectionId: string): Promise<boolean> => {
     const db = await getMongoDb();
-    const count = await db
-      .collection<ProductListingDocument>(LISTING_COLLECTION)
-      .countDocuments({
-        $and: [
-          buildLookupFilter('productId', productId),
-          buildLookupFilter('connectionId', connectionId),
-        ],
-      } as Filter<ProductListingDocument>);
+    const count = await db.collection<ProductListingDocument>(LISTING_COLLECTION).countDocuments({
+      $and: [
+        buildLookupFilter('productId', productId),
+        buildLookupFilter('connectionId', connectionId),
+      ],
+    } as Filter<ProductListingDocument>);
     return count > 0;
   },
 
@@ -601,18 +624,14 @@ export async function getProductListingRepository(): Promise<ProductListingRepos
  * Used during transition or for robust lookup when active provider might not have the data.
  */
 
-export async function findProductListingByIdAcrossProviders(
-  id: string
-): Promise<{
+export async function findProductListingByIdAcrossProviders(id: string): Promise<{
   listing: ProductListingRecord;
   repository: ProductListingRepository;
 } | null> {
   // Check active provider first for performance
   const provider = await getAppDbProvider();
-  const activeRepo =
-    provider === 'mongodb' ? mongoRepository : prismaRepository;
-  const otherRepo =
-    provider === 'mongodb' ? prismaRepository : mongoRepository;
+  const activeRepo = provider === 'mongodb' ? mongoRepository : prismaRepository;
+  const otherRepo = provider === 'mongodb' ? prismaRepository : mongoRepository;
 
   const activeResult = await activeRepo.getListingById(id);
   if (activeResult) {
@@ -653,7 +672,10 @@ export async function findProductListingsByProductsAndConnectionAcrossProviders(
   productIds: string[],
   connectionId: string
 ): Promise<Map<string, { listing: ProductListingRecord; repository: ProductListingRepository }>> {
-  const result = new Map<string, { listing: ProductListingRecord; repository: ProductListingRepository }>();
+  const result = new Map<
+    string,
+    { listing: ProductListingRecord; repository: ProductListingRepository }
+  >();
   if (productIds.length === 0) return result;
 
   const providers = [
@@ -693,7 +715,7 @@ export async function listProductListingsByProductIdAcrossProviders(
 
 export async function listAllProductListingsAcrossProviders(): Promise<
   Array<Pick<ProductListingRecord, 'productId' | 'status' | 'integrationId' | 'marketplaceData'>>
-  > {
+> {
   const [prismaListings, mongoListings] = await Promise.all([
     prismaRepository.listAllListings(),
     mongoRepository.listAllListings(),

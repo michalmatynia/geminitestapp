@@ -76,9 +76,10 @@ const resolveScanSlotPreviewPath = (filepath: string | null | undefined): string
   return encodeURI(`/${trimmed}`);
 };
 
-const resolveScanSlotPreviewKind = (
-  slot: { filepath?: string | null; mimeType?: string | undefined }
-): 'image' | 'pdf' | 'other' => {
+const resolveScanSlotPreviewKind = (slot: {
+  filepath?: string | null;
+  mimeType?: string | undefined;
+}): 'image' | 'pdf' | 'other' => {
   const mimeType = slot.mimeType?.trim().toLowerCase() ?? '';
   if (mimeType.startsWith('image/')) return 'image';
   if (mimeType === 'application/pdf') return 'pdf';
@@ -118,11 +119,7 @@ export function CaseResolverScanFileEditor(): React.JSX.Element | null {
     partyOptions,
   } = useCaseResolverViewContext();
 
-  const {
-    workspace,
-    editingDocumentDraft,
-    isUploadingScanDraftFiles,
-  } = state;
+  const { workspace, editingDocumentDraft, isUploadingScanDraftFiles } = state;
 
   const draftId = editingDocumentDraft?.id ?? null;
   const originalFile = useMemo(
@@ -185,14 +182,15 @@ export function CaseResolverScanFileEditor(): React.JSX.Element | null {
               <span className='text-gray-700'>/</span>
               <span className='text-blue-400/80'>{draft.fileType}</span>
             </div>
-            <div className='truncate text-sm font-semibold text-gray-100'>
-              {draft.name}
-            </div>
+            <div className='truncate text-sm font-semibold text-gray-100'>{draft.name}</div>
           </div>
         </div>
 
         {isEditingDocumentLocked && (
-          <Badge variant='outline' className='h-7 border-amber-500/40 bg-amber-500/5 px-2 text-[10px] font-bold text-amber-500'>
+          <Badge
+            variant='outline'
+            className='h-7 border-amber-500/40 bg-amber-500/5 px-2 text-[10px] font-bold text-amber-500'
+          >
             LOCKED
           </Badge>
         )}
@@ -206,19 +204,31 @@ export function CaseResolverScanFileEditor(): React.JSX.Element | null {
       >
         <div className='flex items-center justify-between gap-4'>
           <TabsList className='h-9 w-fit border border-border/40 bg-card/40 p-1'>
-            <TabsTrigger value='document' className='h-7 px-4 text-xs data-[state=active]:bg-blue-600/20 data-[state=active]:text-blue-400'>
+            <TabsTrigger
+              value='document'
+              className='h-7 px-4 text-xs data-[state=active]:bg-blue-600/20 data-[state=active]:text-blue-400'
+            >
               <ScanLine className='mr-2 size-3.5' />
               Scans
             </TabsTrigger>
-            <TabsTrigger value='relations' className='h-7 px-4 text-xs data-[state=active]:bg-purple-600/20 data-[state=active]:text-purple-400'>
+            <TabsTrigger
+              value='relations'
+              className='h-7 px-4 text-xs data-[state=active]:bg-purple-600/20 data-[state=active]:text-purple-400'
+            >
               <Network className='mr-2 size-3.5' />
               Relations
             </TabsTrigger>
-            <TabsTrigger value='metadata' className='h-7 px-4 text-xs data-[state=active]:bg-amber-600/20 data-[state=active]:text-amber-400'>
+            <TabsTrigger
+              value='metadata'
+              className='h-7 px-4 text-xs data-[state=active]:bg-amber-600/20 data-[state=active]:text-amber-400'
+            >
               <Settings2 className='mr-2 size-3.5' />
               Metadata
             </TabsTrigger>
-            <TabsTrigger value='revisions' className='h-7 px-4 text-xs data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400'>
+            <TabsTrigger
+              value='revisions'
+              className='h-7 px-4 text-xs data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400'
+            >
               <History className='mr-2 size-3.5' />
               History
             </TabsTrigger>
@@ -226,10 +236,8 @@ export function CaseResolverScanFileEditor(): React.JSX.Element | null {
         </div>
 
         <div className='flex-1 overflow-auto mt-4'>
-
           {/* ── Scans Tab ── */}
           <TabsContent value='document' className='m-0 flex flex-col gap-4'>
-
             {/* Upload section — compact, above the text field */}
             <div className='flex flex-col gap-2 rounded-lg border border-border/60 bg-card/10 p-3'>
               <div className='flex items-center justify-between gap-2'>
@@ -252,10 +260,7 @@ export function CaseResolverScanFileEditor(): React.JSX.Element | null {
                     variant='outline'
                     size='sm'
                     onClick={handleRunScanDraftOcr}
-                    disabled={
-                      (draft.scanSlots ?? []).length === 0 ||
-                      isEditingDocumentLocked
-                    }
+                    disabled={(draft.scanSlots ?? []).length === 0 || isEditingDocumentLocked}
                     className='h-7 text-[11px]'
                   >
                     Run OCR
@@ -297,47 +302,49 @@ export function CaseResolverScanFileEditor(): React.JSX.Element | null {
                           key={slot.id}
                           className='group relative aspect-[3/4] overflow-hidden border-border/60 bg-black/40'
                         >
-                          {slot.filepath ? (() => {
-                            const previewPath = resolveScanSlotPreviewPath(slot.filepath);
-                            const previewKind = resolveScanSlotPreviewKind(slot);
-                            if (previewKind === 'image' && previewPath) {
+                          {slot.filepath ? (
+                            (() => {
+                              const previewPath = resolveScanSlotPreviewPath(slot.filepath);
+                              const previewKind = resolveScanSlotPreviewKind(slot);
+                              if (previewKind === 'image' && previewPath) {
+                                return (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img
+                                    src={previewPath}
+                                    alt={slot.name || 'Scan page'}
+                                    loading='lazy'
+                                    className='h-full w-full object-cover opacity-80 transition-opacity group-hover:opacity-100'
+                                  />
+                                );
+                              }
+                              if (previewKind === 'pdf' && previewPath) {
+                                return (
+                                  <div className='flex h-full w-full flex-col items-center justify-center gap-2 bg-gradient-to-b from-slate-900/70 to-slate-950/90 p-2 text-center'>
+                                    <FileText className='size-6 text-rose-300/80' />
+                                    <span className='rounded border border-rose-400/40 bg-rose-500/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-rose-200/90'>
+                                      PDF
+                                    </span>
+                                    <a
+                                      href={previewPath}
+                                      target='_blank'
+                                      rel='noreferrer'
+                                      className='text-[9px] text-blue-300 underline-offset-2 hover:underline'
+                                    >
+                                      Open
+                                    </a>
+                                  </div>
+                                );
+                              }
                               return (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img
-                                  src={previewPath}
-                                  alt={slot.name || 'Scan page'}
-                                  loading='lazy'
-                                  className='h-full w-full object-cover opacity-80 transition-opacity group-hover:opacity-100'
-                                />
-                              );
-                            }
-                            if (previewKind === 'pdf' && previewPath) {
-                              return (
-                                <div className='flex h-full w-full flex-col items-center justify-center gap-2 bg-gradient-to-b from-slate-900/70 to-slate-950/90 p-2 text-center'>
-                                  <FileText className='size-6 text-rose-300/80' />
-                                  <span className='rounded border border-rose-400/40 bg-rose-500/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-rose-200/90'>
-                                    PDF
-                                  </span>
-                                  <a
-                                    href={previewPath}
-                                    target='_blank'
-                                    rel='noreferrer'
-                                    className='text-[9px] text-blue-300 underline-offset-2 hover:underline'
-                                  >
-                                    Open
-                                  </a>
+                                <div className='flex h-full flex-col items-center justify-center p-1 text-center'>
+                                  <FileText className='mb-1 size-5 text-gray-600' />
+                                  <div className='truncate text-[9px] text-gray-500'>
+                                    {slot.name || 'File'}
+                                  </div>
                                 </div>
                               );
-                            }
-                            return (
-                              <div className='flex h-full flex-col items-center justify-center p-1 text-center'>
-                                <FileText className='mb-1 size-5 text-gray-600' />
-                                <div className='truncate text-[9px] text-gray-500'>
-                                  {slot.name || 'File'}
-                                </div>
-                              </div>
-                            );
-                          })() : (
+                            })()
+                          ) : (
                             <div className='flex h-full flex-col items-center justify-center p-1 text-center'>
                               <FileText className='mb-1 size-5 text-gray-600' />
                               <div className='truncate text-[9px] text-gray-500'>
@@ -398,7 +405,9 @@ export function CaseResolverScanFileEditor(): React.JSX.Element | null {
                 variant='ghost'
                 size='sm'
                 className='h-8 gap-2 px-2 text-[11px] text-gray-400 hover:bg-white/5 hover:text-gray-200'
-                onClick={() => { void handleCopyDraftFileId(); }}
+                onClick={() => {
+                  void handleCopyDraftFileId();
+                }}
               >
                 <span className='opacity-60'>ID:</span>
                 <span className='font-mono'>{draft.id}</span>
@@ -434,7 +443,7 @@ export function CaseResolverScanFileEditor(): React.JSX.Element | null {
                 </div>
               ) : (
                 <div className='grid gap-2'>
-                  {relatedFiles.map(file => {
+                  {relatedFiles.map((file) => {
                     const dateLabel = formatShortDate(file.documentDate?.isoDate);
                     return (
                       <div
@@ -509,7 +518,9 @@ export function CaseResolverScanFileEditor(): React.JSX.Element | null {
               <FormField label='Tag'>
                 <SelectSimple
                   value={draft.tagId ?? '__none__'}
-                  onValueChange={(v) => updateEditingDocumentDraft({ tagId: v === '__none__' ? null : v })}
+                  onValueChange={(v) =>
+                    updateEditingDocumentDraft({ tagId: v === '__none__' ? null : v })
+                  }
                   options={caseTagOptions}
                   disabled={isEditingDocumentLocked}
                   triggerClassName='bg-card/20 border-border/60'
@@ -518,7 +529,9 @@ export function CaseResolverScanFileEditor(): React.JSX.Element | null {
               <FormField label='Case Identifier'>
                 <SelectSimple
                   value={draft.caseIdentifierId ?? '__none__'}
-                  onValueChange={(v) => updateEditingDocumentDraft({ caseIdentifierId: v === '__none__' ? null : v })}
+                  onValueChange={(v) =>
+                    updateEditingDocumentDraft({ caseIdentifierId: v === '__none__' ? null : v })
+                  }
                   options={caseIdentifierOptions}
                   disabled={isEditingDocumentLocked}
                   triggerClassName='bg-card/20 border-border/60'
@@ -527,7 +540,9 @@ export function CaseResolverScanFileEditor(): React.JSX.Element | null {
               <FormField label='Category'>
                 <SelectSimple
                   value={draft.categoryId ?? '__none__'}
-                  onValueChange={(v) => updateEditingDocumentDraft({ categoryId: v === '__none__' ? null : v })}
+                  onValueChange={(v) =>
+                    updateEditingDocumentDraft({ categoryId: v === '__none__' ? null : v })
+                  }
                   options={caseCategoryOptions}
                   disabled={isEditingDocumentLocked}
                   triggerClassName='bg-card/20 border-border/60'
@@ -536,7 +551,9 @@ export function CaseResolverScanFileEditor(): React.JSX.Element | null {
               <FormField label='Addresser (From)'>
                 <SelectSimple
                   value={encodedAddresser}
-                  onValueChange={(v) => updateEditingDocumentDraft({ addresser: decodeFilemakerPartyReference(v) })}
+                  onValueChange={(v) =>
+                    updateEditingDocumentDraft({ addresser: decodeFilemakerPartyReference(v) })
+                  }
                   options={partyOptions}
                   disabled={isEditingDocumentLocked}
                   triggerClassName='bg-card/20 border-border/60'
@@ -545,7 +562,9 @@ export function CaseResolverScanFileEditor(): React.JSX.Element | null {
               <FormField label='Addressee (To)'>
                 <SelectSimple
                   value={encodedAddressee}
-                  onValueChange={(v) => updateEditingDocumentDraft({ addressee: decodeFilemakerPartyReference(v) })}
+                  onValueChange={(v) =>
+                    updateEditingDocumentDraft({ addressee: decodeFilemakerPartyReference(v) })
+                  }
                   options={partyOptions}
                   disabled={isEditingDocumentLocked}
                   triggerClassName='bg-card/20 border-border/60'
@@ -581,7 +600,6 @@ export function CaseResolverScanFileEditor(): React.JSX.Element | null {
               isRestoreDisabled={!!isEditingDocumentLocked}
             />
           </TabsContent>
-
         </div>
       </Tabs>
     </div>

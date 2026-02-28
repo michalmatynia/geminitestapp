@@ -1,8 +1,6 @@
 import 'server-only';
 
-import {
-  OLLAMA_BASE_URL,
-} from '@/features/ai/agent-runtime/core/config';
+import { OLLAMA_BASE_URL } from '@/features/ai/agent-runtime/core/config';
 import {
   buildPlanStepsFromSpecs,
   flattenPlanHierarchy,
@@ -10,10 +8,7 @@ import {
   parsePlanJson,
 } from '@/features/ai/agent-runtime/planning/utils';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import type {
-  PlanStep,
-  PlannerMeta,
-} from '@/shared/contracts/agent-runtime';
+import type { PlanStep, PlannerMeta } from '@/shared/contracts/agent-runtime';
 import prisma from '@/shared/lib/db/prisma';
 
 import { normalizePlanStepSpecs } from './llm-step-specs';
@@ -197,11 +192,10 @@ export async function guardRepetitionWithLLM({
       }>;
     } | null;
     if (!parsed?.steps?.length) return candidateSteps;
-    const guarded = buildPlanStepsFromSpecs(
-      normalizePlanStepSpecs(parsed.steps),
-      null,
-      true
-    ).slice(0, maxSteps);
+    const guarded = buildPlanStepsFromSpecs(normalizePlanStepSpecs(parsed.steps), null, true).slice(
+      0,
+      maxSteps
+    );
     if ('agentAuditLog' in prisma && runId) {
       await prisma.agentAuditLog.create({
         data: {
@@ -428,17 +422,16 @@ export async function optimizePlanWithLLM({
     const optimizedHierarchy = parsed.optimizedGoals
       ? normalizePlanHierarchy({ goals: parsed.optimizedGoals })
       : null;
-    const optimizedSpecs =
-      optimizedHierarchy?.goals.length
-        ? flattenPlanHierarchy(optimizedHierarchy)
-        : (parsed.optimizedSteps ?? []);
+    const optimizedSpecs = optimizedHierarchy?.goals.length
+      ? flattenPlanHierarchy(optimizedHierarchy)
+      : (parsed.optimizedSteps ?? []);
     const optimizedSteps = optimizedSpecs.length
       ? buildPlanStepsFromSpecs(
-        normalizePlanStepSpecs(optimizedSpecs),
-        meta,
-        true,
-        maxStepAttempts
-      ).slice(0, maxSteps)
+          normalizePlanStepSpecs(optimizedSpecs),
+          meta,
+          true,
+          maxStepAttempts
+        ).slice(0, maxSteps)
       : [];
     return {
       reason: parsed.reason ?? null,
@@ -479,7 +472,7 @@ export async function enrichPlanHierarchyWithLLM({
           {
             role: 'system',
             content:
-              'You enrich goal hierarchies for execution. Return only JSON with keys: goals. goals is array of {title, successCriteria, priority, dependsOn, subgoals:[{title, successCriteria, priority, dependsOn, steps:[{title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}]}]}. Keep the same number of goals/subgoals but refine titles and steps. tool is \'playwright\' or \'none\'.',
+              "You enrich goal hierarchies for execution. Return only JSON with keys: goals. goals is array of {title, successCriteria, priority, dependsOn, subgoals:[{title, successCriteria, priority, dependsOn, steps:[{title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}]}]}. Keep the same number of goals/subgoals but refine titles and steps. tool is 'playwright' or 'none'.",
           },
           {
             role: 'user',

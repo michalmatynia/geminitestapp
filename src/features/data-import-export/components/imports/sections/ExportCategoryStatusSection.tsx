@@ -4,22 +4,12 @@ import React, { useMemo } from 'react';
 import Link from 'next/link';
 import { useImportExport } from '@/features/data-import-export/context/ImportExportContext';
 import { useCategoryMappingsByConnection } from '@/features/integrations/hooks/useMarketplaceQueries';
-import {
-  Badge,
-  Hint,
-} from '@/shared/ui';
+import { Badge, Hint } from '@/shared/ui';
 
 export function ExportCategoryStatusSection(): React.JSX.Element {
-  const CATEGORY_TEMPLATE_PRODUCT_FIELDS = new Set([
-    'categoryid',
-    'category_id',
-    'category',
-  ]);
+  const CATEGORY_TEMPLATE_PRODUCT_FIELDS = new Set(['categoryid', 'category_id', 'category']);
 
-  const {
-    selectedBaseConnectionId,
-    exportTemplateMappings,
-  } = useImportExport();
+  const { selectedBaseConnectionId, exportTemplateMappings } = useImportExport();
 
   const usesCategoryMapper = useMemo(
     (): boolean =>
@@ -32,20 +22,17 @@ export function ExportCategoryStatusSection(): React.JSX.Element {
   const categoryMappingsQuery = useCategoryMappingsByConnection(selectedBaseConnectionId, {
     enabled: usesCategoryMapper && !!selectedBaseConnectionId,
   });
-  
+
   const activeCategoryMappings = useMemo(
-    () =>
-      (categoryMappingsQuery.data ?? []).filter(
-        (mapping) => mapping.isActive
-      ),
+    () => (categoryMappingsQuery.data ?? []).filter((mapping) => mapping.isActive),
     [categoryMappingsQuery.data]
   );
-  
+
   const mappedInternalCategoryCount = useMemo(
     () => new Set(activeCategoryMappings.map((mapping) => mapping.internalCategoryId)).size,
     [activeCategoryMappings]
   );
-  
+
   const mappedExternalCategoryCount = useMemo(
     () => new Set(activeCategoryMappings.map((mapping) => mapping.externalCategoryId)).size,
     [activeCategoryMappings]
@@ -86,28 +73,26 @@ export function ExportCategoryStatusSection(): React.JSX.Element {
       </div>
       <div className='mt-2 text-xs text-gray-400'>
         {!usesCategoryMapper ? (
-          <span>
-            Current export template does not map product category field (`categoryId`).
-          </span>
+          <span>Current export template does not map product category field (`categoryId`).</span>
         ) : !selectedBaseConnectionId ? (
           <span>Select a Base connection to validate category mappings.</span>
         ) : categoryMappingsQuery.isError ? (
-          <span>
-            Failed to load category mappings for this connection.
-          </span>
+          <span>Failed to load category mappings for this connection.</span>
         ) : activeCategoryMappings.length === 0 ? (
           <span>
             No active mappings found for this connection. Add mappings in{' '}
-            <Link href='/admin/integrations/aggregators/base-com/category-mapping' className='text-amber-300 underline'>
+            <Link
+              href='/admin/integrations/aggregators/base-com/category-mapping'
+              className='text-amber-300 underline'
+            >
               Category Mapper
             </Link>
             .
           </span>
         ) : (
           <span>
-            Found {activeCategoryMappings.length} active mapping(s),{' '}
-            {mappedInternalCategoryCount} internal category(ies) and{' '}
-            {mappedExternalCategoryCount} Base category(ies).
+            Found {activeCategoryMappings.length} active mapping(s), {mappedInternalCategoryCount}{' '}
+            internal category(ies) and {mappedExternalCategoryCount} Base category(ies).
           </span>
         )}
       </div>

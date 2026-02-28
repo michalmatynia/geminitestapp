@@ -1,11 +1,8 @@
 import type { CaseResolverAssetKind } from '@/shared/contracts/case-resolver';
 import { DRAG_KEYS, getFirstDragValue } from '@/shared/utils/drag-drop';
 
-
-export const CASE_RESOLVER_DROP_DOCUMENT_TO_CANVAS_EVENT =
-  'case_resolver:drop-document-to-canvas';
-export const CASE_RESOLVER_SHOW_DOCUMENT_IN_CANVAS_EVENT =
-  'case_resolver:show-document-in-canvas';
+export const CASE_RESOLVER_DROP_DOCUMENT_TO_CANVAS_EVENT = 'case_resolver:drop-document-to-canvas';
+export const CASE_RESOLVER_SHOW_DOCUMENT_IN_CANVAS_EVENT = 'case_resolver:show-document-in-canvas';
 
 export type CaseResolverDropDocumentToCanvasDetail = {
   fileId: string;

@@ -11,8 +11,7 @@ import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 const projectsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio');
 const uploadsRoot = path.join(process.cwd(), 'public', 'uploads');
 
-const sanitizeProjectId = (value: string): string =>
-  value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
+const sanitizeProjectId = (value: string): string => value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
 
 const sanitizeFolderPath = (value: string): string => {
   const normalized = value.replace(/\\/g, '/').trim();
@@ -93,7 +92,9 @@ export async function POST_handler(
   const assetId = parsed.data.id?.trim() ?? '';
   const isDiskOnly = assetId.startsWith('disk:');
   let sourceFilepath = parsed.data.filepath?.trim() ?? '';
-  let repoRecord: Awaited<ReturnType<Awaited<ReturnType<typeof getImageFileRepository>>['getImageFileById']>> | null = null;
+  let repoRecord: Awaited<
+    ReturnType<Awaited<ReturnType<typeof getImageFileRepository>>['getImageFileById']>
+  > | null = null;
 
   if (assetId && !isDiskOnly) {
     const repo = await getImageFileRepository();

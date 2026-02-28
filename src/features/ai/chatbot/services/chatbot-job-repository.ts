@@ -29,7 +29,10 @@ type ChatbotJobCreateInput = Pick<
   'sessionId' | 'model' | 'payload' | 'resultText' | 'errorMessage'
 >;
 type ChatbotJobUpdateInput = Partial<
-  Pick<ChatbotJobDocument, 'status' | 'model' | 'payload' | 'resultText' | 'errorMessage' | 'startedAt' | 'finishedAt'>
+  Pick<
+    ChatbotJobDocument,
+    'status' | 'model' | 'payload' | 'resultText' | 'errorMessage' | 'startedAt' | 'finishedAt'
+  >
 >;
 
 function documentToJob(doc: ChatbotJobDocument): ChatbotJob {
@@ -116,10 +119,7 @@ export const chatbotJobRepository: ChatbotJobRepository = {
     };
   },
 
-  async update(
-    id: string,
-    update: ChatbotJobUpdateInput
-  ): Promise<ChatbotJob | null> {
+  async update(id: string, update: ChatbotJobUpdateInput): Promise<ChatbotJob | null> {
     if (!ObjectId.isValid(id)) return null;
     const db = await getMongoDb();
     const updateDoc: ChatbotJobUpdateInput = {};

@@ -17,11 +17,7 @@ function QueryErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
         <p className='mt-2 mb-6 text-sm text-gray-400'>
           {(error as Error)?.message || 'An unexpected error occurred while loading data.'}
         </p>
-        <Button
-          onClick={resetErrorBoundary}
-          variant='default'
-          className='flex items-center gap-2'
-        >
+        <Button onClick={resetErrorBoundary} variant='default' className='flex items-center gap-2'>
           <RefreshCcw className='h-4 w-4' />
           Try again
         </Button>

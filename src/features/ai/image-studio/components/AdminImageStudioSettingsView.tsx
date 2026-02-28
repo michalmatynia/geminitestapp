@@ -25,7 +25,9 @@ type AdminImageStudioSettingsViewProps = {
   embedded: boolean;
 };
 
-export function AdminImageStudioSettingsView({ embedded }: AdminImageStudioSettingsViewProps): React.JSX.Element {
+export function AdminImageStudioSettingsView({
+  embedded,
+}: AdminImageStudioSettingsViewProps): React.JSX.Element {
   const {
     settingsStore,
     settingsLoaded,
@@ -56,7 +58,11 @@ export function AdminImageStudioSettingsView({ embedded }: AdminImageStudioSetti
 
   if (!settingsLoaded) {
     return (
-      <Card variant='subtle' padding='lg' className='flex min-h-[400px] items-center justify-center border-dashed'>
+      <Card
+        variant='subtle'
+        padding='lg'
+        className='flex min-h-[400px] items-center justify-center border-dashed'
+      >
         <div className='flex flex-col items-center gap-3'>
           <RefreshCcw className='size-8 animate-spin text-gray-600' />
           <p className='text-sm text-gray-500'>Initializing Image Studio settings...</p>
@@ -128,11 +134,7 @@ export function AdminImageStudioSettingsView({ embedded }: AdminImageStudioSetti
         </div>
       )}
 
-      <Tabs
-        value={activeSettingsTab}
-        onValueChange={handleTabChange}
-        className='w-full'
-      >
+      <Tabs value={activeSettingsTab} onValueChange={handleTabChange} className='w-full'>
         <TabsList className='mb-6 grid w-full grid-cols-4 md:max-w-2xl'>
           <TabsTrigger value='prompt'>Prompts</TabsTrigger>
           <TabsTrigger value='generation'>AI Models</TabsTrigger>

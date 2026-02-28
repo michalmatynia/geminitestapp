@@ -79,9 +79,9 @@ describe('products ai-paths description-context handler', () => {
 
     const response = await GET_handler(
       request as Parameters<typeof GET_handler>[0],
-      { query: { catalogId: 'catalog-1', categoryId: 'cat-2', includeCategories: true } } as Parameters<
-        typeof GET_handler
-      >[1]
+      {
+        query: { catalogId: 'catalog-1', categoryId: 'cat-2', includeCategories: true },
+      } as Parameters<typeof GET_handler>[1]
     );
 
     const payload = (await response.json()) as {
@@ -99,9 +99,7 @@ describe('products ai-paths description-context handler', () => {
 
   it('keeps categoryName resolution when includeCategories is disabled', async () => {
     listParametersMock.mockResolvedValue([buildParameter()]);
-    listCategoriesMock.mockResolvedValue([
-      buildCategory({ id: 'cat-1', name_en: 'Shirts' }),
-    ]);
+    listCategoriesMock.mockResolvedValue([buildCategory({ id: 'cat-1', name_en: 'Shirts' })]);
 
     const request = new Request(
       'http://localhost/api/products/ai-paths/description-context?catalogId=catalog-1&categoryId=cat-1&includeCategories=false'
@@ -109,9 +107,9 @@ describe('products ai-paths description-context handler', () => {
 
     const response = await GET_handler(
       request as Parameters<typeof GET_handler>[0],
-      { query: { catalogId: 'catalog-1', categoryId: 'cat-1', includeCategories: false } } as Parameters<
-        typeof GET_handler
-      >[1]
+      {
+        query: { catalogId: 'catalog-1', categoryId: 'cat-1', includeCategories: false },
+      } as Parameters<typeof GET_handler>[1]
     );
 
     const payload = (await response.json()) as {
@@ -131,9 +129,9 @@ describe('products ai-paths description-context handler', () => {
 
     const response = await GET_handler(
       request as Parameters<typeof GET_handler>[0],
-      { query: { catalogId: undefined, categoryId: 'cat-1', includeCategories: true } } as Parameters<
-        typeof GET_handler
-      >[1]
+      {
+        query: { catalogId: undefined, categoryId: 'cat-1', includeCategories: true },
+      } as Parameters<typeof GET_handler>[1]
     );
 
     const payload = (await response.json()) as {

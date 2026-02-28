@@ -55,8 +55,8 @@ async function main(): Promise<void> {
         },
       },
       null,
-      2,
-    ),
+      2
+    )
   );
 }
 

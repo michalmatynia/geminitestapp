@@ -38,8 +38,9 @@ export interface ProductFormMetadataContextType {
   filteredPriceGroups: PriceGroupWithDetails[];
 }
 
-export const ProductFormMetadataContext =
-  createContext<ProductFormMetadataContextType | null>(null);
+export const ProductFormMetadataContext = createContext<ProductFormMetadataContextType | null>(
+  null
+);
 
 export function ProductFormMetadataProvider({
   children,
@@ -101,9 +102,7 @@ export function ProductFormMetadataProvider({
 export const useProductFormMetadata = (): ProductFormMetadataContextType => {
   const context = useContext(ProductFormMetadataContext);
   if (!context) {
-    throw internalError(
-      'useProductFormMetadata must be used within a ProductFormMetadataProvider'
-    );
+    throw internalError('useProductFormMetadata must be used within a ProductFormMetadataProvider');
   }
   return context;
 };

@@ -91,7 +91,9 @@ describe('filemaker settings', () => {
     expect(database.organizations[0]?.country).toBe('Poland');
     expect(database.persons[0]?.addressId).toBe('person-address-p-1');
     expect(database.organizations[0]?.addressId).toBe('organization-address-o-1');
-    expect(getFilemakerAddressById(database, database.persons[0]?.addressId)?.country).toBe('Poland');
+    expect(getFilemakerAddressById(database, database.persons[0]?.addressId)?.country).toBe(
+      'Poland'
+    );
   });
 
   it('normalizes address links and enforces one default per owner', () => {
@@ -207,7 +209,9 @@ describe('filemaker settings', () => {
     const options = buildFilemakerPartyOptions(database);
     expect(options.length).toBe(3);
     expect(resolveFilemakerPartyLabel(database, { kind: 'person', id: 'p-1' })).toBe('Jane Smith');
-    expect(resolveFilemakerPartyLabel(database, { kind: 'organization', id: 'o-1' })).toBe('Beta Ltd');
+    expect(resolveFilemakerPartyLabel(database, { kind: 'organization', id: 'o-1' })).toBe(
+      'Beta Ltd'
+    );
   });
 
   it('ignores deprecated fullAddress payloads', () => {
@@ -478,7 +482,9 @@ describe('filemaker settings', () => {
       partyId: 'o-1',
     });
     expect(linkedOrganization.created).toBe(true);
-    expect(getFilemakerPartiesForPhoneNumber(linkedOrganization.database, 'ph-1').organizations).toHaveLength(1);
+    expect(
+      getFilemakerPartiesForPhoneNumber(linkedOrganization.database, 'ph-1').organizations
+    ).toHaveLength(1);
 
     const unlinked = unlinkFilemakerPhoneNumberFromParty(linkedOrganization.database, {
       phoneNumberId: 'ph-1',
@@ -492,7 +498,9 @@ describe('filemaker settings', () => {
       partyKind: 'person',
       partyId: 'p-1',
     }).database;
-    expect(removeFilemakerPartyPhoneNumberLinks(relinked, 'person', 'p-1').phoneNumberLinks).toHaveLength(0);
+    expect(
+      removeFilemakerPartyPhoneNumberLinks(relinked, 'person', 'p-1').phoneNumberLinks
+    ).toHaveLength(0);
     expect(removeFilemakerPhoneNumber(relinked, 'ph-1').phoneNumbers).toHaveLength(0);
   });
 
@@ -672,7 +680,9 @@ describe('filemaker settings', () => {
     });
     expect(unlinked.eventOrganizationLinks).toHaveLength(0);
 
-    expect(removeFilemakerOrganizationEventLinks(linked.database, 'o-1').eventOrganizationLinks).toHaveLength(0);
+    expect(
+      removeFilemakerOrganizationEventLinks(linked.database, 'o-1').eventOrganizationLinks
+    ).toHaveLength(0);
     expect(removeFilemakerEvent(linked.database, 'ev-1').events).toHaveLength(0);
   });
 
@@ -917,10 +927,7 @@ describe('filemaker settings', () => {
       text: 'Reach me at mailto:ada.nowak@example.com and <office@example.com>.',
     });
 
-    expect(result.appliedEmails).toEqual([
-      'ada.nowak@example.com',
-      'office@example.com',
-    ]);
+    expect(result.appliedEmails).toEqual(['ada.nowak@example.com', 'office@example.com']);
     expect(result.createdEmailCount).toBe(2);
     expect(result.linkedEmailCount).toBe(2);
   });

@@ -11,7 +11,9 @@ export function reminderList(label: string, items: string[]): string | null {
 }
 
 export function sleep(ms: number): Promise<void> {
-  return new Promise<void>((resolve: (value: void | PromiseLike<void>) => void) => setTimeout(resolve, ms));
+  return new Promise<void>((resolve: (value: void | PromiseLike<void>) => void) =>
+    setTimeout(resolve, ms)
+  );
 }
 
 export function buildSelfImprovementPlaybook(
@@ -25,9 +27,9 @@ export function buildSelfImprovementPlaybook(
   const collect = (values: unknown): string[] =>
     Array.isArray(values)
       ? values
-        .filter((item: unknown): item is string => typeof item === 'string')
-        .map((item: string) => item.trim())
-        .filter(Boolean)
+          .filter((item: unknown): item is string => typeof item === 'string')
+          .map((item: string) => item.trim())
+          .filter(Boolean)
       : [];
   const mistakes = new Set<string>();
   const improvements = new Set<string>();
@@ -40,29 +42,21 @@ export function buildSelfImprovementPlaybook(
     collect((meta as { mistakes?: unknown }).mistakes).forEach((entry: string) =>
       mistakes.add(entry)
     );
-    collect((meta as { improvements?: unknown }).improvements).forEach(
-      (entry: string) => improvements.add(entry)
+    collect((meta as { improvements?: unknown }).improvements).forEach((entry: string) =>
+      improvements.add(entry)
     );
     collect((meta as { guardrails?: unknown }).guardrails).forEach((entry: string) =>
       guardrails.add(entry)
     );
-    collect((meta as { toolAdjustments?: unknown }).toolAdjustments).forEach(
-      (entry: string) => toolAdjustments.add(entry)
+    collect((meta as { toolAdjustments?: unknown }).toolAdjustments).forEach((entry: string) =>
+      toolAdjustments.add(entry)
     );
   }
   const lines = [
-    summaries.length
-      ? `Recent learning: ${summaries.slice(0, 2).join(' | ')}`
-      : null,
-    mistakes.size
-      ? `Avoid: ${Array.from(mistakes).slice(0, 4).join(' | ')}`
-      : null,
-    improvements.size
-      ? `Improve: ${Array.from(improvements).slice(0, 4).join(' | ')}`
-      : null,
-    guardrails.size
-      ? `Guardrails: ${Array.from(guardrails).slice(0, 4).join(' | ')}`
-      : null,
+    summaries.length ? `Recent learning: ${summaries.slice(0, 2).join(' | ')}` : null,
+    mistakes.size ? `Avoid: ${Array.from(mistakes).slice(0, 4).join(' | ')}` : null,
+    improvements.size ? `Improve: ${Array.from(improvements).slice(0, 4).join(' | ')}` : null,
+    guardrails.size ? `Guardrails: ${Array.from(guardrails).slice(0, 4).join(' | ')}` : null,
     toolAdjustments.size
       ? `Tool tweaks: ${Array.from(toolAdjustments).slice(0, 3).join(' | ')}`
       : null,

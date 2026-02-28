@@ -1,13 +1,13 @@
 import { describe, it, expect, vi } from 'vitest';
 
-import { 
+import {
   handleContext,
-  handleParser, 
-  handleMapper, 
-  handleMutator, 
-  handleValidator, 
-  handleRegex, 
-  handleIterator 
+  handleParser,
+  handleMapper,
+  handleMutator,
+  handleValidator,
+  handleRegex,
+  handleIterator,
 } from '@/shared/lib/ai-paths/core/runtime/handlers/transform';
 
 import { createMockContext } from '../../test-utils';
@@ -20,9 +20,9 @@ describe('Transform Handlers', () => {
           id: 'n1',
           type: 'context',
           title: 'My Context',
-          config: { context: { role: 'manual', entityId: 'p1', entityType: 'product' } }
+          config: { context: { role: 'manual', entityId: 'p1', entityType: 'product' } },
         } as any,
-        fetchEntityCached: vi.fn().mockResolvedValue({ id: 'p1', name: 'Product 1' })
+        fetchEntityCached: vi.fn().mockResolvedValue({ id: 'p1', name: 'Product 1' }),
       });
       const result = await handleContext(ctx);
       expect(result['entityId']).toBe('p1');
@@ -37,13 +37,13 @@ describe('Transform Handlers', () => {
         node: {
           id: 'n1',
           type: 'parser',
-          config: { 
-            parser: { 
-              mappings: { title: '$.name', price: '$.price' } 
-            } 
-          }
+          config: {
+            parser: {
+              mappings: { title: '$.name', price: '$.price' },
+            },
+          },
         } as any,
-        nodeInputs: { entityJson: { name: 'Product', price: 100 } }
+        nodeInputs: { entityJson: { name: 'Product', price: 100 } },
       });
       const result = await handleParser(ctx);
       expect(result).toEqual({ title: 'Product', price: 100 });
@@ -54,13 +54,13 @@ describe('Transform Handlers', () => {
         node: {
           id: 'n1',
           type: 'parser',
-          config: { 
-            parser: { 
-              mappings: { title: '$.missing' } 
-            } 
-          }
+          config: {
+            parser: {
+              mappings: { title: '$.missing' },
+            },
+          },
         } as any,
-        nodeInputs: { entityJson: { name: 'Fallback Name' } }
+        nodeInputs: { entityJson: { name: 'Fallback Name' } },
       });
       const result = await handleParser(ctx);
       expect(result['title']).toBe('Fallback Name');
@@ -73,9 +73,9 @@ describe('Transform Handlers', () => {
           type: 'parser',
           config: {
             parser: {
-              mappings: { images: '$.images' }
-            }
-          }
+              mappings: { images: '$.images' },
+            },
+          },
         } as any,
         nodeInputs: {
           entityJson: {
@@ -87,10 +87,7 @@ describe('Transform Handlers', () => {
         },
       });
       const result = await handleParser(ctx);
-      expect(result['images']).toEqual([
-        'https://cdn.example.com/a.jpg',
-        '/uploads/b.png',
-      ]);
+      expect(result['images']).toEqual(['https://cdn.example.com/a.jpg', '/uploads/b.png']);
     });
   });
 
@@ -101,14 +98,14 @@ describe('Transform Handlers', () => {
           id: 'n1',
           type: 'mapper',
           outputs: ['out1'],
-          config: { 
-            mapper: { 
+          config: {
+            mapper: {
               outputs: ['out1'],
-              mappings: { out1: '$.user.name' } 
-            } 
-          }
+              mappings: { out1: '$.user.name' },
+            },
+          },
         } as any,
-        nodeInputs: { context: { user: { name: 'Alice' } } }
+        nodeInputs: { context: { user: { name: 'Alice' } } },
       });
       const result = await handleMapper(ctx);
       expect(result).toEqual({ out1: 'Alice' });
@@ -123,9 +120,9 @@ describe('Transform Handlers', () => {
           config: {
             mapper: {
               outputs: ['result'],
-              mappings: { result: 'result.id' }
-            }
-          }
+              mappings: { result: 'result.id' },
+            },
+          },
         } as any,
         nodeInputs: { result: { id: 'prod-1' } },
       });
@@ -144,9 +141,9 @@ describe('Transform Handlers', () => {
           config: {
             mapper: {
               outputs: ['result'],
-              mappings: { result: 'result.id' }
-            }
-          }
+              mappings: { result: 'result.id' },
+            },
+          },
         } as any,
         nodeInputs: { value: { id: 'fallback' } },
         edges: [
@@ -156,7 +153,7 @@ describe('Transform Handlers', () => {
             to: 'n2',
             fromPort: 'result',
             toPort: 'result',
-          } as any
+          } as any,
         ],
         toast,
       });
@@ -176,14 +173,14 @@ describe('Transform Handlers', () => {
         node: {
           id: 'n1',
           type: 'mutator',
-          config: { 
-            mutator: { 
-              path: 'user.score', 
-              valueTemplate: '100' 
-            } 
-          }
+          config: {
+            mutator: {
+              path: 'user.score',
+              valueTemplate: '100',
+            },
+          },
         } as any,
-        nodeInputs: { context: { user: { score: 0 } } }
+        nodeInputs: { context: { user: { score: 0 } } },
       });
       const result = await handleMutator(ctx);
       expect((result['context'] as any).user.score).toBe('100');
@@ -196,14 +193,14 @@ describe('Transform Handlers', () => {
         node: {
           id: 'n1',
           type: 'validator',
-          config: { 
-            validator: { 
+          config: {
+            validator: {
               requiredPaths: ['user.name', 'user.email'],
-              mode: 'all'
-            } 
-          }
+              mode: 'all',
+            },
+          },
         } as any,
-        nodeInputs: { context: { user: { name: 'Alice' } } }
+        nodeInputs: { context: { user: { name: 'Alice' } } },
       });
       const result = await handleValidator(ctx);
       expect(result['valid']).toBe(false);
@@ -217,16 +214,16 @@ describe('Transform Handlers', () => {
         node: {
           id: 'n1',
           type: 'regex',
-          config: { 
-            regex: { 
-              pattern: 'ID-(\\d+)', 
+          config: {
+            regex: {
+              pattern: 'ID-(\\d+)',
               flags: 'i',
               mode: 'extract',
-              groupBy: '1'
-            } 
-          }
+              groupBy: '1',
+            },
+          },
         } as any,
-        nodeInputs: { value: 'Your ID-123 is ready' }
+        nodeInputs: { value: 'Your ID-123 is ready' },
       });
       const result = await handleRegex(ctx);
       expect(result['value']).toBe('123');
@@ -238,9 +235,9 @@ describe('Transform Handlers', () => {
       const items = ['a', 'b', 'c'];
       let ctx = createMockContext({
         nodeInputs: { value: items },
-        prevOutputs: {}
+        prevOutputs: {},
       });
-      
+
       let result = await handleIterator(ctx);
       expect(result['value']).toBe('a');
       expect(result['index']).toBe(0);
@@ -250,7 +247,7 @@ describe('Transform Handlers', () => {
       ctx = createMockContext({
         nodeInputs: { value: items, callback: 'ack-a' },
         prevOutputs: result,
-        now: 'step-2'
+        now: 'step-2',
       });
       result = await handleIterator(ctx);
       expect(result['status']).toBe('advance_pending');
@@ -260,7 +257,7 @@ describe('Transform Handlers', () => {
       ctx = createMockContext({
         nodeInputs: { value: items },
         prevOutputs: result,
-        now: 'step-3'
+        now: 'step-3',
       });
       result = await handleIterator(ctx);
       expect(result['value']).toBe('b');

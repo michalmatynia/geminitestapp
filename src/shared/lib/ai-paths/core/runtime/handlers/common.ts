@@ -1,12 +1,12 @@
-import type { NodeHandler, NodeHandlerContext, RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
+import type {
+  NodeHandler,
+  NodeHandlerContext,
+  RuntimePortValues,
+} from '@/shared/contracts/ai-paths-runtime';
 import type { LogicalConditionConfig, LogicalConditionOperator } from '@/shared/contracts/ai-paths';
 
 import { DELAY_OUTPUT_PORTS, ROUTER_OUTPUT_PORTS } from '../../constants';
-import {
-  coerceInput,
-  coerceInputArray,
-  safeStringify,
-} from '../../utils';
+import { coerceInput, coerceInputArray, safeStringify } from '../../utils';
 
 export const handleConstant: NodeHandler = ({ node }: NodeHandlerContext): RuntimePortValues => {
   const constantConfig = node.config?.constant ?? {
@@ -29,7 +29,10 @@ export const handleConstant: NodeHandler = ({ node }: NodeHandlerContext): Runti
   return { value };
 };
 
-export const handleMath: NodeHandler = ({ node, nodeInputs }: NodeHandlerContext): RuntimePortValues => {
+export const handleMath: NodeHandler = ({
+  node,
+  nodeInputs,
+}: NodeHandlerContext): RuntimePortValues => {
   const inputValue = coerceInput(nodeInputs['value']);
   const numeric = Number(inputValue);
   const mathConfig = node.config?.math ?? { operation: 'add', operand: 0 };
@@ -66,7 +69,10 @@ export const handleMath: NodeHandler = ({ node, nodeInputs }: NodeHandlerContext
   return { value: result };
 };
 
-export const handleCompare: NodeHandler = ({ node, nodeInputs }: NodeHandlerContext): RuntimePortValues => {
+export const handleCompare: NodeHandler = ({
+  node,
+  nodeInputs,
+}: NodeHandlerContext): RuntimePortValues => {
   const compareConfig = node.config?.compare ?? {
     operator: 'eq',
     compareTo: '',
@@ -150,9 +156,7 @@ const evaluateLogicalConditionItem = (
 ): boolean => {
   const asString = safeStringify(value ?? '');
   const normalized = caseSensitive ? asString : asString.toLowerCase();
-  const target = caseSensitive
-    ? String(compareTo ?? '')
-    : String(compareTo ?? '').toLowerCase();
+  const target = caseSensitive ? String(compareTo ?? '') : String(compareTo ?? '').toLowerCase();
 
   switch (operator) {
     case 'truthy':
@@ -172,17 +176,9 @@ const evaluateLogicalConditionItem = (
     case 'endsWith':
       return normalized.endsWith(target);
     case 'isEmpty':
-      return (
-        normalized.trim() === '' ||
-        normalized.trim() === '[]' ||
-        normalized.trim() === '{}'
-      );
+      return normalized.trim() === '' || normalized.trim() === '[]' || normalized.trim() === '{}';
     case 'notEmpty':
-      return (
-        normalized.trim() !== '' &&
-        normalized.trim() !== '[]' &&
-        normalized.trim() !== '{}'
-      );
+      return normalized.trim() !== '' && normalized.trim() !== '[]' && normalized.trim() !== '{}';
     case 'greaterThan':
       return Number(asString) > Number(compareTo ?? 0);
     case 'lessThan':
@@ -254,9 +250,7 @@ export const handleLogicalCondition: NodeHandler = ({
         valid = true;
         break;
       }
-      errors.push(
-        `Condition did not match: [${condition.inputPort}] ${condition.operator}`
-      );
+      errors.push(`Condition did not match: [${condition.inputPort}] ${condition.operator}`);
     }
     if (valid) {
       errors.length = 0;
@@ -270,7 +264,10 @@ export const handleLogicalCondition: NodeHandler = ({
   };
 };
 
-export const handleRouter: NodeHandler = ({ node, nodeInputs }: NodeHandlerContext): RuntimePortValues => {
+export const handleRouter: NodeHandler = ({
+  node,
+  nodeInputs,
+}: NodeHandlerContext): RuntimePortValues => {
   const config = node.config?.router ?? {
     mode: 'valid',
     matchMode: 'truthy',
@@ -312,10 +309,11 @@ export const handleRouter: NodeHandler = ({ node, nodeInputs }: NodeHandlerConte
   return next;
 };
 
-export const handleGate: NodeHandler = ({ node, nodeInputs }: NodeHandlerContext): RuntimePortValues => {
-  const contextValue = coerceInput(nodeInputs['context']) as
-    | Record<string, unknown>
-    | undefined;
+export const handleGate: NodeHandler = ({
+  node,
+  nodeInputs,
+}: NodeHandlerContext): RuntimePortValues => {
+  const contextValue = coerceInput(nodeInputs['context']) as Record<string, unknown> | undefined;
   const validInput = coerceInput(nodeInputs['valid']);
   const errorsInput = coerceInputArray(nodeInputs['errors']);
   const config = node.config?.gate ?? { mode: 'block', failMessage: 'Gate blocked' };
@@ -334,17 +332,21 @@ export const handleGate: NodeHandler = ({ node, nodeInputs }: NodeHandlerContext
   };
 };
 
-export const handleBundle: NodeHandler = ({ node, nodeInputs }: NodeHandlerContext): RuntimePortValues => {
+export const handleBundle: NodeHandler = ({
+  node,
+  nodeInputs,
+}: NodeHandlerContext): RuntimePortValues => {
   const config = node.config?.bundle ?? { includePorts: [] };
-  const includePorts = config.includePorts?.length
-    ? config.includePorts
-    : node.inputs;
-  const bundle = includePorts.reduce<Record<string, unknown>>((acc: Record<string, unknown>, port: string) => {
-    if (nodeInputs[port] !== undefined) {
-      acc[port] = nodeInputs[port];
-    }
-    return acc;
-  }, {});
+  const includePorts = config.includePorts?.length ? config.includePorts : node.inputs;
+  const bundle = includePorts.reduce<Record<string, unknown>>(
+    (acc: Record<string, unknown>, port: string) => {
+      if (nodeInputs[port] !== undefined) {
+        acc[port] = nodeInputs[port];
+      }
+      return acc;
+    },
+    {}
+  );
   return { bundle };
 };
 
@@ -372,10 +374,13 @@ export const handleDelay: NodeHandler = async ({
         (abortError as { name?: string }).name = 'AbortError';
         reject(abortError);
       };
-      const timer = setTimeout(() => {
-        abortSignal.removeEventListener('abort', onAbort);
-        resolve();
-      }, Math.max(0, delayMs));
+      const timer = setTimeout(
+        () => {
+          abortSignal.removeEventListener('abort', onAbort);
+          resolve();
+        },
+        Math.max(0, delayMs)
+      );
       abortSignal.addEventListener('abort', onAbort, { once: true });
     });
     executed.delay.add(node.id);
@@ -389,7 +394,10 @@ export const handleDelay: NodeHandler = async ({
   return delayed;
 };
 
-export const handleViewer: NodeHandler = ({ node, prevOutputs }: NodeHandlerContext): RuntimePortValues => {
+export const handleViewer: NodeHandler = ({
+  node,
+  prevOutputs,
+}: NodeHandlerContext): RuntimePortValues => {
   // Viewer mainly displays data in UI, runtime behavior is pass-through or sync
   // Assuming it might pass through inputs to outputs if connected, but standard viewer has no outputs.
   // We check if it has outputs configured (custom viewer?)
@@ -398,16 +406,16 @@ export const handleViewer: NodeHandler = ({ node, prevOutputs }: NodeHandlerCont
   // If it has outputs, behave like a bundle/pass-through
   // but viewer inputs are specific.
   // For now return prevOutputs as in original code logic (it wasn't explicit about viewer outputs)
-  // Re-reading original code: "case 'viewer'" was not present in the switch, 
+  // Re-reading original code: "case 'viewer'" was not present in the switch,
   // so it fell through to default? No, the loop iterates all nodes, switch has cases.
   // If no case match, nextOutputs = prevOutputs.
   // Wait, I need to check if viewer was in the switch.
-  // "case 'viewer'" is NOT in the big switch I read earlier. 
+  // "case 'viewer'" is NOT in the big switch I read earlier.
   // Ah, actually, if I look at "case 'parser'", "case 'mapper'", etc.
-  // Viewer likely just holds state in `nextInputs` which UI reads. 
+  // Viewer likely just holds state in `nextInputs` which UI reads.
   // But if I want to support viewer passing data, I should check.
   // The normalized definition of viewer has outputs: [] usually.
-  
+
   // So for viewer we just return prevOutputs (empty usually).
   return prevOutputs;
 };

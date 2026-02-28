@@ -1,4 +1,8 @@
-import type { NodeHandler, NodeHandlerContext, RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
+import type {
+  NodeHandler,
+  NodeHandlerContext,
+  RuntimePortValues,
+} from '@/shared/contracts/ai-paths-runtime';
 
 import { coerceInput } from '../../utils';
 
@@ -42,18 +46,13 @@ const readEntityObjectFromContext = (
   context: Record<string, unknown> | null | undefined
 ): Record<string, unknown> | null => {
   if (!context) return null;
-  const candidate =
-    context['entity'] ?? context['entityJson'] ?? context['product'] ?? null;
+  const candidate = context['entity'] ?? context['entityJson'] ?? context['product'] ?? null;
   return isPlainRecord(candidate) ? candidate : null;
 };
 
 const readFetcherSourceMode = (node: NodeHandlerContext['node']): FetcherSourceMode => {
   const mode = node.config?.fetcher?.sourceMode;
-  if (
-    mode === 'live_context' ||
-    mode === 'simulation_id' ||
-    mode === 'live_then_simulation'
-  ) {
+  if (mode === 'live_context' || mode === 'simulation_id' || mode === 'live_then_simulation') {
     return mode;
   }
   return DEFAULT_FETCHER_SOURCE_MODE;
@@ -162,9 +161,7 @@ export const handleFetcher: NodeHandler = async ({
     readString(node.config?.fetcher?.productId) ??
     null;
   const configEntityType =
-    normalizeEntityType(node.config?.fetcher?.entityType) ??
-    liveEntityType ??
-    'product';
+    normalizeEntityType(node.config?.fetcher?.entityType) ?? liveEntityType ?? 'product';
 
   const simulationEntityId = configEntityId ?? liveEntityId;
   const simulationEntityType = configEntityType;
@@ -253,8 +250,7 @@ export const handleFetcher: NodeHandler = async ({
     ...incomingMetaRecord,
     fetchedAt: now,
     fetcherSourceMode: sourceMode,
-    fetcherResolvedSource:
-      sourceTag === 'simulation_fetcher' ? 'simulation_id' : 'live_context',
+    fetcherResolvedSource: sourceTag === 'simulation_fetcher' ? 'simulation_id' : 'live_context',
     entityId: resolvedEntityId,
     entityType: resolvedEntityType,
     pathId: activePathId,

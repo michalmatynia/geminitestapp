@@ -1,8 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  defaultFolderTreeProfilesV2,
-} from '@/shared/utils/folder-tree-profiles-v2';
+import { defaultFolderTreeProfilesV2 } from '@/shared/utils/folder-tree-profiles-v2';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 import {
   buildMasterTree,
@@ -11,7 +9,9 @@ import {
   normalizeMasterTreeNodes,
 } from '@/shared/utils/master-folder-tree-engine';
 
-const node = (overrides: Partial<MasterTreeNode> & Pick<MasterTreeNode, 'id' | 'name'>): MasterTreeNode => ({
+const node = (
+  overrides: Partial<MasterTreeNode> & Pick<MasterTreeNode, 'id' | 'name'>
+): MasterTreeNode => ({
   id: overrides.id,
   type: overrides.type ?? 'file',
   kind: overrides.kind ?? 'note',
@@ -55,7 +55,13 @@ describe('master-folder-tree-engine', () => {
 
   it('blocks file drop to root when profile disallows file-to-root', () => {
     const nodes: MasterTreeNode[] = [
-      node({ id: 'cat-root', type: 'folder', kind: 'category', name: 'Root category', path: 'root' }),
+      node({
+        id: 'cat-root',
+        type: 'folder',
+        kind: 'category',
+        name: 'Root category',
+        path: 'root',
+      }),
       node({
         id: 'file-1',
         type: 'file',

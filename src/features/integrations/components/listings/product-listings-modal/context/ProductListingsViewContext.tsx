@@ -12,7 +12,9 @@ export type ProductListingsViewContextValue = {
   showSync: boolean;
 };
 
-const ProductListingsViewContext = React.createContext<ProductListingsViewContextValue | null>(null);
+const ProductListingsViewContext = React.createContext<ProductListingsViewContextValue | null>(
+  null
+);
 
 type ProductListingsViewProviderProps = {
   value: ProductListingsViewContextValue;
@@ -33,7 +35,9 @@ export function ProductListingsViewProvider({
 export function useProductListingsViewContext(): ProductListingsViewContextValue {
   const context = React.useContext(ProductListingsViewContext);
   if (!context) {
-    throw new Error('useProductListingsViewContext must be used within ProductListingsViewProvider');
+    throw new Error(
+      'useProductListingsViewContext must be used within ProductListingsViewProvider'
+    );
   }
   return context;
 }

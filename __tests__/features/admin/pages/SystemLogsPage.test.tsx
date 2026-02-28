@@ -19,17 +19,17 @@ vi.mock('next/navigation', () => ({
 
 // Mock SystemLogsContext (override global mock from vitest.setup.ts if needed)
 vi.mock('@/features/observability/context/SystemLogsContext', async (importOriginal) => {
-  const actual = await importOriginal<any>();
+  const actual = (await importOriginal()) as any;
   return {
     ...actual,
-    SystemLogsProvider: ({ children }: any) => children,
+    SystemLogsProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
     useSystemLogsContext: vi.fn(),
   };
 });
 
 // Mock SettingsStoreProvider to avoid react-query issues in provider
 vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
-  SettingsStoreProvider: ({ children }: any) => children,
+  SettingsStoreProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   useSettingsStore: vi.fn(() => ({
     get: vi.fn(),
     getBoolean: vi.fn(() => false),
@@ -44,46 +44,92 @@ vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
 
 // Mock useToast and UI components
 vi.mock('@/shared/ui', async (importOriginal) => {
-  const actual = await importOriginal<any>();
+  const actual = (await importOriginal()) as any;
   return {
     ...actual,
     useToast: vi.fn(() => ({ toast: vi.fn() })),
-    Button: ({ children, onClick, disabled, className }: any) => (
-      <button onClick={onClick} disabled={disabled} className={className}>{children}</button>
+    Button: ({
+      children,
+      onClick,
+      disabled,
+      className,
+    }: {
+      children: React.ReactNode;
+      onClick?: () => void;
+      disabled?: boolean;
+      className?: string;
+    }) => (
+      <button onClick={onClick} disabled={disabled} className={className}>
+        {children}
+      </button>
     ),
-    Input: ({ value, onChange, placeholder, type }: any) => (
-      <input value={value} onChange={onChange} placeholder={placeholder} type={type} />
+    Input: ({
+      value,
+      onChange,
+      placeholder,
+      type,
+    }: {
+      value: string;
+      onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+      placeholder?: string;
+      type?: string;
+    }) => <input value={value} onChange={onChange} placeholder={placeholder} type={type} />,
+    Select: ({
+      children,
+      value,
+      onValueChange,
+    }: {
+      children: React.ReactNode;
+      value: string;
+      onValueChange: (val: string) => void;
+    }) => <select value={value} onChange={(e) => onValueChange(e.target.value)}>{children}</select>,
+    SelectTrigger: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+    SelectValue: ({ placeholder }: { placeholder?: string }) => <span>{placeholder}</span>,
+    SelectContent: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    SelectItem: ({ children, value }: { children: React.ReactNode; value: string }) => (
+      <option value={value}>{children}</option>
     ),
-    Select: ({ children, value, onValueChange }: any) => (
-      <select value={value} onChange={(e) => onValueChange(e.target.value)}>{children}</select>
-    ),
-    SelectTrigger: ({ children }: any) => <div>{children}</div>,
-    SelectValue: ({ placeholder }: any) => <span>{placeholder}</span>,
-    SelectContent: ({ children }: any) => <>{children}</>,
-    SelectItem: ({ children, value }: any) => <option value={value}>{children}</option>,
-    Label: ({ children }: any) => <label>{children}</label>,
-    SectionHeader: ({ title, description, actions }: any) => (
+    Label: ({ children }: { children: React.ReactNode }) => <label>{children}</label>,
+    SectionHeader: ({
+      title,
+      description,
+      actions,
+    }: {
+      title: string;
+      description?: string;
+      actions?: React.ReactNode;
+    }) => (
       <div>
         <h1>{title}</h1>
         <p>{description}</p>
         <div>{actions}</div>
       </div>
     ),
-    SectionPanel: ({ children }: any) => <div>{children}</div>,
-    ListPanel: ({ children, header, filters }: any) => (
+    SectionPanel: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+    ListPanel: ({
+      children,
+      header,
+      filters,
+    }: {
+      children: React.ReactNode;
+      header?: React.ReactNode;
+      filters?: React.ReactNode;
+    }) => (
       <div>
         {header}
         {filters}
         {children}
       </div>
     ),
-    StandardDataTablePanel: ({ data, columns }: any) => (
+    StandardDataTablePanel: ({ data, columns }: { data: any[]; columns: any[] }) => (
       <div>
         {data.map((row: any, i: number) => (
           <div key={i}>
             {columns.map((col: any) => {
               if (col.cell && typeof col.cell === 'function') {
-                return <div key={col.accessorKey || col.id}>{col.cell({ row: { original: row } })}</div>;
+                return (
+                  <div key={col.accessorKey || col.id}>{col.cell({ row: { original: row } })}</div>
+                );
               }
               return <div key={col.accessorKey || col.id}>{row[col.accessorKey]}</div>;
             })}
@@ -94,11 +140,12 @@ vi.mock('@/shared/ui', async (importOriginal) => {
   };
 });
 
-const createTestQueryClient = () => new QueryClient({
-  defaultOptions: {
-    queries: { retry: false },
-  },
-});
+const createTestQueryClient = () =>
+  new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+    },
+  });
 
 const renderPage = () => {
   const queryClient = createTestQueryClient();
@@ -114,21 +161,43 @@ describe('SystemLogsPage', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    
+
     // Default context mock
-    (useSystemLogsContext as any).mockReturnValue({
-      logsQuery: { isPending: false, isFetching: false, refetch: vi.fn() },
-      metricsQuery: { isPending: false, isFetching: false, refetch: vi.fn() },
-      insightsQuery: { isLoading: false, data: { insights: [] } },
-      mongoDiagnosticsQuery: { isLoading: false, data: { collections: [] }, refetch: vi.fn() },
-      runInsightMutation: { isPending: false, mutate: vi.fn() },
-      interpretLogMutation: { isPending: false },
-      clearLogsMutation: { isPending: false },
+    vi.mocked(useSystemLogsContext).mockReturnValue({
+      logsQuery: { isPending: false, isFetching: false, refetch: vi.fn() } as any,
+      metricsQuery: { isPending: false, isFetching: false, refetch: vi.fn() } as any,
+      insightsQuery: { isLoading: false, data: { insights: [] } } as any,
+      mongoDiagnosticsQuery: { isLoading: false, data: { collections: [] }, refetch: vi.fn() } as any,
+      runInsightMutation: { isPending: false, mutate: vi.fn() } as any,
+      interpretLogMutation: { isPending: false } as any,
+      clearLogsMutation: { isPending: false } as any,
+      rebuildIndexesMutation: { isPending: false } as any,
       confirmAction: mockConfirmAction,
       ConfirmationModal: () => null,
+      handleClearLogs: vi.fn(),
+      handleRebuildMongoIndexes: vi.fn(),
+      handleRunInsight: vi.fn(),
+      handleInterpretLog: vi.fn(),
+      isClearLogsConfirmOpen: false,
+      setIsClearLogsConfirmOpen: vi.fn(),
+      isRebuildIndexesConfirmOpen: false,
+      setIsRebuildIndexesConfirmOpen: vi.fn(),
+      toast: vi.fn(),
       logs: [
-        { id: '1', level: 'error', message: 'Test Error', createdAt: new Date().toISOString(), source: 'api' },
-        { id: '2', level: 'info', message: 'Test Info', createdAt: new Date().toISOString(), source: 'client' },
+        {
+          id: '1',
+          level: 'error',
+          message: 'Test Error',
+          createdAt: new Date().toISOString(),
+          source: 'api',
+        },
+        {
+          id: '2',
+          level: 'info',
+          message: 'Test Info',
+          createdAt: new Date().toISOString(),
+          source: 'client',
+        },
       ],
       metrics: {
         total: 2,
@@ -143,6 +212,7 @@ describe('SystemLogsPage', () => {
       total: 2,
       totalPages: 1,
       page: 1,
+      pageSize: 50,
       setPage: vi.fn(),
       filterFields: [],
       level: 'all',
@@ -162,16 +232,16 @@ describe('SystemLogsPage', () => {
       diagnostics: [],
       diagnosticsUpdatedAt: null,
       logInterpretations: {},
-    });
+    } as ReturnType<typeof useSystemLogsContext>);
   });
 
   it('renders logs list and metrics', () => {
     renderPage();
-    
+
     expect(screen.getByText('Observation Post')).toBeInTheDocument();
     expect(screen.getByText('Test Error')).toBeInTheDocument();
     expect(screen.getByText('Test Info')).toBeInTheDocument();
-    
+
     // Check metrics using flexible matchers for PropertyRow labels
     expect(screen.getByText(/^Total Logs:/i)).toBeInTheDocument();
     expect(screen.getByText(/^Errors:/i)).toBeInTheDocument();
@@ -179,7 +249,7 @@ describe('SystemLogsPage', () => {
 
   it('renders filter section', () => {
     renderPage();
-    // In our mock PageLayout/DynamicFilters might not render "Filters" text exactly, 
+    // In our mock PageLayout/DynamicFilters might not render "Filters" text exactly,
     // let's check for "Log Filters" which is in SystemLogsPage.tsx
     expect(screen.getByText(/Log Filters/i)).toBeInTheDocument();
   });
@@ -187,7 +257,7 @@ describe('SystemLogsPage', () => {
   it('opens clear logs action without crashing', async () => {
     const user = userEvent.setup();
     renderPage();
-    
+
     const clearButton = screen.getByText('Wipe Logs');
     await user.click(clearButton);
 
@@ -204,10 +274,10 @@ describe('SystemLogsPage', () => {
     });
 
     renderPage();
-    
+
     const copyButton = screen.getByText('Export');
     await user.click(copyButton);
-    
+
     // CopyButton component internally calls navigator.clipboard.writeText
     expect(mockWriteText).toHaveBeenCalled();
   });

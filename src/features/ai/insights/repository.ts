@@ -2,7 +2,11 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 
-import type { AiInsightRecord, AiInsightType, AiInsightNotification } from '@/shared/contracts/ai-insights';
+import type {
+  AiInsightRecord,
+  AiInsightType,
+  AiInsightNotification,
+} from '@/shared/contracts/ai-insights';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
@@ -52,11 +56,13 @@ const upsertSettingValue = async (key: string, value: string): Promise<void> => 
     if (!hasMongo) return;
     const mongo = await getMongoDb();
     const now = new Date();
-    await mongo.collection<SettingDoc>(SETTINGS_COLLECTION).updateOne(
-      { key },
-      { $set: { value, updatedAt: now }, $setOnInsert: { createdAt: now } },
-      { upsert: true }
-    );
+    await mongo
+      .collection<SettingDoc>(SETTINGS_COLLECTION)
+      .updateOne(
+        { key },
+        { $set: { value, updatedAt: now }, $setOnInsert: { createdAt: now } },
+        { upsert: true }
+      );
     return;
   }
 
@@ -135,10 +141,7 @@ export const appendAiInsightNotification = async (
   };
   const history = await listAiInsightNotifications(100);
   const next = normalizeNotifications([notification, ...history]).slice(0, 50);
-  await upsertSettingValue(
-    AI_INSIGHTS_SETTINGS_KEYS.notifications,
-    serializeSetting(next),
-  );
+  await upsertSettingValue(AI_INSIGHTS_SETTINGS_KEYS.notifications, serializeSetting(next));
   return notification;
 };
 

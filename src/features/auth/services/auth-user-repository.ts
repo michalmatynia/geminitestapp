@@ -22,9 +22,7 @@ type MongoUserDoc = {
 
 const normalizeEmail = (email: string): string => email.trim().toLowerCase();
 
-export const findAuthUserByEmail = async (
-  email: string
-): Promise<AuthUserRecord | null> => {
+export const findAuthUserByEmail = async (email: string): Promise<AuthUserRecord | null> => {
   const normalized = normalizeEmail(email);
   const provider = requireAuthProvider(await getAuthDataProvider());
   await logSystemEvent({
@@ -81,9 +79,7 @@ export const findAuthUserByEmail = async (
   };
 };
 
-export const findAuthUserById = async (
-  userId: string
-): Promise<AuthUserRecord | null> => {
+export const findAuthUserById = async (userId: string): Promise<AuthUserRecord | null> => {
   const provider = requireAuthProvider(await getAuthDataProvider());
   if (provider === 'prisma') {
     const user = await prisma.user.findUnique({

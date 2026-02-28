@@ -23,18 +23,9 @@ interface FilePreviewModalProps {
   children?: React.ReactNode;
 }
 
-export default function FilePreviewModal({
-  file,
-  onClose,
-  children,
-}: FilePreviewModalProps) {
+export default function FilePreviewModal({ file, onClose, children }: FilePreviewModalProps) {
   return (
-    <AppModal
-      open={true}
-      onClose={onClose}
-      title={file.filename}
-      size='lg'
-    >
+    <AppModal open={true} onClose={onClose} title={file.filename} size='lg'>
       <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
         <div>
           <h2 className='text-2xl font-bold mb-4'>{file.filename}</h2>
@@ -69,14 +60,12 @@ export default function FilePreviewModal({
             </p>
             {file.createdAt && (
               <p>
-                <strong>Added:</strong>{' '}
-                {new Date(file.createdAt).toLocaleString()}
+                <strong>Added:</strong> {new Date(file.createdAt).toLocaleString()}
               </p>
             )}
             {file.updatedAt && (
               <p>
-                <strong>Modified:</strong>{' '}
-                {new Date(file.updatedAt).toLocaleString()}
+                <strong>Modified:</strong> {new Date(file.updatedAt).toLocaleString()}
               </p>
             )}
             {(file.tags ?? []).length > 0 && (
@@ -87,7 +76,7 @@ export default function FilePreviewModal({
           </div>
           <div className='mt-4 rounded-md border border-border/60 bg-black/30 p-3'>
             <div className='text-xs font-semibold uppercase tracking-wide text-gray-400'>
-                Raw Metadata
+              Raw Metadata
             </div>
             <pre className='mt-2 max-h-48 overflow-auto text-[11px] text-gray-300'>
               {JSON.stringify(file, null, 2)}

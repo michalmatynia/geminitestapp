@@ -33,7 +33,9 @@ export function useTemplateManagement() {
 
   const handleDeleteSectionTemplate = useCallback(
     (templateId: string): void => {
-      const filtered = savedSectionTemplates.filter((record: SectionTemplateRecord) => record.id !== templateId);
+      const filtered = savedSectionTemplates.filter(
+        (record: SectionTemplateRecord) => record.id !== templateId
+      );
       void updateSetting.mutateAsync({
         key: SECTION_TEMPLATE_SETTINGS_KEY,
         value: serializeSetting(filtered),

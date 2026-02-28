@@ -6,7 +6,7 @@ const listAnalyticsEventsMock = vi.hoisted(() => vi.fn());
 const authMock = vi.hoisted(() => vi.fn());
 const extractClientIpMock = vi.hoisted(() => vi.fn(() => '127.0.0.1'));
 
-vi.mock('@/features/analytics/server', () => ({
+vi.mock('@/shared/lib/analytics/server', () => ({
   insertAnalyticsEvent: insertAnalyticsEventMock,
   listAnalyticsEvents: listAnalyticsEventsMock,
 }));
@@ -34,9 +34,10 @@ describe('/api/analytics/events POST', () => {
 
   it('returns 202 without waiting for ingestion in default non-blocking mode', async () => {
     insertAnalyticsEventMock.mockImplementation(
-      () => new Promise<{ id: string }>(() => {
-        // Intentionally unresolved to verify request returns immediately.
-      })
+      () =>
+        new Promise<{ id: string }>(() => {
+          // Intentionally unresolved to verify request returns immediately.
+        })
     );
 
     const req = new NextRequest('http://localhost/api/analytics/events', {

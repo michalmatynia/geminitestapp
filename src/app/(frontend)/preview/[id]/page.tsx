@@ -16,9 +16,7 @@ interface PreviewPageProps {
   params: Promise<{ id: string }>;
 }
 
-export async function generateMetadata({
-  params,
-}: PreviewPageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: PreviewPageProps): Promise<Metadata> {
   const { id } = await params;
   return {
     title: `Preview ${id}`,
@@ -26,9 +24,7 @@ export async function generateMetadata({
   };
 }
 
-export default async function CmsPreviewPage({
-  params,
-}: PreviewPageProps): Promise<JSX.Element> {
+export default async function CmsPreviewPage({ params }: PreviewPageProps): Promise<JSX.Element> {
   const session = await auth();
   if (!isAdminSession(session)) {
     notFound();

@@ -3,10 +3,13 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { AnalysisResultSection } from '../AnalysisResultSection';
-import type { ImageStudioAnalysisPlanSnapshot } from '../../../../utils/analysis-bridge';
+import type { ImageStudioAnalysisPlanSnapshot } from '@/shared/lib/ai/image-studio/utils/analysis-bridge';
 
 vi.mock('@/shared/ui', () => ({
-  Button: ({ children, ...rest }: React.ButtonHTMLAttributes<HTMLButtonElement>): React.JSX.Element => (
+  Button: ({
+    children,
+    ...rest
+  }: React.ButtonHTMLAttributes<HTMLButtonElement>): React.JSX.Element => (
     <button {...rest}>{children}</button>
   ),
   Card: ({ children }: { children: React.ReactNode }): React.JSX.Element => <div>{children}</div>,
@@ -65,7 +68,9 @@ describe('AnalysisResultSection apply routing UX', () => {
       />
     );
 
-    expect(screen.getByText('Apply will switch to analyzed slot: Analyzed Slot.')).toBeInTheDocument();
+    expect(
+      screen.getByText('Apply will switch to analyzed slot: Analyzed Slot.')
+    ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Apply To Object Layout' })).toBeEnabled();
   });
 
@@ -87,7 +92,9 @@ describe('AnalysisResultSection apply routing UX', () => {
 
     expect(screen.getByRole('button', { name: 'Apply To Object Layout' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Apply To Auto Scaler' })).toBeDisabled();
-    expect(screen.getByText('Analyzed slot no longer exists. Re-run analysis on an available slot.')).toBeInTheDocument();
+    expect(
+      screen.getByText('Analyzed slot no longer exists. Re-run analysis on an available slot.')
+    ).toBeInTheDocument();
   });
 
   it('disables apply actions and shows lock warning when slot selection is locked', () => {
@@ -109,7 +116,9 @@ describe('AnalysisResultSection apply routing UX', () => {
     expect(screen.getByRole('button', { name: 'Apply To Object Layout' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Apply To Auto Scaler' })).toBeDisabled();
     expect(
-      screen.getByText('Slot selection is currently locked by sequencing. Unlock it before applying this plan.')
+      screen.getByText(
+        'Slot selection is currently locked by sequencing. Unlock it before applying this plan.'
+      )
     ).toBeInTheDocument();
   });
 
@@ -132,7 +141,9 @@ describe('AnalysisResultSection apply routing UX', () => {
     expect(screen.getByRole('button', { name: 'Apply To Object Layout' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Apply To Auto Scaler' })).toBeDisabled();
     expect(
-      screen.getByText('Analyzed slot image has changed since this plan was created. Run analysis again.')
+      screen.getByText(
+        'Analyzed slot image has changed since this plan was created. Run analysis again.'
+      )
     ).toBeInTheDocument();
   });
 
@@ -181,7 +192,9 @@ describe('AnalysisResultSection apply routing UX', () => {
     expect(screen.getByRole('button', { name: 'Apply To Object Layout' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Apply To Auto Scaler' })).toBeDisabled();
     expect(
-      screen.getByText('Analyzed slot source metadata is missing. Reselect slot image and rerun analysis.')
+      screen.getByText(
+        'Analyzed slot source metadata is missing. Reselect slot image and rerun analysis.'
+      )
     ).toBeInTheDocument();
   });
 });

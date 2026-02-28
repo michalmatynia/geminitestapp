@@ -4,9 +4,7 @@ import {
   type CaseResolverFileType,
   type CaseResolverPartyReference,
 } from '@/shared/contracts/case-resolver';
-import {
-  type CaseResolverPartySearchKind,
-} from './settings.constants';
+import { type CaseResolverPartySearchKind } from './settings.constants';
 
 export const normalizeFolderPath = (value: string): string => {
   const normalized = value.replace(/\\/g, '/').trim();
@@ -180,13 +178,11 @@ export const normalizeCaseResolverFileType = (value: unknown): CaseResolverFileT
   return 'document';
 };
 
-export const normalizeCaseResolverDocumentVersion = (
-  value: unknown
-): 'original' | 'exploded' => (value === 'exploded' ? 'exploded' : 'original');
+export const normalizeCaseResolverDocumentVersion = (value: unknown): 'original' | 'exploded' =>
+  value === 'exploded' ? 'exploded' : 'original';
 
-export const normalizeCaseResolverCaseStatus = (
-  value: unknown
-): 'pending' | 'completed' => (value === 'completed' ? 'completed' : 'pending');
+export const normalizeCaseResolverCaseStatus = (value: unknown): 'pending' | 'completed' =>
+  value === 'completed' ? 'completed' : 'pending';
 
 export const normalizeCaseTreeOrder = (value: unknown): number | undefined => {
   if (typeof value !== 'number' || !Number.isFinite(value)) return undefined;
@@ -222,7 +218,9 @@ export const normalizeCaseResolverPartySearchKindValue = (
   return null;
 };
 
-export const normalizeDocumentFormatVersion = (value: unknown): CaseResolverDocumentFormatVersion => {
+export const normalizeDocumentFormatVersion = (
+  value: unknown
+): CaseResolverDocumentFormatVersion => {
   if (value === 1) return 1;
   return 1;
 };

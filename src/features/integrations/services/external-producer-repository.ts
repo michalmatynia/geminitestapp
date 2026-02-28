@@ -52,9 +52,7 @@ const ensureMongoExternalProducerIndexes = async (): Promise<void> => {
   if (!mongoExternalProducerIndexesReady) {
     mongoExternalProducerIndexesReady = (async () => {
       const db = await getMongoDb();
-      const collection = db.collection<MongoExternalProducerDoc>(
-        EXTERNAL_PRODUCER_COLLECTION
-      );
+      const collection = db.collection<MongoExternalProducerDoc>(EXTERNAL_PRODUCER_COLLECTION);
       await Promise.all([
         collection.createIndex(
           { connectionId: 1, externalId: 1 },
@@ -94,16 +92,12 @@ const buildMongoIdFilter = (id: string): Filter<MongoExternalProducerDoc> => {
   return { _id: id } as Filter<MongoExternalProducerDoc>;
 };
 
-const mirrorPrismaRecordsToMongo = async (
-  records: ExternalProducerDoc[]
-): Promise<void> => {
+const mirrorPrismaRecordsToMongo = async (records: ExternalProducerDoc[]): Promise<void> => {
   if (records.length === 0) return;
 
   await ensureMongoExternalProducerIndexes();
   const db = await getMongoDb();
-  const collection = db.collection<MongoExternalProducerDoc>(
-    EXTERNAL_PRODUCER_COLLECTION
-  );
+  const collection = db.collection<MongoExternalProducerDoc>(EXTERNAL_PRODUCER_COLLECTION);
 
   for (const record of records) {
     await collection.updateOne(
@@ -142,9 +136,7 @@ export function getExternalProducerRepository(): ExternalProducerRepository {
       if (provider === 'mongodb') {
         await ensureMongoExternalProducerIndexes();
         const db = await getMongoDb();
-        const collection = db.collection<MongoExternalProducerDoc>(
-          EXTERNAL_PRODUCER_COLLECTION
-        );
+        const collection = db.collection<MongoExternalProducerDoc>(EXTERNAL_PRODUCER_COLLECTION);
 
         let count = 0;
         for (const input of syncInputs) {
@@ -212,9 +204,7 @@ export function getExternalProducerRepository(): ExternalProducerRepository {
           .toArray();
 
         if (mongoRecords.length > 0) {
-          return mongoRecords.map((record: MongoExternalProducerDoc) =>
-            toMongoRecord(record)
-          );
+          return mongoRecords.map((record: MongoExternalProducerDoc) => toMongoRecord(record));
         }
 
         try {

@@ -6,8 +6,12 @@ import path from 'path';
 import { UnrecoverableError } from 'bullmq';
 import OpenAI from 'openai';
 
-import { IMAGE_STUDIO_OPENAI_API_KEY_KEY } from '@/features/ai/image-studio/utils/studio-settings';
-import { detectCaseResolverOcrProvider, type CaseResolverOcrProvider } from '@/features/case-resolver/ocr-provider';
+import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
+import { IMAGE_STUDIO_OPENAI_API_KEY_KEY } from '@/shared/lib/ai/image-studio/studio-settings';
+import {
+  detectCaseResolverOcrProvider,
+  type CaseResolverOcrProvider,
+} from '@/features/case-resolver/ocr-provider';
 import { resolveCaseResolverOcrDiskPath } from '@/features/case-resolver/server/ocr-runtime';
 import {
   markCaseResolverOcrJobCompleted,
@@ -19,14 +23,13 @@ import {
 import { DEFAULT_CASE_RESOLVER_OCR_PROMPT } from '@/features/case-resolver/settings';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import { getSettingValue } from '@/features/products/services/aiDescriptionService';
 import { createManagedQueue, isRedisAvailable } from '@/shared/lib/queue';
+import { readStoredSettingValue } from '@/shared/lib/ai-brain/server';
 
 import type { ChatCompletionContentPart } from 'openai/resources/chat/completions';
 
 const LOG_SOURCE = 'case-resolver-ocr-queue';
 const OLLAMA_BASE_URL = process.env['OLLAMA_BASE_URL'] || 'http://localhost:11434';
-const OLLAMA_MODEL = process.env['OLLAMA_MODEL']?.trim() || '';
 const MAX_PDF_OCR_TEXT_CHARS = 80_000;
 const OLLAMA_OCR_TIMEOUT_MS = 90_000;
 const REMOTE_OCR_TIMEOUT_MS = 120_000;
@@ -84,22 +87,20 @@ type PdfParseModule = {
 
 type PreparedCaseResolverOcrInput =
   | {
-    kind: 'image';
-    filepath: string;
-    base64Image: string;
-    mimeType: string;
-  }
+      kind: 'image';
+      filepath: string;
+      base64Image: string;
+      mimeType: string;
+    }
   | {
-    kind: 'pdf';
-    filepath: string;
-    extractedDocumentText: string;
-  };
+      kind: 'pdf';
+      filepath: string;
+      extractedDocumentText: string;
+    };
 
 export type CaseResolverOcrDispatchMode = 'queued' | 'inline';
 
-const parseProviderPrefixedModel = (
-  value: string
-): CaseResolverResolvedOcrModel | null => {
+const parseProviderPrefixedModel = (value: string): CaseResolverResolvedOcrModel | null => {
   const trimmed = value.trim();
   if (!trimmed) return null;
 
@@ -125,13 +126,12 @@ const parseProviderPrefixedModel = (
   };
 };
 
-export const inferCaseResolverOcrProviderFromModel = (
-  modelName: string
-): CaseResolverOcrProvider => detectCaseResolverOcrProvider(modelName);
+export const inferCaseResolverOcrProviderFromModel = (modelName: string): CaseResolverOcrProvider =>
+  detectCaseResolverOcrProvider(modelName);
 
 export const resolveCaseResolverOcrModel = (
   model: string,
-  fallbackModel: string = OLLAMA_MODEL
+  fallbackModel: string = ''
 ): CaseResolverResolvedOcrModel => {
   const runtimeModel = model.trim();
   const selectedModel = runtimeModel || fallbackModel.trim();
@@ -148,7 +148,7 @@ export const resolveCaseResolverOcrModel = (
 
 export const resolveCaseResolverOcrModelCandidates = (
   model: string,
-  fallbackModel: string = OLLAMA_MODEL
+  fallbackModel: string = ''
 ): CaseResolverResolvedOcrModel[] => {
   const runtimeCandidates = model
     .split(/[\n,;]+/)
@@ -156,11 +156,7 @@ export const resolveCaseResolverOcrModelCandidates = (
     .filter(Boolean);
   const fallbackCandidate = fallbackModel.trim();
   const candidateValues =
-    runtimeCandidates.length > 0
-      ? runtimeCandidates
-      : fallbackCandidate
-        ? [fallbackCandidate]
-        : [];
+    runtimeCandidates.length > 0 ? runtimeCandidates : fallbackCandidate ? [fallbackCandidate] : [];
 
   if (candidateValues.length === 0) {
     throw new Error('OCR model is not configured.');
@@ -181,10 +177,13 @@ export const resolveCaseResolverOcrModelCandidates = (
 
 const resolveOpenAiApiKey = async (): Promise<string> => {
   const apiKey =
-    (await getSettingValue(IMAGE_STUDIO_OPENAI_API_KEY_KEY))?.trim() || '';
+    (await readStoredSettingValue(IMAGE_STUDIO_OPENAI_API_KEY_KEY))?.trim() ||
+    (await readStoredSettingValue('openai_api_key'))?.trim() ||
+    process.env['OPENAI_API_KEY']?.trim() ||
+    '';
   if (!apiKey) {
     throw new Error(
-      'OpenAI API key is missing for selected OCR model. Configure Image Studio API key (image_studio_openai_api_key).'
+      'OpenAI API key is missing for selected OCR model. Configure it in Brain provider settings.'
     );
   }
   return apiKey;
@@ -192,7 +191,7 @@ const resolveOpenAiApiKey = async (): Promise<string> => {
 
 const resolveAnthropicApiKey = async (): Promise<string> => {
   const apiKey =
-    (await getSettingValue('anthropic_api_key'))?.trim() ||
+    (await readStoredSettingValue('anthropic_api_key'))?.trim() ||
     process.env['ANTHROPIC_API_KEY']?.trim() ||
     '';
   if (!apiKey) {
@@ -203,7 +202,7 @@ const resolveAnthropicApiKey = async (): Promise<string> => {
 
 const resolveGeminiApiKey = async (): Promise<string> => {
   const apiKey =
-    (await getSettingValue('gemini_api_key'))?.trim() ||
+    (await readStoredSettingValue('gemini_api_key'))?.trim() ||
     process.env['GEMINI_API_KEY']?.trim() ||
     '';
   if (!apiKey) {
@@ -349,9 +348,7 @@ const withPromiseTimeout = async <T>(
   }
 };
 
-export const classifyCaseResolverOcrError = (
-  error: unknown
-): CaseResolverOcrErrorCategory => {
+export const classifyCaseResolverOcrError = (error: unknown): CaseResolverOcrErrorCategory => {
   const message =
     error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
   if (message.includes('timed out') || message.includes('timeout')) {
@@ -459,22 +456,22 @@ const runOpenAiOcrRequest = async (input: {
   const content: string | ChatCompletionContentPart[] =
     typeof input.base64Image === 'string' && input.base64Image.length > 0
       ? [
-        {
-          type: 'text' as const,
-          text: input.prompt,
-        },
-        {
-          type: 'image_url' as const,
-          image_url: {
-            url: `data:${input.mimeType || 'image/jpeg'};base64,${input.base64Image}`,
+          {
+            type: 'text' as const,
+            text: input.prompt,
           },
-        },
-      ]
+          {
+            type: 'image_url' as const,
+            image_url: {
+              url: `data:${input.mimeType || 'image/jpeg'};base64,${input.base64Image}`,
+            },
+          },
+        ]
       : buildOcrPromptContent({
-        prompt: input.prompt,
-        filepath: input.filepath,
-        extractedDocumentText: input.extractedDocumentText,
-      });
+          prompt: input.prompt,
+          filepath: input.filepath,
+          extractedDocumentText: input.extractedDocumentText,
+        });
   const messages = [
     {
       role: 'user' as const,
@@ -528,22 +525,22 @@ const runAnthropicOcrRequest = async (input: {
         typeof input.base64Image === 'string'
           ? input.prompt
           : buildOcrPromptContent({
-            prompt: input.prompt,
-            filepath: input.filepath,
-            extractedDocumentText: input.extractedDocumentText,
-          }),
+              prompt: input.prompt,
+              filepath: input.filepath,
+              extractedDocumentText: input.extractedDocumentText,
+            }),
     },
     ...(typeof input.base64Image === 'string' && input.base64Image.length > 0
       ? [
-        {
-          type: 'image',
-          source: {
-            type: 'base64',
-            media_type: input.mimeType || 'image/jpeg',
-            data: input.base64Image,
+          {
+            type: 'image',
+            source: {
+              type: 'base64',
+              media_type: input.mimeType || 'image/jpeg',
+              data: input.base64Image,
+            },
           },
-        },
-      ]
+        ]
       : []),
   ];
   const response = await fetchWithTimeout(
@@ -592,20 +589,20 @@ const runGeminiOcrRequest = async (input: {
         typeof input.base64Image === 'string'
           ? input.prompt
           : buildOcrPromptContent({
-            prompt: input.prompt,
-            filepath: input.filepath,
-            extractedDocumentText: input.extractedDocumentText,
-          }),
+              prompt: input.prompt,
+              filepath: input.filepath,
+              extractedDocumentText: input.extractedDocumentText,
+            }),
     },
     ...(typeof input.base64Image === 'string' && input.base64Image.length > 0
       ? [
-        {
-          inline_data: {
-            mime_type: input.mimeType || 'image/jpeg',
-            data: input.base64Image,
+          {
+            inline_data: {
+              mime_type: input.mimeType || 'image/jpeg',
+              data: input.base64Image,
+            },
           },
-        },
-      ]
+        ]
       : []),
   ];
   const response = await fetchWithTimeout(
@@ -743,8 +740,13 @@ const runCaseResolverOcr = async (input: {
   model: string;
   prompt: string;
 }): Promise<string> => {
+  const brainConfig = await resolveBrainExecutionConfigForCapability('case_resolver.ocr', {
+    defaultTemperature: 0,
+    defaultMaxTokens: 1500,
+    runtimeKind: 'ocr',
+  });
   const resolvedPath = resolveCaseResolverOcrDiskPath(input.filepath);
-  const resolvedModels = resolveOcrModels(input.model);
+  const resolvedModels = resolveOcrModels(brainConfig.modelId);
   const prompt = resolveOcrPrompt(input.prompt);
   const prepared = await prepareCaseResolverOcrInput(resolvedPath);
   const attemptedModels: string[] = [];
@@ -807,8 +809,7 @@ const queue = createManagedQueue<CaseResolverOcrQueueJobData>({
       await markCaseResolverOcrJobCompleted(data.jobId, extractedText);
       return { ok: true, jobId: data.jobId };
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'OCR runtime job failed.';
+      const errorMessage = error instanceof Error ? error.message : 'OCR runtime job failed.';
       const retryable = isRetryableCaseResolverOcrError(error);
       if (!retryable) {
         throw new UnrecoverableError(errorMessage);
@@ -911,10 +912,7 @@ export const enqueueCaseResolverOcrJob = async (
       context: {
         runtimeJobId: data.jobId,
         correlationId: data.correlationId ?? null,
-        error:
-          enqueueError instanceof Error
-            ? enqueueError.message
-            : String(enqueueError),
+        error: enqueueError instanceof Error ? enqueueError.message : String(enqueueError),
       },
     });
 

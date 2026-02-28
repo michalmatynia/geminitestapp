@@ -1,7 +1,5 @@
 import { validateRegexSafety } from '@/shared/utils/regex-safety';
-import {
-  PromptValidationRuleCompileError,
-} from '@/shared/lib/prompt-core/errors';
+import { PromptValidationRuleCompileError } from '@/shared/lib/prompt-core/errors';
 import {
   recordPromptValidationCounter,
   recordPromptValidationError,
@@ -14,9 +12,7 @@ import type {
 
 import { DEFAULT_PATTERN_IDS } from './parser-default-patterns';
 
-import type {
-  PromptExploderSegmentType,
-} from './types';
+import type { PromptExploderSegmentType } from './types';
 import type { PromptExploderRuntimeValidationScope } from './validation-stack';
 
 const NEVER_MATCH_RE = /$a/;
@@ -42,7 +38,9 @@ const toSegmentTypeHint = (
   value: PromptExploderRuleSegmentType | PromptExploderSegmentType | string | null | undefined
 ): PromptExploderSegmentType | null => {
   if (!value) return null;
-  return isPromptExploderSegmentType(String(value)) ? (String(value) as PromptExploderSegmentType) : null;
+  return isPromptExploderSegmentType(String(value))
+    ? (String(value) as PromptExploderSegmentType)
+    : null;
 };
 
 const typeFromPatternId = (patternId: string): PromptExploderSegmentType | null => {
@@ -60,10 +58,7 @@ const normalizeRegexFlags = (flags: string | null | undefined): string | undefin
   return cleaned.trim() || undefined;
 };
 
-const compileSafeRegex = (
-  pattern: string,
-  flags: string | null | undefined
-): RegExp | null => {
+const compileSafeRegex = (pattern: string, flags: string | null | undefined): RegExp | null => {
   try {
     return new RegExp(pattern, normalizeRegexFlags(flags));
   } catch {
@@ -94,15 +89,9 @@ export type PatternRuntime = {
 };
 
 export const normalizeRuntimeValidationScope = (
-  scope:
-    | PromptExploderRuntimeValidationScope
-    | 'case_resolver_prompt_exploder'
-    | null
-    | undefined
+  scope: PromptExploderRuntimeValidationScope | 'case_resolver_prompt_exploder' | null | undefined
 ): PromptExploderRuntimeValidationScope =>
-  scope === 'case_resolver_prompt_exploder'
-    ? 'case_resolver_prompt_exploder'
-    : 'prompt_exploder';
+  scope === 'case_resolver_prompt_exploder' ? 'case_resolver_prompt_exploder' : 'prompt_exploder';
 const runtimePatternCacheByRules = new WeakMap<
   PromptValidationRule[],
   Map<PromptExploderRuntimeValidationScope, PatternRuntime>
@@ -119,14 +108,8 @@ const runtimePatternCacheStats = {
 const COMPILE_FAILURE_WINDOW_MS = 60_000;
 const COMPILE_FAILURE_THRESHOLD = 5;
 const COMPILE_CIRCUIT_OPEN_MS = 45_000;
-const compileFailuresByScope = new Map<
-  PromptExploderRuntimeValidationScope,
-  number[]
->();
-const compileCircuitOpenUntilByScope = new Map<
-  PromptExploderRuntimeValidationScope,
-  number
->();
+const compileFailuresByScope = new Map<PromptExploderRuntimeValidationScope, number[]>();
+const compileCircuitOpenUntilByScope = new Map<PromptExploderRuntimeValidationScope, number>();
 
 const parseCacheKey = (
   key: string
@@ -208,9 +191,7 @@ export const invalidatePromptExploderRuntimePatternCacheByRuntime = (args: {
     const settingsMatch = args.settingsVersion
       ? parsed.settingsVersion === args.settingsVersion
       : true;
-    const listMatch = args.listVersion
-      ? parsed.listVersion === args.listVersion
-      : true;
+    const listMatch = args.listVersion ? parsed.listVersion === args.listVersion : true;
     if (settingsMatch && listMatch) {
       continue;
     }
@@ -239,7 +220,8 @@ const compileRuntimePatterns = (
     );
   }
 
-  const allowDefaultFallback = scope !== 'case_resolver_prompt_exploder';  const byId = new Map<string, RegExp>();
+  const allowDefaultFallback = scope !== 'case_resolver_prompt_exploder';
+  const byId = new Map<string, RegExp>();
   const runtimeRulesById = new Map<string, RuntimeRegexRule>();
   const compileErrors: PromptValidationRuleCompileError[] = [];
 
@@ -264,7 +246,11 @@ const compileRuntimePatterns = (
     if (!rule.enabled) return false;
     if (rule.kind !== 'regex') return false;
     const scopes = (rule.appliesToScopes || []) as string[];
-    const activeRuleScope = scope === 'case_resolver_prompt_exploder' ? 'case_resolver_prompt_exploder' : 'prompt_exploder';    return scopes.length === 0 || scopes.includes(activeRuleScope) || scopes.includes('global');
+    const activeRuleScope =
+      scope === 'case_resolver_prompt_exploder'
+        ? 'case_resolver_prompt_exploder'
+        : 'prompt_exploder';
+    return scopes.length === 0 || scopes.includes(activeRuleScope) || scopes.includes('global');
   });
 
   scopedRules.forEach((rule) => {
@@ -307,14 +293,8 @@ const compileRuntimePatterns = (
       regex: compiled,
       segmentTypeHint:
         toSegmentTypeHint(rule.promptExploderSegmentType) ?? typeFromPatternId(rule.id),
-      confidenceBoost: Math.min(
-        0.5,
-        Math.max(0, Number(rule.promptExploderConfidenceBoost ?? 0))
-      ),
-      priority: Math.min(
-        50,
-        Math.max(-50, Math.floor(Number(rule.promptExploderPriority ?? 0)))
-      ),
+      confidenceBoost: Math.min(0.5, Math.max(0, Number(rule.promptExploderConfidenceBoost ?? 0))),
+      priority: Math.min(50, Math.max(-50, Math.floor(Number(rule.promptExploderPriority ?? 0)))),
       sequence: Number.isFinite(rule.sequence ?? 0) ? Math.floor(rule.sequence ?? 0) : 0,
       treatAsHeading: Boolean(rule.promptExploderTreatAsHeading),
     });
@@ -465,7 +445,9 @@ export const prewarmPromptExploderRuntimePatterns = (args: {
 };
 
 export const testPattern = (runtime: PatternRuntime, patternId: string, value: string): boolean => {
-  const regex = runtime.byId.get(patternId) ?? (runtime.allowDefaultFallback ? DEFAULT_PATTERN_IDS[patternId] : undefined);
+  const regex =
+    runtime.byId.get(patternId) ??
+    (runtime.allowDefaultFallback ? DEFAULT_PATTERN_IDS[patternId] : undefined);
   if (!regex) return false;
   return regex.test(value);
 };
@@ -496,9 +478,6 @@ export const matchesBoundaryHeading = (
   return resolveBoundaryRegex(runtime, patternId, fallback).test(value);
 };
 
-export const collectMatchedRules = (
-  runtime: PatternRuntime,
-  text: string
-): RuntimeRegexRule[] => {
+export const collectMatchedRules = (runtime: PatternRuntime, text: string): RuntimeRegexRule[] => {
   return runtime.regexRules.filter((rule) => rule.regex.test(text));
 };

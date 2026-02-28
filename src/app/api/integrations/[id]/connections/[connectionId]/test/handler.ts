@@ -13,16 +13,9 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { internalError } from '@/shared/errors/app-error';
 import { mapStatusToAppError } from '@/shared/errors/error-mapper';
 
-import type {
-  Browser,
-  BrowserContext,
-  Page,
-  BrowserContextOptions,
-} from 'playwright';
+import type { Browser, BrowserContext, Page, BrowserContextOptions } from 'playwright';
 
-type PersistedStorageState = NonNullable<
-  Exclude<BrowserContextOptions['storageState'], string>
->;
+type PersistedStorageState = NonNullable<Exclude<BrowserContextOptions['storageState'], string>>;
 
 type TestLogEntry = {
   step: string;
@@ -78,29 +71,22 @@ export async function postTestConnectionHandler(
   const rawManualTimeout = requestBody.manualTimeoutMs;
   const manualLoginTimeoutMs =
     typeof rawManualTimeout === 'number' && Number.isFinite(rawManualTimeout)
-      ? Math.max(
-        30_000,
-        Math.min(MAX_MANUAL_LOGIN_TIMEOUT_MS, Math.floor(rawManualTimeout))
-      )
+      ? Math.max(30_000, Math.min(MAX_MANUAL_LOGIN_TIMEOUT_MS, Math.floor(rawManualTimeout)))
       : DEFAULT_MANUAL_LOGIN_TIMEOUT_MS;
-  
-  const pushStep = (
-    step: string,
-    status: 'pending' | 'ok' | 'failed',
-    detail: string
-  ) => {
+
+  const pushStep = (step: string, status: 'pending' | 'ok' | 'failed', detail: string) => {
     steps.push({
       step,
       status,
       detail,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   };
 
   const fail = async (step: string, detail: string, status = 400) => {
     const safeDetail = detail?.trim() ? detail : 'Unknown error';
     pushStep(step, 'failed', safeDetail);
-    
+
     throw mapStatusToAppError(safeDetail, status);
   };
 
@@ -132,7 +118,7 @@ export async function postTestConnectionHandler(
     return NextResponse.json(
       {
         error: `Please use the Base.com-specific test endpoint: POST ${baseTestUrl}`,
-        redirectUrl: baseTestUrl
+        redirectUrl: baseTestUrl,
       },
       { status: 400 }
     );
@@ -140,22 +126,12 @@ export async function postTestConnectionHandler(
 
   if (isTraderaApiIntegrationSlug(integration.slug)) {
     if (manualMode) {
-      pushStep(
-        'Manual mode',
-        'ok',
-        'Manual login mode does not apply to Tradera API connections.'
-      );
+      pushStep('Manual mode', 'ok', 'Manual login mode does not apply to Tradera API connections.');
     }
 
-    pushStep(
-      'Decrypting credentials',
-      'pending',
-      'Validating Tradera API credentials'
-    );
+    pushStep('Decrypting credentials', 'pending', 'Validating Tradera API credentials');
     const appId = toPositiveInt(connection.traderaApiAppId);
-    const userId =
-      toPositiveInt(connection.traderaApiUserId) ??
-      toPositiveInt(connection.username);
+    const userId = toPositiveInt(connection.traderaApiUserId) ?? toPositiveInt(connection.username);
     const encryptedAppKey = connection.traderaApiAppKey ?? connection.password;
     const encryptedToken = connection.traderaApiToken ?? connection.password;
 
@@ -187,7 +163,6 @@ export async function postTestConnectionHandler(
     let appKey: string;
     let token: string;
     try {
-    
       appKey = decryptSecret(encryptedAppKey).trim();
       token = decryptSecret(encryptedToken).trim();
     } catch (error) {
@@ -198,22 +173,11 @@ export async function postTestConnectionHandler(
       );
     }
     if (!appKey || !token) {
-      return fail(
-        'Decrypting credentials',
-        'Tradera API credentials are empty after decryption.'
-      );
+      return fail('Decrypting credentials', 'Tradera API credentials are empty after decryption.');
     }
-    pushStep(
-      'Decrypting credentials',
-      'ok',
-      'Tradera API credentials decrypted'
-    );
+    pushStep('Decrypting credentials', 'ok', 'Tradera API credentials decrypted');
 
-    pushStep(
-      'Testing API connection',
-      'pending',
-      'Calling RestrictedService.GetUserInfo'
-    );
+    pushStep('Testing API connection', 'pending', 'Calling RestrictedService.GetUserInfo');
     try {
       const profile = await getTraderaUserInfo({
         appId,
@@ -252,11 +216,7 @@ export async function postTestConnectionHandler(
   }
 
   if (manualMode) {
-    pushStep(
-      'Manual mode',
-      'ok',
-      `Manual login enabled (timeout ${manualLoginTimeoutMs}ms).`
-    );
+    pushStep('Manual mode', 'ok', `Manual login enabled (timeout ${manualLoginTimeoutMs}ms).`);
   }
 
   // Decrypt to ensure credentials are readable with the configured key.
@@ -267,37 +227,23 @@ export async function postTestConnectionHandler(
   );
   const encryptedPassword = connection.password;
   if (!manualMode && !encryptedPassword) {
-    return fail(
-      'Decrypting credentials',
-      'No encrypted password configured for this connection.'
-    );
+    return fail('Decrypting credentials', 'No encrypted password configured for this connection.');
   }
   const loginUsername = connection.username;
   if (!manualMode && !loginUsername) {
-    return fail(
-      'Decrypting credentials',
-      'No username configured for this connection.'
-    );
+    return fail('Decrypting credentials', 'No username configured for this connection.');
   }
-  const decryptedPassword = manualMode
-    ? ''
-    : decryptSecret(encryptedPassword as string);
+  const decryptedPassword = manualMode ? '' : decryptSecret(encryptedPassword as string);
   pushStep(
     'Decrypting credentials',
     'ok',
-    manualMode
-      ? 'Skipped in manual mode.'
-      : 'Password decrypted successfully'
+    manualMode ? 'Skipped in manual mode.' : 'Password decrypted successfully'
   );
 
   let storedState: PersistedStorageState | null = null;
 
   if (connection.playwrightStorageState) {
-    pushStep(
-      'Loading session',
-      'pending',
-      'Loading stored Playwright session'
-    );
+    pushStep('Loading session', 'pending', 'Loading stored Playwright session');
     try {
       const raw = decryptSecret(connection.playwrightStorageState);
       const parsed = JSON.parse(raw) as unknown;
@@ -315,20 +261,11 @@ export async function postTestConnectionHandler(
         };
         pushStep('Loading session', 'ok', 'Stored session loaded');
       } else {
-        pushStep(
-          'Loading session',
-          'failed',
-          'Stored session has invalid shape'
-        );
+        pushStep('Loading session', 'failed', 'Stored session has invalid shape');
       }
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Unknown error';
-      pushStep(
-        'Loading session',
-        'failed',
-        `Failed to load session: ${message}`
-      );
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      pushStep('Loading session', 'failed', `Failed to load session: ${message}`);
     }
   }
 
@@ -362,38 +299,24 @@ export async function postTestConnectionHandler(
     try {
       proxyPassword = decryptSecret(connection.playwrightProxyPassword);
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Unknown error';
-      pushStep(
-        'Proxy setup',
-        'failed',
-        `Failed to decrypt proxy password: ${message}`
-      );
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      pushStep('Proxy setup', 'failed', `Failed to decrypt proxy password: ${message}`);
     }
   }
   const emulateDevice = connection.playwrightEmulateDevice ?? false;
   const deviceName = connection.playwrightDeviceName ?? '';
 
   if (proxyEnabled && !proxyServer) {
-    return fail(
-      'Proxy setup',
-      'Proxy is enabled but no proxy server is set.'
-    );
+    return fail('Proxy setup', 'Proxy is enabled but no proxy server is set.');
   }
   if (proxyEnabled && proxyServer) {
     pushStep('Proxy setup', 'ok', `Using proxy ${proxyServer}`);
   }
 
   const deviceProfile =
-    emulateDevice && deviceName && devices[deviceName]
-      ? devices[deviceName]
-      : null;
+    emulateDevice && deviceName && devices[deviceName] ? devices[deviceName] : null;
   if (emulateDevice && deviceName && !deviceProfile) {
-    pushStep(
-      'Device emulation',
-      'failed',
-      `Unknown device profile: ${deviceName}`
-    );
+    pushStep('Device emulation', 'failed', `Unknown device profile: ${deviceName}`);
   } else if (emulateDevice && deviceProfile) {
     pushStep('Device emulation', 'ok', `Using ${deviceName}`);
   }
@@ -412,13 +335,13 @@ export async function postTestConnectionHandler(
         slowMo,
         ...(proxyEnabled && proxyServer
           ? {
-            proxy: {
-              server: proxyServer,
-              ...(proxyUsername && { username: proxyUsername }),
-              ...(proxyPassword && { password: proxyPassword })
+              proxy: {
+                server: proxyServer,
+                ...(proxyUsername && { username: proxyUsername }),
+                ...(proxyPassword && { password: proxyPassword }),
+              },
             }
-          }
-          : {})
+          : {}),
       });
 
       const deviceContextOptions: BrowserContextOptions = deviceProfile
@@ -427,7 +350,7 @@ export async function postTestConnectionHandler(
 
       const contextOptions: BrowserContextOptions = {
         ...deviceContextOptions,
-        ...(storedState ? { storageState: storedState } : {})
+        ...(storedState ? { storageState: storedState } : {}),
       };
 
       context = await browser.newContext(contextOptions);
@@ -438,7 +361,7 @@ export async function postTestConnectionHandler(
       const message = error instanceof Error ? error.message : 'Unknown error';
       return fail('Launching Playwright', message);
     }
-    
+
     if (!page) {
       return fail('Launching Playwright', 'Browser page not initialized');
     }
@@ -478,7 +401,7 @@ export async function postTestConnectionHandler(
           'https://www.tradera.com/en',
           {
             waitUntil: 'domcontentloaded',
-            timeout: 30000
+            timeout: 30000,
           },
           'Session check'
         );
@@ -495,20 +418,15 @@ export async function postTestConnectionHandler(
           pushStep('Reusing session', 'failed', 'Session invalid or expired');
         }
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : 'Unknown error';
-        pushStep(
-          'Reusing session',
-          'failed',
-          `Failed to check session: ${message}`
-        );
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        pushStep('Reusing session', 'failed', `Failed to check session: ${message}`);
       }
     }
 
     const loginUrls = [
       'https://www.tradera.com/login',
       'https://www.tradera.com/en/login',
-      'https://www.tradera.com/en'
+      'https://www.tradera.com/en',
     ];
     const openLoginPage = async () => {
       if (!page) throw internalError('Page not found');
@@ -520,11 +438,9 @@ export async function postTestConnectionHandler(
             { waitUntil: 'domcontentloaded', timeout: 30000 },
             'Opening login page'
           );
-          await safeWaitForLoadState(
-            'networkidle',
-            { timeout: 15000 },
-            'Opening login page'
-          ).catch(() => undefined);
+          await safeWaitForLoadState('networkidle', { timeout: 15000 }, 'Opening login page').catch(
+            () => undefined
+          );
           await humanizedPause();
           const formLocator = page.locator('#sign-in-form').first();
           if ((await safeCount(formLocator, 'Login form')) > 0) {
@@ -532,13 +448,8 @@ export async function postTestConnectionHandler(
             return url;
           }
         } catch (error) {
-          const message =
-            error instanceof Error ? error.message : 'Unknown error';
-          pushStep(
-            'Opening login page',
-            'failed',
-            `${url} failed: ${message}`
-          );
+          const message = error instanceof Error ? error.message : 'Unknown error';
+          pushStep('Opening login page', 'failed', `${url} failed: ${message}`);
         }
       }
       return loginUrls[loginUrls.length - 1]!;
@@ -548,21 +459,17 @@ export async function postTestConnectionHandler(
     const formSelector = [
       '#sign-in-form',
       'form[data-sign-in-form="true"]',
-      'form[data-sentry-component="LoginForm"]'
+      'form[data-sentry-component="LoginForm"]',
     ].join(', ');
     const emailSelector = '#email, input[name="email"], input[type="email"]';
-    const passwordSelector =
-      '#password, input[name="password"], input[type="password"]';
+    const passwordSelector = '#password, input[name="password"], input[type="password"]';
 
     const findInput = async (selectors: string[]) => {
       if (!page) throw internalError('Page not found');
       for (const selector of selectors) {
         const locator = page.locator(selector).first();
         if ((await safeCount(locator, `Find input ${selector}`)) > 0) {
-          const visible = await safeIsVisible(
-            locator,
-            `Find input ${selector}`
-          ).catch(() => false);
+          const visible = await safeIsVisible(locator, `Find input ${selector}`).catch(() => false);
           if (visible) {
             return { selector, locator };
           }
@@ -585,15 +492,13 @@ export async function postTestConnectionHandler(
           loginUrl,
           {
             waitUntil: 'domcontentloaded',
-            timeout: 30000
+            timeout: 30000,
           },
           'Manual login'
         );
-        await safeWaitForLoadState(
-          'networkidle',
-          { timeout: 15000 },
-          'Manual login'
-        ).catch(() => undefined);
+        await safeWaitForLoadState('networkidle', { timeout: 15000 }, 'Manual login').catch(
+          () => undefined
+        );
         await safeWaitFor(
           page.locator(successSelector).first(),
           { state: 'visible', timeout: manualLoginTimeoutMs },
@@ -601,8 +506,7 @@ export async function postTestConnectionHandler(
         );
         pushStep('Manual login', 'ok', 'Logged-in state detected.');
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : 'Unknown error';
+        const message = error instanceof Error ? error.message : 'Unknown error';
         return await failWithDebug(
           'Manual login',
           `Manual login timed out or failed after ${manualLoginTimeoutMs}ms: ${message}`
@@ -620,21 +524,13 @@ export async function postTestConnectionHandler(
         );
         if (!page) throw internalError('Page not found');
         const formLocator = page.locator(formSelector).first();
-        const isVisible = await safeIsVisible(
-          formLocator,
-          'Login form'
-        ).catch(() => false);
+        const isVisible = await safeIsVisible(formLocator, 'Login form').catch(() => false);
         if (!isVisible) {
           throw internalError('Login form not visible yet');
         }
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : 'Unknown error';
-        pushStep(
-          'Locating login form',
-          'failed',
-          `Form not ready: ${message}`
-        );
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        pushStep('Locating login form', 'failed', `Form not ready: ${message}`);
         if (!page) throw internalError('Page not found');
         const signInTrigger = page
           .locator(
@@ -646,7 +542,7 @@ export async function postTestConnectionHandler(
               'a[href*="/login"]',
               'a[href*="login"]',
               'button[aria-label*="Sign in"]',
-              'button[aria-label*="Logga in"]'
+              'button[aria-label*="Logga in"]',
             ].join(', ')
           )
           .first();
@@ -656,10 +552,7 @@ export async function postTestConnectionHandler(
             await humanizedClick(signInTrigger);
             await humanizedPause();
           } catch (clickError) {
-            const clickMessage =
-              clickError instanceof Error
-                ? clickError.message
-                : 'Unknown error';
+            const clickMessage = clickError instanceof Error ? clickError.message : 'Unknown error';
             pushStep(
               'Locating login form',
               'failed',
@@ -679,8 +572,7 @@ export async function postTestConnectionHandler(
             'Login form'
           );
         } catch (waitError) {
-          const waitMessage =
-            waitError instanceof Error ? waitError.message : 'Unknown error';
+          const waitMessage = waitError instanceof Error ? waitError.message : 'Unknown error';
           return await failWithDebug(
             'Locating login form',
             `Form still not visible: ${waitMessage}`
@@ -700,36 +592,23 @@ export async function postTestConnectionHandler(
           'Password field'
         );
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : 'Unknown error';
-        return await failWithDebug(
-          'Locating login form',
-          `Input fields not visible: ${message}`
-        );
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        return await failWithDebug('Locating login form', `Input fields not visible: ${message}`);
       }
       pushStep('Locating login form', 'ok', 'Sign-in form detected');
 
       pushStep('Filling credentials', 'pending', 'Locating login fields');
-      const usernameSelectors = [
-        '#email',
-        'input[name="email"]',
-        'input[type="email"]'
-      ];
-      const passwordSelectors = [
-        '#password',
-        'input[type="password"]',
-        'input[name="password"]'
-      ];
+      const usernameSelectors = ['#email', 'input[name="email"]', 'input[type="email"]'];
+      const passwordSelectors = ['#password', 'input[type="password"]', 'input[name="password"]'];
 
       const findInputInForm = async (selectors: string[]) => {
         if (!page) throw internalError('Page not found');
         for (const selector of selectors) {
           const locator = page.locator(formSelector).first().locator(selector).first();
           if ((await safeCount(locator, `Find form input ${selector}`)) > 0) {
-            const visible = await safeIsVisible(
-              locator,
-              `Find form input ${selector}`
-            ).catch(() => false);
+            const visible = await safeIsVisible(locator, `Find form input ${selector}`).catch(
+              () => false
+            );
             if (visible) {
               return { selector, locator };
             }
@@ -741,22 +620,15 @@ export async function postTestConnectionHandler(
       const usernameField = await findInputInForm(usernameSelectors);
       const passwordField = await findInputInForm(passwordSelectors);
       if (!usernameField || !passwordField) {
-        return await failWithDebug(
-          'Filling credentials',
-          'Login fields not found on Tradera page'
-        );
+        return await failWithDebug('Filling credentials', 'Login fields not found on Tradera page');
       }
       try {
         await humanizedFill(usernameField.locator, loginUsername as string);
         await humanizedFill(passwordField.locator, decryptedPassword);
         await humanizedPause();
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : 'Unknown error';
-        return await failWithDebug(
-          'Filling credentials',
-          `Failed to fill fields: ${message}`
-        );
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        return await failWithDebug('Filling credentials', `Failed to fill fields: ${message}`);
       }
       pushStep(
         'Filling credentials',
@@ -768,9 +640,7 @@ export async function postTestConnectionHandler(
     if (!sessionReused && !useManualLogin) {
       pushStep('Submitting login', 'pending', 'Attempting to submit form');
       if (!page) throw internalError('Page not found');
-      const stayLoggedIn = page
-        .locator('input[name="keepMeLoggedIn"]')
-        .first();
+      const stayLoggedIn = page.locator('input[name="keepMeLoggedIn"]').first();
       try {
         if ((await safeCount(stayLoggedIn, 'Stay logged in')) > 0) {
           const isChecked = await stayLoggedIn.isChecked().catch(() => false);
@@ -785,39 +655,31 @@ export async function postTestConnectionHandler(
           pushStep('Keep me logged in', 'failed', 'Checkbox not found');
         }
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : 'Unknown error';
+        const message = error instanceof Error ? error.message : 'Unknown error';
         pushStep('Keep me logged in', 'failed', `Checkbox error: ${message}`);
       }
       const submitSelectors = [
         'button[data-login-submit="true"]',
         '#sign-in-form button[type="submit"]',
         'button:has-text("Sign in")',
-        'button:has-text("Logga in")'
+        'button:has-text("Logga in")',
       ];
       const submitButton = await findInput(submitSelectors);
       if (!submitButton) {
-        return await failWithDebug(
-          'Submitting login',
-          'Submit button not found'
-        );
+        return await failWithDebug('Submitting login', 'Submit button not found');
       }
       try {
         await Promise.allSettled([
           page.waitForNavigation({
             waitUntil: 'domcontentloaded',
-            timeout: 15000
+            timeout: 15000,
           }),
-          humanizedClick(submitButton.locator)
+          humanizedClick(submitButton.locator),
         ]);
         await humanizedPause();
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : 'Unknown error';
-        return await failWithDebug(
-          'Submitting login',
-          `Submit failed: ${message}`
-        );
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        return await failWithDebug('Submitting login', `Submit failed: ${message}`);
       }
       pushStep('Submitting login', 'ok', `Clicked ${submitButton.selector}`);
 
@@ -830,34 +692,23 @@ export async function postTestConnectionHandler(
           'Post-submit error'
         ).catch(() => '');
         const postSubmitDetail = `URL: ${postSubmitUrl}${
-          postSubmitError?.trim()
-            ? `\nError: ${postSubmitError}`
-            : '\nError: (none visible)'
+          postSubmitError?.trim() ? `\nError: ${postSubmitError}` : '\nError: (none visible)'
         }`;
         pushStep('Post-submit debug', 'ok', postSubmitDetail);
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : 'Unknown error';
+        const message = error instanceof Error ? error.message : 'Unknown error';
         pushStep('Post-submit debug', 'failed', `Debug failed: ${message}`);
       }
 
-      const captchaHints = [
-        'captcha',
-        'recaptcha',
-        'fylla i captcha',
-        'captcha:n'
-      ];
+      const captchaHints = ['captcha', 'recaptcha', 'fylla i captcha', 'captcha:n'];
       try {
         if (!page) throw internalError('Page not found');
         const postSubmitErrorLower = (
-          await safeInnerText(
-            page.locator(errorSelector).first(),
-            'Post-submit error'
-          ).catch(() => '')
+          await safeInnerText(page.locator(errorSelector).first(), 'Post-submit error').catch(
+            () => ''
+          )
         ).toLowerCase();
-        const captchaDetected = captchaHints.some((hint) =>
-          postSubmitErrorLower.includes(hint)
-        );
+        const captchaDetected = captchaHints.some((hint) => postSubmitErrorLower.includes(hint));
         if (captchaDetected) {
           pushStep(
             'Captcha required',
@@ -874,32 +725,20 @@ export async function postTestConnectionHandler(
               page.locator(formSelector).first(),
               { state: 'hidden', timeout: 120000 },
               'Captcha form hide'
-            ).then(() => 'form-hidden')
+            ).then(() => 'form-hidden'),
           ]).catch(() => 'timeout');
 
           if (captchaResult === 'timeout') {
-            return await failWithDebug(
-              'Captcha required',
-              'Captcha not solved within 2 minutes.'
-            );
+            return await failWithDebug('Captcha required', 'Captcha not solved within 2 minutes.');
           }
           pushStep('Captcha required', 'ok', 'Captcha solved.');
         }
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : 'Unknown error';
-        pushStep(
-          'Captcha required',
-          'failed',
-          `Captcha check failed: ${message}`
-        );
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        pushStep('Captcha required', 'failed', `Captcha check failed: ${message}`);
       }
 
-      pushStep(
-        'Verifying session',
-        'pending',
-        'Checking for logged-in state'
-      );
+      pushStep('Verifying session', 'pending', 'Checking for logged-in state');
       try {
         if (!page) throw internalError('Page not found');
         const formLocator = page.locator(formSelector).first();
@@ -909,16 +748,14 @@ export async function postTestConnectionHandler(
             { state: 'visible', timeout: 12000 },
             'Login success'
           ).then(() => 'success'),
-          safeWaitFor(
-            formLocator,
-            { state: 'hidden', timeout: 12000 },
-            'Login form hide'
-          ).then(() => 'form-hidden'),
+          safeWaitFor(formLocator, { state: 'hidden', timeout: 12000 }, 'Login form hide').then(
+            () => 'form-hidden'
+          ),
           safeWaitFor(
             page.locator(errorSelector).first(),
             { state: 'visible', timeout: 12000 },
             'Login error'
-          ).then(() => 'error')
+          ).then(() => 'error'),
         ]).catch(() => 'timeout');
 
         if (result === 'error') {
@@ -938,18 +775,11 @@ export async function postTestConnectionHandler(
             currentUrl === loginUrl || currentUrl.includes('/login')
               ? 'Still on login page (invalid credentials, CAPTCHA, or extra verification required).'
               : `Current URL: ${currentUrl}`;
-          return await failWithDebug(
-            'Verifying session',
-            `Login verification timed out. ${hint}`
-          );
+          return await failWithDebug('Verifying session', `Login verification timed out. ${hint}`);
         }
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : 'Unknown error';
-        return await failWithDebug(
-          'Verifying session',
-          `Verification failed: ${message}`
-        );
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        return await failWithDebug('Verifying session', `Verification failed: ${message}`);
       }
     } else {
       pushStep(
@@ -961,27 +791,18 @@ export async function postTestConnectionHandler(
       );
     }
 
-    pushStep(
-      'Saving session',
-      'pending',
-      'Storing Playwright session cookies'
-    );
+    pushStep('Saving session', 'pending', 'Storing Playwright session cookies');
     try {
       if (!page) throw internalError('Page not found');
       const storageStateResult = await page.context().storageState();
       await repo.updateConnection(connection.id, {
         playwrightStorageState: encryptSecret(JSON.stringify(storageStateResult)),
-        playwrightStorageStateUpdatedAt: new Date()
+        playwrightStorageStateUpdatedAt: new Date(),
       });
       pushStep('Saving session', 'ok', 'Session stored for reuse');
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Unknown error';
-      pushStep(
-        'Saving session',
-        'failed',
-        `Failed to store session: ${message}`
-      );
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      pushStep('Saving session', 'failed', `Failed to store session: ${message}`);
     }
 
     pushStep('Verifying session', 'ok', 'Login appears successful');

@@ -109,12 +109,8 @@ export const preservePathConfigFlagsOnSeed = (
     const parsedSeededRecord = parsedSeeded as Record<string, unknown>;
     const merged: Record<string, unknown> = {
       ...parsedSeededRecord,
-      ...(preservedFlags.isActive !== undefined
-        ? { isActive: preservedFlags.isActive }
-        : {}),
-      ...(preservedFlags.isLocked !== undefined
-        ? { isLocked: preservedFlags.isLocked }
-        : {}),
+      ...(preservedFlags.isActive !== undefined ? { isActive: preservedFlags.isActive } : {}),
+      ...(preservedFlags.isLocked !== undefined ? { isLocked: preservedFlags.isLocked } : {}),
     };
     return JSON.stringify(merged);
   } catch {

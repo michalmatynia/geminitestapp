@@ -1,7 +1,4 @@
-import type {
-  AiPathRunNodeRecord,
-  AiPathRunRecord,
-} from '@/shared/contracts/ai-paths';
+import type { AiPathRunNodeRecord, AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 
 export type JsonIntegrityFinding = {
@@ -66,7 +63,10 @@ const collectNodeDiagnostics = (
       ? (outputs['guardrailMeta'] as Record<string, unknown>)
       : isRecord(outputs['bundle']) &&
           isRecord((outputs['bundle'] as Record<string, unknown>)['guardrailMeta'])
-        ? ((outputs['bundle'] as Record<string, unknown>)['guardrailMeta'] as Record<string, unknown>)
+        ? ((outputs['bundle'] as Record<string, unknown>)['guardrailMeta'] as Record<
+            string,
+            unknown
+          >)
         : null;
     if (!guardrailMeta) return [];
     const parseDiagnostics = guardrailMeta['parseDiagnostics'];
@@ -165,9 +165,5 @@ export async function collectJsonIntegrityFindings(
   };
 }
 
-export const dedupeRunIdsFromJsonIntegrityFindings = (
-  findings: JsonIntegrityFinding[]
-): string[] =>
-  Array.from(
-    new Set(findings.map((finding: JsonIntegrityFinding): string => finding.runId))
-  );
+export const dedupeRunIdsFromJsonIntegrityFindings = (findings: JsonIntegrityFinding[]): string[] =>
+  Array.from(new Set(findings.map((finding: JsonIntegrityFinding): string => finding.runId)));

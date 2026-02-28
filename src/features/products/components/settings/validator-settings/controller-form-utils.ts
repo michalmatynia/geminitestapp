@@ -14,13 +14,10 @@ import type { PatternFormData } from '@/shared/contracts/products';
 
 import { normalizeReplacementFields } from './helpers';
 
-
 /**
  * Validator docs: see docs/validator/function-reference.md#controller.buildformdatafrompattern
  */
-export const buildFormDataFromPattern = (
-  pattern: ProductValidationPattern
-): PatternFormData => {
+export const buildFormDataFromPattern = (pattern: ProductValidationPattern): PatternFormData => {
   const recipe = parseDynamicReplacementRecipe(pattern.replacementValue);
 
   return {
@@ -45,9 +42,8 @@ export const buildFormDataFromPattern = (
     ),
     postAcceptBehavior: pattern.postAcceptBehavior ?? 'revalidate',
     denyBehaviorOverride:
-      normalizeProductValidationPatternDenyBehaviorOverride(
-        pattern.denyBehaviorOverride
-      ) ?? 'inherit',
+      normalizeProductValidationPatternDenyBehaviorOverride(pattern.denyBehaviorOverride) ??
+      'inherit',
     validationDebounceMs: String(pattern.validationDebounceMs ?? 0),
     replacementMode: recipe ? 'dynamic' : 'static',
     sourceMode: recipe?.sourceMode ?? 'current_field',
@@ -76,9 +72,7 @@ export const buildFormDataFromPattern = (
         : '1',
     roundMode: recipe?.roundMode ?? 'none',
     padLength:
-      recipe?.padLength !== undefined && recipe?.padLength !== null
-        ? String(recipe.padLength)
-        : '',
+      recipe?.padLength !== undefined && recipe?.padLength !== null ? String(recipe.padLength) : '',
     padChar: recipe?.padChar ?? '0',
     logicOperator: recipe?.logicOperator ?? 'none',
     logicOperand: recipe?.logicOperand ?? '',
@@ -91,9 +85,7 @@ export const buildFormDataFromPattern = (
     targetApply: recipe?.targetApply ?? 'replace_matched_segment',
     sequenceGroupId: pattern.sequenceGroupId ?? '',
     sequence:
-      pattern.sequence !== null && pattern.sequence !== undefined
-        ? String(pattern.sequence)
-        : '',
+      pattern.sequence !== null && pattern.sequence !== undefined ? String(pattern.sequence) : '',
     chainMode: pattern.chainMode ?? 'continue',
     maxExecutions: String(pattern.maxExecutions ?? 1),
     passOutputToNext: pattern.passOutputToNext ?? true,
@@ -101,7 +93,7 @@ export const buildFormDataFromPattern = (
     runtimeType:
       (pattern.runtimeEnabled ?? false) && (pattern.runtimeType ?? 'none') === 'none'
         ? 'database_query'
-        : pattern.runtimeType ?? 'none',
+        : (pattern.runtimeType ?? 'none'),
     runtimeConfig: pattern.runtimeConfig ?? '',
     appliesToScopes: normalizeProductValidationPatternScopes(pattern.appliesToScopes),
   };

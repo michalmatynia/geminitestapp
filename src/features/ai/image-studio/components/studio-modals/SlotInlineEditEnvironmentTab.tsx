@@ -1,10 +1,10 @@
-import { } from 'lucide-react';
+import {} from 'lucide-react';
 import React from 'react';
 
 import { Button, TabsContent, Hint } from '@/shared/ui';
 
 import { InlineImagePreviewCanvas } from './InlineImagePreviewCanvas';
-import { 
+import {
   formatBytes,
   formatDateTime,
   EMPTY_ENVIRONMENT_REFERENCE_DRAFT,
@@ -41,7 +41,9 @@ export function SlotInlineEditEnvironmentTab(): React.JSX.Element {
       <div className='space-y-3 rounded-lg border border-border/60 bg-card/35 p-3'>
         <div className='flex flex-wrap items-center justify-between gap-2'>
           <div className='space-y-0.5'>
-            <Hint size='xxs' uppercase className='text-gray-500'>Environment Reference</Hint>
+            <Hint size='xxs' uppercase className='text-gray-500'>
+              Environment Reference
+            </Hint>
             <div className='text-xs text-gray-200'>
               Source: {environmentPreviewSource.sourceType}
             </div>
@@ -56,7 +58,8 @@ export function SlotInlineEditEnvironmentTab(): React.JSX.Element {
 
         <div className='grid gap-2 rounded-md border border-border/60 bg-card/30 p-3 text-[11px] text-gray-300 sm:grid-cols-2'>
           <div>
-            <span className='text-gray-500'>Source type:</span> {environmentPreviewSource.sourceType}
+            <span className='text-gray-500'>Source type:</span>{' '}
+            {environmentPreviewSource.sourceType}
           </div>
           <div>
             <span className='text-gray-500'>Dimensions:</span> {environmentPreviewDimensions}
@@ -68,13 +71,16 @@ export function SlotInlineEditEnvironmentTab(): React.JSX.Element {
             </span>
           </div>
           <div>
-            <span className='text-gray-500'>Mime type:</span> {environmentReferenceDraft.mimetype || 'n/a'}
+            <span className='text-gray-500'>Mime type:</span>{' '}
+            {environmentReferenceDraft.mimetype || 'n/a'}
           </div>
           <div>
-            <span className='text-gray-500'>Filename:</span> {environmentReferenceDraft.filename || 'n/a'}
+            <span className='text-gray-500'>Filename:</span>{' '}
+            {environmentReferenceDraft.filename || 'n/a'}
           </div>
           <div>
-            <span className='text-gray-500'>File size:</span> {formatBytes(environmentReferenceDraft.size)}
+            <span className='text-gray-500'>File size:</span>{' '}
+            {formatBytes(environmentReferenceDraft.size)}
           </div>
           <div className='sm:col-span-2'>
             <span className='text-gray-500'>Raw source:</span>{' '}
@@ -89,7 +95,8 @@ export function SlotInlineEditEnvironmentTab(): React.JSX.Element {
             </span>
           </div>
           <div>
-            <span className='text-gray-500'>Updated:</span> {formatDateTime(environmentReferenceDraft.updatedAt)}
+            <span className='text-gray-500'>Updated:</span>{' '}
+            {formatDateTime(environmentReferenceDraft.updatedAt)}
           </div>
           <div />
         </div>
@@ -100,22 +107,21 @@ export function SlotInlineEditEnvironmentTab(): React.JSX.Element {
       </div>
 
       <div className='flex flex-wrap items-center gap-2'>
-        <Button size='xs'
-          type='button'
-          variant='outline'
-          onClick={onUploadEnvironmentFromDrive}
-        >
+        <Button size='xs' type='button' variant='outline' onClick={onUploadEnvironmentFromDrive}>
           Upload Environment From Drive
         </Button>
-        <Button size='xs'
+        <Button
+          size='xs'
           type='button'
           variant='outline'
           onClick={onUploadEnvironmentFromLocal}
           disabled={uploadPending}
           loading={uploadPending}
         >
-                    Upload Environment From Local
-        </Button>        <Button size='xs'
+          Upload Environment From Local
+        </Button>{' '}
+        <Button
+          size='xs'
           type='button'
           variant='outline'
           onClick={onClearEnvironmentImage}

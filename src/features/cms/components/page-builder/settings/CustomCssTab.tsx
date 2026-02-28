@@ -11,12 +11,12 @@ export function CustomCssTab(): React.JSX.Element {
   return (
     <div className='flex-1 overflow-y-auto p-4 mt-0 space-y-3'>
       <CssAiSection />
-      <Textarea 
-        value={customCssValue} 
-        onChange={(e) => handleCustomCssChange(e.target.value)} 
-        placeholder={'parent {\n  outline: 1px dashed #4ade80;\n}\n\nchildren {\n  gap: 12px;\n}'} 
-        className='min-h-[160px] font-mono text-xs' 
-        spellCheck={false} 
+      <Textarea
+        value={customCssValue}
+        onChange={(e) => handleCustomCssChange(e.target.value)}
+        placeholder={'parent {\n  outline: 1px dashed #4ade80;\n}\n\nchildren {\n  gap: 12px;\n}'}
+        className='min-h-[160px] font-mono text-xs'
+        spellCheck={false}
       />
     </div>
   );

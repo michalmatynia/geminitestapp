@@ -8,8 +8,7 @@ const VALIDATOR_LIST_SORT_ORDER_GAP = 1000;
 
 // ─── ID helpers ───────────────────────────────────────────────────────────────
 
-export const toValidatorListNodeId = (listId: string): string =>
-  `${LIST_PREFIX}${listId}`;
+export const toValidatorListNodeId = (listId: string): string => `${LIST_PREFIX}${listId}`;
 
 export const fromValidatorListNodeId = (nodeId: string): string | null => {
   if (!nodeId.startsWith(LIST_PREFIX)) return null;
@@ -33,9 +32,7 @@ export type ValidatorListNodeMetadata = {
  * Converts an ordered ValidatorPatternList array into a flat MasterTreeNode list.
  * Each list becomes a `file` node (kind: 'validator-list') at root level.
  */
-export function buildValidatorListMasterNodes(
-  lists: ValidatorPatternList[]
-): MasterTreeNode[] {
+export function buildValidatorListMasterNodes(lists: ValidatorPatternList[]): MasterTreeNode[] {
   return lists.map((list, index) => ({
     id: toValidatorListNodeId(list.id),
     type: 'file' as const,

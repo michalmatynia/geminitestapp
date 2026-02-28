@@ -9,9 +9,8 @@ type SelectProductForListingModalViewContextValue = {
   onSuccess: () => void;
 };
 
-const SelectProductForListingModalViewContext = React.createContext<SelectProductForListingModalViewContextValue | null>(
-  null
-);
+const SelectProductForListingModalViewContext =
+  React.createContext<SelectProductForListingModalViewContextValue | null>(null);
 
 type SelectProductForListingModalViewProviderProps = {
   value: SelectProductForListingModalViewContextValue;

@@ -18,14 +18,15 @@ const makeCondition = (
   operator: ProductAdvancedFilterOperator,
   value?: unknown,
   valueTo?: unknown
-) => ({
-  type: 'condition' as const,
-  id,
-  field,
-  operator,
-  ...(value !== undefined ? { value } : {}),
-  ...(valueTo !== undefined ? { valueTo } : {}),
-}) as any;
+) =>
+  ({
+    type: 'condition' as const,
+    id,
+    field,
+    operator,
+    ...(value !== undefined ? { value } : {}),
+    ...(valueTo !== undefined ? { valueTo } : {}),
+  }) as any;
 
 const makeGroup = (
   id: string,
@@ -71,9 +72,7 @@ describe('advanced filter contract v2', () => {
   });
 
   it('rejects invalid field/operator compatibility with actionable message', () => {
-    const payload = makeGroup('root', [
-      makeCondition('c1', 'published', 'contains', 'yes'),
-    ]);
+    const payload = makeGroup('root', [makeCondition('c1', 'published', 'contains', 'yes')]);
 
     const result = productAdvancedFilterGroupSchema.safeParse(payload);
     expect(result.success).toBe(false);
@@ -82,15 +81,20 @@ describe('advanced filter contract v2', () => {
   });
 
   it('rejects list operators above max items', () => {
-    const values = Array.from({ length: PRODUCT_ADVANCED_FILTER_MAX_SET_ITEMS + 1 }, (_, index) => `id-${index}`);
-    const payload = makeGroup('root', [
-      makeCondition('c1', 'catalogId', 'in', values),
-    ]);
+    const values = Array.from(
+      { length: PRODUCT_ADVANCED_FILTER_MAX_SET_ITEMS + 1 },
+      (_, index) => `id-${index}`
+    );
+    const payload = makeGroup('root', [makeCondition('c1', 'catalogId', 'in', values)]);
 
     const result = productAdvancedFilterGroupSchema.safeParse(payload);
     expect(result.success).toBe(false);
     if (result.success) return;
-    expect(result.error.issues.some((issue) => issue.message.includes(String(PRODUCT_ADVANCED_FILTER_MAX_SET_ITEMS)))).toBe(true);
+    expect(
+      result.error.issues.some((issue) =>
+        issue.message.includes(String(PRODUCT_ADVANCED_FILTER_MAX_SET_ITEMS))
+      )
+    ).toBe(true);
   });
 
   it('rejects depth above max', () => {
@@ -110,7 +114,11 @@ describe('advanced filter contract v2', () => {
     const result = productAdvancedFilterGroupSchema.safeParse(payload);
     expect(result.success).toBe(false);
     if (result.success) return;
-    expect(result.error.issues.some((issue) => issue.message.includes(String(PRODUCT_ADVANCED_FILTER_MAX_RULES)))).toBe(true);
+    expect(
+      result.error.issues.some((issue) =>
+        issue.message.includes(String(PRODUCT_ADVANCED_FILTER_MAX_RULES))
+      )
+    ).toBe(true);
   });
 
   it('rejects malformed advancedFilter JSON at query-schema level', () => {
@@ -124,9 +132,7 @@ describe('advanced filter contract v2', () => {
   });
 
   it('validates preset bundle export/import shape', () => {
-    const filter = makeGroup('root', [
-      makeCondition('c1', 'name', 'contains', 'chair'),
-    ]);
+    const filter = makeGroup('root', [makeCondition('c1', 'name', 'contains', 'chair')]);
     const payload = {
       version: 1,
       exportedAt: new Date().toISOString(),

@@ -6,9 +6,17 @@ import { getRedisClient, isRedisEnabled } from '@/shared/lib/redis';
 
 let subscriber: Redis | null = null;
 
-const logWarning = async (message: string, context: { service: string; circuitId: string; failures: number; resetTimeoutMs: number; lastError: string }): Promise<void> => {
+const logWarning = async (
+  message: string,
+  context: {
+    service: string;
+    circuitId: string;
+    failures: number;
+    resetTimeoutMs: number;
+    lastError: string;
+  }
+): Promise<void> => {
   try {
-     
     const mod = await import('@/features/observability/server');
     await mod.ErrorSystem.logWarning(message, context);
   } catch {
@@ -16,9 +24,11 @@ const logWarning = async (message: string, context: { service: string; circuitId
   }
 };
 
-const captureException = async (error: unknown, context: { source: string; context: { action: string } }): Promise<void> => {
+const captureException = async (
+  error: unknown,
+  context: { source: string; context: { action: string } }
+): Promise<void> => {
   try {
-     
     const mod = await import('@/features/observability/server');
     await mod.ErrorSystem.captureException(error, {
       service: context.source,
@@ -98,10 +108,16 @@ export function getRedisSubscriber(): Redis | null {
       ...(process.env['REDIS_TLS'] === 'true' ? { tls: {} } : {}),
     });
     subscriber.on('error', (err) => {
-      void captureException(err, { source: 'redis-pubsub', context: { action: 'subscriber_connection_error' } });
+      void captureException(err, {
+        source: 'redis-pubsub',
+        context: { action: 'subscriber_connection_error' },
+      });
     });
   } catch (error) {
-    void captureException(error, { source: 'redis-pubsub', context: { action: 'create_subscriber_failed' } });
+    void captureException(error, {
+      source: 'redis-pubsub',
+      context: { action: 'create_subscriber_failed' },
+    });
     return null;
   }
 

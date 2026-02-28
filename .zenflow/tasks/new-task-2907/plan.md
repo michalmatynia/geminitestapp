@@ -1,6 +1,7 @@
 # Full SDD workflow
 
 ## Configuration
+
 - **Artifacts Path**: {@artifacts_path} → `.zenflow/tasks/{task_id}`
 
 ---
@@ -8,6 +9,7 @@
 ## Workflow Steps
 
 ### [x] Step: Requirements
+
 <!-- chat-id: a9507fde-532a-44c2-a304-c1c6f8054375 -->
 
 Create a Product Requirements Document (PRD) based on the feature description.
@@ -21,6 +23,7 @@ Create a Product Requirements Document (PRD) based on the feature description.
 Save the PRD to `{@artifacts_path}/requirements.md`.
 
 ### [x] Step: Technical Specification
+
 <!-- chat-id: aa40d1fe-fb9e-4c5b-a14c-d62f700ea81c -->
 
 Create a technical specification based on the PRD in `{@artifacts_path}/requirements.md`.
@@ -29,6 +32,7 @@ Create a technical specification based on the PRD in `{@artifacts_path}/requirem
 2. Define the implementation approach
 
 Save to `{@artifacts_path}/spec.md` with:
+
 - Technical context (language, dependencies)
 - Implementation approach referencing existing code patterns
 - Source code structure changes
@@ -37,6 +41,7 @@ Save to `{@artifacts_path}/spec.md` with:
 - Verification approach using project lint/test commands
 
 ### [x] Step: Planning
+
 <!-- chat-id: 01cad206-c8dd-4839-b70b-2f25760f0695 -->
 
 Create a detailed implementation plan based on `{@artifacts_path}/spec.md`.
@@ -54,11 +59,13 @@ If the feature is trivial and doesn't warrant full specification, update this wo
 Save to `{@artifacts_path}/plan.md`.
 
 ### [x] Step: Phase 1 - Auto-Fix Style Issues
+
 <!-- chat-id: dece3a4d-4c25-451b-bea7-57d525d52b04 -->
 
 **Objective**: Fix 62,292 auto-fixable ESLint violations using `eslint --fix`.
 
 **Tasks**:
+
 1. Run `npx eslint src __tests__ --fix` to automatically resolve:
    - 47,451 `quotes` violations (double → single quotes)
    - 11,028 `indent` violations (standardize to 2-space indentation)
@@ -70,6 +77,7 @@ Save to `{@artifacts_path}/plan.md`.
 4. Run `npm run test` to verify all tests pass
 
 **Verification**:
+
 - ESLint error count reduced from 62,358 to ~81 (type safety issues only)
 - Build succeeds without TypeScript errors
 - All tests pass
@@ -80,11 +88,13 @@ Save to `{@artifacts_path}/plan.md`.
 ---
 
 ### [x] Step: Phase 2A - Type Safety in Shared UI Components
+
 <!-- chat-id: edee74d3-8d0b-480a-9521-7511d27346ad -->
 
 **Objective**: Fix type safety issues in `src/shared/ui` (62 files, highest impact).
 
 **Target Rules**:
+
 - `@typescript-eslint/no-explicit-any` (replace with proper types)
 - `@typescript-eslint/no-unsafe-member-access` (add type guards)
 - `@typescript-eslint/no-unsafe-assignment` (validate before assignment)
@@ -93,6 +103,7 @@ Save to `{@artifacts_path}/plan.md`.
 - `@typescript-eslint/no-unsafe-return` (add return type annotations)
 
 **Tasks**:
+
 1. Identify all ESLint violations in `src/shared/ui`
 2. Fix explicit `any` types with proper interfaces
 3. Add type guards for property access
@@ -102,6 +113,7 @@ Save to `{@artifacts_path}/plan.md`.
 7. Run `npm run test` to verify no regressions
 
 **Verification**:
+
 - No type safety issues in `src/shared/ui` directory
 - All tests for shared UI components pass
 - TypeScript compilation succeeds
@@ -111,11 +123,13 @@ Save to `{@artifacts_path}/plan.md`.
 ---
 
 ### [ ] Step: Phase 2B - Type Safety in CMS Page Builder
+
 <!-- chat-id: 11e2e75c-fd01-4df1-a537-475a1682e0ad -->
 
 **Objective**: Fix type safety issues in `src/features/cms/components/page-builder` (28 files).
 
 **Tasks**:
+
 1. Identify all ESLint violations in page builder components
 2. Fix explicit `any` types with CMS-specific interfaces
 3. Add type guards for dynamic CMS content
@@ -126,6 +140,7 @@ Save to `{@artifacts_path}/plan.md`.
 8. Manually test page builder functionality
 
 **Verification**:
+
 - No type safety issues in page builder directory
 - CMS page builder works correctly in browser
 - All CMS-related tests pass
@@ -139,10 +154,12 @@ Save to `{@artifacts_path}/plan.md`.
 **Objective**: Fix type safety issues in AI paths components (46 files total).
 
 **Affected Directories**:
+
 - `src/features/ai/ai-paths/components/node-config/dialog` (27 files)
 - `src/features/ai/ai-paths/components` (19 files)
 
 **Tasks**:
+
 1. Identify all ESLint violations in AI paths components
 2. Fix explicit `any` types with AI path-specific types
 3. Add type guards for node configuration data
@@ -152,6 +169,7 @@ Save to `{@artifacts_path}/plan.md`.
 7. Run `npm run test` to verify AI paths tests pass
 
 **Verification**:
+
 - No type safety issues in AI paths component directories
 - AI path configuration works correctly
 - All AI paths tests pass
@@ -165,6 +183,7 @@ Save to `{@artifacts_path}/plan.md`.
 **Objective**: Fix type safety issues in `src/features/cms/components/frontend/sections` (21 files).
 
 **Tasks**:
+
 1. Identify all ESLint violations in frontend sections
 2. Fix explicit `any` types with section-specific interfaces
 3. Add type guards for section content rendering
@@ -175,6 +194,7 @@ Save to `{@artifacts_path}/plan.md`.
 8. Manually test section rendering
 
 **Verification**:
+
 - No type safety issues in frontend sections directory
 - Frontend sections render correctly with animations
 - All tests pass
@@ -188,6 +208,7 @@ Save to `{@artifacts_path}/plan.md`.
 **Objective**: Fix type safety issues in `src/features/products/hooks` (20 files).
 
 **Tasks**:
+
 1. Identify all ESLint violations in product hooks
 2. Fix explicit `any` types with product domain types
 3. Type API responses for product data
@@ -197,6 +218,7 @@ Save to `{@artifacts_path}/plan.md`.
 7. Run `npm run test` to verify product tests pass
 
 **Verification**:
+
 - No type safety issues in products hooks directory
 - Product hooks work correctly
 - All product tests pass
@@ -210,6 +232,7 @@ Save to `{@artifacts_path}/plan.md`.
 **Objective**: Fix type safety issues in `src/shared/types/domain` (17 files).
 
 **Tasks**:
+
 1. Identify all ESLint violations in domain type files
 2. Fix explicit `any` types with proper type definitions
 3. Improve type utility functions
@@ -219,6 +242,7 @@ Save to `{@artifacts_path}/plan.md`.
 7. Run `npm run build` to verify type compilation
 
 **Verification**:
+
 - No type safety issues in domain types directory
 - All type exports compile correctly
 - No regression in type inference across codebase
@@ -232,10 +256,12 @@ Save to `{@artifacts_path}/plan.md`.
 **Objective**: Fix type safety issues in remaining affected directories (< 10 files each).
 
 **Affected Directories**:
+
 - `__tests__/features/agent-runtime/services` (14 files)
 - Other directories with < 10 affected files
 
 **Tasks**:
+
 1. Identify all remaining ESLint violations
 2. Fix type safety issues directory by directory
 3. Remove or prefix unused variables with underscore
@@ -243,6 +269,7 @@ Save to `{@artifacts_path}/plan.md`.
 5. Run `npm run test` to verify tests pass
 
 **Verification**:
+
 - No remaining type safety issues
 - All tests pass
 - Build succeeds
@@ -256,10 +283,12 @@ Save to `{@artifacts_path}/plan.md`.
 **Objective**: Fix 5 `import/no-restricted-paths` violations.
 
 **Rules to Enforce**:
+
 - `src/shared` must NOT import from `src/features`
 - `src/app/api` must NOT import from `src/features`
 
 **Tasks**:
+
 1. Identify violations: `npx eslint src --format=json | jq '.[] | select(.messages[].ruleId == "import/no-restricted-paths")'`
 2. For each violation, determine fix strategy:
    - Move shared code from `src/features` to `src/shared`, OR
@@ -271,6 +300,7 @@ Save to `{@artifacts_path}/plan.md`.
 6. Manually test affected features
 
 **Verification**:
+
 - No architecture boundary violations
 - All tests pass
 - Application functionality unchanged
@@ -284,11 +314,13 @@ Save to `{@artifacts_path}/plan.md`.
 **Objective**: Fix remaining ESLint issues (~43 logic and code quality issues).
 
 **Target Rules**:
+
 - `no-redeclare` (duplicate variable declarations)
 - `no-empty` (empty blocks)
 - Other minor issues
 
 **Tasks**:
+
 1. Run `npm run lint` to identify remaining issues
 2. Fix each issue individually:
    - Remove duplicate declarations
@@ -299,6 +331,7 @@ Save to `{@artifacts_path}/plan.md`.
 5. Run `npm run test` to verify tests pass
 
 **Verification**:
+
 - `npm run lint` reports 0 errors and 0 warnings
 - Build succeeds
 - All tests pass
@@ -312,6 +345,7 @@ Save to `{@artifacts_path}/plan.md`.
 **Objective**: Comprehensive verification that all ESLint issues are resolved and application works correctly.
 
 **Tasks**:
+
 1. Run `npm run lint` and verify 0 errors/warnings
 2. Run `npm run build` and verify successful compilation
 3. Run `npm run test` and verify all unit tests pass
@@ -327,6 +361,7 @@ Save to `{@artifacts_path}/plan.md`.
 8. Review git history and squash commits if needed
 
 **Success Criteria**:
+
 - ✅ `npm run lint` exits with code 0
 - ✅ `npm run build` completes successfully
 - ✅ `npm run test` shows all tests passing

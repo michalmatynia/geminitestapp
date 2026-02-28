@@ -7,25 +7,14 @@ import { dbApi } from '@/shared/lib/ai-paths/api';
 import type { CollectionSchema, SchemaData } from '@/shared/contracts/database';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { 
-  Button, 
-  Label, 
-  SelectSimple, 
-  SearchInput,
-  Pagination,
-  Card,
-  Hint,
-} from '@/shared/ui';
+import { Button, Label, SelectSimple, SearchInput, Pagination, Card, Hint } from '@/shared/ui';
 
 import { useAiPathConfig } from '../AiPathConfigContext';
-
 
 const normalizeSchemaCollections = (schema: SchemaData | null): CollectionSchema[] => {
   if (!schema) return [];
 
-  const stripUndefinedProvider = (
-    collection: CollectionSchema
-  ): CollectionSchema => {
+  const stripUndefinedProvider = (collection: CollectionSchema): CollectionSchema => {
     const { provider, ...rest } = collection;
     return provider ? { ...rest, provider } : rest;
   };
@@ -34,21 +23,25 @@ const normalizeSchemaCollections = (schema: SchemaData | null): CollectionSchema
     const collectionsRaw = Array.isArray(schema.collections)
       ? schema.collections
       : Object.values(schema.collections ?? {});
-    const collections: CollectionSchema[] = Array.from(collectionsRaw as unknown as CollectionSchema[]);
+    const collections: CollectionSchema[] = Array.from(
+      collectionsRaw as unknown as CollectionSchema[]
+    );
     if (collections.length) {
       return collections.map((collection) => stripUndefinedProvider(collection));
     }
     const merged: CollectionSchema[] = [];
     (['mongodb', 'prisma'] as const).forEach((provider) => {
       const source = schema.sources?.[provider] as
-              | { collections?: CollectionSchema[] | Record<string, CollectionSchema> }
-              | null
-              | undefined;
+        | { collections?: CollectionSchema[] | Record<string, CollectionSchema> }
+        | null
+        | undefined;
       if (!source?.collections) return;
       const sourceCollectionsRaw = Array.isArray(source.collections)
         ? source.collections
         : Object.values(source.collections);
-      const sourceCollections: CollectionSchema[] = Array.from(sourceCollectionsRaw as unknown as CollectionSchema[]);
+      const sourceCollections: CollectionSchema[] = Array.from(
+        sourceCollectionsRaw as unknown as CollectionSchema[]
+      );
       if (!sourceCollections.length) return;
       sourceCollections.forEach((collection) => {
         merged.push({ ...stripUndefinedProvider(collection), provider });
@@ -61,17 +54,16 @@ const normalizeSchemaCollections = (schema: SchemaData | null): CollectionSchema
   const baseCollectionsRaw = Array.isArray(schema.collections)
     ? schema.collections
     : Object.values(schema.collections ?? {});
-  const baseCollections: CollectionSchema[] = Array.from(baseCollectionsRaw as unknown as CollectionSchema[]);
+  const baseCollections: CollectionSchema[] = Array.from(
+    baseCollectionsRaw as unknown as CollectionSchema[]
+  );
   return baseCollections.map((collection) => ({
     ...stripUndefinedProvider(collection),
     provider,
   }));
 };
 
-const buildCollectionKey = (
-  collection: CollectionSchema,
-  includeProvider: boolean
-): string =>
+const buildCollectionKey = (collection: CollectionSchema, includeProvider: boolean): string =>
   includeProvider && collection.provider
     ? `${collection.provider}:${collection.name}`
     : collection.name;
@@ -201,19 +193,13 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
     if (fetchedDbSchema.provider === 'multi') {
       const providers = new Set<'mongodb' | 'prisma'>();
       schemaCollections.forEach((collection) => {
-        if (
-          collection.provider === 'mongodb' ||
-          collection.provider === 'prisma'
-        ) {
+        if (collection.provider === 'mongodb' || collection.provider === 'prisma') {
           providers.add(collection.provider);
         }
       });
       return Array.from(providers);
     }
-    if (
-      fetchedDbSchema.provider === 'mongodb' ||
-      fetchedDbSchema.provider === 'prisma'
-    ) {
+    if (fetchedDbSchema.provider === 'mongodb' || fetchedDbSchema.provider === 'prisma') {
       return [fetchedDbSchema.provider];
     }
     return [] as Array<'mongodb' | 'prisma'>;
@@ -264,15 +250,13 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
         </Hint>
 
         {schemaLoading ? (
-          <div className='py-4 text-center text-sm text-gray-400'>
-            Loading schema...
-          </div>
+          <div className='py-4 text-center text-sm text-gray-400'>Loading schema...</div>
         ) : schemaCollections.length > 0 ? (
           <div className='space-y-4'>
             <div className='text-xs text-gray-400'>
               Provider:{' '}
               <span className='text-purple-300'>
-                {(fetchedDbSchema?.provider === 'multi')
+                {fetchedDbSchema?.provider === 'multi'
                   ? availableProviders.join(' + ') || 'multi'
                   : fetchedDbSchema?.provider || 'N/A'}
               </span>
@@ -319,7 +303,11 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
                 <Label className='text-xs text-gray-400'>
                   Select Collections ({schemaConfig.collections?.length ?? 0} selected)
                 </Label>
-                <Card variant='subtle-compact' padding='sm' className='mt-2 max-h-[200px] space-y-1 overflow-y-auto border-border bg-card/50'>
+                <Card
+                  variant='subtle-compact'
+                  padding='sm'
+                  className='mt-2 max-h-[200px] space-y-1 overflow-y-auto border-border bg-card/50'
+                >
                   {schemaCollections.map((coll) => {
                     const includeProvider = fetchedDbSchema?.provider === 'multi';
                     const key = buildCollectionKey(coll, includeProvider);
@@ -354,20 +342,26 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
             )}
 
             <div className='grid grid-cols-2 gap-3'>
-              <Card variant='subtle-compact' padding='sm' className='flex items-center justify-between border-border bg-card/50 text-xs text-gray-300'>
+              <Card
+                variant='subtle-compact'
+                padding='sm'
+                className='flex items-center justify-between border-border bg-card/50 text-xs text-gray-300'
+              >
                 <span>Include Fields</span>
                 <Button
                   variant={schemaConfig.includeFields ? 'success' : 'default'}
                   size='xs'
                   type='button'
-                  onClick={() =>
-                    updateSchemaConfig({ includeFields: !schemaConfig.includeFields })
-                  }
+                  onClick={() => updateSchemaConfig({ includeFields: !schemaConfig.includeFields })}
                 >
                   {schemaConfig.includeFields ? 'Yes' : 'No'}
                 </Button>
               </Card>
-              <Card variant='subtle-compact' padding='sm' className='flex items-center justify-between border-border bg-card/50 text-xs text-gray-300'>
+              <Card
+                variant='subtle-compact'
+                padding='sm'
+                className='flex items-center justify-between border-border bg-card/50 text-xs text-gray-300'
+              >
                 <span>Include Relations</span>
                 <Button
                   variant={schemaConfig.includeRelations ? 'success' : 'default'}
@@ -405,24 +399,27 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
                 {(schemaConfig.mode === 'all'
                   ? schemaCollections
                   : schemaCollections.filter((collection) =>
-                    matchesCollectionSelection(
-                      collection,
-                      new Set((schemaConfig.collections ?? []).map((c: string) => c.toLowerCase()))
+                      matchesCollectionSelection(
+                        collection,
+                        new Set(
+                          (schemaConfig.collections ?? []).map((c: string) => c.toLowerCase())
+                        )
+                      )
                     )
-                  )
                 ).map((coll) => (
                   <div key={`${coll.provider ?? 'db'}:${coll.name}`} className='mb-2'>
                     <div className='font-medium text-purple-300'>
                       {coll.name}
                       {showProviderLabel && coll.provider ? (
-                        <span className='ml-2 text-[10px] text-gray-500'>
-                          ({coll.provider})
-                        </span>
+                        <span className='ml-2 text-[10px] text-gray-500'>({coll.provider})</span>
                       ) : null}
                     </div>
                     {schemaConfig.includeFields && coll.fields && (
                       <div className='ml-2 text-[10px] text-gray-500'>
-                        {coll.fields.slice(0, 5).map((f) => f.name).join(', ')}
+                        {coll.fields
+                          .slice(0, 5)
+                          .map((f) => f.name)
+                          .join(', ')}
                         {coll.fields.length > 5 && ` +${coll.fields.length - 5} more`}
                       </div>
                     )}
@@ -430,13 +427,17 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
                 ))}
                 {schemaConfig.mode === 'selected' &&
                   (!schemaConfig.collections || schemaConfig.collections.length === 0) && (
-                  <div className='italic text-gray-500'>No collections selected</div>
-                )}
+                    <div className='italic text-gray-500'>No collections selected</div>
+                  )}
               </div>
             </Card>
 
             {/* Data Browser */}
-            <Card variant='subtle-compact' padding='sm' className='border-cyan-800/50 bg-cyan-950/20'>
+            <Card
+              variant='subtle-compact'
+              padding='sm'
+              className='border-cyan-800/50 bg-cyan-950/20'
+            >
               <Hint size='xs' uppercase={false} className='mb-3 font-medium text-cyan-300'>
                 Data Browser
               </Hint>
@@ -475,7 +476,9 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
                         )
                         .map((coll) => ({
                           value: coll.name,
-                          label: coll.name + (showProviderLabel && coll.provider ? ` (${coll.provider})` : ''),
+                          label:
+                            coll.name +
+                            (showProviderLabel && coll.provider ? ` (${coll.provider})` : ''),
                         }))}
                       triggerClassName='flex-1 border-border bg-card/70'
                       placeholder='Select collection to browse'
@@ -537,7 +540,8 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
 
                   {/* Results info */}
                   <div className='text-[10px] text-gray-500'>
-                    Showing {browseSkip + 1}-{Math.min(browseSkip + browseLimit, browseTotal)} of {browseTotal} documents
+                    Showing {browseSkip + 1}-{Math.min(browseSkip + browseLimit, browseTotal)} of{' '}
+                    {browseTotal} documents
                   </div>
 
                   {/* Documents list */}
@@ -566,13 +570,20 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
                           docId = `doc-${idx}`;
                         }
                         const isExpanded = expandedDocId === docId;
-                        const displayNameValue = doc['name'] ?? doc['title'] ?? doc['name_en'] ?? doc['sku'] ?? docId;
+                        const displayNameValue =
+                          doc['name'] ?? doc['title'] ?? doc['name_en'] ?? doc['sku'] ?? docId;
                         let displayName: string;
                         if (typeof displayNameValue === 'string') {
                           displayName = displayNameValue;
-                        } else if (typeof displayNameValue === 'number' || typeof displayNameValue === 'boolean') {
+                        } else if (
+                          typeof displayNameValue === 'number' ||
+                          typeof displayNameValue === 'boolean'
+                        ) {
                           displayName = String(displayNameValue);
-                        } else if (typeof displayNameValue === 'object' && displayNameValue !== null) {
+                        } else if (
+                          typeof displayNameValue === 'object' &&
+                          displayNameValue !== null
+                        ) {
                           displayName = JSON.stringify(displayNameValue);
                         } else {
                           displayName = '';
@@ -599,7 +610,12 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
                                 viewBox='0 0 24 24'
                                 stroke='currentColor'
                               >
-                                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 9l-7 7-7-7' />
+                                <path
+                                  strokeLinecap='round'
+                                  strokeLinejoin='round'
+                                  strokeWidth={2}
+                                  d='M19 9l-7 7-7-7'
+                                />
                               </svg>
                             </button>
                             {isExpanded && (
@@ -614,9 +630,7 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
                       })}
                     </div>
                   ) : (
-                    <div className='py-4 text-center text-sm text-gray-500'>
-                      No documents found
-                    </div>
+                    <div className='py-4 text-center text-sm text-gray-500'>No documents found</div>
                   )}
 
                   {/* Pagination */}
@@ -637,9 +651,7 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
           </div>
         ) : (
           <div className='space-y-3'>
-            <div className='py-4 text-center text-sm text-gray-500'>
-              No schema data available
-            </div>
+            <div className='py-4 text-center text-sm text-gray-500'>No schema data available</div>
             <Button
               type='button'
               variant='outline'

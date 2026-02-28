@@ -22,9 +22,7 @@ export default function CreateSlugPage(): React.JSX.Element {
     setError('');
 
     if (!SLUG_REGEX.test(slug)) {
-      setError(
-        'Invalid slug format. Use only lowercase letters, numbers, and hyphens.'
-      );
+      setError('Invalid slug format. Use only lowercase letters, numbers, and hyphens.');
       return;
     }
 
@@ -33,27 +31,35 @@ export default function CreateSlugPage(): React.JSX.Element {
       if (domainId) createData.domainId = domainId;
       await createSlug.mutateAsync(createData);
       toast('Route path created successfully.', { variant: 'success' });
-      const next = domainId ? `/admin/cms/slugs?domainId=${encodeURIComponent(domainId)}` : '/admin/cms/slugs';
+      const next = domainId
+        ? `/admin/cms/slugs?domainId=${encodeURIComponent(domainId)}`
+        : '/admin/cms/slugs';
       router.push(next);
     } catch (err: unknown) {
-      logClientError(err, { context: { source: 'CreateSlugPage', action: 'createSlug', slug, domainId } });
+      logClientError(err, {
+        context: { source: 'CreateSlugPage', action: 'createSlug', slug, domainId },
+      });
       setError(err instanceof Error ? err.message : 'An unexpected error occurred.');
     }
   };
 
   return (
     <div className='container mx-auto py-10 max-w-2xl space-y-6'>
-      <SectionHeader 
-        title='Create Route' 
+      <SectionHeader
+        title='Create Route'
         description='Register a new URL path for your content.'
         eyebrow='CMS · Routing'
       />
-      
-      <form onSubmit={(e: React.FormEvent<HTMLFormElement>): void => { void handleSubmit(e); }}>
+
+      <form
+        onSubmit={(e: React.FormEvent<HTMLFormElement>): void => {
+          void handleSubmit(e);
+        }}
+      >
         <FormSection title='Path Details' className='p-6'>
-          <FormField 
-            label='Slug' 
-            error={error} 
+          <FormField
+            label='Slug'
+            error={error}
             description='This will be the URL segment (e.g. "about-us" becomes /about-us)'
             required
           >
@@ -66,7 +72,7 @@ export default function CreateSlugPage(): React.JSX.Element {
               autoFocus
             />
           </FormField>
-          
+
           <FormActions
             onCancel={() => router.back()}
             saveText='Create Path'

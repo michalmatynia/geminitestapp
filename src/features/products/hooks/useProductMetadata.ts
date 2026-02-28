@@ -171,9 +171,7 @@ export function useProductMetadata({
         return [fallbackCatalogId];
       }
     }
-    const normalizedInitialCatalogIds = normalizeCatalogIdList(
-      initialCatalogIds ?? [],
-    );
+    const normalizedInitialCatalogIds = normalizeCatalogIdList(initialCatalogIds ?? []);
     if (normalizedInitialCatalogIds.length > 0) {
       return normalizedInitialCatalogIds;
     }
@@ -213,47 +211,39 @@ export function useProductMetadata({
     return [];
   }, [product, initialProducerIds]);
 
-  const [selectedCatalogIds, setSelectedCatalogIds] = React.useState<string[]>(
-    initialCatalogSelection,
+  const [selectedCatalogIds, setSelectedCatalogIds] =
+    React.useState<string[]>(initialCatalogSelection);
+  const [selectedCategoryId, setSelectedCategoryId] = React.useState<string | null>(
+    initialCategorySelection
   );
-  const [selectedCategoryId, setSelectedCategoryId] = React.useState<
-    string | null
-  >(initialCategorySelection);
-  const [selectedTagIds, setSelectedTagIds] =
-    React.useState<string[]>(initialTagSelection);
-  const [selectedProducerIds, setSelectedProducerIds] = React.useState<
-    string[]
-  >(initialProducerSelection);
+  const [selectedTagIds, setSelectedTagIds] = React.useState<string[]>(initialTagSelection);
+  const [selectedProducerIds, setSelectedProducerIds] =
+    React.useState<string[]>(initialProducerSelection);
 
   const arraysEqual = (a: string[], b: string[]): boolean =>
-    a.length === b.length &&
-    a.every((value: string, index: number) => value === b[index]);
+    a.length === b.length && a.every((value: string, index: number) => value === b[index]);
 
   React.useEffect(() => {
     setSelectedCatalogIds((prev: string[]) =>
-      arraysEqual(prev, initialCatalogSelection)
-        ? prev
-        : initialCatalogSelection,
+      arraysEqual(prev, initialCatalogSelection) ? prev : initialCatalogSelection
     );
   }, [initialCatalogSelection]);
 
   React.useEffect(() => {
     setSelectedCategoryId((prev: string | null) =>
-      prev === initialCategorySelection ? prev : initialCategorySelection,
+      prev === initialCategorySelection ? prev : initialCategorySelection
     );
   }, [initialCategorySelection]);
 
   React.useEffect(() => {
     setSelectedTagIds((prev: string[]) =>
-      arraysEqual(prev, initialTagSelection) ? prev : initialTagSelection,
+      arraysEqual(prev, initialTagSelection) ? prev : initialTagSelection
     );
   }, [initialTagSelection]);
 
   React.useEffect(() => {
     setSelectedProducerIds((prev: string[]) =>
-      arraysEqual(prev, initialProducerSelection)
-        ? prev
-        : initialProducerSelection,
+      arraysEqual(prev, initialProducerSelection) ? prev : initialProducerSelection
     );
   }, [initialProducerSelection]);
 
@@ -264,13 +254,9 @@ export function useProductMetadata({
   const categories = categoriesQuery.data || [];
   const isSelectedCategoryInPrimaryCatalog = React.useMemo((): boolean => {
     if (!selectedCategoryId) return true;
-    return categories.some(
-      (category: ProductCategory) => category.id === selectedCategoryId,
-    );
+    return categories.some((category: ProductCategory) => category.id === selectedCategoryId);
   }, [categories, selectedCategoryId]);
-  const attemptedCategoryCatalogResolutionsRef = React.useRef<Set<string>>(
-    new Set(),
-  );
+  const attemptedCategoryCatalogResolutionsRef = React.useRef<Set<string>>(new Set());
 
   React.useEffect(() => {
     attemptedCategoryCatalogResolutionsRef.current.clear();
@@ -285,30 +271,22 @@ export function useProductMetadata({
     if (isSelectedCategoryInPrimaryCatalog) return;
 
     const resolutionKey = `${selectedCategoryId}:${primaryCatalogId || 'none'}`;
-    if (attemptedCategoryCatalogResolutionsRef.current.has(resolutionKey))
-      return;
+    if (attemptedCategoryCatalogResolutionsRef.current.has(resolutionKey)) return;
     attemptedCategoryCatalogResolutionsRef.current.add(resolutionKey);
 
     let cancelled = false;
     void api
-      .get<ProductCategory>(
-        `/api/products/categories/${encodeURIComponent(selectedCategoryId)}`,
-        {
-          logError: false,
-        },
-      )
+      .get<ProductCategory>(`/api/products/categories/${encodeURIComponent(selectedCategoryId)}`, {
+        logError: false,
+      })
       .then((category: ProductCategory) => {
         if (cancelled) return;
         const categoryCatalogId =
-          typeof category?.catalogId === 'string'
-            ? category.catalogId.trim()
-            : '';
+          typeof category?.catalogId === 'string' ? category.catalogId.trim() : '';
         if (!categoryCatalogId) return;
         setSelectedCatalogIds((prev: string[]) => {
           if (prev[0] === categoryCatalogId) return prev;
-          const withoutCurrent = prev.filter(
-            (id: string) => id !== categoryCatalogId,
-          );
+          const withoutCurrent = prev.filter((id: string) => id !== categoryCatalogId);
           return [categoryCatalogId, ...withoutCurrent];
         });
       })
@@ -334,7 +312,7 @@ export function useProductMetadata({
     setSelectedCatalogIds((prev: string[]) =>
       prev.includes(catalogId)
         ? prev.filter((id: string) => id !== catalogId)
-        : [...prev, catalogId],
+        : [...prev, catalogId]
     );
   };
 
@@ -345,9 +323,7 @@ export function useProductMetadata({
 
   const toggleTag = (tagId: string): void => {
     setSelectedTagIds((prev: string[]) =>
-      prev.includes(tagId)
-        ? prev.filter((id: string) => id !== tagId)
-        : [...prev, tagId],
+      prev.includes(tagId) ? prev.filter((id: string) => id !== tagId) : [...prev, tagId]
     );
   };
 
@@ -355,7 +331,7 @@ export function useProductMetadata({
     setSelectedProducerIds((prev: string[]) =>
       prev.includes(producerId)
         ? prev.filter((id: string) => id !== producerId)
-        : [...prev, producerId],
+        : [...prev, producerId]
     );
   };
 
@@ -373,48 +349,32 @@ export function useProductMetadata({
     }
 
     const selectedCatalogs = catalogs.filter((catalog: CatalogRecord) =>
-      selectedCatalogIds.includes(catalog.id),
+      selectedCatalogIds.includes(catalog.id)
     );
     const languageIdSet = new Set(
-      selectedCatalogs.flatMap(
-        (catalog: CatalogRecord) => catalog.languageIds ?? [],
-      ),
+      selectedCatalogs.flatMap((catalog: CatalogRecord) => catalog.languageIds ?? [])
     );
     const normalizedLanguageSet = new Set(
-      Array.from(languageIdSet).map((value: string) =>
-        String(value).trim().toUpperCase(),
-      ),
+      Array.from(languageIdSet).map((value: string) => String(value).trim().toUpperCase())
     );
 
     const filteredLanguages = languageIdSet.size
       ? languages.filter((language: Language) => {
-        const idKey = String(language.id).trim().toUpperCase();
-        const codeKey = String(language.code).trim().toUpperCase();
-        return (
-          normalizedLanguageSet.has(idKey) ||
-            normalizedLanguageSet.has(codeKey)
-        );
-      })
+          const idKey = String(language.id).trim().toUpperCase();
+          const codeKey = String(language.code).trim().toUpperCase();
+          return normalizedLanguageSet.has(idKey) || normalizedLanguageSet.has(codeKey);
+        })
       : languages;
 
     const priceGroupIdSet = new Set(
-      selectedCatalogs.flatMap(
-        (catalog: CatalogRecord) => catalog.priceGroupIds ?? [],
-      ),
+      selectedCatalogs.flatMap((catalog: CatalogRecord) => catalog.priceGroupIds ?? [])
     );
     const filteredPriceGroups = priceGroupIdSet.size
-      ? priceGroups.filter((group: PriceGroupWithDetails) =>
-        priceGroupIdSet.has(group.id),
-      )
+      ? priceGroups.filter((group: PriceGroupWithDetails) => priceGroupIdSet.has(group.id))
       : priceGroups;
 
     return { filteredLanguages, filteredPriceGroups };
-  }, [
-    catalogsQuery.data,
-    languagesQuery.data,
-    priceGroupsQuery.data,
-    selectedCatalogIds,
-  ]);
+  }, [catalogsQuery.data, languagesQuery.data, priceGroupsQuery.data, selectedCatalogIds]);
 
   return {
     catalogs: catalogsQuery.data || [],

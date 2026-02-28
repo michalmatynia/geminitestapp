@@ -105,14 +105,13 @@ function normalizeFilters(filters: ProductFilterInput = {}): ProductFilters {
 
 // Cached database operations for products
 export class CachedProductService {
-  
   // Get product by ID with caching
   static getProductById: (id: string) => Promise<ProductWithImages | null> = withQueryCache(
     async (id: string) => productService.getProductById(id),
     {
       keyGenerator: (id: string) => `product:${id}`,
       ttl: 300000, // 5 minutes
-      tags: (id: string) => ProductCacheHelpers.getTags.product(id)
+      tags: (id: string) => ProductCacheHelpers.getTags.product(id),
     }
   );
 
@@ -122,21 +121,24 @@ export class CachedProductService {
     {
       keyGenerator: (sku: string) => `product:sku:${sku}`,
       ttl: 300000, // 5 minutes
-      tags: (_sku: string) => ['products:list']
+      tags: (_sku: string) => ['products:list'],
     }
   );
 
   // Get products list with filtering and caching
-  static getProducts: (filters?: ProductFilterInput) => Promise<ProductWithImages[]> = withQueryCache(
-    async (filters: ProductFilterInput = {}) => {
-      return productService.getProducts(normalizeFilters(filters));
-    },
-    {
-      keyGenerator: (filters: ProductFilterInput = {}) => `products:list:${JSON.stringify(filters)}`,
-      ttl: 180000, // 3 minutes
-      tags: (filters: ProductFilterInput = {}) => ProductCacheHelpers.getTags.productList(filters)
-    }
-  );
+  static getProducts: (filters?: ProductFilterInput) => Promise<ProductWithImages[]> =
+    withQueryCache(
+      async (filters: ProductFilterInput = {}) => {
+        return productService.getProducts(normalizeFilters(filters));
+      },
+      {
+        keyGenerator: (filters: ProductFilterInput = {}) =>
+          `products:list:${JSON.stringify(filters)}`,
+        ttl: 180000, // 3 minutes
+        tags: (filters: ProductFilterInput = {}) =>
+          ProductCacheHelpers.getTags.productList(filters),
+      }
+    );
 
   // Get product count with caching
   static getProductCount: (filters?: ProductFilterInput) => Promise<number> = withQueryCache(
@@ -144,14 +146,21 @@ export class CachedProductService {
       return productService.countProducts(normalizeFilters(filters));
     },
     {
-      keyGenerator: (filters: ProductFilterInput = {}) => `products:count:${JSON.stringify(filters)}`,
+      keyGenerator: (filters: ProductFilterInput = {}) =>
+        `products:count:${JSON.stringify(filters)}`,
       ttl: 300000, // 5 minutes
-      tags: (filters: ProductFilterInput = {}) => ['products:count', ...ProductCacheHelpers.getTags.productList(filters)]
+      tags: (filters: ProductFilterInput = {}) => [
+        'products:count',
+        ...ProductCacheHelpers.getTags.productList(filters),
+      ],
     }
   );
 
   // Get products by category with caching
-  static getProductsByCategory: (categoryId: string, limit?: number) => Promise<ProductWithImages[]> = withQueryCache(
+  static getProductsByCategory: (
+    categoryId: string,
+    limit?: number
+  ) => Promise<ProductWithImages[]> = withQueryCache(
     async (categoryId: string, limit?: number) => {
       const categoryFilters: ProductFilters = {};
       if (typeof limit === 'number' && Number.isFinite(limit) && limit > 0) {
@@ -162,17 +171,16 @@ export class CachedProductService {
         (product: ProductWithImages) =>
           typeof product.categoryId === 'string' && product.categoryId === categoryId
       );
-      return typeof limit === 'number' && limit > 0
-        ? filtered.slice(0, limit)
-        : filtered;
+      return typeof limit === 'number' && limit > 0 ? filtered.slice(0, limit) : filtered;
     },
     {
-      keyGenerator: (categoryId: string, limit?: number) => `products:category:${categoryId}:${limit || 'all'}`,
+      keyGenerator: (categoryId: string, limit?: number) =>
+        `products:category:${categoryId}:${limit || 'all'}`,
       ttl: 240000, // 4 minutes
       tags: (categoryId: string) => [
         ...ProductCacheHelpers.getTags.category(categoryId),
-        'products:list'
-      ]
+        'products:list',
+      ],
     }
   );
 
@@ -182,12 +190,15 @@ export class CachedProductService {
     {
       keyGenerator: (id: string) => `product:${id}:with-images`,
       ttl: 600000, // 10 minutes (longer for expensive queries)
-      tags: (id: string) => [...ProductCacheHelpers.getTags.product(id), 'images']
+      tags: (id: string) => [...ProductCacheHelpers.getTags.product(id), 'images'],
     }
   );
 
   // Search products with caching
-  static searchProducts: (query: string, filters?: ProductFilterInput) => Promise<ProductWithImages[]> = withQueryCache(
+  static searchProducts: (
+    query: string,
+    filters?: ProductFilterInput
+  ) => Promise<ProductWithImages[]> = withQueryCache(
     async (query: string, filters: ProductFilterInput = {}) => {
       return productService.getProducts({
         ...normalizeFilters(filters),
@@ -195,9 +206,13 @@ export class CachedProductService {
       });
     },
     {
-      keyGenerator: (query: string, filters: ProductFilterInput = {}) => `products:search:${query}:${JSON.stringify(filters)}`,
+      keyGenerator: (query: string, filters: ProductFilterInput = {}) =>
+        `products:search:${query}:${JSON.stringify(filters)}`,
       ttl: 120000, // 2 minutes (shorter for search results)
-      tags: (_query: string, _filters: ProductFilterInput = {}) => ['products:search', 'products:list']
+      tags: (_query: string, _filters: ProductFilterInput = {}) => [
+        'products:search',
+        'products:list',
+      ],
     }
   );
 
@@ -205,13 +220,18 @@ export class CachedProductService {
   static listCategories: (filters: { catalogId: string }) => Promise<unknown[]> = withQueryCache(
     async (filters: { catalogId: string }) => {
       const primaryProvider = await getProductDataProvider();
-      const repository = await import('@/features/products/services/category-repository').then(m => m.getCategoryRepository(primaryProvider));
+      const repository = await import('@/features/products/services/category-repository').then(
+        (m) => m.getCategoryRepository(primaryProvider)
+      );
       return repository.listCategories(filters);
     },
     {
       keyGenerator: (filters: { catalogId: string }) => `categories:list:${filters.catalogId}`,
       ttl: 300000, // 5 minutes
-      tags: (filters: { catalogId: string }) => [`categories:list:${filters.catalogId}`, 'categories:list']
+      tags: (filters: { catalogId: string }) => [
+        `categories:list:${filters.catalogId}`,
+        'categories:list',
+      ],
     }
   );
 
@@ -219,13 +239,15 @@ export class CachedProductService {
   static getCategoryTree: (catalogId: string) => Promise<unknown[]> = withQueryCache(
     async (catalogId: string) => {
       const primaryProvider = await getProductDataProvider();
-      const repository = await import('@/features/products/services/category-repository').then(m => m.getCategoryRepository(primaryProvider));
+      const repository = await import('@/features/products/services/category-repository').then(
+        (m) => m.getCategoryRepository(primaryProvider)
+      );
       return repository.getCategoryTree(catalogId);
     },
     {
       keyGenerator: (catalogId: string) => `categories:tree:${catalogId}`,
       ttl: 300000, // 5 minutes
-      tags: (catalogId: string) => [`categories:tree:${catalogId}`, 'categories:list']
+      tags: (catalogId: string) => [`categories:tree:${catalogId}`, 'categories:list'],
     }
   );
 
@@ -256,13 +278,13 @@ export function withCacheInvalidation<TArgs extends unknown[], TResult>(
 ): (...args: TArgs) => Promise<TResult> {
   return async (...args: TArgs): Promise<TResult> => {
     const result = await mutationFn(...args);
-    
+
     // Invalidate by tags
     if (invalidationStrategy.tags) {
       const tags = invalidationStrategy.tags(...args);
       tags.forEach((tag: string) => queryCache.invalidateByTag(tag));
     }
-    
+
     // Invalidate by patterns
     if (invalidationStrategy.patterns) {
       const patterns = invalidationStrategy.patterns(...args);
@@ -270,19 +292,18 @@ export function withCacheInvalidation<TArgs extends unknown[], TResult>(
         queryCache.invalidateByPattern(pattern);
       });
     }
-    
+
     // Custom invalidation
     if (invalidationStrategy.custom) {
       invalidationStrategy.custom(...args);
     }
-    
+
     return result;
   };
 }
 
 // Product mutation operations with cache invalidation
 export class CachedProductMutations {
-  
   static createProduct: (data: Record<string, unknown>) => Promise<null> = withCacheInvalidation(
     async (_data: Record<string, unknown>): Promise<null> => {
       // const product = await db.product.create({ data });
@@ -291,21 +312,22 @@ export class CachedProductMutations {
     },
     {
       tags: () => ['products:list', 'products:count'],
-      custom: () => ProductCacheHelpers.invalidateAll()
+      custom: () => ProductCacheHelpers.invalidateAll(),
     }
   );
 
-  static updateProduct: (id: string, data: Record<string, unknown>) => Promise<null> = withCacheInvalidation(
-    async (_id: string, _data: Record<string, unknown>): Promise<null> => {
-      // const product = await db.product.update({ where: { id }, data });
-      // return product;
-      return Promise.resolve(null); // Placeholder
-    },
-    {
-      tags: (id: string) => ProductCacheHelpers.getTags.product(id),
-      custom: (id: string) => ProductCacheHelpers.invalidateProduct(id)
-    }
-  );
+  static updateProduct: (id: string, data: Record<string, unknown>) => Promise<null> =
+    withCacheInvalidation(
+      async (_id: string, _data: Record<string, unknown>): Promise<null> => {
+        // const product = await db.product.update({ where: { id }, data });
+        // return product;
+        return Promise.resolve(null); // Placeholder
+      },
+      {
+        tags: (id: string) => ProductCacheHelpers.getTags.product(id),
+        custom: (id: string) => ProductCacheHelpers.invalidateProduct(id),
+      }
+    );
 
   static deleteProduct: (id: string) => Promise<null> = withCacheInvalidation(
     async (_id: string): Promise<null> => {
@@ -318,7 +340,7 @@ export class CachedProductMutations {
       custom: (id: string) => {
         ProductCacheHelpers.invalidateProduct(id);
         ProductCacheHelpers.invalidateAll();
-      }
+      },
     }
   );
 }

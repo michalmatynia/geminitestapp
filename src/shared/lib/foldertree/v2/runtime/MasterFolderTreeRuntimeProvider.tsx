@@ -75,17 +75,13 @@ export function MasterFolderTreeRuntimeProvider({
     const handleKeyDown = (event: KeyboardEvent): void => {
       if (event.defaultPrevented) return;
       const isUndoShortcut =
-        (event.metaKey || event.ctrlKey) &&
-        !event.shiftKey &&
-        event.key.toLowerCase() === 'z';
+        (event.metaKey || event.ctrlKey) && !event.shiftKey && event.key.toLowerCase() === 'z';
       if (!isUndoShortcut) return;
 
       const target = event.target;
       if (
         target instanceof HTMLElement &&
-        (target.tagName === 'INPUT' ||
-          target.tagName === 'TEXTAREA' ||
-          target.isContentEditable)
+        (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)
       ) {
         return;
       }
@@ -107,9 +103,7 @@ export function MasterFolderTreeRuntimeProvider({
   }, [focusedInstanceId]);
 
   return (
-    <FolderTreeRuntimeContext.Provider value={bus}>
-      {children}
-    </FolderTreeRuntimeContext.Provider>
+    <FolderTreeRuntimeContext.Provider value={bus}>{children}</FolderTreeRuntimeContext.Provider>
   );
 }
 

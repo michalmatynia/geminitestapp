@@ -3,11 +3,17 @@
 import { useMemo, useState, useCallback } from 'react';
 
 import { buildModelProfile } from '@/features/ai/chatbot/utils';
-import type { AgentTeachingAgentRecord, AgentTeachingEmbeddingCollectionRecord } from '@/shared/contracts/agent-teaching';
+import type {
+  AgentTeachingAgentRecord,
+  AgentTeachingEmbeddingCollectionRecord,
+} from '@/shared/contracts/agent-teaching';
 import { useToast } from '@/shared/ui';
 
 import { useAgentTeachingQueriesContext } from '../context/AgentTeachingContext';
-import { useDeleteEmbeddingCollectionMutation, useUpsertEmbeddingCollectionMutation } from '../hooks/useAgentTeachingQueries';
+import {
+  useDeleteEmbeddingCollectionMutation,
+  useUpsertEmbeddingCollectionMutation,
+} from '../hooks/useAgentTeachingQueries';
 
 const isEmbeddingModel = (model: string): boolean => Boolean(buildModelProfile(model).isEmbedding);
 
@@ -34,7 +40,9 @@ export function useAgentTeachingQueriesCollectionsState() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<AgentTeachingEmbeddingCollectionRecord | null>(null);
   const [draft, setDraft] = useState<Partial<AgentTeachingEmbeddingCollectionRecord>>({});
-  const [itemToDelete, setItemToDelete] = useState<AgentTeachingEmbeddingCollectionRecord | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<AgentTeachingEmbeddingCollectionRecord | null>(
+    null
+  );
 
   const openCreate = useCallback(() => {
     setEditing(null);
@@ -79,7 +87,9 @@ export function useAgentTeachingQueriesCollectionsState() {
       toast(editing ? 'Collection updated.' : 'Collection created.', { variant: 'success' });
       closeModal();
     } catch (error) {
-      toast(error instanceof Error ? error.message : 'Failed to save collection.', { variant: 'error' });
+      toast(error instanceof Error ? error.message : 'Failed to save collection.', {
+        variant: 'error',
+      });
     }
   };
 
@@ -89,15 +99,21 @@ export function useAgentTeachingQueriesCollectionsState() {
       await remove({ id: itemToDelete.id });
       toast('Collection deleted.', { variant: 'success' });
     } catch (error) {
-      toast(error instanceof Error ? error.message : 'Failed to delete collection.', { variant: 'error' });
+      toast(error instanceof Error ? error.message : 'Failed to delete collection.', {
+        variant: 'error',
+      });
     } finally {
       setItemToDelete(null);
     }
   };
 
-  const usedByCount = useCallback((collectionId: string): number =>
-    agents.filter((agent: AgentTeachingAgentRecord) => (agent.collectionIds ?? []).includes(collectionId)).length,
-  [agents]);
+  const usedByCount = useCallback(
+    (collectionId: string): number =>
+      agents.filter((agent: AgentTeachingAgentRecord) =>
+        (agent.collectionIds ?? []).includes(collectionId)
+      ).length,
+    [agents]
+  );
 
   return {
     collections,

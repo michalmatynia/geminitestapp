@@ -8,8 +8,6 @@ import type { Db } from 'mongodb';
 import type { MongoClient } from 'mongodb';
 import type { MongoClientOptions } from 'mongodb';
 
-
-
 type MongoClientCtor = new (uri: string, options?: MongoClientOptions) => MongoClient;
 type MongoGlobalState = {
   __mongoClient?: MongoClient;
@@ -44,7 +42,10 @@ const getMongoClientOptions = (): MongoClientOptions => ({
   maxPoolSize: parsePositiveInt(process.env['MONGODB_MAX_POOL_SIZE'], 20),
   minPoolSize: parsePositiveInt(process.env['MONGODB_MIN_POOL_SIZE'], 1),
   maxIdleTimeMS: parsePositiveInt(process.env['MONGODB_MAX_IDLE_TIME_MS'], 60_000),
-  serverSelectionTimeoutMS: parsePositiveInt(process.env['MONGODB_SERVER_SELECTION_TIMEOUT_MS'], 5_000),
+  serverSelectionTimeoutMS: parsePositiveInt(
+    process.env['MONGODB_SERVER_SELECTION_TIMEOUT_MS'],
+    5_000
+  ),
   connectTimeoutMS: parsePositiveInt(process.env['MONGODB_CONNECT_TIMEOUT_MS'], 5_000),
   socketTimeoutMS: parsePositiveInt(process.env['MONGODB_SOCKET_TIMEOUT_MS'], 120_000),
   retryWrites: true,

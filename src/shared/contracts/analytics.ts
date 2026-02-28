@@ -87,12 +87,15 @@ export const analyticsEventSchema = dtoBaseSchema.extend({
   ipHash: z.string().nullable().optional(),
   ipMasked: z.string().nullable().optional(),
   userAgent: z.string().nullable().optional(),
-  ua: z.object({
-    browser: z.string().nullable().optional(),
-    os: z.string().nullable().optional(),
-    device: z.string().nullable().optional(),
-    isBot: z.boolean().nullable().optional(),
-  }).nullable().optional(),
+  ua: z
+    .object({
+      browser: z.string().nullable().optional(),
+      os: z.string().nullable().optional(),
+      device: z.string().nullable().optional(),
+      isBot: z.boolean().nullable().optional(),
+    })
+    .nullable()
+    .optional(),
   country: z.string().nullable().optional(),
   region: z.string().nullable().optional(),
   city: z.string().nullable().optional(),

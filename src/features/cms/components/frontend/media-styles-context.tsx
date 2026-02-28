@@ -12,9 +12,7 @@ export function MediaStylesProvider({
   children: React.ReactNode;
 }): React.ReactNode {
   return (
-    <MediaStylesContext.Provider value={value ?? null}>
-      {children}
-    </MediaStylesContext.Provider>
+    <MediaStylesContext.Provider value={value ?? null}>{children}</MediaStylesContext.Provider>
   );
 }
 

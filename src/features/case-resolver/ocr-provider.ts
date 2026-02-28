@@ -18,9 +18,7 @@ const isAnthropicModelId = (modelName: string): boolean =>
 const isGeminiModelId = (modelName: string): boolean =>
   modelName.toLowerCase().startsWith('gemini');
 
-export const detectCaseResolverOcrProvider = (
-  modelName: string
-): CaseResolverOcrProvider => {
+export const detectCaseResolverOcrProvider = (modelName: string): CaseResolverOcrProvider => {
   const normalized = modelName.trim();
   if (!normalized) return 'ollama';
   if (isAnthropicModelId(normalized)) return 'anthropic';
@@ -29,9 +27,7 @@ export const detectCaseResolverOcrProvider = (
   return 'ollama';
 };
 
-export const formatCaseResolverOcrProviderLabel = (
-  provider: CaseResolverOcrProvider
-): string => {
+export const formatCaseResolverOcrProviderLabel = (provider: CaseResolverOcrProvider): string => {
   switch (provider) {
     case 'openai':
       return 'OpenAI';

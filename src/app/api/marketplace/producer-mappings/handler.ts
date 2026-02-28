@@ -44,9 +44,7 @@ export async function POST_handler(
   const { connectionId, externalProducerId, internalProducerId } = body;
 
   if (!connectionId || !externalProducerId || !internalProducerId) {
-    throw badRequestError(
-      'connectionId, externalProducerId, and internalProducerId are required'
-    );
+    throw badRequestError('connectionId, externalProducerId, and internalProducerId are required');
   }
 
   const repo = getProducerMappingRepository();

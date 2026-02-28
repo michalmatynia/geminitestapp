@@ -6,7 +6,12 @@ import { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import { AgentAuditLog, AgentBrowserLog, AgentSnapshot } from '@/shared/contracts/chatbot';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-import { useAgentAudits, useAgentLogs, useAgentRuns, useAgentSnapshots } from '../hooks/useAgentRunsQueries';
+import {
+  useAgentAudits,
+  useAgentLogs,
+  useAgentRuns,
+  useAgentSnapshots,
+} from '../hooks/useAgentRunsQueries';
 
 // --- Granular Contexts ---
 
@@ -65,12 +70,24 @@ export const useAgentRunContext = (): AgentRunContextType => {
 
 export function AgentRunProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const [selectedAgentRunId, setSelectedAgentRunId] = useState<string | null>(null);
-  const [agentStreamStatus, setAgentStreamStatus] = useState<'idle' | 'connecting' | 'live' | 'error'>('idle');
+  const [agentStreamStatus, setAgentStreamStatus] = useState<
+    'idle' | 'connecting' | 'live' | 'error'
+  >('idle');
 
-  const { data: agentRuns = [], isLoading: isLoadingRuns, refetch: refetchRuns, error: runsError } = useAgentRuns();
-  const { data: agentSnapshots = [], error: snapshotsError } = useAgentSnapshots(selectedAgentRunId);
-  const { data: agentBrowserLogs = [], error: logsError } = useAgentLogs(selectedAgentRunId, { refetchInterval: 5000 });
-  const { data: agentAuditLogs = [], error: auditsError } = useAgentAudits(selectedAgentRunId, { refetchInterval: 5000 });
+  const {
+    data: agentRuns = [],
+    isLoading: isLoadingRuns,
+    refetch: refetchRuns,
+    error: runsError,
+  } = useAgentRuns();
+  const { data: agentSnapshots = [], error: snapshotsError } =
+    useAgentSnapshots(selectedAgentRunId);
+  const { data: agentBrowserLogs = [], error: logsError } = useAgentLogs(selectedAgentRunId, {
+    refetchInterval: 5000,
+  });
+  const { data: agentAuditLogs = [], error: auditsError } = useAgentAudits(selectedAgentRunId, {
+    refetchInterval: 5000,
+  });
 
   const error = runsError || snapshotsError || logsError || auditsError || null;
 
@@ -84,21 +101,25 @@ export function AgentRunProvider({ children }: { children: ReactNode }): React.J
       setAgentStreamStatus('idle');
       return;
     }
-     
+
     setAgentStreamStatus('connecting');
     const source = new EventSource(`/api/agentcreator/agent/${selectedAgentRunId}/stream`);
-    
+
     source.onmessage = (): void => {
       try {
         setAgentStreamStatus('live');
       } catch (err: unknown) {
-        logClientError(err, { context: { source: 'AgentRunContext', action: 'onmessage', runId: selectedAgentRunId } });
+        logClientError(err, {
+          context: { source: 'AgentRunContext', action: 'onmessage', runId: selectedAgentRunId },
+        });
         setAgentStreamStatus('error');
       }
     };
-    
+
     source.onerror = (err: Event): void => {
-      logClientError(err, { context: { source: 'AgentRunContext', action: 'onerror', runId: selectedAgentRunId } });
+      logClientError(err, {
+        context: { source: 'AgentRunContext', action: 'onerror', runId: selectedAgentRunId },
+      });
       setAgentStreamStatus('error');
       source.close();
     };
@@ -108,40 +129,50 @@ export function AgentRunProvider({ children }: { children: ReactNode }): React.J
     };
   }, [selectedAgentRunId]);
 
-  const listValue = useMemo<AgentRunListData>(() => ({
-    agentRuns,
-    isLoadingRuns,
-    refetchRuns,
-    error,
-  }), [agentRuns, isLoadingRuns, refetchRuns, error]);
+  const listValue = useMemo<AgentRunListData>(
+    () => ({
+      agentRuns,
+      isLoadingRuns,
+      refetchRuns,
+      error,
+    }),
+    [agentRuns, isLoadingRuns, refetchRuns, error]
+  );
 
-  const selectionValue = useMemo<AgentRunSelectionData>(() => ({
-    selectedAgentRunId,
-    setSelectedAgentRunId,
-    selectedAgentRun,
-  }), [selectedAgentRunId, selectedAgentRun]);
+  const selectionValue = useMemo<AgentRunSelectionData>(
+    () => ({
+      selectedAgentRunId,
+      setSelectedAgentRunId,
+      selectedAgentRun,
+    }),
+    [selectedAgentRunId, selectedAgentRun]
+  );
 
-  const detailValue = useMemo<AgentRunDetailData>(() => ({
-    agentSnapshots,
-    agentBrowserLogs,
-    agentAuditLogs,
-    agentStreamStatus,
-    setAgentStreamStatus,
-  }), [agentSnapshots, agentBrowserLogs, agentAuditLogs, agentStreamStatus]);
+  const detailValue = useMemo<AgentRunDetailData>(
+    () => ({
+      agentSnapshots,
+      agentBrowserLogs,
+      agentAuditLogs,
+      agentStreamStatus,
+      setAgentStreamStatus,
+    }),
+    [agentSnapshots, agentBrowserLogs, agentAuditLogs, agentStreamStatus]
+  );
 
-  const aggregatedValue = useMemo((): AgentRunContextType => ({
-    ...listValue,
-    ...selectionValue,
-    ...detailValue,
-  }), [listValue, selectionValue, detailValue]);
+  const aggregatedValue = useMemo(
+    (): AgentRunContextType => ({
+      ...listValue,
+      ...selectionValue,
+      ...detailValue,
+    }),
+    [listValue, selectionValue, detailValue]
+  );
 
   return (
     <RunListContext.Provider value={listValue}>
       <RunSelectionContext.Provider value={selectionValue}>
         <RunDetailContext.Provider value={detailValue}>
-          <AgentRunContext.Provider value={aggregatedValue}>
-            {children}
-          </AgentRunContext.Provider>
+          <AgentRunContext.Provider value={aggregatedValue}>{children}</AgentRunContext.Provider>
         </RunDetailContext.Provider>
       </RunSelectionContext.Provider>
     </RunListContext.Provider>

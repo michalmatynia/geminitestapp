@@ -15,7 +15,6 @@ import {
   fetchChatbotModels,
 } from '../api';
 
-
 const normalizeModelList = (payload: unknown): string[] => {
   if (Array.isArray(payload)) {
     return payload
@@ -42,7 +41,9 @@ const normalizeModelList = (payload: unknown): string[] => {
 /**
  * Query hook for fetching all chatbot sessions
  */
-export function useChatbotSessions(options?: { enabled?: boolean }): ListQuery<ChatbotSessionListItem> {
+export function useChatbotSessions(options?: {
+  enabled?: boolean;
+}): ListQuery<ChatbotSessionListItem> {
   const queryKey = chatbotKeys.sessions();
   return createListQueryV2({
     queryKey,
@@ -65,7 +66,10 @@ export function useChatbotSessions(options?: { enabled?: boolean }): ListQuery<C
 /**
  * Query hook for fetching session IDs only (lightweight)
  */
-export function useChatbotSessionIds(query?: string, options?: { enabled?: boolean }): ListQuery<string> {
+export function useChatbotSessionIds(
+  query?: string,
+  options?: { enabled?: boolean }
+): ListQuery<string> {
   const queryKey = chatbotKeys.sessionIds(query);
   return createListQueryV2({
     queryKey,
@@ -91,8 +95,13 @@ export function useChatbotSessionIds(query?: string, options?: { enabled?: boole
 /**
  * Query hook for fetching a single chatbot session with messages
  */
-export function useChatbotSession(sessionId: string | null, options?: { enabled?: boolean }): SingleQuery<ChatSession | null> {
-  const queryKey = sessionId ? chatbotKeys.session(sessionId) : [...chatbotKeys.all, 'session', 'none'];
+export function useChatbotSession(
+  sessionId: string | null,
+  options?: { enabled?: boolean }
+): SingleQuery<ChatSession | null> {
+  const queryKey = sessionId
+    ? chatbotKeys.session(sessionId)
+    : [...chatbotKeys.all, 'session', 'none'];
   return createSingleQueryV2({
     id: sessionId,
     queryKey,
@@ -115,12 +124,16 @@ export function useChatbotSession(sessionId: string | null, options?: { enabled?
 /**
  * Query hook for fetching chatbot settings
  */
-export function useChatbotSettings(key?: string, options?: { enabled?: boolean }): SingleQuery<{ settings?: { settings?: unknown } | null }> {
+export function useChatbotSettings(
+  key?: string,
+  options?: { enabled?: boolean }
+): SingleQuery<{ settings?: { settings?: unknown } | null }> {
   const queryKey = chatbotKeys.settings.all(key);
   return createSingleQueryV2({
     id: key,
     queryKey,
-    queryFn: (): Promise<{ settings?: { settings?: unknown } | null }> => key ? fetchChatbotSettings(key) : Promise.resolve({ settings: null }),
+    queryFn: (): Promise<{ settings?: { settings?: unknown } | null }> =>
+      key ? fetchChatbotSettings(key) : Promise.resolve({ settings: null }),
     enabled: (options?.enabled ?? true) && !!key,
     meta: {
       source: 'chatbot.hooks.useChatbotSettings',
@@ -136,7 +149,10 @@ export function useChatbotSettings(key?: string, options?: { enabled?: boolean }
 /**
  * Query hook for fetching available models from the chatbot API
  */
-export function useChatbotModels(options?: { enabled?: boolean; staleTime?: number }): ListQuery<string> {
+export function useChatbotModels(options?: {
+  enabled?: boolean;
+  staleTime?: number;
+}): ListQuery<string> {
   const queryKey = brainKeys.models();
   return createListQueryV2<string, string[]>({
     queryKey,
@@ -165,7 +181,10 @@ export function useChatbotModels(options?: { enabled?: boolean; staleTime?: numb
 /**
  * Query hook for fetching Ollama models from a custom base URL
  */
-export function useOllamaModels(baseUrl: string, options?: { enabled?: boolean }): ListQuery<string> {
+export function useOllamaModels(
+  baseUrl: string,
+  options?: { enabled?: boolean }
+): ListQuery<string> {
   const queryKey = chatbotKeys.ollamaModels(baseUrl);
   return createListQueryV2({
     queryKey,
@@ -186,7 +205,10 @@ export function useOllamaModels(baseUrl: string, options?: { enabled?: boolean }
 /**
  * Query hook for fetching chatbot memory/context
  */
-export function useChatbotMemory(query?: string, options?: { enabled?: boolean }): SingleQuery<unknown> {
+export function useChatbotMemory(
+  query?: string,
+  options?: { enabled?: boolean }
+): SingleQuery<unknown> {
   const queryKey = chatbotKeys.memory(query);
   return createSingleQueryV2({
     id: query || 'global',

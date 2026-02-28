@@ -29,14 +29,13 @@ import { cmsDomainCreateSchema, cmsDomainUpdateSchema } from '../../validations/
 
 import type { ColumnDef } from '@tanstack/react-table';
 
-
 export default function ZonesPage(): React.JSX.Element {
   const domainsQuery = useCmsDomains();
   const createDomain = useCreateCmsDomain();
   const deleteDomain = useDeleteCmsDomain();
   const updateDomain = useUpdateCmsDomain();
   const { toast } = useToast();
-  
+
   const domains = useMemo((): CmsDomain[] => domainsQuery.data ?? [], [domainsQuery.data]);
   const [domain, setDomain] = useState('');
   const [error, setError] = useState('');
@@ -47,7 +46,7 @@ export default function ZonesPage(): React.JSX.Element {
     const validation = validateFormData(
       cmsDomainCreateSchema,
       { domain },
-      'Enter a domain or hostname.',
+      'Enter a domain or hostname.'
     );
     if (!validation.success) {
       setError(validation.firstError);
@@ -74,7 +73,9 @@ export default function ZonesPage(): React.JSX.Element {
       toast('Zone removed successfully.', { variant: 'success' });
       setZoneToDelete(null);
     } catch (err: unknown) {
-      logClientError(err, { context: { source: 'ZonesPage', action: 'deleteDomain', domainId: id } });
+      logClientError(err, {
+        context: { source: 'ZonesPage', action: 'deleteDomain', domainId: id },
+      });
       toast(err instanceof Error ? err.message : 'Failed to delete domain.', { variant: 'error' });
     }
   };
@@ -84,7 +85,7 @@ export default function ZonesPage(): React.JSX.Element {
     const validation = validateFormData(
       cmsDomainUpdateSchema,
       { aliasOf },
-      'Alias selection is invalid.',
+      'Alias selection is invalid.'
     );
     if (!validation.success) {
       setError(validation.firstError);
@@ -92,80 +93,107 @@ export default function ZonesPage(): React.JSX.Element {
     }
 
     try {
-      const input = validation.data.aliasOf === undefined ? {} : { aliasOf: validation.data.aliasOf };
+      const input =
+        validation.data.aliasOf === undefined ? {} : { aliasOf: validation.data.aliasOf };
       await updateDomain.mutateAsync({ id, input });
       toast('Zone routing updated.', { variant: 'success' });
     } catch (err: unknown) {
-      logClientError(err, { context: { source: 'ZonesPage', action: 'updateAlias', domainId: id, aliasOf } });
+      logClientError(err, {
+        context: { source: 'ZonesPage', action: 'updateAlias', domainId: id, aliasOf },
+      });
       toast(err instanceof Error ? err.message : 'Failed to update alias.', { variant: 'error' });
     }
   };
 
-  const columns = useMemo<ColumnDef<CmsDomain>[]>(() => [
-    {
-      accessorKey: 'domain',
-      header: 'Hostname / URL',
-      cell: ({ row }) => (
-        <div className='flex items-center gap-3'>
-          <div className='flex h-8 w-8 items-center justify-center rounded bg-emerald-500/10 text-emerald-400'>
-            <Globe className='size-4' />
+  const columns = useMemo<ColumnDef<CmsDomain>[]>(
+    () => [
+      {
+        accessorKey: 'domain',
+        header: 'Hostname / URL',
+        cell: ({ row }) => (
+          <div className='flex items-center gap-3'>
+            <div className='flex h-8 w-8 items-center justify-center rounded bg-emerald-500/10 text-emerald-400'>
+              <Globe className='size-4' />
+            </div>
+            <div className='flex flex-col'>
+              <span className='font-medium text-gray-200'>{row.original.domain}</span>
+              <span className='text-[10px] text-gray-500 font-mono uppercase tracking-tighter'>
+                {row.original.id}
+              </span>
+            </div>
           </div>
-          <div className='flex flex-col'>
-            <span className='font-medium text-gray-200'>{row.original.domain}</span>
-            <span className='text-[10px] text-gray-500 font-mono uppercase tracking-tighter'>{row.original.id}</span>
+        ),
+      },
+      {
+        id: 'type',
+        header: 'Routing Policy',
+        cell: ({ row }) => {
+          if (!row.original.aliasOf)
+            return (
+              <StatusBadge
+                status='Independent Zone'
+                variant='info'
+                size='sm'
+                className='font-bold'
+              />
+            );
+          const target = domains.find((d) => d.id === row.original.aliasOf);
+          return (
+            <div className='flex flex-col gap-1'>
+              <StatusBadge
+                status='Shared Context'
+                variant='warning'
+                size='sm'
+                className='font-bold'
+              />
+              <span className='text-[10px] text-gray-500'>
+                Inherits slugs from {target?.domain ?? 'another zone'}
+              </span>
+            </div>
+          );
+        },
+      },
+      {
+        id: 'alias',
+        header: 'Alias Configuration',
+        cell: ({ row }) => (
+          <SelectSimple
+            size='xs'
+            value={row.original.aliasOf ?? 'none'}
+            onValueChange={(val) => {
+              void handleAliasChange(row.original.id, val);
+            }}
+            options={[
+              { value: 'none', label: 'Keep Independent' },
+              ...domains
+                .filter((d) => d.id !== row.original.id)
+                .map((d) => ({ value: d.id, label: `Alias of ${d.domain}` })),
+            ]}
+            className='h-7 w-44 text-[10px]'
+          />
+        ),
+      },
+      {
+        id: 'actions',
+        header: () => <div className='text-right'>Tools</div>,
+        cell: ({ row }) => (
+          <div className='flex justify-end'>
+            <Button
+              variant='ghost'
+              size='xs'
+              className='h-7 w-7 p-0 text-rose-400 hover:text-rose-300'
+              onClick={() => {
+                setZoneToDelete(row.original.id);
+              }}
+            >
+              <Trash2 className='size-3.5' />
+            </Button>
           </div>
-        </div>
-      ),
-    },
-    {
-      id: 'type',
-      header: 'Routing Policy',
-      cell: ({ row }) => {
-        if (!row.original.aliasOf) return <StatusBadge status='Independent Zone' variant='info' size='sm' className='font-bold' />;
-        const target = domains.find(d => d.id === row.original.aliasOf);
-        return (
-          <div className='flex flex-col gap-1'>
-            <StatusBadge status='Shared Context' variant='warning' size='sm' className='font-bold' />
-            <span className='text-[10px] text-gray-500'>Inherits slugs from {target?.domain ?? 'another zone'}</span>
-          </div>
-        );
-      }
-    },
-    {
-      id: 'alias',
-      header: 'Alias Configuration',
-      cell: ({ row }) => (
-        <SelectSimple
-          size='xs'
-          value={row.original.aliasOf ?? 'none'}
-          onValueChange={(val) => { void handleAliasChange(row.original.id, val); }}
-          options={[
-            { value: 'none', label: 'Keep Independent' },
-            ...domains
-              .filter(d => d.id !== row.original.id)
-              .map(d => ({ value: d.id, label: `Alias of ${d.domain}` })),
-          ]}
-          className='h-7 w-44 text-[10px]'
-        />
-      ),
-    },
-    {
-      id: 'actions',
-      header: () => <div className='text-right'>Tools</div>,
-      cell: ({ row }) => (
-        <div className='flex justify-end'>
-          <Button 
-            variant='ghost' 
-            size='xs' 
-            className='h-7 w-7 p-0 text-rose-400 hover:text-rose-300'
-            onClick={() => { setZoneToDelete(row.original.id); }}
-          >
-            <Trash2 className='size-3.5' />
-          </Button>
-        </div>
-      )
-    }
-  ], [domains, handleAliasChange]);
+        ),
+      },
+    ],
+    [domains, handleAliasChange]
+  );
 
   return (
     <div className='mx-auto w-full max-w-none py-10 space-y-6'>
@@ -175,12 +203,8 @@ export default function ZonesPage(): React.JSX.Element {
       />
 
       <FormSection title='Provision New Zone' className='p-6'>
-
         <form onSubmit={handleSubmit} className='flex items-end gap-4'>
-
           <FormField label='Hostname / Domain' error={error} className='flex-1'>
-
-      
             <Input
               value={domain}
               onChange={(e) => setDomain(e.target.value)}

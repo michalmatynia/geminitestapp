@@ -1,16 +1,13 @@
 import { ObjectId } from 'mongodb';
 import { randomUUID } from 'crypto';
 
-
-import type { 
-  ParameterRepository, 
+import type {
+  ParameterRepository,
   ParameterFilters,
   ParameterCreateInput,
   ParameterUpdateInput,
 } from '@/shared/contracts/products';
-import type { 
-  ProductParameter 
-} from '@/shared/contracts/products';
+import type { ProductParameter } from '@/shared/contracts/products';
 import { internalError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
@@ -88,13 +85,19 @@ export const mongoParameterRepository: ParameterRepository = {
       ] as Filter<ProductParameterDoc>[];
     }
 
-    const params = await db.collection<ProductParameterDoc>(COLLECTION).find(query).sort({ name_en: 1 }).toArray();
+    const params = await db
+      .collection<ProductParameterDoc>(COLLECTION)
+      .find(query)
+      .sort({ name_en: 1 })
+      .toArray();
     return params.map(toParameterDomain);
   },
 
   async getParameterById(id: string): Promise<ProductParameter | null> {
     const db = await getMongoDb();
-    const doc = await db.collection<ProductParameterDoc>(COLLECTION).findOne({ _id: new ObjectId(id) });
+    const doc = await db
+      .collection<ProductParameterDoc>(COLLECTION)
+      .findOne({ _id: new ObjectId(id) });
     return doc ? toParameterDomain(doc) : null;
   },
 
@@ -117,22 +120,23 @@ export const mongoParameterRepository: ParameterRepository = {
 
   async updateParameter(id: string, data: ParameterUpdateInput): Promise<ProductParameter> {
     const db = await getMongoDb();
-    
+
     const set: Partial<ProductParameterDoc> = {
       updatedAt: new Date(),
     };
-    
+
     if (data.name_en !== undefined) set.name_en = data.name_en;
     if (data.name_pl !== undefined) set.name_pl = data.name_pl;
     if (data.name_de !== undefined) set.name_de = data.name_de;
-    if (data.selectorType !== undefined) set.selectorType = normalizeSelectorType(data.selectorType);
-    if (data.optionLabels !== undefined) set.optionLabels = normalizeOptionLabels(data.optionLabels);
+    if (data.selectorType !== undefined)
+      set.selectorType = normalizeSelectorType(data.selectorType);
+    if (data.optionLabels !== undefined)
+      set.optionLabels = normalizeOptionLabels(data.optionLabels);
 
-    await db.collection<ProductParameterDoc>(COLLECTION).updateOne(
-      { _id: new ObjectId(id) }, 
-      { $set: set } as UpdateFilter<ProductParameterDoc>
-    );
-    
+    await db
+      .collection<ProductParameterDoc>(COLLECTION)
+      .updateOne({ _id: new ObjectId(id) }, { $set: set } as UpdateFilter<ProductParameterDoc>);
+
     const updated = await this.getParameterById(id);
     if (!updated) throw internalError('Failed to update parameter', { parameterId: id });
     return updated;
@@ -145,14 +149,16 @@ export const mongoParameterRepository: ParameterRepository = {
 
   async findByName(catalogId: string, name_en: string): Promise<ProductParameter | null> {
     const db = await getMongoDb();
-    const doc = await db.collection<ProductParameterDoc>(COLLECTION).findOne({ catalogId, name_en });
+    const doc = await db
+      .collection<ProductParameterDoc>(COLLECTION)
+      .findOne({ catalogId, name_en });
     return doc ? toParameterDomain(doc) : null;
   },
 
   async bulkCreateParameters(data: ParameterCreateInput[]): Promise<ProductParameter[]> {
     const db = await getMongoDb();
     const now = new Date();
-    const docs: ProductParameterDoc[] = data.map(item => ({
+    const docs: ProductParameterDoc[] = data.map((item) => ({
       _id: new ObjectId(),
       id: randomUUID(),
       catalogId: item.catalogId,

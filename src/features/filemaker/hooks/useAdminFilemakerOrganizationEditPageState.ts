@@ -21,9 +21,7 @@ import {
   parseFilemakerEmailParserRulesFromPromptSettings,
   parseFilemakerDatabase,
 } from '../settings';
-import {
-  decodeRouteParam,
-} from '../pages/filemaker-page-utils';
+import { decodeRouteParam } from '../pages/filemaker-page-utils';
 
 import type {
   FilemakerEmail,
@@ -80,10 +78,7 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
   const countries = countriesQuery.data ?? [];
 
   const rawDatabase = settingsStore.get(FILEMAKER_DATABASE_KEY);
-  const database = useMemo(
-    () => parseFilemakerDatabase(rawDatabase),
-    [rawDatabase]
-  );
+  const database = useMemo(() => parseFilemakerDatabase(rawDatabase), [rawDatabase]);
 
   const organization = useMemo(
     () => database.organizations.find((o) => o.id === organizationId) ?? null,
@@ -100,7 +95,11 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
     if (organization) {
       setOrgDraft(organization);
 
-      const addressLinks = getFilemakerAddressLinksForOwner(database, 'organization', organization.id);
+      const addressLinks = getFilemakerAddressLinksForOwner(
+        database,
+        'organization',
+        organization.id
+      );
       const addresses = addressLinks.map((link) => {
         const addr = getFilemakerAddressById(database, link.addressId);
         return {
@@ -122,12 +121,16 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
   }, [organization, database]);
 
   const emails = useMemo(
-    () => (organization ? getFilemakerEmailsForParty(database, 'organization', organization.id) : []),
+    () =>
+      organization ? getFilemakerEmailsForParty(database, 'organization', organization.id) : [],
     [database, organization]
   );
 
   const phoneNumbers = useMemo(
-    () => (organization ? getFilemakerPhoneNumbersForParty(database, 'organization', organization.id) : []),
+    () =>
+      organization
+        ? getFilemakerPhoneNumbersForParty(database, 'organization', organization.id)
+        : [],
     [database, organization]
   );
 
@@ -168,15 +171,21 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
     const promptSettings = settingsStore.get(FILEMAKER_EMAIL_PARSER_PROMPT_SETTINGS_KEY);
     const rules = parseFilemakerEmailParserRulesFromPromptSettings(promptSettings);
 
-    const { database: nextDatabase, createdEmailCount, linkedEmailCount } =
-      parseAndUpsertFilemakerEmailsForParty(database, {
-        partyKind: 'organization',
-        partyId: organization.id,
-        text: emailExtractionText,
-        parserRules: rules,
-      });
+    const {
+      database: nextDatabase,
+      createdEmailCount,
+      linkedEmailCount,
+    } = parseAndUpsertFilemakerEmailsForParty(database, {
+      partyKind: 'organization',
+      partyId: organization.id,
+      text: emailExtractionText,
+      parserRules: rules,
+    });
 
-    await persistDatabase(nextDatabase, `Extracted ${createdEmailCount} new emails and linked ${linkedEmailCount} total.`);
+    await persistDatabase(
+      nextDatabase,
+      `Extracted ${createdEmailCount} new emails and linked ${linkedEmailCount} total.`
+    );
     setEmailExtractionText('');
   }, [database, organization, emailExtractionText, persistDatabase, settingsStore]);
 

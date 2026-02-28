@@ -2,7 +2,17 @@ import React, { useMemo, useState } from 'react';
 
 import type { AiNode, NodeDefinition } from '@/shared/lib/ai-paths';
 import { createParserMappings, formatRuntimeValue } from '@/shared/lib/ai-paths';
-import { Button, Input, Label, Textarea, StatusBadge, Card, Badge, EmptyState, Hint } from '@/shared/ui';
+import {
+  Button,
+  Input,
+  Label,
+  Textarea,
+  StatusBadge,
+  Card,
+  Badge,
+  EmptyState,
+  Hint,
+} from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import {
@@ -16,7 +26,7 @@ import {
   useRuntimeActions,
 } from '../context';
 import { useAiPathsSettingsOrchestrator } from './ai-paths-settings/AiPathsSettingsOrchestratorContext';
-import { formatPlaceholderLabel, formatPortLabel } from '../utils/ui-utils';
+import { formatPlaceholderLabel, formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
 
 type PaletteMode = 'data' | 'sound';
 
@@ -46,7 +56,15 @@ const DATA_PALETTE_GROUPS: PaletteGroup[] = [
   { title: 'Context + Parsing', types: ['context', 'parser'], icon: '📦' },
   {
     title: 'Transforms',
-    types: ['mapper', 'mutator', 'string_mutator', 'validator', 'validation_pattern', 'regex', 'iterator'],
+    types: [
+      'mapper',
+      'mutator',
+      'string_mutator',
+      'validator',
+      'validation_pattern',
+      'regex',
+      'iterator',
+    ],
     icon: '🧭',
   },
   {
@@ -55,7 +73,11 @@ const DATA_PALETTE_GROUPS: PaletteGroup[] = [
     icon: '🧪',
   },
   { title: 'Bundles + Templates', types: ['bundle', 'template'], icon: '🧩' },
-  { title: 'IO + Fetch', types: ['http', 'api_advanced', 'playwright', 'database', 'db_schema'], icon: '🌐' },
+  {
+    title: 'IO + Fetch',
+    types: ['http', 'api_advanced', 'playwright', 'database', 'db_schema'],
+    icon: '🌐',
+  },
   { title: 'Prompts + Models', types: ['prompt', 'model'], icon: '🤖' },
   { title: 'Agents', types: ['agent', 'learner_agent'], icon: '🧠' },
   { title: 'Viewers', types: ['viewer', 'notification'], icon: '👁' },
@@ -66,7 +88,17 @@ const SOUND_PALETTE_GROUPS: PaletteGroup[] = [
   { title: 'Sound Outputs', types: ['audio_speaker', 'viewer'], icon: '🔊' },
   {
     title: 'Signal Control',
-    types: ['trigger', 'fetcher', 'simulation', 'constant', 'math', 'gate', 'router', 'delay', 'bundle'],
+    types: [
+      'trigger',
+      'fetcher',
+      'simulation',
+      'constant',
+      'math',
+      'gate',
+      'router',
+      'delay',
+      'bundle',
+    ],
     icon: '🎛',
   },
 ];
@@ -98,13 +130,14 @@ export function CanvasSidebar(): React.JSX.Element {
   const runStatus = runtimeRunStatus;
 
   // --- Derived ---
-  const selectedNode = useMemo(() => 
-    selectedNodeId ? nodes.find(n => n.id === selectedNodeId) ?? null : null
-  , [nodes, selectedNodeId]);
+  const selectedNode = useMemo(
+    () => (selectedNodeId ? (nodes.find((n) => n.id === selectedNodeId) ?? null) : null),
+    [nodes, selectedNodeId]
+  );
 
   const selectedIsScheduledTrigger =
     selectedNode?.type === 'trigger' && selectedNode.config?.trigger?.event === 'scheduled_run';
-  
+
   const showRunControls = executionMode === 'local';
   const runStatusLabel =
     runStatus === 'running'
@@ -140,7 +173,10 @@ export function CanvasSidebar(): React.JSX.Element {
           });
           return { group, items };
         })
-        .filter((entry: { group: PaletteGroup; items: NodeDefinition[] }): boolean => entry.items.length > 0),
+        .filter(
+          (entry: { group: PaletteGroup; items: NodeDefinition[] }): boolean =>
+            entry.items.length > 0
+        ),
     [activePaletteGroups, isPaletteSearchActive, normalizedPaletteSearch, palette]
   );
   const totalFilteredPaletteItems = useMemo(
@@ -155,12 +191,11 @@ export function CanvasSidebar(): React.JSX.Element {
 
   return (
     <div className='space-y-4'>
-      <Card
-        className='border-border/60 bg-card/40 p-4'
-        data-edge-panel
-      >
+      <Card className='border-border/60 bg-card/40 p-4' data-edge-panel>
         <div className='mb-3 flex items-center justify-between'>
-          <Hint size='xs' uppercase={false} className='font-semibold text-white'>Node Palette</Hint>
+          <Hint size='xs' uppercase={false} className='font-semibold text-white'>
+            Node Palette
+          </Hint>
           <button
             data-doc-id='palette_toggle'
             type='button'
@@ -257,7 +292,12 @@ export function CanvasSidebar(): React.JSX.Element {
                         viewBox='0 0 24 24'
                         stroke='currentColor'
                       >
-                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 9l-7 7-7-7' />
+                        <path
+                          strokeLinecap='round'
+                          strokeLinejoin='round'
+                          strokeWidth={2}
+                          d='M19 9l-7 7-7-7'
+                        />
                       </svg>
                     </button>
                     {isExpanded && (
@@ -273,15 +313,25 @@ export function CanvasSidebar(): React.JSX.Element {
                           >
                             {((): React.JSX.Element => {
                               const isScheduledTrigger =
-                              node.type === 'trigger' && node.config?.trigger?.event === 'scheduled_run';
+                                node.type === 'trigger' &&
+                                node.config?.trigger?.event === 'scheduled_run';
                               return (
                                 <div className='flex items-center justify-between gap-2'>
-                                  <Hint size='xs' uppercase={false} className='font-semibold text-white'>
+                                  <Hint
+                                    size='xs'
+                                    uppercase={false}
+                                    className='font-semibold text-white'
+                                  >
                                     {node.title}
                                   </Hint>
                                   <div className='flex items-center gap-1'>
                                     {isScheduledTrigger ? (
-                                      <StatusBadge status='Scheduled' variant='warning' size='sm' className='font-bold h-4 px-1.5' />
+                                      <StatusBadge
+                                        status='Scheduled'
+                                        variant='warning'
+                                        size='sm'
+                                        className='font-bold h-4 px-1.5'
+                                      />
                                     ) : null}
                                     <span className='text-[10px] uppercase text-gray-500'>
                                       {node.type}
@@ -290,9 +340,7 @@ export function CanvasSidebar(): React.JSX.Element {
                                 </div>
                               );
                             })()}
-                            <p className='mt-1 text-[11px] text-gray-400'>
-                              {node.description}
-                            </p>
+                            <p className='mt-1 text-[11px] text-gray-400'>{node.description}</p>
                           </div>
                         ))}
                       </div>
@@ -304,23 +352,31 @@ export function CanvasSidebar(): React.JSX.Element {
           </div>
         )}
       </Card>
-            
-                  
+
       {!selectedEdgeId && (
         <Card className='border-border/60 bg-card/40 p-4'>
-          <Hint size='xs' uppercase={false} className='mb-3 font-semibold text-white'>Inspector</Hint>          {selectedNode ? (
-      
+          <Hint size='xs' uppercase={false} className='mb-3 font-semibold text-white'>
+            Inspector
+          </Hint>{' '}
+          {selectedNode ? (
             <div className='space-y-3 text-xs text-gray-300'>
-              <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/50 text-[11px] text-gray-400'>
+              <Card
+                variant='subtle-compact'
+                padding='sm'
+                className='border-border/60 bg-card/50 text-[11px] text-gray-400'
+              >
                 <div className='flex items-center justify-between'>
                   <span className='uppercase text-gray-500'>Type</span>
                   <div className='flex items-center gap-1'>
                     {selectedIsScheduledTrigger ? (
-                      <StatusBadge status='Scheduled' variant='warning' size='sm' className='font-bold h-4 px-1.5' />
+                      <StatusBadge
+                        status='Scheduled'
+                        variant='warning'
+                        size='sm'
+                        className='font-bold h-4 px-1.5'
+                      />
                     ) : null}
-                    <span className='text-[10px] uppercase text-gray-300'>
-                      {selectedNode.type}
-                    </span>
+                    <span className='text-[10px] uppercase text-gray-300'>{selectedNode.type}</span>
                   </div>
                 </div>
               </Card>
@@ -331,7 +387,9 @@ export function CanvasSidebar(): React.JSX.Element {
                     variant='success'
                     size='sm'
                     type='button'
-                    onClick={(event) => { void fireTrigger(selectedNode, event); }}
+                    onClick={(event) => {
+                      void fireTrigger(selectedNode, event);
+                    }}
                   >
                     Fire Trigger
                   </Button>
@@ -341,7 +399,9 @@ export function CanvasSidebar(): React.JSX.Element {
                       variant='info'
                       size='sm'
                       type='button'
-                      onClick={(event) => { void fireTriggerPersistent(selectedNode, event); }}
+                      onClick={(event) => {
+                        void fireTriggerPersistent(selectedNode, event);
+                      }}
                     >
                       Queue Persistent Run
                     </Button>
@@ -389,7 +449,11 @@ export function CanvasSidebar(): React.JSX.Element {
                   }}
                 />
               </div>
-              <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/50 text-[11px] text-gray-400'>
+              <Card
+                variant='subtle-compact'
+                padding='sm'
+                className='border-border/60 bg-card/50 text-[11px] text-gray-400'
+              >
                 Inputs:{' '}
                 {selectedNode.inputs.map((port: string) => formatPortLabel(port)).join(', ') ||
                   'None'}{' '}
@@ -398,70 +462,69 @@ export function CanvasSidebar(): React.JSX.Element {
                 {selectedNode.outputs.map((port: string) => formatPortLabel(port)).join(', ') ||
                   'None'}
               </Card>
-              {selectedNode.type === 'prompt' && ((): React.JSX.Element | null => {
-                const incomingEdges = edges.filter((edge) => edge.to === selectedNode.id);
-                const inputPorts = incomingEdges
-                  .map((edge) => edge.toPort)
-                  .filter((port: string | null | undefined): port is string => Boolean(port));
-                const bundleKeys = new Set<string>();
-                incomingEdges.forEach((edge) => {
-                  if (edge.toPort !== 'bundle') return;
-                  const fromNode = nodes.find((node) => node.id === edge.from);
-                  if (!fromNode) return;
-                  if (fromNode.type === 'parser') {
-                    const mappings =
-                      fromNode.config?.parser?.mappings ??
-                      createParserMappings(fromNode.outputs);
-                    Object.keys(mappings).forEach((key: string) => {
-                      const trimmed = key.trim();
-                      if (trimmed) bundleKeys.add(trimmed);
-                    });
-                    return;
-                  }
-                  if (fromNode.type === 'bundle') {
-                    fromNode.inputs.forEach((port: string) => {
-                      const trimmed = port.trim();
-                      if (trimmed) bundleKeys.add(trimmed);
-                    });
-                  }
-                  if (fromNode.type === 'mapper') {
-                    const mapperOutputs =
-                      fromNode.config?.mapper?.outputs ?? fromNode.outputs;
-                    mapperOutputs.forEach((output: string) => {
-                      const trimmed = output.trim();
-                      if (trimmed) bundleKeys.add(trimmed);
-                    });
-                  }
-                });
-                const directPlaceholders = inputPorts.filter((port) => port !== 'bundle');
-                if (bundleKeys.size === 0 && directPlaceholders.length === 0) return null;
-                return (
-                  <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/50 text-[11px] text-gray-400'>
-                    <div className='text-gray-300'>Prompt placeholders</div>
-                    {bundleKeys.size > 0 && (
-                      <div className='mt-2 flex flex-wrap gap-2'>
-                        {Array.from(bundleKeys).map((key) => (
-                          <Badge
-                            key={key}
-                            variant='outline'
-                            className='text-[10px] font-normal'
-                          >
-                            {formatPlaceholderLabel(key)}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-                    {directPlaceholders.length > 0 && (
-                      <div className='mt-2 text-[11px] text-gray-500'>
-                        Direct inputs:{' '}
-                        {directPlaceholders
-                          .map((port) => formatPlaceholderLabel(port))
-                          .join(', ')}
-                      </div>
-                    )}
-                  </Card>
-                );
-              })()}
+              {selectedNode.type === 'prompt' &&
+                ((): React.JSX.Element | null => {
+                  const incomingEdges = edges.filter((edge) => edge.to === selectedNode.id);
+                  const inputPorts = incomingEdges
+                    .map((edge) => edge.toPort)
+                    .filter((port: string | null | undefined): port is string => Boolean(port));
+                  const bundleKeys = new Set<string>();
+                  incomingEdges.forEach((edge) => {
+                    if (edge.toPort !== 'bundle') return;
+                    const fromNode = nodes.find((node) => node.id === edge.from);
+                    if (!fromNode) return;
+                    if (fromNode.type === 'parser') {
+                      const mappings =
+                        fromNode.config?.parser?.mappings ?? createParserMappings(fromNode.outputs);
+                      Object.keys(mappings).forEach((key: string) => {
+                        const trimmed = key.trim();
+                        if (trimmed) bundleKeys.add(trimmed);
+                      });
+                      return;
+                    }
+                    if (fromNode.type === 'bundle') {
+                      fromNode.inputs.forEach((port: string) => {
+                        const trimmed = port.trim();
+                        if (trimmed) bundleKeys.add(trimmed);
+                      });
+                    }
+                    if (fromNode.type === 'mapper') {
+                      const mapperOutputs = fromNode.config?.mapper?.outputs ?? fromNode.outputs;
+                      mapperOutputs.forEach((output: string) => {
+                        const trimmed = output.trim();
+                        if (trimmed) bundleKeys.add(trimmed);
+                      });
+                    }
+                  });
+                  const directPlaceholders = inputPorts.filter((port) => port !== 'bundle');
+                  if (bundleKeys.size === 0 && directPlaceholders.length === 0) return null;
+                  return (
+                    <Card
+                      variant='subtle-compact'
+                      padding='sm'
+                      className='border-border/60 bg-card/50 text-[11px] text-gray-400'
+                    >
+                      <div className='text-gray-300'>Prompt placeholders</div>
+                      {bundleKeys.size > 0 && (
+                        <div className='mt-2 flex flex-wrap gap-2'>
+                          {Array.from(bundleKeys).map((key) => (
+                            <Badge key={key} variant='outline' className='text-[10px] font-normal'>
+                              {formatPlaceholderLabel(key)}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                      {directPlaceholders.length > 0 && (
+                        <div className='mt-2 text-[11px] text-gray-500'>
+                          Direct inputs:{' '}
+                          {directPlaceholders
+                            .map((port) => formatPlaceholderLabel(port))
+                            .join(', ')}
+                        </div>
+                      )}
+                    </Card>
+                  );
+                })()}
               <Button
                 data-doc-id='inspector_open_node_config'
                 className='w-full rounded-md border text-xs text-white hover:bg-muted/60'
@@ -493,8 +556,11 @@ export function CanvasSidebar(): React.JSX.Element {
             <StatusBadge
               status={runStatusLabel}
               variant={
-                runStatus === 'running' || runStatus === 'stepping' ? 'processing' :
-                  runStatus === 'paused' ? 'warning' : 'neutral'
+                runStatus === 'running' || runStatus === 'stepping'
+                  ? 'processing'
+                  : runStatus === 'paused'
+                    ? 'warning'
+                    : 'neutral'
               }
               size='sm'
               className='font-bold'
@@ -541,7 +607,6 @@ export function CanvasSidebar(): React.JSX.Element {
                     const node = selectedNode?.type === 'trigger' ? selectedNode : undefined;
                     stepRun(node);
                   }}
-                  
                   disabled={!stepRun}
                 >
                   Step
@@ -567,7 +632,6 @@ export function CanvasSidebar(): React.JSX.Element {
                   const node = selectedNode?.type === 'trigger' ? selectedNode : undefined;
                   stepRun(node);
                 }}
-                
                 disabled={!stepRun}
               >
                 Step Run
@@ -578,113 +642,127 @@ export function CanvasSidebar(): React.JSX.Element {
       )}
 
       <Card className='border-border/60 bg-card/40 p-4'>
-        <Hint size='xs' uppercase={false} className='mb-3 font-semibold text-white'>Connections</Hint>
+        <Hint size='xs' uppercase={false} className='mb-3 font-semibold text-white'>
+          Connections
+        </Hint>
         <div className='space-y-2 text-xs text-gray-400'>
           <div>Active wires: {edges.length}</div>
-          {selectedEdgeId ? ((): React.JSX.Element | null => {
-            const selectedEdge = edges.find((edge) => edge.id === selectedEdgeId);
-            const fromNodeId = selectedEdge?.from;
-            const toNodeId = selectedEdge?.to;
-            const fromNode = fromNodeId ? nodes.find((n) => n.id === fromNodeId) : null;
-            const toNode = toNodeId ? nodes.find((n) => n.id === toNodeId) : null;
-            const sourceOutputs = fromNodeId
-              ? (runtimeState.outputs?.[fromNodeId])
-              : undefined;
-            const targetInputs = toNodeId
-              ? (runtimeState.inputs?.[toNodeId])
-              : undefined;
-            const sourceValue = selectedEdge
-              ? readPortRuntimeValue(sourceOutputs, selectedEdge.fromPort)
-              : undefined;
-            const targetValue = selectedEdge
-              ? readPortRuntimeValue(targetInputs, selectedEdge.toPort)
-              : undefined;
-            return selectedEdge ? (
-              <Card variant='info' padding='sm' className='space-y-3 border-blue-500/30 bg-blue-500/5'>
-                <Hint size='xs' uppercase={false} className='font-medium text-blue-300'>Selected Wire</Hint>
-                <div className='space-y-2'>
-                  <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/50'>
-                    <Hint size='xxs' uppercase className='text-gray-500'>From</Hint>
-                    <div className='text-sm text-white'>
-                      {fromNode?.title ?? selectedEdge.from}
-                    </div>
-                    <div className='text-[11px] text-gray-400'>
-                      Type:{' '}
-                      <span className='text-amber-300'>
-                        {fromNode?.type ?? 'unknown'}
-                      </span>
-                    </div>
-                    <div className='text-[11px] text-gray-400'>
-                      Port:{' '}
-                      <span className='text-amber-300'>
-                        {selectedEdge.fromPort ?? 'default'}
-                      </span>
-                    </div>
-                  </Card>
-                  <div className='flex justify-center text-gray-500'>↓</div>
-                  <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/50'>
-                    <Hint size='xxs' uppercase className='text-gray-500'>To</Hint>
-                    <div className='text-sm text-white'>
-                      {toNode?.title ?? selectedEdge.to}
-                    </div>
-                    <div className='text-[11px] text-gray-400'>
-                      Type:{' '}
-                      <span className='text-sky-300'>
-                        {toNode?.type ?? 'unknown'}
-                      </span>
-                    </div>
-                    <div className='text-[11px] text-gray-400'>
-                      Port:{' '}
-                      <span className='text-sky-300'>
-                        {selectedEdge.toPort ?? 'default'}
-                      </span>
-                    </div>
-                  </Card>
-                </div>
-                <Card variant='subtle-compact' padding='sm' className='space-y-2 border-border/60 bg-card/40'>
-                  <Hint size='xxs' uppercase className='text-gray-500'>
-                    Connector Data
+          {selectedEdgeId ? (
+            ((): React.JSX.Element | null => {
+              const selectedEdge = edges.find((edge) => edge.id === selectedEdgeId);
+              const fromNodeId = selectedEdge?.from;
+              const toNodeId = selectedEdge?.to;
+              const fromNode = fromNodeId ? nodes.find((n) => n.id === fromNodeId) : null;
+              const toNode = toNodeId ? nodes.find((n) => n.id === toNodeId) : null;
+              const sourceOutputs = fromNodeId ? runtimeState.outputs?.[fromNodeId] : undefined;
+              const targetInputs = toNodeId ? runtimeState.inputs?.[toNodeId] : undefined;
+              const sourceValue = selectedEdge
+                ? readPortRuntimeValue(sourceOutputs, selectedEdge.fromPort)
+                : undefined;
+              const targetValue = selectedEdge
+                ? readPortRuntimeValue(targetInputs, selectedEdge.toPort)
+                : undefined;
+              return selectedEdge ? (
+                <Card
+                  variant='info'
+                  padding='sm'
+                  className='space-y-3 border-blue-500/30 bg-blue-500/5'
+                >
+                  <Hint size='xs' uppercase={false} className='font-medium text-blue-300'>
+                    Selected Wire
                   </Hint>
-                  <div>
-                    <div className='text-[10px] text-amber-300'>
-                      Source ({selectedEdge.fromPort ?? 'default'})
-                    </div>
-                    <pre className='mt-1 max-h-28 overflow-auto whitespace-pre-wrap rounded border border-border/50 bg-black/30 px-2 py-1 text-[10px] text-gray-200'>
-                      {sourceValue === undefined ? 'No runtime output yet.' : formatRuntimeValue(sourceValue)}
-                    </pre>
+                  <div className='space-y-2'>
+                    <Card
+                      variant='subtle-compact'
+                      padding='sm'
+                      className='border-border/60 bg-card/50'
+                    >
+                      <Hint size='xxs' uppercase className='text-gray-500'>
+                        From
+                      </Hint>
+                      <div className='text-sm text-white'>
+                        {fromNode?.title ?? selectedEdge.from}
+                      </div>
+                      <div className='text-[11px] text-gray-400'>
+                        Type: <span className='text-amber-300'>{fromNode?.type ?? 'unknown'}</span>
+                      </div>
+                      <div className='text-[11px] text-gray-400'>
+                        Port:{' '}
+                        <span className='text-amber-300'>{selectedEdge.fromPort ?? 'default'}</span>
+                      </div>
+                    </Card>
+                    <div className='flex justify-center text-gray-500'>↓</div>
+                    <Card
+                      variant='subtle-compact'
+                      padding='sm'
+                      className='border-border/60 bg-card/50'
+                    >
+                      <Hint size='xxs' uppercase className='text-gray-500'>
+                        To
+                      </Hint>
+                      <div className='text-sm text-white'>{toNode?.title ?? selectedEdge.to}</div>
+                      <div className='text-[11px] text-gray-400'>
+                        Type: <span className='text-sky-300'>{toNode?.type ?? 'unknown'}</span>
+                      </div>
+                      <div className='text-[11px] text-gray-400'>
+                        Port:{' '}
+                        <span className='text-sky-300'>{selectedEdge.toPort ?? 'default'}</span>
+                      </div>
+                    </Card>
                   </div>
-                  <div>
-                    <div className='text-[10px] text-sky-300'>
-                      Target ({selectedEdge.toPort ?? 'default'})
+                  <Card
+                    variant='subtle-compact'
+                    padding='sm'
+                    className='space-y-2 border-border/60 bg-card/40'
+                  >
+                    <Hint size='xxs' uppercase className='text-gray-500'>
+                      Connector Data
+                    </Hint>
+                    <div>
+                      <div className='text-[10px] text-amber-300'>
+                        Source ({selectedEdge.fromPort ?? 'default'})
+                      </div>
+                      <pre className='mt-1 max-h-28 overflow-auto whitespace-pre-wrap rounded border border-border/50 bg-black/30 px-2 py-1 text-[10px] text-gray-200'>
+                        {sourceValue === undefined
+                          ? 'No runtime output yet.'
+                          : formatRuntimeValue(sourceValue)}
+                      </pre>
                     </div>
-                    <pre className='mt-1 max-h-28 overflow-auto whitespace-pre-wrap rounded border border-border/50 bg-black/30 px-2 py-1 text-[10px] text-gray-200'>
-                      {targetValue === undefined ? 'No runtime input yet.' : formatRuntimeValue(targetValue)}
-                    </pre>
+                    <div>
+                      <div className='text-[10px] text-sky-300'>
+                        Target ({selectedEdge.toPort ?? 'default'})
+                      </div>
+                      <pre className='mt-1 max-h-28 overflow-auto whitespace-pre-wrap rounded border border-border/50 bg-black/30 px-2 py-1 text-[10px] text-gray-200'>
+                        {targetValue === undefined
+                          ? 'No runtime input yet.'
+                          : formatRuntimeValue(targetValue)}
+                      </pre>
+                    </div>
+                  </Card>
+                  <div className='flex gap-2'>
+                    <Button
+                      className='flex-1'
+                      variant='outline'
+                      size='sm'
+                      type='button'
+                      onClick={() => selectEdge(null)}
+                    >
+                      Deselect
+                    </Button>
+                    <Button
+                      className='flex-1'
+                      variant='destructive'
+                      size='sm'
+                      type='button'
+                      onClick={() => handleRemoveEdge(selectedEdgeId)}
+                    >
+                      Remove
+                    </Button>
                   </div>
                 </Card>
-                <div className='flex gap-2'>
-                  <Button
-                    className='flex-1'
-                    variant='outline'
-                    size='sm'
-                    type='button'
-                    onClick={() => selectEdge(null)}
-                  >
-                    Deselect
-                  </Button>
-                  <Button
-                    className='flex-1'
-                    variant='destructive'
-                    size='sm'
-                    type='button'
-                    onClick={() => handleRemoveEdge(selectedEdgeId)}
-                  >
-                    Remove
-                  </Button>
-                </div>
-              </Card>
-            ) : null;
-          })() : (
+              ) : null;
+            })()
+          ) : (
             <div className='text-[11px] text-gray-500'>Click a wire to select it.</div>
           )}
           <Button

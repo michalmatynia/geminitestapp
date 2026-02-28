@@ -80,8 +80,7 @@ const sleep = (ms: number, signal?: AbortSignal): Promise<void> =>
 
 export const toJsonSafe = (value: unknown): unknown => cloneJsonSafe(value);
 
-export const safeJsonStringify = (value: unknown): string =>
-  sharedSafeJsonStringify(value);
+export const safeJsonStringify = (value: unknown): string => sharedSafeJsonStringify(value);
 
 export const parseRuntimeState = (value: unknown): RuntimeState => {
   if (!value) return EMPTY_RUNTIME_STATE;
@@ -128,10 +127,7 @@ export const normalizeUpdaterSamples = (value: unknown): Record<string, UpdaterS
     return parsed.success ? parsed.data : null;
   });
 
-export const buildPersistedRuntimeState = (
-  state: RuntimeState,
-  graphNodes: AiNode[]
-): string => {
+export const buildPersistedRuntimeState = (state: RuntimeState, graphNodes: AiNode[]): string => {
   const excludedTypes = new Set<string>(['notification', 'viewer']);
   const trimRuntimeValue = (value: unknown, depth: number = 1): unknown => {
     if (value === null || value === undefined) return value;
@@ -153,10 +149,12 @@ export const buildPersistedRuntimeState = (
       if (depth <= 0) return '[Object]';
       const record = value as Record<string, unknown>;
       const entries = Object.entries(record);
-      const trimmedEntries = entries.slice(0, 20).map(([key, entryValue]: [string, unknown]) => [
-        key,
-        trimRuntimeValue(entryValue, depth - 1),
-      ]);
+      const trimmedEntries = entries
+        .slice(0, 20)
+        .map(([key, entryValue]: [string, unknown]) => [
+          key,
+          trimRuntimeValue(entryValue, depth - 1),
+        ]);
       const result = Object.fromEntries(trimmedEntries) as Record<string, unknown>;
       if (entries.length > 20) {
         result['__truncated__'] = `…${entries.length - 20} more keys`;
@@ -195,14 +193,16 @@ export const buildPersistedRuntimeState = (
   Object.entries(state.history ?? {}).forEach(([key, value]) => {
     if (!includeHistoryInPathConfig) return;
     if (!nodeIds.has(key)) return;
-    const entries = Array.isArray(value) ? (value) : [];
+    const entries = Array.isArray(value) ? value : [];
     const trimmed = entries.slice(-historyLimit);
     if (trimmed.length > 0) {
-      history[key] = trimmed.map((entry: RuntimeHistoryEntry): RuntimeHistoryEntry => ({
-        ...entry,
-        inputs: entry.inputs ? trimRuntimePorts(entry.inputs) : entry.inputs,
-        outputs: entry.outputs ? trimRuntimePorts(entry.outputs) : entry.outputs,
-      }));
+      history[key] = trimmed.map(
+        (entry: RuntimeHistoryEntry): RuntimeHistoryEntry => ({
+          ...entry,
+          inputs: entry.inputs ? trimRuntimePorts(entry.inputs) : entry.inputs,
+          outputs: entry.outputs ? trimRuntimePorts(entry.outputs) : entry.outputs,
+        })
+      );
     }
   });
   const payload: Record<string, unknown> = {
@@ -242,8 +242,7 @@ export const sanitizePathConfig = (config: PathConfig): PathConfig => {
       operation: isDatabaseOperation(operation) ? operation : 'query',
       writeOutcomePolicy: {
         onZeroAffected:
-          (databaseConfig as Partial<DatabaseConfig>).writeOutcomePolicy
-            ?.onZeroAffected ?? 'fail',
+          (databaseConfig as Partial<DatabaseConfig>).writeOutcomePolicy?.onZeroAffected ?? 'fail',
       },
     } as DatabaseConfig;
     delete (nextDatabaseConfig as { schemaSnapshot?: unknown })['schemaSnapshot'];
@@ -275,10 +274,7 @@ export const sanitizePathConfig = (config: PathConfig): PathConfig => {
     Array.isArray(repairedConfig.edges) ? (repairedConfig.edges as EdgeDto[]) : []
   );
   const graphNodes = normalizeNodes(migratedTriggerGraph.nodes);
-  const normalizedEdges = sanitizeEdges(
-    graphNodes,
-    migratedTriggerGraph.edges
-  );
+  const normalizedEdges = sanitizeEdges(graphNodes, migratedTriggerGraph.edges);
   const uiState = repairedConfig.uiState ? { ...repairedConfig.uiState } : undefined;
   if (uiState && 'configOpen' in uiState) {
     delete (uiState as { configOpen?: boolean }).configOpen;
@@ -295,9 +291,14 @@ export const sanitizePathConfig = (config: PathConfig): PathConfig => {
   };
 };
 
-export const sanitizePathConfigs = (configs: Record<string, PathConfig>): Record<string, PathConfig> =>
+export const sanitizePathConfigs = (
+  configs: Record<string, PathConfig>
+): Record<string, PathConfig> =>
   Object.fromEntries(
-    Object.entries(configs).map(([key, value]: [string, PathConfig]) => [key, sanitizePathConfig(value)])
+    Object.entries(configs).map(([key, value]: [string, PathConfig]) => [
+      key,
+      sanitizePathConfig(value),
+    ])
   );
 
 export const serializePathConfigs = (configs: Record<string, PathConfig>): string =>
@@ -320,8 +321,8 @@ export const buildDbQueryPayload = (
       ? (inputQuery as Record<string, unknown>)
       : null) ??
     (callbackQueryInput &&
-      typeof callbackQueryInput === 'object' &&
-      !Array.isArray(callbackQueryInput)
+    typeof callbackQueryInput === 'object' &&
+    !Array.isArray(callbackQueryInput)
       ? (callbackQueryInput as Record<string, unknown>)
       : null);
   if (inlineQuery) {
@@ -329,11 +330,7 @@ export const buildDbQueryPayload = (
   } else {
     const queryTemplate = queryConfig.queryTemplate ?? '';
     if (queryTemplate.trim()) {
-      const rendered = renderTemplate(
-        queryTemplate,
-        nodeInputs,
-        inputValue ?? ''
-      );
+      const rendered = renderTemplate(queryTemplate, nodeInputs, inputValue ?? '');
       const parsed = parseJsonSafe(rendered);
       if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
         query = parsed as Record<string, unknown>;
@@ -343,9 +340,7 @@ export const buildDbQueryPayload = (
   const projection = parseJsonSafe(queryConfig.projection ?? '') as
     | Record<string, unknown>
     | undefined;
-  const sort = parseJsonSafe(queryConfig.sort ?? '') as
-    | Record<string, unknown>
-    | undefined;
+  const sort = parseJsonSafe(queryConfig.sort ?? '') as Record<string, unknown> | undefined;
   return {
     query,
     projection,
@@ -453,11 +448,7 @@ export const pollGraphJob = async (
     const { status, result: jobResult, error: jobError } = pollResult.data;
     if (!status) continue;
     if (status === 'completed') {
-      const result = jobResult as
-        | { result?: string }
-        | string
-        | null
-        | undefined;
+      const result = jobResult as { result?: string } | string | null | undefined;
       if (result && typeof result === 'object' && 'result' in result) {
         return (result as { result?: string }).result ?? '';
       }

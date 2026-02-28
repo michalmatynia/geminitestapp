@@ -1,4 +1,3 @@
- 
 import 'server-only';
 
 import { createHash } from 'crypto';
@@ -11,7 +10,7 @@ import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 
-import { ErrorSystem } from '../../utils/observability/error-system';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { withTransientRecovery } from './transient-recovery/with-recovery';
 
 const SETTINGS_COLLECTION = 'settings';
@@ -34,8 +33,7 @@ type NotificationConfig = {
 
 type SettingRecord = { _id: string; key?: string; value?: string };
 
-const canUsePrismaSettings = () =>
-  Boolean(process.env['DATABASE_URL']) && 'setting' in prisma;
+const canUsePrismaSettings = () => Boolean(process.env['DATABASE_URL']) && 'setting' in prisma;
 
 const readPrismaSetting = async (key: string): Promise<string | null> => {
   if (!canUsePrismaSettings()) return null;
@@ -91,31 +89,25 @@ const levelPriority: Record<SystemLogLevel, number> = {
   error: 3,
 };
 
-const shouldNotifyForLevel = (
-  level: SystemLogLevel,
-  minLevel: SystemLogLevel,
-) => levelPriority[level] >= levelPriority[minLevel];
+const shouldNotifyForLevel = (level: SystemLogLevel, minLevel: SystemLogLevel) =>
+  levelPriority[level] >= levelPriority[minLevel];
 
 const getNotificationConfig = async (): Promise<NotificationConfig> => {
-  const [enabledSetting, webhookSetting, minLevelSetting, throttleSetting] =
-    await Promise.all([
-      readSettingValue(NOTIFICATION_SETTINGS_KEYS.enabled),
-      readSettingValue(NOTIFICATION_SETTINGS_KEYS.webhookUrl),
-      readSettingValue(NOTIFICATION_SETTINGS_KEYS.minLevel),
-      readSettingValue(NOTIFICATION_SETTINGS_KEYS.throttleSeconds),
-    ]);
+  const [enabledSetting, webhookSetting, minLevelSetting, throttleSetting] = await Promise.all([
+    readSettingValue(NOTIFICATION_SETTINGS_KEYS.enabled),
+    readSettingValue(NOTIFICATION_SETTINGS_KEYS.webhookUrl),
+    readSettingValue(NOTIFICATION_SETTINGS_KEYS.minLevel),
+    readSettingValue(NOTIFICATION_SETTINGS_KEYS.throttleSeconds),
+  ]);
 
   const enabled =
     parseBoolean(enabledSetting) ||
     parseBoolean(process.env['CRITICAL_ERROR_NOTIFICATIONS_ENABLED']);
-  const webhookUrl =
-    webhookSetting ?? process.env['CRITICAL_ERROR_WEBHOOK_URL'] ?? null;
-  const minLevel = parseMinLevel(
-    minLevelSetting ?? process.env['CRITICAL_ERROR_MIN_LEVEL'],
-  );
+  const webhookUrl = webhookSetting ?? process.env['CRITICAL_ERROR_WEBHOOK_URL'] ?? null;
+  const minLevel = parseMinLevel(minLevelSetting ?? process.env['CRITICAL_ERROR_MIN_LEVEL']);
   const throttleSeconds = parseNumber(
     throttleSetting ?? process.env['CRITICAL_ERROR_THROTTLE_SECONDS'],
-    DEFAULT_THROTTLE_SECONDS,
+    DEFAULT_THROTTLE_SECONDS
   );
 
   return {
@@ -179,7 +171,7 @@ const buildPayload = (log: SystemLogRecord, critical: boolean): Record<string, u
 
 export const notifyCriticalError = async (
   log: SystemLogRecord,
-  critical: boolean,
+  critical: boolean
 ): Promise<{ delivered: boolean; throttled: boolean }> => {
   try {
     const config = await getNotificationConfig();
@@ -217,7 +209,7 @@ export const notifyCriticalError = async (
           maxDelayMs: 10000,
           timeoutMs: 8000,
         },
-      },
+      }
     );
     if (!res.ok) {
       void ErrorSystem.logWarning('[critical-error-notifier] Webhook failed', {
@@ -231,7 +223,7 @@ export const notifyCriticalError = async (
   } catch (error) {
     void ErrorSystem.captureException(error, {
       service: 'critical-error-notifier',
-      action: 'notifyCriticalError'
+      action: 'notifyCriticalError',
     });
     return { delivered: false, throttled: false };
   }

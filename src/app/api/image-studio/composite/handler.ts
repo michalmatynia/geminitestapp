@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import sharp from 'sharp';
 import { z } from 'zod';
 
-import { getImageStudioSlotById } from '@/features/ai/image-studio/server/slot-repository';
+import { getImageStudioSlotById } from '@/shared/lib/ai/image-studio/server/slot-repository';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 
@@ -107,10 +107,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   const height = baseMeta.height ?? 512;
 
   // Resize base to ensure consistent dimensions and get raw buffer
-  const baseBuffer = await baseImage
-    .resize(width, height, { fit: 'cover' })
-    .png()
-    .toBuffer();
+  const baseBuffer = await baseImage.resize(width, height, { fit: 'cover' }).png().toBuffer();
 
   // Build composite inputs for subsequent layers
   const compositeInputs: sharp.OverlayOptions[] = [];
@@ -124,9 +121,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
 
     // Apply opacity if not 1
     if (layer.opacity < 1) {
-      layerBuffer = await sharp(layerBuffer)
-        .ensureAlpha(layer.opacity)
-        .toBuffer();
+      layerBuffer = await sharp(layerBuffer).ensureAlpha(layer.opacity).toBuffer();
     }
 
     compositeInputs.push({
@@ -138,10 +133,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   }
 
   // Composite all layers
-  const resultBuffer = await sharp(baseBuffer)
-    .composite(compositeInputs)
-    .png()
-    .toBuffer();
+  const resultBuffer = await sharp(baseBuffer).composite(compositeInputs).png().toBuffer();
 
   const resultImageBase64 = `data:image/png;base64,${resultBuffer.toString('base64')}`;
 

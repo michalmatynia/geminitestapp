@@ -28,9 +28,11 @@ export type CmsMasterNodeRef =
 
 export const toCmsZoneNodeId = (zone: PageZone): string => `${CMS_ZONE_NODE_PREFIX}${zone}`;
 
-export const toCmsSectionNodeId = (sectionId: string): string => `${CMS_SECTION_NODE_PREFIX}${sectionId}`;
+export const toCmsSectionNodeId = (sectionId: string): string =>
+  `${CMS_SECTION_NODE_PREFIX}${sectionId}`;
 
-export const toCmsZoneFooterNodeId = (zone: PageZone): string => `${CMS_ZONE_FOOTER_NODE_PREFIX}${zone}`;
+export const toCmsZoneFooterNodeId = (zone: PageZone): string =>
+  `${CMS_ZONE_FOOTER_NODE_PREFIX}${zone}`;
 
 export const fromCmsSectionNodeId = (value: string): string | null =>
   value.startsWith(CMS_SECTION_NODE_PREFIX) ? value.slice(CMS_SECTION_NODE_PREFIX.length) : null;
@@ -71,9 +73,7 @@ export const decodeCmsMasterNodeId = (value: string): CmsMasterNodeRef | null =>
 
 const getSectionNodeLabel = (section: SectionInstance): string => {
   const settings =
-    section.settings && typeof section.settings === 'object'
-      ? section.settings
-      : null;
+    section.settings && typeof section.settings === 'object' ? section.settings : null;
   const customLabel = settings?.['label'];
   if (typeof customLabel === 'string' && customLabel.trim().length > 0) {
     return customLabel.trim();

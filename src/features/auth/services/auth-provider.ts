@@ -28,7 +28,9 @@ const readMongoAuthProvider = async (): Promise<AuthDbProvider | null> => {
     const mongo = await getMongoDb();
     const doc = await mongo
       .collection<{ _id: string; key?: string; value?: string }>('settings')
-      .findOne({ $or: [{ _id: AUTH_SETTINGS_KEYS.provider }, { key: AUTH_SETTINGS_KEYS.provider }] });
+      .findOne({
+        $or: [{ _id: AUTH_SETTINGS_KEYS.provider }, { key: AUTH_SETTINGS_KEYS.provider }],
+      });
     return normalizeProvider(doc?.value ?? null);
   } catch {
     return null;
@@ -56,22 +58,21 @@ const warnAuthProviderDrift = (
   if (appProvider === authProvider) return;
   // Explicit auth provider settings are intentional overrides in mixed-provider deployments.
   if (source !== 'default') return;
-  void ErrorSystem.logWarning(`Auth provider "${authProvider}" from ${source} differs from app provider "${appProvider}".`, {
-    service: 'auth-provider',
-    appProvider,
-    authProvider,
-    source
-  });
+  void ErrorSystem.logWarning(
+    `Auth provider "${authProvider}" from ${source} differs from app provider "${appProvider}".`,
+    {
+      service: 'auth-provider',
+      appProvider,
+      authProvider,
+      source,
+    }
+  );
 };
 
-const ensureAvailableAuthProvider = (
-  provider: AuthDbProvider
-): AuthDbProvider => {
+const ensureAvailableAuthProvider = (provider: AuthDbProvider): AuthDbProvider => {
   if (isPrimaryProviderConfigured(provider)) return provider;
 
-  throw internalError(
-    `Auth provider "${provider}" is not configured in environment variables.`
-  );
+  throw internalError(`Auth provider "${provider}" is not configured in environment variables.`);
 };
 
 // Auth provider must be deterministic and never fail.

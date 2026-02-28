@@ -2,13 +2,11 @@
 
 import { createContext, useContext } from 'react';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
-import type { 
+import type {
   MasterFolderTreeController,
   FolderTreeProfileV2,
 } from '@/shared/contracts/master-folder-tree';
-import type { 
-  MasterTreeId, 
-} from '@/shared/utils';
+import type { MasterTreeId } from '@/shared/utils';
 import type { FolderTreePlaceholderClassSet } from '@/shared/utils/folder-tree-profiles-v2';
 
 export interface SlotTreeContextValue {

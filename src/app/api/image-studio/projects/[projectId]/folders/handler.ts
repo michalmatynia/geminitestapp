@@ -7,14 +7,13 @@ import { z } from 'zod';
 import {
   deleteImageStudioSlotCascade,
   listImageStudioSlots,
-} from '@/features/ai/image-studio/server/slot-repository';
+} from '@/shared/lib/ai/image-studio/server/slot-repository';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 
 const projectsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio');
 
-const sanitizeProjectId = (value: string): string =>
-  value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
+const sanitizeProjectId = (value: string): string => value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
 
 const sanitizeFolderPath = (value: string): string => {
   const normalized = value.replace(/\\/g, '/').trim();
@@ -30,8 +29,7 @@ const createFolderSchema = z.object({
   folder: z.string().min(1),
 });
 
-const normalizeTreePath = (value: string): string =>
-  sanitizeFolderPath(value);
+const normalizeTreePath = (value: string): string => sanitizeFolderPath(value);
 
 const isTreePathWithin = (candidatePath: string, parentPath: string): boolean => {
   const candidate = normalizeTreePath(candidatePath);
@@ -91,7 +89,7 @@ export async function DELETE_handler(
 
   const slots = await listImageStudioSlots(projectId);
   const targetRootSlots = slots.filter((slot) =>
-    isTreePathWithin(slot.folderPath ?? '', safeFolder),
+    isTreePathWithin(slot.folderPath ?? '', safeFolder)
   );
 
   const deletedSlotIds = new Set<string>();
@@ -115,9 +113,7 @@ export async function DELETE_handler(
   }
 
   if (failedRootSlotIds.length > 0) {
-    warnings.push(
-      `Some cards in folder "${safeFolder}" could not be deleted.`,
-    );
+    warnings.push(`Some cards in folder "${safeFolder}" could not be deleted.`);
   }
 
   const payload: DeleteFolderResult = {

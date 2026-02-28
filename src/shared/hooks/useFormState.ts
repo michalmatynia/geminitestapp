@@ -1,38 +1,33 @@
 'use client';
 
-import {
-  useState,
-  useCallback,
-  useRef,
-  useMemo,
-} from 'react';
+import { useState, useCallback, useRef, useMemo } from 'react';
 
 export interface FormStateOptions<T extends Record<string, unknown>> {
   /**
    * Initial form values
    */
   initialValues: T;
-  
+
   /**
    * Validation function that returns errors or empty object if valid
    */
   validate?: (values: T) => Promise<Partial<Record<keyof T, string>>>;
-  
+
   /**
    * Submit handler
    */
   onSubmit: (values: T) => Promise<void>;
-  
+
   /**
    * Called on validation error before submit
    */
   onValidationError?: (errors: Partial<Record<keyof T, string>>) => void;
-  
+
   /**
    * Called on submit error
    */
   onSubmitError?: (error: Error) => void;
-  
+
   /**
    * Called on submit success
    */
@@ -98,8 +93,8 @@ export function useFormState<T extends Record<string, unknown>>({
   }, [errors]);
 
   const setValue = useCallback(<K extends keyof T>(field: K, value: T[K]) => {
-    setValues(prev => ({ ...prev, [field]: value }));
-    setErrors(prev => {
+    setValues((prev) => ({ ...prev, [field]: value }));
+    setErrors((prev) => {
       const newErrors = { ...prev };
       delete newErrors[field];
       return newErrors;
@@ -107,16 +102,16 @@ export function useFormState<T extends Record<string, unknown>>({
   }, []);
 
   const setValuesImpl = useCallback((newValues: Partial<T>) => {
-    setValues(prev => ({ ...prev, ...newValues }));
+    setValues((prev) => ({ ...prev, ...newValues }));
     setErrors({});
   }, []);
 
   const setFieldError = useCallback((field: keyof T, error: string) => {
-    setErrors(prev => ({ ...prev, [field]: error }));
+    setErrors((prev) => ({ ...prev, [field]: error }));
   }, []);
 
   const clearFieldError = useCallback((field: keyof T) => {
-    setErrors(prev => {
+    setErrors((prev) => {
       const newErrors = { ...prev };
       delete newErrors[field];
       return newErrors;
@@ -182,4 +177,3 @@ export function useFormState<T extends Record<string, unknown>>({
     },
   };
 }
-

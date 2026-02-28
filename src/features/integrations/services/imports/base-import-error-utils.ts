@@ -36,9 +36,7 @@ export const buildSummaryMessage = (
   return `${prefix}: ${stats.imported} imported, ${stats.updated} updated, ${stats.skipped} skipped, ${stats.failed} failed.`;
 };
 
-export const classifyBaseImportError = (
-  error: unknown
-): ClassifiedBaseImportError => {
+export const classifyBaseImportError = (error: unknown): ClassifiedBaseImportError => {
   if (!error) {
     return {
       code: 'UNEXPECTED_ERROR',
@@ -235,10 +233,7 @@ export const determineBaseImportTerminalStatus = (
   return 'completed';
 };
 
-export const computeRetryDelayMs = (
-  attempt: number,
-  retryAfterMs?: number
-): number => {
+export const computeRetryDelayMs = (attempt: number, retryAfterMs?: number): number => {
   if (typeof retryAfterMs === 'number' && Number.isFinite(retryAfterMs) && retryAfterMs > 0) {
     return Math.min(Math.floor(retryAfterMs), BASE_IMPORT_RETRY_MAX_DELAY_MS);
   }

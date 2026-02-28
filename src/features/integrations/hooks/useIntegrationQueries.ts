@@ -9,13 +9,10 @@ import {
   importExportTemplateSchema,
   type ImportExportTemplate,
 } from '@/shared/contracts/data-import-export';
-import { 
-  integrationSchema, 
-  integrationConnectionSchema,
-} from '@/shared/contracts/integrations';
-import type { 
-  Integration, 
-  IntegrationConnection, 
+import { integrationSchema, integrationConnectionSchema } from '@/shared/contracts/integrations';
+import type {
+  Integration,
+  IntegrationConnection,
   IntegrationWithConnections,
   BaseInventory,
 } from '@/shared/contracts/integrations';
@@ -49,11 +46,15 @@ export function useIntegrations(): ListQuery<Integration> {
   });
 }
 
-export function useIntegrationConnections(integrationId?: string): ListQuery<IntegrationConnection> {
+export function useIntegrationConnections(
+  integrationId?: string
+): ListQuery<IntegrationConnection> {
   const queryKey = getIntegrationConnectionsQueryKey(integrationId);
   const queryFn = async (): Promise<IntegrationConnection[]> => {
     if (!integrationId) return [];
-    const data = await api.get<IntegrationConnection[]>(`/api/integrations/${integrationId}/connections`);
+    const data = await api.get<IntegrationConnection[]>(
+      `/api/integrations/${integrationId}/connections`
+    );
     return z.array(integrationConnectionSchema).parse(data);
   };
 
@@ -74,7 +75,7 @@ export function useIntegrationConnections(integrationId?: string): ListQuery<Int
 
 export function useConnectionSession(
   connectionId?: string,
-  options?: { enabled?: boolean },
+  options?: { enabled?: boolean }
 ): SingleQuery<unknown> {
   const queryKey = integrationKeys.connectionSession(connectionId);
   const queryFn = async (): Promise<unknown> =>
@@ -206,9 +207,7 @@ export function useDefaultExportInventory(): SingleQuery<{ inventoryId?: string 
 export function useDefaultExportConnection(): SingleQuery<{ connectionId?: string | null }> {
   const queryKey = integrationKeys.selection.defaultConnection();
   const queryFn = async (): Promise<{ connectionId?: string | null }> =>
-    api.get<{ connectionId?: string | null }>(
-      '/api/integrations/exports/base/default-connection'
-    );
+    api.get<{ connectionId?: string | null }>('/api/integrations/exports/base/default-connection');
 
   return createSingleQueryV2({
     id: 'default-export-connection',
@@ -225,13 +224,19 @@ export function useDefaultExportConnection(): SingleQuery<{ connectionId?: strin
   });
 }
 
-export function useBaseInventories(connectionId: string, enabled: boolean = true): ListQuery<BaseInventory> {
+export function useBaseInventories(
+  connectionId: string,
+  enabled: boolean = true
+): ListQuery<BaseInventory> {
   const queryKey = integrationKeys.baseInventories(connectionId);
   const queryFn = async (): Promise<BaseInventory[]> => {
-    const data = await api.post<{ inventories?: BaseInventory[]; error?: string }>('/api/integrations/imports/base', {
-      action: 'inventories',
-      connectionId,
-    });
+    const data = await api.post<{ inventories?: BaseInventory[]; error?: string }>(
+      '/api/integrations/imports/base',
+      {
+        action: 'inventories',
+        connectionId,
+      }
+    );
     if (data.error) throw new ApiError(data.error, 400);
     return Array.isArray(data.inventories) ? data.inventories : [];
   };
@@ -264,23 +269,28 @@ export const getExportTemplatesQueryOptions = () => ({
 
 export const getActiveExportTemplateQueryOptions = () => ({
   queryKey: integrationKeys.activeExportTemplate(),
-  queryFn: () => api.get<{ templateId?: string | null }>('/api/integrations/exports/base/active-template'),
+  queryFn: () =>
+    api.get<{ templateId?: string | null }>('/api/integrations/exports/base/active-template'),
   staleTime: 5 * 60 * 1000,
 });
 
 export const getDefaultExportInventoryQueryOptions = () => ({
   queryKey: integrationKeys.defaultExportInventory(),
-  queryFn: () => api.get<{ inventoryId?: string | null }>('/api/integrations/exports/base/default-inventory'),
+  queryFn: () =>
+    api.get<{ inventoryId?: string | null }>('/api/integrations/exports/base/default-inventory'),
   staleTime: 5 * 60 * 1000,
 });
 
 export const getBaseInventoriesQueryOptions = (connectionId: string, enabled: boolean = true) => ({
   queryKey: integrationKeys.baseInventories(connectionId),
   queryFn: async (): Promise<BaseInventory[]> => {
-    const data = await api.post<{ inventories?: BaseInventory[]; error?: string }>('/api/integrations/imports/base', {
-      action: 'inventories',
-      connectionId,
-    });
+    const data = await api.post<{ inventories?: BaseInventory[]; error?: string }>(
+      '/api/integrations/imports/base',
+      {
+        action: 'inventories',
+        connectionId,
+      }
+    );
     if (data.error) throw new ApiError(data.error, 400);
     return Array.isArray(data.inventories) ? data.inventories : [];
   },

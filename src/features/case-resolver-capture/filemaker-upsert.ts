@@ -48,11 +48,11 @@ const toCandidateAddressInput = (
 const hasAddressData = (input: CandidateAddressInput): boolean =>
   Boolean(
     input.street ||
-      input.streetNumber ||
-      input.city ||
-      input.postalCode ||
-      input.country ||
-      input.countryId
+    input.streetNumber ||
+    input.city ||
+    input.postalCode ||
+    input.country ||
+    input.countryId
   );
 
 const firstNonEmptyLine = (value: string): string =>
@@ -85,9 +85,7 @@ const derivePersonName = (
   };
 };
 
-const deriveOrganizationName = (
-  candidate: PromptExploderCaseResolverPartyCandidate
-): string =>
+const deriveOrganizationName = (candidate: PromptExploderCaseResolverPartyCandidate): string =>
   (candidate.organizationName ?? '').trim() ||
   (candidate.kind === 'organization' ? (candidate.displayName ?? '').trim() : '') ||
   firstNonEmptyLine(candidate.rawText ?? '') ||
@@ -113,7 +111,10 @@ const findAddressById = (
 ): FilemakerAddress | null => {
   const normalizedId = (addressId ?? '').trim();
   if (!normalizedId) return null;
-  return database.addresses.find((address: FilemakerAddress): boolean => address.id === normalizedId) ?? null;
+  return (
+    database.addresses.find((address: FilemakerAddress): boolean => address.id === normalizedId) ??
+    null
+  );
 };
 
 const resolveReferenceName = (

@@ -4,15 +4,15 @@ import React from 'react';
 import { AlignJustify, List, ListPlus, SlidersHorizontal } from 'lucide-react';
 import { SelectSimple, Tooltip } from '@/shared/ui';
 import { cn } from '@/shared/utils';
-import { 
-  useDocumentRelationSearchContext, 
-  type ResultHeight 
+import {
+  useDocumentRelationSearchContext,
+  type ResultHeight,
 } from '../../context/DocumentRelationSearchContext';
-import { 
-  type DocumentRelationFileTypeFilter, 
-  type DocumentRelationSortMode 
+import {
+  type DocumentRelationFileTypeFilter,
+  type DocumentRelationSortMode,
 } from '../../hooks/useDocumentRelationSearch';
-import { getCaseResolverDocTooltip } from '../../utils/docs';
+import { getCaseResolverDocTooltip } from '@/features/case-resolver/relation-search/utils/docs';
 
 const SORT_OPTIONS: { value: DocumentRelationSortMode; label: string }[] = [
   { value: 'name_asc', label: 'Name A→Z' },
@@ -141,7 +141,11 @@ export function ScopeBar({
             { key: 'compact', Icon: AlignJustify, label: 'Compact view' },
             { key: 'normal', Icon: List, label: 'Normal view' },
             { key: 'expanded', Icon: ListPlus, label: 'Expanded view' },
-          ] as { key: ResultHeight; Icon: React.ComponentType<{ className?: string }>; label: string }[]
+          ] as {
+            key: ResultHeight;
+            Icon: React.ComponentType<{ className?: string }>;
+            label: string;
+          }[]
         ).map(({ key, Icon, label }) => (
           <Tooltip key={key} content={label} side='bottom'>
             <button

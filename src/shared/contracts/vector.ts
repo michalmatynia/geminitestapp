@@ -48,7 +48,16 @@ export const vectorShapeTypeSchema = z.enum([
 export type VectorShapeTypeDto = z.infer<typeof vectorShapeTypeSchema>;
 export type VectorShapeType = VectorShapeTypeDto;
 
-export const vectorShapeRoleSchema = z.enum(['contour', 'fill', 'inner', 'outer', 'custom', 'product', 'shadow', 'background']);
+export const vectorShapeRoleSchema = z.enum([
+  'contour',
+  'fill',
+  'inner',
+  'outer',
+  'custom',
+  'product',
+  'shadow',
+  'background',
+]);
 export type VectorShapeRoleDto = z.infer<typeof vectorShapeRoleSchema>;
 export type VectorShapeRole = VectorShapeRoleDto;
 

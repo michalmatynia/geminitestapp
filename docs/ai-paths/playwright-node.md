@@ -45,7 +45,7 @@ export default async function run({
   emit,
   artifacts,
   log,
-  helpers
+  helpers,
 }) {
   // ...
 }

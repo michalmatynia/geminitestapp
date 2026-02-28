@@ -185,7 +185,10 @@ export const enforceRateLimit = async (
 };
 
 if (typeof setInterval !== 'undefined') {
-  setInterval((): void => {
-    Object.values(rateLimiters).forEach((limiter: RateLimiter): void => limiter.cleanup());
-  }, 5 * 60 * 1000);
+  setInterval(
+    (): void => {
+      Object.values(rateLimiters).forEach((limiter: RateLimiter): void => limiter.cleanup());
+    },
+    5 * 60 * 1000
+  );
 }

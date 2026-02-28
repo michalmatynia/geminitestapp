@@ -35,15 +35,15 @@ export const CanvasMinimap = React.memo(function CanvasMinimap(): React.JSX.Elem
   const svgRef = React.useRef<SVGSVGElement | null>(null);
   const [dragState, setDragState] = React.useState<
     | {
-      mode: 'navigate';
-      pointerId: number;
-    }
+        mode: 'navigate';
+        pointerId: number;
+      }
     | {
-      mode: 'viewport';
-      pointerId: number;
-      centerOffsetX: number;
-      centerOffsetY: number;
-    }
+        mode: 'viewport';
+        pointerId: number;
+        centerOffsetX: number;
+        centerOffsetY: number;
+      }
     | null
   >(null);
 
@@ -55,8 +55,8 @@ export const CanvasMinimap = React.memo(function CanvasMinimap(): React.JSX.Elem
   } | null => {
     if (!viewportSize || view.scale <= 0) return null;
     return {
-      x: (-view.x) / view.scale,
-      y: (-view.y) / view.scale,
+      x: -view.x / view.scale,
+      y: -view.y / view.scale,
       width: viewportSize.width / view.scale,
       height: viewportSize.height / view.scale,
     };
@@ -98,7 +98,7 @@ export const CanvasMinimap = React.memo(function CanvasMinimap(): React.JSX.Elem
         onWheel={(event) => {
           event.preventDefault();
           event.stopPropagation();
-          const zoomFactor = Math.exp((-event.deltaY) * 0.0018);
+          const zoomFactor = Math.exp(-event.deltaY * 0.0018);
           onZoomTo(clampScale(view.scale * zoomFactor));
         }}
         onPointerDown={(event) => {
@@ -166,18 +166,20 @@ export const CanvasMinimap = React.memo(function CanvasMinimap(): React.JSX.Elem
           rx={20}
           ry={20}
         />
-        {minimapEdgePaths.map((edge: EdgePath): React.JSX.Element => (
-          <path
-            key={`minimap-edge-${edge.id}`}
-            d={edge.path}
-            stroke='rgba(148, 163, 184, 0.32)'
-            strokeWidth={6}
-            fill='none'
-            strokeLinecap='round'
-            strokeLinejoin='round'
-            pointerEvents='none'
-          />
-        ))}
+        {minimapEdgePaths.map(
+          (edge: EdgePath): React.JSX.Element => (
+            <path
+              key={`minimap-edge-${edge.id}`}
+              d={edge.path}
+              stroke='rgba(148, 163, 184, 0.32)'
+              strokeWidth={6}
+              fill='none'
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              pointerEvents='none'
+            />
+          )
+        )}
         {nodes.map((node: AiNode): React.JSX.Element => {
           const isSelected = selectedNodeIdSet.has(node.id);
           return (

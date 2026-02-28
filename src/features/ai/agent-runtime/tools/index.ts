@@ -6,9 +6,9 @@ import path from 'path';
 
 import { Prisma } from '@prisma/client';
 
+import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import prisma from '@/shared/lib/db/prisma';
-
 
 import {
   normalizeExtractionItemsWithLLM,
@@ -31,13 +31,9 @@ import {
   captureSnapshot,
   captureSessionContext,
 } from './playwright/browser';
-import {
-  collectUiInventory,
-} from './playwright/inventory';
+import { collectUiInventory } from './playwright/inventory';
 import { runExtractionRequest } from './run-agent-tool-extraction';
-import {
-  fetchSearchResults,
-} from './search';
+import { fetchSearchResults } from './search';
 import {
   extractTargetUrl,
   getTargetHostname,
@@ -50,7 +46,15 @@ import {
   evaluateRobotsRules,
 } from './utils';
 
-import type { Browser, BrowserContext, Page, ConsoleMessage, Request, Response, Locator } from 'playwright';
+import type {
+  Browser,
+  BrowserContext,
+  Page,
+  ConsoleMessage,
+  Request,
+  Response,
+  Locator,
+} from 'playwright';
 
 export type AgentToolRequest = {
   name: 'playwright';
@@ -95,16 +99,17 @@ type FailureRecoveryPlan = {
   notes: string | null;
 };
 
-const DEFAULT_OLLAMA_MODEL = process.env['OLLAMA_MODEL'] ?? 'qwen3-vl:30b';
-
 const resolveIgnoreRobotsTxt = (planState: unknown): boolean => {
   if (!planState || typeof planState !== 'object') return false;
-  const prefs = (planState as { preferences?: { ignoreRobotsTxt?: boolean } })
-    .preferences;
+  const prefs = (planState as { preferences?: { ignoreRobotsTxt?: boolean } }).preferences;
   return Boolean(prefs?.ignoreRobotsTxt);
 };
 
-export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: Browser, injectedContext?: BrowserContext): Promise<AgentToolResult> {
+export async function runAgentTool(
+  request: AgentToolRequest,
+  injectedBrowser?: Browser,
+  injectedContext?: BrowserContext
+): Promise<AgentToolResult> {
   const { runId, prompt, browser, runHeadless, stepId, stepLabel } = request.input;
   const debugEnabled = process.env['DEBUG_CHATBOT'] === 'true';
   if (!runId) {
@@ -114,7 +119,7 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
   if (!('agentBrowserLog' in prisma) || !('agentBrowserSnapshot' in prisma)) {
     void ErrorSystem.logWarning('[chatbot][agent][tool] Agent browser tables not initialized.', {
       service: 'agent-tool',
-      runId
+      runId,
     });
     return {
       ok: false,
@@ -128,38 +133,56 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
     const runRecord =
       'chatbotAgentRun' in prisma
         ? await prisma.chatbotAgentRun.findUnique({
-          where: { id: runId },
-          select: {
-            model: true,
-            searchProvider: true,
-            planState: true,
-            memoryKey: true,
-          },
-        })
+            where: { id: runId },
+            select: {
+              model: true,
+              searchProvider: true,
+              planState: true,
+              memoryKey: true,
+            },
+          })
         : null;
-    const resolvedModel = runRecord?.model || DEFAULT_OLLAMA_MODEL;
+    const [
+      defaultConfig,
+      memoryValidationConfig,
+      memorySummarizationConfig,
+      extractionValidationConfig,
+      toolRouterConfig,
+      selectorInferenceConfig,
+      outputNormalizationConfig,
+    ] = await Promise.all([
+      resolveBrainExecutionConfigForCapability('agent_runtime.default', {
+        runtimeKind: 'chat',
+      }),
+      resolveBrainExecutionConfigForCapability('agent_runtime.memory_validation', {
+        runtimeKind: 'validation',
+      }),
+      resolveBrainExecutionConfigForCapability('agent_runtime.memory_summarization', {
+        runtimeKind: 'chat',
+      }),
+      resolveBrainExecutionConfigForCapability('agent_runtime.extraction_validation', {
+        runtimeKind: 'validation',
+      }),
+      resolveBrainExecutionConfigForCapability('agent_runtime.tool_router', {
+        runtimeKind: 'chat',
+      }),
+      resolveBrainExecutionConfigForCapability('agent_runtime.selector_inference', {
+        runtimeKind: 'vision',
+      }),
+      resolveBrainExecutionConfigForCapability('agent_runtime.output_normalization', {
+        runtimeKind: 'validation',
+      }),
+    ]);
+    const resolvedModel = defaultConfig.modelId;
     const resolvedSearchProvider = runRecord?.searchProvider ?? 'brave';
     const ignoreRobotsTxt = resolveIgnoreRobotsTxt(runRecord?.planState);
     const memoryKey = runRecord?.memoryKey ?? null;
-    
-    // Resolve specific models from preferences
-    const getPrefModel = (key: string): string | null => {
-      if (!runRecord?.planState || typeof runRecord.planState !== 'object') {
-        return null;
-      }
-      const prefs = (
-        runRecord.planState as { preferences?: Record<string, unknown> }
-      ).preferences;
-      const value = prefs?.[key];
-      return typeof value === 'string' ? value : null;
-    };
-
-    const memoryValidationModel = getPrefModel('memoryValidationModel');
-    const memorySummarizationModel = getPrefModel('memorySummarizationModel');
-    const extractionValidationModel = getPrefModel('extractionValidationModel');
-    const toolRouterModel = getPrefModel('toolRouterModel');
-    const selectorInferenceModel = getPrefModel('selectorInferenceModel');
-    const outputNormalizationModel = getPrefModel('outputNormalizationModel');
+    const memoryValidationModel = memoryValidationConfig.modelId;
+    const memorySummarizationModel = memorySummarizationConfig.modelId;
+    const extractionValidationModel = extractionValidationConfig.modelId;
+    const toolRouterModel = toolRouterConfig.modelId;
+    const selectorInferenceModel = selectorInferenceConfig.modelId;
+    const outputNormalizationModel = outputNormalizationConfig.modelId;
 
     let launch: Browser | null = null;
     let context: BrowserContext | null = null;
@@ -185,7 +208,9 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
       message: string,
       metadata?: Record<string, unknown>
     ): Promise<void> => {
-      const normalizeLogMetadata = async (payload?: Record<string, unknown>): Promise<Record<string, unknown> | undefined> => {
+      const normalizeLogMetadata = async (
+        payload?: Record<string, unknown>
+      ): Promise<Record<string, unknown> | undefined> => {
         if (!payload || !outputNormalizationModel) return payload;
         const extractionType = payload['extractionType'];
         if (extractionType !== 'product_names' && extractionType !== 'emails') {
@@ -195,9 +220,7 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
         const normalizeField = async (key: string): Promise<void> => {
           const value = payload[key];
           if (!Array.isArray(value)) return;
-          const items = value.filter(
-            (item: unknown): item is string => typeof item === 'string'
-          );
+          const items = value.filter((item: unknown): item is string => typeof item === 'string');
           if (items.length === 0) return;
           const typedExtractionType: 'product_names' | 'emails' = extractionType;
           const normalized = await normalizeExtractionItemsWithLLM(
@@ -225,9 +248,7 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
         ]);
         return payload;
       };
-      const normalizedMetadata = await normalizeLogMetadata(
-        metadata ? { ...metadata } : undefined
-      );
+      const normalizedMetadata = await normalizeLogMetadata(metadata ? { ...metadata } : undefined);
       await prisma.agentBrowserLog.create({
         data: {
           runId,
@@ -282,7 +303,7 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
     } else {
       page = await context.newPage();
     }
-    
+
     if (!page) {
       throw new Error('Failed to initialize Playwright page.');
     }
@@ -346,9 +367,9 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
 
     try {
       const searchFirstDecision = await decideSearchFirstWithLLM(
-        toolLlmContext, 
-        prompt ?? '', 
-        targetUrl, 
+        toolLlmContext,
+        prompt ?? '',
+        targetUrl,
         hasExplicitUrl(prompt),
         memoryKey,
         memoryValidationModel,
@@ -363,7 +384,7 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
           const allowedResults = targetHostname
             ? results.filter((result: { url: string }) => isAllowedUrl(result.url, targetHostname))
             : results;
-          
+
           if (targetHostname && allowedResults.length === 0) {
             await log('warning', 'Search-first returned no allowed results.', {
               stepId: activeStepId ?? null,
@@ -376,12 +397,10 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
             query && allowedResults.length
               ? await pickSearchResultWithLLM(toolLlmContext, query, prompt ?? '', allowedResults)
               : null;
-          
+
           const resolvedPicked =
-            picked && (!targetHostname || isAllowedUrl(picked, targetHostname))
-              ? picked
-              : null;
-            
+            picked && (!targetHostname || isAllowedUrl(picked, targetHostname)) ? picked : null;
+
           if (picked && !resolvedPicked) {
             await log('warning', 'Search-first ignored disallowed URL.', {
               stepId: activeStepId ?? null,
@@ -393,7 +412,7 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
 
           const fallback =
             resolvedPicked || (allowedResults.length ? allowedResults[0]?.url : null);
-            
+
           if (fallback) {
             if (!(await enforceRobotsPolicy(fallback))) {
               return { ok: false, error: 'Blocked by robots.txt.' };
@@ -429,17 +448,20 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
               url: targetUrl,
               error: error instanceof Error ? error.message : String(error),
             });
-            
+
             // Search escalation
-            const query = (await buildSearchQueryWithLLM(toolLlmContext, prompt ?? '')) ?? prompt ?? '';
+            const query =
+              (await buildSearchQueryWithLLM(toolLlmContext, prompt ?? '')) ?? prompt ?? '';
             let searchUrl: string | null = null;
             if (query) {
               const results = await fetchSearchResults(query, resolvedSearchProvider, log);
               if (results.length > 0) {
                 const allowedResults = targetHostname
-                  ? results.filter((result: { url: string }) => isAllowedUrl(result.url, targetHostname))
+                  ? results.filter((result: { url: string }) =>
+                      isAllowedUrl(result.url, targetHostname)
+                    )
                   : results;
-                    
+
                 if (targetHostname && allowedResults.length === 0) {
                   await log('warning', 'Search escalation returned no allowed results.', {
                     stepId: activeStepId ?? null,
@@ -447,11 +469,16 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
                     targetHostname,
                   });
                 } else {
-                  const picked = await pickSearchResultWithLLM(toolLlmContext, query, prompt ?? '', allowedResults);
+                  const picked = await pickSearchResultWithLLM(
+                    toolLlmContext,
+                    query,
+                    prompt ?? '',
+                    allowedResults
+                  );
                   const resolvedPicked =
-                            picked && (!targetHostname || isAllowedUrl(picked, targetHostname))
-                              ? picked
-                              : null;
+                    picked && (!targetHostname || isAllowedUrl(picked, targetHostname))
+                      ? picked
+                      : null;
                   if (picked && !resolvedPicked) {
                     await log('warning', 'Search escalation ignored disallowed URL.', {
                       stepId: activeStepId ?? null,
@@ -496,9 +523,11 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
           const results = await fetchSearchResults(query, resolvedSearchProvider, log);
           if (results.length > 0) {
             const allowedResults = targetHostname
-              ? results.filter((result: { url: string }) => isAllowedUrl(result.url, targetHostname))
+              ? results.filter((result: { url: string }) =>
+                  isAllowedUrl(result.url, targetHostname)
+                )
               : results;
-                 
+
             if (targetHostname && allowedResults.length === 0) {
               await log('warning', 'Search escalation returned no allowed results.', {
                 stepId: activeStepId ?? null,
@@ -506,11 +535,14 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
                 targetHostname,
               });
             } else {
-              const picked = await pickSearchResultWithLLM(toolLlmContext, query, prompt ?? '', allowedResults);
+              const picked = await pickSearchResultWithLLM(
+                toolLlmContext,
+                query,
+                prompt ?? '',
+                allowedResults
+              );
               const resolvedPicked =
-                        picked && (!targetHostname || isAllowedUrl(picked, targetHostname))
-                          ? picked
-                          : null;
+                picked && (!targetHostname || isAllowedUrl(picked, targetHostname)) ? picked : null;
               if (picked && !resolvedPicked) {
                 await log('warning', 'Search escalation ignored disallowed URL.', {
                   stepId: activeStepId ?? null,
@@ -561,9 +593,16 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
       );
       domText = initialSnapshot.domText;
       finalUrl = initialSnapshot.url;
-      await captureSessionContext(page, context, runId, 'after-initial-navigation', log, activeStepId);
+      await captureSessionContext(
+        page,
+        context,
+        runId,
+        'after-initial-navigation',
+        log,
+        activeStepId
+      );
       await dismissConsent(page, 'after-initial-navigation', log, activeStepId);
-      
+
       const isChallenge = await checkForChallenge(page, 'dom', log, activeStepId);
       if (isChallenge) {
         await flagCloudflare('dom', 'challenge markers in DOM/HTML');
@@ -633,7 +672,7 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
           username: credentials.username ? '[redacted]' : null,
         });
 
-        loginFormVisible = await ensureLoginFormVisible(page, runId, log) || false;
+        loginFormVisible = (await ensureLoginFormVisible(page, runId, log)) || false;
         await checkForChallenge(page, 'dom-after-login', log, activeStepId);
         if (cloudflareDetected) {
           return {
@@ -641,7 +680,7 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
             error: 'Cloudflare challenge detected; requires human.',
           };
         }
-        
+
         if (!loginFormVisible) {
           const recoveryDomSample = (
             await page.evaluate(
@@ -675,7 +714,14 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
                 waitUntil: 'domcontentloaded',
                 timeout: 20000,
               });
-              await captureSessionContext(page, context, runId, 'login-recovery-url', log, activeStepId);
+              await captureSessionContext(
+                page,
+                context,
+                runId,
+                'login-recovery-url',
+                log,
+                activeStepId
+              );
             } catch (error) {
               await log('warning', 'Login recovery URL navigation failed.', {
                 url: recoveryPlan.loginUrl,
@@ -688,7 +734,14 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
               const clickTarget = page.locator(recoveryPlan.clickSelector).first();
               await clickTarget.click({ timeout: 4000 });
               await page.waitForTimeout(1500);
-              await captureSessionContext(page, context, runId, 'login-recovery-click', log, activeStepId);
+              await captureSessionContext(
+                page,
+                context,
+                runId,
+                'login-recovery-click',
+                log,
+                activeStepId
+              );
             } catch (error) {
               await log('warning', 'Login recovery click failed.', {
                 selector: recoveryPlan.clickSelector,
@@ -697,7 +750,7 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
             }
           }
 
-          loginFormVisible = await ensureLoginFormVisible(page, runId, log) || false;
+          loginFormVisible = (await ensureLoginFormVisible(page, runId, log)) || false;
           if (!loginFormVisible) {
             await log('error', 'Login form not visible after attempting to open.', {
               stepId: activeStepId ?? null,
@@ -719,7 +772,7 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
         };
 
         const loginCandidates = await inferLoginCandidates(page, log, activeStepId);
-        
+
         const emailInput = await findFirstVisible(
           page.locator(
             'input[type="email"], input[name*="email" i], input[autocomplete*="email" i]'
@@ -742,8 +795,7 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
           if (!recoveryPlan) {
             const recoveryDomSample = (
               await page.evaluate(
-                () =>
-                  document.body?.innerText || document.documentElement?.innerText || ''
+                () => document.body?.innerText || document.documentElement?.innerText || ''
               )
             ).slice(0, 2000);
             const recoveryInventory = await collectUiInventory(
@@ -773,7 +825,7 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
             passwordInput = await locateBySelector(recoveryPlan.passwordSelector);
           }
         }
-         
+
         if (usernameInput && (credentials.email || credentials.username)) {
           const value = credentials.email ?? credentials.username ?? '';
           await usernameInput.fill(value);
@@ -853,11 +905,9 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
         );
         domText = postSnapshot.domText;
         finalUrl = postSnapshot.url;
-
       } else {
         await log('info', 'No credentials found in prompt. Navigation only.');
       }
-
     } finally {
       if (context && !injectedContext) {
         await context.close();
@@ -878,18 +928,22 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
         }
       } catch (recordError) {
         try {
-          await ErrorSystem.captureException(recordError, { 
-            service: 'agent-tool', 
+          await ErrorSystem.captureException(recordError, {
+            service: 'agent-tool',
             action: 'captureVideo',
-            runId 
+            runId,
           });
         } catch (logError) {
           if (debugEnabled) {
             const { logger } = await import('@/shared/utils/logger');
-            logger.error('[chatbot][agent][tool] Video capture failed (and logging failed)', logError, {
-              runId,
-              recordError,
-            });
+            logger.error(
+              '[chatbot][agent][tool] Video capture failed (and logging failed)',
+              logError,
+              {
+                runId,
+                recordError,
+              }
+            );
           }
         }
       }
@@ -901,19 +955,23 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
           });
         } catch (updateError) {
           try {
-            await ErrorSystem.captureException(updateError, { 
-              service: 'agent-tool', 
+            await ErrorSystem.captureException(updateError, {
+              service: 'agent-tool',
               action: 'updateRecordingPath',
               runId,
-              videoPath 
+              videoPath,
             });
           } catch (logError) {
             if (debugEnabled) {
               const { logger } = await import('@/shared/utils/logger');
-              logger.error('[chatbot][agent][tool] Recording update failed (and logging failed)', logError, {
-                runId,
-                updateError,
-              });
+              logger.error(
+                '[chatbot][agent][tool] Recording update failed (and logging failed)',
+                logError,
+                {
+                  runId,
+                  updateError,
+                }
+              );
             }
           }
         }
@@ -952,22 +1010,25 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
         logCount,
       },
     };
-
   } catch (error) {
     const errorId = randomUUID();
     const message = error instanceof Error ? error.message : 'Tool failed.';
-    
+
     try {
-      await ErrorSystem.captureException(error, { 
-        service: 'agent-tool', 
+      await ErrorSystem.captureException(error, {
+        service: 'agent-tool',
         action: 'runAgentTool',
         runId,
-        errorId
+        errorId,
       });
     } catch (logError) {
       if (debugEnabled) {
         const { logger } = await import('@/shared/utils/logger');
-        logger.error('[chatbot][agent][tool] Failed (and logging failed)', logError, { runId, errorId, error });
+        logger.error('[chatbot][agent][tool] Failed (and logging failed)', logError, {
+          runId,
+          errorId,
+          error,
+        });
       }
     }
 

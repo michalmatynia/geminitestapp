@@ -11,17 +11,11 @@ import type {
   RuntimeState,
   PathExecutionMode,
 } from '@/shared/lib/ai-paths';
-import {
-  TRIGGER_EVENTS,
-  evaluateDataContractPreflight,
-  entityApi,
-} from '@/shared/lib/ai-paths';
+import { TRIGGER_EVENTS, evaluateDataContractPreflight, entityApi } from '@/shared/lib/ai-paths';
 import { getProductDetailQueryKey } from '@/features/products/hooks/productCache';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
-import { 
-  buildSimulationContext, 
-} from './utils';
+import { buildSimulationContext } from './utils';
 
 type SimulationArgs = {
   normalizedNodes: AiNode[];
@@ -30,39 +24,54 @@ type SimulationArgs = {
   aiPathsValidation?: AiPathsValidationConfig | undefined;
   setRuntimeState: React.Dispatch<React.SetStateAction<RuntimeState>>;
   runtimeStateRef: React.MutableRefObject<RuntimeState>;
-  reportAiPathsError: (error: unknown, context: Record<string, unknown>, fallbackMessage?: string) => void;
-  toast: (message: string, options?: { variant?: 'success' | 'error' | 'info' | 'warning'; duration?: number; error?: unknown }) => void;
+  reportAiPathsError: (
+    error: unknown,
+    context: Record<string, unknown>,
+    fallbackMessage?: string
+  ) => void;
+  toast: (
+    message: string,
+    options?: {
+      variant?: 'success' | 'error' | 'info' | 'warning';
+      duration?: number;
+      error?: unknown;
+    }
+  ) => void;
   // Local logic callbacks
-  runGraphForTrigger: (triggerNode: AiNode, event?: React.MouseEvent, contextOverride?: Record<string, unknown>) => Promise<void>;
+  runGraphForTrigger: (
+    triggerNode: AiNode,
+    event?: React.MouseEvent,
+    contextOverride?: Record<string, unknown>
+  ) => Promise<void>;
 };
 
 const resolveEdgeFromNodeId = (edge: Edge): string | null =>
-  (typeof edge.from === 'string' && edge.from.trim().length > 0
+  typeof edge.from === 'string' && edge.from.trim().length > 0
     ? edge.from.trim()
     : typeof edge.source === 'string' && edge.source.trim().length > 0
       ? edge.source.trim()
-      : null);
+      : null;
 
 const resolveEdgeToNodeId = (edge: Edge): string | null =>
-  (typeof edge.to === 'string' && edge.to.trim().length > 0
+  typeof edge.to === 'string' && edge.to.trim().length > 0
     ? edge.to.trim()
     : typeof edge.target === 'string' && edge.target.trim().length > 0
       ? edge.target.trim()
-      : null);
+      : null;
 
 const resolveEdgeFromPort = (edge: Edge): string | null =>
-  (typeof edge.fromPort === 'string' && edge.fromPort.trim().length > 0
+  typeof edge.fromPort === 'string' && edge.fromPort.trim().length > 0
     ? edge.fromPort.trim()
     : typeof edge.sourceHandle === 'string' && edge.sourceHandle.trim().length > 0
       ? edge.sourceHandle.trim()
-      : null);
+      : null;
 
 const resolveEdgeToPort = (edge: Edge): string | null =>
-  (typeof edge.toPort === 'string' && edge.toPort.trim().length > 0
+  typeof edge.toPort === 'string' && edge.toPort.trim().length > 0
     ? edge.toPort.trim()
     : typeof edge.targetHandle === 'string' && edge.targetHandle.trim().length > 0
       ? edge.targetHandle.trim()
-      : null);
+      : null;
 
 export const applySimulationPreviewToRuntimeState = (args: {
   runtimeState: RuntimeState;
@@ -119,7 +128,11 @@ export function useAiPathsSimulation(args: SimulationArgs) {
           staleTime: 0,
         });
       } catch (error) {
-        args.reportAiPathsError(error, { action: 'fetchProduct', productId }, 'Failed to fetch product:');
+        args.reportAiPathsError(
+          error,
+          { action: 'fetchProduct', productId },
+          'Failed to fetch product:'
+        );
         return null;
       }
     },
@@ -171,15 +184,22 @@ export function useAiPathsSimulation(args: SimulationArgs) {
   const seedSimulationRuntimeState = useCallback(
     (simulationNode: AiNode, simulationContext: Record<string, unknown>): void => {
       if (args.executionMode !== 'local') return;
-      const entityId = typeof simulationContext['entityId'] === 'string' ? simulationContext['entityId'] : null;
-      const entityType = typeof simulationContext['entityType'] === 'string' ? simulationContext['entityType'] : null;
-      const productId = typeof simulationContext['productId'] === 'string' ? simulationContext['productId'] : null;
+      const entityId =
+        typeof simulationContext['entityId'] === 'string' ? simulationContext['entityId'] : null;
+      const entityType =
+        typeof simulationContext['entityType'] === 'string'
+          ? simulationContext['entityType']
+          : null;
+      const productId =
+        typeof simulationContext['productId'] === 'string' ? simulationContext['productId'] : null;
       const simulationOutputs: RuntimePortValues = {
         context: simulationContext,
         ...(entityId ? { entityId } : {}),
         ...(entityType ? { entityType } : {}),
         ...(productId ? { productId } : {}),
-        ...(simulationContext['entityJson'] !== undefined ? { entityJson: simulationContext['entityJson'] } : {}),
+        ...(simulationContext['entityJson'] !== undefined
+          ? { entityJson: simulationContext['entityJson'] }
+          : {}),
       };
       const nextState = applySimulationPreviewToRuntimeState({
         runtimeState: args.runtimeStateRef.current,
@@ -203,19 +223,22 @@ export function useAiPathsSimulation(args: SimulationArgs) {
     [args]
   );
 
-  const dispatchTrigger = useCallback((eventName: string, entityId: string, entityType?: string): void => {
-    if (typeof window === 'undefined') return;
-    window.dispatchEvent(
-      new CustomEvent('ai-path-trigger', {
-        detail: {
-          trigger: eventName,
-          productId: entityId,
-          entityId,
-          entityType: entityType ?? 'product',
-        },
-      })
-    );
-  }, []);
+  const dispatchTrigger = useCallback(
+    (eventName: string, entityId: string, entityType?: string): void => {
+      if (typeof window === 'undefined') return;
+      window.dispatchEvent(
+        new CustomEvent('ai-path-trigger', {
+          detail: {
+            trigger: eventName,
+            productId: entityId,
+            entityId,
+            entityType: entityType ?? 'product',
+          },
+        })
+      );
+    },
+    []
+  );
 
   const handleRunSimulation = useCallback(
     async (simulationNode: AiNode, triggerEvent?: string): Promise<void> => {
@@ -228,7 +251,7 @@ export function useAiPathsSimulation(args: SimulationArgs) {
         args.toast('Enter an Entity ID in the simulation node.', { variant: 'error' });
         return;
       }
-      
+
       const initialContext = buildSimulationContext({ entityId, entityType, entity: null });
       seedSimulationRuntimeState(simulationNode, initialContext);
 
@@ -287,7 +310,9 @@ export function useAiPathsSimulation(args: SimulationArgs) {
             node.type === 'trigger' && connectedTriggerIds.includes(node.id)
         );
         if (!triggerNode) {
-          const triggerCandidates = args.normalizedNodes.filter((node: AiNode): boolean => node.type === 'trigger');
+          const triggerCandidates = args.normalizedNodes.filter(
+            (node: AiNode): boolean => node.type === 'trigger'
+          );
           if (triggerCandidates.length === 1) {
             triggerNode = triggerCandidates[0];
             args.toast('No Trigger node connected; using the only Trigger in this path.', {
@@ -317,12 +342,13 @@ export function useAiPathsSimulation(args: SimulationArgs) {
             variant: 'error',
           });
         }
-        const simulationContext = enrichedContext 
+        const simulationContext = enrichedContext
           ? buildSimulationContext({ entityId, entityType, entity: enrichedContext })
           : initialContext;
-        
+
         const triggerNode = args.normalizedNodes.find(
-          (node: AiNode): boolean => node.type === 'trigger' && node.config?.trigger?.event === triggerEvent
+          (node: AiNode): boolean =>
+            node.type === 'trigger' && node.config?.trigger?.event === triggerEvent
         );
         if (triggerNode) {
           await args.runGraphForTrigger(triggerNode, undefined, simulationContext);
@@ -336,6 +362,6 @@ export function useAiPathsSimulation(args: SimulationArgs) {
     handleRunSimulation,
     fetchEntityByType,
     buildSimulationContext,
-    seedSimulationRuntimeState
+    seedSimulationRuntimeState,
   };
 }

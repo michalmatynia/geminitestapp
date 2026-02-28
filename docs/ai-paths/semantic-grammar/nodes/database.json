@@ -18,12 +18,7 @@
     "schema",
     "aiQuery"
   ],
-  "outputs": [
-    "result",
-    "bundle",
-    "content_en",
-    "aiPrompt"
-  ],
+  "outputs": ["result", "bundle", "content_en", "aiPrompt"],
   "configFields": [
     {
       "path": "database.operation",
@@ -221,12 +216,7 @@
       "schema",
       "aiQuery"
     ],
-    "outputs": [
-      "result",
-      "bundle",
-      "content_en",
-      "aiPrompt"
-    ],
+    "outputs": ["result", "bundle", "content_en", "aiPrompt"],
     "data": {},
     "connections": {
       "incoming": [],

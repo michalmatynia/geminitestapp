@@ -31,23 +31,24 @@ export function useTreeContext() {
  */
 export function useTreeNodeState(id: string | undefined) {
   const context = useTreeContext();
-  
+
   return useMemo(() => {
     if (!context || !id) return { isSelected: false, isExpanded: false };
-    
-    const isSelected = Array.isArray(context.selectedIds) 
-      ? context.selectedIds.includes(id) 
-      : context.selectedIds?.has(id) ?? false;
-      
+
+    const isSelected = Array.isArray(context.selectedIds)
+      ? context.selectedIds.includes(id)
+      : (context.selectedIds?.has(id) ?? false);
+
     const isExpanded = Array.isArray(context.expandedIds)
       ? context.expandedIds.includes(id)
-      : context.expandedIds?.has(id) ?? false;
-      
+      : (context.expandedIds?.has(id) ?? false);
+
     return {
       isSelected,
       isExpanded,
       onToggleExpand: () => context.onToggleExpand?.(id),
-      onSelect: (options?: { multi?: boolean; toggle?: boolean }) => context.onSelect?.(id, options),
+      onSelect: (options?: { multi?: boolean; toggle?: boolean }) =>
+        context.onSelect?.(id, options),
       isProcessing: context.isProcessing,
     };
   }, [context, id]);

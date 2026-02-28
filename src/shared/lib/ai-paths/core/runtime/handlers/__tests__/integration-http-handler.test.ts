@@ -1,15 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { handleHttp } from '@/shared/lib/ai-paths/core/runtime/handlers/integration-http-handler';
-import type {
-  AiNode,
-  RuntimePortValues,
-} from '@/shared/contracts/ai-paths';
+import type { AiNode, RuntimePortValues } from '@/shared/contracts/ai-paths';
 import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 
-const buildNode = (
-  patch: Partial<AiNode> = {}
-): AiNode =>
+const buildNode = (patch: Partial<AiNode> = {}): AiNode =>
   ({
     id: 'node-http',
     type: 'http',
@@ -32,10 +27,7 @@ const buildNode = (
     ...(patch as Record<string, unknown>),
   }) as AiNode;
 
-const buildContext = (
-  node: AiNode,
-  nodeInputs: RuntimePortValues
-): NodeHandlerContext =>
+const buildContext = (node: AiNode, nodeInputs: RuntimePortValues): NodeHandlerContext =>
   ({
     node,
     nodeInputs,
@@ -80,19 +72,15 @@ describe('handleHttp', () => {
   });
 
   it('blocks redirect chains that resolve to disallowed hosts', async () => {
-    const fetchMock = vi
-      .fn<typeof fetch>()
-      .mockResolvedValueOnce(
-        new Response(null, {
-          status: 302,
-          headers: { location: 'http://169.254.169.254/latest/meta-data/' },
-        })
-      );
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValueOnce(
+      new Response(null, {
+        status: 302,
+        headers: { location: 'http://169.254.169.254/latest/meta-data/' },
+      })
+    );
     vi.stubGlobal('fetch', fetchMock);
 
-    const result = await handleHttp(
-      buildContext(buildNode(), {})
-    );
+    const result = await handleHttp(buildContext(buildNode(), {}));
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(result['bundle']).toEqual(
@@ -122,14 +110,17 @@ describe('handleHttp', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     const result = await handleHttp(
-      buildContext(buildNode({
-        config: {
-          http: {
-            ...buildNode().config!.http!,
-            responsePath: 'value',
+      buildContext(
+        buildNode({
+          config: {
+            http: {
+              ...buildNode().config!.http!,
+              responsePath: 'value',
+            },
           },
-        },
-      }), {})
+        }),
+        {}
+      )
     );
 
     expect(fetchMock).toHaveBeenCalledTimes(2);

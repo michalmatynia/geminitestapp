@@ -3,6 +3,7 @@
 import { ArrowDown, ArrowUp } from 'lucide-react';
 import React from 'react';
 
+import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
 import {
   Button,
   FormField,
@@ -17,10 +18,16 @@ import {
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
-import { IMAGE_STUDIO_SEQUENCE_OPERATIONS } from '../../utils/studio-settings';
+import { IMAGE_STUDIO_SEQUENCE_OPERATIONS } from '@/shared/lib/ai/image-studio/utils/studio-settings';
 import { useImageStudioSettingsContext } from '../../context/ImageStudioSettingsContext';
 
 export function PromptSettingsTab(): React.JSX.Element {
+  const promptExtractModel = useBrainModelOptions({
+    capability: 'image_studio.prompt_extract',
+  });
+  const uiExtractorModel = useBrainModelOptions({
+    capability: 'image_studio.ui_extractor',
+  });
   const {
     studioSettings,
     setStudioSettings,
@@ -50,23 +57,27 @@ export function PromptSettingsTab(): React.JSX.Element {
               onCheckedChange={(checked) =>
                 setStudioSettings((prev) => ({
                   ...prev,
-                  promptExtraction: { ...prev.promptExtraction, mode: checked ? 'hybrid' : 'programmatic' },
+                  promptExtraction: {
+                    ...prev.promptExtraction,
+                    mode: checked ? 'hybrid' : 'programmatic',
+                  },
                 }))
               }
             />
-            <FormField label='Model' description='Recommended: gpt-4o-mini or gpt-4o.'>
+            <FormField
+              label='Model'
+              description='Brain-managed via Image Studio Prompt Extract capability.'
+            >
               <Input
-                value={studioSettings.promptExtraction.gpt.model}
-                onChange={(e) =>
-                  setStudioSettings((prev) => ({
-                    ...prev,
-                    promptExtraction: {
-                      ...prev.promptExtraction,
-                      gpt: { ...prev.promptExtraction.gpt, model: e.target.value },
-                    },
-                  }))
+                value={
+                  promptExtractModel.effectiveModelId.trim() ||
+                  studioSettings.promptExtraction.gpt.model.trim() ||
+                  'Not configured in AI Brain'
                 }
-                placeholder='gpt-4o-mini'
+                readOnly
+                disabled
+                className='cursor-not-allowed'
+                placeholder='Not configured in AI Brain'
               />
             </FormField>
             <div className='grid grid-cols-2 gap-4'>
@@ -97,7 +108,10 @@ export function PromptSettingsTab(): React.JSX.Element {
                       ...prev,
                       promptExtraction: {
                         ...prev.promptExtraction,
-                        gpt: { ...prev.promptExtraction.gpt, max_output_tokens: Number(e.target.value) },
+                        gpt: {
+                          ...prev.promptExtraction.gpt,
+                          max_output_tokens: Number(e.target.value),
+                        },
                       },
                     }))
                   }
@@ -123,17 +137,22 @@ export function PromptSettingsTab(): React.JSX.Element {
                 ]}
               />
             </FormField>
-            {(studioSettings.uiExtractor.mode === 'ai' || studioSettings.uiExtractor.mode === 'both') && (
-              <FormField label='AI Model' description='Model for detection and bounding boxes.'>
+            {(studioSettings.uiExtractor.mode === 'ai' ||
+              studioSettings.uiExtractor.mode === 'both') && (
+              <FormField
+                label='AI Model'
+                description='Brain-managed via Image Studio UI Extractor capability.'
+              >
                 <Input
-                  value={studioSettings.uiExtractor.model}
-                  onChange={(e) =>
-                    setStudioSettings((prev) => ({
-                      ...prev,
-                      uiExtractor: { ...prev.uiExtractor, model: e.target.value },
-                    }))
+                  value={
+                    uiExtractorModel.effectiveModelId.trim() ||
+                    studioSettings.uiExtractor.model.trim() ||
+                    'Not configured in AI Brain'
                   }
-                  placeholder='gpt-4o'
+                  readOnly
+                  disabled
+                  className='cursor-not-allowed'
+                  placeholder='Not configured in AI Brain'
                 />
               </FormField>
             )}
@@ -168,7 +187,9 @@ export function PromptSettingsTab(): React.JSX.Element {
                       className='min-w-[2.5rem] font-mono'
                     />
                     <div>
-                      <p className='text-xs font-medium text-white uppercase tracking-wider'>{op.replace(/_/g, ' ')}</p>
+                      <p className='text-xs font-medium text-white uppercase tracking-wider'>
+                        {op.replace(/_/g, ' ')}
+                      </p>
                     </div>
                   </div>
                   <div className='flex items-center gap-2'>

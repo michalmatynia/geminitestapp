@@ -97,9 +97,7 @@ const extractVariants = (pattern: string): string[] => {
   const input = pattern.trim();
   if (!input) return [];
   const topLevelParts = splitTopLevelAlternation(input);
-  return topLevelParts
-    .map((part) => stripOuterNonCapturingGroup(part))
-    .filter(Boolean);
+  return topLevelParts.map((part) => stripOuterNonCapturingGroup(part)).filter(Boolean);
 };
 
 const safeRegexCompiles = (pattern: string, flags = 'mi'): boolean => {
@@ -145,4 +143,3 @@ export const mergeRegexPatternsForRule = (
   }
   return merged;
 };
-

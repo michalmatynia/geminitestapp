@@ -1,12 +1,7 @@
 'use client';
 
 import React from 'react';
-import {
-  Input,
-  SelectSimple,
-  FormField,
-  FormSection,
-} from '@/shared/ui';
+import { Input, SelectSimple, FormField, FormSection } from '@/shared/ui';
 import {
   LOGIC_ACTION_OPTIONS,
   LOGIC_OPERATOR_OPTIONS,
@@ -18,28 +13,30 @@ import {
 } from '../validator-pattern-modal-options';
 import { useValidatorSettingsContext } from '../ValidatorSettingsContext';
 import type { PatternFormData } from '@/shared/contracts/products';
-import type { 
-  DynamicReplacementMathOperation, 
-  DynamicReplacementRoundMode, 
-  DynamicReplacementLogicOperator, 
-  DynamicReplacementLogicAction 
+import type {
+  DynamicReplacementMathOperation,
+  DynamicReplacementRoundMode,
+  DynamicReplacementLogicOperator,
+  DynamicReplacementLogicAction,
 } from '@/features/products/utils/validator-replacement-recipe';
 
 export function ValidatorPatternModalDynamicSection(): React.JSX.Element | null {
-  const {
-    formData,
-    setFormData,
-    sourceFieldOptions,
-  } = useValidatorSettingsContext();
+  const { formData, setFormData, sourceFieldOptions } = useValidatorSettingsContext();
 
   if (formData.replacementMode !== 'dynamic') return null;
 
   return (
-    <FormSection title='Dynamic Replacer Config' variant='subtle' className='border border-cyan-500/20 bg-cyan-500/5 p-3 space-y-4'>
+    <FormSection
+      title='Dynamic Replacer Config'
+      variant='subtle'
+      className='border border-cyan-500/20 bg-cyan-500/5 p-3 space-y-4'
+    >
       <div className='space-y-4 mt-4'>
-        {(formData.sourceMode === 'form_field' || formData.sourceMode === 'latest_product_field') && (
+        {(formData.sourceMode === 'form_field' ||
+          formData.sourceMode === 'latest_product_field') && (
           <FormField label='Source Field'>
-            <SelectSimple size='sm'
+            <SelectSimple
+              size='sm'
               value={formData.sourceField || '__none__'}
               onValueChange={(value: string): void =>
                 setFormData((prev: PatternFormData) => ({
@@ -47,10 +44,7 @@ export function ValidatorPatternModalDynamicSection(): React.JSX.Element | null 
                   sourceField: value === '__none__' ? '' : value,
                 }))
               }
-              options={[
-                SOURCE_FIELD_PLACEHOLDER_OPTION,
-                ...sourceFieldOptions,
-              ]}
+              options={[SOURCE_FIELD_PLACEHOLDER_OPTION, ...sourceFieldOptions]}
             />
           </FormField>
         )}
@@ -99,7 +93,8 @@ export function ValidatorPatternModalDynamicSection(): React.JSX.Element | null 
 
         <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
           <FormField label='Math Operation'>
-            <SelectSimple size='sm'
+            <SelectSimple
+              size='sm'
               value={formData.mathOperation}
               onValueChange={(value: string): void =>
                 setFormData((prev: PatternFormData) => ({
@@ -124,7 +119,8 @@ export function ValidatorPatternModalDynamicSection(): React.JSX.Element | null 
             />
           </FormField>
           <FormField label='Round Mode'>
-            <SelectSimple size='sm'
+            <SelectSimple
+              size='sm'
               value={formData.roundMode}
               onValueChange={(value: string): void =>
                 setFormData((prev: PatternFormData) => ({
@@ -138,7 +134,8 @@ export function ValidatorPatternModalDynamicSection(): React.JSX.Element | null 
         </div>
 
         <FormField label='Logic Operator'>
-          <SelectSimple size='sm'
+          <SelectSimple
+            size='sm'
             value={formData.logicOperator}
             onValueChange={(value: string): void =>
               setFormData((prev: PatternFormData) => ({
@@ -185,7 +182,8 @@ export function ValidatorPatternModalDynamicSection(): React.JSX.Element | null 
           <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
             <FormSection title='When condition is TRUE' variant='subtle' className='p-3 space-y-3'>
               <div className='mt-2 space-y-3'>
-                <SelectSimple size='sm'
+                <SelectSimple
+                  size='sm'
                   value={formData.logicWhenTrueAction}
                   onValueChange={(value: string): void =>
                     setFormData((prev: PatternFormData) => ({
@@ -213,7 +211,8 @@ export function ValidatorPatternModalDynamicSection(): React.JSX.Element | null 
 
             <FormSection title='When condition is FALSE' variant='subtle' className='p-3 space-y-3'>
               <div className='mt-2 space-y-3'>
-                <SelectSimple size='sm'
+                <SelectSimple
+                  size='sm'
                   value={formData.logicWhenFalseAction}
                   onValueChange={(value: string): void =>
                     setFormData((prev: PatternFormData) => ({
@@ -243,7 +242,8 @@ export function ValidatorPatternModalDynamicSection(): React.JSX.Element | null 
 
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
           <FormField label='Result Assembly'>
-            <SelectSimple size='sm'
+            <SelectSimple
+              size='sm'
               value={formData.resultAssembly}
               onValueChange={(value: string): void =>
                 setFormData((prev: PatternFormData) => ({
@@ -255,7 +255,8 @@ export function ValidatorPatternModalDynamicSection(): React.JSX.Element | null 
             />
           </FormField>
           <FormField label='Apply To Target'>
-            <SelectSimple size='sm'
+            <SelectSimple
+              size='sm'
               value={formData.targetApply}
               onValueChange={(value: string): void =>
                 setFormData((prev: PatternFormData) => ({

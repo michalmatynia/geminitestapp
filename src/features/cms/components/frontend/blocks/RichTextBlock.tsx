@@ -8,10 +8,10 @@ import { useSectionData } from '../sections/SectionDataContext';
 export function RichTextBlock(): React.ReactNode {
   const settings = useRequiredBlockSettings();
   const { colorSchemes } = useSectionData();
-  
+
   // RichText currently stores no editable text content, just renders as a placeholder area
   const colorScheme = (settings['colorScheme'] as string) || 'scheme-1';
-  
+
   // Logic demonstrating access to context from section
   const hasSchemes = colorSchemes && Object.keys(colorSchemes).length > 0;
 

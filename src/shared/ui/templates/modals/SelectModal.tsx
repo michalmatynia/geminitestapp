@@ -48,7 +48,7 @@ export function SelectModal<T>({
   const filteredOptions = useMemo(() => {
     if (!searchable || !search) return options;
     return options.filter(
-      opt =>
+      (opt) =>
         opt.label.toLowerCase().includes(search.toLowerCase()) ||
         opt.description?.toLowerCase().includes(search.toLowerCase())
     );
@@ -74,8 +74,8 @@ export function SelectModal<T>({
 
   const handleConfirm = useCallback(() => {
     if (multiple) {
-      const selectedOptions = options.filter(opt => selected.has(opt.id));
-      selectedOptions.forEach(opt => onSelect(opt));
+      const selectedOptions = options.filter((opt) => selected.has(opt.id));
+      selectedOptions.forEach((opt) => onSelect(opt));
       onClose();
     }
   }, [multiple, selected, options, onSelect, onClose]);
@@ -89,11 +89,7 @@ export function SelectModal<T>({
       subtitle={subtitle}
       size={size}
       headerActions={
-        <Button
-          onClick={onClose}
-          variant='outline'
-          disabled={loading}
-        >
+        <Button onClick={onClose} variant='outline' disabled={loading}>
           Close
         </Button>
       }
@@ -104,7 +100,7 @@ export function SelectModal<T>({
             type='text'
             placeholder='Search options...'
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={(e) => setSearch(e.target.value)}
             disabled={loading}
             className='px-3 py-2 border border-border rounded-md bg-background text-foreground placeholder-muted-foreground'
           />
@@ -120,7 +116,7 @@ export function SelectModal<T>({
           </div>
         ) : (
           <div className='space-y-2 max-h-96 overflow-y-auto'>
-            {filteredOptions.map(option => (
+            {filteredOptions.map((option) => (
               <button
                 key={option.id}
                 onClick={() => handleSelect(option)}
@@ -128,10 +124,10 @@ export function SelectModal<T>({
                 className={`
                   w-full p-3 text-left rounded-md border transition-colors
                   ${
-              selected.has(option.id)
-                ? 'bg-primary/10 border-primary'
-                : 'bg-card border-border hover:bg-muted'
-              }
+                    selected.has(option.id)
+                      ? 'bg-primary/10 border-primary'
+                      : 'bg-card border-border hover:bg-muted'
+                  }
                   ${option.disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
                 `}
               >
@@ -146,11 +142,7 @@ export function SelectModal<T>({
 
         {multiple && (
           <div className='flex justify-end gap-2 pt-4 border-t border-border'>
-            <Button
-              onClick={onClose}
-              variant='outline'
-              disabled={loading}
-            >
+            <Button onClick={onClose} variant='outline' disabled={loading}>
               Cancel
             </Button>
             <Button

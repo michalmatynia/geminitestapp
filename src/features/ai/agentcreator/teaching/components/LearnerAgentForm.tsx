@@ -1,17 +1,11 @@
 'use client';
 
 import React from 'react';
-import type { 
-  AgentTeachingAgentRecord, 
-  AgentTeachingEmbeddingCollectionRecord 
+import type {
+  AgentTeachingAgentRecord,
+  AgentTeachingEmbeddingCollectionRecord,
 } from '@/shared/contracts/agent-teaching';
-import { 
-  Input, 
-  SelectSimple, 
-  Textarea, 
-  Checkbox, 
-  FormField 
-} from '@/shared/ui';
+import { Input, Textarea, Checkbox, FormField } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 export type LearnerAgentLibraryItem = Omit<AgentTeachingAgentRecord, 'description'> & {
@@ -21,47 +15,51 @@ export type LearnerAgentLibraryItem = Omit<AgentTeachingAgentRecord, 'descriptio
 export type LearnerAgentFormProps = {
   draft: LearnerAgentLibraryItem;
   onChange: (changes: Partial<LearnerAgentLibraryItem>) => void;
-  chatModels: string[];
-  embeddingModels: string[];
+  chatModel: string;
+  embeddingModel: string;
   collections: AgentTeachingEmbeddingCollectionRecord[];
 };
 
 export function LearnerAgentForm({
   draft,
   onChange,
-  chatModels,
-  embeddingModels,
+  chatModel,
+  embeddingModel,
   collections,
 }: LearnerAgentFormProps): React.JSX.Element {
   const resolveCollectionName = (id: string): string => {
     const found = collections.find((c) => c.id === id);
     return found?.name ?? id;
   };
+  const effectiveChatModel = chatModel.trim() || draft.llmModel?.trim() || '';
+  const effectiveEmbeddingModel = embeddingModel.trim() || draft.embeddingModel?.trim() || '';
 
   return (
     <div className='space-y-6'>
       <div className='grid gap-4 md:grid-cols-2'>
         <FormField
           label='LLM model'
-          description='Model used to answer questions.'
+          description='Brain-managed via Agent Teaching Chat capability.'
         >
-          <SelectSimple size='sm'
-            value={draft.llmModel ?? ''}
-            onValueChange={(value: string) => onChange({ llmModel: value })}
-            options={chatModels.map((model: string) => ({ value: model, label: model }))}
-            placeholder='Select LLM model'
+          <Input
+            value={effectiveChatModel || 'Not configured in AI Brain'}
+            readOnly
+            disabled
+            placeholder='Not configured in AI Brain'
+            className='cursor-not-allowed'
           />
         </FormField>
 
         <FormField
           label='Embedding model'
-          description='Must match the embedding collections you attach.'
+          description='Brain-managed via Agent Teaching Embeddings capability.'
         >
-          <SelectSimple size='sm'
-            value={draft.embeddingModel ?? ''}
-            onValueChange={(value: string) => onChange({ embeddingModel: value })}
-            options={embeddingModels.map((model: string) => ({ value: model, label: model }))}
-            placeholder='Select embedding model'
+          <Input
+            value={effectiveEmbeddingModel || 'Not configured in AI Brain'}
+            readOnly
+            disabled
+            placeholder='Not configured in AI Brain'
+            className='cursor-not-allowed'
           />
         </FormField>
       </div>
@@ -69,14 +67,19 @@ export function LearnerAgentForm({
       <FormField label='System prompt' description='Optional instructions (tone, scope, rules)...'>
         <Textarea
           value={draft.systemPrompt ?? ''}
-          onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => onChange({ systemPrompt: event.target.value })}
+          onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
+            onChange({ systemPrompt: event.target.value })
+          }
           placeholder='Enter prompt instructions'
           className='min-h-[120px]'
         />
       </FormField>
 
       <div className='grid gap-4 md:grid-cols-2'>
-        <FormField label='Temperature' description='Higher = more creative, lower = more deterministic.'>
+        <FormField
+          label='Temperature'
+          description='Higher = more creative, lower = more deterministic.'
+        >
           <Input
             type='number'
             min={0}
@@ -102,7 +105,10 @@ export function LearnerAgentForm({
         </FormField>
       </div>
 
-      <FormField label='Max docs scanned per collection' description='Limits retrieval scan size (higher = better recall, lower = faster).'>
+      <FormField
+        label='Max docs scanned per collection'
+        description='Limits retrieval scan size (higher = better recall, lower = faster).'
+      >
         <Input
           type='number'
           min={10}
@@ -126,7 +132,10 @@ export function LearnerAgentForm({
             }
           />
         </FormField>
-        <FormField label='Min similarity score' description='Higher = stricter. Lower = more context (and more noise).'>
+        <FormField
+          label='Min similarity score'
+          description='Higher = stricter. Lower = more context (and more noise).'
+        >
           <Input
             type='number'
             step='0.05'
@@ -150,14 +159,15 @@ export function LearnerAgentForm({
             {collections.map((collection: AgentTeachingEmbeddingCollectionRecord) => {
               const checked = (draft.collectionIds ?? []).includes(collection.id);
               const sameModel =
-                !draft.embeddingModel ||
-                collection.embeddingModel === draft.embeddingModel;
+                !effectiveEmbeddingModel || collection.embeddingModel === effectiveEmbeddingModel;
               return (
                 <label
                   key={collection.id}
                   className={cn(
                     'flex items-start gap-2 rounded-md border px-3 py-2 text-sm transition-colors cursor-pointer',
-                    checked ? 'border-emerald-500/40 bg-emerald-500/10' : 'border-border bg-card/40 hover:bg-card/60',
+                    checked
+                      ? 'border-emerald-500/40 bg-emerald-500/10'
+                      : 'border-border bg-card/40 hover:bg-card/60',
                     !sameModel && 'opacity-60'
                   )}
                   title={

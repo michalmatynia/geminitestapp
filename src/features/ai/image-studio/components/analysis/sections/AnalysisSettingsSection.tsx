@@ -2,18 +2,14 @@
 
 import React from 'react';
 import { Button, Card, SelectSimple } from '@/shared/ui';
-import { 
-  type AnalysisMode, 
-  type ShadowPolicy, 
-  type DetectionMode,
-} from '../analysis-types';
-import { 
-  PADDING_MIN, 
-  PADDING_MAX, 
-  WHITE_THRESHOLD_MIN, 
-  WHITE_THRESHOLD_MAX, 
-  CHROMA_THRESHOLD_MIN, 
-  CHROMA_THRESHOLD_MAX 
+import { type AnalysisMode, type ShadowPolicy, type DetectionMode } from '../analysis-types';
+import {
+  PADDING_MIN,
+  PADDING_MAX,
+  WHITE_THRESHOLD_MIN,
+  WHITE_THRESHOLD_MAX,
+  CHROMA_THRESHOLD_MIN,
+  CHROMA_THRESHOLD_MAX,
 } from '../analysis-types';
 
 export interface AnalysisSettingsSectionProps {
@@ -61,20 +57,32 @@ export interface AnalysisSettingsSectionProps {
 }
 
 export function AnalysisSettingsSection({
-  mode, setMode,
-  layoutPadding, setLayoutPadding,
-  layoutPaddingX, setLayoutPaddingX,
-  layoutPaddingY, setLayoutPaddingY,
-  layoutSplitAxes, setLayoutSplitAxes,
-  layoutAdvancedEnabled, setLayoutAdvancedEnabled,
-  layoutDetection, setLayoutDetection,
-  layoutWhiteThreshold, setLayoutWhiteThreshold,
-  layoutChromaThreshold, setLayoutChromaThreshold,
-  layoutFillMissingCanvasWhite, setLayoutFillMissingCanvasWhite,
-  layoutShadowPolicy, setLayoutShadowPolicy,
+  mode,
+  setMode,
+  layoutPadding,
+  setLayoutPadding,
+  layoutPaddingX,
+  setLayoutPaddingX,
+  layoutPaddingY,
+  setLayoutPaddingY,
+  layoutSplitAxes,
+  setLayoutSplitAxes,
+  layoutAdvancedEnabled,
+  setLayoutAdvancedEnabled,
+  layoutDetection,
+  setLayoutDetection,
+  layoutWhiteThreshold,
+  setLayoutWhiteThreshold,
+  layoutChromaThreshold,
+  setLayoutChromaThreshold,
+  layoutFillMissingCanvasWhite,
+  setLayoutFillMissingCanvasWhite,
+  layoutShadowPolicy,
+  setLayoutShadowPolicy,
   layoutPresetOptionValue,
   layoutPresetOptions,
-  layoutPresetDraftName, setLayoutPresetDraftName,
+  layoutPresetDraftName,
+  setLayoutPresetDraftName,
   onCenterLayoutPresetChange,
   onCenterLayoutSavePreset,
   onCenterLayoutDeletePreset,
@@ -189,7 +197,11 @@ export function AnalysisSettingsSection({
       </div>
 
       {layoutAdvancedEnabled ? (
-        <Card variant='subtle-compact' padding='sm' className='mt-3 space-y-2 border-border/50 bg-card/30'>
+        <Card
+          variant='subtle-compact'
+          padding='sm'
+          className='mt-3 space-y-2 border-border/50 bg-card/30'
+        >
           <div className='grid gap-2 sm:grid-cols-2 lg:grid-cols-4'>
             <SelectSimple
               size='sm'
@@ -345,12 +357,7 @@ export function AnalysisSettingsSection({
           {busyLabel}
         </Button>
         {busy ? (
-          <Button
-            type='button'
-            size='sm'
-            variant='outline'
-            onClick={handleCancel}
-          >
+          <Button type='button' size='sm' variant='outline' onClick={handleCancel}>
             Cancel Analysis
           </Button>
         ) : null}

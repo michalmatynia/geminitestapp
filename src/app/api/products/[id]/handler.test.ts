@@ -99,9 +99,9 @@ describe('products/[id] handler cache invalidation', () => {
     } as unknown as NextRequest;
     updateProductMock.mockResolvedValueOnce(null);
 
-    await expect(
-      PUT_handler(request, buildContext(), { id: 'missing-product' })
-    ).rejects.toThrow('Product not found');
+    await expect(PUT_handler(request, buildContext(), { id: 'missing-product' })).rejects.toThrow(
+      'Product not found'
+    );
 
     expect(invalidateProductMock).not.toHaveBeenCalled();
   });

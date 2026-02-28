@@ -10,7 +10,9 @@ const safeJson = async <T>(res: Response): Promise<T> => {
   }
 };
 
-export const registerUser = async (input: Register): Promise<{ ok: boolean; payload: RegisterResponse }> => {
+export const registerUser = async (
+  input: Register
+): Promise<{ ok: boolean; payload: RegisterResponse }> => {
   const res = await fetch('/api/auth/register', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

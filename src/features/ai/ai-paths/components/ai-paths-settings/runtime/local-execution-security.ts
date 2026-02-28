@@ -10,8 +10,7 @@ export type LocalExecutionSecurityIssue = {
 const isPlainRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 
-const normalizeText = (value: unknown): string =>
-  typeof value === 'string' ? value.trim() : '';
+const normalizeText = (value: unknown): string => (typeof value === 'string' ? value.trim() : '');
 
 const hasInlineSecretLikeHttpHeaders = (rawHeaders: unknown): boolean => {
   const headersText = normalizeText(rawHeaders);
@@ -62,9 +61,7 @@ const parseJsonRecord = (value: unknown): Record<string, unknown> | null => {
   }
 };
 
-export const evaluateLocalExecutionSecurity = (
-  nodes: AiNode[]
-): LocalExecutionSecurityIssue[] => {
+export const evaluateLocalExecutionSecurity = (nodes: AiNode[]): LocalExecutionSecurityIssue[] => {
   const issues: LocalExecutionSecurityIssue[] = [];
   nodes.forEach((node: AiNode): void => {
     const nodeTitle = node.title ?? node.id;
@@ -134,8 +131,7 @@ export const evaluateLocalExecutionSecurity = (
           nodeId: node.id,
           nodeType: node.type,
           nodeTitle,
-          reason:
-            'Playwright settingsOverrides include proxyPassword directly in node settings.',
+          reason: 'Playwright settingsOverrides include proxyPassword directly in node settings.',
         });
       }
 
@@ -145,8 +141,7 @@ export const evaluateLocalExecutionSecurity = (
           nodeId: node.id,
           nodeType: node.type,
           nodeTitle,
-          reason:
-            'Playwright launch options include inline proxy password credentials.',
+          reason: 'Playwright launch options include inline proxy password credentials.',
         });
       }
 
@@ -156,8 +151,7 @@ export const evaluateLocalExecutionSecurity = (
           nodeId: node.id,
           nodeType: node.type,
           nodeTitle,
-          reason:
-            'Playwright context options include inline HTTP credentials password.',
+          reason: 'Playwright context options include inline HTTP credentials password.',
         });
       }
     }

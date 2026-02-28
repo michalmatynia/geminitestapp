@@ -4,11 +4,7 @@ import { z } from 'zod';
 
 import { findAuthUserByEmail } from '@/features/auth/server';
 import { getAuthSecurityProfile } from '@/features/auth/server';
-import {
-  checkLoginAllowed,
-  extractClientIp,
-  recordLoginFailure,
-} from '@/features/auth/server';
+import { checkLoginAllowed, extractClientIp, recordLoginFailure } from '@/features/auth/server';
 import { getAuthUserPageSettings } from '@/features/auth/server';
 import { createLoginChallenge } from '@/features/auth/server';
 import { logAuthEvent } from '@/features/auth/server';
@@ -20,10 +16,7 @@ export const payloadSchema = z.object({
   password: z.string().min(1),
 });
 
-export async function POST_handler(
-  req: NextRequest,
-  ctx: ApiHandlerContext,
-): Promise<Response> {
+export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const data = ctx.body as z.infer<typeof payloadSchema> | undefined;
   if (!data) throw badRequestError('Invalid payload');
 
@@ -54,7 +47,7 @@ export async function POST_handler(
         message: 'Too many attempts. Please try again later.',
         lockedUntil: allowed.lockedUntil?.toISOString() ?? null,
       },
-      { status: 429 },
+      { status: 429 }
     );
   }
 

@@ -1,5 +1,9 @@
 import type { StringMutatorOperation } from '@/shared/contracts/ai-paths';
-import type { NodeHandler, NodeHandlerContext, RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
+import type {
+  NodeHandler,
+  NodeHandlerContext,
+  RuntimePortValues,
+} from '@/shared/contracts/ai-paths-runtime';
 import {
   cloneValue,
   coerceInput,
@@ -10,10 +14,11 @@ import {
   safeStringify,
 } from '../../../utils';
 
-export const handleMutator: NodeHandler = ({ node, nodeInputs }: NodeHandlerContext): RuntimePortValues => {
-  const contextValue = coerceInput(nodeInputs['context']) as
-    | Record<string, unknown>
-    | undefined;
+export const handleMutator: NodeHandler = ({
+  node,
+  nodeInputs,
+}: NodeHandlerContext): RuntimePortValues => {
+  const contextValue = coerceInput(nodeInputs['context']) as Record<string, unknown> | undefined;
   if (!contextValue) {
     return {};
   }
@@ -28,7 +33,7 @@ export const handleMutator: NodeHandler = ({ node, nodeInputs }: NodeHandlerCont
   const currentValue = getValueAtMappingPath(contextValue, targetPath);
   const rendered = renderTemplate(
     mutatorConfig.valueTemplate ?? '{{value}}',
-    { ...contextValue, ...(nodeInputs) } as Record<string, unknown>,
+    { ...contextValue, ...nodeInputs } as Record<string, unknown>,
     currentValue
   );
   const updated = cloneValue(contextValue);
@@ -66,7 +71,7 @@ const applyStringMutatorReplace = (
   const search = operation.search ?? '';
   if (!search) return current;
   const matchMode = operation.matchMode ?? 'all';
-  const replacement = operation.type === 'remove' ? '' : operation.replace ?? '';
+  const replacement = operation.type === 'remove' ? '' : (operation.replace ?? '');
   if (operation.useRegex) {
     const flags = normalizeStringMutatorFlags(operation.flags, matchMode);
     try {
@@ -82,17 +87,16 @@ const applyStringMutatorReplace = (
   return current.replace(search, replacement);
 };
 
-export const handleStringMutator: NodeHandler = ({ node, nodeInputs }: NodeHandlerContext): RuntimePortValues => {
-  const rawInput = coerceInput(
-    nodeInputs['value'] ?? nodeInputs['prompt'] ?? nodeInputs['result']
-  );
+export const handleStringMutator: NodeHandler = ({
+  node,
+  nodeInputs,
+}: NodeHandlerContext): RuntimePortValues => {
+  const rawInput = coerceInput(nodeInputs['value'] ?? nodeInputs['prompt'] ?? nodeInputs['result']);
   if (rawInput === undefined || rawInput === null) {
     return {};
   }
   const stringConfig = node.config?.stringMutator ?? { operations: [] };
-  const operations = Array.isArray(stringConfig.operations)
-    ? stringConfig.operations
-    : [];
+  const operations = Array.isArray(stringConfig.operations) ? stringConfig.operations : [];
   let current = safeStringify(rawInput);
   operations.forEach((operation: StringMutatorOperation): void => {
     switch (operation.type) {
@@ -117,8 +121,9 @@ export const handleStringMutator: NodeHandler = ({ node, nodeInputs }: NodeHandl
         if (mode === 'upper') {
           current = current.toUpperCase();
         } else if (mode === 'title') {
-          current = current.replace(/\w\S*/g, (token: string) =>
-            token.charAt(0).toUpperCase() + token.slice(1).toLowerCase()
+          current = current.replace(
+            /\w\S*/g,
+            (token: string) => token.charAt(0).toUpperCase() + token.slice(1).toLowerCase()
           );
         } else {
           current = current.toLowerCase();

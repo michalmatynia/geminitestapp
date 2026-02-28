@@ -1,8 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  defaultPromptEngineSettings,
-} from '@/shared/lib/prompt-engine/settings';
+import { defaultPromptEngineSettings } from '@/shared/lib/prompt-engine/settings';
 import type { PromptValidationRule } from '@/shared/contracts/prompt-engine';
 import { explodePromptText } from '@/features/prompt-exploder/parser';
 import { getPromptExploderScopedRules } from '@/features/prompt-exploder/pattern-pack';
@@ -33,29 +31,30 @@ describe('case resolver prompt exploder segmentation', () => {
       validationScope: 'case_resolver_prompt_exploder',
     });
 
-    const segmentBodies = document.segments.map((segment) => ((segment.raw || segment.text) || '') || '');
-    const addresserIndex = segmentBodies.findIndex((value) =>
-      value.includes('Michał Matynia')
+    const segmentBodies = document.segments.map(
+      (segment) => segment.raw || segment.text || '' || ''
     );
+    const addresserIndex = segmentBodies.findIndex((value) => value.includes('Michał Matynia'));
     const addresseeIndex = segmentBodies.findIndex((value) =>
       value.includes('Inspektorat ZUS w Gryficach')
     );
     const placeDateIndex = segmentBodies.findIndex((value) =>
       value.includes('Szczecin, 25.01.2026 r.')
     );
-    
+
     expect(placeDateIndex).toBeGreaterThanOrEqual(0);
     expect(addresserIndex).toBeGreaterThanOrEqual(0);
     expect(addresseeIndex).toBeGreaterThanOrEqual(0);
     expect(addresserIndex).not.toBe(placeDateIndex);
     expect(addresseeIndex).toBeGreaterThan(addresserIndex);
-    
+
     const addresserSegment = document.segments[addresserIndex];
     const addresseeSegment = document.segments[addresseeIndex];
     const placeDateSegment = document.segments[placeDateIndex];
     const subjectSegment = document.segments.find((segment) =>
-      (((segment.raw || segment.text) || '') || '').includes('Wniosek o umorzenie zadłużenia')
-    );    expect(addresserSegment?.raw).toContain('Fioletowa 71/2');
+      (segment.raw || segment.text || '' || '').includes('Wniosek o umorzenie zadłużenia')
+    );
+    expect(addresserSegment?.raw).toContain('Fioletowa 71/2');
     expect(addresserSegment?.raw).toContain('Polska');
     expect(addresserSegment?.raw).not.toContain('Inspektorat ZUS w Gryficach');
     expect(addresseeSegment?.raw).toContain('Inspektorat ZUS w Gryficach');
@@ -89,9 +88,7 @@ describe('case resolver prompt exploder segmentation', () => {
     expect(addresserSegment?.matchedPatternLabels).toContain(
       'Case Resolver Extract: Address Postal Code'
     );
-    expect(addresserSegment?.matchedPatternLabels).toContain(
-      'Case Resolver Extract: Address City'
-    );
+    expect(addresserSegment?.matchedPatternLabels).toContain('Case Resolver Extract: Address City');
     expect(addresserSegment?.matchedPatternLabels).toContain(
       'Case Resolver Extract: Address Country'
     );
@@ -104,9 +101,7 @@ describe('case resolver prompt exploder segmentation', () => {
     expect(addresseeSegment?.matchedPatternLabels).not.toContain(
       'Case Resolver Extract: Address Country'
     );
-    expect(placeDateSegment?.matchedPatternLabels).toContain(
-      'Case Resolver Heading: Place + Date'
-    );
+    expect(placeDateSegment?.matchedPatternLabels).toContain('Case Resolver Heading: Place + Date');
     expect(addresseeSegment?.matchedSequenceLabels).toContain('Case Resolver Structure');
     expect(placeDateSegment?.title).toBe('');
     expect(addresserSegment?.title).toBe('');
@@ -140,16 +135,16 @@ describe('case resolver prompt exploder segmentation', () => {
     });
 
     const placeDateSegment = document.segments.find((segment) =>
-      ((segment.raw || segment.text) || '').includes('Szczecin 25.01.2026')
+      (segment.raw || segment.text || '').includes('Szczecin 25.01.2026')
     );
     const addresserSegment = document.segments.find((segment) =>
-      ((segment.raw || segment.text) || '').includes('Michał Matynia')
+      (segment.raw || segment.text || '').includes('Michał Matynia')
     );
     const addresseeSegment = document.segments.find((segment) =>
-      ((segment.raw || segment.text) || '').includes('Inspektorat ZUS w Gryficach')
+      (segment.raw || segment.text || '').includes('Inspektorat ZUS w Gryficach')
     );
     const subjectSegment = document.segments.find((segment) =>
-      ((segment.raw || segment.text) || '').includes('Wniosek o umorzenie zadłużenia')
+      (segment.raw || segment.text || '').includes('Wniosek o umorzenie zadłużenia')
     );
 
     expect(placeDateSegment).toBeDefined();
@@ -195,18 +190,16 @@ describe('case resolver prompt exploder segmentation', () => {
     });
 
     const placeDateSegment = document.segments.find((segment) =>
-      ((segment.raw || segment.text) || '').includes('Szczecin, dnia [DD.MM.2026]')
+      (segment.raw || segment.text || '').includes('Szczecin, dnia [DD.MM.2026]')
     );
     const addresserSegment = document.segments.find((segment) =>
-      ((segment.raw || segment.text) || '').includes('Michał Matynia')
+      (segment.raw || segment.text || '').includes('Michał Matynia')
     );
 
     expect(placeDateSegment).toBeDefined();
     expect(addresserSegment).toBeDefined();
     expect(placeDateSegment?.id).not.toBe(addresserSegment?.id);
-    expect(placeDateSegment?.matchedPatternLabels).toContain(
-      'Case Resolver Heading: Place + Date'
-    );
+    expect(placeDateSegment?.matchedPatternLabels).toContain('Case Resolver Heading: Place + Date');
     expect(placeDateSegment?.title).toBe('');
   });
 
@@ -229,12 +222,12 @@ describe('case resolver prompt exploder segmentation', () => {
     });
 
     const dotyczySegment = document.segments.find((segment) =>
-      ((segment.raw || segment.text) || '').includes(
+      (segment.raw || segment.text || '').includes(
         'Dotyczy: postępowanie administracyjne ZUS O/Szczecin nr 390000/71/RKS3/2026/282'
       )
     );
     const bodySegment = document.segments.find((segment) =>
-      ((segment.raw || segment.text) || '').includes(
+      (segment.raw || segment.text || '').includes(
         'Niniejszym wnoszę o umorzenie powstałego zadłużenia'
       )
     );
@@ -244,7 +237,8 @@ describe('case resolver prompt exploder segmentation', () => {
     expect(dotyczySegment?.id).not.toBe(bodySegment?.id);
     expect(dotyczySegment?.raw?.trim()).toBe(
       'Dotyczy: postępowanie administracyjne ZUS O/Szczecin nr 390000/71/RKS3/2026/282'
-    );    expect(dotyczySegment?.matchedPatternLabels).toContain(
+    );
+    expect(dotyczySegment?.matchedPatternLabels).toContain(
       'Case Resolver Heading: Dotyczy Subheading'
     );
     expect(dotyczySegment?.matchedPatternLabels).toContain(
@@ -283,12 +277,14 @@ Na podstawie obowiązujących przepisów informuję, że z dniem [dd.mm.2026] za
     });
 
     const segmentBodies = document.segments.map((segment) => segment.raw || segment.text);
-    const addresserIndex = segmentBodies.findIndex((value) => (value || '').includes('Michał Matynia'));
+    const addresserIndex = segmentBodies.findIndex((value) =>
+      (value || '').includes('Michał Matynia')
+    );
     const addresseeIndex = segmentBodies.findIndex((value) =>
       (value || '').includes('Zakład Ubezpieczeń Społecznych Oddział w Szczecinie')
-    );    const subjectIndex = document.segments.findIndex(
-      (segment) =>
-        segment.title === 'Rezygnacja z funkcji płatnika składek (wyrejestrowanie)'
+    );
+    const subjectIndex = document.segments.findIndex(
+      (segment) => segment.title === 'Rezygnacja z funkcji płatnika składek (wyrejestrowanie)'
     );
 
     expect(addresserIndex).toBeGreaterThanOrEqual(0);
@@ -405,7 +401,7 @@ Niniejszym wnoszę o zwrot kosztów podróży świadka.`;
     });
 
     const uzasadnienieSegment = document.segments.find((segment) =>
-      ((segment.raw || segment.text) || '').includes(
+      (segment.raw || segment.text || '').includes(
         'Przez kilka lat nie nastąpiło skuteczne doręczenie wnioskodawcy'
       )
     );
@@ -433,7 +429,7 @@ Niniejszym wnoszę o zwrot kosztów podróży świadka.`;
     });
 
     const closingSegment = document.segments.find((segment) =>
-      ((segment.raw || segment.text) || '').includes('Na zakończenie, na podstawie art. 73 § 1 KPA')
+      (segment.raw || segment.text || '').includes('Na zakończenie, na podstawie art. 73 § 1 KPA')
     );
 
     expect(closingSegment).toBeDefined();
@@ -463,12 +459,12 @@ Niniejszym wnoszę o zwrot kosztów podróży świadka.`;
     });
 
     const addresserSegment = document.segments.find((segment) =>
-      ((segment.raw || segment.text) || '').includes(
+      (segment.raw || segment.text || '').includes(
         'Strona w postępowaniu przed WSA: Michał Matynia'
       )
     );
     const addresseeSegment = document.segments.find((segment) =>
-      ((segment.raw || segment.text) || '').includes(
+      (segment.raw || segment.text || '').includes(
         'Organ w postępowaniu przed WSA: Zakład Ubezpieczeń Społecznych'
       )
     );
@@ -526,28 +522,26 @@ Z poważaniem,`;
     expect(document.segments.length).toBeGreaterThan(5);
 
     const placeDateSegment = document.segments.find((segment) =>
-      ((segment.raw || segment.text) || '').includes('Szczecin 25.01.2026')
+      (segment.raw || segment.text || '').includes('Szczecin 25.01.2026')
     );
     const addresserSegment = document.segments.find((segment) =>
-      ((segment.raw || segment.text) || '').includes('Michał Matynia')
+      (segment.raw || segment.text || '').includes('Michał Matynia')
     );
     const addresseeSegment = document.segments.find((segment) =>
-      ((segment.raw || segment.text) || '').includes('Inspektorat ZUS w Gryficach')
+      (segment.raw || segment.text || '').includes('Inspektorat ZUS w Gryficach')
     );
     const dotyczySegment = document.segments.find((segment) =>
-      ((segment.raw || segment.text) || '').includes(
+      (segment.raw || segment.text || '').includes(
         'Dotyczy: postępowanie administracyjne ZUS O/Szczecin nr 390000/71/RKS3/2026/282'
       )
     );
     const bodySegment = document.segments.find((segment) =>
-      ((segment.raw || segment.text) || '').includes(
+      (segment.raw || segment.text || '').includes(
         'Niniejszym wnoszę o umorzenie powstałego zadłużenia'
       )
     );
     const closingSegment = document.segments.find((segment) =>
-      ((segment.raw || segment.text) || '').includes(
-        'Na zakończenie, na podstawie art. 73 § 1 KPA'
-      )
+      (segment.raw || segment.text || '').includes('Na zakończenie, na podstawie art. 73 § 1 KPA')
     );
 
     expect(placeDateSegment).toBeDefined();
@@ -573,14 +567,13 @@ Z poważaniem,`;
       (segment) => segment.title === 'Uzasadnienie'
     );
     const wniosekSegment = document.segments.find((segment) =>
-      ((segment.raw || segment.text) || '').includes(
+      (segment.raw || segment.text || '').includes(
         'Wniosek o umorzenie zadłużenia lub korektę rozliczeń oraz o zawieszenie postępowania administracyjnego'
       )
     );
     expect(uzasadnienieSegment).toBeDefined();
     expect(wniosekSegment?.title).toBe('');
-    const uzasadnienieBody =
-      uzasadnienieSegment?.raw || uzasadnienieSegment?.text || '';
+    const uzasadnienieBody = uzasadnienieSegment?.raw || uzasadnienieSegment?.text || '';
     expect(uzasadnienieBody.startsWith('Uzasadnienie')).toBe(false);
   });
 

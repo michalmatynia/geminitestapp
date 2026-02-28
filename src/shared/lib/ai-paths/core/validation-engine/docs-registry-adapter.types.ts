@@ -192,7 +192,10 @@ export const semanticNodeIndexRowSchema = z.object({
   nodeType: z.string().trim().min(1),
   title: z.string().trim().min(1),
   file: z.string().trim().min(1),
-  nodeHash: z.string().trim().regex(/^[a-f0-9]{64}$/i),
+  nodeHash: z
+    .string()
+    .trim()
+    .regex(/^[a-f0-9]{64}$/i),
   nodeHashAlgorithm: z.literal('sha256'),
   inputCount: z.number().int().optional(),
   outputCount: z.number().int().optional(),

@@ -1,6 +1,6 @@
 import type { ManagedImageSlotDto as ProductImageSlot } from '@/shared/contracts/image-slots';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
-import { isLikelyImageStudioErrorText } from '../../utils/image-src';
+import { isLikelyImageStudioErrorText } from '@/shared/lib/ai/image-studio/utils/image-src';
 
 export const OBJECT_SLOT_INDEX = 0;
 export const TEMP_OBJECT_SLOT_ID = '__image_studio_temp_object__';
@@ -72,10 +72,7 @@ export function slotHasRenderableImage(slot: ImageStudioSlotRecord | null | unde
   const imageFileId = slot.imageFileId?.trim() ?? '';
   const imageFilePath = slot.imageFile?.url?.trim() ?? '';
   const rawImageUrl = slot.imageUrl?.trim() ?? '';
-  const imageUrl =
-    rawImageUrl && !isLikelyImageStudioErrorText(rawImageUrl)
-      ? rawImageUrl
-      : '';
+  const imageUrl = rawImageUrl && !isLikelyImageStudioErrorText(rawImageUrl) ? rawImageUrl : '';
   const imageBase64 = slot.imageBase64?.trim() ?? '';
   return Boolean(imageFileId || imageFilePath || imageUrl || imageBase64);
 }

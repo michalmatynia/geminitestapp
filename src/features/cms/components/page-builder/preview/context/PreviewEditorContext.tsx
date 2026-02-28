@@ -28,11 +28,7 @@ export function PreviewEditorProvider({
   children: React.ReactNode;
   value: PreviewEditorContextValue;
 }): React.JSX.Element {
-  return (
-    <PreviewEditorContext.Provider value={value}>
-      {children}
-    </PreviewEditorContext.Provider>
-  );
+  return <PreviewEditorContext.Provider value={value}>{children}</PreviewEditorContext.Provider>;
 }
 
 export function usePreviewEditor(): PreviewEditorContextValue {

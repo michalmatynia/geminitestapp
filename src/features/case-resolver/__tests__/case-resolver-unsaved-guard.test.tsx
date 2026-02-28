@@ -19,9 +19,8 @@ vi.mock('@/features/case-resolver/components/CaseResolverViewContext', () => ({
 }));
 
 vi.mock('@/features/case-resolver/components/CaseResolverFolderTree', async () => {
-  const {
-    useCaseResolverPageContext,
-  } = await import('@/features/case-resolver/context/CaseResolverPageContext');
+  const { useCaseResolverPageContext } =
+    await import('@/features/case-resolver/context/CaseResolverPageContext');
   const CaseResolverFolderTree = () => {
     const context = useCaseResolverPageContext();
     return (
@@ -171,7 +170,7 @@ describe('CaseResolverPageView unsaved guard', () => {
     expect(handleOpenFileEditorMock).not.toHaveBeenCalled();
     expect(screen.getByText('Unsaved Changes')).toBeInTheDocument();
     expect(
-      screen.getByText('You have unsaved changes in this document. What would you like to do?'),
+      screen.getByText('You have unsaved changes in this document. What would you like to do?')
     ).toBeInTheDocument();
   });
 });

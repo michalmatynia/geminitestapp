@@ -1,10 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import type { 
-  IntegrationConnectionBasic, 
-  ImageRetryPreset 
-} from '@/shared/contracts/integrations';
+import type { IntegrationConnectionBasic, ImageRetryPreset } from '@/shared/contracts/integrations';
 import { normalizeImageRetryPresets } from '@/features/data-import-export/utils/image-retry-presets';
 
 export function useImportExportPreferences({
@@ -47,7 +44,12 @@ export function useImportExportPreferences({
         if (defaultExportInventoryPref?.inventoryId) {
           setExportInventoryId(defaultExportInventoryPref.inventoryId);
         }
-        if (defaultConnectionPref?.connectionId && baseConnections.some((c: IntegrationConnectionBasic) => c.id === defaultConnectionPref.connectionId)) {
+        if (
+          defaultConnectionPref?.connectionId &&
+          baseConnections.some(
+            (c: IntegrationConnectionBasic) => c.id === defaultConnectionPref.connectionId
+          )
+        ) {
           setSelectedBaseConnectionId(defaultConnectionPref.connectionId);
         }
         if (exportStockFallbackPref?.enabled !== undefined) {
@@ -65,18 +67,18 @@ export function useImportExportPreferences({
     }
     return undefined;
   }, [
-    lastImportTemplatePref, 
-    defaultExportInventoryPref, 
-    defaultConnectionPref, 
-    exportStockFallbackPref, 
-    imageRetryPresetsPref, 
-    sampleProductPref, 
+    lastImportTemplatePref,
+    defaultExportInventoryPref,
+    defaultConnectionPref,
+    exportStockFallbackPref,
+    imageRetryPresetsPref,
+    sampleProductPref,
     baseConnections,
     setImportTemplateId,
     setExportInventoryId,
     setSelectedBaseConnectionId,
     setExportStockFallbackEnabled,
     setImageRetryPresets,
-    setInventoryId
+    setInventoryId,
   ]);
 }

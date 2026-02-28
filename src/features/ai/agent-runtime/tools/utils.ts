@@ -1,4 +1,3 @@
-
 export const toDataUrl = (buffer: Buffer): string =>
   `data:image/png;base64,${buffer.toString('base64')}`;
 
@@ -74,7 +73,9 @@ export const normalizeEmailCandidates = (items: string[]): string[] => {
   });
 };
 
-export const loadRobotsTxt = async (url: string): Promise<{ ok: boolean; status: number | null; content: string; error?: string }> => {
+export const loadRobotsTxt = async (
+  url: string
+): Promise<{ ok: boolean; status: number | null; content: string; error?: string }> => {
   try {
     const target = new URL(url);
     const robotsUrl = `${target.origin}/robots.txt`;
@@ -94,7 +95,9 @@ export const loadRobotsTxt = async (url: string): Promise<{ ok: boolean; status:
   }
 };
 
-export const parseRobotsRules = (robotsTxt: string): Map<string, Array<{ type: 'allow' | 'disallow'; path: string }>> => {
+export const parseRobotsRules = (
+  robotsTxt: string
+): Map<string, Array<{ type: 'allow' | 'disallow'; path: string }>> => {
   const rules = new Map<string, Array<{ type: 'allow' | 'disallow'; path: string }>>();
   let currentAgents: string[] = [];
   const lines = robotsTxt.split(/\r?\n/);
@@ -142,10 +145,7 @@ export const evaluateRobotsRules = (
     if (path.startsWith(rule.path)) {
       if (!bestMatch || rule.path.length > bestMatch.path.length) {
         bestMatch = rule;
-      } else if (
-        rule.path.length === bestMatch?.path.length &&
-        rule.type === 'allow'
-      ) {
+      } else if (rule.path.length === bestMatch?.path.length && rule.type === 'allow') {
         bestMatch = rule;
       }
     }
@@ -157,7 +157,9 @@ export const evaluateRobotsRules = (
   };
 };
 
-export const parseCredentials = (prompt?: string): { email?: string; username?: string; password?: string } | null => {
+export const parseCredentials = (
+  prompt?: string
+): { email?: string; username?: string; password?: string } | null => {
   if (!prompt) return null;
   const emailMatch = prompt.match(/email\s*[:=]\s*([^\s]+)/i);
   const userMatch = prompt.match(/(?:username|user|login)\s*[:=]\s*([^\s]+)/i);
@@ -173,12 +175,12 @@ export const parseCredentials = (prompt?: string): { email?: string; username?: 
   };
 };
 
-export const parseExtractionRequest = (prompt?: string): { type: 'product_names' | 'emails'; count: number | null } | null => {
+export const parseExtractionRequest = (
+  prompt?: string
+): { type: 'product_names' | 'emails'; count: number | null } | null => {
   if (!prompt) return null;
   const taskTypeHint = /task type:\s*extract_info/i.test(prompt);
-  const wantsExtraction =
-    taskTypeHint ||
-    /(extract|collect|find|list|get)\b/i.test(prompt);
+  const wantsExtraction = taskTypeHint || /(extract|collect|find|list|get)\b/i.test(prompt);
   if (/task type:\s*web_task/i.test(prompt) && !wantsExtraction) return null;
   if (!wantsExtraction) return null;
   const isProduct = /product/i.test(prompt);
@@ -193,10 +195,14 @@ export const parseExtractionRequest = (prompt?: string): { type: 'product_names'
   }
   if (taskTypeHint) {
     return { type: 'emails', count };
-  }  return null;
+  }
+  return null;
 };
 
-export const buildEvidenceSnippets = (items: string[], domText: string): Array<{ item: string; snippet: string }> => {
+export const buildEvidenceSnippets = (
+  items: string[],
+  domText: string
+): Array<{ item: string; snippet: string }> => {
   const evidence: Array<{ item: string; snippet: string }> = [];
   if (!domText) return evidence;
   const lowerText = domText.toLowerCase();

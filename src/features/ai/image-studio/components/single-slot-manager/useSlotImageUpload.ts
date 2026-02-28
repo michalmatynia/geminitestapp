@@ -2,16 +2,16 @@
 
 import { useCallback } from 'react';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
-import { 
-  OBJECT_SLOT_INDEX, 
-  resolveSlotIdCandidates, 
-  REVEAL_IN_TREE_EVENT 
+import {
+  OBJECT_SLOT_INDEX,
+  resolveSlotIdCandidates,
+  REVEAL_IN_TREE_EVENT,
 } from './single-slot-manager-utils';
-import type { 
-  ImageStudioSlotDto as ImageStudioSlot, 
+import type {
+  ImageStudioSlotDto as ImageStudioSlot,
   ImageStudioAssetDto as ImageStudioUploadedAsset,
   UpdateImageStudioSlotDto,
-  CreateImageStudioSlotDto
+  CreateImageStudioSlotDto,
 } from '@/shared/contracts/image-studio';
 import type { QueryClient, UseMutationResult } from '@tanstack/react-query';
 
@@ -26,7 +26,11 @@ interface SlotImageUploadProps {
   getFolderForNewSlot: () => string;
   objectSlot: ImageStudioSlot | null;
   createSlots: (slots: CreateImageStudioSlotDto[]) => Promise<ImageStudioSlot[]>;
-  updateSlotMutation: UseMutationResult<ImageStudioSlot, Error, { id: string; data: UpdateImageStudioSlotDto }>;
+  updateSlotMutation: UseMutationResult<
+    ImageStudioSlot,
+    Error,
+    { id: string; data: UpdateImageStudioSlotDto }
+  >;
   setTemporaryObjectUpload: (asset: ImageStudioUploadedAsset | null) => void;
   setSelectedSlotId: (id: string | null) => void;
   setObjectImageLinkDraft: (link: string) => void;
@@ -100,9 +104,9 @@ export function useSlotImageUpload({
             }
           }
           if (!updatedSlot) {
-            throw (updateError instanceof Error
+            throw updateError instanceof Error
               ? updateError
-              : new Error('Failed to attach image to selected card.'));
+              : new Error('Failed to attach image to selected card.');
           }
 
           setTemporaryObjectUpload(null);
@@ -115,7 +119,9 @@ export function useSlotImageUpload({
             });
           }
           if (typeof window !== 'undefined') {
-            window.dispatchEvent(new CustomEvent(REVEAL_IN_TREE_EVENT, { detail: { slotId: updatedSlot.id } }));
+            window.dispatchEvent(
+              new CustomEvent(REVEAL_IN_TREE_EVENT, { detail: { slotId: updatedSlot.id } })
+            );
           }
           void invalidateImageStudioSlots(queryClient, normalizedProjectId);
           return;
@@ -145,7 +151,9 @@ export function useSlotImageUpload({
           });
         }
         if (typeof window !== 'undefined') {
-          window.dispatchEvent(new CustomEvent(REVEAL_IN_TREE_EVENT, { detail: { slotId: createdSlot.id } }));
+          window.dispatchEvent(
+            new CustomEvent(REVEAL_IN_TREE_EVENT, { detail: { slotId: createdSlot.id } })
+          );
         }
         void invalidateImageStudioSlots(queryClient, normalizedProjectId);
       } catch (error) {

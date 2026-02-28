@@ -29,4 +29,3 @@ describe('AI Paths legacy run stream handler', () => {
     expect(payload).toContain('Refresh the page');
   });
 });
-

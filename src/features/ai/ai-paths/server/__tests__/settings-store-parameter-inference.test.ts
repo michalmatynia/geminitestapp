@@ -21,12 +21,10 @@ describe('parameter inference seed config', () => {
     expect(queryNode?.['type']).toBe('database');
 
     const queryConfig = (
-      (((queryNode?.['config'] as Record<string, unknown> | undefined)?.[
-        'database'
-      ] as Record<string, unknown> | undefined)?.['query'] as
+      (queryNode?.['config'] as Record<string, unknown> | undefined)?.['database'] as
         | Record<string, unknown>
-        | undefined)
-    );
+        | undefined
+    )?.['query'] as Record<string, unknown> | undefined;
 
     expect(queryConfig?.['collection']).toBe('product_parameters');
     expect(queryConfig?.['single']).toBe(false);
@@ -67,18 +65,12 @@ describe('parameter inference seed config', () => {
     const nodes = Array.isArray(config.nodes) ? config.nodes : [];
     const edges = Array.isArray(config.edges) ? config.edges : [];
 
-    const templatePromptNode = nodes.find(
-      (node) => node?.['id'] === 'node-prompt-template-params'
-    );
-    const templateVpNode = nodes.find(
-      (node) => node?.['id'] === 'node-vp-template-params'
-    );
+    const templatePromptNode = nodes.find((node) => node?.['id'] === 'node-prompt-template-params');
+    const templateVpNode = nodes.find((node) => node?.['id'] === 'node-vp-template-params');
     const templateLogicalConditionNode = nodes.find(
       (node) => node?.['id'] === 'node-lc-template-params'
     );
-    const templateRouterNode = nodes.find(
-      (node) => node?.['id'] === 'node-router-seed-params'
-    );
+    const templateRouterNode = nodes.find((node) => node?.['id'] === 'node-router-seed-params');
     const seedNode = nodes.find((node) => node?.['id'] === 'node-seed-params');
 
     expect(templatePromptNode?.['type']).toBe('prompt');
@@ -88,27 +80,21 @@ describe('parameter inference seed config', () => {
     expect(seedNode?.['type']).toBe('database');
 
     const templatePrompt = (
-      (((templatePromptNode?.['config'] as Record<string, unknown> | undefined)?.[
-        'prompt'
-      ] as Record<string, unknown> | undefined)?.['template'] as
-        | string
-        | undefined)
-    );
+      (templatePromptNode?.['config'] as Record<string, unknown> | undefined)?.['prompt'] as
+        | Record<string, unknown>
+        | undefined
+    )?.['template'] as string | undefined;
     expect(templatePrompt).toContain('{"parameterId":"<id>","value":""}');
 
-    const seedDbConfig = (((seedNode?.['config'] as Record<string, unknown> | undefined)?.[
+    const seedDbConfig = (seedNode?.['config'] as Record<string, unknown> | undefined)?.[
       'database'
-    ] as Record<string, unknown> | undefined));
-    const seedQueryConfig = ((seedDbConfig?.['query'] as Record<string, unknown> | undefined));
+    ] as Record<string, unknown> | undefined;
+    const seedQueryConfig = seedDbConfig?.['query'] as Record<string, unknown> | undefined;
 
     expect(seedQueryConfig?.['collection']).toBe('products');
     expect(seedDbConfig?.['action']).toBe('findOneAndUpdate');
-    expect(seedQueryConfig?.['queryTemplate']).toEqual(
-      expect.stringContaining('"$exists"')
-    );
-    expect(seedQueryConfig?.['queryTemplate']).toEqual(
-      expect.stringContaining('"$size"')
-    );
+    expect(seedQueryConfig?.['queryTemplate']).toEqual(expect.stringContaining('"$exists"'));
+    expect(seedQueryConfig?.['queryTemplate']).toEqual(expect.stringContaining('"$size"'));
     expect(seedDbConfig?.['updateTemplate']).toEqual(
       expect.stringContaining('"parameters": {{value}}')
     );
@@ -153,15 +139,13 @@ describe('parameter inference seed config', () => {
     const updateNode = nodes.find((node) => node?.['id'] === 'node-update-params');
     expect(updateNode?.['type']).toBe('database');
 
-    const dbConfig = (((updateNode?.['config'] as Record<string, unknown> | undefined)?.[
+    const dbConfig = (updateNode?.['config'] as Record<string, unknown> | undefined)?.[
       'database'
-    ] as Record<string, unknown> | undefined));
-    const queryConfig = ((dbConfig?.['query'] as Record<string, unknown> | undefined));
+    ] as Record<string, unknown> | undefined;
+    const queryConfig = dbConfig?.['query'] as Record<string, unknown> | undefined;
 
     expect(dbConfig?.['updatePayloadMode']).toBe('custom');
-    expect(queryConfig?.['queryTemplate']).toEqual(
-      expect.stringContaining('"id": "{{entityId}}"')
-    );
+    expect(queryConfig?.['queryTemplate']).toEqual(expect.stringContaining('"id": "{{entityId}}"'));
     expect(dbConfig?.['updateTemplate']).toEqual(
       expect.stringContaining('"parameters": {{value}}')
     );
@@ -211,8 +195,8 @@ describe('parameter inference seed config', () => {
     const updateNode = nodes.find((node) => node?.['id'] === 'node-update-params');
     if (!updateNode) throw new Error('Expected node-update-params');
 
-    const dbConfig = (((updateNode['config'] as Record<string, unknown>)['database'] ??
-      {}) as Record<string, unknown>);
+    const dbConfig = ((updateNode['config'] as Record<string, unknown>)['database'] ??
+      {}) as Record<string, unknown>;
     updateNode['config'] = {
       ...(updateNode['config'] as Record<string, unknown>),
       database: {
@@ -234,10 +218,11 @@ describe('parameter inference seed config', () => {
     const queryNode = nodes.find((node) => node?.['id'] === 'node-query-params');
     if (!queryNode) throw new Error('Expected node-query-params');
 
-    const dbConfig = (((queryNode['config'] as Record<string, unknown>)['database'] ??
-      {}) as Record<string, unknown>);
-    const queryConfig = (((dbConfig['query'] as Record<string, unknown>) ??
-      {}));
+    const dbConfig = ((queryNode['config'] as Record<string, unknown>)['database'] ?? {}) as Record<
+      string,
+      unknown
+    >;
+    const queryConfig = (dbConfig['query'] as Record<string, unknown>) ?? {};
     queryNode['config'] = {
       ...(queryNode['config'] as Record<string, unknown>),
       database: {
@@ -261,10 +246,9 @@ describe('parameter inference seed config', () => {
     const updateNode = nodes.find((node) => node?.['id'] === 'node-update-params');
     if (!updateNode) throw new Error('Expected node-update-params');
 
-    const dbConfig = (((updateNode['config'] as Record<string, unknown>)['database'] ??
-      {}) as Record<string, unknown>);
-    const queryConfig = (((dbConfig['query'] as Record<string, unknown>) ??
-      {}));
+    const dbConfig = ((updateNode['config'] as Record<string, unknown>)['database'] ??
+      {}) as Record<string, unknown>;
+    const queryConfig = (dbConfig['query'] as Record<string, unknown>) ?? {};
     updateNode['config'] = {
       ...(updateNode['config'] as Record<string, unknown>),
       database: {
@@ -289,16 +273,13 @@ describe('parameter inference seed config', () => {
     const promptNode = nodes.find((node) => node?.['id'] === 'node-prompt-params');
     if (!promptNode) throw new Error('Expected node-prompt-params');
 
-    const promptConfig = (((promptNode['config'] as Record<string, unknown>)['prompt'] ??
-      {}) as Record<string, unknown>);
+    const promptConfig = ((promptNode['config'] as Record<string, unknown>)['prompt'] ??
+      {}) as Record<string, unknown>;
     promptNode['config'] = {
       ...(promptNode['config'] as Record<string, unknown>),
       prompt: {
         ...promptConfig,
-        template: String(promptConfig['template'] ?? '').replace(
-          /8\.[\s\S]*$/m,
-          ''
-        ),
+        template: String(promptConfig['template'] ?? '').replace(/8\.[\s\S]*$/m, ''),
       },
     };
 

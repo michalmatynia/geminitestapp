@@ -11,7 +11,15 @@ export type MediaReplaceTarget = {
 };
 
 // Section-type block types that get a richer preview
-export const SECTION_BLOCK_TYPES = ['ImageWithText', 'Hero', 'RichText', 'Block', 'TextAtom', 'Carousel', 'Slideshow'];
+export const SECTION_BLOCK_TYPES = [
+  'ImageWithText',
+  'Hero',
+  'RichText',
+  'Block',
+  'TextAtom',
+  'Carousel',
+  'Slideshow',
+];
 
 export const getGapClass = (gap?: string): string => {
   if (gap === 'none') return 'gap-0';
@@ -32,7 +40,9 @@ export const getGapStyle = (gapPx: unknown): React.CSSProperties | undefined => 
   return undefined;
 };
 
-export const resolveJustifyContent = (value: unknown): React.CSSProperties['justifyContent'] | undefined => {
+export const resolveJustifyContent = (
+  value: unknown
+): React.CSSProperties['justifyContent'] | undefined => {
   if (value === 'center') return 'center';
   if (value === 'end') return 'flex-end';
   if (value === 'space-between') return 'space-between';
@@ -42,7 +52,9 @@ export const resolveJustifyContent = (value: unknown): React.CSSProperties['just
   return undefined;
 };
 
-export const resolveAlignItems = (value: unknown): React.CSSProperties['alignItems'] | undefined => {
+export const resolveAlignItems = (
+  value: unknown
+): React.CSSProperties['alignItems'] | undefined => {
   if (value === 'center') return 'center';
   if (value === 'end') return 'flex-end';
   if (value === 'stretch') return 'stretch';
@@ -80,7 +92,8 @@ export const DEFAULT_BLOCK_MIN_HEIGHT: Record<string, number> = {
 
 export const getBlockMinHeight = (type: string): number => DEFAULT_BLOCK_MIN_HEIGHT[type] ?? 40;
 
-export const getSpacingValue = (value: unknown): number => (typeof value === 'number' && Number.isFinite(value) ? value : 0);
+export const getSpacingValue = (value: unknown): number =>
+  typeof value === 'number' && Number.isFinite(value) ? value : 0;
 
 export const toNumber = (value: unknown, fallback: number): number =>
   typeof value === 'number' && Number.isFinite(value) ? value : fallback;
@@ -103,14 +116,20 @@ export const shouldShowSectionDivider = (settings: Record<string, unknown>): boo
 };
 
 // Helper to check if an ImageElement is in background mode for a specific target
-export function isBackgroundModeImage(block: BlockInstance, target: 'grid' | 'row' | 'column'): boolean {
+export function isBackgroundModeImage(
+  block: BlockInstance,
+  target: 'grid' | 'row' | 'column'
+): boolean {
   if (block.type !== 'ImageElement') return false;
   const backgroundTarget = (block.settings?.['backgroundTarget'] as string) || 'none';
   return backgroundTarget === target;
 }
 
 // Collect all ImageElements from a block tree that have a specific background target
-export function collectBackgroundImages(blocks: BlockInstance[], target: 'grid' | 'row' | 'column'): BlockInstance[] {
+export function collectBackgroundImages(
+  blocks: BlockInstance[],
+  target: 'grid' | 'row' | 'column'
+): BlockInstance[] {
   const result: BlockInstance[] = [];
   for (const block of blocks) {
     if (isBackgroundModeImage(block, target)) {

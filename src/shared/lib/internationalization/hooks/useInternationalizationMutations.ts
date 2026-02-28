@@ -2,17 +2,17 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 
-import type { CurrencyOption, CountryOption, Language } from '@/shared/contracts/internationalization';
+import type {
+  CurrencyOption,
+  CountryOption,
+  Language,
+} from '@/shared/contracts/internationalization';
 import type { DeleteMutation, SaveMutation } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import { createDeleteMutationV2, createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
-import type { 
-  SaveCurrencyInput, 
-  SaveCountryInput, 
-  SaveLanguageInput 
-} from '../api';
+import type { SaveCurrencyInput, SaveCountryInput, SaveLanguageInput } from '../api';
 
 const i18nKeys = QUERY_KEYS.internationalization;
 
@@ -76,7 +76,10 @@ export function useDeleteLanguageMutation(): DeleteMutation<void, string> {
   });
 }
 
-export function useSaveCurrencyMutation(): SaveMutation<CurrencyOption, { id?: string; data: SaveCurrencyInput }> {
+export function useSaveCurrencyMutation(): SaveMutation<
+  CurrencyOption,
+  { id?: string; data: SaveCurrencyInput }
+> {
   const queryClient = useQueryClient();
   const mutationKey = i18nKeys.currencies();
   return createMutationV2<CurrencyOption, { id?: string; data: SaveCurrencyInput }>({
@@ -99,7 +102,10 @@ export function useSaveCurrencyMutation(): SaveMutation<CurrencyOption, { id?: s
   });
 }
 
-export function useSaveCountryMutation(): SaveMutation<CountryOption, { id?: string; data: SaveCountryInput }> {
+export function useSaveCountryMutation(): SaveMutation<
+  CountryOption,
+  { id?: string; data: SaveCountryInput }
+> {
   const queryClient = useQueryClient();
   const mutationKey = i18nKeys.countries();
   return createMutationV2<CountryOption, { id?: string; data: SaveCountryInput }>({
@@ -122,7 +128,10 @@ export function useSaveCountryMutation(): SaveMutation<CountryOption, { id?: str
   });
 }
 
-export function useSaveLanguageMutation(): SaveMutation<Language, { id?: string; data: SaveLanguageInput }> {
+export function useSaveLanguageMutation(): SaveMutation<
+  Language,
+  { id?: string; data: SaveLanguageInput }
+> {
   const queryClient = useQueryClient();
   const mutationKey = i18nKeys.languages();
   return createMutationV2<Language, { id?: string; data: SaveLanguageInput }>({

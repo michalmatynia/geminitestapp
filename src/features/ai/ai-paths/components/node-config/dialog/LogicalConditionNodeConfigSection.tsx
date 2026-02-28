@@ -2,7 +2,11 @@
 
 import React from 'react';
 
-import type { LogicalConditionConfig, LogicalConditionItem, LogicalConditionOperator } from '@/shared/lib/ai-paths';
+import type {
+  LogicalConditionConfig,
+  LogicalConditionItem,
+  LogicalConditionOperator,
+} from '@/shared/lib/ai-paths';
 import { Button, FormField, Input, Label, SelectSimple } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
@@ -36,12 +40,7 @@ const combinatorOptions = [
   { value: 'or', label: 'OR (any must pass)' },
 ];
 
-const NO_COMPARE_TO_OPERATORS = new Set<string>([
-  'truthy',
-  'falsy',
-  'isEmpty',
-  'notEmpty',
-]);
+const NO_COMPARE_TO_OPERATORS = new Set<string>(['truthy', 'falsy', 'isEmpty', 'notEmpty']);
 
 const STRING_OPERATORS = new Set<string>([
   'equals',
@@ -71,9 +70,7 @@ export function LogicalConditionNodeConfigSection(): React.JSX.Element | null {
   };
 
   const updateCondition = (index: number, patch: Partial<LogicalConditionItem>): void => {
-    const next = config.conditions.map((c, i) =>
-      i === index ? { ...c, ...patch } : c
-    );
+    const next = config.conditions.map((c, i) => (i === index ? { ...c, ...patch } : c));
     updateConfig({ conditions: next });
   };
 
@@ -121,9 +118,7 @@ export function LogicalConditionNodeConfigSection(): React.JSX.Element | null {
               className='rounded-md border border-border bg-card/40 p-3 space-y-3'
             >
               <div className='flex items-center justify-between gap-2'>
-                <span className='text-xs font-semibold text-white'>
-                  Condition {index + 1}
-                </span>
+                <span className='text-xs font-semibold text-white'>Condition {index + 1}</span>
                 <Button
                   type='button'
                   variant='ghost'

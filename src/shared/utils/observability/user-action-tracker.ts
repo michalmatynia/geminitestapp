@@ -44,7 +44,7 @@ export const initUserActionTracker = (): void => {
     try {
       const target = event.target as Element;
       // Skip frequent non-interactions if needed, but click/change/submit are key.
-      
+
       const action: UserAction = {
         type: event.type,
         target: getSelector(target),
@@ -55,7 +55,7 @@ export const initUserActionTracker = (): void => {
         action.x = event.clientX;
         action.y = event.clientY;
       }
-      
+
       const text = getSafeText(target);
       if (text) action.textContent = text;
 

@@ -21,7 +21,6 @@ import { CrudPanel } from '../components/CrudPanel';
 import { SqlQueryConsole } from '../components/SqlQueryConsole';
 import { DatabaseProvider, useDatabase } from '../context/DatabaseContext';
 
-
 function DatabaseOperationsContent(): React.JSX.Element {
   const { dbType, setDbType, tableDetails, isLoading: previewLoading } = useDatabase();
   const isProduction = process.env['NODE_ENV'] === 'production';
@@ -32,11 +31,10 @@ function DatabaseOperationsContent(): React.JSX.Element {
       description='Execute SQL queries and manage table data directly.'
       headerActions={
         <div className='flex items-center gap-2'>
-          <SelectSimple size='sm'
+          <SelectSimple
+            size='sm'
             value={dbType}
-            onValueChange={(value: string): void =>
-              setDbType(value as DatabaseType)
-            }
+            onValueChange={(value: string): void => setDbType(value as DatabaseType)}
             options={[
               { value: 'postgresql', label: 'PostgreSQL' },
               { value: 'mongodb', label: 'MongoDB' },
@@ -58,7 +56,9 @@ function DatabaseOperationsContent(): React.JSX.Element {
 
       <Tabs defaultValue='sql' className='w-full'>
         <TabsList className='mb-4'>
-          <TabsTrigger value='sql' className='text-xs'>SQL Console</TabsTrigger>
+          <TabsTrigger value='sql' className='text-xs'>
+            SQL Console
+          </TabsTrigger>
           <TabsTrigger value='crud' className='text-xs'>
             Table Manager {tableDetails.length > 0 && `(${tableDetails.length})`}
           </TabsTrigger>
@@ -79,14 +79,14 @@ function DatabaseOperationsContent(): React.JSX.Element {
           {!previewLoading && tableDetails.length === 0 && (
             <EmptyState
               title='No tables found'
-              description={dbType === 'mongodb'
-                ? 'Table metadata is not available for MongoDB. Use the SQL Console tab for MongoDB operations.'
-                : 'No tables found in the database.'}
+              description={
+                dbType === 'mongodb'
+                  ? 'Table metadata is not available for MongoDB. Use the SQL Console tab for MongoDB operations.'
+                  : 'No tables found in the database.'
+              }
             />
           )}
-          {!previewLoading && tableDetails.length > 0 && (
-            <CrudPanel />
-          )}
+          {!previewLoading && tableDetails.length > 0 && <CrudPanel />}
         </TabsContent>
       </Tabs>
     </PageLayout>

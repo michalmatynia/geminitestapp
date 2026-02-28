@@ -9,7 +9,8 @@ import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Card, PanelHeader, useToast, LoadingState, ToggleRow } from '@/shared/ui';
 
 export const PAGE_BUILDER_SHOW_EXTRACT_PLACEHOLDER_KEY = 'page_builder_show_extract_placeholder';
-export const PAGE_BUILDER_SHOW_SECTION_DROP_PLACEHOLDER_KEY = 'page_builder_show_section_drop_placeholder';
+export const PAGE_BUILDER_SHOW_SECTION_DROP_PLACEHOLDER_KEY =
+  'page_builder_show_section_drop_placeholder';
 
 export function PageBuilderSettingsPage(): React.JSX.Element {
   const settingsStore = useSettingsStore();
@@ -24,11 +25,14 @@ export function PageBuilderSettingsPage(): React.JSX.Element {
 
   // Local state for user edits (null means use server value)
   const [localExtractPlaceholder, setLocalExtractPlaceholder] = useState<boolean | null>(null);
-  const [localSectionDropPlaceholder, setLocalSectionDropPlaceholder] = useState<boolean | null>(null);
+  const [localSectionDropPlaceholder, setLocalSectionDropPlaceholder] = useState<boolean | null>(
+    null
+  );
 
   // Compute displayed values: use local if edited, otherwise derive from server
-  const showExtractPlaceholder = localExtractPlaceholder ?? (serverExtractValue === 'true');
-  const showSectionDropPlaceholder = localSectionDropPlaceholder ?? (serverSectionDropValue !== 'false');
+  const showExtractPlaceholder = localExtractPlaceholder ?? serverExtractValue === 'true';
+  const showSectionDropPlaceholder =
+    localSectionDropPlaceholder ?? serverSectionDropValue !== 'false';
 
   const isDirty = localExtractPlaceholder !== null || localSectionDropPlaceholder !== null;
 
@@ -49,7 +53,9 @@ export function PageBuilderSettingsPage(): React.JSX.Element {
       setLocalSectionDropPlaceholder(null);
       toast('Settings saved successfully.', { variant: 'success' });
     } catch (error) {
-      logClientError(error, { context: { source: 'PageBuilderSettingsPage', action: 'saveSettings' } });
+      logClientError(error, {
+        context: { source: 'PageBuilderSettingsPage', action: 'saveSettings' },
+      });
       const message = error instanceof Error ? error.message : 'Failed to save settings';
       toast(message, { variant: 'error' });
     }
@@ -74,9 +80,11 @@ export function PageBuilderSettingsPage(): React.JSX.Element {
             label: updateSettingsBulk.isPending ? 'Saving...' : 'Save Settings',
             onClick: handleSave,
             disabled: !isDirty || updateSettingsBulk.isPending,
-            icon: updateSettingsBulk.isPending ? <Loader2 className='size-4 animate-spin' /> : undefined,
-            variant: 'default'
-          }
+            icon: updateSettingsBulk.isPending ? (
+              <Loader2 className='size-4 animate-spin' />
+            ) : undefined,
+            variant: 'default',
+          },
         ]}
       />
 

@@ -37,12 +37,13 @@ const normalizeFolderPath = (value: string): string => {
 
 type CaseResolverRelationNodeGroup = 'case' | 'folder' | 'file' | 'custom';
 
-const RELATION_NODE_BASE_OFFSETS: Record<CaseResolverRelationNodeGroup, { x: number; y: number }> = {
-  case: { x: 120, y: 120 },
-  folder: { x: 520, y: 120 },
-  file: { x: 920, y: 120 },
-  custom: { x: 1320, y: 120 },
-};
+const RELATION_NODE_BASE_OFFSETS: Record<CaseResolverRelationNodeGroup, { x: number; y: number }> =
+  {
+    case: { x: 120, y: 120 },
+    folder: { x: 520, y: 120 },
+    file: { x: 920, y: 120 },
+    custom: { x: 1320, y: 120 },
+  };
 
 const RELATION_NODE_GRID_STEP_Y = 130;
 const RELATION_NODE_GRID_COLUMNS = 2;
@@ -93,18 +94,21 @@ const sanitizeRelationNodes = (value: unknown): AiNode[] => {
       typeof record['title'] === 'string' && record['title'].trim().length > 0
         ? record['title'].trim()
         : `Relation ${index + 1}`;
-    const description =
-      typeof record['description'] === 'string' ? record['description'] : '';
+    const description = typeof record['description'] === 'string' ? record['description'] : '';
     const positionRecord =
       record['position'] && typeof record['position'] === 'object'
         ? (record['position'] as Record<string, unknown>)
         : null;
     const x =
-      positionRecord && typeof positionRecord['x'] === 'number' && Number.isFinite(positionRecord['x'])
+      positionRecord &&
+      typeof positionRecord['x'] === 'number' &&
+      Number.isFinite(positionRecord['x'])
         ? positionRecord['x']
         : 0;
     const y =
-      positionRecord && typeof positionRecord['y'] === 'number' && Number.isFinite(positionRecord['y'])
+      positionRecord &&
+      typeof positionRecord['y'] === 'number' &&
+      Number.isFinite(positionRecord['y'])
         ? positionRecord['y']
         : 0;
     const rawInputs = Array.isArray(record['inputs']) ? (record['inputs'] as unknown[]) : [];
@@ -198,33 +202,35 @@ const sanitizeRelationNodeMeta = (
     return {};
   }
   const result: Record<string, CaseResolverRelationNodeMeta> = {};
-  Object.entries(value as Record<string, unknown>).forEach(([nodeId, entry]: [string, unknown]): void => {
-    if (!validNodeIds.has(nodeId)) return;
-    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return;
-    const record = entry as Record<string, unknown>;
-    const label =
-      typeof record['label'] === 'string' && record['label'].trim().length > 0
-        ? record['label'].trim()
-        : nodeId;
-    const entityId =
-      typeof record['entityId'] === 'string' && record['entityId'].trim().length > 0
-        ? record['entityId'].trim()
-        : nodeId;
-    const createdAt = normalizeTimestamp(record['createdAt'], now);
-    const updatedAt = normalizeTimestamp(record['updatedAt'], createdAt);
-    result[nodeId] = {
-      ...DEFAULT_CASE_RESOLVER_RELATION_NODE_META,
-      entityType: sanitizeRelationEntityType(record['entityType']),
-      entityId,
-      label,
-      fileKind: sanitizeRelationFileKind(record['fileKind']),
-      folderPath: sanitizeOptionalId(record['folderPath']),
-      sourceFileId: sanitizeOptionalId(record['sourceFileId']),
-      isStructural: record['isStructural'] === true,
-      createdAt,
-      updatedAt,
-    };
-  });
+  Object.entries(value as Record<string, unknown>).forEach(
+    ([nodeId, entry]: [string, unknown]): void => {
+      if (!validNodeIds.has(nodeId)) return;
+      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return;
+      const record = entry as Record<string, unknown>;
+      const label =
+        typeof record['label'] === 'string' && record['label'].trim().length > 0
+          ? record['label'].trim()
+          : nodeId;
+      const entityId =
+        typeof record['entityId'] === 'string' && record['entityId'].trim().length > 0
+          ? record['entityId'].trim()
+          : nodeId;
+      const createdAt = normalizeTimestamp(record['createdAt'], now);
+      const updatedAt = normalizeTimestamp(record['updatedAt'], createdAt);
+      result[nodeId] = {
+        ...DEFAULT_CASE_RESOLVER_RELATION_NODE_META,
+        entityType: sanitizeRelationEntityType(record['entityType']),
+        entityId,
+        label,
+        fileKind: sanitizeRelationFileKind(record['fileKind']),
+        folderPath: sanitizeOptionalId(record['folderPath']),
+        sourceFileId: sanitizeOptionalId(record['sourceFileId']),
+        isStructural: record['isStructural'] === true,
+        createdAt,
+        updatedAt,
+      };
+    }
+  );
   return result;
 };
 
@@ -237,24 +243,26 @@ const sanitizeRelationEdgeMeta = (
     return {};
   }
   const result: Record<string, CaseResolverRelationEdgeMeta> = {};
-  Object.entries(value as Record<string, unknown>).forEach(([edgeId, entry]: [string, unknown]): void => {
-    if (!validEdgeIds.has(edgeId)) return;
-    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return;
-    const record = entry as Record<string, unknown>;
-    const createdAt = normalizeTimestamp(record['createdAt'], now);
-    const updatedAt = normalizeTimestamp(record['updatedAt'], createdAt);
-    result[edgeId] = {
-      ...DEFAULT_CASE_RESOLVER_RELATION_EDGE_META,
-      relationType: sanitizeRelationEdgeKind(record['relationType']),
-      label:
-        typeof record['label'] === 'string'
-          ? record['label']
-          : DEFAULT_CASE_RESOLVER_RELATION_EDGE_META.label,
-      isStructural: record['isStructural'] === true,
-      createdAt,
-      updatedAt,
-    };
-  });
+  Object.entries(value as Record<string, unknown>).forEach(
+    ([edgeId, entry]: [string, unknown]): void => {
+      if (!validEdgeIds.has(edgeId)) return;
+      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return;
+      const record = entry as Record<string, unknown>;
+      const createdAt = normalizeTimestamp(record['createdAt'], now);
+      const updatedAt = normalizeTimestamp(record['updatedAt'], createdAt);
+      result[edgeId] = {
+        ...DEFAULT_CASE_RESOLVER_RELATION_EDGE_META,
+        relationType: sanitizeRelationEdgeKind(record['relationType']),
+        label:
+          typeof record['label'] === 'string'
+            ? record['label']
+            : DEFAULT_CASE_RESOLVER_RELATION_EDGE_META.label,
+        isStructural: record['isStructural'] === true,
+        createdAt,
+        updatedAt,
+      };
+    }
+  );
   return result;
 };
 
@@ -267,8 +275,10 @@ const structuralRelationEdgeId = (
 export const toCaseResolverRelationCaseNodeId = (caseId: string): string => `case:${caseId}`;
 export const toCaseResolverRelationFolderNodeId = (folderPath: string): string =>
   `folder:${folderPath.trim() || CASE_RESOLVER_RELATION_ROOT_FOLDER_ID}`;
-export const toCaseResolverRelationCaseFileNodeId = (caseId: string): string => `file:case:${caseId}`;
-export const toCaseResolverRelationAssetFileNodeId = (assetId: string): string => `file:asset:${assetId}`;
+export const toCaseResolverRelationCaseFileNodeId = (caseId: string): string =>
+  `file:case:${caseId}`;
+export const toCaseResolverRelationAssetFileNodeId = (assetId: string): string =>
+  `file:asset:${assetId}`;
 
 type CaseResolverRelationNodeSeed = {
   id: string;
@@ -328,9 +338,7 @@ const relationFolderEntityIdFromPath = (folderPath: string): string => {
 const relationFolderPathFromEntityId = (entityId: string): string | null =>
   entityId === CASE_RESOLVER_RELATION_ROOT_FOLDER_ID ? '' : entityId;
 
-const normalizeRelationMetaFolderPath = (
-  value: string | null | undefined
-): string | null => {
+const normalizeRelationMetaFolderPath = (value: string | null | undefined): string | null => {
   const normalized = normalizeFolderPath(value ?? '');
   return normalized.length > 0 ? normalized : null;
 };
@@ -425,7 +433,9 @@ export const buildCaseResolverRelationGraph = ({
           : ['out'],
       position,
       data:
-        existingNode?.data && typeof existingNode.data === 'object' && !Array.isArray(existingNode.data)
+        existingNode?.data &&
+        typeof existingNode.data === 'object' &&
+        !Array.isArray(existingNode.data)
           ? existingNode.data
           : {},
     });
@@ -538,7 +548,10 @@ export const buildCaseResolverRelationGraph = ({
       label,
       title: node.title,
       description: node.description ?? '',
-      group: entityType === 'case' || entityType === 'folder' || entityType === 'file' ? entityType : 'custom',
+      group:
+        entityType === 'case' || entityType === 'folder' || entityType === 'file'
+          ? entityType
+          : 'custom',
       fileKind: existingMeta?.fileKind ?? null,
       folderPath: existingMeta?.folderPath ?? null,
       sourceFileId: existingMeta?.sourceFileId ?? null,

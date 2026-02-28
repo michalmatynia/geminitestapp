@@ -91,7 +91,7 @@ export const repairRuntimeStatePorts = (args: {
   const addMissingPorts = (
     bucket: PortBucket,
     nodeId: string,
-    source: Record<string, unknown> | null,
+    source: Record<string, unknown> | null
   ): number => {
     if (!source) return 0;
     const target = ensureNodePorts(bucket, nodeId);

@@ -31,15 +31,20 @@ export function useProductCreateValidation(_options: UseValidationOptions = {}):
 
   const validate = useCallback(async (data: unknown): Promise<ValidationState> => {
     setValidationState((prev: ValidationState) => ({ ...prev, isValidating: true }));
-    
+
     const result = await validateProductCreate(data);
     const newState: ValidationState = {
       isValid: result.success,
       errors: result.success ? [] : result.errors,
-      fieldErrors: result.success ? {} : result.errors.reduce((acc: Record<string, string>, error: ValidationError) => ({
-        ...acc,
-        [error.field]: error.message
-      }), {}),
+      fieldErrors: result.success
+        ? {}
+        : result.errors.reduce(
+            (acc: Record<string, string>, error: ValidationError) => ({
+              ...acc,
+              [error.field]: error.message,
+            }),
+            {}
+          ),
       isValidating: false,
     };
 
@@ -50,13 +55,15 @@ export function useProductCreateValidation(_options: UseValidationOptions = {}):
   const validateField = useCallback(async (field: string, value: unknown): Promise<void> => {
     const partialData: Record<string, unknown> = { [field]: value };
     const result = await validateProductCreate(partialData);
-    
+
     setValidationState((prev: ValidationState) => ({
       ...prev,
       fieldErrors: {
         ...prev.fieldErrors,
-        [field]: result.success ? '' : result.errors.find((e: ValidationError) => e.field === field)?.message || ''
-      }
+        [field]: result.success
+          ? ''
+          : result.errors.find((e: ValidationError) => e.field === field)?.message || '',
+      },
     }));
   }, []);
 
@@ -64,12 +71,13 @@ export function useProductCreateValidation(_options: UseValidationOptions = {}):
     validationState,
     validate,
     validateField,
-    reset: (): void => setValidationState({
-      isValid: false,
-      errors: [],
-      fieldErrors: {},
-      isValidating: false,
-    })
+    reset: (): void =>
+      setValidationState({
+        isValid: false,
+        errors: [],
+        fieldErrors: {},
+        isValidating: false,
+      }),
   };
 }
 
@@ -87,15 +95,20 @@ export function useProductUpdateValidation(_options: UseValidationOptions = {}):
 
   const validate = useCallback(async (data: unknown): Promise<ValidationState> => {
     setValidationState((prev: ValidationState) => ({ ...prev, isValidating: true }));
-    
+
     const result = await validateProductUpdate(data);
     const newState: ValidationState = {
       isValid: result.success,
       errors: result.success ? [] : result.errors,
-      fieldErrors: result.success ? {} : result.errors.reduce((acc: Record<string, string>, error: ValidationError) => ({
-        ...acc,
-        [error.field]: error.message
-      }), {}),
+      fieldErrors: result.success
+        ? {}
+        : result.errors.reduce(
+            (acc: Record<string, string>, error: ValidationError) => ({
+              ...acc,
+              [error.field]: error.message,
+            }),
+            {}
+          ),
       isValidating: false,
     };
 
@@ -106,11 +119,12 @@ export function useProductUpdateValidation(_options: UseValidationOptions = {}):
   return {
     validationState,
     validate,
-    reset: (): void => setValidationState({
-      isValid: true,
-      errors: [],
-      fieldErrors: {},
-      isValidating: false,
-    })
+    reset: (): void =>
+      setValidationState({
+        isValid: true,
+        errors: [],
+        fieldErrors: {},
+        isValidating: false,
+      }),
   };
 }

@@ -24,8 +24,7 @@ export const PLAYWRIGHT_SCRIPT_TEMPLATES: PlaywrightScriptTemplate[] = [
   {
     id: 'link-crawler',
     name: 'Link Crawler',
-    description:
-      'Collect unique first-party links from a page and emit top results.',
+    description: 'Collect unique first-party links from a page and emit top results.',
     script:
       'export default async function run({ page, input, emit, log }) {\n' +
       '  const target = input?.prompt || input?.value || input?.result || "https://example.com";\n' +
@@ -58,8 +57,7 @@ export const PLAYWRIGHT_SCRIPT_TEMPLATES: PlaywrightScriptTemplate[] = [
   {
     id: 'form-fill',
     name: 'Form Fill + Submit',
-    description:
-      'Populate a simple form, submit it, and emit status + final URL.',
+    description: 'Populate a simple form, submit it, and emit status + final URL.',
     script:
       'export default async function run({ page, input, emit }) {\n' +
       '  const target = input?.prompt || "https://example.com/contact";\n' +
@@ -82,8 +80,7 @@ export const PLAYWRIGHT_SCRIPT_TEMPLATES: PlaywrightScriptTemplate[] = [
   {
     id: 'visual-audit',
     name: 'Visual Audit',
-    description:
-      'Capture screenshot/html artifacts and return basic page diagnostics.',
+    description: 'Capture screenshot/html artifacts and return basic page diagnostics.',
     script:
       'export default async function run({ page, input, artifacts, emit }) {\n' +
       '  const target = input?.prompt || input?.value || "https://example.com";\n' +
@@ -105,9 +102,7 @@ export const PLAYWRIGHT_SCRIPT_TEMPLATES: PlaywrightScriptTemplate[] = [
 
 export const CUSTOM_PLAYWRIGHT_SCRIPT_TEMPLATE = '__custom__';
 
-export const findPlaywrightScriptTemplate = (
-  templateId: string
-): PlaywrightScriptTemplate | null =>
+export const findPlaywrightScriptTemplate = (templateId: string): PlaywrightScriptTemplate | null =>
   PLAYWRIGHT_SCRIPT_TEMPLATES.find((template) => template.id === templateId) ?? null;
 
 export const findPlaywrightTemplateByScript = (
@@ -116,8 +111,6 @@ export const findPlaywrightTemplateByScript = (
   const normalized = script?.trim() ?? '';
   if (!normalized) return null;
   return (
-    PLAYWRIGHT_SCRIPT_TEMPLATES.find(
-      (template) => template.script.trim() === normalized
-    ) ?? null
+    PLAYWRIGHT_SCRIPT_TEMPLATES.find((template) => template.script.trim() === normalized) ?? null
   );
 };

@@ -6,9 +6,7 @@ import { Copy, GripVertical, Pencil, Trash2 } from 'lucide-react';
 import { StatusBadge, StatusToggle, TreeCaret, TreeContextMenu, TreeRow } from '@/shared/ui';
 import { cn, type MasterTreeNode } from '@/shared/utils';
 
-import {
-  fromPatternMasterNodeId,
-} from '../validator-pattern-master-tree';
+import { fromPatternMasterNodeId } from '../validator-pattern-master-tree';
 import { useValidatorPatternTreeContext } from '../ValidatorPatternTreeContext';
 
 export interface PatternNodeItemProps {
@@ -104,14 +102,10 @@ export function PatternNodeItem({
             buttonClassName='hover:bg-gray-700'
             placeholderClassName='w-3'
           />
-          <span className='min-w-0 flex-1 truncate font-medium text-white'>
-            {pattern.label}
-          </span>
+          <span className='min-w-0 flex-1 truncate font-medium text-white'>{pattern.label}</span>
           <span className='ml-1 flex shrink-0 items-center gap-1'>
             <StatusBadge status={pattern.target} variant='info' size='sm' />
-            {showLocale && (
-              <StatusBadge status={localeLabel} variant='processing' size='sm' />
-            )}
+            {showLocale && <StatusBadge status={localeLabel} variant='processing' size='sm' />}
             <StatusBadge
               status={pattern.severity}
               variant={pattern.severity === 'warning' ? 'warning' : 'error'}
@@ -128,7 +122,9 @@ export function PatternNodeItem({
               <StatusToggle
                 enabled={pattern.enabled}
                 disabled={isPending}
-                onToggle={(): void => { void onTogglePattern(pattern); }}
+                onToggle={(): void => {
+                  void onTogglePattern(pattern);
+                }}
               />
             </span>
             <span

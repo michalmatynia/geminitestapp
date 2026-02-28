@@ -1,8 +1,6 @@
 import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
-import { 
-  fromCaseResolverCaseNodeId 
-} from '@/features/case-resolver/master-tree';
+import { fromCaseResolverCaseNodeId } from '@/features/case-resolver/master-tree';
 
 export const parseBoolean = (value: unknown): boolean => value === true;
 export const CASE_RESOLVER_CASES_MASTER_SETTINGS_HREF =
@@ -17,7 +15,7 @@ export const parseTimestampMs = (value: string | null | undefined): number => {
 };
 
 export const resolveCaseStatusRank = (
-  status: CaseResolverFile['caseStatus'] | null | undefined,
+  status: CaseResolverFile['caseStatus'] | null | undefined
 ): number => (status === 'completed' ? 1 : 0);
 
 export const resolveBinaryRank = (value: boolean | null | undefined): number =>
@@ -25,7 +23,7 @@ export const resolveBinaryRank = (value: boolean | null | undefined): number =>
 
 export const resolveSignatureLabel = (
   file: CaseResolverFile | null,
-  caseIdentifierPathById: Map<string, string>,
+  caseIdentifierPathById: Map<string, string>
 ): string => {
   if (!file?.caseIdentifierId) return '';
   return caseIdentifierPathById.get(file.caseIdentifierId)?.trim() ?? '';
@@ -38,7 +36,7 @@ export const resolveCaseTreeOrderValue = (file: CaseResolverFile | null): number
 
 const resolveNodeHappeningDateMs = (
   node: MasterTreeNode,
-  file: CaseResolverFile | null,
+  file: CaseResolverFile | null
 ): { timestampMs: number; hasValue: boolean } => {
   if (file) {
     const happeningDateValue = file.happeningDate?.trim() ?? '';
@@ -50,13 +48,9 @@ const resolveNodeHappeningDateMs = (
     }
   }
 
-  const metadata = node.metadata && typeof node.metadata === 'object'
-    ? node.metadata
-    : null;
+  const metadata = node.metadata && typeof node.metadata === 'object' ? node.metadata : null;
   const happeningDate =
-    typeof metadata?.['happeningDate'] === 'string'
-      ? metadata['happeningDate']
-      : null;
+    typeof metadata?.['happeningDate'] === 'string' ? metadata['happeningDate'] : null;
   if (!happeningDate) return { timestampMs: 0, hasValue: false };
   const parsed = Date.parse(happeningDate);
   if (!Number.isFinite(parsed)) return { timestampMs: 0, hasValue: false };
@@ -99,10 +93,7 @@ export const sortCaseTreeNodes = ({
     | 'sent';
   sortOrder: 'asc' | 'desc';
 }): MasterTreeNode[] => {
-  const resolveNodeTimestamp = (
-    node: MasterTreeNode,
-    key: 'created' | 'updated'
-  ): number => {
+  const resolveNodeTimestamp = (node: MasterTreeNode, key: 'created' | 'updated'): number => {
     const caseId = fromCaseResolverCaseNodeId(node.id);
     const caseFile = caseId ? (filesById.get(caseId) ?? null) : null;
     if (caseFile) {
@@ -110,18 +101,9 @@ export const sortCaseTreeNodes = ({
         ? parseTimestampMs(caseFile.updatedAt ?? caseFile.createdAt)
         : parseTimestampMs(caseFile.createdAt);
     }
-    const metadata =
-      node.metadata && typeof node.metadata === 'object'
-        ? node.metadata
-        : null;
-    const createdAt =
-      typeof metadata?.['createdAt'] === 'string'
-        ? metadata['createdAt']
-        : null;
-    const updatedAt =
-      typeof metadata?.['updatedAt'] === 'string'
-        ? metadata['updatedAt']
-        : null;
+    const metadata = node.metadata && typeof node.metadata === 'object' ? node.metadata : null;
+    const createdAt = typeof metadata?.['createdAt'] === 'string' ? metadata['createdAt'] : null;
+    const updatedAt = typeof metadata?.['updatedAt'] === 'string' ? metadata['updatedAt'] : null;
     return key === 'updated'
       ? parseTimestampMs(updatedAt ?? createdAt)
       : parseTimestampMs(createdAt);
@@ -150,8 +132,7 @@ export const sortCaseTreeNodes = ({
           if (nameDelta !== 0) return nameDelta * direction;
         } else if (sortBy === 'created') {
           const createdDelta =
-            resolveNodeTimestamp(left, 'created') -
-            resolveNodeTimestamp(right, 'created');
+            resolveNodeTimestamp(left, 'created') - resolveNodeTimestamp(right, 'created');
           if (createdDelta !== 0) return createdDelta * direction;
         } else if (sortBy === 'happeningDate') {
           const leftHappeningDate = resolveNodeHappeningDateMs(left, leftCaseFile);
@@ -161,14 +142,12 @@ export const sortCaseTreeNodes = ({
           }
           if (leftHappeningDate.hasValue && rightHappeningDate.hasValue) {
             const happeningDateDelta =
-              leftHappeningDate.timestampMs -
-              rightHappeningDate.timestampMs;
+              leftHappeningDate.timestampMs - rightHappeningDate.timestampMs;
             if (happeningDateDelta !== 0) return happeningDateDelta * direction;
           }
         } else if (sortBy === 'updated') {
           const updatedDelta =
-            resolveNodeTimestamp(left, 'updated') -
-            resolveNodeTimestamp(right, 'updated');
+            resolveNodeTimestamp(left, 'updated') - resolveNodeTimestamp(right, 'updated');
           if (updatedDelta !== 0) return updatedDelta * direction;
         } else if (sortBy === 'status') {
           const statusDelta =
@@ -176,14 +155,8 @@ export const sortCaseTreeNodes = ({
             resolveCaseStatusRank(rightCaseFile?.caseStatus);
           if (statusDelta !== 0) return statusDelta * direction;
         } else if (sortBy === 'signature') {
-          const leftSignatureLabel = resolveSignatureLabel(
-            leftCaseFile,
-            caseIdentifierPathById,
-          );
-          const rightSignatureLabel = resolveSignatureLabel(
-            rightCaseFile,
-            caseIdentifierPathById,
-          );
+          const leftSignatureLabel = resolveSignatureLabel(leftCaseFile, caseIdentifierPathById);
+          const rightSignatureLabel = resolveSignatureLabel(rightCaseFile, caseIdentifierPathById);
           const leftIsEmpty = leftSignatureLabel.length === 0;
           const rightIsEmpty = rightSignatureLabel.length === 0;
           if (leftIsEmpty !== rightIsEmpty) {
@@ -191,26 +164,21 @@ export const sortCaseTreeNodes = ({
             return leftIsEmpty ? -1 : 1;
           }
           if (!leftIsEmpty && !rightIsEmpty) {
-            const signatureDelta = leftSignatureLabel.localeCompare(
-              rightSignatureLabel,
-            );
+            const signatureDelta = leftSignatureLabel.localeCompare(rightSignatureLabel);
             if (signatureDelta !== 0) return signatureDelta * direction;
           }
         } else if (sortBy === 'locked') {
           const lockedDelta =
-            resolveBinaryRank(leftCaseFile?.isLocked) -
-            resolveBinaryRank(rightCaseFile?.isLocked);
+            resolveBinaryRank(leftCaseFile?.isLocked) - resolveBinaryRank(rightCaseFile?.isLocked);
           if (lockedDelta !== 0) return lockedDelta * direction;
         } else if (sortBy === 'sent') {
           const sentDelta =
-            resolveBinaryRank(leftCaseFile?.isSent) -
-            resolveBinaryRank(rightCaseFile?.isSent);
+            resolveBinaryRank(leftCaseFile?.isSent) - resolveBinaryRank(rightCaseFile?.isSent);
           if (sentDelta !== 0) return sentDelta * direction;
         }
 
         const orderDelta =
-          resolveCaseTreeOrderValue(leftCaseFile) -
-          resolveCaseTreeOrderValue(rightCaseFile);
+          resolveCaseTreeOrderValue(leftCaseFile) - resolveCaseTreeOrderValue(rightCaseFile);
         if (orderDelta !== 0) return orderDelta;
         const nameDelta = left.name.localeCompare(right.name);
         if (nameDelta !== 0) return nameDelta;

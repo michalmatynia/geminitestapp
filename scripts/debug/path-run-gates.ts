@@ -18,7 +18,10 @@ async function main(): Promise<void> {
 
   const parsed = JSON.parse(rec.value) as Record<string, unknown>;
   const nodes = normalizeNodes(Array.isArray(parsed['nodes']) ? (parsed['nodes'] as never[]) : []);
-  const edges = sanitizeEdges(nodes, Array.isArray(parsed['edges']) ? (parsed['edges'] as never[]) : []);
+  const edges = sanitizeEdges(
+    nodes,
+    Array.isArray(parsed['edges']) ? (parsed['edges'] as never[]) : []
+  );
   const compile = compileGraph(nodes, edges);
   const dep = inspectPathDependencies(nodes, edges);
 
@@ -44,8 +47,8 @@ async function main(): Promise<void> {
         },
       },
       null,
-      2,
-    ),
+      2
+    )
   );
 }
 

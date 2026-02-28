@@ -1,14 +1,18 @@
 import { NextRequest } from 'next/server';
 
 import { internalError } from '@/shared/errors/app-error';
-import { apiHandlerWithParams, type ApiHandlerContext as _ApiHandlerContext } from '@/shared/lib/api/api-handler';
+import {
+  apiHandlerWithParams,
+  type ApiHandlerContext as _ApiHandlerContext,
+} from '@/shared/lib/api/api-handler';
 import prisma from '@/shared/lib/db/prisma';
 import { startIntervalTask } from '@/shared/lib/timers';
 
 export const runtime = 'nodejs';
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 
-async function GET_handler(req: NextRequest,
+async function GET_handler(
+  req: NextRequest,
   { params }: { params: Promise<{ runId: string }> }
 ): Promise<Response> {
   if (!('agentBrowserSnapshot' in prisma)) {
@@ -27,30 +31,30 @@ async function GET_handler(req: NextRequest,
             orderBy: { createdAt: 'desc' },
           });
           const payload = latest ? { snapshot: latest } : { snapshot: null };
-          controller.enqueue(
-            encoder.encode(`data: ${JSON.stringify(payload)}\n\n`)
-          );
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify(payload)}\n\n`));
         } catch (error) {
           try {
             const { ErrorSystem } = await import('@/features/observability/server');
-            void ErrorSystem.captureException(error, { 
-              service: 'agent-stream', 
+            void ErrorSystem.captureException(error, {
+              service: 'agent-stream',
               action: 'sendSnapshot',
-              runId 
+              runId,
             });
           } catch (logError) {
             if (DEBUG_CHATBOT) {
               const { logger } = await import('@/shared/utils/logger');
-              logger.error('[chatbot][agent][stream] Snapshot fetch failed (and logging failed)', logError, {
-                runId,
-                error,
-              });
+              logger.error(
+                '[chatbot][agent][stream] Snapshot fetch failed (and logging failed)',
+                logError,
+                {
+                  runId,
+                  error,
+                }
+              );
             }
           }
           controller.enqueue(
-            encoder.encode(
-              `data: ${JSON.stringify({ snapshot: null, error: 'snapshot' })}\n\n`
-            )
+            encoder.encode(`data: ${JSON.stringify({ snapshot: null, error: 'snapshot' })}\n\n`)
           );
         }
       };

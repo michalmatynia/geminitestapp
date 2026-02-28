@@ -33,8 +33,7 @@ vi.mock('@/features/ai/ai-paths/services/path-run-service', () => ({
 
 vi.mock('@/features/ai/ai-paths/services/path-run-recovery-service', () => ({
   recoverStaleRunningRuns: recoverStaleRunningRunsMock,
-  resolveAiPathsStaleRunningCleanupIntervalMs:
-    resolveAiPathsStaleRunningCleanupIntervalMsMock,
+  resolveAiPathsStaleRunningCleanupIntervalMs: resolveAiPathsStaleRunningCleanupIntervalMsMock,
   resolveAiPathsStaleRunningMaxAgeMs: resolveAiPathsStaleRunningMaxAgeMsMock,
 }));
 
@@ -65,9 +64,9 @@ describe('AI Paths runs list handler', () => {
   it('passes nodeId filter through to repository list options', async () => {
     const response = await GET_handler(
       new NextRequest(
-        'http://localhost/api/ai-paths/runs?pathId=path-node-filter&nodeId=node-42&status=failed&limit=25&offset=5',
+        'http://localhost/api/ai-paths/runs?pathId=path-node-filter&nodeId=node-42&status=failed&limit=25&offset=5'
       ),
-      mockContext,
+      mockContext
     );
     const payload = (await response.json()) as AiPathRunListResult;
 
@@ -80,7 +79,7 @@ describe('AI Paths runs list handler', () => {
         status: 'failed',
         limit: 25,
         offset: 5,
-      }),
+      })
     );
     expect(payload).toEqual({ runs: [], total: 0 });
   });
@@ -88,15 +87,15 @@ describe('AI Paths runs list handler', () => {
   it('uses distinct cache keys for different node filters', async () => {
     await GET_handler(
       new NextRequest(
-        'http://localhost/api/ai-paths/runs?pathId=cache-key-path&nodeId=node-a&limit=1',
+        'http://localhost/api/ai-paths/runs?pathId=cache-key-path&nodeId=node-a&limit=1'
       ),
-      mockContext,
+      mockContext
     );
     await GET_handler(
       new NextRequest(
-        'http://localhost/api/ai-paths/runs?pathId=cache-key-path&nodeId=node-b&limit=1',
+        'http://localhost/api/ai-paths/runs?pathId=cache-key-path&nodeId=node-b&limit=1'
       ),
-      mockContext,
+      mockContext
     );
 
     expect(listRunsMock).toHaveBeenCalledTimes(2);
@@ -104,37 +103,35 @@ describe('AI Paths runs list handler', () => {
       1,
       expect.objectContaining({
         nodeId: 'node-a',
-      }),
+      })
     );
     expect(listRunsMock).toHaveBeenNthCalledWith(
       2,
       expect.objectContaining({
         nodeId: 'node-b',
-      }),
+      })
     );
   });
 
   it('treats status=all as an unfiltered run list', async () => {
     await GET_handler(
-      new NextRequest(
-        'http://localhost/api/ai-paths/runs?status=all&limit=25&offset=0',
-      ),
-      mockContext,
+      new NextRequest('http://localhost/api/ai-paths/runs?status=all&limit=25&offset=0'),
+      mockContext
     );
 
     expect(listRunsMock).toHaveBeenCalledWith(
       expect.not.objectContaining({
         status: expect.any(String),
-      }),
+      })
     );
   });
 
   it('forwards source and sourceMode when source is provided', async () => {
     await GET_handler(
       new NextRequest(
-        'http://localhost/api/ai-paths/runs?source=ai_paths_ui&sourceMode=exclude&limit=50',
+        'http://localhost/api/ai-paths/runs?source=ai_paths_ui&sourceMode=exclude&limit=50'
       ),
-      mockContext,
+      mockContext
     );
 
     expect(listRunsMock).toHaveBeenCalledWith(
@@ -143,22 +140,20 @@ describe('AI Paths runs list handler', () => {
         source: 'ai_paths_ui',
         sourceMode: 'exclude',
         limit: 50,
-      }),
+      })
     );
   });
 
   it('ignores sourceMode when source is missing', async () => {
     await GET_handler(
-      new NextRequest(
-        'http://localhost/api/ai-paths/runs?sourceMode=exclude&limit=10',
-      ),
-      mockContext,
+      new NextRequest('http://localhost/api/ai-paths/runs?sourceMode=exclude&limit=10'),
+      mockContext
     );
 
     expect(listRunsMock).toHaveBeenCalledWith(
       expect.not.objectContaining({
         sourceMode: expect.any(String),
-      }),
+      })
     );
   });
 });

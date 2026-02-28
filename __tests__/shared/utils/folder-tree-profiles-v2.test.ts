@@ -24,7 +24,9 @@ describe('folder-tree-profiles-v2', () => {
     expect(defaultFolderTreeProfilesV2.product_categories.icons.slots.file).toBeNull();
     expect(defaultFolderTreeProfilesV2.cms_page_builder.icons.slots.root).toBe('LayoutGrid');
     expect(
-      defaultFolderTreeProfilesV2.image_studio.nesting.rules.some((rule) => rule.targetType === 'root')
+      defaultFolderTreeProfilesV2.image_studio.nesting.rules.some(
+        (rule) => rule.targetType === 'root'
+      )
     ).toBe(true);
   });
 

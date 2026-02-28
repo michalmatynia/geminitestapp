@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { MarkdownSplitEditor } from '@/features/document-editor';
+import { MarkdownSplitEditor } from '@/shared/lib/document-editor';
 import { useNoteFormContext } from '@/features/notesapp/context/NoteFormContext';
 import { useToast } from '@/shared/ui';
 import { sanitizeHtml } from '@/shared/utils';
@@ -13,9 +13,7 @@ interface MarkdownEditorProps {
   isCodeMode?: boolean | undefined;
 }
 
-export function MarkdownEditor({
-  isCodeMode = false,
-}: MarkdownEditorProps): React.JSX.Element {
+export function MarkdownEditor({ isCodeMode = false }: MarkdownEditorProps): React.JSX.Element {
   const {
     content,
     setContent,

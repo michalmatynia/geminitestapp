@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { startImageStudioSequenceRun } from '@/features/ai/image-studio/server/sequence-runtime';
+import { startImageStudioSequenceRun } from '@/shared/lib/ai/image-studio/server/sequence-runtime';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 
@@ -30,10 +30,7 @@ const sequenceStartSchema = z.object({
   metadata: z.record(z.string(), z.unknown()).nullable().optional(),
 });
 
-export async function POST_handler(
-  req: NextRequest,
-  _ctx: ApiHandlerContext,
-): Promise<Response> {
+export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const body = (await req.json().catch(() => null)) as unknown;
   const parsed = sequenceStartSchema.safeParse(body);
   if (!parsed.success) {
@@ -48,10 +45,10 @@ export async function POST_handler(
     referenceSlotIds: parsed.data.referenceSlotIds ?? [],
     mask: parsed.data.mask
       ? {
-        polygons: parsed.data.mask.polygons,
-        invert: Boolean(parsed.data.mask.invert),
-        feather: parsed.data.mask.feather ?? 0,
-      }
+          polygons: parsed.data.mask.polygons,
+          invert: Boolean(parsed.data.mask.invert),
+          feather: parsed.data.mask.feather ?? 0,
+        }
       : null,
     studioSettings: parsed.data.studioSettings ?? null,
     steps: parsed.data.steps,

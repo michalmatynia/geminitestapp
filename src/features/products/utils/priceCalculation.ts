@@ -34,7 +34,9 @@ export function calculatePriceForCurrency(
   const defaultGroup: PriceGroupForCalculation | undefined =
     (defaultPriceGroupId
       ? priceGroups.find((g: PriceGroupForCalculation): boolean => g.id === defaultPriceGroupId)
-      : undefined) ?? priceGroups.find((g: PriceGroupForCalculation): boolean => !!g.isDefault) ?? priceGroups[0];
+      : undefined) ??
+    priceGroups.find((g: PriceGroupForCalculation): boolean => !!g.isDefault) ??
+    priceGroups[0];
 
   if (!defaultGroup) {
     return {
@@ -51,7 +53,9 @@ export function calculatePriceForCurrency(
   }
 
   const findGroupById = (id?: string | null): PriceGroupForCalculation | undefined =>
-    id ? priceGroups.find((g: PriceGroupForCalculation): boolean => g.id === id || g.groupId === id) : undefined;
+    id
+      ? priceGroups.find((g: PriceGroupForCalculation): boolean => g.id === id || g.groupId === id)
+      : undefined;
 
   const resolvePriceForGroup = (
     group: PriceGroupForCalculation | undefined,

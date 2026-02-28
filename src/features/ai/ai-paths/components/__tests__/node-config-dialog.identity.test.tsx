@@ -72,9 +72,7 @@ vi.mock('@/shared/ui', () => ({
   }: React.ButtonHTMLAttributes<HTMLButtonElement>): React.JSX.Element => (
     <button {...rest}>{children}</button>
   ),
-  Tabs: ({ children }: { children: React.ReactNode }): React.JSX.Element => (
-    <div>{children}</div>
-  ),
+  Tabs: ({ children }: { children: React.ReactNode }): React.JSX.Element => <div>{children}</div>,
   TabsContent: ({ children }: { children: React.ReactNode }): React.JSX.Element => (
     <div>{children}</div>
   ),

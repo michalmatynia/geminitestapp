@@ -8,7 +8,10 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 interface QueryMiddleware {
   name: string;
   onQueryStart?: (query: Query<unknown, Error, unknown, readonly unknown[]>) => void;
-  onQuerySuccess?: (query: Query<unknown, Error, unknown, readonly unknown[]>, data: unknown) => void;
+  onQuerySuccess?: (
+    query: Query<unknown, Error, unknown, readonly unknown[]>,
+    data: unknown
+  ) => void;
   onQueryError?: (query: Query<unknown, Error, unknown, readonly unknown[]>, error: Error) => void;
   onQueryUpdate?: (query: Query<unknown, Error, unknown, readonly unknown[]>) => void;
 }
@@ -98,7 +101,13 @@ export function useQueryMiddleware(middlewares: QueryMiddleware[]): void {
               break;
           }
         } catch (error) {
-          logClientError(error instanceof Error ? error : new Error(String(error)), { context: { source: 'QueryMiddleware', action: 'middlewareError', middlewareName: middleware.name } });
+          logClientError(error instanceof Error ? error : new Error(String(error)), {
+            context: {
+              source: 'QueryMiddleware',
+              action: 'middlewareError',
+              middlewareName: middleware.name,
+            },
+          });
         }
       });
     });
@@ -111,20 +120,18 @@ export function useQueryMiddleware(middlewares: QueryMiddleware[]): void {
 export const loggingMiddleware: QueryMiddleware = {
   name: 'logging',
 
-
   onQueryError: (query: Query<unknown, Error, unknown, readonly unknown[]>, error: Error): void => {
     const message = error?.message?.trim() || '';
     if (!message || ['{}', '[]', '[object Object]'].includes(message)) {
       return;
     }
-    logClientError(error, { 
-      context: { 
-        source: 'QueryMiddleware', 
+    logClientError(error, {
+      context: {
+        source: 'QueryMiddleware',
         queryKey: query.queryKey,
-        fetchStatus: query.state.fetchStatus
-      } 
+        fetchStatus: query.state.fetchStatus,
+      },
     });
-
   },
 };
 
@@ -144,7 +151,8 @@ export const performanceMiddleware: QueryMiddleware = {
     if (!REPORT_SLOW_QUERIES) return;
     if (duration <= SLOW_QUERY_THRESHOLD_MS) return;
     const queryLabel = getQueryKeyLabel(query);
-    if (!shouldReportWithCooldown(slowQueryLastReportedAt, queryLabel, SLOW_QUERY_COOLDOWN_MS)) return;
+    if (!shouldReportWithCooldown(slowQueryLastReportedAt, queryLabel, SLOW_QUERY_COOLDOWN_MS))
+      return;
     logClientError(`Slow query: ${queryLabel}`, {
       context: {
         source: 'PerformanceMiddleware',
@@ -164,10 +172,15 @@ export const performanceMiddleware: QueryMiddleware = {
 // Cache optimization middleware
 export const cacheOptimizationMiddleware: QueryMiddleware = {
   name: 'cacheOptimization',
-  onQuerySuccess: (query: Query<unknown, Error, unknown, readonly unknown[]>, data: unknown): void => {
+  onQuerySuccess: (
+    query: Query<unknown, Error, unknown, readonly unknown[]>,
+    data: unknown
+  ): void => {
     // Automatically set longer stale time for large datasets
     if (Array.isArray(data) && data.length > 100) {
-      const queryWithSetOptions = query as Query<unknown, Error, unknown, readonly unknown[]> & { setOptions?: (options: unknown) => void };
+      const queryWithSetOptions = query as Query<unknown, Error, unknown, readonly unknown[]> & {
+        setOptions?: (options: unknown) => void;
+      };
       if (typeof queryWithSetOptions.setOptions === 'function') {
         queryWithSetOptions.setOptions({
           staleTime: 10 * 60 * 1000, // 10 minutes for large datasets
@@ -205,7 +218,10 @@ export const validationMiddleware: QueryMiddleware = {
       if (!REPORT_QUERY_WARNINGS) return;
       const queryLabel = getQueryKeyLabel(query);
       const warningKey = `validation:null-data:${queryLabel}`;
-      if (!shouldReportWithCooldown(queryWarningLastReportedAt, warningKey, QUERY_WARNING_COOLDOWN_MS)) return;
+      if (
+        !shouldReportWithCooldown(queryWarningLastReportedAt, warningKey, QUERY_WARNING_COOLDOWN_MS)
+      )
+        return;
       logClientError(`Query returned null/undefined: ${queryLabel}`, {
         context: {
           source: 'ValidationMiddleware',
@@ -215,8 +231,6 @@ export const validationMiddleware: QueryMiddleware = {
         },
       });
     }
-    
-
   },
 };
 
@@ -230,10 +244,15 @@ export const securityMiddleware: QueryMiddleware = {
     const queryKeyStr = queryLabel.toLowerCase();
     const sensitivePatterns = ['password', 'token', 'secret', 'key'];
 
-    const matchedPattern = sensitivePatterns.find((pattern: string) => queryKeyStr.includes(pattern));
+    const matchedPattern = sensitivePatterns.find((pattern: string) =>
+      queryKeyStr.includes(pattern)
+    );
     if (matchedPattern) {
       const warningKey = `security:sensitive-query-key:${queryLabel}`;
-      if (!shouldReportWithCooldown(queryWarningLastReportedAt, warningKey, QUERY_WARNING_COOLDOWN_MS)) return;
+      if (
+        !shouldReportWithCooldown(queryWarningLastReportedAt, warningKey, QUERY_WARNING_COOLDOWN_MS)
+      )
+        return;
       logClientError(`Potential sensitive data in query key: ${queryLabel}`, {
         context: {
           source: 'SecurityMiddleware',

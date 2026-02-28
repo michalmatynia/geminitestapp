@@ -21,9 +21,7 @@ export const reorderPayloadSchema = z.object({
   updates: z.array(reorderUpdateSchema).min(1).max(500),
 });
 
-const normalizeNullableTrimmed = (
-  value: string | null | undefined
-): string | null | undefined => {
+const normalizeNullableTrimmed = (value: string | null | undefined): string | null | undefined => {
   if (value === undefined) return undefined;
   if (value === null) return null;
   const trimmed = value.trim();

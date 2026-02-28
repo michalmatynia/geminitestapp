@@ -51,8 +51,13 @@ export function useCenterPreviewVariants({
   workingSlot,
 }: UseCenterPreviewVariantsArgs): UseCenterPreviewVariantsResult {
   const [variantTimestampQuery, setVariantTimestampQuery] = useState('');
-  const [compareVariantIds, setCompareVariantIds] = useState<[string | null, string | null]>([null, null]);
-  const [compareVariantLookup, setCompareVariantLookup] = useState<Record<string, VariantThumbnailInfo>>({});
+  const [compareVariantIds, setCompareVariantIds] = useState<[string | null, string | null]>([
+    null,
+    null,
+  ]);
+  const [compareVariantLookup, setCompareVariantLookup] = useState<
+    Record<string, VariantThumbnailInfo>
+  >({});
   const [dismissedVariantKeys, setDismissedVariantKeys] = useState<Set<string>>(new Set());
   const pendingDismissedVariantHydrationKeyRef = useRef<string | null>(null);
 
@@ -103,29 +108,24 @@ export function useCenterPreviewVariants({
     window.localStorage.setItem(dismissedVariantStorageKey, serialized);
   }, [dismissedVariantKeys, dismissedVariantStorageKey]);
 
-  const buildVariantDismissKeys = useCallback(
-    (variant: VariantThumbnailInfo): string[] => {
-      const keys = new Set<string>();
-      keys.add(`id:${variant.id}`);
-      const normalizedSlotId = variant.slotId?.trim() ?? '';
-      if (normalizedSlotId) {
-        keys.add(`slot:${normalizedSlotId}`);
-      } else {
-        // For transient variants without a concrete slot, fall back to output/path keys.
-        if (variant.output?.id) {
-          keys.add(`output:${variant.output.id}`);
-        }
-        const normalizedPath = normalizeImagePath(
-          variant.output?.filepath ?? variant.imageSrc
-        );
-        if (normalizedPath) {
-          keys.add(`path:${normalizedPath}`);
-        }
+  const buildVariantDismissKeys = useCallback((variant: VariantThumbnailInfo): string[] => {
+    const keys = new Set<string>();
+    keys.add(`id:${variant.id}`);
+    const normalizedSlotId = variant.slotId?.trim() ?? '';
+    if (normalizedSlotId) {
+      keys.add(`slot:${normalizedSlotId}`);
+    } else {
+      // For transient variants without a concrete slot, fall back to output/path keys.
+      if (variant.output?.id) {
+        keys.add(`output:${variant.output.id}`);
       }
-      return Array.from(keys);
-    },
-    []
-  );
+      const normalizedPath = normalizeImagePath(variant.output?.filepath ?? variant.imageSrc);
+      if (normalizedPath) {
+        keys.add(`path:${normalizedPath}`);
+      }
+    }
+    return Array.from(keys);
+  }, []);
 
   const variantThumbnails = useMemo(() => {
     const builtVariants = buildVariantThumbnails({
@@ -151,13 +151,15 @@ export function useCenterPreviewVariants({
     }
 
     const hasSyncedSequenceSlot = slots.some((slot) => {
-      if (!slot.metadata || typeof slot.metadata !== 'object' || Array.isArray(slot.metadata)) return false;
+      if (!slot.metadata || typeof slot.metadata !== 'object' || Array.isArray(slot.metadata))
+        return false;
       const metadata = slot.metadata;
       const sequence = metadata['sequence'];
       if (!sequence || typeof sequence !== 'object' || Array.isArray(sequence)) return false;
-      const runId = typeof (sequence as Record<string, unknown>)['runId'] === 'string'
-        ? ((sequence as Record<string, unknown>)['runId'] as string).trim()
-        : '';
+      const runId =
+        typeof (sequence as Record<string, unknown>)['runId'] === 'string'
+          ? ((sequence as Record<string, unknown>)['runId'] as string).trim()
+          : '';
       return runId === pendingRunId;
     });
     if (hasSyncedSequenceSlot) return builtVariants;
@@ -165,9 +167,7 @@ export function useCenterPreviewVariants({
     const pendingVariantId = `sequence:pending:${pendingRunId}`;
     if (builtVariants.some((variant) => variant.id === pendingVariantId)) return builtVariants;
     const nextIndex =
-      builtVariants.length > 0
-        ? Math.max(...builtVariants.map((variant) => variant.index)) + 1
-        : 1;
+      builtVariants.length > 0 ? Math.max(...builtVariants.map((variant) => variant.index)) + 1 : 1;
     const pendingVariant: VariantThumbnailInfo = {
       id: pendingVariantId,
       index: nextIndex,
@@ -184,12 +184,8 @@ export function useCenterPreviewVariants({
       costEstimated: false,
     };
 
-    return [
-      pendingVariant,
-      ...builtVariants,
-    ];
-  },
-  [
+    return [pendingVariant, ...builtVariants];
+  }, [
     activeRunId,
     activeRunSourceSlotId,
     landingSlots,
@@ -209,9 +205,7 @@ export function useCenterPreviewVariants({
         if (variant.output?.id && dismissedVariantKeys.has(`output:${variant.output.id}`)) {
           return false;
         }
-        const normalizedPath = normalizeImagePath(
-          variant.output?.filepath ?? variant.imageSrc
-        );
+        const normalizedPath = normalizeImagePath(variant.output?.filepath ?? variant.imageSrc);
         if (normalizedPath && dismissedVariantKeys.has(`path:${normalizedPath}`)) {
           return false;
         }
@@ -248,34 +242,30 @@ export function useCenterPreviewVariants({
     );
   }, [normalizedVariantTimestampQuery, visibleVariantThumbnails]);
 
-  const compareVariantA = useMemo(
-    () => {
-      const compareVariantId = compareVariantIds[0];
-      if (!compareVariantId) return null;
-      return (
-        visibleVariantThumbnails.find((variant) => variant.id === compareVariantId) ??
-        compareVariantLookup[compareVariantId] ??
-        null
-      );
-    },
-    [compareVariantIds, compareVariantLookup, visibleVariantThumbnails]
-  );
+  const compareVariantA = useMemo(() => {
+    const compareVariantId = compareVariantIds[0];
+    if (!compareVariantId) return null;
+    return (
+      visibleVariantThumbnails.find((variant) => variant.id === compareVariantId) ??
+      compareVariantLookup[compareVariantId] ??
+      null
+    );
+  }, [compareVariantIds, compareVariantLookup, visibleVariantThumbnails]);
 
-  const compareVariantB = useMemo(
-    () => {
-      const compareVariantId = compareVariantIds[1];
-      if (!compareVariantId) return null;
-      return (
-        visibleVariantThumbnails.find((variant) => variant.id === compareVariantId) ??
-        compareVariantLookup[compareVariantId] ??
-        null
-      );
-    },
-    [compareVariantIds, compareVariantLookup, visibleVariantThumbnails]
-  );
+  const compareVariantB = useMemo(() => {
+    const compareVariantId = compareVariantIds[1];
+    if (!compareVariantId) return null;
+    return (
+      visibleVariantThumbnails.find((variant) => variant.id === compareVariantId) ??
+      compareVariantLookup[compareVariantId] ??
+      null
+    );
+  }, [compareVariantIds, compareVariantLookup, visibleVariantThumbnails]);
 
-  const compareVariantImageA = compareVariantA?.imageSrc ?? compareVariantA?.output?.filepath ?? null;
-  const compareVariantImageB = compareVariantB?.imageSrc ?? compareVariantB?.output?.filepath ?? null;
+  const compareVariantImageA =
+    compareVariantA?.imageSrc ?? compareVariantA?.output?.filepath ?? null;
+  const compareVariantImageB =
+    compareVariantB?.imageSrc ?? compareVariantB?.output?.filepath ?? null;
   const canCompareSelectedVariants = Boolean(compareVariantImageA && compareVariantImageB);
 
   const activeVariantId = useMemo((): string | null => {
@@ -288,9 +278,7 @@ export function useCenterPreviewVariants({
     );
 
     if (workingSlotId) {
-      const bySlotId = visibleVariantThumbnails.find(
-        (variant) => variant.slotId === workingSlotId
-      );
+      const bySlotId = visibleVariantThumbnails.find((variant) => variant.slotId === workingSlotId);
       if (bySlotId) return bySlotId.id;
     }
 

@@ -80,7 +80,7 @@ export function buildMongoUpdatesFromMappings({
 
 export function extractMissingTemplatePorts(
   template: string,
-  templateInputs: RuntimePortValues,
+  templateInputs: RuntimePortValues
 ): string[] {
   const missing: Set<string> = new Set<string>();
   // Keep this token parser aligned with renderTemplate to avoid treating

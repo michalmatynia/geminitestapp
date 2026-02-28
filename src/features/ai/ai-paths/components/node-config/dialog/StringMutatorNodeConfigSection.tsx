@@ -3,14 +3,7 @@
 import React, { useState } from 'react';
 
 import type { StringMutatorOperation } from '@/shared/lib/ai-paths';
-import {
-  Button,
-  Input,
-  SelectSimple,
-  ToggleRow,
-  FormField,
-  EmptyState,
-} from '@/shared/ui';
+import { Button, Input, SelectSimple, ToggleRow, FormField, EmptyState } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -23,14 +16,19 @@ const OPERATION_LABELS: Record<StringMutatorOperation['type'], string> = {
   slice: 'Slice',
 };
 
-const createOperation = (
-  type: StringMutatorOperation['type']
-): StringMutatorOperation => {
+const createOperation = (type: StringMutatorOperation['type']): StringMutatorOperation => {
   switch (type) {
     case 'trim':
       return { type: 'trim', mode: 'both' };
     case 'replace':
-      return { type: 'replace', search: '', replace: '', matchMode: 'all', useRegex: false, flags: '' };
+      return {
+        type: 'replace',
+        search: '',
+        replace: '',
+        matchMode: 'all',
+        useRegex: false,
+        flags: '',
+      };
     case 'remove':
       return { type: 'remove', search: '', matchMode: 'all', useRegex: false, flags: '' };
     case 'case':
@@ -40,7 +38,14 @@ const createOperation = (
     case 'slice':
       return { type: 'slice', start: 0 };
     default:
-      return { type: 'replace', search: '', replace: '', matchMode: 'all', useRegex: false, flags: '' };
+      return {
+        type: 'replace',
+        search: '',
+        replace: '',
+        matchMode: 'all',
+        useRegex: false,
+        flags: '',
+      };
   }
 };
 
@@ -57,9 +62,7 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
   if (selectedNode?.type !== 'string_mutator') return null;
 
   const stringConfig = selectedNode.config?.stringMutator ?? { operations: [] };
-  const operations = Array.isArray(stringConfig.operations)
-    ? stringConfig.operations
-    : [];
+  const operations = Array.isArray(stringConfig.operations) ? stringConfig.operations : [];
   const [newType, setNewType] = useState<StringMutatorOperation['type']>('replace');
 
   const updateOperations = (nextOperations: StringMutatorOperation[]): void => {
@@ -106,11 +109,18 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
             />
           ) : (
             operations.map((operation: StringMutatorOperation, index: number) => (
-              <div key={`${operation.type}-${index}`} className='rounded-md border border-border bg-card/40 p-3'>
+              <div
+                key={`${operation.type}-${index}`}
+                className='rounded-md border border-border bg-card/40 p-3'
+              >
                 <div className='flex flex-wrap items-center justify-between gap-3'>
                   <div className='flex items-center gap-2'>
-                    <FormField label={`Operation ${index + 1}`} className='flex-row items-center gap-2 space-y-0'>
-                      <SelectSimple size='sm'
+                    <FormField
+                      label={`Operation ${index + 1}`}
+                      className='flex-row items-center gap-2 space-y-0'
+                    >
+                      <SelectSimple
+                        size='sm'
                         variant='subtle'
                         value={operation.type}
                         onValueChange={(value: string): void =>
@@ -138,7 +148,8 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
                 {operation.type === 'trim' && (
                   <div className='mt-3'>
                     <FormField label='Trim Mode'>
-                      <SelectSimple size='sm'
+                      <SelectSimple
+                        size='sm'
                         variant='subtle'
                         value={operation.mode ?? 'both'}
                         onValueChange={(value: string): void =>
@@ -182,7 +193,8 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
                       </FormField>
                     )}
                     <FormField label='Match Mode'>
-                      <SelectSimple size='sm'
+                      <SelectSimple
+                        size='sm'
                         variant='subtle'
                         value={operation.matchMode ?? 'all'}
                         onValueChange={(value: string): void =>
@@ -195,7 +207,7 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
                         triggerClassName='w-full'
                       />
                     </FormField>
-                    
+
                     <ToggleRow
                       label='Use Regex'
                       description='Interpret the search field as a RegExp pattern.'
@@ -226,7 +238,8 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
                 {operation.type === 'case' && (
                   <div className='mt-3'>
                     <FormField label='Case Mode'>
-                      <SelectSimple size='sm'
+                      <SelectSimple
+                        size='sm'
                         variant='subtle'
                         value={operation.mode ?? 'lower'}
                         onValueChange={(value: string): void =>
@@ -257,7 +270,8 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
                       />
                     </FormField>
                     <FormField label='Position'>
-                      <SelectSimple size='sm'
+                      <SelectSimple
+                        size='sm'
                         variant='subtle'
                         value={operation.position ?? 'suffix'}
                         onValueChange={(value: string): void =>
@@ -307,7 +321,8 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
         </div>
 
         <div className='mt-4 flex flex-wrap items-center gap-2'>
-          <SelectSimple size='sm'
+          <SelectSimple
+            size='sm'
             variant='subtle'
             value={newType}
             onValueChange={(value: string): void =>

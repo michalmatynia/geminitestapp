@@ -43,9 +43,8 @@ export function MutatorNodeConfigSection(): React.JSX.Element | null {
           }
         />
         <p className='mt-2 text-[11px] text-gray-500'>
-          Use <span className='text-gray-300'>{'{{value}}'}</span> for the
-          current value or dot paths like{' '}
-          <span className='text-gray-300'>{'{{entity.title}}'}</span>.
+          Use <span className='text-gray-300'>{'{{value}}'}</span> for the current value or dot
+          paths like <span className='text-gray-300'>{'{{entity.title}}'}</span>.
         </p>
       </div>
     </div>

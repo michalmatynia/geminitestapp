@@ -9,10 +9,7 @@ import {
   useSelectionState,
   useSelectionActions,
 } from '../context';
-import type {
-  AiNode,
-  PathFlowIntensity,
-} from '@/shared/lib/ai-paths';
+import type { AiNode, PathFlowIntensity } from '@/shared/lib/ai-paths';
 import type { EdgeRoutingMode } from '../context/hooks/useEdgePaths';
 import {
   RENDERER_MODE_STORAGE_KEY,
@@ -39,10 +36,9 @@ export function useCanvasBoardState({
   const runtimeActions = useRuntimeActions();
   const selectionState = useSelectionState();
   const selectionActions = useSelectionActions();
-  
-  const [edgeRoutingMode, setEdgeRoutingMode] =
-    React.useState<EdgeRoutingMode>('bezier');
-  
+
+  const [edgeRoutingMode, setEdgeRoutingMode] = React.useState<EdgeRoutingMode>('bezier');
+
   const canvasInteractions = useCanvasInteractions({
     confirmNodeSwitch,
     edgeRoutingMode,
@@ -84,15 +80,11 @@ export function useCanvasBoardState({
     if (storedMode === 'legacy' || storedMode === 'svg') {
       setRendererMode(storedMode);
     }
-    const storedRoutingMode = window.localStorage.getItem(
-      EDGE_ROUTING_MODE_STORAGE_KEY
-    );
+    const storedRoutingMode = window.localStorage.getItem(EDGE_ROUTING_MODE_STORAGE_KEY);
     if (storedRoutingMode === 'bezier' || storedRoutingMode === 'orthogonal') {
       setEdgeRoutingMode(storedRoutingMode);
     }
-    const storedMinimapVisibility = window.localStorage.getItem(
-      MINIMAP_VISIBILITY_STORAGE_KEY
-    );
+    const storedMinimapVisibility = window.localStorage.getItem(MINIMAP_VISIBILITY_STORAGE_KEY);
     if (storedMinimapVisibility === '0') {
       setShowMinimap(false);
     }
@@ -110,10 +102,7 @@ export function useCanvasBoardState({
 
   React.useEffect(() => {
     if (typeof window === 'undefined') return;
-    window.localStorage.setItem(
-      MINIMAP_VISIBILITY_STORAGE_KEY,
-      showMinimap ? '1' : '0'
-    );
+    window.localStorage.setItem(MINIMAP_VISIBILITY_STORAGE_KEY, showMinimap ? '1' : '0');
   }, [showMinimap]);
 
   React.useEffect(() => {
@@ -182,8 +171,7 @@ export function useCanvasBoardState({
       if (sampleElapsedMs >= SVG_PERF_SAMPLE_WINDOW_MS) {
         const measuredFps = Math.round((frameCount * 1000) / sampleElapsedMs);
         const measuredAvgFrameMs = frameCount > 0 ? frameMsSum / frameCount : 0;
-        const measuredSlowFrameRatio =
-          frameCount > 0 ? slowFrameCount / frameCount : 0;
+        const measuredSlowFrameRatio = frameCount > 0 ? slowFrameCount / frameCount : 0;
         setSvgPerf((previous) => {
           if (
             previous.fps === measuredFps &&
@@ -233,15 +221,17 @@ export function useCanvasBoardState({
         targetNodeId: string,
         targetPort: string
       ): unknown => {
-        const source = bucket === 'inputs' ? runtimeStateContext.runtimeState.inputs : runtimeStateContext.runtimeState.outputs;
+        const source =
+          bucket === 'inputs'
+            ? runtimeStateContext.runtimeState.inputs
+            : runtimeStateContext.runtimeState.outputs;
         const nodeValues = source?.[targetNodeId] ?? {};
         const direct = nodeValues[targetPort];
         if (direct !== undefined) return direct;
         const history = runtimeStateContext.runtimeState.history?.[targetNodeId];
         if (!Array.isArray(history) || history.length === 0) return undefined;
         const lastEntry = history[history.length - 1];
-        const fallbackSource =
-          bucket === 'inputs' ? lastEntry?.['inputs'] : lastEntry?.['outputs'];
+        const fallbackSource = bucket === 'inputs' ? lastEntry?.['inputs'] : lastEntry?.['outputs'];
         if (
           !fallbackSource ||
           typeof fallbackSource !== 'object' ||
@@ -260,11 +250,12 @@ export function useCanvasBoardState({
         const incomingValues: unknown[] = [];
         graphState.edges.forEach((edge) => {
           const toNodeId = typeof edge.to === 'string' ? edge.to : null;
-          const toPort = typeof edge.toPort === 'string' && edge.toPort.trim().length > 0
-            ? edge.toPort
-            : typeof edge.targetHandle === 'string' && edge.targetHandle.trim().length > 0
-              ? edge.targetHandle
-              : null;
+          const toPort =
+            typeof edge.toPort === 'string' && edge.toPort.trim().length > 0
+              ? edge.toPort
+              : typeof edge.targetHandle === 'string' && edge.targetHandle.trim().length > 0
+                ? edge.targetHandle
+                : null;
           if (toNodeId !== nodeId || toPort !== port) return;
           const fromNodeId = typeof edge.from === 'string' ? edge.from : null;
           const fromPort =
@@ -288,18 +279,24 @@ export function useCanvasBoardState({
   );
 
   const getNodeRuntimeData = React.useCallback(
-    (nodeId: string): {
+    (
+      nodeId: string
+    ): {
       inputs: Record<string, unknown> | undefined;
       outputs: Record<string, unknown> | undefined;
     } => {
       const history = runtimeStateContext.runtimeState.history?.[nodeId];
       const lastEntry =
-        Array.isArray(history) && history.length > 0
-          ? history[history.length - 1]
-          : null;
+        Array.isArray(history) && history.length > 0 ? history[history.length - 1] : null;
       return {
-        inputs: mergeRuntimePayload(runtimeStateContext.runtimeState.inputs?.[nodeId], lastEntry?.['inputs']),
-        outputs: mergeRuntimePayload(runtimeStateContext.runtimeState.outputs?.[nodeId], lastEntry?.['outputs']),
+        inputs: mergeRuntimePayload(
+          runtimeStateContext.runtimeState.inputs?.[nodeId],
+          lastEntry?.['inputs']
+        ),
+        outputs: mergeRuntimePayload(
+          runtimeStateContext.runtimeState.outputs?.[nodeId],
+          lastEntry?.['outputs']
+        ),
       };
     },
     [runtimeStateContext.runtimeState]
@@ -346,15 +343,33 @@ export function useCanvasBoardState({
     edgeRoutingMode,
     setEdgeRoutingMode,
     edgePaths: canvasInteractions.edgePaths,
-    handlePointerDownNode: (nodeId, event) => { void canvasInteractions.handlePointerDownNode(event, nodeId); },
-    handlePointerMoveNode: (nodeId, event) => { canvasInteractions.handlePointerMoveNode(event, nodeId); },
-    handlePointerUpNode: (nodeId, event) => { canvasInteractions.handlePointerUpNode(event, nodeId); },
-    handlePanStart: (event) => { canvasInteractions.handlePanStart(event); },
-    handlePanMove: (event) => { canvasInteractions.handlePanMove(event); },
-    handlePanEnd: (event) => { canvasInteractions.handlePanEnd(event); },
-    handleWheel: (event) => { canvasInteractions.handleWheel(event); },
-    handleRemoveEdge: (edgeId) => { canvasInteractions.handleRemoveEdge(edgeId); },
-    handleDisconnectPort: (direction, nodeId, port) => { canvasInteractions.handleDisconnectPort(direction, nodeId, port); },
+    handlePointerDownNode: (nodeId, event) => {
+      void canvasInteractions.handlePointerDownNode(event, nodeId);
+    },
+    handlePointerMoveNode: (nodeId, event) => {
+      canvasInteractions.handlePointerMoveNode(event, nodeId);
+    },
+    handlePointerUpNode: (nodeId, event) => {
+      canvasInteractions.handlePointerUpNode(event, nodeId);
+    },
+    handlePanStart: (event) => {
+      canvasInteractions.handlePanStart(event);
+    },
+    handlePanMove: (event) => {
+      canvasInteractions.handlePanMove(event);
+    },
+    handlePanEnd: (event) => {
+      canvasInteractions.handlePanEnd(event);
+    },
+    handleWheel: (event) => {
+      canvasInteractions.handleWheel(event);
+    },
+    handleRemoveEdge: (edgeId) => {
+      canvasInteractions.handleRemoveEdge(edgeId);
+    },
+    handleDisconnectPort: (direction, nodeId, port) => {
+      canvasInteractions.handleDisconnectPort(direction, nodeId, port);
+    },
     handleStartConnection: (event, node, port) => {
       void canvasInteractions.handleStartConnection(event, node, port);
     },
@@ -364,14 +379,30 @@ export function useCanvasBoardState({
     handleReconnectInput: (event, nodeId, port) => {
       void canvasInteractions.handleReconnectInput(event, nodeId, port);
     },
-    handleSelectNode: (nodeId, options) => { void canvasInteractions.handleSelectNode(nodeId, options); },
-    handleDrop: (event) => { canvasInteractions.handleDrop(event); },
-    handleDragOver: (event) => { canvasInteractions.handleDragOver(event); },
-    zoomTo: (targetScale) => { canvasInteractions.zoomTo(targetScale); },
-    fitToNodes: () => { canvasInteractions.fitToNodes(); },
-    fitToSelection: () => { canvasInteractions.fitToSelection(); },
-    resetView: () => { canvasInteractions.resetView(); },
-    centerOnCanvasPoint: (canvasX, canvasY) => { canvasInteractions.centerOnCanvasPoint(canvasX, canvasY); },
+    handleSelectNode: (nodeId, options) => {
+      void canvasInteractions.handleSelectNode(nodeId, options);
+    },
+    handleDrop: (event) => {
+      canvasInteractions.handleDrop(event);
+    },
+    handleDragOver: (event) => {
+      canvasInteractions.handleDragOver(event);
+    },
+    zoomTo: (targetScale) => {
+      canvasInteractions.zoomTo(targetScale);
+    },
+    fitToNodes: () => {
+      canvasInteractions.fitToNodes();
+    },
+    fitToSelection: () => {
+      canvasInteractions.fitToSelection();
+    },
+    resetView: () => {
+      canvasInteractions.resetView();
+    },
+    centerOnCanvasPoint: (canvasX, canvasY) => {
+      canvasInteractions.centerOnCanvasPoint(canvasX, canvasY);
+    },
     selectionMarqueeRect: canvasInteractions.selectionMarqueeRect,
     touchLongPressIndicator: canvasInteractions.touchLongPressIndicator,
     ConfirmationModal: canvasInteractions.ConfirmationModal,

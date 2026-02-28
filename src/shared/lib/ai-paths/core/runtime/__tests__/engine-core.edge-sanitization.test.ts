@@ -16,7 +16,8 @@ const buildNodes = (): AiNode[] => [
         valueType: 'string',
         value: 'hello',
       },
-    },    position: { x: 0, y: 0 },
+    },
+    position: { x: 0, y: 0 },
   },
   {
     id: 'node-delay',

@@ -1,7 +1,10 @@
 import 'server-only';
 
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import { getProductDataProvider, type ProductDbProvider } from '@/features/products/services/product-provider';
+import {
+  getProductDataProvider,
+  type ProductDbProvider,
+} from '@/features/products/services/product-provider';
 import type { TagRepository } from '@/shared/contracts/products';
 
 import { mongoTagRepository } from './mongo-tag-repository';
@@ -11,7 +14,7 @@ export const getTagRepository = async (
   providerOverride?: ProductDbProvider
 ): Promise<TagRepository> => {
   try {
-    const provider = providerOverride ?? await getProductDataProvider();
+    const provider = providerOverride ?? (await getProductDataProvider());
     if (provider === 'mongodb') {
       return mongoTagRepository;
     }

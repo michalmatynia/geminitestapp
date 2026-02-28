@@ -5,18 +5,28 @@ import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 import { ComponentSettingsPanel } from '@/features/cms/components/page-builder/ComponentSettingsPanel';
 import { ComponentSettingsProvider } from '@/features/cms/components/page-builder/context/ComponentSettingsContext';
-import { useCmsThemes, useCmsDomains, useCmsSlugs, useCmsAllSlugs } from '@/features/cms/hooks/useCmsQueries';
-import { usePageBuilderState, usePageBuilderDispatch, usePageBuilderSelection } from '@/features/cms/hooks/usePageBuilderContext';
+import {
+  useCmsThemes,
+  useCmsDomains,
+  useCmsSlugs,
+  useCmsAllSlugs,
+} from '@/features/cms/hooks/useCmsQueries';
+import {
+  usePageBuilderState,
+  usePageBuilderDispatch,
+  usePageBuilderSelection,
+} from '@/features/cms/hooks/usePageBuilderContext';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 
 // Create a new QueryClient for each test
-const createTestQueryClient = () => new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: false,
+const createTestQueryClient = () =>
+  new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+      },
     },
-  },
-});
+  });
 
 // Mock hooks
 vi.mock('@/features/cms/hooks/usePageBuilderContext', () => {
@@ -83,11 +93,13 @@ vi.mock('@/features/cms/components/page-builder/section-registry', () => ({
 }));
 
 vi.mock('@/shared/ui', async (importOriginal) => {
-  const actual = await importOriginal() as any;
+  const actual = (await importOriginal()) as any;
   const MockTabsList = ({ children, activeValue, onValueChange }: any) => (
     <div data-testid='tabs-list' role='tablist'>
-      {React.Children.map(children, child => 
-        React.isValidElement(child) ? React.cloneElement(child as any, { activeValue, onValueChange }) : child
+      {React.Children.map(children, (child) =>
+        React.isValidElement(child)
+          ? React.cloneElement(child as any, { activeValue, onValueChange })
+          : child
       )}
     </div>
   );
@@ -95,7 +107,11 @@ vi.mock('@/shared/ui', async (importOriginal) => {
 
   const MockTabsContent = ({ children, value, activeValue }: any) => {
     if (value !== activeValue) return null;
-    return <div role='tabpanel' data-testid={`tab-content-${value}`}>{children}</div>;
+    return (
+      <div role='tabpanel' data-testid={`tab-content-${value}`}>
+        {children}
+      </div>
+    );
   };
   MockTabsContent.displayName = 'TabsContent';
 
@@ -103,7 +119,7 @@ vi.mock('@/shared/ui', async (importOriginal) => {
     ...actual,
     Tabs: ({ children, value, onValueChange }: any) => (
       <div data-testid='tabs'>
-        {React.Children.map(children, child => {
+        {React.Children.map(children, (child) => {
           if (React.isValidElement(child)) {
             const type = child.type as any;
             if (type.displayName === 'TabsList') {
@@ -119,8 +135,8 @@ vi.mock('@/shared/ui', async (importOriginal) => {
     ),
     TabsList: MockTabsList,
     TabsTrigger: ({ children, value, activeValue, onValueChange }: any) => (
-      <button 
-        role='tab' 
+      <button
+        role='tab'
         aria-selected={value === activeValue}
         onClick={() => onValueChange?.(value)}
         data-testid={`tab-trigger-${value}`}
@@ -130,7 +146,9 @@ vi.mock('@/shared/ui', async (importOriginal) => {
     ),
     TabsContent: MockTabsContent,
     Button: ({ children, onClick, variant }: any) => (
-      <button onClick={onClick} data-variant={variant}>{children}</button>
+      <button onClick={onClick} data-variant={variant}>
+        {children}
+      </button>
     ),
   };
 });
@@ -147,11 +165,11 @@ vi.mock('@/features/cms/components/page-builder/SettingsFieldRenderer', () => ({
   SettingsFieldRenderer: ({ field, value, onChange }: any) => (
     <div data-testid={`field-${field.key}`}>
       <label htmlFor={`input-${field.key}`}>{field.label}</label>
-      <input 
+      <input
         id={`input-${field.key}`}
         data-testid={`input-${field.key}`}
-        value={typeof value === 'string' || typeof value === 'number' ? value : ''} 
-        onChange={(e) => onChange(field.key, e.target.value)} 
+        value={typeof value === 'string' || typeof value === 'number' ? value : ''}
+        onChange={(e) => onChange(field.key, e.target.value)}
       />
     </div>
   ),
@@ -167,7 +185,13 @@ vi.mock('@/features/cms/components/page-builder/CssAnimationConfigPanel', () => 
 
 describe('ComponentSettingsPanel Component', () => {
   const mockDispatch = vi.fn();
-  const mockPage = { id: '1', name: 'Test Page', status: 'draft' as const, seoTitle: '', slugs: [] };
+  const mockPage = {
+    id: '1',
+    name: 'Test Page',
+    status: 'draft' as const,
+    seoTitle: '',
+    slugs: [],
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -182,31 +206,45 @@ describe('ComponentSettingsPanel Component', () => {
     const queryClient = createTestQueryClient();
     return render(
       <QueryClientProvider client={queryClient}>
-        <ComponentSettingsProvider>
-          {ui}
-        </ComponentSettingsProvider>
+        <ComponentSettingsProvider>{ui}</ComponentSettingsProvider>
       </QueryClientProvider>
     );
   };
 
-  it('should show \'Select a page\' message when no page is set', () => {
-    (usePageBuilderState as any).mockReturnValue({ currentPage: null, inspectorSettings: { showEditorChrome: true }, sections: [] });
+  it("should show 'Select a page' message when no page is set", () => {
+    (usePageBuilderState as any).mockReturnValue({
+      currentPage: null,
+      inspectorSettings: { showEditorChrome: true },
+      sections: [],
+    });
     (usePageBuilderDispatch as any).mockReturnValue(mockDispatch);
-    (usePageBuilderSelection as any).mockReturnValue({ selectedSection: null, selectedBlock: null, selectedColumn: null });
+    (usePageBuilderSelection as any).mockReturnValue({
+      selectedSection: null,
+      selectedBlock: null,
+      selectedColumn: null,
+    });
 
     renderWithProviders(<ComponentSettingsPanel />);
     expect(screen.getByText(/Select a page first/i)).toBeInTheDocument();
   });
 
   it('should show page settings when nothing is selected', () => {
-    (usePageBuilderState as any).mockReturnValue({ currentPage: mockPage, inspectorSettings: { showEditorChrome: true }, sections: [] });
+    (usePageBuilderState as any).mockReturnValue({
+      currentPage: mockPage,
+      inspectorSettings: { showEditorChrome: true },
+      sections: [],
+    });
     (usePageBuilderDispatch as any).mockReturnValue(mockDispatch);
-    (usePageBuilderSelection as any).mockReturnValue({ selectedSection: null, selectedBlock: null, selectedColumn: null });
+    (usePageBuilderSelection as any).mockReturnValue({
+      selectedSection: null,
+      selectedBlock: null,
+      selectedColumn: null,
+    });
 
     renderWithProviders(<ComponentSettingsPanel />);
     expect(screen.getAllByText('Test Page').length).toBeGreaterThan(0);
     expect(screen.getByText('Status')).toBeInTheDocument();
-    
+
     expect(screen.getByRole('tab', { name: /Page/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /SEO/i })).toBeInTheDocument();
   });
@@ -218,12 +256,20 @@ describe('ComponentSettingsPanel Component', () => {
       settings: { imageHeight: 'large' },
     };
 
-    (usePageBuilderState as any).mockReturnValue({ currentPage: mockPage, inspectorSettings: { showEditorChrome: true }, sections: [mockSection] });
+    (usePageBuilderState as any).mockReturnValue({
+      currentPage: mockPage,
+      inspectorSettings: { showEditorChrome: true },
+      sections: [mockSection],
+    });
     (usePageBuilderDispatch as any).mockReturnValue(mockDispatch);
-    (usePageBuilderSelection as any).mockReturnValue({ selectedSection: mockSection, selectedBlock: null, selectedColumn: null });
+    (usePageBuilderSelection as any).mockReturnValue({
+      selectedSection: mockSection,
+      selectedBlock: null,
+      selectedColumn: null,
+    });
 
     renderWithProviders(<ComponentSettingsPanel />);
-    
+
     expect(screen.getByText(/Section: Hero banner/i)).toBeInTheDocument();
     expect(screen.getByText('Image height')).toBeInTheDocument();
   });
@@ -231,12 +277,20 @@ describe('ComponentSettingsPanel Component', () => {
   it('should handle removing a section', () => {
     const mockSection = { id: 'sec-1', type: 'Hero', settings: {} };
 
-    (usePageBuilderState as any).mockReturnValue({ currentPage: mockPage, inspectorSettings: { showEditorChrome: true }, sections: [mockSection] });
+    (usePageBuilderState as any).mockReturnValue({
+      currentPage: mockPage,
+      inspectorSettings: { showEditorChrome: true },
+      sections: [mockSection],
+    });
     (usePageBuilderDispatch as any).mockReturnValue(mockDispatch);
-    (usePageBuilderSelection as any).mockReturnValue({ selectedSection: mockSection, selectedBlock: null, selectedColumn: null });
+    (usePageBuilderSelection as any).mockReturnValue({
+      selectedSection: mockSection,
+      selectedBlock: null,
+      selectedColumn: null,
+    });
 
     renderWithProviders(<ComponentSettingsPanel />);
-    
+
     const removeBtn = screen.getByRole('button', { name: /Remove section/i });
     fireEvent.click(removeBtn);
 
@@ -247,12 +301,20 @@ describe('ComponentSettingsPanel Component', () => {
   });
 
   it('should update SEO settings', async () => {
-    (usePageBuilderState as any).mockReturnValue({ currentPage: mockPage, inspectorSettings: { showEditorChrome: true }, sections: [] });
+    (usePageBuilderState as any).mockReturnValue({
+      currentPage: mockPage,
+      inspectorSettings: { showEditorChrome: true },
+      sections: [],
+    });
     (usePageBuilderDispatch as any).mockReturnValue(mockDispatch);
-    (usePageBuilderSelection as any).mockReturnValue({ selectedSection: null, selectedBlock: null, selectedColumn: null });
+    (usePageBuilderSelection as any).mockReturnValue({
+      selectedSection: null,
+      selectedBlock: null,
+      selectedColumn: null,
+    });
 
     renderWithProviders(<ComponentSettingsPanel />);
-    
+
     const seoTab = screen.getByRole('tab', { name: /SEO/i });
     fireEvent.click(seoTab);
 

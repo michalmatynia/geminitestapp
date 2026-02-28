@@ -32,9 +32,7 @@ const normalizeOptionLabels = (input: unknown): string[] => {
   return labels;
 };
 
-const toPublicProductParameter = (
-  parameter: ProductParameter
-): PublicProductParameter => ({
+const toPublicProductParameter = (parameter: ProductParameter): PublicProductParameter => ({
   id: parameter.id,
   name: parameter.name,
   name_en: parameter.name_en,
@@ -48,15 +46,10 @@ const toPublicProductParameter = (
  * GET /api/public/products/parameters
  * Returns catalog-scoped product parameter metadata for public automation/runtime usage.
  */
-export async function GET_handler(
-  req: NextRequest,
-  ctx: ApiHandlerContext
-): Promise<Response> {
+export async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const query = ctx.query as CatalogIdQuery | undefined;
   const catalogId =
-    query?.catalogId ??
-    new URL(req.url).searchParams.get('catalogId')?.trim() ??
-    '';
+    query?.catalogId ?? new URL(req.url).searchParams.get('catalogId')?.trim() ?? '';
 
   if (!catalogId) {
     throw badRequestError('catalogId query parameter is required');

@@ -18,9 +18,7 @@
     "description_en",
     "prompt"
   ],
-  "outputs": [
-    "prompt"
-  ],
+  "outputs": ["prompt"],
   "configFields": [
     {
       "path": "template.template",
@@ -62,9 +60,7 @@
       "description_en",
       "prompt"
     ],
-    "outputs": [
-      "prompt"
-    ],
+    "outputs": ["prompt"],
     "data": {},
     "connections": {
       "incoming": [],

@@ -7,10 +7,7 @@ import type {
 } from '@/shared/contracts/ai-paths';
 
 import { DB_COLLECTION_OPTIONS } from '../constants';
-import {
-  AI_PATHS_VALIDATION_SCHEMA_VERSION,
-  normalizeAiPathsValidationConfig,
-} from './defaults';
+import { AI_PATHS_VALIDATION_SCHEMA_VERSION, normalizeAiPathsValidationConfig } from './defaults';
 import { AI_PATHS_NODE_DOCS } from '../docs/node-docs';
 
 export type AiPathsValidationFinding = {
@@ -83,15 +80,10 @@ const DEFAULT_SEVERITY_WEIGHT: Record<'error' | 'warning' | 'info', number> = {
   info: 5,
 };
 
-const COLLECTION_ALLOWLIST = new Set(
-  DB_COLLECTION_OPTIONS.map((option) => option.value),
-);
-const KNOWN_NODE_TYPES = new Set(
-  AI_PATHS_NODE_DOCS.map((doc) => doc.type),
-);
+const COLLECTION_ALLOWLIST = new Set(DB_COLLECTION_OPTIONS.map((option) => option.value));
+const KNOWN_NODE_TYPES = new Set(AI_PATHS_NODE_DOCS.map((doc) => doc.type));
 
-const clampScore = (value: number): number =>
-  Math.max(0, Math.min(100, Math.trunc(value)));
+const clampScore = (value: number): number => Math.max(0, Math.min(100, Math.trunc(value)));
 
 const normalizePathToken = (value: string): string =>
   value.trim().replace(/^\$\./, '').replace(/^\$\[/, '[');
@@ -142,7 +134,7 @@ const hasMeaningfulValue = (value: unknown): boolean => {
 
 const buildGraphContext = (
   nodes: AiNode[],
-  edges: Edge[],
+  edges: Edge[]
 ): {
   counts: {
     nodes: number;
@@ -156,7 +148,7 @@ const buildGraphContext = (
       acc[key] = (acc[key] ?? 0) + 1;
       return acc;
     },
-    {},
+    {}
   );
   return {
     counts: {
@@ -219,10 +211,7 @@ const isAllowedCollection = (value: string): boolean => {
   return false;
 };
 
-const doEdgeEndpointsResolve = (
-  edges: Edge[],
-  nodesById: Map<string, AiNode>,
-): boolean =>
+const doEdgeEndpointsResolve = (edges: Edge[], nodesById: Map<string, AiNode>): boolean =>
   edges.every((edge: Edge): boolean => {
     const fromNodeId = edgeFromNodeId(edge);
     const toNodeId = edgeToNodeId(edge);
@@ -230,10 +219,7 @@ const doEdgeEndpointsResolve = (
     return nodesById.has(fromNodeId) && nodesById.has(toNodeId);
   });
 
-const doEdgePortsMatchNodeDeclarations = (
-  edges: Edge[],
-  nodesById: Map<string, AiNode>,
-): boolean =>
+const doEdgePortsMatchNodeDeclarations = (edges: Edge[], nodesById: Map<string, AiNode>): boolean =>
   edges.every((edge: Edge): boolean => {
     const fromNodeId = edgeFromNodeId(edge);
     const toNodeId = edgeToNodeId(edge);
@@ -253,11 +239,7 @@ const doEdgePortsMatchNodeDeclarations = (
 const doNodeTypesKnown = (nodes: AiNode[], allowedTypes?: string[]): boolean => {
   const normalizedAllowed =
     Array.isArray(allowedTypes) && allowedTypes.length > 0
-      ? new Set(
-        allowedTypes
-          .map((type) => toText(type).trim())
-          .filter((type) => type.length > 0),
-      )
+      ? new Set(allowedTypes.map((type) => toText(type).trim()).filter((type) => type.length > 0))
       : KNOWN_NODE_TYPES;
   if (normalizedAllowed.size === 0) return false;
   return nodes.every((node: AiNode): boolean => normalizedAllowed.has(node.type));
@@ -284,8 +266,9 @@ const doEdgeIdsUnique = (edges: Edge[]): boolean => {
 };
 
 const doNodePositionsFinite = (nodes: AiNode[]): boolean =>
-  nodes.every((node: AiNode): boolean =>
-    Number.isFinite(node.position?.x) && Number.isFinite(node.position?.y),
+  nodes.every(
+    (node: AiNode): boolean =>
+      Number.isFinite(node.position?.x) && Number.isFinite(node.position?.y)
   );
 
 const evaluateCondition = (args: {
@@ -305,8 +288,7 @@ const evaluateCondition = (args: {
       case 'exists': {
         if (rule.module === 'graph') {
           return (
-            resolvePathValue(graphContext, condition.valuePath ?? condition.field) !==
-            undefined
+            resolvePathValue(graphContext, condition.valuePath ?? condition.field) !== undefined
           );
         }
         if (!node) return false;
@@ -315,13 +297,11 @@ const evaluateCondition = (args: {
       case 'non_empty': {
         if (rule.module === 'graph') {
           return hasMeaningfulValue(
-            resolvePathValue(graphContext, condition.valuePath ?? condition.field),
+            resolvePathValue(graphContext, condition.valuePath ?? condition.field)
           );
         }
         if (!node) return false;
-        return hasMeaningfulValue(
-          resolvePathValue(node, condition.valuePath ?? condition.field),
-        );
+        return hasMeaningfulValue(resolvePathValue(node, condition.valuePath ?? condition.field));
       }
       case 'equals': {
         if (rule.module === 'graph') {
@@ -332,8 +312,7 @@ const evaluateCondition = (args: {
         }
         if (!node) return false;
         return (
-          resolvePathValue(node, condition.valuePath ?? condition.field) ===
-          condition.expected
+          resolvePathValue(node, condition.valuePath ?? condition.field) === condition.expected
         );
       }
       case 'in': {
@@ -376,14 +355,14 @@ const evaluateCondition = (args: {
       case 'jsonpath_exists': {
         const value = resolvePathValue(
           rule.module === 'graph' ? graphContext : node,
-          condition.valuePath ?? condition.field,
+          condition.valuePath ?? condition.field
         );
         return value !== undefined;
       }
       case 'jsonpath_equals': {
         const value = resolvePathValue(
           rule.module === 'graph' ? graphContext : node,
-          condition.valuePath ?? condition.field,
+          condition.valuePath ?? condition.field
         );
         if (typeof condition.expected === 'number' && typeof value === 'number') {
           return value >= condition.expected;
@@ -410,7 +389,7 @@ const evaluateCondition = (args: {
         if (!node) return false;
         if (condition.fromNodeType === 'simulation') {
           const hasSourceType = nodes.some(
-            (candidate: AiNode): boolean => candidate.type === condition.fromNodeType,
+            (candidate: AiNode): boolean => candidate.type === condition.fromNodeType
           );
           if (!hasSourceType) return true;
         }
@@ -432,7 +411,7 @@ const evaluateCondition = (args: {
         if (!node) return false;
         if (condition.toNodeType === 'simulation') {
           const hasTargetType = nodes.some(
-            (candidate: AiNode): boolean => candidate.type === condition.toNodeType,
+            (candidate: AiNode): boolean => candidate.type === condition.toNodeType
           );
           if (!hasTargetType) return true;
         }
@@ -454,14 +433,14 @@ const evaluateCondition = (args: {
         if (!node) return false;
         const raw = resolvePathValue(
           node,
-          condition.field ?? condition.valuePath ?? 'config.database.query.collection',
+          condition.field ?? condition.valuePath ?? 'config.database.query.collection'
         );
         return isAllowedCollection(toText(raw));
       }
       case 'entity_collection_resolves': {
         if (!node) return false;
         const entityType = normalizeEntityType(
-          resolvePathValue(node, 'config.simulation.entityType'),
+          resolvePathValue(node, 'config.simulation.entityType')
         );
         const entityId =
           toText(resolvePathValue(node, 'config.simulation.entityId')).trim() ||
@@ -528,28 +507,24 @@ const evaluateRuleForNode = (args: {
 }): { passed: boolean; failedConditions: string[] } => {
   const { rule, node, nodes, nodesById, edges, graphContext, config } = args;
   const mode = rule.conditionMode === 'any' ? 'any' : 'all';
-  const checks = rule.conditions.map(
-    (condition: AiPathsValidationCondition): boolean =>
-      evaluateCondition({
-        condition,
-        rule,
-        node,
-        nodes,
-        nodesById,
-        edges,
-        graphContext,
-        config,
-      }),
+  const checks = rule.conditions.map((condition: AiPathsValidationCondition): boolean =>
+    evaluateCondition({
+      condition,
+      rule,
+      node,
+      nodes,
+      nodesById,
+      edges,
+      graphContext,
+      config,
+    })
   );
   const passed =
     mode === 'any'
       ? checks.some((value: boolean): boolean => value)
       : checks.every((value: boolean): boolean => value);
   const failedConditions = rule.conditions
-    .filter(
-      (_condition: AiPathsValidationCondition, index: number): boolean =>
-        !checks[index],
-    )
+    .filter((_condition: AiPathsValidationCondition, index: number): boolean => !checks[index])
     .map((condition: AiPathsValidationCondition): string => condition.id);
   return { passed, failedConditions };
 };
@@ -593,17 +568,14 @@ export const evaluateAiPathsValidationPreflight = ({
   const normalizedConfig = normalizeAiPathsValidationConfig(config);
   const policy = normalizedConfig.policy ?? 'block_below_threshold';
   const baseScore =
-    typeof normalizedConfig.baseScore === 'number'
-      ? clampScore(normalizedConfig.baseScore)
-      : 100;
+    typeof normalizedConfig.baseScore === 'number' ? clampScore(normalizedConfig.baseScore) : 100;
 
   const evaluatedAt = new Date().toISOString();
   const graphContext = buildGraphContext(nodes, edges);
 
   if (!normalizedConfig.enabled) {
     return {
-      schemaVersion:
-        normalizedConfig.schemaVersion ?? AI_PATHS_VALIDATION_SCHEMA_VERSION,
+      schemaVersion: normalizedConfig.schemaVersion ?? AI_PATHS_VALIDATION_SCHEMA_VERSION,
       evaluatedAt,
       enabled: false,
       policy,
@@ -629,7 +601,7 @@ export const evaluateAiPathsValidationPreflight = ({
   }
 
   const nodesById = new Map<string, AiNode>(
-    nodes.map((node: AiNode): [string, AiNode] => [node.id, node]),
+    nodes.map((node: AiNode): [string, AiNode] => [node.id, node])
   );
   const findings: AiPathsValidationFinding[] = [];
   const moduleImpactMap = new Map<string, AiPathsValidationModuleImpact>();
@@ -653,16 +625,12 @@ export const evaluateAiPathsValidationPreflight = ({
   let rulesEvaluated = 0;
   let failedRules = 0;
 
-  const evaluateAndCollectFinding = (
-    rule: AiPathsValidationRule,
-    node: AiNode | null,
-  ): void => {
+  const evaluateAndCollectFinding = (rule: AiPathsValidationRule, node: AiNode | null): void => {
     rulesEvaluated += 1;
     appliedRuleIds.add(rule.id);
 
     const moduleKey = rule.module ?? 'custom';
-    const moduleImpact =
-      moduleImpactMap.get(moduleKey) ?? createEmptyModuleImpact(moduleKey);
+    const moduleImpact = moduleImpactMap.get(moduleKey) ?? createEmptyModuleImpact(moduleKey);
     moduleImpact.rulesEvaluated += 1;
 
     const evaluation = evaluateRuleForNode({
@@ -722,9 +690,7 @@ export const evaluateAiPathsValidationPreflight = ({
       return;
     }
 
-    const matchingNodes = nodes.filter((node: AiNode): boolean =>
-      matchesRuleNode(rule, node),
-    );
+    const matchingNodes = nodes.filter((node: AiNode): boolean => matchesRuleNode(rule, node));
     if (matchingNodes.length === 0) {
       skippedRuleIds.add(rule.id);
       return;
@@ -735,28 +701,24 @@ export const evaluateAiPathsValidationPreflight = ({
   });
 
   const severityCounts = findings.reduce<Record<'error' | 'warning' | 'info', number>>(
-    (
-      acc: Record<'error' | 'warning' | 'info', number>,
-      finding: AiPathsValidationFinding,
-    ) => {
+    (acc: Record<'error' | 'warning' | 'info', number>, finding: AiPathsValidationFinding) => {
       const key = finding.severity;
       acc[key] = (acc[key] ?? 0) + 1;
       return acc;
     },
-    createEmptySeverityCounts(),
+    createEmptySeverityCounts()
   );
 
   const recommendations = findings
     .filter(
       (
-        finding: AiPathsValidationFinding,
+        finding: AiPathsValidationFinding
       ): finding is AiPathsValidationFinding & { recommendation: string } =>
-        typeof finding.recommendation === 'string' &&
-        finding.recommendation.trim().length > 0,
+        typeof finding.recommendation === 'string' && finding.recommendation.trim().length > 0
     )
     .map(
       (
-        finding: AiPathsValidationFinding & { recommendation: string },
+        finding: AiPathsValidationFinding & { recommendation: string }
       ): AiPathsValidationRecommendation => ({
         id: `${finding.ruleId}:${finding.nodeId ?? 'graph'}:recommendation`,
         ruleId: finding.ruleId,
@@ -766,7 +728,7 @@ export const evaluateAiPathsValidationPreflight = ({
         recommendation: finding.recommendation,
         nodeId: finding.nodeId,
         nodeTitle: finding.nodeTitle,
-      }),
+      })
     );
 
   const warnThreshold = normalizedConfig.warnThreshold ?? 70;

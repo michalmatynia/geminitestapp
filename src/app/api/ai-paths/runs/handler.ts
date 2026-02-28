@@ -13,35 +13,29 @@ import {
 } from '@/features/ai/ai-paths/services/path-run-recovery-service';
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import { deletePathRunsWithRepository } from '@/features/ai/ai-paths/services/path-run-service';
-import type {
-  AiPathRunListOptions,
-  AiPathRunStatus,
-} from '@/shared/contracts/ai-paths';
+import type { AiPathRunListOptions, AiPathRunStatus } from '@/shared/contracts/ai-paths';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 let lastStaleRunningCleanupAt = 0;
 let staleRunningCleanupPromise: Promise<void> | null = null;
 
-const parseEnvNumber = (
-  value: string | undefined,
-  fallback: number,
-): number => {
+const parseEnvNumber = (value: string | undefined, fallback: number): number => {
   const parsed = Number.parseInt(value ?? '', 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 };
 
 const staleRunningCleanupIntervalMs = parseEnvNumber(
   process.env['AI_PATHS_STALE_RUNNING_CLEANUP_INTERVAL_MS'],
-  resolveAiPathsStaleRunningCleanupIntervalMs(),
+  resolveAiPathsStaleRunningCleanupIntervalMs()
 );
 const staleRunningMaxAgeMs = resolveAiPathsStaleRunningMaxAgeMs();
 const runsListResponseCacheTtlMs = parseEnvNumber(
   process.env['AI_PATHS_RUNS_LIST_CACHE_TTL_MS'],
-  0,
+  0
 );
 const runsListResponseCacheMaxEntries = parseEnvNumber(
   process.env['AI_PATHS_RUNS_LIST_CACHE_MAX_ENTRIES'],
-  200,
+  200
 );
 const runsListResponseCache = new Map<
   string,
@@ -65,7 +59,7 @@ const pruneRunsListResponseCache = (now: number): void => {
 };
 
 const scheduleStaleRunningCleanup = (
-  repo: Awaited<ReturnType<typeof getPathRunRepository>>,
+  repo: Awaited<ReturnType<typeof getPathRunRepository>>
 ): void => {
   const now = Date.now();
   if (staleRunningCleanupPromise) return;
@@ -97,17 +91,9 @@ const RUN_STATUSES: AiPathRunStatus[] = [
   'dead_lettered',
 ];
 
-const TERMINAL_STATUSES: AiPathRunStatus[] = [
-  'completed',
-  'failed',
-  'canceled',
-  'dead_lettered',
-];
+const TERMINAL_STATUSES: AiPathRunStatus[] = ['completed', 'failed', 'canceled', 'dead_lettered'];
 
-export async function GET_handler(
-  req: NextRequest,
-  _ctx: ApiHandlerContext,
-): Promise<Response> {
+export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const access = await requireAiPathsRunAccess();
   const url = new URL(req.url);
   const pathId = url.searchParams.get('pathId')?.trim() || undefined;
@@ -122,10 +108,7 @@ export async function GET_handler(
     : undefined;
   const limitParam = url.searchParams.get('limit');
   const offsetParam = url.searchParams.get('offset');
-  const includeTotalParam = url.searchParams
-    .get('includeTotal')
-    ?.trim()
-    .toLowerCase();
+  const includeTotalParam = url.searchParams.get('includeTotal')?.trim().toLowerCase();
   const includeTotal = !(
     includeTotalParam === '0' ||
     includeTotalParam === 'false' ||
@@ -133,12 +116,8 @@ export async function GET_handler(
   );
   const limitRaw = limitParam ? Number.parseInt(limitParam, 10) : NaN;
   const offsetRaw = offsetParam ? Number.parseInt(offsetParam, 10) : NaN;
-  const limit =
-    Number.isFinite(limitRaw) && limitRaw > 0
-      ? Math.min(limitRaw, 500)
-      : undefined;
-  const offset =
-    Number.isFinite(offsetRaw) && offsetRaw >= 0 ? offsetRaw : undefined;
+  const limit = Number.isFinite(limitRaw) && limitRaw > 0 ? Math.min(limitRaw, 500) : undefined;
+  const offset = Number.isFinite(offsetRaw) && offsetRaw >= 0 ? offsetRaw : undefined;
   const repo = await getPathRunRepository();
   scheduleStaleRunningCleanup(repo);
   const hasGlobalRunAccess = canAccessGlobalAiPathRuns(access);
@@ -192,15 +171,11 @@ export async function GET_handler(
   });
 }
 
-export async function DELETE_handler(
-  req: NextRequest,
-  _ctx: ApiHandlerContext,
-): Promise<Response> {
+export async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const access = await requireAiPathsAccess();
   await enforceAiPathsActionRateLimit(access, 'runs-clear');
   const url = new URL(req.url);
-  const scopeRaw =
-    url.searchParams.get('scope')?.trim().toLowerCase() || 'terminal';
+  const scopeRaw = url.searchParams.get('scope')?.trim().toLowerCase() || 'terminal';
   const scope = scopeRaw === 'all' ? 'all' : 'terminal';
   const pathId = url.searchParams.get('pathId')?.trim() || undefined;
   const source = url.searchParams.get('source')?.trim() || undefined;

@@ -40,19 +40,9 @@ export const catalogIdQuerySchema = z.object({
 export type CatalogIdQuery = z.infer<typeof catalogIdQuerySchema>;
 
 export const descriptionContextQuerySchema = z.object({
-  catalogId: z.preprocess(
-    normalizeOptionalEntityId,
-    z.string().min(1).max(128).optional()
-  ),
-  categoryId: z.preprocess(
-    normalizeOptionalEntityId,
-    z.string().min(1).max(128).optional()
-  ),
-  includeCategories: z
-    .preprocess(parseBooleanQueryValue, z.boolean().optional())
-    .default(true),
+  catalogId: z.preprocess(normalizeOptionalEntityId, z.string().min(1).max(128).optional()),
+  categoryId: z.preprocess(normalizeOptionalEntityId, z.string().min(1).max(128).optional()),
+  includeCategories: z.preprocess(parseBooleanQueryValue, z.boolean().optional()).default(true),
 });
 
-export type DescriptionContextQuery = z.infer<
-  typeof descriptionContextQuerySchema
->;
+export type DescriptionContextQuery = z.infer<typeof descriptionContextQuerySchema>;

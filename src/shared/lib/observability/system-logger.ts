@@ -1,10 +1,9 @@
-import type { SystemLogLevelDto as SystemLogLevel, SystemLogRecordDto as SystemLogRecord } from '@/shared/contracts/observability';
+import type {
+  SystemLogLevelDto as SystemLogLevel,
+  SystemLogRecordDto as SystemLogRecord,
+} from '@/shared/contracts/observability';
 
-import {
-  isSensitiveKey,
-  REDACTED_VALUE,
-  truncateString,
-} from './log-redaction';
+import { isSensitiveKey, REDACTED_VALUE, truncateString } from './log-redaction';
 
 const MAX_CONTEXT_SIZE = 12000;
 const MAX_VALUE_LENGTH = 4000;
@@ -25,20 +24,19 @@ type CreateSystemLogFn = (input: {
   userId?: string | null;
 }) => Promise<SystemLogRecord>;
 
-type NotifyCriticalErrorFn = (
-  record: SystemLogRecord,
-  shouldNotify: boolean,
-) => Promise<unknown>;
+type NotifyCriticalErrorFn = (record: SystemLogRecord, shouldNotify: boolean) => Promise<unknown>;
 
 const loadCreateSystemLog = async (): Promise<CreateSystemLogFn | null> => {
   if (typeof window !== 'undefined') return null;
-  const mod = await import('./system-log-repository') as { createSystemLog?: CreateSystemLogFn };
+  const mod = (await import('./system-log-repository')) as { createSystemLog?: CreateSystemLogFn };
   return mod.createSystemLog ?? null;
 };
 
 const loadNotifyCriticalError = async (): Promise<NotifyCriticalErrorFn | null> => {
   if (typeof window !== 'undefined') return null;
-  const mod = await import('./critical-error-notifier') as { notifyCriticalError?: NotifyCriticalErrorFn };
+  const mod = (await import('./critical-error-notifier')) as {
+    notifyCriticalError?: NotifyCriticalErrorFn;
+  };
   return mod.notifyCriticalError ?? null;
 };
 
@@ -69,11 +67,10 @@ const sanitizeValue = (value: unknown): Record<string, unknown> | null => {
         }
         if (typeof val === 'function') return '[Function]';
         if (typeof val === 'bigint') return val.toString();
-        if (typeof val === 'string')
-          return truncateString(val, MAX_VALUE_LENGTH);
+        if (typeof val === 'string') return truncateString(val, MAX_VALUE_LENGTH);
         return val;
       },
-      2,
+      2
     );
     if (!json) return null;
     if (json.length > MAX_CONTEXT_SIZE) {
@@ -169,8 +166,9 @@ const normalizeCauseEntry = (cause: unknown): ErrorCauseEntry => {
   }
 
   const message =
-    (cause && typeof cause === 'object' ? readString((cause as Record<string, unknown>)['message']) : undefined) ??
-    'Unknown cause';
+    (cause && typeof cause === 'object'
+      ? readString((cause as Record<string, unknown>)['message'])
+      : undefined) ?? 'Unknown cause';
   const name =
     cause && typeof cause === 'object'
       ? readString((cause as Record<string, unknown>)['name'], 120)
@@ -211,9 +209,7 @@ const buildCauseChain = (error: unknown): ErrorCauseEntry[] | undefined => {
   return chain.length > 0 ? chain : undefined;
 };
 
-export const normalizeErrorInfo = (
-  error: unknown,
-): NormalizedErrorInfo => {
+export const normalizeErrorInfo = (error: unknown): NormalizedErrorInfo => {
   if (error instanceof Error) {
     const code = readCode(error);
     const httpStatus =
@@ -274,7 +270,7 @@ export const normalizeErrorInfo = (
 };
 
 const extractRequestInfo = (
-  request?: Request,
+  request?: Request
 ): { path?: string; method?: string; requestId?: string } => {
   if (!request) return {};
   try {
@@ -282,7 +278,9 @@ const extractRequestInfo = (
     return {
       path: url.pathname,
       method: request.method,
-      ...(request.headers.get('x-request-id') && { requestId: request.headers.get('x-request-id')! }),
+      ...(request.headers.get('x-request-id') && {
+        requestId: request.headers.get('x-request-id')!,
+      }),
     };
   } catch {
     return {};
@@ -359,9 +357,7 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
 
     // Auto-classify error if it exists and category is missing
     const explicitCategory =
-      typeof input.context?.['category'] === 'string'
-        ? input.context['category']
-        : undefined;
+      typeof input.context?.['category'] === 'string' ? input.context['category'] : undefined;
     let category = explicitCategory;
     if (!category && input.error) {
       try {
@@ -373,27 +369,23 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
     }
 
     const errorCode =
-      (typeof input.context?.['errorCode'] === 'string'
-        ? input.context['errorCode']
-        : undefined) ?? errorInfo?.code;
+      (typeof input.context?.['errorCode'] === 'string' ? input.context['errorCode'] : undefined) ??
+      errorInfo?.code;
     const errorName =
-      (typeof input.context?.['errorName'] === 'string'
-        ? input.context['errorName']
-        : undefined) ?? errorInfo?.name;
+      (typeof input.context?.['errorName'] === 'string' ? input.context['errorName'] : undefined) ??
+      errorInfo?.name;
     const service =
-      typeof input.context?.['service'] === 'string'
-        ? input.context['service']
-        : undefined;
+      typeof input.context?.['service'] === 'string' ? input.context['service'] : undefined;
 
     const fingerprint =
       input.level === 'error' || input.level === 'warn' || errorInfo
         ? buildErrorFingerprint({
-          message: input.message,
-          source: input.source ?? null,
-          path: input.request?.url ? (requestInfo.path ?? null) : null,
-          statusCode: input.statusCode ?? null,
-          errorInfo,
-        })
+            message: input.message,
+            source: input.source ?? null,
+            path: input.request?.url ? (requestInfo.path ?? null) : null,
+            statusCode: input.statusCode ?? null,
+            errorInfo,
+          })
         : null;
     const context = {
       ...(input.context ?? {}),
@@ -458,20 +450,13 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
         console.error('[system-logger] Failed to persist log asynchronously', err);
       }
     })();
-
   } catch (error) {
     console.error('[system-logger] Failed to process system log', error);
   }
 }
 
-export async function logSystemError(
-  input: Omit<SystemLogInput, 'level'>,
-): Promise<void> {
+export async function logSystemError(input: Omit<SystemLogInput, 'level'>): Promise<void> {
   await logSystemEvent({ ...input, level: 'error' });
 }
 
-export {
-  getSystemLogById,
-  getSystemLogMetrics,
-  listSystemLogs,
-} from './system-log-repository';
+export { getSystemLogById, getSystemLogMetrics, listSystemLogs } from './system-log-repository';

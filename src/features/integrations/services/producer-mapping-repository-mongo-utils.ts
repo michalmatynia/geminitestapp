@@ -1,9 +1,6 @@
 import { ObjectId, type Filter } from 'mongodb';
 
-import type {
-  ProducerMapping,
-  ProducerMappingWithDetails,
-} from '@/shared/contracts/integrations';
+import type { ProducerMapping, ProducerMappingWithDetails } from '@/shared/contracts/integrations';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 export type MongoProducerMappingDoc = {
@@ -46,11 +43,9 @@ export const ensureMongoProducerMappingIndexes = async (): Promise<void> => {
   if (!mongoProducerMappingIndexesReady) {
     mongoProducerMappingIndexesReady = (async () => {
       const db = await getMongoDb();
-      const mappingCollection = db.collection<MongoProducerMappingDoc>(
-        PRODUCER_MAPPING_COLLECTION,
-      );
+      const mappingCollection = db.collection<MongoProducerMappingDoc>(PRODUCER_MAPPING_COLLECTION);
       const externalCollection = db.collection<MongoExternalProducerDoc>(
-        EXTERNAL_PRODUCER_COLLECTION,
+        EXTERNAL_PRODUCER_COLLECTION
       );
 
       await Promise.all([
@@ -59,26 +54,26 @@ export const ensureMongoProducerMappingIndexes = async (): Promise<void> => {
           {
             unique: true,
             name: 'producer_mappings_connection_internal_unique',
-          },
+          }
         ),
         mappingCollection.createIndex(
           { connectionId: 1, isActive: 1 },
-          { name: 'producer_mappings_connection_active' },
+          { name: 'producer_mappings_connection_active' }
         ),
         mappingCollection.createIndex(
           { connectionId: 1, externalProducerId: 1 },
-          { name: 'producer_mappings_connection_external' },
+          { name: 'producer_mappings_connection_external' }
         ),
         externalCollection.createIndex(
           { connectionId: 1, externalId: 1 },
           {
             unique: true,
             name: 'external_producers_connection_external_unique',
-          },
+          }
         ),
         externalCollection.createIndex(
           { connectionId: 1, name: 1 },
-          { name: 'external_producers_connection_name' },
+          { name: 'external_producers_connection_name' }
         ),
       ]);
     })();
@@ -86,9 +81,7 @@ export const ensureMongoProducerMappingIndexes = async (): Promise<void> => {
   await mongoProducerMappingIndexesReady;
 };
 
-export const buildMongoIdFilter = (
-  id: string,
-): Filter<MongoProducerMappingDoc> => {
+export const buildMongoIdFilter = (id: string): Filter<MongoProducerMappingDoc> => {
   if (ObjectId.isValid(id)) {
     return {
       $or: [{ _id: id }, { _id: new ObjectId(id) }],
@@ -113,7 +106,7 @@ const buildMongoIdCandidates = (values: string[]): Array<string | ObjectId> => {
 };
 
 export const mapMongoProducerMappingToRecord = (
-  record: MongoProducerMappingDoc,
+  record: MongoProducerMappingDoc
 ): ProducerMapping => ({
   id: record._id.toString(),
   connectionId: record.connectionId,
@@ -125,7 +118,7 @@ export const mapMongoProducerMappingToRecord = (
 });
 
 const mapMongoExternalProducer = (
-  record: MongoExternalProducerDoc,
+  record: MongoExternalProducerDoc
 ): ProducerMappingWithDetails['externalProducer'] => ({
   id: record._id.toString(),
   connectionId: record.connectionId,
@@ -138,7 +131,7 @@ const mapMongoExternalProducer = (
 });
 
 const mapMongoInternalProducer = (
-  record: MongoInternalProducerDoc,
+  record: MongoInternalProducerDoc
 ): ProducerMappingWithDetails['internalProducer'] => ({
   id: record.id || record._id.toString(),
   name: record.name,
@@ -148,7 +141,7 @@ const mapMongoInternalProducer = (
 });
 
 const createMissingExternalProducer = (
-  mapping: MongoProducerMappingDoc,
+  mapping: MongoProducerMappingDoc
 ): ProducerMappingWithDetails['externalProducer'] => ({
   id: mapping.externalProducerId,
   connectionId: mapping.connectionId,
@@ -161,7 +154,7 @@ const createMissingExternalProducer = (
 });
 
 const createMissingInternalProducer = (
-  mapping: MongoProducerMappingDoc,
+  mapping: MongoProducerMappingDoc
 ): ProducerMappingWithDetails['internalProducer'] => ({
   id: mapping.internalProducerId,
   name: `[Missing internal producer: ${mapping.internalProducerId}]`,
@@ -171,34 +164,30 @@ const createMissingInternalProducer = (
 });
 
 export const hydrateMongoProducerMappingDetails = async (
-  records: MongoProducerMappingDoc[],
+  records: MongoProducerMappingDoc[]
 ): Promise<ProducerMappingWithDetails[]> => {
   if (records.length === 0) return [];
 
   const db = await getMongoDb();
-  const externalCollection = db.collection<MongoExternalProducerDoc>(
-    EXTERNAL_PRODUCER_COLLECTION,
-  );
-  const internalCollection = db.collection<MongoInternalProducerDoc>(
-    INTERNAL_PRODUCER_COLLECTION,
-  );
+  const externalCollection = db.collection<MongoExternalProducerDoc>(EXTERNAL_PRODUCER_COLLECTION);
+  const internalCollection = db.collection<MongoInternalProducerDoc>(INTERNAL_PRODUCER_COLLECTION);
 
   const connectionIds = Array.from(
-    new Set(records.map((record: MongoProducerMappingDoc) => record.connectionId)),
+    new Set(records.map((record: MongoProducerMappingDoc) => record.connectionId))
   );
   const externalIds = Array.from(
     new Set(
       records
         .map((record: MongoProducerMappingDoc) => record.externalProducerId)
-        .filter((value: string) => Boolean(value)),
-    ),
+        .filter((value: string) => Boolean(value))
+    )
   );
   const internalIds = Array.from(
     new Set(
       records
         .map((record: MongoProducerMappingDoc) => record.internalProducerId)
-        .filter((value: string) => Boolean(value)),
-    ),
+        .filter((value: string) => Boolean(value))
+    )
   );
 
   const externalCandidates = buildMongoIdCandidates(externalIds);
@@ -207,23 +196,16 @@ export const hydrateMongoProducerMappingDetails = async (
   const externalFilter: Filter<MongoExternalProducerDoc> =
     externalIds.length > 0
       ? ({
-        connectionId:
-            connectionIds.length === 1 ? connectionIds[0] : { $in: connectionIds },
-        $or: [
-          { _id: { $in: externalCandidates } },
-          { externalId: { $in: externalIds } },
-        ],
-      } as Filter<MongoExternalProducerDoc>)
+          connectionId: connectionIds.length === 1 ? connectionIds[0] : { $in: connectionIds },
+          $or: [{ _id: { $in: externalCandidates } }, { externalId: { $in: externalIds } }],
+        } as Filter<MongoExternalProducerDoc>)
       : ({ _id: { $exists: false } } as Filter<MongoExternalProducerDoc>);
 
   const internalFilter: Filter<MongoInternalProducerDoc> =
     internalIds.length > 0
       ? ({
-        $or: [
-          { id: { $in: internalIds } },
-          { _id: { $in: internalCandidates } },
-        ],
-      } as Filter<MongoInternalProducerDoc>)
+          $or: [{ id: { $in: internalIds } }, { _id: { $in: internalCandidates } }],
+        } as Filter<MongoInternalProducerDoc>)
       : ({ _id: { $exists: false } } as Filter<MongoInternalProducerDoc>);
 
   const [externalDocs, internalDocs] = await Promise.all([

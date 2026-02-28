@@ -38,11 +38,7 @@ export function ApiConsoleProvider({
   value: ApiConsoleContextValue;
   children: React.ReactNode;
 }): React.JSX.Element {
-  return (
-    <ApiConsoleContext.Provider value={value}>
-      {children}
-    </ApiConsoleContext.Provider>
-  );
+  return <ApiConsoleContext.Provider value={value}>{children}</ApiConsoleContext.Provider>;
 }
 
 export function useApiConsoleContext(): ApiConsoleContextValue {

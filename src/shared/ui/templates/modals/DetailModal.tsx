@@ -5,7 +5,6 @@ import React from 'react';
 import type { ModalStateProps } from '@/shared/contracts/ui';
 import { AppModal } from '@/shared/ui/app-modal';
 
-
 export interface DetailModalProps extends ModalStateProps {
   title: React.ReactNode;
   subtitle?: React.ReactNode;

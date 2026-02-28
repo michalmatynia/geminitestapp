@@ -1,9 +1,6 @@
 import type { GraphCompileCode, GraphCompileFinding } from './graph';
 
-type WarningFinding = Pick<
-  GraphCompileFinding,
-  'severity' | 'message' | 'code' | 'metadata'
->;
+type WarningFinding = Pick<GraphCompileFinding, 'severity' | 'message' | 'code' | 'metadata'>;
 
 type CompileWarningReport = {
   warnings: number;
@@ -15,9 +12,7 @@ const MAX_CYCLE_LABELS = 4;
 const isNonEmptyString = (value: unknown): value is string =>
   typeof value === 'string' && value.trim().length > 0;
 
-const readCycleLabels = (
-  metadata: Record<string, unknown> | undefined
-): string[] => {
+const readCycleLabels = (metadata: Record<string, unknown> | undefined): string[] => {
   if (!metadata) return [];
   const labelsRaw = metadata['nodeLabels'];
   if (!Array.isArray(labelsRaw)) return [];
@@ -65,9 +60,7 @@ const withActionableContext = (finding: WarningFinding): string | null => {
   return appendInspectorHint(message);
 };
 
-export const buildCompileWarningMessage = (
-  compileReport: CompileWarningReport
-): string => {
+export const buildCompileWarningMessage = (compileReport: CompileWarningReport): string => {
   const warningFindings = compileReport.findings.filter(
     (finding: WarningFinding): boolean => finding.severity === 'warning'
   );
@@ -75,9 +68,7 @@ export const buildCompileWarningMessage = (
     return `Graph compile warnings detected (${compileReport.warnings}). Open Paths Settings -> Compile Inspector for details.`;
   }
   const primaryFinding = warningFindings[0];
-  const primaryMessage = primaryFinding
-    ? withActionableContext(primaryFinding)
-    : null;
+  const primaryMessage = primaryFinding ? withActionableContext(primaryFinding) : null;
   if (!primaryMessage) {
     return `Graph compile warnings detected (${compileReport.warnings}). Open Paths Settings -> Compile Inspector for details.`;
   }

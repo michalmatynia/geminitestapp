@@ -18,7 +18,10 @@ type CategorySingleSelectFieldProps = {
   placeholder?: string | undefined;
 };
 
-export function CategorySingleSelectField({ onChange, ...props }: CategorySingleSelectFieldProps): React.JSX.Element {
+export function CategorySingleSelectField({
+  onChange,
+  ...props
+}: CategorySingleSelectFieldProps): React.JSX.Element {
   const selectedIds =
     props.selectedCategoryId === undefined
       ? undefined

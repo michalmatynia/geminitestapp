@@ -8,14 +8,12 @@ export function NodeHistoryTab(): React.JSX.Element | null {
   const { selectedNode, runtimeState, clearNodeHistory } = useAiPathConfig();
   if (!selectedNode) return null;
 
-  const history = (runtimeState.history?.[selectedNode.id] ?? []);
+  const history = runtimeState.history?.[selectedNode.id] ?? [];
   const hasHistory = history.length > 0;
   return (
     <div className='space-y-4'>
       <div className='flex flex-wrap items-center justify-between gap-2'>
-        <div className='text-xs text-gray-400'>
-          History entries: {history.length}
-        </div>
+        <div className='text-xs text-gray-400'>History entries: {history.length}</div>
         <Button
           type='button'
           variant='outline'

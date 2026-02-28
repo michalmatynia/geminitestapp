@@ -136,32 +136,18 @@ const openCreateProductModal = async (page: Page, sku: string) => {
 };
 
 test.describe('Products cache freshness', () => {
-  test('refreshes trigger buttons in Product modal without page reload', async ({
-    page,
-  }) => {
+  test('refreshes trigger buttons in Product modal without page reload', async ({ page }) => {
     const authenticated = await ensureAdminSession(page);
-    test.skip(
-      !authenticated,
-      'Admin authentication is required for this e2e test.'
-    );
+    test.skip(!authenticated, 'Admin authentication is required for this e2e test.');
 
     const now = new Date().toISOString();
     let triggerButtonsPhase: 1 | 2 = 1;
 
-    const legacyButton = createModalTriggerButton(
-      'trigger-legacy',
-      'Legacy Modal Trigger',
-      now
-    );
-    const freshButton = createModalTriggerButton(
-      'trigger-fresh',
-      'Fresh Modal Trigger',
-      now
-    );
+    const legacyButton = createModalTriggerButton('trigger-legacy', 'Legacy Modal Trigger', now);
+    const freshButton = createModalTriggerButton('trigger-fresh', 'Fresh Modal Trigger', now);
 
     await page.route('**/api/ai-paths/trigger-buttons**', async (route) => {
-      const payload =
-        triggerButtonsPhase === 1 ? [legacyButton] : [freshButton];
+      const payload = triggerButtonsPhase === 1 ? [legacyButton] : [freshButton];
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -171,17 +157,10 @@ test.describe('Products cache freshness', () => {
     });
 
     await page.goto('/admin/products');
-    await expect(
-      page.getByRole('heading', { name: 'Products', exact: true })
-    ).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Products', exact: true })).toBeVisible();
 
-    const firstModal = await openCreateProductModal(
-      page,
-      `FRESH-A-${Date.now()}`
-    );
-    await expect(
-      firstModal.getByRole('button', { name: 'Legacy Modal Trigger' })
-    ).toBeVisible();
+    const firstModal = await openCreateProductModal(page, `FRESH-A-${Date.now()}`);
+    await expect(firstModal.getByRole('button', { name: 'Legacy Modal Trigger' })).toBeVisible();
     await firstModal.getByRole('button', { name: 'Close', exact: true }).click();
     await expect(firstModal).not.toBeVisible({ timeout: 10_000 });
 
@@ -192,27 +171,15 @@ test.describe('Products cache freshness', () => {
         response.url().includes('/api/ai-paths/trigger-buttons')
     );
 
-    const secondModal = await openCreateProductModal(
-      page,
-      `FRESH-B-${Date.now()}`
-    );
+    const secondModal = await openCreateProductModal(page, `FRESH-B-${Date.now()}`);
     await refetchPromise;
-    await expect(
-      secondModal.getByRole('button', { name: 'Fresh Modal Trigger' })
-    ).toBeVisible();
-    await expect(
-      secondModal.getByRole('button', { name: 'Legacy Modal Trigger' })
-    ).toHaveCount(0);
+    await expect(secondModal.getByRole('button', { name: 'Fresh Modal Trigger' })).toBeVisible();
+    await expect(secondModal.getByRole('button', { name: 'Legacy Modal Trigger' })).toHaveCount(0);
   });
 
-  test('shows newly available products after navigating back to All Products', async ({
-    page,
-  }) => {
+  test('shows newly available products after navigating back to All Products', async ({ page }) => {
     const authenticated = await ensureAdminSession(page);
-    test.skip(
-      !authenticated,
-      'Admin authentication is required for this e2e test.'
-    );
+    test.skip(!authenticated, 'Admin authentication is required for this e2e test.');
 
     const now = new Date().toISOString();
     let productPhase: 1 | 2 = 1;
@@ -220,18 +187,8 @@ test.describe('Products cache freshness', () => {
     const oldSku = `E2E-OLD-${Date.now()}`;
     const newSku = `E2E-NEW-${Date.now()}`;
 
-    const oldProduct = createProductFixture(
-      'product-old',
-      oldSku,
-      'Old Product',
-      now
-    );
-    const newProduct = createProductFixture(
-      'product-new',
-      newSku,
-      'New Product',
-      now
-    );
+    const oldProduct = createProductFixture('product-old', oldSku, 'Old Product', now);
+    const newProduct = createProductFixture('product-new', newSku, 'New Product', now);
 
     await page.route('**/api/products/count**', async (route) => {
       await route.fulfill({
@@ -247,18 +204,14 @@ test.describe('Products cache freshness', () => {
         status: 200,
         contentType: 'application/json',
         headers: { 'Cache-Control': 'no-store' },
-        body: JSON.stringify(
-          productPhase === 1 ? [oldProduct] : [oldProduct, newProduct]
-        ),
+        body: JSON.stringify(productPhase === 1 ? [oldProduct] : [oldProduct, newProduct]),
       });
     });
 
     await page.goto('/admin/ai-paths');
     await page.goto('/admin/products');
 
-    await expect(
-      page.getByRole('heading', { name: 'Products', exact: true })
-    ).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Products', exact: true })).toBeVisible();
     await expect(page.getByText(oldSku).first()).toBeVisible();
     await expect(page.getByText(newSku).first()).toHaveCount(0);
 

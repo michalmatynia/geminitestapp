@@ -33,7 +33,7 @@ describe('productService', () => {
     await prisma.imageFile.deleteMany({});
     await prisma.product.deleteMany({});
     await prisma.catalog.deleteMany({});
-    
+
     vi.clearAllMocks();
   });
 
@@ -117,7 +117,7 @@ describe('productService', () => {
       formData.append('catalogIds', catalog.id);
 
       const product = await productService.createProduct(formData);
-      
+
       const productInCatalog = await prisma.productCatalog.findFirst({
         where: { productId: product.id, catalogId: catalog.id },
       });
@@ -140,8 +140,7 @@ describe('productService', () => {
       });
       if (typeof (file as File & { arrayBuffer?: unknown }).arrayBuffer !== 'function') {
         Object.defineProperty(file, 'arrayBuffer', {
-          value: async (): Promise<ArrayBuffer> =>
-            new Uint8Array([9, 8, 7, 6]).buffer,
+          value: async (): Promise<ArrayBuffer> => new Uint8Array([9, 8, 7, 6]).buffer,
         });
       }
       formData.append('images', file);
@@ -173,12 +172,12 @@ describe('productService', () => {
       if (!process.env['DATABASE_URL']) return;
 
       const original = await createMockProduct({ name_en: 'Old Name', sku: 'OLD-SKU' });
-      
+
       const formData = new FormData();
       formData.append('name_en', 'Updated Name');
-      
+
       const updated = await productService.updateProduct(original.id, formData);
-      
+
       expect(updated?.name_en).toBe('Updated Name');
       expect(updated?.sku).toBe('OLD-SKU');
     });
@@ -187,12 +186,12 @@ describe('productService', () => {
       if (!process.env['DATABASE_URL']) return;
 
       const original = await createMockProduct({ name_en: 'Product', sku: 'OLD-SKU' });
-      
+
       const formData = new FormData();
       formData.append('sku', 'NEW-SKU');
-      
+
       const updated = await productService.updateProduct(original.id, formData);
-      
+
       expect(updated?.sku).toBe('NEW-SKU');
     });
 
@@ -227,8 +226,7 @@ describe('productService', () => {
       });
       if (typeof (file as File & { arrayBuffer?: unknown }).arrayBuffer !== 'function') {
         Object.defineProperty(file, 'arrayBuffer', {
-          value: async (): Promise<ArrayBuffer> =>
-            new Uint8Array([1, 2, 3, 4]).buffer,
+          value: async (): Promise<ArrayBuffer> => new Uint8Array([1, 2, 3, 4]).buffer,
         });
       }
 
@@ -280,7 +278,7 @@ describe('productService', () => {
       // The current implementation of updateProduct for images unlinks all and re-links in order.
       // So checking the order of IDs returned by findMany (default order) might depend on implementation.
       const productWithImages = await productService.getProductById(original.id);
-      expect(productWithImages?.images.map((img: any) => img.imageFile.id)).toEqual([
+      expect(productWithImages?.images.map((img) => img.imageFile.id)).toEqual([
         imageB.id,
         imageA.id,
       ]);
@@ -374,7 +372,9 @@ describe('productService', () => {
       if (!process.env['DATABASE_URL']) return;
 
       const original = await createMockProduct({ sku: 'ORIG456' });
-      await expect(productService.duplicateProduct(original.id, '')).rejects.toThrow('SKU is required');
+      await expect(productService.duplicateProduct(original.id, '')).rejects.toThrow(
+        'SKU is required'
+      );
     });
 
     it('should return null if original product does not exist', async () => {

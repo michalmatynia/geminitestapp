@@ -2,6 +2,9 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CaseResolverTreeHeader } from '@/features/case-resolver/components/CaseResolverTreeHeader';
+import type { CaseResolverPageContextValue } from '@/features/case-resolver/context/CaseResolverPageContext';
+import type { CaseResolverFolderTreeContextValue } from '@/features/case-resolver/context/CaseResolverFolderTreeContext';
+import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
 
 const routerPushMock = vi.fn();
 const onRetryCaseContextMock = vi.fn();
@@ -14,8 +17,8 @@ const setShowChildCaseFoldersMock = vi.fn();
 
 const pageContext = {
   activeCaseId: 'case-a',
-  requestedCaseStatus: 'ready' as 'loading' | 'ready' | 'missing',
-  requestedCaseIssue: null as 'requested_file_missing' | 'workspace_unavailable' | null,
+  requestedCaseStatus: 'ready' as const,
+  requestedCaseIssue: null,
   canCreateInActiveCase: true,
   onRetryCaseContext: onRetryCaseContextMock,
   onResetCaseContext: onResetCaseContextMock,
@@ -24,20 +27,20 @@ const pageContext = {
   onCreateScanFile: onCreateScanFileMock,
   onCreateNodeFile: onCreateNodeFileMock,
   caseResolverIdentifiers: [] as Array<{ id: string; name: string }>,
-};
+} as unknown as CaseResolverPageContextValue;
 
-const folderTreeContext: any = {
+const folderTreeContext = {
   activeCaseFile: {
     id: 'case-a',
     name: 'Case A',
     caseIdentifierId: null,
-  },
+  } as unknown as CaseResolverFile,
   activeCaseChildCount: 0,
   showChildCaseFolders: true,
   setShowChildCaseFolders: setShowChildCaseFoldersMock,
   selectedFolderForFolderCreate: null,
   selectedFolderForCreate: null,
-};
+} as unknown as CaseResolverFolderTreeContextValue;
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
@@ -71,7 +74,7 @@ describe('CaseResolverTreeHeader', () => {
       id: 'case-a',
       name: 'Case A',
       caseIdentifierId: null,
-    };
+    } as any;
     folderTreeContext.activeCaseChildCount = 2;
     folderTreeContext.showChildCaseFolders = true;
   });
@@ -104,7 +107,7 @@ describe('CaseResolverTreeHeader', () => {
     render(<CaseResolverTreeHeader searchQuery='' onSearchChange={vi.fn()} />);
 
     expect(
-      screen.getByText('Requested case context was not found. Retry or reset context.'),
+      screen.getByText('Requested case context was not found. Retry or reset context.')
     ).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));

@@ -67,13 +67,15 @@ export const productTagSchema = namedDtoSchema.extend({
 export type ProductTagDto = z.infer<typeof productTagSchema>;
 export type ProductTag = ProductTagDto;
 
-export const createProductTagSchema = productTagSchema.omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-}).extend({
-  color: z.string().nullable().optional(),
-});
+export const createProductTagSchema = productTagSchema
+  .omit({
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+  })
+  .extend({
+    color: z.string().nullable().optional(),
+  });
 
 export type ProductTagCreateInputDto = z.infer<typeof createProductTagSchema>;
 
@@ -103,16 +105,18 @@ export type CatalogDto = z.infer<typeof catalogSchema>;
 export type Catalog = CatalogDto;
 export type CatalogRecord = CatalogDto;
 
-export const createCatalogSchema = catalogSchema.omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-}).extend({
-  description: z.string().nullable().optional(),
-  isDefault: z.boolean().optional(),
-  languageIds: z.array(z.string()).optional(),
-  priceGroupIds: z.array(z.string()).optional(),
-});
+export const createCatalogSchema = catalogSchema
+  .omit({
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+  })
+  .extend({
+    description: z.string().nullable().optional(),
+    isDefault: z.boolean().optional(),
+    languageIds: z.array(z.string()).optional(),
+    priceGroupIds: z.array(z.string()).optional(),
+  });
 
 export type CatalogCreateInputDto = z.infer<typeof createCatalogSchema>;
 
@@ -182,9 +186,7 @@ export const productParameterSelectorTypeSchema = z.enum([
   'checklist',
 ]);
 
-export type ProductParameterSelectorTypeDto = z.infer<
-  typeof productParameterSelectorTypeSchema
->;
+export type ProductParameterSelectorTypeDto = z.infer<typeof productParameterSelectorTypeSchema>;
 
 export const productParameterSchema = namedDtoSchema.extend({
   catalogId: z.string(),
@@ -198,14 +200,16 @@ export const productParameterSchema = namedDtoSchema.extend({
 export type ProductParameterDto = z.infer<typeof productParameterSchema>;
 export type ProductParameter = ProductParameterDto;
 
-export const createProductParameterSchema = productParameterSchema.omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-}).extend({
-  selectorType: productParameterSelectorTypeSchema.optional(),
-  optionLabels: z.array(z.string()).optional(),
-});
+export const createProductParameterSchema = productParameterSchema
+  .omit({
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+  })
+  .extend({
+    selectorType: productParameterSelectorTypeSchema.optional(),
+    optionLabels: z.array(z.string()).optional(),
+  });
 
 export type ProductParameterCreateInputDto = z.infer<typeof createProductParameterSchema>;
 
@@ -298,11 +302,13 @@ export type ProductImageDto = z.infer<typeof productImageSchema>;
 /**
  * Product Image Record Contract (Domain-specific DTO)
  */
-export const productImageRecordSchema = productImageSchema.omit({
-  imageFile: true,
-}).extend({
-  imageFile: imageFileRecordSchema,
-});
+export const productImageRecordSchema = productImageSchema
+  .omit({
+    imageFile: true,
+  })
+  .extend({
+    imageFile: imageFileRecordSchema,
+  });
 
 export interface ProductImageRecordDto {
   productId: string;
@@ -418,13 +424,12 @@ export type Product = ProductDto;
 /**
  * Product With Images Contract
  */
-export const productWithImagesSchema = productSchema
-  .extend({
-    images: z.array(productImageRecordSchema).default([]),
-    catalogs: z.array(productCatalogRecordSchema).default([]),
-    tags: z.array(productTagRelationSchema).default([]),
-    producers: z.array(productProducerRelationSchema).default([]),
-  });
+export const productWithImagesSchema = productSchema.extend({
+  images: z.array(productImageRecordSchema).default([]),
+  catalogs: z.array(productCatalogRecordSchema).default([]),
+  tags: z.array(productTagRelationSchema).default([]),
+  producers: z.array(productProducerRelationSchema).default([]),
+});
 export type ProductWithImagesDto = z.infer<typeof productWithImagesSchema>;
 export type ProductWithImages = ProductWithImagesDto;
 
@@ -481,23 +486,20 @@ const optionalStringArrayFromFormSchema = z.preprocess(
   z.array(z.string()).optional()
 );
 
-const optionalParameterValuesFromFormSchema = z.preprocess(
-  (value: unknown): unknown => {
-    if (value === undefined || value === null) return undefined;
-    if (Array.isArray(value)) return value;
-    if (typeof value !== 'string') return value;
+const optionalParameterValuesFromFormSchema = z.preprocess((value: unknown): unknown => {
+  if (value === undefined || value === null) return undefined;
+  if (Array.isArray(value)) return value;
+  if (typeof value !== 'string') return value;
 
-    const trimmed = value.trim();
-    if (!trimmed) return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
 
-    try {
-      return JSON.parse(trimmed) as unknown;
-    } catch {
-      return value;
-    }
-  },
-  z.array(productParameterValueSchema).optional()
-);
+  try {
+    return JSON.parse(trimmed) as unknown;
+  } catch {
+    return value;
+  }
+}, z.array(productParameterValueSchema).optional());
 
 export const productCreateInputSchema = z.object({
   id: z.string().nullable().optional(),
@@ -543,16 +545,13 @@ export type CreateProductInput = ProductCreateInputDto;
 export type ProductCreateInput = ProductCreateInputDto;
 
 export const productUpdateInputSchema = productCreateInputSchema.partial().extend({
-  sku: z.preprocess(
-    (value: unknown): unknown => {
-      if (value === undefined) return undefined;
-      if (value === null) return null;
-      if (typeof value !== 'string') return value;
-      const trimmed = value.trim();
-      return trimmed.length > 0 ? trimmed : null;
-    },
-    z.string().min(1).nullable().optional()
-  ),
+  sku: z.preprocess((value: unknown): unknown => {
+    if (value === undefined) return undefined;
+    if (value === null) return null;
+    if (typeof value !== 'string') return value;
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : null;
+  }, z.string().min(1).nullable().optional()),
 });
 
 export type ProductUpdateInputDto = z.infer<typeof productUpdateInputSchema>;
@@ -648,7 +647,9 @@ export type ProductAdvancedFilterOperator = ProductAdvancedFilterOperatorDto;
 
 export const productAdvancedFilterCombinatorSchema = z.enum(['and', 'or']);
 
-export type ProductAdvancedFilterCombinatorDto = z.infer<typeof productAdvancedFilterCombinatorSchema>;
+export type ProductAdvancedFilterCombinatorDto = z.infer<
+  typeof productAdvancedFilterCombinatorSchema
+>;
 export type ProductAdvancedFilterCombinator = ProductAdvancedFilterCombinatorDto;
 
 export const PRODUCT_ADVANCED_FILTER_MAX_DEPTH = 5;
@@ -698,7 +699,9 @@ export const productAdvancedFilterConditionSchema = z.object({
   valueTo: productAdvancedFilterValueSchema.optional(),
 });
 
-export type ProductAdvancedFilterConditionDto = z.infer<typeof productAdvancedFilterConditionSchema>;
+export type ProductAdvancedFilterConditionDto = z.infer<
+  typeof productAdvancedFilterConditionSchema
+>;
 export type ProductAdvancedFilterCondition = ProductAdvancedFilterConditionDto;
 
 export interface ProductAdvancedFilterGroupDto {
@@ -711,24 +714,24 @@ export interface ProductAdvancedFilterGroupDto {
 
 export type ProductAdvancedFilterGroup = ProductAdvancedFilterGroupDto;
 
-const productAdvancedFilterGroupBaseSchema: z.ZodType<ProductAdvancedFilterGroupDto> =
-  z.object({
-    type: z.literal('group'),
-    id: z.string().trim().min(1),
-    combinator: productAdvancedFilterCombinatorSchema,
-    not: z.boolean().default(false),
-    rules: z
-      .array(
-        z.union([
-          productAdvancedFilterConditionSchema,
-          z.lazy(() => productAdvancedFilterGroupBaseSchema),
-        ])
-      )
-      .min(1),
-  });
+const productAdvancedFilterGroupBaseSchema: z.ZodType<ProductAdvancedFilterGroupDto> = z.object({
+  type: z.literal('group'),
+  id: z.string().trim().min(1),
+  combinator: productAdvancedFilterCombinatorSchema,
+  not: z.boolean().default(false),
+  rules: z
+    .array(
+      z.union([
+        productAdvancedFilterConditionSchema,
+        z.lazy(() => productAdvancedFilterGroupBaseSchema),
+      ])
+    )
+    .min(1),
+});
 
 export type ProductAdvancedFilterRuleDto =
-  ProductAdvancedFilterConditionDto | ProductAdvancedFilterGroupDto;
+  | ProductAdvancedFilterConditionDto
+  | ProductAdvancedFilterGroupDto;
 export type ProductAdvancedFilterRule = ProductAdvancedFilterRuleDto;
 
 const PRODUCT_ADVANCED_STRING_FIELDS = new Set<ProductAdvancedFilterField>([
@@ -743,14 +746,9 @@ const PRODUCT_ADVANCED_STRING_FIELDS = new Set<ProductAdvancedFilterField>([
   'baseProductId',
 ]);
 
-const PRODUCT_ADVANCED_NUMERIC_FIELDS = new Set<ProductAdvancedFilterField>([
-  'price',
-  'stock',
-]);
+const PRODUCT_ADVANCED_NUMERIC_FIELDS = new Set<ProductAdvancedFilterField>(['price', 'stock']);
 
-const PRODUCT_ADVANCED_DATE_FIELDS = new Set<ProductAdvancedFilterField>([
-  'createdAt',
-]);
+const PRODUCT_ADVANCED_DATE_FIELDS = new Set<ProductAdvancedFilterField>(['createdAt']);
 
 const PRODUCT_ADVANCED_BOOLEAN_FIELDS = new Set<ProductAdvancedFilterField>([
   'published',
@@ -763,8 +761,7 @@ const isAdvancedStringValue = (value: unknown): value is string =>
 const isAdvancedNumberValue = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value);
 
-const isAdvancedBooleanValue = (value: unknown): value is boolean =>
-  typeof value === 'boolean';
+const isAdvancedBooleanValue = (value: unknown): value is boolean => typeof value === 'boolean';
 
 const isAdvancedDateValue = (value: unknown): value is string | number => {
   if (typeof value === 'number') {
@@ -961,7 +958,10 @@ export const productAdvancedFilterGroupSchema: z.ZodType<ProductAdvancedFilterGr
       });
     }
 
-    const walk = (nestedGroup: ProductAdvancedFilterGroupDto, path: Array<string | number>): void => {
+    const walk = (
+      nestedGroup: ProductAdvancedFilterGroupDto,
+      path: Array<string | number>
+    ): void => {
       nestedGroup.rules.forEach((rule: ProductAdvancedFilterRuleDto, index: number) => {
         const nextPath = [...path, 'rules', index];
         if (rule.type === 'condition') {
@@ -992,7 +992,9 @@ export const productAdvancedFilterPresetBundleSchema = z.object({
   presets: z.array(productAdvancedFilterPresetSchema),
 });
 
-export type ProductAdvancedFilterPresetBundleDto = z.infer<typeof productAdvancedFilterPresetBundleSchema>;
+export type ProductAdvancedFilterPresetBundleDto = z.infer<
+  typeof productAdvancedFilterPresetBundleSchema
+>;
 export type ProductAdvancedFilterPresetBundle = ProductAdvancedFilterPresetBundleDto;
 
 export const productListPreferencesSchema = z.object({
@@ -1012,13 +1014,7 @@ export type ProductListPreferencesDto = z.infer<typeof productListPreferencesSch
 /**
  * Product Filter Contract
  */
-export const productStockOperatorSchema = z.enum([
-  'gt',
-  'gte',
-  'lt',
-  'lte',
-  'eq',
-]);
+export const productStockOperatorSchema = z.enum(['gt', 'gte', 'lt', 'lte', 'eq']);
 
 export type ProductStockOperatorDto = z.infer<typeof productStockOperatorSchema>;
 export type ProductStockOperator = ProductStockOperatorDto;
@@ -1106,7 +1102,9 @@ export type ProductValidationDenyBehavior = ProductValidationDenyBehaviorDto;
 export type ProductValidationPatternDenyBehaviorOverride = ProductValidationDenyBehavior | null;
 
 export const productValidationLaunchScopeBehaviorSchema = z.enum(['gate', 'condition_only']);
-export type ProductValidationLaunchScopeBehaviorDto = z.infer<typeof productValidationLaunchScopeBehaviorSchema>;
+export type ProductValidationLaunchScopeBehaviorDto = z.infer<
+  typeof productValidationLaunchScopeBehaviorSchema
+>;
 export type ProductValidationLaunchScopeBehavior = ProductValidationLaunchScopeBehaviorDto;
 
 export const productValidationInstanceScopeSchema = z.enum([
@@ -1114,7 +1112,9 @@ export const productValidationInstanceScopeSchema = z.enum([
   'product_create',
   'product_edit',
 ]);
-export type ProductValidationInstanceScopeDto = z.infer<typeof productValidationInstanceScopeSchema>;
+export type ProductValidationInstanceScopeDto = z.infer<
+  typeof productValidationInstanceScopeSchema
+>;
 export type ProductValidationInstanceScope = ProductValidationInstanceScopeDto;
 
 export type ProductValidationDenyIssueInput = {
@@ -1192,7 +1192,10 @@ export type ProductValidationPostAcceptBehaviorDto = 'revalidate' | 'stop_after_
 export type ProductValidationPostAcceptBehavior = ProductValidationPostAcceptBehaviorDto;
 export type ProductValidationChainModeDto = 'continue' | 'stop_on_match' | 'stop_on_replace';
 export type ProductValidationChainMode = ProductValidationChainModeDto;
-export type ProductValidationLaunchSourceModeDto = 'current_field' | 'form_field' | 'latest_product_field';
+export type ProductValidationLaunchSourceModeDto =
+  | 'current_field'
+  | 'form_field'
+  | 'latest_product_field';
 export type ProductValidationLaunchSourceMode = ProductValidationLaunchSourceModeDto;
 export type ProductValidationLaunchOperatorDto =
   | 'equals'
@@ -1212,61 +1215,71 @@ export type ProductValidationLaunchOperator = ProductValidationLaunchOperatorDto
 export type ProductValidationPatternDto = z.infer<typeof productValidationPatternSchema>;
 export type ProductValidationPattern = ProductValidationPatternDto;
 
-export const createProductValidationPatternSchema = productValidationPatternSchema.omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-}).extend({
-  locale: z.string().nullable().optional(),
-  flags: z.string().nullable().optional(),
-  severity: productValidationSeveritySchema.nullable().optional(),
-  enabled: z.boolean().optional(),
-  replacementEnabled: z.boolean().optional(),
-  replacementAutoApply: z.boolean().optional(),
-  skipNoopReplacementProposal: z.boolean().optional(),
-  replacementValue: z.string().nullable().optional(),
-  replacementFields: z.array(z.string()).optional(),
-  runtimeEnabled: z.boolean().optional(),
-  runtimeType: z.enum(['none', 'database_query', 'ai_prompt']).optional(),
-  runtimeConfig: z.string().nullable().optional(),
-  postAcceptBehavior: z.enum(['revalidate', 'stop_after_accept']).optional(),
-  denyBehaviorOverride: productValidationDenyBehaviorSchema.nullable().optional(),
-  validationDebounceMs: z.number().optional(),
-  sequenceGroupId: z.string().nullable().optional(),
-  sequenceGroupLabel: z.string().nullable().optional(),
-  sequenceGroupDebounceMs: z.number().optional(),
-  sequence: z.number().nullable().optional(),
-  chainMode: z.enum(['continue', 'stop_on_match', 'stop_on_replace']).optional(),
-  maxExecutions: z.number().optional(),
-  passOutputToNext: z.boolean().optional(),
-  launchEnabled: z.boolean().optional(),
-  launchSourceMode: z.enum(['current_field', 'form_field', 'latest_product_field']).optional(),
-  launchSourceField: z.string().nullable().optional(),
-  launchOperator: z.enum([
-    'equals',
-    'not_equals',
-    'contains',
-    'starts_with',
-    'ends_with',
-    'regex',
-    'gt',
-    'gte',
-    'lt',
-    'lte',
-    'is_empty',
-    'is_not_empty',
-  ]).optional(),
-  launchValue: z.string().nullable().optional(),
-  launchFlags: z.string().nullable().optional(),
-});
+export const createProductValidationPatternSchema = productValidationPatternSchema
+  .omit({
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+  })
+  .extend({
+    locale: z.string().nullable().optional(),
+    flags: z.string().nullable().optional(),
+    severity: productValidationSeveritySchema.nullable().optional(),
+    enabled: z.boolean().optional(),
+    replacementEnabled: z.boolean().optional(),
+    replacementAutoApply: z.boolean().optional(),
+    skipNoopReplacementProposal: z.boolean().optional(),
+    replacementValue: z.string().nullable().optional(),
+    replacementFields: z.array(z.string()).optional(),
+    runtimeEnabled: z.boolean().optional(),
+    runtimeType: z.enum(['none', 'database_query', 'ai_prompt']).optional(),
+    runtimeConfig: z.string().nullable().optional(),
+    postAcceptBehavior: z.enum(['revalidate', 'stop_after_accept']).optional(),
+    denyBehaviorOverride: productValidationDenyBehaviorSchema.nullable().optional(),
+    validationDebounceMs: z.number().optional(),
+    sequenceGroupId: z.string().nullable().optional(),
+    sequenceGroupLabel: z.string().nullable().optional(),
+    sequenceGroupDebounceMs: z.number().optional(),
+    sequence: z.number().nullable().optional(),
+    chainMode: z.enum(['continue', 'stop_on_match', 'stop_on_replace']).optional(),
+    maxExecutions: z.number().optional(),
+    passOutputToNext: z.boolean().optional(),
+    launchEnabled: z.boolean().optional(),
+    launchSourceMode: z.enum(['current_field', 'form_field', 'latest_product_field']).optional(),
+    launchSourceField: z.string().nullable().optional(),
+    launchOperator: z
+      .enum([
+        'equals',
+        'not_equals',
+        'contains',
+        'starts_with',
+        'ends_with',
+        'regex',
+        'gt',
+        'gte',
+        'lt',
+        'lte',
+        'is_empty',
+        'is_not_empty',
+      ])
+      .optional(),
+    launchValue: z.string().nullable().optional(),
+    launchFlags: z.string().nullable().optional(),
+  });
 
-export type CreateProductValidationPatternDto = z.infer<typeof createProductValidationPatternSchema>;
+export type CreateProductValidationPatternDto = z.infer<
+  typeof createProductValidationPatternSchema
+>;
 
-export const updateProductValidationPatternSchema = createProductValidationPatternSchema.partial().extend({
-  expectedUpdatedAt: z.string().nullable().optional(),
-});
+export const updateProductValidationPatternSchema = createProductValidationPatternSchema
+  .partial()
+  .extend({
+    expectedUpdatedAt: z.string().nullable().optional(),
+  });
 
-export type UpdateProductValidationPatternDto = z.infer<typeof updateProductValidationPatternSchema>;
+export type UpdateProductValidationPatternDto = z.infer<
+  typeof updateProductValidationPatternSchema
+>;
 
 export const productValidationSequenceGroupSchema = z.object({
   id: z.string(),
@@ -1275,7 +1288,9 @@ export const productValidationSequenceGroupSchema = z.object({
   patternIds: z.array(z.string()),
 });
 
-export type ProductValidationSequenceGroupDto = z.infer<typeof productValidationSequenceGroupSchema>;
+export type ProductValidationSequenceGroupDto = z.infer<
+  typeof productValidationSequenceGroupSchema
+>;
 
 export const productValidatorSettingsSchema = z.object({
   enabledByDefault: z.boolean(),
@@ -1286,7 +1301,9 @@ export const productValidatorSettingsSchema = z.object({
   ),
 });
 
-export type ProductValidationInstanceDenyBehaviorMapDto = z.infer<typeof productValidatorSettingsSchema>['instanceDenyBehavior'];
+export type ProductValidationInstanceDenyBehaviorMapDto = z.infer<
+  typeof productValidatorSettingsSchema
+>['instanceDenyBehavior'];
 export type ProductValidatorSettingsDto = z.infer<typeof productValidatorSettingsSchema>;
 export type ProductValidatorSettings = ProductValidatorSettingsDto;
 export type ProductValidationInstanceDenyBehaviorMap = ProductValidationInstanceDenyBehaviorMapDto;
@@ -1323,18 +1340,28 @@ export const dynamicReplacementMathOperationSchema = z.enum([
   'multiply',
   'divide',
 ]);
-export type DynamicReplacementMathOperationDto = z.infer<typeof dynamicReplacementMathOperationSchema>;
+export type DynamicReplacementMathOperationDto = z.infer<
+  typeof dynamicReplacementMathOperationSchema
+>;
 export type DynamicReplacementMathOperation = DynamicReplacementMathOperationDto;
 
 export const dynamicReplacementRoundModeSchema = z.enum(['none', 'round', 'floor', 'ceil']);
 export type DynamicReplacementRoundModeDto = z.infer<typeof dynamicReplacementRoundModeSchema>;
 export type DynamicReplacementRoundMode = DynamicReplacementRoundModeDto;
 
-export const dynamicReplacementResultAssemblySchema = z.enum(['segment_only', 'source_replace_match']);
-export type DynamicReplacementResultAssemblyDto = z.infer<typeof dynamicReplacementResultAssemblySchema>;
+export const dynamicReplacementResultAssemblySchema = z.enum([
+  'segment_only',
+  'source_replace_match',
+]);
+export type DynamicReplacementResultAssemblyDto = z.infer<
+  typeof dynamicReplacementResultAssemblySchema
+>;
 export type DynamicReplacementResultAssembly = DynamicReplacementResultAssemblyDto;
 
-export const dynamicReplacementTargetApplySchema = z.enum(['replace_whole_field', 'replace_matched_segment']);
+export const dynamicReplacementTargetApplySchema = z.enum([
+  'replace_whole_field',
+  'replace_matched_segment',
+]);
 export type DynamicReplacementTargetApplyDto = z.infer<typeof dynamicReplacementTargetApplySchema>;
 export type DynamicReplacementTargetApply = DynamicReplacementTargetApplyDto;
 
@@ -1353,7 +1380,9 @@ export const dynamicReplacementLogicOperatorSchema = z.enum([
   'is_empty',
   'is_not_empty',
 ]);
-export type DynamicReplacementLogicOperatorDto = z.infer<typeof dynamicReplacementLogicOperatorSchema>;
+export type DynamicReplacementLogicOperatorDto = z.infer<
+  typeof dynamicReplacementLogicOperatorSchema
+>;
 export type DynamicReplacementLogicOperator = DynamicReplacementLogicOperatorDto;
 
 export const dynamicReplacementLogicActionSchema = z.enum(['keep', 'set_value', 'clear', 'abort']);
@@ -1395,7 +1424,9 @@ export const productValidationSequenceGroupDraftSchema = z.object({
   debounceMs: z.string(),
 });
 
-export type ProductValidationSequenceGroupDraftDto = z.infer<typeof productValidationSequenceGroupDraftSchema>;
+export type ProductValidationSequenceGroupDraftDto = z.infer<
+  typeof productValidationSequenceGroupDraftSchema
+>;
 export type SequenceGroupDraft = ProductValidationSequenceGroupDraftDto;
 
 export const productValidationPatternFormDataSchema = z.object({
@@ -1455,7 +1486,9 @@ export const productValidationPatternFormDataSchema = z.object({
   appliesToScopes: z.array(productValidationInstanceScopeSchema),
 });
 
-export type ProductValidationPatternFormDataDto = z.infer<typeof productValidationPatternFormDataSchema>;
+export type ProductValidationPatternFormDataDto = z.infer<
+  typeof productValidationPatternFormDataSchema
+>;
 
 /**
  * Product Studio Sequencing DTOs
@@ -1468,7 +1501,9 @@ export const productStudioSequenceGenerationModeSchema = z.enum([
   'auto',
 ]);
 
-export type ProductStudioSequenceGenerationModeDto = z.infer<typeof productStudioSequenceGenerationModeSchema>;
+export type ProductStudioSequenceGenerationModeDto = z.infer<
+  typeof productStudioSequenceGenerationModeSchema
+>;
 export type ProductStudioSequenceGenerationMode = ProductStudioSequenceGenerationModeDto;
 
 export const productStudioExecutionRouteSchema = z.enum([
@@ -1481,9 +1516,15 @@ export const productStudioExecutionRouteSchema = z.enum([
 export type ProductStudioExecutionRouteDto = z.infer<typeof productStudioExecutionRouteSchema>;
 export type ProductStudioExecutionRoute = ProductStudioExecutionRouteDto;
 
-export const productStudioSequencingDiagnosticsScopeSchema = z.enum(['project', 'global', 'default']);
+export const productStudioSequencingDiagnosticsScopeSchema = z.enum([
+  'project',
+  'global',
+  'default',
+]);
 
-export type ProductStudioSequencingDiagnosticsScopeDto = z.infer<typeof productStudioSequencingDiagnosticsScopeSchema>;
+export type ProductStudioSequencingDiagnosticsScopeDto = z.infer<
+  typeof productStudioSequencingDiagnosticsScopeSchema
+>;
 export type ProductStudioSequencingDiagnosticsScope = ProductStudioSequencingDiagnosticsScopeDto;
 
 export const productStudioSequenceReadinessStateSchema = z.enum([
@@ -1494,7 +1535,9 @@ export const productStudioSequenceReadinessStateSchema = z.enum([
   'project_snapshot_stale',
 ]);
 
-export type ProductStudioSequenceReadinessStateDto = z.infer<typeof productStudioSequenceReadinessStateSchema>;
+export type ProductStudioSequenceReadinessStateDto = z.infer<
+  typeof productStudioSequenceReadinessStateSchema
+>;
 
 export const productStudioSequencingConfigSchema = z.object({
   persistedEnabled: z.boolean(),
@@ -1534,7 +1577,9 @@ export const productStudioSequencingDiagnosticsSchema = z.object({
   selectedSnapshotModelId: z.string().nullable(),
 });
 
-export type ProductStudioSequencingDiagnosticsDto = z.infer<typeof productStudioSequencingDiagnosticsSchema>;
+export type ProductStudioSequencingDiagnosticsDto = z.infer<
+  typeof productStudioSequencingDiagnosticsSchema
+>;
 export type ProductStudioSequencingDiagnostics = ProductStudioSequencingDiagnosticsDto;
 
 export const productStudioSequenceReadinessSchema = z.object({
@@ -1544,7 +1589,9 @@ export const productStudioSequenceReadinessSchema = z.object({
   message: z.string().nullable(),
 });
 
-export type ProductStudioSequenceReadinessDto = z.infer<typeof productStudioSequenceReadinessSchema>;
+export type ProductStudioSequenceReadinessDto = z.infer<
+  typeof productStudioSequenceReadinessSchema
+>;
 export type ProductStudioSequenceReadiness = ProductStudioSequenceReadinessDto;
 
 export const DEFAULT_PRODUCT_STUDIO_SEQUENCE_READINESS: ProductStudioSequenceReadiness = {
@@ -1554,7 +1601,9 @@ export const DEFAULT_PRODUCT_STUDIO_SEQUENCE_READINESS: ProductStudioSequenceRea
   message: 'Loading...',
 };
 
-export function normalizeProductStudioSequenceGenerationMode(value: unknown): ProductStudioSequenceGenerationMode {
+export function normalizeProductStudioSequenceGenerationMode(
+  value: unknown
+): ProductStudioSequenceGenerationMode {
   if (
     value === 'studio_prompt_then_sequence' ||
     value === 'model_full_sequence' ||
@@ -1659,10 +1708,7 @@ export type CatalogRepository = {
   listCatalogs(): Promise<CatalogRecord[]>;
   getCatalogById(id: string): Promise<CatalogRecord | null>;
   createCatalog(input: CatalogCreateInput): Promise<CatalogRecord>;
-  updateCatalog(
-    id: string,
-    input: CatalogUpdateInput
-  ): Promise<CatalogRecord | null>;
+  updateCatalog(id: string, input: CatalogUpdateInput): Promise<CatalogRecord | null>;
   deleteCatalog(id: string): Promise<void>;
   getCatalogsByIds(ids: string[]): Promise<CatalogRecord[]>;
   setDefaultCatalog(id: string): Promise<void>;
@@ -1678,7 +1724,11 @@ export type CategoryRepository = {
   createCategory(data: CreateProductCategoryDto): Promise<ProductCategory>;
   updateCategory(id: string, data: UpdateProductCategoryDto): Promise<ProductCategory>;
   deleteCategory(id: string): Promise<void>;
-  findByName(catalogId: string, name: string, parentId?: string | null): Promise<ProductCategory | null>;
+  findByName(
+    catalogId: string,
+    name: string,
+    parentId?: string | null
+  ): Promise<ProductCategory | null>;
   isDescendant(categoryId: string, targetId: string): Promise<boolean>;
 };
 
@@ -1745,10 +1795,7 @@ export type TransactionalProductRepository = {
   findProductsByBaseIds(baseIds: string[]): Promise<ProductRecord[]>;
   createProduct(data: ProductCreateInputDto): Promise<ProductRecord>;
   bulkCreateProducts(data: ProductCreateInputDto[]): Promise<number>;
-  updateProduct(
-    id: string,
-    data: ProductUpdateInputDto
-  ): Promise<ProductRecord | null>;
+  updateProduct(id: string, data: ProductUpdateInputDto): Promise<ProductRecord | null>;
   deleteProduct(id: string): Promise<ProductRecord | null>;
   duplicateProduct(id: string, sku: string): Promise<ProductRecord | null>;
   getProductImages(productId: string): Promise<ProductImageRecord[]>;
@@ -1756,41 +1803,19 @@ export type TransactionalProductRepository = {
   replaceProductImages(productId: string, imageFileIds: string[]): Promise<void>;
   removeProductImage(productId: string, imageFileId: string): Promise<void>;
   countProductsByImageFileId(imageFileId: string): Promise<number>;
-  replaceProductCatalogs(
-    productId: string,
-    catalogIds: string[]
-  ): Promise<void>;
-  replaceProductCategory(
-    productId: string,
-    categoryId: string | null
-  ): Promise<void>;
-  replaceProductTags(
-    productId: string,
-    tagIds: string[]
-  ): Promise<void>;
-  replaceProductProducers(
-    productId: string,
-    producerIds: string[]
-  ): Promise<void>;
-  replaceProductNotes(
-    productId: string,
-    noteIds: string[]
-  ): Promise<void>;
-  bulkReplaceProductCatalogs(
-    productIds: string[],
-    catalogIds: string[]
-  ): Promise<void>;
-  bulkAddProductCatalogs(
-    productIds: string[],
-    catalogIds: string[]
-  ): Promise<void>;
-  bulkRemoveProductCatalogs(
-    productIds: string[],
-    catalogIds: string[]
-  ): Promise<void>;
+  replaceProductCatalogs(productId: string, catalogIds: string[]): Promise<void>;
+  replaceProductCategory(productId: string, categoryId: string | null): Promise<void>;
+  replaceProductTags(productId: string, tagIds: string[]): Promise<void>;
+  replaceProductProducers(productId: string, producerIds: string[]): Promise<void>;
+  replaceProductNotes(productId: string, noteIds: string[]): Promise<void>;
+  bulkReplaceProductCatalogs(productIds: string[], catalogIds: string[]): Promise<void>;
+  bulkAddProductCatalogs(productIds: string[], catalogIds: string[]): Promise<void>;
+  bulkRemoveProductCatalogs(productIds: string[], catalogIds: string[]): Promise<void>;
 };
 export type ProductRepository = TransactionalProductRepository & {
-  getProductsWithCount(filters: ProductFilters): Promise<{ products: ProductWithImages[]; total: number }>;
+  getProductsWithCount(
+    filters: ProductFilters
+  ): Promise<{ products: ProductWithImages[]; total: number }>;
   createProductInTransaction: <T>(
     callback: (tx: TransactionalProductRepository & unknown) => Promise<T>
   ) => Promise<T>;
@@ -1844,14 +1869,19 @@ export interface ValidatorSettingsController {
   handleSavePattern: () => Promise<void>;
   handleTogglePattern: (pattern: ProductValidationPattern) => Promise<void>;
   handleDeletePattern: (id: string) => Promise<void>;
-  handleUpdateSettings: (updates: Partial<{
-    enabledByDefault: boolean;
-    formatterEnabledByDefault: boolean;
-    instanceDenyBehavior: ProductValidationInstanceDenyBehaviorMap;
-  }>) => Promise<void>;
+  handleUpdateSettings: (
+    updates: Partial<{
+      enabledByDefault: boolean;
+      formatterEnabledByDefault: boolean;
+      instanceDenyBehavior: ProductValidationInstanceDenyBehaviorMap;
+    }>
+  ) => Promise<void>;
   handleToggleDefault: (enabled: boolean) => Promise<void>;
   handleToggleFormatterDefault: (enabled: boolean) => Promise<void>;
-  handleInstanceBehaviorChange: (scope: ProductValidationInstanceScope, behavior: ProductValidationDenyBehavior) => Promise<void>;
+  handleInstanceBehaviorChange: (
+    scope: ProductValidationInstanceScope,
+    behavior: ProductValidationDenyBehavior
+  ) => Promise<void>;
   handleEditPattern: (pattern: ProductValidationPattern) => void;
   handleDuplicatePattern: (pattern: ProductValidationPattern) => void;
   handleAddPattern: (target?: string) => void;
@@ -1904,7 +1934,10 @@ export type ProductValidationPatternRepository = {
   listPatterns(): Promise<ProductValidationPattern[]>;
   getPatternById(id: string): Promise<ProductValidationPattern | null>;
   createPattern(data: CreateProductValidationPatternInput): Promise<ProductValidationPattern>;
-  updatePattern(id: string, data: UpdateProductValidationPatternInput): Promise<ProductValidationPattern>;
+  updatePattern(
+    id: string,
+    data: UpdateProductValidationPatternInput
+  ): Promise<ProductValidationPattern>;
   deletePattern(id: string): Promise<void>;
   getEnabledByDefault(): Promise<boolean>;
   setEnabledByDefault(enabled: boolean): Promise<boolean>;

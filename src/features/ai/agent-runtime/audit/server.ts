@@ -49,13 +49,13 @@ export async function logAgentAudit(
     void logSystemEvent({
       level: 'info',
       source: 'agent-audit',
-      message: 'agentAuditLog NOT in prisma'
+      message: 'agentAuditLog NOT in prisma',
     });
     if (DEBUG_CHATBOT) {
       void logSystemEvent({
         level: 'warn',
         source: 'agent-audit',
-        message: 'Audit table not initialized'
+        message: 'Audit table not initialized',
       });
     }
     return;
@@ -100,7 +100,12 @@ export async function logAgentAudit(
   }
 }
 
-async function reportError(error: unknown, runId: string | null, level: string, message: string): Promise<void> {
+async function reportError(
+  error: unknown,
+  runId: string | null,
+  level: string,
+  message: string
+): Promise<void> {
   void ErrorSystem.captureException(error, {
     service: 'agent-audit',
     action: 'logAgentAudit',

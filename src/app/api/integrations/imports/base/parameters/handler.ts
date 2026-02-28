@@ -4,30 +4,24 @@ import { z } from 'zod';
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { decryptSecret } from '@/features/integrations/server';
 import { callBaseApi } from '@/features/integrations/server';
-import {
-  getImportParameterCache,
-  setImportParameterCache
-} from '@/features/integrations/server';
-import { ErrorSystem } from '@/features/observability/server';
+import { getImportParameterCache, setImportParameterCache } from '@/features/integrations/server';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { parseJsonBody } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
-const optionalIdSchema = z.preprocess(
-  (value) => {
-    if (typeof value !== 'string') return value;
-    const trimmed = value.trim();
-    return trimmed ? trimmed : undefined;
-  },
-  z.string().trim().min(1).optional()
-);
+const optionalIdSchema = z.preprocess((value) => {
+  if (typeof value !== 'string') return value;
+  const trimmed = value.trim();
+  return trimmed ? trimmed : undefined;
+}, z.string().trim().min(1).optional());
 
 const requestSchema = z.object({
   inventoryId: optionalIdSchema,
   productId: optionalIdSchema,
   connectionId: optionalIdSchema,
   sampleSize: z.coerce.number().int().positive().max(20).optional(),
-  clearOnly: z.boolean().optional()
+  clearOnly: z.boolean().optional(),
 });
 
 const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);
@@ -40,20 +34,14 @@ const toStringId = (value: unknown): string | null => {
   return null;
 };
 
-const extractProductIdFromRecord = (
-  record: Record<string, unknown>
-): string | null =>
+const extractProductIdFromRecord = (record: Record<string, unknown>): string | null =>
   toStringId(record['product_id']) ??
   toStringId(record['id']) ??
   toStringId(record['base_product_id']);
 
-const normalizeProductId = (value: unknown): string =>
-  toStringId(value)?.trim() ?? '';
+const normalizeProductId = (value: unknown): string => toStringId(value)?.trim() ?? '';
 
-const extractProductIdsFromListPayload = (
-  payload: unknown,
-  limit: number
-): string[] => {
+const extractProductIdsFromListPayload = (payload: unknown, limit: number): string[] => {
   const ids: string[] = [];
   const seen = new Set<string>();
   const push = (value: unknown): void => {
@@ -108,10 +96,7 @@ const extractProductRecords = (
   const matchedById = new Map<string, ProductRecordMatch>();
   const fallback: ProductRecordMatch[] = [];
 
-  const addCandidate = (
-    record: Record<string, unknown>,
-    idHint?: string | null
-  ): void => {
+  const addCandidate = (record: Record<string, unknown>, idHint?: string | null): void => {
     const resolvedId = normalizeProductId(extractProductIdFromRecord(record) ?? idHint);
     const candidate: ProductRecordMatch = {
       record,
@@ -129,16 +114,16 @@ const extractProductRecords = (
   if (Array.isArray(products)) {
     products.forEach((entry: unknown, index: number) => {
       if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return;
-      const idHint =
-        requestedNormalized[index] ??
-        null;
+      const idHint = requestedNormalized[index] ?? null;
       addCandidate(entry as Record<string, unknown>, idHint);
     });
   } else if (products && typeof products === 'object') {
-    Object.entries(products as Record<string, unknown>).forEach(([key, value]: [string, unknown]) => {
-      if (!value || typeof value !== 'object' || Array.isArray(value)) return;
-      addCandidate(value as Record<string, unknown>, key);
-    });
+    Object.entries(products as Record<string, unknown>).forEach(
+      ([key, value]: [string, unknown]) => {
+        if (!value || typeof value !== 'object' || Array.isArray(value)) return;
+        addCandidate(value as Record<string, unknown>, key);
+      }
+    );
   }
 
   const ordered: ProductRecordMatch[] = [];
@@ -162,7 +147,10 @@ const extractProductRecords = (
   return ordered;
 };
 
-const extractProductRecord = (payload: unknown, productId: string): Record<string, unknown> | null => {
+const extractProductRecord = (
+  payload: unknown,
+  productId: string
+): Record<string, unknown> | null => {
   const products = (payload as { products?: unknown })?.products;
   if (Array.isArray(products)) {
     return (
@@ -174,16 +162,16 @@ const extractProductRecord = (payload: unknown, productId: string): Record<strin
           record['id'] === productId ||
           record['base_product_id'] === productId
         );
-      }) as Record<string, unknown> | undefined) ?? (products[0] as Record<string, unknown> | undefined) ?? null
+      }) as Record<string, unknown> | undefined) ??
+      (products[0] as Record<string, unknown> | undefined) ??
+      null
     );
   }
   if (products && typeof products === 'object') {
     const recordMap = products as Record<string, unknown>;
-    return (
-      (recordMap[productId] ??
+    return (recordMap[productId] ??
       recordMap[Number(productId) as unknown as keyof typeof recordMap] ??
-      Object.values(recordMap)[0]) as Record<string, unknown> | null
-    );
+      Object.values(recordMap)[0]) as Record<string, unknown> | null;
   }
   return null;
 };
@@ -223,10 +211,7 @@ const collectPrefixedKeys = (
   });
 };
 
-const resolveValueByPath = (
-  record: Record<string, unknown>,
-  path: string
-): unknown => {
+const resolveValueByPath = (record: Record<string, unknown>, path: string): unknown => {
   if (!path) return null;
   const parts = path.split('.');
   let current: unknown = record;
@@ -256,9 +241,7 @@ const toPreviewValue = (value: unknown): string | null => {
   if (typeof value === 'object') {
     try {
       const stringified = JSON.stringify(value);
-      return stringified.length > 160
-        ? `${stringified.slice(0, 157)}...`
-        : stringified;
+      return stringified.length > 160 ? `${stringified.slice(0, 157)}...` : stringified;
     } catch {
       return null;
     }
@@ -274,7 +257,7 @@ const collectParameterKeys = (product: Record<string, unknown>) => {
   keys.add('id');
   keys.add('ean');
   keys.add('sku');
-  
+
   const parameterBuckets = [
     product['parameters'],
     product['params'],
@@ -282,7 +265,7 @@ const collectParameterKeys = (product: Record<string, unknown>) => {
     product['features'],
     product['text_fields'],
     (product['text_fields'] as Record<string, unknown> | undefined)?.['features'],
-    (product['text_fields'] as Record<string, unknown> | undefined)?.['features|en']
+    (product['text_fields'] as Record<string, unknown> | undefined)?.['features|en'],
   ];
   for (const bucket of parameterBuckets) {
     if (!bucket) continue;
@@ -297,10 +280,7 @@ const collectParameterKeys = (product: Record<string, unknown>) => {
           record['label'] ??
           record['title'];
         const id =
-          record['id'] ??
-          record['parameter_id'] ??
-          record['param_id'] ??
-          record['attribute_id'];
+          record['id'] ?? record['parameter_id'] ?? record['param_id'] ?? record['attribute_id'];
         if (typeof name === 'string' && name.trim()) {
           keys.add(name.trim());
         }
@@ -336,9 +316,7 @@ const collectParameterKeys = (product: Record<string, unknown>) => {
   const sortedKeys = Array.from(keys).sort((a, b) => a.localeCompare(b));
   const values: Record<string, string> = {};
   for (const key of sortedKeys) {
-    const directValue =
-      product[key] ??
-      resolveValueByPath(product, key);
+    const directValue = product[key] ?? resolveValueByPath(product, key);
     const fallbackBuckets = [
       product['parameters'],
       product['params'],
@@ -346,7 +324,7 @@ const collectParameterKeys = (product: Record<string, unknown>) => {
       product['features'],
       product['text_fields'],
       (product['text_fields'] as Record<string, unknown> | undefined)?.['features'],
-      (product['text_fields'] as Record<string, unknown> | undefined)?.['features|en']
+      (product['text_fields'] as Record<string, unknown> | undefined)?.['features|en'],
     ];
     let resolved = directValue;
     if (resolved === undefined) {
@@ -357,16 +335,17 @@ const collectParameterKeys = (product: Record<string, unknown>) => {
             if (!entry || typeof entry !== 'object') continue;
             const record = entry as Record<string, unknown>;
             const name =
-                      record['name'] ??
-                      record['parameter'] ??
-                      record['code'] ??
-                      record['label'] ??
-                      record['title'];
+              record['name'] ??
+              record['parameter'] ??
+              record['code'] ??
+              record['label'] ??
+              record['title'];
             const id =
-                      record['id'] ??
-                      record['parameter_id'] ??
-                      record['param_id'] ??
-                      record['attribute_id'];            if (name === key || id === key) {
+              record['id'] ??
+              record['parameter_id'] ??
+              record['param_id'] ??
+              record['attribute_id'];
+            if (name === key || id === key) {
               resolved =
                 record['value'] ??
                 record['values'] ??
@@ -421,7 +400,7 @@ export async function postBaseImportParametersHandler(
   _ctx: ApiHandlerContext
 ): Promise<Response> {
   const parsed = await parseJsonBody(req, requestSchema, {
-    logPrefix: 'imports.base.parameters.POST'
+    logPrefix: 'imports.base.parameters.POST',
   });
   if (!parsed.ok) {
     return parsed.response;
@@ -433,7 +412,7 @@ export async function postBaseImportParametersHandler(
       inventoryId: null,
       productId: null,
       keys: [],
-      values: {}
+      values: {},
     });
     return NextResponse.json({ ok: true });
   }
@@ -445,9 +424,7 @@ export async function postBaseImportParametersHandler(
   const integrationRepo = await getIntegrationRepository();
   const integrations = await integrationRepo.listIntegrations();
   const baseIntegration = integrations.find((integration: (typeof integrations)[number]) =>
-    BASE_INTEGRATION_SLUGS.has(
-      (integration.slug ?? '').trim().toLowerCase()
-    )
+    BASE_INTEGRATION_SLUGS.has((integration.slug ?? '').trim().toLowerCase())
   );
   if (!baseIntegration) {
     throw notFoundError('Base integration not found.');
@@ -457,7 +434,9 @@ export async function postBaseImportParametersHandler(
   const normalizedConnectionId = data.connectionId?.trim();
   const connection = normalizedConnectionId
     ? connections.find((entry: (typeof connections)[number]) => entry.id === normalizedConnectionId)
-    : connections.find((entry: (typeof connections)[number]) => entry.baseApiToken || entry.password);
+    : connections.find(
+        (entry: (typeof connections)[number]) => entry.baseApiToken || entry.password
+      );
   if (!connection?.baseApiToken && !connection?.password) {
     throw badRequestError('No Base API token configured.');
   }
@@ -476,12 +455,12 @@ export async function postBaseImportParametersHandler(
   const productIds: string[] = data.productId
     ? [data.productId]
     : extractProductIdsFromListPayload(
-      await callBaseApi(token, 'getInventoryProductsList', {
-        inventory_id: data.inventoryId,
-        limit: sampleSize,
-      }),
-      sampleSize
-    );
+        await callBaseApi(token, 'getInventoryProductsList', {
+          inventory_id: data.inventoryId,
+          limit: sampleSize,
+        }),
+        sampleSize
+      );
   if (productIds.length === 0) {
     throw notFoundError('No products found in selected inventory.', {
       inventoryId: data.inventoryId,
@@ -490,14 +469,14 @@ export async function postBaseImportParametersHandler(
 
   const payload = await callBaseApi(token, 'getInventoryProductsData', {
     inventory_id: data.inventoryId,
-    products: productIds
+    products: productIds,
   });
   const explicitProductId = data.productId?.trim() ?? '';
   const matchedProducts = explicitProductId
     ? (() => {
-      const product = extractProductRecord(payload, explicitProductId);
-      return product ? [{ record: product, productId: explicitProductId }] : [];
-    })()
+        const product = extractProductRecord(payload, explicitProductId);
+        return product ? [{ record: product, productId: explicitProductId }] : [];
+      })()
     : extractProductRecords(payload, productIds);
 
   if (matchedProducts.length === 0) {
@@ -532,16 +511,14 @@ export async function postBaseImportParametersHandler(
 
   const { keys, values } = mergeCollectedParameterKeys(normalizedProducts);
   const sampleProductId =
-    normalizeProductId(data.productId) ||
-    normalizeProductId(productIds[0]) ||
-    null;
+    normalizeProductId(data.productId) || normalizeProductId(productIds[0]) || null;
 
   try {
     await setImportParameterCache({
       inventoryId: data.inventoryId,
       productId: sampleProductId,
       keys,
-      values
+      values,
     });
   } catch (cacheError) {
     void ErrorSystem.captureException(cacheError, {
@@ -555,7 +532,7 @@ export async function postBaseImportParametersHandler(
     inventoryId: data.inventoryId,
     productId: sampleProductId,
     keys,
-    values
+    values,
   });
 }
 
@@ -567,11 +544,11 @@ export async function getBaseImportParametersHandler(
   return NextResponse.json(
     cache
       ? {
-        inventoryId: cache.inventoryId,
-        productId: cache.productId,
-        keys: cache.keys,
-        values: cache.values
-      }
+          inventoryId: cache.inventoryId,
+          productId: cache.productId,
+          keys: cache.keys,
+          values: cache.values,
+        }
       : { keys: [], values: {} }
   );
 }

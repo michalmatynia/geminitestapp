@@ -2,9 +2,7 @@ import { NextRequest } from 'next/server';
 import sharp from 'sharp';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import {
-  IMAGE_STUDIO_CENTER_ERROR_CODES,
-} from '@/features/ai/image-studio/contracts/center';
+import { IMAGE_STUDIO_CENTER_ERROR_CODES } from '@/features/ai/image-studio/contracts/center';
 
 const {
   mkdirMock,
@@ -41,9 +39,13 @@ const {
   validateCenterSourceDimensionsMock: vi.fn(),
   getImageStudioSlotLinkBySourceAndRelationMock: vi.fn(),
   upsertImageStudioSlotLinkMock: vi.fn(),
-  createImageStudioSlotsMock: vi.fn<
-    (projectId: string, slots: Array<Record<string, unknown>>) => Promise<Array<Record<string, unknown>>>
-  >(),
+  createImageStudioSlotsMock:
+    vi.fn<
+      (
+        projectId: string,
+        slots: Array<Record<string, unknown>>
+      ) => Promise<Array<Record<string, unknown>>>
+    >(),
   getImageStudioSlotByIdMock: vi.fn(),
   loadSourceBufferFromSlotMock: vi.fn(),
   parseImageDataUrlMock: vi.fn(),
@@ -61,7 +63,7 @@ vi.mock('fs/promises', () => ({
   writeFile: writeFileMock,
 }));
 
-vi.mock('@/features/ai/image-studio/server/center-utils', () => ({
+vi.mock('@/shared/lib/ai/image-studio/server/center-utils', () => ({
   buildCenterFingerprint: buildCenterFingerprintMock,
   buildCenterFingerprintRelationType: buildCenterFingerprintRelationTypeMock,
   buildCenterLayoutSignature: buildCenterLayoutSignatureMock,
@@ -73,17 +75,17 @@ vi.mock('@/features/ai/image-studio/server/center-utils', () => ({
   validateCenterSourceDimensions: validateCenterSourceDimensionsMock,
 }));
 
-vi.mock('@/features/ai/image-studio/server/slot-link-repository', () => ({
+vi.mock('@/shared/lib/ai/image-studio/server/slot-link-repository', () => ({
   getImageStudioSlotLinkBySourceAndRelation: getImageStudioSlotLinkBySourceAndRelationMock,
   upsertImageStudioSlotLink: upsertImageStudioSlotLinkMock,
 }));
 
-vi.mock('@/features/ai/image-studio/server/slot-repository', () => ({
+vi.mock('@/shared/lib/ai/image-studio/server/slot-repository', () => ({
   createImageStudioSlots: createImageStudioSlotsMock,
   getImageStudioSlotById: getImageStudioSlotByIdMock,
 }));
 
-vi.mock('@/features/ai/image-studio/server/source-image-utils', () => ({
+vi.mock('@/shared/lib/ai/image-studio/server/source-image-utils', () => ({
   loadSourceBufferFromSlot: loadSourceBufferFromSlotMock,
   parseImageDataUrl: parseImageDataUrlMock,
 }));
@@ -124,7 +126,10 @@ const buildSlot = (overrides: Record<string, unknown> = {}): Record<string, unkn
   ...overrides,
 });
 
-const buildRequest = (body: Record<string, unknown>, headers?: Record<string, string>): NextRequest =>
+const buildRequest = (
+  body: Record<string, unknown>,
+  headers?: Record<string, string>
+): NextRequest =>
   new NextRequest('http://localhost/api/image-studio/slots/source-slot/center', {
     method: 'POST',
     headers: {
@@ -429,7 +434,10 @@ describe('image-studio center handler', () => {
 
     const firstCreateCall = createImageStudioSlotsMock.mock.calls[0];
     expect(firstCreateCall).toBeDefined();
-    const [calledProjectId, createdBatch] = firstCreateCall as [string, Array<Record<string, unknown>>];
+    const [calledProjectId, createdBatch] = firstCreateCall as [
+      string,
+      Array<Record<string, unknown>>,
+    ];
     expect(calledProjectId).toBe('project-1');
     const createdPayload = createdBatch[0];
     expect(createdPayload).toBeDefined();
@@ -442,9 +450,7 @@ describe('image-studio center handler', () => {
     expect(metadata).not.toBeNull();
     expect(metadata?.['relationType']).toBe('center:output');
     const centerMetadata =
-      metadata &&
-      typeof metadata['center'] === 'object' &&
-      !Array.isArray(metadata['center'])
+      metadata && typeof metadata['center'] === 'object' && !Array.isArray(metadata['center'])
         ? (metadata['center'] as Record<string, unknown>)
         : null;
     expect(centerMetadata).not.toBeNull();
@@ -489,7 +495,10 @@ describe('image-studio center handler', () => {
     const responseLayout = payload['layout'] as Record<string, unknown>;
     expect(response.status).toBe(201);
     expect(centerAndScaleObjectByLayoutMock).toHaveBeenCalledTimes(1);
-    expect(centerAndScaleObjectByLayoutMock).toHaveBeenCalledWith(sourceBuffer, analysisDerivedLayout);
+    expect(centerAndScaleObjectByLayoutMock).toHaveBeenCalledWith(
+      sourceBuffer,
+      analysisDerivedLayout
+    );
     expect(responseLayout['whiteThreshold']).toBe(18);
     expect(responseLayout['chromaThreshold']).toBe(9);
     expect(responseLayout['shadowPolicy']).toBe('include_shadow');
@@ -507,9 +516,7 @@ describe('image-studio center handler', () => {
         ? (createSlotPayload['metadata'] as Record<string, unknown>)
         : null;
     const centerMetadata =
-      metadata &&
-      typeof metadata['center'] === 'object' &&
-      !Array.isArray(metadata['center'])
+      metadata && typeof metadata['center'] === 'object' && !Array.isArray(metadata['center'])
         ? (metadata['center'] as Record<string, unknown>)
         : null;
     const centerLayout =
@@ -581,18 +588,28 @@ describe('image-studio center handler', () => {
     const payload = (await response.json()) as Record<string, unknown>;
     const responseLayout = payload['layout'] as Record<string, unknown>;
     const responseDetectionDetails = payload['detectionDetails'] as Record<string, unknown>;
-    const responseCandidates = responseDetectionDetails['candidateDetections'] as Record<string, unknown>;
+    const responseCandidates = responseDetectionDetails['candidateDetections'] as Record<
+      string,
+      unknown
+    >;
 
     expect(response.status).toBe(201);
     expect(payload['detectionUsed']).toBe('alpha_bbox');
     expect(payload['confidenceBefore']).toBe(0.41);
     expect(responseLayout['layoutPolicyVersion']).toBe('v2');
-    expect(responseLayout['detectionPolicyDecision']).toBe('auto_white_low_confidence_fallback_alpha');
+    expect(responseLayout['detectionPolicyDecision']).toBe(
+      'auto_white_low_confidence_fallback_alpha'
+    );
     expect(responseDetectionDetails['policyVersion']).toBe('v2');
-    expect(responseDetectionDetails['policyReason']).toBe('auto_white_low_confidence_fallback_alpha');
+    expect(responseDetectionDetails['policyReason']).toBe(
+      'auto_white_low_confidence_fallback_alpha'
+    );
     expect(responseDetectionDetails['fallbackApplied']).toBe(true);
     expect(responseCandidates['alpha_bbox']).toEqual({ confidence: 0.41, area: 49 });
-    expect(responseCandidates['white_bg_first_colored_pixel']).toEqual({ confidence: 0.2, area: 31 });
+    expect(responseCandidates['white_bg_first_colored_pixel']).toEqual({
+      confidence: 0.2,
+      area: 31,
+    });
 
     const createSlotPayload = createImageStudioSlotsMock.mock.calls[0]?.[1]?.[0];
     const metadata =
@@ -602,9 +619,7 @@ describe('image-studio center handler', () => {
         ? (createSlotPayload['metadata'] as Record<string, unknown>)
         : null;
     const centerMetadata =
-      metadata &&
-      typeof metadata['center'] === 'object' &&
-      !Array.isArray(metadata['center'])
+      metadata && typeof metadata['center'] === 'object' && !Array.isArray(metadata['center'])
         ? (metadata['center'] as Record<string, unknown>)
         : null;
     const centerLayout =
@@ -627,12 +642,19 @@ describe('image-studio center handler', () => {
         : null;
 
     expect(centerLayout?.['layoutPolicyVersion']).toBe('v2');
-    expect(centerLayout?.['detectionPolicyDecision']).toBe('auto_white_low_confidence_fallback_alpha');
+    expect(centerLayout?.['detectionPolicyDecision']).toBe(
+      'auto_white_low_confidence_fallback_alpha'
+    );
     expect(centerDetectionDetails?.['policyVersion']).toBe('v2');
-    expect(centerDetectionDetails?.['policyReason']).toBe('auto_white_low_confidence_fallback_alpha');
+    expect(centerDetectionDetails?.['policyReason']).toBe(
+      'auto_white_low_confidence_fallback_alpha'
+    );
     expect(centerDetectionDetails?.['fallbackApplied']).toBe(true);
     expect(centerCandidates?.['alpha_bbox']).toEqual({ confidence: 0.41, area: 49 });
-    expect(centerCandidates?.['white_bg_first_colored_pixel']).toEqual({ confidence: 0.2, area: 31 });
+    expect(centerCandidates?.['white_bg_first_colored_pixel']).toEqual({
+      confidence: 0.2,
+      area: 31,
+    });
   });
 
   it('supports fingerprint dedupe mode when enabled via env flag', async () => {
@@ -708,7 +730,9 @@ describe('image-studio center handler', () => {
     expect(response.status).toBe(200);
     expect(payload['deduplicated']).toBe(true);
     expect(payload['dedupeReason']).toBe('fingerprint');
-    expect((payload['slot'] as Record<string, unknown>)['id']).toBe('slot-center-fingerprint-existing');
+    expect((payload['slot'] as Record<string, unknown>)['id']).toBe(
+      'slot-center-fingerprint-existing'
+    );
     expect(centerAndScaleObjectByLayoutMock).not.toHaveBeenCalled();
     expect(createImageStudioSlotsMock).not.toHaveBeenCalled();
   });

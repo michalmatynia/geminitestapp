@@ -17,9 +17,7 @@ import type {
 } from '@/shared/contracts/agent-runtime';
 import prisma from '@/shared/lib/db/prisma';
 
-import {
-  persistCheckpoint,
-} from '../memory/checkpoint';
+import { persistCheckpoint } from '../memory/checkpoint';
 
 type PostStepReviewInput = {
   context: AgentExecutionContext;
@@ -39,10 +37,7 @@ type PostStepReviewInput = {
   lastError: string | null;
   approvalRequestedStepId: string | null;
   approvalGrantedStepId: string | null;
-  logBranchAlternatives: (
-    meta: PlannerMeta | null | undefined,
-    reason: string
-  ) => Promise<void>;
+  logBranchAlternatives: (meta: PlannerMeta | null | undefined, reason: string) => Promise<void>;
 };
 
 type PostStepReviewResult = {
@@ -100,14 +95,8 @@ export async function runPostStepAdaptiveReviews(
   const summaryInterval = 5;
   const midRunInterval = 3;
 
-  const completedCount = planSteps.filter(
-    (item: PlanStep) => item.status === 'completed'
-  ).length;
-  if (
-    stagnationCount >= 2 &&
-      replanCount < settings.maxReplanCalls &&
-      completedCount > 0
-  ) {
+  const completedCount = planSteps.filter((item: PlanStep) => item.status === 'completed').length;
+  if (stagnationCount >= 2 && replanCount < settings.maxReplanCalls && completedCount > 0) {
     const stagnationContext = await getBrowserContextSummary(run.id);
     const stagnationReview = await buildAdaptivePlanReview({
       prompt: run.prompt,
@@ -159,10 +148,10 @@ export async function runPostStepAdaptiveReviews(
   }
   if (
     taskType === 'extract_info' &&
-      completedCount >= 2 &&
-      completedCount !== lastExtractionCheckAt &&
-      replanCount < settings.maxReplanCalls &&
-      'agentAuditLog' in prisma
+    completedCount >= 2 &&
+    completedCount !== lastExtractionCheckAt &&
+    replanCount < settings.maxReplanCalls &&
+    'agentAuditLog' in prisma
   ) {
     lastExtractionCheckAt = completedCount;
     const extractionAudit = await prisma.agentAuditLog.findFirst({
@@ -208,10 +197,7 @@ export async function runPostStepAdaptiveReviews(
           stepId: step.id,
           activeStepId: step.id,
         });
-        await logBranchAlternatives(
-          extractionReview.meta,
-          'missing-extraction'
-        );
+        await logBranchAlternatives(extractionReview.meta, 'missing-extraction');
         await persistCheckpoint({
           runId: run.id,
           steps: planSteps,
@@ -229,8 +215,8 @@ export async function runPostStepAdaptiveReviews(
   }
   if (
     completedCount >= summaryInterval &&
-      completedCount % summaryInterval === 0 &&
-      completedCount !== summaryCheckpoint
+    completedCount % summaryInterval === 0 &&
+    completedCount !== summaryCheckpoint
   ) {
     const summaryContext = await getBrowserContextSummary(run.id);
     const summary = await summarizePlannerMemoryWithLLM({
@@ -269,11 +255,7 @@ export async function runPostStepAdaptiveReviews(
       });
     }
   }
-  if (
-    noContextCount >= 2 &&
-      replanCount < settings.maxReplanCalls &&
-      completedCount > 0
-  ) {
+  if (noContextCount >= 2 && replanCount < settings.maxReplanCalls && completedCount > 0) {
     const noContextReview = await buildAdaptivePlanReview({
       prompt: run.prompt,
       memory: memoryContext,
@@ -324,8 +306,8 @@ export async function runPostStepAdaptiveReviews(
   }
   if (
     completedCount >= midRunInterval &&
-      completedCount % midRunInterval === 0 &&
-      replanCount < settings.maxReplanCalls
+    completedCount % midRunInterval === 0 &&
+    replanCount < settings.maxReplanCalls
   ) {
     const adaptContext = await getBrowserContextSummary(run.id);
     const adaptResult = await buildMidRunAdaptationWithLLM({
@@ -476,9 +458,9 @@ export async function runPostStepAdaptiveReviews(
   }
   if (
     previousUrl &&
-      lastContextUrl &&
-      lastContextUrl !== previousUrl &&
-      replanCount < settings.maxReplanCalls
+    lastContextUrl &&
+    lastContextUrl !== previousUrl &&
+    replanCount < settings.maxReplanCalls
   ) {
     const shiftContext = await getBrowserContextSummary(run.id);
     const shiftReview = await buildAdaptivePlanReview({
@@ -547,7 +529,7 @@ export async function runPostStepAdaptiveReviews(
   }
   if (
     shouldEvaluateReplan(stepIndex, planSteps, settings.replanEverySteps) &&
-      replanCount < settings.maxReplanCalls
+    replanCount < settings.maxReplanCalls
   ) {
     const reviewContext = await getBrowserContextSummary(run.id);
     const reviewResult = await buildAdaptivePlanReview({

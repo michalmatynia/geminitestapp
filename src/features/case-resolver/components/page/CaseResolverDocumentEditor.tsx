@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import React, { useMemo } from 'react';
 
-import { DocumentWysiwygEditor } from '@/features/document-editor';
+import { DocumentWysiwygEditor } from '@/shared/lib/document-editor';
 import {
   encodeFilemakerPartyReference,
   decodeFilemakerPartyReference,
@@ -40,7 +40,7 @@ import { useCaseResolverViewContext } from '../CaseResolverViewContext';
 import { DocumentRelationSearchPanel } from '../../relation-search';
 import {
   resolvePromptExploderTransferStatusLabel,
-  type PromptExploderTransferUiStatus
+  type PromptExploderTransferUiStatus,
 } from '../../hooks/prompt-exploder-transfer-lifecycle';
 import { CaseResolverHistoryEntries } from './CaseResolverHistoryEntries';
 
@@ -135,13 +135,12 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
 
   const canApplyPendingPromptOutput = Boolean(pendingPromptExploderPayload);
   const promptTransferStatus =
-    captureApplyDiagnostics?.status ??
-    (pendingPromptExploderPayload ? 'pending' : 'idle');
-  const promptTransferStatusLabel =
-    resolvePromptExploderTransferStatusLabel(promptTransferStatus as PromptExploderTransferUiStatus);
+    captureApplyDiagnostics?.status ?? (pendingPromptExploderPayload ? 'pending' : 'idle');
+  const promptTransferStatusLabel = resolvePromptExploderTransferStatusLabel(
+    promptTransferStatus as PromptExploderTransferUiStatus
+  );
 
-  const showPromptExploderApplyAction =
-    canApplyPendingPromptOutput;
+  const showPromptExploderApplyAction = canApplyPendingPromptOutput;
 
   const pendingPromptTransferId = pendingPromptExploderPayload?.transferId ?? '';
 
@@ -206,9 +205,7 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
                 className='group flex min-w-0 items-center gap-1.5 rounded px-1 py-0.5 text-left hover:bg-white/5 disabled:pointer-events-none'
                 title='Click to rename'
               >
-                <span className='truncate text-sm font-semibold text-gray-100'>
-                  {draft.name}
-                </span>
+                <span className='truncate text-sm font-semibold text-gray-100'>{draft.name}</span>
                 <Pencil className='size-3 shrink-0 text-gray-600 opacity-0 transition-opacity group-hover:opacity-100' />
               </button>
             )}
@@ -252,7 +249,9 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
             <Button
               variant='ghost'
               size='sm'
-              onClick={() => { void handleExportDraftPdf(); }}
+              onClick={() => {
+                void handleExportDraftPdf();
+              }}
               className='h-7 px-2.5 text-[11px] text-gray-400 hover:text-gray-200'
               title='Export PDF'
             >
@@ -262,7 +261,10 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
           </div>
 
           {isEditingDocumentLocked && (
-            <Badge variant='outline' className='h-7 border-amber-500/40 bg-amber-500/5 px-2 text-[10px] font-bold text-amber-500'>
+            <Badge
+              variant='outline'
+              className='h-7 border-amber-500/40 bg-amber-500/5 px-2 text-[10px] font-bold text-amber-500'
+            >
               LOCKED
             </Badge>
           )}
@@ -276,19 +278,31 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
       >
         <div className='flex items-center justify-between gap-4'>
           <TabsList className='h-9 w-fit border border-border/40 bg-card/40 p-1'>
-            <TabsTrigger value='document' className='h-7 px-4 text-xs data-[state=active]:bg-blue-600/20 data-[state=active]:text-blue-400'>
+            <TabsTrigger
+              value='document'
+              className='h-7 px-4 text-xs data-[state=active]:bg-blue-600/20 data-[state=active]:text-blue-400'
+            >
               <FileText className='mr-2 size-3.5' />
               Content
             </TabsTrigger>
-            <TabsTrigger value='relations' className='h-7 px-4 text-xs data-[state=active]:bg-purple-600/20 data-[state=active]:text-purple-400'>
+            <TabsTrigger
+              value='relations'
+              className='h-7 px-4 text-xs data-[state=active]:bg-purple-600/20 data-[state=active]:text-purple-400'
+            >
               <Network className='mr-2 size-3.5' />
               Relations
             </TabsTrigger>
-            <TabsTrigger value='metadata' className='h-7 px-4 text-xs data-[state=active]:bg-amber-600/20 data-[state=active]:text-amber-400'>
+            <TabsTrigger
+              value='metadata'
+              className='h-7 px-4 text-xs data-[state=active]:bg-amber-600/20 data-[state=active]:text-amber-400'
+            >
               <Settings2 className='mr-2 size-3.5' />
               Metadata
             </TabsTrigger>
-            <TabsTrigger value='revisions' className='h-7 px-4 text-xs data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400'>
+            <TabsTrigger
+              value='revisions'
+              className='h-7 px-4 text-xs data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400'
+            >
               <History className='mr-2 size-3.5' />
               History
             </TabsTrigger>
@@ -306,8 +320,12 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
                         <Terminal className='size-5 text-blue-400' />
                       </div>
                       <div>
-                        <div className='text-sm font-semibold text-blue-100'>Pending Prompt Exploder Output</div>
-                        <div className='text-[11px] text-blue-300/60'>{promptTransferStatusLabel} • {pendingPromptTransferId}</div>
+                        <div className='text-sm font-semibold text-blue-100'>
+                          Pending Prompt Exploder Output
+                        </div>
+                        <div className='text-[11px] text-blue-300/60'>
+                          {promptTransferStatusLabel} • {pendingPromptTransferId}
+                        </div>
                       </div>
                     </div>
                     <div className='flex items-center gap-2'>
@@ -315,7 +333,9 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
                         size='sm'
                         variant='outline'
                         className='h-8 border-blue-500/40 text-blue-200'
-                        onClick={() => { void handleApplyPendingPromptExploderPayload(); }}
+                        onClick={() => {
+                          void handleApplyPendingPromptExploderPayload();
+                        }}
                       >
                         Apply Output
                       </Button>
@@ -323,7 +343,9 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
                         size='sm'
                         variant='ghost'
                         className='h-8 text-blue-400'
-                        onClick={(): void => { handleDiscardPendingPromptExploderPayload(); }}
+                        onClick={(): void => {
+                          handleDiscardPendingPromptExploderPayload();
+                        }}
                       >
                         Discard
                       </Button>
@@ -335,7 +357,9 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
               <div className='grid grid-cols-2 gap-4'>
                 <Input
                   value={draft.documentCity ?? ''}
-                  onChange={(e) => updateEditingDocumentDraft({ documentCity: e.target.value || null })}
+                  onChange={(e) =>
+                    updateEditingDocumentDraft({ documentCity: e.target.value || null })
+                  }
                   placeholder='City...'
                   disabled={isEditingDocumentLocked}
                   className='bg-card/20 border-border/60'
@@ -347,7 +371,14 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
                     const val = e.target.value;
                     updateEditingDocumentDraft({
                       documentDate: val
-                        ? { source: 'metadata', sourceLine: null, cityHint: null, action: 'useDetectedDate', ...draft.documentDate, isoDate: val }
+                        ? {
+                            source: 'metadata',
+                            sourceLine: null,
+                            cityHint: null,
+                            action: 'useDetectedDate',
+                            ...draft.documentDate,
+                            isoDate: val,
+                          }
                         : null,
                     });
                   }}
@@ -356,7 +387,9 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
                 />
                 <SelectSimple
                   value={encodedAddresser === 'none' ? '' : encodedAddresser}
-                  onValueChange={(v) => updateEditingDocumentDraft({ addresser: decodeFilemakerPartyReference(v) })}
+                  onValueChange={(v) =>
+                    updateEditingDocumentDraft({ addresser: decodeFilemakerPartyReference(v) })
+                  }
                   options={partyOptions}
                   placeholder='From...'
                   disabled={isEditingDocumentLocked}
@@ -364,7 +397,9 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
                 />
                 <SelectSimple
                   value={encodedAddressee === 'none' ? '' : encodedAddressee}
-                  onValueChange={(v) => updateEditingDocumentDraft({ addressee: decodeFilemakerPartyReference(v) })}
+                  onValueChange={(v) =>
+                    updateEditingDocumentDraft({ addressee: decodeFilemakerPartyReference(v) })
+                  }
                   options={partyOptions}
                   placeholder='To...'
                   disabled={isEditingDocumentLocked}
@@ -400,7 +435,9 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
                   variant='ghost'
                   size='sm'
                   className='h-8 gap-2 px-2 text-[11px] text-gray-400 hover:bg-white/5 hover:text-gray-200'
-                  onClick={() => { void handleCopyDraftFileId(); }}
+                  onClick={() => {
+                    void handleCopyDraftFileId();
+                  }}
                 >
                   <span className='opacity-60'>ID:</span>
                   <span className='font-mono'>{editingDocumentDraft.id}</span>
@@ -436,7 +473,7 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
                 </div>
               ) : (
                 <div className='grid gap-2'>
-                  {relatedFiles.map(file => {
+                  {relatedFiles.map((file) => {
                     const dateLabel = formatShortDate(file.documentDate?.isoDate);
                     return (
                       <div
@@ -502,7 +539,9 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
               <FormField label='Document Tag'>
                 <SelectSimple
                   value={editingDocumentDraft.tagId ?? '__none__'}
-                  onValueChange={(v) => updateEditingDocumentDraft({ tagId: v === '__none__' ? null : v })}
+                  onValueChange={(v) =>
+                    updateEditingDocumentDraft({ tagId: v === '__none__' ? null : v })
+                  }
                   options={caseTagOptions}
                   disabled={isEditingDocumentLocked}
                   triggerClassName='bg-card/20 border-border/60'
@@ -511,7 +550,9 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
               <FormField label='Case Identifier'>
                 <SelectSimple
                   value={editingDocumentDraft.caseIdentifierId ?? '__none__'}
-                  onValueChange={(v) => updateEditingDocumentDraft({ caseIdentifierId: v === '__none__' ? null : v })}
+                  onValueChange={(v) =>
+                    updateEditingDocumentDraft({ caseIdentifierId: v === '__none__' ? null : v })
+                  }
                   options={caseIdentifierOptions}
                   disabled={isEditingDocumentLocked}
                   triggerClassName='bg-card/20 border-border/60'
@@ -520,7 +561,9 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
               <FormField label='Category'>
                 <SelectSimple
                   value={editingDocumentDraft.categoryId ?? '__none__'}
-                  onValueChange={(v) => updateEditingDocumentDraft({ categoryId: v === '__none__' ? null : v })}
+                  onValueChange={(v) =>
+                    updateEditingDocumentDraft({ categoryId: v === '__none__' ? null : v })
+                  }
                   options={caseCategoryOptions}
                   disabled={isEditingDocumentLocked}
                   triggerClassName='bg-card/20 border-border/60'

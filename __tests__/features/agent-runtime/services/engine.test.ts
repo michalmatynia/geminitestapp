@@ -55,12 +55,12 @@ vi.mock('@/features/ai/agent-runtime/audit', () => ({
 }));
 vi.mock('@/features/observability/server', () => ({
   logSystemEvent: vi.fn().mockResolvedValue(undefined),
-  logSystemError: vi.fn().mockResolvedValue(undefined), getErrorFingerprint: vi.fn().mockResolvedValue('test-fingerprint'),
+  logSystemError: vi.fn().mockResolvedValue(undefined),
+  getErrorFingerprint: vi.fn().mockResolvedValue('test-fingerprint'),
   ErrorSystem: {
     captureException: vi.fn(),
   },
 }));
-
 
 describe('Agent Runtime - Engine', () => {
   const mockRunId = 'run-123';
@@ -86,11 +86,18 @@ describe('Agent Runtime - Engine', () => {
   it('should run the full loop successfully (Action: Tool)', async () => {
     // Setup Mocks
     (prisma.chatbotAgentRun.findUnique as any).mockResolvedValue(mockRun);
-    (browserModule.launchBrowser as any).mockResolvedValue({ close: vi.fn().mockResolvedValue(undefined) });
-    (browserModule.createBrowserContext as any).mockResolvedValue({ close: vi.fn().mockResolvedValue(undefined) });
-    
+    (browserModule.launchBrowser as any).mockResolvedValue({
+      close: vi.fn().mockResolvedValue(undefined),
+    });
+    (browserModule.createBrowserContext as any).mockResolvedValue({
+      close: vi.fn().mockResolvedValue(undefined),
+    });
+
     (contextModule.prepareRunContext as any).mockResolvedValue({
-      settings: {}, preferences: {}, memoryContext: [], resolvedModel: 'llama3'
+      settings: {},
+      preferences: {},
+      memoryContext: [],
+      resolvedModel: 'llama3',
     });
 
     (memoryCheckpointModule.parseCheckpoint as any).mockReturnValue({});
@@ -115,7 +122,7 @@ describe('Agent Runtime - Engine', () => {
     (finalizeModule.finalizeAgentRun as any).mockResolvedValue({
       verificationContext: {},
       verification: { verdict: 'pass' },
-      improvementReview: null
+      improvementReview: null,
     });
 
     // Execute
@@ -129,16 +136,20 @@ describe('Agent Runtime - Engine', () => {
 
   it('should complete run if decision is respond', async () => {
     (prisma.chatbotAgentRun.findUnique as any).mockResolvedValue(mockRun);
-    (browserModule.launchBrowser as any).mockResolvedValue({ close: vi.fn().mockResolvedValue(undefined) });
-    (browserModule.createBrowserContext as any).mockResolvedValue({ close: vi.fn().mockResolvedValue(undefined) });
-    (contextModule.prepareRunContext as any).mockResolvedValue({ 
-      settings: {}, 
-      preferences: {}, 
-      memoryContext: [], 
-      resolvedModel: 'llama3' 
+    (browserModule.launchBrowser as any).mockResolvedValue({
+      close: vi.fn().mockResolvedValue(undefined),
+    });
+    (browserModule.createBrowserContext as any).mockResolvedValue({
+      close: vi.fn().mockResolvedValue(undefined),
+    });
+    (contextModule.prepareRunContext as any).mockResolvedValue({
+      settings: {},
+      preferences: {},
+      memoryContext: [],
+      resolvedModel: 'llama3',
     });
     (memoryCheckpointModule.parseCheckpoint as any).mockReturnValue({});
-    
+
     (planModule.initializePlanState as any).mockResolvedValue({
       planSteps: [],
       decision: { action: 'respond' },
@@ -148,10 +159,12 @@ describe('Agent Runtime - Engine', () => {
 
     await runAgentControlLoop(mockRunId);
 
-    expect(prisma.chatbotAgentRun.update).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: mockRunId },
-      data: expect.objectContaining({ status: 'completed' })
-    }));
+    expect(prisma.chatbotAgentRun.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: mockRunId },
+        data: expect.objectContaining({ status: 'completed' }),
+      })
+    );
   });
 
   it('should handle errors gracefully', async () => {
@@ -161,21 +174,30 @@ describe('Agent Runtime - Engine', () => {
 
     await runAgentControlLoop(mockRunId);
 
-    expect(prisma.chatbotAgentRun.update).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: mockRunId },
-      data: expect.objectContaining({ status: 'failed', errorMessage: 'Browser Fail' })
-    }));
+    expect(prisma.chatbotAgentRun.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: mockRunId },
+        data: expect.objectContaining({ status: 'failed', errorMessage: 'Browser Fail' }),
+      })
+    );
   });
 
   it('should set status to waiting_human if requested', async () => {
     (prisma.chatbotAgentRun.findUnique as any).mockResolvedValue(mockRun);
-    (browserModule.launchBrowser as any).mockResolvedValue({ close: vi.fn().mockResolvedValue(undefined) });
-    (browserModule.createBrowserContext as any).mockResolvedValue({ close: vi.fn().mockResolvedValue(undefined) });
+    (browserModule.launchBrowser as any).mockResolvedValue({
+      close: vi.fn().mockResolvedValue(undefined),
+    });
+    (browserModule.createBrowserContext as any).mockResolvedValue({
+      close: vi.fn().mockResolvedValue(undefined),
+    });
     (contextModule.prepareRunContext as any).mockResolvedValue({
-      settings: {}, preferences: {}, memoryContext: [], resolvedModel: 'llama3'
+      settings: {},
+      preferences: {},
+      memoryContext: [],
+      resolvedModel: 'llama3',
     });
     (memoryCheckpointModule.parseCheckpoint as any).mockReturnValue({});
-    
+
     (planModule.initializePlanState as any).mockResolvedValue({
       planSteps: [{ id: 'step-1' }],
       decision: { action: 'tool' },
@@ -194,9 +216,11 @@ describe('Agent Runtime - Engine', () => {
 
     await runAgentControlLoop(mockRunId);
 
-    expect(prisma.chatbotAgentRun.update).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: mockRunId },
-      data: expect.objectContaining({ status: 'waiting_human' })
-    }));
+    expect(prisma.chatbotAgentRun.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: mockRunId },
+        data: expect.objectContaining({ status: 'waiting_human' }),
+      })
+    );
   });
 });

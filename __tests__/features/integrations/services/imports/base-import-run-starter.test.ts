@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { startBaseImportRun, startBaseImportRunResponse } from '@/features/integrations/services/imports/base-import-run-starter';
+import {
+  startBaseImportRun,
+  startBaseImportRunResponse,
+} from '@/features/integrations/services/imports/base-import-run-starter';
 import type { StartBaseImportRunInput } from '@/features/integrations/services/imports/base-import-service';
-import type {
-  BaseImportRunRecord,
-  BaseImportStartResponse,
-} from '@/shared/contracts/integrations';
+import type { BaseImportRunRecord, BaseImportStartResponse } from '@/shared/contracts/integrations';
 
 const prepareBaseImportRunMock = vi.hoisted(() => vi.fn());
 const updateBaseImportRunQueueJobMock = vi.hoisted(() => vi.fn());
@@ -81,13 +81,15 @@ const buildRun = (overrides: Partial<BaseImportRunRecord> = {}): BaseImportRunRe
 describe('base-import-run-starter', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    toStartResponseMock.mockImplementation((run: BaseImportRunRecord): BaseImportStartResponse => ({
-      runId: run.id,
-      status: run.status,
-      preflight: run.preflight,
-      queueJobId: run.queueJobId ?? null,
-      summaryMessage: run.summaryMessage ?? null,
-    }));
+    toStartResponseMock.mockImplementation(
+      (run: BaseImportRunRecord): BaseImportStartResponse => ({
+        runId: run.id,
+        status: run.status,
+        preflight: run.preflight,
+        queueJobId: run.queueJobId ?? null,
+        summaryMessage: run.summaryMessage ?? null,
+      })
+    );
   });
 
   it('enqueues queued runs with pending items and stores queue job id', async () => {

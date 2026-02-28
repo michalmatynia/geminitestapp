@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
 
-import { 
-  getDefaultImageRetryPresets, 
+import {
+  getDefaultImageRetryPresets,
   normalizeImageRetryPresets,
-  buildImageRetryPresetLabel
+  buildImageRetryPresetLabel,
 } from '@/features/data-import-export/utils/image-retry-presets';
 
 describe('Image Retry Presets Utils', () => {
@@ -22,12 +22,14 @@ describe('Image Retry Presets Utils', () => {
     });
 
     it('merges input with defaults', () => {
-      const input = [{
-        id: 'custom-preset',
-        label: 'Custom Label',
-        transform: { maxDimension: 800 }
-      }];
-      
+      const input = [
+        {
+          id: 'custom-preset',
+          label: 'Custom Label',
+          transform: { maxDimension: 800 },
+        },
+      ];
+
       const normalized = normalizeImageRetryPresets(input);
       expect(normalized.length).toBe(1);
       expect(normalized[0]!.name).toBe('Custom Label');
@@ -35,12 +37,14 @@ describe('Image Retry Presets Utils', () => {
     });
 
     it('overwrites labels for known IDs based on build rules', () => {
-      const input = [{
-        id: 'lower-dimension',
-        label: 'Should be overwritten',
-        transform: { maxDimension: 1000 }
-      }];
-      
+      const input = [
+        {
+          id: 'lower-dimension',
+          label: 'Should be overwritten',
+          transform: { maxDimension: 1000 },
+        },
+      ];
+
       const normalized = normalizeImageRetryPresets(input);
       expect(normalized[0]!.name).toBe('Lower max dimension (1000px)');
     });

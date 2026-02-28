@@ -6,9 +6,17 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, conflictError } from '@/shared/errors/app-error';
 import type { CatalogIdQuery } from '@/shared/validations/product-metadata-api-schemas';
 
-const SELECTOR_TYPES = ['text', 'textarea', 'radio', 'select', 'dropdown', 'checkbox', 'checklist'] as const;
+const SELECTOR_TYPES = [
+  'text',
+  'textarea',
+  'radio',
+  'select',
+  'dropdown',
+  'checkbox',
+  'checklist',
+] as const;
 const selectorTypeSchema = z.enum(SELECTOR_TYPES);
-const SELECTOR_TYPES_REQUIRING_OPTIONS = new Set<typeof SELECTOR_TYPES[number]>([
+const SELECTOR_TYPES_REQUIRING_OPTIONS = new Set<(typeof SELECTOR_TYPES)[number]>([
   'radio',
   'select',
   'dropdown',
@@ -29,26 +37,28 @@ const normalizeOptionLabels = (input: unknown): string[] => {
   return labels;
 };
 
-export const productParameterCreateSchema = z.object({
-  name_en: z.string().min(1, 'English name is required'),
-  name_pl: z.string().optional().nullable(),
-  name_de: z.string().optional().nullable(),
-  catalogId: z.string().min(1, 'Catalog ID is required'),
-  selectorType: selectorTypeSchema.default('text'),
-  optionLabels: z.array(z.string()).optional().default([]),
-}).superRefine((value, ctx) => {
-  const normalizedOptionLabels = normalizeOptionLabels(value.optionLabels);
-  if (
-    SELECTOR_TYPES_REQUIRING_OPTIONS.has(value.selectorType) &&
-    normalizedOptionLabels.length === 0
-  ) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ['optionLabels'],
-      message: 'At least one option label is required for this selector type.',
-    });
-  }
-});
+export const productParameterCreateSchema = z
+  .object({
+    name_en: z.string().min(1, 'English name is required'),
+    name_pl: z.string().optional().nullable(),
+    name_de: z.string().optional().nullable(),
+    catalogId: z.string().min(1, 'Catalog ID is required'),
+    selectorType: selectorTypeSchema.default('text'),
+    optionLabels: z.array(z.string()).optional().default([]),
+  })
+  .superRefine((value, ctx) => {
+    const normalizedOptionLabels = normalizeOptionLabels(value.optionLabels);
+    if (
+      SELECTOR_TYPES_REQUIRING_OPTIONS.has(value.selectorType) &&
+      normalizedOptionLabels.length === 0
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['optionLabels'],
+        message: 'At least one option label is required for this selector type.',
+      });
+    }
+  });
 
 /**
  * GET /api/products/parameters
@@ -59,9 +69,7 @@ export const productParameterCreateSchema = z.object({
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const query = _ctx.query as CatalogIdQuery | undefined;
   const catalogId =
-    query?.catalogId ??
-    new URL(req.url).searchParams.get('catalogId')?.trim() ??
-    '';
+    query?.catalogId ?? new URL(req.url).searchParams.get('catalogId')?.trim() ?? '';
 
   if (!catalogId) {
     throw badRequestError('catalogId query parameter is required');
@@ -69,7 +77,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
 
   const repository = await getParameterRepository();
   const parameters = await repository.listParameters({ catalogId });
-  
+
   return NextResponse.json(parameters);
 }
 
@@ -83,12 +91,12 @@ export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): P
 
   const repository = await getParameterRepository();
   const existing = await repository.findByName(catalogId, name_en);
-  
+
   if (existing) {
-    throw conflictError(
-      'A parameter with this name already exists in this catalog',
-      { name_en, catalogId }
-    );
+    throw conflictError('A parameter with this name already exists in this catalog', {
+      name_en,
+      catalogId,
+    });
   }
 
   const parameter = await repository.createParameter({

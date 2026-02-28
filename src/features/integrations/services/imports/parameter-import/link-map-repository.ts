@@ -47,9 +47,7 @@ const buildScopeKey = (scope?: LinkScopeInput): string => {
   return `${connectionId}${SCOPE_SEPARATOR}${inventoryId}`;
 };
 
-const normalizeLinkEntries = (
-  raw: unknown
-): Record<string, string> => {
+const normalizeLinkEntries = (raw: unknown): Record<string, string> => {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
     return {};
   }
@@ -153,8 +151,7 @@ const parseLinkMap = (raw: string | null): ParameterLinkMap => {
   }
 };
 
-const serializeLinkMap = (map: ParameterLinkMap): string =>
-  JSON.stringify(map);
+const serializeLinkMap = (map: ParameterLinkMap): string => JSON.stringify(map);
 
 export const getCatalogParameterLinks = async (input: {
   catalogId: string;
@@ -167,9 +164,7 @@ export const getCatalogParameterLinks = async (input: {
   const scopeKey = buildScopeKey(input);
   const scopedLinks =
     all[scopeKey]?.[normalizedCatalogId] ??
-    (scopeKey !== DEFAULT_SCOPE_KEY
-      ? all[DEFAULT_SCOPE_KEY]?.[normalizedCatalogId]
-      : undefined);
+    (scopeKey !== DEFAULT_SCOPE_KEY ? all[DEFAULT_SCOPE_KEY]?.[normalizedCatalogId] : undefined);
   return scopedLinks ?? {};
 };
 

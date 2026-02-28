@@ -28,9 +28,7 @@
       "defaultValue": "false"
     }
   ],
-  "notes": [
-    "Configuration UI is not available yet; it runs with defaults."
-  ],
+  "notes": ["Configuration UI is not available yet; it runs with defaults."],
   "semanticNodeExample": {
     "id": "node_notification",
     "type": "notification",

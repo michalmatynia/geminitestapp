@@ -33,8 +33,7 @@ export interface ProductFormImageContextType {
   refreshImagesFromProduct: (savedProduct: ProductWithImages) => void;
 }
 
-export const ProductFormImageContext =
-  createContext<ProductFormImageContextType | null>(null);
+export const ProductFormImageContext = createContext<ProductFormImageContextType | null>(null);
 
 export function ProductFormImageProvider({
   children,
@@ -99,18 +98,14 @@ export function ProductFormImageProvider({
   );
 
   return (
-    <ProductFormImageContext.Provider value={value}>
-      {children}
-    </ProductFormImageContext.Provider>
+    <ProductFormImageContext.Provider value={value}>{children}</ProductFormImageContext.Provider>
   );
 }
 
 export const useProductFormImages = (): ProductFormImageContextType => {
   const context = useContext(ProductFormImageContext);
   if (!context) {
-    throw internalError(
-      'useProductFormImages must be used within a ProductFormImageProvider'
-    );
+    throw internalError('useProductFormImages must be used within a ProductFormImageProvider');
   }
   return context;
 };

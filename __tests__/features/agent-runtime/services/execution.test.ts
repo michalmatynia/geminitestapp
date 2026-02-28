@@ -1,9 +1,15 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 import { getBrowserContextSummary } from '@/features/ai/agent-runtime/browsing/context';
-import { resolveAgentPlanSettings, resolveAgentPreferences } from '@/features/ai/agent-runtime/core/config';
+import {
+  resolveAgentPlanSettings,
+  resolveAgentPreferences,
+} from '@/features/ai/agent-runtime/core/config';
 import { prepareRunContext } from '@/features/ai/agent-runtime/execution/context';
-import { detectLoopPattern, buildLoopGuardReview } from '@/features/ai/agent-runtime/execution/loop-guard';
+import {
+  detectLoopPattern,
+  buildLoopGuardReview,
+} from '@/features/ai/agent-runtime/execution/loop-guard';
 import prisma from '@/shared/lib/db/prisma';
 
 // Mock external modules
@@ -57,10 +63,11 @@ describe('Agent Runtime - Execution', () => {
         plannerModel: 'planner-v1',
       });
       (getBrowserContextSummary as any).mockResolvedValue({ url: 'about:blank' });
-      
+
       const mockMemory = [{ content: 'Session 1' }, { content: 'Session 2' }];
       // Mock browser module
-      const { listAgentMemory, listAgentLongTermMemory } = await import('@/features/ai/agent-runtime/memory');
+      const { listAgentMemory, listAgentLongTermMemory } =
+        await import('@/features/ai/agent-runtime/memory');
       (listAgentMemory as any).mockResolvedValue(mockMemory);
       (listAgentLongTermMemory as any).mockResolvedValue([]);
 
@@ -139,28 +146,40 @@ describe('Agent Runtime - Execution', () => {
         model: 'llama3',
         currentPlan: [],
         completedIndex: 0,
-        loopSignal: { pattern: 'repeat-same-step', reason: 'Repeat', titles: [], urls: [], statuses: [] },
+        loopSignal: {
+          pattern: 'repeat-same-step',
+          reason: 'Repeat',
+          titles: [],
+          urls: [],
+          statuses: [],
+        },
         maxSteps: 10,
-        maxStepAttempts: 3
+        maxStepAttempts: 3,
       });
 
       expect(result.action).toBe('replan');
       expect(result.steps).toHaveLength(1);
       expect(result.steps[0]?.title).toBe('New Step');
     });
-    
+
     it('should fallback on LLM failure', async () => {
       (global.fetch as any).mockRejectedValue(new Error('LLM Fail'));
-      
+
       const result = await buildLoopGuardReview({
         prompt: 'Task',
         memory: [],
         model: 'llama3',
         currentPlan: [],
         completedIndex: 0,
-        loopSignal: { pattern: 'repeat-same-step', reason: 'Repeat', titles: [], urls: [], statuses: [] },
+        loopSignal: {
+          pattern: 'repeat-same-step',
+          reason: 'Repeat',
+          titles: [],
+          urls: [],
+          statuses: [],
+        },
         maxSteps: 10,
-        maxStepAttempts: 3
+        maxStepAttempts: 3,
       });
 
       expect(result.action).toBe('continue');

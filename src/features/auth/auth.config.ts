@@ -17,9 +17,7 @@ if (
 ) {
   void (async () => {
     const { logger } = await import('@/shared/utils/logger');
-    logger.warn(
-      '[AUTH] AUTH_SECRET/NEXTAUTH_SECRET not set. Using dev fallback secret.'
-    );
+    logger.warn('[AUTH] AUTH_SECRET/NEXTAUTH_SECRET not set. Using dev fallback secret.');
   })();
 }
 
@@ -146,11 +144,7 @@ export const authConfig = {
           redirectUrl.searchParams.set('error', 'AccountDisabled');
           return Response.redirect(redirectUrl);
         }
-        if (
-          adminOnlyPrefixes.some((prefix: string) =>
-            nextUrl.pathname.startsWith(prefix),
-          )
-        ) {
+        if (adminOnlyPrefixes.some((prefix: string) => nextUrl.pathname.startsWith(prefix))) {
           if (!isElevated) {
             const redirectUrl = new URL('/admin', nextUrl);
             redirectUrl.searchParams.set('denied', '1');
@@ -159,17 +153,12 @@ export const authConfig = {
           return true;
         }
 
-        const requiredPermissions = resolveRequiredPermissions(
-          nextUrl.pathname,
-        );
+        const requiredPermissions = resolveRequiredPermissions(nextUrl.pathname);
         if (requiredPermissions.length === 0) return true;
-        const permissions =
-          (auth?.user as { permissions?: string[] })?.permissions ?? [];
+        const permissions = (auth?.user as { permissions?: string[] })?.permissions ?? [];
         const hasAccess =
           isElevated ||
-          requiredPermissions.some((permission: string) =>
-            permissions.includes(permission),
-          );
+          requiredPermissions.some((permission: string) => permissions.includes(permission));
         if (hasAccess) return true;
         const redirectUrl = new URL('/admin', nextUrl);
         redirectUrl.searchParams.set('denied', '1');
@@ -183,16 +172,12 @@ export const authConfig = {
           session.user.id = token.sub;
         }
         session.user.role = (token as { role?: string }).role ?? null;
-        session.user.permissions =
-          (token as { permissions?: string[] }).permissions ?? [];
-        session.user.roleLevel =
-          (token as { roleLevel?: number }).roleLevel ?? null;
-        session.user.isElevated =
-          (token as { isElevated?: boolean }).isElevated ?? false;
+        session.user.permissions = (token as { permissions?: string[] }).permissions ?? [];
+        session.user.roleLevel = (token as { roleLevel?: number }).roleLevel ?? null;
+        session.user.isElevated = (token as { isElevated?: boolean }).isElevated ?? false;
         session.user.accountDisabled =
           (token as { accountDisabled?: boolean }).accountDisabled ?? false;
-        session.user.accountBanned =
-          (token as { accountBanned?: boolean }).accountBanned ?? false;
+        session.user.accountBanned = (token as { accountBanned?: boolean }).accountBanned ?? false;
       }
       return session;
     },

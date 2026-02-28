@@ -121,7 +121,7 @@ describe('executeDatabaseUpdate custom payload mode', () => {
       expect.objectContaining({
         status: 'success',
         operation: 'update',
-      }),
+      })
     );
   });
 
@@ -265,11 +265,10 @@ describe('executeDatabaseUpdate custom payload mode', () => {
       expect.objectContaining({
         status: 'warning',
         code: 'zero_affected',
-      }),
+      })
     );
-    expect(toast).toHaveBeenCalledWith(
-      expect.stringContaining('affected 0 records'),
-      { variant: 'warning' },
-    );
+    expect(toast).toHaveBeenCalledWith(expect.stringContaining('affected 0 records'), {
+      variant: 'warning',
+    });
   });
 });

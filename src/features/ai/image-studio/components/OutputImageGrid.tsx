@@ -31,7 +31,9 @@ export function OutputImageGrid({
   if (outputs.length === 0) return null;
 
   return (
-    <div className={cn(columns === 3 ? 'grid grid-cols-3 gap-2' : 'grid grid-cols-2 gap-2', className)}>
+    <div
+      className={cn(columns === 3 ? 'grid grid-cols-3 gap-2' : 'grid grid-cols-2 gap-2', className)}
+    >
       {outputs.map((output) => (
         <div
           key={output.id}
@@ -62,7 +64,8 @@ export function OutputImageGrid({
               <Download className='size-3.5' />
             </a>
             {onSaveAsSlot && (
-              <Button size='xs'
+              <Button
+                size='xs'
                 type='button'
                 variant='ghost'
                 className='size-6 rounded p-0 text-white/80 hover:text-white hover:bg-white/10'

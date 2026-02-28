@@ -1,7 +1,4 @@
-import type {
-  ValidatorPatternList,
-  ValidatorScope,
-} from '@/shared/contracts/validator';
+import type { ValidatorPatternList, ValidatorScope } from '@/shared/contracts/validator';
 import {
   PromptValidationRuntimeError,
   PromptValidationScopeResolutionError,
@@ -12,10 +9,7 @@ import {
   recordPromptValidationError,
   recordPromptValidationTiming,
 } from '@/shared/lib/prompt-core/runtime-observability';
-import type {
-  PromptValidationRule,
-  PromptEngineSettings,
-} from '@/shared/contracts/prompt-engine';
+import type { PromptValidationRule, PromptEngineSettings } from '@/shared/contracts/prompt-engine';
 import {
   type PromptValidationRuntimeSelection,
   type PromptValidationRuntimeIdentityDto,
@@ -27,20 +21,12 @@ import {
   invalidatePromptExploderRuntimePatternCacheByRuntime,
   prewarmPromptExploderRuntimePatterns,
 } from './parser';
-import {
-  getPromptExploderScopedRules,
-  PROMPT_EXPLODER_PATTERN_PACK_IDS,
-} from './pattern-pack';
+import { getPromptExploderScopedRules, PROMPT_EXPLODER_PATTERN_PACK_IDS } from './pattern-pack';
 import { filterTemplatesForRuntime } from './runtime-refresh';
-import {
-  resolvePromptExploderValidationStack,
-} from './validation-stack';
+import { resolvePromptExploderValidationStack } from './validation-stack';
 
 import type { PromptExploderSettings } from './types';
-import type {
-  PromptExploderDocument,
-  PromptExploderLearnedTemplate,
-} from './types';
+import type { PromptExploderDocument, PromptExploderLearnedTemplate } from './types';
 
 type PromptValidationOrchestratorInput = {
   promptSettings: PromptEngineSettings;
@@ -78,10 +64,13 @@ const RUNTIME_SELECTION_CACHE_LIMIT = 80;
 const RUNTIME_SELECTION_CACHE_TTL_MS = 45_000;
 const runtimeSelectionCache = new Map<string, CachedRuntimeSelection>();
 const inflightPrewarmByCacheKey = new Map<string, Promise<void>>();
-const runtimeVersionByScopeStackProfile = new Map<string, {
-  settingsVersion: string;
-  listVersion: string;
-}>();
+const runtimeVersionByScopeStackProfile = new Map<
+  string,
+  {
+    settingsVersion: string;
+    listVersion: string;
+  }
+>();
 
 const hashString = (value: string): string => {
   let hash = 5381;
@@ -117,9 +106,7 @@ const serializeRuleSignature = (rule: PromptValidationRule): string => {
   ].join('|');
 };
 
-const buildPromptSettingsVersion = (
-  promptSettings: PromptEngineSettings
-): string => {
+const buildPromptSettingsVersion = (promptSettings: PromptEngineSettings): string => {
   const signatures = [
     ...promptSettings.promptValidation.rules,
     ...(promptSettings.promptValidation.learnedRules ?? []),
@@ -129,18 +116,8 @@ const buildPromptSettingsVersion = (
   return hashString(signatures.join('\n'));
 };
 
-const buildPatternListVersion = (
-  lists: ValidatorPatternList[]
-): string => {
-  const signatures = lists
-    .map((list) =>
-      [
-        list.id,
-        list.scope,
-        list.updatedAt,
-      ].join('|')
-    )
-    .sort();
+const buildPatternListVersion = (lists: ValidatorPatternList[]): string => {
+  const signatures = lists.map((list) => [list.id, list.scope, list.updatedAt].join('|')).sort();
   return hashString(signatures.join('\n'));
 };
 
@@ -173,16 +150,13 @@ const CASE_RESOLVER_HEADING_RULE_ID_RE = /^segment\.case_resolver\.heading\./i;
 const isCaseResolverRuntimeScope = (scope: string | null | undefined): boolean =>
   scope === 'case-resolver-prompt-exploder' || scope === 'case_resolver_prompt_exploder';
 
-const hasUsableCaseResolverHeadingRules = (
-  rules: PromptValidationRule[]
-): boolean =>
+const hasUsableCaseResolverHeadingRules = (rules: PromptValidationRule[]): boolean =>
   rules.some(
     (rule) =>
       rule.kind === 'regex' &&
       rule.promptExploderTreatAsHeading === true &&
       CASE_RESOLVER_HEADING_RULE_ID_RE.test(rule.id)
   );
-
 
 const mergeTemplatesById = (
   persistedTemplates: PromptExploderLearnedTemplate[],
@@ -232,9 +206,7 @@ const trimRuntimeSelectionCache = (): void => {
   }
 };
 
-const serializeSessionRuleSignature = (
-  rules: PromptValidationRule[]
-): string =>
+const serializeSessionRuleSignature = (rules: PromptValidationRule[]): string =>
   hashString(
     rules
       .map((rule) => serializeRuleSignature(rule))
@@ -242,18 +214,11 @@ const serializeSessionRuleSignature = (
       .join('\n')
   );
 
-const serializeTemplateSignature = (
-  templates: PromptExploderLearnedTemplate[]
-): string =>
+const serializeTemplateSignature = (templates: PromptExploderLearnedTemplate[]): string =>
   hashString(
     templates
       .map((template) =>
-        [
-          template.id,
-          template.state,
-          template.updatedAt,
-          template.approvals,
-        ].join('|')
+        [template.id, template.state, template.updatedAt, template.approvals].join('|')
       )
       .sort()
       .join('\n')
@@ -285,9 +250,7 @@ const buildRuntimeSelectionCacheKey = (args: {
     args.templateSignature,
   ].join(':');
 
-const getCachedRuntimeSelection = (
-  key: string
-): CachedRuntimeSelection | null => {
+const getCachedRuntimeSelection = (key: string): CachedRuntimeSelection | null => {
   const cached = runtimeSelectionCache.get(key);
   if (!cached) return null;
   if (Date.now() - cached.createdAt > RUNTIME_SELECTION_CACHE_TTL_MS) {
@@ -323,8 +286,7 @@ const trackRuntimeVersionAndInvalidate = (args: {
   });
   if (
     previous &&
-    (previous.settingsVersion !== args.settingsVersion ||
-      previous.listVersion !== args.listVersion)
+    (previous.settingsVersion !== args.settingsVersion || previous.listVersion !== args.listVersion)
   ) {
     invalidatePromptExploderRuntimePatternCacheByRuntime({
       scope: args.scope,
@@ -377,15 +339,11 @@ export const resolvePromptValidationRuntime = (
         stack: resolveStackId(stackResolution.stack),
       });
     }
-    recordPromptValidationTiming(
-      'scope_resolve_ms',
-      performance.now() - stackStartedAt,
-      {
-        scope: stackResolution.scope ?? 'global',
-        stack: resolveStackId(stackResolution.stack),
-        correlationId,
-      }
-    );
+    recordPromptValidationTiming('scope_resolve_ms', performance.now() - stackStartedAt, {
+      scope: stackResolution.scope ?? 'global',
+      stack: resolveStackId(stackResolution.stack),
+      correlationId,
+    });
 
     const listVersion = buildPatternListVersion(args.validatorPatternLists);
     const settingsVersion = buildPromptSettingsVersion(args.promptSettings);
@@ -418,18 +376,14 @@ export const resolvePromptValidationRuntime = (
         scope: stackResolution.scope ?? 'global',
         cache: 'selection',
       });
-      recordPromptValidationTiming(
-        'runtime_select_ms',
-        performance.now() - startedAt,
-        {
-          scope: stackResolution.scope ?? 'global',
-          stack: resolveStackId(stackResolution.stack),
-          profile: args.runtimeRuleProfile,
-          correlationId,
-          mode: 'cache_hit',
-        }
-      );
-    
+      recordPromptValidationTiming('runtime_select_ms', performance.now() - startedAt, {
+        scope: stackResolution.scope ?? 'global',
+        stack: resolveStackId(stackResolution.stack),
+        profile: args.runtimeRuleProfile,
+        correlationId,
+        mode: 'cache_hit',
+      });
+
       return {
         correlationId,
         stackResolution: cached.stackResolution,
@@ -451,14 +405,8 @@ export const resolvePromptValidationRuntime = (
       args.promptSettings,
       stackResolution.scope ?? 'global'
     );
-    const effectiveRules = mergeRulesById(
-      scopedRules,
-      sessionLearnedRules
-    );
-    const runtimeValidationRules = selectRuntimeRules(
-      effectiveRules,
-      args.runtimeRuleProfile
-    );
+    const effectiveRules = mergeRulesById(scopedRules, sessionLearnedRules);
+    const runtimeValidationRules = selectRuntimeRules(effectiveRules, args.runtimeRuleProfile);
     if (
       isCaseResolverRuntimeScope(stackResolution.scope ?? 'global') &&
       !hasUsableCaseResolverHeadingRules(runtimeValidationRules)
@@ -480,9 +428,9 @@ export const resolvePromptValidationRuntime = (
     );
     const runtimeLearnedTemplates = args.learningEnabled
       ? filterTemplatesForRuntime(effectiveLearnedTemplates, {
-        minApprovalsForMatching: args.minApprovalsForMatching,
-        maxTemplates: args.maxTemplates,
-      })
+          minApprovalsForMatching: args.minApprovalsForMatching,
+          maxTemplates: args.maxTemplates,
+        })
       : [];
     trackRuntimeVersionAndInvalidate({
       scope: stackResolution.scope ?? 'global',
@@ -510,17 +458,16 @@ export const resolvePromptValidationRuntime = (
       runtimeLearnedTemplates,
     });
 
-    recordPromptValidationTiming(
-      'runtime_select_ms',
-      performance.now() - startedAt,
-      {
-        scope: stackResolution.scope,
-        stack: typeof stackResolution.stack === 'string' ? stackResolution.stack : stackResolution.stack?.id || 'anonymous',
-        profile: args.runtimeRuleProfile,
-        correlationId,
-        mode: 'cache_miss',
-      }
-    );
+    recordPromptValidationTiming('runtime_select_ms', performance.now() - startedAt, {
+      scope: stackResolution.scope,
+      stack:
+        typeof stackResolution.stack === 'string'
+          ? stackResolution.stack
+          : stackResolution.stack?.id || 'anonymous',
+      profile: args.runtimeRuleProfile,
+      correlationId,
+      mode: 'cache_miss',
+    });
 
     if (!inflightPrewarmByCacheKey.has(runtimeCacheKey)) {
       recordPromptValidationCounter('runtime_inflight_dedup_miss', 1, {
@@ -580,15 +527,15 @@ export const explodePromptWithValidationRuntime = (args: {
 }): PromptExploderDocument => {
   const pipelineStartedAt = performance.now();
   const recordPipelineTiming = (status: 'ok' | 'error'): void => {
-    recordPromptValidationTiming(
-      'runtime_pipeline_ms',
-      performance.now() - pipelineStartedAt,
-      {
-        scope: args.runtime.identity.scope,
-        stack: typeof args.runtime.identity.stack === 'string' ? args.runtime.identity.stack : args.runtime.identity.stack?.id || 'anonymous',        correlationId: args.runtime.correlationId,
-        status,
-      }
-    );
+    recordPromptValidationTiming('runtime_pipeline_ms', performance.now() - pipelineStartedAt, {
+      scope: args.runtime.identity.scope,
+      stack:
+        typeof args.runtime.identity.stack === 'string'
+          ? args.runtime.identity.stack
+          : args.runtime.identity.stack?.id || 'anonymous',
+      correlationId: args.runtime.correlationId,
+      status,
+    });
   };
   const maxAttempts = 2;
   let lastError: unknown = null;
@@ -605,15 +552,15 @@ export const explodePromptWithValidationRuntime = (args: {
         runtimeCacheKey: args.runtime.identity.cacheKey,
         correlationId: args.runtime.correlationId,
       });
-      recordPromptValidationTiming(
-        'explode_ms',
-        performance.now() - explodeStartedAt,
-        {
-          scope: args.runtime.identity.scope,
-          stack: typeof args.runtime.identity.stack === 'string' ? args.runtime.identity.stack : args.runtime.identity.stack?.id || 'anonymous',          correlationId: args.runtime.correlationId,
-          attempt: String(attempt),
-        }
-      );
+      recordPromptValidationTiming('explode_ms', performance.now() - explodeStartedAt, {
+        scope: args.runtime.identity.scope,
+        stack:
+          typeof args.runtime.identity.stack === 'string'
+            ? args.runtime.identity.stack
+            : args.runtime.identity.stack?.id || 'anonymous',
+        correlationId: args.runtime.correlationId,
+        attempt: String(attempt),
+      });
       if (attempt > 1) {
         recordPromptValidationCounter('runtime_retry_success', 1, {
           scope: args.runtime.identity.scope,

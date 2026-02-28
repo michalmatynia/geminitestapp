@@ -5,7 +5,7 @@ async function main() {
   const jobs = await prisma.productAiJob.findMany({
     where: { type: 'translation' },
     orderBy: { createdAt: 'desc' },
-    take: 3
+    take: 3,
   });
 
   console.log('\n=== Recent Translation Jobs ===');
@@ -25,4 +25,6 @@ async function main() {
   }
 }
 
-main().catch(console.error).finally(() => prisma.$disconnect());
+main()
+  .catch(console.error)
+  .finally(() => prisma.$disconnect());

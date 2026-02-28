@@ -1,10 +1,9 @@
 import type { Page, PageSummary } from '@/shared/contracts/cms';
 import { api } from '@/shared/lib/api-client';
 
-
 export const fetchPages = async (domainId?: string | null): Promise<PageSummary[]> => {
   return api.get<PageSummary[]>('/api/cms/pages', {
-    params: { domainId: domainId ?? undefined }
+    params: { domainId: domainId ?? undefined },
   });
 };
 
@@ -24,7 +23,10 @@ export const createPage = async (input: {
   }
 };
 
-export const updatePage = async (id: string, input: Page & { slugIds?: string[] }): Promise<{ ok: boolean; payload: Page }> => {
+export const updatePage = async (
+  id: string,
+  input: Page & { slugIds?: string[] }
+): Promise<{ ok: boolean; payload: Page }> => {
   try {
     const payload = await api.put<Page>(`/api/cms/pages/${id}`, input);
     return { ok: true, payload };

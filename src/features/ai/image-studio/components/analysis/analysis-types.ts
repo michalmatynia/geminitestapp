@@ -12,10 +12,8 @@ export type AnalysisStatus = 'idle' | 'resolving' | 'processing';
 export type AnalysisMode = ImageStudioAnalysisMode;
 export type ShadowPolicy = ImageStudioCenterShadowPolicy;
 export type DetectionMode = ImageStudioCenterDetectionMode;
-export type AnalysisResult = ImageStudioAnalysisSummary & Pick<
-  ImageStudioAnalysisResponse,
-  'effectiveMode' | 'authoritativeSource'
->;
+export type AnalysisResult = ImageStudioAnalysisSummary &
+  Pick<ImageStudioAnalysisResponse, 'effectiveMode' | 'authoritativeSource'>;
 
 export const PADDING_DEFAULT = 8;
 export const PADDING_MIN = 0;

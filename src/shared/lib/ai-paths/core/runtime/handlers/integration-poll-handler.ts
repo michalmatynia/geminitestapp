@@ -1,19 +1,9 @@
-import type {
-  DbQueryConfig,
-  PollConfig,
-  RuntimePortValues,
-} from '@/shared/contracts/ai-paths';
-import type {
-  NodeHandler,
-  NodeHandlerContext,
-} from '@/shared/contracts/ai-paths-runtime';
+import type { DbQueryConfig, PollConfig, RuntimePortValues } from '@/shared/contracts/ai-paths';
+import type { NodeHandler, NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 
 import { DEFAULT_DB_QUERY } from '../../constants';
 import { coerceInput } from '../../utils';
-import {
-  pollDatabaseQuery,
-  pollGraphJob,
-} from '../utils';
+import { pollDatabaseQuery, pollGraphJob } from '../utils';
 
 type PollFailureClassification = {
   status: 'failed' | 'timeout' | 'canceled';
@@ -27,10 +17,7 @@ type PollFailureClassification = {
   error: string;
 };
 
-const classifyPollError = (
-  error: unknown,
-  mode: 'job' | 'database'
-): PollFailureClassification => {
+const classifyPollError = (error: unknown, mode: 'job' | 'database'): PollFailureClassification => {
   const message = error instanceof Error ? error.message : String(error);
   const normalized = message.trim().toLowerCase();
 
@@ -91,9 +78,7 @@ export const handlePoll: NodeHandler = async ({
     }
     const rawJobId: unknown = coerceInput(nodeInputs['jobId']);
     const jobId: string =
-      typeof rawJobId === 'string' || typeof rawJobId === 'number'
-        ? String(rawJobId).trim()
-        : '';
+      typeof rawJobId === 'string' || typeof rawJobId === 'number' ? String(rawJobId).trim() : '';
     if (!jobId) {
       return prevOutputs;
     }
@@ -119,12 +104,9 @@ export const handlePoll: NodeHandler = async ({
   const pollMode: 'job' | 'database' = pollConfig.mode ?? 'job';
   const rawJobId: unknown = coerceInput(nodeInputs['jobId']);
   const jobId: string =
-    typeof rawJobId === 'string' || typeof rawJobId === 'number'
-      ? String(rawJobId).trim()
-      : '';
+    typeof rawJobId === 'string' || typeof rawJobId === 'number' ? String(rawJobId).trim() : '';
   if (pollMode === 'database') {
-    const queryConfig: DbQueryConfig =
-      { ...DEFAULT_DB_QUERY, ...(pollConfig.dbQuery ?? {}) };
+    const queryConfig: DbQueryConfig = { ...DEFAULT_DB_QUERY, ...(pollConfig.dbQuery ?? {}) };
     try {
       const response: { result: unknown; status: string; bundle: Record<string, unknown> } =
         await pollDatabaseQuery(
@@ -148,9 +130,7 @@ export const handlePoll: NodeHandler = async ({
           ...(response.bundle ?? {}),
           jobId,
           status: response.status,
-          ...(response.status === 'timeout'
-            ? { reason: 'poll_timeout', retryable: true }
-            : {}),
+          ...(response.status === 'timeout' ? { reason: 'poll_timeout', retryable: true } : {}),
         },
       };
     } catch (error: unknown) {
@@ -161,7 +141,7 @@ export const handlePoll: NodeHandler = async ({
       reportAiPathsError(
         error,
         { action: 'pollDatabase', nodeId: node.id },
-        'Database polling failed:',
+        'Database polling failed:'
       );
       return {
         result: null,
@@ -200,7 +180,7 @@ export const handlePoll: NodeHandler = async ({
     reportAiPathsError(
       error,
       { action: 'pollJob', jobId, nodeId: node.id },
-      'AI job polling failed:',
+      'AI job polling failed:'
     );
     return {
       result: null,

@@ -1,15 +1,12 @@
-
-
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { decryptSecret, encryptSecret } from '@/features/integrations/server';
-import { logSystemEvent } from '@/features/observability/server';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { mapErrorToAppError } from '@/shared/errors/error-mapper';
 
-const PROD_TOKEN_URL =
-  process.env['ALLEGRO_TOKEN_URL'] ?? 'https://allegro.pl/auth/oauth/token';
+const PROD_TOKEN_URL = process.env['ALLEGRO_TOKEN_URL'] ?? 'https://allegro.pl/auth/oauth/token';
 const SANDBOX_TOKEN_URL =
   process.env['ALLEGRO_SANDBOX_TOKEN_URL'] ??
   'https://allegro.pl.allegrosandbox.pl/auth/oauth/token';
@@ -31,7 +28,11 @@ const toErrorRedirect = (origin: string, reason: string): string => {
   return url.toString();
 };
 
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; connectionId: string }): Promise<Response> {
+export async function GET_handler(
+  req: NextRequest,
+  _ctx: ApiHandlerContext,
+  params: { id: string; connectionId: string }
+): Promise<Response> {
   let integrationId: string | null = null;
   let connectionId: string | null = null;
   const requestUrl = new URL(req.url);
@@ -43,8 +44,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, par
 
     const errorParam = requestUrl.searchParams.get('error');
     if (errorParam) {
-      const description =
-        requestUrl.searchParams.get('error_description') || errorParam;
+      const description = requestUrl.searchParams.get('error_description') || errorParam;
       return NextResponse.redirect(toErrorRedirect(requestUrl.origin, description));
     }
 
@@ -56,13 +56,9 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, par
       );
     }
 
-    const expectedState = req.cookies.get(
-      `allegro_oauth_state_${connId}`
-    )?.value;
+    const expectedState = req.cookies.get(`allegro_oauth_state_${connId}`)?.value;
     if (!expectedState || expectedState !== state) {
-      return NextResponse.redirect(
-        toErrorRedirect(requestUrl.origin, 'Invalid OAuth state.')
-      );
+      return NextResponse.redirect(toErrorRedirect(requestUrl.origin, 'Invalid OAuth state.'));
     }
 
     const repo = await getIntegrationRepository();
@@ -85,22 +81,18 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, par
     const clientSecret = decryptSecret(connection.password);
     const redirectUri = `${requestUrl.origin}/api/integrations/${id}/connections/${connId}/allegro/callback`;
 
-    const tokenUrl = connection.allegroUseSandbox
-      ? SANDBOX_TOKEN_URL
-      : PROD_TOKEN_URL;
+    const tokenUrl = connection.allegroUseSandbox ? SANDBOX_TOKEN_URL : PROD_TOKEN_URL;
     const tokenRes = await fetch(tokenUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
-        Authorization: `Basic ${Buffer.from(
-          `${clientId}:${clientSecret}`
-        ).toString('base64')}`
+        Authorization: `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`,
       },
       body: new URLSearchParams({
         grant_type: 'authorization_code',
         code,
-        redirect_uri: redirectUri
-      })
+        redirect_uri: redirectUri,
+      }),
     });
 
     let payload: AllegroTokenResponse;
@@ -112,8 +104,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, par
     }
 
     if (!tokenRes.ok || payload.error || !payload.access_token) {
-      const reason =
-        payload.error_description || payload.error || 'Token exchange failed.';
+      const reason = payload.error_description || payload.error || 'Token exchange failed.';
       return NextResponse.redirect(toErrorRedirect(requestUrl.origin, reason));
     }
 
@@ -124,13 +115,11 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, par
 
     await repo.updateConnection(connId, {
       allegroAccessToken: encryptSecret(payload.access_token),
-      allegroRefreshToken: payload.refresh_token
-        ? encryptSecret(payload.refresh_token)
-        : null,
+      allegroRefreshToken: payload.refresh_token ? encryptSecret(payload.refresh_token) : null,
       allegroTokenType: payload.token_type ?? null,
       allegroScope: payload.scope ?? null,
       allegroExpiresAt: expiresAt ? expiresAt.toISOString() : null,
-      allegroTokenUpdatedAt: new Date().toISOString()
+      allegroTokenUpdatedAt: new Date().toISOString(),
     });
 
     const successUrl = new URL('/admin/integrations', requestUrl.origin);
@@ -141,7 +130,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, par
       name: `allegro_oauth_state_${connId}`,
       value: '',
       maxAge: 0,
-      path: '/'
+      path: '/',
     });
 
     return response;
@@ -159,17 +148,15 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, par
         connectionId,
         ...(mapped
           ? {
-            code: mapped.code,
-            httpStatus: mapped.httpStatus,
-            expected: mapped.expected,
-            critical: mapped.critical,
-            retryable: mapped.retryable
-          }
-          : {})
-      }
+              code: mapped.code,
+              httpStatus: mapped.httpStatus,
+              expected: mapped.expected,
+              critical: mapped.critical,
+              retryable: mapped.retryable,
+            }
+          : {}),
+      },
     });
-    return NextResponse.redirect(
-      toErrorRedirect(requestUrl.origin, message)
-    );
+    return NextResponse.redirect(toErrorRedirect(requestUrl.origin, message));
   }
 }

@@ -1,25 +1,15 @@
 'use client';
 
 import React from 'react';
-import {
-  Input,
-  MultiSelect,
-  SelectSimple,
-  FormField,
-  Card,
-} from '@/shared/ui';
+import { Input, MultiSelect, SelectSimple, FormField, Card } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 import { useRuleItemContext } from '../context/RuleItemContext';
-import {
-  LAUNCH_OPERATORS,
-  SCOPE_OPTIONS,
-  normalizeRuleScopes,
-} from '../rule-item-utils';
-import type { 
-  PromptValidationChainMode, 
-  PromptValidationLaunchScopeBehavior, 
-  PromptValidationLaunchOperator, 
-  PromptValidationScope 
+import { LAUNCH_OPERATORS, SCOPE_OPTIONS, normalizeRuleScopes } from '../rule-item-utils';
+import type {
+  PromptValidationChainMode,
+  PromptValidationLaunchScopeBehavior,
+  PromptValidationLaunchOperator,
+  PromptValidationScope,
 } from '../../settings';
 
 export function RuleItemExecutionSettings(): React.JSX.Element | null {
@@ -46,7 +36,11 @@ export function RuleItemExecutionSettings(): React.JSX.Element | null {
   const launchFlags = rule.launchFlags ?? '';
 
   return (
-    <Card variant='subtle-compact' padding='sm' className='grid gap-2 border-border/40 bg-foreground/5 md:grid-cols-4'>
+    <Card
+      variant='subtle-compact'
+      padding='sm'
+      className='grid gap-2 border-border/40 bg-foreground/5 md:grid-cols-4'
+    >
       <FormField label='Sequence'>
         <Input
           type='number'
@@ -72,9 +66,7 @@ export function RuleItemExecutionSettings(): React.JSX.Element | null {
           onValueChange={(value: string): void =>
             patchRule({
               chainMode:
-            value === 'stop_on_match' || value === 'stop_on_replace'
-              ? value
-              : 'continue',
+                value === 'stop_on_match' || value === 'stop_on_replace' ? value : 'continue',
             })
           }
           options={[
@@ -151,9 +143,7 @@ export function RuleItemExecutionSettings(): React.JSX.Element | null {
             selected={launchAppliesToScopes}
             onChange={(values: string[]): void => {
               patchRule({
-                launchAppliesToScopes: normalizeRuleScopes(
-              values as PromptValidationScope[]
-                ),
+                launchAppliesToScopes: normalizeRuleScopes(values as PromptValidationScope[]),
               });
             }}
             placeholder='All scopes'
@@ -168,9 +158,7 @@ export function RuleItemExecutionSettings(): React.JSX.Element | null {
             onValueChange={(value: string): void => {
               const valid = LAUNCH_OPERATORS.some((op) => op.value === value);
               patchRule({
-                launchOperator: valid
-                  ? (value as PromptValidationLaunchOperator)
-                  : 'contains',
+                launchOperator: valid ? (value as PromptValidationLaunchOperator) : 'contains',
               });
             }}
             options={LAUNCH_OPERATORS}

@@ -55,8 +55,7 @@ export const extractProducerList = (payload: BaseApiResponse): BaseProducer[] =>
       const name =
         (typeof record['name'] === 'string' && record['name'].trim()) ||
         (typeof record['producer_name'] === 'string' && record['producer_name'].trim()) ||
-        (typeof record['manufacturer_name'] === 'string' &&
-          record['manufacturer_name'].trim()) ||
+        (typeof record['manufacturer_name'] === 'string' && record['manufacturer_name'].trim()) ||
         id;
       return { id, name };
     })
@@ -78,9 +77,7 @@ export const extractTagList = (payload: BaseApiResponse): BaseTag[] => {
       if (!entry || typeof entry !== 'object') return null;
       const record = entry as Record<string, unknown>;
       const id =
-        toStringId(record['tag_id']) ??
-        toStringId(record['id']) ??
-        toStringId(record['label_id']);
+        toStringId(record['tag_id']) ?? toStringId(record['id']) ?? toStringId(record['label_id']);
       if (!id) return null;
       const name =
         (typeof record['name'] === 'string' && record['name'].trim()) ||
@@ -140,8 +137,7 @@ export const extractWarehouseList = (payload: BaseApiResponse): BaseWarehouse[] 
       typeof record['warehouse_type'] === 'string' && record['warehouse_type'].trim()
         ? record['warehouse_type'].trim().toLowerCase()
         : null;
-    const typedId =
-      type && !id.startsWith(`${type}_`) ? `${type}_${id}` : type ? id : undefined;
+    const typedId = type && !id.startsWith(`${type}_`) ? `${type}_${id}` : type ? id : undefined;
     const name =
       (typeof record['name'] === 'string' && record['name'].trim()) ||
       (typeof record['label'] === 'string' && record['label'].trim()) ||
@@ -175,8 +171,7 @@ export const extractProductIds = (payload: BaseApiResponse): string[] => {
     }
   } else if (rawProducts && typeof rawProducts === 'object') {
     for (const [key, value] of Object.entries(rawProducts as Record<string, unknown>)) {
-      const record =
-        value && typeof value === 'object' ? (value as Record<string, unknown>) : null;
+      const record = value && typeof value === 'object' ? (value as Record<string, unknown>) : null;
       const id = record?.['product_id'] ?? record?.['id'] ?? record?.['base_product_id'] ?? key;
       const resolved = toStringId(id);
       if (resolved) ids.add(resolved);
@@ -215,7 +210,7 @@ export const extractProducts = (payload: BaseApiResponse): BaseProductRecord[] =
         }
         const id = toStringId(value) ?? key;
         return id ? { id } : {};
-      },
+      }
     );
   }
 
@@ -255,11 +250,7 @@ export const dedupeCategories = (categories: BaseCategory[]): BaseCategory[] => 
   return Array.from(byId.values());
 };
 
-const CATEGORY_SYSTEM_KEYS = new Set<string>([
-  'status',
-  'error_code',
-  'error_message',
-]);
+const CATEGORY_SYSTEM_KEYS = new Set<string>(['status', 'error_code', 'error_message']);
 
 const CATEGORY_CHILD_COLLECTION_KEYS = [
   'children',
@@ -289,7 +280,7 @@ type ParsedCategoryNode = {
 const parseCategoryNode = (
   value: unknown,
   inheritedParentId: string | null,
-  fallbackKey?: string,
+  fallbackKey?: string
 ): ParsedCategoryNode | null => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     return null;
@@ -305,15 +296,19 @@ const parseCategoryNode = (
     '';
   const hasName = rawName.length > 0;
 
-  const hasExplicitParent = hasOwn(record, 'parent_id')
-    || hasOwn(record, 'parent_category_id')
-    || hasOwn(record, 'parentId');
+  const hasExplicitParent =
+    hasOwn(record, 'parent_id') ||
+    hasOwn(record, 'parent_category_id') ||
+    hasOwn(record, 'parentId');
 
-  const childCollections = CATEGORY_CHILD_COLLECTION_KEYS
-    .map((key) => record[key])
-    .filter((entry: unknown): entry is unknown => entry !== undefined && entry !== null);
+  const childCollections = CATEGORY_CHILD_COLLECTION_KEYS.map((key) => record[key]).filter(
+    (entry: unknown): entry is unknown => entry !== undefined && entry !== null
+  );
 
-  if (!explicitId && !(fallbackId && (hasName || hasExplicitParent || childCollections.length > 0))) {
+  if (
+    !explicitId &&
+    !(fallbackId && (hasName || hasExplicitParent || childCollections.length > 0))
+  ) {
     return null;
   }
 
@@ -325,7 +320,7 @@ const parseCategoryNode = (
   if (!id) return null;
 
   const explicitParentId = normalizeBaseParentId(
-    record['parent_id'] ?? record['parent_category_id'] ?? record['parentId'],
+    record['parent_id'] ?? record['parent_category_id'] ?? record['parentId']
   );
   const parentId = hasExplicitParent ? explicitParentId : inheritedParentId;
 
@@ -347,7 +342,7 @@ type StoredCategory = {
 
 const mergeCategory = (
   categoriesById: Map<string, StoredCategory>,
-  parsed: ParsedCategoryNode,
+  parsed: ParsedCategoryNode
 ): void => {
   const existing = categoriesById.get(parsed.category.id);
   if (!existing) {
@@ -359,9 +354,11 @@ const mergeCategory = (
   }
 
   const nextCategory: BaseCategory = { ...existing.category };
-  const existingHasConcreteName = Boolean(nextCategory.name && nextCategory.name !== nextCategory.id);
+  const existingHasConcreteName = Boolean(
+    nextCategory.name && nextCategory.name !== nextCategory.id
+  );
   const parsedHasConcreteName = Boolean(
-    parsed.category.name && parsed.category.name !== parsed.category.id,
+    parsed.category.name && parsed.category.name !== parsed.category.id
   );
   if (!existingHasConcreteName && parsedHasConcreteName) {
     nextCategory.name = parsed.category.name;
@@ -384,13 +381,13 @@ const collectCategoriesFromNode = (
   categoriesById: Map<string, StoredCategory>,
   inheritedParentId: string | null,
   fallbackKey?: string,
-  depth: number = 0,
+  depth: number = 0
 ): void => {
   if (depth > 32) return;
 
   if (Array.isArray(value)) {
     value.forEach((entry: unknown) =>
-      collectCategoriesFromNode(entry, categoriesById, inheritedParentId, undefined, depth + 1),
+      collectCategoriesFromNode(entry, categoriesById, inheritedParentId, undefined, depth + 1)
     );
     return;
   }
@@ -418,27 +415,21 @@ const collectCategoriesFromNode = (
         categoriesById,
         parsed.category.id,
         undefined,
-        depth + 1,
+        depth + 1
       );
     });
     return;
   }
 
-  Object.entries(value as Record<string, unknown>).forEach(([key, childValue]: [string, unknown]) => {
-    if (CATEGORY_SYSTEM_KEYS.has(key)) return;
-    collectCategoriesFromNode(
-      childValue,
-      categoriesById,
-      inheritedParentId,
-      key,
-      depth + 1,
-    );
-  });
+  Object.entries(value as Record<string, unknown>).forEach(
+    ([key, childValue]: [string, unknown]) => {
+      if (CATEGORY_SYSTEM_KEYS.has(key)) return;
+      collectCategoriesFromNode(childValue, categoriesById, inheritedParentId, key, depth + 1);
+    }
+  );
 };
 
-export const fetchBaseCategoriesFromPayload = (
-  payload: BaseApiResponse,
-): BaseCategory[] => {
+export const fetchBaseCategoriesFromPayload = (payload: BaseApiResponse): BaseCategory[] => {
   const rawCategories =
     payload['categories'] ??
     (payload['data'] as Record<string, unknown> | undefined)?.['categories'] ??

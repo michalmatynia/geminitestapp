@@ -4,7 +4,7 @@ import { z } from 'zod';
 import {
   deleteImportTemplate,
   getImportTemplate,
-  updateImportTemplate
+  updateImportTemplate,
 } from '@/features/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
@@ -13,7 +13,7 @@ import { removeUndefined } from '@/shared/utils';
 
 const mappingSchema = z.object({
   sourceKey: z.string().trim().min(1),
-  targetField: z.string().trim().min(1)
+  targetField: z.string().trim().min(1),
 });
 
 const parameterImportSchema = z.object({
@@ -32,7 +32,11 @@ const templateSchema = z.object({
   parameterImport: parameterImportSchema.optional(),
 });
 
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
+export async function GET_handler(
+  _req: NextRequest,
+  _ctx: ApiHandlerContext,
+  params: { id: string }
+): Promise<Response> {
   const { id } = params;
   if (!id) {
     throw badRequestError('Template id is required');
@@ -44,31 +48,42 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, pa
   return NextResponse.json(template);
 }
 
-export async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
+export async function PUT_handler(
+  req: NextRequest,
+  _ctx: ApiHandlerContext,
+  params: { id: string }
+): Promise<Response> {
   const { id } = params;
   if (!id) {
     throw badRequestError('Template id is required');
   }
   const parsed = await parseJsonBody(req, templateSchema, {
-    logPrefix: 'import-templates.PUT'
+    logPrefix: 'import-templates.PUT',
   });
   if (!parsed.ok) {
     return parsed.response;
   }
   const data = parsed.data;
-  const template = await updateImportTemplate(id, removeUndefined({
-    name: data.name,
-    description: data.description,
-    mappings: data.mappings,
-    parameterImport: data.parameterImport,
-  }));
+  const template = await updateImportTemplate(
+    id,
+    removeUndefined({
+      name: data.name,
+      description: data.description,
+      mappings: data.mappings,
+      parameterImport: data.parameterImport,
+    })
+  );
   if (!template) {
     throw notFoundError('Template not found.', { templateId: id });
   }
   return NextResponse.json(template);
 }
 
-export async function DELETE_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
+export async function DELETE_handler(
+  _req: NextRequest,
+  _ctx: ApiHandlerContext,
+  params: { id: string }
+): Promise<Response> {
   const { id } = params;
   if (!id) {
     throw badRequestError('Template id is required');

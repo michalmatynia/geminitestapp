@@ -24,9 +24,7 @@ export type CaseResolverPlainTextTransformInput = {
 };
 
 export type CaseResolverCompileOptions = {
-  transformPlainTextOutput?: (
-    input: CaseResolverPlainTextTransformInput
-  ) => string;
+  transformPlainTextOutput?: (input: CaseResolverPlainTextTransformInput) => string;
 };
 
 const JOIN_VALUE_MAP: Record<CaseResolverJoinMode, string> = {
@@ -64,7 +62,7 @@ const resolveEdgeMeta = (
 const decodeBasicHtmlEntities = (value: string): string =>
   value
     .replace(/&nbsp;/gi, ' ')
-    .replace(/&apos;|&#39;/gi, '\'')
+    .replace(/&apos;|&#39;/gi, "'")
     .replace(/&quot;/gi, '"')
     .replace(/&gt;/gi, '>')
     .replace(/&lt;/gi, '<')
@@ -141,10 +139,7 @@ const wrapByQuoteMode = (value: string, meta: CaseResolverNodeMeta): string => {
   return `<span style="color: ${normalizedColor};">${wrappedValue}</span>`;
 };
 
-const wrapByQuoteModeWithoutColor = (
-  value: string,
-  meta: CaseResolverNodeMeta
-): string => {
+const wrapByQuoteModeWithoutColor = (value: string, meta: CaseResolverNodeMeta): string => {
   if (!value) return value;
   const quotedValue =
     meta.quoteMode === 'double' ? `"${value}"` : meta.quoteMode === 'single' ? `'${value}'` : value;
@@ -162,20 +157,13 @@ const sortNodeIdsByPosition = (nodes: AiNode[]): string[] =>
     })
     .map((node: AiNode) => node.id);
 
-const appendWithJoin = (
-  current: string,
-  value: string,
-  joinMode: CaseResolverJoinMode
-): string => {
+const appendWithJoin = (current: string, value: string, joinMode: CaseResolverJoinMode): string => {
   if (!value) return current;
   if (!current) return value;
   return `${current}${JOIN_VALUE_MAP[joinMode]}${value}`;
 };
 
-const sortEdgesBySourcePosition = (
-  edges: Edge[],
-  nodeById: Map<string, AiNode>
-): Edge[] => {
+const sortEdgesBySourcePosition = (edges: Edge[], nodeById: Map<string, AiNode>): Edge[] => {
   return [...edges].sort((left: Edge, right: Edge) => {
     const leftFrom = left.from ?? left.source;
     const rightFrom = right.from ?? right.source;
@@ -201,11 +189,11 @@ const sortEdgesBySourcePosition = (
 const resolveSourceOutputValue = (
   sourceOutputs:
     | {
-      textfield: string;
-      plaintextContent: string;
-      plainText: string;
-      wysiwygContent: string;
-    }
+        textfield: string;
+        plaintextContent: string;
+        plainText: string;
+        wysiwygContent: string;
+      }
     | null
     | undefined,
   fromPort: string | null | undefined,
@@ -281,7 +269,9 @@ export const compileCaseResolverPrompt = (
     });
 
     const sortedNodeIds = sortNodeIdsByPosition(graphNodes);
-    const rootNodeIds = sortedNodeIds.filter((nodeId: string) => (incomingCount.get(nodeId) ?? 0) === 0);
+    const rootNodeIds = sortedNodeIds.filter(
+      (nodeId: string) => (incomingCount.get(nodeId) ?? 0) === 0
+    );
 
     const startNodeIds =
       selectedNodeId && nodeById.has(selectedNodeId)
@@ -343,10 +333,7 @@ export const compileCaseResolverPrompt = (
       const meta = resolveNodeMeta(node.id, graph.nodeMeta || {});
       const nodeText = resolveNodeText(node);
       const nodeWysiwygText = resolveNodeWysiwygText(node);
-      const incomingEdges = sortEdgesBySourcePosition(
-        incomingByNode.get(node.id) ?? [],
-        nodeById
-      );
+      const incomingEdges = sortEdgesBySourcePosition(incomingByNode.get(node.id) ?? [], nodeById);
 
       const collectIncoming = (
         type: 'textfield' | 'plaintextContent' | 'plainText' | 'wysiwygContent'
@@ -368,8 +355,7 @@ export const compileCaseResolverPrompt = (
           if (!edgeFromNodeId) return;
           const sourceOutputs = outputsByNode[edgeFromNodeId];
           const rawSourceValue = resolveSourceOutputValue(sourceOutputs, edge.fromPort, type);
-          const sourceValue =
-            type === 'plainText' ? stripHtml(rawSourceValue) : rawSourceValue;
+          const sourceValue = type === 'plainText' ? stripHtml(rawSourceValue) : rawSourceValue;
           if (!sourceValue) return;
           const edgeJoinMode = resolveEdgeMeta(edge.id, graph.edgeMeta || {}).joinMode ?? 'newline';
           if (!firstJoinMode) firstJoinMode = edgeJoinMode;
@@ -387,25 +373,22 @@ export const compileCaseResolverPrompt = (
       const hasIncomingPlaintextContent = incomingPlaintextContent.value.trim().length > 0;
       const hasIncomingPlainText = incomingPlainText.value.trim().length > 0;
       const hasIncomingWysiwygContent = incomingWysiwygContent.value.trim().length > 0;
-      const isExplanatoryPlainTextInputFlow =
-        meta.role === 'explanatory' && hasIncomingPlainText;
-      const incomingText =
-        hasIncomingTextfield
-          ? incomingTextfield.value
-          : hasIncomingPlainText
-            ? incomingPlainText.value
-            : meta.role === 'explanatory' && hasIncomingPlaintextContent
-              ? incomingPlaintextContent.value
-              : '';
-      const incomingTextJoinMode = (
-        hasIncomingTextfield
+      const isExplanatoryPlainTextInputFlow = meta.role === 'explanatory' && hasIncomingPlainText;
+      const incomingText = hasIncomingTextfield
+        ? incomingTextfield.value
+        : hasIncomingPlainText
+          ? incomingPlainText.value
+          : meta.role === 'explanatory' && hasIncomingPlaintextContent
+            ? incomingPlaintextContent.value
+            : '';
+      const incomingTextJoinMode =
+        (hasIncomingTextfield
           ? incomingTextfield.firstJoinMode
           : hasIncomingPlainText
             ? incomingPlainText.firstJoinMode
             : meta.role === 'explanatory' && hasIncomingPlaintextContent
               ? incomingPlaintextContent.firstJoinMode
-              : null
-      ) ?? DEFAULT_CASE_RESOLVER_EDGE_META.joinMode;
+              : null) ?? DEFAULT_CASE_RESOLVER_EDGE_META.joinMode;
       const resolvedTextfield =
         meta.role === 'explanatory' && incomingText.trim().length > 0 && nodeText.trim().length > 0
           ? appendWithJoin(incomingText, nodeText, incomingTextJoinMode as CaseResolverJoinMode)
@@ -423,10 +406,7 @@ export const compileCaseResolverPrompt = (
           ? nodeText
           : resolvedTextfield;
       const wrappedTextfieldOutput = wrapByQuoteModeWithoutColor(resolvedTextfield, meta);
-      const wrappedSecondaryPlainTextSeed = wrapByQuoteModeWithoutColor(
-        secondaryOutputSeed,
-        meta
-      );
+      const wrappedSecondaryPlainTextSeed = wrapByQuoteModeWithoutColor(secondaryOutputSeed, meta);
       let plainTextOutput = options.transformPlainTextOutput
         ? wrappedSecondaryPlainTextSeed
         : stripHtml(wrappedSecondaryPlainTextSeed);
@@ -436,12 +416,16 @@ export const compileCaseResolverPrompt = (
         ? incomingPlainText.value
         : incomingPlaintextContent.value;
       if (meta.includeInOutput && wrappedSecondaryText.trim().length > 0) {
-        const joinMode: CaseResolverJoinMode = (
-          isExplanatoryPlainTextInputFlow
+        const joinMode: CaseResolverJoinMode =
+          (isExplanatoryPlainTextInputFlow
             ? incomingPlainText.firstJoinMode
-            : incomingPlaintextContent.firstJoinMode
-        ) || (DEFAULT_CASE_RESOLVER_EDGE_META.joinMode ?? 'newline');
-        plaintextContentOutput = appendWithJoin(plaintextContentOutput, wrappedSecondaryText, joinMode);
+            : incomingPlaintextContent.firstJoinMode) ||
+          (DEFAULT_CASE_RESOLVER_EDGE_META.joinMode ?? 'newline');
+        plaintextContentOutput = appendWithJoin(
+          plaintextContentOutput,
+          wrappedSecondaryText,
+          joinMode
+        );
       }
       if (meta.role === 'explanatory' && !options.transformPlainTextOutput) {
         plaintextContentOutput = stripHtml(plaintextContentOutput);
@@ -463,7 +447,11 @@ export const compileCaseResolverPrompt = (
         }
       }
       let wysiwygContentOutput = meta.role === 'explanatory' ? incomingWysiwygContent.value : '';
-      if (meta.role === 'explanatory' && meta.includeInOutput && nodeWysiwygText.trim().length > 0) {
+      if (
+        meta.role === 'explanatory' &&
+        meta.includeInOutput &&
+        nodeWysiwygText.trim().length > 0
+      ) {
         const joinMode: CaseResolverJoinMode =
           incomingWysiwygContent.firstJoinMode ||
           DEFAULT_CASE_RESOLVER_EDGE_META.joinMode ||

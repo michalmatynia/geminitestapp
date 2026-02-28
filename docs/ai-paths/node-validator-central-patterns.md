@@ -15,13 +15,17 @@ Machine-readable assertions are maintained in domain-specific docs referenced by
 - `docs/ai-paths/node-validator-coverage-matrix.csv`
 
 Semantic catalog note:
+
 - `docs/ai-paths/semantic-grammar/nodes/index.json` carries per-node `nodeHash` metadata used for docs inference traceability.
 
 Manifest-driven source ordering and enablement:
+
 - `docs/ai-paths/node-validator-central-manifest.json`
 
 Schema reference:
+
 - `docs/ai-paths/node-validator-assertion-schema-v2.md`
 
 Inference logic reference:
+
 - `docs/ai-paths/node-validator-doc-logic-inference.md`

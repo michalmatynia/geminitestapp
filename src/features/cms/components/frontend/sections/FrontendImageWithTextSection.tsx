@@ -1,9 +1,7 @@
 'use client';
 
-
 import { Image as ImageIcon } from 'lucide-react';
 import Image from 'next/image';
-
 
 import { useMediaStyles } from '../media-styles-context';
 import { getSectionContainerClass, getSectionStyles, getVerticalAlign } from '../theme-styles';
@@ -26,16 +24,23 @@ export function FrontendImageWithTextSection(): React.ReactNode {
   const mediaStyles = useMediaStyles();
 
   const imgHeightClass =
-    imageHeight === 'small' ? 'min-h-[200px]'
-      : imageHeight === 'large' ? 'min-h-[500px]'
+    imageHeight === 'small'
+      ? 'min-h-[200px]'
+      : imageHeight === 'large'
+        ? 'min-h-[500px]'
         : 'min-h-[350px]'; // medium
 
   return (
     <section style={sectionStyles}>
       <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth })}>
-        <div className={`flex flex-col gap-8 md:gap-12 ${imageFirst ? 'md:flex-row' : 'md:flex-row-reverse'} ${verticalClass}`}>
+        <div
+          className={`flex flex-col gap-8 md:gap-12 ${imageFirst ? 'md:flex-row' : 'md:flex-row-reverse'} ${verticalClass}`}
+        >
           {/* Image */}
-          <div className={`cms-media relative w-full md:w-1/2 ${imgHeightClass}`} style={mediaStyles ?? undefined}>
+          <div
+            className={`cms-media relative w-full md:w-1/2 ${imgHeightClass}`}
+            style={mediaStyles ?? undefined}
+          >
             {image ? (
               <Image
                 src={image}
@@ -45,7 +50,9 @@ export function FrontendImageWithTextSection(): React.ReactNode {
                 sizes='(max-width: 768px) 100vw, 50vw'
               />
             ) : (
-              <div className={`flex ${imgHeightClass} w-full items-center justify-center bg-gray-800`}>
+              <div
+                className={`flex ${imgHeightClass} w-full items-center justify-center bg-gray-800`}
+              >
                 <ImageIcon className='size-16 text-gray-600' />
               </div>
             )}
@@ -56,9 +63,7 @@ export function FrontendImageWithTextSection(): React.ReactNode {
             {blocks.map((block: BlockInstance) => (
               <FrontendBlockRenderer key={block.id} block={block} />
             ))}
-            {blocks.length === 0 && (
-              <p className='text-gray-500'>Add content blocks</p>
-            )}
+            {blocks.length === 0 && <p className='text-gray-500'>Add content blocks</p>}
           </div>
         </div>
       </div>

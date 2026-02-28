@@ -26,7 +26,7 @@ export const AppErrorCodes = {
   methodNotAllowed: 'METHOD_NOT_ALLOWED',
   resourceLocked: 'RESOURCE_LOCKED',
   quotaExceeded: 'QUOTA_EXCEEDED',
-  
+
   // Server Errors
   internal: 'INTERNAL_SERVER_ERROR',
   externalService: 'EXTERNAL_SERVICE_ERROR',
@@ -34,7 +34,7 @@ export const AppErrorCodes = {
   timeout: 'TIMEOUT',
   databaseError: 'DATABASE_ERROR',
   configurationError: 'CONFIGURATION_ERROR',
-  
+
   // Domain Errors
   duplicateEntry: 'DUPLICATE_ENTRY',
   invalidState: 'INVALID_STATE',
@@ -42,7 +42,6 @@ export const AppErrorCodes = {
   integrationError: 'INTEGRATION_ERROR',
   apiKeyInvalid: 'API_KEY_INVALID',
   webhookFailed: 'WEBHOOK_FAILED',
-  
 } as const;
 
 export class AppError extends Error {
@@ -101,8 +100,7 @@ export class AppError extends Error {
   }
 }
 
-export const isAppError = (error: unknown): error is AppError =>
-  error instanceof AppError;
+export const isAppError = (error: unknown): error is AppError => error instanceof AppError;
 
 export const createAppError = (message: string, options: AppErrorOptions): AppError =>
   new AppError(message, options);
@@ -111,10 +109,7 @@ export const createAppError = (message: string, options: AppErrorOptions): AppEr
 // Client Errors (4xx)
 // ============================================================================
 
-export const validationError = (
-  message: string,
-  meta?: Record<string, unknown>
-): AppError =>
+export const validationError = (message: string, meta?: Record<string, unknown>): AppError =>
   new AppError(message, {
     code: AppErrorCodes.validation,
     httpStatus: 400,
@@ -425,8 +420,7 @@ export const wrapError = (
 ): AppError => {
   if (isAppError(error)) return error;
 
-  const message: string =
-    error instanceof Error ? error.message : String(error) || fallbackMessage;
+  const message: string = error instanceof Error ? error.message : String(error) || fallbackMessage;
 
   return new AppError(message, {
     code: AppErrorCodes.internal,

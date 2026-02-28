@@ -8,7 +8,7 @@ import type {
 import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 
 import { parseJsonSafe, renderJsonTemplate } from '../../utils';
-import { getUnsupportedProviderActionMessage } from '../../utils/provider-actions';
+import { getUnsupportedProviderActionMessage } from '@/shared/lib/ai-paths/core/utils/provider-actions';
 import { buildDbQueryPayload } from '../utils';
 import { handleDatabaseMongoCreateAction } from './integration-database-mongo-create-action';
 import { handleDatabaseMongoDeleteAction } from './integration-database-mongo-delete-action';
@@ -81,7 +81,7 @@ export async function handleDatabaseMongoAction({
     };
   }
 
-  const filter = (queryPayload['query'] ?? {});
+  const filter = queryPayload['query'] ?? {};
   const projection = queryPayload['projection'];
   const sort = queryPayload['sort'];
   const limit = queryPayload['limit'];
@@ -91,13 +91,7 @@ export async function handleDatabaseMongoAction({
   const updateTemplate: string = dbConfig.updateTemplate?.trim() ?? '';
 
   const parseJsonTemplate = (template: string): unknown =>
-    parseJsonSafe(
-      renderJsonTemplate(
-        template,
-        templateContext,
-        inputValue ?? '',
-      ),
-    );
+    parseJsonSafe(renderJsonTemplate(template, templateContext, inputValue ?? ''));
 
   if (actionCategory === 'read' || actionCategory === 'aggregate') {
     return await handleDatabaseMongoReadAction({

@@ -10,12 +10,7 @@ import type {
 
 const PROMPT_EXPLODER_MASTER_NODE_PREFIX = 'prompt_item:';
 
-const LOGICAL_OPERATOR_VALUES = new Set<string>([
-  'if',
-  'only_if',
-  'unless',
-  'when',
-]);
+const LOGICAL_OPERATOR_VALUES = new Set<string>(['if', 'only_if', 'unless', 'when']);
 
 const LOGICAL_COMPARATOR_VALUES = new Set<string>([
   'truthy',
@@ -91,13 +86,13 @@ const readNodeMetadata = (node: MasterTreeNode): PromptExploderNodeMetadata | nu
   if (typeof candidate.itemId !== 'string' || !candidate.itemId.trim()) return null;
   const logicalOperator =
     typeof candidate.logicalOperator === 'string' &&
-      LOGICAL_OPERATOR_VALUES.has(candidate.logicalOperator)
+    LOGICAL_OPERATOR_VALUES.has(candidate.logicalOperator)
       ? candidate.logicalOperator
       : null;
   const logicalConditions = cloneLogicalConditions(candidate.logicalConditions ?? []);
   const referencedComparator =
     typeof candidate.referencedComparator === 'string' &&
-      LOGICAL_COMPARATOR_VALUES.has(candidate.referencedComparator)
+    LOGICAL_COMPARATOR_VALUES.has(candidate.referencedComparator)
       ? candidate.referencedComparator
       : null;
   return {
@@ -105,9 +100,7 @@ const readNodeMetadata = (node: MasterTreeNode): PromptExploderNodeMetadata | nu
     logicalOperator,
     logicalConditions,
     referencedParamPath:
-      typeof candidate.referencedParamPath === 'string'
-        ? candidate.referencedParamPath
-        : null,
+      typeof candidate.referencedParamPath === 'string' ? candidate.referencedParamPath : null,
     referencedComparator,
     referencedValue: candidate.referencedValue ?? null,
   };
@@ -124,14 +117,12 @@ const coerceLogicalConditions = (
     const c = condition as Record<string, unknown>;
     const paramPath = typeof c['paramPath'] === 'string' ? c['paramPath'].trim() : '';
     const comparator =
-      typeof c['comparator'] === 'string' &&
-        LOGICAL_COMPARATOR_VALUES.has(c['comparator'])
+      typeof c['comparator'] === 'string' && LOGICAL_COMPARATOR_VALUES.has(c['comparator'])
         ? (c['comparator'] as PromptExploderLogicalComparator)
         : null;
     if (!paramPath || !comparator) return;
     const joinWithPrevious =
-      typeof c['joinWithPrevious'] === 'string' &&
-        LOGICAL_JOIN_VALUES.has(c['joinWithPrevious'])
+      typeof c['joinWithPrevious'] === 'string' && LOGICAL_JOIN_VALUES.has(c['joinWithPrevious'])
         ? (c['joinWithPrevious'] as PromptExploderLogicalJoin)
         : index === 0
           ? null
@@ -233,8 +224,7 @@ export const rebuildPromptExploderListFromMasterNodes = (args: {
       const itemId = metadata?.itemId || nodeItemId || createListItemId();
       const fallback = fallbackById.get(itemId);
 
-      const logicalOperator =
-        metadata?.logicalOperator ?? fallback?.logicalOperator ?? null;
+      const logicalOperator = metadata?.logicalOperator ?? fallback?.logicalOperator ?? null;
       const logicalConditions = coerceLogicalConditions(
         metadata?.logicalConditions ?? fallback?.logicalConditions ?? []
       );
@@ -242,8 +232,7 @@ export const rebuildPromptExploderListFromMasterNodes = (args: {
         metadata?.referencedParamPath ?? fallback?.referencedParamPath ?? null;
       const referencedComparator =
         metadata?.referencedComparator ?? fallback?.referencedComparator ?? null;
-      const referencedValue =
-        metadata?.referencedValue ?? fallback?.referencedValue ?? null;
+      const referencedValue = metadata?.referencedValue ?? fallback?.referencedValue ?? null;
 
       return {
         id: itemId,

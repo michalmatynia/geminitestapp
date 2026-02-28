@@ -27,7 +27,7 @@ type ToastFn = (
   message: string,
   options?: {
     variant?: 'info' | 'success' | 'warning' | 'error';
-  },
+  }
 ) => void;
 
 type UseAiPathsSettingsModeActionsInput = {
@@ -66,13 +66,13 @@ type UseAiPathsSettingsModeActionsInput = {
   persistPathSettings: (
     nextPaths: PathMeta[],
     nextActivePathId: string,
-    nextConfig: PathConfig,
+    nextConfig: PathConfig
   ) => Promise<void>;
   persistSettingsBulk: (entries: Array<{ key: string; value: string }>) => Promise<void>;
   reportAiPathsError: (
     error: unknown,
     context: Record<string, unknown>,
-    fallbackMessage?: string,
+    fallbackMessage?: string
   ) => void;
   toast: ToastFn;
 };
@@ -139,14 +139,12 @@ export function useAiPathsSettingsModeActions({
         return;
       }
       setExecutionMode(mode);
-      setPathConfigs(
-        (prev: Record<string, PathConfig>): Record<string, PathConfig> => {
-          const base = prev[activePathId] ?? createDefaultPathConfig(activePathId);
-          return { ...prev, [activePathId]: { ...base, executionMode: mode } };
-        },
-      );
+      setPathConfigs((prev: Record<string, PathConfig>): Record<string, PathConfig> => {
+        const base = prev[activePathId] ?? createDefaultPathConfig(activePathId);
+        return { ...prev, [activePathId]: { ...base, executionMode: mode } };
+      });
     },
-    [activePathId, isPathLocked, setExecutionMode, setPathConfigs, toast],
+    [activePathId, isPathLocked, setExecutionMode, setPathConfigs, toast]
   );
 
   const handleFlowIntensityChange = useCallback(
@@ -162,14 +160,12 @@ export function useAiPathsSettingsModeActions({
         return;
       }
       setFlowIntensity(intensity);
-      setPathConfigs(
-        (prev: Record<string, PathConfig>): Record<string, PathConfig> => {
-          const base = prev[activePathId] ?? createDefaultPathConfig(activePathId);
-          return { ...prev, [activePathId]: { ...base, flowIntensity: intensity } };
-        },
-      );
+      setPathConfigs((prev: Record<string, PathConfig>): Record<string, PathConfig> => {
+        const base = prev[activePathId] ?? createDefaultPathConfig(activePathId);
+        return { ...prev, [activePathId]: { ...base, flowIntensity: intensity } };
+      });
     },
-    [activePathId, isPathLocked, setFlowIntensity, setPathConfigs, toast],
+    [activePathId, isPathLocked, setFlowIntensity, setPathConfigs, toast]
   );
 
   const handleRunModeChange = useCallback(
@@ -185,14 +181,12 @@ export function useAiPathsSettingsModeActions({
         return;
       }
       setRunMode(mode);
-      setPathConfigs(
-        (prev: Record<string, PathConfig>): Record<string, PathConfig> => {
-          const base = prev[activePathId] ?? createDefaultPathConfig(activePathId);
-          return { ...prev, [activePathId]: { ...base, runMode: mode } };
-        },
-      );
+      setPathConfigs((prev: Record<string, PathConfig>): Record<string, PathConfig> => {
+        const base = prev[activePathId] ?? createDefaultPathConfig(activePathId);
+        return { ...prev, [activePathId]: { ...base, runMode: mode } };
+      });
     },
-    [activePathId, isPathLocked, setRunMode, setPathConfigs, toast],
+    [activePathId, isPathLocked, setRunMode, setPathConfigs, toast]
   );
 
   const handleStrictFlowModeChange = useCallback(
@@ -208,14 +202,12 @@ export function useAiPathsSettingsModeActions({
         return;
       }
       setStrictFlowMode(enabled);
-      setPathConfigs(
-        (prev: Record<string, PathConfig>): Record<string, PathConfig> => {
-          const base = prev[activePathId] ?? createDefaultPathConfig(activePathId);
-          return { ...prev, [activePathId]: { ...base, strictFlowMode: enabled } };
-        },
-      );
+      setPathConfigs((prev: Record<string, PathConfig>): Record<string, PathConfig> => {
+        const base = prev[activePathId] ?? createDefaultPathConfig(activePathId);
+        return { ...prev, [activePathId]: { ...base, strictFlowMode: enabled } };
+      });
     },
-    [activePathId, isPathLocked, setPathConfigs, setStrictFlowMode, toast],
+    [activePathId, isPathLocked, setPathConfigs, setStrictFlowMode, toast]
   );
 
   const handleBlockedRunPolicyChange = useCallback(
@@ -232,21 +224,12 @@ export function useAiPathsSettingsModeActions({
         return;
       }
       setBlockedRunPolicy(policy);
-      setPathConfigs(
-        (prev: Record<string, PathConfig>): Record<string, PathConfig> => {
-          const base = prev[activePathId] ?? createDefaultPathConfig(activePathId);
-          return { ...prev, [activePathId]: { ...base, blockedRunPolicy: policy } };
-        },
-      );
+      setPathConfigs((prev: Record<string, PathConfig>): Record<string, PathConfig> => {
+        const base = prev[activePathId] ?? createDefaultPathConfig(activePathId);
+        return { ...prev, [activePathId]: { ...base, blockedRunPolicy: policy } };
+      });
     },
-    [
-      activePathId,
-      blockedRunPolicy,
-      isPathLocked,
-      setBlockedRunPolicy,
-      setPathConfigs,
-      toast,
-    ],
+    [activePathId, blockedRunPolicy, isPathLocked, setBlockedRunPolicy, setPathConfigs, toast]
   );
 
   const normalizeHistoryRetentionPasses = useCallback((value: number): number => {
@@ -276,7 +259,7 @@ export function useAiPathsSettingsModeActions({
         reportAiPathsError(
           error,
           { action: 'saveHistoryRetention', previous, nextValue },
-          'Failed to save AI Paths history retention:',
+          'Failed to save AI Paths history retention:'
         );
         toast('Failed to save history retention.', { variant: 'error' });
       }
@@ -288,7 +271,7 @@ export function useAiPathsSettingsModeActions({
       reportAiPathsError,
       setHistoryRetentionPasses,
       toast,
-    ],
+    ]
   );
 
   const handleTogglePathLock = useCallback((): void => {
@@ -330,15 +313,16 @@ export function useAiPathsSettingsModeActions({
         selectedNodeId,
       },
     };
-    const nextPaths = paths.map((path: PathMeta): PathMeta =>
-      path.id === activePathId ? { ...path, name: pathName, updatedAt } : path,
+    const nextPaths = paths.map(
+      (path: PathMeta): PathMeta =>
+        path.id === activePathId ? { ...path, name: pathName, updatedAt } : path
     );
     setPaths(nextPaths);
     setPathConfigs(
       (prev: Record<string, PathConfig>): Record<string, PathConfig> => ({
         ...prev,
         [activePathId]: nextConfig,
-      }),
+      })
     );
     void (async (): Promise<void> => {
       try {
@@ -347,7 +331,7 @@ export function useAiPathsSettingsModeActions({
         reportAiPathsError(
           error,
           { action: 'togglePathLock', pathId: activePathId },
-          'Failed to save path lock:',
+          'Failed to save path lock:'
         );
         toast('Failed to save path lock.', { variant: 'error' });
       }
@@ -423,15 +407,16 @@ export function useAiPathsSettingsModeActions({
         selectedNodeId,
       },
     };
-    const nextPaths = paths.map((path: PathMeta): PathMeta =>
-      path.id === activePathId ? { ...path, name: pathName, updatedAt } : path,
+    const nextPaths = paths.map(
+      (path: PathMeta): PathMeta =>
+        path.id === activePathId ? { ...path, name: pathName, updatedAt } : path
     );
     setPaths(nextPaths);
     setPathConfigs(
       (prev: Record<string, PathConfig>): Record<string, PathConfig> => ({
         ...prev,
         [activePathId]: nextConfig,
-      }),
+      })
     );
     void (async (): Promise<void> => {
       try {
@@ -440,7 +425,7 @@ export function useAiPathsSettingsModeActions({
         reportAiPathsError(
           error,
           { action: 'togglePathActive', pathId: activePathId },
-          'Failed to save path activation:',
+          'Failed to save path activation:'
         );
         toast('Failed to save path activation.', { variant: 'error' });
       }

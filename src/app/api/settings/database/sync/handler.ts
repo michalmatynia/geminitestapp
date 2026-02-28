@@ -2,8 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { auth } from '@/features/auth/server';
-import { assertDatabaseEngineOperationEnabled } from '@/features/database/services/database-engine-operation-guards';
-import { enqueueProductAiJob, processSingleJob, startProductAiJobQueue } from '@/features/jobs/server';
+import { assertDatabaseEngineOperationEnabled } from '@/shared/lib/db/services/database-engine-operation-guards';
+import {
+  enqueueProductAiJob,
+  processSingleJob,
+  startProductAiJobQueue,
+} from '@/features/jobs/server';
 import { logActivity, logSystemError } from '@/features/observability/server';
 import { ActivityTypes } from '@/shared/constants/observability';
 import type { ProductAiJobTypeDto as ProductAiJobType } from '@/shared/contracts/jobs';
@@ -22,8 +26,7 @@ const syncSchema = z.object({
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const session = await auth();
   const hasAccess =
-    session?.user?.isElevated ||
-    session?.user?.permissions?.includes('settings.manage');
+    session?.user?.isElevated || session?.user?.permissions?.includes('settings.manage');
   if (!hasAccess) {
     throw authError('Unauthorized.');
   }
@@ -45,16 +48,12 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     );
   }
 
-  const job = await enqueueProductAiJob(
-    'system',
-    'db_sync' as ProductAiJobType,
-    {
-      direction,
-      skipAuthCollections: Boolean(skipAuthCollections),
-      entityType: 'system',
-      source: 'db_sync',
-    }
-  );
+  const job = await enqueueProductAiJob('system', 'db_sync' as ProductAiJobType, {
+    direction,
+    skipAuthCollections: Boolean(skipAuthCollections),
+    entityType: 'system',
+    source: 'db_sync',
+  });
 
   void logActivity({
     type: ActivityTypes.SYSTEM.DATABASE_SYNC,
@@ -62,15 +61,13 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     userId: session?.user?.id ?? null,
     entityId: job.id,
     entityType: 'job',
-    metadata: { direction, jobId: job.id }
+    metadata: { direction, jobId: job.id },
   }).catch((error: Error) => {
     logger.warn('Failed to log database sync activity', { error });
   });
 
   const { env } = await import('@/shared/lib/env');
-  const inlineJobs =
-    env.AI_JOBS_INLINE ||
-    env.NODE_ENV !== 'production';
+  const inlineJobs = env.AI_JOBS_INLINE || env.NODE_ENV !== 'production';
 
   if (inlineJobs) {
     processSingleJob(job.id).catch(async (error: unknown) => {

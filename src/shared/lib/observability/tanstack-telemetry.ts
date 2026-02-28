@@ -29,11 +29,9 @@ const ENABLE_QUERY_TELEMETRY_IN_DEV =
 const ENABLE_QUERY_TELEMETRY =
   process.env['NEXT_PUBLIC_ENABLE_QUERY_TELEMETRY'] === 'true' ||
   (process.env['NEXT_PUBLIC_ENABLE_QUERY_TELEMETRY'] !== 'false' &&
-    (
-      process.env.NODE_ENV === 'production' ||
+    (process.env.NODE_ENV === 'production' ||
       process.env.NODE_ENV === 'test' ||
-      ENABLE_QUERY_TELEMETRY_IN_DEV
-    ));
+      ENABLE_QUERY_TELEMETRY_IN_DEV));
 
 type EmitTanstackTelemetryInput = {
   entity: TanstackEntityKind;
@@ -53,7 +51,10 @@ type SerializableRecord = Record<string, unknown>;
 const dedupeBucket = new Map<string, number>();
 const queuedEvents: TanstackTelemetryEvent[] = [];
 let flushTimer: ReturnType<typeof setTimeout> | null = null;
-let sanitizedContextCache = new WeakMap<Record<string, unknown>, Record<string, unknown> | undefined>();
+let sanitizedContextCache = new WeakMap<
+  Record<string, unknown>,
+  Record<string, unknown> | undefined
+>();
 
 const isSerializableRecord = (value: unknown): value is SerializableRecord =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -93,9 +94,7 @@ const sanitizeTag = (value: unknown): string | null => {
   if (typeof value !== 'string') return null;
   const trimmed = value.trim();
   if (!trimmed) return null;
-  return trimmed.length > MAX_META_TAG_LENGTH
-    ? trimmed.slice(0, MAX_META_TAG_LENGTH)
-    : trimmed;
+  return trimmed.length > MAX_META_TAG_LENGTH ? trimmed.slice(0, MAX_META_TAG_LENGTH) : trimmed;
 };
 
 const sanitizeTags = (tags: unknown): string[] => {
@@ -140,7 +139,9 @@ const extractStatusCode = (error: unknown): number | undefined => {
   return undefined;
 };
 
-const sanitizeContext = (context: Record<string, unknown> | undefined): Record<string, unknown> | undefined => {
+const sanitizeContext = (
+  context: Record<string, unknown> | undefined
+): Record<string, unknown> | undefined => {
   if (!context) return undefined;
   if (sanitizedContextCache.has(context)) {
     return sanitizedContextCache.get(context);
@@ -178,22 +179,20 @@ const sanitizeContext = (context: Record<string, unknown> | undefined): Record<s
   return sanitized;
 };
 
-const requiredMetaFields: Array<keyof Pick<TanstackFactoryMeta, 'source' | 'operation' | 'resource'>> = [
-  'source',
-  'operation',
-  'resource',
-];
+const requiredMetaFields: Array<
+  keyof Pick<TanstackFactoryMeta, 'source' | 'operation' | 'resource'>
+> = ['source', 'operation', 'resource'];
 
-const toFallbackMeta = (
-  meta: TanstackFactoryMeta | null | undefined
-): TanstackFactoryMeta => ({
-  source: typeof meta?.source === 'string' && meta.source.trim().length > 0
-    ? meta.source
-    : 'tanstack.unknown',
+const toFallbackMeta = (meta: TanstackFactoryMeta | null | undefined): TanstackFactoryMeta => ({
+  source:
+    typeof meta?.source === 'string' && meta.source.trim().length > 0
+      ? meta.source
+      : 'tanstack.unknown',
   operation: meta?.operation ?? 'action',
-  resource: typeof meta?.resource === 'string' && meta.resource.trim().length > 0
-    ? meta.resource
-    : 'unknown-resource',
+  resource:
+    typeof meta?.resource === 'string' && meta.resource.trim().length > 0
+      ? meta.resource
+      : 'unknown-resource',
   queryKey: meta?.queryKey,
   mutationKey: meta?.mutationKey,
   criticality: meta?.criticality,
@@ -213,9 +212,7 @@ const assertFactoryMeta = (meta: TanstackFactoryMeta | null | undefined): void =
     return typeof value !== 'string' || value.trim().length === 0;
   });
   if (missing.length > 0) {
-    throw new Error(
-      `[tanstack-factory-v2] Missing required meta fields: ${missing.join(', ')}`
-    );
+    throw new Error(`[tanstack-factory-v2] Missing required meta fields: ${missing.join(', ')}`);
   }
 };
 
@@ -259,12 +256,10 @@ export const getTanstackFactoryMetaFromBag = (
       queryKey: Array.isArray(storedMeta['key']) ? (storedMeta['key'] as QueryKey) : undefined,
       criticality: (storedMeta['criticality'] as TanstackCriticality | undefined) ?? 'normal',
       samplingRate:
-        typeof storedMeta['samplingRate'] === 'number'
-          ? storedMeta['samplingRate']
-          : undefined,
+        typeof storedMeta['samplingRate'] === 'number' ? storedMeta['samplingRate'] : undefined,
       domain: (storedMeta['domain'] as TanstackFactoryMeta['domain'] | undefined) ?? 'global',
       tags: Array.isArray(storedMeta['tags'])
-        ? (storedMeta['tags'].filter((tag): tag is string => typeof tag === 'string'))
+        ? storedMeta['tags'].filter((tag): tag is string => typeof tag === 'string')
         : [],
     });
   } catch {
@@ -405,7 +400,9 @@ export const emitTanstackTelemetry = (input: EmitTanstackTelemetryInput): boolea
     domain: resolvedMeta.domain,
     sampled: true,
     ...(typeof input.attempt === 'number' ? { attempt: input.attempt } : {}),
-    ...(typeof input.durationMs === 'number' ? { durationMs: Math.max(0, Math.round(input.durationMs)) } : {}),
+    ...(typeof input.durationMs === 'number'
+      ? { durationMs: Math.max(0, Math.round(input.durationMs)) }
+      : {}),
     ...(typeof statusCode === 'number' ? { statusCode } : {}),
     ...(category ? { category } : {}),
     ...(errorMessage ? { errorMessage } : {}),
@@ -443,7 +440,10 @@ export const tanstackTelemetryTestUtils = {
   reset: (): void => {
     dedupeBucket.clear();
     queuedEvents.splice(0, queuedEvents.length);
-    sanitizedContextCache = new WeakMap<Record<string, unknown>, Record<string, unknown> | undefined>();
+    sanitizedContextCache = new WeakMap<
+      Record<string, unknown>,
+      Record<string, unknown> | undefined
+    >();
     if (flushTimer) {
       clearTimeout(flushTimer);
       flushTimer = null;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { readMeta } from '@/features/ai/image-studio/utils/metadata';
+import { readMeta } from '@/shared/lib/ai/image-studio/utils/metadata';
 
 describe('readMeta', () => {
   it('returns empty object for null metadata', () => {

@@ -64,11 +64,15 @@ export function DatabaseQueryInputControls(): React.JSX.Element {
           <SelectSimple
             size='xs'
             value={actionCategory}
-            onValueChange={(value: string): void => onActionCategoryChange(value as DatabaseActionCategory)}
-            options={actionCategoryOptions.map((option: { value: DatabaseActionCategory; label: string }) => ({
-              value: option.value,
-              label: option.label
-            }))}
+            onValueChange={(value: string): void =>
+              onActionCategoryChange(value as DatabaseActionCategory)
+            }
+            options={actionCategoryOptions.map(
+              (option: { value: DatabaseActionCategory; label: string }) => ({
+                value: option.value,
+                label: option.label,
+              })
+            )}
             triggerClassName='h-7 w-[140px] border-border bg-card/70 text-xs text-white'
           />
           <SelectSimple
@@ -77,7 +81,7 @@ export function DatabaseQueryInputControls(): React.JSX.Element {
             onValueChange={(value: string): void => onActionChange(value as DatabaseAction)}
             options={actionOptions.map((option: { value: DatabaseAction; label: string }) => ({
               value: option.value,
-              label: option.label
+              label: option.label,
             }))}
             triggerClassName='h-7 w-[170px] border-border bg-card/70 text-xs text-white'
           />
@@ -95,7 +99,9 @@ export function DatabaseQueryInputControls(): React.JSX.Element {
                     : 'border-emerald-700 bg-emerald-500/10 text-emerald-200 hover:bg-emerald-500/20'
             }`}
             onClick={onFormatClick}
-            onContextMenu={(event: React.MouseEvent<HTMLButtonElement>): void => onFormatContextMenu(event)}
+            onContextMenu={(event: React.MouseEvent<HTMLButtonElement>): void =>
+              onFormatContextMenu(event)
+            }
           >
             {!queryFormatterEnabled
               ? 'Format'
@@ -142,16 +148,16 @@ export function DatabaseQueryInputControls(): React.JSX.Element {
       {showFilterInput ? (
         <div className='space-y-1'>
           <div className='flex items-center justify-between'>
-            <span className='text-[10px] uppercase tracking-wide text-gray-500'>
-              {filterLabel}
-            </span>
+            <span className='text-[10px] uppercase tracking-wide text-gray-500'>{filterLabel}</span>
             <span className='text-[9px] text-gray-500'>{filterHint}</span>
           </div>
           <Textarea
             className='min-h-[110px] w-full rounded-md border border-border bg-card/70 text-xs text-white'
             value={filterTemplateValue ?? ''}
             onFocus={onFilterFocus}
-            onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => onFilterChange?.(event.target.value)}
+            onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
+              onFilterChange?.(event.target.value)
+            }
             placeholder={(filterTemplateValue ?? '').trim() === '' ? filterPlaceholder : undefined}
           />
         </div>
@@ -159,9 +165,7 @@ export function DatabaseQueryInputControls(): React.JSX.Element {
       {showFilterInput ? (
         <div className='space-y-1'>
           <div className='flex items-center justify-between'>
-            <span className='text-[10px] uppercase tracking-wide text-gray-500'>
-              {updateLabel}
-            </span>
+            <span className='text-[10px] uppercase tracking-wide text-gray-500'>{updateLabel}</span>
             <span className='text-[9px] text-gray-500'>{updateHint}</span>
           </div>
           <Textarea
@@ -169,7 +173,9 @@ export function DatabaseQueryInputControls(): React.JSX.Element {
             className='min-h-[140px] w-full rounded-md border border-border bg-card/70 text-sm text-white'
             value={queryTemplateValue}
             onFocus={onQueryFocus}
-            onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => onQueryChange(event.target.value)}
+            onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
+              onQueryChange(event.target.value)
+            }
             placeholder={queryTemplateValue.trim() === '' ? queryPlaceholder : undefined}
           />
         </div>
@@ -179,7 +185,9 @@ export function DatabaseQueryInputControls(): React.JSX.Element {
           className='min-h-[140px] w-full rounded-md border border-border bg-card/70 text-sm text-white'
           value={queryTemplateValue}
           onFocus={onQueryFocus}
-          onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => onQueryChange(event.target.value)}
+          onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
+            onQueryChange(event.target.value)
+          }
           placeholder={queryTemplateValue.trim() === '' ? queryPlaceholder : undefined}
         />
       )}

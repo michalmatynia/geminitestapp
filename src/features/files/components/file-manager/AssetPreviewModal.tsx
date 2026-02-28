@@ -26,28 +26,19 @@ export function AssetPreviewModal({
     >
       <div className='space-y-6'>
         <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
-          <MetadataItem
-            label='Size'
-            value={`${((previewAsset.size ?? 0) / 1024).toFixed(2)} KB`}
-          />
-          <MetadataItem
-            label='MIME Type'
-            value={previewAsset.mimetype}
-          />
+          <MetadataItem label='Size' value={`${((previewAsset.size ?? 0) / 1024).toFixed(2)} KB`} />
+          <MetadataItem label='MIME Type' value={previewAsset.mimetype} />
           <MetadataItem
             label='Visibility'
-            value={(
-              <StatusBadge 
-                status={previewAsset.isPublic ? 'Public' : 'Private'} 
+            value={
+              <StatusBadge
+                status={previewAsset.isPublic ? 'Public' : 'Private'}
                 variant={previewAsset.isPublic ? 'success' : 'neutral'}
                 size='sm'
               />
-            )}
+            }
           />
-          <MetadataItem
-            label='Category'
-            value={previewAsset.categoryId ?? '—'}
-          />
+          <MetadataItem label='Category' value={previewAsset.categoryId ?? '—'} />
           <MetadataItem
             label='Added'
             value={previewAsset.createdAt ? new Date(previewAsset.createdAt).toLocaleString() : '—'}
@@ -63,7 +54,7 @@ export function AssetPreviewModal({
         {(previewAsset.tags ?? []).length > 0 && (
           <FormField label='Tags'>
             <div className='flex flex-wrap gap-2'>
-              {(previewAsset.tags ?? []).map(tag => (
+              {(previewAsset.tags ?? []).map((tag) => (
                 <Badge key={tag} variant='secondary' className='text-[10px]'>
                   {tag}
                 </Badge>
@@ -74,7 +65,11 @@ export function AssetPreviewModal({
 
         {previewAsset.description && (
           <FormField label='Description'>
-            <Card variant='subtle-compact' padding='md' className='border-border bg-card/30 text-sm text-gray-300 leading-relaxed'>
+            <Card
+              variant='subtle-compact'
+              padding='md'
+              className='border-border bg-card/30 text-sm text-gray-300 leading-relaxed'
+            >
               {previewAsset.description}
             </Card>
           </FormField>
@@ -91,4 +86,3 @@ export function AssetPreviewModal({
     </DetailModal>
   );
 }
-

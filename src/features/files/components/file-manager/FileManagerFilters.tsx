@@ -9,20 +9,28 @@ import { useFileManager } from '../../contexts/FileManagerContext';
 
 /**
  * REFACTORED: FileManagerFilters using FilterPanel template
- * 
+ *
  * Before: 140 LOC
  * After: 60 LOC
  * Savings: 57% reduction
- * 
+ *
  * Note: Simplified bulk actions rendering to focus on filtering.
  * Bulk actions UI can be extracted to separate component if needed.
  */
 export const FileManagerFilters = memo(function FileManagerFilters(): React.JSX.Element {
   const {
-    filenameSearch, setFilenameSearch,
-    productNameSearch, setProductNameSearch,
-    showTagSearch, tagSearch, setTagSearch,
-    activeTab, showFolderFilter, folderFilter, setLocalFolderFilter, folderOptions,
+    filenameSearch,
+    setFilenameSearch,
+    productNameSearch,
+    setProductNameSearch,
+    showTagSearch,
+    tagSearch,
+    setTagSearch,
+    activeTab,
+    showFolderFilter,
+    folderFilter,
+    setLocalFolderFilter,
+    folderOptions,
   } = useFileManager();
 
   const enableTagSearch = showTagSearch;
@@ -46,20 +54,23 @@ export const FileManagerFilters = memo(function FileManagerFilters(): React.JSX.
         type: 'select',
         options: folderOptions.map((folder: string) => ({
           value: folder,
-          label: folder === 'all' ? 'All folders' : folder
-        }))
+          label: folder === 'all' ? 'All folders' : folder,
+        })),
       });
     }
 
     return filters;
   }, [enableTagSearch, folderFilterEnabled, folderOptions]);
 
-  const filterValues = useMemo(() => ({
-    filename: filenameSearch,
-    product: productNameSearch,
-    tag: tagSearch,
-    folder: folderFilter,
-  }), [filenameSearch, productNameSearch, tagSearch, folderFilter]);
+  const filterValues = useMemo(
+    () => ({
+      filename: filenameSearch,
+      product: productNameSearch,
+      tag: tagSearch,
+      folder: folderFilter,
+    }),
+    [filenameSearch, productNameSearch, tagSearch, folderFilter]
+  );
 
   const handleFilterChange = (key: string, value: unknown) => {
     switch (key) {

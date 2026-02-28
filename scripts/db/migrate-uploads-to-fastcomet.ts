@@ -95,11 +95,9 @@ type MongoNoteFileRow = {
 const uploadsRoot = path.join(process.cwd(), 'public', 'uploads');
 const DEFAULT_BATCH_LIMIT = 10_000;
 
-const canUsePrisma = (): boolean =>
-  Boolean(process.env['DATABASE_URL']) && 'setting' in prisma;
+const canUsePrisma = (): boolean => Boolean(process.env['DATABASE_URL']) && 'setting' in prisma;
 
-const normalizeString = (value: string | null | undefined): string =>
-  (value ?? '').trim();
+const normalizeString = (value: string | null | undefined): string => (value ?? '').trim();
 
 const parsePositiveInt = (value: string | undefined): number | null => {
   const parsed = Number(value);
@@ -174,9 +172,7 @@ const parseArgs = (argv: string[]): CliOptions => {
       return;
     }
     if (arg.startsWith('--upload-endpoint=')) {
-      options.uploadEndpointOverride = normalizeString(
-        arg.slice('--upload-endpoint='.length)
-      );
+      options.uploadEndpointOverride = normalizeString(arg.slice('--upload-endpoint='.length));
       return;
     }
     if (arg.startsWith('--base-url=')) {
@@ -184,9 +180,7 @@ const parseArgs = (argv: string[]): CliOptions => {
       return;
     }
     if (arg.startsWith('--delete-endpoint=')) {
-      options.deleteEndpointOverride = normalizeString(
-        arg.slice('--delete-endpoint='.length)
-      );
+      options.deleteEndpointOverride = normalizeString(arg.slice('--delete-endpoint='.length));
       return;
     }
     if (arg.startsWith('--auth-token=')) {
@@ -198,50 +192,38 @@ const parseArgs = (argv: string[]): CliOptions => {
       return;
     }
     if (arg.startsWith('--keep-local-copy=')) {
-      options.keepLocalCopyOverride = parseBoolean(
-        arg.slice('--keep-local-copy='.length)
-      );
+      options.keepLocalCopyOverride = parseBoolean(arg.slice('--keep-local-copy='.length));
     }
   });
 
   return options;
 };
 
-const resolveFastCometConfig = async (
-  options: CliOptions
-): Promise<FastCometStorageConfig> => {
+const resolveFastCometConfig = async (options: CliOptions): Promise<FastCometStorageConfig> => {
   const settings = await getFileStorageSettings({ force: true });
   const base = settings.fastComet;
 
   const resolved: FastCometStorageConfig = {
     ...base,
-    ...(options.uploadEndpointOverride
-      ? { uploadEndpoint: options.uploadEndpointOverride }
-      : {}),
+    ...(options.uploadEndpointOverride ? { uploadEndpoint: options.uploadEndpointOverride } : {}),
     ...(options.baseUrlOverride !== null ? { baseUrl: options.baseUrlOverride } : {}),
     ...(options.deleteEndpointOverride !== null
       ? {
-        deleteEndpoint:
+          deleteEndpoint:
             options.deleteEndpointOverride.trim().length > 0
               ? options.deleteEndpointOverride
               : null,
-      }
+        }
       : {}),
     ...(options.authTokenOverride !== null
       ? {
-        authToken:
-            options.authTokenOverride.trim().length > 0
-              ? options.authTokenOverride
-              : null,
-      }
+          authToken: options.authTokenOverride.trim().length > 0 ? options.authTokenOverride : null,
+        }
       : {}),
     ...(options.timeoutMsOverride !== null
       ? {
-        timeoutMs: Math.min(
-          Math.max(options.timeoutMsOverride, 1_000),
-          120_000
-        ),
-      }
+          timeoutMs: Math.min(Math.max(options.timeoutMsOverride, 1_000), 120_000),
+        }
       : {}),
     ...(options.keepLocalCopyOverride !== null
       ? { keepLocalCopy: options.keepLocalCopyOverride }
@@ -257,8 +239,7 @@ const resolveFastCometConfig = async (
   return resolved;
 };
 
-const isUploadPublicPath = (publicPath: string): boolean =>
-  publicPath.startsWith('/uploads/');
+const isUploadPublicPath = (publicPath: string): boolean => publicPath.startsWith('/uploads/');
 
 const buildUploadDescriptor = (publicPath: string): UploadDescriptor => {
   const relative = publicPath.replace(/^\/+/, '');
@@ -278,10 +259,7 @@ const buildUploadDescriptor = (publicPath: string): UploadDescriptor => {
   const filename = path.basename(publicPath);
   const folderSegments = rest.slice(0, Math.max(rest.length - 1, 0));
 
-  const projectId =
-    category === 'notes' || category === 'studio'
-      ? maybeProject
-      : null;
+  const projectId = category === 'notes' || category === 'studio' ? maybeProject : null;
 
   const folder =
     category === 'case-resolver'
@@ -521,10 +499,9 @@ const migrateMongoImageFiles = async (params: {
         const filter: Record<string, unknown> = {
           $or: [{ _id: rowId }, { id: rowId }],
         };
-        await db.collection('image_files').updateOne(
-          filter,
-          { $set: { filepath: remotePath, updatedAt: new Date() } }
-        );
+        await db
+          .collection('image_files')
+          .updateOne(filter, { $set: { filepath: remotePath, updatedAt: new Date() } });
       },
     });
   }
@@ -567,10 +544,9 @@ const migrateMongoNoteFiles = async (params: {
         const filter: Record<string, unknown> = {
           $or: [{ _id: rowId }, { id: rowId }],
         };
-        await db.collection('noteFiles').updateOne(
-          filter,
-          { $set: { filepath: remotePath, updatedAt: new Date() } }
-        );
+        await db
+          .collection('noteFiles')
+          .updateOne(filter, { $set: { filepath: remotePath, updatedAt: new Date() } });
       },
     });
   }
@@ -595,11 +571,13 @@ const setSourceAfterMigration = async (params: {
     const db = await getMongoDb();
     const now = new Date();
     for (const payload of payloads) {
-      await db.collection('settings').updateOne(
-        { key: payload.key },
-        { $set: { value: payload.value, updatedAt: now }, $setOnInsert: { createdAt: now } },
-        { upsert: true }
-      );
+      await db
+        .collection('settings')
+        .updateOne(
+          { key: payload.key },
+          { $set: { value: payload.value, updatedAt: now }, $setOnInsert: { createdAt: now } },
+          { upsert: true }
+        );
     }
   }
 
@@ -628,37 +606,37 @@ async function main(): Promise<void> {
   const imageFilesResult = options.targets.has('image-files')
     ? provider === 'mongodb'
       ? await migrateMongoImageFiles({
-        fastComet,
-        dryRun: options.dryRun,
-        limit,
-      })
+          fastComet,
+          dryRun: options.dryRun,
+          limit,
+        })
       : await migratePrismaImageFiles({
-        fastComet,
-        dryRun: options.dryRun,
-        limit,
-      })
+          fastComet,
+          dryRun: options.dryRun,
+          limit,
+        })
     : null;
 
   const noteFilesResult = options.targets.has('note-files')
     ? provider === 'mongodb'
       ? await migrateMongoNoteFiles({
-        fastComet,
-        dryRun: options.dryRun,
-        limit,
-      })
+          fastComet,
+          dryRun: options.dryRun,
+          limit,
+        })
       : await migratePrismaNoteFiles({
-        fastComet,
-        dryRun: options.dryRun,
-        limit,
-      })
+          fastComet,
+          dryRun: options.dryRun,
+          limit,
+        })
     : null;
 
   const assets3dResult = options.targets.has('assets3d')
     ? await migratePrismaAssets3D({
-      fastComet,
-      dryRun: options.dryRun,
-      limit,
-    })
+        fastComet,
+        dryRun: options.dryRun,
+        limit,
+      })
     : null;
 
   if (!options.dryRun && options.sourceAfterMigration !== 'no-change') {

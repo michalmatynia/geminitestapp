@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { compareGenerationParams } from '@/features/ai/image-studio/utils/version-graph-compare';
+import { compareGenerationParams } from '@/shared/lib/ai/image-studio/utils/version-graph-compare';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
 // ── Factory ──────────────────────────────────────────────────────────────────
 
 const createSlot = (
-  overrides: Partial<ImageStudioSlotRecord> & { id: string },
+  overrides: Partial<ImageStudioSlotRecord> & { id: string }
 ): ImageStudioSlotRecord => ({
   createdAt: '',
   updatedAt: null,

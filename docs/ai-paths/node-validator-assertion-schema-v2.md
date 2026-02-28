@@ -5,7 +5,7 @@ The Node Validator sync consumes these assertions and compiles rule candidates.
 
 ## Block format
 
-```markdown
+````markdown
 ```ai-paths-assertion
 {
   "id": "unique.assertion.id",
@@ -32,6 +32,8 @@ The Node Validator sync consumes these assertions and compiles rule candidates.
   ]
 }
 ```
+````
+
 ```
 
 ## Required fields
@@ -85,3 +87,4 @@ The Node Validator sync consumes these assertions and compiles rule candidates.
 - `semantic_nodes_catalog`
 - `tooltip_docs_catalog`
 - `coverage_matrix_csv`
+```

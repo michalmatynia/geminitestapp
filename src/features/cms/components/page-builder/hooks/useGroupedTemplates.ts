@@ -34,7 +34,10 @@ export function useGroupedTemplates(
   );
 
   const templates = useMemo(
-    () => sectionTypes.filter((def: SectionDefinition) => !primitiveTypes.has(def.type) && !elementTypes.has(def.type)),
+    () =>
+      sectionTypes.filter(
+        (def: SectionDefinition) => !primitiveTypes.has(def.type) && !elementTypes.has(def.type)
+      ),
     [sectionTypes, primitiveTypes, elementTypes]
   );
 
@@ -43,12 +46,17 @@ export function useGroupedTemplates(
     const result: Record<string, SectionTemplate[]> = {};
 
     if (gridAllowed && savedGridTemplates.length > 0) {
-      const savedGrids: SectionTemplate[] = savedGridTemplates.map((record: GridTemplateRecord) => ({
-        name: record.name,
-        description: record.description && record.description.length > 0 ? record.description : 'Saved grid template',
-        category: 'Saved grids',
-        create: () => cloneGridTemplateSection(record.section),
-      }));
+      const savedGrids: SectionTemplate[] = savedGridTemplates.map(
+        (record: GridTemplateRecord) => ({
+          name: record.name,
+          description:
+            record.description && record.description.length > 0
+              ? record.description
+              : 'Saved grid template',
+          category: 'Saved grids',
+          create: () => cloneGridTemplateSection(record.section),
+        })
+      );
       result['Saved grids'] = savedGrids;
     }
 
@@ -60,7 +68,10 @@ export function useGroupedTemplates(
         }
         result[category].push({
           name: record.name,
-          description: record.description && record.description.length > 0 ? record.description : `Saved ${record.sectionType} template`,
+          description:
+            record.description && record.description.length > 0
+              ? record.description
+              : `Saved ${record.sectionType} template`,
           category,
           create: () => cloneSectionTemplateSection(record.section),
         });

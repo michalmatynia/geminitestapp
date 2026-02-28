@@ -3,14 +3,12 @@
 import { Search, X } from 'lucide-react';
 import React, { useState, useCallback, useEffect } from 'react';
 
-
 import { FilterField } from '@/shared/contracts/ui';
 import { Button, Label, SelectSimple } from '@/shared/ui';
 import { Checkbox } from '@/shared/ui/checkbox';
 import { Input } from '@/shared/ui/input';
 import { MultiSelect } from '@/shared/ui/multi-select';
-import { cn } from '@/shared/utils/ui-utils';
-
+import { cn } from '@/shared/utils';
 
 const isActiveFilterValue = (value: unknown): boolean => {
   if (value === undefined || value === null) return false;
@@ -41,7 +39,9 @@ const getSingleSelectValue = (value: unknown): string => {
 const getMultiSelectValues = (value: unknown): string[] => {
   if (Array.isArray(value)) {
     return value
-      .filter((entry): entry is string | number => typeof entry === 'string' || typeof entry === 'number')
+      .filter(
+        (entry): entry is string | number => typeof entry === 'string' || typeof entry === 'number'
+      )
       .map(String);
   }
   if (typeof value === 'string' || typeof value === 'number') {
@@ -95,7 +95,7 @@ export const PanelFilters: React.FC<PanelFiltersProps> = ({
   // Debounce search changes
   useEffect(() => {
     if (localSearch === externalSearch) return;
-    
+
     const timer = setTimeout(() => {
       onSearchChange?.(localSearch);
     }, 400);
@@ -110,7 +110,9 @@ export const PanelFilters: React.FC<PanelFiltersProps> = ({
   }, [onReset]);
 
   const hasActiveFilters = Object.values(values).some((value) => isActiveFilterValue(value));
-  const activeFilterCount = Object.values(values).filter((value) => isActiveFilterValue(value)).length;
+  const activeFilterCount = Object.values(values).filter((value) =>
+    isActiveFilterValue(value)
+  ).length;
 
   const filterFieldsToRender = filters;
   const showToggleButton = filterFieldsToRender.length > 0 && (compact || collapsible);
@@ -145,11 +147,7 @@ export const PanelFilters: React.FC<PanelFiltersProps> = ({
             </div>
           )}
 
-          {actions && (
-            <div className='flex items-center gap-2 shrink-0'>
-              {actions}
-            </div>
-          )}
+          {actions && <div className='flex items-center gap-2 shrink-0'>{actions}</div>}
 
           {showToggleButton ? (
             <Button
@@ -218,7 +216,7 @@ const FilterControl: React.FC<FilterControlProps> = ({ field, value, onChange })
   };
 
   const [localValue, setLocalValue] = useState<string | number | undefined>(
-    (value as string | number | undefined)
+    value as string | number | undefined
   );
 
   // Sync local value with external value (e.g. on reset or external change)
@@ -248,7 +246,9 @@ const FilterControl: React.FC<FilterControlProps> = ({ field, value, onChange })
       if (field.multi) {
         return (
           <div style={containerStyle} className='flex flex-col gap-1'>
-            <Label className='text-[10px] font-semibold uppercase tracking-wider text-gray-500/80'>{field.label}</Label>
+            <Label className='text-[10px] font-semibold uppercase tracking-wider text-gray-500/80'>
+              {field.label}
+            </Label>
             <MultiSelect
               options={options}
               selected={getMultiSelectValues(value)}
@@ -262,7 +262,9 @@ const FilterControl: React.FC<FilterControlProps> = ({ field, value, onChange })
 
       return (
         <div style={containerStyle} className='flex flex-col gap-1'>
-          <Label className='text-[10px] font-semibold uppercase tracking-wider text-gray-500/80'>{field.label}</Label>
+          <Label className='text-[10px] font-semibold uppercase tracking-wider text-gray-500/80'>
+            {field.label}
+          </Label>
           <SelectSimple
             size='sm'
             value={getSingleSelectValue(value)}
@@ -293,7 +295,9 @@ const FilterControl: React.FC<FilterControlProps> = ({ field, value, onChange })
     case 'number':
       return (
         <div style={containerStyle} className='flex flex-col gap-1'>
-          <Label className='text-[10px] font-semibold uppercase tracking-wider text-gray-500/80'>{field.label}</Label>
+          <Label className='text-[10px] font-semibold uppercase tracking-wider text-gray-500/80'>
+            {field.label}
+          </Label>
           <Input
             type='number'
             placeholder={field.placeholder}
@@ -307,7 +311,9 @@ const FilterControl: React.FC<FilterControlProps> = ({ field, value, onChange })
     case 'date':
       return (
         <div style={containerStyle} className='flex flex-col gap-1'>
-          <Label className='text-[10px] font-semibold uppercase tracking-wider text-gray-500/80'>{field.label}</Label>
+          <Label className='text-[10px] font-semibold uppercase tracking-wider text-gray-500/80'>
+            {field.label}
+          </Label>
           <Input
             type='date'
             value={(localValue as string) || ''}
@@ -321,7 +327,9 @@ const FilterControl: React.FC<FilterControlProps> = ({ field, value, onChange })
       const rangeValue = value as { from?: string; to?: string } | undefined;
       return (
         <div style={containerStyle} className='flex flex-col gap-1'>
-          <Label className='text-[10px] font-semibold uppercase tracking-wider text-gray-500/80'>{field.label}</Label>
+          <Label className='text-[10px] font-semibold uppercase tracking-wider text-gray-500/80'>
+            {field.label}
+          </Label>
           <div className='flex gap-1'>
             <Input
               type='date'
@@ -356,7 +364,9 @@ const FilterControl: React.FC<FilterControlProps> = ({ field, value, onChange })
     default:
       return (
         <div style={containerStyle} className='flex flex-col gap-1'>
-          <Label className='text-[10px] font-semibold uppercase tracking-wider text-gray-500/80'>{field.label}</Label>
+          <Label className='text-[10px] font-semibold uppercase tracking-wider text-gray-500/80'>
+            {field.label}
+          </Label>
           <Input
             type='text'
             placeholder={field.placeholder}

@@ -61,7 +61,7 @@ export async function apiClient<T>(
 ): Promise<T> {
   const isFormData = customConfig.body instanceof FormData;
   const headers: Record<string, string> = isFormData ? {} : { 'Content-Type': 'application/json' };
-  
+
   // Build URL with query parameters
   let url = endpoint;
   if (params) {
@@ -94,16 +94,17 @@ export async function apiClient<T>(
 
   try {
     const fetchPromise = fetch(url, config);
-    const response = timeout > 0
-      ? await Promise.race<Response>([
-        fetchPromise,
-        new Promise<Response>((_, reject) => {
-          timer = setTimeout(() => {
-            reject(new Error(`Request timeout after ${timeout}ms`));
-          }, timeout);
-        }),
-      ])
-      : await fetchPromise;
+    const response =
+      timeout > 0
+        ? await Promise.race<Response>([
+            fetchPromise,
+            new Promise<Response>((_, reject) => {
+              timer = setTimeout(() => {
+                reject(new Error(`Request timeout after ${timeout}ms`));
+              }, timeout);
+            }),
+          ])
+        : await fetchPromise;
 
     if (response.status === 204) {
       return {} as T;
@@ -138,14 +139,14 @@ export async function apiClient<T>(
     error.payload = data;
 
     if (logError) {
-      logClientError(error, { 
-        context: { 
-          endpoint, 
-          method: config.method, 
+      logClientError(error, {
+        context: {
+          endpoint,
+          method: config.method,
           status: response.status,
           traceId: getTraceId(),
-          params 
-        } 
+          params,
+        },
       });
       if (isLoggableObject(error)) {
         error.__logged = true;
@@ -175,13 +176,13 @@ export async function apiClient<T>(
 
     const genericError = new Error(error instanceof Error ? error.message : 'Network Error');
     if (logError) {
-      logClientError(genericError, { 
-        context: { 
-          endpoint, 
-          method: config.method, 
+      logClientError(genericError, {
+        context: {
+          endpoint,
+          method: config.method,
           traceId: getTraceId(),
-          params 
-        } 
+          params,
+        },
       });
       if (isLoggableObject(genericError)) {
         genericError.__logged = true;
@@ -205,16 +206,28 @@ export interface Api {
 }
 
 export const api: Api = {
-  get: <T>(endpoint: string, options?: ApiClientOptions): Promise<T> => 
+  get: <T>(endpoint: string, options?: ApiClientOptions): Promise<T> =>
     apiClient<T>(endpoint, { ...options, method: 'GET' }),
-  post: <T>(endpoint: string, body?: unknown, options?: ApiClientOptions): Promise<T> => 
-    apiClient<T>(endpoint, { ...options, method: 'POST', body: body instanceof FormData ? body : JSON.stringify(body) }),
-  put: <T>(endpoint: string, body?: unknown, options?: ApiClientOptions): Promise<T> => 
-    apiClient<T>(endpoint, { ...options, method: 'PUT', body: body instanceof FormData ? body : JSON.stringify(body) }),
-  patch: <T>(endpoint: string, body?: unknown, options?: ApiClientOptions): Promise<T> => 
-    apiClient<T>(endpoint, { ...options, method: 'PATCH', body: body instanceof FormData ? body : JSON.stringify(body) }),
+  post: <T>(endpoint: string, body?: unknown, options?: ApiClientOptions): Promise<T> =>
+    apiClient<T>(endpoint, {
+      ...options,
+      method: 'POST',
+      body: body instanceof FormData ? body : JSON.stringify(body),
+    }),
+  put: <T>(endpoint: string, body?: unknown, options?: ApiClientOptions): Promise<T> =>
+    apiClient<T>(endpoint, {
+      ...options,
+      method: 'PUT',
+      body: body instanceof FormData ? body : JSON.stringify(body),
+    }),
+  patch: <T>(endpoint: string, body?: unknown, options?: ApiClientOptions): Promise<T> =>
+    apiClient<T>(endpoint, {
+      ...options,
+      method: 'PATCH',
+      body: body instanceof FormData ? body : JSON.stringify(body),
+    }),
   patchFormData: <T>(endpoint: string, body: FormData, options?: ApiClientOptions): Promise<T> =>
     apiClient<T>(endpoint, { ...options, method: 'PATCH', body }),
-  delete: <T>(endpoint: string, options?: ApiClientOptions): Promise<T> => 
+  delete: <T>(endpoint: string, options?: ApiClientOptions): Promise<T> =>
     apiClient<T>(endpoint, { ...options, method: 'DELETE' }),
 };

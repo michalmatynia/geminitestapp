@@ -1,18 +1,9 @@
 'use client';
 
-import {
-  FileCode2,
-  FileImage,
-  FileText,
-  Folder,
-  FolderOpen,
-  GripVertical,
-} from 'lucide-react';
+import { FileCode2, FileImage, FileText, Folder, FolderOpen, GripVertical } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import {
-  useMasterFolderTreeInstance,
-} from '@/shared/lib/foldertree';
+import { useMasterFolderTreeInstance } from '@/shared/lib/foldertree';
 import {
   FolderTreeViewportV2,
   applyInternalMasterTreeDrop,
@@ -25,11 +16,7 @@ import {
 } from '@/shared/lib/foldertree/v2/search';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { FolderTreePanel } from '@/shared/ui';
-import {
-  DRAG_KEYS,
-  resolveVerticalDropPosition,
-  setDragData,
-} from '@/shared/utils/drag-drop';
+import { DRAG_KEYS, resolveVerticalDropPosition, setDragData } from '@/shared/utils/drag-drop';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
@@ -69,10 +56,7 @@ type PendingNodeCanvasAction = {
 };
 
 function CaseResolverFolderTreeInner(): React.JSX.Element {
-  const {
-    selectedAssetId,
-    onLinkRelatedFiles,
-  } = useCaseResolverPageContext();
+  const { selectedAssetId, onLinkRelatedFiles } = useCaseResolverPageContext();
 
   const {
     masterNodes,
@@ -88,21 +72,14 @@ function CaseResolverFolderTreeInner(): React.JSX.Element {
   const [pendingNodeCanvasAction, setPendingNodeCanvasAction] =
     useState<PendingNodeCanvasAction | null>(null);
   const [treeSearchQuery, setTreeSearchQuery] = useState('');
-  
+
   const dragHandleNodeIdRef = React.useRef<string | null>(null);
   const clearDragHandleArming = React.useCallback((): void => {
     dragHandleNodeIdRef.current = null;
   }, []);
 
   useEffect((): (() => void) => {
-    const events = [
-      'dragend',
-      'drop',
-      'pointerup',
-      'pointercancel',
-      'mouseup',
-      'blur',
-    ] as const;
+    const events = ['dragend', 'drop', 'pointerup', 'pointercancel', 'mouseup', 'blur'] as const;
     events.forEach((eventName) => {
       window.addEventListener(eventName, clearDragHandleArming);
     });
@@ -136,35 +113,40 @@ function CaseResolverFolderTreeInner(): React.JSX.Element {
     [controller]
   );
 
-  const canStartTreeDrag = React.useCallback(({ node, event }: { node: MasterTreeNode; event: React.DragEvent<HTMLDivElement> }): boolean => {
-    const blockedVirtualSectionNode = isCaseResolverVirtualSectionNode(node);
-    const eventTarget = event.target;
-    const fromEventTargetHandle =
-      eventTarget instanceof Element &&
-      eventTarget.closest('[data-master-tree-drag-handle="true"]') !== null;
-    let fromPointerHandle = false;
-    if (typeof document !== 'undefined') {
-      const pointerElement = document.elementFromPoint(
-        event.clientX,
-        event.clientY,
-      );
-      fromPointerHandle =
-        pointerElement?.closest('[data-master-tree-drag-handle="true"]') !==
-        null;
-    }
-    const fromHandleGesture = fromEventTargetHandle || fromPointerHandle;
-    if (fromHandleGesture) {
-      dragHandleNodeIdRef.current = node.id;
-    }
+  const canStartTreeDrag = React.useCallback(
+    ({
+      node,
+      event,
+    }: {
+      node: MasterTreeNode;
+      event: React.DragEvent<HTMLDivElement>;
+    }): boolean => {
+      const blockedVirtualSectionNode = isCaseResolverVirtualSectionNode(node);
+      const eventTarget = event.target;
+      const fromEventTargetHandle =
+        eventTarget instanceof Element &&
+        eventTarget.closest('[data-master-tree-drag-handle="true"]') !== null;
+      let fromPointerHandle = false;
+      if (typeof document !== 'undefined') {
+        const pointerElement = document.elementFromPoint(event.clientX, event.clientY);
+        fromPointerHandle =
+          pointerElement?.closest('[data-master-tree-drag-handle="true"]') !== null;
+      }
+      const fromHandleGesture = fromEventTargetHandle || fromPointerHandle;
+      if (fromHandleGesture) {
+        dragHandleNodeIdRef.current = node.id;
+      }
 
-    return canStartCaseResolverTreeNodeDrag({
-      nodeType: node.type,
-      nodeId: node.id,
-      isVirtualSectionNode: blockedVirtualSectionNode,
-      fromHandleGesture,
-      armedNodeId: dragHandleNodeIdRef.current,
-    });
-  }, []);
+      return canStartCaseResolverTreeNodeDrag({
+        nodeType: node.type,
+        nodeId: node.id,
+        isVirtualSectionNode: blockedVirtualSectionNode,
+        fromHandleGesture,
+        armedNodeId: dragHandleNodeIdRef.current,
+      });
+    },
+    []
+  );
 
   const armDragHandle = React.useCallback((nodeId: string): void => {
     dragHandleNodeIdRef.current = nodeId;
@@ -177,9 +159,7 @@ function CaseResolverFolderTreeInner(): React.JSX.Element {
   useEffect(() => {
     if (highlightedFolderAncestorNodeIds.length === 0) return;
     const nextExpandedNodeIds = new Set<string>(
-      Array.from(controller.expandedNodeIds).map((nodeId): string =>
-        String(nodeId),
-      ),
+      Array.from(controller.expandedNodeIds).map((nodeId): string => String(nodeId))
     );
     let changed = false;
     highlightedFolderAncestorNodeIds.forEach((folderNodeId: string): void => {
@@ -209,14 +189,11 @@ function CaseResolverFolderTreeInner(): React.JSX.Element {
           folder: pendingNodeCanvasAction.folder,
         });
       } else {
-        setHighlightedNodeFileAssetIds(
-          pendingNodeCanvasAction.relatedNodeFileAssetIds,
-        );
+        setHighlightedNodeFileAssetIds(pendingNodeCanvasAction.relatedNodeFileAssetIds);
         emitCaseResolverShowDocumentInCanvas({
           fileId: pendingNodeCanvasAction.fileId,
           nodeId: pendingNodeCanvasAction.nodeId ?? null,
-          relatedNodeFileAssetIds:
-            pendingNodeCanvasAction.relatedNodeFileAssetIds,
+          relatedNodeFileAssetIds: pendingNodeCanvasAction.relatedNodeFileAssetIds,
         });
       }
       setPendingNodeCanvasAction(null);
@@ -225,7 +202,12 @@ function CaseResolverFolderTreeInner(): React.JSX.Element {
     return (): void => {
       window.clearTimeout(timeoutId);
     };
-  }, [isNodeFileCanvasActive, pendingNodeCanvasAction, selectedAssetId, setHighlightedNodeFileAssetIds]);
+  }, [
+    isNodeFileCanvasActive,
+    pendingNodeCanvasAction,
+    selectedAssetId,
+    setHighlightedNodeFileAssetIds,
+  ]);
 
   const {
     FolderClosedIcon,
@@ -286,7 +268,7 @@ function CaseResolverFolderTreeInner(): React.JSX.Element {
         fallbackId: 'GripVertical',
       }),
     }),
-    [resolveIcon],
+    [resolveIcon]
   );
 
   return (
@@ -295,10 +277,7 @@ function CaseResolverFolderTreeInner(): React.JSX.Element {
       bodyClassName='flex min-h-0 flex-1 flex-col'
       masterInstance='case_resolver'
       header={
-        <CaseResolverTreeHeader
-          searchQuery={treeSearchQuery}
-          onSearchChange={setTreeSearchQuery}
-        />
+        <CaseResolverTreeHeader searchQuery={treeSearchQuery} onSearchChange={setTreeSearchQuery} />
       }
     >
       {isSearchActive ? (
@@ -315,27 +294,21 @@ function CaseResolverFolderTreeInner(): React.JSX.Element {
             controller={controller}
             canStartDrag={canStartTreeDrag}
             rootDropUi={rootDropUi}
-            canDrop={({
-              draggedNodeId,
-              targetId,
-              position,
-              defaultAllowed,
-            }): boolean => {
+            canDrop={({ draggedNodeId, targetId, position, defaultAllowed }): boolean => {
               const draggedNode = controller.nodes.find(
-                (candidate: MasterTreeNode): boolean => candidate.id === draggedNodeId,
+                (candidate: MasterTreeNode): boolean => candidate.id === draggedNodeId
               );
               if (draggedNode && isCaseResolverVirtualSectionNode(draggedNode)) return false;
               const targetNode = targetId
                 ? controller.nodes.find(
-                  (candidate: MasterTreeNode): boolean => candidate.id === targetId,
-                )
+                    (candidate: MasterTreeNode): boolean => candidate.id === targetId
+                  )
                 : null;
               if (targetNode && isCaseResolverVirtualSectionNode(targetNode)) return false;
               if (defaultAllowed) return true;
               const dragged = decodeCaseResolverMasterNodeId(draggedNodeId);
               if (!dragged) return false;
-              if (dragged.entity !== 'file' && dragged.entity !== 'asset')
-                return false;
+              if (dragged.entity !== 'file' && dragged.entity !== 'asset') return false;
 
               if (position === 'inside') {
                 if (targetId === null) return true;
@@ -350,7 +323,7 @@ function CaseResolverFolderTreeInner(): React.JSX.Element {
             }}
             resolveDropPosition={(event, { draggedNodeId, targetId }, ctlr) => {
               const targetNode = ctlr.nodes.find(
-                (candidate: MasterTreeNode): boolean => candidate.id === targetId,
+                (candidate: MasterTreeNode): boolean => candidate.id === targetId
               );
               if (targetNode?.type === 'folder') {
                 return 'inside';
@@ -362,13 +335,9 @@ function CaseResolverFolderTreeInner(): React.JSX.Element {
                 return 'inside';
               }
               const targetRect = event.currentTarget.getBoundingClientRect();
-              const edgePosition = resolveVerticalDropPosition(
-                event.clientY,
-                targetRect,
-                {
-                  thresholdRatio: 0.34,
-                },
-              );
+              const edgePosition = resolveVerticalDropPosition(event.clientY, targetRect, {
+                thresholdRatio: 0.34,
+              });
               return edgePosition ?? 'after';
             }}
             onNodeDragStart={({ node, event }): void => {
@@ -411,17 +380,14 @@ function CaseResolverFolderTreeInner(): React.JSX.Element {
               setDragData(
                 event.dataTransfer,
                 { [DRAG_KEYS.CASE_RESOLVER_ITEM]: JSON.stringify(payload) },
-                { text: payload.name, effectAllowed: 'copyMove' },
+                { text: payload.name, effectAllowed: 'copyMove' }
               );
             }}
             onNodeDrop={async (
               { draggedNodeId, targetId, position, rootDropZone },
-              ctlr,
+              ctlr
             ): Promise<void> => {
-              const isInternal = isInternalMasterTreeNode(
-                ctlr.nodes,
-                draggedNodeId,
-              );
+              const isInternal = isInternalMasterTreeNode(ctlr.nodes, draggedNodeId);
               if (!isInternal) return;
 
               // File-on-file center drop → link as related documents
@@ -443,7 +409,7 @@ function CaseResolverFolderTreeInner(): React.JSX.Element {
               });
             }}
             renderNode={(nodeProps: FolderTreeViewportRenderNodeInput) => (
-              <CaseResolverTreeNode 
+              <CaseResolverTreeNode
                 {...nodeProps}
                 armDragHandle={armDragHandle}
                 releaseDragHandle={releaseDragHandle}

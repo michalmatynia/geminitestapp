@@ -4,7 +4,7 @@ const { listBrainModelsMock } = vi.hoisted(() => ({
   listBrainModelsMock: vi.fn(),
 }));
 
-vi.mock('@/features/ai/brain/server-model-catalog', () => ({
+vi.mock('@/shared/lib/ai-brain/server-model-catalog', () => ({
   listBrainModels: listBrainModelsMock,
 }));
 
@@ -18,6 +18,24 @@ describe('brain models handler', () => {
   it('returns the Brain-backed model catalog payload', async () => {
     listBrainModelsMock.mockResolvedValue({
       models: ['gpt-4o-mini', 'llama3.2'],
+      descriptors: {
+        'gpt-4o-mini': {
+          id: 'gpt-4o-mini',
+          family: 'chat',
+          modality: 'text',
+          vendor: 'openai',
+          supportsStreaming: true,
+          supportsJsonMode: true,
+        },
+        'llama3.2': {
+          id: 'llama3.2',
+          family: 'chat',
+          modality: 'text',
+          vendor: 'ollama',
+          supportsStreaming: true,
+          supportsJsonMode: false,
+        },
+      },
       warning: {
         code: 'OLLAMA_UNAVAILABLE',
         message: 'fallback only',
@@ -32,7 +50,7 @@ describe('brain models handler', () => {
 
     const response = await GET_handler(
       new Request('http://localhost/api/brain/models') as Parameters<typeof GET_handler>[0],
-      {} as Parameters<typeof GET_handler>[1],
+      {} as Parameters<typeof GET_handler>[1]
     );
 
     const payload = (await response.json()) as {
@@ -44,6 +62,26 @@ describe('brain models handler', () => {
     expect(payload.models).toEqual(['gpt-4o-mini', 'llama3.2']);
     expect(payload.warning?.code).toBe('OLLAMA_UNAVAILABLE');
     expect(payload.sources?.configuredOllamaModels).toEqual(['llama3.2']);
-    expect(listBrainModelsMock).toHaveBeenCalledTimes(1);
+    expect(listBrainModelsMock).toHaveBeenCalledWith({});
+  });
+
+  it('passes discovery filters through to the model catalog', async () => {
+    listBrainModelsMock.mockResolvedValue({
+      models: ['gpt-4o-mini'],
+      descriptors: {},
+    });
+
+    await GET_handler(
+      new Request(
+        'http://localhost/api/brain/models?family=chat&modality=text&streaming=true'
+      ) as Parameters<typeof GET_handler>[0],
+      {} as Parameters<typeof GET_handler>[1]
+    );
+
+    expect(listBrainModelsMock).toHaveBeenCalledWith({
+      family: 'chat',
+      modality: 'text',
+      streaming: true,
+    });
   });
 });

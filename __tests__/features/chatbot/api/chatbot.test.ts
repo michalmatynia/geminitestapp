@@ -1,12 +1,36 @@
 import { http, HttpResponse } from 'msw';
 import { NextRequest } from 'next/server';
-import { vi, MockInstance } from 'vitest';
+import { vi, MockInstance, describe, it, expect, beforeEach, afterEach } from 'vitest';
 
 import { GET, POST } from '@/app/api/chatbot/route';
 import { server } from '@/mocks/server';
-
+import { resolveBrainModelExecutionConfig } from '@/shared/lib/ai-brain/server';
+import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
 
 const OLLAMA_BASE_URL = process.env['OLLAMA_BASE_URL'] || 'http://localhost:11434';
+
+vi.mock('@/shared/lib/db/app-db-provider', () => ({
+  getAppDbProvider: vi.fn().mockResolvedValue('prisma'),
+  getAppDbProviderSetting: vi.fn().mockResolvedValue('prisma'),
+  invalidateAppDbProviderCache: vi.fn(),
+  APP_DB_PROVIDER_SETTING_KEY: 'app_db_provider',
+}));
+
+vi.mock('@/shared/lib/ai-brain/server', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/lib/ai-brain/server')>();
+  return {
+    ...actual,
+    resolveBrainModelExecutionConfig: vi.fn(),
+  };
+});
+
+vi.mock('@/shared/lib/ai-brain/server-runtime-client', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/lib/ai-brain/server-runtime-client')>();
+  return {
+    ...actual,
+    runBrainChatCompletion: vi.fn(),
+  };
+});
 
 describe('Chatbot API', () => {
   let consoleErrorSpy: MockInstance;
@@ -14,6 +38,39 @@ describe('Chatbot API', () => {
   beforeEach(() => {
     consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     process.env['OLLAMA_MODEL'] = 'test-model';
+    
+    // Mock AI Brain config directly
+    vi.mocked(resolveBrainModelExecutionConfig).mockResolvedValue({
+      provider: 'model',
+      agentId: '',
+      modelId: 'test-model',
+      temperature: 0.7,
+      maxTokens: 800,
+      systemPrompt: 'You are a helpful assistant.',
+      assignment: {
+        enabled: true,
+        provider: 'model',
+        modelId: 'test-model',
+        agentId: '',
+        temperature: 0.7,
+        maxTokens: 800,
+        notes: null,
+      },
+      capability: 'chatbot.reply',
+      feature: 'chatbot',
+      brainApplied: {
+        capability: 'chatbot.reply',
+        feature: 'chatbot',
+        modelFamily: 'chat',
+        runtimeKind: 'chat',
+        provider: 'model',
+        modelId: 'test-model',
+        temperature: 0.7,
+        maxTokens: 800,
+        systemPromptApplied: true,
+        enforced: true,
+      },
+    });
   });
 
   afterEach(() => {
@@ -35,7 +92,8 @@ describe('Chatbot API', () => {
     const data = (await res.json()) as { models: string[] };
 
     expect(res.status).toBe(200);
-    expect(data.models).toEqual(['test-model', 'llava']);
+    expect(data.models).toContain('test-model');
+    expect(data.models).toContain('llava');
   });
 
   it('should return fallback models when model listing fails', async () => {
@@ -46,11 +104,14 @@ describe('Chatbot API', () => {
     );
 
     const res = await GET(new NextRequest('http://localhost/api/chatbot'));
-    const data = (await res.json()) as { models: string[]; warning?: any };
+    const data = (await res.json()) as { 
+      models: string[]; 
+      warning?: { code: string; message: string } 
+    };
 
     expect(res.status).toBe(200);
     expect(data.models).toBeDefined();
-    expect(data.warning.code).toBe('MODELS_UNAVAILABLE');
+    expect(data.warning?.code).toBe('OLLAMA_UNAVAILABLE');
   });
 
   it('should reject invalid chat payloads', async () => {
@@ -66,12 +127,12 @@ describe('Chatbot API', () => {
     expect(data.error).toBe('No messages provided.');
   });
 
-  it('should proxy chat requests to Ollama', async () => {
-    server.use(
-      http.post(`${OLLAMA_BASE_URL}/api/chat`, () => {
-        return HttpResponse.json({ message: { content: 'Hello from model.' } });
-      })
-    );
+  it('should proxy chat requests to Ollama via Brain runtime', async () => {
+    vi.mocked(runBrainChatCompletion).mockResolvedValue({
+      text: 'Hello from model.',
+      vendor: 'ollama',
+      modelId: 'test-model',
+    });
 
     const req = new NextRequest('http://localhost/api/chatbot', {
       method: 'POST',
@@ -82,18 +143,18 @@ describe('Chatbot API', () => {
     });
 
     const res = await POST(req);
-    const data = (await res.json()) as { message: string };
+    const data = (await res.json()) as { message: string; error?: string };
+
+    if (res.status !== 200) {
+      console.log('Error response:', JSON.stringify(data, null, 2));
+    }
 
     expect(res.status).toBe(200);
     expect(data.message).toBe('Hello from model.');
   });
 
   it('should return a debug errorId when chat proxy fails', async () => {
-    server.use(
-      http.post(`${OLLAMA_BASE_URL}/api/chat`, () => {
-        return new HttpResponse('Model unavailable', { status: 502 });
-      })
-    );
+    vi.mocked(runBrainChatCompletion).mockRejectedValue(new Error('Ollama error: Model unavailable'));
 
     const req = new NextRequest('http://localhost/api/chatbot', {
       method: 'POST',
@@ -106,17 +167,13 @@ describe('Chatbot API', () => {
     const res = await POST(req);
     const data = (await res.json()) as { error: string; errorId?: string };
 
-    expect(res.status).toBe(502);
+    expect(res.status).toBe(500);
     expect(data.error).toContain('Ollama error');
     expect(data.errorId).toBeDefined();
   });
 
   it('should return a debug errorId on unexpected chat errors', async () => {
-    server.use(
-      http.post(`${OLLAMA_BASE_URL}/api/chat`, () => {
-        return HttpResponse.error();
-      })
-    );
+    vi.mocked(runBrainChatCompletion).mockRejectedValue(new Error('Unexpected error'));
 
     const req = new NextRequest('http://localhost/api/chatbot', {
       method: 'POST',

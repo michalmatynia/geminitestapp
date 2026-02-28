@@ -24,21 +24,19 @@ const extensionForMimeType = (mimetype: string): string => {
   return '.jpg';
 };
 
-const resolveFilename = (input: {
-  url: string;
-  preferred?: string;
-  mimetype: string;
-}): string => {
+const resolveFilename = (input: { url: string; preferred?: string; mimetype: string }): string => {
   const baseFallback = `linked-image-${Date.now()}`;
-  const withSource = input.preferred?.trim() || (() => {
-    try {
-      const parsed = new URL(input.url);
-      const basename = path.basename(parsed.pathname).trim();
-      return basename || '';
-    } catch {
-      return '';
-    }
-  })();
+  const withSource =
+    input.preferred?.trim() ||
+    (() => {
+      try {
+        const parsed = new URL(input.url);
+        const basename = path.basename(parsed.pathname).trim();
+        return basename || '';
+      } catch {
+        return '';
+      }
+    })();
 
   const source = withSource || baseFallback;
   const ext = path.extname(source).trim();
@@ -84,7 +82,8 @@ export async function POST_handler(
     });
   }
 
-  const detectedMime = blob.type?.trim() || response.headers.get('content-type')?.trim() || 'image/jpeg';
+  const detectedMime =
+    blob.type?.trim() || response.headers.get('content-type')?.trim() || 'image/jpeg';
   if (!detectedMime.toLowerCase().startsWith('image/')) {
     throw badRequestError('URL does not point to an image.', {
       url: parsed.data.url,

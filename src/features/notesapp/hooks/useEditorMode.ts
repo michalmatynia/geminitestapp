@@ -18,24 +18,18 @@ export function useEditorMode(
     content?: string;
     [key: string]: unknown;
   } | null,
-  settingsEditorMode: NoteEditorType,
+  settingsEditorMode: NoteEditorType
 ): {
   editorMode: NoteEditorType;
   setEditorMode: (mode: NoteEditorType) => void;
   isEditorModeLocked: boolean;
   isMigrating: boolean;
-  handleMigrateToWysiwyg: (
-    content: string,
-    onSuccess?: () => void,
-  ) => Promise<string | undefined>;
-  handleMigrateToMarkdown: (
-    content: string,
-    onSuccess?: () => void,
-  ) => Promise<string | undefined>;
+  handleMigrateToWysiwyg: (content: string, onSuccess?: () => void) => Promise<string | undefined>;
+  handleMigrateToMarkdown: (content: string, onSuccess?: () => void) => Promise<string | undefined>;
 } {
   const { toast } = useToast();
   const [editorMode, setEditorMode] = useState<NoteEditorType>(
-    (note?.editorType as NoteEditorType) || settingsEditorMode,
+    (note?.editorType as NoteEditorType) || settingsEditorMode
   );
   const [isMigrating, setIsMigrating] = useState(false);
 
@@ -87,7 +81,7 @@ export function useEditorMode(
 
   const handleMigrateToWysiwyg = async (
     content: string,
-    onSuccess?: () => void,
+    onSuccess?: () => void
   ): Promise<string | undefined> => {
     if (!note?.id) return;
 
@@ -129,7 +123,7 @@ export function useEditorMode(
 
   const handleMigrateToMarkdown = async (
     content: string,
-    onSuccess?: () => void,
+    onSuccess?: () => void
   ): Promise<string | undefined> => {
     if (!note?.id) return;
 

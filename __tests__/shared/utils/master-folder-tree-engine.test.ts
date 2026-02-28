@@ -69,12 +69,8 @@ describe('master-folder-tree-engine', () => {
 
     const normalized = normalizeMasterTreePaths(createNodes());
     expect(normalized.find((node) => node.id === 'f-root')?.path).toBe('workspace');
-    expect(normalized.find((node) => node.id === 'f-project')?.path).toBe(
-      'workspace/project'
-    );
-    expect(normalized.find((node) => node.id === 'n-1')?.path).toBe(
-      'workspace/project/note-one'
-    );
+    expect(normalized.find((node) => node.id === 'f-project')?.path).toBe('workspace/project');
+    expect(normalized.find((node) => node.id === 'n-1')?.path).toBe('workspace/project/note-one');
   });
 
   it('detects parent cycles', () => {

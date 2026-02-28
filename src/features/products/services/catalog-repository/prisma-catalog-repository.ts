@@ -1,6 +1,5 @@
 import 'server-only';
 
-
 import type {
   CatalogCreateInput,
   CatalogRecord,
@@ -25,10 +24,11 @@ const toRecord = (
   createdAt: catalog.createdAt.toISOString(),
   updatedAt: catalog.updatedAt.toISOString(),
   // Sort by position to ensure correct ordering
-  languageIds: catalog.languages
-    ?.sort((a: { position: number }, b: { position: number }) => a.position - b.position)
-    .map((entry: { languageId: string }) => entry.languageId) ?? [],
-  priceGroupIds: (catalog.priceGroupIds) ?? [],
+  languageIds:
+    catalog.languages
+      ?.sort((a: { position: number }, b: { position: number }) => a.position - b.position)
+      .map((entry: { languageId: string }) => entry.languageId) ?? [],
+  priceGroupIds: catalog.priceGroupIds ?? [],
 });
 
 export const prismaCatalogRepository: CatalogRepository = {

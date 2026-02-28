@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { cancelImageStudioSequenceRun } from '@/features/ai/image-studio/server/sequence-runtime';
+import { cancelImageStudioSequenceRun } from '@/shared/lib/ai/image-studio/server/sequence-runtime';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 
 export async function POST_handler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
-  params: { runId: string },
+  params: { runId: string }
 ): Promise<Response> {
   const runId = params.runId?.trim();
   if (!runId) {

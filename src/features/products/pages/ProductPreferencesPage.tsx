@@ -5,10 +5,22 @@ import { useEffect, useState, useMemo } from 'react';
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { useCatalogs } from '@/features/products/hooks/useProductSettingsQueries';
-import { useUserPreferences, useUpdateUserPreferences } from '@/features/products/hooks/useUserPreferences';
+import {
+  useUserPreferences,
+  useUpdateUserPreferences,
+} from '@/features/products/hooks/useUserPreferences';
 import type { Catalog } from '@/shared/contracts/products';
 import type { ProductListPreferences } from '@/shared/contracts/products';
-import { Button, SelectSimple, Input, useToast, FormSection, FormField, LoadingState, PageLayout } from '@/shared/ui';
+import {
+  Button,
+  SelectSimple,
+  Input,
+  useToast,
+  FormSection,
+  FormField,
+  LoadingState,
+  PageLayout,
+} from '@/shared/ui';
 
 const DEFAULT_PREFERENCES: ProductListPreferences = {
   nameLocale: 'name_en',
@@ -28,7 +40,7 @@ export function ProductPreferencesPage(): React.JSX.Element {
   const { preferences: savedPreferences, loading: prefsLoading } = useUserPreferences();
   const catalogsQuery = useCatalogs();
   const catalogs = useMemo(() => catalogsQuery.data || [], [catalogsQuery.data]);
-  
+
   const [preferences, setPreferences] = useState<ProductListPreferences>(DEFAULT_PREFERENCES);
   const updateMutation = useUpdateUserPreferences();
 
@@ -54,7 +66,9 @@ export function ProductPreferencesPage(): React.JSX.Element {
       toast('Preferences saved successfully', { variant: 'success' });
       router.push('/admin/products');
     } catch (error) {
-      logClientError(error, { context: { source: 'ProductPreferencesPage', action: 'handleSave' } });
+      logClientError(error, {
+        context: { source: 'ProductPreferencesPage', action: 'handleSave' },
+      });
       toast('Failed to save preferences', { variant: 'error' });
     }
   };
@@ -65,7 +79,9 @@ export function ProductPreferencesPage(): React.JSX.Element {
       setPreferences(DEFAULT_PREFERENCES);
       toast('Preferences reset to default', { variant: 'success' });
     } catch (error) {
-      logClientError(error, { context: { source: 'ProductPreferencesPage', action: 'handleResetToDefault' } });
+      logClientError(error, {
+        context: { source: 'ProductPreferencesPage', action: 'handleResetToDefault' },
+      });
       toast('Failed to reset preferences', { variant: 'error' });
     }
   };
@@ -83,26 +99,21 @@ export function ProductPreferencesPage(): React.JSX.Element {
       title='Product Preferences'
       description='Manage your product list display and navigation preferences'
       headerActions={
-        <Button
-          variant='outline'
-          onClick={() => router.push('/admin/products')}
-        >
+        <Button variant='outline' onClick={() => router.push('/admin/products')}>
           Back to Products
         </Button>
       }
     >
       <div className='space-y-6'>
-        <FormSection
-          title='Product List Settings'
-          className='p-6'
-        >
+        <FormSection title='Product List Settings' className='p-6'>
           <div className='space-y-4'>
             {/* Name Locale */}
             <FormField
               label='Product Name Language'
               description='Default language for product names in the list'
             >
-              <SelectSimple size='sm'
+              <SelectSimple
+                size='sm'
                 value={preferences.nameLocale || 'name_en'}
                 onValueChange={(value: string) =>
                   setPreferences((prev: ProductListPreferences) => ({
@@ -123,7 +134,8 @@ export function ProductPreferencesPage(): React.JSX.Element {
               label='Default Catalog Filter'
               description='Default catalog filter when opening the product list'
             >
-              <SelectSimple size='sm'
+              <SelectSimple
+                size='sm'
                 value={preferences.catalogFilter || 'all'}
                 onValueChange={(value: string) =>
                   setPreferences((prev: ProductListPreferences) => ({
@@ -135,8 +147,8 @@ export function ProductPreferencesPage(): React.JSX.Element {
                   { value: 'all', label: 'All Catalogs' },
                   ...catalogs.map((catalog: Catalog) => ({
                     value: catalog.id,
-                    label: catalog.name
-                  }))
+                    label: catalog.name,
+                  })),
                 ]}
               />
             </FormField>
@@ -164,7 +176,8 @@ export function ProductPreferencesPage(): React.JSX.Element {
               label='Thumbnail Source'
               description='Choose which image source is used for product list thumbnails'
             >
-              <SelectSimple size='sm'
+              <SelectSimple
+                size='sm'
                 value={preferences.thumbnailSource || 'file'}
                 onValueChange={(value: string) =>
                   setPreferences((prev: ProductListPreferences) => ({
@@ -185,7 +198,8 @@ export function ProductPreferencesPage(): React.JSX.Element {
               label='Products Per Page'
               description='Number of products to display per page'
             >
-              <SelectSimple size='sm'
+              <SelectSimple
+                size='sm'
                 value={String(preferences.pageSize || 50)}
                 onValueChange={(value: string) =>
                   setPreferences((prev: ProductListPreferences) => ({
@@ -193,7 +207,10 @@ export function ProductPreferencesPage(): React.JSX.Element {
                     pageSize: parseInt(value, 10),
                   }))
                 }
-                options={['10', '25', '50', '100', '200'].map((size: string) => ({ value: size, label: size }))}
+                options={['10', '25', '50', '100', '200'].map((size: string) => ({
+                  value: size,
+                  label: size,
+                }))}
               />
             </FormField>
 

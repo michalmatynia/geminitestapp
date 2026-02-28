@@ -3,11 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
-const {
-  parseJsonBodyMock,
-  duplicateProductMock,
-  invalidateAllMock,
-} = vi.hoisted(() => ({
+const { parseJsonBodyMock, duplicateProductMock, invalidateAllMock } = vi.hoisted(() => ({
   parseJsonBodyMock: vi.fn(),
   duplicateProductMock: vi.fn(),
   invalidateAllMock: vi.fn(),
@@ -60,9 +56,9 @@ describe('products/[id]/duplicate handler cache invalidation', () => {
     const request = {} as NextRequest;
     duplicateProductMock.mockResolvedValueOnce(null);
 
-    await expect(
-      POST_handler(request, buildContext(), { id: 'missing-product' })
-    ).rejects.toThrow('Product not found');
+    await expect(POST_handler(request, buildContext(), { id: 'missing-product' })).rejects.toThrow(
+      'Product not found'
+    );
 
     expect(invalidateAllMock).not.toHaveBeenCalled();
   });

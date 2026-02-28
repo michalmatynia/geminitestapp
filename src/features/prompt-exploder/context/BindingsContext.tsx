@@ -103,8 +103,7 @@ export function BindingsProvider({ children }: { children: React.ReactNode }): R
     if (
       resolved.fromSegmentId === bindingDraft.fromSegmentId &&
       resolved.toSegmentId === bindingDraft.toSegmentId &&
-      (segments.length > 0 ||
-        (!bindingDraft.fromSubsectionId && !bindingDraft.toSubsectionId))
+      (segments.length > 0 || (!bindingDraft.fromSubsectionId && !bindingDraft.toSubsectionId))
     ) {
       return;
     }

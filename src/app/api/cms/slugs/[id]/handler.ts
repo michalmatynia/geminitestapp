@@ -35,7 +35,11 @@ const resolveDomainFromRequest = async (req: NextRequest) => {
  * GET /api/cms/slugs/[id]
  * Fetches a single slug by its ID.
  */
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, params: Params): Promise<NextResponse | Response> {
+export async function GET_handler(
+  req: NextRequest,
+  _ctx: ApiHandlerContext,
+  params: Params
+): Promise<NextResponse | Response> {
   const { id } = params;
   const cmsRepository = await getCmsRepository();
   const domain = await resolveDomainFromRequest(req);
@@ -52,7 +56,11 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext, par
  * DELETE /api/cms/slugs/[id]
  * Deletes a slug.
  */
-export async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext, params: Params): Promise<NextResponse | Response> {
+export async function DELETE_handler(
+  req: NextRequest,
+  _ctx: ApiHandlerContext,
+  params: Params
+): Promise<NextResponse | Response> {
   const { id } = params;
   const cmsRepository = await getCmsRepository();
   const domain = await resolveDomainFromRequest(req);
@@ -70,7 +78,11 @@ export async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext, 
  * PUT /api/cms/slugs/[id]
  * Updates a slug.
  */
-export async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: Params): Promise<NextResponse | Response> {
+export async function PUT_handler(
+  req: NextRequest,
+  _ctx: ApiHandlerContext,
+  params: Params
+): Promise<NextResponse | Response> {
   const { id } = params;
 
   const parsed = await parseJsonBody(req, cmsSlugUpdateSchema, {

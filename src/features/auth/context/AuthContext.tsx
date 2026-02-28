@@ -67,7 +67,6 @@ const useAuthContextValue = ({
   updateSetting: ReturnType<typeof useUpdateSetting>;
   isPublicMode: boolean;
 }): AuthContextValue => {
-
   const permissions = useMemo(() => session?.user?.permissions ?? [], [session]);
   const isElevated = useMemo(() => Boolean(session?.user?.isElevated), [session]);
 
@@ -112,7 +111,7 @@ const useAuthContextValue = ({
     const storedDefault = settingsQuery.data.get(AUTH_SETTINGS_KEYS.defaultRole);
     return storedDefault && roles.some((role) => role.id === storedDefault)
       ? storedDefault
-      : roles.find((role) => role.id === 'viewer')?.id ?? roles[0]?.id ?? 'viewer';
+      : (roles.find((role) => role.id === 'viewer')?.id ?? roles[0]?.id ?? 'viewer');
   }, [settingsQuery.data, roles]);
 
   const securityPolicy = useMemo(() => {
@@ -120,8 +119,11 @@ const useAuthContextValue = ({
     const storedPolicyRaw = settingsQuery.data.get(AUTH_SETTINGS_KEYS.securityPolicy);
     const parsedPolicy = storedPolicyRaw
       ? normalizeAuthSecurityPolicy(
-        parseJsonSetting<Partial<AuthSecurityPolicy>>(storedPolicyRaw, DEFAULT_AUTH_SECURITY_POLICY)
-      )
+          parseJsonSetting<Partial<AuthSecurityPolicy>>(
+            storedPolicyRaw,
+            DEFAULT_AUTH_SECURITY_POLICY
+          )
+        )
       : DEFAULT_AUTH_SECURITY_POLICY;
     return parsedPolicy;
   }, [settingsQuery.data]);
@@ -134,7 +136,9 @@ const useAuthContextValue = ({
     );
   }, [settingsQuery.data]);
 
-  const isLoading = isPublicMode ? settingsQuery.isPending : status === 'loading' || settingsQuery.isPending;
+  const isLoading = isPublicMode
+    ? settingsQuery.isPending
+    : status === 'loading' || settingsQuery.isPending;
 
   const value = useMemo(
     () => ({

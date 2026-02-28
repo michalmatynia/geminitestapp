@@ -31,7 +31,7 @@ export function LogInsightsPanel(): React.JSX.Element {
         {logsQuery.isLoading ? (
           <LoadingState message='Loading insights...' size='sm' className='py-4' />
         ) : logsQuery.error ? (
-          <div className='text-xs text-red-400'>{(logsQuery.error).message}</div>
+          <div className='text-xs text-red-400'>{logsQuery.error.message}</div>
         ) : (logsQuery.data?.insights?.length ?? 0) === 0 ? (
           <EmptyState
             title='No insights yet'

@@ -15,8 +15,7 @@ export const AI_PATHS_MAINTENANCE_ACTION_IDS = [
   'upgrade_runtime_input_contracts',
   'upgrade_server_execution_mode',
 ] as const;
-export type AiPathsMaintenanceActionId =
-  (typeof AI_PATHS_MAINTENANCE_ACTION_IDS)[number];
+export type AiPathsMaintenanceActionId = (typeof AI_PATHS_MAINTENANCE_ACTION_IDS)[number];
 
 export type AiPathsMaintenanceActionReport = {
   id: AiPathsMaintenanceActionId;
@@ -82,8 +81,7 @@ const normalizeAiPathsMaintenanceAction = (
   return {
     id,
     title: typeof item['title'] === 'string' ? item['title'] : id,
-    description:
-      typeof item['description'] === 'string' ? item['description'] : '',
+    description: typeof item['description'] === 'string' ? item['description'] : '',
     blocking: item['blocking'] === true,
     status,
     affectedRecords:
@@ -93,9 +91,7 @@ const normalizeAiPathsMaintenanceAction = (
   };
 };
 
-const normalizeAiPathsMaintenanceReport = (
-  value: unknown
-): AiPathsMaintenanceReport => {
+const normalizeAiPathsMaintenanceReport = (value: unknown): AiPathsMaintenanceReport => {
   if (!value || typeof value !== 'object') {
     return {
       scannedAt: new Date().toISOString(),
@@ -110,9 +106,8 @@ const normalizeAiPathsMaintenanceReport = (
     .map((item: unknown): AiPathsMaintenanceActionReport | null =>
       normalizeAiPathsMaintenanceAction(item)
     )
-    .filter(
-      (item: AiPathsMaintenanceActionReport | null): item is AiPathsMaintenanceActionReport =>
-        Boolean(item)
+    .filter((item: AiPathsMaintenanceActionReport | null): item is AiPathsMaintenanceActionReport =>
+      Boolean(item)
     );
   const pendingActions = actions.filter((item) => item.status === 'pending');
   return {
@@ -121,13 +116,11 @@ const normalizeAiPathsMaintenanceReport = (
         ? payload['scannedAt']
         : new Date().toISOString(),
     pendingActions:
-      typeof payload['pendingActions'] === 'number' &&
-      Number.isFinite(payload['pendingActions'])
+      typeof payload['pendingActions'] === 'number' && Number.isFinite(payload['pendingActions'])
         ? Math.max(0, Math.trunc(payload['pendingActions']))
         : pendingActions.length,
     blockingActions:
-      typeof payload['blockingActions'] === 'number' &&
-      Number.isFinite(payload['blockingActions'])
+      typeof payload['blockingActions'] === 'number' && Number.isFinite(payload['blockingActions'])
         ? Math.max(0, Math.trunc(payload['blockingActions']))
         : pendingActions.filter((item) => item.blocking).length,
     actions,
@@ -142,13 +135,17 @@ const readBackupSettings = (): AiPathsSettingRecord[] | null => {
     const parsed = JSON.parse(raw) as unknown;
     const records = Array.isArray(parsed)
       ? parsed
-      : parsed && typeof parsed === 'object' && Array.isArray((parsed as { records?: unknown }).records)
+      : parsed &&
+          typeof parsed === 'object' &&
+          Array.isArray((parsed as { records?: unknown }).records)
         ? (parsed as { records: unknown[] }).records
         : null;
     if (!records) return null;
     const backupAgeMs =
-      parsed && typeof parsed === 'object' && typeof (parsed as { savedAt?: unknown }).savedAt === 'number'
-        ? Date.now() - ((parsed as { savedAt: number }).savedAt)
+      parsed &&
+      typeof parsed === 'object' &&
+      typeof (parsed as { savedAt?: unknown }).savedAt === 'number'
+        ? Date.now() - (parsed as { savedAt: number }).savedAt
         : Number.POSITIVE_INFINITY;
     if (backupAgeMs > AI_PATHS_SETTINGS_BACKUP_MAX_AGE_MS) {
       return null;
@@ -200,10 +197,7 @@ const fetchAiPathsSettingsResponse = async (): Promise<Response> => {
   let lastError: unknown;
   for (let attempt = 0; attempt <= AI_PATHS_SETTINGS_RETRY_DELAYS_MS.length; attempt += 1) {
     const controller = new AbortController();
-    const timeoutId = setTimeout(
-      () => controller.abort(),
-      AI_PATHS_SETTINGS_REQUEST_TIMEOUT_MS
-    );
+    const timeoutId = setTimeout(() => controller.abort(), AI_PATHS_SETTINGS_REQUEST_TIMEOUT_MS);
     try {
       const response = await fetch('/api/ai-paths/settings', {
         credentials: 'include',
@@ -251,9 +245,9 @@ const fetchAiPathsSettingsFromApi = async (): Promise<AiPathsSettingRecord[]> =>
   return normalized;
 };
 
-export const fetchAiPathsSettingsCached = async (
-  options?: { bypassCache?: boolean | undefined }
-): Promise<AiPathsSettingRecord[]> => {
+export const fetchAiPathsSettingsCached = async (options?: {
+  bypassCache?: boolean | undefined;
+}): Promise<AiPathsSettingRecord[]> => {
   if (!options?.bypassCache && isFreshCache() && aiPathsSettingsCache) {
     return aiPathsSettingsCache;
   }
@@ -269,12 +263,26 @@ export const fetchAiPathsSettingsCached = async (
     })
     .catch((error: unknown) => {
       if (aiPathsSettingsCache) {
-        logClientError(error, { context: { source: 'ai-paths-settings-client', action: 'fetchCached', message: 'GET failed; using stale cache.', level: 'warn' } });
+        logClientError(error, {
+          context: {
+            source: 'ai-paths-settings-client',
+            action: 'fetchCached',
+            message: 'GET failed; using stale cache.',
+            level: 'warn',
+          },
+        });
         return aiPathsSettingsCache;
       }
       const backup = readBackupSettings();
       if (backup && backup.length > 0) {
-        logClientError(error, { context: { source: 'ai-paths-settings-client', action: 'fetchCached', message: 'GET failed; using local backup cache.', level: 'warn' } });
+        logClientError(error, {
+          context: {
+            source: 'ai-paths-settings-client',
+            action: 'fetchCached',
+            message: 'GET failed; using local backup cache.',
+            level: 'warn',
+          },
+        });
         aiPathsSettingsCache = backup;
         aiPathsSettingsFetchedAt = Date.now();
         return backup;
@@ -351,10 +359,7 @@ export const updateAiPathsSetting = async (
 export const deleteAiPathsSettings = async (keys: string[]): Promise<number> => {
   const normalizedKeys = Array.from(
     new Set(
-      keys.filter(
-        (key: string): boolean =>
-          typeof key === 'string' && key.startsWith('ai_paths_')
-      )
+      keys.filter((key: string): boolean => typeof key === 'string' && key.startsWith('ai_paths_'))
     )
   );
   if (normalizedKeys.length === 0) return 0;
@@ -396,12 +401,12 @@ export const applyAiPathsMaintenanceActions = async (
   const normalizedActionIds =
     actionIds && actionIds.length > 0
       ? Array.from(
-        new Set(
-          actionIds.filter((actionId): actionId is AiPathsMaintenanceActionId =>
-            isAiPathsMaintenanceActionId(actionId)
+          new Set(
+            actionIds.filter((actionId): actionId is AiPathsMaintenanceActionId =>
+              isAiPathsMaintenanceActionId(actionId)
+            )
           )
         )
-      )
       : undefined;
   let data: unknown;
   try {
@@ -419,10 +424,9 @@ export const applyAiPathsMaintenanceActions = async (
 
   const payload = data && typeof data === 'object' ? (data as Record<string, unknown>) : {};
   const appliedActionIds = Array.isArray(payload['appliedActionIds'])
-    ? payload['appliedActionIds'].filter(
-      (value: unknown): value is AiPathsMaintenanceActionId =>
+    ? payload['appliedActionIds'].filter((value: unknown): value is AiPathsMaintenanceActionId =>
         isAiPathsMaintenanceActionId(value)
-    )
+      )
     : [];
   const report = normalizeAiPathsMaintenanceReport(payload['report']);
   invalidateAiPathsSettingsCache();

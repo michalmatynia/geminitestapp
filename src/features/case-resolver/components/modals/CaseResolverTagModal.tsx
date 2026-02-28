@@ -3,7 +3,10 @@
 import React, { useMemo } from 'react';
 
 import type { EntityModalProps } from '@/shared/contracts/ui';
-import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
+import {
+  SettingsPanelBuilder,
+  type SettingsField,
+} from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import type { CaseResolverTag } from '../../types';
 
@@ -31,34 +34,34 @@ export function CaseResolverTagModal({
   isSaving,
   onSave,
 }: CaseResolverTagModalProps): React.JSX.Element | null {
-  const fields: SettingsField<TagFormData>[] = useMemo(() => [
-    {
-      key: 'name',
-      label: 'Name',
-      type: 'text',
-      placeholder: 'Tag name',
-      required: true,
-    },
-    {
-      key: 'color',
-      label: 'Color',
-      type: 'color',
-      required: true,
-    },
-    {
-      key: 'parentId',
-      label: 'Parent Tag',
-      type: 'select',
-      options: [
-        { value: '__none__', label: 'No parent (root tag)' },
-        ...parentTagOptions,
-      ],
-      placeholder: 'Select parent tag',
-    }
-  ], [parentTagOptions]);
+  const fields: SettingsField<TagFormData>[] = useMemo(
+    () => [
+      {
+        key: 'name',
+        label: 'Name',
+        type: 'text',
+        placeholder: 'Tag name',
+        required: true,
+      },
+      {
+        key: 'color',
+        label: 'Color',
+        type: 'color',
+        required: true,
+      },
+      {
+        key: 'parentId',
+        label: 'Parent Tag',
+        type: 'select',
+        options: [{ value: '__none__', label: 'No parent (root tag)' }, ...parentTagOptions],
+        placeholder: 'Select parent tag',
+      },
+    ],
+    [parentTagOptions]
+  );
 
   const handleChange = (vals: Partial<TagFormData>) => {
-    setFormData(prev => {
+    setFormData((prev) => {
       const next = { ...prev, ...vals };
       if (vals.parentId === '__none__') next.parentId = null;
       return next;

@@ -2,14 +2,14 @@ import { describe, it, expect, beforeEach, vi, afterAll } from 'vitest';
 
 vi.unmock('@/shared/lib/db/prisma');
 
-import { 
-  createExportTemplate, 
-  getExportTemplate, 
-  listExportTemplates, 
-  updateExportTemplate, 
+import {
+  createExportTemplate,
+  getExportTemplate,
+  listExportTemplates,
+  updateExportTemplate,
   deleteExportTemplate,
   setExportActiveTemplateId,
-  getExportActiveTemplateId
+  getExportActiveTemplateId,
 } from '@/features/integrations/services/export-template-repository';
 import prisma from '@/shared/lib/db/prisma';
 
@@ -27,10 +27,10 @@ describe('ExportTemplateRepository', () => {
             'base_export_default_inventory_id',
             'base_export_default_connection_id',
             'base_export_stock_fallback_enabled',
-            'base_export_image_retry_presets'
-          ]
-        }
-      }
+            'base_export_image_retry_presets',
+          ],
+        },
+      },
     });
   });
 
@@ -44,7 +44,7 @@ describe('ExportTemplateRepository', () => {
     const template = await createExportTemplate({
       name: 'Standard Template',
       description: 'My description',
-      mappings: [{ sourceKey: 'sku', targetField: 'sku' }]
+      mappings: [{ sourceKey: 'sku', targetField: 'sku' }],
     });
 
     expect(template.id).toBeDefined();
@@ -62,8 +62,8 @@ describe('ExportTemplateRepository', () => {
       name: 'Template with Basehost',
       mappings: [
         { sourceKey: 'sku', targetField: 'sku' },
-        { sourceKey: 'images_basehost_all', targetField: 'images' } // Forbidden
-      ]
+        { sourceKey: 'images_basehost_all', targetField: 'images' }, // Forbidden
+      ],
     });
 
     const templates = await listExportTemplates();
@@ -75,7 +75,7 @@ describe('ExportTemplateRepository', () => {
     if (!process.env['DATABASE_URL']) return;
 
     const template = await createExportTemplate({ name: 'Old Name' });
-    
+
     const updated = await updateExportTemplate(template.id, { name: 'New Name' });
     expect(updated?.name).toBe('New Name');
 
@@ -87,7 +87,7 @@ describe('ExportTemplateRepository', () => {
     if (!process.env['DATABASE_URL']) return;
 
     const template = await createExportTemplate({ name: 'To Delete' });
-    
+
     const result = await deleteExportTemplate(template.id);
     expect(result).toBe(true);
 
@@ -99,10 +99,10 @@ describe('ExportTemplateRepository', () => {
     if (!process.env['DATABASE_URL']) return;
 
     const template = await createExportTemplate({ name: 'Active One' });
-    
+
     await setExportActiveTemplateId(template.id);
     const activeId = await getExportActiveTemplateId();
-    
+
     expect(activeId).toBe(template.id);
   });
 });

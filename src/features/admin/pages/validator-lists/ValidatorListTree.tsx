@@ -12,7 +12,10 @@ import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/
 import type { ValidatorPatternList } from '@/shared/contracts/admin';
 import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
 import type { FolderTreeProfileV2 } from '@/shared/contracts/master-folder-tree';
-import type { MasterTreeDropPosition, MasterTreeId } from '@/shared/utils/master-folder-tree-contract';
+import type {
+  MasterTreeDropPosition,
+  MasterTreeId,
+} from '@/shared/utils/master-folder-tree-contract';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { useToast } from '@/shared/ui';
 
@@ -84,10 +87,7 @@ export function ValidatorListTree({
 }: ValidatorListTreeProps): React.JSX.Element {
   const { toast } = useToast();
 
-  const masterNodes = useMemo(
-    () => buildValidatorListMasterNodes(lists),
-    [lists]
-  );
+  const masterNodes = useMemo(() => buildValidatorListMasterNodes(lists), [lists]);
 
   const controller = useFolderTreeInstanceV2({
     instanceId: 'validator_list_tree',
@@ -99,13 +99,9 @@ export function ValidatorListTree({
   useEffect(() => {
     void controller.replaceNodes(masterNodes, 'external_sync');
     // controller is a stable object; masterNodes changes drive the sync
-     
   }, [masterNodes]);
 
-  const listById = useMemo(
-    () => new Map(lists.map((l) => [l.id, l])),
-    [lists]
-  );
+  const listById = useMemo(() => new Map(lists.map((l) => [l.id, l])), [lists]);
 
   const onNodeDrop = useCallback(
     async (
@@ -134,10 +130,9 @@ export function ValidatorListTree({
         logClientError(error, {
           context: { source: 'ValidatorListTree', action: 'reorder' },
         });
-        toast(
-          error instanceof Error ? error.message : 'Failed to reorder lists.',
-          { variant: 'error' }
-        );
+        toast(error instanceof Error ? error.message : 'Failed to reorder lists.', {
+          variant: 'error',
+        });
       }
     },
     [listById, onReorder, toast]

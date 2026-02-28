@@ -22,7 +22,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   const text = await file.text();
 
   const parsed = Papa.parse<CsvRow>(text, { header: true });
-  
+
   const CHUNK_SIZE = 50;
   let successful = 0;
   let failed = 0;
@@ -35,13 +35,13 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       const { productService } = await import('@/features/products/server');
       const createdCount = await productService.bulkCreateProducts(pendingBatch);
       successful += createdCount;
-      failed += (pendingBatch.length - createdCount);
+      failed += pendingBatch.length - createdCount;
     } catch (error) {
       failed += pendingBatch.length;
       const message = error instanceof Error ? error.message : 'Batch creation failed';
       void ErrorSystem.logWarning(`Failed to import batch of ${pendingBatch.length} products`, {
         service: 'csv-import',
-        error: message
+        error: message,
       });
     }
     pendingBatch.length = 0;
@@ -84,14 +84,14 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
   await flushBatch();
 
-  return NextResponse.json({ 
+  return NextResponse.json({
     message: 'CSV import completed',
     summary: {
       total: parsed.data.length,
       successful,
       failed,
-      errors: errors.slice(0, 10)
-    }
+      errors: errors.slice(0, 10),
+    },
   });
 }
 

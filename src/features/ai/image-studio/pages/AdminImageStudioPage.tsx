@@ -28,7 +28,7 @@ import { useProjectsActions, useProjectsState } from '../context/ProjectsContext
 import { useSettingsActions } from '../context/SettingsContext';
 import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
 import { useUiActions, useUiState, type PreviewCanvasSize } from '../context/UiContext';
-import { getImageStudioDocTooltip } from '../utils/studio-docs';
+import { getImageStudioDocTooltip } from '@/shared/lib/ai/image-studio/utils/studio-docs';
 
 type StudioTab = 'studio' | 'projects' | 'settings' | 'prompts' | 'docs';
 const PREVIEW_CANVAS_SIZE_OPTIONS: Array<{ value: PreviewCanvasSize; label: string }> = [
@@ -67,10 +67,7 @@ function AdminImageStudioPageContent(): React.JSX.Element {
   useEffect(() => {
     const rawTab = searchParams?.get('tab');
     const nextTab: StudioTab =
-      rawTab === 'projects' ||
-      rawTab === 'settings' ||
-      rawTab === 'prompts' ||
-      rawTab === 'docs'
+      rawTab === 'projects' || rawTab === 'settings' || rawTab === 'prompts' || rawTab === 'docs'
         ? rawTab
         : 'studio';
     if (nextTab !== activeTab) {
@@ -83,7 +80,11 @@ function AdminImageStudioPageContent(): React.JSX.Element {
     if (!requestedProjectId || requestedProjectId === projectId) return;
     if (projectsQuery.isLoading) return;
     const availableProjects = projectsQuery.data ?? [];
-    if (availableProjects.length > 0 && !availableProjects.some((project) => project.id === requestedProjectId)) return;
+    if (
+      availableProjects.length > 0 &&
+      !availableProjects.some((project) => project.id === requestedProjectId)
+    )
+      return;
     setProjectId(requestedProjectId);
   }, [projectId, projectsQuery.data, projectsQuery.isLoading, searchParams, setProjectId]);
 
@@ -118,38 +119,41 @@ function AdminImageStudioPageContent(): React.JSX.Element {
     };
   }, [hideTopBar, setIsMenuHidden]);
 
-  const handleTabChange = useCallback((value: string): void => {
-    const nextTab: StudioTab =
-      value === 'projects' ||
-      value === 'settings' ||
-      value === 'prompts' ||
-      value === 'docs'
-        ? value
-        : 'studio';
-    setActiveTab(nextTab);
+  const handleTabChange = useCallback(
+    (value: string): void => {
+      const nextTab: StudioTab =
+        value === 'projects' || value === 'settings' || value === 'prompts' || value === 'docs'
+          ? value
+          : 'studio';
+      setActiveTab(nextTab);
 
-    const params = new URLSearchParams(searchParams?.toString() ?? '');
-    if (nextTab === 'studio') {
+      const params = new URLSearchParams(searchParams?.toString() ?? '');
+      if (nextTab === 'studio') {
+        params.delete('tab');
+      } else {
+        params.set('tab', nextTab);
+      }
+      const query = params.toString();
+      router.replace(query ? `${pathname}?${query}` : pathname);
+    },
+    [pathname, router, searchParams]
+  );
+
+  const handleOpenProjectEditor = useCallback(
+    (nextProjectId: string): void => {
+      const normalizedProjectId = nextProjectId.trim();
+      if (!normalizedProjectId) return;
+
+      setProjectId(normalizedProjectId);
+      setActiveTab('studio');
+      const params = new URLSearchParams(searchParams?.toString() ?? '');
+      params.set('projectId', normalizedProjectId);
       params.delete('tab');
-    } else {
-      params.set('tab', nextTab);
-    }
-    const query = params.toString();
-    router.replace(query ? `${pathname}?${query}` : pathname);
-  }, [pathname, router, searchParams]);
-
-  const handleOpenProjectEditor = useCallback((nextProjectId: string): void => {
-    const normalizedProjectId = nextProjectId.trim();
-    if (!normalizedProjectId) return;
-
-    setProjectId(normalizedProjectId);
-    setActiveTab('studio');
-    const params = new URLSearchParams(searchParams?.toString() ?? '');
-    params.set('projectId', normalizedProjectId);
-    params.delete('tab');
-    const query = params.toString();
-    router.replace(query ? `${pathname}?${query}` : pathname);
-  }, [pathname, router, searchParams, setProjectId]);
+      const query = params.toString();
+      router.replace(query ? `${pathname}?${query}` : pathname);
+    },
+    [pathname, router, searchParams, setProjectId]
+  );
 
   const handleReturnToProductStudio = useCallback((): void => {
     if (!returnToPath) return;
@@ -184,7 +188,11 @@ function AdminImageStudioPageContent(): React.JSX.Element {
           id='image-studio-tabs'
           value={activeTab as string}
           onValueChange={handleTabChange}
-          className={hideTopBar ? 'flex min-h-0 min-w-0 flex-1 flex-col gap-0' : 'flex min-h-0 min-w-0 flex-1 flex-col gap-3'}
+          className={
+            hideTopBar
+              ? 'flex min-h-0 min-w-0 flex-1 flex-col gap-0'
+              : 'flex min-h-0 min-w-0 flex-1 flex-col gap-3'
+          }
         >
           {!hideTopBar ? (
             <div className='border-b bg-muted/40 px-1 py-2'>
@@ -206,7 +214,9 @@ function AdminImageStudioPageContent(): React.JSX.Element {
                     {activeTab === 'studio' ? (
                       <>
                         <div className='flex items-center gap-2'>
-                          <span className='text-[10px] uppercase tracking-wide text-muted-foreground'>Canvas</span>
+                          <span className='text-[10px] uppercase tracking-wide text-muted-foreground'>
+                            Canvas
+                          </span>
                           <ToggleButtonGroup
                             value={previewCanvasSize}
                             onChange={setPreviewCanvasSize}
@@ -217,7 +227,10 @@ function AdminImageStudioPageContent(): React.JSX.Element {
                         </div>
                       </>
                     ) : null}
-                    <span className='size-7 shrink-0 opacity-0 pointer-events-none' aria-hidden='true' />
+                    <span
+                      className='size-7 shrink-0 opacity-0 pointer-events-none'
+                      aria-hidden='true'
+                    />
                   </div>
                   <div className='flex min-w-0 items-center justify-end gap-2'>
                     <span className='w-[280px] shrink-0 truncate text-left text-xs text-muted-foreground'>
@@ -268,10 +281,7 @@ function AdminImageStudioPageContent(): React.JSX.Element {
             </TabsContent>
 
             <TabsContent value='settings' className='h-full m-0 overflow-y-auto p-4'>
-              <AdminImageStudioSettingsPage
-                embedded
-                onSaved={handleRefreshSettings}
-              />
+              <AdminImageStudioSettingsPage embedded onSaved={handleRefreshSettings} />
             </TabsContent>
 
             <TabsContent value='prompts' className='h-full m-0 overflow-y-auto p-4'>

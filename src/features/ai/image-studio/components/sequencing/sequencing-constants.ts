@@ -1,4 +1,4 @@
-import type { ImageStudioSequenceOperation } from '../../utils/studio-settings';
+import type { ImageStudioSequenceOperation } from '@/shared/lib/ai/image-studio/utils/studio-settings';
 
 export const UPSCALE_SCALE_OPTIONS = ['1.25', '1.5', '2', '3', '4'].map((value) => ({
   value,

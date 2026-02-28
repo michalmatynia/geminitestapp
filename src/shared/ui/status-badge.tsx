@@ -4,7 +4,17 @@ import { cn } from '@/shared/utils';
 
 import { Badge } from './badge';
 
-export type StatusVariant = 'pending' | 'active' | 'failed' | 'removed' | 'neutral' | 'info' | 'success' | 'warning' | 'error' | 'processing';
+export type StatusVariant =
+  | 'pending'
+  | 'active'
+  | 'failed'
+  | 'removed'
+  | 'neutral'
+  | 'info'
+  | 'success'
+  | 'warning'
+  | 'error'
+  | 'processing';
 
 interface StatusBadgeProps {
   status: string;
@@ -20,11 +30,31 @@ interface StatusBadgeProps {
 // Map common statuses to variants
 const statusToVariant = (status: string): StatusVariant => {
   const s = status.toLowerCase();
-  if (s === 'pending' || s === 'queued' || s === 'waiting' || s === 'not tested' || s === 'not_tested' || s === 'not connected' || s === 'not_connected' || s === 'disconnected') return 'pending';
-  if (s === 'active' || s === 'success' || s === 'completed' || s === 'listed' || s === 'healthy' || s === 'connected' || s === 'ok') return 'active';
+  if (
+    s === 'pending' ||
+    s === 'queued' ||
+    s === 'waiting' ||
+    s === 'not tested' ||
+    s === 'not_tested' ||
+    s === 'not connected' ||
+    s === 'not_connected' ||
+    s === 'disconnected'
+  )
+    return 'pending';
+  if (
+    s === 'active' ||
+    s === 'success' ||
+    s === 'completed' ||
+    s === 'listed' ||
+    s === 'healthy' ||
+    s === 'connected' ||
+    s === 'ok'
+  )
+    return 'active';
   if (s === 'failed' || s === 'error' || s === 'critical' || s === 'canceled') return 'error';
   if (s === 'removed' || s === 'archived' || s === 'deleted') return 'removed';
-  if (s === 'processing' || s === 'in_progress' || s === 'running' || s === 'stepping') return 'processing';
+  if (s === 'processing' || s === 'in_progress' || s === 'running' || s === 'stepping')
+    return 'processing';
   if (s === 'info') return 'info';
   if (s === 'warning') return 'warning';
   return 'neutral';
@@ -42,7 +72,7 @@ export function StatusBadge({
 }: StatusBadgeProps): React.JSX.Element {
   const resolvedVariant = variant || statusToVariant(status);
   const label = status.trim();
-  
+
   return (
     <Badge
       variant={resolvedVariant}
@@ -55,7 +85,9 @@ export function StatusBadge({
       title={title}
       onClick={onClick}
     >
-      {icon && <span className={cn('flex-shrink-0', size === 'sm' ? 'size-2.5' : 'size-3')}>{icon}</span>}
+      {icon && (
+        <span className={cn('flex-shrink-0', size === 'sm' ? 'size-2.5' : 'size-3')}>{icon}</span>
+      )}
       {!hideLabel && label ? <span>{label}</span> : null}
     </Badge>
   );

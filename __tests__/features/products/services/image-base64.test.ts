@@ -29,14 +29,12 @@ describe('buildImageBase64Slots', () => {
   });
 
   it('converts allowed remote images to data URLs', async () => {
-    const fetchMock = vi
-      .fn<typeof fetch>()
-      .mockResolvedValue(
-        new Response(Buffer.from('image-bytes'), {
-          status: 200,
-          headers: { 'content-type': 'image/png' },
-        })
-      );
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(Buffer.from('image-bytes'), {
+        status: 200,
+        headers: { 'content-type': 'image/png' },
+      })
+    );
     vi.stubGlobal('fetch', fetchMock);
 
     const result = await buildImageBase64Slots({

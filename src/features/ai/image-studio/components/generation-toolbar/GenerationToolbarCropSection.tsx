@@ -61,12 +61,11 @@ export function GenerationToolbarCropSection({
     <div className='rounded border border-border/60 bg-card/40 p-3'>
       <div className='mb-2 flex items-center justify-between gap-2'>
         <div className='text-[10px] uppercase tracking-wide text-gray-500'>Crop</div>
-        <span className='text-[11px] text-gray-500'>
-          {boundaryStatusLabel}
-        </span>
+        <span className='text-[11px] text-gray-500'>{boundaryStatusLabel}</span>
       </div>
       <div className='grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center'>
-        <SelectSimple size='sm'
+        <SelectSimple
+          size='sm'
           className='w-full'
           value={cropMode}
           onValueChange={(val) => setCropMode(val as CropMode)}
@@ -76,7 +75,8 @@ export function GenerationToolbarCropSection({
         />
         {maybeWrapTooltip(
           cropTooltipContent.cropBoxTool,
-          <Button size='xs'
+          <Button
+            size='xs'
             type='button'
             variant='outline'
             onClick={onCreateCropBox}
@@ -90,7 +90,8 @@ export function GenerationToolbarCropSection({
       <div className='mt-2 flex flex-wrap items-center gap-2'>
         {maybeWrapTooltip(
           cropTooltipContent.crop,
-          <Button size='xs'
+          <Button
+            size='xs'
             type='button'
             variant='outline'
             onClick={onCrop}
@@ -103,7 +104,8 @@ export function GenerationToolbarCropSection({
         )}
         {maybeWrapTooltip(
           cropTooltipContent.squareCrop,
-          <Button size='xs'
+          <Button
+            size='xs'
             type='button'
             variant='outline'
             onClick={onSquareCrop}
@@ -115,7 +117,8 @@ export function GenerationToolbarCropSection({
         )}
         {maybeWrapTooltip(
           cropTooltipContent.viewCrop,
-          <Button size='xs'
+          <Button
+            size='xs'
             type='button'
             variant='outline'
             onClick={onViewCrop}
@@ -125,20 +128,20 @@ export function GenerationToolbarCropSection({
             View Crop
           </Button>
         )}
-        {cropBusy ? (
-          maybeWrapTooltip(
-            cropTooltipContent.cancelCrop,
-            <Button
-              size='xs'
-              type='button'
-              variant='outline'
-              onClick={onCancelCrop}
-              title={cropTooltipsEnabled ? cropTooltipContent.cancelCrop : undefined}
-            >
-              Cancel Crop
-            </Button>
-          )
-        ) : null}
+        {cropBusy
+          ? maybeWrapTooltip(
+              cropTooltipContent.cancelCrop,
+              <Button
+                size='xs'
+                type='button'
+                variant='outline'
+                onClick={onCancelCrop}
+                title={cropTooltipsEnabled ? cropTooltipContent.cancelCrop : undefined}
+              >
+                Cancel Crop
+              </Button>
+            )
+          : null}
       </div>
     </div>
   );

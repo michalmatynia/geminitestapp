@@ -1,7 +1,4 @@
-import {
-  VALIDATOR_SCOPE_DESCRIPTIONS,
-  VALIDATOR_SCOPE_LABELS,
-} from '@/shared/contracts/validator';
+import { VALIDATOR_SCOPE_DESCRIPTIONS, VALIDATOR_SCOPE_LABELS } from '@/shared/contracts/validator';
 import { PromptValidationScopeResolutionError } from '@/shared/lib/prompt-core/errors';
 import type { PromptValidationScope } from '@/shared/contracts/prompt-engine';
 import type { ValidatorPatternList, ValidatorScope } from '@/shared/contracts/admin';
@@ -23,7 +20,8 @@ export type PromptExploderValidationRuleStackOption = {
   scope: ValidatorScope;
 };
 
-export type PromptExploderValidationStackResolutionReason = PromptExploderValidationStackResolutionReasonDto;
+export type PromptExploderValidationStackResolutionReason =
+  PromptExploderValidationStackResolutionReasonDto;
 
 export type PromptExploderValidationStackResolution = PromptExploderValidationStackResolutionDto;
 
@@ -49,15 +47,15 @@ const FALLBACK_VALIDATION_STACK_OPTIONS: PromptExploderValidationRuleStackOption
   },
 ];
 
-const normalizeStackValue = (value: PromptExploderValidationRuleStack | null | undefined): string => {
+const normalizeStackValue = (
+  value: PromptExploderValidationRuleStack | null | undefined
+): string => {
   if (!value) return '';
   if (typeof value === 'string') return value.trim();
   return (value.id || '').trim();
 };
 
-const toRuntimeScope = (
-  validatorScope: ValidatorScope
-): PromptExploderRuntimeValidationScope =>
+const toRuntimeScope = (validatorScope: ValidatorScope): PromptExploderRuntimeValidationScope =>
   validatorScope === CASE_RESOLVER_PROMPT_EXPLODER_VALIDATOR_SCOPE
     ? 'case_resolver_prompt_exploder'
     : 'prompt_exploder';
@@ -86,7 +84,10 @@ const resolveStackByScope = (
   }
 
   if (patternLists.length > 0) {
-    const promptExploderFallback = findFirstListByScope(patternLists, PROMPT_EXPLODER_VALIDATOR_SCOPE);
+    const promptExploderFallback = findFirstListByScope(
+      patternLists,
+      PROMPT_EXPLODER_VALIDATOR_SCOPE
+    );
     const list = promptExploderFallback ?? patternLists[0] ?? null;
     if (list) {
       return {
@@ -132,7 +133,8 @@ export const resolvePromptExploderValidationStack = (args: {
 
   if (normalizedStack) {
     const matchedList =
-      patternLists.find((list: ValidatorPatternList): boolean => list.id === normalizedStack) ?? null;
+      patternLists.find((list: ValidatorPatternList): boolean => list.id === normalizedStack) ??
+      null;
     if (matchedList) {
       return {
         stack: matchedList.id,
@@ -186,10 +188,12 @@ export const normalizePromptExploderValidationRuleStack = (
   stack: PromptExploderValidationRuleStack | null | undefined,
   patternLists: ValidatorPatternList[] = []
 ): PromptExploderValidationRuleStack => {
-  return resolvePromptExploderValidationStack({
-    stack,
-    patternLists,
-  }).stack || DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK;
+  return (
+    resolvePromptExploderValidationStack({
+      stack,
+      patternLists,
+    }).stack || DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK
+  );
 };
 
 export const promptExploderValidationScopeFromStack = (
@@ -207,15 +211,12 @@ export const promptExploderValidationStackFromScope = (
 ): PromptExploderValidationRuleStack =>
   (scope === 'case_resolver_prompt_exploder'
     ? resolveStackByScope(
-      CASE_RESOLVER_PROMPT_EXPLODER_VALIDATOR_SCOPE,
-      patternLists,
-      'default_scope'
-    ).stack
-    : resolveStackByScope(
-      PROMPT_EXPLODER_VALIDATOR_SCOPE,
-      patternLists,
-      'default_scope'
-    ).stack) || DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK;
+        CASE_RESOLVER_PROMPT_EXPLODER_VALIDATOR_SCOPE,
+        patternLists,
+        'default_scope'
+      ).stack
+    : resolveStackByScope(PROMPT_EXPLODER_VALIDATOR_SCOPE, patternLists, 'default_scope').stack) ||
+  DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK;
 
 export const promptExploderValidationStackFromBridgeSource = (
   source: 'image-studio' | 'case-resolver' | 'prompt-exploder' | null | undefined,
@@ -223,15 +224,12 @@ export const promptExploderValidationStackFromBridgeSource = (
 ): PromptExploderValidationRuleStack =>
   (source === 'case-resolver'
     ? resolveStackByScope(
-      CASE_RESOLVER_PROMPT_EXPLODER_VALIDATOR_SCOPE,
-      patternLists,
-      'default_scope'
-    ).stack
-    : resolveStackByScope(
-      PROMPT_EXPLODER_VALIDATOR_SCOPE,
-      patternLists,
-      'default_scope'
-    ).stack) || DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK;
+        CASE_RESOLVER_PROMPT_EXPLODER_VALIDATOR_SCOPE,
+        patternLists,
+        'default_scope'
+      ).stack
+    : resolveStackByScope(PROMPT_EXPLODER_VALIDATOR_SCOPE, patternLists, 'default_scope').stack) ||
+  DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK;
 
 export const promptExploderValidatorScopeFromStack = (
   stack: PromptExploderValidationRuleStack | null | undefined,

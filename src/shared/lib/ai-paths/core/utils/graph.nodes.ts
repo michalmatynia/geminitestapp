@@ -38,10 +38,7 @@ const resolvePortContract = (
   return null;
 };
 
-export const getNodeInputPortCardinality = (
-  node: AiNode,
-  portName: string
-): InputCardinality => {
+export const getNodeInputPortCardinality = (node: AiNode, portName: string): InputCardinality => {
   const runtimeInputCardinality = (
     node.config?.runtime as { inputCardinality?: Record<string, InputCardinality> } | undefined
   )?.inputCardinality;
@@ -57,16 +54,19 @@ export const getNodeInputPortCardinality = (
     }
   }
   const name = portName.toLowerCase();
-  if (name === 'bundle' || name === 'result' || name === 'context' || name === 'images' || name === 'imageurls') {
+  if (
+    name === 'bundle' ||
+    name === 'result' ||
+    name === 'context' ||
+    name === 'images' ||
+    name === 'imageurls'
+  ) {
     return 'many';
   }
   return 'one';
 };
 
-export const getNodeInputPortContract = (
-  node: AiNode,
-  portName: string
-): { required: boolean } => {
+export const getNodeInputPortContract = (node: AiNode, portName: string): { required: boolean } => {
   const runtimeContract = resolvePortContract(
     node.config?.runtime?.inputContracts as Record<string, PortContract> | undefined,
     portName

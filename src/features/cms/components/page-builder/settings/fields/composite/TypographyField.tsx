@@ -15,7 +15,8 @@ export function TypographyField(): React.ReactNode {
     <div className='space-y-2'>
       <div className='space-y-0.5'>
         <span className='text-[10px] text-gray-500 uppercase'>Font Family</span>
-        <SelectSimple size='sm'
+        <SelectSimple
+          size='sm'
           value={(typo['fontFamily'] as string) ?? 'Inter, sans-serif'}
           onValueChange={(v: string): void => update('fontFamily', v)}
           options={FONT_FAMILY_OPTIONS}
@@ -25,7 +26,8 @@ export function TypographyField(): React.ReactNode {
       <div className='grid grid-cols-2 gap-2'>
         <div className='space-y-0.5'>
           <span className='text-[10px] text-gray-500 uppercase'>Weight</span>
-          <SelectSimple size='sm'
+          <SelectSimple
+            size='sm'
             value={String((typo['fontWeight'] as string | number) ?? '400')}
             onValueChange={(v: string): void => update('fontWeight', v)}
             options={FONT_WEIGHT_OPTIONS}
@@ -37,7 +39,9 @@ export function TypographyField(): React.ReactNode {
           <Input
             type='number'
             value={(typo['fontSize'] as number) ?? 16}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update('fontSize', Number(e.target.value))}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+              update('fontSize', Number(e.target.value))
+            }
             className='text-xs h-7'
             min={8}
             max={200}
@@ -50,7 +54,9 @@ export function TypographyField(): React.ReactNode {
           <Input
             type='number'
             value={(typo['lineHeight'] as number) ?? 1.5}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update('lineHeight', Number(e.target.value))}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+              update('lineHeight', Number(e.target.value))
+            }
             className='text-xs h-7'
             min={0.5}
             max={5}
@@ -62,7 +68,9 @@ export function TypographyField(): React.ReactNode {
           <Input
             type='number'
             value={(typo['letterSpacing'] as number) ?? 0}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update('letterSpacing', Number(e.target.value))}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+              update('letterSpacing', Number(e.target.value))
+            }
             className='text-xs h-7'
             step={0.5}
           />
@@ -74,12 +82,16 @@ export function TypographyField(): React.ReactNode {
           <input
             type='color'
             value={(typo['textColor'] as string) ?? '#ffffff'}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update('textColor', e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+              update('textColor', e.target.value)
+            }
             className='h-7 w-7 cursor-pointer rounded border border-border/50 bg-transparent p-0.5'
           />
           <Input
             value={(typo['textColor'] as string) ?? '#ffffff'}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update('textColor', e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+              update('textColor', e.target.value)
+            }
             className='flex-1 text-xs font-mono'
             maxLength={7}
           />

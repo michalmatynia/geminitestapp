@@ -14,14 +14,18 @@ import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { resolveDeleteInventoryId } from './helpers';
 
 const deleteSchema = z.object({
-  inventoryId: z.string().min(1).optional()
+  inventoryId: z.string().min(1).optional(),
 });
 
 const BASE_DELETE_RUN_PATH_ID = 'integration-base-delete';
 const BASE_DELETE_RUN_PATH_NAME = 'Base.com Deletion Jobs';
 const BASE_DELETE_SOURCE = 'integration_base_delete';
 
-export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; listingId: string }): Promise<Response> {
+export async function POST_handler(
+  _req: NextRequest,
+  _ctx: ApiHandlerContext,
+  params: { id: string; listingId: string }
+): Promise<Response> {
   const { id: productId, listingId } = params;
   if (!productId || !listingId) {
     throw badRequestError('Product id and listing id are required');
@@ -35,16 +39,13 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, p
 
   const parsed = await parseJsonBody(_req, deleteSchema, {
     logPrefix: 'integrations.products.listings.DELETE_FROM_BASE',
-    allowEmpty: true
+    allowEmpty: true,
   });
   if (!parsed.ok) {
     return parsed.response;
   }
   const data = parsed.data;
-  const inventoryId = resolveDeleteInventoryId(
-    data.inventoryId,
-    listing.inventoryId
-  );
+  const inventoryId = resolveDeleteInventoryId(data.inventoryId, listing.inventoryId);
 
   if (!listing.externalListingId) {
     throw badRequestError('Missing Base.com product id for deletion.');
@@ -110,12 +111,10 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, p
     });
 
     const integrationRepo = await getIntegrationRepository();
-    const connection = await integrationRepo.getConnectionById(
-      listing.connectionId
-    );
+    const connection = await integrationRepo.getConnectionById(listing.connectionId);
     if (!connection) {
       throw notFoundError('Connection not found', {
-        connectionId: listing.connectionId
+        connectionId: listing.connectionId,
       });
     }
 
@@ -128,7 +127,7 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, p
 
     if (!token) {
       throw badRequestError('Base.com API token not found in connection.', {
-        connectionId: listing.connectionId
+        connectionId: listing.connectionId,
       });
     }
 
@@ -139,7 +138,7 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, p
       exportedAt: new Date().toISOString(),
       status: 'deleted',
       inventoryId,
-      externalListingId: listing.externalListingId
+      externalListingId: listing.externalListingId,
     });
     if (runId) {
       await runRepository
@@ -173,8 +172,7 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, p
       runId,
     });
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : 'Failed to delete from Base.com.';
+    const errorMessage = error instanceof Error ? error.message : 'Failed to delete from Base.com.';
     await repo.updateListingStatus(listingId, 'failed').catch(() => undefined);
     await repo
       .appendExportHistory(listingId, {

@@ -43,28 +43,27 @@ export function useRealtimeQuery<TData>(
 
     // Try WebSocket connection first
     const wsUrl = `ws://localhost:3000/ws/${JSON.stringify(queryKey)}`;
-    
+
     try {
       wsRef.current = new WebSocket(wsUrl);
-      
+
       wsRef.current.onmessage = (event: MessageEvent): void => {
         try {
           const data = JSON.parse(event.data as string) as unknown;
           queryClient.setQueryData(queryKey as unknown[], data);
           config?.onUpdate?.(data);
         } catch (error) {
-          logClientError(error instanceof Error ? error : new Error(String(error)), { context: { source: 'useRealtimeQuery', action: 'parseWebSocketData', level: 'warn' } });
+          logClientError(error instanceof Error ? error : new Error(String(error)), {
+            context: { source: 'useRealtimeQuery', action: 'parseWebSocketData', level: 'warn' },
+          });
         }
       };
 
       wsRef.current.onerror = (): void => {
         // Fallback to polling if WebSocket fails
-  
       };
-
     } catch {
       // WebSocket not available, use polling
-
     }
 
     const currentInterval = intervalRef.current;
@@ -100,12 +99,16 @@ export function useServerSentEvents<TData>(
         queryClient.setQueryData(queryKey as unknown[], data);
         config?.onUpdate?.(data);
       } catch (error) {
-        logClientError(error instanceof Error ? error : new Error(String(error)), { context: { source: 'useServerSentEvents', action: 'parseSSEData', level: 'warn' } });
+        logClientError(error instanceof Error ? error : new Error(String(error)), {
+          context: { source: 'useServerSentEvents', action: 'parseSSEData', level: 'warn' },
+        });
       }
     };
 
     eventSource.onerror = (error: Event): void => {
-      logClientError(new Error(String(error)), { context: { source: 'useServerSentEvents', action: 'sseConnectionError', level: 'warn' } });
+      logClientError(new Error(String(error)), {
+        context: { source: 'useServerSentEvents', action: 'sseConnectionError', level: 'warn' },
+      });
     };
 
     return (): void => {

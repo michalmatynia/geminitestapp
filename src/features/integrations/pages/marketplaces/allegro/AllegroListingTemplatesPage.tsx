@@ -9,14 +9,14 @@ export default function AllegroListingTemplatesPage(): React.JSX.Element {
       <SectionHeader
         title='Listing Templates'
         description='Build reusable listing templates for Allegro.'
-        eyebrow={(
+        eyebrow={
           <Link
             href='/admin/integrations/marketplaces/allegro'
             className='text-blue-300 hover:text-blue-200'
           >
             ← Allegro
           </Link>
-        )}
+        }
         className='mb-6'
       />
 

@@ -1,4 +1,3 @@
-
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
 import { asRecord } from './slot-inline-edit-utils';
@@ -15,10 +14,7 @@ type Toast = (
 ) => void;
 
 type UpdateSlotMutationLike = {
-  mutateAsync: (args: {
-    id: string;
-    data: Record<string, unknown>;
-  }) => Promise<unknown>;
+  mutateAsync: (args: { id: string; data: Record<string, unknown> }) => Promise<unknown>;
 };
 
 type InlineSlotHandlersDeps = {
@@ -45,9 +41,7 @@ type InlineSlotHandlers = {
   handleApplyLinkedVariantToCard: (variant: LinkedGeneratedVariantViewModel) => Promise<void>;
 };
 
-export const createInlineSlotHandlers = (
-  deps: InlineSlotHandlersDeps
-): InlineSlotHandlers => {
+export const createInlineSlotHandlers = (deps: InlineSlotHandlersDeps): InlineSlotHandlers => {
   const handleSaveInlineSlot = async (): Promise<void> => {
     if (!deps.selectedSlot) return;
     deps.setSlotUpdateBusy(true);
@@ -57,8 +51,7 @@ export const createInlineSlotHandlers = (
         ? { ...(deps.selectedSlot.metadata as Record<string, unknown>) }
         : {};
       const hasEnvironmentReference = Boolean(
-        deps.environmentReferenceDraft.imageFileId ||
-        deps.environmentReferenceDraft.imageUrl.trim()
+        deps.environmentReferenceDraft.imageFileId || deps.environmentReferenceDraft.imageUrl.trim()
       );
       if (hasEnvironmentReference) {
         baseMetadata['environmentReference'] = {
@@ -78,7 +71,8 @@ export const createInlineSlotHandlers = (
       await deps.updateSlotMutation.mutateAsync({
         id: deps.selectedSlot.id,
         data: {
-          name: deps.slotNameDraft.trim() || deps.selectedSlot.name || `Card ${deps.slotsCount + 1}`,
+          name:
+            deps.slotNameDraft.trim() || deps.selectedSlot.name || `Card ${deps.slotsCount + 1}`,
           folderPath: deps.slotFolderDraft.trim(),
           metadata: Object.keys(baseMetadata).length > 0 ? baseMetadata : null,
         },
@@ -86,7 +80,9 @@ export const createInlineSlotHandlers = (
       deps.setSlotInlineEditOpen(false);
       deps.toast('Card updated.', { variant: 'success' });
     } catch (error: unknown) {
-      deps.toast(error instanceof Error ? error.message : 'Failed to update card', { variant: 'error' });
+      deps.toast(error instanceof Error ? error.message : 'Failed to update card', {
+        variant: 'error',
+      });
     } finally {
       deps.setSlotUpdateBusy(false);
     }
@@ -95,7 +91,9 @@ export const createInlineSlotHandlers = (
   const handleClearSlotImage = async (): Promise<void> => {
     if (!deps.selectedSlot) return;
     if (deps.isCardImageRemovalLocked(deps.selectedSlot)) {
-      deps.toast('Card image is locked and can only be removed by deleting the card.', { variant: 'warning' });
+      deps.toast('Card image is locked and can only be removed by deleting the card.', {
+        variant: 'warning',
+      });
       return;
     }
     deps.setSlotUpdateBusy(true);
@@ -113,7 +111,9 @@ export const createInlineSlotHandlers = (
       deps.setSlotBase64Draft('');
       deps.toast('Card image cleared.', { variant: 'success' });
     } catch (error: unknown) {
-      deps.toast(error instanceof Error ? error.message : 'Failed to clear card image', { variant: 'error' });
+      deps.toast(error instanceof Error ? error.message : 'Failed to clear card image', {
+        variant: 'error',
+      });
     } finally {
       deps.setSlotUpdateBusy(false);
     }
@@ -139,7 +139,9 @@ export const createInlineSlotHandlers = (
       deps.setSlotBase64Draft('');
       deps.toast('Linked variant applied to card.', { variant: 'success' });
     } catch (error: unknown) {
-      deps.toast(error instanceof Error ? error.message : 'Failed to apply linked variant.', { variant: 'error' });
+      deps.toast(error instanceof Error ? error.message : 'Failed to apply linked variant.', {
+        variant: 'error',
+      });
     } finally {
       deps.setLinkedVariantApplyBusyKey((current) => (current === variant.key ? null : current));
       deps.setSlotUpdateBusy(false);

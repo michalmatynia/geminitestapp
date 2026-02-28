@@ -9,7 +9,6 @@ import {
 } from '@/features/prompt-exploder/utils/case-resolver-extraction';
 import type { PromptExploderSegment } from '@/shared/contracts/prompt-exploder';
 
-
 const createSegment = (input: {
   id: string;
   raw: string;
@@ -54,9 +53,7 @@ describe('case resolver extraction bridge payload', () => {
     );
 
     expect(dashedScopeRules.length).toBeGreaterThan(0);
-    expect(dashedScopeRules.map((rule) => rule.id)).toEqual(
-      captureRules.map((rule) => rule.id)
-    );
+    expect(dashedScopeRules.map((rule) => rule.id)).toEqual(captureRules.map((rule) => rule.id));
   });
 
   it('extracts parties and place/date metadata from case resolver segments', () => {
@@ -298,9 +295,7 @@ describe('case resolver extraction bridge payload', () => {
     expect(payload.parties?.addresser?.displayName).toBe('Michał Matynia');
     expect(payload.parties?.addresser?.kind).toBe('person');
     expect(payload.parties?.addressee?.displayName).toBe('Komisariat Policji Szczecin–Dąbie');
-    expect(payload.parties?.addressee?.organizationName).toBe(
-      'Komisariat Policji Szczecin–Dąbie'
-    );
+    expect(payload.parties?.addressee?.organizationName).toBe('Komisariat Policji Szczecin–Dąbie');
     expect(payload.parties?.addressee?.kind).toBe('organization');
     expect(payload.parties?.addressee?.street).toBe('Pomorska');
     expect(payload.parties?.addressee?.streetNumber).toBe('15');
@@ -378,9 +373,7 @@ describe('case resolver extraction bridge payload', () => {
     expect(result.payload.parties?.addresser?.rawText).toContain('Fioletowa 71/2');
     expect(result.payload.parties?.addresser?.rawText).toContain('\n');
     expect(result.payload.parties?.addressee?.displayName).toBe('Inspektorat ZUS w Gryficach');
-    expect(result.payload.parties?.addressee?.organizationName).toBe(
-      'Inspektorat ZUS w Gryficach'
-    );
+    expect(result.payload.parties?.addressee?.organizationName).toBe('Inspektorat ZUS w Gryficach');
   });
 
   it('reports no transfer captures when both rule and fallback extraction fail', () => {

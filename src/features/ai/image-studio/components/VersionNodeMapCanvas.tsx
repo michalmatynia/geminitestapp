@@ -7,9 +7,15 @@ import type { CompositeLayerConfig } from '@/shared/contracts/image-studio';
 import { CompositeStackNode } from './CompositeStackNode';
 import { useVersionNodeMapContext } from './VersionNodeMapContext';
 import { useSettingsState } from '../context/SettingsContext';
-import { readMeta } from '../utils/metadata';
-import { getImageStudioDocTooltip } from '../utils/studio-docs';
-import { CONTENT_OFFSET_X, CONTENT_OFFSET_Y, NODE_HEIGHT, NODE_WIDTH, getCompositeNodeHeight } from '../utils/version-graph';
+import { readMeta } from '@/shared/lib/ai/image-studio/utils/metadata';
+import { getImageStudioDocTooltip } from '@/shared/lib/ai/image-studio/utils/studio-docs';
+import {
+  CONTENT_OFFSET_X,
+  CONTENT_OFFSET_Y,
+  NODE_HEIGHT,
+  NODE_WIDTH,
+  getCompositeNodeHeight,
+} from '@/shared/lib/ai/image-studio/utils/version-graph';
 
 import type { VersionNode } from '../context/VersionGraphContext';
 
@@ -55,10 +61,7 @@ export interface VersionNodeMapCanvasRef {
 
 // ── Edge path ────────────────────────────────────────────────────────────────
 
-function buildEdgePath(
-  sourceNode: VersionNode,
-  targetNode: VersionNode,
-): string {
+function buildEdgePath(sourceNode: VersionNode, targetNode: VersionNode): string {
   const sx = sourceNode.x;
   const sy = sourceNode.y + NODE_HEIGHT / 2;
   const tx = targetNode.x;
@@ -116,7 +119,7 @@ function getNodeStrokeClass(
   isSelected: boolean,
   isMergeSelected: boolean,
   isCompareSelected: boolean,
-  isCompositeSelected: boolean,
+  isCompositeSelected: boolean
 ): string {
   if (isCompareSelected) return 'fill-card/80 stroke-cyan-400';
   if (isCompositeSelected) return 'fill-card/80 stroke-teal-400';
@@ -165,71 +168,73 @@ function resolveNodeOperationVisual(node: VersionNode): NodeOperationVisual {
   return { label: 'Base', icon: 'B', color: '#9ca3af' };
 }
 
-
 // ── Component ────────────────────────────────────────────────────────────────
 
-export const VersionNodeMapCanvas = React.forwardRef<VersionNodeMapCanvasRef, VersionNodeMapCanvasProps>(
-  function VersionNodeMapCanvas(
-    _props,
+export const VersionNodeMapCanvas = React.forwardRef<
+  VersionNodeMapCanvasRef,
+  VersionNodeMapCanvasProps
+>(function VersionNodeMapCanvas(_props, ref) {
+  const { studioSettings } = useSettingsState();
+  const {
+    nodes,
+    edges,
+    selectedNodeId,
+    hoveredNodeId,
+    mergeMode,
+    mergeSelectedIds,
+    compositeMode,
+    compositeSelectedIds,
+    collapsedNodeIds,
+    filteredNodeIds,
+    isolatedNodeIds,
+    compareMode,
+    compareNodeIds,
+    onSelectNode,
+    onHoverNode,
+    onOpenNodeDetails,
+    onToggleMergeSelection,
+    onToggleCompositeSelection,
+    onToggleCollapse,
+    onReorderCompositeLayer,
+    onContextMenu,
+    getSlotImageSrc,
+    getSlotAnnotation,
+    zoom,
+    onZoomChange,
+  } = useVersionNodeMapContext();
+  const versionGraphTooltipsEnabled = studioSettings.helpTooltips.versionGraphButtonsEnabled;
+  const tooltipContent = React.useMemo(
+    () => ({
+      nodeToggleCollapse: getImageStudioDocTooltip('version_graph_node_toggle_collapse'),
+      nodeOpenDetails: getImageStudioDocTooltip('version_graph_node_open_details'),
+    }),
+    []
+  );
+
+  const svgRef = useRef<SVGSVGElement>(null);
+  const [pan, setPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const panRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const zoomRef = useRef<number>(zoom);
+  const dragRef = useRef<{ startX: number; startY: number; panX: number; panY: number } | null>(
+    null
+  );
+  const [hoveredEdgeId, setHoveredEdgeId] = useState<string | null>(null);
+  const [smoothTransition, setSmoothTransition] = useState(false);
+  const brokenImagesRef = useRef<Set<string>>(new Set());
+  const [, setBrokenTick] = useState(0);
+  const prevNodeCountRef = useRef(nodes.length);
+
+  useEffect(() => {
+    if (nodes.length !== prevNodeCountRef.current) {
+      brokenImagesRef.current.clear();
+      prevNodeCountRef.current = nodes.length;
+    }
+  }, [nodes.length]);
+
+  // Expose SVG ref + fitToView + pan/zoom access
+  useImperativeHandle(
     ref,
-  ) {
-    const { studioSettings } = useSettingsState();
-    const {
-      nodes,
-      edges,
-      selectedNodeId,
-      hoveredNodeId,
-      mergeMode,
-      mergeSelectedIds,
-      compositeMode,
-      compositeSelectedIds,
-      collapsedNodeIds,
-      filteredNodeIds,
-      isolatedNodeIds,
-      compareMode,
-      compareNodeIds,
-      onSelectNode,
-      onHoverNode,
-      onOpenNodeDetails,
-      onToggleMergeSelection,
-      onToggleCompositeSelection,
-      onToggleCollapse,
-      onReorderCompositeLayer,
-      onContextMenu,
-      getSlotImageSrc,
-      getSlotAnnotation,
-      zoom,
-      onZoomChange,
-    } = useVersionNodeMapContext();
-    const versionGraphTooltipsEnabled = studioSettings.helpTooltips.versionGraphButtonsEnabled;
-    const tooltipContent = React.useMemo(
-      () => ({
-        nodeToggleCollapse: getImageStudioDocTooltip('version_graph_node_toggle_collapse'),
-        nodeOpenDetails: getImageStudioDocTooltip('version_graph_node_open_details'),
-      }),
-      []
-    );
-
-    const svgRef = useRef<SVGSVGElement>(null);
-    const [pan, setPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-    const panRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
-    const zoomRef = useRef<number>(zoom);
-    const dragRef = useRef<{ startX: number; startY: number; panX: number; panY: number } | null>(null);
-    const [hoveredEdgeId, setHoveredEdgeId] = useState<string | null>(null);
-    const [smoothTransition, setSmoothTransition] = useState(false);
-    const brokenImagesRef = useRef<Set<string>>(new Set());
-    const [, setBrokenTick] = useState(0);
-    const prevNodeCountRef = useRef(nodes.length);
-
-    useEffect(() => {
-      if (nodes.length !== prevNodeCountRef.current) {
-        brokenImagesRef.current.clear();
-        prevNodeCountRef.current = nodes.length;
-      }
-    }, [nodes.length]);
-
-    // Expose SVG ref + fitToView + pan/zoom access
-    useImperativeHandle(ref, () => ({
+    () => ({
       get svgElement() {
         return svgRef.current;
       },
@@ -243,7 +248,10 @@ export const VersionNodeMapCanvas = React.forwardRef<VersionNodeMapCanvasRef, Ve
         const offsetX = CONTENT_OFFSET_X;
         const offsetY = CONTENT_OFFSET_Y;
 
-        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        let minX = Infinity,
+          minY = Infinity,
+          maxX = -Infinity,
+          maxY = -Infinity;
         for (const n of nodes) {
           const nx = n.x + offsetX - NODE_WIDTH / 2;
           const ny = n.y + offsetY - NODE_HEIGHT / 2;
@@ -282,521 +290,548 @@ export const VersionNodeMapCanvas = React.forwardRef<VersionNodeMapCanvasRef, Ve
         setPan(newPan);
         setTimeout(() => setSmoothTransition(false), 200);
       },
-    }), [nodes, onZoomChange]);
+    }),
+    [nodes, onZoomChange]
+  );
 
-    // Track previous node/edge IDs for new-item animations
-    const prevNodeIdsRef = useRef<Set<string>>(new Set());
-    const prevEdgeIdsRef = useRef<Set<string>>(new Set());
-    const newNodeIdsRef = useRef<Set<string>>(new Set());
-    const newEdgeIdsRef = useRef<Set<string>>(new Set());
-    const animationsPrimedRef = useRef(false);
+  // Track previous node/edge IDs for new-item animations
+  const prevNodeIdsRef = useRef<Set<string>>(new Set());
+  const prevEdgeIdsRef = useRef<Set<string>>(new Set());
+  const newNodeIdsRef = useRef<Set<string>>(new Set());
+  const newEdgeIdsRef = useRef<Set<string>>(new Set());
+  const animationsPrimedRef = useRef(false);
 
-    // Compute new items on each render
-    const currentNodeIds = new Set(nodes.map((n) => n.id));
-    const currentEdgeIds = new Set(edges.map((e) => e.id));
+  // Compute new items on each render
+  const currentNodeIds = new Set(nodes.map((n) => n.id));
+  const currentEdgeIds = new Set(edges.map((e) => e.id));
 
+  if (!animationsPrimedRef.current) {
+    // Do not animate every node when the graph is first opened.
+    newNodeIdsRef.current = new Set();
+    newEdgeIdsRef.current = new Set();
+  } else {
+    newNodeIdsRef.current = new Set(
+      [...currentNodeIds].filter((id) => !prevNodeIdsRef.current.has(id))
+    );
+    newEdgeIdsRef.current = new Set(
+      [...currentEdgeIds].filter((id) => !prevEdgeIdsRef.current.has(id))
+    );
+  }
+
+  // Update previous sets after render
+  useEffect(() => {
     if (!animationsPrimedRef.current) {
-      // Do not animate every node when the graph is first opened.
-      newNodeIdsRef.current = new Set();
-      newEdgeIdsRef.current = new Set();
-    } else {
-      newNodeIdsRef.current = new Set(
-        [...currentNodeIds].filter((id) => !prevNodeIdsRef.current.has(id)),
-      );
-      newEdgeIdsRef.current = new Set(
-        [...currentEdgeIds].filter((id) => !prevEdgeIdsRef.current.has(id)),
-      );
+      prevNodeIdsRef.current = currentNodeIds;
+      prevEdgeIdsRef.current = currentEdgeIds;
+      animationsPrimedRef.current = true;
+      return;
     }
+    const timeout = setTimeout(() => {
+      prevNodeIdsRef.current = currentNodeIds;
+      prevEdgeIdsRef.current = currentEdgeIds;
+      // Clear new flags after animation duration
+    }, 600);
+    return () => clearTimeout(timeout);
+  });
 
-    // Update previous sets after render
-    useEffect(() => {
-      if (!animationsPrimedRef.current) {
-        prevNodeIdsRef.current = currentNodeIds;
-        prevEdgeIdsRef.current = currentEdgeIds;
-        animationsPrimedRef.current = true;
-        return;
-      }
-      const timeout = setTimeout(() => {
-        prevNodeIdsRef.current = currentNodeIds;
-        prevEdgeIdsRef.current = currentEdgeIds;
-        // Clear new flags after animation duration
-      }, 600);
-      return () => clearTimeout(timeout);
-    });
+  const nodeById = new Map(nodes.map((n) => [n.id, n]));
+  const mergeSelectedSet = new Set(mergeSelectedIds);
+  const compositeSelectedSet = new Set(compositeSelectedIds);
 
-    const nodeById = new Map(nodes.map((n) => [n.id, n]));
-    const mergeSelectedSet = new Set(mergeSelectedIds);
-    const compositeSelectedSet = new Set(compositeSelectedIds);
+  // ── Pan handlers ──
 
-    // ── Pan handlers ──
+  const handlePointerDown = useCallback(
+    (e: React.PointerEvent<SVGSVGElement>) => {
+      if (e.button !== 0) return;
+      if ((e.target as SVGElement).closest('[data-node-id]')) return;
+      dragRef.current = { startX: e.clientX, startY: e.clientY, panX: pan.x, panY: pan.y };
+      svgRef.current?.setPointerCapture(e.pointerId);
+    },
+    [pan]
+  );
 
-    const handlePointerDown = useCallback(
-      (e: React.PointerEvent<SVGSVGElement>) => {
-        if (e.button !== 0) return;
-        if ((e.target as SVGElement).closest('[data-node-id]')) return;
-        dragRef.current = { startX: e.clientX, startY: e.clientY, panX: pan.x, panY: pan.y };
-        svgRef.current?.setPointerCapture(e.pointerId);
-      },
-      [pan],
-    );
+  const handlePointerMove = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
+    if (!dragRef.current) return;
+    const dx = e.clientX - dragRef.current.startX;
+    const dy = e.clientY - dragRef.current.startY;
+    setPan({ x: dragRef.current.panX + dx, y: dragRef.current.panY + dy });
+  }, []);
 
-    const handlePointerMove = useCallback(
-      (e: React.PointerEvent<SVGSVGElement>) => {
-        if (!dragRef.current) return;
-        const dx = e.clientX - dragRef.current.startX;
-        const dy = e.clientY - dragRef.current.startY;
-        setPan({ x: dragRef.current.panX + dx, y: dragRef.current.panY + dy });
-      },
-      [],
-    );
+  const handlePointerUp = useCallback(() => {
+    dragRef.current = null;
+  }, []);
 
-    const handlePointerUp = useCallback(() => {
-      dragRef.current = null;
-    }, []);
+  useEffect(() => {
+    panRef.current = pan;
+  }, [pan]);
 
-    useEffect(() => {
-      panRef.current = pan;
-    }, [pan]);
+  useEffect(() => {
+    zoomRef.current = zoom;
+  }, [zoom]);
 
-    useEffect(() => {
-      zoomRef.current = zoom;
-    }, [zoom]);
+  // ── Zoom handler ──
+  // Use a native wheel listener with passive: false so browser/page scrolling
+  // is suppressed while zooming over the graph canvas.
+  useEffect(() => {
+    const element = svgRef.current;
+    if (!element) return;
 
-    // ── Zoom handler ──
-    // Use a native wheel listener with passive: false so browser/page scrolling
-    // is suppressed while zooming over the graph canvas.
-    useEffect(() => {
-      const element = svgRef.current;
-      if (!element) return;
+    const handleNativeWheel = (event: WheelEvent): void => {
+      event.preventDefault();
+      event.stopPropagation();
 
-      const handleNativeWheel = (event: WheelEvent): void => {
-        event.preventDefault();
-        event.stopPropagation();
-
-        // Normalize wheel movement across mouse wheel and trackpad sources.
-        const normalizedDeltaY = event.deltaMode === 1
+      // Normalize wheel movement across mouse wheel and trackpad sources.
+      const normalizedDeltaY =
+        event.deltaMode === 1
           ? event.deltaY * 16
           : event.deltaMode === 2
             ? event.deltaY * 240
             : event.deltaY;
-        const rawZoomDelta = -normalizedDeltaY * WHEEL_ZOOM_SENSITIVITY;
-        const zoomDelta = Math.max(
-          -MAX_WHEEL_ZOOM_DELTA,
-          Math.min(MAX_WHEEL_ZOOM_DELTA, rawZoomDelta),
-        );
-        if (Math.abs(zoomDelta) < MIN_WHEEL_ZOOM_DELTA) return;
+      const rawZoomDelta = -normalizedDeltaY * WHEEL_ZOOM_SENSITIVITY;
+      const zoomDelta = Math.max(
+        -MAX_WHEEL_ZOOM_DELTA,
+        Math.min(MAX_WHEEL_ZOOM_DELTA, rawZoomDelta)
+      );
+      if (Math.abs(zoomDelta) < MIN_WHEEL_ZOOM_DELTA) return;
 
-        const currentZoom = zoomRef.current;
-        const currentPan = panRef.current;
-        const nextZoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, currentZoom + zoomDelta));
-        if (nextZoom === currentZoom) return;
+      const currentZoom = zoomRef.current;
+      const currentPan = panRef.current;
+      const nextZoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, currentZoom + zoomDelta));
+      if (nextZoom === currentZoom) return;
 
-        const rect = element.getBoundingClientRect();
-        const pointerX = event.clientX - rect.left;
-        const pointerY = event.clientY - rect.top;
-        const worldX = (pointerX - currentPan.x) / currentZoom;
-        const worldY = (pointerY - currentPan.y) / currentZoom;
-        const nextPan = {
-          x: pointerX - worldX * nextZoom,
-          y: pointerY - worldY * nextZoom,
-        };
-
-        panRef.current = nextPan;
-        zoomRef.current = nextZoom;
-        setPan(nextPan);
-        onZoomChange(nextZoom);
+      const rect = element.getBoundingClientRect();
+      const pointerX = event.clientX - rect.left;
+      const pointerY = event.clientY - rect.top;
+      const worldX = (pointerX - currentPan.x) / currentZoom;
+      const worldY = (pointerY - currentPan.y) / currentZoom;
+      const nextPan = {
+        x: pointerX - worldX * nextZoom,
+        y: pointerY - worldY * nextZoom,
       };
 
-      element.addEventListener('wheel', handleNativeWheel, { passive: false });
-      return () => {
-        element.removeEventListener('wheel', handleNativeWheel);
-      };
-    }, [onZoomChange]);
-
-    // ── Click handlers ──
-
-    const handleBackgroundClick = useCallback(
-      (e: React.MouseEvent<SVGSVGElement>) => {
-        if (!(e.target as SVGElement).closest('[data-node-id]')) {
-          onSelectNode(null);
-        }
-      },
-      [onSelectNode],
-    );
-
-    const handleNodeClick = useCallback(
-      (e: React.MouseEvent, nodeId: string) => {
-        e.stopPropagation();
-        if (compositeMode) {
-          onToggleCompositeSelection(nodeId);
-        } else if (mergeMode) {
-          onToggleMergeSelection(nodeId);
-        } else {
-          onSelectNode(nodeId);
-        }
-      },
-      [compositeMode, mergeMode, onToggleCompositeSelection, onToggleMergeSelection, onSelectNode],
-    );
-
-    // ── Viewport culling ──
-    // Compute visible bounds for culling off-screen nodes (performance optimization)
-    const svgRect = svgRef.current?.getBoundingClientRect();
-    const cullMargin = 200; // extra margin in world-space units
-    const viewBounds = svgRect ? {
-      minX: (-pan.x / zoom) - cullMargin - CONTENT_OFFSET_X,
-      minY: (-pan.y / zoom) - cullMargin - CONTENT_OFFSET_Y,
-      maxX: (-pan.x + svgRect.width) / zoom + cullMargin - CONTENT_OFFSET_X,
-      maxY: (-pan.y + svgRect.height) / zoom + cullMargin - CONTENT_OFFSET_Y,
-    } : null;
-
-    const isNodeVisible = (node: VersionNode): boolean => {
-      if (!viewBounds || nodes.length < 50) return true;
-      return node.x + NODE_WIDTH / 2 >= viewBounds.minX
-        && node.x - NODE_WIDTH / 2 <= viewBounds.maxX
-        && node.y + NODE_HEIGHT / 2 >= viewBounds.minY
-        && node.y - NODE_HEIGHT / 2 <= viewBounds.maxY;
+      panRef.current = nextPan;
+      zoomRef.current = nextZoom;
+      setPan(nextPan);
+      onZoomChange(nextZoom);
     };
 
-    if (nodes.length === 0) {
-      return (
-        <div className='flex h-full items-center justify-center text-xs text-gray-500'>
-          No cards in this project yet.
-        </div>
-      );
-    }
+    element.addEventListener('wheel', handleNativeWheel, { passive: false });
+    return () => {
+      element.removeEventListener('wheel', handleNativeWheel);
+    };
+  }, [onZoomChange]);
 
+  // ── Click handlers ──
+
+  const handleBackgroundClick = useCallback(
+    (e: React.MouseEvent<SVGSVGElement>) => {
+      if (!(e.target as SVGElement).closest('[data-node-id]')) {
+        onSelectNode(null);
+      }
+    },
+    [onSelectNode]
+  );
+
+  const handleNodeClick = useCallback(
+    (e: React.MouseEvent, nodeId: string) => {
+      e.stopPropagation();
+      if (compositeMode) {
+        onToggleCompositeSelection(nodeId);
+      } else if (mergeMode) {
+        onToggleMergeSelection(nodeId);
+      } else {
+        onSelectNode(nodeId);
+      }
+    },
+    [compositeMode, mergeMode, onToggleCompositeSelection, onToggleMergeSelection, onSelectNode]
+  );
+
+  // ── Viewport culling ──
+  // Compute visible bounds for culling off-screen nodes (performance optimization)
+  const svgRect = svgRef.current?.getBoundingClientRect();
+  const cullMargin = 200; // extra margin in world-space units
+  const viewBounds = svgRect
+    ? {
+        minX: -pan.x / zoom - cullMargin - CONTENT_OFFSET_X,
+        minY: -pan.y / zoom - cullMargin - CONTENT_OFFSET_Y,
+        maxX: (-pan.x + svgRect.width) / zoom + cullMargin - CONTENT_OFFSET_X,
+        maxY: (-pan.y + svgRect.height) / zoom + cullMargin - CONTENT_OFFSET_Y,
+      }
+    : null;
+
+  const isNodeVisible = (node: VersionNode): boolean => {
+    if (!viewBounds || nodes.length < 50) return true;
     return (
-      <svg
-        ref={svgRef}
-        role='img'
-        aria-label={`Version graph with ${nodes.length} nodes and ${edges.length} edges`}
-        className='h-full w-full cursor-grab overscroll-none active:cursor-grabbing'
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onClick={handleBackgroundClick}
+      node.x + NODE_WIDTH / 2 >= viewBounds.minX &&
+      node.x - NODE_WIDTH / 2 <= viewBounds.maxX &&
+      node.y + NODE_HEIGHT / 2 >= viewBounds.minY &&
+      node.y - NODE_HEIGHT / 2 <= viewBounds.maxY
+    );
+  };
+
+  if (nodes.length === 0) {
+    return (
+      <div className='flex h-full items-center justify-center text-xs text-gray-500'>
+        No cards in this project yet.
+      </div>
+    );
+  }
+
+  return (
+    <svg
+      ref={svgRef}
+      role='img'
+      aria-label={`Version graph with ${nodes.length} nodes and ${edges.length} edges`}
+      className='h-full w-full cursor-grab overscroll-none active:cursor-grabbing'
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onClick={handleBackgroundClick}
+    >
+      <style>{SVG_STYLES}</style>
+      <SvgDefs />
+      <g
+        transform={`translate(${pan.x}, ${pan.y}) scale(${zoom})`}
+        style={smoothTransition ? { transition: 'transform 0.15s ease-out' } : undefined}
       >
-        <style>{SVG_STYLES}</style>
-        <SvgDefs />
-        <g
-          transform={`translate(${pan.x}, ${pan.y}) scale(${zoom})`}
-          style={smoothTransition ? { transition: 'transform 0.15s ease-out' } : undefined}
-        >
-          <g transform={`translate(${nodes.length > 0 ? CONTENT_OFFSET_X : 0}, ${CONTENT_OFFSET_Y})`}>
-            {/* Edges */}
-            {edges.map((edge) => {
-              const sourceNode = nodeById.get(edge.source);
-              const targetNode = nodeById.get(edge.target);
-              if (!sourceNode || !targetNode) return null;
-              // Viewport culling: skip if both endpoints are off-screen
-              if (!isNodeVisible(sourceNode) && !isNodeVisible(targetNode)) return null;
+        <g transform={`translate(${nodes.length > 0 ? CONTENT_OFFSET_X : 0}, ${CONTENT_OFFSET_Y})`}>
+          {/* Edges */}
+          {edges.map((edge) => {
+            const sourceNode = nodeById.get(edge.source);
+            const targetNode = nodeById.get(edge.target);
+            if (!sourceNode || !targetNode) return null;
+            // Viewport culling: skip if both endpoints are off-screen
+            if (!isNodeVisible(sourceNode) && !isNodeVisible(targetNode)) return null;
 
-              const isMergeEdge = edge.type === 'merge';
-              const isCompositeEdge = edge.type === 'composite';
-              const isNewEdge = newEdgeIdsRef.current.has(edge.id);
+            const isMergeEdge = edge.type === 'merge';
+            const isCompositeEdge = edge.type === 'composite';
+            const isNewEdge = newEdgeIdsRef.current.has(edge.id);
 
-              const midX = (sourceNode.x + targetNode.x) / 2;
-              const midY = (sourceNode.y + NODE_HEIGHT / 2 + targetNode.y - NODE_HEIGHT / 2 + 8) / 2;
+            const midX = (sourceNode.x + targetNode.x) / 2;
+            const midY = (sourceNode.y + NODE_HEIGHT / 2 + targetNode.y - NODE_HEIGHT / 2 + 8) / 2;
 
-              const isEdgeHovered = hoveredEdgeId === edge.id;
-              const edgeStroke = isCompositeEdge ? '#14b8a6' : isMergeEdge ? '#a855f7' : '#6b7280';
-              const edgeMarker = isCompositeEdge
-                ? 'url(#vgraph-arrow-composite)'
-                : isMergeEdge ? 'url(#vgraph-arrow-merge)' : 'url(#vgraph-arrow)';
+            const isEdgeHovered = hoveredEdgeId === edge.id;
+            const edgeStroke = isCompositeEdge ? '#14b8a6' : isMergeEdge ? '#a855f7' : '#6b7280';
+            const edgeMarker = isCompositeEdge
+              ? 'url(#vgraph-arrow-composite)'
+              : isMergeEdge
+                ? 'url(#vgraph-arrow-merge)'
+                : 'url(#vgraph-arrow)';
 
-              return (
-                <React.Fragment key={edge.id}>
-                  {/* Invisible wider hit area for hover */}
-                  <path
-                    d={buildEdgePath(sourceNode, targetNode)}
-                    fill='none'
-                    stroke='transparent'
-                    strokeWidth={10}
-                    style={{ cursor: 'pointer' }}
-                    onMouseEnter={() => setHoveredEdgeId(edge.id)}
-                    onMouseLeave={() => setHoveredEdgeId(null)}
-                  />
-                  <path
-                    d={buildEdgePath(sourceNode, targetNode)}
-                    fill='none'
-                    strokeWidth={isEdgeHovered ? 2.5 : 1.5}
-                    markerEnd={edgeMarker}
-                    stroke={edgeStroke}
-                    strokeOpacity={isEdgeHovered ? 0.9 : isCompositeEdge || isMergeEdge ? 0.6 : 0.5}
-                    strokeDasharray={isCompositeEdge ? '6 3' : isMergeEdge ? '4 3' : undefined}
-                    style={{
-                      pointerEvents: 'none',
-                      transition: 'stroke-width 0.15s ease, stroke-opacity 0.15s ease',
-                      ...(isNewEdge ? {
-                        strokeDasharray: 1000,
-                        strokeDashoffset: 1000,
-                        animation: 'vgraph-edge-draw 0.6s ease forwards 0.2s',
-                      } : {}),
-                    }}
-                  />
-                  {zoom > 0.7 || isEdgeHovered ? (
-                    <text
-                      x={midX + 4}
-                      y={midY}
-                      fontSize={7}
-                      fill={edgeStroke}
-                      fillOpacity={0.7}
-                      textAnchor='start'
-                    >
-                      {isCompositeEdge ? 'comp' : isMergeEdge ? 'merge' : 'gen'}
-                    </text>
-                  ) : null}
-                </React.Fragment>
-              );
-            })}
-
-            {/* Nodes */}
-            {nodes.map((node) => {
-              if (!isNodeVisible(node)) return null;
-              const isSelected = node.id === selectedNodeId;
-              const isHovered = node.id === hoveredNodeId;
-              const isMergeSelected = mergeSelectedSet.has(node.id);
-              const isNewNode = newNodeIdsRef.current.has(node.id);
-              const isCollapsed = collapsedNodeIds.has(node.id);
-              const isFilteredOut = filteredNodeIds !== null && !filteredNodeIds.has(node.id);
-              const imageSrc = getSlotImageSrc(node.slot);
-              const operationVisual = resolveNodeOperationVisual(node);
-              const nx = node.x - NODE_WIDTH / 2;
-              const ny = node.y - NODE_HEIGHT / 2;
-
-              const isCompositeSelected = compositeSelectedSet.has(node.id);
-              const isIsolatedOut = isolatedNodeIds !== null && !isolatedNodeIds.has(node.id);
-              const isCompareSelected = compareMode && compareNodeIds !== null
-                && (compareNodeIds[0] === node.id || compareNodeIds[1] === node.id);
-              const dimmed = (mergeMode && !isMergeSelected && !isHovered)
-                || (compositeMode && !isCompositeSelected && !isHovered)
-                || isFilteredOut || isIsolatedOut;
-              const hasChildren = node.childIds.length > 0;
-              const annotation = getSlotAnnotation?.(node.slot);
-              const isCompositeNode = node.type === 'composite';
-              const compositeMeta = isCompositeNode ? readMeta(node.slot) : null;
-              const compositeLayers: CompositeLayerConfig[] = compositeMeta?.compositeConfig?.layers ?? [];
-              const compositeHeight = isCompositeNode ? getCompositeNodeHeight(compositeLayers.length) : NODE_HEIGHT;
-
-              return (
-                <g
-                  key={node.id}
-                  data-node-id={node.id}
-                  className='cursor-pointer'
-                  onClick={(e) => handleNodeClick(e, node.id)}
-                  onContextMenu={(e) => {
-                    if (onContextMenu) {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      onContextMenu(node.id, e.clientX, e.clientY);
-                    }
-                  }}
-                  onPointerEnter={() => onHoverNode(node.id)}
-                  onPointerLeave={() => onHoverNode(null)}
+            return (
+              <React.Fragment key={edge.id}>
+                {/* Invisible wider hit area for hover */}
+                <path
+                  d={buildEdgePath(sourceNode, targetNode)}
+                  fill='none'
+                  stroke='transparent'
+                  strokeWidth={10}
+                  style={{ cursor: 'pointer' }}
+                  onMouseEnter={() => setHoveredEdgeId(edge.id)}
+                  onMouseLeave={() => setHoveredEdgeId(null)}
+                />
+                <path
+                  d={buildEdgePath(sourceNode, targetNode)}
+                  fill='none'
+                  strokeWidth={isEdgeHovered ? 2.5 : 1.5}
+                  markerEnd={edgeMarker}
+                  stroke={edgeStroke}
+                  strokeOpacity={isEdgeHovered ? 0.9 : isCompositeEdge || isMergeEdge ? 0.6 : 0.5}
+                  strokeDasharray={isCompositeEdge ? '6 3' : isMergeEdge ? '4 3' : undefined}
                   style={{
-                    transform: `translate(${nx}px, ${ny}px) scale(${isHovered && !mergeMode && !compositeMode ? 1.08 : 1})`,
-                    transformOrigin: `${nx + NODE_WIDTH / 2}px ${ny + compositeHeight / 2}px`,
-                    transition: 'transform 0.3s ease-out, opacity 0.2s ease',
-                    opacity: dimmed ? (isFilteredOut ? 0.2 : 0.4) : isHovered ? 1 : 0.85,
-                    animation: isNewNode
-                      ? 'vgraph-fade-in 0.5s ease forwards'
-                      : isSelected
-                        ? 'vgraph-glow-pulse 2s ease-in-out infinite'
-                        : undefined,
+                    pointerEvents: 'none',
+                    transition: 'stroke-width 0.15s ease, stroke-opacity 0.15s ease',
+                    ...(isNewEdge
+                      ? {
+                          strokeDasharray: 1000,
+                          strokeDashoffset: 1000,
+                          animation: 'vgraph-edge-draw 0.6s ease forwards 0.2s',
+                        }
+                      : {}),
                   }}
-                >
-                  {/* Accessible title */}
-                  <title>{operationVisual.label} ({node.type})</title>
+                />
+                {zoom > 0.7 || isEdgeHovered ? (
+                  <text
+                    x={midX + 4}
+                    y={midY}
+                    fontSize={7}
+                    fill={edgeStroke}
+                    fillOpacity={0.7}
+                    textAnchor='start'
+                  >
+                    {isCompositeEdge ? 'comp' : isMergeEdge ? 'merge' : 'gen'}
+                  </text>
+                ) : null}
+              </React.Fragment>
+            );
+          })}
 
-                  {isCompositeNode && compositeLayers.length > 0 ? (
-                    <CompositeStackNode
-                      node={node}
-                      isSelected={isSelected}
-                      isHovered={isHovered}
-                      layers={compositeLayers}
-                      zoom={zoom}
-                      getSlotLabel={(slotId) => {
-                        const n = nodeById.get(slotId);
-                        return n ? n.label : slotId.slice(0, 8);
-                      }}
-                      getSlotImageSrc={(slotId) => {
-                        const n = nodeById.get(slotId);
-                        return n ? getSlotImageSrc(n.slot) : null;
-                      }}
-                      onReorderLayer={(from, to) => onReorderCompositeLayer(node.id, from, to)}
-                    />
-                  ) : (
-                    <>
-                      {/* Background */}
-                      <rect
-                        x={0}
-                        y={0}
-                        width={NODE_WIDTH}
-                        height={NODE_HEIGHT}
-                        rx={8}
-                        ry={8}
-                        strokeWidth={isSelected || isMergeSelected || isCompositeSelected ? 2 : 1}
-                        strokeDasharray={isMergeSelected ? '4 3' : isCompositeSelected ? '6 3' : undefined}
-                        className={getNodeStrokeClass(node, isSelected, isMergeSelected, isCompareSelected, isCompositeSelected)}
-                      />
+          {/* Nodes */}
+          {nodes.map((node) => {
+            if (!isNodeVisible(node)) return null;
+            const isSelected = node.id === selectedNodeId;
+            const isHovered = node.id === hoveredNodeId;
+            const isMergeSelected = mergeSelectedSet.has(node.id);
+            const isNewNode = newNodeIdsRef.current.has(node.id);
+            const isCollapsed = collapsedNodeIds.has(node.id);
+            const isFilteredOut = filteredNodeIds !== null && !filteredNodeIds.has(node.id);
+            const imageSrc = getSlotImageSrc(node.slot);
+            const operationVisual = resolveNodeOperationVisual(node);
+            const nx = node.x - NODE_WIDTH / 2;
+            const ny = node.y - NODE_HEIGHT / 2;
 
-                      {/* Thumbnail */}
-                      {imageSrc && !brokenImagesRef.current.has(node.id) ? (
-                        <image
-                          href={imageSrc}
-                          x={(NODE_WIDTH - THUMB_SIZE) / 2}
-                          y={6}
-                          width={THUMB_SIZE}
-                          height={THUMB_SIZE}
-                          preserveAspectRatio='xMidYMid slice'
-                          clipPath='inset(0 round 4px)'
-                          onError={() => {
-                            brokenImagesRef.current.add(node.id);
-                            setBrokenTick((t) => t + 1);
-                          }}
-                        />
-                      ) : (
-                        <rect
-                          x={(NODE_WIDTH - THUMB_SIZE) / 2}
-                          y={6}
-                          width={THUMB_SIZE}
-                          height={THUMB_SIZE}
-                          rx={4}
-                          ry={4}
-                          fill={brokenImagesRef.current.has(node.id) ? '#7f1d1d' : '#374151'}
-                          fillOpacity={0.4}
-                        />
+            const isCompositeSelected = compositeSelectedSet.has(node.id);
+            const isIsolatedOut = isolatedNodeIds !== null && !isolatedNodeIds.has(node.id);
+            const isCompareSelected =
+              compareMode &&
+              compareNodeIds !== null &&
+              (compareNodeIds[0] === node.id || compareNodeIds[1] === node.id);
+            const dimmed =
+              (mergeMode && !isMergeSelected && !isHovered) ||
+              (compositeMode && !isCompositeSelected && !isHovered) ||
+              isFilteredOut ||
+              isIsolatedOut;
+            const hasChildren = node.childIds.length > 0;
+            const annotation = getSlotAnnotation?.(node.slot);
+            const isCompositeNode = node.type === 'composite';
+            const compositeMeta = isCompositeNode ? readMeta(node.slot) : null;
+            const compositeLayers: CompositeLayerConfig[] =
+              compositeMeta?.compositeConfig?.layers ?? [];
+            const compositeHeight = isCompositeNode
+              ? getCompositeNodeHeight(compositeLayers.length)
+              : NODE_HEIGHT;
+
+            return (
+              <g
+                key={node.id}
+                data-node-id={node.id}
+                className='cursor-pointer'
+                onClick={(e) => handleNodeClick(e, node.id)}
+                onContextMenu={(e) => {
+                  if (onContextMenu) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onContextMenu(node.id, e.clientX, e.clientY);
+                  }
+                }}
+                onPointerEnter={() => onHoverNode(node.id)}
+                onPointerLeave={() => onHoverNode(null)}
+                style={{
+                  transform: `translate(${nx}px, ${ny}px) scale(${isHovered && !mergeMode && !compositeMode ? 1.08 : 1})`,
+                  transformOrigin: `${nx + NODE_WIDTH / 2}px ${ny + compositeHeight / 2}px`,
+                  transition: 'transform 0.3s ease-out, opacity 0.2s ease',
+                  opacity: dimmed ? (isFilteredOut ? 0.2 : 0.4) : isHovered ? 1 : 0.85,
+                  animation: isNewNode
+                    ? 'vgraph-fade-in 0.5s ease forwards'
+                    : isSelected
+                      ? 'vgraph-glow-pulse 2s ease-in-out infinite'
+                      : undefined,
+                }}
+              >
+                {/* Accessible title */}
+                <title>
+                  {operationVisual.label} ({node.type})
+                </title>
+
+                {isCompositeNode && compositeLayers.length > 0 ? (
+                  <CompositeStackNode
+                    node={node}
+                    isSelected={isSelected}
+                    isHovered={isHovered}
+                    layers={compositeLayers}
+                    zoom={zoom}
+                    getSlotLabel={(slotId) => {
+                      const n = nodeById.get(slotId);
+                      return n ? n.label : slotId.slice(0, 8);
+                    }}
+                    getSlotImageSrc={(slotId) => {
+                      const n = nodeById.get(slotId);
+                      return n ? getSlotImageSrc(n.slot) : null;
+                    }}
+                    onReorderLayer={(from, to) => onReorderCompositeLayer(node.id, from, to)}
+                  />
+                ) : (
+                  <>
+                    {/* Background */}
+                    <rect
+                      x={0}
+                      y={0}
+                      width={NODE_WIDTH}
+                      height={NODE_HEIGHT}
+                      rx={8}
+                      ry={8}
+                      strokeWidth={isSelected || isMergeSelected || isCompositeSelected ? 2 : 1}
+                      strokeDasharray={
+                        isMergeSelected ? '4 3' : isCompositeSelected ? '6 3' : undefined
+                      }
+                      className={getNodeStrokeClass(
+                        node,
+                        isSelected,
+                        isMergeSelected,
+                        isCompareSelected,
+                        isCompositeSelected
                       )}
+                    />
 
-                      {/* Operation label under thumbnail */}
-                      <g>
-                        <circle
-                          cx={NODE_WIDTH / 2 - 20}
-                          cy={THUMB_SIZE + 6 + LABEL_OFFSET_Y - 2}
-                          r={3}
-                          fill={operationVisual.color}
-                          fillOpacity={0.95}
-                        />
-                        <text
-                          x={NODE_WIDTH / 2 - 14}
-                          y={THUMB_SIZE + 6 + LABEL_OFFSET_Y + 1}
-                          textAnchor='start'
-                          fill={operationVisual.color}
-                          fontSize={7}
-                          fontWeight='bold'
-                        >
-                          {operationVisual.icon}
-                        </text>
-                        <text
-                          x={NODE_WIDTH / 2 - 6}
-                          y={THUMB_SIZE + 6 + LABEL_OFFSET_Y + 1}
-                          textAnchor='start'
-                          fill='#d1d5db'
-                          fontSize={8}
-                        >
-                          {operationVisual.label}
-                        </text>
-                      </g>
+                    {/* Thumbnail */}
+                    {imageSrc && !brokenImagesRef.current.has(node.id) ? (
+                      <image
+                        href={imageSrc}
+                        x={(NODE_WIDTH - THUMB_SIZE) / 2}
+                        y={6}
+                        width={THUMB_SIZE}
+                        height={THUMB_SIZE}
+                        preserveAspectRatio='xMidYMid slice'
+                        clipPath='inset(0 round 4px)'
+                        onError={() => {
+                          brokenImagesRef.current.add(node.id);
+                          setBrokenTick((t) => t + 1);
+                        }}
+                      />
+                    ) : (
+                      <rect
+                        x={(NODE_WIDTH - THUMB_SIZE) / 2}
+                        y={6}
+                        width={THUMB_SIZE}
+                        height={THUMB_SIZE}
+                        rx={4}
+                        ry={4}
+                        fill={brokenImagesRef.current.has(node.id) ? '#7f1d1d' : '#374151'}
+                        fillOpacity={0.4}
+                      />
+                    )}
 
-                      {/* Mask badge */}
-                      {node.hasMask ? (
-                        <circle
-                          cx={NODE_WIDTH - 6}
-                          cy={8}
-                          r={4}
-                          fill='#a855f7'
-                        />
-                      ) : null}
-
-                      {/* Annotation badge with tooltip */}
-                      {annotation ? (
-                        <g>
-                          <circle
-                            cx={6}
-                            cy={NODE_HEIGHT - 8}
-                            r={3}
-                            fill='#facc15'
-                            fillOpacity={0.8}
-                          />
-                          <title>{annotation}</title>
-                        </g>
-                      ) : null}
-
-                      {/* Collapse toggle button */}
-                      {hasChildren && !mergeMode && !compositeMode ? (
-                        <g
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onToggleCollapse(node.id);
-                          }}
-                          className='cursor-pointer'
-                        >
-                          {versionGraphTooltipsEnabled ? <title>{tooltipContent.nodeToggleCollapse}</title> : null}
-                          <rect
-                            x={NODE_WIDTH / 2 - 10}
-                            y={NODE_HEIGHT - 4}
-                            width={20}
-                            height={14}
-                            rx={3}
-                            ry={3}
-                            fill='#1f2937'
-                            stroke='#4b5563'
-                            strokeWidth={0.5}
-                          />
-                          <text
-                            x={NODE_WIDTH / 2}
-                            y={NODE_HEIGHT + 7}
-                            textAnchor='middle'
-                            fill={isCollapsed ? '#facc15' : '#9ca3af'}
-                            fontSize={8}
-                            fontWeight='bold'
-                          >
-                            {isCollapsed ? `+${node.descendantCount}` : '\u2212'}
-                          </text>
-                        </g>
-                      ) : null}
-                    </>
-                  )}
-                  {onOpenNodeDetails ? (
-                    <g
-                      className='cursor-pointer'
-                      role='button'
-                      aria-label={versionGraphTooltipsEnabled ? tooltipContent.nodeOpenDetails : 'Open node details'}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        onOpenNodeDetails(node.id);
-                      }}
-                    >
-                      {versionGraphTooltipsEnabled ? <title>{tooltipContent.nodeOpenDetails}</title> : null}
+                    {/* Operation label under thumbnail */}
+                    <g>
                       <circle
-                        cx={NODE_WIDTH - 8}
-                        cy={4}
-                        r={4.5}
-                        fill='#0f172a'
+                        cx={NODE_WIDTH / 2 - 20}
+                        cy={THUMB_SIZE + 6 + LABEL_OFFSET_Y - 2}
+                        r={3}
+                        fill={operationVisual.color}
                         fillOpacity={0.95}
-                        stroke='#60a5fa'
-                        strokeWidth={1}
                       />
                       <text
-                        x={NODE_WIDTH - 8}
-                        y={6}
-                        textAnchor='middle'
-                        fill='#bfdbfe'
-                        fontSize={6}
-                        fontWeight={700}
-                        pointerEvents='none'
+                        x={NODE_WIDTH / 2 - 14}
+                        y={THUMB_SIZE + 6 + LABEL_OFFSET_Y + 1}
+                        textAnchor='start'
+                        fill={operationVisual.color}
+                        fontSize={7}
+                        fontWeight='bold'
                       >
-                        i
+                        {operationVisual.icon}
+                      </text>
+                      <text
+                        x={NODE_WIDTH / 2 - 6}
+                        y={THUMB_SIZE + 6 + LABEL_OFFSET_Y + 1}
+                        textAnchor='start'
+                        fill='#d1d5db'
+                        fontSize={8}
+                      >
+                        {operationVisual.label}
                       </text>
                     </g>
-                  ) : null}
-                </g>
-              );
-            })}
-          </g>
+
+                    {/* Mask badge */}
+                    {node.hasMask ? (
+                      <circle cx={NODE_WIDTH - 6} cy={8} r={4} fill='#a855f7' />
+                    ) : null}
+
+                    {/* Annotation badge with tooltip */}
+                    {annotation ? (
+                      <g>
+                        <circle
+                          cx={6}
+                          cy={NODE_HEIGHT - 8}
+                          r={3}
+                          fill='#facc15'
+                          fillOpacity={0.8}
+                        />
+                        <title>{annotation}</title>
+                      </g>
+                    ) : null}
+
+                    {/* Collapse toggle button */}
+                    {hasChildren && !mergeMode && !compositeMode ? (
+                      <g
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onToggleCollapse(node.id);
+                        }}
+                        className='cursor-pointer'
+                      >
+                        {versionGraphTooltipsEnabled ? (
+                          <title>{tooltipContent.nodeToggleCollapse}</title>
+                        ) : null}
+                        <rect
+                          x={NODE_WIDTH / 2 - 10}
+                          y={NODE_HEIGHT - 4}
+                          width={20}
+                          height={14}
+                          rx={3}
+                          ry={3}
+                          fill='#1f2937'
+                          stroke='#4b5563'
+                          strokeWidth={0.5}
+                        />
+                        <text
+                          x={NODE_WIDTH / 2}
+                          y={NODE_HEIGHT + 7}
+                          textAnchor='middle'
+                          fill={isCollapsed ? '#facc15' : '#9ca3af'}
+                          fontSize={8}
+                          fontWeight='bold'
+                        >
+                          {isCollapsed ? `+${node.descendantCount}` : '\u2212'}
+                        </text>
+                      </g>
+                    ) : null}
+                  </>
+                )}
+                {onOpenNodeDetails ? (
+                  <g
+                    className='cursor-pointer'
+                    role='button'
+                    aria-label={
+                      versionGraphTooltipsEnabled
+                        ? tooltipContent.nodeOpenDetails
+                        : 'Open node details'
+                    }
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onOpenNodeDetails(node.id);
+                    }}
+                  >
+                    {versionGraphTooltipsEnabled ? (
+                      <title>{tooltipContent.nodeOpenDetails}</title>
+                    ) : null}
+                    <circle
+                      cx={NODE_WIDTH - 8}
+                      cy={4}
+                      r={4.5}
+                      fill='#0f172a'
+                      fillOpacity={0.95}
+                      stroke='#60a5fa'
+                      strokeWidth={1}
+                    />
+                    <text
+                      x={NODE_WIDTH - 8}
+                      y={6}
+                      textAnchor='middle'
+                      fill='#bfdbfe'
+                      fontSize={6}
+                      fontWeight={700}
+                      pointerEvents='none'
+                    >
+                      i
+                    </text>
+                  </g>
+                ) : null}
+              </g>
+            );
+          })}
         </g>
-      </svg>
-    );
-  },
-);
+      </g>
+    </svg>
+  );
+});

@@ -1,12 +1,13 @@
 'use client';
 
-import {
-  EditIcon,
-  Trash2Icon
-} from 'lucide-react';
+import { EditIcon, Trash2Icon } from 'lucide-react';
 import React, { useMemo, useRef, useState } from 'react';
 
-import type { DatabaseColumnInfo, DatabaseTableDetail, DatabaseType } from '@/shared/contracts/database';
+import type {
+  DatabaseColumnInfo,
+  DatabaseTableDetail,
+  DatabaseType,
+} from '@/shared/contracts/database';
 import {
   Input,
   FormModal,
@@ -34,7 +35,13 @@ function formatCellValue(value: unknown): string {
 function parseInputValue(value: string, type: string): unknown {
   if (value === '' || value === '∅') return null;
   const lowerType = type.toLowerCase();
-  if (lowerType.includes('int') || lowerType === 'numeric' || lowerType === 'decimal' || lowerType === 'float' || lowerType === 'double') {
+  if (
+    lowerType.includes('int') ||
+    lowerType === 'numeric' ||
+    lowerType === 'decimal' ||
+    lowerType === 'float' ||
+    lowerType === 'double'
+  ) {
     const num = Number(value);
     if (!Number.isNaN(num)) return num;
   }
@@ -42,7 +49,11 @@ function parseInputValue(value: string, type: string): unknown {
     return value === 'true' || value === '1';
   }
   if (lowerType === 'json' || lowerType === 'jsonb') {
-    try { return JSON.parse(value); } catch { return value; }
+    try {
+      return JSON.parse(value);
+    } catch {
+      return value;
+    }
   }
   return value;
 }
@@ -107,20 +118,20 @@ function RowFormModal({
           >
             <div className='flex flex-col gap-1.5'>
               {col.isPrimaryKey && (
-                <StatusBadge
-                  status='PK'
-                  variant='info'
-                  size='sm'
-                  className='font-bold mb-1'
-                />
+                <StatusBadge status='PK' variant='info' size='sm' className='font-bold mb-1' />
               )}
               <Input
                 value={formData[col.name] ?? ''}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, [col.name]: e.target.value }))
+                onChange={(e) => setFormData((prev) => ({ ...prev, [col.name]: e.target.value }))}
+                placeholder={
+                  typeof col.defaultValue === 'string'
+                    ? col.defaultValue
+                    : col.nullable
+                      ? 'NULL'
+                      : 'required'
                 }
-                placeholder={typeof col.defaultValue === 'string' ? col.defaultValue : (col.nullable ? 'NULL' : 'required')}
-                className='font-mono text-xs'                disabled={mode === 'edit' && col.isPrimaryKey}
+                className='font-mono text-xs'
+                disabled={mode === 'edit' && col.isPrimaryKey}
               />
             </div>
           </FormField>
@@ -136,14 +147,22 @@ export function CrudPanel(props: {
   dbType?: DatabaseType;
 }): React.JSX.Element {
   const {
-    selectedTable, setSelectedTable,
-    page, setPage,
-    pageSize, setPageSize,
-    mutationError, setMutationError,
-    successMessage, setSuccessMessage,
-    showAddModal, setShowAddModal,
-    editingRow, setEditingRow,
-    deletingRow, setDeletingRow,
+    selectedTable,
+    setSelectedTable,
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    mutationError,
+    setMutationError,
+    successMessage,
+    setSuccessMessage,
+    showAddModal,
+    setShowAddModal,
+    editingRow,
+    setEditingRow,
+    deletingRow,
+    setDeletingRow,
     tableDetail,
     rows,
     totalRows,
@@ -159,12 +178,13 @@ export function CrudPanel(props: {
     rowsQuery,
   }: UseCrudPanelStateReturn = useCrudPanelState(props);
 
-  const rowsError: string | null = rowsQuery.isError && rowsQuery.error instanceof Error ? rowsQuery.error.message : null;
+  const rowsError: string | null =
+    rowsQuery.isError && rowsQuery.error instanceof Error ? rowsQuery.error.message : null;
   const errorMessage: string | null = mutationError ?? rowsError;
 
   const columnDefs = useMemo<ColumnDef<Record<string, unknown>>[]>(() => {
     if (!columns.length && rows.length === 0) return [];
-    
+
     const actionCol: ColumnDef<Record<string, unknown>> = {
       id: 'actions',
       header: 'Actions',
@@ -191,12 +211,14 @@ export function CrudPanel(props: {
       size: 80,
     };
 
-    const dataCols = (rows.length > 0 ? Object.keys(rows[0] ?? {}) : columns.map(c => c.name)).map((key) => ({
+    const dataCols = (
+      rows.length > 0 ? Object.keys(rows[0] ?? {}) : columns.map((c) => c.name)
+    ).map((key) => ({
       accessorKey: key,
       header: key,
       cell: ({ row }: { row: { original: Record<string, unknown> } }) => (
-        <span 
-          className='font-mono text-xs text-gray-300 truncate block max-w-[200px]' 
+        <span
+          className='font-mono text-xs text-gray-300 truncate block max-w-[200px]'
           title={formatCellValue(row.original[key])}
         >
           {formatCellValue(row.original[key])}
@@ -223,7 +245,7 @@ export function CrudPanel(props: {
   );
 
   const filters = (
-    <DatabaseTableSelector 
+    <DatabaseTableSelector
       selectedTable={selectedTable}
       setSelectedTable={setSelectedTable}
       tableDetails={tableDetails}
@@ -236,16 +258,17 @@ export function CrudPanel(props: {
     />
   );
 
-  const footer = selectedTable && !isLoadingRows && rows.length > 0 ? (
-    <DatabasePagination 
-      totalRows={totalRows}
-      page={page}
-      maxPage={maxPage}
-      setPage={setPage}
-      pageSize={pageSize}
-      setPageSize={setPageSize}
-    />
-  ) : null;
+  const footer =
+    selectedTable && !isLoadingRows && rows.length > 0 ? (
+      <DatabasePagination
+        totalRows={totalRows}
+        page={page}
+        maxPage={maxPage}
+        setPage={setPage}
+        pageSize={pageSize}
+        setPageSize={setPageSize}
+      />
+    ) : null;
 
   return (
     <div className='space-y-4'>
@@ -263,7 +286,11 @@ export function CrudPanel(props: {
         />
       ) : (
         <div className='space-y-4'>
-          <Card variant='subtle-compact' padding='sm' className='flex flex-wrap items-center gap-3 bg-card/30 border-border/60'>
+          <Card
+            variant='subtle-compact'
+            padding='sm'
+            className='flex flex-wrap items-center gap-3 bg-card/30 border-border/60'
+          >
             {filters}
           </Card>
           {alerts}

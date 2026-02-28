@@ -42,11 +42,7 @@ export function LogList({
   }
 
   if (logs.length === 0) {
-    return (
-      <div className='py-8 text-center text-xs text-gray-500 italic'>
-        {emptyMessage}
-      </div>
-    );
+    return <div className='py-8 text-center text-xs text-gray-500 italic'>{emptyMessage}</div>;
   }
 
   const formatTimestamp = (ts: string | number | Date): string => {
@@ -58,36 +54,27 @@ export function LogList({
   };
 
   return (
-    <div 
-      className={cn('space-y-2 overflow-y-auto pr-1', className)}
-      style={{ maxHeight }}
-    >
+    <div className={cn('space-y-2 overflow-y-auto pr-1', className)} style={{ maxHeight }}>
       {logs.map((log) => (
-        <div 
-          key={log.id} 
+        <div
+          key={log.id}
           className='flex flex-col gap-1 rounded-md border border-border/30 bg-black/20 p-2 text-[11px] transition-colors hover:bg-black/30'
         >
           <div className='flex items-center gap-2'>
             <span className='shrink-0 font-mono text-gray-500'>
               [{formatTimestamp(log.timestamp)}]
             </span>
-            <StatusBadge 
-              status={log.level} 
-              size='sm' 
-              className='h-4 font-bold uppercase' 
-            />
+            <StatusBadge status={log.level} size='sm' className='h-4 font-bold uppercase' />
             {log.source && (
-              <StatusBadge 
-                status={log.source} 
-                variant='neutral' 
-                size='sm' 
-                className='h-4 px-1 font-mono uppercase opacity-70' 
+              <StatusBadge
+                status={log.source}
+                variant='neutral'
+                size='sm'
+                className='h-4 px-1 font-mono uppercase opacity-70'
               />
             )}
           </div>
-          <div className='break-words leading-relaxed text-gray-200'>
-            {log.message}
-          </div>
+          <div className='break-words leading-relaxed text-gray-200'>{log.message}</div>
           {log.context && (
             <div className='mt-1'>
               {renderContext ? (

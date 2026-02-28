@@ -21,8 +21,12 @@ describe('useMasterFolderTreeAppearance', () => {
 
     expect(result.current.placeholderClasses.rootIdle).toContain('border-sky-500');
     expect(result.current.rootDropUi.label).toBe('Move to root');
-    expect(result.current.rootDropUi.idleClassName).toBe(result.current.placeholderClasses.rootIdle);
-    expect(result.current.rootDropUi.activeClassName).toBe(result.current.placeholderClasses.rootActive);
+    expect(result.current.rootDropUi.idleClassName).toBe(
+      result.current.placeholderClasses.rootIdle
+    );
+    expect(result.current.rootDropUi.activeClassName).toBe(
+      result.current.placeholderClasses.rootActive
+    );
   });
 
   it('resolves icons from profile overrides and falls back safely', () => {

@@ -97,8 +97,12 @@ export async function handleDatabaseMongoDeleteAction({
     };
   }
   const deleteResult: ApiResponse<unknown> = await dbApi.action({
-    ...(queryPayload['provider'] ? { provider: queryPayload['provider'] as 'auto' | 'mongodb' | 'prisma' } : {}),
-    ...(queryPayload['collectionMap'] ? { collectionMap: queryPayload['collectionMap'] as Record<string, string> } : {}),
+    ...(queryPayload['provider']
+      ? { provider: queryPayload['provider'] as 'auto' | 'mongodb' | 'prisma' }
+      : {}),
+    ...(queryPayload['collectionMap']
+      ? { collectionMap: queryPayload['collectionMap'] as Record<string, string> }
+      : {}),
     action,
     collection,
     filter,
@@ -109,7 +113,7 @@ export async function handleDatabaseMongoDeleteAction({
     reportAiPathsError(
       new Error(deleteResult.error),
       { action: 'dbDelete', collection, nodeId: node.id },
-      'Database delete failed:',
+      'Database delete failed:'
     );
     toast(deleteResult.error || 'Database delete failed.', { variant: 'error' });
     return { result: null, bundle: { error: 'Delete failed' }, aiPrompt };
@@ -123,8 +127,7 @@ export async function handleDatabaseMongoDeleteAction({
   const writeOutcome = writeOutcomeEvaluation.writeOutcome;
   if (writeOutcomeEvaluation.isZeroAffected) {
     const message =
-      writeOutcome.message ??
-      `Database write affected 0 records for delete (${action}).`;
+      writeOutcome.message ?? `Database write affected 0 records for delete (${action}).`;
     if (writeOutcome.status === 'failed') {
       reportAiPathsError(
         new Error(message),
@@ -134,7 +137,7 @@ export async function handleDatabaseMongoDeleteAction({
           nodeId: node.id,
           writeOutcome,
         },
-        'Database delete failed:',
+        'Database delete failed:'
       );
       toast(message, { variant: 'error' });
       throw new Error(message);

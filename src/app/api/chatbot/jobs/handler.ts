@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { resolveBrainModelExecutionConfig } from '@/features/ai/brain/server';
+import { resolveBrainModelExecutionConfig } from '@/shared/lib/ai-brain/server';
 import { chatbotJobRepository } from '@/features/ai/chatbot/services/chatbot-job-repository';
 import { chatbotSessionRepository } from '@/features/ai/chatbot/services/chatbot-session-repository';
 import { enqueueChatbotJob, startChatbotJobQueue } from '@/features/jobs/server';
@@ -29,10 +29,7 @@ const enqueueJobSchema = z.object({
   userMessage: z.string().trim().optional(),
 }) as z.ZodSchema<EnqueueJobRequest>;
 
-export async function GET_handler(
-  _req: NextRequest,
-  ctx: ApiHandlerContext,
-): Promise<Response> {
+export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const jobs: ChatbotJob[] = await chatbotJobRepository.findAll(50);
 
   if (DEBUG_CHATBOT) {
@@ -45,16 +42,13 @@ export async function GET_handler(
   return NextResponse.json({ jobs });
 }
 
-export async function POST_handler(
-  req: NextRequest,
-  ctx: ApiHandlerContext,
-): Promise<Response> {
+export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const result: JsonParseResult<EnqueueJobRequest> = await parseJsonBody<EnqueueJobRequest>(
     req,
     enqueueJobSchema,
     {
       logPrefix: 'chatbot.jobs.POST',
-    },
+    }
   );
 
   if (!result.ok) {
@@ -122,17 +116,10 @@ export async function POST_handler(
   });
 }
 
-export async function DELETE_handler(
-  req: NextRequest,
-  ctx: ApiHandlerContext,
-): Promise<Response> {
+export async function DELETE_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const scope = req.nextUrl.searchParams.get('scope') ?? 'terminal';
 
-  const terminalStatuses: Array<ChatbotJob['status']> = [
-    'completed',
-    'failed',
-    'canceled',
-  ];
+  const terminalStatuses: Array<ChatbotJob['status']> = ['completed', 'failed', 'canceled'];
 
   if (scope !== 'terminal') {
     throw badRequestError('Unsupported delete scope.');

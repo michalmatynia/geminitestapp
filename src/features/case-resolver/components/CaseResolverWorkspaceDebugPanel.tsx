@@ -18,10 +18,7 @@ export function CaseResolverWorkspaceDebugPanel({
   enabled,
 }: CaseResolverWorkspaceDebugPanelProps): React.JSX.Element | null {
   const [events, setEvents] = React.useState(() => readCaseResolverWorkspaceDebugEvents());
-  const snapshot = React.useMemo(
-    () => readCaseResolverWorkspaceObservabilitySnapshot(),
-    [events]
-  );
+  const snapshot = React.useMemo(() => readCaseResolverWorkspaceObservabilitySnapshot(), [events]);
   const conflictRatePercent = (snapshot.conflictRate * 100).toFixed(1);
   const successRatePercent = (snapshot.saveSuccessRate * 100).toFixed(1);
 
@@ -47,9 +44,7 @@ export function CaseResolverWorkspaceDebugPanel({
     <Card className='fixed bottom-4 right-4 z-50 flex max-h-[60vh] w-[420px] flex-col border-border/70 bg-black/80 p-2 text-[11px] text-gray-100 shadow-xl backdrop-blur'>
       <div className='mb-2 flex items-center justify-between gap-2'>
         <span className='font-medium text-gray-100'>Workspace Debug</span>
-        <span className='font-mono text-[10px] text-gray-300'>
-          events: {events.length}
-        </span>
+        <span className='font-mono text-[10px] text-gray-300'>events: {events.length}</span>
       </div>
       <div className='mb-2 grid grid-cols-2 gap-1 rounded border border-border/60 bg-black/40 px-2 py-1 font-mono text-[10px] text-gray-200'>
         <span>save p95: {Math.round(snapshot.persistDurationMs.p95)}ms</span>
@@ -108,10 +103,7 @@ export function CaseResolverWorkspaceDebugPanel({
           <div className='text-gray-400'>No workspace events captured.</div>
         ) : null}
         {recent.map((entry) => (
-          <div
-            key={entry.id}
-            className='rounded border border-border/60 bg-black/30 px-2 py-1'
-          >
+          <div key={entry.id} className='rounded border border-border/60 bg-black/30 px-2 py-1'>
             <div className='text-[10px] text-gray-400'>
               {entry.timestamp} | {entry.source}
             </div>

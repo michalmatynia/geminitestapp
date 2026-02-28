@@ -1,6 +1,4 @@
-import {
-  PRODUCT_SIMPLE_PARAMETER_ID_PREFIX,
-} from '@/shared/contracts/products';
+import { PRODUCT_SIMPLE_PARAMETER_ID_PREFIX } from '@/shared/contracts/products';
 import type {
   ProductParameterValue,
   ProductSimpleParameterValue,
@@ -11,9 +9,7 @@ const toTrimmedString = (value: unknown): string => {
   return value.trim();
 };
 
-const normalizeValuesByLanguage = (
-  input: unknown
-): Record<string, string> | undefined => {
+const normalizeValuesByLanguage = (input: unknown): Record<string, string> | undefined => {
   if (!input || typeof input !== 'object' || Array.isArray(input)) {
     return undefined;
   }
@@ -93,9 +89,7 @@ export const mergeProductParameterValues = (input: {
   customFieldValues: ProductParameterValue[];
   simpleParameterValues: ProductSimpleParameterValue[];
 }): ProductParameterValue[] => {
-  const customFieldValues = Array.isArray(input.customFieldValues)
-    ? input.customFieldValues
-    : [];
+  const customFieldValues = Array.isArray(input.customFieldValues) ? input.customFieldValues : [];
   const simpleParameterValues = Array.isArray(input.simpleParameterValues)
     ? input.simpleParameterValues
     : [];

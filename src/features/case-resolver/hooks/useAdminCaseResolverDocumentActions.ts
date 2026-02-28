@@ -10,7 +10,7 @@ import {
   buildDocumentPdfMarkup,
   createCaseResolverHistorySnapshotEntry,
   createId,
-} from '../utils/caseResolverUtils';
+} from '@/features/case-resolver/utils/caseResolverUtils';
 import {
   CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT,
   buildCaseResolverDraftComparableFingerprint,
@@ -20,22 +20,24 @@ import {
   ensureSafeDocumentHtml,
   toStorageDocumentValue,
   type DocumentContentCanonical,
-} from '@/features/document-editor';
+} from '@/shared/lib/document-editor';
 import { savePromptExploderDraftPromptFromCaseResolver } from '@/features/prompt-exploder/bridge';
 import type { CaseResolverFileEditDraft } from '../types';
 import { logCaseResolverWorkspaceEvent } from '../workspace-persistence';
 
 const sanitizeDocumentExportBaseName = (value: string): string => {
-  return value
-    .trim()
-    .replace(/[<>:"/\\|?*]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim() || 'Document';
+  return (
+    value
+      .trim()
+      .replace(/[<>:"/\\|?*]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim() || 'Document'
+  );
 };
 
 const buildPartyAddressBlock = (
   filemakerDatabase: FilemakerDatabase,
-  reference: CaseResolverPartyReference | null | undefined,
+  reference: CaseResolverPartyReference | null | undefined
 ): string => {
   if (!reference) return '';
   const lines: string[] = [];
@@ -64,7 +66,7 @@ const buildPartyAddressBlock = (
 
 const buildDraftPdfPreviewMarkup = (
   draft: CaseResolverFileEditDraft,
-  filemakerDatabase: FilemakerDatabase,
+  filemakerDatabase: FilemakerDatabase
 ): string => {
   return buildDocumentPdfMarkup({
     documentDate: draft.documentDate?.isoDate ?? '',
@@ -216,12 +218,11 @@ export function useAdminCaseResolverDocumentActions({
     }
     const promptExploderSessionId = createId('case-prompt-session');
     const promptSource = (() => {
-      const sourceHtml = (
+      const sourceHtml =
         typeof editingDocumentDraft.documentContentHtml === 'string' &&
         editingDocumentDraft.documentContentHtml.trim().length > 0
-      )
-        ? editingDocumentDraft.documentContentHtml
-        : ensureSafeDocumentHtml(editingDocumentDraft.documentContent ?? '');
+          ? editingDocumentDraft.documentContentHtml
+          : ensureSafeDocumentHtml(editingDocumentDraft.documentContent ?? '');
       const canonical = deriveDocumentContentSync({
         mode: 'wysiwyg',
         value: sourceHtml,
@@ -281,63 +282,65 @@ export function useAdminCaseResolverDocumentActions({
         URL.revokeObjectURL(previewUrl);
       }, 120_000);
     } catch (_error: unknown) {
-      toast(
-        _error instanceof Error ? _error.message : 'Failed to generate PDF preview.',
-        { variant: 'error' }
-      );
+      toast(_error instanceof Error ? _error.message : 'Failed to generate PDF preview.', {
+        variant: 'error',
+      });
     }
   }, [editingDocumentDraft, filemakerDatabase, toast]);
 
-  const printDocumentMarkup = useCallback((markup: string): void => {
-    if (typeof window === 'undefined' || typeof document === 'undefined') return;
-    if (printInFlightRef.current) return;
-    printInFlightRef.current = true;
-    const frame = document.createElement('iframe');
-    let hasTriggeredPrint = false;
-    const releasePrintLockTimeout = window.setTimeout((): void => {
-      printInFlightRef.current = false;
-    }, 10_000);
-    frame.setAttribute('aria-hidden', 'true');
-    frame.style.position = 'fixed';
-    frame.style.width = '0';
-    frame.style.height = '0';
-    frame.style.border = '0';
-    frame.style.opacity = '0';
-    frame.style.pointerEvents = 'none';
-
-    const cleanup = (): void => {
-      window.setTimeout((): void => {
-        window.clearTimeout(releasePrintLockTimeout);
+  const printDocumentMarkup = useCallback(
+    (markup: string): void => {
+      if (typeof window === 'undefined' || typeof document === 'undefined') return;
+      if (printInFlightRef.current) return;
+      printInFlightRef.current = true;
+      const frame = document.createElement('iframe');
+      let hasTriggeredPrint = false;
+      const releasePrintLockTimeout = window.setTimeout((): void => {
         printInFlightRef.current = false;
-        if (frame.parentNode) {
-          frame.parentNode.removeChild(frame);
-        }
-      }, 300);
-    };
+      }, 10_000);
+      frame.setAttribute('aria-hidden', 'true');
+      frame.style.position = 'fixed';
+      frame.style.width = '0';
+      frame.style.height = '0';
+      frame.style.border = '0';
+      frame.style.opacity = '0';
+      frame.style.pointerEvents = 'none';
 
-    frame.onload = (): void => {
-      if (hasTriggeredPrint) return;
-      hasTriggeredPrint = true;
-      window.setTimeout((): void => {
-        const frameWindow = frame.contentWindow;
-        if (!frameWindow) {
-          toast('Failed to open the print dialog.', { variant: 'error' });
+      const cleanup = (): void => {
+        window.setTimeout((): void => {
+          window.clearTimeout(releasePrintLockTimeout);
+          printInFlightRef.current = false;
+          if (frame.parentNode) {
+            frame.parentNode.removeChild(frame);
+          }
+        }, 300);
+      };
+
+      frame.onload = (): void => {
+        if (hasTriggeredPrint) return;
+        hasTriggeredPrint = true;
+        window.setTimeout((): void => {
+          const frameWindow = frame.contentWindow;
+          if (!frameWindow) {
+            toast('Failed to open the print dialog.', { variant: 'error' });
+            cleanup();
+            return;
+          }
+          try {
+            frameWindow.focus();
+            frameWindow.print();
+          } catch (_error: unknown) {
+            toast('Failed to open the print dialog.', { variant: 'error' });
+          }
           cleanup();
-          return;
-        }
-        try {
-          frameWindow.focus();
-          frameWindow.print();
-        } catch (_error: unknown) {
-          toast('Failed to open the print dialog.', { variant: 'error' });
-        }
-        cleanup();
-      }, 120);
-    };
+        }, 120);
+      };
 
-    frame.srcdoc = markup;
-    document.body.appendChild(frame);
-  }, [toast]);
+      frame.srcdoc = markup;
+      document.body.appendChild(frame);
+    },
+    [toast]
+  );
 
   const handlePrintDraftDocument = useCallback((): void => {
     if (!editingDocumentDraft) return;
@@ -345,10 +348,9 @@ export function useAdminCaseResolverDocumentActions({
       const markup = buildDraftPdfPreviewMarkup(editingDocumentDraft, filemakerDatabase);
       printDocumentMarkup(markup);
     } catch (_error: unknown) {
-      toast(
-        _error instanceof Error ? _error.message : 'Failed to generate printable document.',
-        { variant: 'error' }
-      );
+      toast(_error instanceof Error ? _error.message : 'Failed to generate printable document.', {
+        variant: 'error',
+      });
     }
   }, [editingDocumentDraft, filemakerDatabase, printDocumentMarkup, toast]);
 
@@ -397,10 +399,9 @@ export function useAdminCaseResolverDocumentActions({
       }, 500);
       toast('PDF exported.', { variant: 'success' });
     } catch (_error: unknown) {
-      toast(
-        _error instanceof Error ? _error.message : 'Failed to export PDF.',
-        { variant: 'error' }
-      );
+      toast(_error instanceof Error ? _error.message : 'Failed to export PDF.', {
+        variant: 'error',
+      });
     }
   }, [editingDocumentDraft, filemakerDatabase, toast]);
 
@@ -420,10 +421,9 @@ export function useAdminCaseResolverDocumentActions({
       }
       if (files.length === 0) return;
       void handleUploadScanFiles(editingDocumentDraft.id, files).catch((_error: unknown) => {
-        toast(
-          _error instanceof Error ? _error.message : 'Failed to upload scan images.',
-          { variant: 'error' }
-        );
+        toast(_error instanceof Error ? _error.message : 'Failed to upload scan images.', {
+          variant: 'error',
+        });
       });
     },
     [editingDocumentDraft, handleUploadScanFiles, toast]
@@ -434,7 +434,7 @@ export function useAdminCaseResolverDocumentActions({
       if (editingDocumentDraft?.fileType !== 'scanfile') return;
       if (editingDocumentDraft.isLocked) return;
       const nextSlots = (editingDocumentDraft.scanSlots ?? []).filter((s) => s.id !== slotId);
-      setEditingDocumentDraft(current => current ? { ...current, scanSlots: nextSlots } : null);
+      setEditingDocumentDraft((current) => (current ? { ...current, scanSlots: nextSlots } : null));
     },
     [editingDocumentDraft, setEditingDocumentDraft]
   );
@@ -443,10 +443,7 @@ export function useAdminCaseResolverDocumentActions({
     if (editingDocumentDraft?.fileType !== 'scanfile') return;
     if (editingDocumentDraft.isLocked) return;
     void handleRunScanFileOcr(editingDocumentDraft.id).catch((_error: unknown) => {
-      toast(
-        _error instanceof Error ? _error.message : 'Failed to run OCR.',
-        { variant: 'error' }
-      );
+      toast(_error instanceof Error ? _error.message : 'Failed to run OCR.', { variant: 'error' });
     });
   }, [editingDocumentDraft, handleRunScanFileOcr, toast]);
 
@@ -467,18 +464,22 @@ export function useAdminCaseResolverDocumentActions({
       const nextHistory = [currentSnapshot, ...(editingDocumentDraft.documentHistory ?? [])]
         .filter((e): e is CaseResolverDocumentHistoryEntry => e !== null)
         .slice(0, CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT);
-      
-      setEditingDocumentDraft(current => current ? {
-        ...current,
-        activeDocumentVersion: entry.activeDocumentVersion,
-        editorType: entry.editorType,
-        documentContent: entry.documentContent,
-        documentContentMarkdown: entry.documentContentMarkdown,
-        documentContentHtml: entry.documentContentHtml,
-        documentContentPlainText: entry.documentContentPlainText,
-        documentHistory: nextHistory,
-      } : null);
-      
+
+      setEditingDocumentDraft((current) =>
+        current
+          ? {
+              ...current,
+              activeDocumentVersion: entry.activeDocumentVersion,
+              editorType: entry.editorType,
+              documentContent: entry.documentContent,
+              documentContentMarkdown: entry.documentContentMarkdown,
+              documentContentHtml: entry.documentContentHtml,
+              documentContentPlainText: entry.documentContentPlainText,
+              documentHistory: nextHistory,
+            }
+          : null
+      );
+
       setEditorContentRevisionSeed((v) => v + 1);
       toast('History entry loaded.', { variant: 'info' });
     },
@@ -519,9 +520,7 @@ export function useAdminCaseResolverDocumentActions({
           current.fileType === 'scanfile' ? 'markdown' : 'wysiwyg';
         const canonical: DocumentContentCanonical = deriveDocumentContentSync({
           mode: resolvedMode,
-          value: resolvedMode === 'markdown'
-            ? (input.markdown ?? input.value)
-            : input.value,
+          value: resolvedMode === 'markdown' ? (input.markdown ?? input.value) : input.value,
           previousMarkdown: input.markdown ?? current.documentContentMarkdown,
           previousHtml: input.html ?? current.documentContentHtml,
         });

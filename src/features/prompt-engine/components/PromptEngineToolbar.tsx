@@ -4,13 +4,7 @@ import { RefreshCcw } from 'lucide-react';
 import Link from 'next/link';
 import React from 'react';
 
-import {
-  AppModal,
-  Button,
-  FileUploadButton,
-  SectionHeader,
-  Textarea,
-} from '@/shared/ui';
+import { AppModal, Button, FileUploadButton, SectionHeader, Textarea } from '@/shared/ui';
 
 import { usePromptEngine } from '../context/PromptEngineContext';
 import { useOptionalPromptEngineValidationPageContext } from '../context/PromptEngineValidationPageContext';
@@ -106,11 +100,7 @@ export function PromptEngineToolbar(): React.JSX.Element {
           >
             Import JSON
           </FileUploadButton>
-          <Button
-            type='button'
-            variant='outline'
-            onClick={() => openPasteModal('rules')}
-          >
+          <Button type='button' variant='outline' onClick={() => openPasteModal('rules')}>
             Paste JSON
           </Button>
           <FileUploadButton
@@ -124,11 +114,7 @@ export function PromptEngineToolbar(): React.JSX.Element {
           >
             Import learned
           </FileUploadButton>
-          <Button
-            type='button'
-            variant='outline'
-            onClick={() => openPasteModal('learned')}
-          >
+          <Button type='button' variant='outline' onClick={() => openPasteModal('learned')}>
             Paste learned
           </Button>
           <Button type='button' variant='outline' onClick={handleAddRule}>
@@ -161,10 +147,12 @@ export function PromptEngineToolbar(): React.JSX.Element {
       <AppModal
         isOpen={pasteModalOpen}
         onClose={() => setPasteModalOpen(false)}
-        title={pasteTarget === 'rules' ? 'Paste Validation Patterns JSON' : 'Paste Learned Patterns JSON'}
+        title={
+          pasteTarget === 'rules' ? 'Paste Validation Patterns JSON' : 'Paste Learned Patterns JSON'
+        }
         subtitle='Paste a JSON array of rule objects, then import into the current tab.'
         size='lg'
-        footer={(
+        footer={
           <>
             <Button
               type='button'
@@ -184,7 +172,7 @@ export function PromptEngineToolbar(): React.JSX.Element {
               Import Pasted JSON
             </Button>
           </>
-        )}
+        }
       >
         <Textarea
           value={pasteValue}

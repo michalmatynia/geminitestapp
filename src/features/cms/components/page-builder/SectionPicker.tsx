@@ -19,8 +19,13 @@ interface SectionPickerProps {
 
 export function SectionPicker({ disabled, zone, onSelect }: SectionPickerProps): React.ReactNode {
   const [isOpen, setIsOpen] = useState(false);
-  const { savedGridTemplates, savedSectionTemplates, handleDeleteSectionTemplate } = useTemplateManagement();
-  const { primitives, elements, templates, groupedTemplates } = useGroupedTemplates(zone, savedGridTemplates, savedSectionTemplates);
+  const { savedGridTemplates, savedSectionTemplates, handleDeleteSectionTemplate } =
+    useTemplateManagement();
+  const { primitives, elements, templates, groupedTemplates } = useGroupedTemplates(
+    zone,
+    savedGridTemplates,
+    savedSectionTemplates
+  );
 
   const handleSelect = useCallback(
     (type: string) => {

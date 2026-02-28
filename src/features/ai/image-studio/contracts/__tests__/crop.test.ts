@@ -43,7 +43,10 @@ describe('imageStudioCropRequestSchema', () => {
   it('requires polygon points for polygon mode', () => {
     const parsed = imageStudioCropRequestSchema.safeParse({
       mode: 'server_polygon',
-      polygon: [{ x: 0.1, y: 0.2 }, { x: 0.8, y: 0.2 }],
+      polygon: [
+        { x: 0.1, y: 0.2 },
+        { x: 0.8, y: 0.2 },
+      ],
     });
     expect(parsed.success).toBe(false);
   });

@@ -4,13 +4,8 @@
   "nodeType": "description_updater",
   "title": "Description Updater (Deprecated)",
   "purpose": "Writes description_en back to the product.",
-  "inputs": [
-    "productId",
-    "description_en"
-  ],
-  "outputs": [
-    "description_en"
-  ],
+  "inputs": ["productId", "description_en"],
+  "outputs": ["description_en"],
   "configFields": [
     {
       "path": "runtime.cache.mode",
@@ -23,9 +18,7 @@
       "defaultValue": "false"
     }
   ],
-  "notes": [
-    "Deprecated node. Prefer Database node write operations for updates."
-  ],
+  "notes": ["Deprecated node. Prefer Database node write operations for updates."],
   "semanticNodeExample": {
     "id": "node_description_updater",
     "type": "description_updater",
@@ -35,13 +28,8 @@
       "x": 100,
       "y": 100
     },
-    "inputs": [
-      "productId",
-      "description_en"
-    ],
-    "outputs": [
-      "description_en"
-    ],
+    "inputs": ["productId", "description_en"],
+    "outputs": ["description_en"],
     "data": {},
     "connections": {
       "incoming": [],

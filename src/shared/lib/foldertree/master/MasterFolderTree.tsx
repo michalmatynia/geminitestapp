@@ -2,7 +2,10 @@
 
 import React from 'react';
 
-import type { FolderTreeViewportRenderNodeInput, FolderTreeViewportV2Props } from '../v2/components/FolderTreeViewportV2';
+import type {
+  FolderTreeViewportRenderNodeInput,
+  FolderTreeViewportV2Props,
+} from '../v2/components/FolderTreeViewportV2';
 import { FolderTreeViewportV2 } from '../v2/components/FolderTreeViewportV2';
 
 export type MasterFolderTreeRenderNodeInput = FolderTreeViewportRenderNodeInput;

@@ -25,9 +25,7 @@ export function AppEmbedList(): React.ReactNode {
             <ToggleRow
               label='Enabled'
               checked={isEnabled}
-              onCheckedChange={(checked: boolean) =>
-                toggleOption(item.id, checked)
-              }
+              onCheckedChange={(checked: boolean) => toggleOption(item.id, checked)}
               className='border-none bg-transparent hover:bg-transparent p-0'
             />
             <Link

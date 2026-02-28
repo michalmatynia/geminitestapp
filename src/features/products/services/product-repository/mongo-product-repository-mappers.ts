@@ -47,7 +47,7 @@ const normalizeLocalizedField = (
     en: string | null | undefined;
     pl: string | null | undefined;
     de: string | null | undefined;
-  },
+  }
 ): ProductRecord['name'] => {
   const legacyRecord =
     legacy && typeof legacy === 'object' && !Array.isArray(legacy)
@@ -56,7 +56,7 @@ const normalizeLocalizedField = (
 
   const resolveNullable = (
     primary: string | null | undefined,
-    fallback: unknown,
+    fallback: unknown
   ): string | null => {
     if (typeof primary === 'string') return primary;
     if (primary === null) return null;
@@ -126,23 +126,21 @@ const normalizeParameterValues = (input: unknown): ProductParameterValue[] => {
       typeof valuesByLanguageRaw === 'object' &&
       !Array.isArray(valuesByLanguageRaw)
         ? Object.entries(valuesByLanguageRaw as Record<string, unknown>).reduce(
-          (acc: Record<string, string>, [languageCode, languageValue]) => {
-            const normalizedCode = toTrimmedString(languageCode)?.toLowerCase();
-            if (!normalizedCode || typeof languageValue !== 'string') return acc;
-            acc[normalizedCode] = languageValue;
-            return acc;
-          },
-          {}
-        )
+            (acc: Record<string, string>, [languageCode, languageValue]) => {
+              const normalizedCode = toTrimmedString(languageCode)?.toLowerCase();
+              if (!normalizedCode || typeof languageValue !== 'string') return acc;
+              acc[normalizedCode] = languageValue;
+              return acc;
+            },
+            {}
+          )
         : {};
     const current = byParameterId.get(parameterId);
     if (!current) {
       byParameterId.set(parameterId, {
         parameterId,
         value,
-        ...(Object.keys(valuesByLanguage).length > 0
-          ? { valuesByLanguage }
-          : {}),
+        ...(Object.keys(valuesByLanguage).length > 0 ? { valuesByLanguage } : {}),
       });
       return;
     }
@@ -187,11 +185,7 @@ const normalizeProducerRelations = (
 
     const rawAssignedAt = record['assignedAt'] ?? record['assigned_at'];
     let assignedAt: string;
-    if (
-      rawAssignedAt &&
-      typeof rawAssignedAt === 'object' &&
-      rawAssignedAt instanceof Date
-    ) {
+    if (rawAssignedAt && typeof rawAssignedAt === 'object' && rawAssignedAt instanceof Date) {
       assignedAt = rawAssignedAt.toISOString();
     } else {
       assignedAt = toTrimmedString(rawAssignedAt) ?? fallbackAssignedAt;
@@ -204,8 +198,9 @@ const normalizeProducerRelations = (
     };
 
     if (record['producer'] && typeof record['producer'] === 'object') {
-      relation.producer =
-        record['producer'] as NonNullable<ProductWithImages['producers']>[number]['producer'];
+      relation.producer = record['producer'] as NonNullable<
+        ProductWithImages['producers']
+      >[number]['producer'];
     }
     normalized.push(relation);
   }
@@ -238,11 +233,7 @@ const normalizeTagRelations = (
 
     const rawAssignedAt = record['assignedAt'] ?? record['assigned_at'];
     let assignedAt: string;
-    if (
-      rawAssignedAt &&
-      typeof rawAssignedAt === 'object' &&
-      rawAssignedAt instanceof Date
-    ) {
+    if (rawAssignedAt && typeof rawAssignedAt === 'object' && rawAssignedAt instanceof Date) {
       assignedAt = rawAssignedAt.toISOString();
     } else {
       assignedAt = toTrimmedString(rawAssignedAt) ?? fallbackAssignedAt;
@@ -279,13 +270,9 @@ export const toProductResponse = (doc: WithId<ProductDocument>): ProductWithImag
   const fallbackAssignedAt =
     doc.updatedAt instanceof Date
       ? doc.updatedAt.toISOString()
-      : (String(doc.updatedAt) || new Date().toISOString());
+      : String(doc.updatedAt) || new Date().toISOString();
   const tags = normalizeTagRelations(doc.tags, productId, fallbackAssignedAt);
-  const producers = normalizeProducerRelations(
-    doc.producers,
-    productId,
-    fallbackAssignedAt
-  );
+  const producers = normalizeProducerRelations(doc.producers, productId, fallbackAssignedAt);
   const noteIds = Array.isArray(doc.noteIds) ? doc.noteIds : [];
 
   return {
@@ -319,14 +306,8 @@ export const toProductResponse = (doc: WithId<ProductDocument>): ProductWithImag
     imageLinks: Array.isArray(doc.imageLinks) ? doc.imageLinks : [],
     imageBase64s: Array.isArray(doc.imageBase64s) ? doc.imageBase64s : [],
     noteIds,
-    createdAt:
-      doc.createdAt instanceof Date
-        ? doc.createdAt.toISOString()
-        : String(doc.createdAt),
-    updatedAt:
-      doc.updatedAt instanceof Date
-        ? doc.updatedAt.toISOString()
-        : String(doc.updatedAt),
+    createdAt: doc.createdAt instanceof Date ? doc.createdAt.toISOString() : String(doc.createdAt),
+    updatedAt: doc.updatedAt instanceof Date ? doc.updatedAt.toISOString() : String(doc.updatedAt),
     images: images.map((img) => ({ ...img, assignedAt: img.assignedAt })),
     catalogs: catalogs.map((cat) => ({ ...cat, assignedAt: cat.assignedAt })),
     categoryId: resolveCategoryId(doc),
@@ -351,13 +332,9 @@ export const toProductBase = (doc: ProductDocument): ProductRecord => {
   const fallbackAssignedAt =
     doc.updatedAt instanceof Date
       ? doc.updatedAt.toISOString()
-      : (String(doc.updatedAt) || new Date().toISOString());
+      : String(doc.updatedAt) || new Date().toISOString();
   const tags = normalizeTagRelations(doc.tags, productId, fallbackAssignedAt);
-  const producers = normalizeProducerRelations(
-    doc.producers,
-    productId,
-    fallbackAssignedAt
-  );
+  const producers = normalizeProducerRelations(doc.producers, productId, fallbackAssignedAt);
 
   return {
     id: productId,
@@ -390,14 +367,8 @@ export const toProductBase = (doc: ProductDocument): ProductRecord => {
     imageLinks: Array.isArray(doc.imageLinks) ? doc.imageLinks : [],
     imageBase64s: Array.isArray(doc.imageBase64s) ? doc.imageBase64s : [],
     noteIds,
-    createdAt:
-      doc.createdAt instanceof Date
-        ? doc.createdAt.toISOString()
-        : String(doc.createdAt),
-    updatedAt:
-      doc.updatedAt instanceof Date
-        ? doc.updatedAt.toISOString()
-        : String(doc.updatedAt),
+    createdAt: doc.createdAt instanceof Date ? doc.createdAt.toISOString() : String(doc.createdAt),
+    updatedAt: doc.updatedAt instanceof Date ? doc.updatedAt.toISOString() : String(doc.updatedAt),
     categoryId: resolveCategoryId(doc),
     tags,
     producers,

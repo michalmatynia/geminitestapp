@@ -22,8 +22,7 @@ const CHALLENGE_TTL_MINUTES = 5;
 const memoryChallenges = new Map<string, ChallengeRecord>();
 let challengeIndexesReady: Promise<void> | null = null;
 
-const nowPlusMinutes = (minutes: number): Date =>
-  new Date(Date.now() + minutes * 60 * 1000);
+const nowPlusMinutes = (minutes: number): Date => new Date(Date.now() + minutes * 60 * 1000);
 
 const getMongoChallenge = async (id: string): Promise<ChallengeRecord | null> => {
   if (!process.env['MONGODB_URI']) return null;
@@ -67,7 +66,9 @@ const deletePrismaChallenge = async (id: string): Promise<void> => {
 };
 
 const getMemoryChallenge = (id: string): ChallengeRecord | null => memoryChallenges.get(id) ?? null;
-const setMemoryChallenge = (record: ChallengeRecord): void => { memoryChallenges.set(record._id, record); };
+const setMemoryChallenge = (record: ChallengeRecord): void => {
+  memoryChallenges.set(record._id, record);
+};
 const deleteMemoryChallenge = (id: string): boolean => memoryChallenges.delete(id);
 
 const getChallenge = async (id: string): Promise<ChallengeRecord | null> => {

@@ -87,5 +87,6 @@ describe('CMS Themes API', () => {
     expect(data).toBeDefined();
     expect(data.length).toBeGreaterThan(0);
     expect(data[0]).toBeDefined();
-    expect(data[0]!.name).toBe('Default Theme');  });
+    expect(data[0]!.name).toBe('Default Theme');
+  });
 });

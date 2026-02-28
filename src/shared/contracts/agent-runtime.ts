@@ -56,15 +56,17 @@ export type PlannerCritique = z.infer<typeof plannerCritiqueSchema>;
 export const plannerAlternativeSchema = z.object({
   title: z.string(),
   rationale: z.string().nullable().optional(),
-  steps: z.array(z.object({
-    title: z.string().optional(),
-    tool: z.string().optional(),
-    expectedObservation: z.string().optional(),
-    successCriteria: z.string().optional(),
-    phase: z.string().optional(),
-    priority: z.number().optional(),
-    dependsOn: z.union([z.array(z.number()), z.array(z.string())]).optional(),
-  })),
+  steps: z.array(
+    z.object({
+      title: z.string().optional(),
+      tool: z.string().optional(),
+      expectedObservation: z.string().optional(),
+      successCriteria: z.string().optional(),
+      phase: z.string().optional(),
+      priority: z.number().optional(),
+      dependsOn: z.union([z.array(z.number()), z.array(z.string())]).optional(),
+    })
+  ),
 });
 
 export type PlannerAlternative = z.infer<typeof plannerAlternativeSchema>;
@@ -202,17 +204,21 @@ export type AuditLevel = 'info' | 'warning' | 'error';
 export type MemoryScope = 'session' | 'longterm';
 
 export const planHierarchySchema = z.object({
-  goals: z.array(z.object({
-    id: z.string(),
-    title: z.string(),
-    description: z.string().optional(),
-    subgoals: z.array(z.string()),
-  })),
-  subgoals: z.array(z.object({
-    id: z.string(),
-    title: z.string(),
-    steps: z.array(z.string()),
-  })),
+  goals: z.array(
+    z.object({
+      id: z.string(),
+      title: z.string(),
+      description: z.string().optional(),
+      subgoals: z.array(z.string()),
+    })
+  ),
+  subgoals: z.array(
+    z.object({
+      id: z.string(),
+      title: z.string(),
+      steps: z.array(z.string()),
+    })
+  ),
 });
 
 export type PlanHierarchy = z.infer<typeof planHierarchySchema>;
@@ -235,7 +241,14 @@ export const agentToolResultSchema = z.object({
 
 export type AgentToolResult = z.infer<typeof agentToolResultSchema>;
 
-export const agentRunStatusTypeSchema = z.enum(['queued', 'running', 'waiting_human', 'stopped', 'failed', 'completed']);
+export const agentRunStatusTypeSchema = z.enum([
+  'queued',
+  'running',
+  'waiting_human',
+  'stopped',
+  'failed',
+  'completed',
+]);
 export type AgentRunStatusType = z.infer<typeof agentRunStatusTypeSchema>;
 
 export const agentAuditLogRecordSchema = dtoBaseSchema.extend({
@@ -277,13 +290,15 @@ export const agentExecutionContextSchema = z.object({
   selfCheckModel: z.string(),
   loopGuardModel: z.string(),
   approvalGateModel: z.string().nullable(),
-  browserContext: z.object({
-    url: z.string().nullable().optional(),
-    title: z.string().nullable().optional(),
-    domTextSample: z.string().optional(),
-    logs: z.array(z.object({ level: z.string(), message: z.string() })).optional(),
-    uiInventory: z.unknown().optional(),
-  }).nullable(),
+  browserContext: z
+    .object({
+      url: z.string().nullable().optional(),
+      title: z.string().nullable().optional(),
+      domTextSample: z.string().optional(),
+      logs: z.array(z.object({ level: z.string(), message: z.string() })).optional(),
+      uiInventory: z.unknown().optional(),
+    })
+    .nullable(),
 });
 
 export type AgentExecutionContext = z.infer<typeof agentExecutionContextSchema>;

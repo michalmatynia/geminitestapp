@@ -18,7 +18,8 @@ export function useFetchExternalCategoriesMutation() {
   const queryClient = useQueryClient();
   return createMutationV2({
     mutationKey: QUERY_KEYS.integrations.marketplace.mutation('fetch-categories'),
-    mutationFn: (payload: { connectionId: string }) => api.post<{ fetched: number; message: string }>('/api/marketplace/categories/fetch', payload),
+    mutationFn: (payload: { connectionId: string }) =>
+      api.post<{ fetched: number; message: string }>('/api/marketplace/categories/fetch', payload),
     meta: {
       source: 'integrations.hooks.marketplace.fetch-categories',
       operation: 'action',
@@ -36,7 +37,11 @@ export function useSaveMappingsMutation() {
   const queryClient = useQueryClient();
   return createUpdateMutationV2({
     mutationKey: QUERY_KEYS.integrations.marketplace.mutation('save-mappings'),
-    mutationFn: (payload: { connectionId: string; catalogId: string; mappings: { externalCategoryId: string; internalCategoryId: string | null }[] }) => 
+    mutationFn: (payload: {
+      connectionId: string;
+      catalogId: string;
+      mappings: { externalCategoryId: string; internalCategoryId: string | null }[];
+    }) =>
       api.post<{ upserted: number; message: string }>('/api/marketplace/mappings/bulk', payload),
     meta: {
       source: 'integrations.hooks.marketplace.save-mappings',
@@ -56,10 +61,7 @@ export function useFetchExternalProducersMutation() {
   return createMutationV2({
     mutationKey: QUERY_KEYS.integrations.marketplace.mutation('fetch-producers'),
     mutationFn: (payload: { connectionId: string }) =>
-      api.post<{ fetched: number; message: string }>(
-        '/api/marketplace/producers/fetch',
-        payload
-      ),
+      api.post<{ fetched: number; message: string }>('/api/marketplace/producers/fetch', payload),
     meta: {
       source: 'integrations.hooks.marketplace.fetch-producers',
       operation: 'action',
@@ -103,10 +105,7 @@ export function useFetchExternalTagsMutation() {
   return createMutationV2({
     mutationKey: QUERY_KEYS.integrations.marketplace.mutation('fetch-tags'),
     mutationFn: (payload: { connectionId: string }) =>
-      api.post<{ fetched: number; message: string }>(
-        '/api/marketplace/tags/fetch',
-        payload
-      ),
+      api.post<{ fetched: number; message: string }>('/api/marketplace/tags/fetch', payload),
     meta: {
       source: 'integrations.hooks.marketplace.fetch-tags',
       operation: 'action',

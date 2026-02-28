@@ -32,7 +32,13 @@ export const getStatusIcon = (status: string): React.JSX.Element => {
   }
 };
 
-export function JobStatusCell({ status, errorMessage }: { status: string; errorMessage?: string | null }): React.JSX.Element {
+export function JobStatusCell({
+  status,
+  errorMessage,
+}: {
+  status: string;
+  errorMessage?: string | null;
+}): React.JSX.Element {
   return (
     <div className='flex flex-col gap-1'>
       <StatusBadge status={status} icon={getStatusIcon(status)} />

@@ -1,8 +1,6 @@
 import 'server-only';
 
-import {
-  Prisma,
-} from '@prisma/client';
+import { Prisma } from '@prisma/client';
 
 import {
   type CreateProductInput,
@@ -20,9 +18,7 @@ import {
   normalizeImageFileIds,
   normalizeProductParameterValues,
 } from './prisma-product-repository.helpers';
-import {
-  buildProductWhere,
-} from './prisma-product-repository.filters';
+import { buildProductWhere } from './prisma-product-repository.filters';
 import {
   toProductRecord,
   toProductImageRecord,
@@ -33,9 +29,7 @@ import {
 // Repository Implementation
 // ---------------------------------------------------------------------------
 
-const createTransactionalRepository = (
-  tx: Prisma.TransactionClient,
-): ProductRepository => ({
+const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRepository => ({
   getProducts: async (filters) => {
     const where = buildProductWhere(filters);
     const page = filters.page ?? 1;
@@ -68,8 +62,7 @@ const createTransactionalRepository = (
     return products.map((p) => toProductRecord(p as FullPrismaProduct));
   },
 
-  countProducts: (filters) =>
-    tx.product.count({ where: buildProductWhere(filters) }),
+  countProducts: (filters) => tx.product.count({ where: buildProductWhere(filters) }),
 
   async getProductsWithCount(filters) {
     const where = buildProductWhere(filters);
@@ -215,16 +208,13 @@ const createTransactionalRepository = (
       ...rest
     } = data;
     const normalizedParameters =
-      rest.parameters !== undefined
-        ? normalizeProductParameterValues(rest.parameters)
-        : undefined;
+      rest.parameters !== undefined ? normalizeProductParameterValues(rest.parameters) : undefined;
     const cleanData = removeUndefined({
       ...rest,
       ...(normalizedParameters !== undefined
         ? {
-          parameters:
-              normalizedParameters as Prisma.JsonValue,
-        }
+            parameters: normalizedParameters as Prisma.JsonValue,
+          }
         : {}),
       ...(id ? { id } : {}),
     }) as Prisma.ProductCreateInput;
@@ -260,9 +250,8 @@ const createTransactionalRepository = (
         ...rest,
         ...(normalizedParameters !== undefined
           ? {
-            parameters:
-                normalizedParameters as Prisma.InputJsonValue,
-          }
+              parameters: normalizedParameters as Prisma.InputJsonValue,
+            }
           : {}),
         ...(id ? { id } : {}),
       }) as Prisma.ProductCreateManyInput;
@@ -293,16 +282,13 @@ const createTransactionalRepository = (
       ...rest
     } = data;
     const normalizedParameters =
-      rest.parameters !== undefined
-        ? normalizeProductParameterValues(rest.parameters)
-        : undefined;
+      rest.parameters !== undefined ? normalizeProductParameterValues(rest.parameters) : undefined;
     const cleanData = removeUndefined({
       ...rest,
       ...(normalizedParameters !== undefined
         ? {
-          parameters:
-              normalizedParameters as Prisma.InputJsonValue,
-        }
+            parameters: normalizedParameters as Prisma.InputJsonValue,
+          }
         : {}),
     }) as Prisma.ProductUpdateInput;
 
@@ -427,9 +413,7 @@ const createTransactionalRepository = (
       include: { imageFile: true },
       orderBy: { assignedAt: 'asc' },
     });
-    return images
-      .map(toProductImageRecord)
-      .filter((i): i is ProductImageRecord => i !== null);
+    return images.map(toProductImageRecord).filter((i): i is ProductImageRecord => i !== null);
   },
 
   addProductImages: async (productId, imageFileIds) => {
@@ -494,9 +478,7 @@ const createTransactionalRepository = (
       where: { id: { in: uniqueIds } },
       select: { id: true },
     });
-    const existingIds = new Set(
-      existing.map((entry: { id: string }) => entry.id),
-    );
+    const existingIds = new Set(existing.map((entry: { id: string }) => entry.id));
     const validIds = uniqueIds.filter((id: string) => existingIds.has(id));
     if (validIds.length === 0) return;
     await tx.productProducerAssignment.createMany({
@@ -505,9 +487,9 @@ const createTransactionalRepository = (
   },
 
   replaceProductNotes: async (productId, noteIds) => {
-    const uniqueIds = Array.from(
-      new Set(noteIds.filter((id: string) => id?.trim())),
-    ).map((id: string) => id.trim());
+    const uniqueIds = Array.from(new Set(noteIds.filter((id: string) => id?.trim()))).map(
+      (id: string) => id.trim()
+    );
     await tx.product.update({
       where: { id: productId },
       data: { noteIds: uniqueIds },
@@ -529,7 +511,7 @@ const createTransactionalRepository = (
     if (validCatalogIds.length > 0) {
       await tx.productCatalog.createMany({
         data: productIds.flatMap((productId) =>
-          validCatalogIds.map((catalogId) => ({ productId, catalogId })),
+          validCatalogIds.map((catalogId) => ({ productId, catalogId }))
         ),
         skipDuplicates: true,
       });
@@ -548,7 +530,7 @@ const createTransactionalRepository = (
 
     await tx.productCatalog.createMany({
       data: productIds.flatMap((productId) =>
-        validCatalogIds.map((catalogId) => ({ productId, catalogId })),
+        validCatalogIds.map((catalogId) => ({ productId, catalogId }))
       ),
       skipDuplicates: true,
     });
@@ -575,9 +557,7 @@ const createTransactionalRepository = (
   },
 
   createProductInTransaction: async <T>(
-    callback: (
-      txClient: ProductRepository & Prisma.TransactionClient,
-    ) => Promise<T>,
+    callback: (txClient: ProductRepository & Prisma.TransactionClient) => Promise<T>
   ): Promise<T> => {
     return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const txRepo = createTransactionalRepository(tx);
@@ -716,7 +696,7 @@ export const prismaProductRepository: ProductRepository = {
   },
 
   async createProductInTransaction<T>(
-    callback: (txClient: ProductRepository & Prisma.TransactionClient) => Promise<T>,
+    callback: (txClient: ProductRepository & Prisma.TransactionClient) => Promise<T>
   ): Promise<T> {
     return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const txRepo = createTransactionalRepository(tx);

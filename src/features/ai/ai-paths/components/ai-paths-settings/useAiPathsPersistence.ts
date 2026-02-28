@@ -158,8 +158,7 @@ export function useAiPathsPersistence({
     mutationKey: QUERY_KEYS.ai.aiPaths.mutation('settings.bulk-update'),
     mutationFn: async (
       payloads: Array<{ key: string; value: string }>
-    ): Promise<Array<{ key: string; value: string }>> =>
-      await updateAiPathsSettingsBulk(payloads),
+    ): Promise<Array<{ key: string; value: string }>> => await updateAiPathsSettingsBulk(payloads),
     meta: {
       source: 'ai.ai-paths.settings.persistence.bulk-update',
       operation: 'update',
@@ -172,9 +171,9 @@ export function useAiPathsPersistence({
     },
   });
   const [saving, setSaving] = useState(false);
-  const [autoSaveStatus, setAutoSaveStatus] = useState<
-    'idle' | 'saving' | 'saved' | 'error'
-  >('idle');
+  const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>(
+    'idle'
+  );
   const [autoSaveAt, setAutoSaveAt] = useState<string | null>(null);
   const [uiStateLoaded, setUiStateLoaded] = useState(false);
 
@@ -203,17 +202,14 @@ export function useAiPathsPersistence({
     pathConfigsRef.current = pathConfigs;
   }, [pathConfigs]);
 
-  const enqueueSettingsWrite = useCallback(
-    async <T>(operation: () => Promise<T>): Promise<T> => {
-      const run = settingsWriteQueueRef.current.then(operation, operation);
-      settingsWriteQueueRef.current = run.then(
-        () => undefined,
-        () => undefined
-      );
-      return await run;
-    },
-    []
-  );
+  const enqueueSettingsWrite = useCallback(async <T>(operation: () => Promise<T>): Promise<T> => {
+    const run = settingsWriteQueueRef.current.then(operation, operation);
+    settingsWriteQueueRef.current = run.then(
+      () => undefined,
+      () => undefined
+    );
+    return await run;
+  }, []);
 
   const persistSettingsBulk = useCallback(
     async (payload: PersistSettingsPayload): Promise<void> => {
@@ -236,12 +232,9 @@ export function useAiPathsPersistence({
   );
   const persistUserPreferences = useCallback(
     async (pathId: string | null): Promise<void> => {
-      const updatedPreferences = await api.patch<AiPathsUserPreferences>(
-        '/api/user/preferences',
-        {
-          aiPathsActivePathId: pathId,
-        }
-      );
+      const updatedPreferences = await api.patch<AiPathsUserPreferences>('/api/user/preferences', {
+        aiPathsActivePathId: pathId,
+      });
       const nextPathId = resolvePreferredActivePathId(updatedPreferences) ?? pathId ?? null;
       const updateCachedPreferences = (
         current: AiPathsUserPreferences | undefined
@@ -269,36 +262,39 @@ export function useAiPathsPersistence({
         await persistUserPreferences(resolved);
         lastUserPrefsActivePathIdRef.current = resolved;
       } catch (error) {
-        logClientError(error, { context: { source: 'useAiPathsPersistence', action: 'persistActivePathPreference', pathId: resolved } });
+        logClientError(error, {
+          context: {
+            source: 'useAiPathsPersistence',
+            action: 'persistActivePathPreference',
+            pathId: resolved,
+          },
+        });
       }
     },
     [persistUserPreferences, uiStateLoaded]
   );
 
-  const resolveUserPreferences = useCallback(
-    async (): Promise<AiPathsUserPreferences | null> => {
-      const cachedPreferences = queryClient.getQueryData<AiPathsUserPreferences>(
-        QUERY_KEYS.userPreferences.all
-      );
-      if (cachedPreferences && typeof cachedPreferences === 'object') {
-        return cachedPreferences;
-      }
-      try {
-        return await queryClient.fetchQuery({
-          queryKey: QUERY_KEYS.userPreferences.all,
-          queryFn: async (): Promise<AiPathsUserPreferences> => {
-            return await api.get<AiPathsUserPreferences>('/api/user/preferences', {
-              logError: false,
-            });
-          },
-          staleTime: USER_PREFERENCES_STALE_MS,
-        });
-      } catch {
-        return null;
-      }
-    },
-    [queryClient]
-  );
+  const resolveUserPreferences = useCallback(async (): Promise<AiPathsUserPreferences | null> => {
+    const cachedPreferences = queryClient.getQueryData<AiPathsUserPreferences>(
+      QUERY_KEYS.userPreferences.all
+    );
+    if (cachedPreferences && typeof cachedPreferences === 'object') {
+      return cachedPreferences;
+    }
+    try {
+      return await queryClient.fetchQuery({
+        queryKey: QUERY_KEYS.userPreferences.all,
+        queryFn: async (): Promise<AiPathsUserPreferences> => {
+          return await api.get<AiPathsUserPreferences>('/api/user/preferences', {
+            logError: false,
+          });
+        },
+        staleTime: USER_PREFERENCES_STALE_MS,
+      });
+    } catch {
+      return null;
+    }
+  }, [queryClient]);
 
   useEffect((): void => {
     if (loadInFlightRef.current) return;
@@ -319,10 +315,9 @@ export function useAiPathsPersistence({
           ])
         );
         const historyRetentionRaw = map.get(AI_PATHS_HISTORY_RETENTION_KEY);
-        const normalizedHistoryRetentionPasses = normalizeHistoryRetentionPasses(historyRetentionRaw);
-        const historyRetentionOptionsMaxRaw = map.get(
-          AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_KEY
-        );
+        const normalizedHistoryRetentionPasses =
+          normalizeHistoryRetentionPasses(historyRetentionRaw);
+        const historyRetentionOptionsMaxRaw = map.get(AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_KEY);
         const normalizedHistoryRetentionOptionsMax = normalizeHistoryRetentionOptionsMax(
           historyRetentionOptionsMaxRaw
         );
@@ -346,14 +341,12 @@ export function useAiPathsPersistence({
         const preferredPathIdFromUser = resolvePreferredActivePathId(userPreferences);
         const preferredGroups = Array.isArray(uiState?.['expandedGroups'])
           ? (uiState?.['expandedGroups'] as unknown[]).filter(
-            (value: unknown): value is string =>
-              typeof value === 'string' && value.trim().length > 0
-          )
+              (value: unknown): value is string =>
+                typeof value === 'string' && value.trim().length > 0
+            )
           : null;
         const preferredPaletteCollapsed =
-          typeof uiState?.['paletteCollapsed'] === 'boolean'
-            ? uiState?.['paletteCollapsed']
-            : null;
+          typeof uiState?.['paletteCollapsed'] === 'boolean' ? uiState?.['paletteCollapsed'] : null;
         const hasStoredUiState = Boolean(uiState);
         if (preferredGroups) {
           setExpandedPaletteGroups(new Set(preferredGroups));
@@ -397,7 +390,8 @@ export function useAiPathsPersistence({
             value: String(normalizedHistoryRetentionOptionsMax),
           });
         }
-        let loadedLastError: { message: string; time: string; pathId?: string | null } | null = null;
+        let loadedLastError: { message: string; time: string; pathId?: string | null } | null =
+          null;
         if (lastErrorRaw) {
           try {
             const parsed = JSON.parse(lastErrorRaw) as {
@@ -431,8 +425,8 @@ export function useAiPathsPersistence({
           try {
             const parsed = JSON.parse(queryPresetsRaw) as DbQueryPreset[];
             if (Array.isArray(parsed)) {
-              const normalized = parsed.map((item: DbQueryPreset): DbQueryPreset =>
-                normalizeDbQueryPreset(item)
+              const normalized = parsed.map(
+                (item: DbQueryPreset): DbQueryPreset => normalizeDbQueryPreset(item)
               );
               setDbQueryPresets(normalized);
             }
@@ -482,8 +476,7 @@ export function useAiPathsPersistence({
           if (Array.isArray(parsedIndex)) {
             settingsMetas = normalizeLoadedPathMetas(
               parsedIndex.filter(
-                (meta: unknown): meta is PathMeta =>
-                  Boolean(meta) && typeof meta === 'object'
+                (meta: unknown): meta is PathMeta => Boolean(meta) && typeof meta === 'object'
               )
             );
           }
@@ -511,8 +504,7 @@ export function useAiPathsPersistence({
                   Number.isFinite(normalizedRunCountRaw)
                     ? Math.max(0, Math.trunc(normalizedRunCountRaw))
                     : 0;
-                const normalizedStrictFlowMode =
-                  migration.config.strictFlowMode !== false;
+                const normalizedStrictFlowMode = migration.config.strictFlowMode !== false;
                 const normalizedBlockedRunPolicy =
                   migration.config.blockedRunPolicy === 'complete_with_warning'
                     ? 'complete_with_warning'
@@ -555,8 +547,7 @@ export function useAiPathsPersistence({
                     stableStringify(normalizedAiPathsValidation) ||
                   stableStringify(migration.config.edges ?? []) !==
                     stableStringify(normalizedConfigEdges) ||
-                  normalizeLoadedPathName(meta.id, parsedConfig.name) !==
-                    resolvedName
+                  normalizeLoadedPathName(meta.id, parsedConfig.name) !== resolvedName
                 ) {
                   migrationPayload.push({
                     key: `${PATH_CONFIG_PREFIX}${meta.id}`,
@@ -668,7 +659,9 @@ export function useAiPathsPersistence({
             : 'medium'
         );
         setRunMode(
-          activeConfig.runMode === 'automatic' || activeConfig.runMode === 'manual' || activeConfig.runMode === 'step'
+          activeConfig.runMode === 'automatic' ||
+            activeConfig.runMode === 'manual' ||
+            activeConfig.runMode === 'step'
             ? activeConfig.runMode
             : activeConfig.runMode === 'queue'
               ? 'automatic'
@@ -680,9 +673,7 @@ export function useAiPathsPersistence({
             ? 'complete_with_warning'
             : 'fail_run'
         );
-        setAiPathsValidation(
-          normalizeAiPathsValidationConfig(activeConfig.aiPathsValidation)
-        );
+        setAiPathsValidation(normalizeAiPathsValidationConfig(activeConfig.aiPathsValidation));
         setParserSamples(normalizeParserSamples(activeConfig.parserSamples));
         setUpdaterSamples(normalizeUpdaterSamples(activeConfig.updaterSamples));
         setRuntimeState(parseRuntimeState(activeConfig.runtimeState));
@@ -691,9 +682,10 @@ export function useAiPathsPersistence({
         setIsPathActive(activeConfig.isActive !== false);
         const preferredNodeId = activeConfig.uiState?.selectedNodeId ?? null;
         const resolvedNodeId =
-          preferredNodeId && normalizedNodes.some((node: AiNode): boolean => node.id === preferredNodeId)
+          preferredNodeId &&
+          normalizedNodes.some((node: AiNode): boolean => node.id === preferredNodeId)
             ? preferredNodeId
-            : normalizedNodes[0]?.id ?? null;
+            : (normalizedNodes[0]?.id ?? null);
         setSelectedNodeId(resolvedNodeId);
         setConfigOpen(false);
         if (loadedLastError?.message === 'Failed to load AI Paths settings') {
@@ -706,7 +698,9 @@ export function useAiPathsPersistence({
               await updateAiPathsSettingsMutation.mutateAsync(migrationPayload);
             });
           } catch (error) {
-            logClientError(error, { context: { source: 'useAiPathsPersistence', action: 'loadConfigMigration' } });
+            logClientError(error, {
+              context: { source: 'useAiPathsPersistence', action: 'loadConfigMigration' },
+            });
           }
         }
         setUiStateLoaded(true);
@@ -719,7 +713,6 @@ export function useAiPathsPersistence({
       }
     };
     void loadConfig();
-     
   }, [
     toast,
     reportAiPathsError,
@@ -747,7 +740,9 @@ export function useAiPathsPersistence({
     const shouldPersistUserPrefs = nextActivePathId !== lastUserPrefsActivePathIdRef.current;
     const timeout = setTimeout((): void => {
       void persistUiState(payload).catch((error: unknown) => {
-        logClientError(error, { context: { source: 'useAiPathsPersistence', action: 'autoPersistUiState' } });
+        logClientError(error, {
+          context: { source: 'useAiPathsPersistence', action: 'autoPersistUiState' },
+        });
       });
       if (shouldPersistUserPrefs) {
         void persistUserPreferences(nextActivePathId)
@@ -755,12 +750,25 @@ export function useAiPathsPersistence({
             lastUserPrefsActivePathIdRef.current = nextActivePathId;
           })
           .catch((error: unknown) => {
-            logClientError(error, { context: { source: 'useAiPathsPersistence', action: 'autoPersistUserPrefs', pathId: nextActivePathId } });
+            logClientError(error, {
+              context: {
+                source: 'useAiPathsPersistence',
+                action: 'autoPersistUserPrefs',
+                pathId: nextActivePathId,
+              },
+            });
           });
       }
     }, 200);
     return (): void => clearTimeout(timeout);
-  }, [activePathId, expandedPaletteGroups, paletteCollapsed, uiStateLoaded, persistUiState, persistUserPreferences]);
+  }, [
+    activePathId,
+    expandedPaletteGroups,
+    paletteCollapsed,
+    uiStateLoaded,
+    persistUiState,
+    persistUserPreferences,
+  ]);
 
   const persistPathSettings = useCallback(
     async (
@@ -810,10 +818,7 @@ export function useAiPathsPersistence({
   );
 
   const persistRuntimePathState = useCallback(
-    async (
-      configId: string,
-      config: PathConfig
-    ): Promise<void> => {
+    async (configId: string, config: PathConfig): Promise<void> => {
       const payload = stringifyForStorage(
         sanitizePathConfig(config),
         `runtime path config (${configId})`
@@ -1000,9 +1005,7 @@ export function useAiPathsPersistence({
         const lintResult = lintPathNodeRoles(nodesForSave);
         if (lintResult.errors.length > 0) {
           const baselineNodes = pathConfigsRef.current[activePathId]?.nodes ?? [];
-          const baselineLint = lintPathNodeRoles(
-            Array.isArray(baselineNodes) ? baselineNodes : []
-          );
+          const baselineLint = lintPathNodeRoles(Array.isArray(baselineNodes) ? baselineNodes : []);
           const baselineDuplicateCounts = new Map<string, number>(
             baselineLint.duplicateRoleTypes.map(
               (item: { type: string; count: number }): [string, number] => [item.type, item.count]
@@ -1047,14 +1050,10 @@ export function useAiPathsPersistence({
           const warningMessage = buildCompileWarningMessage(compileReport);
           toast(warningMessage, { variant: 'warning' });
         }
-        const config = buildActivePathConfig(
-          updatedAt,
-          nodesForSave,
-          resolvedName,
-          edgesForSave
-        );
-        const nextPaths = pathsRef.current.map((path: PathMeta): PathMeta =>
-          path.id === activePathId ? { ...path, name: resolvedName, updatedAt } : path
+        const config = buildActivePathConfig(updatedAt, nodesForSave, resolvedName, edgesForSave);
+        const nextPaths = pathsRef.current.map(
+          (path: PathMeta): PathMeta =>
+            path.id === activePathId ? { ...path, name: resolvedName, updatedAt } : path
         );
         const persistedConfig = await persistPathSettings(nextPaths, activePathId, config);
         const finalConfig = persistedConfig ?? config;
@@ -1073,8 +1072,9 @@ export function useAiPathsPersistence({
           typeof finalConfig.updatedAt === 'string' && finalConfig.updatedAt.trim().length > 0
             ? finalConfig.updatedAt
             : updatedAt;
-        const finalPaths = nextPaths.map((path: PathMeta): PathMeta =>
-          path.id === activePathId ? { ...path, updatedAt: finalUpdatedAt } : path
+        const finalPaths = nextPaths.map(
+          (path: PathMeta): PathMeta =>
+            path.id === activePathId ? { ...path, updatedAt: finalUpdatedAt } : path
         );
         setPathConfigs({ ...pathConfigsRef.current, [activePathId]: finalConfig });
         setPaths(finalPaths);
@@ -1152,7 +1152,6 @@ export function useAiPathsPersistence({
   useEffect((): void => {
     if (loading || !activePathId) return;
     lastSavedSnapshotRef.current = buildPathSnapshot();
-     
   }, [activePathId, loading]);
 
   useEffect((): void => {
@@ -1175,9 +1174,7 @@ export function useAiPathsPersistence({
           const activeConfig = pathConfigs[activePathId] ?? createDefaultPathConfig(activePathId);
           await persistPathSettings(nextPaths, activePathId, activeConfig);
         } else {
-          await persistSettingsBulk([
-            { key: PATH_INDEX_KEY, value: JSON.stringify(nextPaths) },
-          ]);
+          await persistSettingsBulk([{ key: PATH_INDEX_KEY, value: JSON.stringify(nextPaths) }]);
         }
         toast('Path list saved.', { variant: 'success' });
       } catch (error) {
@@ -1185,14 +1182,7 @@ export function useAiPathsPersistence({
         toast('Failed to save path list.', { variant: 'error' });
       }
     },
-    [
-      activePathId,
-      pathConfigs,
-      persistPathSettings,
-      persistSettingsBulk,
-      reportAiPathsError,
-      toast,
-    ]
+    [activePathId, pathConfigs, persistPathSettings, persistSettingsBulk, reportAiPathsError, toast]
   );
 
   return {

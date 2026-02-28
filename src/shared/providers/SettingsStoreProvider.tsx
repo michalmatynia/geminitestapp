@@ -5,7 +5,6 @@ import React, { createContext, useContext, useMemo } from 'react';
 import { useLiteSettingsMap, useSettingsMap } from '@/shared/hooks/use-settings';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-
 export type SettingsStoreValue = {
   map: Map<string, string>;
   isLoading: boolean;
@@ -78,18 +77,16 @@ export function SettingsStoreProvider({
     };
   }, [error, isFetching, isLoading, mapData, refetch]);
 
-  return (
-    <SettingsStoreContext.Provider value={value}>
-      {children}
-    </SettingsStoreContext.Provider>
-  );
+  return <SettingsStoreContext.Provider value={value}>{children}</SettingsStoreContext.Provider>;
 }
 
 export function useSettingsStore(): SettingsStoreValue {
   const context = useContext(SettingsStoreContext);
   if (!context) {
     if (process.env['NODE_ENV'] === 'development') {
-      logClientError(new Error('Missing SettingsStoreProvider context; returning defaults.'), { context: { source: 'useSettingsStore', level: 'warn' } });
+      logClientError(new Error('Missing SettingsStoreProvider context; returning defaults.'), {
+        context: { source: 'useSettingsStore', level: 'warn' },
+      });
     }
     return fallbackStore;
   }

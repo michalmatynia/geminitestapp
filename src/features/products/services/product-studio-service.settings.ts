@@ -8,7 +8,7 @@ import {
   parseImageStudioSettings,
   resolveImageStudioSequenceActiveSteps,
   type ImageStudioSettings,
-} from '@/features/ai/image-studio/utils/studio-settings';
+} from '@/shared/lib/ai/image-studio/studio-settings';
 import { PRODUCT_STUDIO_SEQUENCE_GENERATION_MODE_SETTING_KEY } from '@/features/products/constants';
 import { getSettingValue } from '@/features/products/services/aiDescriptionService';
 import {
@@ -27,17 +27,17 @@ import {
 import { clampUpscaleScale } from './product-studio-service.io';
 
 export const resolveSequencingFromStudioSettings = (
-  studioSettings: ImageStudioSettings,
+  studioSettings: ImageStudioSettings
 ): ProductStudioSequencingConfig => {
   const sequenceConfig = studioSettings.projectSequencing;
-  const activeSteps = resolveImageStudioSequenceActiveSteps(
-    sequenceConfig,
-  ).filter((step) => step.enabled);
+  const activeSteps = resolveImageStudioSequenceActiveSteps(sequenceConfig).filter(
+    (step) => step.enabled
+  );
   const persistedEnabled = Boolean(sequenceConfig.enabled);
   const enabled = persistedEnabled && activeSteps.length > 0;
   const firstUpscaleStep = activeSteps.find((step) => step.type === 'upscale');
   const firstGenerateStep = activeSteps.find(
-    (step) => step.type === 'generate' || step.type === 'regenerate',
+    (step) => step.type === 'generate' || step.type === 'regenerate'
   );
   const currentSnapshot = buildImageStudioSequenceSnapshot(studioSettings);
   const savedSnapshotHash = trimString(sequenceConfig.snapshotHash);
@@ -59,30 +59,22 @@ export const resolveSequencingFromStudioSettings = (
       ? 'Project sequence snapshot is not saved yet. In Image Studio click "Save Project".'
       : 'Project sequence snapshot is out of date. In Image Studio click "Save Project" to persist the exact stack and crop geometry.';
   const expectedOutputs =
-    firstGenerateStep?.type === 'generate' ||
-    firstGenerateStep?.type === 'regenerate'
-      ? (firstGenerateStep.config.outputCount ??
-        studioSettings.targetAi.openai.image.n ??
-        1)
+    firstGenerateStep?.type === 'generate' || firstGenerateStep?.type === 'regenerate'
+      ? (firstGenerateStep.config.outputCount ?? studioSettings.targetAi.openai.image.n ?? 1)
       : (studioSettings.targetAi.openai.image.n ?? 1);
   return {
     persistedEnabled,
     enabled,
-    cropCenterBeforeGeneration:
-      enabled && activeSteps.some((step) => step.type === 'crop_center'),
-    upscaleOnAccept:
-      enabled && activeSteps.some((step) => step.type === 'upscale'),
+    cropCenterBeforeGeneration: enabled && activeSteps.some((step) => step.type === 'crop_center'),
+    upscaleOnAccept: enabled && activeSteps.some((step) => step.type === 'upscale'),
     upscaleScale: clampUpscaleScale(
       firstUpscaleStep?.type === 'upscale'
         ? firstUpscaleStep.config.scale
-        : sequenceConfig.upscaleScale,
+        : sequenceConfig.upscaleScale
     ),
     runViaSequence: enabled && !needsSaveDefaults,
     sequenceStepCount: activeSteps.length,
-    expectedOutputs: Math.max(
-      1,
-      Math.min(10, Math.floor(expectedOutputs || 1)),
-    ),
+    expectedOutputs: Math.max(1, Math.min(10, Math.floor(expectedOutputs || 1))),
     snapshotHash: savedSnapshotHash,
     snapshotSavedAt: savedSnapshotSavedAt,
     snapshotStepCount: savedSnapshotStepCount,
@@ -95,7 +87,7 @@ export const resolveSequencingFromStudioSettings = (
 };
 
 export const resolveStudioSettingsBundle = async (
-  projectId: string,
+  projectId: string
 ): Promise<{
   parsedStudioSettings: ImageStudioSettings;
   studioSettings: Record<string, unknown>;
@@ -125,9 +117,8 @@ export const resolveStudioSettingsBundle = async (
     globalSettingsRaw,
     selectedSettings: parsedSettings,
   });
-  const sequenceGenerationMode = normalizeProductStudioSequenceGenerationMode(
-    sequenceGenerationModeRaw,
-  );
+  const sequenceGenerationMode =
+    normalizeProductStudioSequenceGenerationMode(sequenceGenerationModeRaw);
   const modelId = trimString(parsedSettings.targetAi.openai.model) ?? '';
   return {
     parsedStudioSettings: parsedSettings,

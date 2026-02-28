@@ -32,63 +32,71 @@ interface PersistedItem<T = unknown> {
 // Hook for persisting query data to localStorage/sessionStorage
 export function useQueryPersistence(config: PersistenceConfig): { clearPersisted: () => void } {
   const queryClient = useQueryClient();
-  const storage = typeof window !== 'undefined' ? (config.storage || localStorage) : null;
+  const storage = typeof window !== 'undefined' ? config.storage || localStorage : null;
   const maxItemBytes = config.maxItemBytes ?? DEFAULT_MAX_ITEM_BYTES;
 
-  const saveToStorage = useCallback((queryKey: unknown[], data: unknown): void => {
-    if (!storage) return;
-    const key = `${config.key}-${JSON.stringify(queryKey)}`;
-    try {
-      const item: PersistedItem = {
-        data,
-        timestamp: Date.now(),
-        ttl: config.ttl,
-      };
-      const serialized = JSON.stringify(item);
-      if (serialized.length > maxItemBytes) {
-        storage.removeItem(key);
-        return;
-      }
-      storage.setItem(key, serialized);
-      mutedQuotaKeys.delete(key);
-    } catch (error) {
-      if (isQuotaExceededError(error)) {
-        storage.removeItem(key);
-        if (mutedQuotaKeys.has(key)) return;
-        mutedQuotaKeys.add(key);
-      }
-      logClientError(error instanceof Error ? error : new Error(String(error)), {
-        context: {
-          source: 'useQueryPersistence',
-          action: 'saveQueryToStorage',
-          level: 'warn',
-          storageKey: key,
-        },
-      });
-    }
-  }, [config.key, config.ttl, maxItemBytes, storage]);
-
-  const loadFromStorage = useCallback((queryKey: unknown[]): unknown | null => {
-    if (!storage) return null;
-    try {
+  const saveToStorage = useCallback(
+    (queryKey: unknown[], data: unknown): void => {
+      if (!storage) return;
       const key = `${config.key}-${JSON.stringify(queryKey)}`;
-      const item = storage.getItem(key);
-      if (!item) return null;
+      try {
+        const item: PersistedItem = {
+          data,
+          timestamp: Date.now(),
+          ttl: config.ttl,
+        };
+        const serialized = JSON.stringify(item);
+        if (serialized.length > maxItemBytes) {
+          storage.removeItem(key);
+          return;
+        }
+        storage.setItem(key, serialized);
+        mutedQuotaKeys.delete(key);
+      } catch (error) {
+        if (isQuotaExceededError(error)) {
+          storage.removeItem(key);
+          if (mutedQuotaKeys.has(key)) return;
+          mutedQuotaKeys.add(key);
+        }
+        logClientError(error instanceof Error ? error : new Error(String(error)), {
+          context: {
+            source: 'useQueryPersistence',
+            action: 'saveQueryToStorage',
+            level: 'warn',
+            storageKey: key,
+          },
+        });
+      }
+    },
+    [config.key, config.ttl, maxItemBytes, storage]
+  );
 
-      const parsed = JSON.parse(item) as PersistedItem;
-      
-      // Check TTL
-      if (parsed.ttl && Date.now() - parsed.timestamp > parsed.ttl) {
-        storage.removeItem(key);
+  const loadFromStorage = useCallback(
+    (queryKey: unknown[]): unknown | null => {
+      if (!storage) return null;
+      try {
+        const key = `${config.key}-${JSON.stringify(queryKey)}`;
+        const item = storage.getItem(key);
+        if (!item) return null;
+
+        const parsed = JSON.parse(item) as PersistedItem;
+
+        // Check TTL
+        if (parsed.ttl && Date.now() - parsed.timestamp > parsed.ttl) {
+          storage.removeItem(key);
+          return null;
+        }
+
+        return parsed.data;
+      } catch (error) {
+        logClientError(error instanceof Error ? error : new Error(String(error)), {
+          context: { source: 'useQueryPersistence', action: 'loadQueryFromStorage', level: 'warn' },
+        });
         return null;
       }
-
-      return parsed.data;
-    } catch (error) {
-      logClientError(error instanceof Error ? error : new Error(String(error)), { context: { source: 'useQueryPersistence', action: 'loadQueryFromStorage', level: 'warn' } });
-      return null;
-    }
-  }, [config.key, storage]);
+    },
+    [config.key, storage]
+  );
 
   // Load persisted data on mount
   useEffect((): void => {
@@ -104,8 +112,10 @@ export function useQueryPersistence(config: PersistenceConfig): { clearPersisted
   useEffect((): (() => void) => {
     const unsubscribes = config.queryKeys.map((queryKey: unknown[]) => {
       return queryClient.getQueryCache().subscribe((event): void => {
-        if (event.type === 'updated' && 
-            JSON.stringify(event.query.queryKey) === JSON.stringify(queryKey)) {
+        if (
+          event.type === 'updated' &&
+          JSON.stringify(event.query.queryKey) === JSON.stringify(queryKey)
+        ) {
           const data = queryClient.getQueryData(queryKey);
           if (data) {
             saveToStorage(queryKey, data);
@@ -139,23 +149,28 @@ export function useFormPersistence<T>(
   saveForm: (values: T) => void;
   loadForm: () => T;
   clearForm: () => void;
-  } {
-  const storage = typeof window !== 'undefined' ? (options?.storage || sessionStorage) : null;
+} {
+  const storage = typeof window !== 'undefined' ? options?.storage || sessionStorage : null;
   const key = `form-${formKey}`;
 
-  const saveForm = useCallback((values: T): void => {
-    if (!storage) return;
-    try {
-      const item: PersistedItem<T> = {
-        data: values,
-        timestamp: Date.now(),
-        ttl: options?.ttl,
-      };
-      storage.setItem(key, JSON.stringify(item));
-    } catch (error) {
-      logClientError(error instanceof Error ? error : new Error(String(error)), { context: { source: 'useFormPersistence', action: 'saveFormState', level: 'warn' } });
-    }
-  }, [key, options?.ttl, storage]);
+  const saveForm = useCallback(
+    (values: T): void => {
+      if (!storage) return;
+      try {
+        const item: PersistedItem<T> = {
+          data: values,
+          timestamp: Date.now(),
+          ttl: options?.ttl,
+        };
+        storage.setItem(key, JSON.stringify(item));
+      } catch (error) {
+        logClientError(error instanceof Error ? error : new Error(String(error)), {
+          context: { source: 'useFormPersistence', action: 'saveFormState', level: 'warn' },
+        });
+      }
+    },
+    [key, options?.ttl, storage]
+  );
 
   const loadForm = useCallback((): T => {
     if (!storage) return defaultValues;
@@ -164,7 +179,7 @@ export function useFormPersistence<T>(
       if (!item) return defaultValues;
 
       const parsed = JSON.parse(item) as PersistedItem<T>;
-      
+
       // Check TTL
       if (parsed.ttl && Date.now() - parsed.timestamp > parsed.ttl) {
         storage.removeItem(key);
@@ -173,7 +188,9 @@ export function useFormPersistence<T>(
 
       return { ...defaultValues, ...parsed.data };
     } catch (error) {
-      logClientError(error instanceof Error ? error : new Error(String(error)), { context: { source: 'useFormPersistence', action: 'loadFormState', level: 'warn' } });
+      logClientError(error instanceof Error ? error : new Error(String(error)), {
+        context: { source: 'useFormPersistence', action: 'loadFormState', level: 'warn' },
+      });
       return defaultValues;
     }
   }, [key, defaultValues, storage]);

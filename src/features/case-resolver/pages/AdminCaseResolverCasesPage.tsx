@@ -145,9 +145,7 @@ function AdminCaseResolverCasesInner(): React.JSX.Element {
         type: 'custom',
         render: ({ value, onChange, disabled }) => {
           const valueRecord =
-            value && typeof value === 'object'
-              ? (value as Record<string, unknown>)
-              : null;
+            value && typeof value === 'object' ? (value as Record<string, unknown>) : null;
           const dateText =
             typeof value === 'string'
               ? value

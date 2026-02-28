@@ -4,14 +4,12 @@ import { COMMON_RUNTIME_FIELDS, dbQueryFields } from '../node-docs.constants';
 export const constantDocs: NodeConfigDocField[] = [
   {
     path: 'constant.valueType',
-    description:
-      'How to interpret the stored value: string/number/boolean/json.',
+    description: 'How to interpret the stored value: string/number/boolean/json.',
     defaultValue: 'string',
   },
   {
     path: 'constant.value',
-    description:
-      'The literal value to emit (for json, this should be JSON text).',
+    description: 'The literal value to emit (for json, this should be JSON text).',
     defaultValue: '""',
   },
   ...COMMON_RUNTIME_FIELDS,
@@ -20,14 +18,12 @@ export const constantDocs: NodeConfigDocField[] = [
 export const mathDocs: NodeConfigDocField[] = [
   {
     path: 'math.operation',
-    description:
-      'Numeric operation to apply: add/subtract/multiply/divide/round/ceil/floor.',
+    description: 'Numeric operation to apply: add/subtract/multiply/divide/round/ceil/floor.',
     defaultValue: 'add',
   },
   {
     path: 'math.operand',
-    description:
-      'Number used by the operation (ignored for round/ceil/floor).',
+    description: 'Number used by the operation (ignored for round/ceil/floor).',
     defaultValue: '0',
   },
   ...COMMON_RUNTIME_FIELDS,
@@ -62,8 +58,7 @@ export const gateDocs: NodeConfigDocField[] = [
   },
   {
     path: 'gate.failMessage',
-    description:
-      'Optional message to display/log when blocking.',
+    description: 'Optional message to display/log when blocking.',
   },
   ...COMMON_RUNTIME_FIELDS,
 ];
@@ -77,20 +72,17 @@ export const compareDocs: NodeConfigDocField[] = [
   },
   {
     path: 'compare.compareTo',
-    description:
-      'String to compare against (converted based on operator and input value).',
+    description: 'String to compare against (converted based on operator and input value).',
     defaultValue: '""',
   },
   {
     path: 'compare.caseSensitive',
-    description:
-      'When comparing strings, whether case matters.',
+    description: 'When comparing strings, whether case matters.',
     defaultValue: 'false',
   },
   {
     path: 'compare.message',
-    description:
-      'Optional error message to emit when valid is false.',
+    description: 'Optional error message to emit when valid is false.',
   },
   ...COMMON_RUNTIME_FIELDS,
 ];
@@ -98,20 +90,17 @@ export const compareDocs: NodeConfigDocField[] = [
 export const routerDocs: NodeConfigDocField[] = [
   {
     path: 'router.mode',
-    description:
-      'valid routes on valid/errors; value routes on a value input.',
+    description: 'valid routes on valid/errors; value routes on a value input.',
     defaultValue: 'value',
   },
   {
     path: 'router.matchMode',
-    description:
-      'truthy/falsy/equals/contains',
+    description: 'truthy/falsy/equals/contains',
     defaultValue: 'truthy',
   },
   {
     path: 'router.compareTo',
-    description:
-      'Used by equals/contains modes.',
+    description: 'Used by equals/contains modes.',
     defaultValue: '""',
   },
   ...COMMON_RUNTIME_FIELDS,

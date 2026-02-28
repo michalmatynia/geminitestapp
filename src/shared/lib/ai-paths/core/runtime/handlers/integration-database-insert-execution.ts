@@ -6,10 +6,7 @@ import type {
 import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 
 import { dbApi, entityApi, ApiResponse } from '../../../api';
-import {
-  buildDbQueryPayload,
-  buildFormData,
-} from '../utils';
+import { buildDbQueryPayload, buildFormData } from '../utils';
 import {
   evaluateWriteOutcome,
   resolveWriteOutcomePolicy,
@@ -53,7 +50,7 @@ export async function executeDatabaseInsert({
   const applyInsertWriteOutcome = (
     action: string,
     resultPayload: unknown,
-    context: Record<string, unknown>,
+    context: Record<string, unknown>
   ): void => {
     const outcome = evaluateWriteOutcome({
       operation: 'insert',
@@ -64,8 +61,7 @@ export async function executeDatabaseInsert({
     writeOutcome = outcome.writeOutcome;
     if (!outcome.isZeroAffected) return;
     const message =
-      outcome.writeOutcome.message ??
-      `Database write affected 0 records for insert (${action}).`;
+      outcome.writeOutcome.message ?? `Database write affected 0 records for insert (${action}).`;
     if (outcome.writeOutcome.status === 'failed') {
       reportAiPathsError(
         new Error(message),
@@ -75,7 +71,7 @@ export async function executeDatabaseInsert({
           ...context,
           writeOutcome: outcome.writeOutcome,
         },
-        'Database insert failed:',
+        'Database insert failed:'
       );
       toast(message, { variant: 'error' });
       throw new Error(message);
@@ -97,30 +93,24 @@ export async function executeDatabaseInsert({
       };
       executed.updater.add(node.id);
     } else if (forceCollectionInsert) {
-      const queryPayload = buildDbQueryPayload(
-        templateContext,
-        queryConfig,
-      );
-      const collection =
-        queryPayload.collection?.trim() || configuredCollection || entityType;
+      const queryPayload = buildDbQueryPayload(templateContext, queryConfig);
+      const collection = queryPayload.collection?.trim() || configuredCollection || entityType;
       const customInsertPayload = {
         ...(queryPayload.provider
           ? {
-            provider: queryPayload.provider,
-          }
+              provider: queryPayload.provider,
+            }
           : {}),
         ...(queryPayload.collectionMap
           ? {
-            collectionMap: queryPayload.collectionMap,
-          }
+              collectionMap: queryPayload.collectionMap,
+            }
           : {}),
         action: 'insertOne' as const,
         collection,
         document: payload,
       };
-      const customInsertResult: ApiResponse<unknown> = await dbApi.action(
-        customInsertPayload,
-      );
+      const customInsertResult: ApiResponse<unknown> = await dbApi.action(customInsertPayload);
       executed.updater.add(node.id);
       if (!customInsertResult.ok) {
         reportAiPathsError(
@@ -131,7 +121,7 @@ export async function executeDatabaseInsert({
             collection,
             nodeId: node.id,
           },
-          'Database insert failed:',
+          'Database insert failed:'
         );
         toast(customInsertResult.error || `Failed to insert ${collection}.`, {
           variant: 'error',
@@ -147,14 +137,14 @@ export async function executeDatabaseInsert({
       }
     } else if (entityType === 'product') {
       const productResult: ApiResponse<unknown> = await entityApi.createProduct(
-        buildFormData(payload),
+        buildFormData(payload)
       );
       executed.updater.add(node.id);
       if (!productResult.ok) {
         reportAiPathsError(
           new Error(productResult.error),
           { action: 'insertEntity', entityType, nodeId: node.id },
-          'Database insert failed:',
+          'Database insert failed:'
         );
         toast(`Failed to insert ${entityType}.`, { variant: 'error' });
       } else {
@@ -173,7 +163,7 @@ export async function executeDatabaseInsert({
         reportAiPathsError(
           new Error(noteResult.error),
           { action: 'insertEntity', entityType, nodeId: node.id },
-          'Database insert failed:',
+          'Database insert failed:'
         );
         toast(`Failed to insert ${entityType}.`, { variant: 'error' });
       } else {
@@ -186,32 +176,25 @@ export async function executeDatabaseInsert({
         }
       }
     } else {
-      const queryPayload = buildDbQueryPayload(
-        templateContext,
-        queryConfig,
-      );
+      const queryPayload = buildDbQueryPayload(templateContext, queryConfig);
       const collection =
-        queryPayload.collection?.trim() ||
-        queryConfig.collection?.trim() ||
-        entityType;
+        queryPayload.collection?.trim() || queryConfig.collection?.trim() || entityType;
       const customInsertPayload = {
         ...(queryPayload.provider
           ? {
-            provider: queryPayload.provider,
-          }
+              provider: queryPayload.provider,
+            }
           : {}),
         ...(queryPayload.collectionMap
           ? {
-            collectionMap: queryPayload.collectionMap,
-          }
+              collectionMap: queryPayload.collectionMap,
+            }
           : {}),
         action: 'insertOne' as const,
         collection,
         document: payload,
       };
-      const customInsertResult: ApiResponse<unknown> = await dbApi.action(
-        customInsertPayload,
-      );
+      const customInsertResult: ApiResponse<unknown> = await dbApi.action(customInsertPayload);
       executed.updater.add(node.id);
       if (!customInsertResult.ok) {
         reportAiPathsError(
@@ -222,7 +205,7 @@ export async function executeDatabaseInsert({
             collection,
             nodeId: node.id,
           },
-          'Database insert failed:',
+          'Database insert failed:'
         );
         toast(customInsertResult.error || `Failed to insert ${collection}.`, {
           variant: 'error',

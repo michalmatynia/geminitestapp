@@ -20,7 +20,7 @@ export function CssAnimationWrapper({
   className,
 }: CssAnimationWrapperProps): React.ReactNode {
   const blockSettings = useBlockSettings();
-  
+
   const config = useMemo(() => {
     if (propConfig) return propConfig;
     if (blockSettings?.['cssAnimation']) {
@@ -29,10 +29,7 @@ export function CssAnimationWrapper({
     return undefined;
   }, [propConfig, blockSettings]);
 
-  const merged = useMemo(
-    () => ({ ...DEFAULT_CSS_ANIMATION_CONFIG, ...(config ?? {}) }),
-    [config]
-  );
+  const merged = useMemo(() => ({ ...DEFAULT_CSS_ANIMATION_CONFIG, ...(config ?? {}) }), [config]);
   const enabled = Boolean(merged.enabled) && merged.effect !== 'none';
   const trigger = merged.trigger ?? 'load';
   const ref = useRef<HTMLDivElement | null>(null);
@@ -62,13 +59,10 @@ export function CssAnimationWrapper({
     return <>{children}</>;
   }
 
-  const iterationCount = merged.loop || merged.iterations === 'infinite'
-    ? 'infinite'
-    : String(
-      typeof merged.iterations === 'number'
-        ? Math.max(1, merged.iterations)
-        : 1
-    );
+  const iterationCount =
+    merged.loop || merged.iterations === 'infinite'
+      ? 'infinite'
+      : String(typeof merged.iterations === 'number' ? Math.max(1, merged.iterations) : 1);
   const styleVars: React.CSSProperties = {
     ['--cms-css-anim-name' as string]: `cms-anim-${merged.effect}`,
     ['--cms-css-anim-duration' as string]: `${merged.duration ?? 700}ms`,

@@ -10,18 +10,9 @@ type PlanStepSpecInput = {
   subgoalId?: string | null;
 };
 
-export const normalizePlanStepSpecs = (
-  steps: PlanStepSpecInput[]
-): PlanStepSpecInput[] =>
+export const normalizePlanStepSpecs = (steps: PlanStepSpecInput[]): PlanStepSpecInput[] =>
   steps.map((step: PlanStepSpecInput) => {
-    const {
-      expectedObservation,
-      successCriteria,
-      phase,
-      priority,
-      dependsOn,
-      ...rest
-    } = step;
+    const { expectedObservation, successCriteria, phase, priority, dependsOn, ...rest } = step;
     return {
       ...rest,
       ...(expectedObservation != null && { expectedObservation }),

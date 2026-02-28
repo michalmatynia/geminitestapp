@@ -1,6 +1,4 @@
-import {
-  type AiNode,
-} from '@/shared/contracts/ai-paths';
+import { type AiNode } from '@/shared/contracts/ai-paths';
 import {
   DEFAULT_DB_QUERY,
   DELAY_INPUT_PORTS,
@@ -10,9 +8,7 @@ import {
   ROUTER_INPUT_PORTS,
   ROUTER_OUTPUT_PORTS,
 } from '../../constants';
-import {
-  ensureUniquePorts,
-} from '../../utils';
+import { ensureUniquePorts } from '../../utils';
 
 export const normalizeRouterNode = (node: AiNode): AiNode => {
   return {

@@ -7,15 +7,8 @@ import { PanelState, UsePanelStateOptions, UsePanelStateReturn } from '@/shared/
  * @param options Configuration options for initial state
  * @returns State object and setter functions
  */
-export function usePanelState(
-  options: UsePanelStateOptions = {}
-): UsePanelStateReturn {
-  const {
-    initialPage = 1,
-    initialPageSize = 10,
-    initialFilters = {},
-    onStateChange,
-  } = options;
+export function usePanelState(options: UsePanelStateOptions = {}): UsePanelStateReturn {
+  const { initialPage = 1, initialPageSize = 10, initialFilters = {}, onStateChange } = options;
 
   const [state, setState] = useState<PanelState>({
     page: initialPage,

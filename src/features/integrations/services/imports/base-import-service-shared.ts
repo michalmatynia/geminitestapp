@@ -27,7 +27,10 @@ export type {
   BaseConnectionContext,
 };
 
-import type { Product as ProductRecord, CreateProduct as ProductCreateInput } from '@/shared/contracts/products';
+import type {
+  Product as ProductRecord,
+  CreateProduct as ProductCreateInput,
+} from '@/shared/contracts/products';
 
 export const BASE_DETAILS_BATCH_SIZE = 100;
 export const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);
@@ -76,10 +79,7 @@ export type NormalizedMappedProduct = ProductCreateInput & {
   tagIds?: string[];
 };
 
-const toPositiveIntOrFallback = (
-  value: string | undefined,
-  fallback: number
-): number => {
+const toPositiveIntOrFallback = (value: string | undefined, fallback: number): number => {
   if (!value) return fallback;
   const parsed = Number.parseInt(value, 10);
   if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
@@ -121,7 +121,10 @@ export const toStringId = (value: unknown): string | null => {
 
 const normalizeCurrencyCode = (value: unknown): string | null => {
   if (typeof value !== 'string') return null;
-  const compact = value.trim().toUpperCase().replace(/[^A-Z]/g, '');
+  const compact = value
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z]/g, '');
   return compact.length === 3 ? compact : null;
 };
 
@@ -130,8 +133,7 @@ export const addCurrencyCandidate = (target: Set<string>, value: unknown): void 
   if (code) target.add(code);
 };
 
-export const sanitizeSku = (value: string): string =>
-  value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
+export const sanitizeSku = (value: string): string => value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
 
 export const guessMimeType = (url: string): string => {
   const lower = url.toLowerCase();
@@ -160,9 +162,7 @@ export const isSkuConflictError = (error: unknown): boolean => {
 export const normalizeSelectedIds = (selectedIds: string[] | undefined): string[] =>
   Array.from(
     new Set(
-      (selectedIds ?? [])
-        .map((id: string) => id.trim())
-        .filter((id: string) => id.length > 0)
+      (selectedIds ?? []).map((id: string) => id.trim()).filter((id: string) => id.length > 0)
     )
   );
 
@@ -180,10 +180,7 @@ export const shouldReuseIdempotentRun = (status: BaseImportRunStatus): boolean =
 export const resolveMode = (mode: BaseImportMode | undefined): BaseImportMode =>
   mode ?? 'upsert_on_base_id';
 
-export const createRunIdempotencyKey = (
-  params: BaseImportRunParams,
-  ids: string[]
-): string => {
+export const createRunIdempotencyKey = (params: BaseImportRunParams, ids: string[]): string => {
   const hash = createHash('sha1');
   hash.update(
     JSON.stringify({

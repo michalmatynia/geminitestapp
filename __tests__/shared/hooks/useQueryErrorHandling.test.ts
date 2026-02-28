@@ -12,9 +12,7 @@ describe('useQueryErrorHandling helpers', () => {
       ' Request timeout after 15000ms '
     );
 
-    expect(signature).toBe(
-      '["products","list"]::request timeout after 15000ms'
-    );
+    expect(signature).toBe('["products","list"]::request timeout after 15000ms');
   });
 
   it('suppresses duplicate toasts inside the dedupe window', () => {

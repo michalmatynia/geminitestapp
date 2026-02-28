@@ -7,14 +7,13 @@ import prisma from '@/shared/lib/db/prisma';
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 
-async function GET_handler(_req: NextRequest,
+async function GET_handler(
+  _req: NextRequest,
   { params }: { params: Promise<{ snapshotId: string }> }
 ): Promise<Response> {
   const requestStart = Date.now();
   if (!('agentBrowserSnapshot' in prisma)) {
-    throw internalError(
-      'Agent snapshots not initialized. Run prisma generate/db push.'
-    );
+    throw internalError('Agent snapshots not initialized. Run prisma generate/db push.');
   }
   const { snapshotId } = await params;
   const snapshot = await prisma.agentBrowserSnapshot.findUnique({
@@ -34,6 +33,7 @@ async function GET_handler(_req: NextRequest,
 }
 
 export const GET = apiHandlerWithParams<{ snapshotId: string }>(
-  async (_req: NextRequest, _ctx: ApiHandlerContext, params: { snapshotId: string }) => GET_handler(_req, { params: Promise.resolve(params) }),
+  async (_req: NextRequest, _ctx: ApiHandlerContext, params: { snapshotId: string }) =>
+    GET_handler(_req, { params: Promise.resolve(params) }),
   { source: 'chatbot.agent.snapshots.[snapshotId].GET' }
 );

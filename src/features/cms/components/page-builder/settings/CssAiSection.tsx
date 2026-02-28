@@ -2,11 +2,21 @@
 
 import React, { useMemo, useState } from 'react';
 
-import type { CustomCssAiProvider } from '@/shared/contracts/cms';
-import { Button, ToggleRow, Textarea, Tabs, TabsList, TabsTrigger, TabsContent, SelectSimple, FormSection, FormField } from '@/shared/ui';
+import {
+  Button,
+  ToggleRow,
+  Textarea,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+  Input,
+  FormSection,
+  FormField,
+} from '@/shared/ui';
 
 import { useInspectorAi } from '../context/InspectorAiContext';
-import { buildDiffLines } from '../utils/ai-helpers';
+import { buildDiffLines } from '@/features/cms/components/page-builder/utils/ai-helpers';
 
 // ---------------------------------------------------------------------------
 // CssAiSection component — renders the CSS AI assistant panel
@@ -27,9 +37,6 @@ function CssAiSection(): React.JSX.Element {
     applyCss,
     customCssAiConfig,
     updateCustomCssAiConfig,
-    providerOptions,
-    modelOptions,
-    agentOptions,
     contextPreviewOpen,
     setContextPreviewOpen,
     contextPreviewTab,
@@ -40,6 +47,9 @@ function CssAiSection(): React.JSX.Element {
     pageContextPreview,
     elementContextPreview,
     copyContext,
+    brainAiProvider,
+    brainAiModelId,
+    brainAiAgentId,
   } = useInspectorAi();
 
   const [cssAiDiffOnly, setCssAiDiffOnly] = useState<boolean>(true);
@@ -52,13 +62,20 @@ function CssAiSection(): React.JSX.Element {
 
   const cssDiffLines = useMemo(() => {
     if (!cssDiff) return [];
-    return cssAiDiffOnly ? cssDiff.lines.filter((line: { type: 'add' | 'remove' | 'same'; text: string }) => line.type !== 'same') : cssDiff.lines;
+    return cssAiDiffOnly
+      ? cssDiff.lines.filter(
+          (line: { type: 'add' | 'remove' | 'same'; text: string }) => line.type !== 'same'
+        )
+      : cssDiff.lines;
   }, [cssDiff, cssAiDiffOnly]);
 
   const cssDiffStats = useMemo(() => {
     if (!cssDiff) return { added: 0, removed: 0, same: 0 };
     return cssDiff.lines.reduce(
-      (acc: { added: number; removed: number; same: number }, line: { type: 'add' | 'remove' | 'same'; text: string }) => {
+      (
+        acc: { added: number; removed: number; same: number },
+        line: { type: 'add' | 'remove' | 'same'; text: string }
+      ) => {
         if (line.type === 'add') acc.added += 1;
         else if (line.type === 'remove') acc.removed += 1;
         else acc.same += 1;
@@ -76,43 +93,26 @@ function CssAiSection(): React.JSX.Element {
       className='p-3 space-y-4'
     >
       <div className='space-y-4 mt-4'>
-        <FormField label='Provider'>
-          <SelectSimple size='sm'
-            value={customCssAiConfig.provider ?? 'model'}
-            onValueChange={(value: string): void =>
-              updateCustomCssAiConfig({ provider: value as CustomCssAiProvider })
-            }
-            options={providerOptions}
-            placeholder='Select provider'
+        <FormField label='Provider' description='Brain-managed via CMS CSS Stream capability.'>
+          <Input
+            value={brainAiProvider === 'agent' ? 'Deepthinking agent' : 'AI model'}
+            readOnly
+            disabled
+            className='cursor-not-allowed'
           />
         </FormField>
-        {customCssAiConfig.provider !== 'agent' ? (
-          <FormField label='Model'>
-            <SelectSimple size='sm'
-              value={customCssAiConfig.modelId ?? ''}
-              onValueChange={(value: string): void =>
-                updateCustomCssAiConfig({ modelId: value })
-              }
-              options={modelOptions.map((model: string) => ({ value: model, label: model }))}
-              placeholder={modelOptions.length ? 'Select model' : 'No models available'}
-            />
-          </FormField>
-        ) : (
-          <FormField label='Deepthinking agent'>
-            <SelectSimple size='sm'
-              value={customCssAiConfig.agentId ?? ''}
-              onValueChange={(value: string): void =>
-                updateCustomCssAiConfig({ agentId: value })
-              }
-              options={
-                agentOptions.length
-                  ? agentOptions
-                  : [{ label: 'No agents configured', value: '' }]
-              }
-              placeholder={agentOptions.length ? 'Select agent' : 'No agents configured'}
-            />
-          </FormField>
-        )}
+        <FormField label={brainAiProvider === 'agent' ? 'Deepthinking agent' : 'Model'}>
+          <Input
+            value={
+              brainAiProvider === 'agent'
+                ? brainAiAgentId || 'Not configured in AI Brain'
+                : brainAiModelId || 'Not configured in AI Brain'
+            }
+            readOnly
+            disabled
+            className='cursor-not-allowed'
+          />
+        </FormField>
         <FormField label='Prompt' description={`Context: ${contextPlaceholder}`}>
           <Textarea
             value={customCssAiConfig.prompt ?? ''}
@@ -148,17 +148,16 @@ function CssAiSection(): React.JSX.Element {
         />
         <div className='text-[11px] text-gray-500'>
           <span className='font-mono text-gray-300'>page_context</span> = full page UI context,{' '}
-          <span className='font-mono text-gray-300'>element_context</span> = selected element details.
+          <span className='font-mono text-gray-300'>element_context</span> = selected element
+          details.
         </div>
-        
+
         <FormSection title='Context preview' variant='subtle' className='p-2 space-y-3'>
           <div className='flex flex-wrap items-center justify-between gap-2 mt-2'>
             <ToggleRow
               label='Full context'
               checked={contextPreviewFull}
-              onCheckedChange={(value: boolean) =>
-                setContextPreviewFull(value)
-              }
+              onCheckedChange={(value: boolean) => setContextPreviewFull(value)}
               className='bg-transparent border-none p-0 hover:bg-transparent'
               labelClassName='text-[11px] text-gray-300'
             />
@@ -190,8 +189,12 @@ function CssAiSection(): React.JSX.Element {
               className='mt-3'
             >
               <TabsList className='w-full'>
-                <TabsTrigger value='page' className='flex-1 text-xs'>Page</TabsTrigger>
-                <TabsTrigger value='element' className='flex-1 text-xs'>Element</TabsTrigger>
+                <TabsTrigger value='page' className='flex-1 text-xs'>
+                  Page
+                </TabsTrigger>
+                <TabsTrigger value='element' className='flex-1 text-xs'>
+                  Element
+                </TabsTrigger>
               </TabsList>
               <TabsContent value='page' className='mt-2 space-y-2'>
                 <div className='flex items-center justify-between'>
@@ -241,9 +244,7 @@ function CssAiSection(): React.JSX.Element {
           <ToggleRow
             label='Auto-apply on generate'
             checked={cssAiAutoApply}
-            onCheckedChange={(value: boolean) =>
-              setCssAiAutoApply(value)
-            }
+            onCheckedChange={(value: boolean) => setCssAiAutoApply(value)}
             className='bg-transparent border-none p-0 hover:bg-transparent'
             labelClassName='text-xs text-gray-300'
           />
@@ -256,12 +257,7 @@ function CssAiSection(): React.JSX.Element {
             {cssAiLoading ? 'Generating\u2026' : 'Generate CSS'}
           </Button>
           {cssAiLoading && (
-            <Button
-              type='button'
-              size='sm'
-              variant='outline'
-              onClick={cancelCss}
-            >
+            <Button type='button' size='sm' variant='outline' onClick={cancelCss}>
               Cancel
             </Button>
           )}
@@ -270,16 +266,12 @@ function CssAiSection(): React.JSX.Element {
           <ToggleRow
             label='Append when auto-applying'
             checked={cssAiAppend}
-            onCheckedChange={(value: boolean) =>
-              setCssAiAppend(value)
-            }
+            onCheckedChange={(value: boolean) => setCssAiAppend(value)}
             className='bg-transparent border-none p-0 hover:bg-transparent'
             labelClassName='text-xs text-gray-300'
           />
         )}
-        {cssAiError && (
-          <div className='text-xs text-red-400'>{cssAiError}</div>
-        )}
+        {cssAiError && <div className='text-xs text-red-400'>{cssAiError}</div>}
         {cssAiOutput && (
           <FormSection title='Last generated CSS' variant='subtle' className='p-3 space-y-3 mt-4'>
             <div className='flex items-center justify-between mt-2'>
@@ -327,21 +319,27 @@ function CssAiSection(): React.JSX.Element {
               </div>
               <div className='mt-2 max-h-48 overflow-auto rounded bg-black/40 p-2 font-mono text-[11px]'>
                 {cssDiffLines.length > 0 ? (
-                  cssDiffLines.map((line: { type: 'add' | 'remove' | 'same'; text: string }, index: number) => {
-                    const prefix = line.type === 'add' ? '+ ' : line.type === 'remove' ? '- ' : '  ';
-                    const colorClass =
-                      line.type === 'add'
-                        ? 'text-emerald-300'
-                        : line.type === 'remove'
-                          ? 'text-rose-300'
-                          : 'text-gray-300';
-                    return (
-                      <div key={`${line.type}-${index}`} className={`whitespace-pre ${colorClass}`}>
-                        {prefix}
-                        {line.text}
-                      </div>
-                    );
-                  })
+                  cssDiffLines.map(
+                    (line: { type: 'add' | 'remove' | 'same'; text: string }, index: number) => {
+                      const prefix =
+                        line.type === 'add' ? '+ ' : line.type === 'remove' ? '- ' : '  ';
+                      const colorClass =
+                        line.type === 'add'
+                          ? 'text-emerald-300'
+                          : line.type === 'remove'
+                            ? 'text-rose-300'
+                            : 'text-gray-300';
+                      return (
+                        <div
+                          key={`${line.type}-${index}`}
+                          className={`whitespace-pre ${colorClass}`}
+                        >
+                          {prefix}
+                          {line.text}
+                        </div>
+                      );
+                    }
+                  )
                 ) : (
                   <div className='text-gray-500'>No differences yet.</div>
                 )}

@@ -4,9 +4,7 @@ import { Loader2 } from 'lucide-react';
 import React from 'react';
 
 import { PanelStat } from '@/shared/contracts/ui';
-import { cn } from '@/shared/utils/ui-utils';
-
-
+import { cn } from '@/shared/utils';
 
 interface PanelStatsProps {
   stats: PanelStat[];
@@ -17,11 +15,7 @@ interface PanelStatsProps {
 /**
  * PanelStats - Displays a grid of statistics/metrics
  */
-export const PanelStats: React.FC<PanelStatsProps> = ({
-  stats,
-  isLoading,
-  className,
-}) => {
+export const PanelStats: React.FC<PanelStatsProps> = ({ stats, isLoading, className }) => {
   if (stats.length === 0) {
     return null;
   }
@@ -43,20 +37,12 @@ export const PanelStats: React.FC<PanelStatsProps> = ({
   };
 
   return (
-    <div
-      className={cn('grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-5', className)}
-    >
+    <div className={cn('grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-5', className)}>
       {stats.map((stat) => (
-        <div
-          key={stat.key}
-          className={getStatColor(stat.color)}
-          title={stat.tooltip}
-        >
+        <div key={stat.key} className={getStatColor(stat.color)} title={stat.tooltip}>
           <div className='flex items-center gap-2'>
             {stat.icon && <span className='h-4 w-4 opacity-60'>{stat.icon}</span>}
-            <span className='text-xs font-medium text-gray-600 uppercase'>
-              {stat.label}
-            </span>
+            <span className='text-xs font-medium text-gray-600 uppercase'>{stat.label}</span>
           </div>
           <div className='flex items-center gap-2'>
             {isLoading ? (

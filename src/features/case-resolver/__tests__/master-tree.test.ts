@@ -31,7 +31,12 @@ describe('case-resolver master tree', () => {
       folderRecords: [],
       folderTimestamps: {},
       files: [
-        createCaseResolverFile({ id: 'case-root-hidden', name: 'Case Root', fileType: 'case', folder: '' }),
+        createCaseResolverFile({
+          id: 'case-root-hidden',
+          name: 'Case Root',
+          fileType: 'case',
+          folder: '',
+        }),
         createCaseResolverFile({ id: 'file-root-z', name: 'zeta', folder: '' }),
         createCaseResolverFile({ id: 'file-root-a', name: 'apple', folder: '' }),
         createCaseResolverFile({ id: 'file-alpha-z', name: 'zulu', folder: 'alpha' }),
@@ -44,7 +49,12 @@ describe('case-resolver master tree', () => {
           kind: 'image',
           filepath: '/uploads/case-resolver/assets/middle.png',
         }),
-        createCaseResolverAssetFile({ id: 'asset-alpha-a', name: 'able.pdf', folder: 'alpha', kind: 'pdf' }),
+        createCaseResolverAssetFile({
+          id: 'asset-alpha-a',
+          name: 'able.pdf',
+          folder: 'alpha',
+          kind: 'pdf',
+        }),
       ],
       relationGraph: createEmptyCaseResolverRelationGraph(),
       activeFileId: 'file-root-a',
@@ -62,11 +72,7 @@ describe('case-resolver master tree', () => {
     ]);
 
     const alphaNode = tree.roots.find((node) => node.name === 'alpha');
-    expect(alphaNode?.children.map((node) => node.name)).toEqual([
-      'sub',
-      'able.pdf',
-      'zulu',
-    ]);
+    expect(alphaNode?.children.map((node) => node.name)).toEqual(['sub', 'able.pdf', 'zulu']);
   });
 
   it('hides image placeholders without uploaded file paths', () => {
@@ -83,10 +89,20 @@ describe('case-resolver master tree', () => {
       folderRecords: [],
       folderTimestamps: {},
       files: [
-        createCaseResolverFile({ id: 'case-root-hidden', name: 'Case Root', fileType: 'case', folder: '' }),
+        createCaseResolverFile({
+          id: 'case-root-hidden',
+          name: 'Case Root',
+          fileType: 'case',
+          folder: '',
+        }),
       ],
       assets: [
-        createCaseResolverAssetFile({ id: 'asset-placeholder', name: 'placeholder.png', folder: 'alpha', kind: 'image' }),
+        createCaseResolverAssetFile({
+          id: 'asset-placeholder',
+          name: 'placeholder.png',
+          folder: 'alpha',
+          kind: 'image',
+        }),
         createCaseResolverAssetFile({
           id: 'asset-uploaded',
           name: 'uploaded.png',
@@ -225,16 +241,25 @@ describe('case-resolver master tree', () => {
     });
 
     expect(
-      scopedNodes.some((node) => node.id === toCaseResolverCaseContentFileNodeId('case-root', 'doc-root'))
+      scopedNodes.some(
+        (node) => node.id === toCaseResolverCaseContentFileNodeId('case-root', 'doc-root')
+      )
     ).toBe(true);
     expect(
-      scopedNodes.some((node) => node.id === toCaseResolverCaseContentFileNodeId('case-child', 'scan-child'))
+      scopedNodes.some(
+        (node) => node.id === toCaseResolverCaseContentFileNodeId('case-child', 'scan-child')
+      )
     ).toBe(false);
     expect(
-      scopedNodes.some((node) => node.id === toCaseResolverCaseContentFolderNodeId('case-root', 'root-folder/evidence'))
+      scopedNodes.some(
+        (node) =>
+          node.id === toCaseResolverCaseContentFolderNodeId('case-root', 'root-folder/evidence')
+      )
     ).toBe(true);
     expect(
-      scopedNodes.some((node) => node.id === toCaseResolverCaseContentFolderNodeId('case-child', 'child-folder'))
+      scopedNodes.some(
+        (node) => node.id === toCaseResolverCaseContentFolderNodeId('case-child', 'child-folder')
+      )
     ).toBe(false);
   });
 });

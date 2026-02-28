@@ -33,23 +33,23 @@ describe('CmsPageRenderer Component', () => {
     const components = [
       {
         type: 'RichText',
-        content: { zone: 'template', settings: {}, blocks: [] }
+        content: { zone: 'template', settings: {}, blocks: [] },
       },
       {
         type: 'Hero',
-        content: { zone: 'header', settings: {}, blocks: [] }
+        content: { zone: 'header', settings: {}, blocks: [] },
       },
       {
         type: 'Newsletter',
-        content: { zone: 'footer', settings: {}, blocks: [] }
-      }
+        content: { zone: 'footer', settings: {}, blocks: [] },
+      },
     ];
 
     render(<CmsPageRenderer components={components as any} />);
 
     const sections = screen.getAllByTestId(/^section-/);
     expect(sections).toHaveLength(3);
-    
+
     // Header comes first
     expect(sections[0]).toHaveAttribute('data-testid', 'section-hero');
     // Template second
@@ -58,24 +58,24 @@ describe('CmsPageRenderer Component', () => {
     expect(sections[2]).toHaveAttribute('data-testid', 'section-newsletter');
   });
 
-  it('should handle missing zone by defaulting to \'template\'', () => {
+  it("should handle missing zone by defaulting to 'template'", () => {
     const components = [
       {
         type: 'Grid',
-        content: { settings: {}, blocks: [] }
-      }
+        content: { settings: {}, blocks: [] },
+      },
     ];
 
     render(<CmsPageRenderer components={components as any} />);
     expect(screen.getByTestId('section-grid')).toBeInTheDocument();
   });
 
-  it('should handle invalid zone by defaulting to \'template\'', () => {
+  it("should handle invalid zone by defaulting to 'template'", () => {
     const components = [
       {
         type: 'Grid',
-        content: { zone: 'invalid-zone', settings: {}, blocks: [] }
-      }
+        content: { zone: 'invalid-zone', settings: {}, blocks: [] },
+      },
     ];
 
     render(<CmsPageRenderer components={components as any} />);
@@ -86,12 +86,12 @@ describe('CmsPageRenderer Component', () => {
     const components = [
       {
         type: 'Hero',
-        content: { zone: 'template', settings: { isHidden: 'false' }, blocks: [] }
+        content: { zone: 'template', settings: { isHidden: 'false' }, blocks: [] },
       },
       {
         type: 'RichText',
-        content: { zone: 'template', settings: { isHidden: 'true' }, blocks: [] }
-      }
+        content: { zone: 'template', settings: { isHidden: 'true' }, blocks: [] },
+      },
     ];
 
     render(<CmsPageRenderer components={components as any} />);
@@ -103,12 +103,12 @@ describe('CmsPageRenderer Component', () => {
     const components = [
       {
         type: 'Hero',
-        content: { zone: 'template', settings: { id: 1 }, blocks: [] }
+        content: { zone: 'template', settings: { id: 1 }, blocks: [] },
       },
       {
         type: 'RichText',
-        content: { zone: 'template', settings: { id: 2 }, blocks: [] }
-      }
+        content: { zone: 'template', settings: { id: 2 }, blocks: [] },
+      },
     ];
 
     render(<CmsPageRenderer components={components as any} />);

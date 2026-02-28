@@ -1,10 +1,24 @@
 'use client';
 
 import { UseMutationResult } from '@tanstack/react-query';
-import React, { createContext, useContext, useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useMemo,
+  useEffect,
+  useRef,
+  useCallback,
+} from 'react';
 
-import { useFetchExternalCategoriesMutation, useSaveMappingsMutation } from '@/features/integrations/hooks/useMarketplaceMutations';
-import { useExternalCategories, useCategoryMappings } from '@/features/integrations/hooks/useMarketplaceQueries';
+import {
+  useFetchExternalCategoriesMutation,
+  useSaveMappingsMutation,
+} from '@/features/integrations/hooks/useMarketplaceMutations';
+import {
+  useExternalCategories,
+  useCategoryMappings,
+} from '@/features/integrations/hooks/useMarketplaceQueries';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { useProductCategories } from '@/features/products/hooks/useCategoryQueries';
 import { useCatalogs } from '@/features/products/hooks/useProductMetadataQueries';
@@ -26,7 +40,8 @@ export interface CategoryMapperConfig {
 const ConfigContext = createContext<CategoryMapperConfig | null>(null);
 export const useCategoryMapperConfig = () => {
   const context = useContext(ConfigContext);
-  if (!context) throw new Error('useCategoryMapperConfig must be used within CategoryMapperProvider');
+  if (!context)
+    throw new Error('useCategoryMapperConfig must be used within CategoryMapperProvider');
   return context;
 };
 
@@ -61,7 +76,8 @@ export interface CategoryMapperUIState {
 const UIStateContext = createContext<CategoryMapperUIState | null>(null);
 export const useCategoryMapperUIState = () => {
   const context = useContext(UIStateContext);
-  if (!context) throw new Error('useCategoryMapperUIState must be used within CategoryMapperProvider');
+  if (!context)
+    throw new Error('useCategoryMapperUIState must be used within CategoryMapperProvider');
   return context;
 };
 
@@ -78,19 +94,25 @@ export interface CategoryMapperActions {
   saveMutation: UseMutationResult<
     { upserted: number; message: string },
     Error,
-    { connectionId: string; catalogId: string; mappings: { externalCategoryId: string; internalCategoryId: string | null }[] }
+    {
+      connectionId: string;
+      catalogId: string;
+      mappings: { externalCategoryId: string; internalCategoryId: string | null }[];
+    }
   >;
 }
 const ActionsContext = createContext<CategoryMapperActions | null>(null);
 export const useCategoryMapperActions = () => {
   const context = useContext(ActionsContext);
-  if (!context) throw new Error('useCategoryMapperActions must be used within CategoryMapperProvider');
+  if (!context)
+    throw new Error('useCategoryMapperActions must be used within CategoryMapperProvider');
   return context;
 };
 
 // --- Legacy Aggregator ---
 
-interface CategoryMapperContextValue extends CategoryMapperConfig, CategoryMapperData, CategoryMapperUIState, CategoryMapperActions {}
+interface CategoryMapperContextValue
+  extends CategoryMapperConfig, CategoryMapperData, CategoryMapperUIState, CategoryMapperActions {}
 
 const CategoryMapperContext = createContext<CategoryMapperContextValue | null>(null);
 
@@ -110,11 +132,16 @@ const normalizeParentExternalId = (value: string | null | undefined): string | n
   return candidate;
 };
 
-const buildInternalCategoryOptions = (categories: ProductCategoryDto[]): InternalCategoryOption[] => {
+const buildInternalCategoryOptions = (
+  categories: ProductCategoryDto[]
+): InternalCategoryOption[] => {
   if (categories.length === 0) return [];
 
   const byId = new Map<string, ProductCategoryDto>(
-    categories.map((category: ProductCategoryDto): [string, ProductCategoryDto] => [category.id, category])
+    categories.map((category: ProductCategoryDto): [string, ProductCategoryDto] => [
+      category.id,
+      category,
+    ])
   );
   const childrenByParentId = new Map<string | null, ProductCategoryDto[]>();
 
@@ -127,7 +154,9 @@ const buildInternalCategoryOptions = (categories: ProductCategoryDto[]): Interna
   for (const category of categories) {
     const rawParentId = typeof category.parentId === 'string' ? category.parentId.trim() : '';
     const normalizedParentId =
-      rawParentId.length > 0 && rawParentId !== category.id && byId.has(rawParentId) ? rawParentId : null;
+      rawParentId.length > 0 && rawParentId !== category.id && byId.has(rawParentId)
+        ? rawParentId
+        : null;
     pushChild(normalizedParentId, category);
   }
 
@@ -171,17 +200,17 @@ const buildInternalCategoryOptions = (categories: ProductCategoryDto[]): Interna
   return options;
 };
 
-export function CategoryMapperProvider({ 
-  connectionId, 
-  connectionName, 
-  children 
-}: { 
-  connectionId: string; 
-  connectionName: string; 
-  children: React.ReactNode; 
+export function CategoryMapperProvider({
+  connectionId,
+  connectionName,
+  children,
+}: {
+  connectionId: string;
+  connectionName: string;
+  children: React.ReactNode;
 }): React.JSX.Element {
   const { toast } = useToast();
-  
+
   // Queries
   const catalogsQuery = useCatalogs();
   const catalogs = useMemo(() => catalogsQuery.data ?? [], [catalogsQuery.data]);
@@ -216,7 +245,10 @@ export function CategoryMapperProvider({
   );
 
   const externalCategoriesQuery = useExternalCategories(connectionId);
-  const externalCategories = useMemo(() => externalCategoriesQuery.data ?? [], [externalCategoriesQuery.data]);
+  const externalCategories = useMemo(
+    () => externalCategoriesQuery.data ?? [],
+    [externalCategoriesQuery.data]
+  );
   const externalCategoriesLoading = externalCategoriesQuery.isLoading;
   const externalIds = useMemo(
     () =>
@@ -286,7 +318,9 @@ export function CategoryMapperProvider({
       const result = await fetchMutation.mutateAsync({ connectionId });
       toast(result.message, { variant: 'success' });
     } catch (error: unknown) {
-      logClientError(error, { context: { source: 'BaseCategoryMapper', action: 'fetchFromBase', connectionId } });
+      logClientError(error, {
+        context: { source: 'BaseCategoryMapper', action: 'fetchFromBase', connectionId },
+      });
       const message = error instanceof Error ? error.message : 'Failed to fetch categories';
       toast(message, { variant: 'error' });
     }
@@ -297,27 +331,34 @@ export function CategoryMapperProvider({
       if (pendingMappings.has(externalCategoryId)) {
         return pendingMappings.get(externalCategoryId) ?? null;
       }
-      const mapping = mappings.find((m: CategoryMappingWithDetails) => m.externalCategoryId === externalCategoryId);
+      const mapping = mappings.find(
+        (m: CategoryMappingWithDetails) => m.externalCategoryId === externalCategoryId
+      );
       if (!mapping?.isActive) return null;
       return mapping.internalCategoryId;
     },
     [mappings, pendingMappings]
   );
 
-  const handleMappingChange = useCallback((externalCategoryId: string, internalCategoryId: string | null): void => {
-    setPendingMappings((prev: Map<string, string | null>) => {
-      const next = new Map(prev);
-      const savedMapping = mappings.find((m: CategoryMappingWithDetails) => m.externalCategoryId === externalCategoryId);
-      const savedValue = savedMapping?.isActive ? savedMapping.internalCategoryId : null;
+  const handleMappingChange = useCallback(
+    (externalCategoryId: string, internalCategoryId: string | null): void => {
+      setPendingMappings((prev: Map<string, string | null>) => {
+        const next = new Map(prev);
+        const savedMapping = mappings.find(
+          (m: CategoryMappingWithDetails) => m.externalCategoryId === externalCategoryId
+        );
+        const savedValue = savedMapping?.isActive ? savedMapping.internalCategoryId : null;
 
-      if (savedValue === internalCategoryId) {
-        next.delete(externalCategoryId);
-      } else {
-        next.set(externalCategoryId, internalCategoryId);
-      }
-      return next;
-    });
-  }, [mappings]);
+        if (savedValue === internalCategoryId) {
+          next.delete(externalCategoryId);
+        } else {
+          next.set(externalCategoryId, internalCategoryId);
+        }
+        return next;
+      });
+    },
+    [mappings]
+  );
 
   const handleSave = async (): Promise<void> => {
     if (pendingMappings.size === 0 || !selectedCatalogId) {
@@ -342,7 +383,14 @@ export function CategoryMapperProvider({
       toast(result.message, { variant: 'success' });
       setPendingMappings(new Map());
     } catch (error: unknown) {
-      logClientError(error, { context: { source: 'BaseCategoryMapper', action: 'saveMappings', connectionId, catalogId: selectedCatalogId } });
+      logClientError(error, {
+        context: {
+          source: 'BaseCategoryMapper',
+          action: 'saveMappings',
+          connectionId,
+          catalogId: selectedCatalogId,
+        },
+      });
       const message = error instanceof Error ? error.message : 'Failed to save mappings';
       toast(message, { variant: 'error' });
     }
@@ -368,54 +416,91 @@ export function CategoryMapperProvider({
 
   const stats = useMemo((): { total: number; mapped: number; pending: number } => {
     const total = externalCategories.length;
-    const mapped = externalCategories.filter((c: ExternalCategory) => getMappingForExternal(c.id) !== null).length;
+    const mapped = externalCategories.filter(
+      (c: ExternalCategory) => getMappingForExternal(c.id) !== null
+    ).length;
     const pending = pendingMappings.size;
     return { total, mapped, pending };
   }, [externalCategories, getMappingForExternal, pendingMappings.size]);
 
-  const configValue = useMemo<CategoryMapperConfig>(() => ({
-    connectionId,
-    connectionName,
-  }), [connectionId, connectionName]);
+  const configValue = useMemo<CategoryMapperConfig>(
+    () => ({
+      connectionId,
+      connectionName,
+    }),
+    [connectionId, connectionName]
+  );
 
-  const dataValue = useMemo<CategoryMapperData>(() => ({
-    catalogs,
-    catalogsLoading,
-    selectedCatalogId,
-    setSelectedCatalogId,
-    internalCategories,
-    internalCategoriesLoading,
-    internalCategoryOptions,
-    externalCategories,
-    externalCategoriesLoading,
-    externalIds,
-    mappings,
-    mappingsLoading,
-    categoryTree,
-  }), [catalogs, catalogsLoading, selectedCatalogId, internalCategories, internalCategoriesLoading, internalCategoryOptions, externalCategories, externalCategoriesLoading, externalIds, mappings, mappingsLoading, categoryTree]);
+  const dataValue = useMemo<CategoryMapperData>(
+    () => ({
+      catalogs,
+      catalogsLoading,
+      selectedCatalogId,
+      setSelectedCatalogId,
+      internalCategories,
+      internalCategoriesLoading,
+      internalCategoryOptions,
+      externalCategories,
+      externalCategoriesLoading,
+      externalIds,
+      mappings,
+      mappingsLoading,
+      categoryTree,
+    }),
+    [
+      catalogs,
+      catalogsLoading,
+      selectedCatalogId,
+      internalCategories,
+      internalCategoriesLoading,
+      internalCategoryOptions,
+      externalCategories,
+      externalCategoriesLoading,
+      externalIds,
+      mappings,
+      mappingsLoading,
+      categoryTree,
+    ]
+  );
 
-  const uiStateValue = useMemo<CategoryMapperUIState>(() => ({
-    pendingMappings,
-    expandedIds,
-    toggleExpand,
-    stats,
-  }), [pendingMappings, expandedIds, toggleExpand, stats]);
+  const uiStateValue = useMemo<CategoryMapperUIState>(
+    () => ({
+      pendingMappings,
+      expandedIds,
+      toggleExpand,
+      stats,
+    }),
+    [pendingMappings, expandedIds, toggleExpand, stats]
+  );
 
-  const actionsValue = useMemo<CategoryMapperActions>(() => ({
-    handleFetchFromBase,
-    handleMappingChange,
-    handleSave,
-    getMappingForExternal,
-    fetchMutation,
-    saveMutation,
-  }), [handleFetchFromBase, handleMappingChange, handleSave, getMappingForExternal, fetchMutation, saveMutation]);
+  const actionsValue = useMemo<CategoryMapperActions>(
+    () => ({
+      handleFetchFromBase,
+      handleMappingChange,
+      handleSave,
+      getMappingForExternal,
+      fetchMutation,
+      saveMutation,
+    }),
+    [
+      handleFetchFromBase,
+      handleMappingChange,
+      handleSave,
+      getMappingForExternal,
+      fetchMutation,
+      saveMutation,
+    ]
+  );
 
-  const aggregatedValue = useMemo<CategoryMapperContextValue>(() => ({
-    ...configValue,
-    ...dataValue,
-    ...uiStateValue,
-    ...actionsValue,
-  }), [configValue, dataValue, uiStateValue, actionsValue]);
+  const aggregatedValue = useMemo<CategoryMapperContextValue>(
+    () => ({
+      ...configValue,
+      ...dataValue,
+      ...uiStateValue,
+      ...actionsValue,
+    }),
+    [configValue, dataValue, uiStateValue, actionsValue]
+  );
 
   return (
     <ConfigContext.Provider value={configValue}>

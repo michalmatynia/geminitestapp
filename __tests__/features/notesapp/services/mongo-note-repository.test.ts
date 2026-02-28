@@ -58,7 +58,7 @@ describe('Mongo Note Repository', () => {
 
     it('returns existing notebook if found', async () => {
       mockCollection.toArray.mockResolvedValue([{ _id: 'n1', id: 'n1', name: 'Existing' }]);
-      
+
       const notebook = await mongoNoteRepository.getOrCreateDefaultNotebook();
       expect(notebook.name).toBe('Existing');
       expect(mockCollection.insertOne).not.toHaveBeenCalled();
@@ -92,7 +92,17 @@ describe('Mongo Note Repository', () => {
     it('gets all notes with filters', async () => {
       mockCollection.toArray
         .mockResolvedValueOnce([{ _id: 'default-n', id: 'default-n' }]) // For getOrCreateDefault
-        .mockResolvedValueOnce([{ _id: 'note-1', id: 'note-1', title: 'N1', content: 'C1', tags: [], categories: [], relationsFrom: [] }]) // For notes
+        .mockResolvedValueOnce([
+          {
+            _id: 'note-1',
+            id: 'note-1',
+            title: 'N1',
+            content: 'C1',
+            tags: [],
+            categories: [],
+            relationsFrom: [],
+          },
+        ]) // For notes
         .mockResolvedValueOnce([]) // For files
         .mockResolvedValueOnce([]); // For incoming relations
 
@@ -100,18 +110,20 @@ describe('Mongo Note Repository', () => {
 
       expect(notes).toHaveLength(1);
       expect(notes[0]!.title).toBe('N1');
-      expect(mockCollection.find).toHaveBeenCalledWith(expect.objectContaining({
-        $or: expect.any(Array)
-      }));
+      expect(mockCollection.find).toHaveBeenCalledWith(
+        expect.objectContaining({
+          $or: expect.any(Array),
+        })
+      );
     });
 
     it('gets note by ID with relations', async () => {
-      const mockNote = { 
-        _id: 'note-1', 
-        id: 'note-1', 
-        title: 'N1', 
+      const mockNote = {
+        _id: 'note-1',
+        id: 'note-1',
+        title: 'N1',
         content: 'C1',
-        relationsFrom: [{ targetNoteId: 'note-2', assignedAt: new Date() }]
+        relationsFrom: [{ targetNoteId: 'note-2', assignedAt: new Date() }],
       };
       mockCollection.findOne.mockResolvedValue(mockNote);
       mockCollection.toArray
@@ -130,7 +142,11 @@ describe('Mongo Note Repository', () => {
       mockCollection.toArray.mockResolvedValue([{ _id: 'default-n', id: 'default-n' }]);
       mockCollection.insertOne.mockResolvedValue({ insertedId: 'mock-uuid' });
 
-      const tag = await mongoNoteRepository.createTag({ name: 'Urgent', color: null, notebookId: 'default-n' });
+      const tag = await mongoNoteRepository.createTag({
+        name: 'Urgent',
+        color: null,
+        notebookId: 'default-n',
+      });
 
       expect(mockDb.collection).toHaveBeenCalledWith('tags');
       expect(tag.name).toBe('Urgent');
@@ -141,7 +157,7 @@ describe('Mongo Note Repository', () => {
         .mockResolvedValueOnce([{ _id: 'default-n', id: 'default-n' }]) // For getOrCreateDefault
         .mockResolvedValueOnce([
           { _id: 'c1', id: 'c1', name: 'Parent', parentId: null },
-          { _id: 'c2', id: 'c2', name: 'Child', parentId: 'c1' }
+          { _id: 'c2', id: 'c2', name: 'Child', parentId: 'c1' },
         ]) // For categories
         .mockResolvedValueOnce([]); // For notes
 

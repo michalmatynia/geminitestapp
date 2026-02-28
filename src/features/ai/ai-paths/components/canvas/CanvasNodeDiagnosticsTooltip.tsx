@@ -2,7 +2,10 @@
 
 import React from 'react';
 import { Card } from '@/shared/ui';
-import { renderNodeDiagnosticsTooltipContent, type SvgNodeDiagnosticsTooltipState } from '../CanvasBoard.utils';
+import {
+  renderNodeDiagnosticsTooltipContent,
+  type SvgNodeDiagnosticsTooltipState,
+} from '../CanvasBoard.utils';
 
 export interface CanvasNodeDiagnosticsTooltipProps {
   tooltip: SvgNodeDiagnosticsTooltipState;

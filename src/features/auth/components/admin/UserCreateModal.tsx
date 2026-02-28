@@ -3,7 +3,10 @@
 import React from 'react';
 
 import { useToast } from '@/shared/ui';
-import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
+import {
+  SettingsPanelBuilder,
+  type SettingsField,
+} from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import { useUsers } from '../../context/UsersContext';
 
@@ -61,7 +64,7 @@ export function UserCreateModal(): React.JSX.Element | null {
       await mutations.register.mutateAsync({
         email: createForm.email,
         password: createForm.password,
-        name: createForm.name
+        name: createForm.name,
       });
       setCreateOpen(false);
       setCreateForm({ name: '', email: '', password: '', roleId: 'none', verified: false });
@@ -73,9 +76,9 @@ export function UserCreateModal(): React.JSX.Element | null {
   };
 
   const handleChange = (values: Partial<UserCreateFormState>) => {
-    setCreateForm(prev => {
+    setCreateForm((prev) => {
       if (!prev) return prev;
-      return ({ ...prev, ...values });
+      return { ...prev, ...values };
     });
   };
 

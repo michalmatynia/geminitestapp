@@ -44,16 +44,32 @@ export function UrlGuardProvider(): null {
     if (normalizedPath) {
       const nextUrl = `${normalizedPath}${window.location.search}${window.location.hash}`;
       window.history.replaceState(null, '', nextUrl);
-       
-      logClientError(new Error('Normalized path'), { context: { source: 'UrlGuardProvider', from: window.location.pathname, to: normalizedPath, level: 'info' } });
+
+      logClientError(new Error('Normalized path'), {
+        context: {
+          source: 'UrlGuardProvider',
+          from: window.location.pathname,
+          to: normalizedPath,
+          level: 'info',
+        },
+      });
     }
 
-    const wrap = (original: (url: string, ...rest: unknown[]) => void): ((url: string, ...rest: unknown[]) => void) => {
+    const wrap = (
+      original: (url: string, ...rest: unknown[]) => void
+    ): ((url: string, ...rest: unknown[]) => void) => {
       return (url: string, ...rest: unknown[]): void => {
         const next = normalizeNavigationUrl(url, host);
         if (next.startsWith(hostPrefix) || next.startsWith(`//${host}`)) {
-           
-          logClientError(new Error('Blocked invalid navigation'), { context: { source: 'UrlGuardProvider', url, normalized: next, stack: new Error().stack, level: 'warn' } });
+          logClientError(new Error('Blocked invalid navigation'), {
+            context: {
+              source: 'UrlGuardProvider',
+              url,
+              normalized: next,
+              stack: new Error().stack,
+              level: 'warn',
+            },
+          });
         }
         original(next, ...rest);
       };
@@ -76,10 +92,18 @@ export function UrlGuardProvider(): null {
         if (typeof url === 'string') {
           const next = normalizeNavigationUrl(url, host);
           if (next.startsWith(hostPrefix) || next.startsWith(`//${host}`)) {
-             
-            logClientError(new Error(`${label} invalid`), { context: { source: 'UrlGuardProvider', url, normalized: next, stack: new Error().stack, level: 'warn' } });
+            logClientError(new Error(`${label} invalid`), {
+              context: {
+                source: 'UrlGuardProvider',
+                url,
+                normalized: next,
+                stack: new Error().stack,
+                level: 'warn',
+              },
+            });
           }
-          original.call(window.history, data, title, next); return;
+          original.call(window.history, data, title, next);
+          return;
         }
         original.call(window.history, data, title, url as string | URL | null);
       };
@@ -103,8 +127,15 @@ export function UrlGuardProvider(): null {
       if (!href) return;
       const normalized = normalizeNavigationUrl(href, host);
       if (normalized !== href) {
-         
-        logClientError(new Error('Normalized anchor'), { context: { source: 'UrlGuardProvider', href, normalized, stack: new Error().stack, level: 'info' } });
+        logClientError(new Error('Normalized anchor'), {
+          context: {
+            source: 'UrlGuardProvider',
+            href,
+            normalized,
+            stack: new Error().stack,
+            level: 'info',
+          },
+        });
         anchor.setAttribute('href', normalized);
       }
     };

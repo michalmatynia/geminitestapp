@@ -1,7 +1,15 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import ProductImageManager from '@/features/products/components/ProductImageManager';
 import { ProductImageManagerControllerProvider } from '@/features/products/components/ProductImageManagerControllerContext';
@@ -9,13 +17,13 @@ import { api } from '@/shared/lib/api-client';
 
 import { useProjectsState } from '../context/ProjectsContext';
 import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
-import { isLikelyImageStudioErrorText } from '../utils/image-src';
+import { isLikelyImageStudioErrorText } from '@/shared/lib/ai/image-studio/utils/image-src';
 
-import { 
-  OBJECT_SLOT_INDEX, 
-  toManagedSlot, 
-  toManagedUploadedAsset, 
-  slotHasRenderableImage 
+import {
+  OBJECT_SLOT_INDEX,
+  toManagedSlot,
+  toManagedUploadedAsset,
+  slotHasRenderableImage,
 } from './single-slot-manager/single-slot-manager-utils';
 import { useConsumeTemporaryUpload } from './single-slot-manager/useConsumeTemporaryUpload';
 import { useSlotImageUpload } from './single-slot-manager/useSlotImageUpload';
@@ -83,9 +91,7 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
       const slotImageUrl = objectSlot?.imageUrl ?? '';
       setUploadError(null);
       setObjectImageLinkDraft(
-        slotImageUrl && isLikelyImageStudioErrorText(slotImageUrl)
-          ? ''
-          : slotImageUrl
+        slotImageUrl && isLikelyImageStudioErrorText(slotImageUrl) ? '' : slotImageUrl
       );
       setObjectImageBase64Draft(objectSlot?.imageBase64 ?? '');
     }, [
@@ -95,18 +101,18 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
       objectSlot?.imageBase64,
     ]);
 
-    const getFolderForNewSlot = useCallback(
-      (): string => selectedFolder.trim(),
-      [selectedFolder]
-    );
+    const getFolderForNewSlot = useCallback((): string => selectedFolder.trim(), [selectedFolder]);
 
     const deleteUploadedAsset = useCallback(
       async (uploaded: { id: string; filepath: string }): Promise<void> => {
         if (!projectId) return;
-        await api.post(`/api/image-studio/projects/${encodeURIComponent(projectId)}/assets/delete`, {
-          id: uploaded.id,
-          filepath: uploaded.filepath,
-        });
+        await api.post(
+          `/api/image-studio/projects/${encodeURIComponent(projectId)}/assets/delete`,
+          {
+            id: uploaded.id,
+            filepath: uploaded.filepath,
+          }
+        );
       },
       [projectId]
     );
@@ -125,11 +131,19 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
       setUploadError,
     });
 
-    const { consumeTemporaryObjectUpload, lastConsumedTemporaryUploadIdRef, lastConsumedSlotIdRef } = consume;
-
-    useImperativeHandle(ref, () => ({
+    const {
       consumeTemporaryObjectUpload,
-    }), [consumeTemporaryObjectUpload]);
+      lastConsumedTemporaryUploadIdRef,
+      lastConsumedSlotIdRef,
+    } = consume;
+
+    useImperativeHandle(
+      ref,
+      () => ({
+        consumeTemporaryObjectUpload,
+      }),
+      [consumeTemporaryObjectUpload]
+    );
 
     const upload = useSlotImageUpload({
       projectId,

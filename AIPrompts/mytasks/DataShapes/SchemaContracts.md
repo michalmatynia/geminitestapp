@@ -17,4 +17,3 @@ Trim strings, normalize emails, validate ObjectId strings, enforce allowed enums
 Explicit “API contracts”
 
 If you have multiple consumers, consider OpenAPI (or typed RPC) so request/response drift can’t happen silently.
-

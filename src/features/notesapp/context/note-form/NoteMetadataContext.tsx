@@ -20,9 +20,6 @@ export const NoteMetadataContext = createContext<NoteMetadataData | null>(null);
 
 export function useNoteMetadataContext(): NoteMetadataData {
   const context = useContext(NoteMetadataContext);
-  if (!context)
-    throw new Error(
-      'useNoteMetadataContext must be used within NoteFormProvider',
-    );
+  if (!context) throw new Error('useNoteMetadataContext must be used within NoteFormProvider');
   return context;
 }

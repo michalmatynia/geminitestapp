@@ -123,12 +123,16 @@ export const buildFullValidatorDocumentationClipboardText = (): string => {
 
   sections.push('', '## UI Controls & Tooltips', '');
   sections.push(
-    VALIDATOR_UI_DOCS.map((doc: ValidatorUiDoc) =>
-      buildUiDocClipboardSection(doc)
-    ).join('\n\n')
+    VALIDATOR_UI_DOCS.map((doc: ValidatorUiDoc) => buildUiDocClipboardSection(doc)).join('\n\n')
   );
 
-  sections.push('', '## Source Paths', '- docs/validator/semantic-grammar/*', '- src/features/documentation/catalogs/validator-docs.ts', '');
+  sections.push(
+    '',
+    '## Source Paths',
+    '- docs/validator/semantic-grammar/*',
+    '- src/features/documentation/catalogs/validator-docs.ts',
+    ''
+  );
 
   return sections.join('\n');
 };

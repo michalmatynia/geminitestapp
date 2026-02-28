@@ -1,4 +1,7 @@
-import { DOCUMENTATION_MODULE_IDS, type DocumentationEntry } from '@/shared/lib/documentation/types';
+import {
+  DOCUMENTATION_MODULE_IDS,
+  type DocumentationEntry,
+} from '@/shared/lib/documentation/types';
 
 import {
   IMAGE_STUDIO_CROP_DOC_KEYS,
@@ -10,9 +13,8 @@ import {
   type ImageStudioDocKey,
 } from './image-studio-docs';
 
-
-export const IMAGE_STUDIO_DOCUMENTATION_CATALOG: DocumentationEntry[] = (
-  Object.values(IMAGE_STUDIO_DOCS)
+export const IMAGE_STUDIO_DOCUMENTATION_CATALOG: DocumentationEntry[] = Object.values(
+  IMAGE_STUDIO_DOCS
 ).map((entry) => ({
   id: entry.key,
   moduleId: DOCUMENTATION_MODULE_IDS.imageStudio,

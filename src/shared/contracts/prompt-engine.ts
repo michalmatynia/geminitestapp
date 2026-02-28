@@ -24,7 +24,11 @@ export const promptValidationSeveritySchema = z.enum(['error', 'warning', 'info'
 export type PromptValidationSeverity = z.infer<typeof promptValidationSeveritySchema>;
 export type PromptValidationSeverityDto = PromptValidationSeverity;
 
-export const promptValidationChainModeSchema = z.enum(['continue', 'stop_on_match', 'stop_on_replace']);
+export const promptValidationChainModeSchema = z.enum([
+  'continue',
+  'stop_on_match',
+  'stop_on_replace',
+]);
 export type PromptValidationChainMode = z.infer<typeof promptValidationChainModeSchema>;
 export type PromptValidationChainModeDto = PromptValidationChainMode;
 
@@ -42,7 +46,9 @@ export type PromptValidationScope = z.infer<typeof promptValidationScopeSchema>;
 export type PromptValidationScopeDto = PromptValidationScope;
 
 export const promptValidationLaunchScopeBehaviorSchema = z.enum(['gate', 'bypass']);
-export type PromptValidationLaunchScopeBehavior = z.infer<typeof promptValidationLaunchScopeBehaviorSchema>;
+export type PromptValidationLaunchScopeBehavior = z.infer<
+  typeof promptValidationLaunchScopeBehaviorSchema
+>;
 export type PromptValidationLaunchScopeBehaviorDto = PromptValidationLaunchScopeBehavior;
 
 export const promptValidationLaunchOperatorSchema = z.enum([
@@ -244,7 +250,9 @@ export const promptValidationStackResolutionInputSchema = z.object({
   patternLists: z.array(validatorPatternListSchema).nullable().optional(),
 });
 
-export type PromptValidationStackResolutionInput = z.infer<typeof promptValidationStackResolutionInputSchema>;
+export type PromptValidationStackResolutionInput = z.infer<
+  typeof promptValidationStackResolutionInputSchema
+>;
 
 /**
  * Prompt Validation Evaluation DTOs
@@ -274,7 +282,9 @@ export const promptValidationExecutionContextSchema = z.object({
   scope: promptValidationScopeSchema.nullable().optional(),
 });
 
-export type PromptValidationExecutionContext = z.infer<typeof promptValidationExecutionContextSchema>;
+export type PromptValidationExecutionContext = z.infer<
+  typeof promptValidationExecutionContextSchema
+>;
 export type PromptValidationExecutionContextDto = PromptValidationExecutionContext;
 
 export const promptValidationPreparedRuntimeSchema = z.object({
@@ -291,7 +301,15 @@ export type PromptValidationPreparedRuntimeDto = PromptValidationPreparedRuntime
  * Prompt Params DTOs
  */
 
-export const paramSpecKindSchema = z.enum(['boolean', 'number', 'string', 'enum', 'rgb', 'tuple2', 'json']);
+export const paramSpecKindSchema = z.enum([
+  'boolean',
+  'number',
+  'string',
+  'enum',
+  'rgb',
+  'tuple2',
+  'json',
+]);
 export type ParamSpecKind = z.infer<typeof paramSpecKindSchema>;
 export type ParamSpecKindDto = ParamSpecKind;
 
@@ -425,17 +443,21 @@ export const promptValidationRuntimeSloTargetsSchema = z.object({
   maxFallbackRate: z.number(),
 });
 
-export type PromptValidationRuntimeSloTargets = z.infer<typeof promptValidationRuntimeSloTargetsSchema>;
+export type PromptValidationRuntimeSloTargets = z.infer<
+  typeof promptValidationRuntimeSloTargetsSchema
+>;
 export type PromptValidationRuntimeSloTargetsDto = PromptValidationRuntimeSloTargets;
 
 export const promptValidationRuntimeHealthSchema = z.object({
   status: z.enum(['ok', 'degraded', 'critical']),
-  checks: z.array(z.object({
-    name: z.string(),
-    ok: z.boolean(),
-    value: z.number(),
-    target: z.number(),
-  })),
+  checks: z.array(
+    z.object({
+      name: z.string(),
+      ok: z.boolean(),
+      value: z.number(),
+      target: z.number(),
+    })
+  ),
 });
 
 export type PromptValidationRuntimeHealth = z.infer<typeof promptValidationRuntimeHealthSchema>;
@@ -443,19 +465,23 @@ export type PromptValidationRuntimeHealthDto = PromptValidationRuntimeHealth;
 
 export const promptValidationObservabilitySnapshotSchema = z.object({
   generatedAt: z.string(),
-  metrics: z.array(z.object({
-    name: promptValidationTimingNameSchema,
-    count: z.number(),
-    avgMs: z.number(),
-    p50Ms: z.number(),
-    p95Ms: z.number(),
-    maxMs: z.number(),
-  })),
+  metrics: z.array(
+    z.object({
+      name: promptValidationTimingNameSchema,
+      count: z.number(),
+      avgMs: z.number(),
+      p50Ms: z.number(),
+      p95Ms: z.number(),
+      maxMs: z.number(),
+    })
+  ),
   counters: z.record(promptValidationCounterNameSchema, z.number()),
   sloTargets: promptValidationRuntimeSloTargetsSchema,
   health: promptValidationRuntimeHealthSchema,
   errors: z.record(promptValidationErrorNameSchema, z.number()),
 });
 
-export type PromptValidationObservabilitySnapshot = z.infer<typeof promptValidationObservabilitySnapshotSchema>;
+export type PromptValidationObservabilitySnapshot = z.infer<
+  typeof promptValidationObservabilitySnapshotSchema
+>;
 export type PromptValidationObservabilitySnapshotDto = PromptValidationObservabilitySnapshot;

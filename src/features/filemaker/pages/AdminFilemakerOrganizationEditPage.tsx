@@ -1,24 +1,17 @@
 'use client';
 
 import React from 'react';
-import { 
-  Breadcrumbs,
-  FormActions,
-} from '@/shared/ui';
-import { 
-  AdminFilemakerOrganizationEditPageProvider, 
-  useAdminFilemakerOrganizationEditPageContext 
+import { Breadcrumbs, FormActions } from '@/shared/ui';
+import {
+  AdminFilemakerOrganizationEditPageProvider,
+  useAdminFilemakerOrganizationEditPageContext,
 } from '../context/AdminFilemakerOrganizationEditPageContext';
 import { OrganizationBasicInfoSection } from '../components/page/OrganizationBasicInfoSection';
 import { OrganizationEmailsSection } from '../components/page/OrganizationEmailsSection';
 
 function AdminFilemakerOrganizationEditPageInner(): React.JSX.Element {
-  const { 
-    organization, 
-    handleSave, 
-    updateSetting,
-    router
-  } = useAdminFilemakerOrganizationEditPageContext();
+  const { organization, handleSave, updateSetting, router } =
+    useAdminFilemakerOrganizationEditPageContext();
 
   if (!organization) {
     return (
@@ -32,10 +25,7 @@ function AdminFilemakerOrganizationEditPageInner(): React.JSX.Element {
     <div className='container mx-auto space-y-6 py-8'>
       <div className='flex flex-wrap items-center justify-between gap-4'>
         <Breadcrumbs
-          items={[
-            { label: 'Filemaker', href: '/admin/filemaker' },
-            { label: organization.name },
-          ]}
+          items={[{ label: 'Filemaker', href: '/admin/filemaker' }, { label: organization.name }]}
         />
       </div>
 
@@ -43,13 +33,11 @@ function AdminFilemakerOrganizationEditPageInner(): React.JSX.Element {
         <div className='space-y-6 lg:col-span-2'>
           <OrganizationBasicInfoSection />
           <OrganizationEmailsSection />
-          
+
           {/* More sections will be added here */}
         </div>
 
-        <div className='space-y-6'>
-          {/* Sidebar sections will be added here */}
-        </div>
+        <div className='space-y-6'>{/* Sidebar sections will be added here */}</div>
       </div>
 
       <FormActions

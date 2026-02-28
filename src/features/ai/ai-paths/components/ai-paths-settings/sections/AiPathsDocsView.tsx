@@ -9,7 +9,5 @@ export function AiPathsDocsView(): React.JSX.Element | null {
 
   if (activeTab !== 'docs') return null;
 
-  return (
-    <DocsTabPanel />
-  );
+  return <DocsTabPanel />;
 }

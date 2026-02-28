@@ -41,4 +41,3 @@ export async function GET_handler(
 
   return NextResponse.json({ entries });
 }
-

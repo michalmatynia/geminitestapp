@@ -1,15 +1,10 @@
-import type {
-  PromptExploderLearnedTemplate,
-  PromptExploderSegmentType,
-} from './types';
+import type { PromptExploderLearnedTemplate, PromptExploderSegmentType } from './types';
 
 const clampNumber = (value: number, min: number, max: number): number =>
   Math.min(max, Math.max(min, value));
 
 export type TemplateMergeMode = 'auto' | 'new' | 'target';
-export type TemplateUpsertErrorCode =
-  | 'TARGET_TEMPLATE_NOT_FOUND'
-  | 'TARGET_TEMPLATE_TYPE_MISMATCH';
+export type TemplateUpsertErrorCode = 'TARGET_TEMPLATE_NOT_FOUND' | 'TARGET_TEMPLATE_TYPE_MISMATCH';
 
 export type TemplateSimilarityMatch = {
   template: PromptExploderLearnedTemplate;
@@ -126,14 +121,9 @@ const learningDiceSimilarity = (left: string, right: string): number => {
   return (2 * overlap) / (leftBigrams.size + rightBigrams.size);
 };
 
-const learningAnchorCoverageScore = (
-  sourceText: string,
-  anchorTokens: string[]
-): number => {
+const learningAnchorCoverageScore = (sourceText: string, anchorTokens: string[]): number => {
   const normalizedSource = normalizeLearningText(sourceText);
-  const anchors = anchorTokens
-    .map((token) => normalizeLearningText(token))
-    .filter(Boolean);
+  const anchors = anchorTokens.map((token) => normalizeLearningText(token)).filter(Boolean);
   if (anchors.length === 0) return 0;
   let hits = 0;
   anchors.forEach((token) => {
@@ -153,9 +143,9 @@ export const templateSimilarityScore = (
   );
   const sampleScore = template.sampleText
     ? Math.max(
-      learningDiceSimilarity(sourceText, template.sampleText),
-      learningJaccardSimilarity(sourceText, template.sampleText)
-    )
+        learningDiceSimilarity(sourceText, template.sampleText),
+        learningJaccardSimilarity(sourceText, template.sampleText)
+      )
     : 0;
   const anchorScore = learningAnchorCoverageScore(sourceText, template.anchorTokens || []);
   return Math.max(titleScore, sampleScore * 0.8 + anchorScore * 0.2);
@@ -246,26 +236,26 @@ export const upsertLearnedTemplate = (args: UpsertLearnedTemplateArgs): Template
   const existingTemplateIds = new Set(args.templates.map((template) => template.id));
   const createTemplateId = args.createTemplateId ?? defaultCreateTemplateId;
 
-  const exactTemplate = args.templates.find((template) => {
-    return (
-      template.segmentType === args.segmentType &&
-      template.normalizedTitle === normalizedTitle
-    );
-  }) ?? null;
+  const exactTemplate =
+    args.templates.find((template) => {
+      return (
+        template.segmentType === args.segmentType && template.normalizedTitle === normalizedTitle
+      );
+    }) ?? null;
 
   const similarTemplateMatch =
     mergeMode === 'auto' && !exactTemplate
       ? findSimilarTemplateMatch({
-        templates: args.templates,
-        segmentType: args.segmentType,
-        sourceText,
-        similarityThreshold: args.similarityThreshold,
-      })
+          templates: args.templates,
+          segmentType: args.segmentType,
+          sourceText,
+          similarityThreshold: args.similarityThreshold,
+        })
       : null;
 
   const targetedTemplate =
     mergeMode === 'target'
-      ? args.templates.find((template) => template.id === args.targetTemplateId) ?? null
+      ? (args.templates.find((template) => template.id === args.targetTemplateId) ?? null)
       : null;
 
   if (mergeMode === 'target') {
@@ -296,7 +286,9 @@ export const upsertLearnedTemplate = (args: UpsertLearnedTemplateArgs): Template
   const currentApprovalsCount = typeof existingApprovals === 'number' ? existingApprovals : 0;
   const nextApprovals = currentApprovalsCount + 1;
   const nextState = deriveTemplateStateAfterApproval({
-    existingState: (typeof existingTemplate?.state === 'string' ? existingTemplate.state : null) as PromptExploderLearnedTemplate['state'] | null,
+    existingState: (typeof existingTemplate?.state === 'string' ? existingTemplate.state : null) as
+      | PromptExploderLearnedTemplate['state']
+      | null,
     nextApprovals,
     minApprovalsForMatching: args.minApprovalsForMatching,
     autoActivateLearnedTemplates: args.autoActivateLearnedTemplates,
@@ -315,33 +307,33 @@ export const upsertLearnedTemplate = (args: UpsertLearnedTemplateArgs): Template
 
   const nextTemplate: PromptExploderLearnedTemplate = existingTemplate
     ? {
-      ...existingTemplate,
-      approvals: nextApprovals,
-      state: nextState,
-      updatedAt: now,
-      anchorTokens: mergeTemplateAnchorTokens(
-        existingTemplate.anchorTokens || [],
-        learningTokens(sourceText)
-      ),
-      sampleText: mergeTemplateSampleText(existingTemplate.sampleText || '', sampleText),
-    }
+        ...existingTemplate,
+        approvals: nextApprovals,
+        state: nextState,
+        updatedAt: now,
+        anchorTokens: mergeTemplateAnchorTokens(
+          existingTemplate.anchorTokens || [],
+          learningTokens(sourceText)
+        ),
+        sampleText: mergeTemplateSampleText(existingTemplate.sampleText || '', sampleText),
+      }
     : {
-      id: nextTemplateId,
-      segmentType: args.segmentType,
-      state: nextState,
-      title: args.title,
-      normalizedTitle,
-      anchorTokens: learningTokens(sourceText),
-      sampleText,
-      approvals: 1,
-      createdAt: now,
-      updatedAt: now,
-    };
+        id: nextTemplateId,
+        segmentType: args.segmentType,
+        state: nextState,
+        title: args.title,
+        normalizedTitle,
+        anchorTokens: learningTokens(sourceText),
+        sampleText,
+        approvals: 1,
+        createdAt: now,
+        updatedAt: now,
+      };
 
   const nextTemplates = existingTemplate
     ? args.templates.map((template) =>
-      template.id === existingTemplate.id ? nextTemplate : template
-    )
+        template.id === existingTemplate.id ? nextTemplate : template
+      )
     : [...args.templates, nextTemplate];
 
   const mergeOutcome =

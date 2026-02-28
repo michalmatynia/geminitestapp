@@ -1,12 +1,8 @@
 'use client';
 
-import {
-  readDocsTooltipsEnabled,
-  useDocsTooltipsSetting,
-} from '@/shared/lib/tooltip-engine';
+import { readDocsTooltipsEnabled, useDocsTooltipsSetting } from '@/shared/lib/tooltip-engine';
 
-export const PROMPT_EXPLODER_DOCS_TOOLTIP_KEY =
-  'prompt_exploder:docs_tooltips_enabled';
+export const PROMPT_EXPLODER_DOCS_TOOLTIP_KEY = 'prompt_exploder:docs_tooltips_enabled';
 
 export const readPromptExploderDocsTooltipsEnabled = (): boolean =>
   readDocsTooltipsEnabled(PROMPT_EXPLODER_DOCS_TOOLTIP_KEY, false);
@@ -17,10 +13,7 @@ type PromptExploderDocsTooltipsState = {
 };
 
 export function usePromptExploderDocsTooltips(): PromptExploderDocsTooltipsState {
-  const { enabled, setEnabled } = useDocsTooltipsSetting(
-    PROMPT_EXPLODER_DOCS_TOOLTIP_KEY,
-    false
-  );
+  const { enabled, setEnabled } = useDocsTooltipsSetting(PROMPT_EXPLODER_DOCS_TOOLTIP_KEY, false);
 
   return {
     docsTooltipsEnabled: enabled,

@@ -20,11 +20,11 @@ export function ReassembledPromptPanel(): React.JSX.Element {
         <Button
           type='button'
           variant='outline'
-          onClick={(): void => { void handleApplyToImageStudio(); }}
+          onClick={(): void => {
+            void handleApplyToImageStudio();
+          }}
         >
-          {returnTarget === 'case-resolver'
-            ? 'Apply to Case Resolver'
-            : 'Apply to Image Studio'}
+          {returnTarget === 'case-resolver' ? 'Apply to Case Resolver' : 'Apply to Image Studio'}
         </Button>
       }
     >

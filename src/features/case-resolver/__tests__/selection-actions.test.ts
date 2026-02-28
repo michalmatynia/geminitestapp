@@ -6,6 +6,7 @@ import {
   createCaseResolverAssetFile,
   parseCaseResolverWorkspace,
 } from '@/features/case-resolver/settings';
+import type { CaseResolverWorkspaceDebugEvent } from '@/features/case-resolver/workspace-persistence';
 import type {
   CaseResolverAssetFile,
   CaseResolverWorkspace,
@@ -14,8 +15,9 @@ import type {
 const logCaseResolverWorkspaceEventMock = vi.fn();
 
 vi.mock('@/features/case-resolver/workspace-persistence', () => ({
-  logCaseResolverWorkspaceEvent: (...args: unknown[]) =>
-    logCaseResolverWorkspaceEventMock(...args),
+  logCaseResolverWorkspaceEvent: (
+    event: Omit<CaseResolverWorkspaceDebugEvent, 'id' | 'timestamp'>
+  ) => logCaseResolverWorkspaceEventMock(event),
 }));
 
 const createWorkspace = (): CaseResolverWorkspace => ({
@@ -42,7 +44,7 @@ describe('useCaseResolverStateSelectionActions', () => {
         selectedAssetId: 'asset-1',
         updateWorkspace,
         treeSaveToast: 'Case Resolver tree changes saved.',
-      }),
+      })
     );
 
     act(() => {
@@ -59,7 +61,7 @@ describe('useCaseResolverStateSelectionActions', () => {
     expect(typeof updater).toBe('function');
     const updatedWorkspace = updater?.(workspace) ?? workspace;
     const updatedAsset = (updatedWorkspace.assets ?? []).find(
-      (asset: CaseResolverAssetFile) => asset.id === 'asset-1',
+      (asset: CaseResolverAssetFile) => asset.id === 'asset-1'
     );
     expect(updatedAsset?.description).toBe('Updated description');
   });
@@ -74,7 +76,7 @@ describe('useCaseResolverStateSelectionActions', () => {
         selectedAssetId: 'asset-1',
         updateWorkspace,
         treeSaveToast: 'Case Resolver tree changes saved.',
-      }),
+      })
     );
 
     const options = {

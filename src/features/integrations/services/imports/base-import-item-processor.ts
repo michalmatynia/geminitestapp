@@ -25,10 +25,7 @@ import { getTagMappingRepository } from '@/features/integrations/services/tag-ma
 import { getProducerRepository } from '@/features/products/services/producer-repository';
 import { getProductRepository } from '@/features/products/services/product-repository';
 import { getTagRepository } from '@/features/products/services/tag-repository';
-import {
-  validateProductCreate,
-  validateProductUpdate,
-} from '@/features/products/validations';
+import { validateProductCreate, validateProductUpdate } from '@/features/products/validations';
 import type {
   BaseImportErrorClass,
   BaseImportErrorCode,
@@ -67,11 +64,8 @@ export const resolveProducerAndTagLookups = async (
     producers
       .map((producer: { id: string; name: string }) => {
         const normalizedName =
-          typeof producer.name === 'string'
-            ? producer.name.trim().toLowerCase()
-            : '';
-        const normalizedId =
-          typeof producer.id === 'string' ? producer.id.trim() : '';
+          typeof producer.name === 'string' ? producer.name.trim().toLowerCase() : '';
+        const normalizedId = typeof producer.id === 'string' ? producer.id.trim() : '';
         if (!normalizedName || !normalizedId) return null;
         return [normalizedName, normalizedId] as const;
       })
@@ -88,8 +82,7 @@ export const resolveProducerAndTagLookups = async (
   const tagNameToId = new Map(
     tags
       .map((tag: { id: string; name: string }) => {
-        const normalizedName =
-          typeof tag.name === 'string' ? tag.name.trim().toLowerCase() : '';
+        const normalizedName = typeof tag.name === 'string' ? tag.name.trim().toLowerCase() : '';
         const normalizedId = typeof tag.id === 'string' ? tag.id.trim() : '';
         if (!normalizedName || !normalizedId) return null;
         return [normalizedName, normalizedId] as const;
@@ -122,10 +115,7 @@ export const resolveProducerAndTagLookups = async (
   };
 };
 
-const resolveProducerIds = (
-  values: string[] | undefined,
-  lookups: ProductLookupMaps
-): string[] => {
+const resolveProducerIds = (values: string[] | undefined, lookups: ProductLookupMaps): string[] => {
   if (!Array.isArray(values) || values.length === 0) return [];
   const unique = new Set<string>();
   values.forEach((rawValue: string) => {
@@ -141,10 +131,7 @@ const resolveProducerIds = (
   return Array.from(unique);
 };
 
-const resolveTagIds = (
-  values: string[] | undefined,
-  lookups: ProductLookupMaps
-): string[] => {
+const resolveTagIds = (values: string[] | undefined, lookups: ProductLookupMaps): string[] => {
   if (!Array.isArray(values) || values.length === 0) return [];
   const unique = new Set<string>();
   values.forEach((rawValue: string) => {
@@ -193,11 +180,7 @@ const classifyByErrorCode = (
   return { errorClass: 'permanent', retryable: false };
 };
 
-const downloadImage = async (
-  url: string,
-  sku: string,
-  index: number
-): Promise<{ id: string }> => {
+const downloadImage = async (url: string, sku: string, index: number): Promise<{ id: string }> => {
   const imageRepository = await getImageFileRepository();
   const response = await fetch(url);
   if (!response.ok) {
@@ -220,10 +203,7 @@ const downloadImage = async (
   });
 };
 
-const createLinkedImage = async (
-  url: string,
-  index: number
-): Promise<{ id: string }> => {
+const createLinkedImage = async (url: string, index: number): Promise<{ id: string }> => {
   const imageRepository = await getImageFileRepository();
   const filename = extractFilename(url, `base-image-${index}.jpg`);
   return imageRepository.createImageFile({
@@ -270,10 +250,7 @@ const linkImportedProductToBaseListing = async (input: {
       );
     }
     if (existingListing.listing.status !== 'active') {
-      await existingListing.repository.updateListingStatus(
-        existingListing.listing.id,
-        'active'
-      );
+      await existingListing.repository.updateListingStatus(existingListing.listing.id, 'active');
     }
     await existingListing.repository.updateListing(existingListing.listing.id, {
       marketplaceData: {
@@ -363,11 +340,7 @@ const decideImportAction = (input: {
     }
 
     if (existingByBaseId) {
-      if (
-        existingBySku &&
-        existingBySku.id !== existingByBaseId.id &&
-        !allowDuplicateSku
-      ) {
+      if (existingBySku && existingBySku.id !== existingByBaseId.id && !allowDuplicateSku) {
         return {
           type: 'skip',
           code: 'CONFLICT',
@@ -453,21 +426,19 @@ const normalizeParameterValues = (input: unknown): ProductParameterValue[] => {
       typeof valuesByLanguageRaw === 'object' &&
       !Array.isArray(valuesByLanguageRaw)
         ? Object.entries(valuesByLanguageRaw as Record<string, unknown>).reduce(
-          (acc: Record<string, string>, [languageCode, languageValue]: [string, unknown]) => {
-            const normalizedLanguageCode = languageCode.trim().toLowerCase();
-            if (!normalizedLanguageCode || typeof languageValue !== 'string') return acc;
-            acc[normalizedLanguageCode] = languageValue;
-            return acc;
-          },
-          {}
-        )
+            (acc: Record<string, string>, [languageCode, languageValue]: [string, unknown]) => {
+              const normalizedLanguageCode = languageCode.trim().toLowerCase();
+              if (!normalizedLanguageCode || typeof languageValue !== 'string') return acc;
+              acc[normalizedLanguageCode] = languageValue;
+              return acc;
+            },
+            {}
+          )
         : {};
     byParameterId.set(parameterId, {
       parameterId,
       value,
-      ...(Object.keys(valuesByLanguage).length > 0
-        ? { valuesByLanguage }
-        : {}),
+      ...(Object.keys(valuesByLanguage).length > 0 ? { valuesByLanguage } : {}),
     });
   });
   return Array.from(byParameterId.values());
@@ -526,16 +497,17 @@ export const importSingleItem = async (input: {
   prefetchedLinks?: Record<string, string>;
   prefetchedProductsByBaseId?: Map<string, ProductWithImages>;
   prefetchedProductsBySku?: Map<string, ProductWithImages>;
-  prefetchedListings?: Map<string, { listing: ProductListing; repository: ProductListingRepository }>;
+  prefetchedListings?: Map<
+    string,
+    { listing: ProductListing; repository: ProductListingRepository }
+  >;
 }): Promise<ProcessItemResult> => {
   const mapped = normalizeMappedProduct(
     input.raw,
     input.templateMappings,
     input.preferredPriceCurrencies
   );
-  const templateMappedParameterValues = normalizeParameterValues(
-    mapped.parameters
-  );
+  const templateMappedParameterValues = normalizeParameterValues(mapped.parameters);
   const mappedProducerIds = resolveProducerIds(mapped.producerIds, input.lookups);
   const mappedTagIds = resolveTagIds(mapped.tagIds, input.lookups);
   const imageUrls = (mapped.imageLinks ?? []).slice(0, MAX_IMAGES_PER_PRODUCT);
@@ -548,12 +520,12 @@ export const importSingleItem = async (input: {
   const mappedSku = pickMappedSku(mapped);
 
   const existingByBaseId = mappedBaseProductId
-    ? input.prefetchedProductsByBaseId?.get(mappedBaseProductId) ??
-      (await input.productRepository.findProductByBaseId(mappedBaseProductId))
+    ? (input.prefetchedProductsByBaseId?.get(mappedBaseProductId) ??
+      (await input.productRepository.findProductByBaseId(mappedBaseProductId)))
     : null;
   const existingBySku = mappedSku
-    ? input.prefetchedProductsBySku?.get(mappedSku) ??
-      (await input.productRepository.getProductBySku(mappedSku))
+    ? (input.prefetchedProductsBySku?.get(mappedSku) ??
+      (await input.productRepository.getProductBySku(mappedSku)))
     : null;
 
   const decision = decideImportAction({
@@ -602,14 +574,11 @@ export const importSingleItem = async (input: {
       connectionId: input.connectionId,
       inventoryId: input.inventoryId,
       parameterRepository: input.parameterRepository,
-      existingValues: Array.isArray(decision.target.parameters)
-        ? decision.target.parameters
-        : [],
+      existingValues: Array.isArray(decision.target.parameters) ? decision.target.parameters : [],
       catalogLanguageCodes: input.catalogLanguageCodes ?? [],
       defaultLanguageCode: input.defaultLanguageCode ?? null,
       settings: normalizeBaseImportParameterImportSettings(
-        input.parameterImportSettings ??
-          defaultBaseImportParameterImportSettings
+        input.parameterImportSettings ?? defaultBaseImportParameterImportSettings
       ),
       templateMappings: input.templateMappings,
       prefetchedParameters: input.prefetchedParameters,
@@ -622,8 +591,7 @@ export const importSingleItem = async (input: {
       parameterImportResult.applied ? parameterImportResult.parameters : [],
       templateMappedParameterValues
     );
-    mapped.parameters =
-      resolvedParameterValues.length > 0 ? resolvedParameterValues : undefined;
+    mapped.parameters = resolvedParameterValues.length > 0 ? resolvedParameterValues : undefined;
 
     const updateData: ProductUpdateInput = {
       baseProductId: mappedBaseProductId ?? decision.target.baseProductId ?? null,
@@ -642,9 +610,7 @@ export const importSingleItem = async (input: {
       sizeWidth: mapped.sizeWidth,
       length: mapped.length,
       imageLinks: imageUrls,
-      ...(resolvedParameterValues.length > 0
-        ? { parameters: resolvedParameterValues }
-        : {}),
+      ...(resolvedParameterValues.length > 0 ? { parameters: resolvedParameterValues } : {}),
     };
 
     if (mappedSku && !input.allowDuplicateSku && mappedSku !== decision.target.sku) {
@@ -704,9 +670,7 @@ export const importSingleItem = async (input: {
       throw new Error(`Failed to update product ${decision.target.id}`);
     }
 
-    await input.productRepository.replaceProductCatalogs(updated.id, [
-      input.targetCatalogId,
-    ]);
+    await input.productRepository.replaceProductCatalogs(updated.id, [input.targetCatalogId]);
     if (mappedProducerIds.length > 0) {
       await input.productRepository.replaceProductProducers(updated.id, mappedProducerIds);
     }
@@ -867,9 +831,7 @@ export const importSingleItem = async (input: {
     throw new Error('Failed to create product.');
   }
 
-  await input.productRepository.replaceProductCatalogs(created.id, [
-    input.targetCatalogId,
-  ]);
+  await input.productRepository.replaceProductCatalogs(created.id, [input.targetCatalogId]);
   if (mappedProducerIds.length > 0) {
     await input.productRepository.replaceProductProducers(created.id, mappedProducerIds);
   }

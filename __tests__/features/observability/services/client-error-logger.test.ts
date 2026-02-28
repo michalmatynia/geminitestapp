@@ -1,7 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import { isSensitiveKey } from '@/shared/lib/observability/log-redaction';
-import { logClientError, setClientErrorBaseContext } from '@/features/observability/utils/client-error-logger';
+import {
+  logClientError,
+  setClientErrorBaseContext,
+} from '@/features/observability/utils/client-error-logger';
 
 // Mock dependencies
 vi.mock('@/shared/lib/observability/log-redaction', () => ({
@@ -16,7 +19,7 @@ describe('client-error-logger', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    
+
     // Mock navigator and window
     (global as any).navigator = {
       userAgent: 'TestAgent',
@@ -37,7 +40,7 @@ describe('client-error-logger', () => {
   it('builds correct payload for Error object and sends via beacon', () => {
     const error = new Error('Client side crash');
     error.stack = 'test stack';
-    
+
     logClientError(error);
 
     expect(navigator.sendBeacon).toHaveBeenCalled();
@@ -47,7 +50,7 @@ describe('client-error-logger', () => {
 
   it('includes extra context and base context in payload', () => {
     setClientErrorBaseContext({ appVersion: '1.0.0' });
-    
+
     // Switch to fetch by making sendBeacon fail
     (navigator as any).sendBeacon = undefined;
 
@@ -64,7 +67,7 @@ describe('client-error-logger', () => {
     const body = JSON.parse((global.fetch as any).mock.calls[0][1].body);
     expect(body.context).toMatchObject({
       appVersion: '1.0.0',
-      component: 'Header'
+      component: 'Header',
     });
   });
 

@@ -3,7 +3,10 @@
 import type { ErrorContext } from '@/shared/contracts/observability';
 import { isAbortLikeError } from '@/shared/utils/observability/is-abort-like-error';
 
-export const reportClientError = async (error: unknown, context: ErrorContext = {}): Promise<void> => {
+export const reportClientError = async (
+  error: unknown,
+  context: ErrorContext = {}
+): Promise<void> => {
   if (isAbortLikeError(error)) return;
 
   try {
@@ -25,6 +28,9 @@ export const reportClientError = async (error: unknown, context: ErrorContext = 
     });
   } catch (err) {
     const { logger } = await import('@/shared/utils/logger');
-    logger.error('Failed to send client error report', err instanceof Error ? err : new Error(String(err)));
+    logger.error(
+      'Failed to send client error report',
+      err instanceof Error ? err : new Error(String(err))
+    );
   }
 };

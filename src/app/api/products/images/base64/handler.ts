@@ -34,8 +34,8 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   if (failed > 0) {
     const { logger } = await import('@/shared/utils/logger');
     logger.error(`[products.images.base64.bulk] ${failed} image conversions failed`, {
-      failures: failures.map(f => String(f.reason)),
-      totalRequested: productIds.length
+      failures: failures.map((f) => String(f.reason)),
+      totalRequested: productIds.length,
     });
   }
 

@@ -23,11 +23,7 @@ export function PreviewSectionProvider({
   children: React.ReactNode;
   value: PreviewSectionContextValue;
 }) {
-  return (
-    <PreviewSectionContext.Provider value={value}>
-      {children}
-    </PreviewSectionContext.Provider>
-  );
+  return <PreviewSectionContext.Provider value={value}>{children}</PreviewSectionContext.Provider>;
 }
 
 export function usePreviewSectionContext() {

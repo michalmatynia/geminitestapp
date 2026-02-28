@@ -1,8 +1,4 @@
-import type {
-  AiNode,
-  NodeConfig,
-  NodeType,
-} from '@/shared/contracts/ai-paths';
+import type { AiNode, NodeConfig, NodeType } from '@/shared/contracts/ai-paths';
 
 import {
   TRIGGER_EVENTS,
@@ -12,24 +8,21 @@ import {
   DEFAULT_CONTEXT_ROLE,
 } from '../constants';
 import { palette } from '../definitions';
-import {
-  createDefaultPlaywrightConfig,
-} from '../playwright/default-config';
-import {
-  createParserMappings,
-  createViewerOutputs,
-  resolveNodeTypeId,
-} from '../utils';
-import {
-  backfillNodePortContracts,
-} from './normalization.helpers';
+import { createDefaultPlaywrightConfig } from '../playwright/default-config';
+import { createParserMappings, createViewerOutputs, resolveNodeTypeId } from '../utils';
+import { backfillNodePortContracts } from './normalization.helpers';
 
 import { normalizeContextNode } from './nodes/context';
 import { normalizeTriggerNode } from './nodes/trigger';
 import { normalizeFetcherNode, normalizeSimulationNode } from './nodes/fetcher';
 import { normalizeMapperNode, normalizeParserNode, normalizeRegexNode } from './nodes/parser';
 import { normalizeDatabaseNode, normalizeDbSchemaNode } from './nodes/database';
-import { normalizeAiDescriptionNode, normalizeDescriptionUpdaterNode, normalizeModelNode, normalizeAgentNode } from './nodes/ai';
+import {
+  normalizeAiDescriptionNode,
+  normalizeDescriptionUpdaterNode,
+  normalizeModelNode,
+  normalizeAgentNode,
+} from './nodes/ai';
 import { normalizeAudioOscillatorNode, normalizeAudioSpeakerNode } from './nodes/audio';
 import { normalizeRouterNode, normalizeDelayNode, normalizePollNode } from './nodes/control';
 import { normalizeMutatorNode, normalizeStringMutatorNode } from './nodes/mutator';
@@ -50,46 +43,80 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] => {
   const normalized = items
     .map((node: AiNode): AiNode | null => {
       switch (node.type) {
-        case 'context': return normalizeContextNode(node);
-        case 'trigger': return normalizeTriggerNode(node);
-        case 'fetcher': return normalizeFetcherNode(node);
-        case 'simulation': return normalizeSimulationNode(node);
-        case 'mapper': return normalizeMapperNode(node);
-        case 'parser': return normalizeParserNode(node);
-        case 'regex': return normalizeRegexNode(node);
-        case 'database': return normalizeDatabaseNode(node);
-        case 'db_schema': return normalizeDbSchemaNode(node);
-        case 'ai_description': return normalizeAiDescriptionNode(node);
-        case 'description_updater': return normalizeDescriptionUpdaterNode(node);
-        case 'model': return normalizeModelNode(node);
-        case 'agent': return normalizeAgentNode(node);
-        case 'audio_oscillator': return normalizeAudioOscillatorNode(node);
-        case 'audio_speaker': return normalizeAudioSpeakerNode(node);
-        case 'router': return normalizeRouterNode(node);
-        case 'delay': return normalizeDelayNode(node);
-        case 'poll': return normalizePollNode(node);
-        case 'http': return normalizeHttpNode(node);
-        case 'api_advanced': return normalizeApiAdvancedNode(node);
-        case 'validation_pattern': return normalizeValidationPatternNode(node);
-        case 'mutator': return normalizeMutatorNode(node);
-        case 'string_mutator': return normalizeStringMutatorNode(node);
-        case 'validator': return normalizeValidatorNode(node);
-        case 'constant': return normalizeConstantNode(node);
-        case 'math': return normalizeMathNode(node);
-        case 'template': return normalizeTemplateNode(node);
-        case 'bundle': return normalizeBundleNode(node);
-        case 'compare': return normalizeCompareNode(node);
-        case 'playwright': return normalizePlaywrightNode(node);
-        case 'viewer': return normalizeViewerNode(node);
-        default: return node;
+        case 'context':
+          return normalizeContextNode(node);
+        case 'trigger':
+          return normalizeTriggerNode(node);
+        case 'fetcher':
+          return normalizeFetcherNode(node);
+        case 'simulation':
+          return normalizeSimulationNode(node);
+        case 'mapper':
+          return normalizeMapperNode(node);
+        case 'parser':
+          return normalizeParserNode(node);
+        case 'regex':
+          return normalizeRegexNode(node);
+        case 'database':
+          return normalizeDatabaseNode(node);
+        case 'db_schema':
+          return normalizeDbSchemaNode(node);
+        case 'ai_description':
+          return normalizeAiDescriptionNode(node);
+        case 'description_updater':
+          return normalizeDescriptionUpdaterNode(node);
+        case 'model':
+          return normalizeModelNode(node);
+        case 'agent':
+          return normalizeAgentNode(node);
+        case 'audio_oscillator':
+          return normalizeAudioOscillatorNode(node);
+        case 'audio_speaker':
+          return normalizeAudioSpeakerNode(node);
+        case 'router':
+          return normalizeRouterNode(node);
+        case 'delay':
+          return normalizeDelayNode(node);
+        case 'poll':
+          return normalizePollNode(node);
+        case 'http':
+          return normalizeHttpNode(node);
+        case 'api_advanced':
+          return normalizeApiAdvancedNode(node);
+        case 'validation_pattern':
+          return normalizeValidationPatternNode(node);
+        case 'mutator':
+          return normalizeMutatorNode(node);
+        case 'string_mutator':
+          return normalizeStringMutatorNode(node);
+        case 'validator':
+          return normalizeValidatorNode(node);
+        case 'constant':
+          return normalizeConstantNode(node);
+        case 'math':
+          return normalizeMathNode(node);
+        case 'template':
+          return normalizeTemplateNode(node);
+        case 'bundle':
+          return normalizeBundleNode(node);
+        case 'compare':
+          return normalizeCompareNode(node);
+        case 'playwright':
+          return normalizePlaywrightNode(node);
+        case 'viewer':
+          return normalizeViewerNode(node);
+        default:
+          return node;
       }
     })
     .filter((node: AiNode | null): node is AiNode => Boolean(node));
-  return backfillNodePortContracts(normalized).nodes.map((node: AiNode): AiNode => ({
-    ...node,
-    instanceId: node.id,
-    nodeTypeId: resolveNodeTypeId(node, palette),
-  }));
+  return backfillNodePortContracts(normalized).nodes.map(
+    (node: AiNode): AiNode => ({
+      ...node,
+      instanceId: node.id,
+      nodeTypeId: resolveNodeTypeId(node, palette),
+    })
+  );
 };
 
 export const getDefaultConfigForType = (

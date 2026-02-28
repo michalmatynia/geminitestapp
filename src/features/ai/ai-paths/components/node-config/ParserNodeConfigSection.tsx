@@ -2,17 +2,7 @@
 
 import React from 'react';
 
-
-
-
-
-
-
-import type {
-  AiNode,
-  ParserConfig,
-  ParserSampleState,
-} from '@/shared/lib/ai-paths';
+import type { AiNode, ParserConfig, ParserSampleState } from '@/shared/lib/ai-paths';
 import {
   PARSER_PATH_OPTIONS,
   PARSER_PRESETS,
@@ -53,8 +43,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
   React.useEffect((): void | (() => void) => {
     if (!isParserNode) return;
     const nextMappings =
-      selectedNode.config?.parser?.mappings ??
-      createParserMappings(selectedNode.outputs ?? []);
+      selectedNode.config?.parser?.mappings ?? createParserMappings(selectedNode.outputs ?? []);
     setParserDraftNodeId(selectedNode.id);
     setParserDraftMappings(nextMappings);
     return (): void => {
@@ -63,12 +52,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
         parserDraftTimerRef.current = null;
       }
     };
-  }, [
-    selectedNode.id,
-    isParserNode,
-    selectedNode.config?.parser?.mappings,
-    selectedNode.outputs,
-  ]);
+  }, [selectedNode.id, isParserNode, selectedNode.config?.parser?.mappings, selectedNode.outputs]);
 
   const parserConfig: ParserConfig = selectedNode.config?.parser ?? {
     mappings: createParserMappings(selectedNode.outputs),
@@ -79,11 +63,9 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
     () => parserConfig.mappings ?? createParserMappings(selectedNode.outputs),
     [parserConfig.mappings, selectedNode.outputs]
   );
-  const draftMappings =
-    parserDraftNodeId === selectedNode.id ? parserDraftMappings : mappings;
+  const draftMappings = parserDraftNodeId === selectedNode.id ? parserDraftMappings : mappings;
   const outputMode = parserConfig.outputMode ?? 'individual';
-  const presetId =
-    parserConfig.presetId ?? PARSER_PRESETS[0]?.id ?? 'custom';
+  const presetId = parserConfig.presetId ?? PARSER_PRESETS[0]?.id ?? 'custom';
   const presetOptions = [
     ...PARSER_PRESETS,
     {
@@ -95,25 +77,23 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
   ];
   const activePreset =
     presetOptions.find((preset: { id: string }) => preset.id === presetId) ?? null;
-  const sampleState =
-    parserSamples[selectedNode.id] ?? {
-      entityType: 'product',
-      entityId: '',
-      simulationId: '',
-      json: '',
-      mappingMode: 'top',
-      depth: 2,
-      keyStyle: 'path',
-      includeContainers: false,
-    };
+  const sampleState = parserSamples[selectedNode.id] ?? {
+    entityType: 'product',
+    entityId: '',
+    simulationId: '',
+    json: '',
+    mappingMode: 'top',
+    depth: 2,
+    keyStyle: 'path',
+    includeContainers: false,
+  };
   const simulationOptions = React.useMemo(
     () =>
       nodes
         .filter((node: AiNode): boolean => node.type === 'simulation')
         .map((node: AiNode) => {
           const simConfig = node.config?.simulation;
-          const entityId =
-            simConfig?.entityId?.trim() || simConfig?.productId?.trim() || '';
+          const entityId = simConfig?.entityId?.trim() || simConfig?.productId?.trim() || '';
           const entityType = simConfig?.entityType?.trim() || 'product';
           return {
             id: node.id,
@@ -125,10 +105,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
         .filter((option: { entityId: string }) => option.entityId),
     [nodes]
   );
-  const parsedSample = React.useMemo(
-    () => safeParseJson(sampleState.json),
-    [sampleState.json]
-  );
+  const parsedSample = React.useMemo(() => safeParseJson(sampleState.json), [sampleState.json]);
   const sampleValue = parsedSample.value;
   const sampleMappings = React.useMemo(() => {
     if (!sampleValue) return {};
@@ -149,10 +126,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
     sampleState.includeContainers,
   ]);
   const sampleEntries = React.useMemo(
-    () =>
-      sampleValue
-        ? extractJsonPathEntries(sampleValue, sampleState.depth ?? 2)
-        : [],
+    () => (sampleValue ? extractJsonPathEntries(sampleValue, sampleState.depth ?? 2) : []),
     [sampleValue, sampleState.depth]
   );
   const samplePaths = React.useMemo(
@@ -173,7 +147,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
       }),
     [samplePaths]
   );
-  const parserRuntimeInputs = (runtimeState.inputs?.[selectedNode.id] ?? {});
+  const parserRuntimeInputs = runtimeState.inputs?.[selectedNode.id] ?? {};
   const parserContext =
     parserRuntimeInputs['context'] && typeof parserRuntimeInputs['context'] === 'object'
       ? (parserRuntimeInputs['context'] as Record<string, unknown>)
@@ -261,13 +235,10 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
       .map((key: string) => key.trim())
       .filter(Boolean);
     const hasImagesOutput = keys.some(
-      (key: string) =>
-        key.toLowerCase() === 'images' || key.toLowerCase() === 'imageurls'
+      (key: string) => key.toLowerCase() === 'images' || key.toLowerCase() === 'imageurls'
     );
     const nextOutputs =
-      nextMode === 'bundle'
-        ? ['bundle', ...(hasImagesOutput ? ['images'] : [])]
-        : keys;
+      nextMode === 'bundle' ? ['bundle', ...(hasImagesOutput ? ['images'] : [])] : keys;
     updateSelectedNode({
       outputs: nextOutputs.length ? nextOutputs : selectedNode.outputs,
       config: {
@@ -296,7 +267,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
       return [nextKey, entry[1]] as [string, string];
     });
     const nextMappings: Record<string, string> = {};
-    (nextEntries).forEach(([key, path]: [string, string]) => {
+    nextEntries.forEach(([key, path]: [string, string]) => {
       if (!key?.trim()) return;
       nextMappings[key.trim()] = path;
     });
@@ -335,11 +306,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
       {}
     );
     if (mode === 'replace') {
-      commitMappingsImmediate(
-        presetMappings,
-        outputMode,
-        activePreset.id
-      );
+      commitMappingsImmediate(presetMappings, outputMode, activePreset.id);
       return;
     }
     const merged: Record<string, string> = { ...draftMappings };
@@ -370,10 +337,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
       toast('Provide sample JSON to detect image fields.', { variant: 'error' });
       return;
     }
-    const detected = inferImageMappingPath(
-      sampleValue,
-      sampleState.depth ?? 2
-    );
+    const detected = inferImageMappingPath(sampleValue, sampleState.depth ?? 2);
     if (!detected) {
       toast('No image-like field detected in the sample.', { variant: 'error' });
       return;
@@ -406,14 +370,19 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
         <div className='text-gray-400'>Input source</div>
         <div className='mt-1 text-sm text-gray-200'>{parserSourceLabel}</div>
       </div>
-      
+
       <FormField label='Preset'>
-        <SelectSimple size='sm'
+        <SelectSimple
+          size='sm'
           value={presetId}
           onValueChange={(value: string) =>
             commitMappingsImmediate(draftMappings, outputMode, value)
           }
-          options={presetOptions.map((p: { id: string; label: string; description?: string }) => ({ value: p.id, label: p.label, description: (p as { description?: string }).description }))}
+          options={presetOptions.map((p: { id: string; label: string; description?: string }) => ({
+            value: p.id,
+            label: p.label,
+            description: (p as { description?: string }).description,
+          }))}
           placeholder='Select preset'
           variant='subtle'
         />
@@ -439,7 +408,8 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
 
       <FormField label='Sample JSON'>
         <div className='grid gap-2 sm:grid-cols-[160px_1fr_auto] sm:items-center'>
-          <SelectSimple size='sm'
+          <SelectSimple
+            size='sm'
             value={sampleState.entityType}
             onValueChange={(value: string) =>
               setParserSamples((prev: Record<string, ParserSampleState>) => ({
@@ -476,7 +446,8 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
               placeholder='Entity ID'
             />
             {simulationOptions.length > 0 && (
-              <SelectSimple size='sm'
+              <SelectSimple
+                size='sm'
                 value={sampleState.simulationId ?? ''}
                 onValueChange={(value: string) => {
                   const option = simulationOptions.find(
@@ -493,7 +464,10 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
                     },
                   }));
                 }}
-                options={simulationOptions.map((opt: { id: string; label: string }) => ({ value: opt.id, label: opt.label }))}
+                options={simulationOptions.map((opt: { id: string; label: string }) => ({
+                  value: opt.id,
+                  label: opt.label,
+                }))}
                 placeholder='Use simulation ID'
                 variant='subtle'
                 triggerClassName='h-8 text-[10px]'
@@ -533,7 +507,8 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
           placeholder='{ "id": "123", "title": "Sample" }'
         />
         <div className='mt-2 flex flex-wrap gap-2'>
-          <SelectSimple size='sm'
+          <SelectSimple
+            size='sm'
             value={sampleState.mappingMode}
             onValueChange={(value: string) =>
               setParserSamples((prev: Record<string, ParserSampleState>) => ({
@@ -550,7 +525,8 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
             ]}
             className='w-[180px]'
           />
-          <SelectSimple size='sm'
+          <SelectSimple
+            size='sm'
             value={String(sampleState.depth)}
             onValueChange={(value: string) =>
               setParserSamples((prev: Record<string, ParserSampleState>) => ({
@@ -584,7 +560,8 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
             {sampleState.includeContainers ? 'Containers: On' : 'Containers: Off'}
           </Button>
           {sampleState.mappingMode === 'flatten' && (
-            <SelectSimple size='sm'
+            <SelectSimple
+              size='sm'
               value={sampleState.keyStyle}
               onValueChange={(value: string) =>
                 setParserSamples((prev: Record<string, ParserSampleState>) => ({
@@ -604,9 +581,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
           )}
         </div>
         {parsedSample.error ? (
-          <p className='mt-2 text-[11px] text-rose-300'>
-            {parsedSample.error}
-          </p>
+          <p className='mt-2 text-[11px] text-rose-300'>{parsedSample.error}</p>
         ) : null}
         <div className='mt-3 flex flex-wrap gap-2'>
           {Object.keys(sampleMappings).length > 0 && (
@@ -637,17 +612,15 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
         </div>
       </FormField>
 
-      <FormField 
-        label='Output Mode' 
+      <FormField
+        label='Output Mode'
         description='Bundle mode emits a single bundle port and uses mapping keys as placeholders for Prompt templates.'
       >
-        <SelectSimple size='sm'
+        <SelectSimple
+          size='sm'
           value={outputMode}
           onValueChange={(value: string) =>
-            commitMappingsImmediate(
-              draftMappings,
-              value as 'individual' | 'bundle'
-            )
+            commitMappingsImmediate(draftMappings, value as 'individual' | 'bundle')
           }
           options={[
             { value: 'individual', label: 'Individual outputs' },
@@ -720,7 +693,8 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
                 }
                 placeholder='$.path.to.value'
               />
-              <SelectSimple size='sm'
+              <SelectSimple
+                size='sm'
                 onValueChange={(value: string) => updateMappingPath(index, value)}
                 options={uniqueSuggestedPathOptions}
                 placeholder='Pick a suggested path'
@@ -746,9 +720,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
         <Button
           type='button'
           className='w-full rounded-md border text-xs text-white hover:bg-muted/60'
-          onClick={() =>
-            addMapping(`field_${entries.length + 1}`, '')
-          }
+          onClick={() => addMapping(`field_${entries.length + 1}`, '')}
         >
           Add mapping
         </Button>
@@ -776,39 +748,33 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
             <Button
               type='button'
               className='rounded-md border text-[10px] text-gray-200 hover:bg-muted/60'
-              onClick={() =>
-                updateMappingPath(imageEntryIndex, '$.images')
-              }
+              onClick={() => updateMappingPath(imageEntryIndex, '$.images')}
             >
               Use $.images
             </Button>
             <Button
               type='button'
               className='rounded-md border text-[10px] text-gray-200 hover:bg-muted/60'
-              onClick={() =>
-                updateMappingPath(imageEntryIndex, '$.imageLinks')
-              }
+              onClick={() => updateMappingPath(imageEntryIndex, '$.imageLinks')}
             >
               Use $.imageLinks
             </Button>
             <Button
               type='button'
               className='rounded-md border text-[10px] text-gray-200 hover:bg-muted/60'
-              onClick={() =>
-                updateMappingPath(imageEntryIndex, '$.media')
-              }
+              onClick={() => updateMappingPath(imageEntryIndex, '$.media')}
             >
-                            Use $.media
+              Use $.media
             </Button>
           </div>
         </div>
       )}
-      <p className='text-[11px] text-gray-500'>        Use JSON paths like{' '}
-        <span className='text-gray-300'>{'$.images'}</span>,{' '}
+      <p className='text-[11px] text-gray-500'>
+        {' '}
+        Use JSON paths like <span className='text-gray-300'>{'$.images'}</span>,{' '}
         <span className='text-gray-300'>{'$.imageLinks'}</span>, or{' '}
         <span className='text-gray-300'>{'$.media'}</span> for image arrays.
       </p>
     </div>
   );
-            
 }

@@ -16,7 +16,8 @@ export function FocusModeTogglePortal({
   if (typeof document === 'undefined') return null;
 
   return createPortal(
-    <Button size='xs'
+    <Button
+      size='xs'
       type='button'
       variant='outline'
       onClick={onToggleFocusMode}
@@ -26,6 +27,6 @@ export function FocusModeTogglePortal({
     >
       {isFocusMode ? <EyeOff className='size-4' /> : <Eye className='size-4' />}
     </Button>,
-    document.body,
+    document.body
   );
 }

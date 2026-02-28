@@ -1,6 +1,4 @@
-import {
-  contentBlockDefinitions,
-} from './block-definitions-content';
+import { contentBlockDefinitions } from './block-definitions-content';
 import { layoutBlockDefinitions } from './block-definitions-layout';
 import { mediaBlockDefinitions } from './block-definitions-media';
 

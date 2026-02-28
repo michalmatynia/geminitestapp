@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { runImageStudioCardLinkBackfill } from '@/features/ai/image-studio/server/card-link-backfill';
+import { runImageStudioCardLinkBackfill } from '@/shared/lib/ai/image-studio/server/card-link-backfill';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 
-const sanitizeProjectId = (value: string): string =>
-  value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
+const sanitizeProjectId = (value: string): string => value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
 
 const payloadSchema = z.object({
   projectId: z.string().trim().optional().nullable(),

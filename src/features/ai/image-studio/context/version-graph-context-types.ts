@@ -1,10 +1,6 @@
-import type { LayoutMode, VersionEdge, VersionNode } from '../utils/version-graph';
+import type { LayoutMode, VersionEdge, VersionNode } from '@/shared/lib/ai/image-studio/utils/version-graph';
 
-export type VersionGraphFilterType =
-  | 'base'
-  | 'generation'
-  | 'merge'
-  | 'composite';
+export type VersionGraphFilterType = 'base' | 'generation' | 'merge' | 'composite';
 
 export interface VersionGraphState {
   nodes: VersionNode[];
@@ -65,7 +61,7 @@ export interface VersionGraphActions {
   reorderCompositeLayer: (
     compositeSlotId: string,
     fromIndex: number,
-    toIndex: number,
+    toIndex: number
   ) => Promise<void>;
   flattenComposite: (compositeSlotId: string) => Promise<void>;
   refreshCompositePreview: (compositeSlotId: string) => Promise<void>;

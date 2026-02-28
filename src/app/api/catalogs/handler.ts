@@ -1,10 +1,8 @@
-
-
 import { type AnyBulkWriteOperation } from 'mongodb';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { logSystemEvent } from '@/features/observability/server';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { getCatalogRepository } from '@/features/products/server';
 import { getProductDataProvider } from '@/features/products/server';
 import { normalizeCatalogLanguageSelection } from '@/features/products/services/catalog-language-normalization';
@@ -13,7 +11,6 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-
 
 const catalogSchema = z.object({
   name: z.string().trim().min(1),
@@ -53,10 +50,7 @@ export async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Pro
             missingIds.add(languageId);
           }
         });
-        if (
-          catalog.defaultLanguageId &&
-          !languageCodeById.has(catalog.defaultLanguageId)
-        ) {
+        if (catalog.defaultLanguageId && !languageCodeById.has(catalog.defaultLanguageId)) {
           missingIds.add(catalog.defaultLanguageId);
         }
       });
@@ -69,8 +63,7 @@ export async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Pro
             (languageId: string) => languageCodeById.get(languageId) ?? languageId
           ) ?? [];
         const nextDefaultLanguageId = catalog.defaultLanguageId
-          ? languageCodeById.get(catalog.defaultLanguageId) ??
-            catalog.defaultLanguageId
+          ? (languageCodeById.get(catalog.defaultLanguageId) ?? catalog.defaultLanguageId)
           : null;
 
         const languageIdsChanged =
@@ -78,8 +71,7 @@ export async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Pro
           nextLanguageIds.some(
             (languageId: string, index: number) => languageId !== catalog.languageIds?.[index]
           );
-        const defaultChanged =
-          nextDefaultLanguageId !== catalog.defaultLanguageId;
+        const defaultChanged = nextDefaultLanguageId !== catalog.defaultLanguageId;
 
         if (languageIdsChanged || defaultChanged) {
           bulkOps.push({
@@ -150,29 +142,23 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     !normalizedLanguages.defaultLanguageId ||
     !normalizedLanguages.languageIds.includes(normalizedLanguages.defaultLanguageId)
   ) {
-    throw badRequestError(
-      'Default language must be one of the selected languages.',
-      { field: 'defaultLanguageId' }
-    );
+    throw badRequestError('Default language must be one of the selected languages.', {
+      field: 'defaultLanguageId',
+    });
   }
   if (!data.priceGroupIds || data.priceGroupIds.length === 0) {
     throw badRequestError('Select at least one price group.', {
       field: 'priceGroupIds',
     });
   }
-  if (
-    !data.defaultPriceGroupId ||
-    !data.priceGroupIds.includes(data.defaultPriceGroupId)
-  ) {
-    throw badRequestError(
-      'Default price group must be one of the selected price groups.',
-      { field: 'defaultPriceGroupId' }
-    );
+  if (!data.defaultPriceGroupId || !data.priceGroupIds.includes(data.defaultPriceGroupId)) {
+    throw badRequestError('Default price group must be one of the selected price groups.', {
+      field: 'defaultPriceGroupId',
+    });
   }
   const catalogRepository = await getCatalogRepository(provider);
   const existingCatalogs = await catalogRepository.listCatalogs();
-  const shouldBeDefault =
-    existingCatalogs.length === 0 ? true : data.isDefault ?? false;
+  const shouldBeDefault = existingCatalogs.length === 0 ? true : (data.isDefault ?? false);
   const catalog = await catalogRepository.createCatalog({
     name: data.name,
     description: data.description ?? null,

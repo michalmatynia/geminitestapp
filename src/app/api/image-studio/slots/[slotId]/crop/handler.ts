@@ -20,24 +20,25 @@ import {
   clampCropRect,
   validateCropOutputDimensions,
   validateCropSourceDimensions,
-} from '@/features/ai/image-studio/server/crop-utils';
+} from '@/shared/lib/ai/image-studio/server/crop-utils';
 import {
   getImageStudioSlotLinkBySourceAndRelation,
   upsertImageStudioSlotLink,
-} from '@/features/ai/image-studio/server/slot-link-repository';
+} from '@/shared/lib/ai/image-studio/server/slot-link-repository';
 import {
   createImageStudioSlots,
   getImageStudioSlotById,
-} from '@/features/ai/image-studio/server/slot-repository';
+} from '@/shared/lib/ai/image-studio/server/slot-repository';
 import { getImageFileRepository, getDiskPathFromPublicPath } from '@/features/files/server';
-import { logSystemEvent } from '@/features/observability/server';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, isAppError, notFoundError } from '@/shared/errors/app-error';
 
 const uploadsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio', 'crops');
 const SOURCE_FETCH_TIMEOUT_MS = 15_000;
 const CROP_PIPELINE_VERSION = process.env['IMAGE_STUDIO_CROP_PIPELINE_VERSION']?.trim() || 'v2';
-const STRICT_SERVER_CROP_ENABLED = process.env['IMAGE_STUDIO_CROP_SERVER_AUTHORITATIVE'] !== 'false';
+const STRICT_SERVER_CROP_ENABLED =
+  process.env['IMAGE_STUDIO_CROP_SERVER_AUTHORITATIVE'] !== 'false';
 
 type StudioSlotRecord = NonNullable<Awaited<ReturnType<typeof getImageStudioSlotById>>>;
 type UploadedClientCropImage = {
@@ -78,11 +79,9 @@ const parseJsonFormValue = <T>(value: FormDataEntryValue | null): T | undefined 
   }
 };
 
-const sanitizeSegment = (value: string): string =>
-  value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
+const sanitizeSegment = (value: string): string => value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
 
-const sanitizeFilename = (value: string): string =>
-  value.replace(/[^a-zA-Z0-9._-]/g, '_');
+const sanitizeFilename = (value: string): string => value.replace(/[^a-zA-Z0-9._-]/g, '_');
 
 const readIdempotencyKey = (req: NextRequest): string | null => {
   const headerValue = req.headers.get('x-idempotency-key') ?? req.headers.get('x-crop-request-id');
@@ -174,7 +173,9 @@ function normalizePublicPath(filepath: string): string {
   return normalized;
 }
 
-async function loadSourceBuffer(slot: StudioSlotRecord): Promise<{ buffer: Buffer; mimeHint: string | null }> {
+async function loadSourceBuffer(
+  slot: StudioSlotRecord
+): Promise<{ buffer: Buffer; mimeHint: string | null }> {
   const base64Candidate =
     typeof slot.imageBase64 === 'string' && slot.imageBase64.trim().startsWith('data:')
       ? slot.imageBase64.trim()
@@ -397,7 +398,9 @@ async function processCropPayload(input: {
 }): Promise<CropProcessingResult> {
   const { payload, sourceSlot, uploadedClientImage } = input;
   const preferAuthoritativeSource =
-    STRICT_SERVER_CROP_ENABLED || payload.mode === 'server_bbox' || payload.mode === 'server_polygon';
+    STRICT_SERVER_CROP_ENABLED ||
+    payload.mode === 'server_bbox' ||
+    payload.mode === 'server_polygon';
 
   let sourceBuffer: Buffer | null = null;
   let sourceWidth = 0;
@@ -433,9 +436,9 @@ async function processCropPayload(input: {
       throw sourceLoadError instanceof Error
         ? sourceLoadError
         : cropBadRequest(
-          IMAGE_STUDIO_CROP_ERROR_CODES.SOURCE_IMAGE_MISSING,
-          'Server polygon crop requires a resolvable source image.'
-        );
+            IMAGE_STUDIO_CROP_ERROR_CODES.SOURCE_IMAGE_MISSING,
+            'Server polygon crop requires a resolvable source image.'
+          );
     }
 
     const polygonResult = await cropByPolygonMask(
@@ -538,13 +541,15 @@ async function processCropPayload(input: {
     throw sourceLoadError instanceof Error
       ? sourceLoadError
       : cropBadRequest(
-        IMAGE_STUDIO_CROP_ERROR_CODES.SOURCE_IMAGE_MISSING,
-        'Server crop requires a resolvable source image.'
-      );
+          IMAGE_STUDIO_CROP_ERROR_CODES.SOURCE_IMAGE_MISSING,
+          'Server crop requires a resolvable source image.'
+        );
   }
 
   if (uploadedClientImage) {
-    const metadata = await sharp(uploadedClientImage.buffer).metadata().catch(() => null);
+    const metadata = await sharp(uploadedClientImage.buffer)
+      .metadata()
+      .catch(() => null);
     const outputWidth = metadata?.width ?? null;
     const outputHeight = metadata?.height ?? null;
     if (outputWidth && outputHeight && !validateCropOutputDimensions(outputWidth, outputHeight)) {
@@ -574,7 +579,9 @@ async function processCropPayload(input: {
     );
   }
 
-  const metadata = await sharp(parsedData.buffer).metadata().catch(() => null);
+  const metadata = await sharp(parsedData.buffer)
+    .metadata()
+    .catch(() => null);
   const outputWidth = metadata?.width ?? null;
   const outputHeight = metadata?.height ?? null;
   if (outputWidth && outputHeight && !validateCropOutputDimensions(outputWidth, outputHeight)) {
@@ -612,7 +619,8 @@ export async function postCropSlotHandler(
     body && typeof body === 'object' && !Array.isArray(body)
       ? { ...(body as Record<string, unknown>) }
       : {};
-  const normalizedMode = typeof normalizedBody['mode'] === 'string' ? normalizedBody['mode'].trim() : '';
+  const normalizedMode =
+    typeof normalizedBody['mode'] === 'string' ? normalizedBody['mode'].trim() : '';
   if (normalizedMode) {
     normalizedBody['mode'] = normalizedMode;
   } else if (Array.isArray(normalizedBody['polygon'])) {
@@ -623,11 +631,9 @@ export async function postCropSlotHandler(
 
   const parsed = imageStudioCropRequestSchema.safeParse(normalizedBody);
   if (!parsed.success) {
-    throw cropBadRequest(
-      IMAGE_STUDIO_CROP_ERROR_CODES.INVALID_PAYLOAD,
-      'Invalid crop payload.',
-      { errors: parsed.error.format() }
-    );
+    throw cropBadRequest(IMAGE_STUDIO_CROP_ERROR_CODES.INVALID_PAYLOAD, 'Invalid crop payload.', {
+      errors: parsed.error.format(),
+    });
   }
 
   const sourceSlot = await getImageStudioSlotById(slotId);
@@ -644,7 +650,12 @@ export async function postCropSlotHandler(
     ...(idempotencyKey ? { requestId: idempotencyKey } : {}),
   };
 
-  if (payload.mode === 'client_bbox' && !payload.dataUrl && !uploadedClientImage && STRICT_SERVER_CROP_ENABLED === false) {
+  if (
+    payload.mode === 'client_bbox' &&
+    !payload.dataUrl &&
+    !uploadedClientImage &&
+    STRICT_SERVER_CROP_ENABLED === false
+  ) {
     throw cropBadRequest(
       IMAGE_STUDIO_CROP_ERROR_CODES.CLIENT_IMAGE_REQUIRED,
       'Client crop requires uploaded image or dataUrl when authoritative server mode is disabled.'

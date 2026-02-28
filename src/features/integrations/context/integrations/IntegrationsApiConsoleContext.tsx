@@ -30,6 +30,7 @@ export const IntegrationsApiConsoleContext = createContext<IntegrationsApiConsol
 
 export const useIntegrationsApiConsole = () => {
   const context = useContext(IntegrationsApiConsoleContext);
-  if (!context) throw new Error('useIntegrationsApiConsole must be used within IntegrationsProvider');
+  if (!context)
+    throw new Error('useIntegrationsApiConsole must be used within IntegrationsProvider');
   return context;
 };

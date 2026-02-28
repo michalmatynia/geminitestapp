@@ -100,13 +100,7 @@ const normalizeSlug = (value: string): string =>
     .replace(/^_+|_+$/g, '');
 
 const uniqueStrings = (values: string[]): string[] =>
-  Array.from(
-    new Set(
-      values
-        .map((value) => value.trim())
-        .filter((value) => value.length > 0),
-    ),
-  );
+  Array.from(new Set(values.map((value) => value.trim()).filter((value) => value.length > 0)));
 
 const readJson = (filePath: string): unknown => {
   const raw = fs.readFileSync(filePath, 'utf8');
@@ -121,7 +115,9 @@ const formatEntry = (entry: TooltipCatalogEntry): TooltipCatalogEntry => ({
   aliases: uniqueStrings(entry.aliases),
   docPath: normalizeDocPath(entry.docPath),
   ...(entry.tags && entry.tags.length > 0 ? { tags: uniqueStrings(entry.tags) } : {}),
-  ...(entry.uiTargets && entry.uiTargets.length > 0 ? { uiTargets: uniqueStrings(entry.uiTargets) } : {}),
+  ...(entry.uiTargets && entry.uiTargets.length > 0
+    ? { uiTargets: uniqueStrings(entry.uiTargets) }
+    : {}),
 });
 
 const buildManualOverrideEntries = (source: TooltipManifestSource): TooltipCatalogEntry[] => {
@@ -142,7 +138,7 @@ const buildManualOverrideEntries = (source: TooltipManifestSource): TooltipCatal
       docPath: entry.docPath,
       tags: uniqueStrings([...(source.tags ?? []), ...(entry.tags ?? [])]),
       uiTargets: entry.uiTargets ?? [],
-    }),
+    })
   );
 };
 
@@ -156,14 +152,14 @@ const buildNodeDocsEntries = (source: TooltipManifestSource): TooltipCatalogEntr
     entries.push(
       formatEntry({
         id: `node_palette_${doc.type}`,
-        title: `${nodeLabel} (Palette)` ,
+        title: `${nodeLabel} (Palette)`,
         summary: doc.purpose,
         section: 'Node Palette',
         aliases: [doc.type, nodeLabel, `palette ${doc.type}`],
         docPath: semanticNodePath,
         tags: [...source.tags, 'node', 'palette'],
         uiTargets: [`palette.node.${doc.type}`],
-      }),
+      })
     );
 
     entries.push(
@@ -176,7 +172,7 @@ const buildNodeDocsEntries = (source: TooltipManifestSource): TooltipCatalogEntr
         docPath: semanticNodePath,
         tags: [...source.tags, 'node', 'config'],
         uiTargets: [`node-config.${doc.type}`],
-      }),
+      })
     );
 
     for (const field of doc.config) {
@@ -192,7 +188,7 @@ const buildNodeDocsEntries = (source: TooltipManifestSource): TooltipCatalogEntr
           docPath: semanticNodePath,
           tags: [...source.tags, 'node', 'config-field'],
           uiTargets: [`node-config.${doc.type}.${field.path}`],
-        }),
+        })
       );
     }
   }
@@ -218,7 +214,7 @@ const buildSemanticIndexEntries = (source: TooltipManifestSource): TooltipCatalo
       docPath: normalizeDocPath(row.file),
       tags: [...source.tags, 'semantic-node'],
       uiTargets: [`docs.semantic.${row.nodeType}`],
-    }),
+    })
   );
 };
 
@@ -252,7 +248,7 @@ const buildSnippetEntries = (source: TooltipManifestSource): TooltipCatalogEntry
         docPath: '/docs/ai-paths/semantic-grammar/README.md',
         tags: [...source.tags, 'docs-snippet'],
         uiTargets: [`docs.snippet.${normalizeSlug(snippetName)}`],
-      }),
+      })
     );
   }
 
@@ -294,15 +290,15 @@ const serializeCatalogTs = (entries: TooltipCatalogEntry[]): string => {
   return `${header}${JSON.stringify(entries, null, 2)};\n`;
 };
 
-const normalizeManifestSource = (source: z.infer<typeof manifestSourceSchema>): TooltipManifestSource => ({
+const normalizeManifestSource = (
+  source: z.infer<typeof manifestSourceSchema>
+): TooltipManifestSource => ({
   id: source.id,
   type: source.type,
   path: source.path,
   enabled: source.enabled !== false,
   priority:
-    typeof source.priority === 'number' && Number.isFinite(source.priority)
-      ? source.priority
-      : 100,
+    typeof source.priority === 'number' && Number.isFinite(source.priority) ? source.priority : 100,
   tags: uniqueStrings(source.tags ?? []),
   ...(source.snippetNames ? { snippetNames: uniqueStrings(source.snippetNames) } : {}),
 });
@@ -320,12 +316,13 @@ const main = (): void => {
   const entriesById = new Map<string, TooltipCatalogEntry>();
   const duplicateIds: Array<{ id: string; sourceId: string }> = [];
 
-      for (const source of normalizedSources) {
-        const sourceEntries = buildSourceEntries(source);
-        for (const entry of sourceEntries) {
-          const valid = tooltipEntrySchema.parse(entry) as TooltipCatalogEntry;
-          const normalized = formatEntry(valid);
-          if (entriesById.has(normalized.id)) {        duplicateIds.push({ id: normalized.id, sourceId: source.id });
+  for (const source of normalizedSources) {
+    const sourceEntries = buildSourceEntries(source);
+    for (const entry of sourceEntries) {
+      const valid = tooltipEntrySchema.parse(entry) as TooltipCatalogEntry;
+      const normalized = formatEntry(valid);
+      if (entriesById.has(normalized.id)) {
+        duplicateIds.push({ id: normalized.id, sourceId: source.id });
         continue;
       }
       entriesById.set(normalized.id, normalized);
@@ -340,7 +337,7 @@ const main = (): void => {
   }
 
   const entries = Array.from(entriesById.values()).sort((left, right) =>
-    left.id.localeCompare(right.id),
+    left.id.localeCompare(right.id)
   );
 
   fs.writeFileSync(outputJsonPath, `${JSON.stringify(entries, null, 2)}\n`, 'utf8');

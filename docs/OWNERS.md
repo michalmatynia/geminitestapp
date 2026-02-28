@@ -1,26 +1,26 @@
 ---
-owner: "Platform Team"
-last_reviewed: "2026-02-20"
-status: "active"
+owner: 'Platform Team'
+last_reviewed: '2026-02-20'
+status: 'active'
 ---
 
 # Documentation Owners
 
 ## Feature Areas
 
-| Area | Primary Owner | Secondary Owner | Review Cadence |
-| --- | --- | --- | --- |
-| Case Resolver | Case Resolver Team | Platform Operations | Monthly + post-incident |
-| AI Paths | AI Paths Team | Platform Operations | Monthly |
-| Prompt Exploder | Prompt Exploder Team | Platform Operations | Monthly |
+| Area            | Primary Owner        | Secondary Owner     | Review Cadence          |
+| --------------- | -------------------- | ------------------- | ----------------------- |
+| Case Resolver   | Case Resolver Team   | Platform Operations | Monthly + post-incident |
+| AI Paths        | AI Paths Team        | Platform Operations | Monthly                 |
+| Prompt Exploder | Prompt Exploder Team | Platform Operations | Monthly                 |
 
 ## Core Docs
 
-| Document Group | Primary Owner | Secondary Owner | Review Cadence |
-| --- | --- | --- | --- |
-| Developer Handbook | Platform Team | Feature Leads | Quarterly |
-| Architecture/Patterns | Platform Team | Frontend/Backend Leads | Quarterly |
-| API/Operational Runbooks | Feature Team On-Call | Platform Operations | Monthly |
+| Document Group           | Primary Owner        | Secondary Owner        | Review Cadence |
+| ------------------------ | -------------------- | ---------------------- | -------------- |
+| Developer Handbook       | Platform Team        | Feature Leads          | Quarterly      |
+| Architecture/Patterns    | Platform Team        | Frontend/Backend Leads | Quarterly      |
+| API/Operational Runbooks | Feature Team On-Call | Platform Operations    | Monthly        |
 
 ## Update Rules
 

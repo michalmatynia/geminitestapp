@@ -1,7 +1,10 @@
 import { renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-import { useCaseResolverStateFolderActions } from '@/features/case-resolver/hooks/useCaseResolverState.folder-actions';
+import {
+  useCaseResolverStateFolderActions,
+  type UseCaseResolverStateFolderActionsResult,
+} from '@/features/case-resolver/hooks/useCaseResolverState.folder-actions';
 import {
   createCaseResolverAssetFile,
   createCaseResolverFile,
@@ -13,21 +16,20 @@ import type {
   CaseResolverWorkspace,
 } from '@/shared/contracts/case-resolver';
 
-const createMutableState = <T,>(initial: T): {
+const createMutableState = <T>(
+  initial: T
+): {
   set: React.Dispatch<React.SetStateAction<T>>;
 } => {
   let current = initial;
   const set: React.Dispatch<React.SetStateAction<T>> = (value): void => {
-    current =
-      typeof value === 'function'
-        ? (value as (prev: T) => T)(current)
-        : value;
+    current = typeof value === 'function' ? (value as (prev: T) => T)(current) : value;
   };
   return { set };
 };
 
 const buildFolderActionsHarness = (): {
-  result: any;
+  result: { current: UseCaseResolverStateFolderActionsResult };
   getWorkspace: () => CaseResolverWorkspace;
 } => {
   const caseFile = createCaseResolverFile({
@@ -73,9 +75,7 @@ const buildFolderActionsHarness = (): {
   const selectedFileState = createMutableState<string | null>(documentFile.id);
   const selectedAssetState = createMutableState<string | null>(null);
   const selectedFolderState = createMutableState<string | null>(null);
-  const editingDraftState = createMutableState<CaseResolverFileEditDraft | null>(
-    null
-  );
+  const editingDraftState = createMutableState<CaseResolverFileEditDraft | null>(null);
 
   const updateWorkspace = (
     updater: (current: CaseResolverWorkspace) => CaseResolverWorkspace
@@ -143,4 +143,3 @@ describe('case resolver folder actions move regression', () => {
     expect(movedAsset?.folder).toBe('node-assets');
   });
 });
-

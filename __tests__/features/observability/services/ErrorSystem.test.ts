@@ -22,7 +22,7 @@ describe('ErrorSystem', () => {
   it('captures and logs an Error object', async () => {
     const error = new Error('Test exception');
     const context = { service: 'test-service' };
-    
+
     await ErrorSystem.captureException(error, context);
 
     expect(logSystemEvent).toHaveBeenCalledWith(
@@ -66,21 +66,30 @@ describe('ErrorSystem', () => {
 
   it('logs warnings and optionally to agent audit', async () => {
     await ErrorSystem.logWarning('Low disk space', { service: 'disk' });
-    expect(logSystemEvent).toHaveBeenCalledWith(expect.objectContaining({
-      level: 'warn',
-      message: '[disk] Low disk space',
-    }));
+    expect(logSystemEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        level: 'warn',
+        message: '[disk] Low disk space',
+      })
+    );
 
     const agentContext = { service: 'agent', runId: 'run-123' };
     await ErrorSystem.logWarning('Retry limit reached', agentContext);
-    expect(logAgentAudit).toHaveBeenCalledWith('run-123', 'warning', 'Retry limit reached', agentContext);
+    expect(logAgentAudit).toHaveBeenCalledWith(
+      'run-123',
+      'warning',
+      'Retry limit reached',
+      agentContext
+    );
   });
 
   it('logs info messages', async () => {
     await ErrorSystem.logInfo('User logged in', { userId: 'user-1' });
-    expect(logSystemEvent).toHaveBeenCalledWith(expect.objectContaining({
-      level: 'info',
-      message: '[unknown] User logged in',
-    }));
+    expect(logSystemEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        level: 'info',
+        message: '[unknown] User logged in',
+      })
+    );
   });
 });

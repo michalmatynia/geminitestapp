@@ -16,7 +16,7 @@ import {
   findProductListingByProductAndConnectionAcrossProviders,
 } from '@/features/integrations/server';
 import { resolveBaseConnectionToken } from '@/features/integrations/services/base-token-resolver';
-import { ErrorSystem } from '@/features/observability/server';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { parseJsonBody } from '@/features/products/server';
 import { getProductRepository } from '@/features/products/server';
 import type { ProductListingExportEvent } from '@/shared/contracts/integrations';
@@ -25,7 +25,7 @@ import {
   badRequestError,
   conflictError,
   externalServiceError,
-  notFoundError
+  notFoundError,
 } from '@/shared/errors/app-error';
 
 import {
@@ -71,7 +71,7 @@ export async function postExportToBaseHandler(
   try {
     const { id: productId } = params;
     const parsed = await parseJsonBody(_req, exportSchema, {
-      logPrefix: 'export-to-base'
+      logPrefix: 'export-to-base',
     });
     if (!parsed.ok) {
       logCapture.stop();
@@ -84,10 +84,8 @@ export async function postExportToBaseHandler(
       _req.headers.get('x-request-id') ??
       undefined;
     const imagesOnly = data.imagesOnly ?? false;
-    const forwardedHost =
-      _req.headers.get('x-forwarded-host') ?? _req.headers.get('host');
-    const forwardedProto =
-      _req.headers.get('x-forwarded-proto') ?? 'http';
+    const forwardedHost = _req.headers.get('x-forwarded-host') ?? _req.headers.get('host');
+    const forwardedProto = _req.headers.get('x-forwarded-proto') ?? 'http';
     const imageBaseUrl = forwardedHost
       ? `${forwardedProto}://${forwardedHost}`
       : new URL(_req.url).origin;
@@ -142,7 +140,7 @@ export async function postExportToBaseHandler(
 
     if (!connection) {
       throw notFoundError('Connection not found', {
-        connectionId: data.connectionId
+        connectionId: data.connectionId,
       });
     }
 
@@ -189,7 +187,7 @@ export async function postExportToBaseHandler(
         productId,
         sku: product.sku,
         connectionName: connection.name,
-      })
+      }),
     ]);
 
     const createdRunId = createdRun.id;
@@ -224,11 +222,9 @@ export async function postExportToBaseHandler(
     let imageBase64Mode = preparedExportContext.imageBase64Mode;
     let imageTransform = preparedExportContext.imageTransform;
     const producerNameById = preparedExportContext.producerNameById;
-    const producerExternalIdByInternalId =
-      preparedExportContext.producerExternalIdByInternalId;
+    const producerExternalIdByInternalId = preparedExportContext.producerExternalIdByInternalId;
     const tagNameById = preparedExportContext.tagNameById;
-    const tagExternalIdByInternalId =
-      preparedExportContext.tagExternalIdByInternalId;
+    const tagExternalIdByInternalId = preparedExportContext.tagExternalIdByInternalId;
     const exportProduct = preparedExportContext.exportProduct;
 
     let listingRepo = primaryListingRepo;
@@ -239,7 +235,8 @@ export async function postExportToBaseHandler(
     const tokenResolution = resolveBaseConnectionToken(connection);
     if (!tokenResolution.token) {
       throw badRequestError(
-        tokenResolution.error ?? 'No Base API token configured. Please test or re-save the connection.',
+        tokenResolution.error ??
+          'No Base API token configured. Please test or re-save the connection.',
         { connectionId: data.connectionId }
       );
     }
@@ -295,14 +292,8 @@ export async function postExportToBaseHandler(
           listingExternalId = existingListing.externalListingId ?? listingExternalId;
           listingInventoryId = existingListing.inventoryId ?? null;
           await listingRepo.updateListingStatus(existingListing.id, 'pending');
-          if (
-            listingExternalId &&
-            existingListing.externalListingId !== listingExternalId
-          ) {
-            await listingRepo.updateListingExternalId(
-              existingListing.id,
-              listingExternalId
-            );
+          if (listingExternalId && existingListing.externalListingId !== listingExternalId) {
+            await listingRepo.updateListingExternalId(existingListing.id, listingExternalId);
           }
         }
         if (!listingExternalId) {
@@ -311,11 +302,10 @@ export async function postExportToBaseHandler(
           );
         }
       } else {
-        const resolvedByConnection =
-          await findProductListingByProductAndConnectionAcrossProviders(
-            productId,
-            data.connectionId
-          );
+        const resolvedByConnection = await findProductListingByProductAndConnectionAcrossProviders(
+          productId,
+          data.connectionId
+        );
         if (!resolvedByConnection) {
           const newListing = await primaryListingRepo.createListing({
             productId,
@@ -340,10 +330,7 @@ export async function postExportToBaseHandler(
           listingExternalId = existingListing.externalListingId ?? listingExternalId;
           await listingRepo.updateListingStatus(existingListing.id, 'pending');
           if (existingListing.inventoryId !== resolvedInventoryId) {
-            await listingRepo.updateListingInventoryId(
-              existingListing.id,
-              resolvedInventoryId
-            );
+            await listingRepo.updateListingInventoryId(existingListing.id, resolvedInventoryId);
           }
         }
       }
@@ -353,8 +340,10 @@ export async function postExportToBaseHandler(
       const existingListing = await listingRepo.getListingById(listingId);
       const history = existingListing?.exportHistory ?? [];
       const prior = history.find(
-        (event: ProductListingExportEvent) => event.requestId === requestId && event.status === 'success'
-      );      if (prior) {
+        (event: ProductListingExportEvent) =>
+          event.requestId === requestId && event.status === 'success'
+      );
+      if (prior) {
         if (runId) {
           await runRepository
             .createRunEvent({
@@ -388,11 +377,10 @@ export async function postExportToBaseHandler(
         return NextResponse.json({
           success: true,
           message: 'Export already completed',
-          externalProductId:
-            prior.externalListingId ?? existingListing?.externalListingId ?? null,
+          externalProductId: prior.externalListingId ?? existingListing?.externalListingId ?? null,
           idempotent: true,
           runId,
-          logs
+          logs,
         });
       }
     }
@@ -400,31 +388,27 @@ export async function postExportToBaseHandler(
     // Check for duplicate SKU in Base.com — skipped when the product already has a known
     // Base.com product_id (listingExternalId), which means this is a re-export/update,
     // not a new product creation.
-    const allowDuplicateSku = imagesOnly ? true : data.allowDuplicateSku ?? false;
+    const allowDuplicateSku = imagesOnly ? true : (data.allowDuplicateSku ?? false);
     if (!allowDuplicateSku && !listingExternalId && product.sku) {
       await ErrorSystem.logInfo('[export-to-base] Checking if SKU exists in Base.com', {
         sku: product.sku,
-        inventoryId: resolvedInventoryId
+        inventoryId: resolvedInventoryId,
       });
 
       const skuVal = product.sku;
       const tokenVal = token;
-      const skuCheck = await checkBaseSkuExists(
-        tokenVal,
-        resolvedInventoryId,
-        skuVal
-      );
+      const skuCheck = await checkBaseSkuExists(tokenVal, resolvedInventoryId, skuVal);
       if (skuCheck.exists) {
         await ErrorSystem.logWarning('[export-to-base] SKU already exists in Base.com', {
           sku: product.sku,
-          existingProductId: skuCheck.productId
+          existingProductId: skuCheck.productId,
         });
         throw conflictError(
           `SKU "${product.sku}" already exists in Base.com inventory. Use "Allow duplicate SKUs" option to export anyway.`,
           {
             skuExists: true,
             existingProductId: skuCheck.productId,
-            sku: product.sku
+            sku: product.sku,
           }
         );
       }
@@ -435,12 +419,10 @@ export async function postExportToBaseHandler(
     const canRetryWrite = imagesOnly || Boolean(listingExternalId);
     imageDiagnosticsContext = {
       ...imageDiagnosticsContext,
-      inventoryId: targetInventoryId
+      inventoryId: targetInventoryId,
     };
 
-    let warehouseId = imagesOnly
-      ? null
-      : await getExportWarehouseId(targetInventoryId);
+    let warehouseId = imagesOnly ? null : await getExportWarehouseId(targetInventoryId);
     const warehouseResolution = await resolveWarehouseAndStockMappings({
       imagesOnly,
       token,
@@ -457,16 +439,16 @@ export async function postExportToBaseHandler(
     await ErrorSystem.logInfo('[export-to-base] Calling Base.com API', {
       productId,
       inventoryId: targetInventoryId,
-      mappingsCount: effectiveMappings.length
+      mappingsCount: effectiveMappings.length,
     });
 
     const baseImageDiagnostics = exportImagesAsBase64
       ? buildImageDiagnosticsLogger({
-        ...imageDiagnosticsContext,
-        exportImagesAsBase64,
-        imageBase64Mode,
-        imageTransform
-      })
+          ...imageDiagnosticsContext,
+          exportImagesAsBase64,
+          imageBase64Mode,
+          imageTransform,
+        })
       : undefined;
 
     const buildExportSnapshot = async (
@@ -474,7 +456,7 @@ export async function postExportToBaseHandler(
       activeMappings: typeof mappings = effectiveMappings,
       includeStockWithoutWarehouse = false
     ) => {
-      const exportData = await buildBaseProductData(
+      const exportData = (await buildBaseProductData(
         exportProduct,
         activeMappings,
         targetWarehouseId,
@@ -483,25 +465,25 @@ export async function postExportToBaseHandler(
           includeStockWithoutWarehouse,
           ...(stockWarehouseAliases ? { stockWarehouseAliases } : {}),
           ...(producerNameById ? { producerNameById } : {}),
-          ...(producerExternalIdByInternalId
-            ? { producerExternalIdByInternalId }
-            : {}),
+          ...(producerExternalIdByInternalId ? { producerExternalIdByInternalId } : {}),
           ...(tagNameById ? { tagNameById } : {}),
-          ...(tagExternalIdByInternalId
-            ? { tagExternalIdByInternalId }
-            : {}),
+          ...(tagExternalIdByInternalId ? { tagExternalIdByInternalId } : {}),
           exportImagesAsBase64: exportImagesAsBase64,
           imageBase64Mode,
           imageTransform,
-          imagesOnly
+          imagesOnly,
         }
-      ) as Record<string, unknown> & {
+      )) as Record<string, unknown> & {
         text_fields?: Record<string, unknown>;
         prices?: Record<string, unknown>;
         stock?: Record<string, unknown>;
       };
       const exportFields = Object.keys(exportData).flatMap((key) => {
-        if (key === 'text_fields' && exportData.text_fields && typeof exportData.text_fields === 'object') {
+        if (
+          key === 'text_fields' &&
+          exportData.text_fields &&
+          typeof exportData.text_fields === 'object'
+        ) {
           return Object.keys(exportData.text_fields).map((field) => `text_fields.${field}`);
         }
         if (key === 'prices' && exportData.prices && typeof exportData.prices === 'object') {
@@ -515,11 +497,8 @@ export async function postExportToBaseHandler(
       return { exportData, exportFields };
     };
 
-    const allowStockFallback = imagesOnly
-      ? false
-      : await getExportStockFallbackEnabled();
-    let includeStockWithoutWarehouse =
-      !imagesOnly && !warehouseId && product.stock !== null;
+    const allowStockFallback = imagesOnly ? false : await getExportStockFallbackEnabled();
+    let includeStockWithoutWarehouse = !imagesOnly && !warehouseId && product.stock !== null;
     let exportFields = imagesOnly ? ['images'] : [];
     if (!imagesOnly) {
       ({ exportFields } = await buildExportSnapshot(
@@ -530,43 +509,39 @@ export async function postExportToBaseHandler(
     }
     let result = imagesOnly
       ? await exportProductImagesToBase(
-        token,
-        targetInventoryId,
-        exportProduct,
+          token,
+          targetInventoryId,
+          exportProduct,
           listingExternalId as string,
           {
             imageBaseUrl,
             exportImagesAsBase64: exportImagesAsBase64,
             ...(baseImageDiagnostics ? { imageDiagnostics: baseImageDiagnostics } : {}),
             imageBase64Mode,
-            imageTransform
+            imageTransform,
           }
-      )
+        )
       : await exportProductToBase(
-        token,
-        targetInventoryId,
-        exportProduct,
-        effectiveMappings,
-        warehouseId,
-        {
-          imageBaseUrl,
-          includeStockWithoutWarehouse,
-          ...(stockWarehouseAliases ? { stockWarehouseAliases } : {}),
-          ...(producerNameById ? { producerNameById } : {}),
-          ...(producerExternalIdByInternalId
-            ? { producerExternalIdByInternalId }
-            : {}),
-          ...(tagNameById ? { tagNameById } : {}),
-          ...(tagExternalIdByInternalId
-            ? { tagExternalIdByInternalId }
-            : {}),
-          exportImagesAsBase64: exportImagesAsBase64,
-          ...(baseImageDiagnostics ? { imageDiagnostics: baseImageDiagnostics } : {}),
-          imageBase64Mode,
-          imageTransform,
-          existingProductId: listingExternalId ?? undefined,
-        }
-      );
+          token,
+          targetInventoryId,
+          exportProduct,
+          effectiveMappings,
+          warehouseId,
+          {
+            imageBaseUrl,
+            includeStockWithoutWarehouse,
+            ...(stockWarehouseAliases ? { stockWarehouseAliases } : {}),
+            ...(producerNameById ? { producerNameById } : {}),
+            ...(producerExternalIdByInternalId ? { producerExternalIdByInternalId } : {}),
+            ...(tagNameById ? { tagNameById } : {}),
+            ...(tagExternalIdByInternalId ? { tagExternalIdByInternalId } : {}),
+            exportImagesAsBase64: exportImagesAsBase64,
+            ...(baseImageDiagnostics ? { imageDiagnostics: baseImageDiagnostics } : {}),
+            imageBase64Mode,
+            imageTransform,
+            existingProductId: listingExternalId ?? undefined,
+          }
+        );
 
     const isWarehouseMismatch = (message: string | undefined) =>
       typeof message === 'string' &&
@@ -575,8 +550,7 @@ export async function postExportToBaseHandler(
 
     const isStockMismatch = (message: string | undefined) =>
       typeof message === 'string' &&
-      (message.toLowerCase().includes('stock') ||
-        message.toLowerCase().includes('quantity'));
+      (message.toLowerCase().includes('stock') || message.toLowerCase().includes('quantity'));
 
     const warehouseMismatch = !imagesOnly && isWarehouseMismatch(result.error);
 
@@ -591,7 +565,7 @@ export async function postExportToBaseHandler(
         productId,
         inventoryId: targetInventoryId,
         warehouseId,
-        error: result.error
+        error: result.error,
       });
       warehouseId = null;
       effectiveMappings = effectiveMappings.filter(
@@ -614,13 +588,9 @@ export async function postExportToBaseHandler(
           includeStockWithoutWarehouse,
           ...(stockWarehouseAliases ? { stockWarehouseAliases } : {}),
           ...(producerNameById ? { producerNameById } : {}),
-          ...(producerExternalIdByInternalId
-            ? { producerExternalIdByInternalId }
-            : {}),
+          ...(producerExternalIdByInternalId ? { producerExternalIdByInternalId } : {}),
           ...(tagNameById ? { tagNameById } : {}),
-          ...(tagExternalIdByInternalId
-            ? { tagExternalIdByInternalId }
-            : {}),
+          ...(tagExternalIdByInternalId ? { tagExternalIdByInternalId } : {}),
           exportImagesAsBase64: exportImagesAsBase64,
           imageBase64Mode,
           imageTransform,
@@ -632,7 +602,7 @@ export async function postExportToBaseHandler(
         productId,
         inventoryId: targetInventoryId,
         warehouseId,
-        error: result.error
+        error: result.error,
       });
     }
 
@@ -648,7 +618,7 @@ export async function postExportToBaseHandler(
         productId,
         inventoryId: targetInventoryId,
         warehouseId,
-        error: result.error
+        error: result.error,
       });
       warehouseId = null;
       effectiveMappings = effectiveMappings.filter(
@@ -671,13 +641,9 @@ export async function postExportToBaseHandler(
           includeStockWithoutWarehouse,
           ...(stockWarehouseAliases ? { stockWarehouseAliases } : {}),
           ...(producerNameById ? { producerNameById } : {}),
-          ...(producerExternalIdByInternalId
-            ? { producerExternalIdByInternalId }
-            : {}),
+          ...(producerExternalIdByInternalId ? { producerExternalIdByInternalId } : {}),
           ...(tagNameById ? { tagNameById } : {}),
-          ...(tagExternalIdByInternalId
-            ? { tagExternalIdByInternalId }
-            : {}),
+          ...(tagExternalIdByInternalId ? { tagExternalIdByInternalId } : {}),
           exportImagesAsBase64: exportImagesAsBase64,
           imageBase64Mode,
           imageTransform,
@@ -698,27 +664,30 @@ export async function postExportToBaseHandler(
         context: {
           ...imageDiagnosticsContext,
           exportImagesAsBase64,
-          imageBase64Mode
-        }
+          imageBase64Mode,
+        },
       });
 
       if (!exportImagesAsBase64 || !imageTransform) {
-        void ErrorSystem.logWarning('[export-to-base] Image export failed, retrying with base64 + JPEG resize', {
-          ...imageDiagnosticsContext,
-          error: result.error
-        });
+        void ErrorSystem.logWarning(
+          '[export-to-base] Image export failed, retrying with base64 + JPEG resize',
+          {
+            ...imageDiagnosticsContext,
+            error: result.error,
+          }
+        );
         exportImagesAsBase64 = true;
         imageBase64Mode = 'base-only';
         imageTransform = {
           forceJpeg: true,
           maxDimension: 1600,
-          jpegQuality: 85
+          jpegQuality: 85,
         };
         const imageDiagnostics = buildImageDiagnosticsLogger({
           ...imageDiagnosticsContext,
           exportImagesAsBase64,
           imageBase64Mode,
-          imageTransform
+          imageTransform,
         });
         if (!imagesOnly) {
           ({ exportFields } = await buildExportSnapshot(
@@ -730,51 +699,43 @@ export async function postExportToBaseHandler(
         if (canRetryWrite) {
           result = imagesOnly
             ? await exportProductImagesToBase(
-              token,
-              targetInventoryId,
-              exportProduct,
+                token,
+                targetInventoryId,
+                exportProduct,
                 listingExternalId as string,
                 {
                   imageBaseUrl,
                   exportImagesAsBase64: exportImagesAsBase64,
                   imageDiagnostics,
                   imageBase64Mode,
-                  imageTransform
+                  imageTransform,
                 }
-            )
+              )
             : await exportProductToBase(
-              token,
-              targetInventoryId,
-              exportProduct,
-              effectiveMappings,
-              warehouseId,
-              {
-                imageBaseUrl,
-                includeStockWithoutWarehouse,
-                ...(stockWarehouseAliases ? { stockWarehouseAliases } : {}),
-                ...(producerNameById ? { producerNameById } : {}),
-                ...(producerExternalIdByInternalId
-                  ? { producerExternalIdByInternalId }
-                  : {}),
-                ...(tagNameById ? { tagNameById } : {}),
-                ...(tagExternalIdByInternalId
-                  ? { tagExternalIdByInternalId }
-                  : {}),
-                exportImagesAsBase64: exportImagesAsBase64,
-                imageDiagnostics,
-                imageBase64Mode,
-                imageTransform,
-                existingProductId: listingExternalId ?? undefined,
-              }
-            );
+                token,
+                targetInventoryId,
+                exportProduct,
+                effectiveMappings,
+                warehouseId,
+                {
+                  imageBaseUrl,
+                  includeStockWithoutWarehouse,
+                  ...(stockWarehouseAliases ? { stockWarehouseAliases } : {}),
+                  ...(producerNameById ? { producerNameById } : {}),
+                  ...(producerExternalIdByInternalId ? { producerExternalIdByInternalId } : {}),
+                  ...(tagNameById ? { tagNameById } : {}),
+                  ...(tagExternalIdByInternalId ? { tagExternalIdByInternalId } : {}),
+                  exportImagesAsBase64: exportImagesAsBase64,
+                  imageDiagnostics,
+                  imageBase64Mode,
+                  imageTransform,
+                  existingProductId: listingExternalId ?? undefined,
+                }
+              );
         } else {
           let existingExternalProductId: string | null = null;
           if (product.sku) {
-            const skuCheck = await checkBaseSkuExists(
-              token,
-              targetInventoryId,
-              product.sku
-            );
+            const skuCheck = await checkBaseSkuExists(token, targetInventoryId, product.sku);
             existingExternalProductId = skuCheck.productId ?? null;
           }
 
@@ -790,7 +751,7 @@ export async function postExportToBaseHandler(
                 exportImagesAsBase64: exportImagesAsBase64,
                 imageDiagnostics,
                 imageBase64Mode,
-                imageTransform
+                imageTransform,
               }
             );
           } else {
@@ -805,13 +766,9 @@ export async function postExportToBaseHandler(
                 includeStockWithoutWarehouse,
                 ...(stockWarehouseAliases ? { stockWarehouseAliases } : {}),
                 ...(producerNameById ? { producerNameById } : {}),
-                ...(producerExternalIdByInternalId
-                  ? { producerExternalIdByInternalId }
-                  : {}),
+                ...(producerExternalIdByInternalId ? { producerExternalIdByInternalId } : {}),
                 ...(tagNameById ? { tagNameById } : {}),
-                ...(tagExternalIdByInternalId
-                  ? { tagExternalIdByInternalId }
-                  : {}),
+                ...(tagExternalIdByInternalId ? { tagExternalIdByInternalId } : {}),
                 exportImagesAsBase64: exportImagesAsBase64,
                 imageDiagnostics,
                 imageBase64Mode,
@@ -825,11 +782,7 @@ export async function postExportToBaseHandler(
     }
 
     if (!result.success && !imagesOnly && !canRetryWrite && product.sku) {
-      const createdAfterTimeout = await checkBaseSkuExists(
-        token,
-        targetInventoryId,
-        product.sku
-      );
+      const createdAfterTimeout = await checkBaseSkuExists(token, targetInventoryId, product.sku);
       if (createdAfterTimeout.exists) {
         await ErrorSystem.logWarning(
           '[export-to-base] Initial export failed but SKU now exists; treating export as successful to avoid duplicate create.',
@@ -843,9 +796,7 @@ export async function postExportToBaseHandler(
         );
         result = {
           success: true,
-          ...(createdAfterTimeout.productId
-            ? { productId: createdAfterTimeout.productId }
-            : {}),
+          ...(createdAfterTimeout.productId ? { productId: createdAfterTimeout.productId } : {}),
         };
       }
     }
@@ -861,18 +812,18 @@ export async function postExportToBaseHandler(
           warehouseId,
           externalListingId: result.productId || null,
           fields: exportFields,
-          requestId: requestId ?? null
+          requestId: requestId ?? null,
         });
       }
       throw externalServiceError(result.error || 'Failed to export product', {
         productId,
-        inventoryId: targetInventoryId
+        inventoryId: targetInventoryId,
       });
     }
 
     await ErrorSystem.logInfo('[export-to-base] Export successful', {
       productId,
-      externalProductId: result.productId
+      externalProductId: result.productId,
     });
 
     if (listingId) {
@@ -888,7 +839,7 @@ export async function postExportToBaseHandler(
         warehouseId,
         externalListingId: result.productId || null,
         fields: exportFields,
-        requestId: requestId ?? null
+        requestId: requestId ?? null,
       });
     }
 
@@ -929,7 +880,7 @@ export async function postExportToBaseHandler(
       message: 'Product successfully exported to Base.com',
       externalProductId: result.productId,
       runId,
-      logs
+      logs,
     });
   } catch (error) {
     logCapture.stop();

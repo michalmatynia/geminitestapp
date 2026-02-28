@@ -14,7 +14,7 @@ describe('useCaseListAutoExpandBootstrap', () => {
         isCaseSubsetVisible: true,
         autoExpandedNodeIds: ['folder-a', 'folder-b'],
         setExpandedNodeIds,
-      }),
+      })
     );
 
     expect(setExpandedNodeIds).not.toHaveBeenCalled();
@@ -41,7 +41,7 @@ describe('useCaseListAutoExpandBootstrap', () => {
           isCaseSubsetVisible: true,
           autoExpandedNodeIds: ['folder-a', 'folder-b'],
         },
-      },
+      }
     );
 
     expect(setExpandedNodeIds).toHaveBeenCalledTimes(1);
@@ -84,7 +84,7 @@ describe('useCaseListAutoExpandBootstrap', () => {
           isCaseSubsetVisible: true,
           autoExpandedNodeIds: ['folder-a'],
         },
-      },
+      }
     );
 
     expect(setExpandedNodeIds).not.toHaveBeenCalled();

@@ -8,19 +8,13 @@ import {
   postValidatorPatternsHandler,
 } from './handler';
 
-export const GET = apiHandler(
-  getValidatorPatternsHandler,
-  {
-    source: 'products.validator-patterns.GET',
-    cacheControl: 'no-store',
-  },
-);
+export const GET = apiHandler(getValidatorPatternsHandler, {
+  source: 'products.validator-patterns.GET',
+  cacheControl: 'no-store',
+});
 
-export const POST = apiHandler(
-  postValidatorPatternsHandler,
-  {
-    source: 'products.validator-patterns.POST',
-    parseJsonBody: true,
-    bodySchema: createPatternSchema,
-  },
-);
+export const POST = apiHandler(postValidatorPatternsHandler, {
+  source: 'products.validator-patterns.POST',
+  parseJsonBody: true,
+  bodySchema: createPatternSchema,
+});

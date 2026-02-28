@@ -111,11 +111,11 @@ export const validateExtractionWithLLM = async (
       : [];
     const missingCount =
       typeof parsed?.['missingCount'] === 'number'
-        ? (parsed?.['missingCount'])
+        ? parsed?.['missingCount']
         : Math.max(0, requiredCount - acceptedItems.length);
     const valid =
       typeof parsed?.['valid'] === 'boolean'
-        ? (parsed?.['valid'])
+        ? parsed?.['valid']
         : acceptedItems.length >= requiredCount;
     return {
       valid,
@@ -125,14 +125,14 @@ export const validateExtractionWithLLM = async (
       missingCount,
       evidence: Array.isArray(parsed?.['evidence'])
         ? (parsed?.['evidence'] as unknown[]).filter(
-          (item: unknown): item is { item: string; snippet: string } =>
-            typeof item === 'object' &&
+            (item: unknown): item is { item: string; snippet: string } =>
+              typeof item === 'object' &&
               item !== null &&
               'item' in item &&
               typeof (item as Record<string, unknown>)['item'] === 'string' &&
               'snippet' in item &&
               typeof (item as Record<string, unknown>)['snippet'] === 'string'
-        )
+          )
         : [],
     };
   } catch (error) {
@@ -141,11 +141,7 @@ export const validateExtractionWithLLM = async (
       valid: fallbackAccepted.length >= requiredCount,
       acceptedItems: fallbackAccepted,
       rejectedItems: items.filter((item: string) => !fallbackAccepted.includes(item)),
-      issues: [
-        `LLM validation failed: ${
-          error instanceof Error ? error.message : String(error)
-        }`,
-      ],
+      issues: [`LLM validation failed: ${error instanceof Error ? error.message : String(error)}`],
       missingCount: Math.max(0, requiredCount - fallbackAccepted.length),
       evidence,
     };
@@ -176,7 +172,7 @@ export const normalizeExtractionItemsWithLLM = async (
           {
             role: 'system',
             content:
-              'You clean extracted outputs. Return only JSON with key \'items\' as an array of cleaned strings. Remove hashes, IDs, boilerplate, and duplicates. Keep original ordering where possible. For emails, return lowercase valid emails only.',
+              "You clean extracted outputs. Return only JSON with key 'items' as an array of cleaned strings. Remove hashes, IDs, boilerplate, and duplicates. Keep original ordering where possible. For emails, return lowercase valid emails only.",
           },
           {
             role: 'user',
@@ -226,7 +222,7 @@ export const inferSelectorsFromLLM = async (
           {
             role: 'system',
             content:
-              'You are a DOM selector expert. Return only JSON with a \'selectors\' array. Use concise, robust CSS selectors.',
+              "You are a DOM selector expert. Return only JSON with a 'selectors' array. Use concise, robust CSS selectors.",
           },
           {
             role: 'user',
@@ -247,7 +243,9 @@ export const inferSelectorsFromLLM = async (
     const content = extractMessageContent(json);
     const parsed = parseJsonObject(content) as Record<string, unknown> | null;
     const selectors = Array.isArray(parsed?.['selectors'])
-      ? (parsed?.['selectors'] as unknown[]).filter((selector: unknown) => typeof selector === 'string')
+      ? (parsed?.['selectors'] as unknown[]).filter(
+          (selector: unknown) => typeof selector === 'string'
+        )
       : [];
     if (log) {
       await log('info', 'LLM selector inference completed.', {
@@ -335,13 +333,13 @@ export const buildExtractionPlan = async (
     const parsed = parseJsonObject(content) as Record<string, unknown> | null;
     const primarySelectors = Array.isArray(parsed?.['primarySelectors'])
       ? (parsed?.['primarySelectors'] as unknown[]).filter(
-        (selector: unknown) => typeof selector === 'string'
-      )
+          (selector: unknown) => typeof selector === 'string'
+        )
       : [];
     const fallbackSelectors = Array.isArray(parsed?.['fallbackSelectors'])
       ? (parsed?.['fallbackSelectors'] as unknown[]).filter(
-        (selector: unknown) => typeof selector === 'string'
-      )
+          (selector: unknown) => typeof selector === 'string'
+        )
       : [];
     const plan = {
       target: typeof parsed?.['target'] === 'string' ? parsed?.['target'] : null,
@@ -443,29 +441,27 @@ export const buildFailureRecoveryPlan = async (
     const content = extractMessageContent(json);
     const parsed = parseJsonObject(content) as Record<string, unknown> | null;
     const selectors = Array.isArray(parsed?.['selectors'])
-      ? (parsed?.['selectors'] as unknown[]).filter((selector: unknown) => typeof selector === 'string')
+      ? (parsed?.['selectors'] as unknown[]).filter(
+          (selector: unknown) => typeof selector === 'string'
+        )
       : [];
     const listingUrls = Array.isArray(parsed?.['listingUrls'])
       ? (parsed?.['listingUrls'] as unknown[]).filter((item: unknown) => typeof item === 'string')
       : [];
     const plan = {
-      reason: typeof parsed?.['reason'] === 'string' ? (parsed?.['reason']) : null,
+      reason: typeof parsed?.['reason'] === 'string' ? parsed?.['reason'] : null,
       selectors,
       listingUrls,
       clickSelector:
-        typeof parsed?.['clickSelector'] === 'string' ? (parsed?.['clickSelector']) : null,
-      loginUrl: typeof parsed?.['loginUrl'] === 'string' ? (parsed?.['loginUrl']) : null,
+        typeof parsed?.['clickSelector'] === 'string' ? parsed?.['clickSelector'] : null,
+      loginUrl: typeof parsed?.['loginUrl'] === 'string' ? parsed?.['loginUrl'] : null,
       usernameSelector:
-        typeof parsed?.['usernameSelector'] === 'string'
-          ? (parsed?.['usernameSelector'])
-          : null,
+        typeof parsed?.['usernameSelector'] === 'string' ? parsed?.['usernameSelector'] : null,
       passwordSelector:
-        typeof parsed?.['passwordSelector'] === 'string'
-          ? (parsed?.['passwordSelector'])
-          : null,
+        typeof parsed?.['passwordSelector'] === 'string' ? parsed?.['passwordSelector'] : null,
       submitSelector:
-        typeof parsed?.['submitSelector'] === 'string' ? (parsed?.['submitSelector']) : null,
-      notes: typeof parsed?.['notes'] === 'string' ? (parsed?.['notes']) : null,
+        typeof parsed?.['submitSelector'] === 'string' ? parsed?.['submitSelector'] : null,
+      notes: typeof parsed?.['notes'] === 'string' ? parsed?.['notes'] : null,
     };
     if (log) {
       await log('info', 'LLM failure recovery plan created.', {
@@ -532,8 +528,7 @@ export const buildSearchQueryWithLLM = async (
     const payload = (await response.json()) as unknown;
     const content = extractMessageContent(payload);
     const parsed = parseJsonObject(content) as Record<string, unknown> | null;
-    const query =
-      typeof parsed?.['query'] === 'string' ? parsed['query'].trim() : '';
+    const query = typeof parsed?.['query'] === 'string' ? parsed['query'].trim() : '';
     return query || null;
   } catch (error) {
     if (log) {
@@ -563,8 +558,7 @@ export const pickSearchResultWithLLM = async (
         messages: [
           {
             role: 'system',
-            content:
-              'You select the best URL for the user task. Return only JSON with key: url.',
+            content: 'You select the best URL for the user task. Return only JSON with key: url.',
           },
           {
             role: 'user',
@@ -645,12 +639,12 @@ export const decideSearchFirstWithLLM = async (
         query: query || null,
       });
     }
-    
+
     // Note: Long-term memory logic from original file omitted here for simplicity
     // and to avoid circular dependencies if possible.
     // The calling function should handle long-term memory persistence if needed
     // or we can move the memory logic here if we import validateAndAddAgentLongTermMemory.
-    
+
     await prisma.agentAuditLog.create({
       data: {
         runId,

@@ -1,14 +1,20 @@
 'use client';
 
-import { Brush, Circle, Eye, EyeOff, Lasso, PenLine, RectangleHorizontal, Type, Trash2 } from 'lucide-react';
+import {
+  Brush,
+  Circle,
+  Eye,
+  EyeOff,
+  Lasso,
+  PenLine,
+  RectangleHorizontal,
+  Type,
+  Trash2,
+} from 'lucide-react';
 import React, { useCallback, useState } from 'react';
 
 import type { VectorShape, VectorShapeRole } from '@/shared/contracts/vector';
-import {
-  Button,
-  Input,
-  SelectSimple,
-} from '@/shared/ui';
+import { Button, Input, SelectSimple } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { useMaskingState, useMaskingActions } from '../context/MaskingContext';
@@ -56,9 +62,7 @@ export interface ShapeListPanelProps {
   className?: string | undefined;
 }
 
-export function ShapeListPanel({
-  className,
-}: ShapeListPanelProps): React.JSX.Element {
+export function ShapeListPanel({ className }: ShapeListPanelProps): React.JSX.Element {
   const { maskShapes, activeMaskId } = useMaskingState();
   const { setMaskShapes, setActiveMaskId } = useMaskingActions();
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -117,9 +121,7 @@ export function ShapeListPanel({
             key={shape.id}
             className={cn(
               'group flex items-center gap-1.5 rounded px-2 py-1 text-xs transition-colors cursor-pointer',
-              isActive
-                ? 'bg-accent/20 ring-1 ring-accent/40'
-                : 'hover:bg-accent/10'
+              isActive ? 'bg-accent/20 ring-1 ring-accent/40' : 'hover:bg-accent/10'
             )}
             onClick={() => setActiveMaskId(shape.id)}
           >
@@ -128,21 +130,22 @@ export function ShapeListPanel({
               className='inline-block size-2.5 shrink-0 rounded-full'
               style={{ backgroundColor: displayColor }}
             />
-            <ShapeIcon
-              className={cn('size-3 shrink-0', iconColorClass)}
-              aria-hidden='true'
-            />
+            <ShapeIcon className={cn('size-3 shrink-0', iconColorClass)} aria-hidden='true' />
 
             {/* Name / rename */}
             <div className='min-w-0 flex-1'>
               {editingId === shape.id ? (
-                <Input size='sm'
+                <Input
+                  size='sm'
                   value={editName}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditName(e.target.value)}
                   onBlur={commitRename}
                   onKeyDown={(e: React.KeyboardEvent) => {
                     if (e.key === 'Enter') commitRename();
-                    if (e.key === 'Escape') { setEditingId(null); setEditName(''); }
+                    if (e.key === 'Escape') {
+                      setEditingId(null);
+                      setEditName('');
+                    }
                   }}
                   className='h-5 px-1 text-xs'
                   autoFocus
@@ -201,7 +204,8 @@ export function ShapeListPanel({
             )}
 
             {/* Visibility toggle */}
-            <Button size='xs'
+            <Button
+              size='xs'
               type='button'
               variant='ghost'
               className='size-5 shrink-0 text-gray-300 opacity-90 hover:text-white hover:opacity-100'
@@ -215,7 +219,8 @@ export function ShapeListPanel({
             </Button>
 
             {/* Delete */}
-            <Button size='xs'
+            <Button
+              size='xs'
               type='button'
               variant='ghost'
               className='size-5 shrink-0 text-destructive/80 opacity-70 hover:opacity-100 hover:text-destructive'

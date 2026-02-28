@@ -6,12 +6,12 @@ import { FormSection, FormField, Textarea, Button, Card, Badge } from '@/shared/
 import { useAdminFilemakerOrganizationEditPageContext } from '../../context/AdminFilemakerOrganizationEditPageContext';
 
 export function OrganizationEmailsSection(): React.JSX.Element {
-  const { 
-    emails, 
-    emailExtractionText, 
-    setEmailExtractionText, 
+  const {
+    emails,
+    emailExtractionText,
+    setEmailExtractionText,
     handleExtractEmails,
-    updateSetting
+    updateSetting,
   } = useAdminFilemakerOrganizationEditPageContext();
 
   return (
@@ -28,7 +28,9 @@ export function OrganizationEmailsSection(): React.JSX.Element {
                     <Mail className='size-3.5 text-blue-300' />
                     <span className='truncate text-xs text-white'>{email.email}</span>
                   </div>
-                  <Badge variant='outline' className='text-[10px] uppercase h-5'>{email.status}</Badge>
+                  <Badge variant='outline' className='text-[10px] uppercase h-5'>
+                    {email.status}
+                  </Badge>
                 </div>
               </Card>
             ))}
@@ -49,7 +51,9 @@ export function OrganizationEmailsSection(): React.JSX.Element {
           <Button
             type='button'
             size='sm'
-            onClick={() => { void handleExtractEmails(); }}
+            onClick={() => {
+              void handleExtractEmails();
+            }}
             disabled={!emailExtractionText.trim() || updateSetting.isPending}
           >
             <Plus className='mr-1.5 size-3.5' />

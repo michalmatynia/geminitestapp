@@ -79,12 +79,8 @@ describe('integrations/[id]/connections POST handler', () => {
   });
 
   it('allows empty username for Baselinker', async () => {
-    const response = await POST_handler(
-      {} as NextRequest,
-      buildContext(),
-      { id: 'int-base' }
-    );
-    const body = await response.json() as Record<string, unknown>;
+    const response = await POST_handler({} as NextRequest, buildContext(), { id: 'int-base' });
+    const body = (await response.json()) as Record<string, unknown>;
 
     expect(response.status).toBe(200);
     expect(createConnectionMock).toHaveBeenCalledWith(
@@ -113,4 +109,3 @@ describe('integrations/[id]/connections POST handler', () => {
     expect(createConnectionMock).not.toHaveBeenCalled();
   });
 });
-

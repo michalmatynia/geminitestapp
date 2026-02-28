@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { OBJECT_LAYOUT_GOLDEN_FIXTURES, type ObjectLayoutFixtureVariant } from '@/features/ai/image-studio/analysis/__fixtures__/object-layout';
+import {
+  OBJECT_LAYOUT_GOLDEN_FIXTURES,
+  type ObjectLayoutFixtureVariant,
+} from '@/features/ai/image-studio/analysis/__fixtures__/object-layout';
 import {
   averageMetric,
   computeBoundsDelta,
@@ -10,7 +13,10 @@ import {
 import { detectObjectBoundsForLayoutFromRgba } from '@/features/ai/image-studio/analysis/shared';
 import type { ImageStudioCenterLayoutConfig } from '@/features/ai/image-studio/contracts/center';
 
-const DETECTION_LAYOUT_BY_VARIANT: Record<ObjectLayoutFixtureVariant, ImageStudioCenterLayoutConfig> = {
+const DETECTION_LAYOUT_BY_VARIANT: Record<
+  ObjectLayoutFixtureVariant,
+  ImageStudioCenterLayoutConfig
+> = {
   auto: {
     detection: 'auto',
     shadowPolicy: 'auto',

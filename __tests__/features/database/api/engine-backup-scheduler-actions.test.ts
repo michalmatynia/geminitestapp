@@ -12,7 +12,7 @@ import {
   getDatabaseBackupSchedulerStatus,
   markDatabaseBackupJobQueued,
   tickDatabaseBackupScheduler,
-} from '@/features/database/services/database-backup-scheduler';
+} from '@/shared/lib/db/services/database-backup-scheduler';
 import {
   enqueueProductAiJob,
   enqueueProductAiJobToQueue,
@@ -28,10 +28,10 @@ import { getDatabaseEngineOperationControls } from '@/shared/lib/db/database-eng
 vi.mock('@/shared/lib/api/api-handler', () => ({
   apiHandler:
     (handler: (req: NextRequest, ctx: unknown) => Promise<Response>) =>
-      async (req: NextRequest): Promise<Response> =>
-        handler(req, {
-          requestId: 'test-request-id',
-        }),
+    async (req: NextRequest): Promise<Response> =>
+      handler(req, {
+        requestId: 'test-request-id',
+      }),
 }));
 
 vi.mock('@/features/auth/server', () => ({
@@ -42,7 +42,7 @@ vi.mock('@/shared/lib/db/database-engine-policy', () => ({
   getDatabaseEngineOperationControls: vi.fn(),
 }));
 
-vi.mock('@/features/database/services/database-backup-scheduler', () => ({
+vi.mock('@/shared/lib/db/services/database-backup-scheduler', () => ({
   tickDatabaseBackupScheduler: vi.fn(),
   getDatabaseBackupSchedulerStatus: vi.fn(),
   markDatabaseBackupJobQueued: vi.fn(),

@@ -1,7 +1,12 @@
 import 'server-only';
 
 import { isRetryableError } from '@/shared/errors/app-error';
-import { withRetry, type RetryOptions, withCircuitBreaker, type CircuitBreakerOptions } from '@/shared/utils/retry';
+import {
+  withRetry,
+  type RetryOptions,
+  withCircuitBreaker,
+  type CircuitBreakerOptions,
+} from '@/shared/utils/retry';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 import { getTransientRecoverySettings } from './settings';
@@ -77,10 +82,8 @@ export async function withTransientRecovery<T>(
     if (circuitId && settings.circuit.enabled) {
       return await withCircuitBreaker(execute, {
         circuitId,
-        failureThreshold:
-          options?.circuit?.failureThreshold ?? settings.circuit.failureThreshold,
-        resetTimeoutMs:
-          options?.circuit?.resetTimeoutMs ?? settings.circuit.resetTimeoutMs,
+        failureThreshold: options?.circuit?.failureThreshold ?? settings.circuit.failureThreshold,
+        resetTimeoutMs: options?.circuit?.resetTimeoutMs ?? settings.circuit.resetTimeoutMs,
       });
     }
     return await execute();
@@ -90,7 +93,7 @@ export async function withTransientRecovery<T>(
         level: 'warn',
         message: '[transient-recovery] fallback executed',
         source: options?.source ?? 'transient-recovery',
-        context: { error: error instanceof Error ? error.message : String(error) }
+        context: { error: error instanceof Error ? error.message : String(error) },
       });
       return (await options.fallback()) as T;
     }

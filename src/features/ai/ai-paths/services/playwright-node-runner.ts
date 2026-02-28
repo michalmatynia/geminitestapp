@@ -6,7 +6,10 @@ import { createRequire } from 'module';
 import path from 'path';
 import vm from 'vm';
 
-import { defaultPlaywrightSettings, PLAYWRIGHT_PERSONA_SETTINGS_KEY } from '@/shared/lib/playwright/constants/playwright';
+import {
+  defaultPlaywrightSettings,
+  PLAYWRIGHT_PERSONA_SETTINGS_KEY,
+} from '@/shared/lib/playwright/constants/playwright';
 import { getSettingValue } from '@/features/products/server';
 import {
   playwrightSettingsSchema,
@@ -47,11 +50,9 @@ const safeStringify = (value: unknown): string => {
   }
 };
 
-const resolveRunStatePath = (runId: string): string =>
-  path.join(RUN_ROOT_DIR, `${runId}.json`);
+const resolveRunStatePath = (runId: string): string => path.join(RUN_ROOT_DIR, `${runId}.json`);
 
-const resolveRunArtifactsDir = (runId: string): string =>
-  path.join(RUN_ROOT_DIR, runId);
+const resolveRunArtifactsDir = (runId: string): string => path.join(RUN_ROOT_DIR, runId);
 
 const ensureRunRoot = async (): Promise<void> => {
   await fs.mkdir(RUN_ROOT_DIR, { recursive: true });
@@ -129,12 +130,14 @@ export type PlaywrightNodeRunRequest = {
   settingsOverrides?: Record<string, unknown> | undefined;
   launchOptions?: Record<string, unknown> | undefined;
   contextOptions?: Record<string, unknown> | undefined;
-  capture?: {
-    screenshot?: boolean | undefined;
-    html?: boolean | undefined;
-    video?: boolean | undefined;
-    trace?: boolean | undefined;
-  } | undefined;
+  capture?:
+    | {
+        screenshot?: boolean | undefined;
+        html?: boolean | undefined;
+        video?: boolean | undefined;
+        trace?: boolean | undefined;
+      }
+    | undefined;
 };
 
 export type PlaywrightNodeArtifactReadResult = {
@@ -291,10 +294,7 @@ const parseUserScript = (
   source: string,
   logs: string[]
 ): ((context: Record<string, unknown>) => Promise<unknown>) => {
-  const normalizedSource = source.replace(
-    /^\s*export\s+default\s+/m,
-    'const defaultExport = '
-  );
+  const normalizedSource = source.replace(/^\s*export\s+default\s+/m, 'const defaultExport = ');
   const bootstrap = `
     "use strict";
     let __playwrightNodeFn = null;
@@ -314,9 +314,12 @@ const parseUserScript = (
   const sandbox = {
     console: {
       log: (...args: unknown[]) => logs.push(`[console.log] ${args.map(safeStringify).join(' ')}`),
-      info: (...args: unknown[]) => logs.push(`[console.info] ${args.map(safeStringify).join(' ')}`),
-      warn: (...args: unknown[]) => logs.push(`[console.warn] ${args.map(safeStringify).join(' ')}`),
-      error: (...args: unknown[]) => logs.push(`[console.error] ${args.map(safeStringify).join(' ')}`),
+      info: (...args: unknown[]) =>
+        logs.push(`[console.info] ${args.map(safeStringify).join(' ')}`),
+      warn: (...args: unknown[]) =>
+        logs.push(`[console.warn] ${args.map(safeStringify).join(' ')}`),
+      error: (...args: unknown[]) =>
+        logs.push(`[console.error] ${args.map(safeStringify).join(' ')}`),
     },
     setTimeout,
     clearTimeout,
@@ -326,9 +329,7 @@ const parseUserScript = (
   };
   const resolved: unknown = script.runInNewContext(sandbox, { timeout: 250 });
   if (typeof resolved !== 'function') {
-    throw new Error(
-      'Playwright script must export a default async function or define `run`.'
-    );
+    throw new Error('Playwright script must export a default async function or define `run`.');
   }
   return resolved as (context: Record<string, unknown>) => Promise<unknown>;
 };
@@ -618,10 +619,7 @@ const executePlaywrightNodeRun = async (
         const video = page.video();
         if (video) {
           const videoPath = await video.path();
-          const targetVideoPath = path.join(
-            runArtifactsDir,
-            `video-${Date.now()}.webm`
-          );
+          const targetVideoPath = path.join(runArtifactsDir, `video-${Date.now()}.webm`);
           await fs.copyFile(videoPath, targetVideoPath);
           artifacts.push({
             name: 'video',
@@ -688,10 +686,7 @@ export const readPlaywrightNodeRun = async (
     if (parsed['runId'] !== runId) return null;
     return {
       ...(parsed as PlaywrightNodeRunRecord),
-      ownerUserId:
-        typeof parsed['ownerUserId'] === 'string'
-          ? parsed['ownerUserId']
-          : null,
+      ownerUserId: typeof parsed['ownerUserId'] === 'string' ? parsed['ownerUserId'] : null,
     };
   } catch {
     return null;
@@ -719,8 +714,7 @@ export const readPlaywrightNodeArtifact = async (input: {
 
   const relativeArtifactPath = `${runId}/${fileName}`;
   const artifact =
-    run.artifacts.find((candidate) => candidate.path === relativeArtifactPath) ??
-    null;
+    run.artifacts.find((candidate) => candidate.path === relativeArtifactPath) ?? null;
   if (!artifact) return null;
 
   const runRootDir = path.join(RUN_ROOT_DIR, runId);

@@ -65,8 +65,7 @@ vi.mock('@/features/products/server', () => ({
 
 vi.mock('@/features/integrations/server', () => ({
   getIntegrationRepository: getIntegrationRepositoryMock,
-  findProductListingByProductAndConnectionAcrossProviders:
-    findListingAcrossProvidersMock,
+  findProductListingByProductAndConnectionAcrossProviders: findListingAcrossProvidersMock,
   getProductListingRepository: getProductListingRepositoryMock,
 }));
 
@@ -119,11 +118,7 @@ describe('integrations/products/[id]/base/link-existing POST handler', () => {
   });
 
   it('creates a new local base listing link when listing does not exist', async () => {
-    const response = await POST_handler(
-      {} as NextRequest,
-      buildContext(),
-      { id: 'product-1' }
-    );
+    const response = await POST_handler({} as NextRequest, buildContext(), { id: 'product-1' });
 
     const body = (await response.json()) as Record<string, unknown>;
 
@@ -159,27 +154,14 @@ describe('integrations/products/[id]/base/link-existing POST handler', () => {
       },
     });
 
-    const response = await POST_handler(
-      {} as NextRequest,
-      buildContext(),
-      { id: 'product-1' }
-    );
+    const response = await POST_handler({} as NextRequest, buildContext(), { id: 'product-1' });
 
     const body = (await response.json()) as Record<string, unknown>;
 
     expect(response.status).toBe(200);
-    expect(updateListingExternalIdMock).toHaveBeenCalledWith(
-      'listing-existing-1',
-      'base-prod-77'
-    );
-    expect(updateListingInventoryIdMock).toHaveBeenCalledWith(
-      'listing-existing-1',
-      'inv-main'
-    );
-    expect(updateListingStatusMock).toHaveBeenCalledWith(
-      'listing-existing-1',
-      'active'
-    );
+    expect(updateListingExternalIdMock).toHaveBeenCalledWith('listing-existing-1', 'base-prod-77');
+    expect(updateListingInventoryIdMock).toHaveBeenCalledWith('listing-existing-1', 'inv-main');
+    expect(updateListingStatusMock).toHaveBeenCalledWith('listing-existing-1', 'active');
     expect(createListingMock).not.toHaveBeenCalled();
     expect(body).toEqual({
       linked: true,

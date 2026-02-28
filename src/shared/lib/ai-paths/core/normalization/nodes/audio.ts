@@ -1,6 +1,4 @@
-import {
-  type AiNode,
-} from '@/shared/contracts/ai-paths';
+import { type AiNode } from '@/shared/contracts/ai-paths';
 
 export const normalizeAudioOscillatorNode = (node: AiNode): AiNode => {
   return {

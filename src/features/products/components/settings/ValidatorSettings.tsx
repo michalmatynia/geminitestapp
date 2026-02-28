@@ -21,11 +21,7 @@ import { ValidatorSettingsProvider } from './validator-settings/ValidatorSetting
 export function ValidatorSettings(): React.JSX.Element {
   const controller = useValidatorSettingsController();
   const { confirm, ConfirmationModal } = useConfirm();
-  const {
-    patternToDelete,
-    setPatternToDelete,
-    handleDeletePattern,
-  } = controller;
+  const { patternToDelete, setPatternToDelete, handleDeletePattern } = controller;
 
   useEffect(() => {
     if (!patternToDelete) return;
@@ -67,7 +63,7 @@ function ValidatorDocsTooltipsPanel(): React.JSX.Element {
       description='Enable hover tooltips powered by validator docs for controls and actions.'
       variant='subtle'
       className='p-4'
-      actions={(
+      actions={
         <ValidatorDocTooltip docId='validator.docs.toggle'>
           <StatusToggle
             enabled={enabled}
@@ -76,7 +72,7 @@ function ValidatorDocsTooltipsPanel(): React.JSX.Element {
             }}
           />
         </ValidatorDocTooltip>
-      )}
+      }
     >
       <p className='text-xs text-gray-400'>
         Turn this on to view inline docs hints for validator controls while adjusting settings.

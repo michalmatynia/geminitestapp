@@ -88,8 +88,10 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
   const selectedCanvasFileId = activeFile?.id ?? null;
   const selectedWorkspaceId = workspace?.id ?? null;
 
-  const edgeFromPort = (selectedEdge as CompatEdge)?.fromPort ?? (selectedEdge as CompatEdge)?.sourceHandle;
-  const edgeToPort = (selectedEdge as CompatEdge)?.toPort ?? (selectedEdge as CompatEdge)?.targetHandle;
+  const edgeFromPort =
+    (selectedEdge as CompatEdge)?.fromPort ?? (selectedEdge as CompatEdge)?.sourceHandle;
+  const edgeToPort =
+    (selectedEdge as CompatEdge)?.toPort ?? (selectedEdge as CompatEdge)?.targetHandle;
   const handleCopyOutputPreview = React.useCallback(
     async (value: string): Promise<void> => {
       try {
@@ -101,27 +103,27 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
     },
     [toast]
   );
-  const outputPreviewRows = React.useMemo(
-    (): Array<{ label: string; value: string }> => {
-      if (!selectedPromptOutputPreview) return [];
-      const rows: Array<{ label: string; value: string }> = [
-        { label: 'wysiwygText', value: selectedPromptOutputPreview.textfield || '' },
-        { label: 'plaintextContent', value: selectedPromptOutputPreview.plaintextContent || '' },
-        { label: 'plainText', value: selectedPromptOutputPreview.plainText || '' },
-      ];
-      if (selectedPromptMeta?.role === 'explanatory') {
-        rows.push({ label: 'WYSIWYGContent', value: selectedPromptOutputPreview.wysiwygContent || '' });
-      }
-      return rows;
-    },
-    [selectedPromptMeta?.role, selectedPromptOutputPreview]
-  );
+  const outputPreviewRows = React.useMemo((): Array<{ label: string; value: string }> => {
+    if (!selectedPromptOutputPreview) return [];
+    const rows: Array<{ label: string; value: string }> = [
+      { label: 'wysiwygText', value: selectedPromptOutputPreview.textfield || '' },
+      { label: 'plaintextContent', value: selectedPromptOutputPreview.plaintextContent || '' },
+      { label: 'plainText', value: selectedPromptOutputPreview.plainText || '' },
+    ];
+    if (selectedPromptMeta?.role === 'explanatory') {
+      rows.push({
+        label: 'WYSIWYGContent',
+        value: selectedPromptOutputPreview.wysiwygContent || '',
+      });
+    }
+    return rows;
+  }, [selectedPromptMeta?.role, selectedPromptOutputPreview]);
 
   return (
     <DetailModal
       isOpen={open}
       onClose={() => onOpenChange(false)}
-      title={(
+      title={
         <div className='flex items-center gap-2'>
           <Button
             type='button'
@@ -138,7 +140,7 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
           </Button>
           <span>Node Inspector</span>
         </div>
-      )}
+      }
       subtitle='Inspect and edit selected node/edge settings.'
       size='xl'
     >
@@ -162,7 +164,9 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
                   <div className='space-y-2 rounded border border-sky-500/30 bg-sky-500/10 p-3'>
                     <div className='flex items-center justify-between gap-2 text-xs'>
                       <span className='text-sky-100'>Source Document</span>
-                      <span className='truncate text-[11px] text-sky-200'>{selectedPromptSourceFile.name}</span>
+                      <span className='truncate text-[11px] text-sky-200'>
+                        {selectedPromptSourceFile.name}
+                      </span>
                     </div>
                     <Button
                       type='button'
@@ -171,11 +175,11 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
                         const nodeContext: CaseResolverEditorNodeContext | null =
                           selectedNode && selectedCanvasFileId && selectedWorkspaceId
                             ? {
-                              nodeId: selectedNode.id,
-                              fileId: selectedCanvasFileId,
-                              workspaceId: selectedWorkspaceId,
-                              mode: 'wysiwyg',
-                            }
+                                nodeId: selectedNode.id,
+                                fileId: selectedCanvasFileId,
+                                workspaceId: selectedWorkspaceId,
+                                mode: 'wysiwyg',
+                              }
                             : null;
                         onEditFile(
                           selectedPromptSourceFile.id,
@@ -187,12 +191,17 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
                     </Button>
                   </div>
                 ) : null}
-                    
+
                 <FormField label='Node Role'>
-                  <SelectSimple size='sm'
+                  <SelectSimple
+                    size='sm'
                     value={selectedPromptMeta.role}
                     onValueChange={(value: string): void => {
-                      if (value === 'text_note' || value === 'explanatory' || value === 'ai_prompt') {
+                      if (
+                        value === 'text_note' ||
+                        value === 'explanatory' ||
+                        value === 'ai_prompt'
+                      ) {
                         onUpdateSelectedNodeMeta?.({ role: value });
                       }
                     }}
@@ -200,9 +209,10 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
                     triggerClassName='h-8 border-border bg-card/60 text-xs text-white'
                   />
                 </FormField>
-                    
+
                 <FormField label='Quotation Wrapper'>
-                  <SelectSimple size='sm'
+                  <SelectSimple
+                    size='sm'
                     value={selectedPromptMeta.quoteMode}
                     onValueChange={(value: string): void => {
                       if (value === 'none' || value === 'double' || value === 'single') {
@@ -213,7 +223,7 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
                     triggerClassName='h-8 border-border bg-card/60 text-xs text-white'
                   />
                 </FormField>
-                    
+
                 <div className='grid grid-cols-2 gap-2'>
                   <FormField label='Surround Prefix'>
                     <Input
@@ -259,7 +269,9 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
                     <Input
                       type='color'
                       value={
-                        CASE_RESOLVER_NODE_TEXT_COLOR_PATTERN.test(selectedPromptMeta.textColor ?? '')
+                        CASE_RESOLVER_NODE_TEXT_COLOR_PATTERN.test(
+                          selectedPromptMeta.textColor ?? ''
+                        )
                           ? selectedPromptMeta.textColor
                           : '#ffffff'
                       }
@@ -290,7 +302,9 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
                   </div>
                 </FormField>
                 <div className='space-y-2 rounded border border-border/60 bg-card/30 px-3 py-3'>
-                  <div className='text-[11px] text-gray-300'>Case Resolver Plain Text Validation</div>
+                  <div className='text-[11px] text-gray-300'>
+                    Case Resolver Plain Text Validation
+                  </div>
                   <ValidatorFormatterToggle
                     validatorEnabled={selectedPromptMeta.plainTextValidationEnabled ?? true}
                     formatterEnabled={selectedPromptMeta.plainTextFormatterEnabled ?? true}
@@ -302,8 +316,9 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
                       const fallbackStackId = currentStackId || defaultPlainTextStackId;
                       onUpdateSelectedNodeMeta?.({
                         plainTextValidationEnabled: next,
-                        plainTextFormatterEnabled:
-                          next ? (selectedPromptMeta.plainTextFormatterEnabled ?? true) : false,
+                        plainTextFormatterEnabled: next
+                          ? (selectedPromptMeta.plainTextFormatterEnabled ?? true)
+                          : false,
                         ...(next && fallbackStackId
                           ? { plainTextValidationStackId: fallbackStackId }
                           : {}),
@@ -332,13 +347,15 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
                       </div>
                     ) : (
                       <p className='text-[11px] text-amber-200'>
-                        No &ldquo;Case Resolver - Plain Text&rdquo; validation stacks are configured yet.
+                        No &ldquo;Case Resolver - Plain Text&rdquo; validation stacks are configured
+                        yet.
                       </p>
                     )
                   ) : null}
                   {selectedPromptMeta.role === 'explanatory' ? (
                     <p className='text-[11px] text-gray-500'>
-                      Explanatory nodes expose plain-text outputs plus an additional WYSIWYGContent lane.
+                      Explanatory nodes expose plain-text outputs plus an additional WYSIWYGContent
+                      lane.
                     </p>
                   ) : null}
                 </div>
@@ -349,7 +366,11 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
                 ) : null}
                 {!selectedPromptSourceFile ? (
                   <FormField
-                    label={selectedPromptMeta.role === 'explanatory' ? 'Explanatory Text (WYSIWYG)' : 'Node Text'}
+                    label={
+                      selectedPromptMeta.role === 'explanatory'
+                        ? 'Explanatory Text (WYSIWYG)'
+                        : 'Node Text'
+                    }
                     description={
                       selectedPromptMeta.role === 'explanatory'
                         ? 'This rich text is appended to incoming WYSIWYGContent and transformed to plain text by validation patterns.'
@@ -390,15 +411,10 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
                     <div className='text-[11px] text-gray-400'>Output Preview</div>
                     {selectedPromptSecondaryOutputHint ? (
                       <div className='rounded border border-amber-500/35 bg-amber-500/10 p-2 text-[10px] text-amber-100'>
-                        Only <span className='font-semibold'>wysiwygText</span> input is connected.
-                        {' '}
-                        <span className='font-semibold'>plaintextContent</span>
-                        {' '}
-                        and
-                        {' '}
-                        <span className='font-semibold'>plainText</span>
-                        {' '}
-                        outputs remain empty until those lanes are connected.
+                        Only <span className='font-semibold'>wysiwygText</span> input is connected.{' '}
+                        <span className='font-semibold'>plaintextContent</span> and{' '}
+                        <span className='font-semibold'>plainText</span> outputs remain empty until
+                        those lanes are connected.
                       </div>
                     ) : null}
                     <div className='space-y-1 text-[11px]'>
@@ -430,14 +446,18 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
                 </div>
 
                 <div className='rounded border border-border/60 bg-card/30 px-3 py-2 text-xs text-gray-400'>
-                  Document nodes support <span className='text-gray-200'>wysiwygText</span>, <span className='text-gray-200'>plaintextContent</span>, and <span className='text-gray-200'>plainText</span> I/O.
+                  Document nodes support <span className='text-gray-200'>wysiwygText</span>,{' '}
+                  <span className='text-gray-200'>plaintextContent</span>, and{' '}
+                  <span className='text-gray-200'>plainText</span> I/O.
                   {selectedPromptMeta.role === 'explanatory' ? (
                     <>
                       {' '}
-                      Explanatory nodes also support <span className='text-gray-200'>WYSIWYGContent</span> I/O.
+                      Explanatory nodes also support{' '}
+                      <span className='text-gray-200'>WYSIWYGContent</span> I/O.
                     </>
                   ) : null}
-                  Use <span className='text-gray-200'>plainText</span> input to strip incoming HTML to clean text automatically.
+                  Use <span className='text-gray-200'>plainText</span> input to strip incoming HTML
+                  to clean text automatically.
                 </div>
               </>
             ) : (
@@ -462,19 +482,25 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
           <div className='space-y-2 rounded border border-border/60 bg-card/30 p-3'>
             <FormField
               label='Edge join operator'
-              actions={(
+              actions={
                 <div className='flex items-center gap-1'>
                   <Split className='size-3.5 text-gray-500' />
                   <span className='text-[11px] text-gray-500'>
                     {edgeFromPort ?? 'output'} {'->'} {edgeToPort ?? 'input'}
                   </span>
                 </div>
-              )}
+              }
             >
-              <SelectSimple size='sm'
+              <SelectSimple
+                size='sm'
                 value={selectedEdgeJoinMode}
                 onValueChange={(value: string): void => {
-                  if (value === 'newline' || value === 'tab' || value === 'space' || value === 'none') {
+                  if (
+                    value === 'newline' ||
+                    value === 'tab' ||
+                    value === 'space' ||
+                    value === 'none'
+                  ) {
                     onUpdateSelectedEdgeMeta?.({ joinMode: value });
                   }
                 }}

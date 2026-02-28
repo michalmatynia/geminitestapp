@@ -1,5 +1,3 @@
-
-
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -20,7 +18,7 @@ const normalizeParameters = (value: unknown): Record<string, unknown> => {
 const requestSchema = z
   .object({
     method: z.string().trim().min(1),
-    parameters: z.record(z.string(), z['unknown']()).optional()
+    parameters: z.record(z.string(), z['unknown']()).optional(),
   })
   .passthrough();
 
@@ -28,13 +26,17 @@ const requestSchema = z
  * POST /api/integrations/[id]/connections/[connectionId]/base/request
  * Proxy Base.com API requests using the stored token.
  */
-export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; connectionId: string }): Promise<Response> {
+export async function POST_handler(
+  _req: NextRequest,
+  _ctx: ApiHandlerContext,
+  params: { id: string; connectionId: string }
+): Promise<Response> {
   const { id, connectionId } = params;
   if (!id || !connectionId) {
     throw badRequestError('Integration id and connection id are required');
   }
   const parsed = await parseJsonBody(_req, requestSchema, {
-    logPrefix: 'integrations.base.request.POST'
+    logPrefix: 'integrations.base.request.POST',
   });
   if (!parsed.ok) {
     return parsed.response;
@@ -48,10 +50,7 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, p
     throw notFoundError('Base.com integration not found.', { integrationId: id });
   }
 
-  const connection = await repo.getConnectionByIdAndIntegration(
-    connectionId,
-    id
-  );
+  const connection = await repo.getConnectionByIdAndIntegration(connectionId, id);
   if (!connection) {
     throw notFoundError('Connection not found.', { connectionId });
   }
@@ -83,7 +82,7 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, p
           : undefined;
     const products = await fetchBaseProducts(baseToken, inventoryId, limit);
     return NextResponse.json({
-      data: { products, count: products.length, inventoryId }
+      data: { products, count: products.length, inventoryId },
     });
   }
 
@@ -110,7 +109,7 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, p
     }
     const payload = await callBaseApi(baseToken, 'getInventoryProductsData', {
       inventory_id: inventoryId,
-      products: [productId]
+      products: [productId],
     });
     const rawProducts = (payload as { products?: unknown }).products;
     let product: unknown = null;
@@ -137,8 +136,8 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, p
       data: {
         product: product ?? null,
         inventoryId,
-        productId
-      }
+        productId,
+      },
     });
   }
 

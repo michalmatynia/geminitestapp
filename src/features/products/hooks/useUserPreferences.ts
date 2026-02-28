@@ -36,7 +36,9 @@ const userPreferencesQueryKey = QUERY_KEYS.userPreferences.all;
 const mapProductListPreferences = (
   data: SharedUserPreferences | null | undefined
 ): ProductListPreferences => ({
-  nameLocale: (data?.productListNameLocale as 'name_en' | 'name_pl' | 'name_de' | null | undefined) || 'name_en',
+  nameLocale:
+    (data?.productListNameLocale as 'name_en' | 'name_pl' | 'name_de' | null | undefined) ||
+    'name_en',
   catalogFilter: data?.productListCatalogFilter || 'all',
   currencyCode: data?.productListCurrencyCode ?? 'PLN',
   pageSize: data?.productListPageSize || 12,
@@ -56,7 +58,7 @@ async function fetchUserPreferences(signal?: AbortSignal): Promise<SharedUserPre
 
 async function updateUserPreference(
   key: keyof ProductListPreferences,
-  value: unknown,
+  value: unknown
 ): Promise<void> {
   const apiKey = `productList${key.charAt(0).toUpperCase()}${key.slice(1)}`;
   const validation = userPreferencesUpdateSchema.safeParse({ [apiKey]: value });
@@ -67,41 +69,36 @@ async function updateUserPreference(
   await api.patch('/api/user/preferences', payload);
 }
 
-
-function updateLocalStorage(
-  key: keyof ProductListPreferences,
-  value: unknown,
-): void {
+function updateLocalStorage(key: keyof ProductListPreferences, value: unknown): void {
   if (typeof window === 'undefined') return;
 
   const storageKey = `productList${key.charAt(0).toUpperCase()}${key.slice(1)}`;
   window.localStorage.setItem(storageKey, String(value));
 }
 
-async function updateUserPreferences(
-  data: Partial<ProductListPreferences>,
-): Promise<void> {
+async function updateUserPreferences(data: Partial<ProductListPreferences>): Promise<void> {
   const entries = Object.entries(data);
   for (const [key, value] of entries) {
     await updateUserPreference(key as keyof ProductListPreferences, value);
   }
 }
 
-export function useUpdateUserPreferences(): UseMutationResult<void, Error, Partial<ProductListPreferences>> {
+export function useUpdateUserPreferences(): UseMutationResult<
+  void,
+  Error,
+  Partial<ProductListPreferences>
+> {
   const queryClient = useQueryClient();
-  return useOfflineMutation<void, Error, Partial<ProductListPreferences>>(
-    updateUserPreferences,
-    {
-      queryKey: userPreferencesQueryKey,
-      onQueued: () => {
-        // Handle queued state
-      },
-      onProcessed: () => {
-        void invalidateUserPreferences(queryClient);
-      },
-      errorMessage: 'Failed to update preferences',
-    }
-  );
+  return useOfflineMutation<void, Error, Partial<ProductListPreferences>>(updateUserPreferences, {
+    queryKey: userPreferencesQueryKey,
+    onQueued: () => {
+      // Handle queued state
+    },
+    onProcessed: () => {
+      void invalidateUserPreferences(queryClient);
+    },
+    errorMessage: 'Failed to update preferences',
+  });
 }
 
 export interface UserPreferencesHookResult {
@@ -111,12 +108,11 @@ export interface UserPreferencesHookResult {
   setCatalogFilter: (filter: string) => Promise<void>;
   setCurrencyCode: (code: string) => Promise<void>;
   setPageSize: (size: number) => Promise<void>;
-  setAdvancedFilterPresets: (
-    presets: ProductAdvancedFilterPreset[]
-  ) => Promise<void>;
-  setAppliedAdvancedFilterState: (
-    state: { advancedFilter: string; presetId: string | null }
-  ) => Promise<void>;
+  setAdvancedFilterPresets: (presets: ProductAdvancedFilterPreset[]) => Promise<void>;
+  setAppliedAdvancedFilterState: (state: {
+    advancedFilter: string;
+    presetId: string | null;
+  }) => Promise<void>;
 }
 
 export function useUserPreferences(): UserPreferencesHookResult {

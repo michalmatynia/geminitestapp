@@ -8,7 +8,7 @@ import { cn } from '@/shared/utils';
 
 import { useVersionGraphControlsContext } from './VersionGraphControlsContext';
 import { useSettingsState } from '../context/SettingsContext';
-import { getImageStudioDocTooltip } from '../utils/studio-docs';
+import { getImageStudioDocTooltip } from '@/shared/lib/ai/image-studio/utils/studio-docs';
 
 // ── Component ────────────────────────────────────────────────────────────────
 
@@ -76,12 +76,18 @@ export function VersionGraphFilterBar(): React.JSX.Element {
                     : t === 'composite'
                       ? 'bg-teal-500/20 text-teal-400'
                       : 'bg-purple-500/20 text-purple-400'
-                : 'text-gray-500 hover:text-gray-400',
+                : 'text-gray-500 hover:text-gray-400'
             )}
             title={versionGraphTooltipsEnabled ? resolveTypeTooltip(t) : undefined}
             onClick={() => onToggleFilterType(t)}
           >
-            {t === 'base' ? 'Base' : t === 'generation' ? 'Gen' : t === 'composite' ? 'Comp' : 'Merge'}
+            {t === 'base'
+              ? 'Base'
+              : t === 'generation'
+                ? 'Gen'
+                : t === 'composite'
+                  ? 'Comp'
+                  : 'Merge'}
           </button>
         ))}
 
@@ -92,7 +98,7 @@ export function VersionGraphFilterBar(): React.JSX.Element {
             'rounded px-1.5 py-0.5 text-[9px] font-medium',
             filterHasMask !== null
               ? 'bg-purple-500/20 text-purple-400'
-              : 'text-gray-500 hover:text-gray-400',
+              : 'text-gray-500 hover:text-gray-400'
           )}
           title={versionGraphTooltipsEnabled ? tooltipContent.maskCycle : undefined}
           onClick={() => {
@@ -112,7 +118,7 @@ export function VersionGraphFilterBar(): React.JSX.Element {
             'rounded px-1.5 py-0.5 text-[9px] font-medium',
             filterLeafOnly
               ? 'bg-yellow-500/20 text-yellow-400'
-              : 'text-gray-500 hover:text-gray-400',
+              : 'text-gray-500 hover:text-gray-400'
           )}
           title={versionGraphTooltipsEnabled ? tooltipContent.leafToggle : undefined}
           onClick={onToggleLeafOnly}

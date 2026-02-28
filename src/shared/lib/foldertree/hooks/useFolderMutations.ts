@@ -19,7 +19,10 @@ interface ImportFolderResponse {
   data?: unknown;
 }
 
-export function useImportFolderMutation(): CreateMutation<ImportFolderResponse, ImportFolderPayload> {
+export function useImportFolderMutation(): CreateMutation<
+  ImportFolderResponse,
+  ImportFolderPayload
+> {
   const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.notes.all;
 

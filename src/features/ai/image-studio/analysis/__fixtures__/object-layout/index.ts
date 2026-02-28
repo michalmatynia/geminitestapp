@@ -65,12 +65,18 @@ const fixtureTransparentCore = (): ObjectLayoutGoldenFixture => {
   const coreBounds = { left: 28, top: 18, width: 34, height: 28 } as const;
   const rgba = createRgbaCanvas(width, height, { r: 255, g: 255, b: 255, a: 0 });
 
-  paintRect(rgba, width, height, { left: 26, top: 16, width: 38, height: 32 }, {
-    r: 70,
-    g: 138,
-    b: 228,
-    a: 6,
-  });
+  paintRect(
+    rgba,
+    width,
+    height,
+    { left: 26, top: 16, width: 38, height: 32 },
+    {
+      r: 70,
+      g: 138,
+      b: 228,
+      a: 6,
+    }
+  );
   paintRect(rgba, width, height, coreBounds, { r: 47, g: 109, b: 210, a: 255 });
 
   return {
@@ -195,7 +201,7 @@ const fixtureOffWhiteDrift = (): ObjectLayoutGoldenFixture => {
   for (let y = 0; y < height; y += 1) {
     for (let x = 0; x < width; x += 1) {
       if ((x + y) % 17 !== 0) continue;
-      const offset = ((y * width) + x) * 4;
+      const offset = (y * width + x) * 4;
       rgba[offset] = Math.min(255, (rgba[offset] ?? 0) + 1);
       rgba[offset + 1] = Math.max(0, (rgba[offset + 1] ?? 0) - 1);
       rgba[offset + 2] = Math.max(0, (rgba[offset + 2] ?? 0) - 2);

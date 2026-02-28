@@ -3,11 +3,13 @@ import type {
   ApplyBaseParameterImportResult,
   ExtractedBaseParameter,
 } from '@/shared/contracts/integrations';
-import type { ProductParameterDto as ProductParameter, ProductParameterValueDto as ProductParameterValue } from '@/shared/contracts/products';
+import type {
+  ProductParameterDto as ProductParameter,
+  ProductParameterValueDto as ProductParameterValue,
+} from '@/shared/contracts/products';
 
 import { extractBaseParameters } from './extractor';
 import { getCatalogParameterLinks, mergeCatalogParameterLinks } from './link-map-repository';
-
 
 const toTrimmedString = (value: unknown): string | null => {
   if (typeof value !== 'string') return null;
@@ -17,7 +19,10 @@ const toTrimmedString = (value: unknown): string | null => {
 
 const normalizeLanguageCode = (value: string | null | undefined): string | null => {
   if (!value) return null;
-  const normalized = value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
+  const normalized = value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]/g, '');
   return normalized.length > 0 ? normalized : null;
 };
 
@@ -68,9 +73,7 @@ const buildParameterValuePayload = (input: {
 
   const normalizedDefault = normalizeLanguageCode(input.defaultLanguageCode);
   const valueMap: Record<string, string> = {};
-  const normalizedExtractedEntries = Object.entries(
-    input.extracted.valuesByLanguage
-  ).reduce(
+  const normalizedExtractedEntries = Object.entries(input.extracted.valuesByLanguage).reduce(
     (acc: Record<string, string>, [key, rawValue]: [string, string]) => {
       const normalizedKey = normalizeLanguageCode(key);
       const normalizedValue = toTrimmedString(rawValue);
@@ -89,8 +92,7 @@ const buildParameterValuePayload = (input: {
   if (!defaultValue) return null;
 
   if (input.settingsLanguageScope === 'default_only') {
-    const targetCode =
-      normalizedDefault ?? normalizedCatalogCodes[0] ?? 'en';
+    const targetCode = normalizedDefault ?? normalizedCatalogCodes[0] ?? 'en';
     valueMap[targetCode] = normalizedExtractedEntries[targetCode] ?? defaultValue;
   } else if (normalizedCatalogCodes.length > 0) {
     normalizedCatalogCodes.forEach((code: string) => {
@@ -98,12 +100,10 @@ const buildParameterValuePayload = (input: {
       if (value) valueMap[code] = value;
     });
   } else {
-    Object.entries(normalizedExtractedEntries).forEach(
-      ([code, value]: [string, string]) => {
-        if (code === 'default') return;
-        valueMap[code] = value;
-      }
-    );
+    Object.entries(normalizedExtractedEntries).forEach(([code, value]: [string, string]) => {
+      if (code === 'default') return;
+      valueMap[code] = value;
+    });
   }
 
   const value =
@@ -117,7 +117,9 @@ const buildParameterValuePayload = (input: {
   };
 };
 
-const buildLookupMaps = (parameters: ProductParameter[]): {
+const buildLookupMaps = (
+  parameters: ProductParameter[]
+): {
   byId: Map<string, ProductParameter>;
   byName: Map<string, ProductParameter>;
 } => {
@@ -197,10 +199,10 @@ export const applyBaseParameterImport = async (
     input.prefetchedLinks ??
     (useLinkMap
       ? await getCatalogParameterLinks({
-        catalogId: input.catalogId,
-        connectionId: input.connectionId ?? null,
-        inventoryId: input.inventoryId ?? null,
-      })
+          catalogId: input.catalogId,
+          connectionId: input.connectionId ?? null,
+          inventoryId: input.inventoryId ?? null,
+        })
       : {});
   const linkUpdates: Record<string, string> = {};
 
@@ -276,10 +278,7 @@ export const applyBaseParameterImport = async (
     if (!nextValuePayload) continue;
 
     const existing = nextByParameterId.get(matched.id);
-    if (
-      !input.settings.overwriteExistingValues &&
-      hasExistingValue(existing)
-    ) {
+    if (!input.settings.overwriteExistingValues && hasExistingValue(existing)) {
       continue;
     }
 

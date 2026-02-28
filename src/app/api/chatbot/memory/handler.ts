@@ -10,29 +10,26 @@ const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();
   if (!('agentLongTermMemory' in prisma)) {
-    throw internalError(
-      'Long-term memory table not initialized. Run prisma generate/db push.'
-    );
+    throw internalError('Long-term memory table not initialized. Run prisma generate/db push.');
   }
   const url = new URL(req.url);
   const memoryKey = url.searchParams.get('memoryKey')?.trim() || null;
   const tag = url.searchParams.get('tag')?.trim() || null;
   const query = url.searchParams.get('q')?.trim() || null;
   const limitParam = Number(url.searchParams.get('limit'));
-  const limit =
-    Number.isFinite(limitParam) && limitParam > 0 ? Math.min(limitParam, 100) : 50;
+  const limit = Number.isFinite(limitParam) && limitParam > 0 ? Math.min(limitParam, 100) : 50;
 
   const where = {
     ...(memoryKey ? { memoryKey } : {}),
     ...(tag ? { tags: { has: tag } } : {}),
     ...(query
       ? {
-        OR: [
-          { content: { contains: query, mode: 'insensitive' as const } },
-          { summary: { contains: query, mode: 'insensitive' as const } },
-          { tags: { has: query } },
-        ],
-      }
+          OR: [
+            { content: { contains: query, mode: 'insensitive' as const } },
+            { summary: { contains: query, mode: 'insensitive' as const } },
+            { tags: { has: query } },
+          ],
+        }
       : {}),
   };
 

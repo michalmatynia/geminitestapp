@@ -20,16 +20,13 @@ export interface ProductFormParameterContextType {
   addParameterValue: () => void;
   updateParameterId: (index: number, parameterId: string) => void;
   updateParameterValue: (index: number, value: string) => void;
-  updateParameterValueByLanguage: (
-    index: number,
-    languageCode: string,
-    value: string
-  ) => void;
+  updateParameterValueByLanguage: (index: number, languageCode: string, value: string) => void;
   removeParameterValue: (index: number) => void;
 }
 
-export const ProductFormParameterContext =
-  createContext<ProductFormParameterContextType | null>(null);
+export const ProductFormParameterContext = createContext<ProductFormParameterContextType | null>(
+  null
+);
 
 export function ProductFormParameterProvider({
   children,
@@ -47,9 +44,7 @@ export function ProductFormParameterProvider({
   const primaryCatalogId = selectedCatalogIds[0] || '';
   const parametersQuery = useParameters(primaryCatalogId);
 
-  const [parameterValues, setParameterValues] = useState<
-    ProductParameterValue[]
-  >(() => {
+  const [parameterValues, setParameterValues] = useState<ProductParameterValue[]>(() => {
     const sourceParams = product?.parameters ?? draft?.parameters;
     if (!Array.isArray(sourceParams)) return [];
 
@@ -59,19 +54,15 @@ export function ProductFormParameterProvider({
         typeof entry.valuesByLanguage === 'object' &&
         !Array.isArray(entry.valuesByLanguage)
           ? Object.entries(entry.valuesByLanguage).reduce(
-            (
-              acc: Record<string, string>,
-              [lang, rawValue]: [string, unknown]
-            ) => {
-              const normalizedLang = lang.trim().toLowerCase();
-              if (!normalizedLang) return acc;
-              const normalizedValue =
-                  typeof rawValue === 'string' ? rawValue : '';
-              acc[normalizedLang] = normalizedValue;
-              return acc;
-            },
+              (acc: Record<string, string>, [lang, rawValue]: [string, unknown]) => {
+                const normalizedLang = lang.trim().toLowerCase();
+                if (!normalizedLang) return acc;
+                const normalizedValue = typeof rawValue === 'string' ? rawValue : '';
+                acc[normalizedLang] = normalizedValue;
+                return acc;
+              },
               {} as Record<string, string>
-          )
+            )
           : {};
       const directValue = typeof entry?.value === 'string' ? entry.value : '';
       const fallbackValue =
@@ -79,8 +70,7 @@ export function ProductFormParameterProvider({
         valuesByLanguage['default'] ||
         valuesByLanguage['en'] ||
         Object.values(valuesByLanguage).find(
-          (value: string): boolean =>
-            typeof value === 'string' && value.length > 0
+          (value: string): boolean => typeof value === 'string' && value.length > 0
         ) ||
         '';
 
@@ -97,36 +87,30 @@ export function ProductFormParameterProvider({
   const value = useMemo((): ProductFormParameterContextType => {
     const addParameterValue = (): void => {
       onInteraction?.();
-      setParameterValues(
-        (prev: ProductParameterValue[]): ProductParameterValue[] => [
-          ...prev,
-          { parameterId: '', value: '' },
-        ]
-      );
+      setParameterValues((prev: ProductParameterValue[]): ProductParameterValue[] => [
+        ...prev,
+        { parameterId: '', value: '' },
+      ]);
     };
 
     const updateParameterId = (index: number, parameterId: string): void => {
       onInteraction?.();
-      setParameterValues(
-        (prev: ProductParameterValue[]): ProductParameterValue[] => {
-          const next = [...prev];
-          if (!next[index]) return prev;
-          next[index] = { ...next[index], parameterId };
-          return next;
-        }
-      );
+      setParameterValues((prev: ProductParameterValue[]): ProductParameterValue[] => {
+        const next = [...prev];
+        if (!next[index]) return prev;
+        next[index] = { ...next[index], parameterId };
+        return next;
+      });
     };
 
     const updateParameterValue = (index: number, value: string): void => {
       onInteraction?.();
-      setParameterValues(
-        (prev: ProductParameterValue[]): ProductParameterValue[] => {
-          const next = [...prev];
-          if (!next[index]) return prev;
-          next[index] = { ...next[index], value };
-          return next;
-        }
-      );
+      setParameterValues((prev: ProductParameterValue[]): ProductParameterValue[] => {
+        const next = [...prev];
+        if (!next[index]) return prev;
+        next[index] = { ...next[index], value };
+        return next;
+      });
     };
 
     const updateParameterValueByLanguage = (
@@ -135,36 +119,31 @@ export function ProductFormParameterProvider({
       value: string
     ): void => {
       onInteraction?.();
-      setParameterValues(
-        (prev: ProductParameterValue[]): ProductParameterValue[] => {
-          const next = [...prev];
-          if (!next[index]) return prev;
-          const normalizedLang = languageCode.trim().toLowerCase();
-          if (!normalizedLang) return prev;
-          const current = next[index];
-          const currentValues =
-            current.valuesByLanguage &&
-            typeof current.valuesByLanguage === 'object' &&
-            !Array.isArray(current.valuesByLanguage)
-              ? { ...current.valuesByLanguage }
-              : {};
-          currentValues[normalizedLang] = value;
-          next[index] = {
-            ...current,
-            valuesByLanguage: currentValues,
-          };
-          return next;
-        }
-      );
+      setParameterValues((prev: ProductParameterValue[]): ProductParameterValue[] => {
+        const next = [...prev];
+        if (!next[index]) return prev;
+        const normalizedLang = languageCode.trim().toLowerCase();
+        if (!normalizedLang) return prev;
+        const current = next[index];
+        const currentValues =
+          current.valuesByLanguage &&
+          typeof current.valuesByLanguage === 'object' &&
+          !Array.isArray(current.valuesByLanguage)
+            ? { ...current.valuesByLanguage }
+            : {};
+        currentValues[normalizedLang] = value;
+        next[index] = {
+          ...current,
+          valuesByLanguage: currentValues,
+        };
+        return next;
+      });
     };
 
     const removeParameterValue = (index: number): void => {
       onInteraction?.();
-      setParameterValues(
-        (prev: ProductParameterValue[]): ProductParameterValue[] =>
-          prev.filter(
-            (_: ProductParameterValue, i: number): boolean => i !== index
-          )
+      setParameterValues((prev: ProductParameterValue[]): ProductParameterValue[] =>
+        prev.filter((_: ProductParameterValue, i: number): boolean => i !== index)
       );
     };
 

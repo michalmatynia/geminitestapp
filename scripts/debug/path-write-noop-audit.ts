@@ -1,9 +1,6 @@
 import 'dotenv/config';
 
-import {
-  collectNoopWriteFindings,
-  dedupeRunIds,
-} from './path-write-noop-utils';
+import { collectNoopWriteFindings, dedupeRunIds } from './path-write-noop-utils';
 
 type CliOptions = {
   runId?: string;
@@ -61,8 +58,8 @@ async function main(): Promise<void> {
         findings: result.findings,
       },
       null,
-      2,
-    ),
+      2
+    )
   );
 }
 
@@ -70,4 +67,3 @@ void main().catch((error) => {
   console.error('path-write-noop-audit failed:', error);
   process.exit(1);
 });
-

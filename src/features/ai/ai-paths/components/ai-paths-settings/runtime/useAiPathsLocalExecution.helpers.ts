@@ -1,7 +1,4 @@
-import type {
-  AiNode,
-  RuntimePortValues,
-} from '@/shared/lib/ai-paths';
+import type { AiNode, RuntimePortValues } from '@/shared/lib/ai-paths';
 
 export const isPlainRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -11,8 +8,7 @@ export type SimulationRunBehavior = 'before_connected_trigger' | 'manual_only';
 export type FetcherSourceMode = 'live_context' | 'simulation_id' | 'live_then_simulation';
 
 export const DEFAULT_TRIGGER_CONTEXT_MODE: TriggerContextMode = 'trigger_only';
-export const DEFAULT_SIMULATION_RUN_BEHAVIOR: SimulationRunBehavior =
-  'before_connected_trigger';
+export const DEFAULT_SIMULATION_RUN_BEHAVIOR: SimulationRunBehavior = 'before_connected_trigger';
 export const DEFAULT_FETCHER_SOURCE_MODE: FetcherSourceMode = 'live_context';
 
 export const normalizeEntityType = (value?: string | null): string | null => {
@@ -43,9 +39,8 @@ export const readEntityTypeFromContext = (
   return normalizeEntityType(entityType);
 };
 
-export const hasEntityReference = (
-  context: Record<string, unknown> | null | undefined
-): boolean => readEntityIdFromContext(context) !== null;
+export const hasEntityReference = (context: Record<string, unknown> | null | undefined): boolean =>
+  readEntityIdFromContext(context) !== null;
 
 export const hasSimulationContextProvenance = (
   context: Record<string, unknown> | null | undefined
@@ -78,9 +73,7 @@ export const resolveTriggerContextMode = (triggerNode: AiNode): TriggerContextMo
   return DEFAULT_TRIGGER_CONTEXT_MODE;
 };
 
-export const resolveSimulationRunBehavior = (
-  simulationNode: AiNode
-): SimulationRunBehavior => {
+export const resolveSimulationRunBehavior = (simulationNode: AiNode): SimulationRunBehavior => {
   const behavior = simulationNode.config?.simulation?.runBehavior;
   if (behavior === 'before_connected_trigger' || behavior === 'manual_only') {
     return behavior;
@@ -88,15 +81,9 @@ export const resolveSimulationRunBehavior = (
   return DEFAULT_SIMULATION_RUN_BEHAVIOR;
 };
 
-export const resolveFetcherSourceMode = (
-  fetcherNode: AiNode
-): FetcherSourceMode => {
+export const resolveFetcherSourceMode = (fetcherNode: AiNode): FetcherSourceMode => {
   const mode = fetcherNode.config?.fetcher?.sourceMode;
-  if (
-    mode === 'live_context' ||
-    mode === 'simulation_id' ||
-    mode === 'live_then_simulation'
-  ) {
+  if (mode === 'live_context' || mode === 'simulation_id' || mode === 'live_then_simulation') {
     return mode;
   }
   return DEFAULT_FETCHER_SOURCE_MODE;
@@ -123,9 +110,7 @@ export const buildSimulationOutputsFromContext = (
     ...(entityId ? { entityId } : {}),
     ...(entityType ? { entityType } : {}),
     ...(productId ? { productId } : {}),
-    ...(context['entityJson'] !== undefined
-      ? { entityJson: context['entityJson'] }
-      : {}),
+    ...(context['entityJson'] !== undefined ? { entityJson: context['entityJson'] } : {}),
   };
 };
 
@@ -140,16 +125,13 @@ export const extractDatabaseRuntimeMetadata = (
       ? bundle['collection']
       : null;
   const requestedProvider =
-    typeof bundle['requestedProvider'] === 'string' &&
-    bundle['requestedProvider'].trim().length > 0
+    typeof bundle['requestedProvider'] === 'string' && bundle['requestedProvider'].trim().length > 0
       ? bundle['requestedProvider']
       : null;
   const resolvedProvider =
-    typeof bundle['resolvedProvider'] === 'string' &&
-    bundle['resolvedProvider'].trim().length > 0
+    typeof bundle['resolvedProvider'] === 'string' && bundle['resolvedProvider'].trim().length > 0
       ? bundle['resolvedProvider']
-      : typeof bundle['provider'] === 'string' &&
-          bundle['provider'].trim().length > 0
+      : typeof bundle['provider'] === 'string' && bundle['provider'].trim().length > 0
         ? bundle['provider']
         : null;
   const providerFallback = isPlainRecord(bundle['providerFallback'])

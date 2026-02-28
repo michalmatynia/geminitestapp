@@ -14,11 +14,7 @@ import {
 import type { ImageExportLogger } from './base-exporter-images';
 
 // Base.com API field names that accept image data
-const IMAGE_TARGET_FIELDS = new Set([
-  'images',
-  'image',
-  'image_urls',
-]);
+const IMAGE_TARGET_FIELDS = new Set(['images', 'image', 'image_urls']);
 
 const PRODUCER_TARGET_FIELDS = new Set([
   'producer',
@@ -33,19 +29,9 @@ const PRODUCER_TARGET_FIELDS = new Set([
   'manufacturer_ids',
 ]);
 
-const TAG_TARGET_FIELDS = new Set([
-  'tag',
-  'tags',
-  'tag_id',
-  'tag_ids',
-]);
+const TAG_TARGET_FIELDS = new Set(['tag', 'tags', 'tag_id', 'tag_ids']);
 
-const NUMERIC_TARGET_FIELDS = new Set([
-  'weight',
-  'length',
-  'width',
-  'height',
-]);
+const NUMERIC_TARGET_FIELDS = new Set(['weight', 'length', 'width', 'height']);
 
 type ProducerNameLookup = Record<string, string> | Map<string, string> | null | undefined;
 type ProducerExternalIdLookup = Record<string, string> | Map<string, string> | null | undefined;
@@ -116,9 +102,7 @@ type ParsedParameterSourceKey = {
   languageCode: string | null;
 };
 
-const parseParameterSourceKey = (
-  sourceKey: string
-): ParsedParameterSourceKey | null => {
+const parseParameterSourceKey = (sourceKey: string): ParsedParameterSourceKey | null => {
   const trimmed = sourceKey.trim();
   if (!trimmed) return null;
   if (!trimmed.toLowerCase().startsWith('parameter:')) return null;
@@ -168,9 +152,7 @@ const getProductParameterValue = (
   if (!normalizedParameterId) return null;
   const normalizedLanguageCode =
     typeof languageCode === 'string' ? languageCode.trim().toLowerCase() : '';
-  const entries = Array.isArray(product.parameters)
-    ? product.parameters
-    : [];
+  const entries = Array.isArray(product.parameters) ? product.parameters : [];
   const match = entries.find((entry) => {
     const entryParameterId = toTrimmedString(entry?.parameterId);
     return (
@@ -188,10 +170,7 @@ const getProductParameterValue = (
       : null;
 
   if (normalizedLanguageCode && valuesByLanguage) {
-    const localizedValue = getLocalizedParameterValue(
-      valuesByLanguage,
-      normalizedLanguageCode
-    );
+    const localizedValue = getLocalizedParameterValue(valuesByLanguage, normalizedLanguageCode);
     if (localizedValue) return localizedValue;
   }
 
@@ -233,9 +212,7 @@ const getProducerEntryName = (entry: ProducerEntry): string | null => {
 
 const getProductCategoryId = (product: ProductWithImages): string | null => {
   const record = product as unknown as Record<string, unknown>;
-  const direct =
-    toTrimmedString(record['categoryId']) ??
-    toTrimmedString(record['category_id']);
+  const direct = toTrimmedString(record['categoryId']) ?? toTrimmedString(record['category_id']);
   if (direct) return direct;
 
   const categoryValue = record['category'];
@@ -266,26 +243,15 @@ const getProductCategoryId = (product: ProductWithImages): string | null => {
   return null;
 };
 
-const getLookupValue = (
-  lookup: EntityLookup,
-  key: string
-): string | null => {
+const getLookupValue = (lookup: EntityLookup, key: string): string | null => {
   if (!lookup) return null;
   if (lookup instanceof Map) {
-    return (
-      toTrimmedString(lookup.get(key)) ??
-      toTrimmedString(lookup.get(key.toLowerCase()))
-    );
+    return toTrimmedString(lookup.get(key)) ?? toTrimmedString(lookup.get(key.toLowerCase()));
   }
-  return (
-    toTrimmedString(lookup[key]) ??
-    toTrimmedString(lookup[key.toLowerCase()])
-  );
+  return toTrimmedString(lookup[key]) ?? toTrimmedString(lookup[key.toLowerCase()]);
 };
 
-const getLookupEntries = (
-  lookup: EntityLookup
-): Array<[string, string]> => {
+const getLookupEntries = (lookup: EntityLookup): Array<[string, string]> => {
   if (!lookup) return [];
   if (lookup instanceof Map) {
     return Array.from(lookup.entries())
@@ -321,10 +287,7 @@ const getProducerExternalIdFromLookup = (
   return getLookupValue(producerExternalIdByInternalId, internalProducerId);
 };
 
-const getTagNameFromLookup = (
-  tagId: string,
-  tagNameById?: TagNameLookup
-): string | null => {
+const getTagNameFromLookup = (tagId: string, tagNameById?: TagNameLookup): string | null => {
   return getLookupValue(tagNameById, tagId);
 };
 
@@ -345,10 +308,7 @@ const buildProducerNameToExternalIdLookup = (
   for (const [internalProducerId, externalProducerId] of getLookupEntries(
     producerExternalIdByInternalId
   )) {
-    const producerName = getProducerNameFromLookup(
-      internalProducerId,
-      producerNameById
-    );
+    const producerName = getProducerNameFromLookup(internalProducerId, producerNameById);
     if (!producerName) continue;
     const key = producerName.toLowerCase();
     if (!result.has(key)) {
@@ -366,9 +326,7 @@ const buildTagNameToExternalIdLookup = (
   const result = new Map<string, string>();
   if (!tagNameById || !tagExternalIdByInternalId) return result;
 
-  for (const [internalTagId, externalTagId] of getLookupEntries(
-    tagExternalIdByInternalId
-  )) {
+  for (const [internalTagId, externalTagId] of getLookupEntries(tagExternalIdByInternalId)) {
     const tagName = getTagNameFromLookup(internalTagId, tagNameById);
     if (!tagName) continue;
     const key = tagName.toLowerCase();
@@ -447,14 +405,11 @@ const toProducerNameValueList = (
 
     const text = toStringValue(candidate);
     if (!text) return;
-    const normalizedText = text.includes(',') || text.includes(';')
-      ? text.split(/[,;]+/g)
-      : [text];
+    const normalizedText = text.includes(',') || text.includes(';') ? text.split(/[,;]+/g) : [text];
     normalizedText.forEach((part: string) => {
       const trimmed = part.trim();
       if (!trimmed) return;
-      const resolved =
-        getProducerNameFromLookup(trimmed, producerNameById) ?? trimmed;
+      const resolved = getProducerNameFromLookup(trimmed, producerNameById) ?? trimmed;
       if (!seen.has(resolved)) {
         seen.add(resolved);
         values.push(resolved);
@@ -501,9 +456,7 @@ const toProducerIdValueList = (
 
     const text = toStringValue(candidate);
     if (!text) return;
-    const normalizedText = text.includes(',') || text.includes(';')
-      ? text.split(/[,;]+/g)
-      : [text];
+    const normalizedText = text.includes(',') || text.includes(';') ? text.split(/[,;]+/g) : [text];
     normalizedText.forEach((part: string) => {
       const trimmed = part.trim();
       if (!trimmed) return;
@@ -524,10 +477,7 @@ const toProducerIdValueList = (
   return values;
 };
 
-const toTagNameValueList = (
-  value: unknown,
-  tagNameById?: TagNameLookup
-): string[] => {
+const toTagNameValueList = (value: unknown, tagNameById?: TagNameLookup): string[] => {
   const values: string[] = [];
   const seen = new Set<string>();
 
@@ -554,9 +504,7 @@ const toTagNameValueList = (
 
     const text = toStringValue(candidate);
     if (!text) return;
-    const normalizedText = text.includes(',') || text.includes(';')
-      ? text.split(/[,;]+/g)
-      : [text];
+    const normalizedText = text.includes(',') || text.includes(';') ? text.split(/[,;]+/g) : [text];
     normalizedText.forEach((part: string) => {
       const trimmed = part.trim();
       if (!trimmed) return;
@@ -607,16 +555,11 @@ const toTagIdValueList = (
 
     const text = toStringValue(candidate);
     if (!text) return;
-    const normalizedText = text.includes(',') || text.includes(';')
-      ? text.split(/[,;]+/g)
-      : [text];
+    const normalizedText = text.includes(',') || text.includes(';') ? text.split(/[,;]+/g) : [text];
     normalizedText.forEach((part: string) => {
       const trimmed = part.trim();
       if (!trimmed) return;
-      const mappedFromInternal = getTagExternalIdFromLookup(
-        trimmed,
-        tagExternalIdByInternalId
-      );
+      const mappedFromInternal = getTagExternalIdFromLookup(trimmed, tagExternalIdByInternalId);
       const mappedFromName = tagNameToExternalId.get(trimmed.toLowerCase());
       const resolved = mappedFromInternal ?? mappedFromName ?? trimmed;
       if (!seen.has(resolved)) {
@@ -680,9 +623,7 @@ const getProductTagValues = (
   tagNameById?: TagNameLookup,
   tagExternalIdByInternalId?: TagExternalIdLookup
 ): { tagIds: string[]; tagNames: string[] } => {
-  const entries = Array.isArray(product.tags)
-    ? (product.tags as unknown as TagEntry[])
-    : [];
+  const entries = Array.isArray(product.tags) ? (product.tags as unknown as TagEntry[]) : [];
   const tagIds: string[] = [];
   const tagNames: string[] = [];
   const seenIds = new Set<string>();
@@ -706,10 +647,7 @@ const getProductTagValues = (
   }
 
   tagIds.forEach((tagId: string, index: number) => {
-    const resolvedExternalId = getTagExternalIdFromLookup(
-      tagId,
-      tagExternalIdByInternalId
-    );
+    const resolvedExternalId = getTagExternalIdFromLookup(tagId, tagExternalIdByInternalId);
     if (resolvedExternalId) {
       tagIds[index] = resolvedExternalId;
     }
@@ -761,10 +699,7 @@ const getProductValue = (
       producerNameById,
       producerExternalIdByInternalId
     );
-    if (
-      normalized === 'producerid' ||
-      normalized === 'producer_id'
-    ) {
+    if (normalized === 'producerid' || normalized === 'producer_id') {
       return producerIds[0] ?? null;
     }
     if (normalized === 'producerids' || normalized === 'producer_ids') {
@@ -807,11 +742,7 @@ const getProductValue = (
     if (normalized === 'tagids' || normalized === 'tag_ids') {
       return tagIds;
     }
-    if (
-      normalized === 'tags' ||
-      normalized === 'tagnames' ||
-      normalized === 'tag_names'
-    ) {
+    if (normalized === 'tags' || normalized === 'tagnames' || normalized === 'tag_names') {
       return tagNames.length > 0 ? tagNames : tagIds;
     }
     if (normalized === 'tag') {
@@ -896,7 +827,7 @@ export function applyExportTemplateMappings(
       if (Array.isArray(rawValue)) {
         const urls = rawValue
           .map((entry: unknown) =>
-            typeof entry === 'string' ? resolveImageUrl(entry, imageBaseUrl) ?? '' : ''
+            typeof entry === 'string' ? (resolveImageUrl(entry, imageBaseUrl) ?? '') : ''
           )
           .filter(Boolean)
           .filter((url: string, index: number) =>
@@ -943,18 +874,13 @@ export function applyExportTemplateMappings(
       const producerValues =
         producerTarget === 'producer'
           ? toProducerNameValueList(rawValue, producerNameById)
-          : toProducerIdValueList(
-            rawValue,
-            producerExternalIdByInternalId,
-            producerNameById
-          );
+          : toProducerIdValueList(rawValue, producerExternalIdByInternalId, producerNameById);
       if (producerValues.length === 0) continue;
       if (producerTarget === 'producer' || producerTarget === 'producer_id') {
         const producerValue = producerValues[0] ?? null;
         result[normalizedOutputField] = producerValue;
         if (
-          (normalizedTargetField === 'producer' ||
-            normalizedTargetField === 'producer_id') &&
+          (normalizedTargetField === 'producer' || normalizedTargetField === 'producer_id') &&
           result['manufacturer_id'] === undefined
         ) {
           result['manufacturer_id'] = producerValue;
@@ -979,16 +905,10 @@ export function applyExportTemplateMappings(
             result['manufacturer_id'] = primaryProducerId;
           }
         }
-        if (
-          normalizedTargetField === 'producer_ids' &&
-          result['manufacturer_ids'] === undefined
-        ) {
+        if (normalizedTargetField === 'producer_ids' && result['manufacturer_ids'] === undefined) {
           result['manufacturer_ids'] = producerValues;
         }
-        if (
-          normalizedTargetField === 'manufacturer_ids' &&
-          result['producer_ids'] === undefined
-        ) {
+        if (normalizedTargetField === 'manufacturer_ids' && result['producer_ids'] === undefined) {
           result['producer_ids'] = producerValues;
         }
       }
@@ -1000,11 +920,7 @@ export function applyExportTemplateMappings(
       const tagValues =
         tagTarget === 'tag'
           ? toTagNameValueList(rawValue, tagNameById)
-          : toTagIdValueList(
-            rawValue,
-            tagExternalIdByInternalId,
-            tagNameById
-          );
+          : toTagIdValueList(rawValue, tagExternalIdByInternalId, tagNameById);
       if (tagValues.length === 0) continue;
       if (tagTarget === 'tag' || tagTarget === 'tag_id') {
         result[targetField] = tagValues[0] ?? null;

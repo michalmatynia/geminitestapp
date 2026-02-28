@@ -41,7 +41,8 @@ const normalizeSchemaType = (value: string): string => {
   const normalized = value.trim();
   const lower = normalized.toLowerCase();
   if (lower === 'string') return 'string';
-  if (lower === 'int' || lower === 'float' || lower === 'decimal' || lower === 'number') return 'number';
+  if (lower === 'int' || lower === 'float' || lower === 'decimal' || lower === 'number')
+    return 'number';
   if (lower === 'boolean' || lower === 'bool') return 'boolean';
   if (lower === 'datetime' || lower === 'date') return 'string';
   if (lower === 'json') return 'Record<string, unknown>';
@@ -53,7 +54,9 @@ export const formatCollectionSchema = (collectionName: string, fields: FieldSche
   if (!fields || fields.length === 0) {
     return `interface ${interfaceName} {}`;
   }
-  const lines = fields.map((field: FieldSchema) => `  ${field.name}: ${normalizeSchemaType(field.type)};`);
+  const lines = fields.map(
+    (field: FieldSchema) => `  ${field.name}: ${normalizeSchemaType(field.type)};`
+  );
   return `interface ${interfaceName} {\n${lines.join('\n')}\n}`;
 };
 
@@ -75,18 +78,19 @@ export const normalizeSchemaCollections = (schema: SchemaData | null): Collectio
   };
 
   if (schema.provider === 'multi') {
-    return (collectionsArray as Array<CollectionSchema & { provider?: string }>).map((collection) => stripUndefinedProvider(collection));
+    return (collectionsArray as Array<CollectionSchema & { provider?: string }>).map((collection) =>
+      stripUndefinedProvider(collection)
+    );
   }
 
   const provider = schema.provider === 'prisma' ? 'prisma' : 'mongodb';
-  return (collectionsArray as Array<CollectionSchema & { provider?: string }>).map((collection) => ({
-    ...stripUndefinedProvider(collection),
-    provider,
-  }));
+  return (collectionsArray as Array<CollectionSchema & { provider?: string }>).map(
+    (collection) => ({
+      ...stripUndefinedProvider(collection),
+      provider,
+    })
+  );
 };
 
-export const formatCollectionLabel = (
-  collection: CollectionSchema,
-  isMulti: boolean
-): string =>
+export const formatCollectionLabel = (collection: CollectionSchema, isMulti: boolean): string =>
   isMulti && collection.provider ? `${collection.name} (${collection.provider})` : collection.name;

@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest';
 
 import { defaultPlaywrightSettings } from '@/shared/lib/playwright/constants/playwright';
-import { 
-  normalizePlaywrightPersonas, 
-  arePlaywrightSettingsEqual, 
+import {
+  normalizePlaywrightPersonas,
+  arePlaywrightSettingsEqual,
   findPlaywrightPersonaMatch,
-  buildPlaywrightSettings 
+  buildPlaywrightSettings,
 } from '@/shared/lib/playwright/utils/personas';
 
 describe('Playwright Persona Utils', () => {
@@ -56,7 +56,7 @@ describe('Playwright Persona Utils', () => {
         { id: 'p1', name: 'P1', settings: buildPlaywrightSettings({ slowMo: 100 }) },
         { id: 'p2', name: 'P2', settings: buildPlaywrightSettings({ slowMo: 500 }) },
       ] as any;
-      
+
       const match = findPlaywrightPersonaMatch(settings, personas);
       expect(match?.id).toBe('p2');
     });

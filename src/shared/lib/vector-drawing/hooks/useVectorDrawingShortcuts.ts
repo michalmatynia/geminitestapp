@@ -50,12 +50,18 @@ export function useVectorDrawingShortcuts({
       // Tool shortcuts (only when no modifier keys)
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       const toolMap: Record<string, VectorToolMode> = {
-        v: 'select', '1': 'select',
-        p: 'polygon', '2': 'polygon',
-        l: 'lasso', '3': 'lasso',
-        r: 'rect', '4': 'rect',
-        e: 'ellipse', '5': 'ellipse',
-        b: 'brush', '6': 'brush',
+        v: 'select',
+        '1': 'select',
+        p: 'polygon',
+        '2': 'polygon',
+        l: 'lasso',
+        '3': 'lasso',
+        r: 'rect',
+        '4': 'rect',
+        e: 'ellipse',
+        '5': 'ellipse',
+        b: 'brush',
+        '6': 'brush',
       };
       const mappedTool = toolMap[e.key.toLowerCase()];
       if (mappedTool) {

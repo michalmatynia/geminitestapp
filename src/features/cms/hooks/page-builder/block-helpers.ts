@@ -1,10 +1,9 @@
-import { getSectionDefinition, getBlockDefinition } from '../../components/page-builder/section-registry';
+import {
+  getSectionDefinition,
+  getBlockDefinition,
+} from '../../components/page-builder/section-registry';
 
-import type {
-  SectionInstance,
-  BlockInstance,
-  SettingsField,
-} from '../../types/page-builder';
+import type { SectionInstance, BlockInstance, SettingsField } from '../../types/page-builder';
 
 // ---------------------------------------------------------------------------
 // ID generation
@@ -179,8 +178,9 @@ export function createRowBlock(columnCount: number): BlockInstance {
   const rowDef = getBlockDefinition('Row');
   const defaultSettings = rowDef ? { ...rowDef.defaultSettings } : {};
   const minHeight =
-    typeof defaultSettings['minHeight'] === 'number' && Number.isFinite(defaultSettings['minHeight'])
-      ? (defaultSettings['minHeight'])
+    typeof defaultSettings['minHeight'] === 'number' &&
+    Number.isFinite(defaultSettings['minHeight'])
+      ? defaultSettings['minHeight']
       : 0;
   if (minHeight <= 0) {
     defaultSettings['minHeight'] = 120;
@@ -232,7 +232,10 @@ export function ensureGridRows(section: SectionInstance): SectionInstance {
     const allRows = [...rows, extraRow];
     const maxColumns = Math.max(
       1,
-      ...allRows.map((row: BlockInstance) => (row.blocks ?? []).filter((b: BlockInstance) => b.type === 'Column').length)
+      ...allRows.map(
+        (row: BlockInstance) =>
+          (row.blocks ?? []).filter((b: BlockInstance) => b.type === 'Column').length
+      )
     );
     return {
       ...section,
@@ -242,10 +245,17 @@ export function ensureGridRows(section: SectionInstance): SectionInstance {
   }
   const rowDef = getBlockDefinition('Row');
   const rowsSetting = (section.settings['rows'] as number) ?? 1;
-  const columnsSetting = (section.settings['columns'] as number) ?? Math.max(1, columns.length || 1);
+  const columnsSetting =
+    (section.settings['columns'] as number) ?? Math.max(1, columns.length || 1);
   if (columns.length === 0) {
-    const rows = Array.from({ length: Math.max(1, rowsSetting) }, () => createRowBlock(columnsSetting));
-    return { ...section, blocks: [...rows, ...extras], settings: { ...section.settings, rows: rows.length, columns: columnsSetting } };
+    const rows = Array.from({ length: Math.max(1, rowsSetting) }, () =>
+      createRowBlock(columnsSetting)
+    );
+    return {
+      ...section,
+      blocks: [...rows, ...extras],
+      settings: { ...section.settings, rows: rows.length, columns: columnsSetting },
+    };
   }
   const row: BlockInstance = {
     id: uid(),
@@ -253,7 +263,11 @@ export function ensureGridRows(section: SectionInstance): SectionInstance {
     settings: rowDef ? { ...rowDef.defaultSettings } : {},
     blocks: columns,
   };
-  return { ...section, blocks: [row, ...extras], settings: { ...section.settings, rows: 1, columns: columns.length } };
+  return {
+    ...section,
+    blocks: [row, ...extras],
+    settings: { ...section.settings, rows: 1, columns: columns.length },
+  };
 }
 
 export function updateColumnBlocks(
@@ -299,7 +313,9 @@ export function removeColumnFromRows(
     if (block.type !== 'Row') return block;
     const rowBlocks = block.blocks ?? [];
     const columns = rowBlocks.filter((b: BlockInstance) => b.type === 'Column');
-    const isTargetRow = rowId ? block.id === rowId : rowBlocks.some((b: BlockInstance) => b.id === columnId);
+    const isTargetRow = rowId
+      ? block.id === rowId
+      : rowBlocks.some((b: BlockInstance) => b.id === columnId);
     if (!isTargetRow) return block;
     if (columns.length <= 1) return block;
     const nextRowBlocks = rowBlocks.filter((b: BlockInstance) => b.id !== columnId);
@@ -319,7 +335,12 @@ export function removeBlockFromColumnBlocks(
   let moved: BlockInstance | undefined;
   const nextBlocks = blocks.map((block: BlockInstance) => {
     if (block.type === 'Row' && block.blocks) {
-      const result = removeBlockFromColumnBlocks(block.blocks, columnId, blockId, fromParentBlockId);
+      const result = removeBlockFromColumnBlocks(
+        block.blocks,
+        columnId,
+        blockId,
+        fromParentBlockId
+      );
       if (result.moved) moved = result.moved;
       return { ...block, blocks: result.blocks };
     }
@@ -331,13 +352,19 @@ export function removeBlockFromColumnBlocks(
             if (pb.id !== fromParentBlockId) return pb;
             const found = (pb.blocks ?? []).find((eb: BlockInstance) => eb.id === blockId);
             if (found) moved = found;
-            return { ...pb, blocks: (pb.blocks ?? []).filter((eb: BlockInstance) => eb.id !== blockId) };
+            return {
+              ...pb,
+              blocks: (pb.blocks ?? []).filter((eb: BlockInstance) => eb.id !== blockId),
+            };
           }),
         };
       }
       const found = (block.blocks ?? []).find((cb: BlockInstance) => cb.id === blockId);
       if (found) moved = found;
-      return { ...block, blocks: (block.blocks ?? []).filter((cb: BlockInstance) => cb.id !== blockId) };
+      return {
+        ...block,
+        blocks: (block.blocks ?? []).filter((cb: BlockInstance) => cb.id !== blockId),
+      };
     }
     return block;
   });
@@ -355,7 +382,13 @@ export function insertBlockIntoColumnBlocks(
     if (blockItem.type === 'Row' && blockItem.blocks) {
       return {
         ...blockItem,
-        blocks: insertBlockIntoColumnBlocks(blockItem.blocks, columnId, block, toIndex, toParentBlockId),
+        blocks: insertBlockIntoColumnBlocks(
+          blockItem.blocks,
+          columnId,
+          block,
+          toIndex,
+          toParentBlockId
+        ),
       };
     }
     if (blockItem.type === 'Column' && blockItem.id === columnId) {
@@ -464,29 +497,50 @@ export function findSection(sections: SectionInstance[], nodeId: string): Sectio
 export function findBlock(
   sections: SectionInstance[],
   nodeId: string
-): { block: BlockInstance; section: SectionInstance; parentColumn?: BlockInstance; parentBlock?: BlockInstance; parentRow?: BlockInstance } | null {
+): {
+  block: BlockInstance;
+  section: SectionInstance;
+  parentColumn?: BlockInstance;
+  parentBlock?: BlockInstance;
+  parentRow?: BlockInstance;
+} | null {
   const searchBlocks = (
     blocks: BlockInstance[],
     section: SectionInstance,
     parentColumn?: BlockInstance,
     parentBlock?: BlockInstance,
     parentRow?: BlockInstance
-  ): { block: BlockInstance; section: SectionInstance; parentColumn?: BlockInstance; parentBlock?: BlockInstance; parentRow?: BlockInstance } | null => {
+  ): {
+    block: BlockInstance;
+    section: SectionInstance;
+    parentColumn?: BlockInstance;
+    parentBlock?: BlockInstance;
+    parentRow?: BlockInstance;
+  } | null => {
     for (const b of blocks) {
-      if (b.id === nodeId) return {
-        block: b,
-        section,
-        ...(parentColumn && { parentColumn }),
-        ...(parentBlock && { parentBlock }),
-        ...(parentRow && { parentRow })
-      };
+      if (b.id === nodeId)
+        return {
+          block: b,
+          section,
+          ...(parentColumn && { parentColumn }),
+          ...(parentBlock && { parentBlock }),
+          ...(parentRow && { parentRow }),
+        };
       if (!b.blocks || b.blocks.length === 0) continue;
       if (b.type === 'Column') {
         for (const cb of b.blocks ?? []) {
-          if (cb.id === nodeId) return { block: cb, section, parentColumn: b, ...(parentRow && { parentRow }) };
+          if (cb.id === nodeId)
+            return { block: cb, section, parentColumn: b, ...(parentRow && { parentRow }) };
           if (cb.blocks) {
             for (const eb of cb.blocks) {
-              if (eb.id === nodeId) return { block: eb, section, parentColumn: b, parentBlock: cb, ...(parentRow && { parentRow }) };
+              if (eb.id === nodeId)
+                return {
+                  block: eb,
+                  section,
+                  parentColumn: b,
+                  parentBlock: cb,
+                  ...(parentRow && { parentRow }),
+                };
             }
           }
         }
@@ -511,8 +565,14 @@ export function findBlock(
   return null;
 }
 
-export function findColumn(sections: SectionInstance[], nodeId: string): { column: BlockInstance; section: SectionInstance } | null {
-  const searchColumns = (blocks: BlockInstance[], section: SectionInstance): { column: BlockInstance; section: SectionInstance } | null => {
+export function findColumn(
+  sections: SectionInstance[],
+  nodeId: string
+): { column: BlockInstance; section: SectionInstance } | null {
+  const searchColumns = (
+    blocks: BlockInstance[],
+    section: SectionInstance
+  ): { column: BlockInstance; section: SectionInstance } | null => {
     for (const b of blocks) {
       if (b.type === 'Column' && b.id === nodeId) return { column: b, section };
       if (b.blocks) {
@@ -573,13 +633,16 @@ export function applySettingsDefaults(
   return merged;
 }
 
-export function buildSectionSettings(type: string, settings: Record<string, unknown>): Record<string, unknown> {
+export function buildSectionSettings(
+  type: string,
+  settings: Record<string, unknown>
+): Record<string, unknown> {
   const def = getSectionDefinition(type);
   if (!def) return settings;
   const merged = applySettingsDefaults(settings, def.settingsSchema, def.defaultSettings);
   if (type === 'AnnouncementBar') {
-    const left = typeof merged['paddingLeft'] === 'number' ? (merged['paddingLeft']) : undefined;
-    const right = typeof merged['paddingRight'] === 'number' ? (merged['paddingRight']) : undefined;
+    const left = typeof merged['paddingLeft'] === 'number' ? merged['paddingLeft'] : undefined;
+    const right = typeof merged['paddingRight'] === 'number' ? merged['paddingRight'] : undefined;
     return {
       ...merged,
       paddingLeft: left === 24 || left === undefined ? 0 : left,

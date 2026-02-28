@@ -3,7 +3,9 @@ import { vi } from 'vitest';
 import type { AiNode } from '@/shared/contracts/ai-paths';
 import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 
-export const createMockContext = (overrides: Partial<NodeHandlerContext> = {}): NodeHandlerContext => {
+export const createMockContext = (
+  overrides: Partial<NodeHandlerContext> = {}
+): NodeHandlerContext => {
   return {
     node: {
       id: 'test-node',

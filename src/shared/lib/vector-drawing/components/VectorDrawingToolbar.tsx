@@ -127,7 +127,9 @@ export function VectorDrawingToolbar({
   const toolOptions = showSelectTool
     ? baseToolOptions
     : baseToolOptions.filter((option) => option.key !== 'select');
-  const hasActions = Boolean(onUndo || onRedo || onClose || onDetach || onClear || onSmooth || onSimplify);
+  const hasActions = Boolean(
+    onUndo || onRedo || onClose || onDetach || onClear || onSmooth || onSimplify
+  );
   const resolveTooltip = (docId: string, fallback: string): string =>
     getDocumentationTooltip(DOCUMENTATION_MODULE_IDS.vectorDrawing, docId) ?? fallback;
 
@@ -161,9 +163,7 @@ export function VectorDrawingToolbar({
       ))}
       {hasActions ? <div className='mx-1 h-6 w-px bg-border' /> : null}
       {onUndo ? (
-        <Tooltip
-          content={resolveTooltip('vector_toolbar_action_undo', 'Undo (Ctrl+Z)')}
-        >
+        <Tooltip content={resolveTooltip('vector_toolbar_action_undo', 'Undo (Ctrl+Z)')}>
           <Button
             type='button'
             variant='outline'
@@ -176,9 +176,7 @@ export function VectorDrawingToolbar({
         </Tooltip>
       ) : null}
       {onRedo ? (
-        <Tooltip
-          content={resolveTooltip('vector_toolbar_action_redo', 'Redo (Ctrl+Shift+Z)')}
-        >
+        <Tooltip content={resolveTooltip('vector_toolbar_action_redo', 'Redo (Ctrl+Shift+Z)')}>
           <Button
             type='button'
             variant='outline'
@@ -191,9 +189,7 @@ export function VectorDrawingToolbar({
         </Tooltip>
       ) : null}
       {onClose ? (
-        <Tooltip
-          content={resolveTooltip('vector_toolbar_action_close_polygon', 'Close polygon')}
-        >
+        <Tooltip content={resolveTooltip('vector_toolbar_action_close_polygon', 'Close polygon')}>
           <Button
             type='button'
             variant='outline'
@@ -206,9 +202,7 @@ export function VectorDrawingToolbar({
         </Tooltip>
       ) : null}
       {onDetach ? (
-        <Tooltip
-          content={resolveTooltip('vector_toolbar_action_detach_polygon', 'Detach polygon')}
-        >
+        <Tooltip content={resolveTooltip('vector_toolbar_action_detach_polygon', 'Detach polygon')}>
           <Button
             type='button'
             variant='outline'
@@ -221,9 +215,7 @@ export function VectorDrawingToolbar({
         </Tooltip>
       ) : null}
       {onClear ? (
-        <Tooltip
-          content={resolveTooltip('vector_toolbar_action_clear_shapes', 'Clear shapes')}
-        >
+        <Tooltip content={resolveTooltip('vector_toolbar_action_clear_shapes', 'Clear shapes')}>
           <Button
             type='button'
             variant='outline'
@@ -236,9 +228,7 @@ export function VectorDrawingToolbar({
         </Tooltip>
       ) : null}
       {onSmooth ? (
-        <Tooltip
-          content={resolveTooltip('vector_toolbar_action_smooth_path', 'Smooth path')}
-        >
+        <Tooltip content={resolveTooltip('vector_toolbar_action_smooth_path', 'Smooth path')}>
           <Button
             type='button'
             variant='outline'
@@ -251,9 +241,7 @@ export function VectorDrawingToolbar({
         </Tooltip>
       ) : null}
       {onSimplify ? (
-        <Tooltip
-          content={resolveTooltip('vector_toolbar_action_simplify_path', 'Simplify path')}
-        >
+        <Tooltip content={resolveTooltip('vector_toolbar_action_simplify_path', 'Simplify path')}>
           <Button
             type='button'
             variant='outline'

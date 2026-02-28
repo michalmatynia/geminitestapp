@@ -1,17 +1,14 @@
 import type { Dispatch, SetStateAction } from 'react';
 
 import { integrationDefinitions } from '@/shared/contracts/integrations';
-import type { 
-  Integration, 
-  IntegrationConnection, 
-  SessionCookie, 
+import type {
+  Integration,
+  IntegrationConnection,
+  SessionCookie,
   TestLogEntry,
-  SessionPayload
+  SessionPayload,
 } from '@/shared/contracts/integrations';
-import type { 
-  PlaywrightPersona, 
-  PlaywrightSettings 
-} from '@/shared/contracts/playwright';
+import type { PlaywrightPersona, PlaywrightSettings } from '@/shared/contracts/playwright';
 
 export type {
   Integration,
@@ -128,9 +125,7 @@ export interface IntegrationsContextType {
   } | null;
   savingAllegroSandbox: boolean;
   handleIntegrationClick: (definition: IntegrationDefinition) => Promise<void>;
-  handleSaveConnection: (
-    options?: SaveConnectionOptions
-  ) => Promise<IntegrationConnection | null>;
+  handleSaveConnection: (options?: SaveConnectionOptions) => Promise<IntegrationConnection | null>;
   handleDeleteConnection: (connection: IntegrationConnection) => void;
   handleConfirmDeleteConnection: (userPassword: string) => Promise<boolean>;
   connectionToDelete: IntegrationConnection | null;

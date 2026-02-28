@@ -34,9 +34,11 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   }
   const resolvedNotebookId =
     parsed.data.notebookId ?? (await noteService.getOrCreateDefaultNotebook()).id;
-  const theme = await noteService.createTheme(removeUndefined({
-    ...parsed.data,
-    notebookId: resolvedNotebookId,
-  }) as ThemeCreateInput);
+  const theme = await noteService.createTheme(
+    removeUndefined({
+      ...parsed.data,
+      notebookId: resolvedNotebookId,
+    }) as ThemeCreateInput
+  );
   return NextResponse.json(theme, { status: 201 });
 }

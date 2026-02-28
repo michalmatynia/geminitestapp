@@ -8,9 +8,7 @@ import {
 
 const normalizeHistoryRetentionValue = (value: unknown, fallback: number): number => {
   const parsed =
-    typeof value === 'number'
-      ? value
-      : Number.parseInt(typeof value === 'string' ? value : '', 10);
+    typeof value === 'number' ? value : Number.parseInt(typeof value === 'string' ? value : '', 10);
   if (!Number.isFinite(parsed) || parsed < AI_PATHS_HISTORY_RETENTION_MIN) {
     return fallback;
   }
@@ -45,7 +43,7 @@ export const buildNodesForAutoSave = (
   activePathId: string | null,
   pathConfigs: Record<string, PathConfig>
 ): AiNode[] => {
-  const savedNodes = activePathId ? pathConfigs[activePathId]?.nodes ?? [] : [];
+  const savedNodes = activePathId ? (pathConfigs[activePathId]?.nodes ?? []) : [];
   const savedConfigById = new Map<string, AiNode['config']>(
     savedNodes.map((node: AiNode): [string, AiNode['config']] => [node.id, node.config])
   );
@@ -144,8 +142,7 @@ export const normalizeLoadedPathMetas = (metas: PathMeta[]): PathMeta[] => {
   metas.forEach((meta: PathMeta) => {
     const id = typeof meta.id === 'string' ? meta.id.trim() : '';
     if (!id) return;
-    const normalizedName =
-      normalizeLoadedPathName(id, meta.name) || `Path ${id.slice(0, 6)}`;
+    const normalizedName = normalizeLoadedPathName(id, meta.name) || `Path ${id.slice(0, 6)}`;
     const fallbackTimestamp = new Date().toISOString();
     const normalizedCreatedAt =
       typeof meta.createdAt === 'string' && meta.createdAt.trim().length > 0
@@ -174,8 +171,7 @@ export const normalizeLoadedPathMetas = (metas: PathMeta[]): PathMeta[] => {
     }
   });
 
-  return Array.from(byId.values()).sort(
-    (a: PathMeta, b: PathMeta): number =>
-      b.updatedAt.localeCompare(a.updatedAt)
+  return Array.from(byId.values()).sort((a: PathMeta, b: PathMeta): number =>
+    b.updatedAt.localeCompare(a.updatedAt)
   );
 };

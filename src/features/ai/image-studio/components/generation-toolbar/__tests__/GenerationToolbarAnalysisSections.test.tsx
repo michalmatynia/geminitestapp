@@ -154,7 +154,9 @@ describe('GenerationToolbar analysis integration section UX', () => {
     const onRunCenter = vi.fn();
     const onRunAuto = vi.fn();
     render(<GenerationToolbarCenterSection {...baseCenterProps({ onRunAnalysis: onRunCenter })} />);
-    render(<GenerationToolbarAutoScalerSection {...baseAutoScalerProps({ onRunAnalysis: onRunAuto })} />);
+    render(
+      <GenerationToolbarAutoScalerSection {...baseAutoScalerProps({ onRunAnalysis: onRunAuto })} />
+    );
 
     const buttons = screen.getAllByRole('button', { name: 'Run Analysis' });
     fireEvent.click(buttons[0]!);
@@ -182,7 +184,9 @@ describe('GenerationToolbar analysis integration section UX', () => {
   });
 
   it('disables Run Analysis when there is no source image', () => {
-    render(<GenerationToolbarAutoScalerSection {...baseAutoScalerProps({ hasSourceImage: false })} />);
+    render(
+      <GenerationToolbarAutoScalerSection {...baseAutoScalerProps({ hasSourceImage: false })} />
+    );
     const button = screen.getByRole('button', { name: 'Run Analysis' });
     expect(button).toBeDisabled();
     expect(button).toHaveAttribute('title', 'Select a slot image before analysis');
@@ -208,7 +212,8 @@ describe('GenerationToolbar analysis integration section UX', () => {
     render(
       <GenerationToolbarAutoScalerSection
         {...baseAutoScalerProps({
-          analysisConfigMismatchMessage: 'Current controls differ from analysis plan: padding, detection.',
+          analysisConfigMismatchMessage:
+            'Current controls differ from analysis plan: padding, detection.',
           onOpenSharedDetectionSettings,
         })}
       />

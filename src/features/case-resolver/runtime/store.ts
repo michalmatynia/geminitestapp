@@ -4,22 +4,20 @@ export type CaseResolverRuntimeStore = {
   getSnapshot: () => CaseResolverRuntimeSnapshot;
   getState: () => CaseResolverRuntimeState;
   setState: (nextState: CaseResolverRuntimeState) => void;
-  patchState: (
-    updater: (current: CaseResolverRuntimeState) => CaseResolverRuntimeState,
-  ) => void;
+  patchState: (updater: (current: CaseResolverRuntimeState) => CaseResolverRuntimeState) => void;
   subscribe: (listener: () => void) => () => void;
 };
 
 const cloneSnapshot = (
   state: CaseResolverRuntimeState,
-  version: number,
+  version: number
 ): CaseResolverRuntimeSnapshot => ({
   version,
   state,
 });
 
 export const createCaseResolverRuntimeStore = (
-  initialState: CaseResolverRuntimeState,
+  initialState: CaseResolverRuntimeState
 ): CaseResolverRuntimeStore => {
   let state = initialState;
   let version = 0;
@@ -43,7 +41,7 @@ export const createCaseResolverRuntimeStore = (
       emit();
     },
     patchState: (
-      updater: (current: CaseResolverRuntimeState) => CaseResolverRuntimeState,
+      updater: (current: CaseResolverRuntimeState) => CaseResolverRuntimeState
     ): void => {
       const nextState = updater(state);
       if (nextState === state) return;

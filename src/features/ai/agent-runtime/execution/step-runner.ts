@@ -66,14 +66,8 @@ type StepLoopResult = {
   requiresHuman: boolean;
 };
 
-export async function runPlanStepLoop(
-  input: StepLoopInput
-): Promise<StepLoopResult> {
-  const {
-    context,
-    sharedBrowser,
-    sharedContext,
-  } = input;
+export async function runPlanStepLoop(input: StepLoopInput): Promise<StepLoopResult> {
+  const { context, sharedBrowser, sharedContext } = input;
   const {
     run,
     settings,
@@ -97,16 +91,11 @@ export async function runPlanStepLoop(
   let replanCount = 0;
   let selfCheckCount = 0;
   let lastContextUrl = context.browserContext?.url ?? null;
-  let hasBrowserContext = Boolean(
-    lastContextUrl && lastContextUrl !== 'about:blank'
-  );
+  let hasBrowserContext = Boolean(lastContextUrl && lastContextUrl !== 'about:blank');
   let consecutiveFailures = 0;
-  let approvalRequestedStepId: string | null =
-    input.checkpoint?.approvalRequestedStepId ?? null;
-  const approvalGrantedStepId: string | null =
-    input.checkpoint?.approvalGrantedStepId ?? null;
-  let checkpointBriefStepId: string | null =
-    input.checkpoint?.checkpointStepId ?? null;
+  let approvalRequestedStepId: string | null = input.checkpoint?.approvalRequestedStepId ?? null;
+  const approvalGrantedStepId: string | null = input.checkpoint?.approvalGrantedStepId ?? null;
+  let checkpointBriefStepId: string | null = input.checkpoint?.checkpointStepId ?? null;
   let checkpointBriefError: string | null = input.checkpoint?.lastError ?? null;
   let stagnationCount = 0;
   let noContextCount = 0;
@@ -122,9 +111,7 @@ export async function runPlanStepLoop(
     url: string | null;
   }> = [];
 
-  const maybeUpdateCheckpointBrief = async (
-    activeStepIdForBrief: string | null
-  ): Promise<void> => {
+  const maybeUpdateCheckpointBrief = async (activeStepIdForBrief: string | null): Promise<void> => {
     if (!activeStepIdForBrief) return;
     if (
       checkpointBriefStepId === activeStepIdForBrief &&
@@ -230,11 +217,7 @@ export async function runPlanStepLoop(
         }
       }
     }
-    if (
-      preferences.requireHumanApproval &&
-      requiresApproval &&
-      approvalGrantedStepId !== step.id
-    ) {
+    if (preferences.requireHumanApproval && requiresApproval && approvalGrantedStepId !== step.id) {
       approvalRequestedStepId = step.id;
       await prisma.chatbotAgentRun.update({
         where: { id: run.id },
@@ -316,7 +299,7 @@ export async function runPlanStepLoop(
 
       void (async () => {
         const tasks: Promise<unknown>[] = [];
-        
+
         // Task 1: Checkpoint Brief
         tasks.push(maybeUpdateCheckpointBrief(step.id));
 
@@ -326,7 +309,179 @@ export async function runPlanStepLoop(
           completedCount % summaryInterval === 0 &&
           completedCount !== summaryCheckpoint
         ) {
-          tasks.push((async () => {
+          tasks.push(
+            (async () => {
+              const summaryContext = await getBrowserContextSummary(run.id);
+              const summary = await summarizePlannerMemoryWithLLM({
+                prompt: run.prompt,
+                model: memorySummarizationModel,
+                memory: memoryContext,
+                steps: planSteps,
+                browserContext: summaryContext,
+                runId: run.id,
+              });
+              if (summary) {
+                await addAgentMemory({
+                  runId: run.id,
+                  scope: 'session',
+                  content: summary,
+                  metadata: { type: 'planner-summary', completedCount },
+                });
+                memoryContext = [...memoryContext, summary].slice(-10);
+                summaryCheckpoint = completedCount;
+                await logAgentAudit(run.id, 'info', 'Planner summary saved.', {
+                  type: 'planner-summary',
+                  completedCount,
+                  summary,
+                });
+              }
+            })()
+          );
+        }
+
+        if (tasks.length > 0) {
+          await Promise.allSettled(tasks);
+        }
+      })();
+
+      stepIndex += 1;
+      continue;
+    }
+
+    const shouldInitializeBrowser = !hasBrowserContext || stepIndex === 0;
+    const previousUrl = lastContextUrl;
+    const shouldRunExtraction = isExtractionStep(step, run.prompt, taskType);
+    const toolPrompt = appendTaskTypeToPrompt(
+      run.prompt,
+      shouldRunExtraction ? 'extract_info' : taskType
+    );
+    const toolName = shouldInitializeBrowser || shouldRunExtraction ? 'playwright' : 'snapshot';
+    const toolStart = Date.now();
+    const toolContext = {
+      type: 'tool-execution',
+      toolName,
+      stepId: step.id,
+      stepTitle: step.title,
+      shouldRunExtraction,
+      shouldInitializeBrowser,
+    };
+    await logAgentAudit(run.id, 'info', 'Tool execution started.', toolContext);
+    const toolTimeoutId = setTimeout(() => {
+      void logAgentAudit(run.id, 'warning', 'Tool execution taking longer than expected.', {
+        ...toolContext,
+        elapsedMs: Date.now() - toolStart,
+      });
+    }, 20000);
+    let toolResult: Awaited<ReturnType<typeof runAgentTool>> | null = null;
+    let toolError: unknown = null;
+    try {
+      toolResult =
+        shouldInitializeBrowser || shouldRunExtraction
+          ? await runAgentTool(
+              {
+                name: 'playwright',
+                input: {
+                  prompt: toolPrompt,
+                  browser: run.agentBrowser || 'chromium',
+                  runId: run.id,
+                  ...(typeof run.runHeadless === 'boolean' && {
+                    runHeadless: run.runHeadless,
+                  }),
+                  stepId: step.id,
+                  stepLabel: step.title,
+                },
+              },
+              sharedBrowser ?? undefined,
+              sharedContext ?? undefined
+            )
+          : await runAgentBrowserControl({
+              runId: run.id,
+              action: 'snapshot',
+              stepId: step.id,
+              stepLabel: step.title,
+            });
+    } catch (error) {
+      toolError = error;
+    } finally {
+      clearTimeout(toolTimeoutId);
+      const errorMessage = toolResult?.error ?? unknownToErrorMessage(toolError);
+      await logAgentAudit(run.id, toolError ? 'error' : 'info', 'Tool execution finished.', {
+        ...toolContext,
+        ok: toolResult?.ok ?? false,
+        error: errorMessage,
+        durationMs: Date.now() - toolStart,
+      });
+    }
+    if (toolError || !toolResult) {
+      throw toolError instanceof Error ? toolError : new Error('Tool execution failed.');
+    }
+
+    if (!toolResult.ok) {
+      overallOk = false;
+      lastError = toolResult.error || 'Tool failed.';
+      requiresHuman =
+        typeof lastError === 'string' && /requires human|cloudflare challenge/i.test(lastError);
+      consecutiveFailures += 1;
+    } else {
+      consecutiveFailures = 0;
+    }
+
+    planSteps = planSteps.map((item: PlanStep) =>
+      item.id === step.id
+        ? {
+            ...item,
+            status: toolResult.ok ? 'completed' : 'failed',
+            snapshotId: toolResult.output?.snapshotId ?? null,
+            logCount: toolResult.output?.logCount ?? null,
+          }
+        : item
+    );
+    if (toolResult.output?.snapshotId) {
+      const outputUrl = typeof toolResult.output?.url === 'string' ? toolResult.output.url : null;
+      hasBrowserContext = Boolean(outputUrl && outputUrl !== 'about:blank');
+      if (hasBrowserContext && outputUrl) {
+        lastContextUrl = outputUrl;
+        noContextCount = 0;
+        if (lastStableUrl === outputUrl) {
+          stagnationCount += 1;
+        } else {
+          stagnationCount = 0;
+          lastStableUrl = outputUrl;
+        }
+      } else {
+        noContextCount += 1;
+      }
+    }
+    await logAgentAudit(run.id, 'info', 'Plan updated.', {
+      type: 'plan-update',
+      steps: planSteps,
+      result: toolResult.ok ? 'completed' : 'failed',
+    });
+    const completedCount = planSteps.filter((item: PlanStep) => item.status === 'completed').length;
+
+    // Parallelize non-critical background tasks
+    const activeStepIdForBrief = toolResult.ok ? (planSteps[stepIndex + 1]?.id ?? null) : step.id;
+
+    void (async () => {
+      const tasks: Promise<unknown>[] = [];
+
+      // Task 1: Checkpoint Brief (only on change)
+      if (
+        activeStepIdForBrief &&
+        (checkpointBriefStepId !== activeStepIdForBrief ||
+          checkpointBriefError !== (lastError ?? null))
+      ) {
+        tasks.push(maybeUpdateCheckpointBrief(activeStepIdForBrief));
+      }
+
+      // Task 2: Planner Summary (periodic)
+      if (
+        completedCount >= summaryInterval &&
+        completedCount % summaryInterval === 0 &&
+        completedCount !== summaryCheckpoint
+      ) {
+        tasks.push(
+          (async () => {
             const summaryContext = await getBrowserContextSummary(run.id);
             const summary = await summarizePlannerMemoryWithLLM({
               prompt: run.prompt,
@@ -351,191 +506,8 @@ export async function runPlanStepLoop(
                 summary,
               });
             }
-          })());
-        }
-
-        if (tasks.length > 0) {
-          await Promise.allSettled(tasks);
-        }
-      })();
-      
-      stepIndex += 1;
-      continue;
-    }
-
-    const shouldInitializeBrowser = !hasBrowserContext || stepIndex === 0;
-    const previousUrl = lastContextUrl;
-    const shouldRunExtraction = isExtractionStep(step, run.prompt, taskType);
-    const toolPrompt = appendTaskTypeToPrompt(
-      run.prompt,
-      shouldRunExtraction ? 'extract_info' : taskType
-    );
-    const toolName =
-      shouldInitializeBrowser || shouldRunExtraction ? 'playwright' : 'snapshot';
-    const toolStart = Date.now();
-    const toolContext = {
-      type: 'tool-execution',
-      toolName,
-      stepId: step.id,
-      stepTitle: step.title,
-      shouldRunExtraction,
-      shouldInitializeBrowser,
-    };
-    await logAgentAudit(run.id, 'info', 'Tool execution started.', toolContext);
-    const toolTimeoutId = setTimeout(() => {
-      void logAgentAudit(
-        run.id,
-        'warning',
-        'Tool execution taking longer than expected.',
-        {
-          ...toolContext,
-          elapsedMs: Date.now() - toolStart,
-        }
-      );
-    }, 20000);
-    let toolResult: Awaited<ReturnType<typeof runAgentTool>> | null = null;
-    let toolError: unknown = null;
-    try {
-      toolResult =
-        shouldInitializeBrowser || shouldRunExtraction
-          ? await runAgentTool(
-            {
-              name: 'playwright',
-              input: {
-                prompt: toolPrompt,
-                browser: run.agentBrowser || 'chromium',
-                runId: run.id,
-                ...(typeof run.runHeadless === 'boolean' && {
-                  runHeadless: run.runHeadless,
-                }),
-                stepId: step.id,
-                stepLabel: step.title,
-              },
-            },
-            sharedBrowser ?? undefined,
-            sharedContext ?? undefined
-          )
-          : await runAgentBrowserControl({
-            runId: run.id,
-            action: 'snapshot',
-            stepId: step.id,
-            stepLabel: step.title,
-          });
-    } catch (error) {
-      toolError = error;
-    } finally {
-      clearTimeout(toolTimeoutId);
-      const errorMessage = toolResult?.error ?? unknownToErrorMessage(toolError);
-      await logAgentAudit(
-        run.id,
-        toolError ? 'error' : 'info',
-        'Tool execution finished.',
-        {
-          ...toolContext,
-          ok: toolResult?.ok ?? false,
-          error: errorMessage,
-          durationMs: Date.now() - toolStart,
-        }
-      );
-    }
-    if (toolError || !toolResult) {
-      throw toolError instanceof Error
-        ? toolError
-        : new Error('Tool execution failed.');
-    }
-
-    if (!toolResult.ok) {
-      overallOk = false;
-      lastError = toolResult.error || 'Tool failed.';
-      requiresHuman =
-        typeof lastError === 'string' &&
-        /requires human|cloudflare challenge/i.test(lastError);
-      consecutiveFailures += 1;
-    } else {
-      consecutiveFailures = 0;
-    }
-
-    planSteps = planSteps.map((item: PlanStep) =>
-      item.id === step.id
-        ? {
-          ...item,
-          status: toolResult.ok ? 'completed' : 'failed',
-          snapshotId: toolResult.output?.snapshotId ?? null,
-          logCount: toolResult.output?.logCount ?? null,
-        }
-        : item
-    );
-    if (toolResult.output?.snapshotId) {
-      const outputUrl =
-        typeof toolResult.output?.url === 'string' ? toolResult.output.url : null;
-      hasBrowserContext = Boolean(outputUrl && outputUrl !== 'about:blank');
-      if (hasBrowserContext && outputUrl) {
-        lastContextUrl = outputUrl;
-        noContextCount = 0;
-        if (lastStableUrl === outputUrl) {
-          stagnationCount += 1;
-        } else {
-          stagnationCount = 0;
-          lastStableUrl = outputUrl;
-        }
-      } else {
-        noContextCount += 1;
-      }
-    }
-    await logAgentAudit(run.id, 'info', 'Plan updated.', {
-      type: 'plan-update',
-      steps: planSteps,
-      result: toolResult.ok ? 'completed' : 'failed',
-    });
-    const completedCount = planSteps.filter(
-      (item: PlanStep) => item.status === 'completed'
-    ).length;
-    
-    // Parallelize non-critical background tasks
-    const activeStepIdForBrief = toolResult.ok
-      ? (planSteps[stepIndex + 1]?.id ?? null)
-      : step.id;
-
-    void (async () => {
-      const tasks: Promise<unknown>[] = [];
-      
-      // Task 1: Checkpoint Brief (only on change)
-      if (activeStepIdForBrief && (checkpointBriefStepId !== activeStepIdForBrief || checkpointBriefError !== (lastError ?? null))) {
-        tasks.push(maybeUpdateCheckpointBrief(activeStepIdForBrief));
-      }
-
-      // Task 2: Planner Summary (periodic)
-      if (
-        completedCount >= summaryInterval &&
-        completedCount % summaryInterval === 0 &&
-        completedCount !== summaryCheckpoint
-      ) {
-        tasks.push((async () => {
-          const summaryContext = await getBrowserContextSummary(run.id);
-          const summary = await summarizePlannerMemoryWithLLM({
-            prompt: run.prompt,
-            model: memorySummarizationModel,
-            memory: memoryContext,
-            steps: planSteps,
-            browserContext: summaryContext,
-            runId: run.id,
-          });
-          if (summary) {
-            await addAgentMemory({
-              runId: run.id,
-              scope: 'session',
-              content: summary,
-              metadata: { type: 'planner-summary', completedCount },
-            });
-            memoryContext = [...memoryContext, summary].slice(-10);
-            summaryCheckpoint = completedCount;
-            await logAgentAudit(run.id, 'info', 'Planner summary saved.', {
-              type: 'planner-summary',
-              completedCount,
-              summary,
-            });
-          }
-        })());
+          })()
+        );
       }
 
       if (tasks.length > 0) {
@@ -568,9 +540,7 @@ export async function runPlanStepLoop(
     ) {
       const baseBackoff = Math.max(0, settings.loopBackoffBaseMs);
       const maxBackoff = Math.max(baseBackoff, settings.loopBackoffMaxMs);
-      loopBackoffMs = loopBackoffMs
-        ? Math.min(loopBackoffMs * 2, maxBackoff)
-        : baseBackoff;
+      loopBackoffMs = loopBackoffMs ? Math.min(loopBackoffMs * 2, maxBackoff) : baseBackoff;
       if (loopBackoffMs > 0) {
         await sleep(loopBackoffMs);
       }
@@ -753,8 +723,7 @@ export async function runPlanStepLoop(
         });
         if (branchResult.branchSteps?.length) {
           const failedIndex = planSteps.findIndex((item: PlanStep) => item.id === step.id);
-          const insertAt =
-            failedIndex === -1 ? planSteps.length : failedIndex + 1;
+          const insertAt = failedIndex === -1 ? planSteps.length : failedIndex + 1;
           planSteps = [
             ...planSteps.slice(0, insertAt),
             ...branchResult.branchSteps,

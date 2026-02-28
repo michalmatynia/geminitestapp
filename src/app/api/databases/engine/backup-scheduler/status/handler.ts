@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getDatabaseBackupSchedulerStatus } from '@/features/database/services/database-backup-scheduler';
+import { getDatabaseBackupSchedulerStatus } from '@/shared/lib/db/services/database-backup-scheduler';
 import {
   DATABASE_BACKUP_SCHEDULER_REPEAT_EVERY_MS,
   getDatabaseBackupSchedulerQueueStatus,
@@ -24,6 +24,6 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
     },
     {
       headers: { 'Cache-Control': 'no-store' },
-    },
+    }
   );
 }

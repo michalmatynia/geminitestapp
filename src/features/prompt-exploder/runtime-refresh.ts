@@ -10,14 +10,10 @@ import type {
 } from './types';
 import type { PromptExploderRuntimeValidationScope } from './validation-stack';
 
-
 const clampNumber = (value: number, min: number, max: number): number =>
   Math.min(max, Math.max(min, value));
 
-export type PromptExploderRuntimeRuleProfile =
-  | 'all'
-  | 'pattern_pack'
-  | 'learned_only';
+export type PromptExploderRuntimeRuleProfile = 'all' | 'pattern_pack' | 'learned_only';
 
 const normalizeApprovals = (value: unknown): number => {
   if (typeof value === 'number') return value;
@@ -28,11 +24,7 @@ export const filterTemplatesForRuntime = (
   templates: PromptExploderLearnedTemplate[],
   options: { minApprovalsForMatching: number; maxTemplates: number }
 ): PromptExploderLearnedTemplate[] => {
-  const minApprovals = clampNumber(
-    Math.floor(options.minApprovalsForMatching),
-    1,
-    20
-  );
+  const minApprovals = clampNumber(Math.floor(options.minApprovalsForMatching), 1, 20);
   const maxTemplates = clampNumber(Math.floor(options.maxTemplates), 50, 5000);
   const sorted = [...templates].sort((left, right) => {
     const leftApprovals = normalizeApprovals(left.approvals);
@@ -47,8 +39,7 @@ export const filterTemplatesForRuntime = (
   return sorted
     .filter(
       (template) =>
-        template.state === 'active' &&
-        normalizeApprovals(template.approvals) >= minApprovals
+        template.state === 'active' && normalizeApprovals(template.approvals) >= minApprovals
     )
     .slice(0, maxTemplates);
 };
@@ -121,9 +112,9 @@ export const resolveSegmentIdAfterReexplode = (args: {
     const targetTitle = args.strategy.title;
     const matched = args.document.segments.find(
       (segment: PromptExploderSegment) =>
-        normalizeLearningText(segment.title || '') ===
-                  normalizeLearningText(targetTitle)
-    );    return matched?.id ?? args.document.segments[0]?.id ?? null;
+        normalizeLearningText(segment.title || '') === normalizeLearningText(targetTitle)
+    );
+    return matched?.id ?? args.document.segments[0]?.id ?? null;
   }
   if (args.strategy.kind === 'preserve_id') {
     const { previousId } = args.strategy;
@@ -134,7 +125,7 @@ export const resolveSegmentIdAfterReexplode = (args: {
       (segment: PromptExploderSegment) => segment.id === previousId
     )
       ? previousId
-      : args.document.segments[0]?.id ?? null;
+      : (args.document.segments[0]?.id ?? null);
   }
   return args.document.segments[0]?.id ?? null;
 };

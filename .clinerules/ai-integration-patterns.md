@@ -1,7 +1,9 @@
 ## Brief overview
+
 Guidelines for AI integration patterns and admin system development in this Next.js application, focusing on Gemini AI integration, content generation workflows, and administrative interface conventions.
 
 ## AI integration patterns
+
 - Use dedicated API routes for AI operations (e.g., `/api/generate-description/route.ts`)
 - Implement proper error handling for AI service failures with fallback mechanisms
 - Structure AI requests with clear input validation using Zod schemas
@@ -10,6 +12,7 @@ Guidelines for AI integration patterns and admin system development in this Next
 - Implement rate limiting and request throttling for AI endpoints
 
 ## Content generation workflow
+
 - Provide AI-generated content as suggestions rather than automatic replacements
 - Allow users to review and edit AI-generated content before saving
 - Implement preview functionality for AI-generated descriptions and content
@@ -17,6 +20,7 @@ Guidelines for AI integration patterns and admin system development in this Next
 - Store both original and AI-enhanced content when applicable
 
 ## Admin system conventions
+
 - Use consistent layout patterns with collapsible menus and navigation
 - Implement CRUD operations with proper confirmation dialogs for destructive actions
 - Use data tables with sorting, filtering, and pagination for list views
@@ -25,6 +29,7 @@ Guidelines for AI integration patterns and admin system development in this Next
 - Implement file management with preview capabilities and drag-drop functionality
 
 ## Database management patterns
+
 - Provide backup and restore functionality through admin interface
 - Include database migration tracking and rollback capabilities
 - Use transaction-based operations for complex data modifications
@@ -32,6 +37,7 @@ Guidelines for AI integration patterns and admin system development in this Next
 - Store operation logs for audit trails and debugging purposes
 
 ## File handling conventions
+
 - Use dedicated file management components with preview capabilities
 - Implement proper file validation (type, size, format) before upload
 - Provide image optimization and multiple format support
@@ -39,6 +45,7 @@ Guidelines for AI integration patterns and admin system development in this Next
 - Include file metadata storage and retrieval functionality
 
 ## Testing approach for AI features
+
 - Mock AI service responses in tests to ensure consistent behavior
 - Test both successful AI responses and error scenarios
 - Include integration tests for complete AI workflow chains

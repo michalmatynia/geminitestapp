@@ -10,11 +10,7 @@ import {
 } from '@/features/notesapp/utils/notes-master-tree-external-drop';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
-const folderNode = (
-  id: string,
-  parentId: string | null,
-  sortOrder: number,
-): MasterTreeNode => ({
+const folderNode = (id: string, parentId: string | null, sortOrder: number): MasterTreeNode => ({
   id: toFolderMasterNodeId(id),
   type: 'folder',
   kind: 'folder',
@@ -24,11 +20,7 @@ const folderNode = (
   sortOrder,
 });
 
-const noteNode = (
-  id: string,
-  parentId: string,
-  sortOrder: number,
-): MasterTreeNode => ({
+const noteNode = (id: string, parentId: string, sortOrder: number): MasterTreeNode => ({
   id: toNoteMasterNodeId(id),
   type: 'file',
   kind: 'note',
@@ -64,10 +56,7 @@ describe('canDropNotesNode', () => {
 describe('resolveNotesExternalDropAction', () => {
   it('resolves note-to-note drops as relation action', () => {
     const folderId = toFolderMasterNodeId('work');
-    const nodes: MasterTreeNode[] = [
-      folderNode('work', null, 0),
-      noteNode('note-b', folderId, 0),
-    ];
+    const nodes: MasterTreeNode[] = [folderNode('work', null, 0), noteNode('note-b', folderId, 0)];
     const action = resolveNotesExternalDropAction({
       draggedNodeId: toNoteMasterNodeId('note-a'),
       targetId: toNoteMasterNodeId('note-b'),
@@ -83,10 +72,7 @@ describe('resolveNotesExternalDropAction', () => {
   });
 
   it('resolves root-top folder drops as reorder action with anchor', () => {
-    const roots: MasterTreeNode[] = [
-      folderNode('alpha', null, 0),
-      folderNode('beta', null, 1),
-    ];
+    const roots: MasterTreeNode[] = [folderNode('alpha', null, 0), folderNode('beta', null, 1)];
     const action = resolveNotesExternalDropAction({
       draggedNodeId: toFolderMasterNodeId('beta'),
       targetId: null,

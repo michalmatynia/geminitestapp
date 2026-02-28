@@ -24,20 +24,21 @@ const priceGroupSchema = z
     currencyId: z.string().trim().min(1),
     type: z.enum(['standard', 'dependent']),
     basePriceField: z.string().trim().min(1),
-    sourceGroupId: z.string().trim().optional().transform((value) => {
-      if (!value) return undefined;
-      return value;
-    }),
+    sourceGroupId: z
+      .string()
+      .trim()
+      .optional()
+      .transform((value) => {
+        if (!value) return undefined;
+        return value;
+      }),
     priceMultiplier: z.coerce.number().nonnegative(),
     addToPrice: z.coerce.number().int(),
   })
-  .refine(
-    (data) => data.type === 'standard' || !!data['sourceGroupId'],
-    {
-      message: 'Source price group is required for dependent groups',
-      path: ['sourceGroupId'],
-    }
-  );
+  .refine((data) => data.type === 'standard' || !!data['sourceGroupId'], {
+    message: 'Source price group is required for dependent groups',
+    path: ['sourceGroupId'],
+  });
 
 type CurrencyRecord = {
   id: string;
@@ -72,14 +73,22 @@ const buildCurrencyMap = async (): Promise<Map<string, CurrencyRecord>> => {
         select: { id: true, code: true, name: true, symbol: true },
       });
       return new Map(
-        currencies.map((currency: { id: string; code: string; name: string | null; symbol: string | null }) => [currency.id, currency as CurrencyRecord])
+        currencies.map(
+          (currency: { id: string; code: string; name: string | null; symbol: string | null }) => [
+            currency.id,
+            currency as CurrencyRecord,
+          ]
+        )
       );
     } catch {
       // Fall through to fallback currencies.
     }
   }
   return new Map(
-    fallbackCurrencies.map((currency: (typeof fallbackCurrencies)[number]) => [currency.id, currency])
+    fallbackCurrencies.map((currency: (typeof fallbackCurrencies)[number]) => [
+      currency.id,
+      currency,
+    ])
   );
 };
 
@@ -123,10 +132,7 @@ export async function getPriceGroupsHandler(
     const db = await getMongoDb();
     const currencyMap = await buildCurrencyMap();
     const currencyByCode = new Map(
-      Array.from(currencyMap.values()).map((currency: CurrencyRecord) => [
-        currency.code,
-        currency,
-      ])
+      Array.from(currencyMap.values()).map((currency: CurrencyRecord) => [currency.code, currency])
     );
     const existingPln = await db
       .collection<PriceGroupDoc>(PRICE_GROUPS_COLLECTION)
@@ -153,28 +159,18 @@ export async function getPriceGroupsHandler(
         createdAt: now,
         updatedAt: now,
       };
-      await db
-        .collection<PriceGroupDoc>(PRICE_GROUPS_COLLECTION)
-        .insertOne(plnGroup);
+      await db.collection<PriceGroupDoc>(PRICE_GROUPS_COLLECTION).insertOne(plnGroup);
     }
     const groups = await db
       .collection<PriceGroupDoc>(PRICE_GROUPS_COLLECTION)
       .find({})
       .sort({ name: 1 })
       .toArray();
-    const groupMap = new Map(
-      groups.map((group: WithId<PriceGroupDoc>) => [group.id, group])
-    );
+    const groupMap = new Map(groups.map((group: WithId<PriceGroupDoc>) => [group.id, group]));
     const normalized = groups.map((group: WithId<PriceGroupDoc>) => ({
       ...group,
-      currency: resolveCurrency(
-        currencyMap,
-        group.currencyId,
-        group.currencyCode
-      ),
-      sourceGroup: group.sourceGroupId
-        ? groupMap.get(group.sourceGroupId) ?? null
-        : null,
+      currency: resolveCurrency(currencyMap, group.currencyId, group.currencyCode),
+      sourceGroup: group.sourceGroupId ? (groupMap.get(group.sourceGroupId) ?? null) : null,
     }));
     return NextResponse.json(normalized as unknown as PriceGroupWithDetails[]);
   }
@@ -275,9 +271,7 @@ export async function postPriceGroupsHandler(
       createdAt: now,
       updatedAt: now,
     };
-    await db
-      .collection<PriceGroupDoc>(PRICE_GROUPS_COLLECTION)
-      .insertOne(group);
+    await db.collection<PriceGroupDoc>(PRICE_GROUPS_COLLECTION).insertOne(group);
     return NextResponse.json({
       ...group,
       currency,

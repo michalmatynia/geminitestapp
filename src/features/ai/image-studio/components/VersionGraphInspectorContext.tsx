@@ -22,7 +22,9 @@ type VersionGraphInspectorContextValue = {
   onAnnotationBlur: () => void;
 };
 
-const VersionGraphInspectorContext = React.createContext<VersionGraphInspectorContextValue | null>(null);
+const VersionGraphInspectorContext = React.createContext<VersionGraphInspectorContextValue | null>(
+  null
+);
 
 export function VersionGraphInspectorProvider({
   value,
@@ -41,7 +43,9 @@ export function VersionGraphInspectorProvider({
 export function useVersionGraphInspectorContext(): VersionGraphInspectorContextValue {
   const context = React.useContext(VersionGraphInspectorContext);
   if (!context) {
-    throw new Error('useVersionGraphInspectorContext must be used inside VersionGraphInspectorProvider');
+    throw new Error(
+      'useVersionGraphInspectorContext must be used inside VersionGraphInspectorProvider'
+    );
   }
   return context;
 }

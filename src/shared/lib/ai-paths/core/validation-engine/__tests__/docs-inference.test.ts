@@ -7,6 +7,7 @@ import {
   approveInferredAiPathsValidationRule,
   compileAiPathsValidationRulesFromDocsSnapshot,
 } from '../docs-inference';
+import type { AiPathsDocsSnapshot } from '../docs-registry-adapter';
 import { evaluateAiPathsValidationPreflight } from '../evaluator';
 
 const buildTriggerNode = (eventValue: string): AiNode =>
@@ -26,7 +27,7 @@ const buildTriggerNode = (eventValue: string): AiNode =>
         event: eventValue,
       },
     },
-  }) as AiNode;
+  }) as unknown as AiNode;
 
 const emptyEdges: Edge[] = [];
 
@@ -69,7 +70,9 @@ describe('docs inference compiler', () => {
       ],
     };
 
-    const compiled = compileAiPathsValidationRulesFromDocsSnapshot(snapshot as any);
+    const compiled = compileAiPathsValidationRulesFromDocsSnapshot(
+      snapshot as unknown as AiPathsDocsSnapshot
+    );
     expect(compiled).toHaveLength(1);
     expect(compiled[0]?.enabled).toBe(false);
     expect(compiled[0]?.inference?.sourceType).toBe('central_docs');
@@ -106,7 +109,9 @@ describe('docs inference compiler', () => {
         },
       ],
     };
-    const candidateRule = compileAiPathsValidationRulesFromDocsSnapshot(snapshot as any)[0];
+    const candidateRule = compileAiPathsValidationRulesFromDocsSnapshot(
+      snapshot as unknown as AiPathsDocsSnapshot
+    )[0];
     if (!candidateRule) {
       throw new Error('Expected compiled candidate rule.');
     }

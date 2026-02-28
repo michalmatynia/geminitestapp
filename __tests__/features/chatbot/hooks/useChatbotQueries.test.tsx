@@ -3,8 +3,12 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import * as chatbotApi from '@/features/ai/chatbot/api';
-import { useChatbotSessions, useChatbotSession, useChatbotSettings, useChatbotModels } from '@/features/ai/chatbot/hooks/useChatbotQueries';
-
+import {
+  useChatbotSessions,
+  useChatbotSession,
+  useChatbotSettings,
+  useChatbotModels,
+} from '@/features/ai/chatbot/hooks/useChatbotQueries';
 
 vi.mock('@/features/ai/chatbot/api', () => ({
   chatbotQueryKeys: {
@@ -20,14 +24,15 @@ vi.mock('@/features/ai/chatbot/api', () => ({
   fetchOllamaModels: vi.fn(),
 }));
 
-const createQueryClient = () => new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: false,
-      staleTime: 0,
+const createQueryClient = () =>
+  new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+        staleTime: 0,
+      },
     },
-  },
-});
+  });
 
 describe('Chatbot Queries Hooks', () => {
   let queryClient: QueryClient;
@@ -82,7 +87,9 @@ describe('Chatbot Queries Hooks', () => {
     it('fetches models from API', async () => {
       vi.mocked(chatbotApi.fetchChatbotModels).mockResolvedValue({ models: ['m1', 'm2'] });
 
-      const { result } = renderHook(() => useChatbotModels({ enabled: true, staleTime: 0 }), { wrapper });
+      const { result } = renderHook(() => useChatbotModels({ enabled: true, staleTime: 0 }), {
+        wrapper,
+      });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
       expect(result.current.data).toEqual(['m1', 'm2']);

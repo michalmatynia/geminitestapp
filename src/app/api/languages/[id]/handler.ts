@@ -11,7 +11,6 @@ import prisma from '@/shared/lib/db/prisma';
 
 import type { Prisma } from '@prisma/client';
 
-
 const languageUpdateSchema = z.object({
   code: z.string().trim().min(1).optional(),
   name: z.string().trim().min(1).optional(),
@@ -44,7 +43,11 @@ const LANGUAGES_COLLECTION = 'languages';
  * PUT /api/languages/[id]
  * Updates language country assignments.
  */
-export async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
+export async function PUT_handler(
+  req: NextRequest,
+  _ctx: ApiHandlerContext,
+  params: { id: string }
+): Promise<Response> {
   const { id } = params;
   if (!id) {
     throw badRequestError('Language id is required');
@@ -63,9 +66,7 @@ export async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, par
       throw internalError('MongoDB is not configured.');
     }
     const mongo = await getMongoDb();
-    const existingLang = await mongo
-      .collection<LanguageDoc>(LANGUAGES_COLLECTION)
-      .findOne({ id });
+    const existingLang = await mongo.collection<LanguageDoc>(LANGUAGES_COLLECTION).findOne({ id });
 
     if (!existingLang) {
       throw notFoundError('Language not found.', { languageId: id });
@@ -92,7 +93,11 @@ export async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, par
       if (uniqueIds.length > 0) {
         const countriesCollection = mongo.collection('countries');
         for (const countryId of uniqueIds) {
-          const country = (await countriesCollection.findOne({ id: countryId })) as { id: string; code: string; name: string } | null;
+          const country = (await countriesCollection.findOne({ id: countryId })) as {
+            id: string;
+            code: string;
+            name: string;
+          } | null;
           if (country) {
             countries.push({
               countryId: country.id,
@@ -112,9 +117,7 @@ export async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, par
       .collection<LanguageDoc>(LANGUAGES_COLLECTION)
       .updateOne({ id }, { $set: updateFields });
 
-    const updated = await mongo
-      .collection<LanguageDoc>(LANGUAGES_COLLECTION)
-      .findOne({ id });
+    const updated = await mongo.collection<LanguageDoc>(LANGUAGES_COLLECTION).findOne({ id });
     if (!updated) {
       throw notFoundError('Language not found.', { languageId: id });
     }
@@ -148,9 +151,7 @@ export async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, par
         select: { id: true },
       });
       const existingIds = new Set(existing.map((entry) => entry.id));
-      const validIds = uniqueIds.filter((countryId) =>
-        existingIds.has(countryId)
-      );
+      const validIds = uniqueIds.filter((countryId) => existingIds.has(countryId));
       await tx.languageCountry.deleteMany({ where: { languageId: id } });
       if (validIds.length > 0) {
         await tx.languageCountry.createMany({
@@ -183,7 +184,11 @@ export async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, par
  * DELETE /api/languages/[id]
  * Deletes a language and its assignments.
  */
-export async function DELETE_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
+export async function DELETE_handler(
+  _req: NextRequest,
+  _ctx: ApiHandlerContext,
+  params: { id: string }
+): Promise<Response> {
   const { id } = params;
   if (!id) {
     throw badRequestError('Language id is required');
@@ -197,17 +202,12 @@ export async function DELETE_handler(_req: NextRequest, _ctx: ApiHandlerContext,
     const mongo = await getMongoDb();
 
     // Remove language from any catalogs that reference it
-    await mongo.collection('catalogs').updateMany(
-      { languageIds: id },
-      { 
-        $pull: { languageIds: id } 
-      } as unknown as import('mongodb').UpdateFilter<import('mongodb').Document>
-    );
+    await mongo.collection('catalogs').updateMany({ languageIds: id }, {
+      $pull: { languageIds: id },
+    } as unknown as import('mongodb').UpdateFilter<import('mongodb').Document>);
 
     // Delete the language
-    const result = await mongo
-      .collection<LanguageDoc>(LANGUAGES_COLLECTION)
-      .deleteOne({ id });
+    const result = await mongo.collection<LanguageDoc>(LANGUAGES_COLLECTION).deleteOne({ id });
 
     if (result.deletedCount === 0) {
       throw notFoundError('Language not found.', { languageId: id });
@@ -231,4 +231,3 @@ export async function DELETE_handler(_req: NextRequest, _ctx: ApiHandlerContext,
 
   return new Response(null, { status: 204 });
 }
-

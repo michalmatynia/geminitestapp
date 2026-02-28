@@ -52,19 +52,13 @@ export function SidePanel({
       aria-hidden={isFocusMode}
     >
       {header && (
-        <div className={cn('flex-shrink-0 border-b border-border', headerClassName)}>
-          {header}
-        </div>
+        <div className={cn('flex-shrink-0 border-b border-border', headerClassName)}>{header}</div>
       )}
 
-      <div className={cn('flex-1 min-h-0 overflow-y-auto', contentClassName)}>
-        {children}
-      </div>
+      <div className={cn('flex-1 min-h-0 overflow-y-auto', contentClassName)}>{children}</div>
 
       {footer && (
-        <div className={cn('flex-shrink-0 border-t border-border', footerClassName)}>
-          {footer}
-        </div>
+        <div className={cn('flex-shrink-0 border-t border-border', footerClassName)}>{footer}</div>
       )}
     </aside>
   );

@@ -136,7 +136,9 @@ describe('repairPathNodeIdentities', () => {
     );
 
     expect(
-      repaired.config.edges.every((edge) => edge.from !== secondNode?.id && edge.to !== secondNode?.id)
+      repaired.config.edges.every(
+        (edge) => edge.from !== secondNode?.id && edge.to !== secondNode?.id
+      )
     ).toBe(true);
     expect(repaired.config.uiState?.selectedNodeId).toBe(firstNode?.id);
 
@@ -149,9 +151,7 @@ describe('repairPathNodeIdentities', () => {
     expect(
       (repaired.config.updaterSamples as Record<string, unknown>)[firstNode?.id as string]
     ).toBeDefined();
-    expect(repaired.warnings.some((warning) => warning.code === 'duplicate_node_id')).toBe(
-      true
-    );
+    expect(repaired.warnings.some((warning) => warning.code === 'duplicate_node_id')).toBe(true);
   });
 
   it('generates missing ids and remaps persisted string runtime/sample state keys', () => {
@@ -176,9 +176,10 @@ describe('repairPathNodeIdentities', () => {
 
     const repaired = repairPathNodeIdentities(config, { palette });
     const repairedNode = repaired.config.nodes[0];
-    const repairedRuntimeState = JSON.parse(
-      repaired.config.runtimeState as string
-    ) as Record<string, Record<string, unknown>>;
+    const repairedRuntimeState = JSON.parse(repaired.config.runtimeState as string) as Record<
+      string,
+      Record<string, unknown>
+    >;
     const promptDefinition = palette.find(
       (definition) => definition.type === 'prompt' && definition.title === 'Prompt'
     );
@@ -186,9 +187,10 @@ describe('repairPathNodeIdentities', () => {
     expect(repairedNode?.id).toMatch(/^node-[a-f0-9]{24}$/);
     expect(repairedNode?.instanceId).toBe(repairedNode?.id);
     expect(repairedNode?.nodeTypeId).toBe(promptDefinition?.nodeTypeId);
-    expect(
-      Object.keys(repaired.config.parserSamples as Record<string, unknown>)
-    ).toEqual([repairedNode?.id]);
-    expect(Object.keys(repairedRuntimeState['inputs'] ?? {})).toEqual([repairedNode?.id]);    expect(repaired.warnings.some((warning) => warning.code === 'missing_node_id')).toBe(true);
+    expect(Object.keys(repaired.config.parserSamples as Record<string, unknown>)).toEqual([
+      repairedNode?.id,
+    ]);
+    expect(Object.keys(repairedRuntimeState['inputs'] ?? {})).toEqual([repairedNode?.id]);
+    expect(repaired.warnings.some((warning) => warning.code === 'missing_node_id')).toBe(true);
   });
 });

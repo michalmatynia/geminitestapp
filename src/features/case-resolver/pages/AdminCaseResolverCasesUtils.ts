@@ -29,16 +29,11 @@ export type IndexedCaseRow = {
   normalizedCategory: string;
 };
 
-export type CaseFileComparator = (
-  left: CaseResolverFile,
-  right: CaseResolverFile,
-) => number;
+export type CaseFileComparator = (left: CaseResolverFile, right: CaseResolverFile) => number;
 
-export const buildPathLabelMap = <
-  T extends { id: string; name: string; parentId: string | null },
->(
-    items: T[],
-  ): Map<string, string> => {
+export const buildPathLabelMap = <T extends { id: string; name: string; parentId: string | null }>(
+  items: T[]
+): Map<string, string> => {
   const byId = new Map<string, T>(items.map((item) => [item.id, item]));
   const labels = new Map<string, string>();
 
@@ -58,10 +53,10 @@ export const buildPathLabelMap = <
 
 export const buildCaseTree = (
   files: CaseResolverFile[],
-  sortComparator?: CaseFileComparator,
+  sortComparator?: CaseFileComparator
 ): CaseTreeNode[] => {
   const nodesById = new Map<string, CaseTreeNode>(
-    files.map((file) => [file.id, { file, children: [] }]),
+    files.map((file) => [file.id, { file, children: [] }])
   );
   const roots: CaseTreeNode[] = [];
 
@@ -87,7 +82,7 @@ export const buildCaseTree = (
 
 export const flattenCaseTreeOptions = (
   nodes: CaseTreeNode[],
-  depth: number = 0,
+  depth: number = 0
 ): Array<{ value: string; label: string }> => {
   const options: Array<{ value: string; label: string }> = [];
   nodes.forEach((node) => {

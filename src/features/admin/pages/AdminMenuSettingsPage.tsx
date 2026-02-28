@@ -1,15 +1,15 @@
 'use client';
 
-import { 
-  ArrowDown, 
-  ArrowUp, 
-  ChevronLeft, 
-  ChevronRight, 
-  GripVertical, 
-  Plus, 
-  Star, 
+import {
+  ArrowDown,
+  ArrowUp,
+  ChevronLeft,
+  ChevronRight,
+  GripVertical,
+  Plus,
+  Star,
   Trash2,
-  Menu
+  Menu,
 } from 'lucide-react';
 import React from 'react';
 
@@ -19,26 +19,26 @@ import {
   type NavItem,
 } from '@/features/admin/components/Menu';
 import type { AdminNavLeaf } from '@/shared/contracts/admin';
-import { 
-  Button, 
-  Checkbox, 
-  Input, 
-  SearchInput, 
-  SelectSimple, 
-  FormSection, 
-  FormField, 
+import {
+  Button,
+  Checkbox,
+  Input,
+  SearchInput,
+  SelectSimple,
+  FormSection,
+  FormField,
   SectionHeader,
   StatusBadge,
   PanelHeader,
-  ToggleRow
+  ToggleRow,
 } from '@/shared/ui';
 import { cn, DRAG_KEYS, getFirstDragValue, setDragData } from '@/shared/utils';
 
-import { 
-  AdminMenuSettingsProvider, 
+import {
+  AdminMenuSettingsProvider,
   useAdminMenuSettings,
   type AdminNavNodeEntry,
-  type FlattenedCustomNode
+  type FlattenedCustomNode,
 } from '../context/AdminMenuSettingsContext';
 
 type ColorOption = (typeof ADMIN_MENU_COLORS)[number];
@@ -73,7 +73,10 @@ function FavoritesSection(): React.JSX.Element {
               if (!entry) return null;
               const { id, label, parents } = entry;
               return (
-                <div key={id} className='flex items-center justify-between gap-3 rounded-md border border-border/40 bg-gray-900/40 p-3'>
+                <div
+                  key={id}
+                  className='flex items-center justify-between gap-3 rounded-md border border-border/40 bg-gray-900/40 p-3'
+                >
                   <SectionHeader
                     title={label}
                     subtitle={parents.length ? parents.join(' / ') : undefined}
@@ -142,13 +145,13 @@ function FavoritesSection(): React.JSX.Element {
             >
               <Checkbox
                 checked={favoritesSet.has(item.id)}
-                onCheckedChange={(checked: boolean | 'indeterminate') => handleToggleFavorite(item.id, Boolean(checked))}
+                onCheckedChange={(checked: boolean | 'indeterminate') =>
+                  handleToggleFavorite(item.id, Boolean(checked))
+                }
               />
               <div className='min-w-0'>
                 <div className='truncate text-sm text-white'>{item.label}</div>
-                <div className='truncate text-[11px] text-gray-500'>
-                  {item.parents.join(' / ')}
-                </div>
+                <div className='truncate text-[11px] text-gray-500'>{item.parents.join(' / ')}</div>
                 {item.href ? (
                   <div className='truncate text-[11px] text-gray-600'>{item.href}</div>
                 ) : null}
@@ -162,11 +165,7 @@ function FavoritesSection(): React.JSX.Element {
 }
 
 function SectionColorsSection(): React.JSX.Element {
-  const {
-    sections,
-    sectionColors,
-    updateSectionColor,
-  } = useAdminMenuSettings();
+  const { sections, sectionColors, updateSectionColor } = useAdminMenuSettings();
 
   return (
     <FormSection
@@ -182,7 +181,10 @@ function SectionColorsSection(): React.JSX.Element {
           const current = sectionColors[sectionId] ?? 'none';
           const colorStyle = current !== 'none' ? ADMIN_MENU_COLOR_MAP[current] : null;
           return (
-            <div key={sectionId} className='flex items-center justify-between gap-3 rounded-md border border-border/40 bg-gray-900/40 p-3'>
+            <div
+              key={sectionId}
+              className='flex items-center justify-between gap-3 rounded-md border border-border/40 bg-gray-900/40 p-3'
+            >
               <div className='flex items-center gap-2'>
                 {colorStyle ? (
                   <span className={cn('h-2.5 w-2.5 rounded-full', colorStyle.dot)} />
@@ -191,7 +193,8 @@ function SectionColorsSection(): React.JSX.Element {
                 )}
                 <span className='text-sm text-gray-200'>{sectionLabel}</span>
               </div>
-              <SelectSimple size='sm'
+              <SelectSimple
+                size='sm'
                 value={current}
                 onValueChange={(value: string) => updateSectionColor(sectionId, value)}
                 options={[
@@ -199,7 +202,7 @@ function SectionColorsSection(): React.JSX.Element {
                   ...ADMIN_MENU_COLORS.map((option: ColorOption) => ({
                     value: option.value,
                     label: option.label,
-                  }))
+                  })),
                 ]}
                 className='w-[160px]'
                 triggerClassName='h-8 text-xs'
@@ -267,7 +270,12 @@ function MenuBuilderSection(): React.JSX.Element {
           <Plus className='mr-2 size-4' />
           Add link
         </Button>
-        <Button type='button' variant='outline' size='sm' onClick={() => handleAddRootNode('group')}>
+        <Button
+          type='button'
+          variant='outline'
+          size='sm'
+          onClick={() => handleAddRootNode('group')}
+        >
           <Plus className='mr-2 size-4' />
           Add group
         </Button>
@@ -279,7 +287,9 @@ function MenuBuilderSection(): React.JSX.Element {
       <div className='mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]'>
         <div>
           <h3 className='text-xs font-semibold uppercase tracking-wide text-gray-400'>Layout</h3>
-          <p className='mt-1 text-[11px] text-gray-500'>Drag the grip to reorder. Use indent/outdent to nest items.</p>
+          <p className='mt-1 text-[11px] text-gray-500'>
+            Drag the grip to reorder. Use indent/outdent to nest items.
+          </p>
           {flattenedCustomNav.length === 0 ? (
             <p className='mt-3 rounded-md border border-border bg-card/40 p-3 text-xs text-gray-400'>
               No items yet. Add links or groups to start building your menu.
@@ -306,17 +316,24 @@ function MenuBuilderSection(): React.JSX.Element {
                     onDragOver={(event: React.DragEvent<HTMLDivElement>): void => {
                       event.preventDefault();
                       const rect = (event.currentTarget as HTMLDivElement).getBoundingClientRect();
-                      const position = event.clientY < rect.top + rect.height / 2 ? 'above' : 'below';
+                      const position =
+                        event.clientY < rect.top + rect.height / 2 ? 'above' : 'below';
                       setDragOver({ path, position });
                     }}
                     onDrop={(event: React.DragEvent<HTMLDivElement>): void => {
                       event.preventDefault();
-                      const raw = getFirstDragValue(event.dataTransfer, [DRAG_KEYS.ADMIN_MENU_PATH, DRAG_KEYS.TEXT]);
+                      const raw = getFirstDragValue(event.dataTransfer, [
+                        DRAG_KEYS.ADMIN_MENU_PATH,
+                        DRAG_KEYS.TEXT,
+                      ]);
                       let dragged: number[] | null = draggedPath;
                       if (raw) {
                         try {
                           const parsed = JSON.parse(raw) as unknown;
-                          if (Array.isArray(parsed) && parsed.every((val: unknown) => Number.isInteger(val))) {
+                          if (
+                            Array.isArray(parsed) &&
+                            parsed.every((val: unknown) => Number.isInteger(val))
+                          ) {
                             dragged = parsed as number[];
                           }
                         } catch {
@@ -333,7 +350,9 @@ function MenuBuilderSection(): React.JSX.Element {
                     }}
                     onDragLeave={(event: React.DragEvent<HTMLDivElement>): void => {
                       if (event.currentTarget.contains(event.relatedTarget as Node | null)) return;
-                      setDragOver((prev: { path: number[]; position: 'above' | 'below' } | null) => (prev && isSamePath(prev.path, path) ? null : prev));
+                      setDragOver((prev: { path: number[]; position: 'above' | 'below' } | null) =>
+                        prev && isSamePath(prev.path, path) ? null : prev
+                      );
                     }}
                   >
                     {isDragTarget && dragOver?.position === 'above' ? (
@@ -342,7 +361,10 @@ function MenuBuilderSection(): React.JSX.Element {
                     {isDragTarget && dragOver?.position === 'below' ? (
                       <div className='pointer-events-none absolute -bottom-1 left-2 right-2 h-0.5 rounded-full bg-blue-500' />
                     ) : null}
-                    <div className='flex min-w-0 flex-1 flex-wrap items-center gap-2' style={{ paddingLeft: depth * 16 }}>
+                    <div
+                      className='flex min-w-0 flex-1 flex-wrap items-center gap-2'
+                      style={{ paddingLeft: depth * 16 }}
+                    >
                       <button
                         type='button'
                         className='grid h-8 w-8 place-items-center rounded-md border border-border/70 bg-gray-900/40 text-gray-400 hover:text-gray-200'
@@ -367,7 +389,9 @@ function MenuBuilderSection(): React.JSX.Element {
                       <div className='min-w-[160px] flex-1'>
                         <Input
                           value={labelValue}
-                          onChange={(event: React.ChangeEvent<HTMLInputElement>) => updateCustomLabel(path, event.target.value)}
+                          onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                            updateCustomLabel(path, event.target.value)
+                          }
                           placeholder='Label'
                           className='h-8 bg-gray-900/40 text-xs'
                           disabled={isBuiltIn}
@@ -376,7 +400,9 @@ function MenuBuilderSection(): React.JSX.Element {
                       <div className='min-w-[180px] flex-1'>
                         <Input
                           value={hrefValue}
-                          onChange={(event: React.ChangeEvent<HTMLInputElement>) => updateCustomHref(path, event.target.value)}
+                          onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                            updateCustomHref(path, event.target.value)
+                          }
                           placeholder='/admin/...'
                           className='h-8 bg-gray-900/40 text-xs'
                           disabled={isBuiltIn}
@@ -431,10 +457,14 @@ function MenuBuilderSection(): React.JSX.Element {
         </div>
 
         <div>
-          <h3 className='text-xs font-semibold uppercase tracking-wide text-gray-400'>Add built-in items</h3>
+          <h3 className='text-xs font-semibold uppercase tracking-wide text-gray-400'>
+            Add built-in items
+          </h3>
           <SearchInput
             value={libraryQuery}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>) => setLibraryQuery(event.target.value)}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+              setLibraryQuery(event.target.value)
+            }
             placeholder='Search built-in menu…'
             className='mt-2 h-9 bg-gray-900/40'
             onClear={() => setLibraryQuery('')}
@@ -449,7 +479,10 @@ function MenuBuilderSection(): React.JSX.Element {
               filteredLibraryItems.map((entry: AdminNavNodeEntry) => {
                 const isAdded = customIds.has(entry.id);
                 return (
-                  <div key={entry.id} className='flex items-center justify-between gap-2 rounded-md border border-border/60 bg-card/30 p-3'>
+                  <div
+                    key={entry.id}
+                    className='flex items-center justify-between gap-2 rounded-md border border-border/60 bg-card/30 p-3'
+                  >
                     <SectionHeader
                       title={entry.label}
                       subtitle={`${entry.parents.join(' / ')}${entry.parents.length ? ' / ' : ''}${entry.href ?? 'Group'}`}
@@ -480,13 +513,7 @@ function MenuBuilderSection(): React.JSX.Element {
 }
 
 function AdminMenuSettingsInner(): React.JSX.Element {
-  const { 
-    isDirty, 
-    isDefaultState, 
-    isSaving, 
-    handleSave, 
-    handleReset 
-  } = useAdminMenuSettings();
+  const { isDirty, isDefaultState, isSaving, handleSave, handleReset } = useAdminMenuSettings();
 
   return (
     <div className='container mx-auto py-10'>
@@ -505,9 +532,11 @@ function AdminMenuSettingsInner(): React.JSX.Element {
           {
             key: 'save',
             label: isSaving ? 'Saving...' : 'Save Settings',
-            onClick: () => { void handleSave(); },
+            onClick: () => {
+              void handleSave();
+            },
             disabled: !isDirty || isSaving,
-          }
+          },
         ]}
       />
 

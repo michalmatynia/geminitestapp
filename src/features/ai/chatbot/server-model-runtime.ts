@@ -1,69 +1,8 @@
 import 'server-only';
 
-import OpenAI from 'openai';
-import type { ChatCompletionContentPart, ChatCompletionMessageParam } from 'openai/resources/chat/completions';
-
-import { getSettingValue } from '@/features/products/services/aiDescriptionService';
+import type { ChatCompletionContentPart } from 'openai/resources/chat/completions';
+import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
 import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
-import { configurationError } from '@/shared/errors/app-error';
-
-const OLLAMA_BASE_URL =
-  process.env['OLLAMA_BASE_URL'] || 'http://localhost:11434';
-
-const isOpenAiModel = (modelName: string): boolean => {
-  const modelLower = modelName.toLowerCase();
-  return (
-    ((modelLower.startsWith('gpt-') && !modelLower.includes('oss')) ||
-      modelLower.startsWith('ft:gpt-') ||
-      modelLower.startsWith('o1-') ||
-      modelLower.startsWith('o3-') ||
-      modelLower.startsWith('o4-') ||
-      modelLower.startsWith('chatgpt-'))
-  );
-};
-
-const isAnthropicModel = (modelName: string): boolean => {
-  const modelLower = modelName.toLowerCase();
-  return modelLower.startsWith('claude-') || modelLower.startsWith('anthropic:');
-};
-
-const isGeminiModel = (modelName: string): boolean => {
-  const modelLower = modelName.toLowerCase();
-  return (
-    modelLower.startsWith('gemini-') || modelLower.startsWith('models/gemini-')
-  );
-};
-
-const getClient = async (
-  modelName: string,
-): Promise<{ openai: OpenAI; isOllama: boolean }> => {
-  if (isOpenAiModel(modelName)) {
-    const apiKey =
-      (await getSettingValue('openai_api_key')) ??
-      process.env['OPENAI_API_KEY'] ??
-      null;
-    if (!apiKey) {
-      throw configurationError(
-        'OpenAI API key is missing for the Brain-assigned Chatbot model.',
-      );
-    }
-    return { openai: new OpenAI({ apiKey }), isOllama: false };
-  }
-
-  if (isAnthropicModel(modelName) || isGeminiModel(modelName)) {
-    throw configurationError(
-      `Brain-assigned Chatbot model "${modelName}" is not supported by Chatbot runtime yet. Use an OpenAI or Ollama model in /admin/settings/brain.`,
-    );
-  }
-
-  return {
-    openai: new OpenAI({
-      baseURL: `${OLLAMA_BASE_URL}/v1`,
-      apiKey: 'ollama',
-    }),
-    isOllama: true,
-  };
-};
 
 const resolveImageUrl = (raw: string): string => {
   const value = raw.trim();
@@ -72,9 +11,7 @@ const resolveImageUrl = (raw: string): string => {
   if (value.startsWith('http://') || value.startsWith('https://')) return value;
   if (value.startsWith('/')) {
     const base =
-      process.env['NEXT_PUBLIC_APP_URL'] ||
-      process.env['NEXTAUTH_URL'] ||
-      'http://localhost:3000';
+      process.env['NEXT_PUBLIC_APP_URL'] || process.env['NEXTAUTH_URL'] || 'http://localhost:3000';
     const normalizedBase = base.endsWith('/') ? base.slice(0, -1) : base;
     return `${normalizedBase}${value}`;
   }
@@ -87,13 +24,13 @@ const normalizeRole = (role: string): 'user' | 'assistant' | 'system' => {
 };
 
 const buildMessageContent = (
-  message: Pick<ChatMessage, 'content' | 'images'>,
+  message: Pick<ChatMessage, 'content' | 'images'>
 ): string | ChatCompletionContentPart[] => {
   const imageValues = Array.isArray(message.images)
     ? message.images
-      .filter((value): value is string => typeof value === 'string')
-      .map((value) => value.trim())
-      .filter(Boolean)
+        .filter((value): value is string => typeof value === 'string')
+        .map((value) => value.trim())
+        .filter(Boolean)
     : [];
   if (imageValues.length === 0) {
     return message.content;
@@ -120,8 +57,14 @@ const buildMessageContent = (
 const buildMessages = (input: {
   messages: Array<Pick<ChatMessage, 'role' | 'content' | 'images'>>;
   systemPrompt: string;
-}): ChatCompletionMessageParam[] => {
-  const output: ChatCompletionMessageParam[] = [];
+}): Array<{
+  role: 'system' | 'user' | 'assistant';
+  content: string | ChatCompletionContentPart[];
+}> => {
+  const output: Array<{
+    role: 'system' | 'user' | 'assistant';
+    content: string | ChatCompletionContentPart[];
+  }> = [];
   if (input.systemPrompt.trim()) {
     output.push({
       role: 'system',
@@ -130,7 +73,10 @@ const buildMessages = (input: {
   }
 
   input.messages.forEach((message) => {
-    if (!message.content?.trim() && (!Array.isArray(message.images) || message.images.length === 0)) {
+    if (
+      !message.content?.trim() &&
+      (!Array.isArray(message.images) || message.images.length === 0)
+    ) {
       return;
     }
     const role = normalizeRole(message.role);
@@ -166,22 +112,21 @@ export const runChatbotModel = async (input: {
 }): Promise<{
   message: string;
   modelId: string;
-  provider: 'openai' | 'ollama';
+  provider: 'openai' | 'ollama' | 'anthropic' | 'gemini';
 }> => {
-  const { openai, isOllama } = await getClient(input.modelId);
-  const completion = await openai.chat.completions.create({
-    model: input.modelId,
+  const completion = await runBrainChatCompletion({
+    modelId: input.modelId,
     messages: buildMessages({
       messages: input.messages,
       systemPrompt: input.systemPrompt,
     }),
     temperature: input.temperature,
-    max_tokens: input.maxTokens,
+    maxTokens: input.maxTokens,
   });
 
   return {
-    message: completion.choices[0]?.message.content?.trim() || '',
-    modelId: input.modelId,
-    provider: isOllama ? 'ollama' : 'openai',
+    message: completion.text.trim() || '',
+    modelId: completion.modelId,
+    provider: completion.vendor,
   };
 };

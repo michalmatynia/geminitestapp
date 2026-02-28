@@ -3,10 +3,11 @@
 import { CalendarDays, Database, Mail } from 'lucide-react';
 import React from 'react';
 
+import { PanelHeader } from '@/shared/ui';
 import {
-  PanelHeader,
-} from '@/shared/ui';
-import { AdminFilemakerPageProvider, useAdminFilemakerPageContext } from '../context/AdminFilemakerPageContext';
+  AdminFilemakerPageProvider,
+  useAdminFilemakerPageContext,
+} from '../context/AdminFilemakerPageContext';
 import { FilemakerSummaryBadges } from '../components/page/FilemakerSummaryBadges';
 import { FilemakerPersonsSection } from '../components/page/FilemakerPersonsSection';
 import { FilemakerEmailsSection } from '../components/page/FilemakerEmailsSection';

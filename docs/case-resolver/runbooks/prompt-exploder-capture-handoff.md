@@ -1,14 +1,14 @@
 ---
-owner: "Case Resolver Team"
-last_reviewed: "2026-02-20"
-status: "active"
+owner: 'Case Resolver Team'
+last_reviewed: '2026-02-20'
+status: 'active'
 related_components:
-  - "src/features/prompt-exploder/bridge.ts"
-  - "src/features/prompt-exploder/context/DocumentContext.tsx"
-  - "src/features/case-resolver/hooks/useCaseResolverState.ts"
-  - "src/features/case-resolver/hooks/useCaseResolverState.prompt-exploder-sync.ts"
-  - "src/features/case-resolver/hooks/prompt-exploder-transfer-lifecycle.ts"
-  - "src/features/case-resolver/pages/AdminCaseResolverPage.tsx"
+  - 'src/features/prompt-exploder/bridge.ts'
+  - 'src/features/prompt-exploder/context/DocumentContext.tsx'
+  - 'src/features/case-resolver/hooks/useCaseResolverState.ts'
+  - 'src/features/case-resolver/hooks/useCaseResolverState.prompt-exploder-sync.ts'
+  - 'src/features/case-resolver/hooks/prompt-exploder-transfer-lifecycle.ts'
+  - 'src/features/case-resolver/pages/AdminCaseResolverPage.tsx'
 ---
 
 # Runbook: Prompt Exploder -> Case Resolver Capture Handoff

@@ -21,9 +21,7 @@ export function CatalogLanguagesSection(): React.JSX.Element {
 
   return (
     <div className='rounded-md border border-border bg-card/70 p-4 space-y-4'>
-      <Label className='text-sm font-semibold text-white'>
-        Languages
-      </Label>
+      <Label className='text-sm font-semibold text-white'>Languages</Label>
       {languagesLoading ? (
         <p className='text-xs text-gray-500'>Loading languages...</p>
       ) : languagesError ? (
@@ -40,24 +38,18 @@ export function CatalogLanguagesSection(): React.JSX.Element {
 
           <div className='space-y-1'>
             {selectedLanguageIds.length === 0 ? (
-              <p className='text-xs text-gray-500'>
-                No languages selected.
-              </p>
+              <p className='text-xs text-gray-500'>No languages selected.</p>
             ) : (
               selectedLanguageIds.map((id, index) => {
                 const lang = getLanguage(id);
-                const label = lang
-                  ? `${lang.name} (${lang.code})`
-                  : id;
+                const label = lang ? `${lang.name} (${lang.code})` : id;
                 return (
                   <div
                     key={id}
                     className='flex items-center justify-between rounded-md border bg-gray-900 px-3 py-1.5 text-xs text-gray-200'
                   >
                     <div className='flex items-center gap-2'>
-                      <span className='text-gray-500 w-4'>
-                        {index + 1}.
-                      </span>
+                      <span className='text-gray-500 w-4'>{index + 1}.</span>
                       <span>{label}</span>
                       {id === defaultLanguageId && (
                         <Badge variant='success' className='text-[9px] h-4 px-1'>
@@ -80,9 +72,7 @@ export function CatalogLanguagesSection(): React.JSX.Element {
                         size='icon'
                         className='h-6 w-6'
                         onClick={() => moveLanguage(id, 'down')}
-                        disabled={
-                          index === selectedLanguageIds.length - 1
-                        }
+                        disabled={index === selectedLanguageIds.length - 1}
                       >
                         ↓
                       </Button>
@@ -117,9 +107,7 @@ export function CatalogLanguagesSection(): React.JSX.Element {
           </div>
 
           <div className='space-y-2'>
-            <Label className='text-xs text-gray-400'>
-              Default language
-            </Label>
+            <Label className='text-xs text-gray-400'>Default language</Label>
             <SelectSimple
               size='sm'
               value={defaultLanguageId}
@@ -130,7 +118,7 @@ export function CatalogLanguagesSection(): React.JSX.Element {
                 const lang = getLanguage(id);
                 return {
                   value: id,
-                  label: lang ? `${lang.name} (${lang.code})` : id
+                  label: lang ? `${lang.name} (${lang.code})` : id,
                 };
               })}
               triggerClassName='w-full bg-gray-900 border-border text-xs text-white h-9'

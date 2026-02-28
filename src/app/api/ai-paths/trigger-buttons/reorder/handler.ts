@@ -24,7 +24,7 @@ const writeTriggerButtonsRaw = async (value: string): Promise<void> => {
 
 const applyReorder = (
   existing: AiTriggerButtonRecord[],
-  orderedIds: string[],
+  orderedIds: string[]
 ): AiTriggerButtonRecord[] => {
   const byId = new Map<string, AiTriggerButtonRecord>();
   existing.forEach((item: AiTriggerButtonRecord) => byId.set(item.id, item));
@@ -51,10 +51,7 @@ const applyReorder = (
   return next;
 };
 
-export async function POST_handler(
-  req: NextRequest,
-  _ctx: ApiHandlerContext,
-): Promise<Response> {
+export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await requireAiPathsAccess();
   const parsed = await parseJsonBody(req, aiTriggerButtonReorderSchema, {
     logPrefix: 'ai-paths.trigger-buttons.reorder.POST',

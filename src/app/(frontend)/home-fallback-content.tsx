@@ -33,14 +33,10 @@ const normalizeSocialUrl = (value?: string | null): string | null => {
   return `https://${trimmed}`;
 };
 
-const buildSocialLinks = (
-  theme: SocialThemeSettings | null | undefined,
-): SocialLink[] => {
+const buildSocialLinks = (theme: SocialThemeSettings | null | undefined): SocialLink[] => {
   if (!theme) return [];
   const links: SocialLink[] = [];
-  const addLink = (
-    link: Omit<SocialLink, 'href'> & { href: string | null },
-  ) => {
+  const addLink = (link: Omit<SocialLink, 'href'> & { href: string | null }) => {
     if (link.href) links.push({ ...link, href: link.href });
   };
 
@@ -113,11 +109,7 @@ const buildSocialLinks = (
   return links;
 };
 
-function SocialLinks({
-  theme,
-}: {
-  theme: SocialThemeSettings | null | undefined;
-}) {
+function SocialLinks({ theme }: { theme: SocialThemeSettings | null | undefined }) {
   const links = buildSocialLinks(theme);
   if (!links.length) return null;
 
@@ -181,11 +173,7 @@ export function HomeFallbackContent({
     <div className='flex min-h-screen flex-col'>
       {showFallbackHeader ? (
         <header className='flex h-14 items-center px-4 lg:px-6'>
-          <Link
-            href='#'
-            className='flex items-center justify-center'
-            prefetch={false}
-          >
+          <Link href='#' className='flex items-center justify-center' prefetch={false}>
             <MountainIcon className='size-6' />
             <span className='sr-only'>Acme Inc</span>
           </Link>
@@ -215,9 +203,7 @@ export function HomeFallbackContent({
 
       {showFallbackHeader ? (
         <footer className='flex w-full shrink-0 flex-col items-center gap-3 border-t border-gray-800 px-4 py-6 sm:flex-row md:px-6'>
-          <p className='text-xs text-gray-400'>
-            &copy; 2024 Acme Inc. All rights reserved.
-          </p>
+          <p className='text-xs text-gray-400'>&copy; 2024 Acme Inc. All rights reserved.</p>
           <div className='flex flex-col items-center gap-3 sm:ml-auto sm:flex-row sm:items-center'>
             <nav className='flex gap-4 sm:gap-6'>
               <Link

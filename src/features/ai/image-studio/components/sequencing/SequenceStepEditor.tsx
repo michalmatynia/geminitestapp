@@ -10,7 +10,7 @@ import {
   UPSCALE_SCALE_OPTIONS,
   UPSCALE_STRATEGY_OPTIONS,
 } from './sequencing-constants';
-import { getImageStudioDocTooltip } from '../../utils/studio-docs';
+import { getImageStudioDocTooltip } from '@/shared/lib/ai/image-studio/utils/studio-docs';
 
 import type {
   ImageStudioSequenceCropStep,
@@ -21,7 +21,7 @@ import type {
   ImageStudioSequenceStepInputSource,
   ImageStudioSequenceStepRuntime,
   ImageStudioSequenceUpscaleStep,
-} from '../../utils/studio-settings';
+} from '@/shared/lib/ai/image-studio/utils/studio-settings';
 
 type SequenceStepEditorProps = {
   stepId: string;
@@ -29,14 +29,17 @@ type SequenceStepEditorProps = {
   step: ImageStudioSequenceStep;
   activeGenerationModel: string;
   cropShapeOptions: Array<{ value: string; label: string }>;
-  cropShapeGeometryById: Record<string, {
-    bbox: { x: number; y: number; width: number; height: number } | null;
-    polygon: Array<{ x: number; y: number }> | null;
-  }>;
+  cropShapeGeometryById: Record<
+    string,
+    {
+      bbox: { x: number; y: number; width: number; height: number } | null;
+      polygon: Array<{ x: number; y: number }> | null;
+    }
+  >;
   sequencerFieldTooltipsEnabled: boolean;
   updateStep: (
     stepId: string,
-    updater: (step: ImageStudioSequenceStep) => ImageStudioSequenceStep,
+    updater: (step: ImageStudioSequenceStep) => ImageStudioSequenceStep
   ) => void;
 };
 
@@ -50,13 +53,11 @@ export function SequenceStepEditor({
   sequencerFieldTooltipsEnabled,
   updateStep,
 }: SequenceStepEditorProps): React.JSX.Element {
-  const isGenerationStep =
-    step.type === 'generate' || step.type === 'regenerate';
+  const isGenerationStep = step.type === 'generate' || step.type === 'regenerate';
   const projectGenerationModel = activeGenerationModel.trim();
   const generateStep = isGenerationStep ? step : null;
   const modelOverride = generateStep?.config.modelOverride?.trim() ?? '';
-  const effectiveGenerationModel =
-    modelOverride || projectGenerationModel || 'Not configured';
+  const effectiveGenerationModel = modelOverride || projectGenerationModel || 'Not configured';
   const modelSourceDescription = modelOverride
     ? 'Using step override model. Clear Model override to use the project model.'
     : projectGenerationModel
@@ -75,7 +76,7 @@ export function SequenceStepEditor({
   const maybeWrapTooltip = (
     content: string,
     child: React.JSX.Element,
-    wrapperClassName = 'w-full',
+    wrapperClassName = 'w-full'
   ): React.JSX.Element => {
     if (!sequencerFieldTooltipsEnabled) return child;
     return (
@@ -182,7 +183,9 @@ export function SequenceStepEditor({
             className='h-7 w-full min-w-0 rounded border border-border/60 bg-card/40 px-2 text-[11px] text-gray-100 outline-none'
             aria-label={`${operation} retry backoff ms`}
             placeholder='Retry Backoff (ms)'
-            title={sequencerFieldTooltipsEnabled ? sequencerTooltipContent.retryBackoffMs : undefined}
+            title={
+              sequencerFieldTooltipsEnabled ? sequencerTooltipContent.retryBackoffMs : undefined
+            }
           />
         )}
       </div>
@@ -234,7 +237,7 @@ export function SequenceStepEditor({
                   const typed = current as ImageStudioSequenceCropStep;
                   const selectedShapeId = value.trim() ? value : null;
                   const geometry = selectedShapeId
-                    ? cropShapeGeometryById[selectedShapeId] ?? null
+                    ? (cropShapeGeometryById[selectedShapeId] ?? null)
                     : null;
                   return {
                     ...typed,
@@ -300,7 +303,11 @@ export function SequenceStepEditor({
               className='h-7 w-full min-w-0 rounded border border-border/60 bg-card/40 px-2 text-[11px] text-gray-100 outline-none'
               placeholder='Padding %'
               aria-label='Crop padding percent'
-              title={sequencerFieldTooltipsEnabled ? sequencerTooltipContent.cropPaddingPercent : undefined}
+              title={
+                sequencerFieldTooltipsEnabled
+                  ? sequencerTooltipContent.cropPaddingPercent
+                  : undefined
+              }
             />
           )}
         </div>
@@ -379,7 +386,9 @@ export function SequenceStepEditor({
               className='h-7 w-full min-w-0 rounded border border-border/60 bg-card/40 px-2 text-[11px] text-gray-100 outline-none'
               placeholder='Feather'
               aria-label='Mask feather'
-              title={sequencerFieldTooltipsEnabled ? sequencerTooltipContent.maskFeather : undefined}
+              title={
+                sequencerFieldTooltipsEnabled ? sequencerTooltipContent.maskFeather : undefined
+              }
             />
           )}
           <label className='flex h-7 items-center gap-2 rounded border border-border/60 bg-card/40 px-2 text-[11px] text-gray-200'>
@@ -464,9 +473,7 @@ export function SequenceStepEditor({
               max={10}
               step={1}
               value={
-                typeof step.config.outputCount === 'number'
-                  ? String(step.config.outputCount)
-                  : ''
+                typeof step.config.outputCount === 'number' ? String(step.config.outputCount) : ''
               }
               onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                 const value = event.target.value.trim();
@@ -499,7 +506,11 @@ export function SequenceStepEditor({
               className='h-7 w-full min-w-0 rounded border border-border/60 bg-card/40 px-2 text-[11px] text-gray-100 outline-none'
               placeholder='Output count'
               aria-label='Output count override'
-              title={sequencerFieldTooltipsEnabled ? sequencerTooltipContent.generateOutputCount : undefined}
+              title={
+                sequencerFieldTooltipsEnabled
+                  ? sequencerTooltipContent.generateOutputCount
+                  : undefined
+              }
             />
           )}
           <SelectSimple
@@ -624,7 +635,11 @@ export function SequenceStepEditor({
                   }}
                   className='h-6 w-full min-w-0 border-0 bg-transparent text-[11px] text-gray-100 outline-none placeholder:text-gray-500'
                   aria-label='Target width'
-                  title={sequencerFieldTooltipsEnabled ? sequencerTooltipContent.upscaleTargetWidth : undefined}
+                  title={
+                    sequencerFieldTooltipsEnabled
+                      ? sequencerTooltipContent.upscaleTargetWidth
+                      : undefined
+                  }
                 />,
                 'inline-flex'
               )}
@@ -654,7 +669,11 @@ export function SequenceStepEditor({
                   }}
                   className='h-6 w-full min-w-0 border-0 bg-transparent text-[11px] text-gray-100 outline-none placeholder:text-gray-500'
                   aria-label='Target height'
-                  title={sequencerFieldTooltipsEnabled ? sequencerTooltipContent.upscaleTargetHeight : undefined}
+                  title={
+                    sequencerFieldTooltipsEnabled
+                      ? sequencerTooltipContent.upscaleTargetHeight
+                      : undefined
+                  }
                 />,
                 'inline-flex'
               )}

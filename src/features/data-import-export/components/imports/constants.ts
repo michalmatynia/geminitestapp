@@ -53,12 +53,11 @@ export const PRODUCT_FIELDS = [
 
 export const PRODUCT_PARAMETER_TARGET_PREFIX = 'parameter:' as const;
 export const PRODUCT_PARAMETER_TARGET_PATTERN = `${PRODUCT_PARAMETER_TARGET_PREFIX}<parameter_id>`;
-export const PRODUCT_PARAMETER_TARGET_TRANSLATED_PATTERN =
-  `${PRODUCT_PARAMETER_TARGET_PREFIX}<parameter_id>|<language_code>`;
+export const PRODUCT_PARAMETER_TARGET_TRANSLATED_PATTERN = `${PRODUCT_PARAMETER_TARGET_PREFIX}<parameter_id>|<language_code>`;
 
 export const IMAGE_SLOT_KEYS = Array.from(
   { length: 15 },
-  (_: unknown, index: number) => `image_slot_${index + 1}`,
+  (_: unknown, index: number) => `image_slot_${index + 1}`
 );
 
 export const ALL_IMAGE_KEYS = [
@@ -136,5 +135,5 @@ export const EXPORT_PARAMETER_DOCS: ExportParameterDoc[] = [
 ];
 
 export const EXPORT_PARAMETER_KEYS = Array.from(
-  new Set(EXPORT_PARAMETER_DOCS.map((entry: ExportParameterDoc) => entry.key)),
+  new Set(EXPORT_PARAMETER_DOCS.map((entry: ExportParameterDoc) => entry.key))
 );

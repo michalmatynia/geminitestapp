@@ -1,10 +1,6 @@
 export type JsonIntegrityPolicy = 'strict' | 'repair';
 
-export type JsonIntegrityParseState =
-  | 'not_json_like'
-  | 'parsed'
-  | 'repaired'
-  | 'unparseable';
+export type JsonIntegrityParseState = 'not_json_like' | 'parsed' | 'repaired' | 'unparseable';
 
 export type JsonIntegrityDiagnostic = {
   rawType: string;
@@ -22,8 +18,7 @@ export type JsonIntegrityNormalizationResult = {
   diagnostic: JsonIntegrityDiagnostic;
 };
 
-const JSON_OBJECT_BOUNDARY_REPAIR_REGEX =
-  /(:\s*\{[^{}]*\})(\s*,\s*\{)/g;
+const JSON_OBJECT_BOUNDARY_REPAIR_REGEX = /(:\s*\{[^{}]*\})(\s*,\s*\{)/g;
 const TRAILING_COMMAS_BEFORE_CLOSER_REGEX = /,\s*([}\]])/g;
 const MARKDOWN_FENCE_REGEX = /```(?:[A-Za-z0-9_-]+)?\s*([\s\S]*?)```/m;
 
@@ -35,8 +30,7 @@ const toRawType = (value: unknown): string => {
 
 const looksLikeJsonContainer = (value: string): boolean => {
   return (
-    (value.startsWith('{') && value.endsWith('}')) ||
-    (value.startsWith('[') && value.endsWith(']'))
+    (value.startsWith('{') && value.endsWith('}')) || (value.startsWith('[') && value.endsWith(']'))
   );
 };
 
@@ -46,20 +40,15 @@ const looksJsonish = (value: string): boolean => {
   return value.includes('{') || value.includes('[');
 };
 
-const isStructuredValue = (value: unknown): boolean =>
-  Boolean(value) && typeof value === 'object';
+const isStructuredValue = (value: unknown): boolean => Boolean(value) && typeof value === 'object';
 
-export const normalizeJsonIntegrityPolicy = (
-  value: unknown
-): JsonIntegrityPolicy => (value === 'strict' ? 'strict' : 'repair');
+export const normalizeJsonIntegrityPolicy = (value: unknown): JsonIntegrityPolicy =>
+  value === 'strict' ? 'strict' : 'repair';
 
 export const repairMalformedJsonLikeString = (value: string): string => {
   let next = value;
   for (let pass = 0; pass < 3; pass += 1) {
-    const repaired = next.replace(
-      JSON_OBJECT_BOUNDARY_REPAIR_REGEX,
-      '$1}$2'
-    );
+    const repaired = next.replace(JSON_OBJECT_BOUNDARY_REPAIR_REGEX, '$1}$2');
     if (repaired === next) break;
     next = repaired;
   }
@@ -91,9 +80,7 @@ const tryParseStructuredJson = (
 };
 
 const stripMarkdownCodeFences = (value: string): string => {
-  const fullFence = value.match(
-    /^```(?:[A-Za-z0-9_-]+)?\s*([\s\S]*?)\s*```$/
-  );
+  const fullFence = value.match(/^```(?:[A-Za-z0-9_-]+)?\s*([\s\S]*?)\s*```$/);
   if (fullFence?.[1]) {
     return fullFence[1].trim();
   }
@@ -138,10 +125,7 @@ const computeMissingClosers = (value: string): string => {
 
     const open = stack.at(-1);
     if (!open) continue;
-    if (
-      (open === '{' && char === '}') ||
-      (open === '[' && char === ']')
-    ) {
+    if ((open === '{' && char === '}') || (open === '[' && char === ']')) {
       stack.pop();
     }
   }
@@ -246,11 +230,7 @@ export const normalizeJsonLikeValue = (
   });
 
   if (policy === 'strict') {
-    return buildUnparseable(
-      rawAttempt.error,
-      Boolean(computeMissingClosers(trimmed)),
-      []
-    );
+    return buildUnparseable(rawAttempt.error, Boolean(computeMissingClosers(trimmed)), []);
   }
 
   let lastParseError = rawAttempt.error;

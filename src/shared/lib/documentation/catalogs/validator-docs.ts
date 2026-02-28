@@ -38,7 +38,7 @@ export const VALIDATOR_FUNCTION_DOCS: ValidatorFunctionDoc[] = [
     returns: 'revalidate or stop_after_accept.',
     errors: ['No throws.'],
     edgeCases: ['Unknown values fallback to revalidate.'],
-    example: 'normalizePostAcceptBehavior(\'stop_after_accept\')',
+    example: "normalizePostAcceptBehavior('stop_after_accept')",
   },
   {
     id: 'core.normalizePatternSequence',
@@ -115,18 +115,21 @@ export const VALIDATOR_FUNCTION_DOCS: ValidatorFunctionDoc[] = [
     returns: 'target and locale tuple.',
     errors: ['No throws.'],
     edgeCases: ['Unknown fields return target=null.'],
-    example: 'resolveFieldTargetAndLocale(\'name_pl\')',
+    example: "resolveFieldTargetAndLocale('name_pl')",
   },
   {
     id: 'core.isPatternLocaleMatch',
     symbol: 'isPatternLocaleMatch',
     file: 'src/features/products/validation-engine/core.ts',
     purpose: 'Checks locale compatibility between pattern and field.',
-    params: ['patternLocale: locale configured on pattern.', 'fieldLocale: locale inferred from field name.'],
+    params: [
+      'patternLocale: locale configured on pattern.',
+      'fieldLocale: locale inferred from field name.',
+    ],
     returns: 'Boolean locale match decision.',
     errors: ['No throws.'],
     edgeCases: ['Pattern without locale matches any locale.'],
-    example: 'isPatternLocaleMatch(\'pl\', \'pl\')',
+    example: "isPatternLocaleMatch('pl', 'pl')",
   },
   {
     id: 'core.normalizeReplacementFields',
@@ -137,7 +140,7 @@ export const VALIDATOR_FUNCTION_DOCS: ValidatorFunctionDoc[] = [
     returns: 'Filtered unique list of allowed fields.',
     errors: ['No throws.'],
     edgeCases: ['Invalid entries are dropped silently.'],
-    example: 'normalizeReplacementFields([\'sku\', \'sku\'])',
+    example: "normalizeReplacementFields(['sku', 'sku'])",
   },
   {
     id: 'core.isReplacementAllowedForField',
@@ -148,7 +151,7 @@ export const VALIDATOR_FUNCTION_DOCS: ValidatorFunctionDoc[] = [
     returns: 'Boolean allow/deny.',
     errors: ['No throws.'],
     edgeCases: ['Empty allowlist means global replacement.'],
-    example: 'isReplacementAllowedForField(pattern, \'name_en\')',
+    example: "isReplacementAllowedForField(pattern, 'name_en')",
   },
   {
     id: 'core.isLatestPriceStockMirrorPattern',
@@ -177,32 +180,56 @@ export const VALIDATOR_FUNCTION_DOCS: ValidatorFunctionDoc[] = [
     symbol: 'resolvePatternLaunchSourceValue',
     file: 'src/features/products/validation-engine/core.ts',
     purpose: 'Resolves the value used to evaluate launch condition.',
-    params: ['pattern: pattern launch settings.', 'fieldValue: current field value.', 'values: full form values.', 'latestProductValues: latest persisted product snapshot.'],
+    params: [
+      'pattern: pattern launch settings.',
+      'fieldValue: current field value.',
+      'values: full form values.',
+      'latestProductValues: latest persisted product snapshot.',
+    ],
     returns: 'Source value string used by launch operator.',
     errors: ['No throws.'],
     edgeCases: ['Missing source field resolves to empty string.'],
-    example: 'resolvePatternLaunchSourceValue({ pattern, fieldValue, values, latestProductValues })',
+    example:
+      'resolvePatternLaunchSourceValue({ pattern, fieldValue, values, latestProductValues })',
   },
   {
     id: 'core.shouldLaunchPattern',
     symbol: 'shouldLaunchPattern',
     file: 'src/features/products/validation-engine/core.ts',
     purpose: 'Evaluates launch gates for static and sequence patterns.',
-    params: ['pattern: candidate pattern.', 'validationScope: current form instance scope.', 'fieldValue: field value under validation.', 'values: full form values.', 'latestProductValues: latest persisted product snapshot.'],
+    params: [
+      'pattern: candidate pattern.',
+      'validationScope: current form instance scope.',
+      'fieldValue: field value under validation.',
+      'values: full form values.',
+      'latestProductValues: latest persisted product snapshot.',
+    ],
     returns: 'Boolean launch decision.',
     errors: ['No throws.'],
-    edgeCases: ['Missing external source field blocks launch.', 'Out-of-scope behavior depends on launchScopeBehavior.'],
-    example: 'shouldLaunchPattern({ pattern, validationScope, fieldValue, values, latestProductValues })',
+    edgeCases: [
+      'Missing external source field blocks launch.',
+      'Out-of-scope behavior depends on launchScopeBehavior.',
+    ],
+    example:
+      'shouldLaunchPattern({ pattern, validationScope, fieldValue, values, latestProductValues })',
   },
   {
     id: 'core.resolvePatternReplacementValue',
     symbol: 'resolvePatternReplacementValue',
     file: 'src/features/products/validation-engine/core.ts',
     purpose: 'Resolves static or dynamic replacement payload for matched pattern.',
-    params: ['pattern: candidate pattern.', 'fieldValue: current field value.', 'values: full form values.', 'latestProductValues: latest persisted product snapshot.'],
+    params: [
+      'pattern: candidate pattern.',
+      'fieldValue: current field value.',
+      'values: full form values.',
+      'latestProductValues: latest persisted product snapshot.',
+    ],
     returns: 'Resolved replacement object or null.',
     errors: ['No throws.'],
-    edgeCases: ['Invalid dynamic recipe returns null.', 'Dynamic recipes always use replace_whole_field.'],
+    edgeCases: [
+      'Invalid dynamic recipe returns null.',
+      'Dynamic recipes always use replace_whole_field.',
+    ],
     example: 'resolvePatternReplacementValue({ pattern, fieldValue, values, latestProductValues })',
   },
   {
@@ -210,7 +237,11 @@ export const VALIDATOR_FUNCTION_DOCS: ValidatorFunctionDoc[] = [
     symbol: 'applyResolvedReplacement',
     file: 'src/features/products/validation-engine/core.ts',
     purpose: 'Applies replacement to value using recipe apply mode.',
-    params: ['value: current field value.', 'pattern: pattern regex/flags context.', 'replacement: resolved replacement data.'],
+    params: [
+      'value: current field value.',
+      'pattern: pattern regex/flags context.',
+      'replacement: resolved replacement data.',
+    ],
     returns: 'Rewritten field value.',
     errors: ['Regex compilation errors are swallowed and original value is returned.'],
     edgeCases: ['No replacement value returns original input.'],
@@ -225,17 +256,25 @@ export const VALIDATOR_FUNCTION_DOCS: ValidatorFunctionDoc[] = [
     returns: 'Diff index, length, and matchText snippet.',
     errors: ['No throws.'],
     edgeCases: ['Equal strings produce a single-character fallback segment.'],
-    example: 'deriveDiffSegment(\'abc\', \'axc\')',
+    example: "deriveDiffSegment('abc', 'axc')",
   },
   {
     id: 'core.buildFieldIssues',
     symbol: 'buildFieldIssues',
     file: 'src/features/products/validation-engine/core.ts',
     purpose: 'Builds static validator issues by applying eligible patterns to each field.',
-    params: ['values: form values map.', 'patterns: all validation patterns.', 'latestProductValues: latest persisted product values.', 'validationScope: form instance scope.'],
+    params: [
+      'values: form values map.',
+      'patterns: all validation patterns.',
+      'latestProductValues: latest persisted product values.',
+      'validationScope: form instance scope.',
+    ],
     returns: 'Map of field names to issue arrays.',
     errors: ['Invalid regex in persisted pattern is skipped defensively.'],
-    edgeCases: ['Sequence groups merge outputs into one issue.', 'No-op replacements can be suppressed per pattern setting.'],
+    edgeCases: [
+      'Sequence groups merge outputs into one issue.',
+      'No-op replacements can be suppressed per pattern setting.',
+    ],
     example: 'buildFieldIssues({ values, patterns, latestProductValues, validationScope })',
   },
   {
@@ -243,7 +282,10 @@ export const VALIDATOR_FUNCTION_DOCS: ValidatorFunctionDoc[] = [
     symbol: 'mergeFieldIssueMaps',
     file: 'src/features/products/validation-engine/core.ts',
     purpose: 'Merges static and runtime issue maps by field.',
-    params: ['staticIssues: issues from static engine.', 'runtimeIssues: issues from runtime evaluator.'],
+    params: [
+      'staticIssues: issues from static engine.',
+      'runtimeIssues: issues from runtime evaluator.',
+    ],
     returns: 'Combined issue map.',
     errors: ['No throws.'],
     edgeCases: ['Fields existing in one map are preserved.'],
@@ -280,7 +322,7 @@ export const VALIDATOR_FUNCTION_DOCS: ValidatorFunctionDoc[] = [
     returns: 'Validated and deduplicated replacement fields.',
     errors: ['No throws.'],
     edgeCases: ['Invalid fields are removed.'],
-    example: 'normalizeReplacementFields([\'name_en\', \'name_en\'])',
+    example: "normalizeReplacementFields(['name_en', 'name_en'])",
   },
   {
     id: 'helpers.formatReplacementFields',
@@ -302,7 +344,7 @@ export const VALIDATOR_FUNCTION_DOCS: ValidatorFunctionDoc[] = [
     returns: 'List of allowed replacement field keys.',
     errors: ['No throws.'],
     edgeCases: ['Unknown target falls back to sku.'],
-    example: 'getReplacementFieldsForTarget(\'name\')',
+    example: "getReplacementFieldsForTarget('name')",
   },
   {
     id: 'helpers.isLocaleTarget',
@@ -313,7 +355,7 @@ export const VALIDATOR_FUNCTION_DOCS: ValidatorFunctionDoc[] = [
     returns: 'True for name and description targets.',
     errors: ['No throws.'],
     edgeCases: ['Non-localized targets return false.'],
-    example: 'isLocaleTarget(\'sku\')',
+    example: "isLocaleTarget('sku')",
   },
   {
     id: 'helpers.isLatestFieldMirrorPattern',
@@ -324,7 +366,7 @@ export const VALIDATOR_FUNCTION_DOCS: ValidatorFunctionDoc[] = [
     returns: 'Boolean match result.',
     errors: ['No throws.'],
     edgeCases: ['Static replacers are not treated as mirror patterns.'],
-    example: 'isLatestFieldMirrorPattern(pattern, \'price\')',
+    example: "isLatestFieldMirrorPattern(pattern, 'price')",
   },
   {
     id: 'helpers.isNameSecondSegmentDimensionPattern',
@@ -335,7 +377,7 @@ export const VALIDATOR_FUNCTION_DOCS: ValidatorFunctionDoc[] = [
     returns: 'Boolean match result.',
     errors: ['No throws.'],
     edgeCases: ['Requires form_field name_en dynamic recipe.'],
-    example: 'isNameSecondSegmentDimensionPattern(pattern, \'length\')',
+    example: "isNameSecondSegmentDimensionPattern(pattern, 'length')",
   },
   {
     id: 'helpers.getSourceFieldOptionsForTarget',
@@ -368,7 +410,7 @@ export const VALIDATOR_FUNCTION_DOCS: ValidatorFunctionDoc[] = [
     returns: 'Encoded recipe string.',
     errors: ['No throws.'],
     edgeCases: ['Always sets replace_whole_field target apply mode.'],
-    example: 'buildLatestFieldRecipe(\'stock\')',
+    example: "buildLatestFieldRecipe('stock')",
   },
   {
     id: 'helpers.buildDuplicateLabel',
@@ -390,7 +432,7 @@ export const VALIDATOR_FUNCTION_DOCS: ValidatorFunctionDoc[] = [
     returns: 'Unique label not present in existing set.',
     errors: ['No throws.'],
     edgeCases: ['Empty label falls back to Pattern.'],
-    example: 'buildUniqueLabel(\'Price from latest product\', labels)',
+    example: "buildUniqueLabel('Price from latest product', labels)",
   },
   {
     id: 'helpers.getPatternSequence',
@@ -430,11 +472,15 @@ export const VALIDATOR_FUNCTION_DOCS: ValidatorFunctionDoc[] = [
     symbol: 'reorderPatterns',
     file: 'src/features/products/components/settings/validator-settings/helpers.ts',
     purpose: 'Reorders pattern list for drag-and-drop sequencing operations.',
-    params: ['patterns: ordered list.', 'draggedId: dragged pattern id.', 'targetId: drop target pattern id.'],
+    params: [
+      'patterns: ordered list.',
+      'draggedId: dragged pattern id.',
+      'targetId: drop target pattern id.',
+    ],
     returns: 'Reordered list or null when no-op/invalid.',
     errors: ['No throws.'],
     edgeCases: ['Dropping onto same id returns null.'],
-    example: 'reorderPatterns(patterns, \'a\', \'b\')',
+    example: "reorderPatterns(patterns, 'a', 'b')",
   },
   {
     id: 'helpers.createSequenceGroupId',
@@ -467,7 +513,7 @@ export const VALIDATOR_FUNCTION_DOCS: ValidatorFunctionDoc[] = [
     returns: 'True when RegExp constructor succeeds.',
     errors: ['No throws (exceptions are caught).'],
     edgeCases: ['Empty flags are treated as undefined.'],
-    example: 'canCompileRegex(\'^KEY\', \'i\')',
+    example: "canCompileRegex('^KEY', 'i')",
   },
   {
     id: 'helpers.buildSequenceGroups',
@@ -495,7 +541,8 @@ export const VALIDATOR_FUNCTION_DOCS: ValidatorFunctionDoc[] = [
     id: 'controller.createSequenceActions',
     symbol: 'createSequenceActions',
     file: 'src/features/products/components/settings/validator-settings/controller-sequence-actions.ts',
-    purpose: 'Builds all advanced template/group action handlers used by validator settings controller.',
+    purpose:
+      'Builds all advanced template/group action handlers used by validator settings controller.',
     params: ['input: dependencies and mutation callbacks for sequence/template actions.'],
     returns: 'Action handlers object consumed by controller.',
     errors: ['Handlers catch errors and route failures to notifyError + logClientError.'],
@@ -510,7 +557,9 @@ export const VALIDATOR_FUNCTION_DOCS: ValidatorFunctionDoc[] = [
     params: [],
     returns: 'ValidatorSettingsController interface consumed by UI panels.',
     errors: ['Mutation errors are surfaced via toasts and observability logs.'],
-    edgeCases: ['Reorder flow includes optimistic grouping draft updates and stale timestamp checks.'],
+    edgeCases: [
+      'Reorder flow includes optimistic grouping draft updates and stale timestamp checks.',
+    ],
     example: 'const controller = useValidatorSettingsController()',
   },
   {
@@ -533,7 +582,7 @@ export const VALIDATOR_FUNCTION_DOCS: ValidatorFunctionDoc[] = [
     returns: 'Validated scope enum value.',
     errors: ['No throws.'],
     edgeCases: ['Unknown values fallback to products scope.'],
-    example: 'parseValidatorScope(\'image-studio\')',
+    example: "parseValidatorScope('image-studio')",
   },
   {
     id: 'scope.normalizeValidatorPatternLists',
@@ -674,8 +723,12 @@ export const VALIDATOR_UI_DOCS: ValidatorUiDoc[] = [
   {
     id: 'validator.instance.behavior.select',
     title: 'Instance Deny Behavior',
-    description: 'Sets whether denial stops future prompts in session or asks again next validation.',
-    relatedFunctions: ['ui.ValidatorInstanceBehaviorPanel', 'controller.useValidatorSettingsController'],
+    description:
+      'Sets whether denial stops future prompts in session or asks again next validation.',
+    relatedFunctions: [
+      'ui.ValidatorInstanceBehaviorPanel',
+      'controller.useValidatorSettingsController',
+    ],
   },
   {
     id: 'validator.patterns.add',
@@ -710,7 +763,8 @@ export const VALIDATOR_UI_DOCS: ValidatorUiDoc[] = [
   {
     id: 'validator.patterns.sequence.nameMirrorPl',
     title: 'Name EN -> PL Sequence',
-    description: 'Creates sequence that mirrors English name into Polish and applies category replacements.',
+    description:
+      'Creates sequence that mirrors English name into Polish and applies category replacements.',
     relatedFunctions: ['controller.createSequenceActions'],
   },
   {
@@ -735,7 +789,10 @@ export const VALIDATOR_UI_DOCS: ValidatorUiDoc[] = [
     id: 'validator.pattern.edit',
     title: 'Edit Pattern',
     description: 'Loads selected pattern into modal for editing.',
-    relatedFunctions: ['controller.useValidatorSettingsController', 'controller.buildFormDataFromPattern'],
+    relatedFunctions: [
+      'controller.useValidatorSettingsController',
+      'controller.buildFormDataFromPattern',
+    ],
   },
   {
     id: 'validator.pattern.delete',
@@ -765,7 +822,10 @@ export const VALIDATOR_UI_DOCS: ValidatorUiDoc[] = [
     id: 'validator.modal.target',
     title: 'Target Selector',
     description: 'Selects product field target for regex validation.',
-    relatedFunctions: ['helpers.getReplacementFieldsForTarget', 'helpers.getSourceFieldOptionsForTarget'],
+    relatedFunctions: [
+      'helpers.getReplacementFieldsForTarget',
+      'helpers.getSourceFieldOptionsForTarget',
+    ],
   },
   {
     id: 'validator.modal.applyScopes',
@@ -825,7 +885,11 @@ export const VALIDATOR_UI_DOCS: ValidatorUiDoc[] = [
     id: 'validator.modal.sequence',
     title: 'Sequence Controls',
     description: 'Controls execution order, chaining, and max executions in sequence mode.',
-    relatedFunctions: ['core.normalizePatternSequence', 'core.normalizePatternChainMode', 'core.normalizePatternMaxExecutions'],
+    relatedFunctions: [
+      'core.normalizePatternSequence',
+      'core.normalizePatternChainMode',
+      'core.normalizePatternMaxExecutions',
+    ],
   },
 ];
 

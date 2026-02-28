@@ -7,12 +7,7 @@ import { Bold, Italic, Link2, List, ListOrdered } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
 import { usePrompt } from '@/shared/hooks/ui/usePrompt';
-import {
-  Button,
-  SelectSimple,
-  Card,
-  Hint,
-} from '@/shared/ui';
+import { Button, SelectSimple, Card, Hint } from '@/shared/ui';
 
 function RichTextToolbarButton({
   title,
@@ -102,7 +97,8 @@ export function MiniRichTextEditor({
       defaultValue: editor.getAttributes('link')['href'] as string | undefined,
     });
 
-    if (url === null) return;    if (url === '') {
+    if (url === null) return;
+    if (url === '') {
       editor.chain().focus().extendMarkRange('link').unsetLink().run();
     } else {
       editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
@@ -112,7 +108,9 @@ export function MiniRichTextEditor({
   if (!editor) {
     return (
       <div className='space-y-2'>
-        <Hint size='xxs' uppercase className='text-gray-500'>{label}</Hint>
+        <Hint size='xxs' uppercase className='text-gray-500'>
+          {label}
+        </Hint>
         <Card variant='subtle-compact' padding='sm' className='text-xs text-gray-500'>
           Loading editor...
         </Card>
@@ -122,8 +120,14 @@ export function MiniRichTextEditor({
 
   return (
     <div className='space-y-2'>
-      <Hint size='xxs' uppercase className='text-gray-500'>{label}</Hint>
-      <Card variant='subtle-compact' padding='none' className='flex flex-wrap items-center gap-1 bg-card/60 px-2 py-1'>
+      <Hint size='xxs' uppercase className='text-gray-500'>
+        {label}
+      </Hint>
+      <Card
+        variant='subtle-compact'
+        padding='none'
+        className='flex flex-wrap items-center gap-1 bg-card/60 px-2 py-1'
+      >
         {showFormatSelect && (
           <div className='mr-2'>
             <SelectSimple
@@ -174,9 +178,13 @@ export function MiniRichTextEditor({
         )}
         <RichTextToolbarButton
           title='Insert link'
-          onClick={() => { void addLink(); }}
+          onClick={() => {
+            void addLink();
+          }}
           active={editor.isActive('link')}
-        >          <Link2 className='size-4' />
+        >
+          {' '}
+          <Link2 className='size-4' />
         </RichTextToolbarButton>
       </Card>
       <Card variant='subtle-compact' padding='none' className='bg-card/40'>

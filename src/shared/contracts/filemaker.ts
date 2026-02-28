@@ -47,14 +47,8 @@ export const filemakerAddressSchema = dtoBaseSchema.extend({
 export type FilemakerAddressDto = z.infer<typeof filemakerAddressSchema>;
 export type FilemakerAddress = FilemakerAddressDto;
 
-export const filemakerAddressOwnerKindSchema = z.enum([
-  'person',
-  'organization',
-  'event',
-]);
-export type FilemakerAddressOwnerKindDto = z.infer<
-  typeof filemakerAddressOwnerKindSchema
->;
+export const filemakerAddressOwnerKindSchema = z.enum(['person', 'organization', 'event']);
+export type FilemakerAddressOwnerKindDto = z.infer<typeof filemakerAddressOwnerKindSchema>;
 export type FilemakerAddressOwnerKind = FilemakerAddressOwnerKindDto;
 
 export const filemakerAddressLinkSchema = dtoBaseSchema.extend({
@@ -115,12 +109,7 @@ export const filemakerEventSchema = dtoBaseSchema.extend({
 export type FilemakerEventDto = z.infer<typeof filemakerEventSchema>;
 export type FilemakerEvent = FilemakerEventDto;
 
-export const filemakerEmailStatusSchema = z.enum([
-  'active',
-  'inactive',
-  'bounced',
-  'unverified',
-]);
+export const filemakerEmailStatusSchema = z.enum(['active', 'inactive', 'bounced', 'unverified']);
 export type FilemakerEmailStatusDto = z.infer<typeof filemakerEmailStatusSchema>;
 export type FilemakerEmailStatus = FilemakerEmailStatusDto;
 

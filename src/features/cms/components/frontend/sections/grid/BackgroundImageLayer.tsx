@@ -2,16 +2,14 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { 
-  clampNumber, 
-  resolveObjectPosition, 
-  buildTransparencyMaskStyles, 
-  resolveGradientDirection 
+import {
+  clampNumber,
+  resolveObjectPosition,
+  buildTransparencyMaskStyles,
+  resolveGradientDirection,
 } from './frontend-grid-utils';
 
-function buildImageElementPresentation(
-  settings: Record<string, unknown>
-): {
+function buildImageElementPresentation(settings: Record<string, unknown>): {
   wrapperStyles: React.CSSProperties;
   imageStyles: React.CSSProperties;
   overlayStyles: React.CSSProperties;
@@ -75,7 +73,10 @@ function buildImageElementPresentation(
     }
   }
 
-  Object.assign(wrapperStyles, buildTransparencyMaskStyles(transparencyMode, transparencyDirection, transparencyStrength));
+  Object.assign(
+    wrapperStyles,
+    buildTransparencyMaskStyles(transparencyMode, transparencyDirection, transparencyStrength)
+  );
 
   const filters: string[] = [];
   if (blur > 0) filters.push(`blur(${blur}px)`);
@@ -117,10 +118,10 @@ function buildImageElementPresentation(
   };
 }
 
-export function BackgroundImageLayer({ 
-  settings 
-}: { 
-  settings?: Record<string, unknown> 
+export function BackgroundImageLayer({
+  settings,
+}: {
+  settings?: Record<string, unknown>;
 }): React.ReactNode {
   if (!settings) return null;
   const src = (settings['src'] as string) || '';

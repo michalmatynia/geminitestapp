@@ -52,7 +52,7 @@ export function useProductSelectionForm(): UseProductSelectionFormResult {
         isBaseComIntegration,
         selectedInventoryId,
       },
-      'Please review required listing settings.',
+      'Please review required listing settings.'
     );
     if (!validation.success) {
       setError(validation.firstError);
@@ -80,7 +80,9 @@ export function useProductSelectionForm(): UseProductSelectionFormResult {
       }
       onSuccess();
     } catch (err: unknown) {
-      logClientError(err, { context: { source: 'SelectProductForListingModal', action: 'submit' } });
+      logClientError(err, {
+        context: { source: 'SelectProductForListingModal', action: 'submit' },
+      });
       setError(err instanceof Error ? err.message : 'Failed to list product');
     }
   };

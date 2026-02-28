@@ -14,7 +14,7 @@ export function useNoteMetadata(
     isArchived?: boolean;
     isFavorite?: boolean;
     [key: string]: unknown;
-  } | null,
+  } | null
 ): {
   title: string;
   setTitle: (title: string) => void;
@@ -29,9 +29,7 @@ export function useNoteMetadata(
   getReadableTextColor: (hex: string) => string;
 } {
   const [title, setTitle] = useState(note?.title || '');
-  const [color, setColor] = useState(
-    note?.color?.toLowerCase().trim() || '#ffffff',
-  );
+  const [color, setColor] = useState(note?.color?.toLowerCase().trim() || '#ffffff');
   const [isPinned, setIsPinned] = useState(note?.isPinned || false);
   const [isArchived, setIsArchived] = useState(note?.isArchived || false);
   const [isFavorite, setIsFavorite] = useState(note?.isFavorite || false);

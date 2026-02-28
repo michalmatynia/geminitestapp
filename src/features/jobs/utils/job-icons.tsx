@@ -1,11 +1,6 @@
 'use client';
 
-import { 
-  Clock, 
-  CheckCircle, 
-  XCircle, 
-  Loader2 
-} from 'lucide-react';
+import { Clock, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import React from 'react';
 
 export const getStatusIcon = (status: string): React.JSX.Element => {

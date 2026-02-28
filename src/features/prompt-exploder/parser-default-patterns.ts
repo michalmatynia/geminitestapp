@@ -10,8 +10,7 @@ export const DEFAULT_PATTERN_IDS: Record<string, RegExp> = {
   'segment.conditional.fix_until': /\bfix\s+until\b/i,
   'segment.comment.patch': /^\s*\/\/\s*PATCH\b/i,
   'segment.subsection.alpha_heading': /^\s*([A-Z])\)\s+(.+)$/,
-  'segment.subsection.reference_named':
-    /^\s*(RL\d+|P\d+|QA(?:_R)?\d+)\s+\(([^)]+)\)\s*:\s*(.*)$/i,
+  'segment.subsection.reference_named': /^\s*(RL\d+|P\d+|QA(?:_R)?\d+)\s+\(([^)]+)\)\s*:\s*(.*)$/i,
   'segment.subsection.reference_plain': /^\s*(RL\d+|P\d+|QA(?:_R)?\d+)\b\s*[—:-]?\s*(.*)$/i,
   'segment.subsection.qa_code': /^\s*(QA(?:_R)?\d+)\b\s*[—:-]?\s*(.*)$/i,
   'segment.subsection.numeric_bracket_heading': /^\s*\d+\.\s+\[([A-Z0-9 _()\-/:&+.,]{2,})]$/,

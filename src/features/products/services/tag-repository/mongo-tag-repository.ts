@@ -1,13 +1,7 @@
 import { ObjectId } from 'mongodb';
 
-
-import type { 
-  TagRepository, 
-  TagFilters 
-} from '@/shared/contracts/products';
-import type { 
-  ProductTag 
-} from '@/shared/contracts/products';
+import type { TagRepository, TagFilters } from '@/shared/contracts/products';
+import type { ProductTag } from '@/shared/contracts/products';
 import { internalError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
@@ -42,7 +36,11 @@ export const mongoTagRepository: TagRepository = {
       query.name = { $regex: filters.search, $options: 'i' };
     }
 
-    const tags = await db.collection<ProductTagDoc>(COLLECTION).find(query).sort({ name: 1 }).toArray();
+    const tags = await db
+      .collection<ProductTagDoc>(COLLECTION)
+      .find(query)
+      .sort({ name: 1 })
+      .toArray();
     return tags.map(toTagDomain);
   },
 
@@ -52,7 +50,11 @@ export const mongoTagRepository: TagRepository = {
     return doc ? toTagDomain(doc) : null;
   },
 
-  async createTag(data: { name: string; color?: string | null; catalogId: string }): Promise<ProductTag> {
+  async createTag(data: {
+    name: string;
+    color?: string | null;
+    catalogId: string;
+  }): Promise<ProductTag> {
     const db = await getMongoDb();
     const now = new Date();
     const doc: Omit<ProductTagDoc, '_id'> = {
@@ -68,19 +70,18 @@ export const mongoTagRepository: TagRepository = {
 
   async updateTag(id: string, data: { name?: string; color?: string | null }): Promise<ProductTag> {
     const db = await getMongoDb();
-    
+
     const set: Partial<ProductTagDoc> = {
       updatedAt: new Date(),
     };
-    
+
     if (data.name !== undefined) set.name = data.name;
     if (data.color !== undefined) set.color = data.color;
 
-    await db.collection<ProductTagDoc>(COLLECTION).updateOne(
-      { _id: new ObjectId(id) }, 
-      { $set: set } as UpdateFilter<ProductTagDoc>
-    );
-    
+    await db
+      .collection<ProductTagDoc>(COLLECTION)
+      .updateOne({ _id: new ObjectId(id) }, { $set: set } as UpdateFilter<ProductTagDoc>);
+
     const updated = await this.getTagById(id);
     if (!updated) throw internalError('Failed to update tag', { tagId: id });
     return updated;

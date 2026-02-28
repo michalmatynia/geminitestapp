@@ -1,7 +1,11 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 import { logAgentAudit } from '@/features/ai/agent-runtime/audit';
-import { parseCheckpoint, buildCheckpointState, persistCheckpoint } from '@/features/ai/agent-runtime/memory/checkpoint';
+import {
+  parseCheckpoint,
+  buildCheckpointState,
+  persistCheckpoint,
+} from '@/features/ai/agent-runtime/memory/checkpoint';
 import prisma from '@/shared/lib/db/prisma';
 
 vi.mock('@/shared/lib/db/prisma', () => ({
@@ -58,19 +62,26 @@ describe('Agent Runtime - Checkpoint', () => {
         steps: [],
         activeStepId: 'step-1',
       };
-      
+
       await persistCheckpoint(payload);
 
-      expect(prisma.chatbotAgentRun.update).toHaveBeenCalledWith(expect.objectContaining({
-        where: { id: 'run-1' },
-        data: expect.objectContaining({
-          activeStepId: 'step-1',
-          planState: expect.objectContaining({
-            activeStepId: 'step-1'
-          })
+      expect(prisma.chatbotAgentRun.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'run-1' },
+          data: expect.objectContaining({
+            activeStepId: 'step-1',
+            planState: expect.objectContaining({
+              activeStepId: 'step-1',
+            }),
+          }),
         })
-      }));
-      expect(logAgentAudit).toHaveBeenCalledWith('run-1', 'info', 'Checkpoint saved.', expect.anything());
+      );
+      expect(logAgentAudit).toHaveBeenCalledWith(
+        'run-1',
+        'info',
+        'Checkpoint saved.',
+        expect.anything()
+      );
     });
   });
 });

@@ -23,7 +23,7 @@ if (nodeMajor < 20) {
 if (dev && nodeMajor >= 24) {
   console.error(
     `[runtime] Node ${process.version} is not supported for dev mode (Next/SWC/Turbopack instability). ` +
-    'Use Node 22 LTS: `nvm use 22`.'
+      'Use Node 22 LTS: `nvm use 22`.'
   );
   process.exit(1);
 }
@@ -33,7 +33,11 @@ let loggingToolsCache = null;
 async function getLoggingTools() {
   if (loggingToolsCache) return loggingToolsCache;
   const fallback = {
-    ErrorSystem: { captureException: console.error, logWarning: console.warn, logInfo: console.log },
+    ErrorSystem: {
+      captureException: console.error,
+      logWarning: console.warn,
+      logInfo: console.log,
+    },
     logSystemEvent: (params) => console.log(params.message, params.context),
   };
 
@@ -75,9 +79,7 @@ const port = process.env.PORT ? Number(process.env.PORT) : 3000;
 const host = process.env.HOST || '::';
 
 const SCRAPER_GUARD = createScraperGuard({
-  enabled: process.env.SCRAPER_GUARD_ENABLED
-    ? process.env.SCRAPER_GUARD_ENABLED !== 'false'
-    : !dev,
+  enabled: process.env.SCRAPER_GUARD_ENABLED ? process.env.SCRAPER_GUARD_ENABLED !== 'false' : !dev,
   windowMs: parseEnvNumber('SCRAPER_GUARD_WINDOW_MS', 60 * 1000),
   pageMax: parseEnvNumber('SCRAPER_GUARD_PAGE_MAX', 120),
   apiMax: parseEnvNumber('SCRAPER_GUARD_API_MAX', 300),
@@ -117,7 +119,12 @@ app.prepare().then(async () => {
         const key = name.toLowerCase();
         if (key === 'location' || key === 'refresh') {
           if (debugResponseHeaders) {
-            logSystemEvent({ level: 'warn', message: '[response-header]', source: 'server', context: { name, value, stack: new Error().stack } });
+            logSystemEvent({
+              level: 'warn',
+              message: '[response-header]',
+              source: 'server',
+              context: { name, value, stack: new Error().stack },
+            });
           }
           if (key === 'refresh') {
             return;
@@ -134,17 +141,15 @@ app.prepare().then(async () => {
     res.writeHead = (statusCode, statusMessage, headers) => {
       let nextStatusMessage = statusMessage;
       let nextHeaders = headers;
-      if (
-        nextHeaders === undefined &&
-        nextStatusMessage &&
-        typeof nextStatusMessage === 'object'
-      ) {
+      if (nextHeaders === undefined && nextStatusMessage && typeof nextStatusMessage === 'object') {
         nextHeaders = nextStatusMessage;
         nextStatusMessage = undefined;
       }
       if (nextHeaders && typeof nextHeaders === 'object') {
-        if (nextHeaders.Location) nextHeaders.Location = normalizeRedirectHeader(nextHeaders.Location);
-        if (nextHeaders.location) nextHeaders.location = normalizeRedirectHeader(nextHeaders.location);
+        if (nextHeaders.Location)
+          nextHeaders.Location = normalizeRedirectHeader(nextHeaders.Location);
+        if (nextHeaders.location)
+          nextHeaders.location = normalizeRedirectHeader(nextHeaders.location);
         if (nextHeaders.Refresh) delete nextHeaders.Refresh;
         if (nextHeaders.refresh) delete nextHeaders.refresh;
       }
@@ -155,7 +160,12 @@ app.prepare().then(async () => {
         statusCode < 400 &&
         statusCode !== 304
       ) {
-        logSystemEvent({ level: 'warn', message: '[response-writeHead]', source: 'server', context: { statusCode, headers: nextHeaders, stack: new Error().stack } });
+        logSystemEvent({
+          level: 'warn',
+          message: '[response-writeHead]',
+          source: 'server',
+          context: { statusCode, headers: nextHeaders, stack: new Error().stack },
+        });
       }
       return originalWriteHead(statusCode, nextStatusMessage, nextHeaders);
     };
@@ -189,7 +199,18 @@ app.prepare().then(async () => {
       originalRawUrl.startsWith(`${host}/`);
     if (shouldNormalize && normalizedUrl !== originalRawUrl) {
       if (debugUrlNormalize) {
-        logSystemEvent({ level: 'warn', message: '[url-normalize] rewrite', source: 'server', context: { original: originalRawUrl, normalized: normalizedUrl, host, referer: req.headers.referer, userAgent: req.headers['user-agent'] } });
+        logSystemEvent({
+          level: 'warn',
+          message: '[url-normalize] rewrite',
+          source: 'server',
+          context: {
+            original: originalRawUrl,
+            normalized: normalizedUrl,
+            host,
+            referer: req.headers.referer,
+            userAgent: req.headers['user-agent'],
+          },
+        });
       }
       res.statusCode = 307;
       res.setHeader('Location', normalizedUrl);
@@ -199,11 +220,35 @@ app.prepare().then(async () => {
     if (normalizedUrl !== originalRawUrl) {
       req.url = normalizedUrl;
     }
-    if (debugUrlNormalize && (originalRawUrl.includes(hostPrefix) || originalRawUrl.includes(`//${host}`))) {
-      logSystemEvent({ level: 'warn', message: '[url-normalize] received', source: 'server', context: { original: originalRawUrl, host, referer: req.headers.referer, userAgent: req.headers['user-agent'] } });
+    if (
+      debugUrlNormalize &&
+      (originalRawUrl.includes(hostPrefix) || originalRawUrl.includes(`//${host}`))
+    ) {
+      logSystemEvent({
+        level: 'warn',
+        message: '[url-normalize] received',
+        source: 'server',
+        context: {
+          original: originalRawUrl,
+          host,
+          referer: req.headers.referer,
+          userAgent: req.headers['user-agent'],
+        },
+      });
     }
     if (debugUrlNormalize && normalizedUrl === '/' && originalRawUrl !== '/') {
-      logSystemEvent({ level: 'warn', message: '[root-request]', source: 'server', context: { url: originalRawUrl, normalized: normalizedUrl, host, referer: req.headers.referer, userAgent: req.headers['user-agent'] } });
+      logSystemEvent({
+        level: 'warn',
+        message: '[root-request]',
+        source: 'server',
+        context: {
+          url: originalRawUrl,
+          normalized: normalizedUrl,
+          host,
+          referer: req.headers.referer,
+          userAgent: req.headers['user-agent'],
+        },
+      });
     }
     const url = new URL(normalizedUrl, baseUrl);
     // Next custom server expects a path-focused parsedUrl (like url.parse(req.url, true)).
@@ -248,7 +293,10 @@ app.prepare().then(async () => {
   const isExpectedMissingCleanupModuleError = (error) => {
     if (!error) return false;
     const code = typeof error === 'object' ? error.code : undefined;
-    const message = typeof error === 'object' && typeof error.message === 'string' ? error.message : String(error);
+    const message =
+      typeof error === 'object' && typeof error.message === 'string'
+        ? error.message
+        : String(error);
     return (
       code === 'ERR_MODULE_NOT_FOUND' ||
       code === 'MODULE_NOT_FOUND' ||
@@ -274,7 +322,12 @@ app.prepare().then(async () => {
 
   // Graceful shutdown: drain BullMQ workers and close all Redis connections before exit
   const gracefulShutdown = async (signal) => {
-    logSystemEvent({ level: 'info', message: `Received ${signal}, shutting down gracefully...`, source: 'server', context: { signal } });
+    logSystemEvent({
+      level: 'info',
+      message: `Received ${signal}, shutting down gracefully...`,
+      source: 'server',
+      context: { signal },
+    });
     try {
       const queueModule = await importCleanupModule('./src/shared/lib/queue/index.js');
       if (queueModule?.stopAllWorkers) {
@@ -284,7 +337,12 @@ app.prepare().then(async () => {
         await queueModule.closeRedisConnection();
       }
     } catch (err) {
-      logSystemEvent({ level: 'warn', message: `Queue cleanup error: ${err.message}`, source: 'server', context: { error: err.message, module: 'queue' } });
+      logSystemEvent({
+        level: 'warn',
+        message: `Queue cleanup error: ${err.message}`,
+        source: 'server',
+        context: { error: err.message, module: 'queue' },
+      });
     }
     try {
       const redisPubSubModule = await importCleanupModule('./src/shared/lib/redis-pubsub.js');
@@ -292,7 +350,12 @@ app.prepare().then(async () => {
         await redisPubSubModule.closeSubscriber();
       }
     } catch (err) {
-      logSystemEvent({ level: 'warn', message: `Redis subscriber cleanup error: ${err.message}`, source: 'server', context: { error: err.message, module: 'redis-pubsub' } });
+      logSystemEvent({
+        level: 'warn',
+        message: `Redis subscriber cleanup error: ${err.message}`,
+        source: 'server',
+        context: { error: err.message, module: 'redis-pubsub' },
+      });
     }
     try {
       const redisModule = await importCleanupModule('./src/shared/lib/redis.js');
@@ -300,7 +363,12 @@ app.prepare().then(async () => {
         await redisModule.closeRedisClient();
       }
     } catch (err) {
-      logSystemEvent({ level: 'warn', message: `Redis client cleanup error: ${err.message}`, source: 'server', context: { error: err.message, module: 'redis' } });
+      logSystemEvent({
+        level: 'warn',
+        message: `Redis client cleanup error: ${err.message}`,
+        source: 'server',
+        context: { error: err.message, module: 'redis' },
+      });
     }
     server.close(() => {
       logSystemEvent({ level: 'info', message: 'Server closed', source: 'server' });
@@ -308,7 +376,12 @@ app.prepare().then(async () => {
     });
     // Force exit after 10 seconds
     setTimeout(() => {
-      logSystemEvent({ level: 'warn', message: 'Forced exit after timeout', source: 'server', context: { timeoutMs: 10000 } });
+      logSystemEvent({
+        level: 'warn',
+        message: 'Forced exit after timeout',
+        source: 'server',
+        context: { timeoutMs: 10000 },
+      });
       process.exit(1);
     }, 10000);
   };
@@ -344,7 +417,12 @@ app.prepare().then(async () => {
       }
       await listenWithOptions({ port, host: '0.0.0.0' });
     }
-    logSystemEvent({ level: 'info', message: `Ready on http://localhost:${port}`, source: 'server', context: { port, host } });
+    logSystemEvent({
+      level: 'info',
+      message: `Ready on http://localhost:${port}`,
+      source: 'server',
+      context: { port, host },
+    });
   };
 
   startServer().catch((error) => {
@@ -375,7 +453,15 @@ function createScraperGuard(config) {
     lastCleanupAt: 0,
   };
 
-  const staticPrefixes = ['/_next/', '/favicon', '/robots.txt', '/sitemap', '/assets/', '/fonts/', '/uploads/'];
+  const staticPrefixes = [
+    '/_next/',
+    '/favicon',
+    '/robots.txt',
+    '/sitemap',
+    '/assets/',
+    '/fonts/',
+    '/uploads/',
+  ];
   const staticExtensions = new Set([
     '.css',
     '.js',
@@ -435,11 +521,7 @@ function createScraperGuard(config) {
     /libwww-perl/i,
   ];
 
-  const allowlistIpSet = new Set([...
-    config.allowlistIps,
-    '127.0.0.1',
-    '::1',
-  ]);
+  const allowlistIpSet = new Set([...config.allowlistIps, '127.0.0.1', '::1']);
   const blocklistIpSet = new Set(config.blocklistIps);
 
   function shouldBypass(pathname) {
@@ -517,30 +599,33 @@ function createScraperGuard(config) {
       };
     }
 
-    const userAgent = typeof req.headers['user-agent'] === 'string'
-      ? req.headers['user-agent']
-      : '';
+    const userAgent =
+      typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : '';
     const isAllowlistedUa =
       allowlistBots.some((pattern) => pattern.test(userAgent)) ||
       config.allowlistUserAgents.some((value) => userAgent.includes(value));
     const isDeniedUa = denylistBots.some((pattern) => pattern.test(userAgent));
 
-    const accept = typeof req.headers['accept'] === 'string'
-      ? req.headers['accept'].toLowerCase()
-      : '';
-    const secFetchSite = typeof req.headers['sec-fetch-site'] === 'string'
-      ? req.headers['sec-fetch-site']
-      : '';
+    const accept =
+      typeof req.headers['accept'] === 'string' ? req.headers['accept'].toLowerCase() : '';
+    const secFetchSite =
+      typeof req.headers['sec-fetch-site'] === 'string' ? req.headers['sec-fetch-site'] : '';
 
     const isApi = path.startsWith('/api/');
     const isHtmlAccept = accept.includes('text/html') || accept.includes('application/xhtml+xml');
     const missingBrowserHints = !secFetchSite && !isApi;
-    const suspicious = !isAllowlistedUa && (isDeniedUa || !userAgent || (!isApi && !isHtmlAccept) || missingBrowserHints);
+    const suspicious =
+      !isAllowlistedUa &&
+      (isDeniedUa || !userAgent || (!isApi && !isHtmlAccept) || missingBrowserHints);
 
     const scope = isApi ? 'api' : 'page';
     const limit = suspicious
-      ? (scope === 'api' ? config.strictApiMax : config.strictPageMax)
-      : (scope === 'api' ? config.apiMax : config.pageMax);
+      ? scope === 'api'
+        ? config.strictApiMax
+        : config.strictPageMax
+      : scope === 'api'
+        ? config.apiMax
+        : config.pageMax;
     const blockMs = suspicious ? config.strictBlockMs : config.blockMs;
 
     const now = Date.now();
@@ -550,7 +635,12 @@ function createScraperGuard(config) {
     const blockedUntil = state.blocked.get(key);
     if (blockedUntil && blockedUntil > now) {
       if (config.logBlocked) {
-        logSystemEvent({ level: 'warn', message: '[SCRAPER_GUARD] blocked request', source: 'scraper-guard', context: { ip, path, scope, blockedUntil: new Date(blockedUntil).toISOString() } });
+        logSystemEvent({
+          level: 'warn',
+          message: '[SCRAPER_GUARD] blocked request',
+          source: 'scraper-guard',
+          context: { ip, path, scope, blockedUntil: new Date(blockedUntil).toISOString() },
+        });
       }
       const retryAfterSec = Math.ceil((blockedUntil - now) / 1000);
       return {
@@ -572,7 +662,19 @@ function createScraperGuard(config) {
       const until = now + blockMs;
       state.blocked.set(key, until);
       if (config.logBlocked) {
-        logSystemEvent({ level: 'warn', message: '[SCRAPER_GUARD] rate limit exceeded', source: 'scraper-guard', context: { ip, path, scope, limit, blockedUntil: new Date(until).toISOString(), suspicious } });
+        logSystemEvent({
+          level: 'warn',
+          message: '[SCRAPER_GUARD] rate limit exceeded',
+          source: 'scraper-guard',
+          context: {
+            ip,
+            path,
+            scope,
+            limit,
+            blockedUntil: new Date(until).toISOString(),
+            suspicious,
+          },
+        });
       }
       return {
         allowed: false,

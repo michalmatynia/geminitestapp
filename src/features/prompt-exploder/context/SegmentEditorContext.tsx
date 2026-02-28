@@ -1,11 +1,5 @@
 'use client';
 
- 
- 
- 
- 
- 
-
 import React, { createContext, useCallback, useEffect, useMemo, useState, useContext } from 'react';
 
 import { PROMPT_ENGINE_SETTINGS_KEY } from '@/shared/contracts/prompt-engine';
@@ -46,10 +40,7 @@ import {
 import { useDocumentState, useDocumentActions } from './hooks/useDocument';
 import { useSettingsState, useSettingsActions } from './hooks/useSettings';
 
-import type {
-  PromptExploderLearnedTemplate,
-  PromptExploderSegment,
-} from '../types';
+import type { PromptExploderLearnedTemplate, PromptExploderSegment } from '../types';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -123,7 +114,11 @@ const SegmentEditorActionsContext = createContext<SegmentEditorActions | null>(n
 
 // ── Provider ─────────────────────────────────────────────────────────────────
 
-export function SegmentEditorProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
+export function SegmentEditorProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}): React.JSX.Element {
   const { toast } = useToast();
 
   const {
@@ -138,17 +133,9 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
     runtimeValidationRules,
     runtimeLearnedTemplates,
   } = useSettingsState();
-  const {
-    setSessionLearnedRules,
-    setSessionLearnedTemplates,
-    updateSetting,
-    updateSettingsBulk,
-  } = useSettingsActions();
-  const {
-    documentState,
-    selectedSegment,
-    promptText,
-  } = useDocumentState();
+  const { setSessionLearnedRules, setSessionLearnedTemplates, updateSetting, updateSettingsBulk } =
+    useSettingsActions();
+  const { documentState, selectedSegment, promptText } = useDocumentState();
   const {
     replaceSegments,
     updateSegment,
@@ -163,7 +150,9 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
   const [draggingListItemIndex, setDraggingListItemIndex] = useState<number | null>(null);
   const [listItemDropTargetIndex, setListItemDropTargetIndex] = useState<number | null>(null);
   const [listItemDropPosition, setListItemDropPosition] = useState<'before' | 'after' | null>(null);
-  const [approvalDraft, setApprovalDraft] = useState(promptExploderCreateApprovalDraftFromSegment(null));
+  const [approvalDraft, setApprovalDraft] = useState(
+    promptExploderCreateApprovalDraftFromSegment(null)
+  );
 
   // ── Sync approval draft ────────────────────────────────────────────────────
 
@@ -175,7 +164,9 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
 
   useEffect(() => {
     if (!draggingSegmentId) return;
-    const segmentIds = new Set((documentState?.segments ?? []).map((s: PromptExploderSegment) => s.id));
+    const segmentIds = new Set(
+      (documentState?.segments ?? []).map((s: PromptExploderSegment) => s.id)
+    );
     if (segmentIds.has(draggingSegmentId)) return;
     setDraggingSegmentId(null);
     setSegmentDropTargetId(null);
@@ -220,18 +211,20 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
   const similarTemplateCandidates = useMemo(() => {
     if (!selectedSegment)
       return [] as Array<{
-                  id: string;
-                  title: string;
-                  segmentType: PromptExploderLearnedTemplate['segmentType'];
-                  score: number;
-                  approvals: number;
-                  state: PromptExploderLearnedTemplate['state'];
-                  mergeEligible: boolean;
-                  sameType: boolean;
-                                normalizedTitle?: string;
-                              }>;
-    const sourceText = `${selectedSegment.title || ''} ${promptExploderBuildSegmentSampleText(selectedSegment)}`.trim();
-    const normalizedSelectedTitle = normalizeLearningText(selectedSegment.title || '');    return effectiveLearnedTemplates
+        id: string;
+        title: string;
+        segmentType: PromptExploderLearnedTemplate['segmentType'];
+        score: number;
+        approvals: number;
+        state: PromptExploderLearnedTemplate['state'];
+        mergeEligible: boolean;
+        sameType: boolean;
+        normalizedTitle?: string;
+      }>;
+    const sourceText =
+      `${selectedSegment.title || ''} ${promptExploderBuildSegmentSampleText(selectedSegment)}`.trim();
+    const normalizedSelectedTitle = normalizeLearningText(selectedSegment.title || '');
+    return effectiveLearnedTemplates
       .map((template) => {
         const score = templateSimilarityScore(sourceText, template);
         const sameType = template.segmentType === approvalDraft.ruleSegmentType;
@@ -247,7 +240,8 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
           sameType,
           normalizedTitle: template.normalizedTitle,
         };
-      })      .filter(
+      })
+      .filter(
         (candidate) =>
           candidate.score >= promptExploderClampNumber(templateMergeThreshold - 0.1, 0.3, 0.95) ||
           candidate.normalizedTitle === normalizedSelectedTitle
@@ -262,31 +256,33 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
       })
       .slice(0, 6)
       .map(({ sameType: _sameType, normalizedTitle: _normalizedTitle, ...candidate }) => candidate);
-  }, [approvalDraft.ruleSegmentType, effectiveLearnedTemplates, selectedSegment, templateMergeThreshold]);
+  }, [
+    approvalDraft.ruleSegmentType,
+    effectiveLearnedTemplates,
+    selectedSegment,
+    templateMergeThreshold,
+  ]);
 
-  const templateTargetOptions = useMemo(
-    () => {
-      const normalizeApprovals = (val: unknown): number => {
-        if (typeof val === 'number') return val;
-        return 0;
-      };
+  const templateTargetOptions = useMemo(() => {
+    const normalizeApprovals = (val: unknown): number => {
+      if (typeof val === 'number') return val;
+      return 0;
+    };
 
-      return effectiveLearnedTemplates
-        .filter((template) => template.segmentType === approvalDraft.ruleSegmentType)
-        .sort((left, right) => {
-          const leftApprovals = normalizeApprovals(left.approvals);
-          const rightApprovals = normalizeApprovals(right.approvals);
-          if (rightApprovals !== leftApprovals) return rightApprovals - leftApprovals;
-          return (String(right.updatedAt || '')).localeCompare(String(left.updatedAt || ''));
-        })
-        .slice(0, 80)
-        .map((template) => ({
-          value: template.id,
-          label: `${template.title} (${template.state}, ${normalizeApprovals(template.approvals)})`,
-        }));
-    },
-    [approvalDraft.ruleSegmentType, effectiveLearnedTemplates]
-  );
+    return effectiveLearnedTemplates
+      .filter((template) => template.segmentType === approvalDraft.ruleSegmentType)
+      .sort((left, right) => {
+        const leftApprovals = normalizeApprovals(left.approvals);
+        const rightApprovals = normalizeApprovals(right.approvals);
+        if (rightApprovals !== leftApprovals) return rightApprovals - leftApprovals;
+        return String(right.updatedAt || '').localeCompare(String(left.updatedAt || ''));
+      })
+      .slice(0, 80)
+      .map((template) => ({
+        value: template.id,
+        label: `${template.title} (${template.state}, ${normalizeApprovals(template.approvals)})`,
+      }));
+  }, [approvalDraft.ruleSegmentType, effectiveLearnedTemplates]);
 
   // ── Actions ────────────────────────────────────────────────────────────────
 
@@ -302,17 +298,14 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
     setSegmentDropPosition(null);
   }, []);
 
-  const handleSegmentDragOver = useCallback(
-    (event: React.DragEvent, targetSegmentId: string) => {
-      event.preventDefault();
-      const target = event.currentTarget as HTMLElement;
-      const rect = target.getBoundingClientRect();
-      const pos = resolveDropPosition(event.clientY, rect.top, rect.height);
-      setSegmentDropTargetId(targetSegmentId);
-      setSegmentDropPosition(pos);
-    },
-    []
-  );
+  const handleSegmentDragOver = useCallback((event: React.DragEvent, targetSegmentId: string) => {
+    event.preventDefault();
+    const target = event.currentTarget as HTMLElement;
+    const rect = target.getBoundingClientRect();
+    const pos = resolveDropPosition(event.clientY, rect.top, rect.height);
+    setSegmentDropTargetId(targetSegmentId);
+    setSegmentDropPosition(pos);
+  }, []);
 
   const handleSegmentDrop = useCallback(
     (event: React.DragEvent, targetSegmentId: string) => {
@@ -347,17 +340,14 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
     setListItemDropPosition(null);
   }, []);
 
-  const handleListItemDragOver = useCallback(
-    (event: React.DragEvent, targetIndex: number) => {
-      event.preventDefault();
-      const target = event.currentTarget as HTMLElement;
-      const rect = target.getBoundingClientRect();
-      const pos = resolveDropPosition(event.clientY, rect.top, rect.height);
-      setListItemDropTargetIndex(targetIndex);
-      setListItemDropPosition(pos);
-    },
-    []
-  );
+  const handleListItemDragOver = useCallback((event: React.DragEvent, targetIndex: number) => {
+    event.preventDefault();
+    const target = event.currentTarget as HTMLElement;
+    const rect = target.getBoundingClientRect();
+    const pos = resolveDropPosition(event.clientY, rect.top, rect.height);
+    setListItemDropTargetIndex(targetIndex);
+    setListItemDropPosition(pos);
+  }, []);
 
   const handleListItemDrop = useCallback(
     (event: React.DragEvent, targetIndex: number) => {
@@ -506,7 +496,8 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
       const templateUpsert = upsertLearnedTemplate({
         templates: effectiveLearnedTemplates,
         segmentType: approvalDraft.ruleSegmentType,
-        title: selectedSegment.title || '',        sourceText: segmentLearningSource,
+        title: selectedSegment.title || '',
+        sourceText: segmentLearningSource,
         sampleText: segmentSampleText,
         similarityThreshold: templateMergeThreshold,
         minApprovalsForMatching: learningDraft.minApprovalsForMatching,
@@ -532,7 +523,8 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
       const learnedRuleDraft = buildManualLearnedRegexRuleDraft({
         id: learnedRuleId,
         segmentTitle: selectedSegment.title || '',
-        segmentType: approvalDraft.ruleSegmentType,        sequence: 1000 + nextTemplates.length,
+        segmentType: approvalDraft.ruleSegmentType,
+        sequence: 1000 + nextTemplates.length,
         ruleTitle: approvalDraft.ruleTitle,
         rulePattern: approvalDraft.rulePattern,
         priority: approvalDraft.rulePriority,
@@ -630,10 +622,9 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
       ].filter(Boolean);
       toast(messageParts.join(' '), { variant: 'success' });
     } catch (error) {
-      toast(
-        error instanceof Error ? error.message : 'Failed to approve segment pattern.',
-        { variant: 'error' }
-      );
+      toast(error instanceof Error ? error.message : 'Failed to approve segment pattern.', {
+        variant: 'error',
+      });
     }
   }, [
     approvalDraft,
@@ -661,21 +652,34 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
 
   // ── Memoized context values ────────────────────────────────────────────────
 
-  const reorderValue = useMemo<SegmentEditorReorderState>(() => ({
-    draggingSegmentId,
-    segmentDropTargetId,
-    segmentDropPosition,
-    draggingListItemIndex,
-    listItemDropTargetIndex,
-    listItemDropPosition,
-  }), [draggingSegmentId, segmentDropTargetId, segmentDropPosition, draggingListItemIndex, listItemDropTargetIndex, listItemDropPosition]);
+  const reorderValue = useMemo<SegmentEditorReorderState>(
+    () => ({
+      draggingSegmentId,
+      segmentDropTargetId,
+      segmentDropPosition,
+      draggingListItemIndex,
+      listItemDropTargetIndex,
+      listItemDropPosition,
+    }),
+    [
+      draggingSegmentId,
+      segmentDropTargetId,
+      segmentDropPosition,
+      draggingListItemIndex,
+      listItemDropTargetIndex,
+      listItemDropPosition,
+    ]
+  );
 
-  const patternsValue = useMemo<SegmentEditorPatternsState>(() => ({
-    approvalDraft,
-    matchedRuleDetails,
-    similarTemplateCandidates,
-    templateTargetOptions,
-  }), [approvalDraft, matchedRuleDetails, similarTemplateCandidates, templateTargetOptions]);
+  const patternsValue = useMemo<SegmentEditorPatternsState>(
+    () => ({
+      approvalDraft,
+      matchedRuleDetails,
+      similarTemplateCandidates,
+      templateTargetOptions,
+    }),
+    [approvalDraft, matchedRuleDetails, similarTemplateCandidates, templateTargetOptions]
+  );
 
   const stateValue = useMemo<SegmentEditorState>(
     () => ({
@@ -742,13 +746,15 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
 
 export function useSegmentEditorReorder(): SegmentEditorReorderState {
   const context = useContext(ReorderContext);
-  if (!context) throw new Error('useSegmentEditorReorder must be used within SegmentEditorProvider');
+  if (!context)
+    throw new Error('useSegmentEditorReorder must be used within SegmentEditorProvider');
   return context;
 }
 
 export function useSegmentEditorPatterns(): SegmentEditorPatternsState {
   const context = useContext(PatternsContext);
-  if (!context) throw new Error('useSegmentEditorPatterns must be used within SegmentEditorProvider');
+  if (!context)
+    throw new Error('useSegmentEditorPatterns must be used within SegmentEditorProvider');
   return context;
 }
 

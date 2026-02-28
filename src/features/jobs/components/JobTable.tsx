@@ -22,7 +22,7 @@ interface JobTableProps {
   onDelete?: (jobId: string) => void;
   isCancelling?: (jobId: string) => boolean;
   isDeleting?: (jobId: string) => boolean;
-  
+
   // Panel props
   header?: React.ReactNode;
   alerts?: React.ReactNode;
@@ -43,22 +43,32 @@ export function JobTable({
   filters,
   footer,
 }: JobTableProps): React.JSX.Element {
-  const { 
-    setSelectedListing, 
-    listingJobs, 
-    confirmCancelListing, 
-    isCancellingListing 
-  } = useJobsContext();
+  const { setSelectedListing, listingJobs, confirmCancelListing, isCancellingListing } =
+    useJobsContext();
 
-  const handleViewDetails = useMemo(() => onViewDetailsProp || ((id: string) => {
-    const row = listingJobs.flatMap(j => j.listings.map(l => ({ job: j, listing: l }))).find(r => r.listing.id === id);
-    if (row) setSelectedListing(row);
-  }), [onViewDetailsProp, listingJobs, setSelectedListing]);
+  const handleViewDetails = useMemo(
+    () =>
+      onViewDetailsProp ||
+      ((id: string) => {
+        const row = listingJobs
+          .flatMap((j) => j.listings.map((l) => ({ job: j, listing: l })))
+          .find((r) => r.listing.id === id);
+        if (row) setSelectedListing(row);
+      }),
+    [onViewDetailsProp, listingJobs, setSelectedListing]
+  );
 
-  const handleCancel = useMemo(() => onCancelProp || ((id: string) => {
-    const row = listingJobs.flatMap(j => j.listings.map(l => ({ job: j, listing: l }))).find(r => r.listing.id === id);
-    if (row) confirmCancelListing(row.job.productId, row.listing.id);
-  }), [onCancelProp, listingJobs, confirmCancelListing]);
+  const handleCancel = useMemo(
+    () =>
+      onCancelProp ||
+      ((id: string) => {
+        const row = listingJobs
+          .flatMap((j) => j.listings.map((l) => ({ job: j, listing: l })))
+          .find((r) => r.listing.id === id);
+        if (row) confirmCancelListing(row.job.productId, row.listing.id);
+      }),
+    [onCancelProp, listingJobs, confirmCancelListing]
+  );
 
   const isCancelling = isCancellingProp || isCancellingListing;
 

@@ -1,10 +1,7 @@
 'use client';
 
 import type { DbSchemaSnapshot } from '@/shared/contracts/ai-paths';
-import type { 
-  CollectionSchema, 
-  SchemaData 
-} from '@/shared/contracts/database';
+import type { CollectionSchema, SchemaData } from '@/shared/contracts/database';
 
 export const toTitleCase = (value: string): string =>
   value
@@ -33,23 +30,33 @@ export const normalizeSchemaType = (value: string): string => {
   const normalized = value.trim();
   const lower = normalized.toLowerCase();
   if (lower === 'string') return 'string';
-  if (lower === 'int' || lower === 'float' || lower === 'decimal' || lower === 'number') return 'number';
+  if (lower === 'int' || lower === 'float' || lower === 'decimal' || lower === 'number')
+    return 'number';
   if (lower === 'boolean' || lower === 'bool') return 'boolean';
   if (lower === 'datetime' || lower === 'date') return 'string';
   if (lower === 'json') return 'Record<string, unknown>';
   return normalized || 'unknown';
 };
 
-export const formatCollectionSchema = (collectionName: string, fields: Array<{ name: string; type: string }> = []): string => {
+export const formatCollectionSchema = (
+  collectionName: string,
+  fields: Array<{ name: string; type: string }> = []
+): string => {
   const interfaceName = toTitleCase(singularize(collectionName));
   if (!fields.length) {
     return `interface ${interfaceName} {}`;
   }
-  const lines = fields.map((field: { name: string; type: string }) => `  ${field.name}: ${normalizeSchemaType(field.type)};`);
+  const lines = fields.map(
+    (field: { name: string; type: string }) =>
+      `  ${field.name}: ${normalizeSchemaType(field.type)};`
+  );
   return `interface ${interfaceName} {\n${lines.join('\n')}\n}`;
 };
 
-export const formatCollectionLabel = (collection: CollectionSchema, includeProvider: boolean): string => {
+export const formatCollectionLabel = (
+  collection: CollectionSchema,
+  includeProvider: boolean
+): string => {
   const baseLabel = toTitleCase(collection.name);
   if (includeProvider && collection.provider) {
     return `${baseLabel} (${collection.provider})`;
@@ -61,7 +68,7 @@ export const normalizeSchemaCollections = (schema: SchemaData | null): Array<Col
   if (!schema?.collections) return [];
 
   const baseCollections = Array.isArray(schema.collections)
-    ? (schema.collections)
+    ? schema.collections
     : Object.values(schema.collections);
 
   if (baseCollections.length === 0) return [];
@@ -70,10 +77,13 @@ export const normalizeSchemaCollections = (schema: SchemaData | null): Array<Col
     collection: CollectionSchema & { provider?: string }
   ): CollectionSchema => {
     const { provider, ...rest } = collection;
-    return provider ? { ...rest, provider } as CollectionSchema : rest as CollectionSchema;
+    return provider ? ({ ...rest, provider } as CollectionSchema) : (rest as CollectionSchema);
   };
 
-  if (schema.provider === 'multi') return baseCollections.map((collection) => stripUndefinedProvider(collection as CollectionSchema & { provider?: string }));
+  if (schema.provider === 'multi')
+    return baseCollections.map((collection) =>
+      stripUndefinedProvider(collection as CollectionSchema & { provider?: string })
+    );
 
   const provider: 'mongodb' | 'prisma' = schema.provider === 'prisma' ? 'prisma' : 'mongodb';
   return baseCollections.map((collection) => ({
@@ -97,7 +107,11 @@ export const matchesCollectionSelection = (
 
 export const applySchemaSelection = (
   schema: SchemaData,
-  schemaConfig?: { mode?: 'all' | 'selected'; collections?: string[]; includeFields?: boolean } | null
+  schemaConfig?: {
+    mode?: 'all' | 'selected';
+    collections?: string[];
+    includeFields?: boolean;
+  } | null
 ): SchemaData => {
   let collections = normalizeSchemaCollections(schema);
   if (schemaConfig?.mode === 'selected' && schemaConfig.collections?.length) {
@@ -121,7 +135,7 @@ export const toDbSchemaSnapshotCollection = (
   collection: CollectionSchema
 ): DbSchemaSnapshot['collections'][number] => {
   const relations = collection.relations;
-  
+
   return {
     name: collection.name,
     fields: (collection.fields ?? []).map((field: { name: string; type: string }) => ({
@@ -143,7 +157,7 @@ export const toDbSchemaSnapshotSourceCollection = (
   relations?: string[];
 } => {
   const relations = collection.relations;
-  
+
   return {
     name: collection.name,
     fields: (collection.fields ?? []).map((field: { name: string; type: string }) => ({
@@ -154,23 +168,26 @@ export const toDbSchemaSnapshotSourceCollection = (
   };
 };
 
-export const toDbSchemaSnapshot = (
-  schema: SchemaData,
-  syncedAt: string
-): DbSchemaSnapshot => {
+export const toDbSchemaSnapshot = (schema: SchemaData, syncedAt: string): DbSchemaSnapshot => {
   const normalizedCollections = normalizeSchemaCollections(schema);
 
   if (schema.provider === 'multi') {
     const schemaSources = schema['sources'];
     const sources = schemaSources
-      ? (['mongodb', 'prisma'] as const).reduce((acc, provider) => {
-        const source = schemaSources[provider] as { provider: string; collections: CollectionSchema[] } | undefined;
-        if (!source) return acc;
-        acc[provider] = {
-          provider: source.provider as 'mongodb' | 'prisma',
-          collections: source.collections.map(toDbSchemaSnapshotSourceCollection),
-        };        return acc;
-      }, {} as NonNullable<DbSchemaSnapshot['sources']>)
+      ? (['mongodb', 'prisma'] as const).reduce(
+          (acc, provider) => {
+            const source = schemaSources[provider] as
+              | { provider: string; collections: CollectionSchema[] }
+              | undefined;
+            if (!source) return acc;
+            acc[provider] = {
+              provider: source.provider as 'mongodb' | 'prisma',
+              collections: source.collections.map(toDbSchemaSnapshotSourceCollection),
+            };
+            return acc;
+          },
+          {} as NonNullable<DbSchemaSnapshot['sources']>
+        )
       : undefined;
 
     return {
@@ -182,7 +199,8 @@ export const toDbSchemaSnapshot = (
   }
 
   return {
-    provider: schema.provider === 'multi' ? 'multi' : schema.provider === 'prisma' ? 'prisma' : 'mongodb',
+    provider:
+      schema.provider === 'multi' ? 'multi' : schema.provider === 'prisma' ? 'prisma' : 'mongodb',
     collections: normalizedCollections.map(toDbSchemaSnapshotCollection),
     syncedAt,
   };
@@ -233,7 +251,9 @@ export const isProductCollection = (collection: string): boolean => {
   return false;
 };
 
-export const buildSchemaPlaceholderContext = (schema: SchemaData | null): Record<string, string> => {
+export const buildSchemaPlaceholderContext = (
+  schema: SchemaData | null
+): Record<string, string> => {
   const context: Record<string, string> = {};
   const collections = normalizeSchemaCollections(schema);
   if (collections.length === 0) return context;

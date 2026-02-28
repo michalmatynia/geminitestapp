@@ -11,9 +11,9 @@ import {
   type SequenceRequestPreview,
   type SequenceRunStartResponse,
 } from './right-sidebar-utils';
-import { resolvePromptPlaceholders } from '../../utils/run-request-preview';
+import { resolvePromptPlaceholders } from '@/shared/lib/ai/image-studio/utils/run-request-preview';
 
-import type { ImageStudioSequenceStep } from '../../utils/studio-settings';
+import type { ImageStudioSequenceStep } from '@/shared/lib/ai/image-studio/utils/studio-settings';
 
 type Toast = (
   message: string,
@@ -121,7 +121,7 @@ export function useRightSidebarSequence({
         sourceWidth: workingSlotImageWidth ?? 1,
         sourceHeight: workingSlotImageHeight ?? 1,
         imageContentFrame,
-      },
+      }
     );
     if (stepResolutionErrors.length > 0) {
       errors.push(...stepResolutionErrors);
@@ -129,10 +129,10 @@ export function useRightSidebarSequence({
     const mask =
       sequencePolygons.length > 0
         ? {
-          polygons: sequencePolygons,
-          invert: maskInvert,
-          feather: maskFeather,
-        }
+            polygons: sequencePolygons,
+            invert: maskInvert,
+            feather: maskFeather,
+          }
         : null;
 
     const images = buildReferencePreviewImages(slots, compositeAssetIds);
@@ -201,12 +201,12 @@ export function useRightSidebarSequence({
       sequenceRequestPreview.payload
         ? JSON.stringify(sequenceRequestPreview.payload, null, 2)
         : JSON.stringify(
-          {
-            errors: sequenceRequestPreview.errors,
-          },
-          null,
-          2
-        ),
+            {
+              errors: sequenceRequestPreview.errors,
+            },
+            null,
+            2
+          ),
     [sequenceRequestPreview]
   );
 
@@ -257,7 +257,7 @@ export function useRightSidebarSequence({
         sourceWidth: workingSlotImageWidth ?? 1,
         sourceHeight: workingSlotImageHeight ?? 1,
         imageContentFrame,
-      },
+      }
     );
     if (stepResolutionErrors.length > 0) {
       toast(stepResolutionErrors[0] ?? 'Selected-shape crop step is not fully configured.', {
@@ -267,9 +267,8 @@ export function useRightSidebarSequence({
       return;
     }
     setSequenceRunBusy(true);
-    void api.post<SequenceRunStartResponse>(
-      '/api/image-studio/sequences/run',
-      {
+    void api
+      .post<SequenceRunStartResponse>('/api/image-studio/sequences/run', {
         projectId: normalizedProjectId,
         sourceSlotId: workingSlot.id,
         prompt: resolvedPrompt || promptText.trim(),
@@ -278,24 +277,25 @@ export function useRightSidebarSequence({
         mask:
           polygons.length > 0
             ? {
-              polygons,
-              invert: maskInvert,
-              feather: maskFeather,
-            }
+                polygons,
+                invert: maskInvert,
+                feather: maskFeather,
+              }
             : null,
         studioSettings: studioSettings as unknown as Record<string, unknown>,
         steps: resolvedSteps,
         metadata: {
           source: 'right-sidebar-sequence-generate',
         },
-      }
-    )
+      })
       .then((result) => {
         const stepCount =
           typeof result.stepCount === 'number' && Number.isFinite(result.stepCount)
             ? Math.max(1, Math.floor(result.stepCount))
             : Math.max(1, enabledSequenceRuntimeSteps.length);
-        toast(`Sequence started (${stepCount} step${stepCount === 1 ? '' : 's'}).`, { variant: 'success' });
+        toast(`Sequence started (${stepCount} step${stepCount === 1 ? '' : 's'}).`, {
+          variant: 'success',
+        });
         if (result.dispatchMode === 'inline') {
           toast('Redis queue unavailable, sequence is running inline.', { variant: 'info' });
         }
@@ -303,7 +303,9 @@ export function useRightSidebarSequence({
         setSidebarTab('sequencing');
       })
       .catch((error: unknown) => {
-        toast(error instanceof Error ? error.message : 'Failed to start sequence.', { variant: 'error' });
+        toast(error instanceof Error ? error.message : 'Failed to start sequence.', {
+          variant: 'error',
+        });
       })
       .finally(() => {
         setSequenceRunBusy(false);

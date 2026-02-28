@@ -8,15 +8,18 @@ import { z } from 'zod';
 import { getImageFileRepository } from '@/features/files/server';
 import type { ImageFileRecord } from '@/shared/contracts/files';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { badRequestError, externalServiceError, payloadTooLargeError } from '@/shared/errors/app-error';
+import {
+  badRequestError,
+  externalServiceError,
+  payloadTooLargeError,
+} from '@/shared/errors/app-error';
 
 const projectsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio');
 const uploadsRoot = path.join(process.cwd(), 'public', 'uploads');
 const MAX_REMOTE_IMPORT_BYTES = 15 * 1024 * 1024;
 const REMOTE_FETCH_TIMEOUT_MS = 15_000;
 
-const sanitizeProjectId = (value: string): string =>
-  value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
+const sanitizeProjectId = (value: string): string => value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
 
 const sanitizeFolderPath = (value: string): string => {
   const normalized = value.replace(/\\/g, '/').trim();
@@ -102,13 +105,18 @@ function parseDataUrl(dataUrl: string): { buffer: Buffer; mime: string | null } 
   }
 }
 
-async function fetchRemoteFile(url: string): Promise<{ buffer: Buffer; mime: string | null; filename: string }> {
+async function fetchRemoteFile(
+  url: string
+): Promise<{ buffer: Buffer; mime: string | null; filename: string }> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REMOTE_FETCH_TIMEOUT_MS);
   try {
     const response = await fetch(url, { signal: controller.signal });
     if (!response.ok) {
-      throw externalServiceError(`Remote fetch failed (${response.status})`, { url, status: response.status });
+      throw externalServiceError(`Remote fetch failed (${response.status})`, {
+        url,
+        status: response.status,
+      });
     }
     const mime = response.headers.get('content-type');
     const lengthHeader = response.headers.get('content-length');
@@ -154,17 +162,12 @@ export async function POST_handler(
   const projectId = sanitizeProjectId(params.projectId);
   if (!projectId) throw badRequestError('Project id is required');
 
-  const parsed = importSchema.safeParse(
-    (await req.json().catch(() => null)) as unknown
-  );
+  const parsed = importSchema.safeParse((await req.json().catch(() => null)) as unknown);
   if (!parsed.success) {
     throw badRequestError('Invalid payload', { errors: parsed.error.format() });
   }
 
-  const safeFolder =
-    parsed.data.folder?.trim()
-      ? sanitizeFolderPath(parsed.data.folder)
-      : '';
+  const safeFolder = parsed.data.folder?.trim() ? sanitizeFolderPath(parsed.data.folder) : '';
 
   const diskDir = safeFolder
     ? path.join(projectsRoot, projectId, safeFolder)
@@ -194,8 +197,8 @@ export async function POST_handler(
   const failures: Array<{ filepath: string; error: string }> = [];
 
   for (const item of parsed.data.files) {
-    const sourceRecord = item.id ? sourceById.get(item.id) ?? null : null;
-    const sourcePath = item.id ? sourceRecord?.filepath ?? item.filepath : item.filepath;
+    const sourceRecord = item.id ? (sourceById.get(item.id) ?? null) : null;
+    const sourcePath = item.id ? (sourceRecord?.filepath ?? item.filepath) : item.filepath;
     const rawSource = sourcePath ?? '';
 
     if (isDataUrl(rawSource)) {
@@ -208,7 +211,8 @@ export async function POST_handler(
         failures.push({ filepath: rawSource, error: 'Base64 data is too large' });
         continue;
       }
-      const mime = parsedData.mime || item.mimetype || sourceRecord?.mimetype || 'application/octet-stream';
+      const mime =
+        parsedData.mime || item.mimetype || sourceRecord?.mimetype || 'application/octet-stream';
       const baseName = sourceRecord?.filename || item.filename || 'base64-image';
       const safeName = sanitizeFilename(ensureFilenameExtension(baseName, mime));
       const filename = `${Date.now()}-${randomUUID().slice(0, 8)}-${safeName}`;
@@ -250,8 +254,10 @@ export async function POST_handler(
     if (isHttpUrl(rawSource)) {
       try {
         const remote = await fetchRemoteFile(rawSource);
-        const mime = remote.mime || item.mimetype || sourceRecord?.mimetype || 'application/octet-stream';
-        const baseName = sourceRecord?.filename || item.filename || remote.filename || 'remote-image';
+        const mime =
+          remote.mime || item.mimetype || sourceRecord?.mimetype || 'application/octet-stream';
+        const baseName =
+          sourceRecord?.filename || item.filename || remote.filename || 'remote-image';
         const safeName = sanitizeFilename(ensureFilenameExtension(baseName, mime));
         const filename = `${Date.now()}-${randomUUID().slice(0, 8)}-${safeName}`;
         const destDiskPath = path.join(diskDir, filename);
@@ -288,14 +294,20 @@ export async function POST_handler(
         });
         continue;
       } catch (error) {
-        failures.push({ filepath: rawSource, error: error instanceof Error ? error.message : 'Failed to fetch remote file' });
+        failures.push({
+          filepath: rawSource,
+          error: error instanceof Error ? error.message : 'Failed to fetch remote file',
+        });
         continue;
       }
     }
 
     const diskSource = resolveDiskPathFromPublicUploadPath(rawSource);
     if (!diskSource) {
-      failures.push({ filepath: rawSource, error: 'Unsupported file path (must be under /uploads/)' });
+      failures.push({
+        filepath: rawSource,
+        error: 'Unsupported file path (must be under /uploads/)',
+      });
       continue;
     }
 
@@ -348,7 +360,7 @@ export async function POST_handler(
     logger.warn(`[image-studio.assets.import] ${failures.length} files failed to import`, {
       projectId,
       failures: failures.slice(0, 5),
-      totalFailures: failures.length
+      totalFailures: failures.length,
     });
   }
 

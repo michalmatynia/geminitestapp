@@ -3,8 +3,16 @@
 import React, { createContext, useContext, useState, useMemo, ReactNode } from 'react';
 
 import type { TraderaQueueHealthResponse } from '@/features/jobs/api';
-import { useCancelListingMutation, useChatbotJobMutation, useClearChatbotJobsMutation } from '@/features/jobs/hooks/useJobMutations';
-import { useIntegrationJobs, useChatbotJobs, useTraderaQueueHealth } from '@/features/jobs/hooks/useJobQueries';
+import {
+  useCancelListingMutation,
+  useChatbotJobMutation,
+  useClearChatbotJobsMutation,
+} from '@/features/jobs/hooks/useJobMutations';
+import {
+  useIntegrationJobs,
+  useChatbotJobs,
+  useTraderaQueueHealth,
+} from '@/features/jobs/hooks/useJobQueries';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { ListingJob, ProductJob } from '@/shared/contracts/integrations';
 import { internalError } from '@/shared/errors/app-error';
@@ -31,14 +39,14 @@ interface JobsContextType {
   listingJobsError: Error | null;
   traderaQueueHealth: TraderaQueueHealthResponse | null;
   traderaQueueHealthLoading: boolean;
-  
+
   // Chatbot Jobs
   chatbotJobs: ChatbotJob[];
   chatbotJobsLoading: boolean;
   chatbotJobsRefreshing: boolean;
   refetchChatbotJobs: () => Promise<unknown>;
   chatbotJobsError: Error | null;
-  
+
   // UI State - Filtering & Pagination
   query: string;
   setQuery: (query: string) => void;
@@ -46,18 +54,18 @@ interface JobsContextType {
   setPage: (page: number) => void;
   pageSize: number;
   setPageSize: (size: number) => void;
-  
+
   // Selected Job Details
   selectedListing: { job: ProductJob; listing: ListingJob } | null;
   setSelectedListing: (selection: { job: ProductJob; listing: ListingJob } | null) => void;
-  
+
   // Actions
   handleCancelListing: (productId: string, listingId: string) => Promise<void>;
   isCancellingListing: (listingId: string) => boolean;
-  
+
   handleCancelChatbotJob: (jobId: string) => Promise<void>;
   isCancellingChatbotJob: (jobId: string) => boolean;
-  
+
   handleClearCompletedChatbotJobs: () => void;
   isClearingChatbotJobs: boolean;
 
@@ -79,7 +87,10 @@ export function useJobsContext(): JobsContextType {
 export function JobsProvider({ children }: { children: ReactNode }): React.JSX.Element {
   // --- Product Listing Jobs ---
   const listingJobsQuery = useIntegrationJobs();
-  const listingJobs = useMemo(() => (listingJobsQuery.data as ProductJob[]) || [], [listingJobsQuery.data]);
+  const listingJobs = useMemo(
+    () => (listingJobsQuery.data as ProductJob[]) || [],
+    [listingJobsQuery.data]
+  );
   const traderaQueueHealthQuery = useTraderaQueueHealth();
   const cancelListingMutation = useCancelListingMutation();
 
@@ -89,7 +100,7 @@ export function JobsProvider({ children }: { children: ReactNode }): React.JSX.E
     const data = chatbotJobsQuery.data as { jobs?: ChatbotJob[] } | undefined;
     return data?.jobs || [];
   }, [chatbotJobsQuery.data]);
-  
+
   const chatbotMutation = useChatbotJobMutation();
   const clearChatbotMutation = useClearChatbotJobsMutation();
 
@@ -99,14 +110,19 @@ export function JobsProvider({ children }: { children: ReactNode }): React.JSX.E
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
-  const [selectedListing, setSelectedListing] = useState<{ job: ProductJob; listing: ListingJob } | null>(null);
+  const [selectedListing, setSelectedListing] = useState<{
+    job: ProductJob;
+    listing: ListingJob;
+  } | null>(null);
 
   // --- Handlers ---
   const handleCancelListing = async (productId: string, listingId: string): Promise<void> => {
     try {
       await cancelListingMutation.mutateAsync({ productId, listingId });
     } catch (err: unknown) {
-      logClientError(err, { context: { source: 'JobsContext', action: 'cancelListing', productId, listingId } });
+      logClientError(err, {
+        context: { source: 'JobsContext', action: 'cancelListing', productId, listingId },
+      });
     }
   };
 
@@ -124,7 +140,9 @@ export function JobsProvider({ children }: { children: ReactNode }): React.JSX.E
     try {
       await chatbotMutation.mutateAsync({ jobId, action: 'cancel' });
     } catch (error: unknown) {
-      logClientError(error, { context: { source: 'JobsContext', action: 'cancelChatbotJob', jobId } });
+      logClientError(error, {
+        context: { source: 'JobsContext', action: 'cancelChatbotJob', jobId },
+      });
     }
   };
 
@@ -136,33 +154,39 @@ export function JobsProvider({ children }: { children: ReactNode }): React.JSX.E
     listingJobs,
     listingJobsLoading: listingJobsQuery.isLoading,
     listingJobsRefreshing: listingJobsQuery.isFetching,
-    refetchListingJobs: async () => { await listingJobsQuery.refetch(); },
+    refetchListingJobs: async () => {
+      await listingJobsQuery.refetch();
+    },
     listingJobsError: listingJobsQuery.error,
     traderaQueueHealth: traderaQueueHealthQuery.data ?? null,
     traderaQueueHealthLoading: traderaQueueHealthQuery.isLoading,
-    
+
     chatbotJobs,
     chatbotJobsLoading: chatbotJobsQuery.isLoading,
     chatbotJobsRefreshing: chatbotJobsQuery.isFetching,
-    refetchChatbotJobs: async () => { await chatbotJobsQuery.refetch(); },
+    refetchChatbotJobs: async () => {
+      await chatbotJobsQuery.refetch();
+    },
     chatbotJobsError: chatbotJobsQuery.error,
-    
+
     query,
     setQuery,
     page,
     setPage,
     pageSize,
     setPageSize,
-    
+
     selectedListing,
     setSelectedListing,
-    
+
     handleCancelListing,
-    isCancellingListing: (id) => cancelListingMutation.isPending && cancelListingMutation.variables?.listingId === id,
-    
+    isCancellingListing: (id) =>
+      cancelListingMutation.isPending && cancelListingMutation.variables?.listingId === id,
+
     handleCancelChatbotJob,
-    isCancellingChatbotJob: (id) => chatbotMutation.isPending && chatbotMutation.variables?.jobId === id,
-    
+    isCancellingChatbotJob: (id) =>
+      chatbotMutation.isPending && chatbotMutation.variables?.jobId === id,
+
     handleClearCompletedChatbotJobs,
     isClearingChatbotJobs: clearChatbotMutation.isPending,
 
@@ -170,9 +194,5 @@ export function JobsProvider({ children }: { children: ReactNode }): React.JSX.E
     ConfirmationModal,
   };
 
-  return (
-    <JobsContext.Provider value={value}>
-      {children}
-    </JobsContext.Provider>
-  );
+  return <JobsContext.Provider value={value}>{children}</JobsContext.Provider>;
 }

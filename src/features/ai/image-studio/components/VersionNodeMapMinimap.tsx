@@ -3,7 +3,12 @@
 import React, { useCallback, useRef, useState } from 'react';
 
 import { useVersionNodeMapContext } from './VersionNodeMapContext';
-import { CONTENT_OFFSET_X, CONTENT_OFFSET_Y, NODE_HEIGHT, NODE_WIDTH } from '../utils/version-graph';
+import {
+  CONTENT_OFFSET_X,
+  CONTENT_OFFSET_Y,
+  NODE_HEIGHT,
+  NODE_WIDTH,
+} from '@/shared/lib/ai/image-studio/utils/version-graph';
 
 import type { VersionEdge } from '../context/VersionGraphContext';
 
@@ -23,16 +28,8 @@ const EDGE_COLORS: Record<VersionEdge['type'], string> = {
 };
 
 export function VersionNodeMapMinimap(): React.JSX.Element | null {
-  const {
-    nodes,
-    edges,
-    selectedNodeId,
-    pan,
-    zoom,
-    viewportWidth,
-    viewportHeight,
-    onPanTo,
-  } = useVersionNodeMapContext();
+  const { nodes, edges, selectedNodeId, pan, zoom, viewportWidth, viewportHeight, onPanTo } =
+    useVersionNodeMapContext();
 
   const svgRef = useRef<SVGSVGElement>(null);
   const [dragging, setDragging] = useState(false);
@@ -41,7 +38,10 @@ export function VersionNodeMapMinimap(): React.JSX.Element | null {
   const offsetX = CONTENT_OFFSET_X;
   const offsetY = CONTENT_OFFSET_Y;
 
-  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  let minX = Infinity,
+    minY = Infinity,
+    maxX = -Infinity,
+    maxY = -Infinity;
   for (const n of nodes) {
     const nx = n.x + offsetX - NODE_WIDTH / 2;
     const ny = n.y + offsetY - NODE_HEIGHT / 2;
@@ -57,10 +57,7 @@ export function VersionNodeMapMinimap(): React.JSX.Element | null {
   const graphH = maxY - minY || 1;
 
   // Scale to fit minimap
-  const scale = Math.min(
-    (MINIMAP_W - PADDING * 2) / graphW,
-    (MINIMAP_H - PADDING * 2) / graphH,
-  );
+  const scale = Math.min((MINIMAP_W - PADDING * 2) / graphW, (MINIMAP_H - PADDING * 2) / graphH);
 
   const toMiniX = (wx: number) => PADDING + (wx - minX) * scale;
   const toMiniY = (wy: number) => PADDING + (wy - minY) * scale;
@@ -87,7 +84,7 @@ export function VersionNodeMapMinimap(): React.JSX.Element | null {
       const newPanY = viewportHeight / 2 - worldY * zoom;
       onPanTo(newPanX, newPanY);
     },
-    [scale, minX, minY, viewportWidth, viewportHeight, zoom, onPanTo],
+    [scale, minX, minY, viewportWidth, viewportHeight, zoom, onPanTo]
   );
 
   const handleClick = useCallback(
@@ -97,19 +94,16 @@ export function VersionNodeMapMinimap(): React.JSX.Element | null {
       if (!rect) return;
       panFromMiniCoords(e.clientX - rect.left, e.clientY - rect.top);
     },
-    [dragging, panFromMiniCoords],
+    [dragging, panFromMiniCoords]
   );
 
   // Drag-to-pan on viewport rect
-  const handlePointerDown = useCallback(
-    (e: React.PointerEvent<SVGRectElement>) => {
-      e.stopPropagation();
-      e.preventDefault();
-      setDragging(true);
-      (e.target as SVGRectElement).setPointerCapture(e.pointerId);
-    },
-    [],
-  );
+  const handlePointerDown = useCallback((e: React.PointerEvent<SVGRectElement>) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setDragging(true);
+    (e.target as SVGRectElement).setPointerCapture(e.pointerId);
+  }, []);
 
   const handlePointerMove = useCallback(
     (e: React.PointerEvent<SVGRectElement>) => {
@@ -118,7 +112,7 @@ export function VersionNodeMapMinimap(): React.JSX.Element | null {
       if (!rect) return;
       panFromMiniCoords(e.clientX - rect.left, e.clientY - rect.top);
     },
-    [dragging, panFromMiniCoords],
+    [dragging, panFromMiniCoords]
   );
 
   const handlePointerUp = useCallback(() => {
@@ -156,25 +150,17 @@ export function VersionNodeMapMinimap(): React.JSX.Element | null {
       {nodes.map((n) => {
         const cx = toMiniX(n.x + offsetX);
         const cy = toMiniY(n.y + offsetY);
-        const fill = n.id === selectedNodeId
-          ? '#facc15'
-          : n.type === 'composite'
-            ? '#14b8a6'
-            : n.type === 'merge'
-              ? '#a855f7'
-              : n.type === 'generation'
-                ? '#34d399'
-                : '#60a5fa';
-        return (
-          <circle
-            key={n.id}
-            cx={cx}
-            cy={cy}
-            r={DOT_R}
-            fill={fill}
-            fillOpacity={0.8}
-          />
-        );
+        const fill =
+          n.id === selectedNodeId
+            ? '#facc15'
+            : n.type === 'composite'
+              ? '#14b8a6'
+              : n.type === 'merge'
+                ? '#a855f7'
+                : n.type === 'generation'
+                  ? '#34d399'
+                  : '#60a5fa';
+        return <circle key={n.id} cx={cx} cy={cy} r={DOT_R} fill={fill} fillOpacity={0.8} />;
       })}
 
       {/* Viewport indicator — draggable */}

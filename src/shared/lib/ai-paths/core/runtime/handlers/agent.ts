@@ -3,20 +3,18 @@ import {
   DEFAULT_AGENT_PERSONA_SETTINGS,
 } from '@/features/ai/agentcreator/constants/personas';
 import type { AgentPersona } from '@/shared/contracts/agents';
-import type { NodeHandler, NodeHandlerContext, RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
+import type {
+  NodeHandler,
+  NodeHandlerContext,
+  RuntimePortValues,
+} from '@/shared/contracts/ai-paths-runtime';
 import type { ChatMessage } from '@/shared/contracts/chatbot';
 
 import { agentApi, learnerAgentsApi, settingsApi } from '../../../api';
-import {
-  coerceInput,
-  formatRuntimeValue,
-  hashRuntimeValue,
-  parseJsonSafe,
-} from '../../utils';
+import { coerceInput, formatRuntimeValue, hashRuntimeValue, parseJsonSafe } from '../../utils';
 import { buildPromptOutput, coercePayloadObject } from '../utils';
 
 import type { AgentEnqueuePayload } from '../../../api';
-
 
 type AgentRunRecord = {
   id?: string;
@@ -62,7 +60,9 @@ const parseAgentPersonas = (value: unknown): AgentPersona[] => {
 const fetchAgentPersonas = async (): Promise<AgentPersona[]> => {
   const response = await settingsApi.list({ scope: 'heavy' });
   if (!response.ok) return [];
-  const record = response.data.find((item: { key: string }) => item.key === AGENT_PERSONA_SETTINGS_KEY);
+  const record = response.data.find(
+    (item: { key: string }) => item.key === AGENT_PERSONA_SETTINGS_KEY
+  );
   if (!record) return [];
   return parseAgentPersonas(record.value);
 };
@@ -90,7 +90,9 @@ const pollAgentRun = async (
       return { run: run!, status };
     }
     if (attempt < maxAttempts - 1) {
-      await new Promise<void>((resolve: (value: void | PromiseLike<void>) => void) => setTimeout(resolve, intervalMs));
+      await new Promise<void>((resolve: (value: void | PromiseLike<void>) => void) =>
+        setTimeout(resolve, intervalMs)
+      );
     }
   }
   throw new Error('Agent run timed out.');
@@ -128,22 +130,18 @@ export const handleAgent: NodeHandler = async ({
   const promptFromTemplate = template
     ? buildPromptOutput({ template }, nodeInputs).promptOutput
     : '';
-  const rawPrompt =
-    template?.length
-      ? promptFromTemplate
-      : coerceInput(nodeInputs['prompt']) ??
-        coerceInput(nodeInputs['value']) ??
-        coerceInput(nodeInputs['result']) ??
-        coerceInput(nodeInputs['bundle']) ??
-        coerceInput(nodeInputs['context']) ??
-        coerceInput(nodeInputs['entityJson']) ??
-        coerceInput(nodeInputs['title']) ??
-        coerceInput(nodeInputs['content_en']);
+  const rawPrompt = template?.length
+    ? promptFromTemplate
+    : (coerceInput(nodeInputs['prompt']) ??
+      coerceInput(nodeInputs['value']) ??
+      coerceInput(nodeInputs['result']) ??
+      coerceInput(nodeInputs['bundle']) ??
+      coerceInput(nodeInputs['context']) ??
+      coerceInput(nodeInputs['entityJson']) ??
+      coerceInput(nodeInputs['title']) ??
+      coerceInput(nodeInputs['content_en']));
 
-  const prompt =
-    typeof rawPrompt === 'string'
-      ? rawPrompt.trim()
-      : formatRuntimeValue(rawPrompt);
+  const prompt = typeof rawPrompt === 'string' ? rawPrompt.trim() : formatRuntimeValue(rawPrompt);
 
   if (!prompt || prompt === '—') {
     return buildAiTerminalOutputs({
@@ -163,10 +161,9 @@ export const handleAgent: NodeHandler = async ({
   } catch {
     personas = [];
   }
-  const persona =
-    agentConfig.personaId
-      ? personas.find((item: { id: string }) => item.id === agentConfig.personaId)
-      : undefined;
+  const persona = agentConfig.personaId
+    ? personas.find((item: { id: string }) => item.id === agentConfig.personaId)
+    : undefined;
   const settings = persona?.settings ?? DEFAULT_AGENT_PERSONA_SETTINGS;
 
   const payload: AgentEnqueuePayload = {
@@ -222,14 +219,11 @@ export const handleAgent: NodeHandler = async ({
     const planState =
       run?.planState && typeof run.planState === 'object'
         ? (run.planState as Record<string, unknown>)
-        : coercePayloadObject(run?.planState) ?? null;
+        : (coercePayloadObject(run?.planState) ?? null);
     const checkpointBrief =
-      typeof planState?.['checkpointBrief'] === 'string'
-        ? planState['checkpointBrief']
-        : '';
+      typeof planState?.['checkpointBrief'] === 'string' ? planState['checkpointBrief'] : '';
     const logLines = Array.isArray(run?.logLines) ? run?.logLines : [];
-    const lastLog =
-      logLines.length > 0 ? logLines[logLines.length - 1] ?? '' : '';
+    const lastLog = logLines.length > 0 ? (logLines[logLines.length - 1] ?? '') : '';
     const result = checkpointBrief || lastLog || run?.errorMessage || '';
 
     return {
@@ -246,11 +240,7 @@ export const handleAgent: NodeHandler = async ({
       },
     };
   } catch (error) {
-    reportAiPathsError(
-      error,
-      { action: 'agentRun', nodeId: node.id },
-      'Agent run failed:'
-    );
+    reportAiPathsError(error, { action: 'agentRun', nodeId: node.id }, 'Agent run failed:');
     toast('Agent run failed.', { variant: 'error' });
     executed.ai.add(node.id);
     return {
@@ -317,22 +307,18 @@ export const handleLearnerAgent: NodeHandler = async ({
   const promptFromTemplate = template
     ? buildPromptOutput({ template }, nodeInputs).promptOutput
     : '';
-  const rawPrompt =
-    template?.length
-      ? promptFromTemplate
-      : coerceInput(nodeInputs['prompt']) ??
-        coerceInput(nodeInputs['value']) ??
-        coerceInput(nodeInputs['result']) ??
-        coerceInput(nodeInputs['bundle']) ??
-        coerceInput(nodeInputs['context']) ??
-        coerceInput(nodeInputs['entityJson']) ??
-        coerceInput(nodeInputs['title']) ??
-        coerceInput(nodeInputs['content_en']);
+  const rawPrompt = template?.length
+    ? promptFromTemplate
+    : (coerceInput(nodeInputs['prompt']) ??
+      coerceInput(nodeInputs['value']) ??
+      coerceInput(nodeInputs['result']) ??
+      coerceInput(nodeInputs['bundle']) ??
+      coerceInput(nodeInputs['context']) ??
+      coerceInput(nodeInputs['entityJson']) ??
+      coerceInput(nodeInputs['title']) ??
+      coerceInput(nodeInputs['content_en']));
 
-  const prompt =
-    typeof rawPrompt === 'string'
-      ? rawPrompt.trim()
-      : formatRuntimeValue(rawPrompt);
+  const prompt = typeof rawPrompt === 'string' ? rawPrompt.trim() : formatRuntimeValue(rawPrompt);
 
   if (!prompt || prompt === '—') {
     return buildAiTerminalOutputs({
@@ -360,9 +346,7 @@ export const handleLearnerAgent: NodeHandler = async ({
   const payload = { agentId, messages };
   const payloadHash = hashRuntimeValue({ payload, runId, runStartedAt });
   const prevPayloadHash =
-    typeof (prevOutputs)['payloadHash'] === 'string'
-      ? ((prevOutputs)['payloadHash'])
-      : '';
+    typeof prevOutputs['payloadHash'] === 'string' ? prevOutputs['payloadHash'] : '';
   if (prevPayloadHash && prevPayloadHash === payloadHash) {
     return prevOutputs;
   }

@@ -11,9 +11,7 @@ export const GET = apiHandlerWithParams<{ runId: string }>(
   async (req, _ctx, params) => {
     const requestStart = Date.now();
     if (!('agentAuditLog' in prisma)) {
-      throw internalError(
-        'Agent steps not initialized. Run prisma generate/db push.'
-      );
+      throw internalError('Agent steps not initialized. Run prisma generate/db push.');
     }
     const { runId } = params;
     const url = new URL(req.url);
@@ -27,26 +25,24 @@ export const GET = apiHandlerWithParams<{ runId: string }>(
     });
     const filtered = stepId
       ? audits.filter((audit) => {
-        const metadata = audit.metadata as
-            | {
-                stepId?: string;
-                failedStepId?: string;
-                activeStepId?: string;
-                steps?: Array<{ id?: string }>;
-              }
-            | null;
-        if (
-          metadata?.stepId === stepId ||
+          const metadata = audit.metadata as {
+            stepId?: string;
+            failedStepId?: string;
+            activeStepId?: string;
+            steps?: Array<{ id?: string }>;
+          } | null;
+          if (
+            metadata?.stepId === stepId ||
             metadata?.failedStepId === stepId ||
             metadata?.activeStepId === stepId
-        ) {
-          return true;
-        }
-        if (Array.isArray(metadata?.steps)) {
-          return metadata?.steps.some((step) => step?.id === stepId);
-        }
-        return false;
-      })
+          ) {
+            return true;
+          }
+          if (Array.isArray(metadata?.steps)) {
+            return metadata?.steps.some((step) => step?.id === stepId);
+          }
+          return false;
+        })
       : audits;
     if (DEBUG_CHATBOT) {
       void ErrorSystem.logInfo('Audits loaded', {

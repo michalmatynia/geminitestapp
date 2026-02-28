@@ -45,31 +45,29 @@ const ALL_NODE_TYPES: NodeType[] = [
   'description_updater',
 ];
 
-const definitionByType = new Map(NODE_DEFINITIONS.map((def: (typeof NODE_DEFINITIONS)[number]) => [def.type, def]));
+const definitionByType = new Map(
+  NODE_DEFINITIONS.map((def: (typeof NODE_DEFINITIONS)[number]) => [def.type, def])
+);
 
 export const AI_PATHS_NODE_DOCS: AiPathsNodeDoc[] = ALL_NODE_TYPES.map((type: NodeType) => {
   const fallbackDefinition =
     type === 'description_updater'
       ? {
-        type: 'description_updater' as const,
-        title: 'Description Updater (Deprecated)',
-        description: 'Writes description_en back to the product.',
-        inputs: ['productId', 'description_en'],
-        outputs: ['description_en'],
-      }
+          type: 'description_updater' as const,
+          title: 'Description Updater (Deprecated)',
+          description: 'Writes description_en back to the product.',
+          inputs: ['productId', 'description_en'],
+          outputs: ['description_en'],
+        }
       : null;
   const def = definitionByType.get(type) ?? fallbackDefinition;
   const notes =
     type === 'description_updater'
-      ? [
-        'Deprecated node. Prefer Database node write operations for updates.',
-      ]
+      ? ['Deprecated node. Prefer Database node write operations for updates.']
       : type === 'notification'
         ? ['Configuration UI is not available yet; it runs with defaults.']
         : type === 'playwright'
-          ? [
-            'Built-in script templates are available in the Playwright node config dialog.',
-          ]
+          ? ['Built-in script templates are available in the Playwright node config dialog.']
           : undefined;
   return {
     type,
@@ -99,5 +97,5 @@ export const buildAiPathsNodeDocJsonSnippet = (doc: AiPathsNodeDoc): string =>
       notes: doc.notes ?? [],
     },
     null,
-    2,
+    2
   )}\n`;

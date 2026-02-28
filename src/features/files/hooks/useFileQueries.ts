@@ -3,11 +3,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 
 import type { ExpandedImageFile } from '@/features/products';
-import type { 
-  ListQuery, 
-  DeleteMutation, 
-  UpdateMutation 
-} from '@/shared/contracts/ui';
+import type { ListQuery, DeleteMutation, UpdateMutation } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import {
   createListQueryV2,
@@ -54,10 +50,14 @@ export function useDeleteFile(): DeleteMutation {
   });
 }
 
-export function useUpdateFileTags(): UpdateMutation<ExpandedImageFile, { id: string; tags: string[] }> {
+export function useUpdateFileTags(): UpdateMutation<
+  ExpandedImageFile,
+  { id: string; tags: string[] }
+> {
   const queryClient = useQueryClient();
   return createUpdateMutationV2({
-    mutationFn: ({ id, tags }: { id: string; tags: string[] }) => api.patch<ExpandedImageFile>(`/api/files/${id}`, { tags }),
+    mutationFn: ({ id, tags }: { id: string; tags: string[] }) =>
+      api.patch<ExpandedImageFile>(`/api/files/${id}`, { tags }),
     mutationKey: fileKeys.all,
     meta: {
       source: 'files.hooks.useUpdateFileTags',

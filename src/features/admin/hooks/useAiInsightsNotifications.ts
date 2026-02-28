@@ -10,11 +10,14 @@ import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 export const aiNotificationsQueryKey = QUERY_KEYS.ai.insights.notifications();
 
-export const useAiInsightsNotifications = (params?: { enabled?: boolean } | void): SingleQuery<NotificationsResponse> =>
+export const useAiInsightsNotifications = (
+  params?: { enabled?: boolean } | void
+): SingleQuery<NotificationsResponse> =>
   createSingleQueryV2<NotificationsResponse>({
     id: 'ai-insights-notifications',
     queryKey: aiNotificationsQueryKey,
-    queryFn: () => api.get<NotificationsResponse>('/api/ai-insights/notifications', { params: { limit: 30 } }),
+    queryFn: () =>
+      api.get<NotificationsResponse>('/api/ai-insights/notifications', { params: { limit: 30 } }),
     enabled: params?.enabled ?? true,
     meta: {
       source: 'admin.hooks.useAiInsightsNotifications',

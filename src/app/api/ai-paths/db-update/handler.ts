@@ -66,19 +66,13 @@ type PrismaDelegate = {
 
 type DbProvider = 'mongodb' | 'prisma';
 
-type ProviderResolutionErrorCode =
-  | 'provider_not_configured'
-  | 'collection_not_available';
+type ProviderResolutionErrorCode = 'provider_not_configured' | 'collection_not_available';
 
 class ProviderResolutionError extends Error {
   public readonly code: ProviderResolutionErrorCode;
   public readonly provider: DbProvider;
 
-  constructor(
-    code: ProviderResolutionErrorCode,
-    provider: DbProvider,
-    message: string,
-  ) {
+  constructor(code: ProviderResolutionErrorCode, provider: DbProvider, message: string) {
     super(message);
     this.name = 'ProviderResolutionError';
     this.code = code;
@@ -86,9 +80,8 @@ class ProviderResolutionError extends Error {
   }
 }
 
-const isProviderResolutionError = (
-  error: unknown,
-): error is ProviderResolutionError => error instanceof ProviderResolutionError;
+const isProviderResolutionError = (error: unknown): error is ProviderResolutionError =>
+  error instanceof ProviderResolutionError;
 
 const coerceQuery = (value: unknown): Record<string, unknown> => {
   if (!value) return {};
@@ -105,8 +98,7 @@ const coerceQuery = (value: unknown): Record<string, unknown> => {
   return {};
 };
 
-const normalizeCollectionKey = (value: string): string =>
-  value.trim().toLowerCase();
+const normalizeCollectionKey = (value: string): string => value.trim().toLowerCase();
 
 const resolvePrismaCollectionKey = (collection: string): string | null => {
   if (!collection) return null;
@@ -117,12 +109,11 @@ const resolvePrismaCollectionKey = (collection: string): string | null => {
   return PRISMA_COLLECTION_DELEGATES[normalized] ? normalized : null;
 };
 
-const looksLikeObjectId = (value: string): boolean =>
-  /^[0-9a-fA-F]{24}$/.test(value);
+const looksLikeObjectId = (value: string): boolean => /^[0-9a-fA-F]{24}$/.test(value);
 
 const normalizeObjectId = (
   query: Record<string, unknown>,
-  idType?: string,
+  idType?: string
 ): Record<string, unknown> => {
   if (idType !== 'objectId') return query;
   const next = { ...query };
@@ -135,16 +126,11 @@ const normalizeObjectId = (
 const getPrismaDelegate = (collection: string): PrismaDelegate | null => {
   const delegateName = PRISMA_COLLECTION_DELEGATES[collection];
   if (!delegateName) return null;
-  const delegate = (prisma as unknown as Record<string, PrismaDelegate>)[
-    delegateName
-  ];
+  const delegate = (prisma as unknown as Record<string, PrismaDelegate>)[delegateName];
   return delegate ?? null;
 };
 
-export async function POST_handler(
-  req: NextRequest,
-  _ctx: ApiHandlerContext,
-): Promise<Response> {
+export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const { access, isInternal } = await requireAiPathsAccessOrInternal(req);
   if (!isInternal) {
     await enforceAiPathsActionRateLimit(access, 'db-update');
@@ -167,7 +153,7 @@ export async function POST_handler(
   const explicitCollectionMap = normalizeAiPathsCollectionMap(collectionMap);
   const collectionResolution = resolveAiPathsCollectionName(
     requestedCollection,
-    explicitCollectionMap,
+    explicitCollectionMap
   );
   const resolvedCollection = collectionResolution.collection;
 
@@ -175,32 +161,27 @@ export async function POST_handler(
     throw internalError('Collection not allowlisted');
   }
 
-  const normalizedUpdates =
-    updates && typeof updates === 'object' ? updates : {};
+  const normalizedUpdates = updates && typeof updates === 'object' ? updates : {};
   if (Object.keys(normalizedUpdates).length === 0) {
     throw badRequestError('No updates provided');
   }
 
-  const runUpdateWithProvider = async (
-    provider: DbProvider,
-  ): Promise<Record<string, unknown>> => {
+  const runUpdateWithProvider = async (provider: DbProvider): Promise<Record<string, unknown>> => {
     if (provider === 'prisma') {
       if (!process.env['DATABASE_URL']) {
         throw new ProviderResolutionError(
           'provider_not_configured',
           provider,
-          'Prisma is not configured',
+          'Prisma is not configured'
         );
       }
       const prismaCollection = resolvePrismaCollectionKey(resolvedCollection);
-      const delegate = prismaCollection
-        ? getPrismaDelegate(prismaCollection)
-        : null;
+      const delegate = prismaCollection ? getPrismaDelegate(prismaCollection) : null;
       if (!delegate) {
         throw new ProviderResolutionError(
           'collection_not_available',
           provider,
-          'Collection not available for Prisma',
+          'Collection not available for Prisma'
         );
       }
       const where = coerceQuery(query);
@@ -231,7 +212,7 @@ export async function POST_handler(
       throw new ProviderResolutionError(
         'provider_not_configured',
         provider,
-        'MongoDB is not configured',
+        'MongoDB is not configured'
       );
     }
 
@@ -264,10 +245,9 @@ export async function POST_handler(
 
   const primaryProvider = await resolveCollectionProviderForRequest(
     resolvedCollection,
-    requestedProvider,
+    requestedProvider
   );
-  const canAttemptFallback =
-    requestedProvider !== 'mongodb' && requestedProvider !== 'prisma';
+  const canAttemptFallback = requestedProvider !== 'mongodb' && requestedProvider !== 'prisma';
 
   try {
     const result = await runUpdateWithProvider(primaryProvider);
@@ -283,8 +263,7 @@ export async function POST_handler(
       throw badRequestError(primaryError.message);
     }
 
-    const fallbackProvider: DbProvider =
-      primaryProvider === 'prisma' ? 'mongodb' : 'prisma';
+    const fallbackProvider: DbProvider = primaryProvider === 'prisma' ? 'mongodb' : 'prisma';
 
     try {
       const fallbackResult = await runUpdateWithProvider(fallbackProvider);

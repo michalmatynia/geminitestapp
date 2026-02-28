@@ -1,4 +1,3 @@
- 
 'use client';
 
 import { useQueryClient, type Query } from '@tanstack/react-query';
@@ -16,43 +15,52 @@ interface QueryMetadata {
 export function useQueryLifecycle(): {
   cleanupStaleQueries: () => void;
   optimizeQueryPriorities: () => void;
-  getQueryStats: () => { totalQueries: number; activeQueries: number; highPriorityQueries: number; totalMemoryUsage: number; avgAccessCount: number };
-  } {
+  getQueryStats: () => {
+    totalQueries: number;
+    activeQueries: number;
+    highPriorityQueries: number;
+    totalMemoryUsage: number;
+    avgAccessCount: number;
+  };
+} {
   const queryClient = useQueryClient();
   const queryMetadata = useRef<Map<string, QueryMetadata>>(new Map());
 
-  const updateMetadata = useCallback((queryKey: readonly unknown[], type: 'access' | 'error' | 'success'): void => {
-    const key = JSON.stringify(queryKey);
-    const existing = queryMetadata.current.get(key) || {
-      priority: 1,
-      lastAccessed: Date.now(),
-      accessCount: 0,
-      dataSize: 0,
-      errorCount: 0,
-    };
+  const updateMetadata = useCallback(
+    (queryKey: readonly unknown[], type: 'access' | 'error' | 'success'): void => {
+      const key = JSON.stringify(queryKey);
+      const existing = queryMetadata.current.get(key) || {
+        priority: 1,
+        lastAccessed: Date.now(),
+        accessCount: 0,
+        dataSize: 0,
+        errorCount: 0,
+      };
 
-    switch (type) {
-      case 'access':
-        existing.accessCount++;
-        existing.lastAccessed = Date.now();
-        existing.priority = Math.min(existing.priority + 0.1, 10);
-        break;
-      case 'error':
-        existing.errorCount++;
-        existing.priority = Math.max(existing.priority - 0.5, 0.1);
-        break;
-      case 'success': {
-        existing.priority = Math.min(existing.priority + 0.2, 10);
-        const query = queryClient.getQueryCache().find({ queryKey });
-        if (query?.state.data) {
-          existing.dataSize = JSON.stringify(query.state.data).length;
+      switch (type) {
+        case 'access':
+          existing.accessCount++;
+          existing.lastAccessed = Date.now();
+          existing.priority = Math.min(existing.priority + 0.1, 10);
+          break;
+        case 'error':
+          existing.errorCount++;
+          existing.priority = Math.max(existing.priority - 0.5, 0.1);
+          break;
+        case 'success': {
+          existing.priority = Math.min(existing.priority + 0.2, 10);
+          const query = queryClient.getQueryCache().find({ queryKey });
+          if (query?.state.data) {
+            existing.dataSize = JSON.stringify(query.state.data).length;
+          }
+          break;
         }
-        break;
       }
-    }
 
-    queryMetadata.current.set(key, existing);
-  }, [queryClient]);
+      queryMetadata.current.set(key, existing);
+    },
+    [queryClient]
+  );
 
   const cleanupStaleQueries = useCallback((): void => {
     const cache = queryClient.getQueryCache();
@@ -63,11 +71,13 @@ export function useQueryLifecycle(): {
     queries.forEach((query: Query<unknown, Error, unknown, readonly unknown[]>): void => {
       const key = JSON.stringify(query.queryKey);
       const metadata = queryMetadata.current.get(key);
-      
-      if (metadata && 
-          query.getObserversCount() === 0 && 
-          now - metadata.lastAccessed > staleThreshold &&
-          metadata.priority < 2) {
+
+      if (
+        metadata &&
+        query.getObserversCount() === 0 &&
+        now - metadata.lastAccessed > staleThreshold &&
+        metadata.priority < 2
+      ) {
         cache.remove(query);
         queryMetadata.current.delete(key);
       }
@@ -81,14 +91,16 @@ export function useQueryLifecycle(): {
     queries.forEach((query: Query<unknown, Error, unknown, readonly unknown[]>): void => {
       const key = JSON.stringify(query.queryKey);
       const metadata = queryMetadata.current.get(key);
-      
+
       if (metadata) {
         // Adjust stale time based on priority and access patterns
         const baseStaleTime = 5 * 60 * 1000; // 5 minutes
         const adjustedStaleTime = baseStaleTime * (metadata.priority / 5);
-        
+
         // Use type-safe check for setOptions if it exists on the instance
-        const queryWithSetOptions = query as Query<unknown, Error, unknown, readonly unknown[]> & { setOptions?: (options: unknown) => void };
+        const queryWithSetOptions = query as Query<unknown, Error, unknown, readonly unknown[]> & {
+          setOptions?: (options: unknown) => void;
+        };
         if (typeof queryWithSetOptions.setOptions === 'function') {
           queryWithSetOptions.setOptions({
             staleTime: Math.max(adjustedStaleTime, 30 * 1000), // Min 30 seconds
@@ -104,13 +116,13 @@ export function useQueryLifecycle(): {
     const unsubscribe = queryClient.getQueryCache().subscribe((event): void => {
       if (event.type === 'updated') {
         const query = event.query as Query<unknown, Error, unknown, readonly unknown[]>;
-        
+
         if (query.state.status === 'success') {
           updateMetadata(query.queryKey, 'success');
         } else if (query.state.status === 'error') {
           updateMetadata(query.queryKey, 'error');
         }
-        
+
         if (query.getObserversCount() > 0) {
           updateMetadata(query.queryKey, 'access');
         }
@@ -140,16 +152,22 @@ export function useQueryLifecycle(): {
   } => {
     const cache = queryClient.getQueryCache();
     const queries = cache.getAll();
-    
+
     return {
       totalQueries: queries.length,
       activeQueries: queries.filter((q: Query) => q.getObserversCount() > 0).length,
-      highPriorityQueries: Array.from(queryMetadata.current.values())
-        .filter((m: QueryMetadata) => m.priority > 7).length,
-      totalMemoryUsage: Array.from(queryMetadata.current.values())
-        .reduce((sum: number, m: QueryMetadata) => sum + m.dataSize, 0),
-      avgAccessCount: Array.from(queryMetadata.current.values())
-        .reduce((sum: number, m: QueryMetadata) => sum + m.accessCount, 0) / (queryMetadata.current.size || 1),
+      highPriorityQueries: Array.from(queryMetadata.current.values()).filter(
+        (m: QueryMetadata) => m.priority > 7
+      ).length,
+      totalMemoryUsage: Array.from(queryMetadata.current.values()).reduce(
+        (sum: number, m: QueryMetadata) => sum + m.dataSize,
+        0
+      ),
+      avgAccessCount:
+        Array.from(queryMetadata.current.values()).reduce(
+          (sum: number, m: QueryMetadata) => sum + m.accessCount,
+          0
+        ) / (queryMetadata.current.size || 1),
     };
   }, [queryClient]);
 

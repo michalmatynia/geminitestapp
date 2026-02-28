@@ -3,11 +3,11 @@
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useMemo } from 'react';
 
-import { 
-  Button, 
-  Input, 
-  SectionHeader, 
-  FormField, 
+import {
+  Button,
+  Input,
+  SectionHeader,
+  FormField,
   StandardDataTablePanel,
   Tag,
   Card,
@@ -43,97 +43,99 @@ export default function AgentMemoryPage(): React.JSX.Element {
     refetch,
   } = useChatbotMemoryState();
 
-  const columns = useMemo<ColumnDef<ExtendedMemoryItem>[]>(() => [
-    {
-      id: 'expander',
-      header: () => null,
-      cell: ({ row }) => (
-        <Button
-          size='icon'
-          variant='ghost'
-          className='h-7 w-7'
-          onClick={() => toggleExpanded(row.original.id)}
-        >
-          {expanded[row.original.id] ? <ChevronUp className='size-4' /> : <ChevronDown className='size-4' />}
-        </Button>
-      ),
-    },
-    {
-      accessorKey: 'value',
-      header: 'Memory / Summary',
-      cell: ({ row }) => (
-        <div className='flex flex-col gap-1'>
-          <span className='font-medium text-white'>
-            {(row.original.metadata?.['summary'] as string) || row.original.value.slice(0, 100)}
+  const columns = useMemo<ColumnDef<ExtendedMemoryItem>[]>(
+    () => [
+      {
+        id: 'expander',
+        header: () => null,
+        cell: ({ row }) => (
+          <Button
+            size='icon'
+            variant='ghost'
+            className='h-7 w-7'
+            onClick={() => toggleExpanded(row.original.id)}
+          >
+            {expanded[row.original.id] ? (
+              <ChevronUp className='size-4' />
+            ) : (
+              <ChevronDown className='size-4' />
+            )}
+          </Button>
+        ),
+      },
+      {
+        accessorKey: 'value',
+        header: 'Memory / Summary',
+        cell: ({ row }) => (
+          <div className='flex flex-col gap-1'>
+            <span className='font-medium text-white'>
+              {(row.original.metadata?.['summary'] as string) || row.original.value.slice(0, 100)}
+            </span>
+            <span className='text-[10px] text-gray-500 font-mono'>Key: {row.original.key}</span>
+          </div>
+        ),
+      },
+      {
+        accessorKey: 'tags',
+        header: 'Tags',
+        cell: ({ row }) => (
+          <div className='flex flex-wrap gap-1'>
+            {(row.original.metadata?.['tags'] as string[])?.length ? (
+              (row.original.metadata?.['tags'] as string[]).map((t) => <Tag key={t} label={t} />)
+            ) : (
+              <span className='text-xs text-gray-600'>None</span>
+            )}
+          </div>
+        ),
+      },
+      {
+        accessorKey: 'importance',
+        header: 'Score',
+        cell: ({ row }) => (
+          <span className='text-xs font-medium text-gray-300'>
+            {(row.original.metadata?.['importance'] as number) ?? '—'}
           </span>
-          <span className='text-[10px] text-gray-500 font-mono'>
-            Key: {row.original.key}
-          </span>
-        </div>
-      ),
-    },
-    {
-      accessorKey: 'tags',
-      header: 'Tags',
-      cell: ({ row }) => (
-        <div className='flex flex-wrap gap-1'>
-          {(row.original.metadata?.['tags'] as string[])?.length ? (
-            (row.original.metadata?.['tags'] as string[]).map((t) => (
-              <Tag key={t} label={t} />
-            ))
-          ) : (
-            <span className='text-xs text-gray-600'>None</span>
-          )}
-        </div>
-      ),
-    },
-    {
-      accessorKey: 'importance',
-      header: 'Score',
-      cell: ({ row }) => (
-        <span className='text-xs font-medium text-gray-300'>
-          {(row.original.metadata?.['importance'] as number) ?? '—'}
-        </span>
-      ),
-    },
-    {
-      accessorKey: 'updatedAt',
-      header: 'Last Seen',
-      cell: ({ row }) => (
-        <span className='text-xs text-gray-400'>
-          {formatDate(row.original.updatedAt)}
-        </span>
-      ),
-    },
-  ], [expanded, toggleExpanded]);
+        ),
+      },
+      {
+        accessorKey: 'updatedAt',
+        header: 'Last Seen',
+        cell: ({ row }) => (
+          <span className='text-xs text-gray-400'>{formatDate(row.original.updatedAt)}</span>
+        ),
+      },
+    ],
+    [expanded, toggleExpanded]
+  );
 
   return (
     <div className='mx-auto w-full max-w-none py-10'>
       <SectionHeader
         title='Agent Long-Term Memory'
         description='Knowledge preserved by agents across conversations and runs.'
-        eyebrow={(
+        eyebrow={
           <a href='/admin/chatbot' className='text-blue-300 hover:text-blue-200'>
             ← Back to chatbot
           </a>
-        )}
-        actions={(
-          <Button
-            variant='outline'
-            size='xs'
-            onClick={refetch}
-            loading={isFetching}
-          >
+        }
+        actions={
+          <Button variant='outline' size='xs' onClick={refetch} loading={isFetching}>
             Refresh
           </Button>
-        )}
+        }
         className='mb-6'
       />
 
       <StandardDataTablePanel
         variant='flat'
-        alerts={error ? <p className='text-sm text-rose-400'>{error instanceof Error ? error.message : String(error)}</p> : null}
-        filters={(
+        alerts={
+          error ? (
+            <p className='text-sm text-rose-400'>
+              {error instanceof Error ? error.message : String(error)}
+            </p>
+          ) : null
+        }
+        filters={
           <div className='grid gap-4 md:grid-cols-4'>
             <FormField label='Memory key'>
               <Input
@@ -174,7 +176,7 @@ export default function AgentMemoryPage(): React.JSX.Element {
               />
             </FormField>
           </div>
-        )}
+        }
         columns={columns}
         data={items}
         isLoading={loading}
@@ -182,31 +184,53 @@ export default function AgentMemoryPage(): React.JSX.Element {
           <div className='p-4 space-y-4 bg-black/20'>
             <div className='grid gap-4 md:grid-cols-2'>
               <div>
-                <Hint size='xxs' uppercase className='mb-2'>Full Content</Hint>
-                <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-black/40 font-mono text-[11px] text-gray-300 whitespace-pre-wrap'>
+                <Hint size='xxs' uppercase className='mb-2'>
+                  Full Content
+                </Hint>
+                <Card
+                  variant='subtle-compact'
+                  padding='sm'
+                  className='border-border/60 bg-black/40 font-mono text-[11px] text-gray-300 whitespace-pre-wrap'
+                >
                   {row.original.value}
                 </Card>
               </div>
               <div>
-                <Hint size='xxs' uppercase className='mb-2'>Context Details</Hint>
-                <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-black/40 space-y-2 text-xs text-gray-400'>
+                <Hint size='xxs' uppercase className='mb-2'>
+                  Context Details
+                </Hint>
+                <Card
+                  variant='subtle-compact'
+                  padding='sm'
+                  className='border-border/60 bg-black/40 space-y-2 text-xs text-gray-400'
+                >
                   <div className='flex justify-between border-b border-white/5 pb-1'>
                     <span>Created</span>
                     <span className='text-gray-200'>{formatDate(row.original.createdAt)}</span>
                   </div>
                   <div className='flex justify-between border-b border-white/5 pb-1'>
                     <span>Accessed</span>
-                    <span className='text-gray-200'>{formatDate(row.original.metadata?.['lastAccessedAt'] as string)}</span>
+                    <span className='text-gray-200'>
+                      {formatDate(row.original.metadata?.['lastAccessedAt'] as string)}
+                    </span>
                   </div>
                   <div className='flex justify-between border-b border-white/5 pb-1'>
                     <span>Run ID</span>
-                    <span className='font-mono text-gray-200'>{(row.original.metadata?.['runId'] as string) || '—'}</span>
+                    <span className='font-mono text-gray-200'>
+                      {(row.original.metadata?.['runId'] as string) || '—'}
+                    </span>
                   </div>
                 </Card>
                 {row.original.metadata && (
                   <div className='mt-4'>
-                    <Hint size='xxs' uppercase className='mb-2'>Metadata</Hint>
-                    <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-black/40 font-mono text-[10px] text-gray-400 whitespace-pre-wrap'>
+                    <Hint size='xxs' uppercase className='mb-2'>
+                      Metadata
+                    </Hint>
+                    <Card
+                      variant='subtle-compact'
+                      padding='sm'
+                      className='border-border/60 bg-black/40 font-mono text-[10px] text-gray-400 whitespace-pre-wrap'
+                    >
                       {JSON.stringify(row.original.metadata, null, 2)}
                     </Card>
                   </div>

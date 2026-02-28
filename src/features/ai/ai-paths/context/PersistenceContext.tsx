@@ -147,12 +147,9 @@ export function PersistenceProvider({
     operationHandlersRef.current = handlers;
   }, []);
 
-  const savePathConfig = useCallback(
-    async (options?: SavePathConfigOptions): Promise<boolean> => {
-      return await (operationHandlersRef.current.savePathConfig?.(options) ?? Promise.resolve(false));
-    },
-    []
-  );
+  const savePathConfig = useCallback(async (options?: SavePathConfigOptions): Promise<boolean> => {
+    return await (operationHandlersRef.current.savePathConfig?.(options) ?? Promise.resolve(false));
+  }, []);
 
   // Actions are stable
   const actions = useMemo<PersistenceActions>(
@@ -207,9 +204,7 @@ export function PersistenceProvider({
 
   return (
     <PersistenceActionsContext.Provider value={actions}>
-      <PersistenceStateContext.Provider value={state}>
-        {children}
-      </PersistenceStateContext.Provider>
+      <PersistenceStateContext.Provider value={state}>{children}</PersistenceStateContext.Provider>
     </PersistenceActionsContext.Provider>
   );
 }

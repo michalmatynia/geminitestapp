@@ -7,7 +7,14 @@ import React, { useMemo } from 'react';
 
 import { useCmsThemes, useDeleteTheme } from '@/features/cms/hooks/useCmsQueries';
 import type { CmsTheme } from '@/shared/contracts/cms';
-import { Button, EmptyState, ActionMenu, DropdownMenuItem, DropdownMenuSeparator, StandardDataTablePanel } from '@/shared/ui';
+import {
+  Button,
+  EmptyState,
+  ActionMenu,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  StandardDataTablePanel,
+} from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 import type { ColumnDef } from '@tanstack/react-table';
@@ -29,79 +36,88 @@ export default function ThemesPage(): React.ReactNode {
     }
   };
 
-  const columns = useMemo<ColumnDef<CmsTheme>[]>(() => [
-    {
-      accessorKey: 'name',
-      header: 'Theme Name',
-      cell: ({ row }) => (
-        <div className='flex items-center gap-3'>
-          <div className='flex h-8 w-8 items-center justify-center rounded bg-primary/10 text-primary'>
-            <Palette className='size-4' />
+  const columns = useMemo<ColumnDef<CmsTheme>[]>(
+    () => [
+      {
+        accessorKey: 'name',
+        header: 'Theme Name',
+        cell: ({ row }) => (
+          <div className='flex items-center gap-3'>
+            <div className='flex h-8 w-8 items-center justify-center rounded bg-primary/10 text-primary'>
+              <Palette className='size-4' />
+            </div>
+            <Link
+              href={`/admin/cms/themes/${row.original.id}/edit`}
+              className='font-medium text-gray-200 hover:text-blue-300 transition-colors'
+            >
+              {row.original.name}
+            </Link>
           </div>
-          <Link
-            href={`/admin/cms/themes/${row.original.id}/edit`}
-            className='font-medium text-gray-200 hover:text-blue-300 transition-colors'
-          >
-            {row.original.name}
-          </Link>
-        </div>
-      ),
-    },
-    {
-      id: 'palette',
-      header: 'Color Palette',
-      cell: ({ row }) => (
-        <div className='flex items-center gap-1.5'>
-          {Object.values(row.original.colors).slice(0, 6).map((color, idx) => (
-            <div
-              key={idx}
-              className='size-5 rounded-full border border-white/10 shadow-sm'
-              style={{ backgroundColor: color }}
-              title={color}
-            />
-          ))}
-          {Object.keys(row.original.colors).length > 6 && (
-            <span className='text-[10px] text-gray-500 font-bold ml-1'>
-              +{Object.keys(row.original.colors).length - 6}
-            </span>
-          )}
-        </div>
-      ),
-    },
-    {
-      accessorKey: 'updatedAt',
-      header: 'Updated',
-      cell: ({ row }) => <span className='text-xs text-gray-500'>{row.original.updatedAt ? new Date(row.original.updatedAt).toLocaleString() : '—'}</span>,
-    },
-    {
-      id: 'actions',
-      header: () => <div className='text-right'>Actions</div>,
-      cell: ({ row }) => (
-        <div className='flex justify-end'>
-          <ActionMenu ariaLabel={`Actions for theme ${row.original.name}`}>
-            <DropdownMenuItem
-              onSelect={(event: Event): void => {
-                event.preventDefault();
-                router.push(`/admin/cms/themes/${row.original.id}/edit`);
-              }}
-            >
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              className='text-destructive focus:text-destructive'
-              onSelect={(event: Event): void => {
-                event.preventDefault();
-                setThemeToDelete(row.original.id);
-              }}
-            >
-              Delete
-            </DropdownMenuItem>
-          </ActionMenu>
-        </div>
-      ),
-    },
-  ], []);
+        ),
+      },
+      {
+        id: 'palette',
+        header: 'Color Palette',
+        cell: ({ row }) => (
+          <div className='flex items-center gap-1.5'>
+            {Object.values(row.original.colors)
+              .slice(0, 6)
+              .map((color, idx) => (
+                <div
+                  key={idx}
+                  className='size-5 rounded-full border border-white/10 shadow-sm'
+                  style={{ backgroundColor: color }}
+                  title={color}
+                />
+              ))}
+            {Object.keys(row.original.colors).length > 6 && (
+              <span className='text-[10px] text-gray-500 font-bold ml-1'>
+                +{Object.keys(row.original.colors).length - 6}
+              </span>
+            )}
+          </div>
+        ),
+      },
+      {
+        accessorKey: 'updatedAt',
+        header: 'Updated',
+        cell: ({ row }) => (
+          <span className='text-xs text-gray-500'>
+            {row.original.updatedAt ? new Date(row.original.updatedAt).toLocaleString() : '—'}
+          </span>
+        ),
+      },
+      {
+        id: 'actions',
+        header: () => <div className='text-right'>Actions</div>,
+        cell: ({ row }) => (
+          <div className='flex justify-end'>
+            <ActionMenu ariaLabel={`Actions for theme ${row.original.name}`}>
+              <DropdownMenuItem
+                onSelect={(event: Event): void => {
+                  event.preventDefault();
+                  router.push(`/admin/cms/themes/${row.original.id}/edit`);
+                }}
+              >
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className='text-destructive focus:text-destructive'
+                onSelect={(event: Event): void => {
+                  event.preventDefault();
+                  setThemeToDelete(row.original.id);
+                }}
+              >
+                Delete
+              </DropdownMenuItem>
+            </ActionMenu>
+          </div>
+        ),
+      },
+    ],
+    []
+  );
 
   return (
     <div className='mx-auto w-full max-w-none py-10 space-y-6'>
@@ -122,7 +138,11 @@ export default function ThemesPage(): React.ReactNode {
             title='No themes defined'
             description='Themes allow you to maintain a consistent visual language across your storefront.'
             action={
-              <Button onClick={() => router.push('/admin/cms/themes/create')} variant='outline' size='sm'>
+              <Button
+                onClick={() => router.push('/admin/cms/themes/create')}
+                variant='outline'
+                size='sm'
+              >
                 Create Your First Theme
               </Button>
             }

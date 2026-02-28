@@ -8,10 +8,15 @@ import { useFileManager } from '../../contexts/FileManagerContext';
 
 export function FileManagerBulkActions(): React.JSX.Element {
   const {
-    mode, selectionMode, showBulkActions,
-    bulkTagInput, setBulkTagInput,
-    bulkTagMode, setBulkTagMode,
-    handleApplyTags, isPending,
+    mode,
+    selectionMode,
+    showBulkActions,
+    bulkTagInput,
+    setBulkTagInput,
+    bulkTagMode,
+    setBulkTagMode,
+    handleApplyTags,
+    isPending,
   } = useFileManager();
 
   if (!(mode === 'select' && selectionMode === 'multiple' && showBulkActions)) {
@@ -27,19 +32,22 @@ export function FileManagerBulkActions(): React.JSX.Element {
         onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setBulkTagInput(e.target.value)}
         className='w-full md:w-72 p-2 bg-gray-800 rounded'
       />
-      <SelectSimple size='sm'
+      <SelectSimple
+        size='sm'
         value={bulkTagMode}
         onValueChange={(value: string): void => setBulkTagMode(value as 'add' | 'replace')}
         options={[
           { value: 'add', label: 'Add' },
-          { value: 'replace', label: 'Replace' }
+          { value: 'replace', label: 'Replace' },
         ]}
         className='w-full md:w-32'
         triggerClassName='text-sm'
       />
       <Button
         size='sm'
-        onClick={(): void => { void handleApplyTags(); }}
+        onClick={(): void => {
+          void handleApplyTags();
+        }}
         disabled={isPending}
       >
         {isPending ? 'Saving...' : 'Apply tags'}

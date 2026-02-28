@@ -11,11 +11,54 @@ import {
 
 import type { BlockDefinition } from '../../../types/page-builder';
 
-export const COLUMN_ALLOWED_BLOCK_TYPES = ['Heading', 'Text', 'TextElement', 'TextAtom', 'ImageElement', 'Button', 'Image', 'Model3D', 'Model3DElement', 'VideoEmbed', 'Divider', 'SocialLinks', 'Icon', 'AppEmbed', 'ImageWithText', 'RichText', 'Hero', 'Block', 'Carousel', 'Slideshow'];
+export const COLUMN_ALLOWED_BLOCK_TYPES = [
+  'Heading',
+  'Text',
+  'TextElement',
+  'TextAtom',
+  'ImageElement',
+  'Button',
+  'Image',
+  'Model3D',
+  'Model3DElement',
+  'VideoEmbed',
+  'Divider',
+  'SocialLinks',
+  'Icon',
+  'AppEmbed',
+  'ImageWithText',
+  'RichText',
+  'Hero',
+  'Block',
+  'Carousel',
+  'Slideshow',
+];
 export const BLOCK_SECTION_ALLOWED_BLOCK_TYPES = ['Announcement', ...COLUMN_ALLOWED_BLOCK_TYPES];
 
 // Row can contain columns and also elements/blocks directly (not just inside columns)
-export const ROW_ALLOWED_BLOCK_TYPES = ['Column', 'TextElement', 'ImageElement', 'TextAtom', 'Button', 'Image', 'Heading', 'Text', 'VideoEmbed', 'Divider', 'SocialLinks', 'Icon', 'AppEmbed', 'Hero', 'ImageWithText', 'RichText', 'Block', 'Model3D', 'Model3DElement', 'Carousel', 'Slideshow'];
+export const ROW_ALLOWED_BLOCK_TYPES = [
+  'Column',
+  'TextElement',
+  'ImageElement',
+  'TextAtom',
+  'Button',
+  'Image',
+  'Heading',
+  'Text',
+  'VideoEmbed',
+  'Divider',
+  'SocialLinks',
+  'Icon',
+  'AppEmbed',
+  'Hero',
+  'ImageWithText',
+  'RichText',
+  'Block',
+  'Model3D',
+  'Model3DElement',
+  'Carousel',
+  'Slideshow',
+];
 
 export const layoutBlockDefinitions: Record<string, BlockDefinition> = {
   Row: {
@@ -106,7 +149,14 @@ export const layoutBlockDefinitions: Record<string, BlockDefinition> = {
         ],
         defaultValue: 'inherit',
       },
-      { key: 'height', label: 'Row height (px)', type: 'range', defaultValue: 0, min: 0, max: 1000 },
+      {
+        key: 'height',
+        label: 'Row height (px)',
+        type: 'range',
+        defaultValue: 0,
+        min: 0,
+        max: 1000,
+      },
       ...paddingFields(),
       ...marginFields(),
       ...sectionStyleFields(),
@@ -183,7 +233,14 @@ export const layoutBlockDefinitions: Record<string, BlockDefinition> = {
         ],
         defaultValue: 'inherit',
       },
-      { key: 'height', label: 'Column height (px)', type: 'range', defaultValue: 0, min: 0, max: 1000 },
+      {
+        key: 'height',
+        label: 'Column height (px)',
+        type: 'range',
+        defaultValue: 0,
+        min: 0,
+        max: 1000,
+      },
       {
         key: 'justifyContent',
         label: 'Vertical alignment',

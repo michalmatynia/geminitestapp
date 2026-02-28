@@ -4,9 +4,7 @@ import { handleValidationPattern } from '@/shared/lib/ai-paths/core/runtime/hand
 import type { AiNode } from '@/shared/contracts/ai-paths';
 import type { NodeHandlerContext, RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
 
-const buildNode = (
-  patch: Partial<AiNode> = {}
-): AiNode =>
+const buildNode = (patch: Partial<AiNode> = {}): AiNode =>
   ({
     id: 'node-validation-pattern',
     type: 'validation_pattern',
@@ -37,10 +35,7 @@ const buildNode = (
     ...(patch as Record<string, unknown>),
   }) as AiNode;
 
-const buildContext = (
-  node: AiNode,
-  nodeInputs: RuntimePortValues
-): NodeHandlerContext =>
+const buildContext = (node: AiNode, nodeInputs: RuntimePortValues): NodeHandlerContext =>
   ({
     node,
     nodeInputs,
@@ -120,12 +115,10 @@ describe('handleValidationPattern', () => {
       },
     });
 
-    const result = (await handleValidationPattern(buildContext(node, { value: 'world' })));
+    const result = await handleValidationPattern(buildContext(node, { value: 'world' }));
     expect(result['valid']).toBe(false);
     expect(result['errors']).toEqual(
-      expect.arrayContaining([
-        expect.stringContaining('Must contain hello'),
-      ])
+      expect.arrayContaining([expect.stringContaining('Must contain hello')])
     );
     expect(result['value']).toBe('world');
     expect((result['bundle'] as Record<string, unknown>)['issueCount']).toBe(1);
@@ -182,13 +175,11 @@ describe('handleValidationPattern', () => {
       },
     });
 
-    const result = (await handleValidationPattern(buildContext(node, { value: 'foo text' })));
+    const result = await handleValidationPattern(buildContext(node, { value: 'foo text' }));
     expect(result['valid']).toBe(true);
     expect(result['value']).toContain('bar');
     expect(result['errors']).toEqual([]);
-    expect(
-      Array.isArray((result['bundle'] as Record<string, unknown>)['appliedFixes'])
-    ).toBe(true);
+    expect(Array.isArray((result['bundle'] as Record<string, unknown>)['appliedFixes'])).toBe(true);
   });
 
   it('supports report-only mode', async () => {
@@ -231,18 +222,16 @@ describe('handleValidationPattern', () => {
       },
     });
 
-    const result = (await handleValidationPattern(buildContext(node, { value: 'abc' })));
+    const result = await handleValidationPattern(buildContext(node, { value: 'abc' }));
     expect(result['valid']).toBe(true);
     expect((result['errors'] as string[]).length).toBe(1);
   });
 
   it('passes through when no rules are configured', async () => {
     const node = buildNode();
-    const result = (await handleValidationPattern(buildContext(node, { value: 'abc' })));
+    const result = await handleValidationPattern(buildContext(node, { value: 'abc' }));
     expect(result['valid']).toBe(true);
     expect(result['errors']).toEqual([]);
-    expect((result['bundle'] as Record<string, unknown>)['reason']).toBe(
-      'no_rules_configured'
-    );
+    expect((result['bundle'] as Record<string, unknown>)['reason']).toBe('no_rules_configured');
   });
 });

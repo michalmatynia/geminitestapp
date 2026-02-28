@@ -12,7 +12,8 @@ type MassListProductModalViewContextValue = {
   onSuccess: () => void;
 };
 
-const MassListProductModalViewContext = React.createContext<MassListProductModalViewContextValue | null>(null);
+const MassListProductModalViewContext =
+  React.createContext<MassListProductModalViewContextValue | null>(null);
 
 type MassListProductModalViewProviderProps = {
   value: MassListProductModalViewContextValue;

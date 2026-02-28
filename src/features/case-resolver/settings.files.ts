@@ -5,7 +5,7 @@ import {
   ensureSafeDocumentHtml,
   stripHtmlToPlainText,
   toStorageDocumentValue,
-} from '@/features/document-editor/content-format';
+} from '@/shared/lib/document-editor/content-format';
 import {
   type CaseResolverDocumentDateProposal,
   type CaseResolverDocumentFormatVersion,
@@ -18,9 +18,7 @@ import {
   type CaseResolverPartyReference,
   type CaseResolverScanSlot,
 } from '@/shared/contracts/case-resolver';
-import {
-  DEFAULT_CASE_RESOLVER_SCANFILE_OCR_PROMPT,
-} from './settings.constants';
+import { DEFAULT_CASE_RESOLVER_SCANFILE_OCR_PROMPT } from './settings.constants';
 import {
   normalizeCaseHappeningDate,
   normalizeCaseResolverCaseStatus,
@@ -101,8 +99,7 @@ export const normalizeCaseResolverRelatedFileLinks = (
     if (hasSameRelatedFileIds) return file;
     return {
       ...file,
-      relatedFileIds:
-        normalizedRelatedFileIds.length > 0 ? normalizedRelatedFileIds : undefined,
+      relatedFileIds: normalizedRelatedFileIds.length > 0 ? normalizedRelatedFileIds : undefined,
     };
   });
 };
@@ -135,9 +132,7 @@ export const normalizeCaseResolverDocumentHistory = (
         ? record['documentContentMarkdown']
         : undefined;
     const rawHtml =
-      typeof record['documentContentHtml'] === 'string'
-        ? record['documentContentHtml']
-        : undefined;
+      typeof record['documentContentHtml'] === 'string' ? record['documentContentHtml'] : undefined;
     const activeDocumentVersion = normalizeCaseResolverDocumentVersion(
       record['activeDocumentVersion']
     );
@@ -205,7 +200,11 @@ export const normalizeCaseResolverDocumentHistory = (
     .sort((left: CaseResolverDocumentHistoryEntry, right: CaseResolverDocumentHistoryEntry) => {
       const rightTimestamp = Date.parse(right.savedAt);
       const leftTimestamp = Date.parse(left.savedAt);
-      if (Number.isFinite(rightTimestamp) && Number.isFinite(leftTimestamp) && rightTimestamp !== leftTimestamp) {
+      if (
+        Number.isFinite(rightTimestamp) &&
+        Number.isFinite(leftTimestamp) &&
+        rightTimestamp !== leftTimestamp
+      ) {
         return rightTimestamp - leftTimestamp;
       }
       return right.documentContentVersion - left.documentContentVersion;
@@ -213,7 +212,10 @@ export const normalizeCaseResolverDocumentHistory = (
     .slice(0, CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT);
 };
 
-export const normalizeCaseResolverScanSlots = (input: unknown, fileId: string): CaseResolverScanSlot[] => {
+export const normalizeCaseResolverScanSlots = (
+  input: unknown,
+  fileId: string
+): CaseResolverScanSlot[] => {
   if (!Array.isArray(input)) return [];
 
   const seen = new Set<string>();
@@ -232,9 +234,13 @@ export const normalizeCaseResolverScanSlots = (input: unknown, fileId: string): 
 
     const rawName = typeof record['name'] === 'string' ? record['name'].trim() : '';
     const rawStatus = typeof record['status'] === 'string' ? record['status'] : '';
-    const status = (rawStatus === 'pending' || rawStatus === 'processing' || rawStatus === 'completed' || rawStatus === 'failed') 
-      ? rawStatus 
-      : 'completed';
+    const status =
+      rawStatus === 'pending' ||
+      rawStatus === 'processing' ||
+      rawStatus === 'completed' ||
+      rawStatus === 'failed'
+        ? rawStatus
+        : 'completed';
 
     slots.push({
       id: rawId,
@@ -246,9 +252,7 @@ export const normalizeCaseResolverScanSlots = (input: unknown, fileId: string): 
       sourceFileId: sanitizeOptionalId(record['sourceFileId']),
       mimeType: sanitizeOptionalMimeType(record['mimeType']),
       size:
-        typeof record['size'] === 'number' &&
-          Number.isFinite(record['size']) &&
-          record['size'] >= 0
+        typeof record['size'] === 'number' && Number.isFinite(record['size']) && record['size'] >= 0
           ? Math.round(record['size'])
           : undefined,
       ocrText: typeof record['ocrText'] === 'string' ? record['ocrText'] : '',
@@ -360,7 +364,10 @@ export const createCaseResolverFile = (input: CreateCaseResolverFileInput): Case
       }
       return '';
     }
-    if (typeof input.documentContentHtml === 'string' && input.documentContentHtml.trim().length > 0) {
+    if (
+      typeof input.documentContentHtml === 'string' &&
+      input.documentContentHtml.trim().length > 0
+    ) {
       return input.documentContentHtml;
     }
     if (
@@ -379,18 +386,17 @@ export const createCaseResolverFile = (input: CreateCaseResolverFileInput): Case
   });
   const documentContent = toStorageDocumentValue(canonicalDocument);
   const editorType: CaseResolverEditorType = resolvedEditorType;
-  const documentContentFormatVersion = normalizeDocumentFormatVersion(input.documentContentFormatVersion);
+  const documentContentFormatVersion = normalizeDocumentFormatVersion(
+    input.documentContentFormatVersion
+  );
   const documentContentVersion = normalizeDocumentContentVersion(input.documentContentVersion);
   const documentConversionWarnings = Array.isArray(input.documentConversionWarnings)
     ? input.documentConversionWarnings
-      .filter((entry: string | unknown): entry is string => typeof entry === 'string')
-      .map((entry: string) => entry.trim())
-      .filter((entry: string) => entry.length > 0)
+        .filter((entry: string | unknown): entry is string => typeof entry === 'string')
+        .map((entry: string) => entry.trim())
+        .filter((entry: string) => entry.length > 0)
     : canonicalDocument.warnings;
-  const lastContentConversionAt = normalizeTimestamp(
-    input.lastContentConversionAt,
-    updatedAt
-  );
+  const lastContentConversionAt = normalizeTimestamp(input.lastContentConversionAt, updatedAt);
   const parentCaseId = sanitizeOptionalId(input.parentCaseId);
   const referenceCaseIds = sanitizeOptionalIdArray(input.referenceCaseIds).filter(
     (referenceId: string): boolean => referenceId !== input.id
@@ -398,8 +404,7 @@ export const createCaseResolverFile = (input: CreateCaseResolverFileInput): Case
   const relatedFileIds = sanitizeOptionalIdArray(input.relatedFileIds).filter(
     (relatedId: string): boolean => relatedId !== input.id
   );
-  const scanOcrModel =
-    typeof input.scanOcrModel === 'string' ? input.scanOcrModel.trim() : '';
+  const scanOcrModel = typeof input.scanOcrModel === 'string' ? input.scanOcrModel.trim() : '';
   const scanOcrPrompt =
     typeof input.scanOcrPrompt === 'string' && input.scanOcrPrompt.trim().length > 0
       ? input.scanOcrPrompt.trim()

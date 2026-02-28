@@ -2,15 +2,13 @@
 
 import React, { useMemo } from 'react';
 
-import { 
-  Button, 
-  StandardDataTablePanel, 
-  SelectSimple,
-  PanelStats,
-  StatusBadge,
-} from '@/shared/ui';
+import { Button, StandardDataTablePanel, SelectSimple, PanelStats, StatusBadge } from '@/shared/ui';
 
-import { useImageStudioRuns, type ImageStudioRunRecord, type ImageStudioRunStatus } from '../hooks/useImageStudioRuns';
+import {
+  useImageStudioRuns,
+  type ImageStudioRunRecord,
+  type ImageStudioRunStatus,
+} from '../hooks/useImageStudioRuns';
 
 import type { ColumnDef } from '@tanstack/react-table';
 
@@ -42,77 +40,88 @@ export function ImageStudioRunsQueuePanel(): React.JSX.Element {
     refetch,
   } = useImageStudioRuns();
 
-  const columns = useMemo<ColumnDef<ImageStudioRunRecord>[]>(() => [
-    {
-      accessorKey: 'id',
-      header: 'Run',
-      cell: ({ row }) => <span className='font-mono text-[11px]'>{row.original.id.slice(0, 12)}...</span>,
-    },
-    {
-      accessorKey: 'projectId',
-      header: 'Project',
-    },
-    {
-      accessorKey: 'status',
-      header: 'Status',
-      cell: ({ row }) => (
-        <StatusBadge 
-          status={row.original.status} 
-          variant={
-            row.original.status === 'running' ? 'processing' :
-              row.original.status === 'queued' ? 'warning' :
-                row.original.status === 'completed' ? 'success' : 'error'
-          }
-          size='sm'
-          className='font-bold'
-        />
-      ),
-    },
-    {
-      accessorKey: 'dispatchMode',
-      header: 'Runtime',
-      cell: ({ row }) => (
-        <StatusBadge
-          status={row.original.dispatchMode === 'inline' ? 'Inline' : 'Redis'}
-          variant={row.original.dispatchMode === 'inline' ? 'error' : 'success'}
-          size='sm'
-          className='font-medium'
-        />
-      ),
-    },
-    {
-      id: 'outputs',
-      header: 'Outputs',
-      cell: ({ row }) => `${row.original.outputs.length}/${row.original.expectedOutputs}`,
-    },
-    {
-      accessorKey: 'createdAt',
-      header: 'Created',
-      cell: ({ row }) => toDateLabel(row.original.createdAt),
-    },
-    {
-      accessorKey: 'startedAt',
-      header: 'Started',
-      cell: ({ row }) => toDateLabel(row.original.startedAt),
-    },
-    {
-      accessorKey: 'finishedAt',
-      header: 'Finished',
-      cell: ({ row }) => toDateLabel(row.original.finishedAt),
-    },
-    {
-      accessorKey: 'errorMessage',
-      header: 'Error',
-      cell: ({ row }) => <span className='text-rose-200'>{row.original.errorMessage ?? '—'}</span>,
-    },
-  ], []);
+  const columns = useMemo<ColumnDef<ImageStudioRunRecord>[]>(
+    () => [
+      {
+        accessorKey: 'id',
+        header: 'Run',
+        cell: ({ row }) => (
+          <span className='font-mono text-[11px]'>{row.original.id.slice(0, 12)}...</span>
+        ),
+      },
+      {
+        accessorKey: 'projectId',
+        header: 'Project',
+      },
+      {
+        accessorKey: 'status',
+        header: 'Status',
+        cell: ({ row }) => (
+          <StatusBadge
+            status={row.original.status}
+            variant={
+              row.original.status === 'running'
+                ? 'processing'
+                : row.original.status === 'queued'
+                  ? 'warning'
+                  : row.original.status === 'completed'
+                    ? 'success'
+                    : 'error'
+            }
+            size='sm'
+            className='font-bold'
+          />
+        ),
+      },
+      {
+        accessorKey: 'dispatchMode',
+        header: 'Runtime',
+        cell: ({ row }) => (
+          <StatusBadge
+            status={row.original.dispatchMode === 'inline' ? 'Inline' : 'Redis'}
+            variant={row.original.dispatchMode === 'inline' ? 'error' : 'success'}
+            size='sm'
+            className='font-medium'
+          />
+        ),
+      },
+      {
+        id: 'outputs',
+        header: 'Outputs',
+        cell: ({ row }) => `${row.original.outputs.length}/${row.original.expectedOutputs}`,
+      },
+      {
+        accessorKey: 'createdAt',
+        header: 'Created',
+        cell: ({ row }) => toDateLabel(row.original.createdAt),
+      },
+      {
+        accessorKey: 'startedAt',
+        header: 'Started',
+        cell: ({ row }) => toDateLabel(row.original.startedAt),
+      },
+      {
+        accessorKey: 'finishedAt',
+        header: 'Finished',
+        cell: ({ row }) => toDateLabel(row.original.finishedAt),
+      },
+      {
+        accessorKey: 'errorMessage',
+        header: 'Error',
+        cell: ({ row }) => (
+          <span className='text-rose-200'>{row.original.errorMessage ?? '—'}</span>
+        ),
+      },
+    ],
+    []
+  );
 
   return (
     <div className='space-y-4'>
       <StandardDataTablePanel
         title='Image Studio Runs'
         description='Queue-backed generation runs persisted from Image Studio.'
-        headerActions={(
+        headerActions={
           <div className='flex items-center gap-2'>
             <Button
               type='button'
@@ -132,7 +141,7 @@ export function ImageStudioRunsQueuePanel(): React.JSX.Element {
               {isFetching ? 'Refreshing...' : 'Refresh'}
             </Button>
           </div>
-        )}
+        }
         columns={columns}
         data={runs}
         isLoading={isLoading}

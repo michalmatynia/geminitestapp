@@ -6,7 +6,7 @@ import type { ColumnDef, Row } from '@tanstack/react-table';
 
 import { StatusBadge, Tooltip } from '@/shared/ui';
 import type { CaseRow } from '../../context/DocumentRelationSearchContext';
-import { getCaseResolverDocTooltip } from '../../utils/docs';
+import { getCaseResolverDocTooltip } from '@/features/case-resolver/relation-search/utils/docs';
 
 export interface CaseTableColumnProps {
   onDrillInto: (caseId: string) => void;
@@ -31,10 +31,7 @@ export const getCaseTableColumns = ({
     accessorKey: 'file.name',
     header: 'Case',
     cell: ({ row }: { row: Row<CaseRow> }): React.JSX.Element => (
-      <span
-        className='block truncate text-gray-400'
-        title={row.original.file.name}
-      >
+      <span className='block truncate text-gray-400' title={row.original.file.name}>
         {row.original.file.name}
       </span>
     ),

@@ -54,14 +54,8 @@ export function EventEffectsWrapper({
   const nodeId = nodeIdProp ?? blockRender?.block.id;
   const customCss = customCssProp ?? settings['customCss'];
 
-  const config = useMemo<CmsEventEffectsConfig>(
-    () => getEventEffectsConfig(settings),
-    [settings]
-  );
-  const hoverStyle = useMemo(
-    () => getEventHoverStyle(config),
-    [config]
-  );
+  const config = useMemo<CmsEventEffectsConfig>(() => getEventEffectsConfig(settings), [settings]);
+  const hoverStyle = useMemo(() => getEventHoverStyle(config), [config]);
   const eventClassName = useMemo(
     () => getEventClassName(config, { disableClick }),
     [config, disableClick]
@@ -120,7 +114,12 @@ export function EventEffectsWrapper({
   if (children === null || children === undefined) return children;
 
   if (!React.isValidElement(children)) {
-    if (!eventClassName && Object.keys(hoverStyle).length === 0 && !scopedCustomCss && !customClassName) {
+    if (
+      !eventClassName &&
+      Object.keys(hoverStyle).length === 0 &&
+      !scopedCustomCss &&
+      !customClassName
+    ) {
       return children;
     }
 
@@ -152,13 +151,16 @@ export function EventEffectsWrapper({
   const nextProps: Record<string, unknown> = isFragment
     ? {}
     : {
-      className: mergedClassName,
-      style: mergedStyle,
-    };
+        className: mergedClassName,
+        style: mergedStyle,
+      };
 
   if (clickEnabled && !isFragment) {
-    const existingOnClick = (children.props as { onClick?: (event: React.MouseEvent) => void }).onClick;
-    const existingOnKeyDown = (children.props as { onKeyDown?: (event: React.KeyboardEvent) => void }).onKeyDown;
+    const existingOnClick = (children.props as { onClick?: (event: React.MouseEvent) => void })
+      .onClick;
+    const existingOnKeyDown = (
+      children.props as { onKeyDown?: (event: React.KeyboardEvent) => void }
+    ).onKeyDown;
     nextProps['onClick'] = (event: React.MouseEvent): void => {
       existingOnClick?.(event);
       if (!event.defaultPrevented) handleClick(event);

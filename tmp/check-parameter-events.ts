@@ -18,7 +18,10 @@ async function main(): Promise<void> {
 
     const nodes = (await db
       .collection('ai_path_run_nodes')
-      .find({ runId: { $in: runIds }, nodeId: { $in: ['node-query-params', 'node-update-params'] } })
+      .find({
+        runId: { $in: runIds },
+        nodeId: { $in: ['node-query-params', 'node-update-params'] },
+      })
       .sort({ startedAt: -1 })
       .toArray()) as Array<Record<string, unknown>>;
 
@@ -43,7 +46,13 @@ async function main(): Promise<void> {
       .filter((event) => {
         const nodeId = event['nodeId'];
         const message = typeof event['message'] === 'string' ? event['message'] : '';
-        return nodeId === 'node-query-params' || nodeId === 'node-update-params' || message.toLowerCase().includes('query') || message.toLowerCase().includes('update') || message.toLowerCase().includes('parameter inference');
+        return (
+          nodeId === 'node-query-params' ||
+          nodeId === 'node-update-params' ||
+          message.toLowerCase().includes('query') ||
+          message.toLowerCase().includes('update') ||
+          message.toLowerCase().includes('parameter inference')
+        );
       })
       .map((event) => ({
         runId: event['runId'],

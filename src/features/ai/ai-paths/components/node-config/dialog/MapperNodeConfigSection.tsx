@@ -1,8 +1,13 @@
 'use client';
 
-import { createParserMappings, formatRuntimeValue, getValueAtMappingPath, parsePathList } from '@/shared/lib/ai-paths';
+import {
+  createParserMappings,
+  formatRuntimeValue,
+  getValueAtMappingPath,
+  parsePathList,
+} from '@/shared/lib/ai-paths';
 import { formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
-import { Input,  SelectSimple, Textarea, FormField } from '@/shared/ui';
+import { Input, SelectSimple, Textarea, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -72,20 +77,14 @@ const buildLivePreview = (
 };
 
 export function MapperNodeConfigSection(): React.JSX.Element | null {
-  const {
-    selectedNode,
-    runtimeState,
-    updateSelectedNode,
-    updateSelectedNodeConfig,
-  } = useAiPathConfig();
+  const { selectedNode, runtimeState, updateSelectedNode, updateSelectedNodeConfig } =
+    useAiPathConfig();
 
   if (selectedNode?.type !== 'mapper') return null;
 
   const mapperConfig = selectedNode.config?.mapper ?? {
     outputs: selectedNode.outputs.length ? selectedNode.outputs : ['value'],
-    mappings: createParserMappings(
-      selectedNode.outputs.length ? selectedNode.outputs : ['value']
-    ),
+    mappings: createParserMappings(selectedNode.outputs.length ? selectedNode.outputs : ['value']),
     jsonIntegrityPolicy: 'repair',
   };
   const outputs = mapperConfig.outputs.length
@@ -96,23 +95,30 @@ export function MapperNodeConfigSection(): React.JSX.Element | null {
   const runtimeInputs = runtimeState.inputs?.[selectedNode.id] ?? {};
   const mapperSources = buildMapperSources(runtimeInputs);
   const contextInput = getMapperContextValue(mapperSources);
-  const preview = contextInput !== null && contextInput !== undefined
-    ? buildLivePreview(mapperSources, outputs, mapperConfig.mappings)
-    : null;
+  const preview =
+    contextInput !== null && contextInput !== undefined
+      ? buildLivePreview(mapperSources, outputs, mapperConfig.mappings)
+      : null;
   const livePreview = preview?.values ?? null;
   const hasLivePreview = livePreview !== null && Object.keys(livePreview).length > 0;
 
   return (
     <div className='space-y-4'>
       <div className='rounded-md border border-border bg-card/50 p-3'>
-        <div className='text-[11px] text-gray-400 font-semibold mb-3 uppercase tracking-wider'>Live Preview</div>
+        <div className='text-[11px] text-gray-400 font-semibold mb-3 uppercase tracking-wider'>
+          Live Preview
+        </div>
         <div className='grid grid-cols-1 gap-3 md:grid-cols-2'>
           <FormField label='Context Input'>
             <Textarea
               variant='subtle'
               size='sm'
               className='min-h-[110px] font-mono'
-              value={contextInput !== null && contextInput !== undefined ? formatRuntimeValue(contextInput) : ''}
+              value={
+                contextInput !== null && contextInput !== undefined
+                  ? formatRuntimeValue(contextInput)
+                  : ''
+              }
               readOnly
               placeholder='Run the path or simulation to see the latest context input.'
             />
@@ -133,11 +139,12 @@ export function MapperNodeConfigSection(): React.JSX.Element | null {
           </FormField>
         </div>
       </div>
-      <FormField 
-        label='JSON Integrity Policy' 
+      <FormField
+        label='JSON Integrity Policy'
         description='Controls how string inputs are normalized before path mapping.'
       >
-        <SelectSimple size='sm'
+        <SelectSimple
+          size='sm'
           variant='subtle'
           value={mapperConfig.jsonIntegrityPolicy ?? 'repair'}
           onValueChange={(value: string): void => {
@@ -158,8 +165,8 @@ export function MapperNodeConfigSection(): React.JSX.Element | null {
         />
       </FormField>
 
-      <FormField 
-        label='Outputs (one per line)' 
+      <FormField
+        label='Outputs (one per line)'
         description='Outputs must match downstream input ports exactly.'
       >
         <Textarea
@@ -191,37 +198,38 @@ export function MapperNodeConfigSection(): React.JSX.Element | null {
         />
       </FormField>
       <div className='space-y-3 pt-2 border-t border-border/20'>
-        <div className='text-xs font-semibold text-gray-400 uppercase tracking-wider'>Field Mappings</div>
-        {outputs.map((output: string): React.JSX.Element => (
-          <FormField 
-            key={output} 
-            label={`${formatPortLabel(output)} Mapping Path`}
-          >
-            <Input
-              variant='subtle'
-              size='sm'
-              value={mapperConfig.mappings?.[output] ?? ''}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                const nextMappings = {
-                  ...mapperConfig.mappings,
-                  [output]: event.target.value,
-                };
-                updateSelectedNodeConfig({
-                  mapper: {
-                    outputs,
-                    mappings: nextMappings,
-                    jsonIntegrityPolicy: mapperConfig.jsonIntegrityPolicy ?? 'repair',
-                  },
-                });
-              }}
-            />
-            {preview?.unresolved[output] ? (
-              <p className='mt-1 text-[10px] text-amber-400 font-mono'>
-                Unresolved: {preview.unresolved[output]}
-              </p>
-            ) : null}
-          </FormField>
-        ))}
+        <div className='text-xs font-semibold text-gray-400 uppercase tracking-wider'>
+          Field Mappings
+        </div>
+        {outputs.map(
+          (output: string): React.JSX.Element => (
+            <FormField key={output} label={`${formatPortLabel(output)} Mapping Path`}>
+              <Input
+                variant='subtle'
+                size='sm'
+                value={mapperConfig.mappings?.[output] ?? ''}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                  const nextMappings = {
+                    ...mapperConfig.mappings,
+                    [output]: event.target.value,
+                  };
+                  updateSelectedNodeConfig({
+                    mapper: {
+                      outputs,
+                      mappings: nextMappings,
+                      jsonIntegrityPolicy: mapperConfig.jsonIntegrityPolicy ?? 'repair',
+                    },
+                  });
+                }}
+              />
+              {preview?.unresolved[output] ? (
+                <p className='mt-1 text-[10px] text-amber-400 font-mono'>
+                  Unresolved: {preview.unresolved[output]}
+                </p>
+              ) : null}
+            </FormField>
+          )
+        )}
       </div>
     </div>
   );

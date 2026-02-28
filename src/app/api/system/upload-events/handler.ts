@@ -22,8 +22,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   const from = parseDateParam(url.searchParams.get('from'));
   const to = parseDateParam(url.searchParams.get('to'), true);
 
-  const status =
-    statusParam === 'success' || statusParam === 'error' ? statusParam : null;
+  const status = statusParam === 'success' || statusParam === 'error' ? statusParam : null;
 
   const result = await listFileUploadEvents({
     page,

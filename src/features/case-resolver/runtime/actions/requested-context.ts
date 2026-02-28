@@ -18,7 +18,7 @@ const normalizeRequestedFileId = (value: string | null | undefined): string | nu
 
 export const reduceRequestedContextState = (
   currentState: CaseResolverRuntimeRequestedContextSlice,
-  event: RequestedContextEvent,
+  event: RequestedContextEvent
 ): CaseResolverRuntimeRequestedContextSlice => {
   if (event.type === 'reset') {
     return {

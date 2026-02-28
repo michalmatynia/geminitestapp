@@ -12,25 +12,21 @@ import {
   type AiTriggerButtonCreatePayload,
   type AiTriggerButtonUpdatePayload,
 } from '@/features/ai/ai-paths/validations/trigger-buttons';
-import type { AgentTeachingAgentRecord, AgentTeachingChatSource } from '@/shared/contracts/agent-teaching';
+import type {
+  AgentTeachingAgentRecord,
+  AgentTeachingChatSource,
+} from '@/shared/contracts/agent-teaching';
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
 import type { ChatMessage } from '@/shared/contracts/chatbot';
-import type {
-  DatabaseBrowseDto,
-  SchemaResponsePayloadDto,
-} from '@/shared/contracts/database';
+import type { DatabaseBrowseDto, SchemaResponsePayloadDto } from '@/shared/contracts/database';
 import type { HttpResult } from '@/shared/contracts/http';
-import type {
-  SettingRecordDto,
-  SettingsScopeDto,
-} from '@/shared/contracts/settings';
+import type { SettingRecordDto, SettingsScopeDto } from '@/shared/contracts/settings';
 
 import type { AiPathRuntimeAnalyticsSummary } from '..';
 
 // ============================================================================
 // Types
 // ============================================================================
-
 
 export type ApiResponse<T> = HttpResult<T>;
 
@@ -130,12 +126,14 @@ export type PlaywrightNodeEnqueuePayload = {
   settingsOverrides?: Record<string, unknown> | undefined;
   launchOptions?: Record<string, unknown> | undefined;
   contextOptions?: Record<string, unknown> | undefined;
-  capture?: {
-    screenshot?: boolean | undefined;
-    html?: boolean | undefined;
-    video?: boolean | undefined;
-    trace?: boolean | undefined;
-  } | undefined;
+  capture?:
+    | {
+        screenshot?: boolean | undefined;
+        html?: boolean | undefined;
+        video?: boolean | undefined;
+        trace?: boolean | undefined;
+      }
+    | undefined;
 };
 
 export type PlaywrightNodeRunSnapshot = {
@@ -166,9 +164,7 @@ const resolveApiUrl = (url: string): string => {
     return url;
   }
   const base =
-    process.env['NEXT_PUBLIC_APP_URL'] ||
-    process.env['NEXTAUTH_URL'] ||
-    'http://localhost:3000';
+    process.env['NEXT_PUBLIC_APP_URL'] || process.env['NEXTAUTH_URL'] || 'http://localhost:3000';
   const trimmedBase = base.endsWith('/') ? base.slice(0, -1) : base;
   const path = url.startsWith('/') ? url : `/${url}`;
   return `${trimmedBase}${path}`;
@@ -176,12 +172,11 @@ const resolveApiUrl = (url: string): string => {
 
 async function apiFetch<T>(
   url: string,
-  options?: (RequestInit & { timeoutMs?: number | undefined })
+  options?: RequestInit & { timeoutMs?: number | undefined }
 ): Promise<ApiResponse<T>> {
   const { timeoutMs = 15000, ...fetchOptions } = options ?? {};
   const callerSignal = fetchOptions.signal;
-  const abortController =
-    typeof AbortController !== 'undefined' ? new AbortController() : null;
+  const abortController = typeof AbortController !== 'undefined' ? new AbortController() : null;
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
   let timedOut = false;
   let forwardAbort: (() => void) | null = null;
@@ -211,13 +206,16 @@ async function apiFetch<T>(
       ...(abortController ? { signal: abortController.signal } : {}),
     });
     if (!res.ok) {
-      const errorData = await res.json().catch(() => ({})) as { error?: string; message?: string };
+      const errorData = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        message?: string;
+      };
       return {
         ok: false,
         error: errorData.error || errorData.message || `Request failed with status ${res.status}`,
       };
     }
-    const data = await res.json() as T;
+    const data = (await res.json()) as T;
     return { ok: true, data };
   } catch (error) {
     if (timedOut) {
@@ -328,9 +326,12 @@ export const dbApi = {
   /**
    * Fetch database schema
    */
-  async schema(options?: { provider?: 'auto' | 'mongodb' | 'prisma' | 'all' }): Promise<ApiResponse<SchemaResponse>> {
+  async schema(options?: {
+    provider?: 'auto' | 'mongodb' | 'prisma' | 'all';
+  }): Promise<ApiResponse<SchemaResponse>> {
     const provider = options?.provider;
-    const query = provider && provider !== 'auto' ? `?provider=${encodeURIComponent(provider)}` : '';
+    const query =
+      provider && provider !== 'auto' ? `?provider=${encodeURIComponent(provider)}` : '';
     return apiFetch<SchemaResponse>(`/api/databases/schema${query}`);
   },
 
@@ -339,7 +340,12 @@ export const dbApi = {
    */
   async browse(
     collection: string,
-    options?: { limit?: number; skip?: number; query?: string; provider?: 'auto' | 'mongodb' | 'prisma' | 'all' }
+    options?: {
+      limit?: number;
+      skip?: number;
+      query?: string;
+      provider?: 'auto' | 'mongodb' | 'prisma' | 'all';
+    }
   ): Promise<ApiResponse<BrowseResponse>> {
     const params = new URLSearchParams();
     params.set('collection', collection);
@@ -374,9 +380,7 @@ export const triggerButtonsApi = {
     return apiFetch<AiTriggerButtonRecord[]>('/api/ai-paths/trigger-buttons');
   },
 
-  async create(
-    payload: AiTriggerButtonCreatePayload
-  ): Promise<ApiResponse<AiTriggerButtonRecord>> {
+  async create(payload: AiTriggerButtonCreatePayload): Promise<ApiResponse<AiTriggerButtonRecord>> {
     const validation = aiTriggerButtonCreateSchema.safeParse(payload);
     if (!validation.success) {
       return {
@@ -428,7 +432,9 @@ export const triggerButtonsApi = {
 // ============================================================================
 
 export const agentApi = {
-  async enqueue(payload: AgentEnqueuePayload): Promise<ApiResponse<{ runId: string; status?: string }>> {
+  async enqueue(
+    payload: AgentEnqueuePayload
+  ): Promise<ApiResponse<{ runId: string; status?: string }>> {
     return apiPost<{ runId: string; status?: string }>('/api/agentcreator/agent', payload);
   },
 
@@ -441,10 +447,7 @@ export const playwrightNodeApi = {
   async enqueue(
     payload: PlaywrightNodeEnqueuePayload
   ): Promise<ApiResponse<{ run: PlaywrightNodeRunSnapshot }>> {
-    return apiPost<{ run: PlaywrightNodeRunSnapshot }>(
-      '/api/ai-paths/playwright',
-      payload
-    );
+    return apiPost<{ run: PlaywrightNodeRunSnapshot }>('/api/ai-paths/playwright', payload);
   },
 
   async poll(runId: string): Promise<ApiResponse<{ run: PlaywrightNodeRunSnapshot }>> {
@@ -474,7 +477,9 @@ export const playwrightNodeApi = {
 
 export const learnerAgentsApi = {
   async listAgents(): Promise<ApiResponse<AgentTeachingAgentRecord[]>> {
-    const response = await apiFetch<{ agents?: AgentTeachingAgentRecord[] }>('/api/agentcreator/teaching/agents');
+    const response = await apiFetch<{ agents?: AgentTeachingAgentRecord[] }>(
+      '/api/agentcreator/teaching/agents'
+    );
     if (!response.ok) return response;
     return { ok: true, data: response.data.agents ?? [] };
   },
@@ -483,7 +488,10 @@ export const learnerAgentsApi = {
     agentId: string;
     messages: ChatMessage[];
   }): Promise<ApiResponse<{ message: string; sources: AgentTeachingChatSource[] }>> {
-    return apiPost<{ message: string; sources: AgentTeachingChatSource[] }>('/api/agentcreator/teaching/chat', payload);
+    return apiPost<{ message: string; sources: AgentTeachingChatSource[] }>(
+      '/api/agentcreator/teaching/chat',
+      payload
+    );
   },
 };
 
@@ -503,9 +511,7 @@ export const entityApi = {
    * Fetch a product by ID
    */
   async getProduct(productId: string): Promise<ApiResponse<Record<string, unknown>>> {
-    return apiFetch<Record<string, unknown>>(
-      `/api/products/${encodeURIComponent(productId)}`
-    );
+    return apiFetch<Record<string, unknown>>(`/api/products/${encodeURIComponent(productId)}`);
   },
 
   /**
@@ -522,10 +528,10 @@ export const entityApi = {
         body: formData,
       });
       if (!res.ok) {
-        const errorData = await res.json().catch(() => ({})) as { error?: string };
+        const errorData = (await res.json().catch(() => ({}))) as { error?: string };
         return { ok: false, error: errorData.error || 'Failed to create product' };
       }
-      const data = await res.json() as Record<string, unknown>;
+      const data = (await res.json()) as Record<string, unknown>;
       return { ok: true, data };
     } catch (error) {
       return { ok: false, error: error instanceof Error ? error.message : 'Unknown error' };
@@ -536,24 +542,22 @@ export const entityApi = {
    * Delete a product
    */
   async deleteProduct(productId: string): Promise<ApiResponse<{ ok: boolean }>> {
-    return apiDelete<{ ok: boolean }>(
-      `/api/products/${encodeURIComponent(productId)}`
-    );
+    return apiDelete<{ ok: boolean }>(`/api/products/${encodeURIComponent(productId)}`);
   },
 
   /**
    * Fetch a note by ID
    */
   async getNote(noteId: string): Promise<ApiResponse<Record<string, unknown>>> {
-    return apiFetch<Record<string, unknown>>(
-      `/api/notes/${encodeURIComponent(noteId)}`
-    );
+    return apiFetch<Record<string, unknown>>(`/api/notes/${encodeURIComponent(noteId)}`);
   },
 
   /**
    * Create a note
    */
-  async createNote(payload: Record<string, unknown>): Promise<ApiResponse<Record<string, unknown>>> {
+  async createNote(
+    payload: Record<string, unknown>
+  ): Promise<ApiResponse<Record<string, unknown>>> {
     return apiPost<Record<string, unknown>>('/api/notes', payload);
   },
 
@@ -561,9 +565,7 @@ export const entityApi = {
    * Delete a note
    */
   async deleteNote(noteId: string): Promise<ApiResponse<{ ok: boolean }>> {
-    return apiDelete<{ ok: boolean }>(
-      `/api/notes/${encodeURIComponent(noteId)}`
-    );
+    return apiDelete<{ ok: boolean }>(`/api/notes/${encodeURIComponent(noteId)}`);
   },
 
   /**
@@ -632,11 +634,13 @@ export const aiJobsApi = {
   async poll(
     jobId: string,
     options?: { signal?: AbortSignal }
-  ): Promise<ApiResponse<{
-    status: string;
-    result?: unknown;
-    error?: string;
-  }>> {
+  ): Promise<
+    ApiResponse<{
+      status: string;
+      result?: unknown;
+      error?: string;
+    }>
+  > {
     const response = await apiFetch<{
       job?: { status?: string; result?: unknown; errorMessage?: string | null };
     }>(`/api/products/ai-jobs/${encodeURIComponent(jobId)}`, {
@@ -690,10 +694,10 @@ export const aiGenerationApi = {
         body: formData,
       });
       if (!res.ok) {
-        const errorData = await res.json().catch(() => ({})) as { error?: string };
+        const errorData = (await res.json().catch(() => ({}))) as { error?: string };
         return { ok: false, error: errorData.error || 'Failed to update description' };
       }
-      const data = await res.json() as Record<string, unknown>;
+      const data = (await res.json()) as Record<string, unknown>;
       return { ok: true, data };
     } catch (error) {
       return { ok: false, error: error instanceof Error ? error.message : 'Unknown error' };
@@ -798,7 +802,9 @@ export const runsApi = {
     });
   },
 
-  async get(runId: string): Promise<ApiResponse<{ run: unknown; nodes: unknown[]; events: unknown[] }>> {
+  async get(
+    runId: string
+  ): Promise<ApiResponse<{ run: unknown; nodes: unknown[]; events: unknown[] }>> {
     return apiFetch<{ run: unknown; nodes: unknown[]; events: unknown[] }>(
       `/api/ai-paths/runs/${encodeURIComponent(runId)}`
     );
@@ -842,24 +848,19 @@ export const runsApi = {
   },
 
   async resume(runId: string, mode?: 'resume' | 'replay'): Promise<ApiResponse<{ run: unknown }>> {
-    return apiPost<{ run: unknown }>(
-      `/api/ai-paths/runs/${encodeURIComponent(runId)}/resume`,
-      { mode }
-    );
+    return apiPost<{ run: unknown }>(`/api/ai-paths/runs/${encodeURIComponent(runId)}/resume`, {
+      mode,
+    });
   },
 
   async retryNode(runId: string, nodeId: string): Promise<ApiResponse<{ run: unknown }>> {
-    return apiPost<{ run: unknown }>(
-      `/api/ai-paths/runs/${encodeURIComponent(runId)}/retry-node`,
-      { nodeId }
-    );
+    return apiPost<{ run: unknown }>(`/api/ai-paths/runs/${encodeURIComponent(runId)}/retry-node`, {
+      nodeId,
+    });
   },
 
   async cancel(runId: string): Promise<ApiResponse<{ run: unknown }>> {
-    return apiPost<{ run: unknown }>(
-      `/api/ai-paths/runs/${encodeURIComponent(runId)}/cancel`,
-      {}
-    );
+    return apiPost<{ run: unknown }>(`/api/ai-paths/runs/${encodeURIComponent(runId)}/cancel`, {});
   },
 
   async requeueDeadLetter(payload: {
@@ -868,11 +869,13 @@ export const runsApi = {
     query?: string | null;
     mode?: 'resume' | 'replay';
     limit?: number | null;
-  }): Promise<ApiResponse<{
-    requeued: number;
-    runIds: string[];
-    errors?: Array<{ runId: string; error: string }>;
-  }>> {
+  }): Promise<
+    ApiResponse<{
+      requeued: number;
+      runIds: string[];
+      errors?: Array<{ runId: string; error: string }>;
+    }>
+  > {
     return apiPost<{
       requeued: number;
       runIds: string[];

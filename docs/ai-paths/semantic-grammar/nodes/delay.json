@@ -4,20 +4,8 @@
   "nodeType": "delay",
   "title": "Delay",
   "purpose": "Delay signals to sequence flows.",
-  "inputs": [
-    "context",
-    "bundle",
-    "prompt",
-    "result",
-    "value"
-  ],
-  "outputs": [
-    "context",
-    "bundle",
-    "prompt",
-    "result",
-    "value"
-  ],
+  "inputs": ["context", "bundle", "prompt", "result", "value"],
+  "outputs": ["context", "bundle", "prompt", "result", "value"],
   "configFields": [
     {
       "path": "delay.ms",
@@ -45,20 +33,8 @@
       "x": 100,
       "y": 100
     },
-    "inputs": [
-      "context",
-      "bundle",
-      "prompt",
-      "result",
-      "value"
-    ],
-    "outputs": [
-      "context",
-      "bundle",
-      "prompt",
-      "result",
-      "value"
-    ],
+    "inputs": ["context", "bundle", "prompt", "result", "value"],
+    "outputs": ["context", "bundle", "prompt", "result", "value"],
     "data": {},
     "connections": {
       "incoming": [],

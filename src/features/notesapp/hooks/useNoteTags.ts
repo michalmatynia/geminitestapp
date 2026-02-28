@@ -16,7 +16,7 @@ export function useNoteTags(
   availableTags: TagRecord[] = [],
   notebookId?: string | null,
   noteNotebookId?: string | null,
-  onTagCreated?: () => void,
+  onTagCreated?: () => void
 ): {
   selectedTagIds: string[];
   setSelectedTagIds: (ids: string[]) => void;
@@ -40,9 +40,9 @@ export function useNoteTags(
       availableTags.filter(
         (tag: TagRecord) =>
           (tag.name || '').toLowerCase().includes(tagInput.toLowerCase()) &&
-          !selectedTagIds.includes(tag.id),
+          !selectedTagIds.includes(tag.id)
       ),
-    [availableTags, tagInput, selectedTagIds],
+    [availableTags, tagInput, selectedTagIds]
   );
 
   const handleAddTag = (tag: TagRecord): void => {
@@ -55,8 +55,7 @@ export function useNoteTags(
     if (!tagInput.trim()) return;
 
     const existingTag = availableTags.find(
-      (t: TagRecord) =>
-        (t.name || '').toLowerCase() === tagInput.trim().toLowerCase(),
+      (t: TagRecord) => (t.name || '').toLowerCase() === tagInput.trim().toLowerCase()
     );
 
     if (existingTag) {

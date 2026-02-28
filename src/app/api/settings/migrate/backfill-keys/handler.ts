@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-
 import { auth } from '@/features/auth/server';
-import { assertDatabaseEngineOperationEnabled } from '@/features/database/services/database-engine-operation-guards';
+import { assertDatabaseEngineOperationEnabled } from '@/shared/lib/db/services/database-engine-operation-guards';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { authError, forbiddenError, internalError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
@@ -28,8 +27,7 @@ type BackfillResult = {
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const session = await auth();
   const hasAccess =
-    session?.user?.isElevated ||
-    session?.user?.permissions?.includes('settings.manage');
+    session?.user?.isElevated || session?.user?.permissions?.includes('settings.manage');
   if (!hasAccess) {
     throw authError('Unauthorized.');
   }
@@ -59,11 +57,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     $and: [
       { _id: { $type: 'string' as const } },
       {
-        $or: [
-          { key: { $exists: false } },
-          { key: null },
-          { key: '' },
-        ],
+        $or: [{ key: { $exists: false } }, { key: null }, { key: '' }],
       },
     ],
   };

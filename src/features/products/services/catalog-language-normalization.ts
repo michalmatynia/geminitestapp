@@ -26,9 +26,7 @@ const buildLookupMap = (rows: LanguageLookupRow[]): Map<string, string> => {
   return map;
 };
 
-const readLanguageRows = async (
-  provider: ProductDbProvider
-): Promise<LanguageLookupRow[]> => {
+const readLanguageRows = async (provider: ProductDbProvider): Promise<LanguageLookupRow[]> => {
   if (provider === 'mongodb') {
     const mongo = await getMongoDb();
     return mongo
@@ -57,8 +55,7 @@ export const normalizeCatalogLanguageSelection = async (params: {
   for (const rawId of languageIds) {
     const trimmed = String(rawId ?? '').trim();
     if (!trimmed) continue;
-    const canonical =
-      lookup.get(trimmed) ?? lookup.get(trimmed.toLowerCase()) ?? trimmed;
+    const canonical = lookup.get(trimmed) ?? lookup.get(trimmed.toLowerCase()) ?? trimmed;
     if (seen.has(canonical)) continue;
     seen.add(canonical);
     normalizedLanguageIds.push(canonical);
@@ -66,9 +63,7 @@ export const normalizeCatalogLanguageSelection = async (params: {
 
   const trimmedDefault = String(defaultLanguageId ?? '').trim();
   const normalizedDefaultLanguageId = trimmedDefault
-    ? lookup.get(trimmedDefault) ??
-      lookup.get(trimmedDefault.toLowerCase()) ??
-      trimmedDefault
+    ? (lookup.get(trimmedDefault) ?? lookup.get(trimmedDefault.toLowerCase()) ?? trimmedDefault)
     : null;
 
   return {

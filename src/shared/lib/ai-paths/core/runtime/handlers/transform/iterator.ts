@@ -1,9 +1,9 @@
-import type { NodeHandler, NodeHandlerContext, RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
-import {
-  coerceInput,
-  hashRuntimeValue,
-  parseJsonSafe,
-} from '../../../utils';
+import type {
+  NodeHandler,
+  NodeHandlerContext,
+  RuntimePortValues,
+} from '@/shared/contracts/ai-paths-runtime';
+import { coerceInput, hashRuntimeValue, parseJsonSafe } from '../../../utils';
 
 const coerceIteratorItems = (value: unknown): unknown[] => {
   if (value === undefined || value === null) return [];
@@ -35,7 +35,11 @@ const coerceIteratorItems = (value: unknown): unknown[] => {
   return [value];
 };
 
-export const handleIterator: NodeHandler = ({ nodeInputs, prevOutputs, now }: NodeHandlerContext): RuntimePortValues => {
+export const handleIterator: NodeHandler = ({
+  nodeInputs,
+  prevOutputs,
+  now,
+}: NodeHandlerContext): RuntimePortValues => {
   const iterableInput = nodeInputs['value'];
   const callbackInput = coerceInput(nodeInputs['callback']);
 
@@ -43,10 +47,16 @@ export const handleIterator: NodeHandler = ({ nodeInputs, prevOutputs, now }: No
   const total = items.length;
   const itemsHash = hashRuntimeValue(items);
 
-  const prevItemsHash = typeof prevOutputs['itemsHash'] === 'string' ? prevOutputs['itemsHash'] : '';
-  const prevIndex = typeof prevOutputs['index'] === 'number' && Number.isFinite(prevOutputs['index']) ? prevOutputs['index'] : 0;
-  const prevLastAckHash = typeof prevOutputs['lastAckHash'] === 'string' ? prevOutputs['lastAckHash'] : '';
-  const prevAdvanceStamp = typeof prevOutputs['advanceStamp'] === 'string' ? prevOutputs['advanceStamp'] : '';
+  const prevItemsHash =
+    typeof prevOutputs['itemsHash'] === 'string' ? prevOutputs['itemsHash'] : '';
+  const prevIndex =
+    typeof prevOutputs['index'] === 'number' && Number.isFinite(prevOutputs['index'])
+      ? prevOutputs['index']
+      : 0;
+  const prevLastAckHash =
+    typeof prevOutputs['lastAckHash'] === 'string' ? prevOutputs['lastAckHash'] : '';
+  const prevAdvanceStamp =
+    typeof prevOutputs['advanceStamp'] === 'string' ? prevOutputs['advanceStamp'] : '';
 
   let index = prevItemsHash && prevItemsHash === itemsHash ? prevIndex : 0;
   const lastAckHash = prevItemsHash && prevItemsHash === itemsHash ? prevLastAckHash : '';

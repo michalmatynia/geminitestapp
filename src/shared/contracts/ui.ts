@@ -67,8 +67,10 @@ export interface MultiSectionModalProps extends ModalStateProps {
   error?: string | null;
 }
 
-export type ExtractEntityType<T extends EntityModalProps<unknown, unknown>> = T extends EntityModalProps<infer E, unknown> ? E : never;
-export type ExtractListItemType<T extends EntityModalProps<unknown, unknown>> = T extends EntityModalProps<unknown, infer L> ? L : never;
+export type ExtractEntityType<T extends EntityModalProps<unknown, unknown>> =
+  T extends EntityModalProps<infer E, unknown> ? E : never;
+export type ExtractListItemType<T extends EntityModalProps<unknown, unknown>> =
+  T extends EntityModalProps<unknown, infer L> ? L : never;
 
 /**
  * Standard TanStack Query result types
@@ -78,10 +80,25 @@ export type ListQuery<T, TResponse = T[]> = UseQueryResult<TResponse, Error>;
 export type SingleQuery<T> = UseQueryResult<T, Error>;
 export type PagedQuery<T> = UseQueryResult<ListResponse<T>, Error>;
 
-export type CreateMutation<T, TInput = Omit<T, 'id' | 'createdAt' | 'updatedAt'>> = UseMutationResult<T, Error, TInput>;
-export type UpdateMutation<T, TInput = { id: string; data: Partial<T> }> = UseMutationResult<T, Error, TInput>;
-export type DeleteMutation<TResponse = void, TInput = string> = UseMutationResult<TResponse, Error, TInput>;
-export type SaveMutation<T, TInput = { id?: string; data: Partial<T> }> = UseMutationResult<T, Error, TInput>;
+export type CreateMutation<
+  T,
+  TInput = Omit<T, 'id' | 'createdAt' | 'updatedAt'>,
+> = UseMutationResult<T, Error, TInput>;
+export type UpdateMutation<T, TInput = { id: string; data: Partial<T> }> = UseMutationResult<
+  T,
+  Error,
+  TInput
+>;
+export type DeleteMutation<TResponse = void, TInput = string> = UseMutationResult<
+  TResponse,
+  Error,
+  TInput
+>;
+export type SaveMutation<T, TInput = { id?: string; data: Partial<T> }> = UseMutationResult<
+  T,
+  Error,
+  TInput
+>;
 export type MutationResult<TResponse, TInput> = UseMutationResult<TResponse, Error, TInput>;
 export type VoidMutation<TInput> = UseMutationResult<void, Error, TInput>;
 
@@ -105,10 +122,7 @@ export interface ApiHandlerContext {
   rateLimitHeaders?: Record<string, string>;
 }
 
-export type ApiRouteHandler = (
-  req: NextRequest,
-  ctx: ApiHandlerContext
-) => Promise<Response>;
+export type ApiRouteHandler = (req: NextRequest, ctx: ApiHandlerContext) => Promise<Response>;
 
 export type ApiRouteHandlerWithParams<P extends Record<string, string | string[]>> = (
   req: NextRequest,

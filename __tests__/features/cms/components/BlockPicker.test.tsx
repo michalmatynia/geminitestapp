@@ -5,13 +5,14 @@ import { vi } from 'vitest';
 import { BlockPicker } from '@/features/cms/components/page-builder/BlockPicker';
 
 // Create a new QueryClient for each test
-const createTestQueryClient = () => new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: false,
+const createTestQueryClient = () =>
+  new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+      },
     },
-  },
-});
+  });
 
 // Mock the registry
 vi.mock('@/features/cms/components/page-builder/section-registry', () => ({
@@ -47,7 +48,7 @@ describe('BlockPicker Component', () => {
     );
 
     const plusButton = screen.getByLabelText('Add block');
-    
+
     // Initially closed
     expect(screen.queryByText('Heading')).not.toBeInTheDocument();
 

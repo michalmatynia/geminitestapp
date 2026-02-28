@@ -3,6 +3,7 @@
 This document describes reusable component patterns to maintain consistency and reduce duplication across features.
 
 ## Table of Contents
+
 1. [Modal Templates](#modal-templates)
 2. [Settings Panel Factory](#settings-panel-factory)
 3. [Form State Hook](#form-state-hook)
@@ -17,6 +18,7 @@ Modal templates provide consistent, reusable patterns for common modal use cases
 ### Available Templates
 
 #### 1. SelectModal
+
 **Purpose**: Single/multi-select operations
 **Replaces**: `SelectIntegrationModal`, `SelectProductForListingModal`, custom selection modals
 
@@ -31,15 +33,16 @@ const options: SelectOption<string>[] = [
 <SelectModal
   open={isOpen}
   onClose={handleClose}
-  title="Select Integration"
+  title='Select Integration'
   options={options}
   onSelect={(option) => console.log('Selected:', option)}
   searchable={true}
   multiple={false}
-/>
+/>;
 ```
 
 **Props**:
+
 - `open: boolean` - Modal visibility
 - `onClose: () => void` - Close handler
 - `title: string` - Modal title
@@ -52,6 +55,7 @@ const options: SelectOption<string>[] = [
 - `size?: 'sm' | 'md' | 'lg' | 'xl'` - Modal size
 
 #### 2. ConfirmModal
+
 **Purpose**: Confirmation dialogs for destructive/important actions
 **Replaces**: Custom delete/confirm modals, `*ConfirmDialog` components
 
@@ -64,14 +68,15 @@ import { ConfirmModal } from '@/shared/ui/templates/modals/ConfirmModal';
   onConfirm={async () => {
     await api.delete(item);
   }}
-  title="Delete Item"
-  message="Are you sure you want to delete this item? This action cannot be undone."
-  confirmText="Delete"
+  title='Delete Item'
+  message='Are you sure you want to delete this item? This action cannot be undone.'
+  confirmText='Delete'
   isDangerous={true}
-/>
+/>;
 ```
 
 **Props**:
+
 - `open: boolean` - Modal visibility
 - `onClose: () => void` - Close handler
 - `onConfirm: () => void | Promise<void>` - Confirmation handler
@@ -85,6 +90,7 @@ import { ConfirmModal } from '@/shared/ui/templates/modals/ConfirmModal';
 - `size?: 'sm' | 'md' | 'lg' | 'xl'` - Modal size
 
 #### 3. DetailModal
+
 **Purpose**: Display detailed information, logs, or read-only content
 **Replaces**: `*DetailModal`, `*PreviewModal`, `LogModal`, `ContentDisplayModal`
 
@@ -94,17 +100,18 @@ import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 <DetailModal
   open={isOpen}
   onClose={handleClose}
-  title="Sync Result"
-  subtitle="View details of the last synchronization"
+  title='Sync Result'
+  subtitle='View details of the last synchronization'
 >
-  <div className="space-y-4">
+  <div className='space-y-4'>
     <p>Status: Success</p>
     <pre>{JSON.stringify(syncLog, null, 2)}</pre>
   </div>
-</DetailModal>
+</DetailModal>;
 ```
 
 **Props**:
+
 - `open: boolean` - Modal visibility
 - `onClose: () => void` - Close handler
 - `title: string` - Modal title
@@ -123,7 +130,10 @@ Generic settings panel builder for consistent CRUD settings UI.
 **Replaces**: Individual settings modals (Theme, Component, Menu, Viewer3D, etc.)
 
 ```tsx
-import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
+import {
+  SettingsPanelBuilder,
+  type SettingsField,
+} from '@/shared/ui/templates/SettingsPanelBuilder';
 
 interface ThemeSettings {
   primaryColor: string;
@@ -177,7 +187,7 @@ const [errors, setErrors] = useState<Partial<Record<keyof ThemeSettings, string>
 <SettingsPanelBuilder
   open={isOpen}
   onClose={handleClose}
-  title="Theme Settings"
+  title='Theme Settings'
   fields={fields}
   values={settings}
   errors={errors}
@@ -191,7 +201,7 @@ const [errors, setErrors] = useState<Partial<Record<keyof ThemeSettings, string>
     await api.saveThemeSettings(settings);
   }}
   isSaving={isSaving}
-/>
+/>;
 ```
 
 **Custom Field Rendering**:
@@ -204,11 +214,7 @@ const fields: SettingsField<Settings>[] = [
     label: 'Color Palette',
     type: 'custom',
     render: ({ value, onChange, disabled }) => (
-      <ColorPaletteSelector
-        colors={value}
-        onChange={onChange}
-        disabled={disabled}
-      />
+      <ColorPaletteSelector colors={value} onChange={onChange} disabled={disabled} />
     ),
   },
 ];
@@ -237,28 +243,28 @@ const { state, actions } = useFormState<ProductForm>({
     price: 0,
     description: '',
   },
-  
+
   validate: async (values) => {
     const errors: Partial<Record<keyof ProductForm, string>> = {};
-    
+
     if (!values.name) {
       errors.name = 'Product name is required';
     }
     if (values.price < 0) {
       errors.price = 'Price cannot be negative';
     }
-    
+
     return errors;
   },
-  
+
   onSubmit: async (values) => {
     await api.saveProduct(values);
   },
-  
+
   onSubmitSuccess: () => {
     toast.success('Product saved!');
   },
-  
+
   onSubmitError: (error) => {
     toast.error(`Failed to save: ${error.message}`);
   },
@@ -267,16 +273,10 @@ const { state, actions } = useFormState<ProductForm>({
 // Use in component
 return (
   <form>
-    <input
-      value={state.values.name}
-      onChange={(e) => actions.setValue('name', e.target.value)}
-    />
+    <input value={state.values.name} onChange={(e) => actions.setValue('name', e.target.value)} />
     {state.errors.name && <p>{state.errors.name}</p>}
-    
-    <button
-      onClick={actions.handleSubmit}
-      disabled={!state.isValid || state.isSubmitting}
-    >
+
+    <button onClick={actions.handleSubmit} disabled={!state.isValid || state.isSubmitting}>
       {state.isSubmitting ? 'Saving...' : 'Save'}
     </button>
   </form>
@@ -284,6 +284,7 @@ return (
 ```
 
 **State**:
+
 - `values: T` - Current form values
 - `errors: Partial<Record<keyof T, string>>` - Validation errors
 - `isSubmitting: boolean` - Submission in progress
@@ -291,6 +292,7 @@ return (
 - `isValid: boolean` - No validation errors
 
 **Actions**:
+
 - `setValue(field, value)` - Update single field
 - `setValues(values)` - Update multiple fields
 - `setFieldError(field, error)` - Set field error
@@ -310,17 +312,18 @@ return (
 #### Example: Replace `SelectIntegrationModal`
 
 **Before**:
+
 ```tsx
 export function SelectIntegrationModal({ onClose, onSelect }) {
   const [search, setSearch] = useState('');
   const [integrations, setIntegrations] = useState([]);
-  
+
   useEffect(() => {
     // Custom search logic
   }, [search]);
-  
+
   return (
-    <AppModal open={true} onClose={onClose} title="Select Integration">
+    <AppModal open={true} onClose={onClose} title='Select Integration'>
       {/* Custom UI */}
     </AppModal>
   );
@@ -328,24 +331,25 @@ export function SelectIntegrationModal({ onClose, onSelect }) {
 ```
 
 **After**:
+
 ```tsx
 import { SelectModal, type SelectOption } from '@/shared/ui/templates/modals/SelectModal';
 
 export function SelectIntegrationModal({ onClose, onSelect }) {
   const integrations = useIntegrations(); // Your data hook
-  
-  const options: SelectOption<Integration>[] = integrations.map(i => ({
+
+  const options: SelectOption<Integration>[] = integrations.map((i) => ({
     id: i.id,
     label: i.name,
     value: i,
     description: i.description,
   }));
-  
+
   return (
     <SelectModal
       open={true}
       onClose={onClose}
-      title="Select Integration"
+      title='Select Integration'
       options={options}
       onSelect={(option) => onSelect(option.value)}
       searchable={true}
@@ -357,6 +361,7 @@ export function SelectIntegrationModal({ onClose, onSelect }) {
 ### Migrating from Context to useFormState
 
 **Before**:
+
 ```tsx
 // src/features/products/context/ProductFormContext.tsx
 export const ProductFormContext = createContext<ProductFormContextType | null>(null);
@@ -369,6 +374,7 @@ export function useProductForm() {
 ```
 
 **After**:
+
 ```tsx
 import { useFormState } from '@/shared/hooks/useFormState';
 
@@ -385,18 +391,16 @@ export function useProductForm(product?: Product) {
 ### Migrating Settings Modals to SettingsPanelBuilder
 
 **Before**:
+
 ```tsx
 export function ThemeSettingsModal({ open, onClose }) {
   const [theme, setTheme] = useState('');
   const [color, setColor] = useState('');
   // ... many useState hooks
-  
+
   return (
-    <FormModal open={open} onClose={onClose} title="Theme">
-      <input
-        value={theme}
-        onChange={(e) => setTheme(e.target.value)}
-      />
+    <FormModal open={open} onClose={onClose} title='Theme'>
+      <input value={theme} onChange={(e) => setTheme(e.target.value)} />
       {/* More fields */}
     </FormModal>
   );
@@ -404,6 +408,7 @@ export function ThemeSettingsModal({ open, onClose }) {
 ```
 
 **After**:
+
 ```tsx
 import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
@@ -415,12 +420,12 @@ interface ThemeSettings {
 export function ThemeSettingsModal({ open, onClose }) {
   const [settings, setSettings] = useState<ThemeSettings>(initialSettings);
   const [errors, setErrors] = useState({});
-  
+
   const fields: SettingsField<ThemeSettings>[] = [
     { key: 'theme', label: 'Theme', type: 'select', options: [...] },
     { key: 'color', label: 'Color', type: 'text' },
   ];
-  
+
   return (
     <SettingsPanelBuilder
       open={open}
@@ -461,7 +466,9 @@ export function ThemeSettingsModal({ open, onClose }) {
 ## Base Mapper Consolidation
 
 ### Problem
+
 Three nearly-identical mapper components (`BaseTagMapper`, `BaseProducerMapper`, `BaseCategoryMapper`) with 95% code duplication:
+
 - Identical UI/UX patterns
 - Identical state management logic
 - Identical error handling
@@ -489,27 +496,27 @@ interface TagMapperConfig extends GenericItemMapperConfig<ProductTag, ExternalTa
     internalColumnHeader: 'Internal Tag',
     externalColumnHeader: 'Base.com Tag',
     additionalColumnsHeader: 'Catalog', // Optional
-    
+
     // Data
     internalItems: tags,
     externalItems: externalTags,
     currentMappings: mappings,
-    
+
     // Accessors (map data to display)
     getInternalId: (tag) => tag.id,
     getInternalLabel: (tag) => tag.name,
     getExternalId: (tag) => tag.id,
     getExternalLabel: (tag) => tag.name,
     getInternalAdditionalLabel: (tag) => catalogName, // Optional
-    
+
     // Mapping accessors
     getMappingInternalId: (mapping) => mapping.internalTagId,
     getMappingExternalId: (mapping) => mapping.externalTagId,
-    
+
     // Operations
     onFetch: async () => await fetchTagsMutation(),
     onSave: async (mappings) => await saveMappingsMutation(mappings),
-    
+
     // Loading states
     isLoadingInternal: tagsQuery.isLoading,
     isLoadingExternal: externalTagsQuery.isLoading,
@@ -517,12 +524,13 @@ interface TagMapperConfig extends GenericItemMapperConfig<ProductTag, ExternalTa
     isFetching: fetchMutation.isPending,
     isSaving: saveMutation.isPending,
   }}
-/>
+/>;
 ```
 
 ### Migration Path
 
 #### Before: BaseTagMapper (226 lines)
+
 ```tsx
 export function BaseTagMapper(): React.JSX.Element {
   const { connectionId, connectionName } = useCategoryMapper();
@@ -535,7 +543,7 @@ export function BaseTagMapper(): React.JSX.Element {
 
   const internalTags = useMemo(() => [...].sort(...), [...]);
   const externalTagOptions = useMemo(() => [...].map(...), [...]);
-  
+
   const { pendingMappings, ... } = usePendingExternalMappings({...});
 
   const handleFetch = async () => { try { ... } catch (error) { ... } };
@@ -559,6 +567,7 @@ export function BaseTagMapper(): React.JSX.Element {
 ```
 
 #### After: BaseTagMapper (Refactored, ~40 lines)
+
 ```tsx
 export function BaseTagMapper(): React.JSX.Element {
   const { connectionId } = useCategoryMapper();
@@ -588,12 +597,14 @@ export function BaseTagMapper(): React.JSX.Element {
 ```
 
 ### Impact
+
 - **Lines Reduced**: 226 → 40 lines per component (82% reduction)
 - **Total Reduction**: 470 → ~280 lines (40% total reduction)
 - **Maintenance**: Single source of truth for mapper UI/logic
 - **Extensibility**: Easy to create new mappers for other resources
 
 ### Key Features of GenericItemMapper
+
 - ✅ Full TypeScript generics (`<TInternal, TExternal, TMapping>`)
 - ✅ Flexible data accessors (callbacks for field extraction)
 - ✅ Optional additional column support
@@ -604,6 +615,7 @@ export function BaseTagMapper(): React.JSX.Element {
 - ✅ Backward compatible with existing code
 
 ### Refactored Components
+
 The following components have been refactored to use `GenericItemMapper`:
 
 1. **BaseTagMapper.tsx** - Maps internal product tags to external marketplace tags
@@ -620,7 +632,7 @@ All refactored mappers follow this pattern:
 3. Create operation handlers (onFetch, onSave)
 4. Pass everything to GenericItemMapper via config
 
-Result: 
+Result:
 - Cleaner component logic
 - Less boilerplate
 - Type-safe with generics
@@ -631,6 +643,7 @@ Result:
 ### Testing
 
 GenericItemMapper should be tested for:
+
 - ✓ Rendering with different data types
 - ✓ Handling fetch operations
 - ✓ Handling save operations
@@ -641,6 +654,7 @@ GenericItemMapper should be tested for:
 - ✓ Optional additional columns
 
 Example test:
+
 ```tsx
 it('should save pending mappings', async () => {
   const onSave = vi.fn().mockResolvedValue({ message: 'Saved' });
@@ -669,7 +683,9 @@ it('should save pending mappings', async () => {
 # Phase 2.2: API Console Base Consolidation
 
 ## Problem
+
 Three API console wrapper components (`BaseApiConsole`, `AllegroApiConsole`) with duplicate logic:
+
 - Nearly identical wrapper implementation (63 + 70 lines)
 - Generic UI component (`ApiConsole`, 178 lines) used by both
 - Only differences: context variable names and preset definitions
@@ -681,6 +697,7 @@ Three API console wrapper components (`BaseApiConsole`, `AllegroApiConsole`) wit
 Refactored the generic UI component to be config-driven, eliminating the need for wrapper duplicates.
 
 ### Before: Separate Wrappers (70 lines each)
+
 ```tsx
 export function BaseApiConsole(): React.JSX.Element {
   const {
@@ -710,7 +727,9 @@ export function BaseApiConsole(): React.JSX.Element {
       loading={baseApiLoading}
       error={baseApiError}
       response={baseApiResponse}
-      onRequest={() => { void handleBaseApiRequest(); }}
+      onRequest={() => {
+        void handleBaseApiRequest();
+      }}
       baseUrl='https://api.baselinker.com/connector.php'
       methodType='input'
     />
@@ -744,6 +763,7 @@ export function AllegroApiConsole(): React.JSX.Element {
 ```
 
 ### After: Config-Driven (30-40 lines each)
+
 ```tsx
 export function BaseApiConsole(): React.JSX.Element {
   const {
@@ -776,7 +796,9 @@ export function BaseApiConsole(): React.JSX.Element {
       presets={baseApiPresets}
       onSetMethod={setBaseApiMethod}
       onSetBodyOrParams={setBaseApiParams}
-      onRequest={() => { void handleBaseApiRequest(); }}
+      onRequest={() => {
+        void handleBaseApiRequest();
+      }}
     />
   );
 }
@@ -789,9 +811,9 @@ export interface GenericApiConsoleConfig {
   title: string;
   description: string;
   baseUrl: string;
-  methodType?: 'select' | 'input';           // How to input HTTP method
-  bodyOrParamsLabel?: string;                 // Label for body/params field
-  connectionWarning?: string;                 // Warning if not connected
+  methodType?: 'select' | 'input'; // How to input HTTP method
+  bodyOrParamsLabel?: string; // Label for body/params field
+  connectionWarning?: string; // Warning if not connected
 }
 
 export interface GenericApiConsoleState {
@@ -823,22 +845,27 @@ export interface GenericApiConsoleProps {
 ### Key Features
 
 ✅ **Configuration-Driven**
+
 - All UI/display options in `config` object
 - Reusable for any API endpoint
 
 ✅ **Flexible State Management**
+
 - Accepts external state (can be from context, useState, etc.)
 - Doesn't impose state management approach
 
 ✅ **Optional Path Support**
+
 - `onSetPath` callback only rendered if provided
 - Works with path-based APIs (Allegro) and parameter-based (Base.com)
 
 ✅ **Provider-Agnostic**
+
 - No hard-coded API provider logic
 - Easy to add new providers (Shopify, WooCommerce, etc.)
 
 ✅ **Connection Status**
+
 - Optional `isConnected` prop
 - Optional `connectionWarning` in config
 - Disables send button when not connected
@@ -929,6 +956,7 @@ GenericApiConsole includes comprehensive test coverage:
 Consolidates 7+ panel implementations (ProductListPanel, JobTable, FileUploadEventsPanel, LocalRunsPanel, ImageStudioRunsQueuePanel, ProductListingJobsPanel, DatabaseBackupsPanel) by extracting **common UI patterns** into reusable sub-components and a state management hook.
 
 All panel components follow the same pattern:
+
 ```
 ┌─────────────────────────────────────┐
 │  Header (Title + Actions + Refresh) │
@@ -948,6 +976,7 @@ All panel components follow the same pattern:
 ### Components Created
 
 **1. `usePanelState` Hook** (2.4 KB)
+
 - Generic panel state management hook
 - Manages: page, pageSize, filters, search, sorting
 - Features:
@@ -968,6 +997,7 @@ const { state, setPage, setPageSize, setFilter, setSearch, reset } = usePanelSta
 ```
 
 **2. `PanelHeader` Component** (3.4 KB)
+
 - Renders panel title, description, and action buttons
 - Features:
   - Icon support
@@ -991,6 +1021,7 @@ const { state, setPage, setPageSize, setFilter, setSearch, reset } = usePanelSta
 ```
 
 **3. `PanelFilters` Component** (7.5 KB)
+
 - Dynamic filter UI renderer
 - Supports 6 field types:
   - `text` - Text input with search icon
@@ -1019,6 +1050,7 @@ const { state, setPage, setPageSize, setFilter, setSearch, reset } = usePanelSta
 ```
 
 **4. `PanelStats` Component** (2.0 KB)
+
 - Displays metrics grid (e.g., Total, Success, Error counts)
 - Features:
   - Responsive grid (2 cols mobile, 5 cols desktop)
@@ -1039,6 +1071,7 @@ const { state, setPage, setPageSize, setFilter, setSearch, reset } = usePanelSta
 ```
 
 **5. `PanelAlerts` Component** (2.9 KB)
+
 - Displays error, warning, info, and success alerts
 - Features:
   - Automatic error alert from Error object
@@ -1059,6 +1092,7 @@ const { state, setPage, setPageSize, setFilter, setSearch, reset } = usePanelSta
 ```
 
 **6. `PanelPagination` Component** (3.8 KB)
+
 - Full pagination controls
 - Features:
   - Previous/next buttons with intelligent disabling
@@ -1129,6 +1163,7 @@ interface PanelState {
 ### Consolidation Examples
 
 #### Before: ProductListPanel (110 LOC)
+
 ```typescript
 export function ProductListPanel() {
   const [page, setPage] = useState(1);
@@ -1137,7 +1172,7 @@ export function ProductListPanel() {
   const [search, setSearch] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { data, loading, error } = useProducts({ page, pageSize, filters, search });
-  
+
   return (
     <div className="space-y-4">
       <ProductListHeader onRefresh={() => { setIsRefreshing(true); /* ... */ }} />
@@ -1150,6 +1185,7 @@ export function ProductListPanel() {
 ```
 
 #### After: ProductListPanel (40 LOC)
+
 ```typescript
 export function ProductListPanel() {
   const { state, setPage, setPageSize, setFilter, setSearch } = usePanelState({
@@ -1196,6 +1232,7 @@ export function ProductListPanel() {
 ### Usage Patterns
 
 **Pattern 1: Simple data table with filters**
+
 ```typescript
 const ProductsPanel = () => {
   const { state, setPage, setFilter, setSearch } = usePanelState();
@@ -1213,6 +1250,7 @@ const ProductsPanel = () => {
 ```
 
 **Pattern 2: Panel with stats and alerts**
+
 ```typescript
 const RunsPanel = () => {
   const { state, setPage } = usePanelState();
@@ -1234,6 +1272,7 @@ const RunsPanel = () => {
 ```
 
 **Pattern 3: Compact mode with action buttons**
+
 ```typescript
 const JobsPanel = () => {
   const { state, setFilter, reset } = usePanelState();
@@ -1263,11 +1302,13 @@ const JobsPanel = () => {
 ### Testing
 
 All components have unit tests:
+
 - **usePanelState**: 7 tests (initialization, state updates, callbacks)
 - **PanelHeader**: 6 tests (rendering, actions, refresh, icons)
 - **PanelPagination**: 6 tests (navigation, disabling, page info)
 
 Run tests:
+
 ```bash
 npm run test -- __tests__/shared/ui/templates/panels/ --run
 ```
@@ -1294,7 +1335,6 @@ Consolidate filter implementations (ProductFilters, NotesFilters, etc.) into a c
 
 ---
 
-
 ---
 
 ## Phase 3.2: Filter Components Consolidation
@@ -1302,6 +1342,7 @@ Consolidate filter implementations (ProductFilters, NotesFilters, etc.) into a c
 ### Overview
 
 Consolidates 10+ filter implementations (ProductFilters, NotesFilters, FileManagerFilters, etc.) by:
+
 1. **Extending PanelFilters** with missing field types (multi-select, compound filters)
 2. **Creating FilterPanel** wrapper with presets and context integration
 3. **Migrating existing filters** to use FilterPanel template
@@ -1323,6 +1364,7 @@ Consolidates 10+ filter implementations (ProductFilters, NotesFilters, FileManag
 | FiltersContainer | 55 | Wrapper, low priority | LOW |
 
 **Duplication Metrics:**
+
 - 65-70% code duplication across filters
 - Common patterns: search input, reset button, hasActiveFilters logic, grid layout
 - **Expected consolidation: 450-500 LOC reduction (37% savings)**
@@ -1330,6 +1372,7 @@ Consolidates 10+ filter implementations (ProductFilters, NotesFilters, FileManag
 ### Components Created
 
 **FilterPanel** (2.5 KB)
+
 - Wrapper around PanelFilters
 - Features:
   - Preset/quick filter buttons
@@ -1357,14 +1400,17 @@ Consolidates 10+ filter implementations (ProductFilters, NotesFilters, FileManag
 ### Migration Strategy
 
 **Phase 1 - Quick Wins** (Already done or trivial):
+
 - FileUploadEventsFilters → use PanelFilters directly (saves 55 LOC)
 - JobsFilters → use PanelFilters directly (saves 20 LOC)
 
 **Phase 2 - Medium Lift** (Next priority):
+
 - ProductFilters → FilterPanel template
 - PromptEngineFilters → FilterPanel template
 
 **Phase 3 - Complex Lift** (Requires refactoring):
+
 - NotesFilters → Split into FilterPanel + DisplayOptions
 - FileManagerFilters → FilterPanel + custom multi-search
 
@@ -1373,12 +1419,13 @@ Consolidates 10+ filter implementations (ProductFilters, NotesFilters, FileManag
 #### Example 1: ProductFilters Migration
 
 **Before** (109 LOC):
+
 ```typescript
 // ProductFilters.tsx - Part 1
 export function ProductFilters() {
   const context = useProductListContext();
   const { search, sku, minPrice, maxPrice, startDate, endDate } = context.filters;
-  
+
   const hasActiveFilters = Boolean(search || sku || minPrice || maxPrice || startDate || endDate);
 
   const handleReset = (): void => {
@@ -1455,6 +1502,7 @@ export function ProductFilters() {
 ```
 
 **After** (30 LOC):
+
 ```typescript
 // ProductFilters.tsx - Using FilterPanel
 export function ProductFilters() {
@@ -1497,10 +1545,11 @@ export function ProductFilters() {
 #### Example 2: PromptEngineFilters Migration
 
 **Before** (50 LOC):
+
 ```typescript
 export function PromptEngineFilters() {
   const { filters, setFilters } = usePromptEngineContext();
-  
+
   return (
     <div className="space-y-2">
       <Input
@@ -1528,6 +1577,7 @@ export function PromptEngineFilters() {
 ```
 
 **After** (12 LOC):
+
 ```typescript
 export function PromptEngineFilters() {
   const { filters, setFilters } = usePromptEngineContext();
@@ -1557,6 +1607,7 @@ export function PromptEngineFilters() {
 ### Test Coverage
 
 FilterPanel: 7 tests
+
 - Renders filter controls
 - Renders search input
 - Renders presets
@@ -1570,12 +1621,14 @@ FilterPanel: 7 tests
 ### Integration Guidelines
 
 **When to use FilterPanel:**
+
 - ✅ Simple domain-specific filters (ProductFilters, NotesFilters, etc.)
 - ✅ Filters that use context for state management
 - ✅ Filters that need presets/quick filters
 - ✅ Filters that fit 3-6 field pattern
 
 **When NOT to use FilterPanel:**
+
 - ❌ Complex filter logic (use custom component)
 - ❌ Filters with custom rendering per field
 - ❌ Filters deeply integrated with table sorting/grouping
@@ -1590,6 +1643,7 @@ FilterPanel: 7 tests
 ### Next Steps (Phase 3.3)
 
 Consolidate picker/dropdown components (BlockPicker, SectionPicker, CategoryPicker, etc.) into GenericPicker<T> template with:
+
 - Configurable search/filter
 - Async data loading
 - Multi-select support
@@ -1597,10 +1651,10 @@ Consolidate picker/dropdown components (BlockPicker, SectionPicker, CategoryPick
 
 ---
 
-
 #### Example 3: FileManagerFilters Migration (Complex Multi-Search)
 
 **Before** (140 LOC - excerpt):
+
 ```typescript
 export function FileManagerFilters() {
   const context = useFileManagerContext();
@@ -1633,11 +1687,12 @@ export function FileManagerFilters() {
 ```
 
 **After** (45 LOC):
+
 ```typescript
 export function FileManagerFilters() {
   const context = useFileManagerContext();
   const { filenameSearch, productNameSearch, tagSearch, folderFilter } = context.filters;
-  
+
   // Combine all search fields into single "search" for unified filtering
   const combinedSearch = `${filenameSearch} ${productNameSearch} ${tagSearch}`.trim();
 
@@ -1685,6 +1740,7 @@ Before migrating a filter component to FilterPanel, verify:
 - ✅ Search input is independent of other filters (or can be)
 
 **Red flags** (don't migrate yet):
+
 - ❌ Custom rendering in filter fields
 - ❌ Filter changes trigger complex async operations
 - ❌ Filters are tightly coupled to sorting/grouping logic
@@ -1696,12 +1752,14 @@ Before migrating a filter component to FilterPanel, verify:
 ### Performance & Accessibility
 
 **Performance:**
+
 - All filter components are stateless (parent manages state)
 - No unnecessary re-renders via proper dependency arrays
 - Filter changes don't cause list re-render until parent triggers
 - Supports debouncing/throttling at parent level
 
 **Accessibility:**
+
 - All form inputs have proper labels
 - Filter controls use semantic HTML
 - Keyboard navigation supported (native Select/Input)
@@ -1709,4 +1767,3 @@ Before migrating a filter component to FilterPanel, verify:
 - ARIA attributes on interactive elements
 
 ---
-

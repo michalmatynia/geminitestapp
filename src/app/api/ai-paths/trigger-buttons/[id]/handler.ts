@@ -26,7 +26,7 @@ const writeTriggerButtonsRaw = async (value: string): Promise<void> => {
 export async function PATCH_handler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
-  params: { id: string },
+  params: { id: string }
 ): Promise<Response> {
   await requireAiPathsAccess();
   const id = params.id;
@@ -37,17 +37,14 @@ export async function PATCH_handler(
   if (!parsed.ok) return parsed.response;
   const raw = await readTriggerButtonsRaw();
   const existing = parseAiTriggerButtonsRaw(raw);
-  const index = existing.findIndex(
-    (item: AiTriggerButtonRecord) => item.id === id,
-  );
+  const index = existing.findIndex((item: AiTriggerButtonRecord) => item.id === id);
   if (index === -1) {
     throw notFoundError('Trigger button not found.', { id });
   }
   const current = existing[index]!;
   const now = new Date().toISOString();
   const nextName = parsed.data.name ? parsed.data.name.trim() : current.name;
-  const currentDisplayMode =
-    current.display.showLabel === false ? 'icon' : 'icon_label';
+  const currentDisplayMode = current.display.showLabel === false ? 'icon' : 'icon_label';
   const nextDisplayMode = parsed.data.display ?? currentDisplayMode;
   const nextRecord: AiTriggerButtonRecord = {
     ...current,
@@ -75,7 +72,7 @@ export async function PATCH_handler(
 export async function DELETE_handler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
-  params: { id: string },
+  params: { id: string }
 ): Promise<Response> {
   await requireAiPathsAccess();
   const id = params.id;

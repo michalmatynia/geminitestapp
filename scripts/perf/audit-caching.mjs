@@ -26,7 +26,7 @@ const run = async () => {
   const root = process.cwd();
   const apiDir = path.join(root, 'src/app/api');
   const files = await walk(apiDir);
-  const routeFiles = files.filter(f => f.endsWith('route.ts') || f.endsWith('route.tsx'));
+  const routeFiles = files.filter((f) => f.endsWith('route.ts') || f.endsWith('route.tsx'));
 
   const missing = [];
 
@@ -40,14 +40,20 @@ const run = async () => {
     const hasApiHandler = /\bapiHandlerWithParams\b|\bapiHandler\s*\(/.test(content);
     const hasCacheOption = /cacheControl\s*:/.test(content);
 
-    if (!hasForceDynamic && !hasRevalidate && !hasCacheControl && !hasApiHandler && !hasCacheOption) {
+    if (
+      !hasForceDynamic &&
+      !hasRevalidate &&
+      !hasCacheControl &&
+      !hasApiHandler &&
+      !hasCacheOption
+    ) {
       missing.push(relativePath);
     }
   }
 
   console.log(`Checked ${routeFiles.length} routes.`);
   console.log('Routes missing explicit caching policy:');
-  missing.forEach(m => console.log(`- ${m}`));
+  missing.forEach((m) => console.log(`- ${m}`));
 };
 
 run();

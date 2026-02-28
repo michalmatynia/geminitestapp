@@ -1,17 +1,17 @@
-import fs from "fs";
-import path from "path";
+import fs from 'fs';
+import path from 'path';
 
-const apiRoot = fs.existsSync(path.join(process.cwd(), "src", "app", "api"))
-  ? path.join(process.cwd(), "src", "app", "api")
-  : path.join(process.cwd(), "app", "api");
+const apiRoot = fs.existsSync(path.join(process.cwd(), 'src', 'app', 'api'))
+  ? path.join(process.cwd(), 'src', 'app', 'api')
+  : path.join(process.cwd(), 'app', 'api');
 
 const listRouteFiles = (dir: string, acc: string[] = []) => {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-    if (entry.name === "node_modules" || entry.name === ".next") continue;
+    if (entry.name === 'node_modules' || entry.name === '.next') continue;
     const fullPath = path.join(dir, entry.name);
     if (entry.isDirectory()) {
       listRouteFiles(fullPath, acc);
-    } else if (entry.isFile() && entry.name === "route.ts") {
+    } else if (entry.isFile() && entry.name === 'route.ts') {
       acc.push(fullPath);
     }
   }
@@ -22,7 +22,7 @@ const routeFiles = listRouteFiles(apiRoot);
 
 type Mismatch = {
   file: string;
-  kind: "handler" | "createErrorResponse";
+  kind: 'handler' | 'createErrorResponse';
   method: string;
   source: string;
   expected: string;
@@ -33,10 +33,10 @@ const mismatches: Mismatch[] = [];
 for (const file of routeFiles) {
   const rel = path
     .relative(apiRoot, file)
-    .replace(/\\/g, "/")
-    .replace(/\/route\.ts$/, "");
-  const sourceBase = rel.split("/").join(".");
-  const text = fs.readFileSync(file, "utf8");
+    .replace(/\\/g, '/')
+    .replace(/\/route\.ts$/, '');
+  const sourceBase = rel.split('/').join('.');
+  const text = fs.readFileSync(file, 'utf8');
 
   const exportMatches = [
     ...text.matchAll(
@@ -52,7 +52,7 @@ for (const file of routeFiles) {
     if (source !== expected) {
       mismatches.push({
         file: rel,
-        kind: "handler",
+        kind: 'handler',
         method,
         source,
         expected,
@@ -68,15 +68,13 @@ for (const file of routeFiles) {
     if (!source) continue;
     if (exportMap.size === 0) continue;
     if (Array.from(exportMap.values()).includes(source)) continue;
-    const method = Array.from(exportMap.keys()).find((key) =>
-      source.endsWith(`.${key}`)
-    );
+    const method = Array.from(exportMap.keys()).find((key) => source.endsWith(`.${key}`));
     if (!method) continue;
     const expected = `${sourceBase}.${method}`;
     if (source !== expected) {
       mismatches.push({
         file: rel,
-        kind: "createErrorResponse",
+        kind: 'createErrorResponse',
         method,
         source,
         expected,
@@ -86,9 +84,7 @@ for (const file of routeFiles) {
 }
 
 if (mismatches.length > 0) {
-  console.error(
-    `[check-api-error-sources] Found ${mismatches.length} mismatch(es):`
-  );
+  console.error(`[check-api-error-sources] Found ${mismatches.length} mismatch(es):`);
   for (const mismatch of mismatches) {
     console.error(
       `- ${mismatch.file} (${mismatch.kind}) ${mismatch.method}: "${mismatch.source}" -> "${mismatch.expected}"`
@@ -97,4 +93,4 @@ if (mismatches.length > 0) {
   process.exit(1);
 }
 
-console.log("[check-api-error-sources] OK");
+console.log('[check-api-error-sources] OK');

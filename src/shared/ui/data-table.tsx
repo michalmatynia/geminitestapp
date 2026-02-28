@@ -27,7 +27,6 @@ import { Button } from './button';
 import { EmptyState } from './empty-state';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './table';
 
-
 interface DataTableProps<TData> {
   columns: ColumnDef<TData>[];
   data: TData[];
@@ -71,7 +70,10 @@ export function DataTableSortableHeader<TData, TValue>({
       size='sm'
       onClick={handler ?? undefined}
       disabled={!handler}
-      className={cn('-ml-3 h-8 gap-1 px-3 text-left text-sm font-medium text-foreground hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-60', className)}
+      className={cn(
+        '-ml-3 h-8 gap-1 px-3 text-left text-sm font-medium text-foreground hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-60',
+        className
+      )}
     >
       {label}
       <span className='text-xs text-muted-foreground'>
@@ -88,7 +90,6 @@ declare module '@tanstack/react-table' {
   }
 }
 
- 
 export const DataTable = memo(function DataTable<TData>({
   columns,
   data,
@@ -147,21 +148,21 @@ export const DataTable = memo(function DataTable<TData>({
   }, [sorting, sortingStorageKey]);
 
   // Memoize table meta to prevent unnecessary re-renders
-  const tableMeta = useMemo(() => ({
-    ...meta,
-    queryClient,
-  }), [
-    meta,
-    queryClient,
-  ]);
+  const tableMeta = useMemo(
+    () => ({
+      ...meta,
+      queryClient,
+    }),
+    [meta, queryClient]
+  );
 
   // TanStack Table is not compatible with React Compiler memoization warnings.
-   
+
   const table = useReactTable<TData>({
     data,
     columns,
     getRowId: getRowId as (row: TData) => string,
-    getSubRows: getSubRows as ((row: TData) => TData[] | undefined),
+    getSubRows: getSubRows as (row: TData) => TData[] | undefined,
     getCoreRowModel: getCoreRowModel(),
     onRowSelectionChange: onRowSelectionChange,
     onExpandedChange: onExpandedChange,
@@ -188,25 +189,23 @@ export const DataTable = memo(function DataTable<TData>({
   });
 
   return (
-    <div 
-      className={cn('rounded-md border border-border flex flex-col', className, 'w-full min-w-0 max-w-none')}
+    <div
+      className={cn(
+        'rounded-md border border-border flex flex-col',
+        className,
+        'w-full min-w-0 max-w-none'
+      )}
       style={maxHeight ? { maxHeight } : undefined}
     >
-      <div 
-        ref={parentRef}
-        className={cn('flex-1 min-h-0', maxHeight && 'overflow-auto')}
-      >
-        <Table
-          className='border-collapse'
-          wrapperClassName={cn(maxHeight && 'overflow-visible')}
-        >
+      <div ref={parentRef} className={cn('flex-1 min-h-0', maxHeight && 'overflow-auto')}>
+        <Table className='border-collapse' wrapperClassName={cn(maxHeight && 'overflow-visible')}>
           <TableHeader className={cn(stickyHeader && 'z-10 bg-background')}>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className='border-border'>
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead 
-                      key={header.id} 
+                    <TableHead
+                      key={header.id}
                       className={cn(
                         'text-foreground',
                         stickyHeader && 'sticky top-0 z-20 bg-background'
@@ -214,10 +213,7 @@ export const DataTable = memo(function DataTable<TData>({
                     >
                       {header.isPlaceholder
                         ? null
-                        : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
+                        : flexRender(header.column.columnDef.header, header.getContext())}
                     </TableHead>
                   );
                 })}
@@ -228,10 +224,7 @@ export const DataTable = memo(function DataTable<TData>({
             {isLoading ? (
               skeletonRows || (
                 <TableRow>
-                  <TableCell
-                    colSpan={columns.length}
-                    className='h-24'
-                  >
+                  <TableCell colSpan={columns.length} className='h-24'>
                     <div className='flex flex-col items-center justify-center gap-2 text-muted-foreground'>
                       <Loader2 className='h-6 w-6 animate-spin text-blue-500' />
                       <span className='text-xs'>Loading data...</span>
@@ -244,7 +237,13 @@ export const DataTable = memo(function DataTable<TData>({
                 <>
                   {rowVirtualizer.getVirtualItems().length > 0 && (
                     <TableRow>
-                      <TableCell colSpan={columns.length} style={{ height: `${rowVirtualizer.getVirtualItems()[0]?.start ?? 0}px`, padding: 0 }} />
+                      <TableCell
+                        colSpan={columns.length}
+                        style={{
+                          height: `${rowVirtualizer.getVirtualItems()[0]?.start ?? 0}px`,
+                          padding: 0,
+                        }}
+                      />
                     </TableRow>
                   )}
                   {rowVirtualizer.getVirtualItems().map((virtualRow) => {
@@ -277,12 +276,12 @@ export const DataTable = memo(function DataTable<TData>({
                   })}
                   {rowVirtualizer.getVirtualItems().length > 0 && (
                     <TableRow>
-                      <TableCell 
-                        colSpan={columns.length} 
-                        style={{ 
-                          height: `${rowVirtualizer.getTotalSize() - (rowVirtualizer.getVirtualItems()[rowVirtualizer.getVirtualItems().length - 1]?.end ?? 0)}px`, 
-                          padding: 0 
-                        }} 
+                      <TableCell
+                        colSpan={columns.length}
+                        style={{
+                          height: `${rowVirtualizer.getTotalSize() - (rowVirtualizer.getVirtualItems()[rowVirtualizer.getVirtualItems().length - 1]?.end ?? 0)}px`,
+                          padding: 0,
+                        }}
                       />
                     </TableRow>
                   )}
@@ -313,13 +312,10 @@ export const DataTable = memo(function DataTable<TData>({
               )
             ) : (
               <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className='h-24 py-12'
-                >
+                <TableCell colSpan={columns.length} className='h-24 py-12'>
                   {emptyState ?? (
-                    <EmptyState 
-                      title='No results' 
+                    <EmptyState
+                      title='No results'
                       description="Try adjusting your filters to find what you're looking for."
                       className='border-none p-0'
                     />

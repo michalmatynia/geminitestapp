@@ -14,9 +14,10 @@ export function useAnalyticsInsightsQuery(): ListQuery<AiInsightRecord, InsightR
   const queryKey = QUERY_KEYS.ai.insights.analytics();
   return createListQueryV2<AiInsightRecord, InsightResponse>({
     queryKey,
-    queryFn: () => api.get<InsightResponse>('/api/analytics/insights', {
-      params: { limit: 10 }
-    }),
+    queryFn: () =>
+      api.get<InsightResponse>('/api/analytics/insights', {
+        params: { limit: 10 },
+      }),
     meta: {
       source: 'insights.hooks.useAnalyticsInsightsQuery',
       operation: 'list',
@@ -32,9 +33,10 @@ export function useLogInsightsQuery(): ListQuery<AiInsightRecord, InsightRespons
   const queryKey = QUERY_KEYS.ai.insights.logs();
   return createListQueryV2<AiInsightRecord, InsightResponse>({
     queryKey,
-    queryFn: () => api.get<InsightResponse>('/api/system/logs/insights', {
-      params: { limit: 10 }
-    }),
+    queryFn: () =>
+      api.get<InsightResponse>('/api/system/logs/insights', {
+        params: { limit: 10 },
+      }),
     meta: {
       source: 'insights.hooks.useLogInsightsQuery',
       operation: 'list',
@@ -65,7 +67,7 @@ export function useRunAnalyticsInsightMutation(): MutationResult<AiInsightRecord
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ai.insights.analytics() });
-    }
+    },
   });
 }
 
@@ -88,6 +90,6 @@ export function useRunLogInsightMutation(): MutationResult<AiInsightRecord | nul
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ai.insights.logs() });
-    }
+    },
   });
 }

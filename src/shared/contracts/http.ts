@@ -23,9 +23,7 @@ export const httpResultSchema = z.discriminatedUnion('ok', [
   z.object({ ok: z.literal(false), error: z.string() }),
 ]);
 
-export type HttpResult<T> =
-  | { ok: true; data: T }
-  | { ok: false; error: string };
+export type HttpResult<T> = { ok: true; data: T } | { ok: false; error: string };
 
 export const paginationSchema = z.object({
   page: z.number(),

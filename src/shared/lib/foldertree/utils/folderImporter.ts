@@ -16,9 +16,7 @@ export interface NoteImport {
  * Only processes .md and .markdown files as notes
  * Returns array of folder structures
  */
-export async function parseMultipleFolders(
-  items: DataTransferItemList
-): Promise<FolderNode[]> {
+export async function parseMultipleFolders(items: DataTransferItemList): Promise<FolderNode[]> {
   const entries: FileSystemEntry[] = [];
 
   // Collect all file system entries
@@ -40,10 +38,7 @@ export async function parseMultipleFolders(
   const folders: FolderNode[] = [];
   for (const entry of entries) {
     if (entry.isDirectory) {
-      const folderNode = await processDirectoryEntry(
-        entry as FileSystemDirectoryEntry,
-        ''
-      );
+      const folderNode = await processDirectoryEntry(entry as FileSystemDirectoryEntry, '');
       folders.push(folderNode);
     }
   }
@@ -55,9 +50,7 @@ async function processDirectoryEntry(
   dirEntry: FileSystemDirectoryEntry,
   parentPath: string
 ): Promise<FolderNode> {
-  const currentPath = parentPath
-    ? `${parentPath}/${dirEntry.name}`
-    : dirEntry.name;
+  const currentPath = parentPath ? `${parentPath}/${dirEntry.name}` : dirEntry.name;
 
   const node: FolderNode = {
     name: dirEntry.name,
@@ -70,18 +63,12 @@ async function processDirectoryEntry(
 
   for (const entry of entries) {
     if (entry.isDirectory) {
-      const childNode = await processDirectoryEntry(
-        entry as FileSystemDirectoryEntry,
-        currentPath
-      );
+      const childNode = await processDirectoryEntry(entry as FileSystemDirectoryEntry, currentPath);
       node.children.push(childNode);
     } else if (entry.isFile) {
       const fileEntry = entry as FileSystemFileEntry;
       // Only process markdown files
-      if (
-        fileEntry.name.endsWith('.md') ||
-        fileEntry.name.endsWith('.markdown')
-      ) {
+      if (fileEntry.name.endsWith('.md') || fileEntry.name.endsWith('.markdown')) {
         const file = await getFile(fileEntry);
         const content = await file.text();
         const title = fileEntry.name.replace(/\.(md|markdown)$/, '');
@@ -98,29 +85,29 @@ async function processDirectoryEntry(
   return node;
 }
 
-function readDirectory(
-  dirEntry: FileSystemDirectoryEntry
-): Promise<FileSystemEntry[]> {
-  return new Promise((resolve: (value: FileSystemEntry[]) => void, reject: (reason?: unknown) => void) => {
-    const reader = dirEntry.createReader();
-    const entries: FileSystemEntry[] = [];
+function readDirectory(dirEntry: FileSystemDirectoryEntry): Promise<FileSystemEntry[]> {
+  return new Promise(
+    (resolve: (value: FileSystemEntry[]) => void, reject: (reason?: unknown) => void) => {
+      const reader = dirEntry.createReader();
+      const entries: FileSystemEntry[] = [];
 
-    const readEntries = (): void => {
-      reader.readEntries(
-        (results: FileSystemEntry[]) => {
-          if (results.length === 0) {
-            resolve(entries);
-          } else {
-            entries.push(...results);
-            readEntries(); // Continue reading in batches
-          }
-        },
-        (error: DOMException) => reject(error)
-      );
-    };
+      const readEntries = (): void => {
+        reader.readEntries(
+          (results: FileSystemEntry[]) => {
+            if (results.length === 0) {
+              resolve(entries);
+            } else {
+              entries.push(...results);
+              readEntries(); // Continue reading in batches
+            }
+          },
+          (error: DOMException) => reject(error)
+        );
+      };
 
-    readEntries();
-  });
+      readEntries();
+    }
+  );
 }
 
 function getFile(fileEntry: FileSystemFileEntry): Promise<File> {

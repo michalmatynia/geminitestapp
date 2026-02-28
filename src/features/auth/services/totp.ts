@@ -55,7 +55,12 @@ export const buildOtpAuthUrl = (params: {
   return `otpauth://totp/${label}?secret=${params.secret}&issuer=${issuer}`;
 };
 
-const generateTotp = (secret: string, timestamp: number, digits: number = 6, step: number = 30): string => {
+const generateTotp = (
+  secret: string,
+  timestamp: number,
+  digits: number = 6,
+  step: number = 30
+): string => {
   const counter = Math.floor(timestamp / 1000 / step);
   const buffer = Buffer.alloc(8);
   buffer.writeBigInt64BE(BigInt(counter));
@@ -71,11 +76,7 @@ const generateTotp = (secret: string, timestamp: number, digits: number = 6, ste
   return otp;
 };
 
-export const verifyTotpToken = (
-  secret: string,
-  token: string,
-  window: number = 1
-): boolean => {
+export const verifyTotpToken = (secret: string, token: string, window: number = 1): boolean => {
   const clean = token.replace(/\s+/g, '');
   const now = Date.now();
   for (let offset = -window; offset <= window; offset += 1) {

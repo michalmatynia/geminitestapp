@@ -23,11 +23,10 @@ import { useSettingsState } from '../context/SettingsContext';
 import { useSlotsActions } from '../context/SlotsContext';
 import { useVersionGraphActions, useVersionGraphState } from '../context/VersionGraphContext';
 import { useVersionGraphShortcuts } from '../hooks/useVersionGraphShortcuts';
-import { getImageStudioSlotImageSrc } from '../utils/image-src';
-import { readMeta } from '../utils/metadata';
-import { getImageStudioDocTooltip } from '../utils/studio-docs';
-import { CONTENT_OFFSET_X, CONTENT_OFFSET_Y, exportSvgAsPng } from '../utils/version-graph';
-
+import { getImageStudioSlotImageSrc } from '@/shared/lib/ai/image-studio/utils/image-src';
+import { readMeta } from '@/shared/lib/ai/image-studio/utils/metadata';
+import { getImageStudioDocTooltip } from '@/shared/lib/ai/image-studio/utils/studio-docs';
+import { CONTENT_OFFSET_X, CONTENT_OFFSET_Y, exportSvgAsPng } from '@/shared/lib/ai/image-studio/utils/version-graph';
 
 // ── Component ────────────────────────────────────────────────────────────────
 
@@ -98,7 +97,9 @@ export function VersionNodeMapPanel(): React.JSX.Element {
   const [showStats, setShowStats] = useState(false);
   const [showMinimap, setShowMinimap] = useState(false);
   const canvasContainerRef = useRef<HTMLDivElement>(null);
-  const [contextMenu, setContextMenu] = useState<{ nodeId: string; x: number; y: number } | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ nodeId: string; x: number; y: number } | null>(
+    null
+  );
   const [detailsNodeId, setDetailsNodeId] = useState<string | null>(null);
   const [annotationDraft, setAnnotationDraft] = useState('');
   const annotationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -108,16 +109,14 @@ export function VersionNodeMapPanel(): React.JSX.Element {
     []
   );
 
-  const selectedNode = selectedNodeId
-    ? nodes.find((n) => n.id === selectedNodeId) ?? null
-    : null;
+  const selectedNode = selectedNodeId ? (nodes.find((n) => n.id === selectedNodeId) ?? null) : null;
   const detailsNode = detailsNodeId
-    ? allNodes.find((node) => node.id === detailsNodeId) ?? null
+    ? (allNodes.find((node) => node.id === detailsNodeId) ?? null)
     : null;
 
   const getSlotImageSrc = useCallback(
     (slot: ImageStudioSlotRecord) => getImageStudioSlotImageSrc(slot),
-    [],
+    []
   );
 
   const handleActivateNode = useCallback(
@@ -125,7 +124,7 @@ export function VersionNodeMapPanel(): React.JSX.Element {
       activateNode(id);
       switchToControls();
     },
-    [activateNode, switchToControls],
+    [activateNode, switchToControls]
   );
 
   const handleExecuteMerge = useCallback(async () => {
@@ -148,15 +147,18 @@ export function VersionNodeMapPanel(): React.JSX.Element {
     }
   }, [executeComposite, compositeBusy]);
 
-  const handleFlattenComposite = useCallback(async (slotId: string) => {
-    if (compositeBusy) return;
-    setCompositeBusy(true);
-    try {
-      await flattenComposite(slotId);
-    } finally {
-      setCompositeBusy(false);
-    }
-  }, [flattenComposite, compositeBusy]);
+  const handleFlattenComposite = useCallback(
+    async (slotId: string) => {
+      if (compositeBusy) return;
+      setCompositeBusy(true);
+      try {
+        await flattenComposite(slotId);
+      } finally {
+        setCompositeBusy(false);
+      }
+    },
+    [flattenComposite, compositeBusy]
+  );
 
   const handleExportPng = useCallback(async () => {
     const svg = canvasRef.current?.svgElement;
@@ -195,23 +197,35 @@ export function VersionNodeMapPanel(): React.JSX.Element {
     setContextMenu(null);
   }, []);
 
-  const handleCtxDetachSubtree = useCallback((nodeId: string) => {
-    void detachSubtree(nodeId);
-  }, [detachSubtree]);
+  const handleCtxDetachSubtree = useCallback(
+    (nodeId: string) => {
+      void detachSubtree(nodeId);
+    },
+    [detachSubtree]
+  );
 
-  const handleIsolateToNewCard = useCallback((nodeId: string) => {
-    void detachSubtree(nodeId);
-  }, [detachSubtree]);
+  const handleIsolateToNewCard = useCallback(
+    (nodeId: string) => {
+      void detachSubtree(nodeId);
+    },
+    [detachSubtree]
+  );
 
-  const handleCtxAddToComposite = useCallback((nodeId: string) => {
-    if (!compositeMode) toggleCompositeMode();
-    toggleCompositeSelection(nodeId);
-  }, [compositeMode, toggleCompositeMode, toggleCompositeSelection]);
+  const handleCtxAddToComposite = useCallback(
+    (nodeId: string) => {
+      if (!compositeMode) toggleCompositeMode();
+      toggleCompositeSelection(nodeId);
+    },
+    [compositeMode, toggleCompositeMode, toggleCompositeSelection]
+  );
 
-  const handleCtxCompareWith = useCallback((nodeId: string) => {
-    if (!compareMode) toggleCompareMode();
-    setCompareNodeIds([nodeId, '']);
-  }, [compareMode, toggleCompareMode, setCompareNodeIds]);
+  const handleCtxCompareWith = useCallback(
+    (nodeId: string) => {
+      if (!compareMode) toggleCompareMode();
+      setCompareNodeIds([nodeId, '']);
+    },
+    [compareMode, toggleCompareMode, setCompareNodeIds]
+  );
 
   const handleCtxCopyId = useCallback((nodeId: string) => {
     void navigator.clipboard.writeText(nodeId);
@@ -234,35 +248,44 @@ export function VersionNodeMapPanel(): React.JSX.Element {
     };
   }, []);
 
-  const handleCompareNodeClick = useCallback((nodeId: string) => {
-    if (!compareMode) return;
-    if (!compareNodeIds) {
-      setCompareNodeIds([nodeId, '']);
-    } else if (!compareNodeIds[1] || compareNodeIds[0] === nodeId) {
-      if (compareNodeIds[0] !== nodeId) {
-        setCompareNodeIds([compareNodeIds[0], nodeId]);
+  const handleCompareNodeClick = useCallback(
+    (nodeId: string) => {
+      if (!compareMode) return;
+      if (!compareNodeIds) {
+        setCompareNodeIds([nodeId, '']);
+      } else if (!compareNodeIds[1] || compareNodeIds[0] === nodeId) {
+        if (compareNodeIds[0] !== nodeId) {
+          setCompareNodeIds([compareNodeIds[0], nodeId]);
+        }
+      } else {
+        setCompareNodeIds([nodeId, '']);
       }
-    } else {
-      setCompareNodeIds([nodeId, '']);
-    }
-  }, [compareMode, compareNodeIds, setCompareNodeIds]);
+    },
+    [compareMode, compareNodeIds, setCompareNodeIds]
+  );
 
-  const handleCanvasSelectNode = useCallback((id: string | null) => {
-    if (compareMode && id) {
-      handleCompareNodeClick(id);
-    } else if (id) {
-      selectNode(id);
-      setWorkingSlotId(id);
-    } else {
-      selectNode(id);
-    }
-    closeContextMenu();
-  }, [compareMode, handleCompareNodeClick, selectNode, setWorkingSlotId, closeContextMenu]);
+  const handleCanvasSelectNode = useCallback(
+    (id: string | null) => {
+      if (compareMode && id) {
+        handleCompareNodeClick(id);
+      } else if (id) {
+        selectNode(id);
+        setWorkingSlotId(id);
+      } else {
+        selectNode(id);
+      }
+      closeContextMenu();
+    },
+    [compareMode, handleCompareNodeClick, selectNode, setWorkingSlotId, closeContextMenu]
+  );
 
-  const handleOpenNodeDetails = useCallback((id: string) => {
-    setDetailsNodeId(id);
-    closeContextMenu();
-  }, [closeContextMenu]);
+  const handleOpenNodeDetails = useCallback(
+    (id: string) => {
+      setDetailsNodeId(id);
+      closeContextMenu();
+    },
+    [closeContextMenu]
+  );
 
   const handleCloseNodeDetails = useCallback(() => {
     setDetailsNodeId(null);
@@ -270,36 +293,43 @@ export function VersionNodeMapPanel(): React.JSX.Element {
 
   const getSlotAnnotation = useCallback(
     (slot: ImageStudioSlotRecord) => readMeta(slot).annotation,
-    [],
+    []
   );
 
   const contextMenuNode = contextMenu
-    ? nodes.find((n) => n.id === contextMenu.nodeId) ?? null
+    ? (nodes.find((n) => n.id === contextMenu.nodeId) ?? null)
     : null;
 
   const compareNodes = compareNodeIds
-    ? [nodes.find((n) => n.id === compareNodeIds[0]) ?? null, nodes.find((n) => n.id === compareNodeIds[1]) ?? null] as const
+    ? ([
+        nodes.find((n) => n.id === compareNodeIds[0]) ?? null,
+        nodes.find((n) => n.id === compareNodeIds[1]) ?? null,
+      ] as const)
     : null;
 
   const handleMinimapPan = useCallback((x: number, y: number) => {
     canvasRef.current?.setPan({ x, y });
   }, []);
 
-  const handleFocusNode = useCallback((nodeId: string) => {
-    const node = nodes.find((n) => n.id === nodeId);
-    if (!node) return;
-    const containerW = canvasContainerRef.current?.clientWidth ?? 300;
-    const containerH = canvasContainerRef.current?.clientHeight ?? 200;
-    // Center canvas on the node (account for content offset)
-    const worldX = node.x + CONTENT_OFFSET_X;
-    const worldY = node.y + CONTENT_OFFSET_Y;
-    canvasRef.current?.setPan({
-      x: containerW / 2 - worldX * zoom,
-      y: containerH / 2 - worldY * zoom,
-    });
-  }, [nodes, zoom]);
+  const handleFocusNode = useCallback(
+    (nodeId: string) => {
+      const node = nodes.find((n) => n.id === nodeId);
+      if (!node) return;
+      const containerW = canvasContainerRef.current?.clientWidth ?? 300;
+      const containerH = canvasContainerRef.current?.clientHeight ?? 200;
+      // Center canvas on the node (account for content offset)
+      const worldX = node.x + CONTENT_OFFSET_X;
+      const worldY = node.y + CONTENT_OFFSET_Y;
+      canvasRef.current?.setPan({
+        x: containerW / 2 - worldX * zoom,
+        y: containerH / 2 - worldY * zoom,
+      });
+    },
+    [nodes, zoom]
+  );
 
-  const hasActiveFilters = filterQuery || filterTypes.size > 0 || filterHasMask !== null || filterLeafOnly;
+  const hasActiveFilters =
+    filterQuery || filterTypes.size > 0 || filterHasMask !== null || filterLeafOnly;
 
   const canvasContextValue = {
     nodes,
@@ -431,7 +461,10 @@ export function VersionNodeMapPanel(): React.JSX.Element {
         {/* Stats row */}
         {showStats ? (
           <div className='border-b border-border/40 px-3 py-1 text-[9px] text-gray-500'>
-            {graphStats.totalNodes} nodes · {graphStats.baseCount} base · {graphStats.generationCount} gen · {graphStats.mergeCount} merge{graphStats.compositeCount > 0 ? ` · ${graphStats.compositeCount} comp` : ''} · depth {graphStats.maxDepth} · {graphStats.maskedCount} masked
+            {graphStats.totalNodes} nodes · {graphStats.baseCount} base ·{' '}
+            {graphStats.generationCount} gen · {graphStats.mergeCount} merge
+            {graphStats.compositeCount > 0 ? ` · ${graphStats.compositeCount} comp` : ''} · depth{' '}
+            {graphStats.maxDepth} · {graphStats.maskedCount} masked
           </div>
         ) : null}
 
@@ -441,12 +474,12 @@ export function VersionNodeMapPanel(): React.JSX.Element {
         {/* Mode banners */}
         {mergeMode ? (
           <div className='border-b border-orange-400/20 bg-orange-500/5 px-3 py-1 text-[10px] text-orange-400'>
-          Click nodes to select for merge. Select 2+ nodes, then click Merge.
+            Click nodes to select for merge. Select 2+ nodes, then click Merge.
           </div>
         ) : null}
         {compositeMode ? (
           <div className='border-b border-teal-400/20 bg-teal-500/5 px-3 py-1 text-[10px] text-teal-400'>
-          Click nodes to select for compositing. Select 2+ nodes, then click Composite.
+            Click nodes to select for compositing. Select 2+ nodes, then click Composite.
           </div>
         ) : null}
         {compareMode ? (
@@ -460,7 +493,7 @@ export function VersionNodeMapPanel(): React.JSX.Element {
           <div className='flex items-center justify-between border-b border-blue-400/20 bg-blue-500/5 px-3 py-1'>
             <span className='text-[10px] text-blue-400'>
               <Focus className='mr-1 inline size-2.5' />
-            Branch isolated
+              Branch isolated
             </span>
             <button
               type='button'
@@ -468,7 +501,7 @@ export function VersionNodeMapPanel(): React.JSX.Element {
               title={versionGraphTooltipsEnabled ? isolationClearTooltip : undefined}
               onClick={() => isolateBranch(null)}
             >
-            Clear
+              Clear
             </button>
           </div>
         ) : null}

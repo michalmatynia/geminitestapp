@@ -9,10 +9,7 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
  * Returns { products: ProductWithImages[], total: number } in a single request,
  * using a $facet aggregation on MongoDB so the DB is queried only once.
  */
-export async function GET_handler(
-  _req: NextRequest,
-  ctx: ApiHandlerContext
-): Promise<Response> {
+export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const filters = ctx.query as ProductFiltersParsed;
   const result = await productService.getProductsWithCount(filters);
   return NextResponse.json(result);

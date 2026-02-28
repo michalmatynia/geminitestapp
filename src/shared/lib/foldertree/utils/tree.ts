@@ -1,8 +1,5 @@
 import type { CategoryWithChildren } from '@/shared/contracts/notes';
-import {
-  findTreeNodeById,
-  findTreeNodeParentId,
-} from '@/shared/utils/tree-operations';
+import { findTreeNodeById, findTreeNodeParentId } from '@/shared/utils/tree-operations';
 
 export const findFolderById = (
   foldersToScan: CategoryWithChildren[],

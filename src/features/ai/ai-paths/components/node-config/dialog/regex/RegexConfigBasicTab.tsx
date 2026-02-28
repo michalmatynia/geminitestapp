@@ -1,15 +1,7 @@
 'use client';
 
 import React from 'react';
-import { 
-  Button, 
-  FormField, 
-  Hint, 
-  Input, 
-  Label, 
-  SelectSimple, 
-  ToggleRow 
-} from '@/shared/ui';
+import { Button, FormField, Hint, Input, Label, SelectSimple, ToggleRow } from '@/shared/ui';
 import type { RegexConfig } from '@/shared/lib/ai-paths';
 import { extractRegexLiteral, normalizeRegexFlags } from '../regex-node-config-preview';
 
@@ -54,7 +46,8 @@ export function RegexConfigBasicTab({
               placeholder='Example: ^(?<prefix>[A-Z]+)-(?<id>\d+)$'
             />
             <p className='mt-2 text-[11px] text-gray-500'>
-              Pattern is stored without / delimiters. You can paste /pattern/flags and click Normalize.
+              Pattern is stored without / delimiters. You can paste /pattern/flags and click
+              Normalize.
             </p>
           </FormField>
         </div>
@@ -98,7 +91,9 @@ export function RegexConfigBasicTab({
               <Input
                 className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
                 value={templateName}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>): void => onTemplateNameChange(event.target.value)}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                  onTemplateNameChange(event.target.value)
+                }
                 placeholder='Template name'
               />
             </FormField>
@@ -122,14 +117,16 @@ export function RegexConfigBasicTab({
           </div>
         </div>
         <Hint className='mt-2'>
-          Saved templates can be managed in the Templates tab. Global templates are shared across nodes/paths.
+          Saved templates can be managed in the Templates tab. Global templates are shared across
+          nodes/paths.
         </Hint>
       </div>
 
       <div className='grid grid-cols-1 gap-3 md:grid-cols-3'>
         <div>
           <Label className='text-xs text-gray-400'>Mode</Label>
-          <SelectSimple size='sm'
+          <SelectSimple
+            size='sm'
             value={regexMode}
             onValueChange={(value: string): void =>
               onUpdateRegex({ mode: value as NonNullable<RegexConfig['mode']> })
@@ -146,7 +143,8 @@ export function RegexConfigBasicTab({
         </div>
         <div>
           <Label className='text-xs text-gray-400'>Match Mode</Label>
-          <SelectSimple size='sm'
+          <SelectSimple
+            size='sm'
             value={regexConfig.matchMode ?? 'first'}
             onValueChange={(value: string): void =>
               onUpdateRegex({ matchMode: value as NonNullable<RegexConfig['matchMode']> })
@@ -166,7 +164,8 @@ export function RegexConfigBasicTab({
         </div>
         <div>
           <Label className='text-xs text-gray-400'>Grouped Output Mode</Label>
-          <SelectSimple size='sm'
+          <SelectSimple
+            size='sm'
             value={regexConfig.outputMode ?? 'object'}
             onValueChange={(value: string): void =>
               onUpdateRegex({ outputMode: value as NonNullable<RegexConfig['outputMode']> })
@@ -184,12 +183,12 @@ export function RegexConfigBasicTab({
 
       <div>
         <Label className='text-xs text-gray-400'>JSON Integrity Policy</Label>
-        <SelectSimple size='sm'
+        <SelectSimple
+          size='sm'
           value={regexConfig.jsonIntegrityPolicy ?? 'repair'}
           onValueChange={(value: string): void =>
             onUpdateRegex({
-              jsonIntegrityPolicy:
-                value === 'strict' ? 'strict' : 'repair',
+              jsonIntegrityPolicy: value === 'strict' ? 'strict' : 'repair',
             })
           }
           placeholder='Select policy'
@@ -216,7 +215,9 @@ export function RegexConfigBasicTab({
             onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
               onUpdateVariantField('groupBy', event.target.value)
             }
-            placeholder={isExtractMode ? 'match | 1 | amount | groups | captures' : 'match | 1 | prefix'}
+            placeholder={
+              isExtractMode ? 'match | 1 | amount | groups | captures' : 'match | 1 | prefix'
+            }
           />
           <p className='mt-1 text-[11px] text-gray-500'>
             {isExtractMode ? (
@@ -232,7 +233,8 @@ export function RegexConfigBasicTab({
               </>
             ) : (
               <>
-                Use <span className='text-gray-300'>match</span>, a capture index (1,2,...) or a named group.
+                Use <span className='text-gray-300'>match</span>, a capture index (1,2,...) or a
+                named group.
               </>
             )}
           </p>
@@ -249,9 +251,11 @@ export function RegexConfigBasicTab({
           <ToggleRow
             type='switch'
             label='Include unmatched'
-            description={isExtractMode
-              ? 'Keep non-matching inputs in matches with the fallback key.'
-              : 'Keep non-matching inputs under a group key.'}
+            description={
+              isExtractMode
+                ? 'Keep non-matching inputs in matches with the fallback key.'
+                : 'Keep non-matching inputs under a group key.'
+            }
             checked={regexConfig.includeUnmatched ?? true}
             onCheckedChange={(checked: boolean) => onUpdateRegex({ includeUnmatched: checked })}
             className='flex-1'
@@ -273,12 +277,15 @@ export function RegexConfigBasicTab({
         </div>
         <div className='rounded-md border border-border bg-card/50 px-3 py-2'>
           <div className='text-[11px] text-gray-300'>Validation</div>
-          <div className={`mt-1 text-[11px] ${regexValidation.ok ? 'text-emerald-200' : 'text-rose-200'}`}>
+          <div
+            className={`mt-1 text-[11px] ${regexValidation.ok ? 'text-emerald-200' : 'text-rose-200'}`}
+          >
             {regexValidation.ok ? 'Regex compiles' : regexValidation.error}
           </div>
           {!regexValidation.ok ? (
             <div className='mt-1 text-[11px] text-gray-500'>
-              Tip: use <span className='text-gray-300'>\</span> to escape backslashes in string patterns.
+              Tip: use <span className='text-gray-300'>\</span> to escape backslashes in string
+              patterns.
             </div>
           ) : null}
         </div>

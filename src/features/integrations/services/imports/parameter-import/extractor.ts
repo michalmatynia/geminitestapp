@@ -3,30 +3,13 @@ import type { ExtractedBaseParameter } from '@/shared/contracts/integrations';
 
 import type { BaseProductRecord } from '../base-client';
 
-const PARAMETER_VALUE_KEYS = [
-  'value',
-  'values',
-  'value_id',
-  'label',
-  'text',
-] as const;
+const PARAMETER_VALUE_KEYS = ['value', 'values', 'value_id', 'label', 'text'] as const;
 
-const PARAMETER_NAME_KEYS = [
-  'name',
-  'parameter',
-  'code',
-  'label',
-  'title',
-] as const;
+const PARAMETER_NAME_KEYS = ['name', 'parameter', 'code', 'label', 'title'] as const;
 
 const PARAMETER_ID_KEYS = ['id', 'parameter_id', 'param_id', 'attribute_id'] as const;
 
-const PARAMETER_COLLECTION_KEYS = new Set([
-  'parameters',
-  'params',
-  'attributes',
-  'features',
-]);
+const PARAMETER_COLLECTION_KEYS = new Set(['parameters', 'params', 'attributes', 'features']);
 
 const toTrimmedString = (value: unknown): string | null => {
   if (typeof value === 'string') {
@@ -77,10 +60,7 @@ type MutableExtractedParameter = {
   valuesByLanguage: Record<string, string>;
 };
 
-const getRecordValue = (
-  record: Record<string, unknown>,
-  keys: readonly string[]
-): unknown => {
+const getRecordValue = (record: Record<string, unknown>, keys: readonly string[]): unknown => {
   for (const key of keys) {
     if (record[key] !== undefined && record[key] !== null) {
       return record[key];
@@ -257,11 +237,7 @@ const toAllowedMappedSources = (
     const source = mapping.sourceKey?.trim().toLowerCase();
     const target = mapping.targetField?.trim().toLowerCase();
     if (!source || !target) return;
-    if (
-      target === 'parameters' ||
-      target === 'parameters_all' ||
-      target === 'parameter'
-    ) {
+    if (target === 'parameters' || target === 'parameters_all' || target === 'parameter') {
       addMappedSource(source);
     }
     if (target.startsWith('parameter:')) {
@@ -282,24 +258,17 @@ export const extractBaseParameters = (input: {
     collectCollectionByLanguage(input.record, collectionKey, 'default', byKey);
   });
 
-  const mappedSources = toAllowedMappedSources(
-    input.settings,
-    input.templateMappings
-  );
+  const mappedSources = toAllowedMappedSources(input.settings, input.templateMappings);
 
-  const extracted = Array.from(byKey.values()).filter(
-    (entry: MutableExtractedParameter) => {
-      if (!mappedSources) return true;
-      if (mappedSources.size === 0) return false;
-      const nameValues = Object.values(entry.namesByLanguage).map((name) =>
-        name.toLowerCase()
-      );
-      if (entry.baseParameterId && mappedSources.has(entry.baseParameterId.toLowerCase())) {
-        return true;
-      }
-      return nameValues.some((name) => mappedSources.has(name));
+  const extracted = Array.from(byKey.values()).filter((entry: MutableExtractedParameter) => {
+    if (!mappedSources) return true;
+    if (mappedSources.size === 0) return false;
+    const nameValues = Object.values(entry.namesByLanguage).map((name) => name.toLowerCase());
+    if (entry.baseParameterId && mappedSources.has(entry.baseParameterId.toLowerCase())) {
+      return true;
     }
-  );
+    return nameValues.some((name) => mappedSources.has(name));
+  });
 
   extracted.forEach((entry: MutableExtractedParameter) => {
     if (!entry.namesByLanguage['default']) {

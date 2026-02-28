@@ -21,10 +21,7 @@ type CustomRenderOptions = {
   queryClient?: QueryClient;
 } & Omit<RenderOptions, 'wrapper'>;
 
-const customRender = (
-  ui: React.ReactElement,
-  options?: CustomRenderOptions,
-): RenderResult => {
+const customRender = (ui: React.ReactElement, options?: CustomRenderOptions): RenderResult => {
   const queryClient = options?.queryClient || createTestQueryClient();
   const Wrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
     <QueryClientProvider client={queryClient}>

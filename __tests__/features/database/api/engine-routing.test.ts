@@ -32,7 +32,9 @@ describe('Database Engine routing in database operations APIs', () => {
     });
     const collection = vi.fn().mockReturnValue({ insertOne });
     const db = vi.fn().mockReturnValue({ collection });
-    vi.mocked(getMongoClient).mockResolvedValue({ db } as unknown as Awaited<ReturnType<typeof getMongoClient>>);
+    vi.mocked(getMongoClient).mockResolvedValue({ db } as unknown as Awaited<
+      ReturnType<typeof getMongoClient>
+    >);
 
     const res = await POST_CRUD(
       new NextRequest('http://localhost/api/databases/crud', {
@@ -60,7 +62,9 @@ describe('Database Engine routing in database operations APIs', () => {
     const find = vi.fn().mockReturnValue({ limit });
     const collection = vi.fn().mockReturnValue({ find });
     const db = vi.fn().mockReturnValue({ collection });
-    vi.mocked(getMongoClient).mockResolvedValue({ db } as unknown as Awaited<ReturnType<typeof getMongoClient>>);
+    vi.mocked(getMongoClient).mockResolvedValue({ db } as unknown as Awaited<
+      ReturnType<typeof getMongoClient>
+    >);
 
     const res = await POST_EXECUTE(
       new NextRequest('http://localhost/api/databases/execute', {
@@ -83,6 +87,6 @@ describe('Database Engine routing in database operations APIs', () => {
     });
     expect(resolveCollectionProviderForRequest).toHaveBeenCalledWith('products', 'auto');
     expect(find).toHaveBeenCalledWith({ sku: 'SKU-1' });
-    expect((limit).mock.calls[0]?.[0]).toBe(200);
+    expect(limit.mock.calls[0]?.[0]).toBe(200);
   });
 });

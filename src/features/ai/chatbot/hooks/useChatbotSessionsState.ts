@@ -15,7 +15,6 @@ import {
   useUpdateSessionTitle,
 } from '../hooks';
 
-
 export interface UseChatbotSessionsStateReturn {
   sessions: ChatbotSessionListItem[];
   filteredSessions: ChatbotSessionListItem[];
@@ -85,7 +84,7 @@ export function useChatbotSessionsState(): UseChatbotSessionsStateReturn {
   const selectingAll = selectAllMatchingMutation.isPending;
 
   const clearSelection = useCallback(() => setSelectedIds(new Set()), []);
-  
+
   const filteredSessions = useMemo(() => {
     const term = searchQuery.trim().toLowerCase();
     if (!term) return sessions;
@@ -95,9 +94,9 @@ export function useChatbotSessionsState(): UseChatbotSessionsStateReturn {
     });
   }, [searchQuery, sessions]);
 
-  const selectAllVisible = useCallback(() => 
-    setSelectedIds(new Set(filteredSessions.map((s) => s.id))), 
-  [filteredSessions]
+  const selectAllVisible = useCallback(
+    () => setSelectedIds(new Set(filteredSessions.map((s) => s.id))),
+    [filteredSessions]
   );
 
   const selectAllMatching = useCallback(async () => {

@@ -42,18 +42,18 @@ export function useBackgroundSync({
 
   const syncData = async (): Promise<void> => {
     if (!isVisibleRef.current || !enabled) return;
-    
+
     try {
       await queryClient.refetchQueries({ queryKey });
       const currentData = queryClient.getQueryData(queryKey);
-      
+
       if (currentData !== previousDataRef.current) {
         onUpdate?.(currentData);
         previousDataRef.current = currentData;
       }
     } catch (error: unknown) {
-      logClientError(error instanceof Error ? error : new Error(String(error)), { 
-        context: { source: 'useBackgroundSync', action: 'backgroundSyncFailed', level: 'warn' } 
+      logClientError(error instanceof Error ? error : new Error(String(error)), {
+        context: { source: 'useBackgroundSync', action: 'backgroundSyncFailed', level: 'warn' },
       });
     }
   };
@@ -80,7 +80,10 @@ export function useBackgroundSync({
 }
 
 // Hook for real-time job status updates
-export function useJobStatusSync(jobId: string, enabled: boolean = true): { forceSync: () => Promise<void> } {
+export function useJobStatusSync(
+  jobId: string,
+  enabled: boolean = true
+): { forceSync: () => Promise<void> } {
   return useBackgroundSync({
     queryKey: QUERY_KEYS.jobs.status(jobId),
     interval: 5000, // 5 seconds for jobs
@@ -89,7 +92,10 @@ export function useJobStatusSync(jobId: string, enabled: boolean = true): { forc
 }
 
 // Hook for product list updates
-export function useProductListSync(filters: Record<string, unknown>, enabled: boolean = true): { forceSync: () => Promise<void> } {
+export function useProductListSync(
+  filters: Record<string, unknown>,
+  enabled: boolean = true
+): { forceSync: () => Promise<void> } {
   return useBackgroundSync({
     queryKey: getProductListQueryKey(filters),
     interval: 60000, // 1 minute for products

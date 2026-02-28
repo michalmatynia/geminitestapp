@@ -2,10 +2,7 @@
 
 import { useMemo } from 'react';
 
-import type {
-  AiPathRunNodeRecord,
-  RuntimeHistoryEntry,
-} from '@/shared/contracts/ai-paths';
+import type { AiPathRunNodeRecord, RuntimeHistoryEntry } from '@/shared/contracts/ai-paths';
 import {
   Button,
   Label,
@@ -75,14 +72,8 @@ export function RunDetailDialog(): React.JSX.Element {
 
   const onClose = () => setRunDetailOpen(false);
 
-  const runNodes = useMemo(
-    () => normalizeRunNodes(runDetail?.nodes),
-    [runDetail?.nodes]
-  );
-  const runEvents = useMemo(
-    () => normalizeRunEvents(runDetail?.events),
-    [runDetail?.events]
-  );
+  const runNodes = useMemo(() => normalizeRunNodes(runDetail?.nodes), [runDetail?.nodes]);
+  const runEvents = useMemo(() => normalizeRunEvents(runDetail?.events), [runDetail?.events]);
 
   const runNodeSummary = useMemo(() => {
     if (!runDetail) return null;
@@ -102,12 +93,7 @@ export function RunDetailDialog(): React.JSX.Element {
   )?.history;
 
   const historyOptions = useMemo(
-    () =>
-      buildHistoryNodeOptions(
-        runDetailHistory,
-        runNodes,
-        runDetail?.run?.graph?.nodes ?? null
-      ),
+    () => buildHistoryNodeOptions(runDetailHistory, runNodes, runDetail?.run?.graph?.nodes ?? null),
     [runDetailHistory, runDetail?.run?.graph?.nodes, runNodes]
   );
 
@@ -136,15 +122,12 @@ export function RunDetailDialog(): React.JSX.Element {
   const slowestRuntimeNodeSpan = useMemo(() => {
     const spans = runtimeTrace?.profile?.nodeSpans;
     if (!Array.isArray(spans) || spans.length === 0) return null;
-    return spans.reduce<
-      | {
-        spanId?: string;
-        nodeId?: string;
-        nodeType?: string;
-        durationMs?: number | null;
-      }
-      | null
-    >((slowest, current) => {
+    return spans.reduce<{
+      spanId?: string;
+      nodeId?: string;
+      nodeType?: string;
+      durationMs?: number | null;
+    } | null>((slowest, current) => {
       const currentDuration =
         typeof current.durationMs === 'number' && Number.isFinite(current.durationMs)
           ? current.durationMs
@@ -159,10 +142,7 @@ export function RunDetailDialog(): React.JSX.Element {
     }, null);
   }, [runtimeTrace]);
 
-  const playwrightArtifacts = useMemo(
-    () => collectPlaywrightArtifacts(runNodes),
-    [runNodes]
-  );
+  const playwrightArtifacts = useMemo(() => collectPlaywrightArtifacts(runNodes), [runNodes]);
 
   const isScheduledRun = Boolean(runDetail?.run?.triggerEvent === 'scheduled_run');
 
@@ -185,7 +165,7 @@ export function RunDetailDialog(): React.JSX.Element {
                 <span>{runDetail.run.status}</span>
                 {isScheduledRun ? (
                   <span className='rounded-full border border-amber-400/60 bg-amber-500/15 px-2 py-[1px] text-[9px] uppercase text-amber-200'>
-                      Scheduled
+                    Scheduled
                   </span>
                 ) : null}
               </div>
@@ -194,7 +174,11 @@ export function RunDetailDialog(): React.JSX.Element {
               <span className='text-[10px] uppercase text-gray-500'>Stream</span>
               <div className='flex flex-wrap items-center gap-2 text-sm'>
                 <span>{runStreamStatus}</span>
-                <Button variant='ghost' size='sm' onClick={() => onStreamPauseToggle(!runStreamPaused)}>
+                <Button
+                  variant='ghost'
+                  size='sm'
+                  onClick={() => onStreamPauseToggle(!runStreamPaused)}
+                >
                   {runStreamPaused ? 'Resume stream' : 'Pause stream'}
                 </Button>
               </div>
@@ -205,20 +189,18 @@ export function RunDetailDialog(): React.JSX.Element {
             </div>
             <div>
               <span className='text-[10px] uppercase text-gray-500'>Runtime Fingerprint</span>
-              <div className='font-mono text-[11px]'>
-                {runtimeFingerprint ?? 'n/a'}
-              </div>
+              <div className='font-mono text-[11px]'>{runtimeFingerprint ?? 'n/a'}</div>
             </div>
             <div>
               <span className='text-[10px] uppercase text-gray-500'>Created</span>
-              <div>{runDetail.run.createdAt ? new Date(runDetail.run.createdAt).toLocaleString() : '-'}</div>
+              <div>
+                {runDetail.run.createdAt ? new Date(runDetail.run.createdAt).toLocaleString() : '-'}
+              </div>
             </div>
             <div>
               <span className='text-[10px] uppercase text-gray-500'>Started</span>
               <div>
-                {runDetail.run.startedAt
-                  ? new Date(runDetail.run.startedAt).toLocaleString()
-                  : '-'}
+                {runDetail.run.startedAt ? new Date(runDetail.run.startedAt).toLocaleString() : '-'}
               </div>
             </div>
             <div>
@@ -234,7 +216,7 @@ export function RunDetailDialog(): React.JSX.Element {
             <div className='rounded-md border border-border/70 bg-black/20 p-3'>
               <div className='flex flex-wrap items-center justify-between gap-2 text-[11px] text-gray-500'>
                 <span>
-                    Nodes: {runNodeSummary.completed}/{runNodeSummary.total} completed
+                  Nodes: {runNodeSummary.completed}/{runNodeSummary.total} completed
                 </span>
                 <span>{runNodeSummary.progress}%</span>
               </div>
@@ -271,24 +253,16 @@ export function RunDetailDialog(): React.JSX.Element {
                     ? ` (+${runtimeTrace.profile.droppedEventCount} truncated)`
                     : ''}
                 </div>
-                <div>
-                  Engine events: {runtimeTrace.profile?.eventCount ?? 0}
-                </div>
-                <div>
-                  Runtime: {runtimeTrace.profile?.summary?.durationMs ?? 0}ms
-                </div>
-                <div>
-                  Iterations: {runtimeTrace.profile?.summary?.iterationCount ?? 0}
-                </div>
-                <div>
-                  Node spans: {runtimeTrace.profile?.nodeSpans?.length ?? 0}
-                </div>
+                <div>Engine events: {runtimeTrace.profile?.eventCount ?? 0}</div>
+                <div>Runtime: {runtimeTrace.profile?.summary?.durationMs ?? 0}ms</div>
+                <div>Iterations: {runtimeTrace.profile?.summary?.iterationCount ?? 0}</div>
+                <div>Node spans: {runtimeTrace.profile?.nodeSpans?.length ?? 0}</div>
               </div>
               {runtimeTrace.profile?.summary?.hottestNodes?.[0] ? (
                 <div className='mt-2 text-[11px] text-sky-100'>
                   Hottest node: {runtimeTrace.profile.summary.hottestNodes[0]?.nodeId ?? 'n/a'} (
-                  {runtimeTrace.profile.summary.hottestNodes[0]?.nodeType ?? 'unknown'}) ·
-                  avg {Math.round(runtimeTrace.profile.summary.hottestNodes[0]?.avgMs ?? 0)}ms
+                  {runtimeTrace.profile.summary.hottestNodes[0]?.nodeType ?? 'unknown'}) · avg{' '}
+                  {Math.round(runtimeTrace.profile.summary.hottestNodes[0]?.avgMs ?? 0)}ms
                 </div>
               ) : null}
               {slowestRuntimeNodeSpan ? (
@@ -311,9 +285,7 @@ export function RunDetailDialog(): React.JSX.Element {
                     key={`${artifact.path}:${artifact.nodeId}:${index}`}
                     className='flex flex-wrap items-center gap-2 text-[11px]'
                   >
-                    <span className='text-gray-400'>
-                      {artifact.nodeTitle ?? artifact.nodeId}
-                    </span>
+                    <span className='text-gray-400'>{artifact.nodeTitle ?? artifact.nodeId}</span>
                     {artifact.url ? (
                       <a
                         href={artifact.url}
@@ -350,7 +322,7 @@ export function RunDetailDialog(): React.JSX.Element {
                   size='sm'
                   value={selectedHistoryNodeId ?? ''}
                   onValueChange={onHistoryNodeSelect}
-                  options={historyOptions.map(opt => ({ value: opt.id, label: opt.label }))}
+                  options={historyOptions.map((opt) => ({ value: opt.id, label: opt.label }))}
                   placeholder='Select node'
                   triggerClassName='h-7 w-[220px] border-border bg-card/70 text-[11px] text-white'
                 />
@@ -369,7 +341,7 @@ export function RunDetailDialog(): React.JSX.Element {
               </div>
             ) : (
               <div className='mt-2 text-[11px] text-gray-500'>
-                  No history recorded for this run.
+                No history recorded for this run.
               </div>
             )}
           </div>
@@ -401,7 +373,7 @@ export function RunDetailDialog(): React.JSX.Element {
                   <Label className='text-[10px] uppercase text-gray-500'>Events</Label>
                   {runEventsOverflow ? (
                     <span className='rounded border border-amber-400/50 bg-amber-500/10 px-2 py-0.5 text-[10px] text-amber-200'>
-                        Truncated
+                      Truncated
                       {runEventsBatchLimit ? ` (limit ${runEventsBatchLimit})` : ''}
                     </span>
                   ) : null}

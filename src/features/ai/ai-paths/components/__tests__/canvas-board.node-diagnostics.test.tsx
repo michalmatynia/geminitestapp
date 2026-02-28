@@ -1,16 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import type {
-  AiNode,
-  DataContractNodeIssueSummary,
-  RuntimeState,
-} from '@/shared/lib/ai-paths';
+import type { AiNode, DataContractNodeIssueSummary, RuntimeState } from '@/shared/lib/ai-paths';
 
-import {
-  CanvasBoardUIProvider,
-  type CanvasBoardUIContextValue,
-} from '../CanvasBoardUIContext';
+import { CanvasBoardUIProvider, type CanvasBoardUIContextValue } from '../CanvasBoardUIContext';
 import { renderNodeDiagnosticsTooltipContent } from '../CanvasBoard.utils';
 import { CanvasSvgNodeLayer } from '../canvas-svg-node-layer';
 
@@ -72,7 +65,8 @@ const buildContextValue = (
     fitToNodes: vi.fn(),
     fitToSelection: vi.fn(),
     resetView: vi.fn(),
-    centerOnCanvasPoint: vi.fn(),    nodeDiagnosticsById,
+    centerOnCanvasPoint: vi.fn(),
+    nodeDiagnosticsById,
     inputPulseNodes: new Set(),
     outputPulseNodes: new Set(),
     activeEdgeIds: new Set(),

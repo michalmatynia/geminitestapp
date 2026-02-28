@@ -20,7 +20,7 @@ import { EmptyState } from '@/shared/ui';
 export function PreviewImageWithTextSection() {
   const { colorSchemes, layout } = useCmsPageContext();
   const mediaStyles = useMediaStyles();
-  const { 
+  const {
     section,
     selectedRing,
     renderSectionActions,
@@ -30,10 +30,7 @@ export function PreviewImageWithTextSection() {
     PreviewBlockItem,
   } = usePreviewSectionContext();
 
-  const { 
-    inspectorSettings, 
-    onOpenMedia,
-  } = usePreviewEditor();
+  const { inspectorSettings, onOpenMedia } = usePreviewEditor();
 
   const showEditorChrome = inspectorSettings.showEditorChrome ?? false;
   const sectionStyles = getSectionStyles(section.settings, colorSchemes);
@@ -81,8 +78,13 @@ export function PreviewImageWithTextSection() {
         </button>
       )}
       <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth })}>
-        <div className={`flex flex-col gap-8 md:gap-12 ${imageFirst ? 'md:flex-row' : 'md:flex-row-reverse'} ${verticalClass}`}>
-          <div className={`cms-media relative w-full md:w-1/2 ${imgHeightClass}`} style={mediaStyles ?? undefined}>
+        <div
+          className={`flex flex-col gap-8 md:gap-12 ${imageFirst ? 'md:flex-row' : 'md:flex-row-reverse'} ${verticalClass}`}
+        >
+          <div
+            className={`cms-media relative w-full md:w-1/2 ${imgHeightClass}`}
+            style={mediaStyles ?? undefined}
+          >
             {sectionImage ? (
               <NextImage
                 src={sectionImage}
@@ -93,7 +95,9 @@ export function PreviewImageWithTextSection() {
                 unoptimized
               />
             ) : showEditorChrome ? (
-              <div className={`flex ${imgHeightClass} w-full items-center justify-center bg-card/40`}>
+              <div
+                className={`flex ${imgHeightClass} w-full items-center justify-center bg-card/40`}
+              >
                 <ImageIcon className='size-16 text-gray-600' />
               </div>
             ) : null}
@@ -116,6 +120,6 @@ export function PreviewImageWithTextSection() {
           </div>
         </div>
       </div>
-    </div>,
+    </div>
   );
 }

@@ -1,11 +1,11 @@
 ---
-owner: "Case Resolver Team"
-last_reviewed: "2026-02-20"
-status: "active"
+owner: 'Case Resolver Team'
+last_reviewed: '2026-02-20'
+status: 'active'
 related_components:
-  - "src/features/case-resolver/pages/AdminCaseResolverPage.tsx"
-  - "src/features/case-resolver/pages/AdminCaseResolverCasesPage.tsx"
-  - "src/features/case-resolver/hooks/useCaseResolverState.ts"
+  - 'src/features/case-resolver/pages/AdminCaseResolverPage.tsx'
+  - 'src/features/case-resolver/pages/AdminCaseResolverCasesPage.tsx'
+  - 'src/features/case-resolver/hooks/useCaseResolverState.ts'
 ---
 
 # Case Resolver Overview

@@ -2,29 +2,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { auth } from '@/features/auth/server';
-import {
-  getAuthSecurityProfile,
-  updateAuthSecurityProfile,
-} from '@/features/auth/server';
+import { getAuthSecurityProfile, updateAuthSecurityProfile } from '@/features/auth/server';
 import { decryptAuthSecret } from '@/features/auth/server';
 import { hashRecoveryCode, verifyTotpToken } from '@/features/auth/server';
 import { logAuthEvent } from '@/features/auth/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import {
-  authError,
-  badRequestError,
-  validationError,
-} from '@/shared/errors/app-error';
+import { authError, badRequestError, validationError } from '@/shared/errors/app-error';
 
 export const payloadSchema = z.object({
   token: z.string().trim().optional(),
   recoveryCode: z.string().trim().optional(),
 });
 
-export async function POST_handler(
-  req: NextRequest,
-  ctx: ApiHandlerContext,
-): Promise<Response> {
+export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const session = await auth();
   const userId = session?.user?.id;
   if (!userId) {

@@ -1,22 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
-import OpenAI from 'openai';
 import { z } from 'zod';
 
+import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
 import {
-  IMAGE_STUDIO_OPENAI_API_KEY_KEY,
+  runBrainChatCompletion,
+  supportsBrainJsonMode,
+} from '@/shared/lib/ai-brain/server-runtime-client';
+import {
   IMAGE_STUDIO_SETTINGS_KEY,
   parseImageStudioSettings,
-} from '@/features/ai/image-studio/utils/studio-settings';
+} from '@/shared/lib/ai/image-studio/studio-settings';
 import { auth } from '@/features/auth/server';
 import { getSettingValue } from '@/features/products/services/aiDescriptionService';
 import {
   PROMPT_ENGINE_SETTINGS_KEY,
   parsePromptEngineSettings,
   parsePromptValidationRules,
-} from '@/shared/lib/prompt-engine/public';
+} from '@/features/prompt-engine/public';
 import type { PromptValidationRuleDto as PromptValidationRule } from '@/shared/contracts/prompt-engine';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { authError, configurationError, internalError } from '@/shared/errors/app-error';
+import { authError, internalError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
 const payloadSchema = z.object({
@@ -34,44 +37,39 @@ const ruleSignature = (rule: PromptValidationRule): string => {
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const session = await auth();
   const hasAccess =
-    session?.user?.isElevated ||
-    session?.user?.permissions?.includes('ai_paths.manage');
+    session?.user?.isElevated || session?.user?.permissions?.includes('ai_paths.manage');
   if (!hasAccess) throw authError('Unauthorized.');
 
-  const parsed = await parseJsonBody(req, payloadSchema, { logPrefix: 'image-studio.validation-patterns.learn.POST' });
+  const parsed = await parseJsonBody(req, payloadSchema, {
+    logPrefix: 'image-studio.validation-patterns.learn.POST',
+  });
   if (!parsed.ok) return parsed.response;
 
-  const apiKey =
-    (await getSettingValue(IMAGE_STUDIO_OPENAI_API_KEY_KEY))?.trim() ||
-    (await getSettingValue('openai_api_key'))?.trim() ||
-    process.env['OPENAI_API_KEY'] ||
-    null;
-  if (!apiKey) {
-    throw configurationError('OpenAI API key is missing. Set it in Image Studio settings.');
-  }
-
-  const studioSettingsRaw = await getSettingValue(IMAGE_STUDIO_SETTINGS_KEY);
+  const studioSettingsRaw = (await getSettingValue(IMAGE_STUDIO_SETTINGS_KEY)) as
+    | string
+    | null
+    | undefined;
   const studioSettings = parseImageStudioSettings(studioSettingsRaw);
-  const model =
-    studioSettings.promptExtraction.gpt.model ||
-    studioSettings.uiExtractor.model ||
-    (await getSettingValue('openai_model'))?.trim() ||
-    'gpt-4o-mini';
-  const settingsRaw = await getSettingValue(PROMPT_ENGINE_SETTINGS_KEY);
+
+  const settingsRaw = (await getSettingValue(PROMPT_ENGINE_SETTINGS_KEY)) as
+    | string
+    | null
+    | undefined;
   const settings = parsePromptEngineSettings(settingsRaw);
   const existingRules = [
     ...settings.promptValidation.rules,
     ...(settings.promptValidation.learnedRules ?? []),
   ];
 
-  const existingSummary = existingRules.slice(0, 120).map((rule: PromptValidationRule) => {
-    if (rule.kind === 'regex') {
-      return `${rule.id} :: /${rule.pattern}/${rule.flags}`;
-    }
-    return `${rule.id} :: params_object`;
-  }).join('\n');
-
-  const client = new OpenAI({ apiKey });
+  const existingSummary = existingRules
+    .slice(0, 120)
+    .map((rule: PromptValidationRule) => {
+      if (rule.kind === 'regex') {
+        return `${rule.id} :: /${rule.pattern}/${rule.flags}`;
+      }
+      return `${rule.id} :: params_object`;
+    })
+    .join('\n');
 
   const systemPrompt = [
     'You generate validation rules for Image Studio prompts.',
@@ -103,16 +101,28 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     existingSummary || '(none)',
   ].join('\n');
 
-  const response = await client.chat.completions.create({
-    model,
-    temperature: studioSettings.promptExtraction.gpt.temperature ?? 0.2,
+  const brainConfig = await resolveBrainExecutionConfigForCapability(
+    'image_studio.validation_pattern_learning',
+    {
+      defaultTemperature: studioSettings.promptExtraction.gpt.temperature ?? 0.2,
+      defaultMaxTokens: 1600,
+      defaultSystemPrompt: systemPrompt,
+      runtimeKind: 'validation',
+    }
+  );
+
+  const response = await runBrainChatCompletion({
+    modelId: brainConfig.modelId,
+    temperature: brainConfig.temperature,
+    maxTokens: brainConfig.maxTokens,
+    jsonMode: supportsBrainJsonMode(brainConfig.modelId),
     messages: [
-      { role: 'system', content: systemPrompt },
+      { role: 'system', content: brainConfig.systemPrompt },
       { role: 'user', content: userPrompt },
     ],
   });
 
-  const raw = response.choices[0]?.message?.content ?? '';
+  const raw = response.text ?? '';
   const json = (() => {
     try {
       return JSON.parse(raw) as unknown;
@@ -134,7 +144,9 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   }
 
   const existingIds = new Set(existingRules.map((rule: PromptValidationRule) => rule.id));
-  const existingSigs = new Set(existingRules.map((rule: PromptValidationRule) => ruleSignature(rule)));
+  const existingSigs = new Set(
+    existingRules.map((rule: PromptValidationRule) => ruleSignature(rule))
+  );
 
   const filtered = parseResult.rules
     .filter((rule: PromptValidationRule) => !existingIds.has(rule.id))

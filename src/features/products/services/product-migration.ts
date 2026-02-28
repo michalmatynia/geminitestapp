@@ -2,17 +2,16 @@ import 'server-only';
 
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type { ImageFileRecordDto as ImageFileRecord } from '@/shared/contracts/files';
-import type { 
-  CatalogDto as CatalogRecord, 
-  ProductMigrationDirectionDto as MigrationDirection, 
-  ProductMigrationBatchResultDto as MigrationBatchResult 
+import type {
+  CatalogDto as CatalogRecord,
+  ProductMigrationDirectionDto as MigrationDirection,
+  ProductMigrationBatchResultDto as MigrationBatchResult,
 } from '@/shared/contracts/products';
 import { internalError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 
 import type { WithId } from 'mongodb';
-
 
 export type { MigrationDirection };
 
@@ -156,10 +155,8 @@ const toCatalogDocument = (catalog: CatalogInput): CatalogDocument => ({
   updatedAt: catalog.updatedAt.toISOString(),
   languageIds: Array.isArray(catalog.languageIds)
     ? catalog.languageIds
-    : catalog.languages?.map((entry: { languageId: string }) => entry.languageId) ?? [],
-  priceGroupIds: Array.isArray(catalog.priceGroupIds)
-    ? catalog.priceGroupIds
-    : [],
+    : (catalog.languages?.map((entry: { languageId: string }) => entry.languageId) ?? []),
+  priceGroupIds: Array.isArray(catalog.priceGroupIds) ? catalog.priceGroupIds : [],
 });
 
 const buildProductDocument = (product: ProductInput): ProductDocument => ({
@@ -255,9 +252,7 @@ export async function migrateProductBatch({
         );
       }
       const nextCursor =
-      products.length === batchSize
-        ? products[products.length - 1]?.id ?? null
-        : null;
+        products.length === batchSize ? (products[products.length - 1]?.id ?? null) : null;
       return {
         direction,
         productsProcessed: docs.length,
@@ -362,10 +357,9 @@ export async function migrateProductBatch({
             });
           }
           const nextDefaultLanguageId =
-          catalog.defaultLanguageId &&
-          filteredLanguageIds.includes(catalog.defaultLanguageId)
-            ? catalog.defaultLanguageId
-            : filteredLanguageIds[0] ?? null;
+            catalog.defaultLanguageId && filteredLanguageIds.includes(catalog.defaultLanguageId)
+              ? catalog.defaultLanguageId
+              : (filteredLanguageIds[0] ?? null);
           await prisma.catalog.update({
             where: { id },
             data: { defaultLanguageId: nextDefaultLanguageId },
@@ -529,9 +523,7 @@ export async function migrateProductBatch({
     }
 
     const nextCursor =
-    mongoDocs.length === batchSize
-      ? mongoDocs[mongoDocs.length - 1]?._id ?? null
-      : null;
+      mongoDocs.length === batchSize ? (mongoDocs[mongoDocs.length - 1]?._id ?? null) : null;
     return {
       direction,
       productsProcessed: mongoDocs.length,
@@ -547,6 +539,9 @@ export async function migrateProductBatch({
       cursor,
     });
     // Re-throw with enriched context for the job runner or API handler
-    throw internalError(`Migration batch failed [${direction}] at cursor ${cursor}: ${error instanceof Error ? error.message : String(error)}`, { cause: error });
+    throw internalError(
+      `Migration batch failed [${direction}] at cursor ${cursor}: ${error instanceof Error ? error.message : String(error)}`,
+      { cause: error }
+    );
   }
 }

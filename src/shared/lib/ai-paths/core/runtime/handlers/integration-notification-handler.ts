@@ -1,13 +1,7 @@
 import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
-import type {
-  NodeHandler,
-  NodeHandlerContext,
-} from '@/shared/contracts/ai-paths-runtime';
+import type { NodeHandler, NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 
-import {
-  coerceInput,
-  safeStringify,
-} from '../../utils';
+import { coerceInput, safeStringify } from '../../utils';
 import { buildPromptOutput } from '../utils';
 
 export const handleNotification: NodeHandler = ({
@@ -18,7 +12,8 @@ export const handleNotification: NodeHandler = ({
   edges,
   nodes,
   toast,
-  reportAiPathsError,  sideEffectControl,
+  reportAiPathsError,
+  sideEffectControl,
 }: NodeHandlerContext) => {
   if (sideEffectControl?.decision === 'skipped_policy') return prevOutputs;
   const hasMeaningfulValue = (value: unknown): boolean => {
@@ -45,13 +40,10 @@ export const handleNotification: NodeHandler = ({
   }
   let derivedPromptMessage: string | null = null;
   if (promptSourceNode) {
-    const hasUpstreamEdges = edges.some(
-      (edge: Edge): boolean => edge.to === promptSourceNode.id,
-    );
+    const hasUpstreamEdges = edges.some((edge: Edge): boolean => edge.to === promptSourceNode.id);
     const promptSourceInputs = allInputs[promptSourceNode.id] ?? {};
     if (hasUpstreamEdges) {
-      const hasInputValue: boolean =
-        Object.values(promptSourceInputs).some(hasMeaningfulValue);
+      const hasInputValue: boolean = Object.values(promptSourceInputs).some(hasMeaningfulValue);
       if (!hasInputValue) {
         return prevOutputs;
       }
@@ -61,8 +53,7 @@ export const handleNotification: NodeHandler = ({
       /{{\s*(result|value|current)\b[^}]*}}|\[\s*(result|value|current)\b[^\]]*\]/.test(template);
     if (templateNeedsCurrentValue) {
       const currentValue =
-        coerceInput(promptSourceInputs['result']) ??
-        coerceInput(promptSourceInputs['value']);
+        coerceInput(promptSourceInputs['result']) ?? coerceInput(promptSourceInputs['value']);
       const hasCurrentValue =
         currentValue !== undefined &&
         currentValue !== null &&
@@ -74,15 +65,19 @@ export const handleNotification: NodeHandler = ({
     try {
       const derivedPrompt: { promptOutput: string; imagesValue: unknown } = buildPromptOutput(
         promptSourceNode.config?.prompt,
-        promptSourceInputs,
+        promptSourceInputs
       );
       if (derivedPrompt.promptOutput?.trim()) {
         derivedPromptMessage = derivedPrompt.promptOutput;
       }
     } catch (err) {
-      reportAiPathsError(err, {
-        service: 'ai-paths-runtime',
-      }, `Prompt building failed for notification node ${node.id}`);
+      reportAiPathsError(
+        err,
+        {
+          service: 'ai-paths-runtime',
+        },
+        `Prompt building failed for notification node ${node.id}`
+      );
     }
   }
   const messageSource: unknown =
@@ -97,9 +92,11 @@ export const handleNotification: NodeHandler = ({
     coerceInput(nodeInputs['meta']) ??
     coerceInput(nodeInputs['entityId']) ??
     coerceInput(nodeInputs['entityType']);
-  
+
   if (process.env['NODE_ENV'] === 'test') {
-    console.log(`[handleNotification] nodeInputs keys: ${Object.keys(nodeInputs)}, messageSource: ${JSON.stringify(messageSource)}`);
+    console.log(
+      `[handleNotification] nodeInputs keys: ${Object.keys(nodeInputs)}, messageSource: ${JSON.stringify(messageSource)}`
+    );
   }
 
   if (messageSource === undefined) {

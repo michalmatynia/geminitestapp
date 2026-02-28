@@ -1,12 +1,7 @@
 'use client';
 
 import React from 'react';
-import {
-  MultiSelect,
-  SelectSimple,
-  StatusToggle,
-  FormField,
-} from '@/shared/ui';
+import { MultiSelect, SelectSimple, StatusToggle, FormField } from '@/shared/ui';
 import { PATTERN_SCOPE_OPTIONS } from '../constants';
 import {
   DENY_BEHAVIOR_OVERRIDE_OPTIONS,
@@ -14,16 +9,11 @@ import {
 } from '../validator-pattern-modal-options';
 import { ValidatorDocTooltip } from '../ValidatorDocsTooltips';
 import { useValidatorSettingsContext } from '../ValidatorSettingsContext';
-import { 
-  normalizeProductValidationPatternReplacementScopes 
-} from '@/features/products/utils/validator-instance-behavior';
+import { normalizeProductValidationPatternReplacementScopes } from '@/features/products/utils/validator-instance-behavior';
 import type { PatternFormData } from '@/shared/contracts/products';
 
 export function ValidatorPatternModalPolicySection(): React.JSX.Element {
-  const {
-    formData,
-    setFormData,
-  } = useValidatorSettingsContext();
+  const { formData, setFormData } = useValidatorSettingsContext();
 
   return (
     <div className='space-y-4'>
@@ -53,7 +43,8 @@ export function ValidatorPatternModalPolicySection(): React.JSX.Element {
       </FormField>
 
       <FormField label='After Replace Is Accepted'>
-        <SelectSimple size='sm'
+        <SelectSimple
+          size='sm'
           value={formData.postAcceptBehavior}
           onValueChange={(value: string): void =>
             setFormData((prev: PatternFormData) => ({
@@ -70,15 +61,14 @@ export function ValidatorPatternModalPolicySection(): React.JSX.Element {
         label='Deny Policy Override'
         description='Override form-level deny policy for this pattern only.'
       >
-        <SelectSimple size='sm'
+        <SelectSimple
+          size='sm'
           value={formData.denyBehaviorOverride}
           onValueChange={(value: string): void =>
             setFormData((prev: PatternFormData) => ({
               ...prev,
               denyBehaviorOverride:
-                value === 'ask_again' || value === 'mute_session'
-                  ? (value)
-                  : 'inherit',
+                value === 'ask_again' || value === 'mute_session' ? value : 'inherit',
             }))
           }
           options={DENY_BEHAVIOR_OVERRIDE_OPTIONS}
@@ -110,7 +100,9 @@ export function ValidatorPatternModalPolicySection(): React.JSX.Element {
                   return {
                     ...prev,
                     replacementEnabled: nextReplacementEnabled,
-                    replacementAutoApply: nextReplacementEnabled ? prev.replacementAutoApply : false,
+                    replacementAutoApply: nextReplacementEnabled
+                      ? prev.replacementAutoApply
+                      : false,
                   };
                 })
               }
@@ -121,9 +113,7 @@ export function ValidatorPatternModalPolicySection(): React.JSX.Element {
         <div className='flex items-center justify-between rounded-md border border-border bg-gray-900/70 px-3 py-2'>
           <div>
             <span className='text-xs text-gray-300'>Auto-apply replacer</span>
-            <p className='text-[11px] text-gray-500'>
-              OFF keeps it as a proposal only.
-            </p>
+            <p className='text-[11px] text-gray-500'>OFF keeps it as a proposal only.</p>
           </div>
           <ValidatorDocTooltip docId='validator.modal.replacement.autoApply'>
             <StatusToggle

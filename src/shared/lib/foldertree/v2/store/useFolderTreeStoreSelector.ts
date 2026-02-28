@@ -4,7 +4,7 @@ import { useRef, useSyncExternalStore } from 'react';
 
 import type { FolderTreeStore } from './createFolderTreeStore';
 
-const defaultEquality = <T,>(left: T, right: T): boolean => Object.is(left, right);
+const defaultEquality = <T>(left: T, right: T): boolean => Object.is(left, right);
 
 export function useFolderTreeStoreSelector<T>(
   store: FolderTreeStore,

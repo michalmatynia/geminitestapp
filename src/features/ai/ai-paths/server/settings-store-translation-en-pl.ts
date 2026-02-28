@@ -1,6 +1,5 @@
 export const TRANSLATION_EN_PL_PATH_ID = 'path_96708d';
-export const TRANSLATION_EN_PL_PATH_NAME =
-  'Translation EN->PL Description + Parameters';
+export const TRANSLATION_EN_PL_PATH_NAME = 'Translation EN->PL Description + Parameters';
 const UPDATE_NODE_ID = 'node-db-update-translate-en-pl';
 const PARSER_NODE_ID = 'node-parser-translate-en-pl';
 const REGEX_DESCRIPTION_NODE_ID = 'node-regex-translate-en-pl';
@@ -33,16 +32,15 @@ const toRecord = (value: unknown): Record<string, unknown> | null => {
 const toArray = (value: unknown): Array<Record<string, unknown>> =>
   Array.isArray(value)
     ? value.filter(
-      (entry: unknown): entry is Record<string, unknown> =>
-        Boolean(entry) && typeof entry === 'object' && !Array.isArray(entry),
-    )
+        (entry: unknown): entry is Record<string, unknown> =>
+          Boolean(entry) && typeof entry === 'object' && !Array.isArray(entry)
+      )
     : [];
 
 const isTranslationEnPlPathConfig = (parsed: Record<string, unknown>): boolean => {
   const id = typeof parsed['id'] === 'string' ? parsed['id'].trim() : '';
   if (id === TRANSLATION_EN_PL_PATH_ID) return true;
-  const name =
-    typeof parsed['name'] === 'string' ? parsed['name'].trim().toLowerCase() : '';
+  const name = typeof parsed['name'] === 'string' ? parsed['name'].trim().toLowerCase() : '';
   return name === TRANSLATION_EN_PL_PATH_NAME.toLowerCase();
 };
 
@@ -53,7 +51,7 @@ const hasEdge = (
     to: string;
     fromPort: string;
     toPort: string;
-  },
+  }
 ): boolean =>
   edges.some((candidate: Record<string, unknown>) => {
     return (
@@ -64,16 +62,11 @@ const hasEdge = (
     );
   });
 
-const buildEdgeId = (
-  edges: Array<Record<string, unknown>>,
-  preferredPrefix: string,
-): string => {
+const buildEdgeId = (edges: Array<Record<string, unknown>>, preferredPrefix: string): string => {
   const existingIds = new Set(
     edges
-      .map((edge: Record<string, unknown>) =>
-        typeof edge['id'] === 'string' ? edge['id'] : null,
-      )
-      .filter((id: string | null): id is string => Boolean(id)),
+      .map((edge: Record<string, unknown>) => (typeof edge['id'] === 'string' ? edge['id'] : null))
+      .filter((id: string | null): id is string => Boolean(id))
   );
   let counter = 1;
   let nextId = `${preferredPrefix}-${counter}`;
@@ -91,7 +84,7 @@ const ensureEdge = (
     to: string;
     fromPort: string;
     toPort: string;
-  },
+  }
 ): Array<Record<string, unknown>> => {
   if (hasEdge(edges, edge)) return edges;
   return [
@@ -118,11 +111,41 @@ export const buildTranslationEnPlPathConfigValue = (): string => {
       { id: UPDATE_NODE_ID, type: 'database', position: { x: 700, y: 200 } },
     ],
     edges: [
-      { id: 'edge-1', from: PARSER_NODE_ID, to: REGEX_DESCRIPTION_NODE_ID, fromPort: 'description_en', toPort: 'text' },
-      { id: 'edge-2', from: PARSER_NODE_ID, to: REGEX_PARAMETERS_NODE_ID, fromPort: 'parameters', toPort: 'text' },
-      { id: 'edge-3', from: PARSER_NODE_ID, to: UPDATE_NODE_ID, fromPort: 'bundle', toPort: 'bundle' },
-      { id: 'edge-4', from: REGEX_DESCRIPTION_NODE_ID, to: UPDATE_NODE_ID, fromPort: 'value', toPort: 'value' },
-      { id: 'edge-5', from: REGEX_PARAMETERS_NODE_ID, to: UPDATE_NODE_ID, fromPort: 'value', toPort: 'result' },
+      {
+        id: 'edge-1',
+        from: PARSER_NODE_ID,
+        to: REGEX_DESCRIPTION_NODE_ID,
+        fromPort: 'description_en',
+        toPort: 'text',
+      },
+      {
+        id: 'edge-2',
+        from: PARSER_NODE_ID,
+        to: REGEX_PARAMETERS_NODE_ID,
+        fromPort: 'parameters',
+        toPort: 'text',
+      },
+      {
+        id: 'edge-3',
+        from: PARSER_NODE_ID,
+        to: UPDATE_NODE_ID,
+        fromPort: 'bundle',
+        toPort: 'bundle',
+      },
+      {
+        id: 'edge-4',
+        from: REGEX_DESCRIPTION_NODE_ID,
+        to: UPDATE_NODE_ID,
+        fromPort: 'value',
+        toPort: 'value',
+      },
+      {
+        id: 'edge-5',
+        from: REGEX_PARAMETERS_NODE_ID,
+        to: UPDATE_NODE_ID,
+        fromPort: 'value',
+        toPort: 'result',
+      },
     ],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -130,9 +153,7 @@ export const buildTranslationEnPlPathConfigValue = (): string => {
   return JSON.stringify(config);
 };
 
-export const needsTranslationEnPlConfigUpgrade = (
-  raw: string | undefined,
-): boolean => {
+export const needsTranslationEnPlConfigUpgrade = (raw: string | undefined): boolean => {
   if (!raw) return false;
   try {
     const parsed = JSON.parse(raw) as Record<string, unknown>;
@@ -141,18 +162,14 @@ export const needsTranslationEnPlConfigUpgrade = (
 
     const nodes = toArray(parsed['nodes']);
     const edges = toArray(parsed['edges']);
-    const updateNode = nodes.find(
-      (node: Record<string, unknown>) => node['id'] === UPDATE_NODE_ID,
-    );
+    const updateNode = nodes.find((node: Record<string, unknown>) => node['id'] === UPDATE_NODE_ID);
     if (!updateNode) return false;
     const updateConfig = toRecord(updateNode['config']);
     const databaseConfig = toRecord(updateConfig?.['database']);
     if (!databaseConfig) return true;
 
     const updateTemplate =
-      typeof databaseConfig['updateTemplate'] === 'string'
-        ? databaseConfig['updateTemplate']
-        : '';
+      typeof databaseConfig['updateTemplate'] === 'string' ? databaseConfig['updateTemplate'] : '';
     if (!updateTemplate.includes('{{value.description_pl}}')) return true;
     if (!updateTemplate.includes('{{result.parameters}}')) return true;
 
@@ -205,9 +222,7 @@ export const needsTranslationEnPlConfigUpgrade = (
   }
 };
 
-export const upgradeTranslationEnPlConfig = (
-  raw: string | undefined,
-): string | null => {
+export const upgradeTranslationEnPlConfig = (raw: string | undefined): string | null => {
   if (!raw) return null;
   let parsed: Record<string, unknown>;
   try {
@@ -221,7 +236,7 @@ export const upgradeTranslationEnPlConfig = (
   const nodes = toArray(parsed['nodes']);
   let edges = toArray(parsed['edges']);
   const updateNodeIndex = nodes.findIndex(
-    (node: Record<string, unknown>) => node['id'] === UPDATE_NODE_ID,
+    (node: Record<string, unknown>) => node['id'] === UPDATE_NODE_ID
   );
   if (updateNodeIndex < 0) return raw;
 

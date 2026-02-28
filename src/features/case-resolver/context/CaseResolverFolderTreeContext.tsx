@@ -3,10 +3,10 @@
 import React, { createContext, useContext, useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 
-import type { 
-  CaseResolverFile, 
+import type {
+  CaseResolverFile,
   CaseResolverWorkspace,
-  CaseResolverAssetFile
+  CaseResolverAssetFile,
 } from '@/shared/contracts/case-resolver';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 import type { MasterFolderTreeAdapter } from '@/shared/contracts/master-folder-tree';
@@ -28,10 +28,8 @@ import {
   fromCaseResolverAssetNodeId,
 } from '../master-tree';
 import { createMasterFolderTreeAdapterV3 } from '@/shared/lib/foldertree/v2';
-import { 
-  buildCaseResolverNodeFileRelationIndexFromAssets,
-} from '../nodefile-relations';
-import { 
+import { buildCaseResolverNodeFileRelationIndexFromAssets } from '../nodefile-relations';
+import {
   type FolderCaseFileStats,
   parseString,
 } from '../components/CaseResolverFolderTree.helpers';
@@ -46,25 +44,20 @@ const UNASSIGNED_METADATA_VALUE = 'unassigned';
 export const isChildCaseStructureFolderPath = (folderPath: string): boolean =>
   folderPath.trim() === CHILD_CASE_STRUCTURE_FOLDER_PATH;
 
-export const isChildCaseStructureNode = (
-  node: Pick<MasterTreeNode, 'id' | 'metadata'>,
-): boolean =>
+export const isChildCaseStructureNode = (node: Pick<MasterTreeNode, 'id' | 'metadata'>): boolean =>
   isChildCaseStructureFolderPath(fromCaseResolverFolderNodeId(node.id) ?? '') ||
   parseString(node.metadata?.['virtualSection']) === CHILD_CASE_STRUCTURE_METADATA_VALUE;
 
 export const isUnassignedFolderPath = (folderPath: string): boolean =>
   folderPath.trim() === UNASSIGNED_FOLDER_PATH;
 
-export const isUnassignedNode = (
-  node: Pick<MasterTreeNode, 'id' | 'metadata'>,
-): boolean =>
+export const isUnassignedNode = (node: Pick<MasterTreeNode, 'id' | 'metadata'>): boolean =>
   isUnassignedFolderPath(fromCaseResolverFolderNodeId(node.id) ?? '') ||
   parseString(node.metadata?.['virtualSection']) === UNASSIGNED_METADATA_VALUE;
 
 export const isCaseResolverVirtualSectionNode = (
-  node: Pick<MasterTreeNode, 'id' | 'metadata'>,
-): boolean =>
-  isChildCaseStructureNode(node) || isUnassignedNode(node);
+  node: Pick<MasterTreeNode, 'id' | 'metadata'>
+): boolean => isChildCaseStructureNode(node) || isUnassignedNode(node);
 
 export interface CaseResolverFolderTreeContextValue {
   // Tree Data
@@ -73,7 +66,7 @@ export interface CaseResolverFolderTreeContextValue {
   selectedMasterNodeId: string | null;
   initialExpandedFolderNodeIds: string[];
   adapter: MasterFolderTreeAdapter;
-  
+
   // UI State
   showChildCaseFolders: boolean;
   setShowChildCaseFolders: React.Dispatch<React.SetStateAction<boolean>>;
@@ -81,7 +74,7 @@ export interface CaseResolverFolderTreeContextValue {
   setHighlightedNodeFileAssetIds: React.Dispatch<React.SetStateAction<string[]>>;
   highlightedNodeFileAssetIdSet: Set<string>;
   highlightedFolderAncestorNodeIds: string[];
-  
+
   // Stats & Indexes
   fileLockById: Map<string, boolean>;
   folderCaseFileStatsByPath: Map<string, FolderCaseFileStats>;
@@ -91,23 +84,27 @@ export interface CaseResolverFolderTreeContextValue {
   fileOwnerCaseIdById: Map<string, string>;
   assetOwnerCaseIdById: Map<string, string>;
   folderOwnerCaseIdsByPath: Map<string, string[]>;
-  
+
   // Active State
   activeCaseFile: CaseResolverFile | null;
   activeCaseChildCount: number;
   isNodeFileCanvasActive: boolean;
-  
+
   // Helpers
   selectedFolderForCreate: string | null;
   selectedFolderForFolderCreate: string | null;
 }
 
-const CaseResolverFolderTreeContext = createContext<CaseResolverFolderTreeContextValue | null>(null);
+const CaseResolverFolderTreeContext = createContext<CaseResolverFolderTreeContextValue | null>(
+  null
+);
 
 export function useCaseResolverFolderTreeContext(): CaseResolverFolderTreeContextValue {
   const context = useContext(CaseResolverFolderTreeContext);
   if (!context) {
-    throw new Error('useCaseResolverFolderTreeContext must be used within CaseResolverFolderTreeProvider');
+    throw new Error(
+      'useCaseResolverFolderTreeContext must be used within CaseResolverFolderTreeProvider'
+    );
   }
   return context;
 }
@@ -117,14 +114,11 @@ const resolveFolderAncestorNodeIds = (folderPath: string): string[] => {
   if (!normalizedFolder) return [];
   const parts = normalizedFolder.split('/').filter(Boolean);
   return parts.map((_: string, index: number): string =>
-    toCaseResolverFolderNodeId(parts.slice(0, index + 1).join('/')),
+    toCaseResolverFolderNodeId(parts.slice(0, index + 1).join('/'))
   );
 };
 
-const forEachFolderPathAncestor = (
-  folderPath: string,
-  callback: (path: string) => void,
-): void => {
+const forEachFolderPathAncestor = (folderPath: string, callback: (path: string) => void): void => {
   const normalizedFolder = folderPath.trim();
   if (!normalizedFolder) return;
   const parts = normalizedFolder.split('/').filter(Boolean);
@@ -142,7 +136,11 @@ const nowMs = (): number =>
     ? performance.now()
     : Date.now();
 
-export function CaseResolverFolderTreeProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
+export function CaseResolverFolderTreeProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}): React.JSX.Element {
   const searchParams = useSearchParams();
   const requestedFileIdRaw = searchParams.get('fileId');
   const requestedFileId = useMemo((): string | null => {
@@ -163,20 +161,18 @@ export function CaseResolverFolderTreeProvider({ children }: { children: React.R
     onRenameAsset,
     onRenameFolder,
   } = useCaseResolverPageContext();
-  const workspace = useCaseResolverRuntimeSelector(
-    (snapshot) => snapshot.state.workspace.value,
-  );
+  const workspace = useCaseResolverRuntimeSelector((snapshot) => snapshot.state.workspace.value);
   const activeCaseId = useCaseResolverRuntimeSelector(
-    (snapshot) => snapshot.state.selection.activeCaseId,
+    (snapshot) => snapshot.state.selection.activeCaseId
   );
   const selectedFileId = useCaseResolverRuntimeSelector(
-    (snapshot) => snapshot.state.selection.selectedFileId,
+    (snapshot) => snapshot.state.selection.selectedFileId
   );
   const selectedAssetId = useCaseResolverRuntimeSelector(
-    (snapshot) => snapshot.state.selection.selectedAssetId,
+    (snapshot) => snapshot.state.selection.selectedAssetId
   );
   const selectedFolderPath = useCaseResolverRuntimeSelector(
-    (snapshot) => snapshot.state.selection.selectedFolderPath,
+    (snapshot) => snapshot.state.selection.selectedFolderPath
   );
 
   const [showChildCaseFolders, setShowChildCaseFolders] = useState(true);
@@ -185,7 +181,7 @@ export function CaseResolverFolderTreeProvider({ children }: { children: React.R
 
   const workspaceIndexes = useMemo(
     () => getCachedCaseResolverRuntimeIndexes(workspace),
-    [workspace.assets, workspace.files, workspace.folderRecords, workspace.folders],
+    [workspace.assets, workspace.files, workspace.folderRecords, workspace.folders]
   );
 
   // ── Adapter ─────────────────────────────────────────────────────────────────
@@ -207,82 +203,77 @@ export function CaseResolverFolderTreeProvider({ children }: { children: React.R
   };
 
   const adapter = useMemo(
-    (): MasterFolderTreeAdapter => createMasterFolderTreeAdapterV3({
-      handlers: {
-        onMove: async ({ node, targetParent }) => {
-          const targetPath = targetParent?.id ?? '';
-          if (node.entity === 'file') {
-            await adapterOperationsRef.current.moveFile(node.id, targetPath);
-          } else if (node.entity === 'asset') {
-            await adapterOperationsRef.current.moveAsset(node.id, targetPath);
-          } else {
-            await adapterOperationsRef.current.moveFolder(node.id, targetPath);
-          }
+    (): MasterFolderTreeAdapter =>
+      createMasterFolderTreeAdapterV3({
+        handlers: {
+          onMove: async ({ node, targetParent }) => {
+            const targetPath = targetParent?.id ?? '';
+            if (node.entity === 'file') {
+              await adapterOperationsRef.current.moveFile(node.id, targetPath);
+            } else if (node.entity === 'asset') {
+              await adapterOperationsRef.current.moveAsset(node.id, targetPath);
+            } else {
+              await adapterOperationsRef.current.moveFolder(node.id, targetPath);
+            }
+          },
+          onRename: async ({ node, nextName }) => {
+            if (node.entity === 'file') {
+              await adapterOperationsRef.current.renameFile(node.id, nextName);
+            } else if (node.entity === 'asset') {
+              await adapterOperationsRef.current.renameAsset(node.id, nextName);
+            } else {
+              await adapterOperationsRef.current.renameFolder(node.id, nextName);
+            }
+          },
         },
-        onRename: async ({ node, nextName }) => {
-          if (node.entity === 'file') {
-            await adapterOperationsRef.current.renameFile(node.id, nextName);
-          } else if (node.entity === 'asset') {
-            await adapterOperationsRef.current.renameAsset(node.id, nextName);
-          } else {
-            await adapterOperationsRef.current.renameFolder(node.id, nextName);
-          }
-        }
-      },
-      decodeNodeId: (nodeId: string) => {
-        const fileId = fromCaseResolverFileNodeId(nodeId);
-        if (fileId) return { entity: 'file', id: fileId, nodeId };
-        const assetId = fromCaseResolverAssetNodeId(nodeId);
-        if (assetId) return { entity: 'asset', id: assetId, nodeId };
-        const caseId = fromCaseResolverCaseNodeId(nodeId);
-        if (caseId) return { entity: 'folder', id: caseId, nodeId };
-        const folderPath = fromCaseResolverFolderNodeId(nodeId);
-        return { entity: 'folder', id: folderPath || nodeId, nodeId };
-      }
-    }),
-    [],
+        decodeNodeId: (nodeId: string) => {
+          const fileId = fromCaseResolverFileNodeId(nodeId);
+          if (fileId) return { entity: 'file', id: fileId, nodeId };
+          const assetId = fromCaseResolverAssetNodeId(nodeId);
+          if (assetId) return { entity: 'asset', id: assetId, nodeId };
+          const caseId = fromCaseResolverCaseNodeId(nodeId);
+          if (caseId) return { entity: 'folder', id: caseId, nodeId };
+          const folderPath = fromCaseResolverFolderNodeId(nodeId);
+          return { entity: 'folder', id: folderPath || nodeId, nodeId };
+        },
+      }),
+    []
   );
 
-  const treeWorkspace = useMemo(
-    (): CaseResolverWorkspace => {
-      const resolveStartedAtMs = nowMs();
-      const scopedWorkspace = resolveCaseResolverTreeWorkspace({
-        selectedFileId,
-        requestedFileId,
-        activeCaseId,
-        workspace,
-        includeDescendantCaseScope: showChildCaseFolders,
-        indexes: workspaceIndexes,
-      });
-      // If no explicit case context is active, never collapse a non-empty workspace to an empty tree.
-      const hasExplicitCaseContext = Boolean(
-        (activeCaseId?.trim() ?? '') ||
-        (requestedFileId?.trim() ?? ''),
-      );
-      const scopedIsEmpty =
-        scopedWorkspace.files.length === 0 &&
-        scopedWorkspace.assets.length === 0 &&
-        scopedWorkspace.folders.length === 0;
-      const sourceHasData =
-        workspace.files.length > 0 ||
-        workspace.assets.length > 0 ||
-        workspace.folders.length > 0;
-      if (!hasExplicitCaseContext && scopedIsEmpty && sourceHasData) {
-        treeScopeResolveDurationMsRef.current = nowMs() - resolveStartedAtMs;
-        return workspace;
-      }
-      treeScopeResolveDurationMsRef.current = nowMs() - resolveStartedAtMs;
-      return scopedWorkspace;
-    },
-    [
-      activeCaseId,
-      requestedFileId,
+  const treeWorkspace = useMemo((): CaseResolverWorkspace => {
+    const resolveStartedAtMs = nowMs();
+    const scopedWorkspace = resolveCaseResolverTreeWorkspace({
       selectedFileId,
-      showChildCaseFolders,
+      requestedFileId,
+      activeCaseId,
       workspace,
-      workspaceIndexes,
-    ],
-  );
+      includeDescendantCaseScope: showChildCaseFolders,
+      indexes: workspaceIndexes,
+    });
+    // If no explicit case context is active, never collapse a non-empty workspace to an empty tree.
+    const hasExplicitCaseContext = Boolean(
+      (activeCaseId?.trim() ?? '') || (requestedFileId?.trim() ?? '')
+    );
+    const scopedIsEmpty =
+      scopedWorkspace.files.length === 0 &&
+      scopedWorkspace.assets.length === 0 &&
+      scopedWorkspace.folders.length === 0;
+    const sourceHasData =
+      workspace.files.length > 0 || workspace.assets.length > 0 || workspace.folders.length > 0;
+    if (!hasExplicitCaseContext && scopedIsEmpty && sourceHasData) {
+      treeScopeResolveDurationMsRef.current = nowMs() - resolveStartedAtMs;
+      return workspace;
+    }
+    treeScopeResolveDurationMsRef.current = nowMs() - resolveStartedAtMs;
+    return scopedWorkspace;
+  }, [
+    activeCaseId,
+    requestedFileId,
+    selectedFileId,
+    showChildCaseFolders,
+    workspace,
+    workspaceIndexes,
+  ]);
 
   useEffect((): void => {
     const durationMs = treeScopeResolveDurationMsRef.current;
@@ -304,23 +295,22 @@ export function CaseResolverFolderTreeProvider({ children }: { children: React.R
     (): boolean =>
       Boolean(selectedAssetId) &&
       workspace.assets.some(
-        (asset: CaseResolverAssetFile) => asset.id === selectedAssetId && asset.kind === 'node_file',
+        (asset: CaseResolverAssetFile) => asset.id === selectedAssetId && asset.kind === 'node_file'
       ),
-    [selectedAssetId, workspace.assets],
+    [selectedAssetId, workspace.assets]
   );
 
   const activeCaseFile = useMemo(() => {
     if (activeCaseId) {
       const explicitCase = workspace.files.find(
-        (file: CaseResolverFile) => file.id === activeCaseId && file.fileType === 'case',
+        (file: CaseResolverFile) => file.id === activeCaseId && file.fileType === 'case'
       );
       if (explicitCase) return explicitCase;
     }
     if (activeFile?.fileType === 'case') return activeFile;
     if (activeFile?.parentCaseId) {
       const parentCase = workspace.files.find(
-        (file: CaseResolverFile) =>
-          file.id === activeFile.parentCaseId && file.fileType === 'case',
+        (file: CaseResolverFile) => file.id === activeFile.parentCaseId && file.fileType === 'case'
       );
       if (parentCase) return parentCase;
     }
@@ -431,10 +421,7 @@ export function CaseResolverFolderTreeProvider({ children }: { children: React.R
 
   const folderOwnerCaseIdsByPath = useMemo((): Map<string, string[]> => {
     const ownersByPath = new Map<string, Set<string>>();
-    const addOwnerForPath = (
-      folderPath: string,
-      ownerCaseId: string | null | undefined,
-    ): void => {
+    const addOwnerForPath = (folderPath: string, ownerCaseId: string | null | undefined): void => {
       const normalizedOwnerCaseId = ownerCaseId?.trim() ?? '';
       if (!normalizedOwnerCaseId) return;
       forEachFolderPathAncestor(folderPath, (ancestorPath: string): void => {
@@ -460,8 +447,8 @@ export function CaseResolverFolderTreeProvider({ children }: { children: React.R
       resolved.set(
         folderPath,
         Array.from(ownerIds).sort((left: string, right: string): number =>
-          left.localeCompare(right),
-        ),
+          left.localeCompare(right)
+        )
       );
     });
     return resolved;
@@ -472,117 +459,114 @@ export function CaseResolverFolderTreeProvider({ children }: { children: React.R
     treeWorkspace.folderRecords,
   ]);
 
-  const masterNodes = useMemo(
-    (): MasterTreeNode[] => {
-      const baseNodes = buildMasterNodesFromCaseResolverWorkspace(treeWorkspace);
-      const rootCaseId = activeCaseFile?.id ?? null;
+  const masterNodes = useMemo((): MasterTreeNode[] => {
+    const baseNodes = buildMasterNodesFromCaseResolverWorkspace(treeWorkspace);
+    const rootCaseId = activeCaseFile?.id ?? null;
 
-      const getNodeOwnerCaseIds = (node: MasterTreeNode): string[] => {
-        const folderPath = fromCaseResolverFolderNodeId(node.id);
-        if (folderPath !== null) {
-          return folderOwnerCaseIdsByPath.get(folderPath) ?? [];
-        }
-        const fileId = fromCaseResolverFileNodeId(node.id);
-        if (fileId) {
-          const ownerCaseId = fileOwnerCaseIdById.get(fileId);
-          return ownerCaseId ? [ownerCaseId] : [];
-        }
-        const assetId = fromCaseResolverAssetNodeId(node.id);
-        if (assetId) {
-          const ownerCaseId = assetOwnerCaseIdById.get(assetId);
-          return ownerCaseId ? [ownerCaseId] : [];
-        }
-        return [];
-      };
+    const getNodeOwnerCaseIds = (node: MasterTreeNode): string[] => {
+      const folderPath = fromCaseResolverFolderNodeId(node.id);
+      if (folderPath !== null) {
+        return folderOwnerCaseIdsByPath.get(folderPath) ?? [];
+      }
+      const fileId = fromCaseResolverFileNodeId(node.id);
+      if (fileId) {
+        const ownerCaseId = fileOwnerCaseIdById.get(fileId);
+        return ownerCaseId ? [ownerCaseId] : [];
+      }
+      const assetId = fromCaseResolverAssetNodeId(node.id);
+      if (assetId) {
+        const ownerCaseId = assetOwnerCaseIdById.get(assetId);
+        return ownerCaseId ? [ownerCaseId] : [];
+      }
+      return [];
+    };
 
-      const isUnassignedEntityNode = (node: MasterTreeNode): boolean => {
-        const fileId = fromCaseResolverFileNodeId(node.id);
-        if (fileId && unresolvedFileIdSet.has(fileId)) return true;
-        const assetId = fromCaseResolverAssetNodeId(node.id);
-        return Boolean(assetId && unresolvedAssetIdSet.has(assetId));
-      };
+    const isUnassignedEntityNode = (node: MasterTreeNode): boolean => {
+      const fileId = fromCaseResolverFileNodeId(node.id);
+      if (fileId && unresolvedFileIdSet.has(fileId)) return true;
+      const assetId = fromCaseResolverAssetNodeId(node.id);
+      return Boolean(assetId && unresolvedAssetIdSet.has(assetId));
+    };
 
-      let hasUnassignedNodes = false;
-      let hasChildStructureRoots = false;
-      const remappedNodes = baseNodes.map((node: MasterTreeNode): MasterTreeNode => {
-        if (isCaseResolverVirtualSectionNode(node)) return node;
-        if (isUnassignedEntityNode(node)) {
-          hasUnassignedNodes = true;
-          return {
-            ...node,
-            parentId: UNASSIGNED_NODE_ID,
-          };
-        }
-
-        if (!showChildCaseFolders) return node;
-        if (!rootCaseId) return node;
-        if (node.parentId !== null) return node;
-        const ownerCaseIds = getNodeOwnerCaseIds(node);
-        if (ownerCaseIds.length === 0) return node;
-        const ownedByRootCase = ownerCaseIds.includes(rootCaseId);
-        const ownedByChildCase = ownerCaseIds.some((caseId: string): boolean =>
-          childCaseIdSet.has(caseId),
-        );
-        if (!ownedByChildCase || ownedByRootCase) return node;
-        hasChildStructureRoots = true;
+    let hasUnassignedNodes = false;
+    let hasChildStructureRoots = false;
+    const remappedNodes = baseNodes.map((node: MasterTreeNode): MasterTreeNode => {
+      if (isCaseResolverVirtualSectionNode(node)) return node;
+      if (isUnassignedEntityNode(node)) {
+        hasUnassignedNodes = true;
         return {
           ...node,
-          parentId: CHILD_CASE_STRUCTURE_NODE_ID,
+          parentId: UNASSIGNED_NODE_ID,
         };
-      });
-      if (!hasUnassignedNodes && !hasChildStructureRoots) return baseNodes;
+      }
 
-      const virtualNodes: MasterTreeNode[] = [];
-      if (hasUnassignedNodes) {
-        virtualNodes.push({
-          id: UNASSIGNED_NODE_ID,
-          type: 'folder',
-          kind: 'folder',
-          parentId: null,
-          name: 'Unassigned',
-          path: UNASSIGNED_FOLDER_PATH,
-          sortOrder: Number.MAX_SAFE_INTEGER - 1,
-          metadata: {
-            entity: 'folder',
-            rawPath: UNASSIGNED_FOLDER_PATH,
-            virtualSection: UNASSIGNED_METADATA_VALUE,
-            createdAt: null,
-            updatedAt: null,
-          },
-        });
-      }
-      if (hasChildStructureRoots) {
-        virtualNodes.push({
-          id: CHILD_CASE_STRUCTURE_NODE_ID,
-          type: 'folder',
-          kind: 'folder',
-          parentId: null,
-          name: 'Children Cases',
-          path: CHILD_CASE_STRUCTURE_FOLDER_PATH,
-          sortOrder: Number.MAX_SAFE_INTEGER,
-          metadata: {
-            entity: 'folder',
-            rawPath: CHILD_CASE_STRUCTURE_FOLDER_PATH,
-            virtualSection: CHILD_CASE_STRUCTURE_METADATA_VALUE,
-            createdAt: null,
-            updatedAt: null,
-          },
-        });
-      }
-      return [...remappedNodes, ...virtualNodes];
-    },
-    [
-      activeCaseFile?.id,
-      childCaseIdSet,
-      fileOwnerCaseIdById,
-      assetOwnerCaseIdById,
-      folderOwnerCaseIdsByPath,
-      showChildCaseFolders,
-      treeWorkspace,
-      unresolvedFileIdSet,
-      unresolvedAssetIdSet,
-    ],
-  );
+      if (!showChildCaseFolders) return node;
+      if (!rootCaseId) return node;
+      if (node.parentId !== null) return node;
+      const ownerCaseIds = getNodeOwnerCaseIds(node);
+      if (ownerCaseIds.length === 0) return node;
+      const ownedByRootCase = ownerCaseIds.includes(rootCaseId);
+      const ownedByChildCase = ownerCaseIds.some((caseId: string): boolean =>
+        childCaseIdSet.has(caseId)
+      );
+      if (!ownedByChildCase || ownedByRootCase) return node;
+      hasChildStructureRoots = true;
+      return {
+        ...node,
+        parentId: CHILD_CASE_STRUCTURE_NODE_ID,
+      };
+    });
+    if (!hasUnassignedNodes && !hasChildStructureRoots) return baseNodes;
+
+    const virtualNodes: MasterTreeNode[] = [];
+    if (hasUnassignedNodes) {
+      virtualNodes.push({
+        id: UNASSIGNED_NODE_ID,
+        type: 'folder',
+        kind: 'folder',
+        parentId: null,
+        name: 'Unassigned',
+        path: UNASSIGNED_FOLDER_PATH,
+        sortOrder: Number.MAX_SAFE_INTEGER - 1,
+        metadata: {
+          entity: 'folder',
+          rawPath: UNASSIGNED_FOLDER_PATH,
+          virtualSection: UNASSIGNED_METADATA_VALUE,
+          createdAt: null,
+          updatedAt: null,
+        },
+      });
+    }
+    if (hasChildStructureRoots) {
+      virtualNodes.push({
+        id: CHILD_CASE_STRUCTURE_NODE_ID,
+        type: 'folder',
+        kind: 'folder',
+        parentId: null,
+        name: 'Children Cases',
+        path: CHILD_CASE_STRUCTURE_FOLDER_PATH,
+        sortOrder: Number.MAX_SAFE_INTEGER,
+        metadata: {
+          entity: 'folder',
+          rawPath: CHILD_CASE_STRUCTURE_FOLDER_PATH,
+          virtualSection: CHILD_CASE_STRUCTURE_METADATA_VALUE,
+          createdAt: null,
+          updatedAt: null,
+        },
+      });
+    }
+    return [...remappedNodes, ...virtualNodes];
+  }, [
+    activeCaseFile?.id,
+    childCaseIdSet,
+    fileOwnerCaseIdById,
+    assetOwnerCaseIdById,
+    folderOwnerCaseIdsByPath,
+    showChildCaseFolders,
+    treeWorkspace,
+    unresolvedFileIdSet,
+    unresolvedAssetIdSet,
+  ]);
 
   const selectedMasterNodeId = useMemo((): string | null => {
     if (selectedFileId) return toCaseResolverFileNodeId(selectedFileId);
@@ -602,7 +586,7 @@ export function CaseResolverFolderTreeProvider({ children }: { children: React.R
       masterNodes
         .filter((node: MasterTreeNode) => node.type === 'folder')
         .map((node: MasterTreeNode) => node.id),
-    [masterNodes],
+    [masterNodes]
   );
 
   const fileLockById = useMemo((): Map<string, boolean> => {
@@ -610,14 +594,11 @@ export function CaseResolverFolderTreeProvider({ children }: { children: React.R
       treeWorkspace.files.map((file: CaseResolverFile): [string, boolean] => [
         file.id,
         file.isLocked ?? false,
-      ]),
+      ])
     );
   }, [treeWorkspace.files]);
 
-  const folderCaseFileStatsByPath = useMemo((): Map<
-    string,
-    FolderCaseFileStats
-  > => {
+  const folderCaseFileStatsByPath = useMemo((): Map<string, FolderCaseFileStats> => {
     const stats = new Map<string, FolderCaseFileStats>();
     treeWorkspace.files.forEach((file: CaseResolverFile): void => {
       if (file.fileType === 'case') return;
@@ -642,9 +623,7 @@ export function CaseResolverFolderTreeProvider({ children }: { children: React.R
       assets: treeWorkspace.assets,
       files: treeWorkspace.files,
     });
-    return new Map<string, string[]>(
-      Object.entries(relations.nodeFileAssetIdsByDocumentFileId),
-    );
+    return new Map<string, string[]>(Object.entries(relations.nodeFileAssetIdsByDocumentFileId));
   }, [treeWorkspace.assets, treeWorkspace.files]);
 
   useEffect(() => {
@@ -653,30 +632,25 @@ export function CaseResolverFolderTreeProvider({ children }: { children: React.R
     const relatedNodeFileAssetIds = selectedFileId
       ? (nodeFileAssetIdsBySourceFileId.get(selectedFileId) ?? [])
       : [];
-    const stableRelatedNodeFileAssetIds = Array.from(
-      new Set<string>(relatedNodeFileAssetIds),
-    ).sort((left: string, right: string): number => left.localeCompare(right));
+    const stableRelatedNodeFileAssetIds = Array.from(new Set<string>(relatedNodeFileAssetIds)).sort(
+      (left: string, right: string): number => left.localeCompare(right)
+    );
     const nextHighlighted = [
       ...(activeNodeFileAssetId ? [activeNodeFileAssetId] : []),
       ...stableRelatedNodeFileAssetIds.filter(
-        (assetId: string): boolean => assetId !== activeNodeFileAssetId,
+        (assetId: string): boolean => assetId !== activeNodeFileAssetId
       ),
     ];
     setHighlightedNodeFileAssetIds((currentHighlighted: string[]): string[] =>
       areStringArraysEqual(currentHighlighted, nextHighlighted)
         ? currentHighlighted
-        : nextHighlighted,
+        : nextHighlighted
     );
-  }, [
-    isNodeFileCanvasActive,
-    nodeFileAssetIdsBySourceFileId,
-    selectedAssetId,
-    selectedFileId,
-  ]);
+  }, [isNodeFileCanvasActive, nodeFileAssetIdsBySourceFileId, selectedAssetId, selectedFileId]);
 
   const highlightedNodeFileAssetIdSet = useMemo(
     () => new Set<string>(highlightedNodeFileAssetIds),
-    [highlightedNodeFileAssetIds],
+    [highlightedNodeFileAssetIds]
   );
 
   useEffect(() => {
@@ -690,10 +664,10 @@ export function CaseResolverFolderTreeProvider({ children }: { children: React.R
     const validNodeFileAssetIds = new Set<string>(
       treeWorkspace.assets
         .filter((asset: CaseResolverAssetFile): boolean => asset.kind === 'node_file')
-        .map((asset: CaseResolverAssetFile): string => asset.id),
+        .map((asset: CaseResolverAssetFile): string => asset.id)
     );
-    const nextHighlighted = highlightedNodeFileAssetIds.filter(
-      (assetId: string): boolean => validNodeFileAssetIds.has(assetId),
+    const nextHighlighted = highlightedNodeFileAssetIds.filter((assetId: string): boolean =>
+      validNodeFileAssetIds.has(assetId)
     );
     if (nextHighlighted.length === highlightedNodeFileAssetIds.length) return;
     setHighlightedNodeFileAssetIds(nextHighlighted);
@@ -706,11 +680,9 @@ export function CaseResolverFolderTreeProvider({ children }: { children: React.R
     treeWorkspace.assets.forEach((asset: CaseResolverAssetFile): void => {
       if (asset.kind !== 'node_file') return;
       if (!highlighted.has(asset.id)) return;
-      resolveFolderAncestorNodeIds(asset.folder).forEach(
-        (folderNodeId: string): void => {
-          ancestorNodeIds.add(folderNodeId);
-        },
-      );
+      resolveFolderAncestorNodeIds(asset.folder).forEach((folderNodeId: string): void => {
+        ancestorNodeIds.add(folderNodeId);
+      });
     });
     return Array.from(ancestorNodeIds);
   }, [highlightedNodeFileAssetIds, treeWorkspace.assets]);
@@ -721,62 +693,63 @@ export function CaseResolverFolderTreeProvider({ children }: { children: React.R
 
   const selectedFolderForFolderCreate =
     selectedFolderPath &&
-      (
-        isChildCaseStructureFolderPath(selectedFolderPath) ||
-        isUnassignedFolderPath(selectedFolderPath)
-      )
+    (isChildCaseStructureFolderPath(selectedFolderPath) ||
+      isUnassignedFolderPath(selectedFolderPath))
       ? ''
       : selectedFolderPath;
 
-  const value = useMemo((): CaseResolverFolderTreeContextValue => ({
-    masterNodes,
-    treeWorkspace,
-    selectedMasterNodeId,
-    initialExpandedFolderNodeIds,
-    adapter,
-    showChildCaseFolders,
-    setShowChildCaseFolders,
-    highlightedNodeFileAssetIds,
-    setHighlightedNodeFileAssetIds,
-    highlightedNodeFileAssetIdSet,
-    highlightedFolderAncestorNodeIds,
-    fileLockById,
-    folderCaseFileStatsByPath,
-    nodeFileAssetIdsBySourceFileId,
-    caseNameById,
-    childCaseIdSet,
-    fileOwnerCaseIdById,
-    assetOwnerCaseIdById,
-    folderOwnerCaseIdsByPath,
-    activeCaseFile,
-    activeCaseChildCount,
-    isNodeFileCanvasActive,
-    selectedFolderForCreate,
-    selectedFolderForFolderCreate,
-  }), [
-    masterNodes,
-    treeWorkspace,
-    selectedMasterNodeId,
-    initialExpandedFolderNodeIds,
-    adapter,
-    showChildCaseFolders,
-    highlightedNodeFileAssetIds,
-    highlightedNodeFileAssetIdSet,
-    highlightedFolderAncestorNodeIds,
-    fileLockById,
-    folderCaseFileStatsByPath,
-    nodeFileAssetIdsBySourceFileId,
-    caseNameById,
-    childCaseIdSet,
-    fileOwnerCaseIdById,
-    assetOwnerCaseIdById,
-    folderOwnerCaseIdsByPath,
-    activeCaseFile,
-    activeCaseChildCount,
-    isNodeFileCanvasActive,
-    selectedFolderForCreate,
-    selectedFolderForFolderCreate,
-  ]);
+  const value = useMemo(
+    (): CaseResolverFolderTreeContextValue => ({
+      masterNodes,
+      treeWorkspace,
+      selectedMasterNodeId,
+      initialExpandedFolderNodeIds,
+      adapter,
+      showChildCaseFolders,
+      setShowChildCaseFolders,
+      highlightedNodeFileAssetIds,
+      setHighlightedNodeFileAssetIds,
+      highlightedNodeFileAssetIdSet,
+      highlightedFolderAncestorNodeIds,
+      fileLockById,
+      folderCaseFileStatsByPath,
+      nodeFileAssetIdsBySourceFileId,
+      caseNameById,
+      childCaseIdSet,
+      fileOwnerCaseIdById,
+      assetOwnerCaseIdById,
+      folderOwnerCaseIdsByPath,
+      activeCaseFile,
+      activeCaseChildCount,
+      isNodeFileCanvasActive,
+      selectedFolderForCreate,
+      selectedFolderForFolderCreate,
+    }),
+    [
+      masterNodes,
+      treeWorkspace,
+      selectedMasterNodeId,
+      initialExpandedFolderNodeIds,
+      adapter,
+      showChildCaseFolders,
+      highlightedNodeFileAssetIds,
+      highlightedNodeFileAssetIdSet,
+      highlightedFolderAncestorNodeIds,
+      fileLockById,
+      folderCaseFileStatsByPath,
+      nodeFileAssetIdsBySourceFileId,
+      caseNameById,
+      childCaseIdSet,
+      fileOwnerCaseIdById,
+      assetOwnerCaseIdById,
+      folderOwnerCaseIdsByPath,
+      activeCaseFile,
+      activeCaseChildCount,
+      isNodeFileCanvasActive,
+      selectedFolderForCreate,
+      selectedFolderForFolderCreate,
+    ]
+  );
 
   return (
     <CaseResolverFolderTreeContext.Provider value={value}>

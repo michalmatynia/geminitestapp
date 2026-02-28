@@ -1,40 +1,32 @@
-
-
 import { NextRequest, NextResponse } from 'next/server';
 
 import { TRADERA_INTEGRATION_SLUGS } from '@/features/integrations/constants/slugs';
-import { getIntegrationRepository, listAllProductListingsAcrossProviders } from '@/features/integrations/server';
+import {
+  getIntegrationRepository,
+  listAllProductListingsAcrossProviders,
+} from '@/features/integrations/server';
 import { getProductRepository } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);
 type MarketplaceBadgeKey = 'base' | 'tradera';
-type ProductListingBadgesPayload = Record<
-  string,
-  Partial<Record<MarketplaceBadgeKey, string>>
->;
+type ProductListingBadgesPayload = Record<string, Partial<Record<MarketplaceBadgeKey, string>>>;
 
 const normalizeStatus = (value: string | null | undefined): string =>
   (value ?? '').trim().toLowerCase();
 
-const resolveMarketplaceKey = (
-  slug: string | null | undefined
-): MarketplaceBadgeKey | null => {
+const resolveMarketplaceKey = (slug: string | null | undefined): MarketplaceBadgeKey | null => {
   const normalized = (slug ?? '').trim().toLowerCase();
   if (BASE_INTEGRATION_SLUGS.has(normalized)) return 'base';
   if (TRADERA_INTEGRATION_SLUGS.has(normalized)) return 'tradera';
   return null;
 };
 
-const inferMarketplaceFromListingMetadata = (
-  value: unknown
-): MarketplaceBadgeKey | null => {
+const inferMarketplaceFromListingMetadata = (value: unknown): MarketplaceBadgeKey | null => {
   if (!value || typeof value !== 'object') return null;
   const data = value as Record<string, unknown>;
   const marketplace =
-    typeof data['marketplace'] === 'string'
-      ? data['marketplace'].trim().toLowerCase()
-      : '';
+    typeof data['marketplace'] === 'string' ? data['marketplace'].trim().toLowerCase() : '';
   if (BASE_INTEGRATION_SLUGS.has(marketplace)) return 'base';
   if (TRADERA_INTEGRATION_SLUGS.has(marketplace)) return 'tradera';
 
@@ -51,9 +43,7 @@ const inferMarketplaceFromListingMetadata = (
   return null;
 };
 
-const listProductsWithBaseIds = async (): Promise<
-  Array<{ id: string; baseProductId: string }>
-> => {
+const listProductsWithBaseIds = async (): Promise<Array<{ id: string; baseProductId: string }>> => {
   const productRepository = await getProductRepository();
   const pageSize = 500;
   const maxPages = 40;
@@ -154,8 +144,5 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
     }
   }
 
-  return NextResponse.json(
-    Object.fromEntries(byProduct.entries()) as ProductListingBadgesPayload
-  );
+  return NextResponse.json(Object.fromEntries(byProduct.entries()) as ProductListingBadgesPayload);
 }
-

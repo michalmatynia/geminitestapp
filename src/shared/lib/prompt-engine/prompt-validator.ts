@@ -22,7 +22,10 @@ export type PromptValidationIssue = PromptValidationIssueDto;
 
 export type PromptValidationExecutionContext = PromptValidationExecutionContextDto;
 
-export type PromptValidationPreparedRuntime = Omit<PromptValidationPreparedRuntimeDto, 'sequenceGroupCounts'> & {
+export type PromptValidationPreparedRuntime = Omit<
+  PromptValidationPreparedRuntimeDto,
+  'sequenceGroupCounts'
+> & {
   sequenceGroupCounts: Map<string, number>;
 };
 
@@ -40,7 +43,10 @@ function compileRegex(pattern: string, flags: string | undefined): RegExp | null
   }
 }
 
-function findSuggestions(prompt: string, rule: Pick<PromptValidationRule, 'similar'>): PromptValidationSuggestion[] {
+function findSuggestions(
+  prompt: string,
+  rule: Pick<PromptValidationRule, 'similar'>
+): PromptValidationSuggestion[] {
   const suggestions: PromptValidationSuggestion[] = [];
 
   (rule.similar ?? []).forEach((sim: PromptValidationSimilarPattern) => {
@@ -295,10 +301,7 @@ export const preparePromptValidationRuntime = (
   settings: PromptValidationSettings,
   context: PromptValidationExecutionContext = {}
 ): PromptValidationPreparedRuntime => {
-  const mergedRules: PromptValidationRule[] = [
-    ...settings.rules,
-    ...(settings.learnedRules ?? []),
-  ];
+  const mergedRules: PromptValidationRule[] = [...settings.rules, ...(settings.learnedRules ?? [])];
   const orderedRules = sortPromptValidationRules(mergedRules);
   const sequenceGroupCounts = buildPromptSequenceGroupCounts(orderedRules);
   return {
@@ -326,10 +329,7 @@ export const validateProgrammaticPromptWithRuntime = (
     if (!rule.enabled) continue;
     if (!doesPromptRuleApplyToScope(rule, runtime.context.scope)) continue;
 
-    const inSequenceGroup = isPromptRuleInSequenceGroup(
-      rule,
-      runtime.sequenceGroupCounts
-    );
+    const inSequenceGroup = isPromptRuleInSequenceGroup(rule, runtime.sequenceGroupCounts);
     const maxExecutions = normalizePromptRuleMaxExecutions(rule);
     let matched = false;
 

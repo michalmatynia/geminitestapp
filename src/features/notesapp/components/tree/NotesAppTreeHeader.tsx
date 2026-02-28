@@ -33,8 +33,7 @@ export function NotesAppTreeHeader({
     setSelectedFolderId,
   } = useNotesAppContext();
 
-  const isAllNotesActive =
-    !settings.selectedFolderId && !settings.selectedNoteId;
+  const isAllNotesActive = !settings.selectedFolderId && !settings.selectedNoteId;
 
   return (
     <TreeHeader
@@ -99,9 +98,7 @@ export function NotesAppTreeHeader({
           controller.selectNode(null);
         }}
         className={`w-full justify-start gap-2 px-2 py-1.5 text-left text-sm ${
-          isAllNotesActive
-            ? 'bg-blue-600 text-white'
-            : 'text-gray-300 hover:bg-muted/50'
+          isAllNotesActive ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-muted/50'
         }`}
       >
         <Folder className='size-4' />
@@ -109,11 +106,7 @@ export function NotesAppTreeHeader({
       </Button>
       <Button
         onClick={(): void => {
-          filters.handleToggleFavoritesFilter(
-            setSelectedFolderId,
-            setSelectedNote,
-            setIsEditing,
-          );
+          filters.handleToggleFavoritesFilter(setSelectedFolderId, setSelectedNote, setIsEditing);
         }}
         className={`mt-1 w-full justify-start gap-2 px-2 py-1.5 text-left text-sm ${
           filters.filterFavorite === true
@@ -126,22 +119,18 @@ export function NotesAppTreeHeader({
       </Button>
       {undoHistory.length > 0 && (
         <div className='mt-3 rounded border border-border bg-card/60 p-2 text-xs text-gray-300'>
-          <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>
-            History
-          </div>
+          <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>History</div>
           <div className='space-y-1'>
-            {undoHistory
-              .slice(0, 10)
-              .map((entry: { label: string }, index: number) => (
-                <Button
-                  key={`${entry.label}-${index}`}
-                  type='button'
-                  onClick={(): void => handleUndoAtIndex(index)}
-                  className='flex w-full items-center justify-between rounded px-1.5 py-1 text-left text-gray-300 hover:bg-muted/50'
-                >
-                  <span className='truncate'>{entry.label}</span>
-                </Button>
-              ))}
+            {undoHistory.slice(0, 10).map((entry: { label: string }, index: number) => (
+              <Button
+                key={`${entry.label}-${index}`}
+                type='button'
+                onClick={(): void => handleUndoAtIndex(index)}
+                className='flex w-full items-center justify-between rounded px-1.5 py-1 text-left text-gray-300 hover:bg-muted/50'
+              >
+                <span className='truncate'>{entry.label}</span>
+              </Button>
+            ))}
           </div>
         </div>
       )}

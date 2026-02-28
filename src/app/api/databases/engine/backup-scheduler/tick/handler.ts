@@ -4,8 +4,8 @@ import { auth } from '@/features/auth/server';
 import {
   getDatabaseBackupSchedulerStatus,
   tickDatabaseBackupScheduler,
-} from '@/features/database/services/database-backup-scheduler';
-import { assertDatabaseEngineOperationEnabled } from '@/features/database/services/database-engine-operation-guards';
+} from '@/shared/lib/db/services/database-backup-scheduler';
+import { assertDatabaseEngineOperationEnabled } from '@/shared/lib/db/services/database-engine-operation-guards';
 import {
   DATABASE_BACKUP_SCHEDULER_REPEAT_EVERY_MS,
   getDatabaseBackupSchedulerQueueStatus,
@@ -17,8 +17,7 @@ import { authError } from '@/shared/errors/app-error';
 export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const session = await auth();
   const hasAccess =
-    session?.user?.isElevated ||
-    session?.user?.permissions?.includes('settings.manage');
+    session?.user?.isElevated || session?.user?.permissions?.includes('settings.manage');
   if (!hasAccess) {
     throw authError('Unauthorized.');
   }
@@ -45,6 +44,6 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext): 
     },
     {
       headers: { 'Cache-Control': 'no-store' },
-    },
+    }
   );
 }

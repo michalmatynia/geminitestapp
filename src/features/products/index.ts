@@ -8,7 +8,7 @@ export * from './context/ProductListContext';
 export * from './context/ProductFormContext';
 export * from './api';
 export * from '@/shared/contracts/products';
-export { 
+export {
   productCreateSchema as productCreateInputSchemaV1,
   productUpdateSchema as productUpdateInputSchemaV1,
 } from './validations';

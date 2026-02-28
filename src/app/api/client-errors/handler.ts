@@ -11,7 +11,6 @@ import { isAbortLikeError } from '@/shared/utils/observability/is-abort-like-err
 import type { ErrorContext } from '@/shared/contracts/observability';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
-
 const MAX_CLIENT_ERROR_BODY_BYTES = 64_000;
 const MAX_CLIENT_CONTEXT_BYTES = 16_000;
 const MAX_CLIENT_VALUE_LENGTH = 2_000;
@@ -59,20 +58,17 @@ const sanitizeClientContext = (value: unknown): Record<string, unknown> | null =
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
   try {
     const seen = new WeakSet();
-    const serialized = JSON.stringify(
-      value,
-      (key: string, current: unknown): unknown => {
-        if (key && isSensitiveKey(key)) return REDACTED_VALUE;
-        if (typeof current === 'object' && current !== null) {
-          if (seen.has(current)) return '[Circular]';
-          seen.add(current);
-        }
-        if (typeof current === 'function') return '[Function]';
-        if (typeof current === 'bigint') return current.toString();
-        if (typeof current === 'string') return truncateString(current, MAX_CLIENT_VALUE_LENGTH);
-        return current;
+    const serialized = JSON.stringify(value, (key: string, current: unknown): unknown => {
+      if (key && isSensitiveKey(key)) return REDACTED_VALUE;
+      if (typeof current === 'object' && current !== null) {
+        if (seen.has(current)) return '[Circular]';
+        seen.add(current);
       }
-    );
+      if (typeof current === 'function') return '[Function]';
+      if (typeof current === 'bigint') return current.toString();
+      if (typeof current === 'string') return truncateString(current, MAX_CLIENT_VALUE_LENGTH);
+      return current;
+    });
     if (!serialized) return null;
     if (serialized.length > MAX_CLIENT_CONTEXT_BYTES) {
       return {
@@ -90,10 +86,16 @@ const sanitizeClientContext = (value: unknown): Record<string, unknown> | null =
   }
 };
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<NextResponse> {
+export async function POST_handler(
+  req: NextRequest,
+  _ctx: ApiHandlerContext
+): Promise<NextResponse> {
   const contentLength = Number.parseInt(req.headers.get('content-length') ?? '0', 10);
   if (Number.isFinite(contentLength) && contentLength > MAX_CLIENT_ERROR_BODY_BYTES) {
-    return NextResponse.json({ ok: true, success: true, dropped: true, reason: 'payload_too_large' }, { status: 200 });
+    return NextResponse.json(
+      { ok: true, success: true, dropped: true, reason: 'payload_too_large' },
+      { status: 200 }
+    );
   }
 
   const rawBody = (await req.json().catch(() => null)) as unknown;
@@ -102,9 +104,11 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   const payload = parsed.success ? parsed.data : {};
   const sanitizedContext = sanitizeClientContext(payload.context ?? null);
 
-  const fallbackMessage = typeof normalizedBody['message'] === 'string' ? normalizedBody['message'] : null;
+  const fallbackMessage =
+    typeof normalizedBody['message'] === 'string' ? normalizedBody['message'] : null;
   const fallbackName = typeof normalizedBody['name'] === 'string' ? normalizedBody['name'] : null;
-  const fallbackStack = typeof normalizedBody['stack'] === 'string' ? normalizedBody['stack'] : null;
+  const fallbackStack =
+    typeof normalizedBody['stack'] === 'string' ? normalizedBody['stack'] : null;
   const resolveStringField = (
     primary: unknown,
     fallback: unknown,
@@ -118,7 +122,12 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     return defaultValue;
   };
 
-  const message = resolveStringField(payload.message, fallbackMessage, 2_000, 'Unknown client error');
+  const message = resolveStringField(
+    payload.message,
+    fallbackMessage,
+    2_000,
+    'Unknown client error'
+  );
   const normalizedName = resolveStringField(payload.name, fallbackName, 120, 'ClientError');
   if (isAbortLikeError({ name: normalizedName, message })) {
     return NextResponse.json(
@@ -141,7 +150,9 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     ...(typeof payload.digest === 'string' ? { digest: payload.digest } : {}),
     ...(typeof payload.timestamp === 'string' ? { clientTimestamp: payload.timestamp } : {}),
     ...(typeof payload.userAgent === 'string' ? { clientUserAgent: payload.userAgent } : {}),
-    ...(typeof payload.componentStack === 'string' ? { componentStack: payload.componentStack } : {}),
+    ...(typeof payload.componentStack === 'string'
+      ? { componentStack: payload.componentStack }
+      : {}),
     ...(!parsed.success ? { payloadInvalid: true } : {}),
     extra: sanitizedContext ?? {},
     source: 'client.error.reporter',

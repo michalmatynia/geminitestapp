@@ -2,11 +2,7 @@ export const runtime = 'nodejs';
 
 import { apiHandler } from '@/shared/lib/api/api-handler';
 
-import {
-  GET_handler,
-  PUT_handler,
-  updateValidatorSettingsSchema,
-} from './handler';
+import { GET_handler, PUT_handler, updateValidatorSettingsSchema } from './handler';
 
 export const GET = apiHandler(GET_handler, {
   source: 'products.validator-settings.GET',

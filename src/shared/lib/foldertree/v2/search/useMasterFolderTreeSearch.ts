@@ -17,12 +17,9 @@ export function useMasterFolderTreeSearch(
     const normalized = trimmed.toLowerCase();
     const matched = nodes.filter(
       (node: MasterTreeNode): boolean =>
-        node.name.toLowerCase().includes(normalized) ||
-        node.path.toLowerCase().includes(normalized)
+        node.name.toLowerCase().includes(normalized) || node.path.toLowerCase().includes(normalized)
     );
-    matched.sort((a: MasterTreeNode, b: MasterTreeNode): number =>
-      a.name.localeCompare(b.name)
-    );
+    matched.sort((a: MasterTreeNode, b: MasterTreeNode): number => a.name.localeCompare(b.name));
     return matched.map((node: MasterTreeNode): MasterFolderTreeSearchResult => ({ node }));
   }, [nodes, isActive, trimmed]);
 

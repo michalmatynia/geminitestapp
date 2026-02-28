@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { dtoBaseSchema, namedDtoSchema } from './base';
 
-import type { 
+import type {
   BaseImportStartResponse,
   BaseImportRunDetailResponse,
   ImageRetryPreset,
@@ -72,9 +72,7 @@ export const importTemplateParameterImportSchema = z.object({
   matchBy: z.enum(['base_id_then_name', 'name_only']).optional(),
 });
 
-export type ImportTemplateParameterImportDto = z.infer<
-  typeof importTemplateParameterImportSchema
->;
+export type ImportTemplateParameterImportDto = z.infer<typeof importTemplateParameterImportSchema>;
 export type ImportTemplateParameterImport = ImportTemplateParameterImportDto;
 
 export const importExportTemplateSchema = namedDtoSchema.extend({
@@ -244,14 +242,16 @@ export const inventoryDebugRawSchema = z.object({
 export type InventoryDebugRawDto = z.infer<typeof inventoryDebugRawSchema>;
 export type InventoryDebugRaw = InventoryDebugRawDto;
 
-export const debugWarehousesSchema = z.object({
-  inventory: z.array(warehouseOptionSchema).optional(),
-  all: z.array(warehouseOptionSchema).optional(),
-  inventories: z.array(inventoryOptionSchema).optional(),
-  inventoryRaw: warehouseDebugRawSchema.nullable().optional(),
-  inventoriesRaw: inventoryDebugRawSchema.nullable().optional(),
-  allRaw: warehouseDebugRawSchema.nullable().optional(),
-}).nullable();
+export const debugWarehousesSchema = z
+  .object({
+    inventory: z.array(warehouseOptionSchema).optional(),
+    all: z.array(warehouseOptionSchema).optional(),
+    inventories: z.array(inventoryOptionSchema).optional(),
+    inventoryRaw: warehouseDebugRawSchema.nullable().optional(),
+    inventoriesRaw: inventoryDebugRawSchema.nullable().optional(),
+    allRaw: warehouseDebugRawSchema.nullable().optional(),
+  })
+  .nullable();
 
 export type DebugWarehousesDto = z.infer<typeof debugWarehousesSchema>;
 export type DebugWarehouses = DebugWarehousesDto;

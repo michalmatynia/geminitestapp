@@ -28,19 +28,12 @@ type MongoUserDoc = {
   emailVerified?: Date | null;
 };
 
-export async function POST_handler(
-  req: NextRequest,
-  ctx: ApiHandlerContext,
-): Promise<Response> {
+export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const session = await auth();
   const hasAccess =
-    session?.user?.isElevated ||
-    session?.user?.permissions?.includes('auth.users.write');
+    session?.user?.isElevated || session?.user?.permissions?.includes('auth.users.write');
   if (!hasAccess) {
-    return NextResponse.json(
-      { ok: false, message: 'Unauthorized.' },
-      { status: 401 },
-    );
+    return NextResponse.json({ ok: false, message: 'Unauthorized.' }, { status: 401 });
   }
   const data = ctx.body as z.infer<typeof payloadSchema> | undefined;
   if (!data) {
@@ -75,7 +68,7 @@ export async function POST_handler(
         ok: false,
         message: 'Too many attempts. Please try again later.',
       },
-      { status: 429 },
+      { status: 429 }
     );
   }
   const db = await getMongoDb();

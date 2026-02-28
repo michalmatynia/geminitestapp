@@ -47,20 +47,9 @@ export type ImageTransformOptions = {
 
 export type { ImageUrlDiagnostic };
 
-const SUPPORTED_IMAGE_MIME_TYPES = new Set([
-  'image/jpeg',
-  'image/png',
-  'image/gif',
-]);
+const SUPPORTED_IMAGE_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/gif']);
 
-const SUPPORTED_IMAGE_EXTENSIONS = new Set([
-  '.jpg',
-  '.jpeg',
-  '.jpe',
-  '.jfif',
-  '.png',
-  '.gif',
-]);
+const SUPPORTED_IMAGE_EXTENSIONS = new Set(['.jpg', '.jpeg', '.jpe', '.jfif', '.png', '.gif']);
 
 const UNSUPPORTED_IMAGE_EXTENSIONS = new Set([
   '.webp',
@@ -115,7 +104,10 @@ const inferMimeFromExtension = (extension?: string | null): string | null => {
   return null;
 };
 
-const getImageSupportStatus = (url: string, mimetype?: string | null): {
+const getImageSupportStatus = (
+  url: string,
+  mimetype?: string | null
+): {
   supported: boolean;
   reason?: string;
   normalizedMime: string | null;
@@ -125,7 +117,9 @@ const getImageSupportStatus = (url: string, mimetype?: string | null): {
   if (normalizedMime) {
     return {
       supported: isSupportedImageMime(normalizedMime),
-      ...(isSupportedImageMime(normalizedMime) ? {} : { reason: `unsupported_mimetype:${normalizedMime}` }),
+      ...(isSupportedImageMime(normalizedMime)
+        ? {}
+        : { reason: `unsupported_mimetype:${normalizedMime}` }),
       normalizedMime,
       extension: null,
     };
@@ -193,36 +187,47 @@ export const collectProductImageDiagnostics = (
   const diagnostics: ImageUrlDiagnostic[] = [];
 
   const slotImages = product.images ?? [];
-  slotImages.forEach((entry: { imageFile?: { filepath?: string | null; mimetype?: string | null; size?: number | null } | null }, index: number) => {
-    const filepath = entry?.imageFile?.filepath ?? null;
-    const resolvedUrl = resolveImageUrl(filepath, imageBaseUrl);
-    if (!resolvedUrl) {
+  slotImages.forEach(
+    (
+      entry: {
+        imageFile?: {
+          filepath?: string | null;
+          mimetype?: string | null;
+          size?: number | null;
+        } | null;
+      },
+      index: number
+    ) => {
+      const filepath = entry?.imageFile?.filepath ?? null;
+      const resolvedUrl = resolveImageUrl(filepath, imageBaseUrl);
+      if (!resolvedUrl) {
+        diagnostics.push({
+          sourceType: 'slot',
+          index,
+          filepath,
+          resolvedUrl: null,
+          mimetype: entry?.imageFile?.mimetype ?? null,
+          size: entry?.imageFile?.size ?? null,
+          supported: false,
+          reason: 'missing_url',
+        });
+        return;
+      }
+      const status = getImageSupportStatus(resolvedUrl, entry?.imageFile?.mimetype);
       diagnostics.push({
         sourceType: 'slot',
         index,
         filepath,
-        resolvedUrl: null,
+        resolvedUrl,
         mimetype: entry?.imageFile?.mimetype ?? null,
         size: entry?.imageFile?.size ?? null,
-        supported: false,
-        reason: 'missing_url',
+        supported: status.supported,
+        ...(status.reason ? { reason: status.reason } : {}),
+        extension: status.extension,
+        normalizedMime: status.normalizedMime,
       });
-      return;
     }
-    const status = getImageSupportStatus(resolvedUrl, entry?.imageFile?.mimetype);
-    diagnostics.push({
-      sourceType: 'slot',
-      index,
-      filepath,
-      resolvedUrl,
-      mimetype: entry?.imageFile?.mimetype ?? null,
-      size: entry?.imageFile?.size ?? null,
-      supported: status.supported,
-      ...(status.reason ? { reason: status.reason } : {}),
-      extension: status.extension,
-      normalizedMime: status.normalizedMime,
-    });
-  });
+  );
 
   const linkImages = product.imageLinks ?? [];
   linkImages.forEach((link: string, index: number) => {
@@ -281,10 +286,7 @@ export const getImageSlotUrl = (
     }
   }
   const link = product.imageLinks?.[index];
-  const resolved = resolveImageUrl(
-    typeof link === 'string' ? link : null,
-    imageBaseUrl
-  );
+  const resolved = resolveImageUrl(typeof link === 'string' ? link : null, imageBaseUrl);
   if (
     resolved &&
     shouldIncludeImageUrl(resolved, {
@@ -325,22 +327,27 @@ export const getImageList = (
       .filter(Boolean);
   }
   const slots = (product.images ?? [])
-    .map((entry: { imageFile?: { filepath?: string | null; mimetype?: string | null } | null }, index: number): string => {
-      const resolved = resolveImageUrl(entry.imageFile?.filepath, imageBaseUrl) ?? '';
-      if (
-        resolved &&
-        !shouldIncludeImageUrl(resolved, {
-          mimetype: entry.imageFile?.mimetype ?? null,
-          diagnostics,
-          sourceType: 'slot',
-          index,
-          source: entry.imageFile?.filepath ?? resolved,
-        })
-      ) {
-        return '';
+    .map(
+      (
+        entry: { imageFile?: { filepath?: string | null; mimetype?: string | null } | null },
+        index: number
+      ): string => {
+        const resolved = resolveImageUrl(entry.imageFile?.filepath, imageBaseUrl) ?? '';
+        if (
+          resolved &&
+          !shouldIncludeImageUrl(resolved, {
+            mimetype: entry.imageFile?.mimetype ?? null,
+            diagnostics,
+            sourceType: 'slot',
+            index,
+            source: entry.imageFile?.filepath ?? resolved,
+          })
+        ) {
+          return '';
+        }
+        return resolved;
       }
-      return resolved;
-    })
+    )
     .filter(Boolean);
   return slots;
 };
@@ -436,7 +443,7 @@ const imageToBase64DataUri = async (
     }
 
     const extension = getUrlExtension(filepath);
-    const formatMime = format ? FORMAT_MIME_MAP[format] ?? null : null;
+    const formatMime = format ? (FORMAT_MIME_MAP[format] ?? null) : null;
     const inferredMime = contentType ?? inferMimeFromExtension(extension);
 
     let shouldConvert: boolean;
@@ -523,10 +530,7 @@ const imageToBase64DataUri = async (
       );
       const qualityCandidates = Array.from(
         new Set(
-          [
-            transform?.jpegQuality ?? null,
-            ...BASE_IMAGE_CLAMP_QUALITIES,
-          ]
+          [transform?.jpegQuality ?? null, ...BASE_IMAGE_CLAMP_QUALITIES]
             .filter(
               (value): value is number =>
                 typeof value === 'number' && Number.isFinite(value) && value > 0
@@ -670,7 +674,8 @@ export const getProductImagesAsBase64 = async (
 
     // Skip if we already have this as an uploaded image
     const alreadyProcessed = imageSlots.some(
-      (slot: { imageFile?: { filepath?: string | null } | null }) => slot.imageFile?.filepath === link
+      (slot: { imageFile?: { filepath?: string | null } | null }) =>
+        slot.imageFile?.filepath === link
     );
     if (alreadyProcessed) return null;
 
@@ -685,7 +690,7 @@ export const getProductImagesAsBase64 = async (
   });
 
   const results = await Promise.all([...slotTasks, ...linkTasks]);
-  
+
   let outputIndex = 0;
   for (const result of results) {
     if (result?.base64) {

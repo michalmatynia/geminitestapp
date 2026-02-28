@@ -144,23 +144,17 @@ describe('evaluateDataContractPreflight', () => {
 
     expect(
       report.issues.some(
-        (issue) =>
-          issue.code === 'database_template_token_empty' &&
-          issue.token === 'entityId'
+        (issue) => issue.code === 'database_template_token_empty' && issue.token === 'entityId'
       )
     ).toBe(true);
     expect(
       report.issues.some(
-        (issue) =>
-          issue.code === 'database_template_token_empty' &&
-          issue.token === 'bundle.sku'
+        (issue) => issue.code === 'database_template_token_empty' && issue.token === 'bundle.sku'
       )
     ).toBe(true);
     expect(
       report.issues.some(
-        (issue) =>
-          issue.code === 'database_template_token_missing' &&
-          issue.token === 'value.name'
+        (issue) => issue.code === 'database_template_token_missing' && issue.token === 'value.name'
       )
     ).toBe(true);
   });

@@ -22,10 +22,7 @@ const readPositiveIntegerEnv = (key: string, fallback: number): number => {
   return parsed;
 };
 
-const PROVIDER_CACHE_TTL_MS = readPositiveIntegerEnv(
-  'APP_DB_PROVIDER_CACHE_TTL_MS',
-  5 * 60_000
-);
+const PROVIDER_CACHE_TTL_MS = readPositiveIntegerEnv('APP_DB_PROVIDER_CACHE_TTL_MS', 5 * 60_000);
 let providerCache: { value: AppDbProvider | null; ts: number } | null = null;
 let providerInflight: Promise<AppDbProvider | null> | null = null;
 
@@ -44,10 +41,7 @@ const readMongoAppProviderSetting = async (): Promise<AppDbProvider | null> => {
     const doc = await mongo
       .collection<{ _id: string; key?: string; value?: string }>('settings')
       .findOne({
-        $or: [
-          { _id: APP_DB_PROVIDER_SETTING_KEY },
-          { key: APP_DB_PROVIDER_SETTING_KEY },
-        ],
+        $or: [{ _id: APP_DB_PROVIDER_SETTING_KEY }, { key: APP_DB_PROVIDER_SETTING_KEY }],
       });
     return normalizeProvider(doc?.value ?? null);
   } catch {

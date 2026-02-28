@@ -79,19 +79,17 @@ describe('translation EN->PL path config upgrade', () => {
       ? (parsed['edges'] as Array<Record<string, unknown>>)
       : [];
     const updateNode = nodes.find(
-      (node: Record<string, unknown>) =>
-        node['id'] === 'node-db-update-translate-en-pl',
+      (node: Record<string, unknown>) => node['id'] === 'node-db-update-translate-en-pl'
     );
     if (!updateNode) throw new Error('Expected update node');
-    const databaseConfig = ((updateNode['config'] as Record<string, unknown>)?.[
-      'database'
-    ] ?? {}) as Record<string, unknown>;
+    const databaseConfig = ((updateNode['config'] as Record<string, unknown>)?.['database'] ??
+      {}) as Record<string, unknown>;
     const mappings = Array.isArray(databaseConfig['mappings'])
       ? (databaseConfig['mappings'] as Array<Record<string, unknown>>)
       : [];
 
     expect(databaseConfig['updateTemplate']).toEqual(
-      expect.stringContaining('{{result.parameters}}'),
+      expect.stringContaining('{{result.parameters}}')
     );
     expect(mappings).toEqual(
       expect.arrayContaining([
@@ -103,7 +101,7 @@ describe('translation EN->PL path config upgrade', () => {
           sourcePort: 'result',
           targetPath: '__translation_parameters_payload__',
         }),
-      ]),
+      ])
     );
     expect(
       edges.some((edge: Record<string, unknown>) => {
@@ -113,7 +111,7 @@ describe('translation EN->PL path config upgrade', () => {
           edge['fromPort'] === 'value' &&
           edge['toPort'] === 'result'
         );
-      }),
+      })
     ).toBe(true);
     expect(
       edges.some((edge: Record<string, unknown>) => {
@@ -123,15 +121,12 @@ describe('translation EN->PL path config upgrade', () => {
           edge['fromPort'] === 'bundle' &&
           edge['toPort'] === 'bundle'
         );
-      }),
+      })
     ).toBe(true);
     expect(
       edges.filter((edge: Record<string, unknown>) => {
-        return (
-          edge['to'] === 'node-db-update-translate-en-pl' &&
-          edge['toPort'] === 'value'
-        );
-      }),
+        return edge['to'] === 'node-db-update-translate-en-pl' && edge['toPort'] === 'value';
+      })
     ).toHaveLength(1);
   });
 

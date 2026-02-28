@@ -5,10 +5,7 @@ import { buildBenchmarkLearnedRegexRuleDraft } from './rule-drafts';
 import { mergeRegexLearnedRule } from './rule-learning';
 import { upsertLearnedTemplate } from './template-learning';
 
-import type {
-  PromptExploderBenchmarkSuggestion,
-  PromptExploderLearnedTemplate,
-} from './types';
+import type { PromptExploderBenchmarkSuggestion, PromptExploderLearnedTemplate } from './types';
 
 const toSlug = (value: string): string =>
   value
@@ -48,8 +45,8 @@ export const applyBenchmarkSuggestions = (args: {
   const invalidSegmentTitles: string[] = [];
   const templateById = args.shouldUpsertTemplates
     ? new Map<string, PromptExploderLearnedTemplate>(
-      args.initialTemplates.map((template) => [template.id, template])
-    )
+        args.initialTemplates.map((template) => [template.id, template])
+      )
     : null;
   const touchedTemplateIds = new Set<string>();
 

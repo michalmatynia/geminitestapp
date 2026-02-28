@@ -29,35 +29,41 @@ export function JobQueueFilterPanel(): React.JSX.Element {
     setSearchQuery,
   } = useJobQueueContext();
 
-  const filterConfig = useMemo<FilterField[]>(() => [
-    {
-      key: 'pathId',
-      label: 'Path ID',
-      type: 'text',
-      placeholder: 'All paths',
-      width: '20rem',
-    },
-    {
-      key: 'status',
-      label: 'Status',
-      type: 'select',
-      options: STATUS_FILTERS,
-      width: '14rem',
-    },
-    {
-      key: 'pageSize',
-      label: 'Page Size',
-      type: 'select',
-      options: PAGE_SIZES.map((size) => ({ value: String(size), label: String(size) })),
-      width: '10rem',
-    },
-  ], []);
+  const filterConfig = useMemo<FilterField[]>(
+    () => [
+      {
+        key: 'pathId',
+        label: 'Path ID',
+        type: 'text',
+        placeholder: 'All paths',
+        width: '20rem',
+      },
+      {
+        key: 'status',
+        label: 'Status',
+        type: 'select',
+        options: STATUS_FILTERS,
+        width: '14rem',
+      },
+      {
+        key: 'pageSize',
+        label: 'Page Size',
+        type: 'select',
+        options: PAGE_SIZES.map((size) => ({ value: String(size), label: String(size) })),
+        width: '10rem',
+      },
+    ],
+    []
+  );
 
-  const filterValues = useMemo(() => ({
-    pathId: pathFilter,
-    status: statusFilter,
-    pageSize: String(pageSize),
-  }), [pathFilter, statusFilter, pageSize]);
+  const filterValues = useMemo(
+    () => ({
+      pathId: pathFilter,
+      status: statusFilter,
+      pageSize: String(pageSize),
+    }),
+    [pathFilter, statusFilter, pageSize]
+  );
 
   const handleFilterChange = (key: string, value: unknown) => {
     if (key === 'pathId') setPathFilter(String(value));

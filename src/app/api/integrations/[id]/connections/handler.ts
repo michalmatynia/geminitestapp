@@ -1,5 +1,3 @@
-
-
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -31,7 +29,11 @@ const createConnectionSchema = z
  * GET /api/integrations/[id]/connections
  * Fetch connections for an integration.
  */
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
+export async function GET_handler(
+  _req: NextRequest,
+  _ctx: ApiHandlerContext,
+  params: { id: string }
+): Promise<Response> {
   const { id: integrationId } = params;
   if (!integrationId) {
     throw badRequestError('Integration id is required');
@@ -48,8 +50,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, pa
     updatedAt: connection.updatedAt,
 
     hasPlaywrightStorageState: Boolean(connection.playwrightStorageState),
-    playwrightStorageStateUpdatedAt:
-      connection.playwrightStorageStateUpdatedAt,
+    playwrightStorageStateUpdatedAt: connection.playwrightStorageStateUpdatedAt,
     hasAllegroAccessToken: Boolean(connection.allegroAccessToken),
     allegroTokenUpdatedAt: connection.allegroTokenUpdatedAt,
     allegroExpiresAt: connection.allegroExpiresAt,
@@ -99,14 +100,18 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, pa
  * POST /api/integrations/[id]/connections
  * Create a new connection for an integration.
  */
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
+export async function POST_handler(
+  req: NextRequest,
+  _ctx: ApiHandlerContext,
+  params: { id: string }
+): Promise<Response> {
   const { id: integrationId } = params;
   if (!integrationId) {
     throw badRequestError('Integration id is required');
   }
 
   const parsed = await parseJsonBody(req, createConnectionSchema, {
-    logPrefix: 'integrations.connections.POST'
+    logPrefix: 'integrations.connections.POST',
   });
   if (!parsed.ok) {
     return parsed.response;
@@ -131,8 +136,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, pa
     name: data.name,
     username: normalizedUsername,
     password: encryptSecret(data.password),
-    ...(typeof data.traderaDefaultTemplateId === 'string' ||
-    data.traderaDefaultTemplateId === null
+    ...(typeof data.traderaDefaultTemplateId === 'string' || data.traderaDefaultTemplateId === null
       ? { traderaDefaultTemplateId: data.traderaDefaultTemplateId ?? null }
       : {}),
     ...(typeof data.traderaDefaultDurationHours === 'number'
@@ -144,14 +148,11 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, pa
     ...(typeof data.traderaAutoRelistLeadMinutes === 'number'
       ? { traderaAutoRelistLeadMinutes: data.traderaAutoRelistLeadMinutes }
       : {}),
-    ...(typeof data.traderaApiAppId === 'number'
-      ? { traderaApiAppId: data.traderaApiAppId }
-      : {}),
+    ...(typeof data.traderaApiAppId === 'number' ? { traderaApiAppId: data.traderaApiAppId } : {}),
     ...(typeof data.traderaApiAppKey === 'string'
       ? { traderaApiAppKey: encryptSecret(data.traderaApiAppKey) }
       : {}),
-    ...(typeof data.traderaApiPublicKey === 'string' ||
-    data.traderaApiPublicKey === null
+    ...(typeof data.traderaApiPublicKey === 'string' || data.traderaApiPublicKey === null
       ? { traderaApiPublicKey: data.traderaApiPublicKey ?? null }
       : {}),
     ...(typeof data.traderaApiUserId === 'number'
@@ -159,9 +160,9 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, pa
       : {}),
     ...(typeof data.traderaApiToken === 'string'
       ? {
-        traderaApiToken: encryptSecret(data.traderaApiToken),
-        traderaApiTokenUpdatedAt: new Date(),
-      }
+          traderaApiToken: encryptSecret(data.traderaApiToken),
+          traderaApiTokenUpdatedAt: new Date(),
+        }
       : {}),
     ...(typeof data.traderaApiSandbox === 'boolean'
       ? { traderaApiSandbox: data.traderaApiSandbox }

@@ -5,7 +5,11 @@ import type {
 } from '@/shared/contracts/http';
 import { createInfiniteQueryV2 } from '@/shared/lib/query-factories-v2';
 
-import type { InfiniteData, UseInfiniteQueryOptions, UseInfiniteQueryResult } from '@tanstack/react-query';
+import type {
+  InfiniteData,
+  UseInfiniteQueryOptions,
+  UseInfiniteQueryResult,
+} from '@tanstack/react-query';
 
 export type PaginatedResponse<T> = PaginatedResponseDto<T> | LegacyPaginatedResponseDto<T>;
 
@@ -74,11 +78,11 @@ export function useInfiniteQueryWithPagination<TData>(
     number
   >({
     queryKey: [...queryKey, { pageSize, ...initialParams }] as const,
-    queryFn: ({ pageParam }: { pageParam: number }): Promise<PaginatedResponse<TData>> => 
+    queryFn: ({ pageParam }: { pageParam: number }): Promise<PaginatedResponse<TData>> =>
       queryFn({
         page: pageParam || 1,
         pageSize,
-        ...initialParams
+        ...initialParams,
       }),
     initialPageParam: 1,
     getNextPageParam: (lastPage: PaginatedResponse<TData>): number | undefined => {
@@ -101,7 +105,9 @@ export function useInfiniteQueryWithPagination<TData>(
 }
 
 // Helper hook to flatten infinite query data
-export function useFlattenedInfiniteData<T>(infiniteQuery: UseInfiniteQueryResult<InfiniteData<PaginatedResponse<T>>, Error>): {
+export function useFlattenedInfiniteData<T>(
+  infiniteQuery: UseInfiniteQueryResult<InfiniteData<PaginatedResponse<T>>, Error>
+): {
   data: T[];
   totalCount: number;
   isLoading: boolean;
@@ -115,7 +121,7 @@ export function useFlattenedInfiniteData<T>(infiniteQuery: UseInfiniteQueryResul
   const pages: PaginatedResponse<T>[] | undefined = infiniteQuery.data?.pages;
   const flatData: T[] = pages?.flatMap((page: PaginatedResponse<T>) => page.data) || [];
   const totalCount: number = pages?.[0] ? toPagination(pages[0]).total : 0;
-  
+
   return {
     data: flatData,
     totalCount,

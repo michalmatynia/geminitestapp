@@ -46,6 +46,7 @@ public/uploads/         # File storage (images, notes)
 ## Data Layer Reality
 
 The platform can run on **Prisma** or **MongoDB**, selected by:
+
 - `app_db_provider` setting (db)
 - `APP_DB_PROVIDER` env var
 - Fallback: prefer Mongo when `MONGODB_URI` is set, else Prisma when `DATABASE_URL` exists

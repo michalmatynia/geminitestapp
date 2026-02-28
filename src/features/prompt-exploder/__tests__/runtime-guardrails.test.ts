@@ -32,7 +32,7 @@ const createRuntimeSelection = (args: {
     runtimeValidationRules: [],
     effectiveLearnedTemplates: [],
     runtimeLearnedTemplates: [],
-  }) as any;
+  }) as unknown as PromptValidationOrchestrationResult;
 describe('prompt exploder runtime guardrails', () => {
   it('returns a blocking issue when fallback is used and not allowed', () => {
     const runtimeSelection = createRuntimeSelection({

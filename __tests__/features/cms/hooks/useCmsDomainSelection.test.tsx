@@ -41,7 +41,7 @@ describe('useCmsDomainSelection Hook', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     queryClient = createTestQueryClient();
-    
+
     // Default mock implementations
     (useCmsDomains as any).mockReturnValue({ data: mockDomains, isLoading: false });
     (useSettingsMap as any).mockReturnValue({
@@ -54,7 +54,7 @@ describe('useCmsDomainSelection Hook', () => {
         return null;
       }),
     });
-    
+
     server.use(
       http.get('/api/user/preferences', () => {
         return HttpResponse.json({ cmsActiveDomainId: 'd1' });
@@ -74,7 +74,7 @@ describe('useCmsDomainSelection Hook', () => {
     const { result } = renderHook(() => useCmsDomainSelection(), { wrapper });
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
-    
+
     expect(result.current.activeDomainId).toBe('d1');
     expect(result.current.activeDomain!.domain).toBe('example.com');
     expect(result.current.zoningEnabled).toBe(true);
@@ -84,7 +84,7 @@ describe('useCmsDomainSelection Hook', () => {
     const { result } = renderHook(() => useCmsDomainSelection(), { wrapper });
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
-    
+
     expect(result.current.sharedWithDomains).toHaveLength(1);
     expect(result.current.sharedWithDomains[0]!.id).toBe('d2');
   });
@@ -99,7 +99,7 @@ describe('useCmsDomainSelection Hook', () => {
     const { result } = renderHook(() => useCmsDomainSelection(), { wrapper });
 
     await waitFor(() => expect(result.current.activeDomainId).toBe('d2'), { timeout: 2000 });
-    
+
     expect(result.current.canonicalDomain!.id).toBe('d1');
   });
 
@@ -111,13 +111,13 @@ describe('useCmsDomainSelection Hook', () => {
         return HttpResponse.json(capturedBody);
       })
     );
-    
+
     const { result } = renderHook(() => useCmsDomainSelection(), { wrapper });
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
-    
+
     result.current.setActiveDomainId('d2');
-    
+
     await waitFor(() => expect(capturedBody).toEqual({ cmsActiveDomainId: 'd2' }));
   });
 
@@ -136,7 +136,7 @@ describe('useCmsDomainSelection Hook', () => {
     const { result } = renderHook(() => useCmsDomainSelection(), { wrapper });
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
-    
+
     expect(result.current.zoningEnabled).toBe(false);
     expect(result.current.activeDomainId).toBeNull();
   });
@@ -159,7 +159,7 @@ describe('useCmsDomainSelection Hook', () => {
     const { result } = renderHook(() => useCmsDomainSelection(), { wrapper });
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
-    
+
     expect(result.current.hostDomainId).toBe('d2');
     expect(result.current.activeDomainId).toBe('d2');
 

@@ -30,7 +30,9 @@ export function DatabasePresetsTabContextProvider({
 export function useDatabasePresetsTabContext(): DatabasePresetsTabContextValue {
   const context = React.useContext(DatabasePresetsTabContext);
   if (!context) {
-    throw new Error('useDatabasePresetsTabContext must be used within DatabasePresetsTabContextProvider');
+    throw new Error(
+      'useDatabasePresetsTabContext must be used within DatabasePresetsTabContextProvider'
+    );
   }
   return context;
 }

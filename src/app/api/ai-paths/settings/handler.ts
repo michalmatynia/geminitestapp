@@ -30,16 +30,11 @@ const deletePayloadSchema = z
     key: z.string().trim().min(1).optional(),
     keys: z.array(z.string().trim().min(1)).min(1).optional(),
   })
-  .refine(
-    (value) =>
-      Boolean(value.key) || Boolean(value.keys && value.keys.length > 0),
-    { message: 'Provide "key" or non-empty "keys".' },
-  );
+  .refine((value) => Boolean(value.key) || Boolean(value.keys && value.keys.length > 0), {
+    message: 'Provide "key" or non-empty "keys".',
+  });
 
-export async function GET_handler(
-  _req: NextRequest,
-  _ctx: ApiHandlerContext,
-): Promise<Response> {
+export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const settings = await listAiPathsSettings();
   return NextResponse.json(settings, {
     headers: {
@@ -48,10 +43,7 @@ export async function GET_handler(
   });
 }
 
-export async function POST_handler(
-  req: NextRequest,
-  _ctx: ApiHandlerContext,
-): Promise<Response> {
+export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const rawBody = await req.text();
   let body: unknown = {};
   if (rawBody) {
@@ -76,10 +68,7 @@ export async function POST_handler(
   throw badRequestError('Invalid AI Paths settings payload.');
 }
 
-export async function DELETE_handler(
-  req: NextRequest,
-  _ctx: ApiHandlerContext,
-): Promise<Response> {
+export async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const rawBody = await req.text();
   let body: unknown = {};
   if (rawBody) {
@@ -94,10 +83,7 @@ export async function DELETE_handler(
   if (!parsed.success) {
     throw badRequestError('Invalid AI Paths settings delete payload.');
   }
-  const keys = [
-    ...(parsed.data.key ? [parsed.data.key] : []),
-    ...(parsed.data.keys ?? []),
-  ];
+  const keys = [...(parsed.data.key ? [parsed.data.key] : []), ...(parsed.data.keys ?? [])];
   const deletedCount = await deleteAiPathsSettings(keys);
   return NextResponse.json({ deletedCount });
 }

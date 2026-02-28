@@ -35,7 +35,9 @@ export function ImageStudioAnalysisSummaryChip({
   const resolvedClassName = className.trim();
 
   return (
-    <div className={`rounded border px-2 py-1 text-[10px] ${toneClassName}${resolvedClassName ? ` ${resolvedClassName}` : ''}`}>
+    <div
+      className={`rounded border px-2 py-1 text-[10px] ${toneClassName}${resolvedClassName ? ` ${resolvedClassName}` : ''}`}
+    >
       <div className='flex flex-wrap items-center gap-x-2 gap-y-1'>
         <span className='uppercase tracking-wide text-[9px] opacity-80'>{label}</span>
         <span>{data.detectionUsed}</span>
@@ -49,4 +51,3 @@ export function ImageStudioAnalysisSummaryChip({
     </div>
   );
 }
-

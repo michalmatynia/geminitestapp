@@ -1,6 +1,4 @@
-import {
-  type AiPathsSettingRecord,
-} from './settings-store.constants';
+import { type AiPathsSettingRecord } from './settings-store.constants';
 
 export const trimLargeString = (value: string, maxLen: number = 1000): string =>
   value.length > maxLen ? `${value.slice(0, maxLen)}…` : value;
@@ -22,10 +20,12 @@ export const compactRuntimeValue = (value: unknown, depth: number = 1): unknown 
     if (depth <= 0) return '[Object]';
     const record = value as Record<string, unknown>;
     const entries = Object.entries(record);
-    const limited = entries.slice(0, 20).map(([key, entryValue]: [string, unknown]) => [
-      key,
-      compactRuntimeValue(entryValue, depth - 1),
-    ]);
+    const limited = entries
+      .slice(0, 20)
+      .map(([key, entryValue]: [string, unknown]) => [
+        key,
+        compactRuntimeValue(entryValue, depth - 1),
+      ]);
     const result = Object.fromEntries(limited) as Record<string, unknown>;
     if (entries.length > 20) {
       result['__truncated__'] = `…${entries.length - 20} more keys`;
@@ -59,12 +59,12 @@ export const compactRuntimeStateField = (runtimeStateRaw: unknown): string | nul
   const parsedRuntimeState =
     typeof runtimeStateRaw === 'string'
       ? (() => {
-        try {
-          return JSON.parse(runtimeStateRaw) as Record<string, unknown>;
-        } catch {
-          return null;
-        }
-      })()
+          try {
+            return JSON.parse(runtimeStateRaw) as Record<string, unknown>;
+          } catch {
+            return null;
+          }
+        })()
       : runtimeStateRaw && typeof runtimeStateRaw === 'object'
         ? (runtimeStateRaw as Record<string, unknown>)
         : null;

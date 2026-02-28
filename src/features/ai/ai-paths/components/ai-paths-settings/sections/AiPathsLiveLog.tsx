@@ -1,10 +1,7 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import {
-  StatusBadge,
-  EmptyState,
-} from '@/shared/ui';
+import { StatusBadge, EmptyState } from '@/shared/ui';
 import { useAiPathsSettingsOrchestrator } from '../AiPathsSettingsOrchestratorContext';
 import type { AiPathRuntimeEvent } from '@/shared/lib/ai-paths';
 
@@ -12,8 +9,9 @@ export function AiPathsLiveLog(): React.JSX.Element {
   const { runtimeEvents } = useAiPathsSettingsOrchestrator();
 
   const runtimeLogEvents = useMemo(
-    (): AiPathRuntimeEvent[] => runtimeEvents.slice(Math.max(0, runtimeEvents.length - 80)).reverse(),
-    [runtimeEvents],
+    (): AiPathRuntimeEvent[] =>
+      runtimeEvents.slice(Math.max(0, runtimeEvents.length - 80)).reverse(),
+    [runtimeEvents]
   );
 
   return (
@@ -38,11 +36,7 @@ export function AiPathsLiveLog(): React.JSX.Element {
                 <StatusBadge
                   status={event.level ?? 'info'}
                   variant={
-                    event.level === 'error'
-                      ? 'error'
-                      : event.level === 'warn'
-                        ? 'warning'
-                        : 'info'
+                    event.level === 'error' ? 'error' : event.level === 'warn' ? 'warning' : 'info'
                   }
                   size='sm'
                   className='font-bold'

@@ -19,9 +19,7 @@
     "description_en",
     "prompt"
   ],
-  "outputs": [
-    "bundle"
-  ],
+  "outputs": ["bundle"],
   "configFields": [
     {
       "path": "bundle.includePorts",
@@ -64,9 +62,7 @@
       "description_en",
       "prompt"
     ],
-    "outputs": [
-      "bundle"
-    ],
+    "outputs": ["bundle"],
     "data": {},
     "connections": {
       "incoming": [],

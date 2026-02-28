@@ -31,7 +31,7 @@ export function DatabaseTableSelector({
 }: DatabaseTableSelectorProps): React.JSX.Element {
   return (
     <div className='flex flex-wrap items-center gap-3'>
-      <SelectSimple 
+      <SelectSimple
         size='sm'
         value={selectedTable}
         onValueChange={(v) => {
@@ -61,11 +61,7 @@ export function DatabaseTableSelector({
           >
             Refresh
           </Button>
-          <Button
-            size='xs'
-            onClick={onAddRow}
-            className='h-8'
-          >
+          <Button size='xs' onClick={onAddRow} className='h-8'>
             <PlusIcon className='size-3.5 mr-2' />
             Add Row
           </Button>

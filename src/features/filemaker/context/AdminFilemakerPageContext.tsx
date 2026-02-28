@@ -7,7 +7,11 @@ export type AdminFilemakerPageContextValue = ReturnType<typeof useAdminFilemaker
 
 const AdminFilemakerPageContext = createContext<AdminFilemakerPageContextValue | null>(null);
 
-export function AdminFilemakerPageProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
+export function AdminFilemakerPageProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}): React.JSX.Element {
   const value = useAdminFilemakerPageState();
   return (
     <AdminFilemakerPageContext.Provider value={value}>

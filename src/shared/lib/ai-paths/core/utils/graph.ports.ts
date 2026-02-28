@@ -1,13 +1,6 @@
 import type { AiNode } from '@/shared/contracts/ai-paths';
-import {
-  PORT_STACK_TOP,
-  PORT_GAP,
-  PORT_COMPATIBILITY,
-} from '../constants';
-import {
-  arePortTypesCompatible,
-  getPortDataTypes,
-} from './port-types';
+import { PORT_STACK_TOP, PORT_GAP, PORT_COMPATIBILITY } from '../constants';
+import { arePortTypesCompatible, getPortDataTypes } from './port-types';
 
 export const getPortOffsetY = (index: number, _totalPorts: number): number => {
   return PORT_STACK_TOP + index * PORT_GAP;

@@ -1,7 +1,4 @@
-import type {
-  DatabaseConfig,
-  RuntimePortValues,
-} from '@/shared/contracts/ai-paths';
+import type { DatabaseConfig, RuntimePortValues } from '@/shared/contracts/ai-paths';
 import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 
 import { entityApi } from '../../../api';
@@ -38,13 +35,13 @@ export async function handleDatabaseDeleteOperation({
     nodeInputs,
     idField,
     simulationEntityType,
-    simulationEntityId,
+    simulationEntityId
   );
   if (!entityId) {
     reportAiPathsError(
       new Error('Database delete missing entity id'),
       { action: 'deleteEntity', nodeId: node.id },
-      'Database delete missing entity id:',
+      'Database delete missing entity id:'
     );
     toast('Database delete needs an entity ID input.', { variant: 'error' });
     return {
@@ -61,13 +58,14 @@ export async function handleDatabaseDeleteOperation({
       executed.updater.add(node.id);
     } else {
       if (entityType === 'product') {
-        const productDeleteResult: { ok: boolean; error?: string } = await entityApi.deleteProduct(entityId);
+        const productDeleteResult: { ok: boolean; error?: string } =
+          await entityApi.deleteProduct(entityId);
         executed.updater.add(node.id);
         if (!productDeleteResult.ok) {
           reportAiPathsError(
             new Error(productDeleteResult.error),
             { action: 'deleteEntity', entityType, entityId, nodeId: node.id },
-            'Database delete failed:',
+            'Database delete failed:'
           );
           toast(`Failed to delete ${entityType}.`, { variant: 'error' });
         } else {
@@ -75,13 +73,14 @@ export async function handleDatabaseDeleteOperation({
           toast(`Deleted ${entityType} ${entityId}`, { variant: 'success' });
         }
       } else if (entityType === 'note') {
-        const noteDeleteResult: { ok: boolean; error?: string } = await entityApi.deleteNote(entityId);
+        const noteDeleteResult: { ok: boolean; error?: string } =
+          await entityApi.deleteNote(entityId);
         executed.updater.add(node.id);
         if (!noteDeleteResult.ok) {
           reportAiPathsError(
             new Error(noteDeleteResult.error),
             { action: 'deleteEntity', entityType, entityId, nodeId: node.id },
-            'Database delete failed:',
+            'Database delete failed:'
           );
           toast(`Failed to delete ${entityType}.`, { variant: 'error' });
         } else {

@@ -25,8 +25,10 @@ let storage: IAsyncLocalStorage<RequestContext>;
 if (typeof window === 'undefined' && process?.versions?.node) {
   try {
     // Dynamically require async_hooks only in Node.js environment
-     
-    const { AsyncLocalStorage } = require('async_hooks') as { AsyncLocalStorage: new <T>() => IAsyncLocalStorage<T> };
+
+    const { AsyncLocalStorage } = require('async_hooks') as {
+      AsyncLocalStorage: new <T>() => IAsyncLocalStorage<T>;
+    };
     storage = new AsyncLocalStorage<RequestContext>();
   } catch (_error) {
     storage = new MockAsyncLocalStorage<RequestContext>();

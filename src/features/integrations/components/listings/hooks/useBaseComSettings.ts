@@ -19,7 +19,10 @@ import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 // - Inventories require warehouses to be loaded first
 // - Preferences persist across uses
 // Isolating this logic makes the modal cleaner and Base-specific code testable.
-export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: string): {
+export function useBaseComSettings(
+  isBaseComIntegration: boolean,
+  connectionId: string
+): {
   templates: Template[];
   selectedTemplateId: string;
   setSelectedTemplateId: Dispatch<SetStateAction<string>>;
@@ -56,9 +59,15 @@ export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: 
   const updatePreferredInventoryMutation = useUpdatePreferredInventory();
 
   const templates = (templatesQuery?.data as Template[]) ?? [];
-  const inventories = useMemo(() => (inventoriesQuery?.data as BaseInventory[]) ?? [], [inventoriesQuery?.data]);
-  const preferredTemplateId = (activeTemplateQuery?.data as { templateId?: string | null } | undefined)?.templateId ?? null;
-  const preferredInventoryId = (defaultInventoryQuery?.data as { inventoryId?: string | null } | undefined)?.inventoryId ?? null;
+  const inventories = useMemo(
+    () => (inventoriesQuery?.data as BaseInventory[]) ?? [],
+    [inventoriesQuery?.data]
+  );
+  const preferredTemplateId =
+    (activeTemplateQuery?.data as { templateId?: string | null } | undefined)?.templateId ?? null;
+  const preferredInventoryId =
+    (defaultInventoryQuery?.data as { inventoryId?: string | null } | undefined)?.inventoryId ??
+    null;
 
   // Auto-select preferred template
   useEffect(() => {
@@ -79,9 +88,18 @@ export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: 
   // Auto-select preferred inventory or first available
   useEffect(() => {
     let timer: NodeJS.Timeout | null = null;
-    if (isBaseComIntegration && !selectedInventoryId && inventories.length > 0 && !inventoriesQuery?.isLoading && !hasInitializedInventory.current) {
+    if (
+      isBaseComIntegration &&
+      !selectedInventoryId &&
+      inventories.length > 0 &&
+      !inventoriesQuery?.isLoading &&
+      !hasInitializedInventory.current
+    ) {
       timer = setTimeout(() => {
-        if (preferredInventoryId && inventories.some((inv: BaseInventory) => inv.id === preferredInventoryId)) {
+        if (
+          preferredInventoryId &&
+          inventories.some((inv: BaseInventory) => inv.id === preferredInventoryId)
+        ) {
           setSelectedInventoryId(preferredInventoryId);
           hasInitializedInventory.current = true;
         } else {
@@ -93,7 +111,13 @@ export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: 
     return (): void => {
       if (timer) clearTimeout(timer);
     };
-  }, [isBaseComIntegration, inventories, preferredInventoryId, selectedInventoryId, inventoriesQuery?.isLoading]);
+  }, [
+    isBaseComIntegration,
+    inventories,
+    preferredInventoryId,
+    selectedInventoryId,
+    inventoriesQuery?.isLoading,
+  ]);
 
   // Sync template preference when selected changes
   useEffect((): void => {
@@ -101,15 +125,29 @@ export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: 
     if (selectedTemplateId !== preferredTemplateId) {
       void updatePreferredTemplateMutation.mutateAsync({ templateId: selectedTemplateId });
     }
-  }, [isBaseComIntegration, selectedTemplateId, preferredTemplateId, updatePreferredTemplateMutation]);
+  }, [
+    isBaseComIntegration,
+    selectedTemplateId,
+    preferredTemplateId,
+    updatePreferredTemplateMutation,
+  ]);
 
   // Sync inventory preference when selected changes
   useEffect((): void => {
     if (!isBaseComIntegration || !selectedInventoryId || !connectionId) return;
     if (selectedInventoryId !== preferredInventoryId) {
-      void updatePreferredInventoryMutation.mutateAsync({ inventoryId: selectedInventoryId, connectionId });
+      void updatePreferredInventoryMutation.mutateAsync({
+        inventoryId: selectedInventoryId,
+        connectionId,
+      });
     }
-  }, [isBaseComIntegration, selectedInventoryId, preferredInventoryId, connectionId, updatePreferredInventoryMutation]);
+  }, [
+    isBaseComIntegration,
+    selectedInventoryId,
+    preferredInventoryId,
+    connectionId,
+    updatePreferredInventoryMutation,
+  ]);
 
   return {
     templates,

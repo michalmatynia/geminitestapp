@@ -17,7 +17,10 @@ async function main(): Promise<void> {
 
   const parsed = JSON.parse(rec.value) as Record<string, unknown>;
   const nodes = normalizeNodes(Array.isArray(parsed['nodes']) ? (parsed['nodes'] as never[]) : []);
-  const edges = sanitizeEdges(nodes, Array.isArray(parsed['edges']) ? (parsed['edges'] as never[]) : []);
+  const edges = sanitizeEdges(
+    nodes,
+    Array.isArray(parsed['edges']) ? (parsed['edges'] as never[]) : []
+  );
   const triggerNode = nodes.find((node) => node.type === 'trigger') ?? nodes[0];
   if (!triggerNode) {
     console.log(JSON.stringify({ ok: false, error: 'no_nodes', pathId }, null, 2));
@@ -56,8 +59,8 @@ async function main(): Promise<void> {
           },
         },
         null,
-        2,
-      ),
+        2
+      )
     );
   } catch (error) {
     console.log(
@@ -67,8 +70,8 @@ async function main(): Promise<void> {
           error: error instanceof Error ? error.message : String(error),
         },
         null,
-        2,
-      ),
+        2
+      )
     );
   }
 }

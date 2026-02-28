@@ -1,15 +1,26 @@
 'use client';
 
- 
-
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 
 import { useCreateTheme } from '@/features/cms/hooks/useCmsQueries';
 import { cmsThemeCreateSchema } from '@/features/cms/validations/api';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import type { CmsThemeColors, CmsThemeTypography, CmsThemeSpacing, CmsThemeCreateInput } from '@/shared/contracts/cms';
-import { Input, FormSection, FormField, PageLayout, Alert, FormActions, Breadcrumbs } from '@/shared/ui';
+import type {
+  CmsThemeColors,
+  CmsThemeTypography,
+  CmsThemeSpacing,
+  CmsThemeCreateInput,
+} from '@/shared/contracts/cms';
+import {
+  Input,
+  FormSection,
+  FormField,
+  PageLayout,
+  Alert,
+  FormActions,
+  Breadcrumbs,
+} from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
 
 const DEFAULT_COLORS: CmsThemeColors = {
@@ -50,7 +61,7 @@ export default function CreateThemePage(): React.ReactNode {
     const validation = validateFormData(
       cmsThemeCreateSchema,
       { name, colors, typography, spacing },
-      'Theme form is invalid.',
+      'Theme form is invalid.'
     );
     if (!validation.success) {
       setError(validation.firstError);
@@ -63,7 +74,9 @@ export default function CreateThemePage(): React.ReactNode {
       await createTheme.mutateAsync(data);
       router.push('/admin/cms/themes');
     } catch (submitError: unknown) {
-      logClientError(submitError, { context: { source: 'CreateThemePage', action: 'createTheme', name } });
+      logClientError(submitError, {
+        context: { source: 'CreateThemePage', action: 'createTheme', name },
+      });
       setError(submitError instanceof Error ? submitError.message : 'Failed to create theme.');
     }
   };
@@ -84,13 +97,18 @@ export default function CreateThemePage(): React.ReactNode {
             { label: 'Admin', href: '/admin' },
             { label: 'CMS', href: '/admin/cms' },
             { label: 'Themes', href: '/admin/cms/themes' },
-            { label: 'Create' }
+            { label: 'Create' },
           ]}
           className='mb-2'
         />
       }
     >
-      <form onSubmit={(e: React.FormEvent) => { void handleSubmit(e); }} className='space-y-8'>
+      <form
+        onSubmit={(e: React.FormEvent) => {
+          void handleSubmit(e);
+        }}
+        className='space-y-8'
+      >
         {error ? (
           <Alert variant='error' className='mb-6'>
             {error}
@@ -108,19 +126,27 @@ export default function CreateThemePage(): React.ReactNode {
           </FormField>
         </FormSection>
 
-        <FormSection title='Colors' description='Brand and semantic colors for the theme.' gridClassName='grid-cols-2'>
+        <FormSection
+          title='Colors'
+          description='Brand and semantic colors for the theme.'
+          gridClassName='grid-cols-2'
+        >
           {colorKeys.map((key) => (
             <FormField key={key} label={key} className='capitalize'>
               <div className='flex items-center gap-2'>
                 <input
                   type='color'
                   value={colors[key]}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateColor(key, e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    updateColor(key, e.target.value)
+                  }
                   className='h-9 w-10 cursor-pointer rounded border border-border/50 bg-transparent p-0.5'
                 />
                 <Input
                   value={colors[key]}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateColor(key, e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    updateColor(key, e.target.value)
+                  }
                   className='flex-1 text-xs font-mono'
                   maxLength={7}
                 />
@@ -129,31 +155,49 @@ export default function CreateThemePage(): React.ReactNode {
           ))}
         </FormSection>
 
-        <FormSection title='Typography' description='Font families and weights.' gridClassName='grid-cols-2'>
+        <FormSection
+          title='Typography'
+          description='Font families and weights.'
+          gridClassName='grid-cols-2'
+        >
           <FormField label='Heading Font'>
             <Input
               value={typography.headingFont}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTypography((p: CmsThemeTypography) => ({ ...p, headingFont: e.target.value }))}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setTypography((p: CmsThemeTypography) => ({ ...p, headingFont: e.target.value }))
+              }
             />
           </FormField>
           <FormField label='Body Font'>
             <Input
               value={typography.bodyFont}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTypography((p: CmsThemeTypography) => ({ ...p, bodyFont: e.target.value }))}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setTypography((p: CmsThemeTypography) => ({ ...p, bodyFont: e.target.value }))
+              }
             />
           </FormField>
           <FormField label='Base Size (px)'>
             <Input
               type='number'
               value={typography.baseSize}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTypography((p: CmsThemeTypography) => ({ ...p, baseSize: Number(e.target.value) }))}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setTypography((p: CmsThemeTypography) => ({
+                  ...p,
+                  baseSize: Number(e.target.value),
+                }))
+              }
             />
           </FormField>
           <FormField label='Heading Weight'>
             <Input
               type='number'
               value={typography.headingWeight}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTypography((p: CmsThemeTypography) => ({ ...p, headingWeight: Number(e.target.value) }))}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setTypography((p: CmsThemeTypography) => ({
+                  ...p,
+                  headingWeight: Number(e.target.value),
+                }))
+              }
               min={100}
               max={900}
               step={100}
@@ -163,7 +207,12 @@ export default function CreateThemePage(): React.ReactNode {
             <Input
               type='number'
               value={typography.bodyWeight}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTypography((p: CmsThemeTypography) => ({ ...p, bodyWeight: Number(e.target.value) }))}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setTypography((p: CmsThemeTypography) => ({
+                  ...p,
+                  bodyWeight: Number(e.target.value),
+                }))
+              }
               min={100}
               max={900}
               step={100}
@@ -171,17 +220,25 @@ export default function CreateThemePage(): React.ReactNode {
           </FormField>
         </FormSection>
 
-        <FormSection title='Spacing' description='Layout dimensions and constraints.' gridClassName='grid-cols-2'>
+        <FormSection
+          title='Spacing'
+          description='Layout dimensions and constraints.'
+          gridClassName='grid-cols-2'
+        >
           <FormField label='Section Padding'>
             <Input
               value={spacing.sectionPadding}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSpacing((p: CmsThemeSpacing) => ({ ...p, sectionPadding: e.target.value }))}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setSpacing((p: CmsThemeSpacing) => ({ ...p, sectionPadding: e.target.value }))
+              }
             />
           </FormField>
           <FormField label='Container Max Width'>
             <Input
               value={spacing.containerMaxWidth}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSpacing((p: CmsThemeSpacing) => ({ ...p, containerMaxWidth: e.target.value }))}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setSpacing((p: CmsThemeSpacing) => ({ ...p, containerMaxWidth: e.target.value }))
+              }
             />
           </FormField>
         </FormSection>

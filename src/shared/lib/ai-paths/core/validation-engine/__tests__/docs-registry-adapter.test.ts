@@ -23,11 +23,7 @@ describe('docs registry adapter', () => {
       '}',
       '```',
     ].join('\n');
-    const extracted = extractAiPathsAssertionsFromMarkdown(
-      markdown,
-      sourcePath,
-      sourceHash,
-    );
+    const extracted = extractAiPathsAssertionsFromMarkdown(markdown, sourcePath, sourceHash);
     expect(extracted.warnings).toEqual([]);
     expect(extracted.assertions).toHaveLength(1);
     expect(extracted.assertions[0]?.id).toBe('test.schema_v2.metadata');
@@ -58,45 +54,44 @@ describe('docs registry adapter', () => {
     expect(
       snapshot.assertions.some(
         (assertion) =>
-          assertion.id === 'core.graph.trigger_exists' &&
-          assertion.sourceId === 'core-patterns',
-      ),
+          assertion.id === 'core.graph.trigger_exists' && assertion.sourceId === 'core-patterns'
+      )
     ).toBe(true);
     expect(
       snapshot.assertions.some(
         (assertion) =>
           assertion.id === 'catalog.database.database_query_provider.allowed_values' &&
-          assertion.sourceId === 'node-docs-catalog',
-      ),
+          assertion.sourceId === 'node-docs-catalog'
+      )
     ).toBe(true);
     expect(
       snapshot.assertions.some(
         (assertion) =>
           assertion.id ===
             'snippet_wire_rev_docs_wiring_snippet_fetcher_trigger_from_trigger_trigger' &&
-          assertion.sourceId === 'docs-snippets',
-      ),
+          assertion.sourceId === 'docs-snippets'
+      )
     ).toBe(true);
     expect(
       snapshot.assertions.some(
         (assertion) =>
           assertion.id === 'semantic.catalog.node_ids_unique' &&
-          assertion.sourceId === 'semantic-nodes-catalog',
-      ),
+          assertion.sourceId === 'semantic-nodes-catalog'
+      )
     ).toBe(true);
     expect(
       snapshot.assertions.some(
         (assertion) =>
           assertion.id === 'tooltip.regex.ai_prompt_supported_placeholders' &&
-          assertion.sourceId === 'tooltip-docs-catalog',
-      ),
+          assertion.sourceId === 'tooltip-docs-catalog'
+      )
     ).toBe(true);
     expect(
       snapshot.assertions.some(
         (assertion) =>
           assertion.id === 'coverage.database.config.object_non_empty' &&
-          assertion.sourceId === 'coverage-matrix',
-      ),
+          assertion.sourceId === 'coverage-matrix'
+      )
     ).toBe(true);
   });
 });

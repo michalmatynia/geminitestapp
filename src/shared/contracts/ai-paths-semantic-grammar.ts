@@ -1,16 +1,9 @@
 import { z } from 'zod';
 
-import {
-  aiNodeTypeSchema,
-  aiPathsValidationConfigSchema,
-} from './ai-paths';
+import { aiNodeTypeSchema, aiPathsValidationConfigSchema } from './ai-paths';
 
-export const aiPathsSemanticSpecVersionSchema = z.literal(
-  'ai-paths.semantic-grammar.v1',
-);
-export type AiPathsSemanticSpecVersionDto = z.infer<
-  typeof aiPathsSemanticSpecVersionSchema
->;
+export const aiPathsSemanticSpecVersionSchema = z.literal('ai-paths.semantic-grammar.v1');
+export type AiPathsSemanticSpecVersionDto = z.infer<typeof aiPathsSemanticSpecVersionSchema>;
 
 export const semanticPortBindingSchema = z.object({
   edgeId: z.string().optional(),
@@ -25,9 +18,7 @@ export const semanticNodeConnectionsSchema = z.object({
   incoming: z.array(semanticPortBindingSchema),
   outgoing: z.array(semanticPortBindingSchema),
 });
-export type SemanticNodeConnectionsDto = z.infer<
-  typeof semanticNodeConnectionsSchema
->;
+export type SemanticNodeConnectionsDto = z.infer<typeof semanticNodeConnectionsSchema>;
 
 export const semanticNodeSchema = z.object({
   id: z.string(),
@@ -74,9 +65,7 @@ export const semanticPathDescriptorSchema = z.object({
   isLocked: z.boolean().optional(),
   isActive: z.boolean().optional(),
 });
-export type SemanticPathDescriptorDto = z.infer<
-  typeof semanticPathDescriptorSchema
->;
+export type SemanticPathDescriptorDto = z.infer<typeof semanticPathDescriptorSchema>;
 
 export const semanticExecutionDescriptorSchema = z.object({
   parserSamples: z.record(z.string(), z.unknown()).optional(),
@@ -85,9 +74,7 @@ export const semanticExecutionDescriptorSchema = z.object({
   lastRunAt: z.string().nullable().optional(),
   runCount: z.number().optional(),
 });
-export type SemanticExecutionDescriptorDto = z.infer<
-  typeof semanticExecutionDescriptorSchema
->;
+export type SemanticExecutionDescriptorDto = z.infer<typeof semanticExecutionDescriptorSchema>;
 
 export const semanticProvenanceSchema = z.object({
   source: z.literal('ai-paths'),
@@ -115,9 +102,7 @@ export const canvasSemanticDocumentSchema = z.object({
   provenance: semanticProvenanceSchema.optional(),
   extensions: z.record(z.string(), z.unknown()).optional(),
 });
-export type CanvasSemanticDocumentDto = z.infer<
-  typeof canvasSemanticDocumentSchema
->;
+export type CanvasSemanticDocumentDto = z.infer<typeof canvasSemanticDocumentSchema>;
 
 export const subgraphSemanticDocumentSchema = z.object({
   specVersion: aiPathsSemanticSpecVersionSchema,
@@ -130,9 +115,7 @@ export const subgraphSemanticDocumentSchema = z.object({
   provenance: semanticProvenanceSchema.optional(),
   extensions: z.record(z.string(), z.unknown()).optional(),
 });
-export type SubgraphSemanticDocumentDto = z.infer<
-  typeof subgraphSemanticDocumentSchema
->;
+export type SubgraphSemanticDocumentDto = z.infer<typeof subgraphSemanticDocumentSchema>;
 
 export const semanticDocumentSchema = z.discriminatedUnion('kind', [
   canvasSemanticDocumentSchema,

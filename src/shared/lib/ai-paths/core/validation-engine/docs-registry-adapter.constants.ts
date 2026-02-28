@@ -85,11 +85,7 @@ export const LEGACY_FALLBACK_MANIFEST: AiPathsDocsManifest = {
       enabled: true,
       priority: 90,
       tags: ['snippets', 'wiring'],
-      snippetNames: [
-        'DOCS_WIRING_SNIPPET',
-        'DOCS_DESCRIPTION_SNIPPET',
-        'DOCS_JOBS_SNIPPET',
-      ],
+      snippetNames: ['DOCS_WIRING_SNIPPET', 'DOCS_DESCRIPTION_SNIPPET', 'DOCS_JOBS_SNIPPET'],
     },
     {
       id: 'semantic-nodes-catalog',

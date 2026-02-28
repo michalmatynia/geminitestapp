@@ -11,11 +11,13 @@ interface TestResultModalProps extends Omit<ModalStateProps, 'onSuccess'> {
   onSuccess?: () => void;
   success?: boolean;
   message?: string | null;
-  meta?: {
-    errorId?: string;
-    integrationId?: string | null;
-    connectionId?: string | null;
-  } | undefined;
+  meta?:
+    | {
+        errorId?: string;
+        integrationId?: string | null;
+        connectionId?: string | null;
+      }
+    | undefined;
 }
 
 export function TestResultModal({
@@ -28,12 +30,15 @@ export function TestResultModal({
   const testing = useIntegrationsTesting();
 
   const isOpen = isOpenProp ?? (testing.showTestErrorModal || testing.showTestSuccessModal);
-  const onClose = onCloseProp ?? (() => {
-    if (testing.showTestSuccessModal) testing.setShowTestSuccessModal(false);
-    else testing.setShowTestErrorModal(false);
-  });
+  const onClose =
+    onCloseProp ??
+    (() => {
+      if (testing.showTestSuccessModal) testing.setShowTestSuccessModal(false);
+      else testing.setShowTestErrorModal(false);
+    });
   const success = successProp ?? testing.showTestSuccessModal;
-  const message = messageProp ?? (testing.showTestSuccessModal ? testing.testSuccessMessage : testing.testError);
+  const message =
+    messageProp ?? (testing.showTestSuccessModal ? testing.testSuccessMessage : testing.testError);
   const meta = metaProp ?? testing.testErrorMeta;
 
   if (!message) return null;
@@ -48,14 +53,7 @@ export function TestResultModal({
 
   const copyText = metaLines ? `${metaLines}\n\n${message}` : message;
 
-  const footer = (
-    <CopyButton
-      value={copyText}
-      variant='outline'
-      size='sm'
-      showText
-    />
-  );
+  const footer = <CopyButton value={copyText} variant='outline' size='sm' showText />;
 
   return (
     <DetailModal
@@ -73,21 +71,9 @@ export function TestResultModal({
         )}
         {(meta?.errorId || meta?.integrationId || meta?.connectionId) && (
           <div className='grid gap-3 md:grid-cols-3'>
-            <MetadataItem
-              label='Error ID'
-              value={meta?.errorId}
-              mono
-            />
-            <MetadataItem
-              label='Integration ID'
-              value={meta?.integrationId}
-              mono
-            />
-            <MetadataItem
-              label='Connection ID'
-              value={meta?.connectionId}
-              mono
-            />
+            <MetadataItem label='Error ID' value={meta?.errorId} mono />
+            <MetadataItem label='Integration ID' value={meta?.integrationId} mono />
+            <MetadataItem label='Connection ID' value={meta?.connectionId} mono />
           </div>
         )}
         {success ? (

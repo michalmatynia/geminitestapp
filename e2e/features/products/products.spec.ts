@@ -9,16 +9,16 @@ test.describe('Products Management', () => {
   test('should display the products list', async ({ page }) => {
     // Check for the main heading
     await expect(page.getByRole('heading', { name: 'Products', exact: true })).toBeVisible();
-    
+
     // Check for the create button
     await expect(page.getByLabel('Create new product')).toBeVisible();
   });
 
   test('should open the create product modal after entering SKU', async ({ page }) => {
     const testSku = `TEST${Date.now()}`;
-    
+
     // Listen for the window.prompt and provide a SKU
-    page.on('dialog', async dialog => {
+    page.on('dialog', async (dialog) => {
       await dialog.accept(testSku);
     });
 
@@ -26,22 +26,24 @@ test.describe('Products Management', () => {
     await page.getByLabel('Create new product').click();
 
     // The modal should appear
-    await expect(page.getByRole('heading', { name: 'Create Product', exact: true }).nth(1)).toBeVisible();
-    
+    await expect(
+      page.getByRole('heading', { name: 'Create Product', exact: true }).nth(1)
+    ).toBeVisible();
+
     // Check if the SKU is pre-filled
     await expect(page.locator('input#sku')).toHaveValue(testSku);
   });
 
   test('should validate required fields in the create form', async ({ page }) => {
     // SKU prompt
-    page.on('dialog', async dialog => {
+    page.on('dialog', async (dialog) => {
       await dialog.accept(`VAL${Date.now()}`);
     });
     await page.getByLabel('Create new product').click();
 
     const skuInput = page.locator('input#sku');
     await skuInput.fill('');
-    
+
     // Try to submit
     await page.getByRole('button', { name: 'Create', exact: true }).click();
 
@@ -52,7 +54,7 @@ test.describe('Products Management', () => {
 
   test('should switch languages in the form', async ({ page }) => {
     // SKU prompt
-    page.on('dialog', async dialog => {
+    page.on('dialog', async (dialog) => {
       await dialog.accept(`LANG${Date.now()}`);
     });
     await page.getByLabel('Create new product').click();
@@ -62,7 +64,7 @@ test.describe('Products Management', () => {
     await expect(catalogSelect).toBeVisible({ timeout: 15000 });
     await catalogSelect.click({ force: true });
     await page.waitForTimeout(500);
-    
+
     // Use keyboard to select an option (Skip All and Unassigned)
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('ArrowDown');
@@ -79,7 +81,7 @@ test.describe('Products Management', () => {
     // Find the search input
     const searchInput = page.getByPlaceholder('Search by name...');
     await expect(searchInput).toBeVisible();
-    
+
     await searchInput.fill('NonExistentProductXYZ');
     await page.keyboard.press('Enter');
 
@@ -89,14 +91,14 @@ test.describe('Products Management', () => {
 
   test('should navigate between tabs in product form', async ({ page }) => {
     // SKU prompt
-    page.on('dialog', async dialog => {
+    page.on('dialog', async (dialog) => {
       await dialog.accept(`TABS${Date.now()}`);
     });
     await page.getByLabel('Create new product').click();
 
     // Check main tabs
     await expect(page.getByRole('tab', { name: 'General' })).toBeVisible();
-    
+
     await page.getByRole('tab', { name: 'Other' }).click();
     await expect(page.locator('label:has-text("Stock")')).toBeVisible();
 
@@ -108,7 +110,7 @@ test.describe('Products Management', () => {
   test('should paginate products', async ({ page }) => {
     // Check for pagination controls in header
     const nextButton = page.getByLabel('Next page');
-    if (await nextButton.isVisible() && !await nextButton.isDisabled()) {
+    if ((await nextButton.isVisible()) && !(await nextButton.isDisabled())) {
       await nextButton.click();
       await expect(page.locator('text=/ 2')).toBeVisible(); // Assuming at least 2 pages
     } else {
@@ -119,9 +121,9 @@ test.describe('Products Management', () => {
   test('should change page size', async ({ page }) => {
     const pageSizeSelect = page.getByLabel('Products per page');
     await pageSizeSelect.click();
-    
+
     await page.getByRole('option', { name: '24 per page' }).click();
-    
+
     // Check if preference might be saved or UI updated
     await expect(pageSizeSelect).toContainText('24 per page');
   });

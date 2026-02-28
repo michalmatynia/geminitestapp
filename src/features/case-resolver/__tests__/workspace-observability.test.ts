@@ -1,8 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  buildCaseResolverWorkspaceObservabilitySnapshot,
-} from '@/features/case-resolver/workspace-observability';
+import { buildCaseResolverWorkspaceObservabilitySnapshot } from '@/features/case-resolver/workspace-observability';
 import type { CaseResolverWorkspaceDebugEvent } from '@/features/case-resolver/workspace-persistence';
 
 const buildEvent = (
@@ -82,7 +80,8 @@ describe('case resolver workspace observability snapshot', () => {
         timestamp: '2026-02-24T10:00:03.000Z',
         action: 'hydrate_workspace_source_selected',
         workspaceRevision: 4,
-        message: 'source=heavy reason=equal_revision_current_placeholder has_store=true has_heavy=true',
+        message:
+          'source=heavy reason=equal_revision_current_placeholder has_store=true has_heavy=true',
       }),
       buildEvent({
         id: 'event-requested-2',

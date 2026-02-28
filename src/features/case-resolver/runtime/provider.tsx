@@ -27,7 +27,7 @@ const CaseResolverRuntimeStoreContext = createContext<CaseResolverRuntimeStore |
 
 const mapRequestedStatus = (
   requestedContextStatus: 'loading' | 'ready' | 'missing',
-  requestedContextIssue: 'requested_file_missing' | 'workspace_unavailable' | null,
+  requestedContextIssue: 'requested_file_missing' | 'workspace_unavailable' | null
 ): 'idle' | 'loading' | 'ready' | 'missing_not_found' | 'missing_unavailable' => {
   if (requestedContextStatus === 'loading') return 'loading';
   if (requestedContextStatus === 'ready') return 'ready';
@@ -50,7 +50,7 @@ export function CaseResolverRuntimeProvider({
   const storeRef = useRef<CaseResolverRuntimeStore | null>(null);
   if (!storeRef.current) {
     storeRef.current = createCaseResolverRuntimeStore(
-      createInitialCaseResolverRuntimeState(workspace),
+      createInitialCaseResolverRuntimeState(workspace)
     );
   }
   const store = storeRef.current;
@@ -59,10 +59,7 @@ export function CaseResolverRuntimeProvider({
 
   useEffect((): void => {
     store.patchState((currentState) => {
-      const nextRequestedStatus = mapRequestedStatus(
-        requestedContextStatus,
-        requestedContextIssue,
-      );
+      const nextRequestedStatus = mapRequestedStatus(requestedContextStatus, requestedContextIssue);
       const isWorkspaceChanged =
         currentState.workspace.value !== workspace ||
         currentState.workspace.revision !== workspaceRevision;
@@ -90,26 +87,26 @@ export function CaseResolverRuntimeProvider({
       }
       const nextWorkspaceSlice = isWorkspaceChanged
         ? {
-          value: workspace,
-          revision: workspaceRevision,
-          isHydrated: workspace.files.length > 0 || workspace.assets.length > 0,
-        }
+            value: workspace,
+            revision: workspaceRevision,
+            isHydrated: workspace.files.length > 0 || workspace.assets.length > 0,
+          }
         : currentState.workspace;
       const nextSelectionSlice = isSelectionChanged
         ? {
-          selectedFileId,
-          selectedAssetId,
-          selectedFolderPath,
-          activeCaseId,
-        }
+            selectedFileId,
+            selectedAssetId,
+            selectedFolderPath,
+            activeCaseId,
+          }
         : currentState.selection;
       const nextRequestedContextSlice = isRequestedContextChanged
         ? {
-          ...currentState.requestedContext,
-          requestedFileId,
-          status: nextRequestedStatus,
-          issue: requestedContextIssue,
-        }
+            ...currentState.requestedContext,
+            requestedFileId,
+            status: nextRequestedStatus,
+            issue: requestedContextIssue,
+          }
         : currentState.requestedContext;
       return {
         ...currentState,
@@ -143,16 +140,14 @@ export function CaseResolverRuntimeProvider({
 export function useCaseResolverRuntimeStore(): CaseResolverRuntimeStore {
   const store = useContext(CaseResolverRuntimeStoreContext);
   if (!store) {
-    throw new Error(
-      'useCaseResolverRuntimeStore must be used within CaseResolverRuntimeProvider',
-    );
+    throw new Error('useCaseResolverRuntimeStore must be used within CaseResolverRuntimeProvider');
   }
   return store;
 }
 
 export function useCaseResolverRuntimeSelector<T>(
   selector: CaseResolverRuntimeSelector<T>,
-  equalityFn?: (left: T, right: T) => boolean,
+  equalityFn?: (left: T, right: T) => boolean
 ): T {
   const store = useCaseResolverRuntimeStore();
   return useCaseResolverSelector(store, selector, equalityFn);

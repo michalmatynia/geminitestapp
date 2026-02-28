@@ -60,17 +60,16 @@ async function main(): Promise<void> {
     ...(options.pathId ? { pathId: options.pathId } : {}),
     limit: options.limit,
   });
-  const candidateRunIds = dedupeRunIdsFromJsonIntegrityFindings(
-    diagnostics.findings
-  ).slice(0, options.maxApply);
+  const candidateRunIds = dedupeRunIdsFromJsonIntegrityFindings(diagnostics.findings).slice(
+    0,
+    options.maxApply
+  );
 
   const requeued: string[] = [];
   const failed: Array<{ runId: string; error: string }> = [];
 
   if (options.apply) {
-    const { resumePathRun } = await import(
-      '@/features/ai/ai-paths/services/path-run-service'
-    );
+    const { resumePathRun } = await import('@/features/ai/ai-paths/services/path-run-service');
     for (const runId of candidateRunIds) {
       try {
         await resumePathRun(runId, 'replay');

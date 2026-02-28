@@ -36,9 +36,7 @@ export const useAdminLayoutActions = () => {
 
 interface AdminLayoutContextType extends AdminLayoutState, AdminLayoutActions {}
 
-const AdminLayoutContext = createContext<AdminLayoutContextType | undefined>(
-  undefined
-);
+const AdminLayoutContext = createContext<AdminLayoutContextType | undefined>(undefined);
 
 export function AdminLayoutProvider({
   children,
@@ -52,24 +50,33 @@ export function AdminLayoutProvider({
   const [isProgrammaticallyCollapsed, setIsProgrammaticallyCollapsed] = useState(false);
   const [aiDrawerOpen, setAiDrawerOpen] = useState(false);
 
-  const stateValue = useMemo<AdminLayoutState>(() => ({
-    isMenuCollapsed,
-    isMenuHidden,
-    isProgrammaticallyCollapsed,
-    aiDrawerOpen,
-  }), [isMenuCollapsed, isMenuHidden, isProgrammaticallyCollapsed, aiDrawerOpen]);
+  const stateValue = useMemo<AdminLayoutState>(
+    () => ({
+      isMenuCollapsed,
+      isMenuHidden,
+      isProgrammaticallyCollapsed,
+      aiDrawerOpen,
+    }),
+    [isMenuCollapsed, isMenuHidden, isProgrammaticallyCollapsed, aiDrawerOpen]
+  );
 
-  const actionsValue = useMemo<AdminLayoutActions>(() => ({
-    setIsMenuCollapsed,
-    setIsMenuHidden,
-    setIsProgrammaticallyCollapsed,
-    setAiDrawerOpen,
-  }), []);
+  const actionsValue = useMemo<AdminLayoutActions>(
+    () => ({
+      setIsMenuCollapsed,
+      setIsMenuHidden,
+      setIsProgrammaticallyCollapsed,
+      setAiDrawerOpen,
+    }),
+    []
+  );
 
-  const aggregatedValue = useMemo<AdminLayoutContextType>(() => ({
-    ...stateValue,
-    ...actionsValue,
-  }), [stateValue, actionsValue]);
+  const aggregatedValue = useMemo<AdminLayoutContextType>(
+    () => ({
+      ...stateValue,
+      ...actionsValue,
+    }),
+    [stateValue, actionsValue]
+  );
 
   return (
     <StateContext.Provider value={stateValue}>

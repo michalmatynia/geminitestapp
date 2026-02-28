@@ -9,4 +9,3 @@ export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, {
   source: 'products.[id].studio.preflight.GET',
   paramsSchema: idParamSchema,
 });
-

@@ -56,12 +56,18 @@ export const invalidateCatalogScopedData = (queryClient: QueryClient, catalogId:
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.metadata.categories(catalogId) }),
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.metadata.tags(catalogId) }),
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.metadata.parameters(catalogId) }),
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.metadata.simpleParameters(catalogId) }),
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.products.metadata.simpleParameters(catalogId),
+    }),
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.settings.categories(catalogId) }),
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.settings.tags(catalogId) }),
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.settings.parameters(catalogId) }),
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.settings.simpleParameters(catalogId) }),
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.settings.categoryTree(catalogId) }),
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.products.settings.simpleParameters(catalogId),
+    }),
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.products.settings.categoryTree(catalogId),
+    }),
   ]);
 };
 
@@ -84,7 +90,9 @@ export const invalidateValidatorConfig = (queryClient: QueryClient) => {
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.settings.validatorSettings() }),
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.settings.validatorPatterns() }),
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.settings.validatorConfig(true) }),
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.settings.validatorConfig(false) }),
+    queryClient.invalidateQueries({
+      queryKey: QUERY_KEYS.products.settings.validatorConfig(false),
+    }),
   ]);
 };
 
@@ -182,7 +190,9 @@ export const invalidateProductListings = (queryClient: QueryClient, productId: s
 };
 
 export const invalidateListingBadges = (queryClient: QueryClient) => {
-  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.integrations.productListingsBadges() });
+  return queryClient.invalidateQueries({
+    queryKey: QUERY_KEYS.integrations.productListingsBadges(),
+  });
 };
 
 export const invalidateProductListingsAndBadges = (queryClient: QueryClient, productId: string) => {
@@ -210,27 +220,49 @@ export const invalidateListingsBadgesAndQueues = (queryClient: QueryClient, prod
 // --- Marketplace ---
 
 export const invalidateMarketplaceCategories = (queryClient: QueryClient, connectionId: string) => {
-  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.integrations.marketplace.categories(connectionId) });
+  return queryClient.invalidateQueries({
+    queryKey: QUERY_KEYS.integrations.marketplace.categories(connectionId),
+  });
 };
 
-export const invalidateMarketplaceMappings = (queryClient: QueryClient, connectionId: string, catalogId: string) => {
-  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.integrations.marketplace.mappings(connectionId, catalogId) });
+export const invalidateMarketplaceMappings = (
+  queryClient: QueryClient,
+  connectionId: string,
+  catalogId: string
+) => {
+  return queryClient.invalidateQueries({
+    queryKey: QUERY_KEYS.integrations.marketplace.mappings(connectionId, catalogId),
+  });
 };
 
 export const invalidateMarketplaceProducers = (queryClient: QueryClient, connectionId: string) => {
-  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.integrations.marketplace.producers(connectionId) });
+  return queryClient.invalidateQueries({
+    queryKey: QUERY_KEYS.integrations.marketplace.producers(connectionId),
+  });
 };
 
-export const invalidateMarketplaceProducerMappings = (queryClient: QueryClient, connectionId: string) => {
-  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.integrations.marketplace.producerMappings(connectionId) });
+export const invalidateMarketplaceProducerMappings = (
+  queryClient: QueryClient,
+  connectionId: string
+) => {
+  return queryClient.invalidateQueries({
+    queryKey: QUERY_KEYS.integrations.marketplace.producerMappings(connectionId),
+  });
 };
 
 export const invalidateMarketplaceTags = (queryClient: QueryClient, connectionId: string) => {
-  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.integrations.marketplace.tags(connectionId) });
+  return queryClient.invalidateQueries({
+    queryKey: QUERY_KEYS.integrations.marketplace.tags(connectionId),
+  });
 };
 
-export const invalidateMarketplaceTagMappings = (queryClient: QueryClient, connectionId: string) => {
-  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.integrations.marketplace.tagMappings(connectionId) });
+export const invalidateMarketplaceTagMappings = (
+  queryClient: QueryClient,
+  connectionId: string
+) => {
+  return queryClient.invalidateQueries({
+    queryKey: QUERY_KEYS.integrations.marketplace.tagMappings(connectionId),
+  });
 };
 
 // --- System ---
@@ -400,14 +432,8 @@ const resolveRunSource = (run: AiPathRunRecord): string | null => {
   }
 
   const sourceInfoRaw = meta['sourceInfo'];
-  if (
-    sourceInfoRaw &&
-    typeof sourceInfoRaw === 'object' &&
-    !Array.isArray(sourceInfoRaw)
-  ) {
-    const sourceInfoTab = normalizeString(
-      (sourceInfoRaw as Record<string, unknown>)['tab']
-    );
+  if (sourceInfoRaw && typeof sourceInfoRaw === 'object' && !Array.isArray(sourceInfoRaw)) {
+    const sourceInfoTab = normalizeString((sourceInfoRaw as Record<string, unknown>)['tab']);
     if (sourceInfoTab) return `tab:${sourceInfoTab}`;
   }
 
@@ -465,13 +491,7 @@ const extractJobQueueFilters = (queryKey: QueryKey): Record<string, unknown> => 
 
 const matchesQueryFilter = (run: AiPathRunRecord, query: string | null): boolean => {
   if (!query) return true;
-  const haystack = [
-    run.id,
-    run.pathId,
-    run.pathName,
-    run.entityId,
-    run.errorMessage,
-  ]
+  const haystack = [run.id, run.pathId, run.pathName, run.entityId, run.errorMessage]
     .map((item: unknown) => (typeof item === 'string' ? item.toLowerCase() : ''))
     .join(' ');
   return haystack.includes(query);

@@ -35,9 +35,7 @@ describe('case resolver OCR queue model routing helpers', () => {
   });
 
   it('throws when both runtime and fallback model are empty', () => {
-    expect(() => resolveCaseResolverOcrModel('', '')).toThrow(
-      'OCR model is not configured.'
-    );
+    expect(() => resolveCaseResolverOcrModel('', '')).toThrow('OCR model is not configured.');
   });
 
   it('parses multiple OCR model candidates in priority order', () => {
@@ -54,44 +52,30 @@ describe('case resolver OCR queue model routing helpers', () => {
 
   it('deduplicates repeated model candidates', () => {
     expect(
-      resolveCaseResolverOcrModelCandidates(
-        'gemini:gemini-1.5-pro,gemini:gemini-1.5-pro'
-      )
+      resolveCaseResolverOcrModelCandidates('gemini:gemini-1.5-pro,gemini:gemini-1.5-pro')
     ).toEqual([{ provider: 'gemini', model: 'gemini-1.5-pro' }]);
   });
 
   it('classifies transient transport/provider errors as retryable', () => {
     expect(
-      isRetryableCaseResolverOcrError(
-        new Error('OpenAI OCR request timed out after 120000ms.')
-      )
+      isRetryableCaseResolverOcrError(new Error('OpenAI OCR request timed out after 120000ms.'))
     ).toBe(true);
-    expect(
-      isRetryableCaseResolverOcrError(new Error('HTTP 429 rate limit'))
-    ).toBe(true);
-    expect(
-      isRetryableCaseResolverOcrError(new Error('read ECONNRESET'))
-    ).toBe(true);
-    expect(
-      isRetryableCaseResolverOcrError(new Error('Invalid filepath.'))
-    ).toBe(false);
+    expect(isRetryableCaseResolverOcrError(new Error('HTTP 429 rate limit'))).toBe(true);
+    expect(isRetryableCaseResolverOcrError(new Error('read ECONNRESET'))).toBe(true);
+    expect(isRetryableCaseResolverOcrError(new Error('Invalid filepath.'))).toBe(false);
   });
 
   it('classifies OCR errors into operational categories', () => {
     expect(
       classifyCaseResolverOcrError(new Error('OpenAI OCR request timed out after 120000ms.'))
     ).toBe('timeout');
+    expect(classifyCaseResolverOcrError(new Error('HTTP 429 rate limit'))).toBe('rate_limit');
+    expect(classifyCaseResolverOcrError(new Error('read ECONNRESET'))).toBe('network');
     expect(
-      classifyCaseResolverOcrError(new Error('HTTP 429 rate limit'))
-    ).toBe('rate_limit');
-    expect(
-      classifyCaseResolverOcrError(new Error('read ECONNRESET'))
-    ).toBe('network');
-    expect(
-      classifyCaseResolverOcrError(new Error('Only image and PDF files are supported for OCR runtime.'))
+      classifyCaseResolverOcrError(
+        new Error('Only image and PDF files are supported for OCR runtime.')
+      )
     ).toBe('validation');
-    expect(
-      classifyCaseResolverOcrError(new Error('Unexpected response shape'))
-    ).toBe('unknown');
+    expect(classifyCaseResolverOcrError(new Error('Unexpected response shape'))).toBe('unknown');
   });
 });

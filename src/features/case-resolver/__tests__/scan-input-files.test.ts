@@ -6,8 +6,7 @@ import {
   isLikelyScanInputFile,
 } from '@/features/case-resolver/hooks/useCaseResolverState.helpers';
 
-const createMockFile = (name: string, type: string): File =>
-  ({ name, type } as unknown as File);
+const createMockFile = (name: string, type: string): File => ({ name, type }) as unknown as File;
 
 describe('case-resolver scan input guards', () => {
   it('accepts image and pdf files for scan uploads', () => {
@@ -22,4 +21,3 @@ describe('case-resolver scan input guards', () => {
     expect(isLikelyScanInputFile(createMockFile('readme.txt', 'text/plain'))).toBe(false);
   });
 });
-

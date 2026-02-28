@@ -15,11 +15,12 @@ vi.mock('@/shared/hooks/use-settings', () => ({
   useLiteSettingsMap: vi.fn(),
 }));
 
-const createTestQueryClient = () => new QueryClient({
-  defaultOptions: {
-    queries: { retry: false },
-  },
-});
+const createTestQueryClient = () =>
+  new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+    },
+  });
 
 // Mock useToast
 vi.mock('@/shared/ui', async (importOriginal) => {
@@ -49,13 +50,14 @@ describe('AdminFrontManagePage', () => {
     } as any);
   });
 
-  const renderPage = () => render(
-    <QueryClientProvider client={queryClient}>
-      <SettingsStoreProvider>
-        <AdminFrontManagePage />
-      </SettingsStoreProvider>
-    </QueryClientProvider>
-  );
+  const renderPage = () =>
+    render(
+      <QueryClientProvider client={queryClient}>
+        <SettingsStoreProvider>
+          <AdminFrontManagePage />
+        </SettingsStoreProvider>
+      </QueryClientProvider>
+    );
 
   it('renders loading state', () => {
     (useSettingsMap as any).mockReturnValue({ isPending: true });
@@ -70,9 +72,11 @@ describe('AdminFrontManagePage', () => {
     });
 
     renderPage();
-    
+
     // The "Chatbot" button should have the selected styling (blue-500/10)
-    const chatbotButton = screen.getByRole('button', { name: /Chatbot Open the admin chatbot workspace on the home page/i });
+    const chatbotButton = screen.getByRole('button', {
+      name: /Chatbot Open the admin chatbot workspace on the home page/i,
+    });
     expect(chatbotButton).toHaveClass('border-blue-500/60');
   });
 
@@ -85,7 +89,9 @@ describe('AdminFrontManagePage', () => {
     renderPage();
 
     // Select "Notes"
-    const notesButton = screen.getByRole('button', { name: /Notes Open the admin notes workspace on the home page/i });
+    const notesButton = screen.getByRole('button', {
+      name: /Notes Open the admin notes workspace on the home page/i,
+    });
     fireEvent.click(notesButton);
 
     // Save

@@ -16,7 +16,7 @@ import { useSettingsMap } from '@/shared/hooks/use-settings';
 
 vi.mock('next-auth/react', () => ({
   signIn: vi.fn(),
-  SessionProvider: ({ children }: any) => children,
+  SessionProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   useSession: vi.fn(() => ({ data: null, status: 'unauthenticated' })),
 }));
 
@@ -25,14 +25,17 @@ vi.mock('@/features/auth/hooks/useAuthQueries', () => ({
 }));
 
 vi.mock('@/shared/hooks/use-settings', () => ({
-  useSettingsMap: vi.fn(), useUpdateSetting: vi.fn(), useLiteSettingsMap: vi.fn(),
+  useSettingsMap: vi.fn(),
+  useUpdateSetting: vi.fn(),
+  useLiteSettingsMap: vi.fn(),
 }));
 
-const createTestQueryClient = () => new QueryClient({
-  defaultOptions: {
-    queries: { retry: false },
-  },
-});
+const createTestQueryClient = () =>
+  new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+    },
+  });
 
 describe('RegisterPage', () => {
   let queryClient: QueryClient;
@@ -40,28 +43,27 @@ describe('RegisterPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     queryClient = createTestQueryClient();
-    
+
     vi.mocked(useSettingsMap).mockReturnValue({
       isLoading: false,
-      data: new Map([
-        ['auth_user_pages', JSON.stringify({ allowSignup: true })]
-      ]),
-    } as any);
+      data: new Map([['auth_user_pages', JSON.stringify({ allowSignup: true })]]),
+    } as ReturnType<typeof useSettingsMap>);
 
     vi.mocked(useRegisterUser).mockReturnValue({
       mutateAsync: vi.fn(),
-    } as any);
+    } as unknown as ReturnType<typeof useRegisterUser>);
   });
 
-  const renderPage = () => render(
-    <SessionProvider>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <RegisterPage />
-        </AuthProvider>
-      </QueryClientProvider>
-    </SessionProvider>
-  );
+  const renderPage = () =>
+    render(
+      <SessionProvider>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <RegisterPage />
+          </AuthProvider>
+        </QueryClientProvider>
+      </SessionProvider>
+    );
 
   it('renders correctly', () => {
     renderPage();
@@ -77,7 +79,9 @@ describe('RegisterPage', () => {
       ok: true,
       payload: { id: 'u1', email: 'new@example.com' },
     });
-    vi.mocked(useRegisterUser).mockReturnValue({ mutateAsync } as any);
+    vi.mocked(useRegisterUser).mockReturnValue({ mutateAsync } as unknown as ReturnType<
+      typeof useRegisterUser
+    >);
 
     renderPage();
 
@@ -91,19 +95,20 @@ describe('RegisterPage', () => {
         password: 'password123',
         name: undefined,
       });
-      expect(signIn).toHaveBeenCalledWith('credentials', expect.objectContaining({
-        email: 'new@example.com',
-        password: 'password123',
-      }));
+      expect(signIn).toHaveBeenCalledWith(
+        'credentials',
+        expect.objectContaining({
+          email: 'new@example.com',
+          password: 'password123',
+        })
+      );
     });
   });
 
   it('shows error message if signup is disabled', () => {
     vi.mocked(useSettingsMap).mockReturnValue({
       isLoading: false,
-      data: new Map([
-        ['auth_user_pages', JSON.stringify({ allowSignup: false })]
-      ]),
+      data: new Map([['auth_user_pages', JSON.stringify({ allowSignup: false })]]),
     } as any);
 
     renderPage();
@@ -118,7 +123,9 @@ describe('RegisterPage', () => {
       ok: false,
       payload: { error: 'Email already taken' },
     });
-    vi.mocked(useRegisterUser).mockReturnValue({ mutateAsync } as any);
+    vi.mocked(useRegisterUser).mockReturnValue({ mutateAsync } as unknown as ReturnType<
+      typeof useRegisterUser
+    >);
 
     renderPage();
 

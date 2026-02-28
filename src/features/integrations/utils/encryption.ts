@@ -24,11 +24,7 @@ export function encryptSecret(value: string): string {
   const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
   const encrypted = Buffer.concat([cipher.update(value, 'utf8'), cipher.final()]);
   const tag = cipher.getAuthTag();
-  return [
-    iv.toString('base64'),
-    tag.toString('base64'),
-    encrypted.toString('base64'),
-  ].join(':');
+  return [iv.toString('base64'), tag.toString('base64'), encrypted.toString('base64')].join(':');
 }
 
 export function decryptSecret(payload: string): string {

@@ -22,7 +22,7 @@ const debugQueueLog = (message: string, context?: Record<string, unknown>): void
     level: 'info',
     source: LOG_SOURCE,
     message,
-    context: context ?? null
+    context: context ?? null,
   });
 };
 
@@ -65,8 +65,7 @@ const isNonRetryableRunError = (error: unknown): boolean => {
     return true;
   }
 
-  const message =
-    error instanceof Error ? error.message : typeof error === 'string' ? error : '';
+  const message = error instanceof Error ? error.message : typeof error === 'string' ? error : '';
   const normalized = message.toLowerCase();
 
   // Ollama-specific compound check (existing logic)
@@ -98,12 +97,9 @@ const resolveDurationMs = (
 };
 
 export const computeBackoffMs = (retryCount: number, meta?: Record<string, unknown>): number => {
-  const base =
-    typeof meta?.['backoffMs'] === 'number' ? meta['backoffMs'] : DEFAULT_BACKOFF_MS;
+  const base = typeof meta?.['backoffMs'] === 'number' ? meta['backoffMs'] : DEFAULT_BACKOFF_MS;
   const max =
-    typeof meta?.['backoffMaxMs'] === 'number'
-      ? meta['backoffMaxMs']
-      : DEFAULT_BACKOFF_MAX_MS;
+    typeof meta?.['backoffMaxMs'] === 'number' ? meta['backoffMaxMs'] : DEFAULT_BACKOFF_MAX_MS;
   const exponent = Math.max(0, retryCount);
   const raw = normalizeNumber(base * Math.pow(2, exponent), DEFAULT_BACKOFF_MS, 0);
   const capped = Math.min(raw, normalizeNumber(max, DEFAULT_BACKOFF_MAX_MS, 0));
@@ -233,18 +229,12 @@ export const processStaleRunRecovery = async (): Promise<void> => {
       source: 'ai-paths-queue.stale-recovery',
     });
     if (count > 0) {
-      debugQueueLog(
-        `Recovery: marked ${count} stale running run(s) as failed`,
-        { count }
-      );
-      void ErrorSystem.logWarning(
-        `Stale run recovery: marked ${count} run(s) as failed`,
-        {
-          service: 'ai-paths-queue',
-          action: 'staleRunRecovery',
-          count,
-        }
-      );
+      debugQueueLog(`Recovery: marked ${count} stale running run(s) as failed`, { count });
+      void ErrorSystem.logWarning(`Stale run recovery: marked ${count} run(s) as failed`, {
+        service: 'ai-paths-queue',
+        action: 'staleRunRecovery',
+        count,
+      });
     }
   } catch (error) {
     void ErrorSystem.logWarning('Stale run recovery failed', {

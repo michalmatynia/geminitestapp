@@ -8,13 +8,7 @@ import type {
   ImportValidationPatternsResult,
 } from '@/features/products/api/settings';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import {
-  AppModal,
-  Button,
-  FormField,
-  Textarea,
-  useToast,
-} from '@/shared/ui';
+import { AppModal, Button, FormField, Textarea, useToast } from '@/shared/ui';
 
 import { VALIDATOR_SAMPLE_IMPORT_JSON } from './validator-documentation-clipboard';
 
@@ -63,9 +57,7 @@ export function ValidatorPatternImportModal({
 
   const [rawJson, setRawJson] = React.useState<string>(VALIDATOR_SAMPLE_IMPORT_JSON);
   const [parseError, setParseError] = React.useState<string | null>(null);
-  const [lastResult, setLastResult] = React.useState<ImportValidationPatternsResult | null>(
-    null
-  );
+  const [lastResult, setLastResult] = React.useState<ImportValidationPatternsResult | null>(null);
 
   const hasBlockingErrors = (lastResult?.errors.length ?? 0) > 0;
 
@@ -162,7 +154,7 @@ export function ValidatorPatternImportModal({
       size='lg'
       closeOnOutside={!importMutation.isPending}
       closeOnEscape={!importMutation.isPending}
-      footer={(
+      footer={
         <>
           <Button
             type='button'
@@ -203,7 +195,7 @@ export function ValidatorPatternImportModal({
             Apply Import
           </Button>
         </>
-      )}
+      }
     >
       <div className='space-y-4'>
         <FormField label='Validation Patterns JSON'>
@@ -251,7 +243,9 @@ export function ValidatorPatternImportModal({
 
             {lastResult.errors.length > 0 ? (
               <div className='space-y-2'>
-                <p className='text-xs font-semibold text-red-200'>Import issues ({lastResult.errors.length})</p>
+                <p className='text-xs font-semibold text-red-200'>
+                  Import issues ({lastResult.errors.length})
+                </p>
                 <div className='max-h-36 space-y-1 overflow-y-auto rounded border border-red-500/30 bg-red-500/5 p-2 text-xs text-red-100'>
                   {lastResult.errors.map((error, index) => (
                     <p key={`${error.code ?? 'error'}-${index}`}>
@@ -266,7 +260,9 @@ export function ValidatorPatternImportModal({
             )}
 
             <div className='space-y-2'>
-              <p className='text-xs font-semibold text-slate-200'>Planned operations ({lastResult.operations.length})</p>
+              <p className='text-xs font-semibold text-slate-200'>
+                Planned operations ({lastResult.operations.length})
+              </p>
               <div className='max-h-52 space-y-1 overflow-y-auto rounded border border-border/60 bg-black/20 p-2 text-xs text-slate-200'>
                 {lastResult.operations.map((operation, index) => (
                   <p key={`${operation.patternId ?? operation.code ?? operation.label}-${index}`}>

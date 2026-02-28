@@ -12,7 +12,7 @@ import {
   IMAGE_STUDIO_PROMPT_LIBRARY_KEY,
   parseImageStudioPromptLibrary,
   type ImageStudioPromptEntry,
-} from '../utils/prompt-library';
+} from '@/shared/lib/ai/image-studio/utils/prompt-library';
 
 function createPromptId(): string {
   return typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
@@ -21,7 +21,9 @@ function createPromptId(): string {
 }
 
 function createDefaultPromptName(entries: ImageStudioPromptEntry[]): string {
-  const existing = new Set(entries.map((entry: ImageStudioPromptEntry) => entry.name.trim().toLowerCase()));
+  const existing = new Set(
+    entries.map((entry: ImageStudioPromptEntry) => entry.name.trim().toLowerCase())
+  );
   let index = entries.length + 1;
   while (existing.has(`prompt ${index}`)) {
     index += 1;
@@ -53,13 +55,17 @@ export function AdminImageStudioPromptsPage(): React.JSX.Element {
       if (selectedPromptId) setSelectedPromptId('');
       return;
     }
-    if (!selectedPromptId || !promptEntries.some((entry: ImageStudioPromptEntry) => entry.id === selectedPromptId)) {
+    if (
+      !selectedPromptId ||
+      !promptEntries.some((entry: ImageStudioPromptEntry) => entry.id === selectedPromptId)
+    ) {
       setSelectedPromptId(promptEntries[0]!.id);
     }
   }, [promptEntries, selectedPromptId]);
 
   const activePrompt = useMemo(
-    () => promptEntries.find((entry: ImageStudioPromptEntry) => entry.id === selectedPromptId) ?? null,
+    () =>
+      promptEntries.find((entry: ImageStudioPromptEntry) => entry.id === selectedPromptId) ?? null,
     [promptEntries, selectedPromptId]
   );
   const isDirty = useMemo(
@@ -111,7 +117,9 @@ export function AdminImageStudioPromptsPage(): React.JSX.Element {
   );
 
   const handleDeletePrompt = useCallback((id: string): void => {
-    setPromptEntries((prev: ImageStudioPromptEntry[]) => prev.filter((entry: ImageStudioPromptEntry) => entry.id !== id));
+    setPromptEntries((prev: ImageStudioPromptEntry[]) =>
+      prev.filter((entry: ImageStudioPromptEntry) => entry.id !== id)
+    );
     setSelectedPromptId((current: string) => (current === id ? '' : current));
   }, []);
 
@@ -123,7 +131,9 @@ export function AdminImageStudioPromptsPage(): React.JSX.Element {
       });
       toast('Prompts saved.', { variant: 'success' });
     } catch (error) {
-      logClientError(error, { context: { source: 'AdminImageStudioPromptsPage', action: 'savePrompts' } });
+      logClientError(error, {
+        context: { source: 'AdminImageStudioPromptsPage', action: 'savePrompts' },
+      });
       toast('Failed to save prompts.', { variant: 'error' });
     }
   }, [promptEntries, toast, updateSetting]);
@@ -134,15 +144,12 @@ export function AdminImageStudioPromptsPage(): React.JSX.Element {
         <div className='flex flex-wrap items-center justify-between gap-3'>
           <div>
             <div className='text-lg text-gray-100'>Prompt Library</div>
-            <div className='text-xs text-gray-500'>Add, edit, and remove reusable Image Studio prompts.</div>
+            <div className='text-xs text-gray-500'>
+              Add, edit, and remove reusable Image Studio prompts.
+            </div>
           </div>
           <div className='flex items-center gap-2'>
-            <Button
-              size='sm'
-              type='button'
-              variant='outline'
-              onClick={handleAddPrompt}
-            >
+            <Button size='sm' type='button' variant='outline' onClick={handleAddPrompt}>
               <Plus className='mr-1 size-4' />
               Add prompt
             </Button>

@@ -46,9 +46,7 @@ const resolveHttpStatus = (error: unknown): number => {
 };
 
 // Middleware for consistent error handling
-export function withErrorHandling<T extends unknown[]>(
-  handler: (...args: T) => Promise<Response>
-) {
+export function withErrorHandling<T extends unknown[]>(handler: (...args: T) => Promise<Response>) {
   return async (...args: T): Promise<Response> => {
     try {
       return await handler(...args);
@@ -60,11 +58,11 @@ export function withErrorHandling<T extends unknown[]>(
         source: 'products.api.withErrorHandling',
         ...requestDiagnostics,
       });
-      
+
       // Generate request ID for tracking
       const requestId = requestDiagnostics.requestId ?? crypto.randomUUID();
       const status = resolveHttpStatus(error);
-      
+
       // Ensure error is an instance of Error or ApiErrorBuilder for createVersionedErrorResponse
       if (error instanceof ApiErrorBuilder) {
         return createVersionedErrorResponse(error, status, requestId);

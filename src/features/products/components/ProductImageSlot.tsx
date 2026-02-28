@@ -1,8 +1,6 @@
- 
 'use client';
 
-import { 
-  PlusIcon, XIcon, GripVertical, MoreVertical, Eye } from 'lucide-react';
+import { PlusIcon, XIcon, GripVertical, MoreVertical, Eye } from 'lucide-react';
 import NextImage from 'next/image';
 
 import { resolveProductImageUrl } from '@/shared/utils/image-routing';
@@ -21,9 +19,7 @@ interface ProductImageSlotProps {
   index: number;
 }
 
-export function ProductImageSlot({
-  index,
-}: ProductImageSlotProps) {
+export function ProductImageSlot({ index }: ProductImageSlotProps) {
   const {
     slotViewModes,
     base64LoadingSlots,
@@ -49,13 +45,7 @@ export function ProductImageSlot({
     handleDrop,
   } = useProductImageManagerUI();
 
-  const {
-    imageSlots,
-    imageLinks,
-    imageBase64s,
-    setImageLinkAt,
-    setImageBase64At,
-  } = controller;
+  const { imageSlots, imageLinks, imageBase64s, setImageLinkAt, setImageBase64At } = controller;
 
   const slot = imageSlots[index];
   const isDragging = draggedIndex === index;
@@ -64,18 +54,21 @@ export function ProductImageSlot({
   const imageLocked = Boolean(controller.isSlotImageLocked?.(index));
   const linkValue = imageLinks[index] ?? '';
   const base64Value = imageBase64s[index] ?? '';
-  
-  const uploadUrl = slot ? (
-    slot.type === 'existing' 
-      ? resolveProductImageUrl(slot.data.filepath, externalBaseUrl) ?? slot.data.filepath
-      : resolveProductImageUrl(slot.previewUrl, externalBaseUrl) ?? slot.previewUrl
-  ) : '';
+
+  const uploadUrl = slot
+    ? slot.type === 'existing'
+      ? (resolveProductImageUrl(slot.data.filepath, externalBaseUrl) ?? slot.data.filepath)
+      : (resolveProductImageUrl(slot.previewUrl, externalBaseUrl) ?? slot.previewUrl)
+    : '';
 
   const mode = slotViewModes[index];
-  const showBase64 = (mode === 'base64' && !!base64Value.trim()) || (!hasUpload && !linkValue.trim() && !!base64Value.trim());
-  const showLink = (mode === 'link' && !!linkValue.trim()) || (!hasUpload && !!linkValue.trim() && !showBase64);
-  const displayUrl = showBase64 ? base64Value : (showLink ? linkValue : uploadUrl);
-  
+  const showBase64 =
+    (mode === 'base64' && !!base64Value.trim()) ||
+    (!hasUpload && !linkValue.trim() && !!base64Value.trim());
+  const showLink =
+    (mode === 'link' && !!linkValue.trim()) || (!hasUpload && !!linkValue.trim() && !showBase64);
+  const displayUrl = showBase64 ? base64Value : showLink ? linkValue : uploadUrl;
+
   const canReorder = !minimalUi && imageSlots.length > 1;
   const isSingleMinimalSlot = minimalUi && imageSlots.length === 1;
   const singleMinimalSlotFrameClass = 'h-[7.5rem] w-[7.5rem]';
@@ -101,10 +94,12 @@ export function ProductImageSlot({
         >
           <DropdownMenuItem>Upload image</DropdownMenuItem>
         </FileUploadTrigger>
-        <DropdownMenuItem onClick={() => triggerFileManager(index)}>Choose existing</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => triggerFileManager(index)}>
+          Choose existing
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
-          disabled={!slot && !linkValue.trim() || !!base64LoadingSlots[index]}
+          disabled={(!slot && !linkValue.trim()) || !!base64LoadingSlots[index]}
           onClick={() => void convertSlotToBase64(index)}
         >
           {base64LoadingSlots[index] ? 'Converting...' : 'Convert to Base64'}
@@ -125,10 +120,16 @@ export function ProductImageSlot({
           Clear Base64
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem disabled={!linkValue.trim() || imageLocked} onClick={() => setImageLinkAt(index, '')}>
+        <DropdownMenuItem
+          disabled={!linkValue.trim() || imageLocked}
+          onClick={() => setImageLinkAt(index, '')}
+        >
           Clear link
         </DropdownMenuItem>
-        <DropdownMenuItem disabled={!hasUpload || imageLocked} onClick={() => void clearVisibleImage(index)}>
+        <DropdownMenuItem
+          disabled={!hasUpload || imageLocked}
+          onClick={() => void clearVisibleImage(index)}
+        >
           Clear upload
         </DropdownMenuItem>
       </div>
@@ -157,7 +158,9 @@ export function ProductImageSlot({
           ${isDragOver ? 'border-emerald-500 bg-emerald-500/10' : ''}
         `}
       >
-        <div className={`flex h-full w-full items-center justify-center ${isReordering ? 'pointer-events-none' : ''}`}>
+        <div
+          className={`flex h-full w-full items-center justify-center ${isReordering ? 'pointer-events-none' : ''}`}
+        >
           {displayUrl ? (
             <>
               {hasUpload && showDragHandle && (
@@ -244,15 +247,25 @@ export function ProductImageSlot({
   );
 
   return (
-    <div className={`flex flex-col gap-1 ${isSingleMinimalSlot && minimalSingleSlotAlign === 'left' ? 'items-start' : 'items-center'}`}>
+    <div
+      className={`flex flex-col gap-1 ${isSingleMinimalSlot && minimalSingleSlotAlign === 'left' ? 'items-start' : 'items-center'}`}
+    >
       {minimalUi && slotLabel && (
-        <div className={isSingleMinimalSlot ? `w-[7.5rem] ${minimalSingleSlotAlign === 'left' ? 'text-left' : 'text-center'} text-[10px] font-medium tracking-wide text-gray-400` : 'w-24 text-center text-[10px] font-medium tracking-wide text-gray-400'}>
+        <div
+          className={
+            isSingleMinimalSlot
+              ? `w-[7.5rem] ${minimalSingleSlotAlign === 'left' ? 'text-left' : 'text-center'} text-[10px] font-medium tracking-wide text-gray-400`
+              : 'w-24 text-center text-[10px] font-medium tracking-wide text-gray-400'
+          }
+        >
           {slotLabel}
         </div>
       )}
-      
+
       {minimalUi ? (
-        <div className={`${isSingleMinimalSlot && minimalSingleSlotAlign === 'left' ? '' : 'mx-auto'} flex ${minimalLayoutWidthClass} items-start gap-2`}>
+        <div
+          className={`${isSingleMinimalSlot && minimalSingleSlotAlign === 'left' ? '' : 'mx-auto'} flex ${minimalLayoutWidthClass} items-start gap-2`}
+        >
           {thumbnailFrame}
           <div className='flex w-[4.25rem] flex-col items-stretch gap-1'>
             {(['upload', 'link', 'base64'] as const).map((m) => (
@@ -262,7 +275,11 @@ export function ProductImageSlot({
                 variant={mode === m ? 'default' : 'outline'}
                 size='sm'
                 className='h-6 w-full px-2 text-[10px]'
-                disabled={(m === 'upload' && !hasUpload) || (m === 'link' && !linkValue.trim()) || (m === 'base64' && !base64Value.trim())}
+                disabled={
+                  (m === 'upload' && !hasUpload) ||
+                  (m === 'link' && !linkValue.trim()) ||
+                  (m === 'base64' && !base64Value.trim())
+                }
                 onClick={() => setSlotViewMode(index, m)}
               >
                 {m.charAt(0).toUpperCase() + m.slice(1)}
@@ -276,19 +293,41 @@ export function ProductImageSlot({
           <div className='flex w-full items-center justify-between gap-2'>
             <div className='flex items-center gap-1 text-[10px] text-gray-400'>
               {(['U', 'L', 'B'] as const).map((label, i) => {
-                const hasVal = i === 0 ? hasUpload : (i === 1 ? !!linkValue.trim() : !!base64Value.trim());
-                const colorClass = i === 0 ? 'border-emerald-400 text-emerald-300' : (i === 1 ? 'border-sky-400 text-sky-300' : 'border-purple-400 text-purple-300');
+                const hasVal =
+                  i === 0 ? hasUpload : i === 1 ? !!linkValue.trim() : !!base64Value.trim();
+                const colorClass =
+                  i === 0
+                    ? 'border-emerald-400 text-emerald-300'
+                    : i === 1
+                      ? 'border-sky-400 text-sky-300'
+                      : 'border-purple-400 text-purple-300';
                 return (
-                  <span key={label} className={`rounded-full border px-1 ${hasVal ? colorClass : 'border-gray-600 text-gray-500'}`}>
+                  <span
+                    key={label}
+                    className={`rounded-full border px-1 ${hasVal ? colorClass : 'border-gray-600 text-gray-500'}`}
+                  >
                     {label}
                   </span>
                 );
               })}
             </div>
             <div className='flex items-center gap-1'>
-              <ActionMenu variant='outline' size='sm' triggerClassName='h-6 px-2 text-[10px]' trigger={`View: ${(mode ?? 'upload').charAt(0).toUpperCase() + (mode ?? 'upload').slice(1)}`}>
+              <ActionMenu
+                variant='outline'
+                size='sm'
+                triggerClassName='h-6 px-2 text-[10px]'
+                trigger={`View: ${(mode ?? 'upload').charAt(0).toUpperCase() + (mode ?? 'upload').slice(1)}`}
+              >
                 {(['upload', 'link', 'base64'] as const).map((m) => (
-                  <DropdownMenuItem key={m} disabled={(m === 'upload' && !hasUpload) || (m === 'link' && !linkValue.trim()) || (m === 'base64' && !base64Value.trim())} onClick={() => setSlotViewMode(index, m)}>
+                  <DropdownMenuItem
+                    key={m}
+                    disabled={
+                      (m === 'upload' && !hasUpload) ||
+                      (m === 'link' && !linkValue.trim()) ||
+                      (m === 'base64' && !base64Value.trim())
+                    }
+                    onClick={() => setSlotViewMode(index, m)}
+                  >
                     {m.charAt(0).toUpperCase() + m.slice(1)}
                   </DropdownMenuItem>
                 ))}
@@ -306,11 +345,21 @@ export function ProductImageSlot({
           value={linkValue}
           onChange={(e) => setImageLinkAt(index, e.target.value)}
           placeholder='Paste image link'
-          className={minimalUi ? `h-7 ${minimalLayoutWidthClass} px-2 text-[10px]` : 'h-7 w-full px-2 text-[10px]'}
+          className={
+            minimalUi
+              ? `h-7 ${minimalLayoutWidthClass} px-2 text-[10px]`
+              : 'h-7 w-full px-2 text-[10px]'
+          }
         />
       )}
       {!!base64Value.trim() && (
-        <div className={minimalUi ? `${minimalLayoutWidthClass} text-[10px] text-purple-300/80` : 'w-full text-[10px] text-purple-300/80'}>
+        <div
+          className={
+            minimalUi
+              ? `${minimalLayoutWidthClass} text-[10px] text-purple-300/80`
+              : 'w-full text-[10px] text-purple-300/80'
+          }
+        >
           Base64 stored
         </div>
       )}

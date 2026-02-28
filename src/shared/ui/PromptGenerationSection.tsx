@@ -2,7 +2,6 @@ import { CopyIcon } from 'lucide-react';
 
 import { Button, Label, Textarea, Checkbox, Badge, SelectSimple } from '@/shared/ui';
 
-
 interface PromptGenerationSectionProps {
   pathNumber: number;
   pathTitle: string;
@@ -59,10 +58,15 @@ export function PromptGenerationSection({
   return (
     <div className='space-y-4'>
       <div className='flex items-center gap-2'>
-        <Badge variant={badgeVariant} className={`h-6 w-6 justify-center p-0 font-bold ${badgeTextColor}`}>{pathNumber}</Badge>
+        <Badge
+          variant={badgeVariant}
+          className={`h-6 w-6 justify-center p-0 font-bold ${badgeTextColor}`}
+        >
+          {pathNumber}
+        </Badge>
         <h3 className='text-md font-medium text-white'>{pathTitle}</h3>
       </div>
-      
+
       <div className='pl-8 space-y-6'>
         <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
           <div className='space-y-2'>
@@ -70,18 +74,28 @@ export function PromptGenerationSection({
             <Textarea
               rows={pathNumber === 1 ? 4 : 6} // Path 1 is 4 rows, Path 2 is 6 rows
               value={inputValue}
-              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => onInputChange(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                onInputChange(e.target.value)
+              }
               className='mt-1.5 bg-gray-900 border text-white font-mono text-sm'
             />
           </div>
           <div className='space-y-2'>
             <div className='flex items-center justify-between'>
               <Label>{initialResultLabel}</Label>
-              <Button variant='ghost' size='sm' className='h-6 text-[10px]' onClick={onCopyInitialResult}>
-                <CopyIcon className='size-3 mr-1'/>Copy
+              <Button
+                variant='ghost'
+                size='sm'
+                className='h-6 text-[10px]'
+                onClick={onCopyInitialResult}
+              >
+                <CopyIcon className='size-3 mr-1' />
+                Copy
               </Button>
             </div>
-            <div className={`mt-1.5 rounded-md border border-border/60 bg-card/40 p-4 text-sm text-gray-300 h-[${pathNumber === 1 ? '100px' : '132px'}] overflow-y-auto font-${pathNumber === 1 ? 'mono' : 'sans'}`}>
+            <div
+              className={`mt-1.5 rounded-md border border-border/60 bg-card/40 p-4 text-sm text-gray-300 h-[${pathNumber === 1 ? '100px' : '132px'}] overflow-y-auto font-${pathNumber === 1 ? 'mono' : 'sans'}`}
+            >
               {initialResultValue ? (
                 <div className='whitespace-pre-wrap'>{initialResultValue}</div>
               ) : (
@@ -93,7 +107,8 @@ export function PromptGenerationSection({
 
         <div className='max-w-md'>
           <Label>{modelLabel}</Label>
-          <SelectSimple size='sm'
+          <SelectSimple
+            size='sm'
             value={modelValue}
             onValueChange={onModelChange}
             options={modelOptions}
@@ -102,12 +117,16 @@ export function PromptGenerationSection({
 
         <div className='pt-4 border-t border-border/50 space-y-4'>
           <div className='flex items-center gap-2'>
-            <Checkbox 
-              id={outputEnabledCheckboxId} 
-              checked={outputEnabled} 
-              onCheckedChange={(checked: boolean | 'indeterminate') => onOutputEnabledChange(!!checked)} 
+            <Checkbox
+              id={outputEnabledCheckboxId}
+              checked={outputEnabled}
+              onCheckedChange={(checked: boolean | 'indeterminate') =>
+                onOutputEnabledChange(!!checked)
+              }
             />
-            <Label htmlFor={outputEnabledCheckboxId} className={`cursor-pointer ${badgeTextColor}`}>Enable Output Prompt (Refinement using {modelValue})</Label>
+            <Label htmlFor={outputEnabledCheckboxId} className={`cursor-pointer ${badgeTextColor}`}>
+              Enable Output Prompt (Refinement using {modelValue})
+            </Label>
           </div>
           {outputEnabled && (
             <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-2 duration-300'>
@@ -116,7 +135,9 @@ export function PromptGenerationSection({
                 <Textarea
                   rows={pathNumber === 1 ? 4 : 6} // Path 1 is 4 rows, Path 2 is 6 rows
                   value={outputPromptValue}
-                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => onOutputPromptChange(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                    onOutputPromptChange(e.target.value)
+                  }
                   className='mt-1.5 bg-gray-900 border text-white font-mono text-sm'
                   placeholder={outputPlaceholder}
                 />
@@ -124,11 +145,19 @@ export function PromptGenerationSection({
               <div className='space-y-2'>
                 <div className='flex items-center justify-between'>
                   <Label>{finalResultLabel}</Label>
-                  <Button variant='ghost' size='sm' className='h-6 text-[10px]' onClick={onCopyFinalResult}>
-                    <CopyIcon className='size-3 mr-1'/>Copy
+                  <Button
+                    variant='ghost'
+                    size='sm'
+                    className='h-6 text-[10px]'
+                    onClick={onCopyFinalResult}
+                  >
+                    <CopyIcon className='size-3 mr-1' />
+                    Copy
                   </Button>
                 </div>
-                <div className={`mt-1.5 rounded-md border border-border/60 bg-card/40 p-4 text-sm text-gray-300 h-[${pathNumber === 1 ? '100px' : '132px'}] overflow-y-auto font-${pathNumber === 1 ? 'mono' : 'sans'}`}>
+                <div
+                  className={`mt-1.5 rounded-md border border-border/60 bg-card/40 p-4 text-sm text-gray-300 h-[${pathNumber === 1 ? '100px' : '132px'}] overflow-y-auto font-${pathNumber === 1 ? 'mono' : 'sans'}`}
+                >
                   {finalResultValue ? (
                     <div className='whitespace-pre-wrap'>{finalResultValue}</div>
                   ) : (

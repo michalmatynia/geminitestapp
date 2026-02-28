@@ -36,8 +36,7 @@ const resolveCaseStatusRank = (
   status: CaseResolverFile['caseStatus'] | null | undefined
 ): number => (status === 'completed' ? 1 : 0);
 
-const resolveBinaryRank = (value: boolean | null | undefined): number =>
-  value === true ? 1 : 0;
+const resolveBinaryRank = (value: boolean | null | undefined): number => (value === true ? 1 : 0);
 
 const resolveCaseIdentifierLabel = (
   file: CaseResolverFile,
@@ -55,8 +54,7 @@ const compareCaseRows = (
   sortOrder: 'asc' | 'desc',
   caseIdentifierPathById: Map<string, string>
 ): number => {
-  const resolveDirectionalDelta = (value: number): number =>
-    sortOrder === 'asc' ? value : -value;
+  const resolveDirectionalDelta = (value: number): number => (sortOrder === 'asc' ? value : -value);
 
   if (sortBy === 'name') {
     const nameDelta = left.name.localeCompare(right.name);
@@ -64,8 +62,7 @@ const compareCaseRows = (
   }
 
   if (sortBy === 'created') {
-    const createdDelta =
-      resolveTimestampMs(left.createdAt) - resolveTimestampMs(right.createdAt);
+    const createdDelta = resolveTimestampMs(left.createdAt) - resolveTimestampMs(right.createdAt);
     if (createdDelta !== 0) return resolveDirectionalDelta(createdDelta);
   }
 
@@ -76,8 +73,7 @@ const compareCaseRows = (
       return leftHappeningDate.hasValue ? -1 : 1;
     }
     if (leftHappeningDate.hasValue && rightHappeningDate.hasValue) {
-      const happeningDateDelta =
-        leftHappeningDate.timestampMs - rightHappeningDate.timestampMs;
+      const happeningDateDelta = leftHappeningDate.timestampMs - rightHappeningDate.timestampMs;
       if (happeningDateDelta !== 0) return resolveDirectionalDelta(happeningDateDelta);
     }
   }
@@ -91,8 +87,7 @@ const compareCaseRows = (
 
   if (sortBy === 'status') {
     const statusDelta =
-      resolveCaseStatusRank(left.caseStatus) -
-      resolveCaseStatusRank(right.caseStatus);
+      resolveCaseStatusRank(left.caseStatus) - resolveCaseStatusRank(right.caseStatus);
     if (statusDelta !== 0) return resolveDirectionalDelta(statusDelta);
   }
 
@@ -112,8 +107,7 @@ const compareCaseRows = (
   }
 
   if (sortBy === 'locked') {
-    const lockedDelta =
-      resolveBinaryRank(left.isLocked) - resolveBinaryRank(right.isLocked);
+    const lockedDelta = resolveBinaryRank(left.isLocked) - resolveBinaryRank(right.isLocked);
     if (lockedDelta !== 0) return resolveDirectionalDelta(lockedDelta);
   }
 
@@ -213,26 +207,17 @@ export function useAdminCaseResolverCasesState() {
       workspace.files
         .filter((file: CaseResolverFile): boolean => file.fileType === 'case')
         .sort((left: CaseResolverFile, right: CaseResolverFile): number =>
-          compareCaseRows(
-            left,
-            right,
-            caseSortBy,
-            caseSortOrder,
-            caseIdentifierPathById,
-          ),
+          compareCaseRows(left, right, caseSortBy, caseSortOrder, caseIdentifierPathById)
         ),
-    [caseIdentifierPathById, caseSortBy, caseSortOrder, workspace.files],
+    [caseIdentifierPathById, caseSortBy, caseSortOrder, workspace.files]
   );
 
   const filesById = useMemo(
     () =>
       new Map<string, CaseResolverFile>(
-        files.map((file: CaseResolverFile): [string, CaseResolverFile] => [
-          file.id,
-          file,
-        ]),
+        files.map((file: CaseResolverFile): [string, CaseResolverFile] => [file.id, file])
       ),
-    [files],
+    [files]
   );
 
   const caseTagFilterOptions = useMemo(

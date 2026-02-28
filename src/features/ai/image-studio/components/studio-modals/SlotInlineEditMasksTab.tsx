@@ -3,21 +3,18 @@ import React from 'react';
 import { TabsContent } from '@/shared/ui';
 import { Hint } from '@/shared/ui';
 
-import { 
-  formatBytes,
-  formatDateTime,
-} from './slot-inline-edit-utils';
+import { formatBytes, formatDateTime } from './slot-inline-edit-utils';
 import { useStudioInlineEdit } from './StudioInlineEditContext';
 
 export function SlotInlineEditMasksTab(): React.JSX.Element {
-  const {
-    linkedMaskSlots,
-  } = useStudioInlineEdit();
+  const { linkedMaskSlots } = useStudioInlineEdit();
 
   return (
     <TabsContent value='masks' className='mt-0 space-y-4'>
       <div className='space-y-2 rounded-lg border border-border/60 bg-card/35 p-3'>
-        <Hint size='xxs' uppercase className='text-gray-500'>Linked Masks</Hint>
+        <Hint size='xxs' uppercase className='text-gray-500'>
+          Linked Masks
+        </Hint>
         <div className='text-xs text-gray-300'>
           Masks attached to this card via mask metadata links.
         </div>
@@ -51,23 +48,24 @@ export function SlotInlineEditMasksTab(): React.JSX.Element {
               <div className='min-w-0 space-y-1 text-[11px] text-gray-300'>
                 <div className='truncate text-xs text-gray-100'>{mask.name}</div>
                 <div className='text-[10px] text-gray-400'>
-                  Variant: <span className='text-gray-200'>{mask.variant}</span>
-                  {' '}• Inverted: <span className='text-gray-200'>{mask.inverted ? 'Yes' : 'No'}</span>
-                  {' '}• Mode: <span className='text-gray-200'>{mask.generationMode}</span>
+                  Variant: <span className='text-gray-200'>{mask.variant}</span> • Inverted:{' '}
+                  <span className='text-gray-200'>{mask.inverted ? 'Yes' : 'No'}</span> • Mode:{' '}
+                  <span className='text-gray-200'>{mask.generationMode}</span>
                 </div>
                 <div className='text-[10px] text-gray-400'>
-                  Relation: <span className='font-mono text-gray-300'>{mask.relationType || 'mask'}</span>
+                  Relation:{' '}
+                  <span className='font-mono text-gray-300'>{mask.relationType || 'mask'}</span>
                 </div>
                 <div className='text-[10px] text-gray-400'>
                   Mask Slot: <span className='font-mono text-gray-300'>{mask.slotId}</span>
                 </div>
                 <div className='text-[10px] text-gray-400'>
-                  File ID: <span className='font-mono text-gray-300'>{mask.imageFileId || 'n/a'}</span>
+                  File ID:{' '}
+                  <span className='font-mono text-gray-300'>{mask.imageFileId || 'n/a'}</span>
                 </div>
                 <div className='text-[10px] text-gray-400'>
-                  File: <span className='text-gray-300'>{mask.filename || 'n/a'}</span>
-                  {' '}• Size: <span className='text-gray-300'>{formatBytes(mask.size)}</span>
-                  {' '}• Dimensions:{' '}
+                  File: <span className='text-gray-300'>{mask.filename || 'n/a'}</span> • Size:{' '}
+                  <span className='text-gray-300'>{formatBytes(mask.size)}</span> • Dimensions:{' '}
                   <span className='text-gray-300'>
                     {mask.width && mask.height ? `${mask.width} x ${mask.height}` : 'n/a'}
                   </span>

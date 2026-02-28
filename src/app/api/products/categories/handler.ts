@@ -1,9 +1,7 @@
-
-
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { logSystemEvent } from '@/features/observability/server';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { CachedProductService } from '@/features/products/performance/cached-service';
 import { getCategoryRepository, getProductDataProvider } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
@@ -19,7 +17,10 @@ const buildServerTiming = (entries: Record<string, number | null | undefined>): 
   return parts.join(', ');
 };
 
-const attachTimingHeaders = (response: Response, entries: Record<string, number | null | undefined>): void => {
+const attachTimingHeaders = (
+  response: Response,
+  entries: Record<string, number | null | undefined>
+): void => {
   const value = buildServerTiming(entries);
   if (value) {
     response.headers.set('Server-Timing', value);
@@ -46,9 +47,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   const requestStart = performance.now();
   const query = _ctx.query as CatalogIdQuery | undefined;
   const catalogId =
-    query?.catalogId ??
-    new URL(req.url).searchParams.get('catalogId')?.trim() ??
-    '';
+    query?.catalogId ?? new URL(req.url).searchParams.get('catalogId')?.trim() ?? '';
 
   if (!catalogId) {
     throw badRequestError('catalogId query parameter is required');
@@ -56,17 +55,17 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
 
   const forceFresh = req.nextUrl.searchParams.get('fresh') === '1';
   const repositoryStart = performance.now();
-  
+
   const categories = forceFresh
     ? await (async () => {
-      const primaryProvider = await getProductDataProvider();
-      const repository = await getCategoryRepository(primaryProvider);
-      return repository.listCategories({ catalogId });
-    })()
+        const primaryProvider = await getProductDataProvider();
+        const repository = await getCategoryRepository(primaryProvider);
+        return repository.listCategories({ catalogId });
+      })()
     : await CachedProductService.listCategories({ catalogId });
 
   timings['repository'] = performance.now() - repositoryStart;
-  
+
   timings['total'] = performance.now() - requestStart;
   if (shouldLogTiming()) {
     await logSystemEvent({
@@ -75,7 +74,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
       context: { timings },
     });
   }
-  
+
   const response = NextResponse.json(categories);
   attachTimingHeaders(response, timings);
   return response;
@@ -94,7 +93,7 @@ export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): P
   }
 
   const repository = await getCategoryRepository();
-  
+
   // Check for duplicate name under the same parent within the same catalog
   const existing = await repository.findByName(catalogId, normalizedName, parentId ?? null);
 

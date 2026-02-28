@@ -36,4 +36,3 @@ export const swapSlots = (
   next[toIndex] = temp!;
   return next;
 };
-

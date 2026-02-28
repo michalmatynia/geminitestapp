@@ -2,7 +2,12 @@ import 'server-only';
 
 import { NextRequest } from 'next/server';
 
-import { withApiVersioning, createVersionedResponse, StandardErrors, withErrorHandling } from '@/features/products/api/server';
+import {
+  withApiVersioning,
+  createVersionedResponse,
+  StandardErrors,
+  withErrorHandling,
+} from '@/features/products/api/server';
 import type { ApiVersion } from '@/features/products/api/server';
 import { CachedProductService } from '@/features/products/performance';
 import { withSecurity } from '@/features/products/security';
@@ -23,7 +28,11 @@ async function productsHandler(req: NextRequest, version: ApiVersion): Promise<R
   }
 }
 
-async function handleGetProducts(_req: NextRequest, version: ApiVersion, searchParams: URLSearchParams): Promise<Response> {
+async function handleGetProducts(
+  _req: NextRequest,
+  version: ApiVersion,
+  searchParams: URLSearchParams
+): Promise<Response> {
   const filters = Object.fromEntries(searchParams.entries());
   const page = parseInt(searchParams.get('page') || '1');
   const limit = Math.min(parseInt(searchParams.get('limit') || '20'), 100);
@@ -36,7 +45,7 @@ async function handleGetProducts(_req: NextRequest, version: ApiVersion, searchP
     }),
     CachedProductService.getProductCount({
       ...filters,
-    })
+    }),
   ]);
 
   if (!products || (products.length === 0 && page === 1)) {
@@ -73,7 +82,7 @@ async function handleCreateProduct(req: NextRequest, version: ApiVersion): Promi
 
     if (!sku) {
       return StandardErrors.validationError([
-        { field: 'sku', message: 'SKU is required', code: 'REQUIRED_FIELD' }
+        { field: 'sku', message: 'SKU is required', code: 'REQUIRED_FIELD' },
       ])
         .withMeta(version, '/api/products', 'POST')
         .toResponse(400);
@@ -106,16 +115,11 @@ async function handleCreateProduct(req: NextRequest, version: ApiVersion): Promi
   }
 }
 
-export const ProductsV2GET = withSecurity(
-  withErrorHandling(
-    withApiVersioning(productsHandler)
-  ),
-  { rateLimiter: 'api' }
-);
+export const ProductsV2GET = withSecurity(withErrorHandling(withApiVersioning(productsHandler)), {
+  rateLimiter: 'api',
+});
 
-export const ProductsV2POST = withSecurity(
-  withErrorHandling(
-    withApiVersioning(productsHandler)
-  ),
-  { rateLimiter: 'productCreate', enableInputSanitization: true }
-);
+export const ProductsV2POST = withSecurity(withErrorHandling(withApiVersioning(productsHandler)), {
+  rateLimiter: 'productCreate',
+  enableInputSanitization: true,
+});

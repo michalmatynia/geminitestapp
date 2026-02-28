@@ -2,13 +2,7 @@
 
 import React from 'react';
 
-import {
-  Input,
-  Textarea,
-  Label,
-  FormModal,
-  SelectSimple,
-} from '@/shared/ui';
+import { Input, Textarea, Label, FormModal, SelectSimple } from '@/shared/ui';
 
 import { useCategoryFormContext } from './CategoryFormContext';
 
@@ -113,14 +107,10 @@ export function CategoryForm(): React.JSX.Element | null {
               triggerClassName='w-full bg-gray-900 border-border text-white'
             />
           </div>
-          {loadingCategories && (
-            <p className='mt-1 text-xs text-gray-500'>Loading categories...</p>
-          )}
-          {!loadingCategories &&
-            parentOptions.length === 0 && (
+          {loadingCategories && <p className='mt-1 text-xs text-gray-500'>Loading categories...</p>}
+          {!loadingCategories && parentOptions.length === 0 && (
             <p className='mt-1 text-xs text-gray-500'>
-                No categories available in{' '}
-              {modalCatalogName ?? 'this catalog'}.
+              No categories available in {modalCatalogName ?? 'this catalog'}.
             </p>
           )}
         </div>

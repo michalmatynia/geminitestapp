@@ -13,7 +13,11 @@ const MAX_SLOT_INDEX = 9;
  * GET /api/notes/[id]/files
  * Get all files for a note
  */
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
+export async function GET_handler(
+  _req: NextRequest,
+  _ctx: ApiHandlerContext,
+  params: { id: string }
+): Promise<Response> {
   const { id } = params;
   const files = await noteService.getNoteFiles(id);
   return NextResponse.json(files);
@@ -23,7 +27,11 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, pa
  * POST /api/notes/[id]/files
  * Upload a file to a specific slot
  */
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
+export async function POST_handler(
+  req: NextRequest,
+  _ctx: ApiHandlerContext,
+  params: { id: string }
+): Promise<Response> {
   const { id: noteId } = params;
 
   let formData: FormData;
@@ -66,12 +74,12 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, pa
 
   // Check if slot is already occupied
   const existingFiles = await noteService.getNoteFiles(noteId);
-  const existingFile = existingFiles.find( (f: NoteFileDto) => f.slotIndex === slotIndex);
+  const existingFile = existingFiles.find((f: NoteFileDto) => f.slotIndex === slotIndex);
   if (existingFile) {
-    throw conflictError(
-      `Slot ${slotIndex} is already occupied. Delete the existing file first.`,
-      { noteId, slotIndex }
-    );
+    throw conflictError(`Slot ${slotIndex} is already occupied. Delete the existing file first.`, {
+      noteId,
+      slotIndex,
+    });
   }
 
   const noteFile = await uploadNoteFile(file, noteId, slotIndex);

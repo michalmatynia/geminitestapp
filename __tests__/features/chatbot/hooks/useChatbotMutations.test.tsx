@@ -3,13 +3,12 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import * as chatbotApi from '@/features/ai/chatbot/api';
-import { 
-  useCreateChatbotSession, 
-  useUpdateSessionTitle, 
+import {
+  useCreateChatbotSession,
+  useUpdateSessionTitle,
   useDeleteChatbotSession,
-  useSaveChatbotSettings 
+  useSaveChatbotSettings,
 } from '@/features/ai/chatbot/hooks/useChatbotMutations';
-
 
 vi.mock('@/features/ai/chatbot/api', () => ({
   chatbotQueryKeys: {
@@ -26,13 +25,14 @@ vi.mock('@/features/ai/chatbot/api', () => ({
   saveChatbotSettings: vi.fn(),
 }));
 
-const createQueryClient = () => new QueryClient({
-  defaultOptions: {
-    mutations: {
-      retry: false,
+const createQueryClient = () =>
+  new QueryClient({
+    defaultOptions: {
+      mutations: {
+        retry: false,
+      },
     },
-  },
-});
+  });
 
 const wrapper = ({ children }: { children: React.ReactNode }) => (
   <QueryClientProvider client={createQueryClient()}>{children}</QueryClientProvider>

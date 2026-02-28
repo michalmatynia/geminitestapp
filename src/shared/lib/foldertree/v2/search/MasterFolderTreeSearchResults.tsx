@@ -38,10 +38,7 @@ export function MasterFolderTreeSearchResults({
       {results.map(({ node }: MasterFolderTreeSearchResult): React.JSX.Element => {
         const Icon = resolveNodeIcon(node);
         const pathSegments = node.path.split('/');
-        const breadcrumb =
-          pathSegments.length > 1
-            ? pathSegments.slice(0, -1).join(' / ')
-            : null;
+        const breadcrumb = pathSegments.length > 1 ? pathSegments.slice(0, -1).join(' / ') : null;
 
         return (
           <button

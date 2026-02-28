@@ -4,14 +4,8 @@
   "nodeType": "model",
   "title": "Model",
   "purpose": "Runs a selected model.",
-  "inputs": [
-    "prompt",
-    "images"
-  ],
-  "outputs": [
-    "result",
-    "jobId"
-  ],
+  "inputs": ["prompt", "images"],
+  "outputs": ["result", "jobId"],
   "configFields": [
     {
       "path": "model.modelId",
@@ -59,14 +53,8 @@
       "x": 100,
       "y": 100
     },
-    "inputs": [
-      "prompt",
-      "images"
-    ],
-    "outputs": [
-      "result",
-      "jobId"
-    ],
+    "inputs": ["prompt", "images"],
+    "outputs": ["result", "jobId"],
     "data": {},
     "connections": {
       "incoming": [],

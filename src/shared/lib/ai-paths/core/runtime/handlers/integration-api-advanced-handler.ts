@@ -1,11 +1,5 @@
-import type {
-  AdvancedApiConfig,
-  RuntimePortValues,
-} from '@/shared/contracts/ai-paths';
-import type {
-  NodeHandler,
-  NodeHandlerContext,
-} from '@/shared/contracts/ai-paths-runtime';
+import type { AdvancedApiConfig, RuntimePortValues } from '@/shared/contracts/ai-paths';
+import type { NodeHandler, NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 
 import { getValueAtMappingPath, renderTemplate, safeStringify } from '../../utils';
 import {
@@ -142,17 +136,12 @@ const applyPathParams = (url: string, params: Record<string, string>): string =>
   Object.entries(params).forEach(([key, value]) => {
     if (!key) return;
     const encoded = encodeURIComponent(value);
-    next = next
-      .replaceAll(`:${key}`, encoded)
-      .replaceAll(`{${key}}`, encoded);
+    next = next.replaceAll(`:${key}`, encoded).replaceAll(`{${key}}`, encoded);
   });
   return next;
 };
 
-const appendQueryParams = (
-  url: string,
-  queryParams: Record<string, string>
-): string => {
+const appendQueryParams = (url: string, queryParams: Record<string, string>): string => {
   const entries = Object.entries(queryParams).filter(
     ([key, value]) => key.trim().length > 0 && value.length > 0
   );
@@ -174,18 +163,13 @@ const sleep = async (ms: number): Promise<void> => {
   });
 };
 
-const resolveRetryDelay = (
-  attempt: number,
-  config: AdvancedApiConfig
-): number => {
+const resolveRetryDelay = (attempt: number, config: AdvancedApiConfig): number => {
   const base = Math.max(0, Math.trunc(config.retryBackoffMs ?? 0));
   if (base <= 0) return 0;
   const max = Math.max(base, Math.trunc(config.retryMaxBackoffMs ?? base));
   const strategy = config.retryBackoff ?? 'fixed';
   const step =
-    strategy === 'exponential'
-      ? Math.min(max, base * Math.pow(2, Math.max(0, attempt - 1)))
-      : base;
+    strategy === 'exponential' ? Math.min(max, base * Math.pow(2, Math.max(0, attempt - 1))) : base;
   const jitterRatio = Math.max(0, Math.min(1, config.retryJitterRatio ?? 0));
   if (jitterRatio <= 0) return step;
   const jitter = Math.round(step * jitterRatio * Math.random());
@@ -227,10 +211,7 @@ const evaluateErrorRoute = (
 ): AdvancedApiErrorRoute | null => {
   for (const route of routes) {
     if (route.when === 'status') {
-      if (
-        typeof route.status === 'number' &&
-        Math.trunc(route.status) === payload.status
-      ) {
+      if (typeof route.status === 'number' && Math.trunc(route.status) === payload.status) {
         return route;
       }
       continue;
@@ -306,13 +287,10 @@ const parseOutputMappings = (
   nodeId: string
 ): Record<string, string> =>
   toStringRecord(
-    parseJsonWithTemplates<unknown>(
-      config.outputMappingsJson,
-      nodeInputs,
-      {},
-      reportAiPathsError,
-      { action: 'parseAdvancedApiOutputMappings', nodeId }
-    )
+    parseJsonWithTemplates<unknown>(config.outputMappingsJson, nodeInputs, {}, reportAiPathsError, {
+      action: 'parseAdvancedApiOutputMappings',
+      nodeId,
+    })
   );
 
 type SignalControl = {
@@ -419,11 +397,7 @@ const resolveAuthHeaders = async (
   if (authMode === 'oauth2_client_credentials') {
     const tokenUrl = renderTemplate(config.oauthTokenUrl ?? '', nodeInputs, '').trim();
     const clientId = renderTemplate(config.oauthClientIdTemplate ?? '', nodeInputs, '');
-    const clientSecret = renderTemplate(
-      config.oauthClientSecretTemplate ?? '',
-      nodeInputs,
-      ''
-    );
+    const clientSecret = renderTemplate(config.oauthClientSecretTemplate ?? '', nodeInputs, '');
     const scope = renderTemplate(config.oauthScopeTemplate ?? '', nodeInputs, '');
     if (!tokenUrl || !clientId || !clientSecret) {
       return { headers: nextHeaders, queryParams: nextQueryParams };
@@ -510,44 +484,25 @@ export const handleAdvancedApi: NodeHandler = async ({
   }
 
   const parsedPathParams = toStringRecord(
-    parseJsonWithTemplates<unknown>(
-      config.pathParamsJson,
-      nodeInputs,
-      {},
-      reportAiPathsError,
-      { action: 'parseAdvancedApiPathParams', nodeId: node.id }
-    )
+    parseJsonWithTemplates<unknown>(config.pathParamsJson, nodeInputs, {}, reportAiPathsError, {
+      action: 'parseAdvancedApiPathParams',
+      nodeId: node.id,
+    })
   );
   const parsedQueryParams = toStringRecord(
-    parseJsonWithTemplates<unknown>(
-      config.queryParamsJson,
-      nodeInputs,
-      {},
-      reportAiPathsError,
-      { action: 'parseAdvancedApiQueryParams', nodeId: node.id }
-    )
+    parseJsonWithTemplates<unknown>(config.queryParamsJson, nodeInputs, {}, reportAiPathsError, {
+      action: 'parseAdvancedApiQueryParams',
+      nodeId: node.id,
+    })
   );
   const parsedHeaders = toStringRecord(
-    parseJsonWithTemplates<unknown>(
-      config.headersJson,
-      nodeInputs,
-      {},
-      reportAiPathsError,
-      { action: 'parseAdvancedApiHeaders', nodeId: node.id }
-    )
+    parseJsonWithTemplates<unknown>(config.headersJson, nodeInputs, {}, reportAiPathsError, {
+      action: 'parseAdvancedApiHeaders',
+      nodeId: node.id,
+    })
   );
-  const outputMappings = parseOutputMappings(
-    config,
-    nodeInputs,
-    reportAiPathsError,
-    node.id
-  );
-  const retryStatuses = resolveRetryStatuses(
-    config,
-    nodeInputs,
-    reportAiPathsError,
-    node.id
-  );
+  const outputMappings = parseOutputMappings(config, nodeInputs, reportAiPathsError, node.id);
+  const retryStatuses = resolveRetryStatuses(config, nodeInputs, reportAiPathsError, node.id);
   const errorRoutes = parseErrorRoutes(config, nodeInputs, reportAiPathsError, node.id);
 
   const maxPages = Math.max(1, Math.trunc(config.maxPages ?? 1));
@@ -563,10 +518,7 @@ export const handleAdvancedApi: NodeHandler = async ({
 
   const rateLimitEnabled = Boolean(config.rateLimitEnabled);
   const rateLimitRequests = Math.max(1, Math.trunc(config.rateLimitRequests ?? 1));
-  const rateLimitIntervalMs = Math.max(
-    1,
-    Math.trunc(config.rateLimitIntervalMs ?? 1000)
-  );
+  const rateLimitIntervalMs = Math.max(1, Math.trunc(config.rateLimitIntervalMs ?? 1000));
   const minRequestGapMs = Math.ceil(rateLimitIntervalMs / rateLimitRequests);
   let lastRequestAt = 0;
 
@@ -575,9 +527,9 @@ export const handleAdvancedApi: NodeHandler = async ({
   const retryOnNetworkError = config.retryOnNetworkError !== false;
 
   const generatedIdempotencyKey = sideEffectControl?.idempotencyKey?.trim() ?? '';
-  const idempotencyEnabled = Boolean(config.idempotencyEnabled) || generatedIdempotencyKey.length > 0;
-  const idempotencyHeaderName =
-    (config.idempotencyHeaderName ?? '').trim() || 'Idempotency-Key';
+  const idempotencyEnabled =
+    Boolean(config.idempotencyEnabled) || generatedIdempotencyKey.length > 0;
+  const idempotencyHeaderName = (config.idempotencyHeaderName ?? '').trim() || 'Idempotency-Key';
   const configuredIdempotencyKey = renderTemplate(
     config.idempotencyKeyTemplate ?? '',
     nodeInputs,
@@ -814,18 +766,16 @@ export const handleAdvancedApi: NodeHandler = async ({
     }
 
     let attempt = 1;
-    let requestResult:
-      | {
-          envelope: JsonRecord;
-          responseText: string;
-          status: number;
-          ok: boolean;
-          route: AdvancedApiErrorRoute | null;
-          timedOut: boolean;
-          networkError: boolean;
-          responseData: unknown;
-        }
-      | null = null;
+    let requestResult: {
+      envelope: JsonRecord;
+      responseText: string;
+      status: number;
+      ok: boolean;
+      route: AdvancedApiErrorRoute | null;
+      timedOut: boolean;
+      networkError: boolean;
+      responseData: unknown;
+    } | null = null;
 
     const pageQueryParams: Record<string, string> = { ...parsedQueryParams };
     if (paginationMode === 'page') {
@@ -847,11 +797,10 @@ export const handleAdvancedApi: NodeHandler = async ({
       const canRetry =
         retryEnabled &&
         attempt < retryAttempts &&
-        (
-          (current.status > 0 && retryStatuses.has(current.status)) ||
+        ((current.status > 0 && retryStatuses.has(current.status)) ||
           (current.status === 0 &&
-            ((current.timedOut || current.networkError) && retryOnNetworkError))
-        );
+            (current.timedOut || current.networkError) &&
+            retryOnNetworkError));
       if (!canRetry) break;
       await sleep(resolveRetryDelay(attempt, config));
       attempt += 1;
@@ -865,9 +814,7 @@ export const handleAdvancedApi: NodeHandler = async ({
       itemsPath.length > 0
         ? getValueAtMappingPath(requestResult.responseData, itemsPath)
         : undefined;
-    const pageItems: unknown[] = Array.isArray(responseItems)
-      ? responseItems
-      : [];
+    const pageItems: unknown[] = Array.isArray(responseItems) ? responseItems : [];
     if (pageItems.length > 0) {
       pageItems.forEach((item: unknown) => {
         aggregateItems.push(item);

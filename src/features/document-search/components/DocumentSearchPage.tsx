@@ -38,14 +38,14 @@ export function DocumentSearchPage({
     <ListPanel
       variant='flat'
       className={cn('flex min-h-0 flex-1 flex-col', className)}
-      header={(
+      header={
         <div className='flex items-center gap-3'>
           {startAdornment}
           <h1 className='text-3xl font-bold text-white'>{title}</h1>
           {titleAdornment}
           <div className='ml-auto flex items-center gap-2'>{endAdornment}</div>
         </div>
-      )}
+      }
       filters={filters}
       contentClassName={cn('flex min-h-0 flex-1 flex-col overflow-y-auto pr-1', contentClassName)}
     >

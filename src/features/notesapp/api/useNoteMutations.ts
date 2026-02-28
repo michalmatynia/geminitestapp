@@ -20,11 +20,7 @@ import type {
   UpdateNoteThemeDto as ThemeUpdateInput,
 } from '@/shared/contracts/notes';
 import type { DeleteResponse } from '@/shared/contracts/ui';
-import type {
-  CreateMutation,
-  UpdateMutation,
-  DeleteMutation,
-} from '@/shared/contracts/ui';
+import type { CreateMutation, UpdateMutation, DeleteMutation } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import {
   createCreateMutationV2,
@@ -33,15 +29,11 @@ import {
 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
-export function useCreateNote(): CreateMutation<
-  NoteWithRelations,
-  NoteCreateInput
-  > {
+export function useCreateNote(): CreateMutation<NoteWithRelations, NoteCreateInput> {
   const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.notes.all;
   return createCreateMutationV2({
-    mutationFn: (payload: NoteCreateInput) =>
-      api.post<NoteWithRelations>('/api/notes', payload),
+    mutationFn: (payload: NoteCreateInput) => api.post<NoteWithRelations>('/api/notes', payload),
     mutationKey,
     meta: {
       source: 'notes.hooks.useCreateNote',
@@ -60,7 +52,7 @@ export function useCreateNote(): CreateMutation<
 export function useUpdateNote(): UpdateMutation<
   NoteWithRelations,
   NoteUpdateInput & { id: string }
-  > {
+> {
   const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.notes.all;
   return createUpdateMutationV2({
@@ -104,10 +96,7 @@ export function useDeleteNote(): DeleteMutation<DeleteResponse> {
   });
 }
 
-export function useCreateNoteFolder(): CreateMutation<
-  CategoryRecord,
-  CategoryCreateInput
-  > {
+export function useCreateNoteFolder(): CreateMutation<CategoryRecord, CategoryCreateInput> {
   const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.notes.all;
   return createCreateMutationV2({
@@ -131,7 +120,7 @@ export function useCreateNoteFolder(): CreateMutation<
 export function useUpdateNoteFolder(): UpdateMutation<
   CategoryRecord,
   CategoryUpdateInput & { id: string }
-  > {
+> {
   const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.notes.all;
   return createUpdateMutationV2({
@@ -173,10 +162,7 @@ export function useDeleteNoteFolder(): DeleteMutation<DeleteResponse> {
   });
 }
 
-export function useCreateNotebook(): CreateMutation<
-  NotebookRecord,
-  NotebookCreateInput
-  > {
+export function useCreateNotebook(): CreateMutation<NotebookRecord, NotebookCreateInput> {
   const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.notes.notebooks();
   return createCreateMutationV2({
@@ -202,7 +188,7 @@ export function useCreateNotebook(): CreateMutation<
 export function useUpdateNotebook(): UpdateMutation<
   NotebookRecord,
   NotebookUpdateInput & { id: string }
-  > {
+> {
   const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.notes.notebooks();
   return createUpdateMutationV2({
@@ -232,8 +218,7 @@ export function useDeleteNotebook(): DeleteMutation<DeleteResponse> {
   const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.notes.notebooks();
   return createDeleteMutationV2({
-    mutationFn: (id: string) =>
-      api.delete<DeleteResponse>(`/api/notes/notebooks/${id}`),
+    mutationFn: (id: string) => api.delete<DeleteResponse>(`/api/notes/notebooks/${id}`),
     mutationKey,
     meta: {
       source: 'notes.hooks.useDeleteNotebook',
@@ -253,8 +238,7 @@ export function useCreateNoteTag(): CreateMutation<TagRecord, TagCreateInput> {
   const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.notes.tags();
   return createCreateMutationV2({
-    mutationFn: (payload: TagCreateInput) =>
-      api.post<TagRecord>('/api/notes/tags', payload),
+    mutationFn: (payload: TagCreateInput) => api.post<TagRecord>('/api/notes/tags', payload),
     mutationKey,
     meta: {
       source: 'notes.hooks.useCreateNoteTag',
@@ -273,10 +257,7 @@ export function useCreateNoteTag(): CreateMutation<TagRecord, TagCreateInput> {
   });
 }
 
-export function useUpdateNoteTag(): UpdateMutation<
-  TagRecord,
-  TagUpdateInput & { id: string }
-  > {
+export function useUpdateNoteTag(): UpdateMutation<TagRecord, TagUpdateInput & { id: string }> {
   const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.notes.tags();
   return createUpdateMutationV2({
@@ -301,8 +282,7 @@ export function useDeleteNoteTag(): DeleteMutation<DeleteResponse> {
   const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.notes.tags();
   return createDeleteMutationV2({
-    mutationFn: (id: string) =>
-      api.delete<DeleteResponse>(`/api/notes/tags/${id}`),
+    mutationFn: (id: string) => api.delete<DeleteResponse>(`/api/notes/tags/${id}`),
     mutationKey,
     meta: {
       source: 'notes.hooks.useDeleteNoteTag',
@@ -318,15 +298,11 @@ export function useDeleteNoteTag(): DeleteMutation<DeleteResponse> {
   });
 }
 
-export function useCreateNoteTheme(): CreateMutation<
-  ThemeRecord,
-  ThemeCreateInput
-  > {
+export function useCreateNoteTheme(): CreateMutation<ThemeRecord, ThemeCreateInput> {
   const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.notes.themes();
   return createCreateMutationV2({
-    mutationFn: (payload: ThemeCreateInput) =>
-      api.post<ThemeRecord>('/api/notes/themes', payload),
+    mutationFn: (payload: ThemeCreateInput) => api.post<ThemeRecord>('/api/notes/themes', payload),
     mutationKey,
     meta: {
       source: 'notes.hooks.useCreateNoteTheme',
@@ -350,7 +326,7 @@ export function useCreateNoteTheme(): CreateMutation<
 export function useUpdateNoteTheme(): UpdateMutation<
   ThemeRecord,
   ThemeUpdateInput & { id: string }
-  > {
+> {
   const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.notes.themes();
   return createUpdateMutationV2({
@@ -377,8 +353,7 @@ export function useDeleteNoteTheme(): DeleteMutation<DeleteResponse> {
   const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.notes.themes();
   return createDeleteMutationV2({
-    mutationFn: (id: string) =>
-      api.delete<DeleteResponse>(`/api/notes/themes/${id}`),
+    mutationFn: (id: string) => api.delete<DeleteResponse>(`/api/notes/themes/${id}`),
     mutationKey,
     meta: {
       source: 'notes.hooks.useDeleteNoteTheme',

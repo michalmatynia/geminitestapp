@@ -104,10 +104,12 @@ export type UpdateTranslationDto = Partial<CreateTranslationDto>;
  */
 
 export const countryWithCurrenciesSchema = countrySchema.extend({
-  currencies: z.array(z.object({
-    currencyId: z.string(),
-    currency: currencySchema,
-  })),
+  currencies: z.array(
+    z.object({
+      currencyId: z.string(),
+      currency: currencySchema,
+    })
+  ),
 });
 
 export type CountryWithCurrenciesDto = z.infer<typeof countryWithCurrenciesSchema>;

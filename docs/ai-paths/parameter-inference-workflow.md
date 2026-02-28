@@ -1,11 +1,13 @@
 # Parameter Inference AI Path Workflow (English)
 
 ## Scope
+
 - Input: product `name` + product images from Product Modal trigger context.
 - Output: auto-filled `product.parameters` entries in English.
 - Non-goals: translation/localization of inferred parameter values.
 
 ## Acceptance Criteria
+
 1. A Product Modal trigger button `Infer Parameters` is visible next to `Infer Fields`.
 2. Trigger launches the `Parameter Inference` path.
 3. Workflow reads parameter definitions from `product_parameters` by catalog, with fallback to `product.parameters[].parameterId` when catalog context is missing.
@@ -18,6 +20,7 @@
 10. Runtime keeps debug payload for dropped/accepted/written parameter entries.
 
 ## Runtime Guard (Database Node)
+
 - `database.parameterInferenceGuard.enabled = true`
 - `targetPath = "parameters"`
 - `definitionsPort = "result"`
@@ -26,10 +29,12 @@
 - `allowUnknownParameterIds = false`
 
 ## Data Prerequisites
+
 1. Products must have `catalogId` when available.
 2. If `catalogId` is missing, `product.parameters[].parameterId` must be present to enable fallback definition lookup.
 
 ## Test Matrix
+
 1. Product with valid `catalogId`, clear title/images -> expected accepted parameters > 0.
 2. Product without `catalogId`, but existing parameter IDs -> fallback query resolves definitions and writes values.
 3. Product without `catalogId` and without parameter IDs -> run is blocked by hard gate with explicit error.
@@ -42,10 +47,12 @@
 10. Partial or sparse inference output -> product still keeps full parameter template rows with empty values where missing.
 
 ## Regression Baseline
+
 - SKU `KEYCHA1078` must pass after catalog backfill and write at least one inferred parameter in non-dry run.
 - No silent success with zero definitions is allowed.
 
 ## Rollout Metrics
+
 - Path run success rate.
 - Average accepted parameters per run.
 - Dropped counts by reason: unknown parameter ID, invalid option, empty candidate value, duplicate, invalid shape.
@@ -53,5 +60,6 @@
 - Manual correction rate in Product form after inference.
 
 ## Operational Notes
+
 - This path is auto-seeded and auto-repaired from AI Paths settings store.
 - If settings are missing/corrupt, the workflow and trigger button are re-created automatically.

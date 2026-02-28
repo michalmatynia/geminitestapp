@@ -1,5 +1,12 @@
-import type { BoundsNormalizerConfig, BoundsNormalizerInputFormat } from '@/shared/contracts/ai-paths-core';
-import type { NodeHandler, NodeHandlerContext, RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
+import type {
+  BoundsNormalizerConfig,
+  BoundsNormalizerInputFormat,
+} from '@/shared/contracts/ai-paths-core';
+import type {
+  NodeHandler,
+  NodeHandlerContext,
+  RuntimePortValues,
+} from '@/shared/contracts/ai-paths-runtime';
 import { coerceInput, getValueAtMappingPath } from '../../../utils';
 
 // ---------------------------------------------------------------------------
@@ -25,7 +32,11 @@ const toFinite = (v: unknown): number | null => {
 };
 
 /** Read a value via optional dot-path; falls back to reading key directly. */
-const readField = (obj: unknown, customPath: string | undefined, defaultKey: string): number | null => {
+const readField = (
+  obj: unknown,
+  customPath: string | undefined,
+  defaultKey: string
+): number | null => {
   if (obj === null || obj === undefined || typeof obj !== 'object') return null;
   const key = customPath?.trim() || defaultKey;
   return toFinite(getValueAtMappingPath(obj, key));
@@ -46,11 +57,11 @@ const resolvePath = (value: unknown, path: string | undefined): unknown => {
  */
 const fromPixelsTlwh = (
   raw: unknown,
-  cfg: BoundsNormalizerConfig,
+  cfg: BoundsNormalizerConfig
 ): { left: number; top: number; width: number; height: number } | null => {
-  const left   = readField(raw, cfg.leftField,   'left');
-  const top    = readField(raw, cfg.topField,    'top');
-  const width  = readField(raw, cfg.widthField,  'width');
+  const left = readField(raw, cfg.leftField, 'left');
+  const top = readField(raw, cfg.topField, 'top');
+  const width = readField(raw, cfg.widthField, 'width');
   const height = readField(raw, cfg.heightField, 'height');
   if (left === null || top === null || width === null || height === null) return null;
   if (width <= 0 || height <= 0) return null;
@@ -63,14 +74,14 @@ const fromPixelsTlwh = (
  */
 const fromPixelsTlbr = (
   raw: unknown,
-  cfg: BoundsNormalizerConfig,
+  cfg: BoundsNormalizerConfig
 ): { left: number; top: number; width: number; height: number } | null => {
-  const x1 = readField(raw, cfg.leftField,   'x1');
-  const y1 = readField(raw, cfg.topField,    'y1');
-  const x2 = readField(raw, cfg.widthField,  'x2');
+  const x1 = readField(raw, cfg.leftField, 'x1');
+  const y1 = readField(raw, cfg.topField, 'y1');
+  const x2 = readField(raw, cfg.widthField, 'x2');
   const y2 = readField(raw, cfg.heightField, 'y2');
   if (x1 === null || y1 === null || x2 === null || y2 === null) return null;
-  const width  = x2 - x1;
+  const width = x2 - x1;
   const height = y2 - y1;
   if (width <= 0 || height <= 0) return null;
   return { left: x1, top: y1, width, height };
@@ -83,7 +94,7 @@ const fromPixelsTlbr = (
 const fromGeminiMillirelative = (
   raw: unknown,
   imgW: number,
-  imgH: number,
+  imgH: number
 ): { left: number; top: number; width: number; height: number } | null => {
   if (!Array.isArray(raw) || raw.length < 4) return null;
   const y1 = toFinite(raw[0]);
@@ -91,9 +102,9 @@ const fromGeminiMillirelative = (
   const y2 = toFinite(raw[2]);
   const x2 = toFinite(raw[3]);
   if (y1 === null || x1 === null || y2 === null || x2 === null) return null;
-  const left   = Math.round((x1 / 1000) * imgW);
-  const top    = Math.round((y1 / 1000) * imgH);
-  const width  = Math.round(((x2 - x1) / 1000) * imgW);
+  const left = Math.round((x1 / 1000) * imgW);
+  const top = Math.round((y1 / 1000) * imgH);
+  const width = Math.round(((x2 - x1) / 1000) * imgW);
   const height = Math.round(((y2 - y1) / 1000) * imgH);
   if (width <= 0 || height <= 0) return null;
   return { left, top, width, height };
@@ -108,7 +119,7 @@ const fromRelativeXywh = (
   raw: unknown,
   imgW: number,
   imgH: number,
-  cfg: BoundsNormalizerConfig,
+  cfg: BoundsNormalizerConfig
 ): { left: number; top: number; width: number; height: number } | null => {
   let cx: number | null = null;
   let cy: number | null = null;
@@ -116,19 +127,30 @@ const fromRelativeXywh = (
   let rh: number | null = null;
 
   if (Array.isArray(raw) && raw.length >= 4) {
-    [cx, cy, rw, rh] = raw.map(toFinite) as [number | null, number | null, number | null, number | null];
+    [cx, cy, rw, rh] = raw.map(toFinite) as [
+      number | null,
+      number | null,
+      number | null,
+      number | null,
+    ];
   } else if (raw !== null && typeof raw === 'object') {
-    cx = readField(raw, cfg.leftField,   'cx') ?? readField(raw, undefined, 'centerX') ?? readField(raw, undefined, 'x');
-    cy = readField(raw, cfg.topField,    'cy') ?? readField(raw, undefined, 'centerY') ?? readField(raw, undefined, 'y');
-    rw = readField(raw, cfg.widthField,  'w')  ?? readField(raw, undefined, 'width');
-    rh = readField(raw, cfg.heightField, 'h')  ?? readField(raw, undefined, 'height');
+    cx =
+      readField(raw, cfg.leftField, 'cx') ??
+      readField(raw, undefined, 'centerX') ??
+      readField(raw, undefined, 'x');
+    cy =
+      readField(raw, cfg.topField, 'cy') ??
+      readField(raw, undefined, 'centerY') ??
+      readField(raw, undefined, 'y');
+    rw = readField(raw, cfg.widthField, 'w') ?? readField(raw, undefined, 'width');
+    rh = readField(raw, cfg.heightField, 'h') ?? readField(raw, undefined, 'height');
   }
   if (cx === null || cy === null || rw === null || rh === null) return null;
-  const width  = Math.round(rw * imgW);
+  const width = Math.round(rw * imgW);
   const height = Math.round(rh * imgH);
   if (width <= 0 || height <= 0) return null;
   const left = Math.round(cx * imgW - width / 2);
-  const top  = Math.round(cy * imgH - height / 2);
+  const top = Math.round(cy * imgH - height / 2);
   return { left, top, width, height };
 };
 
@@ -140,19 +162,19 @@ const fromPercentageTlwh = (
   raw: unknown,
   imgW: number,
   imgH: number,
-  cfg: BoundsNormalizerConfig,
+  cfg: BoundsNormalizerConfig
 ): { left: number; top: number; width: number; height: number } | null => {
-  const left   = readField(raw, cfg.leftField,   'left');
-  const top    = readField(raw, cfg.topField,    'top');
-  const width  = readField(raw, cfg.widthField,  'width');
+  const left = readField(raw, cfg.leftField, 'left');
+  const top = readField(raw, cfg.topField, 'top');
+  const width = readField(raw, cfg.widthField, 'width');
   const height = readField(raw, cfg.heightField, 'height');
   if (left === null || top === null || width === null || height === null) return null;
   const pw = Math.round((width / 100) * imgW);
   const ph = Math.round((height / 100) * imgH);
   if (pw <= 0 || ph <= 0) return null;
   return {
-    left:  Math.round((left / 100) * imgW),
-    top:   Math.round((top / 100) * imgH),
+    left: Math.round((left / 100) * imgW),
+    top: Math.round((top / 100) * imgH),
     width: pw,
     height: ph,
   };
@@ -165,7 +187,7 @@ const fromAuto = (
   raw: unknown,
   imgW: number | null,
   imgH: number | null,
-  cfg: BoundsNormalizerConfig,
+  cfg: BoundsNormalizerConfig
 ): { left: number; top: number; width: number; height: number } | null => {
   // Array of 4 numbers → try Gemini millirelative first, then relative_xywh
   if (Array.isArray(raw) && raw.length === 4) {
@@ -199,7 +221,7 @@ const fromAuto = (
 
 const resolveImageDims = (
   context: unknown,
-  cfg: BoundsNormalizerConfig,
+  cfg: BoundsNormalizerConfig
 ): { imgW: number | null; imgH: number | null } => {
   if (context === null || context === undefined || typeof context !== 'object') {
     return { imgW: null, imgH: null };
@@ -224,7 +246,7 @@ export const handleBoundsNormalizer: NodeHandler = ({
   try {
     const cfg: BoundsNormalizerConfig = {
       inputFormat: 'pixels_tlwh',
-      ...((node.config?.boundsNormalizer) ?? {}),
+      ...(node.config?.boundsNormalizer ?? {}),
     };
 
     const rawInput = coerceInput(nodeInputs['value']);
@@ -255,7 +277,7 @@ export const handleBoundsNormalizer: NodeHandler = ({
         } else {
           toast(
             `Bounds Normaliser "${node.title ?? node.id}": image dimensions not available for gemini_millirelative format.`,
-            { variant: 'info' },
+            { variant: 'info' }
           );
         }
         break;
@@ -265,7 +287,7 @@ export const handleBoundsNormalizer: NodeHandler = ({
         } else {
           toast(
             `Bounds Normaliser "${node.title ?? node.id}": image dimensions not available for relative_xywh format.`,
-            { variant: 'info' },
+            { variant: 'info' }
           );
         }
         break;
@@ -275,7 +297,7 @@ export const handleBoundsNormalizer: NodeHandler = ({
         } else {
           toast(
             `Bounds Normaliser "${node.title ?? node.id}": image dimensions not available for percentage_tlwh format.`,
-            { variant: 'info' },
+            { variant: 'info' }
           );
         }
         break;
@@ -287,7 +309,7 @@ export const handleBoundsNormalizer: NodeHandler = ({
     if (!converted) {
       toast(
         `Bounds Normaliser "${node.title ?? node.id}": could not extract bounds from input using format "${format}".`,
-        { variant: 'info' },
+        { variant: 'info' }
       );
       return {};
     }
@@ -297,8 +319,7 @@ export const handleBoundsNormalizer: NodeHandler = ({
       ? toFinite(resolvePath(rawInput, cfg.confidencePath))
       : null;
     const label: unknown = cfg.labelPath ? resolvePath(rawInput, cfg.labelPath) : null;
-    const labelStr: string | null =
-      typeof label === 'string' && label.trim() ? label.trim() : null;
+    const labelStr: string | null = typeof label === 'string' && label.trim() ? label.trim() : null;
 
     const result: NormalisedBounds = {
       ...converted,
@@ -311,7 +332,7 @@ export const handleBoundsNormalizer: NodeHandler = ({
     reportAiPathsError(
       error,
       { service: 'ai-paths-runtime', nodeId: node.id, nodeType: node.type },
-      `Node ${node.id} failed`,
+      `Node ${node.id} failed`
     );
     return {};
   }

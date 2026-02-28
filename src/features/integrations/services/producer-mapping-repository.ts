@@ -157,9 +157,7 @@ const resolveExternalProducerRefMongo = async (
 ): Promise<string> => {
   await ensureMongoProducerMappingIndexes();
   const db = await getMongoDb();
-  const collection = db.collection<MongoExternalProducerDoc>(
-    EXTERNAL_PRODUCER_COLLECTION
-  );
+  const collection = db.collection<MongoExternalProducerDoc>(EXTERNAL_PRODUCER_COLLECTION);
 
   const candidate = externalProducerId.trim();
   if (candidate.length === 0) {
@@ -211,12 +209,9 @@ const ensureInternalProducerRefPrisma = async (
   }
 
   const producerRepository = await getProducerRepository();
-  const sourceProducer = await producerRepository
-    .getProducerById(candidate)
-    .catch(() => null);
+  const sourceProducer = await producerRepository.getProducerById(candidate).catch(() => null);
 
-  const baseName =
-    sourceProducer?.name?.trim() || buildFallbackProducerName(candidate);
+  const baseName = sourceProducer?.name?.trim() || buildFallbackProducerName(candidate);
   const website = sourceProducer?.website ?? null;
   const fallbackSuffix = candidate.slice(-6) || 'mapped';
 
@@ -271,18 +266,14 @@ const ensureInternalProducerRefPrisma = async (
   });
 };
 
-const ensureInternalProducerRefMongo = async (
-  internalProducerId: string
-): Promise<void> => {
+const ensureInternalProducerRefMongo = async (internalProducerId: string): Promise<void> => {
   const candidate = internalProducerId.trim();
   if (candidate.length === 0) {
     return;
   }
 
   const db = await getMongoDb();
-  const collection = db.collection<MongoInternalProducerDoc>(
-    INTERNAL_PRODUCER_COLLECTION
-  );
+  const collection = db.collection<MongoInternalProducerDoc>(INTERNAL_PRODUCER_COLLECTION);
 
   const existing = await collection.findOne({
     $or: ObjectId.isValid(candidate)
@@ -294,9 +285,7 @@ const ensureInternalProducerRefMongo = async (
   }
 
   const producerRepository = await getProducerRepository();
-  const sourceProducer = await producerRepository
-    .getProducerById(candidate)
-    .catch(() => null);
+  const sourceProducer = await producerRepository.getProducerById(candidate).catch(() => null);
 
   const now = new Date();
   await collection.updateOne(
@@ -308,8 +297,7 @@ const ensureInternalProducerRefMongo = async (
       $setOnInsert: {
         _id: randomUUID(),
         id: candidate,
-        name:
-          sourceProducer?.name?.trim() || buildFallbackProducerName(candidate),
+        name: sourceProducer?.name?.trim() || buildFallbackProducerName(candidate),
         website: sourceProducer?.website ?? null,
         createdAt: now,
       },
@@ -318,22 +306,14 @@ const ensureInternalProducerRefMongo = async (
   );
 };
 
-const mirrorPrismaMappingsToMongo = async (
-  records: EnrichedProducerMapping[]
-): Promise<void> => {
+const mirrorPrismaMappingsToMongo = async (records: EnrichedProducerMapping[]): Promise<void> => {
   if (records.length === 0) return;
 
   await ensureMongoProducerMappingIndexes();
   const db = await getMongoDb();
-  const mappingCollection = db.collection<MongoProducerMappingDoc>(
-    PRODUCER_MAPPING_COLLECTION
-  );
-  const externalCollection = db.collection<MongoExternalProducerDoc>(
-    EXTERNAL_PRODUCER_COLLECTION
-  );
-  const internalCollection = db.collection<MongoInternalProducerDoc>(
-    INTERNAL_PRODUCER_COLLECTION
-  );
+  const mappingCollection = db.collection<MongoProducerMappingDoc>(PRODUCER_MAPPING_COLLECTION);
+  const externalCollection = db.collection<MongoExternalProducerDoc>(EXTERNAL_PRODUCER_COLLECTION);
+  const internalCollection = db.collection<MongoInternalProducerDoc>(INTERNAL_PRODUCER_COLLECTION);
 
   for (const record of records) {
     await externalCollection.updateOne(
@@ -344,9 +324,7 @@ const mirrorPrismaMappingsToMongo = async (
       {
         $set: {
           name: record.externalProducer.name,
-          metadata:
-            (record.externalProducer.metadata as Record<string, unknown> | null) ??
-            null,
+          metadata: (record.externalProducer.metadata as Record<string, unknown> | null) ?? null,
           fetchedAt: record.externalProducer.fetchedAt,
           updatedAt: record.externalProducer.updatedAt,
         },
@@ -402,9 +380,7 @@ export function getProducerMappingRepository(): ProducerMappingRepository {
       if (provider === 'mongodb') {
         await ensureMongoProducerMappingIndexes();
         const db = await getMongoDb();
-        const collection = db.collection<MongoProducerMappingDoc>(
-          PRODUCER_MAPPING_COLLECTION
-        );
+        const collection = db.collection<MongoProducerMappingDoc>(PRODUCER_MAPPING_COLLECTION);
 
         const resolvedExternalProducerId = await resolveExternalProducerRefMongo(
           input.connectionId,
@@ -466,9 +442,7 @@ export function getProducerMappingRepository(): ProducerMappingRepository {
       if (provider === 'mongodb') {
         await ensureMongoProducerMappingIndexes();
         const db = await getMongoDb();
-        const collection = db.collection<MongoProducerMappingDoc>(
-          PRODUCER_MAPPING_COLLECTION
-        );
+        const collection = db.collection<MongoProducerMappingDoc>(PRODUCER_MAPPING_COLLECTION);
 
         const filter = buildMongoIdFilter(id);
         const current = await collection.findOne(filter);
@@ -510,10 +484,10 @@ export function getProducerMappingRepository(): ProducerMappingRepository {
         const resolvedExternalProducerId =
           input.externalProducerId !== undefined
             ? await resolveExternalProducerRefPrisma(
-              tx,
-              current.connectionId,
-              input.externalProducerId
-            )
+                tx,
+                current.connectionId,
+                input.externalProducerId
+              )
             : undefined;
 
         const record = await tx.producerMapping.update({
@@ -603,9 +577,7 @@ export function getProducerMappingRepository(): ProducerMappingRepository {
           if (prismaRecords.length > 0) {
             await mirrorPrismaMappingsToMongo(prismaRecords);
           }
-          return prismaRecords.map((record: EnrichedProducerMapping) =>
-            toDetails(record)
-          );
+          return prismaRecords.map((record: EnrichedProducerMapping) => toDetails(record));
         } catch {
           return [];
         }
@@ -702,9 +674,7 @@ export function getProducerMappingRepository(): ProducerMappingRepository {
           if (prismaRecords.length > 0) {
             await mirrorPrismaMappingsToMongo(prismaRecords);
           }
-          return prismaRecords.map((record: EnrichedProducerMapping) =>
-            toDetails(record)
-          );
+          return prismaRecords.map((record: EnrichedProducerMapping) => toDetails(record));
         } catch {
           return [];
         }
@@ -733,9 +703,7 @@ export function getProducerMappingRepository(): ProducerMappingRepository {
       if (provider === 'mongodb') {
         await ensureMongoProducerMappingIndexes();
         const db = await getMongoDb();
-        const collection = db.collection<MongoProducerMappingDoc>(
-          PRODUCER_MAPPING_COLLECTION
-        );
+        const collection = db.collection<MongoProducerMappingDoc>(PRODUCER_MAPPING_COLLECTION);
 
         let count = 0;
         for (const mapping of mappings) {

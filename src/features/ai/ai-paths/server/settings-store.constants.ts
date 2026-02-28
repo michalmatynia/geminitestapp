@@ -54,8 +54,7 @@ export const AI_PATHS_MAINTENANCE_ACTION_IDS = [
   'upgrade_server_execution_mode',
 ] as const;
 
-export type AiPathsMaintenanceActionId =
-  (typeof AI_PATHS_MAINTENANCE_ACTION_IDS)[number];
+export type AiPathsMaintenanceActionId = (typeof AI_PATHS_MAINTENANCE_ACTION_IDS)[number];
 
 export type AiPathsMaintenanceActionReport = {
   id: AiPathsMaintenanceActionId;

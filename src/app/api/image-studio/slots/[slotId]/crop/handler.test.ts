@@ -2,9 +2,7 @@ import { NextRequest } from 'next/server';
 import sharp from 'sharp';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import {
-  IMAGE_STUDIO_CROP_ERROR_CODES,
-} from '@/features/ai/image-studio/contracts/crop';
+import { IMAGE_STUDIO_CROP_ERROR_CODES } from '@/features/ai/image-studio/contracts/crop';
 
 const {
   mkdirMock,
@@ -36,9 +34,13 @@ const {
   validateCropSourceDimensionsMock: vi.fn(),
   getImageStudioSlotLinkBySourceAndRelationMock: vi.fn(),
   upsertImageStudioSlotLinkMock: vi.fn(),
-  createImageStudioSlotsMock: vi.fn<
-    (projectId: string, slots: Array<Record<string, unknown>>) => Promise<Array<Record<string, unknown>>>
-  >(),
+  createImageStudioSlotsMock:
+    vi.fn<
+      (
+        projectId: string,
+        slots: Array<Record<string, unknown>>
+      ) => Promise<Array<Record<string, unknown>>>
+    >(),
   getImageStudioSlotByIdMock: vi.fn(),
   getImageFileRepositoryMock: vi.fn(),
   getDiskPathFromPublicPathMock: vi.fn(),
@@ -57,7 +59,7 @@ vi.mock('fs/promises', () => ({
   readFile: readFileMock,
 }));
 
-vi.mock('@/features/ai/image-studio/server/crop-utils', () => ({
+vi.mock('@/shared/lib/ai/image-studio/server/crop-utils', () => ({
   buildCropFingerprint: buildCropFingerprintMock,
   buildCropFingerprintRelationType: buildCropFingerprintRelationTypeMock,
   buildCropRequestRelationType: buildCropRequestRelationTypeMock,
@@ -66,12 +68,12 @@ vi.mock('@/features/ai/image-studio/server/crop-utils', () => ({
   validateCropSourceDimensions: validateCropSourceDimensionsMock,
 }));
 
-vi.mock('@/features/ai/image-studio/server/slot-link-repository', () => ({
+vi.mock('@/shared/lib/ai/image-studio/server/slot-link-repository', () => ({
   getImageStudioSlotLinkBySourceAndRelation: getImageStudioSlotLinkBySourceAndRelationMock,
   upsertImageStudioSlotLink: upsertImageStudioSlotLinkMock,
 }));
 
-vi.mock('@/features/ai/image-studio/server/slot-repository', () => ({
+vi.mock('@/shared/lib/ai/image-studio/server/slot-repository', () => ({
   createImageStudioSlots: createImageStudioSlotsMock,
   getImageStudioSlotById: getImageStudioSlotByIdMock,
 }));
@@ -115,7 +117,10 @@ const buildSlot = (overrides: Record<string, unknown> = {}): Record<string, unkn
   ...overrides,
 });
 
-const buildRequest = (body: Record<string, unknown>, headers?: Record<string, string>): NextRequest =>
+const buildRequest = (
+  body: Record<string, unknown>,
+  headers?: Record<string, string>
+): NextRequest =>
   new NextRequest('http://localhost/api/image-studio/slots/source-slot/crop', {
     method: 'POST',
     headers: {
@@ -318,7 +323,10 @@ describe('image-studio crop handler', () => {
 
     const firstCreateCall = createImageStudioSlotsMock.mock.calls[0];
     expect(firstCreateCall).toBeDefined();
-    const [calledProjectId, createdBatch] = firstCreateCall as [string, Array<Record<string, unknown>>];
+    const [calledProjectId, createdBatch] = firstCreateCall as [
+      string,
+      Array<Record<string, unknown>>,
+    ];
     expect(calledProjectId).toBe('project-1');
     const createdPayload = createdBatch[0];
     expect(createdPayload).toBeDefined();
@@ -331,9 +339,7 @@ describe('image-studio crop handler', () => {
     expect(metadata).not.toBeNull();
     expect(metadata?.['relationType']).toBe('crop:output');
     const cropMetadata =
-      metadata &&
-      typeof metadata['crop'] === 'object' &&
-      !Array.isArray(metadata['crop'])
+      metadata && typeof metadata['crop'] === 'object' && !Array.isArray(metadata['crop'])
         ? (metadata['crop'] as Record<string, unknown>)
         : null;
     expect(cropMetadata).not.toBeNull();
@@ -392,7 +398,9 @@ describe('image-studio crop handler', () => {
     expect(response.status).toBe(200);
     expect(payload['deduplicated']).toBe(true);
     expect(payload['dedupeReason']).toBe('fingerprint');
-    expect((payload['slot'] as Record<string, unknown>)['id']).toBe('slot-crop-fingerprint-existing');
+    expect((payload['slot'] as Record<string, unknown>)['id']).toBe(
+      'slot-crop-fingerprint-existing'
+    );
     expect(clampCropRectMock).not.toHaveBeenCalled();
     expect(createImageStudioSlotsMock).not.toHaveBeenCalled();
   });

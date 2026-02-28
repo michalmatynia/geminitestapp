@@ -31,11 +31,12 @@ vi.mock('@/features/notesapp', () => ({
   NoteSettingsProvider: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 
-const createTestQueryClient = () => new QueryClient({
-  defaultOptions: {
-    queries: { retry: false },
-  },
-});
+const createTestQueryClient = () =>
+  new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+    },
+  });
 
 const renderLayout = (children: ReactNode) => {
   const queryClient = createTestQueryClient();
@@ -43,9 +44,7 @@ const renderLayout = (children: ReactNode) => {
     <QueryClientProvider client={queryClient}>
       <SettingsStoreProvider>
         <ToastProvider>
-          <AdminLayout>
-            {children}
-          </AdminLayout>
+          <AdminLayout>{children}</AdminLayout>
         </ToastProvider>
       </SettingsStoreProvider>
     </QueryClientProvider>
@@ -74,7 +73,7 @@ describe('AdminLayout', () => {
 
     const aside = screen.getByRole('complementary');
     const toggleButtons = screen.getAllByRole('button');
-    const toggleButton = toggleButtons.find(b => b.querySelector('svg')); // Find button with chevron icon
+    const toggleButton = toggleButtons.find((b) => b.querySelector('svg')); // Find button with chevron icon
 
     // Initially expanded - check for w-56 (default)
     expect(aside.className).toContain('w-56');
@@ -83,7 +82,7 @@ describe('AdminLayout', () => {
       // Click collapse
       fireEvent.click(toggleButton);
       expect(aside.className).toContain('w-16');
-      
+
       // Click expand
       fireEvent.click(toggleButton);
       expect(aside.className).toContain('w-56');

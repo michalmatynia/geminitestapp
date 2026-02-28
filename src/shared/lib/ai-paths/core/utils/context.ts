@@ -4,7 +4,7 @@ import { CONTEXT_PRESET_FIELDS } from '../constants';
 import { omitByPaths, pickByPaths } from './json';
 
 export const getContextPresetSet = (entityType?: string): Record<string, string[]> => {
-  const key = entityType === 'auto' ? '' : entityType ?? '';
+  const key = entityType === 'auto' ? '' : (entityType ?? '');
   return (CONTEXT_PRESET_FIELDS[key] ?? CONTEXT_PRESET_FIELDS['default'])!;
 };
 
@@ -13,7 +13,7 @@ export const applyContextPreset = (
   preset: 'light' | 'medium' | 'full' | 'suggested'
 ): ContextConfig => {
   const set = getContextPresetSet(current.entityType);
-  const paths = set ? set[preset] ?? [] : [];
+  const paths = set ? (set[preset] ?? []) : [];
   if (paths.length === 0) return { ...current, scopeMode: 'full' };
   return {
     ...current,
@@ -44,7 +44,10 @@ export const toggleContextTarget = (current: ContextConfig, field: string): Cont
   };
 };
 
-export const applyContextScope = (payload: Record<string, unknown>, config?: ContextConfig): Record<string, unknown> => {
+export const applyContextScope = (
+  payload: Record<string, unknown>,
+  config?: ContextConfig
+): Record<string, unknown> => {
   const scopeMode = config?.scopeMode ?? 'full';
   const includePaths = config?.includePaths ?? [];
   const excludePaths = config?.excludePaths ?? [];

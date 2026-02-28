@@ -1,14 +1,13 @@
 'use client';
 
-import {
-  createContext,
-  useContext,
-  useMemo,
-  ReactNode,
-  ProfilerOnRenderCallback,
-} from 'react';
+import { createContext, useContext, useMemo, ReactNode, ProfilerOnRenderCallback } from 'react';
 
-import type { Catalog, PriceGroupWithDetails, ProductWithImages, ProductDraftDto } from '@/shared/contracts/products';
+import type {
+  Catalog,
+  PriceGroupWithDetails,
+  ProductWithImages,
+  ProductDraftDto,
+} from '@/shared/contracts/products';
 import { internalError } from '@/shared/errors/app-error';
 
 import type { ColumnDef, RowSelectionState, OnChangeFn } from '@tanstack/react-table';
@@ -19,14 +18,14 @@ export interface ProductListContextType {
   onCreateProduct: () => void;
   onCreateFromDraft: (draftId: string) => void;
   activeDrafts: ProductDraftDto[];
-  
+
   // Pagination
   page: number;
   totalPages: number;
   setPage: (page: number) => void;
   pageSize: number;
   setPageSize: (size: number) => void;
-  
+
   // Preferences/Localization
   nameLocale: 'name_en' | 'name_pl' | 'name_de';
   setNameLocale: (locale: 'name_en' | 'name_pl' | 'name_de') => void;
@@ -35,7 +34,7 @@ export interface ProductListContextType {
   setCurrencyCode: (code: string) => void;
   currencyOptions: string[];
   filtersCollapsedByDefault: boolean;
-  
+
   // Filters
   catalogFilter: string;
   setCatalogFilter: (filter: string) => void;
@@ -70,7 +69,7 @@ export interface ProductListContextType {
   setAdvancedFilterState: (value: string, presetId: string | null) => void;
   baseExported: '' | 'true' | 'false';
   setBaseExported: (value: '' | 'true' | 'false') => void;
-  
+
   // Data State
   data: ProductWithImages[];
   isLoading: boolean;
@@ -78,7 +77,7 @@ export interface ProductListContextType {
   actionError: string | null;
   onDismissActionError: () => void;
   setRefreshTrigger: React.Dispatch<React.SetStateAction<number>>;
-  
+
   // Selection
   rowSelection: RowSelectionState;
   setRowSelection: OnChangeFn<RowSelectionState>;
@@ -86,7 +85,7 @@ export interface ProductListContextType {
   loadingGlobal: boolean;
   onDeleteSelected: () => Promise<void>;
   onAddToMarketplace: () => void;
-  
+
   // Table Configuration
   handleProductsTableRender: ProfilerOnRenderCallback;
   tableColumns: ColumnDef<ProductWithImages>[];
@@ -95,7 +94,7 @@ export interface ProductListContextType {
   skeletonRows: ReactNode;
   maxHeight?: string | number | undefined;
   stickyHeader?: boolean | undefined;
-  
+
   // Row Handlers
   productNameKey: 'name_en' | 'name_pl' | 'name_de';
   priceGroups: PriceGroupWithDetails[];
@@ -284,16 +283,11 @@ export interface ProductListModalsContextType {
   onSelectIntegrationFromModal: (integrationId: string, connectionId: string) => void;
 }
 
-const ProductListFiltersContext =
-  createContext<ProductListFiltersContextType | null>(null);
-const ProductListSelectionContext =
-  createContext<ProductListSelectionContextType | null>(null);
-const ProductListTableContext =
-  createContext<ProductListTableContextType | null>(null);
-const ProductListActionsContext =
-  createContext<ProductListActionsContextType | null>(null);
-const ProductListModalsContext =
-  createContext<ProductListModalsContextType | null>(null);
+const ProductListFiltersContext = createContext<ProductListFiltersContextType | null>(null);
+const ProductListSelectionContext = createContext<ProductListSelectionContextType | null>(null);
+const ProductListTableContext = createContext<ProductListTableContextType | null>(null);
+const ProductListActionsContext = createContext<ProductListActionsContextType | null>(null);
+const ProductListModalsContext = createContext<ProductListModalsContextType | null>(null);
 
 export const useProductListContext = () => {
   const context = useContext(ProductListContext);
@@ -306,30 +300,23 @@ export const useProductListContext = () => {
 export const useProductListFiltersContext = (): ProductListFiltersContextType => {
   const context = useContext(ProductListFiltersContext);
   if (!context) {
-    throw internalError(
-      'useProductListFiltersContext must be used within a ProductListProvider'
-    );
+    throw internalError('useProductListFiltersContext must be used within a ProductListProvider');
   }
   return context;
 };
 
-export const useProductListSelectionContext =
-  (): ProductListSelectionContextType => {
-    const context = useContext(ProductListSelectionContext);
-    if (!context) {
-      throw internalError(
-        'useProductListSelectionContext must be used within a ProductListProvider'
-      );
-    }
-    return context;
-  };
+export const useProductListSelectionContext = (): ProductListSelectionContextType => {
+  const context = useContext(ProductListSelectionContext);
+  if (!context) {
+    throw internalError('useProductListSelectionContext must be used within a ProductListProvider');
+  }
+  return context;
+};
 
 export const useProductListTableContext = (): ProductListTableContextType => {
   const context = useContext(ProductListTableContext);
   if (!context) {
-    throw internalError(
-      'useProductListTableContext must be used within a ProductListProvider'
-    );
+    throw internalError('useProductListTableContext must be used within a ProductListProvider');
   }
   return context;
 };
@@ -337,9 +324,7 @@ export const useProductListTableContext = (): ProductListTableContextType => {
 export const useProductListActionsContext = (): ProductListActionsContextType => {
   const context = useContext(ProductListActionsContext);
   if (!context) {
-    throw internalError(
-      'useProductListActionsContext must be used within a ProductListProvider'
-    );
+    throw internalError('useProductListActionsContext must be used within a ProductListProvider');
   }
   return context;
 };
@@ -347,9 +332,7 @@ export const useProductListActionsContext = (): ProductListActionsContextType =>
 export const useProductListModalsContext = (): ProductListModalsContextType => {
   const context = useContext(ProductListModalsContext);
   if (!context) {
-    throw internalError(
-      'useProductListModalsContext must be used within a ProductListProvider'
-    );
+    throw internalError('useProductListModalsContext must be used within a ProductListProvider');
   }
   return context;
 };

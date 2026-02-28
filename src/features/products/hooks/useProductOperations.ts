@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
@@ -16,7 +15,7 @@ import { useToast } from '@/shared/ui';
 const SKU_LOOKUP_TIMEOUT_MS = 30_000;
 
 export function useProductOperations(
-  setRefreshTrigger: React.Dispatch<React.SetStateAction<number>>,
+  setRefreshTrigger: React.Dispatch<React.SetStateAction<number>>
 ): {
   isCreateOpen: boolean;
   setIsCreateOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -45,8 +44,7 @@ export function useProductOperations(
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isPromptOpen, setIsPromptOpen] = useState(false);
   const [initialSku, setInitialSku] = useState<string>('');
-  const [editingProduct, setEditingProduct] =
-    useState<ProductWithImages | null>(null);
+  const [editingProduct, setEditingProduct] = useState<ProductWithImages | null>(null);
   const [lastEditedId, setLastEditedId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
@@ -75,17 +73,18 @@ export function useProductOperations(
             timeout: SKU_LOOKUP_TIMEOUT_MS,
           }),
       });
-      
+
       if (products.some((p) => p.sku === sku)) {
         setActionError('SKU already exists.');
         return;
       }
     } catch (error) {
-      logClientError(error, { context: { source: 'useProductOperations', action: 'validateSku', sku } });
-      toast(
-        'SKU pre-check failed. You can continue; uniqueness will be validated on save.',
-        { variant: 'info' }
-      );
+      logClientError(error, {
+        context: { source: 'useProductOperations', action: 'validateSku', sku },
+      });
+      toast('SKU pre-check failed. You can continue; uniqueness will be validated on save.', {
+        variant: 'info',
+      });
     }
 
     if (editingProduct) {
@@ -109,8 +108,7 @@ export function useProductOperations(
   };
 
   const handleOpenCreateFromDraft = (draft: ProductDraftDto): void => {
-    const draftSku =
-      typeof draft.sku === 'string' ? draft.sku.trim().toUpperCase() : '';
+    const draftSku = typeof draft.sku === 'string' ? draft.sku.trim().toUpperCase() : '';
     setInitialSku(draftSku);
     setIsCreateOpen(true);
   };

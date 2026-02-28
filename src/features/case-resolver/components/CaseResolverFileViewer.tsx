@@ -1,14 +1,27 @@
 'use client';
 
-import { ExternalLink as ExternalLinkIcon, FileText, FolderOpen, Image as ImageIcon } from 'lucide-react';
+import {
+  ExternalLink as ExternalLinkIcon,
+  FileText,
+  FolderOpen,
+  Image as ImageIcon,
+} from 'lucide-react';
 import React from 'react';
 
 import type { CaseResolverAssetFile } from '@/shared/contracts/case-resolver';
-import { Button, ExternalLink, Label, Textarea, useToast, FileUploadTrigger, EmptyState, Card } from '@/shared/ui';
+import {
+  Button,
+  ExternalLink,
+  Label,
+  Textarea,
+  useToast,
+  FileUploadTrigger,
+  EmptyState,
+  Card,
+} from '@/shared/ui';
 import { PanelHeader } from '@/shared/ui/templates/panels';
 
 import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
-
 
 const formatFileSize = (size: number | null): string => {
   if (size === null || size < 0 || !Number.isFinite(size)) return 'Unknown';
@@ -39,17 +52,16 @@ export function CaseResolverFileViewer(): React.JSX.Element {
   if (!selectedAsset) {
     return (
       <Card variant='glass' padding='md' className='flex h-[calc(100vh-120px)] flex-col gap-4'>
-        <PanelHeader
-          title='File Viewer'
-          refreshable={false}
-        />
+        <PanelHeader title='File Viewer' refreshable={false} />
         <EmptyState
           title='No file selected'
-          description={selectedFolderPath !== null
-            ? `Folder selected: ${selectedFolderPath || '(root)'}. Select a file to preview.`
-            : activeFile
-              ? `Case selected: ${activeFile.name}. Open a node file to enter canvas mode, or select another file to preview it here.`
-              : 'Select a file from the tree to preview it here.'}
+          description={
+            selectedFolderPath !== null
+              ? `Folder selected: ${selectedFolderPath || '(root)'}. Select a file to preview.`
+              : activeFile
+                ? `Case selected: ${activeFile.name}. Open a node file to enter canvas mode, or select another file to preview it here.`
+                : 'Select a file from the tree to preview it here.'
+          }
           icon={<FolderOpen className='size-12' />}
           className='flex-1 border-none bg-transparent'
         />
@@ -69,10 +81,9 @@ export function CaseResolverFileViewer(): React.JSX.Element {
       try {
         await onAttachAssetFile(selectedAsset.id, file, { expectedKind: 'image' });
       } catch (error: unknown) {
-        toast(
-          error instanceof Error ? error.message : 'Failed to attach image file.',
-          { variant: 'error' }
-        );
+        toast(error instanceof Error ? error.message : 'Failed to attach image file.', {
+          variant: 'error',
+        });
       } finally {
         setIsAttachingImage(false);
         setIsDragActive(false);
@@ -87,32 +98,49 @@ export function CaseResolverFileViewer(): React.JSX.Element {
         title={selectedAsset.name}
         subtitle={resolveAssetSubtitle(selectedAsset)}
         refreshable={false}
-        customActions={selectedAsset.filepath ? (
-          <ExternalLink
-            href={selectedAsset.filepath}
-            className='rounded border border-border/60 px-2 py-1 text-[11px] text-gray-200 hover:bg-muted/40'
-          >
-            Open
-          </ExternalLink>
-        ) : null}
+        customActions={
+          selectedAsset.filepath ? (
+            <ExternalLink
+              href={selectedAsset.filepath}
+              className='rounded border border-border/60 px-2 py-1 text-[11px] text-gray-200 hover:bg-muted/40'
+            >
+              Open
+            </ExternalLink>
+          ) : null
+        }
       />
 
       <div className='mt-3 grid grid-cols-1 gap-2 text-xs text-gray-300 md:grid-cols-2'>
-
         <div className='mt-3 grid grid-cols-1 gap-2 text-xs text-gray-300 md:grid-cols-2'>
-          <Card variant='subtle-compact' padding='sm' className='flex items-center justify-between border-border/50 bg-card/20'>
+          <Card
+            variant='subtle-compact'
+            padding='sm'
+            className='flex items-center justify-between border-border/50 bg-card/20'
+          >
             <span className='text-gray-500'>Kind</span>
             <span className='uppercase text-[10px]'>{selectedAsset.kind}</span>
           </Card>
-          <Card variant='subtle-compact' padding='sm' className='flex items-center justify-between border-border/50 bg-card/20'>
+          <Card
+            variant='subtle-compact'
+            padding='sm'
+            className='flex items-center justify-between border-border/50 bg-card/20'
+          >
             <span className='text-gray-500'>Size</span>
             <span>{formatFileSize(selectedAsset.size)}</span>
           </Card>
-          <Card variant='subtle-compact' padding='sm' className='flex items-center justify-between border-border/50 bg-card/20'>
+          <Card
+            variant='subtle-compact'
+            padding='sm'
+            className='flex items-center justify-between border-border/50 bg-card/20'
+          >
             <span className='text-gray-500'>MIME</span>
             <span className='truncate pl-2'>{selectedAsset.mimeType ?? 'Unknown'}</span>
           </Card>
-          <Card variant='subtle-compact' padding='sm' className='flex items-center justify-between border-border/50 bg-card/20'>
+          <Card
+            variant='subtle-compact'
+            padding='sm'
+            className='flex items-center justify-between border-border/50 bg-card/20'
+          >
             <span className='text-gray-500'>Folder</span>
             <span className='truncate pl-2'>{selectedAsset.folder || '(root)'}</span>
           </Card>
@@ -131,7 +159,11 @@ export function CaseResolverFileViewer(): React.JSX.Element {
         </div>
       </div>
 
-      <Card variant='subtle-compact' padding='none' className='min-h-0 flex-1 overflow-hidden border-border/60 bg-card/25'>
+      <Card
+        variant='subtle-compact'
+        padding='none'
+        className='min-h-0 flex-1 overflow-hidden border-border/60 bg-card/25'
+      >
         {isImageAsset ? (
           <div className='h-full p-3'>
             <FileUploadTrigger
@@ -206,7 +238,12 @@ export function CaseResolverFileViewer(): React.JSX.Element {
                 <ExternalLinkIcon className='size-3.5' />
               </ExternalLink>
             ) : (
-              <Button type='button' disabled variant='outline' className='h-8 text-xs text-gray-500'>
+              <Button
+                type='button'
+                disabled
+                variant='outline'
+                className='h-8 text-xs text-gray-500'
+              >
                 File path unavailable
               </Button>
             )}

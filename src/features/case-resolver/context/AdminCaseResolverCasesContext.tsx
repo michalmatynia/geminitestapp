@@ -32,7 +32,7 @@ import {
   logCaseResolverWorkspaceEvent,
 } from '../workspace-persistence';
 
-import { 
+import {
   type CaseViewMode,
   type CaseSortKey,
   type CaseSortOrder,
@@ -43,16 +43,17 @@ import {
   type CaseSentFilter,
   type CaseHierarchyFilter,
   type CaseReferencesFilter,
-  type AdminCaseResolverCasesContextValue
+  type AdminCaseResolverCasesContextValue,
 } from './admin-cases/types';
 
-import {
-  normalizeCaseListViewDefaults,
-} from './admin-cases/utils';
+import { normalizeCaseListViewDefaults } from './admin-cases/utils';
 import { useAdminCaseResolverCasesState } from './admin-cases/useAdminCaseResolverCasesState';
-import { useAdminCaseResolverCasesActions, type ToastFn } from './admin-cases/useAdminCaseResolverCasesActions';
+import {
+  useAdminCaseResolverCasesActions,
+  type ToastFn,
+} from './admin-cases/useAdminCaseResolverCasesActions';
 
-export type { 
+export type {
   CaseViewMode,
   CaseSortKey,
   CaseSortOrder,
@@ -63,12 +64,18 @@ export type {
   CaseSentFilter,
   CaseHierarchyFilter,
   CaseReferencesFilter,
-  AdminCaseResolverCasesContextValue
+  AdminCaseResolverCasesContextValue,
 };
 
-const AdminCaseResolverCasesContext = createContext<AdminCaseResolverCasesContextValue | null>(null);
+const AdminCaseResolverCasesContext = createContext<AdminCaseResolverCasesContextValue | null>(
+  null
+);
 
-export function AdminCaseResolverCasesProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
+export function AdminCaseResolverCasesProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}): React.JSX.Element {
   const pathname = usePathname();
   const preferencesQuery = useUserPreferences();
   const settingsStore = useSettingsStore();
@@ -77,62 +84,49 @@ export function AdminCaseResolverCasesProvider({ children }: { children: React.R
 
   const caseListViewDefaults = useMemo(
     () => normalizeCaseListViewDefaults(preferencesQuery.data),
-    [preferencesQuery.data],
+    [preferencesQuery.data]
   );
 
   const rawWorkspace = settingsStore.get(CASE_RESOLVER_WORKSPACE_KEY);
   const rawCaseResolverTags = settingsStore.get(CASE_RESOLVER_TAGS_KEY);
-  const rawCaseResolverIdentifiers = settingsStore.get(
-    CASE_RESOLVER_IDENTIFIERS_KEY,
-  );
-  const rawCaseResolverCategories = settingsStore.get(
-    CASE_RESOLVER_CATEGORIES_KEY,
-  );
+  const rawCaseResolverIdentifiers = settingsStore.get(CASE_RESOLVER_IDENTIFIERS_KEY);
+  const rawCaseResolverCategories = settingsStore.get(CASE_RESOLVER_CATEGORIES_KEY);
 
   const parsedWorkspace = useMemo(
     (): CaseResolverWorkspace => parseCaseResolverWorkspace(rawWorkspace),
-    [rawWorkspace],
+    [rawWorkspace]
   );
   const canHydrateWorkspaceFromStore = useMemo(
     (): boolean => hasCaseResolverWorkspaceFilesArray(rawWorkspace),
-    [rawWorkspace],
+    [rawWorkspace]
   );
   const caseResolverTags = useMemo(
     (): CaseResolverTag[] => parseCaseResolverTags(rawCaseResolverTags),
-    [rawCaseResolverTags],
+    [rawCaseResolverTags]
   );
   const caseResolverIdentifiers = useMemo(
-    (): CaseResolverIdentifier[] =>
-      parseCaseResolverIdentifiers(rawCaseResolverIdentifiers),
-    [rawCaseResolverIdentifiers],
+    (): CaseResolverIdentifier[] => parseCaseResolverIdentifiers(rawCaseResolverIdentifiers),
+    [rawCaseResolverIdentifiers]
   );
   const caseResolverCategories = useMemo(
-    (): CaseResolverCategory[] =>
-      parseCaseResolverCategories(rawCaseResolverCategories),
-    [rawCaseResolverCategories],
+    (): CaseResolverCategory[] => parseCaseResolverCategories(rawCaseResolverCategories),
+    [rawCaseResolverCategories]
   );
 
-  const caseResolverTagOptions = useMemo<
-    Array<{ value: string; label: string }>
-  >(
+  const caseResolverTagOptions = useMemo<Array<{ value: string; label: string }>>(
     () =>
       caseResolverTags.map((tag: CaseResolverTag) => ({
         value: tag.id,
         label: tag.label,
       })),
-    [caseResolverTags],
+    [caseResolverTags]
   );
 
-  const caseResolverCategoryOptions = useMemo<
-    Array<{ value: string; label: string }>
-  >(() => {
+  const caseResolverCategoryOptions = useMemo<Array<{ value: string; label: string }>>(() => {
     const byId = new Map<string, CaseResolverCategory>(
       caseResolverCategories.map(
-        (category: CaseResolverCategory): [string, CaseResolverCategory] => [
-          category.id,
-          category,
-        ],
-      ),
+        (category: CaseResolverCategory): [string, CaseResolverCategory] => [category.id, category]
+      )
     );
     const resolveDepth = (category: CaseResolverCategory): number => {
       let depth = 0;
@@ -157,46 +151,77 @@ export function AdminCaseResolverCasesProvider({ children }: { children: React.R
   settingsStoreRefetchRef.current = settingsStore.refetch;
 
   const state = useAdminCaseResolverCasesState(parsedWorkspace);
-  
+
   const {
-    workspace, setWorkspace,
+    workspace,
+    setWorkspace,
     lastPersistedWorkspaceValueRef,
     lastPersistedWorkspaceRevisionRef,
     isCreatingCase,
     setIsCreatingCase,
     createCaseMutationIdRef,
-    caseDraft, setCaseDraft,
+    caseDraft,
+    setCaseDraft,
     isCreateCaseModalOpen,
     setIsCreateCaseModalOpen,
-    editingCaseId, setEditingCaseId,
-    editingCaseName, setEditingCaseName,
-    editingCaseParentId, setEditingCaseParentId,
-    editingCaseReferenceCaseIds, setEditingCaseReferenceCaseIds,
-    editingCaseTagId, setEditingCaseTagId,
-    editingCaseCaseIdentifierId, setEditingCaseCaseIdentifierId,
-    pendingCaseIdentifierIds, setPendingCaseIdentifierIds,
-    editingCaseCategoryId, setEditingCaseCategoryId,
-    collapsedCaseIds, setCollapsedCaseIds,
-    heldCaseId, setHeldCaseId,
-    caseSearchQuery, setCaseSearchQuery,
-    caseSearchScope, setCaseSearchScope,
-    caseFileTypeFilter, setCaseFileTypeFilter,
-    caseFilterTagIds, setCaseFilterTagIds,
-    caseFilterCaseIdentifierIds, setCaseFilterCaseIdentifierIds,
-    caseFilterCategoryIds, setCaseFilterCategoryIds,
-    caseFilterFolder, setCaseFilterFolder,
-    caseFilterStatus, setCaseFilterStatus,
-    caseFilterLocked, setCaseFilterLocked,
-    caseFilterSent, setCaseFilterSent,
-    caseFilterHierarchy, setCaseFilterHierarchy,
-    caseFilterReferences, setCaseFilterReferences,
-    caseSortBy, setCaseSortBy,
-    caseSortOrder, setCaseSortOrder,
-    caseViewMode, setCaseViewMode,
-    caseShowNestedContent, setCaseShowNestedContent,
-    caseFilterPanelDefaultExpanded, setCaseFilterPanelDefaultExpanded,
-    didHydrateCaseListViewDefaults, setDidHydrateCaseListViewDefaults,
-    confirmation, setConfirmation,
+    editingCaseId,
+    setEditingCaseId,
+    editingCaseName,
+    setEditingCaseName,
+    editingCaseParentId,
+    setEditingCaseParentId,
+    editingCaseReferenceCaseIds,
+    setEditingCaseReferenceCaseIds,
+    editingCaseTagId,
+    setEditingCaseTagId,
+    editingCaseCaseIdentifierId,
+    setEditingCaseCaseIdentifierId,
+    pendingCaseIdentifierIds,
+    setPendingCaseIdentifierIds,
+    editingCaseCategoryId,
+    setEditingCaseCategoryId,
+    collapsedCaseIds,
+    setCollapsedCaseIds,
+    heldCaseId,
+    setHeldCaseId,
+    caseSearchQuery,
+    setCaseSearchQuery,
+    caseSearchScope,
+    setCaseSearchScope,
+    caseFileTypeFilter,
+    setCaseFileTypeFilter,
+    caseFilterTagIds,
+    setCaseFilterTagIds,
+    caseFilterCaseIdentifierIds,
+    setCaseFilterCaseIdentifierIds,
+    caseFilterCategoryIds,
+    setCaseFilterCategoryIds,
+    caseFilterFolder,
+    setCaseFilterFolder,
+    caseFilterStatus,
+    setCaseFilterStatus,
+    caseFilterLocked,
+    setCaseFilterLocked,
+    caseFilterSent,
+    setCaseFilterSent,
+    caseFilterHierarchy,
+    setCaseFilterHierarchy,
+    caseFilterReferences,
+    setCaseFilterReferences,
+    caseSortBy,
+    setCaseSortBy,
+    caseSortOrder,
+    setCaseSortOrder,
+    caseViewMode,
+    setCaseViewMode,
+    caseShowNestedContent,
+    setCaseShowNestedContent,
+    caseFilterPanelDefaultExpanded,
+    setCaseFilterPanelDefaultExpanded,
+    didHydrateCaseListViewDefaults,
+    setDidHydrateCaseListViewDefaults,
+    confirmation,
+    setConfirmation,
     requestedCaseIdentifierFilterFromQuery,
     appliedCaseIdentifierFilterFromQueryRef,
   } = state;
@@ -235,22 +260,28 @@ export function AdminCaseResolverCasesProvider({ children }: { children: React.R
     handleToggleCaseStatus,
   } = actions;
 
-  const handleToggleCaseCollapse = useCallback((caseId: string): void => {
-    setCollapsedCaseIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(caseId)) next.delete(caseId);
-      else next.add(caseId);
-      return next;
-    });
-  }, [setCollapsedCaseIds]);
+  const handleToggleCaseCollapse = useCallback(
+    (caseId: string): void => {
+      setCollapsedCaseIds((prev) => {
+        const next = new Set(prev);
+        if (next.has(caseId)) next.delete(caseId);
+        else next.add(caseId);
+        return next;
+      });
+    },
+    [setCollapsedCaseIds]
+  );
 
-  const handleToggleHeldCase = useCallback((caseId: string): void => {
-    const normalizedCaseId = caseId.trim();
-    if (!normalizedCaseId) return;
-    setHeldCaseId((current: string | null): string | null =>
-      current === normalizedCaseId ? null : normalizedCaseId
-    );
-  }, [setHeldCaseId]);
+  const handleToggleHeldCase = useCallback(
+    (caseId: string): void => {
+      const normalizedCaseId = caseId.trim();
+      if (!normalizedCaseId) return;
+      setHeldCaseId((current: string | null): string | null =>
+        current === normalizedCaseId ? null : normalizedCaseId
+      );
+    },
+    [setHeldCaseId]
+  );
 
   const handleClearHeldCase = useCallback((): void => {
     setHeldCaseId(null);
@@ -270,9 +301,7 @@ export function AdminCaseResolverCasesProvider({ children }: { children: React.R
     settingsStoreRefetchRef.current();
     let isCancelled = false;
     void (async (): Promise<void> => {
-      const latestWorkspace = await fetchCaseResolverWorkspaceSnapshot(
-        'cases_page_route_sync',
-      );
+      const latestWorkspace = await fetchCaseResolverWorkspaceSnapshot('cases_page_route_sync');
       if (!latestWorkspace || isCancelled) return;
       const latestRevision = getCaseResolverWorkspaceRevision(latestWorkspace);
       setWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace => {
@@ -320,15 +349,31 @@ export function AdminCaseResolverCasesProvider({ children }: { children: React.R
     setCaseSearchScope(caseListViewDefaults.searchScope);
     setCaseFilterPanelDefaultExpanded(!caseListViewDefaults.filtersCollapsedByDefault);
     setDidHydrateCaseListViewDefaults(true);
-  }, [caseListViewDefaults, didHydrateCaseListViewDefaults, preferencesQuery.isFetched, setCaseFilterPanelDefaultExpanded, setCaseSearchScope, setCaseShowNestedContent, setCaseSortBy, setCaseSortOrder, setCaseViewMode, setDidHydrateCaseListViewDefaults]);
+  }, [
+    caseListViewDefaults,
+    didHydrateCaseListViewDefaults,
+    preferencesQuery.isFetched,
+    setCaseFilterPanelDefaultExpanded,
+    setCaseSearchScope,
+    setCaseShowNestedContent,
+    setCaseSortBy,
+    setCaseSortOrder,
+    setCaseViewMode,
+    setDidHydrateCaseListViewDefaults,
+  ]);
 
   useEffect(() => {
-    if (appliedCaseIdentifierFilterFromQueryRef.current === requestedCaseIdentifierFilterFromQuery) return;
+    if (appliedCaseIdentifierFilterFromQueryRef.current === requestedCaseIdentifierFilterFromQuery)
+      return;
     appliedCaseIdentifierFilterFromQueryRef.current = requestedCaseIdentifierFilterFromQuery;
     if (!requestedCaseIdentifierFilterFromQuery) return;
     setCaseFilterCaseIdentifierIds([requestedCaseIdentifierFilterFromQuery]);
     setCaseFilterPanelDefaultExpanded(true);
-  }, [requestedCaseIdentifierFilterFromQuery, setCaseFilterCaseIdentifierIds, setCaseFilterPanelDefaultExpanded]);
+  }, [
+    requestedCaseIdentifierFilterFromQuery,
+    setCaseFilterCaseIdentifierIds,
+    setCaseFilterPanelDefaultExpanded,
+  ]);
 
   const handleSaveListViewDefaults = useCallback(async (): Promise<void> => {
     try {
@@ -337,15 +382,29 @@ export function AdminCaseResolverCasesProvider({ children }: { children: React.R
         { key: 'caseResolverCaseListSortBy', value: caseSortBy },
         { key: 'caseResolverCaseListSortOrder', value: caseSortOrder },
         { key: 'caseResolverCaseListSearchScope', value: caseSearchScope },
-        { key: 'caseResolverCaseListFiltersCollapsedByDefault', value: (!caseFilterPanelDefaultExpanded).toString() },
+        {
+          key: 'caseResolverCaseListFiltersCollapsedByDefault',
+          value: (!caseFilterPanelDefaultExpanded).toString(),
+        },
         { key: 'caseResolverCaseListShowNestedContent', value: caseShowNestedContent.toString() },
       ]);
       toast('Default view settings saved.', { variant: 'success' });
     } catch (error) {
-      logClientError(error, { context: { source: 'AdminCaseResolverCasesPage', action: 'saveDefaults' } });
+      logClientError(error, {
+        context: { source: 'AdminCaseResolverCasesPage', action: 'saveDefaults' },
+      });
       toast('Failed to save default settings.', { variant: 'error' });
     }
-  }, [caseViewMode, caseSortBy, caseSortOrder, caseSearchScope, caseFilterPanelDefaultExpanded, caseShowNestedContent, updateSetting, toast]);
+  }, [
+    caseViewMode,
+    caseSortBy,
+    caseSortOrder,
+    caseSearchScope,
+    caseFilterPanelDefaultExpanded,
+    caseShowNestedContent,
+    updateSetting,
+    toast,
+  ]);
 
   // Options
   const parentCaseOptions = useMemo(
@@ -353,7 +412,7 @@ export function AdminCaseResolverCasesProvider({ children }: { children: React.R
       workspace.files
         .filter((f) => f.fileType === 'case')
         .map((f) => ({ value: f.id, label: f.name })),
-    [workspace.files],
+    [workspace.files]
   );
 
   const caseReferenceOptions = useMemo(
@@ -361,7 +420,7 @@ export function AdminCaseResolverCasesProvider({ children }: { children: React.R
       workspace.files
         .filter((f) => f.fileType === 'case')
         .map((f) => ({ value: f.id, label: f.name })),
-    [workspace.files],
+    [workspace.files]
   );
 
   const caseIdentifierOptions = useMemo(
@@ -369,14 +428,19 @@ export function AdminCaseResolverCasesProvider({ children }: { children: React.R
       caseResolverIdentifiers.map((identifier: CaseResolverIdentifier) => {
         const identifierRecord = identifier as unknown as Record<string, unknown>;
         const id = typeof identifier.id === 'string' ? identifier.id.trim() : '';
-        const name = typeof identifierRecord['name'] === 'string' ? identifierRecord['name'].trim() : '';
-        const label = typeof identifierRecord['label'] === 'string' ? identifierRecord['label'].trim() : '';
-        const type = typeof identifierRecord['type'] === 'string' ? identifierRecord['type'].trim() : '';
-        const value = typeof identifierRecord['value'] === 'string' ? identifierRecord['value'].trim() : '';
-        const resolvedLabel = label || name || [type, value].filter(part => part.length > 0).join(': ') || id;
+        const name =
+          typeof identifierRecord['name'] === 'string' ? identifierRecord['name'].trim() : '';
+        const label =
+          typeof identifierRecord['label'] === 'string' ? identifierRecord['label'].trim() : '';
+        const type =
+          typeof identifierRecord['type'] === 'string' ? identifierRecord['type'].trim() : '';
+        const value =
+          typeof identifierRecord['value'] === 'string' ? identifierRecord['value'].trim() : '';
+        const resolvedLabel =
+          label || name || [type, value].filter((part) => part.length > 0).join(': ') || id;
         return { value: id, label: resolvedLabel };
       }),
-    [caseResolverIdentifiers],
+    [caseResolverIdentifiers]
   );
 
   const folderOptions = useMemo(() => {
@@ -390,125 +454,186 @@ export function AdminCaseResolverCasesProvider({ children }: { children: React.R
   }, [workspace.files]);
 
   const isLoading = settingsStore.isLoading;
-  const value = useMemo((): AdminCaseResolverCasesContextValue => ({
-    workspace,
-    caseDraft,
-    isCreatingCase,
-    isCreateCaseModalOpen,
-    editingCaseId,
-    editingCaseName,
-    editingCaseParentId,
-    editingCaseReferenceCaseIds,
-    editingCaseTagId,
-    editingCaseCaseIdentifierId,
-    editingCaseCategoryId,
-    pendingCaseIdentifierIds,
-    collapsedCaseIds,
-    heldCaseId,
-    caseSearchQuery,
-    caseSearchScope,
-    caseFileTypeFilter,
-    caseFilterTagIds,
-    caseFilterCaseIdentifierIds,
-    caseFilterCategoryIds,
-    caseFilterFolder,
-    caseFilterStatus,
-    caseFilterLocked,
-    caseFilterSent,
-    caseFilterHierarchy,
-    caseFilterReferences,
-    caseSortBy,
-    caseSortOrder,
-    caseViewMode,
-    caseShowNestedContent,
-    caseFilterPanelDefaultExpanded,
-    didHydrateCaseListViewDefaults,
-    confirmation,
-    setWorkspace,
-    setCaseDraft,
-    setIsCreateCaseModalOpen,
-    setEditingCaseId,
-    setEditingCaseName,
-    setEditingCaseParentId,
-    setEditingCaseReferenceCaseIds,
-    setEditingCaseTagId,
-    setEditingCaseCaseIdentifierId,
-    setEditingCaseCategoryId,
-    setPendingCaseIdentifierIds,
-    setCollapsedCaseIds,
-    setHeldCaseId,
-    setCaseSearchQuery,
-    setCaseSearchScope,
-    setCaseFileTypeFilter,
-    setCaseFilterTagIds,
-    setCaseFilterCaseIdentifierIds,
-    setCaseFilterCategoryIds,
-    setCaseFilterFolder,
-    setCaseFilterStatus,
-    setCaseFilterLocked,
-    setCaseFilterSent,
-    setCaseFilterHierarchy,
-    setCaseFilterReferences,
-    setCaseSortBy,
-    setCaseSortOrder,
-    setCaseViewMode,
-    setCaseShowNestedContent,
-    setCaseFilterPanelDefaultExpanded,
-    setConfirmation,
-    handleCreateCase,
-    handleUpdateCase,
-    handleDeleteCase,
-    handleToggleCaseCollapse,
-    handleToggleHeldCase,
-    handleClearHeldCase,
-    handleMoveCase,
-    handleReorderCase,
-    handleRenameCase,
-    handleToggleCaseStatus,
-    handleSaveCaseDraft,
-    handleRefreshWorkspace,
-    handleSaveListViewDefaults,
-    caseResolverTags,
-    caseResolverIdentifiers,
-    caseResolverCategories,
-    caseResolverTagOptions,
-    caseResolverCategoryOptions,
-    parentCaseOptions,
-    caseReferenceOptions,
-    caseIdentifierOptions,
-    folderOptions,
-    isLoading,
-  }), [
-    workspace, caseDraft, isCreatingCase, isCreateCaseModalOpen, editingCaseId,
-    editingCaseName, editingCaseParentId, editingCaseReferenceCaseIds,
-    editingCaseTagId, editingCaseCaseIdentifierId, editingCaseCategoryId,
-    pendingCaseIdentifierIds, collapsedCaseIds, heldCaseId,
-    caseSearchQuery, caseSearchScope, caseFileTypeFilter,
-    caseFilterTagIds, caseFilterCaseIdentifierIds, caseFilterCategoryIds,
-    caseFilterFolder, caseFilterStatus, caseFilterLocked, caseFilterSent,
-    caseFilterHierarchy, caseFilterReferences,
-    caseSortBy, caseSortOrder, caseViewMode, caseShowNestedContent, caseFilterPanelDefaultExpanded,
-    didHydrateCaseListViewDefaults, confirmation,
-    setWorkspace, setCaseDraft, setIsCreateCaseModalOpen, setEditingCaseId,
-    setEditingCaseName, setEditingCaseParentId, setEditingCaseReferenceCaseIds,
-    setEditingCaseTagId, setEditingCaseCaseIdentifierId, setEditingCaseCategoryId,
-    setPendingCaseIdentifierIds, setCollapsedCaseIds, setHeldCaseId,
-    setCaseSearchQuery, setCaseSearchScope, setCaseFileTypeFilter,
-    setCaseFilterTagIds, setCaseFilterCaseIdentifierIds, setCaseFilterCategoryIds,
-    setCaseFilterFolder, setCaseFilterStatus, setCaseFilterLocked, setCaseFilterSent,
-    setCaseFilterHierarchy, setCaseFilterReferences,
-    setCaseSortBy, setCaseSortOrder, setCaseViewMode, setCaseShowNestedContent, setCaseFilterPanelDefaultExpanded,
-    setConfirmation,
-    handleCreateCase, handleUpdateCase, handleDeleteCase,
-    handleToggleCaseCollapse, handleToggleHeldCase, handleClearHeldCase,
-    handleMoveCase, handleReorderCase, handleRenameCase,
-    handleToggleCaseStatus, handleSaveCaseDraft, handleRefreshWorkspace,
-    handleSaveListViewDefaults,
-    caseResolverTags, caseResolverIdentifiers, caseResolverCategories,
-    caseResolverTagOptions, caseResolverCategoryOptions,
-    parentCaseOptions, caseReferenceOptions, caseIdentifierOptions, folderOptions,
-    isLoading,
-  ]);
+  const value = useMemo(
+    (): AdminCaseResolverCasesContextValue => ({
+      workspace,
+      caseDraft,
+      isCreatingCase,
+      isCreateCaseModalOpen,
+      editingCaseId,
+      editingCaseName,
+      editingCaseParentId,
+      editingCaseReferenceCaseIds,
+      editingCaseTagId,
+      editingCaseCaseIdentifierId,
+      editingCaseCategoryId,
+      pendingCaseIdentifierIds,
+      collapsedCaseIds,
+      heldCaseId,
+      caseSearchQuery,
+      caseSearchScope,
+      caseFileTypeFilter,
+      caseFilterTagIds,
+      caseFilterCaseIdentifierIds,
+      caseFilterCategoryIds,
+      caseFilterFolder,
+      caseFilterStatus,
+      caseFilterLocked,
+      caseFilterSent,
+      caseFilterHierarchy,
+      caseFilterReferences,
+      caseSortBy,
+      caseSortOrder,
+      caseViewMode,
+      caseShowNestedContent,
+      caseFilterPanelDefaultExpanded,
+      didHydrateCaseListViewDefaults,
+      confirmation,
+      setWorkspace,
+      setCaseDraft,
+      setIsCreateCaseModalOpen,
+      setEditingCaseId,
+      setEditingCaseName,
+      setEditingCaseParentId,
+      setEditingCaseReferenceCaseIds,
+      setEditingCaseTagId,
+      setEditingCaseCaseIdentifierId,
+      setEditingCaseCategoryId,
+      setPendingCaseIdentifierIds,
+      setCollapsedCaseIds,
+      setHeldCaseId,
+      setCaseSearchQuery,
+      setCaseSearchScope,
+      setCaseFileTypeFilter,
+      setCaseFilterTagIds,
+      setCaseFilterCaseIdentifierIds,
+      setCaseFilterCategoryIds,
+      setCaseFilterFolder,
+      setCaseFilterStatus,
+      setCaseFilterLocked,
+      setCaseFilterSent,
+      setCaseFilterHierarchy,
+      setCaseFilterReferences,
+      setCaseSortBy,
+      setCaseSortOrder,
+      setCaseViewMode,
+      setCaseShowNestedContent,
+      setCaseFilterPanelDefaultExpanded,
+      setConfirmation,
+      handleCreateCase,
+      handleUpdateCase,
+      handleDeleteCase,
+      handleToggleCaseCollapse,
+      handleToggleHeldCase,
+      handleClearHeldCase,
+      handleMoveCase,
+      handleReorderCase,
+      handleRenameCase,
+      handleToggleCaseStatus,
+      handleSaveCaseDraft,
+      handleRefreshWorkspace,
+      handleSaveListViewDefaults,
+      caseResolverTags,
+      caseResolverIdentifiers,
+      caseResolverCategories,
+      caseResolverTagOptions,
+      caseResolverCategoryOptions,
+      parentCaseOptions,
+      caseReferenceOptions,
+      caseIdentifierOptions,
+      folderOptions,
+      isLoading,
+    }),
+    [
+      workspace,
+      caseDraft,
+      isCreatingCase,
+      isCreateCaseModalOpen,
+      editingCaseId,
+      editingCaseName,
+      editingCaseParentId,
+      editingCaseReferenceCaseIds,
+      editingCaseTagId,
+      editingCaseCaseIdentifierId,
+      editingCaseCategoryId,
+      pendingCaseIdentifierIds,
+      collapsedCaseIds,
+      heldCaseId,
+      caseSearchQuery,
+      caseSearchScope,
+      caseFileTypeFilter,
+      caseFilterTagIds,
+      caseFilterCaseIdentifierIds,
+      caseFilterCategoryIds,
+      caseFilterFolder,
+      caseFilterStatus,
+      caseFilterLocked,
+      caseFilterSent,
+      caseFilterHierarchy,
+      caseFilterReferences,
+      caseSortBy,
+      caseSortOrder,
+      caseViewMode,
+      caseShowNestedContent,
+      caseFilterPanelDefaultExpanded,
+      didHydrateCaseListViewDefaults,
+      confirmation,
+      setWorkspace,
+      setCaseDraft,
+      setIsCreateCaseModalOpen,
+      setEditingCaseId,
+      setEditingCaseName,
+      setEditingCaseParentId,
+      setEditingCaseReferenceCaseIds,
+      setEditingCaseTagId,
+      setEditingCaseCaseIdentifierId,
+      setEditingCaseCategoryId,
+      setPendingCaseIdentifierIds,
+      setCollapsedCaseIds,
+      setHeldCaseId,
+      setCaseSearchQuery,
+      setCaseSearchScope,
+      setCaseFileTypeFilter,
+      setCaseFilterTagIds,
+      setCaseFilterCaseIdentifierIds,
+      setCaseFilterCategoryIds,
+      setCaseFilterFolder,
+      setCaseFilterStatus,
+      setCaseFilterLocked,
+      setCaseFilterSent,
+      setCaseFilterHierarchy,
+      setCaseFilterReferences,
+      setCaseSortBy,
+      setCaseSortOrder,
+      setCaseViewMode,
+      setCaseShowNestedContent,
+      setCaseFilterPanelDefaultExpanded,
+      setConfirmation,
+      handleCreateCase,
+      handleUpdateCase,
+      handleDeleteCase,
+      handleToggleCaseCollapse,
+      handleToggleHeldCase,
+      handleClearHeldCase,
+      handleMoveCase,
+      handleReorderCase,
+      handleRenameCase,
+      handleToggleCaseStatus,
+      handleSaveCaseDraft,
+      handleRefreshWorkspace,
+      handleSaveListViewDefaults,
+      caseResolverTags,
+      caseResolverIdentifiers,
+      caseResolverCategories,
+      caseResolverTagOptions,
+      caseResolverCategoryOptions,
+      parentCaseOptions,
+      caseReferenceOptions,
+      caseIdentifierOptions,
+      folderOptions,
+      isLoading,
+    ]
+  );
 
   return (
     <AdminCaseResolverCasesContext.Provider value={value}>
@@ -520,7 +645,9 @@ export function AdminCaseResolverCasesProvider({ children }: { children: React.R
 export function useAdminCaseResolverCases(): AdminCaseResolverCasesContextValue {
   const context = useContext(AdminCaseResolverCasesContext);
   if (!context) {
-    throw internalError('useAdminCaseResolverCases must be used within AdminCaseResolverCasesProvider');
+    throw internalError(
+      'useAdminCaseResolverCases must be used within AdminCaseResolverCasesProvider'
+    );
   }
   return context;
 }

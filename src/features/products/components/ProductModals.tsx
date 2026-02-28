@@ -10,7 +10,6 @@ import { useProductListModalsContext } from '@/features/products/context/Product
 
 import { ProductFormModal } from './modals/ProductFormModal';
 
-
 const SelectIntegrationModal = dynamic(
   () => import('@/features/integrations/components/listings/SelectIntegrationModal'),
   {

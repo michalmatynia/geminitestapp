@@ -45,7 +45,7 @@ describe('Agent Creator API', () => {
     it('returns 500 if prisma table is missing', async () => {
       const originalPrisma = (prisma as any).chatbotAgentRun;
       delete (prisma as any).chatbotAgentRun;
-      
+
       const req = new NextRequest('http://localhost/api/agentcreator/agent');
       const res = await GET(req);
       expect(res.status).toBe(500);
@@ -67,7 +67,7 @@ describe('Agent Creator API', () => {
           prompt: 'Verify the price of item X',
           model: 'gpt-4',
           tools: ['browser'],
-          planSettings: { maxSteps: 5 }
+          planSettings: { maxSteps: 5 },
         }),
       });
 
@@ -82,10 +82,10 @@ describe('Agent Creator API', () => {
             prompt: 'Verify the price of item X',
             planState: expect.objectContaining({
               settings: expect.objectContaining({
-                maxSteps: 5
-              })
-            })
-          })
+                maxSteps: 5,
+              }),
+            }),
+          }),
         })
       );
     });

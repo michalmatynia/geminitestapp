@@ -5,7 +5,6 @@ import type { AiPathRunRepository } from '@/shared/contracts/ai-paths';
 
 import { getPathRunRepository } from './path-run-repository';
 
-
 const DEFAULT_STALE_RUNNING_MAX_AGE_MS = 30 * 60 * 1000;
 const DEFAULT_STALE_RUNNING_CLEANUP_INTERVAL_MS = 120_000;
 
@@ -48,4 +47,3 @@ export const recoverStaleRunningRuns = async (input?: {
     return 0;
   }
 };
-

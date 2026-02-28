@@ -9,7 +9,6 @@ import type { ProductAiJobTypeDto as ProductAiJobType } from '@/shared/contracts
 import type { ProductWithImagesDto as ProductWithImages } from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
-
 const bulkJobSchema = z.object({
   type: z.string().trim().min(1),
   config: z.record(z.string(), z.unknown()).optional(),
@@ -41,7 +40,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     products.map((p: ProductWithImages) =>
       enqueueProductAiJob(p.id, type as ProductAiJobType, {
         ...(config as Record<string, unknown>),
-        // We don't include full product data here, 
+        // We don't include full product data here,
         // the worker will fetch it to ensure it's fresh
       })
     )
@@ -49,9 +48,9 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
 
   startProductAiJobQueue();
 
-  return NextResponse.json({ 
-    success: true, 
+  return NextResponse.json({
+    success: true,
     count: jobs.length,
-    message: `Queued ${jobs.length} jobs of type ${type}` 
+    message: `Queued ${jobs.length} jobs of type ${type}`,
   });
 }

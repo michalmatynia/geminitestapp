@@ -11,9 +11,7 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const requestSchema = z.object({
   statuses: z
-    .array(
-      z.enum(['pending', 'processing', 'imported', 'updated', 'skipped', 'failed'])
-    )
+    .array(z.enum(['pending', 'processing', 'imported', 'updated', 'skipped', 'failed']))
     .optional(),
 });
 
@@ -25,10 +23,7 @@ export async function POST_handler(
   const body = (await req.json().catch(() => ({}))) as unknown;
   const parsed = requestSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: 'Invalid resume payload.' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'Invalid resume payload.' }, { status: 400 });
   }
 
   const statuses = parsed.data.statuses ?? ['failed', 'pending'];

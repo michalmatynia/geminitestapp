@@ -2,7 +2,14 @@
 
 import React from 'react';
 import { ChevronRight } from 'lucide-react';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/shared/ui';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/shared/ui';
 import { useDocumentRelationSearchContext } from '../../context/DocumentRelationSearchContext';
 import { FileTypeIcon, formatShortDate } from './document-relation-search-utils';
 
@@ -26,7 +33,12 @@ export function DocumentPreviewDialog(): React.JSX.Element {
     : '';
 
   return (
-    <Dialog open={file !== null} onOpenChange={(open) => { if (!open) onClose(); }}>
+    <Dialog
+      open={file !== null}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
       <DialogContent className='max-w-xl'>
         {file && (
           <>
@@ -95,7 +107,9 @@ export function DocumentPreviewDialog(): React.JSX.Element {
               <button
                 type='button'
                 disabled={isLocked}
-                onClick={() => { onLink(file.id); }}
+                onClick={() => {
+                  onLink(file.id);
+                }}
                 className='flex items-center gap-1.5 rounded bg-cyan-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-cyan-500 disabled:pointer-events-none disabled:opacity-40'
               >
                 Link this document

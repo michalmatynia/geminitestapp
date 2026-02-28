@@ -20,7 +20,7 @@ const {
   startChatbotJobQueueMock: vi.fn(),
 }));
 
-vi.mock('@/features/ai/brain/server', () => ({
+vi.mock('@/shared/lib/ai-brain/server', () => ({
   resolveBrainModelExecutionConfig: resolveBrainModelExecutionConfigMock,
 }));
 
@@ -102,7 +102,7 @@ describe('chatbot jobs handler', () => {
           userMessage: 'Translate this',
         }),
       }) as Parameters<typeof POST_handler>[0],
-      { requestId: 'req-3' } as Parameters<typeof POST_handler>[1],
+      { requestId: 'req-3' } as Parameters<typeof POST_handler>[1]
     );
 
     const payload = (await response.json()) as {
@@ -114,8 +114,8 @@ describe('chatbot jobs handler', () => {
     expect(createMock).toHaveBeenCalledTimes(1);
     const createArgs = createMock.mock.calls[0] as [
       {
-        sessionId: 'session-1',
-        model: 'brain-model',
+        sessionId: 'session-1';
+        model: 'brain-model';
         payload?: {
           model?: string;
           options?: {

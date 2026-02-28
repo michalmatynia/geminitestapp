@@ -7,15 +7,15 @@ import * as React from 'react';
 
 import { cn } from '@/shared/utils';
 
-type NativeOption = { value: string; label: string; disabled?: boolean | undefined }
+type NativeOption = { value: string; label: string; disabled?: boolean | undefined };
 
 type NativeSelectContextValue = {
-  value: string
-  onValueChange?: ((value: string) => void) | undefined
-  disabled?: boolean | undefined
-  options: NativeOption[]
-  placeholder?: string | undefined
-}
+  value: string;
+  onValueChange?: ((value: string) => void) | undefined;
+  disabled?: boolean | undefined;
+  options: NativeOption[];
+  placeholder?: string | undefined;
+};
 
 const NativeSelectContext = React.createContext<NativeSelectContextValue | null>(null);
 
@@ -28,13 +28,20 @@ const getNodeText = (node: React.ReactNode): string => {
   if (node === null || node === undefined || typeof node === 'boolean') return '';
   if (typeof node === 'string' || typeof node === 'number') return String(node);
   if (Array.isArray(node)) return node.map(getNodeText).join('');
-  if (React.isValidElement(node) && node.props && typeof node.props === 'object' && 'children' in node.props) {
+  if (
+    React.isValidElement(node) &&
+    node.props &&
+    typeof node.props === 'object' &&
+    'children' in node.props
+  ) {
     return getNodeText(node.props.children as React.ReactNode);
   }
   return '';
 };
 
-const extractNativeOptions = (children: React.ReactNode): { options: NativeOption[]; placeholder?: string | undefined } => {
+const extractNativeOptions = (
+  children: React.ReactNode
+): { options: NativeOption[]; placeholder?: string | undefined } => {
   const options: NativeOption[] = [];
   let placeholder: string | undefined;
 
@@ -42,9 +49,9 @@ const extractNativeOptions = (children: React.ReactNode): { options: NativeOptio
     if (!node) return;
     React.Children.forEach(node, (child) => {
       if (!React.isValidElement(child)) return;
-      
+
       const props = child.props as Record<string, unknown>;
-      
+
       if (child.type === SelectValue && typeof props?.['placeholder'] === 'string') {
         placeholder = props['placeholder'];
       }
@@ -53,7 +60,12 @@ const extractNativeOptions = (children: React.ReactNode): { options: NativeOptio
         return;
       }
       if (child.type === SelectItem) {
-        const value = typeof props['value'] === 'string' ? (props['value']) : (typeof props['value'] === 'number' ? String(props['value']) : '');
+        const value =
+          typeof props['value'] === 'string'
+            ? props['value']
+            : typeof props['value'] === 'number'
+              ? String(props['value'])
+              : '';
         if (!value) return;
         options.push({
           value,
@@ -72,16 +84,23 @@ const extractNativeOptions = (children: React.ReactNode): { options: NativeOptio
   return { options, placeholder };
 };
 
-const Select: React.FC<
-  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Root>
-> = (allProps) => {
-   
-  const { value, defaultValue, onValueChange: onValueChangeProp, disabled, children, ...props } = allProps;
+const Select: React.FC<React.ComponentPropsWithoutRef<typeof SelectPrimitive.Root>> = (
+  allProps
+) => {
+  const {
+    value,
+    defaultValue,
+    onValueChange: onValueChangeProp,
+    disabled,
+    children,
+    ...props
+  } = allProps;
   const useNativeSelect = useNativeSelectMode();
-  
-  const { options, placeholder } = React.useMemo(() => 
-    useNativeSelect ? extractNativeOptions(children) : { options: [], placeholder: undefined },
-  [children, useNativeSelect]
+
+  const { options, placeholder } = React.useMemo(
+    () =>
+      useNativeSelect ? extractNativeOptions(children) : { options: [], placeholder: undefined },
+    [children, useNativeSelect]
   );
 
   const handleValueChange = React.useMemo(() => {
@@ -103,7 +122,8 @@ const Select: React.FC<
     );
   }
 
-  const normalizedValue = typeof value === 'string' ? value : typeof defaultValue === 'string' ? defaultValue : '';
+  const normalizedValue =
+    typeof value === 'string' ? value : typeof defaultValue === 'string' ? defaultValue : '';
 
   return (
     <NativeSelectContext.Provider

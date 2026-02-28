@@ -3,10 +3,7 @@ import { redirect } from 'next/navigation';
 import { JSX } from 'react';
 
 import { getCmsRepository } from '@/features/cms/services/cms-repository';
-import {
-  getSlugsForDomain,
-  resolveCmsDomainFromHeaders,
-} from '@/features/cms/services/cms-domain';
+import { getSlugsForDomain, resolveCmsDomainFromHeaders } from '@/features/cms/services/cms-domain';
 
 import { HomeContent } from './HomeContent';
 import {
@@ -29,11 +26,7 @@ export default async function Home(): Promise<JSX.Element> {
       : Promise.resolve<string | null>(null),
   ]);
 
-  if (
-    frontPageRedirectEnabled &&
-    frontPageApp &&
-    FRONT_PAGE_ALLOWED.has(frontPageApp)
-  ) {
+  if (frontPageRedirectEnabled && frontPageApp && FRONT_PAGE_ALLOWED.has(frontPageApp)) {
     if (frontPageApp === 'chatbot') {
       redirect('/admin/chatbot');
     }
@@ -43,16 +36,10 @@ export default async function Home(): Promise<JSX.Element> {
   }
 
   const hdrs = await withTiming('headers', () => headers());
-  const domain = await withTiming('cmsDomain', () =>
-    resolveCmsDomainFromHeaders(hdrs),
-  );
-  const slugs = await withTiming('cmsSlugs', () =>
-    getSlugsForDomain(domain.id, cmsRepository),
-  );
+  const domain = await withTiming('cmsDomain', () => resolveCmsDomainFromHeaders(hdrs));
+  const slugs = await withTiming('cmsSlugs', () => getSlugsForDomain(domain.id, cmsRepository));
 
-  const content = (
-    <HomeContent domainId={domain.id} slugs={slugs} withTiming={withTiming} />
-  );
+  const content = <HomeContent domainId={domain.id} slugs={slugs} withTiming={withTiming} />;
 
   await flush();
   return content;

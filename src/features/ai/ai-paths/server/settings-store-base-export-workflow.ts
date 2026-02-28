@@ -1,18 +1,14 @@
 export const BASE_EXPORT_BLWO_PATH_ID = 'path_base_export_blwo_v1';
 export const BASE_EXPORT_BLWO_PATH_NAME = 'Base Export Workflow (BLWo)';
-export const BASE_EXPORT_BLWO_TRIGGER_BUTTON_ID =
-  '5f36f340-3d89-4f6f-a08f-2387f380b90b';
+export const BASE_EXPORT_BLWO_TRIGGER_BUTTON_ID = '5f36f340-3d89-4f6f-a08f-2387f380b90b';
 export const BASE_EXPORT_BLWO_TRIGGER_BUTTON_NAME = 'BLWo';
 
-export const buildBaseExportBlwoPathConfigValue = (
-  timestamp: string
-): string =>
+export const buildBaseExportBlwoPathConfigValue = (timestamp: string): string =>
   JSON.stringify({
     id: BASE_EXPORT_BLWO_PATH_ID,
     version: 2,
     name: BASE_EXPORT_BLWO_PATH_NAME,
-    description:
-      'Product-row workflow export to Base.com launched by BLWo trigger button.',
+    description: 'Product-row workflow export to Base.com launched by BLWo trigger button.',
     trigger: 'Product Row - BLWo',
     executionMode: 'server',
     flowIntensity: 'medium',
@@ -166,9 +162,18 @@ export const buildBaseExportBlwoPathConfigValue = (
         id: 'node-api-export-base',
         type: 'api_advanced',
         title: 'Export To Base',
-        description:
-          'Execute product export with explicit payload fields from workflow inputs.',
-        inputs: ['context', 'bundle', 'prompt', 'result', 'value', 'entityId', 'entityType', 'cursor', 'page'],
+        description: 'Execute product export with explicit payload fields from workflow inputs.',
+        inputs: [
+          'context',
+          'bundle',
+          'prompt',
+          'result',
+          'value',
+          'entityId',
+          'entityType',
+          'cursor',
+          'page',
+        ],
         outputs: ['value', 'bundle', 'status', 'headers', 'items', 'route', 'error', 'success'],
         position: { x: 1460, y: 300 },
         config: {

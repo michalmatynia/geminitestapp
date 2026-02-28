@@ -19,18 +19,11 @@ import {
   Card,
   Hint,
 } from '@/shared/ui';
-import {
-  SettingsField,
-  SettingsFieldsRenderer,
-} from '@/shared/ui/templates/SettingsPanelBuilder';
+import { SettingsField, SettingsFieldsRenderer } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import { ImagePickerField } from './shared-fields';
 import { MiniRichTextEditor } from './theme/MiniRichTextEditor';
-import {
-  THEME_SECTIONS,
-  toSectionId,
-  SAVED_THEME_PREFIX,
-} from './theme/theme-constants';
+import { THEME_SECTIONS, toSectionId, SAVED_THEME_PREFIX } from './theme/theme-constants';
 import { ThemeButtonsSection } from './theme/ThemeButtonsSection';
 import {
   ThemeProductCardsSection,
@@ -47,7 +40,11 @@ import { useThemeSettings } from './ThemeSettingsContext';
 // Panel Content
 // ---------------------------------------------------------------------------
 
-function ThemeSettingsPanelContent({ showHeader = true }: { showHeader?: boolean }): React.JSX.Element {
+function ThemeSettingsPanelContent({
+  showHeader = true,
+}: {
+  showHeader?: boolean;
+}): React.JSX.Element {
   const { theme, update } = useThemeSettings();
   const { startAddScheme } = useThemeColors();
   const themesQuery = useCmsThemes();
@@ -98,7 +95,9 @@ function ThemeSettingsPanelContent({ showHeader = true }: { showHeader?: boolean
   }, [openSectionsArray, userOpenSections, updatePreferencesMutation]);
 
   useEffect((): (() => void) => {
-    return (): void => { if (persistTimerRef.current) window.clearTimeout(persistTimerRef.current); };
+    return (): void => {
+      if (persistTimerRef.current) window.clearTimeout(persistTimerRef.current);
+    };
   }, []);
 
   useEffect((): (() => void) => {
@@ -114,7 +113,7 @@ function ThemeSettingsPanelContent({ showHeader = true }: { showHeader?: boolean
     if (typeof window === 'undefined') return undefined;
     const handler = (event: Event): void => {
       const detail = (event as CustomEvent<Record<string, unknown>>).detail ?? {};
-      const section = typeof detail['section'] === 'string' ? (detail['section']) : 'Colors';
+      const section = typeof detail['section'] === 'string' ? detail['section'] : 'Colors';
       setUserOpenSections((prev: Set<string> | null) => {
         const current = prev ?? initialOpenSections;
         const next = new Set(current);
@@ -166,18 +165,21 @@ function ThemeSettingsPanelContent({ showHeader = true }: { showHeader?: boolean
     return [...presets, ...saved];
   }, [savedThemes]);
 
-  const toggleSection = useCallback((section: string): void => {
-    setUserOpenSections((prev: Set<string> | null) => {
-      const current = prev ?? initialOpenSections;
-      const next = new Set(current);
-      if (next.has(section)) {
-        next.delete(section);
-      } else {
-        next.add(section);
-      }
-      return next;
-    });
-  }, [initialOpenSections]);
+  const toggleSection = useCallback(
+    (section: string): void => {
+      setUserOpenSections((prev: Set<string> | null) => {
+        const current = prev ?? initialOpenSections;
+        const next = new Set(current);
+        if (next.has(section)) {
+          next.delete(section);
+        } else {
+          next.add(section);
+        }
+        return next;
+      });
+    },
+    [initialOpenSections]
+  );
 
   const updateSetting = useCallback(
     <K extends keyof ThemeSettings>(key: K): ((value: ThemeSettings[K]) => void) => {
@@ -194,93 +196,374 @@ function ThemeSettingsPanelContent({ showHeader = true }: { showHeader?: boolean
         case 'Animations':
           return [
             { key: 'enableAnimations', label: 'Enable animations', type: 'checkbox' },
-            ...(theme.enableAnimations ? [
-              { key: 'animationDuration', label: 'Duration', type: 'range', min: 100, max: 1000, suffix: 'ms' },
-              { key: 'animationEasing', label: 'Easing', type: 'select', options: [
-                { label: 'Ease out', value: 'ease-out' },
-                { label: 'Ease in-out', value: 'ease-in-out' },
-                { label: 'Ease in', value: 'ease-in' },
-                { label: 'Linear', value: 'linear' },
-                { label: 'Spring', value: 'cubic-bezier(.68,-0.55,.27,1.55)' },
-              ]},
-              { key: 'scrollReveal', label: 'Reveal sections on scroll', type: 'checkbox' },
-              { key: 'hoverEffect', label: 'Hover effect', type: 'select', options: [
-                { label: 'Vertical lift', value: 'vertical-lift' },
-                { label: '3D lift', value: 'lift-3d' },
-              ]},
-              { key: 'hoverScale', label: 'Hover scale', type: 'range', min: 1, max: 1.2, step: 0.01, suffix: 'x' },
-            ] as SettingsField<ThemeSettings>[] : [])
+            ...(theme.enableAnimations
+              ? ([
+                  {
+                    key: 'animationDuration',
+                    label: 'Duration',
+                    type: 'range',
+                    min: 100,
+                    max: 1000,
+                    suffix: 'ms',
+                  },
+                  {
+                    key: 'animationEasing',
+                    label: 'Easing',
+                    type: 'select',
+                    options: [
+                      { label: 'Ease out', value: 'ease-out' },
+                      { label: 'Ease in-out', value: 'ease-in-out' },
+                      { label: 'Ease in', value: 'ease-in' },
+                      { label: 'Linear', value: 'linear' },
+                      { label: 'Spring', value: 'cubic-bezier(.68,-0.55,.27,1.55)' },
+                    ],
+                  },
+                  { key: 'scrollReveal', label: 'Reveal sections on scroll', type: 'checkbox' },
+                  {
+                    key: 'hoverEffect',
+                    label: 'Hover effect',
+                    type: 'select',
+                    options: [
+                      { label: 'Vertical lift', value: 'vertical-lift' },
+                      { label: '3D lift', value: 'lift-3d' },
+                    ],
+                  },
+                  {
+                    key: 'hoverScale',
+                    label: 'Hover scale',
+                    type: 'range',
+                    min: 1,
+                    max: 1.2,
+                    step: 0.01,
+                    suffix: 'x',
+                  },
+                ] as SettingsField<ThemeSettings>[])
+              : []),
           ];
 
         case 'Variant Pills':
           return [
-            { key: 'pillRadius', label: 'Corner radius', type: 'number', min: 0, max: 999, suffix: 'px' },
-            { key: 'pillPaddingX', label: 'Padding X', type: 'number', min: 4, max: 32, suffix: 'px' },
-            { key: 'pillPaddingY', label: 'Padding Y', type: 'number', min: 2, max: 16, suffix: 'px' },
-            { key: 'pillFontSize', label: 'Font size', type: 'number', min: 10, max: 18, suffix: 'px' },
+            {
+              key: 'pillRadius',
+              label: 'Corner radius',
+              type: 'number',
+              min: 0,
+              max: 999,
+              suffix: 'px',
+            },
+            {
+              key: 'pillPaddingX',
+              label: 'Padding X',
+              type: 'number',
+              min: 4,
+              max: 32,
+              suffix: 'px',
+            },
+            {
+              key: 'pillPaddingY',
+              label: 'Padding Y',
+              type: 'number',
+              min: 2,
+              max: 16,
+              suffix: 'px',
+            },
+            {
+              key: 'pillFontSize',
+              label: 'Font size',
+              type: 'number',
+              min: 10,
+              max: 18,
+              suffix: 'px',
+            },
             { key: 'pillBg', label: 'Background Color', type: 'color' },
             { key: 'pillText', label: 'Text Color', type: 'color' },
             { key: 'pillActiveBg', label: 'Active Background', type: 'color' },
             { key: 'pillActiveText', label: 'Active Text', type: 'color' },
             { key: 'pillBorderColor', label: 'Border Color', type: 'color' },
-            { key: 'pillBorderWidth', label: 'Border Thickness', type: 'number', min: 0, max: 8, suffix: 'px' },
-            { key: 'pillBorderOpacity', label: 'Border Opacity', type: 'range', min: 0, max: 100, suffix: '%' },
-            { key: 'pillShadowOpacity', label: 'Shadow Opacity', type: 'range', min: 0, max: 100, suffix: '%' },
-            { key: 'pillShadowX', label: 'Shadow X', type: 'number', min: -20, max: 20, suffix: 'px' },
-            { key: 'pillShadowY', label: 'Shadow Y', type: 'number', min: -20, max: 20, suffix: 'px' },
-            { key: 'pillShadowBlur', label: 'Shadow Blur', type: 'number', min: 0, max: 40, suffix: 'px' },
+            {
+              key: 'pillBorderWidth',
+              label: 'Border Thickness',
+              type: 'number',
+              min: 0,
+              max: 8,
+              suffix: 'px',
+            },
+            {
+              key: 'pillBorderOpacity',
+              label: 'Border Opacity',
+              type: 'range',
+              min: 0,
+              max: 100,
+              suffix: '%',
+            },
+            {
+              key: 'pillShadowOpacity',
+              label: 'Shadow Opacity',
+              type: 'range',
+              min: 0,
+              max: 100,
+              suffix: '%',
+            },
+            {
+              key: 'pillShadowX',
+              label: 'Shadow X',
+              type: 'number',
+              min: -20,
+              max: 20,
+              suffix: 'px',
+            },
+            {
+              key: 'pillShadowY',
+              label: 'Shadow Y',
+              type: 'number',
+              min: -20,
+              max: 20,
+              suffix: 'px',
+            },
+            {
+              key: 'pillShadowBlur',
+              label: 'Shadow Blur',
+              type: 'number',
+              min: 0,
+              max: 40,
+              suffix: 'px',
+            },
           ];
 
         case 'Inputs':
           return [
             { key: 'inputHeight', label: 'Height', type: 'number', min: 28, max: 56, suffix: 'px' },
-            { key: 'inputFontSize', label: 'Font size', type: 'number', min: 10, max: 20, suffix: 'px' },
+            {
+              key: 'inputFontSize',
+              label: 'Font size',
+              type: 'number',
+              min: 10,
+              max: 20,
+              suffix: 'px',
+            },
             { key: 'inputBg', label: 'Background Color', type: 'color' },
             { key: 'inputText', label: 'Text Color', type: 'color' },
             { key: 'inputFocusBorder', label: 'Focus border', type: 'color' },
             { key: 'inputPlaceholder', label: 'Placeholder Color', type: 'color' },
             { key: 'inputBorderColor', label: 'Border Color', type: 'color' },
-            { key: 'inputBorderWidth', label: 'Border Thickness', type: 'number', min: 0, max: 8, suffix: 'px' },
-            { key: 'inputBorderOpacity', label: 'Border Opacity', type: 'range', min: 0, max: 100, suffix: '%' },
-            { key: 'inputRadius', label: 'Corner radius', type: 'number', min: 0, max: 24, suffix: 'px' },
-            { key: 'inputShadowOpacity', label: 'Shadow Opacity', type: 'range', min: 0, max: 100, suffix: '%' },
-            { key: 'inputShadowX', label: 'Shadow X', type: 'number', min: -20, max: 20, suffix: 'px' },
-            { key: 'inputShadowY', label: 'Shadow Y', type: 'number', min: -20, max: 20, suffix: 'px' },
-            { key: 'inputShadowBlur', label: 'Shadow Blur', type: 'number', min: 0, max: 40, suffix: 'px' },
+            {
+              key: 'inputBorderWidth',
+              label: 'Border Thickness',
+              type: 'number',
+              min: 0,
+              max: 8,
+              suffix: 'px',
+            },
+            {
+              key: 'inputBorderOpacity',
+              label: 'Border Opacity',
+              type: 'range',
+              min: 0,
+              max: 100,
+              suffix: '%',
+            },
+            {
+              key: 'inputRadius',
+              label: 'Corner radius',
+              type: 'number',
+              min: 0,
+              max: 24,
+              suffix: 'px',
+            },
+            {
+              key: 'inputShadowOpacity',
+              label: 'Shadow Opacity',
+              type: 'range',
+              min: 0,
+              max: 100,
+              suffix: '%',
+            },
+            {
+              key: 'inputShadowX',
+              label: 'Shadow X',
+              type: 'number',
+              min: -20,
+              max: 20,
+              suffix: 'px',
+            },
+            {
+              key: 'inputShadowY',
+              label: 'Shadow Y',
+              type: 'number',
+              min: -20,
+              max: 20,
+              suffix: 'px',
+            },
+            {
+              key: 'inputShadowBlur',
+              label: 'Shadow Blur',
+              type: 'number',
+              min: 0,
+              max: 40,
+              suffix: 'px',
+            },
           ];
 
         case 'Content Containers':
           return [
             { key: 'containerBg', label: 'Background Color', type: 'color' },
             { key: 'containerBorderColor', label: 'Border color', type: 'color' },
-            { key: 'containerRadius', label: 'Radius', type: 'number', min: 0, max: 24, suffix: 'px' },
-            { key: 'containerPaddingInner', label: 'Inner padding', type: 'number', min: 8, max: 64, suffix: 'px' },
-            { key: 'containerShadow', label: 'Shadow', type: 'select', options: [
-              { label: 'None', value: 'none' }, { label: 'Small', value: 'small' }, { label: 'Medium', value: 'medium' }, { label: 'Large', value: 'large' },
-            ]},
-            { key: 'containerBorderWidth', label: 'Border Thickness', type: 'number', min: 0, max: 8, suffix: 'px' },
-            { key: 'containerBorderOpacity', label: 'Border Opacity', type: 'range', min: 0, max: 100, suffix: '%' },
-            { key: 'containerBorderRadius', label: 'Border Corner radius', type: 'number', min: 0, max: 48, suffix: 'px' },
-            { key: 'containerShadowOpacity', label: 'Shadow Opacity', type: 'range', min: 0, max: 100, suffix: '%' },
-            { key: 'containerShadowX', label: 'Shadow X', type: 'number', min: -20, max: 20, suffix: 'px' },
-            { key: 'containerShadowY', label: 'Shadow Y', type: 'number', min: -20, max: 20, suffix: 'px' },
-            { key: 'containerShadowBlur', label: 'Shadow Blur', type: 'number', min: 0, max: 40, suffix: 'px' },
+            {
+              key: 'containerRadius',
+              label: 'Radius',
+              type: 'number',
+              min: 0,
+              max: 24,
+              suffix: 'px',
+            },
+            {
+              key: 'containerPaddingInner',
+              label: 'Inner padding',
+              type: 'number',
+              min: 8,
+              max: 64,
+              suffix: 'px',
+            },
+            {
+              key: 'containerShadow',
+              label: 'Shadow',
+              type: 'select',
+              options: [
+                { label: 'None', value: 'none' },
+                { label: 'Small', value: 'small' },
+                { label: 'Medium', value: 'medium' },
+                { label: 'Large', value: 'large' },
+              ],
+            },
+            {
+              key: 'containerBorderWidth',
+              label: 'Border Thickness',
+              type: 'number',
+              min: 0,
+              max: 8,
+              suffix: 'px',
+            },
+            {
+              key: 'containerBorderOpacity',
+              label: 'Border Opacity',
+              type: 'range',
+              min: 0,
+              max: 100,
+              suffix: '%',
+            },
+            {
+              key: 'containerBorderRadius',
+              label: 'Border Corner radius',
+              type: 'number',
+              min: 0,
+              max: 48,
+              suffix: 'px',
+            },
+            {
+              key: 'containerShadowOpacity',
+              label: 'Shadow Opacity',
+              type: 'range',
+              min: 0,
+              max: 100,
+              suffix: '%',
+            },
+            {
+              key: 'containerShadowX',
+              label: 'Shadow X',
+              type: 'number',
+              min: -20,
+              max: 20,
+              suffix: 'px',
+            },
+            {
+              key: 'containerShadowY',
+              label: 'Shadow Y',
+              type: 'number',
+              min: -20,
+              max: 20,
+              suffix: 'px',
+            },
+            {
+              key: 'containerShadowBlur',
+              label: 'Shadow Blur',
+              type: 'number',
+              min: 0,
+              max: 40,
+              suffix: 'px',
+            },
           ];
 
         case 'Media':
           return [
             { key: 'imagePlaceholderBg', label: 'Placeholder bg', type: 'color' },
-            { key: 'videoRatio', label: 'Video ratio', type: 'select', options: [
-              { label: '16:9', value: '16:9' }, { label: '4:3', value: '4:3' }, { label: '1:1', value: '1:1' }, { label: '9:16 Vertical', value: '9:16' },
-            ]},
+            {
+              key: 'videoRatio',
+              label: 'Video ratio',
+              type: 'select',
+              options: [
+                { label: '16:9', value: '16:9' },
+                { label: '4:3', value: '4:3' },
+                { label: '1:1', value: '1:1' },
+                { label: '9:16 Vertical', value: '9:16' },
+              ],
+            },
             { key: 'imageBorderColor', label: 'Border color', type: 'color' },
-            { key: 'imageBorderWidth', label: 'Border Thickness', type: 'number', min: 0, max: 8, suffix: 'px' },
-            { key: 'imageBorderOpacity', label: 'Border Opacity', type: 'range', min: 0, max: 100, suffix: '%' },
-            { key: 'imageRadius', label: 'Corner radius', type: 'number', min: 0, max: 48, suffix: 'px' },
-            { key: 'imageShadowOpacity', label: 'Shadow Opacity', type: 'range', min: 0, max: 100, suffix: '%' },
-            { key: 'imageShadowX', label: 'Shadow X', type: 'number', min: -20, max: 20, suffix: 'px' },
-            { key: 'imageShadowY', label: 'Shadow Y', type: 'number', min: -20, max: 20, suffix: 'px' },
-            { key: 'imageShadowBlur', label: 'Shadow Blur', type: 'number', min: 0, max: 40, suffix: 'px' },
+            {
+              key: 'imageBorderWidth',
+              label: 'Border Thickness',
+              type: 'number',
+              min: 0,
+              max: 8,
+              suffix: 'px',
+            },
+            {
+              key: 'imageBorderOpacity',
+              label: 'Border Opacity',
+              type: 'range',
+              min: 0,
+              max: 100,
+              suffix: '%',
+            },
+            {
+              key: 'imageRadius',
+              label: 'Corner radius',
+              type: 'number',
+              min: 0,
+              max: 48,
+              suffix: 'px',
+            },
+            {
+              key: 'imageShadowOpacity',
+              label: 'Shadow Opacity',
+              type: 'range',
+              min: 0,
+              max: 100,
+              suffix: '%',
+            },
+            {
+              key: 'imageShadowX',
+              label: 'Shadow X',
+              type: 'number',
+              min: -20,
+              max: 20,
+              suffix: 'px',
+            },
+            {
+              key: 'imageShadowY',
+              label: 'Shadow Y',
+              type: 'number',
+              min: -20,
+              max: 20,
+              suffix: 'px',
+            },
+            {
+              key: 'imageShadowBlur',
+              label: 'Shadow Blur',
+              type: 'number',
+              min: 0,
+              max: 40,
+              suffix: 'px',
+            },
           ];
 
         case 'Dropdowns and pop-ups':
@@ -288,17 +571,81 @@ function ThemeSettingsPanelContent({ showHeader = true }: { showHeader?: boolean
             { key: 'dropdownBg', label: 'Dropdown bg', type: 'color' },
             { key: 'popupOverlayColor', label: 'Popup overlay', type: 'color' },
             { key: 'dropdownBorder', label: 'Border color', type: 'color' },
-            { key: 'dropdownBorderWidth', label: 'Border Thickness', type: 'number', min: 0, max: 8, suffix: 'px' },
-            { key: 'dropdownBorderOpacity', label: 'Border Opacity', type: 'range', min: 0, max: 100, suffix: '%' },
-            { key: 'dropdownRadius', label: 'Dropdown radius', type: 'number', min: 0, max: 24, suffix: 'px' },
-            { key: 'popupRadius', label: 'Popup radius', type: 'number', min: 0, max: 32, suffix: 'px' },
-            { key: 'dropdownShadow', label: 'Shadow Preset', type: 'select', options: [
-              { label: 'None', value: 'none' }, { label: 'Small', value: 'small' }, { label: 'Medium', value: 'medium' }, { label: 'Large', value: 'large' },
-            ]},
-            { key: 'dropdownShadowOpacity', label: 'Shadow Opacity', type: 'range', min: 0, max: 100, suffix: '%' },
-            { key: 'dropdownShadowX', label: 'Shadow X', type: 'number', min: -30, max: 30, suffix: 'px' },
-            { key: 'dropdownShadowY', label: 'Shadow Y', type: 'number', min: -30, max: 30, suffix: 'px' },
-            { key: 'dropdownShadowBlur', label: 'Shadow Blur', type: 'number', min: 0, max: 60, suffix: 'px' },
+            {
+              key: 'dropdownBorderWidth',
+              label: 'Border Thickness',
+              type: 'number',
+              min: 0,
+              max: 8,
+              suffix: 'px',
+            },
+            {
+              key: 'dropdownBorderOpacity',
+              label: 'Border Opacity',
+              type: 'range',
+              min: 0,
+              max: 100,
+              suffix: '%',
+            },
+            {
+              key: 'dropdownRadius',
+              label: 'Dropdown radius',
+              type: 'number',
+              min: 0,
+              max: 24,
+              suffix: 'px',
+            },
+            {
+              key: 'popupRadius',
+              label: 'Popup radius',
+              type: 'number',
+              min: 0,
+              max: 32,
+              suffix: 'px',
+            },
+            {
+              key: 'dropdownShadow',
+              label: 'Shadow Preset',
+              type: 'select',
+              options: [
+                { label: 'None', value: 'none' },
+                { label: 'Small', value: 'small' },
+                { label: 'Medium', value: 'medium' },
+                { label: 'Large', value: 'large' },
+              ],
+            },
+            {
+              key: 'dropdownShadowOpacity',
+              label: 'Shadow Opacity',
+              type: 'range',
+              min: 0,
+              max: 100,
+              suffix: '%',
+            },
+            {
+              key: 'dropdownShadowX',
+              label: 'Shadow X',
+              type: 'number',
+              min: -30,
+              max: 30,
+              suffix: 'px',
+            },
+            {
+              key: 'dropdownShadowY',
+              label: 'Shadow Y',
+              type: 'number',
+              min: -30,
+              max: 30,
+              suffix: 'px',
+            },
+            {
+              key: 'dropdownShadowBlur',
+              label: 'Shadow Blur',
+              type: 'number',
+              min: 0,
+              max: 60,
+              suffix: 'px',
+            },
           ];
 
         case 'Drawers':
@@ -306,30 +653,137 @@ function ThemeSettingsPanelContent({ showHeader = true }: { showHeader?: boolean
             { key: 'drawerWidth', label: 'Width', type: 'range', min: 280, max: 600, suffix: 'px' },
             { key: 'drawerBg', label: 'Background Color', type: 'color' },
             { key: 'drawerOverlayColor', label: 'Overlay Color', type: 'color' },
-            { key: 'drawerPosition', label: 'Position', type: 'select', options: [
-              { label: 'Right', value: 'right' }, { label: 'Left', value: 'left' },
-            ]},
+            {
+              key: 'drawerPosition',
+              label: 'Position',
+              type: 'select',
+              options: [
+                { label: 'Right', value: 'right' },
+                { label: 'Left', value: 'left' },
+              ],
+            },
             { key: 'drawerBorderColor', label: 'Border color', type: 'color' },
-            { key: 'drawerBorderWidth', label: 'Border Thickness', type: 'number', min: 0, max: 8, suffix: 'px' },
-            { key: 'drawerBorderOpacity', label: 'Border Opacity', type: 'range', min: 0, max: 100, suffix: '%' },
-            { key: 'drawerRadius', label: 'Corner radius', type: 'number', min: 0, max: 32, suffix: 'px' },
-            { key: 'drawerShadowOpacity', label: 'Shadow Opacity', type: 'range', min: 0, max: 100, suffix: '%' },
-            { key: 'drawerShadowX', label: 'Shadow X', type: 'number', min: -30, max: 30, suffix: 'px' },
-            { key: 'drawerShadowY', label: 'Shadow Y', type: 'number', min: -30, max: 30, suffix: 'px' },
-            { key: 'drawerShadowBlur', label: 'Shadow Blur', type: 'number', min: 0, max: 60, suffix: 'px' },
+            {
+              key: 'drawerBorderWidth',
+              label: 'Border Thickness',
+              type: 'number',
+              min: 0,
+              max: 8,
+              suffix: 'px',
+            },
+            {
+              key: 'drawerBorderOpacity',
+              label: 'Border Opacity',
+              type: 'range',
+              min: 0,
+              max: 100,
+              suffix: '%',
+            },
+            {
+              key: 'drawerRadius',
+              label: 'Corner radius',
+              type: 'number',
+              min: 0,
+              max: 32,
+              suffix: 'px',
+            },
+            {
+              key: 'drawerShadowOpacity',
+              label: 'Shadow Opacity',
+              type: 'range',
+              min: 0,
+              max: 100,
+              suffix: '%',
+            },
+            {
+              key: 'drawerShadowX',
+              label: 'Shadow X',
+              type: 'number',
+              min: -30,
+              max: 30,
+              suffix: 'px',
+            },
+            {
+              key: 'drawerShadowY',
+              label: 'Shadow Y',
+              type: 'number',
+              min: -30,
+              max: 30,
+              suffix: 'px',
+            },
+            {
+              key: 'drawerShadowBlur',
+              label: 'Shadow Blur',
+              type: 'number',
+              min: 0,
+              max: 60,
+              suffix: 'px',
+            },
           ];
 
         case 'Badges':
           return [
-            { key: 'badgePosition', label: 'Position on cards', type: 'select', options: [
-              { label: 'Top left', value: 'top-left' }, { label: 'Top right', value: 'top-right' }, { label: 'Bottom left', value: 'bottom-left' }, { label: 'Bottom right', value: 'bottom-right' },
-            ]},
-            { key: 'badgeRadius', label: 'Corner radius', type: 'range', min: 0, max: 40, suffix: 'px' },
-            { key: 'badgeFontSize', label: 'Font size', type: 'number', min: 8, max: 16, suffix: 'px' },
-            { key: 'badgePaddingX', label: 'Padding X', type: 'number', min: 2, max: 16, suffix: 'px' },
-            { key: 'badgePaddingY', label: 'Padding Y', type: 'number', min: 0, max: 8, suffix: 'px' },
-            { key: 'badgeSaleColorScheme', label: 'Sale color scheme', type: 'select', options: theme.colorSchemes.map((scheme: ColorScheme) => ({ label: scheme.name, value: scheme.id })) },
-            { key: 'badgeSoldOutColorScheme', label: 'Sold out color scheme', type: 'select', options: theme.colorSchemes.map((scheme: ColorScheme) => ({ label: scheme.name, value: scheme.id })) },
+            {
+              key: 'badgePosition',
+              label: 'Position on cards',
+              type: 'select',
+              options: [
+                { label: 'Top left', value: 'top-left' },
+                { label: 'Top right', value: 'top-right' },
+                { label: 'Bottom left', value: 'bottom-left' },
+                { label: 'Bottom right', value: 'bottom-right' },
+              ],
+            },
+            {
+              key: 'badgeRadius',
+              label: 'Corner radius',
+              type: 'range',
+              min: 0,
+              max: 40,
+              suffix: 'px',
+            },
+            {
+              key: 'badgeFontSize',
+              label: 'Font size',
+              type: 'number',
+              min: 8,
+              max: 16,
+              suffix: 'px',
+            },
+            {
+              key: 'badgePaddingX',
+              label: 'Padding X',
+              type: 'number',
+              min: 2,
+              max: 16,
+              suffix: 'px',
+            },
+            {
+              key: 'badgePaddingY',
+              label: 'Padding Y',
+              type: 'number',
+              min: 0,
+              max: 8,
+              suffix: 'px',
+            },
+            {
+              key: 'badgeSaleColorScheme',
+              label: 'Sale color scheme',
+              type: 'select',
+              options: theme.colorSchemes.map((scheme: ColorScheme) => ({
+                label: scheme.name,
+                value: scheme.id,
+              })),
+            },
+            {
+              key: 'badgeSoldOutColorScheme',
+              label: 'Sold out color scheme',
+              type: 'select',
+              options: theme.colorSchemes.map((scheme: ColorScheme) => ({
+                label: scheme.name,
+                value: scheme.id,
+              })),
+            },
             { key: 'badgeDefaultBg', label: 'Default Background', type: 'color' },
             { key: 'badgeDefaultText', label: 'Default Text', type: 'color' },
             { key: 'badgeSaleBg', label: 'Sale Background', type: 'color' },
@@ -341,23 +795,40 @@ function ThemeSettingsPanelContent({ showHeader = true }: { showHeader?: boolean
             { key: 'searchPlaceholder', label: 'Placeholder text', type: 'text' },
             { key: 'searchMinChars', label: 'Min characters', type: 'number', min: 1, max: 5 },
             { key: 'searchShowSuggestions', label: 'Enable search suggestions', type: 'checkbox' },
-            ...(theme.searchShowSuggestions ? [
-              { key: 'searchShowVendor', label: 'Show product vendor', type: 'checkbox' },
-              { key: 'searchShowPrice', label: 'Show product price', type: 'checkbox' },
-            ] as SettingsField<ThemeSettings>[] : []),
+            ...(theme.searchShowSuggestions
+              ? ([
+                  { key: 'searchShowVendor', label: 'Show product vendor', type: 'checkbox' },
+                  { key: 'searchShowPrice', label: 'Show product price', type: 'checkbox' },
+                ] as SettingsField<ThemeSettings>[])
+              : []),
             { key: 'searchMaxResults', label: 'Max results', type: 'number', min: 3, max: 20 },
           ];
 
         case 'Currency Format':
           return [
-            { key: 'currencyCode', label: 'Currency', type: 'select', options: [
-              { label: 'USD ($)', value: 'USD' }, { label: 'EUR (\u20ac)', value: 'EUR' }, { label: 'GBP (\u00a3)', value: 'GBP' },
-              { label: 'CAD (C$)', value: 'CAD' }, { label: 'AUD (A$)', value: 'AUD' }, { label: 'JPY (\u00a5)', value: 'JPY' },
-            ]},
+            {
+              key: 'currencyCode',
+              label: 'Currency',
+              type: 'select',
+              options: [
+                { label: 'USD ($)', value: 'USD' },
+                { label: 'EUR (\u20ac)', value: 'EUR' },
+                { label: 'GBP (\u00a3)', value: 'GBP' },
+                { label: 'CAD (C$)', value: 'CAD' },
+                { label: 'AUD (A$)', value: 'AUD' },
+                { label: 'JPY (\u00a5)', value: 'JPY' },
+              ],
+            },
             { key: 'currencySymbol', label: 'Symbol', type: 'text' },
-            { key: 'currencyPosition', label: 'Symbol position', type: 'select', options: [
-              { label: 'Before ($10)', value: 'before' }, { label: 'After (10$)', value: 'after' },
-            ]},
+            {
+              key: 'currencyPosition',
+              label: 'Symbol position',
+              type: 'select',
+              options: [
+                { label: 'Before ($10)', value: 'before' },
+                { label: 'After (10$)', value: 'after' },
+              ],
+            },
             { key: 'currencyShowCode', label: 'Show currency codes', type: 'checkbox' },
             { key: 'thousandsSeparator', label: 'Thousands separator', type: 'text' },
             { key: 'decimalSeparator', label: 'Decimal separator', type: 'text' },
@@ -366,20 +837,48 @@ function ThemeSettingsPanelContent({ showHeader = true }: { showHeader?: boolean
 
         case 'Cart':
           return [
-            { key: 'cartStyle', label: 'Cart type', type: 'select', options: [
-              { label: 'Drawer', value: 'drawer' }, { label: 'Page', value: 'page' }, { label: 'Popup notification', value: 'dropdown' },
-            ]},
-            { key: 'cartIconStyle', label: 'Icon style', type: 'select', options: [
-              { label: 'Bag', value: 'bag' }, { label: 'Cart', value: 'cart' }, { label: 'Basket', value: 'basket' },
-            ]},
+            {
+              key: 'cartStyle',
+              label: 'Cart type',
+              type: 'select',
+              options: [
+                { label: 'Drawer', value: 'drawer' },
+                { label: 'Page', value: 'page' },
+                { label: 'Popup notification', value: 'dropdown' },
+              ],
+            },
+            {
+              key: 'cartIconStyle',
+              label: 'Icon style',
+              type: 'select',
+              options: [
+                { label: 'Bag', value: 'bag' },
+                { label: 'Cart', value: 'cart' },
+                { label: 'Basket', value: 'basket' },
+              ],
+            },
             { key: 'showCartCount', label: 'Show item count', type: 'checkbox' },
             { key: 'cartShowVendor', label: 'Show vendor', type: 'checkbox' },
             { key: 'cartEnableNote', label: 'Enable cart note', type: 'checkbox' },
             { key: 'cartEmptyText', label: 'Empty cart text', type: 'text' },
-            ...(theme.cartStyle === 'drawer' ? [
-              { key: 'cartDrawerShowWhenEmpty', label: 'Visible when cart drawer is empty', type: 'checkbox' },
-              { key: 'cartDrawerColorScheme', label: 'Color scheme', type: 'select', options: theme.colorSchemes.map((scheme: ColorScheme) => ({ label: scheme.name, value: scheme.id })) },
-            ] as SettingsField<ThemeSettings>[] : [])
+            ...(theme.cartStyle === 'drawer'
+              ? ([
+                  {
+                    key: 'cartDrawerShowWhenEmpty',
+                    label: 'Visible when cart drawer is empty',
+                    type: 'checkbox',
+                  },
+                  {
+                    key: 'cartDrawerColorScheme',
+                    label: 'Color scheme',
+                    type: 'select',
+                    options: theme.colorSchemes.map((scheme: ColorScheme) => ({
+                      label: scheme.name,
+                      value: scheme.id,
+                    })),
+                  },
+                ] as SettingsField<ThemeSettings>[])
+              : []),
           ];
 
         case 'Theme Style':
@@ -401,8 +900,14 @@ function ThemeSettingsPanelContent({ showHeader = true }: { showHeader?: boolean
         case 'Logo':
           return (
             <div className='space-y-3'>
-              <Card variant='subtle-compact' padding='sm' className='border-dashed border-border/50 bg-card/30'>
-                <Hint size='xxs' uppercase className='font-semibold text-gray-500'>Logo preview</Hint>
+              <Card
+                variant='subtle-compact'
+                padding='sm'
+                className='border-dashed border-border/50 bg-card/30'
+              >
+                <Hint size='xxs' uppercase className='font-semibold text-gray-500'>
+                  Logo preview
+                </Hint>
                 <div className='mt-3 flex items-center justify-center rounded border border-border/40 bg-card/50 p-4'>
                   {logoPreviewUrl ? (
                     <Image
@@ -419,9 +924,20 @@ function ThemeSettingsPanelContent({ showHeader = true }: { showHeader?: boolean
                 </div>
               </Card>
               <SettingsFieldsRenderer
-                fields={[{ key: 'logoWidth', label: 'Desktop logo width', type: 'range', min: 50, max: 300, suffix: 'px' } as SettingsField<{ logoWidth: number }>]}
+                fields={[
+                  {
+                    key: 'logoWidth',
+                    label: 'Desktop logo width',
+                    type: 'range',
+                    min: 50,
+                    max: 300,
+                    suffix: 'px',
+                  } as SettingsField<{ logoWidth: number }>,
+                ]}
                 values={{ logoWidth }}
-                onChange={(vals) => setLogoWidth((vals as unknown as { logoWidth: number }).logoWidth)}
+                onChange={(vals) =>
+                  setLogoWidth((vals as unknown as { logoWidth: number }).logoWidth)
+                }
               />
               <div className='space-y-2'>
                 <FileUploadTrigger
@@ -438,10 +954,17 @@ function ThemeSettingsPanelContent({ showHeader = true }: { showHeader?: boolean
                   </Button>
                 </FileUploadTrigger>
                 <div className='flex items-center gap-2'>
-                  <FileUploadButton size='sm' variant='outline' accept='image/*' onFilesSelected={(files: File[]) => handleLogoSelect(files)}>
+                  <FileUploadButton
+                    size='sm'
+                    variant='outline'
+                    accept='image/*'
+                    onFilesSelected={(files: File[]) => handleLogoSelect(files)}
+                  >
                     Choose file
                   </FileUploadButton>
-                  <span className='flex-1 truncate text-[11px] text-gray-500'>{logoFile?.name ?? 'No file selected'}</span>
+                  <span className='flex-1 truncate text-[11px] text-gray-500'>
+                    {logoFile?.name ?? 'No file selected'}
+                  </span>
                 </div>
               </div>
             </div>
@@ -473,21 +996,51 @@ function ThemeSettingsPanelContent({ showHeader = true }: { showHeader?: boolean
             <div className='space-y-4'>
               <SettingsFieldsRenderer
                 fields={[
-                  { key: 'brandName', label: 'Brand name', type: 'text', placeholder: 'Your brand' },
-                  { key: 'brandTagline', label: 'Tagline', type: 'text', placeholder: 'Your tagline' },
-                  { key: 'brandEmail', label: 'Email', type: 'email', placeholder: 'hello@example.com' },
-                  { key: 'brandPhone', label: 'Phone', type: 'text', placeholder: '+1 234 567 890' },
-                  { key: 'brandAddress', label: 'Address', type: 'text', placeholder: '123 Main St' },
+                  {
+                    key: 'brandName',
+                    label: 'Brand name',
+                    type: 'text',
+                    placeholder: 'Your brand',
+                  },
+                  {
+                    key: 'brandTagline',
+                    label: 'Tagline',
+                    type: 'text',
+                    placeholder: 'Your tagline',
+                  },
+                  {
+                    key: 'brandEmail',
+                    label: 'Email',
+                    type: 'email',
+                    placeholder: 'hello@example.com',
+                  },
+                  {
+                    key: 'brandPhone',
+                    label: 'Phone',
+                    type: 'text',
+                    placeholder: '+1 234 567 890',
+                  },
+                  {
+                    key: 'brandAddress',
+                    label: 'Address',
+                    type: 'text',
+                    placeholder: '123 Main St',
+                  },
                 ]}
                 values={theme}
                 onChange={(values) => {
                   Object.entries(values).forEach(([key, value]) => {
-                    update(key as keyof ThemeSettings, value as unknown as ThemeSettings[keyof ThemeSettings]);
+                    update(
+                      key as keyof ThemeSettings,
+                      value as unknown as ThemeSettings[keyof ThemeSettings]
+                    );
                   });
                 }}
               />
               <div className='border-t border-border/30 pt-2'>
-                <Hint size='xxs' uppercase className='mb-2 block text-gray-500'>Footer description</Hint>
+                <Hint size='xxs' uppercase className='mb-2 block text-gray-500'>
+                  Footer description
+                </Hint>
                 <div className='space-y-3'>
                   <MiniRichTextEditor
                     label='Headline'
@@ -502,15 +1055,27 @@ function ThemeSettingsPanelContent({ showHeader = true }: { showHeader?: boolean
                     minHeight='140px'
                     showFormatSelect
                     enableLists
-                  />                  <ImagePickerField
+                  />{' '}
+                  <ImagePickerField
                     label='Image'
                     value={theme.brandFooterImage}
                     onChange={updateSetting('brandFooterImage')}
                   />
                   <SettingsFieldsRenderer
-                    fields={[{ key: 'brandFooterImageWidth', label: 'Image width', type: 'range', min: 50, max: 550, suffix: 'px' }]}
+                    fields={[
+                      {
+                        key: 'brandFooterImageWidth',
+                        label: 'Image width',
+                        type: 'range',
+                        min: 50,
+                        max: 550,
+                        suffix: 'px',
+                      },
+                    ]}
                     values={theme}
-                    onChange={(values) => update('brandFooterImageWidth', values.brandFooterImageWidth as number)}
+                    onChange={(values) =>
+                      update('brandFooterImageWidth', values.brandFooterImageWidth as number)
+                    }
                   />
                 </div>
               </div>
@@ -521,21 +1086,74 @@ function ThemeSettingsPanelContent({ showHeader = true }: { showHeader?: boolean
           return (
             <SettingsFieldsRenderer
               fields={[
-                { key: 'socialFacebook', label: 'Facebook', type: 'text', placeholder: 'https://facebook.com/...' },
-                { key: 'socialInstagram', label: 'Instagram', type: 'text', placeholder: 'https://instagram.com/...' },
-                { key: 'socialYoutube', label: 'YouTube', type: 'text', placeholder: 'https://youtube.com/...' },
-                { key: 'socialTiktok', label: 'TikTok', type: 'text', placeholder: 'https://tiktok.com/...' },
-                { key: 'socialTwitter', label: 'X / Twitter', type: 'text', placeholder: 'https://x.com/...' },
-                { key: 'socialSnapchat', label: 'Snapchat', type: 'text', placeholder: 'https://snapchat.com/add/...' },
-                { key: 'socialPinterest', label: 'Pinterest', type: 'text', placeholder: 'https://pinterest.com/...' },
-                { key: 'socialTumblr', label: 'Tumblr', type: 'text', placeholder: 'https://tumblr.com/...' },
-                { key: 'socialVimeo', label: 'Vimeo', type: 'text', placeholder: 'https://vimeo.com/...' },
-                { key: 'socialLinkedin', label: 'LinkedIn', type: 'text', placeholder: 'https://linkedin.com/...' },
+                {
+                  key: 'socialFacebook',
+                  label: 'Facebook',
+                  type: 'text',
+                  placeholder: 'https://facebook.com/...',
+                },
+                {
+                  key: 'socialInstagram',
+                  label: 'Instagram',
+                  type: 'text',
+                  placeholder: 'https://instagram.com/...',
+                },
+                {
+                  key: 'socialYoutube',
+                  label: 'YouTube',
+                  type: 'text',
+                  placeholder: 'https://youtube.com/...',
+                },
+                {
+                  key: 'socialTiktok',
+                  label: 'TikTok',
+                  type: 'text',
+                  placeholder: 'https://tiktok.com/...',
+                },
+                {
+                  key: 'socialTwitter',
+                  label: 'X / Twitter',
+                  type: 'text',
+                  placeholder: 'https://x.com/...',
+                },
+                {
+                  key: 'socialSnapchat',
+                  label: 'Snapchat',
+                  type: 'text',
+                  placeholder: 'https://snapchat.com/add/...',
+                },
+                {
+                  key: 'socialPinterest',
+                  label: 'Pinterest',
+                  type: 'text',
+                  placeholder: 'https://pinterest.com/...',
+                },
+                {
+                  key: 'socialTumblr',
+                  label: 'Tumblr',
+                  type: 'text',
+                  placeholder: 'https://tumblr.com/...',
+                },
+                {
+                  key: 'socialVimeo',
+                  label: 'Vimeo',
+                  type: 'text',
+                  placeholder: 'https://vimeo.com/...',
+                },
+                {
+                  key: 'socialLinkedin',
+                  label: 'LinkedIn',
+                  type: 'text',
+                  placeholder: 'https://linkedin.com/...',
+                },
               ]}
               values={theme}
               onChange={(values) => {
                 Object.entries(values).forEach(([key, value]) => {
-                  update(key as keyof ThemeSettings, value as unknown as ThemeSettings[keyof ThemeSettings]);
+                  update(
+                    key as keyof ThemeSettings,
+                    value as unknown as ThemeSettings[keyof ThemeSettings]
+                  );
                 });
               }}
             />
@@ -545,15 +1163,26 @@ function ThemeSettingsPanelContent({ showHeader = true }: { showHeader?: boolean
           return (
             <div className='space-y-4'>
               <SettingsFieldsRenderer
-                fields={[{ key: 'customCssSelectors', label: 'CSS selectors', type: 'text', placeholder: '.product-card, #cart, .footer' }]}
+                fields={[
+                  {
+                    key: 'customCssSelectors',
+                    label: 'CSS selectors',
+                    type: 'text',
+                    placeholder: '.product-card, #cart, .footer',
+                  },
+                ]}
                 values={theme}
-                onChange={(values) => update('customCssSelectors', values.customCssSelectors as string)}
+                onChange={(values) =>
+                  update('customCssSelectors', values.customCssSelectors as string)
+                }
               />
               <div className='space-y-1.5'>
                 <Label className='text-xs text-gray-400'>CSS Code</Label>
                 <Textarea
                   value={theme.customCss}
-                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => update('customCss', e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                    update('customCss', e.target.value)
+                  }
                   placeholder={'.my-class {\n  color: red;\n}'}
                   className='w-full bg-card/40 p-2 font-mono text-xs text-gray-300 placeholder:text-gray-600 min-h-[120px]'
                   spellCheck={false}
@@ -571,7 +1200,10 @@ function ThemeSettingsPanelContent({ showHeader = true }: { showHeader?: boolean
                 values={theme}
                 onChange={(values) => {
                   Object.entries(values).forEach(([key, value]) => {
-                    update(key as keyof ThemeSettings, value as unknown as ThemeSettings[keyof ThemeSettings]);
+                    update(
+                      key as keyof ThemeSettings,
+                      value as unknown as ThemeSettings[keyof ThemeSettings]
+                    );
                   });
                 }}
               />
@@ -581,17 +1213,17 @@ function ThemeSettingsPanelContent({ showHeader = true }: { showHeader?: boolean
         }
       }
     },
-  [
-    theme,
-    update,
-    updateSetting,
-    logoPreviewUrl,
-    logoWidth,
-    logoFile?.name,
-    handleLogoSelect,
-    getFieldsForSection,
-    toggleSection
-  ]
+    [
+      theme,
+      update,
+      updateSetting,
+      logoPreviewUrl,
+      logoWidth,
+      logoFile?.name,
+      handleLogoSelect,
+      getFieldsForSection,
+      toggleSection,
+    ]
   );
 
   return (
@@ -622,12 +1254,16 @@ function ThemeSettingsPanelContent({ showHeader = true }: { showHeader?: boolean
                     onClick={(): void => toggleSection(section)}
                     className='h-8 w-8 p-0'
                   >
-                    <ChevronDown className={`size-4 text-gray-500 transition ${isOpen ? 'rotate-180' : ''}`} />
+                    <ChevronDown
+                      className={`size-4 text-gray-500 transition ${isOpen ? 'rotate-180' : ''}`}
+                    />
                   </Button>
                 }
               >
                 {isOpen && (
-                  <div className='px-3 pb-3 border-t border-border/40 pt-3'>{renderSectionBody(section)}</div>
+                  <div className='px-3 pb-3 border-t border-border/40 pt-3'>
+                    {renderSectionBody(section)}
+                  </div>
                 )}
               </FormSection>
             );
@@ -638,7 +1274,9 @@ function ThemeSettingsPanelContent({ showHeader = true }: { showHeader?: boolean
   );
 }
 
-export function ThemeSettingsPanel({ showHeader = true }: { showHeader?: boolean } = {}): React.JSX.Element {
+export function ThemeSettingsPanel({
+  showHeader = true,
+}: { showHeader?: boolean } = {}): React.JSX.Element {
   return (
     <ThemeColorsProvider>
       <ThemeSettingsPanelContent showHeader={showHeader} />

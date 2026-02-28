@@ -22,8 +22,11 @@ import {
   TEXT_ATOM_BLOCK_TYPE,
 } from './block-helpers';
 import { reducePageBuilderMoveActions } from './page-builder-reducer-move-actions';
-import { getSectionDefinition, getBlockDefinition } from '../../components/page-builder/section-registry';
-import { normalizePageZone } from '../../utils/page-builder-normalization';
+import {
+  getSectionDefinition,
+  getBlockDefinition,
+} from '../../components/page-builder/section-registry';
+import { normalizePageZone } from '@/features/cms/utils/page-builder-normalization';
 
 import type {
   PageBuilderState,
@@ -48,7 +51,7 @@ export function reducePageBuilderStateCore(
       return { ...state, pages: action.pages };
 
     case 'SET_CURRENT_PAGE': {
-    // Reconstruct SectionInstance[] from the page's saved components
+      // Reconstruct SectionInstance[] from the page's saved components
       const normalizedPage = {
         ...action.page,
         showMenu: action.page.showMenu ?? true,
@@ -107,15 +110,17 @@ export function reducePageBuilderStateCore(
           undefined
         );
       } else if (action.sectionType === 'Slideshow') {
-      // Auto-create Frame 1 when adding a Slideshow
+        // Auto-create Frame 1 when adding a Slideshow
         const frameDef = getBlockDefinition('SlideshowFrame');
         if (frameDef) {
-          initialBlocks = [{
-            id: uid(),
-            type: 'SlideshowFrame',
-            settings: { ...frameDef.defaultSettings },
-            blocks: [],
-          }];
+          initialBlocks = [
+            {
+              id: uid(),
+              type: 'SlideshowFrame',
+              settings: { ...frameDef.defaultSettings },
+              blocks: [],
+            },
+          ];
         }
       }
 
@@ -151,7 +156,10 @@ export function reducePageBuilderStateCore(
           const { rows, extras } = splitGridBlocks(normalized.blocks);
           const columnsPerRow =
             (normalized.settings['columns'] as number) ??
-            Math.max(1, (rows[0]?.blocks ?? []).filter((b: BlockInstance) => b.type === 'Column').length || 1);
+            Math.max(
+              1,
+              (rows[0]?.blocks ?? []).filter((b: BlockInstance) => b.type === 'Column').length || 1
+            );
           const nextRows = [...rows, createRowBlock(columnsPerRow)];
           return {
             ...normalized,
@@ -164,9 +172,7 @@ export function reducePageBuilderStateCore(
       const newBlock = createBlockInstance(action.blockType);
       if (!newBlock) return state;
       const updatedSections = state.sections.map((s: SectionInstance) =>
-        s.id === action.sectionId
-          ? { ...s, blocks: [...s.blocks, newBlock] }
-          : s
+        s.id === action.sectionId ? { ...s, blocks: [...s.blocks, newBlock] } : s
       );
       return {
         ...state,
@@ -213,20 +219,20 @@ export function reducePageBuilderStateCore(
       const updatedSections = state.sections.map((s: SectionInstance) =>
         s.id === action.sectionId
           ? {
-            ...s,
-            blocks: s.blocks.map((b: BlockInstance) =>
-              b.id === action.blockId
-                ? applyTextAtomSettings(b, { ...b.settings, ...action.settings })
-                : b
-            ),
-          }
+              ...s,
+              blocks: s.blocks.map((b: BlockInstance) =>
+                b.id === action.blockId
+                  ? applyTextAtomSettings(b, { ...b.settings, ...action.settings })
+                  : b
+              ),
+            }
           : s
       );
       return { ...state, sections: updatedSections };
     }
 
     case 'MOVE_BLOCK': {
-    // Remove block from source section, insert into target section at index
+      // Remove block from source section, insert into target section at index
       let movedBlock: BlockInstance | null = null;
       const sectionsAfterRemove = state.sections.map((s: SectionInstance) => {
         if (s.id === action.fromSectionId) {
@@ -269,7 +275,9 @@ export function reducePageBuilderStateCore(
         const nextRows = rows.map((row: BlockInstance) => {
           const cols = (row.blocks ?? []).filter((b: BlockInstance) => b.type === 'Column');
           if (cols.length < targetCols) {
-            const newCols = Array.from({ length: targetCols - cols.length }, () => createColumnBlock());
+            const newCols = Array.from({ length: targetCols - cols.length }, () =>
+              createColumnBlock()
+            );
             return { ...row, blocks: [...cols, ...newCols] };
           }
           return { ...row, blocks: cols.slice(0, targetCols) };
@@ -290,11 +298,16 @@ export function reducePageBuilderStateCore(
         const { rows, extras } = splitGridBlocks(normalized.blocks);
         const columnsPerRow =
           (normalized.settings['columns'] as number) ??
-          Math.max(1, (rows[0]?.blocks ?? []).filter((b: BlockInstance) => b.type === 'Column').length || 1);
+          Math.max(
+            1,
+            (rows[0]?.blocks ?? []).filter((b: BlockInstance) => b.type === 'Column').length || 1
+          );
         const targetRows = Math.max(1, action.rowCount);
         let nextRows: BlockInstance[];
         if (targetRows > rows.length) {
-          const newRows = Array.from({ length: targetRows - rows.length }, () => createRowBlock(columnsPerRow));
+          const newRows = Array.from({ length: targetRows - rows.length }, () =>
+            createRowBlock(columnsPerRow)
+          );
           nextRows = [...rows, ...newRows];
         } else {
           nextRows = rows.slice(0, targetRows);
@@ -315,7 +328,10 @@ export function reducePageBuilderStateCore(
         const { rows, extras } = splitGridBlocks(normalized.blocks);
         const columnsPerRow =
           (normalized.settings['columns'] as number) ??
-          Math.max(1, (rows[0]?.blocks ?? []).filter((b: BlockInstance) => b.type === 'Column').length || 1);
+          Math.max(
+            1,
+            (rows[0]?.blocks ?? []).filter((b: BlockInstance) => b.type === 'Column').length || 1
+          );
         const nextRows = [...rows, createRowBlock(columnsPerRow)];
         return {
           ...normalized,
@@ -338,7 +354,10 @@ export function reducePageBuilderStateCore(
         didRemove = true;
         const maxColumns = Math.max(
           1,
-          ...nextRows.map((row: BlockInstance) => (row.blocks ?? []).filter((b: BlockInstance) => b.type === 'Column').length)
+          ...nextRows.map(
+            (row: BlockInstance) =>
+              (row.blocks ?? []).filter((b: BlockInstance) => b.type === 'Column').length
+          )
         );
         return {
           ...normalized,
@@ -349,7 +368,8 @@ export function reducePageBuilderStateCore(
       return {
         ...state,
         sections: updatedSections,
-        selectedNodeId: didRemove && state.selectedNodeId === action.rowId ? null : state.selectedNodeId,
+        selectedNodeId:
+          didRemove && state.selectedNodeId === action.rowId ? null : state.selectedNodeId,
       };
     }
 
@@ -358,14 +378,22 @@ export function reducePageBuilderStateCore(
         if (s.id !== action.sectionId || s.type !== 'Grid') return s;
         const normalized = ensureGridRows(s);
         let maxColumns = (normalized.settings['columns'] as number) ?? 1;
-        const nextBlocks = updateRowBlocks(normalized.blocks, action.rowId, (row: BlockInstance) => {
-          const cols = row.blocks ?? [];
-          const nextCols = [...cols, createColumnBlock()];
-          maxColumns = Math.max(maxColumns, nextCols.length);
-          return { ...row, blocks: nextCols };
-        });
+        const nextBlocks = updateRowBlocks(
+          normalized.blocks,
+          action.rowId,
+          (row: BlockInstance) => {
+            const cols = row.blocks ?? [];
+            const nextCols = [...cols, createColumnBlock()];
+            maxColumns = Math.max(maxColumns, nextCols.length);
+            return { ...row, blocks: nextCols };
+          }
+        );
         const rowCount = nextBlocks.filter((b: BlockInstance) => b.type === 'Row').length;
-        return { ...normalized, blocks: nextBlocks, settings: { ...normalized.settings, rows: rowCount, columns: maxColumns } };
+        return {
+          ...normalized,
+          blocks: nextBlocks,
+          settings: { ...normalized.settings, rows: rowCount, columns: maxColumns },
+        };
       });
       return { ...state, sections: updatedSections };
     }
@@ -381,7 +409,10 @@ export function reducePageBuilderStateCore(
         const rows = result.blocks.filter((b: BlockInstance) => b.type === 'Row');
         const maxColumns = Math.max(
           1,
-          ...rows.map((row: BlockInstance) => (row.blocks ?? []).filter((b: BlockInstance) => b.type === 'Column').length)
+          ...rows.map(
+            (row: BlockInstance) =>
+              (row.blocks ?? []).filter((b: BlockInstance) => b.type === 'Column').length
+          )
         );
         return {
           ...normalized,
@@ -392,7 +423,8 @@ export function reducePageBuilderStateCore(
       return {
         ...state,
         sections: updatedSections,
-        selectedNodeId: didRemove && state.selectedNodeId === action.columnId ? null : state.selectedNodeId,
+        selectedNodeId:
+          didRemove && state.selectedNodeId === action.columnId ? null : state.selectedNodeId,
       };
     }
 
@@ -472,7 +504,9 @@ export function reducePageBuilderStateCore(
           blocks: updateColumnBlocks(s.blocks, action.columnId, (col: BlockInstance) => ({
             ...col,
             blocks: (col.blocks ?? []).map((pb: BlockInstance) =>
-              pb.id === action.parentBlockId ? { ...pb, blocks: [...(pb.blocks ?? []), newElem] } : pb
+              pb.id === action.parentBlockId
+                ? { ...pb, blocks: [...(pb.blocks ?? []), newElem] }
+                : pb
             ),
           })),
         };
@@ -489,7 +523,12 @@ export function reducePageBuilderStateCore(
             ...col,
             blocks: (col.blocks ?? []).map((pb: BlockInstance) =>
               pb.id === action.parentBlockId
-                ? { ...pb, blocks: (pb.blocks ?? []).filter((eb: BlockInstance) => eb.id !== action.elementId) }
+                ? {
+                    ...pb,
+                    blocks: (pb.blocks ?? []).filter(
+                      (eb: BlockInstance) => eb.id !== action.elementId
+                    ),
+                  }
                 : pb
             ),
           })),
@@ -512,13 +551,13 @@ export function reducePageBuilderStateCore(
             blocks: (col.blocks ?? []).map((pb: BlockInstance) =>
               pb.id === action.parentBlockId
                 ? {
-                  ...pb,
-                  blocks: (pb.blocks ?? []).map((eb: BlockInstance) =>
-                    eb.id === action.blockId
-                      ? applyTextAtomSettings(eb, { ...eb.settings, ...action.settings })
-                      : eb
-                  ),
-                }
+                    ...pb,
+                    blocks: (pb.blocks ?? []).map((eb: BlockInstance) =>
+                      eb.id === action.blockId
+                        ? applyTextAtomSettings(eb, { ...eb.settings, ...action.settings })
+                        : eb
+                    ),
+                  }
                 : pb
             ),
           })),
@@ -534,10 +573,14 @@ export function reducePageBuilderStateCore(
         if (s.id !== action.sectionId) return s;
         return {
           ...s,
-          blocks: updateSectionNestedBlocks(s.blocks, action.parentBlockId, (parent: BlockInstance) => ({
-            ...parent,
-            blocks: [...(parent.blocks ?? []), newElem],
-          })),
+          blocks: updateSectionNestedBlocks(
+            s.blocks,
+            action.parentBlockId,
+            (parent: BlockInstance) => ({
+              ...parent,
+              blocks: [...(parent.blocks ?? []), newElem],
+            })
+          ),
         };
       });
       return { ...state, sections: updatedSections, selectedNodeId: newElem.id };
@@ -548,10 +591,16 @@ export function reducePageBuilderStateCore(
         if (s.id !== action.sectionId) return s;
         return {
           ...s,
-          blocks: updateSectionNestedBlocks(s.blocks, action.parentBlockId, (parent: BlockInstance) => ({
-            ...parent,
-            blocks: (parent.blocks ?? []).filter((eb: BlockInstance) => eb.id !== action.elementId),
-          })),
+          blocks: updateSectionNestedBlocks(
+            s.blocks,
+            action.parentBlockId,
+            (parent: BlockInstance) => ({
+              ...parent,
+              blocks: (parent.blocks ?? []).filter(
+                (eb: BlockInstance) => eb.id !== action.elementId
+              ),
+            })
+          ),
         };
       });
       return {
@@ -566,14 +615,18 @@ export function reducePageBuilderStateCore(
         if (s.id !== action.sectionId) return s;
         return {
           ...s,
-          blocks: updateSectionNestedBlocks(s.blocks, action.parentBlockId, (parent: BlockInstance) => ({
-            ...parent,
-            blocks: (parent.blocks ?? []).map((eb: BlockInstance) =>
-              eb.id === action.blockId
-                ? applyTextAtomSettings(eb, { ...eb.settings, ...action.settings })
-                : eb
-            ),
-          })),
+          blocks: updateSectionNestedBlocks(
+            s.blocks,
+            action.parentBlockId,
+            (parent: BlockInstance) => ({
+              ...parent,
+              blocks: (parent.blocks ?? []).map((eb: BlockInstance) =>
+                eb.id === action.blockId
+                  ? applyTextAtomSettings(eb, { ...eb.settings, ...action.settings })
+                  : eb
+              ),
+            })
+          ),
         };
       });
       return { ...state, sections: updatedSections };
@@ -612,7 +665,10 @@ export function reducePageBuilderStateCore(
             ...col,
             blocks: (col.blocks ?? []).map((pb: BlockInstance) =>
               pb.id === action.carouselId
-                ? { ...pb, blocks: (pb.blocks ?? []).filter((f: BlockInstance) => f.id !== action.frameId) }
+                ? {
+                    ...pb,
+                    blocks: (pb.blocks ?? []).filter((f: BlockInstance) => f.id !== action.frameId),
+                  }
                 : pb
             ),
           })),
@@ -637,11 +693,13 @@ export function reducePageBuilderStateCore(
             blocks: (col.blocks ?? []).map((carousel: BlockInstance) =>
               carousel.id === action.carouselId
                 ? {
-                  ...carousel,
-                  blocks: (carousel.blocks ?? []).map((frame: BlockInstance) =>
-                    frame.id === action.frameId ? { ...frame, blocks: [...(frame.blocks ?? []), newElem] } : frame
-                  ),
-                }
+                    ...carousel,
+                    blocks: (carousel.blocks ?? []).map((frame: BlockInstance) =>
+                      frame.id === action.frameId
+                        ? { ...frame, blocks: [...(frame.blocks ?? []), newElem] }
+                        : frame
+                    ),
+                  }
                 : carousel
             ),
           })),
@@ -703,8 +761,7 @@ export function reducePageBuilderStateCore(
             ? { publishedAt: new Date().toISOString() }
             : state.currentPage.publishedAt
               ? { publishedAt: state.currentPage.publishedAt }
-              : {}
-          ),
+              : {}),
         },
       };
     }
@@ -833,7 +890,9 @@ export function reducePageBuilderStateCore(
     }
 
     case 'DUPLICATE_SECTION': {
-      const sectionIndex = state.sections.findIndex((s: SectionInstance) => s.id === action.sectionId);
+      const sectionIndex = state.sections.findIndex(
+        (s: SectionInstance) => s.id === action.sectionId
+      );
       const original = state.sections[sectionIndex];
       if (sectionIndex === -1 || !original) return state;
       const cloned = cloneSection(original);

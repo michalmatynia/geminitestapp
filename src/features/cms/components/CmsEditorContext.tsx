@@ -16,15 +16,8 @@ type CmsEditorProviderProps = {
   children: React.ReactNode;
 };
 
-export function CmsEditorProvider({
-  value,
-  children,
-}: CmsEditorProviderProps): React.JSX.Element {
-  return (
-    <CmsEditorContext.Provider value={value}>
-      {children}
-    </CmsEditorContext.Provider>
-  );
+export function CmsEditorProvider({ value, children }: CmsEditorProviderProps): React.JSX.Element {
+  return <CmsEditorContext.Provider value={value}>{children}</CmsEditorContext.Provider>;
 }
 
 export function useCmsEditor(): CmsEditorContextValue {

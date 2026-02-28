@@ -24,13 +24,16 @@ vi.mock('@/shared/lib/db/prisma', () => {
     update: vi.fn(),
   };
   return {
-    default: new Proxy({}, {
-      get: (_target, prop) => {
-        if (prop === 'chatbotAgentRun') return mockChatbotAgentRun;
-        return undefined;
-      },
-      has: (_target, prop) => prop === 'chatbotAgentRun',
-    }),
+    default: new Proxy(
+      {},
+      {
+        get: (_target, prop) => {
+          if (prop === 'chatbotAgentRun') return mockChatbotAgentRun;
+          return undefined;
+        },
+        has: (_target, prop) => prop === 'chatbotAgentRun',
+      }
+    ),
   };
 });
 
@@ -60,24 +63,37 @@ describe('Agent Queue Worker', () => {
     await processNextQueuedAgentRun();
 
     expect(prisma.chatbotAgentRun.findFirst).toHaveBeenCalled();
-    expect(prisma.chatbotAgentRun.update).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: 'run-1' },
-      data: expect.objectContaining({ status: 'running' }),
-    }));
+    expect(prisma.chatbotAgentRun.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'run-1' },
+        data: expect.objectContaining({ status: 'running' }),
+      })
+    );
     expect(runAgentControlLoop).toHaveBeenCalledWith('run-1');
   });
 
   it('recovers stuck runs', async () => {
-    const stuckRun = { id: 'run-stuck', status: 'running', updatedAt: new Date(Date.now() - 20 * 60 * 1000) };
+    const stuckRun = {
+      id: 'run-stuck',
+      status: 'running',
+      updatedAt: new Date(Date.now() - 20 * 60 * 1000),
+    };
     vi.mocked(prisma.chatbotAgentRun.findMany).mockResolvedValue([stuckRun] as any);
 
     await processNextQueuedAgentRun();
 
-    expect(prisma.chatbotAgentRun.update).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: 'run-stuck' },
-      data: expect.objectContaining({ status: 'queued' }),
-    }));
-    expect(logAgentAudit).toHaveBeenCalledWith('run-stuck', 'warning', expect.any(String), expect.any(Object));
+    expect(prisma.chatbotAgentRun.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'run-stuck' },
+        data: expect.objectContaining({ status: 'queued' }),
+      })
+    );
+    expect(logAgentAudit).toHaveBeenCalledWith(
+      'run-stuck',
+      'warning',
+      expect.any(String),
+      expect.any(Object)
+    );
   });
 
   it('handles run failure', async () => {
@@ -87,10 +103,17 @@ describe('Agent Queue Worker', () => {
 
     await processNextQueuedAgentRun();
 
-    expect(logAgentAudit).toHaveBeenCalledWith('run-fail', 'error', expect.any(String), expect.any(Object));
-    expect(prisma.chatbotAgentRun.update).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: 'run-fail' },
-      data: expect.objectContaining({ status: 'failed', errorMessage: 'Agent Crash' }),
-    }));
+    expect(logAgentAudit).toHaveBeenCalledWith(
+      'run-fail',
+      'error',
+      expect.any(String),
+      expect.any(Object)
+    );
+    expect(prisma.chatbotAgentRun.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'run-fail' },
+        data: expect.objectContaining({ status: 'failed', errorMessage: 'Agent Crash' }),
+      })
+    );
   });
 });

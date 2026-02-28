@@ -7,10 +7,7 @@ import path from 'path';
 import { Prisma } from '@prisma/client';
 
 import { logAgentAudit } from '@/features/ai/agent-runtime/audit';
-import {
-  DEFAULT_OLLAMA_MODEL,
-  DEBUG_CHATBOT,
-} from '@/features/ai/agent-runtime/core/config';
+import { DEBUG_CHATBOT } from '@/features/ai/agent-runtime/core/config';
 import { reminderList } from '@/features/ai/agent-runtime/core/utils';
 import { prepareRunContext } from '@/features/ai/agent-runtime/execution/context';
 import { finalizeAgentRun } from '@/features/ai/agent-runtime/execution/finalize';
@@ -31,11 +28,7 @@ import {
   createBrowserContext,
 } from '@/features/ai/agent-runtime/tools/playwright/browser';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import type {
-  AgentDecision,
-  PlanStep,
-  PlannerMeta,
-} from '@/shared/contracts/agent-runtime';
+import type { AgentDecision, PlanStep, PlannerMeta } from '@/shared/contracts/agent-runtime';
 import prisma from '@/shared/lib/db/prisma';
 
 import type { Browser, BrowserContext } from 'playwright';
@@ -62,10 +55,7 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
       return;
     }
 
-    sharedBrowser = await launchBrowser(
-      run.agentBrowser || 'chromium',
-      run.runHeadless ?? true
-    );
+    sharedBrowser = await launchBrowser(run.agentBrowser || 'chromium', run.runHeadless ?? true);
     const runDir = path.join(process.cwd(), 'tmp', 'chatbot-agent', runId);
     await fs.mkdir(runDir, { recursive: true });
     sharedContext = await createBrowserContext(sharedBrowser, runDir);
@@ -74,7 +64,7 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
     const context = await prepareRunContext({
       id: run.id,
       prompt: run.prompt,
-      model: run.model ?? DEFAULT_OLLAMA_MODEL,
+      model: run.model ?? null,
       memoryKey: run.memoryKey ?? null,
       planState: run.planState,
       agentBrowser: run.agentBrowser,
@@ -96,17 +86,11 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
     const checkpoint = parseCheckpoint(run.planState);
     let summaryCheckpoint = checkpoint?.summaryCheckpoint ?? 0;
     let preferences = basePreferences;
-    ({
-      planSteps,
-      taskType,
-      decision,
-      stepIndex,
-      summaryCheckpoint,
-      preferences,
-    } = await initializePlanState({
-      context,
-      checkpoint,
-    }));
+    ({ planSteps, taskType, decision, stepIndex, summaryCheckpoint, preferences } =
+      await initializePlanState({
+        context,
+        checkpoint,
+      }));
 
     await logAgentAudit(run.id, 'info', 'Decision made.', decision);
 
@@ -122,11 +106,11 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
       let requiresHuman = false;
       const checkpointForStepLoop = checkpoint
         ? {
-          approvalRequestedStepId: checkpoint.approvalRequestedStepId ?? null,
-          approvalGrantedStepId: checkpoint.approvalGrantedStepId ?? null,
-          checkpointStepId: checkpoint.checkpointStepId ?? null,
-          lastError: checkpoint.lastError ?? null,
-        }
+            approvalRequestedStepId: checkpoint.approvalRequestedStepId ?? null,
+            approvalGrantedStepId: checkpoint.approvalGrantedStepId ?? null,
+            checkpointStepId: checkpoint.checkpointStepId ?? null,
+            lastError: checkpoint.lastError ?? null,
+          }
         : null;
       const stepRunResult = await runPlanStepLoop({
         context,
@@ -199,16 +183,15 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
         lastError = toolResult.ok ? null : toolResult.error || 'Tool failed.';
       }
 
-      const { verificationContext, verification, improvementReview } =
-        await finalizeAgentRun({
-          context,
-          planSteps,
-          taskType,
-          overallOk,
-          requiresHuman,
-          lastError,
-          summaryCheckpoint,
-        });
+      const { verificationContext, verification, improvementReview } = await finalizeAgentRun({
+        context,
+        planSteps,
+        taskType,
+        overallOk,
+        requiresHuman,
+        lastError,
+        summaryCheckpoint,
+      });
       if (improvementReview && memoryKey) {
         const memoryResult = await validateAndAddAgentLongTermMemory({
           memoryKey,
@@ -225,10 +208,7 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
               ? reminderList('Guardrails', improvementReview.guardrails)
               : null,
             improvementReview.toolAdjustments.length
-              ? reminderList(
-                'Tool adjustments',
-                improvementReview.toolAdjustments
-              )
+              ? reminderList('Tool adjustments', improvementReview.toolAdjustments)
               : null,
           ]
             .filter(Boolean)
@@ -307,9 +287,7 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
           `Status: ${overallOk ? 'completed' : 'failed'}`,
           taskType ? `Task type: ${taskType}` : null,
           finalUrl ? `URL: ${finalUrl}` : null,
-          verification?.verdict
-            ? `Verification: ${verification.verdict}`
-            : null,
+          verification?.verdict ? `Verification: ${verification.verdict}` : null,
           extractionSummary?.extractionType
             ? `Extraction: ${extractionSummary.extractionType} (${extractionSummary.extractedCount ?? 0})`
             : null,
@@ -342,20 +320,22 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
             summary,
             'Steps:',
             ...stepSummary.map(
-              (step: { title: string; status: string; phase: string | null; priority: number | null }, index: number) =>
-                `${index + 1}. ${step.title} (${step.status}${
-                  step.phase ? `, ${step.phase}` : ''
-                })`
+              (
+                step: {
+                  title: string;
+                  status: string;
+                  phase: string | null;
+                  priority: number | null;
+                },
+                index: number
+              ) =>
+                `${index + 1}. ${step.title} (${step.status}${step.phase ? `, ${step.phase}` : ''})`
             ),
             verification?.evidence?.length
               ? `Evidence: ${verification.evidence.join(' | ')}`
               : null,
-            verification?.missing?.length
-              ? `Missing: ${verification.missing.join(' | ')}`
-              : null,
-            verification?.followUp
-              ? `Follow-up: ${verification.followUp}`
-              : null,
+            verification?.missing?.length ? `Missing: ${verification.missing.join(' | ')}` : null,
+            verification?.followUp ? `Follow-up: ${verification.followUp}` : null,
             extractionSummary?.items?.length
               ? `Sample items: ${extractionSummary.items.join(' | ')}`
               : null,
@@ -390,15 +370,10 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
           });
         }
       }
-      await logAgentAudit(
-        run.id,
-        overallOk ? 'info' : 'error',
-        'Playwright tool finished.',
-        {
-          result: overallOk ? 'completed' : 'failed',
-          error: lastError,
-        }
-      );
+      await logAgentAudit(run.id, overallOk ? 'info' : 'error', 'Playwright tool finished.', {
+        result: overallOk ? 'completed' : 'failed',
+        error: lastError,
+      });
       return;
     }
 
@@ -464,7 +439,7 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
   } catch (error) {
     const errorId = randomUUID();
     const message = error instanceof Error ? error.message : 'Unknown error';
-    
+
     // Use centralized error system
     await ErrorSystem.captureException(error, {
       service: 'agent-engine',
@@ -492,20 +467,24 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
     } catch (innerError) {
       try {
         const { ErrorSystem } = await import('@/features/observability/server');
-        void ErrorSystem.captureException(innerError, { 
-          service: 'agent-engine', 
+        void ErrorSystem.captureException(innerError, {
+          service: 'agent-engine',
           action: 'persistError',
           targetRunId: runId,
-          originalErrorId: errorId
+          originalErrorId: errorId,
         });
       } catch (logError) {
         if (DEBUG_CHATBOT) {
           const { logger } = await import('@/shared/utils/logger');
-          logger.error('[chatbot][agent][engine] Failed to persist error (and logging failed)', logError, {
-            runId,
-            errorId,
-            innerError,
-          });
+          logger.error(
+            '[chatbot][agent][engine] Failed to persist error (and logging failed)',
+            logError,
+            {
+              runId,
+              errorId,
+              innerError,
+            }
+          );
         }
       }
     }

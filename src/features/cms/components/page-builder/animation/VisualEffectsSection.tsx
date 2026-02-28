@@ -3,11 +3,7 @@
 import React, { useCallback } from 'react';
 
 import { DEFAULT_ANIMATION_CONFIG } from '@/shared/lib/gsap';
-import {
-  FormSection,
-  FormField,
-  Card,
-} from '@/shared/ui';
+import { FormSection, FormField, Card } from '@/shared/ui';
 
 import { useAnimationConfigContext } from './AnimationConfigContext';
 import { RangeField, SelectField } from '../shared-fields';
@@ -31,16 +27,25 @@ import {
 
 export function VisualEffectsSection(): React.ReactNode {
   const { config, onChange } = useAnimationConfigContext();
-  const visualFilterFromValue = config.visualFilterFrom ?? DEFAULT_ANIMATION_CONFIG.visualFilterFrom ?? '';
-  const visualFilterToValue = config.visualFilterTo ?? DEFAULT_ANIMATION_CONFIG.visualFilterTo ?? '';
-  const visualClipFromValue = config.visualClipFrom ?? DEFAULT_ANIMATION_CONFIG.visualClipFrom ?? '';
+  const visualFilterFromValue =
+    config.visualFilterFrom ?? DEFAULT_ANIMATION_CONFIG.visualFilterFrom ?? '';
+  const visualFilterToValue =
+    config.visualFilterTo ?? DEFAULT_ANIMATION_CONFIG.visualFilterTo ?? '';
+  const visualClipFromValue =
+    config.visualClipFrom ?? DEFAULT_ANIMATION_CONFIG.visualClipFrom ?? '';
   const visualClipToValue = config.visualClipTo ?? DEFAULT_ANIMATION_CONFIG.visualClipTo ?? '';
-  const visualRadiusFromValue = config.visualRadiusFrom ?? DEFAULT_ANIMATION_CONFIG.visualRadiusFrom ?? '';
-  const visualRadiusToValue = config.visualRadiusTo ?? DEFAULT_ANIMATION_CONFIG.visualRadiusTo ?? '';
-  const visualShadowFromValue = config.visualShadowFrom ?? DEFAULT_ANIMATION_CONFIG.visualShadowFrom ?? '';
-  const visualShadowToValue = config.visualShadowTo ?? DEFAULT_ANIMATION_CONFIG.visualShadowTo ?? '';
-  const visualBackgroundFromValue = config.visualBackgroundFrom ?? DEFAULT_ANIMATION_CONFIG.visualBackgroundFrom ?? '';
-  const visualBackgroundToValue = config.visualBackgroundTo ?? DEFAULT_ANIMATION_CONFIG.visualBackgroundTo ?? '';
+  const visualRadiusFromValue =
+    config.visualRadiusFrom ?? DEFAULT_ANIMATION_CONFIG.visualRadiusFrom ?? '';
+  const visualRadiusToValue =
+    config.visualRadiusTo ?? DEFAULT_ANIMATION_CONFIG.visualRadiusTo ?? '';
+  const visualShadowFromValue =
+    config.visualShadowFrom ?? DEFAULT_ANIMATION_CONFIG.visualShadowFrom ?? '';
+  const visualShadowToValue =
+    config.visualShadowTo ?? DEFAULT_ANIMATION_CONFIG.visualShadowTo ?? '';
+  const visualBackgroundFromValue =
+    config.visualBackgroundFrom ?? DEFAULT_ANIMATION_CONFIG.visualBackgroundFrom ?? '';
+  const visualBackgroundToValue =
+    config.visualBackgroundTo ?? DEFAULT_ANIMATION_CONFIG.visualBackgroundTo ?? '';
 
   const resolvedFilterFrom = parseFilterString(visualFilterFromValue);
   const resolvedFilterTo = parseFilterString(visualFilterToValue);
@@ -180,7 +185,11 @@ export function VisualEffectsSection(): React.ReactNode {
   return (
     <FormSection title='Visual FX' variant='subtle-compact' className='p-3 space-y-4'>
       <div className='space-y-3 mt-4'>
-        <Card variant='subtle-compact' padding='sm' className='border-border/40 bg-card/30 space-y-3'>
+        <Card
+          variant='subtle-compact'
+          padding='sm'
+          className='border-border/40 bg-card/30 space-y-3'
+        >
           <FormField label='Filter type'>
             <SelectField
               label='Filter type'
@@ -213,7 +222,11 @@ export function VisualEffectsSection(): React.ReactNode {
           )}
         </Card>
 
-        <Card variant='subtle-compact' padding='sm' className='border-border/40 bg-card/30 space-y-3'>
+        <Card
+          variant='subtle-compact'
+          padding='sm'
+          className='border-border/40 bg-card/30 space-y-3'
+        >
           <FormField label='Clip path'>
             <SelectField
               label='Clip path'
@@ -246,7 +259,11 @@ export function VisualEffectsSection(): React.ReactNode {
           )}
         </Card>
 
-        <Card variant='subtle-compact' padding='sm' className='border-border/40 bg-card/30 space-y-3'>
+        <Card
+          variant='subtle-compact'
+          padding='sm'
+          className='border-border/40 bg-card/30 space-y-3'
+        >
           <div className='grid gap-3 sm:grid-cols-2'>
             <RangeField
               label='Radius from'
@@ -269,7 +286,11 @@ export function VisualEffectsSection(): React.ReactNode {
           </div>
         </Card>
 
-        <Card variant='subtle-compact' padding='sm' className='border-border/40 bg-card/30 space-y-3'>
+        <Card
+          variant='subtle-compact'
+          padding='sm'
+          className='border-border/40 bg-card/30 space-y-3'
+        >
           <FormSection title='Shadow' variant='subtle-compact' className='p-0'>
             <div className='grid gap-4 lg:grid-cols-2 mt-2'>
               <div className='space-y-3'>
@@ -388,7 +409,11 @@ export function VisualEffectsSection(): React.ReactNode {
           </FormSection>
         </Card>
 
-        <Card variant='subtle-compact' padding='sm' className='border-border/40 bg-card/30 space-y-3'>
+        <Card
+          variant='subtle-compact'
+          padding='sm'
+          className='border-border/40 bg-card/30 space-y-3'
+        >
           <div className='grid gap-3 sm:grid-cols-2'>
             <ColorPickerField
               label='Background from'

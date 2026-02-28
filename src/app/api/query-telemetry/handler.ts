@@ -3,8 +3,11 @@ import { z } from 'zod';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { logger } from '@/shared/utils/logger';
-import { isSensitiveKey, REDACTED_VALUE, truncateString } from '@/shared/utils/observability/client-redaction';
-
+import {
+  isSensitiveKey,
+  REDACTED_VALUE,
+  truncateString,
+} from '@/shared/utils/observability/client-redaction';
 
 const MAX_BATCH_SIZE = 100;
 const MAX_CONTEXT_BYTES = 12_000;
@@ -31,7 +34,11 @@ const eventSchema = z.object({
   statusCode: z.coerce.number().int().nonnegative().optional(),
   category: z.coerce.string().trim().min(1).max(120).optional(),
   errorMessage: z.coerce.string().trim().min(1).max(2_000).optional(),
-  context: z.record(z.string(), z.unknown()).nullable().optional().transform((value) => value ?? undefined),
+  context: z
+    .record(z.string(), z.unknown())
+    .nullable()
+    .optional()
+    .transform((value) => value ?? undefined),
   tags: z.array(z.coerce.string().trim().min(1).max(120)).max(16).optional(),
 });
 
@@ -45,7 +52,9 @@ const toLogLevel = (stage: string): 'info' | 'warn' | 'error' => {
   return 'info';
 };
 
-const sanitizeContext = (context: Record<string, unknown> | undefined): Record<string, unknown> | undefined => {
+const sanitizeContext = (
+  context: Record<string, unknown> | undefined
+): Record<string, unknown> | undefined => {
   if (!context) return undefined;
   try {
     const seen = new WeakSet<object>();
@@ -159,7 +168,10 @@ const persistTelemetryBatch = async ({
   return { accepted, dropped };
 };
 
-export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<NextResponse> {
+export async function POST_handler(
+  req: NextRequest,
+  ctx: ApiHandlerContext
+): Promise<NextResponse> {
   const parsed = bodySchema.safeParse(ctx.body);
   if (!parsed.success) {
     return NextResponse.json(
@@ -200,11 +212,14 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
     });
   });
 
-  return NextResponse.json({
-    ok: true,
-    accepted: parsed.data.events.length,
-    dropped: 0,
-    queued: true,
-    requestId: ctx.requestId,
-  }, { status: 202 });
+  return NextResponse.json(
+    {
+      ok: true,
+      accepted: parsed.data.events.length,
+      dropped: 0,
+      queued: true,
+      requestId: ctx.requestId,
+    },
+    { status: 202 }
+  );
 }

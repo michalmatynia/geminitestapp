@@ -13,7 +13,6 @@ import { ResourceCard } from './ResourceCard';
 import { SectionHeader } from './section-header';
 import { Textarea } from './textarea';
 
-
 export interface LibraryItem {
   id: string;
   name: string;
@@ -230,10 +229,10 @@ export function ItemLibrary<T extends LibraryItem>({
             <Button type='button' variant='outline' onClick={closeModal} disabled={isSaving}>
               Cancel
             </Button>
-            <Button 
-              type='button' 
+            <Button
+              type='button'
               variant='default'
-              onClick={handleSave} 
+              onClick={handleSave}
               disabled={isSaving || !draft.name?.trim()}
               className='min-w-[120px]'
             >

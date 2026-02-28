@@ -24,7 +24,8 @@ export function SplitViewControls({
 
   return (
     <div className='absolute bottom-2 left-2 z-20 flex items-center gap-2'>
-      <Button size='xs'
+      <Button
+        size='xs'
         type='button'
         variant='outline'
         onClick={onGoToSourceSlot}
@@ -34,7 +35,8 @@ export function SplitViewControls({
       >
         <Undo2 className='size-3.5' />
       </Button>
-      <Button size='xs'
+      <Button
+        size='xs'
         type='button'
         variant='outline'
         onClick={onToggleSourceVariantView}
@@ -42,7 +44,9 @@ export function SplitViewControls({
         className='h-7 w-7 bg-background/90 px-0 backdrop-blur'
         title={
           canCompare
-            ? (singleVariantView === 'variant' ? 'View source' : 'View variant')
+            ? singleVariantView === 'variant'
+              ? 'View source'
+              : 'View variant'
             : 'Source/variant toggle unavailable'
         }
         aria-label={singleVariantView === 'variant' ? 'View source' : 'View variant'}
@@ -53,7 +57,8 @@ export function SplitViewControls({
           <EyeOff className='size-3.5' />
         )}
       </Button>
-      <Button size='xs'
+      <Button
+        size='xs'
         type='button'
         variant='outline'
         onClick={onToggleSplitVariantView}
@@ -61,7 +66,9 @@ export function SplitViewControls({
         className='h-7 w-7 bg-background/90 px-0 backdrop-blur'
         title={
           canCompare
-            ? (splitVariantView ? 'Exit split view' : 'Split view')
+            ? splitVariantView
+              ? 'Exit split view'
+              : 'Split view'
             : 'Split compare unavailable'
         }
         aria-label={splitVariantView ? 'Exit split view' : 'Split view'}

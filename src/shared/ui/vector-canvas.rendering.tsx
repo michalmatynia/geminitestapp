@@ -187,75 +187,88 @@ export function VectorShapeOverlay({
       preserveAspectRatio='none'
       aria-hidden='true'
     >
-      {shapes.filter((shape) => shape.visible).map((shape: VectorShape) => {
-        const path = vectorShapeToPath(shape, viewboxSize);
-        if (!path) return null;
-        const isActive = shape.id === activeShapeId;
-        const isMaskEligible =
-          (shape.type === 'polygon' || shape.type === 'lasso') &&
-          shape.closed &&
-          shape.points.length >= 3;
-        const isNonMaskType = shape.type === 'rect' || shape.type === 'ellipse' || shape.type === 'brush';
-        const stroke = isMaskEligible
-          ? (isActive ? 'rgba(16,185,129,0.95)' : 'rgba(56,189,248,0.95)')
-          : isNonMaskType
-            ? (isActive ? 'rgba(251,146,60,0.95)' : 'rgba(251,146,60,0.75)')
-            : (isActive ? 'rgba(34,211,238,0.98)' : 'rgba(56,189,248,0.9)');
-        const fill = shape.closed && shape.points.length >= 3
-          ? (isMaskEligible ? 'rgba(56,189,248,0.14)' : 'rgba(251,146,60,0.08)')
-          : 'transparent';
-        const dash = isMaskEligible ? undefined : (isNonMaskType ? '6 4' : '8 4');
-        return (
-          <g key={shape.id}>
-            <path
-              d={path}
-              fill={fill}
-              stroke={stroke}
-              strokeWidth={isActive ? 2.5 : 2}
-              strokeDasharray={dash}
-              vectorEffect='non-scaling-stroke'
-            />
-            {(
-              shape.type === 'polygon' ||
+      {shapes
+        .filter((shape) => shape.visible)
+        .map((shape: VectorShape) => {
+          const path = vectorShapeToPath(shape, viewboxSize);
+          if (!path) return null;
+          const isActive = shape.id === activeShapeId;
+          const isMaskEligible =
+            (shape.type === 'polygon' || shape.type === 'lasso') &&
+            shape.closed &&
+            shape.points.length >= 3;
+          const isNonMaskType =
+            shape.type === 'rect' || shape.type === 'ellipse' || shape.type === 'brush';
+          const stroke = isMaskEligible
+            ? isActive
+              ? 'rgba(16,185,129,0.95)'
+              : 'rgba(56,189,248,0.95)'
+            : isNonMaskType
+              ? isActive
+                ? 'rgba(251,146,60,0.95)'
+                : 'rgba(251,146,60,0.75)'
+              : isActive
+                ? 'rgba(34,211,238,0.98)'
+                : 'rgba(56,189,248,0.9)';
+          const fill =
+            shape.closed && shape.points.length >= 3
+              ? isMaskEligible
+                ? 'rgba(56,189,248,0.14)'
+                : 'rgba(251,146,60,0.08)'
+              : 'transparent';
+          const dash = isMaskEligible ? undefined : isNonMaskType ? '6 4' : '8 4';
+          return (
+            <g key={shape.id}>
+              <path
+                d={path}
+                fill={fill}
+                stroke={stroke}
+                strokeWidth={isActive ? 2.5 : 2}
+                strokeDasharray={dash}
+                vectorEffect='non-scaling-stroke'
+              />
+              {shape.type === 'polygon' ||
               shape.type === 'lasso' ||
               shape.type === 'brush' ||
               shape.type === 'rect' ||
               shape.type === 'ellipse'
-            )
-              ? (shape.type === 'rect' || shape.type === 'ellipse'
-                ? shape.points.slice(0, 2)
-                : shape.points).map((point: VectorPoint, index: number) => {
-                const cx = point.x * viewboxSize;
-                const cy = point.y * viewboxSize;
-                const selected = isActive && index === (selectedPointIndex ?? -1);
-                const isRectLike = shape.type === 'rect' || shape.type === 'ellipse';
-                const haloRadius = isRectLike ? 7.5 : (index === 0 ? 7.5 : 6.5);
-                const markerRadius = isRectLike ? 5.5 : (index === 0 ? 5.5 : 4.5);
-                return (
-                  <g key={`${shape.id}-${index.toString(36)}`}>
-                    <circle cx={cx} cy={cy} r={haloRadius} fill='rgba(2,6,23,0.55)' />
-                    <circle
-                      cx={cx}
-                      cy={cy}
-                      r={markerRadius}
-                      fill={selected
-                        ? 'rgba(251,191,36,0.98)'
-                        : (
-                          isRectLike
-                            ? 'rgba(251,146,60,0.98)'
-                            : (index === 0 ? 'rgba(16,185,129,0.98)' : 'rgba(56,189,248,0.98)')
-                        )}
-                      stroke='rgba(255,255,255,0.9)'
-                      strokeWidth={1.5}
-                      vectorEffect='non-scaling-stroke'
-                    />
-                  </g>
-                );
-              })
-              : null}
-          </g>
-        );
-      })}
+                ? (shape.type === 'rect' || shape.type === 'ellipse'
+                    ? shape.points.slice(0, 2)
+                    : shape.points
+                  ).map((point: VectorPoint, index: number) => {
+                    const cx = point.x * viewboxSize;
+                    const cy = point.y * viewboxSize;
+                    const selected = isActive && index === (selectedPointIndex ?? -1);
+                    const isRectLike = shape.type === 'rect' || shape.type === 'ellipse';
+                    const haloRadius = isRectLike ? 7.5 : index === 0 ? 7.5 : 6.5;
+                    const markerRadius = isRectLike ? 5.5 : index === 0 ? 5.5 : 4.5;
+                    return (
+                      <g key={`${shape.id}-${index.toString(36)}`}>
+                        <circle cx={cx} cy={cy} r={haloRadius} fill='rgba(2,6,23,0.55)' />
+                        <circle
+                          cx={cx}
+                          cy={cy}
+                          r={markerRadius}
+                          fill={
+                            selected
+                              ? 'rgba(251,191,36,0.98)'
+                              : isRectLike
+                                ? 'rgba(251,146,60,0.98)'
+                                : index === 0
+                                  ? 'rgba(16,185,129,0.98)'
+                                  : 'rgba(56,189,248,0.98)'
+                          }
+                          stroke='rgba(255,255,255,0.9)'
+                          strokeWidth={1.5}
+                          vectorEffect='non-scaling-stroke'
+                        />
+                      </g>
+                    );
+                  })
+                : null}
+            </g>
+          );
+        })}
     </svg>
   );
 }

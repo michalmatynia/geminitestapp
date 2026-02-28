@@ -1,10 +1,6 @@
 import { Prisma } from '@prisma/client';
 
-import type {
-  BaseTag,
-  ExternalTag,
-  ExternalTagSyncInput,
-} from '@/shared/contracts/integrations';
+import type { BaseTag, ExternalTag, ExternalTagSyncInput } from '@/shared/contracts/integrations';
 import prisma from '@/shared/lib/db/prisma';
 
 export type ExternalTagRepository = {
@@ -83,10 +79,7 @@ export function getExternalTagRepository(): ExternalTagRepository {
       return toRecord(record);
     },
 
-    async getByExternalId(
-      connectionId: string,
-      externalId: string
-    ): Promise<ExternalTag | null> {
+    async getByExternalId(connectionId: string, externalId: string): Promise<ExternalTag | null> {
       const record = await prisma.externalTag.findUnique({
         where: {
           connectionId_externalId: {

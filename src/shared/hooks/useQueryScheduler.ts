@@ -1,4 +1,3 @@
- 
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
@@ -12,49 +11,61 @@ interface QuerySchedulerConfig {
 
 // Hook for query scheduling and prioritization
 export function useQueryScheduler(): {
-  scheduleQuery: (id: string, queryKey: readonly unknown[], queryFn: () => Promise<unknown>, config: QuerySchedulerConfig) => void;
-  cancelScheduledQuery: (id: string) => void;
-  clearAllScheduled: () => void;
-  } {
-  const queryClient = useQueryClient();
-  const scheduledQueries = useRef<Map<string, {
-    queryKey: readonly unknown[];
-    queryFn: () => Promise<unknown>;
-    config: QuerySchedulerConfig;
-    timeout?: NodeJS.Timeout;
-      }>>(new Map());
-
-  const scheduleQuery = useCallback((
+  scheduleQuery: (
     id: string,
     queryKey: readonly unknown[],
     queryFn: () => Promise<unknown>,
     config: QuerySchedulerConfig
-  ): void => {
-    // Cancel existing scheduled query
-    const existing = scheduledQueries.current.get(id);
-    if (existing?.timeout) {
-      clearTimeout(existing.timeout);
-    }
-
-    const delay = config.delay || (
-      config.priority === 'high' ? 0 :
-        config.priority === 'medium' ? 1000 : 3000
-    );
-
-    const timeout = setTimeout((): void => {
-      if (!config.condition || config.condition()) {
-        void queryClient.prefetchQuery({ queryKey, queryFn });
+  ) => void;
+  cancelScheduledQuery: (id: string) => void;
+  clearAllScheduled: () => void;
+} {
+  const queryClient = useQueryClient();
+  const scheduledQueries = useRef<
+    Map<
+      string,
+      {
+        queryKey: readonly unknown[];
+        queryFn: () => Promise<unknown>;
+        config: QuerySchedulerConfig;
+        timeout?: NodeJS.Timeout;
       }
-      scheduledQueries.current.delete(id);
-    }, delay);
+    >
+  >(new Map());
 
-    scheduledQueries.current.set(id, {
-      queryKey,
-      queryFn,
-      config,
-      timeout,
-    });
-  }, [queryClient]);
+  const scheduleQuery = useCallback(
+    (
+      id: string,
+      queryKey: readonly unknown[],
+      queryFn: () => Promise<unknown>,
+      config: QuerySchedulerConfig
+    ): void => {
+      // Cancel existing scheduled query
+      const existing = scheduledQueries.current.get(id);
+      if (existing?.timeout) {
+        clearTimeout(existing.timeout);
+      }
+
+      const delay =
+        config.delay ||
+        (config.priority === 'high' ? 0 : config.priority === 'medium' ? 1000 : 3000);
+
+      const timeout = setTimeout((): void => {
+        if (!config.condition || config.condition()) {
+          void queryClient.prefetchQuery({ queryKey, queryFn });
+        }
+        scheduledQueries.current.delete(id);
+      }, delay);
+
+      scheduledQueries.current.set(id, {
+        queryKey,
+        queryFn,
+        config,
+        timeout,
+      });
+    },
+    [queryClient]
+  );
 
   const cancelScheduledQuery = useCallback((id: string): void => {
     const query = scheduledQueries.current.get(id);

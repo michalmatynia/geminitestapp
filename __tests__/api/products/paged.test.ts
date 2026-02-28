@@ -5,7 +5,10 @@ import { vi, beforeEach, afterAll, describe, it, expect } from 'vitest';
 // broken import chain in src/features/documentation/catalogs/ai-paths.ts
 // doesn't prevent the test suite from loading (pre-existing project issue).
 vi.mock('@/shared/contracts/documentation', () => ({ DOCUMENTATION_MODULE_IDS: {} }));
-vi.mock('@/features/documentation', () => ({ DOCUMENTATION_MODULE_IDS: {}, AI_PATHS_TOOLTIP_CATALOG: [] }));
+vi.mock('@/shared/lib/documentation', () => ({
+  DOCUMENTATION_MODULE_IDS: {},
+  AI_PATHS_TOOLTIP_CATALOG: [],
+}));
 
 // Mock Prisma client
 vi.mock('@/shared/lib/db/prisma', () => ({
@@ -109,9 +112,7 @@ describe('GET /api/products/paged', () => {
     vi.mocked(prisma.product.findMany).mockResolvedValue([]);
     vi.mocked(prisma.product.count).mockResolvedValue(0);
 
-    await GET(
-      new NextRequest('http://localhost/api/products/paged?catalogId=cat-123')
-    );
+    await GET(new NextRequest('http://localhost/api/products/paged?catalogId=cat-123'));
 
     expect(prisma.product.findMany).toHaveBeenCalledWith(
       expect.objectContaining({

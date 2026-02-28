@@ -1,13 +1,13 @@
 'use client';
 
 import { useEffect } from 'react';
-import { saveObjectLayoutAdvancedDefaults } from '../../utils/object-layout-presets';
+import { saveObjectLayoutAdvancedDefaults } from '@/shared/lib/ai/image-studio/utils/object-layout-presets';
 import {
   IMAGE_STUDIO_ANALYSIS_PLAN_CHANGED_EVENT,
   clearImageStudioAnalysisApplyIntent,
   loadImageStudioAnalysisApplyIntent,
   loadImageStudioAnalysisPlanSnapshot,
-} from '../../utils/analysis-bridge';
+} from '@/shared/lib/ai/image-studio/utils/analysis-bridge';
 import { type GenerationToolbarState } from './GenerationToolbar.types';
 
 export function useGenerationToolbarEffects(
@@ -121,10 +121,7 @@ export function useGenerationToolbarEffects(
     }
 
     const normalizedIntentSourceSignature = intent.sourceSignature?.trim() ?? '';
-    if (
-      normalizedIntentSourceSignature &&
-      !workingSourceSignature
-    ) {
+    if (normalizedIntentSourceSignature && !workingSourceSignature) {
       lastConsumedAnalysisIntentRef.current = intentKey;
       clearImageStudioAnalysisApplyIntent(activeProjectId);
       toast('Working slot source metadata is missing. Reselect slot image and retry.', {
@@ -198,12 +195,16 @@ export function useGenerationToolbarEffects(
         return;
       }
       setQueuedAnalysisRunTarget(null);
-      void (async () => { await handleCenterObject(); })();
+      void (async () => {
+        await handleCenterObject();
+      })();
       return;
     }
     if (autoScaleBusy || autoScaleRequestInFlightRef.current) return;
     setQueuedAnalysisRunTarget(null);
-    void (async () => { await handleAutoScale(); })();
+    void (async () => {
+      await handleAutoScale();
+    })();
   }, [
     autoScaleBusy,
     centerBusy,

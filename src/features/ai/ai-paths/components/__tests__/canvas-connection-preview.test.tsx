@@ -125,9 +125,11 @@ describe('canvas connection preview', () => {
           pinnedConnectorKey={null}
           connectorHitRadius={16}
           showPortLabels={false}
-          buildConnectorKey={(direction: 'input' | 'output', nodeId: string, port: string): string =>
-            `${direction}:${nodeId}:${port}`
-          }
+          buildConnectorKey={(
+            direction: 'input' | 'output',
+            nodeId: string,
+            port: string
+          ): string => `${direction}:${nodeId}:${port}`}
           onReconnectInput={vi.fn()}
           onCompleteConnection={vi.fn()}
           onDisconnectPort={vi.fn()}

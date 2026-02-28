@@ -36,10 +36,11 @@ export const autoformatMarkdown = (text: string): string => {
       const lastPart = pathParts[pathParts.length - 1] || urlObj.hostname;
 
       // Clean up the title (remove file extensions, decode URI components)
-      const title = decodeURIComponent(lastPart)
-        .replace(/\.[^.]+$/, '') // Remove file extension
-        .replace(/[-_]/g, ' ') // Replace dashes/underscores with spaces
-        .trim() || urlObj.hostname;
+      const title =
+        decodeURIComponent(lastPart)
+          .replace(/\.[^.]+$/, '') // Remove file extension
+          .replace(/[-_]/g, ' ') // Replace dashes/underscores with spaces
+          .trim() || urlObj.hostname;
 
       return `[${title}](${url})`;
     } catch {

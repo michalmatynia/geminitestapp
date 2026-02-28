@@ -11,7 +11,6 @@ import { ColorField, TextField } from '../shared-fields';
 import { useThemeSettings } from '../ThemeSettingsContext';
 import { ThemeAiSection } from './ThemeAiSection';
 
-
 export function ThemeColorsSection(): React.JSX.Element {
   const { theme, update } = useThemeSettings();
   const {
@@ -31,9 +30,13 @@ export function ThemeColorsSection(): React.JSX.Element {
     toggleGlobalPalette,
   } = useThemeColors();
 
-  const updateSetting = useCallback(<K extends keyof ThemeSettings>(key: K) => (value: ThemeSettings[K]) => {
-    update(key, value);
-  }, [update]);
+  const updateSetting = useCallback(
+    <K extends keyof ThemeSettings>(key: K) =>
+      (value: ThemeSettings[K]) => {
+        update(key, value);
+      },
+    [update]
+  );
 
   return (
     <div className='space-y-4'>
@@ -107,7 +110,10 @@ export function ThemeColorsSection(): React.JSX.Element {
                         <span className='whitespace-normal break-words'>{scheme.name}</span>
                         <div className='flex items-center gap-2'>
                           {isActive && (
-                            <Badge variant='outline' className='border-blue-500/40 bg-blue-500/20 px-2 py-0 text-[10px] text-blue-200'>
+                            <Badge
+                              variant='outline'
+                              className='border-blue-500/40 bg-blue-500/20 px-2 py-0 text-[10px] text-blue-200'
+                            >
                               Active
                             </Badge>
                           )}
@@ -127,15 +133,24 @@ export function ThemeColorsSection(): React.JSX.Element {
                       </div>
                       <div
                         className='rounded border p-2'
-                        style={{ backgroundColor: scheme.colors.background, borderColor: scheme.colors.border }}
+                        style={{
+                          backgroundColor: scheme.colors.background,
+                          borderColor: scheme.colors.border,
+                        }}
                       >
                         <div
                           className='overflow-hidden rounded border'
-                          style={{ backgroundColor: scheme.colors.surface, borderColor: scheme.colors.border }}
+                          style={{
+                            backgroundColor: scheme.colors.surface,
+                            borderColor: scheme.colors.border,
+                          }}
                         >
                           <div
                             className='flex items-center justify-between border-b px-2 py-1'
-                            style={{ backgroundColor: scheme.colors.surface, borderColor: scheme.colors.border }}
+                            style={{
+                              backgroundColor: scheme.colors.surface,
+                              borderColor: scheme.colors.border,
+                            }}
                           >
                             <div
                               className='h-1.5 w-10 rounded'
@@ -149,7 +164,10 @@ export function ThemeColorsSection(): React.JSX.Element {
                           <div className='space-y-2 p-2'>
                             <div
                               className='rounded border p-2'
-                              style={{ backgroundColor: scheme.colors.surface, borderColor: scheme.colors.border }}
+                              style={{
+                                backgroundColor: scheme.colors.surface,
+                                borderColor: scheme.colors.border,
+                              }}
                             >
                               <div
                                 className='h-2 w-4/5 rounded'
@@ -191,11 +209,7 @@ export function ThemeColorsSection(): React.JSX.Element {
               <div className='text-xs text-gray-400'>
                 {editingSchemeId ? 'Edit scheme' : 'New scheme'}
               </div>
-              <Button
-                size='sm'
-                onClick={handleSaveScheme}
-                variant='solid'
-              >
+              <Button size='sm' onClick={handleSaveScheme} variant='solid'>
                 {editingSchemeId ? 'Save scheme' : 'Create scheme'}
               </Button>
             </div>
@@ -243,21 +257,65 @@ export function ThemeColorsSection(): React.JSX.Element {
           onClick={toggleGlobalPalette}
           className='flex w-full items-center justify-between gap-2 text-left'
         >
-          <Hint size='xxs' uppercase className='text-gray-500'>Global palette</Hint>
-          <ChevronDown className={`size-3 text-gray-500 transition ${isGlobalPaletteOpen ? 'rotate-180' : ''}`} />
+          <Hint size='xxs' uppercase className='text-gray-500'>
+            Global palette
+          </Hint>
+          <ChevronDown
+            className={`size-3 text-gray-500 transition ${isGlobalPaletteOpen ? 'rotate-180' : ''}`}
+          />
         </button>
         {isGlobalPaletteOpen && (
           <div className='mt-3 space-y-3'>
-            <ColorField label='Primary' value={theme.primaryColor} onChange={updateSetting('primaryColor')} />
-            <ColorField label='Secondary' value={theme.secondaryColor} onChange={updateSetting('secondaryColor')} />
-            <ColorField label='Accent' value={theme.accentColor} onChange={updateSetting('accentColor')} />
-            <ColorField label='Background' value={theme.backgroundColor} onChange={updateSetting('backgroundColor')} />
-            <ColorField label='Surface' value={theme.surfaceColor} onChange={updateSetting('surfaceColor')} />
-            <ColorField label='Text' value={theme.textColor} onChange={updateSetting('textColor')} />
-            <ColorField label='Muted text' value={theme.mutedTextColor} onChange={updateSetting('mutedTextColor')} />
-            <ColorField label='Border' value={theme.borderColor} onChange={updateSetting('borderColor')} />
-            <ColorField label='Error' value={theme.errorColor} onChange={updateSetting('errorColor')} />
-            <ColorField label='Success' value={theme.successColor} onChange={updateSetting('successColor')} />
+            <ColorField
+              label='Primary'
+              value={theme.primaryColor}
+              onChange={updateSetting('primaryColor')}
+            />
+            <ColorField
+              label='Secondary'
+              value={theme.secondaryColor}
+              onChange={updateSetting('secondaryColor')}
+            />
+            <ColorField
+              label='Accent'
+              value={theme.accentColor}
+              onChange={updateSetting('accentColor')}
+            />
+            <ColorField
+              label='Background'
+              value={theme.backgroundColor}
+              onChange={updateSetting('backgroundColor')}
+            />
+            <ColorField
+              label='Surface'
+              value={theme.surfaceColor}
+              onChange={updateSetting('surfaceColor')}
+            />
+            <ColorField
+              label='Text'
+              value={theme.textColor}
+              onChange={updateSetting('textColor')}
+            />
+            <ColorField
+              label='Muted text'
+              value={theme.mutedTextColor}
+              onChange={updateSetting('mutedTextColor')}
+            />
+            <ColorField
+              label='Border'
+              value={theme.borderColor}
+              onChange={updateSetting('borderColor')}
+            />
+            <ColorField
+              label='Error'
+              value={theme.errorColor}
+              onChange={updateSetting('errorColor')}
+            />
+            <ColorField
+              label='Success'
+              value={theme.successColor}
+              onChange={updateSetting('successColor')}
+            />
           </div>
         )}
       </Card>

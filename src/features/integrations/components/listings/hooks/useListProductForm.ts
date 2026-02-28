@@ -21,13 +21,8 @@ type UseListProductFormResult = {
   logsOpen: boolean;
   setLogsOpen: (value: boolean) => void;
   submitting: boolean;
-  handleSubmit: (
-    onSuccess: () => void
-  ) => Promise<void>;
-  handleImageRetry: (
-    preset: ImageRetryPreset,
-    onSuccess: () => void
-  ) => Promise<void>;
+  handleSubmit: (onSuccess: () => void) => Promise<void>;
+  handleImageRetry: (preset: ImageRetryPreset, onSuccess: () => void) => Promise<void>;
 };
 
 export function useListProductForm(productId: string): UseListProductFormResult {
@@ -61,9 +56,10 @@ export function useListProductForm(productId: string): UseListProductFormResult 
     connectionId: string,
     inventoryId: string,
     options?: {
-    imageBase64Mode?: 'base-only' | 'full-data-uri';
-    imageTransform?: ImageTransformOptions | null;
-  }): Promise<void> => {
+      imageBase64Mode?: 'base-only' | 'full-data-uri';
+      imageTransform?: ImageTransformOptions | null;
+    }
+  ): Promise<void> => {
     const exportData: ExportToBaseVariables = {
       connectionId,
       inventoryId,
@@ -79,9 +75,7 @@ export function useListProductForm(productId: string): UseListProductFormResult 
     }
   };
 
-  const handleSubmit = async (
-    onSuccess: () => void
-  ): Promise<void> => {
+  const handleSubmit = async (onSuccess: () => void): Promise<void> => {
     const validation = validateFormData(
       listProductFormSchema,
       {
@@ -123,20 +117,18 @@ export function useListProductForm(productId: string): UseListProductFormResult 
           connectionId: selectedConnectionId,
           ...(isTraderaIntegration
             ? {
-              durationHours: selectedTraderaDurationHours,
-              autoRelistEnabled: selectedTraderaAutoRelistEnabled,
-              autoRelistLeadMinutes: selectedTraderaAutoRelistLeadMinutes,
-              templateId:
+                durationHours: selectedTraderaDurationHours,
+                autoRelistEnabled: selectedTraderaAutoRelistEnabled,
+                autoRelistLeadMinutes: selectedTraderaAutoRelistLeadMinutes,
+                templateId:
                   selectedTraderaTemplateId && selectedTraderaTemplateId !== 'none'
                     ? selectedTraderaTemplateId
                     : null,
-            }
+              }
             : {}),
         });
         if (isTraderaIntegration) {
-          const queue = (
-            response as { queue?: { jobId?: string; name?: string } } | null
-          )?.queue;
+          const queue = (response as { queue?: { jobId?: string; name?: string } } | null)?.queue;
           toast(
             queue?.jobId
               ? `Tradera listing queued (job ${queue.jobId}).`
@@ -176,12 +168,8 @@ export function useListProductForm(productId: string): UseListProductFormResult 
       } = {};
       if (preset.imageBase64Mode) exportOptions.imageBase64Mode = preset.imageBase64Mode;
       if (preset.transform) exportOptions.imageTransform = preset.transform;
-      
-      await exportToBase(
-        selectedConnectionId || '',
-        selectedInventoryId || '',
-        exportOptions
-      );
+
+      await exportToBase(selectedConnectionId || '', selectedInventoryId || '', exportOptions);
       onSuccess();
     } catch (err: unknown) {
       logClientError(err, {

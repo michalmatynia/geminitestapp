@@ -10,12 +10,7 @@ const globalForRedis = global as unknown as {
 
 let redis: Redis | null = globalForRedis.redis ?? null;
 
-const TRANSIENT_REDIS_ERROR_CODES = new Set([
-  'EPIPE',
-  'ECONNRESET',
-  'ECONNREFUSED',
-  'ETIMEDOUT',
-]);
+const TRANSIENT_REDIS_ERROR_CODES = new Set(['EPIPE', 'ECONNRESET', 'ECONNREFUSED', 'ETIMEDOUT']);
 
 const isTransientRedisTransportError = (error: unknown): boolean => {
   if (!(error instanceof Error)) return false;
@@ -35,9 +30,11 @@ const isTransientRedisTransportError = (error: unknown): boolean => {
   );
 };
 
-const captureException = async (error: unknown, context: { service: string; action: string }): Promise<void> => {
+const captureException = async (
+  error: unknown,
+  context: { service: string; action: string }
+): Promise<void> => {
   try {
-     
     const mod = await import('@/features/observability/server');
     await mod.ErrorSystem.captureException(error, context);
   } catch {
@@ -51,7 +48,7 @@ if (REDIS_URL && !redis) {
       maxRetriesPerRequest: null,
       enableReadyCheck: true,
     });
-    
+
     redis.on('error', (err) => {
       if (isTransientRedisTransportError(err)) return;
       void captureException(err, { service: 'redis', action: 'connection_error' });

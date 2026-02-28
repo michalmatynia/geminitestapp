@@ -3,14 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { useImportExport } from '@/features/data-import-export/context/ImportExportContext';
-import {
-  Button,
-  SectionHeader,
-  Hint,
-  ToggleRow,
-  MetadataItem,
-  Card,
-} from '@/shared/ui';
+import { Button, SectionHeader, Hint, ToggleRow, MetadataItem, Card } from '@/shared/ui';
 
 export function ExportQuickActionsSection(): React.JSX.Element {
   const {
@@ -36,11 +29,7 @@ export function ExportQuickActionsSection(): React.JSX.Element {
   return (
     <>
       <Card className='border-border/60 bg-card/40 p-4'>
-        <SectionHeader
-          title='Quick Actions'
-          size='xs'
-          className='mb-3'
-        />
+        <SectionHeader title='Quick Actions' size='xs' className='mb-3' />
         <div className='flex flex-wrap gap-3'>
           <Button
             onClick={(): void => {
@@ -103,13 +92,11 @@ export function ExportQuickActionsSection(): React.JSX.Element {
           </Link>
         </div>
       </Card>
-      
+
       {debugWarehouses ? (
         <Card className='border-border bg-card/60 p-3 text-xs text-gray-300'>
           <div className='flex flex-wrap items-center justify-between gap-2 mb-2'>
-            <span className='font-semibold text-gray-200'>
-              Warehouse debug (raw IDs)
-            </span>
+            <span className='font-semibold text-gray-200'>Warehouse debug (raw IDs)</span>
             <Button
               type='button'
               variant='ghost'
@@ -122,18 +109,39 @@ export function ExportQuickActionsSection(): React.JSX.Element {
           </div>
           <div className='mt-2 space-y-4'>
             <div>
-              <Hint uppercase className='mb-1'>Selected inventory raw response</Hint>
+              <Hint uppercase className='mb-1'>
+                Selected inventory raw response
+              </Hint>
               {debugWarehouses.inventoriesRaw ? (
                 <div className='mt-1 space-y-1'>
-                  <MetadataItem variant='minimal' label='Method' value={debugWarehouses.inventoriesRaw.method} />
-                  <MetadataItem variant='minimal' label='Status' value={debugWarehouses.inventoriesRaw.statusCode} />
-                  <MetadataItem variant='minimal' label='Ok' value={debugWarehouses.inventoriesRaw.ok ? 'true' : 'false'} />
+                  <MetadataItem
+                    variant='minimal'
+                    label='Method'
+                    value={debugWarehouses.inventoriesRaw.method}
+                  />
+                  <MetadataItem
+                    variant='minimal'
+                    label='Status'
+                    value={debugWarehouses.inventoriesRaw.statusCode}
+                  />
+                  <MetadataItem
+                    variant='minimal'
+                    label='Ok'
+                    value={debugWarehouses.inventoriesRaw.ok ? 'true' : 'false'}
+                  />
                   {debugWarehouses.inventoriesRaw.error ? (
-                    <MetadataItem variant='minimal' label='Error' value={debugWarehouses.inventoriesRaw.error} valueClassName='text-red-400' />
+                    <MetadataItem
+                      variant='minimal'
+                      label='Error'
+                      value={debugWarehouses.inventoriesRaw.error}
+                      valueClassName='text-red-400'
+                    />
                   ) : null}
                   {((): React.JSX.Element | null => {
-                    const payload = debugWarehouses.inventoriesRaw
-                      ?.payload as { inventories?: Array<Record<string, unknown>> } | null | undefined;
+                    const payload = debugWarehouses.inventoriesRaw?.payload as
+                      | { inventories?: Array<Record<string, unknown>> }
+                      | null
+                      | undefined;
                     const inventories = payload?.inventories;
                     if (!Array.isArray(inventories)) return null;
                     const match = inventories.find((inv: Record<string, unknown>) => {
@@ -141,8 +149,7 @@ export function ExportQuickActionsSection(): React.JSX.Element {
                       const inventoryId = inv['inventory_id'];
                       return (
                         exportInventoryId &&
-                        (typeof inventoryId === 'string' ||
-                          typeof inventoryId === 'number') &&
+                        (typeof inventoryId === 'string' || typeof inventoryId === 'number') &&
                         String(inventoryId) === exportInventoryId
                       );
                     });
@@ -170,23 +177,42 @@ export function ExportQuickActionsSection(): React.JSX.Element {
               )}
             </div>
             <div>
-              <Hint uppercase className='mb-1'>Inventory warehouses raw response</Hint>
+              <Hint uppercase className='mb-1'>
+                Inventory warehouses raw response
+              </Hint>
               {debugWarehouses.inventoryRaw ? (
                 <div className='mt-1 space-y-1'>
-                  <MetadataItem variant='minimal' label='Inventory ID' value={exportInventoryId || '—'} />
-                  <MetadataItem variant='minimal' label='Method' value={debugWarehouses.inventoryRaw.method} />
-                  <MetadataItem variant='minimal' label='Status' value={debugWarehouses.inventoryRaw.statusCode} />
-                  <MetadataItem variant='minimal' label='Ok' value={debugWarehouses.inventoryRaw.ok ? 'true' : 'false'} />
+                  <MetadataItem
+                    variant='minimal'
+                    label='Inventory ID'
+                    value={exportInventoryId || '—'}
+                  />
+                  <MetadataItem
+                    variant='minimal'
+                    label='Method'
+                    value={debugWarehouses.inventoryRaw.method}
+                  />
+                  <MetadataItem
+                    variant='minimal'
+                    label='Status'
+                    value={debugWarehouses.inventoryRaw.statusCode}
+                  />
+                  <MetadataItem
+                    variant='minimal'
+                    label='Ok'
+                    value={debugWarehouses.inventoryRaw.ok ? 'true' : 'false'}
+                  />
                   {debugWarehouses.inventoryRaw.error ? (
-                    <MetadataItem variant='minimal' label='Error' value={debugWarehouses.inventoryRaw.error} valueClassName='text-red-400' />
+                    <MetadataItem
+                      variant='minimal'
+                      label='Error'
+                      value={debugWarehouses.inventoryRaw.error}
+                      valueClassName='text-red-400'
+                    />
                   ) : null}
                   <pre className='mt-2 max-h-64 overflow-auto rounded border border-border bg-card p-2 text-[10px] text-gray-300 font-mono'>
                     {debugWarehouses.inventoryRaw.payload
-                      ? JSON.stringify(
-                        debugWarehouses.inventoryRaw.payload,
-                        null,
-                        2,
-                      )
+                      ? JSON.stringify(debugWarehouses.inventoryRaw.payload, null, 2)
                       : 'No payload returned.'}
                   </pre>
                 </div>

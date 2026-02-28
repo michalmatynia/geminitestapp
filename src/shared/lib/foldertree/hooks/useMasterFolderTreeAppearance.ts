@@ -47,12 +47,7 @@ export function useMasterFolderTreeAppearance(profile: FolderTreeProfileV2): {
   );
 
   const resolveIcon = useCallback(
-    ({
-      slot,
-      kind,
-      fallback,
-      fallbackId = null,
-    }: ResolveMasterFolderTreeIconInput): LucideIcon => {
+    ({ slot, kind, fallback, fallbackId = null }: ResolveMasterFolderTreeIconInput): LucideIcon => {
       const resolvedIconId = resolveFolderTreeIconV2(profile, slot, kind) ?? fallbackId ?? null;
       if (!resolvedIconId) return fallback;
       return ICON_LIBRARY_MAP[resolvedIconId] ?? fallback;

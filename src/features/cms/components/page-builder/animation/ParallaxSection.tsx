@@ -16,39 +16,55 @@ import {
   PARALLAX_DEFAULTS,
   PARALLAX_PATTERNS,
 } from '@/shared/contracts/gsap';
-import {
-  Checkbox,
-  Input,
-  SelectSimple,
-  FormSection,
-  FormField,
-} from '@/shared/ui';
+import { Checkbox, Input, SelectSimple, FormSection, FormField } from '@/shared/ui';
 
 import { useAnimationConfigContext } from './AnimationConfigContext';
 
 export function ParallaxSection(): React.ReactNode {
   const { config, onChange } = useAnimationConfigContext();
-  const parallaxPresetValue = config.parallaxPreset ?? DEFAULT_ANIMATION_CONFIG.parallaxPreset ?? 'none';
-  const parallaxSelectorValue = config.parallaxSelector ?? DEFAULT_ANIMATION_CONFIG.parallaxSelector ?? '';
+  const parallaxPresetValue =
+    config.parallaxPreset ?? DEFAULT_ANIMATION_CONFIG.parallaxPreset ?? 'none';
+  const parallaxSelectorValue =
+    config.parallaxSelector ?? DEFAULT_ANIMATION_CONFIG.parallaxSelector ?? '';
   const parallaxAxisValue = config.parallaxAxis ?? DEFAULT_ANIMATION_CONFIG.parallaxAxis ?? 'y';
   const parallaxOffsetValue =
-        config.parallaxOffset ?? (PARALLAX_DEFAULTS[parallaxPresetValue] as ParallaxDefaultValue)?.offset ?? DEFAULT_ANIMATION_CONFIG.parallaxOffset ?? 0;  const parallaxScrubValue = config.parallaxScrub ?? DEFAULT_ANIMATION_CONFIG.parallaxScrub ?? 0.6;
-  const parallaxStartValue = config.parallaxStart ?? DEFAULT_ANIMATION_CONFIG.parallaxStart ?? 'top bottom';
-  const parallaxEndValue = config.parallaxEnd ?? DEFAULT_ANIMATION_CONFIG.parallaxEnd ?? 'bottom top';
-  const parallaxEaseValue = config.parallaxEase ?? DEFAULT_ANIMATION_CONFIG.parallaxEase ?? 'sine.inOut';
-  const parallaxPatternValue = config.parallaxPattern ?? DEFAULT_ANIMATION_CONFIG.parallaxPattern ?? 'uniform';
-  const parallaxReverseValue = config.parallaxReverse ?? DEFAULT_ANIMATION_CONFIG.parallaxReverse ?? false;
-  const parallaxChildStepValue = config.parallaxChildStep ?? DEFAULT_ANIMATION_CONFIG.parallaxChildStep ?? 16;
-  const parallaxLayerStrengthValue = config.parallaxLayerStrength ?? DEFAULT_ANIMATION_CONFIG.parallaxLayerStrength ?? 0.35;
-  const parallaxLayerScaleStepValue = config.parallaxLayerScaleStep ?? DEFAULT_ANIMATION_CONFIG.parallaxLayerScaleStep ?? 0.015;
-  const parallaxRandomSeedValue = config.parallaxRandomSeed ?? DEFAULT_ANIMATION_CONFIG.parallaxRandomSeed ?? 7;
-  const parallaxScaleFromValue = config.parallaxScaleFrom ?? DEFAULT_ANIMATION_CONFIG.parallaxScaleFrom ?? 1;
-  const parallaxScaleToValue = config.parallaxScaleTo ?? DEFAULT_ANIMATION_CONFIG.parallaxScaleTo ?? 1;
-  const parallaxRotateFromValue = config.parallaxRotateFrom ?? DEFAULT_ANIMATION_CONFIG.parallaxRotateFrom ?? 0;
-  const parallaxRotateToValue = config.parallaxRotateTo ?? DEFAULT_ANIMATION_CONFIG.parallaxRotateTo ?? 0;
-  const parallaxOpacityFromValue = config.parallaxOpacityFrom ?? DEFAULT_ANIMATION_CONFIG.parallaxOpacityFrom ?? 1;
-  const parallaxOpacityToValue = config.parallaxOpacityTo ?? DEFAULT_ANIMATION_CONFIG.parallaxOpacityTo ?? 1;
-  const parallaxBlurFromValue = config.parallaxBlurFrom ?? DEFAULT_ANIMATION_CONFIG.parallaxBlurFrom ?? 0;
+    config.parallaxOffset ??
+    (PARALLAX_DEFAULTS[parallaxPresetValue] as ParallaxDefaultValue)?.offset ??
+    DEFAULT_ANIMATION_CONFIG.parallaxOffset ??
+    0;
+  const parallaxScrubValue = config.parallaxScrub ?? DEFAULT_ANIMATION_CONFIG.parallaxScrub ?? 0.6;
+  const parallaxStartValue =
+    config.parallaxStart ?? DEFAULT_ANIMATION_CONFIG.parallaxStart ?? 'top bottom';
+  const parallaxEndValue =
+    config.parallaxEnd ?? DEFAULT_ANIMATION_CONFIG.parallaxEnd ?? 'bottom top';
+  const parallaxEaseValue =
+    config.parallaxEase ?? DEFAULT_ANIMATION_CONFIG.parallaxEase ?? 'sine.inOut';
+  const parallaxPatternValue =
+    config.parallaxPattern ?? DEFAULT_ANIMATION_CONFIG.parallaxPattern ?? 'uniform';
+  const parallaxReverseValue =
+    config.parallaxReverse ?? DEFAULT_ANIMATION_CONFIG.parallaxReverse ?? false;
+  const parallaxChildStepValue =
+    config.parallaxChildStep ?? DEFAULT_ANIMATION_CONFIG.parallaxChildStep ?? 16;
+  const parallaxLayerStrengthValue =
+    config.parallaxLayerStrength ?? DEFAULT_ANIMATION_CONFIG.parallaxLayerStrength ?? 0.35;
+  const parallaxLayerScaleStepValue =
+    config.parallaxLayerScaleStep ?? DEFAULT_ANIMATION_CONFIG.parallaxLayerScaleStep ?? 0.015;
+  const parallaxRandomSeedValue =
+    config.parallaxRandomSeed ?? DEFAULT_ANIMATION_CONFIG.parallaxRandomSeed ?? 7;
+  const parallaxScaleFromValue =
+    config.parallaxScaleFrom ?? DEFAULT_ANIMATION_CONFIG.parallaxScaleFrom ?? 1;
+  const parallaxScaleToValue =
+    config.parallaxScaleTo ?? DEFAULT_ANIMATION_CONFIG.parallaxScaleTo ?? 1;
+  const parallaxRotateFromValue =
+    config.parallaxRotateFrom ?? DEFAULT_ANIMATION_CONFIG.parallaxRotateFrom ?? 0;
+  const parallaxRotateToValue =
+    config.parallaxRotateTo ?? DEFAULT_ANIMATION_CONFIG.parallaxRotateTo ?? 0;
+  const parallaxOpacityFromValue =
+    config.parallaxOpacityFrom ?? DEFAULT_ANIMATION_CONFIG.parallaxOpacityFrom ?? 1;
+  const parallaxOpacityToValue =
+    config.parallaxOpacityTo ?? DEFAULT_ANIMATION_CONFIG.parallaxOpacityTo ?? 1;
+  const parallaxBlurFromValue =
+    config.parallaxBlurFrom ?? DEFAULT_ANIMATION_CONFIG.parallaxBlurFrom ?? 0;
   const parallaxBlurToValue = config.parallaxBlurTo ?? DEFAULT_ANIMATION_CONFIG.parallaxBlurTo ?? 0;
 
   const parallaxAxisOptions: { label: string; value: ParallaxAxis }[] = [
@@ -63,14 +79,15 @@ export function ParallaxSection(): React.ReactNode {
       const next: GsapAnimationConfig = {
         ...config,
         parallaxPreset: preset,
-        parallaxOffset: preset === 'none' ? 0 : defaults?.offset ?? config.parallaxOffset,
+        parallaxOffset: preset === 'none' ? 0 : (defaults?.offset ?? config.parallaxOffset),
       };
       if (preset === 'depth' && defaults?.scale) {
         next.parallaxScaleFrom = defaults.scale;
         next.parallaxScaleTo = 1;
       }
       onChange(next);
-    },    [config, onChange]
+    },
+    [config, onChange]
   );
 
   const handleParallaxSelectorChange = useCallback(
@@ -265,7 +282,8 @@ export function ParallaxSection(): React.ReactNode {
   return (
     <FormSection title='Parallax' variant='subtle-compact' className='p-3 space-y-4'>
       <FormField label='Preset'>
-        <SelectSimple size='sm'
+        <SelectSimple
+          size='sm'
           value={parallaxPresetValue}
           onValueChange={handleParallaxPresetChange}
           options={PARALLAX_PRESETS}
@@ -276,7 +294,8 @@ export function ParallaxSection(): React.ReactNode {
         <div className='mt-4 space-y-4'>
           <div className='grid gap-3 sm:grid-cols-2 items-end'>
             <FormField label='Pattern'>
-              <SelectSimple size='sm'
+              <SelectSimple
+                size='sm'
                 value={parallaxPatternValue}
                 onValueChange={handleParallaxPatternChange}
                 options={PARALLAX_PATTERNS}
@@ -284,13 +303,17 @@ export function ParallaxSection(): React.ReactNode {
             </FormField>
 
             <div className='flex items-center gap-2 mb-2'>
-              <Checkbox checked={parallaxReverseValue} onCheckedChange={handleParallaxReverseChange} />
+              <Checkbox
+                checked={parallaxReverseValue}
+                onCheckedChange={handleParallaxReverseChange}
+              />
               <span className='text-xs text-gray-300'>Reverse direction</span>
             </div>
           </div>
 
           <FormField label='Axis'>
-            <SelectSimple size='sm'
+            <SelectSimple
+              size='sm'
               value={parallaxAxisValue}
               onValueChange={handleParallaxAxisChange}
               options={parallaxAxisOptions}
@@ -352,7 +375,8 @@ export function ParallaxSection(): React.ReactNode {
               />
             </FormField>
             <FormField label='Ease'>
-              <SelectSimple size='sm'
+              <SelectSimple
+                size='sm'
                 value={parallaxEaseValue}
                 onValueChange={handleParallaxEaseChange}
                 options={ANIMATION_EASINGS}
@@ -460,16 +484,17 @@ export function ParallaxSection(): React.ReactNode {
             </FormField>
           </div>
           {parallaxPatternValue === 'increment' && (
-            <FormField label='Per-child step (px)'>              <Input
-          
-              type='number'
-              min={0}
-              max={200}
-              step={1}
-              value={parallaxChildStepValue}
-              onChange={handleParallaxChildStepChange}
-              className='h-9'
-            />
+            <FormField label='Per-child step (px)'>
+              {' '}
+              <Input
+                type='number'
+                min={0}
+                max={200}
+                step={1}
+                value={parallaxChildStepValue}
+                onChange={handleParallaxChildStepChange}
+                className='h-9'
+              />
             </FormField>
           )}
 
@@ -515,7 +540,8 @@ export function ParallaxSection(): React.ReactNode {
           )}
 
           <p className='text-[10px] text-gray-500'>
-            Use a selector like <span className='text-gray-400'>:scope &gt; *</span> for per-child patterns.
+            Use a selector like <span className='text-gray-400'>:scope &gt; *</span> for per-child
+            patterns.
           </p>
         </div>
       )}

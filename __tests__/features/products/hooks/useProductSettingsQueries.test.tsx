@@ -140,9 +140,9 @@ describe('useProductSettingsQueries invalidation', () => {
 
     await result.current.mutateAsync({ enabledByDefault: true });
 
-    expect(productSettingsApi.updateValidatorSettings).toHaveBeenCalledWith(
-      { enabledByDefault: true }
-    );
+    expect(productSettingsApi.updateValidatorSettings).toHaveBeenCalledWith({
+      enabledByDefault: true,
+    });
     await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(4));
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: productSettingsKeys.validatorSettings(),
@@ -426,14 +426,12 @@ describe('useProductSettingsQueries invalidation', () => {
       message: 'Name is required',
     } as never);
 
-    expect(productSettingsApi.createValidationPattern).toHaveBeenCalledWith(
-      {
-        label: 'no-empty-name',
-        target: 'name',
-        regex: '.+',
-        message: 'Name is required',
-      }
-    );
+    expect(productSettingsApi.createValidationPattern).toHaveBeenCalledWith({
+      label: 'no-empty-name',
+      target: 'name',
+      regex: '.+',
+      message: 'Name is required',
+    });
     await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(4));
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: productSettingsKeys.validatorPatterns(),
@@ -462,10 +460,9 @@ describe('useProductSettingsQueries invalidation', () => {
       data: { label: 'no-empty-name' } as never,
     });
 
-    expect(productSettingsApi.updateValidationPattern).toHaveBeenCalledWith(
-      'pattern-1',
-      { label: 'no-empty-name' }
-    );
+    expect(productSettingsApi.updateValidationPattern).toHaveBeenCalledWith('pattern-1', {
+      label: 'no-empty-name',
+    });
     await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(4));
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: productSettingsKeys.validatorPatterns(),

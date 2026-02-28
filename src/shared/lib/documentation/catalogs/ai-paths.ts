@@ -1,4 +1,7 @@
-import { DOCUMENTATION_MODULE_IDS, type DocumentationEntry } from '@/shared/lib/documentation/types';
+import {
+  DOCUMENTATION_MODULE_IDS,
+  type DocumentationEntry,
+} from '@/shared/lib/documentation/types';
 
 import {
   AI_PATHS_TOOLTIP_CATALOG,
@@ -17,5 +20,5 @@ export const AI_PATHS_DOCUMENTATION_CATALOG: DocumentationEntry[] = AI_PATHS_DOC
     content: entry.summary,
     keywords: entry.aliases,
     ...(entry.docPath ? { relatedLinks: [entry.docPath] } : {}),
-  }),
+  })
 );

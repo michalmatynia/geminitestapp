@@ -18,17 +18,14 @@ export function SlotCreateModal({
   disabled = false,
 }: SlotCreateModalProps): React.JSX.Element | null {
   return (
-    <DetailModal
-      isOpen={isOpen}
-      onClose={onClose}
-      title='New Card'
-      size='sm'
-      footer={null}
-    >
+    <DetailModal isOpen={isOpen} onClose={onClose} title='New Card' size='sm' footer={null}>
       <div className='grid gap-3'>
-        <Button 
+        <Button
           variant='secondary'
-          onClick={() => { onSelectMode('empty'); onClose(); }}
+          onClick={() => {
+            onSelectMode('empty');
+            onClose();
+          }}
           disabled={disabled}
           className='w-full h-12 justify-start px-4 text-sm'
         >
@@ -37,9 +34,12 @@ export function SlotCreateModal({
             <span className='text-[10px] opacity-70'>Initialize a blank card slot</span>
           </div>
         </Button>
-        <Button 
+        <Button
           variant='primary'
-          onClick={() => { onSelectMode('image'); onClose(); }}
+          onClick={() => {
+            onSelectMode('image');
+            onClose();
+          }}
           disabled={disabled}
           className='w-full h-12 justify-start px-4 text-sm'
         >
@@ -48,9 +48,12 @@ export function SlotCreateModal({
             <span className='text-[10px] opacity-90'>Use an existing preview image</span>
           </div>
         </Button>
-        <Button 
+        <Button
           variant='outline'
-          onClick={() => { onSelectMode('local'); onClose(); }}
+          onClick={() => {
+            onSelectMode('local');
+            onClose();
+          }}
           disabled={disabled}
           className='w-full h-12 justify-start px-4 text-sm'
         >

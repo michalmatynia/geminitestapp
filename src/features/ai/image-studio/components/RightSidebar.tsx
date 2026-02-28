@@ -4,17 +4,12 @@ import { Clock3, GitBranch, Redo2, Sparkles, Undo2, Workflow } from 'lucide-reac
 import React, { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-import {
-  Button,
-  DetailModal,
-  useToast,
-} from '@/shared/ui';
+import { Button, DetailModal, useToast } from '@/shared/ui';
+import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
 import { cn } from '@/shared/utils';
 
 import { ImageStudioAnalysisTab } from './ImageStudioAnalysisTab';
-import {
-  ACTION_HISTORY_MAX_STEPS,
-} from './right-sidebar/right-sidebar-utils';
+import { ACTION_HISTORY_MAX_STEPS } from './right-sidebar/right-sidebar-utils';
 import { RightSidebarControlsTab } from './right-sidebar/RightSidebarControlsTab';
 import { RightSidebarHistoryTab } from './right-sidebar/RightSidebarHistoryTab';
 import { RightSidebarQuickActions } from './right-sidebar/RightSidebarQuickActions';
@@ -31,23 +26,26 @@ import { usePromptActions, usePromptState } from '../context/PromptContext';
 import { useSettingsState, useSettingsActions } from '../context/SettingsContext';
 import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
 import { useUiActions, useUiState } from '../context/UiContext';
-import { supportsImageSequenceGeneration } from '../utils/image-models';
-import { buildRunRequestPreview } from '../utils/run-request-preview';
-import { normalizeImageStudioModelPresets, resolveImageStudioSequenceActiveSteps } from '../utils/studio-settings';
-import { 
-  formatCanvasSizeLabel, 
-  CANVAS_SIZE_PRESET_OPTIONS, 
-  estimatePromptTokens, 
-  resolveModelCostProfile, 
+import { supportsImageSequenceGeneration } from '@/shared/lib/ai/image-studio/utils/image-models';
+import { buildRunRequestPreview } from '@/shared/lib/ai/image-studio/utils/run-request-preview';
+import {
+  normalizeImageStudioModelPresets,
+  resolveImageStudioSequenceActiveSteps,
+} from '@/shared/lib/ai/image-studio/utils/studio-settings';
+import {
+  formatCanvasSizeLabel,
+  CANVAS_SIZE_PRESET_OPTIONS,
+  estimatePromptTokens,
+  resolveModelCostProfile,
   cloneSerializableValue,
   type StudioActionHistorySnapshot,
 } from './right-sidebar/right-sidebar-utils';
 import { CanvasResizeModal } from './right-sidebar/CanvasResizeModal';
 import { ControlPromptModal } from './right-sidebar/ControlPromptModal';
 import { ParamRow } from './ParamRow';
-import { flattenParams, type ParamSpec } from '@/shared/lib/prompt-engine/prompt-params';
-import { type ParamUiControl } from '../utils/param-ui';
-import { type ImageStudioSettings } from '../utils/studio-settings';
+import { flattenParams, type ParamSpec } from '@/shared/lib/prompt-engine';
+import { type ParamUiControl } from '@/shared/lib/ai/image-studio/utils/param-ui';
+import { type ImageStudioSettings } from '@/shared/lib/ai/image-studio/utils/studio-settings';
 
 const IMAGE_STUDIO_QUICK_ACTIONS_HOST_ID = 'image-studio-quick-actions-host';
 
@@ -102,41 +100,43 @@ export function RightSidebar(): React.JSX.Element {
     previewMode,
     compositeAssetIds,
   } = useSlotsState();
-  const {
-    setCompositeAssetIds,
-    setSelectedFolder,
-    setWorkingSlotId,
-    setPreviewMode,
-  } = useSlotsActions();
+  const { setCompositeAssetIds, setSelectedFolder, setWorkingSlotId, setPreviewMode } =
+    useSlotsActions();
   const { promptText, paramsState, paramSpecs, paramUiOverrides } = usePromptState();
-  const {
-    setPromptText,
-    setParamsState,
-    setParamSpecs,
-    setParamUiOverrides,
-  } = usePromptActions();
+  const { setPromptText, setParamsState, setParamSpecs, setParamUiOverrides } = usePromptActions();
   const { studioSettings } = useSettingsState();
   const { runMutation, isRunInFlight, activeRunStatus } = useGenerationState();
   const { handleRunGeneration } = useGenerationActions();
   const { setStudioSettings } = useSettingsActions();
+  const brainGenerationModel = useBrainModelOptions({
+    capability: 'image_studio.general',
+  });
 
   const [requestPreviewOpen, setRequestPreviewOpen] = useState(false);
-  const [requestPreviewMode, setRequestPreviewMode] = useState<RequestPreviewMode>('without_sequence');
+  const [requestPreviewMode, setRequestPreviewMode] =
+    useState<RequestPreviewMode>('without_sequence');
   const [promptControlOpen, setPromptControlOpen] = useState(false);
   const [sequenceRunBusy, setSequenceRunBusy] = useState(false);
   const [controlsOpen, setControlsOpen] = useState(false);
   const [resizeCanvasOpen, setResizeCanvasOpen] = useState(false);
   const [canvasSizePresetValue, setCanvasSizePresetValue] = useState('1024x1024');
-  const [sidebarTab, setSidebarTab] = useState<'controls' | 'analysis' | 'graph' | 'sequencing' | 'history'>('controls');
+  const [sidebarTab, setSidebarTab] = useState<
+    'controls' | 'analysis' | 'graph' | 'sequencing' | 'history'
+  >('controls');
   const [historyMode, setHistoryMode] = useState<'actions' | 'runs'>('actions');
   const [quickActionsHostEl, setQuickActionsHostEl] = useState<HTMLElement | null>(null);
-  
+
   const { toast } = useToast();
 
   const switchToControls = React.useCallback(() => setSidebarTab('controls'), []);
 
   const flattenedParamsList = useMemo(
-    () => (paramsState ? (flattenParams(paramsState) as Array<{ path: string; value: unknown; kind: string }>).filter((leaf) => Boolean(leaf.path)) : []),
+    () =>
+      paramsState
+        ? (
+            flattenParams(paramsState) as Array<{ path: string; value: unknown; kind: string }>
+        ).filter((leaf) => Boolean(leaf.path))
+        : [],
     [paramsState]
   );
   const hasExtractedControls = flattenedParamsList.length > 0;
@@ -145,7 +145,7 @@ export function RightSidebar(): React.JSX.Element {
     () =>
       normalizeImageStudioModelPresets(
         studioSettings.targetAi.openai.modelPresets,
-        studioSettings.targetAi.openai.model,
+        studioSettings.targetAi.openai.model
       ),
     [studioSettings.targetAi.openai.modelPresets, studioSettings.targetAi.openai.model]
   );
@@ -153,38 +153,42 @@ export function RightSidebar(): React.JSX.Element {
     () => quickSwitchModels.map((modelId) => ({ value: modelId, label: modelId })),
     [quickSwitchModels]
   );
-  const estimatedPromptTokens = useMemo(
-    () => estimatePromptTokens(promptText),
-    [promptText]
-  );
+  const estimatedPromptTokens = useMemo(() => estimatePromptTokens(promptText), [promptText]);
   const selectedModelId = useMemo(
-    () => studioSettings.targetAi.openai.model.trim() || 'unknown-model',
-    [studioSettings.targetAi.openai.model]
+    () =>
+      brainGenerationModel.effectiveModelId.trim() ||
+      studioSettings.targetAi.openai.model.trim() ||
+      '',
+    [brainGenerationModel.effectiveModelId, studioSettings.targetAi.openai.model]
   );
   const quickModelValue = selectedModelId;
   const estimatedGenerationCost = useMemo(() => {
-    const profile = resolveModelCostProfile(studioSettings.targetAi.openai.model);
+    const profile = resolveModelCostProfile(selectedModelId);
     const count = Math.max(1, Number(studioSettings.targetAi.openai.image.n ?? 1));
     const imageCost = profile.imageUsdPerImage * count;
     const promptCost = (estimatedPromptTokens / 1000) * profile.inputUsdPer1KTokens;
     return imageCost + promptCost;
-  }, [estimatedPromptTokens, studioSettings.targetAi.openai.image.n, studioSettings.targetAi.openai.model]);
+  }, [estimatedPromptTokens, selectedModelId, studioSettings.targetAi.openai.image.n]);
   const modelSupportsSequenceGeneration = useMemo(
-    () => supportsImageSequenceGeneration(studioSettings.targetAi.openai.model),
-    [studioSettings.targetAi.openai.model]
+    () => supportsImageSequenceGeneration(selectedModelId),
+    [selectedModelId]
   );
   const enabledSequenceRuntimeSteps = useMemo(
-    () => resolveImageStudioSequenceActiveSteps(studioSettings.projectSequencing).filter((step) => step.enabled),
+    () =>
+      resolveImageStudioSequenceActiveSteps(studioSettings.projectSequencing).filter(
+        (step) => step.enabled
+      ),
     [studioSettings.projectSequencing]
   );
   const sequenceRequiresPrompt = useMemo(
-    () => enabledSequenceRuntimeSteps.some((step) => step.type === 'generate' || step.type === 'regenerate'),
+    () =>
+      enabledSequenceRuntimeSteps.some(
+        (step) => step.type === 'generate' || step.type === 'regenerate'
+      ),
     [enabledSequenceRuntimeSteps]
   );
   const activeProject = useMemo(
-    () =>
-      (projectsQuery.data ?? []).find((project) => project.id === projectId) ??
-      null,
+    () => (projectsQuery.data ?? []).find((project) => project.id === projectId) ?? null,
     [projectId, projectsQuery.data]
   );
   const workingSlotImageWidth = useMemo((): number | null => {
@@ -195,7 +199,7 @@ export function RightSidebar(): React.JSX.Element {
     const height = workingSlot?.imageFile?.height ?? null;
     return typeof height === 'number' && Number.isFinite(height) && height > 0 ? height : null;
   }, [workingSlot?.imageFile?.height]);
-  
+
   const projectCanvasWidthPx = activeProject?.canvasWidthPx ?? null;
   const projectCanvasHeightPx = activeProject?.canvasHeightPx ?? null;
 
@@ -240,7 +244,12 @@ export function RightSidebar(): React.JSX.Element {
     ];
   }, [currentCanvasSizeValue, fallbackCanvasHeightPx, fallbackCanvasWidthPx]);
 
-  const sequenceImageContentFrame = useMemo((): { x: number; y: number; width: number; height: number } | null => {
+  const sequenceImageContentFrame = useMemo((): {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null => {
     const normalizedWorkingSlotId = workingSlot?.id?.trim() ?? '';
     if (!normalizedWorkingSlotId) return null;
     const frameBinding = getPreviewCanvasImageFrame();
@@ -254,87 +263,122 @@ export function RightSidebar(): React.JSX.Element {
       ? 'Queued...'
       : 'Generating...'
     : `Generate From Prompt ${(studioSettings.targetAi.openai.image.n ?? 1) > 1 ? `(${studioSettings.targetAi.openai.image.n})` : ''}`;
-  const canResetCanvasImageOffset = Math.abs(canvasImageOffset.x) > 0.5 || Math.abs(canvasImageOffset.y) > 0.5;
+  const canResetCanvasImageOffset =
+    Math.abs(canvasImageOffset.x) > 0.5 || Math.abs(canvasImageOffset.y) > 0.5;
   const isMoveImageActive = imageTransformMode === 'move';
   const canRecenterCanvasImage = isMoveImageActive && canResetCanvasImageOffset;
 
-  const actionHistorySnapshotInput = useMemo(() => ({
-    activeMaskId,
-    brushRadius,
-    canvasImageOffset,
-    canvasBackgroundLayerEnabled,
-    canvasBackgroundColor,
-    canvasSelectionEnabled,
-    compositeAssetIds,
-    formatterEnabled,
-    imageTransformMode,
-    maskFeather,
-    maskInvert,
-    maskShapes,
-    paramSpecs,
-    paramUiOverrides,
-    paramsState,
-    previewMode,
-    promptText,
-    selectedFolder,
-    selectedPointIndex,
-    selectedSlotId,
-    studioSettings,
-    tool,
-    validatorEnabled,
-    workingSlotId,
-  }), [
-    activeMaskId,
-    brushRadius,
-    canvasImageOffset,
-    canvasBackgroundLayerEnabled,
-    canvasBackgroundColor,
-    canvasSelectionEnabled,
-    compositeAssetIds,
-    formatterEnabled,
-    imageTransformMode,
-    maskFeather,
-    maskInvert,
-    maskShapes,
-    paramSpecs,
-    paramUiOverrides,
-    paramsState,
-    previewMode,
-    promptText,
-    selectedFolder,
-    selectedPointIndex,
-    selectedSlotId,
-    studioSettings,
-    tool,
-    validatorEnabled,
-    workingSlotId,
-  ]);
+  const actionHistorySnapshotInput = useMemo(
+    () => ({
+      activeMaskId,
+      brushRadius,
+      canvasImageOffset,
+      canvasBackgroundLayerEnabled,
+      canvasBackgroundColor,
+      canvasSelectionEnabled,
+      compositeAssetIds,
+      formatterEnabled,
+      imageTransformMode,
+      maskFeather,
+      maskInvert,
+      maskShapes,
+      paramSpecs,
+      paramUiOverrides,
+      paramsState,
+      previewMode,
+      promptText,
+      selectedFolder,
+      selectedPointIndex,
+      selectedSlotId,
+      studioSettings,
+      tool,
+      validatorEnabled,
+      workingSlotId,
+    }),
+    [
+      activeMaskId,
+      brushRadius,
+      canvasImageOffset,
+      canvasBackgroundLayerEnabled,
+      canvasBackgroundColor,
+      canvasSelectionEnabled,
+      compositeAssetIds,
+      formatterEnabled,
+      imageTransformMode,
+      maskFeather,
+      maskInvert,
+      maskShapes,
+      paramSpecs,
+      paramUiOverrides,
+      paramsState,
+      previewMode,
+      promptText,
+      selectedFolder,
+      selectedPointIndex,
+      selectedSlotId,
+      studioSettings,
+      tool,
+      validatorEnabled,
+      workingSlotId,
+    ]
+  );
 
-  const applyActionHistorySnapshot = React.useCallback((snapshot: StudioActionHistorySnapshot): void => {
-    setSelectedFolder(snapshot.selectedFolder);
-    setWorkingSlotId(snapshot.workingSlotId);
-    setPreviewMode(snapshot.previewMode);
-    setCompositeAssetIds(cloneSerializableValue(snapshot.compositeAssetIds));
-    setTool(snapshot.tool);
-    setCanvasSelectionEnabled(snapshot.canvasSelectionEnabled);
-    setImageTransformMode(snapshot.imageTransformMode);
-    setCanvasImageOffset(cloneSerializableValue(snapshot.canvasImageOffset));
-    setCanvasBackgroundLayerEnabled(snapshot.canvasBackgroundLayerEnabled);
-    setCanvasBackgroundColor(snapshot.canvasBackgroundColor);
-    setMaskShapes(cloneSerializableValue(snapshot.maskShapes));
-    setActiveMaskId(snapshot.activeMaskId);
-    setSelectedPointIndex(snapshot.selectedPointIndex);
-    setMaskInvert(snapshot.maskInvert);
-    setMaskFeather(snapshot.maskFeather);
-    setBrushRadius(snapshot.brushRadius);
-    setPromptText(snapshot.promptText);
-    setParamsState(cloneSerializableValue(snapshot.paramsState));
-    setParamSpecs(cloneSerializableValue(snapshot.paramSpecs) as Record<string, ParamSpec> | null);
-    setParamUiOverrides(cloneSerializableValue(snapshot.paramUiOverrides) as Record<string, ParamUiControl>);
-    setStudioSettings(cloneSerializableValue(snapshot.studioSettings) as ImageStudioSettings);
-    setValidatorEnabled(snapshot.validatorEnabled);
-    setFormatterEnabled(snapshot.validatorEnabled ? snapshot.formatterEnabled : false);
-  }, [setSelectedFolder, setWorkingSlotId, setPreviewMode, setCompositeAssetIds, setTool, setCanvasSelectionEnabled, setImageTransformMode, setCanvasImageOffset, setCanvasBackgroundLayerEnabled, setCanvasBackgroundColor, setMaskShapes, setActiveMaskId, setSelectedPointIndex, setMaskInvert, setMaskFeather, setBrushRadius, setPromptText, setParamsState, setParamSpecs, setParamUiOverrides, setStudioSettings, setValidatorEnabled, setFormatterEnabled]);
+  const applyActionHistorySnapshot = React.useCallback(
+    (snapshot: StudioActionHistorySnapshot): void => {
+      setSelectedFolder(snapshot.selectedFolder);
+      setWorkingSlotId(snapshot.workingSlotId);
+      setPreviewMode(snapshot.previewMode);
+      setCompositeAssetIds(cloneSerializableValue(snapshot.compositeAssetIds));
+      setTool(snapshot.tool);
+      setCanvasSelectionEnabled(snapshot.canvasSelectionEnabled);
+      setImageTransformMode(snapshot.imageTransformMode);
+      setCanvasImageOffset(cloneSerializableValue(snapshot.canvasImageOffset));
+      setCanvasBackgroundLayerEnabled(snapshot.canvasBackgroundLayerEnabled);
+      setCanvasBackgroundColor(snapshot.canvasBackgroundColor);
+      setMaskShapes(cloneSerializableValue(snapshot.maskShapes));
+      setActiveMaskId(snapshot.activeMaskId);
+      setSelectedPointIndex(snapshot.selectedPointIndex);
+      setMaskInvert(snapshot.maskInvert);
+      setMaskFeather(snapshot.maskFeather);
+      setBrushRadius(snapshot.brushRadius);
+      setPromptText(snapshot.promptText);
+      setParamsState(cloneSerializableValue(snapshot.paramsState));
+      setParamSpecs(
+        cloneSerializableValue(snapshot.paramSpecs) as Record<string, ParamSpec> | null
+      );
+      setParamUiOverrides(
+        cloneSerializableValue(snapshot.paramUiOverrides) as Record<string, ParamUiControl>
+      );
+      setStudioSettings(cloneSerializableValue(snapshot.studioSettings) as ImageStudioSettings);
+      setValidatorEnabled(snapshot.validatorEnabled);
+      setFormatterEnabled(snapshot.validatorEnabled ? snapshot.formatterEnabled : false);
+    },
+    [
+      setSelectedFolder,
+      setWorkingSlotId,
+      setPreviewMode,
+      setCompositeAssetIds,
+      setTool,
+      setCanvasSelectionEnabled,
+      setImageTransformMode,
+      setCanvasImageOffset,
+      setCanvasBackgroundLayerEnabled,
+      setCanvasBackgroundColor,
+      setMaskShapes,
+      setActiveMaskId,
+      setSelectedPointIndex,
+      setMaskInvert,
+      setMaskFeather,
+      setBrushRadius,
+      setPromptText,
+      setParamsState,
+      setParamSpecs,
+      setParamUiOverrides,
+      setStudioSettings,
+      setValidatorEnabled,
+      setFormatterEnabled,
+    ]
+  );
 
   const {
     actionHistoryEntries,
@@ -352,35 +396,32 @@ export function RightSidebar(): React.JSX.Element {
     snapshotInput: actionHistorySnapshotInput,
   });
 
-  const {
-    handleRunSequenceGeneration,
-    sequenceRequestPreview,
-    sequenceRequestPreviewJson,
-  } = useRightSidebarSequence({
-    compositeAssetIds,
-    enabledSequenceRuntimeSteps,
-    maskFeather,
-    maskInvert,
-    maskShapes,
-    modelSupportsSequenceGeneration,
-    paramsState,
-    projectId,
-    promptText,
-    sequenceRequiresPrompt,
-    sequenceRunBusy,
-    setPromptControlOpen,
-    setSequenceRunBusy,
-    setSidebarTab,
-    slots,
-    studioSettings,
-    toast: (msg: string, opt?: { variant?: 'success' | 'error' | 'info' | 'warning' }) => {
-      toast(msg, opt);
-    },
-    workingSlot,
-    workingSlotImageWidth,
-    workingSlotImageHeight,
-    imageContentFrame: sequenceImageContentFrame,
-  });
+  const { handleRunSequenceGeneration, sequenceRequestPreview, sequenceRequestPreviewJson } =
+    useRightSidebarSequence({
+      compositeAssetIds,
+      enabledSequenceRuntimeSteps,
+      maskFeather,
+      maskInvert,
+      maskShapes,
+      modelSupportsSequenceGeneration,
+      paramsState,
+      projectId,
+      promptText,
+      sequenceRequiresPrompt,
+      sequenceRunBusy,
+      setPromptControlOpen,
+      setSequenceRunBusy,
+      setSidebarTab,
+      slots,
+      studioSettings,
+      toast: (msg: string, opt?: { variant?: 'success' | 'error' | 'info' | 'warning' }) => {
+        toast(msg, opt);
+      },
+      workingSlot,
+      workingSlotImageWidth,
+      workingSlotImageHeight,
+      imageContentFrame: sequenceImageContentFrame,
+    });
 
   const requestPreview = useMemo(
     () =>
@@ -418,15 +459,16 @@ export function RightSidebar(): React.JSX.Element {
     [requestPreview]
   );
 
-  const activeRequestPreview = requestPreviewMode === 'with_sequence'
-    ? sequenceRequestPreview
-    : requestPreview;
-  const activeRequestPreviewJson = requestPreviewMode === 'with_sequence'
-    ? sequenceRequestPreviewJson
-    : generationRequestPreviewJson;
-  const activeRequestPreviewEndpoint = requestPreviewMode === 'with_sequence'
-    ? '/api/image-studio/sequences/run'
-    : '/api/image-studio/run';
+  const activeRequestPreview =
+    requestPreviewMode === 'with_sequence' ? sequenceRequestPreview : requestPreview;
+  const activeRequestPreviewJson =
+    requestPreviewMode === 'with_sequence'
+      ? sequenceRequestPreviewJson
+      : generationRequestPreviewJson;
+  const activeRequestPreviewEndpoint =
+    requestPreviewMode === 'with_sequence'
+      ? '/api/image-studio/sequences/run'
+      : '/api/image-studio/run';
 
   useEffect(() => {
     setHistoryMode('actions');
@@ -444,22 +486,25 @@ export function RightSidebar(): React.JSX.Element {
     };
     resolveHost();
     const frameId = window.requestAnimationFrame(resolveHost);
-    return (): void => { window.cancelAnimationFrame(frameId); };
+    return (): void => {
+      window.cancelAnimationFrame(frameId);
+    };
   }, [projectId, sidebarTab]);
 
-  const handleQuickModelChange = React.useCallback((value: string): void => {
-    setStudioSettings((prev) => ({
-      ...prev,
-      targetAi: {
-        ...prev.targetAi,
-        openai: { ...prev.targetAi.openai, api: 'images', model: value },
-      },
-    }));
-  }, [setStudioSettings]);
+  const handleQuickModelChange = React.useCallback(
+    (value: string): void => {
+      setStudioSettings((prev) => ({
+        ...prev,
+        targetAi: {
+          ...prev.targetAi,
+          openai: { ...prev.targetAi.openai, api: 'images', model: value },
+        },
+      }));
+    },
+    [setStudioSettings]
+  );
 
-  const quickActionsPanelContent = useMemo(() => (
-    <RightSidebarQuickActions />
-  ), []);
+  const quickActionsPanelContent = useMemo(() => <RightSidebarQuickActions />, []);
 
   const contextValue = useMemo(
     (): RightSidebarContextValue => ({
@@ -514,7 +559,41 @@ export function RightSidebar(): React.JSX.Element {
       selectedModelId,
       sequenceRunBusy,
     }),
-    [switchToControls, canvasSizePresetOptions, canvasSizePresetValue, projectCanvasSizeLabel, canRecenterCanvasImage, quickActionsHostEl, quickActionsPanelContent, projectId, actionHistoryEntries.length, actionHistoryItems, activeActionHistoryIndex, historyMode, handleRestoreActionStep, activeRequestPreview, activeRequestPreviewEndpoint, activeRequestPreviewJson, requestPreviewMode, promptText, sequenceRequestPreview, setRequestPreviewMode, estimatedGenerationCost, estimatedPromptTokens, generationBusy, generationLabel, hasExtractedControls, modelSupportsSequenceGeneration, quickModelValue, handleQuickModelChange, handleRunGeneration, handleRunSequenceGeneration, quickModelOptions, selectedModelId, sequenceRunBusy]
+    [
+      switchToControls,
+      canvasSizePresetOptions,
+      canvasSizePresetValue,
+      projectCanvasSizeLabel,
+      canRecenterCanvasImage,
+      quickActionsHostEl,
+      quickActionsPanelContent,
+      projectId,
+      actionHistoryEntries.length,
+      actionHistoryItems,
+      activeActionHistoryIndex,
+      historyMode,
+      handleRestoreActionStep,
+      activeRequestPreview,
+      activeRequestPreviewEndpoint,
+      activeRequestPreviewJson,
+      requestPreviewMode,
+      promptText,
+      sequenceRequestPreview,
+      setRequestPreviewMode,
+      estimatedGenerationCost,
+      estimatedPromptTokens,
+      generationBusy,
+      generationLabel,
+      hasExtractedControls,
+      modelSupportsSequenceGeneration,
+      quickModelValue,
+      handleQuickModelChange,
+      handleRunGeneration,
+      handleRunSequenceGeneration,
+      quickModelOptions,
+      selectedModelId,
+      sequenceRunBusy,
+    ]
   );
 
   return (
@@ -539,7 +618,9 @@ export function RightSidebar(): React.JSX.Element {
                   ? 'border-b-2 border-blue-400 text-gray-200 hover:bg-transparent'
                   : 'text-gray-500 hover:text-gray-300'
               )}
-              onClick={() => setSidebarTab(tab as 'controls' | 'analysis' | 'graph' | 'sequencing' | 'history')}
+              onClick={() =>
+                setSidebarTab(tab as 'controls' | 'analysis' | 'graph' | 'sequencing' | 'history')
+              }
             >
               {tab === 'analysis' && <Sparkles className='mr-1 inline size-3' />}
               {tab === 'graph' && <GitBranch className='mr-1 inline size-3' />}
@@ -552,24 +633,51 @@ export function RightSidebar(): React.JSX.Element {
 
         <div className='flex items-center justify-between border-b border-border/30 bg-card/30 px-3 py-1.5'>
           <div className='text-[10px] uppercase tracking-wide text-gray-500'>
-            Action History {activeActionHistoryIndex >= 0 ? `${activeActionHistoryIndex + 1}/${actionHistoryEntries.length}` : '0/0'}
+            Action History{' '}
+            {activeActionHistoryIndex >= 0
+              ? `${activeActionHistoryIndex + 1}/${actionHistoryEntries.length}`
+              : '0/0'}
           </div>
           <div className='flex items-center gap-1.5'>
-            <Button size='xs' variant='outline' className='h-6 px-2 text-[10px]' onClick={handleUndoAction} disabled={!canUndoAction}>
+            <Button
+              size='xs'
+              variant='outline'
+              className='h-6 px-2 text-[10px]'
+              onClick={handleUndoAction}
+              disabled={!canUndoAction}
+            >
               <Undo2 className='mr-1 size-3' /> Undo
             </Button>
-            <Button size='xs' variant='outline' className='h-6 px-2 text-[10px]' onClick={handleRedoAction} disabled={!canRedoAction}>
+            <Button
+              size='xs'
+              variant='outline'
+              className='h-6 px-2 text-[10px]'
+              onClick={handleRedoAction}
+              disabled={!canRedoAction}
+            >
               <Redo2 className='mr-1 size-3' /> Redo
             </Button>
           </div>
         </div>
 
-        {quickActionsHostEl && createPortal(<div className='space-y-2 pb-2'>{quickActionsPanelContent}</div>, quickActionsHostEl)}
+        {quickActionsHostEl &&
+          createPortal(
+            <div className='space-y-2 pb-2'>{quickActionsPanelContent}</div>,
+            quickActionsHostEl
+          )}
 
         {sidebarTab === 'analysis' ? (
-          <div className='min-h-0 flex flex-1 overflow-y-auto'><ImageStudioAnalysisTab /></div>
+          <div className='min-h-0 flex flex-1 overflow-y-auto'>
+            <ImageStudioAnalysisTab />
+          </div>
         ) : sidebarTab === 'graph' ? (
-          selectedSlotId ? <VersionNodeMapPanel /> : <div className='min-h-0 flex flex-1 items-center justify-center px-4 text-center text-xs text-gray-500'>Select a card to view its version graph.</div>
+          selectedSlotId ? (
+            <VersionNodeMapPanel />
+          ) : (
+            <div className='min-h-0 flex flex-1 items-center justify-center px-4 text-center text-xs text-gray-500'>
+              Select a card to view its version graph.
+            </div>
+          )
         ) : sidebarTab === 'sequencing' ? (
           <SequencingPanel />
         ) : sidebarTab === 'history' ? (
@@ -581,11 +689,18 @@ export function RightSidebar(): React.JSX.Element {
 
       <ControlPromptModal isOpen={promptControlOpen} onClose={() => setPromptControlOpen(false)} />
 
-      <DetailModal isOpen={controlsOpen} onClose={() => setControlsOpen(false)} title='Controls' size='lg'>
+      <DetailModal
+        isOpen={controlsOpen}
+        onClose={() => setControlsOpen(false)}
+        title='Controls'
+        size='lg'
+      >
         <div className='space-y-4 text-sm text-gray-200'>
           {hasExtractedControls ? (
             <div className='max-h-[70vh] space-y-3 overflow-auto pr-1'>
-              {flattenedParamsList.map((leaf) => <ParamRow key={leaf.path} leaf={leaf} />)}
+              {flattenedParamsList.map((leaf) => (
+                <ParamRow key={leaf.path} leaf={leaf} />
+              ))}
             </div>
           ) : (
             <div className='text-xs text-gray-500'>No extracted controls available yet.</div>
@@ -595,7 +710,12 @@ export function RightSidebar(): React.JSX.Element {
 
       <CanvasResizeModal isOpen={resizeCanvasOpen} onClose={() => setResizeCanvasOpen(false)} />
 
-      <DetailModal isOpen={requestPreviewOpen} onClose={() => setRequestPreviewOpen(false)} title='Generation Request Preview' size='xl'>
+      <DetailModal
+        isOpen={requestPreviewOpen}
+        onClose={() => setRequestPreviewOpen(false)}
+        title='Generation Request Preview'
+        size='xl'
+      >
         <RightSidebarRequestPreviewBody />
       </DetailModal>
     </RightSidebarProvider>

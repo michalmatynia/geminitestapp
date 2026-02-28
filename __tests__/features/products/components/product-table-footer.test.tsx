@@ -7,7 +7,7 @@ import { ProductTableFooter } from '@/features/products/components/list/ProductT
 import { ToastProvider } from '@/shared/ui/toast';
 
 const queryClient = new QueryClient({
-  defaultOptions: { queries: { retry: false } }
+  defaultOptions: { queries: { retry: false } },
 });
 
 describe('ProductTableFooter Component', () => {
@@ -27,18 +27,18 @@ describe('ProductTableFooter Component', () => {
   const renderWithProviders = (ui: React.ReactElement) => {
     return render(
       <QueryClientProvider client={queryClient}>
-        <ToastProvider>
-          {ui}
-        </ToastProvider>
+        <ToastProvider>{ui}</ToastProvider>
       </QueryClientProvider>
     );
   };
 
   it('renders selection count', () => {
     renderWithProviders(<ProductTableFooter {...mockProps} />);
-    expect(screen.getByText((_content, element) => {
-      return element?.textContent === '0 of 100 row(s) selected.';
-    })).toBeInTheDocument();
+    expect(
+      screen.getByText((_content, element) => {
+        return element?.textContent === '0 of 100 row(s) selected.';
+      })
+    ).toBeInTheDocument();
   });
 
   it('disables delete button when no selection', () => {

@@ -80,7 +80,10 @@ describe('resolveRectDragPoints', () => {
   });
 
   it('resizes an existing rect from center when Alt+Shift are held', () => {
-    const points = [{ x: 0.4, y: 0.4 }, { x: 0.6, y: 0.6 }];
+    const points = [
+      { x: 0.4, y: 0.4 },
+      { x: 0.6, y: 0.6 },
+    ];
     const pointer = { x: 0.75, y: 0.65 };
 
     const resized = resolveRectResizePoints(points, 1, pointer, {
@@ -102,7 +105,10 @@ describe('resolveRectDragPoints', () => {
   });
 
   it('resizes an existing rect proportionally from opposite corner when Shift is held', () => {
-    const points = [{ x: 0.2, y: 0.2 }, { x: 0.4, y: 0.5 }];
+    const points = [
+      { x: 0.2, y: 0.2 },
+      { x: 0.4, y: 0.5 },
+    ];
     const pointer = { x: 0.7, y: 0.8 };
 
     const resized = resolveRectResizePoints(points, 1, pointer, {

@@ -56,9 +56,7 @@ export const stopProductSyncQueue = async (): Promise<void> => {
   await queue.stopWorker();
 };
 
-export const enqueueProductSyncRunJob = async (
-  data: ProductSyncQueueJobData
-): Promise<string> => {
+export const enqueueProductSyncRunJob = async (data: ProductSyncQueueJobData): Promise<string> => {
   const dedupeBucket = Math.floor(Date.now() / 10_000);
   const jobId = `${data.profileId}:${data.runId}:${data.trigger}:${dedupeBucket}`;
   return queue.enqueue(data, { jobId });

@@ -15,8 +15,8 @@ vi.mock('next/dynamic', () => ({
   default: () => {
     const MockFileManager = ({ onSelectFile }: any) => (
       <div data-testid='file-manager'>
-        <button 
-          data-testid='select-file-btn' 
+        <button
+          data-testid='select-file-btn'
           onClick={() => onSelectFile?.([{ id: 'f1', filepath: '/uploads/img.png' }])}
         >
           Select
@@ -29,10 +29,10 @@ vi.mock('next/dynamic', () => ({
 
 // Mock Dialog components to just render children if open
 vi.mock('@/shared/ui', async (importOriginal) => {
-  const actual = await importOriginal() as any;
+  const actual = (await importOriginal()) as any;
   return {
     ...actual,
-    Dialog: ({ children, open }: any) => open ? <div data-testid='dialog'>{children}</div> : null,
+    Dialog: ({ children, open }: any) => (open ? <div data-testid='dialog'>{children}</div> : null),
     DialogContent: ({ children }: any) => <div data-testid='dialog-content'>{children}</div>,
     DialogHeader: ({ children }: any) => <div>{children}</div>,
     DialogTitle: ({ children }: any) => <div>{children}</div>,
@@ -42,8 +42,8 @@ vi.mock('@/shared/ui', async (importOriginal) => {
 
 const queryClient = new QueryClient({
   defaultOptions: {
-    queries: { retry: false }
-  }
+    queries: { retry: false },
+  },
 });
 const wrapper = ({ children }: { children: React.ReactNode }) => (
   <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
@@ -53,15 +53,10 @@ describe('MediaLibraryPanel Component', () => {
   it('should render when open', () => {
     const onOpenChange = vi.fn();
     const onSelect = vi.fn();
-    
-    render(
-      <MediaLibraryPanel 
-        open={true} 
-        onOpenChange={onOpenChange} 
-        onSelect={onSelect} 
-      />, 
-      { wrapper }
-    );
+
+    render(<MediaLibraryPanel open={true} onOpenChange={onOpenChange} onSelect={onSelect} />, {
+      wrapper,
+    });
 
     expect(screen.getAllByText('Media Library')[0]).toBeInTheDocument();
     expect(screen.getByTestId('file-manager')).toBeInTheDocument();
@@ -69,11 +64,7 @@ describe('MediaLibraryPanel Component', () => {
 
   it('should not render when closed', () => {
     const { container } = render(
-      <MediaLibraryPanel 
-        open={false} 
-        onOpenChange={vi.fn()} 
-        onSelect={vi.fn()} 
-      />, 
+      <MediaLibraryPanel open={false} onOpenChange={vi.fn()} onSelect={vi.fn()} />,
       { wrapper }
     );
     expect(container).toBeEmptyDOMElement();
@@ -81,14 +72,9 @@ describe('MediaLibraryPanel Component', () => {
 
   it('should call onSelect when a file is selected', () => {
     const onSelect = vi.fn();
-    render(
-      <MediaLibraryPanel 
-        open={true} 
-        onOpenChange={vi.fn()} 
-        onSelect={onSelect} 
-      />, 
-      { wrapper }
-    );
+    render(<MediaLibraryPanel open={true} onOpenChange={vi.fn()} onSelect={onSelect} />, {
+      wrapper,
+    });
 
     const selectBtn = screen.getByTestId('select-file-btn');
     fireEvent.click(selectBtn);

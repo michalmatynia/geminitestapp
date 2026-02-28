@@ -1,5 +1,3 @@
-
-
 const SENSITIVE_KEY_PATTERNS = [
   /pass(word)?/i,
   /token/i,

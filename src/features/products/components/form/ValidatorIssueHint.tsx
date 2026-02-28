@@ -4,9 +4,7 @@ import { ArrowRight } from 'lucide-react';
 import { memo, useCallback } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import {
-  useProductValidationActions,
-} from '@/features/products/context/ProductValidationSettingsContext';
+import { useProductValidationActions } from '@/features/products/context/ProductValidationSettingsContext';
 import {
   getIssueReplacementPreview,
   type FieldValidatorIssue,
@@ -56,9 +54,7 @@ export const ValidatorIssueHint = memo(function ValidatorIssueHint({
       ? 'border-amber-500/40 bg-amber-500/10 text-amber-100'
       : 'border-red-500/40 bg-red-500/10 text-red-100';
   const matchClass =
-    issue.severity === 'warning'
-      ? 'bg-amber-300/30 text-amber-50'
-      : 'bg-red-300/30 text-red-50';
+    issue.severity === 'warning' ? 'bg-amber-300/30 text-amber-50' : 'bg-red-300/30 text-red-50';
   const replacementBadgeClass =
     issue.replacementScope === 'global'
       ? 'border-emerald-500/50 bg-emerald-500/15 text-emerald-100'
@@ -78,9 +74,7 @@ export const ValidatorIssueHint = memo(function ValidatorIssueHint({
   const proposedValue =
     proposedValueOverride ??
     (issue.replacementValue ? getIssueReplacementPreview(value, issue) : null);
-  const hasProposedChange = Boolean(
-    proposedValue !== null && proposedValue !== value
-  );
+  const hasProposedChange = Boolean(proposedValue !== null && proposedValue !== value);
 
   return (
     <div className={cn('mt-2 rounded-md border px-2 py-2 text-xs', toneClass)}>
@@ -89,7 +83,9 @@ export const ValidatorIssueHint = memo(function ValidatorIssueHint({
         <span className='min-w-0 flex-1 break-words'>{issue.message}</span>
       </div>
       <div className='mt-2 flex flex-wrap items-center gap-1'>
-        <span className={cn('shrink-0 rounded border px-1.5 py-0.5 text-[10px]', replacementBadgeClass)}>
+        <span
+          className={cn('shrink-0 rounded border px-1.5 py-0.5 text-[10px]', replacementBadgeClass)}
+        >
           {replacementBadgeText}
         </span>
         {onDeny || (issue.replacementValue && onReplace) ? (
@@ -127,9 +123,7 @@ export const ValidatorIssueHint = memo(function ValidatorIssueHint({
           <Hint uppercase size='xxs' variant='info' className='text-emerald-200/90'>
             Proposed Result
           </Hint>
-          <p className='mt-1 break-all font-mono text-[11px] text-emerald-100'>
-            {proposedValue}
-          </p>
+          <p className='mt-1 break-all font-mono text-[11px] text-emerald-100'>{proposedValue}</p>
         </div>
       ) : null}
     </div>
@@ -174,12 +168,12 @@ export const IssueHintRow = memo(function IssueHintRow({
       if (!Number.isFinite(numericValue)) return;
       setValue(
         numericField,
-                      Math.max(0, Math.floor(numericValue)) as ProductFormData[typeof numericField],
-                      { shouldDirty: true, shouldTouch: true }
+        Math.max(0, Math.floor(numericValue)) as ProductFormData[typeof numericField],
+        { shouldDirty: true, shouldTouch: true }
       );
     } else {
       const currentValue =
-                      (getValues(fieldName as keyof ProductFormData) as string | undefined) ?? '';
+        (getValues(fieldName as keyof ProductFormData) as string | undefined) ?? '';
       const nextValue = getIssueReplacementPreview(currentValue, issue);
       void acceptIssue({
         fieldName,
@@ -190,14 +184,14 @@ export const IssueHintRow = memo(function IssueHintRow({
       });
       if (nextValue !== currentValue) {
         setValue(
-                        fieldName as keyof ProductFormData,
-                        nextValue as ProductFormData[keyof ProductFormData],
-                        { shouldDirty: true, shouldTouch: true }
+          fieldName as keyof ProductFormData,
+          nextValue as ProductFormData[keyof ProductFormData],
+          { shouldDirty: true, shouldTouch: true }
         );
       }
     }
   }, [acceptIssue, fieldName, getValues, issue, numericField, setValue]);
-            
+
   const onDeny = useCallback((): void => {
     void denyIssue({
       fieldName,

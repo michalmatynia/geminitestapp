@@ -61,8 +61,7 @@ export function FormModal({
     }
   };
   const shouldHighlightSave = hasUnsavedChanges ?? !isSaveDisabled;
-  const isSaveButtonDisabled =
-    isSaving || isSaveDisabled || hasUnsavedChanges === false;
+  const isSaveButtonDisabled = isSaving || isSaveDisabled || hasUnsavedChanges === false;
   const saveButtonClassName = cn(
     'min-w-[100px] rounded-md border text-xs transition-colors',
     shouldHighlightSave
@@ -103,12 +102,7 @@ export function FormModal({
       <div className='flex flex-wrap items-center justify-end gap-2'>
         {actions}
         {showCancelButton ? (
-          <Button
-            type='button'
-            onClick={onClose}
-            variant='outline'
-            className='min-w-[100px]'
-          >
+          <Button type='button' onClick={onClose} variant='outline' className='min-w-[100px]'>
             {cancelText}
           </Button>
         ) : null}

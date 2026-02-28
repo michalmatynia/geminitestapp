@@ -12,7 +12,8 @@ export function MaskControlsPanel(): React.JSX.Element {
   const { maskPreviewEnabled } = useUiState();
   const { workingSlot } = useSlotsState();
   const { maskFeather, maskThresholdSensitivity, maskEdgeSensitivity } = useMaskingState();
-  const { setMaskFeather, setMaskThresholdSensitivity, setMaskEdgeSensitivity } = useMaskingActions();
+  const { setMaskFeather, setMaskThresholdSensitivity, setMaskEdgeSensitivity } =
+    useMaskingActions();
 
   return (
     <>

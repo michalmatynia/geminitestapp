@@ -9,11 +9,8 @@ import { getOrCreateDefaultNotebook } from './notebook-impl';
 
 import type { Tag } from '@prisma/client';
 
-export const getAllTags = async (
-  notebookId?: string | null,
-): Promise<TagRecord[]> => {
-  const resolvedNotebookId =
-    notebookId ?? (await getOrCreateDefaultNotebook()).id;
+export const getAllTags = async (notebookId?: string | null): Promise<TagRecord[]> => {
+  const resolvedNotebookId = notebookId ?? (await getOrCreateDefaultNotebook()).id;
   const tags = await prisma.tag.findMany({
     where: { notebookId: resolvedNotebookId },
     orderBy: { name: 'asc' },
@@ -29,16 +26,15 @@ export const getTagById = async (id: string): Promise<TagRecord | null> => {
   const tag = await prisma.tag.findUnique({ where: { id } });
   return tag
     ? {
-      ...tag,
-      createdAt: tag.createdAt.toISOString(),
-      updatedAt: tag.updatedAt.toISOString(),
-    }
+        ...tag,
+        createdAt: tag.createdAt.toISOString(),
+        updatedAt: tag.updatedAt.toISOString(),
+      }
     : null;
 };
 
 export const createTag = async (data: TagCreateInput): Promise<TagRecord> => {
-  const resolvedNotebookId =
-    data.notebookId ?? (await getOrCreateDefaultNotebook()).id;
+  const resolvedNotebookId = data.notebookId ?? (await getOrCreateDefaultNotebook()).id;
 
   const tag = await prisma.tag.create({
     data: {
@@ -54,10 +50,7 @@ export const createTag = async (data: TagCreateInput): Promise<TagRecord> => {
   };
 };
 
-export const updateTag = async (
-  id: string,
-  data: TagUpdateInput,
-): Promise<TagRecord | null> => {
+export const updateTag = async (id: string, data: TagUpdateInput): Promise<TagRecord | null> => {
   try {
     const tag = await prisma.tag.update({
       where: { id },

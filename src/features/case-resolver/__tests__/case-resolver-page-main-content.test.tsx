@@ -20,9 +20,7 @@ vi.mock('@/features/case-resolver/components/CaseResolverRelationsWorkspace', ()
 }));
 
 vi.mock('@/features/case-resolver/components/CaseResolverCaseOverviewWorkspace', () => ({
-  CaseResolverCaseOverviewWorkspace: () => (
-    <div data-testid='case-overview-workspace' />
-  ),
+  CaseResolverCaseOverviewWorkspace: () => <div data-testid='case-overview-workspace' />,
 }));
 
 vi.mock('@/features/case-resolver/components/CaseResolverFileViewer', () => ({
@@ -93,7 +91,8 @@ describe('CaseResolverPageMainContent routing', () => {
           id: 'workspace-1',
           files: [caseFile, staleDocumentFile],
           assets: [],
-        } as unknown as CaseResolverStateValue['workspace'],        activeCaseId: 'case-1',
+        } as unknown as CaseResolverStateValue['workspace'],
+        activeCaseId: 'case-1',
         selectedFileId: 'case-1',
         activeFile: staleDocumentFile as CaseResolverStateValue['activeFile'],
         selectedAsset: null,
@@ -123,7 +122,8 @@ describe('CaseResolverPageMainContent routing', () => {
           id: 'workspace-1',
           files: [caseFile],
           assets: [],
-        } as unknown as CaseResolverStateValue['workspace'],        activeCaseId: 'case-2',
+        } as unknown as CaseResolverStateValue['workspace'],
+        activeCaseId: 'case-2',
         selectedFileId: null,
         activeFile: null,
         selectedAsset: null,
@@ -159,7 +159,8 @@ describe('CaseResolverPageMainContent routing', () => {
           id: 'workspace-1',
           files: [caseFile, documentFile],
           assets: [],
-        } as unknown as CaseResolverStateValue['workspace'],        activeCaseId: 'case-3',
+        } as unknown as CaseResolverStateValue['workspace'],
+        activeCaseId: 'case-3',
         selectedFileId: 'doc-3',
         activeFile: documentFile as CaseResolverStateValue['activeFile'],
         selectedAsset: null,
@@ -174,4 +175,3 @@ describe('CaseResolverPageMainContent routing', () => {
     expect(screen.queryByTestId('case-overview-workspace')).not.toBeInTheDocument();
   });
 });
-

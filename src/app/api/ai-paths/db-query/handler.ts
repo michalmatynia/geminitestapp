@@ -24,12 +24,7 @@ const querySchema = z.object({
   collectionMap: z.record(z.string(), z.string()).optional(),
   query: z.record(z.string(), z['unknown']()).optional(),
   projection: z.record(z.string(), z['unknown']()).optional(),
-  sort: z
-    .record(
-      z.string(),
-      z.union([z.number(), z.literal('asc'), z.literal('desc')]),
-    )
-    .optional(),
+  sort: z.record(z.string(), z.union([z.number(), z.literal('asc'), z.literal('desc')])).optional(),
   limit: z.number().int().min(1).max(200).optional(),
   single: z.boolean().optional(),
   idType: z.enum(['string', 'objectId']).optional(),
@@ -88,8 +83,7 @@ const coerceQuery = (value: unknown): Record<string, unknown> => {
   return {};
 };
 
-const normalizeCollectionKey = (value: string): string =>
-  value.trim().toLowerCase();
+const normalizeCollectionKey = (value: string): string => value.trim().toLowerCase();
 
 const resolvePrismaCollectionKey = (collection: string): string | null => {
   if (!collection) return null;
@@ -100,12 +94,11 @@ const resolvePrismaCollectionKey = (collection: string): string | null => {
   return PRISMA_COLLECTION_DELEGATES[normalized] ? normalized : null;
 };
 
-const looksLikeObjectId = (value: string): boolean =>
-  /^[0-9a-fA-F]{24}$/.test(value);
+const looksLikeObjectId = (value: string): boolean => /^[0-9a-fA-F]{24}$/.test(value);
 
 const normalizeObjectId = (
   query: Record<string, unknown>,
-  idType?: string,
+  idType?: string
 ): Record<string, unknown> => {
   if (idType !== 'objectId') return query;
   const next = { ...query };
@@ -115,34 +108,22 @@ const normalizeObjectId = (
   return next;
 };
 
-const canRetryWithObjectId = (
-  query: Record<string, unknown>,
-  idType?: string,
-): boolean =>
-  idType !== 'objectId' &&
-  typeof query['_id'] === 'string' &&
-  looksLikeObjectId(query['_id']);
+const canRetryWithObjectId = (query: Record<string, unknown>, idType?: string): boolean =>
+  idType !== 'objectId' && typeof query['_id'] === 'string' && looksLikeObjectId(query['_id']);
 
 const getPrismaDelegate = (collection: string): PrismaDelegate | null => {
   const delegateName = PRISMA_COLLECTION_DELEGATES[collection];
   if (!delegateName) return null;
-  const delegate = (prisma as unknown as Record<string, PrismaDelegate>)[
-    delegateName
-  ];
+  const delegate = (prisma as unknown as Record<string, PrismaDelegate>)[delegateName];
   return delegate ?? null;
 };
 
 const normalizePrismaSelect = (
-  projection?: Record<string, unknown>,
+  projection?: Record<string, unknown>
 ): Record<string, unknown> | undefined => {
-  if (
-    !projection ||
-    typeof projection !== 'object' ||
-    Array.isArray(projection)
-  )
-    return undefined;
+  if (!projection || typeof projection !== 'object' || Array.isArray(projection)) return undefined;
   const hasNested = Object.values(projection).some(
-    (value: unknown) => value !== null && typeof value === 'object',
+    (value: unknown) => value !== null && typeof value === 'object'
   );
   if (hasNested) return projection;
   const select: Record<string, boolean> = {};
@@ -154,10 +135,9 @@ const normalizePrismaSelect = (
 };
 
 const normalizePrismaOrderBy = (
-  sort?: Record<string, unknown>,
+  sort?: Record<string, unknown>
 ): Record<string, 'asc' | 'desc'> | undefined => {
-  if (!sort || typeof sort !== 'object' || Array.isArray(sort))
-    return undefined;
+  if (!sort || typeof sort !== 'object' || Array.isArray(sort)) return undefined;
   const orderBy: Record<string, 'asc' | 'desc'> = {};
   for (const [key, value] of Object.entries(sort)) {
     if (value === 'desc' || value === -1) {
@@ -183,12 +163,7 @@ const isSimpleInValue = (value: unknown): boolean => {
   const keys = Object.keys(value);
   if (keys.length !== 1 || keys[0] !== '$in') return false;
   const list = value['$in'];
-  return (
-    Array.isArray(list) &&
-    list.length > 0 &&
-    list.length <= 200 &&
-    list.every(isScalarValue)
-  );
+  return Array.isArray(list) && list.length > 0 && list.length <= 200 && list.every(isScalarValue);
 };
 
 const isSafeSimpleFilter = (filter: Record<string, unknown>): boolean => {
@@ -200,21 +175,17 @@ const isSafeSimpleFilter = (filter: Record<string, unknown>): boolean => {
   });
 };
 
-const isSafeSimpleProjection = (
-  projection?: Record<string, unknown>,
-): boolean => {
+const isSafeSimpleProjection = (projection?: Record<string, unknown>): boolean => {
   if (!projection || !isPlainRecord(projection)) return true;
   return Object.values(projection).every(
-    (value: unknown) =>
-      value === 1 || value === 0 || value === true || value === false,
+    (value: unknown) => value === 1 || value === 0 || value === true || value === false
   );
 };
 
 const isSafeSimpleSort = (sort?: Record<string, unknown>): boolean => {
   if (!sort || !isPlainRecord(sort)) return true;
   return Object.values(sort).every(
-    (value: unknown) =>
-      value === 1 || value === -1 || value === 'asc' || value === 'desc',
+    (value: unknown) => value === 1 || value === -1 || value === 'asc' || value === 'desc'
   );
 };
 
@@ -225,10 +196,7 @@ const isSafeAutoFallbackCandidate = (input: {
   sort?: Record<string, unknown>;
   idType?: 'string' | 'objectId';
 }): boolean => {
-  if (
-    input.requestedProvider === 'mongodb' ||
-    input.requestedProvider === 'prisma'
-  ) {
+  if (input.requestedProvider === 'mongodb' || input.requestedProvider === 'prisma') {
     return false;
   }
   if (input.idType === 'objectId') {
@@ -255,10 +223,7 @@ type QueryResponsePayload =
       fallback?: Record<string, unknown>;
     };
 
-export async function POST_handler(
-  req: NextRequest,
-  _ctx: ApiHandlerContext,
-): Promise<Response> {
+export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const { access, isInternal } = await requireAiPathsAccessOrInternal(req);
   if (!isInternal) {
     await enforceAiPathsActionRateLimit(access, 'db-query');
@@ -283,7 +248,7 @@ export async function POST_handler(
   const explicitCollectionMap = normalizeAiPathsCollectionMap(collectionMap);
   const collectionResolution = resolveAiPathsCollectionName(
     requestedCollection,
-    explicitCollectionMap,
+    explicitCollectionMap
   );
   const resolvedCollection = collectionResolution.collection;
 
@@ -296,24 +261,20 @@ export async function POST_handler(
   const canAttemptSafeAutoFallback = isSafeAutoFallbackCandidate({
     ...(requestedProvider !== undefined ? { requestedProvider } : {}),
     query: rawFilter,
-    ...(requestProjection !== undefined
-      ? { projection: requestProjection }
-      : {}),
+    ...(requestProjection !== undefined ? { projection: requestProjection } : {}),
     ...(requestSort !== undefined ? { sort: requestSort } : {}),
     ...(idType !== undefined ? { idType } : {}),
   });
 
   const runQueryWithProvider = async (
-    provider: 'mongodb' | 'prisma',
+    provider: 'mongodb' | 'prisma'
   ): Promise<QueryResponsePayload> => {
     if (provider === 'prisma') {
       if (!process.env['DATABASE_URL']) {
         throw internalError('Prisma is not configured');
       }
       const prismaCollection = resolvePrismaCollectionKey(resolvedCollection);
-      const delegate = prismaCollection
-        ? getPrismaDelegate(prismaCollection)
-        : null;
+      const delegate = prismaCollection ? getPrismaDelegate(prismaCollection) : null;
       if (!delegate) {
         throw badRequestError('Collection not available for Prisma');
       }
@@ -323,18 +284,18 @@ export async function POST_handler(
       if (single) {
         const item = delegate.findFirst
           ? await delegate.findFirst({
-            where,
-            ...(select ? { select } : {}),
-            ...(orderBy ? { orderBy } : {}),
-          })
-          : ((
-            await delegate.findMany({
               where,
               ...(select ? { select } : {}),
               ...(orderBy ? { orderBy } : {}),
-              take: 1,
             })
-          )[0] ?? null);
+          : ((
+              await delegate.findMany({
+                where,
+                ...(select ? { select } : {}),
+                ...(orderBy ? { orderBy } : {}),
+                take: 1,
+              })
+            )[0] ?? null);
         return {
           item: (item as Record<string, unknown> | null) ?? null,
           count: item ? 1 : 0,
@@ -365,7 +326,7 @@ export async function POST_handler(
     const filter = normalizeObjectId(rawFilter, idType);
 
     const findOneWithFilter = async (
-      candidateFilter: Record<string, unknown>,
+      candidateFilter: Record<string, unknown>
     ): Promise<Record<string, unknown> | null> =>
       collectionRef.findOne(candidateFilter, {
         ...(requestProjection ? { projection: requestProjection } : {}),
@@ -373,11 +334,11 @@ export async function POST_handler(
       }) as Promise<Record<string, unknown> | null>;
 
     const findManyWithFilter = async (
-      candidateFilter: Record<string, unknown>,
+      candidateFilter: Record<string, unknown>
     ): Promise<{ items: Record<string, unknown>[]; count: number }> => {
       const cursor = collectionRef.find(
         candidateFilter,
-        requestProjection ? { projection: requestProjection } : undefined,
+        requestProjection ? { projection: requestProjection } : undefined
       );
       if (requestSort) {
         cursor.sort(requestSort as Sort);
@@ -392,9 +353,7 @@ export async function POST_handler(
     if (single) {
       let item = await findOneWithFilter(filter);
       if (!item && canRetryWithObjectId(rawFilter, idType)) {
-        item = await findOneWithFilter(
-          normalizeObjectId(rawFilter, 'objectId'),
-        );
+        item = await findOneWithFilter(normalizeObjectId(rawFilter, 'objectId'));
       }
       return {
         item,
@@ -405,9 +364,7 @@ export async function POST_handler(
 
     let { items, count } = await findManyWithFilter(filter);
     if (count === 0 && canRetryWithObjectId(rawFilter, idType)) {
-      ({ items, count } = await findManyWithFilter(
-        normalizeObjectId(rawFilter, 'objectId'),
-      ));
+      ({ items, count } = await findManyWithFilter(normalizeObjectId(rawFilter, 'objectId')));
     }
     return {
       items,
@@ -418,7 +375,7 @@ export async function POST_handler(
 
   const primaryProvider = await resolveCollectionProviderForRequest(
     resolvedCollection,
-    requestedProvider,
+    requestedProvider
   );
 
   try {
@@ -428,8 +385,7 @@ export async function POST_handler(
     if (!canAttemptSafeAutoFallback) {
       throw primaryError;
     }
-    const fallbackProvider =
-      primaryProvider === 'prisma' ? 'mongodb' : 'prisma';
+    const fallbackProvider = primaryProvider === 'prisma' ? 'mongodb' : 'prisma';
     try {
       const fallbackResult = await runQueryWithProvider(fallbackProvider);
       return NextResponse.json({

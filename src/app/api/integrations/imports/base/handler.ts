@@ -75,7 +75,10 @@ type PriceGroupLookup = {
 
 const normalizeCurrencyCode = (value: unknown): string | null => {
   if (typeof value !== 'string') return null;
-  const compact = value.trim().toUpperCase().replace(/[^A-Z]/g, '');
+  const compact = value
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z]/g, '');
   return compact.length === 3 ? compact : null;
 };
 
@@ -92,21 +95,16 @@ const resolvePriceGroupContext = async (
 
   if (provider === 'mongodb') {
     const mongo = await getMongoDb();
-    const priceGroupCollection =
-      mongo.collection<PriceGroupLookup>('price_groups');
-    const byId =
-      preferredPriceGroupId?.trim()
-        ? await priceGroupCollection.findOne(
+    const priceGroupCollection = mongo.collection<PriceGroupLookup>('price_groups');
+    const byId = preferredPriceGroupId?.trim()
+      ? await priceGroupCollection.findOne(
           { id: preferredPriceGroupId.trim() },
           { projection: projectedFields }
         )
-        : null;
+      : null;
     const fallbackDefault = byId
       ? null
-      : await priceGroupCollection.findOne(
-        { isDefault: true },
-        { projection: projectedFields }
-      );
+      : await priceGroupCollection.findOne({ isDefault: true }, { projection: projectedFields });
     const resolved = byId ?? fallbackDefault;
     if (!resolved?.id) {
       return { defaultPriceGroupId: null, preferredCurrencies: [] };
@@ -121,10 +119,7 @@ const resolvePriceGroupContext = async (
           .collection<{ id?: string; code?: string }>('currencies')
           .findOne(
             {
-              $or: [
-                { id: resolved.currencyId },
-                { code: resolved.currencyId }
-              ]
+              $or: [{ id: resolved.currencyId }, { code: resolved.currencyId }],
             },
             { projection: { code: 1, id: 1 } }
           );
@@ -135,33 +130,32 @@ const resolvePriceGroupContext = async (
     }
     return {
       defaultPriceGroupId: resolved.id,
-      preferredCurrencies: Array.from(preferredCurrencies)
+      preferredCurrencies: Array.from(preferredCurrencies),
     };
   }
 
-  const byId =
-    preferredPriceGroupId?.trim()
-      ? await prisma.priceGroup.findUnique({
+  const byId = preferredPriceGroupId?.trim()
+    ? await prisma.priceGroup.findUnique({
         where: { id: preferredPriceGroupId.trim() },
         select: {
           id: true,
           groupId: true,
           currencyId: true,
-          currency: { select: { code: true } }
-        }
+          currency: { select: { code: true } },
+        },
       })
-      : null;
+    : null;
   const fallbackDefault = byId
     ? null
     : await prisma.priceGroup.findFirst({
-      where: { isDefault: true },
-      select: {
-        id: true,
-        groupId: true,
-        currencyId: true,
-        currency: { select: { code: true } }
-      }
-    });
+        where: { isDefault: true },
+        select: {
+          id: true,
+          groupId: true,
+          currencyId: true,
+          currency: { select: { code: true } },
+        },
+      });
   const resolved = byId ?? fallbackDefault;
   if (!resolved?.id) {
     return { defaultPriceGroupId: null, preferredCurrencies: [] };
@@ -172,7 +166,7 @@ const resolvePriceGroupContext = async (
   addCurrencyCandidate(preferredCurrencies, resolved.currencyId);
   return {
     defaultPriceGroupId: resolved.id,
-    preferredCurrencies: Array.from(preferredCurrencies)
+    preferredCurrencies: Array.from(preferredCurrencies),
   };
 };
 
@@ -224,11 +218,10 @@ export async function postBaseImportsHandler(
     password?: string | null | undefined;
   } | null = null;
   if (baseIntegrationId && resolvedBaseConnectionId) {
-    resolvedBaseConnection =
-      await integrationRepo.getConnectionByIdAndIntegration(
-        resolvedBaseConnectionId,
-        baseIntegrationId
-      );
+    resolvedBaseConnection = await integrationRepo.getConnectionByIdAndIntegration(
+      resolvedBaseConnectionId,
+      baseIntegrationId
+    );
     if (!resolvedBaseConnection) {
       // resolvedBaseConnectionId = null; // Unused
     }
@@ -239,12 +232,12 @@ export async function postBaseImportsHandler(
   if (!token) {
     if (baseIntegrationId) {
       if (!resolvedBaseConnection) {
-        const connections = await integrationRepo.listConnections(
-          baseIntegrationId
-        );
-        resolvedBaseConnection = connections.find(
-          (connection: (typeof connections)[number]) => connection.baseApiToken || connection.password
-        ) ?? null;
+        const connections = await integrationRepo.listConnections(baseIntegrationId);
+        resolvedBaseConnection =
+          connections.find(
+            (connection: (typeof connections)[number]) =>
+              connection.baseApiToken || connection.password
+          ) ?? null;
         // resolvedBaseConnectionId = resolvedBaseConnection?.id ?? null; // Unused
       }
       if (resolvedBaseConnection) {
@@ -290,13 +283,9 @@ export async function postBaseImportsHandler(
     if (!data.inventoryId) {
       throw badRequestError('Inventory ID is required.');
     }
-    const inventoryResult = await fetchBaseWarehousesDebug(
-      token,
-      data.inventoryId
-    );
+    const inventoryResult = await fetchBaseWarehousesDebug(token, data.inventoryId);
     const inventoriesResult = await fetchBaseInventoriesDebug(token);
-    let allResult: Awaited<ReturnType<typeof fetchBaseAllWarehousesDebug>> | null =
-      null;
+    let allResult: Awaited<ReturnType<typeof fetchBaseAllWarehousesDebug>> | null = null;
     if (data.includeAllWarehouses) {
       try {
         allResult = await fetchBaseAllWarehousesDebug(token);
@@ -311,8 +300,8 @@ export async function postBaseImportsHandler(
       raw: {
         inventory: inventoryResult,
         inventories: inventoriesResult,
-        all: allResult
-      }
+        all: allResult,
+      },
     });
   }
 
@@ -327,7 +316,8 @@ export async function postBaseImportsHandler(
     const catalogs = await catalogRepository.listCatalogs();
     const defaultCatalog = catalogs.find((catalog: (typeof catalogs)[number]) => catalog.isDefault);
     const targetCatalog = data.catalogId
-      ? catalogs.find((catalog: (typeof catalogs)[number]) => catalog.id === data.catalogId) ?? defaultCatalog
+      ? (catalogs.find((catalog: (typeof catalogs)[number]) => catalog.id === data.catalogId) ??
+        defaultCatalog)
       : defaultCatalog;
     const { preferredCurrencies: listPreferredCurrencies } = await resolvePriceGroupContext(
       provider,
@@ -340,7 +330,7 @@ export async function postBaseImportsHandler(
     const productRepository = await getProductRepository();
     const allProducts = await productRepository.getProducts({
       pageSize: 10000, // Get all products
-      page: 1
+      page: 1,
     });
     const existingIds = new Set(
       allProducts
@@ -355,7 +345,7 @@ export async function postBaseImportsHandler(
 
     const listItems = allBaseIds.map((id: string) => ({
       id,
-      exists: existingIds.has(id)
+      exists: existingIds.has(id),
     }));
     const filteredItems = data.uniqueOnly
       ? listItems.filter((item: { id: string; exists: boolean }) => !item.exists)
@@ -384,23 +374,20 @@ export async function postBaseImportsHandler(
           });
           const images = extractBaseImageUrls(record);
           const baseProductId =
-          mapped.baseProductId ??
-          toStringId(record['base_product_id']) ??
-          toStringId(record['product_id']) ??
-          toStringId(record['id']);
+            mapped.baseProductId ??
+            toStringId(record['base_product_id']) ??
+            toStringId(record['product_id']) ??
+            toStringId(record['id']);
 
           // Prioritize EN, then PL, then DE, then raw name
           const name =
-          mapped.name_en ??
-          mapped.name_pl ??
-          mapped.name_de ??
-          (typeof record['name'] === 'string' ? record['name'] : 'Unnamed');
+            mapped.name_en ??
+            mapped.name_pl ??
+            mapped.name_de ??
+            (typeof record['name'] === 'string' ? record['name'] : 'Unnamed');
 
           const description =
-          mapped.description_en ??
-          mapped.description_pl ??
-          mapped.description_de ??
-          '';
+            mapped.description_en ?? mapped.description_pl ?? mapped.description_de ?? '';
 
           const sku = mapped.sku ?? null;
           const skuExists = sku ? existingSkus.has(sku) : false;
@@ -414,7 +401,7 @@ export async function postBaseImportsHandler(
             description: description.slice(0, 100),
             price: mapped.price ?? 0,
             stock: mapped.stock ?? 0,
-            image: images[0] ?? null
+            image: images[0] ?? null,
           };
         })
         .filter((item: MappedItem) => Boolean(item.baseProductId && item.sku));
@@ -425,11 +412,7 @@ export async function postBaseImportsHandler(
       for (let index = 0; index < ids.length; index += BASE_DETAILS_BATCH_SIZE) {
         const batch = ids.slice(index, index + BASE_DETAILS_BATCH_SIZE);
         if (batch.length === 0) continue;
-        const batchProducts = await fetchBaseProductDetails(
-          token,
-          inventoryId,
-          batch
-        );
+        const batchProducts = await fetchBaseProductDetails(token, inventoryId, batch);
         records.push(...batchProducts);
       }
       return mapRecordsToItems(records);
@@ -450,7 +433,7 @@ export async function postBaseImportsHandler(
           skuDuplicates: 0,
           page,
           pageSize,
-          totalPages: filteredItemsTotalPages
+          totalPages: filteredItemsTotalPages,
         });
       }
 
@@ -468,7 +451,7 @@ export async function postBaseImportsHandler(
         skuDuplicates: skuDuplicateCount,
         page,
         pageSize,
-        totalPages: filteredItemsTotalPages
+        totalPages: filteredItemsTotalPages,
       });
     }
 
@@ -481,9 +464,7 @@ export async function postBaseImportsHandler(
       );
     const searchedList = mappedSearchScope.filter((item: MappedItem) => {
       const nameOk =
-        normalizedName.length === 0
-          ? true
-          : item.name.toLowerCase().includes(normalizedName);
+        normalizedName.length === 0 ? true : item.name.toLowerCase().includes(normalizedName);
       const skuValue = (item.sku ?? '').toLowerCase();
       const skuOk =
         normalizedSku.length === 0
@@ -509,7 +490,7 @@ export async function postBaseImportsHandler(
       skuDuplicates: skuDuplicateCount,
       page: normalizedPage,
       pageSize,
-      totalPages: searchedTotalPages
+      totalPages: searchedTotalPages,
     });
   }
   throw badRequestError(`Unsupported action: ${data.action}`);

@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  explodePromptText,
-  updatePromptExploderDocument,
-} from '@/features/prompt-exploder/parser';
-import type { PromptExploderBinding, PromptExploderSegment } from '@/shared/contracts/prompt-exploder';
+import { explodePromptText, updatePromptExploderDocument } from '@/features/prompt-exploder/parser';
+import type {
+  PromptExploderBinding,
+  PromptExploderSegment,
+} from '@/shared/contracts/prompt-exploder';
 
 const REFERENCE_PROMPT = [
   'REFERENCE',

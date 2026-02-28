@@ -5,7 +5,6 @@ import {
 } from '@/shared/contracts/case-resolver';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
-
 const normalizeTimestamp = (value: unknown, fallback: string): string =>
   typeof value === 'string' && value.trim().length > 0 ? value.trim() : fallback;
 
@@ -105,12 +104,10 @@ export const normalizeCaseResolverIdentifiers = (input: unknown): CaseResolverId
   });
 
   const byId = new Map<string, CaseResolverIdentifier>(
-    raw.map(
-      (identifier: CaseResolverIdentifier): [string, CaseResolverIdentifier] => [
-        identifier.id,
-        identifier,
-      ]
-    )
+    raw.map((identifier: CaseResolverIdentifier): [string, CaseResolverIdentifier] => [
+      identifier.id,
+      identifier,
+    ])
   );
   const normalizedParents = raw.map(
     (identifier: CaseResolverIdentifier): CaseResolverIdentifier => ({
@@ -181,10 +178,12 @@ export const normalizeCaseResolverTags = (input: unknown): CaseResolverTag[] => 
   const byId = new Map<string, CaseResolverTag>(
     raw.map((tag: CaseResolverTag): [string, CaseResolverTag] => [tag.id, tag])
   );
-  const normalizedParents = raw.map((tag: CaseResolverTag): CaseResolverTag => ({
-    ...tag,
-    parentId: resolveSafeTagParentId(tag.id, tag.parentId ?? null, byId),
-  }));
+  const normalizedParents = raw.map(
+    (tag: CaseResolverTag): CaseResolverTag => ({
+      ...tag,
+      parentId: resolveSafeTagParentId(tag.id, tag.parentId ?? null, byId),
+    })
+  );
 
   const grouped = new Map<string, CaseResolverTag[]>();
   const getGroupKey = (parentId: string | null): string => parentId ?? '__root__';
@@ -247,12 +246,17 @@ export const normalizeCaseResolverCategories = (input: unknown): CaseResolverCat
   });
 
   const byId = new Map<string, CaseResolverCategory>(
-    raw.map((category: CaseResolverCategory): [string, CaseResolverCategory] => [category.id, category])
+    raw.map((category: CaseResolverCategory): [string, CaseResolverCategory] => [
+      category.id,
+      category,
+    ])
   );
-  const normalizedParents = raw.map((category: CaseResolverCategory): CaseResolverCategory => ({
-    ...category,
-    parentId: resolveSafeCategoryParentId(category.id, category.parentId ?? null, byId),
-  }));
+  const normalizedParents = raw.map(
+    (category: CaseResolverCategory): CaseResolverCategory => ({
+      ...category,
+      parentId: resolveSafeCategoryParentId(category.id, category.parentId ?? null, byId),
+    })
+  );
 
   const grouped = new Map<string, CaseResolverCategory[]>();
   const getGroupKey = (parentId: string | null): string => parentId ?? '__root__';
@@ -338,8 +342,8 @@ export const parseCaseResolverTags = (raw: string | null | undefined): CaseResol
 
 export const parseCaseResolverIdentifiers = (
   raw: string | null | undefined
-): CaseResolverIdentifier[] =>
-  normalizeCaseResolverIdentifiers(parseJsonSetting<unknown>(raw, []));
+): CaseResolverIdentifier[] => normalizeCaseResolverIdentifiers(parseJsonSetting<unknown>(raw, []));
 
-export const parseCaseResolverCategories = (raw: string | null | undefined): CaseResolverCategory[] =>
-  normalizeCaseResolverCategories(parseJsonSetting<unknown>(raw, []));
+export const parseCaseResolverCategories = (
+  raw: string | null | undefined
+): CaseResolverCategory[] => normalizeCaseResolverCategories(parseJsonSetting<unknown>(raw, []));

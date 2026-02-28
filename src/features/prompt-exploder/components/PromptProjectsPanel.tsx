@@ -14,12 +14,8 @@ import type { PromptExploderLibraryItem } from '../prompt-library';
 export function PromptProjectsPanel(): React.JSX.Element {
   const { promptText, documentState } = useDocumentState();
   const { isBusy } = useSettingsState();
-  const {
-    selectedLibraryItemId,
-    libraryNameDraft,
-    promptLibraryItems,
-    selectedLibraryItem,
-  } = useLibraryState();
+  const { selectedLibraryItemId, libraryNameDraft, promptLibraryItems, selectedLibraryItem } =
+    useLibraryState();
   const {
     setLibraryNameDraft,
     handleNewLibraryEntry,
@@ -46,11 +42,7 @@ export function PromptProjectsPanel(): React.JSX.Element {
           >
             Save Project
           </Button>
-          <Button
-            type='button'
-            variant='outline'
-            onClick={handleNewLibraryEntry}
-          >
+          <Button type='button' variant='outline' onClick={handleNewLibraryEntry}>
             New Project
           </Button>
           <Button
@@ -77,7 +69,7 @@ export function PromptProjectsPanel(): React.JSX.Element {
                 title: item.name,
                 description: item.prompt,
                 subtitle: `segments ${item.document?.segments.length ?? 0} · updated ${promptExploderFormatTimestamp(item.updatedAt)}`,
-                original: item
+                original: item,
               }))}
               selectedId={selectedLibraryItemId ?? undefined}
               onSelect={(item) => handleLoadLibraryItem(item.id)}
@@ -100,13 +92,10 @@ export function PromptProjectsPanel(): React.JSX.Element {
           <div className='rounded border border-border/50 bg-card/20 p-2 text-xs text-gray-500'>
             <div>
               Active project:{' '}
-              <span className='text-gray-300'>
-                {selectedLibraryItem?.name ?? 'Unsaved draft'}
-              </span>
+              <span className='text-gray-300'>{selectedLibraryItem?.name ?? 'Unsaved draft'}</span>
             </div>
             <div>
-              Prompt length:{' '}
-              <span className='text-gray-300'>{promptText.length}</span>
+              Prompt length: <span className='text-gray-300'>{promptText.length}</span>
             </div>
             <div>
               Saved segments:{' '}
@@ -116,9 +105,7 @@ export function PromptProjectsPanel(): React.JSX.Element {
             </div>
             <div>
               Current segments:{' '}
-              <span className='text-gray-300'>
-                {documentState?.segments.length ?? 0}
-              </span>
+              <span className='text-gray-300'>{documentState?.segments.length ?? 0}</span>
             </div>
           </div>
           <div className='text-[11px] text-gray-500'>

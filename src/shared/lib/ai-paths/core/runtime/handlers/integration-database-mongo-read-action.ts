@@ -1,8 +1,4 @@
-import type {
-  DatabaseAction,
-  DbQueryConfig,
-  RuntimePortValues,
-} from '@/shared/contracts/ai-paths';
+import type { DatabaseAction, DbQueryConfig, RuntimePortValues } from '@/shared/contracts/ai-paths';
 import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 
 import { dbApi, ApiResponse } from '../../../api';
@@ -60,9 +56,7 @@ export async function handleDatabaseMongoReadAction({
     };
   }
   if (action === 'aggregate') {
-    const parsedPipeline: unknown = parseJsonTemplate(
-      _queryConfig.queryTemplate ?? '[]',
-    );
+    const parsedPipeline: unknown = parseJsonTemplate(_queryConfig.queryTemplate ?? '[]');
     if (!Array.isArray(parsedPipeline)) {
       toast('Aggregation pipeline must be a JSON array.', {
         variant: 'error',
@@ -85,11 +79,15 @@ export async function handleDatabaseMongoReadAction({
         aiPrompt,
       };
     }
-    const aggResult: ApiResponse<DbActionResult> = await dbApi.action<DbActionResult>({ 
-      ...(queryPayload['provider'] ? { provider: queryPayload['provider'] as 'auto' | 'mongodb' | 'prisma' } : {}),
+    const aggResult: ApiResponse<DbActionResult> = await dbApi.action<DbActionResult>({
+      ...(queryPayload['provider']
+        ? { provider: queryPayload['provider'] as 'auto' | 'mongodb' | 'prisma' }
+        : {}),
       action,
       collection,
-      ...(queryPayload['collectionMap'] ? { collectionMap: queryPayload['collectionMap'] as Record<string, string> } : {}),
+      ...(queryPayload['collectionMap']
+        ? { collectionMap: queryPayload['collectionMap'] as Record<string, string> }
+        : {}),
       pipeline: parsedPipeline,
     });
     if (!aggResult.ok) {
@@ -104,10 +102,10 @@ export async function handleDatabaseMongoReadAction({
       result: (aggResult.data as Record<string, unknown>)?.['items'] ?? [],
       bundle: {
         count:
-        (aggResult.data as Record<string, unknown>)?.['count'] ??
-        (Array.isArray((aggResult.data as Record<string, unknown>)?.['items'])
-          ? ((aggResult.data as Record<string, unknown>)?.['items'] as unknown[]).length
-          : 0),
+          (aggResult.data as Record<string, unknown>)?.['count'] ??
+          (Array.isArray((aggResult.data as Record<string, unknown>)?.['items'])
+            ? ((aggResult.data as Record<string, unknown>)?.['items'] as unknown[]).length
+            : 0),
         collection,
       },
       aiPrompt,
@@ -129,11 +127,15 @@ export async function handleDatabaseMongoReadAction({
       aiPrompt,
     };
   }
-  const readResult: ApiResponse<DbActionResult> = await dbApi.action<DbActionResult>({ 
-    ...(queryPayload['provider'] ? { provider: queryPayload['provider'] as 'auto' | 'mongodb' | 'prisma' } : {}),
+  const readResult: ApiResponse<DbActionResult> = await dbApi.action<DbActionResult>({
+    ...(queryPayload['provider']
+      ? { provider: queryPayload['provider'] as 'auto' | 'mongodb' | 'prisma' }
+      : {}),
     action,
     collection,
-    ...(queryPayload['collectionMap'] ? { collectionMap: queryPayload['collectionMap'] as Record<string, string> } : {}),
+    ...(queryPayload['collectionMap']
+      ? { collectionMap: queryPayload['collectionMap'] as Record<string, string> }
+      : {}),
     filter,
     ...(projection !== undefined ? { projection: projection as Record<string, unknown> } : {}),
     ...(sort !== undefined ? { sort: sort as Record<string, unknown> } : {}),
@@ -148,12 +150,11 @@ export async function handleDatabaseMongoReadAction({
   const data: DbActionResult = readResult.data;
   let result: unknown = data['item'] ?? data['items'] ?? data['values'] ?? data['count'] ?? [];
   let count: number =
-  (data['count'] as number) ??
-  (Array.isArray(result) ? (result as unknown[]).length : result ? 1 : 0);
-  toast(
-    `Database query succeeded for ${collection} (${count} result${count === 1 ? '' : 's'}).`,
-    { variant: 'success' },
-  );
+    (data['count'] as number) ??
+    (Array.isArray(result) ? (result as unknown[]).length : result ? 1 : 0);
+  toast(`Database query succeeded for ${collection} (${count} result${count === 1 ? '' : 's'}).`, {
+    variant: 'success',
+  });
   return {
     result,
     bundle: {

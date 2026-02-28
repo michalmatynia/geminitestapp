@@ -29,12 +29,9 @@ export const aiTriggerButtonDisplaySchema = z.enum(['icon', 'icon_label']);
 
 type AiTriggerButtonDisplayMode = z.infer<typeof aiTriggerButtonDisplaySchema>;
 
-const normalizeText = (value: unknown): string =>
-  typeof value === 'string' ? value.trim() : '';
+const normalizeText = (value: unknown): string => (typeof value === 'string' ? value.trim() : '');
 
-const normalizePathId = (
-  value: unknown
-): string | null | undefined => {
+const normalizePathId = (value: unknown): string | null | undefined => {
   if (value === undefined) return undefined;
   if (value === null) return null;
   if (typeof value !== 'string') return null;
@@ -87,8 +84,7 @@ const normalizeRecordForRead = (value: unknown): Record<string, unknown> | null 
   if (displayLabel) {
     const rawNameLooksOpaque =
       rawName.length > 0 && (rawName === id || isOpaqueTriggerButtonName(rawName));
-    const displayLooksOpaque =
-      displayLabel === id || isOpaqueTriggerButtonName(displayLabel);
+    const displayLooksOpaque = displayLabel === id || isOpaqueTriggerButtonName(displayLabel);
     if (rawNameLooksOpaque && !displayLooksOpaque) {
       resolvedName = displayLabel;
     }
@@ -117,13 +113,9 @@ const coerceOptionalBoolean = (value: unknown): boolean | undefined => {
   return undefined;
 };
 
-const normalizeDisplayForRead = (
-  value: unknown
-): AiTriggerButtonDisplayMode | undefined => {
+const normalizeDisplayForRead = (value: unknown): AiTriggerButtonDisplayMode | undefined => {
   if (value && typeof value === 'object' && !Array.isArray(value)) {
-    const showLabel = coerceOptionalBoolean(
-      (value as Record<string, unknown>)['showLabel']
-    );
+    const showLabel = coerceOptionalBoolean((value as Record<string, unknown>)['showLabel']);
     return showLabel === false ? 'icon' : 'icon_label';
   }
   if (typeof value !== 'string') return undefined;
@@ -134,7 +126,9 @@ const normalizeDisplayForRead = (
   return undefined;
 };
 
-const normalizeModeForRead = (value: unknown): 'click' | 'toggle' | 'execute_path' | 'open_chat' | 'open_url' | 'copy_text' | undefined => {
+const normalizeModeForRead = (
+  value: unknown
+): 'click' | 'toggle' | 'execute_path' | 'open_chat' | 'open_url' | 'copy_text' | undefined => {
   if (typeof value !== 'string') return undefined;
   const normalized = value.trim().toLowerCase();
   if (normalized === 'click') return 'click';
@@ -148,25 +142,23 @@ const normalizeModeForRead = (value: unknown): 'click' | 'toggle' | 'execute_pat
 
 const normalizeLocationsForRead = (
   value: unknown
-): Array<
-  | 'product_modal'
-  | 'product_list'
-  | 'product_row'
-  | 'note_modal'
-  | 'note_list'
-  | 'product_list_header'
-  | 'product_list_item'
-  | 'product_form_header'
-  | 'product_form_footer'
-  | 'cms_page_header'
-  | 'cms_block_header'
-  | 'admin_dashboard'
-> | undefined => {
-  const source = Array.isArray(value)
-    ? value
-    : typeof value === 'string'
-      ? [value]
-      : [];
+):
+  | Array<
+      | 'product_modal'
+      | 'product_list'
+      | 'product_row'
+      | 'note_modal'
+      | 'note_list'
+      | 'product_list_header'
+      | 'product_list_item'
+      | 'product_form_header'
+      | 'product_form_footer'
+      | 'cms_page_header'
+      | 'cms_block_header'
+      | 'admin_dashboard'
+    >
+  | undefined => {
+  const source = Array.isArray(value) ? value : typeof value === 'string' ? [value] : [];
   const seen = new Set<
     | 'product_modal'
     | 'product_list'
@@ -278,10 +270,7 @@ const normalizeAiTriggerButtonRecord = (
     enabled: isVisible,
     locations: [...locations],
     mode: record.mode ?? 'click',
-    display: buildCanonicalTriggerButtonDisplay(
-      record.name,
-      record.display ?? 'icon_label'
-    ),
+    display: buildCanonicalTriggerButtonDisplay(record.name, record.display ?? 'icon_label'),
     createdAt: record.createdAt ?? now,
     updatedAt: record.updatedAt ?? record.createdAt ?? now,
     isActive: isVisible,

@@ -105,18 +105,20 @@ const sanitizeDocumentFileLinksByNode = (
     return {};
   }
   const result: Record<string, string[]> = {};
-  Object.entries(source as Record<string, unknown>).forEach(([nodeId, rawLinks]: [string, unknown]) => {
-    if (!validNodeIds.has(nodeId)) return;
-    if (!Array.isArray(rawLinks)) return;
-    const unique = new Set<string>();
-    rawLinks.forEach((entry: unknown) => {
-      if (typeof entry !== 'string') return;
-      const normalized = entry.trim();
-      if (!normalized) return;
-      unique.add(normalized);
-    });
-    result[nodeId] = Array.from(unique);
-  });
+  Object.entries(source as Record<string, unknown>).forEach(
+    ([nodeId, rawLinks]: [string, unknown]) => {
+      if (!validNodeIds.has(nodeId)) return;
+      if (!Array.isArray(rawLinks)) return;
+      const unique = new Set<string>();
+      rawLinks.forEach((entry: unknown) => {
+        if (typeof entry !== 'string') return;
+        const normalized = entry.trim();
+        if (!normalized) return;
+        unique.add(normalized);
+      });
+      result[nodeId] = Array.from(unique);
+    }
+  );
   return result;
 };
 
@@ -128,13 +130,15 @@ const sanitizeDocumentSourceFileIdByNode = (
     return {};
   }
   const result: Record<string, string> = {};
-  Object.entries(source as Record<string, unknown>).forEach(([nodeId, rawFileId]: [string, unknown]) => {
-    if (!validNodeIds.has(nodeId)) return;
-    if (typeof rawFileId !== 'string') return;
-    const normalizedFileId = rawFileId.trim();
-    if (!normalizedFileId) return;
-    result[nodeId] = normalizedFileId;
-  });
+  Object.entries(source as Record<string, unknown>).forEach(
+    ([nodeId, rawFileId]: [string, unknown]) => {
+      if (!validNodeIds.has(nodeId)) return;
+      if (typeof rawFileId !== 'string') return;
+      const normalizedFileId = rawFileId.trim();
+      if (!normalizedFileId) return;
+      result[nodeId] = normalizedFileId;
+    }
+  );
   return result;
 };
 
@@ -146,13 +150,15 @@ const sanitizeNodeFileAssetIdByNode = (
     return {};
   }
   const result: Record<string, string> = {};
-  Object.entries(source as Record<string, unknown>).forEach(([nodeId, rawAssetId]: [string, unknown]) => {
-    if (!validNodeIds.has(nodeId)) return;
-    if (typeof rawAssetId !== 'string') return;
-    const normalizedAssetId = rawAssetId.trim();
-    if (!normalizedAssetId) return;
-    result[nodeId] = normalizedAssetId;
-  });
+  Object.entries(source as Record<string, unknown>).forEach(
+    ([nodeId, rawAssetId]: [string, unknown]) => {
+      if (!validNodeIds.has(nodeId)) return;
+      if (typeof rawAssetId !== 'string') return;
+      const normalizedAssetId = rawAssetId.trim();
+      if (!normalizedAssetId) return;
+      result[nodeId] = normalizedAssetId;
+    }
+  );
   return result;
 };
 
@@ -169,21 +175,21 @@ const ensureDocumentPromptPorts = (
     const normalizedNode: AiNode =
       node.type === 'template' && isTextNode
         ? {
-          ...node,
-          type: 'prompt',
-          config: {
-            ...(node.config ?? {}),
-            prompt: {
-              ...(node.config?.prompt ?? {}),
-              template:
-                typeof node.config?.prompt?.template === 'string'
-                  ? node.config.prompt.template
-                  : typeof node.config?.template?.template === 'string'
-                    ? node.config.template.template
-                    : '',
+            ...node,
+            type: 'prompt',
+            config: {
+              ...(node.config ?? {}),
+              prompt: {
+                ...(node.config?.prompt ?? {}),
+                template:
+                  typeof node.config?.prompt?.template === 'string'
+                    ? node.config.prompt.template
+                    : typeof node.config?.template?.template === 'string'
+                      ? node.config.template.template
+                      : '',
+              },
             },
-          },
-        }
+          }
         : node;
     if (normalizedNode.type !== 'prompt' || !isTextNode) return normalizedNode;
     const isExplanatoryNode = nodeMeta[node.id]?.role === 'explanatory';
@@ -288,9 +294,7 @@ export const sanitizeGraph = (graph: unknown): CaseResolverGraph => {
   const rawNodes = Array.isArray(graphRecord['nodes']) ? (graphRecord['nodes'] as AiNode[]) : [];
   const edges = Array.isArray(graphRecord['edges']) ? (graphRecord['edges'] as Edge[]) : [];
   const validNodeIds = new Set<string>(
-    rawNodes
-      .map((node: AiNode) => (typeof node?.id === 'string' ? node.id : ''))
-      .filter(Boolean)
+    rawNodes.map((node: AiNode) => (typeof node?.id === 'string' ? node.id : '')).filter(Boolean)
   );
   const edgesByNodeId = edges.filter(
     (edge: Edge): boolean =>
@@ -303,7 +307,9 @@ export const sanitizeGraph = (graph: unknown): CaseResolverGraph => {
 
   const presetRaw = graphRecord['pdfExtractionPresetId'];
   const pdfExtractionPresetId: CaseResolverPdfExtractionPresetId =
-    presetRaw === 'plain_text' || presetRaw === 'structured_sections' || presetRaw === 'facts_entities'
+    presetRaw === 'plain_text' ||
+    presetRaw === 'structured_sections' ||
+    presetRaw === 'facts_entities'
       ? presetRaw
       : DEFAULT_CASE_RESOLVER_PDF_EXTRACTION_PRESET_ID;
   const documentFileLinksByNode = sanitizeDocumentFileLinksByNode(
@@ -340,7 +346,7 @@ export const sanitizeGraph = (graph: unknown): CaseResolverGraph => {
       .map((node: AiNode): string => node.id)
   );
   const sanitizedEdges = sanitizeTextNodeEdgePorts(edgesByNodeId, textNodeIds, explanatoryNodeIds);
-  const strictEdges: CaseResolverGraph['edges'] = (sanitizedEdges)
+  const strictEdges: CaseResolverGraph['edges'] = sanitizedEdges
     .map((edge: Edge): CaseResolverGraph['edges'][number] | null => {
       const from = edge.from ?? edge.source;
       const to = edge.to ?? edge.target;
@@ -350,10 +356,10 @@ export const sanitizeGraph = (graph: unknown): CaseResolverGraph => {
         from,
         to,
         ...(edge.label ? { label: edge.label } : {}),
-        ...(edge.fromPort ?? edge.sourceHandle
+        ...((edge.fromPort ?? edge.sourceHandle)
           ? { fromPort: edge.fromPort ?? edge.sourceHandle ?? undefined }
           : {}),
-        ...(edge.toPort ?? edge.targetHandle
+        ...((edge.toPort ?? edge.targetHandle)
           ? { toPort: edge.toPort ?? edge.targetHandle ?? undefined }
           : {}),
       };
@@ -378,9 +384,7 @@ export const sanitizeGraph = (graph: unknown): CaseResolverGraph => {
     documentFileLinksByNode,
     documentDropNodeId,
     documentSourceFileIdByNode,
-    ...(Object.keys(nodeFileAssetIdByNode).length > 0
-      ? { nodeFileAssetIdByNode }
-      : {}),
+    ...(Object.keys(nodeFileAssetIdByNode).length > 0 ? { nodeFileAssetIdByNode } : {}),
   };
 };
 

@@ -24,7 +24,7 @@ export type CaseListSearchEntry = {
 export function useCaseListSearch(
   workspaceFiles: CaseResolverFile[],
   identifierLabelById: Map<string, string>,
-  query: string,
+  query: string
 ): { entries: CaseListSearchEntry[]; isActive: boolean } {
   const trimmed = query.trim();
   const isActive = trimmed.length > 0;
@@ -52,12 +52,10 @@ export function useCaseListSearch(
     for (const caseFile of caseFiles) {
       const signatureLabel = resolveIdentifierSearchLabel(
         caseFile.caseIdentifierId,
-        identifierLabelById,
+        identifierLabelById
       );
       caseSignatureLabelById.set(caseFile.id, signatureLabel);
-      const searchable = normalizeSearchText(
-        `${caseFile.name} ${signatureLabel}`,
-      );
+      const searchable = normalizeSearchText(`${caseFile.name} ${signatureLabel}`);
       if (searchable.includes(normalized)) {
         caseMatchedIds.add(caseFile.id);
       }
@@ -68,7 +66,7 @@ export function useCaseListSearch(
 
     for (const file of docFiles) {
       const searchable = normalizeSearchText(
-        `${file.name} ${file.folder} ${resolveSearchableDocumentContent(file)}`,
+        `${file.name} ${file.folder} ${resolveSearchableDocumentContent(file)}`
       );
       if (!searchable.includes(normalized)) continue;
 
@@ -77,7 +75,7 @@ export function useCaseListSearch(
 
       const signatureLabel = resolveIdentifierSearchLabel(
         file.caseIdentifierId,
-        identifierLabelById,
+        identifierLabelById
       );
 
       const existing = matchedFilesByCaseId.get(parentCaseId) ?? [];

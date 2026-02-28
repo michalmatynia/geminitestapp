@@ -17,7 +17,6 @@ import type { ProductDbProvider } from '@/features/products/services/product-pro
 import type { ImageFileRecord } from '@/shared/contracts/files';
 import type { NoteFileRecord } from '@/shared/contracts/notes';
 
-
 const uploadsRoot = path.join(process.cwd(), 'public', 'uploads');
 const productsRoot = path.join(uploadsRoot, 'products');
 const notesRoot = path.join(uploadsRoot, 'notes');
@@ -144,9 +143,7 @@ function getUploadTarget({
 
   if (category === 'case_resolver') {
     const safeFolder = folder?.trim() ? sanitizeFolderPath(folder) : '';
-    const diskDir = safeFolder
-      ? path.join(caseResolverRoot, safeFolder)
-      : caseResolverRoot;
+    const diskDir = safeFolder ? path.join(caseResolverRoot, safeFolder) : caseResolverRoot;
     const publicDir = safeFolder
       ? `/uploads/case-resolver/${safeFolder}`
       : '/uploads/case-resolver';
@@ -185,7 +182,8 @@ export async function uploadFile(
   const normalizedType = typeof file.type === 'string' ? file.type.trim().toLowerCase() : '';
   const hasAllowedType = isAllowedMimeType(normalizedType);
   const hasAllowedExt = isAllowedFilenameExtension(rawName);
-  const allowStudioFallbackType = isStudioUpload && (normalizedType === '' || normalizedType === 'application/octet-stream');
+  const allowStudioFallbackType =
+    isStudioUpload && (normalizedType === '' || normalizedType === 'application/octet-stream');
   if (!hasAllowedType && !hasAllowedExt && !allowStudioFallbackType) {
     throw new Error(`Unsupported file type for "${rawName}": ${normalizedType || 'unknown'}`);
   }
@@ -255,9 +253,7 @@ export async function uploadFile(
       size: file.size,
       source: 'fileUploader.uploadFile',
       errorMessage: error instanceof Error ? error.message : 'Upload failed',
-      meta: options?.allowOrphanRecord
-        ? { orphanRecord: true, storageSource }
-        : { storageSource },
+      meta: options?.allowOrphanRecord ? { orphanRecord: true, storageSource } : { storageSource },
     }).catch(() => {});
     await ErrorSystem.captureException(error, {
       service: 'fileUploader',
@@ -404,7 +400,7 @@ export async function deleteNoteFile(
       service: 'fileUploader',
       action: 'deleteNoteFile',
       noteId,
-      filepath
+      filepath,
     });
     return false;
   }

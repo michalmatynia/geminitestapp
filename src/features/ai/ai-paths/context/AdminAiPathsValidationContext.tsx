@@ -5,9 +5,15 @@ import { useAdminAiPathsValidationState } from '../hooks/useAdminAiPathsValidati
 
 export type AdminAiPathsValidationContextValue = ReturnType<typeof useAdminAiPathsValidationState>;
 
-const AdminAiPathsValidationContext = createContext<AdminAiPathsValidationContextValue | null>(null);
+const AdminAiPathsValidationContext = createContext<AdminAiPathsValidationContextValue | null>(
+  null
+);
 
-export function AdminAiPathsValidationProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
+export function AdminAiPathsValidationProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}): React.JSX.Element {
   const value = useAdminAiPathsValidationState();
   return (
     <AdminAiPathsValidationContext.Provider value={value}>
@@ -19,7 +25,9 @@ export function AdminAiPathsValidationProvider({ children }: { children: React.R
 export function useAdminAiPathsValidationContext(): AdminAiPathsValidationContextValue {
   const context = useContext(AdminAiPathsValidationContext);
   if (!context) {
-    throw new Error('useAdminAiPathsValidationContext must be used within AdminAiPathsValidationProvider');
+    throw new Error(
+      'useAdminAiPathsValidationContext must be used within AdminAiPathsValidationProvider'
+    );
   }
   return context;
 }

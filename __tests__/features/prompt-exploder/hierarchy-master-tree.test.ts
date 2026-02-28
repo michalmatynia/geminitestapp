@@ -93,14 +93,10 @@ describe('prompt exploder hierarchy master tree adapter', () => {
   });
 
   it('updates and removes nested list items by id', () => {
-    const updated = updatePromptExploderListItemById(
-      SAMPLE_ITEMS,
-      'qa_r1_fail',
-      (item: any) => ({
-        ...item,
-        text: 'FAIL if relighting is missing.',
-      })
-    );
+    const updated = updatePromptExploderListItemById(SAMPLE_ITEMS, 'qa_r1_fail', (item: any) => ({
+      ...item,
+      text: 'FAIL if relighting is missing.',
+    }));
     expect(updated[0]!.children[1]!.text).toBe('FAIL if relighting is missing.');
 
     const removed = removePromptExploderListItemById(updated, 'qa_r1_pass');

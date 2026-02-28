@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getAnalyticsSummary } from '@/features/analytics/server';
+import { getAnalyticsSummary } from '@/shared/lib/analytics/server';
 import { auth } from '@/features/auth/server';
 import type { AnalyticsScope } from '@/shared/contracts';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
@@ -21,10 +21,7 @@ const getRangeWindow = (range: AnalyticsRange): { from: Date; to: Date } => {
   return { from, to };
 };
 
-export async function GET_handler(
-  req: NextRequest,
-  _ctx: ApiHandlerContext,
-): Promise<Response> {
+export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const session = await auth();
   if (!session?.user) throw authError('Unauthorized.');
 

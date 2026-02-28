@@ -1,20 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import type {
-  AiNode,
-  AiPathsValidationConfig,
-  Edge,
-} from '@/shared/contracts/ai-paths';
+import type { AiNode, AiPathsValidationConfig, Edge } from '@/shared/contracts/ai-paths';
 
 import { normalizeAiPathsValidationConfig } from '../defaults';
 import { evaluateAiPathsValidationPreflight } from '../evaluator';
 
-const buildNode = (
-  id: string,
-  type: AiNode['type'],
-  inputs: string[],
-  outputs: string[],
-): AiNode =>
+const buildNode = (id: string, type: AiNode['type'], inputs: string[], outputs: string[]): AiNode =>
   ({
     id,
     type,
@@ -120,9 +111,7 @@ describe('semantic grammar validation operators', () => {
   });
 
   it('fails when an edge references missing endpoint node', () => {
-    const nodes: AiNode[] = [
-      buildNode('node-a', 'trigger', ['context'], ['trigger']),
-    ];
+    const nodes: AiNode[] = [buildNode('node-a', 'trigger', ['context'], ['trigger'])];
     const edges: Edge[] = [
       {
         id: 'edge-missing-target',
@@ -139,9 +128,7 @@ describe('semantic grammar validation operators', () => {
       config: baseValidationConfig(),
     });
     expect(report.failedRules).toBeGreaterThan(0);
-    expect(report.findings.some((finding) => finding.ruleId.includes('edge_endpoints'))).toBe(
-      true,
-    );
+    expect(report.findings.some((finding) => finding.ruleId.includes('edge_endpoints'))).toBe(true);
   });
 
   it('fails when edge port is not declared on source/target node', () => {
@@ -179,7 +166,9 @@ describe('semantic grammar validation operators', () => {
       edges: [],
       config: baseValidationConfig(),
     });
-    expect(report.findings.some((finding) => finding.ruleId === 'semantic.catalog.node_ids_unique')).toBe(true);
+    expect(
+      report.findings.some((finding) => finding.ruleId === 'semantic.catalog.node_ids_unique')
+    ).toBe(true);
   });
 
   it('fails when edge IDs are duplicated', () => {
@@ -209,7 +198,9 @@ describe('semantic grammar validation operators', () => {
       edges,
       config: baseValidationConfig(),
     });
-    expect(report.findings.some((finding) => finding.ruleId === 'semantic.catalog.edge_ids_unique')).toBe(true);
+    expect(
+      report.findings.some((finding) => finding.ruleId === 'semantic.catalog.edge_ids_unique')
+    ).toBe(true);
   });
 
   it('fails when node positions are non-finite', () => {
@@ -227,9 +218,7 @@ describe('semantic grammar validation operators', () => {
       config: baseValidationConfig(),
     });
     expect(
-      report.findings.some(
-        (finding) => finding.ruleId === 'semantic.catalog.node_positions_finite',
-      ),
+      report.findings.some((finding) => finding.ruleId === 'semantic.catalog.node_positions_finite')
     ).toBe(true);
   });
 
@@ -245,16 +234,12 @@ describe('semantic grammar validation operators', () => {
       config: baseValidationConfig(),
     });
     expect(
-      report.findings.some(
-        (finding) => finding.ruleId === 'semantic.catalog.node_types_known',
-      ),
+      report.findings.some((finding) => finding.ruleId === 'semantic.catalog.node_types_known')
     ).toBe(true);
   });
 
   it('treats wired_to checks as not applicable when target node type is absent', () => {
-    const nodes: AiNode[] = [
-      buildNode('node-a', 'trigger', ['context'], ['trigger']),
-    ];
+    const nodes: AiNode[] = [buildNode('node-a', 'trigger', ['context'], ['trigger'])];
     const edges: Edge[] = [];
     const config = normalizeAiPathsValidationConfig({
       ...baseValidationConfig(),
@@ -287,9 +272,7 @@ describe('semantic grammar validation operators', () => {
       config,
     });
     expect(
-      report.findings.some(
-        (finding) => finding.ruleId === 'semantic.wiring.trigger_to_simulation',
-      ),
+      report.findings.some((finding) => finding.ruleId === 'semantic.wiring.trigger_to_simulation')
     ).toBe(false);
   });
 
@@ -330,9 +313,7 @@ describe('semantic grammar validation operators', () => {
       config,
     });
     expect(
-      report.findings.some(
-        (finding) => finding.ruleId === 'semantic.wiring.trigger_to_simulation',
-      ),
+      report.findings.some((finding) => finding.ruleId === 'semantic.wiring.trigger_to_simulation')
     ).toBe(true);
   });
 });

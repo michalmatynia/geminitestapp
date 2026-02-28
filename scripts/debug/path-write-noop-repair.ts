@@ -1,9 +1,6 @@
 import 'dotenv/config';
 
-import {
-  collectNoopWriteFindings,
-  dedupeRunIds,
-} from './path-write-noop-utils';
+import { collectNoopWriteFindings, dedupeRunIds } from './path-write-noop-utils';
 import {
   collectJsonIntegrityFindings,
   dedupeRunIdsFromJsonIntegrityFindings,
@@ -57,8 +54,7 @@ const parseArgs = (argv: string[]): CliOptions => {
     }
     if (arg.startsWith('--mode=')) {
       const mode = arg.slice('--mode='.length).trim().toLowerCase();
-      options.mode =
-        mode === 'json-integrity' ? 'json-integrity' : 'noop-write';
+      options.mode = mode === 'json-integrity' ? 'json-integrity' : 'noop-write';
     }
   });
 
@@ -81,9 +77,10 @@ async function main(): Promise<void> {
     scannedRuns = diagnostics.scannedRuns;
     scannedNodes = diagnostics.scannedNodes;
     findingCount = diagnostics.findings.length;
-    candidateRunIds = dedupeRunIdsFromJsonIntegrityFindings(
-      diagnostics.findings
-    ).slice(0, options.maxApply);
+    candidateRunIds = dedupeRunIdsFromJsonIntegrityFindings(diagnostics.findings).slice(
+      0,
+      options.maxApply
+    );
   } else {
     const diagnostics = await collectNoopWriteFindings({
       ...(options.runId ? { runId: options.runId } : {}),
@@ -93,19 +90,14 @@ async function main(): Promise<void> {
     scannedRuns = diagnostics.scannedRuns;
     scannedNodes = diagnostics.scannedNodes;
     findingCount = diagnostics.findings.length;
-    candidateRunIds = dedupeRunIds(diagnostics.findings).slice(
-      0,
-      options.maxApply
-    );
+    candidateRunIds = dedupeRunIds(diagnostics.findings).slice(0, options.maxApply);
   }
 
   const requeued: string[] = [];
   const failed: Array<{ runId: string; error: string }> = [];
 
   if (options.apply) {
-    const { resumePathRun } = await import(
-      '@/features/ai/ai-paths/services/path-run-service'
-    );
+    const { resumePathRun } = await import('@/features/ai/ai-paths/services/path-run-service');
     for (const runId of candidateRunIds) {
       try {
         await resumePathRun(runId, 'replay');
@@ -140,8 +132,8 @@ async function main(): Promise<void> {
         failed,
       },
       null,
-      2,
-    ),
+      2
+    )
   );
 }
 

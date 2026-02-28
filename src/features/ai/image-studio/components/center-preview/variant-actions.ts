@@ -129,7 +129,7 @@ const dismissVariantFromUi = (
   clearActiveRunError: () => void,
   setDismissedVariantKeys: React.Dispatch<React.SetStateAction<Set<string>>>,
   setVariantTooltip: React.Dispatch<React.SetStateAction<VariantTooltipState | null>>,
-  variant: VariantThumbnailInfo,
+  variant: VariantThumbnailInfo
 ): void => {
   setDismissedVariantKeys((current) => {
     const next = new Set(current);
@@ -153,7 +153,8 @@ const refreshGenerationQueries = (queryClient: QueryClient): void => {
 };
 
 const collectSourceParentSlotIds = (slot: ImageStudioSlotRecord | null): string[] => {
-  if (!slot?.metadata || typeof slot.metadata !== 'object' || Array.isArray(slot.metadata)) return [];
+  if (!slot?.metadata || typeof slot.metadata !== 'object' || Array.isArray(slot.metadata))
+    return [];
   const metadata = slot.metadata;
   const ordered = new Set<string>();
   const primarySource =
@@ -261,7 +262,7 @@ export const deleteVariantFromCenterPreview = async ({
           {
             cache: 'no-store',
             logError: false,
-          },
+          }
         );
         queryClient.setQueryData(studioKeys.slots(projectId), response);
       },
@@ -271,7 +272,7 @@ export const deleteVariantFromCenterPreview = async ({
     });
 
     const runIdFromVariantId = variant.id.startsWith('run:')
-      ? variant.id.split(':')[1]?.trim() ?? ''
+      ? (variant.id.split(':')[1]?.trim() ?? '')
       : '';
     const generationRunId = runIdFromVariantId || activeRunId?.trim() || null;
     const response = await api.post<DeleteVariantApiResponse>(
@@ -283,27 +284,26 @@ export const deleteVariantFromCenterPreview = async ({
         generationRunId: generationRunId ?? undefined,
         generationOutputIndex: Number.isFinite(variant.index) ? variant.index : undefined,
         sourceSlotId: rootVariantSourceSlotId ?? undefined,
-      },
+      }
     );
     const slotById = new Map<string, ImageStudioSlotRecord>(
-      slots.map((slot): [string, ImageStudioSlotRecord] => [slot.id, slot]),
+      slots.map((slot): [string, ImageStudioSlotRecord] => [slot.id, slot])
     );
     const deletedSlotIds = new Set(
       response.deletedSlotIds
         .filter((slotId): slotId is string => typeof slotId === 'string')
         .map((slotId: string) => slotId.trim())
-        .filter(Boolean),
+        .filter(Boolean)
     );
     const focusSlotCandidates = new Set<string>();
     const resolvedTargetSlotId = (targetSlotId ?? variant.slotId ?? '').trim();
-    const targetSlotRecord = resolvedTargetSlotId ? slotById.get(resolvedTargetSlotId) ?? null : null;
+    const targetSlotRecord = resolvedTargetSlotId
+      ? (slotById.get(resolvedTargetSlotId) ?? null)
+      : null;
     const deletedSlotRecords = Array.from(deletedSlotIds)
       .map((slotId: string) => slotById.get(slotId) ?? null)
       .filter((slot): slot is ImageStudioSlotRecord => Boolean(slot));
-    const possibleParentSources = [
-      targetSlotRecord,
-      ...deletedSlotRecords,
-    ];
+    const possibleParentSources = [targetSlotRecord, ...deletedSlotRecords];
     possibleParentSources.forEach((slot) => {
       collectSourceParentSlotIds(slot).forEach((parentId) => {
         if (deletedSlotIds.has(parentId)) return;
@@ -336,7 +336,7 @@ export const deleteVariantFromCenterPreview = async ({
       clearActiveRunError,
       setDismissedVariantKeys,
       setVariantTooltip,
-      variant,
+      variant
     );
     refreshGenerationQueries(queryClient);
     try {
@@ -345,14 +345,12 @@ export const deleteVariantFromCenterPreview = async ({
         {
           cache: 'no-store',
           logError: false,
-        },
+        }
       );
       queryClient.setQueryData(studioKeys.slots(projectId), refreshed);
       const refreshedSlots = Array.isArray(refreshed?.slots) ? refreshed.slots : [];
       const refreshedIdSet = new Set(
-        refreshedSlots
-          .map((slot) => slot.id?.trim() ?? '')
-          .filter(Boolean),
+        refreshedSlots.map((slot) => slot.id?.trim() ?? '').filter(Boolean)
       );
       const nextFocusSlotId =
         Array.from(focusSlotCandidates).find((candidateId) => refreshedIdSet.has(candidateId)) ??
@@ -367,6 +365,8 @@ export const deleteVariantFromCenterPreview = async ({
     await queryClient.invalidateQueries({ queryKey: studioKeys.slots(projectId) });
     await queryClient.refetchQueries({ queryKey: studioKeys.slots(projectId), type: 'active' });
   } catch (error: unknown) {
-    toast(error instanceof Error ? error.message : 'Failed to delete variant.', { variant: 'error' });
+    toast(error instanceof Error ? error.message : 'Failed to delete variant.', {
+      variant: 'error',
+    });
   }
 };

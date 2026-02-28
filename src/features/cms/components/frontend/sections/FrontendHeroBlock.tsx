@@ -1,6 +1,5 @@
 'use client';
 
-
 import { FrontendBlockRenderer } from './FrontendBlockRenderer';
 import { useSectionBlockData } from './SectionBlockContext';
 import { useMediaStyles } from '../media-styles-context';
@@ -13,7 +12,10 @@ export function FrontendHeroBlock(): React.ReactNode {
   const mediaStyles = useMediaStyles();
 
   return (
-    <div className='cms-media relative min-h-[200px] overflow-hidden' style={mediaStyles ?? undefined}>
+    <div
+      className='cms-media relative min-h-[200px] overflow-hidden'
+      style={mediaStyles ?? undefined}
+    >
       {image ? (
         <div
           className='absolute inset-0 bg-cover bg-center'
@@ -29,9 +31,7 @@ export function FrontendHeroBlock(): React.ReactNode {
         {blocks.map((block: BlockInstance) => (
           <FrontendBlockRenderer key={block.id} block={block} />
         ))}
-        {blocks.length === 0 && (
-          <p className='text-gray-400'>Hero banner</p>
-        )}
+        {blocks.length === 0 && <p className='text-gray-400'>Hero banner</p>}
       </div>
     </div>
   );

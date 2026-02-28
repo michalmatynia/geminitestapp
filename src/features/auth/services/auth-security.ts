@@ -1,9 +1,7 @@
 import 'server-only';
 
 import { getAuthDataProvider, requireAuthProvider } from '@/features/auth/services/auth-provider';
-import {
-  AUTH_SETTINGS_KEYS,
-} from '@/features/auth/utils/auth-management';
+import { AUTH_SETTINGS_KEYS } from '@/features/auth/utils/auth-management';
 import {
   DEFAULT_AUTH_SECURITY_POLICY,
   normalizeAuthSecurityPolicy,
@@ -119,8 +117,7 @@ export const validatePasswordStrength = (
 const normalizeKey = (value: string | null | undefined): string =>
   value?.trim().toLowerCase() ?? '';
 
-const buildAttemptKey = (scope: 'email' | 'ip', value: string): string =>
-  `${scope}:${value}`;
+const buildAttemptKey = (scope: 'email' | 'ip', value: string): string => `${scope}:${value}`;
 
 const getMemoryAttempt = (key: string): AttemptRecord | null => {
   const record = memoryAttempts.get(key);
@@ -139,9 +136,7 @@ const clearMemoryAttempt = (key: string): void => {
 const getMongoAttempt = async (key: string): Promise<AttemptRecord | null> => {
   if (!process.env['MONGODB_URI']) return null;
   const mongo = await getMongoDb();
-  const doc = await mongo
-    .collection<AttemptRecord>(ATTEMPTS_COLLECTION)
-    .findOne({ _id: key });
+  const doc = await mongo.collection<AttemptRecord>(ATTEMPTS_COLLECTION).findOne({ _id: key });
   return doc ?? null;
 };
 
@@ -173,9 +168,7 @@ const setPrismaAttempt = async (record: AttemptRecord): Promise<void> => {
 const clearMongoAttempt = async (key: string): Promise<void> => {
   if (!process.env['MONGODB_URI']) return;
   const mongo = await getMongoDb();
-  await mongo
-    .collection<AttemptRecord>(ATTEMPTS_COLLECTION)
-    .deleteOne({ _id: key });
+  await mongo.collection<AttemptRecord>(ATTEMPTS_COLLECTION).deleteOne({ _id: key });
 };
 
 const clearPrismaAttempt = async (key: string): Promise<void> => {
@@ -253,8 +246,7 @@ const bumpAttempt = async (
     }
   }
 
-  const lockedUntil =
-    nextCount >= maxAttempts ? new Date(now.getTime() + lockMs) : null;
+  const lockedUntil = nextCount >= maxAttempts ? new Date(now.getTime() + lockMs) : null;
   const expiresAt = new Date(now.getTime() + (windowMs + lockMs));
 
   const record: AttemptRecord = {

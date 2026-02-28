@@ -4,9 +4,7 @@ import type {
   CaseResolverCaptureDocumentDateAction,
   CaseResolverCaptureProposalState,
 } from '@/features/case-resolver-capture/proposals';
-import {
-  type CaseResolverCaptureAction,
-} from '@/features/case-resolver-capture/settings';
+import { type CaseResolverCaptureAction } from '@/features/case-resolver-capture/settings';
 import { encodeFilemakerPartyReference } from '@/features/filemaker/settings';
 import { Badge, Button, FormField, SelectSimple } from '@/shared/ui';
 import { ConfirmDialog } from '@/shared/ui/confirm-dialog';
@@ -20,10 +18,7 @@ type PromptExploderCaptureMappingModalProps = {
   partyOptions: Array<{ value: string; label: string }>;
   onClose: () => void;
   onApply: () => void;
-  onUpdateAction: (
-    role: 'addresser' | 'addressee',
-    action: CaseResolverCaptureAction
-  ) => void;
+  onUpdateAction: (role: 'addresser' | 'addressee', action: CaseResolverCaptureAction) => void;
   onUpdateReference: (role: 'addresser' | 'addressee', value: string) => void;
   onUpdateDateAction: (action: CaseResolverCaptureDocumentDateAction) => void;
   resolveMatchedPartyLabel: (
@@ -119,25 +114,18 @@ export function PromptExploderCaptureMappingModal({
         showClose={false}
         closeOnOutside={false}
         closeOnEscape={false}
-        onInteractOutside={(): void => { setCloseConfirmOpen(true); }}
-        onEscapeKeyDown={(): void => { setCloseConfirmOpen(true); }}
+        onInteractOutside={(): void => {
+          setCloseConfirmOpen(true);
+        }}
+        onEscapeKeyDown={(): void => {
+          setCloseConfirmOpen(true);
+        }}
         footer={
           <div className='flex w-full justify-end gap-2'>
-            <Button
-              type='button'
-              variant='outline'
-              onClick={onClose}
-              disabled={applying}
-              size='sm'
-            >
-            Dismiss (No Mapping)
+            <Button type='button' variant='outline' onClick={onClose} disabled={applying} size='sm'>
+              Dismiss (No Mapping)
             </Button>
-            <Button
-              type='button'
-              onClick={onApply}
-              disabled={!draft || applying}
-              size='sm'
-            >
+            <Button type='button' onClick={onApply} disabled={!draft || applying} size='sm'>
               {applying ? 'Applying...' : 'Apply Mapping'}
             </Button>
           </div>
@@ -146,27 +134,33 @@ export function PromptExploderCaptureMappingModal({
         {draft ? (
           <div className='space-y-4'>
             <div className='rounded border border-border/60 bg-card/30 px-3 py-2 text-xs text-gray-300'>
-            Target File: <span className='font-medium text-gray-100'>{targetFileName}</span>
+              Target File: <span className='font-medium text-gray-100'>{targetFileName}</span>
             </div>
             {diagnostics ? (
               <div className='rounded border border-border/60 bg-card/20 px-3 py-2 text-[11px] text-gray-300'>
                 <div>
-                Apply status: <span className='font-medium text-gray-100'>{diagnostics.status}</span>
+                  Apply status:{' '}
+                  <span className='font-medium text-gray-100'>{diagnostics.status}</span>
                   {diagnostics.stage ? ` (${diagnostics.stage})` : ''}
                 </div>
-                <div className='mt-0.5'>
-                  {diagnostics.message}
-                </div>
+                <div className='mt-0.5'>{diagnostics.message}</div>
                 <div className='mt-0.5 text-gray-400'>
-                target: {diagnostics.targetFileId ?? '(none)'} · resolved: {diagnostics.resolvedTargetFileId ?? '(none)'} · rev: {diagnostics.workspaceRevision} · attempts: {diagnostics.attempts}
+                  target: {diagnostics.targetFileId ?? '(none)'} · resolved:{' '}
+                  {diagnostics.resolvedTargetFileId ?? '(none)'} · rev:{' '}
+                  {diagnostics.workspaceRevision} · attempts: {diagnostics.attempts}
                 </div>
-                {(diagnostics.cleanupDurationMs !== null && diagnostics.cleanupDurationMs !== undefined) ||
-              (diagnostics.mutationDurationMs !== null && diagnostics.mutationDurationMs !== undefined) ||
-              (diagnostics.totalDurationMs !== null && diagnostics.totalDurationMs !== undefined) ? (
-                    <div className='mt-0.5 text-gray-500'>
-                  cleanup: {diagnostics.cleanupDurationMs ?? '-'}ms · mutation: {diagnostics.mutationDurationMs ?? '-'}ms · total: {diagnostics.totalDurationMs ?? '-'}ms
-                    </div>
-                  ) : null}
+                {(diagnostics.cleanupDurationMs !== null &&
+                  diagnostics.cleanupDurationMs !== undefined) ||
+                (diagnostics.mutationDurationMs !== null &&
+                  diagnostics.mutationDurationMs !== undefined) ||
+                (diagnostics.totalDurationMs !== null &&
+                  diagnostics.totalDurationMs !== undefined) ? (
+                  <div className='mt-0.5 text-gray-500'>
+                    cleanup: {diagnostics.cleanupDurationMs ?? '-'}ms · mutation:{' '}
+                    {diagnostics.mutationDurationMs ?? '-'}ms · total:{' '}
+                    {diagnostics.totalDurationMs ?? '-'}ms
+                  </div>
+                ) : null}
               </div>
             ) : null}
 
@@ -176,22 +170,22 @@ export function PromptExploderCaptureMappingModal({
                   <div className='flex items-center gap-2'>
                     <div className='text-sm font-semibold text-gray-100'>Document Date</div>
                     <Badge variant='outline' className='px-1.5 py-0 text-[10px]'>
-                    Source: {draft.documentDate.source === 'metadata' ? 'Metadata' : 'Text'}
+                      Source: {draft.documentDate.source === 'metadata' ? 'Metadata' : 'Text'}
                     </Badge>
                   </div>
                 </div>
                 <div className='rounded border border-border/60 bg-card/30 p-2 text-xs text-gray-200'>
                   <div>
-                  Detected date: <span className='font-medium'>{draft.documentDate.isoDate}</span>
+                    Detected date: <span className='font-medium'>{draft.documentDate.isoDate}</span>
                   </div>
                   {draft.documentDate.city ? (
                     <div className='mt-1'>
-                    Captured city: <span className='font-medium'>{draft.documentDate.city}</span>
+                      Captured city: <span className='font-medium'>{draft.documentDate.city}</span>
                     </div>
                   ) : null}
                   {draft.documentDate.sourceLine ? (
                     <div className='mt-1 text-[11px] text-gray-400'>
-                    Source line: {draft.documentDate.sourceLine}
+                      Source line: {draft.documentDate.sourceLine}
                     </div>
                   ) : null}
                 </div>
@@ -200,7 +194,11 @@ export function PromptExploderCaptureMappingModal({
                     size='sm'
                     value={draft.documentDate.action}
                     onValueChange={(value: string): void => {
-                      if (value === 'useDetectedDate' || value === 'keepText' || value === 'ignore') {
+                      if (
+                        value === 'useDetectedDate' ||
+                        value === 'keepText' ||
+                        value === 'ignore'
+                      ) {
                         onUpdateDateAction(value);
                       }
                     }}
@@ -211,7 +209,7 @@ export function PromptExploderCaptureMappingModal({
               </div>
             ) : (
               <div className='rounded border border-dashed border-border/60 bg-card/20 px-3 py-3 text-sm text-gray-400'>
-              No captured document date in this Prompt Exploder payload.
+                No captured document date in this Prompt Exploder payload.
               </div>
             )}
 
@@ -224,7 +222,7 @@ export function PromptExploderCaptureMappingModal({
                     key={role}
                     className='rounded border border-dashed border-border/60 bg-card/20 px-3 py-3 text-sm text-gray-400'
                   >
-                  No captured {roleLabel.toLowerCase()} candidate in this Prompt Exploder payload.
+                    No captured {roleLabel.toLowerCase()} candidate in this Prompt Exploder payload.
                   </div>
                 );
               }
@@ -233,13 +231,18 @@ export function PromptExploderCaptureMappingModal({
                 ? resolveMatchedPartyLabel(proposal.existingReference)
                 : 'None';
               const actionOptions = resolveActionOptions(proposal);
-              const selectedAction = actionOptions.some((option) => option.value === proposal.action)
+              const selectedAction = actionOptions.some(
+                (option) => option.value === proposal.action
+              )
                 ? proposal.action
-                : actionOptions[0]?.value ?? 'ignore';
+                : (actionOptions[0]?.value ?? 'ignore');
               const shouldShowMatchedPartySelector = selectedAction === 'useMatched';
 
               return (
-                <div key={role} className='space-y-3 rounded border border-border/60 bg-card/25 p-3'>
+                <div
+                  key={role}
+                  className='space-y-3 rounded border border-border/60 bg-card/25 p-3'
+                >
                   <div className='flex items-center justify-between gap-3'>
                     <div className='flex items-center gap-2'>
                       <div className='text-sm font-semibold text-gray-100'>{roleLabel}</div>
@@ -248,16 +251,18 @@ export function PromptExploderCaptureMappingModal({
                       </Badge>
                     </div>
                     <div className='text-[11px] text-gray-400'>
-                    Source role: {proposal.sourceRole}
+                      Source role: {proposal.sourceRole}
                     </div>
                   </div>
 
                   <div className='rounded border border-border/60 bg-card/30 p-2'>
                     <div className='text-[11px] uppercase tracking-wide text-gray-500'>
-                    Captured Text
+                      Captured Text
                     </div>
                     <div className='mt-1 whitespace-pre-wrap text-xs text-gray-200'>
-                      {proposal.candidate.rawText || proposal.candidate.displayName || 'No captured text.'}
+                      {proposal.candidate.rawText ||
+                        proposal.candidate.displayName ||
+                        'No captured text.'}
                     </div>
                   </div>
 
@@ -269,9 +274,9 @@ export function PromptExploderCaptureMappingModal({
                         onValueChange={(value: string): void => {
                           if (
                             value === 'useMatched' ||
-                          value === 'createInFilemaker' ||
-                          value === 'keepText' ||
-                          value === 'ignore'
+                            value === 'createInFilemaker' ||
+                            value === 'keepText' ||
+                            value === 'ignore'
                           ) {
                             onUpdateAction(role, value);
                           }
@@ -304,11 +309,11 @@ export function PromptExploderCaptureMappingModal({
 
                   {proposal.existingAddressId ? (
                     <div className='text-[11px] text-gray-500'>
-                    Matched address ID: {proposal.existingAddressId}
+                      Matched address ID: {proposal.existingAddressId}
                     </div>
                   ) : proposal.hasAddressCandidate ? (
                     <div className='text-[11px] text-gray-500'>
-                    Address candidate detected (not matched in Filemaker).
+                      Address candidate detected (not matched in Filemaker).
                     </div>
                   ) : null}
                 </div>

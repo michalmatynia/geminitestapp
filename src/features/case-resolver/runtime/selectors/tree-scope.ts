@@ -5,10 +5,7 @@ import type {
 } from '@/shared/contracts/case-resolver';
 
 import { normalizeFolderPaths } from '../../settings';
-import {
-  getCachedCaseResolverRuntimeIndexes,
-  type CaseResolverRuntimeIndexes,
-} from './indexes';
+import { getCachedCaseResolverRuntimeIndexes, type CaseResolverRuntimeIndexes } from './indexes';
 
 type ResolveScopedWorkspaceArgs = {
   workspace: CaseResolverWorkspace;
@@ -19,10 +16,7 @@ type ResolveScopedWorkspaceArgs = {
   indexes?: CaseResolverRuntimeIndexes;
 };
 
-const forEachFolderPathAncestor = (
-  folderPath: string,
-  callback: (path: string) => void,
-): void => {
+const forEachFolderPathAncestor = (folderPath: string, callback: (path: string) => void): void => {
   const normalizedFolderPath = folderPath.trim();
   if (!normalizedFolderPath) return;
   const folderParts = normalizedFolderPath.split('/').filter(Boolean);
@@ -71,12 +65,10 @@ export const resolveScopedCaseResolverWorkspaceWithIndexes = ({
   const scopedRootCaseId =
     contextFile.fileType === 'case'
       ? contextFile.id
-      : (
-        contextFile.parentCaseId &&
-        (indexes.caseFilesById.get(contextFile.parentCaseId)?.fileType === 'case')
-          ? contextFile.parentCaseId
-          : null
-      );
+      : contextFile.parentCaseId &&
+          indexes.caseFilesById.get(contextFile.parentCaseId)?.fileType === 'case'
+        ? contextFile.parentCaseId
+        : null;
   if (!scopedRootCaseId) return workspace;
 
   const scopedCaseIds = new Set<string>();
@@ -99,7 +91,7 @@ export const resolveScopedCaseResolverWorkspaceWithIndexes = ({
       if (isOwnedByScopedCase) return;
       const ownerCaseIds = indexes.folderOwnerCaseIdsByPath.get(ancestorPath) ?? [];
       isOwnedByScopedCase = ownerCaseIds.some((ownerCaseId: string): boolean =>
-        scopedCaseIds.has(ownerCaseId),
+        scopedCaseIds.has(ownerCaseId)
       );
     });
     return isOwnedByScopedCase;
@@ -133,7 +125,7 @@ export const resolveScopedCaseResolverWorkspaceWithIndexes = ({
       if (ownerCaseId) return;
       const relatedFileIds = indexes.relatedFileIdsByFileId.get(file.id) ?? [];
       const hasScopedRelation = relatedFileIds.some((relatedFileId: string): boolean =>
-        scopedFileIds.has(relatedFileId),
+        scopedFileIds.has(relatedFileId)
       );
       if (!hasScopedRelation) return;
       scopedFileIds.add(file.id);
@@ -142,14 +134,14 @@ export const resolveScopedCaseResolverWorkspaceWithIndexes = ({
   }
 
   const scopedFiles = workspace.files.filter((file: CaseResolverFile): boolean =>
-    scopedFileIds.has(file.id),
+    scopedFileIds.has(file.id)
   );
   if (scopedFiles.length === 0) {
     return workspace;
   }
 
   const scopedFileIdSet = new Set<string>(
-    scopedFiles.map((file: CaseResolverFile): string => file.id),
+    scopedFiles.map((file: CaseResolverFile): string => file.id)
   );
   const scopedNodeFileAssetIds = new Set<string>();
   scopedFiles.forEach((file: CaseResolverFile): void => {
@@ -164,23 +156,25 @@ export const resolveScopedCaseResolverWorkspaceWithIndexes = ({
   const scopedAssets = workspace.assets.filter((asset): boolean =>
     Boolean(
       (asset.sourceFileId && scopedFileIdSet.has(asset.sourceFileId)) ||
-      (asset.kind === 'node_file' && scopedNodeFileAssetIds.has(asset.id)),
-    ),
+      (asset.kind === 'node_file' && scopedNodeFileAssetIds.has(asset.id))
+    )
   );
 
   const scopedFolderRecords = (workspace.folderRecords ?? []).filter(
     (folderRecord: CaseResolverFolderRecord): boolean =>
-      Boolean(folderRecord.ownerCaseId && scopedCaseIds.has(folderRecord.ownerCaseId)),
+      Boolean(folderRecord.ownerCaseId && scopedCaseIds.has(folderRecord.ownerCaseId))
   );
   const scopedFolders = normalizeFolderPaths([
-    ...scopedFolderRecords.map((folderRecord: CaseResolverFolderRecord): string => folderRecord.path),
+    ...scopedFolderRecords.map(
+      (folderRecord: CaseResolverFolderRecord): string => folderRecord.path
+    ),
     ...scopedFiles.map((file: CaseResolverFile): string => file.folder),
     ...scopedAssets.map((asset): string => asset.folder),
   ]);
   const scopedFolderTimestamps = Object.fromEntries(
     Object.entries(workspace.folderTimestamps ?? {}).filter(
-      ([folderPath]: [string, unknown]): boolean => scopedFolders.includes(folderPath),
-    ),
+      ([folderPath]: [string, unknown]): boolean => scopedFolders.includes(folderPath)
+    )
   );
 
   const normalizedActiveCaseId = activeCaseId?.trim() ?? '';
@@ -193,7 +187,7 @@ export const resolveScopedCaseResolverWorkspaceWithIndexes = ({
   const nextActiveFileId =
     activeCandidates.find(
       (candidate: string | null): candidate is string =>
-        typeof candidate === 'string' && scopedFileIdSet.has(candidate),
+        typeof candidate === 'string' && scopedFileIdSet.has(candidate)
     ) ?? null;
 
   return {

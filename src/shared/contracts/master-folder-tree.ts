@@ -33,9 +33,10 @@ export type MasterTreeNodeDto = z.infer<typeof masterTreeNodeSchema>;
 export type MasterTreeNode = MasterTreeNodeDto;
 export type MasterTreeId = string;
 
-export const masterTreeViewNodeSchema: z.ZodType<MasterTreeViewNodeDto> = masterTreeNodeSchema.extend({
-  children: z.array(z.lazy(() => masterTreeViewNodeSchema)),
-});
+export const masterTreeViewNodeSchema: z.ZodType<MasterTreeViewNodeDto> =
+  masterTreeNodeSchema.extend({
+    children: z.array(z.lazy(() => masterTreeViewNodeSchema)),
+  });
 
 export type MasterTreeViewNodeDto = MasterTreeNodeDto & {
   children: MasterTreeViewNodeDto[];
@@ -136,7 +137,9 @@ export const masterFolderTreePersistOperationSchema = z.discriminatedUnion('type
   }),
 ]);
 
-export type MasterFolderTreePersistOperationDto = z.infer<typeof masterFolderTreePersistOperationSchema>;
+export type MasterFolderTreePersistOperationDto = z.infer<
+  typeof masterFolderTreePersistOperationSchema
+>;
 export type MasterFolderTreePersistOperation = MasterFolderTreePersistOperationDto;
 
 export const masterFolderTreeDragStateSchema = z.object({
@@ -174,7 +177,9 @@ export const masterFolderTreePersistContextSchema = z.object({
   nextNodes: z.array(masterTreeNodeSchema),
 });
 
-export type MasterFolderTreePersistContextDto = z.infer<typeof masterFolderTreePersistContextSchema>;
+export type MasterFolderTreePersistContextDto = z.infer<
+  typeof masterFolderTreePersistContextSchema
+>;
 
 export interface MasterFolderTreePersistContext {
   previousNodes: MasterTreeNode[];
@@ -226,15 +231,11 @@ export interface MasterFolderTreeAdapterV3 {
     operation: MasterFolderTreePersistOperation,
     context: MasterFolderTreePersistContext
   ) => Promise<MasterTreeNode[] | void>;
-  fetchState?: (
-    instanceId?: string
-  ) => Promise<{
+  fetchState?: (instanceId?: string) => Promise<{
     nodes: MasterTreeNode[];
     version?: number | undefined;
   }>;
-  prepare?: (
-    tx: MasterFolderTreeTransaction
-  ) => Promise<MasterFolderTreePreparedTransaction>;
+  prepare?: (tx: MasterFolderTreeTransaction) => Promise<MasterFolderTreePreparedTransaction>;
   apply: (
     tx: MasterFolderTreeTransaction,
     prepared: MasterFolderTreePreparedTransaction
@@ -250,9 +251,7 @@ export interface MasterFolderTreeAdapterV3 {
   ) => Promise<void>;
 }
 
-export type MasterFolderTreeAdapter =
-  | MasterFolderTreeAdapterV3
-  | MasterFolderTreeLegacyAdapter;
+export type MasterFolderTreeAdapter = MasterFolderTreeAdapterV3 | MasterFolderTreeLegacyAdapter;
 
 export const masterFolderTreeActionOkSchema = z.object({
   ok: z.literal(true),
@@ -354,7 +353,11 @@ export interface MasterFolderTreeController {
   undoHistory: { label: string; createdAt: number }[];
   isApplying: boolean;
   lastError: MasterFolderTreeError | null;
-  canDropNode: (nodeId: MasterTreeId, targetId: MasterTreeId | null, position?: MasterTreeDropPositionDto) => MasterTreeCanDropResultDto;
+  canDropNode: (
+    nodeId: MasterTreeId,
+    targetId: MasterTreeId | null,
+    position?: MasterTreeDropPositionDto
+  ) => MasterTreeCanDropResultDto;
   selectNode: (nodeId: MasterTreeId | null) => void;
   setExpandedNodeIds: (nodeIds: MasterTreeId[]) => void;
   toggleNodeExpanded: (nodeId: MasterTreeId) => void;
@@ -369,17 +372,37 @@ export interface MasterFolderTreeController {
   startDrag: (nodeId: MasterTreeId) => void;
   updateDragTarget: (targetId: MasterTreeId | null, position?: MasterTreeDropPositionDto) => void;
   clearDrag: () => void;
-  dropDraggedNode: (targetId: MasterTreeId | null, position?: MasterTreeDropPositionDto) => Promise<MasterFolderTreeActionResult>;
-  moveNode: (nodeId: MasterTreeId, targetParentId: MasterTreeId | null, targetIndex?: number) => Promise<MasterFolderTreeActionResult>;
-  reorderNode: (nodeId: MasterTreeId, targetId: MasterTreeId, position: 'before' | 'after') => Promise<MasterFolderTreeActionResult>;
-  dropNodeToRoot: (nodeId: MasterTreeId, targetIndex?: number) => Promise<MasterFolderTreeActionResult>;
-  replaceNodes: (nodes: MasterTreeNode[], reason?: 'refresh' | 'external_sync') => Promise<MasterFolderTreeActionResult>;
+  dropDraggedNode: (
+    targetId: MasterTreeId | null,
+    position?: MasterTreeDropPositionDto
+  ) => Promise<MasterFolderTreeActionResult>;
+  moveNode: (
+    nodeId: MasterTreeId,
+    targetParentId: MasterTreeId | null,
+    targetIndex?: number
+  ) => Promise<MasterFolderTreeActionResult>;
+  reorderNode: (
+    nodeId: MasterTreeId,
+    targetId: MasterTreeId,
+    position: 'before' | 'after'
+  ) => Promise<MasterFolderTreeActionResult>;
+  dropNodeToRoot: (
+    nodeId: MasterTreeId,
+    targetIndex?: number
+  ) => Promise<MasterFolderTreeActionResult>;
+  replaceNodes: (
+    nodes: MasterTreeNode[],
+    reason?: 'refresh' | 'external_sync'
+  ) => Promise<MasterFolderTreeActionResult>;
   refreshFromAdapter: () => Promise<MasterFolderTreeActionResult>;
   undo: () => Promise<MasterFolderTreeActionResult>;
   clearError: () => void;
 }
 
-export function toMasterFolderTreeActionFail(message: string, code?: string): MasterFolderTreeActionResult {
+export function toMasterFolderTreeActionFail(
+  message: string,
+  code?: string
+): MasterFolderTreeActionResult {
   return {
     success: false,
     ok: false,

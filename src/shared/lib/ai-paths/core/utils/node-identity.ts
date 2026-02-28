@@ -27,8 +27,7 @@ const HASH_HEX_LENGTH = 24;
 const NODE_INSTANCE_ID_HASH_PATTERN = /^node-[a-f0-9]{24}$/;
 const NODE_TYPE_ID_HASH_PATTERN = /^nt-[a-f0-9]{24}$/;
 
-const asTrimmedString = (value: unknown): string =>
-  typeof value === 'string' ? value.trim() : '';
+const asTrimmedString = (value: unknown): string => (typeof value === 'string' ? value.trim() : '');
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -43,7 +42,9 @@ const composeHashHex = (seed: string): string => {
     hashString(`a:${normalizedSeed}`),
     hashString(`b:${normalizedSeed}`),
     hashString(`c:${normalizedSeed}`),
-  ].join('').slice(0, HASH_HEX_LENGTH);
+  ]
+    .join('')
+    .slice(0, HASH_HEX_LENGTH);
 };
 
 const createHashedIdentifier = (prefix: string, seed: string): string =>
@@ -52,8 +53,7 @@ const createHashedIdentifier = (prefix: string, seed: string): string =>
 const isHashedNodeInstanceId = (value: string): boolean =>
   NODE_INSTANCE_ID_HASH_PATTERN.test(value);
 
-const isHashedNodeTypeId = (value: string): boolean =>
-  NODE_TYPE_ID_HASH_PATTERN.test(value);
+const isHashedNodeTypeId = (value: string): boolean => NODE_TYPE_ID_HASH_PATTERN.test(value);
 
 const createNodeTypeHashId = (args: {
   type: string;
@@ -132,10 +132,7 @@ export const createNodeInstanceId = (usedIds: Set<string> | Iterable<string>): s
     const entropy = globalThis.crypto?.randomUUID
       ? globalThis.crypto.randomUUID()
       : `${Date.now()}:${Math.random()}:${attempt}`;
-    candidate = createHashedIdentifier(
-      NODE_INSTANCE_ID_PREFIX,
-      `${entropy}:${attempt}`
-    );
+    candidate = createHashedIdentifier(NODE_INSTANCE_ID_PREFIX, `${entropy}:${attempt}`);
     attempt += 1;
   }
   if (usedIds instanceof Set) {
@@ -165,9 +162,9 @@ const findDefinitionForNode = (
     if (byTriggerEvent) return byTriggerEvent;
   }
 
-  return palette.find(
-    (definition: NodeDefinition): boolean => definition.type === node.type
-  ) ?? null;
+  return (
+    palette.find((definition: NodeDefinition): boolean => definition.type === node.type) ?? null
+  );
 };
 
 export const resolveNodeTypeId = (
@@ -247,15 +244,17 @@ const remapRuntimeState = (
     let changed = false;
     const next = { ...value };
 
-    ([
-      'inputs',
-      'outputs',
-      'history',
-      'hashes',
-      'hashTimestamps',
-      'nodeStatuses',
-      'nodeOutputs',
-    ] as const).forEach((key) => {
+    (
+      [
+        'inputs',
+        'outputs',
+        'history',
+        'hashes',
+        'hashTimestamps',
+        'nodeStatuses',
+        'nodeOutputs',
+      ] as const
+    ).forEach((key) => {
       const remapped = remapNodeKeyedRecord(next[key], remapNodeId);
       if (!remapped.changed) return;
       next[key] = remapped.value;
@@ -269,23 +268,35 @@ const remapRuntimeState = (
     try {
       const parsed = JSON.parse(runtimeState) as unknown;
       if (!isRecord(parsed)) {
-        return { runtimeState: runtimeState as string | Record<string, unknown> | undefined, changed: false };
+        return {
+          runtimeState: runtimeState as string | Record<string, unknown> | undefined,
+          changed: false,
+        };
       }
       const remapped = remapRuntimeObject(parsed);
       if (!remapped.changed) {
-        return { runtimeState: runtimeState as string | Record<string, unknown> | undefined, changed: false };
+        return {
+          runtimeState: runtimeState as string | Record<string, unknown> | undefined,
+          changed: false,
+        };
       }
       return {
         runtimeState: JSON.stringify(remapped.runtimeState),
         changed: true,
       };
     } catch {
-      return { runtimeState: runtimeState as string | Record<string, unknown> | undefined, changed: false };
+      return {
+        runtimeState: runtimeState as string | Record<string, unknown> | undefined,
+        changed: false,
+      };
     }
   }
 
   if (!isRecord(runtimeState)) {
-    return { runtimeState: runtimeState as string | Record<string, unknown> | undefined, changed: false };
+    return {
+      runtimeState: runtimeState as string | Record<string, unknown> | undefined,
+      changed: false,
+    };
   }
 
   const remapped = remapRuntimeObject(runtimeState);
@@ -440,18 +451,12 @@ export const repairPathNodeIdentities = (
     changed = true;
   }
 
-  const remappedParserSamples = remapNodeKeyedRecord(
-    pathConfig.parserSamples,
-    remapNodeId
-  );
+  const remappedParserSamples = remapNodeKeyedRecord(pathConfig.parserSamples, remapNodeId);
   if (remappedParserSamples.changed) {
     changed = true;
   }
 
-  const remappedUpdaterSamples = remapNodeKeyedRecord(
-    pathConfig.updaterSamples,
-    remapNodeId
-  );
+  const remappedUpdaterSamples = remapNodeKeyedRecord(pathConfig.updaterSamples, remapNodeId);
   if (remappedUpdaterSamples.changed) {
     changed = true;
   }
@@ -463,20 +468,20 @@ export const repairPathNodeIdentities = (
 
   const nextConfig: PathConfig = changed
     ? {
-      ...pathConfig,
-      nodes: repairedNodes,
-      edges: repairedEdges,
-      ...(nextUiState ? { uiState: nextUiState } : {}),
-      ...(remappedParserSamples.changed
-        ? { parserSamples: remappedParserSamples.value as PathConfig['parserSamples'] }
-        : {}),
-      ...(remappedUpdaterSamples.changed
-        ? { updaterSamples: remappedUpdaterSamples.value as PathConfig['updaterSamples'] }
-        : {}),
-      ...(remappedRuntimeState.changed
-        ? { runtimeState: remappedRuntimeState.runtimeState }
-        : {}),
-    }
+        ...pathConfig,
+        nodes: repairedNodes,
+        edges: repairedEdges,
+        ...(nextUiState ? { uiState: nextUiState } : {}),
+        ...(remappedParserSamples.changed
+          ? { parserSamples: remappedParserSamples.value as PathConfig['parserSamples'] }
+          : {}),
+        ...(remappedUpdaterSamples.changed
+          ? { updaterSamples: remappedUpdaterSamples.value as PathConfig['updaterSamples'] }
+          : {}),
+        ...(remappedRuntimeState.changed
+          ? { runtimeState: remappedRuntimeState.runtimeState }
+          : {}),
+      }
     : pathConfig;
 
   return {

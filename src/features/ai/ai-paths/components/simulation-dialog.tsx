@@ -4,12 +4,7 @@ import React, { useMemo, useCallback } from 'react';
 
 import type { AiNode } from '@/shared/lib/ai-paths';
 import type { EntityModalProps } from '@/shared/contracts/ui';
-import {
-  Button,
-  Input,
-  Alert,
-  FormField,
-} from '@/shared/ui';
+import { Button, Input, Alert, FormField } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
 import { useAiPathsSettingsOrchestrator } from './ai-paths-settings/AiPathsSettingsOrchestratorContext';
@@ -45,7 +40,7 @@ export function SimulationDialog(): React.JSX.Element | null {
   const simulationNode = useMemo(
     (): AiNode | null =>
       simulationOpenNodeId
-        ? nodes.find((node: AiNode): boolean => node.id === simulationOpenNodeId) ?? null
+        ? (nodes.find((node: AiNode): boolean => node.id === simulationOpenNodeId) ?? null)
         : null,
     [nodes, simulationOpenNodeId]
   );
@@ -56,8 +51,9 @@ export function SimulationDialog(): React.JSX.Element | null {
   const handleConfigChange = useCallback(
     async (nodeId: string, entityId: string): Promise<void> => {
       setNodes((prev: AiNode[]): AiNode[] =>
-        prev.map((node: AiNode): AiNode =>
-          node.id === nodeId ? applySimulationEntityId(node, entityId) : node
+        prev.map(
+          (node: AiNode): AiNode =>
+            node.id === nodeId ? applySimulationEntityId(node, entityId) : node
         )
       );
     },
@@ -74,10 +70,9 @@ export function SimulationDialog(): React.JSX.Element | null {
   );
 
   const simulationConfig = simulationNode?.config?.simulation ?? { productId: '' };
-  const simulationEntityValue =
-    simulationConfig.entityId?.trim()
-      ? simulationConfig.entityId
-      : simulationConfig.productId ?? '';
+  const simulationEntityValue = simulationConfig.entityId?.trim()
+    ? simulationConfig.entityId
+    : (simulationConfig.productId ?? '');
   const [draftEntityId, setDraftEntityId] = React.useState<string>(simulationEntityValue);
 
   React.useEffect((): void => {
@@ -120,13 +115,13 @@ export function SimulationDialog(): React.JSX.Element | null {
             }}
           />
         </FormField>
-        
+
         {isPathLocked ? (
           <Alert variant='warning' className='px-2 py-1 text-[11px]'>
             This path is locked. Unlock it to change simulation inputs.
           </Alert>
         ) : null}
-        
+
         <Alert variant='info' className='px-2 py-1 text-[11px]'>
           Current entity type: {simulationConfig.entityType ?? 'product'}
         </Alert>

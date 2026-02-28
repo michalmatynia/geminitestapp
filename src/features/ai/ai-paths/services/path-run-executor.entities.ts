@@ -10,7 +10,10 @@ export const normalizeEntityType = (value?: string | null): string | null => {
   return normalized;
 };
 
-export const fetchEntityByType = async (entityType: string, entityId: string): Promise<Record<string, unknown> | null> => {
+export const fetchEntityByType = async (
+  entityType: string,
+  entityId: string
+): Promise<Record<string, unknown> | null> => {
   if (!entityType || !entityId) return null;
   const normalized = normalizeEntityType(entityType);
   try {

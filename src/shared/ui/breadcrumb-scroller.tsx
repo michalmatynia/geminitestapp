@@ -45,10 +45,7 @@ export function BreadcrumbScroller({
   };
 
   return (
-    <div
-      className='relative -mx-4 -mb-4 rounded-b-lg'
-      style={{ backgroundColor }}
-    >
+    <div className='relative -mx-4 -mb-4 rounded-b-lg' style={{ backgroundColor }}>
       {canScrollLeft && (
         <Button
           type='button'

@@ -4,9 +4,7 @@ interface ProductTableSkeletonProps {
   rows?: number;
 }
 
-export function ProductTableSkeleton({
-  rows = 12
-}: ProductTableSkeletonProps): React.JSX.Element {
+export function ProductTableSkeleton({ rows = 12 }: ProductTableSkeletonProps): React.JSX.Element {
   return (
     <>
       {Array.from({ length: rows }).map((_: unknown, rowIndex: number) => (

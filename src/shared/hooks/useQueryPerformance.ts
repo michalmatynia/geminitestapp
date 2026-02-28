@@ -28,19 +28,22 @@ class QueryPerformanceMonitor {
   }
 
   getAverageTime(queryKey?: string): number {
-    const filtered = queryKey 
+    const filtered = queryKey
       ? this.metrics.filter((m: QueryPerformanceMetrics) => m.queryKey === queryKey)
       : this.metrics;
-    
+
     if (filtered.length === 0) return 0;
-    return filtered.reduce((sum: number, m: QueryPerformanceMetrics) => sum + m.fetchTime, 0) / filtered.length;
+    return (
+      filtered.reduce((sum: number, m: QueryPerformanceMetrics) => sum + m.fetchTime, 0) /
+      filtered.length
+    );
   }
 
   getCacheHitRate(queryKey?: string): number {
-    const filtered = queryKey 
+    const filtered = queryKey
       ? this.metrics.filter((m: QueryPerformanceMetrics) => m.queryKey === queryKey)
       : this.metrics;
-    
+
     if (filtered.length === 0) return 0;
     const hits = filtered.filter((m: QueryPerformanceMetrics) => m.cacheHit).length;
     return (hits / filtered.length) * 100;
@@ -57,9 +60,11 @@ export interface QueryPerformanceHookResult {
 }
 
 export function useQueryPerformance(): QueryPerformanceHookResult {
-  const [metrics, setMetrics] = useState<QueryPerformanceMetrics[]>(performanceMonitor.getMetrics());
+  const [metrics, setMetrics] = useState<QueryPerformanceMetrics[]>(
+    performanceMonitor.getMetrics()
+  );
 
-  useEffect((): () => void => {
+  useEffect((): (() => void) => {
     const interval = setInterval((): void => {
       setMetrics([...performanceMonitor.getMetrics()]);
     }, 5000);
@@ -84,7 +89,10 @@ export function useQueryPerformance(): QueryPerformanceHookResult {
 export function useQueryWithPerformance<TData>(
   queryKey: readonly unknown[],
   queryFn: () => Promise<TData>,
-  options?: Omit<UndefinedInitialDataOptions<TData, Error, TData, readonly unknown[]>, 'queryKey' | 'queryFn' | 'meta'>
+  options?: Omit<
+    UndefinedInitialDataOptions<TData, Error, TData, readonly unknown[]>,
+    'queryKey' | 'queryFn' | 'meta'
+  >
 ): UseQueryResult<TData, Error> {
   const keyString = JSON.stringify(queryKey);
 
@@ -95,7 +103,7 @@ export function useQueryWithPerformance<TData>(
       const data = await queryFn();
       const fetchTime = Date.now() - startTime;
       const dataSize = JSON.stringify(data).length;
-      
+
       performanceMonitor.addMetric({
         queryKey: keyString,
         fetchTime,
@@ -103,7 +111,7 @@ export function useQueryWithPerformance<TData>(
         dataSize,
         timestamp: Date.now(),
       });
-      
+
       return data;
     },
     meta: {

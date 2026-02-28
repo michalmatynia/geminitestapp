@@ -4,9 +4,7 @@ import { handleAdvancedApi } from '@/shared/lib/ai-paths/core/runtime/handlers/i
 import type { AiNode } from '@/shared/contracts/ai-paths';
 import type { NodeHandlerContext, RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
 
-const buildNode = (
-  patch: Partial<AiNode> = {}
-): AiNode =>
+const buildNode = (patch: Partial<AiNode> = {}): AiNode =>
   ({
     id: 'node-api-advanced',
     type: 'api_advanced',
@@ -14,7 +12,17 @@ const buildNode = (
     description: 'Advanced API node',
     position: { x: 0, y: 0 },
     data: {},
-    inputs: ['context', 'bundle', 'prompt', 'result', 'value', 'entityId', 'entityType', 'cursor', 'page'],
+    inputs: [
+      'context',
+      'bundle',
+      'prompt',
+      'result',
+      'value',
+      'entityId',
+      'entityType',
+      'cursor',
+      'page',
+    ],
     outputs: ['value', 'bundle', 'status', 'headers', 'items', 'route', 'error', 'success'],
     config: {
       apiAdvanced: {
@@ -63,10 +71,7 @@ const buildNode = (
     ...(patch as Record<string, unknown>),
   }) as AiNode;
 
-const buildContext = (
-  node: AiNode,
-  nodeInputs: RuntimePortValues
-): NodeHandlerContext =>
+const buildContext = (node: AiNode, nodeInputs: RuntimePortValues): NodeHandlerContext =>
   ({
     node,
     nodeInputs,
@@ -112,14 +117,12 @@ describe('handleAdvancedApi', () => {
 
   it('executes templated request and maps outputs', async () => {
     const node = buildNode();
-    const fetchMock = vi
-      .fn<typeof fetch>()
-      .mockResolvedValue(
-        new Response(JSON.stringify({ items: [1, 2], ok: true }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        })
-      );
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(JSON.stringify({ items: [1, 2], ok: true }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    );
     vi.stubGlobal('fetch', fetchMock);
 
     const result = await handleAdvancedApi(
@@ -167,14 +170,12 @@ describe('handleAdvancedApi', () => {
 
   it('blocks redirect chains that resolve to disallowed hosts', async () => {
     const node = buildNode();
-    const fetchMock = vi
-      .fn<typeof fetch>()
-      .mockResolvedValueOnce(
-        new Response(null, {
-          status: 302,
-          headers: { location: 'http://169.254.169.254/latest/meta-data/' },
-        })
-      );
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValueOnce(
+      new Response(null, {
+        status: 302,
+        headers: { location: 'http://169.254.169.254/latest/meta-data/' },
+      })
+    );
     vi.stubGlobal('fetch', fetchMock);
 
     const result = await handleAdvancedApi(
@@ -220,9 +221,7 @@ describe('handleAdvancedApi', () => {
       );
     vi.stubGlobal('fetch', fetchMock);
 
-    const result = await handleAdvancedApi(
-      buildContext(node, {})
-    );
+    const result = await handleAdvancedApi(buildContext(node, {}));
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(result['status']).toBe(200);

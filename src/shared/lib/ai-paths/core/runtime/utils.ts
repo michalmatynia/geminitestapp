@@ -1,13 +1,8 @@
-import type {
-  ContextConfig,
-  DbQueryConfig,
-} from '@/shared/contracts/ai-paths';
+import type { ContextConfig, DbQueryConfig } from '@/shared/contracts/ai-paths';
 import type { RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
 
 import { aiJobsApi, dbApi } from '../../api';
-import {
-  DEFAULT_CONTEXT_ROLE,
-} from '../constants';
+import { DEFAULT_CONTEXT_ROLE } from '../constants';
 import {
   applyContextScope,
   coerceInput,
@@ -18,7 +13,7 @@ import {
   renderTemplate,
   safeStringify,
 } from '../utils';
-import { getAiPathsCollectionMapFromInputs } from '../utils/collection-mapping';
+import { getAiPathsCollectionMapFromInputs } from '@/shared/lib/ai-paths/core/utils/collection-mapping';
 
 export const looksLikeObjectId = (value: unknown): boolean =>
   typeof value === 'string' && /^[0-9a-fA-F]{24}$/.test(value);
@@ -59,15 +54,17 @@ export function extractImageUrls(value: unknown, seen: Set<object> = new Set<obj
         const parsed = JSON.parse(trimmed) as unknown;
         return extractImageUrls(parsed, seen);
       } catch {
-        return /(\.png|\.jpe?g|\.webp|\.gif|\.svg|\/uploads\/|^https?:\/\/)/i.test(value) ? [value] : [];
+        return /(\.png|\.jpe?g|\.webp|\.gif|\.svg|\/uploads\/|^https?:\/\/)/i.test(value)
+          ? [value]
+          : [];
       }
     }
-    return /(\.png|\.jpe?g|\.webp|\.gif|\.svg|\/uploads\/|^https?:\/\/)/i.test(value) ? [value] : [];
+    return /(\.png|\.jpe?g|\.webp|\.gif|\.svg|\/uploads\/|^https?:\/\/)/i.test(value)
+      ? [value]
+      : [];
   }
   if (Array.isArray(value)) {
-    return Array.from(
-      new Set(value.flatMap((item: unknown) => extractImageUrls(item, seen)))
-    );
+    return Array.from(new Set(value.flatMap((item: unknown) => extractImageUrls(item, seen))));
   }
   if (typeof value === 'object') {
     if (seen.has(value)) return [];
@@ -133,10 +130,7 @@ const hasImageHintKey = (value: unknown): boolean => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   return Object.keys(value as Record<string, unknown>).some((key: string) => {
     const normalized = key.trim();
-    return (
-      IMAGE_HINT_KEYS.has(normalized) ||
-      normalized.toLowerCase().includes('image')
-    );
+    return IMAGE_HINT_KEYS.has(normalized) || normalized.toLowerCase().includes('image');
   });
 };
 
@@ -146,9 +140,7 @@ const normalizeImageCentricValue = (value: unknown): unknown => {
 
   if (Array.isArray(value)) {
     if (value.length === 0) return value;
-    const imageLikeCount = value.filter((item: unknown) =>
-      hasImageHintKey(item)
-    ).length;
+    const imageLikeCount = value.filter((item: unknown) => hasImageHintKey(item)).length;
     if (imageLikeCount >= Math.ceil(value.length / 2)) {
       return urls;
     }
@@ -177,7 +169,7 @@ export const buildPromptOutput = (
       bundleContext = parsed as Record<string, unknown>;
     }
   }
-  const bundleTitle = 
+  const bundleTitle =
     bundleContext['title'] ??
     bundleContext['name'] ??
     bundleContext['name_en'] ??
@@ -186,13 +178,13 @@ export const buildPromptOutput = (
     bundleContext['label'] ??
     bundleContext['productName'] ??
     undefined;
-  const bundleId = 
+  const bundleId =
     bundleContext['productId'] ??
     bundleContext['entityId'] ??
     bundleContext['id'] ??
     bundleContext['_id'] ??
     undefined;
-  const bundleDescription = 
+  const bundleDescription =
     bundleContext['content_en'] ??
     bundleContext['description_en'] ??
     bundleContext['description'] ??
@@ -202,7 +194,7 @@ export const buildPromptOutput = (
     ...(bundleTitle !== undefined ? { title: bundleTitle, name: bundleTitle } : {}),
     ...(bundleId !== undefined ? { productId: bundleId, entityId: bundleId } : {}),
     ...(bundleDescription !== undefined
-      ? { content_en: bundleDescription, description_en: bundleDescription } 
+      ? { content_en: bundleDescription, description_en: bundleDescription }
       : {}),
   };
   const normalizedImagesInput = normalizeImageCentricValue(nodeInputs['images']);
@@ -214,7 +206,7 @@ export const buildPromptOutput = (
     return extractImageUrls(bundleContext['images']);
   })();
   const normalizedNodeInputs: Record<string, unknown> = {
-    ...(nodeInputs),
+    ...nodeInputs,
     ...(nodeInputs['images'] !== undefined ? { images: normalizedImagesInput } : {}),
     ...(nodeInputs['result'] !== undefined ? { result: normalizedResultInput } : {}),
     ...(nodeInputs['value'] !== undefined ? { value: normalizedValueInput } : {}),
@@ -232,15 +224,11 @@ export const buildPromptOutput = (
     coerceInput(normalizedResultInput) ?? coerceInput(normalizedValueInput) ?? '';
   const currentValue = normalizeImageCentricValue(currentValueCandidate);
   const prompt = resolvedConfig.template
-    ? renderTemplate(
-      resolvedConfig.template,
-      data,
-      currentValue
-    )
+    ? renderTemplate(resolvedConfig.template, data, currentValue)
     : Object.entries(data)
-      .map(([key, value]: [string, unknown]) => `${key}: ${formatRuntimeValue(value)}`)
-      .join('\n');
-  const imagesValue = 
+        .map(([key, value]: [string, unknown]) => `${key}: ${formatRuntimeValue(value)}`)
+        .join('\n');
+  const imagesValue =
     normalizedImagesInput !== undefined
       ? normalizedImagesInput
       : bundleContext['images'] !== undefined
@@ -255,18 +243,15 @@ export const resolveJobProductId = (
   simulationEntityId?: string | null,
   activePathId?: string | null
 ): string => {
-  const direct = 
-    coerceInput(nodeInputs['productId']) ?? coerceInput(nodeInputs['entityId']);
+  const direct = coerceInput(nodeInputs['productId']) ?? coerceInput(nodeInputs['entityId']);
   if (typeof direct === 'string' && direct.trim()) return direct.trim();
   if (typeof direct === 'number') return String(direct);
   const contextValue = coerceInput(nodeInputs['context']) as
-    | { entityId?: string; productId?: string } 
+    | { entityId?: string; productId?: string }
     | undefined;
   if (contextValue?.['productId']?.trim()) return contextValue['productId'].trim();
   if (contextValue?.['entityId']?.trim()) return contextValue['entityId'].trim();
-  const entityJson = coerceInput(nodeInputs['entityJson']) as
-    | { id?: string | number } 
-    | undefined;
+  const entityJson = coerceInput(nodeInputs['entityJson']) as { id?: string | number } | undefined;
   if (typeof entityJson?.['id'] === 'string' && entityJson['id'].trim()) {
     return entityJson['id'].trim();
   }
@@ -290,12 +275,12 @@ export const resolveEntityIdFromInputs = (
   if (typeof direct === 'string' && direct.trim()) return direct.trim();
   if (typeof direct === 'number') return String(direct);
   const contextValue = coerceInput(nodeInputs['context']) as
-    | { entityId?: string; productId?: string } 
+    | { entityId?: string; productId?: string }
     | undefined;
   if (contextValue?.['productId']?.trim()) return contextValue['productId'].trim();
   if (contextValue?.['entityId']?.trim()) return contextValue['entityId'].trim();
   const bundleValue = coerceInput(nodeInputs['bundle']) as
-    | { entityId?: string; productId?: string; id?: string | number } 
+    | { entityId?: string; productId?: string; id?: string | number }
     | undefined;
   if (typeof bundleValue?.['productId'] === 'string' && bundleValue['productId'].trim()) {
     return bundleValue['productId'].trim();
@@ -307,9 +292,7 @@ export const resolveEntityIdFromInputs = (
     return bundleValue['id'].trim();
   }
   if (typeof bundleValue?.['id'] === 'number') return String(bundleValue['id']);
-  const entityJson = coerceInput(nodeInputs['entityJson']) as
-    | { id?: string | number } 
-    | undefined;
+  const entityJson = coerceInput(nodeInputs['entityJson']) as { id?: string | number } | undefined;
   if (typeof entityJson?.['id'] === 'string' && entityJson['id'].trim()) {
     return entityJson['id'].trim();
   }
@@ -342,11 +325,7 @@ export const pollGraphJob = async (
       const { status, result: jobResult, error: jobError } = pollResult.data;
       if (!status) continue;
       if (status === 'completed') {
-        const result = jobResult as
-          | { result?: string }
-          | string
-          | null
-          | undefined;
+        const result = jobResult as { result?: string } | string | null | undefined;
         if (result && typeof result === 'object' && 'result' in result) {
           return (result as { result?: string })['result'] ?? '';
         }
@@ -366,7 +345,10 @@ export const pollGraphJob = async (
         throw createAbortError();
       }
       if (attempt === maxAttempts - 1) {
-        throw new Error(`Connection error after ${maxAttempts} attempts: ${error instanceof Error ? error.message : String(error)}`, { cause: error });
+        throw new Error(
+          `Connection error after ${maxAttempts} attempts: ${error instanceof Error ? error.message : String(error)}`,
+          { cause: error }
+        );
       }
       // Wait before retrying on connection errors
       await sleep(Math.max(0, intervalMs), signal);
@@ -395,13 +377,7 @@ export const buildDbQueryPayload = (
   const inputValue = coerceInput(nodeInputs['value']) ?? coerceInput(nodeInputs['jobId']);
   let query: Record<string, unknown> = {};
   const parseRenderedQuery = (raw: string): Record<string, unknown> | null => {
-    const parsed = parseJsonSafe(
-      renderJsonTemplate(
-        raw,
-        nodeInputs,
-        inputValue ?? ''
-      )
-    );
+    const parsed = parseJsonSafe(renderJsonTemplate(raw, nodeInputs, inputValue ?? ''));
     if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
       return parsed as Record<string, unknown>;
     }
@@ -433,24 +409,16 @@ export const buildDbQueryPayload = (
   } else {
     const queryTemplate = queryConfig.queryTemplate ?? '';
     if (queryTemplate.trim().length > 0) {
-      const parsed = parseJsonSafe(
-        renderJsonTemplate(
-          queryTemplate,
-          nodeInputs,
-          inputValue ?? ''
-        )
-      );
+      const parsed = parseJsonSafe(renderJsonTemplate(queryTemplate, nodeInputs, inputValue ?? ''));
       if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
         query = parsed as Record<string, unknown>;
       }
     }
   }
   const projection = parseJsonSafe(queryConfig.projection ?? '') as
-    | Record<string, unknown> 
+    | Record<string, unknown>
     | undefined;
-  const sort = parseJsonSafe(queryConfig.sort ?? '') as
-    | Record<string, unknown> 
-    | undefined;
+  const sort = parseJsonSafe(queryConfig.sort ?? '') as Record<string, unknown> | undefined;
   const collectionMap = getAiPathsCollectionMapFromInputs(nodeInputs);
   return {
     query,
@@ -526,7 +494,7 @@ export const pollDatabaseQuery = async (
       throw new Error('Database poll query failed.');
     }
     const data = queryResult.data;
-    const result: unknown = config.dbQuery.single ? data.item ?? null : data.items ?? [];
+    const result: unknown = config.dbQuery.single ? (data.item ?? null) : (data.items ?? []);
     const bundle = {
       count: data.count ?? (Array.isArray(result) ? result.length : result ? 1 : 0),
       query: payload.query,
@@ -537,9 +505,7 @@ export const pollDatabaseQuery = async (
     lastBundle = bundle;
     const successPath = config.successPath?.trim() ?? '';
     const matchedItem: unknown = Array.isArray(result)
-      ? result.find((item: unknown) =>
-        evaluateMatch(getValueAtMappingPath(item, successPath))
-      )
+      ? result.find((item: unknown) => evaluateMatch(getValueAtMappingPath(item, successPath)))
       : null;
     const candidate: unknown = successPath
       ? Array.isArray(result)
@@ -549,9 +515,7 @@ export const pollDatabaseQuery = async (
     const isMatch = Array.isArray(result)
       ? Boolean(matchedItem) ||
         result.some((item: unknown) =>
-          evaluateMatch(
-            successPath ? getValueAtMappingPath(item, successPath) : item
-          )
+          evaluateMatch(successPath ? getValueAtMappingPath(item, successPath) : item)
         )
       : evaluateMatch(candidate);
     if (isMatch) {
@@ -616,24 +580,20 @@ export const resolveContextPayload = async (
   const role = baseRole ?? fallbackRole;
   const rawEntityType = contextConfig.entityType?.trim() || 'auto';
   const baseEntityType =
-    baseContext && typeof baseContext['entityType'] === 'string'
-      ? baseContext['entityType']
-      : null;
+    baseContext && typeof baseContext['entityType'] === 'string' ? baseContext['entityType'] : null;
   const entityType =
     rawEntityType === 'auto'
-      ? (baseEntityType) ?? (simulationEntityType) ?? 'entity'
-      : rawEntityType || (baseEntityType) || (simulationEntityType) || 'entity';
+      ? (baseEntityType ?? simulationEntityType ?? 'entity')
+      : rawEntityType || baseEntityType || simulationEntityType || 'entity';
   const manualId = contextConfig.entityId?.trim() || null;
   const baseEntityId =
-    baseContext && typeof baseContext['entityId'] === 'string'
-      ? baseContext['entityId']
-      : null;
+    baseContext && typeof baseContext['entityId'] === 'string' ? baseContext['entityId'] : null;
   const entityId =
     contextConfig.entityIdSource === 'manual'
       ? manualId
       : contextConfig.entityIdSource === 'context'
-        ? (baseEntityId) ?? manualId ?? null
-        : (baseEntityId) ?? (simulationEntityId) ?? manualId ?? null;
+        ? (baseEntityId ?? manualId ?? null)
+        : (baseEntityId ?? simulationEntityId ?? manualId ?? null);
   const baseEntity =
     (baseContext?.['entity'] as Record<string, unknown> | undefined) ??
     (baseContext?.['entityJson'] as Record<string, unknown> | undefined) ??
@@ -641,7 +601,8 @@ export const resolveContextPayload = async (
     null;
   const fetchRequested = !baseEntity && Boolean(entityId && entityType);
   const fetched =
-    baseEntity ?? (fetchRequested && entityId && entityType
+    baseEntity ??
+    (fetchRequested && entityId && entityType
       ? await fetchEntityCached(entityType, entityId)
       : null);
   const fetchedIsEmptyRecord =
@@ -659,8 +620,9 @@ export const resolveContextPayload = async (
     ? (baseContext?.['images'] as unknown[])
     : null;
   // Only extract images from entity when base images aren't already provided
-  const resolvedImages =
-    baseImages?.length ? baseImages : extractImageUrls(entityForContext ?? rawEntity);
+  const resolvedImages = baseImages?.length
+    ? baseImages
+    : extractImageUrls(entityForContext ?? rawEntity);
   const baseContextRest = baseContext ? { ...baseContext } : {};
   delete (baseContextRest as Record<string, unknown>)['entity'];
   delete (baseContextRest as Record<string, unknown>)['entityJson'];
@@ -683,9 +645,7 @@ export const resolveContextPayload = async (
     ...baseContextRest,
     entity: entityForContext,
     productId:
-      entityType === 'product'
-        ? entityId
-        : (baseContext?.['productId'] as string | undefined),
+      entityType === 'product' ? entityId : (baseContext?.['productId'] as string | undefined),
     product:
       entityType === 'product'
         ? entityForContext
@@ -695,8 +655,7 @@ export const resolveContextPayload = async (
     scopeTarget === 'context' ? applyContextScope(context, contextConfig) : context;
   const scopedContextEntity =
     scopeTarget === 'context'
-      ? ((scopedContext?.entity as Record<string, unknown> | undefined) ??
-          entityForContext)
+      ? ((scopedContext?.entity as Record<string, unknown> | undefined) ?? entityForContext)
       : scopedEntity;
   return {
     role,

@@ -24,13 +24,18 @@ import { cn } from '@/shared/utils';
 
 import { useVersionGraphControlsContext } from './VersionGraphControlsContext';
 import { useSettingsState } from '../context/SettingsContext';
-import { getImageStudioDocTooltip, type ImageStudioDocKey } from '../utils/studio-docs';
+import { getImageStudioDocTooltip, type ImageStudioDocKey } from '@/shared/lib/ai/image-studio/utils/studio-docs';
 
-import type { LayoutMode } from '../utils/version-graph';
+import type { LayoutMode } from '@/shared/lib/ai/image-studio/utils/version-graph';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
-const LAYOUT_MODES: { mode: LayoutMode; label: string; Icon: typeof Network; docKey: ImageStudioDocKey }[] = [
+const LAYOUT_MODES: {
+  mode: LayoutMode;
+  label: string;
+  Icon: typeof Network;
+  docKey: ImageStudioDocKey;
+}[] = [
   { mode: 'dag', label: 'DAG', Icon: Network, docKey: 'version_graph_layout_dag' },
   { mode: 'timeline-h', label: 'H', Icon: ArrowRight, docKey: 'version_graph_layout_timeline_h' },
   { mode: 'timeline-v', label: 'V', Icon: ArrowDown, docKey: 'version_graph_layout_timeline_v' },
@@ -98,15 +103,20 @@ export function VersionGraphToolbar(): React.JSX.Element {
   return (
     <div className='flex items-center justify-between border-b border-border/40 px-3 py-1.5'>
       <div className='text-[10px] uppercase tracking-wide text-gray-500'>
-        Version Graph ({nodeCount}{allNodeCount !== nodeCount ? `/${allNodeCount}` : ''})
+        Version Graph ({nodeCount}
+        {allNodeCount !== nodeCount ? `/${allNodeCount}` : ''})
       </div>
       <div className='flex items-center gap-1'>
         {/* ── Modes group ──────────────────────────────────────── */}
 
         {/* Merge mode toggle */}
-        <Button size='xs'
+        <Button
+          size='xs'
           variant={mergeMode ? 'default' : 'ghost'}
-          className={cn('size-6', mergeMode && 'bg-orange-500/20 text-orange-400 hover:bg-orange-500/30')}
+          className={cn(
+            'size-6',
+            mergeMode && 'bg-orange-500/20 text-orange-400 hover:bg-orange-500/30'
+          )}
           title={versionGraphTooltipsEnabled ? tooltipContent.mergeModeToggle : undefined}
           onClick={onToggleMergeMode}
         >
@@ -115,7 +125,8 @@ export function VersionGraphToolbar(): React.JSX.Element {
 
         {/* Merge execute button */}
         {mergeMode && mergeSelectedIds.length >= 2 ? (
-          <Button size='xs'
+          <Button
+            size='xs'
             variant='outline'
             className='h-6 border-orange-400/40 px-2 text-[10px] text-orange-400 hover:bg-orange-500/10'
             disabled={mergeBusy}
@@ -128,7 +139,8 @@ export function VersionGraphToolbar(): React.JSX.Element {
 
         {/* Clear merge selection */}
         {mergeMode && mergeSelectedIds.length > 0 ? (
-          <Button size='xs'
+          <Button
+            size='xs'
             variant='ghost'
             className='size-6 text-gray-400'
             title={versionGraphTooltipsEnabled ? tooltipContent.mergeClearSelection : undefined}
@@ -139,9 +151,13 @@ export function VersionGraphToolbar(): React.JSX.Element {
         ) : null}
 
         {/* Composite mode toggle */}
-        <Button size='xs'
+        <Button
+          size='xs'
           variant={compositeMode ? 'default' : 'ghost'}
-          className={cn('size-6', compositeMode && 'bg-teal-500/20 text-teal-400 hover:bg-teal-500/30')}
+          className={cn(
+            'size-6',
+            compositeMode && 'bg-teal-500/20 text-teal-400 hover:bg-teal-500/30'
+          )}
           title={versionGraphTooltipsEnabled ? tooltipContent.compositeModeToggle : undefined}
           onClick={onToggleCompositeMode}
         >
@@ -150,7 +166,8 @@ export function VersionGraphToolbar(): React.JSX.Element {
 
         {/* Composite execute button */}
         {compositeMode && compositeSelectedIds.length >= 2 ? (
-          <Button size='xs'
+          <Button
+            size='xs'
             variant='outline'
             className='h-6 border-teal-400/40 px-2 text-[10px] text-teal-400 hover:bg-teal-500/10'
             disabled={compositeBusy}
@@ -163,7 +180,8 @@ export function VersionGraphToolbar(): React.JSX.Element {
 
         {/* Clear composite selection */}
         {compositeMode && compositeSelectedIds.length > 0 ? (
-          <Button size='xs'
+          <Button
+            size='xs'
             variant='ghost'
             className='size-6 text-gray-400'
             title={versionGraphTooltipsEnabled ? tooltipContent.compositeClearSelection : undefined}
@@ -174,9 +192,13 @@ export function VersionGraphToolbar(): React.JSX.Element {
         ) : null}
 
         {/* Compare mode toggle */}
-        <Button size='xs'
+        <Button
+          size='xs'
           variant={compareMode ? 'default' : 'ghost'}
-          className={cn('size-6', compareMode && 'bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500/30')}
+          className={cn(
+            'size-6',
+            compareMode && 'bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500/30'
+          )}
           title={versionGraphTooltipsEnabled ? tooltipContent.compareModeToggle : undefined}
           onClick={onToggleCompareMode}
         >
@@ -188,7 +210,8 @@ export function VersionGraphToolbar(): React.JSX.Element {
         {/* ── Actions group ────────────────────────────────────── */}
 
         {/* Collapse controls */}
-        <Button size='xs'
+        <Button
+          size='xs'
           variant='ghost'
           className='size-6'
           title={versionGraphTooltipsEnabled ? tooltipContent.collapseAll : undefined}
@@ -196,7 +219,8 @@ export function VersionGraphToolbar(): React.JSX.Element {
         >
           <ChevronUp className='size-3' />
         </Button>
-        <Button size='xs'
+        <Button
+          size='xs'
           variant='ghost'
           className='size-6'
           title={versionGraphTooltipsEnabled ? tooltipContent.expandAll : undefined}
@@ -206,7 +230,8 @@ export function VersionGraphToolbar(): React.JSX.Element {
         </Button>
 
         {/* Stats toggle */}
-        <Button size='xs'
+        <Button
+          size='xs'
           variant={showStats ? 'default' : 'ghost'}
           className={cn('size-6', showStats && 'bg-accent')}
           title={versionGraphTooltipsEnabled ? tooltipContent.statsToggle : undefined}
@@ -217,7 +242,8 @@ export function VersionGraphToolbar(): React.JSX.Element {
 
         {/* Minimap toggle */}
         {showMinimapButton ? (
-          <Button size='xs'
+          <Button
+            size='xs'
             variant={showMinimap ? 'default' : 'ghost'}
             className={cn('size-6', showMinimap && 'bg-accent')}
             title={versionGraphTooltipsEnabled ? tooltipContent.minimapToggle : undefined}
@@ -228,7 +254,8 @@ export function VersionGraphToolbar(): React.JSX.Element {
         ) : null}
 
         {/* Export PNG */}
-        <Button size='xs'
+        <Button
+          size='xs'
           variant='ghost'
           className='size-6'
           title={versionGraphTooltipsEnabled ? tooltipContent.exportPng : undefined}
@@ -252,7 +279,7 @@ export function VersionGraphToolbar(): React.JSX.Element {
                 'flex items-center gap-0.5 px-1.5 py-0.5 text-[9px]',
                 layoutMode === mode
                   ? 'bg-accent text-accent-foreground'
-                  : 'text-gray-500 hover:text-gray-300',
+                  : 'text-gray-500 hover:text-gray-300'
               )}
               title={versionGraphTooltipsEnabled ? getImageStudioDocTooltip(docKey) : undefined}
               onClick={() => onSetLayoutMode(mode)}
@@ -264,7 +291,8 @@ export function VersionGraphToolbar(): React.JSX.Element {
         </div>
 
         {/* Zoom controls */}
-        <Button size='xs'
+        <Button
+          size='xs'
           variant='ghost'
           className='size-6'
           title={versionGraphTooltipsEnabled ? tooltipContent.zoomOut : undefined}
@@ -275,7 +303,8 @@ export function VersionGraphToolbar(): React.JSX.Element {
         <span className='min-w-[36px] text-center text-[10px] text-gray-400'>
           {Math.round(zoom * 100)}%
         </span>
-        <Button size='xs'
+        <Button
+          size='xs'
           variant='ghost'
           className='size-6'
           title={versionGraphTooltipsEnabled ? tooltipContent.zoomIn : undefined}
@@ -283,7 +312,8 @@ export function VersionGraphToolbar(): React.JSX.Element {
         >
           <Plus className='size-3' />
         </Button>
-        <Button size='xs'
+        <Button
+          size='xs'
           variant='ghost'
           className='size-6'
           title={versionGraphTooltipsEnabled ? tooltipContent.fitToView : undefined}

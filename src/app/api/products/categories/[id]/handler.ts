@@ -1,16 +1,10 @@
-
-
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { CachedProductService } from '@/features/products/performance/cached-service';
 import { getCategoryRepository } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import {
-  badRequestError,
-  conflictError,
-  notFoundError,
-} from '@/shared/errors/app-error';
+import { badRequestError, conflictError, notFoundError } from '@/shared/errors/app-error';
 
 export const productCategoryUpdateSchema = z.object({
   name: z.string().min(1).optional(),
@@ -51,8 +45,7 @@ export async function PUT_handler(
 ): Promise<Response> {
   const data = ctx.body as z.infer<typeof productCategoryUpdateSchema>;
   const { parentId, catalogId } = data;
-  const normalizedName =
-    data.name !== undefined ? data.name.trim() : undefined;
+  const normalizedName = data.name !== undefined ? data.name.trim() : undefined;
   if (data.name !== undefined && !normalizedName) {
     throw badRequestError('Category name is required');
   }
@@ -70,7 +63,7 @@ export async function PUT_handler(
       ? parentId
       : catalogId && catalogId !== current.catalogId
         ? null
-        : current.parentId ?? null;
+        : (current.parentId ?? null);
   const currentParentId = current.parentId ?? null;
 
   if (nextParentId === params.id) {
@@ -88,11 +81,7 @@ export async function PUT_handler(
   }
 
   // Prevent moving category to itself or its descendants
-  if (
-    nextParentId !== null &&
-    (catalogId === undefined ||
-      catalogId === current.catalogId)
-  ) {
+  if (nextParentId !== null && (catalogId === undefined || catalogId === current.catalogId)) {
     const isDescendant = await repository.isDescendant(params.id, nextParentId);
     if (isDescendant) {
       throw badRequestError('Cannot move category into itself or its descendants');
@@ -100,24 +89,16 @@ export async function PUT_handler(
   }
 
   const nextName = normalizedName ?? current.name;
-  const placementChanged =
-    nextCatalogId !== current.catalogId || nextParentId !== currentParentId;
+  const placementChanged = nextCatalogId !== current.catalogId || nextParentId !== currentParentId;
   if (normalizedName !== undefined || placementChanged) {
-    const existing = await repository.findByName(
-      nextCatalogId,
-      nextName,
-      nextParentId
-    );
+    const existing = await repository.findByName(nextCatalogId, nextName, nextParentId);
 
     if (existing && existing.id !== params.id) {
-      throw conflictError(
-        'A category with this name already exists at this level',
-        {
-          name: nextName,
-          parentId: nextParentId,
-          catalogId: nextCatalogId,
-        }
-      );
+      throw conflictError('A category with this name already exists at this level', {
+        name: nextName,
+        parentId: nextParentId,
+        catalogId: nextCatalogId,
+      });
     }
   }
 
@@ -148,9 +129,8 @@ export async function DELETE_handler(
 ): Promise<Response> {
   const repository = await getCategoryRepository();
   await repository.deleteCategory(params.id);
-  
+
   CachedProductService.invalidateAll();
 
   return NextResponse.json({ success: true });
 }
-

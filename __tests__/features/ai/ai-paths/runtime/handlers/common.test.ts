@@ -1,13 +1,13 @@
 import { describe, it, expect, vi } from 'vitest';
 
-import { 
-  handleConstant, 
-  handleMath, 
-  handleCompare, 
-  handleRouter, 
-  handleGate, 
-  handleBundle, 
-  handleDelay 
+import {
+  handleConstant,
+  handleMath,
+  handleCompare,
+  handleRouter,
+  handleGate,
+  handleBundle,
+  handleDelay,
 } from '@/shared/lib/ai-paths/core/runtime/handlers/common';
 
 import { createMockContext } from '../../test-utils';
@@ -19,8 +19,8 @@ describe('Common Handlers', () => {
         node: {
           id: 'n1',
           type: 'constant',
-          config: { constant: { valueType: 'string', value: 'hello' } }
-        } as any
+          config: { constant: { valueType: 'string', value: 'hello' } },
+        } as any,
       });
       const result = handleConstant(ctx);
       expect(result).toEqual({ value: 'hello' });
@@ -31,8 +31,8 @@ describe('Common Handlers', () => {
         node: {
           id: 'n1',
           type: 'constant',
-          config: { constant: { valueType: 'number', value: '42' } }
-        } as any
+          config: { constant: { valueType: 'number', value: '42' } },
+        } as any,
       });
       const result = handleConstant(ctx);
       expect(result).toEqual({ value: 42 });
@@ -43,8 +43,8 @@ describe('Common Handlers', () => {
         node: {
           id: 'n1',
           type: 'constant',
-          config: { constant: { valueType: 'boolean', value: 'true' } }
-        } as any
+          config: { constant: { valueType: 'boolean', value: 'true' } },
+        } as any,
       });
       const result = handleConstant(ctx);
       expect(result).toEqual({ value: true });
@@ -55,8 +55,8 @@ describe('Common Handlers', () => {
         node: {
           id: 'n1',
           type: 'constant',
-          config: { constant: { valueType: 'json', value: '{"a": 1}' } }
-        } as any
+          config: { constant: { valueType: 'json', value: '{"a": 1}' } },
+        } as any,
       });
       const result = handleConstant(ctx);
       expect(result).toEqual({ value: { a: 1 } });
@@ -69,9 +69,9 @@ describe('Common Handlers', () => {
         node: {
           id: 'n1',
           type: 'math',
-          config: { math: { operation: 'add', operand: 5 } }
+          config: { math: { operation: 'add', operand: 5 } },
         } as any,
-        nodeInputs: { value: 10 }
+        nodeInputs: { value: 10 },
       });
       const result = handleMath(ctx);
       expect(result).toEqual({ value: 15 });
@@ -82,9 +82,9 @@ describe('Common Handlers', () => {
         node: {
           id: 'n1',
           type: 'math',
-          config: { math: { operation: 'add', operand: 5 } }
+          config: { math: { operation: 'add', operand: 5 } },
         } as any,
-        nodeInputs: { value: 'not-a-number' }
+        nodeInputs: { value: 'not-a-number' },
       });
       const result = handleMath(ctx);
       expect(result).toEqual({ value: 'not-a-number' });
@@ -97,9 +97,9 @@ describe('Common Handlers', () => {
         node: {
           id: 'n1',
           type: 'compare',
-          config: { compare: { operator: 'eq', compareTo: 'test' } }
+          config: { compare: { operator: 'eq', compareTo: 'test' } },
         } as any,
-        nodeInputs: { value: 'test' }
+        nodeInputs: { value: 'test' },
       });
       const result = await handleCompare(ctx);
       expect(result['valid']).toBe(true);
@@ -110,9 +110,9 @@ describe('Common Handlers', () => {
         node: {
           id: 'n1',
           type: 'compare',
-          config: { compare: { operator: 'eq', compareTo: 'TEST', caseSensitive: false } }
+          config: { compare: { operator: 'eq', compareTo: 'TEST', caseSensitive: false } },
         } as any,
-        nodeInputs: { value: 'test' }
+        nodeInputs: { value: 'test' },
       });
       const result = await handleCompare(ctx);
       expect(result['valid']).toBe(true);
@@ -125,9 +125,9 @@ describe('Common Handlers', () => {
         node: {
           id: 'n1',
           type: 'router',
-          config: { router: { mode: 'valid', matchMode: 'truthy' } }
+          config: { router: { mode: 'valid', matchMode: 'truthy' } },
         } as any,
-        nodeInputs: { valid: true, value: 'some-value' }
+        nodeInputs: { valid: true, value: 'some-value' },
       });
       const result = await handleRouter(ctx);
       expect(result['valid']).toBe(true);
@@ -139,9 +139,9 @@ describe('Common Handlers', () => {
         node: {
           id: 'n1',
           type: 'router',
-          config: { router: { mode: 'valid', matchMode: 'truthy' } }
+          config: { router: { mode: 'valid', matchMode: 'truthy' } },
         } as any,
-        nodeInputs: { valid: false }
+        nodeInputs: { valid: false },
       });
       const result = await handleRouter(ctx);
       expect(result['valid']).toBe(false);
@@ -155,9 +155,9 @@ describe('Common Handlers', () => {
         node: {
           id: 'n1',
           type: 'gate',
-          config: { gate: { mode: 'block' } }
+          config: { gate: { mode: 'block' } },
         } as any,
-        nodeInputs: { valid: true, context: { user: 'admin' } }
+        nodeInputs: { valid: true, context: { user: 'admin' } },
       });
       const result = await handleGate(ctx);
       expect(result['valid']).toBe(true);
@@ -169,9 +169,9 @@ describe('Common Handlers', () => {
         node: {
           id: 'n1',
           type: 'gate',
-          config: { gate: { mode: 'block', failMessage: 'Denied' } }
+          config: { gate: { mode: 'block', failMessage: 'Denied' } },
         } as any,
-        nodeInputs: { valid: false }
+        nodeInputs: { valid: false },
       });
       const result = await handleGate(ctx);
       expect(result['valid']).toBe(false);
@@ -186,9 +186,9 @@ describe('Common Handlers', () => {
         node: {
           id: 'n1',
           type: 'bundle',
-          config: { bundle: { includePorts: ['a', 'b'] } }
+          config: { bundle: { includePorts: ['a', 'b'] } },
         } as any,
-        nodeInputs: { a: 1, b: 2, c: 3 }
+        nodeInputs: { a: 1, b: 2, c: 3 },
       });
       const result = await handleBundle(ctx);
       expect(result['bundle']).toEqual({ a: 1, b: 2 });
@@ -202,15 +202,15 @@ describe('Common Handlers', () => {
         node: {
           id: 'n1',
           type: 'delay',
-          config: { delay: { ms: 1000 } }
+          config: { delay: { ms: 1000 } },
         } as any,
-        nodeInputs: { value: 'test' }
+        nodeInputs: { value: 'test' },
       });
-      
+
       const promise = handleDelay(ctx);
       vi.advanceTimersByTime(1000);
       const result = await promise;
-      
+
       expect(result).toEqual({ value: 'test' });
       expect(ctx.executed.delay.has('n1')).toBe(true);
       vi.useRealTimers();

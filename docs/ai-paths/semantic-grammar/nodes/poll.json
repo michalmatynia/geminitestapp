@@ -4,20 +4,8 @@
   "nodeType": "poll",
   "title": "Poll Job",
   "purpose": "Poll an AI job or database query until it completes.",
-  "inputs": [
-    "jobId",
-    "query",
-    "value",
-    "entityId",
-    "productId",
-    "bundle"
-  ],
-  "outputs": [
-    "result",
-    "status",
-    "jobId",
-    "bundle"
-  ],
+  "inputs": ["jobId", "query", "value", "entityId", "productId", "bundle"],
+  "outputs": ["result", "status", "jobId", "bundle"],
   "configFields": [
     {
       "path": "poll.mode",
@@ -131,20 +119,8 @@
       "x": 100,
       "y": 100
     },
-    "inputs": [
-      "jobId",
-      "query",
-      "value",
-      "entityId",
-      "productId",
-      "bundle"
-    ],
-    "outputs": [
-      "result",
-      "status",
-      "jobId",
-      "bundle"
-    ],
+    "inputs": ["jobId", "query", "value", "entityId", "productId", "bundle"],
+    "outputs": ["result", "status", "jobId", "bundle"],
     "data": {},
     "connections": {
       "incoming": [],

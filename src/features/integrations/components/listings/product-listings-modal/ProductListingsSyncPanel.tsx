@@ -5,19 +5,17 @@ import React from 'react';
 
 import { useProductListingsContext } from '@/features/integrations/context/ProductListingsContext';
 import type { SyncDirectionDto as SyncDirection } from '@/shared/contracts/products';
-import {
-  Button,
-  Card,
-} from '@/shared/ui';
+import { Button, Card } from '@/shared/ui';
 
 const normalizeIntegrationSlug = (value: string | null | undefined): string =>
   (value ?? '').trim().toLowerCase();
 
 export function ProductListingsSyncPanel(): React.JSX.Element {
-  const { product, listings, syncingImages, setIsSyncImagesConfirmOpen } = useProductListingsContext();
+  const { product, listings, syncingImages, setIsSyncImagesConfirmOpen } =
+    useProductListingsContext();
 
-  const baseListing = listings.find(
-    (listing) => ['baselinker', 'base-com', 'base'].includes(normalizeIntegrationSlug(listing.integration.slug))
+  const baseListing = listings.find((listing) =>
+    ['baselinker', 'base-com', 'base'].includes(normalizeIntegrationSlug(listing.integration.slug))
   );
 
   const getSyncFields = () => {
@@ -45,7 +43,10 @@ export function ProductListingsSyncPanel(): React.JSX.Element {
       },
       {
         name: 'Price',
-        value: product.price !== null && product.price !== undefined ? `${product.price.toFixed(2)}` : '—',
+        value:
+          product.price !== null && product.price !== undefined
+            ? `${product.price.toFixed(2)}`
+            : '—',
         hasValue: product.price !== null && product.price !== undefined,
         syncDirection: 'to_base' as SyncDirection,
         description: 'Base price',
@@ -117,7 +118,11 @@ export function ProductListingsSyncPanel(): React.JSX.Element {
         </div>
       </div>
 
-      <Card variant='subtle-compact' padding='none' className='mb-3 border-blue-500/20 bg-blue-500/5 px-2 py-1.5'>
+      <Card
+        variant='subtle-compact'
+        padding='none'
+        className='mb-3 border-blue-500/20 bg-blue-500/5 px-2 py-1.5'
+      >
         <div className='flex items-center gap-2 text-xs text-blue-300'>
           <ArrowRight className='size-3' />
           <span>
@@ -131,9 +136,7 @@ export function ProductListingsSyncPanel(): React.JSX.Element {
           <div
             key={field.name}
             className={`flex items-center justify-between rounded-md border border-border/40 px-2 py-1.5 text-xs ${
-              field.hasValue
-                ? 'bg-card/50'
-                : 'bg-gray-900/20 opacity-50 border-none'
+              field.hasValue ? 'bg-card/50' : 'bg-gray-900/20 opacity-50 border-none'
             }`}
           >
             <div className='flex items-center gap-2'>
@@ -150,7 +153,10 @@ export function ProductListingsSyncPanel(): React.JSX.Element {
               <span className='max-w-[120px] truncate text-gray-400' title={field.value}>
                 {field.value}
               </span>
-              <div className='flex items-center gap-1' title={getSyncDirectionLabel(field.syncDirection)}>
+              <div
+                className='flex items-center gap-1'
+                title={getSyncDirectionLabel(field.syncDirection)}
+              >
                 {getSyncDirectionIcon(field.hasValue ? field.syncDirection : 'none')}
               </div>
             </div>
@@ -160,7 +166,9 @@ export function ProductListingsSyncPanel(): React.JSX.Element {
 
       <div className='mt-3 border-t border-border pt-2'>
         <div className='flex items-center justify-between text-[10px] text-gray-500'>
-          <span>{activeFields.length} of {syncFields.length} fields will be synced</span>
+          <span>
+            {activeFields.length} of {syncFields.length} fields will be synced
+          </span>
           <div className='flex items-center gap-3'>
             <div className='flex items-center gap-1'>
               <ArrowRight className='size-2.5 text-blue-400' />
@@ -180,9 +188,7 @@ export function ProductListingsSyncPanel(): React.JSX.Element {
 
       <Card variant='subtle-compact' padding='sm' className='mt-4 bg-card/50'>
         <div className='mb-2 flex items-center justify-between'>
-          <h5 className='text-xs font-medium uppercase tracking-wide text-gray-400'>
-            Images
-          </h5>
+          <h5 className='text-xs font-medium uppercase tracking-wide text-gray-400'>Images</h5>
           <span className='text-[10px] text-gray-500'>
             Links: {imageLinkCount} · Uploads: {uploadCount}
           </span>

@@ -23,11 +23,7 @@ export function PriceGroupsSettings(): React.JSX.Element {
         title='Price Groups'
         description='Configure pricing tiers and group rules for products.'
         actions={
-          <Button
-            className='min-w-[100px]'
-            type='button'
-            onClick={onOpenPriceGroupCreate}
-          >
+          <Button className='min-w-[100px]' type='button' onClick={onOpenPriceGroupCreate}>
             Add Price Group
           </Button>
         }
@@ -52,11 +48,15 @@ export function PriceGroupsSettings(): React.JSX.Element {
               ),
               subtitle: `${group.currencyCode} · ${group.groupType}`,
               description: group.description || 'No description',
-              original: group
+              original: group,
             }))}
             isLoading={loadingGroups}
-            onEdit={(item) => { onEditPriceGroup(item.original); }}
-            onDelete={(item) => { onDeletePriceGroup(item.original); }}
+            onEdit={(item) => {
+              onEditPriceGroup(item.original);
+            }}
+            onDelete={(item) => {
+              onDeletePriceGroup(item.original);
+            }}
             emptyMessage='At least one price group is required. Add a price group to continue.'
           />
         </div>
@@ -69,7 +69,8 @@ export function PriceGroupsSettings(): React.JSX.Element {
         className='p-4'
       >
         <div className='mt-4'>
-          <SelectSimple size='sm'
+          <SelectSimple
+            size='sm'
             value={defaultGroupId}
             onValueChange={onDefaultGroupChange}
             disabled={priceGroups.length === 0 || defaultGroupSaving}

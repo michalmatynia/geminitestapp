@@ -4,16 +4,8 @@
   "nodeType": "mapper",
   "title": "JSON Mapper",
   "purpose": "Map context to custom outputs.",
-  "inputs": [
-    "context",
-    "result",
-    "bundle",
-    "value"
-  ],
-  "outputs": [
-    "value",
-    "result"
-  ],
+  "inputs": ["context", "result", "bundle", "value"],
+  "outputs": ["value", "result"],
   "configFields": [
     {
       "path": "mapper.outputs",
@@ -46,16 +38,8 @@
       "x": 100,
       "y": 100
     },
-    "inputs": [
-      "context",
-      "result",
-      "bundle",
-      "value"
-    ],
-    "outputs": [
-      "value",
-      "result"
-    ],
+    "inputs": ["context", "result", "bundle", "value"],
+    "outputs": ["value", "result"],
     "data": {},
     "connections": {
       "incoming": [],

@@ -23,8 +23,8 @@ export const getOrCreateDefaultNotebook = async (): Promise<NotebookRecord> => {
   const notebook = existing
     ? existing
     : await prisma.notebook.create({
-      data: { name: 'Default', color: '#3b82f6' },
-    });
+        data: { name: 'Default', color: '#3b82f6' },
+      });
 
   const result: NotebookRecord = {
     ...notebook,
@@ -48,22 +48,18 @@ export const getAllNotebooks = async (): Promise<NotebookRecord[]> => {
   }));
 };
 
-export const getNotebookById = async (
-  id: string,
-): Promise<NotebookRecord | null> => {
+export const getNotebookById = async (id: string): Promise<NotebookRecord | null> => {
   const notebook = await prisma.notebook.findUnique({ where: { id } });
   return notebook
     ? {
-      ...notebook,
-      createdAt: notebook.createdAt.toISOString(),
-      updatedAt: notebook.updatedAt.toISOString(),
-    }
+        ...notebook,
+        createdAt: notebook.createdAt.toISOString(),
+        updatedAt: notebook.updatedAt.toISOString(),
+      }
     : null;
 };
 
-export const createNotebook = async (
-  data: NotebookCreateInput,
-): Promise<NotebookRecord> => {
+export const createNotebook = async (data: NotebookCreateInput): Promise<NotebookRecord> => {
   const notebook = await prisma.notebook.create({
     data: {
       name: data.name,
@@ -79,7 +75,7 @@ export const createNotebook = async (
 
 export const updateNotebook = async (
   id: string,
-  data: NotebookUpdateInput,
+  data: NotebookUpdateInput
 ): Promise<NotebookRecord | null> => {
   try {
     const notebook = await prisma.notebook.update({

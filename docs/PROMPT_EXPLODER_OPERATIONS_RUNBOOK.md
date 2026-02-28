@@ -1,11 +1,13 @@
 # Prompt Exploder Operations Runbook
 
 ## Release Modes
+
 - `internal`: use `runtime.ruleProfile = all`, learning enabled, benchmark tests required.
 - `beta`: use `runtime.ruleProfile = pattern_pack` by default, enable learned templates progressively.
 - `default`: use configured profile based on monitored benchmark stability.
 
 ## Runtime Feature Flags
+
 - `NEXT_PUBLIC_PROMPT_VALIDATION_ORCHESTRATOR_V2`:
   - `true`/`1`/`on`: force orchestrator path on.
   - `false`/`0`/`off`: force legacy path.
@@ -19,6 +21,7 @@
   - unset: strict outside production, relaxed in production.
 
 ## Pre-Release Gates
+
 1. Run:
    - `npx vitest run __tests__/features/prompt-exploder/parser.test.ts __tests__/features/prompt-exploder/benchmark.test.ts __tests__/features/prompt-exploder/settings.test.ts`
 2. Ensure benchmark expected-type recall gate passes (>= 95%).
@@ -26,6 +29,7 @@
 4. Capture a Prompt Exploder pattern snapshot before rollout.
 
 ## Runtime Governance
+
 - Keep learned templates in `candidate` until approved for `active`.
 - Use `minApprovalsForMatching` and `autoActivateLearnedTemplates` to control activation.
 - Review low-confidence benchmark suggestions and promote only validated rules to avoid overfitting.
@@ -38,6 +42,7 @@
   3. Demote suspicious templates to `disabled`.
 
 ## Runtime Health Monitoring
+
 - Use `GET /api/prompt-runtime/health` for runtime status.
 - Response includes:
   - `observability`: timings, counters, errors, SLO targets, health checks.
@@ -51,6 +56,7 @@
   - This clears runtime observability state, parser cache, selection cache, and inflight load snapshot.
 
 ## SLO Targets
+
 - `p95PipelineMs <= 120`
 - `p95ExplodeMs <= 100`
 - `p95CompileMs <= 40`
@@ -62,7 +68,9 @@
   - `critical`: three or more failed checks.
 
 ## Incident Playbooks
+
 1. **Compile circuit opens repeatedly**
+
 - Symptom: `runtime_circuit_break_open` counter increases, parser cache snapshot shows open scope.
 - Actions:
   1. Check recently changed validator regex rules.
@@ -71,6 +79,7 @@
   4. If needed, use `?reset=true` after rule correction to clear stale state.
 
 2. **Backpressure drops increase**
+
 - Symptom: `runtime_backpressure_drop` counter rises, users see “Runtime is busy for this scope.”
 - Actions:
   1. Confirm inflight per scope in health `load` snapshot.
@@ -78,6 +87,7 @@
   3. Keep canary rollout below `100` until pressure normalizes.
 
 3. **Fallback rate spikes**
+
 - Symptom: `runtime_selection_fallback / runtime_selection_total` exceeds target.
 - Actions:
   1. Verify configured validation stack exists and is mapped for current scope.
@@ -85,6 +95,7 @@
   3. Fix list/stack config and watch fallback counter trend.
 
 4. **Latency regression**
+
 - Symptom: pipeline/explode/compile p95 above target.
 - Actions:
   1. Confirm cache hit ratio (`runtime_cache_hit` vs `runtime_cache_miss`).
@@ -93,6 +104,7 @@
   4. Run benchmark suite before restoring rollout.
 
 ## Incident Recovery
+
 1. Open Prompt Exploder admin page.
 2. In `Pattern Snapshot Governance`, select last known stable snapshot.
 3. Click `Restore`.

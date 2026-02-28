@@ -1,24 +1,27 @@
 'use client';
 
-import React, { createContext, useContext, useState, useRef, useCallback, useEffect, useMemo } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useRef,
+  useCallback,
+  useEffect,
+  useMemo,
+} from 'react';
 
 import { useTeachingAgents } from '@/features/ai/agentcreator/teaching/hooks/useAgentTeachingQueries';
-import { useBrainModelOptions } from '@/features/ai/brain/hooks/useBrainModelOptions';
+import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { AgentTeachingAgentRecord } from '@/shared/contracts/agent-teaching';
 import type { ChatMessage } from '@/shared/contracts/chatbot';
-import type { 
-  BlockInstance, 
-  SectionInstance,
-  CustomCssAiConfig,
-} from '@/shared/contracts/cms';
+import type { BlockInstance, SectionInstance, CustomCssAiConfig } from '@/shared/contracts/cms';
 import { internalError } from '@/shared/errors/app-error';
 import { ApiError } from '@/shared/lib/api-client';
 import { useToast } from '@/shared/ui';
 
 import { usePageBuilder } from '../../hooks/usePageBuilderContext';
-import { extractCssFromResponse, extractJsonFromResponse } from '../utils/ai-helpers';
-
+import { extractCssFromResponse, extractJsonFromResponse } from '@/features/cms/components/page-builder/utils/ai-helpers';
 
 // ---------------------------------------------------------------------------
 // Context & Types
@@ -33,11 +36,11 @@ export interface InspectorAiContextValue {
   setCssAiAppend: (val: boolean) => void;
   cssAiAutoApply: boolean;
   setCssAiAutoApply: (val: boolean) => void;
-  
+
   // CSS AI Actions
   generateCss: () => Promise<void>;
   cancelCss: () => void;
-  
+
   // Content AI State
   contentAiProvider: 'model' | 'agent';
   setContentAiProvider: (val: 'model' | 'agent') => void;
@@ -50,12 +53,12 @@ export interface InspectorAiContextValue {
   contentAiLoading: boolean;
   contentAiError: string | null;
   contentAiOutput: string;
-  
+
   // Content AI Actions
   generateContent: () => Promise<void>;
   cancelContent: () => void;
   applyContent: () => void;
-  
+
   // Context Preview
   contextPreviewOpen: boolean;
   setContextPreviewOpen: (val: boolean) => void;
@@ -68,18 +71,23 @@ export interface InspectorAiContextValue {
   pageContextPreview: string;
   elementContextPreview: string;
   copyContext: (text: string) => Promise<void>;
-  
+
+  // Brain routing
+  brainAiProvider: 'model' | 'agent';
+  brainAiModelId: string;
+  brainAiAgentId: string;
+
   // Options
   modelOptions: string[];
   agentOptions: Array<{ label: string; value: string }>;
   providerOptions: Array<{ label: string; value: string }>;
-  
+
   // Configuration & Data
   customCssValue: string;
   customCssAiConfig: CustomCssAiConfig;
   updateCustomCssAiConfig: (patch: Partial<CustomCssAiConfig>) => void;
   applyCss: (mode: 'append' | 'replace') => void;
-  
+
   // Metadata
   contentAiAllowedKeys: string[];
   contentAiPlaceholder: string;
@@ -109,7 +117,10 @@ function stringifyContext(value: unknown, limit?: number | null): string {
     if (json.length <= limit) return json;
     return `${json.slice(0, limit)}\n...truncated...`;
   } catch {
-    const fallback = (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') ? String(value) : '[complex value]';
+    const fallback =
+      typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
+        ? String(value)
+        : '[complex value]';
     if (limit == null) return fallback;
     return fallback.length <= limit ? fallback : `${fallback.slice(0, limit)}...`;
   }
@@ -126,7 +137,7 @@ function serializeBlock(block: BlockInstance): SerializedBlock {
   return {
     id: block.id,
     type: block.type,
-    settings: (block.settings ?? {}),
+    settings: block.settings ?? {},
     blocks: (block.blocks ?? []).map((b: BlockInstance) => serializeBlock(b)),
   };
 }
@@ -193,13 +204,15 @@ export function InspectorAiProvider({
   const [contextPreviewNonce, setContextPreviewNonce] = useState<number>(0);
 
   // --- Data Loading ---
-  const cssProvider = customCssAiConfig.provider ?? 'model';
   const brainModelOptions = useBrainModelOptions({
-    feature: 'cms_builder',
-    enabled: aiQueriesEnabled && (cssProvider === 'model' || contentAiProvider === 'model'),
+    capability: 'cms.css_stream',
+    enabled: aiQueriesEnabled,
   });
+  const brainAiProvider = brainModelOptions.assignment.provider;
+  const brainAiModelId = brainModelOptions.assignment.modelId.trim();
+  const brainAiAgentId = brainModelOptions.assignment.agentId.trim();
   const teachingAgentsQuery = useTeachingAgents({
-    enabled: aiQueriesEnabled && (cssProvider === 'agent' || contentAiProvider === 'agent'),
+    enabled: aiQueriesEnabled && brainAiProvider === 'agent',
   });
 
   const modelOptions = useMemo((): string[] => {
@@ -210,7 +223,11 @@ export function InspectorAiProvider({
   }, [brainModelOptions.models]);
 
   const agentOptions = useMemo(
-    (): Array<{ label: string; value: string }> => (teachingAgentsQuery.data ?? []).map((agent: AgentTeachingAgentRecord) => ({ label: agent.name, value: agent.id })),
+    (): Array<{ label: string; value: string }> =>
+      (teachingAgentsQuery.data ?? []).map((agent: AgentTeachingAgentRecord) => ({
+        label: agent.name,
+        value: agent.id,
+      })),
     [teachingAgentsQuery.data]
   );
 
@@ -240,105 +257,113 @@ export function InspectorAiProvider({
 
   // --- Context Building ---
 
-  const buildPageContext = useCallback((limit?: number | null): string => {
-    const resolvedLimit = limit === undefined ? PAGE_CONTEXT_LIMIT : limit;
-    if (!state?.currentPage) return 'No page loaded.';
-    const pageContext = {
-      page: {
-        id: state.currentPage.id,
-        name: state.currentPage.name,
-        status: state.currentPage.status,
-        themeId: state.currentPage.themeId,
-        publishedAt: state.currentPage.publishedAt,
-        slugs: state.currentPage.slugs ?? [],
-      },
-      sections: (state.sections ?? []).map((section: SectionInstance) => ({
-        id: section.id,
-        type: section.type,
-        zone: section.zone,
-        settings: section.settings ?? {},
-        blocks: (section.blocks ?? []).map((b: BlockInstance) => serializeBlock(b)),
-      })),
-    };
-    return stringifyContext(pageContext, resolvedLimit);
-  }, [state]);
+  const buildPageContext = useCallback(
+    (limit?: number | null): string => {
+      const resolvedLimit = limit === undefined ? PAGE_CONTEXT_LIMIT : limit;
+      if (!state?.currentPage) return 'No page loaded.';
+      const pageContext = {
+        page: {
+          id: state.currentPage.id,
+          name: state.currentPage.name,
+          status: state.currentPage.status,
+          themeId: state.currentPage.themeId,
+          publishedAt: state.currentPage.publishedAt,
+          slugs: state.currentPage.slugs ?? [],
+        },
+        sections: (state.sections ?? []).map((section: SectionInstance) => ({
+          id: section.id,
+          type: section.type,
+          zone: section.zone,
+          settings: section.settings ?? {},
+          blocks: (section.blocks ?? []).map((b: BlockInstance) => serializeBlock(b)),
+        })),
+      };
+      return stringifyContext(pageContext, resolvedLimit);
+    },
+    [state]
+  );
 
   const selectedGridRow = useMemo<BlockInstance | null>(() => {
     if (selectedParentSection?.type !== 'Grid' || !selectedParentColumn) return null;
     return (
-      (selectedParentSection.blocks).find(
+      selectedParentSection.blocks.find(
         (block: BlockInstance) =>
           block.type === 'Row' &&
-          (block.blocks ?? []).some((column: BlockInstance) => (column).id === selectedParentColumn.id)
+          (block.blocks ?? []).some(
+            (column: BlockInstance) => column.id === selectedParentColumn.id
+          )
       ) ?? null
     );
   }, [selectedParentSection, selectedParentColumn]);
 
-  const buildElementContext = useCallback((limit?: number | null): string => {
-    const resolvedLimit = limit === undefined ? ELEMENT_CONTEXT_LIMIT : limit;
-    if (selectedSection && !selectedBlock && !selectedColumn) {
-      return stringifyContext(
-        {
-          kind: 'section',
-          id: selectedSection.id,
-          type: selectedSection.type,
-          zone: selectedSection.zone,
-          settings: selectedSection.settings ?? {},
-          blocks: (selectedSection.blocks ?? []).map((b: BlockInstance) => serializeBlock(b)),
-        },
-        resolvedLimit
-      );
-    }
-    if (selectedColumn) {
-      return stringifyContext(
-        {
-          kind: 'column',
-          id: selectedColumn.id,
-          sectionId: selectedColumnParentSection?.id,
-          rowId: selectedGridRow?.id,
-          settings: selectedColumn.settings ?? {},
-          blocks: (selectedColumn.blocks ?? []).map((b: BlockInstance) => serializeBlock(b)),
-        },
-        resolvedLimit
-      );
-    }
-    if (selectedBlock) {
-      return stringifyContext(
-        {
-          kind: selectedBlock.type === 'Row' ? 'row' : 'block',
-          id: selectedBlock.id,
-          type: selectedBlock.type,
-          sectionId: selectedParentSection?.id,
-          columnId: selectedParentColumn?.id,
-          parentBlockId: selectedParentBlock?.id,
-          settings: selectedBlock.settings ?? {},
-          blocks: (selectedBlock.blocks ?? []).map((b: BlockInstance) => serializeBlock(b)),
-        },
-        resolvedLimit
-      );
-    }
-    return 'No element selected.';
-  }, [
-    selectedSection,
-    selectedBlock,
-    selectedColumn,
-    selectedParentSection,
-    selectedParentColumn,
-    selectedParentBlock,
-    selectedColumnParentSection,
-    selectedGridRow,
-  ]);
+  const buildElementContext = useCallback(
+    (limit?: number | null): string => {
+      const resolvedLimit = limit === undefined ? ELEMENT_CONTEXT_LIMIT : limit;
+      if (selectedSection && !selectedBlock && !selectedColumn) {
+        return stringifyContext(
+          {
+            kind: 'section',
+            id: selectedSection.id,
+            type: selectedSection.type,
+            zone: selectedSection.zone,
+            settings: selectedSection.settings ?? {},
+            blocks: (selectedSection.blocks ?? []).map((b: BlockInstance) => serializeBlock(b)),
+          },
+          resolvedLimit
+        );
+      }
+      if (selectedColumn) {
+        return stringifyContext(
+          {
+            kind: 'column',
+            id: selectedColumn.id,
+            sectionId: selectedColumnParentSection?.id,
+            rowId: selectedGridRow?.id,
+            settings: selectedColumn.settings ?? {},
+            blocks: (selectedColumn.blocks ?? []).map((b: BlockInstance) => serializeBlock(b)),
+          },
+          resolvedLimit
+        );
+      }
+      if (selectedBlock) {
+        return stringifyContext(
+          {
+            kind: selectedBlock.type === 'Row' ? 'row' : 'block',
+            id: selectedBlock.id,
+            type: selectedBlock.type,
+            sectionId: selectedParentSection?.id,
+            columnId: selectedParentColumn?.id,
+            parentBlockId: selectedParentBlock?.id,
+            settings: selectedBlock.settings ?? {},
+            blocks: (selectedBlock.blocks ?? []).map((b: BlockInstance) => serializeBlock(b)),
+          },
+          resolvedLimit
+        );
+      }
+      return 'No element selected.';
+    },
+    [
+      selectedSection,
+      selectedBlock,
+      selectedColumn,
+      selectedParentSection,
+      selectedParentColumn,
+      selectedParentBlock,
+      selectedColumnParentSection,
+      selectedGridRow,
+    ]
+  );
 
   const pageContextPreview = useMemo((): string => {
     if (!contextPreviewOpen) return '';
-     
+
     contextPreviewNonce; // subscription
     return buildPageContext(contextPreviewFull ? null : undefined);
   }, [contextPreviewOpen, contextPreviewFull, contextPreviewNonce, buildPageContext]);
 
   const elementContextPreview = useMemo((): string => {
     if (!contextPreviewOpen) return '';
-     
+
     contextPreviewNonce; // subscription
     return buildElementContext(contextPreviewFull ? null : undefined);
   }, [contextPreviewOpen, contextPreviewFull, contextPreviewNonce, buildElementContext]);
@@ -350,7 +375,9 @@ export function InspectorAiProvider({
         toast('Context copied.', { variant: 'success' });
       } catch (error) {
         toast('Failed to copy context.', { variant: 'error' });
-        logClientError(error as Error, { context: { source: 'InspectorAiContext', action: 'copyContext' } });
+        logClientError(error as Error, {
+          context: { source: 'InspectorAiContext', action: 'copyContext' },
+        });
       }
     },
     [toast]
@@ -386,17 +413,18 @@ export function InspectorAiProvider({
       if (!prompt.trim()) {
         throw new ApiError('Prompt is empty.', 400);
       }
-    
+
       const sessionId = `css-ai-${Date.now()}`;
       const now = new Date().toISOString();
-    
+
       const messages: ChatMessage[] = [
         {
           id: `sys-${Date.now()}`,
           sessionId,
           timestamp: now,
           role: 'system',
-          content: 'You are a CSS assistant. Return only valid CSS without code fences or explanations.',
+          content:
+            'You are a CSS assistant. Return only valid CSS without code fences or explanations.',
         },
         {
           id: `user-${Date.now()}`,
@@ -409,14 +437,14 @@ export function InspectorAiProvider({
       const controller = new AbortController();
       cssAiAbortRef.current = controller;
 
-      const provider = customCssAiConfig.provider ?? 'model';
-      const modelId = (customCssAiConfig.modelId ?? '').trim() || modelOptions[0] || '';
-      const agentId = (customCssAiConfig.agentId ?? '').trim();
+      const provider = brainAiProvider;
+      const modelId = provider === 'model' ? brainAiModelId : '';
+      const agentId = provider === 'agent' ? brainAiAgentId : '';
       if (provider === 'model' && !modelId) {
-        throw new ApiError('Select an AI model first.', 400);
+        throw new ApiError('Configure CMS CSS Stream in AI Brain first.', 400);
       }
       if (provider === 'agent' && !agentId) {
-        throw new ApiError('Select a Deepthinking agent first.', 400);
+        throw new ApiError('Configure a CMS CSS Stream agent in AI Brain first.', 400);
       }
 
       const res = await fetch('/api/cms/css-ai/stream', {
@@ -508,10 +536,9 @@ export function InspectorAiProvider({
   }, [
     cssAiLoading,
     buildCssAiPrompt,
-    customCssAiConfig.provider,
-    customCssAiConfig.agentId,
-    customCssAiConfig.modelId,
-    modelOptions,
+    brainAiProvider,
+    brainAiModelId,
+    brainAiAgentId,
     cssAiAutoApply,
     cssAiAppend,
     customCssValue,
@@ -556,10 +583,13 @@ export function InspectorAiProvider({
       const allowed = new Set(contentAiAllowedKeys);
       const filtered =
         allowed.size > 0
-          ? Object.entries(settingsPatch).reduce<Record<string, unknown>>((acc: Record<string, unknown>, [key, value]: [string, unknown]) => {
-            if (allowed.has(key)) acc[key] = value;
-            return acc;
-          }, {})
+          ? Object.entries(settingsPatch).reduce<Record<string, unknown>>(
+              (acc: Record<string, unknown>, [key, value]: [string, unknown]) => {
+                if (allowed.has(key)) acc[key] = value;
+                return acc;
+              },
+              {}
+            )
           : settingsPatch;
       const entries = Object.entries(filtered);
       if (entries.length === 0) {
@@ -583,19 +613,19 @@ export function InspectorAiProvider({
         throw new ApiError('Prompt is empty.', 400);
       }
 
-      const provider = contentAiProvider;
-      const modelId = provider === 'model' ? (contentAiModelId.trim() || modelOptions[0] || '') : '';
-      const agentId = provider === 'agent' ? contentAiAgentId.trim() : '';
+      const provider = brainAiProvider;
+      const modelId = provider === 'model' ? brainAiModelId : '';
+      const agentId = provider === 'agent' ? brainAiAgentId : '';
       if (provider === 'model' && !modelId) {
-        throw new ApiError('Select an AI model first.', 400);
+        throw new ApiError('Configure CMS CSS Stream in AI Brain first.', 400);
       }
       if (provider === 'agent' && !agentId) {
-        throw new ApiError('Select a Deepthinking agent first.', 400);
+        throw new ApiError('Configure a CMS CSS Stream agent in AI Brain first.', 400);
       }
 
       const sessionId = `content-ai-${Date.now()}`;
       const now = new Date().toISOString();
-      
+
       const messages: ChatMessage[] = [
         {
           id: `sys-${Date.now()}`,
@@ -603,7 +633,7 @@ export function InspectorAiProvider({
           timestamp: now,
           role: 'system',
           content:
-                    'You are a CMS content assistant. Return only JSON. If updating settings, output an object of key/value pairs matching allowed keys.',
+            'You are a CMS content assistant. Return only JSON. If updating settings, output an object of key/value pairs matching allowed keys.',
         },
         {
           id: `user-${Date.now()}`,
@@ -697,10 +727,9 @@ export function InspectorAiProvider({
   }, [
     contentAiLoading,
     buildContentAiPrompt,
-    contentAiProvider,
-    contentAiModelId,
-    contentAiAgentId,
-    modelOptions,
+    brainAiProvider,
+    brainAiModelId,
+    brainAiAgentId,
     toast,
   ]);
 
@@ -751,7 +780,7 @@ export function InspectorAiProvider({
     setCssAiAutoApply,
     generateCss,
     cancelCss,
-    
+
     contentAiProvider,
     setContentAiProvider,
     contentAiModelId,
@@ -766,7 +795,7 @@ export function InspectorAiProvider({
     generateContent,
     cancelContent,
     applyContent,
-    
+
     contextPreviewOpen,
     setContextPreviewOpen,
     contextPreviewTab,
@@ -778,16 +807,19 @@ export function InspectorAiProvider({
     pageContextPreview,
     elementContextPreview,
     copyContext,
-    
+    brainAiProvider,
+    brainAiModelId,
+    brainAiAgentId,
+
     modelOptions,
     agentOptions,
     providerOptions,
-    
+
     customCssValue,
     customCssAiConfig,
     updateCustomCssAiConfig: onUpdateCustomCssAiConfig,
     applyCss,
-    
+
     contentAiAllowedKeys,
     contentAiPlaceholder,
   };

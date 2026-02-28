@@ -104,7 +104,7 @@ const getSourceIds = (slot: SlotDoc): string[] => {
 const buildCascadeFromRoots = (
   roots: string[],
   slotsById: Map<string, SlotDoc>,
-  childIdsBySource: Map<string, Set<string>>,
+  childIdsBySource: Map<string, Set<string>>
 ): Set<string> => {
   const toDelete = new Set<string>();
   const queue = roots.filter((id) => slotsById.has(id));
@@ -163,15 +163,27 @@ const run = async (): Promise<void> => {
     let deletedFiles = 0;
 
     for (const projectId of projectIds) {
-      const slots = await db.collection<SlotDoc>('image_studio_slots').find({ projectId }).toArray();
-      const links = await db.collection<SlotLinkDoc>('image_studio_slot_links').find({ projectId }).toArray();
+      const slots = await db
+        .collection<SlotDoc>('image_studio_slots')
+        .find({ projectId })
+        .toArray();
+      const links = await db
+        .collection<SlotLinkDoc>('image_studio_slot_links')
+        .find({ projectId })
+        .toArray();
       const generationSlots = slots.filter((slot) => isGenerationLikeSlot(slot));
       scannedGenerationSlots += generationSlots.length;
 
-      const imageFileIds = Array.from(new Set(generationSlots.map((slot) => asTrimmedString(slot.imageFileId)).filter(Boolean)));
-      const imageFiles = imageFileIds.length > 0
-        ? await db.collection<ImageFileDoc>('image_files').find({ _id: { $in: imageFileIds } }).toArray()
-        : [];
+      const imageFileIds = Array.from(
+        new Set(generationSlots.map((slot) => asTrimmedString(slot.imageFileId)).filter(Boolean))
+      );
+      const imageFiles =
+        imageFileIds.length > 0
+          ? await db
+              .collection<ImageFileDoc>('image_files')
+              .find({ _id: { $in: imageFileIds } })
+              .toArray()
+          : [];
       const imageFileById = new Map<string, ImageFileDoc>(imageFiles.map((doc) => [doc._id, doc]));
 
       const orphanRootIds: string[] = [];
@@ -180,7 +192,8 @@ const run = async (): Promise<void> => {
         if (fileId) {
           const imageFile = imageFileById.get(fileId);
           const pathCandidate = normalizePublicPath(imageFile?.filepath ?? slot.imageUrl);
-          const renderable = Boolean(imageFile) && (pathCandidate ? await diskPathExists(pathCandidate) : true);
+          const renderable =
+            Boolean(imageFile) && (pathCandidate ? await diskPathExists(pathCandidate) : true);
           if (!renderable) orphanRootIds.push(slot._id);
           continue;
         }
@@ -216,7 +229,9 @@ const run = async (): Promise<void> => {
       });
 
       const toDelete = buildCascadeFromRoots(orphanRootIds, slotsById, childIdsBySource);
-      console.log(`${LOG_PREFIX} ${projectId}: orphan roots=${orphanRootIds.length}, cascade delete=${toDelete.size}`);
+      console.log(
+        `${LOG_PREFIX} ${projectId}: orphan roots=${orphanRootIds.length}, cascade delete=${toDelete.size}`
+      );
       Array.from(toDelete).forEach((slotId) => {
         const slot = slotsById.get(slotId);
         console.log(`${LOG_PREFIX}   - ${slotId} (${slot?.imageUrl ?? 'n/a'})`);
@@ -225,11 +240,13 @@ const run = async (): Promise<void> => {
       if (!apply || toDelete.size === 0) continue;
 
       const deletedSlotIds = Array.from(toDelete);
-      const fileIdsToDelete = Array.from(new Set(
-        deletedSlotIds
-          .map((slotId) => asTrimmedString(slotsById.get(slotId)?.imageFileId))
-          .filter(Boolean)
-      ));
+      const fileIdsToDelete = Array.from(
+        new Set(
+          deletedSlotIds
+            .map((slotId) => asTrimmedString(slotsById.get(slotId)?.imageFileId))
+            .filter(Boolean)
+        )
+      );
 
       const slotDeleteResult = await db.collection<SlotDoc>('image_studio_slots').deleteMany({
         _id: { $in: deletedSlotIds },
@@ -238,10 +255,7 @@ const run = async (): Promise<void> => {
 
       await db.collection<SlotLinkDoc>('image_studio_slot_links').deleteMany({
         projectId,
-        $or: [
-          { sourceSlotId: { $in: deletedSlotIds } },
-          { targetSlotId: { $in: deletedSlotIds } },
-        ],
+        $or: [{ sourceSlotId: { $in: deletedSlotIds } }, { targetSlotId: { $in: deletedSlotIds } }],
       });
 
       for (const fileId of fileIdsToDelete) {

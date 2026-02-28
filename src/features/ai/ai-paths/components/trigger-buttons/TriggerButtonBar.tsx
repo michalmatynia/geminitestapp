@@ -4,7 +4,10 @@ import { Settings2 } from 'lucide-react';
 import React from 'react';
 
 import { ICON_LIBRARY_MAP } from '@/shared/lib/icons';
-import type { AiTriggerButtonLocation, AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
+import type {
+  AiTriggerButtonLocation,
+  AiTriggerButtonRecord,
+} from '@/shared/contracts/ai-trigger-buttons';
 import { Button, ToggleRow, Tooltip } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -25,13 +28,7 @@ export function TriggerButtonBar({
   getEntityJson,
   className,
 }: TriggerButtonBarProps): React.JSX.Element | null {
-  const { 
-    buttons, 
-    toggleMap, 
-    successMap, 
-    runStates, 
-    handleTrigger 
-  } = useTriggerButtons({
+  const { buttons, toggleMap, successMap, runStates, handleTrigger } = useTriggerButtons({
     location,
     entityType,
     entityId,
@@ -51,7 +48,7 @@ export function TriggerButtonBar({
         const hasSucceeded = Boolean(successMap[button.id]);
         const baseOpacity = hasSucceeded ? 1 : 0.7;
         const textOpacity = isRunning ? baseOpacity + (1 - baseOpacity) * progress : baseOpacity;
-        
+
         if (button.mode === 'toggle') {
           const checked = Boolean(toggleMap[button.id]);
           const toggleControl = (
@@ -66,16 +63,21 @@ export function TriggerButtonBar({
                 <span
                   aria-hidden
                   className='pointer-events-none absolute inset-0 z-0 origin-left bg-emerald-500/10 transition-transform duration-200 ease-linear'
-                  style={{ transform: `scaleX(${Math.max(0.02, progress)})`, pointerEvents: 'none' }}
+                  style={{
+                    transform: `scaleX(${Math.max(0.02, progress)})`,
+                    pointerEvents: 'none',
+                  }}
                 />
               ) : null}
               <ToggleRow
                 label={showLabel ? button.name : ''}
-                icon={Icon ? (
-                  <Icon className='size-4 text-gray-200' style={{ opacity: textOpacity }} />
-                ) : (
-                  <Settings2 className='size-4 text-gray-500' style={{ opacity: textOpacity }} />
-                )}
+                icon={
+                  Icon ? (
+                    <Icon className='size-4 text-gray-200' style={{ opacity: textOpacity }} />
+                  ) : (
+                    <Settings2 className='size-4 text-gray-500' style={{ opacity: textOpacity }} />
+                  )
+                }
                 checked={checked}
                 disabled={isRunning}
                 onCheckedChange={(nextChecked: boolean) => {
@@ -121,9 +123,15 @@ export function TriggerButtonBar({
               />
             ) : null}
             {Icon ? (
-              <Icon className='relative z-10 size-4' style={{ opacity: showLabel ? 1 : textOpacity }} />
+              <Icon
+                className='relative z-10 size-4'
+                style={{ opacity: showLabel ? 1 : textOpacity }}
+              />
             ) : (
-              <Settings2 className='relative z-10 size-4' style={{ opacity: showLabel ? 1 : textOpacity }} />
+              <Settings2
+                className='relative z-10 size-4'
+                style={{ opacity: showLabel ? 1 : textOpacity }}
+              />
             )}
             {showLabel ? (
               <span

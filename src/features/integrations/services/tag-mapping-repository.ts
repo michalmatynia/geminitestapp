@@ -14,10 +14,7 @@ export type TagMappingRepository = {
   delete: (id: string) => Promise<void>;
   getById: (id: string) => Promise<TagMapping | null>;
   listByConnection: (connectionId: string) => Promise<TagMappingWithDetails[]>;
-  getByInternalTag: (
-    connectionId: string,
-    internalTagId: string
-  ) => Promise<TagMapping | null>;
+  getByInternalTag: (connectionId: string, internalTagId: string) => Promise<TagMapping | null>;
   listByInternalTagIds: (
     connectionId: string,
     internalTagIds: string[]

@@ -1,6 +1,6 @@
 'use client';
 
-import { } from 'lucide-react';
+import {} from 'lucide-react';
 import Image from 'next/image';
 import React, { useEffect, useMemo, useState } from 'react';
 
@@ -249,7 +249,11 @@ export function ProjectGenerationHistoryTab(): React.JSX.Element {
 
   if (!projectId) {
     return (
-      <Card variant='subtle-compact' padding='md' className='border-border/60 bg-card/40 text-sm text-muted-foreground'>
+      <Card
+        variant='subtle-compact'
+        padding='md'
+        className='border-border/60 bg-card/40 text-sm text-muted-foreground'
+      >
         Select a project to view generation history.
       </Card>
     );
@@ -257,7 +261,11 @@ export function ProjectGenerationHistoryTab(): React.JSX.Element {
 
   if (runsQuery.isLoading) {
     return (
-      <Card variant='subtle-compact' padding='md' className='flex items-center gap-2 border-border/60 bg-card/40 text-sm text-muted-foreground'>
+      <Card
+        variant='subtle-compact'
+        padding='md'
+        className='flex items-center gap-2 border-border/60 bg-card/40 text-sm text-muted-foreground'
+      >
         <LoadingState message='Loading generation history...' />
       </Card>
     );
@@ -273,7 +281,11 @@ export function ProjectGenerationHistoryTab(): React.JSX.Element {
 
   if (runs.length === 0) {
     return (
-      <Card variant='subtle-compact' padding='md' className='border-border/60 bg-card/40 text-sm text-muted-foreground'>
+      <Card
+        variant='subtle-compact'
+        padding='md'
+        className='border-border/60 bg-card/40 text-sm text-muted-foreground'
+      >
         No generation runs yet for this project.
       </Card>
     );
@@ -281,7 +293,11 @@ export function ProjectGenerationHistoryTab(): React.JSX.Element {
 
   return (
     <div className='space-y-3'>
-      <Card variant='subtle-compact' padding='sm' className='flex flex-wrap items-center justify-between gap-2 border-border/60 bg-card/40 text-xs text-muted-foreground'>
+      <Card
+        variant='subtle-compact'
+        padding='sm'
+        className='flex flex-wrap items-center justify-between gap-2 border-border/60 bg-card/40 text-xs text-muted-foreground'
+      >
         <span>
           Showing {pageStart}-{pageEnd} of {total} runs
         </span>
@@ -295,7 +311,8 @@ export function ProjectGenerationHistoryTab(): React.JSX.Element {
       </Card>
       {runs.map((run) => {
         const prompt = run.request?.prompt?.trim() ?? '';
-        const promptSummary = prompt.length > 120 ? `${prompt.slice(0, 120)}...` : prompt || 'No prompt';
+        const promptSummary =
+          prompt.length > 120 ? `${prompt.slice(0, 120)}...` : prompt || 'No prompt';
         const isExpanded = expandedRunId === run.id;
         const timeline = resolveRunTimeline(run);
         const executionMeta = resolveExecutionMeta(run);
@@ -322,9 +339,13 @@ export function ProjectGenerationHistoryTab(): React.JSX.Element {
               <div className='flex flex-wrap items-center gap-2'>
                 <Badge
                   variant={
-                    run.status === 'completed' ? 'success' :
-                      run.status === 'failed' ? 'error' :
-                        run.status === 'running' ? 'info' : 'warning'
+                    run.status === 'completed'
+                      ? 'success'
+                      : run.status === 'failed'
+                        ? 'error'
+                        : run.status === 'running'
+                          ? 'info'
+                          : 'warning'
                   }
                   className='font-bold uppercase'
                 >
@@ -346,22 +367,40 @@ export function ProjectGenerationHistoryTab(): React.JSX.Element {
             {isExpanded ? (
               <div className='mt-3 space-y-3 border-t border-border/50 pt-3'>
                 <div className='grid gap-2 text-xs text-muted-foreground sm:grid-cols-2 lg:grid-cols-4'>
-                  <div><span className='text-foreground'>Run ID:</span> {run.id}</div>
-                  <div><span className='text-foreground'>Started:</span> {formatDateTime(run.startedAt)}</div>
-                  <div><span className='text-foreground'>Finished:</span> {formatDateTime(run.finishedAt)}</div>
-                  <div><span className='text-foreground'>Duration:</span> {formatDuration(run.startedAt, run.finishedAt)}</div>
+                  <div>
+                    <span className='text-foreground'>Run ID:</span> {run.id}
+                  </div>
+                  <div>
+                    <span className='text-foreground'>Started:</span>{' '}
+                    {formatDateTime(run.startedAt)}
+                  </div>
+                  <div>
+                    <span className='text-foreground'>Finished:</span>{' '}
+                    {formatDateTime(run.finishedAt)}
+                  </div>
+                  <div>
+                    <span className='text-foreground'>Duration:</span>{' '}
+                    {formatDuration(run.startedAt, run.finishedAt)}
+                  </div>
                 </div>
 
                 <div>
                   <div className='mb-1 text-xs font-semibold text-foreground'>Prompt</div>
-                  <pre className='max-h-28 overflow-auto rounded border border-border/60 bg-black/30 p-2 text-xs text-gray-200 whitespace-pre-wrap'>{prompt || 'n/a'}</pre>
+                  <pre className='max-h-28 overflow-auto rounded border border-border/60 bg-black/30 p-2 text-xs text-gray-200 whitespace-pre-wrap'>
+                    {prompt || 'n/a'}
+                  </pre>
                 </div>
 
                 <div>
                   <div className='mb-1 text-xs font-semibold text-foreground'>Lifecycle Events</div>
                   <div className='space-y-1'>
                     {timeline.map((event) => (
-                      <Card key={event.id} variant='subtle-compact' padding='sm' className='border-border/50 bg-card/50 text-xs'>
+                      <Card
+                        key={event.id}
+                        variant='subtle-compact'
+                        padding='sm'
+                        className='border-border/50 bg-card/50 text-xs'
+                      >
                         <div className='text-foreground'>{event.label}</div>
                         <div className='text-muted-foreground'>{formatDateTime(event.at)}</div>
                         <pre className='mt-1 max-h-24 overflow-auto rounded bg-black/30 p-1.5 text-[11px] text-gray-200'>
@@ -374,11 +413,23 @@ export function ProjectGenerationHistoryTab(): React.JSX.Element {
 
                 {run.outputs.length > 0 ? (
                   <div>
-                    <div className='mb-1 text-xs font-semibold text-foreground'>Generated Outputs</div>
+                    <div className='mb-1 text-xs font-semibold text-foreground'>
+                      Generated Outputs
+                    </div>
                     <div className='grid gap-2 sm:grid-cols-2 xl:grid-cols-3'>
                       {run.outputs.map((output, index) => (
-                        <Card key={output.id} variant='subtle-compact' padding='sm' className='border-border/50 bg-card/50'>
-                          <a href={output.filepath} target='_blank' rel='noopener noreferrer' className='block relative h-36 w-full rounded overflow-hidden'>
+                        <Card
+                          key={output.id}
+                          variant='subtle-compact'
+                          padding='sm'
+                          className='border-border/50 bg-card/50'
+                        >
+                          <a
+                            href={output.filepath}
+                            target='_blank'
+                            rel='noopener noreferrer'
+                            className='block relative h-36 w-full rounded overflow-hidden'
+                          >
                             <Image
                               src={output.filepath}
                               alt={output.filename || `Output ${index + 1}`}
@@ -388,30 +439,42 @@ export function ProjectGenerationHistoryTab(): React.JSX.Element {
                             />
                           </a>
                           <div className='mt-2 space-y-0.5 text-[11px] text-muted-foreground'>
-                            <div className='text-foreground'>#{index + 1} {output.filename || output.id}</div>
+                            <div className='text-foreground'>
+                              #{index + 1} {output.filename || output.id}
+                            </div>
                             <div>File ID: {output.id}</div>
                             <div>Size: {formatBytes(output.size)}</div>
-                            <div>Resolution: {output.width ?? '?'} x {output.height ?? '?'}</div>
+                            <div>
+                              Resolution: {output.width ?? '?'} x {output.height ?? '?'}
+                            </div>
                           </div>
                         </Card>
                       ))}
                     </div>
                   </div>
                 ) : (
-                  <Card variant='subtle-compact' padding='sm' className='border-border/50 bg-card/50 text-xs text-muted-foreground'>
+                  <Card
+                    variant='subtle-compact'
+                    padding='sm'
+                    className='border-border/50 bg-card/50 text-xs text-muted-foreground'
+                  >
                     No output files were recorded for this run.
                   </Card>
                 )}
 
                 <div className='grid gap-3 lg:grid-cols-2'>
                   <div>
-                    <div className='mb-1 text-xs font-semibold text-foreground'>Request Payload</div>
+                    <div className='mb-1 text-xs font-semibold text-foreground'>
+                      Request Payload
+                    </div>
                     <pre className='max-h-52 overflow-auto rounded border border-border/60 bg-black/30 p-2 text-[11px] text-gray-200'>
                       {toPrettyJson(run.request ?? {})}
                     </pre>
                   </div>
                   <div>
-                    <div className='mb-1 text-xs font-semibold text-foreground'>API Response Snapshot</div>
+                    <div className='mb-1 text-xs font-semibold text-foreground'>
+                      API Response Snapshot
+                    </div>
                     <pre className='max-h-52 overflow-auto rounded border border-border/60 bg-black/30 p-2 text-[11px] text-gray-200'>
                       {toPrettyJson(apiResponseSnapshot)}
                     </pre>
@@ -419,7 +482,9 @@ export function ProjectGenerationHistoryTab(): React.JSX.Element {
                 </div>
 
                 <div>
-                  <div className='mb-1 text-xs font-semibold text-foreground'>Execution Metadata</div>
+                  <div className='mb-1 text-xs font-semibold text-foreground'>
+                    Execution Metadata
+                  </div>
                   <pre className='max-h-52 overflow-auto rounded border border-border/60 bg-black/30 p-2 text-[11px] text-gray-200'>
                     {toPrettyJson(executionMeta ?? { note: 'No execution metadata recorded.' })}
                   </pre>

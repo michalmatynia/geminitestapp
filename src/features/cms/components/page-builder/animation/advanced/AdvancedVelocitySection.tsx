@@ -1,26 +1,24 @@
 'use client';
 
 import React from 'react';
-import {
-  Input,
-  SelectSimple,
-  FormSection,
-  FormField,
-} from '@/shared/ui';
+import { Input, SelectSimple, FormSection, FormField } from '@/shared/ui';
 import { DEFAULT_ANIMATION_CONFIG, VELOCITY_EFFECTS, type VelocityEffect } from '@/shared/lib/gsap';
 import { useAnimationConfigContext } from '../AnimationConfigContext';
 
 export function AdvancedVelocitySection(): React.JSX.Element {
   const { config, onChange } = useAnimationConfigContext();
-  
-  const velocityEffectValue = config.velocityEffect ?? DEFAULT_ANIMATION_CONFIG.velocityEffect ?? 'none';
-  const velocityStrengthValue = config.velocityStrength ?? DEFAULT_ANIMATION_CONFIG.velocityStrength ?? 0.15;
+
+  const velocityEffectValue =
+    config.velocityEffect ?? DEFAULT_ANIMATION_CONFIG.velocityEffect ?? 'none';
+  const velocityStrengthValue =
+    config.velocityStrength ?? DEFAULT_ANIMATION_CONFIG.velocityStrength ?? 0.15;
   const velocityMaxValue = config.velocityMax ?? DEFAULT_ANIMATION_CONFIG.velocityMax ?? 20;
 
   return (
     <FormSection title='Velocity FX' variant='subtle-compact' className='p-3 space-y-4'>
       <FormField label='Effect'>
-        <SelectSimple size='sm'
+        <SelectSimple
+          size='sm'
           value={velocityEffectValue}
           onValueChange={(v) => onChange({ ...config, velocityEffect: v as VelocityEffect })}
           options={VELOCITY_EFFECTS}
@@ -37,7 +35,8 @@ export function AdvancedVelocitySection(): React.JSX.Element {
               value={velocityStrengthValue}
               onChange={(e) => {
                 const val = parseFloat(e.target.value);
-                if (!isNaN(val)) onChange({ ...config, velocityStrength: Math.max(0.01, Math.min(2, val)) });
+                if (!isNaN(val))
+                  onChange({ ...config, velocityStrength: Math.max(0.01, Math.min(2, val)) });
               }}
               className='h-9'
             />
@@ -51,7 +50,8 @@ export function AdvancedVelocitySection(): React.JSX.Element {
               value={velocityMaxValue}
               onChange={(e) => {
                 const val = parseFloat(e.target.value);
-                if (!isNaN(val)) onChange({ ...config, velocityMax: Math.max(1, Math.min(60, val)) });
+                if (!isNaN(val))
+                  onChange({ ...config, velocityMax: Math.max(1, Math.min(60, val)) });
               }}
               className='h-9'
             />

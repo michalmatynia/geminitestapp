@@ -9,7 +9,7 @@ import {
   type UseAiPathsObjectAnalysisReturn,
   type AiPathsObjectAnalysisStatus,
 } from '../../../hooks/useAiPathsObjectAnalysis';
-import type { AiPathsObjectAnalysisAutoApplyTarget } from '../../../utils/ai-paths-object-analysis';
+import type { AiPathsObjectAnalysisAutoApplyTarget } from '@/shared/lib/ai/image-studio/utils/ai-paths-object-analysis';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -82,7 +82,7 @@ function FieldMappingRow({
         className={cn(
           'h-6 flex-1 rounded border border-border/60 bg-background/50 px-2',
           'text-xs text-gray-200 placeholder:text-gray-600',
-          'focus:outline-none focus:ring-1 focus:ring-ring',
+          'focus:outline-none focus:ring-1 focus:ring-ring'
         )}
       />
     </div>
@@ -99,7 +99,17 @@ function AiPathAnalysisTriggerFull({
   analysis: UseAiPathsObjectAnalysisReturn;
 }): React.JSX.Element {
   const [fieldMappingOpen, setFieldMappingOpen] = useState(false);
-  const { status, errorMessage, lastResult, config, pathMetas, pathMetasLoading, setConfig, triggerAnalysis, cancelAnalysis } = analysis;
+  const {
+    status,
+    errorMessage,
+    lastResult,
+    config,
+    pathMetas,
+    pathMetasLoading,
+    setConfig,
+    triggerAnalysis,
+    cancelAnalysis,
+  } = analysis;
 
   const pathOptions = useMemo(
     () =>
@@ -108,12 +118,12 @@ function AiPathAnalysisTriggerFull({
         : pathMetas.length === 0
           ? [{ value: '__empty__', label: 'No AI Paths found', disabled: true }]
           : pathMetas.map((m) => ({ value: m.id, label: m.name })),
-    [pathMetas, pathMetasLoading],
+    [pathMetas, pathMetasLoading]
   );
 
   const autoApplyOptions = useMemo(
     () => AUTO_APPLY_OPTIONS.map((o) => ({ value: o.value, label: o.label })),
-    [],
+    []
   );
 
   const busy = isActive(status);
@@ -123,8 +133,8 @@ function AiPathAnalysisTriggerFull({
       <div>
         <div className='text-sm font-medium text-gray-200'>AI-Path Object Analysis</div>
         <div className='text-xs text-gray-500'>
-          Trigger an AI-Path workflow (e.g. Gemma vision) to detect the object and centre it on the canvas.
-          Configure your path in the AI-Paths feature, then select it here.
+          Trigger an AI-Path workflow (e.g. Gemma vision) to detect the object and centre it on the
+          canvas. Configure your path in the AI-Paths feature, then select it here.
         </div>
       </div>
 
@@ -135,7 +145,10 @@ function AiPathAnalysisTriggerFull({
           size='sm'
           value={config.pathId || undefined}
           onValueChange={(v) =>
-            setConfig((prev) => ({ ...prev, pathId: v === '__loading__' || v === '__empty__' ? '' : v }))
+            setConfig((prev) => ({
+              ...prev,
+              pathId: v === '__loading__' || v === '__empty__' ? '' : v,
+            }))
           }
           options={pathOptions}
           placeholder='Select a path…'
@@ -157,12 +170,7 @@ function AiPathAnalysisTriggerFull({
             Trigger AI Analysis
           </Button>
         ) : (
-          <Button
-            size='xs'
-            type='button'
-            variant='outline'
-            onClick={cancelAnalysis}
-          >
+          <Button size='xs' type='button' variant='outline' onClick={cancelAnalysis}>
             Cancel
           </Button>
         )}
@@ -188,8 +196,14 @@ function AiPathAnalysisTriggerFull({
           <div className='font-medium text-green-400'>Analysis complete</div>
           {lastResult.bounds && (
             <div className='mt-1 space-y-0.5 font-mono'>
-              <div>Left: {Math.round(lastResult.bounds.left)}px &nbsp; Top: {Math.round(lastResult.bounds.top)}px</div>
-              <div>Width: {Math.round(lastResult.bounds.width)}px &nbsp; Height: {Math.round(lastResult.bounds.height)}px</div>
+              <div>
+                Left: {Math.round(lastResult.bounds.left)}px &nbsp; Top:{' '}
+                {Math.round(lastResult.bounds.top)}px
+              </div>
+              <div>
+                Width: {Math.round(lastResult.bounds.width)}px &nbsp; Height:{' '}
+                {Math.round(lastResult.bounds.height)}px
+              </div>
             </div>
           )}
           {lastResult.appliedPreviewOffset && (
@@ -197,7 +211,8 @@ function AiPathAnalysisTriggerFull({
           )}
           {lastResult.appliedToTargets !== 'none' && (
             <div className='mt-0.5'>
-              Applied layout to: <span className='text-gray-300'>{lastResult.appliedToTargets}</span>
+              Applied layout to:{' '}
+              <span className='text-gray-300'>{lastResult.appliedToTargets}</span>
             </div>
           )}
         </div>
@@ -223,9 +238,7 @@ function AiPathAnalysisTriggerFull({
           <input
             type='checkbox'
             checked={config.runAfterApply}
-            onChange={(e) =>
-              setConfig((prev) => ({ ...prev, runAfterApply: e.target.checked }))
-            }
+            onChange={(e) => setConfig((prev) => ({ ...prev, runAfterApply: e.target.checked }))}
             className='h-3 w-3 rounded border-gray-600 accent-primary'
           />
           <span className='text-xs text-gray-400'>Auto-run tool after applying settings</span>
@@ -263,9 +276,9 @@ function AiPathAnalysisTriggerFull({
         {fieldMappingOpen && (
           <div className='mt-2 space-y-2'>
             <div className='text-[10px] text-gray-600'>
-              Enter dot-notation paths into your path's run.result
-              (e.g. <code className='text-gray-400'>objectBounds.left</code>).
-              Leave blank if using centre fields.
+              Enter dot-notation paths into your path's run.result (e.g.{' '}
+              <code className='text-gray-400'>objectBounds.left</code>). Leave blank if using centre
+              fields.
             </div>
 
             {/* Trigger node ID */}
@@ -397,7 +410,15 @@ function AiPathAnalysisTriggerCompact({
 }: {
   analysis: UseAiPathsObjectAnalysisReturn;
 }): React.JSX.Element {
-  const { status, config, pathMetas, pathMetasLoading, setConfig, triggerAnalysis, cancelAnalysis } = analysis;
+  const {
+    status,
+    config,
+    pathMetas,
+    pathMetasLoading,
+    setConfig,
+    triggerAnalysis,
+    cancelAnalysis,
+  } = analysis;
 
   const pathOptions = useMemo(
     () =>
@@ -406,7 +427,7 @@ function AiPathAnalysisTriggerCompact({
         : pathMetas.length === 0
           ? [{ value: '__empty__', label: 'No paths', disabled: true }]
           : pathMetas.map((m) => ({ value: m.id, label: m.name })),
-    [pathMetas, pathMetasLoading],
+    [pathMetas, pathMetasLoading]
   );
 
   const busy = isActive(status);
@@ -417,7 +438,10 @@ function AiPathAnalysisTriggerCompact({
         size='xs'
         value={config.pathId || undefined}
         onValueChange={(v) =>
-          setConfig((prev) => ({ ...prev, pathId: v === '__loading__' || v === '__empty__' ? '' : v }))
+          setConfig((prev) => ({
+            ...prev,
+            pathId: v === '__loading__' || v === '__empty__' ? '' : v,
+          }))
         }
         options={pathOptions}
         placeholder='Select AI Path…'

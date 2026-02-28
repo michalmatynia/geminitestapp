@@ -4,10 +4,7 @@ import { handlePoll } from '@/shared/lib/ai-paths/core/runtime/handlers/integrat
 import type { AiNode } from '@/shared/contracts/ai-paths';
 import type { NodeHandlerContext, RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
 
-import {
-  pollDatabaseQuery,
-  pollGraphJob,
-} from '../../utils';
+import { pollDatabaseQuery, pollGraphJob } from '../../utils';
 
 vi.mock('../../utils', async () => {
   const actual = await vi.importActual<typeof import('../../utils')>('../../utils');
@@ -18,9 +15,7 @@ vi.mock('../../utils', async () => {
   };
 });
 
-const buildNode = (
-  patch: Partial<AiNode> = {}
-): AiNode =>
+const buildNode = (patch: Partial<AiNode> = {}): AiNode =>
   ({
     id: 'node-poll',
     type: 'poll',
@@ -92,9 +87,7 @@ describe('handlePoll', () => {
   it('classifies canceled job polling as canceled status', async () => {
     vi.mocked(pollGraphJob).mockRejectedValueOnce(new Error('AI job was canceled.'));
 
-    const result = await handlePoll(
-      buildContext(buildNode(), { jobId: 'job-1' })
-    );
+    const result = await handlePoll(buildContext(buildNode(), { jobId: 'job-1' }));
 
     expect(result['status']).toBe('canceled');
     expect(result['bundle']).toEqual(
@@ -109,9 +102,7 @@ describe('handlePoll', () => {
   it('classifies job timeout as timeout status', async () => {
     vi.mocked(pollGraphJob).mockRejectedValueOnce(new Error('AI job timed out.'));
 
-    const result = await handlePoll(
-      buildContext(buildNode(), { jobId: 'job-timeout' })
-    );
+    const result = await handlePoll(buildContext(buildNode(), { jobId: 'job-timeout' }));
 
     expect(result['status']).toBe('timeout');
     expect(result['bundle']).toEqual(
@@ -139,9 +130,7 @@ describe('handlePoll', () => {
       },
     });
 
-    const result = await handlePoll(
-      buildContext(node, { jobId: 'job-db-timeout' })
-    );
+    const result = await handlePoll(buildContext(node, { jobId: 'job-db-timeout' }));
 
     expect(result['status']).toBe('timeout');
     expect(result['bundle']).toEqual(
@@ -162,11 +151,7 @@ describe('handlePoll', () => {
 
     await expect(
       handlePoll(
-        buildContext(
-          buildNode(),
-          { jobId: 'job-abort' },
-          { abortSignal: controller.signal }
-        )
+        buildContext(buildNode(), { jobId: 'job-abort' }, { abortSignal: controller.signal })
       )
     ).rejects.toThrow('Operation aborted.');
   });

@@ -1,6 +1,5 @@
 import 'server-only';
 
-
 import { randomUUID } from 'crypto';
 
 import { Prisma } from '@prisma/client';
@@ -85,13 +84,9 @@ const normalizeIconColor = (value: unknown): string | null => {
   return trimmed.toLowerCase();
 };
 
-const openProductFormTabOptions = new Set<string>(
-  PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS
-);
+const openProductFormTabOptions = new Set<string>(PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS);
 
-const normalizeOpenProductFormTab = (
-  value: unknown
-): ProductDraftOpenFormTab => {
+const normalizeOpenProductFormTab = (value: unknown): ProductDraftOpenFormTab => {
   if (typeof value !== 'string') return 'general';
   const trimmed = value.trim();
   if (!openProductFormTabOptions.has(trimmed)) return 'general';
@@ -139,9 +134,7 @@ const listDrafts_Mongo = async (): Promise<ProductDraftDto[]> => {
     categoryId: typeof draft.categoryId === 'string' ? draft.categoryId : null,
     tagIds: Array.isArray(draft.tagIds) ? draft.tagIds : [],
     producerIds: normalizeStringArray(draft.producerIds),
-    parameters: Array.isArray(draft.parameters)
-      ? draft.parameters
-      : [],
+    parameters: Array.isArray(draft.parameters) ? draft.parameters : [],
     defaultPriceGroupId: draft.defaultPriceGroupId || null,
     active: draft.active ?? true,
     validatorEnabled: draft.validatorEnabled ?? true,
@@ -190,9 +183,7 @@ const getDraft_Mongo = async (id: string): Promise<ProductDraftDto | null> => {
     categoryId: typeof draft.categoryId === 'string' ? draft.categoryId : null,
     tagIds: Array.isArray(draft.tagIds) ? draft.tagIds : [],
     producerIds: normalizeStringArray(draft.producerIds),
-    parameters: Array.isArray(draft.parameters)
-      ? draft.parameters
-      : [],
+    parameters: Array.isArray(draft.parameters) ? draft.parameters : [],
     defaultPriceGroupId: draft.defaultPriceGroupId || null,
     active: draft.active ?? true,
     validatorEnabled: draft.validatorEnabled ?? true,
@@ -300,21 +291,29 @@ const createDraft_Mongo = async (input: CreateProductDraftDto): Promise<ProductD
   };
 };
 
-const updateDraft_Mongo = async (id: string, input: UpdateProductDraftDto): Promise<ProductDraftDto | null> => {
+const updateDraft_Mongo = async (
+  id: string,
+  input: UpdateProductDraftDto
+): Promise<ProductDraftDto | null> => {
   const mongo = await getMongoDb();
   const now = new Date();
   const updatePayload: Partial<MongoDraftDoc> = {};
-  
+
   // Explicitly copy non-undefined values to satisfy exactOptionalPropertyTypes
-  (Object.keys(input) as (keyof UpdateProductDraftDto)[]).forEach((key: keyof UpdateProductDraftDto) => {
-    const val = input[key];
-    if (val !== undefined) {
-      (updatePayload as Record<string, unknown>)[key] = val;
+  (Object.keys(input) as (keyof UpdateProductDraftDto)[]).forEach(
+    (key: keyof UpdateProductDraftDto) => {
+      const val = input[key];
+      if (val !== undefined) {
+        (updatePayload as Record<string, unknown>)[key] = val;
+      }
     }
-  });
+  );
 
   if ('categoryId' in input) {
-    const normalized = typeof input.categoryId === 'string' && input.categoryId.trim() ? input.categoryId.trim() : null;
+    const normalized =
+      typeof input.categoryId === 'string' && input.categoryId.trim()
+        ? input.categoryId.trim()
+        : null;
     updatePayload.categoryId = normalized;
   }
 
@@ -331,9 +330,7 @@ const updateDraft_Mongo = async (id: string, input: UpdateProductDraftDto): Prom
   }
 
   if ('openProductFormTab' in input) {
-    updatePayload.openProductFormTab = normalizeOpenProductFormTab(
-      input.openProductFormTab
-    );
+    updatePayload.openProductFormTab = normalizeOpenProductFormTab(input.openProductFormTab);
   }
 
   const result = await mongo.collection<MongoDraftDoc>('product_drafts').findOneAndUpdate(
@@ -348,12 +345,13 @@ const updateDraft_Mongo = async (id: string, input: UpdateProductDraftDto): Prom
   );
 
   if (!result) return null;
-  
+
   // Handle different MongoDB driver versions
-  const doc = (typeof result === 'object' && 'value' in result) 
-    ? (result.value as MongoDraftDoc | null) 
-    : (result as unknown as MongoDraftDoc | null);
-  
+  const doc =
+    typeof result === 'object' && 'value' in result
+      ? (result.value as MongoDraftDoc | null)
+      : (result as unknown as MongoDraftDoc | null);
+
   if (!doc) return null;
 
   return {
@@ -383,9 +381,7 @@ const updateDraft_Mongo = async (id: string, input: UpdateProductDraftDto): Prom
     categoryId: typeof doc.categoryId === 'string' ? doc.categoryId : null,
     tagIds: Array.isArray(doc.tagIds) ? doc.tagIds : [],
     producerIds: normalizeStringArray(doc.producerIds),
-    parameters: Array.isArray(doc.parameters)
-      ? doc.parameters
-      : [],
+    parameters: Array.isArray(doc.parameters) ? doc.parameters : [],
     defaultPriceGroupId: doc.defaultPriceGroupId || null,
     active: doc.active ?? true,
     validatorEnabled: doc.validatorEnabled ?? true,
@@ -513,7 +509,10 @@ const createDraft_Prisma = async (input: CreateProductDraftDto): Promise<Product
   };
 };
 
-const updateDraft_Prisma = async (id: string, input: UpdateProductDraftDto): Promise<ProductDraftDto | null> => {
+const updateDraft_Prisma = async (
+  id: string,
+  input: UpdateProductDraftDto
+): Promise<ProductDraftDto | null> => {
   try {
     const {
       validatorEnabled: _validatorEnabled,
@@ -581,7 +580,10 @@ export const createDraft = async (input: CreateProductDraftDto): Promise<Product
   return provider === 'mongodb' ? createDraft_Mongo(input) : createDraft_Prisma(input);
 };
 
-export const updateDraft = async (id: string, input: UpdateProductDraftDto): Promise<ProductDraftDto | null> => {
+export const updateDraft = async (
+  id: string,
+  input: UpdateProductDraftDto
+): Promise<ProductDraftDto | null> => {
   const provider = await getDraftProvider();
   return provider === 'mongodb' ? updateDraft_Mongo(id, input) : updateDraft_Prisma(id, input);
 };

@@ -1,10 +1,12 @@
 @config "../../tailwind.config.ts";
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @layer base {
   :root {
-    --app-font-heading: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    --app-font-body: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --app-font-heading:
+      ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --app-font-body:
+      ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
@@ -97,99 +99,228 @@
   }
 
   @keyframes cms-anim-fade {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
   }
   @keyframes cms-anim-fade-up {
-    from { opacity: 0; transform: translateY(var(--cms-css-anim-distance, 40px)); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(var(--cms-css-anim-distance, 40px));
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
   @keyframes cms-anim-fade-down {
-    from { opacity: 0; transform: translateY(calc(var(--cms-css-anim-distance, 40px) * -1)); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(calc(var(--cms-css-anim-distance, 40px) * -1));
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
   @keyframes cms-anim-fade-left {
-    from { opacity: 0; transform: translateX(var(--cms-css-anim-distance, 40px)); }
-    to { opacity: 1; transform: translateX(0); }
+    from {
+      opacity: 0;
+      transform: translateX(var(--cms-css-anim-distance, 40px));
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
   }
   @keyframes cms-anim-fade-right {
-    from { opacity: 0; transform: translateX(calc(var(--cms-css-anim-distance, 40px) * -1)); }
-    to { opacity: 1; transform: translateX(0); }
+    from {
+      opacity: 0;
+      transform: translateX(calc(var(--cms-css-anim-distance, 40px) * -1));
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
   }
   @keyframes cms-anim-slide-up {
-    from { transform: translateY(var(--cms-css-anim-distance, 40px)); }
-    to { transform: translateY(0); }
+    from {
+      transform: translateY(var(--cms-css-anim-distance, 40px));
+    }
+    to {
+      transform: translateY(0);
+    }
   }
   @keyframes cms-anim-slide-down {
-    from { transform: translateY(calc(var(--cms-css-anim-distance, 40px) * -1)); }
-    to { transform: translateY(0); }
+    from {
+      transform: translateY(calc(var(--cms-css-anim-distance, 40px) * -1));
+    }
+    to {
+      transform: translateY(0);
+    }
   }
   @keyframes cms-anim-slide-left {
-    from { transform: translateX(var(--cms-css-anim-distance, 40px)); }
-    to { transform: translateX(0); }
+    from {
+      transform: translateX(var(--cms-css-anim-distance, 40px));
+    }
+    to {
+      transform: translateX(0);
+    }
   }
   @keyframes cms-anim-slide-right {
-    from { transform: translateX(calc(var(--cms-css-anim-distance, 40px) * -1)); }
-    to { transform: translateX(0); }
+    from {
+      transform: translateX(calc(var(--cms-css-anim-distance, 40px) * -1));
+    }
+    to {
+      transform: translateX(0);
+    }
   }
   @keyframes cms-anim-zoom-in {
-    from { opacity: 0; transform: scale(var(--cms-css-anim-scale, 0.9)); }
-    to { opacity: 1; transform: scale(1); }
+    from {
+      opacity: 0;
+      transform: scale(var(--cms-css-anim-scale, 0.9));
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
   }
   @keyframes cms-anim-zoom-out {
-    from { opacity: 0; transform: scale(var(--cms-css-anim-scale, 1.1)); }
-    to { opacity: 1; transform: scale(1); }
+    from {
+      opacity: 0;
+      transform: scale(var(--cms-css-anim-scale, 1.1));
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
   }
   @keyframes cms-anim-flip-x {
-    from { opacity: 0; transform: rotateX(var(--cms-css-anim-rotate, 90deg)); }
-    to { opacity: 1; transform: rotateX(0deg); }
+    from {
+      opacity: 0;
+      transform: rotateX(var(--cms-css-anim-rotate, 90deg));
+    }
+    to {
+      opacity: 1;
+      transform: rotateX(0deg);
+    }
   }
   @keyframes cms-anim-flip-y {
-    from { opacity: 0; transform: rotateY(var(--cms-css-anim-rotate, 90deg)); }
-    to { opacity: 1; transform: rotateY(0deg); }
+    from {
+      opacity: 0;
+      transform: rotateY(var(--cms-css-anim-rotate, 90deg));
+    }
+    to {
+      opacity: 1;
+      transform: rotateY(0deg);
+    }
   }
   @keyframes cms-anim-rotate {
-    from { opacity: 0; transform: rotate(var(--cms-css-anim-rotate, 12deg)); }
-    to { opacity: 1; transform: rotate(0deg); }
+    from {
+      opacity: 0;
+      transform: rotate(var(--cms-css-anim-rotate, 12deg));
+    }
+    to {
+      opacity: 1;
+      transform: rotate(0deg);
+    }
   }
   @keyframes cms-anim-blur {
-    from { opacity: 0; filter: blur(var(--cms-css-anim-blur, 6px)); }
-    to { opacity: 1; filter: blur(0); }
+    from {
+      opacity: 0;
+      filter: blur(var(--cms-css-anim-blur, 6px));
+    }
+    to {
+      opacity: 1;
+      filter: blur(0);
+    }
   }
   @keyframes cms-anim-pop {
-    0% { opacity: 0; transform: scale(var(--cms-css-anim-scale, 0.9)); }
-    70% { opacity: 1; transform: scale(1.05); }
-    100% { opacity: 1; transform: scale(1); }
+    0% {
+      opacity: 0;
+      transform: scale(var(--cms-css-anim-scale, 0.9));
+    }
+    70% {
+      opacity: 1;
+      transform: scale(1.05);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
   }
   @keyframes cms-anim-pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(calc(1 + (var(--cms-css-anim-scale, 0.05)))); }
-    100% { transform: scale(1); }
+    0% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(calc(1 + (var(--cms-css-anim-scale, 0.05))));
+    }
+    100% {
+      transform: scale(1);
+    }
   }
   @keyframes cms-anim-float {
-    0% { transform: translateY(0); }
-    50% { transform: translateY(calc(var(--cms-css-anim-distance, 40px) * -1)); }
-    100% { transform: translateY(0); }
+    0% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(calc(var(--cms-css-anim-distance, 40px) * -1));
+    }
+    100% {
+      transform: translateY(0);
+    }
   }
   @keyframes cms-anim-shake {
-    0% { transform: translateX(0); }
-    20% { transform: translateX(calc(var(--cms-css-anim-distance, 40px) / -4)); }
-    40% { transform: translateX(calc(var(--cms-css-anim-distance, 40px) / 4)); }
-    60% { transform: translateX(calc(var(--cms-css-anim-distance, 40px) / -6)); }
-    80% { transform: translateX(calc(var(--cms-css-anim-distance, 40px) / 6)); }
-    100% { transform: translateX(0); }
+    0% {
+      transform: translateX(0);
+    }
+    20% {
+      transform: translateX(calc(var(--cms-css-anim-distance, 40px) / -4));
+    }
+    40% {
+      transform: translateX(calc(var(--cms-css-anim-distance, 40px) / 4));
+    }
+    60% {
+      transform: translateX(calc(var(--cms-css-anim-distance, 40px) / -6));
+    }
+    80% {
+      transform: translateX(calc(var(--cms-css-anim-distance, 40px) / 6));
+    }
+    100% {
+      transform: translateX(0);
+    }
   }
   @keyframes cms-anim-wobble {
-    0% { transform: rotate(0deg); }
-    25% { transform: rotate(calc(var(--cms-css-anim-rotate, 12deg) / -2)); }
-    50% { transform: rotate(calc(var(--cms-css-anim-rotate, 12deg) / 2)); }
-    75% { transform: rotate(calc(var(--cms-css-anim-rotate, 12deg) / -3)); }
-    100% { transform: rotate(0deg); }
+    0% {
+      transform: rotate(0deg);
+    }
+    25% {
+      transform: rotate(calc(var(--cms-css-anim-rotate, 12deg) / -2));
+    }
+    50% {
+      transform: rotate(calc(var(--cms-css-anim-rotate, 12deg) / 2));
+    }
+    75% {
+      transform: rotate(calc(var(--cms-css-anim-rotate, 12deg) / -3));
+    }
+    100% {
+      transform: rotate(0deg);
+    }
   }
   @keyframes cms-anim-glow {
-    0% { box-shadow: 0 0 0 rgba(56, 189, 248, 0); }
-    50% { box-shadow: 0 0 24px rgba(56, 189, 248, 0.35); }
-    100% { box-shadow: 0 0 0 rgba(56, 189, 248, 0); }
+    0% {
+      box-shadow: 0 0 0 rgba(56, 189, 248, 0);
+    }
+    50% {
+      box-shadow: 0 0 24px rgba(56, 189, 248, 0.35);
+    }
+    100% {
+      box-shadow: 0 0 0 rgba(56, 189, 248, 0);
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -232,37 +363,39 @@
 }
 
 @layer base {
-  html[data-app-font-set="dm-sans"] {
-    --app-font-heading: "DM Sans", ui-sans-serif, system-ui, sans-serif;
-    --app-font-body: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  html[data-app-font-set='dm-sans'] {
+    --app-font-heading: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+    --app-font-body: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
   }
-  html[data-app-font-set="manrope"] {
-    --app-font-heading: "Manrope", ui-sans-serif, system-ui, sans-serif;
-    --app-font-body: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  html[data-app-font-set='manrope'] {
+    --app-font-heading: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+    --app-font-body: 'Manrope', ui-sans-serif, system-ui, sans-serif;
   }
-  html[data-app-font-set="outfit"] {
-    --app-font-heading: "Outfit", ui-sans-serif, system-ui, sans-serif;
-    --app-font-body: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  html[data-app-font-set='outfit'] {
+    --app-font-heading: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+    --app-font-body: 'Outfit', ui-sans-serif, system-ui, sans-serif;
   }
-  html[data-app-font-set="plus-jakarta"] {
-    --app-font-heading: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
-    --app-font-body: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  html[data-app-font-set='plus-jakarta'] {
+    --app-font-heading: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+    --app-font-body: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
   }
-  html[data-app-font-set="space-grotesk"] {
-    --app-font-heading: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
-    --app-font-body: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  html[data-app-font-set='space-grotesk'] {
+    --app-font-heading: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+    --app-font-body: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
   }
-  html[data-app-font-set="sora"] {
-    --app-font-heading: "Sora", ui-sans-serif, system-ui, sans-serif;
-    --app-font-body: "Sora", ui-sans-serif, system-ui, sans-serif;
+  html[data-app-font-set='sora'] {
+    --app-font-heading: 'Sora', ui-sans-serif, system-ui, sans-serif;
+    --app-font-body: 'Sora', ui-sans-serif, system-ui, sans-serif;
   }
-  html[data-app-font-set="bebas-dm"] {
-    --app-font-heading: "Bebas Neue", ui-sans-serif, system-ui, sans-serif;
-    --app-font-body: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  html[data-app-font-set='bebas-dm'] {
+    --app-font-heading: 'Bebas Neue', ui-sans-serif, system-ui, sans-serif;
+    --app-font-body: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
   }
-  html[data-app-font-set="system"] {
-    --app-font-heading: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    --app-font-body: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  html[data-app-font-set='system'] {
+    --app-font-heading:
+      ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --app-font-body:
+      ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
 }
 
@@ -351,8 +484,16 @@
   }
 
   @keyframes ai-paths-dot-bounce {
-    0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
-    40% { transform: translateY(-6px); opacity: 1; }
+    0%,
+    80%,
+    100% {
+      transform: translateY(0);
+      opacity: 0.4;
+    }
+    40% {
+      transform: translateY(-6px);
+      opacity: 1;
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -374,7 +515,9 @@
   .cms-hover-card,
   .cms-hover-button {
     transform: translateY(0) translateZ(0);
-    transition: transform 200ms ease, box-shadow 200ms ease;
+    transition:
+      transform 200ms ease,
+      box-shadow 200ms ease;
     will-change: transform;
   }
 
@@ -392,7 +535,9 @@
     transform: translateY(0) translateZ(0);
     perspective: var(--cms-event-hover-perspective, none);
     transform-style: preserve-3d;
-    transition: transform 200ms ease, box-shadow 200ms ease;
+    transition:
+      transform 200ms ease,
+      box-shadow 200ms ease;
     will-change: transform;
   }
 

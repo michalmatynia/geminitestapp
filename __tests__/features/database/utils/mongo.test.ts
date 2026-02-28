@@ -4,7 +4,7 @@ import {
   getMongoConnectionUrl,
   getMongoDatabaseName,
   assertValidBackupName,
-} from '@/features/database/utils/mongo';
+} from '@/shared/lib/db/utils/mongo';
 
 // Mock server-only to prevent errors
 vi.mock('server-only', () => ({}));
@@ -51,15 +51,11 @@ describe('mongo utils', () => {
     });
 
     it('should throw for invalid extension', () => {
-      expect(() => assertValidBackupName('backup.txt')).toThrow(
-        'Invalid backup file type'
-      );
+      expect(() => assertValidBackupName('backup.txt')).toThrow('Invalid backup file type');
     });
 
     it('should throw for name with directory traversal', () => {
-      expect(() => assertValidBackupName('../backup.archive')).toThrow(
-        'Invalid backup name'
-      );
+      expect(() => assertValidBackupName('../backup.archive')).toThrow('Invalid backup name');
     });
   });
 });

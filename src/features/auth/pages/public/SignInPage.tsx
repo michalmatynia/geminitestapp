@@ -19,7 +19,7 @@ import {
   CardTitle,
   CardDescription,
   CardContent,
-  CardFooter
+  CardFooter,
 } from '@/shared/ui';
 
 function SignInPageLoader(): React.JSX.Element {
@@ -59,7 +59,9 @@ function SignInForm({ allowSocialLogin }: { allowSocialLogin: boolean }): React.
         const { ok, payload } = await verifyCredentialsMutation.mutateAsync({ email, password });
         if (!ok || !payload.ok) {
           const message = payload.message ?? 'Sign-in failed. Check your credentials.';
-          logClientError(new Error(message), { context: { source: 'SignInPage', action: 'verifyCredentials', email } });
+          logClientError(new Error(message), {
+            context: { source: 'SignInPage', action: 'verifyCredentials', email },
+          });
           setMessage(message);
           setIsSubmitting(false);
           return;
@@ -82,9 +84,7 @@ function SignInForm({ allowSocialLogin }: { allowSocialLogin: boolean }): React.
         } catch (error) {
           logClientError(error, { context: { source: 'SignInPage', action: 'signIn', email } });
           const message =
-            error instanceof Error
-              ? error.message
-              : 'Sign-in failed. Please try again.';
+            error instanceof Error ? error.message : 'Sign-in failed. Please try again.';
           setMessage(message);
         } finally {
           setIsSubmitting(false);
@@ -113,10 +113,7 @@ function SignInForm({ allowSocialLogin }: { allowSocialLogin: boolean }): React.
       });
     } catch (error) {
       logClientError(error, { context: { source: 'SignInPage', action: 'signInMfa', email } });
-      const message =
-        error instanceof Error
-          ? error.message
-          : 'Sign-in failed. Please try again.';
+      const message = error instanceof Error ? error.message : 'Sign-in failed. Please try again.';
       setMessage(message);
     } finally {
       setIsSubmitting(false);
@@ -141,7 +138,10 @@ function SignInForm({ allowSocialLogin }: { allowSocialLogin: boolean }): React.
               {errorMessage}
             </Alert>
           ) : null}
-          <form className='space-y-4' onSubmit={(e: React.FormEvent<HTMLFormElement>) => void handleSubmit(e)}>
+          <form
+            className='space-y-4'
+            onSubmit={(e: React.FormEvent<HTMLFormElement>) => void handleSubmit(e)}
+          >
             <div className='space-y-2'>
               <Label className='text-sm text-gray-300' htmlFor='email'>
                 Email
@@ -151,7 +151,9 @@ function SignInForm({ allowSocialLogin }: { allowSocialLogin: boolean }): React.
                 type='email'
                 className='w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-white'
                 value={email}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>) => setEmail(event.target.value)}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                  setEmail(event.target.value)
+                }
                 required
               />
             </div>
@@ -164,7 +166,9 @@ function SignInForm({ allowSocialLogin }: { allowSocialLogin: boolean }): React.
                 type='password'
                 className='w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-white'
                 value={password}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>) => setPassword(event.target.value)}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                  setPassword(event.target.value)
+                }
                 required
               />
             </div>
@@ -179,7 +183,9 @@ function SignInForm({ allowSocialLogin }: { allowSocialLogin: boolean }): React.
                     type='text'
                     className='w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-white'
                     value={otp}
-                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => setOtp(event.target.value)}
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                      setOtp(event.target.value)
+                    }
                     placeholder='123456'
                   />
                 </div>
@@ -192,7 +198,9 @@ function SignInForm({ allowSocialLogin }: { allowSocialLogin: boolean }): React.
                     type='text'
                     className='w-full rounded-md border border-border bg-gray-900 px-3 py-2 text-white'
                     value={recoveryCode}
-                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => setRecoveryCode(event.target.value)}
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                      setRecoveryCode(event.target.value)
+                    }
                     placeholder='ABCD-1234-EFGH'
                   />
                 </div>

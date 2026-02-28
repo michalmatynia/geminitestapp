@@ -91,9 +91,7 @@ const createInMemoryParameterRepository = (): ParameterRepository => {
       items.splice(0, items.length, ...next);
     },
     async findByName(catalogId, name_en) {
-      const found = items.find(
-        (item) => item.catalogId === catalogId && item.name_en === name_en
-      );
+      const found = items.find((item) => item.catalogId === catalogId && item.name_en === name_en);
       if (!found) return null;
       return {
         ...found,

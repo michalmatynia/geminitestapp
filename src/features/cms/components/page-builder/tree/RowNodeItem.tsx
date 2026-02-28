@@ -3,7 +3,14 @@
 import { Columns, Trash2, Plus, GripVertical } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
-import { TreeRow, TreeCaret, TreeActionButton, TreeActionSlot, TreeContextMenu, type TreeContextMenuItem } from '@/shared/ui';
+import {
+  TreeRow,
+  TreeCaret,
+  TreeActionButton,
+  TreeActionSlot,
+  TreeContextMenu,
+  type TreeContextMenuItem,
+} from '@/shared/ui';
 import { DRAG_KEYS, hasDragType } from '@/shared/utils/drag-drop';
 
 import { BlockNodeItem } from './BlockNodeItem';
@@ -15,26 +22,16 @@ import { useTreeSectionId } from './TreeSectionContext';
 import { useDragStateExtract } from '../../../hooks/useDragStateExtract';
 import { usePageBuilder } from '../../../hooks/usePageBuilderContext';
 import { useTreeActions } from '../../../hooks/useTreeActionsContext';
-import { readBlockDragData, readSectionDragData } from '../../../utils/page-builder-dnd';
+import { readBlockDragData, readSectionDragData } from '@/features/cms/utils/page-builder-dnd';
 
 import type { RowNodeItemProps } from './tree-types';
 import type { BlockInstance } from '../../../types/page-builder';
 
-export function RowNodeItem({
-  row,
-  rowIndex,
-  rowCount,
-}: RowNodeItemProps): React.ReactNode {
+export function RowNodeItem({ row, rowIndex, rowCount }: RowNodeItemProps): React.ReactNode {
   const sectionId = useTreeSectionId();
   const { state: pbState } = usePageBuilder();
-  const {
-    expandedIds,
-    selectNode,
-    toggleExpand,
-    blockActions,
-    sectionActions,
-    gridActions,
-  } = useTreeActions();
+  const { expandedIds, selectNode, toggleExpand, blockActions, sectionActions, gridActions } =
+    useTreeActions();
 
   const selectedNodeId = pbState.selectedNodeId;
 
@@ -107,7 +104,10 @@ export function RowNodeItem({
             const hasBlockPayload = hasDragType(e.dataTransfer, [DRAG_KEYS.BLOCK_ID]);
             const dragId = blockDrag.id;
             // Allow section drops (for convertible sections like ImageElement, TextElement, etc.)
-            const isSectionDrop = draggedSectionId && draggedSectionId !== sectionId && CONVERTIBLE_SECTION_TYPES.includes(draggedSectionType ?? '');
+            const isSectionDrop =
+              draggedSectionId &&
+              draggedSectionId !== sectionId &&
+              CONVERTIBLE_SECTION_TYPES.includes(draggedSectionType ?? '');
             // Allow drops if we have a block or convertible section being dragged
             if (!dragId && !hasBlockPayload && !isSectionDrop) return;
             e.preventDefault();
@@ -130,15 +130,25 @@ export function RowNodeItem({
             });
             const draggedSectionIdFromTransfer = sectionDrag.id;
             const draggedSectionTypeFromTransfer = sectionDrag.type;
-            const isSectionDrag = Boolean(draggedSectionIdFromTransfer) || Boolean(draggedSectionId);
+            const isSectionDrag =
+              Boolean(draggedSectionIdFromTransfer) || Boolean(draggedSectionId);
 
             if (isSectionDrag) {
               const sectionIdToDrop = draggedSectionId || draggedSectionIdFromTransfer;
               const sectionTypeToDrop = draggedSectionType || draggedSectionTypeFromTransfer;
-              if (sectionIdToDrop && sectionIdToDrop !== sectionId && CONVERTIBLE_SECTION_TYPES.includes(sectionTypeToDrop ?? '')) {
-              // Route to first column if available
+              if (
+                sectionIdToDrop &&
+                sectionIdToDrop !== sectionId &&
+                CONVERTIBLE_SECTION_TYPES.includes(sectionTypeToDrop ?? '')
+              ) {
+                // Route to first column if available
                 if (firstColumn) {
-                  sectionActions.dropToColumn(sectionIdToDrop, sectionId, firstColumn.id, (firstColumn.blocks ?? []).length);
+                  sectionActions.dropToColumn(
+                    sectionIdToDrop,
+                    sectionId,
+                    firstColumn.id,
+                    (firstColumn.blocks ?? []).length
+                  );
                 }
                 endSectionDrag();
               }
@@ -176,7 +186,7 @@ export function RowNodeItem({
                 fromParent || undefined
               );
             } else {
-            // For all other block types, drop directly into the Row
+              // For all other block types, drop directly into the Row
               const rowChildren = row.blocks ?? [];
               blockActions.dropToRow(
                 dragId,
@@ -254,10 +264,7 @@ export function RowNodeItem({
             // Render direct element children (non-Column blocks in the Row)
             return (
               <TreeParentBlockProvider key={child.id} parentBlockId={row.id}>
-                <BlockNodeItem
-                  block={child}
-                  index={childIndex}
-                />
+                <BlockNodeItem block={child} index={childIndex} />
               </TreeParentBlockProvider>
             );
           })}

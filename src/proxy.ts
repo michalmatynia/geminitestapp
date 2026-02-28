@@ -12,10 +12,11 @@ const baseProxy = (request: NextRequest): NextResponse => {
 
 type NextRequestHandler = (
   request: NextRequest,
-  context: Record<string, unknown>,
+  context: Record<string, unknown>
 ) => Promise<Response> | Response;
 
-const handler: NextRequestHandler | null = typeof auth === 'function' ? (auth as unknown as NextRequestHandler) : null;
+const handler: NextRequestHandler | null =
+  typeof auth === 'function' ? (auth as unknown as NextRequestHandler) : null;
 
 type HandlerContext = Parameters<NextRequestHandler>[1];
 
@@ -24,7 +25,7 @@ const shouldBypassAuth = (request: NextRequest): boolean =>
 
 export function proxy(
   request: NextRequest,
-  context?: HandlerContext,
+  context?: HandlerContext
 ): Promise<Response> | Response {
   const resolvedContext = context ?? ({ params: {} } as HandlerContext);
   if (shouldBypassAuth(request)) {

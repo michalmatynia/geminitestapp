@@ -9,12 +9,8 @@ import type { ImageRetryPreset } from '@/shared/contracts/integrations';
 import { ImageRetryDropdown, Alert } from '@/shared/ui';
 
 export function ProductListingsError(): React.JSX.Element {
-  const {
-    error,
-    lastExportListingId,
-    exportingListing,
-    handleImageRetry,
-  } = useProductListingsContext();
+  const { error, lastExportListingId, exportingListing, handleImageRetry } =
+    useProductListingsContext();
   const imageRetryPresets: ImageRetryPreset[] = useImageRetryPresets();
   const isImageError = isImageExportError(error);
 

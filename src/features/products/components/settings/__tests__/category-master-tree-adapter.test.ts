@@ -5,11 +5,7 @@ import { createCategoryMasterTreeAdapter } from '@/features/products/components/
 import type { MasterFolderTreePersistContext } from '@/shared/contracts/master-folder-tree';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
-const categoryNode = (
-  id: string,
-  parentId: string | null,
-  sortOrder: number
-): MasterTreeNode => ({
+const categoryNode = (id: string, parentId: string | null, sortOrder: number): MasterTreeNode => ({
   id: toCategoryMasterNodeId(id),
   type: 'folder',
   kind: 'category',

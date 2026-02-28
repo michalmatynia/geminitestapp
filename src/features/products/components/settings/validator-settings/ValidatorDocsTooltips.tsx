@@ -2,14 +2,8 @@
 
 import React from 'react';
 
-import {
-  DOCUMENTATION_MODULE_IDS,
-  getDocumentationEntry,
-} from '@/shared/lib/documentation';
-import {
-  DocumentationTooltip,
-  useDocsTooltipsSetting,
-} from '@/shared/lib/tooltip-engine';
+import { DOCUMENTATION_MODULE_IDS, getDocumentationEntry } from '@/shared/lib/documentation';
+import { DocumentationTooltip, useDocsTooltipsSetting } from '@/shared/lib/tooltip-engine';
 
 import type { ValidatorUiDoc } from './validator-docs-catalog';
 
@@ -46,9 +40,7 @@ export function ValidatorDocsTooltipsProvider({
   }, []);
 
   return (
-    <ValidatorDocsTooltipContext.Provider
-      value={{ enabled, setEnabled, getDoc }}
-    >
+    <ValidatorDocsTooltipContext.Provider value={{ enabled, setEnabled, getDoc }}>
       {children}
     </ValidatorDocsTooltipContext.Provider>
   );

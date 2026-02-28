@@ -4,23 +4,20 @@ import { Zap } from 'lucide-react';
 import React from 'react';
 
 import { DEFAULT_ANIMATION_CONFIG } from '@/shared/lib/gsap';
-import type { 
+import type {
   AnimationPresetDto as AnimationPreset,
-  AnimationTriggerDto as AnimationTrigger
+  AnimationTriggerDto as AnimationTrigger,
 } from '@/shared/contracts/gsap';
-import { 
-  ANIMATION_PRESETS, 
-  ANIMATION_EASINGS,
-} from '@/shared/contracts/gsap';
-import { 
-  Input, 
-  Label, 
+import { ANIMATION_PRESETS, ANIMATION_EASINGS } from '@/shared/contracts/gsap';
+import {
+  Input,
+  Label,
   SelectSimple,
   RadioGroup,
   RadioGroupItem,
   FormField,
   SectionHeader,
-  ToggleRow
+  ToggleRow,
 } from '@/shared/ui';
 
 import { AdvancedSection } from './animation/AdvancedSection';
@@ -32,9 +29,14 @@ import { useComponentSettingsContext } from './context/ComponentSettingsContext'
 import { useVectorOverlay } from '../../hooks/usePageBuilderContext';
 
 export function AnimationConfigPanel(): React.JSX.Element {
-  const { currentAnimationConfig: config, handleAnimationChange: onChange } = useComponentSettingsContext();
+  const { currentAnimationConfig: config, handleAnimationChange: onChange } =
+    useComponentSettingsContext();
   const { openVectorOverlay } = useVectorOverlay();
-  const isEnabled = config.preset !== 'none' || config.motionPathEnabled || config.svgDrawEnabled || config.parallaxPreset !== 'none';
+  const isEnabled =
+    config.preset !== 'none' ||
+    config.motionPathEnabled ||
+    config.svgDrawEnabled ||
+    config.parallaxPreset !== 'none';
 
   return (
     <div className='space-y-6 pb-20'>
@@ -125,11 +127,13 @@ export function AnimationConfigPanel(): React.JSX.Element {
             </RadioGroup>
           </FormField>
 
-          <AnimationConfigProvider value={{ 
-            config, 
-            onChange, 
-            openVectorOverlay
-          }}>
+          <AnimationConfigProvider
+            value={{
+              config,
+              onChange,
+              openVectorOverlay,
+            }}
+          >
             <TimelineSection />
             <ParallaxSection />
             <AdvancedSection />

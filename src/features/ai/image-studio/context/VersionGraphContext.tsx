@@ -14,16 +14,16 @@ import {
   preloadVersionGraphImage,
   remapMetadataForDetachedCopy,
 } from './version-graph-context-utils';
-import { getImageStudioSlotImageSrc } from '../utils/image-src';
-import { readMeta } from '../utils/metadata';
+import { getImageStudioSlotImageSrc } from '@/shared/lib/ai/image-studio/utils/image-src';
+import { readMeta } from '@/shared/lib/ai/image-studio/utils/metadata';
 import {
   computeVersionGraph,
   computeTimelineLayout,
   type VersionNode,
   type VersionEdge,
   type LayoutMode,
-} from '../utils/version-graph';
-import { resolveScopedVersionGraphSlots } from '../utils/version-graph-scope';
+} from '@/shared/lib/ai/image-studio/utils/version-graph';
+import { resolveScopedVersionGraphSlots } from '@/shared/lib/ai/image-studio/utils/version-graph-scope';
 
 import type {
   VersionGraphActions,
@@ -47,9 +47,14 @@ const VersionGraphActionsContext = createContext<VersionGraphActions | null>(nul
 
 // ── Provider ─────────────────────────────────────────────────────────────────
 
-export function VersionGraphProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
+export function VersionGraphProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}): React.JSX.Element {
   const { slots, selectedSlotId } = useSlotsState();
-  const { setSelectedSlotId, setWorkingSlotId, createSlots, updateSlotMutation } = useSlotsActions();
+  const { setSelectedSlotId, setWorkingSlotId, createSlots, updateSlotMutation } =
+    useSlotsActions();
   const { toast } = useToast();
 
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
@@ -68,9 +73,7 @@ export function VersionGraphProvider({ children }: { children: React.ReactNode }
 
   // Filter state
   const [filterQuery, setFilterQuery] = useState('');
-  const [filterTypes, setFilterTypes] = useState<Set<VersionGraphFilterType>>(
-    new Set(),
-  );
+  const [filterTypes, setFilterTypes] = useState<Set<VersionGraphFilterType>>(new Set());
   const [filterHasMask, setFilterHasMask] = useState<boolean | null>(null);
   const [filterLeafOnly, setFilterLeafOnly] = useState(false);
 
@@ -84,10 +87,7 @@ export function VersionGraphProvider({ children }: { children: React.ReactNode }
   const [compareMode, setCompareMode] = useState(false);
   const [compareNodeIds, setCompareNodeIds] = useState<[string, string] | null>(null);
 
-  const activeSlotId = useMemo(
-    () => selectedSlotId ?? null,
-    [selectedSlotId],
-  );
+  const activeSlotId = useMemo(() => selectedSlotId ?? null, [selectedSlotId]);
 
   const scopedSlots = useMemo(() => {
     return resolveScopedVersionGraphSlots(slots, activeSlotId);
@@ -133,22 +133,23 @@ export function VersionGraphProvider({ children }: { children: React.ReactNode }
   // Compute hidden IDs from collapse
   const hiddenIds = useMemo(
     () => collectHiddenIds(collapsedNodeIds, layoutGraph.nodes),
-    [collapsedNodeIds, layoutGraph.nodes],
+    [collapsedNodeIds, layoutGraph.nodes]
   );
 
   // Filter out collapsed descendants
   const visibleNodes = useMemo(
     () => layoutGraph.nodes.filter((n) => !hiddenIds.has(n.id)),
-    [layoutGraph.nodes, hiddenIds],
+    [layoutGraph.nodes, hiddenIds]
   );
   const visibleEdges = useMemo(
     () => layoutGraph.edges.filter((e) => !hiddenIds.has(e.source) && !hiddenIds.has(e.target)),
-    [layoutGraph.edges, hiddenIds],
+    [layoutGraph.edges, hiddenIds]
   );
 
   // Compute filtered node IDs (for dimming, not hiding)
   const filteredNodeIds = useMemo<Set<string> | null>(() => {
-    const hasFilter = filterQuery || filterTypes.size > 0 || filterHasMask !== null || filterLeafOnly;
+    const hasFilter =
+      filterQuery || filterTypes.size > 0 || filterHasMask !== null || filterLeafOnly;
     if (!hasFilter) return null;
 
     const matched = new Set<string>();
@@ -177,7 +178,15 @@ export function VersionGraphProvider({ children }: { children: React.ReactNode }
       if (node.depth > maxDepth) maxDepth = node.depth;
       if (node.hasMask) maskedCount += 1;
     }
-    return { totalNodes: all.length, baseCount, generationCount, mergeCount, compositeCount, maxDepth, maskedCount };
+    return {
+      totalNodes: all.length,
+      baseCount,
+      generationCount,
+      mergeCount,
+      compositeCount,
+      maxDepth,
+      maskedCount,
+    };
   }, [layoutGraph.nodes]);
 
   // Compute isolated node IDs (ancestors + descendants + self)
@@ -220,12 +229,9 @@ export function VersionGraphProvider({ children }: { children: React.ReactNode }
 
   // ── Actions ──
 
-  const selectNode = useCallback(
-    (slotId: string | null) => {
-      setSelectedNodeId(slotId);
-    },
-    [],
-  );
+  const selectNode = useCallback((slotId: string | null) => {
+    setSelectedNodeId(slotId);
+  }, []);
 
   const hoverNode = useCallback((slotId: string | null) => {
     setHoveredNodeId(slotId);
@@ -237,95 +243,98 @@ export function VersionGraphProvider({ children }: { children: React.ReactNode }
       setSelectedNodeId(slotId);
       setSelectedSlotId(slotId);
     },
-    [setWorkingSlotId, setSelectedSlotId],
+    [setWorkingSlotId, setSelectedSlotId]
   );
 
-  const detachSubtree = useCallback(async (slotId: string) => {
-    const nodeById = new Map(layoutGraph.nodes.map((node) => [node.id, node]));
-    const rootNode = nodeById.get(slotId);
-    if (!rootNode) {
-      toast('Selected node no longer exists.', { variant: 'error' });
-      return;
-    }
-
-    const subtreeIds = new Set<string>([slotId]);
-    const queue: string[] = [slotId];
-    while (queue.length > 0) {
-      const currentId = queue.shift();
-      if (!currentId) continue;
-      const currentNode = nodeById.get(currentId);
-      if (!currentNode) continue;
-      currentNode.childIds.forEach((childId: string) => {
-        if (subtreeIds.has(childId)) return;
-        subtreeIds.add(childId);
-        queue.push(childId);
-      });
-    }
-
-    const subtreeNodes = layoutGraph.nodes.filter((node) => subtreeIds.has(node.id));
-    if (subtreeNodes.length === 0) {
-      toast('No detachable subtree found for that node.', { variant: 'error' });
-      return;
-    }
-
-    const orderedNodes = [...subtreeNodes].sort((a, b) => {
-      if (a.id === slotId) return -1;
-      if (b.id === slotId) return 1;
-      if (a.depth !== b.depth) return a.depth - b.depth;
-      return a.id.localeCompare(b.id);
-    });
-
-    const idMap = new Map<string, string>();
-    let detachedRootId: string | null = null;
-
-    try {
-      for (const node of orderedNodes) {
-        const slot = node.slot;
-        const metadata = remapMetadataForDetachedCopy(
-          asRecord(slot.metadata),
-          idMap,
-          node.id === slotId,
-        );
-        const createdSlots = await createSlots([
-          {
-            name: slot.name ?? null,
-            folderPath: slot.folderPath ?? null,
-            imageFileId: slot.imageFileId ?? null,
-            imageUrl: slot.imageUrl ?? null,
-            imageBase64: slot.imageBase64 ?? null,
-            asset3dId: slot.asset3dId ?? null,
-            metadata,
-          },
-        ]);
-
-        const created = createdSlots[0];
-        if (!created) {
-          throw new Error('detached copy failed');
-        }
-
-        idMap.set(node.id, created.id);
-        if (node.id === slotId) {
-          detachedRootId = created.id;
-        }
+  const detachSubtree = useCallback(
+    async (slotId: string) => {
+      const nodeById = new Map(layoutGraph.nodes.map((node) => [node.id, node]));
+      const rootNode = nodeById.get(slotId);
+      if (!rootNode) {
+        toast('Selected node no longer exists.', { variant: 'error' });
+        return;
       }
-    } catch {
-      toast('Failed to detach the selected subtree.', { variant: 'error' });
-      return;
-    }
 
-    if (!detachedRootId) {
-      toast('Detached subtree was created, but no root was returned.', { variant: 'error' });
-      return;
-    }
+      const subtreeIds = new Set<string>([slotId]);
+      const queue: string[] = [slotId];
+      while (queue.length > 0) {
+        const currentId = queue.shift();
+        if (!currentId) continue;
+        const currentNode = nodeById.get(currentId);
+        if (!currentNode) continue;
+        currentNode.childIds.forEach((childId: string) => {
+          if (subtreeIds.has(childId)) return;
+          subtreeIds.add(childId);
+          queue.push(childId);
+        });
+      }
 
-    setWorkingSlotId(detachedRootId);
-    setSelectedSlotId(detachedRootId);
-    setSelectedNodeId(detachedRootId);
-    toast(
-      `Detached ${subtreeNodes.length} ${subtreeNodes.length === 1 ? 'node' : 'nodes'} into an independent card tree.`,
-      { variant: 'success' },
-    );
-  }, [layoutGraph.nodes, createSlots, setWorkingSlotId, setSelectedSlotId, toast]);
+      const subtreeNodes = layoutGraph.nodes.filter((node) => subtreeIds.has(node.id));
+      if (subtreeNodes.length === 0) {
+        toast('No detachable subtree found for that node.', { variant: 'error' });
+        return;
+      }
+
+      const orderedNodes = [...subtreeNodes].sort((a, b) => {
+        if (a.id === slotId) return -1;
+        if (b.id === slotId) return 1;
+        if (a.depth !== b.depth) return a.depth - b.depth;
+        return a.id.localeCompare(b.id);
+      });
+
+      const idMap = new Map<string, string>();
+      let detachedRootId: string | null = null;
+
+      try {
+        for (const node of orderedNodes) {
+          const slot = node.slot;
+          const metadata = remapMetadataForDetachedCopy(
+            asRecord(slot.metadata),
+            idMap,
+            node.id === slotId
+          );
+          const createdSlots = await createSlots([
+            {
+              name: slot.name ?? null,
+              folderPath: slot.folderPath ?? null,
+              imageFileId: slot.imageFileId ?? null,
+              imageUrl: slot.imageUrl ?? null,
+              imageBase64: slot.imageBase64 ?? null,
+              asset3dId: slot.asset3dId ?? null,
+              metadata,
+            },
+          ]);
+
+          const created = createdSlots[0];
+          if (!created) {
+            throw new Error('detached copy failed');
+          }
+
+          idMap.set(node.id, created.id);
+          if (node.id === slotId) {
+            detachedRootId = created.id;
+          }
+        }
+      } catch {
+        toast('Failed to detach the selected subtree.', { variant: 'error' });
+        return;
+      }
+
+      if (!detachedRootId) {
+        toast('Detached subtree was created, but no root was returned.', { variant: 'error' });
+        return;
+      }
+
+      setWorkingSlotId(detachedRootId);
+      setSelectedSlotId(detachedRootId);
+      setSelectedNodeId(detachedRootId);
+      toast(
+        `Detached ${subtreeNodes.length} ${subtreeNodes.length === 1 ? 'node' : 'nodes'} into an independent card tree.`,
+        { variant: 'success' }
+      );
+    },
+    [layoutGraph.nodes, createSlots, setWorkingSlotId, setSelectedSlotId, toast]
+  );
 
   const toggleMergeMode = useCallback(() => {
     setMergeMode((prev) => {
@@ -342,9 +351,7 @@ export function VersionGraphProvider({ children }: { children: React.ReactNode }
 
   const toggleMergeSelection = useCallback((slotId: string) => {
     setMergeSelectedIds((prev) =>
-      prev.includes(slotId)
-        ? prev.filter((id) => id !== slotId)
-        : [...prev, slotId],
+      prev.includes(slotId) ? prev.filter((id) => id !== slotId) : [...prev, slotId]
     );
   }, []);
 
@@ -439,9 +446,7 @@ export function VersionGraphProvider({ children }: { children: React.ReactNode }
 
   const toggleCompositeSelection = useCallback((slotId: string) => {
     setCompositeSelectedIds((prev) =>
-      prev.includes(slotId)
-        ? prev.filter((id) => id !== slotId)
-        : [...prev, slotId],
+      prev.includes(slotId) ? prev.filter((id) => id !== slotId) : [...prev, slotId]
     );
   }, []);
 
@@ -449,32 +454,35 @@ export function VersionGraphProvider({ children }: { children: React.ReactNode }
     setCompositeSelectedIds([]);
   }, []);
 
-  const refreshCompositePreviewInternal = useCallback(async (slotId: string, layers: CompositeLayerConfig[]) => {
-    setCompositeLoading(true);
-    try {
-      const res = await fetch('/api/image-studio/composite', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ layers }),
-      });
-      if (!res.ok) throw new Error('Composite API failed');
-      const data = (await res.json()) as { resultImageBase64: string };
-      setCompositeResultCache((prev) => {
-        const next = new Map(prev);
-        next.set(slotId, data.resultImageBase64);
-        return next;
-      });
-      // Persist the composited image on the slot
-      await updateSlotMutation.mutateAsync({
-        id: slotId,
-        data: { imageBase64: data.resultImageBase64 },
-      });
-    } catch {
-      toast('Failed to generate composite preview.', { variant: 'error' });
-    } finally {
-      setCompositeLoading(false);
-    }
-  }, [updateSlotMutation, toast]);
+  const refreshCompositePreviewInternal = useCallback(
+    async (slotId: string, layers: CompositeLayerConfig[]) => {
+      setCompositeLoading(true);
+      try {
+        const res = await fetch('/api/image-studio/composite', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ layers }),
+        });
+        if (!res.ok) throw new Error('Composite API failed');
+        const data = (await res.json()) as { resultImageBase64: string };
+        setCompositeResultCache((prev) => {
+          const next = new Map(prev);
+          next.set(slotId, data.resultImageBase64);
+          return next;
+        });
+        // Persist the composited image on the slot
+        await updateSlotMutation.mutateAsync({
+          id: slotId,
+          data: { imageBase64: data.resultImageBase64 },
+        });
+      } catch {
+        toast('Failed to generate composite preview.', { variant: 'error' });
+      } finally {
+        setCompositeLoading(false);
+      }
+    },
+    [updateSlotMutation, toast]
+  );
 
   const executeComposite = useCallback(async () => {
     if (compositeSelectedIds.length < 2) {
@@ -524,103 +532,122 @@ export function VersionGraphProvider({ children }: { children: React.ReactNode }
     } catch {
       toast('Failed to create composite node.', { variant: 'error' });
     }
-  }, [compositeSelectedIds, slots, createSlots, setSelectedSlotId, toast, refreshCompositePreviewInternal]);
+  }, [
+    compositeSelectedIds,
+    slots,
+    createSlots,
+    setSelectedSlotId,
+    toast,
+    refreshCompositePreviewInternal,
+  ]);
 
-  const refreshCompositePreview = useCallback(async (compositeSlotId: string) => {
-    const slot = slots.find((s) => s.id === compositeSlotId);
-    if (!slot) return;
-    const meta = readMeta(slot);
-    const layers = meta.compositeConfig?.layers;
-    if (!layers || layers.length === 0) return;
-    await refreshCompositePreviewInternal(compositeSlotId, layers);
-  }, [slots, refreshCompositePreviewInternal]);
+  const refreshCompositePreview = useCallback(
+    async (compositeSlotId: string) => {
+      const slot = slots.find((s) => s.id === compositeSlotId);
+      if (!slot) return;
+      const meta = readMeta(slot);
+      const layers = meta.compositeConfig?.layers;
+      if (!layers || layers.length === 0) return;
+      await refreshCompositePreviewInternal(compositeSlotId, layers);
+    },
+    [slots, refreshCompositePreviewInternal]
+  );
 
-  const reorderCompositeLayer = useCallback(async (compositeSlotId: string, fromIndex: number, toIndex: number) => {
-    const slot = slots.find((s) => s.id === compositeSlotId);
-    if (!slot) return;
-    const meta = readMeta(slot);
-    const layers = meta.compositeConfig?.layers;
-    if (!layers) return;
+  const reorderCompositeLayer = useCallback(
+    async (compositeSlotId: string, fromIndex: number, toIndex: number) => {
+      const slot = slots.find((s) => s.id === compositeSlotId);
+      if (!slot) return;
+      const meta = readMeta(slot);
+      const layers = meta.compositeConfig?.layers;
+      if (!layers) return;
 
-    const reordered = [...layers];
-    const [moved] = reordered.splice(fromIndex, 1);
-    if (!moved) return;
-    reordered.splice(toIndex, 0, moved);
-    // Re-assign order indices
-    const updated = reordered.map((l, i) => ({ ...l, order: i }));
+      const reordered = [...layers];
+      const [moved] = reordered.splice(fromIndex, 1);
+      if (!moved) return;
+      reordered.splice(toIndex, 0, moved);
+      // Re-assign order indices
+      const updated = reordered.map((l, i) => ({ ...l, order: i }));
 
-    // Clear cached result for this slot before re-fetching
-    setCompositeResultCache((prev) => {
-      const next = new Map(prev);
-      next.delete(compositeSlotId);
-      return next;
-    });
-
-    await updateSlotMutation.mutateAsync({
-      id: compositeSlotId,
-      data: {
-        metadata: { ...meta, compositeConfig: { ...meta.compositeConfig, layers: updated } } as Record<string, unknown>,
-      },
-    });
-
-    // Refresh preview with new layer order
-    void refreshCompositePreviewInternal(compositeSlotId, updated);
-  }, [slots, updateSlotMutation, refreshCompositePreviewInternal]);
-
-  const flattenComposite = useCallback(async (compositeSlotId: string) => {
-    const slot = slots.find((s) => s.id === compositeSlotId);
-    if (!slot) return;
-    const meta = readMeta(slot);
-    const layers = meta.compositeConfig?.layers;
-    if (!layers || layers.length === 0) return;
-
-    setCompositeLoading(true);
-    try {
-      const res = await fetch('/api/image-studio/composite', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ layers, flatten: true }),
+      // Clear cached result for this slot before re-fetching
+      setCompositeResultCache((prev) => {
+        const next = new Map(prev);
+        next.delete(compositeSlotId);
+        return next;
       });
-      if (!res.ok) throw new Error('Composite flatten API failed');
-      const data = (await res.json()) as { resultImageBase64: string };
 
-      // Create a new independent node with the flattened image
-      const created = await createSlots([
-        {
-          name: `Flattened (${layers.length})`,
-          folderPath: slot.folderPath,
-          imageBase64: data.resultImageBase64,
+      await updateSlotMutation.mutateAsync({
+        id: compositeSlotId,
+        data: {
           metadata: {
-            role: 'composite',
-            sourceSlotId: compositeSlotId,
-            relationType: 'composite:flatten',
-          },
+            ...meta,
+            compositeConfig: { ...meta.compositeConfig, layers: updated },
+          } as Record<string, unknown>,
         },
-      ]);
+      });
 
-      const flatSlot = created[0];
-      if (flatSlot) {
-        // Update composite config with flattenedSlotId
-        await updateSlotMutation.mutateAsync({
-          id: compositeSlotId,
-          data: {
-            metadata: {
-              ...meta,
-              compositeConfig: { ...meta.compositeConfig, layers, flattenedSlotId: flatSlot.id },
-            } as Record<string, unknown>,
-          },
+      // Refresh preview with new layer order
+      void refreshCompositePreviewInternal(compositeSlotId, updated);
+    },
+    [slots, updateSlotMutation, refreshCompositePreviewInternal]
+  );
+
+  const flattenComposite = useCallback(
+    async (compositeSlotId: string) => {
+      const slot = slots.find((s) => s.id === compositeSlotId);
+      if (!slot) return;
+      const meta = readMeta(slot);
+      const layers = meta.compositeConfig?.layers;
+      if (!layers || layers.length === 0) return;
+
+      setCompositeLoading(true);
+      try {
+        const res = await fetch('/api/image-studio/composite', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ layers, flatten: true }),
         });
-        setSelectedNodeId(flatSlot.id);
-        setSelectedSlotId(flatSlot.id);
-      }
+        if (!res.ok) throw new Error('Composite flatten API failed');
+        const data = (await res.json()) as { resultImageBase64: string };
 
-      toast('Composite flattened to new node.', { variant: 'success' });
-    } catch {
-      toast('Failed to flatten composite.', { variant: 'error' });
-    } finally {
-      setCompositeLoading(false);
-    }
-  }, [slots, createSlots, updateSlotMutation, setSelectedSlotId, toast]);
+        // Create a new independent node with the flattened image
+        const created = await createSlots([
+          {
+            name: `Flattened (${layers.length})`,
+            folderPath: slot.folderPath,
+            imageBase64: data.resultImageBase64,
+            metadata: {
+              role: 'composite',
+              sourceSlotId: compositeSlotId,
+              relationType: 'composite:flatten',
+            },
+          },
+        ]);
+
+        const flatSlot = created[0];
+        if (flatSlot) {
+          // Update composite config with flattenedSlotId
+          await updateSlotMutation.mutateAsync({
+            id: compositeSlotId,
+            data: {
+              metadata: {
+                ...meta,
+                compositeConfig: { ...meta.compositeConfig, layers, flattenedSlotId: flatSlot.id },
+              } as Record<string, unknown>,
+            },
+          });
+          setSelectedNodeId(flatSlot.id);
+          setSelectedSlotId(flatSlot.id);
+        }
+
+        toast('Composite flattened to new node.', { variant: 'success' });
+      } catch {
+        toast('Failed to flatten composite.', { variant: 'error' });
+      } finally {
+        setCompositeLoading(false);
+      }
+    },
+    [slots, createSlots, updateSlotMutation, setSelectedSlotId, toast]
+  );
 
   // Filter actions
   const setFilterQueryAction = useCallback((q: string) => {
@@ -665,17 +692,20 @@ export function VersionGraphProvider({ children }: { children: React.ReactNode }
   }, []);
 
   // Annotation action
-  const setAnnotation = useCallback(async (nodeId: string, text: string) => {
-    const slot = slots.find((s) => s.id === nodeId);
-    if (!slot) return;
-    const existingMeta = readMeta(slot);
-    await updateSlotMutation.mutateAsync({
-      id: nodeId,
-      data: {
-        metadata: { ...existingMeta, annotation: text || undefined } as Record<string, unknown>,
-      },
-    });
-  }, [slots, updateSlotMutation]);
+  const setAnnotation = useCallback(
+    async (nodeId: string, text: string) => {
+      const slot = slots.find((s) => s.id === nodeId);
+      if (!slot) return;
+      const existingMeta = readMeta(slot);
+      await updateSlotMutation.mutateAsync({
+        id: nodeId,
+        data: {
+          metadata: { ...existingMeta, annotation: text || undefined } as Record<string, unknown>,
+        },
+      });
+    },
+    [slots, updateSlotMutation]
+  );
 
   // Compare mode actions
   const toggleCompareMode = useCallback(() => {
@@ -719,12 +749,31 @@ export function VersionGraphProvider({ children }: { children: React.ReactNode }
       compareNodeIds,
     }),
     [
-      visibleNodes, visibleEdges, layoutGraph.nodes, layoutGraph.rootNodes,
-      selectedNodeId, hoveredNodeId, mergeMode, mergeSelectedIds,
-      collapsedNodeIds, filterQuery, filterTypes, filterHasMask, filteredNodeIds, filterLeafOnly,
-      layoutMode, graphStats, compositeMode, compositeSelectedIds, compositeResultCache, compositeLoading,
-      isolatedNodeId, isolatedNodeIds, compareMode, compareNodeIds,
-    ],
+      visibleNodes,
+      visibleEdges,
+      layoutGraph.nodes,
+      layoutGraph.rootNodes,
+      selectedNodeId,
+      hoveredNodeId,
+      mergeMode,
+      mergeSelectedIds,
+      collapsedNodeIds,
+      filterQuery,
+      filterTypes,
+      filterHasMask,
+      filteredNodeIds,
+      filterLeafOnly,
+      layoutMode,
+      graphStats,
+      compositeMode,
+      compositeSelectedIds,
+      compositeResultCache,
+      compositeLoading,
+      isolatedNodeId,
+      isolatedNodeIds,
+      compareMode,
+      compareNodeIds,
+    ]
   );
 
   const actions = useMemo<VersionGraphActions>(
@@ -759,14 +808,35 @@ export function VersionGraphProvider({ children }: { children: React.ReactNode }
       setCompareNodeIds: setCompareNodeIdsAction,
     }),
     [
-      selectNode, hoverNode, activateNode, detachSubtree,
-      toggleMergeMode, toggleMergeSelection, clearMergeSelection, executeMerge,
-      toggleCollapse, expandAll, collapseAll,
-      toggleCompositeMode, toggleCompositeSelection, clearCompositeSelection,
-      executeComposite, reorderCompositeLayer, flattenComposite, refreshCompositePreview,
-      setFilterQueryAction, toggleFilterType, setFilterHasMaskAction, toggleFilterLeafOnly, clearFilters,
-      setLayoutModeAction, isolateBranch, setAnnotation, toggleCompareMode, setCompareNodeIdsAction,
-    ],
+      selectNode,
+      hoverNode,
+      activateNode,
+      detachSubtree,
+      toggleMergeMode,
+      toggleMergeSelection,
+      clearMergeSelection,
+      executeMerge,
+      toggleCollapse,
+      expandAll,
+      collapseAll,
+      toggleCompositeMode,
+      toggleCompositeSelection,
+      clearCompositeSelection,
+      executeComposite,
+      reorderCompositeLayer,
+      flattenComposite,
+      refreshCompositePreview,
+      setFilterQueryAction,
+      toggleFilterType,
+      setFilterHasMaskAction,
+      toggleFilterLeafOnly,
+      clearFilters,
+      setLayoutModeAction,
+      isolateBranch,
+      setAnnotation,
+      toggleCompareMode,
+      setCompareNodeIdsAction,
+    ]
   );
 
   return (

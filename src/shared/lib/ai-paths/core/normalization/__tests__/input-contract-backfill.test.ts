@@ -80,4 +80,3 @@ describe('input contract backfill', () => {
     expect(second.changedNodeIds).toEqual([]);
   });
 });
-

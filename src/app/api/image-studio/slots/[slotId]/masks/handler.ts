@@ -8,12 +8,12 @@ import { z } from 'zod';
 import {
   getImageStudioSlotLinkBySourceAndRelation,
   upsertImageStudioSlotLink,
-} from '@/features/ai/image-studio/server/slot-link-repository';
+} from '@/shared/lib/ai/image-studio/server/slot-link-repository';
 import {
   createImageStudioSlots,
   getImageStudioSlotById,
   updateImageStudioSlot,
-} from '@/features/ai/image-studio/server/slot-repository';
+} from '@/shared/lib/ai/image-studio/server/slot-repository';
 import { getDiskPathFromPublicPath, getImageFileRepository } from '@/features/files/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
@@ -33,10 +33,7 @@ const maskEntrySchema = z.object({
 
 const payloadSchema = z.object({
   mode: z.enum(['client_data_url', 'server_polygon']).optional(),
-  masks: z
-    .array(maskEntrySchema)
-    .min(1)
-    .max(8),
+  masks: z.array(maskEntrySchema).min(1).max(8),
 });
 
 const uploadsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio', 'masks');
@@ -87,7 +84,10 @@ function normalizePublicPath(filepath: string): string {
   return normalized;
 }
 
-function buildMaskFolderPath(sourceFolder: string | null | undefined, sourceSlotId: string): string {
+function buildMaskFolderPath(
+  sourceFolder: string | null | undefined,
+  sourceSlotId: string
+): string {
   const prefix = sourceFolder ? sanitizeFolderPath(sourceFolder) : '';
   const suffix = `_masks/${sourceSlotId}`;
   return prefix ? `${prefix}/${suffix}` : suffix;
@@ -127,10 +127,10 @@ async function loadSourceBuffer(sourceSlot: SourceSlotRecord): Promise<Buffer> {
   return fs.readFile(diskPath);
 }
 
-const colorFor = (hex: '#000000' | '#ffffff'): { r: number; g: number; b: number; alpha: number } =>
-  hex === '#000000'
-    ? { r: 0, g: 0, b: 0, alpha: 1 }
-    : { r: 255, g: 255, b: 255, alpha: 1 };
+const colorFor = (
+  hex: '#000000' | '#ffffff'
+): { r: number; g: number; b: number; alpha: number } =>
+  hex === '#000000' ? { r: 0, g: 0, b: 0, alpha: 1 } : { r: 255, g: 255, b: 255, alpha: 1 };
 
 const resolveMaskColors = (
   variant: 'white' | 'black',
@@ -138,9 +138,7 @@ const resolveMaskColors = (
 ): { background: '#000000' | '#ffffff'; fill: '#000000' | '#ffffff' } => {
   const preferWhite = variant === 'white';
   const background =
-    (preferWhite && !inverted) || (!preferWhite && inverted)
-      ? '#000000'
-      : '#ffffff';
+    (preferWhite && !inverted) || (!preferWhite && inverted) ? '#000000' : '#ffffff';
   const fill = background === '#000000' ? '#ffffff' : '#000000';
   return { background, fill };
 };
@@ -176,7 +174,10 @@ async function buildServerPolygonMaskBuffer({
   const { background, fill } = resolveMaskColors(variant, inverted);
   const polygonMaskSvg = Buffer.from(
     `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><rect x="0" y="0" width="${width}" height="${height}" fill="black" />${polygons
-      .map((polygon) => `<polygon points="${polygonPointsToSvg(polygon, width, height)}" fill="white" />`)
+      .map(
+        (polygon) =>
+          `<polygon points="${polygonPointsToSvg(polygon, width, height)}" fill="white" />`
+      )
       .join('')}</svg>`,
     'utf8'
   );
@@ -228,9 +229,7 @@ export async function POST_handler(
   const slotId = params.slotId?.trim() ?? '';
   if (!slotId) throw badRequestError('Slot id is required');
 
-  const parsed = payloadSchema.safeParse(
-    (await req.json().catch(() => null)) as unknown
-  );
+  const parsed = payloadSchema.safeParse((await req.json().catch(() => null)) as unknown);
   if (!parsed.success) {
     throw badRequestError('Invalid payload', { errors: parsed.error.format() });
   }
@@ -245,7 +244,9 @@ export async function POST_handler(
       throw badRequestError('Client mask mode requires dataUrl in all masks.');
     }
   } else {
-    const missingPolygons = parsed.data.masks.some((mask) => !mask.polygons || mask.polygons.length === 0);
+    const missingPolygons = parsed.data.masks.some(
+      (mask) => !mask.polygons || mask.polygons.length === 0
+    );
     if (missingPolygons) {
       throw badRequestError('Server polygon mode requires polygons in all masks.');
     }
@@ -319,7 +320,7 @@ export async function POST_handler(
       inverted: Boolean(mask.inverted),
       relationType,
       generationMode: mode,
-      polygonCount: mode === 'server_polygon' ? mask.polygons?.length ?? 0 : undefined,
+      polygonCount: mode === 'server_polygon' ? (mask.polygons?.length ?? 0) : undefined,
     };
     let maskSlot = null;
 

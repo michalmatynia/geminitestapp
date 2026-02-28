@@ -1,6 +1,9 @@
 import 'server-only';
 
-import type { AgentTeachingChatSource, AgentTeachingEmbeddingDocumentMetadata } from '@/shared/contracts/agent-teaching';
+import type {
+  AgentTeachingChatSource,
+  AgentTeachingEmbeddingDocumentMetadata,
+} from '@/shared/contracts/agent-teaching';
 
 import { listEmbeddingDocumentsForRetrieval } from './repository';
 
@@ -43,20 +46,25 @@ export async function retrieveTopContext(params: {
   });
 
   const embeddingModel = params.embeddingModel?.trim();
-  type RetrievalDoc = typeof docs[number];
+  type RetrievalDoc = (typeof docs)[number];
   const filteredDocs = embeddingModel
     ? docs.filter((doc: RetrievalDoc): boolean => doc.embeddingModel === embeddingModel)
     : docs;
 
   const scored = filteredDocs
-    .map((doc: RetrievalDoc): ScoredDocument => ({
-      documentId: doc.id,
-      collectionId: doc.collectionId,
-      score: cosineSimilarity(params.queryEmbedding, doc.embedding),
-      text: doc.text,
-      metadata: doc.metadata ?? undefined,
-    }))
-    .filter((item: { score: number }): boolean => Number.isFinite(item.score) && item.score >= params.minScore);
+    .map(
+      (doc: RetrievalDoc): ScoredDocument => ({
+        documentId: doc.id,
+        collectionId: doc.collectionId,
+        score: cosineSimilarity(params.queryEmbedding, doc.embedding),
+        text: doc.text,
+        metadata: doc.metadata ?? undefined,
+      })
+    )
+    .filter(
+      (item: { score: number }): boolean =>
+        Number.isFinite(item.score) && item.score >= params.minScore
+    );
 
   scored.sort((a: ScoredDocument, b: ScoredDocument): number => b.score - a.score);
   return scored.slice(0, Math.max(0, Math.min(params.topK, 50)));

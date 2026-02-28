@@ -72,13 +72,7 @@ export const mergeValidationIssues = (
   const hasError = issues.some((issue: QueryValidationIssue) => issue.severity === 'error');
   const hasWarning = issues.some((issue: QueryValidationIssue) => issue.severity === 'warning');
   const nextStatus: QueryValidationStatus =
-    base.status === 'error'
-      ? 'error'
-      : hasError
-        ? 'error'
-        : hasWarning
-          ? 'warning'
-          : base.status;
+    base.status === 'error' ? 'error' : hasError ? 'error' : hasWarning ? 'warning' : base.status;
   const nextMessage =
     base.status === 'valid'
       ? hasError
@@ -242,7 +236,7 @@ export const buildMongoQueryValidation = (value: string): QueryValidationResult 
     if (!trimmed.startsWith('{') && !trimmed.startsWith('[')) {
       hints.push('Start with a JSON object, e.g. { "field": "value" }.');
     }
-    if (raw.includes('\'')) {
+    if (raw.includes("'")) {
       hints.push('Use double quotes for keys and string values.');
     }
     if (/\bObjectId\s*\(/.test(raw)) {
@@ -303,7 +297,7 @@ export const buildJsonQueryValidation = (value: string): QueryValidationResult =
     if (!trimmed.startsWith('{') && !trimmed.startsWith('[')) {
       hints.push('Start with a JSON object, e.g. { "field": "value" }.');
     }
-    if (raw.includes('\'')) {
+    if (raw.includes("'")) {
       hints.push('Use double quotes for keys and string values.');
     }
     if (/,\s*[}\]]/.test(raw)) {
@@ -340,7 +334,7 @@ const ensureArray = (value: unknown): unknown[] =>
 const convertMongoFieldCondition = (
   value: Record<string, unknown>,
   warnings: string[],
-  onChange: () => void,
+  onChange: () => void
 ): Record<string, unknown> => {
   const result: Record<string, unknown> = {};
   for (const [key, rawVal] of Object.entries(value)) {
@@ -405,7 +399,7 @@ const convertMongoFieldCondition = (
           result['not'] = convertMongoFieldCondition(
             rawVal as Record<string, unknown>,
             warnings,
-            onChange,
+            onChange
           );
           onChange();
         }
@@ -418,11 +412,7 @@ const convertMongoFieldCondition = (
   return result;
 };
 
-const convertMongoWhere = (
-  value: unknown,
-  warnings: string[],
-  onChange: () => void,
-): unknown => {
+const convertMongoWhere = (value: unknown, warnings: string[], onChange: () => void): unknown => {
   if (!value || typeof value !== 'object') return value;
   if (Array.isArray(value)) {
     return value.map((entry) => convertMongoWhere(entry, warnings, onChange));
@@ -436,19 +426,19 @@ const convertMongoWhere = (
       switch (key) {
         case '$and':
           result['AND'] = ensureArray(rawVal).map((entry) =>
-            convertMongoWhere(entry, warnings, onChange),
+            convertMongoWhere(entry, warnings, onChange)
           );
           onChange();
           break;
         case '$or':
           result['OR'] = ensureArray(rawVal).map((entry) =>
-            convertMongoWhere(entry, warnings, onChange),
+            convertMongoWhere(entry, warnings, onChange)
           );
           onChange();
           break;
         case '$nor':
           result['NOT'] = ensureArray(rawVal).map((entry) =>
-            convertMongoWhere(entry, warnings, onChange),
+            convertMongoWhere(entry, warnings, onChange)
           );
           onChange();
           break;
@@ -482,7 +472,7 @@ const convertMongoWhere = (
 const convertMongoUpdate = (
   value: Record<string, unknown>,
   warnings: string[],
-  onChange: () => void,
+  onChange: () => void
 ): Record<string, unknown> => {
   const result: Record<string, unknown> = {};
   const hasOperator = Object.keys(value).some((key) => key.startsWith('$'));
@@ -560,7 +550,7 @@ const convertMongoUpdate = (
 
 export const convertMongoToPrismaQuery = (
   raw: string,
-  mode: 'query' | 'update',
+  mode: 'query' | 'update'
 ): PrismaConversionResult => {
   const warnings: string[] = [];
   if (!raw.trim()) {

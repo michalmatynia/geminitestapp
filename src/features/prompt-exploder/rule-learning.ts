@@ -12,17 +12,14 @@ export const mergeRegexLearnedRule = (args: {
   const nextRule: PromptValidationRule =
     existingRule?.kind === 'regex'
       ? {
-        ...args.incomingRule,
-        pattern: mergeRegexPatternsForRule(
-          existingRule.pattern,
-          args.incomingRule.pattern
-        ),
-        similar: existingRule.similar ?? args.incomingRule.similar,
-        sequence:
-          (typeof existingRule.sequence === 'number'
-            ? existingRule.sequence
-            : args.incomingRule.sequence) ?? null,
-      }
+          ...args.incomingRule,
+          pattern: mergeRegexPatternsForRule(existingRule.pattern, args.incomingRule.pattern),
+          similar: existingRule.similar ?? args.incomingRule.similar,
+          sequence:
+            (typeof existingRule.sequence === 'number'
+              ? existingRule.sequence
+              : args.incomingRule.sequence) ?? null,
+        }
       : args.incomingRule;
 
   return {
@@ -39,18 +36,14 @@ export const upsertRegexLearnedRule = (args: {
   nextRule: PromptValidationRule;
   wasUpdate: boolean;
 } => {
-  const existingRule =
-    args.rules.find((rule) => rule.id === args.incomingRule.id) ?? null;
+  const existingRule = args.rules.find((rule) => rule.id === args.incomingRule.id) ?? null;
   const merged = mergeRegexLearnedRule({
     existingRule,
     incomingRule: args.incomingRule,
   });
   return {
     nextRule: merged.nextRule,
-    nextRules: [
-      ...args.rules.filter((rule) => rule.id !== merged.nextRule.id),
-      merged.nextRule,
-    ],
+    nextRules: [...args.rules.filter((rule) => rule.id !== merged.nextRule.id), merged.nextRule],
     wasUpdate: merged.wasUpdate,
   };
 };

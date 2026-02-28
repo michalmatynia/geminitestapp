@@ -42,7 +42,7 @@ export async function processAgentRun(runId: string): Promise<void> {
   } catch (error: unknown) {
     void ErrorSystem.captureException(error, {
       service: 'agent-queue',
-      runId: nextRun.id
+      runId: nextRun.id,
     });
     await logAgentFailure(nextRun.id, error);
   }
@@ -78,9 +78,9 @@ export async function recoverStuckRuns(): Promise<void> {
     const resumePlanState =
       run.planState && typeof run.planState === 'object'
         ? {
-          ...(run.planState as Record<string, unknown>),
-          resumeRequestedAt: new Date().toISOString(),
-        }
+            ...(run.planState as Record<string, unknown>),
+            resumeRequestedAt: new Date().toISOString(),
+          }
         : { resumeRequestedAt: new Date().toISOString() };
     await prisma.chatbotAgentRun.update({
       where: { id: run.id },
@@ -105,15 +105,10 @@ export async function recoverStuckRuns(): Promise<void> {
 
 async function logAgentFailure(runId: string, error: unknown): Promise<void> {
   const errorId = randomUUID();
-  await logAgentAudit(
-    runId,
-    'error',
-    'Agent run failed while processing queue.',
-    {
-      errorId,
-      message: error instanceof Error ? error.message : 'Unknown error',
-    }
-  );
+  await logAgentAudit(runId, 'error', 'Agent run failed while processing queue.', {
+    errorId,
+    message: error instanceof Error ? error.message : 'Unknown error',
+  });
   await prisma.chatbotAgentRun.update({
     where: { id: runId },
     data: {

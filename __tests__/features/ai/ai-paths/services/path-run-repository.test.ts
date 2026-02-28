@@ -33,7 +33,7 @@ describe('AiPathRunRepository', () => {
       position: { x: 0, y: 0 },
       inputs: [],
       outputs: ['value'],
-      config: { constant: { value: 'test1', valueType: 'string' } }
+      config: { constant: { value: 'test1', valueType: 'string' } },
     },
     {
       id: 'node-2',
@@ -43,8 +43,8 @@ describe('AiPathRunRepository', () => {
       position: { x: 100, y: 100 },
       inputs: [],
       outputs: ['value'],
-      config: { constant: { value: 'test2', valueType: 'string' } }
-    }
+      config: { constant: { value: 'test2', valueType: 'string' } },
+    },
   ];
 
   it('should create and find a run', async () => {
@@ -54,7 +54,7 @@ describe('AiPathRunRepository', () => {
       pathName: 'Test Path',
       userId: 'user-1',
       triggerEvent: 'manual',
-      graph: { nodes: mockNodes, edges: [] }
+      graph: { nodes: mockNodes, edges: [] },
     });
 
     expect(run.id).toBeDefined();
@@ -72,7 +72,7 @@ describe('AiPathRunRepository', () => {
     const updated = await repo.updateRun(run.id, {
       status: 'running',
       errorMessage: 'Some error',
-      startedAt: new Date().toISOString()
+      startedAt: new Date().toISOString(),
     });
 
     expect(updated.status).toBe('running');
@@ -142,7 +142,7 @@ describe('AiPathRunRepository', () => {
 
   it('should claim next queued run', async () => {
     await repo.createRun({ status: 'queued', pathId: 'p1' });
-    
+
     const claimed = await repo.claimNextQueuedRun();
     expect(claimed).not.toBeNull();
     expect(claimed!.status).toBe('running');
@@ -161,7 +161,7 @@ describe('AiPathRunRepository', () => {
 
     const past = new Date(Date.now() - 10000);
     await repo.createRun({ status: 'queued', pathId: 'past', nextRetryAt: past.toISOString() });
-    
+
     const claimed2 = await repo.claimNextQueuedRun();
     expect(claimed2).not.toBeNull();
     expect(claimed2!.pathId).toBe('past');
@@ -213,12 +213,12 @@ describe('AiPathRunRepository', () => {
 
   it('should upsert run node', async () => {
     const run = await repo.createRun({ status: 'queued', pathId: 'test' });
-    
+
     // Create via upsert
     const node = await repo.upsertRunNode(run.id, 'node-x', {
       nodeType: 'custom',
       status: 'running',
-      attempt: 1
+      attempt: 1,
     });
     expect(node.nodeId).toBe('node-x');
     expect(node.status).toBe('running');
@@ -227,7 +227,7 @@ describe('AiPathRunRepository', () => {
     const updated = await repo.upsertRunNode(run.id, 'node-x', {
       nodeType: 'custom',
       status: 'completed',
-      outputs: { foo: 'bar' }
+      outputs: { foo: 'bar' },
     });
     expect(updated.status).toBe('completed');
     expect(updated.outputs).toEqual({ foo: 'bar' });
@@ -240,7 +240,7 @@ describe('AiPathRunRepository', () => {
       runId: run.id,
       level: 'info',
       message: 'Started',
-      metadata: { foo: 'bar' }
+      metadata: { foo: 'bar' },
     });
 
     const events = await repo.listRunEvents(run.id);
@@ -252,9 +252,9 @@ describe('AiPathRunRepository', () => {
 
   it('should mark stale running runs as failed', async () => {
     const run = await repo.createRun({ status: 'queued', pathId: 'stale' });
-    await repo.updateRun(run.id, { 
-      status: 'running', 
-      startedAt: new Date(Date.now() - 100000).toISOString() 
+    await repo.updateRun(run.id, {
+      status: 'running',
+      startedAt: new Date(Date.now() - 100000).toISOString(),
     });
 
     const result = await repo.markStaleRunningRuns(50000); // 50s max age

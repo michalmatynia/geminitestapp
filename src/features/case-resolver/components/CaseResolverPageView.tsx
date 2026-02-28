@@ -163,7 +163,8 @@ export function CaseResolverPageView(): React.JSX.Element {
           onDeleteFile: handleDeleteFile,
           onDeleteAsset: handleDeleteAsset,
           onToggleFileLock: handleToggleFileLock,
-          onEditFile: (fileId, options) => guardNavigation(() => handleOpenFileEditor(fileId, options)),
+          onEditFile: (fileId, options) =>
+            guardNavigation(() => handleOpenFileEditor(fileId, options)),
           caseResolverTags,
           caseResolverIdentifiers,
           caseResolverCategories,
@@ -204,7 +205,9 @@ export function CaseResolverPageView(): React.JSX.Element {
           {/* Unsaved-changes guard dialog */}
           <Dialog
             open={pendingNavigation !== null}
-            onOpenChange={(open) => { if (!open) setPendingNavigation(null); }}
+            onOpenChange={(open) => {
+              if (!open) setPendingNavigation(null);
+            }}
           >
             <DialogContent className='max-w-md'>
               <DialogHeader>

@@ -1,10 +1,10 @@
 ---
-owner: "Case Resolver Team"
-last_reviewed: "2026-02-20"
-status: "active"
+owner: 'Case Resolver Team'
+last_reviewed: '2026-02-20'
+status: 'active'
 related_components:
-  - "src/features/case-resolver/workspace-persistence.ts"
-  - "src/features/case-resolver/components/CaseResolverWorkspaceDebugPanel.tsx"
+  - 'src/features/case-resolver/workspace-persistence.ts'
+  - 'src/features/case-resolver/components/CaseResolverWorkspaceDebugPanel.tsx'
 ---
 
 # Runbook: Case Resolver Performance and Stability

@@ -23,8 +23,20 @@ describe('ChatInterface', () => {
   });
 
   const mockMessages = [
-    { id: '1', sessionId: 's1', role: 'user' as const, content: 'Hello', timestamp: new Date().toISOString() },
-    { id: '2', sessionId: 's1', role: 'assistant' as const, content: 'Hi there!', timestamp: new Date().toISOString() },
+    {
+      id: '1',
+      sessionId: 's1',
+      role: 'user' as const,
+      content: 'Hello',
+      timestamp: new Date().toISOString(),
+    },
+    {
+      id: '2',
+      sessionId: 's1',
+      role: 'assistant' as const,
+      content: 'Hi there!',
+      timestamp: new Date().toISOString(),
+    },
   ];
 
   const defaultMockValue = {
@@ -99,7 +111,12 @@ describe('ChatInterface', () => {
     setAgentLoopBackoffMaxMs: vi.fn(),
     latestAgentRunId: null,
     setLatestAgentRunId: vi.fn(),
-    debugState: { activeRunId: null, isPaused: false, stepMode: false, lastUpdateAt: new Date().toISOString() },
+    debugState: {
+      activeRunId: null,
+      isPaused: false,
+      stepMode: false,
+      lastUpdateAt: new Date().toISOString(),
+    },
     setDebugState: vi.fn(),
     globalContext: '',
     setGlobalContext: vi.fn(),
@@ -122,7 +139,7 @@ describe('ChatInterface', () => {
     selectSession: vi.fn(),
   };
 
-  it('renders \'Start a conversation\' when no messages', () => {
+  it("renders 'Start a conversation' when no messages", () => {
     vi.mocked(useChatbotMessages).mockReturnValue(defaultMockValue);
     render(<ChatInterface />);
     expect(screen.getByText('Start a conversation...')).toBeInTheDocument();

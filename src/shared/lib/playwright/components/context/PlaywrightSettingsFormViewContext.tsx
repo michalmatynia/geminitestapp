@@ -12,9 +12,8 @@ type PlaywrightSettingsFormViewContextValue = {
   description?: string;
 };
 
-const PlaywrightSettingsFormViewContext = React.createContext<PlaywrightSettingsFormViewContextValue | null>(
-  null
-);
+const PlaywrightSettingsFormViewContext =
+  React.createContext<PlaywrightSettingsFormViewContextValue | null>(null);
 
 type PlaywrightSettingsFormViewProviderProps = {
   value: PlaywrightSettingsFormViewContextValue;
@@ -35,7 +34,9 @@ export function PlaywrightSettingsFormViewProvider({
 export function usePlaywrightSettingsFormView(): PlaywrightSettingsFormViewContextValue {
   const context = React.useContext(PlaywrightSettingsFormViewContext);
   if (!context) {
-    throw internalError('usePlaywrightSettingsFormView must be used within PlaywrightSettingsFormViewProvider');
+    throw internalError(
+      'usePlaywrightSettingsFormView must be used within PlaywrightSettingsFormViewProvider'
+    );
   }
   return context;
 }

@@ -11,7 +11,7 @@ export class InputSanitizer {
   private static readonly SQL_INJECTION_PATTERNS: RegExp[] = [
     /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|UNION|SCRIPT)\b)/gi,
     /(--|\/\*|\*\/|;|'|"|`)/g,
-    /(\bOR\b|\bAND\b).*?[=<>]/gi
+    /(\bOR\b|\bAND\b).*?[=<>]/gi,
   ];
 
   private static readonly XSS_PATTERNS: RegExp[] = [
@@ -20,7 +20,7 @@ export class InputSanitizer {
     /on\w+\s*=/gi,
     /<iframe\b[^>]*>/gi,
     /<object\b[^>]*>/gi,
-    /<embed\b[^>]*>/gi
+    /<embed\b[^>]*>/gi,
   ];
 
   static sanitizeString(input: string, options: SanitizationOptions = {}): string {
@@ -45,7 +45,7 @@ export class InputSanitizer {
     } else {
       // Remove all HTML tags
       sanitized = sanitized.replace(/<[^>]*>/g, '');
-      
+
       // Remove potential XSS patterns
       this.XSS_PATTERNS.forEach((pattern: RegExp) => {
         sanitized = sanitized.replace(pattern, '');
@@ -75,11 +75,14 @@ export class InputSanitizer {
       if (typeof value === 'string') {
         sanitized[key as keyof T] = this.sanitizeString(value, options) as T[keyof T];
       } else if (Array.isArray(value)) {
-        sanitized[key as keyof T] = value.map((item: unknown) => 
+        sanitized[key as keyof T] = value.map((item: unknown) =>
           typeof item === 'string' ? this.sanitizeString(item, options) : item
         ) as T[keyof T];
       } else if (value && typeof value === 'object') {
-        sanitized[key as keyof T] = this.sanitizeObject(value as Record<string, unknown>, {}) as T[keyof T];
+        sanitized[key as keyof T] = this.sanitizeObject(
+          value as Record<string, unknown>,
+          {}
+        ) as T[keyof T];
       } else {
         sanitized[key as keyof T] = value as T[keyof T];
       }
@@ -125,12 +128,24 @@ export const ProductSanitizationRules: Record<string, SanitizationOptions> = {
   name_en: { maxLength: 200, stripWhitespace: true },
   name_pl: { maxLength: 200, stripWhitespace: true },
   name_de: { maxLength: 200, stripWhitespace: true },
-  description_en: { maxLength: 2000, allowHtml: true, allowedTags: ['p', 'br', 'b', 'i', 'strong', 'em'] },
-  description_pl: { maxLength: 2000, allowHtml: true, allowedTags: ['p', 'br', 'b', 'i', 'strong', 'em'] },
-  description_de: { maxLength: 2000, allowHtml: true, allowedTags: ['p', 'br', 'b', 'i', 'strong', 'em'] },
+  description_en: {
+    maxLength: 2000,
+    allowHtml: true,
+    allowedTags: ['p', 'br', 'b', 'i', 'strong', 'em'],
+  },
+  description_pl: {
+    maxLength: 2000,
+    allowHtml: true,
+    allowedTags: ['p', 'br', 'b', 'i', 'strong', 'em'],
+  },
+  description_de: {
+    maxLength: 2000,
+    allowHtml: true,
+    allowedTags: ['p', 'br', 'b', 'i', 'strong', 'em'],
+  },
   supplierName: { maxLength: 100, stripWhitespace: true },
   supplierLink: { maxLength: 500, stripWhitespace: true },
-  priceComment: { maxLength: 500, stripWhitespace: true }
+  priceComment: { maxLength: 500, stripWhitespace: true },
 };
 
 // Middleware for automatic sanitization
@@ -142,7 +157,10 @@ export function withInputSanitization<T extends Record<string, unknown>>(
 }
 
 // Validation helpers
-export function validateProductInput(data: Record<string, unknown>): { isValid: boolean; errors: string[] } {
+export function validateProductInput(data: Record<string, unknown>): {
+  isValid: boolean;
+  errors: string[];
+} {
   const errors: string[] = [];
 
   const sku: string | undefined = typeof data['sku'] === 'string' ? data['sku'] : undefined;
@@ -168,6 +186,6 @@ export function validateProductInput(data: Record<string, unknown>): { isValid: 
 
   return {
     isValid: errors.length === 0,
-    errors
+    errors,
   };
 }

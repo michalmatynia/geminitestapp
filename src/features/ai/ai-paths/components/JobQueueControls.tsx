@@ -3,12 +3,7 @@
 import React from 'react';
 import { Trash2 } from 'lucide-react';
 import { useJobQueueContext } from './JobQueueContext';
-import { 
-  Button, 
-  Hint, 
-  Label, 
-  SelectSimple 
-} from '@/shared/ui';
+import { Button, Hint, Label, SelectSimple } from '@/shared/ui';
 
 const AUTO_REFRESH_INTERVAL_OPTIONS = [5000, 10000, 30000, 60000] as const;
 
@@ -33,7 +28,9 @@ export function JobQueueControls(): React.JSX.Element {
     <div className='space-y-4'>
       <div className='flex flex-wrap items-center justify-between gap-3'>
         <div>
-          <Hint size='xs' uppercase={false} className='font-semibold text-white'>{panelLabel}</Hint>
+          <Hint size='xs' uppercase={false} className='font-semibold text-white'>
+            {panelLabel}
+          </Hint>
           <div className='text-xs text-gray-400'>{panelDescription}</div>
         </div>
         <div className='flex flex-wrap gap-2'>

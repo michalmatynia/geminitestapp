@@ -7,25 +7,28 @@ import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui';
 import { api } from '@/shared/lib/api-client';
 
-import { 
-  DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL, 
+import {
+  DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
-  PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY
+  PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY,
 } from '../../constants';
 import { useProductFormCore } from '../ProductFormCoreContext';
 import { useProductFormImages } from '../ProductFormImageContext';
 import { useProductFormStudio } from '../ProductFormStudioContext';
 import { resolveProductImageUrl } from '@/shared/utils/image-routing';
-import { studioKeys, useStudioProjects } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
-import { getImageStudioSlotImageSrc } from '@/features/ai/image-studio/utils/image-src';
+import {
+  studioKeys,
+  useStudioProjects,
+} from '@/features/ai/image-studio/hooks/useImageStudioQueries';
+import { getImageStudioSlotImageSrc } from '@/shared/lib/ai/image-studio/image-src';
 import { invalidateProductsAndCounts } from '@/features/products/hooks/productCache';
 
 import type { ImageStudioSlotDto as ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
-import type { 
-  ProductStudioExecutionRoute, 
-  ProductStudioSequenceGenerationMode, 
+import type {
+  ProductStudioExecutionRoute,
+  ProductStudioSequenceGenerationMode,
   ProductStudioSequenceReadiness,
-  ProductWithImagesDto as ProductWithImages
+  ProductWithImagesDto as ProductWithImages,
 } from '@/shared/contracts/products';
 
 // --- Types ---
@@ -118,13 +121,13 @@ export interface ProductStudioContextValue {
   setStudioProjectId: (id: string | null) => void;
   studioProjectOptions: Array<{ value: string; label: string }>;
   isStudioLoading: boolean;
-  
+
   // Image Selection
   imageSlotPreviews: ProductImageSlotPreview[];
   selectedImageIndex: number | null;
   setSelectedImageIndex: (index: number | null) => void;
   selectedSourcePreview: ProductImageSlotPreview | null;
-  
+
   // Variants Data
   variants: ImageStudioSlotRecord[];
   variantsLoading: boolean;
@@ -132,27 +135,27 @@ export interface ProductStudioContextValue {
   setSelectedVariantSlotId: (id: string | null) => void;
   selectedVariant: ImageStudioSlotRecord | null;
   pendingVariantPlaceholderCount: number;
-  
+
   // Preview State
   sourceImageSrc: string | null;
   variantImageSrc: string | null;
   canCompareWithSource: boolean;
-  
+
   // Sequencing & Diagnostics
   variantsData: ProductStudioVariantsResponse | null;
   sequenceReadinessMessage: string | null;
   blockSendForSequenceReadiness: boolean;
-  
+
   // Audit
   auditEntries: ProductStudioAuditEntry[];
   auditLoading: boolean;
   auditError: string | null;
   refreshAudit: () => Promise<void>;
-  
+
   // Run Status
   activeRunId: string | null;
   runStatus: 'queued' | 'running' | 'completed' | 'failed' | 'cancelled' | null;
-  
+
   // Actions
   handleSendToStudio: () => Promise<void>;
   handleOpenInImageStudio: () => Promise<void>;
@@ -160,7 +163,7 @@ export interface ProductStudioContextValue {
   handleDeleteVariant: (slot: ImageStudioSlotRecord) => Promise<void>;
   handleRotateImageSlot: (direction: 'left' | 'right') => Promise<void>;
   refreshVariants: () => Promise<ProductStudioVariantsResponse | null>;
-  
+
   // Flags
   sending: boolean;
   accepting: boolean;
@@ -174,31 +177,31 @@ const ProductStudioContext = createContext<ProductStudioContextValue | null>(nul
 
 const STUDIO_PROJECT_NOT_CONNECTED = '__product_studio_not_connected__';
 
-export function ProductStudioProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
-  const {
-    studioProjectId,
-    setStudioProjectId,
-    studioConfigLoading,
-    studioConfigSaving,
-  } = useProductFormStudio();
+export function ProductStudioProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}): React.JSX.Element {
+  const { studioProjectId, setStudioProjectId, studioConfigLoading, studioConfigSaving } =
+    useProductFormStudio();
 
   const core = useProductFormCore();
   const product = core.product;
-  
+
   const images = useProductFormImages();
   const imageSlots = images.imageSlots;
   const refreshImagesFromProduct = images.refreshImagesFromProduct;
-  
+
   const studioProjectsQuery = useStudioProjects();
   const studioProjectIds = useMemo(
-    () => (studioProjectsQuery.data ?? []).map(p => p.id.trim()).filter(id => id.length > 0),
+    () => (studioProjectsQuery.data ?? []).map((p) => p.id.trim()).filter((id) => id.length > 0),
     [studioProjectsQuery.data]
   );
-  
+
   const studioProjectOptions = useMemo(
     () => [
       { value: STUDIO_PROJECT_NOT_CONNECTED, label: 'Not Connected' },
-      ...studioProjectIds.map(id => ({ value: id, label: id })),
+      ...studioProjectIds.map((id) => ({ value: id, label: id })),
     ],
     [studioProjectIds]
   );
@@ -206,9 +209,12 @@ export function ProductStudioProvider({ children }: { children: React.ReactNode 
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const settingsStore = useSettingsStore();
-  
-  const configuredDefaultStudioProjectId = settingsStore.get(PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY)?.trim() ?? '';
-  const productImagesExternalBaseUrl = settingsStore.get(PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY) ?? DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL;
+
+  const configuredDefaultStudioProjectId =
+    settingsStore.get(PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY)?.trim() ?? '';
+  const productImagesExternalBaseUrl =
+    settingsStore.get(PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY) ??
+    DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL;
 
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
   const [variantsData, setVariantsData] = useState<ProductStudioVariantsResponse | null>(null);
@@ -224,7 +230,9 @@ export function ProductStudioProvider({ children }: { children: React.ReactNode 
   const [auditLoading, setAuditLoading] = useState(false);
   const [auditError, setAuditError] = useState<string | null>(null);
   const [activeRunId, setActiveRunId] = useState<string | null>(null);
-  const [runStatus, setRunStatus] = useState<'queued' | 'running' | 'completed' | 'failed' | 'cancelled' | null>(null);
+  const [runStatus, setRunStatus] = useState<
+    'queued' | 'running' | 'completed' | 'failed' | 'cancelled' | null
+  >(null);
   const [activeRunBaselineVariantIds, setActiveRunBaselineVariantIds] = useState<string[]>([]);
   const [pendingExpectedOutputs, setPendingExpectedOutputs] = useState<number>(0);
 
@@ -235,8 +243,8 @@ export function ProductStudioProvider({ children }: { children: React.ReactNode 
         const src =
           slot.type === 'file'
             ? slot.previewUrl
-            : resolveProductImageUrl(slot.data.filepath, productImagesExternalBaseUrl) ??
-              slot.previewUrl;
+            : (resolveProductImageUrl(slot.data.filepath, productImagesExternalBaseUrl) ??
+              slot.previewUrl);
         if (!src) return null;
         return { index, label: `Slot ${index + 1}`, src };
       })
@@ -249,7 +257,10 @@ export function ProductStudioProvider({ children }: { children: React.ReactNode 
       setSelectedImageIndex(null);
       return;
     }
-    if (selectedImageIndex !== null && imageSlotPreviews.some(p => p.index === selectedImageIndex)) {
+    if (
+      selectedImageIndex !== null &&
+      imageSlotPreviews.some((p) => p.index === selectedImageIndex)
+    ) {
       return;
     }
     setSelectedImageIndex(imageSlotPreviews[0]?.index ?? null);
@@ -260,11 +271,22 @@ export function ProductStudioProvider({ children }: { children: React.ReactNode 
     if (studioProjectsQuery.isLoading || studioConfigLoading || studioConfigSaving) return;
     const current = studioProjectId?.trim() ?? '';
     if (current.length > 0 && studioProjectIds.includes(current)) return;
-    const fallback = configuredDefaultStudioProjectId.length > 0 && studioProjectIds.includes(configuredDefaultStudioProjectId)
-      ? configuredDefaultStudioProjectId : null;
+    const fallback =
+      configuredDefaultStudioProjectId.length > 0 &&
+      studioProjectIds.includes(configuredDefaultStudioProjectId)
+        ? configuredDefaultStudioProjectId
+        : null;
     if (fallback === current) return;
     setStudioProjectId(fallback);
-  }, [configuredDefaultStudioProjectId, studioConfigLoading, studioConfigSaving, studioProjectId, studioProjectIds, studioProjectsQuery.isLoading, setStudioProjectId]);
+  }, [
+    configuredDefaultStudioProjectId,
+    studioConfigLoading,
+    studioConfigSaving,
+    studioProjectId,
+    studioProjectIds,
+    studioProjectsQuery.isLoading,
+    setStudioProjectId,
+  ]);
 
   const refreshVariants = useCallback(async (): Promise<ProductStudioVariantsResponse | null> => {
     if (!product?.id || !studioProjectId || selectedImageIndex === null) {
@@ -277,23 +299,30 @@ export function ProductStudioProvider({ children }: { children: React.ReactNode 
     try {
       const response = await api.get<ProductStudioVariantsResponse>(
         `/api/products/${encodeURIComponent(product.id)}/studio/variants`,
-        { params: { imageSlotIndex: selectedImageIndex, projectId: studioProjectId }, cache: 'no-store' }
+        {
+          params: { imageSlotIndex: selectedImageIndex, projectId: studioProjectId },
+          cache: 'no-store',
+        }
       );
       setVariantsData(response);
-      setSelectedVariantSlotId(current => {
-        if (current && response.variants.some(s => s.id === current)) return current;
+      setSelectedVariantSlotId((current) => {
+        if (current && response.variants.some((s) => s.id === current)) return current;
         return response.variants[0]?.id ?? null;
       });
       return response;
     } catch (error) {
-      setStudioActionError(error instanceof Error ? error.message : 'Failed to load Studio variants.');
+      setStudioActionError(
+        error instanceof Error ? error.message : 'Failed to load Studio variants.'
+      );
       return null;
     } finally {
       setVariantsLoading(false);
     }
   }, [product?.id, selectedImageIndex, studioProjectId]);
 
-  useEffect(() => { void refreshVariants(); }, [refreshVariants]);
+  useEffect(() => {
+    void refreshVariants();
+  }, [refreshVariants]);
 
   const refreshAudit = useCallback(async (): Promise<void> => {
     if (!product?.id || !studioProjectId || selectedImageIndex === null) {
@@ -306,7 +335,11 @@ export function ProductStudioProvider({ children }: { children: React.ReactNode 
     try {
       const response = await api.get<{ entries: ProductStudioAuditEntry[] }>(
         `/api/products/${encodeURIComponent(product.id)}/studio/audit`,
-        { params: { imageSlotIndex: selectedImageIndex, limit: 40 }, cache: 'no-store', logError: false }
+        {
+          params: { imageSlotIndex: selectedImageIndex, limit: 40 },
+          cache: 'no-store',
+          logError: false,
+        }
       );
       setAuditEntries(Array.isArray(response.entries) ? response.entries : []);
     } catch (error) {
@@ -316,19 +349,23 @@ export function ProductStudioProvider({ children }: { children: React.ReactNode 
     }
   }, [product?.id, selectedImageIndex, studioProjectId]);
 
-  useEffect(() => { void refreshAudit(); }, [refreshAudit]);
+  useEffect(() => {
+    void refreshAudit();
+  }, [refreshAudit]);
 
   const handleSendToStudio = async () => {
     if (!product?.id || !studioProjectId || selectedImageIndex === null) return;
     setSending(true);
     setStudioActionError(null);
-    const baselineIds = (variantsData?.variants ?? []).map(s => s.id).filter((id): id is string => !!id);
+    const baselineIds = (variantsData?.variants ?? [])
+      .map((s) => s.id)
+      .filter((id): id is string => !!id);
     try {
-      const result = await api.post<{ 
-        runId: string; 
-        runKind: 'generation' | 'sequence'; 
-        runStatus: ProductStudioContextValue['runStatus']; 
-        expectedOutputs: number 
+      const result = await api.post<{
+        runId: string;
+        runKind: 'generation' | 'sequence';
+        runStatus: ProductStudioContextValue['runStatus'];
+        expectedOutputs: number;
       }>(`/api/products/${encodeURIComponent(product.id)}/studio/send`, {
         imageSlotIndex: selectedImageIndex,
         projectId: studioProjectId,
@@ -352,10 +389,13 @@ export function ProductStudioProvider({ children }: { children: React.ReactNode 
     if (!product?.id || !studioProjectId || selectedImageIndex === null) return;
     setOpeningInImageStudio(true);
     try {
-      const response = await api.post<{ projectId: string; sourceSlot: { id: string } }>(`/api/products/${encodeURIComponent(product.id)}/studio/link`, {
-        imageSlotIndex: selectedImageIndex,
-        projectId: studioProjectId,
-      });
+      const response = await api.post<{ projectId: string; sourceSlot: { id: string } }>(
+        `/api/products/${encodeURIComponent(product.id)}/studio/link`,
+        {
+          imageSlotIndex: selectedImageIndex,
+          projectId: studioProjectId,
+        }
+      );
       const sourceSlotId = response.sourceSlot?.id;
       if (!sourceSlotId) throw new Error('Source slot not found.');
       window.location.href = `/admin/image-studio?projectId=${response.projectId}&slotId=${sourceSlotId}`;
@@ -370,11 +410,14 @@ export function ProductStudioProvider({ children }: { children: React.ReactNode 
     if (!product?.id || !studioProjectId || !selectedVariantSlotId) return;
     setAccepting(true);
     try {
-      const response = await api.post<{ product: ProductWithImages }>(`/api/products/${encodeURIComponent(product.id)}/studio/accept`, {
-        imageSlotIndex: selectedImageIndex,
-        generationSlotId: selectedVariantSlotId,
-        projectId: studioProjectId,
-      });
+      const response = await api.post<{ product: ProductWithImages }>(
+        `/api/products/${encodeURIComponent(product.id)}/studio/accept`,
+        {
+          imageSlotIndex: selectedImageIndex,
+          generationSlotId: selectedVariantSlotId,
+          projectId: studioProjectId,
+        }
+      );
       refreshImagesFromProduct(response.product);
       await invalidateProductsAndCounts(queryClient);
       toast('Variant accepted.', { variant: 'success' });
@@ -391,10 +434,13 @@ export function ProductStudioProvider({ children }: { children: React.ReactNode 
     if (!studioProjectId || !slot.id) return;
     setDeletingVariantId(slot.id);
     try {
-      await api.post(`/api/image-studio/projects/${encodeURIComponent(studioProjectId)}/variants/delete`, {
-        slotId: slot.id,
-        sourceSlotId: variantsData?.sourceSlotId,
-      });
+      await api.post(
+        `/api/image-studio/projects/${encodeURIComponent(studioProjectId)}/variants/delete`,
+        {
+          slotId: slot.id,
+          sourceSlotId: variantsData?.sourceSlotId,
+        }
+      );
       toast('Variant deleted.', { variant: 'success' });
       await refreshVariants();
     } catch (error) {
@@ -408,10 +454,13 @@ export function ProductStudioProvider({ children }: { children: React.ReactNode 
     if (!product?.id || selectedImageIndex === null) return;
     setRotatingDirection(direction);
     try {
-      const response = await api.post<{ product: ProductWithImages }>(`/api/products/${encodeURIComponent(product.id)}/studio/rotate`, {
-        imageSlotIndex: selectedImageIndex,
-        direction,
-      });
+      const response = await api.post<{ product: ProductWithImages }>(
+        `/api/products/${encodeURIComponent(product.id)}/studio/rotate`,
+        {
+          imageSlotIndex: selectedImageIndex,
+          direction,
+        }
+      );
       refreshImagesFromProduct(response.product);
       await invalidateProductsAndCounts(queryClient);
       await refreshVariants();
@@ -424,18 +473,34 @@ export function ProductStudioProvider({ children }: { children: React.ReactNode 
   };
 
   const variants = variantsData?.variants ?? [];
-  const selectedVariant = variants.find(s => s.id === selectedVariantSlotId) ?? variants[0] ?? null;
-  const selectedSourcePreview = useMemo(() => imageSlotPreviews.find(p => p.index === selectedImageIndex) ?? null, [imageSlotPreviews, selectedImageIndex]);
-  const sourceImageSrc = getImageStudioSlotImageSrc(variantsData?.sourceSlot, productImagesExternalBaseUrl) ?? selectedSourcePreview?.src ?? null;
+  const selectedVariant =
+    variants.find((s) => s.id === selectedVariantSlotId) ?? variants[0] ?? null;
+  const selectedSourcePreview = useMemo(
+    () => imageSlotPreviews.find((p) => p.index === selectedImageIndex) ?? null,
+    [imageSlotPreviews, selectedImageIndex]
+  );
+  const sourceImageSrc =
+    getImageStudioSlotImageSrc(variantsData?.sourceSlot, productImagesExternalBaseUrl) ??
+    selectedSourcePreview?.src ??
+    null;
   const variantImageSrc = getImageStudioSlotImageSrc(selectedVariant, productImagesExternalBaseUrl);
   const canCompareWithSource = Boolean(sourceImageSrc && variantImageSrc);
-  
+
   const sequenceReadiness = variantsData?.sequenceReadiness ?? null;
-  const sequenceReadinessMessage = sequenceReadiness && !sequenceReadiness.ready ? sequenceReadiness.message ?? 'Not ready.' : null;
+  const sequenceReadinessMessage =
+    sequenceReadiness && !sequenceReadiness.ready
+      ? (sequenceReadiness.message ?? 'Not ready.')
+      : null;
   const blockSendForSequenceReadiness = Boolean(sequenceReadinessMessage);
 
-  const activeRunBaselineVariantIdSet = useMemo(() => new Set(activeRunBaselineVariantIds), [activeRunBaselineVariantIds]);
-  const variantsProducedForActiveRun = useMemo(() => variants.filter(s => s.id && !activeRunBaselineVariantIdSet.has(s.id)).length, [activeRunBaselineVariantIdSet, variants]);
+  const activeRunBaselineVariantIdSet = useMemo(
+    () => new Set(activeRunBaselineVariantIds),
+    [activeRunBaselineVariantIds]
+  );
+  const variantsProducedForActiveRun = useMemo(
+    () => variants.filter((s) => s.id && !activeRunBaselineVariantIdSet.has(s.id)).length,
+    [activeRunBaselineVariantIdSet, variants]
+  );
 
   const contextValue: ProductStudioContextValue = {
     studioProjectId,
@@ -451,8 +516,10 @@ export function ProductStudioProvider({ children }: { children: React.ReactNode 
     selectedVariantSlotId,
     setSelectedVariantSlotId,
     selectedVariant,
-    pendingVariantPlaceholderCount: activeRunId && (runStatus === 'queued' || runStatus === 'running')
-      ? Math.max(0, pendingExpectedOutputs - variantsProducedForActiveRun) : 0,
+    pendingVariantPlaceholderCount:
+      activeRunId && (runStatus === 'queued' || runStatus === 'running')
+        ? Math.max(0, pendingExpectedOutputs - variantsProducedForActiveRun)
+        : 0,
     sourceImageSrc,
     variantImageSrc,
     canCompareWithSource,
@@ -480,9 +547,7 @@ export function ProductStudioProvider({ children }: { children: React.ReactNode 
   };
 
   return (
-    <ProductStudioContext.Provider value={contextValue}>
-      {children}
-    </ProductStudioContext.Provider>
+    <ProductStudioContext.Provider value={contextValue}>{children}</ProductStudioContext.Provider>
   );
 }
 

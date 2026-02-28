@@ -61,10 +61,7 @@ const clampIndex = (value: number, min: number, max: number): number => {
   return Math.min(max, Math.max(min, Math.floor(value)));
 };
 
-const resolveSegmentIndex = (
-  segments: PromptExploderSegment[],
-  segmentId: string
-): number => {
+const resolveSegmentIndex = (segments: PromptExploderSegment[], segmentId: string): number => {
   return segments.findIndex((segment: PromptExploderSegment) => segment.id === segmentId);
 };
 
@@ -153,9 +150,7 @@ export const promptExploderSplitSegmentByRange = (args: {
   const right = Math.max(start, end);
 
   const hasSelection = right > left;
-  const extracted = hasSelection
-    ? sourceText.slice(left, right)
-    : sourceText.slice(left);
+  const extracted = hasSelection ? sourceText.slice(left, right) : sourceText.slice(left);
   if (!extracted.trim()) {
     return {
       segments,
@@ -173,7 +168,7 @@ export const promptExploderSplitSegmentByRange = (args: {
     paramsText: target.type === 'parameter_block' ? remaining : target.paramsText,
   };
   const nextSplit = createBlankSegment(target, extracted);
-  nextSplit.title = (target.title && target.title.trim().length > 0) ? `${target.title} (Split)` : '';
+  nextSplit.title = target.title && target.title.trim().length > 0 ? `${target.title} (Split)` : '';
   const nextSegments = [...segments];
   nextSegments[targetIndex] = nextCurrent;
   nextSegments.splice(targetIndex + 1, 0, nextSplit);

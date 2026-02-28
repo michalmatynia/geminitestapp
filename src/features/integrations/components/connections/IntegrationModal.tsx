@@ -132,10 +132,7 @@ export function IntegrationModal(): React.JSX.Element {
           )}
         </Tabs>
 
-        <TestLogModal
-          isOpen={showTestLogModal}
-          onClose={() => setShowTestLogModal(false)}
-        />
+        <TestLogModal isOpen={showTestLogModal} onClose={() => setShowTestLogModal(false)} />
 
         <TestResultModal
           isOpen={showTestErrorModal || showTestSuccessModal}
@@ -145,10 +142,7 @@ export function IntegrationModal(): React.JSX.Element {
           }}
         />
 
-        <SessionModal
-          isOpen={showSessionModal}
-          onClose={() => setShowSessionModal(false)}
-        />
+        <SessionModal isOpen={showSessionModal} onClose={() => setShowSessionModal(false)} />
       </DetailModal>
     </IntegrationModalViewProvider>
   );

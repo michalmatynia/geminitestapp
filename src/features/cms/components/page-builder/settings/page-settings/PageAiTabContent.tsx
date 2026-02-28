@@ -3,17 +3,13 @@
 import React, { useEffect, useMemo } from 'react';
 import { Button, Label, Textarea, SelectSimple } from '@/shared/ui';
 import { usePageAiAssistant } from './usePageAiAssistant';
-import { useBrainModelOptions } from '@/features/ai/brain/hooks/useBrainModelOptions';
+import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
 import { useTeachingAgents } from '@/features/ai/agentcreator/teaching/hooks/useAgentTeachingQueries';
 import type { AgentTeachingAgentRecord } from '@/shared/contracts/agent-teaching';
 
-export function PageAiTabContent({
-  activeTab,
-}: {
-  activeTab: string;
-}): React.JSX.Element {
+export function PageAiTabContent({ activeTab }: { activeTab: string }): React.JSX.Element {
   const ai = usePageAiAssistant();
-  
+
   const brainModelOptions = useBrainModelOptions({
     feature: 'cms_builder',
     enabled: activeTab === 'ai' && ai.pageAiProvider === 'model',
@@ -30,7 +26,11 @@ export function PageAiTabContent({
   }, [brainModelOptions.models]);
 
   const agentOptions = useMemo(
-    () => (teachingAgentsQuery.data ?? []).map((agent: AgentTeachingAgentRecord) => ({ label: agent.name, value: agent.id })),
+    () =>
+      (teachingAgentsQuery.data ?? []).map((agent: AgentTeachingAgentRecord) => ({
+        label: agent.name,
+        value: agent.id,
+      })),
     [teachingAgentsQuery.data]
   );
 
@@ -65,7 +65,8 @@ export function PageAiTabContent({
       </div>
       <div className='space-y-2'>
         <Label className='text-xs text-gray-400'>Task</Label>
-        <SelectSimple size='sm'
+        <SelectSimple
+          size='sm'
           value={ai.pageAiTask}
           onValueChange={(value: string): void => ai.setPageAiTask(value as 'layout' | 'seo')}
           options={pageAiTaskOptions}
@@ -74,7 +75,8 @@ export function PageAiTabContent({
       </div>
       <div className='space-y-2'>
         <Label className='text-xs text-gray-400'>Provider</Label>
-        <SelectSimple size='sm'
+        <SelectSimple
+          size='sm'
           value={ai.pageAiProvider}
           onValueChange={(value: string): void => ai.setPageAiProvider(value as 'model' | 'agent')}
           options={pageAiProviderOptions}
@@ -84,7 +86,8 @@ export function PageAiTabContent({
       {ai.pageAiProvider !== 'agent' ? (
         <div className='space-y-2'>
           <Label className='text-xs text-gray-400'>Model</Label>
-          <SelectSimple size='sm'
+          <SelectSimple
+            size='sm'
             value={ai.pageAiModelId}
             onValueChange={(value: string): void => ai.setPageAiModelId(value)}
             options={modelOptions.map((model: string) => ({ value: model, label: model }))}
@@ -94,10 +97,13 @@ export function PageAiTabContent({
       ) : (
         <div className='space-y-2'>
           <Label className='text-xs text-gray-400'>Deepthinking agent</Label>
-          <SelectSimple size='sm'
+          <SelectSimple
+            size='sm'
             value={ai.pageAiAgentId}
             onValueChange={(value: string): void => ai.setPageAiAgentId(value)}
-            options={agentOptions.length ? agentOptions : [{ label: 'No agents configured', value: '' }]}
+            options={
+              agentOptions.length ? agentOptions : [{ label: 'No agents configured', value: '' }]
+            }
             placeholder={agentOptions.length ? 'Select agent' : 'No agents configured'}
           />
         </div>
@@ -106,7 +112,9 @@ export function PageAiTabContent({
         <Label className='text-xs text-gray-400'>Prompt</Label>
         <Textarea
           value={ai.pageAiPrompt}
-          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void => ai.setPageAiPrompt(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void =>
+            ai.setPageAiPrompt(e.target.value)
+          }
           placeholder={`Describe what you need.\n\nContext:\n${pageAiPlaceholder}`}
           className='min-h-[120px] text-xs'
           spellCheck={false}
@@ -120,7 +128,9 @@ export function PageAiTabContent({
           size='sm'
           onClick={(): void => {
             const current = ai.pageAiPrompt.trim();
-            const nextPrompt = current.length ? `${current}\n\n${pageAiPlaceholder}` : pageAiPlaceholder;
+            const nextPrompt = current.length
+              ? `${current}\n\n${pageAiPlaceholder}`
+              : pageAiPlaceholder;
             ai.setPageAiPrompt(nextPrompt);
           }}
         >
@@ -142,29 +152,17 @@ export function PageAiTabContent({
           {ai.generatePageAiMutation.isPending ? 'Generating...' : 'Generate'}
         </Button>
         {ai.generatePageAiMutation.isPending && (
-          <Button
-            type='button'
-            size='sm'
-            variant='outline'
-            onClick={ai.handleCancelPageAi}
-          >
+          <Button type='button' size='sm' variant='outline' onClick={ai.handleCancelPageAi}>
             Cancel
           </Button>
         )}
       </div>
-      {ai.pageAiError && (
-        <div className='text-xs text-red-400'>{ai.pageAiError}</div>
-      )}
+      {ai.pageAiError && <div className='text-xs text-red-400'>{ai.pageAiError}</div>}
       {ai.pageAiOutput && (
         <div className='space-y-2'>
           <div className='flex items-center justify-between'>
             <Label className='text-xs text-gray-400'>AI output</Label>
-            <Button
-              type='button'
-              size='sm'
-              variant='outline'
-              onClick={ai.handleApplyPageAi}
-            >
+            <Button type='button' size='sm' variant='outline' onClick={ai.handleApplyPageAi}>
               Apply
             </Button>
           </div>

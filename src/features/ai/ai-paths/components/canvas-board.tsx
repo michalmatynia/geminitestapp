@@ -1,9 +1,7 @@
 'use client';
 
 import React from 'react';
-import {
-  type DataContractNodeIssueSummary,
-} from '@/shared/lib/ai-paths';
+import { type DataContractNodeIssueSummary } from '@/shared/lib/ai-paths';
 import { cn } from '@/shared/utils';
 
 import { useCanvasBoardState } from './useCanvasBoardState';
@@ -16,9 +14,9 @@ import { CanvasConnectorTooltip } from './canvas/CanvasConnectorTooltip';
 import { CanvasNodeDiagnosticsTooltip } from './canvas/CanvasNodeDiagnosticsTooltip';
 import { CanvasSelectionMarquee } from './canvas/CanvasSelectionMarquee';
 import { CanvasLongPressIndicator } from './canvas/CanvasLongPressIndicator';
-import { 
-  type CanvasBoardConnectorTooltipOverrideInput, 
-  type CanvasBoardConnectorTooltipOverride
+import {
+  type CanvasBoardConnectorTooltipOverrideInput,
+  type CanvasBoardConnectorTooltipOverride,
 } from './CanvasBoard.utils';
 import type { ConnectorInfo } from './canvas-board-connectors';
 
@@ -94,7 +92,12 @@ export function CanvasBoard({
   }, [pinnedConnectorKey, setSvgConnectorTooltip]);
 
   const handleNodeDiagnosticsHover = React.useCallback(
-    (payload: { clientX: number; clientY: number; nodeId: string; summary: DataContractNodeIssueSummary }) => {
+    (payload: {
+      clientX: number;
+      clientY: number;
+      nodeId: string;
+      summary: DataContractNodeIssueSummary;
+    }) => {
       setSvgNodeDiagnosticsTooltip(payload);
     },
     [setSvgNodeDiagnosticsTooltip]
@@ -128,85 +131,89 @@ export function CanvasBoard({
   const inputPulseNodes = React.useMemo(() => new Set<string>(), []);
   const outputPulseNodes = React.useMemo(() => new Set<string>(), []);
   const wireFlowEnabled = state.effectiveFlowIntensity !== 'off';
-  const flowingIntensity = state.effectiveFlowIntensity === 'off' ? 'low' : state.effectiveFlowIntensity;
+  const flowingIntensity =
+    state.effectiveFlowIntensity === 'off' ? 'low' : state.effectiveFlowIntensity;
   const reduceVisualEffects = state.prefersReducedMotion || !wireFlowEnabled;
   const enableNodeAnimations = !reduceVisualEffects;
 
   // Combined UI context value
-  const canvasInteractions: CanvasBoardUIContextValue = React.useMemo(() => ({
-    ...state,
-    detailLevel,
-    edgeMetaMap,
-    inputPulseNodes,
-    outputPulseNodes,
-    activeEdgeIds,
-    triggerConnected,
-    wireFlowEnabled,
-    flowingIntensity,
-    reduceVisualEffects,
-    enableNodeAnimations,
-    connectorHitTargetPx: CONNECTOR_HIT_TARGET_PX,
-    onPointerDownNode: (event, nodeId) => {
-      state.handlePointerDownNode(nodeId, event);
-    },
-    onPointerMoveNode: (event, nodeId) => {
-      state.handlePointerMoveNode(nodeId, event);
-    },
-    onPointerUpNode: (event, nodeId) => {
-      state.handlePointerUpNode(nodeId, event);
-    },
-    onSelectNode: (nodeId, options) => {
-      state.handleSelectNode(nodeId, options);
-    },
-    onOpenNodeConfig: () => {
-      state.setConfigOpen(true);
-    },
-    onStartConnection: (event, node, port) => {
-      state.handleStartConnection(event, node, port);
-    },
-    onCompleteConnection: (event, node, port) => {
-      state.handleCompleteConnection(event, node, port);
-    },
-    onReconnectInput: (event, nodeId, port) => {
-      state.handleReconnectInput(event, nodeId, port);
-    },
-    onDisconnectPort: (direction, nodeId, port) => {
-      state.handleDisconnectPort(direction, nodeId, port);
-    },
-    onFireTrigger: (node) => {
-      void state.fireTrigger(node);
-    },
-    onRemoveEdge: (edgeId) => {
-      state.handleRemoveEdge(edgeId);
-    },
-    onSelectEdge: (edgeId) => {
-      state.selectEdge(edgeId);
-    },
-    openNodeConfigOnSingleClick,
-    onConnectorHover: handleConnectorHover,
-    onConnectorLeave: handleConnectorLeave,
-    onNodeDiagnosticsHover: handleNodeDiagnosticsHover,
-    onNodeDiagnosticsLeave: handleNodeDiagnosticsLeave,
-    onFocusNodeDiagnostics,
-  }), [
-    state,
-    detailLevel,
-    edgeMetaMap,
-    inputPulseNodes,
-    outputPulseNodes,
-    activeEdgeIds,
-    triggerConnected,
-    wireFlowEnabled,
-    flowingIntensity,
-    reduceVisualEffects,
-    enableNodeAnimations,
-    openNodeConfigOnSingleClick,
-    handleConnectorHover,
-    handleConnectorLeave,
-    handleNodeDiagnosticsHover,
-    handleNodeDiagnosticsLeave,
-    onFocusNodeDiagnostics,
-  ]);
+  const canvasInteractions: CanvasBoardUIContextValue = React.useMemo(
+    () => ({
+      ...state,
+      detailLevel,
+      edgeMetaMap,
+      inputPulseNodes,
+      outputPulseNodes,
+      activeEdgeIds,
+      triggerConnected,
+      wireFlowEnabled,
+      flowingIntensity,
+      reduceVisualEffects,
+      enableNodeAnimations,
+      connectorHitTargetPx: CONNECTOR_HIT_TARGET_PX,
+      onPointerDownNode: (event, nodeId) => {
+        state.handlePointerDownNode(nodeId, event);
+      },
+      onPointerMoveNode: (event, nodeId) => {
+        state.handlePointerMoveNode(nodeId, event);
+      },
+      onPointerUpNode: (event, nodeId) => {
+        state.handlePointerUpNode(nodeId, event);
+      },
+      onSelectNode: (nodeId, options) => {
+        state.handleSelectNode(nodeId, options);
+      },
+      onOpenNodeConfig: () => {
+        state.setConfigOpen(true);
+      },
+      onStartConnection: (event, node, port) => {
+        state.handleStartConnection(event, node, port);
+      },
+      onCompleteConnection: (event, node, port) => {
+        state.handleCompleteConnection(event, node, port);
+      },
+      onReconnectInput: (event, nodeId, port) => {
+        state.handleReconnectInput(event, nodeId, port);
+      },
+      onDisconnectPort: (direction, nodeId, port) => {
+        state.handleDisconnectPort(direction, nodeId, port);
+      },
+      onFireTrigger: (node) => {
+        void state.fireTrigger(node);
+      },
+      onRemoveEdge: (edgeId) => {
+        state.handleRemoveEdge(edgeId);
+      },
+      onSelectEdge: (edgeId) => {
+        state.selectEdge(edgeId);
+      },
+      openNodeConfigOnSingleClick,
+      onConnectorHover: handleConnectorHover,
+      onConnectorLeave: handleConnectorLeave,
+      onNodeDiagnosticsHover: handleNodeDiagnosticsHover,
+      onNodeDiagnosticsLeave: handleNodeDiagnosticsLeave,
+      onFocusNodeDiagnostics,
+    }),
+    [
+      state,
+      detailLevel,
+      edgeMetaMap,
+      inputPulseNodes,
+      outputPulseNodes,
+      activeEdgeIds,
+      triggerConnected,
+      wireFlowEnabled,
+      flowingIntensity,
+      reduceVisualEffects,
+      enableNodeAnimations,
+      openNodeConfigOnSingleClick,
+      handleConnectorHover,
+      handleConnectorLeave,
+      handleNodeDiagnosticsHover,
+      handleNodeDiagnosticsLeave,
+      onFocusNodeDiagnostics,
+    ]
+  );
 
   return (
     <CanvasBoardUIProvider value={canvasInteractions}>
@@ -256,7 +263,7 @@ export function CanvasBoard({
             viewBox={`0 0 ${viewportSize?.width ?? 0} ${viewportSize?.height ?? 0}`}
             className='h-full w-full'
             style={{
-              cursor: isPanning ? 'grabbing' : (selectionToolMode === 'pan' ? 'grab' : 'default'),
+              cursor: isPanning ? 'grabbing' : selectionToolMode === 'pan' ? 'grab' : 'default',
             }}
           >
             <g
@@ -270,12 +277,12 @@ export function CanvasBoard({
           <div className='pointer-events-none absolute inset-0'>
             {selectionMarqueeRect && <CanvasSelectionMarquee rect={selectionMarqueeRect} />}
             {touchLongPressIndicator && (
-              <CanvasLongPressIndicator 
+              <CanvasLongPressIndicator
                 indicator={{
                   x: touchLongPressIndicator.x,
                   y: touchLongPressIndicator.y,
-                  progress: touchLongPressIndicator.progress
-                }} 
+                  progress: touchLongPressIndicator.progress,
+                }}
               />
             )}
             {svgConnectorTooltip && (
@@ -285,11 +292,13 @@ export function CanvasBoard({
                   left: svgConnectorTooltip.clientX + 12,
                   top: svgConnectorTooltip.clientY + 12,
                 }}
-                override={resolveConnectorTooltip?.({
-                  direction: svgConnectorTooltip.info.direction,
-                  node: state.nodeById.get(svgConnectorTooltip.info.nodeId)!,
-                  port: svgConnectorTooltip.info.port,
-                }) ?? null}
+                override={
+                  resolveConnectorTooltip?.({
+                    direction: svgConnectorTooltip.info.direction,
+                    node: state.nodeById.get(svgConnectorTooltip.info.nodeId)!,
+                    port: svgConnectorTooltip.info.port,
+                  }) ?? null
+                }
               />
             )}
             {svgNodeDiagnosticsTooltip && (

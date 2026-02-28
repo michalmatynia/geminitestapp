@@ -50,12 +50,8 @@
     "chainMode": "continue",
     "maxExecutions": 2,
     "passOutputToNext": true,
-    "appliesToScopes": [
-      "case_resolver_plain_text"
-    ],
-    "launchAppliesToScopes": [
-      "case_resolver_plain_text"
-    ],
+    "appliesToScopes": ["case_resolver_plain_text"],
+    "launchAppliesToScopes": ["case_resolver_plain_text"],
     "launchScopeBehavior": "gate",
     "launchEnabled": false,
     "launchOperator": "contains",
@@ -127,12 +123,8 @@
     "chainMode": "continue",
     "maxExecutions": 2,
     "passOutputToNext": true,
-    "appliesToScopes": [
-      "case_resolver_plain_text"
-    ],
-    "launchAppliesToScopes": [
-      "case_resolver_plain_text"
-    ],
+    "appliesToScopes": ["case_resolver_plain_text"],
+    "launchAppliesToScopes": ["case_resolver_plain_text"],
     "launchScopeBehavior": "gate",
     "launchEnabled": false,
     "launchOperator": "contains",
@@ -190,12 +182,8 @@
     "chainMode": "continue",
     "maxExecutions": 2,
     "passOutputToNext": true,
-    "appliesToScopes": [
-      "case_resolver_plain_text"
-    ],
-    "launchAppliesToScopes": [
-      "case_resolver_plain_text"
-    ],
+    "appliesToScopes": ["case_resolver_plain_text"],
+    "launchAppliesToScopes": ["case_resolver_plain_text"],
     "launchScopeBehavior": "gate",
     "launchEnabled": false,
     "launchOperator": "contains",

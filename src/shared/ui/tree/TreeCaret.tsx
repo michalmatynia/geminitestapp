@@ -35,7 +35,7 @@ export function TreeCaret({
   dotClassName,
 }: TreeCaretProps): React.JSX.Element {
   const { isExpanded: contextExpanded, onToggleExpand: contextToggle } = useTreeNodeState(nodeId);
-  
+
   const isOpen = propIsOpen ?? contextExpanded;
   const onToggle = propOnToggle ?? (nodeId ? contextToggle : undefined);
 

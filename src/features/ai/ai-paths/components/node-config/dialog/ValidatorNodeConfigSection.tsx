@@ -24,7 +24,8 @@ export function ValidatorNodeConfigSection(): React.JSX.Element | null {
     <div className='space-y-4'>
       <div>
         <Label className='text-xs text-gray-400'>Validation Mode</Label>
-        <SelectSimple size='sm'
+        <SelectSimple
+          size='sm'
           value={validatorConfig.mode}
           onValueChange={(value: string): void =>
             updateSelectedNodeConfig({
@@ -40,9 +41,7 @@ export function ValidatorNodeConfigSection(): React.JSX.Element | null {
         />
       </div>
       <div>
-        <Label className='text-xs text-gray-400'>
-          Required Paths (one per line)
-        </Label>
+        <Label className='text-xs text-gray-400'>Required Paths (one per line)</Label>
         <Textarea
           className='mt-2 min-h-[100px] w-full rounded-md border border-border bg-card/70 text-sm text-white'
           value={(validatorConfig.requiredPaths ?? []).join('\n')}

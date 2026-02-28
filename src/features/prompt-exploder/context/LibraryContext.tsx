@@ -1,9 +1,5 @@
 'use client';
 
- 
- 
- 
-
 import { useSearchParams } from 'next/navigation';
 import React, { createContext, useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -58,16 +54,9 @@ export function LibraryProvider({ children }: { children: React.ReactNode }): Re
   const { updateSetting } = useSettingsActions();
 
   const { promptText, documentState } = useDocumentState();
-  const {
-    setPromptText,
-    setDocumentState,
-    setSelectedSegmentId,
-    setManualBindings,
-  } = useDocumentActions();
-  const {
-    setBenchmarkReport,
-    setDismissedBenchmarkSuggestionIds,
-  } = useBenchmarkActions();
+  const { setPromptText, setDocumentState, setSelectedSegmentId, setManualBindings } =
+    useDocumentActions();
+  const { setBenchmarkReport, setDismissedBenchmarkSuggestionIds } = useBenchmarkActions();
 
   const [selectedLibraryItemId, setSelectedLibraryItemId] = useState<string | null>(null);
   const [libraryNameDraft, setLibraryNameDraft] = useState('');
@@ -240,7 +229,9 @@ export function LibraryProvider({ children }: { children: React.ReactNode }): Re
         toast(`Deleted library entry: ${target.name}`, { variant: 'success' });
       } catch (error) {
         toast(
-          error instanceof Error ? error.message : 'Failed to delete Prompt Exploder library entry.',
+          error instanceof Error
+            ? error.message
+            : 'Failed to delete Prompt Exploder library entry.',
           { variant: 'error' }
         );
       }
@@ -269,12 +260,7 @@ export function LibraryProvider({ children }: { children: React.ReactNode }): Re
       handleLoadLibraryItem,
       handleDeleteLibraryItem,
     }),
-    [
-      handleNewLibraryEntry,
-      handleSaveLibraryItem,
-      handleLoadLibraryItem,
-      handleDeleteLibraryItem,
-    ]
+    [handleNewLibraryEntry, handleSaveLibraryItem, handleLoadLibraryItem, handleDeleteLibraryItem]
   );
 
   return (

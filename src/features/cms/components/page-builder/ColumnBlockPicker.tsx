@@ -12,14 +12,25 @@ import { getBlockDefinition, getColumnAllowedBlockTypes } from './section-regist
 
 import type { BlockDefinition } from '../../types/page-builder';
 
-const SECTION_BLOCK_TYPES = ['ImageWithText', 'Hero', 'RichText', 'Block', 'TextAtom', 'Carousel', 'Slideshow'];
+const SECTION_BLOCK_TYPES = [
+  'ImageWithText',
+  'Hero',
+  'RichText',
+  'Block',
+  'TextAtom',
+  'Carousel',
+  'Slideshow',
+];
 
 interface ColumnBlockPickerProps {
   onSelect: (blockType: string) => void;
   allowedBlockTypes?: string[] | undefined;
 }
 
-export function ColumnBlockPicker({ onSelect, allowedBlockTypes }: ColumnBlockPickerProps): React.ReactNode {
+export function ColumnBlockPicker({
+  onSelect,
+  allowedBlockTypes,
+}: ColumnBlockPickerProps): React.ReactNode {
   const settingsStore = useSettingsStore();
   const enabledEmbedsRaw = settingsStore.get(APP_EMBED_SETTING_KEY);
   const enabledEmbedsSetting = typeof enabledEmbedsRaw === 'string' ? enabledEmbedsRaw : null;
@@ -32,8 +43,8 @@ export function ColumnBlockPicker({ onSelect, allowedBlockTypes }: ColumnBlockPi
   const resolvedTypes = useMemo(() => {
     const defs = allowedBlockTypes
       ? allowedBlockTypes
-        .map((type: string) => getBlockDefinition(type))
-        .filter((def: BlockDefinition | undefined): def is BlockDefinition => Boolean(def))
+          .map((type: string) => getBlockDefinition(type))
+          .filter((def: BlockDefinition | undefined): def is BlockDefinition => Boolean(def))
       : getColumnAllowedBlockTypes();
     return defs.filter((def: BlockDefinition) => def.type !== 'AppEmbed' || hasAppEmbeds);
   }, [allowedBlockTypes, hasAppEmbeds]);

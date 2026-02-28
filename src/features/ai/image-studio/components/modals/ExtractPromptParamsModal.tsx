@@ -4,16 +4,20 @@ import { Loader2, Zap, Cpu, Sparkles, Wand2 } from 'lucide-react';
 import React from 'react';
 
 import type { ModalStateProps } from '@/shared/contracts/ui';
-import { FormModal, Button, Label, Textarea, StandardDataTablePanel, EmptyState } from '@/shared/ui';
+import {
+  FormModal,
+  Button,
+  Label,
+  Textarea,
+  StandardDataTablePanel,
+  EmptyState,
+} from '@/shared/ui';
 
 import { PromptExtractionHistoryPanel } from '../studio-modals/PromptExtractionHistoryPanel';
 import { useStudioInlineEdit } from '../studio-modals/StudioInlineEditContext';
 import type { ColumnDef } from '@tanstack/react-table';
 
-export function ExtractPromptParamsModal({
-  isOpen,
-  onClose,
-}: ModalStateProps): React.JSX.Element {
+export function ExtractPromptParamsModal({ isOpen, onClose }: ModalStateProps): React.JSX.Element {
   const {
     extractDraftPrompt,
     setExtractDraftPrompt,
@@ -52,15 +56,22 @@ export function ExtractPromptParamsModal({
         accessorKey: 'value',
         header: 'Value',
         cell: ({ row }) => (
-          <div className='text-gray-300 truncate max-w-[200px]' title={JSON.stringify(row.original.value)}>
-            {typeof row.original.value === 'string' ? row.original.value : JSON.stringify(row.original.value)}
+          <div
+            className='text-gray-300 truncate max-w-[200px]'
+            title={JSON.stringify(row.original.value)}
+          >
+            {typeof row.original.value === 'string'
+              ? row.original.value
+              : JSON.stringify(row.original.value)}
           </div>
         ),
       },
       {
         id: 'selector',
         header: 'Selector',
-        cell: ({ row }) => <div className='text-gray-400'>{previewControls[row.original.path] ?? 'auto'}</div>,
+        cell: ({ row }) => (
+          <div className='text-gray-400'>{previewControls[row.original.path] ?? 'auto'}</div>
+        ),
       },
     ],
     [previewControls]
@@ -79,8 +90,9 @@ export function ExtractPromptParamsModal({
         loading={extractBusy === 'smart'}
       >
         <Zap className='size-4' />
-                Smart
-      </Button>      <Button
+        Smart
+      </Button>{' '}
+      <Button
         size='sm'
         variant='outline'
         onClick={() => {
@@ -107,8 +119,9 @@ export function ExtractPromptParamsModal({
         loading={extractBusy === 'ai'}
       >
         <Sparkles className='size-4' />
-                AI Only
-      </Button>      <Button
+        AI Only
+      </Button>{' '}
+      <Button
         size='sm'
         variant='outline'
         onClick={() => {
@@ -142,10 +155,14 @@ export function ExtractPromptParamsModal({
     >
       <div className='space-y-6'>
         <div className='space-y-2'>
-          <Label className='text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1'>Prompt Source</Label>
+          <Label className='text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1'>
+            Prompt Source
+          </Label>
           <Textarea
             value={extractDraftPrompt}
-            onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => setExtractDraftPrompt(event.target.value)}
+            onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
+              setExtractDraftPrompt(event.target.value)
+            }
             className='h-40 font-mono text-[11px] bg-black/20'
             placeholder='Paste prompt text with params object...'
           />
@@ -174,14 +191,21 @@ export function ExtractPromptParamsModal({
         {studioSettings.promptExtraction.showValidationSummary && previewValidation ? (
           <div className='grid gap-4 rounded-lg border border-cyan-500/20 bg-cyan-500/5 p-4 text-xs md:grid-cols-2'>
             <div className='space-y-2'>
-              <div className='font-bold uppercase tracking-wide text-cyan-400'>Validation Before: {previewValidation.before.length}</div>
+              <div className='font-bold uppercase tracking-wide text-cyan-400'>
+                Validation Before: {previewValidation.before.length}
+              </div>
               {previewValidation.before.length === 0 ? (
                 <div className='text-cyan-100/50 italic'>No issues detected.</div>
               ) : (
                 <div className='space-y-1.5'>
                   {previewValidation.before.slice(0, 6).map((issue, index) => (
-                    <div key={`before-${issue.ruleId ?? index}`} className='rounded border border-cyan-500/10 bg-black/20 px-2 py-1.5'>
-                      <div className='text-cyan-100 font-medium'>{issue.title ?? issue.ruleId ?? 'Issue'}</div>
+                    <div
+                      key={`before-${issue.ruleId ?? index}`}
+                      className='rounded border border-cyan-500/10 bg-black/20 px-2 py-1.5'
+                    >
+                      <div className='text-cyan-100 font-medium'>
+                        {issue.title ?? issue.ruleId ?? 'Issue'}
+                      </div>
                       <div className='text-cyan-100/60 leading-relaxed'>{issue.message ?? ''}</div>
                     </div>
                   ))}
@@ -189,14 +213,21 @@ export function ExtractPromptParamsModal({
               )}
             </div>
             <div className='space-y-2'>
-              <div className='font-bold uppercase tracking-wide text-cyan-400'>Validation After: {previewValidation.after.length}</div>
+              <div className='font-bold uppercase tracking-wide text-cyan-400'>
+                Validation After: {previewValidation.after.length}
+              </div>
               {previewValidation.after.length === 0 ? (
                 <div className='text-cyan-100/50 italic'>No issues detected.</div>
               ) : (
                 <div className='space-y-1.5'>
                   {previewValidation.after.slice(0, 6).map((issue, index) => (
-                    <div key={`after-${issue.ruleId ?? index}`} className='rounded border border-cyan-500/10 bg-black/20 px-2 py-1.5'>
-                      <div className='text-cyan-100 font-medium'>{issue.title ?? issue.ruleId ?? 'Issue'}</div>
+                    <div
+                      key={`after-${issue.ruleId ?? index}`}
+                      className='rounded border border-cyan-500/10 bg-black/20 px-2 py-1.5'
+                    >
+                      <div className='text-cyan-100 font-medium'>
+                        {issue.title ?? issue.ruleId ?? 'Issue'}
+                      </div>
                       <div className='text-cyan-100/60 leading-relaxed'>{issue.message ?? ''}</div>
                     </div>
                   ))}
@@ -207,7 +238,9 @@ export function ExtractPromptParamsModal({
         ) : null}
 
         <div className='space-y-2'>
-          <Label className='text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1'>Extracted Parameters</Label>
+          <Label className='text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1'>
+            Extracted Parameters
+          </Label>
           {previewLeaves.length > 0 ? (
             <StandardDataTablePanel
               columns={columns}

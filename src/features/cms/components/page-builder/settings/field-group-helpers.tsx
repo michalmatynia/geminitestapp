@@ -34,10 +34,16 @@ function groupSettingsFields(schema: SettingsField[]): FieldGroup[] {
   let marginBuf: SettingsField[] = [];
 
   const flushPadding = (): void => {
-    if (paddingBuf.length) { groups.push({ kind: 'padding', fields: paddingBuf }); paddingBuf = []; }
+    if (paddingBuf.length) {
+      groups.push({ kind: 'padding', fields: paddingBuf });
+      paddingBuf = [];
+    }
   };
   const flushMargin = (): void => {
-    if (marginBuf.length) { groups.push({ kind: 'margin', fields: marginBuf }); marginBuf = []; }
+    if (marginBuf.length) {
+      groups.push({ kind: 'margin', fields: marginBuf });
+      marginBuf = [];
+    }
   };
 
   for (const field of schema) {
@@ -62,9 +68,8 @@ function renderFieldGroups(
   groups: FieldGroup[],
   settings?: Record<string, unknown>,
   onChange?: (key: string, value: unknown) => void,
-  resolveField?: (field: SettingsField) => SettingsField,
+  resolveField?: (field: SettingsField) => SettingsField
 ): React.ReactNode[] {
-   
   const context = useOptionalSettingsForm();
   const effectiveSettings = settings || context?.values || {};
   const effectiveOnChange = onChange || context?.onChange;
@@ -110,5 +115,12 @@ function renderFieldGroups(
   });
 }
 
-export { PADDING_KEYS, MARGIN_KEYS, MANAGEMENT_FIELDS, prependManagementFields, groupSettingsFields, renderFieldGroups };
+export {
+  PADDING_KEYS,
+  MARGIN_KEYS,
+  MANAGEMENT_FIELDS,
+  prependManagementFields,
+  groupSettingsFields,
+  renderFieldGroups,
+};
 export type { FieldGroup };

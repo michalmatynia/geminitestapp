@@ -28,10 +28,10 @@ describe('resolveWriteTemplateGuardrail', () => {
       throw new Error('Expected write template guardrail failure.');
     }
     expect(result.guardrailMeta.missingTokens).toEqual(
-      expect.arrayContaining(['entityId', 'bundle.parameters']),
+      expect.arrayContaining(['entityId', 'bundle.parameters'])
     );
     expect(result.guardrailMeta.emptyTokens).toEqual(
-      expect.arrayContaining(['value.title', 'current.sku']),
+      expect.arrayContaining(['value.title', 'current.sku'])
     );
   });
 
@@ -58,7 +58,8 @@ describe('resolveWriteTemplateGuardrail', () => {
       templates: [
         {
           name: 'updateTemplate',
-          template: '{"parameters": {{result.parameters}}, "description_pl": "{{value.description_pl}}"}',
+          template:
+            '{"parameters": {{result.parameters}}, "description_pl": "{{value.description_pl}}"}',
         },
       ],
       templateContext: {
@@ -80,10 +81,7 @@ describe('resolveWriteTemplateGuardrail', () => {
         },
       ],
       templateContext: {
-        result: [
-          'not-json',
-          '{"parameters":[{"parameterId":"param-3","value":"steel"}]}',
-        ],
+        result: ['not-json', '{"parameters":[{"parameterId":"param-3","value":"steel"}]}'],
       },
       currentValue: null,
     });
@@ -154,7 +152,7 @@ describe('resolveWriteTemplateGuardrail', () => {
           token: 'result.parameters',
           parseState: 'unparseable',
           truncationDetected: false,
-          parseError: expect.any(String),
+          parseError: expect.stringContaining(''),
         }),
       ])
     );
@@ -194,10 +192,7 @@ describe('resolveWriteTemplateGuardrail', () => {
   it('resolves repairable malformed payloads consistently with mapping-path reader', () => {
     const malformed =
       '{"parameters":[{"parameterId":"p1","value":"v1","valuesByLanguage":{"pl":"x"},{"parameterId":"p2","value":"v2","valuesByLanguage":{"pl":"y"}}]}';
-    const valueAtPath = getValueAtMappingPath(
-      { result: malformed },
-      'result.parameters'
-    );
+    const valueAtPath = getValueAtMappingPath({ result: malformed }, 'result.parameters');
 
     expect(valueAtPath).toEqual([
       {
@@ -242,7 +237,7 @@ describe('evaluateWriteOutcome', () => {
       expect.objectContaining({
         status: 'failed',
         code: 'zero_affected',
-      }),
+      })
     );
   });
 
@@ -259,7 +254,7 @@ describe('evaluateWriteOutcome', () => {
       expect.objectContaining({
         status: 'warning',
         code: 'zero_affected',
-      }),
+      })
     );
   });
 });

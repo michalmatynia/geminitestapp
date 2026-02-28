@@ -1,6 +1,5 @@
 import 'server-only';
 
-
 import { decryptSecret } from '@/features/integrations/server';
 import {
   defaultPlaywrightSettings,
@@ -66,10 +65,7 @@ const toFiniteNumber = (value: unknown, fallback: number, min = 0): number => {
 const toTrimmedString = (value: unknown, fallback = ''): string =>
   typeof value === 'string' ? value.trim() : fallback;
 
-const findPersonaSettings = (
-  raw: unknown,
-  personaId: string
-): Record<string, unknown> | null => {
+const findPersonaSettings = (raw: unknown, personaId: string): Record<string, unknown> | null => {
   if (!Array.isArray(raw)) return null;
   for (const persona of raw) {
     if (!persona || typeof persona !== 'object') continue;
@@ -90,18 +86,16 @@ export const resolveConnectionPlaywrightSettings = async (
     slowMo: connection.playwrightSlowMo ?? defaultPlaywrightSettings.slowMo,
     timeout: connection.playwrightTimeout ?? defaultPlaywrightSettings.timeout,
     navigationTimeout:
-      connection.playwrightNavigationTimeout ??
-      defaultPlaywrightSettings.navigationTimeout,
-    proxyEnabled:
-      connection.playwrightProxyEnabled ?? defaultPlaywrightSettings.proxyEnabled,
+      connection.playwrightNavigationTimeout ?? defaultPlaywrightSettings.navigationTimeout,
+    proxyEnabled: connection.playwrightProxyEnabled ?? defaultPlaywrightSettings.proxyEnabled,
     proxyServer: connection.playwrightProxyServer?.trim() ?? '',
     proxyUsername: connection.playwrightProxyUsername?.trim() ?? '',
     proxyPassword: connection.playwrightProxyPassword
       ? decryptSecret(connection.playwrightProxyPassword)
       : '',
-    emulateDevice:
-      connection.playwrightEmulateDevice ?? defaultPlaywrightSettings.emulateDevice,
-    deviceName: connection.playwrightDeviceName ?? defaultPlaywrightSettings.deviceName ?? 'Desktop Chrome',
+    emulateDevice: connection.playwrightEmulateDevice ?? defaultPlaywrightSettings.emulateDevice,
+    deviceName:
+      connection.playwrightDeviceName ?? defaultPlaywrightSettings.deviceName ?? 'Desktop Chrome',
   };
 
   const personaId = connection.playwrightPersonaId?.trim();
@@ -125,10 +119,7 @@ export const resolveConnectionPlaywrightSettings = async (
     ),
     proxyEnabled: toBoolean(personaSettings['proxyEnabled'], base.proxyEnabled),
     proxyServer: toTrimmedString(personaSettings['proxyServer'], base.proxyServer),
-    proxyUsername: toTrimmedString(
-      personaSettings['proxyUsername'],
-      base.proxyUsername
-    ),
+    proxyUsername: toTrimmedString(personaSettings['proxyUsername'], base.proxyUsername),
     proxyPassword: personaProxyPassword || base.proxyPassword,
     emulateDevice: toBoolean(personaSettings['emulateDevice'], base.emulateDevice),
     deviceName: toTrimmedString(personaSettings['deviceName'], base.deviceName),

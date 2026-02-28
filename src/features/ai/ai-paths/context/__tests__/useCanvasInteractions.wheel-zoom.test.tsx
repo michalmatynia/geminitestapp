@@ -53,8 +53,7 @@ const runWheelZoomScenario = (options?: {
       viewportRef,
       nodes: [],
       resolveActiveNodeSelectionIds: (): string[] => [],
-      updateLastPointerCanvasPosFromClient: (): { x: number; y: number } | null =>
-        null,
+      updateLastPointerCanvasPosFromClient: (): { x: number; y: number } | null => null,
     })
   );
 
@@ -127,8 +126,7 @@ describe('useCanvasInteractionsNavigation wheel zoom', () => {
         viewportRef,
         nodes: [nodeAboveOrigin],
         resolveActiveNodeSelectionIds: (): string[] => [],
-        updateLastPointerCanvasPosFromClient: (): { x: number; y: number } | null =>
-          null,
+        updateLastPointerCanvasPosFromClient: (): { x: number; y: number } | null => null,
       })
     );
 

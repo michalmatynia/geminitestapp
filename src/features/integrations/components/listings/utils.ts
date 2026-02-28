@@ -13,8 +13,6 @@ export const isImageExportError = (message: string | null): boolean => {
   if (!message) return false;
   const normalized = normalizeSearchText(message.toLowerCase());
   return (
-    normalized.includes('zdjec') ||
-    normalized.includes('image') ||
-    normalized.includes('photo')
+    normalized.includes('zdjec') || normalized.includes('image') || normalized.includes('photo')
   );
 };

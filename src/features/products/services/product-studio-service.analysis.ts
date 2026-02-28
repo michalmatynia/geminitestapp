@@ -1,15 +1,11 @@
-import {
-  listImageStudioSlotLinks,
-} from '@/features/ai/image-studio/server/slot-link-repository';
+import { listImageStudioSlotLinks } from '@/shared/lib/ai/image-studio/server/slot-link-repository';
 import {
   listImageStudioSlots,
   type ImageStudioSlotRecord,
-} from '@/features/ai/image-studio/server/slot-repository';
+} from '@/shared/lib/ai/image-studio/server/slot-repository';
 import { trimString } from './product-studio-service.helpers';
 
-export const sortSlotsNewestFirst = (
-  input: ImageStudioSlotRecord[],
-): ImageStudioSlotRecord[] => {
+export const sortSlotsNewestFirst = (input: ImageStudioSlotRecord[]): ImageStudioSlotRecord[] => {
   return [...input].sort((a, b) => {
     const bTime = Date.parse(b.updatedAt ?? b.createdAt ?? '') || 0;
     const aTime = Date.parse(a.updatedAt ?? a.createdAt ?? '') || 0;
@@ -30,11 +26,11 @@ export const resolveGenerationVariants = async (params: {
   ]);
 
   const slotById = new Map<string, ImageStudioSlotRecord>(
-    slots.map((slot: ImageStudioSlotRecord) => [slot.id, slot]),
+    slots.map((slot: ImageStudioSlotRecord) => [slot.id, slot])
   );
 
   const sourceSlotId = params.sourceSlotIds.find((id) => slotById.has(id)) ?? null;
-  const sourceSlot = sourceSlotId ? slotById.get(sourceSlotId) ?? null : null;
+  const sourceSlot = sourceSlotId ? (slotById.get(sourceSlotId) ?? null) : null;
   if (!sourceSlotId) {
     return {
       sourceSlot: null,

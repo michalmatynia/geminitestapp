@@ -1,20 +1,18 @@
 'use client';
 
 import React, { createContext, useContext } from 'react';
-import type { 
-  CaseResolverStateValue 
-} from '../types';
-import type { 
-  CaseResolverGraph, 
+import type { CaseResolverStateValue } from '../types';
+import type {
+  CaseResolverGraph,
   CaseResolverRelationGraph,
   CaseResolverFileEditDraft,
   CaseResolverNodeMeta,
   CaseResolverDocumentHistoryEntry,
-  CaseResolverFile
+  CaseResolverFile,
 } from '@/shared/contracts/case-resolver';
-import type { 
+import type {
   CaseResolverCaptureProposalState,
-  CaseResolverCaptureDocumentDateAction 
+  CaseResolverCaptureDocumentDateAction,
 } from '@/features/case-resolver-capture/proposals';
 import type { CaseResolverCaptureAction } from '@/features/case-resolver-capture/settings';
 
@@ -46,15 +44,11 @@ export type CaseResolverViewContextValue = {
   handleScanDraftDragOver: (event: React.DragEvent<HTMLDivElement>) => void;
   handleScanDraftDragLeave: (event: React.DragEvent<HTMLDivElement>) => void;
   handleScanDraftDrop: (event: React.DragEvent<HTMLDivElement>) => void;
-  handleScanDraftUploadInputChange: (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => void;
+  handleScanDraftUploadInputChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   handleTriggerScanDraftUpload: () => void;
   handleDeleteScanDraftSlot: (slotId: string) => void;
   handleRunScanDraftOcr: () => void;
-  updateEditingDocumentDraft: (
-    patch: Partial<CaseResolverFileEditDraft>,
-  ) => void;
+  updateEditingDocumentDraft: (patch: Partial<CaseResolverFileEditDraft>) => void;
   editingDocumentNodeMeta:
     | (CaseResolverNodeMeta & {
         nodeId: string;
@@ -91,22 +85,20 @@ export type CaseResolverViewContextValue = {
   handleApplyPromptExploderProposal: () => void;
   updatePromptExploderProposalAction: (
     role: 'addresser' | 'addressee',
-    action: CaseResolverCaptureAction,
+    action: CaseResolverCaptureAction
   ) => void;
-  updatePromptExploderProposalReference: (
-    role: 'addresser' | 'addressee',
-    value: string,
-  ) => void;
-  updatePromptExploderProposalDateAction: (
-    action: CaseResolverCaptureDocumentDateAction,
-  ) => void;
+  updatePromptExploderProposalReference: (role: 'addresser' | 'addressee', value: string) => void;
+  updatePromptExploderProposalDateAction: (action: CaseResolverCaptureDocumentDateAction) => void;
   resolvePromptExploderMatchedPartyLabel: (
-    reference: { 
-      id: string; 
-      kind: 'person' | 'organization'; 
-      name?: string | undefined; 
-      role?: string | undefined; 
-    } | null | undefined
+    reference:
+      | {
+          id: string;
+          kind: 'person' | 'organization';
+          name?: string | undefined;
+          role?: string | undefined;
+        }
+      | null
+      | undefined
   ) => string;
   captureApplyDiagnostics: {
     status: 'idle' | 'success' | 'failed';
@@ -121,7 +113,9 @@ export type CaseResolverViewContextValue = {
     mutationDurationMs?: number | null;
     totalDurationMs?: number | null;
   } | null;
-  handleUpdateActiveFileParties: (patch: Partial<Pick<CaseResolverFile, 'addresser' | 'addressee' | 'referenceCaseIds'>>) => void;
+  handleUpdateActiveFileParties: (
+    patch: Partial<Pick<CaseResolverFile, 'addresser' | 'addressee' | 'referenceCaseIds'>>
+  ) => void;
   handleLinkRelatedFiles: (fileIdA: string, fileIdB: string) => void;
   handleUnlinkRelatedFile: (sourceFileId: string, targetFileId: string) => void;
   handleSaveFileEditor: () => void;
@@ -130,7 +124,21 @@ export type CaseResolverViewContextValue = {
   handleCreateDocumentFromSearch: () => void;
   handleOpenFileFromSearch: (id: string) => void;
   handleEditFileFromSearch: (id: string) => void;
-  handleUpdateActiveCaseMetadata: (patch: Partial<Pick<CaseResolverFile, 'name' | 'parentCaseId' | 'referenceCaseIds' | 'tagId' | 'caseIdentifierId' | 'categoryId' | 'caseStatus' | 'happeningDate'>>) => void;
+  handleUpdateActiveCaseMetadata: (
+    patch: Partial<
+      Pick<
+        CaseResolverFile,
+        | 'name'
+        | 'parentCaseId'
+        | 'referenceCaseIds'
+        | 'tagId'
+        | 'caseIdentifierId'
+        | 'categoryId'
+        | 'caseStatus'
+        | 'happeningDate'
+      >
+    >
+  ) => void;
   activeCaseFile: CaseResolverFile | null;
   handleResetCaseContext: () => void;
 };
@@ -145,9 +153,7 @@ export function CaseResolverViewProvider({
   children: React.ReactNode;
 }): React.JSX.Element {
   return (
-    <CaseResolverViewContext.Provider value={value}>
-      {children}
-    </CaseResolverViewContext.Provider>
+    <CaseResolverViewContext.Provider value={value}>{children}</CaseResolverViewContext.Provider>
   );
 }
 

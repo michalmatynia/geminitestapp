@@ -7,19 +7,22 @@ import { PanelHeader } from '@/shared/ui';
 import { useFileManager } from '../../contexts/FileManagerContext';
 
 export function FileManagerHeader(): React.JSX.Element {
-  const { mode, onSelectFile, autoConfirmSelection, selectedFiles, handleConfirmSelection } = useFileManager();
+  const { mode, onSelectFile, autoConfirmSelection, selectedFiles, handleConfirmSelection } =
+    useFileManager();
 
   return (
     <PanelHeader
       title='File Manager'
       actions={
-        mode === 'select' && onSelectFile && !autoConfirmSelection ? [
-          {
-            key: 'confirm',
-            label: `Confirm Selection (${selectedFiles.length})`,
-            onClick: handleConfirmSelection,
-          }
-        ] : []
+        mode === 'select' && onSelectFile && !autoConfirmSelection
+          ? [
+              {
+                key: 'confirm',
+                label: `Confirm Selection (${selectedFiles.length})`,
+                onClick: handleConfirmSelection,
+              },
+            ]
+          : []
       }
       className='mb-4'
     />

@@ -48,11 +48,7 @@ const EMAIL_STATUS_OPTIONS: Array<{
   { value: 'unverified', label: 'Unverified', description: 'Not yet verified.' },
 ];
 
-const toggleSelection = (
-  value: string,
-  checked: boolean,
-  previous: string[]
-): string[] => {
+const toggleSelection = (value: string, checked: boolean, previous: string[]): string[] => {
   if (!value.trim()) return previous;
   if (checked) {
     if (previous.includes(value)) return previous;
@@ -103,9 +99,7 @@ export function AdminFilemakerEmailEditPage(): React.JSX.Element {
     if (!email) return;
     if (hydratedEmailId === email.id) return;
 
-    const linksForEmail = database.emailLinks.filter(
-      (link): boolean => link.emailId === email.id
-    );
+    const linksForEmail = database.emailLinks.filter((link): boolean => link.emailId === email.id);
 
     setEmailValue(email.email);
     setStatus(email.status);
@@ -325,9 +319,7 @@ export function AdminFilemakerEmailEditPage(): React.JSX.Element {
                   <div className='text-xs font-medium text-white'>
                     {person.firstName} {person.lastName}
                   </div>
-                  <div className='text-[11px] text-gray-400'>
-                    {formatFilemakerAddress(person)}
-                  </div>
+                  <div className='text-[11px] text-gray-400'>{formatFilemakerAddress(person)}</div>
                 </div>
               </label>
             );
@@ -337,9 +329,7 @@ export function AdminFilemakerEmailEditPage(): React.JSX.Element {
 
       <FormSection title='Linked Organizations' className='space-y-2 p-4'>
         {organizations.length === 0 ? (
-          <div className='text-xs text-gray-500'>
-            No organizations available in Filemaker.
-          </div>
+          <div className='text-xs text-gray-500'>No organizations available in Filemaker.</div>
         ) : (
           organizations.map((organization: FilemakerOrganization) => {
             const checked = linkedOrganizationIds.includes(organization.id);
@@ -357,9 +347,7 @@ export function AdminFilemakerEmailEditPage(): React.JSX.Element {
                   }}
                 />
                 <div className='min-w-0 flex-1'>
-                  <div className='text-xs font-medium text-white'>
-                    {organization.name}
-                  </div>
+                  <div className='text-xs font-medium text-white'>{organization.name}</div>
                   <div className='text-[11px] text-gray-400'>
                     {formatFilemakerAddress(organization)}
                   </div>

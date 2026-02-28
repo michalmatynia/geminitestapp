@@ -3,12 +3,7 @@ import 'server-only';
 import { mkdir, writeFile } from 'fs/promises';
 import path from 'path';
 
-import {
-  chromium,
-  devices,
-  type BrowserContextOptions,
-  type Page,
-} from 'playwright';
+import { chromium, devices, type BrowserContextOptions, type Page } from 'playwright';
 
 import {
   isTraderaApiIntegrationSlug,
@@ -39,11 +34,11 @@ import {
 } from '@/features/integrations/services/tradera-system-settings';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { getProductRepository, getSettingValue } from '@/features/products/server';
-import type { 
+import type {
   IntegrationConnectionRecord,
   ProductListing,
   TraderaListingJobInput,
-  TraderaCategoryRecord 
+  TraderaCategoryRecord,
 } from '@/shared/contracts/integrations';
 
 export type { TraderaListingJobInput };
@@ -84,7 +79,11 @@ const LOGIN_BUTTON_SELECTORS = [
 ];
 
 const TITLE_SELECTORS = ['input[name="title"]', '#title', '[data-testid*="title"] input'];
-const DESCRIPTION_SELECTORS = ['textarea[name="description"]', '#description', '[data-testid*="description"] textarea'];
+const DESCRIPTION_SELECTORS = [
+  'textarea[name="description"]',
+  '#description',
+  '[data-testid*="description"] textarea',
+];
 const PRICE_SELECTORS = ['input[name="price"]', '#price', 'input[data-testid*="price"]'];
 const SUBMIT_SELECTORS = [
   'button[type="submit"]',
@@ -95,18 +94,11 @@ const SUBMIT_SELECTORS = [
 
 const DEFAULT_TRADERA_API_CATEGORY_ID = 344481;
 const DEFAULT_TRADERA_API_PAYMENT_CONDITION =
-  process.env['TRADERA_API_DEFAULT_PAYMENT_CONDITION'] ??
-  'Payment within 3 days';
+  process.env['TRADERA_API_DEFAULT_PAYMENT_CONDITION'] ?? 'Payment within 3 days';
 const DEFAULT_TRADERA_API_SHIPPING_CONDITION =
-  process.env['TRADERA_API_DEFAULT_SHIPPING_CONDITION'] ??
-  'Shipping paid by buyer';
+  process.env['TRADERA_API_DEFAULT_SHIPPING_CONDITION'] ?? 'Shipping paid by buyer';
 
-type TraderaFailureCategory =
-  | 'AUTH'
-  | 'FORM'
-  | 'SELECTOR'
-  | 'NAVIGATION'
-  | 'UNKNOWN';
+type TraderaFailureCategory = 'AUTH' | 'FORM' | 'SELECTOR' | 'NAVIGATION' | 'UNKNOWN';
 
 const toRecord = (value: unknown): Record<string, unknown> =>
   value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
@@ -135,10 +127,7 @@ const classifyTraderaFailure = (message: string): TraderaFailureCategory => {
   return 'UNKNOWN';
 };
 
-const toUserFacingTraderaFailure = (
-  category: TraderaFailureCategory,
-  message: string
-): string => {
+const toUserFacingTraderaFailure = (category: TraderaFailureCategory, message: string): string => {
   if (category === 'AUTH') {
     return 'Tradera login requires manual verification. Open login window and retry.';
   }
@@ -154,14 +143,10 @@ const resolveConnectionListingSettings = (
   autoRelistLeadMinutes: number;
   templateId: string | null;
 } => ({
-  durationHours:
-    connection.traderaDefaultDurationHours ??
-    systemSettings.defaultDurationHours,
-  autoRelistEnabled:
-    connection.traderaAutoRelistEnabled ?? systemSettings.autoRelistEnabled,
+  durationHours: connection.traderaDefaultDurationHours ?? systemSettings.defaultDurationHours,
+  autoRelistEnabled: connection.traderaAutoRelistEnabled ?? systemSettings.autoRelistEnabled,
   autoRelistLeadMinutes:
-    connection.traderaAutoRelistLeadMinutes ??
-    systemSettings.autoRelistLeadMinutes,
+    connection.traderaAutoRelistLeadMinutes ?? systemSettings.autoRelistLeadMinutes,
   templateId: connection.traderaDefaultTemplateId ?? null,
 });
 
@@ -177,9 +162,7 @@ const buildRelistPolicy = (settings: {
   templateId: settings.templateId,
 });
 
-const toPolicyRecord = (
-  value: ProductListing['relistPolicy']
-): Record<string, unknown> | null => {
+const toPolicyRecord = (value: ProductListing['relistPolicy']): Record<string, unknown> | null => {
   if (!value || typeof value !== 'object') return null;
   return value as Record<string, unknown>;
 };
@@ -198,9 +181,7 @@ const parsePolicyInteger = (value: unknown): number | null => {
   return null;
 };
 
-const parsePolicyTemplateId = (
-  value: unknown
-): string | null | undefined => {
+const parsePolicyTemplateId = (value: unknown): string | null | undefined => {
   if (value === undefined) return undefined;
   if (value === null) return null;
   if (typeof value !== 'string') return undefined;
@@ -238,8 +219,7 @@ const resolveEffectiveListingSettings = (
       leadMinutesCandidate !== null && leadMinutesCandidate >= 0
         ? leadMinutesCandidate
         : fallback.autoRelistLeadMinutes,
-    templateId:
-      templateCandidate !== undefined ? templateCandidate : fallback.templateId,
+    templateId: templateCandidate !== undefined ? templateCandidate : fallback.templateId,
   };
 };
 
@@ -293,7 +273,11 @@ const ensureLoggedIn = async (
   listingFormUrl: string
 ): Promise<void> => {
   const isLoggedIn = async (): Promise<boolean> =>
-    page.locator(LOGIN_SUCCESS_SELECTOR).first().isVisible().catch(() => false);
+    page
+      .locator(LOGIN_SUCCESS_SELECTOR)
+      .first()
+      .isVisible()
+      .catch(() => false);
 
   await page.goto('https://www.tradera.com/en', {
     waitUntil: 'domcontentloaded',
@@ -334,9 +318,7 @@ const ensureLoggedIn = async (
   ]);
 
   if (!(await isLoggedIn())) {
-    throw internalError(
-      'AUTH_REQUIRED: Tradera login failed or requires manual verification.'
-    );
+    throw internalError('AUTH_REQUIRED: Tradera login failed or requires manual verification.');
   }
 
   await page.goto(listingFormUrl, {
@@ -365,33 +347,28 @@ const runTraderaBrowserListing = async ({
   action: 'list' | 'relist';
 }): Promise<TraderaListingResult> => {
   const listingFormUrl = systemSettings.listingFormUrl;
-  const storageState = parsePersistedStorageState(
-    connection.playwrightStorageState
-  );
-  const playwrightSettings =
-    await resolveConnectionPlaywrightSettings(connection);
+  const storageState = parsePersistedStorageState(connection.playwrightStorageState);
+  const playwrightSettings = await resolveConnectionPlaywrightSettings(connection);
   const emulateDevice = playwrightSettings.emulateDevice;
   const deviceName = playwrightSettings.deviceName;
   const deviceProfile =
-    emulateDevice && deviceName && devices[deviceName]
-      ? devices[deviceName]
-      : null;
+    emulateDevice && deviceName && devices[deviceName] ? devices[deviceName] : null;
 
   const browser = await chromium.launch({
     headless: playwrightSettings.headless,
     slowMo: playwrightSettings.slowMo,
     ...(playwrightSettings.proxyEnabled && playwrightSettings.proxyServer
       ? {
-        proxy: {
-          server: playwrightSettings.proxyServer,
-          ...(playwrightSettings.proxyUsername
-            ? { username: playwrightSettings.proxyUsername }
-            : {}),
-          ...(playwrightSettings.proxyPassword
-            ? { password: playwrightSettings.proxyPassword }
-            : {}),
-        },
-      }
+          proxy: {
+            server: playwrightSettings.proxyServer,
+            ...(playwrightSettings.proxyUsername
+              ? { username: playwrightSettings.proxyUsername }
+              : {}),
+            ...(playwrightSettings.proxyPassword
+              ? { password: playwrightSettings.proxyPassword }
+              : {}),
+          },
+        }
       : {}),
   });
 
@@ -423,10 +400,7 @@ const runTraderaBrowserListing = async ({
       product.sku ||
       `Listing ${listing.productId}`;
     const description =
-      product.description_en ||
-      product.description_pl ||
-      product.description_de ||
-      title;
+      product.description_en || product.description_pl || product.description_de || title;
     const priceValue =
       typeof product.price === 'number' && Number.isFinite(product.price)
         ? String(product.price)
@@ -475,11 +449,7 @@ const runTraderaBrowserListing = async ({
       `Failed to resolve Tradera listing id after ${action} (source: ${source}).`
     );
   } catch (error) {
-    const debugArtifacts = await captureTraderaListingDebugArtifacts(
-      page,
-      listing.id,
-      action
-    );
+    const debugArtifacts = await captureTraderaListingDebugArtifacts(page, listing.id, action);
     if (debugArtifacts) {
       const message = error instanceof Error ? error.message : String(error);
       throw internalError(`${message}\n\nDebug:\n${debugArtifacts}`);
@@ -508,13 +478,9 @@ const toPositiveInt = (value: unknown): number | null => {
 const resolveTraderaApiCredentials = (
   connection: IntegrationConnectionRecord
 ): TraderaApiCredentials => {
-  const fallbackSecret = connection.password
-    ? decryptSecret(connection.password).trim()
-    : '';
+  const fallbackSecret = connection.password ? decryptSecret(connection.password).trim() : '';
   const appId = toPositiveInt(connection.traderaApiAppId);
-  const userId =
-    toPositiveInt(connection.traderaApiUserId) ??
-    toPositiveInt(connection.username);
+  const userId = toPositiveInt(connection.traderaApiUserId) ?? toPositiveInt(connection.username);
   const appKey = connection.traderaApiAppKey
     ? decryptSecret(connection.traderaApiAppKey).trim()
     : fallbackSecret;
@@ -523,24 +489,16 @@ const resolveTraderaApiCredentials = (
     : fallbackSecret;
 
   if (!appId) {
-    throw internalError(
-      'Tradera API App ID is missing. Update the connection credentials.'
-    );
+    throw internalError('Tradera API App ID is missing. Update the connection credentials.');
   }
   if (!userId) {
-    throw internalError(
-      'Tradera API User ID is missing. Update the connection credentials.'
-    );
+    throw internalError('Tradera API User ID is missing. Update the connection credentials.');
   }
   if (!appKey) {
-    throw internalError(
-      'Tradera API App Key is missing. Update the connection credentials.'
-    );
+    throw internalError('Tradera API App Key is missing. Update the connection credentials.');
   }
   if (!token) {
-    throw internalError(
-      'Tradera API token is missing. Update the connection credentials.'
-    );
+    throw internalError('Tradera API token is missing. Update the connection credentials.');
   }
 
   return {
@@ -589,20 +547,13 @@ const runTraderaApiListing = async ({
     product.sku ||
     `Listing ${listing.productId}`;
   const description =
-    product.description_en ||
-    product.description_pl ||
-    product.description_de ||
-    title;
+    product.description_en || product.description_pl || product.description_de || title;
   const normalizedPrice =
-    typeof product.price === 'number' &&
-    Number.isFinite(product.price) &&
-    product.price > 0
+    typeof product.price === 'number' && Number.isFinite(product.price) && product.price > 0
       ? product.price
       : 1;
   const quantity =
-    typeof product.stock === 'number' &&
-    Number.isFinite(product.stock) &&
-    product.stock > 0
+    typeof product.stock === 'number' && Number.isFinite(product.stock) && product.stock > 0
       ? Math.floor(product.stock)
       : 1;
   const categoryId = resolveTraderaApiCategoryId(listing, product);
@@ -640,33 +591,28 @@ export const fetchTraderaCategoriesForConnection = async (
   const systemSettings = await loadTraderaSystemSettings();
   const listingFormUrl = systemSettings.listingFormUrl;
 
-  const storageState = parsePersistedStorageState(
-    connection.playwrightStorageState
-  );
-  const playwrightSettings =
-    await resolveConnectionPlaywrightSettings(connection);
+  const storageState = parsePersistedStorageState(connection.playwrightStorageState);
+  const playwrightSettings = await resolveConnectionPlaywrightSettings(connection);
   const emulateDevice = playwrightSettings.emulateDevice;
   const deviceName = playwrightSettings.deviceName;
   const deviceProfile =
-    emulateDevice && deviceName && devices[deviceName]
-      ? devices[deviceName]
-      : null;
+    emulateDevice && deviceName && devices[deviceName] ? devices[deviceName] : null;
 
   const browser = await chromium.launch({
     headless: playwrightSettings.headless,
     slowMo: playwrightSettings.slowMo,
     ...(playwrightSettings.proxyEnabled && playwrightSettings.proxyServer
       ? {
-        proxy: {
-          server: playwrightSettings.proxyServer,
-          ...(playwrightSettings.proxyUsername
-            ? { username: playwrightSettings.proxyUsername }
-            : {}),
-          ...(playwrightSettings.proxyPassword
-            ? { password: playwrightSettings.proxyPassword }
-            : {}),
-        },
-      }
+          proxy: {
+            server: playwrightSettings.proxyServer,
+            ...(playwrightSettings.proxyUsername
+              ? { username: playwrightSettings.proxyUsername }
+              : {}),
+            ...(playwrightSettings.proxyPassword
+              ? { password: playwrightSettings.proxyPassword }
+              : {}),
+          },
+        }
       : {}),
   });
   const deviceContextOptions: BrowserContextOptions = deviceProfile
@@ -692,14 +638,12 @@ export const fetchTraderaCategoriesForConnection = async (
       throw internalError('Could not locate category selector on Tradera listing form.');
     }
 
-    const options = await categorySelect
-      .locator('option')
-      .evaluateAll((nodes) =>
-        nodes.map((node) => ({
-          id: (node as HTMLOptionElement).value ?? '',
-          name: node.textContent?.trim() ?? '',
-        }))
-      );
+    const options = await categorySelect.locator('option').evaluateAll((nodes) =>
+      nodes.map((node) => ({
+        id: (node as HTMLOptionElement).value ?? '',
+        name: node.textContent?.trim() ?? '',
+      }))
+    );
 
     return options
       .filter((option) => option.id && option.name)
@@ -720,10 +664,7 @@ const findDueRelistsInMongo = async (limit: number): Promise<string[]> => {
   const db = await getMongoDb();
   const traderaIntegrations = await db
     .collection<{ _id: string; slug: string }>('integrations')
-    .find(
-      { slug: { $regex: /^(tradera|tradera-api)$/i } },
-      { projection: { _id: 1 } }
-    )
+    .find({ slug: { $regex: /^(tradera|tradera-api)$/i } }, { projection: { _id: 1 } })
     .toArray();
   if (traderaIntegrations.length === 0) return [];
 
@@ -777,9 +718,7 @@ const findDueRelistsInPrisma = async (limit: number): Promise<string[]> => {
   }
 };
 
-export const findDueTraderaRelistListingIds = async (
-  limit = 20
-): Promise<string[]> => {
+export const findDueTraderaRelistListingIds = async (limit = 20): Promise<string[]> => {
   const [mongoResult, prismaResult] = await Promise.allSettled([
     findDueRelistsInMongo(limit),
     findDueRelistsInPrisma(limit),
@@ -789,9 +728,7 @@ export const findDueTraderaRelistListingIds = async (
   return Array.from(new Set([...mongoIds, ...prismaIds])).slice(0, limit);
 };
 
-export const processTraderaListingJob = async (
-  input: TraderaListingJobInput
-): Promise<void> => {
+export const processTraderaListingJob = async (input: TraderaListingJobInput): Promise<void> => {
   const resolved = await findProductListingByIdAcrossProviders(input.listingId);
   if (!resolved) {
     throw notFoundError('Listing not found', { listingId: input.listingId });
@@ -800,16 +737,12 @@ export const processTraderaListingJob = async (
   const listingRepository = resolved.repository;
 
   const integrationRepository = await getIntegrationRepository();
-  const integration = await integrationRepository.getIntegrationById(
-    listing.integrationId
-  );
+  const integration = await integrationRepository.getIntegrationById(listing.integrationId);
   if (!integration || !isTraderaIntegrationSlug(integration.slug)) {
     throw internalError('Listing is not connected to Tradera.');
   }
 
-  const connection = await integrationRepository.getConnectionById(
-    listing.connectionId
-  );
+  const connection = await integrationRepository.getConnectionById(listing.connectionId);
   if (!connection) {
     throw notFoundError('Connection not found', {
       connectionId: listing.connectionId,
@@ -817,20 +750,13 @@ export const processTraderaListingJob = async (
   }
 
   const systemSettings = await loadTraderaSystemSettings();
-  const listingSettings = resolveEffectiveListingSettings(
-    listing,
-    connection,
-    systemSettings
-  );
-  const nextRelistAttempts =
-    (listing.relistAttempts ?? 0) + (input.action === 'relist' ? 1 : 0);
+  const listingSettings = resolveEffectiveListingSettings(listing, connection, systemSettings);
+  const nextRelistAttempts = (listing.relistAttempts ?? 0) + (input.action === 'relist' ? 1 : 0);
   const source = input.source ?? 'api';
   const correlationId = `${input.action}:${listing.id}:${Date.now()}`;
   const existingMarketplaceData = toRecord(listing.marketplaceData);
   const existingTraderaData = toRecord(existingMarketplaceData['tradera']);
-  const listingMode = isTraderaApiIntegrationSlug(integration.slug)
-    ? 'api'
-    : 'browser';
+  const listingMode = isTraderaApiIntegrationSlug(integration.slug) ? 'api' : 'browser';
 
   await ErrorSystem.logInfo('Tradera listing job started', {
     service: 'tradera-listing-service',
@@ -869,16 +795,16 @@ export const processTraderaListingJob = async (
   try {
     const result = isTraderaBrowserIntegrationSlug(integration.slug)
       ? await runTraderaBrowserListing({
-        listing,
-        connection,
-        systemSettings,
-        source,
-        action: input.action,
-      })
+          listing,
+          connection,
+          systemSettings,
+          source,
+          action: input.action,
+        })
       : await runTraderaApiListing({
-        listing,
-        connection,
-      });
+          listing,
+          connection,
+        });
 
     const expiresAt = resolveExpiry(listingSettings.durationHours);
     const nextRelistAt = resolveNextRelistAt(
@@ -893,7 +819,7 @@ export const processTraderaListingJob = async (
       nextRelistAt,
       relistPolicy: buildRelistPolicy(listingSettings),
       relistAttempts: nextRelistAttempts,
-      lastRelistedAt: input.action === 'relist' ? new Date() : listing.lastRelistedAt ?? null,
+      lastRelistedAt: input.action === 'relist' ? new Date() : (listing.lastRelistedAt ?? null),
       lastStatusCheckAt: new Date(),
       failureReason: null,
       marketplaceData: {
@@ -934,8 +860,7 @@ export const processTraderaListingJob = async (
       simulated: Boolean(result.simulated),
     });
   } catch (error) {
-    const rawMessage =
-      error instanceof Error ? error.message : 'Unknown Tradera error';
+    const rawMessage = error instanceof Error ? error.message : 'Unknown Tradera error';
     const failureCategory = classifyTraderaFailure(rawMessage);
     const message = toUserFacingTraderaFailure(failureCategory, rawMessage);
     const failureStatus = failureCategory === 'AUTH' ? 'needs_login' : 'failed';
@@ -981,11 +906,6 @@ export const processTraderaListingJob = async (
 };
 
 export const shouldRunTraderaRelistScheduler = async (): Promise<boolean> => {
-  const enabledSetting = await getSettingValue(
-    TRADERA_SETTINGS_KEYS.schedulerEnabled
-  );
-  return toTruthyBoolean(
-    enabledSetting,
-    DEFAULT_TRADERA_SYSTEM_SETTINGS.schedulerEnabled
-  );
+  const enabledSetting = await getSettingValue(TRADERA_SETTINGS_KEYS.schedulerEnabled);
+  return toTruthyBoolean(enabledSetting, DEFAULT_TRADERA_SYSTEM_SETTINGS.schedulerEnabled);
 };

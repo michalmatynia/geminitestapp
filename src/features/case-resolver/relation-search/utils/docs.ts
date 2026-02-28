@@ -1,6 +1,4 @@
-import {
-  DOCUMENTATION_MODULE_IDS,
-} from '@/shared/lib/documentation';
+import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
 import { getDocumentationTooltip } from '@/shared/lib/tooltip-engine';
 
 export const CASE_RESOLVER_DOC_KEYS = {

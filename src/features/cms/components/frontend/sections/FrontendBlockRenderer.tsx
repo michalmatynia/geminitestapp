@@ -8,12 +8,12 @@ import { AppEmbedBlock } from '../blocks/AppEmbedBlock';
 import { ButtonBlock } from '../blocks/ButtonBlock';
 import { HeadingBlock } from '../blocks/HeadingBlock';
 import { ImageBlock, ImageElementBlock } from '../blocks/ImageBlock';
-import { 
-  AnnouncementBlock, 
-  DividerBlock, 
-  SocialLinksBlock, 
-  IconBlock, 
-  VideoEmbedBlock 
+import {
+  AnnouncementBlock,
+  DividerBlock,
+  SocialLinksBlock,
+  IconBlock,
+  VideoEmbedBlock,
 } from '../blocks/MiscellaneousBlocks';
 import { Model3DBlock } from '../blocks/Model3DBlock';
 import { RichTextBlock } from '../blocks/RichTextBlock';
@@ -21,11 +21,11 @@ import { CssAnimationWrapper } from '../CssAnimationWrapper';
 import { GsapAnimationWrapper } from '../GsapAnimationWrapper';
 import { useMediaStyles } from '../media-styles-context';
 import { useSectionLayout } from './SectionLayoutContext';
-import { 
-  BlockRenderContext, 
-  BlockSettingsContext, 
+import {
+  BlockRenderContext,
+  BlockSettingsContext,
   useBlockSettings as useBlockSettingsFromBlockContext,
-  useRequiredBlockRenderContext 
+  useRequiredBlockRenderContext,
 } from '../blocks/BlockContext';
 import { TextAtomBlock, TextAtomLetterBlock } from '../blocks/TextAtomBlock';
 import { TextBlock, TextElementBlock } from '../blocks/TextBlock';

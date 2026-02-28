@@ -8,7 +8,7 @@ import { useToast } from '@/shared/ui';
 
 import { useProjectsState } from './ProjectsContext';
 import { useSlotsState } from './SlotsContext';
-import { sanitizeStudioProjectId } from '../utils/project-session';
+import { sanitizeStudioProjectId } from '@/shared/lib/ai/image-studio/utils/project-session';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -60,9 +60,8 @@ const asTrimmedString = (value: unknown): string | null => {
 };
 
 const clampInt = (value: unknown, min: number, max: number, fallback: number): number => {
-  const numeric = typeof value === 'number' && Number.isFinite(value)
-    ? Math.round(value)
-    : fallback;
+  const numeric =
+    typeof value === 'number' && Number.isFinite(value) ? Math.round(value) : fallback;
   return Math.max(min, Math.min(max, numeric));
 };
 
@@ -81,19 +80,14 @@ const normalizeTool = (value: unknown): VectorToolMode => {
 };
 
 const normalizeMaskGenMode = (value: unknown): MaskGenerationMode => {
-  if (
-    value === 'ai-polygon' ||
-    value === 'ai-bbox' ||
-    value === 'threshold' ||
-    value === 'edges'
-  ) {
+  if (value === 'ai-polygon' || value === 'ai-bbox' || value === 'threshold' || value === 'edges') {
     return value;
   }
   return 'ai-polygon';
 };
 
 const normalizeMaskDetectionSettingsMap = (
-  value: unknown,
+  value: unknown
 ): Record<string, MaskDetectionSettings> => {
   const record = asRecord(value);
   if (!record) return {};
@@ -109,13 +103,13 @@ const normalizeMaskDetectionSettingsMap = (
         entry['thresholdSensitivity'],
         0,
         100,
-        DEFAULT_MASK_DETECTION_SETTINGS.thresholdSensitivity,
+        DEFAULT_MASK_DETECTION_SETTINGS.thresholdSensitivity
       ),
       edgeSensitivity: clampInt(
         entry['edgeSensitivity'],
         0,
         100,
-        DEFAULT_MASK_DETECTION_SETTINGS.edgeSensitivity,
+        DEFAULT_MASK_DETECTION_SETTINGS.edgeSensitivity
       ),
     };
   });
@@ -142,12 +136,14 @@ const normalizeMaskShape = (value: unknown, index: number): VectorShape | null =
     .map((point) => {
       const pointRecord = asRecord(point);
       if (!pointRecord) return null;
-      const x = typeof pointRecord['x'] === 'number' && Number.isFinite(pointRecord['x'])
-        ? pointRecord['x']
-        : null;
-      const y = typeof pointRecord['y'] === 'number' && Number.isFinite(pointRecord['y'])
-        ? pointRecord['y']
-        : null;
+      const x =
+        typeof pointRecord['x'] === 'number' && Number.isFinite(pointRecord['x'])
+          ? pointRecord['x']
+          : null;
+      const y =
+        typeof pointRecord['y'] === 'number' && Number.isFinite(pointRecord['y'])
+          ? pointRecord['y']
+          : null;
       if (x === null || y === null) return null;
       return { x, y };
     })
@@ -160,9 +156,9 @@ const normalizeMaskShape = (value: unknown, index: number): VectorShape | null =
   const roleRaw = asTrimmedString(record['role']);
   const role =
     roleRaw === 'product' ||
-      roleRaw === 'shadow' ||
-      roleRaw === 'background' ||
-      roleRaw === 'custom'
+    roleRaw === 'shadow' ||
+    roleRaw === 'background' ||
+    roleRaw === 'custom'
       ? roleRaw
       : undefined;
   const label = asTrimmedString(record['label']) ?? undefined;
@@ -197,7 +193,7 @@ const getMaskStateLocalKey = (projectId: string): string | null => {
 
 const parseMaskingProjectLocalState = (
   raw: string | null,
-  expectedProjectId: string,
+  expectedProjectId: string
 ): MaskingProjectLocalState | null => {
   if (!raw?.trim()) return null;
   let parsed: unknown;
@@ -237,13 +233,13 @@ const parseMaskingProjectLocalState = (
     maskFeather: clampInt(record['maskFeather'], 0, 100, 0),
     brushRadius: clampInt(record['brushRadius'], 1, 64, 8),
     maskGenMode: normalizeMaskGenMode(record['maskGenMode']),
-    slotMaskDetectionSettings: normalizeMaskDetectionSettingsMap(record['slotMaskDetectionSettings']),
+    slotMaskDetectionSettings: normalizeMaskDetectionSettingsMap(
+      record['slotMaskDetectionSettings']
+    ),
   };
 };
 
-const loadMaskingProjectLocalState = (
-  projectId: string,
-): MaskingProjectLocalState | null => {
+const loadMaskingProjectLocalState = (projectId: string): MaskingProjectLocalState | null => {
   if (typeof window === 'undefined') return null;
   const key = getMaskStateLocalKey(projectId);
   if (!key) return null;
@@ -251,10 +247,7 @@ const loadMaskingProjectLocalState = (
   return parseMaskingProjectLocalState(raw, projectId);
 };
 
-const saveMaskingProjectLocalState = (
-  projectId: string,
-  state: MaskingProjectLocalState,
-): void => {
+const saveMaskingProjectLocalState = (projectId: string, state: MaskingProjectLocalState): void => {
   if (typeof window === 'undefined') return;
   const key = getMaskStateLocalKey(projectId);
   if (!key) return;
@@ -287,8 +280,8 @@ function getThresholdMaskBounds(
 ): PixelBounds | null {
   let bounds: PixelBounds | null = null;
   const normalized = Math.min(100, Math.max(0, thresholdSensitivity));
-  const lumaCutoff = Math.round(252 - (normalized * 1.2));
-  const saturationCutoff = Math.round(18 - (normalized * 0.16));
+  const lumaCutoff = Math.round(252 - normalized * 1.2);
+  const saturationCutoff = Math.round(18 - normalized * 0.16);
 
   for (let index = 0; index < width * height; index += 1) {
     const offset = index * 4;
@@ -298,7 +291,7 @@ function getThresholdMaskBounds(
     const a = data[offset + 3] ?? 0;
     if (a < 8) continue;
 
-    const luma = (0.2126 * r) + (0.7152 * g) + (0.0722 * b);
+    const luma = 0.2126 * r + 0.7152 * g + 0.0722 * b;
     const maxChannel = Math.max(r, g, b);
     const minChannel = Math.min(r, g, b);
     const saturation = maxChannel - minChannel;
@@ -332,22 +325,30 @@ function getEdgeMaskBounds(
       grayscale[index] = 255;
       continue;
     }
-    grayscale[index] = (0.299 * r) + (0.587 * g) + (0.114 * b);
+    grayscale[index] = 0.299 * r + 0.587 * g + 0.114 * b;
   }
 
   let bounds: PixelBounds | null = null;
   const normalized = Math.min(100, Math.max(0, edgeSensitivity));
-  const edgeThreshold = Math.round(140 - (normalized * 1.1));
+  const edgeThreshold = Math.round(140 - normalized * 1.1);
   for (let y = 1; y < height - 1; y += 1) {
     for (let x = 1; x < width - 1; x += 1) {
-      const idx = (y * width) + x;
+      const idx = y * width + x;
       const gx =
-        -gAt(idx - width - 1) - (2 * gAt(idx - 1)) - gAt(idx + width - 1) +
-        gAt(idx - width + 1) + (2 * gAt(idx + 1)) + gAt(idx + width + 1);
+        -gAt(idx - width - 1) -
+        2 * gAt(idx - 1) -
+        gAt(idx + width - 1) +
+        gAt(idx - width + 1) +
+        2 * gAt(idx + 1) +
+        gAt(idx + width + 1);
       const gy =
-        gAt(idx - width - 1) + (2 * gAt(idx - width)) + gAt(idx - width + 1) -
-        gAt(idx + width - 1) - (2 * gAt(idx + width)) - gAt(idx + width + 1);
-      const magnitude = Math.sqrt((gx * gx) + (gy * gy));
+        gAt(idx - width - 1) +
+        2 * gAt(idx - width) +
+        gAt(idx - width + 1) -
+        gAt(idx + width - 1) -
+        2 * gAt(idx + width) -
+        gAt(idx + width + 1);
+      const magnitude = Math.sqrt(gx * gx + gy * gy);
       if (magnitude < edgeThreshold) continue;
       bounds = extendBounds(bounds, x, y);
     }
@@ -356,7 +357,11 @@ function getEdgeMaskBounds(
   return bounds;
 }
 
-function toExpandedRect(bounds: PixelBounds, width: number, height: number): { x: number; y: number; w: number; h: number } {
+function toExpandedRect(
+  bounds: PixelBounds,
+  width: number,
+  height: number
+): { x: number; y: number; w: number; h: number } {
   const contentWidth = Math.max(1, bounds.maxX - bounds.minX + 1);
   const contentHeight = Math.max(1, bounds.maxY - bounds.minY + 1);
   const padX = Math.max(2, Math.round(contentWidth * 0.03));
@@ -426,7 +431,9 @@ export function MaskingProvider({ children }: { children: React.ReactNode }): Re
   const [brushRadius, setBrushRadius] = useState<number>(8);
   const [maskGenLoading, setMaskGenLoading] = useState<boolean>(false);
   const [maskGenMode, setMaskGenMode] = useState<MaskGenerationMode>('ai-polygon');
-  const [slotMaskDetectionSettings, setSlotMaskDetectionSettings] = useState<Record<string, MaskDetectionSettings>>({});
+  const [slotMaskDetectionSettings, setSlotMaskDetectionSettings] = useState<
+    Record<string, MaskDetectionSettings>
+  >({});
 
   useEffect(() => {
     const normalizedProjectId = projectId.trim();
@@ -451,16 +458,15 @@ export function MaskingProvider({ children }: { children: React.ReactNode }): Re
       restored?.activeMaskId && restoredShapeIds.has(restored.activeMaskId)
         ? restored.activeMaskId
         : null;
-    const restoredActiveShape =
-      restoredActiveMaskId
-        ? restoredShapes.find((shape) => shape.id === restoredActiveMaskId) ?? null
-        : null;
+    const restoredActiveShape = restoredActiveMaskId
+      ? (restoredShapes.find((shape) => shape.id === restoredActiveMaskId) ?? null)
+      : null;
     const restoredSelectedPointIndex =
       typeof restored?.selectedPointIndex === 'number' &&
-        Number.isFinite(restored.selectedPointIndex) &&
-        restored.selectedPointIndex >= 0 &&
-        restoredActiveShape &&
-        restored.selectedPointIndex < restoredActiveShape.points.length
+      Number.isFinite(restored.selectedPointIndex) &&
+      restored.selectedPointIndex >= 0 &&
+      restoredActiveShape &&
+      restored.selectedPointIndex < restoredActiveShape.points.length
         ? restored.selectedPointIndex
         : null;
 
@@ -480,17 +486,16 @@ export function MaskingProvider({ children }: { children: React.ReactNode }): Re
     const normalizedProjectId = projectId.trim();
     if (!normalizedProjectId) return;
 
-    const activeShape =
-      activeMaskId
-        ? maskShapes.find((shape) => shape.id === activeMaskId) ?? null
-        : null;
+    const activeShape = activeMaskId
+      ? (maskShapes.find((shape) => shape.id === activeMaskId) ?? null)
+      : null;
     const persistedActiveMaskId = activeShape ? activeShape.id : null;
     const persistedSelectedPointIndex =
       typeof selectedPointIndex === 'number' &&
-        Number.isFinite(selectedPointIndex) &&
-        selectedPointIndex >= 0 &&
-        activeShape &&
-        selectedPointIndex < activeShape.points.length
+      Number.isFinite(selectedPointIndex) &&
+      selectedPointIndex >= 0 &&
+      activeShape &&
+      selectedPointIndex < activeShape.points.length
         ? selectedPointIndex
         : null;
     const persistedMaskFeather = Math.max(0, Math.min(100, Math.round(maskFeather)));
@@ -530,25 +535,35 @@ export function MaskingProvider({ children }: { children: React.ReactNode }): Re
   ]);
 
   const activeMaskDetectionKey = workingSlot?.id ?? selectedSlot?.id ?? '__global__';
-  const maskDetectionSettings = slotMaskDetectionSettings[activeMaskDetectionKey] ?? DEFAULT_MASK_DETECTION_SETTINGS;
+  const maskDetectionSettings =
+    slotMaskDetectionSettings[activeMaskDetectionKey] ?? DEFAULT_MASK_DETECTION_SETTINGS;
   const maskThresholdSensitivity = maskDetectionSettings.thresholdSensitivity;
   const maskEdgeSensitivity = maskDetectionSettings.edgeSensitivity;
 
-  const setMaskThresholdSensitivity = useCallback((value: number): void => {
-    const clamped = Math.max(0, Math.min(100, Math.round(value)));
-    setSlotMaskDetectionSettings((prev) => {
-      const existing = prev[activeMaskDetectionKey] ?? DEFAULT_MASK_DETECTION_SETTINGS;
-      return { ...prev, [activeMaskDetectionKey]: { ...existing, thresholdSensitivity: clamped } };
-    });
-  }, [activeMaskDetectionKey]);
+  const setMaskThresholdSensitivity = useCallback(
+    (value: number): void => {
+      const clamped = Math.max(0, Math.min(100, Math.round(value)));
+      setSlotMaskDetectionSettings((prev) => {
+        const existing = prev[activeMaskDetectionKey] ?? DEFAULT_MASK_DETECTION_SETTINGS;
+        return {
+          ...prev,
+          [activeMaskDetectionKey]: { ...existing, thresholdSensitivity: clamped },
+        };
+      });
+    },
+    [activeMaskDetectionKey]
+  );
 
-  const setMaskEdgeSensitivity = useCallback((value: number): void => {
-    const clamped = Math.max(0, Math.min(100, Math.round(value)));
-    setSlotMaskDetectionSettings((prev) => {
-      const existing = prev[activeMaskDetectionKey] ?? DEFAULT_MASK_DETECTION_SETTINGS;
-      return { ...prev, [activeMaskDetectionKey]: { ...existing, edgeSensitivity: clamped } };
-    });
-  }, [activeMaskDetectionKey]);
+  const setMaskEdgeSensitivity = useCallback(
+    (value: number): void => {
+      const clamped = Math.max(0, Math.min(100, Math.round(value)));
+      setSlotMaskDetectionSettings((prev) => {
+        const existing = prev[activeMaskDetectionKey] ?? DEFAULT_MASK_DETECTION_SETTINGS;
+        return { ...prev, [activeMaskDetectionKey]: { ...existing, edgeSensitivity: clamped } };
+      });
+    },
+    [activeMaskDetectionKey]
+  );
 
   const handleAiMaskGeneration = useCallback(
     (mode?: MaskGenerationMode) => {
@@ -560,13 +575,22 @@ export function MaskingProvider({ children }: { children: React.ReactNode }): Re
       }
       setMaskGenLoading(true);
 
-      const appendRectShape = (x: number, y: number, w: number, h: number, labelPrefix: string): void => {
+      const appendRectShape = (
+        x: number,
+        y: number,
+        w: number,
+        h: number,
+        labelPrefix: string
+      ): void => {
         const shapeId = `ai_${Date.now().toString(36)}`;
         const newShape: VectorShape = {
           id: shapeId,
           name: `${labelPrefix} ${maskShapes.length + 1}`,
           type: 'rect',
-          points: [{ x, y }, { x: x + w, y: y + h }],
+          points: [
+            { x, y },
+            { x: x + w, y: y + h },
+          ],
           style: {},
           role: 'custom',
           closed: true,
@@ -596,23 +620,33 @@ export function MaskingProvider({ children }: { children: React.ReactNode }): Re
             const imageData = ctx.getImageData(0, 0, sampledWidth, sampledHeight);
             const bounds =
               effectiveMode === 'threshold'
-                ? getThresholdMaskBounds(imageData.data, sampledWidth, sampledHeight, maskThresholdSensitivity)
-                : getEdgeMaskBounds(imageData.data, sampledWidth, sampledHeight, maskEdgeSensitivity);
+                ? getThresholdMaskBounds(
+                    imageData.data,
+                    sampledWidth,
+                    sampledHeight,
+                    maskThresholdSensitivity
+                  )
+                : getEdgeMaskBounds(
+                    imageData.data,
+                    sampledWidth,
+                    sampledHeight,
+                    maskEdgeSensitivity
+                  );
             if (!bounds) {
               toast('No clear mask area detected for this mode.', { variant: 'warning' });
               return;
             }
 
             const rect = toExpandedRect(bounds, sampledWidth, sampledHeight);
-            const invRatio = ratio > 0 ? (1 / ratio) : 1;
+            const invRatio = ratio > 0 ? 1 / ratio : 1;
             const bx = Math.max(0, Math.round(rect.x * invRatio));
             const by = Math.max(0, Math.round(rect.y * invRatio));
             const bw = Math.max(1, Math.round(rect.w * invRatio));
             const bh = Math.max(1, Math.round(rect.h * invRatio));
-            const normalizedX = sourceWidth > 0 ? (bx / sourceWidth) : 0;
-            const normalizedY = sourceHeight > 0 ? (by / sourceHeight) : 0;
-            const normalizedW = sourceWidth > 0 ? (bw / sourceWidth) : 1;
-            const normalizedH = sourceHeight > 0 ? (bh / sourceHeight) : 1;
+            const normalizedX = sourceWidth > 0 ? bx / sourceWidth : 0;
+            const normalizedY = sourceHeight > 0 ? by / sourceHeight : 0;
+            const normalizedW = sourceWidth > 0 ? bw / sourceWidth : 1;
+            const normalizedH = sourceHeight > 0 ? bh / sourceHeight : 1;
             appendRectShape(
               Math.max(0, Math.min(1, normalizedX)),
               Math.max(0, Math.min(1, normalizedY)),
@@ -625,7 +659,9 @@ export function MaskingProvider({ children }: { children: React.ReactNode }): Re
               { variant: 'success' }
             );
           } catch (err: unknown) {
-            toast(err instanceof Error ? err.message : 'Mask generation failed.', { variant: 'error' });
+            toast(err instanceof Error ? err.message : 'Mask generation failed.', {
+              variant: 'error',
+            });
           } finally {
             setMaskGenLoading(false);
           }
@@ -640,10 +676,10 @@ export function MaskingProvider({ children }: { children: React.ReactNode }): Re
 
       const apiMode = effectiveMode === 'ai-polygon' ? 'polygon' : 'bbox';
       api
-        .post<{ polygon?: Array<{ x: number; y: number }>; bbox?: { x: number; y: number; w: number; h: number } }>(
-          '/api/image-studio/mask/ai',
-          { imagePath: filepath, mode: apiMode }
-        )
+        .post<{
+          polygon?: Array<{ x: number; y: number }>;
+          bbox?: { x: number; y: number; w: number; h: number };
+        }>('/api/image-studio/mask/ai', { imagePath: filepath, mode: apiMode })
         .then((result) => {
           if (apiMode === 'polygon' && result.polygon && result.polygon.length >= 3) {
             const newShape: VectorShape = {
@@ -667,29 +703,67 @@ export function MaskingProvider({ children }: { children: React.ReactNode }): Re
           }
         })
         .catch((err: unknown) => {
-          toast(err instanceof Error ? err.message : 'AI mask generation failed.', { variant: 'error' });
+          toast(err instanceof Error ? err.message : 'AI mask generation failed.', {
+            variant: 'error',
+          });
         })
         .finally(() => {
           setMaskGenLoading(false);
         });
     },
-    [maskGenMode, workingSlot, maskShapes.length, setMaskShapes, setActiveMaskId, toast, maskThresholdSensitivity, maskEdgeSensitivity]
+    [
+      maskGenMode,
+      workingSlot,
+      maskShapes.length,
+      setMaskShapes,
+      setActiveMaskId,
+      toast,
+      maskThresholdSensitivity,
+      maskEdgeSensitivity,
+    ]
   );
 
   const state = useMemo<MaskingState>(
     () => ({
-      tool, maskShapes, activeMaskId, selectedPointIndex,
-      maskInvert, maskFeather, brushRadius,
-      maskGenLoading, maskGenMode, maskThresholdSensitivity, maskEdgeSensitivity,
+      tool,
+      maskShapes,
+      activeMaskId,
+      selectedPointIndex,
+      maskInvert,
+      maskFeather,
+      brushRadius,
+      maskGenLoading,
+      maskGenMode,
+      maskThresholdSensitivity,
+      maskEdgeSensitivity,
     }),
-    [tool, maskShapes, activeMaskId, selectedPointIndex, maskInvert, maskFeather, brushRadius, maskGenLoading, maskGenMode, maskThresholdSensitivity, maskEdgeSensitivity]
+    [
+      tool,
+      maskShapes,
+      activeMaskId,
+      selectedPointIndex,
+      maskInvert,
+      maskFeather,
+      brushRadius,
+      maskGenLoading,
+      maskGenMode,
+      maskThresholdSensitivity,
+      maskEdgeSensitivity,
+    ]
   );
 
   const actions = useMemo<MaskingActions>(
     () => ({
-      setTool, setMaskShapes, setActiveMaskId, setSelectedPointIndex,
-      setMaskInvert, setMaskFeather, setBrushRadius,
-      setMaskGenMode, setMaskThresholdSensitivity, setMaskEdgeSensitivity,
+      setTool,
+      setMaskShapes,
+      setActiveMaskId,
+      setSelectedPointIndex,
+      setMaskInvert,
+      setMaskFeather,
+      setBrushRadius,
+      setMaskGenMode,
+      setMaskThresholdSensitivity,
+      setMaskEdgeSensitivity,
       handleAiMaskGeneration,
     }),
     [setMaskThresholdSensitivity, setMaskEdgeSensitivity, handleAiMaskGeneration]
@@ -697,9 +771,7 @@ export function MaskingProvider({ children }: { children: React.ReactNode }): Re
 
   return (
     <MaskingActionsContext.Provider value={actions}>
-      <MaskingStateContext.Provider value={state}>
-        {children}
-      </MaskingStateContext.Provider>
+      <MaskingStateContext.Provider value={state}>{children}</MaskingStateContext.Provider>
     </MaskingActionsContext.Provider>
   );
 }

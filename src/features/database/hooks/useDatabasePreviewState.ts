@@ -6,7 +6,6 @@ import type { DatabaseTableDetail, DatabaseTablePreviewData } from '@/shared/con
 
 import { useDatabase } from '../context/DatabaseContext';
 
-
 export function useDatabasePreviewState() {
   const database = useDatabase();
   const {
@@ -34,16 +33,22 @@ export function useDatabasePreviewState() {
   const [showConsole, setShowConsole] = useState(false);
   const [crudTable, setCrudTable] = useState('');
   const [showCrud, setShowCrud] = useState(false);
-  
+
   const consoleSectionRef = useRef<HTMLDivElement>(null);
   const crudSectionRef = useRef<HTMLDivElement>(null);
 
   const scrollToConsole = useCallback(() => {
-    setTimeout(() => consoleSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+    setTimeout(
+      () => consoleSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+      50
+    );
   }, []);
 
   const scrollToCrud = useCallback(() => {
-    setTimeout(() => crudSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+    setTimeout(
+      () => crudSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+      50
+    );
   }, []);
 
   const filteredGroups = useMemo(() => {
@@ -52,9 +57,7 @@ export function useDatabasePreviewState() {
     return groups
       .map((group) => {
         const matchesType = group.type.toLowerCase().includes(query);
-        const objects = group.objects.filter((obj) =>
-          obj.toLowerCase().includes(query)
-        );
+        const objects = group.objects.filter((obj) => obj.toLowerCase().includes(query));
         if (!matchesType && objects.length === 0) return null;
         return matchesType ? group : { ...group, objects };
       })
@@ -71,17 +74,23 @@ export function useDatabasePreviewState() {
     setExpandedGroups((prev) => ({ ...prev, [type]: !prev[type] }));
   }, []);
 
-  const handleQueryTable = useCallback((tableName: string) => {
-    setConsoleSql(`SELECT * FROM "${tableName}" LIMIT 20`);
-    setShowConsole(true);
-    scrollToConsole();
-  }, [scrollToConsole]);
+  const handleQueryTable = useCallback(
+    (tableName: string) => {
+      setConsoleSql(`SELECT * FROM "${tableName}" LIMIT 20`);
+      setShowConsole(true);
+      scrollToConsole();
+    },
+    [scrollToConsole]
+  );
 
-  const handleManageTable = useCallback((tableName: string) => {
-    setCrudTable(tableName);
-    setShowCrud(true);
-    scrollToCrud();
-  }, [scrollToCrud]);
+  const handleManageTable = useCallback(
+    (tableName: string) => {
+      setCrudTable(tableName);
+      setShowCrud(true);
+      scrollToCrud();
+    },
+    [scrollToCrud]
+  );
 
   const stats = useMemo(() => {
     const totalFks = tableDetails.reduce((sum, t) => sum + t.foreignKeys.length, 0);

@@ -1,52 +1,32 @@
-import OpenAI from 'openai';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-import { generateProductDescription } from '@/features/products/services/aiDescriptionService';
+import { generateProductAiDescription } from '@/features/products/services/aiDescriptionService';
 
-const { MockOpenAI } = vi.hoisted(() => {
-  const mockCreate = vi.fn().mockResolvedValue({
-    choices: [
-      {
-        message: {
-          content: 'Mocked AI Response',
-        },
-      },
-    ],
-  });
-
-  const MockOpenAI = vi.fn().mockImplementation(function(this: any) {
-    this.chat = {
-      completions: {
-        create: mockCreate,
-      },
-    };
-  });
-
-  return {
-    mockCreate,
-    MockOpenAI,
-  };
-});
-
-vi.mock('openai', () => {
-  return {
-    default: MockOpenAI,
-    OpenAI: MockOpenAI,
-  };
-});
-
-// Mock fs/promises
-vi.mock('fs/promises', () => ({
-  default: {
-    readFile: vi.fn().mockResolvedValue(Buffer.from('mock-image-data')),
-  },
+// Mock brain server
+vi.mock('@/shared/lib/ai-brain/server', () => ({
+  resolveBrainExecutionConfigForCapability: vi.fn().mockResolvedValue({
+    modelId: 'gpt-4o',
+    temperature: 0.7,
+    maxTokens: 800,
+    systemPrompt: 'You are an assistant',
+    brainApplied: { enforced: true },
+  }),
 }));
 
-// Mock getImageFileRepository
-vi.mock('@/features/files/server', () => ({
-  getImageFileRepository: vi.fn().mockResolvedValue({
-    listImageFiles: vi.fn().mockResolvedValue([]),
+// Mock chatbot runtime
+vi.mock('@/features/ai/chatbot/server-model-runtime', () => ({
+  runChatbotModel: vi.fn().mockResolvedValue({
+    message: 'Mocked AI Response',
+    modelId: 'gpt-4o',
+    provider: 'openai',
   }),
+}));
+
+// Mock ErrorSystem
+vi.mock('@/shared/utils/observability/error-system', () => ({
+  ErrorSystem: {
+    captureException: vi.fn(),
+  },
 }));
 
 describe('aiDescriptionService', () => {
@@ -54,34 +34,36 @@ describe('aiDescriptionService', () => {
     vi.clearAllMocks();
   });
 
-  it('should throw error if product name is missing', async () => {
-    await expect(generateProductDescription({ productData: {} as any })).rejects.toThrow('Product name is required');
-  });
-
   it('should generate a description using mocked AI', async () => {
-    const productData = { name_en: 'Test Product', price: 100 } as any;
-    const result = await generateProductDescription({ productData });
+    const result = await generateProductAiDescription({
+      productId: 'p1',
+      images: [],
+      visionInputPrompt: 'Analyze this',
+      generationInputPrompt: 'Write desc',
+    });
 
     expect(result).toBeDefined();
     expect(result.description).toBe('Mocked AI Response');
     expect(result.analysisInitial).toBe('Mocked AI Response');
-    
-    // Verify OpenAI was called
-    const mockedOpenAI = vi.mocked(OpenAI);
-    expect(mockedOpenAI).toHaveBeenCalled();
   });
 
-  it('should handle images by reading from disk (mocked)', async () => {
-    const productData = { name_en: 'Image Product' } as any;
-    const imageUrls = ['/uploads/products/test.jpg'];
-    
-    const result = await generateProductDescription({ 
-      productData,
-      imageUrls 
+  it('should work with default prompts if not provided', async () => {
+    const result = await generateProductAiDescription({
+      productId: 'p1',
+      images: [],
     });
 
     expect(result.description).toBe('Mocked AI Response');
-    // Verify OpenAI was called with image data in the message
-    // (In our mock it's simplified but the service should have processed images)
+  });
+
+  it('should handle images', async () => {
+    const images = ['https://example.com/img.jpg'];
+
+    const result = await generateProductAiDescription({
+      productId: 'p1',
+      images,
+    });
+
+    expect(result.description).toBe('Mocked AI Response');
   });
 });

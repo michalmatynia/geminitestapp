@@ -27,7 +27,6 @@ import type { AppProviderDiagnosticsDto as ProviderDiagnosticsResponse } from '@
 import { api, ApiError } from '@/shared/lib/api-client';
 import { DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY } from '@/shared/lib/db/database-engine-constants';
 
-
 export type {
   CrudRequest,
   CrudResult,
@@ -60,9 +59,7 @@ const toFallbackErrorPayload = <T>(error: unknown): T =>
     error: error instanceof Error ? error.message : String(error),
   }) as T;
 
-const wrapInApiPayloadResult = async <T>(
-  promise: Promise<T>
-): Promise<ApiPayloadResult<T>> => {
+const wrapInApiPayloadResult = async <T>(promise: Promise<T>): Promise<ApiPayloadResult<T>> => {
   try {
     const data = await promise;
     return { ok: true, payload: data };
@@ -137,19 +134,16 @@ export const uploadDatabaseBackup = async (
   return { ok: result.ok, payload: result.data };
 };
 
-export const executeSqlQuery = async (
-  input: {
-    sql?: string;
-    type: DatabaseType;
-    collection?: string;
-    operation?: string;
-    filter?: Record<string, unknown>;
-    document?: Record<string, unknown>;
-    update?: Record<string, unknown>;
-    pipeline?: Record<string, unknown>[];
-  }
-): Promise<SqlQueryResult> =>
-  api.post<SqlQueryResult>('/api/databases/execute', input);
+export const executeSqlQuery = async (input: {
+  sql?: string;
+  type: DatabaseType;
+  collection?: string;
+  operation?: string;
+  filter?: Record<string, unknown>;
+  document?: Record<string, unknown>;
+  update?: Record<string, unknown>;
+  pipeline?: Record<string, unknown>[];
+}): Promise<SqlQueryResult> => api.post<SqlQueryResult>('/api/databases/execute', input);
 
 export const getDatabasePreview = async (
   input: DatabasePreviewRequest
@@ -162,7 +156,11 @@ export const getDatabasePreview = async (
       if (!Array.isArray(data)) return [];
       return data.map((g: Record<string, unknown>) => ({
         type: (g['type'] ?? g['name']) as string,
-        objects: Array.isArray(g['objects']) ? (g['objects'] as string[]) : (Array.isArray(g['tables']) ? (g['tables'] as string[]) : []),
+        objects: Array.isArray(g['objects'])
+          ? (g['objects'] as string[])
+          : Array.isArray(g['tables'])
+            ? (g['tables'] as string[])
+            : [],
       }));
     };
 
@@ -172,14 +170,17 @@ export const getDatabasePreview = async (
     const tableRows = (raw['tableRows'] ?? raw['data'] ?? []) as DatabaseTablePreviewData[];
     const finalPage = raw['page'] ?? input.page;
     const finalPageSize = raw['pageSize'] ?? input.pageSize;
-    
+
     const payload: DatabasePreviewPayload = {
       groups,
       tables,
       tableRows,
       total: (raw['total'] ?? rawStats?.['total'] ?? 0) as number,
-      page: typeof finalPage === 'string' ? parseInt(finalPage, 10) : (finalPage as number || 1),
-      pageSize: typeof finalPageSize === 'string' ? parseInt(finalPageSize, 10) : (finalPageSize as number || 50),
+      page: typeof finalPage === 'string' ? parseInt(finalPage, 10) : (finalPage as number) || 1,
+      pageSize:
+        typeof finalPageSize === 'string'
+          ? parseInt(finalPageSize, 10)
+          : (finalPageSize as number) || 50,
     };
 
     return { ok: true, payload };
@@ -196,9 +197,7 @@ export const getDatabasePreview = async (
 
 export const fetchDatabasePreview = getDatabasePreview;
 
-export const executeCrudOperation = async (
-  input: CrudRequest
-): Promise<CrudResult> =>
+export const executeCrudOperation = async (input: CrudRequest): Promise<CrudResult> =>
   api.post<CrudResult>('/api/databases/crud', input);
 
 export const getProviderDiagnostics = async (): Promise<ProviderDiagnosticsResponse> =>
@@ -212,21 +211,35 @@ export const fetchRedisOverview = getRedisOverview;
 export const getDatabaseEngineStatus = async (): Promise<DatabaseEngineStatusResponse> =>
   api.get<DatabaseEngineStatusResponse>('/api/databases/engine/status');
 
-export const runDatabaseEngineBackupNow = async (dbType: 'mongodb' | 'postgresql' | 'all'): Promise<DatabaseEngineBackupRunNowResponse> =>
-  api.post<DatabaseEngineBackupRunNowResponse>('/api/databases/engine/backup-scheduler/run-now', { dbType });
+export const runDatabaseEngineBackupNow = async (
+  dbType: 'mongodb' | 'postgresql' | 'all'
+): Promise<DatabaseEngineBackupRunNowResponse> =>
+  api.post<DatabaseEngineBackupRunNowResponse>('/api/databases/engine/backup-scheduler/run-now', {
+    dbType,
+  });
 
-export const getDatabaseEngineBackupSchedulerStatus = async (): Promise<DatabaseEngineBackupSchedulerStatusResponse> =>
-  api.get<DatabaseEngineBackupSchedulerStatusResponse>('/api/databases/engine/backup-scheduler/status');
+export const getDatabaseEngineBackupSchedulerStatus =
+  async (): Promise<DatabaseEngineBackupSchedulerStatusResponse> =>
+    api.get<DatabaseEngineBackupSchedulerStatusResponse>(
+      '/api/databases/engine/backup-scheduler/status'
+    );
 
 export const fetchDatabaseEngineBackupSchedulerStatus = getDatabaseEngineBackupSchedulerStatus;
 
-export const tickDatabaseEngineBackupScheduler = async (): Promise<DatabaseEngineBackupSchedulerTickResponse> =>
-  api.post<DatabaseEngineBackupSchedulerTickResponse>('/api/databases/engine/backup-scheduler/tick');
+export const tickDatabaseEngineBackupScheduler =
+  async (): Promise<DatabaseEngineBackupSchedulerTickResponse> =>
+    api.post<DatabaseEngineBackupSchedulerTickResponse>(
+      '/api/databases/engine/backup-scheduler/tick'
+    );
 
 export const runDatabaseEngineBackupSchedulerTick = tickDatabaseEngineBackupScheduler;
 
-export const getDatabaseEngineOperationsJobs = async (limit: number = 30): Promise<DatabaseEngineOperationsJobsResponse> =>
-  api.get<DatabaseEngineOperationsJobsResponse>('/api/databases/engine/operations/jobs', { params: { limit } });
+export const getDatabaseEngineOperationsJobs = async (
+  limit: number = 30
+): Promise<DatabaseEngineOperationsJobsResponse> =>
+  api.get<DatabaseEngineOperationsJobsResponse>('/api/databases/engine/operations/jobs', {
+    params: { limit },
+  });
 
 export const fetchDatabaseEngineOperationsJobs = getDatabaseEngineOperationsJobs;
 
@@ -234,7 +247,9 @@ export const getDatabaseEngineProviderPreview = async (
   collections?: string[]
 ): Promise<DatabaseEngineProviderPreviewResponse> => {
   const params = collections ? { collections: collections.join(',') } : undefined;
-  return api.get<DatabaseEngineProviderPreviewResponse>('/api/databases/engine/provider-preview', { params });
+  return api.get<DatabaseEngineProviderPreviewResponse>('/api/databases/engine/provider-preview', {
+    params,
+  });
 };
 
 export const fetchDatabaseEngineProviderPreview = getDatabaseEngineProviderPreview;
@@ -268,21 +283,25 @@ export const backfillSettingsKeys = async (
   limit: number = 500,
   dryRun: boolean = false
 ): Promise<SettingsBackfillResult> => {
-  return api.post<SettingsBackfillResult>('/api/settings/migrate/backfill-keys', { limit, dryRun, manual: true });
+  return api.post<SettingsBackfillResult>('/api/settings/migrate/backfill-keys', {
+    limit,
+    dryRun,
+    manual: true,
+  });
 };
 
 export const cancelDatabaseEngineOperationJob = async (
   jobId: string
 ): Promise<{ success: boolean; job: unknown }> =>
-  api.post<{ success: boolean; job: unknown }>(`/api/databases/engine/operations/jobs/${jobId}/cancel`);
+  api.post<{ success: boolean; job: unknown }>(
+    `/api/databases/engine/operations/jobs/${jobId}/cancel`
+  );
 
 export const fetchAllCollectionsSchema = async (): Promise<MultiSchemaResponse> =>
   api.get<MultiSchemaResponse>('/api/databases/schema');
 
 export const createJsonBackup = async (): Promise<ApiPayloadResult<DatabaseBackupResponse>> =>
-  wrapInApiPayloadResult(
-    api.post<DatabaseBackupResponse>('/api/databases/json-backup')
-  );
+  wrapInApiPayloadResult(api.post<DatabaseBackupResponse>('/api/databases/json-backup'));
 
 export const restoreJsonBackup = async (
   backupName: string

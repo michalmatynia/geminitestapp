@@ -25,7 +25,12 @@ export function CategoryMapperNameCell({
   hasPendingChange,
 }: CategoryMapperNameCellProps): React.JSX.Element {
   return (
-    <div className={cn('flex items-center', hasPendingChange && 'bg-yellow-500/5 rounded px-2 -ml-2 py-1')}>
+    <div
+      className={cn(
+        'flex items-center',
+        hasPendingChange && 'bg-yellow-500/5 rounded px-2 -ml-2 py-1'
+      )}
+    >
       <div style={{ paddingLeft: `${depth * 20}px` }} className='flex items-center'>
         {canExpand ? (
           <Button
@@ -44,9 +49,7 @@ export function CategoryMapperNameCell({
           <span className='mr-2 w-6 inline-block' />
         )}
         <span className='text-sm text-gray-200'>{name}</span>
-        {isMapped && (
-          <Check className='ml-2 h-3 w-3 text-emerald-400' />
-        )}
+        {isMapped && <Check className='ml-2 h-3 w-3 text-emerald-400' />}
       </div>
     </div>
   );

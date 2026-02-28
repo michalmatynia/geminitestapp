@@ -9,12 +9,12 @@ import { cn } from '@/shared/utils';
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
 const FORMAT_OPTIONS = [
-  { value: 'pixels_tlwh',          label: '{left,top,width,height} px — standard (default)' },
-  { value: 'pixels_tlbr',          label: '{x1,y1,x2,y2} px — top-left / bottom-right' },
+  { value: 'pixels_tlwh', label: '{left,top,width,height} px — standard (default)' },
+  { value: 'pixels_tlbr', label: '{x1,y1,x2,y2} px — top-left / bottom-right' },
   { value: 'gemini_millirelative', label: '[y1,x1,y2,x2] 0-1000 — Google Gemini format' },
-  { value: 'relative_xywh',        label: '[cx,cy,w,h] 0-1 — YOLO centre format' },
-  { value: 'percentage_tlwh',      label: '{left,top,width,height} % — percentage' },
-  { value: 'auto',                 label: 'Auto-detect (inspect input shape)' },
+  { value: 'relative_xywh', label: '[cx,cy,w,h] 0-1 — YOLO centre format' },
+  { value: 'percentage_tlwh', label: '{left,top,width,height} % — percentage' },
+  { value: 'auto', label: 'Auto-detect (inspect input shape)' },
 ];
 
 const NEEDS_IMAGE_DIMS = new Set([
@@ -95,7 +95,8 @@ export function BoundsNormalizerNodeConfigSection(): React.JSX.Element | null {
           className='mt-2 h-7 text-xs'
         />
         <p className='mt-1 text-[10px] text-gray-600'>
-          Dot-path into the incoming value to reach the bounds object. Leave empty if bounds are at the root.
+          Dot-path into the incoming value to reach the bounds object. Leave empty if bounds are at
+          the root.
         </p>
       </div>
 
@@ -130,8 +131,9 @@ export function BoundsNormalizerNodeConfigSection(): React.JSX.Element | null {
           {dimOpen && (
             <div className='mt-2 space-y-2'>
               <p className='text-[10px] text-gray-600'>
-                Dot-paths inside the <code className='text-gray-400'>context</code> port value for source image dimensions.
-                Defaults: <code className='text-gray-400'>imageWidth</code> / <code className='text-gray-400'>imageHeight</code>.
+                Dot-paths inside the <code className='text-gray-400'>context</code> port value for
+                source image dimensions. Defaults: <code className='text-gray-400'>imageWidth</code>{' '}
+                / <code className='text-gray-400'>imageHeight</code>.
               </p>
               <FieldInput
                 label='Width path'
@@ -168,33 +170,25 @@ export function BoundsNormalizerNodeConfigSection(): React.JSX.Element | null {
             <FieldInput
               label='Left field'
               value={cfg.leftField ?? ''}
-              placeholder={cn(
-                cfg.inputFormat === 'pixels_tlbr' ? 'x1' : 'left',
-              )}
+              placeholder={cn(cfg.inputFormat === 'pixels_tlbr' ? 'x1' : 'left')}
               onChange={(v) => update({ leftField: v.trim() || undefined })}
             />
             <FieldInput
               label='Top field'
               value={cfg.topField ?? ''}
-              placeholder={cn(
-                cfg.inputFormat === 'pixels_tlbr' ? 'y1' : 'top',
-              )}
+              placeholder={cn(cfg.inputFormat === 'pixels_tlbr' ? 'y1' : 'top')}
               onChange={(v) => update({ topField: v.trim() || undefined })}
             />
             <FieldInput
               label='Width field'
               value={cfg.widthField ?? ''}
-              placeholder={cn(
-                cfg.inputFormat === 'pixels_tlbr' ? 'x2' : 'width',
-              )}
+              placeholder={cn(cfg.inputFormat === 'pixels_tlbr' ? 'x2' : 'width')}
               onChange={(v) => update({ widthField: v.trim() || undefined })}
             />
             <FieldInput
               label='Height field'
               value={cfg.heightField ?? ''}
-              placeholder={cn(
-                cfg.inputFormat === 'pixels_tlbr' ? 'y2' : 'height',
-              )}
+              placeholder={cn(cfg.inputFormat === 'pixels_tlbr' ? 'y2' : 'height')}
               onChange={(v) => update({ heightField: v.trim() || undefined })}
             />
           </div>

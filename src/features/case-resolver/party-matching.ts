@@ -200,10 +200,7 @@ const scoreAddressCompatibility = (
   return score;
 };
 
-const scoreOrganizationNameCompatibility = (
-  candidateName: string,
-  currentName: string
-): number => {
+const scoreOrganizationNameCompatibility = (candidateName: string, currentName: string): number => {
   const left = normalizeOrganizationName(candidateName);
   const right = normalizeOrganizationName(currentName);
   if (!left || !right) return 0;
@@ -230,9 +227,7 @@ const deriveCandidatePersonName = (
     .map((token: string): string => token.trim())
     .filter((token: string): boolean => token.length > 0);
   const firstName = (candidate.firstName ?? '').trim() || displayTokens[0] || '';
-  const lastName =
-    (candidate.lastName ?? '').trim() ||
-    displayTokens.slice(1).join(' ').trim();
+  const lastName = (candidate.lastName ?? '').trim() || displayTokens.slice(1).join(' ').trim();
   return {
     firstName,
     lastName,
@@ -288,7 +283,7 @@ export const findExistingFilemakerPartyReference = (
       }
     }
   }
-  
+
   if (bestPerson && bestPerson.score >= 4) {
     return {
       kind: 'person',
@@ -296,10 +291,10 @@ export const findExistingFilemakerPartyReference = (
       displayName: bestPerson.name,
     };
   }
-  
+
   const organizationName =
-        (candidate.organizationName ?? '').trim() ||
-        (candidate.kind === 'organization' ? (candidate.displayName || '').trim() : '');
+    (candidate.organizationName ?? '').trim() ||
+    (candidate.kind === 'organization' ? (candidate.displayName || '').trim() : '');
   let bestOrganization: { id: string; score: number; name: string } | null = null;
   if (kindHint !== 'person' && organizationName) {
     for (const organization of database.organizations) {
@@ -323,7 +318,7 @@ export const findExistingFilemakerPartyReference = (
       }
     }
   }
-  
+
   if (bestOrganization && bestOrganization.score >= 4) {
     return {
       kind: 'organization',
@@ -346,11 +341,11 @@ type AddressInput = {
 const hasAddressData = (value: AddressInput): boolean =>
   Boolean(
     value.street.trim() ||
-      value.streetNumber.trim() ||
-      value.city.trim() ||
-      value.postalCode.trim() ||
-      value.country.trim() ||
-      value.countryId.trim()
+    value.streetNumber.trim() ||
+    value.city.trim() ||
+    value.postalCode.trim() ||
+    value.country.trim() ||
+    value.countryId.trim()
   );
 
 const scoreAddressInputAgainstAddress = (
@@ -446,14 +441,14 @@ export const resolveCountryFromCandidateValue = (
     };
   }
 
-  const canonicalCode = COUNTRY_ALIAS_TO_CODE[normalized] ?? (
-    /^[a-z]{2}$/i.test(raw.trim()) ? raw.trim().toUpperCase() : ''
-  );
+  const canonicalCode =
+    COUNTRY_ALIAS_TO_CODE[normalized] ??
+    (/^[a-z]{2}$/i.test(raw.trim()) ? raw.trim().toUpperCase() : '');
 
   const byCode = canonicalCode
     ? countries.find(
-      (country: CountryOption): boolean => country.code.trim().toUpperCase() === canonicalCode
-    )
+        (country: CountryOption): boolean => country.code.trim().toUpperCase() === canonicalCode
+      )
     : null;
   if (byCode) {
     return {

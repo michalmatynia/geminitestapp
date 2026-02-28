@@ -15,14 +15,10 @@ export type NoteCardContentProps = {
   note: NoteWithRelations;
 };
 
-export function NoteCardContent({
-  note,
-}: NoteCardContentProps): React.JSX.Element {
+export function NoteCardContent({ note }: NoteCardContentProps): React.JSX.Element {
   const contentHtml = React.useMemo((): string => {
     let html =
-      (note.editorType as string) === 'wysiwyg'
-        ? note.content
-        : renderMarkdownToHtml(note.content);
+      (note.editorType as string) === 'wysiwyg' ? note.content : renderMarkdownToHtml(note.content);
     // Remove image tags from preview to avoid duplication with thumbnail
     html = html.replace(/<img[^>]*>/g, '');
     // Also remove image paragraphs (markdown renders images in <p> tags)
@@ -31,8 +27,7 @@ export function NoteCardContent({
   }, [note.content, note.editorType]);
 
   const thumbnailFile = note.files?.find(
-    (file: NoteFileRecord) =>
-      file.mimetype?.startsWith('image/') && file.filepath,
+    (file: NoteFileRecord) => file.mimetype?.startsWith('image/') && file.filepath
   );
 
   return (
@@ -54,18 +49,9 @@ export function NoteCardContent({
         dangerouslySetInnerHTML={{ __html: contentHtml }}
       />
       <div className='flex flex-wrap gap-2'>
-        {note.tags?.map(
-          (nt: {
-            tagId: string;
-            tag: { color?: string | null; name?: string };
-          }) => (
-            <Tag
-              key={nt.tagId}
-              color={nt.tag.color ?? null}
-              label={nt.tag.name || 'Unnamed'}
-            />
-          ),
-        )}
+        {note.tags?.map((nt: { tagId: string; tag: { color?: string | null; name?: string } }) => (
+          <Tag key={nt.tagId} color={nt.tag.color ?? null} label={nt.tag.name || 'Unnamed'} />
+        ))}
       </div>
     </div>
   );

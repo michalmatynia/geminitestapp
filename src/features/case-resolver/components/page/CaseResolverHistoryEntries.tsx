@@ -6,7 +6,7 @@ import React from 'react';
 import type { CaseResolverDocumentHistoryEntry } from '@/shared/contracts/case-resolver';
 import { Button } from '@/shared/ui';
 
-import { resolveCaseResolverHistoryEntryPreview } from '../../utils/caseResolverUtils';
+import { resolveCaseResolverHistoryEntryPreview } from '@/features/case-resolver/utils/caseResolverUtils';
 
 type CaseResolverHistoryEntriesProps = {
   entries: CaseResolverDocumentHistoryEntry[];
@@ -42,9 +42,12 @@ export function CaseResolverHistoryEntries({
                     <History className='size-5' />
                   </div>
                   <div className='min-w-0'>
-                    <div className='text-sm font-medium text-gray-200'>{formatTimestamp(entry.savedAt)}</div>
+                    <div className='text-sm font-medium text-gray-200'>
+                      {formatTimestamp(entry.savedAt)}
+                    </div>
                     <div className='text-[11px] text-gray-500 uppercase tracking-wider'>
-                      {entry.editorType} <span className='mx-1 opacity-30'>•</span> Version {entry.documentContentVersion}
+                      {entry.editorType} <span className='mx-1 opacity-30'>•</span> Version{' '}
+                      {entry.documentContentVersion}
                     </div>
                     <div className='mt-1 text-xs text-gray-400 whitespace-pre-line break-words'>
                       {previewText || 'No preview text.'}

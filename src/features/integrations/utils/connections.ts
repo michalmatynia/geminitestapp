@@ -1,7 +1,4 @@
-import {
-  TestLogEntry,
-  TestStatus,
-} from '@/shared/contracts/integrations';
+import { TestLogEntry, TestStatus } from '@/shared/contracts/integrations';
 
 export const coerceStatus = (value: unknown): TestStatus => {
   if (value === 'pending' || value === 'ok' || value === 'failed') {
@@ -13,8 +10,7 @@ export const coerceStatus = (value: unknown): TestStatus => {
 export const normalizeSteps = (value: unknown): TestLogEntry[] => {
   if (!Array.isArray(value)) return [];
   return value.map((raw: unknown): TestLogEntry => {
-    const s =
-      raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
+    const s = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
     const stepValue = s?.['step'];
     return {
       step:
@@ -26,10 +22,7 @@ export const normalizeSteps = (value: unknown): TestLogEntry[] => {
               ? String(stepValue)
               : JSON.stringify(stepValue),
       status: coerceStatus(s?.['status']),
-      timestamp:
-        typeof s?.['timestamp'] === 'string'
-          ? s['timestamp']
-          : new Date().toISOString(),
+      timestamp: typeof s?.['timestamp'] === 'string' ? s['timestamp'] : new Date().toISOString(),
       ...(typeof s?.['detail'] === 'string' && { detail: s['detail'] }),
     };
   });

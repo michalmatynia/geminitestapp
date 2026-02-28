@@ -3,13 +3,20 @@
 import { Columns, Minus } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
-import { TreeRow, TreeCaret, TreeActionButton, TreeActionSlot, TreeContextMenu, type TreeContextMenuItem } from '@/shared/ui';
+import {
+  TreeRow,
+  TreeCaret,
+  TreeActionButton,
+  TreeActionSlot,
+  TreeContextMenu,
+  type TreeContextMenuItem,
+} from '@/shared/ui';
 import { DRAG_KEYS, hasDragType } from '@/shared/utils/drag-drop';
 
 import { useDragStateExtract } from '../../../hooks/useDragStateExtract';
 import { usePageBuilder } from '../../../hooks/usePageBuilderContext';
 import { useTreeActions } from '../../../hooks/useTreeActionsContext';
-import { readBlockDragData, readSectionDragData } from '../../../utils/page-builder-dnd';
+import { readBlockDragData, readSectionDragData } from '@/features/cms/utils/page-builder-dnd';
 import { ColumnBlockPicker } from '../ColumnBlockPicker';
 import { BlockNodeItem } from './BlockNodeItem';
 import { SectionBlockNodeItem } from './SectionBlockNodeItem';
@@ -29,14 +36,8 @@ export function ColumnNodeItem({
   const sectionId = useTreeSectionId();
   const rowId = useOptionalTreeRowId();
   const { state: pbState } = usePageBuilder();
-  const {
-    expandedIds,
-    selectNode,
-    toggleExpand,
-    blockActions,
-    sectionActions,
-    gridActions,
-  } = useTreeActions();
+  const { expandedIds, selectNode, toggleExpand, blockActions, sectionActions, gridActions } =
+    useTreeActions();
 
   const selectedNodeId = pbState.selectedNodeId;
 
@@ -82,7 +83,10 @@ export function ColumnNodeItem({
       type: draggedBlockType,
     });
     const dragId = blockDrag.id;
-    const isSectionDrop = draggedSectionId && draggedSectionId !== sectionId && CONVERTIBLE_SECTION_TYPES.includes(draggedSectionType ?? '');
+    const isSectionDrop =
+      draggedSectionId &&
+      draggedSectionId !== sectionId &&
+      CONVERTIBLE_SECTION_TYPES.includes(draggedSectionType ?? '');
     if (!dragId && !hasBlockPayload && !isSectionDrop) return;
     e.preventDefault();
     e.stopPropagation();
@@ -106,8 +110,17 @@ export function ColumnNodeItem({
     if (isSectionDrag) {
       const sectionIdToDrop = draggedSectionId || draggedSectionIdFromTransfer;
       const sectionTypeToDrop = draggedSectionType || draggedSectionTypeFromTransfer;
-      if (sectionIdToDrop && sectionIdToDrop !== sectionId && CONVERTIBLE_SECTION_TYPES.includes(sectionTypeToDrop ?? '')) {
-        sectionActions.dropToColumn(sectionIdToDrop, sectionId, column.id, (column.blocks ?? []).length);
+      if (
+        sectionIdToDrop &&
+        sectionIdToDrop !== sectionId &&
+        CONVERTIBLE_SECTION_TYPES.includes(sectionTypeToDrop ?? '')
+      ) {
+        sectionActions.dropToColumn(
+          sectionIdToDrop,
+          sectionId,
+          column.id,
+          (column.blocks ?? []).length
+        );
         endSectionDrag();
       }
       return;
@@ -195,9 +208,7 @@ export function ColumnNodeItem({
             />
             <Columns className='size-3.5 shrink-0' />
             <span className='flex-1 truncate text-left'>{columnLabel}</span>
-            {isDragOver && (
-              <span className='text-[10px] text-emerald-300'>Drop here</span>
-            )}
+            {isDragOver && <span className='text-[10px] text-emerald-300'>Drop here</span>}
             <TreeActionSlot show='always' align='inline'>
               <TreeActionButton
                 tone='danger'
@@ -213,7 +224,9 @@ export function ColumnNodeItem({
                 <Minus className='size-3' />
               </TreeActionButton>
               <ColumnBlockPicker
-                onSelect={(blockType: string) => blockActions.addToColumn(sectionId, column.id, blockType)}
+                onSelect={(blockType: string) =>
+                  blockActions.addToColumn(sectionId, column.id, blockType)
+                }
               />
             </TreeActionSlot>
           </TreeRow>
@@ -232,17 +245,9 @@ export function ColumnNodeItem({
             {hasBlocks ? (
               (column.blocks ?? []).map((block: BlockInstance, index: number) =>
                 SECTION_BLOCK_TYPES.includes(block.type) ? (
-                  <SectionBlockNodeItem
-                    key={block.id}
-                    block={block}
-                    index={index}
-                  />
+                  <SectionBlockNodeItem key={block.id} block={block} index={index} />
                 ) : (
-                  <BlockNodeItem
-                    key={block.id}
-                    block={block}
-                    index={index}
-                  />
+                  <BlockNodeItem key={block.id} block={block} index={index} />
                 )
               )
             ) : (

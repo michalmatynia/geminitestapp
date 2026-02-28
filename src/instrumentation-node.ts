@@ -3,11 +3,7 @@ type InstrumentationGlobal = typeof globalThis & {
   __cmsProcessHandlersRegistered?: boolean;
 };
 
-const IGNORABLE_PROCESS_ERROR_CODES = new Set([
-  'ECONNRESET',
-  'ECONNABORTED',
-  'EPIPE',
-]);
+const IGNORABLE_PROCESS_ERROR_CODES = new Set(['ECONNRESET', 'ECONNABORTED', 'EPIPE']);
 
 const hasIgnorableAbortMessage = (value: string): boolean => {
   const normalized = value.toLowerCase();
@@ -32,8 +28,10 @@ const isIgnorableUncaughtException = (error: Error): boolean => {
   }
 
   const stack = typeof error.stack === 'string' ? error.stack.toLowerCase() : '';
-  return stack.includes('abortincoming (node:_http_server') ||
-    stack.includes('socketonclose (node:_http_server');
+  return (
+    stack.includes('abortincoming (node:_http_server') ||
+    stack.includes('socketonclose (node:_http_server')
+  );
 };
 
 const isIgnorableProcessFailure = (reason: unknown): boolean => {
@@ -51,13 +49,18 @@ const isIgnorableProcessFailure = (reason: unknown): boolean => {
     if (code && IGNORABLE_PROCESS_ERROR_CODES.has(code)) {
       return true;
     }
-    if (typeof reasonWithCode.message === 'string' && hasIgnorableAbortMessage(reasonWithCode.message)) {
+    if (
+      typeof reasonWithCode.message === 'string' &&
+      hasIgnorableAbortMessage(reasonWithCode.message)
+    ) {
       return true;
     }
     if (typeof reasonWithCode.stack === 'string') {
       const stack = reasonWithCode.stack.toLowerCase();
-      if (stack.includes('abortincoming (node:_http_server') ||
-        stack.includes('socketonclose (node:_http_server')) {
+      if (
+        stack.includes('abortincoming (node:_http_server') ||
+        stack.includes('socketonclose (node:_http_server')
+      ) {
         return true;
       }
     }
@@ -131,7 +134,7 @@ export async function registerNodeInstrumentation() {
         });
       } catch {
         const { logger } = await import('@/shared/utils/logger');
-        logger.error('Fatal: Unhandled Rejection (and logging failed)', reason);  
+        logger.error('Fatal: Unhandled Rejection (and logging failed)', reason);
       }
     })();
   });
@@ -152,7 +155,7 @@ export async function registerNodeInstrumentation() {
         });
       } catch {
         const { logger } = await import('@/shared/utils/logger');
-        logger.error('Fatal: Uncaught Exception (and logging failed)', error);  
+        logger.error('Fatal: Uncaught Exception (and logging failed)', error);
       }
       // Give some time for logging to complete before exiting.
       setTimeout(() => process.exit(1), 1000);

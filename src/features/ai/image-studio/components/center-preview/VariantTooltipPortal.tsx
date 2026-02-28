@@ -31,21 +31,31 @@ export function VariantTooltipPortal({
       className='pointer-events-none fixed z-50 w-[250px] border-border/60 bg-black/85 text-[10px] text-gray-100 shadow-xl backdrop-blur-sm'
       style={{ left: position.left, top: position.top }}
     >
-      <div className='truncate'><span className='text-gray-400'>Model:</span> {tooltip.variant.model || 'n/a'}</div>
-      <div className='truncate'><span className='text-gray-400'>Timestamp:</span> {tooltip.variant.timestampLabel}</div>
+      <div className='truncate'>
+        <span className='text-gray-400'>Model:</span> {tooltip.variant.model || 'n/a'}
+      </div>
+      <div className='truncate'>
+        <span className='text-gray-400'>Timestamp:</span> {tooltip.variant.timestampLabel}
+      </div>
       <div>
         <span className='text-gray-400'>Resolution:</span>{' '}
         {tooltip.variant.output?.width && tooltip.variant.output?.height
           ? `${tooltip.variant.output.width}x${tooltip.variant.output.height}`
           : 'n/a'}
       </div>
-      <div><span className='text-gray-400'>File size:</span> {formatBytes(tooltip.variant.output?.size ?? null)}</div>
-      <div><span className='text-gray-400'>Token cost:</span> {formatUsd(tooltip.variant.tokenCostUsd)}</div>
       <div>
-        <span className='text-gray-400'>Actual cost:</span> {formatUsd(tooltip.variant.actualCostUsd)}
+        <span className='text-gray-400'>File size:</span>{' '}
+        {formatBytes(tooltip.variant.output?.size ?? null)}
+      </div>
+      <div>
+        <span className='text-gray-400'>Token cost:</span> {formatUsd(tooltip.variant.tokenCostUsd)}
+      </div>
+      <div>
+        <span className='text-gray-400'>Actual cost:</span>{' '}
+        {formatUsd(tooltip.variant.actualCostUsd)}
         {tooltip.variant.costEstimated ? ' (est.)' : ''}
       </div>
     </Card>,
-    document.body,
+    document.body
   );
 }

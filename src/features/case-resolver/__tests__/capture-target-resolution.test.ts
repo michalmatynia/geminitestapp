@@ -4,8 +4,14 @@ import {
   applyCaseResolverFileMutationAndRebaseDraft,
   resolveCaptureTargetFile,
 } from '@/features/case-resolver/hooks/useCaseResolverState.helpers';
-import { createCaseResolverFile, parseCaseResolverWorkspace } from '@/features/case-resolver/settings';
-import type { CaseResolverFileEditDraft, CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
+import {
+  createCaseResolverFile,
+  parseCaseResolverWorkspace,
+} from '@/features/case-resolver/settings';
+import type {
+  CaseResolverFileEditDraft,
+  CaseResolverWorkspace,
+} from '@/shared/contracts/case-resolver';
 
 import type { Dispatch, SetStateAction } from 'react';
 
@@ -49,7 +55,9 @@ describe('case resolver capture target resolution', () => {
     ): void => {
       workspace = updater(workspace);
     };
-    const setEditingDocumentDraft: Dispatch<SetStateAction<CaseResolverFileEditDraft | null>> = () => {};
+    const setEditingDocumentDraft: Dispatch<
+      SetStateAction<CaseResolverFileEditDraft | null>
+    > = () => {};
 
     const result = applyCaseResolverFileMutationAndRebaseDraft({
       fileId: 'missing-file',
@@ -82,7 +90,9 @@ describe('case resolver capture target resolution', () => {
     ): void => {
       workspace = updater(workspace);
     };
-    const setEditingDocumentDraft: Dispatch<SetStateAction<CaseResolverFileEditDraft | null>> = () => {};
+    const setEditingDocumentDraft: Dispatch<
+      SetStateAction<CaseResolverFileEditDraft | null>
+    > = () => {};
 
     const result = applyCaseResolverFileMutationAndRebaseDraft({
       fileId: documentFile.id,
@@ -119,11 +129,13 @@ describe('case resolver capture target resolution', () => {
       activeFileId: documentFile.id,
     };
     const updateWorkspace = (
-      updater: (current: CaseResolverWorkspace) => CaseResolverWorkspace,
+      updater: (current: CaseResolverWorkspace) => CaseResolverWorkspace
     ): void => {
       workspace = updater(workspace);
     };
-    const setEditingDocumentDraft: Dispatch<SetStateAction<CaseResolverFileEditDraft | null>> = () => {};
+    const setEditingDocumentDraft: Dispatch<
+      SetStateAction<CaseResolverFileEditDraft | null>
+    > = () => {};
 
     const result = applyCaseResolverFileMutationAndRebaseDraft({
       fileId: documentFile.id,
@@ -138,8 +150,8 @@ describe('case resolver capture target resolution', () => {
 
     expect(result.ok).toBe(true);
     expect(result.nextFile?.parentCaseId).toBe(caseFile.id);
-    expect(
-      workspace.files.find((file) => file.id === documentFile.id)?.parentCaseId,
-    ).toBe(caseFile.id);
+    expect(workspace.files.find((file) => file.id === documentFile.id)?.parentCaseId).toBe(
+      caseFile.id
+    );
   });
 });

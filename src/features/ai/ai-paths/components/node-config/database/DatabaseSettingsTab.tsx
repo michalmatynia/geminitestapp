@@ -12,12 +12,15 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
   const { availablePorts, bundleKeys, operation } = useDatabaseConstructorContext();
   const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();
   if (!selectedNode) return null;
-  const databaseConfig: DatabaseConfig =
-    (selectedNode.config?.database as DatabaseConfig) ?? { operation: 'query' };
+  const databaseConfig: DatabaseConfig = (selectedNode.config?.database as DatabaseConfig) ?? {
+    operation: 'query',
+  };
   const writeSource = databaseConfig.writeSource ?? 'bundle';
   const onZeroAffectedPolicy = databaseConfig.writeOutcomePolicy?.onZeroAffected ?? 'fail';
   const guard = databaseConfig.parameterInferenceGuard ?? {};
-  const updateGuard = (patch: Partial<NonNullable<DatabaseConfig['parameterInferenceGuard']>>): void =>
+  const updateGuard = (
+    patch: Partial<NonNullable<DatabaseConfig['parameterInferenceGuard']>>
+  ): void =>
     updateSelectedNodeConfig({
       database: { ...databaseConfig, parameterInferenceGuard: { ...guard, ...patch } },
     });
@@ -58,16 +61,18 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
                   database: { ...databaseConfig, entityType: value },
                 })
               }
-              options={DB_COLLECTION_OPTIONS.filter((opt: { value: string; label: string }): boolean => opt.value !== 'custom').map((option: { value: string; label: string }) => ({
+              options={DB_COLLECTION_OPTIONS.filter(
+                (opt: { value: string; label: string }): boolean => opt.value !== 'custom'
+              ).map((option: { value: string; label: string }) => ({
                 value: option.value,
-                label: option.label
+                label: option.label,
               }))}
               placeholder='Collection type'
             />
           </FormField>
-          
-          <FormField 
-            label='Payload Source' 
+
+          <FormField
+            label='Payload Source'
             description='The selected input should contain a JSON object. Bundle is recommended.'
           >
             <SelectSimple
@@ -81,14 +86,14 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
               }
               options={availablePorts.map((port: string) => ({
                 value: port,
-                label: formatPortLabel(port)
+                label: formatPortLabel(port),
               }))}
               placeholder='Select payload input'
             />
           </FormField>
 
-          <FormField 
-            label='Payload Path (optional)' 
+          <FormField
+            label='Payload Path (optional)'
             description='Optional path inside the payload to use as the request body.'
           >
             <div className='space-y-2'>
@@ -121,7 +126,7 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
                   }
                   options={Array.from(bundleKeys).map((key: string) => ({
                     value: key,
-                    label: formatPortLabel(key)
+                    label: formatPortLabel(key),
                   }))}
                   placeholder='Pick bundle key'
                 />
@@ -142,9 +147,11 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
                 database: { ...databaseConfig, entityType: value },
               })
             }
-            options={DB_COLLECTION_OPTIONS.filter((opt: { value: string; label: string }): boolean => opt.value !== 'custom').map((option: { value: string; label: string }) => ({
+            options={DB_COLLECTION_OPTIONS.filter(
+              (opt: { value: string; label: string }): boolean => opt.value !== 'custom'
+            ).map((option: { value: string; label: string }) => ({
               value: option.value,
-              label: option.label
+              label: option.label,
             }))}
             placeholder='Collection type'
           />
@@ -152,8 +159,8 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
       )}
 
       {(operation === 'insert' || operation === 'update' || operation === 'delete') && (
-        <FormField 
-          label='Write Outcome Policy' 
+        <FormField
+          label='Write Outcome Policy'
           description='Controls behavior when a write executes successfully but changes no records.'
         >
           <SelectSimple
@@ -194,8 +201,8 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
 
           {guard.enabled && (
             <div className='space-y-3'>
-              <FormField 
-                label='Target field path' 
+              <FormField
+                label='Target field path'
                 description='The field in the database document to write inferred values into, e.g. parameters.'
               >
                 <Input
@@ -209,8 +216,8 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
                 />
               </FormField>
 
-              <FormField 
-                label='Definitions port' 
+              <FormField
+                label='Definitions port'
                 description='Input port that carries the parameter definitions (catalog template).'
               >
                 <SelectSimple

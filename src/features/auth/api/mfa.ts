@@ -1,7 +1,7 @@
-import type { 
+import type {
   MfaSetupResponse,
   MfaVerifyResponse,
-  MfaDisableResponse
+  MfaDisableResponse,
 } from '@/shared/contracts/auth';
 
 const safeJson = async <T>(res: Response): Promise<T> => {
@@ -18,7 +18,9 @@ export const setupMfa = async (): Promise<{ ok: boolean; payload: MfaSetupRespon
   return { ok: res.ok, payload };
 };
 
-export const verifyMfa = async (token: string): Promise<{ ok: boolean; payload: MfaVerifyResponse }> => {
+export const verifyMfa = async (
+  token: string
+): Promise<{ ok: boolean; payload: MfaVerifyResponse }> => {
   const res = await fetch('/api/auth/mfa/verify', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -28,7 +30,10 @@ export const verifyMfa = async (token: string): Promise<{ ok: boolean; payload: 
   return { ok: res.ok, payload };
 };
 
-export const disableMfa = async (input: { token?: string; recoveryCode?: string }): Promise<{ ok: boolean; payload: MfaDisableResponse }> => {
+export const disableMfa = async (input: {
+  token?: string;
+  recoveryCode?: string;
+}): Promise<{ ok: boolean; payload: MfaDisableResponse }> => {
   const res = await fetch('/api/auth/mfa/disable', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

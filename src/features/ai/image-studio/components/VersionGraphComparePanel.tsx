@@ -7,14 +7,15 @@ import { Button } from '@/shared/ui';
 
 import { useVersionGraphCompareContext } from './VersionGraphCompareContext';
 import { useSettingsState } from '../context/SettingsContext';
-import { getImageStudioDocTooltip } from '../utils/studio-docs';
-import { compareGenerationParams } from '../utils/version-graph-compare';
+import { getImageStudioDocTooltip } from '@/shared/lib/ai/image-studio/utils/studio-docs';
+import { compareGenerationParams } from '@/shared/lib/ai/image-studio/utils/version-graph-compare';
 
 // ── Component ────────────────────────────────────────────────────────────────
 
 export function VersionGraphComparePanel(): React.JSX.Element {
   const { studioSettings } = useSettingsState();
-  const { compareNodes, getSlotImageSrc, onOpenDetails, onSwap, onExit } = useVersionGraphCompareContext();
+  const { compareNodes, getSlotImageSrc, onOpenDetails, onSwap, onExit } =
+    useVersionGraphCompareContext();
   const versionGraphTooltipsEnabled = studioSettings.helpTooltips.versionGraphButtonsEnabled;
   const tooltipContent = useMemo(
     () => ({
@@ -27,7 +28,7 @@ export function VersionGraphComparePanel(): React.JSX.Element {
 
   const paramRows = useMemo(
     () => compareGenerationParams(compareNodes[0].slot, compareNodes[1].slot),
-    [compareNodes],
+    [compareNodes]
   );
 
   return (
@@ -61,11 +62,19 @@ export function VersionGraphComparePanel(): React.JSX.Element {
                   className='h-full w-full object-cover'
                 />
               ) : (
-                <div className='flex h-full items-center justify-center text-[10px] text-gray-500'>No image</div>
+                <div className='flex h-full items-center justify-center text-[10px] text-gray-500'>
+                  No image
+                </div>
               )}
             </div>
             <div className='text-[9px] text-gray-500'>
-              {cNode.type === 'composite' ? 'Composite' : cNode.type === 'merge' ? 'Merge' : cNode.type === 'generation' ? 'Generation' : 'Base'}
+              {cNode.type === 'composite'
+                ? 'Composite'
+                : cNode.type === 'merge'
+                  ? 'Merge'
+                  : cNode.type === 'generation'
+                    ? 'Generation'
+                    : 'Base'}
               {cNode.hasMask ? ' · Mask' : ''}
             </div>
           </div>
@@ -75,14 +84,22 @@ export function VersionGraphComparePanel(): React.JSX.Element {
       {/* Parameter diff table */}
       {paramRows.length > 0 ? (
         <div className='mt-2 space-y-0.5'>
-          <div className='text-[9px] font-medium uppercase tracking-wide text-gray-500'>Parameters</div>
+          <div className='text-[9px] font-medium uppercase tracking-wide text-gray-500'>
+            Parameters
+          </div>
           {paramRows.map((row) => (
             <div key={row.field} className='grid grid-cols-[60px_1fr_1fr] gap-1 text-[9px]'>
               <span className='truncate text-gray-500'>{row.field}</span>
-              <span className={`truncate ${row.isDifferent ? 'text-amber-400' : 'text-gray-400'}`} title={row.valueA ?? undefined}>
+              <span
+                className={`truncate ${row.isDifferent ? 'text-amber-400' : 'text-gray-400'}`}
+                title={row.valueA ?? undefined}
+              >
                 {row.valueA ?? '—'}
               </span>
-              <span className={`truncate ${row.isDifferent ? 'text-amber-400' : 'text-gray-400'}`} title={row.valueB ?? undefined}>
+              <span
+                className={`truncate ${row.isDifferent ? 'text-amber-400' : 'text-gray-400'}`}
+                title={row.valueB ?? undefined}
+              >
                 {row.valueB ?? '—'}
               </span>
             </div>
@@ -92,7 +109,8 @@ export function VersionGraphComparePanel(): React.JSX.Element {
 
       {/* Actions */}
       <div className='mt-2 flex gap-2'>
-        <Button size='xs'
+        <Button
+          size='xs'
           variant='outline'
           className='flex-1 text-[10px]'
           title={versionGraphTooltipsEnabled ? tooltipContent.swap : undefined}
@@ -100,7 +118,8 @@ export function VersionGraphComparePanel(): React.JSX.Element {
         >
           Swap
         </Button>
-        <Button size='xs'
+        <Button
+          size='xs'
           variant='outline'
           className='flex-1 text-[10px]'
           title={versionGraphTooltipsEnabled ? tooltipContent.exit : undefined}

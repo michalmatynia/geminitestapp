@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import { SYSTEM_LOG_FILTER_DEFAULTS } from '@/features/observability/lib/log-triage-presets';
-import { readSystemLogUrlState, writeSystemLogUrlState } from '@/features/observability/lib/system-log-filter-url-state';
+import {
+  readSystemLogUrlState,
+  writeSystemLogUrlState,
+} from '@/features/observability/lib/system-log-filter-url-state';
 
 describe('system-log-filter-url-state', () => {
   it('parses URL query into filter state with safe defaults', () => {

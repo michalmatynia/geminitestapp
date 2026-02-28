@@ -28,7 +28,9 @@ export interface UsePromptReturn {
  * Returns a function to trigger prompt and the modal component to render.
  */
 export function usePrompt(): UsePromptReturn {
-  const [config, setPromptConfig] = useState<(PromptConfig & { resolve: (value: string | null) => void }) | null>(null);
+  const [config, setPromptConfig] = useState<
+    (PromptConfig & { resolve: (value: string | null) => void }) | null
+  >(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const prompt = useCallback((newConfig: PromptConfig) => {
@@ -46,18 +48,21 @@ export function usePrompt(): UsePromptReturn {
     setPromptConfig(null);
   }, [config]);
 
-  const handleConfirm = useCallback(async (value: string) => {
-    if (config?.onConfirm) {
-      setIsLoading(true);
-      try {
-        await config.onConfirm(value);
-      } finally {
-        setIsLoading(false);
+  const handleConfirm = useCallback(
+    async (value: string) => {
+      if (config?.onConfirm) {
+        setIsLoading(true);
+        try {
+          await config.onConfirm(value);
+        } finally {
+          setIsLoading(false);
+        }
       }
-    }
-    config?.resolve(value);
-    setPromptConfig(null);
-  }, [config]);
+      config?.resolve(value);
+      setPromptConfig(null);
+    },
+    [config]
+  );
 
   const PromptInputModal = useCallback(() => {
     if (!config) return null;
@@ -83,6 +88,6 @@ export function usePrompt(): UsePromptReturn {
   return {
     prompt,
     PromptInputModal,
-    isPending: isLoading
+    isPending: isLoading,
   };
 }

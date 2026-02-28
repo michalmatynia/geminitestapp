@@ -56,7 +56,9 @@ const dataTransferStub = () => {
   return {
     effectAllowed: 'move',
     dropEffect: 'move',
-    setData: vi.fn((key, val) => { store[key] = val; }),
+    setData: vi.fn((key, val) => {
+      store[key] = val;
+    }),
     getData: vi.fn((key) => store[key] || ''),
     types: [],
   } as unknown as DataTransfer;
@@ -77,14 +79,14 @@ function MasterTreeHarness({
   resolveDropPosition,
 }: {
   initialNodes?: MasterTreeNode[];
-  onNodeDrop?: ((
-    payload: {
-      draggedNodeId: string;
-      targetId: string | null;
-      position: 'inside' | 'before' | 'after';
-      rootDropZone?: 'top' | 'bottom' | undefined;
-    }
-  ) => Promise<void> | void) | undefined;
+  onNodeDrop?:
+    | ((payload: {
+        draggedNodeId: string;
+        targetId: string | null;
+        position: 'inside' | 'before' | 'after';
+        rootDropZone?: 'top' | 'bottom' | undefined;
+      }) => Promise<void> | void)
+    | undefined;
   canDrop?: (() => boolean) | undefined;
   resolveDropPosition?: (() => 'inside' | 'before' | 'after') | undefined;
 }): React.JSX.Element {
@@ -99,23 +101,16 @@ function MasterTreeHarness({
       onNodeDrop={
         onNodeDrop
           ? async (payload): Promise<void> => {
-            await onNodeDrop(payload);
-          }
+              await onNodeDrop(payload);
+            }
           : undefined
       }
       canDrop={canDrop ? (): boolean => canDrop() : undefined}
       resolveDropPosition={
-        resolveDropPosition
-          ? (): 'inside' | 'before' | 'after' => resolveDropPosition()
-          : undefined
+        resolveDropPosition ? (): 'inside' | 'before' | 'after' => resolveDropPosition() : undefined
       }
       renderNode={({ node, isSelected, select, depth }): React.JSX.Element => (
-        <button
-          type='button'
-          onClick={select}
-          data-testid={`row-${node.id}`}
-          data-depth={depth}
-        >
+        <button type='button' onClick={select} data-testid={`row-${node.id}`} data-depth={depth}>
           {isSelected ? '*' : ''}
           {node.name}
         </button>

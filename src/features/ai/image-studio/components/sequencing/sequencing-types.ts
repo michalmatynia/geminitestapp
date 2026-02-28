@@ -1,11 +1,6 @@
-import type { ImageStudioSequenceStep } from '../../utils/studio-settings';
+import type { ImageStudioSequenceStep } from '@/shared/lib/ai/image-studio/utils/studio-settings';
 
-export type SequenceRunStatus =
-  | 'queued'
-  | 'running'
-  | 'completed'
-  | 'failed'
-  | 'cancelled';
+export type SequenceRunStatus = 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
 
 export type SequenceRunHistoryEvent = {
   id: string;
@@ -54,8 +49,4 @@ export type SequenceRunStartResponse = {
   stepCount: number;
 };
 
-export type SequencerDisplayState =
-  | 'idle'
-  | 'running'
-  | 'resolving_terminal_slot'
-  | 'terminal';
+export type SequencerDisplayState = 'idle' | 'running' | 'resolving_terminal_slot' | 'terminal';

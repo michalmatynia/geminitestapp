@@ -9,17 +9,16 @@ const toRecord = (value: unknown): Record<string, unknown> | null => {
 const toArray = (value: unknown): Array<Record<string, unknown>> =>
   Array.isArray(value)
     ? value.filter(
-      (entry: unknown): entry is Record<string, unknown> =>
-        Boolean(entry) && typeof entry === 'object' && !Array.isArray(entry)
-    )
+        (entry: unknown): entry is Record<string, unknown> =>
+          Boolean(entry) && typeof entry === 'object' && !Array.isArray(entry)
+      )
     : [];
 
 const toStringArray = (value: unknown): string[] =>
   Array.isArray(value)
     ? value.filter(
-      (entry: unknown): entry is string =>
-        typeof entry === 'string' && entry.trim().length > 0
-    )
+        (entry: unknown): entry is string => typeof entry === 'string' && entry.trim().length > 0
+      )
     : [];
 
 const toRequiredFlag = (value: unknown): boolean | undefined => {
@@ -109,10 +108,7 @@ const readMergedInputContracts = (
   return merged;
 };
 
-const hasMirroredRuntimeContracts = (
-  node: Record<string, unknown>,
-  inputs: string[]
-): boolean => {
+const hasMirroredRuntimeContracts = (node: Record<string, unknown>, inputs: string[]): boolean => {
   if (inputs.length === 0) return false;
   const { nodeContracts, runtimeContracts } = readNodeContracts(node);
   return inputs.every((port: string): boolean => {
@@ -189,13 +185,15 @@ const applyNodeRuntimeContractsUpgrade = (
         required: false,
       };
     });
-    Object.entries(mergedContracts).forEach(([port, contract]: [string, Record<string, unknown>]): void => {
-      if (nextContracts[port] !== undefined) return;
-      nextContracts[port] = {
-        ...contract,
-        ...(toRequiredFlag(contract['required']) === true ? { required: false } : {}),
-      };
-    });
+    Object.entries(mergedContracts).forEach(
+      ([port, contract]: [string, Record<string, unknown>]): void => {
+        if (nextContracts[port] !== undefined) return;
+        nextContracts[port] = {
+          ...contract,
+          ...(toRequiredFlag(contract['required']) === true ? { required: false } : {}),
+        };
+      }
+    );
     const config = toRecord(node['config']) ?? {};
     const runtime = toRecord(config['runtime']) ?? {};
     return {
@@ -227,10 +225,12 @@ const applyNodeRuntimeContractsUpgrade = (
       required,
     };
   });
-  Object.entries(mergedContracts).forEach(([port, contract]: [string, Record<string, unknown>]): void => {
-    if (nextContracts[port] !== undefined) return;
-    nextContracts[port] = contract;
-  });
+  Object.entries(mergedContracts).forEach(
+    ([port, contract]: [string, Record<string, unknown>]): void => {
+      if (nextContracts[port] !== undefined) return;
+      nextContracts[port] = contract;
+    }
+  );
 
   const config = toRecord(node['config']) ?? {};
   const runtime = toRecord(config['runtime']) ?? {};
@@ -248,9 +248,7 @@ const applyNodeRuntimeContractsUpgrade = (
   };
 };
 
-export const needsRuntimeInputContractsUpgrade = (
-  raw: string | undefined
-): boolean => {
+export const needsRuntimeInputContractsUpgrade = (raw: string | undefined): boolean => {
   if (!raw) return false;
   try {
     const parsed = JSON.parse(raw) as Record<string, unknown>;
@@ -277,9 +275,7 @@ export const needsRuntimeInputContractsUpgrade = (
   }
 };
 
-export const upgradeRuntimeInputContractsConfig = (
-  raw: string | undefined
-): string | null => {
+export const upgradeRuntimeInputContractsConfig = (raw: string | undefined): string | null => {
   if (!raw) return null;
   let parsed: Record<string, unknown>;
   try {

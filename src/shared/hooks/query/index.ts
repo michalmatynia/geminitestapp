@@ -3,9 +3,18 @@ export { useInfiniteQueryWithPagination, useFlattenedInfiniteData } from './useI
 export { useQueryPersistence } from './useQueryPersistence';
 export { useStreamingQuery, useWebSocketQuery, useSmartPolling } from './useStreamingQueries';
 export { useQueryDiagnostics } from './useQueryDiagnostics';
-export { useGlobalQueryErrorHandler, useResilientQuery, useCircuitBreakerQuery } from './useQueryErrorHandling';
+export {
+  useGlobalQueryErrorHandler,
+  useResilientQuery,
+  useCircuitBreakerQuery,
+} from './useQueryErrorHandling';
 export { useDependentQueries, useParallelQueries, useConditionalQuery } from './useAdvancedQueries';
-export { useSearchQuery, useAutocomplete, usePaginatedSearch, useSearchSuggestions } from './useSearchQueries';
+export {
+  useSearchQuery,
+  useAutocomplete,
+  usePaginatedSearch,
+  useSearchSuggestions,
+} from './useSearchQueries';
 export { useRealtimeQuery } from './useRealtimeQuery';
 export { useQueryLifecycle } from './useQueryLifecycle';
 export { useQueryMiddleware } from './useQueryMiddleware';

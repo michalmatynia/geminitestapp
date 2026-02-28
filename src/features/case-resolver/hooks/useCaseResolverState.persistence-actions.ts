@@ -72,31 +72,29 @@ export function useCaseResolverPersistence({
   const [workspaceSaveError, setWorkspaceSaveError] = useState<string | null>(null);
 
   const lastPersistedValueRef = useRef<string>(JSON.stringify(initialWorkspaceState));
-  const lastPersistedRevisionRef = useRef<number>(getCaseResolverWorkspaceRevision(initialWorkspaceState));
+  const lastPersistedRevisionRef = useRef<number>(
+    getCaseResolverWorkspaceRevision(initialWorkspaceState)
+  );
   const pendingSaveToastRef = useRef<string | null>(null);
   const queuedSerializedWorkspaceRef = useRef<string | null>(null);
   const queuedExpectedRevisionRef = useRef<number | null>(null);
   const queuedMutationIdRef = useRef<string | null>(null);
   const queueStateRef = useRef<CaseResolverWorkspacePersistQueueState>(
-    createCaseResolverWorkspacePersistQueueState(),
+    createCaseResolverWorkspacePersistQueueState()
   );
   const conflictRetryTimerRef = useRef<number | null>(null);
   const persistWorkspaceTimerRef = useRef<number | null>(null);
   const persistWorkspaceInFlightRef = useRef(false);
   const workspaceConflictAutoRetryCountRef = useRef(0);
 
-  const applyQueueState = useCallback(
-    (nextState: CaseResolverWorkspacePersistQueueState): void => {
-      queueStateRef.current = nextState;
-      queuedSerializedWorkspaceRef.current = nextState.queuedSerializedWorkspace;
-      queuedExpectedRevisionRef.current = nextState.queuedExpectedRevision;
-      queuedMutationIdRef.current = nextState.queuedMutationId;
-      persistWorkspaceInFlightRef.current =
-        nextState.inFlightSerializedWorkspace !== null;
-      workspaceConflictAutoRetryCountRef.current = nextState.conflictAutoRetryCount;
-    },
-    [],
-  );
+  const applyQueueState = useCallback((nextState: CaseResolverWorkspacePersistQueueState): void => {
+    queueStateRef.current = nextState;
+    queuedSerializedWorkspaceRef.current = nextState.queuedSerializedWorkspace;
+    queuedExpectedRevisionRef.current = nextState.queuedExpectedRevision;
+    queuedMutationIdRef.current = nextState.queuedMutationId;
+    persistWorkspaceInFlightRef.current = nextState.inFlightSerializedWorkspace !== null;
+    workspaceConflictAutoRetryCountRef.current = nextState.conflictAutoRetryCount;
+  }, []);
 
   const syncPersistedWorkspaceTracking = useCallback(
     (nextWorkspace: CaseResolverWorkspace): void => {
@@ -117,17 +115,13 @@ export function useCaseResolverPersistence({
       expectedRevision: number;
       mutationId: string;
     }): void => {
-      applyQueueState(
-        enqueueCaseResolverWorkspacePersistMutation(queueStateRef.current, input),
-      );
+      applyQueueState(enqueueCaseResolverWorkspacePersistMutation(queueStateRef.current, input));
     },
-    [applyQueueState],
+    [applyQueueState]
   );
 
   const clearQueuedWorkspacePersistMutation = useCallback((): void => {
-    applyQueueState(
-      clearCaseResolverWorkspacePersistQueue(queueStateRef.current),
-    );
+    applyQueueState(clearCaseResolverWorkspacePersistQueue(queueStateRef.current));
   }, [applyQueueState]);
 
   const clearConflictRetryTimer = useCallback((): void => {
@@ -152,9 +146,7 @@ export function useCaseResolverPersistence({
       state: queueStateRef.current,
       lastPersistedSerialized: lastPersistedValueRef.current,
       lastPersistedRevision: lastPersistedRevisionRef.current,
-      fallbackMutationId: createCaseResolverWorkspaceMutationId(
-        'case-resolver-workspace-manual',
-      ),
+      fallbackMutationId: createCaseResolverWorkspaceMutationId('case-resolver-workspace-manual'),
     });
     applyQueueState(persistAttemptResult.nextState);
     const persistAttempt = persistAttemptResult.attempt;
@@ -169,9 +161,7 @@ export function useCaseResolverPersistence({
       expectedRevision,
       mutationId,
     } = persistAttempt;
-    const parsedWorkspaceForPersist = parseCaseResolverWorkspace(
-      nextSerializedWorkspace,
-    );
+    const parsedWorkspaceForPersist = parseCaseResolverWorkspace(nextSerializedWorkspace);
 
     setIsWorkspaceSaving(true);
     setWorkspaceSaveStatus('saving');
@@ -183,132 +173,126 @@ export function useCaseResolverPersistence({
       expectedRevision,
       mutationId,
       source: 'case_view',
-    }).then((result) => {
-      if (result.ok) {
-        clearConflictRetryTimer();
-        const persistedWorkspace = result.workspace;
-        syncPersistedWorkspaceTracking(persistedWorkspace);
-        applyQueueState(
-          completeCaseResolverWorkspacePersistAttemptSuccess(
-            queueStateRef.current,
-            {
-              persistedRevision: getCaseResolverWorkspaceRevision(persistedWorkspace),
-            },
-          ),
-        );
-        logCaseResolverWorkspaceEvent({
-          source: 'case_view',
-          action: 'manual_save_success',
-          mutationId,
-          expectedRevision,
-          workspaceRevision: getCaseResolverWorkspaceRevision(persistedWorkspace),
-        });
-        settingsStoreRef.current.refetch();
-        if (pendingSaveToastRef.current) {
-          toast(pendingSaveToastRef.current, { variant: 'success' });
-          pendingSaveToastRef.current = null;
-        }
-        setWorkspaceSaveStatus('saved');
-        setWorkspaceSaveError(null);
-        return;
-      }
-
-      if (!result.ok && result.conflict) {
-        const serverWorkspace = result.workspace;
-        const serverRevision = getCaseResolverWorkspaceRevision(serverWorkspace);
-        syncPersistedWorkspaceTracking(serverWorkspace);
-        logCaseResolverWorkspaceEvent({
-          source: 'case_view',
-          action: 'manual_save_conflict',
-          mutationId,
-          expectedRevision,
-          workspaceRevision: serverRevision,
-        });
-        const conflictResult = completeCaseResolverWorkspacePersistAttemptConflict({
-          state: queueStateRef.current,
-          serverRevision,
-          maxAutoRetryCount: CASE_RESOLVER_WORKSPACE_CONFLICT_AUTO_RETRY_LIMIT,
-        });
-        applyQueueState(conflictResult.nextState);
-        if (conflictResult.exhausted) {
+    })
+      .then((result) => {
+        if (result.ok) {
           clearConflictRetryTimer();
-          shouldContinuePersistQueue = false;
-          pendingSaveToastRef.current = null;
-          const retryErrorMessage =
-            'Could not save Case Resolver changes because workspace kept changing. Please try again.';
+          const persistedWorkspace = result.workspace;
+          syncPersistedWorkspaceTracking(persistedWorkspace);
+          applyQueueState(
+            completeCaseResolverWorkspacePersistAttemptSuccess(queueStateRef.current, {
+              persistedRevision: getCaseResolverWorkspaceRevision(persistedWorkspace),
+            })
+          );
           logCaseResolverWorkspaceEvent({
             source: 'case_view',
-            action: 'manual_save_conflict_retry_exhausted',
+            action: 'manual_save_success',
             mutationId,
             expectedRevision,
-            workspaceRevision: serverRevision,
-            message: retryErrorMessage,
+            workspaceRevision: getCaseResolverWorkspaceRevision(persistedWorkspace),
           });
-          setWorkspaceSaveStatus('error');
-          setWorkspaceSaveError(retryErrorMessage);
-          toast(retryErrorMessage, { variant: 'error' });
+          settingsStoreRef.current.refetch();
+          if (pendingSaveToastRef.current) {
+            toast(pendingSaveToastRef.current, { variant: 'success' });
+            pendingSaveToastRef.current = null;
+          }
+          setWorkspaceSaveStatus('saved');
+          setWorkspaceSaveError(null);
           return;
         }
 
-        const retryDelayMs = computeCaseResolverConflictRetryDelayMs(
-          conflictResult.retryCount,
-        );
-        setWorkspaceSaveStatus('saving');
-        setWorkspaceSaveError(null);
+        if (!result.ok && result.conflict) {
+          const serverWorkspace = result.workspace;
+          const serverRevision = getCaseResolverWorkspaceRevision(serverWorkspace);
+          syncPersistedWorkspaceTracking(serverWorkspace);
+          logCaseResolverWorkspaceEvent({
+            source: 'case_view',
+            action: 'manual_save_conflict',
+            mutationId,
+            expectedRevision,
+            workspaceRevision: serverRevision,
+          });
+          const conflictResult = completeCaseResolverWorkspacePersistAttemptConflict({
+            state: queueStateRef.current,
+            serverRevision,
+            maxAutoRetryCount: CASE_RESOLVER_WORKSPACE_CONFLICT_AUTO_RETRY_LIMIT,
+          });
+          applyQueueState(conflictResult.nextState);
+          if (conflictResult.exhausted) {
+            clearConflictRetryTimer();
+            shouldContinuePersistQueue = false;
+            pendingSaveToastRef.current = null;
+            const retryErrorMessage =
+              'Could not save Case Resolver changes because workspace kept changing. Please try again.';
+            logCaseResolverWorkspaceEvent({
+              source: 'case_view',
+              action: 'manual_save_conflict_retry_exhausted',
+              mutationId,
+              expectedRevision,
+              workspaceRevision: serverRevision,
+              message: retryErrorMessage,
+            });
+            setWorkspaceSaveStatus('error');
+            setWorkspaceSaveError(retryErrorMessage);
+            toast(retryErrorMessage, { variant: 'error' });
+            return;
+          }
+
+          const retryDelayMs = computeCaseResolverConflictRetryDelayMs(conflictResult.retryCount);
+          setWorkspaceSaveStatus('saving');
+          setWorkspaceSaveError(null);
+          clearConflictRetryTimer();
+          conflictRetryTimerRef.current = window.setTimeout((): void => {
+            conflictRetryTimerRef.current = null;
+            flushWorkspacePersist();
+          }, retryDelayMs);
+          shouldContinuePersistQueue = false;
+          logCaseResolverWorkspaceEvent({
+            source: 'case_view',
+            action: 'manual_save_conflict_retry',
+            mutationId,
+            expectedRevision: serverRevision,
+            workspaceRevision: serverRevision,
+            message: `Auto-retrying save after conflict (${conflictResult.retryCount}/${CASE_RESOLVER_WORKSPACE_CONFLICT_AUTO_RETRY_LIMIT}) in ${retryDelayMs}ms.`,
+          });
+          return;
+        }
+
         clearConflictRetryTimer();
-        conflictRetryTimerRef.current = window.setTimeout((): void => {
-          conflictRetryTimerRef.current = null;
-          flushWorkspacePersist();
-        }, retryDelayMs);
+        applyQueueState(completeCaseResolverWorkspacePersistAttemptFailure(queueStateRef.current));
+        if (pendingSaveToastRef.current) {
+          pendingSaveToastRef.current = null;
+        }
         shouldContinuePersistQueue = false;
+        const errorMessage = result.error || 'Failed to save Case Resolver workspace.';
         logCaseResolverWorkspaceEvent({
           source: 'case_view',
-          action: 'manual_save_conflict_retry',
+          action: 'manual_save_error',
           mutationId,
-          expectedRevision: serverRevision,
-          workspaceRevision: serverRevision,
-          message: `Auto-retrying save after conflict (${conflictResult.retryCount}/${CASE_RESOLVER_WORKSPACE_CONFLICT_AUTO_RETRY_LIMIT}) in ${retryDelayMs}ms.`,
+          expectedRevision,
+          message: errorMessage,
         });
-        return;
-      }
-
-      clearConflictRetryTimer();
-      applyQueueState(
-        completeCaseResolverWorkspacePersistAttemptFailure(queueStateRef.current),
-      );
-      if (pendingSaveToastRef.current) {
-        pendingSaveToastRef.current = null;
-      }
-      shouldContinuePersistQueue = false;
-      const errorMessage = result.error || 'Failed to save Case Resolver workspace.';
-      logCaseResolverWorkspaceEvent({
-        source: 'case_view',
-        action: 'manual_save_error',
-        mutationId,
-        expectedRevision,
-        message: errorMessage,
+        setWorkspaceSaveStatus('error');
+        setWorkspaceSaveError(errorMessage);
+        toast(errorMessage, { variant: 'error' });
+      })
+      .finally(() => {
+        applyQueueState({
+          ...queueStateRef.current,
+          inFlightSerializedWorkspace: null,
+          inFlightExpectedRevision: null,
+          inFlightMutationId: null,
+        });
+        if (
+          shouldContinuePersistQueue &&
+          queueStateRef.current.queuedSerializedWorkspace &&
+          queueStateRef.current.queuedSerializedWorkspace !== lastPersistedValueRef.current
+        ) {
+          flushWorkspacePersist();
+          return;
+        }
+        setIsWorkspaceSaving(false);
       });
-      setWorkspaceSaveStatus('error');
-      setWorkspaceSaveError(errorMessage);
-      toast(errorMessage, { variant: 'error' });
-    }).finally(() => {
-      applyQueueState({
-        ...queueStateRef.current,
-        inFlightSerializedWorkspace: null,
-        inFlightExpectedRevision: null,
-        inFlightMutationId: null,
-      });
-      if (
-        shouldContinuePersistQueue &&
-        queueStateRef.current.queuedSerializedWorkspace &&
-        queueStateRef.current.queuedSerializedWorkspace !==
-          lastPersistedValueRef.current
-      ) {
-        flushWorkspacePersist();
-        return;
-      }
-      setIsWorkspaceSaving(false);
-    });
   }, [
     applyQueueState,
     clearConflictRetryTimer,

@@ -4,10 +4,7 @@ import React from 'react';
 import { Play, Square } from 'lucide-react';
 import { Button } from '@/shared/ui';
 import { StudioCard } from '../StudioCard';
-import type { 
-  SequenceRunStatus, 
-  SequencerDisplayState 
-} from './sequencing-types';
+import type { SequenceRunStatus, SequencerDisplayState } from './sequencing-types';
 
 export interface SequenceRunCardProps {
   handleStartSequence: () => void;
@@ -90,9 +87,7 @@ export function SequenceRunCard({
           </div>
         ) : null}
         {activeStepLabel ? (
-          <div className='text-[11px] text-gray-400'>
-            Active step: {activeStepLabel}
-          </div>
+          <div className='text-[11px] text-gray-400'>Active step: {activeStepLabel}</div>
         ) : null}
         {slotSyncWarning ? (
           <div className='text-[11px] text-amber-300'>{slotSyncWarning}</div>
@@ -110,11 +105,7 @@ export function SequenceRunCard({
             </Button>
           </div>
         ) : null}
-        {sequenceError ? (
-          <div className='text-[11px] text-red-300'>
-            {sequenceError}
-          </div>
-        ) : null}
+        {sequenceError ? <div className='text-[11px] text-red-300'>{sequenceError}</div> : null}
 
         <div className='max-h-44 overflow-y-auto rounded border border-border/50 bg-card/40 p-2 text-[11px] text-gray-300'>
           {sequenceLog.length > 0 ? (

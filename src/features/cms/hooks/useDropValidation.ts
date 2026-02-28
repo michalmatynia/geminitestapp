@@ -15,7 +15,17 @@ export interface DropValidationResult {
 }
 
 // Block types that can be nested inside other blocks (container blocks)
-const CONTAINER_BLOCK_TYPES = new Set(['ImageWithText', 'Hero', 'RichText', 'Block', 'TextAtom', 'Carousel', 'CarouselFrame', 'Slideshow', 'SlideshowFrame']);
+const CONTAINER_BLOCK_TYPES = new Set([
+  'ImageWithText',
+  'Hero',
+  'RichText',
+  'Block',
+  'TextAtom',
+  'Carousel',
+  'CarouselFrame',
+  'Slideshow',
+  'SlideshowFrame',
+]);
 
 // Section types that can be converted to blocks
 const CONVERTIBLE_SECTION_TYPES = new Set([
@@ -42,7 +52,7 @@ export function useDropValidation(): {
   canDropInNestedBlock: (blockType: string, parentBlockType: string) => DropValidationResult;
   canConvertSectionToBlock: (sectionType: string) => DropValidationResult;
   isContainerBlock: (blockType: string) => boolean;
-  } {
+} {
   /**
    * Check if a block type can be dropped directly into a Row
    */
@@ -128,7 +138,14 @@ export function useDropValidation(): {
       }
 
       // Default container block types allow common elements
-      const commonAllowed = ['Heading', 'Text', 'TextElement', 'ImageElement', 'Button', 'AppEmbed'];
+      const commonAllowed = [
+        'Heading',
+        'Text',
+        'TextElement',
+        'ImageElement',
+        'Button',
+        'AppEmbed',
+      ];
       if (commonAllowed.includes(blockType)) {
         return { isValid: true };
       }
@@ -144,18 +161,15 @@ export function useDropValidation(): {
   /**
    * Check if a section can be converted to a block (for dropping sections into columns)
    */
-  const canConvertSectionToBlock = useCallback(
-    (sectionType: string): DropValidationResult => {
-      if (CONVERTIBLE_SECTION_TYPES.has(sectionType)) {
-        return { isValid: true };
-      }
-      return {
-        isValid: false,
-        reason: `"${sectionType}" sections cannot be converted to blocks.`,
-      };
-    },
-    []
-  );
+  const canConvertSectionToBlock = useCallback((sectionType: string): DropValidationResult => {
+    if (CONVERTIBLE_SECTION_TYPES.has(sectionType)) {
+      return { isValid: true };
+    }
+    return {
+      isValid: false,
+      reason: `"${sectionType}" sections cannot be converted to blocks.`,
+    };
+  }, []);
 
   /**
    * Check if a block type is a container that can hold other blocks

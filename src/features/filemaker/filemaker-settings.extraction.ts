@@ -1,4 +1,7 @@
-import { FILEMAKER_EMAIL_PARSER_RULE_PREFIX, FILEMAKER_PHONE_VALIDATION_RULE_PREFIX } from './settings-constants';
+import {
+  FILEMAKER_EMAIL_PARSER_RULE_PREFIX,
+  FILEMAKER_PHONE_VALIDATION_RULE_PREFIX,
+} from './settings-constants';
 
 export type FilemakerEmailParserRule = {
   id: string;
@@ -49,8 +52,7 @@ export const DEFAULT_FILEMAKER_EMAIL_PARSER_RULES: FilemakerEmailParserRule[] = 
   },
   {
     id: `${FILEMAKER_EMAIL_PARSER_RULE_PREFIX}plain`,
-    pattern:
-      '(?:^|[^A-Z0-9._%+-])([A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,})(?=$|[^A-Z0-9._%+-])',
+    pattern: '(?:^|[^A-Z0-9._%+-])([A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,})(?=$|[^A-Z0-9._%+-])',
     flags: 'gi',
     sequence: 40,
   },

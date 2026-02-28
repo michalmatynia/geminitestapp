@@ -3,18 +3,10 @@
 import { useQueryClient } from '@tanstack/react-query';
 
 import { runsApi } from '@/shared/lib/ai-paths/api/client';
-import {
-  TRIGGER_EVENTS,
-} from '@/shared/lib/ai-paths/core/constants';
-import {
-  sanitizeEdges,
-} from '@/shared/lib/ai-paths/core/utils/graph';
+import { TRIGGER_EVENTS } from '@/shared/lib/ai-paths/core/constants';
+import { sanitizeEdges } from '@/shared/lib/ai-paths/core/utils/graph';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import type {
-  AiNode,
-  PathConfig,
-  Edge,
-} from '@/shared/contracts/ai-paths';
+import type { AiNode, PathConfig, Edge } from '@/shared/contracts/ai-paths';
 import {
   invalidateAiPathQueue,
   notifyAiPathRunEnqueued,
@@ -37,7 +29,6 @@ const normalizeNodes = (nodes: AiNode[]): AiNode[] => {
   }));
 };
 
-
 function buildTriggerContext(
   triggerNode: AiNode,
   triggerEvent: string,
@@ -49,59 +40,65 @@ function buildTriggerContext(
   const nativeEvent = event?.nativeEvent;
   const pointer = nativeEvent
     ? {
-      clientX: nativeEvent.clientX,
-      clientY: nativeEvent.clientY,
-      pageX: nativeEvent.pageX,
-      pageY: nativeEvent.pageY,
-      screenX: nativeEvent.screenX,
-      screenY: nativeEvent.screenY,
-      offsetX: 'offsetX' in nativeEvent ? (nativeEvent as unknown as { offsetX: number }).offsetX : undefined,
-      offsetY: 'offsetY' in nativeEvent ? (nativeEvent as unknown as { offsetY: number }).offsetY : undefined,
-      button: nativeEvent.button,
-      buttons: nativeEvent.buttons,
-      altKey: nativeEvent.altKey,
-      ctrlKey: nativeEvent.ctrlKey,
-      shiftKey: nativeEvent.shiftKey,
-      metaKey: nativeEvent.metaKey,
-    }
+        clientX: nativeEvent.clientX,
+        clientY: nativeEvent.clientY,
+        pageX: nativeEvent.pageX,
+        pageY: nativeEvent.pageY,
+        screenX: nativeEvent.screenX,
+        screenY: nativeEvent.screenY,
+        offsetX:
+          'offsetX' in nativeEvent
+            ? (nativeEvent as unknown as { offsetX: number }).offsetX
+            : undefined,
+        offsetY:
+          'offsetY' in nativeEvent
+            ? (nativeEvent as unknown as { offsetY: number }).offsetY
+            : undefined,
+        button: nativeEvent.button,
+        buttons: nativeEvent.buttons,
+        altKey: nativeEvent.altKey,
+        ctrlKey: nativeEvent.ctrlKey,
+        shiftKey: nativeEvent.shiftKey,
+        metaKey: nativeEvent.metaKey,
+      }
     : undefined;
   const location =
     typeof window !== 'undefined'
       ? {
-        href: window.location.href,
-        origin: window.location.origin,
-        pathname: window.location.pathname,
-        search: window.location.search,
-        hash: window.location.hash,
-        referrer: document.referrer || undefined,
-      }
+          href: window.location.href,
+          origin: window.location.origin,
+          pathname: window.location.pathname,
+          search: window.location.search,
+          hash: window.location.hash,
+          referrer: document.referrer || undefined,
+        }
       : {};
   const ui =
     typeof window !== 'undefined'
       ? {
-        viewport: {
-          width: window.innerWidth,
-          height: window.innerHeight,
-          devicePixelRatio: window.devicePixelRatio,
-        },
-        screen: {
-          width: window.screen?.width,
-          height: window.screen?.height,
-          availWidth: window.screen?.availWidth,
-          availHeight: window.screen?.availHeight,
-        },
-        userAgent: navigator.userAgent,
-        platform: navigator.platform,
-        language: navigator.language,
-        languages: navigator.languages,
-        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        documentTitle: document.title,
-        visibilityState: document.visibilityState,
-        scroll: {
-          x: window.scrollX,
-          y: window.scrollY,
-        },
-      }
+          viewport: {
+            width: window.innerWidth,
+            height: window.innerHeight,
+            devicePixelRatio: window.devicePixelRatio,
+          },
+          screen: {
+            width: window.screen?.width,
+            height: window.screen?.height,
+            availWidth: window.screen?.availWidth,
+            availHeight: window.screen?.availHeight,
+          },
+          userAgent: navigator.userAgent,
+          platform: navigator.platform,
+          language: navigator.language,
+          languages: navigator.languages,
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          documentTitle: document.title,
+          visibilityState: document.visibilityState,
+          scroll: {
+            x: window.scrollX,
+            y: window.scrollY,
+          },
+        }
       : {};
   return {
     timestamp,
@@ -134,7 +131,7 @@ export function useAiPathTrigger(): {
     product: { id: string } | null,
     event?: React.MouseEvent<HTMLButtonElement>
   ) => Promise<void>;
-  } {
+} {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -157,8 +154,8 @@ export function useAiPathTrigger(): {
         requireServerExecution: boolean
       ): { selectedConfig: PathConfig; triggerEvent: string } | null => {
         return (
-          PRODUCT_TRIGGER_EVENT_IDS
-            .map((eventId: string): { selectedConfig: PathConfig; triggerEvent: string } | null => {
+          PRODUCT_TRIGGER_EVENT_IDS.map(
+            (eventId: string): { selectedConfig: PathConfig; triggerEvent: string } | null => {
               const selectedConfig = findTriggerPath(
                 orderedConfigs,
                 uiState,
@@ -172,18 +169,15 @@ export function useAiPathTrigger(): {
                 }
               );
               return selectedConfig ? { selectedConfig, triggerEvent: eventId } : null;
-            })
-            .find(
-              (
-                candidate
-              ): candidate is { selectedConfig: PathConfig; triggerEvent: string } =>
-                candidate !== null
-            ) ?? null
+            }
+          ).find(
+            (candidate): candidate is { selectedConfig: PathConfig; triggerEvent: string } =>
+              candidate !== null
+          ) ?? null
         );
       };
 
-      const triggerSelection =
-        resolveTriggerSelection(true) ?? resolveTriggerSelection(false);
+      const triggerSelection = resolveTriggerSelection(true) ?? resolveTriggerSelection(false);
 
       if (!triggerSelection) {
         toast(
@@ -235,9 +229,12 @@ export function useAiPathTrigger(): {
       const executionMode = selectedConfig.executionMode === 'local' ? 'local' : 'server';
 
       if (executionMode === 'local') {
-        toast('This path is in Local mode. Local browser execution is unavailable here, so it will be queued on the server.', {
-          variant: 'warning',
-        });
+        toast(
+          'This path is in Local mode. Local browser execution is unavailable here, so it will be queued on the server.',
+          {
+            variant: 'warning',
+          }
+        );
       }
       const enqueueResult = await runsApi.enqueue({
         pathId: selectedConfig.id ?? 'path',
@@ -271,12 +268,14 @@ export function useAiPathTrigger(): {
         queuedRun &&
           typeof queuedRun === 'object' &&
           typeof (queuedRun as { id?: unknown }).id === 'string'
-          ? ((queuedRun as { id: string }).id)
+          ? (queuedRun as { id: string }).id
           : null
       );
       toast('AI Path run queued.', { variant: 'success' });
     } catch (error) {
-      logClientError(error, { context: { source: 'useAiPathTrigger', action: 'runPathTrigger', productId: product.id } });
+      logClientError(error, {
+        context: { source: 'useAiPathTrigger', action: 'runPathTrigger', productId: product.id },
+      });
       toast('Failed to run AI Path trigger.', { variant: 'error' });
     }
   };

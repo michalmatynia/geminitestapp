@@ -98,9 +98,13 @@ export interface UiActions {
   setCanvasBackgroundLayerEnabled: (value: boolean) => void;
   setCanvasBackgroundColor: (value: string) => void;
   setPendingSequenceThumbnail: (value: PendingSequenceThumbnailState | null) => void;
-  registerPreviewCanvasViewportCropResolver: (resolver: PreviewCanvasViewportCropResolver | null) => void;
+  registerPreviewCanvasViewportCropResolver: (
+    resolver: PreviewCanvasViewportCropResolver | null
+  ) => void;
   getPreviewCanvasViewportCrop: () => PreviewCanvasViewportCrop | null;
-  registerPreviewCanvasImageFrameResolver: (resolver: PreviewCanvasImageFrameResolver | null) => void;
+  registerPreviewCanvasImageFrameResolver: (
+    resolver: PreviewCanvasImageFrameResolver | null
+  ) => void;
   getPreviewCanvasImageFrame: () => PreviewCanvasImageFrameBinding | null;
 }
 
@@ -121,31 +125,59 @@ export function UiProvider({ children }: { children: React.ReactNode }): React.J
   const [canvasSelectionEnabled, setCanvasSelectionEnabled] = useState(false);
   const [previewCanvasSize, setPreviewCanvasSize] = useState<PreviewCanvasSize>('regular');
   const [imageTransformMode, setImageTransformMode] = useState<ImageTransformMode>('none');
-  const [canvasImageOffsetState, setCanvasImageOffsetState] = useState<CanvasImageOffset>(DEFAULT_CANVAS_IMAGE_OFFSET);
+  const [canvasImageOffsetState, setCanvasImageOffsetState] = useState<CanvasImageOffset>(
+    DEFAULT_CANVAS_IMAGE_OFFSET
+  );
   const [canvasBackgroundLayerEnabled, setCanvasBackgroundLayerEnabled] = useState(true);
-  const [canvasBackgroundColor, setCanvasBackgroundColorState] = useState(DEFAULT_CANVAS_BACKGROUND_COLOR);
-  const [pendingSequenceThumbnail, setPendingSequenceThumbnail] = useState<PendingSequenceThumbnailState | null>(null);
-  const previewCanvasViewportCropResolverRef = useRef<PreviewCanvasViewportCropResolver | null>(null);
+  const [canvasBackgroundColor, setCanvasBackgroundColorState] = useState(
+    DEFAULT_CANVAS_BACKGROUND_COLOR
+  );
+  const [pendingSequenceThumbnail, setPendingSequenceThumbnail] =
+    useState<PendingSequenceThumbnailState | null>(null);
+  const previewCanvasViewportCropResolverRef = useRef<PreviewCanvasViewportCropResolver | null>(
+    null
+  );
   const previewCanvasImageFrameResolverRef = useRef<PreviewCanvasImageFrameResolver | null>(null);
 
   const layoutState = useMemo<UiLayoutState>(() => ({ isFocusMode }), [isFocusMode]);
-  const canvasState = useMemo<UiCanvasState>(() => ({
-    previewCanvasSize,
-    imageTransformMode,
-    canvasImageOffset: canvasImageOffsetState,
-    canvasBackgroundLayerEnabled,
-    canvasBackgroundColor,
-  }), [previewCanvasSize, imageTransformMode, canvasImageOffsetState, canvasBackgroundLayerEnabled, canvasBackgroundColor]);
+  const canvasState = useMemo<UiCanvasState>(
+    () => ({
+      previewCanvasSize,
+      imageTransformMode,
+      canvasImageOffset: canvasImageOffsetState,
+      canvasBackgroundLayerEnabled,
+      canvasBackgroundColor,
+    }),
+    [
+      previewCanvasSize,
+      imageTransformMode,
+      canvasImageOffsetState,
+      canvasBackgroundLayerEnabled,
+      canvasBackgroundColor,
+    ]
+  );
 
-  const toolsState = useMemo<UiToolsState>(() => ({
-    maskPreviewEnabled,
-    centerGuidesEnabled,
-    validatorEnabled,
-    formatterEnabled,
-    canvasSelectionEnabled,
-  }), [maskPreviewEnabled, centerGuidesEnabled, validatorEnabled, formatterEnabled, canvasSelectionEnabled]);
+  const toolsState = useMemo<UiToolsState>(
+    () => ({
+      maskPreviewEnabled,
+      centerGuidesEnabled,
+      validatorEnabled,
+      formatterEnabled,
+      canvasSelectionEnabled,
+    }),
+    [
+      maskPreviewEnabled,
+      centerGuidesEnabled,
+      validatorEnabled,
+      formatterEnabled,
+      canvasSelectionEnabled,
+    ]
+  );
 
-  const sequenceState = useMemo<UiSequenceState>(() => ({ pendingSequenceThumbnail }), [pendingSequenceThumbnail]);
+  const sequenceState = useMemo<UiSequenceState>(
+    () => ({ pendingSequenceThumbnail }),
+    [pendingSequenceThumbnail]
+  );
 
   const state = useMemo<UiState>(
     () => ({
@@ -188,12 +220,16 @@ export function UiProvider({ children }: { children: React.ReactNode }): React.J
         setCanvasBackgroundColorState(normalizeCanvasBackgroundColor(value));
       },
       setPendingSequenceThumbnail,
-      registerPreviewCanvasViewportCropResolver: (resolver: PreviewCanvasViewportCropResolver | null): void => {
+      registerPreviewCanvasViewportCropResolver: (
+        resolver: PreviewCanvasViewportCropResolver | null
+      ): void => {
         previewCanvasViewportCropResolverRef.current = resolver;
       },
       getPreviewCanvasViewportCrop: (): PreviewCanvasViewportCrop | null =>
         previewCanvasViewportCropResolverRef.current?.() ?? null,
-      registerPreviewCanvasImageFrameResolver: (resolver: PreviewCanvasImageFrameResolver | null): void => {
+      registerPreviewCanvasImageFrameResolver: (
+        resolver: PreviewCanvasImageFrameResolver | null
+      ): void => {
         previewCanvasImageFrameResolverRef.current = resolver;
       },
       getPreviewCanvasImageFrame: (): PreviewCanvasImageFrameBinding | null =>
@@ -208,9 +244,7 @@ export function UiProvider({ children }: { children: React.ReactNode }): React.J
         <UiCanvasContext.Provider value={canvasState}>
           <UiToolsContext.Provider value={toolsState}>
             <UiSequenceContext.Provider value={sequenceState}>
-              <UiStateContext.Provider value={state}>
-                {children}
-              </UiStateContext.Provider>
+              <UiStateContext.Provider value={state}>{children}</UiStateContext.Provider>
             </UiSequenceContext.Provider>
           </UiToolsContext.Provider>
         </UiCanvasContext.Provider>

@@ -20,11 +20,11 @@ import {
   parseAdminMenuJson,
 } from '@/features/admin/constants/admin-menu-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { 
-  Badge, 
-  Card, 
-  FormSection, 
-  SearchInput, 
+import {
+  Badge,
+  Card,
+  FormSection,
+  SearchInput,
   PanelHeader,
   ListPanel,
   EmptyState,
@@ -43,41 +43,32 @@ const ROUTE_DESCRIPTION_OVERRIDES: Record<string, string> = {
   '/admin/ai-paths': 'Design, test, and run AI Paths workflows.',
   '/admin/case-resolver':
     'Build case flows with folder-organized files, WYSIWYG prompt nodes, and node-map composition.',
-  '/admin/case-resolver/cases':
-    'List, add, open, edit, and remove Case Resolver cases.',
-  '/admin/case-resolver/tags':
-    'Manage tags used by Case Resolver documents.',
-  '/admin/case-resolver/identifiers':
-    'Manage case identifiers used by Case Resolver documents.',
-  '/admin/case-resolver/categories':
-    'Manage the Case Resolver document category tree.',
+  '/admin/case-resolver/cases': 'List, add, open, edit, and remove Case Resolver cases.',
+  '/admin/case-resolver/tags': 'Manage tags used by Case Resolver documents.',
+  '/admin/case-resolver/identifiers': 'Manage case identifiers used by Case Resolver documents.',
+  '/admin/case-resolver/categories': 'Manage the Case Resolver document category tree.',
   '/admin/case-resolver/preferences':
     'Configure default Case Resolver Case list view and filter behavior.',
   '/admin/case-resolver/capture':
     'Configure Case Resolver Capture role mappings and Filemaker auto-matching rules.',
-  '/admin/case-resolver/settings':
-    'Configure Case Resolver OCR model settings.',
+  '/admin/case-resolver/settings': 'Configure Case Resolver OCR model settings.',
   '/admin/filemaker':
     'Manage persons, organizations, events, and emails used as addresser/addressee data in Case Resolver documents.',
-  '/admin/filemaker/persons':
-    'Search and review Filemaker persons.',
-  '/admin/filemaker/organizations':
-    'Search and review Filemaker organizations.',
-  '/admin/filemaker/events':
-    'Search and review Filemaker events with linked organizations.',
-  '/admin/filemaker/emails':
-    'Search and review Filemaker emails and relationship links.',
+  '/admin/filemaker/persons': 'Search and review Filemaker persons.',
+  '/admin/filemaker/organizations': 'Search and review Filemaker organizations.',
+  '/admin/filemaker/events': 'Search and review Filemaker events with linked organizations.',
+  '/admin/filemaker/emails': 'Search and review Filemaker emails and relationship links.',
   '/admin/filemaker/list':
     'Search and review the combined Filemaker person, organization, and event registry.',
   '/admin/ai-paths/queue': 'Monitor queued, running, and completed path runs.',
   '/admin/ai-paths/dead-letter': 'Inspect failed AI runs and retry or requeue them.',
-  '/admin/validator':
-    'Edit validation rules for each available validator pattern list.',
-  '/admin/validator/lists':
-    'Create, rename, lock, and remove available validator pattern lists.',
-  '/admin/prompt-exploder': 'Explode long prompts into editable typed segments and reassemble them.',
+  '/admin/validator': 'Edit validation rules for each available validator pattern list.',
+  '/admin/validator/lists': 'Create, rename, lock, and remove available validator pattern lists.',
+  '/admin/prompt-exploder':
+    'Explode long prompts into editable typed segments and reassemble them.',
   '/admin/prompt-exploder/projects': 'Create, edit, remove, and open Prompt Exploder projects.',
-  '/admin/prompt-exploder/settings': 'Configure Prompt Exploder runtime, learning, and AI model settings.',
+  '/admin/prompt-exploder/settings':
+    'Configure Prompt Exploder runtime, learning, and AI model settings.',
   '/admin/products': 'Browse and manage all products in the catalog.',
   '/admin/cms/builder': 'Visual page builder for CMS layouts.',
   '/admin/settings': 'System settings overview and quick access cards.',
@@ -241,7 +232,9 @@ export function AdminRouteMapPage(): React.JSX.Element {
             <div className='w-full max-w-sm'>
               <SearchInput
                 value={query}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>) => setQuery(event.target.value)}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                  setQuery(event.target.value)
+                }
                 onClear={() => setQuery('')}
                 placeholder='Search routes, labels, keywords...'
                 size='sm'
@@ -270,7 +263,10 @@ export function AdminRouteMapPage(): React.JSX.Element {
               >
                 <div className='grid gap-3 md:grid-cols-2'>
                   {sectionEntries.map((entry: RouteMapEntry) => (
-                    <Card key={entry.id} className='border-border bg-card/60 p-4 transition-colors hover:bg-card/80'>
+                    <Card
+                      key={entry.id}
+                      className='border-border bg-card/60 p-4 transition-colors hover:bg-card/80'
+                    >
                       <div className='flex items-start justify-between gap-3'>
                         <div className='min-w-0'>
                           <Link
@@ -287,8 +283,12 @@ export function AdminRouteMapPage(): React.JSX.Element {
                           {entry.parents.length ? entry.parents[entry.parents.length - 1] : 'Root'}
                         </Badge>
                       </div>
-                      <p className='mt-2 text-xs text-gray-300 leading-relaxed'>{entry.description}</p>
-                      <Hint uppercase size='xs' variant='muted' className='mt-2 font-semibold'>{entry.breadcrumb}</Hint>
+                      <p className='mt-2 text-xs text-gray-300 leading-relaxed'>
+                        {entry.description}
+                      </p>
+                      <Hint uppercase size='xs' variant='muted' className='mt-2 font-semibold'>
+                        {entry.breadcrumb}
+                      </Hint>
                     </Card>
                   ))}
                 </div>

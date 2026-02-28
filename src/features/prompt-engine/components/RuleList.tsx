@@ -34,9 +34,7 @@ const getRuleSequence = (rule: PromptValidationRule, fallbackIndex: number): num
   return (fallbackIndex + 1) * DEFAULT_SEQUENCE_STEP;
 };
 
-function sortDraftsBySequence<T extends { parsed: PromptValidationRule | null }>(
-  drafts: T[],
-): T[] {
+function sortDraftsBySequence<T extends { parsed: PromptValidationRule | null }>(drafts: T[]): T[] {
   return drafts
     .map((draft: T, index: number) => ({ draft, index }))
     .sort((a, b) => {
@@ -52,7 +50,7 @@ function sortDraftsBySequence<T extends { parsed: PromptValidationRule | null }>
 }
 
 function buildSequenceGroups<T extends { uid: string; parsed: PromptValidationRule | null }>(
-  drafts: T[],
+  drafts: T[]
 ): Map<string, SequenceGroupView> {
   const groups = new Map<string, SequenceGroupView>();
   for (const draft of drafts) {
@@ -124,10 +122,7 @@ export function RuleList(): React.JSX.Element {
           : 'Prompt Exploder Rules';
 
   const sequencingLocked =
-    query.trim().length > 0 ||
-    severity !== 'all' ||
-    scope !== 'all' ||
-    !includeDisabled;
+    query.trim().length > 0 || severity !== 'all' || scope !== 'all' || !includeDisabled;
   const draggableEnabled = !sequencingLocked;
   const orderedDrafts = useMemo(() => sortDraftsBySequence(filteredDrafts), [filteredDrafts]);
   const sequenceGroups = useMemo(() => buildSequenceGroups(orderedDrafts), [orderedDrafts]);
@@ -206,13 +201,15 @@ export function RuleList(): React.JSX.Element {
         ) : null}
         {sequencingLocked ? (
           <Card variant='warning' padding='md' className='border-amber-500/40 bg-amber-500/10'>
-            <div className='mb-1.5 text-[10px] font-bold uppercase tracking-wider text-amber-200/70'>Sequencing Locked</div>
+            <div className='mb-1.5 text-[10px] font-bold uppercase tracking-wider text-amber-200/70'>
+              Sequencing Locked
+            </div>
             <div className='text-xs text-amber-200'>
-              Sequence drag-and-drop is disabled while filters are active. Clear search, set severity to
+              Sequence drag-and-drop is disabled while filters are active. Clear search, set
+              severity to
               <span className='mx-1 font-medium'>All</span>
               and scope to
-              <span className='mx-1 font-medium'>All scopes</span>
-              , then enable
+              <span className='mx-1 font-medium'>All scopes</span>, then enable
               <span className='mx-1 font-medium'>Include disabled</span>
               to reorder/group rules.
             </div>
@@ -313,7 +310,11 @@ export function RuleList(): React.JSX.Element {
                       }));
                     }}
                   >
-                    {isCollapsed ? <ChevronRight className='size-3' /> : <ChevronDown className='size-3' />}
+                    {isCollapsed ? (
+                      <ChevronRight className='size-3' />
+                    ) : (
+                      <ChevronDown className='size-3' />
+                    )}
                     Sequence / Group
                   </button>
                   <span className='text-xs text-cyan-100/90'>

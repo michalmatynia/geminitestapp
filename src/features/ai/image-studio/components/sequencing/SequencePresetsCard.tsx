@@ -4,13 +4,11 @@ import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { SelectSimple, Button, useToast } from '@/shared/ui';
 import { StudioCard } from '../StudioCard';
 import { useSettingsState, useSettingsActions } from '../../context/SettingsContext';
-import { 
-  normalizeImageStudioSequenceSteps, 
-  type ImageStudioSequencePreset 
-} from '../../utils/studio-settings';
-import { 
-  PRESET_NAME_MAX_LENGTH 
-} from './sequencing-constants';
+import {
+  normalizeImageStudioSequenceSteps,
+  type ImageStudioSequencePreset,
+} from '@/shared/lib/ai/image-studio/utils/studio-settings';
+import { PRESET_NAME_MAX_LENGTH } from './sequencing-constants';
 
 const normalizePresetIdFragment = (value: string): string =>
   value
@@ -20,10 +18,7 @@ const normalizePresetIdFragment = (value: string): string =>
     .replace(/^_+|_+$/g, '')
     .slice(0, 48);
 
-const buildPresetId = (
-  name: string,
-  existingIds: Set<string>,
-): string => {
+const buildPresetId = (name: string, existingIds: Set<string>): string => {
   const baseFragment = normalizePresetIdFragment(name) || 'sequence_preset';
   const base = `preset_${baseFragment}`;
   if (!existingIds.has(base)) return base;
@@ -47,11 +42,11 @@ export function SequencePresetsCard(): React.JSX.Element {
   const sequencePresets = studioSettings.projectSequencing.presets;
   const sequencePresetOptions = useMemo(
     () => sequencePresets.map((preset) => ({ value: preset.id, label: preset.name })),
-    [sequencePresets],
+    [sequencePresets]
   );
   const selectedPreset = useMemo(
     () => sequencePresets.find((preset) => preset.id === selectedPresetId) ?? null,
-    [sequencePresets, selectedPresetId],
+    [sequencePresets, selectedPresetId]
   );
 
   useEffect(() => {
@@ -99,9 +94,8 @@ export function SequencePresetsCard(): React.JSX.Element {
         byIdIndex >= 0
           ? -1
           : existingPresets.findIndex(
-            (preset) =>
-              preset.name.trim().toLowerCase() === normalizedName.toLowerCase(),
-          );
+              (preset) => preset.name.trim().toLowerCase() === normalizedName.toLowerCase()
+            );
       const targetIndex = byIdIndex >= 0 ? byIdIndex : byNameIndex;
       const existingIds = new Set(existingPresets.map((preset) => preset.id));
       nextPresetId =
@@ -119,9 +113,7 @@ export function SequencePresetsCard(): React.JSX.Element {
 
       const nextPresets =
         targetIndex >= 0
-          ? existingPresets.map((preset, index) =>
-            index === targetIndex ? nextPreset : preset,
-          )
+          ? existingPresets.map((preset, index) => (index === targetIndex ? nextPreset : preset))
           : [nextPreset, ...existingPresets];
 
       return {
@@ -139,7 +131,13 @@ export function SequencePresetsCard(): React.JSX.Element {
       setSelectedPresetId(nextPresetId);
     }
     toast(`Saved preset "${normalizedName}".`, { variant: 'success' });
-  }, [presetNameDraft, studioSettings.projectSequencing.steps, selectedPresetId, setStudioSettings, toast]);
+  }, [
+    presetNameDraft,
+    studioSettings.projectSequencing.steps,
+    selectedPresetId,
+    setStudioSettings,
+    toast,
+  ]);
 
   const handleLoadPreset = useCallback((): void => {
     if (!selectedPreset) {

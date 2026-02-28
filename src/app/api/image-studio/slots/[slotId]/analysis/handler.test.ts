@@ -2,9 +2,7 @@ import { NextRequest } from 'next/server';
 import sharp from 'sharp';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import {
-  IMAGE_STUDIO_ANALYSIS_ERROR_CODES,
-} from '@/features/ai/image-studio/contracts/analysis';
+import { IMAGE_STUDIO_ANALYSIS_ERROR_CODES } from '@/features/ai/image-studio/contracts/analysis';
 
 const {
   analyzeImageByAutoScalerLayoutMock,
@@ -20,15 +18,15 @@ const {
   logSystemEventMock: vi.fn(),
 }));
 
-vi.mock('@/features/ai/image-studio/server/auto-scaler-utils', () => ({
+vi.mock('@/shared/lib/ai/image-studio/server/auto-scaler-utils', () => ({
   analyzeImageByAutoScalerLayout: analyzeImageByAutoScalerLayoutMock,
 }));
 
-vi.mock('@/features/ai/image-studio/server/slot-repository', () => ({
+vi.mock('@/shared/lib/ai/image-studio/server/slot-repository', () => ({
   getImageStudioSlotById: getImageStudioSlotByIdMock,
 }));
 
-vi.mock('@/features/ai/image-studio/server/source-image-utils', () => ({
+vi.mock('@/shared/lib/ai/image-studio/server/source-image-utils', () => ({
   loadSourceBufferFromSlot: loadSourceBufferFromSlotMock,
   parseImageDataUrl: parseImageDataUrlMock,
 }));
@@ -190,7 +188,9 @@ describe('image-studio analysis handler', () => {
     expect(payload['effectiveMode']).toBe('server_analysis_v1');
     expect(payload['authoritativeSource']).toBe('source_slot');
     expect(payload['sourceMimeHint']).toBe('image/png');
-    expect((payload['analysis'] as Record<string, unknown>)['detectionUsed']).toBe('white_bg_first_colored_pixel');
+    expect((payload['analysis'] as Record<string, unknown>)['detectionUsed']).toBe(
+      'white_bg_first_colored_pixel'
+    );
 
     expect(loadSourceBufferFromSlotMock).toHaveBeenCalledTimes(1);
     expect(analyzeImageByAutoScalerLayoutMock).toHaveBeenCalledTimes(1);
@@ -343,11 +343,9 @@ describe('image-studio analysis handler', () => {
     expect(payload['authoritativeSource']).toBe('client_upload');
     expect(payload['sourceMimeHint']).toBe('image/png');
     expect(analyzeImageByAutoScalerLayoutMock).toHaveBeenCalledTimes(1);
-    expect(analyzeImageByAutoScalerLayoutMock).toHaveBeenCalledWith(
-      parsedDataBuffer,
-      undefined,
-      { preferTargetCanvas: true }
-    );
+    expect(analyzeImageByAutoScalerLayoutMock).toHaveBeenCalledWith(parsedDataBuffer, undefined, {
+      preferTargetCanvas: true,
+    });
   });
 
   it('throws not found error when source slot does not exist', async () => {

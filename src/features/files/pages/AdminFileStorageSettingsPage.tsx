@@ -32,11 +32,8 @@ import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json
 const normalizeSource = (value: string | null | undefined): FileStorageSource =>
   value === 'fastcomet' ? 'fastcomet' : 'local';
 
-const normalizeFastCometConfig = (
-  raw: string | null | undefined
-): FastCometStorageConfig => {
-  const parsed =
-    parseJsonSetting<Partial<FastCometStorageConfig> | null>(raw, null) ?? {};
+const normalizeFastCometConfig = (raw: string | null | undefined): FastCometStorageConfig => {
+  const parsed = parseJsonSetting<Partial<FastCometStorageConfig> | null>(raw, null) ?? {};
 
   const timeoutRaw = Number(parsed.timeoutMs);
   const timeoutMs = Number.isFinite(timeoutRaw)
@@ -45,26 +42,21 @@ const normalizeFastCometConfig = (
 
   return {
     baseUrl: typeof parsed.baseUrl === 'string' ? parsed.baseUrl : '',
-    uploadEndpoint:
-      typeof parsed.uploadEndpoint === 'string' ? parsed.uploadEndpoint : '',
+    uploadEndpoint: typeof parsed.uploadEndpoint === 'string' ? parsed.uploadEndpoint : '',
     deleteEndpoint:
-      typeof parsed.deleteEndpoint === 'string' &&
-      parsed.deleteEndpoint.trim().length > 0
+      typeof parsed.deleteEndpoint === 'string' && parsed.deleteEndpoint.trim().length > 0
         ? parsed.deleteEndpoint
         : null,
     authToken:
       typeof parsed.authToken === 'string' && parsed.authToken.trim().length > 0
         ? parsed.authToken
         : null,
-    keepLocalCopy:
-      typeof parsed.keepLocalCopy === 'boolean' ? parsed.keepLocalCopy : true,
+    keepLocalCopy: typeof parsed.keepLocalCopy === 'boolean' ? parsed.keepLocalCopy : true,
     timeoutMs,
   };
 };
 
-const normalizeConfigForSave = (
-  config: FastCometStorageConfig
-): FastCometStorageConfig => ({
+const normalizeConfigForSave = (config: FastCometStorageConfig): FastCometStorageConfig => ({
   baseUrl: config.baseUrl.trim(),
   uploadEndpoint: config.uploadEndpoint.trim(),
   deleteEndpoint: config.deleteEndpoint?.trim() || null,
@@ -73,12 +65,8 @@ const normalizeConfigForSave = (
   timeoutMs: Math.min(Math.max(Math.floor(config.timeoutMs), 1_000), 120_000),
 });
 
-const areConfigsEqual = (
-  left: FastCometStorageConfig,
-  right: FastCometStorageConfig
-): boolean =>
-  JSON.stringify(normalizeConfigForSave(left)) ===
-  JSON.stringify(normalizeConfigForSave(right));
+const areConfigsEqual = (left: FastCometStorageConfig, right: FastCometStorageConfig): boolean =>
+  JSON.stringify(normalizeConfigForSave(left)) === JSON.stringify(normalizeConfigForSave(right));
 
 const sourceOptions = fileStorageSourceValues.map((value) => ({
   value,
@@ -100,10 +88,7 @@ export function AdminFileStorageSettingsPage(): React.JSX.Element {
   );
 
   const storedFastCometConfig = useMemo(
-    () =>
-      normalizeFastCometConfig(
-        settingsQuery.data?.get(FASTCOMET_STORAGE_CONFIG_SETTING_KEY)
-      ),
+    () => normalizeFastCometConfig(settingsQuery.data?.get(FASTCOMET_STORAGE_CONFIG_SETTING_KEY)),
     [settingsQuery.data]
   );
 
@@ -122,13 +107,10 @@ export function AdminFileStorageSettingsPage(): React.JSX.Element {
   const normalizedDraft = normalizeConfigForSave(fastCometConfig);
   const normalizedStored = normalizeConfigForSave(storedFastCometConfig);
 
-  const isDirty =
-    source !== storedSource ||
-    !areConfigsEqual(normalizedDraft, normalizedStored);
+  const isDirty = source !== storedSource || !areConfigsEqual(normalizedDraft, normalizedStored);
 
   const isFastCometMisconfigured =
-    source === 'fastcomet' &&
-    normalizedDraft.uploadEndpoint.trim().length === 0;
+    source === 'fastcomet' && normalizedDraft.uploadEndpoint.trim().length === 0;
 
   const saveSettings = (): void => {
     const payloads = [
@@ -170,7 +152,7 @@ export function AdminFileStorageSettingsPage(): React.JSX.Element {
             items={[
               { label: 'Admin', href: '/admin' },
               { label: 'Settings', href: '/admin/settings' },
-              { label: 'File Storage' }
+              { label: 'File Storage' },
             ]}
             className='mb-2'
           />
@@ -184,15 +166,11 @@ export function AdminFileStorageSettingsPage(): React.JSX.Element {
           description='Switch where new uploads are written and where file URLs point.'
           className='p-6'
         >
-          <FormField
-            label='Active provider'
-          >
+          <FormField label='Active provider'>
             <SelectSimple
               size='sm'
               value={source}
-              onValueChange={(value: string): void =>
-                setSource(normalizeSource(value))
-              }
+              onValueChange={(value: string): void => setSource(normalizeSource(value))}
               options={sourceOptions}
               placeholder='Select file source'
             />
@@ -201,7 +179,11 @@ export function AdminFileStorageSettingsPage(): React.JSX.Element {
             </Hint>
           </FormField>
 
-          <Card variant='subtle-compact' padding='md' className='border-border bg-muted/20 space-y-1'>
+          <Card
+            variant='subtle-compact'
+            padding='md'
+            className='border-border bg-muted/20 space-y-1'
+          >
             <div className='flex justify-between text-sm text-gray-300'>
               <span>Current mode</span>
               <span className='font-medium text-gray-100'>
@@ -298,9 +280,7 @@ export function AdminFileStorageSettingsPage(): React.JSX.Element {
                   }))
                 }
               />
-              <Hint className='mt-1'>
-                Range: 1000 - 120000 ms.
-              </Hint>
+              <Hint className='mt-1'>Range: 1000 - 120000 ms.</Hint>
             </FormField>
 
             <FormField label='Keep local mirror copy'>

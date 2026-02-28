@@ -1,21 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import {
-  insertAnalyticsEvent,
-  listAnalyticsEvents,
-} from '@/features/analytics/server';
+import { insertAnalyticsEvent, listAnalyticsEvents } from '@/shared/lib/analytics/server';
 import { auth, extractClientIp } from '@/features/auth/server';
-import type {
-  AnalyticsEventCreateInput,
-  AnalyticsScope,
-} from '@/shared/contracts';
+import type { AnalyticsEventCreateInput, AnalyticsScope } from '@/shared/contracts';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { authError, badRequestError } from '@/shared/errors/app-error';
-import {
-  getPaginationParams,
-  getQueryParams,
-} from '@/shared/lib/api/api-handler';
+import { getPaginationParams, getQueryParams } from '@/shared/lib/api/api-handler';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { logger } from '@/shared/utils/logger';
 
@@ -103,20 +94,15 @@ const persistAnalyticsEvent = async (
     country: string | null;
     region: string | null;
     city: string | null;
-  },
+  }
 ): Promise<{ id: string }> => {
   const userId = await resolveSessionUserId();
-  const input: AnalyticsEventCreateInput = userId
-    ? { ...inputBase, userId }
-    : inputBase;
+  const input: AnalyticsEventCreateInput = userId ? { ...inputBase, userId } : inputBase;
 
   return insertAnalyticsEvent(input, serverContext);
 };
 
-export async function POST_handler(
-  req: NextRequest,
-  _ctx: ApiHandlerContext,
-): Promise<Response> {
+export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, createEventSchema, {
     logPrefix: 'analytics.events.POST',
   });
@@ -125,10 +111,7 @@ export async function POST_handler(
   const ip = extractClientIp(req);
   const userAgent = req.headers.get('user-agent');
 
-  const country =
-    req.headers.get('x-vercel-ip-country') ??
-    req.headers.get('cf-ipcountry') ??
-    null;
+  const country = req.headers.get('x-vercel-ip-country') ?? req.headers.get('cf-ipcountry') ?? null;
   const region = req.headers.get('x-vercel-ip-country-region') ?? null;
   const city = req.headers.get('x-vercel-ip-city') ?? null;
 
@@ -141,9 +124,7 @@ export async function POST_handler(
     ...(parsed.data.search !== null && parsed.data.search !== undefined
       ? { search: parsed.data.search }
       : {}),
-    ...(parsed.data.url !== null && parsed.data.url !== undefined
-      ? { url: parsed.data.url }
-      : {}),
+    ...(parsed.data.url !== null && parsed.data.url !== undefined ? { url: parsed.data.url } : {}),
     ...(parsed.data.title !== null && parsed.data.title !== undefined
       ? { title: parsed.data.title }
       : {}),
@@ -190,16 +171,10 @@ export async function POST_handler(
     });
   });
 
-  return NextResponse.json(
-    { ok: true, queued: true, requestId: _ctx.requestId },
-    { status: 202 },
-  );
+  return NextResponse.json({ ok: true, queued: true, requestId: _ctx.requestId }, { status: 202 });
 }
 
-export async function GET_handler(
-  req: NextRequest,
-  _ctx: ApiHandlerContext,
-): Promise<Response> {
+export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const session = await auth();
   if (!session?.user) throw authError('Unauthorized.');
 
@@ -239,6 +214,6 @@ export async function GET_handler(
       headers: {
         'Cache-Control': 'no-store',
       },
-    },
+    }
   );
 }

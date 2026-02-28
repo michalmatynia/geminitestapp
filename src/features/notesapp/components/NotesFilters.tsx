@@ -24,11 +24,9 @@ import type { FilterField } from '@/shared/ui/templates/panels';
  * - 100% backward compatible
  */
 export function NotesFilters(): React.JSX.Element {
-  const { settings, updateSettings, filters, availableTagsInScope } =
-    useNotesAppContext();
+  const { settings, updateSettings, filters, availableTagsInScope } = useNotesAppContext();
 
-  const { searchQuery, setSearchQuery, filterTagIds, setFilterTagIds } =
-    filters;
+  const { searchQuery, setSearchQuery, filterTagIds, setFilterTagIds } = filters;
   const {
     searchScope,
     sortBy,
@@ -86,7 +84,7 @@ export function NotesFilters(): React.JSX.Element {
       sortBy,
       searchScope,
     }),
-    [searchQuery, filterTagIds, sortBy, searchScope],
+    [searchQuery, filterTagIds, sortBy, searchScope]
   );
 
   const handleFilterChange = (key: string, value: unknown) => {
@@ -138,11 +136,7 @@ export function NotesFilters(): React.JSX.Element {
             className='h-8 gap-1.5 px-2.5'
             title={`Click to sort ${sortOrder === 'asc' ? 'descending' : 'ascending'}`}
           >
-            {sortOrder === 'asc' ? (
-              <ArrowUp size={14} />
-            ) : (
-              <ArrowDown size={14} />
-            )}
+            {sortOrder === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />}
             {sortOrder === 'asc' ? 'Ascending' : 'Descending'}
           </Button>
         </div>
@@ -159,18 +153,14 @@ export function NotesFilters(): React.JSX.Element {
             List
           </Button>
           <Button
-            variant={
-              viewMode === 'grid' && gridDensity === 4 ? 'default' : 'outline'
-            }
+            variant={viewMode === 'grid' && gridDensity === 4 ? 'default' : 'outline'}
             onClick={() => updateSettings({ viewMode: 'grid', gridDensity: 4 })}
             className='h-8 px-2.5'
           >
             Grid 4
           </Button>
           <Button
-            variant={
-              viewMode === 'grid' && gridDensity === 8 ? 'default' : 'outline'
-            }
+            variant={viewMode === 'grid' && gridDensity === 8 ? 'default' : 'outline'}
             onClick={() => updateSettings({ viewMode: 'grid', gridDensity: 8 })}
             className='h-8 px-2.5'
           >
@@ -192,9 +182,7 @@ export function NotesFilters(): React.JSX.Element {
           </Button>
           <Button
             variant={showBreadcrumbs ? 'default' : 'outline'}
-            onClick={() =>
-              updateSettings({ showBreadcrumbs: !showBreadcrumbs })
-            }
+            onClick={() => updateSettings({ showBreadcrumbs: !showBreadcrumbs })}
             className='h-8 gap-1 px-2'
             title='Toggle breadcrumbs'
           >
@@ -202,9 +190,7 @@ export function NotesFilters(): React.JSX.Element {
           </Button>
           <Button
             variant={showRelatedNotes ? 'default' : 'outline'}
-            onClick={() =>
-              updateSettings({ showRelatedNotes: !showRelatedNotes })
-            }
+            onClick={() => updateSettings({ showRelatedNotes: !showRelatedNotes })}
             className='h-8 gap-1 px-2'
             title='Toggle related notes'
           >

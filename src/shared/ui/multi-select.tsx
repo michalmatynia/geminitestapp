@@ -53,9 +53,7 @@ export function MultiSelect({
   const filteredOptions = React.useMemo(() => {
     const normalized = query.trim().toLowerCase();
     if (!normalized) return options;
-    return options.filter((opt) =>
-      opt.label.toLowerCase().includes(normalized)
-    );
+    return options.filter((opt) => opt.label.toLowerCase().includes(normalized));
   }, [options, query]);
 
   const toggleOption = (value: string) => {
@@ -101,9 +99,7 @@ export function MultiSelect({
             className='w-full justify-between text-left font-normal'
             disabled={disabled || loading}
           >
-            <span className='truncate'>
-              {loading ? 'Loading...' : displayValue}
-            </span>
+            <span className='truncate'>{loading ? 'Loading...' : displayValue}</span>
             <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
           </Button>
         </DropdownMenuTrigger>
@@ -121,13 +117,9 @@ export function MultiSelect({
           </div>
           <div className='max-h-64 overflow-y-auto p-1'>
             {loading ? (
-              <div className='p-2 text-center text-sm text-muted-foreground'>
-                Loading...
-              </div>
+              <div className='p-2 text-center text-sm text-muted-foreground'>Loading...</div>
             ) : filteredOptions.length === 0 ? (
-              <div className='p-2 text-center text-sm text-muted-foreground'>
-                {emptyMessage}
-              </div>
+              <div className='p-2 text-center text-sm text-muted-foreground'>{emptyMessage}</div>
             ) : (
               filteredOptions.map((option) => (
                 <DropdownMenuCheckboxItem

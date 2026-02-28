@@ -3,7 +3,11 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 vi.unmock('@/shared/lib/db/prisma');
 
-import { GET as GET_page, PUT as PUT_page, DELETE as DELETE_page } from '@/app/api/cms/pages/[id]/route';
+import {
+  GET as GET_page,
+  PUT as PUT_page,
+  DELETE as DELETE_page,
+} from '@/app/api/cms/pages/[id]/route';
 import { GET as GET_pages, POST as POST_pages } from '@/app/api/cms/pages/route';
 import { getCmsRepository } from '@/features/cms/services/cms-repository';
 import type { Page } from '@/shared/contracts/cms';
@@ -13,13 +17,13 @@ describe('CMS Pages API', () => {
 
   beforeEach(async () => {
     cmsRepository = await getCmsRepository();
-    
+
     // Cleanup: Delete all pages and slugs
     const pages = await cmsRepository.getPages();
     for (const p of pages) {
       await cmsRepository.deletePage(p.id);
     }
-    
+
     const slugs = await cmsRepository.getSlugs();
     for (const s of slugs) {
       await cmsRepository.deleteSlug(s.id);
@@ -44,11 +48,11 @@ describe('CMS Pages API', () => {
       await cmsRepository.createPage({ name: 'Page 2' });
 
       const res = await GET_pages(new NextRequest('http://localhost/api/cms/pages?scope=all'));
-      const data = await res.json() as Page[];
+      const data = (await res.json()) as Page[];
       expect(res.status).toBe(200);
       expect(data.length).toBe(2);
-      expect(data.map(p => p.name)).toContain('Page 1');
-      expect(data.map(p => p.name)).toContain('Page 2');
+      expect(data.map((p) => p.name)).toContain('Page 1');
+      expect(data.map((p) => p.name)).toContain('Page 2');
     });
   });
 
@@ -58,7 +62,7 @@ describe('CMS Pages API', () => {
         id: 's1',
         slug: 'test',
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
       expect(slug.slug).toBe('test');
     });
@@ -72,7 +76,7 @@ describe('CMS Pages API', () => {
       });
 
       const res = await POST_pages(req);
-      const data = await res.json() as Page;
+      const data = (await res.json()) as Page;
 
       expect(res.status).toBe(200);
       expect(data.name).toBe('New Page');
@@ -85,18 +89,18 @@ describe('CMS Pages API', () => {
 
       const req = new NextRequest('http://localhost/api/cms/pages', {
         method: 'POST',
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           name: 'Page with Slugs',
-          slugIds: [slug1.id, slug2.id]
+          slugIds: [slug1.id, slug2.id],
         }),
       });
 
       const res = await POST_pages(req);
-      const data = await res.json() as Page;
+      const data = (await res.json()) as Page;
 
       expect(res.status).toBe(200);
       expect(data.name).toBe('Page with Slugs');
-      
+
       // Verify page in repository has slugs
       const savedPage = await cmsRepository.getPageById(data.id);
       expect(savedPage.slugs.length).toBe(2);
@@ -105,25 +109,39 @@ describe('CMS Pages API', () => {
     it('should create a new page with a theme', async () => {
       const theme = await cmsRepository.createTheme({
         name: 'Creation Theme',
-        colors: { primary: '#000', secondary: '#fff', accent: '#f00', background: '#fff', surface: '#eee', text: '#000', muted: '#888' },
-        typography: { headingFont: 'Arial', bodyFont: 'Arial', baseSize: 16, headingWeight: 700, bodyWeight: 400 },
-        spacing: { sectionPadding: '1rem', containerMaxWidth: '1000px' }
+        colors: {
+          primary: '#000',
+          secondary: '#fff',
+          accent: '#f00',
+          background: '#fff',
+          surface: '#eee',
+          text: '#000',
+          muted: '#888',
+        },
+        typography: {
+          headingFont: 'Arial',
+          bodyFont: 'Arial',
+          baseSize: 16,
+          headingWeight: 700,
+          bodyWeight: 400,
+        },
+        spacing: { sectionPadding: '1rem', containerMaxWidth: '1000px' },
       });
 
       const req = new NextRequest('http://localhost/api/cms/pages', {
         method: 'POST',
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           name: 'Page with Theme',
-          themeId: theme.id
+          themeId: theme.id,
         }),
       });
 
       const res = await POST_pages(req);
-      const data = await res.json() as Page;
+      const data = (await res.json()) as Page;
 
       expect(res.status).toBe(200);
       expect(data.name).toBe('Page with Theme');
-      
+
       // Verify page in repository has the theme
       const savedPage = await cmsRepository.getPageById(data.id);
       expect(savedPage.themeId).toBe(theme.id);
@@ -144,8 +162,10 @@ describe('CMS Pages API', () => {
     it('should return a page by ID', async () => {
       const page = await cmsRepository.createPage({ name: 'Single Page' });
 
-      const res = await GET_page(new NextRequest(`http://localhost/api/cms/pages/${page.id}`), { params: Promise.resolve({ id: page.id }) });
-      const data = await res.json() as Page;
+      const res = await GET_page(new NextRequest(`http://localhost/api/cms/pages/${page.id}`), {
+        params: Promise.resolve({ id: page.id }),
+      });
+      const data = (await res.json()) as Page;
 
       expect(res.status).toBe(200);
       expect(data.id).toBe(page.id);
@@ -153,7 +173,9 @@ describe('CMS Pages API', () => {
     });
 
     it('should return 404 for non-existent page', async () => {
-      const res = await GET_page(new NextRequest('http://localhost/api/cms/pages/non-existent'), { params: Promise.resolve({ id: 'non-existent' }) });
+      const res = await GET_page(new NextRequest('http://localhost/api/cms/pages/non-existent'), {
+        params: Promise.resolve({ id: 'non-existent' }),
+      });
       expect(res.status).toBe(404);
     });
   });
@@ -164,9 +186,23 @@ describe('CMS Pages API', () => {
       const slug = await cmsRepository.createSlug({ slug: 'updated-slug' });
       const theme = await cmsRepository.createTheme({
         name: 'Page Theme',
-        colors: { primary: '#000', secondary: '#fff', accent: '#f00', background: '#fff', surface: '#eee', text: '#000', muted: '#888' },
-        typography: { headingFont: 'Arial', bodyFont: 'Arial', baseSize: 16, headingWeight: 700, bodyWeight: 400 },
-        spacing: { sectionPadding: '1rem', containerMaxWidth: '1000px' }
+        colors: {
+          primary: '#000',
+          secondary: '#fff',
+          accent: '#f00',
+          background: '#fff',
+          surface: '#eee',
+          text: '#000',
+          muted: '#888',
+        },
+        typography: {
+          headingFont: 'Arial',
+          bodyFont: 'Arial',
+          baseSize: 16,
+          headingWeight: 700,
+          bodyWeight: 400,
+        },
+        spacing: { sectionPadding: '1rem', containerMaxWidth: '1000px' },
       });
 
       const updatePayload = {
@@ -179,8 +215,8 @@ describe('CMS Pages API', () => {
         themeId: theme.id,
         components: [
           { type: 'hero', content: { title: 'Hello World' }, order: 0 },
-          { type: 'text', content: { body: 'Lorem ipsum' }, order: 1 }
-        ]
+          { type: 'text', content: { body: 'Lorem ipsum' }, order: 1 },
+        ],
       };
 
       const req = new NextRequest(`http://localhost/api/cms/pages/${page.id}`, {
@@ -189,13 +225,13 @@ describe('CMS Pages API', () => {
       });
 
       const res = await PUT_page(req, { params: Promise.resolve({ id: page.id }) });
-      const data = await res.json() as Page;
+      const data = (await res.json()) as Page;
 
       expect(res.status).toBe(200);
       expect(data.name).toBe('Updated Name');
       expect(data.status).toBe('published');
       expect(data.seoTitle).toBe('SEO Title');
-      
+
       // Verify in repository
       const updatedPage = await cmsRepository.getPageById(page.id);
       expect(updatedPage.components.length).toBe(2);
@@ -207,10 +243,10 @@ describe('CMS Pages API', () => {
     it('should return 404 when updating non-existent page', async () => {
       const req = new NextRequest('http://localhost/api/cms/pages/non-existent', {
         method: 'PUT',
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           name: 'Non-existent',
           slugIds: [],
-          components: []
+          components: [],
         }),
       });
 

@@ -2,35 +2,35 @@
 
 import React from 'react';
 import { Trash2, Plus } from 'lucide-react';
-import { 
-  Button, 
-  Checkbox, 
-  ConfirmModal, 
-  Input, 
-  SelectSimple, 
-  Tabs, 
-  TabsList, 
-  TabsTrigger, 
-  Label, 
-  Card, 
-  Hint 
+import {
+  Button,
+  Checkbox,
+  ConfirmModal,
+  Input,
+  SelectSimple,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  Label,
+  Card,
+  Hint,
 } from '@/shared/ui';
-import { 
-  PRODUCT_FIELDS, 
-  EXPORT_PARAMETER_KEYS, 
-  PRODUCT_PARAMETER_TARGET_PATTERN, 
-  PRODUCT_PARAMETER_TARGET_PREFIX, 
-  PRODUCT_PARAMETER_TARGET_TRANSLATED_PATTERN 
+import {
+  PRODUCT_FIELDS,
+  EXPORT_PARAMETER_KEYS,
+  PRODUCT_PARAMETER_TARGET_PATTERN,
+  PRODUCT_PARAMETER_TARGET_PREFIX,
+  PRODUCT_PARAMETER_TARGET_TRANSLATED_PATTERN,
 } from '@/features/data-import-export/components/imports/constants';
-import { 
-  useParameters as useProductParameters, 
-  useSimpleParameters as useProductSimpleParameters 
+import {
+  useParameters as useProductParameters,
+  useSimpleParameters as useProductSimpleParameters,
 } from '@/features/products/hooks/useProductSettingsQueries';
 import { useImportExport } from '@/features/data-import-export/context/ImportExportContext';
-import { 
-  parseParameterTarget, 
-  toParameterTargetValue, 
-  getParameterDisplayName 
+import {
+  parseParameterTarget,
+  toParameterTargetValue,
+  getParameterDisplayName,
 } from './imports-page-utils';
 import type { TemplateMapping } from '@/shared/contracts/data-import-export';
 import { PRODUCT_SIMPLE_PARAMETER_ID_PREFIX } from '@/shared/contracts/products';
@@ -75,77 +75,62 @@ export function TemplatesTabContent(): React.JSX.Element {
 
   const customParameterTargetsQuery = useProductParameters(catalogId || null);
   const simpleParameterTargetsQuery = useProductSimpleParameters(catalogId || null);
-  const customParameterTargetFields = React.useMemo(
-    (): Array<{ value: string; label: string }> => {
-      const parameters = customParameterTargetsQuery.data ?? [];
-      const seen = new Set<string>();
-      return parameters
-        .map((parameter): { value: string; label: string } | null => {
-          const parameterId = parameter.id.trim();
-          if (!parameterId || seen.has(parameterId)) return null;
-          seen.add(parameterId);
-          return {
-            value: `${PRODUCT_PARAMETER_TARGET_PREFIX}${parameterId}`,
-            label: `Parameter: ${getParameterDisplayName(parameter)}`,
-          };
-        })
-        .filter(
-          (entry): entry is { value: string; label: string } => entry !== null
-        );
-    },
-    [customParameterTargetsQuery.data]
-  );
-  const simpleParameterTargetFields = React.useMemo(
-    (): Array<{ value: string; label: string }> => {
-      const parameters = simpleParameterTargetsQuery.data ?? [];
-      const seen = new Set<string>();
-      return parameters
-        .map(
-          (
-            parameter
-          ): { value: string; label: string } | null => {
-            const parameterId = parameter.id.trim();
-            if (!parameterId || seen.has(parameterId)) return null;
-            seen.add(parameterId);
-            return {
-              value: `${PRODUCT_PARAMETER_TARGET_PREFIX}${PRODUCT_SIMPLE_PARAMETER_ID_PREFIX}${parameterId}`,
-              label: `Simple parameter: ${getParameterDisplayName(parameter)}`,
-            };
-          }
-        )
-        .filter(
-          (entry): entry is { value: string; label: string } => entry !== null
-        );
-    },
-    [simpleParameterTargetsQuery.data]
-  );
-  const templateTargetFieldOptions = React.useMemo(
-    (): Array<{ value: string; label: string }> => {
-      const seen = new Set<string>();
-      return [
-        ...PRODUCT_FIELDS,
-        ...customParameterTargetFields,
-        ...simpleParameterTargetFields,
-      ].filter((entry): boolean => {
-        const normalizedValue = entry.value.trim().toLowerCase();
-        if (!normalizedValue || seen.has(normalizedValue)) return false;
-        seen.add(normalizedValue);
-        return true;
-      });
-    },
-    [customParameterTargetFields, simpleParameterTargetFields]
-  );
+  const customParameterTargetFields = React.useMemo((): Array<{ value: string; label: string }> => {
+    const parameters = customParameterTargetsQuery.data ?? [];
+    const seen = new Set<string>();
+    return parameters
+      .map((parameter): { value: string; label: string } | null => {
+        const parameterId = parameter.id.trim();
+        if (!parameterId || seen.has(parameterId)) return null;
+        seen.add(parameterId);
+        return {
+          value: `${PRODUCT_PARAMETER_TARGET_PREFIX}${parameterId}`,
+          label: `Parameter: ${getParameterDisplayName(parameter)}`,
+        };
+      })
+      .filter((entry): entry is { value: string; label: string } => entry !== null);
+  }, [customParameterTargetsQuery.data]);
+  const simpleParameterTargetFields = React.useMemo((): Array<{ value: string; label: string }> => {
+    const parameters = simpleParameterTargetsQuery.data ?? [];
+    const seen = new Set<string>();
+    return parameters
+      .map((parameter): { value: string; label: string } | null => {
+        const parameterId = parameter.id.trim();
+        if (!parameterId || seen.has(parameterId)) return null;
+        seen.add(parameterId);
+        return {
+          value: `${PRODUCT_PARAMETER_TARGET_PREFIX}${PRODUCT_SIMPLE_PARAMETER_ID_PREFIX}${parameterId}`,
+          label: `Simple parameter: ${getParameterDisplayName(parameter)}`,
+        };
+      })
+      .filter((entry): entry is { value: string; label: string } => entry !== null);
+  }, [simpleParameterTargetsQuery.data]);
+  const templateTargetFieldOptions = React.useMemo((): Array<{ value: string; label: string }> => {
+    const seen = new Set<string>();
+    return [
+      ...PRODUCT_FIELDS,
+      ...customParameterTargetFields,
+      ...simpleParameterTargetFields,
+    ].filter((entry): boolean => {
+      const normalizedValue = entry.value.trim().toLowerCase();
+      if (!normalizedValue || seen.has(normalizedValue)) return false;
+      seen.add(normalizedValue);
+      return true;
+    });
+  }, [customParameterTargetFields, simpleParameterTargetFields]);
 
   const isImportTemplateScope = templateScope === 'import';
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const currentTemplates = isImportTemplateScope ? importTemplates : exportTemplates;
-  const currentActiveTemplateId = isImportTemplateScope ? importActiveTemplateId : exportActiveTemplateId;
-  const currentTemplateMappings = isImportTemplateScope ? importTemplateMappings : exportTemplateMappings;
+  const currentActiveTemplateId = isImportTemplateScope
+    ? importActiveTemplateId
+    : exportActiveTemplateId;
+  const currentTemplateMappings = isImportTemplateScope
+    ? importTemplateMappings
+    : exportTemplateMappings;
   const importSourceFieldOptions = React.useMemo(
     (): string[] =>
-      [...importSourceFields].sort(
-        (a: string, b: string): number => a.localeCompare(b)
-      ),
+      [...importSourceFields].sort((a: string, b: string): number => a.localeCompare(b)),
     [importSourceFields]
   );
   const parameterSourceLabelByValue = React.useMemo((): Map<string, string> => {
@@ -166,12 +151,8 @@ export function TemplatesTabContent(): React.JSX.Element {
 
       const parsedParameterTarget = parseParameterTarget(normalizedSourceKey);
       if (parsedParameterTarget) {
-        const normalizedParameterValue = toParameterTargetValue(
-          parsedParameterTarget.parameterId
-        );
-        const knownParameterLabel = parameterSourceLabelByValue.get(
-          normalizedParameterValue
-        );
+        const normalizedParameterValue = toParameterTargetValue(parsedParameterTarget.parameterId);
+        const knownParameterLabel = parameterSourceLabelByValue.get(normalizedParameterValue);
         const languageSuffix = parsedParameterTarget.languageCode
           ? ` (${parsedParameterTarget.languageCode.toUpperCase()})`
           : '';
@@ -185,27 +166,19 @@ export function TemplatesTabContent(): React.JSX.Element {
     },
     [parameterSourceLabelByValue]
   );
-  const exportSourceFieldOptions = React.useMemo(
-    (): Array<{ value: string; label: string }> => {
-      const allKeys = new Set<string>(EXPORT_PARAMETER_KEYS);
-      importSourceFieldOptions.forEach((key: string) => {
-        allKeys.add(key);
-      });
+  const exportSourceFieldOptions = React.useMemo((): Array<{ value: string; label: string }> => {
+    const allKeys = new Set<string>(EXPORT_PARAMETER_KEYS);
+    importSourceFieldOptions.forEach((key: string) => {
+      allKeys.add(key);
+    });
 
-      return Array.from(allKeys)
-        .map((value: string) => ({
-          value,
-          label: getExportSourceFieldLabel(value),
-        }))
-        .sort((a, b): number =>
-          a.label.localeCompare(b.label) || a.value.localeCompare(b.value)
-        );
-    },
-    [
-      getExportSourceFieldLabel,
-      importSourceFieldOptions,
-    ]
-  );
+    return Array.from(allKeys)
+      .map((value: string) => ({
+        value,
+        label: getExportSourceFieldLabel(value),
+      }))
+      .sort((a, b): number => a.label.localeCompare(b.label) || a.value.localeCompare(b.value));
+  }, [getExportSourceFieldLabel, importSourceFieldOptions]);
   const validParameterTargetValues = React.useMemo(
     (): Set<string> =>
       new Set(
@@ -213,10 +186,7 @@ export function TemplatesTabContent(): React.JSX.Element {
           .filter((entry: { value: string; label: string }) =>
             entry.value.trim().toLowerCase().startsWith(PRODUCT_PARAMETER_TARGET_PREFIX)
           )
-          .map(
-            (entry: { value: string; label: string }) =>
-              entry.value.trim().toLowerCase()
-          )
+          .map((entry: { value: string; label: string }) => entry.value.trim().toLowerCase())
       ),
     [templateTargetFieldOptions]
   );
@@ -235,20 +205,30 @@ export function TemplatesTabContent(): React.JSX.Element {
 
   const addMappingRow = (): void => {
     if (templateScope === 'import') {
-      setImportTemplateMappings((prev: TemplateMapping[]) => [...prev, { sourceKey: '', targetField: '' }]);
+      setImportTemplateMappings((prev: TemplateMapping[]) => [
+        ...prev,
+        { sourceKey: '', targetField: '' },
+      ]);
     } else {
-      setExportTemplateMappings((prev: TemplateMapping[]) => [...prev, { sourceKey: '', targetField: '' }]);
+      setExportTemplateMappings((prev: TemplateMapping[]) => [
+        ...prev,
+        { sourceKey: '', targetField: '' },
+      ]);
     }
   };
 
   const removeMappingRow = (index: number): void => {
     if (templateScope === 'import') {
       setImportTemplateMappings((prev: TemplateMapping[]) =>
-        prev.length === 1 ? [{ sourceKey: '', targetField: '' }] : prev.filter((_: TemplateMapping, i: number) => i !== index)
+        prev.length === 1
+          ? [{ sourceKey: '', targetField: '' }]
+          : prev.filter((_: TemplateMapping, i: number) => i !== index)
       );
     } else {
       setExportTemplateMappings((prev: TemplateMapping[]) =>
-        prev.length === 1 ? [{ sourceKey: '', targetField: '' }] : prev.filter((_: TemplateMapping, i: number) => i !== index)
+        prev.length === 1
+          ? [{ sourceKey: '', targetField: '' }]
+          : prev.filter((_: TemplateMapping, i: number) => i !== index)
       );
     }
   };
@@ -256,18 +236,25 @@ export function TemplatesTabContent(): React.JSX.Element {
   return (
     <Card variant='subtle' padding='lg'>
       <div className='flex flex-wrap justify-between items-start gap-4 mb-6'>
-        <Tabs value={templateScope} onValueChange={(v: string): void => setTemplateScope(v as 'import' | 'export')}>
+        <Tabs
+          value={templateScope}
+          onValueChange={(v: string): void => setTemplateScope(v as 'import' | 'export')}
+        >
           <TabsList className='bg-muted/60'>
             <TabsTrigger value='import'>Import</TabsTrigger>
             <TabsTrigger value='export'>Export</TabsTrigger>
           </TabsList>
         </Tabs>
         <div className='flex gap-2'>
-          <Button variant='outline' size='sm' onClick={handleNewTemplate}>New</Button>
+          <Button variant='outline' size='sm' onClick={handleNewTemplate}>
+            New
+          </Button>
           <Button
             variant='outline'
             size='sm'
-            onClick={() => { void handleDuplicateTemplate(); }}
+            onClick={() => {
+              void handleDuplicateTemplate();
+            }}
             disabled={!currentActiveTemplateId || savingImportTemplate || savingExportTemplate}
           >
             Duplicate
@@ -279,16 +266,18 @@ export function TemplatesTabContent(): React.JSX.Element {
               onClick={() => {
                 void handleCreateExportFromImportTemplate();
               }}
-              disabled={
-                !importActiveTemplateId ||
-                savingImportTemplate ||
-                savingExportTemplate
-              }
+              disabled={!importActiveTemplateId || savingImportTemplate || savingExportTemplate}
             >
               Create Export Copy
             </Button>
           )}
-          <Button size='sm' onClick={() => { void handleSaveTemplate(); }} disabled={savingImportTemplate || savingExportTemplate}>
+          <Button
+            size='sm'
+            onClick={() => {
+              void handleSaveTemplate();
+            }}
+            disabled={savingImportTemplate || savingExportTemplate}
+          >
             {savingImportTemplate || savingExportTemplate ? 'Saving...' : 'Save Template'}
           </Button>
           <Button
@@ -301,19 +290,25 @@ export function TemplatesTabContent(): React.JSX.Element {
           </Button>
         </div>
       </div>
-      
+
       <div className='grid md:grid-cols-[240px_1fr] gap-6'>
-        <Card variant='subtle-compact' padding='sm' className='bg-black/20 border-border/40 max-h-[500px] overflow-y-auto space-y-1'>
-          <Hint size='xxs' uppercase className='px-2 py-1.5 font-bold text-gray-500'>Saved Templates</Hint>
+        <Card
+          variant='subtle-compact'
+          padding='sm'
+          className='bg-black/20 border-border/40 max-h-[500px] overflow-y-auto space-y-1'
+        >
+          <Hint size='xxs' uppercase className='px-2 py-1.5 font-bold text-gray-500'>
+            Saved Templates
+          </Hint>
           {currentTemplates.length === 0 ? (
             <p className='px-2 py-4 text-xs text-gray-600 italic'>No templates found.</p>
           ) : (
             currentTemplates.map((t) => (
-              <Button 
-                key={t.id} 
-                variant='ghost' 
+              <Button
+                key={t.id}
+                variant='ghost'
                 size='sm'
-                className={`w-full justify-start text-xs font-medium ${currentActiveTemplateId === t.id ? 'bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary' : 'text-gray-400'}`} 
+                className={`w-full justify-start text-xs font-medium ${currentActiveTemplateId === t.id ? 'bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary' : 'text-gray-400'}`}
                 onClick={() => applyTemplate(t, templateScope)}
               >
                 {t.name}
@@ -321,23 +316,33 @@ export function TemplatesTabContent(): React.JSX.Element {
             ))
           )}
         </Card>
-        
+
         <div className='space-y-6'>
           <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
             <div className='space-y-1.5'>
               <Label className='text-xs text-gray-400'>Template Name</Label>
-              <Input 
-                value={isImportTemplateScope ? importTemplateName : exportTemplateName} 
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => isImportTemplateScope ? setImportTemplateName(e.target.value) : setExportTemplateName(e.target.value)}
+              <Input
+                value={isImportTemplateScope ? importTemplateName : exportTemplateName}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  isImportTemplateScope
+                    ? setImportTemplateName(e.target.value)
+                    : setExportTemplateName(e.target.value)
+                }
                 placeholder='e.g. Default Producer Import'
                 className='h-9'
               />
             </div>
             <div className='space-y-1.5'>
               <Label className='text-xs text-gray-400'>Description</Label>
-              <Input 
-                value={isImportTemplateScope ? importTemplateDescription : exportTemplateDescription} 
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => isImportTemplateScope ? setImportTemplateDescription(e.target.value) : setExportTemplateDescription(e.target.value)}
+              <Input
+                value={
+                  isImportTemplateScope ? importTemplateDescription : exportTemplateDescription
+                }
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  isImportTemplateScope
+                    ? setImportTemplateDescription(e.target.value)
+                    : setExportTemplateDescription(e.target.value)
+                }
                 placeholder='Optional notes...'
                 className='h-9'
               />
@@ -346,17 +351,25 @@ export function TemplatesTabContent(): React.JSX.Element {
 
           {templateScope === 'export' && (
             <label className='flex items-center gap-2 cursor-pointer w-fit group'>
-              <Checkbox 
-                id='exportImagesAsBase64' 
-                checked={exportImagesAsBase64} 
-                onCheckedChange={(v: boolean | 'indeterminate') => setExportImagesAsBase64(Boolean(v))} 
+              <Checkbox
+                id='exportImagesAsBase64'
+                checked={exportImagesAsBase64}
+                onCheckedChange={(v: boolean | 'indeterminate') =>
+                  setExportImagesAsBase64(Boolean(v))
+                }
               />
-              <span className='text-sm text-gray-300 group-hover:text-white transition-colors'>Export images as Base64 data strings</span>
+              <span className='text-sm text-gray-300 group-hover:text-white transition-colors'>
+                Export images as Base64 data strings
+              </span>
             </label>
           )}
 
           {templateScope === 'import' && (
-            <Card variant='subtle-compact' padding='md' className='border-border/50 bg-gray-950/30 space-y-3'>
+            <Card
+              variant='subtle-compact'
+              padding='md'
+              className='border-border/50 bg-gray-950/30 space-y-3'
+            >
               <div className='flex items-center justify-between gap-3'>
                 <div>
                   <p className='text-sm font-medium text-gray-200'>Parameter Import</p>
@@ -388,9 +401,7 @@ export function TemplatesTabContent(): React.JSX.Element {
                       setImportTemplateParameterImport((prev) => ({
                         ...prev,
                         languageScope:
-                          value === 'default_only'
-                            ? 'default_only'
-                            : 'catalog_languages',
+                          value === 'default_only' ? 'default_only' : 'catalog_languages',
                       }))
                     }
                     options={[
@@ -414,10 +425,7 @@ export function TemplatesTabContent(): React.JSX.Element {
                     onValueChange={(value: string): void =>
                       setImportTemplateParameterImport((prev) => ({
                         ...prev,
-                        matchBy:
-                          value === 'name_only'
-                            ? 'name_only'
-                            : 'base_id_then_name',
+                        matchBy: value === 'name_only' ? 'name_only' : 'base_id_then_name',
                       }))
                     }
                     options={[
@@ -465,7 +473,9 @@ export function TemplatesTabContent(): React.JSX.Element {
           )}
 
           <div className='space-y-3'>
-            <Hint size='xs' uppercase className='font-bold text-gray-500 block mb-1'>Field Mappings</Hint>
+            <Hint size='xs' uppercase className='font-bold text-gray-500 block mb-1'>
+              Field Mappings
+            </Hint>
             <div className='space-y-2'>
               {currentTemplateMappings.map((m, i) => (
                 <div key={i} className='space-y-1'>
@@ -473,34 +483,32 @@ export function TemplatesTabContent(): React.JSX.Element {
                     {templateScope === 'export' ? (
                       <Input
                         value={m.sourceKey}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateMapping(i, { sourceKey: e.target.value })}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          updateMapping(i, { sourceKey: e.target.value })
+                        }
                         placeholder='Source (e.g. category_id or custom_color)'
                         list='export-source-field-options'
                         className='flex-1 h-9'
                       />
                     ) : (
                       <div className='flex-1'>
-                        <SelectSimple 
+                        <SelectSimple
                           size='sm'
                           value={m.sourceKey || '__none__'}
                           onValueChange={(value: string): void =>
                             updateMapping(i, {
-                              sourceKey:
-                                value === '__none__'
-                                  ? ''
-                                  : value,
+                              sourceKey: value === '__none__' ? '' : value,
                             })
                           }
                           options={[
                             { value: '__none__', label: 'Source Field' },
-                            ...(m.sourceKey &&
-                            !importSourceFieldOptions.includes(m.sourceKey)
+                            ...(m.sourceKey && !importSourceFieldOptions.includes(m.sourceKey)
                               ? [
-                                {
-                                  value: m.sourceKey,
-                                  label: `${m.sourceKey} (custom)`,
-                                },
-                              ]
+                                  {
+                                    value: m.sourceKey,
+                                    label: `${m.sourceKey} (custom)`,
+                                  },
+                                ]
                               : []),
                             ...importSourceFieldOptions.map((field: string) => ({
                               value: field,
@@ -515,7 +523,7 @@ export function TemplatesTabContent(): React.JSX.Element {
                       </div>
                     )}
                     <div className='flex-1'>
-                      <SelectSimple 
+                      <SelectSimple
                         size='sm'
                         value={m.targetField || '__none__'}
                         onValueChange={(v: string): void =>
@@ -530,11 +538,11 @@ export function TemplatesTabContent(): React.JSX.Element {
                             (option) => option.value === m.targetField
                           )
                             ? [
-                              {
-                                value: m.targetField,
-                                label: `${m.targetField} (custom)`,
-                              },
-                            ]
+                                {
+                                  value: m.targetField,
+                                  label: `${m.targetField} (custom)`,
+                                },
+                              ]
                             : []),
                           ...templateTargetFieldOptions,
                         ]}
@@ -542,78 +550,74 @@ export function TemplatesTabContent(): React.JSX.Element {
                         placeholder='Target Field'
                       />
                     </div>
-                    <Button 
-                      variant='ghost' 
-                      size='icon' 
+                    <Button
+                      variant='ghost'
+                      size='icon'
                       className='h-9 w-9 text-gray-500 hover:text-red-400'
                       onClick={() => removeMappingRow(i)}
                     >
                       <Trash2 className='size-4' />
                     </Button>
                   </div>
-                  {templateScope === 'export' ? (
-                    (() => {
-                      const sourceValue = m.sourceKey.trim();
-                      const sourceUsesParameterPrefix = sourceValue
-                        .toLowerCase()
-                        .startsWith(PRODUCT_PARAMETER_TARGET_PREFIX);
-                      const targetValue = m.targetField.trim();
-                      const hasParameterPrefix = targetValue
-                        .toLowerCase()
-                        .startsWith(PRODUCT_PARAMETER_TARGET_PREFIX);
-                      if (!hasParameterPrefix && !sourceUsesParameterPrefix) {
-                        return null;
-                      }
+                  {templateScope === 'export'
+                    ? (() => {
+                        const sourceValue = m.sourceKey.trim();
+                        const sourceUsesParameterPrefix = sourceValue
+                          .toLowerCase()
+                          .startsWith(PRODUCT_PARAMETER_TARGET_PREFIX);
+                        const targetValue = m.targetField.trim();
+                        const hasParameterPrefix = targetValue
+                          .toLowerCase()
+                          .startsWith(PRODUCT_PARAMETER_TARGET_PREFIX);
+                        if (!hasParameterPrefix && !sourceUsesParameterPrefix) {
+                          return null;
+                        }
 
-                      if (sourceUsesParameterPrefix) {
-                        const parsedSourceParameter = parseParameterTarget(sourceValue);
-                        if (parsedSourceParameter) {
-                          const baseFieldKey = parsedSourceParameter.languageCode
-                            ? `${parsedSourceParameter.parameterId}|${parsedSourceParameter.languageCode}`
-                            : parsedSourceParameter.parameterId;
+                        if (sourceUsesParameterPrefix) {
+                          const parsedSourceParameter = parseParameterTarget(sourceValue);
+                          if (parsedSourceParameter) {
+                            const baseFieldKey = parsedSourceParameter.languageCode
+                              ? `${parsedSourceParameter.parameterId}|${parsedSourceParameter.languageCode}`
+                              : parsedSourceParameter.parameterId;
+                            return (
+                              <p className='text-[11px] text-amber-300'>
+                                Source uses <code>{PRODUCT_PARAMETER_TARGET_PATTERN}</code>{' '}
+                                notation. Export normalizes it to Base field key{' '}
+                                <code>{baseFieldKey}</code>.
+                              </p>
+                            );
+                          }
+                        }
+
+                        if (!hasParameterPrefix) return null;
+
+                        const parsedParameterTarget = parseParameterTarget(targetValue);
+                        if (!parsedParameterTarget) {
                           return (
                             <p className='text-[11px] text-amber-300'>
-                              Source uses <code>{PRODUCT_PARAMETER_TARGET_PATTERN}</code>{' '}
-                              notation. Export normalizes it to Base field key{' '}
-                              <code>{baseFieldKey}</code>.
+                              Invalid parameter target format. Use{' '}
+                              <code>{PRODUCT_PARAMETER_TARGET_PATTERN}</code> or{' '}
+                              <code>{PRODUCT_PARAMETER_TARGET_TRANSLATED_PATTERN}</code>.
                             </p>
                           );
                         }
-                      }
 
-                      if (!hasParameterPrefix) return null;
+                        const normalizedTargetValue = toParameterTargetValue(
+                          parsedParameterTarget.parameterId
+                        );
+                        if (validParameterTargetValues.has(normalizedTargetValue)) {
+                          return null;
+                        }
 
-                      const parsedParameterTarget = parseParameterTarget(
-                        targetValue
-                      );
-                      if (!parsedParameterTarget) {
                         return (
                           <p className='text-[11px] text-amber-300'>
-                            Invalid parameter target format. Use{' '}
-                            <code>{PRODUCT_PARAMETER_TARGET_PATTERN}</code> or{' '}
-                            <code>{PRODUCT_PARAMETER_TARGET_TRANSLATED_PATTERN}</code>.
+                            {catalogId
+                              ? 'Parameter target is not in current catalog parameter list. Verify the parameter ID.'
+                              : 'Select a catalog in Imports tab to validate parameter targets.'}
                           </p>
                         );
-                      }
-
-                      const normalizedTargetValue = toParameterTargetValue(
-                        parsedParameterTarget.parameterId
-                      );
-                      if (
-                        validParameterTargetValues.has(normalizedTargetValue)
-                      ) {
-                        return null;
-                      }
-
-                      return (
-                        <p className='text-[11px] text-amber-300'>
-                          {catalogId
-                            ? 'Parameter target is not in current catalog parameter list. Verify the parameter ID.'
-                            : 'Select a catalog in Imports tab to validate parameter targets.'}
-                        </p>
-                      );
-                    })()
-                  ) : null}
+                      })()
+                    : null}
                 </div>
               ))}
             </div>
@@ -629,21 +633,18 @@ export function TemplatesTabContent(): React.JSX.Element {
                 <datalist id='export-source-field-options'>
                   {exportSourceFieldOptions.map((option) => {
                     return (
-                      <option
-                        key={option.value}
-                        value={option.value}
-                        label={option.label}
-                      >
+                      <option key={option.value} value={option.value} label={option.label}>
                         {option.label}
                       </option>
                     );
                   })}
                 </datalist>
                 <p className='text-xs text-gray-500 italic'>
-                  Tip: For category mapping use source <code>category_id</code> and target <code>categoryId</code>.
-                  {' '}For parameters set Base field key in <code>Source</code> and use target <code>{PRODUCT_PARAMETER_TARGET_PATTERN}</code> or{' '}
-                  <code>{PRODUCT_PARAMETER_TARGET_TRANSLATED_PATTERN}</code>.
-                  {' '}Available source keys: {exportSourceFieldOptions.length}.
+                  Tip: For category mapping use source <code>category_id</code> and target{' '}
+                  <code>categoryId</code>. For parameters set Base field key in <code>Source</code>{' '}
+                  and use target <code>{PRODUCT_PARAMETER_TARGET_PATTERN}</code> or{' '}
+                  <code>{PRODUCT_PARAMETER_TARGET_TRANSLATED_PATTERN}</code>. Available source keys:{' '}
+                  {exportSourceFieldOptions.length}.
                 </p>
               </>
             )}
@@ -655,8 +656,7 @@ export function TemplatesTabContent(): React.JSX.Element {
                     ? `Loaded ${importSourceFieldOptions.length} source fields from the selected inventory schema.`
                     : 'No source fields loaded yet. Go to Imports tab, select connection + inventory to load schema.'}
                 {catalogId
-                  ? customParameterTargetsQuery.isLoading ||
-                    simpleParameterTargetsQuery.isLoading
+                  ? customParameterTargetsQuery.isLoading || simpleParameterTargetsQuery.isLoading
                     ? ' Loading parameter targets...'
                     : ` Parameter targets: ${customParameterTargetFields.length + simpleParameterTargetFields.length} (${customParameterTargetFields.length} custom, ${simpleParameterTargetFields.length} simple).`
                   : ' Select a catalog in Imports tab to load parameter targets.'}

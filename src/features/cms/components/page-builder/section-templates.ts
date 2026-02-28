@@ -9,11 +9,20 @@ function tid(): string {
   return `tpl-${templateId++}`;
 }
 
-function block(type: string, settings: Record<string, unknown>, blocks?: BlockInstance[]): BlockInstance {
+function block(
+  type: string,
+  settings: Record<string, unknown>,
+  blocks?: BlockInstance[]
+): BlockInstance {
   return { id: tid(), type, settings, ...(blocks ? { blocks } : {}) };
 }
 
-function section(type: string, settings: Record<string, unknown>, blocks: BlockInstance[], zone: PageZone = 'template'): SectionInstance {
+function section(
+  type: string,
+  settings: Record<string, unknown>,
+  blocks: BlockInstance[],
+  zone: PageZone = 'template'
+): SectionInstance {
   return { id: tid(), type, zone, settings, blocks };
 }
 
@@ -41,7 +50,9 @@ export const SECTION_TEMPLATES: SectionTemplate[] = [
         { imageHeight: 'large', colorScheme: 'scheme-1', paddingTop: 36, paddingBottom: 36 },
         [
           block('Heading', { headingText: 'Welcome to Our Site', headingSize: 'large' }),
-          block('Text', { textContent: 'Discover what makes us different. We deliver quality and innovation.' }),
+          block('Text', {
+            textContent: 'Discover what makes us different. We deliver quality and innovation.',
+          }),
           block('Button', { buttonLabel: 'Get Started', buttonLink: '#', buttonStyle: 'solid' }),
         ]
       ),
@@ -69,7 +80,9 @@ export const SECTION_TEMPLATES: SectionTemplate[] = [
         },
         [
           block('Heading', { headingText: 'About Us', headingSize: 'medium' }),
-          block('Text', { textContent: 'Learn more about our mission and the team behind the product.' }),
+          block('Text', {
+            textContent: 'Learn more about our mission and the team behind the product.',
+          }),
         ]
       ),
   },
@@ -79,18 +92,20 @@ export const SECTION_TEMPLATES: SectionTemplate[] = [
     category: 'Content',
     zones: ['template'],
     create: () =>
-      section(
-        'Accordion',
-        { colorScheme: 'scheme-1', paddingTop: 36, paddingBottom: 36 },
-        [
-          block('Heading', { headingText: 'What is your return policy?', headingSize: 'small' }),
-          block('Text', { textContent: 'You can return any item within 30 days of purchase for a full refund.' }),
-          block('Heading', { headingText: 'How long does shipping take?', headingSize: 'small' }),
-          block('Text', { textContent: 'Standard shipping takes 5-7 business days. Express shipping is available.' }),
-          block('Heading', { headingText: 'Do you offer support?', headingSize: 'small' }),
-          block('Text', { textContent: 'Yes, our support team is available 24/7 via email and live chat.' }),
-        ]
-      ),
+      section('Accordion', { colorScheme: 'scheme-1', paddingTop: 36, paddingBottom: 36 }, [
+        block('Heading', { headingText: 'What is your return policy?', headingSize: 'small' }),
+        block('Text', {
+          textContent: 'You can return any item within 30 days of purchase for a full refund.',
+        }),
+        block('Heading', { headingText: 'How long does shipping take?', headingSize: 'small' }),
+        block('Text', {
+          textContent: 'Standard shipping takes 5-7 business days. Express shipping is available.',
+        }),
+        block('Heading', { headingText: 'Do you offer support?', headingSize: 'small' }),
+        block('Text', {
+          textContent: 'Yes, our support team is available 24/7 via email and live chat.',
+        }),
+      ]),
   },
   {
     name: 'Testimonials Grid',
@@ -102,9 +117,13 @@ export const SECTION_TEMPLATES: SectionTemplate[] = [
         'Testimonials',
         { layout: 'grid', columns: 3, colorScheme: 'scheme-1', paddingTop: 36, paddingBottom: 36 },
         [
-          block('Text', { textContent: 'This product changed the way we work. Highly recommended!' }),
+          block('Text', {
+            textContent: 'This product changed the way we work. Highly recommended!',
+          }),
           block('Text', { textContent: 'Outstanding quality and customer service. Five stars.' }),
-          block('Text', { textContent: 'We saw a 40% improvement in productivity after switching.' }),
+          block('Text', {
+            textContent: 'We saw a 40% improvement in productivity after switching.',
+          }),
         ]
       ),
   },
@@ -125,7 +144,9 @@ export const SECTION_TEMPLATES: SectionTemplate[] = [
         },
         [
           block('Heading', { headingText: 'Stay in the Loop', headingSize: 'medium' }),
-          block('Text', { textContent: 'Get the latest news and updates delivered to your inbox.' }),
+          block('Text', {
+            textContent: 'Get the latest news and updates delivered to your inbox.',
+          }),
         ]
       ),
   },

@@ -1,4 +1,3 @@
- 
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -79,8 +78,7 @@ const INSTANCE_META: Array<{
   {
     id: 'case_resolver_cases',
     title: 'Case Resolver Cases',
-    description:
-      'Controls hierarchy placeholders and drag/drop behavior on the Cases list page.',
+    description: 'Controls hierarchy placeholders and drag/drop behavior on the Cases list page.',
     fileHint: 'Not used (case hierarchy nodes are folder-type entries).',
     folderHint: 'Example: case_entry',
   },
@@ -160,9 +158,12 @@ const findRuleIndex = (profile: FolderTreeProfileV2, key: NestingRuleKey): numbe
   return -1;
 };
 
-const getRule = (profile: FolderTreeProfileV2, key: NestingRuleKey): FolderTreeNestingRuleV2 | null => {
+const getRule = (
+  profile: FolderTreeProfileV2,
+  key: NestingRuleKey
+): FolderTreeNestingRuleV2 | null => {
   const index = findRuleIndex(profile, key);
-  return index >= 0 ? profile.nesting.rules[index] ?? null : null;
+  return index >= 0 ? (profile.nesting.rules[index] ?? null) : null;
 };
 
 const getRuleAllow = (profile: FolderTreeProfileV2, key: NestingRuleKey): boolean => {
@@ -189,7 +190,10 @@ const upsertRule = (
     update.childKinds ?? existing?.childKinds ?? config.defaultKinds,
     config.defaultKinds
   );
-  const targetKinds = normalizeKindList(existing?.targetKinds ?? config.targetKinds, config.targetKinds);
+  const targetKinds = normalizeKindList(
+    existing?.targetKinds ?? config.targetKinds,
+    config.targetKinds
+  );
   const nextRule: FolderTreeNestingRuleV2 = {
     childType: config.childType,
     childKinds,
@@ -286,7 +290,10 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
   );
 
   const updateProfile = useCallback(
-    (instance: FolderTreeInstance, updater: (profile: FolderTreeProfileV2) => FolderTreeProfileV2): void => {
+    (
+      instance: FolderTreeInstance,
+      updater: (profile: FolderTreeProfileV2) => FolderTreeProfileV2
+    ): void => {
       setDraftProfiles((prev: FolderTreeProfilesV2Map) => ({
         ...prev,
         [instance]: updater(prev[instance]),
@@ -329,19 +336,16 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
 
       <FormActions
         onCancel={handleRevert}
-        onSave={() => { void handleSave(); }}
+        onSave={() => {
+          void handleSave();
+        }}
         saveText='Save Profiles'
         cancelText='Revert Changes'
         isDisabled={!isDirty || isSaving}
         isSaving={isSaving}
         className='mb-4 flex-wrap justify-start'
       >
-        <Button
-          type='button'
-          variant='outline'
-          onClick={handleResetToDefaults}
-          disabled={isSaving}
-        >
+        <Button type='button' variant='outline' onClick={handleResetToDefaults} disabled={isSaving}>
           Reset To Defaults
         </Button>
       </FormActions>
@@ -364,15 +368,12 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
               padding='lg'
               className='scroll-mt-24 space-y-5 bg-card/40'
             >
-              <SectionHeader
-                title={meta.title}
-                description={meta.description}
-                size='xs'
-              />
+              <SectionHeader title={meta.title} description={meta.description} size='xs' />
 
               <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-4'>
                 <FormField label='Placeholder Preset'>
-                  <SelectSimple size='sm'
+                  <SelectSimple
+                    size='sm'
                     value={profile.placeholders.preset}
                     options={folderTreePlaceholderPresetOptions.map((option) => ({
                       value: option.value,
@@ -391,7 +392,8 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
                 </FormField>
 
                 <FormField label='Placeholder Style'>
-                  <SelectSimple size='sm'
+                  <SelectSimple
+                    size='sm'
                     value={profile.placeholders.style}
                     options={folderTreePlaceholderStyleValues.map((value) => ({
                       value,
@@ -410,7 +412,8 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
                 </FormField>
 
                 <FormField label='Placeholder Emphasis'>
-                  <SelectSimple size='sm'
+                  <SelectSimple
+                    size='sm'
                     value={profile.placeholders.emphasis}
                     options={folderTreePlaceholderEmphasisValues.map((value) => ({
                       value,
@@ -429,7 +432,8 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
                 </FormField>
 
                 <FormField label='Selection Behavior'>
-                  <SelectSimple size='sm'
+                  <SelectSimple
+                    size='sm'
                     value={profile.interactions.selectionBehavior}
                     options={folderTreeSelectionBehaviorOptions}
                     onValueChange={(value: string): void => {
@@ -437,7 +441,8 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
                         ...current,
                         interactions: {
                           ...current.interactions,
-                          selectionBehavior: value as FolderTreeProfileV2['interactions']['selectionBehavior'],
+                          selectionBehavior:
+                            value as FolderTreeProfileV2['interactions']['selectionBehavior'],
                         },
                       }));
                     }}
@@ -445,7 +450,11 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
                 </FormField>
 
                 <label className='block cursor-pointer'>
-                  <Card variant='subtle-compact' padding='sm' className='flex items-start gap-2 border-border/50 bg-card/30'>
+                  <Card
+                    variant='subtle-compact'
+                    padding='sm'
+                    className='flex items-start gap-2 border-border/50 bg-card/30'
+                  >
                     <Checkbox
                       checked={profile.nesting.defaultAllow}
                       onCheckedChange={(checked: boolean | 'indeterminate'): void => {
@@ -497,7 +506,11 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
 
               <div className='grid gap-4 md:grid-cols-2'>
                 <label className='block cursor-pointer'>
-                  <Card variant='subtle-compact' padding='sm' className='flex items-start gap-2 border-border/50 bg-card/30'>
+                  <Card
+                    variant='subtle-compact'
+                    padding='sm'
+                    className='flex items-start gap-2 border-border/50 bg-card/30'
+                  >
                     <Checkbox
                       checked={allowFolderToFolder}
                       onCheckedChange={(checked: boolean | 'indeterminate'): void => {
@@ -511,7 +524,11 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
                 </label>
 
                 <label className='block cursor-pointer'>
-                  <Card variant='subtle-compact' padding='sm' className='flex items-start gap-2 border-border/50 bg-card/30'>
+                  <Card
+                    variant='subtle-compact'
+                    padding='sm'
+                    className='flex items-start gap-2 border-border/50 bg-card/30'
+                  >
                     <Checkbox
                       checked={allowFileToFolder}
                       onCheckedChange={(checked: boolean | 'indeterminate'): void => {
@@ -525,7 +542,11 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
                 </label>
 
                 <label className='block cursor-pointer'>
-                  <Card variant='subtle-compact' padding='sm' className='flex items-start gap-2 border-border/50 bg-card/30'>
+                  <Card
+                    variant='subtle-compact'
+                    padding='sm'
+                    className='flex items-start gap-2 border-border/50 bg-card/30'
+                  >
                     <Checkbox
                       checked={allowFolderToRoot}
                       onCheckedChange={(checked: boolean | 'indeterminate'): void => {
@@ -539,7 +560,11 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
                 </label>
 
                 <label className='block cursor-pointer'>
-                  <Card variant='subtle-compact' padding='sm' className='flex items-start gap-2 border-border/50 bg-card/30'>
+                  <Card
+                    variant='subtle-compact'
+                    padding='sm'
+                    className='flex items-start gap-2 border-border/50 bg-card/30'
+                  >
                     <Checkbox
                       checked={allowFileToRoot}
                       onCheckedChange={(checked: boolean | 'indeterminate'): void => {

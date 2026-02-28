@@ -10,6 +10,7 @@ import type {
   CaseResolverWorkspace,
   CaseResolverFile,
   CaseResolverAssetFile,
+  CaseResolverGraph,
 } from '@/shared/contracts/case-resolver';
 
 const buildWorkspaceFixture = (): CaseResolverWorkspace => {
@@ -55,7 +56,7 @@ const buildWorkspaceFixture = (): CaseResolverWorkspace => {
       nodeFileAssetIdByNode: {
         'node-b': 'asset-node-b',
       },
-    } as any,
+    } as CaseResolverGraph,
   });
 
   return {
@@ -66,7 +67,7 @@ const buildWorkspaceFixture = (): CaseResolverWorkspace => {
     version: 2,
     workspaceRevision: 0,
     lastMutationId: null,
-    
+
     lastMutationAt: null,
     folders: ['old-folder', 'new-folder'],
     folderRecords: [
@@ -74,8 +75,14 @@ const buildWorkspaceFixture = (): CaseResolverWorkspace => {
       { path: 'new-folder', ownerCaseId: 'case-b' },
     ],
     folderTimestamps: {
-      'old-folder': { createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z' },
-      'new-folder': { createdAt: '2026-01-02T00:00:00.000Z', updatedAt: '2026-01-02T00:00:00.000Z' },
+      'old-folder': {
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      },
+      'new-folder': {
+        createdAt: '2026-01-02T00:00:00.000Z',
+        updatedAt: '2026-01-02T00:00:00.000Z',
+      },
     },
     files: [caseA, caseB, docA, docB],
     assets: [
@@ -222,10 +229,10 @@ describe('resolveCaseResolverTreeWorkspace', () => {
     });
 
     expect(scoped.files.map((file: CaseResolverFile) => file.id).sort()).toEqual(
-      workspace.files.map((file: CaseResolverFile) => file.id).sort(),
+      workspace.files.map((file: CaseResolverFile) => file.id).sort()
     );
     expect(scoped.assets.map((asset: CaseResolverAssetFile) => asset.id).sort()).toEqual(
-      workspace.assets.map((asset: CaseResolverAssetFile) => asset.id).sort(),
+      workspace.assets.map((asset: CaseResolverAssetFile) => asset.id).sort()
     );
     expect(scoped.folders).toEqual(workspace.folders);
     expect(scoped.folderRecords).toEqual(workspace.folderRecords);
@@ -240,9 +247,15 @@ describe('resolveCaseResolverTreeWorkspace', () => {
       workspace,
     });
 
-    expect(scoped.files.map((file: CaseResolverFile) => file.id).sort()).toEqual(['case-b', 'doc-b']);
-    expect(scoped.assets.map((asset: CaseResolverAssetFile) => asset.id).sort()).toEqual(['asset-b', 'asset-node-b']);
-    
+    expect(scoped.files.map((file: CaseResolverFile) => file.id).sort()).toEqual([
+      'case-b',
+      'doc-b',
+    ]);
+    expect(scoped.assets.map((asset: CaseResolverAssetFile) => asset.id).sort()).toEqual([
+      'asset-b',
+      'asset-node-b',
+    ]);
+
     expect(scoped.folders).toEqual(['new-folder']);
     expect(scoped.activeFileId).toBe('case-b');
   });
@@ -256,10 +269,10 @@ describe('resolveCaseResolverTreeWorkspace', () => {
     });
 
     expect(scoped.files.map((file: CaseResolverFile) => file.id).sort()).toEqual(
-      workspace.files.map((file: CaseResolverFile) => file.id).sort(),
+      workspace.files.map((file: CaseResolverFile) => file.id).sort()
     );
     expect(scoped.assets.map((asset: CaseResolverAssetFile) => asset.id).sort()).toEqual(
-      workspace.assets.map((asset: CaseResolverAssetFile) => asset.id).sort(),
+      workspace.assets.map((asset: CaseResolverAssetFile) => asset.id).sort()
     );
     expect(scoped.folders).toEqual(workspace.folders);
     expect(scoped.folderRecords).toEqual(workspace.folderRecords);
@@ -279,10 +292,10 @@ describe('resolveCaseResolverTreeWorkspace', () => {
     });
 
     expect(scoped.files.map((file: CaseResolverFile) => file.id).sort()).toEqual(
-      workspace.files.map((file: CaseResolverFile) => file.id).sort(),
+      workspace.files.map((file: CaseResolverFile) => file.id).sort()
     );
     expect(scoped.assets.map((asset: CaseResolverAssetFile) => asset.id).sort()).toEqual(
-      workspace.assets.map((asset: CaseResolverAssetFile) => asset.id).sort(),
+      workspace.assets.map((asset: CaseResolverAssetFile) => asset.id).sort()
     );
     expect(scoped.folders).toEqual(workspace.folders);
   });
@@ -299,8 +312,14 @@ describe('resolveCaseResolverTreeWorkspace', () => {
       },
     });
 
-    expect(scoped.files.map((file: CaseResolverFile) => file.id).sort()).toEqual(['case-b', 'doc-b']);
-    expect(scoped.assets.map((asset: CaseResolverAssetFile) => asset.id).sort()).toEqual(['asset-b', 'asset-node-b']);
+    expect(scoped.files.map((file: CaseResolverFile) => file.id).sort()).toEqual([
+      'case-b',
+      'doc-b',
+    ]);
+    expect(scoped.assets.map((asset: CaseResolverAssetFile) => asset.id).sort()).toEqual([
+      'asset-b',
+      'asset-node-b',
+    ]);
     expect(scoped.folders).toEqual(['new-folder']);
   });
 
@@ -401,7 +420,7 @@ describe('resolveCaseResolverTreeWorkspace', () => {
     });
 
     expect(scoped.files.map((file: CaseResolverFile) => file.id)).toContain(
-      'doc-unassigned-linked',
+      'doc-unassigned-linked'
     );
   });
 
@@ -425,7 +444,7 @@ describe('resolveCaseResolverTreeWorkspace', () => {
     });
 
     expect(scoped.files.map((file: CaseResolverFile) => file.id)).not.toContain(
-      'doc-unassigned-unrelated',
+      'doc-unassigned-unrelated'
     );
   });
 });

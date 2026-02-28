@@ -23,7 +23,12 @@ vi.mock('@/features/cms/components/page-builder/ComponentTreePanel', () => ({
     return (
       <div data-testid='component-tree-panel'>
         Tree
-        <button aria-label='Hide left panel' onClick={() => dispatch({ type: 'TOGGLE_LEFT_PANEL' })}>Hide</button>
+        <button
+          aria-label='Hide left panel'
+          onClick={() => dispatch({ type: 'TOGGLE_LEFT_PANEL' })}
+        >
+          Hide
+        </button>
       </div>
     );
   },
@@ -39,7 +44,12 @@ vi.mock('@/features/cms/components/page-builder/ComponentSettingsPanel', () => (
     return (
       <div data-testid='component-settings-panel'>
         Settings
-        <button aria-label='Hide right panel' onClick={() => dispatch({ type: 'TOGGLE_RIGHT_PANEL' })}>Hide</button>
+        <button
+          aria-label='Hide right panel'
+          onClick={() => dispatch({ type: 'TOGGLE_RIGHT_PANEL' })}
+        >
+          Hide
+        </button>
       </div>
     );
   },
@@ -76,7 +86,7 @@ describe('PageBuilderLayout Component', () => {
 
   it('should render all panels by default', () => {
     render(<PageBuilderLayout />, { wrapper });
-    
+
     expect(screen.getByTestId('component-tree-panel')).toBeInTheDocument();
     expect(screen.getByTestId('page-preview-panel')).toBeInTheDocument();
     expect(screen.getByTestId('component-settings-panel')).toBeInTheDocument();
@@ -84,17 +94,17 @@ describe('PageBuilderLayout Component', () => {
 
   it('should toggle left panel', async () => {
     render(<PageBuilderLayout />, { wrapper });
-    
+
     // The animated container is the grandparent of the tree panel's content wrapper
     const leftPanel = screen.getAllByLabelText('Hide left panel')[0]!.closest('.transition-all')!;
     expect(leftPanel).toHaveClass('w-72');
-    
+
     const hideBtn = screen.getAllByLabelText('Hide left panel')[0]!;
     act(() => {
       fireEvent.click(hideBtn);
     });
     await waitFor(() => expect(leftPanel).toHaveClass('w-0'));
-    
+
     // Click again to show
     const showBtn = screen.getByLabelText('Show left panel');
     act(() => {
@@ -105,17 +115,17 @@ describe('PageBuilderLayout Component', () => {
 
   it('should toggle right panel', async () => {
     render(<PageBuilderLayout />, { wrapper });
-    
+
     // ComponentSettingsPanel is rendered inside the right panel container
     const rightPanel = screen.getByTestId('component-settings-panel').parentElement!;
     expect(rightPanel).toHaveClass('w-80');
-    
+
     const hideBtn = screen.getByLabelText('Hide right panel');
     act(() => {
       fireEvent.click(hideBtn);
     });
     await waitFor(() => expect(rightPanel).toHaveClass('w-0'));
-    
+
     const showBtn = screen.getByLabelText('Show right panel');
     act(() => {
       fireEvent.click(showBtn);
@@ -125,18 +135,18 @@ describe('PageBuilderLayout Component', () => {
 
   it('should switch left panel modes', () => {
     render(<PageBuilderLayout />, { wrapper });
-    
+
     // Default is sections
     expect(screen.getByText('Sections')).toBeInTheDocument();
     expect(screen.getByTestId('component-tree-panel')).toBeInTheDocument();
-    
+
     // Switch to theme
     act(() => {
       fireEvent.click(screen.getByLabelText('Theme settings'));
     });
     expect(screen.getByText('Theme settings')).toBeInTheDocument();
     expect(screen.getByTestId('theme-settings-panel')).toBeInTheDocument();
-    
+
     // Switch to menu
     act(() => {
       fireEvent.click(screen.getByLabelText('Menu settings'));
@@ -150,7 +160,7 @@ describe('PageBuilderLayout Component', () => {
     });
     expect(screen.getByText('App embeds')).toBeInTheDocument();
     expect(screen.getByTestId('app-embeds-panel')).toBeInTheDocument();
-    
+
     // Switch back to sections
     act(() => {
       fireEvent.click(screen.getByLabelText('Back to sections'));
@@ -163,8 +173,8 @@ describe('PageBuilderLayout Component', () => {
     // Mock matchMedia
     let matches = false;
     let changeHandler: ((e: any) => void) | null = null;
-    
-    window.matchMedia = vi.fn().mockImplementation(query => ({
+
+    window.matchMedia = vi.fn().mockImplementation((query) => ({
       matches,
       media: query,
       onchange: null,
@@ -176,18 +186,18 @@ describe('PageBuilderLayout Component', () => {
     }));
 
     render(<PageBuilderLayout />, { wrapper });
-    
+
     const rightPanel = screen.getByTestId('component-settings-panel').parentElement!;
     expect(rightPanel).toHaveClass('w-80'); // Initially open
-    
+
     // Simulate narrow screen
     matches = true;
     act(() => {
       if (changeHandler) changeHandler({ matches: true });
     });
-    
+
     await waitFor(() => expect(rightPanel).toHaveClass('w-0'));
-    
+
     // Simulate wide screen again
     matches = false;
     act(() => {

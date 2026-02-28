@@ -41,5 +41,4 @@ export const LITE_SETTINGS_KEYS = [
 
 const LITE_SETTINGS_KEY_SET = new Set<string>(LITE_SETTINGS_KEYS);
 
-export const isLiteSettingsKey = (key: string): boolean =>
-  LITE_SETTINGS_KEY_SET.has(key);
+export const isLiteSettingsKey = (key: string): boolean => LITE_SETTINGS_KEY_SET.has(key);

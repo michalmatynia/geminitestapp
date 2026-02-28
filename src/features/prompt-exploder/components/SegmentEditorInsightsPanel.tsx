@@ -2,21 +2,10 @@
 
 import React from 'react';
 
-import {
-  Button,
-  Input,
-  Label,
-  SelectSimple,
-  StatusToggle,
-  Textarea,
-  Card,
-} from '@/shared/ui';
+import { Button, Input, Label, SelectSimple, StatusToggle, Textarea, Card } from '@/shared/ui';
 
 import { useDocumentState } from '../context/hooks/useDocument';
-import {
-  useSegmentEditorActions,
-  useSegmentEditorState,
-} from '../context/hooks/useSegmentEditor';
+import { useSegmentEditorActions, useSegmentEditorState } from '../context/hooks/useSegmentEditor';
 import { useSettingsState } from '../context/hooks/useSettings';
 import { promptExploderClampNumber } from '../helpers/formatting';
 import { promptExploderCreateApprovalDraftFromSegment } from '../helpers/segment-helpers';
@@ -27,21 +16,10 @@ import type { PromptExploderSegment } from '../types';
 export function SegmentEditorInsightsPanel(): React.JSX.Element | null {
   const { selectedSegment } = useDocumentState();
 
-  const {
-    effectiveLearnedTemplates,
-    templateMergeThreshold,
-    isBusy,
-  } = useSettingsState();
-  const {
-    approvalDraft,
-    matchedRuleDetails,
-    similarTemplateCandidates,
-    templateTargetOptions,
-  } = useSegmentEditorState();
-  const {
-    setApprovalDraft,
-    handleApproveSelectedSegmentPattern,
-  } = useSegmentEditorActions();
+  const { effectiveLearnedTemplates, templateMergeThreshold, isBusy } = useSettingsState();
+  const { approvalDraft, matchedRuleDetails, similarTemplateCandidates, templateTargetOptions } =
+    useSegmentEditorState();
+  const { setApprovalDraft, handleApproveSelectedSegmentPattern } = useSegmentEditorActions();
 
   if (!selectedSegment) return null;
 
@@ -50,14 +28,14 @@ export function SegmentEditorInsightsPanel(): React.JSX.Element | null {
   };
 
   return (
-    <Card variant='subtle-compact' padding='sm' className='space-y-3 bg-card/30 text-[11px] text-gray-400'>
-      <div className='text-[11px] uppercase tracking-wide text-gray-400'>
-        Matched Rule Insights
-      </div>
+    <Card
+      variant='subtle-compact'
+      padding='sm'
+      className='space-y-3 bg-card/30 text-[11px] text-gray-400'
+    >
+      <div className='text-[11px] uppercase tracking-wide text-gray-400'>Matched Rule Insights</div>
       {matchedRuleDetails.length === 0 ? (
-        <div className='text-[11px] text-gray-500'>
-          No matched patterns for this segment.
-        </div>
+        <div className='text-[11px] text-gray-500'>No matched patterns for this segment.</div>
       ) : (
         <div className='space-y-2'>
           {matchedRuleDetails.map((matchedRule) => (
@@ -77,8 +55,7 @@ export function SegmentEditorInsightsPanel(): React.JSX.Element | null {
               </div>
               <div className='mt-1 text-[10px] text-gray-500'>
                 id: <span className='font-mono'>{matchedRule.id}</span> · priority{' '}
-                {matchedRule.priority} · boost{' '}
-                {matchedRule.confidenceBoost.toFixed(2)} · heading{' '}
+                {matchedRule.priority} · boost {matchedRule.confidenceBoost.toFixed(2)} · heading{' '}
                 {matchedRule.treatAsHeading ? 'yes' : 'no'}
               </div>
             </Card>
@@ -93,7 +70,8 @@ export function SegmentEditorInsightsPanel(): React.JSX.Element | null {
         <div className='grid gap-2 md:grid-cols-2'>
           <div className='space-y-1'>
             <Label className='text-[11px] text-gray-400'>Template Merge Mode</Label>
-            <SelectSimple size='sm'
+            <SelectSimple
+              size='sm'
               value={approvalDraft.templateMergeMode}
               onValueChange={(value: string) => {
                 const nextMode = value as TemplateMergeMode;
@@ -102,9 +80,7 @@ export function SegmentEditorInsightsPanel(): React.JSX.Element | null {
                   templateMergeMode: nextMode,
                   templateTargetId:
                     nextMode === 'target'
-                      ? (previous.templateTargetId ||
-                        templateTargetOptions[0]?.value ||
-                        '')
+                      ? previous.templateTargetId || templateTargetOptions[0]?.value || ''
                       : '',
                 }));
               }}
@@ -118,7 +94,8 @@ export function SegmentEditorInsightsPanel(): React.JSX.Element | null {
           {approvalDraft.templateMergeMode === 'target' ? (
             <div className='space-y-1'>
               <Label className='text-[11px] text-gray-400'>Merge Target Template</Label>
-              <SelectSimple size='sm'
+              <SelectSimple
+                size='sm'
                 value={approvalDraft.templateTargetId}
                 onValueChange={(value: string) => {
                   setApprovalDraft((previous) => ({
@@ -136,8 +113,7 @@ export function SegmentEditorInsightsPanel(): React.JSX.Element | null {
           ) : null}
         </div>
         <div className='mb-2 text-[10px] text-gray-500'>
-          Merge eligibility: same segment type + score &gt;=
-          {' '}{templateMergeThreshold.toFixed(2)}
+          Merge eligibility: same segment type + score &gt;= {templateMergeThreshold.toFixed(2)}
         </div>
         {similarTemplateCandidates.length === 0 ? (
           <div className='text-[11px] text-gray-500'>
@@ -167,10 +143,11 @@ export function SegmentEditorInsightsPanel(): React.JSX.Element | null {
                   </span>
                 </div>
                 <div className='mt-1 text-[10px] text-gray-500'>
-                                        score {(candidate.score * 100).toFixed(1)}% ·
-                  {' '}type {candidate.segmentType} ·
-                  {' '}state {(candidate.state as string) || 'candidate'} · approvals {typeof candidate.approvals === 'number' ? candidate.approvals : 0}
-                </div>                <div className='mt-1 flex justify-end'>
+                  score {(candidate.score * 100).toFixed(1)}% · type {candidate.segmentType} · state{' '}
+                  {(candidate.state as string) || 'candidate'} · approvals{' '}
+                  {typeof candidate.approvals === 'number' ? candidate.approvals : 0}
+                </div>{' '}
+                <div className='mt-1 flex justify-end'>
                   <Button
                     type='button'
                     variant='outline'
@@ -224,7 +201,8 @@ export function SegmentEditorInsightsPanel(): React.JSX.Element | null {
           </div>
           <div className='space-y-1'>
             <Label className='text-[11px] text-gray-400'>Segment Type Hint</Label>
-            <SelectSimple size='sm'
+            <SelectSimple
+              size='sm'
               value={approvalDraft.ruleSegmentType}
               onValueChange={(value: string) => {
                 const nextSegmentType = value as PromptExploderSegment['type'];
@@ -234,13 +212,12 @@ export function SegmentEditorInsightsPanel(): React.JSX.Element | null {
                   templateTargetId:
                     previous.templateMergeMode === 'target'
                       ? (effectiveLearnedTemplates.find(
-                        (template) =>
-                          template.id === previous.templateTargetId &&
-                          template.segmentType === nextSegmentType
-                      )?.id ??
-                        effectiveLearnedTemplates.find(
                           (template) =>
+                            template.id === previous.templateTargetId &&
                             template.segmentType === nextSegmentType
+                        )?.id ??
+                        effectiveLearnedTemplates.find(
+                          (template) => template.segmentType === nextSegmentType
                         )?.id ??
                         '')
                       : previous.templateTargetId,
@@ -252,8 +229,7 @@ export function SegmentEditorInsightsPanel(): React.JSX.Element | null {
                         template.segmentType === nextSegmentType
                     ) &&
                     !effectiveLearnedTemplates.some(
-                      (template) =>
-                        template.segmentType === nextSegmentType
+                      (template) => template.segmentType === nextSegmentType
                     )
                       ? 'auto'
                       : previous.templateMergeMode,
@@ -324,16 +300,16 @@ export function SegmentEditorInsightsPanel(): React.JSX.Element | null {
           </div>
         </div>
         <div className='mt-2 flex items-center justify-between gap-2 text-[10px] text-gray-500'>
-          <span>Approvals train fuzzy recognition and save this rule draft into validator patterns.</span>
+          <span>
+            Approvals train fuzzy recognition and save this rule draft into validator patterns.
+          </span>
           <div className='flex items-center gap-2'>
             <Button
               type='button'
               variant='outline'
               size='sm'
               onClick={() => {
-                setApprovalDraft(
-                  promptExploderCreateApprovalDraftFromSegment(selectedSegment)
-                );
+                setApprovalDraft(promptExploderCreateApprovalDraftFromSegment(selectedSegment));
               }}
             >
               Reset Draft

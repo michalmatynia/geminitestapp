@@ -39,7 +39,9 @@ export interface GenericItemMapperConfig<TInternal, TExternal, TMapping> {
 
   // Async operations
   onFetch: () => Promise<{ message: string }>;
-  onSave: (mappings: Array<{ internalId: string; externalId: string | null }>) => Promise<{ message: string }>;
+  onSave: (
+    mappings: Array<{ internalId: string; externalId: string | null }>
+  ) => Promise<{ message: string }>;
 
   // Loading states
   isLoadingInternal?: boolean;
@@ -102,19 +104,14 @@ export function GenericItemMapper<TInternal, TExternal, TMapping>({
     [externalItems, getExternalId, getExternalLabel]
   );
 
-  const {
-    pendingMappings,
-    getCurrentMapping,
-    handleMappingChange,
-    resetPendingMappings,
-    stats,
-  } = usePendingExternalMappings({
-    mappings: currentMappings,
-    internalIds: sortedInternalItems.map(item => getInternalId(item)),
-    getInternalId: getMappingInternalId,
-    getExternalId: getMappingExternalId,
-    isActive: () => true,
-  });
+  const { pendingMappings, getCurrentMapping, handleMappingChange, resetPendingMappings, stats } =
+    usePendingExternalMappings({
+      mappings: currentMappings,
+      internalIds: sortedInternalItems.map((item) => getInternalId(item)),
+      getInternalId: getMappingInternalId,
+      getExternalId: getMappingExternalId,
+      isActive: () => true,
+    });
 
   useEffect(() => {
     resetPendingMappings();
@@ -128,7 +125,8 @@ export function GenericItemMapper<TInternal, TExternal, TMapping>({
       logClientError(error, {
         context: { source: 'GenericItemMapper', action: 'fetch', connectionId, title },
       });
-      const message = error instanceof Error ? error.message : `Failed to fetch ${title.toLowerCase()}`;
+      const message =
+        error instanceof Error ? error.message : `Failed to fetch ${title.toLowerCase()}`;
       toast(message, { variant: 'error' });
     }
   };
@@ -154,7 +152,8 @@ export function GenericItemMapper<TInternal, TExternal, TMapping>({
       logClientError(error, {
         context: { source: 'GenericItemMapper', action: 'save', connectionId, title },
       });
-      const message = error instanceof Error ? error.message : `Failed to save ${title.toLowerCase()}`;
+      const message =
+        error instanceof Error ? error.message : `Failed to save ${title.toLowerCase()}`;
       toast(message, { variant: 'error' });
     }
   };
@@ -166,7 +165,9 @@ export function GenericItemMapper<TInternal, TExternal, TMapping>({
       {
         id: 'internal',
         header: internalColumnHeader,
-        cell: ({ row }) => <span className='text-sm text-gray-200'>{getInternalLabel(row.original)}</span>,
+        cell: ({ row }) => (
+          <span className='text-sm text-gray-200'>{getInternalLabel(row.original)}</span>
+        ),
       },
     ];
 
@@ -174,7 +175,9 @@ export function GenericItemMapper<TInternal, TExternal, TMapping>({
       cols.push({
         id: 'additional',
         header: additionalColumnsHeader,
-        cell: ({ row }) => <span className='text-sm text-gray-400'>{getInternalAdditionalLabel(row.original)}</span>,
+        cell: ({ row }) => (
+          <span className='text-sm text-gray-400'>{getInternalAdditionalLabel(row.original)}</span>
+        ),
       });
     }
 
@@ -184,7 +187,7 @@ export function GenericItemMapper<TInternal, TExternal, TMapping>({
       cell: ({ row }) => {
         const internalId = getInternalId(row.original);
         const currentMapping = getCurrentMapping(internalId);
-        
+
         return (
           <GenericMapperExternalCell
             value={currentMapping}
@@ -198,16 +201,16 @@ export function GenericItemMapper<TInternal, TExternal, TMapping>({
 
     return cols;
   }, [
-    internalColumnHeader, 
-    externalColumnHeader, 
-    additionalColumnsHeader, 
-    getInternalLabel, 
-    getInternalAdditionalLabel, 
-    getInternalId, 
-    getCurrentMapping, 
-    handleMappingChange, 
-    isLoadingExternal, 
-    externalOptions
+    internalColumnHeader,
+    externalColumnHeader,
+    additionalColumnsHeader,
+    getInternalLabel,
+    getInternalAdditionalLabel,
+    getInternalId,
+    getCurrentMapping,
+    handleMappingChange,
+    isLoadingExternal,
+    externalOptions,
   ]);
 
   return (
@@ -215,7 +218,7 @@ export function GenericItemMapper<TInternal, TExternal, TMapping>({
       <StandardDataTablePanel
         title={title}
         description={`Connection: ${connectionName}`}
-        headerActions={(
+        headerActions={
           <GenericMapperHeaderActions
             onFetch={() => void handleFetch()}
             isFetching={isFetching}
@@ -223,14 +226,10 @@ export function GenericItemMapper<TInternal, TExternal, TMapping>({
             isSaving={isSaving}
             pendingCount={pendingMappings.size}
           />
-        )}
-        alerts={(
-          <GenericMapperStats
-            total={stats.total}
-            mapped={stats.mapped}
-            pending={stats.pending}
-          />
-        )}
+        }
+        alerts={
+          <GenericMapperStats total={stats.total} mapped={stats.mapped} pending={stats.pending} />
+        }
         columns={columns}
         data={sortedInternalItems}
         isLoading={loading}
@@ -246,7 +245,8 @@ export function GenericItemMapper<TInternal, TExternal, TMapping>({
           />
         }
         getRowClassName={(row: Row<TInternal>) => {
-          const hasPendingChange = pendingMappings.size > 0 && pendingMappings.has(getInternalId(row.original));
+          const hasPendingChange =
+            pendingMappings.size > 0 && pendingMappings.has(getInternalId(row.original));
           return hasPendingChange ? 'bg-amber-500/5 hover:bg-amber-500/10' : '';
         }}
         variant='flat'

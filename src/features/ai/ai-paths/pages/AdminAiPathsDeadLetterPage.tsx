@@ -1,19 +1,14 @@
 'use client';
 
-import { 
-  RefreshCw, 
-  AlertCircle,
-  Eye,
-  RotateCcw
-} from 'lucide-react';
+import { RefreshCw, AlertCircle, Eye, RotateCcw } from 'lucide-react';
 import { useMemo } from 'react';
 
 import type { AiPathRunEventRecord, AiPathRunRecord } from '@/shared/contracts/ai-paths';
-import { 
-  Button, 
-  Checkbox, 
+import {
+  Button,
+  Checkbox,
   DataTable,
-  StandardDataTablePanel, 
+  StandardDataTablePanel,
   ConfirmModal,
   FormSection,
   StatusBadge,
@@ -29,11 +24,7 @@ import {
 } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
-import {
-  PAGE_SIZES,
-  calculateNodeStatusSummary,
-  formatTimestamp,
-} from './dead-letter-utils';
+import { PAGE_SIZES, calculateNodeStatusSummary, formatTimestamp } from './dead-letter-utils';
 import { useDeadLetterRuns } from '../hooks/useDeadLetterRuns';
 
 import type { ColumnDef } from '@tanstack/react-table';
@@ -81,106 +72,121 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
     handleRequeueSingle,
   } = useDeadLetterRuns();
 
-  const columns = useMemo<ColumnDef<AiPathRunRecord>[]>(() => [
-    {
-      id: 'select',
-      header: ({ table }) => (
-        <Checkbox
-          checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate')}
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label='Select all'
-        />
-      ),
-      cell: ({ row }) => (
-        <Checkbox
-          checked={selectedIds.has(row.original.id)}
-          onCheckedChange={() => toggleSelected(row.original.id)}
-          aria-label='Select row'
-        />
-      ),
-      enableSorting: false,
-      enableHiding: false,
-    },
-    {
-      accessorKey: 'id',
-      header: 'Run',
-      cell: ({ row }) => (
-        <div className='flex flex-col gap-1'>
-          <span className='font-mono text-[11px] text-gray-200'>{row.original.id}</span>
-          {row.original.entityId && (
-            <span className='text-[10px] text-gray-500 italic'>Entity: {row.original.entityId}</span>
-          )}
-        </div>
-      ),
-    },
-    {
-      accessorKey: 'pathName',
-      header: 'Path',
-      cell: ({ row }) => (
-        <div className='flex flex-col gap-1'>
-          <span className='font-medium text-gray-200'>{row.original.pathName || 'Untitled'}</span>
-          <span className='text-[10px] text-gray-500 font-mono'>{row.original.pathId}</span>
-        </div>
-      ),
-    },
-    {
-      accessorKey: 'retryCount',
-      header: 'Retries',
-      cell: ({ row }) => (
-        <span className='text-xs text-gray-300'>
-          {row.original.retryCount ?? 0}/{row.original.maxAttempts ?? 0}
-        </span>
-      ),
-    },
-    {
-      accessorKey: 'deadLetteredAt',
-      header: 'Dead Lettered',
-      cell: ({ row }) => (
-        <span className='text-xs text-gray-400'>
-          {row.original.deadLetteredAt
-            ? new Date(row.original.deadLetteredAt).toLocaleString()
-            : row.original.updatedAt
-              ? new Date(row.original.updatedAt).toLocaleString()
-              : '-'}
-        </span>
-      ),
-    },
-    {
-      accessorKey: 'errorMessage',
-      header: 'Error',
-      cell: ({ row }) => (
-        <span className='text-[11px] text-rose-300 line-clamp-2 max-w-[240px]' title={row.original.errorMessage || ''}>
-          {row.original.errorMessage || '-'}
-        </span>
-      ),
-    },
-    {
-      id: 'actions',
-      header: () => <div className='text-right'>Actions</div>,
-      cell: ({ row }) => (
-        <div className='flex justify-end gap-2'>
-          <Button
-            variant='ghost'
-            size='xs'
-            onClick={() => { void handleOpenDetail(row.original.id); }}
-            className='h-7'
+  const columns = useMemo<ColumnDef<AiPathRunRecord>[]>(
+    () => [
+      {
+        id: 'select',
+        header: ({ table }) => (
+          <Checkbox
+            checked={
+              table.getIsAllPageRowsSelected() ||
+              (table.getIsSomePageRowsSelected() && 'indeterminate')
+            }
+            onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+            aria-label='Select all'
+          />
+        ),
+        cell: ({ row }) => (
+          <Checkbox
+            checked={selectedIds.has(row.original.id)}
+            onCheckedChange={() => toggleSelected(row.original.id)}
+            aria-label='Select row'
+          />
+        ),
+        enableSorting: false,
+        enableHiding: false,
+      },
+      {
+        accessorKey: 'id',
+        header: 'Run',
+        cell: ({ row }) => (
+          <div className='flex flex-col gap-1'>
+            <span className='font-mono text-[11px] text-gray-200'>{row.original.id}</span>
+            {row.original.entityId && (
+              <span className='text-[10px] text-gray-500 italic'>
+                Entity: {row.original.entityId}
+              </span>
+            )}
+          </div>
+        ),
+      },
+      {
+        accessorKey: 'pathName',
+        header: 'Path',
+        cell: ({ row }) => (
+          <div className='flex flex-col gap-1'>
+            <span className='font-medium text-gray-200'>{row.original.pathName || 'Untitled'}</span>
+            <span className='text-[10px] text-gray-500 font-mono'>{row.original.pathId}</span>
+          </div>
+        ),
+      },
+      {
+        accessorKey: 'retryCount',
+        header: 'Retries',
+        cell: ({ row }) => (
+          <span className='text-xs text-gray-300'>
+            {row.original.retryCount ?? 0}/{row.original.maxAttempts ?? 0}
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'deadLetteredAt',
+        header: 'Dead Lettered',
+        cell: ({ row }) => (
+          <span className='text-xs text-gray-400'>
+            {row.original.deadLetteredAt
+              ? new Date(row.original.deadLetteredAt).toLocaleString()
+              : row.original.updatedAt
+                ? new Date(row.original.updatedAt).toLocaleString()
+                : '-'}
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'errorMessage',
+        header: 'Error',
+        cell: ({ row }) => (
+          <span
+            className='text-[11px] text-rose-300 line-clamp-2 max-w-[240px]'
+            title={row.original.errorMessage || ''}
           >
-            <Eye className='size-3 mr-1.5' />
-            View
-          </Button>
-          <Button
-            variant='outline'
-            size='xs'
-            onClick={() => { void handleRequeueSingle(row.original.id); }}
-            className='h-7'
-          >
-            <RotateCcw className='size-3 mr-1.5' />
-            Requeue
-          </Button>
-        </div>
-      ),
-    },
-  ], [selectedIds, toggleSelected, handleOpenDetail, handleRequeueSingle]);
+            {row.original.errorMessage || '-'}
+          </span>
+        ),
+      },
+      {
+        id: 'actions',
+        header: () => <div className='text-right'>Actions</div>,
+        cell: ({ row }) => (
+          <div className='flex justify-end gap-2'>
+            <Button
+              variant='ghost'
+              size='xs'
+              onClick={() => {
+                void handleOpenDetail(row.original.id);
+              }}
+              className='h-7'
+            >
+              <Eye className='size-3 mr-1.5' />
+              View
+            </Button>
+            <Button
+              variant='outline'
+              size='xs'
+              onClick={() => {
+                void handleRequeueSingle(row.original.id);
+              }}
+              className='h-7'
+            >
+              <RotateCcw className='size-3 mr-1.5' />
+              Requeue
+            </Button>
+          </div>
+        ),
+      },
+    ],
+    [selectedIds, toggleSelected, handleOpenDetail, handleRequeueSingle]
+  );
 
   const nodeStatusSummary = useMemo(() => calculateNodeStatusSummary(detail), [detail]);
 
@@ -196,7 +202,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
       />
 
       <StandardDataTablePanel
-        filters={(
+        filters={
           <FilterPanel
             search={searchQuery}
             onSearchChange={setSearchQuery}
@@ -224,7 +230,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                   { value: 'resume', label: 'Resume (Continue)' },
                   { value: 'replay', label: 'Replay (From start)' },
                 ],
-              }
+              },
             ]}
             headerAction={
               <div className='flex gap-2'>
@@ -247,7 +253,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
               </div>
             }
           />
-        )}
+        }
         footer={
           <PanelPagination
             page={page}
@@ -264,7 +270,11 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
         emptyState={
           <EmptyState
             title='Queue empty'
-            description={pathId || searchQuery ? 'No dead-letter runs match your search.' : 'All runs are processing correctly (or none have failed yet).'}
+            description={
+              pathId || searchQuery
+                ? 'No dead-letter runs match your search.'
+                : 'All runs are processing correctly (or none have failed yet).'
+            }
           />
         }
       />
@@ -283,17 +293,22 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
           </div>
         ) : detail ? (
           <div className='space-y-6'>
-            <FormSection 
-              title='Run Summary' 
+            <FormSection
+              title='Run Summary'
               variant='subtle'
               actions={
                 <div className='flex items-center gap-3'>
-                  <StatusBadge status={streamStatus} variant='neutral' size='sm' className='font-mono uppercase' />
+                  <StatusBadge
+                    status={streamStatus}
+                    variant='neutral'
+                    size='sm'
+                    className='font-mono uppercase'
+                  />
                   <Button
                     variant='ghost'
                     size='xs'
                     className='h-6 text-[10px]'
-                    onClick={() => setStreamPaused(p => !p)}
+                    onClick={() => setStreamPaused((p) => !p)}
                   >
                     {streamPaused ? 'Resume stream' : 'Pause stream'}
                   </Button>
@@ -301,24 +316,14 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
               }
             >
               <div className='grid gap-4 md:grid-cols-3'>
-                <MetadataItem
-                  label='Run ID'
-                  value={detail.run.id}
-                  mono
-                />
-                <MetadataItem
-                  label='Status'
-                  value={<StatusBadge status={detail.run.status} />}
-                />
+                <MetadataItem label='Run ID' value={detail.run.id} mono />
+                <MetadataItem label='Status' value={<StatusBadge status={detail.run.status} />} />
                 <MetadataItem
                   label='Path'
                   value={detail.run.pathName || 'Untitled'}
                   hint={detail.run.pathId ?? undefined}
                 />
-                <MetadataItem
-                  label='Entity'
-                  value={detail.run.entityId}
-                />
+                <MetadataItem label='Entity' value={detail.run.entityId} />
                 <MetadataItem
                   label='Retries'
                   value={`${detail.run.retryCount ?? 0}/${detail.run.maxAttempts ?? 0}`}
@@ -327,9 +332,11 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                   label='Dead-lettered'
                   value={formatTimestamp(detail.run.deadLetteredAt ?? detail.run.updatedAt)}
                 />
-                
+
                 <div className='md:col-span-3 space-y-1.5'>
-                  <Hint size='xxs' uppercase className='text-gray-600 font-bold ml-1'>Error Message</Hint>
+                  <Hint size='xxs' uppercase className='text-gray-600 font-bold ml-1'>
+                    Error Message
+                  </Hint>
                   <Alert variant='error' className='px-3 py-3 text-xs leading-relaxed'>
                     {detail.run.errorMessage || 'No error message provided.'}
                   </Alert>
@@ -341,7 +348,10 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                       <Hint size='xxs' uppercase className='font-bold text-gray-500'>
                         Progress: {nodeStatusSummary.completed}/{nodeStatusSummary.totalNodes} Nodes
                       </Hint>
-                      <Badge variant='outline' className='bg-emerald-500/10 text-emerald-400 border-emerald-500/20 px-1.5 py-0'>
+                      <Badge
+                        variant='outline'
+                        className='bg-emerald-500/10 text-emerald-400 border-emerald-500/20 px-1.5 py-0'
+                      >
                         {nodeStatusSummary.progress}%
                       </Badge>
                     </div>
@@ -358,20 +368,29 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
 
             <div className='space-y-3'>
               <div className='flex items-center justify-between'>
-                <Hint size='xs' uppercase className='font-semibold text-gray-500'>Nodes Execution</Hint>
+                <Hint size='xs' uppercase className='font-semibold text-gray-500'>
+                  Nodes Execution
+                </Hint>
                 <div className='flex gap-2'>
                   <Button
                     variant='outline'
                     size='xs'
                     onClick={() => setShowRetryFailedConfirm(true)}
-                    disabled={retryFailedPending || !detail.nodes.some(n => n.status === 'failed' || n.status === 'blocked')}
+                    disabled={
+                      retryFailedPending ||
+                      !detail.nodes.some((n) => n.status === 'failed' || n.status === 'blocked')
+                    }
                   >
                     Retry Failed Nodes
                   </Button>
                 </div>
               </div>
-              
-              <Card variant='subtle' padding='none' className='border-border bg-gray-950/20 overflow-hidden'>
+
+              <Card
+                variant='subtle'
+                padding='none'
+                className='border-border bg-gray-950/20 overflow-hidden'
+              >
                 <DataTable
                   columns={[
                     {
@@ -379,21 +398,28 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                       header: 'Node',
                       cell: ({ row }) => (
                         <div className='flex flex-col'>
-                          <span className='font-mono text-[11px] text-gray-200'>{row.original.nodeId}</span>
-                          <span className='text-[10px] text-gray-500'>{row.original.nodeTitle || row.original.nodeType}</span>
+                          <span className='font-mono text-[11px] text-gray-200'>
+                            {row.original.nodeId}
+                          </span>
+                          <span className='text-[10px] text-gray-500'>
+                            {row.original.nodeTitle || row.original.nodeType}
+                          </span>
                         </div>
-                      )
+                      ),
                     },
                     {
                       accessorKey: 'status',
                       header: 'Status',
-                      cell: ({ row }) => <StatusBadge status={row.original.status} size='sm' className='font-bold' />
+                      cell: ({ row }) => (
+                        <StatusBadge status={row.original.status} size='sm' className='font-bold' />
+                      ),
                     },
                     {
                       id: 'details',
                       header: 'Details',
                       cell: ({ row }) => {
-                        const hasData = Boolean(row.original.inputs) || Boolean(row.original.outputs);
+                        const hasData =
+                          Boolean(row.original.inputs) || Boolean(row.original.outputs);
                         const isExpanded = row.getIsExpanded();
                         return (
                           <Button
@@ -406,13 +432,14 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                             {isExpanded ? 'Hide Data' : 'Show Data'}
                           </Button>
                         );
-                      }
+                      },
                     },
                     {
                       id: 'actions',
                       header: () => <div className='text-right'>Action</div>,
                       cell: ({ row }) => {
-                        const isRetryable = row.original.status === 'failed' || row.original.status === 'blocked';
+                        const isRetryable =
+                          row.original.status === 'failed' || row.original.status === 'blocked';
                         return (
                           <div className='text-right'>
                             <Button
@@ -426,28 +453,42 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                             </Button>
                           </div>
                         );
-                      }
-                    }
+                      },
+                    },
                   ]}
                   data={detail.nodes}
                   getRowId={(row) => row.nodeId}
                   expanded={useMemo(() => {
                     const state: Record<string, boolean> = {};
-                    expandedNodeIds.forEach(id => { state[id] = true; });
+                    expandedNodeIds.forEach((id) => {
+                      state[id] = true;
+                    });
                     return state;
                   }, [expandedNodeIds])}
                   renderRowDetails={({ row }) => (
                     <div className='p-4 bg-black/40 border-t border-white/5'>
                       <div className='grid gap-4 md:grid-cols-2'>
                         <div className='space-y-1'>
-                          <Hint size='xxs' uppercase className='text-gray-600 font-bold'>Inputs</Hint>
-                          <Card variant='subtle-compact' padding='sm' className='border-white/5 bg-black/40 overflow-auto max-h-40 font-mono text-[10px]'>
+                          <Hint size='xxs' uppercase className='text-gray-600 font-bold'>
+                            Inputs
+                          </Hint>
+                          <Card
+                            variant='subtle-compact'
+                            padding='sm'
+                            className='border-white/5 bg-black/40 overflow-auto max-h-40 font-mono text-[10px]'
+                          >
                             {JSON.stringify(row.original.inputs || {}, null, 2)}
                           </Card>
                         </div>
                         <div className='space-y-1'>
-                          <Hint size='xxs' uppercase className='text-gray-600 font-bold'>Outputs</Hint>
-                          <Card variant='subtle-compact' padding='sm' className='border-white/5 bg-black/40 overflow-auto max-h-40 font-mono text-[10px]'>
+                          <Hint size='xxs' uppercase className='text-gray-600 font-bold'>
+                            Outputs
+                          </Hint>
+                          <Card
+                            variant='subtle-compact'
+                            padding='sm'
+                            className='border-white/5 bg-black/40 overflow-auto max-h-40 font-mono text-[10px]'
+                          >
                             {JSON.stringify(row.original.outputs || {}, null, 2)}
                           </Card>
                         </div>
@@ -461,7 +502,9 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
             <div className='space-y-3'>
               <div className='flex items-center justify-between'>
                 <div className='flex items-center gap-2'>
-                  <Hint size='xs' uppercase className='font-semibold text-gray-500'>Event Log</Hint>
+                  <Hint size='xs' uppercase className='font-semibold text-gray-500'>
+                    Event Log
+                  </Hint>
                   {eventsOverflow && (
                     <StatusBadge
                       status='Truncated'
@@ -473,8 +516,12 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                 </div>
                 <span className='text-[10px] text-gray-600'>{detail.events.length} Events</span>
               </div>
-              
-              <Card variant='subtle' padding='none' className='border-border bg-black/30 overflow-hidden'>
+
+              <Card
+                variant='subtle'
+                padding='none'
+                className='border-border bg-black/30 overflow-hidden'
+              >
                 <div className='max-h-60 overflow-y-auto divide-y divide-white/5'>
                   {detail.events.map((event: AiPathRunEventRecord) => (
                     <div key={event.id} className='p-2 hover:bg-white/5 transition-colors'>
@@ -483,8 +530,11 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                         <StatusBadge
                           status={event.level}
                           variant={
-                            event.level === 'error' ? 'error' : 
-                              event.level === 'warn' ? 'warning' : 'info'
+                            event.level === 'error'
+                              ? 'error'
+                              : event.level === 'warn'
+                                ? 'warning'
+                                : 'info'
                           }
                           size='sm'
                           className='font-bold'
@@ -514,7 +564,9 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
       <ConfirmModal
         isOpen={showRetryFailedConfirm}
         onClose={() => setShowRetryFailedConfirm(false)}
-        onConfirm={() => { void handleRetryFailedNodes(); }}
+        onConfirm={() => {
+          void handleRetryFailedNodes();
+        }}
         title='Retry failed nodes?'
         message='All failed or blocked nodes in this run will be requeued. This will reset their status to pending and enqueue the run.'
         confirmText='Retry failed nodes'

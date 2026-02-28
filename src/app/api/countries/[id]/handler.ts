@@ -1,16 +1,10 @@
-
-
 import { WithId } from 'mongodb';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { getInternationalizationProvider } from '@/shared/lib/internationalization/services/internationalization-provider';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import {
-  configurationError,
-  notFoundError,
-  duplicateEntryError,
-} from '@/shared/errors/app-error';
+import { configurationError, notFoundError, duplicateEntryError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 
@@ -46,7 +40,8 @@ const COUNTRIES_COLLECTION = 'countries';
 const normalizeCountryResponse = (
   country: CountryDoc,
   currencyMap: Map<string, CurrencyDoc>
-): { id: string; code: string; name: string; currencies: unknown[] } => ({ id: country.id,
+): { id: string; code: string; name: string; currencies: unknown[] } => ({
+  id: country.id,
   code: country.code,
   name: country.name,
   currencies: (country.currencyIds ?? [])
@@ -70,7 +65,11 @@ const normalizeCountryResponse = (
  * PUT /api/countries/[id]
  * Updates a country.
  */
-export async function PUT_handler(_req: NextRequest, ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
+export async function PUT_handler(
+  _req: NextRequest,
+  ctx: ApiHandlerContext,
+  params: { id: string }
+): Promise<Response> {
   const { id } = params;
   const data = ctx.body as z.infer<typeof countrySchema>;
   const { currencyIds, ...countryData } = data;
@@ -98,9 +97,9 @@ export async function PUT_handler(_req: NextRequest, ctx: ApiHandlerContext, par
       const requestedCurrencyIds = Array.from(new Set(currencyIds));
       currencyDocs = requestedCurrencyIds.length
         ? await db
-          .collection<CurrencyDoc>(CURRENCIES_COLLECTION)
-          .find({ id: { $in: requestedCurrencyIds } })
-          .toArray()
+            .collection<CurrencyDoc>(CURRENCIES_COLLECTION)
+            .find({ id: { $in: requestedCurrencyIds } })
+            .toArray()
         : [];
       const validCurrencyIds = new Set(
         currencyDocs.map((currency: CurrencyDoc | WithId<CurrencyDoc>) => currency.id)
@@ -131,9 +130,7 @@ export async function PUT_handler(_req: NextRequest, ctx: ApiHandlerContext, par
     const currencyMap = new Map(
       currencyDocs.map((currency: CurrencyDoc | WithId<CurrencyDoc>) => [currency.id, currency])
     );
-    return NextResponse.json(
-      updated ? normalizeCountryResponse(updated, currencyMap) : null
-    );
+    return NextResponse.json(updated ? normalizeCountryResponse(updated, currencyMap) : null);
   }
 
   const country = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
@@ -171,7 +168,11 @@ export async function PUT_handler(_req: NextRequest, ctx: ApiHandlerContext, par
  * DELETE /api/countries/[id]
  * Deletes a country.
  */
-export async function DELETE_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
+export async function DELETE_handler(
+  _req: NextRequest,
+  _ctx: ApiHandlerContext,
+  params: { id: string }
+): Promise<Response> {
   const { id } = params;
 
   const provider = await getInternationalizationProvider();
@@ -187,4 +188,3 @@ export async function DELETE_handler(_req: NextRequest, _ctx: ApiHandlerContext,
   await prisma.country.delete({ where: { id } });
   return new Response(null, { status: 204 });
 }
-

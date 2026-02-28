@@ -29,7 +29,12 @@ import { BLOCK_DEFINITIONS } from './registry/block-definitions';
 import { COLUMN_ALLOWED_BLOCK_TYPES, ROW_ALLOWED_BLOCK_TYPES } from './registry/block-definitions';
 import { SECTION_DEFINITIONS } from './registry/section-definitions';
 
-import type { SectionDefinition, BlockDefinition, SettingsField, PageZone } from '../../types/page-builder';
+import type {
+  SectionDefinition,
+  BlockDefinition,
+  SettingsField,
+  PageZone,
+} from '../../types/page-builder';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -48,9 +53,33 @@ export function getAllSectionTypes(): SectionDefinition[] {
 }
 
 const SECTION_TYPES_BY_ZONE: Record<PageZone, string[]> = {
-  header: ['AnnouncementBar', 'Block', 'TextElement', 'TextAtom', 'ImageElement', 'Model3DElement', 'ButtonElement', 'Hero', 'ImageWithText', 'RichText', 'Grid', 'Slideshow'],
+  header: [
+    'AnnouncementBar',
+    'Block',
+    'TextElement',
+    'TextAtom',
+    'ImageElement',
+    'Model3DElement',
+    'ButtonElement',
+    'Hero',
+    'ImageWithText',
+    'RichText',
+    'Grid',
+    'Slideshow',
+  ],
   template: Object.keys(SECTION_DEFINITIONS).filter((type: string) => type !== 'AnnouncementBar'),
-  footer: ['Block', 'TextElement', 'TextAtom', 'ImageElement', 'Model3DElement', 'ButtonElement', 'RichText', 'Grid', 'Newsletter', 'ContactForm'],
+  footer: [
+    'Block',
+    'TextElement',
+    'TextAtom',
+    'ImageElement',
+    'Model3DElement',
+    'ButtonElement',
+    'RichText',
+    'Grid',
+    'Newsletter',
+    'ContactForm',
+  ],
 };
 
 export function getSectionTypesForZone(zone: PageZone): SectionDefinition[] {
@@ -69,15 +98,15 @@ export function getAllowedBlockTypes(sectionType: string): BlockDefinition[] {
 }
 
 export function getColumnAllowedBlockTypes(): BlockDefinition[] {
-  return COLUMN_ALLOWED_BLOCK_TYPES
-    .map((bt: string) => BLOCK_DEFINITIONS[bt])
-    .filter((b: BlockDefinition | undefined): b is BlockDefinition => b !== undefined);
+  return COLUMN_ALLOWED_BLOCK_TYPES.map((bt: string) => BLOCK_DEFINITIONS[bt]).filter(
+    (b: BlockDefinition | undefined): b is BlockDefinition => b !== undefined
+  );
 }
 
 export function getRowAllowedBlockTypes(): BlockDefinition[] {
-  return ROW_ALLOWED_BLOCK_TYPES
-    .map((bt: string) => BLOCK_DEFINITIONS[bt])
-    .filter((b: BlockDefinition | undefined): b is BlockDefinition => b !== undefined);
+  return ROW_ALLOWED_BLOCK_TYPES.map((bt: string) => BLOCK_DEFINITIONS[bt]).filter(
+    (b: BlockDefinition | undefined): b is BlockDefinition => b !== undefined
+  );
 }
 
 export function isBlockTypeAllowedInRow(blockType: string): boolean {
@@ -124,7 +153,14 @@ export const IMAGE_ELEMENT_BACKGROUND_MODE_SETTINGS: SettingsField[] = [
   { key: 'opacity', label: 'Opacity', type: 'range', defaultValue: 100, min: 0, max: 100 },
   { key: 'blur', label: 'Blur (px)', type: 'range', defaultValue: 0, min: 0, max: 20 },
   { key: 'grayscale', label: 'Grayscale (%)', type: 'range', defaultValue: 0, min: 0, max: 100 },
-  { key: 'brightness', label: 'Brightness (%)', type: 'range', defaultValue: 100, min: 0, max: 200 },
+  {
+    key: 'brightness',
+    label: 'Brightness (%)',
+    type: 'range',
+    defaultValue: 100,
+    min: 0,
+    max: 200,
+  },
   { key: 'contrast', label: 'Contrast (%)', type: 'range', defaultValue: 100, min: 0, max: 200 },
   { key: 'scale', label: 'Scale (%)', type: 'range', defaultValue: 100, min: 50, max: 200 },
   {
@@ -139,7 +175,14 @@ export const IMAGE_ELEMENT_BACKGROUND_MODE_SETTINGS: SettingsField[] = [
     defaultValue: 'none',
   },
   { key: 'overlayColor', label: 'Overlay color', type: 'color', defaultValue: '#000000' },
-  { key: 'overlayOpacity', label: 'Overlay opacity (%)', type: 'range', defaultValue: 0, min: 0, max: 100 },
+  {
+    key: 'overlayOpacity',
+    label: 'Overlay opacity (%)',
+    type: 'range',
+    defaultValue: 0,
+    min: 0,
+    max: 100,
+  },
   { key: 'overlayGradientFrom', label: 'Gradient from', type: 'color', defaultValue: '#000000' },
   { key: 'overlayGradientTo', label: 'Gradient to', type: 'color', defaultValue: '#ffffff' },
   {
@@ -184,7 +227,14 @@ export const IMAGE_ELEMENT_BACKGROUND_MODE_SETTINGS: SettingsField[] = [
     ],
     defaultValue: 'bottom',
   },
-  { key: 'transparencyStrength', label: 'Transparency strength (%)', type: 'range', defaultValue: 0, min: 0, max: 100 },
+  {
+    key: 'transparencyStrength',
+    label: 'Transparency strength (%)',
+    type: 'range',
+    defaultValue: 0,
+    min: 0,
+    max: 100,
+  },
 ];
 
 export type ImageBackgroundTarget = 'none' | 'grid' | 'row' | 'column';

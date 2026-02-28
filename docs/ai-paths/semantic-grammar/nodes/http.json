@@ -4,19 +4,8 @@
   "nodeType": "http",
   "title": "HTTP Fetch",
   "purpose": "Call external APIs with templated inputs.",
-  "inputs": [
-    "context",
-    "bundle",
-    "prompt",
-    "result",
-    "value",
-    "entityId",
-    "entityType"
-  ],
-  "outputs": [
-    "value",
-    "bundle"
-  ],
+  "inputs": ["context", "bundle", "prompt", "result", "value", "entityId", "entityType"],
+  "outputs": ["value", "bundle"],
   "configFields": [
     {
       "path": "http.url",
@@ -69,19 +58,8 @@
       "x": 100,
       "y": 100
     },
-    "inputs": [
-      "context",
-      "bundle",
-      "prompt",
-      "result",
-      "value",
-      "entityId",
-      "entityType"
-    ],
-    "outputs": [
-      "value",
-      "bundle"
-    ],
+    "inputs": ["context", "bundle", "prompt", "result", "value", "entityId", "entityType"],
+    "outputs": ["value", "bundle"],
     "data": {},
     "connections": {
       "incoming": [],

@@ -33,7 +33,8 @@ export function PromptExtractionHistoryPanel({
     <div className='space-y-2 rounded border border-indigo-500/30 bg-indigo-500/5 p-3'>
       <div className='flex flex-wrap items-center justify-between gap-2'>
         <div className='text-xs font-semibold text-indigo-100'>Extraction History</div>
-        <Button size='xs'
+        <Button
+          size='xs'
           type='button'
           variant='ghost'
           className='h-7 px-2 text-xs text-indigo-100 hover:bg-indigo-500/20'
@@ -63,7 +64,8 @@ export function PromptExtractionHistoryPanel({
                   {formatHistoryTime(entry.createdAt)} | {getPromptSourceLabel(entry.source)}
                 </div>
                 <div className='text-[10px] text-indigo-100/70'>
-                  {changed ? 'Prompt changed' : 'No prompt change'} | Validation {entry.validationBeforeCount}
+                  {changed ? 'Prompt changed' : 'No prompt change'} | Validation{' '}
+                  {entry.validationBeforeCount}
                   {' -> '}
                   {entry.validationAfterCount}
                 </div>

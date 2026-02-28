@@ -137,17 +137,19 @@ export function SplitVariantPreview({
       return event.deltaY;
     };
 
-    const buildWheelHandler = (pane: Pane) => (event: WheelEvent): void => {
-      event.preventDefault();
-      event.stopPropagation();
-      const normalizedDelta = normalizeWheelDelta(event);
-      const zoomDelta = Math.max(
-        -SPLIT_WHEEL_MAX_DELTA,
-        Math.min(SPLIT_WHEEL_MAX_DELTA, -normalizedDelta * SPLIT_WHEEL_ZOOM_SENSITIVITY)
-      );
-      if (Math.abs(zoomDelta) < SPLIT_WHEEL_MIN_DELTA) return;
-      onAdjustSplitZoom(pane, zoomDelta);
-    };
+    const buildWheelHandler =
+      (pane: Pane) =>
+      (event: WheelEvent): void => {
+        event.preventDefault();
+        event.stopPropagation();
+        const normalizedDelta = normalizeWheelDelta(event);
+        const zoomDelta = Math.max(
+          -SPLIT_WHEEL_MAX_DELTA,
+          Math.min(SPLIT_WHEEL_MAX_DELTA, -normalizedDelta * SPLIT_WHEEL_ZOOM_SENSITIVITY)
+        );
+        if (Math.abs(zoomDelta) < SPLIT_WHEEL_MIN_DELTA) return;
+        onAdjustSplitZoom(pane, zoomDelta);
+      };
 
     const handleLeftWheel = buildWheelHandler('left');
     const handleRightWheel = buildWheelHandler('right');
@@ -178,7 +180,8 @@ export function SplitVariantPreview({
           data-split-preview-controls='true'
           className='absolute right-1 top-1 z-10 flex items-center gap-1 rounded bg-black/65 p-1'
         >
-          <Button size='xs'
+          <Button
+            size='xs'
             type='button'
             variant='outline'
             className='h-5 w-5 px-0 text-[10px]'
@@ -192,7 +195,8 @@ export function SplitVariantPreview({
           <span className='min-w-10 text-center text-[10px] text-gray-100'>
             {Math.round(leftSplitZoom * 100)}%
           </span>
-          <Button size='xs'
+          <Button
+            size='xs'
             type='button'
             variant='outline'
             className='h-5 w-5 px-0 text-[10px]'
@@ -203,7 +207,8 @@ export function SplitVariantPreview({
           >
             +
           </Button>
-          <Button size='xs'
+          <Button
+            size='xs'
             type='button'
             variant='outline'
             className='h-5 px-1 text-[10px]'
@@ -224,11 +229,8 @@ export function SplitVariantPreview({
           style={{
             transform: `translate(${leftOffset.x}px, ${leftOffset.y}px) scale(${leftSplitZoom})`,
             transformOrigin: 'center center',
-            cursor: activeDrag?.pane === 'left'
-              ? 'grabbing'
-              : leftSplitZoom > 1
-                ? 'grab'
-                : 'default',
+            cursor:
+              activeDrag?.pane === 'left' ? 'grabbing' : leftSplitZoom > 1 ? 'grab' : 'default',
           }}
           draggable={false}
         />
@@ -248,7 +250,8 @@ export function SplitVariantPreview({
           data-split-preview-controls='true'
           className='absolute right-1 top-1 z-10 flex items-center gap-1 rounded bg-black/65 p-1'
         >
-          <Button size='xs'
+          <Button
+            size='xs'
             type='button'
             variant='outline'
             className='h-5 w-5 px-0 text-[10px]'
@@ -262,7 +265,8 @@ export function SplitVariantPreview({
           <span className='min-w-10 text-center text-[10px] text-gray-100'>
             {Math.round(rightSplitZoom * 100)}%
           </span>
-          <Button size='xs'
+          <Button
+            size='xs'
             type='button'
             variant='outline'
             className='h-5 w-5 px-0 text-[10px]'
@@ -273,7 +277,8 @@ export function SplitVariantPreview({
           >
             +
           </Button>
-          <Button size='xs'
+          <Button
+            size='xs'
             type='button'
             variant='outline'
             className='h-5 px-1 text-[10px]'
@@ -294,11 +299,8 @@ export function SplitVariantPreview({
           style={{
             transform: `translate(${rightOffset.x}px, ${rightOffset.y}px) scale(${rightSplitZoom})`,
             transformOrigin: 'center center',
-            cursor: activeDrag?.pane === 'right'
-              ? 'grabbing'
-              : rightSplitZoom > 1
-                ? 'grab'
-                : 'default',
+            cursor:
+              activeDrag?.pane === 'right' ? 'grabbing' : rightSplitZoom > 1 ? 'grab' : 'default',
           }}
           draggable={false}
         />

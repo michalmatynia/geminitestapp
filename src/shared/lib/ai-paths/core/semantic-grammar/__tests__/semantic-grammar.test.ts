@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { PathConfig } from '@/shared/contracts/ai-paths';
 
-import { createDefaultPathConfig } from '../../utils/factory';
+import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factory';
 import {
   deserializeSemanticCanvasToPathConfig,
   parseAndDeserializeSemanticCanvas,
@@ -63,9 +63,7 @@ describe('semantic grammar subgraph operations', () => {
       positionOffset: { x: 40, y: 40 },
     });
 
-    expect(applied.pathConfig.nodes.length).toBe(
-      target.nodes.length + subgraph.nodes.length,
-    );
+    expect(applied.pathConfig.nodes.length).toBe(target.nodes.length + subgraph.nodes.length);
     expect(Object.keys(applied.nodeIdMap)).toHaveLength(subgraph.nodes.length);
   });
 

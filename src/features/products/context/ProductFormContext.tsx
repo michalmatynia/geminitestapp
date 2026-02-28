@@ -1,24 +1,12 @@
 'use client';
 
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useFormState } from 'react-hook-form';
 
 import { useProductFormSubmit } from '@/features/products/hooks/useProductFormSubmit';
 import { decodeSimpleParameterStorageId } from '@/features/products/utils/parameter-partition';
-import {
-  ProductParameterValue,
-} from '@/shared/contracts/products';
-import type {
-  ProductWithImages,
-  ProductDraft,
-} from '@/shared/contracts/products';
+import { ProductParameterValue } from '@/shared/contracts/products';
+import type { ProductWithImages, ProductDraft } from '@/shared/contracts/products';
 import { internalError } from '@/shared/errors/app-error';
 
 import {
@@ -94,14 +82,16 @@ const normalizeComparableParameterValues = (
         entry.valuesByLanguage &&
         typeof entry.valuesByLanguage === 'object' &&
         !Array.isArray(entry.valuesByLanguage)
-          ? Object.entries(entry.valuesByLanguage)
-            .reduce((acc: Record<string, string>, [lang, value]: [string, unknown]) => {
-              const normalizedLang = normalizeComparableString(lang).toLowerCase();
-              const normalizedValue = normalizeComparableString(value);
-              if (!normalizedLang || !normalizedValue) return acc;
-              acc[normalizedLang] = normalizedValue;
-              return acc;
-            }, {} as Record<string, string>)
+          ? Object.entries(entry.valuesByLanguage).reduce(
+              (acc: Record<string, string>, [lang, value]: [string, unknown]) => {
+                const normalizedLang = normalizeComparableString(lang).toLowerCase();
+                const normalizedValue = normalizeComparableString(value);
+                if (!normalizedLang || !normalizedValue) return acc;
+                acc[normalizedLang] = normalizedValue;
+                return acc;
+              },
+              {} as Record<string, string>
+            )
           : {};
       const directValue = normalizeComparableString(entry.value);
       const fallbackLocalizedValue =
@@ -117,9 +107,7 @@ const normalizeComparableParameterValues = (
       return {
         parameterId: normalizedParameterId || '',
         value: directValue || fallbackLocalizedValue,
-        ...(Object.keys(valuesByLanguage).length > 0
-          ? { valuesByLanguage }
-          : {}),
+        ...(Object.keys(valuesByLanguage).length > 0 ? { valuesByLanguage } : {}),
       };
     })
     .filter((entry: ComparableParameterValue): boolean => entry.parameterId.length > 0);
@@ -144,9 +132,7 @@ const toComparableImageSlot = (slot: unknown): string => {
   return [
     'file',
     normalizeComparableString(fileRecord['name']),
-    typeof sizeValue === 'number' && Number.isFinite(sizeValue)
-      ? String(sizeValue)
-      : '0',
+    typeof sizeValue === 'number' && Number.isFinite(sizeValue) ? String(sizeValue) : '0',
     normalizeComparableString(fileRecord['type']),
     typeof lastModifiedValue === 'number' && Number.isFinite(lastModifiedValue)
       ? String(lastModifiedValue)
@@ -154,11 +140,11 @@ const toComparableImageSlot = (slot: unknown): string => {
   ].join(':');
 };
 
-const serializeComparableState = (value: NonFormComparableState): string =>
-  JSON.stringify(value);
+const serializeComparableState = (value: NonFormComparableState): string => JSON.stringify(value);
 
 export interface ProductFormContextType
-  extends ProductFormCoreContextType,
+  extends
+    ProductFormCoreContextType,
     ProductFormMetadataContextType,
     ProductFormImageContextType,
     ProductFormParameterContextType,
@@ -170,8 +156,7 @@ export type ProductFormSubmitContextType = Pick<
   'handleSubmit' | 'ConfirmationModal'
 >;
 
-export const ProductFormSubmitContext =
-  createContext<ProductFormSubmitContextType | null>(null);
+export const ProductFormSubmitContext = createContext<ProductFormSubmitContextType | null>(null);
 
 export const useProductFormSubmitContext = (): ProductFormSubmitContextType => {
   const context = useContext(ProductFormSubmitContext);
@@ -224,44 +209,30 @@ function ProductFormSubmitController({
     setUploadError,
     setUploadSuccess,
   } = useProductFormCore();
-  const {
-    selectedCatalogIds,
-    selectedCategoryId,
-    selectedTagIds,
-    selectedProducerIds,
-  } = useProductFormMetadata();
-  const {
-    imageSlots,
-    imageLinks,
-    imageBase64s,
-    refreshImagesFromProduct,
-  } = useProductFormImages();
+  const { selectedCatalogIds, selectedCategoryId, selectedTagIds, selectedProducerIds } =
+    useProductFormMetadata();
+  const { imageSlots, imageLinks, imageBase64s, refreshImagesFromProduct } = useProductFormImages();
   const { parameterValues } = useProductFormParameters();
   const { studioProjectId } = useProductFormStudio();
 
-  const {
-    handleSubmit,
-    uploading,
-    uploadError,
-    uploadSuccess,
-    ConfirmationModal,
-  } = useProductFormSubmit({
-    product,
-    methods,
-    imageSlots,
-    imageLinks,
-    imageBase64s,
-    selectedCatalogIds,
-    selectedCategoryId,
-    selectedTagIds,
-    selectedProducerIds,
-    selectedNoteIds,
-    parameterValues,
-    studioProjectId,
-    refreshImages: refreshImagesFromProduct,
-    onSuccess,
-    onEditSave,
-  });
+  const { handleSubmit, uploading, uploadError, uploadSuccess, ConfirmationModal } =
+    useProductFormSubmit({
+      product,
+      methods,
+      imageSlots,
+      imageLinks,
+      imageBase64s,
+      selectedCatalogIds,
+      selectedCategoryId,
+      selectedTagIds,
+      selectedProducerIds,
+      selectedNoteIds,
+      parameterValues,
+      studioProjectId,
+      refreshImages: refreshImagesFromProduct,
+      onSuccess,
+      onEditSave,
+    });
 
   useEffect(() => {
     setUploading(uploading);
@@ -304,9 +275,7 @@ function ProductFormSubmitController({
     selectedTagIds,
   ]);
 
-  const [nonFormBaselineKey, setNonFormBaselineKey] = useState<string>(
-    nonFormComparableKey
-  );
+  const [nonFormBaselineKey, setNonFormBaselineKey] = useState<string>(nonFormComparableKey);
 
   const entityIdentity = `${product?.id?.trim() ?? ''}`;
 
@@ -347,10 +316,7 @@ function ProductFormSubmitController({
       handleSubmit,
       ConfirmationModal,
     }),
-    [
-      handleSubmit,
-      ConfirmationModal,
-    ]
+    [handleSubmit, ConfirmationModal]
   );
 
   return (
@@ -475,7 +441,7 @@ function ProductFormSubProvidersInner({
 }) {
   const onInteraction = useProductFormInteraction() || (() => {});
   const { uploading, uploadError, uploadSuccess } = useProductFormCore();
-  
+
   return (
     <ProductFormMetadataProvider
       product={product}
@@ -483,7 +449,11 @@ function ProductFormSubProvidersInner({
       initialCatalogId={initialCatalogId}
       onInteraction={onInteraction}
     >
-      <ProductFormParameterProviderWrapper product={product} draft={draft} onInteraction={onInteraction}>
+      <ProductFormParameterProviderWrapper
+        product={product}
+        draft={draft}
+        onInteraction={onInteraction}
+      >
         <ProductFormStudioProvider product={product}>
           <ProductFormImageProvider
             product={product}
@@ -507,7 +477,17 @@ function ProductFormSubProvidersInner({
   );
 }
 
-function ProductFormParameterProviderWrapper({ children, product, draft, onInteraction }: { children: React.ReactNode, product?: ProductWithImages, draft?: ProductDraft | null, onInteraction: () => void }) {
+function ProductFormParameterProviderWrapper({
+  children,
+  product,
+  draft,
+  onInteraction,
+}: {
+  children: React.ReactNode;
+  product?: ProductWithImages;
+  draft?: ProductDraft | null;
+  onInteraction: () => void;
+}) {
   const { selectedCatalogIds } = useProductFormMetadata();
   return (
     <ProductFormParameterProvider

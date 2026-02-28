@@ -11,8 +11,12 @@ async function main(): Promise<void> {
   try {
     const db = client.db(dbName);
     const runId = 'e25bc6b1-5474-4e21-a133-2b4851244ddd';
-    const queryNode = await db.collection('ai_path_run_nodes').findOne({ runId, nodeId: 'node-query-params' });
-    const updateNode = await db.collection('ai_path_run_nodes').findOne({ runId, nodeId: 'node-update-params' });
+    const queryNode = await db
+      .collection('ai_path_run_nodes')
+      .findOne({ runId, nodeId: 'node-query-params' });
+    const updateNode = await db
+      .collection('ai_path_run_nodes')
+      .findOne({ runId, nodeId: 'node-update-params' });
     const slim = {
       queryNode: queryNode
         ? {

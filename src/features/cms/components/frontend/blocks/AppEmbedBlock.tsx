@@ -13,10 +13,16 @@ export function AppEmbedBlock(): React.ReactNode {
   const title = (settings['title'] as string) || '';
   const embedUrl = (settings['embedUrl'] as string) || '';
   const height = (settings['height'] as number) || 420;
-  const appLabel = APP_EMBED_OPTIONS.find((option: { id: AppEmbedId; label: string }) => option.id === appId)?.label ?? 'App';
+  const appLabel =
+    APP_EMBED_OPTIONS.find((option: { id: AppEmbedId; label: string }) => option.id === appId)
+      ?.label ?? 'App';
 
   return (
-    <Card variant='subtle' padding='md' className='cms-hover-card w-full border-border/40 bg-card/40'>
+    <Card
+      variant='subtle'
+      padding='md'
+      className='cms-hover-card w-full border-border/40 bg-card/40'
+    >
       <div className='mb-3'>
         <div className='text-sm font-semibold text-white'>{title || appLabel}</div>
         <div className='text-[10px] uppercase tracking-wide text-gray-500'>App embed</div>

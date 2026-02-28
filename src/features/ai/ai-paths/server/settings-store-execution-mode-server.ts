@@ -18,9 +18,7 @@ const parsePathConfig = (raw: string | null | undefined): PathConfigLike | null 
   }
 };
 
-export const needsServerExecutionModeConfigUpgrade = (
-  raw: string | null | undefined
-): boolean => {
+export const needsServerExecutionModeConfigUpgrade = (raw: string | null | undefined): boolean => {
   const parsed = parsePathConfig(raw);
   if (!parsed) return false;
   return parsed.executionMode !== 'server';
@@ -44,4 +42,3 @@ export const upgradeServerExecutionModeConfig = (
   const serialized = JSON.stringify(next);
   return serialized === raw ? null : serialized;
 };
-

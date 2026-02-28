@@ -9,14 +9,14 @@ export default function AllegroMessagesPage(): React.JSX.Element {
       <SectionHeader
         title='Messages'
         description='View Allegro buyer messages and inquiries.'
-        eyebrow={(
+        eyebrow={
           <Link
             href='/admin/integrations/marketplaces/allegro'
             className='text-blue-300 hover:text-blue-200'
           >
             ← Allegro
           </Link>
-        )}
+        }
         className='mb-6'
       />
 

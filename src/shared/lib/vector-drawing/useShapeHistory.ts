@@ -85,15 +85,12 @@ export function useShapeHistory(maxDepth: number = 50): ShapeHistoryControls {
     return bufferRef.current[indexRef.current]!;
   }, [canRedo]);
 
-  const reset = useCallback(
-    (shapes: VectorShape[]): void => {
-      const snapshot = shapes.map((s) => ({ ...s, points: s.points.map((p) => ({ ...p })) }));
-      bufferRef.current = [snapshot];
-      indexRef.current = 0;
-      countRef.current = 1;
-    },
-    []
-  );
+  const reset = useCallback((shapes: VectorShape[]): void => {
+    const snapshot = shapes.map((s) => ({ ...s, points: s.points.map((p) => ({ ...p })) }));
+    bufferRef.current = [snapshot];
+    indexRef.current = 0;
+    countRef.current = 1;
+  }, []);
 
   return { pushSnapshot, undo, redo, canUndo, canRedo, reset };
 }

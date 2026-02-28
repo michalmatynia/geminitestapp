@@ -5,12 +5,8 @@ import { FormField, SelectSimple } from '@/shared/ui';
 import { useProductStudioContext } from '../../../context/ProductStudioContext';
 
 export function StudioProjectField(): React.JSX.Element {
-  const {
-    studioProjectId,
-    setStudioProjectId,
-    studioProjectOptions,
-    isStudioLoading,
-  } = useProductStudioContext();
+  const { studioProjectId, setStudioProjectId, studioProjectOptions, isStudioLoading } =
+    useProductStudioContext();
 
   const STUDIO_PROJECT_NOT_CONNECTED = '__product_studio_not_connected__';
 

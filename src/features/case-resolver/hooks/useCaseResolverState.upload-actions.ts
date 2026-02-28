@@ -13,11 +13,7 @@ import {
   normalizeFolderPath,
   normalizeFolderPaths,
 } from '../settings';
-import {
-  createId,
-  isLikelyImageFile,
-  isLikelyScanInputFile,
-} from '../utils/caseResolverUtils';
+import { createId, isLikelyImageFile, isLikelyScanInputFile } from '@/features/case-resolver/utils/caseResolverUtils';
 import {
   normalizeUploadedCaseResolverFile,
   resolveUploadBaseFolder,
@@ -27,13 +23,19 @@ import type { Toast } from '@/shared/contracts/ui';
 
 export interface UseCaseResolverStateUploadActionsValue {
   handleUploadScanFiles: (fileId: string, files: File[]) => Promise<void>;
-  handleUploadAssets: (files: File[], targetFolderPath: string | null) => Promise<CaseResolverAssetFile[]>;
+  handleUploadAssets: (
+    files: File[],
+    targetFolderPath: string | null
+  ) => Promise<CaseResolverAssetFile[]>;
   handleAttachAssetFile: (
     assetId: string,
     file: File,
     options?: { expectedKind?: CaseResolverAssetKind | null }
   ) => Promise<CaseResolverAssetFile>;
-  uploadSourceFileToCaseResolver: (sourceFile: File, targetFolderPath: string) => Promise<CaseResolverUploadedFile>;
+  uploadSourceFileToCaseResolver: (
+    sourceFile: File,
+    targetFolderPath: string
+  ) => Promise<CaseResolverUploadedFile>;
 }
 
 export function useCaseResolverStateUploadActions({
@@ -49,7 +51,13 @@ export function useCaseResolverStateUploadActions({
   toast: Toast;
   updateWorkspace: (
     updater: (current: CaseResolverWorkspace) => CaseResolverWorkspace,
-    options?: { persistToast?: string; persistNow?: boolean; mutationId?: string; source?: string; skipNormalization?: boolean }
+    options?: {
+      persistToast?: string;
+      persistNow?: boolean;
+      mutationId?: string;
+      source?: string;
+      skipNormalization?: boolean;
+    }
   ) => void;
   workspace: CaseResolverWorkspace;
   setEditingDocumentDraft: React.Dispatch<React.SetStateAction<CaseResolverFileEditDraft | null>>;
@@ -105,9 +113,7 @@ export function useCaseResolverStateUploadActions({
 
       for (const sourceFile of sourceFiles) {
         if (!isLikelyScanInputFile(sourceFile)) {
-          failedFiles.push(
-            `${sourceFile.name || 'file'}: Only image and PDF files are supported.`
-          );
+          failedFiles.push(`${sourceFile.name || 'file'}: Only image and PDF files are supported.`);
           continue;
         }
         const inferredKind = inferCaseResolverAssetKind({
@@ -115,9 +121,7 @@ export function useCaseResolverStateUploadActions({
           name: sourceFile.name,
         });
         if (inferredKind !== 'image' && inferredKind !== 'pdf') {
-          failedFiles.push(
-            `${sourceFile.name || 'file'}: Only image and PDF files are supported.`
-          );
+          failedFiles.push(`${sourceFile.name || 'file'}: Only image and PDF files are supported.`);
           continue;
         }
         try {
@@ -149,33 +153,33 @@ export function useCaseResolverStateUploadActions({
       if (createdSlots.length > 0) {
         let didAttachSlots = false;
         let attachBlockedByLock = false;
-        updateWorkspace((current: CaseResolverWorkspace) => {
-          const now = new Date().toISOString();
-          let didUpdate = false;
-          const nextFiles = current.files.map((file: CaseResolverFile): CaseResolverFile => {
-            if (file.id !== fileId || file.fileType !== 'scanfile') return file;
-            if (file.isLocked) {
-              attachBlockedByLock = true;
-              return file;
-            }
-            didUpdate = true;
+        updateWorkspace(
+          (current: CaseResolverWorkspace) => {
+            const now = new Date().toISOString();
+            let didUpdate = false;
+            const nextFiles = current.files.map((file: CaseResolverFile): CaseResolverFile => {
+              if (file.id !== fileId || file.fileType !== 'scanfile') return file;
+              if (file.isLocked) {
+                attachBlockedByLock = true;
+                return file;
+              }
+              didUpdate = true;
+              return {
+                ...file,
+                scanSlots: [...(file.scanSlots ?? []), ...createdSlots],
+                updatedAt: now,
+              };
+            });
+            didAttachSlots = didUpdate;
+            if (!didUpdate) return current;
             return {
-              ...file,
-              scanSlots: [...(file.scanSlots ?? []), ...createdSlots],
-              updatedAt: now,
+              ...current,
+              files: nextFiles,
+              folders: normalizeFolderPaths([...current.folders, ...Array.from(createdFolders)]),
             };
-          });
-          didAttachSlots = didUpdate;
-          if (!didUpdate) return current;
-          return {
-            ...current,
-            files: nextFiles,
-            folders: normalizeFolderPaths([
-              ...current.folders,
-              ...Array.from(createdFolders),
-            ]),
-          };
-        }, { persistToast: treeSaveToast });
+          },
+          { persistToast: treeSaveToast }
+        );
         setEditingDocumentDraft((current) => {
           if (current?.id !== fileId || current?.fileType !== 'scanfile') return current;
           if (current.isLocked) return current;
@@ -197,20 +201,27 @@ export function useCaseResolverStateUploadActions({
       if (failedFiles.length > 0) {
         toast(
           failedFiles.length === 1
-            ? failedFiles[0] ?? 'Failed to upload file.'
+            ? (failedFiles[0] ?? 'Failed to upload file.')
             : `${failedFiles.length} files failed to upload.`,
           { variant: 'error' }
         );
       }
     },
-    [toast, treeSaveToast, updateWorkspace, uploadSourceFileToCaseResolver, workspace.files, setEditingDocumentDraft, setSelectedAssetId, setSelectedFileId, setSelectedFolderPath]
+    [
+      toast,
+      treeSaveToast,
+      updateWorkspace,
+      uploadSourceFileToCaseResolver,
+      workspace.files,
+      setEditingDocumentDraft,
+      setSelectedAssetId,
+      setSelectedFileId,
+      setSelectedFolderPath,
+    ]
   );
 
   const handleUploadAssets = useCallback(
-    async (
-      files: File[],
-      targetFolderPath: string | null
-    ): Promise<CaseResolverAssetFile[]> => {
+    async (files: File[], targetFolderPath: string | null): Promise<CaseResolverAssetFile[]> => {
       const sourceFiles = files.filter(
         (file: File): boolean => file instanceof File && file.size >= 0
       );
@@ -230,7 +241,7 @@ export function useCaseResolverStateUploadActions({
           const uploaded = await uploadSourceFileToCaseResolver(sourceFile, uploadBaseFolder);
           const fallbackName = sourceFile.name.trim() || `File ${createdAssets.length + 1}`;
           const assetName = uploaded.originalName.trim() || fallbackName;
-          
+
           createdAssets.push(
             createCaseResolverAssetFile({
               id: createId('asset'),
@@ -251,20 +262,23 @@ export function useCaseResolverStateUploadActions({
       }
 
       if (createdAssets.length > 0) {
-        updateWorkspace((current: CaseResolverWorkspace) => ({
-          ...current,
-          assets: [...current.assets, ...createdAssets],
-          folders: normalizeFolderPaths([
-            ...current.folders,
-            ...createdAssets.map((asset: CaseResolverAssetFile): string => asset.folder),
-          ]),
-        }), { persistToast: treeSaveToast });
+        updateWorkspace(
+          (current: CaseResolverWorkspace) => ({
+            ...current,
+            assets: [...current.assets, ...createdAssets],
+            folders: normalizeFolderPaths([
+              ...current.folders,
+              ...createdAssets.map((asset: CaseResolverAssetFile): string => asset.folder),
+            ]),
+          }),
+          { persistToast: treeSaveToast }
+        );
       }
 
       if (failedFiles.length > 0) {
         toast(
           failedFiles.length === 1
-            ? failedFiles[0] ?? 'Failed to upload file.'
+            ? (failedFiles[0] ?? 'Failed to upload file.')
             : `${failedFiles.length} files failed to upload.`,
           { variant: 'error' }
         );
@@ -305,18 +319,12 @@ export function useCaseResolverStateUploadActions({
         mimeType: uploaded.mimetype,
         name: uploaded.originalName,
       });
-      if (
-        expectedKind &&
-        expectedKind !== 'file' &&
-        uploadedKind !== expectedKind
-      ) {
+      if (expectedKind && expectedKind !== 'file' && uploadedKind !== expectedKind) {
         throw new Error(`Uploaded file type does not match this ${expectedKind} placeholder.`);
       }
 
       const now = new Date().toISOString();
-      const resolvedKind = expectedKind && expectedKind !== 'file'
-        ? expectedKind
-        : uploadedKind;
+      const resolvedKind = expectedKind && expectedKind !== 'file' ? expectedKind : uploadedKind;
       const updatedAsset: CaseResolverAssetFile = {
         ...currentAsset,
         folder: normalizeFolderPath(uploaded.folder || uploadFolder),
@@ -327,23 +335,28 @@ export function useCaseResolverStateUploadActions({
         size: uploaded.size,
         updatedAt: now,
       };
-      updateWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace => {
-        let didUpdate = false;
-        const nextAssets = current.assets.map((asset: CaseResolverAssetFile): CaseResolverAssetFile => {
-          if (asset.id !== assetId) return asset;
-          didUpdate = true;
-          return updatedAsset;
-        });
-        if (!didUpdate) return current;
-        return {
-          ...current,
-          assets: nextAssets,
-          folders: normalizeFolderPaths([
-            ...current.folders,
-            normalizeFolderPath(uploaded.folder || uploadFolder) || '',
-          ]),
-        };
-      }, { persistToast: treeSaveToast });
+      updateWorkspace(
+        (current: CaseResolverWorkspace): CaseResolverWorkspace => {
+          let didUpdate = false;
+          const nextAssets = current.assets.map(
+            (asset: CaseResolverAssetFile): CaseResolverAssetFile => {
+              if (asset.id !== assetId) return asset;
+              didUpdate = true;
+              return updatedAsset;
+            }
+          );
+          if (!didUpdate) return current;
+          return {
+            ...current,
+            assets: nextAssets,
+            folders: normalizeFolderPaths([
+              ...current.folders,
+              normalizeFolderPath(uploaded.folder || uploadFolder) || '',
+            ]),
+          };
+        },
+        { persistToast: treeSaveToast }
+      );
 
       setSelectedFileId(null);
       setSelectedFolderPath(null);

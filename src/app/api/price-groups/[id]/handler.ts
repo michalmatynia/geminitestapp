@@ -25,20 +25,21 @@ export const priceGroupSchema = z
     currencyId: z.string().trim().min(1),
     type: z.enum(['standard', 'dependent']),
     basePriceField: z.string().trim().min(1),
-    sourceGroupId: z.string().trim().optional().transform((value) => {
-      if (!value) return undefined;
-      return value;
-    }),
+    sourceGroupId: z
+      .string()
+      .trim()
+      .optional()
+      .transform((value) => {
+        if (!value) return undefined;
+        return value;
+      }),
     priceMultiplier: z.coerce.number().nonnegative(),
     addToPrice: z.coerce.number().int(),
   })
-  .refine(
-    (data) => data.type === 'standard' || !!data['sourceGroupId'],
-    {
-      message: 'Source price group is required for dependent groups',
-      path: ['sourceGroupId'],
-    }
-  );
+  .refine((data) => data.type === 'standard' || !!data['sourceGroupId'], {
+    message: 'Source price group is required for dependent groups',
+    path: ['sourceGroupId'],
+  });
 
 type CurrencyRecord = {
   id: string;
@@ -73,14 +74,22 @@ const buildCurrencyMap = async (): Promise<Map<string, CurrencyRecord>> => {
         select: { id: true, code: true, name: true, symbol: true },
       });
       return new Map(
-        currencies.map((currency: { id: string; code: string; name: string | null; symbol: string | null }) => [currency.id, currency as CurrencyRecord])
+        currencies.map(
+          (currency: { id: string; code: string; name: string | null; symbol: string | null }) => [
+            currency.id,
+            currency as CurrencyRecord,
+          ]
+        )
       );
     } catch {
       // Ignore and fall back to defaults.
     }
   }
   return new Map(
-    fallbackCurrencies.map((currency: (typeof fallbackCurrencies)[number]) => [currency.id, currency])
+    fallbackCurrencies.map((currency: (typeof fallbackCurrencies)[number]) => [
+      currency.id,
+      currency,
+    ])
   );
 };
 
@@ -112,7 +121,11 @@ const resolveCurrency = (
  * PUT /api/price-groups/[id]
  * Updates a price group and enforces a single default group.
  */
-export async function PUT_handler(_req: NextRequest, ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
+export async function PUT_handler(
+  _req: NextRequest,
+  ctx: ApiHandlerContext,
+  params: { id: string }
+): Promise<Response> {
   const { id } = params;
   const data = ctx.body as z.infer<typeof priceGroupSchema>;
 
@@ -122,9 +135,7 @@ export async function PUT_handler(_req: NextRequest, ctx: ApiHandlerContext, par
       throw configurationError('MongoDB is not configured');
     }
     const db = await getMongoDb();
-    const current = await db
-      .collection<PriceGroupDoc>(PRICE_GROUPS_COLLECTION)
-      .findOne({ id });
+    const current = await db.collection<PriceGroupDoc>(PRICE_GROUPS_COLLECTION).findOne({ id });
     if (!current) {
       throw notFoundError('Price group not found');
     }
@@ -158,16 +169,14 @@ export async function PUT_handler(_req: NextRequest, ctx: ApiHandlerContext, par
     await db
       .collection<PriceGroupDoc>(PRICE_GROUPS_COLLECTION)
       .updateOne({ id }, { $set: updateDoc });
-    const updated = await db
-      .collection<PriceGroupDoc>(PRICE_GROUPS_COLLECTION)
-      .findOne({ id });
+    const updated = await db.collection<PriceGroupDoc>(PRICE_GROUPS_COLLECTION).findOne({ id });
     return NextResponse.json({
       ...(updated ?? current),
       currency,
       sourceGroup: updateDoc['sourceGroupId']
         ? await db
-          .collection<PriceGroupDoc>(PRICE_GROUPS_COLLECTION)
-          .findOne({ id: updateDoc['sourceGroupId'] })
+            .collection<PriceGroupDoc>(PRICE_GROUPS_COLLECTION)
+            .findOne({ id: updateDoc['sourceGroupId'] })
         : null,
     } as unknown as PriceGroupWithDetails);
   }
@@ -203,7 +212,11 @@ export async function PUT_handler(_req: NextRequest, ctx: ApiHandlerContext, par
  * DELETE /api/price-groups/[id]
  * Deletes a price group.
  */
-export async function DELETE_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
+export async function DELETE_handler(
+  _req: NextRequest,
+  _ctx: ApiHandlerContext,
+  params: { id: string }
+): Promise<Response> {
   const { id } = params;
   const provider = await getProductDataProvider();
   if (provider === 'mongodb') {
@@ -211,9 +224,7 @@ export async function DELETE_handler(_req: NextRequest, _ctx: ApiHandlerContext,
       throw configurationError('MongoDB is not configured');
     }
     const db = await getMongoDb();
-    const total = await db
-      .collection<PriceGroupDoc>(PRICE_GROUPS_COLLECTION)
-      .countDocuments();
+    const total = await db.collection<PriceGroupDoc>(PRICE_GROUPS_COLLECTION).countDocuments();
     if (total <= 1) {
       throw badRequestError('At least one price group is required');
     }
@@ -228,4 +239,3 @@ export async function DELETE_handler(_req: NextRequest, _ctx: ApiHandlerContext,
   await prisma.priceGroup.delete({ where: { id } });
   return new Response(null, { status: 204 });
 }
-

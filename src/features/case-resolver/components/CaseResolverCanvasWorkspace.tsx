@@ -1,9 +1,6 @@
 'use client';
 
-import {
-  Save,
-  Sparkles,
-} from 'lucide-react';
+import { Save, Sparkles } from 'lucide-react';
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 
 import { CanvasBoard } from '@/features/ai/ai-paths/components/canvas-board';
@@ -19,9 +16,7 @@ import {
   invalidateAiPathsSettingsCache,
   updateAiPathsSetting,
 } from '@/shared/lib/ai-paths/settings-store-client';
-import {
-  useGraphState,
-} from '@/features/ai/ai-paths/context/hooks/useGraph';
+import { useGraphState } from '@/features/ai/ai-paths/context/hooks/useGraph';
 import {
   useSelectionActions,
   useSelectionState,
@@ -33,34 +28,23 @@ import {
   DEFAULT_CASE_RESOLVER_NODE_META,
   DEFAULT_CASE_RESOLVER_EDGE_META,
 } from '@/shared/contracts/case-resolver';
-import {
-  Badge,
-  Button,
-  Card,
-  EmptyState,
-} from '@/shared/ui';
+import { Badge, Button, Card, EmptyState } from '@/shared/ui';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 import { cn } from '@/shared/utils';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-import {
-  useCaseResolverPageContext,
-} from '../context/CaseResolverPageContext';
+import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
 import { CaseResolverNodeInspectorModal } from './CaseResolverNodeInspectorModal';
 import { CaseResolverLinkedPreviewModal } from './CaseResolverLinkedPreviewModal';
-import { NodeFileWorkspaceProvider, type NodeFileWorkspaceContextValue } from './NodeFileWorkspaceContext';
-import { 
-  resolvePromptConfig, 
-  renderPromptNodeTextPreview, 
-} from './case-resolver-canvas-utils';
+import {
+  NodeFileWorkspaceProvider,
+  type NodeFileWorkspaceContextValue,
+} from './NodeFileWorkspaceContext';
+import { resolvePromptConfig, renderPromptNodeTextPreview } from './case-resolver-canvas-utils';
 import { isObjectRecord } from '@/shared/utils/object';
 
 function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
-  const {
-    workspace,
-    activeFile,
-    onGraphChange,
-  } = useCaseResolverPageContext();
+  const { workspace, activeFile, onGraphChange } = useCaseResolverPageContext();
 
   const { nodes } = useGraphState();
   const { selectedNodeId, selectedEdgeId, configOpen } = useSelectionState();
@@ -69,21 +53,15 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
   const [isLinkedPreviewOpen, setIsLinkedPreviewOpen] = useState(false);
   const [isNodeInspectorOpen, setIsNodeInspectorOpenLocal] = useState(false);
 
-  const normalizedNodeMeta = useMemo(
-    (): Record<string, CaseResolverNodeMeta> => {
-      const value = activeFile?.graph?.nodeMeta;
-      return isObjectRecord(value) ? (value) : {};
-    },
-    [activeFile?.graph?.nodeMeta]
-  );
+  const normalizedNodeMeta = useMemo((): Record<string, CaseResolverNodeMeta> => {
+    const value = activeFile?.graph?.nodeMeta;
+    return isObjectRecord(value) ? value : {};
+  }, [activeFile?.graph?.nodeMeta]);
 
-  const normalizedEdgeMeta = useMemo(
-    (): Record<string, CaseResolverEdgeMeta> => {
-      const value = activeFile?.graph?.edgeMeta;
-      return isObjectRecord(value) ? (value) : {};
-    },
-    [activeFile?.graph?.edgeMeta]
-  );
+  const normalizedEdgeMeta = useMemo((): Record<string, CaseResolverEdgeMeta> => {
+    const value = activeFile?.graph?.edgeMeta;
+    return isObjectRecord(value) ? value : {};
+  }, [activeFile?.graph?.edgeMeta]);
 
   const activeNodeOptions = useMemo(
     () =>
@@ -100,34 +78,31 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
 
   const selectedNode = useMemo(
     (): AiNode | null =>
-      selectedNodeId ? nodes.find((n: AiNode) => n.id === selectedNodeId) ?? null : null,
+      selectedNodeId ? (nodes.find((n: AiNode) => n.id === selectedNodeId) ?? null) : null,
     [nodes, selectedNodeId]
   );
 
-  const selectedEdge = useMemo(
-    (): unknown | null => {
-      const edges = activeFile?.graph?.edges;
-      if (!selectedEdgeId || !Array.isArray(edges)) return null;
-      return (edges).find((e) => e.id === selectedEdgeId) ?? null;
-    },
-    [activeFile?.graph?.edges, selectedEdgeId]
-  );
+  const selectedEdge = useMemo((): unknown | null => {
+    const edges = activeFile?.graph?.edges;
+    if (!selectedEdgeId || !Array.isArray(edges)) return null;
+    return edges.find((e) => e.id === selectedEdgeId) ?? null;
+  }, [activeFile?.graph?.edges, selectedEdgeId]);
 
   const selectedNodeMeta = useMemo(
-    () => (selectedNodeId ? normalizedNodeMeta[selectedNodeId] ?? DEFAULT_CASE_RESOLVER_NODE_META : null),
+    () =>
+      selectedNodeId
+        ? (normalizedNodeMeta[selectedNodeId] ?? DEFAULT_CASE_RESOLVER_NODE_META)
+        : null,
     [normalizedNodeMeta, selectedNodeId]
   );
 
   const selectedPromptMeta = selectedNodeMeta;
-  const selectedPromptSourceFile = null; 
-  const selectedPromptTemplate = useMemo(
-    () => {
-      if (!selectedNode) return '';
-      const config = resolvePromptConfig(selectedNode);
-      return config.template ?? '';
-    },
-    [selectedNode]
-  );
+  const selectedPromptSourceFile = null;
+  const selectedPromptTemplate = useMemo(() => {
+    if (!selectedNode) return '';
+    const config = resolvePromptConfig(selectedNode);
+    return config.template ?? '';
+  }, [selectedNode]);
   const selectedPromptInputText = useMemo(
     () => (selectedNode ? renderPromptNodeTextPreview(selectedNode, selectedNodeMeta!) : ''),
     [selectedNode, selectedNodeMeta]
@@ -138,37 +113,49 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
     console.log('Update template requested:', template);
   }, []);
 
-  const updateSelectedNodeMeta = useCallback((patch: Partial<CaseResolverNodeMeta>): void => {
-    if (!selectedNodeId || !activeFile?.graph) return;
-    const nextMeta = { ...normalizedNodeMeta, [selectedNodeId]: { ...selectedNodeMeta, ...patch } };
-    const { nodes, edges, ...rest } = activeFile.graph;
-    const nextGraph: CaseResolverGraph = {
-      ...rest,
-      nodes,
-      edges,
-      nodeMeta: nextMeta,
-    };
-    onGraphChange(nextGraph);
-  }, [selectedNodeId, activeFile, normalizedNodeMeta, selectedNodeMeta, onGraphChange]);
+  const updateSelectedNodeMeta = useCallback(
+    (patch: Partial<CaseResolverNodeMeta>): void => {
+      if (!selectedNodeId || !activeFile?.graph) return;
+      const nextMeta = {
+        ...normalizedNodeMeta,
+        [selectedNodeId]: { ...selectedNodeMeta, ...patch },
+      };
+      const { nodes, edges, ...rest } = activeFile.graph;
+      const nextGraph: CaseResolverGraph = {
+        ...rest,
+        nodes,
+        edges,
+        nodeMeta: nextMeta,
+      };
+      onGraphChange(nextGraph);
+    },
+    [selectedNodeId, activeFile, normalizedNodeMeta, selectedNodeMeta, onGraphChange]
+  );
 
   const selectedEdgeJoinMode = useMemo(
-    () => (selectedEdgeId ? (normalizedEdgeMeta[selectedEdgeId] ?? DEFAULT_CASE_RESOLVER_EDGE_META).joinMode : DEFAULT_CASE_RESOLVER_EDGE_META.joinMode),
+    () =>
+      selectedEdgeId
+        ? (normalizedEdgeMeta[selectedEdgeId] ?? DEFAULT_CASE_RESOLVER_EDGE_META).joinMode
+        : DEFAULT_CASE_RESOLVER_EDGE_META.joinMode,
     [normalizedEdgeMeta, selectedEdgeId]
   );
 
-  const updateSelectedEdgeMeta = useCallback((patch: Partial<CaseResolverEdgeMeta>): void => {
-    if (!selectedEdgeId || !activeFile?.graph) return;
-    const currentMeta = normalizedEdgeMeta[selectedEdgeId] ?? DEFAULT_CASE_RESOLVER_EDGE_META;
-    const nextMeta = { ...normalizedEdgeMeta, [selectedEdgeId]: { ...currentMeta, ...patch } };
-    const { nodes, edges, ...rest } = activeFile.graph;
-    const nextGraph: CaseResolverGraph = {
-      ...rest,
-      nodes,
-      edges,
-      edgeMeta: nextMeta,
-    };
-    onGraphChange(nextGraph);
-  }, [selectedEdgeId, activeFile, normalizedEdgeMeta, onGraphChange]);
+  const updateSelectedEdgeMeta = useCallback(
+    (patch: Partial<CaseResolverEdgeMeta>): void => {
+      if (!selectedEdgeId || !activeFile?.graph) return;
+      const currentMeta = normalizedEdgeMeta[selectedEdgeId] ?? DEFAULT_CASE_RESOLVER_EDGE_META;
+      const nextMeta = { ...normalizedEdgeMeta, [selectedEdgeId]: { ...currentMeta, ...patch } };
+      const { nodes, edges, ...rest } = activeFile.graph;
+      const nextGraph: CaseResolverGraph = {
+        ...rest,
+        nodes,
+        edges,
+        edgeMeta: nextMeta,
+      };
+      onGraphChange(nextGraph);
+    },
+    [selectedEdgeId, activeFile, normalizedEdgeMeta, onGraphChange]
+  );
 
   const handleManualGraphSave = useCallback((): void => {
     if (!activeFile?.graph) return;
@@ -199,7 +186,9 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
       await updateAiPathsSetting(AI_PATHS_UI_STATE_KEY, JSON.stringify(nextUiState));
       invalidateAiPathsSettingsCache();
     } catch (error) {
-      logClientError(error, { context: { source: 'CaseResolverCanvasWorkspace', action: 'persistUiState' } });
+      logClientError(error, {
+        context: { source: 'CaseResolverCanvasWorkspace', action: 'persistUiState' },
+      });
     }
   }, [activeFile?.id, workspace?.id]);
 
@@ -220,7 +209,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
       assetId: activeFile?.id ?? '',
       assetName: activeFile?.name ?? '',
       nodes,
-      edges: (activeFile?.graph?.edges || []),
+      edges: activeFile?.graph?.edges || [],
       selectedNodeId,
       selectedEdgeId,
       configOpen,
@@ -356,12 +345,20 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
     <NodeFileWorkspaceProvider value={contextValue}>
       <div className='flex h-full min-h-0 flex-col gap-4'>
         <div className='flex flex-1 min-h-0 gap-4 overflow-hidden'>
-          <Card variant='subtle' padding='none' className='relative flex flex-1 flex-col overflow-hidden'>
+          <Card
+            variant='subtle'
+            padding='none'
+            className='relative flex flex-1 flex-col overflow-hidden'
+          >
             <div className='absolute left-4 top-4 z-10 flex items-center gap-2'>
               <div className='rounded-full border border-border/60 bg-card/80 px-3 py-1.5 backdrop-blur-sm'>
                 <div className='flex items-center gap-2'>
-                  <span className='text-[10px] font-bold uppercase tracking-wider text-gray-500'>Active:</span>
-                  <span className='text-xs font-medium text-white'>{activeFile?.name || 'Untitled Map'}</span>
+                  <span className='text-[10px] font-bold uppercase tracking-wider text-gray-500'>
+                    Active:
+                  </span>
+                  <span className='text-xs font-medium text-white'>
+                    {activeFile?.name || 'Untitled Map'}
+                  </span>
                 </div>
               </div>
               {headerActions}
@@ -374,8 +371,12 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
             <div className='w-72 flex flex-col gap-3'>
               <Card variant='subtle' padding='sm' className='flex-1 overflow-hidden bg-card/40'>
                 <div className='mb-3 flex items-center justify-between px-1'>
-                  <span className='text-[10px] font-bold uppercase tracking-wider text-gray-500'>Nodes</span>
-                  <Badge variant='neutral' className='bg-muted/30 text-[10px]'>{activeNodeOptions.length}</Badge>
+                  <span className='text-[10px] font-bold uppercase tracking-wider text-gray-500'>
+                    Nodes
+                  </span>
+                  <Badge variant='neutral' className='bg-muted/30 text-[10px]'>
+                    {activeNodeOptions.length}
+                  </Badge>
                 </div>
                 <div className='flex-1 overflow-y-auto space-y-1.5 pr-1'>
                   {activeNodeOptions.map((option) => {
@@ -392,9 +393,13 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
                             : 'border-border/40 bg-card/20 hover:border-border/80 hover:bg-card/40'
                         )}
                       >
-                        <div className='truncate text-xs font-medium text-gray-200'>{option.label}</div>
+                        <div className='truncate text-xs font-medium text-gray-200'>
+                          {option.label}
+                        </div>
                         {option.description && (
-                          <div className='mt-1 truncate text-[10px] text-gray-500'>{option.description}</div>
+                          <div className='mt-1 truncate text-[10px] text-gray-500'>
+                            {option.description}
+                          </div>
                         )}
                       </button>
                     );

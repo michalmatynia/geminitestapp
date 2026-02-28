@@ -42,27 +42,40 @@ export function SessionModal({
       isOpen={isOpen}
       onClose={onClose}
       title='Session Context'
-      subtitle={updatedAt ? `Last obtained ${new Date(updatedAt).toLocaleString()}` : 'No timestamp available'}
+      subtitle={
+        updatedAt
+          ? `Last obtained ${new Date(updatedAt).toLocaleString()}`
+          : 'No timestamp available'
+      }
       size='lg'
     >
       {loading ? (
         <LoadingState message='Retrieving session artifacts...' className='py-12' />
       ) : error ? (
-        <Alert variant='error'>
-          {error}
-        </Alert>
+        <Alert variant='error'>{error}</Alert>
       ) : (
         <div className='space-y-6'>
           <div className='space-y-3'>
             <div className='flex items-center justify-between px-1'>
-              <h3 className='text-[10px] uppercase font-bold text-gray-500'>Stored Cookies ({cookies.length})</h3>
+              <h3 className='text-[10px] uppercase font-bold text-gray-500'>
+                Stored Cookies ({cookies.length})
+              </h3>
               {origins.length > 0 && (
-                <StatusBadge status={`${origins.length} Origins`} variant='neutral' size='sm' className='font-bold' />
+                <StatusBadge
+                  status={`${origins.length} Origins`}
+                  variant='neutral'
+                  size='sm'
+                  className='font-bold'
+                />
               )}
             </div>
 
             {cookies.length === 0 ? (
-              <Card variant='subtle' padding='lg' className='border-dashed text-center text-sm text-muted-foreground italic'>
+              <Card
+                variant='subtle'
+                padding='lg'
+                className='border-dashed text-center text-sm text-muted-foreground italic'
+              >
                 No active session cookies detected.
               </Card>
             ) : (
@@ -84,17 +97,23 @@ export function SessionModal({
                     </div>
                     <div className='grid gap-x-6 gap-y-3 text-[11px] text-gray-400 md:grid-cols-2'>
                       <div className='space-y-1 col-span-full'>
-                        <span className='text-[10px] uppercase font-bold text-gray-600 block'>Payload Value</span>
+                        <span className='text-[10px] uppercase font-bold text-gray-600 block'>
+                          Payload Value
+                        </span>
                         <div className='break-all text-gray-200 bg-black/30 p-2 rounded border border-white/5 font-mono leading-relaxed'>
                           {cookie.value || '—'}
                         </div>
                       </div>
                       <div className='space-y-1'>
-                        <span className='text-[10px] uppercase font-bold text-gray-600 block'>Target Path</span>
+                        <span className='text-[10px] uppercase font-bold text-gray-600 block'>
+                          Target Path
+                        </span>
                         <span className='text-gray-300'>{cookie.path || '—'}</span>
                       </div>
                       <div className='space-y-1'>
-                        <span className='text-[10px] uppercase font-bold text-gray-600 block'>Expiration</span>
+                        <span className='text-[10px] uppercase font-bold text-gray-600 block'>
+                          Expiration
+                        </span>
                         <span className='text-gray-300'>
                           {cookie.expires
                             ? new Date(cookie.expires * 1000).toLocaleString()
@@ -103,15 +122,37 @@ export function SessionModal({
                       </div>
                       <div className='flex gap-4 col-span-full pt-1 border-t border-white/5'>
                         <div className='flex items-center gap-1.5'>
-                          <div className={cn('size-1.5 rounded-full', cookie.secure ? 'bg-emerald-500' : 'bg-gray-600')} />
-                          <span className={cn(cookie.secure ? 'text-emerald-400/80' : 'text-gray-500')}>Secure</span>
+                          <div
+                            className={cn(
+                              'size-1.5 rounded-full',
+                              cookie.secure ? 'bg-emerald-500' : 'bg-gray-600'
+                            )}
+                          />
+                          <span
+                            className={cn(cookie.secure ? 'text-emerald-400/80' : 'text-gray-500')}
+                          >
+                            Secure
+                          </span>
                         </div>
                         <div className='flex items-center gap-1.5'>
-                          <div className={cn('size-1.5 rounded-full', cookie.httpOnly ? 'bg-emerald-500' : 'bg-gray-600')} />
-                          <span className={cn(cookie.httpOnly ? 'text-emerald-400/80' : 'text-gray-500')}>HttpOnly</span>
+                          <div
+                            className={cn(
+                              'size-1.5 rounded-full',
+                              cookie.httpOnly ? 'bg-emerald-500' : 'bg-gray-600'
+                            )}
+                          />
+                          <span
+                            className={cn(
+                              cookie.httpOnly ? 'text-emerald-400/80' : 'text-gray-500'
+                            )}
+                          >
+                            HttpOnly
+                          </span>
                         </div>
                         <div className='flex items-center gap-1.5'>
-                          <span className='text-[10px] text-gray-600 uppercase font-bold'>SameSite:</span>
+                          <span className='text-[10px] text-gray-600 uppercase font-bold'>
+                            SameSite:
+                          </span>
                           <span className='text-gray-300'>{cookie.sameSite || 'None'}</span>
                         </div>
                       </div>

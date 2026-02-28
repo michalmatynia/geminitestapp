@@ -2,9 +2,7 @@ import { NextRequest } from 'next/server';
 import sharp from 'sharp';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import {
-  IMAGE_STUDIO_UPSCALE_ERROR_CODES,
-} from '@/features/ai/image-studio/contracts/upscale';
+import { IMAGE_STUDIO_UPSCALE_ERROR_CODES } from '@/features/ai/image-studio/contracts/upscale';
 
 const {
   mkdirMock,
@@ -40,9 +38,13 @@ const {
   validateUpscaleSourceDimensionsMock: vi.fn(),
   getImageStudioSlotLinkBySourceAndRelationMock: vi.fn(),
   upsertImageStudioSlotLinkMock: vi.fn(),
-  createImageStudioSlotsMock: vi.fn<
-    (projectId: string, slots: Array<Record<string, unknown>>) => Promise<Array<Record<string, unknown>>>
-  >(),
+  createImageStudioSlotsMock:
+    vi.fn<
+      (
+        projectId: string,
+        slots: Array<Record<string, unknown>>
+      ) => Promise<Array<Record<string, unknown>>>
+    >(),
   getImageStudioSlotByIdMock: vi.fn(),
   getImageFileRepositoryMock: vi.fn(),
   getDiskPathFromPublicPathMock: vi.fn(),
@@ -61,7 +63,7 @@ vi.mock('fs/promises', () => ({
   readFile: readFileMock,
 }));
 
-vi.mock('@/features/ai/image-studio/server/upscale-utils', () => ({
+vi.mock('@/shared/lib/ai/image-studio/server/upscale-utils', () => ({
   buildUpscaleFingerprint: buildUpscaleFingerprintMock,
   buildUpscaleFingerprintRelationType: buildUpscaleFingerprintRelationTypeMock,
   buildUpscaleRequestRelationType: buildUpscaleRequestRelationTypeMock,
@@ -72,12 +74,12 @@ vi.mock('@/features/ai/image-studio/server/upscale-utils', () => ({
   validateUpscaleSourceDimensions: validateUpscaleSourceDimensionsMock,
 }));
 
-vi.mock('@/features/ai/image-studio/server/slot-link-repository', () => ({
+vi.mock('@/shared/lib/ai/image-studio/server/slot-link-repository', () => ({
   getImageStudioSlotLinkBySourceAndRelation: getImageStudioSlotLinkBySourceAndRelationMock,
   upsertImageStudioSlotLink: upsertImageStudioSlotLinkMock,
 }));
 
-vi.mock('@/features/ai/image-studio/server/slot-repository', () => ({
+vi.mock('@/shared/lib/ai/image-studio/server/slot-repository', () => ({
   createImageStudioSlots: createImageStudioSlotsMock,
   getImageStudioSlotById: getImageStudioSlotByIdMock,
 }));
@@ -121,7 +123,10 @@ const buildSlot = (overrides: Record<string, unknown> = {}): Record<string, unkn
   ...overrides,
 });
 
-const buildRequest = (body: Record<string, unknown>, headers?: Record<string, string>): NextRequest =>
+const buildRequest = (
+  body: Record<string, unknown>,
+  headers?: Record<string, string>
+): NextRequest =>
   new NextRequest('http://localhost/api/image-studio/slots/source-slot/upscale', {
     method: 'POST',
     headers: {
@@ -355,7 +360,10 @@ describe('image-studio upscale handler', () => {
 
     const firstCreateCall = createImageStudioSlotsMock.mock.calls[0];
     expect(firstCreateCall).toBeDefined();
-    const [calledProjectId, createdBatch] = firstCreateCall as [string, Array<Record<string, unknown>>];
+    const [calledProjectId, createdBatch] = firstCreateCall as [
+      string,
+      Array<Record<string, unknown>>,
+    ];
     expect(calledProjectId).toBe('project-1');
     const createdPayload = createdBatch[0];
     expect(createdPayload).toBeDefined();
@@ -368,9 +376,7 @@ describe('image-studio upscale handler', () => {
     expect(metadata).not.toBeNull();
     expect(metadata?.['relationType']).toBe('upscale:output');
     const upscaleMetadata =
-      metadata &&
-      typeof metadata['upscale'] === 'object' &&
-      !Array.isArray(metadata['upscale'])
+      metadata && typeof metadata['upscale'] === 'object' && !Array.isArray(metadata['upscale'])
         ? (metadata['upscale'] as Record<string, unknown>)
         : null;
     expect(upscaleMetadata).not.toBeNull();
@@ -442,7 +448,9 @@ describe('image-studio upscale handler', () => {
     expect(response.status).toBe(200);
     expect(payload['deduplicated']).toBe(true);
     expect(payload['dedupeReason']).toBe('fingerprint');
-    expect((payload['slot'] as Record<string, unknown>)['id']).toBe('slot-upscale-fingerprint-existing');
+    expect((payload['slot'] as Record<string, unknown>)['id']).toBe(
+      'slot-upscale-fingerprint-existing'
+    );
     expect(upscaleImageWithSharpMock).not.toHaveBeenCalled();
     expect(createImageStudioSlotsMock).not.toHaveBeenCalled();
   });

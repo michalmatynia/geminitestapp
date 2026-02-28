@@ -2,9 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { PromptExploderCaptureMappingModal } from '@/features/case-resolver/components/PromptExploderCaptureMappingModal';
-import type {
-  CaseResolverCaptureProposalState,
-} from '@/features/case-resolver-capture/proposals';
+import type { CaseResolverCaptureProposalState } from '@/features/case-resolver-capture/proposals';
 
 const buildProposalDraft = (): CaseResolverCaptureProposalState =>
   ({
@@ -26,7 +24,7 @@ const buildProposalDraft = (): CaseResolverCaptureProposalState =>
     },
     addressee: null,
     documentDate: null,
-  } as CaseResolverCaptureProposalState);
+  }) as CaseResolverCaptureProposalState;
 
 describe('PromptExploderCaptureMappingModal', () => {
   it('dismisses without triggering apply', () => {

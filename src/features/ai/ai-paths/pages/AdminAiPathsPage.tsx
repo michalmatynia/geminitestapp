@@ -7,12 +7,8 @@ import { cn } from '@/shared/utils';
 
 import { AiPathsSettings } from '../components/AiPathsSettings';
 
-
-
 export function AdminAiPathsPage(): React.JSX.Element {
-  const [activeTab, setActiveTab] = useState<'canvas' | 'paths' | 'docs'>(
-    'canvas'
-  );
+  const [activeTab, setActiveTab] = useState<'canvas' | 'paths' | 'docs'>('canvas');
   const [mounted, setMounted] = useState(false);
   const [isFocusMode, setIsFocusMode] = useState(false);
 
@@ -27,13 +23,13 @@ export function AdminAiPathsPage(): React.JSX.Element {
 
   return (
     <div className={wrapperClass}>
-      <div className={`mb-2 flex items-center justify-between gap-4 px-1 ${isFocusMode ? 'hidden' : ''}`}>
+      <div
+        className={`mb-2 flex items-center justify-between gap-4 px-1 ${isFocusMode ? 'hidden' : ''}`}
+      >
         {mounted ? (
           <Tabs
             value={activeTab}
-            onValueChange={(value: string) =>
-              setActiveTab(value as 'canvas' | 'paths' | 'docs')
-            }
+            onValueChange={(value: string) => setActiveTab(value as 'canvas' | 'paths' | 'docs')}
           >
             <TabsList className='bg-card/70'>
               <TabsTrigger value='canvas'>Canvas</TabsTrigger>
@@ -59,9 +55,7 @@ export function AdminAiPathsPage(): React.JSX.Element {
         </div>
         <AiPathsSettings
           activeTab={activeTab}
-          renderActions={(actions: React.ReactNode) => (
-            <div className='w-full'>{actions}</div>
-          )}
+          renderActions={(actions: React.ReactNode) => <div className='w-full'>{actions}</div>}
           onTabChange={setActiveTab}
           isFocusMode={isFocusMode}
           onFocusModeChange={setIsFocusMode}

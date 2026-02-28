@@ -10,7 +10,7 @@ describe('CategoryMappingRepository', () => {
 
   beforeEach(async () => {
     if (!process.env['DATABASE_URL']) return;
-    
+
     // Clean up DB
     await prisma.categoryMapping.deleteMany({});
     await prisma.externalCategory.deleteMany({});
@@ -26,19 +26,19 @@ describe('CategoryMappingRepository', () => {
 
   const setupData = async () => {
     const integration = await prisma.integration.create({
-      data: { name: 'Test', slug: 'test-' + Math.random() }
+      data: { name: 'Test', slug: 'test-' + Math.random() },
     });
     const connection = await prisma.integrationConnection.create({
-      data: { name: 'Conn 1', integrationId: integration.id, username: 'test', password: 'test' }
+      data: { name: 'Conn 1', integrationId: integration.id, username: 'test', password: 'test' },
     });
     const catalog = await prisma.catalog.create({
-      data: { name: 'Cat 1' }
+      data: { name: 'Cat 1' },
     });
     const internalCat = await prisma.productCategory.create({
-      data: { name: 'Int 1', catalogId: catalog.id }
+      data: { name: 'Int 1', catalogId: catalog.id },
     });
     const externalCat = await prisma.externalCategory.create({
-      data: { name: 'Ext 1', externalId: 'e1', connectionId: connection.id }
+      data: { name: 'Ext 1', externalId: 'e1', connectionId: connection.id },
     });
 
     return { connection, catalog, internalCat, externalCat };
@@ -112,7 +112,7 @@ describe('CategoryMappingRepository', () => {
       internalCategoryId: internalCat.id,
       catalogId: catalog.id,
     });
-    
+
     const result = await repo.listByConnection(connection.id);
     expect(result.length).toBe(1);
     expect(result[0]!.externalCategory.name).toBe('Ext 1');
@@ -122,14 +122,12 @@ describe('CategoryMappingRepository', () => {
   it('bulk upserts mappings', async () => {
     if (!process.env['DATABASE_URL']) return;
     const { connection, catalog, internalCat, externalCat } = await setupData();
-    
-    const mappings = [
-      { externalCategoryId: externalCat.id, internalCategoryId: internalCat.id },
-    ];
-    
+
+    const mappings = [{ externalCategoryId: externalCat.id, internalCategoryId: internalCat.id }];
+
     const count = await repo.bulkUpsert(connection.id, catalog.id, mappings);
     expect(count).toBe(1);
-    
+
     const all = await prisma.categoryMapping.findMany({ where: { connectionId: connection.id } });
     expect(all.length).toBe(1);
   });

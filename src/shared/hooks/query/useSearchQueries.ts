@@ -59,13 +59,16 @@ export function useAutocomplete<T>(
     }
   }, [storageKey]);
 
-  const addRecentSearch = useCallback((term: string): void => {
-    if (term.length < 2) return;
-    
-    const recent = getRecentSearches();
-    const updated = [term, ...recent.filter((t: string) => t !== term)].slice(0, maxRecent);
-    localStorage.setItem(storageKey, JSON.stringify(updated));
-  }, [getRecentSearches, maxRecent, storageKey]);
+  const addRecentSearch = useCallback(
+    (term: string): void => {
+      if (term.length < 2) return;
+
+      const recent = getRecentSearches();
+      const updated = [term, ...recent.filter((t: string) => t !== term)].slice(0, maxRecent);
+      localStorage.setItem(storageKey, JSON.stringify(updated));
+    },
+    [getRecentSearches, maxRecent, storageKey]
+  );
 
   const searchQuery = useSearchQuery(searchTerm, { searchFn });
 
@@ -86,7 +89,11 @@ export function useAutocomplete<T>(
 // Hook for paginated search results
 export function usePaginatedSearch<T>(
   searchTerm: string,
-  searchFn: (query: string, page: number, pageSize: number) => Promise<{
+  searchFn: (
+    query: string,
+    page: number,
+    pageSize: number
+  ) => Promise<{
     data: T[];
     total: number;
     hasMore: boolean;
@@ -99,14 +106,18 @@ export function usePaginatedSearch<T>(
   const pageSize = options?.pageSize || 20;
   const enabled = options?.enabled !== false;
 
-  return createListQueryV2<{ data: T[]; total: number; hasMore: boolean }, { data: T[]; total: number; hasMore: boolean }>({
+  return createListQueryV2<
+    { data: T[]; total: number; hasMore: boolean },
+    { data: T[]; total: number; hasMore: boolean }
+  >({
     queryKey: QUERY_KEYS.search.paginated(searchTerm, pageSize),
     queryFn: async (): Promise<{ data: T[]; total: number; hasMore: boolean }> => {
       const results: T[] = [];
       let page = 1;
       let hasMore = true;
 
-      while (hasMore && results.length < pageSize * 3) { // Load up to 3 pages
+      while (hasMore && results.length < pageSize * 3) {
+        // Load up to 3 pages
         const result = await searchFn(searchTerm, page, pageSize);
         results.push(...result.data);
         hasMore = result.hasMore;

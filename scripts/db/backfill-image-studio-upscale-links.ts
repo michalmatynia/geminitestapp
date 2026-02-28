@@ -1,6 +1,6 @@
 import 'dotenv/config';
 
-import { runImageStudioCardLinkBackfill } from '@/features/ai/image-studio/server/card-link-backfill';
+import { runImageStudioCardLinkBackfill } from '@/shared/lib/ai/image-studio/server/card-link-backfill';
 
 type CliOptions = {
   projectId?: string;

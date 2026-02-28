@@ -4,20 +4,8 @@
   "nodeType": "audio_oscillator",
   "title": "Audio Oscillator",
   "purpose": "Generate a waveform signal (sine/square/triangle/sawtooth).",
-  "inputs": [
-    "frequency",
-    "waveform",
-    "gain",
-    "durationMs",
-    "trigger"
-  ],
-  "outputs": [
-    "audioSignal",
-    "frequency",
-    "waveform",
-    "gain",
-    "durationMs"
-  ],
+  "inputs": ["frequency", "waveform", "gain", "durationMs", "trigger"],
+  "outputs": ["audioSignal", "frequency", "waveform", "gain", "durationMs"],
   "configFields": [
     {
       "path": "audioOscillator.waveform",
@@ -68,20 +56,8 @@
       "x": 100,
       "y": 100
     },
-    "inputs": [
-      "frequency",
-      "waveform",
-      "gain",
-      "durationMs",
-      "trigger"
-    ],
-    "outputs": [
-      "audioSignal",
-      "frequency",
-      "waveform",
-      "gain",
-      "durationMs"
-    ],
+    "inputs": ["frequency", "waveform", "gain", "durationMs", "trigger"],
+    "outputs": ["audioSignal", "frequency", "waveform", "gain", "durationMs"],
     "config": {
       "audioOscillator": {
         "waveform": "sine",

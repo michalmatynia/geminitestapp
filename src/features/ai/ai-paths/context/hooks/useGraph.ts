@@ -11,7 +11,4 @@ export {
   useActivePathConfig,
 } from '../GraphContext';
 
-export type {
-  GraphState,
-  GraphActions,
-} from '../GraphContext';
+export type { GraphState, GraphActions } from '../GraphContext';

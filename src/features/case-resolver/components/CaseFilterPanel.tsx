@@ -167,7 +167,7 @@ export function CaseFilterPanel(): React.JSX.Element {
       caseIdentifierFilterOptions,
       caseTagFilterOptions,
       folderFilterOptions,
-    ],
+    ]
   );
 
   const caseFilterValues = useMemo(
@@ -196,22 +196,44 @@ export function CaseFilterPanel(): React.JSX.Element {
       caseFilterTagIds,
       caseFilterCategoryIds,
       caseSearchScope,
-    ],
+    ]
   );
 
   const handleCaseFilterChange = (key: string, value: unknown): void => {
     switch (key) {
-      case 'fileType': setCaseFileTypeFilter(value as CaseFileTypeFilter); break;
-      case 'folder': setCaseFilterFolder(value as string); break;
-      case 'status': setCaseFilterStatus(value as CaseStatusFilter); break;
-      case 'locked': setCaseFilterLocked(value as CaseLockedFilter); break;
-      case 'sent': setCaseFilterSent(value as CaseSentFilter); break;
-      case 'hierarchy': setCaseFilterHierarchy(value as CaseHierarchyFilter); break;
-      case 'references': setCaseFilterReferences(value as CaseReferencesFilter); break;
-      case 'tagIds': setCaseFilterTagIds(value as string[]); break;
-      case 'caseIdentifierIds': setCaseFilterCaseIdentifierIds(value as string[]); break;
-      case 'categoryIds': setCaseFilterCategoryIds(value as string[]); break;
-      case 'searchScope': setCaseSearchScope(value as CaseSearchScope); break;
+      case 'fileType':
+        setCaseFileTypeFilter(value as CaseFileTypeFilter);
+        break;
+      case 'folder':
+        setCaseFilterFolder(value as string);
+        break;
+      case 'status':
+        setCaseFilterStatus(value as CaseStatusFilter);
+        break;
+      case 'locked':
+        setCaseFilterLocked(value as CaseLockedFilter);
+        break;
+      case 'sent':
+        setCaseFilterSent(value as CaseSentFilter);
+        break;
+      case 'hierarchy':
+        setCaseFilterHierarchy(value as CaseHierarchyFilter);
+        break;
+      case 'references':
+        setCaseFilterReferences(value as CaseReferencesFilter);
+        break;
+      case 'tagIds':
+        setCaseFilterTagIds(value as string[]);
+        break;
+      case 'caseIdentifierIds':
+        setCaseFilterCaseIdentifierIds(value as string[]);
+        break;
+      case 'categoryIds':
+        setCaseFilterCategoryIds(value as string[]);
+        break;
+      case 'searchScope':
+        setCaseSearchScope(value as CaseSearchScope);
+        break;
     }
   };
 

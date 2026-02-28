@@ -2,12 +2,7 @@
 
 import React from 'react';
 
-import { 
-  DropdownMenuItem, 
-  LoadingState,
-  EmptyState,
-  ActionMenu,
-} from '@/shared/ui';
+import { DropdownMenuItem, LoadingState, EmptyState, ActionMenu } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 export interface SimpleSettingsListItem {
@@ -56,19 +51,11 @@ export function SimpleSettingsList<T extends SimpleSettingsListItem>({
   padding = 'md',
 }: SimpleSettingsListProps<T>): React.JSX.Element {
   if (isLoading) {
-    return (
-      <LoadingState className='py-8' />
-    );
+    return <LoadingState className='py-8' />;
   }
 
   if (items.length === 0) {
-    return (
-      <EmptyState
-        title={emptyMessage}
-        variant='compact'
-        className='py-8'
-      />
-    );
+    return <EmptyState title={emptyMessage} variant='compact' className='py-8' />;
   }
 
   const gridCols = {
@@ -102,20 +89,12 @@ export function SimpleSettingsList<T extends SimpleSettingsListItem>({
           >
             <div className='flex items-start justify-between gap-3'>
               <div className='flex items-start gap-3 min-w-0'>
-                {item.icon && (
-                  <div className='mt-0.5 shrink-0'>
-                    {item.icon}
-                  </div>
-                )}
+                {item.icon && <div className='mt-0.5 shrink-0'>{item.icon}</div>}
                 <div className='min-w-0'>
                   <div className='flex items-center gap-2'>
-                    <span className='font-semibold text-white truncate'>
-                      {item.title}
-                    </span>
+                    <span className='font-semibold text-white truncate'>{item.title}</span>
                     {item.subtitle && (
-                      <span className='text-xs text-gray-400 truncate'>
-                        {item.subtitle}
-                      </span>
+                      <span className='text-xs text-gray-400 truncate'>{item.subtitle}</span>
                     )}
                   </div>
                   {item.description && (
@@ -128,17 +107,17 @@ export function SimpleSettingsList<T extends SimpleSettingsListItem>({
 
               <div className='flex items-center gap-2 shrink-0'>
                 {renderActions?.(item)}
-                
+
                 {(onEdit || onDelete || renderExtraActions) && (
-                  <ActionMenu
-                    triggerClassName='-mr-2 size-8 text-gray-400 hover:text-white'
-                  >
+                  <ActionMenu triggerClassName='-mr-2 size-8 text-gray-400 hover:text-white'>
                     {renderExtraActions?.(item)}
                     {onEdit && (
-                      <DropdownMenuItem onSelect={(e) => {
-                        e.stopPropagation();
-                        onEdit(item);
-                      }}>
+                      <DropdownMenuItem
+                        onSelect={(e) => {
+                          e.stopPropagation();
+                          onEdit(item);
+                        }}
+                      >
                         Edit
                       </DropdownMenuItem>
                     )}
@@ -158,11 +137,7 @@ export function SimpleSettingsList<T extends SimpleSettingsListItem>({
               </div>
             </div>
 
-            {renderCustomContent && (
-              <div className='mt-4'>
-                {renderCustomContent(item)}
-              </div>
-            )}
+            {renderCustomContent && <div className='mt-4'>{renderCustomContent(item)}</div>}
           </div>
         );
       })}

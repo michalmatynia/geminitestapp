@@ -31,24 +31,23 @@ export function PropertyRow({
   const isStringLabel = typeof label === 'string';
 
   return (
-    <div className={cn(
-      'flex items-center gap-2 text-[11px]',
-      isSubtle ? 'opacity-80' : '',
-      className
-    )}>
+    <div
+      className={cn('flex items-center gap-2 text-[11px]', isSubtle ? 'opacity-80' : '', className)}
+    >
       {icon && <div className='shrink-0 text-gray-500'>{icon}</div>}
-      <span className={cn(
-        'uppercase font-bold tracking-wider text-gray-500 shrink-0',
-        isSubtle ? 'font-medium' : 'font-bold',
-        labelClassName
-      )}>
-        {label}{isStringLabel ? ':' : ''}
+      <span
+        className={cn(
+          'uppercase font-bold tracking-wider text-gray-500 shrink-0',
+          isSubtle ? 'font-medium' : 'font-bold',
+          labelClassName
+        )}
+      >
+        {label}
+        {isStringLabel ? ':' : ''}
       </span>
-      <div className={cn(
-        'text-gray-300 truncate',
-        mono && 'font-mono text-gray-200',
-        valueClassName
-      )}>
+      <div
+        className={cn('text-gray-300 truncate', mono && 'font-mono text-gray-200', valueClassName)}
+      >
         {children ?? value ?? '—'}
       </div>
     </div>

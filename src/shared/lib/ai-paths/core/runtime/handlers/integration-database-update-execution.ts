@@ -44,10 +44,7 @@ const resolveCollectionUpdateContext = ({
   configuredCollection,
   entityType,
 }: ResolveCollectionUpdateContextInput): ResolveCollectionUpdateContextResult => {
-  const queryPayload = buildDbQueryPayload(
-    resolvedInputs,
-    queryConfig,
-  );
+  const queryPayload = buildDbQueryPayload(resolvedInputs, queryConfig);
   const queryFromPayload =
     queryPayload['query'] &&
     typeof queryPayload['query'] === 'object' &&
@@ -56,7 +53,9 @@ const resolveCollectionUpdateContext = ({
       : {};
   const query = queryFromPayload;
   const collection =
-    (queryPayload['collection'] as string | undefined)?.trim() || configuredCollection || entityType;
+    (queryPayload['collection'] as string | undefined)?.trim() ||
+    configuredCollection ||
+    entityType;
   return {
     queryPayload,
     query,
@@ -87,18 +86,16 @@ export type ExecuteDatabaseUpdateInput = {
 export type ExecuteDatabaseUpdateResult =
   | { skipped: true }
   | {
-    skipped: false;
-    updateResult: unknown;
-    executionMeta: Record<string, unknown>;
-    writeOutcome: DatabaseWriteOutcome;
-  };
+      skipped: false;
+      updateResult: unknown;
+      executionMeta: Record<string, unknown>;
+      writeOutcome: DatabaseWriteOutcome;
+    };
 
 const isPlainRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 
-const resolveProviderMeta = (
-  responseData: unknown
-): Record<string, unknown> => {
+const resolveProviderMeta = (responseData: unknown): Record<string, unknown> => {
   if (!isPlainRecord(responseData)) return {};
   const requestedProvider =
     responseData['requestedProvider'] === 'auto' ||
@@ -107,15 +104,12 @@ const resolveProviderMeta = (
       ? responseData['requestedProvider']
       : undefined;
   const resolvedProvider =
-    responseData['resolvedProvider'] === 'mongodb' ||
-    responseData['resolvedProvider'] === 'prisma'
+    responseData['resolvedProvider'] === 'mongodb' || responseData['resolvedProvider'] === 'prisma'
       ? responseData['resolvedProvider']
       : responseData['provider'] === 'mongodb' || responseData['provider'] === 'prisma'
         ? responseData['provider']
         : undefined;
-  const fallback = isPlainRecord(responseData['fallback'])
-    ? responseData['fallback']
-    : undefined;
+  const fallback = isPlainRecord(responseData['fallback']) ? responseData['fallback'] : undefined;
   return {
     ...(requestedProvider ? { requestedProvider } : {}),
     ...(resolvedProvider ? { resolvedProvider } : {}),
@@ -157,7 +151,7 @@ export async function executeDatabaseUpdate({
   const applyWriteOutcome = (
     action: string,
     resultPayload: unknown,
-    context: Record<string, unknown>,
+    context: Record<string, unknown>
   ): void => {
     const outcome = evaluateWriteOutcome({
       operation: 'update',
@@ -168,8 +162,7 @@ export async function executeDatabaseUpdate({
     writeOutcome = outcome.writeOutcome;
     if (!outcome.isZeroAffected) return;
     const outcomeMessage =
-      outcome.writeOutcome.message ??
-      `Database write affected 0 records for update (${action}).`;
+      outcome.writeOutcome.message ?? `Database write affected 0 records for update (${action}).`;
     if (outcome.writeOutcome.status === 'failed') {
       reportAiPathsError(
         new Error(outcomeMessage),
@@ -180,7 +173,7 @@ export async function executeDatabaseUpdate({
           ...context,
           writeOutcome: outcome.writeOutcome,
         },
-        'Database update failed:',
+        'Database update failed:'
       );
       toast(outcomeMessage, { variant: 'error' });
       throw new Error(outcomeMessage);
@@ -189,22 +182,15 @@ export async function executeDatabaseUpdate({
   };
 
   if (updateStrategy === 'many') {
-    const queryPayload = buildDbQueryPayload(
-      resolvedInputs,
-      queryConfig,
-    );
+    const queryPayload = buildDbQueryPayload(resolvedInputs, queryConfig);
     const queryFromPayload =
       queryPayload['query'] &&
       typeof queryPayload['query'] === 'object' &&
       !Array.isArray(queryPayload['query'])
         ? queryPayload['query']
         : {};
-    const query =
-      isCustomPayloadMode && customFilter
-        ? customFilter
-        : queryFromPayload;
-    const hasQuery =
-      query && typeof query === 'object' && Object.keys(query).length > 0;
+    const query = isCustomPayloadMode && customFilter ? customFilter : queryFromPayload;
+    const hasQuery = query && typeof query === 'object' && Object.keys(query).length > 0;
 
     executionMeta = {
       ...executionMeta,
@@ -216,15 +202,11 @@ export async function executeDatabaseUpdate({
       ...(queryPayload.idType !== undefined ? { idType: queryPayload.idType } : {}),
     };
 
-    if (
-      !isCustomPayloadMode &&
-      dbConfig.mode === 'append' &&
-      !executed.updater.has(nodeId)
-    ) {
+    if (!isCustomPayloadMode && dbConfig.mode === 'append' && !executed.updater.has(nodeId)) {
       reportAiPathsError(
         new Error('Append mode is not supported for update many'),
         { action: 'updateMany', nodeId },
-        'Database update many failed:',
+        'Database update many failed:'
       );
       toast('Update many does not support append mode.', {
         variant: 'error',
@@ -244,7 +226,7 @@ export async function executeDatabaseUpdate({
           collection: queryPayload['collection'],
           nodeId,
         },
-        'Database update many failed:',
+        'Database update many failed:'
       );
       toast('Database update requires an explicit query filter.', {
         variant: 'error',
@@ -270,23 +252,23 @@ export async function executeDatabaseUpdate({
       } else {
         const dbUpdateResult: ApiResponse<DbActionResult> = isCustomPayloadMode
           ? await dbApi.action<DbActionResult>({
-            provider: queryPayload.provider,
-            action: 'updateMany',
-            collection: queryPayload.collection,
-            ...(queryPayload.collectionMap ? { collectionMap: queryPayload.collectionMap } : {}),
-            filter: query,
-            update: customUpdateDoc,
-            ...(queryPayload.idType !== undefined ? { idType: queryPayload.idType } : {}),
-          })
+              provider: queryPayload.provider,
+              action: 'updateMany',
+              collection: queryPayload.collection,
+              ...(queryPayload.collectionMap ? { collectionMap: queryPayload.collectionMap } : {}),
+              filter: query,
+              update: customUpdateDoc,
+              ...(queryPayload.idType !== undefined ? { idType: queryPayload.idType } : {}),
+            })
           : await dbApi.update<DbActionResult>({
-            provider: queryPayload.provider,
-            collection: queryPayload.collection,
-            ...(queryPayload.collectionMap ? { collectionMap: queryPayload.collectionMap } : {}),
-            query,
-            updates,
-            single: false,
-            ...(queryPayload.idType !== undefined ? { idType: queryPayload.idType } : {}),
-          });
+              provider: queryPayload.provider,
+              collection: queryPayload.collection,
+              ...(queryPayload.collectionMap ? { collectionMap: queryPayload.collectionMap } : {}),
+              query,
+              updates,
+              single: false,
+              ...(queryPayload.idType !== undefined ? { idType: queryPayload.idType } : {}),
+            });
         executed.updater.add(nodeId);
         if (!dbUpdateResult.ok) {
           reportAiPathsError(
@@ -296,7 +278,7 @@ export async function executeDatabaseUpdate({
               collection: queryPayload['collection'],
               nodeId,
             },
-            'Database update many failed:',
+            'Database update many failed:'
           );
           toast(`Failed to update ${queryPayload['collection']}.`, {
             variant: 'error',
@@ -312,14 +294,14 @@ export async function executeDatabaseUpdate({
             strategy: updateStrategy,
           });
           const modified: number =
-            (dbUpdateResult.data as Record<string, unknown>)?.['modifiedCount'] as number ?? 0;
+            ((dbUpdateResult.data as Record<string, unknown>)?.['modifiedCount'] as number) ?? 0;
           const matched: number =
-            (dbUpdateResult.data as Record<string, unknown>)?.['matchedCount'] as number ?? 0;
+            ((dbUpdateResult.data as Record<string, unknown>)?.['matchedCount'] as number) ?? 0;
           const countLabel = modified || matched;
           if (writeOutcome.status !== 'warning') {
             toast(
               `Updated ${countLabel} document${countLabel === 1 ? '' : 's'} in ${queryPayload['collection']}.`,
-              { variant: 'success' },
+              { variant: 'success' }
             );
           }
         }
@@ -345,20 +327,13 @@ export async function executeDatabaseUpdate({
           ...executionMeta,
         };
       } else {
-        const {
-          query,
-          collection,
-          queryPayload,
-        } = resolveCollectionUpdateContext({
+        const { query, collection, queryPayload } = resolveCollectionUpdateContext({
           resolvedInputs,
           queryConfig,
           configuredCollection,
           entityType,
         });
-        const resolvedFilter =
-          isCustomPayloadMode && customFilter
-            ? customFilter
-            : query;
+        const resolvedFilter = isCustomPayloadMode && customFilter ? customFilter : query;
         executionMeta = {
           ...executionMeta,
           action: isCustomPayloadMode ? 'updateOne' : 'dbUpdateOne',
@@ -384,7 +359,7 @@ export async function executeDatabaseUpdate({
         reportAiPathsError(
           new Error('Database update missing explicit entityId'),
           { action: 'updateEntity', entityType, nodeId },
-          'Database update failed:',
+          'Database update failed:'
         );
         toast(`Database update for ${entityType} requires explicit entityId.`, {
           variant: 'error',
@@ -435,26 +410,19 @@ export async function executeDatabaseUpdate({
         reportAiPathsError(
           error,
           { action: 'updateEntity', entityType, entityId, nodeId },
-          'Database update failed:',
+          'Database update failed:'
         );
         toast(`Failed to update ${entityType}.`, { variant: 'error' });
         executed.updater.add(nodeId);
       }
     } else {
-      const {
-        queryPayload,
-        query,
-        collection,
-      } = resolveCollectionUpdateContext({
+      const { queryPayload, query, collection } = resolveCollectionUpdateContext({
         resolvedInputs,
         queryConfig,
         configuredCollection,
         entityType,
       });
-      const resolvedFilter =
-        isCustomPayloadMode && customFilter
-          ? customFilter
-          : query;
+      const resolvedFilter = isCustomPayloadMode && customFilter ? customFilter : query;
       executionMeta = {
         ...executionMeta,
         action: isCustomPayloadMode ? 'updateOne' : 'dbUpdateOne',
@@ -475,7 +443,7 @@ export async function executeDatabaseUpdate({
             entityId,
             nodeId,
           },
-          'Database update failed:',
+          'Database update failed:'
         );
         toast('Database update requires a query filter.', { variant: 'error' });
         updateResult = {
@@ -487,23 +455,23 @@ export async function executeDatabaseUpdate({
       } else {
         const dbUpdateResult: ApiResponse<DbActionResult> = isCustomPayloadMode
           ? await dbApi.action<DbActionResult>({
-            provider: queryPayload.provider,
-            action: 'updateOne',
-            collection,
-            ...(queryPayload.collectionMap ? { collectionMap: queryPayload.collectionMap } : {}),
-            filter: resolvedFilter,
-            update: customUpdateDoc,
-            ...(queryPayload.idType !== undefined ? { idType: queryPayload.idType } : {}),
-          })
+              provider: queryPayload.provider,
+              action: 'updateOne',
+              collection,
+              ...(queryPayload.collectionMap ? { collectionMap: queryPayload.collectionMap } : {}),
+              filter: resolvedFilter,
+              update: customUpdateDoc,
+              ...(queryPayload.idType !== undefined ? { idType: queryPayload.idType } : {}),
+            })
           : await dbApi.update<DbActionResult>({
-            provider: queryPayload.provider,
-            collection,
-            ...(queryPayload.collectionMap ? { collectionMap: queryPayload.collectionMap } : {}),
-            query: resolvedFilter,
-            updates,
-            single: true,
-            ...(queryPayload.idType !== undefined ? { idType: queryPayload.idType } : {}),
-          });
+              provider: queryPayload.provider,
+              collection,
+              ...(queryPayload.collectionMap ? { collectionMap: queryPayload.collectionMap } : {}),
+              query: resolvedFilter,
+              updates,
+              single: true,
+              ...(queryPayload.idType !== undefined ? { idType: queryPayload.idType } : {}),
+            });
         executed.updater.add(nodeId);
         if (!dbUpdateResult.ok) {
           reportAiPathsError(
@@ -514,7 +482,7 @@ export async function executeDatabaseUpdate({
               entityType,
               nodeId,
             },
-            'Database update failed:',
+            'Database update failed:'
           );
           toast(dbUpdateResult.error || `Failed to update ${collection}.`, {
             variant: 'error',
@@ -535,7 +503,7 @@ export async function executeDatabaseUpdate({
           if (writeOutcome.status !== 'warning') {
             toast(
               `Updated ${countLabel} document${countLabel === 1 ? '' : 's'} in ${collection}.`,
-              { variant: 'success' },
+              { variant: 'success' }
             );
           }
         }

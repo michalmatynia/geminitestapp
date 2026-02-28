@@ -6,9 +6,7 @@ import { GripVertical, Layers } from 'lucide-react';
 import { TreeCaret, TreeContextMenu, TreeRow } from '@/shared/ui';
 import { cn, type MasterTreeNode } from '@/shared/utils';
 
-import {
-  fromSeqGroupMasterNodeId,
-} from '../validator-pattern-master-tree';
+import { fromSeqGroupMasterNodeId } from '../validator-pattern-master-tree';
 import { useValidatorPatternTreeContext } from '../ValidatorPatternTreeContext';
 
 export interface SequenceGroupFolderNodeItemProps {
@@ -69,7 +67,9 @@ export function SequenceGroupFolderNodeItem({
     controller.cancelRename();
   };
 
-  const handleUngroup = (): void => { void onUngroup(groupId); };
+  const handleUngroup = (): void => {
+    void onUngroup(groupId);
+  };
 
   const childCount = group?.patternIds.length ?? 0;
   const debounceMs = group?.debounceMs ?? 0;
@@ -190,18 +190,12 @@ export function SequenceGroupFolderNodeItem({
             <span className='inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center'>
               <Layers className='size-3.5 text-cyan-400' />
             </span>
-            <span className='min-w-0 flex-1 truncate font-medium text-cyan-200'>
-              {node.name}
-            </span>
+            <span className='min-w-0 flex-1 truncate font-medium text-cyan-200'>{node.name}</span>
             <span className='ml-1 flex shrink-0 items-center gap-1.5'>
               <span className='text-[10px] text-gray-500'>
                 {childCount} pattern{childCount === 1 ? '' : 's'}
               </span>
-              {debounceMs > 0 && (
-                <span className='text-[10px] text-cyan-700'>
-                  {debounceMs}ms
-                </span>
-              )}
+              {debounceMs > 0 && <span className='text-[10px] text-cyan-700'>{debounceMs}ms</span>}
               <span
                 className={cn(
                   'rounded px-1 py-0.5 text-[10px] text-amber-300 transition',

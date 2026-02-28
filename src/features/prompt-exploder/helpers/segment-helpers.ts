@@ -26,7 +26,9 @@ export const promptExploderCreateListItem = (text = 'New item'): PromptExploderL
   children: [],
 });
 
-export const promptExploderAddBlankListItem = (items: PromptExploderListItem[]): PromptExploderListItem[] => {
+export const promptExploderAddBlankListItem = (
+  items: PromptExploderListItem[]
+): PromptExploderListItem[] => {
   return [...items, promptExploderCreateListItem()];
 };
 
@@ -41,7 +43,9 @@ export const promptExploderCreateSubsection = (): PromptExploderSubsection => ({
 
 // ── Label formatting ────────────────────────────────────────────────────────
 
-export const promptExploderFormatSubsectionLabel = (subsection: PromptExploderSubsection): string => {
+export const promptExploderFormatSubsectionLabel = (
+  subsection: PromptExploderSubsection
+): string => {
   const title = subsection.title.trim() || 'Untitled subsection';
   if (subsection.code) {
     return `[${subsection.code}] ${title}`;
@@ -53,7 +57,10 @@ export const promptExploderFormatSubsectionLabel = (subsection: PromptExploderSu
 
 export const promptExploderBuildSegmentSampleText = (segment: PromptExploderSegment): string => {
   if (segment.listItems && segment.listItems.length > 0) {
-    return segment.listItems.slice(0, 4).map((item: PromptExploderListItem) => item.text || '').join(' ');
+    return segment.listItems
+      .slice(0, 4)
+      .map((item: PromptExploderListItem) => item.text || '')
+      .join(' ');
   }
   if (segment.subsections && segment.subsections.length > 0) {
     return segment.subsections
@@ -65,7 +72,9 @@ export const promptExploderBuildSegmentSampleText = (segment: PromptExploderSegm
 };
 
 export const promptExploderBuildLearnedRulePattern = (segment: PromptExploderSegment): string => {
-  const tokens = learningTokens(`${segment.title || ''} ${promptExploderBuildSegmentSampleText(segment)}`);
+  const tokens = learningTokens(
+    `${segment.title || ''} ${promptExploderBuildSegmentSampleText(segment)}`
+  );
   if (tokens.length === 0) {
     const escaped = (segment.title || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     return `^\\s*${escaped}\\s*$`;
@@ -107,9 +116,8 @@ export const promptExploderCreateApprovalDraftFromSegment = (
     ruleSegmentType: segment.type,
     rulePriority: 30,
     ruleConfidenceBoost: 0.2,
-    ruleTreatAsHeading: /^[A-Z0-9 _()[\]\\,:&+.-]{3,}$/.test(
-      (segment.title || '').trim()
-    ),    templateMergeMode: 'auto',
+    ruleTreatAsHeading: /^[A-Z0-9 _()[\]\\,:&+.-]{3,}$/.test((segment.title || '').trim()),
+    templateMergeMode: 'auto',
     templateTargetId: '',
   };
 };
@@ -121,7 +129,11 @@ export const promptExploderIsPromptExploderManagedRule = (rule: PromptValidation
   const hasPromptExploderScope =
     scopes.includes('prompt_exploder') || scopes.includes('case_resolver_prompt_exploder');
   if (hasPromptExploderScope) return true;
-  if (rule.id.includes('prompt_exploder') || rule.id.includes('exploder') || rule.id.startsWith('segment.')) {
+  if (
+    rule.id.includes('prompt_exploder') ||
+    rule.id.includes('exploder') ||
+    rule.id.startsWith('segment.')
+  ) {
     return true;
   }
   return false;

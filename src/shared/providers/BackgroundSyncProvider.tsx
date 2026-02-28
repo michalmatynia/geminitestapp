@@ -38,7 +38,11 @@ const parseIntervalSeconds = (value: string | undefined): number => {
   return Math.min(Math.max(parsed, 60), 3600);
 };
 
-export function BackgroundSyncProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
+export function BackgroundSyncProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}): React.JSX.Element {
   const settingsStore = useSettingsStore();
   const resolvedSettings = useMemo(() => {
     const map = settingsStore.map;
@@ -55,9 +59,7 @@ export function BackgroundSyncProvider({ children }: { children: React.ReactNode
     interval: resolvedSettings.intervalSeconds * 1000,
   });
 
-  useEffect(() => {
-
-  }, [isOnline, lastSync]);
+  useEffect(() => {}, [isOnline, lastSync]);
 
   const value = useMemo(
     () => ({

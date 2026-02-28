@@ -48,14 +48,12 @@ export default function CmsSideMenu(): React.JSX.Element {
 
   if (!page) {
     return (
-      <SidePanel 
-        width={320} 
+      <SidePanel
+        width={320}
         header={<SectionHeader title='Loading page…' size='sm' className='p-4' />}
         contentClassName='p-4'
       >
-        <p className='text-sm text-gray-300'>
-          Select a page or wait for data to load.
-        </p>
+        <p className='text-sm text-gray-300'>Select a page or wait for data to load.</p>
       </SidePanel>
     );
   }

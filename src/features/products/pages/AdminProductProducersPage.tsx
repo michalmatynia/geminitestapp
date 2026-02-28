@@ -11,15 +11,18 @@ import {
 } from '@/features/products/hooks/useProductMetadataQueries';
 import type { Producer } from '@/shared/contracts/products';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
-import { 
-  Button, 
-  EmptyState, 
+import {
+  Button,
+  EmptyState,
   useToast,
   StandardDataTablePanel,
   PanelHeader,
   SearchInput,
 } from '@/shared/ui';
-import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
+import {
+  SettingsPanelBuilder,
+  type SettingsField,
+} from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import type { ColumnDef } from '@tanstack/react-table';
 
@@ -42,7 +45,7 @@ const FIELDS: SettingsField<ProducerFormState>[] = [
     type: 'text',
     placeholder: 'https://...',
     helperText: 'Optional official website URL',
-  }
+  },
 ];
 
 export function AdminProductProducersPage(): React.JSX.Element {
@@ -93,13 +96,21 @@ export function AdminProductProducersPage(): React.JSX.Element {
       toast(editing ? 'Producer updated.' : 'Producer created.', { variant: 'success' });
       setOpen(false);
     } catch (error) {
-      logClientError(error, { context: { source: 'AdminProductProducersPage', action: 'saveProducer', producerId: editing?.id } });
-      toast(error instanceof Error ? error.message : 'Failed to save producer.', { variant: 'error' });
+      logClientError(error, {
+        context: {
+          source: 'AdminProductProducersPage',
+          action: 'saveProducer',
+          producerId: editing?.id,
+        },
+      });
+      toast(error instanceof Error ? error.message : 'Failed to save producer.', {
+        variant: 'error',
+      });
     }
   };
 
   const handleChange = (vals: Partial<ProducerFormState>) => {
-    setForm(prev => ({ ...prev, ...vals }));
+    setForm((prev) => ({ ...prev, ...vals }));
   };
 
   const confirmDelete = (producer: Producer): void => {
@@ -113,59 +124,70 @@ export function AdminProductProducersPage(): React.JSX.Element {
           await deleteMutation.mutateAsync(producer.id);
           toast('Producer deleted.', { variant: 'success' });
         } catch (error) {
-          logClientError(error, { context: { source: 'AdminProductProducersPage', action: 'deleteProducer', producerId: producer.id } });
-          toast(error instanceof Error ? error.message : 'Failed to delete producer.', { variant: 'error' });
+          logClientError(error, {
+            context: {
+              source: 'AdminProductProducersPage',
+              action: 'deleteProducer',
+              producerId: producer.id,
+            },
+          });
+          toast(error instanceof Error ? error.message : 'Failed to delete producer.', {
+            variant: 'error',
+          });
         }
-      }
+      },
     });
   };
 
-  const columns = useMemo<ColumnDef<Producer>[]>(() => [
-    {
-      accessorKey: 'name',
-      header: 'Producer Name',
-      cell: ({ row }) => {
-        const producer = row.original;
-        return (
-          <div className='min-w-0'>
-            <div className='text-sm font-medium text-gray-100 truncate'>{producer.name}</div>
-            {producer.website && (
-              <div className='text-xs text-muted-foreground truncate'>{producer.website}</div>
-            )}
-          </div>
-        );
+  const columns = useMemo<ColumnDef<Producer>[]>(
+    () => [
+      {
+        accessorKey: 'name',
+        header: 'Producer Name',
+        cell: ({ row }) => {
+          const producer = row.original;
+          return (
+            <div className='min-w-0'>
+              <div className='text-sm font-medium text-gray-100 truncate'>{producer.name}</div>
+              {producer.website && (
+                <div className='text-xs text-muted-foreground truncate'>{producer.website}</div>
+              )}
+            </div>
+          );
+        },
       },
-    },
-    {
-      id: 'actions',
-      header: () => <div className='text-right'>Actions</div>,
-      cell: ({ row }) => {
-        const producer = row.original;
-        return (
-          <div className='flex items-center justify-end gap-2'>
-            <Button
-              type='button'
-              size='xs'
-              variant='outline'
-              onClick={(): void => openEdit(producer)}
-            >
-              Edit
-            </Button>
-            <Button
-              type='button'
-              size='xs'
-              variant='outline'
-              onClick={(): void => confirmDelete(producer)}
-              className='text-red-300 hover:text-red-200'
-              title='Delete producer'
-            >
-              <Trash2 className='size-3.5' />
-            </Button>
-          </div>
-        );
+      {
+        id: 'actions',
+        header: () => <div className='text-right'>Actions</div>,
+        cell: ({ row }) => {
+          const producer = row.original;
+          return (
+            <div className='flex items-center justify-end gap-2'>
+              <Button
+                type='button'
+                size='xs'
+                variant='outline'
+                onClick={(): void => openEdit(producer)}
+              >
+                Edit
+              </Button>
+              <Button
+                type='button'
+                size='xs'
+                variant='outline'
+                onClick={(): void => confirmDelete(producer)}
+                className='text-red-300 hover:text-red-200'
+                title='Delete producer'
+              >
+                <Trash2 className='size-3.5' />
+              </Button>
+            </div>
+          );
+        },
       },
-    },
-  ], [openEdit]);
+    ],
+    [openEdit]
+  );
 
   return (
     <div className='space-y-6'>
@@ -179,7 +201,7 @@ export function AdminProductProducersPage(): React.JSX.Element {
             label: 'Add Producer',
             icon: <Plus className='size-4' />,
             onClick: openCreate,
-          }
+          },
         ]}
       />
 
@@ -201,13 +223,19 @@ export function AdminProductProducersPage(): React.JSX.Element {
         emptyState={
           <EmptyState
             title='No producers'
-            description={query ? 'No producers match your search.' : 'Create a producer to attach it to products.'}
-            action={!query ? (
-              <Button onClick={openCreate} variant='outline'>
-                <Plus className='size-4 mr-2' />
-                Create Producer
-              </Button>
-            ) : undefined}
+            description={
+              query
+                ? 'No producers match your search.'
+                : 'Create a producer to attach it to products.'
+            }
+            action={
+              !query ? (
+                <Button onClick={openCreate} variant='outline'>
+                  <Plus className='size-4 mr-2' />
+                  Create Producer
+                </Button>
+              ) : undefined
+            }
           />
         }
       />

@@ -26,18 +26,15 @@ export function FiltersContainer({
   gridClassName,
 }: FiltersContainerProps) {
   return (
-    <div className={cn('mb-4 space-y-3 rounded-lg border border-border/60 bg-card/40 p-4', className)}>
+    <div
+      className={cn('mb-4 space-y-3 rounded-lg border border-border/60 bg-card/40 p-4', className)}
+    >
       <SectionHeader
         title={title}
         size='xs'
         actions={
           hasActiveFilters && onReset ? (
-            <Button
-              variant='ghost'
-              size='sm'
-              onClick={onReset}
-              className='h-8 gap-2'
-            >
+            <Button variant='ghost' size='sm' onClick={onReset} className='h-8 gap-2'>
               <X className='h-3 w-3' />
               Reset filters
             </Button>
@@ -45,9 +42,7 @@ export function FiltersContainer({
         }
       />
 
-      <div className={cn('grid grid-cols-1 gap-3', gridClassName)}>
-        {children}
-      </div>
+      <div className={cn('grid grid-cols-1 gap-3', gridClassName)}>{children}</div>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
-import { getBrainAssignmentForFeature } from '@/features/ai/brain/server';
+import { getBrainAssignmentForFeature } from '@/shared/lib/ai-brain/server';
 import {
   generateAnalyticsInsight,
   generateLogsInsight,
@@ -16,7 +16,7 @@ vi.mock('@/features/ai/ai-paths/services/path-run-repository', () => ({
   getPathRunRepository: vi.fn(),
 }));
 
-vi.mock('@/features/ai/brain/server', () => ({
+vi.mock('@/shared/lib/ai-brain/server', () => ({
   getBrainAssignmentForFeature: vi.fn(),
 }));
 

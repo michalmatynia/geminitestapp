@@ -10,7 +10,10 @@ import Menu from '@/features/admin/components/Menu';
 import { UserNav } from '@/features/admin/components/UserNav';
 import { AdminLayoutProvider, useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
 import { AuthProvider } from '@/features/auth';
-import { useUserPreferences, useUpdateUserPreferencesMutation } from '@/features/auth/hooks/useUserPreferences';
+import {
+  useUserPreferences,
+  useUpdateUserPreferencesMutation,
+} from '@/features/auth/hooks/useUserPreferences';
 import { NoteSettingsProvider } from '@/features/notesapp/hooks/NoteSettingsContext';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { QueryProvider } from '@/shared/providers/QueryProvider';
@@ -54,14 +57,19 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
     }
   }, []);
 
-  const persistMenuCollapsed = useCallback(async (collapsed: boolean): Promise<void> => {
-    persistMenuCollapsedFallbacks(collapsed);
-    try {
-      await updatePreferencesMutation.mutateAsync({ adminMenuCollapsed: collapsed });
-    } catch (error) {
-      logClientError(error, { context: { source: 'AdminLayout', action: 'persistMenuCollapsed' } });
-    }
-  }, [persistMenuCollapsedFallbacks, updatePreferencesMutation]);
+  const persistMenuCollapsed = useCallback(
+    async (collapsed: boolean): Promise<void> => {
+      persistMenuCollapsedFallbacks(collapsed);
+      try {
+        await updatePreferencesMutation.mutateAsync({ adminMenuCollapsed: collapsed });
+      } catch (error) {
+        logClientError(error, {
+          context: { source: 'AdminLayout', action: 'persistMenuCollapsed' },
+        });
+      }
+    },
+    [persistMenuCollapsedFallbacks, updatePreferencesMutation]
+  );
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -98,12 +106,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
       setIsMenuCollapsed(preferredMenuCollapsedRef.current);
       setIsProgrammaticallyCollapsed(false);
     }
-  }, [
-    pathname,
-    isProgrammaticallyCollapsed,
-    setIsMenuCollapsed,
-    setIsProgrammaticallyCollapsed,
-  ]);
+  }, [pathname, isProgrammaticallyCollapsed, setIsMenuCollapsed, setIsProgrammaticallyCollapsed]);
 
   const handleToggleCollapse = (): void => {
     const nextCollapsed = !isMenuCollapsed;
@@ -134,7 +137,9 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
       >
         {!isMenuHidden ? (
           <>
-            <div className={`flex items-center mb-4 ${isMenuCollapsed ? 'justify-center' : 'justify-end'}`}>
+            <div
+              className={`flex items-center mb-4 ${isMenuCollapsed ? 'justify-center' : 'justify-end'}`}
+            >
               <Button
                 variant='ghost'
                 onClick={handleToggleCollapse}

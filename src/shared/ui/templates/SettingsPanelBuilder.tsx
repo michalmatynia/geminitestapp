@@ -13,30 +13,41 @@ import { SelectSimple } from '../select-simple';
 import { Switch } from '../switch';
 import { Textarea } from '../textarea';
 
-export type FieldType = 'text' | 'email' | 'password' | 'number' | 'textarea' | 'select' | 'checkbox' | 'switch' | 'color' | 'range' | 'custom';
+export type FieldType =
+  | 'text'
+  | 'email'
+  | 'password'
+  | 'number'
+  | 'textarea'
+  | 'select'
+  | 'checkbox'
+  | 'switch'
+  | 'color'
+  | 'range'
+  | 'custom';
 
 export interface SettingsField<T extends object> {
   /** Field key in the form data */
   key: keyof T;
-  
+
   /** Label displayed to user */
   label: string;
-  
+
   /** Field type */
   type: FieldType;
-  
+
   /** Placeholder text */
   placeholder?: string;
-  
+
   /** Help text shown below field */
   helperText?: string;
-  
+
   /** Is this field required? */
   required?: boolean;
-  
+
   /** Disabled state */
   disabled?: boolean;
-  
+
   /** For select fields, list of options */
   options?: Array<{ label: string; value: string | number }>;
 
@@ -45,7 +56,7 @@ export interface SettingsField<T extends object> {
   max?: number;
   step?: number;
   suffix?: string;
-  
+
   /** Custom render function for advanced fields */
   render?: (props: SettingsFieldRenderProps) => ReactNode;
 }
@@ -89,8 +100,8 @@ export function SettingsFieldsRenderer<T extends object>({
         return (
           <div key={fieldKey}>
             {field.render ? (
-              <FormField 
-                label={field.label} 
+              <FormField
+                label={field.label}
                 required={field.required}
                 description={field.helperText}
                 error={errors[field.key]}
@@ -103,32 +114,35 @@ export function SettingsFieldsRenderer<T extends object>({
                 })}
               </FormField>
             ) : field.type === 'textarea' ? (
-              <FormField 
-                label={field.label} 
+              <FormField
+                label={field.label}
                 required={field.required}
                 description={field.helperText}
                 error={errors[field.key]}
               >
                 <Textarea
                   value={(values[field.key] as string) || ''}
-                  onChange={e => handleFieldChange(field.key, e.target.value)}
+                  onChange={(e) => handleFieldChange(field.key, e.target.value)}
                   placeholder={field.placeholder}
                   disabled={field.disabled || disabled}
                   className='min-h-[100px]'
                 />
               </FormField>
             ) : field.type === 'select' ? (
-              <FormField 
-                label={field.label} 
+              <FormField
+                label={field.label}
                 required={field.required}
                 description={field.helperText}
                 error={errors[field.key]}
               >
                 <SelectSimple
                   value={String(values[field.key] || '')}
-                  onValueChange={val => handleFieldChange(field.key, val)}
+                  onValueChange={(val) => handleFieldChange(field.key, val)}
                   disabled={field.disabled || disabled}
-                  options={field.options?.map(opt => ({ label: opt.label, value: String(opt.value) })) || []}
+                  options={
+                    field.options?.map((opt) => ({ label: opt.label, value: String(opt.value) })) ||
+                    []
+                  }
                   placeholder={field.placeholder || 'Select an option'}
                 />
               </FormField>
@@ -137,56 +151,67 @@ export function SettingsFieldsRenderer<T extends object>({
                 <Checkbox
                   id={fieldId}
                   checked={(values[field.key] as boolean) || false}
-                  onCheckedChange={checked => handleFieldChange(field.key, !!checked)}
+                  onCheckedChange={(checked) => handleFieldChange(field.key, !!checked)}
                   disabled={field.disabled || disabled}
                 />
                 <Label htmlFor={fieldId} className='text-sm cursor-pointer'>
                   {field.label}
                   {field.required && <span className='text-red-500 ml-1'>*</span>}
                 </Label>
-                {field.helperText && <p className='text-xs text-muted-foreground ml-6'>{field.helperText}</p>}
-                {errors[field.key] && <p className='text-xs text-red-500 ml-6'>{errors[field.key]}</p>}
+                {field.helperText && (
+                  <p className='text-xs text-muted-foreground ml-6'>{field.helperText}</p>
+                )}
+                {errors[field.key] && (
+                  <p className='text-xs text-red-500 ml-6'>{errors[field.key]}</p>
+                )}
               </div>
             ) : field.type === 'switch' ? (
               <div className='flex items-center justify-between p-3 rounded-md border border-white/5 bg-card/30 transition-colors hover:bg-card/50'>
                 <div className='flex flex-col gap-0.5'>
-                  <Label htmlFor={fieldId} className='text-sm font-medium text-gray-200 cursor-pointer'>
+                  <Label
+                    htmlFor={fieldId}
+                    className='text-sm font-medium text-gray-200 cursor-pointer'
+                  >
                     {field.label}
                     {field.required && <span className='text-red-500 ml-1'>*</span>}
                   </Label>
-                  {field.helperText && <p className='text-[11px] text-muted-foreground'>{field.helperText}</p>}
+                  {field.helperText && (
+                    <p className='text-[11px] text-muted-foreground'>{field.helperText}</p>
+                  )}
                 </div>
                 <Switch
                   id={fieldId}
                   checked={(values[field.key] as boolean) || false}
-                  onCheckedChange={checked => handleFieldChange(field.key, !!checked)}
+                  onCheckedChange={(checked) => handleFieldChange(field.key, !!checked)}
                   disabled={field.disabled || disabled}
                 />
-                {errors[field.key] && <p className='text-xs text-red-500 mt-1'>{errors[field.key]}</p>}
+                {errors[field.key] && (
+                  <p className='text-xs text-red-500 mt-1'>{errors[field.key]}</p>
+                )}
               </div>
             ) : field.type === 'color' ? (
-              <FormField 
-                label={field.label} 
+              <FormField
+                label={field.label}
                 required={field.required}
                 description={field.helperText}
                 error={errors[field.key]}
               >
                 <div className='flex items-center gap-2'>
-                  <div 
+                  <div
                     className='size-8 rounded border border-border shrink-0 overflow-hidden'
                     style={{ backgroundColor: String(values[field.key] || '#000000') }}
                   >
                     <input
                       type='color'
                       value={String(values[field.key] || '#000000')}
-                      onChange={e => handleFieldChange(field.key, e.target.value)}
+                      onChange={(e) => handleFieldChange(field.key, e.target.value)}
                       className='opacity-0 size-full cursor-pointer'
                       disabled={field.disabled || disabled}
                     />
                   </div>
                   <Input
                     value={String(values[field.key] || '#000000')}
-                    onChange={e => handleFieldChange(field.key, e.target.value)}
+                    onChange={(e) => handleFieldChange(field.key, e.target.value)}
                     placeholder='#000000'
                     disabled={field.disabled || disabled}
                     className='font-mono'
@@ -194,12 +219,17 @@ export function SettingsFieldsRenderer<T extends object>({
                 </div>
               </FormField>
             ) : field.type === 'range' ? (
-              <FormField 
-                label={field.label} 
+              <FormField
+                label={field.label}
                 required={field.required}
                 description={field.helperText}
                 error={errors[field.key]}
-                actions={<span className='text-xs font-mono text-muted-foreground'>{(values[field.key] as number) ?? 0}{field.suffix}</span>}
+                actions={
+                  <span className='text-xs font-mono text-muted-foreground'>
+                    {(values[field.key] as number) ?? 0}
+                    {field.suffix}
+                  </span>
+                }
               >
                 <input
                   type='range'
@@ -207,14 +237,14 @@ export function SettingsFieldsRenderer<T extends object>({
                   max={field.max ?? 100}
                   step={field.step ?? 1}
                   value={(values[field.key] as number) ?? field.min ?? 0}
-                  onChange={e => handleFieldChange(field.key, Number(e.target.value))}
+                  onChange={(e) => handleFieldChange(field.key, Number(e.target.value))}
                   className='w-full accent-primary h-2 bg-muted rounded-lg appearance-none cursor-pointer'
                   disabled={field.disabled || disabled}
                 />
               </FormField>
             ) : (
-              <FormField 
-                label={field.label} 
+              <FormField
+                label={field.label}
                 required={field.required}
                 description={field.helperText}
                 error={errors[field.key]}
@@ -222,8 +252,17 @@ export function SettingsFieldsRenderer<T extends object>({
                 <div className='flex items-center gap-2'>
                   <Input
                     type={field.type}
-                    value={values[field.key] !== undefined && values[field.key] !== null ? String(values[field.key]) : ''}
-                    onChange={e => handleFieldChange(field.key, field.type === 'number' ? Number(e.target.value) : e.target.value)}
+                    value={
+                      values[field.key] !== undefined && values[field.key] !== null
+                        ? String(values[field.key])
+                        : ''
+                    }
+                    onChange={(e) =>
+                      handleFieldChange(
+                        field.key,
+                        field.type === 'number' ? Number(e.target.value) : e.target.value
+                      )
+                    }
                     placeholder={field.placeholder}
                     disabled={field.disabled || disabled}
                     min={field.min}
@@ -231,7 +270,9 @@ export function SettingsFieldsRenderer<T extends object>({
                     step={field.step}
                     className='flex-1'
                   />
-                  {field.suffix && <span className='text-xs text-muted-foreground'>{field.suffix}</span>}
+                  {field.suffix && (
+                    <span className='text-xs text-muted-foreground'>{field.suffix}</span>
+                  )}
                 </div>
               </FormField>
             )}
@@ -242,7 +283,9 @@ export function SettingsFieldsRenderer<T extends object>({
   );
 }
 
-export interface SettingsPanelBuilderProps<T extends object> extends SettingsFieldsRendererProps<T> {
+export interface SettingsPanelBuilderProps<
+  T extends object,
+> extends SettingsFieldsRendererProps<T> {
   open: boolean;
   onClose: () => void;
   title: string;

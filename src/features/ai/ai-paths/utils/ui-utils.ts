@@ -39,7 +39,9 @@ const extractImageUrls = (value: unknown, seen: Set<object> = new Set<object>())
     ];
     const urls: string[] = candidates.flatMap((key: string) => extractImageUrls(record[key], seen));
     if (urls.length) return Array.from(new Set(urls));
-    const deepUrls: string[] = Object.values(record).flatMap((val: unknown) => extractImageUrls(val, seen));
+    const deepUrls: string[] = Object.values(record).flatMap((val: unknown) =>
+      extractImageUrls(val, seen)
+    );
     return Array.from(new Set(deepUrls));
   }
   return [];

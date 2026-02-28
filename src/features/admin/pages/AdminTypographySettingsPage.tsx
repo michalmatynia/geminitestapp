@@ -3,9 +3,25 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { APP_FONT_SET_SETTING_KEY, APP_FONT_SETS, getAppFontSet, type AppFontSetId } from '@/shared/constants/typography';
+import {
+  APP_FONT_SET_SETTING_KEY,
+  APP_FONT_SETS,
+  getAppFontSet,
+  type AppFontSetId,
+} from '@/shared/constants/typography';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
-import { SectionHeader, SelectSimple, useToast, FormSection, FormField, Breadcrumbs, FormActions, LoadingState, PropertyRow, Hint } from '@/shared/ui';
+import {
+  SectionHeader,
+  SelectSimple,
+  useToast,
+  FormSection,
+  FormField,
+  Breadcrumbs,
+  FormActions,
+  LoadingState,
+  PropertyRow,
+  Hint,
+} from '@/shared/ui';
 
 export function AdminTypographySettingsPage(): React.JSX.Element {
   const { toast } = useToast();
@@ -32,7 +48,9 @@ export function AdminTypographySettingsPage(): React.JSX.Element {
       {
         onSuccess: (): void => toast('Typography settings saved', { variant: 'success' }),
         onError: (error: Error): void => {
-          logClientError(error, { context: { source: 'AdminTypographySettingsPage', action: 'save' } });
+          logClientError(error, {
+            context: { source: 'AdminTypographySettingsPage', action: 'save' },
+          });
           toast(error.message || 'Failed to save typography settings', { variant: 'error' });
         },
       }
@@ -53,7 +71,7 @@ export function AdminTypographySettingsPage(): React.JSX.Element {
             items={[
               { label: 'Admin', href: '/admin' },
               { label: 'Settings', href: '/admin/settings' },
-              { label: 'Typography' }
+              { label: 'Typography' },
             ]}
             className='mb-2'
           />
@@ -68,14 +86,17 @@ export function AdminTypographySettingsPage(): React.JSX.Element {
               label='Font set'
               description='Fonts are defined in src/app/fonts.css and loaded from public/fonts.'
             >
-              <SelectSimple size='sm'
+              <SelectSimple
+                size='sm'
                 value={selected}
                 onValueChange={(val: string) => setSelected(val as AppFontSetId)}
-                options={APP_FONT_SETS.map((set: { id: AppFontSetId; name: string; description: string }) => ({
-                  value: set.id,
-                  label: set.name,
-                  description: set.description
-                }))}
+                options={APP_FONT_SETS.map(
+                  (set: { id: AppFontSetId; name: string; description: string }) => ({
+                    value: set.id,
+                    label: set.name,
+                    description: set.description,
+                  })
+                )}
                 placeholder='Select a font set'
               />
             </FormField>
@@ -95,7 +116,9 @@ export function AdminTypographySettingsPage(): React.JSX.Element {
         <div>
           <FormSection title='Preview' className='sticky top-6 p-6 space-y-4'>
             <FormSection variant='subtle-compact' className='p-4'>
-              <Hint uppercase className='mb-2'>Headings</Hint>
+              <Hint uppercase className='mb-2'>
+                Headings
+              </Hint>
               <div className='space-y-2'>
                 <h3 className='text-xl font-semibold text-white'>Edit Product</h3>
                 <h4 className='text-base font-semibold text-white'>Product Settings</h4>
@@ -103,7 +126,9 @@ export function AdminTypographySettingsPage(): React.JSX.Element {
             </FormSection>
 
             <FormSection variant='subtle-compact' className='p-4'>
-              <Hint uppercase className='mb-2'>Body</Hint>
+              <Hint uppercase className='mb-2'>
+                Body
+              </Hint>
               <p className='text-sm text-gray-200'>
                 The quick brown fox jumps over the lazy dog. 0123456789.
               </p>
@@ -115,7 +140,11 @@ export function AdminTypographySettingsPage(): React.JSX.Element {
               <PropertyRow label='Body' value={current.body} mono />
             </FormSection>
 
-            <Hint variant='info' className='rounded-md border border-blue-500/20 bg-blue-500/5 p-3 italic' size='xs'>
+            <Hint
+              variant='info'
+              className='rounded-md border border-blue-500/20 bg-blue-500/5 p-3 italic'
+              size='xs'
+            >
               Tip: If a font file is missing, the app silently falls back to system fonts.
             </Hint>
           </FormSection>

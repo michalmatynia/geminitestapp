@@ -1,20 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
-import OpenAI from 'openai';
 import { z } from 'zod';
 
+import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
 import {
-  IMAGE_STUDIO_OPENAI_API_KEY_KEY,
+  runBrainChatCompletion,
+  supportsBrainJsonMode,
+} from '@/shared/lib/ai-brain/server-runtime-client';
+import {
   IMAGE_STUDIO_SETTINGS_KEY,
   parseImageStudioSettings,
-} from '@/features/ai/image-studio/utils/studio-settings';
+} from '@/shared/lib/ai/image-studio/studio-settings';
 import { auth } from '@/features/auth/server';
 import { getSettingValue } from '@/features/products/services/aiDescriptionService';
-import { formatProgrammaticPrompt } from '@/shared/lib/prompt-engine/prompt-formatter';
+import { formatProgrammaticPrompt } from '@/shared/lib/prompt-engine';
 import { extractParamsFromPrompt } from '@/shared/utils/prompt-params';
-import {
-  type PromptValidationIssue,
-  validateProgrammaticPrompt,
-} from '@/shared/lib/prompt-engine/prompt-validator';
+import { type PromptValidationIssue, validateProgrammaticPrompt } from '@/shared/lib/prompt-engine';
 import {
   parsePromptEngineSettings,
   PROMPT_ENGINE_SETTINGS_KEY,
@@ -98,32 +98,45 @@ function runProgrammaticAttempt(
   applyAutofix: boolean,
   promptValidationSettings: PromptValidationSettings
 ): ProgrammaticAttempt {
-  const validationBefore = validateProgrammaticPrompt(prompt, {
-    enabled: true,
-    rules: promptValidationSettings.rules,
-    learnedRules: promptValidationSettings.learnedRules ?? [],
-  }, {
-    scope: 'image_studio_extraction',
-  });
+  const validationBefore = validateProgrammaticPrompt(
+    prompt,
+    {
+      enabled: true,
+      rules: promptValidationSettings.rules,
+      learnedRules: promptValidationSettings.learnedRules ?? [],
+    },
+    {
+      scope: 'image_studio_extraction',
+    }
+  );
 
   const formatted = applyAutofix
-    ? formatProgrammaticPrompt(prompt, promptValidationSettings, {
-      scope: 'image_studio_extraction',
-    }, {
-      precomputedIssuesBefore: validationBefore,
-    })
+    ? formatProgrammaticPrompt(
+        prompt,
+        promptValidationSettings,
+        {
+          scope: 'image_studio_extraction',
+        },
+        {
+          precomputedIssuesBefore: validationBefore,
+        }
+      )
     : { prompt, changed: false };
   const candidatePrompt = formatted.prompt;
   const direct = extractParamsFromPrompt(candidatePrompt);
 
   if (direct.ok) {
-    const validationAfter = validateProgrammaticPrompt(candidatePrompt, {
-      enabled: true,
-      rules: promptValidationSettings.rules,
-      learnedRules: promptValidationSettings.learnedRules ?? [],
-    }, {
-      scope: 'image_studio_extraction',
-    });
+    const validationAfter = validateProgrammaticPrompt(
+      candidatePrompt,
+      {
+        enabled: true,
+        rules: promptValidationSettings.rules,
+        learnedRules: promptValidationSettings.learnedRules ?? [],
+      },
+      {
+        scope: 'image_studio_extraction',
+      }
+    );
     return {
       ok: true,
       params: direct.params,
@@ -136,13 +149,17 @@ function runProgrammaticAttempt(
     };
   }
 
-  const validationAfter = validateProgrammaticPrompt(candidatePrompt, {
-    enabled: true,
-    rules: promptValidationSettings.rules,
-    learnedRules: promptValidationSettings.learnedRules ?? [],
-  }, {
-    scope: 'image_studio_extraction',
-  });
+  const validationAfter = validateProgrammaticPrompt(
+    candidatePrompt,
+    {
+      enabled: true,
+      rules: promptValidationSettings.rules,
+      learnedRules: promptValidationSettings.learnedRules ?? [],
+    },
+    {
+      scope: 'image_studio_extraction',
+    }
+  );
 
   return {
     ok: false,
@@ -158,36 +175,27 @@ function runProgrammaticAttempt(
 
 async function runAiExtraction(
   prompt: string,
-  model: string,
-  temperature: number,
-  topP: number | undefined,
-  maxOutputTokens: number,
-  apiKey: string
+  input: {
+    model: string;
+    temperature: number;
+    maxOutputTokens: number;
+    systemPrompt: string;
+  }
 ): Promise<Record<string, unknown>> {
-  const client = new OpenAI({ apiKey });
-
-  const systemPrompt = [
-    'You extract a JSON params object from a prompt.',
-    'If the prompt includes a params object (JS-like or JSON), extract it and normalize to strict JSON.',
-    'If the prompt does not include a params object, infer a best-effort params object from explicit key/value settings only; otherwise return an empty object.',
-    'Return ONLY JSON matching: { "params": { ... } } with no extra text.',
-    'Preserve booleans, numbers, arrays, and nested objects when present.',
-  ].join('\n');
-
   const userPrompt = ['Prompt:', prompt].join('\n');
 
-  const response = await client.chat.completions.create({
-    model,
-    temperature,
-    max_tokens: maxOutputTokens,
-    ...(topP !== undefined ? { top_p: topP } : {}),
+  const response = await runBrainChatCompletion({
+    modelId: input.model,
+    temperature: input.temperature,
+    maxTokens: input.maxOutputTokens,
+    jsonMode: supportsBrainJsonMode(input.model),
     messages: [
-      { role: 'system', content: systemPrompt },
+      { role: 'system', content: input.systemPrompt },
       { role: 'user', content: userPrompt },
     ],
   });
 
-  const raw = response.choices[0]?.message?.content ?? '';
+  const raw = response.text ?? '';
   const parsedJson = parseJsonCandidate(raw);
   if (!parsedJson) {
     throw internalError('Model did not return valid JSON.', { raw });
@@ -195,7 +203,9 @@ async function runAiExtraction(
 
   const validated = responseSchema.safeParse(parsedJson);
   if (!validated.success) {
-    throw internalError('Invalid prompt extraction response shape.', { issues: validated.error.flatten() });
+    throw internalError('Invalid prompt extraction response shape.', {
+      issues: validated.error.flatten(),
+    });
   }
 
   return validated.data.params;
@@ -205,24 +215,29 @@ function createResponse(payload: PromptExtractResponse): Response {
   return NextResponse.json(payload);
 }
 
-export async function POST_handler(
-  req: NextRequest,
-  _ctx: ApiHandlerContext
-): Promise<Response> {
+export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const session = await auth();
   const hasAccess =
-    session?.user?.isElevated ||
-    session?.user?.permissions?.includes('ai_paths.manage');
+    session?.user?.isElevated || session?.user?.permissions?.includes('ai_paths.manage');
   if (!hasAccess) throw authError('Unauthorized.');
 
-  const parsed = await parseJsonBody(req, payloadSchema, { logPrefix: 'image-studio.prompt-extract.POST' });
+  const parsed = await parseJsonBody(req, payloadSchema, {
+    logPrefix: 'image-studio.prompt-extract.POST',
+  });
   if (!parsed.ok) return parsed.response;
 
-  const settingsRaw = await getSettingValue(IMAGE_STUDIO_SETTINGS_KEY);
+  const settingsRaw = (await getSettingValue(IMAGE_STUDIO_SETTINGS_KEY)) as
+    | string
+    | null
+    | undefined;
   const settings = parseImageStudioSettings(settingsRaw);
   const modeRequested = parsed.data.mode ?? settings.promptExtraction.mode;
   const applyAutofix = parsed.data.applyAutofix ?? settings.promptExtraction.applyAutofix;
-  const promptEngineSettingsRaw = await getSettingValue(PROMPT_ENGINE_SETTINGS_KEY);
+
+  const promptEngineSettingsRaw = (await getSettingValue(PROMPT_ENGINE_SETTINGS_KEY)) as
+    | string
+    | null
+    | undefined;
   const promptEngineSettings = parsePromptEngineSettings(promptEngineSettingsRaw);
   const programmatic = runProgrammaticAttempt(
     parsed.data.prompt,
@@ -273,59 +288,48 @@ export async function POST_handler(
     });
   }
 
-  const model = (
-    settings.promptExtraction.gpt.model ||
-    settings.targetAi.openai.model ||
-    (await getSettingValue('openai_model')) ||
-          'gpt-4o-mini'
-  ).trim();
+  const systemPrompt = [
+    'You extract a JSON params object from a prompt.',
+    'If the prompt includes a params object (JS-like or JSON), extract it and normalize to strict JSON.',
+    'If the prompt does not include a params object, infer a best-effort params object from explicit key/value settings only; otherwise return an empty object.',
+    'Return ONLY JSON matching: { "params": { ... } } with no extra text.',
+    'Preserve booleans, numbers, arrays, and nested objects when present.',
+  ].join('\n');
+  let model = '';
   let aiError: string | null;
-  if (!model) {
-    aiError = 'Prompt extraction model is missing. Set it in Image Studio settings.';
-  } else {
-    
-    const apiKey =
-      (await getSettingValue(IMAGE_STUDIO_OPENAI_API_KEY_KEY))?.trim() ||
-      (await getSettingValue('openai_api_key'))?.trim() ||
-      process.env['OPENAI_API_KEY'] ||
-      null;
-    if (apiKey) {
-      try {
-        const temperature = settings.promptExtraction.gpt.temperature ?? 0;
-        const top_p = settings.promptExtraction.gpt.top_p ?? undefined;
-        const max_output_tokens = settings.promptExtraction.gpt.max_output_tokens ?? 1200;
-
-        const aiParams = await runAiExtraction(
-          parsed.data.prompt,
-          model,
-          temperature,
-          top_p,
-          max_output_tokens,
-          apiKey
-        );
-        return createResponse({
-          params: aiParams,
-          source: 'gpt',
-          modeRequested,
-          fallbackUsed: false,
-          formattedPrompt: programmatic.formattedPrompt,
-          diagnostics: {
-            programmaticError: programmatic.ok ? null : programmatic.error,
-            aiError: null,
-            model,
-            autofixApplied: programmatic.autofixApplied,
-          },
-          validation: {
-            before: programmatic.validationBefore,
-            after: programmatic.validationAfter,
-          },
-        });
-      } catch (error) {
-        aiError = error instanceof Error ? error.message : 'AI extraction failed.';
-      }
-    } else {
-      aiError = 'OpenAI API key is missing. Set it in Image Studio settings.';
-    }
+  try {
+    const config = await resolveBrainExecutionConfigForCapability('image_studio.prompt_extract', {
+      defaultTemperature: settings.promptExtraction.gpt.temperature ?? 0,
+      defaultMaxTokens: settings.promptExtraction.gpt.max_output_tokens ?? 1200,
+      defaultSystemPrompt: systemPrompt,
+      runtimeKind: 'validation',
+    });
+    model = config.modelId;
+    const aiParams = await runAiExtraction(parsed.data.prompt, {
+      model,
+      temperature: config.temperature,
+      maxOutputTokens: config.maxTokens,
+      systemPrompt: config.systemPrompt,
+    });
+    return createResponse({
+      params: aiParams,
+      source: 'gpt',
+      modeRequested,
+      fallbackUsed: false,
+      formattedPrompt: programmatic.formattedPrompt,
+      diagnostics: {
+        programmaticError: programmatic.ok ? null : programmatic.error,
+        aiError: null,
+        model,
+        autofixApplied: programmatic.autofixApplied,
+      },
+      validation: {
+        before: programmatic.validationBefore,
+        after: programmatic.validationAfter,
+      },
+    });
+  } catch (error) {
+    aiError = error instanceof Error ? error.message : 'AI extraction failed.';
   }
 
   if (programmatic.ok && programmatic.params && programmatic.source) {

@@ -31,9 +31,7 @@ describe('case resolver workspace persist queue', () => {
       expectedRevision: 0,
       mutationId: 'mutation-1',
     });
-    expect(resolveCaseResolverWorkspacePersistQueueStatus(attemptResult.nextState)).toBe(
-      'saving',
-    );
+    expect(resolveCaseResolverWorkspacePersistQueueStatus(attemptResult.nextState)).toBe('saving');
 
     const dedupedResult = beginCaseResolverWorkspacePersistAttempt({
       state: enqueueCaseResolverWorkspacePersistMutation(initialState, {
@@ -46,9 +44,7 @@ describe('case resolver workspace persist queue', () => {
       fallbackMutationId: 'fallback-mutation',
     });
     expect(dedupedResult.attempt).toBeNull();
-    expect(resolveCaseResolverWorkspacePersistQueueStatus(dedupedResult.nextState)).toBe(
-      'idle',
-    );
+    expect(resolveCaseResolverWorkspacePersistQueueStatus(dedupedResult.nextState)).toBe('idle');
   });
 
   it('keeps queued mutation and updates expected revision after success', () => {
@@ -94,13 +90,11 @@ describe('case resolver workspace persist queue', () => {
 
     expect(conflictResult.exhausted).toBe(false);
     expect(conflictResult.retryCount).toBe(1);
-    expect(conflictResult.nextState.queuedSerializedWorkspace).toBe(
-      '{"workspaceRevision":4}',
-    );
+    expect(conflictResult.nextState.queuedSerializedWorkspace).toBe('{"workspaceRevision":4}');
     expect(conflictResult.nextState.queuedMutationId).toBe('mutation-4');
     expect(conflictResult.nextState.queuedExpectedRevision).toBe(3);
     expect(resolveCaseResolverWorkspacePersistQueueStatus(conflictResult.nextState)).toBe(
-      'retry_wait',
+      'retry_wait'
     );
   });
 

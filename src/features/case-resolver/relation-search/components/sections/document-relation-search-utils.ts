@@ -1,8 +1,4 @@
-import { 
-  File, 
-  FileText, 
-  ScanText, 
-} from 'lucide-react';
+import { File, FileText, ScanText } from 'lucide-react';
 import React from 'react';
 import { cn } from '@/shared/utils';
 import type { ResultHeight } from '../../context/DocumentRelationSearchContext';
@@ -18,7 +14,9 @@ export function FileTypeIcon({
     return React.createElement(FileText, { className: cn('size-3.5 text-blue-400/70', className) });
   }
   if (fileType === 'scanfile') {
-    return React.createElement(ScanText, { className: cn('size-3.5 text-amber-400/70', className) });
+    return React.createElement(ScanText, {
+      className: cn('size-3.5 text-amber-400/70', className),
+    });
   }
   return React.createElement(File, { className: cn('size-3.5 text-gray-500', className) });
 }

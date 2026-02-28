@@ -22,9 +22,7 @@ interface UseCurrencyFormReturn {
   handleSubmit: () => Promise<void>;
 }
 
-export function useCurrencyForm({
-  currency,
-}: UseCurrencyFormProps): UseCurrencyFormReturn {
+export function useCurrencyForm({ currency }: UseCurrencyFormProps): UseCurrencyFormReturn {
   const [form, setForm] = React.useState<CurrencyFormState>({
     code: '',
     name: '',
@@ -67,7 +65,9 @@ export function useCurrencyForm({
 
       toast('Currency saved.', { variant: 'success' });
     } catch (err) {
-      logClientError(err, { context: { source: 'CurrencyModal', action: 'saveCurrency', currencyId: currency?.id } });
+      logClientError(err, {
+        context: { source: 'CurrencyModal', action: 'saveCurrency', currencyId: currency?.id },
+      });
       toast('Failed to save currency.', { variant: 'error' });
     }
   };

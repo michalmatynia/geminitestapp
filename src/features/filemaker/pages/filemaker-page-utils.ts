@@ -38,9 +38,7 @@ export const resolveCountryId = (
   return byName?.id ?? '';
 };
 
-export const decodeRouteParam = (
-  value: string | string[] | undefined
-): string => {
+export const decodeRouteParam = (value: string | string[] | undefined): string => {
   const raw = Array.isArray(value) ? (value[0] ?? '') : (value ?? '');
   if (!raw) return '';
   try {

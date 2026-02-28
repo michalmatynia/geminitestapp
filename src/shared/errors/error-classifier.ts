@@ -1,10 +1,17 @@
 import { z } from 'zod';
 
-import { ERROR_CATEGORY, type ErrorCategory, type SuggestedAction } from '@/shared/contracts/observability';
+import {
+  ERROR_CATEGORY,
+  type ErrorCategory,
+  type SuggestedAction,
+} from '@/shared/contracts/observability';
 
 const ERROR_PATTERNS: [RegExp, ErrorCategory][] = [
   [/connection|network|timeout|refused|reset|fetch/i, ERROR_CATEGORY.EXTERNAL],
-  [/auth|login|permission|access|unauthorized|forbidden|jwt|session|not found/i, ERROR_CATEGORY.USER],
+  [
+    /auth|login|permission|access|unauthorized|forbidden|jwt|session|not found/i,
+    ERROR_CATEGORY.USER,
+  ],
   [/validation|invalid|missing|required|wrong format|bad request/i, ERROR_CATEGORY.VALIDATION],
   [/database|prisma|mongo|sql|query failed|migration|foreign key/i, ERROR_CATEGORY.DATABASE],
   [/ai|openai|ollama|llm|token limit|embedding|vision|prompt/i, ERROR_CATEGORY.AI],
@@ -19,7 +26,7 @@ export function classifyError(error: unknown): ErrorCategory {
   }
 
   const message = error instanceof Error ? error.message : String(error);
-  
+
   // Check common library error indicators
   if (message.includes('PrismaClient') || message.includes('MongoDB')) {
     return ERROR_CATEGORY.DATABASE;
@@ -30,7 +37,7 @@ export function classifyError(error: unknown): ErrorCategory {
       return category;
     }
   }
-  
+
   return ERROR_CATEGORY.SYSTEM;
 }
 
@@ -45,7 +52,8 @@ export function getSuggestedActions(category: ErrorCategory, error?: unknown): S
     case ERROR_CATEGORY.EXTERNAL:
       actions.push({
         label: 'Retry',
-        description: 'The external service might be temporarily unavailable. Please try again in a few moments.',
+        description:
+          'The external service might be temporarily unavailable. Please try again in a few moments.',
         actionType: 'RETRY',
       });
       break;
@@ -60,7 +68,8 @@ export function getSuggestedActions(category: ErrorCategory, error?: unknown): S
       } else {
         actions.push({
           label: 'Check Permissions',
-          description: 'You might not have the required permissions for this action. Contact your administrator.',
+          description:
+            'You might not have the required permissions for this action. Contact your administrator.',
           actionType: 'CHECK_CONFIG',
         });
       }
@@ -84,7 +93,8 @@ export function getSuggestedActions(category: ErrorCategory, error?: unknown): S
     case ERROR_CATEGORY.VALIDATION:
       actions.push({
         label: 'Check Input',
-        description: 'Please review the highlighted fields and ensure all required information is correctly provided.',
+        description:
+          'Please review the highlighted fields and ensure all required information is correctly provided.',
         actionType: 'REFRESH_PAGE',
       });
       break;
@@ -92,13 +102,15 @@ export function getSuggestedActions(category: ErrorCategory, error?: unknown): S
     case ERROR_CATEGORY.AI:
       actions.push({
         label: 'Adjust Prompt',
-        description: 'The AI model might be having trouble with the current input. Try rephrasing or simplifying your request.',
+        description:
+          'The AI model might be having trouble with the current input. Try rephrasing or simplifying your request.',
         actionType: 'CHECK_CONFIG',
       });
       if (message.toLowerCase().includes('token')) {
         actions.push({
           label: 'Reduce Content',
-          description: 'The request is too long for the AI model. Try reducing the amount of text sent.',
+          description:
+            'The request is too long for the AI model. Try reducing the amount of text sent.',
           actionType: 'CHECK_CONFIG',
         });
       }
@@ -107,7 +119,8 @@ export function getSuggestedActions(category: ErrorCategory, error?: unknown): S
     default:
       actions.push({
         label: 'Refresh Page',
-        description: 'A temporary system error occurred. Refreshing the page might resolve the issue.',
+        description:
+          'A temporary system error occurred. Refreshing the page might resolve the issue.',
         actionType: 'REFRESH_PAGE',
       });
       actions.push({

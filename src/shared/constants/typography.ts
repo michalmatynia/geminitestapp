@@ -23,8 +23,7 @@ export const APP_FONT_SETS: readonly AppFontSet[] = [
     id: 'system',
     name: 'System',
     description: 'Use system UI fonts (no downloads).',
-    heading:
-      'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+    heading: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
     body: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
   },
   {
@@ -82,4 +81,3 @@ export const getAppFontSet = (id: string | null | undefined): AppFontSet => {
   const found = APP_FONT_SETS.find((set: AppFontSet) => set.id === id);
   return found ?? APP_FONT_SETS[0]!;
 };
-

@@ -41,10 +41,7 @@ type ResolveOptions = {
  * Resolves any error type into a standardized ResolvedError structure.
  * Handles AppError, ZodError, and unknown errors.
  */
-export const resolveError = (
-  error: unknown,
-  options?: ResolveOptions
-): ResolvedError => {
+export const resolveError = (error: unknown, options?: ResolveOptions): ResolvedError => {
   const errorId = randomUUID();
   const category = classifyError(error);
   const suggestedActions = getSuggestedActions(category, error);
@@ -144,9 +141,10 @@ function isPrismaError(error: unknown): error is Error & { code?: string } {
   return (
     error instanceof Error &&
     (error.constructor.name.startsWith('Prisma') ||
-      'code' in error && typeof (error as { code?: unknown }).code === 'string' &&
-      ((error as { code: string }).code.startsWith('P') ||
-        (error as { code: string }).code.includes('ECONN')))
+      ('code' in error &&
+        typeof (error as { code?: unknown }).code === 'string' &&
+        ((error as { code: string }).code.startsWith('P') ||
+          (error as { code: string }).code.includes('ECONN'))))
   );
 }
 
@@ -171,7 +169,14 @@ function resolvePrismaError(
       critical: false,
       retryable: false,
       category: ERROR_CATEGORY.DATABASE,
-      suggestedActions: [{ label: 'Contact Support', description: 'This is a duplicate entry. Contact support if you believe this is an error.', actionType: 'CONTACT_SUPPORT' }],
+      suggestedActions: [
+        {
+          label: 'Contact Support',
+          description:
+            'This is a duplicate entry. Contact support if you believe this is an error.',
+          actionType: 'CONTACT_SUPPORT',
+        },
+      ],
       meta: { prismaCode: code },
       cause: error,
     };
@@ -188,7 +193,13 @@ function resolvePrismaError(
       critical: false,
       retryable: false,
       category: ERROR_CATEGORY.DATABASE,
-      suggestedActions: [{ label: 'Verify Input Data', description: 'The record was not found. Check the provided ID or data.', actionType: 'VERIFY_INPUT_DATA' }],
+      suggestedActions: [
+        {
+          label: 'Verify Input Data',
+          description: 'The record was not found. Check the provided ID or data.',
+          actionType: 'VERIFY_INPUT_DATA',
+        },
+      ],
       meta: { prismaCode: code },
       cause: error,
     };
@@ -205,7 +216,13 @@ function resolvePrismaError(
       critical: false,
       retryable: false,
       category: ERROR_CATEGORY.DATABASE,
-      suggestedActions: [{ label: 'Verify Input Data', description: 'A referenced record was not found. Check the provided IDs or data.', actionType: 'VERIFY_INPUT_DATA' }],
+      suggestedActions: [
+        {
+          label: 'Verify Input Data',
+          description: 'A referenced record was not found. Check the provided IDs or data.',
+          actionType: 'VERIFY_INPUT_DATA',
+        },
+      ],
       meta: { prismaCode: code },
       cause: error,
     };
@@ -224,8 +241,16 @@ function resolvePrismaError(
       retryAfterMs: 5000,
       category: ERROR_CATEGORY.DATABASE,
       suggestedActions: [
-        { label: 'Retry Later', description: 'The database connection failed. Please try again later.', actionType: 'RETRY' },
-        { label: 'Check DB Connection', description: 'Verify your database connection string and credentials.', actionType: 'CHECK_CONFIG' },
+        {
+          label: 'Retry Later',
+          description: 'The database connection failed. Please try again later.',
+          actionType: 'RETRY',
+        },
+        {
+          label: 'Check DB Connection',
+          description: 'Verify your database connection string and credentials.',
+          actionType: 'CHECK_CONFIG',
+        },
       ],
       meta: { prismaCode: code },
       cause: error,
@@ -244,8 +269,16 @@ function resolvePrismaError(
       retryable: true,
       category: ERROR_CATEGORY.DATABASE,
       suggestedActions: [
-        { label: 'Retry Later', description: 'The database operation timed out. Please try again later.', actionType: 'RETRY' },
-        { label: 'Check Server Load', description: 'The server may be overloaded. Check server logs and resource utilization.', actionType: 'CHECK_SERVER_LOAD' },
+        {
+          label: 'Retry Later',
+          description: 'The database operation timed out. Please try again later.',
+          actionType: 'RETRY',
+        },
+        {
+          label: 'Check Server Load',
+          description: 'The server may be overloaded. Check server logs and resource utilization.',
+          actionType: 'CHECK_SERVER_LOAD',
+        },
       ],
       meta: { prismaCode: code },
       cause: error,
@@ -263,8 +296,16 @@ function resolvePrismaError(
     retryable: false,
     category: ERROR_CATEGORY.DATABASE,
     suggestedActions: [
-      { label: 'Contact Support', description: 'An unexpected database error occurred. Please contact support.', actionType: 'CONTACT_SUPPORT' },
-      { label: 'Check Server Logs', description: 'Review server logs for more details about the database error.', actionType: 'CHECK_SERVER_LOGS' },
+      {
+        label: 'Contact Support',
+        description: 'An unexpected database error occurred. Please contact support.',
+        actionType: 'CONTACT_SUPPORT',
+      },
+      {
+        label: 'Check Server Logs',
+        description: 'Review server logs for more details about the database error.',
+        actionType: 'CHECK_SERVER_LOGS',
+      },
     ],
     ...(code ? { meta: { prismaCode: code } } : {}),
     cause: error,

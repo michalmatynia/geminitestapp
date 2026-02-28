@@ -1,15 +1,8 @@
 'use client';
 
-import {
-  Button,
-  DocumentationSection,
-  useToast,
-} from '@/shared/ui';
+import { Button, DocumentationSection, useToast } from '@/shared/ui';
 
-import {
-  VALIDATOR_FUNCTION_DOCS,
-  VALIDATOR_UI_DOCS,
-} from './validator-docs-catalog';
+import { VALIDATOR_FUNCTION_DOCS, VALIDATOR_UI_DOCS } from './validator-docs-catalog';
 import { buildFullValidatorDocumentationClipboardText } from './validator-documentation-clipboard';
 
 export function ValidatorDocumentationTab(): React.JSX.Element {
@@ -21,9 +14,7 @@ export function ValidatorDocumentationTab(): React.JSX.Element {
       return;
     }
     try {
-      await navigator.clipboard.writeText(
-        buildFullValidatorDocumentationClipboardText()
-      );
+      await navigator.clipboard.writeText(buildFullValidatorDocumentationClipboardText());
       toast('Full validator documentation copied (including JSON snippets).', {
         variant: 'success',
       });
@@ -80,7 +71,8 @@ export function ValidatorDocumentationTab(): React.JSX.Element {
                 <span className='font-semibold text-gray-300'>Errors:</span> {doc.errors.join(' ')}
               </p>
               <p className='mt-1 text-xs text-gray-400'>
-                <span className='font-semibold text-gray-300'>Edge cases:</span> {doc.edgeCases.join(' ')}
+                <span className='font-semibold text-gray-300'>Edge cases:</span>{' '}
+                {doc.edgeCases.join(' ')}
               </p>
               <p className='mt-1 font-mono text-[11px] text-emerald-200'>Example: {doc.example}</p>
             </div>

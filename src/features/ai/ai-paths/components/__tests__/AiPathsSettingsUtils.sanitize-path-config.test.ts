@@ -76,9 +76,7 @@ describe('sanitizePathConfig', () => {
 
     expect(sanitized.edges).toHaveLength(2);
     expect(sanitized.edges.find((edge: Edge) => edge.id === 'edge-dangling')).toBeUndefined();
-    expect(
-      sanitized.edges.find((edge: Edge) => edge.id === 'edge-rewire')
-    ).toMatchObject({
+    expect(sanitized.edges.find((edge: Edge) => edge.id === 'edge-rewire')).toMatchObject({
       id: 'edge-rewire',
       fromPort: 'value',
       toPort: 'value',

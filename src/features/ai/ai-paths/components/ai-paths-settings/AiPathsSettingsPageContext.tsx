@@ -2,10 +2,7 @@
 
 import React, { createContext, useContext } from 'react';
 import type { UseAiPathsSettingsStateReturn } from './types';
-import type {
-  AiPathsValidationConfig,
-  DataContractPreflightReport,
-} from '../../lib';
+import type { AiPathsValidationConfig, DataContractPreflightReport } from '../../lib';
 import type { StatusVariant } from '@/shared/ui';
 
 export type AiPathsSettingsPageContextValue = UseAiPathsSettingsStateReturn & {

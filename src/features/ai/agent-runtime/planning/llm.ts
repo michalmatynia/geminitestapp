@@ -29,9 +29,7 @@ import type {
   PlannerMeta,
 } from '@/shared/contracts/agent-runtime';
 
-import {
-  evaluatePlanWithLLM,
-} from './llm-evaluation';
+import { evaluatePlanWithLLM } from './llm-evaluation';
 import {
   dedupePlanStepsWithLLM,
   enrichPlanHierarchyWithLLM,
@@ -113,9 +111,7 @@ export async function buildPlanWithLLM({
     MAX_STEP_ATTEMPTS
   );
   const repetitionModel =
-    typeof guardModel === 'string' && guardModel.trim()
-      ? guardModel.trim()
-      : model;
+    typeof guardModel === 'string' && guardModel.trim() ? guardModel.trim() : model;
   const fallbackPlanTitles = buildPlan(prompt, maxSteps);
   const fallbackSteps = fallbackPlanTitles.map((title: string) => ({
     id: randomUUID(),
@@ -134,7 +130,7 @@ export async function buildPlanWithLLM({
   try {
     const systemPrompt =
       mode === 'branch'
-        ? 'You are an agent planner. Output only JSON with keys: decision, branchSteps, critique, alternatives, taskType, summary, constraints, successSignals. decision: {action, reason, toolName}. branchSteps: array of {title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}. critique: {assumptions[], risks[], unknowns[], safetyChecks[], questions[]}. alternatives: array of {title, rationale, steps:[{title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}]}. taskType is \'web_task\' or \'extract_info\'. summary is a 1-2 sentence plan summary. constraints is an array of key constraints. successSignals is a list of observable success indicators. Provide 1-4 alternate steps to recover from the failed step. tool is \'playwright\' or \'none\'.'
+        ? "You are an agent planner. Output only JSON with keys: decision, branchSteps, critique, alternatives, taskType, summary, constraints, successSignals. decision: {action, reason, toolName}. branchSteps: array of {title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}. critique: {assumptions[], risks[], unknowns[], safetyChecks[], questions[]}. alternatives: array of {title, rationale, steps:[{title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}]}. taskType is 'web_task' or 'extract_info'. summary is a 1-2 sentence plan summary. constraints is an array of key constraints. successSignals is a list of observable success indicators. Provide 1-4 alternate steps to recover from the failed step. tool is 'playwright' or 'none'."
         : `You are an agent planner. Output only JSON with keys: decision, goals, critique, alternatives, taskType, summary, constraints, successSignals. decision: {action, reason, toolName}. goals: array of {title, successCriteria, priority, dependsOn, subgoals:[{title, successCriteria, priority, dependsOn, steps:[{title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}]}]}. critique: {assumptions[], risks[], unknowns[], safetyChecks[], questions[]}. alternatives: array of {title, rationale, steps:[{title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}]}. taskType is 'web_task' or 'extract_info'. summary is a 1-2 sentence plan summary. constraints is an array of key constraints. successSignals is a list of observable success indicators. Use 2-4 goals, 1-3 subgoals each, and max ${maxSteps} total steps. tool is 'playwright' or 'none'. If you cannot provide goals, you may include steps: array of {title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}.`;
 
     const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
@@ -249,8 +245,7 @@ export async function buildPlanWithLLM({
       }
     }
     const hierarchySteps = hierarchy ? flattenPlanHierarchy(hierarchy) : [];
-    const stepSpecs =
-      hierarchySteps.length > 0 ? hierarchySteps : (parsed.steps ?? []);
+    const stepSpecs = hierarchySteps.length > 0 ? hierarchySteps : (parsed.steps ?? []);
     const normalizedStepSpecs = normalizePlanStepSpecs(stepSpecs);
     let steps = buildPlanStepsFromSpecs(
       normalizedStepSpecs,
@@ -295,11 +290,7 @@ export async function buildPlanWithLLM({
         maxSteps,
         maxStepAttempts,
       });
-      if (
-        evaluation &&
-        evaluation.score < 70 &&
-        evaluation.revisedSteps.length
-      ) {
+      if (evaluation && evaluation.score < 70 && evaluation.revisedSteps.length) {
         steps = evaluation.revisedSteps;
       }
       const optimization = await optimizePlanWithLLM({
@@ -405,7 +396,7 @@ export async function buildAdaptivePlanReview({
 }> {
   try {
     const systemPrompt =
-      'You are an agent replanner. Output only JSON with keys: shouldReplan, reason, goals, critique, alternatives, taskType, summary, constraints, successSignals. shouldReplan is boolean. taskType is \'web_task\' or \'extract_info\'. If shouldReplan is true, include goals (same schema as planner with priority/dependsOn) or steps: array of {title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}. critique: {assumptions[], risks[], unknowns[], safetyChecks[], questions[]}. alternatives: array of {title, rationale, steps:[{title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}]}. summary is a short plan summary. constraints and successSignals are arrays. The user input includes trigger and signals fields; use them to focus the replan.';
+      "You are an agent replanner. Output only JSON with keys: shouldReplan, reason, goals, critique, alternatives, taskType, summary, constraints, successSignals. shouldReplan is boolean. taskType is 'web_task' or 'extract_info'. If shouldReplan is true, include goals (same schema as planner with priority/dependsOn) or steps: array of {title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}. critique: {assumptions[], risks[], unknowns[], safetyChecks[], questions[]}. alternatives: array of {title, rationale, steps:[{title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}]}. summary is a short plan summary. constraints and successSignals are arrays. The user input includes trigger and signals fields; use them to focus the replan.";
     const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -487,19 +478,10 @@ export async function buildAdaptivePlanReview({
     const meta = normalizePlannerMeta(parsed);
     const hierarchy = normalizePlanHierarchy(parsed);
     const hierarchySteps = hierarchy ? flattenPlanHierarchy(hierarchy) : [];
-    const stepSpecs =
-      hierarchySteps.length > 0 ? hierarchySteps : (parsed.steps ?? []);
+    const stepSpecs = hierarchySteps.length > 0 ? hierarchySteps : (parsed.steps ?? []);
     const normalizedStepSpecs = normalizePlanStepSpecs(stepSpecs);
     let steps = shouldReplan
-      ? buildPlanStepsFromSpecs(
-        normalizedStepSpecs,
-        meta,
-        true,
-        maxStepAttempts
-      ).slice(
-        0,
-        maxSteps
-      )
+      ? buildPlanStepsFromSpecs(normalizedStepSpecs, meta, true, maxStepAttempts).slice(0, maxSteps)
       : [];
     if (shouldReplan && steps.length === 0) {
       const fallbackBranch = buildBranchStepsFromAlternatives(
@@ -609,7 +591,7 @@ export async function buildSelfCheckReview({
 }> {
   try {
     const systemPrompt =
-      'You are an agent self-checker. Output only JSON with keys: action, reason, notes, questions, evidence, confidence, missingInfo, blockers, hypotheses, verificationSteps, toolSwitch, abortSignals, finishSignals, goals, critique, alternatives, taskType, summary, constraints, successSignals. action is \'continue\', \'replan\', or \'wait_human\'. Provide 5-8 self-questions that test assumptions, evidence quality, tool choice, and completion criteria. evidence is a list of observable facts from the context. confidence is 0-100. If action is \'replan\', include goals (planner schema with priority/dependsOn) or steps: array of {title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}. toolSwitch is a short suggestion like \'use search\' or \'use playwright\'. abortSignals are conditions that should stop the run. finishSignals are conditions that indicate the goal is satisfied. summary is a short plan summary. constraints and successSignals are arrays.';
+      "You are an agent self-checker. Output only JSON with keys: action, reason, notes, questions, evidence, confidence, missingInfo, blockers, hypotheses, verificationSteps, toolSwitch, abortSignals, finishSignals, goals, critique, alternatives, taskType, summary, constraints, successSignals. action is 'continue', 'replan', or 'wait_human'. Provide 5-8 self-questions that test assumptions, evidence quality, tool choice, and completion criteria. evidence is a list of observable facts from the context. confidence is 0-100. If action is 'replan', include goals (planner schema with priority/dependsOn) or steps: array of {title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}. toolSwitch is a short suggestion like 'use search' or 'use playwright'. abortSignals are conditions that should stop the run. finishSignals are conditions that indicate the goal is satisfied. summary is a short plan summary. constraints and successSignals are arrays.";
     const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -706,26 +688,18 @@ export async function buildSelfCheckReview({
       throw new Error('Self-check returned invalid JSON.');
     }
     const action =
-      parsed.action === 'replan' || parsed.action === 'wait_human'
-        ? parsed.action
-        : 'continue';
+      parsed.action === 'replan' || parsed.action === 'wait_human' ? parsed.action : 'continue';
     const meta = normalizePlannerMeta(parsed);
     const hierarchy = normalizePlanHierarchy(parsed);
     const hierarchySteps = hierarchy ? flattenPlanHierarchy(hierarchy) : [];
-    const stepSpecs =
-      hierarchySteps.length > 0 ? hierarchySteps : (parsed.steps ?? []);
+    const stepSpecs = hierarchySteps.length > 0 ? hierarchySteps : (parsed.steps ?? []);
     const normalizedStepSpecs = normalizePlanStepSpecs(stepSpecs);
     let steps =
       action === 'replan'
-        ? buildPlanStepsFromSpecs(
-          normalizedStepSpecs,
-          meta,
-          true,
-          maxStepAttempts
-        ).slice(
-          0,
-          maxSteps
-        )
+        ? buildPlanStepsFromSpecs(normalizedStepSpecs, meta, true, maxStepAttempts).slice(
+            0,
+            maxSteps
+          )
         : [];
     if (action === 'replan' && steps.length === 0) {
       const fallbackBranch = buildBranchStepsFromAlternatives(
@@ -827,7 +801,7 @@ export async function buildResumePlanReview({
 }> {
   try {
     const systemPrompt =
-      'You are an agent resume planner. Output only JSON with keys: shouldReplan, reason, goals, critique, alternatives, taskType, summary, constraints, successSignals. shouldReplan is boolean. taskType is \'web_task\' or \'extract_info\'. If shouldReplan is true, include goals (same schema as planner with priority/dependsOn) or steps: array of {title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}. critique: {assumptions[], risks[], unknowns[], safetyChecks[], questions[]}. alternatives: array of {title, rationale, steps:[{title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}]}. summary is a short plan summary. constraints and successSignals are arrays.';
+      "You are an agent resume planner. Output only JSON with keys: shouldReplan, reason, goals, critique, alternatives, taskType, summary, constraints, successSignals. shouldReplan is boolean. taskType is 'web_task' or 'extract_info'. If shouldReplan is true, include goals (same schema as planner with priority/dependsOn) or steps: array of {title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}. critique: {assumptions[], risks[], unknowns[], safetyChecks[], questions[]}. alternatives: array of {title, rationale, steps:[{title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}]}. summary is a short plan summary. constraints and successSignals are arrays.";
     const response = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -908,19 +882,10 @@ export async function buildResumePlanReview({
     const meta = normalizePlannerMeta(parsed);
     const hierarchy = normalizePlanHierarchy(parsed);
     const hierarchySteps = hierarchy ? flattenPlanHierarchy(hierarchy) : [];
-    const stepSpecs =
-      hierarchySteps.length > 0 ? hierarchySteps : (parsed.steps ?? []);
+    const stepSpecs = hierarchySteps.length > 0 ? hierarchySteps : (parsed.steps ?? []);
     const normalizedStepSpecs = normalizePlanStepSpecs(stepSpecs);
     let steps = shouldReplan
-      ? buildPlanStepsFromSpecs(
-        normalizedStepSpecs,
-        meta,
-        true,
-        maxStepAttempts
-      ).slice(
-        0,
-        maxSteps
-      )
+      ? buildPlanStepsFromSpecs(normalizedStepSpecs, meta, true, maxStepAttempts).slice(0, maxSteps)
       : [];
     if (shouldReplan && steps.length === 0) {
       const fallbackBranch = buildBranchStepsFromAlternatives(
@@ -969,7 +934,6 @@ export async function buildResumePlanReview({
     return { shouldReplan: false, steps: [] };
   }
 }
-
 
 export {
   buildMidRunAdaptationWithLLM,

@@ -3,12 +3,7 @@
 import { Edit2, Plus, Trash2, CalendarDays } from 'lucide-react';
 import React from 'react';
 
-import {
-  Button,
-  FormSection,
-  Card,
-  EmptyState,
-} from '@/shared/ui';
+import { Button, FormSection, Card, EmptyState } from '@/shared/ui';
 import { useAdminFilemakerPageContext } from '../../context/AdminFilemakerPageContext';
 import { formatFilemakerAddress } from '../../settings';
 import type { FilemakerEvent } from '../../types';
@@ -21,13 +16,8 @@ const formatTimestamp = (value: string | null | undefined): string => {
 };
 
 export function FilemakerEventsSection(): React.JSX.Element {
-  const {
-    database,
-    openCreateEvent,
-    handleStartEditEvent,
-    handleDeleteEvent,
-    updateSetting,
-  } = useAdminFilemakerPageContext();
+  const { database, openCreateEvent, handleStartEditEvent, handleDeleteEvent, updateSetting } =
+    useAdminFilemakerPageContext();
 
   const { events } = database;
 
@@ -35,7 +25,7 @@ export function FilemakerEventsSection(): React.JSX.Element {
     <FormSection
       title='Events'
       className='space-y-4 p-4'
-      actions={(
+      actions={
         <Button
           type='button'
           onClick={openCreateEvent}
@@ -45,7 +35,7 @@ export function FilemakerEventsSection(): React.JSX.Element {
           <Plus className='mr-1.5 size-3.5' />
           Add Event
         </Button>
-      )}
+      }
     >
       <div className='space-y-2'>
         {events.length === 0 ? (
@@ -57,16 +47,19 @@ export function FilemakerEventsSection(): React.JSX.Element {
           />
         ) : (
           events.map((event: FilemakerEvent) => (
-            <Card key={event.id} variant='subtle-compact' padding='md' className='border-border/60 bg-card/35'>
+            <Card
+              key={event.id}
+              variant='subtle-compact'
+              padding='md'
+              className='border-border/60 bg-card/35'
+            >
               <div className='flex flex-wrap items-start justify-between gap-3'>
                 <div className='min-w-0 flex-1 space-y-1'>
                   <div className='flex items-center gap-2 text-sm font-semibold text-white'>
                     <CalendarDays className='size-3.5 text-amber-200' />
                     {event.eventName}
                   </div>
-                  <div className='text-[11px] text-gray-400'>
-                    {formatFilemakerAddress(event)}
-                  </div>
+                  <div className='text-[11px] text-gray-400'>{formatFilemakerAddress(event)}</div>
                   <div className='text-[10px] text-gray-600'>
                     Updated: {formatTimestamp(event.updatedAt ?? undefined)}
                   </div>

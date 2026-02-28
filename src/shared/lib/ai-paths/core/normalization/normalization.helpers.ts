@@ -29,10 +29,7 @@ export const mergeNodePortContracts = (
   existing?: PortContractRecord
 ): PortContractRecord | undefined => {
   const keys = Array.from(
-    new Set<string>([
-      ...Object.keys(defaults ?? {}),
-      ...Object.keys(existing ?? {}),
-    ])
+    new Set<string>([...Object.keys(defaults ?? {}), ...Object.keys(existing ?? {})])
   ).sort();
   if (keys.length === 0) return undefined;
 
@@ -76,12 +73,8 @@ export const isSameContractRecord = (
           return [
             key,
             {
-              ...(contract.required !== undefined
-                ? { required: contract.required }
-                : {}),
-              ...(contract.cardinality !== undefined
-                ? { cardinality: contract.cardinality }
-                : {}),
+              ...(contract.required !== undefined ? { required: contract.required } : {}),
+              ...(contract.cardinality !== undefined ? { cardinality: contract.cardinality } : {}),
             },
           ];
         })
@@ -91,7 +84,9 @@ export const isSameContractRecord = (
   return normalize(left) === normalize(right);
 };
 
-export const applyDefinitionContractsToNode = (node: AiNode): { node: AiNode; changed: boolean } => {
+export const applyDefinitionContractsToNode = (
+  node: AiNode
+): { node: AiNode; changed: boolean } => {
   const definition = resolveDefinitionForNode(node);
   if (!definition) return { node, changed: false };
 

@@ -1,12 +1,15 @@
 # Description Inference v3 Lite -> Longform Ecommerce (UI-only)
 
 ## Outcome
+
 - Keep your current strong factual inference behavior.
 - Expand outputs to full ecommerce descriptions (target 140-220 words).
 - Add an automatic quality gate so short/vague outputs regenerate.
 
 ## Exact variable map from your export
+
 These are the placeholders present in your current description path exports (`path_f9z4de`, `path_iabe2o`):
+
 - `{{title}}`
 - `{{images}}`
 - `{{bundle.content_en}}` (existing description)
@@ -14,6 +17,7 @@ These are the placeholders present in your current description path exports (`pa
 - `{{bundle}}` (full parsed payload bundle)
 
 ## Step 1: Duplicate path
+
 1. Open Admin -> AI Paths.
 2. Find `Description Inference v3 Lite`.
 3. Duplicate/Clone path.
@@ -21,6 +25,7 @@ These are the placeholders present in your current description path exports (`pa
 5. Keep the original path unchanged for A/B comparison.
 
 ## Step 2: Update main generation prompt (Draft node)
+
 Use this exact prompt in your existing prompt node (tailored to your exported fields):
 
 ```txt
@@ -50,6 +55,7 @@ Full product bundle JSON: {{bundle}}
 ```
 
 ## Step 3: Enforce structure in UI output template
+
 If your node supports response format instructions, append:
 
 ```txt
@@ -64,7 +70,9 @@ Return plain text only in this exact structure:
 This stabilizes length and makes outputs consistently scannable for ecommerce.
 
 ## Step 4: Expand input context mapping
+
 In the parser/mapper nodes before generation, ensure these paths are available to prompt context:
+
 - `product.name`
 - `product.brand`
 - `product.category`
@@ -80,18 +88,22 @@ In the parser/mapper nodes before generation, ensure these paths are available t
 If any field is missing in your schema, keep it in prompt anyway; missing variables should resolve blank and not break run.
 
 ## Step 5: Add style constraints (UI settings)
+
 In the generation node advanced instructions, add:
+
 - `Tone: confident, vivid, customer-focused`
 - `Reading level: plain, clear, non-technical unless product requires it`
 - `Forbidden behavior: hype-only claims, unverifiable superlatives, hallucinated specs`
 - `Repetition control: avoid repeating same adjective/phrase`
 
 ## Step 6: Add second-pass expansion node
+
 Add a second `model` node after draft output.
 
 Input: `{{result}}`
 
 Prompt:
+
 ```txt
 You are editing ecommerce copy.
 Expand and improve the draft below while preserving factual accuracy.
@@ -122,9 +134,11 @@ Full product bundle JSON: {{bundle}}
 Output key: `longDescriptionCandidate`
 
 ## Step 7: Add quality-check gate (UI-only path nodes)
+
 Create a QA branch after `longDescriptionCandidate`:
 
 1. `template` node (`qaPrompt`) with:
+
 ```txt
 Evaluate the candidate ecommerce description against rules. Return strict JSON only:
 {"pass": boolean, "reasons": string[], "wordCount": number}
@@ -158,6 +172,7 @@ Full product bundle JSON: {{bundle}}
 Keep retry cap at 1-2 loops to avoid runaway runs.
 
 ## Step 8: A/B test setup
+
 1. Keep both paths active:
    - Control: `Description Inference v3 Lite`
    - Variant: `Description Inference v3 Longform Ecommerce`
@@ -166,7 +181,9 @@ Keep retry cap at 1-2 loops to avoid runaway runs.
    - `docs/ai-paths/description-ab-scorecard.csv`
 
 ## Step 9: Tuning rules (quick iteration)
+
 Use this failure-to-fix map:
+
 - Too short -> raise minimum words in both prompts by +20 and keep 3 paragraphs.
 - Too generic -> add rule: `Use at least 3 concrete attributes from source data when available.`
 - Too repetitive -> add rule: `Do not reuse the same adjective more than once.`
@@ -175,6 +192,7 @@ Use this failure-to-fix map:
 Do only one change per iteration so you can attribute impact.
 
 ## Step 10: Gradual rollout
+
 1. Start with 1-2 product categories.
 2. Monitor:
    - Pass rate at QA gate
@@ -184,6 +202,7 @@ Do only one change per iteration so you can attribute impact.
 3. If stable for 3-5 days, expand to all categories and set longform path as default trigger.
 
 ## Definition of done checklist
+
 - [ ] Path duplicated and renamed.
 - [ ] Draft prompt updated (Step 2).
 - [ ] Structure enforcement added (Step 3).

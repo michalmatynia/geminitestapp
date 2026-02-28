@@ -4,9 +4,7 @@ import { describe, expect, it } from 'vitest';
 import type { ConnectorInfo } from '../canvas-board-connectors';
 import { CanvasConnectorTooltip } from '../canvas/CanvasConnectorTooltip';
 
-const buildConnectorInfo = (
-  patch: Partial<ConnectorInfo> = {}
-): ConnectorInfo => ({
+const buildConnectorInfo = (patch: Partial<ConnectorInfo> = {}): ConnectorInfo => ({
   direction: 'output',
   nodeId: 'node-1',
   port: 'result',

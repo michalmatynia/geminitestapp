@@ -18,12 +18,7 @@
     "entityType",
     "productId"
   ],
-  "outputs": [
-    "result",
-    "jobId",
-    "status",
-    "bundle"
-  ],
+  "outputs": ["result", "jobId", "status", "bundle"],
   "configFields": [
     {
       "path": "agent.personaId",
@@ -75,12 +70,7 @@
       "entityType",
       "productId"
     ],
-    "outputs": [
-      "result",
-      "jobId",
-      "status",
-      "bundle"
-    ],
+    "outputs": ["result", "jobId", "status", "bundle"],
     "data": {},
     "connections": {
       "incoming": [],

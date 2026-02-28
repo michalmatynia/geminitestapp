@@ -14,15 +14,7 @@ import { notFoundError } from '@/shared/errors/app-error';
 
 const fieldRuleSchema = z.object({
   id: z.string().trim().min(1).optional(),
-  appField: z.enum([
-    'stock',
-    'price',
-    'name_en',
-    'description_en',
-    'sku',
-    'ean',
-    'weight',
-  ]),
+  appField: z.enum(['stock', 'price', 'name_en', 'description_en', 'sku', 'ean', 'weight']),
   baseField: z.string().trim().min(1),
   direction: z.enum(['disabled', 'base_to_app', 'app_to_base']),
 });
@@ -33,7 +25,12 @@ export const updateProfileSchema = z.object({
   connectionId: z.string().trim().min(1).optional(),
   inventoryId: z.string().trim().min(1).optional(),
   catalogId: z.string().trim().nullable().optional(),
-  scheduleIntervalMinutes: z.number().int().min(1).max(24 * 60).optional(),
+  scheduleIntervalMinutes: z
+    .number()
+    .int()
+    .min(1)
+    .max(24 * 60)
+    .optional(),
   batchSize: z.number().int().min(1).max(500).optional(),
   conflictPolicy: z.enum(['skip']).optional(),
   fieldRules: z.array(fieldRuleSchema).optional(),
@@ -63,7 +60,8 @@ export async function PUT_handler(
   if (body.connectionId !== undefined) patch.connectionId = body.connectionId;
   if (body.inventoryId !== undefined) patch.inventoryId = body.inventoryId;
   if (body.catalogId !== undefined) patch.catalogId = body.catalogId;
-  if (body.scheduleIntervalMinutes !== undefined) patch.scheduleIntervalMinutes = body.scheduleIntervalMinutes;
+  if (body.scheduleIntervalMinutes !== undefined)
+    patch.scheduleIntervalMinutes = body.scheduleIntervalMinutes;
   if (body.batchSize !== undefined) patch.batchSize = body.batchSize;
   if (body.conflictPolicy !== undefined) patch.conflictPolicy = body.conflictPolicy;
   if (body.fieldRules !== undefined) {

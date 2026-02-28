@@ -3,7 +3,10 @@
 import React from 'react';
 import { Card } from '@/shared/ui';
 import { renderConnectorTooltip } from '../canvas-board-connectors';
-import { type CanvasBoardConnectorTooltipOverride, type SvgConnectorTooltipState } from '../CanvasBoard.utils';
+import {
+  type CanvasBoardConnectorTooltipOverride,
+  type SvgConnectorTooltipState,
+} from '../CanvasBoard.utils';
 
 export interface CanvasConnectorTooltipProps {
   tooltip: SvgConnectorTooltipState;

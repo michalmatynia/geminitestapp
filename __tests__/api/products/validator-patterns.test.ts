@@ -99,7 +99,7 @@ describe('validator-pattern routes', () => {
           replacementEnabled: true,
           replacementValue,
         }),
-      }),
+      })
     );
     const data = await response.json();
 
@@ -122,7 +122,7 @@ describe('validator-pattern routes', () => {
           launchOperator: 'regex',
           launchValue: '',
         }),
-      }),
+      })
     );
     const data = await response.json();
 
@@ -160,7 +160,7 @@ describe('validator-pattern routes', () => {
             replacementPaths: ['item.id', 'item._id'],
           }),
         }),
-      }),
+      })
     );
 
     expect(response.status).toBe(201);
@@ -181,7 +181,7 @@ describe('validator-pattern routes', () => {
           replacementValue: null,
           runtimeEnabled: false,
         }),
-      }),
+      })
     );
     const data = await response.json();
 
@@ -212,7 +212,7 @@ describe('validator-pattern routes', () => {
           replacementValue,
         }),
       }),
-      { params: Promise.resolve({ id: 'pattern-1' }) },
+      { params: Promise.resolve({ id: 'pattern-1' }) }
     );
     const data = await response.json();
 
@@ -233,7 +233,7 @@ describe('validator-pattern routes', () => {
           launchFlags: '',
         }),
       }),
-      { params: Promise.resolve({ id: 'pattern-1' }) },
+      { params: Promise.resolve({ id: 'pattern-1' }) }
     );
     const data = await response.json();
 
@@ -268,7 +268,7 @@ describe('validator-pattern routes', () => {
           }),
         }),
       }),
-      { params: Promise.resolve({ id: 'pattern-1' }) },
+      { params: Promise.resolve({ id: 'pattern-1' }) }
     );
 
     expect(response.status).toBe(200);
@@ -338,7 +338,7 @@ describe('validator-pattern routes', () => {
           replacementAutoApply: true,
         }),
       }),
-      { params: Promise.resolve({ id: 'pattern-1' }) },
+      { params: Promise.resolve({ id: 'pattern-1' }) }
     );
 
     expect(response.status).toBe(200);

@@ -42,17 +42,11 @@ describe('folder tree v2 settings', () => {
 
     expect(profileKeys).toHaveLength(folderTreeInstanceValues.length);
     expect(uiKeys).toHaveLength(folderTreeInstanceValues.length);
-    expect(payload.some((entry) => entry.key === FOLDER_TREE_V2_MIGRATION_MARKER_KEY)).toBe(
-      true
-    );
+    expect(payload.some((entry) => entry.key === FOLDER_TREE_V2_MIGRATION_MARKER_KEY)).toBe(true);
 
     folderTreeInstanceValues.forEach((instance) => {
-      expect(payload.some((entry) => entry.key === getFolderTreeProfileV2Key(instance))).toBe(
-        true
-      );
-      expect(payload.some((entry) => entry.key === getFolderTreeUiStateV2Key(instance))).toBe(
-        true
-      );
+      expect(payload.some((entry) => entry.key === getFolderTreeProfileV2Key(instance))).toBe(true);
+      expect(payload.some((entry) => entry.key === getFolderTreeUiStateV2Key(instance))).toBe(true);
     });
   });
 });

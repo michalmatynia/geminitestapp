@@ -7,7 +7,10 @@ import {
   ProductFilters,
   ProductSelectionActions,
 } from '@/features/products/components/list/ProductFilters';
-import { ProductListProvider, type ProductListContextType } from '@/features/products/context/ProductListContext';
+import {
+  ProductListProvider,
+  type ProductListContextType,
+} from '@/features/products/context/ProductListContext';
 import type { ProductListPreferences } from '@/shared/contracts/products';
 import { ToastProvider } from '@/shared/ui/toast';
 
@@ -47,7 +50,7 @@ vi.mock('@/features/products/hooks/useProductMetadataQueries', () => ({
 }));
 
 const queryClient = new QueryClient({
-  defaultOptions: { queries: { retry: false } }
+  defaultOptions: { queries: { retry: false } },
 });
 
 describe('ProductFilters Component', () => {
@@ -123,7 +126,7 @@ describe('ProductFilters Component', () => {
 
   it('renders all filter inputs', () => {
     renderWithProviders(mockContextValue);
-    
+
     expect(screen.getByPlaceholderText('Search by product name...')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Search by product ID...')).toBeInTheDocument();
     expect(screen.getByLabelText('ID Match')).toBeInTheDocument();
@@ -139,21 +142,27 @@ describe('ProductFilters Component', () => {
     renderWithProviders(mockContextValue);
     const input = screen.getByPlaceholderText('Search by product ID...');
     fireEvent.change(input, { target: { value: 'cma123' } });
-    await waitFor(() => expect(mockContextValue.setProductId).toHaveBeenCalledWith('cma123'), { timeout: 1000 });
+    await waitFor(() => expect(mockContextValue.setProductId).toHaveBeenCalledWith('cma123'), {
+      timeout: 1000,
+    });
   });
 
   it('calls setSearch when name input changes', async () => {
     renderWithProviders(mockContextValue);
     const input = screen.getByPlaceholderText('Search by product name...');
     fireEvent.change(input, { target: { value: 'laptop' } });
-    await waitFor(() => expect(mockContextValue.setSearch).toHaveBeenCalledWith('laptop'), { timeout: 1000 });
+    await waitFor(() => expect(mockContextValue.setSearch).toHaveBeenCalledWith('laptop'), {
+      timeout: 1000,
+    });
   });
 
   it('calls setSku when SKU input changes', async () => {
     renderWithProviders(mockContextValue);
     const input = screen.getByPlaceholderText('Search by SKU...');
     fireEvent.change(input, { target: { value: 'ABC' } });
-    await waitFor(() => expect(mockContextValue.setSku).toHaveBeenCalledWith('ABC'), { timeout: 1000 });
+    await waitFor(() => expect(mockContextValue.setSku).toHaveBeenCalledWith('ABC'), {
+      timeout: 1000,
+    });
   });
 
   it('shows active preset pill and clears it on close click', () => {
@@ -255,9 +264,7 @@ describe('ProductFilters Component', () => {
       </QueryClientProvider>
     );
 
-    const filterPresetsTrigger = screen
-      .getAllByText('Filter Presets')[0]
-      ?.closest('button');
+    const filterPresetsTrigger = screen.getAllByText('Filter Presets')[0]?.closest('button');
     if (!filterPresetsTrigger) {
       throw new Error('Expected Filter Presets trigger button');
     }

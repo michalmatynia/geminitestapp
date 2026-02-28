@@ -4,22 +4,22 @@ import {
   imageStudioRunRequestSchema,
   resolveExpectedOutputCount,
   type ImageStudioRunRequest,
-} from '@/features/ai/image-studio/server/run-executor';
+} from '@/shared/lib/ai/image-studio/server/run-executor';
 import {
   createImageStudioRun,
   getImageStudioRunById,
   updateImageStudioRun,
   type ImageStudioRunRecord,
-} from '@/features/ai/image-studio/server/run-repository';
-import { startImageStudioSequenceRun } from '@/features/ai/image-studio/server/sequence-runtime';
+} from '@/shared/lib/ai/image-studio/server/run-repository';
+import { startImageStudioSequenceRun } from '@/shared/lib/ai/image-studio/server/sequence-runtime';
 import {
   createImageStudioSlots,
   type ImageStudioSlotRecord,
-} from '@/features/ai/image-studio/server/slot-repository';
+} from '@/shared/lib/ai/image-studio/server/slot-repository';
 import {
   buildImageStudioSequenceSnapshot,
   resolveImageStudioSequenceActiveSteps,
-} from '@/features/ai/image-studio/utils/studio-settings';
+} from '@/shared/lib/ai/image-studio/studio-settings';
 import {
   enqueueImageStudioRunJob,
   startImageStudioRunQueue,
@@ -38,10 +38,7 @@ import {
   type ProductStudioSequenceReadiness,
   type ProductWithImages,
 } from '@/shared/contracts/products';
-import {
-  badRequestError,
-  operationFailedError,
-} from '@/shared/errors/app-error';
+import { badRequestError, operationFailedError } from '@/shared/errors/app-error';
 
 import {
   buildAuditSettingsContext,
@@ -53,9 +50,7 @@ import {
   sanitizeSkuSegment,
   trimString,
 } from './product-studio-service.helpers';
-import {
-  importSourceProductImageToStudio,
-} from './product-studio-service.io';
+import { importSourceProductImageToStudio } from './product-studio-service.io';
 import {
   toProductImageFileSource,
   type ProductImageFileSource,
@@ -64,9 +59,7 @@ import {
   buildGenerationPrompt,
   buildModelNativeSequencePrompt,
 } from './product-studio-service.prompts';
-import {
-  resolveProductAndStudioTarget,
-} from './product-studio-service.resolution';
+import { resolveProductAndStudioTarget } from './product-studio-service.resolution';
 import {
   buildProductStudioSequenceStepPlan,
   buildSequenceStepPlanWarnings,
@@ -175,21 +168,17 @@ const upsertProductStudioSourceSlot = async (params: {
   const sourceSlot = created[0] ?? null;
 
   if (!sourceSlot) {
-    throw operationFailedError(
-      'Failed to create or update the Studio source card.',
-    );
+    throw operationFailedError('Failed to create or update the Studio source card.');
   }
 
   const config = await setProductStudioSourceSlot(
     params.product.id,
     params.imageSlotIndex,
-    sourceSlot.id,
+    sourceSlot.id
   );
   const sourceSlotUpsertMs = Date.now() - sourceSlotUpsertStartedAt;
   const sourceImageSize =
-    imported.width && imported.height
-      ? { width: imported.width, height: imported.height }
-      : null;
+    imported.width && imported.height ? { width: imported.width, height: imported.height } : null;
 
   return {
     sourceSlot,
@@ -208,7 +197,7 @@ export async function linkProductImageToStudio(params: {
 }): Promise<ProductStudioLinkResult> {
   const resolved = await resolveProductAndStudioTarget(params);
   const sourceImage = toProductImageFileSource(
-    resolved.product.images[resolved.imageSlotIndex]?.imageFile,
+    resolved.product.images[resolved.imageSlotIndex]?.imageFile
   );
   const skuFolderSegment =
     sanitizeSkuSegment(trimString(resolved.product.sku)) ??
@@ -216,9 +205,7 @@ export async function linkProductImageToStudio(params: {
     resolved.product.id;
 
   if (!sourceImage) {
-    throw badRequestError(
-      'Selected product image slot has no uploaded source image.',
-    );
+    throw badRequestError('Selected product image slot has no uploaded source image.');
   }
 
   const sourceSlotResult = await upsertProductStudioSourceSlot({
@@ -260,10 +247,10 @@ export async function sendProductImageToStudio(params: {
     modelId,
   } = await resolveStudioSettingsBundle(resolved.projectId);
   const requestedSequenceMode = normalizeProductStudioSequenceGenerationMode(
-    params.sequenceGenerationMode ?? sequenceGenerationMode,
+    params.sequenceGenerationMode ?? sequenceGenerationMode
   );
   const sourceImage = toProductImageFileSource(
-    resolved.product.images[resolved.imageSlotIndex]?.imageFile,
+    resolved.product.images[resolved.imageSlotIndex]?.imageFile
   );
   const skuFolderSegment =
     sanitizeSkuSegment(trimString(resolved.product.sku)) ??
@@ -271,9 +258,7 @@ export async function sendProductImageToStudio(params: {
     resolved.product.id;
 
   if (!sourceImage) {
-    throw badRequestError(
-      'Selected product image slot has no uploaded source image.',
-    );
+    throw badRequestError('Selected product image slot has no uploaded source image.');
   }
 
   const generationPrompt = buildGenerationPrompt(resolved.product);
@@ -284,17 +269,12 @@ export async function sendProductImageToStudio(params: {
     modelId,
   });
   const resolvedActiveSteps = resolveImageStudioSequenceActiveSteps(
-    parsedStudioSettings.projectSequencing,
+    parsedStudioSettings.projectSequencing
   ).filter((step) => step.enabled);
   const sequenceStepPlan = buildProductStudioSequenceStepPlan(resolvedActiveSteps);
-  const warnings = [
-    ...routeDecision.warnings,
-    ...buildSequenceStepPlanWarnings(sequenceStepPlan),
-  ];
+  const warnings = [...routeDecision.warnings, ...buildSequenceStepPlanWarnings(sequenceStepPlan)];
   routeDecisionMs = Date.now() - routeDecisionStartMs;
-  const sequenceSnapshot = buildImageStudioSequenceSnapshot(
-    parsedStudioSettings,
-  );
+  const sequenceSnapshot = buildImageStudioSequenceSnapshot(parsedStudioSettings);
   const auditSettingsContext = buildAuditSettingsContext(sequencingDiagnostics);
   const sequenceReadiness = resolveSequenceReadiness({
     sequencing,
@@ -304,8 +284,7 @@ export async function sendProductImageToStudio(params: {
   });
   if (!sequenceReadiness.ready) {
     const readinessMessage =
-      sequenceReadiness.message ??
-      'Image Studio project sequencing is not ready.';
+      sequenceReadiness.message ?? 'Image Studio project sequencing is not ready.';
     const fallbackReason = warnings[0] ?? null;
     const runKind =
       isSequenceExecutionRoute(routeDecision.executionRoute) ||
@@ -526,18 +505,16 @@ export async function sendProductImageToStudio(params: {
   const effectivePrompt =
     routeDecision.executionRoute === 'ai_model_full_sequence'
       ? buildModelNativeSequencePrompt({
-        basePrompt: generationPrompt,
-        sequenceStepTypes,
-      })
+          basePrompt: generationPrompt,
+          sequenceStepTypes,
+        })
       : generationPrompt;
   const sourceSlotFilepath =
-    trimString(sourceSlot.imageFile?.filepath) ??
-    trimString(sourceSlot.imageUrl);
+    trimString(sourceSlot.imageFile?.filepath) ?? trimString(sourceSlot.imageUrl);
   if (!sourceSlotFilepath) {
-    throw operationFailedError(
-      'Studio source card is missing an image filepath.',
-      { sourceSlotId: sourceSlot.id },
-    );
+    throw operationFailedError('Studio source card is missing an image filepath.', {
+      sourceSlotId: sourceSlot.id,
+    });
   }
 
   const runRequestCandidate: ImageStudioRunRequest = {
@@ -550,8 +527,7 @@ export async function sendProductImageToStudio(params: {
     studioSettings,
   };
 
-  const parsedRequest =
-    imageStudioRunRequestSchema.safeParse(runRequestCandidate);
+  const parsedRequest = imageStudioRunRequestSchema.safeParse(runRequestCandidate);
   if (!parsedRequest.success) {
     throw badRequestError('Invalid Image Studio run request payload.', {
       errors: parsedRequest.error.format(),
@@ -617,13 +593,10 @@ export async function sendProductImageToStudio(params: {
       errorMessage,
     });
 
-    throw operationFailedError(
-      'Failed to dispatch Image Studio run from Product Studio.',
-      {
-        runId: run.id,
-        reason: errorMessage,
-      },
-    );
+    throw operationFailedError('Failed to dispatch Image Studio run from Product Studio.', {
+      runId: run.id,
+      reason: errorMessage,
+    });
   }
 
   const latestRun =

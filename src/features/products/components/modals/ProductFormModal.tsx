@@ -35,8 +35,7 @@ function ProductFormModalInner({
     product,
     draft,
     hasUnsavedChanges,
-  } =
-    useProductFormContext();
+  } = useProductFormContext();
   const formInstanceKey = product?.id?.trim() || draft?.id?.trim() || 'product-create';
 
   const getEntityJson = (): Record<string, unknown> => {
@@ -63,7 +62,9 @@ function ProductFormModalInner({
       open={isOpen}
       onClose={onClose}
       title={title}
-      onSave={() => { void handleSubmit(); }}
+      onSave={() => {
+        void handleSubmit();
+      }}
       isSaving={uploading}
       hasUnsavedChanges={hasUnsavedChanges}
       saveText={submitButtonText}
@@ -78,11 +79,7 @@ function ProductFormModalInner({
         <ProductForm
           key={formInstanceKey}
           submitButtonText={submitButtonText}
-          {...(
-            validationInstanceScopeOverride
-              ? { validationInstanceScopeOverride }
-              : {}
-          )}
+          {...(validationInstanceScopeOverride ? { validationInstanceScopeOverride } : {})}
         />
       )}
     </FormModal>

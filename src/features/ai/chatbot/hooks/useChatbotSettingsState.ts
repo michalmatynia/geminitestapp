@@ -3,14 +3,11 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 
 import { useAgentCreatorSettings } from '@/features/ai/agentcreator';
-import { useBrainModelOptions } from '@/features/ai/brain/hooks/useBrainModelOptions';
+import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
 import type { ChatbotSettingsDto as ChatbotSettingsPayload } from '@/shared/contracts/chatbot';
 import { useToast } from '@/shared/ui';
 
-import {
-  CHATBOT_SETTINGS_KEY,
-  DEFAULT_CHATBOT_SETTINGS,
-} from '../utils/constants';
+import { CHATBOT_SETTINGS_KEY, DEFAULT_CHATBOT_SETTINGS } from '@/features/ai/chatbot/utils/constants';
 import { useChatbotSettings } from './useChatbotQueries';
 import { useSaveChatbotSettings } from './useChatbotMutations';
 
@@ -34,9 +31,7 @@ export interface UseChatbotSettingsStateReturn {
   localContext: string;
   setLocalContext: React.Dispatch<React.SetStateAction<string>>;
   localContextMode: 'override' | 'append';
-  setLocalContextMode: React.Dispatch<
-    React.SetStateAction<'override' | 'append'>
-  >;
+  setLocalContextMode: React.Dispatch<React.SetStateAction<'override' | 'append'>>;
   settingsDirty: boolean;
   setSettingsDirty: React.Dispatch<React.SetStateAction<boolean>>;
   settingsSaving: boolean;
@@ -106,22 +101,17 @@ export function useChatbotSettingsState(): UseChatbotSettingsStateReturn {
   const [useGlobalContext, setUseGlobalContext] = useState<boolean>(false);
   const [useLocalContext, setUseLocalContext] = useState<boolean>(false);
   const [searchProvider, setSearchProvider] = useState<string>('serpapi');
-  const [playwrightPersonaId, setPlaywrightPersonaId] = useState<string | null>(
-    null,
-  );
+  const [playwrightPersonaId, setPlaywrightPersonaId] = useState<string | null>(null);
 
   // Context settings
   const [globalContext, setGlobalContext] = useState<string>('');
   const [localContext, setLocalContext] = useState<string>('');
-  const [localContextMode, setLocalContextMode] = useState<
-    'override' | 'append'
-  >('override');
+  const [localContextMode, setLocalContextMode] = useState<'override' | 'append'>('override');
 
   // Internal state
   const [settingsDirty, setSettingsDirty] = useState<boolean>(false);
   const [settingsSaving, setSettingsSaving] = useState<boolean>(false);
-  const [settingsSnapshot, setSettingsSnapshot] =
-    useState<ChatbotSettingsPayload | null>(null);
+  const [settingsSnapshot, setSettingsSnapshot] = useState<ChatbotSettingsPayload | null>(null);
   const settingsLoadedRef = useRef<boolean>(false);
 
   // External settings & data
@@ -249,14 +239,13 @@ export function useChatbotSettingsState(): UseChatbotSettingsStateReturn {
       agentLoopGuardThreshold,
       agentLoopBackoffBaseMs,
       agentLoopBackoffMaxMs,
-    ],
+    ]
   );
 
   const loadChatbotSettings = useCallback(async (): Promise<void> => {
     if (!settingsQuery.data?.settings?.settings) return;
 
-    const stored = settingsQuery.data.settings
-      .settings as Partial<ChatbotSettingsPayload>;
+    const stored = settingsQuery.data.settings.settings as Partial<ChatbotSettingsPayload>;
     const resolved: ChatbotSettingsPayload = {
       ...DEFAULT_CHATBOT_SETTINGS,
       ...stored,
@@ -266,18 +255,12 @@ export function useChatbotSettingsState(): UseChatbotSettingsStateReturn {
     setWebSearchEnabled(Boolean(resolved.webSearchEnabled));
     setUseGlobalContext(Boolean(resolved.useGlobalContext));
     setUseLocalContext(Boolean(resolved.useLocalContext));
-    setLocalContextMode(
-      (resolved.localContextMode as 'append' | 'override') ?? 'override',
-    );
+    setLocalContextMode((resolved.localContextMode as 'append' | 'override') ?? 'override');
     setSearchProvider(resolved.searchProvider ?? 'serpapi');
     setPlaywrightPersonaId(resolved.playwrightPersonaId ?? null);
 
     setAgentModeEnabled(Boolean(resolved.agentModeEnabled));
-    setAgentBrowser(
-      resolved.agentBrowser ??
-        DEFAULT_CHATBOT_SETTINGS.agentBrowser ??
-        'chromium',
-    );
+    setAgentBrowser(resolved.agentBrowser ?? DEFAULT_CHATBOT_SETTINGS.agentBrowser ?? 'chromium');
     setAgentRunHeadless(Boolean(resolved.runHeadless));
     setAgentIgnoreRobotsTxt(Boolean(resolved.ignoreRobotsTxt));
     setAgentRequireHumanApproval(Boolean(resolved.requireHumanApproval));
@@ -355,8 +338,7 @@ export function useChatbotSettingsState(): UseChatbotSettingsStateReturn {
       setSettingsSnapshot(currentSettings);
       toast('Chatbot settings saved.', { variant: 'success' });
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : 'Failed to save settings.';
+      const message = error instanceof Error ? error.message : 'Failed to save settings.';
       toast(message, { variant: 'error' });
     }
   };

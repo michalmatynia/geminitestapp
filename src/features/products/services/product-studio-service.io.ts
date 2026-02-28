@@ -1,13 +1,20 @@
 import fs from 'fs/promises';
 import path from 'path';
 import sharp from 'sharp';
-import { getDiskPathFromPublicPath, uploadFile } from '@/shared/lib/files/services/image-file-service';
+import {
+  getDiskPathFromPublicPath,
+  uploadFile,
+} from '@/shared/lib/files/services/image-file-service';
 import { badRequestError, operationFailedError } from '@/shared/errors/app-error';
-import { DATA_URL_REGEX, MIME_BY_EXTENSION, type ProductImageFileSource } from './product-studio-service.images';
+import {
+  DATA_URL_REGEX,
+  MIME_BY_EXTENSION,
+  type ProductImageFileSource,
+} from './product-studio-service.images';
 import { trimString } from './product-studio-service.helpers';
 
 export const parseDataUrlToBuffer = (
-  value: string,
+  value: string
 ): { buffer: Buffer; mime: string | null } | null => {
   const match = value.match(DATA_URL_REGEX);
   if (!match) return null;
@@ -22,7 +29,7 @@ export const parseDataUrlToBuffer = (
 };
 
 export const resolveBufferFromImagePath = async (
-  filepath: string,
+  filepath: string
 ): Promise<{ buffer: Buffer; mime: string | null }> => {
   const normalized = filepath.trim();
   if (!normalized) {
@@ -73,8 +80,7 @@ export const resolveMimeType = (params: {
   if (fallback) return fallback;
 
   const dotIndex = params.filename.lastIndexOf('.');
-  const extension =
-    dotIndex >= 0 ? params.filename.slice(dotIndex).toLowerCase() : '';
+  const extension = dotIndex >= 0 ? params.filename.slice(dotIndex).toLowerCase() : '';
   return MIME_BY_EXTENSION[extension] ?? 'application/octet-stream';
 };
 
@@ -84,7 +90,7 @@ export const clampUpscaleScale = (value: number): number =>
 export const appendFilenameSuffix = (
   filename: string,
   suffix: string,
-  extOverride?: string,
+  extOverride?: string
 ): string => {
   const parsed = path.parse(filename);
   const extension = extOverride ?? (parsed.ext || '');
@@ -94,7 +100,7 @@ export const appendFilenameSuffix = (
 
 export const buildUpscaledImage = async (
   sourceBuffer: Buffer,
-  scaleInput: number,
+  scaleInput: number
 ): Promise<{
   buffer: Buffer;
   width: number;
@@ -105,9 +111,7 @@ export const buildUpscaledImage = async (
   const width = metadata.width ?? 0;
   const height = metadata.height ?? 0;
   if (!(width > 0 && height > 0)) {
-    throw badRequestError(
-      'Accepted variant has invalid dimensions for upscaling.',
-    );
+    throw badRequestError('Accepted variant has invalid dimensions for upscaling.');
   }
 
   const scale = clampUpscaleScale(scaleInput);
@@ -154,8 +158,7 @@ export const importSourceProductImageToStudio = async (params: {
   }
 
   const sourceFilename =
-    trimString(sourceImage.filename) ??
-    `product-image-${params.imageSlotIndex + 1}.png`;
+    trimString(sourceImage.filename) ?? `product-image-${params.imageSlotIndex + 1}.png`;
   const sourceMime = trimString(sourceImage.mimetype);
   const { buffer, mime } = await resolveBufferFromImagePath(sourcePath);
   const mimeType = resolveMimeType({
@@ -170,10 +173,7 @@ export const importSourceProductImageToStudio = async (params: {
 
   if (params.rotateBeforeSendDeg === 90) {
     uploadBuffer = await sharp(uploadBuffer).rotate(90).toBuffer();
-    uploadFilename = appendFilenameSuffix(
-      uploadFilename,
-      '-rot90',
-    );
+    uploadFilename = appendFilenameSuffix(uploadFilename, '-rot90');
   }
 
   const uploadMetadata = await sharp(uploadBuffer).metadata();

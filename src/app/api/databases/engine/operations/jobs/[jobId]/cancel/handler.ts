@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { auth } from '@/features/auth/server';
-import { assertDatabaseEngineOperationEnabled } from '@/features/database/services/database-engine-operation-guards';
+import { assertDatabaseEngineOperationEnabled } from '@/shared/lib/db/services/database-engine-operation-guards';
 import { cancelProductAiJob, getProductAiJob } from '@/features/jobs/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { authError, badRequestError, notFoundError } from '@/shared/errors/app-error';
@@ -21,8 +21,7 @@ export async function POST_handler(
 ): Promise<Response> {
   const session = await auth();
   const hasAccess =
-    session?.user?.isElevated ||
-    session?.user?.permissions?.includes('settings.manage');
+    session?.user?.isElevated || session?.user?.permissions?.includes('settings.manage');
   if (!hasAccess) {
     throw authError('Unauthorized.');
   }

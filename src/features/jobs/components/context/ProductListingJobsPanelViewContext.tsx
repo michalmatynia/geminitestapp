@@ -8,9 +8,8 @@ type ProductListingJobsPanelViewContextValue = {
   showBackToProducts: boolean;
 };
 
-const ProductListingJobsPanelViewContext = React.createContext<ProductListingJobsPanelViewContextValue | null>(
-  null
-);
+const ProductListingJobsPanelViewContext =
+  React.createContext<ProductListingJobsPanelViewContextValue | null>(null);
 
 type ProductListingJobsPanelViewProviderProps = {
   value: ProductListingJobsPanelViewContextValue;

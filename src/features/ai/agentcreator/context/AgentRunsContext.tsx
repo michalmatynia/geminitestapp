@@ -3,12 +3,13 @@
 import React, { createContext, useContext, useState, useMemo } from 'react';
 
 import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
-import type {
-  AgentAuditLog,
-  AgentBrowserLog,
-  AgentSnapshot,
-} from '@/shared/contracts/chatbot';
-import { useAgentAudits, useAgentLogs, useAgentRuns, useAgentSnapshots } from '../hooks/useAgentRunsQueries';
+import type { AgentAuditLog, AgentBrowserLog, AgentSnapshot } from '@/shared/contracts/chatbot';
+import {
+  useAgentAudits,
+  useAgentLogs,
+  useAgentRuns,
+  useAgentSnapshots,
+} from '../hooks/useAgentRunsQueries';
 
 export interface AgentRunsContextValue {
   // Runs List
@@ -16,12 +17,12 @@ export interface AgentRunsContextValue {
   isAgentRunsLoading: boolean;
   isAgentRunsFetching: boolean;
   refetchAgentRuns: () => void;
-  
+
   // Selection & Details
   selectedAgentRunId: string | null;
   setSelectedAgentRunId: (id: string | null) => void;
   selectedAgentRun: AiPathRunRecord | null;
-  
+
   // Run Data
   agentSnapshots: AgentSnapshot[];
   agentBrowserLogs: AgentBrowserLog[];
@@ -89,11 +90,7 @@ export function AgentRunsProvider({ children }: { children: React.ReactNode }): 
     ]
   );
 
-  return (
-    <AgentRunsContext.Provider value={contextValue}>
-      {children}
-    </AgentRunsContext.Provider>
-  );
+  return <AgentRunsContext.Provider value={contextValue}>{children}</AgentRunsContext.Provider>;
 }
 
 export function useAgentRunsContext(): AgentRunsContextValue {

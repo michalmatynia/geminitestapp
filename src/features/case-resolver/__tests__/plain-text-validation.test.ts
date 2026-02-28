@@ -57,4 +57,3 @@ describe('case resolver plain text validation runtime', () => {
     expect(output).toBe(input);
   });
 });
-

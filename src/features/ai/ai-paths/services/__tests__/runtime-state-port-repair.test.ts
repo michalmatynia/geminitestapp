@@ -95,9 +95,9 @@ describe('repairRuntimeStatePorts', () => {
       runNodes: nodes,
     });
 
-    expect((result.runtimeState.outputs?.['node-regex-params'] as Record<string, unknown>)['value']).toBe(
-      'already-present',
-    );
+    expect(
+      (result.runtimeState.outputs?.['node-regex-params'] as Record<string, unknown>)['value']
+    ).toBe('already-present');
     expect(
       (result.runtimeState.nodeOutputs?.['node-regex-params'] as Record<string, unknown>)['value']
     ).toBe('already-present');

@@ -20,9 +20,7 @@ export function AgentCreatorSettingsSection(): React.ReactElement {
   } = useAgentCreatorSettings();
 
   return (
-
     <FormSection title='Agent Settings' variant='subtle' className='p-4'>
-
       <div className='mt-2'>
         <ToggleRow
           label='Enable Agent Mode'
@@ -34,55 +32,39 @@ export function AgentCreatorSettingsSection(): React.ReactElement {
       </div>
 
       {agentModeEnabled && (
-
         <div className='space-y-4 mt-4'>
-
           <div className='grid gap-4 md:grid-cols-2'>
-
             <FormField label='Browser'>
-
-              <SelectSimple size='sm'
-
+              <SelectSimple
+                size='sm'
                 value={agentBrowser}
-
                 onValueChange={setAgentBrowser}
-
                 options={[
-
                   { value: 'chromium', label: 'Chromium' },
 
                   { value: 'firefox', label: 'Firefox' },
 
                   { value: 'webkit', label: 'WebKit' },
-
                 ]}
-
               />
-
             </FormField>
 
             <FormField label='Max Steps' id='agent-max-steps'>
-
               <Input
-
                 id='agent-max-steps'
-
                 type='number'
-
                 value={agentMaxSteps}
-
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAgentMaxSteps(Number(e.target.value))}
-
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setAgentMaxSteps(Number(e.target.value))
+                }
               />
-
             </FormField>
-
           </div>
 
           <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-3'>
             <ToggleRow
               label='Run Headless'
-              description='Don&apos;t show browser window'
+              description="Don't show browser window"
               checked={agentRunHeadless ?? false}
               onCheckedChange={setAgentRunHeadless}
             />
@@ -99,15 +81,8 @@ export function AgentCreatorSettingsSection(): React.ReactElement {
               onCheckedChange={setAgentRequireHumanApproval}
             />
           </div>
-
         </div>
-
       )}
-
     </FormSection>
-
   );
-
 }
-
-  

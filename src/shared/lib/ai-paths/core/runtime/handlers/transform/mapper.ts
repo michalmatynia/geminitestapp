@@ -1,4 +1,8 @@
-import type { NodeHandler, NodeHandlerContext, RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
+import type {
+  NodeHandler,
+  NodeHandlerContext,
+  RuntimePortValues,
+} from '@/shared/contracts/ai-paths-runtime';
 import { coerceInput, getValueAtMappingPath } from '../../../utils';
 import {
   normalizeJsonIntegrityPolicy,
@@ -21,21 +25,11 @@ export const handleMapper: NodeHandler = ({
       mappings: {},
       jsonIntegrityPolicy: 'repair',
     };
-    const jsonIntegrityPolicy = normalizeJsonIntegrityPolicy(
-      mapperConfig.jsonIntegrityPolicy
-    );
-    const jsonIntegrityDiagnostics: Array<
-      JsonIntegrityDiagnostic & { port: string }
-    > = [];
-    const normalizeMapperInputValue = (
-      port: string,
-      value: unknown,
-    ): unknown => {
+    const jsonIntegrityPolicy = normalizeJsonIntegrityPolicy(mapperConfig.jsonIntegrityPolicy);
+    const jsonIntegrityDiagnostics: Array<JsonIntegrityDiagnostic & { port: string }> = [];
+    const normalizeMapperInputValue = (port: string, value: unknown): unknown => {
       const normalized = normalizeJsonLikeValue(value, jsonIntegrityPolicy);
-      if (
-        normalized.state === 'repaired' ||
-        normalized.state === 'unparseable'
-      ) {
+      if (normalized.state === 'repaired' || normalized.state === 'unparseable') {
         jsonIntegrityDiagnostics.push({
           ...normalized.diagnostic,
           port,
@@ -51,10 +45,7 @@ export const handleMapper: NodeHandler = ({
       value: normalizeMapperInputValue('value', coerceInput(nodeInputs['value'])),
     };
     const contextValue =
-      sources['context'] ??
-      sources['result'] ??
-      sources['bundle'] ??
-      sources['value'];
+      sources['context'] ?? sources['result'] ?? sources['bundle'] ?? sources['value'];
     if (contextValue === undefined) return {};
 
     const sourcePathPattern = /^(context|result|bundle|value)(?:\.|\[|$)/;
@@ -105,9 +96,7 @@ export const handleMapper: NodeHandler = ({
         executed.mapper.add(key);
         const preview = unresolvedMappings.slice(0, 2).join(', ');
         const suffix =
-          unresolvedMappings.length > 2
-            ? ` and ${unresolvedMappings.length - 2} more`
-            : '';
+          unresolvedMappings.length > 2 ? ` and ${unresolvedMappings.length - 2} more` : '';
         toast(
           `JSON Mapper "${node.title ?? node.id}" could not resolve mapping(s): ${preview}${suffix}.`,
           { variant: 'info' }
@@ -118,9 +107,7 @@ export const handleMapper: NodeHandler = ({
       mapped['jsonIntegrity'] = jsonIntegrityDiagnostics;
       if (
         jsonIntegrityPolicy === 'strict' &&
-        jsonIntegrityDiagnostics.some(
-          (diagnostic) => diagnostic.parseState === 'unparseable'
-        )
+        jsonIntegrityDiagnostics.some((diagnostic) => diagnostic.parseState === 'unparseable')
       ) {
         const unresolvedPorts = jsonIntegrityDiagnostics
           .filter((diagnostic) => diagnostic.parseState === 'unparseable')
@@ -134,11 +121,15 @@ export const handleMapper: NodeHandler = ({
     }
     return mapped;
   } catch (error) {
-    reportAiPathsError(error, {
-      service: 'ai-paths-runtime',
-      nodeId: node.id,
-      nodeType: node.type,
-    }, `Node ${node.id} failed`);
+    reportAiPathsError(
+      error,
+      {
+        service: 'ai-paths-runtime',
+        nodeId: node.id,
+        nodeType: node.type,
+      },
+      `Node ${node.id} failed`
+    );
     return {};
   }
 };

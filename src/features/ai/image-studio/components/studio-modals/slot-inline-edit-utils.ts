@@ -2,7 +2,7 @@ import { resolveProductImageUrl } from '@/shared/utils/image-routing';
 import type { ImageFileRecord } from '@/shared/contracts/files';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
-import { isImageStudioSlotImageLocked } from '../../utils/slot-image-lock';
+import { isImageStudioSlotImageLocked } from '@/shared/lib/ai/image-studio/utils/slot-image-lock';
 
 import type {
   CompositeTabImageViewModel,
@@ -12,7 +12,6 @@ import type {
   LinkedGeneratedVariantViewModel,
   LinkedMaskSlotViewModel,
 } from './slot-inline-edit-tab-types';
-
 
 export const applyEnvironmentReferenceAssetToDraft = (
   file: ImageFileRecord
@@ -69,9 +68,7 @@ export const EMPTY_ENVIRONMENT_REFERENCE_DRAFT: EnvironmentReferenceDraftViewMod
 
 export const INLINE_CARD_IMAGE_SLOT_INDEX = 0;
 
-export const slotHasRenderableImage = (
-  slot: ImageStudioSlotRecord | null | undefined
-): boolean => {
+export const slotHasRenderableImage = (slot: ImageStudioSlotRecord | null | undefined): boolean => {
   if (!slot) return false;
   const fileId = slot.imageFileId?.trim() ?? '';
   const filePath = slot.imageFile?.url?.trim() ?? '';
@@ -80,9 +77,8 @@ export const slotHasRenderableImage = (
   return Boolean(fileId || filePath || imageUrl || imageBase64);
 };
 
-export const isCardImageRemovalLocked = (
-  slot: ImageStudioSlotRecord | null | undefined
-): boolean => slotHasRenderableImage(slot) || isImageStudioSlotImageLocked(slot ?? null);
+export const isCardImageRemovalLocked = (slot: ImageStudioSlotRecord | null | undefined): boolean =>
+  slotHasRenderableImage(slot) || isImageStudioSlotImageLocked(slot ?? null);
 
 export const readEnvironmentReferenceDraft = (
   slot: ImageStudioSlotRecord | null
@@ -182,10 +178,19 @@ export const resolveDimensionLabel = (
   fallbackHeight: number | null | undefined = null
 ): string => {
   const width =
-    typeof primaryWidth === 'number' && Number.isFinite(primaryWidth) ? primaryWidth : fallbackWidth ?? null;
+    typeof primaryWidth === 'number' && Number.isFinite(primaryWidth)
+      ? primaryWidth
+      : (fallbackWidth ?? null);
   const height =
-    typeof primaryHeight === 'number' && Number.isFinite(primaryHeight) ? primaryHeight : fallbackHeight ?? null;
-  if (typeof width === 'number' && Number.isFinite(width) && typeof height === 'number' && Number.isFinite(height)) {
+    typeof primaryHeight === 'number' && Number.isFinite(primaryHeight)
+      ? primaryHeight
+      : (fallbackHeight ?? null);
+  if (
+    typeof width === 'number' &&
+    Number.isFinite(width) &&
+    typeof height === 'number' &&
+    Number.isFinite(height)
+  ) {
     return `${width} x ${height}`;
   }
   return 'n/a';
@@ -214,8 +219,14 @@ export const mapLinkedGeneratedVariants = (
             filepath: outputPath,
             filename: output.filename ?? '',
             size: typeof output.size === 'number' && Number.isFinite(output.size) ? output.size : 0,
-            width: typeof output.width === 'number' && Number.isFinite(output.width) ? output.width : null,
-            height: typeof output.height === 'number' && Number.isFinite(output.height) ? output.height : null,
+            width:
+              typeof output.width === 'number' && Number.isFinite(output.width)
+                ? output.width
+                : null,
+            height:
+              typeof output.height === 'number' && Number.isFinite(output.height)
+                ? output.height
+                : null,
           },
         };
       })
@@ -254,7 +265,9 @@ export const resolveInlinePreviewSource = (
 
   const normalizedDraftUrl = slotImageUrlDraft.trim();
   if (normalizedDraftUrl) {
-    const resolved = resolveProductImageUrl(normalizedDraftUrl, productImagesExternalBaseUrl) ?? normalizedDraftUrl;
+    const resolved =
+      resolveProductImageUrl(normalizedDraftUrl, productImagesExternalBaseUrl) ??
+      normalizedDraftUrl;
     return {
       src: resolved,
       sourceType: 'Draft URL',
@@ -306,7 +319,8 @@ export const resolveEnvironmentPreviewSource = (
       resolvedSource: 'n/a',
     };
   }
-  const resolved = resolveProductImageUrl(normalizedUrl, productImagesExternalBaseUrl) ?? normalizedUrl;
+  const resolved =
+    resolveProductImageUrl(normalizedUrl, productImagesExternalBaseUrl) ?? normalizedUrl;
   return {
     src: resolved,
     sourceType: environmentReferenceDraft.imageFileId ? 'Uploaded File' : 'Stored URL',
@@ -327,25 +341,33 @@ export const mapLinkedMaskSlots = (
     .filter((slot) => {
       const metadata = asRecord(slot.metadata);
       if (!metadata) return false;
-      const role = typeof metadata['role'] === 'string' ? metadata['role'].trim().toLowerCase() : '';
+      const role =
+        typeof metadata['role'] === 'string' ? metadata['role'].trim().toLowerCase() : '';
       const relationType =
-        typeof metadata['relationType'] === 'string' ? metadata['relationType'].trim().toLowerCase() : '';
+        typeof metadata['relationType'] === 'string'
+          ? metadata['relationType'].trim().toLowerCase()
+          : '';
       const sourceSlotId =
         typeof metadata['sourceSlotId'] === 'string' ? metadata['sourceSlotId'].trim() : '';
       const sourceSlotIds = Array.isArray(metadata['sourceSlotIds'])
         ? (metadata['sourceSlotIds'] as unknown[])
-          .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
-          .map((value: string) => value.trim())
+            .filter(
+              (value): value is string => typeof value === 'string' && value.trim().length > 0
+            )
+            .map((value: string) => value.trim())
         : [];
       const linkedToSelected =
-        sourceSlotId === normalizedSelectedSlotId || sourceSlotIds.includes(normalizedSelectedSlotId);
+        sourceSlotId === normalizedSelectedSlotId ||
+        sourceSlotIds.includes(normalizedSelectedSlotId);
       return linkedToSelected && (role === 'mask' || relationType.startsWith('mask:'));
     })
     .map((slot): LinkedMaskSlotViewModel => {
       const metadata = asRecord(slot.metadata);
-      const relationType = typeof metadata?.['relationType'] === 'string' ? metadata['relationType'] : '';
+      const relationType =
+        typeof metadata?.['relationType'] === 'string' ? metadata['relationType'] : '';
       const variant = typeof metadata?.['variant'] === 'string' ? metadata['variant'] : 'unknown';
-      const generationMode = typeof metadata?.['generationMode'] === 'string' ? metadata['generationMode'] : 'n/a';
+      const generationMode =
+        typeof metadata?.['generationMode'] === 'string' ? metadata['generationMode'] : 'n/a';
       const inverted = Boolean(metadata?.['inverted']);
       const rawFilepath = slot.imageFile?.url?.trim() || slot.imageUrl?.trim() || null;
       const imageSrc = rawFilepath
@@ -422,13 +444,15 @@ export const mapSavedCompositeInputImages = (args: {
   if (!selectedSlot) return [];
   const metadata = asRecord(selectedSlot.metadata);
   const compositeConfig = asRecord(metadata?.['compositeConfig']);
-  const rawLayers = Array.isArray(compositeConfig?.['layers']) ? (compositeConfig?.['layers'] as unknown[]) : [];
+  const rawLayers = Array.isArray(compositeConfig?.['layers'])
+    ? (compositeConfig?.['layers'] as unknown[])
+    : [];
   return rawLayers
     .map((layer, layerIndex): CompositeTabImageViewModel | null => {
       const layerRecord = asRecord(layer);
       if (!layerRecord) return null;
       const slotId = typeof layerRecord['slotId'] === 'string' ? layerRecord['slotId'].trim() : '';
-      const layerSlot = slotId ? slots.find((slot) => slot.id === slotId) ?? null : null;
+      const layerSlot = slotId ? (slots.find((slot) => slot.id === slotId) ?? null) : null;
       const rawFilepath = layerSlot?.imageFile?.url?.trim() || layerSlot?.imageUrl?.trim() || null;
       const imageSrc = rawFilepath
         ? (resolveProductImageUrl(rawFilepath, productImagesExternalBaseUrl) ?? rawFilepath)

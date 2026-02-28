@@ -124,7 +124,7 @@ const assertValidRegex = (regexSource: string, flags: string | null | undefined)
 
 const assertValidReplacementRecipe = (
   replacementEnabled: boolean,
-  replacementValue: string | null,
+  replacementValue: string | null
 ): void => {
   if (!replacementEnabled || !replacementValue) return;
   const recipe = parseDynamicReplacementRecipe(replacementValue);
@@ -169,11 +169,7 @@ const canResolveReplacementAtRuntime = ({
   replacementValue: string | null;
   runtimeEnabled: boolean;
   runtimeType: 'none' | 'database_query' | 'ai_prompt';
-}): boolean =>
-  replacementEnabled &&
-  !replacementValue &&
-  runtimeEnabled &&
-  runtimeType !== 'none';
+}): boolean => replacementEnabled && !replacementValue && runtimeEnabled && runtimeType !== 'none';
 
 const normalizeReplacementFields = (fields: string[] | undefined): string[] => {
   if (!Array.isArray(fields) || fields.length === 0) return [];
@@ -197,7 +193,9 @@ export async function putValidatorPatternByIdHandler(
   const nextReplacementEnabled =
     body.replacementEnabled !== undefined ? body.replacementEnabled : current.replacementEnabled;
   const nextReplacementValue =
-    body.replacementValue !== undefined ? body.replacementValue?.trim() || null : current.replacementValue;
+    body.replacementValue !== undefined
+      ? body.replacementValue?.trim() || null
+      : current.replacementValue;
   const nextReplacementFields =
     body.replacementFields !== undefined
       ? normalizeReplacementFields(body.replacementFields)
@@ -211,17 +209,19 @@ export async function putValidatorPatternByIdHandler(
       ? normalizeProductValidationLaunchScopeBehavior(body.launchScopeBehavior)
       : normalizeProductValidationLaunchScopeBehavior(current.launchScopeBehavior);
   const nextLaunchSourceField =
-    body.launchSourceField !== undefined ? body.launchSourceField?.trim() || null : current.launchSourceField;
+    body.launchSourceField !== undefined
+      ? body.launchSourceField?.trim() || null
+      : current.launchSourceField;
   const nextLaunchAppliesToScopes =
     body.launchAppliesToScopes !== undefined
       ? normalizeProductValidationPatternLaunchScopes(
-        body.launchAppliesToScopes,
-        body.appliesToScopes ?? current.appliesToScopes
-      )
+          body.launchAppliesToScopes,
+          body.appliesToScopes ?? current.appliesToScopes
+        )
       : normalizeProductValidationPatternLaunchScopes(
-        current.launchAppliesToScopes,
-        current.appliesToScopes
-      );
+          current.launchAppliesToScopes,
+          current.appliesToScopes
+        );
   const nextAppliesToScopes =
     body.appliesToScopes !== undefined
       ? normalizeProductValidationPatternScopes(body.appliesToScopes)
@@ -229,17 +229,16 @@ export async function putValidatorPatternByIdHandler(
   const nextReplacementAppliesToScopes =
     body.replacementAppliesToScopes !== undefined
       ? normalizeProductValidationPatternReplacementScopes(
-        body.replacementAppliesToScopes,
-        body.appliesToScopes ?? current.appliesToScopes
-      )
+          body.replacementAppliesToScopes,
+          body.appliesToScopes ?? current.appliesToScopes
+        )
       : normalizeProductValidationPatternReplacementScopes(
-        current.replacementAppliesToScopes,
-        current.appliesToScopes
-      );
+          current.replacementAppliesToScopes,
+          current.appliesToScopes
+        );
   const nextRuntimeEnabled =
     body.runtimeEnabled !== undefined ? body.runtimeEnabled : current.runtimeEnabled;
-  const nextRuntimeType =
-    body.runtimeType !== undefined ? body.runtimeType : current.runtimeType;
+  const nextRuntimeType = body.runtimeType !== undefined ? body.runtimeType : current.runtimeType;
   const nextRuntimeConfigRaw =
     body.runtimeConfig !== undefined ? body.runtimeConfig?.trim() || null : current.runtimeConfig;
   const nextRuntimeConfig = validateAndNormalizeRuntimeConfig({
@@ -266,7 +265,9 @@ export async function putValidatorPatternByIdHandler(
     );
   }
   if (nextLaunchEnabled && nextLaunchSourceMode !== 'current_field' && !nextLaunchSourceField) {
-    throw badRequestError('launchSourceField is required when launchSourceMode is not current_field');
+    throw badRequestError(
+      'launchSourceField is required when launchSourceMode is not current_field'
+    );
   }
   assertValidRegex(nextRegex, nextFlags);
   assertValidReplacementRecipe(nextReplacementEnabled, nextReplacementValue);
@@ -279,7 +280,8 @@ export async function putValidatorPatternByIdHandler(
           ? body.launchValue
           : null
         : current.launchValue,
-    launchFlags: body.launchFlags !== undefined ? body.launchFlags?.trim() || null : current.launchFlags,
+    launchFlags:
+      body.launchFlags !== undefined ? body.launchFlags?.trim() || null : current.launchFlags,
   });
   const updated = await repository.updatePattern(params.id, {
     ...(body.label !== undefined && { label: body.label.trim() }),
@@ -299,7 +301,9 @@ export async function putValidatorPatternByIdHandler(
         body.skipNoopReplacementProposal
       ),
     }),
-    ...(body.replacementValue !== undefined && { replacementValue: body.replacementValue?.trim() || null }),
+    ...(body.replacementValue !== undefined && {
+      replacementValue: body.replacementValue?.trim() || null,
+    }),
     ...(body.replacementFields !== undefined && { replacementFields: nextReplacementFields }),
     ...(body.replacementAppliesToScopes !== undefined && {
       replacementAppliesToScopes: nextReplacementAppliesToScopes,
@@ -313,8 +317,12 @@ export async function putValidatorPatternByIdHandler(
         body.denyBehaviorOverride
       ),
     }),
-    ...(body.validationDebounceMs !== undefined && { validationDebounceMs: body.validationDebounceMs }),
-    ...(body.sequenceGroupId !== undefined && { sequenceGroupId: body.sequenceGroupId?.trim() || null }),
+    ...(body.validationDebounceMs !== undefined && {
+      validationDebounceMs: body.validationDebounceMs,
+    }),
+    ...(body.sequenceGroupId !== undefined && {
+      sequenceGroupId: body.sequenceGroupId?.trim() || null,
+    }),
     ...(body.sequenceGroupLabel !== undefined && {
       sequenceGroupLabel: body.sequenceGroupLabel?.trim() || null,
     }),
@@ -333,7 +341,9 @@ export async function putValidatorPatternByIdHandler(
       launchScopeBehavior: nextLaunchScopeBehavior,
     }),
     ...(body.launchSourceMode !== undefined && { launchSourceMode: body.launchSourceMode }),
-    ...(body.launchSourceField !== undefined && { launchSourceField: body.launchSourceField?.trim() || null }),
+    ...(body.launchSourceField !== undefined && {
+      launchSourceField: body.launchSourceField?.trim() || null,
+    }),
     ...(body.launchOperator !== undefined && { launchOperator: body.launchOperator }),
     ...(body.launchValue !== undefined && {
       launchValue: typeof body.launchValue === 'string' ? body.launchValue : null,

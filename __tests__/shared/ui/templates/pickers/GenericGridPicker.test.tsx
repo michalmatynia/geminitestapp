@@ -18,13 +18,7 @@ describe('GenericGridPicker', () => {
 
   it('renders grid items', () => {
     const onSelect = vi.fn();
-    render(
-      <GenericGridPicker
-        items={mockItems}
-        onSelect={onSelect}
-        renderItem={defaultRender}
-      />
-    );
+    render(<GenericGridPicker items={mockItems} onSelect={onSelect} renderItem={defaultRender} />);
 
     expect(screen.getByText('Item 1')).toBeInTheDocument();
     expect(screen.getByText('Item 2')).toBeInTheDocument();
@@ -33,13 +27,7 @@ describe('GenericGridPicker', () => {
 
   it('calls onSelect when item clicked', async () => {
     const onSelect = vi.fn();
-    render(
-      <GenericGridPicker
-        items={mockItems}
-        onSelect={onSelect}
-        renderItem={defaultRender}
-      />
-    );
+    render(<GenericGridPicker items={mockItems} onSelect={onSelect} renderItem={defaultRender} />);
 
     const item = screen.getByText('Item 1');
     await userEvent.click(item);
@@ -103,13 +91,7 @@ describe('GenericGridPicker', () => {
 
   it('handles enter key to select', async () => {
     const onSelect = vi.fn();
-    render(
-      <GenericGridPicker
-        items={mockItems}
-        onSelect={onSelect}
-        renderItem={defaultRender}
-      />
-    );
+    render(<GenericGridPicker items={mockItems} onSelect={onSelect} renderItem={defaultRender} />);
 
     const item = screen.getByText('Item 1').closest('div[role="gridcell"]');
     fireEvent.keyDown(item!, { key: 'Enter' });
@@ -156,11 +138,7 @@ describe('GenericGridPicker', () => {
     ];
 
     render(
-      <GenericGridPicker
-        items={disabledItems}
-        onSelect={onSelect}
-        renderItem={defaultRender}
-      />
+      <GenericGridPicker items={disabledItems} onSelect={onSelect} renderItem={defaultRender} />
     );
 
     const item1 = screen.getByText('Item 1').closest('div[role="gridcell"]');
@@ -171,8 +149,7 @@ describe('GenericGridPicker', () => {
 
   it('supports custom search matcher', async () => {
     const onSelect = vi.fn();
-    const customMatcher = (query: string, item: GridPickerItem) =>
-      item.id.includes(query);
+    const customMatcher = (query: string, item: GridPickerItem) => item.id.includes(query);
 
     render(
       <GenericGridPicker

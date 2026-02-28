@@ -46,16 +46,14 @@ export function DropTargetIndicator({
         {/* Tooltip showing drag info */}
         <div
           className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded px-2 py-1 text-xs font-medium whitespace-nowrap ${
-            isValid
-              ? 'bg-emerald-600 text-white'
-              : 'bg-red-600 text-white'
+            isValid ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white'
           }`}
         >
-          {isValid ? (
-            draggedItemLabel ? `Drop ${draggedItemLabel} here` : 'Drop here'
-          ) : (
-            invalidReason ?? 'Cannot drop here'
-          )}
+          {isValid
+            ? draggedItemLabel
+              ? `Drop ${draggedItemLabel} here`
+              : 'Drop here'
+            : (invalidReason ?? 'Cannot drop here')}
         </div>
       </div>
     );
@@ -65,17 +63,17 @@ export function DropTargetIndicator({
   const isHorizontal = orientation === 'horizontal';
   const lineStyles: React.CSSProperties = isHorizontal
     ? {
-      left: 0,
-      right: 0,
-      height: '2px',
-      ...(position === 'before' ? { top: 0 } : { bottom: 0 }),
-    }
+        left: 0,
+        right: 0,
+        height: '2px',
+        ...(position === 'before' ? { top: 0 } : { bottom: 0 }),
+      }
     : {
-      top: 0,
-      bottom: 0,
-      width: '2px',
-      ...(position === 'before' ? { left: 0 } : { right: 0 }),
-    };
+        top: 0,
+        bottom: 0,
+        width: '2px',
+        ...(position === 'before' ? { left: 0 } : { right: 0 }),
+      };
 
   return (
     <div
@@ -86,9 +84,7 @@ export function DropTargetIndicator({
     >
       {/* Small circle indicator at the start of the line */}
       <div
-        className={`absolute rounded-full ${
-          isValid ? 'bg-emerald-500' : 'bg-red-500'
-        }`}
+        className={`absolute rounded-full ${isValid ? 'bg-emerald-500' : 'bg-red-500'}`}
         style={
           isHorizontal
             ? { left: 0, top: '50%', transform: 'translateY(-50%)', width: '6px', height: '6px' }
@@ -97,9 +93,7 @@ export function DropTargetIndicator({
       />
       {/* Small circle indicator at the end of the line */}
       <div
-        className={`absolute rounded-full ${
-          isValid ? 'bg-emerald-500' : 'bg-red-500'
-        }`}
+        className={`absolute rounded-full ${isValid ? 'bg-emerald-500' : 'bg-red-500'}`}
         style={
           isHorizontal
             ? { right: 0, top: '50%', transform: 'translateY(-50%)', width: '6px', height: '6px' }
@@ -157,9 +151,11 @@ export const dragStateClasses = {
   /** Applied when hovering over an invalid drop target */
   invalidDropTarget: 'ring-2 ring-red-500/50 bg-red-500/10',
   /** Applied to show insertion point before */
-  insertBefore: 'before:absolute before:left-0 before:right-0 before:top-0 before:h-0.5 before:bg-emerald-500',
+  insertBefore:
+    'before:absolute before:left-0 before:right-0 before:top-0 before:h-0.5 before:bg-emerald-500',
   /** Applied to show insertion point after */
-  insertAfter: 'after:absolute after:left-0 after:right-0 after:bottom-0 after:h-0.5 after:bg-emerald-500',
+  insertAfter:
+    'after:absolute after:left-0 after:right-0 after:bottom-0 after:h-0.5 after:bg-emerald-500',
 };
 
 /**

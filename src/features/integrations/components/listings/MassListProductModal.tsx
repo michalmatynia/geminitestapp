@@ -13,7 +13,10 @@ import { BaseListingSettings } from './BaseListingSettings';
 import { ExportLogViewer } from './ExportLogViewer';
 import { useMassListForm } from './hooks/useMassListForm';
 import { IntegrationAccountSummary } from './IntegrationAccountSummary';
-import { MassListProductModalViewProvider, useMassListProductModalViewContext } from './mass-list-modal/context/MassListProductModalViewContext';
+import {
+  MassListProductModalViewProvider,
+  useMassListProductModalViewContext,
+} from './mass-list-modal/context/MassListProductModalViewContext';
 import { MassListProgressPanel } from './mass-list-modal/MassListProgressPanel';
 
 interface MassListProductModalProps extends EntityModalProps<string[]> {
@@ -22,10 +25,7 @@ interface MassListProductModalProps extends EntityModalProps<string[]> {
 }
 
 function MassListProductModalContent(): React.JSX.Element {
-  const {
-    productIds,
-    onClose,
-  } = useMassListProductModalViewContext();
+  const { productIds, onClose } = useMassListProductModalViewContext();
   const [logsOpen, setLogsOpen] = useState(false);
 
   const {
@@ -34,31 +34,23 @@ function MassListProductModalContent(): React.JSX.Element {
     isBaseComIntegration,
   } = useListingSettingsContext();
 
-  const {
-    error,
-    progress,
-    exportLogs,
-    handleSubmit,
-    submitting,
-  } = useMassListForm();
+  const { error, progress, exportLogs, handleSubmit, submitting } = useMassListForm();
 
   return (
     <FormModal
       open={true}
       onClose={onClose}
       title={`List ${productIds.length} Products to ${selectedIntegration?.name || 'Marketplace'}`}
-      onSave={(): void => { void handleSubmit(); }}
+      onSave={(): void => {
+        void handleSubmit();
+      }}
       isSaving={submitting}
       saveText={isBaseComIntegration ? 'Export to Base.com' : 'List Products'}
       cancelText='Cancel'
       size='md'
     >
       <div className='space-y-6'>
-        {error && (
-          <Alert variant='error'>
-            {error}
-          </Alert>
-        )}
+        {error && <Alert variant='error'>{error}</Alert>}
 
         {submitting && progress && (
           <MassListProgressPanel
@@ -75,20 +67,14 @@ function MassListProductModalContent(): React.JSX.Element {
             {loading ? (
               <LoadingState message='Loading details...' size='sm' className='py-4' />
             ) : (
-              <>
-                {isBaseComIntegration && <BaseListingSettings />}
-              </>
+              <>{isBaseComIntegration && <BaseListingSettings />}</>
             )}
           </>
         )}
 
         {exportLogs.length > 0 && (
           <div className='mt-4 border-t border pt-4'>
-            <ExportLogViewer
-              logs={exportLogs}
-              isOpen={logsOpen}
-              onToggle={setLogsOpen}
-            />
+            <ExportLogViewer logs={exportLogs} isOpen={logsOpen} onToggle={setLogsOpen} />
           </div>
         )}
       </div>
@@ -97,14 +83,7 @@ function MassListProductModalContent(): React.JSX.Element {
 }
 
 export function MassListProductModal(props: MassListProductModalProps): React.JSX.Element | null {
-  const {
-    isOpen,
-    integrationId,
-    connectionId,
-    item: productIds,
-    onClose,
-    onSuccess,
-  } = props;
+  const { isOpen, integrationId, connectionId, item: productIds, onClose, onSuccess } = props;
 
   if (!productIds || !isOpen) return null;
 

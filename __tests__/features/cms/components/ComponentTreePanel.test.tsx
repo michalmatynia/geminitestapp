@@ -4,7 +4,10 @@ import { vi } from 'vitest';
 import { render } from '@/__tests__/test-utils';
 import { ComponentTreePanel } from '@/features/cms/components/page-builder/ComponentTreePanel';
 import { useCmsPages, useCmsPage } from '@/features/cms/hooks/useCmsQueries';
-import { usePageBuilderState, usePageBuilderDispatch } from '@/features/cms/hooks/usePageBuilderContext';
+import {
+  usePageBuilderState,
+  usePageBuilderDispatch,
+} from '@/features/cms/hooks/usePageBuilderContext';
 
 // Mock the hooks
 vi.mock('@/features/cms/hooks/usePageBuilderContext', () => {
@@ -86,7 +89,11 @@ describe('ComponentTreePanel Component', () => {
   });
 
   it('should render empty when no page is selected', () => {
-    (usePageBuilderState as any).mockReturnValue({ pages: mockPages, currentPage: null, sections: [] });
+    (usePageBuilderState as any).mockReturnValue({
+      pages: mockPages,
+      currentPage: null,
+      sections: [],
+    });
     (usePageBuilderDispatch as any).mockReturnValue(mockDispatch);
 
     render(<ComponentTreePanel />);
@@ -100,12 +107,12 @@ describe('ComponentTreePanel Component', () => {
       { id: 's2', type: 'RichText', zone: 'footer', blocks: [] },
     ];
 
-    (usePageBuilderState as any).mockReturnValue({ 
-      pages: mockPages, 
-      currentPage: mockCurrentPage, 
+    (usePageBuilderState as any).mockReturnValue({
+      pages: mockPages,
+      currentPage: mockCurrentPage,
       sections: mockSections,
       selectedNodeId: null,
-      collapsedZones: new Set()
+      collapsedZones: new Set(),
     });
     (usePageBuilderDispatch as any).mockReturnValue(mockDispatch);
 
@@ -127,11 +134,11 @@ describe('ComponentTreePanel Component', () => {
     const mockCurrentPage = { id: '1', name: 'Home' };
     const mockSections = [{ id: 's1', type: 'Hero', zone: 'header', blocks: [] }];
 
-    (usePageBuilderState as any).mockReturnValue({ 
-      pages: mockPages, 
-      currentPage: mockCurrentPage, 
+    (usePageBuilderState as any).mockReturnValue({
+      pages: mockPages,
+      currentPage: mockCurrentPage,
       sections: mockSections,
-      selectedNodeId: null
+      selectedNodeId: null,
     });
     (usePageBuilderDispatch as any).mockReturnValue(mockDispatch);
 
@@ -144,12 +151,10 @@ describe('ComponentTreePanel Component', () => {
     const headerToggle = screen.getByText('Header');
     fireEvent.click(headerToggle);
 
-    // After toggle, it should be hidden (since we mocked the state to be updated by internal useState in real component, 
+    // After toggle, it should be hidden (since we mocked the state to be updated by internal useState in real component,
     // but here we are testing if the click event is handled and triggers re-render or state change if we were using external state.
     // Wait, ComponentTreePanel uses internal setCollapsedZones. So it should work without extra mocking of state for collapse.)
-    
+
     expect(screen.queryByText('Hero')).not.toBeInTheDocument();
   });
-
-
 });

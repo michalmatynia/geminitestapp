@@ -35,7 +35,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 const toJobResult = (value: unknown): ProductAiJobResult | null => {
   if (value === null || value === undefined) return null;
-  return isRecord(value) ? (value) : null;
+  return isRecord(value) ? value : null;
 };
 
 const toIsoString = (value?: Date | null): string | null => {
@@ -93,25 +93,18 @@ const summarizeGraphModelPayload = (payload: unknown): Record<string, unknown> |
     vision: record['vision'],
     promptLength: typeof prompt === 'string' ? prompt.length : null,
     imageCount: imageUrls.length,
-    cacheKey:
-      typeof record['cacheKey'] === 'string'
-        ? (record['cacheKey']).slice(0, 12)
-        : null,
+    cacheKey: typeof record['cacheKey'] === 'string' ? record['cacheKey'].slice(0, 12) : null,
   };
 };
 
-const canReuseGraphModelJob = (
-  job: ProductAiJobRecord,
-  cacheKey: string
-): boolean => {
+const canReuseGraphModelJob = (job: ProductAiJobRecord, cacheKey: string): boolean => {
   if (job.type !== 'graph_model') return false;
   if (resolveGraphModelCacheKey(job.payload) !== cacheKey) return false;
   if (job.status === 'pending') return true;
   if (job.status === 'running') {
     if (GRAPH_MODEL_REUSE_RUNNING_MAX_AGE_MS <= 0) return false;
     if (!job.startedAt) return true;
-    const startedAtMs =
-      job.startedAt instanceof Date ? job.startedAt.getTime() : Number.NaN;
+    const startedAtMs = job.startedAt instanceof Date ? job.startedAt.getTime() : Number.NaN;
     if (!Number.isFinite(startedAtMs)) return true;
     return Date.now() - startedAtMs < GRAPH_MODEL_REUSE_RUNNING_MAX_AGE_MS;
   }
@@ -119,7 +112,11 @@ const canReuseGraphModelJob = (
   return resolveGraphModelResultText(job.result).length > 0;
 };
 
-export async function enqueueProductAiJob(productId: string, type: ProductAiJobType, payload: unknown): Promise<ProductAiJob> {
+export async function enqueueProductAiJob(
+  productId: string,
+  type: ProductAiJobType,
+  payload: unknown
+): Promise<ProductAiJob> {
   try {
     const { ErrorSystem } = await import('@/features/observability/server');
     void ErrorSystem.logInfo('[enqueueProductAiJob] Creating job', {
@@ -127,10 +124,7 @@ export async function enqueueProductAiJob(productId: string, type: ProductAiJobT
       productId,
       context: {
         type,
-        payloadSummary:
-          type === 'graph_model'
-            ? summarizeGraphModelPayload(payload)
-            : undefined,
+        payloadSummary: type === 'graph_model' ? summarizeGraphModelPayload(payload) : undefined,
       },
     });
   } catch {
@@ -139,7 +133,7 @@ export async function enqueueProductAiJob(productId: string, type: ProductAiJobT
       level: 'info',
       source: LOG_SOURCE,
       message: 'Creating job',
-      context: { productId, type }
+      context: { productId, type },
     });
   }
   const jobRepository = await getProductAiJobRepository();
@@ -169,7 +163,7 @@ export async function enqueueProductAiJob(productId: string, type: ProductAiJobT
             level: 'info',
             source: LOG_SOURCE,
             message: 'Reusing graph_model job',
-            context: { jobId: reusable.id, status: reusable.status, cacheKey }
+            context: { jobId: reusable.id, status: reusable.status, cacheKey },
           });
         }
         return toProductAiJob(reusable);
@@ -178,24 +172,24 @@ export async function enqueueProductAiJob(productId: string, type: ProductAiJobT
   }
 
   const jobRecord = await jobRepository.createJob(productId, type, payload);
-  
+
   try {
     const { ErrorSystem } = await import('@/features/observability/server');
     void ErrorSystem.logInfo('[enqueueProductAiJob] Job created', {
       service: 'product-ai-service',
       productId,
       jobId: jobRecord.id,
-      context: { type }
+      context: { type },
     });
   } catch {
     void logSystemEvent({
       level: 'info',
       source: LOG_SOURCE,
       message: 'Job created',
-      context: { jobId: jobRecord.id, productId, type }
+      context: { jobId: jobRecord.id, productId, type },
     });
   }
-  
+
   return toProductAiJob(jobRecord);
 }
 
@@ -232,39 +226,43 @@ export async function getProductAiJobs(
 
   // Fetch all unique products in parallel
   const productResults = await Promise.all(
-    uniqueProductIds.map(async (id: string): Promise<{ id: string; product: Record<string, unknown> | null }> => {
-      try {
-        const product = await productService.getProductById(id);
-        return { id, product: isRecord(product) ? product : null };
-      } catch (error: unknown) {
+    uniqueProductIds.map(
+      async (id: string): Promise<{ id: string; product: Record<string, unknown> | null }> => {
         try {
-          const { logSystemError } = await import('@/features/observability/server');
-          await logSystemError({ 
-            message: '[product-ai-service] Failed to fetch product in getProductAiJobs',
-            error,
-            source: 'product-ai-service',
-            context: { action: 'getProductAiJobs', productId: id }
-          });
-        } catch (logError) {
-          void logSystemEvent({
-            level: 'error',
-            source: LOG_SOURCE,
-            message: 'Failed to fetch product in getProductAiJobs',
-            error,
-            context: { productId: id, logError }
-          });
+          const product = await productService.getProductById(id);
+          return { id, product: isRecord(product) ? product : null };
+        } catch (error: unknown) {
+          try {
+            const { logSystemError } = await import('@/features/observability/server');
+            await logSystemError({
+              message: '[product-ai-service] Failed to fetch product in getProductAiJobs',
+              error,
+              source: 'product-ai-service',
+              context: { action: 'getProductAiJobs', productId: id },
+            });
+          } catch (logError) {
+            void logSystemEvent({
+              level: 'error',
+              source: LOG_SOURCE,
+              message: 'Failed to fetch product in getProductAiJobs',
+              error,
+              context: { productId: id, logError },
+            });
+          }
+          return { id, product: null };
         }
-        return { id, product: null };
       }
-    })
+    )
   );
 
   // Create lookup map for O(1) access
   const productMap = new Map(
-    productResults.map(({ id, product }: { id: string; product: Record<string, unknown> | null }) => [
-      id,
-      toProductSummary(product),
-    ])
+    productResults.map(
+      ({ id, product }: { id: string; product: Record<string, unknown> | null }) => [
+        id,
+        toProductSummary(product),
+      ]
+    )
   );
 
   // Enrich jobs with product data from map
@@ -309,11 +307,11 @@ export async function getProductAiJob(
     } catch (error: unknown) {
       try {
         const { logSystemError } = await import('@/features/observability/server');
-        await logSystemError({ 
+        await logSystemError({
           message: '[product-ai-service] Failed to fetch product in getProductAiJob',
           error,
           source: 'product-ai-service',
-          context: { action: 'getProductAiJob', productId: job.productId, jobId: job.id }
+          context: { action: 'getProductAiJob', productId: job.productId, jobId: job.id },
         });
       } catch (logError) {
         void logSystemEvent({
@@ -321,19 +319,22 @@ export async function getProductAiJob(
           source: LOG_SOURCE,
           message: 'Failed to fetch product in getProductAiJob',
           error,
-          context: { productId: job.productId, jobId: job.id, logError }
+          context: { productId: job.productId, jobId: job.id, logError },
         });
-      }      // Continue without product details if it fails
+      } // Continue without product details if it fails
     }
   }
 
   return {
     ...job,
-    product
+    product,
   };
 }
 
-export async function updateProductAiJob(jobId: string, data: ProductAiJobUpdate): Promise<ProductAiJob> {
+export async function updateProductAiJob(
+  jobId: string,
+  data: ProductAiJobUpdate
+): Promise<ProductAiJob> {
   const jobRepository = await getProductAiJobRepository();
   const updated = await jobRepository.updateJob(jobId, data);
   return toProductAiJob(updated);

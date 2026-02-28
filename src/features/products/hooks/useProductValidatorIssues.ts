@@ -26,10 +26,7 @@ type UseProductValidatorIssuesOptions = {
   isIssueAccepted: (fieldName: string, patternId: string) => boolean;
   runtimeDebounceMs?: number;
   trackedFields?: string[];
-  resolveChangedAt?: (
-    fieldName: string,
-    timestamps: Record<string, number>
-  ) => number;
+  resolveChangedAt?: (fieldName: string, timestamps: Record<string, number>) => number;
   source: string;
 };
 
@@ -64,9 +61,9 @@ export const useProductValidatorIssues = ({
   // reference churn (watch() producing new objects) without semantic value changes.
   const lastSentRuntimeKeyRef = useRef<string>('');
   const [debounceTick, setDebounceTick] = useState(0);
-  const [runtimeFieldIssues, setRuntimeFieldIssues] = useState<Record<string, FieldValidatorIssue[]>>(
-    {}
-  );
+  const [runtimeFieldIssues, setRuntimeFieldIssues] = useState<
+    Record<string, FieldValidatorIssue[]>
+  >({});
 
   const runtimePatternIds = useMemo(
     () =>
@@ -99,13 +96,18 @@ export const useProductValidatorIssues = ({
     } catch {
       return '';
     }
-  }, [latestProductValues, runtimePatternIds, runtimeValues, validationScope, validatorEnabled, values]);
+  }, [
+    latestProductValues,
+    runtimePatternIds,
+    runtimeValues,
+    validationScope,
+    validatorEnabled,
+    values,
+  ]);
 
   useEffect(() => {
     if (!validatorEnabled || runtimePatternIds.length === 0) {
-      setRuntimeFieldIssues((previous) =>
-        Object.keys(previous).length === 0 ? previous : {}
-      );
+      setRuntimeFieldIssues((previous) => (Object.keys(previous).length === 0 ? previous : {}));
       lastSentRuntimeKeyRef.current = '';
       return;
     }
@@ -114,37 +116,40 @@ export const useProductValidatorIssues = ({
     if (runtimeValuesKey && runtimeValuesKey === lastSentRuntimeKeyRef.current) {
       return;
     }
-    const timer = setTimeout(() => {
-      lastSentRuntimeKeyRef.current = runtimeValuesKey;
-      void api
-        .post<{ issues?: Record<string, FieldValidatorIssue[]> }>(
-          '/api/products/validator-runtime/evaluate',
-          {
-            values: runtimeValues ?? values,
-            latestProductValues,
-            patternIds: runtimePatternIds,
-            validationScope,
-          },
-          { logError: false }
-        )
-        .then((response) => {
-          const nextIssues = response.issues ?? {};
-          setRuntimeFieldIssues((previous) =>
-            areIssueMapsEquivalent(previous, nextIssues) ? previous : nextIssues
-          );
-        })
-        .catch((error: unknown) => {
-          setRuntimeFieldIssues((previous) =>
-            Object.keys(previous).length === 0 ? previous : {}
-          );
-          logClientError(error instanceof Error ? error : new Error(String(error)), {
-            context: {
-              source,
-              action: 'runtimeValidatorEvaluate',
+    const timer = setTimeout(
+      () => {
+        lastSentRuntimeKeyRef.current = runtimeValuesKey;
+        void api
+          .post<{ issues?: Record<string, FieldValidatorIssue[]> }>(
+            '/api/products/validator-runtime/evaluate',
+            {
+              values: runtimeValues ?? values,
+              latestProductValues,
+              patternIds: runtimePatternIds,
+              validationScope,
             },
+            { logError: false }
+          )
+          .then((response) => {
+            const nextIssues = response.issues ?? {};
+            setRuntimeFieldIssues((previous) =>
+              areIssueMapsEquivalent(previous, nextIssues) ? previous : nextIssues
+            );
+          })
+          .catch((error: unknown) => {
+            setRuntimeFieldIssues((previous) =>
+              Object.keys(previous).length === 0 ? previous : {}
+            );
+            logClientError(error instanceof Error ? error : new Error(String(error)), {
+              context: {
+                source,
+                action: 'runtimeValidatorEvaluate',
+              },
+            });
           });
-        });
-    }, Math.max(0, runtimeDebounceMs));
+      },
+      Math.max(0, runtimeDebounceMs)
+    );
     return () => {
       clearTimeout(timer);
     };
@@ -178,27 +183,17 @@ export const useProductValidatorIssues = ({
     () =>
       validatorEnabled
         ? buildFieldIssues({
-          values,
-          patterns,
-          latestProductValues,
-          validationScope,
-        })
+            values,
+            patterns,
+            latestProductValues,
+            validationScope,
+          })
         : ({} as Record<string, FieldValidatorIssue[]>),
-    [
-      latestProductValues,
-      patterns,
-      validationScope,
-      validatorEnabled,
-      values,
-    ]
+    [latestProductValues, patterns, validationScope, validatorEnabled, values]
   );
 
   const fieldIssues = useMemo(
-    () =>
-      mergeFieldIssueMaps(
-        staticFieldIssues,
-        validatorEnabled ? runtimeFieldIssues : {}
-      ),
+    () => mergeFieldIssueMaps(staticFieldIssues, validatorEnabled ? runtimeFieldIssues : {}),
     [runtimeFieldIssues, staticFieldIssues, validatorEnabled]
   );
 
@@ -213,7 +208,7 @@ export const useProductValidatorIssues = ({
     for (const [fieldName, issueList] of Object.entries(fieldIssues)) {
       const changedAt = resolveChangedAt
         ? resolveChangedAt(fieldName, fieldEditTimestampsRef.current)
-        : fieldEditTimestampsRef.current[fieldName] ?? 0;
+        : (fieldEditTimestampsRef.current[fieldName] ?? 0);
       if (changedAt <= 0) continue;
       for (const issue of issueList) {
         const debounceMs = normalizeValidationDebounceMs(issue.debounceMs);
@@ -244,7 +239,7 @@ export const useProductValidatorIssues = ({
     for (const [fieldName, issueList] of Object.entries(fieldIssues)) {
       const changedAt = resolveChangedAt
         ? resolveChangedAt(fieldName, fieldEditTimestampsRef.current)
-        : fieldEditTimestampsRef.current[fieldName] ?? 0;
+        : (fieldEditTimestampsRef.current[fieldName] ?? 0);
       visible[fieldName] = issueList.filter((issue: FieldValidatorIssue): boolean => {
         if (isIssueDenied(fieldName, issue.patternId)) return false;
         if (

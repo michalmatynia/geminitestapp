@@ -9,7 +9,7 @@ import {
   mongoBackupsDir,
   ensureMongoBackupsDir,
 } from '@/features/database/server';
-import { assertDatabaseEngineManageAccess } from '@/features/database/services/database-engine-access';
+import { assertDatabaseEngineManageAccess } from '@/shared/lib/db/services/database-engine-access';
 import type { DatabaseBackupFile as DatabaseInfo } from '@/shared/contracts/database';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
@@ -18,8 +18,7 @@ const isValidDate = (value: unknown): value is Date =>
 
 async function getBackups(type: 'postgresql' | 'mongodb'): Promise<DatabaseInfo[]> {
   const backupsDir = type === 'mongodb' ? mongoBackupsDir : pgBackupsDir;
-  const ensureDir =
-    type === 'mongodb' ? ensureMongoBackupsDir : ensurePgBackupsDir;
+  const ensureDir = type === 'mongodb' ? ensureMongoBackupsDir : ensurePgBackupsDir;
   const extension = type === 'mongodb' ? '.archive' : '.dump';
 
   await ensureDir();
@@ -57,7 +56,6 @@ async function getBackups(type: 'postgresql' | 'mongodb'): Promise<DatabaseInfo[
     return safeB - safeA;
   });
 }
-
 
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertDatabaseEngineManageAccess();

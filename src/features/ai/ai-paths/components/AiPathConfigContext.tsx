@@ -128,7 +128,8 @@ export const useAiPathOrchestrator = (): AiPathOrchestratorData => {
 
 // --- Legacy Aggregated Interface ---
 export interface AiPathConfigData
-  extends AiPathSelectionData,
+  extends
+    AiPathSelectionData,
     AiPathGraphData,
     AiPathRuntimeData,
     AiPathPresetsData,
@@ -170,7 +171,7 @@ const useAiPathConfigDefaults = () => {
   const selectedNode = useMemo(
     () =>
       selectedNodeId
-        ? graphState.nodes.find((node: AiNode): boolean => node.id === selectedNodeId) ?? null
+        ? (graphState.nodes.find((node: AiNode): boolean => node.id === selectedNodeId) ?? null)
         : null,
     [graphState.nodes, selectedNodeId]
   );
@@ -271,9 +272,7 @@ export function AiPathConfigProvider({
         <AiPathRuntimeContext.Provider value={value}>
           <AiPathPresetsContext.Provider value={value}>
             <AiPathOrchestratorContext.Provider value={value}>
-              <AiPathConfigContext.Provider value={value}>
-                {children}
-              </AiPathConfigContext.Provider>
+              <AiPathConfigContext.Provider value={value}>{children}</AiPathConfigContext.Provider>
             </AiPathOrchestratorContext.Provider>
           </AiPathPresetsContext.Provider>
         </AiPathRuntimeContext.Provider>
@@ -291,19 +290,29 @@ export function AiPathConfigProviderWithContext({
   children,
   overrides,
 }: AiPathConfigProviderWithContextProps): React.ReactNode {
-  const {
-    selectionValue,
-    graphValue,
-    runtimeValue,
-    presetsValue,
-    orchestratorValue,
-  } = useAiPathConfigDefaults();
+  const { selectionValue, graphValue, runtimeValue, presetsValue, orchestratorValue } =
+    useAiPathConfigDefaults();
 
-  const selection = useMemo(() => overrides ? { ...selectionValue, ...overrides } : selectionValue, [selectionValue, overrides]);
-  const graph = useMemo(() => overrides ? { ...graphValue, ...overrides } : graphValue, [graphValue, overrides]);
-  const runtime = useMemo(() => overrides ? { ...runtimeValue, ...overrides } : runtimeValue, [runtimeValue, overrides]);
-  const presets = useMemo(() => overrides ? { ...presetsValue, ...overrides } : presetsValue, [presetsValue, overrides]);
-  const orchestrator = useMemo(() => overrides ? { ...orchestratorValue, ...overrides } : orchestratorValue, [orchestratorValue, overrides]);
+  const selection = useMemo(
+    () => (overrides ? { ...selectionValue, ...overrides } : selectionValue),
+    [selectionValue, overrides]
+  );
+  const graph = useMemo(
+    () => (overrides ? { ...graphValue, ...overrides } : graphValue),
+    [graphValue, overrides]
+  );
+  const runtime = useMemo(
+    () => (overrides ? { ...runtimeValue, ...overrides } : runtimeValue),
+    [runtimeValue, overrides]
+  );
+  const presets = useMemo(
+    () => (overrides ? { ...presetsValue, ...overrides } : presetsValue),
+    [presetsValue, overrides]
+  );
+  const orchestrator = useMemo(
+    () => (overrides ? { ...orchestratorValue, ...overrides } : orchestratorValue),
+    [orchestratorValue, overrides]
+  );
 
   const aggregatedValue = useMemo<AiPathConfigData>(
     () => ({

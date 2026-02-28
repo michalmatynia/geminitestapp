@@ -1,10 +1,6 @@
 import React from 'react';
 
-import type {
-  AiNode,
-  Edge,
-  PortDataType,
-} from '@/shared/lib/ai-paths';
+import type { AiNode, Edge, PortDataType } from '@/shared/lib/ai-paths';
 import {
   arePortTypesCompatible,
   formatPortDataTypes,
@@ -14,7 +10,7 @@ import {
   isValueCompatibleWithTypes,
 } from '@/shared/lib/ai-paths';
 
-import { formatPortLabel } from '../utils/ui-utils';
+import { formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
 
 type ConnectionTypeMismatch = {
   fromNode?: AiNode | null;
@@ -49,14 +45,8 @@ type BuildConnectorInfoInput = {
   port: string;
   edges: Edge[];
   nodeById: Map<string, AiNode>;
-  getPortValue: (
-    direction: 'input' | 'output',
-    nodeId: string,
-    port: string
-  ) => unknown;
-  getNodeRuntimeData: (
-    nodeId: string
-  ) => {
+  getPortValue: (direction: 'input' | 'output', nodeId: string, port: string) => unknown;
+  getNodeRuntimeData: (nodeId: string) => {
     inputs: Record<string, unknown> | undefined;
     outputs: Record<string, unknown> | undefined;
   };
@@ -169,13 +159,7 @@ export const buildConnectorInfo = ({
     value !== undefined && value !== null
       ? !isValueCompatibleWithTypes(value, expectedTypes)
       : false;
-  const connectionMismatches = getConnectionMismatches(
-    direction,
-    nodeId,
-    port,
-    edges,
-    nodeById
-  );
+  const connectionMismatches = getConnectionMismatches(direction, nodeId, port, edges, nodeById);
   const hasMismatch = runtimeMismatch || connectionMismatches.length > 0;
   return {
     direction,
@@ -203,9 +187,9 @@ export const renderConnectorTooltip = (info: ConnectorInfo): React.JSX.Element =
   const diff =
     info.isHistory && Array.isArray(info.rawValue) && info.rawValue.length > 1
       ? buildDiffLines(
-        stringifyForDiff(info.rawValue[info.rawValue.length - 2]),
-        stringifyForDiff(info.rawValue[info.rawValue.length - 1])
-      )
+          stringifyForDiff(info.rawValue[info.rawValue.length - 2]),
+          stringifyForDiff(info.rawValue[info.rawValue.length - 1])
+        )
       : null;
   return (
     <div className='space-y-1'>
@@ -216,11 +200,7 @@ export const renderConnectorTooltip = (info: ConnectorInfo): React.JSX.Element =
         Data type: <span className='text-gray-200'>{info.expectedLabel}</span>
       </div>
       {info.actualType ? (
-        <div
-          className={`text-[10px] ${
-            info.runtimeMismatch ? 'text-rose-300' : 'text-gray-400'
-          }`}
-        >
+        <div className={`text-[10px] ${info.runtimeMismatch ? 'text-rose-300' : 'text-gray-400'}`}>
           Actual: {info.actualType}
         </div>
       ) : null}
@@ -237,8 +217,7 @@ export const renderConnectorTooltip = (info: ConnectorInfo): React.JSX.Element =
       {info.connectionMismatches.length > 0 ? (
         <div className='space-y-1 text-[10px] text-rose-300'>
           {info.connectionMismatches.map((mismatch, index) => {
-            const fromLabel =
-              mismatch.fromNode?.title ?? mismatch.fromNode?.id ?? 'unknown';
+            const fromLabel = mismatch.fromNode?.title ?? mismatch.fromNode?.id ?? 'unknown';
             const toLabel = mismatch.toNode?.title ?? mismatch.toNode?.id ?? 'unknown';
             return (
               <div key={`${mismatch.fromPort}-${mismatch.toPort}-${index}`}>
@@ -255,9 +234,7 @@ export const renderConnectorTooltip = (info: ConnectorInfo): React.JSX.Element =
       </pre>
       {showNodeInputData ? (
         <div className='mt-2 border-t border-white/10 pt-2'>
-          <div className='text-[10px] text-gray-400'>
-            Node input data:
-          </div>
+          <div className='text-[10px] text-gray-400'>Node input data:</div>
           <pre className='mt-1 max-h-28 overflow-auto whitespace-pre text-[10px] text-gray-300'>
             {formatConnectorValue(info.nodeInputs)}
           </pre>
@@ -265,24 +242,19 @@ export const renderConnectorTooltip = (info: ConnectorInfo): React.JSX.Element =
       ) : null}
       {showNodeOutputData ? (
         <div className='mt-2 border-t border-white/10 pt-2'>
-          <div className='text-[10px] text-gray-400'>
-            Data passed through node (outputs):
-          </div>
+          <div className='text-[10px] text-gray-400'>Data passed through node (outputs):</div>
           <pre className='mt-1 max-h-28 overflow-auto whitespace-pre text-[10px] text-gray-300'>
             {formatConnectorValue(info.nodeOutputs)}
           </pre>
         </div>
       ) : null}
-      <div className='text-[10px] text-gray-500'>
-        Right-click to disconnect. Drag to reconnect.
-      </div>
+      <div className='text-[10px] text-gray-500'>Right-click to disconnect. Drag to reconnect.</div>
       {diff ? (
         <div className='mt-2'>
           <div className='text-[10px] text-gray-400'>Diff (last two passes)</div>
           <div className='mt-1 max-h-40 overflow-auto rounded bg-black/50 p-2 font-mono text-[10px] leading-relaxed'>
             {diff.lines.map((line, index) => {
-              const prefix =
-                line.type === 'add' ? '+ ' : line.type === 'remove' ? '- ' : '  ';
+              const prefix = line.type === 'add' ? '+ ' : line.type === 'remove' ? '- ' : '  ';
               const colorClass =
                 line.type === 'add'
                   ? 'text-emerald-300'
@@ -296,9 +268,7 @@ export const renderConnectorTooltip = (info: ConnectorInfo): React.JSX.Element =
                 </div>
               );
             })}
-            {diff.truncated ? (
-              <div className='mt-1 text-gray-500'>Diff truncated...</div>
-            ) : null}
+            {diff.truncated ? <div className='mt-1 text-gray-500'>Diff truncated...</div> : null}
           </div>
         </div>
       ) : null}

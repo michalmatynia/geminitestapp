@@ -8,7 +8,9 @@ export async function getAgentRuns(): Promise<AiPathRunRecord[]> {
 }
 
 export async function getAgentSnapshots(runId: string): Promise<AgentSnapshot[]> {
-  const data = await api.get<{ snapshots?: AgentSnapshot[] }>(`/api/agentcreator/agent/${runId}/snapshots`);
+  const data = await api.get<{ snapshots?: AgentSnapshot[] }>(
+    `/api/agentcreator/agent/${runId}/snapshots`
+  );
   return data.snapshots ?? [];
 }
 
@@ -18,7 +20,9 @@ export async function getAgentLogs(runId: string): Promise<AgentBrowserLog[]> {
 }
 
 export async function getAgentAudits(runId: string): Promise<AgentAuditLog[]> {
-  const data = await api.get<{ audits?: AgentAuditLog[] }>(`/api/agentcreator/agent/${runId}/audits`);
+  const data = await api.get<{ audits?: AgentAuditLog[] }>(
+    `/api/agentcreator/agent/${runId}/audits`
+  );
   return data.audits ?? [];
 }
 
@@ -30,6 +34,6 @@ export async function deleteAgentRun(runId: string, force: boolean = false): Pro
 
 export async function deleteCompletedAgentRuns(): Promise<void> {
   await api.delete('/api/agentcreator/agent', {
-    params: { scope: 'terminal' }
+    params: { scope: 'terminal' },
   });
 }

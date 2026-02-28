@@ -1,8 +1,5 @@
 'use client';
 
- 
- 
-
 import React from 'react';
 
 import { Button, FormSection } from '@/shared/ui';
@@ -13,9 +10,7 @@ import { useSettingsState, useSettingsActions } from '../context/hooks/useSettin
 
 export function ParserTuningSection(): React.JSX.Element {
   const { isParserTuningOpen } = useSettingsState();
-  const {
-    setIsParserTuningOpen,
-  } = useSettingsActions();
+  const { setIsParserTuningOpen } = useSettingsActions();
 
   return (
     <FormSection
@@ -23,7 +18,7 @@ export function ParserTuningSection(): React.JSX.Element {
       description='Quick-edit boundary and subsection parser rules directly from Prompt Exploder (stored as Validation Patterns).'
       variant='subtle'
       className='p-4'
-      actions={(
+      actions={
         <Button
           type='button'
           variant='outline'
@@ -34,7 +29,7 @@ export function ParserTuningSection(): React.JSX.Element {
         >
           {isParserTuningOpen ? 'Collapse' : 'Expand'}
         </Button>
-      )}
+      }
     >
       {isParserTuningOpen ? (
         <PromptExploderParserTuningProvider>

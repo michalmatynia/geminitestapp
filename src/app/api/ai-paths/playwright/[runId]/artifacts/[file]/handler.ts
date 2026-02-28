@@ -16,8 +16,7 @@ import { assertPlaywrightRunAccess } from '../../../access';
 const guessContentType = (fileName: string): string => {
   const normalized = fileName.toLowerCase();
   if (normalized.endsWith('.png')) return 'image/png';
-  if (normalized.endsWith('.jpg') || normalized.endsWith('.jpeg'))
-    return 'image/jpeg';
+  if (normalized.endsWith('.jpg') || normalized.endsWith('.jpeg')) return 'image/jpeg';
   if (normalized.endsWith('.webm')) return 'video/webm';
   if (normalized.endsWith('.html')) return 'text/html; charset=utf-8';
   if (normalized.endsWith('.json')) return 'application/json; charset=utf-8';
@@ -33,7 +32,7 @@ const toInlineDisposition = (fileName: string): string => {
 export async function GET_handler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
-  params: { runId: string; file: string },
+  params: { runId: string; file: string }
 ): Promise<Response> {
   const { access, isInternal } = await requireAiPathsAccessOrInternal(req);
   if (!isInternal) {
@@ -60,8 +59,7 @@ export async function GET_handler(
     throw notFoundError('Playwright artifact not found.', { runId, file });
   }
 
-  const contentType =
-    artifact.artifact.mimeType?.trim() || guessContentType(file);
+  const contentType = artifact.artifact.mimeType?.trim() || guessContentType(file);
   return new NextResponse(new Uint8Array(artifact.content), {
     headers: {
       'Content-Type': contentType,

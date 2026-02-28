@@ -1,4 +1,5 @@
-export const PROMPT_EXPLODER_RGB_LITERAL_RE = /RGB\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)/i;
+export const PROMPT_EXPLODER_RGB_LITERAL_RE =
+  /RGB\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)/i;
 
 export const clampRgb = (value: number): number => Math.max(0, Math.min(255, Math.round(value)));
 
@@ -13,9 +14,7 @@ export const extractRgbLiteral = (text: string): [number, number, number] | null
 };
 
 export const rgbToHex = ([red, green, blue]: [number, number, number]): string =>
-  `#${[red, green, blue]
-    .map((value) => clampRgb(value).toString(16).padStart(2, '0'))
-    .join('')}`;
+  `#${[red, green, blue].map((value) => clampRgb(value).toString(16).padStart(2, '0')).join('')}`;
 
 export const hexToRgb = (value: string): [number, number, number] | null => {
   const normalized = value.trim();
@@ -29,10 +28,7 @@ export const hexToRgb = (value: string): [number, number, number] | null => {
   ];
 };
 
-export const replaceRgbLiteral = (
-  text: string,
-  rgb: [number, number, number]
-): string => {
+export const replaceRgbLiteral = (text: string, rgb: [number, number, number]): string => {
   return text.replace(
     PROMPT_EXPLODER_RGB_LITERAL_RE,
     `RGB(${clampRgb(rgb[0])},${clampRgb(rgb[1])},${clampRgb(rgb[2])})`

@@ -205,10 +205,7 @@ describe('ai-paths-slo-notifier', () => {
     process.env['AI_PATHS_SLO_COOLDOWN_SECONDS'] = '60';
 
     const redis = {
-      set: vi
-        .fn()
-        .mockResolvedValueOnce('OK')
-        .mockResolvedValueOnce(null),
+      set: vi.fn().mockResolvedValueOnce('OK').mockResolvedValueOnce(null),
       del: vi.fn().mockResolvedValue(1),
     };
     vi.mocked(getRedisConnection).mockReturnValue(redis as any);
@@ -233,7 +230,10 @@ describe('ai-paths-slo-notifier', () => {
     process.env['AI_PATHS_SLO_WEBHOOK_URL'] = 'http://webhook.test';
     process.env['AI_PATHS_SLO_COOLDOWN_SECONDS'] = '60';
 
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 503, statusText: 'Down' }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: false, status: 503, statusText: 'Down' })
+    );
 
     const redis = {
       set: vi.fn().mockResolvedValue('OK'),

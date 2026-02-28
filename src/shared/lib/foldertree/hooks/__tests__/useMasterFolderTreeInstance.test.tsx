@@ -172,7 +172,7 @@ describe('useMasterFolderTreeInstance expansion sync', () => {
         instance: 'case_resolver_cases',
         nodes: [buildNode('folder-a')],
         adapter: undefined,
-      }),
+      })
     );
 
     await waitFor(() => {
@@ -230,7 +230,7 @@ describe('useMasterFolderTreeInstance expansion sync', () => {
         instance: 'case_resolver_cases',
         nodes: [buildNode('folder-a')],
         adapter: undefined,
-      }),
+      })
     );
 
     await waitFor(() => {
@@ -264,7 +264,7 @@ describe('useMasterFolderTreeInstance expansion sync', () => {
         }),
       {
         initialProps: { externalExpanded: ['folder-a'] },
-      },
+      }
     );
 
     await waitFor(() => {

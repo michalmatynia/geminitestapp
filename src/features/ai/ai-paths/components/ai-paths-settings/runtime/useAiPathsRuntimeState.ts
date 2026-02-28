@@ -71,7 +71,22 @@ export function useAiPathsRuntimeState() {
   const normalizeNodeStatus = useCallback((value: unknown): AiPathRuntimeNodeStatus | null => {
     if (!value || typeof value !== 'string') return null;
     const s = value.toLowerCase();
-    if (s === 'idle' || s === 'queued' || s === 'running' || s === 'completed' || s === 'failed' || s === 'canceled' || s === 'cancelled' || s === 'cached' || s === 'polling' || s === 'waiting_callback' || s === 'advance_pending' || s === 'blocked' || s === 'skipped' || s === 'timeout') {
+    if (
+      s === 'idle' ||
+      s === 'queued' ||
+      s === 'running' ||
+      s === 'completed' ||
+      s === 'failed' ||
+      s === 'canceled' ||
+      s === 'cancelled' ||
+      s === 'cached' ||
+      s === 'polling' ||
+      s === 'waiting_callback' ||
+      s === 'advance_pending' ||
+      s === 'blocked' ||
+      s === 'skipped' ||
+      s === 'timeout'
+    ) {
       return s as AiPathRuntimeNodeStatus;
     }
     return null;
@@ -79,21 +94,35 @@ export function useAiPathsRuntimeState() {
 
   const formatStatusLabel = useCallback((status: AiPathRuntimeNodeStatus): string => {
     switch (status) {
-      case 'idle': return 'Idle';
-      case 'queued': return 'Queued';
-      case 'running': return 'Running';
-      case 'completed': return 'Completed';
-      case 'failed': return 'Failed';
+      case 'idle':
+        return 'Idle';
+      case 'queued':
+        return 'Queued';
+      case 'running':
+        return 'Running';
+      case 'completed':
+        return 'Completed';
+      case 'failed':
+        return 'Failed';
       case 'canceled':
-      case 'cancelled': return 'Cancelled';
-      case 'cached': return 'Cached';
-      case 'polling': return 'Polling';
-      case 'waiting_callback': return 'Waiting';
-      case 'advance_pending': return 'Processing';
-      case 'blocked': return 'Blocked';
-      case 'skipped': return 'Skipped';
-      case 'timeout': return 'Timeout';
-      default: return String(status);
+      case 'cancelled':
+        return 'Cancelled';
+      case 'cached':
+        return 'Cached';
+      case 'polling':
+        return 'Polling';
+      case 'waiting_callback':
+        return 'Waiting';
+      case 'advance_pending':
+        return 'Processing';
+      case 'blocked':
+        return 'Blocked';
+      case 'skipped':
+        return 'Skipped';
+      case 'timeout':
+        return 'Timeout';
+      default:
+        return String(status);
     }
   }, []);
 
@@ -105,8 +134,18 @@ export function useAiPathsRuntimeState() {
       if (normalizedStatus === 'running') {
         nodeStartTimesRef.current[input.nodeId] = performance.now();
       }
-      const TERMINAL_STATUSES: ReadonlySet<string> = new Set(['completed', 'cached', 'failed', 'canceled', 'timeout', 'skipped']);
-      if (TERMINAL_STATUSES.has(normalizedStatus) && nodeStartTimesRef.current[input.nodeId] != null) {
+      const TERMINAL_STATUSES: ReadonlySet<string> = new Set([
+        'completed',
+        'cached',
+        'failed',
+        'canceled',
+        'timeout',
+        'skipped',
+      ]);
+      if (
+        TERMINAL_STATUSES.has(normalizedStatus) &&
+        nodeStartTimesRef.current[input.nodeId] != null
+      ) {
         const dur = Math.round(performance.now() - nodeStartTimesRef.current[input.nodeId]!);
         delete nodeStartTimesRef.current[input.nodeId];
         setNodeDurations((prev) => ({ ...prev, [input.nodeId]: dur }));
@@ -123,7 +162,9 @@ export function useAiPathsRuntimeState() {
         source: input.source,
         kind: input.kind ?? 'node_status',
         level: input.level ?? 'info',
-        message: input.message ?? `Node ${input.nodeTitle ?? input.nodeId} is ${formatStatusLabel(normalizedStatus)}.`,
+        message:
+          input.message ??
+          `Node ${input.nodeTitle ?? input.nodeId} is ${formatStatusLabel(normalizedStatus)}.`,
         ...(input.runId !== undefined ? { runId: input.runId } : {}),
         ...(input.runStartedAt !== undefined ? { runStartedAt: input.runStartedAt } : {}),
         nodeId: input.nodeId,
@@ -138,7 +179,10 @@ export function useAiPathsRuntimeState() {
   );
 
   const settleTransientNodeStatuses = useCallback(
-    (terminalStatus: 'completed' | 'failed' | 'canceled', currentOutputs: Record<string, unknown> = {}): void => {
+    (
+      terminalStatus: 'completed' | 'failed' | 'canceled',
+      currentOutputs: Record<string, unknown> = {}
+    ): void => {
       const currentStatuses = runtimeNodeStatusesRef.current;
       const nextStatuses: AiPathRuntimeNodeStatusMap = { ...currentStatuses };
       const candidateNodeIds = new Set<string>([

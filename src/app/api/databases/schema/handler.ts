@@ -3,12 +3,12 @@ import path from 'node:path';
 
 import { NextRequest, NextResponse } from 'next/server';
 
-import type { 
-  FieldInfoDto as FieldInfo, 
-  CollectionSchemaDto as CollectionSchema, 
+import type {
+  FieldInfoDto as FieldInfo,
+  CollectionSchemaDto as CollectionSchema,
   SchemaProviderDto as SchemaProvider,
   SchemaResponseDto as SchemaResponse,
-  SchemaResponsePayloadDto as SchemaResponsePayload
+  SchemaResponsePayloadDto as SchemaResponsePayload,
 } from '@/shared/contracts/database';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
@@ -91,9 +91,7 @@ const stripSchemaComments = (schema: string): string => {
     .join('\n');
 };
 
-const normalizePrismaFieldType = (
-  rawType: string
-): { type: string; isRequired: boolean } => {
+const normalizePrismaFieldType = (rawType: string): { type: string; isRequired: boolean } => {
   const isList = rawType.endsWith('[]');
   const isOptional = rawType.endsWith('?');
   const baseType = rawType.replace(/\?|\[\]/g, '');
@@ -141,7 +139,9 @@ const parsePrismaSchemaModels = (schemaText: string): CollectionSchema[] => {
 const getPrismaDmmf = (): DmmfDatamodel | null => {
   if (!process.env['DATABASE_URL']) return null;
   try {
-    return (prisma as unknown as { _dmmf?: { datamodel?: DmmfDatamodel } })._dmmf?.datamodel ?? null;
+    return (
+      (prisma as unknown as { _dmmf?: { datamodel?: DmmfDatamodel } })._dmmf?.datamodel ?? null
+    );
   } catch {
     return null;
   }
@@ -149,8 +149,9 @@ const getPrismaDmmf = (): DmmfDatamodel | null => {
 
 async function getMongoSchema(includeCounts = false): Promise<SchemaResponse> {
   const db = await getMongoDb();
-  const collectionInfos = (await db.listCollections().toArray())
-    .filter((info) => !info.name.startsWith('system.'));
+  const collectionInfos = (await db.listCollections().toArray()).filter(
+    (info) => !info.name.startsWith('system.')
+  );
   const collections = await mapWithConcurrency(
     collectionInfos,
     MONGO_SCHEMA_CONCURRENCY,
@@ -175,7 +176,7 @@ async function getMongoSchema(includeCounts = false): Promise<SchemaResponse> {
             typeSet.add('date');
           } else if (
             typeof value === 'object' &&
-          (value as { constructor?: { name?: string } })?.constructor?.name === 'ObjectId'
+            (value as { constructor?: { name?: string } })?.constructor?.name === 'ObjectId'
           ) {
             typeSet.add('ObjectId');
           } else {
@@ -188,7 +189,7 @@ async function getMongoSchema(includeCounts = false): Promise<SchemaResponse> {
       for (const [name, types] of fieldTypes) {
         const typeArray = Array.from(types);
         const fieldType =
-        typeArray.length === 1 ? (typeArray[0] ?? 'unknown') : typeArray.join(' | ');
+          typeArray.length === 1 ? (typeArray[0] ?? 'unknown') : typeArray.join(' | ');
         const fieldInfo: FieldInfo = {
           name,
           type: fieldType,
@@ -212,7 +213,7 @@ async function getMongoSchema(includeCounts = false): Promise<SchemaResponse> {
         try {
           entry.documentCount = await coll.estimatedDocumentCount();
         } catch {
-        // Best-effort count
+          // Best-effort count
         }
       }
 
@@ -248,12 +249,14 @@ async function getPrismaSchema(includeCounts = false): Promise<SchemaResponse> {
 
         if (includeCounts) {
           const key = model.name.charAt(0).toLowerCase() + model.name.slice(1);
-          const prismaModel = (prisma as unknown as Record<string, { count?: (args?: unknown) => Promise<number> }>)[key];
+          const prismaModel = (
+            prisma as unknown as Record<string, { count?: (args?: unknown) => Promise<number> }>
+          )[key];
           if (prismaModel?.count) {
             try {
               entry.documentCount = await prismaModel.count();
             } catch {
-            // Best-effort count
+              // Best-effort count
             }
           }
         }
@@ -279,7 +282,7 @@ const enrichCollections = (
   provider: SchemaProvider
 ): Array<CollectionSchema & { provider: SchemaProvider }> => {
   const collections: CollectionSchema[] = Array.isArray(schema.collections)
-    ? (schema.collections)
+    ? schema.collections
     : Object.values(schema.collections as Record<string, CollectionSchema>);
 
   return collections.map((collection: CollectionSchema) => ({

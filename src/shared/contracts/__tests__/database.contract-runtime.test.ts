@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  databasePreviewRequestSchema,
-  databaseTypeSchema,
-} from '@/shared/contracts/database';
+import { databasePreviewRequestSchema, databaseTypeSchema } from '@/shared/contracts/database';
 
 describe('database contract runtime', () => {
   it('parses valid database types', () => {

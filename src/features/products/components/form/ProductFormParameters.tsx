@@ -99,10 +99,7 @@ export default function ProductFormParameters(): React.JSX.Element {
     removeParameterValue,
   } = useProductFormParameters();
 
-  const {
-    selectedCatalogIds,
-    filteredLanguages,
-  } = useProductFormMetadata();
+  const { selectedCatalogIds, filteredLanguages } = useProductFormMetadata();
 
   const catalogLanguages = useMemo((): CatalogLanguageOption[] => {
     const byCode = new Map<string, CatalogLanguageOption>();
@@ -129,7 +126,8 @@ export default function ProductFormParameters(): React.JSX.Element {
     [catalogLanguages]
   );
   const firstLanguageTab = languageTabValues[0] ?? 'default';
-  const [activeParameterLanguageTab, setActiveParameterLanguageTab] = useState<string>(firstLanguageTab);
+  const [activeParameterLanguageTab, setActiveParameterLanguageTab] =
+    useState<string>(firstLanguageTab);
   useEffect(() => {
     setActiveParameterLanguageTab((prev: string) =>
       prev && languageTabValues.includes(prev) ? prev : firstLanguageTab
@@ -139,10 +137,10 @@ export default function ProductFormParameters(): React.JSX.Element {
     activeParameterLanguageTab && languageTabValues.includes(activeParameterLanguageTab)
       ? activeParameterLanguageTab
       : firstLanguageTab;
-  const activeParameterLanguage =
-    catalogLanguages.find((language: CatalogLanguageOption) => language.code === resolvedActiveParameterLanguageTab) ??
-    catalogLanguages[0] ??
-    { code: 'default', label: 'Default' };
+  const activeParameterLanguage = catalogLanguages.find(
+    (language: CatalogLanguageOption) => language.code === resolvedActiveParameterLanguageTab
+  ) ??
+    catalogLanguages[0] ?? { code: 'default', label: 'Default' };
   const preferredLocale = primaryLanguageCode;
   const selectedIds = useMemo(
     () => parameterValues.map((entry: ProductParameterValue) => entry.parameterId).filter(Boolean),
@@ -151,8 +149,9 @@ export default function ProductFormParameters(): React.JSX.Element {
   const hasParameterValueByLanguage = useMemo((): Record<string, boolean> => {
     const result: Record<string, boolean> = {};
     languageTabValues.forEach((languageCode: string) => {
-      result[languageCode] = parameterValues.some((entry: ProductParameterValue): boolean =>
-        getParameterLanguageValue(entry, languageCode, primaryLanguageCode).trim().length > 0
+      result[languageCode] = parameterValues.some(
+        (entry: ProductParameterValue): boolean =>
+          getParameterLanguageValue(entry, languageCode, primaryLanguageCode).trim().length > 0
       );
     });
     return result;
@@ -236,7 +235,7 @@ export default function ProductFormParameters(): React.JSX.Element {
                   !selectedIds.includes(param.id) || param.id === entry.parameterId
               );
               const selectedParameter = entry.parameterId
-                ? parameterById.get(entry.parameterId) ?? null
+                ? (parameterById.get(entry.parameterId) ?? null)
                 : null;
               const selectorType = selectedParameter?.selectorType ?? 'text';
               const optionLabels = Array.isArray(selectedParameter?.optionLabels)
@@ -251,20 +250,13 @@ export default function ProductFormParameters(): React.JSX.Element {
                 )
               );
 
-              if (
-                entry.value &&
-                needsOptions &&
-                !normalizedOptionLabels.includes(entry.value)
-              ) {
+              if (entry.value && needsOptions && !normalizedOptionLabels.includes(entry.value)) {
                 normalizedOptionLabels.unshift(entry.value);
               }
               const getLanguageValue = (languageCode: string): string => {
                 return getParameterLanguageValue(entry, languageCode, primaryLanguageCode);
               };
-              const handleLanguageValueChange = (
-                languageCode: string,
-                nextValue: string
-              ): void => {
+              const handleLanguageValueChange = (languageCode: string, nextValue: string): void => {
                 updateParameterValueByLanguage(index, languageCode, nextValue);
                 if (normalizeLanguageCode(languageCode) === primaryLanguageCode) {
                   updateParameterValue(index, nextValue);
@@ -278,8 +270,7 @@ export default function ProductFormParameters(): React.JSX.Element {
                 optionLookup.set(label.trim().toLowerCase(), label);
               });
               const checklistValues = currentChecklistValues.map(
-                (value: string): string =>
-                  optionLookup.get(value.trim().toLowerCase()) ?? value
+                (value: string): string => optionLookup.get(value.trim().toLowerCase()) ?? value
               );
               const checklistValueKeys = new Set<string>(
                 checklistValues.map((value: string) => value.trim().toLowerCase())
@@ -302,7 +293,8 @@ export default function ProductFormParameters(): React.JSX.Element {
                 >
                   <div className='flex flex-col gap-3 md:flex-row md:items-center'>
                     <div className='w-full md:w-64'>
-                      <SelectSimple size='sm'
+                      <SelectSimple
+                        size='sm'
                         value={entry.parameterId}
                         onValueChange={(value: string) => updateParameterId(index, value)}
                         options={availableOptions.map((param: ProductParameter) => ({
@@ -322,7 +314,10 @@ export default function ProductFormParameters(): React.JSX.Element {
                           <Textarea
                             value={getLanguageValue(activeParameterLanguage.code)}
                             onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
-                              handleLanguageValueChange(activeParameterLanguage.code, event.target.value)
+                              handleLanguageValueChange(
+                                activeParameterLanguage.code,
+                                event.target.value
+                              )
                             }
                             placeholder={`Value (${activeParameterLanguage.label})`}
                             disabled={!entry.parameterId}
@@ -342,10 +337,7 @@ export default function ProductFormParameters(): React.JSX.Element {
                                 const radioId = `product-param-${index}-${activeParameterLanguage.code}-${optionLabel}`;
                                 return (
                                   <div key={optionLabel} className='flex items-center gap-2'>
-                                    <RadioGroupItem
-                                      value={optionLabel}
-                                      id={radioId}
-                                    />
+                                    <RadioGroupItem value={optionLabel} id={radioId} />
                                     <Label htmlFor={radioId} className='text-sm text-gray-200'>
                                       {optionLabel}
                                     </Label>
@@ -358,7 +350,9 @@ export default function ProductFormParameters(): React.JSX.Element {
                           <ToggleRow
                             label={normalizedOptionLabels[0] ?? 'Enabled'}
                             checked={((): boolean => {
-                              const currentValue = getLanguageValue(activeParameterLanguage.code).trim().toLowerCase();
+                              const currentValue = getLanguageValue(activeParameterLanguage.code)
+                                .trim()
+                                .toLowerCase();
                               const optionValue =
                                 normalizedOptionLabels[0]?.trim().toLowerCase() ?? '';
                               return (
@@ -372,9 +366,7 @@ export default function ProductFormParameters(): React.JSX.Element {
                             onCheckedChange={(checked: boolean): void =>
                               handleLanguageValueChange(
                                 activeParameterLanguage.code,
-                                checked
-                                  ? normalizedOptionLabels[0] ?? 'true'
-                                  : ''
+                                checked ? (normalizedOptionLabels[0] ?? 'true') : ''
                               )
                             }
                             disabled={!entry.parameterId}
@@ -394,9 +386,9 @@ export default function ProductFormParameters(): React.JSX.Element {
                                       const nextValues = checked
                                         ? [...checklistValues, optionLabel]
                                         : checklistValues.filter(
-                                          (value: string) =>
-                                            value.trim().toLowerCase() !== optionKey
-                                        );
+                                            (value: string) =>
+                                              value.trim().toLowerCase() !== optionKey
+                                          );
                                       handleLanguageValueChange(
                                         activeParameterLanguage.code,
                                         formatChecklistValues(
@@ -437,7 +429,10 @@ export default function ProductFormParameters(): React.JSX.Element {
                           <Input
                             value={getLanguageValue(activeParameterLanguage.code)}
                             onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                              handleLanguageValueChange(activeParameterLanguage.code, event.target.value)
+                              handleLanguageValueChange(
+                                activeParameterLanguage.code,
+                                event.target.value
+                              )
                             }
                             placeholder={`Value (${activeParameterLanguage.label})`}
                             disabled={!entry.parameterId}
@@ -459,7 +454,8 @@ export default function ProductFormParameters(): React.JSX.Element {
                   {needsOptions && normalizedOptionLabels.length === 0 && entry.parameterId ? (
                     <Alert variant='warning' className='py-2'>
                       <p className='text-xs'>
-                        This parameter has no option labels configured yet. Add labels in Product Settings.
+                        This parameter has no option labels configured yet. Add labels in Product
+                        Settings.
                       </p>
                     </Alert>
                   ) : null}

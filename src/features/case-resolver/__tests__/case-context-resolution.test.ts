@@ -17,10 +17,10 @@ import {
   stripCaseContextQueryParams,
 } from '@/features/case-resolver/hooks/useCaseResolverState.helpers.requested-context';
 import { createCaseResolverFile } from '@/features/case-resolver/settings';
-import type { 
-  CaseResolverFile, 
-  CaseResolverFolderRecord, 
-  CaseResolverWorkspace 
+import type {
+  CaseResolverFile,
+  CaseResolverFolderRecord,
+  CaseResolverWorkspace,
 } from '@/shared/contracts/case-resolver';
 
 const buildFilesById = (files: CaseResolverFile[]): Map<string, CaseResolverFile> =>
@@ -67,7 +67,7 @@ describe('case resolver case context resolution', () => {
         activeCaseId,
         requestedFileId: 'case-missing',
         requestedCaseStatus: 'loading',
-      }),
+      })
     ).toBe(false);
   });
 
@@ -92,7 +92,7 @@ describe('case resolver case context resolution', () => {
         activeCaseId,
         requestedFileId: caseFile.id,
         requestedCaseStatus: 'ready',
-      }),
+      })
     ).toBe(true);
   });
 
@@ -117,7 +117,7 @@ describe('case resolver case context resolution', () => {
         activeCaseId,
         requestedFileId: null,
         requestedCaseStatus: 'ready',
-      }),
+      })
     ).toBe(false);
   });
 
@@ -137,7 +137,7 @@ describe('case resolver case context resolution', () => {
       resolveRequestedCaseIssueAfterRefresh({
         refreshSucceeded: true,
         hasRequestedFileAfterRefresh: false,
-      }),
+      })
     ).toBe('requested_file_missing');
   });
 
@@ -146,15 +146,15 @@ describe('case resolver case context resolution', () => {
       resolveRequestedCaseIssueAfterRefresh({
         refreshSucceeded: false,
         hasRequestedFileAfterRefresh: false,
-      }),
+      })
     ).toBe('workspace_unavailable');
   });
 
   it('strips case-context query parameters and preserves unrelated params', () => {
     expect(
       stripCaseContextQueryParams(
-        'fileId=case-a&openEditor=1&promptExploderSessionId=session-1&tab=tree&view=documents',
-      ),
+        'fileId=case-a&openEditor=1&promptExploderSessionId=session-1&tab=tree&view=documents'
+      )
     ).toBe('tab=tree&view=documents');
   });
 
@@ -171,7 +171,7 @@ describe('case resolver case context resolution', () => {
         attemptedRequestKey: requestKey,
         inFlightRequestKey: null,
         currentStatus: 'loading',
-      }),
+      })
     ).toBe(true);
   });
 
@@ -183,7 +183,7 @@ describe('case resolver case context resolution', () => {
         attemptedRequestKey: requestKey,
         inFlightRequestKey: requestKey,
         currentStatus: 'loading',
-      }),
+      })
     ).toBe(false);
   });
 
@@ -195,7 +195,7 @@ describe('case resolver case context resolution', () => {
         attemptedRequestKey: requestKey,
         inFlightRequestKey: null,
         currentStatus: 'missing',
-      }),
+      })
     ).toBe(false);
   });
 
@@ -208,7 +208,7 @@ describe('case resolver case context resolution', () => {
         requestedCaseIssue: 'requested_file_missing',
         requestKey,
         lastQueuedRequestKey: null,
-      }),
+      })
     ).toBe(true);
     expect(
       shouldQueueRequestedContextAutoClear({
@@ -217,7 +217,7 @@ describe('case resolver case context resolution', () => {
         requestedCaseIssue: 'requested_file_missing',
         requestKey,
         lastQueuedRequestKey: requestKey,
-      }),
+      })
     ).toBe(false);
   });
 
@@ -230,7 +230,7 @@ describe('case resolver case context resolution', () => {
         requestedCaseIssue: null,
         requestKey,
         lastQueuedRequestKey: null,
-      }),
+      })
     ).toBe(false);
   });
 
@@ -243,7 +243,7 @@ describe('case resolver case context resolution', () => {
         requestedCaseIssue: 'workspace_unavailable',
         requestKey,
         lastQueuedRequestKey: null,
-      }),
+      })
     ).toBe(false);
   });
 
@@ -255,7 +255,7 @@ describe('case resolver case context resolution', () => {
         startedAtMs: 10_000,
         nowMs: 14_000,
         watchdogMs: 5_000,
-      }),
+      })
     ).toBe(true);
     expect(
       hasValidRequestedContextInFlight({
@@ -264,7 +264,7 @@ describe('case resolver case context resolution', () => {
         startedAtMs: 10_000,
         nowMs: 16_500,
         watchdogMs: 5_000,
-      }),
+      })
     ).toBe(false);
     expect(
       hasValidRequestedContextInFlight({
@@ -273,7 +273,7 @@ describe('case resolver case context resolution', () => {
         startedAtMs: 10_000,
         nowMs: 12_000,
         watchdogMs: 5_000,
-      }),
+      })
     ).toBe(false);
   });
 
@@ -286,7 +286,7 @@ describe('case resolver case context resolution', () => {
           { path: 'case-a/folder', ownerCaseId: 'case-a' } as CaseResolverFolderRecord,
           { path: 'case-b/folder', ownerCaseId: 'case-b' } as CaseResolverFolderRecord,
         ],
-      }),
+      })
     ).toBe('case-a/folder');
   });
 
@@ -299,7 +299,7 @@ describe('case resolver case context resolution', () => {
           { path: 'case-a/folder', ownerCaseId: 'case-a' } as CaseResolverFolderRecord,
           { path: 'case-b/folder', ownerCaseId: 'case-b' } as CaseResolverFolderRecord,
         ],
-      }),
+      })
     ).toBe('');
   });
 
@@ -454,7 +454,9 @@ describe('case resolver case context resolution', () => {
       ],
     };
 
-    expect(serializeWorkspaceForUnsavedChangesCheck(baseWorkspace as CaseResolverWorkspace)).not.toBe(
+    expect(
+      serializeWorkspaceForUnsavedChangesCheck(baseWorkspace as CaseResolverWorkspace)
+    ).not.toBe(
       serializeWorkspaceForUnsavedChangesCheck(renamedDocumentWorkspace as CaseResolverWorkspace)
     );
   });

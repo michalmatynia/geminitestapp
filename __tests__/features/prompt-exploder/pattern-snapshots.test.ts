@@ -1,4 +1,4 @@
-import type { PromptValidationRule } from '@/shared/lib/prompt-engine/settings';
+import type { PromptValidationRule } from '@/features/prompt-engine/settings';
 import {
   buildPatternSnapshot,
   ensurePromptExploderScopeOnRules,
@@ -11,19 +11,20 @@ import type { PromptExploderPatternSnapshot } from '@/shared/contracts/prompt-ex
 const buildRule = (
   id: string,
   overrides: Partial<PromptValidationRule> = {}
-): PromptValidationRule => ({
-  kind: 'regex',
-  id,
-  enabled: true,
-  severity: 'info',
-  title: id,
-  description: null,
-  pattern: '\\btest\\b',
-  flags: 'mi',
-  message: id,
-  similar: [],
-  ...overrides,
-} as PromptValidationRule);
+): PromptValidationRule =>
+  ({
+    kind: 'regex',
+    id,
+    enabled: true,
+    severity: 'info',
+    title: id,
+    description: null,
+    pattern: '\\btest\\b',
+    flags: 'mi',
+    message: id,
+    similar: [],
+    ...overrides,
+  }) as PromptValidationRule;
 
 describe('prompt exploder pattern snapshots', () => {
   it('builds snapshot with fallback name and serialized rules', () => {
@@ -107,10 +108,7 @@ describe('prompt exploder pattern snapshots', () => {
       buildRule('rule.two', { appliesToScopes: ['image_studio_prompt'] }),
     ]);
     expect(normalized[0]?.appliesToScopes).toEqual(['global', 'prompt_exploder']);
-    expect(normalized[1]?.appliesToScopes).toEqual([
-      'image_studio_prompt',
-      'prompt_exploder',
-    ]);
+    expect(normalized[1]?.appliesToScopes).toEqual(['image_studio_prompt', 'prompt_exploder']);
   });
 
   it('merges restored rules for case resolver scope without removing image stack rules', () => {

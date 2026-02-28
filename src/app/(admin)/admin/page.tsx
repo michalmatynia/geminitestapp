@@ -5,11 +5,7 @@ import { useSystemActivity } from '@/features/observability/hooks/useLogQueries'
 import { useHealthStatus } from '@/shared/hooks/useHealthStatus';
 import { PageLayout } from '@/shared/ui';
 
-import {
-  QuickAccessPanel,
-  RecentActivityPanel,
-  SystemHealthPanel,
-} from './dashboard-panels';
+import { QuickAccessPanel, RecentActivityPanel, SystemHealthPanel } from './dashboard-panels';
 
 export default function AdminDashboard(): JSX.Element {
   const [recentActivityOpen, setRecentActivityOpen] = useState(true);

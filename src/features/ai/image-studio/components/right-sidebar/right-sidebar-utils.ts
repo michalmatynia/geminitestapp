@@ -1,4 +1,4 @@
-import { type CanvasResizeDirection } from '../../utils/canvas-resize';
+import { type CanvasResizeDirection } from '@/shared/lib/ai/image-studio/utils/canvas-resize';
 import type { VectorShape, VectorTool } from '@/shared/lib/vector-drawing';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
@@ -9,11 +9,11 @@ import {
   type MaskShapeForExport,
 } from '../generation-toolbar/GenerationToolbarImageUtils';
 
-import type { RequestPreviewImage } from '../../utils/run-request-preview';
+import type { RequestPreviewImage } from '@/shared/lib/ai/image-studio/utils/run-request-preview';
 import type {
   ImageStudioSequenceCropStep,
   ImageStudioSequenceStep,
-} from '../../utils/studio-settings';
+} from '@/shared/lib/ai/image-studio/utils/studio-settings';
 
 export const CHARS_PER_TOKEN_ESTIMATE = 4;
 export const ACTION_HISTORY_MAX_STEPS = 50;
@@ -32,10 +32,7 @@ export const parseCanvasDimensionInput = (value: string): number | null => {
   return normalized;
 };
 
-export const formatCanvasSizeLabel = (
-  width: number | null,
-  height: number | null
-): string => {
+export const formatCanvasSizeLabel = (width: number | null, height: number | null): string => {
   if (
     typeof width !== 'number' ||
     !Number.isFinite(width) ||
@@ -181,7 +178,7 @@ const MODEL_COST_PROFILES: Array<{ prefix: string; profile: ModelCostProfile }> 
   { prefix: 'dall-e-2', profile: { imageUsdPerImage: 0.02, inputUsdPer1KTokens: 0.0 } },
 ];
 
-export const cloneSerializableValue = <T,>(value: T): T => {
+export const cloneSerializableValue = <T>(value: T): T => {
   const seen = new WeakSet<object>();
   const serialized = JSON.stringify(value, (_key: string, candidate: unknown): unknown => {
     if (typeof candidate === 'bigint') return candidate.toString();
@@ -227,7 +224,7 @@ export const collectSequenceMaskPolygons = (
 const clamp01 = (value: number): number => Math.max(0, Math.min(1, value));
 
 const toCropRectFromPolygons = (
-  polygons: Array<Array<{ x: number; y: number }>>,
+  polygons: Array<Array<{ x: number; y: number }>>
 ): { x: number; y: number; width: number; height: number } | null => {
   if (!Array.isArray(polygons) || polygons.length === 0) return null;
   const points = polygons.flat();
@@ -262,7 +259,7 @@ const resolveSelectedShapeCropStep = (
     sourceWidth: number;
     sourceHeight: number;
     imageContentFrame: ImageContentFrame | null;
-  },
+  }
 ): { step: ImageStudioSequenceCropStep; error: string | null } => {
   if (step.config.kind !== 'selected_shape') {
     return { step, error: null };
@@ -290,7 +287,7 @@ const resolveSelectedShapeCropStep = (
     params.sourceHeight,
     {
       imageContentFrame: params.imageContentFrame,
-    },
+    }
   );
   const cropRect = toCropRectFromPolygons(polygons);
   if (!cropRect) {
@@ -322,7 +319,7 @@ export const resolveSequenceStepsForRun = (
     sourceWidth: number;
     sourceHeight: number;
     imageContentFrame: ImageContentFrame | null;
-  },
+  }
 ): {
   resolvedSteps: ImageStudioSequenceStep[];
   errors: string[];
@@ -354,9 +351,7 @@ export const estimatePromptTokens = (prompt: string): number => {
 export const resolveModelCostProfile = (model: string): ModelCostProfile => {
   const normalizedModel = model.trim().toLowerCase();
   if (!normalizedModel) return DEFAULT_MODEL_COST_PROFILE;
-  const matched = MODEL_COST_PROFILES.find(({ prefix }) =>
-    normalizedModel.startsWith(prefix)
-  );
+  const matched = MODEL_COST_PROFILES.find(({ prefix }) => normalizedModel.startsWith(prefix));
   return matched ? matched.profile : DEFAULT_MODEL_COST_PROFILE;
 };
 
@@ -364,10 +359,11 @@ export type StudioActionHistorySnapshot = {
   selectedFolder: string;
   selectedSlotId: string | null;
   workingSlotId: string | null;
-      previewMode: 'image' | '3d';
-      compositeAssetIds: string[];
-      tool: VectorTool;
-      canvasSelectionEnabled: boolean;  imageTransformMode: 'none' | 'move';
+  previewMode: 'image' | '3d';
+  compositeAssetIds: string[];
+  tool: VectorTool;
+  canvasSelectionEnabled: boolean;
+  imageTransformMode: 'none' | 'move';
   canvasImageOffset: { x: number; y: number };
   canvasBackgroundLayerEnabled: boolean;
   canvasBackgroundColor: string;
@@ -429,10 +425,12 @@ export const buildReferencePreviewImages = (
       const filepath = imageFileUrl || slotImageUrl;
       if (!filepath) return [];
       const slotName = typeof slot.name === 'string' ? slot.name.trim() : '';
-      return [{
-        kind: 'reference' as const,
-        id: slot.id,
-        name: slotName || slot.id || 'Reference card',
-        filepath,
-      }];
+      return [
+        {
+          kind: 'reference' as const,
+          id: slot.id,
+          name: slotName || slot.id || 'Reference card',
+          filepath,
+        },
+      ];
     });

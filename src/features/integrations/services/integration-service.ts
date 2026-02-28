@@ -43,7 +43,7 @@ export const integrationService: IntegrationRepository = {
       description: `Upserted integration ${result.name}`,
       entityId: result.id,
       entityType: 'integration',
-      metadata: { slug: result.slug }
+      metadata: { slug: result.slug },
     }).catch(() => {});
     return result;
   },
@@ -68,7 +68,7 @@ export const integrationService: IntegrationRepository = {
       description: `Created connection ${result.name}`,
       entityId: result.id,
       entityType: 'integration_connection',
-      metadata: { integrationId }
+      metadata: { integrationId },
     }).catch(() => {});
     return result;
   },
@@ -82,7 +82,7 @@ export const integrationService: IntegrationRepository = {
       description: `Updated connection ${result.name}`,
       entityId: result.id,
       entityType: 'integration_connection',
-      metadata: { changes: Object.keys(input) }
+      metadata: { changes: Object.keys(input) },
     }).catch(() => {});
     return result;
   },
@@ -92,7 +92,7 @@ export const integrationService: IntegrationRepository = {
       type: ActivityTypes.INTEGRATION.CONNECTION_DELETED,
       description: `Deleted connection ${id}`,
       entityId: id,
-      entityType: 'integration_connection'
+      entityType: 'integration_connection',
     }).catch(() => {});
   },
 };

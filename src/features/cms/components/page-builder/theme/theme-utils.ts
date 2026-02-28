@@ -26,7 +26,9 @@ export const normalizeAiString = (value: unknown): string | undefined => {
   return trimmed.length ? trimmed : undefined;
 };
 
-export const parseColorSchemePayload = (payload: unknown): { name?: string; colors: Partial<ColorSchemeColors> } | null => {
+export const parseColorSchemePayload = (
+  payload: unknown
+): { name?: string; colors: Partial<ColorSchemeColors> } | null => {
   if (!payload || typeof payload !== 'object') return null;
   const raw = payload as Record<string, unknown>;
   const name =
@@ -44,7 +46,10 @@ export const parseColorSchemePayload = (payload: unknown): { name?: string; colo
   const colors = colorsSource;
   const parsedRaw = {
     background: normalizeAiString(colors['background']) ?? normalizeAiString(colors['bg']),
-    surface: normalizeAiString(colors['surface']) ?? normalizeAiString(colors['layer']) ?? normalizeAiString(colors['card']),
+    surface:
+      normalizeAiString(colors['surface']) ??
+      normalizeAiString(colors['layer']) ??
+      normalizeAiString(colors['card']),
     text: normalizeAiString(colors['text']) ?? normalizeAiString(colors['foreground']),
     accent: normalizeAiString(colors['accent']) ?? normalizeAiString(colors['primary']),
     border: normalizeAiString(colors['border']) ?? normalizeAiString(colors['outline']),
@@ -85,7 +90,8 @@ export const applySavedThemePreset = (
     if (typography.headingFont) next.headingFont = typography.headingFont;
     if (typography.bodyFont) next.bodyFont = typography.bodyFont;
     if (Number.isFinite(typography.baseSize)) next.baseSize = typography.baseSize;
-    if (Number.isFinite(typography.headingWeight)) next.headingWeight = String(typography.headingWeight);
+    if (Number.isFinite(typography.headingWeight))
+      next.headingWeight = String(typography.headingWeight);
     if (Number.isFinite(typography.bodyWeight)) next.bodyWeight = String(typography.bodyWeight);
   }
 

@@ -23,10 +23,7 @@ import type {
 } from '@/shared/contracts/notes';
 import type { ListQuery, SingleQuery } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
-import {
-  createListQueryV2,
-  createSingleQueryV2,
-} from '@/shared/lib/query-factories-v2';
+import { createListQueryV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { noteKeys } from '@/shared/lib/query-key-exports';
 
 const NOTES_STALE_MS = 10_000;
@@ -37,7 +34,7 @@ type QueryOptions = {
 
 export function useNotebooks(
   _notebookId?: string,
-  options?: QueryOptions,
+  options?: QueryOptions
 ): ListQuery<NotebookRecord> {
   const queryKey = noteKeys.notebooks();
   return createListQueryV2({
@@ -61,7 +58,7 @@ export function useNotebooks(
 
 export function useNoteFolderTree(
   notebookId?: string,
-  options?: QueryOptions,
+  options?: QueryOptions
 ): ListQuery<CategoryRecord> {
   const queryKey = noteKeys.folderTree(notebookId);
   return createListQueryV2({
@@ -71,9 +68,7 @@ export function useNoteFolderTree(
         ? `/api/notes/categories/tree?notebookId=${encodeURIComponent(notebookId)}`
         : '/api/notes/categories/tree';
       const data = await api.get<CategoryRecord[]>(url);
-      return z
-        .array(noteCategoryWithChildrenSchema)
-        .parse(data) as unknown as CategoryRecord[];
+      return z.array(noteCategoryWithChildrenSchema).parse(data) as unknown as CategoryRecord[];
     },
     enabled: options?.enabled ?? true,
     staleTime: NOTES_STALE_MS,
@@ -88,10 +83,7 @@ export function useNoteFolderTree(
   });
 }
 
-export function useNoteTags(
-  notebookId?: string,
-  options?: QueryOptions,
-): ListQuery<TagRecord> {
+export function useNoteTags(notebookId?: string, options?: QueryOptions): ListQuery<TagRecord> {
   const queryKey = noteKeys.tags(notebookId);
   return createListQueryV2({
     queryKey,
@@ -115,10 +107,7 @@ export function useNoteTags(
   });
 }
 
-export function useNoteThemes(
-  notebookId?: string,
-  options?: QueryOptions,
-): ListQuery<ThemeRecord> {
+export function useNoteThemes(notebookId?: string, options?: QueryOptions): ListQuery<ThemeRecord> {
   const queryKey = noteKeys.themes(notebookId);
   return createListQueryV2({
     queryKey,
@@ -144,7 +133,7 @@ export function useNoteThemes(
 
 export function useNoteCategories(
   notebookId?: string | null,
-  options?: QueryOptions,
+  options?: QueryOptions
 ): ListQuery<CategoryRecord> {
   const queryKey = noteKeys.categories(notebookId);
   return createListQueryV2({
@@ -183,7 +172,7 @@ export interface FetchNotesParams {
 
 export function useNotes(
   params: FetchNotesParams,
-  options?: QueryOptions,
+  options?: QueryOptions
 ): ListQuery<NoteWithRelations> {
   const queryKey = noteKeys.list(params);
   return createListQueryV2({
@@ -196,9 +185,7 @@ export function useNotes(
       const data = await api.get<NoteWithRelations[]>('/api/notes', {
         params: queryParams,
       });
-      return z
-        .array(noteWithRelationsSchema)
-        .parse(data) as unknown as NoteWithRelations[];
+      return z.array(noteWithRelationsSchema).parse(data) as unknown as NoteWithRelations[];
     },
     enabled: options?.enabled ?? true,
     staleTime: NOTES_STALE_MS,
@@ -215,7 +202,7 @@ export function useNotes(
 
 export function useNote(
   noteId: string | null,
-  options?: QueryOptions,
+  options?: QueryOptions
 ): SingleQuery<NoteWithRelations | null> {
   const queryKey = noteKeys.detail(noteId || 'none');
   return createSingleQueryV2({
@@ -224,9 +211,7 @@ export function useNote(
     queryFn: async (): Promise<NoteWithRelations | null> => {
       if (!noteId) return null;
       const data = await api.get<NoteWithRelations>(`/api/notes/${noteId}`);
-      return noteWithRelationsSchema
-        .nullable()
-        .parse(data) as unknown as NoteWithRelations | null;
+      return noteWithRelationsSchema.nullable().parse(data) as unknown as NoteWithRelations | null;
     },
     staleTime: NOTES_STALE_MS,
     enabled: (options?.enabled ?? true) && !!noteId,
@@ -241,10 +226,7 @@ export function useNote(
   });
 }
 
-export function useNotesLookup(
-  noteIds: string[],
-  options?: QueryOptions,
-): ListQuery<RelatedNote> {
+export function useNotesLookup(noteIds: string[], options?: QueryOptions): ListQuery<RelatedNote> {
   const filteredIds = noteIds.filter(Boolean);
   const queryKey = noteKeys.lookup(filteredIds);
   return createListQueryV2({

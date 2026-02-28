@@ -12,10 +12,7 @@ import {
   type FilemakerPhoneNumberLink,
   type FilemakerPerson,
 } from './types';
-import {
-  normalizePhoneNumbers,
-  normalizeString,
-} from './filemaker-settings.helpers';
+import { normalizePhoneNumbers, normalizeString } from './filemaker-settings.helpers';
 
 export type FilemakerAddressFields = {
   street: string;
@@ -45,10 +42,7 @@ export const normalizeAddressFields = (value: {
 };
 
 export const formatFilemakerAddress = (
-  value: Pick<
-    FilemakerAddressFields,
-    'street' | 'streetNumber' | 'city' | 'postalCode' | 'country'
-  >
+  value: Pick<FilemakerAddressFields, 'street' | 'streetNumber' | 'city' | 'postalCode' | 'country'>
 ): string =>
   [
     [value.street, value.streetNumber]
@@ -266,8 +260,7 @@ export const createFilemakerPhoneNumberLink = (input: {
 }): FilemakerPhoneNumberLink => {
   const now = new Date().toISOString();
   const rawPartyKind = normalizeString(input.partyKind).toLowerCase();
-  const partyKind: FilemakerPartyKind =
-    rawPartyKind === 'organization' ? 'organization' : 'person';
+  const partyKind: FilemakerPartyKind = rawPartyKind === 'organization' ? 'organization' : 'person';
   return {
     id: normalizeString(input.id),
     phoneNumberId: normalizeString(input.phoneNumberId),
@@ -289,7 +282,8 @@ export const createFilemakerEmail = (input: {
   return {
     id: normalizeString(input.id),
     email: normalizeString(input.email).toLowerCase(),
-    status: (normalizeString(input.status).toLowerCase() || 'unverified') as FilemakerEmail['status'],
+    status: (normalizeString(input.status).toLowerCase() ||
+      'unverified') as FilemakerEmail['status'],
     createdAt: input.createdAt ?? now,
     updatedAt: input.updatedAt ?? now,
   };
@@ -305,8 +299,7 @@ export const createFilemakerEmailLink = (input: {
 }): FilemakerEmailLink => {
   const now = new Date().toISOString();
   const rawPartyKind = normalizeString(input.partyKind).toLowerCase();
-  const partyKind: FilemakerPartyKind =
-    rawPartyKind === 'organization' ? 'organization' : 'person';
+  const partyKind: FilemakerPartyKind = rawPartyKind === 'organization' ? 'organization' : 'person';
 
   return {
     id: normalizeString(input.id),

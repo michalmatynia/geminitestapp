@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { normalizeCaseListViewDefaults } from '@/features/case-resolver/context/admin-cases/utils';
+import type { UserPreferences } from '@/shared/contracts/auth';
 import {
   normalizeUserPreferencesUpdatePayload,
   userPreferencesUpdateSchema,
@@ -17,7 +18,7 @@ describe('case list preferences', () => {
     const normalized = normalizeCaseListViewDefaults({
       caseResolverCaseListSortBy: 'unknown_sort_key',
       caseResolverCaseListShowNestedContent: false,
-    } as any);
+    } as unknown as UserPreferences);
 
     expect(normalized.sortBy).toBe('updated');
     expect(normalized.showNestedContent).toBe(false);

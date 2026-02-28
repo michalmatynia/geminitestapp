@@ -1,10 +1,6 @@
 'use client';
 
-import {
-  Folder,
-  FolderOpen,
-  PlusIcon,
-} from 'lucide-react';
+import { Folder, FolderOpen, PlusIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -23,11 +19,7 @@ import {
   type FolderTreeViewportRenderNodeInput,
 } from '@/shared/lib/foldertree/v2';
 import { CaseListSearchPanel } from './list/search';
-import {
-  Button,
-  Card,
-  StandardDataTablePanel,
-} from '@/shared/ui';
+import { Button, Card, StandardDataTablePanel } from '@/shared/ui';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
@@ -38,7 +30,7 @@ import { useAdminCaseResolverCasesState } from '../hooks/useAdminCaseResolverCas
 import { CaseFilterPanel } from './CaseFilterPanel';
 import { CaseListHeader } from './list/CaseListHeader';
 
-import { 
+import {
   CASE_RESOLVER_CASES_MASTER_SETTINGS_HREF,
   buildCaseResolverCaseHref,
   sortCaseTreeNodes,
@@ -71,12 +63,12 @@ type CaseListNodeItemWrapperProps = FolderTreeViewportRenderNodeInput & {
   FolderOpenIcon: React.ComponentType<{ className?: string }>;
 };
 
-const CaseListNodeItemWrapper = memo(function CaseListNodeItemWrapper(props: CaseListNodeItemWrapperProps) {
+const CaseListNodeItemWrapper = memo(function CaseListNodeItemWrapper(
+  props: CaseListNodeItemWrapperProps
+) {
   const targetCaseId = fromCaseResolverCaseNodeId(props.node.id) ?? '';
   const canShowNestHeldAction =
-    Boolean(props.heldCaseId) &&
-    targetCaseId.length > 0 &&
-    props.heldCaseId !== targetCaseId;
+    Boolean(props.heldCaseId) && targetCaseId.length > 0 && props.heldCaseId !== targetCaseId;
   const canNestHeldHere =
     canShowNestHeldAction &&
     !props.isHierarchyLocked &&
@@ -88,7 +80,8 @@ const CaseListNodeItemWrapper = memo(function CaseListNodeItemWrapper(props: Cas
     if (props.isHierarchyLocked) return 'Unlock hierarchy to move held case.';
     if (!props.heldCaseFile) return 'Held case is no longer available.';
     if (props.heldCaseFile.isLocked === true) return 'Held case is locked.';
-    if (props.isHeldCaseAncestorOf(targetCaseId)) return 'Cannot nest held case under its descendant.';
+    if (props.isHeldCaseAncestorOf(targetCaseId))
+      return 'Cannot nest held case under its descendant.';
     return null;
   })();
   return (
@@ -181,9 +174,7 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
     if (filteredCases.length === 0) return [];
     const startIndex = (page - 1) * pageSize;
     if (startIndex >= filteredCases.length) return [];
-    return filteredCases
-      .slice(startIndex, startIndex + pageSize)
-      .map((file) => file.id);
+    return filteredCases.slice(startIndex, startIndex + pageSize).map((file) => file.id);
   }, [filteredCases, page, pageSize]);
 
   const parentCaseIdByCaseId = useMemo((): Map<string, string | null> => {
@@ -196,8 +187,8 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
   }, [files]);
 
   const heldCaseFile = useMemo(
-    () => (heldCaseId ? filesById.get(heldCaseId) ?? null : null),
-    [filesById, heldCaseId],
+    () => (heldCaseId ? (filesById.get(heldCaseId) ?? null) : null),
+    [filesById, heldCaseId]
   );
 
   useEffect((): void => {
@@ -206,31 +197,37 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
     setHeldCaseId(null);
   }, [filesById, heldCaseId, setHeldCaseId]);
 
-  const isHeldCaseAncestorOf = useCallback((candidateCaseId: string): boolean => {
-    const normalizedCandidate = candidateCaseId.trim();
-    const normalizedHeldCaseId = heldCaseId?.trim() ?? '';
-    if (!normalizedCandidate || !normalizedHeldCaseId) return false;
-    let currentCaseId: string | null = normalizedCandidate;
-    const visited = new Set<string>();
-    while (currentCaseId && !visited.has(currentCaseId)) {
-      if (currentCaseId === normalizedHeldCaseId) return true;
-      visited.add(currentCaseId);
-      currentCaseId = parentCaseIdByCaseId.get(currentCaseId) ?? null;
-    }
-    return false;
-  }, [heldCaseId, parentCaseIdByCaseId]);
+  const isHeldCaseAncestorOf = useCallback(
+    (candidateCaseId: string): boolean => {
+      const normalizedCandidate = candidateCaseId.trim();
+      const normalizedHeldCaseId = heldCaseId?.trim() ?? '';
+      if (!normalizedCandidate || !normalizedHeldCaseId) return false;
+      let currentCaseId: string | null = normalizedCandidate;
+      const visited = new Set<string>();
+      while (currentCaseId && !visited.has(currentCaseId)) {
+        if (currentCaseId === normalizedHeldCaseId) return true;
+        visited.add(currentCaseId);
+        currentCaseId = parentCaseIdByCaseId.get(currentCaseId) ?? null;
+      }
+      return false;
+    },
+    [heldCaseId, parentCaseIdByCaseId]
+  );
 
-  const handleNestHeldCase = useCallback(async (targetCaseId: string): Promise<void> => {
-    const normalizedTargetCaseId = targetCaseId.trim();
-    const normalizedHeldCaseId = heldCaseId?.trim() ?? '';
-    if (!normalizedTargetCaseId || !normalizedHeldCaseId) return;
-    if (normalizedTargetCaseId === normalizedHeldCaseId) return;
-    if (isHierarchyLocked) return;
-    const heldCase = filesById.get(normalizedHeldCaseId);
-    if (!heldCase || heldCase.isLocked === true) return;
-    if (isHeldCaseAncestorOf(normalizedTargetCaseId)) return;
-    await handleMoveCase(normalizedHeldCaseId, normalizedTargetCaseId);
-  }, [filesById, handleMoveCase, heldCaseId, isHeldCaseAncestorOf, isHierarchyLocked]);
+  const handleNestHeldCase = useCallback(
+    async (targetCaseId: string): Promise<void> => {
+      const normalizedTargetCaseId = targetCaseId.trim();
+      const normalizedHeldCaseId = heldCaseId?.trim() ?? '';
+      if (!normalizedTargetCaseId || !normalizedHeldCaseId) return;
+      if (normalizedTargetCaseId === normalizedHeldCaseId) return;
+      if (isHierarchyLocked) return;
+      const heldCase = filesById.get(normalizedHeldCaseId);
+      if (!heldCase || heldCase.isLocked === true) return;
+      if (isHeldCaseAncestorOf(normalizedTargetCaseId)) return;
+      await handleMoveCase(normalizedHeldCaseId, normalizedTargetCaseId);
+    },
+    [filesById, handleMoveCase, heldCaseId, isHeldCaseAncestorOf, isHierarchyLocked]
+  );
 
   const visibleCaseIdSet = useMemo((): Set<string> => {
     const scoped = new Set<string>();
@@ -270,7 +267,9 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
 
   const visibleCaseNodes = useMemo((): MasterTreeNode[] => {
     if (!isCaseSubsetVisible) return baseCaseNodes;
-    return baseCaseNodes.filter((node: MasterTreeNode): boolean => visibleCaseNodeIdSet.has(node.id));
+    return baseCaseNodes.filter((node: MasterTreeNode): boolean =>
+      visibleCaseNodeIdSet.has(node.id)
+    );
   }, [baseCaseNodes, isCaseSubsetVisible, visibleCaseNodeIdSet]);
 
   const nestedCaseContentNodes = useMemo((): MasterTreeNode[] => {
@@ -289,7 +288,9 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
   const autoExpandedNodeIds = useMemo((): string[] => {
     if (!isCaseSubsetVisible) return [];
     return masterNodes
-      .filter((node: MasterTreeNode): boolean => node.type === 'folder' && node.kind === 'case_entry')
+      .filter(
+        (node: MasterTreeNode): boolean => node.type === 'folder' && node.kind === 'case_entry'
+      )
       .map((node: MasterTreeNode): string => node.id);
   }, [isCaseSubsetVisible, masterNodes]);
 
@@ -312,7 +313,11 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
           targetParentCaseId: string | null,
           targetIndex?: number
         ): Promise<void> => {
-          await adapterOperationsRef.current.handleMoveCase(caseId, targetParentCaseId, targetIndex);
+          await adapterOperationsRef.current.handleMoveCase(
+            caseId,
+            targetParentCaseId,
+            targetIndex
+          );
         },
         reorderCase: async (
           caseId: string,
@@ -448,16 +453,24 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
         position: 'inside' | 'before' | 'after';
         rootDropZone?: 'top' | 'bottom';
       },
-      ctlr: MasterFolderTreeController,
+      ctlr: MasterFolderTreeController
     ): Promise<void> => {
       if (isHierarchyLocked) return;
-      await applyInternalMasterTreeDrop({ controller: ctlr, draggedNodeId, targetId, position, rootDropZone });
+      await applyInternalMasterTreeDrop({
+        controller: ctlr,
+        draggedNodeId,
+        targetId,
+        position,
+        rootDropZone,
+      });
     },
     [isHierarchyLocked]
   );
 
   const handleNestHeldCaseVoid = useCallback(
-    (caseId: string): void => { void handleNestHeldCase(caseId); },
+    (caseId: string): void => {
+      void handleNestHeldCase(caseId);
+    },
     [handleNestHeldCase]
   );
 
@@ -486,12 +499,24 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
       />
     ),
     [
-      filesById, caseTagPathById, caseIdentifierPathById, caseCategoryPathById,
-      controller, handleToggleCaseStatus, heldCaseId, heldCaseFile,
-      isHierarchyLocked, isHeldCaseAncestorOf,
-      handleToggleHeldCase, handleNestHeldCaseVoid, handleOpenCase, handleOpenFile,
-      handleCreateCaseLocal, handleDeleteCase,
-      FolderClosedIcon, FolderOpenIcon,
+      filesById,
+      caseTagPathById,
+      caseIdentifierPathById,
+      caseCategoryPathById,
+      controller,
+      handleToggleCaseStatus,
+      heldCaseId,
+      heldCaseFile,
+      isHierarchyLocked,
+      isHeldCaseAncestorOf,
+      handleToggleHeldCase,
+      handleNestHeldCaseVoid,
+      handleOpenCase,
+      handleOpenFile,
+      handleCreateCaseLocal,
+      handleDeleteCase,
+      FolderClosedIcon,
+      FolderOpenIcon,
     ]
   );
 
@@ -576,7 +601,9 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
             padding='lg'
             className='flex flex-col items-center justify-center border-dashed border-border/60 bg-card/20 py-20 text-center'
           >
-            <p className='text-sm font-medium text-muted-foreground'>No cases match your current filters.</p>
+            <p className='text-sm font-medium text-muted-foreground'>
+              No cases match your current filters.
+            </p>
           </Card>
         </>
       ) : (

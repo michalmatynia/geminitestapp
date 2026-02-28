@@ -38,7 +38,7 @@ export async function runAgentBrowserControl({
   if (!('agentBrowserLog' in prisma) || !('agentBrowserSnapshot' in prisma)) {
     void ErrorSystem.logWarning('[chatbot][agent][tool] Agent browser tables not initialized.', {
       service: 'agent-control',
-      runId
+      runId,
     });
     return {
       ok: false,
@@ -81,18 +81,13 @@ export async function runAgentBrowserControl({
 
     const fallbackUrl = extractTargetUrl(run.prompt) ?? null;
     const latestUrl =
-      latestSnapshot?.url && latestSnapshot.url !== 'about:blank'
-        ? latestSnapshot.url
-        : null;
-    const targetUrl =
-      action === 'goto' && url?.trim()
-        ? url.trim()
-        : latestUrl ?? fallbackUrl;
+      latestSnapshot?.url && latestSnapshot.url !== 'about:blank' ? latestSnapshot.url : null;
+    const targetUrl = action === 'goto' && url?.trim() ? url.trim() : (latestUrl ?? fallbackUrl);
 
     if (!targetUrl && action !== 'snapshot') {
       return { ok: false, error: 'No target URL available for control action.' };
     }
-    
+
     launch = await launchBrowser(run.agentBrowser ?? 'chromium', run.runHeadless ?? true);
     context = await createBrowserContext(launch, runDir);
     const page: Page = await context.newPage();
@@ -113,10 +108,8 @@ export async function runAgentBrowserControl({
         '<html><head><title>Agent preview</title></head><body><h1>No target URL</h1></body></html>'
       );
     }
-    
-    const safeLabel = stepLabel
-      ? `step-${stepLabel}`
-      : `control-${action}`;
+
+    const safeLabel = stepLabel ? `step-${stepLabel}` : `control-${action}`;
 
     const createdSnapshot = await captureSnapshot(
       page,
@@ -127,15 +120,15 @@ export async function runAgentBrowserControl({
       activeStepId
     );
 
-    // Re-implemented UI inventory and session capture to use shared functions if possible, 
+    // Re-implemented UI inventory and session capture to use shared functions if possible,
     // or keep local if needed. Since I exported them, I can use them.
     await collectUiInventory(page, runId, safeLabel, log, activeStepId);
     await captureSessionContext(page, context, runId, safeLabel, log, activeStepId);
 
     const logCount = await prisma.agentBrowserLog.count({ where: { runId } });
-    
-    // We need to return snapshotId, captureSnapshot doesn't return ID directly but creates it. 
-    // I should have made captureSnapshot return the object. 
+
+    // We need to return snapshotId, captureSnapshot doesn't return ID directly but creates it.
+    // I should have made captureSnapshot return the object.
     // For now I'll query it or just rely on latest.
     const freshSnapshot = await prisma.agentBrowserSnapshot.findFirst({
       where: { runId },
@@ -150,23 +143,26 @@ export async function runAgentBrowserControl({
         logCount,
       },
     };
-
   } catch (error) {
     const errorId = randomUUID();
     const message = error instanceof Error ? error.message : 'Control action failed.';
-    
+
     try {
-      await ErrorSystem.captureException(error, { 
-        service: 'agent-control', 
+      await ErrorSystem.captureException(error, {
+        service: 'agent-control',
         action: 'runAgentBrowserControl',
         runId,
         errorId,
-        requestedAction: action
+        requestedAction: action,
       });
     } catch (logError) {
       if (debugEnabled) {
         const { logger } = await import('@/shared/utils/logger');
-        logger.error('[chatbot][agent][control] Failed (and logging failed)', logError, { runId, errorId, error });
+        logger.error('[chatbot][agent][control] Failed (and logging failed)', logError, {
+          runId,
+          errorId,
+          error,
+        });
       }
     }
 

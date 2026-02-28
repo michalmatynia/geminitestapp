@@ -52,14 +52,14 @@ type ResolveWriteTemplateGuardrailInput = {
 type ResolveWriteTemplateGuardrailResult =
   | { ok: true }
   | {
-    ok: false;
-    message: string;
-    guardrailMeta: DatabaseGuardrailMeta & {
-      code: 'write-template-values';
-      severity: 'error';
-      details: WriteTemplateTokenDiagnostic[];
+      ok: false;
+      message: string;
+      guardrailMeta: DatabaseGuardrailMeta & {
+        code: 'write-template-values';
+        severity: 'error';
+        details: WriteTemplateTokenDiagnostic[];
+      };
     };
-  };
 
 type ReadNumericCounters = {
   matchedCount: number | null;
@@ -81,8 +81,7 @@ type EvaluateWriteOutcomeResult = {
   isZeroAffected: boolean;
 };
 
-const TEMPLATE_TOKEN_REGEX: RegExp =
-  /{{\s*([^}]+)\s*}}|\[\s*([A-Za-z0-9_.$:-]+)\s*\]/g;
+const TEMPLATE_TOKEN_REGEX: RegExp = /{{\s*([^}]+)\s*}}|\[\s*([A-Za-z0-9_.$:-]+)\s*\]/g;
 
 const SYSTEM_ROOT_PREFIXES = ['Date:', 'DB Provider:', 'Collection:'];
 
@@ -133,11 +132,7 @@ type PathReadResult = {
   };
 };
 
-const readByPath = (
-  source: unknown,
-  path: string,
-  policy: JsonIntegrityPolicy
-): PathReadResult => {
+const readByPath = (source: unknown, path: string, policy: JsonIntegrityPolicy): PathReadResult => {
   const normalized = path
     .replace(/\[(['"]?)([A-Za-z0-9_$-]+)\1\]/g, '.$2')
     .replace(/\[(\d+)\]/g, '.$1')
@@ -154,17 +149,15 @@ const readByPath = (
     const normalizedCursorResult = normalizeJsonLikeValue(cursor, policy);
     const normalizedCursor = normalizedCursorResult.value;
     const parseDiagnostic =
-      normalizedCursorResult.state === 'repaired' ||
-      normalizedCursorResult.state === 'unparseable'
+      normalizedCursorResult.state === 'repaired' || normalizedCursorResult.state === 'unparseable'
         ? {
-          rawType: normalizedCursorResult.diagnostic.rawType,
-          parseState: normalizedCursorResult.diagnostic.parseState,
-          repairApplied: normalizedCursorResult.diagnostic.repairApplied,
-          parseError: normalizedCursorResult.diagnostic.parseError,
-          truncationDetected:
-            normalizedCursorResult.diagnostic.truncationDetected,
-          repairSteps: normalizedCursorResult.diagnostic.repairSteps,
-        }
+            rawType: normalizedCursorResult.diagnostic.rawType,
+            parseState: normalizedCursorResult.diagnostic.parseState,
+            repairApplied: normalizedCursorResult.diagnostic.repairApplied,
+            parseError: normalizedCursorResult.diagnostic.parseError,
+            truncationDetected: normalizedCursorResult.diagnostic.truncationDetected,
+            repairSteps: normalizedCursorResult.diagnostic.repairSteps,
+          }
         : undefined;
     if (normalizedCursorResult.state === 'unparseable') {
       return {
@@ -181,18 +174,14 @@ const readByPath = (
         }
         const indexed = readBySegments(normalizedCursor[numericIndex], index + 1);
         if (indexed.parseDiagnostic) return indexed;
-        return parseDiagnostic
-          ? { ...indexed, parseDiagnostic }
-          : indexed;
+        return parseDiagnostic ? { ...indexed, parseDiagnostic } : indexed;
       }
       let firstDiagnostic: PathReadResult['parseDiagnostic'] | undefined;
       for (const item of normalizedCursor) {
         const candidate = readBySegments(item, index);
         if (candidate.value !== undefined) {
           if (candidate.parseDiagnostic) return candidate;
-          return parseDiagnostic
-            ? { ...candidate, parseDiagnostic }
-            : candidate;
+          return parseDiagnostic ? { ...candidate, parseDiagnostic } : candidate;
         }
         if (!firstDiagnostic && candidate.parseDiagnostic) {
           firstDiagnostic = candidate.parseDiagnostic;
@@ -207,15 +196,11 @@ const readByPath = (
 
     const record = toRecord(normalizedCursor);
     if (!record) {
-      return parseDiagnostic
-        ? { value: undefined, parseDiagnostic }
-        : { value: undefined };
+      return parseDiagnostic ? { value: undefined, parseDiagnostic } : { value: undefined };
     }
     const nested = readBySegments(record[segment], index + 1);
     if (nested.parseDiagnostic) return nested;
-    return parseDiagnostic
-      ? { ...nested, parseDiagnostic }
-      : nested;
+    return parseDiagnostic ? { ...nested, parseDiagnostic } : nested;
   };
 
   return readBySegments(source, 0);
@@ -237,38 +222,29 @@ const resolveTokenValue = (
   if (trimmedToken === 'current') return { value: currentValue };
   if (trimmedToken === 'value') {
     return {
-      value:
-        templateContext['value'] !== undefined
-          ? templateContext['value']
-          : currentValue,
+      value: templateContext['value'] !== undefined ? templateContext['value'] : currentValue,
     };
   }
   if (trimmedToken.startsWith('current.')) {
-    const resolved = readByPath(
-      currentValue,
-      trimmedToken.slice('current.'.length),
-      policy
-    );
+    const resolved = readByPath(currentValue, trimmedToken.slice('current.'.length), policy);
     return {
       value: resolved.value,
       ...(resolved.parseDiagnostic
         ? {
-          parseDiagnostic: {
-            token: trimmedToken,
-            rawType: resolved.parseDiagnostic.rawType,
-            parseState: resolved.parseDiagnostic.parseState,
-            repairApplied: resolved.parseDiagnostic.repairApplied,
-            parseError: resolved.parseDiagnostic.parseError,
-            truncationDetected: resolved.parseDiagnostic.truncationDetected,
-            repairSteps: resolved.parseDiagnostic.repairSteps,
-          },
-        }
+            parseDiagnostic: {
+              token: trimmedToken,
+              rawType: resolved.parseDiagnostic.rawType,
+              parseState: resolved.parseDiagnostic.parseState,
+              repairApplied: resolved.parseDiagnostic.repairApplied,
+              parseError: resolved.parseDiagnostic.parseError,
+              truncationDetected: resolved.parseDiagnostic.truncationDetected,
+              repairSteps: resolved.parseDiagnostic.repairSteps,
+            },
+          }
         : {}),
     };
   }
-  if (
-    Object.prototype.hasOwnProperty.call(templateContext, trimmedToken)
-  ) {
+  if (Object.prototype.hasOwnProperty.call(templateContext, trimmedToken)) {
     return {
       value: templateContext[trimmedToken],
     };
@@ -278,17 +254,17 @@ const resolveTokenValue = (
     value: resolved.value,
     ...(resolved.parseDiagnostic
       ? {
-        parseDiagnostic: {
-          port: normalizeTokenRoot(trimmedToken) || undefined,
-          token: trimmedToken,
-          rawType: resolved.parseDiagnostic.rawType,
-          parseState: resolved.parseDiagnostic.parseState,
-          repairApplied: resolved.parseDiagnostic.repairApplied,
-          parseError: resolved.parseDiagnostic.parseError,
-          truncationDetected: resolved.parseDiagnostic.truncationDetected,
-          repairSteps: resolved.parseDiagnostic.repairSteps,
-        },
-      }
+          parseDiagnostic: {
+            port: normalizeTokenRoot(trimmedToken) || undefined,
+            token: trimmedToken,
+            rawType: resolved.parseDiagnostic.rawType,
+            parseState: resolved.parseDiagnostic.parseState,
+            repairApplied: resolved.parseDiagnostic.repairApplied,
+            parseError: resolved.parseDiagnostic.parseError,
+            truncationDetected: resolved.parseDiagnostic.truncationDetected,
+            repairSteps: resolved.parseDiagnostic.repairSteps,
+          },
+        }
       : {}),
   };
 };
@@ -375,15 +351,13 @@ const formatTokenList = (diagnostics: WriteTemplateTokenDiagnostic[]): string =>
 const dedupeValues = (values: string[]): string[] =>
   Array.from(new Set(values.filter((value: string): boolean => value.trim().length > 0)));
 
-const buildLikelyCauseFragment = (
-  diagnostics: WriteTemplateParseDiagnostic[]
-): string | null => {
+const buildLikelyCauseFragment = (diagnostics: WriteTemplateParseDiagnostic[]): string | null => {
   const truncationRoots = Array.from(
     new Set(
       diagnostics
-        .filter((diagnostic: WriteTemplateParseDiagnostic): boolean =>
-          diagnostic.parseState === 'unparseable' &&
-          diagnostic.truncationDetected === true
+        .filter(
+          (diagnostic: WriteTemplateParseDiagnostic): boolean =>
+            diagnostic.parseState === 'unparseable' && diagnostic.truncationDetected === true
         )
         .map(
           (diagnostic: WriteTemplateParseDiagnostic): string =>
@@ -397,10 +371,7 @@ const buildLikelyCauseFragment = (
   return `likely cause: truncated JSON on root ${quotedRoots.join(', ')}`;
 };
 
-const readNumericField = (
-  payload: Record<string, unknown>,
-  field: string
-): number | null => {
+const readNumericField = (payload: Record<string, unknown>, field: string): number | null => {
   const value = payload[field];
   if (typeof value === 'number' && Number.isFinite(value)) {
     return value;
@@ -426,9 +397,7 @@ const resolveAffectedCount = (
 ): { affectedCount: number | null; isZeroAffected: boolean } => {
   const actionLower = action?.toLowerCase() ?? '';
   const treatAsInsert =
-    operation === 'insert' ||
-    actionLower.startsWith('insert') ||
-    actionLower.startsWith('create');
+    operation === 'insert' || actionLower.startsWith('insert') || actionLower.startsWith('create');
   if (treatAsInsert) {
     const affectedCount = counters.insertedCount ?? counters.count;
     return {
@@ -438,9 +407,7 @@ const resolveAffectedCount = (
   }
 
   const treatAsDelete =
-    operation === 'delete' ||
-    actionLower.startsWith('delete') ||
-    actionLower.includes('anddelete');
+    operation === 'delete' || actionLower.startsWith('delete') || actionLower.includes('anddelete');
   if (treatAsDelete) {
     const affectedCount = counters.deletedCount ?? counters.count;
     return {

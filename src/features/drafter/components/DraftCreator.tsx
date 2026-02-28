@@ -12,11 +12,7 @@ import type {
   ProductParameter,
   ProductParameterValue,
 } from '@/features/products';
-import {
-  getCategoriesFlat,
-  getParameters,
-  getTags,
-} from '@/features/products/api/settings';
+import { getCategoriesFlat, getParameters, getTags } from '@/features/products/api/settings';
 import { ProductImagesTabContent } from '@/features/products/components/form/ProductImagesTabContent';
 import { ProductImagesTabProvider } from '@/features/products/components/form/ProductImagesTabContext';
 import type { ProductImageManagerController } from '@/features/products/components/ProductImageManager';
@@ -30,10 +26,7 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 import { validateFormData } from '@/shared/validations/form-validation';
 
 import { DraftCreatorFormProvider } from './DraftCreatorFormContext';
-import {
-  DraftCreatorDetailsTab,
-  DraftCreatorParametersTab,
-} from './DraftCreatorFormFields';
+import { DraftCreatorDetailsTab, DraftCreatorParametersTab } from './DraftCreatorFormFields';
 import { useOptionalDrafterContext } from '../context/DrafterContext';
 
 const DEFAULT_ICON_COLOR = '#60a5fa';
@@ -70,7 +63,7 @@ export function DraftCreator({
   const { toast } = useToast();
   const context = useOptionalDrafterContext();
 
-  const draftId = propDraftId !== undefined ? propDraftId : context?.editingDraftId ?? null;
+  const draftId = propDraftId !== undefined ? propDraftId : (context?.editingDraftId ?? null);
   const handleSaveSuccess = propOnSaveSuccess ?? context?.handleSaveSuccess ?? ((): void => {});
   const formRef = context?.formRef;
 
@@ -111,8 +104,7 @@ export function DraftCreator({
   const [icon, setIcon] = useState<string | null>(null);
   const [iconColorMode, setIconColorMode] = useState<'theme' | 'custom'>('theme');
   const [iconColor, setIconColor] = useState<string>(DEFAULT_ICON_COLOR);
-  const [openProductFormTab, setOpenProductFormTab] =
-    useState<ProductDraftOpenFormTab>('general');
+  const [openProductFormTab, setOpenProductFormTab] = useState<ProductDraftOpenFormTab>('general');
   const [isIconLibraryOpen, setIsIconLibraryOpen] = useState(false);
 
   const [selectedCatalogIds, setSelectedCatalogIds] = useState<string[]>([]);
@@ -126,32 +118,41 @@ export function DraftCreator({
     queries: selectedCatalogIds.map((id: string) => ({
       queryKey: normalizeQueryKey(QUERY_KEYS.products.metadata.categories(id)),
       queryFn: () => getCategoriesFlat(id),
-    }))
+    })),
   });
 
   const tagQueries = useQueries({
     queries: selectedCatalogIds.map((id: string) => ({
       queryKey: normalizeQueryKey(QUERY_KEYS.products.metadata.tags(id)),
       queryFn: () => getTags(id),
-    }))
+    })),
   });
 
   const parameterQueries = useQueries({
     queries: selectedCatalogIds.map((id: string) => ({
       queryKey: normalizeQueryKey(QUERY_KEYS.products.metadata.parameters(id)),
       queryFn: () => getParameters(id),
-    }))
+    })),
   });
 
-  const categories = useMemo(() => categoryQueries.flatMap((q) => (q.data as ProductCategoryDto[]) || []), [categoryQueries]);
-  const tags = useMemo(() => tagQueries.flatMap((q) => (q.data as ProductTag[]) || []), [tagQueries]);
+  const categories = useMemo(
+    () => categoryQueries.flatMap((q) => (q.data as ProductCategoryDto[]) || []),
+    [categoryQueries]
+  );
+  const tags = useMemo(
+    () => tagQueries.flatMap((q) => (q.data as ProductTag[]) || []),
+    [tagQueries]
+  );
   const parameters = useMemo(
     () => parameterQueries.flatMap((q) => (q.data as ProductParameter[]) || []),
     [parameterQueries]
   );
-  const parametersLoading = useMemo(() => parameterQueries.some((q) => q.isLoading), [parameterQueries]);
+  const parametersLoading = useMemo(
+    () => parameterQueries.some((q) => q.isLoading),
+    [parameterQueries]
+  );
   const active = propActive ?? activeState;
-  
+
   const {
     imageSlots,
     imageLinks,
@@ -172,24 +173,29 @@ export function DraftCreator({
     onActiveChange?.(value);
   };
 
-  const applyDraftImageState = useCallback((incomingLinks: string[] | null | undefined): void => {
-    for (let i = 0; i < TOTAL_IMAGE_SLOTS; i += 1) {
-      handleSlotImageChange(null, i);
-      setImageLinkAt(i, '');
-      setImageBase64At(i, '');
-    }
-
-    const normalizedLinks = Array.isArray(incomingLinks) ? incomingLinks : [];
-    normalizedLinks.slice(0, TOTAL_IMAGE_SLOTS).forEach((rawValue: string, index: number): void => {
-      const value = typeof rawValue === 'string' ? rawValue.trim() : '';
-      if (!value) return;
-      if (value.startsWith('data:')) {
-        setImageBase64At(index, value);
-      } else {
-        setImageLinkAt(index, value);
+  const applyDraftImageState = useCallback(
+    (incomingLinks: string[] | null | undefined): void => {
+      for (let i = 0; i < TOTAL_IMAGE_SLOTS; i += 1) {
+        handleSlotImageChange(null, i);
+        setImageLinkAt(i, '');
+        setImageBase64At(i, '');
       }
-    });
-  }, [handleSlotImageChange, setImageBase64At, setImageLinkAt]);
+
+      const normalizedLinks = Array.isArray(incomingLinks) ? incomingLinks : [];
+      normalizedLinks
+        .slice(0, TOTAL_IMAGE_SLOTS)
+        .forEach((rawValue: string, index: number): void => {
+          const value = typeof rawValue === 'string' ? rawValue.trim() : '';
+          if (!value) return;
+          if (value.startsWith('data:')) {
+            setImageBase64At(index, value);
+          } else {
+            setImageLinkAt(index, value);
+          }
+        });
+    },
+    [handleSlotImageChange, setImageBase64At, setImageLinkAt]
+  );
 
   const serializeDraftImageLinks = useCallback(async (): Promise<string[]> => {
     const serialized: string[] = [];
@@ -323,7 +329,7 @@ export function DraftCreator({
     const validation = validateFormData(
       draftSubmitSchema,
       { name, iconColorMode, iconColor, openProductFormTab },
-      'Draft form is invalid.',
+      'Draft form is invalid.'
     );
     if (!validation.success) {
       toast(validation.firstError, { variant: 'error' });
@@ -360,17 +366,24 @@ export function DraftCreator({
         tagIds: selectedTagIds,
         producerIds: selectedProducerIds,
         parameters: parameterValues
-          .map((entry: ProductParameterValue): { parameterId: string | undefined; value: string } => ({
-            parameterId: entry.parameterId?.trim(),
-            value: typeof entry.value === 'string' ? entry.value.trim() : '',
-          }))
-          .filter((entry: { parameterId: string | undefined; value: string }): entry is { parameterId: string; value: string } => !!entry.parameterId),
+          .map(
+            (entry: ProductParameterValue): { parameterId: string | undefined; value: string } => ({
+              parameterId: entry.parameterId?.trim(),
+              value: typeof entry.value === 'string' ? entry.value.trim() : '',
+            })
+          )
+          .filter(
+            (entry: {
+              parameterId: string | undefined;
+              value: string;
+            }): entry is { parameterId: string; value: string } => !!entry.parameterId
+          ),
         active,
         validatorEnabled,
         formatterEnabled: validatorEnabled ? formatterEnabled : false,
         icon,
         iconColorMode,
-        iconColor: iconColorMode === 'custom' ? (normalizedIconColor || DEFAULT_ICON_COLOR) : null,
+        iconColor: iconColorMode === 'custom' ? normalizedIconColor || DEFAULT_ICON_COLOR : null,
         openProductFormTab,
         imageLinks: serializedImageLinks,
         baseProductId: baseProductId.trim() || null,
@@ -393,7 +406,10 @@ export function DraftCreator({
   };
 
   const addParameterValue = (): void => {
-    setParameterValues((prev: ProductParameterValue[]): ProductParameterValue[] => [...prev, { parameterId: '', value: '' }]);
+    setParameterValues((prev: ProductParameterValue[]): ProductParameterValue[] => [
+      ...prev,
+      { parameterId: '', value: '' },
+    ]);
   };
 
   const updateParameterId = (index: number, parameterId: string): void => {
@@ -415,7 +431,9 @@ export function DraftCreator({
   };
 
   const removeParameterValue = (index: number): void => {
-    setParameterValues((prev: ProductParameterValue[]): ProductParameterValue[] => prev.filter((_, i: number): boolean => i !== index));
+    setParameterValues((prev: ProductParameterValue[]): ProductParameterValue[] =>
+      prev.filter((_, i: number): boolean => i !== index)
+    );
   };
 
   const resolvedIconColor = normalizeIconColor(iconColor) || DEFAULT_ICON_COLOR;

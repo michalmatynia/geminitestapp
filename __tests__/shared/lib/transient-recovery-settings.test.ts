@@ -28,33 +28,35 @@ describe('Transient Recovery Settings', () => {
     vi.mocked(prisma.setting.findUnique).mockResolvedValue(null);
 
     const settings = await getTransientRecoverySettings({ force: true });
-    
+
     expect(settings).toEqual(DEFAULT_TRANSIENT_RECOVERY_SETTINGS);
   });
 
   it('normalizes invalid values from DB', async () => {
     vi.mocked(getAppDbProvider).mockResolvedValue('prisma');
     const invalidData = JSON.stringify({
-      retry: { maxAttempts: -5, initialDelayMs: 'invalid' }
+      retry: { maxAttempts: -5, initialDelayMs: 'invalid' },
     });
     vi.mocked(prisma.setting.findUnique).mockResolvedValue({ value: invalidData } as any);
 
     const settings = await getTransientRecoverySettings({ force: true });
-    
+
     expect(settings.retry.maxAttempts).toBe(DEFAULT_TRANSIENT_RECOVERY_SETTINGS.retry.maxAttempts);
-    expect(settings.retry.initialDelayMs).toBe(DEFAULT_TRANSIENT_RECOVERY_SETTINGS.retry.initialDelayMs);
+    expect(settings.retry.initialDelayMs).toBe(
+      DEFAULT_TRANSIENT_RECOVERY_SETTINGS.retry.initialDelayMs
+    );
   });
 
   it('respects valid settings from DB', async () => {
     vi.mocked(getAppDbProvider).mockResolvedValue('prisma');
     const validData = JSON.stringify({
       enabled: false,
-      retry: { maxAttempts: 10, initialDelayMs: 5000 }
+      retry: { maxAttempts: 10, initialDelayMs: 5000 },
     });
     vi.mocked(prisma.setting.findUnique).mockResolvedValue({ value: validData } as any);
 
     const settings = await getTransientRecoverySettings({ force: true });
-    
+
     expect(settings.enabled).toBe(false);
     expect(settings.retry.maxAttempts).toBe(10);
     expect(settings.retry.initialDelayMs).toBe(5000);

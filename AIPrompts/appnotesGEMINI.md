@@ -1,7 +1,6 @@
-
-run npx tsc and address the issues one by one 
-run npx eslint and address the issues one by one 
-run npm build and address the issues one by one 
+run npx tsc and address the issues one by one
+run npx eslint and address the issues one by one
+run npm build and address the issues one by one
 run vitest and address the issues ony by one
 npm audit fix
 npm run test:e2e
@@ -12,43 +11,43 @@ npx prisma migrate dev
 npx prisma migrate reset
 npx prisma db push
 
+## address vitest Prisma mock issues
 
-address vitest Prisma mock issues
----
 INVESTIGATION AN PLANNING
--Carry out investigation into *** 
--I would like to introduce a new feature, prepare a plan, main concerns, areas of interest and fallback strategies for ***
+-Carry out investigation into **_
+-I would like to introduce a new feature, prepare a plan, main concerns, areas of interest and fallback strategies for _**
 -Run a thorough scan of the application and identify areas of improvement
 -Identify potential areas of optimization and improvement in the application and prepare a plan to address them
 -Scan the application and Prepare a thorough GEMINI.MD
 -Scan the application and tell me if there are any modules or application that I could you to improve the app
 
-
 ---
 
 ERROR DETECTION
-Scan the ****** feature and build logical try and Catch Blocks with error explanantion around potential areas of failure
+Scan the **\*\*** feature and build logical try and Catch Blocks with error explanantion around potential areas of failure
 Add Error Boundary components to catch uncaught UI errors and forward them to your logger (via componentDidCatch)
 -Replace ad-hoc try/catch patterns with a consistent error boundary: server action wrapper + route handler wrapper + job wrapper. Each wrapper must: normalize errors, attach context, log centrally, and return a typed result.
--Find all console.* usage; replace with structured logger calls. Enforce: log levels, stable event names, correlation ID, and redaction of secrets.
+-Find all console.\* usage; replace with structured logger calls. Enforce: log levels, stable event names, correlation ID, and redaction of secrets.
 -Implement UI Error Boundaries for React trees and ensure boundary events flow into the centralized error pipeline (including component stack, route, and last user action).
 -Add a ‘safe error serializer’ for client responses: keep user-facing error codes/messages stable; never include raw stack traces or DB error strings.
 
 ---
+
 NETWORK
--Scan *** feature for a potential problem with unnecessary Refetching and CSRF related problems.
+-Scan \*\*\* feature for a potential problem with unnecessary Refetching and CSRF related problems.
 
 Remove legacy solutions and backwards compatibility I want only the newest
 pursue project-wide standardization
 apply the standardized mutation factories
 Develop further robust Tanstack factories for different requests connect them to centralised logging system
-  migrate products/image-studio/integrations hooks to v2 factories behind flags.
+migrate products/image-studio/integrations hooks to v2 factories behind flags.
 
 VALIDATION
+
 - expand mutation-invalidation matrix
 - improve mutation-invalidation matrix
-migrate key hooks to centralized factories
- Update feature hooks to use centralized query keys
+  migrate key hooks to centralized factories
+  Update feature hooks to use centralized query keys
 
 STATE MANAGEMENT
 -Scan the application for potential areas of props-drilling and apply useContext as a refactor
@@ -79,7 +78,7 @@ TYPES & DTOS
 (DTOs) or schemas. Ensure that both frontend and backend use the same interfaces to reduce maintenance overhead and improve type safety.
 -Define API request/response schemas (with Zod) in a shared module so that validation, documentation, and types all come from a single source of truth. Alternatively, use a monorepo to share TypeScript types across layers.
 -Scan the application for potential areas of unnecessary types or type clusters that can be moved into unified into DTOs
--Scan  Types and Type Clusters and move them over to the respective features localised or shared types folder.
+-Scan Types and Type Clusters and move them over to the respective features localised or shared types folder.
 Detect redundant types and propose unified DTOs and TanStack Query integration.
 -Consolidate redundant type definitions into shared DTOs or schemas. Ensure frontend and backend use the same interfaces. One approach is to define API request/response schemas (with Zod) in a shared module.
 -Define DTO contracts as zod objects in a shared package
@@ -92,8 +91,8 @@ Connect tanstack queries to a unified error logging and handling system.
 -Create a single QueryClient with global QueryCache + MutationCache callbacks that forward errors into the central error handler (with queryKey/mutationKey). Do not throw from global callbacks.
 -Define a global retry policy: do not retry 4xx, limit retries for 5xx/timeouts, and align SSR/server retries to be fast.
 -Standardize query keys and introduce a key factory per domain (usersKeys.list(), ordersKeys.detail(id)), then refactor existing hooks to use it.
-Integrate TanStack Query properly. Create a single QueryClient instance and configure its global handlers. 
-React Query supports global onError/onSuccess callbacks at the QueryCache level. You can use these hooks to funnel all query/mutation errors into your logging system. 
+Integrate TanStack Query properly. Create a single QueryClient instance and configure its global handlers.
+React Query supports global onError/onSuccess callbacks at the QueryCache level. You can use these hooks to funnel all query/mutation errors into your logging system.
 Initialize a shared QueryClient with default onError callback that logs errors centrally
 Convert existing data fetching hooks to use TanStack Query and remove ad-hoc fetch logic. Connect those error callbacks to your central error logger.
 
@@ -101,7 +100,7 @@ LOGGING
 -Search for error reporting code blocks and connect them to centralised Error logging and Error handling system
 -connect all API to Error logging and handling system
 -Search for action reporting code blocks and connect them to centralised Logging and handling system
--Connect Activity logging to a centralised logging system 
+-Connect Activity logging to a centralised logging system
 -Scan repository for error handling and centralized logging integration points.
 -Replace ad-hoc console.log calls with a centralised logging library to produce structured log output
 -Integrate an error-tracking service to capture exceptions in both client and server code
@@ -110,9 +109,8 @@ LOGGING
 -Instrument Prisma query timings, Redis timings, and external API timings into traces + structured logs. Produce a ‘top 10 slow operations’ report from local runs.
 -Implement a ‘diagnostic mode’ for production troubleshooting: enable additional logging/tracing via feature flag and auto-disable after TTL.
 
-
 TESTING
-Prepare a suite tests in vitests for feature ***
+Prepare a suite tests in vitests for feature \*\*\*
 write tests for critical components and API routes
 write end-to-end tests (Playwright) for key flows
 include npm test in your build pipeline.
@@ -121,27 +119,28 @@ Set up Jest and React Testing Library ? - Don't I have that alrady ? Is vitest b
 
 CODE PERFORMANCE
 Scan for optimization opportunities Optimization and speed up processes
-check *** section optimization opportunities and avoidance of unnecessary re-renders.
+check \*\*\* section optimization opportunities and avoidance of unnecessary re-renders.
 
 WEB NETWORK PERFORMANCE
 ! Use tools like Lighthouse and Next.js Analytics to identify slow pages. Lighthouse audits can reveal bundle bloat, render-blocking resources, and accessibility issues.
+
 - Run Lighthouse audit; fix any high severity issues (e.g. large images, slow scripts)
--Enable reportWebVitals in Next.js to log core web vitals (TTFB, FID, CLS)
--Review bundle size (e.g. via next build --profile) and code-split large modules or use dynamic imports where beneficial.
--Scan all server-side network calls (fetch/axios/db/redis) and enforce defaults: timeout, abort support, retry policy, and correlation IDs. Ensure retries are safe (idempotent) and add idempotency keys for mutations.
--Audit all async workflows for failure modes (DB/Redis/network). Add ‘typed errors’ (AppError subclasses) and map them to consistent HTTP responses and user-safe messages. Ensure stack traces are kept for logs but not leaked to clients.
--Implement circuit-breaker behavior for flaky downstream dependencies: detect repeated failures, short-circuit for a cooldown, and return degraded responses + log structured events.
--Add concurrency guards for expensive endpoints: request coalescing (single-flight) so concurrent identical requests share one in-flight computation.
--Add a global request context (requestId, userId, route, build version) that is attached to every log, error report, and tracing span.
--Run bundle analysis and remove/replace heavy dependencies. Apply dynamic imports and optimize package imports where possible.
--Adopt next/font for all fonts and remove runtime Google Fonts requests. Verify reduced layout shift and improved privacy.
--Find and fix React render hotspots: memoize derived props, remove unnecessary state, stabilize callbacks, and measure rerenders before/after.
--Audit images: ensure next/image usage, correct sizing, responsive formats, and remove oversized assets.
+  -Enable reportWebVitals in Next.js to log core web vitals (TTFB, FID, CLS)
+  -Review bundle size (e.g. via next build --profile) and code-split large modules or use dynamic imports where beneficial.
+  -Scan all server-side network calls (fetch/axios/db/redis) and enforce defaults: timeout, abort support, retry policy, and correlation IDs. Ensure retries are safe (idempotent) and add idempotency keys for mutations.
+  -Audit all async workflows for failure modes (DB/Redis/network). Add ‘typed errors’ (AppError subclasses) and map them to consistent HTTP responses and user-safe messages. Ensure stack traces are kept for logs but not leaked to clients.
+  -Implement circuit-breaker behavior for flaky downstream dependencies: detect repeated failures, short-circuit for a cooldown, and return degraded responses + log structured events.
+  -Add concurrency guards for expensive endpoints: request coalescing (single-flight) so concurrent identical requests share one in-flight computation.
+  -Add a global request context (requestId, userId, route, build version) that is attached to every log, error report, and tracing span.
+  -Run bundle analysis and remove/replace heavy dependencies. Apply dynamic imports and optimize package imports where possible.
+  -Adopt next/font for all fonts and remove runtime Google Fonts requests. Verify reduced layout shift and improved privacy.
+  -Find and fix React render hotspots: memoize derived props, remove unnecessary state, stabilize callbacks, and measure rerenders before/after.
+  -Audit images: ensure next/image usage, correct sizing, responsive formats, and remove oversized assets.
 
 FILE & MODULE SPLITTING
 -Break up large files and components
 -Long React components (hundreds of lines) often mix concerns; splitting them improves maintainability.
-Splitting a component into smaller ones is the best way to spread that complexity. If a file does UI layout, data fetching, and business logic all at once, that’s a sign to refactor. 
+Splitting a component into smaller ones is the best way to spread that complexity. If a file does UI layout, data fetching, and business logic all at once, that’s a sign to refactor.
 Locate any component or file over ~300 lines and split it: separate presentation vs logic
 Extract complex logic or JSX branches into child components
 
@@ -163,14 +162,15 @@ DATABASE - PRISMA
 DATABASE - MONGODB
 
 SECURITY
--Ensure dependencies are up-to-date and secure. 
+-Ensure dependencies are up-to-date and secure.
 -Run npm audit fix (or Snyk scan) and resolve any critical vulnerabilities in dependencies
+
 - Use HTTPS and environment variable checks.
--add Vulnerability scanning to CI.
--Implement baseline security headers in next.config.js (HSTS, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, etc.) and document why each is set.
--Add a strict Content Security Policy with nonces; ensure compatibility with Next.js scripts and remove unsafe inline scripts where possible.
--Scan for secrets leakage: ensure no sensitive data is logged, no tokens in URLs, and all config is via env vars with validation on boot.
--Add rate limiting / abuse protection (especially auth + write endpoints), ideally backed by Redis, with clear error responses and logging.
+  -add Vulnerability scanning to CI.
+  -Implement baseline security headers in next.config.js (HSTS, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, etc.) and document why each is set.
+  -Add a strict Content Security Policy with nonces; ensure compatibility with Next.js scripts and remove unsafe inline scripts where possible.
+  -Scan for secrets leakage: ensure no sensitive data is logged, no tokens in URLs, and all config is via env vars with validation on boot.
+  -Add rate limiting / abuse protection (especially auth + write endpoints), ideally backed by Redis, with clear error responses and logging.
 
 CODE QUALITY
 -Add CI gates: typecheck, lint, test, build. Fail fast and surface the first actionable error. Enforce consistent node version + lockfile integrity.

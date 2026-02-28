@@ -11,13 +11,9 @@ vi.mock('@/features/prompt-engine/context/PromptEngineContext', () => ({
 vi.mock('@/shared/ui', () => ({
   Tabs: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   TabsList: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  TabsTrigger: ({
-    children,
-    value,
-  }: {
-    children: React.ReactNode;
-    value: string;
-  }) => <button data-value={value}>{children}</button>,
+  TabsTrigger: ({ children, value }: { children: React.ReactNode; value: string }) => (
+    <button data-value={value}>{children}</button>
+  ),
 }));
 
 vi.mock('@/shared/ui/templates/FilterPanel', () => ({
@@ -53,7 +49,9 @@ const buildContextStub = (overrides: Partial<Record<string, unknown>> = {}) => {
   return stub;
 };
 
-const setup = (overrides: Partial<Record<string, unknown>> = {}): PromptEngineFiltersContextStub => {
+const setup = (
+  overrides: Partial<Record<string, unknown>> = {}
+): PromptEngineFiltersContextStub => {
   const context = buildContextStub(overrides);
   vi.mocked(usePromptEngine).mockReturnValue(context as never);
   render(<PromptEngineFilters />);

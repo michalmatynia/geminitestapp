@@ -26,15 +26,13 @@ const NAME_SEGMENT_DIMENSION_TEMPLATES: NameSegmentTemplateConfig[] = [
   {
     target: 'size_length',
     label: 'Name Segment #2 -> Length',
-    message:
-      'Propose Length (sizeLength) from Name segment #2 (between first and second "|").',
+    message: 'Propose Length (sizeLength) from Name segment #2 (between first and second "|").',
     replacementField: 'sizeLength',
   },
   {
     target: 'length',
     label: 'Name Segment #2 -> Height',
-    message:
-      'Propose Height (length) from Name segment #2 (between first and second "|").',
+    message: 'Propose Height (length) from Name segment #2 (between first and second "|").',
     replacementField: 'length',
   },
 ];
@@ -47,7 +45,7 @@ const TEMPLATE_SCOPES: ProductValidationInstanceScope[] = [
 
 const isNameSegmentDimensionPattern = (
   pattern: ProductValidationPattern,
-  template: NameSegmentTemplateConfig,
+  template: NameSegmentTemplateConfig
 ): boolean => {
   if (pattern.target !== template.target) return false;
   if (pattern.label.trim().toLowerCase() === template.label.trim().toLowerCase()) {
@@ -63,10 +61,7 @@ const isNameSegmentDimensionPattern = (
   );
 };
 
-const getPatternSequence = (
-  pattern: ProductValidationPattern,
-  fallbackIndex: number,
-): number => {
+const getPatternSequence = (pattern: ProductValidationPattern, fallbackIndex: number): number => {
   if (typeof pattern.sequence === 'number' && Number.isFinite(pattern.sequence)) {
     return Math.max(0, Math.floor(pattern.sequence));
   }
@@ -79,7 +74,7 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext): 
   const maxSequence = patterns.reduce(
     (max: number, pattern: ProductValidationPattern, index: number) =>
       Math.max(max, getPatternSequence(pattern, index)),
-    0,
+    0
   );
 
   const replacementRecipe = encodeDynamicReplacementRecipe({
@@ -115,7 +110,7 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext): 
   let sequence = maxSequence + 10;
   for (const template of NAME_SEGMENT_DIMENSION_TEMPLATES) {
     const existing = patterns.find((pattern: ProductValidationPattern) =>
-      isNameSegmentDimensionPattern(pattern, template),
+      isNameSegmentDimensionPattern(pattern, template)
     );
     const payload = {
       label: template.label,
@@ -180,8 +175,8 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext): 
   const refreshedPatterns = await repository.listPatterns();
   const ensuredPatterns = refreshedPatterns.filter((pattern: ProductValidationPattern) =>
     NAME_SEGMENT_DIMENSION_TEMPLATES.some((template) =>
-      isNameSegmentDimensionPattern(pattern, template),
-    ),
+      isNameSegmentDimensionPattern(pattern, template)
+    )
   );
 
   invalidateValidationPatternRuntimeCache();

@@ -18,27 +18,21 @@ export async function ProductPublicPage({
     notFound();
   }
 
-  const title =
-    product.name_en ?? product.name_pl ?? product.name_de ?? 'Product';
+  const title = product.name_en ?? product.name_pl ?? product.name_de ?? 'Product';
 
   const imageUrl =
-    product.images && product.images.length > 0
-      ? product.images[0]!.imageFile.filepath
-      : null;
+    product.images && product.images.length > 0 ? product.images[0]!.imageFile.filepath : null;
 
   const priceLabel =
     typeof product.price === 'number'
       ? new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-      }).format(product.price)
+          style: 'currency',
+          currency: 'USD',
+        }).format(product.price)
       : '—';
 
   const description =
-    product.description_en ??
-    product.description_pl ??
-    product.description_de ??
-    '';
+    product.description_en ?? product.description_pl ?? product.description_de ?? '';
 
   return (
     <div className='container mx-auto py-12'>

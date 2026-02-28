@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { auth } from '@/features/auth/server';
-import { markDatabaseBackupJobQueued } from '@/features/database/services/database-backup-scheduler';
-import { assertDatabaseEngineOperationEnabled } from '@/features/database/services/database-engine-operation-guards';
+import { markDatabaseBackupJobQueued } from '@/shared/lib/db/services/database-backup-scheduler';
+import { assertDatabaseEngineOperationEnabled } from '@/shared/lib/db/services/database-engine-operation-guards';
 import {
   enqueueProductAiJob,
   enqueueProductAiJobToQueue,
@@ -19,7 +19,9 @@ const runNowSchema = z.object({
   dbType: z.enum(['mongodb', 'postgresql', 'all']).default('all'),
 });
 
-const resolveTargets = (dbType: z.infer<typeof runNowSchema>['dbType']): Array<'mongodb' | 'postgresql'> => {
+const resolveTargets = (
+  dbType: z.infer<typeof runNowSchema>['dbType']
+): Array<'mongodb' | 'postgresql'> => {
   if (dbType === 'all') return ['mongodb', 'postgresql'];
   return [dbType];
 };
@@ -29,8 +31,7 @@ const isProductionRuntime = (): boolean => process.env['NODE_ENV'] === 'producti
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const session = await auth();
   const hasAccess =
-    session?.user?.isElevated ||
-    session?.user?.permissions?.includes('settings.manage');
+    session?.user?.isElevated || session?.user?.permissions?.includes('settings.manage');
   if (!hasAccess) {
     throw authError('Unauthorized.');
   }
@@ -96,6 +97,6 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     },
     {
       headers: { 'Cache-Control': 'no-store' },
-    },
+    }
   );
 }

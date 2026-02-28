@@ -17,21 +17,11 @@ import type { ColorScheme } from '@/shared/contracts/cms-theme';
 import { ANIMATION_PRESETS } from '@/shared/contracts/gsap';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import {
-  Input,
-  SelectSimple,
-  Button,
-  SectionHeader,
-  FormSection,
-} from '@/shared/ui';
-import {
-  SettingsField,
-  SettingsFieldsRenderer,
-} from '@/shared/ui/templates/SettingsPanelBuilder';
+import { Input, SelectSimple, Button, SectionHeader, FormSection } from '@/shared/ui';
+import { SettingsField, SettingsFieldsRenderer } from '@/shared/ui/templates/SettingsPanelBuilder';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
 import { useThemeSettings } from './ThemeSettingsContext';
-
 
 // ---------------------------------------------------------------------------
 // Types
@@ -53,26 +43,24 @@ const MENU_SECTIONS = [
   'Animations',
 ];
 
-const COLOR_SCHEME_FALLBACK = [
-  { label: 'Custom colors', value: 'custom' },
-];
+const COLOR_SCHEME_FALLBACK = [{ label: 'Custom colors', value: 'custom' }];
 
 const FONT_FAMILY_OPTIONS = [
   { label: 'Inter', value: 'Inter, sans-serif' },
-  { label: 'Bebas Neue', value: '\'Bebas Neue\', sans-serif' },
-  { label: 'Space Grotesk', value: '\'Space Grotesk\', sans-serif' },
+  { label: 'Bebas Neue', value: "'Bebas Neue', sans-serif" },
+  { label: 'Space Grotesk', value: "'Space Grotesk', sans-serif" },
   { label: 'Manrope', value: 'Manrope, sans-serif' },
   { label: 'Outfit', value: 'Outfit, sans-serif' },
-  { label: 'Plus Jakarta Sans', value: '\'Plus Jakarta Sans\', sans-serif' },
-  { label: 'DM Sans', value: '\'DM Sans\', sans-serif' },
+  { label: 'Plus Jakarta Sans', value: "'Plus Jakarta Sans', sans-serif" },
+  { label: 'DM Sans', value: "'DM Sans', sans-serif" },
   { label: 'Sora', value: 'Sora, sans-serif' },
   { label: 'Arial', value: 'Arial, sans-serif' },
   { label: 'Georgia', value: 'Georgia, serif' },
-  { label: 'Times New Roman', value: '\'Times New Roman\', serif' },
-  { label: 'Courier New', value: '\'Courier New\', monospace' },
+  { label: 'Times New Roman', value: "'Times New Roman', serif" },
+  { label: 'Courier New', value: "'Courier New', monospace" },
   { label: 'Verdana', value: 'Verdana, sans-serif' },
-  { label: 'Trebuchet MS', value: '\'Trebuchet MS\', sans-serif' },
-  { label: 'Palatino', value: '\'Palatino Linotype\', serif' },
+  { label: 'Trebuchet MS', value: "'Trebuchet MS', sans-serif" },
+  { label: 'Palatino', value: "'Palatino Linotype', serif" },
   { label: 'System UI', value: 'system-ui, sans-serif' },
 ];
 
@@ -92,7 +80,9 @@ const FONT_WEIGHT_OPTIONS = [
 // Panel
 // ---------------------------------------------------------------------------
 
-export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean } = {}): React.JSX.Element {
+export function MenuSettingsPanel({
+  showHeader = true,
+}: { showHeader?: boolean } = {}): React.JSX.Element {
   const [openSections, setOpenSections] = useState<Set<string>>(new Set());
   const { theme } = useThemeSettings();
   const { domains, activeDomainId, zoningEnabled } = useCmsDomainSelection();
@@ -125,15 +115,9 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
 
   const initialSettings = useMemo((): MenuSettings => {
     if (!settingsReady) return DEFAULT_MENU_SETTINGS;
-    const stored = parseJsonSetting<Partial<MenuSettings> | null>(
-      menuSettingsRaw,
-      null
-    );
+    const stored = parseJsonSetting<Partial<MenuSettings> | null>(menuSettingsRaw, null);
     if (!stored && menuKey !== CMS_MENU_SETTINGS_KEY) {
-      const fallback = parseJsonSetting<Partial<MenuSettings> | null>(
-        defaultMenuSettingsRaw,
-        null
-      );
+      const fallback = parseJsonSetting<Partial<MenuSettings> | null>(defaultMenuSettingsRaw, null);
       return normalizeMenuSettings(fallback);
     }
     return normalizeMenuSettings(stored);
@@ -158,7 +142,9 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
 
   const menuColorSchemeId = useMemo((): string => {
     if (settings.menuColorSchemeId === 'custom') return 'custom';
-    return availableColorSchemeIds.has(settings.menuColorSchemeId) ? settings.menuColorSchemeId : 'custom';
+    return availableColorSchemeIds.has(settings.menuColorSchemeId)
+      ? settings.menuColorSchemeId
+      : 'custom';
   }, [availableColorSchemeIds, settings.menuColorSchemeId]);
 
   const hasScopedMenu = useMemo((): boolean => {
@@ -180,27 +166,33 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
     });
   }, [initialSettings]);
 
-  const updateMenuItem = useCallback((id: string, field: 'label' | 'url' | 'imageUrl', value: string): void => {
-    setUserSettings((prev: MenuSettings | null) => {
-      const current = prev ?? initialSettings;
-      return {
-        ...current,
-        items: current.items.map((item: MenuItem) =>
-          item.id === id ? { ...item, [field]: value } : item
-        ),
-      };
-    });
-  }, [initialSettings]);
+  const updateMenuItem = useCallback(
+    (id: string, field: 'label' | 'url' | 'imageUrl', value: string): void => {
+      setUserSettings((prev: MenuSettings | null) => {
+        const current = prev ?? initialSettings;
+        return {
+          ...current,
+          items: current.items.map((item: MenuItem) =>
+            item.id === id ? { ...item, [field]: value } : item
+          ),
+        };
+      });
+    },
+    [initialSettings]
+  );
 
-  const removeMenuItem = useCallback((id: string): void => {
-    setUserSettings((prev: MenuSettings | null) => {
-      const current = prev ?? initialSettings;
-      return {
-        ...current,
-        items: current.items.filter((item: MenuItem) => item.id !== id),
-      };
-    });
-  }, [initialSettings]);
+  const removeMenuItem = useCallback(
+    (id: string): void => {
+      setUserSettings((prev: MenuSettings | null) => {
+        const current = prev ?? initialSettings;
+        return {
+          ...current,
+          items: current.items.filter((item: MenuItem) => item.id !== id),
+        };
+      });
+    },
+    [initialSettings]
+  );
 
   const getFieldsForSection = useCallback(
     (section: string): SettingsField<MenuSettings>[] => {
@@ -220,27 +212,37 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
             },
             { key: 'collapsible', label: 'Collapsible menu', type: 'checkbox' },
             ...(settings.collapsible
-              ? [{ key: 'collapsedByDefault', label: 'Collapsed by default', type: 'checkbox' } as SettingsField<MenuSettings>]
+              ? [
+                  {
+                    key: 'collapsedByDefault',
+                    label: 'Collapsed by default',
+                    type: 'checkbox',
+                  } as SettingsField<MenuSettings>,
+                ]
               : []),
-            ...((settings.menuPlacement === 'left' || settings.menuPlacement === 'right')
-              ? [{
-                key: 'sideWidth',
-                label: 'Side width',
-                type: 'range',
-                min: 160,
-                max: 420,
-                suffix: 'px',
-              } as SettingsField<MenuSettings>]
+            ...(settings.menuPlacement === 'left' || settings.menuPlacement === 'right'
+              ? [
+                  {
+                    key: 'sideWidth',
+                    label: 'Side width',
+                    type: 'range',
+                    min: 160,
+                    max: 420,
+                    suffix: 'px',
+                  } as SettingsField<MenuSettings>,
+                ]
               : []),
             ...(settings.collapsible
-              ? [{
-                key: 'collapsedWidth',
-                label: 'Collapsed width',
-                type: 'range',
-                min: 48,
-                max: 120,
-                suffix: 'px',
-              } as SettingsField<MenuSettings>]
+              ? [
+                  {
+                    key: 'collapsedWidth',
+                    label: 'Collapsed width',
+                    type: 'range',
+                    min: 48,
+                    max: 120,
+                    suffix: 'px',
+                  } as SettingsField<MenuSettings>,
+                ]
               : []),
           ];
 
@@ -282,14 +284,16 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
           return [
             { key: 'showItemImages', label: 'Show item images', type: 'checkbox' },
             ...(settings.showItemImages
-              ? [{
-                key: 'itemImageSize',
-                label: 'Image size',
-                type: 'range',
-                min: 12,
-                max: 48,
-                suffix: 'px',
-              } as SettingsField<MenuSettings>]
+              ? [
+                  {
+                    key: 'itemImageSize',
+                    label: 'Image size',
+                    type: 'range',
+                    min: 12,
+                    max: 48,
+                    suffix: 'px',
+                  } as SettingsField<MenuSettings>,
+                ]
               : []),
           ];
 
@@ -346,11 +350,11 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
             },
             ...(menuColorSchemeId === 'custom'
               ? ([
-                { key: 'backgroundColor', label: 'Background', type: 'color' },
-                { key: 'textColor', label: 'Text color', type: 'color' },
-                { key: 'activeItemColor', label: 'Active item', type: 'color' },
-                { key: 'borderColor', label: 'Border', type: 'color' },
-              ] as SettingsField<MenuSettings>[])
+                  { key: 'backgroundColor', label: 'Background', type: 'color' },
+                  { key: 'textColor', label: 'Text color', type: 'color' },
+                  { key: 'activeItemColor', label: 'Active item', type: 'color' },
+                  { key: 'borderColor', label: 'Border', type: 'color' },
+                ] as SettingsField<MenuSettings>[])
               : []),
           ];
 
@@ -362,7 +366,7 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
               type: 'number',
               min: 0,
               max: 100,
-              suffix: 'px'
+              suffix: 'px',
             },
             {
               key: 'paddingRight',
@@ -370,7 +374,7 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
               type: 'number',
               min: 0,
               max: 100,
-              suffix: 'px'
+              suffix: 'px',
             },
             {
               key: 'paddingBottom',
@@ -378,7 +382,7 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
               type: 'number',
               min: 0,
               max: 100,
-              suffix: 'px'
+              suffix: 'px',
             },
             {
               key: 'paddingLeft',
@@ -386,7 +390,7 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
               type: 'number',
               min: 0,
               max: 100,
-              suffix: 'px'
+              suffix: 'px',
             },
             {
               key: 'itemGap',
@@ -460,8 +464,9 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
 
         case 'Sticky Behaviour': {
           const isSticky = settings.positionMode === 'sticky';
-          const canHideOnScroll = isSticky || settings.menuPlacement === 'left' || settings.menuPlacement === 'right';
-            
+          const canHideOnScroll =
+            isSticky || settings.menuPlacement === 'left' || settings.menuPlacement === 'right';
+
           return [
             {
               key: 'positionMode',
@@ -470,19 +475,39 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
               options: [
                 { label: 'Glued to top', value: 'sticky' },
                 { label: 'Top of page', value: 'static' },
-              ]
+              ],
             },
-            ...(isSticky ? [
-              { key: 'stickyOffset', label: 'Sticky offset', type: 'number', min: 0, max: 200, suffix: 'px' },
-              { key: 'shrinkOnScroll', label: 'Shrink on scroll', type: 'checkbox' },
-              { key: 'stickyBackground', label: 'Sticky background', type: 'color' },
-            ] as SettingsField<MenuSettings>[] : []),
-            ...(canHideOnScroll ? [
-              { key: 'hideOnScroll', label: 'Hide on scroll', type: 'checkbox' },
-              ...(settings.hideOnScroll ? [
-                { key: 'showOnScrollUpAfterPx', label: 'Show on scroll up after', type: 'number', min: 0, max: 600, suffix: 'px' }
-              ] as SettingsField<MenuSettings>[] : [])
-            ] as SettingsField<MenuSettings>[] : [])
+            ...(isSticky
+              ? ([
+                  {
+                    key: 'stickyOffset',
+                    label: 'Sticky offset',
+                    type: 'number',
+                    min: 0,
+                    max: 200,
+                    suffix: 'px',
+                  },
+                  { key: 'shrinkOnScroll', label: 'Shrink on scroll', type: 'checkbox' },
+                  { key: 'stickyBackground', label: 'Sticky background', type: 'color' },
+                ] as SettingsField<MenuSettings>[])
+              : []),
+            ...(canHideOnScroll
+              ? ([
+                  { key: 'hideOnScroll', label: 'Hide on scroll', type: 'checkbox' },
+                  ...(settings.hideOnScroll
+                    ? ([
+                        {
+                          key: 'showOnScrollUpAfterPx',
+                          label: 'Show on scroll up after',
+                          type: 'number',
+                          min: 0,
+                          max: 600,
+                          suffix: 'px',
+                        },
+                      ] as SettingsField<MenuSettings>[])
+                    : []),
+                ] as SettingsField<MenuSettings>[])
+              : []),
           ];
         }
 
@@ -568,7 +593,7 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
     }, 500);
   }, [menuKey, userSettings, updateSetting]);
 
-  useEffect((): () => void => {
+  useEffect((): (() => void) => {
     return (): void => {
       if (persistTimerRef.current) window.clearTimeout(persistTimerRef.current);
     };
@@ -634,12 +659,7 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
                 </button>
               </div>
             ))}
-            <Button
-              size='sm'
-              variant='outline'
-              className='w-full text-xs'
-              onClick={addMenuItem}
-            >
+            <Button size='sm' variant='outline' className='w-full text-xs' onClick={addMenuItem}>
               <Plus className='mr-1.5 size-3.5' />
               Add menu item
             </Button>
@@ -656,7 +676,9 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
         <SettingsFieldsRenderer
           fields={fields}
           values={settings}
-          onChange={(values) => setUserSettings(prev => ({ ...(prev ?? initialSettings), ...values }))}
+          onChange={(values) =>
+            setUserSettings((prev) => ({ ...(prev ?? initialSettings), ...values }))
+          }
         />
       );
     },
@@ -678,7 +700,8 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
           <FormSection title='Menu scope' variant='subtle' className='p-3'>
             {zoningEnabled ? (
               <div className='mt-2 space-y-2'>
-                <SelectSimple size='sm'
+                <SelectSimple
+                  size='sm'
                   value={menuScopeId}
                   onValueChange={(value: string): void => {
                     setUserMenuScopeId(value);
@@ -688,8 +711,8 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
                     ...domains.map((domain: CmsDomain) => ({
                       value: domain.id,
                       label: domain.domain,
-                      description: domain.id === activeDomainId ? 'active' : undefined
-                    }))
+                      description: domain.id === activeDomainId ? 'active' : undefined,
+                    })),
                   ]}
                   placeholder='Select zone'
                   triggerClassName='h-8 text-xs'
@@ -722,12 +745,16 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
                       onClick={(): void => toggleSection(section)}
                       className='h-8 w-8 p-0'
                     >
-                      <ChevronDown className={`size-4 text-gray-500 transition ${isOpen ? 'rotate-180' : ''}`} />
+                      <ChevronDown
+                        className={`size-4 text-gray-500 transition ${isOpen ? 'rotate-180' : ''}`}
+                      />
                     </Button>
                   }
                 >
                   {isOpen && (
-                    <div className='px-3 pb-3 border-t border-border/40 pt-3'>{renderSectionBody(section)}</div>
+                    <div className='px-3 pb-3 border-t border-border/40 pt-3'>
+                      {renderSectionBody(section)}
+                    </div>
                   )}
                 </FormSection>
               );

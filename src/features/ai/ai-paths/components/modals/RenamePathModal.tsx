@@ -3,7 +3,10 @@
 import React from 'react';
 
 import type { EntityModalProps } from '@/shared/contracts/ui';
-import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
+import {
+  SettingsPanelBuilder,
+  type SettingsField,
+} from '@/shared/ui/templates/SettingsPanelBuilder';
 
 interface RenamePathModalProps extends EntityModalProps<{ name: string }> {
   setDraftName: (value: string) => void;
@@ -21,7 +24,7 @@ const FIELDS: SettingsField<RenameFormState>[] = [
     type: 'text',
     placeholder: 'e.g. My Automation Path',
     required: true,
-  }
+  },
 ];
 
 export function RenamePathModal({
@@ -32,7 +35,7 @@ export function RenamePathModal({
   onSave,
 }: RenamePathModalProps): React.JSX.Element | null {
   const values: RenameFormState = { name: item?.name ?? '' };
-  
+
   const handleChange = (vals: Partial<RenameFormState>) => {
     if (vals.name !== undefined) {
       setDraftName(vals.name);

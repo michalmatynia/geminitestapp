@@ -16,7 +16,7 @@ const decodeHtmlEntities = (value: string): string =>
     .replace(/&lt;/gi, '<')
     .replace(/&gt;/gi, '>')
     .replace(/&quot;/gi, '"')
-    .replace(/&#39;/gi, '\'');
+    .replace(/&#39;/gi, "'");
 
 const stripHtml = (value: string): string =>
   decodeHtmlEntities(value.replace(/<[^>]*>/g, ' '))
@@ -33,7 +33,7 @@ export const resolveCaseResolverPlainText = (file: CaseResolverFile): string => 
 
 const forEachFolderPathAncestor = (
   folderPath: string,
-  callback: (ancestorPath: string) => void,
+  callback: (ancestorPath: string) => void
 ): void => {
   const normalizedFolderPath = folderPath.trim();
   if (!normalizedFolderPath) return;
@@ -66,7 +66,7 @@ const runtimeIndexesCache = new WeakMap<
 >();
 
 export const buildCaseResolverRuntimeIndexes = (
-  workspace: CaseResolverWorkspace,
+  workspace: CaseResolverWorkspace
 ): CaseResolverRuntimeIndexes => {
   const filesById = new Map<string, CaseResolverFile>();
   const assetsById = new Map<string, CaseResolverAssetFile>();
@@ -189,9 +189,7 @@ export const buildCaseResolverRuntimeIndexes = (
   folderOwnerIdsByPath.forEach((ownerIds: Set<string>, folderPath: string): void => {
     folderOwnerCaseIdsByPath.set(
       folderPath,
-      Array.from(ownerIds).sort((left: string, right: string): number =>
-        left.localeCompare(right),
-      ),
+      Array.from(ownerIds).sort((left: string, right: string): number => left.localeCompare(right))
     );
   });
 
@@ -214,7 +212,7 @@ export const buildCaseResolverRuntimeIndexes = (
 };
 
 export const getCachedCaseResolverRuntimeIndexes = (
-  workspace: CaseResolverWorkspace,
+  workspace: CaseResolverWorkspace
 ): CaseResolverRuntimeIndexes => {
   const workspaceRevision = getCaseResolverWorkspaceRevision(workspace);
   const cached = runtimeIndexesCache.get(workspace);
@@ -231,5 +229,5 @@ export const getCachedCaseResolverRuntimeIndexes = (
 
 export const getCaseSubtreeIds = (
   indexes: CaseResolverRuntimeIndexes,
-  caseId: string,
+  caseId: string
 ): Set<string> => indexes.subtreeCaseIdsByCaseId.get(caseId) ?? EMPTY_SET;

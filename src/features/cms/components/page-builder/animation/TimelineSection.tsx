@@ -2,24 +2,14 @@
 
 import React, { useCallback } from 'react';
 
-import type {
-  TimelineMode,
-  ScrollMode,
-  RevealStyle,
-} from '@/shared/lib/gsap';
+import type { TimelineMode, ScrollMode, RevealStyle } from '@/shared/lib/gsap';
 import {
   DEFAULT_ANIMATION_CONFIG,
   TIMELINE_MODES,
   SCROLL_MODES,
   REVEAL_STYLES,
 } from '@/shared/lib/gsap';
-import {
-  SelectSimple,
-  FormSection,
-  FormField,
-  ToggleRow,
-  Input,
-} from '@/shared/ui';
+import { SelectSimple, FormSection, FormField, ToggleRow, Input } from '@/shared/ui';
 
 import { useAnimationConfigContext } from './AnimationConfigContext';
 
@@ -27,20 +17,28 @@ export function TimelineSection(): React.ReactNode {
   const { config, onChange } = useAnimationConfigContext();
   const timelineModeValue = config.timelineMode ?? DEFAULT_ANIMATION_CONFIG.timelineMode ?? 'none';
   const timelineGapValue = config.timelineGap ?? DEFAULT_ANIMATION_CONFIG.timelineGap ?? 0.15;
-  const timelineOverlapValue = config.timelineOverlap ?? DEFAULT_ANIMATION_CONFIG.timelineOverlap ?? 0.2;
-  const timelineResponseOffsetValue = config.timelineResponseOffset ?? DEFAULT_ANIMATION_CONFIG.timelineResponseOffset ?? 0.2;
-  const timelineStaggerEachValue = config.timelineStaggerEach ?? DEFAULT_ANIMATION_CONFIG.timelineStaggerEach ?? 0.12;
-  const timelineWaveAmountValue = config.timelineWaveAmount ?? DEFAULT_ANIMATION_CONFIG.timelineWaveAmount ?? 0.5;
-  const timelineRandomizeValue = config.timelineRandomize ?? DEFAULT_ANIMATION_CONFIG.timelineRandomize ?? false;
+  const timelineOverlapValue =
+    config.timelineOverlap ?? DEFAULT_ANIMATION_CONFIG.timelineOverlap ?? 0.2;
+  const timelineResponseOffsetValue =
+    config.timelineResponseOffset ?? DEFAULT_ANIMATION_CONFIG.timelineResponseOffset ?? 0.2;
+  const timelineStaggerEachValue =
+    config.timelineStaggerEach ?? DEFAULT_ANIMATION_CONFIG.timelineStaggerEach ?? 0.12;
+  const timelineWaveAmountValue =
+    config.timelineWaveAmount ?? DEFAULT_ANIMATION_CONFIG.timelineWaveAmount ?? 0.5;
+  const timelineRandomizeValue =
+    config.timelineRandomize ?? DEFAULT_ANIMATION_CONFIG.timelineRandomize ?? false;
   const timelineLoopValue = config.timelineLoop ?? DEFAULT_ANIMATION_CONFIG.timelineLoop ?? false;
-  const timelineRepeatValue = config.timelineRepeat ?? DEFAULT_ANIMATION_CONFIG.timelineRepeat ?? -1;
+  const timelineRepeatValue =
+    config.timelineRepeat ?? DEFAULT_ANIMATION_CONFIG.timelineRepeat ?? -1;
   const timelineYoyoValue = config.timelineYoyo ?? DEFAULT_ANIMATION_CONFIG.timelineYoyo ?? false;
-  const timelineRepeatDelayValue = config.timelineRepeatDelay ?? DEFAULT_ANIMATION_CONFIG.timelineRepeatDelay ?? 0.2;
+  const timelineRepeatDelayValue =
+    config.timelineRepeatDelay ?? DEFAULT_ANIMATION_CONFIG.timelineRepeatDelay ?? 0.2;
   const scrollModeValue = config.scrollMode ?? DEFAULT_ANIMATION_CONFIG.scrollMode ?? 'none';
   const scrollScrubValue = config.scrollScrub ?? DEFAULT_ANIMATION_CONFIG.scrollScrub ?? 0.6;
   const scrollPinValue = config.scrollPin ?? DEFAULT_ANIMATION_CONFIG.scrollPin ?? false;
   const scrollSnapValue = config.scrollSnap ?? DEFAULT_ANIMATION_CONFIG.scrollSnap ?? false;
-  const scrollSnapDurationValue = config.scrollSnapDuration ?? DEFAULT_ANIMATION_CONFIG.scrollSnapDuration ?? 0.35;
+  const scrollSnapDurationValue =
+    config.scrollSnapDuration ?? DEFAULT_ANIMATION_CONFIG.scrollSnapDuration ?? 0.35;
   const scrollStartValue = config.scrollStart ?? DEFAULT_ANIMATION_CONFIG.scrollStart ?? 'top 85%';
   const scrollEndValue = config.scrollEnd ?? DEFAULT_ANIMATION_CONFIG.scrollEnd ?? 'bottom top';
   const revealStyleValue = config.revealStyle ?? DEFAULT_ANIMATION_CONFIG.revealStyle ?? 'none';
@@ -214,7 +212,8 @@ export function TimelineSection(): React.ReactNode {
       {/* Timeline choreography */}
       <FormSection title='Timeline choreography' variant='subtle-compact' className='p-3 space-y-4'>
         <FormField label='Mode'>
-          <SelectSimple size='sm'
+          <SelectSimple
+            size='sm'
             value={timelineModeValue}
             onValueChange={handleTimelineModeChange}
             options={timelineModeOptions}
@@ -344,7 +343,8 @@ export function TimelineSection(): React.ReactNode {
             )}
 
             <p className='text-[10px] text-gray-500'>
-              Use selector <span className='text-gray-400'>:scope &gt; *</span> to choreograph children.
+              Use selector <span className='text-gray-400'>:scope &gt; *</span> to choreograph
+              children.
             </p>
           </div>
         )}
@@ -353,7 +353,8 @@ export function TimelineSection(): React.ReactNode {
       {/* Scroll storytelling */}
       <FormSection title='Scroll storytelling' variant='subtle-compact' className='p-3 space-y-4'>
         <FormField label='Mode'>
-          <SelectSimple size='sm'
+          <SelectSimple
+            size='sm'
             value={scrollModeValue}
             onValueChange={handleScrollModeChange}
             options={scrollModeOptions}
@@ -383,7 +384,8 @@ export function TimelineSection(): React.ReactNode {
 
             {scrollModeValue === 'reveal' && (
               <FormField label='Reveal style'>
-                <SelectSimple size='sm'
+                <SelectSimple
+                  size='sm'
                   value={revealStyleValue}
                   onValueChange={handleRevealStyleChange}
                   options={revealStyleOptions}
@@ -391,7 +393,9 @@ export function TimelineSection(): React.ReactNode {
               </FormField>
             )}
 
-            {(scrollModeValue === 'scrub' || scrollModeValue === 'pin' || scrollModeValue === 'story') && (
+            {(scrollModeValue === 'scrub' ||
+              scrollModeValue === 'pin' ||
+              scrollModeValue === 'story') && (
               <>
                 <div className='grid gap-3 sm:grid-cols-2 items-end'>
                   <FormField label='Scrub'>
@@ -407,7 +411,11 @@ export function TimelineSection(): React.ReactNode {
                   </FormField>
                   <ToggleRow
                     label='Pin section'
-                    checked={scrollModeValue === 'pin' || scrollModeValue === 'story' ? true : scrollPinValue}
+                    checked={
+                      scrollModeValue === 'pin' || scrollModeValue === 'story'
+                        ? true
+                        : scrollPinValue
+                    }
                     onCheckedChange={handleScrollPinChange}
                     disabled={scrollModeValue === 'pin' || scrollModeValue === 'story'}
                     className='border-none p-0 bg-transparent hover:bg-transparent mb-2'

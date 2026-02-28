@@ -30,12 +30,7 @@ import {
   updateAiPathsSetting,
 } from '@/shared/lib/ai-paths/settings-store-client';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import type {
-  AiNode,
-  Edge,
-  PathConfig,
-  PathMeta,
-} from '@/shared/contracts/ai-paths';
+import type { AiNode, Edge, PathConfig, PathMeta } from '@/shared/contracts/ai-paths';
 import { api } from '@/shared/lib/api-client';
 import {
   invalidateAiPathQueue,
@@ -63,8 +58,7 @@ const normalizeLoadedPathMetas = (metas: PathMeta[]): PathMeta[] => {
   metas.forEach((meta: PathMeta) => {
     const id = typeof meta.id === 'string' ? meta.id.trim() : '';
     if (!id) return;
-    const normalizedName =
-      normalizeLoadedPathName(id, meta.name) || `Path ${id.slice(0, 6)}`;
+    const normalizedName = normalizeLoadedPathName(id, meta.name) || `Path ${id.slice(0, 6)}`;
     const fallbackTimestamp = new Date().toISOString();
     const normalizedCreatedAt =
       typeof meta.createdAt === 'string' && meta.createdAt.trim().length > 0
@@ -92,17 +86,14 @@ const normalizeLoadedPathMetas = (metas: PathMeta[]): PathMeta[] => {
       byId.set(id, normalizedMeta);
     }
   });
-  return Array.from(byId.values()).sort(
-    (a: PathMeta, b: PathMeta): number =>
-      b.updatedAt.localeCompare(a.updatedAt)
+  return Array.from(byId.values()).sort((a: PathMeta, b: PathMeta): number =>
+    b.updatedAt.localeCompare(a.updatedAt)
   );
 };
 
 const normalizeHistoryRetentionPasses = (value: unknown): number => {
   const parsed =
-    typeof value === 'number'
-      ? value
-      : Number.parseInt(typeof value === 'string' ? value : '', 10);
+    typeof value === 'number' ? value : Number.parseInt(typeof value === 'string' ? value : '', 10);
   if (!Number.isFinite(parsed) || parsed < AI_PATHS_HISTORY_RETENTION_MIN) {
     return AI_PATHS_HISTORY_RETENTION_DEFAULT;
   }
@@ -115,7 +106,9 @@ const normalizeHistoryRetentionPasses = (value: unknown): number => {
 const resolveHistoryRetentionPasses = (
   settingsData: Array<{ key: string; value: string }>
 ): number => {
-  const raw = settingsData.find((item: { key: string; value: string }) => item.key === AI_PATHS_HISTORY_RETENTION_KEY)?.value;
+  const raw = settingsData.find(
+    (item: { key: string; value: string }) => item.key === AI_PATHS_HISTORY_RETENTION_KEY
+  )?.value;
   return normalizeHistoryRetentionPasses(raw);
 };
 
@@ -144,15 +137,20 @@ export type FireAiPathTriggerEventArgs = {
   entityId?: string | null | undefined;
   getEntityJson?: (() => Record<string, unknown> | null) | undefined;
   event?: React.MouseEvent<HTMLButtonElement> | React.MouseEvent | undefined;
-  source?: { tab?: string | undefined; location?: string | undefined; page?: string | undefined } | null | undefined;
+  source?:
+    | { tab?: string | undefined; location?: string | undefined; page?: string | undefined }
+    | null
+    | undefined;
   extras?: Record<string, unknown> | null | undefined;
-  onProgress?: ((payload: {
-    status: 'running' | 'success' | 'error';
-    progress: number;
-    completedNodes: number;
-    totalNodes: number;
-    node?: { id: string; title?: string | null; type?: string | null } | null | undefined;
-  }) => void) | undefined;
+  onProgress?:
+    | ((payload: {
+        status: 'running' | 'success' | 'error';
+        progress: number;
+        completedNodes: number;
+        totalNodes: number;
+        node?: { id: string; title?: string | null; type?: string | null } | null | undefined;
+      }) => void)
+    | undefined;
 };
 
 const loadPathConfigsFromSettings = async (
@@ -166,9 +164,10 @@ const loadPathConfigsFromSettings = async (
   try {
     const data =
       settingsData ??
-      ((await (async (): Promise<Array<{ key: string; value: string }> | null> => {
+      (await (async (): Promise<Array<{ key: string; value: string }> | null> => {
         return await fetchAiPathsSettingsCached();
-      })()) ?? []);
+      })()) ??
+      [];
     if (!data.length) return { configs: {}, settingsPathOrder: [] };
     const map = new Map<string, string>(
       data.map((item: { key: string; value: string }) => [item.key, item.value])
@@ -180,13 +179,14 @@ const loadPathConfigsFromSettings = async (
         if (Array.isArray(parsedIndex)) {
           const normalizedMetas = normalizeLoadedPathMetas(
             parsedIndex.filter(
-              (meta: unknown): meta is PathMeta =>
-                Boolean(meta) && typeof meta === 'object'
+              (meta: unknown): meta is PathMeta => Boolean(meta) && typeof meta === 'object'
             )
           );
           settingsPathOrder = normalizedMetas
             .map((meta: PathMeta) => meta?.id)
-            .filter((id: string | undefined): id is string => typeof id === 'string' && id.length > 0);
+            .filter(
+              (id: string | undefined): id is string => typeof id === 'string' && id.length > 0
+            );
           normalizedMetas.forEach((meta: PathMeta) => {
             if (!meta?.id) return;
             const configRaw = map.get(`${PATH_CONFIG_PREFIX}${meta.id}`);
@@ -241,9 +241,7 @@ export const selectTriggerCandidates = <T extends TriggerSelectionCandidate>(arg
   );
 
   const preferredByButton = preferredPathId
-    ? triggerCandidates.find(
-      (config: T): boolean => config.id === preferredPathId
-    ) ?? null
+    ? (triggerCandidates.find((config: T): boolean => config.id === preferredPathId) ?? null)
     : null;
 
   if (preferredPathId) {
@@ -254,9 +252,7 @@ export const selectTriggerCandidates = <T extends TriggerSelectionCandidate>(arg
   }
 
   const preferredByActivePath = activePathId
-    ? activeTriggerCandidates.find(
-      (config: T): boolean => config.id === activePathId
-    ) ?? null
+    ? (activeTriggerCandidates.find((config: T): boolean => config.id === activePathId) ?? null)
     : null;
 
   if (activeTriggerCandidates.length > 1 && !preferredByActivePath) {
@@ -269,10 +265,7 @@ export const selectTriggerCandidates = <T extends TriggerSelectionCandidate>(arg
   return {
     activeTriggerCandidates,
     selectedConfig:
-      preferredByActivePath ??
-      activeTriggerCandidates[0] ??
-      triggerCandidates[0] ??
-      null,
+      preferredByActivePath ?? activeTriggerCandidates[0] ?? triggerCandidates[0] ?? null,
   };
 };
 
@@ -304,29 +297,28 @@ const resolveTriggerSelection = async (
 
   const orderedConfigs: PathConfig[] = pathOrder.length
     ? pathOrder
-      .map((id: string) => configs[id])
-      .filter((config: PathConfig | undefined): config is PathConfig => Boolean(config))
+        .map((id: string) => configs[id])
+        .filter((config: PathConfig | undefined): config is PathConfig => Boolean(config))
     : configsList;
 
   const fallbackTriggerEventId = (TRIGGER_EVENTS[0]?.id as string) ?? 'manual';
   const triggerCandidates: PathConfig[] = orderedConfigs.filter((config: PathConfig) =>
     Array.isArray(config?.nodes)
       ? config.nodes.some((node: AiNode) => {
-        if (node.type !== 'trigger') return false;
-        const configuredEvent = node.config?.trigger?.event ?? fallbackTriggerEventId;
-        return configuredEvent === triggerEventId;
-      })
+          if (node.type !== 'trigger') return false;
+          const configuredEvent = node.config?.trigger?.event ?? fallbackTriggerEventId;
+          return configuredEvent === triggerEventId;
+        })
       : false
   );
 
   const preferredPathId =
-    typeof options?.preferredPathId === 'string' &&
-    options.preferredPathId.trim().length > 0
+    typeof options?.preferredPathId === 'string' && options.preferredPathId.trim().length > 0
       ? options.preferredPathId.trim()
       : null;
   const activePathId =
     (typeof options?.preferredActivePathId === 'string' &&
-      options.preferredActivePathId.trim().length > 0
+    options.preferredActivePathId.trim().length > 0
       ? options.preferredActivePathId.trim()
       : null) ??
     (typeof uiState?.['activePathId'] === 'string' && uiState['activePathId'].trim().length > 0
@@ -356,68 +348,71 @@ const buildTriggerContext = (args: {
   entityJson?: Record<string, unknown> | null;
   event?: React.MouseEvent;
   pathInfo?: { id?: string | undefined; name?: string | undefined } | null | undefined;
-  source?: { tab?: string | undefined; location?: string | undefined; page?: string | undefined } | null | undefined;
+  source?:
+    | { tab?: string | undefined; location?: string | undefined; page?: string | undefined }
+    | null
+    | undefined;
   extras?: Record<string, unknown> | null | undefined;
 }): Record<string, unknown> => {
   const timestamp = new Date().toISOString();
   const nativeEvent = args.event?.nativeEvent;
   const pointer = nativeEvent
     ? {
-      clientX: nativeEvent.clientX,
-      clientY: nativeEvent.clientY,
-      pageX: nativeEvent.pageX,
-      pageY: nativeEvent.pageY,
-      screenX: nativeEvent.screenX,
-      screenY: nativeEvent.screenY,
-      offsetX: nativeEvent.offsetX,
-      offsetY: nativeEvent.offsetY,
-      button: nativeEvent.button,
-      buttons: nativeEvent.buttons,
-      altKey: nativeEvent.altKey,
-      ctrlKey: nativeEvent.ctrlKey,
-      shiftKey: nativeEvent.shiftKey,
-      metaKey: nativeEvent.metaKey,
-    }
+        clientX: nativeEvent.clientX,
+        clientY: nativeEvent.clientY,
+        pageX: nativeEvent.pageX,
+        pageY: nativeEvent.pageY,
+        screenX: nativeEvent.screenX,
+        screenY: nativeEvent.screenY,
+        offsetX: nativeEvent.offsetX,
+        offsetY: nativeEvent.offsetY,
+        button: nativeEvent.button,
+        buttons: nativeEvent.buttons,
+        altKey: nativeEvent.altKey,
+        ctrlKey: nativeEvent.ctrlKey,
+        shiftKey: nativeEvent.shiftKey,
+        metaKey: nativeEvent.metaKey,
+      }
     : undefined;
 
   const location =
     typeof window !== 'undefined'
       ? {
-        href: window.location.href,
-        origin: window.location.origin,
-        pathname: window.location.pathname,
-        search: window.location.search,
-        hash: window.location.hash,
-        referrer: document.referrer || undefined,
-      }
+          href: window.location.href,
+          origin: window.location.origin,
+          pathname: window.location.pathname,
+          search: window.location.search,
+          hash: window.location.hash,
+          referrer: document.referrer || undefined,
+        }
       : {};
 
   const ui =
     typeof window !== 'undefined'
       ? {
-        viewport: {
-          width: window.innerWidth,
-          height: window.innerHeight,
-          devicePixelRatio: window.devicePixelRatio,
-        },
-        screen: {
-          width: window.screen?.width,
-          height: window.screen?.height,
-          availWidth: window.screen?.availWidth,
-          availHeight: window.screen?.availHeight,
-        },
-        userAgent: navigator.userAgent,
-        platform: navigator.platform,
-        language: navigator.language,
-        languages: navigator.languages,
-        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        documentTitle: document.title,
-        visibilityState: document.visibilityState,
-        scroll: {
-          x: window.scrollX,
-          y: window.scrollY,
-        },
-      }
+          viewport: {
+            width: window.innerWidth,
+            height: window.innerHeight,
+            devicePixelRatio: window.devicePixelRatio,
+          },
+          screen: {
+            width: window.screen?.width,
+            height: window.screen?.height,
+            availWidth: window.screen?.availWidth,
+            availHeight: window.screen?.availHeight,
+          },
+          userAgent: navigator.userAgent,
+          platform: navigator.platform,
+          language: navigator.language,
+          languages: navigator.languages,
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          documentTitle: document.title,
+          visibilityState: document.visibilityState,
+          scroll: {
+            x: window.scrollX,
+            y: window.scrollY,
+          },
+        }
       : {};
 
   const base: Record<string, unknown> = {
@@ -459,7 +454,7 @@ const buildTriggerContext = (args: {
 
 export function useAiPathTriggerEvent(): {
   fireAiPathTriggerEvent: (args: FireAiPathTriggerEventArgs) => Promise<void>;
-  } {
+} {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -517,17 +512,12 @@ export function useAiPathTriggerEvent(): {
       }
       let historyRetentionPasses = resolveHistoryRetentionPasses(settingsData);
 
-      let selection = await resolveTriggerSelection(
-        settingsData,
-        triggerEventId,
-        {
-          preferredPathId: args.preferredPathId ?? null,
-          preferredActivePathId,
-        }
-      );
+      let selection = await resolveTriggerSelection(settingsData, triggerEventId, {
+        preferredPathId: args.preferredPathId ?? null,
+        preferredActivePathId,
+      });
       const triggerCandidates: PathConfig[] = selection.triggerCandidates;
-      const activeTriggerCandidates: PathConfig[] =
-        selection.activeTriggerCandidates;
+      const activeTriggerCandidates: PathConfig[] = selection.activeTriggerCandidates;
 
       if (triggerCandidates.length === 0) {
         toast(
@@ -567,14 +557,10 @@ export function useAiPathTriggerEvent(): {
         const freshSettingsData = await fetchAiPathsSettingsCached({
           bypassCache: true,
         });
-        selection = await resolveTriggerSelection(
-          freshSettingsData,
-          triggerEventId,
-          {
-            preferredPathId: args.preferredPathId ?? null,
-            preferredActivePathId,
-          }
-        );
+        selection = await resolveTriggerSelection(freshSettingsData, triggerEventId, {
+          preferredPathId: args.preferredPathId ?? null,
+          preferredActivePathId,
+        });
         if (selection.selectedConfig?.isActive === false || !selection.selectedConfig) {
           toast('This path is deactivated. Activate it to run.', { variant: 'info' });
           return;
@@ -586,7 +572,10 @@ export function useAiPathTriggerEvent(): {
       }
 
       const nodes: AiNode[] = normalizeNodes(selectedConfig.nodes ?? []);
-      const edges: Edge[] = sanitizeEdges(nodes, Array.isArray(selectedConfig.edges) ? selectedConfig.edges : []);
+      const edges: Edge[] = sanitizeEdges(
+        nodes,
+        Array.isArray(selectedConfig.edges) ? selectedConfig.edges : []
+      );
       const fallbackTriggerEventId = (TRIGGER_EVENTS[0]?.id as string) ?? 'manual';
 
       const triggerNodes: AiNode[] = nodes.filter((node: AiNode) => {
@@ -597,7 +586,9 @@ export function useAiPathTriggerEvent(): {
 
       const triggerNode: AiNode | undefined =
         triggerNodes.find((node: AiNode) => edges.some((edge: Edge) => edge.from === node.id)) ??
-        triggerNodes.find((node: AiNode) => edges.some((edge: Edge) => edge.from === node.id || edge.to === node.id)) ??
+        triggerNodes.find((node: AiNode) =>
+          edges.some((edge: Edge) => edge.from === node.id || edge.to === node.id)
+        ) ??
         triggerNodes[0];
 
       if (!triggerNode) {
@@ -628,13 +619,11 @@ export function useAiPathTriggerEvent(): {
         });
       }
 
-      const connectedFetcherRequiresLiveEntityContext = nodes.some(
-        (node: AiNode): boolean => {
-          if (node.type !== 'fetcher' || !connected.has(node.id)) return false;
-          const sourceMode = node.config?.fetcher?.sourceMode ?? 'live_context';
-          return sourceMode === 'live_context';
-        }
-      );
+      const connectedFetcherRequiresLiveEntityContext = nodes.some((node: AiNode): boolean => {
+        if (node.type !== 'fetcher' || !connected.has(node.id)) return false;
+        const sourceMode = node.config?.fetcher?.sourceMode ?? 'live_context';
+        return sourceMode === 'live_context';
+      });
       const normalizedEntityId =
         typeof args.entityId === 'string' && args.entityId.trim().length > 0
           ? args.entityId.trim()
@@ -670,7 +659,11 @@ export function useAiPathTriggerEvent(): {
         const rawProgress = Number.isFinite(payload.progress) ? payload.progress : 0;
         const clamped = Math.max(0, Math.min(1, rawProgress));
         const node = payload.node
-          ? { id: payload.node.id, title: payload.node.title ?? null, type: payload.node.type ?? null }
+          ? {
+              id: payload.node.id,
+              title: payload.node.title ?? null,
+              type: payload.node.type ?? null,
+            }
           : null;
         args.onProgress({
           status: payload.status,
@@ -698,9 +691,7 @@ export function useAiPathTriggerEvent(): {
 
       reportProgress({ status: 'running', progress: 0 });
 
-      const validationConfig = normalizeAiPathsValidationConfig(
-        selectedConfig.aiPathsValidation
-      );
+      const validationConfig = normalizeAiPathsValidationConfig(selectedConfig.aiPathsValidation);
       const runPreflight = evaluateRunPreflight({
         nodes,
         edges,
@@ -711,10 +702,9 @@ export function useAiPathTriggerEvent(): {
       });
       if (runPreflight.shouldBlock) {
         reportProgress({ status: 'error', progress: 0 });
-        toast(
-          runPreflight.blockMessage ?? 'Run blocked by preflight validation.',
-          { variant: 'error' }
-        );
+        toast(runPreflight.blockMessage ?? 'Run blocked by preflight validation.', {
+          variant: 'error',
+        });
         return;
       }
       if (runPreflight.warnings.length > 0) {
@@ -729,14 +719,13 @@ export function useAiPathTriggerEvent(): {
             ...(uiState && typeof uiState === 'object' ? uiState : {}),
             lastTriggeredAt: runAt,
           };
-          await updateAiPathsSetting(
-            AI_PATHS_UI_STATE_KEY,
-            JSON.stringify(nextUiState)
-          );
+          await updateAiPathsSetting(AI_PATHS_UI_STATE_KEY, JSON.stringify(nextUiState));
           invalidateAiPathsSettingsCache();
           void invalidateAiPathSettings(queryClient);
         } catch (error) {
-          logClientError(error, { context: { source: 'useAiPathTriggerEvent', action: 'persistRunSnapshot' } });
+          logClientError(error, {
+            context: { source: 'useAiPathTriggerEvent', action: 'persistRunSnapshot' },
+          });
         }
       };
 
@@ -794,14 +783,13 @@ export function useAiPathTriggerEvent(): {
               warnings: runPreflight.compileReport.warnings,
               findings: runPreflight.compileReport.findings,
             },
-            dependency:
-              runPreflight.dependencyReport
-                ? {
+            dependency: runPreflight.dependencyReport
+              ? {
                   errors: runPreflight.dependencyReport.errors,
                   warnings: runPreflight.dependencyReport.warnings,
                   strictReady: runPreflight.dependencyReport.strictReady,
                 }
-                : null,
+              : null,
             dataContract: {
               errors: runPreflight.dataContractReport.errors,
               warnings: runPreflight.dataContractReport.warnings,
@@ -831,7 +819,7 @@ export function useAiPathTriggerEvent(): {
         queuedRun &&
           typeof queuedRun === 'object' &&
           typeof (queuedRun as { id?: unknown }).id === 'string'
-          ? ((queuedRun as { id: string }).id)
+          ? (queuedRun as { id: string }).id
           : null
       );
       toast('AI Path run queued.', { variant: 'success' });
@@ -845,7 +833,9 @@ export function useAiPathTriggerEvent(): {
 
       await persistRunSnapshot(runAt);
     } catch (error) {
-      logClientError(error, { context: { source: 'useAiPathTriggerEvent', action: 'fireAiPathTriggerEvent' } });
+      logClientError(error, {
+        context: { source: 'useAiPathTriggerEvent', action: 'fireAiPathTriggerEvent' },
+      });
       toast('Failed to run AI Path trigger.', { variant: 'error' });
     }
   };

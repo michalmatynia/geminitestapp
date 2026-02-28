@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { 
+import {
   PromptValidationSeverityDto,
   PromptValidationChainModeDto,
   PromptValidationScopeDto,
@@ -104,17 +104,53 @@ export const defaultPromptValidationRules: PromptValidationRule[] = [
       'Required for programmatic extraction. The params object must be JSON-parseable (quoted keys/strings).',
     message: 'Prompt must include a valid `params = { ... }` object for extraction.',
     similar: [
-      { pattern: 'param\\s*=\\s*\\{', flags: 'i', suggestion: 'Use `params = {` (plural) instead of `param = {`.', comment: null },
-      { pattern: 'params\\s*:\\s*\\{', flags: 'i', suggestion: 'Use `params = {` (assignment) instead of `params: {`.', comment: null },
-      { pattern: 'parameters\\s*=\\s*\\{', flags: 'i', suggestion: 'Use `params = {` instead of `parameters = {`.', comment: null },
+      {
+        pattern: 'param\\s*=\\s*\\{',
+        flags: 'i',
+        suggestion: 'Use `params = {` (plural) instead of `param = {`.',
+        comment: null,
+      },
+      {
+        pattern: 'params\\s*:\\s*\\{',
+        flags: 'i',
+        suggestion: 'Use `params = {` (assignment) instead of `params: {`.',
+        comment: null,
+      },
+      {
+        pattern: 'parameters\\s*=\\s*\\{',
+        flags: 'i',
+        suggestion: 'Use `params = {` instead of `parameters = {`.',
+        comment: null,
+      },
     ],
     autofix: {
       enabled: true,
       operations: [
-        { kind: 'replace', pattern: '\\bparam\\s*[:=]\\s*\\{', flags: 'i', replacement: 'params = {', comment: null },
-        { kind: 'replace', pattern: '\\bparameters\\s*[:=]\\s*\\{', flags: 'i', replacement: 'params = {', comment: null },
-        { kind: 'replace', pattern: '\\bparams\\s*[:=]\\s*\\{', flags: 'i', replacement: 'params = {', comment: 'Normalizes casing/spaces so extraction can find `params = {`.' },
-        { kind: 'params_json', comment: 'Attempts to convert the params object into strict JSON (quoted keys/strings).' },
+        {
+          kind: 'replace',
+          pattern: '\\bparam\\s*[:=]\\s*\\{',
+          flags: 'i',
+          replacement: 'params = {',
+          comment: null,
+        },
+        {
+          kind: 'replace',
+          pattern: '\\bparameters\\s*[:=]\\s*\\{',
+          flags: 'i',
+          replacement: 'params = {',
+          comment: null,
+        },
+        {
+          kind: 'replace',
+          pattern: '\\bparams\\s*[:=]\\s*\\{',
+          flags: 'i',
+          replacement: 'params = {',
+          comment: 'Normalizes casing/spaces so extraction can find `params = {`.',
+        },
+        {
+          kind: 'params_json',
+          comment: 'Attempts to convert the params object into strict JSON (quoted keys/strings).',
+        },
       ],
     },
     sequenceGroupId: 'prompt_core',
@@ -141,13 +177,30 @@ export const defaultPromptValidationRules: PromptValidationRule[] = [
     message: 'Missing `## ROLE` section heading.',
     similar: [
       { pattern: '^#+\\s*Role\\b', flags: 'mi', suggestion: 'Rename to `## ROLE`.', comment: null },
-      { pattern: '^##\\s*ROL\\b', flags: 'mi', suggestion: 'Fix typo to `## ROLE`.', comment: null },
+      {
+        pattern: '^##\\s*ROL\\b',
+        flags: 'mi',
+        suggestion: 'Fix typo to `## ROLE`.',
+        comment: null,
+      },
     ],
     autofix: {
       enabled: true,
       operations: [
-        { kind: 'replace', pattern: '^#+\\s*role\\b.*$', flags: 'mi', replacement: '## ROLE', comment: null },
-        { kind: 'replace', pattern: '^#+\\s*rol\\b.*$', flags: 'mi', replacement: '## ROLE', comment: null },
+        {
+          kind: 'replace',
+          pattern: '^#+\\s*role\\b.*$',
+          flags: 'mi',
+          replacement: '## ROLE',
+          comment: null,
+        },
+        {
+          kind: 'replace',
+          pattern: '^#+\\s*rol\\b.*$',
+          flags: 'mi',
+          replacement: '## ROLE',
+          comment: null,
+        },
       ],
     },
     sequenceGroupId: 'prompt_core',
@@ -173,14 +226,36 @@ export const defaultPromptValidationRules: PromptValidationRule[] = [
     flags: 'mi',
     message: 'Missing `## NON-NEGOTIABLE GOAL` section heading.',
     similar: [
-      { pattern: '^##\\s+NON\\s*NEGOTIABLE\\s+GOAL\\b', flags: 'mi', suggestion: 'Use hyphenated `## NON-NEGOTIABLE GOAL`.', comment: null },
-      { pattern: '^#+\\s*Non[-\\s]?negotiable\\b', flags: 'mi', suggestion: 'Rename to `## NON-NEGOTIABLE GOAL`.', comment: null },
+      {
+        pattern: '^##\\s+NON\\s*NEGOTIABLE\\s+GOAL\\b',
+        flags: 'mi',
+        suggestion: 'Use hyphenated `## NON-NEGOTIABLE GOAL`.',
+        comment: null,
+      },
+      {
+        pattern: '^#+\\s*Non[-\\s]?negotiable\\b',
+        flags: 'mi',
+        suggestion: 'Rename to `## NON-NEGOTIABLE GOAL`.',
+        comment: null,
+      },
     ],
     autofix: {
       enabled: true,
       operations: [
-        { kind: 'replace', pattern: '^#+\\s*non\\s*negotiable\\s+goal\\b.*$', flags: 'mi', replacement: '## NON-NEGOTIABLE GOAL', comment: null },
-        { kind: 'replace', pattern: '^#+\\s*non[-\\s]?negotiable\\b.*$', flags: 'mi', replacement: '## NON-NEGOTIABLE GOAL', comment: null },
+        {
+          kind: 'replace',
+          pattern: '^#+\\s*non\\s*negotiable\\s+goal\\b.*$',
+          flags: 'mi',
+          replacement: '## NON-NEGOTIABLE GOAL',
+          comment: null,
+        },
+        {
+          kind: 'replace',
+          pattern: '^#+\\s*non[-\\s]?negotiable\\b.*$',
+          flags: 'mi',
+          replacement: '## NON-NEGOTIABLE GOAL',
+          comment: null,
+        },
       ],
     },
     sequenceGroupId: 'prompt_core',
@@ -206,14 +281,36 @@ export const defaultPromptValidationRules: PromptValidationRule[] = [
     flags: 'mi',
     message: 'Missing `## PARAMS` section heading.',
     similar: [
-      { pattern: '^##\\s*PARAM\\b', flags: 'mi', suggestion: 'Rename to `## PARAMS`.', comment: null },
-      { pattern: '^#+\\s*Params\\b', flags: 'mi', suggestion: 'Rename to `## PARAMS`.', comment: null },
+      {
+        pattern: '^##\\s*PARAM\\b',
+        flags: 'mi',
+        suggestion: 'Rename to `## PARAMS`.',
+        comment: null,
+      },
+      {
+        pattern: '^#+\\s*Params\\b',
+        flags: 'mi',
+        suggestion: 'Rename to `## PARAMS`.',
+        comment: null,
+      },
     ],
     autofix: {
       enabled: true,
       operations: [
-        { kind: 'replace', pattern: '^#+\\s*param\\b.*$', flags: 'mi', replacement: '## PARAMS', comment: null },
-        { kind: 'replace', pattern: '^#+\\s*params\\b.*$', flags: 'mi', replacement: '## PARAMS', comment: null },
+        {
+          kind: 'replace',
+          pattern: '^#+\\s*param\\b.*$',
+          flags: 'mi',
+          replacement: '## PARAMS',
+          comment: null,
+        },
+        {
+          kind: 'replace',
+          pattern: '^#+\\s*params\\b.*$',
+          flags: 'mi',
+          replacement: '## PARAMS',
+          comment: null,
+        },
       ],
     },
     sequenceGroupId: 'prompt_core',
@@ -239,12 +336,23 @@ export const defaultPromptValidationRules: PromptValidationRule[] = [
     flags: 'mi',
     message: 'Missing `## FINAL QA` section heading.',
     similar: [
-      { pattern: '^#+\\s*QA\\b', flags: 'mi', suggestion: 'Rename to `## FINAL QA`.', comment: null },
+      {
+        pattern: '^#+\\s*QA\\b',
+        flags: 'mi',
+        suggestion: 'Rename to `## FINAL QA`.',
+        comment: null,
+      },
     ],
     autofix: {
       enabled: true,
       operations: [
-        { kind: 'replace', pattern: '^#+\\s*qa\\b.*$', flags: 'mi', replacement: '## FINAL QA', comment: null },
+        {
+          kind: 'replace',
+          pattern: '^#+\\s*qa\\b.*$',
+          flags: 'mi',
+          replacement: '## FINAL QA',
+          comment: null,
+        },
       ],
     },
     sequenceGroupId: 'prompt_core',
@@ -345,7 +453,7 @@ export const defaultPromptValidationRules: PromptValidationRule[] = [
           kind: 'replace',
           pattern: '&apos;|&#39;',
           flags: 'gi',
-          replacement: '\'',
+          replacement: "'",
           comment: null,
         },
         {
@@ -472,18 +580,26 @@ export function parsePromptEngineSettings(raw: string | null | undefined): Promp
     const result = promptEngineSettingsSchema.safeParse(parsed);
     if (!result.success) return defaultPromptEngineSettings;
 
-    const rawRules = (parsed && typeof parsed === 'object' && !Array.isArray(parsed))
-      ? (parsed as Record<string, unknown>)?.['promptValidation']
-      : null;
+    const rawRules =
+      parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+        ? (parsed as Record<string, unknown>)?.['promptValidation']
+        : null;
     const rawRulesArray =
       rawRules && typeof rawRules === 'object' && !Array.isArray(rawRules)
         ? (rawRules as Record<string, unknown>)?.['rules']
         : null;
     const hadAutofixInStorage = Array.isArray(rawRulesArray)
-      ? rawRulesArray.some((rule: unknown) => Boolean(rule) && typeof rule === 'object' && 'autofix' in (rule as Record<string, unknown>))
+      ? rawRulesArray.some(
+          (rule: unknown) =>
+            Boolean(rule) &&
+            typeof rule === 'object' &&
+            'autofix' in (rule as Record<string, unknown>)
+        )
       : false;
 
-    const defaultById = new Map(defaultPromptValidationRules.map((rule: PromptValidationRule) => [rule.id, rule]));
+    const defaultById = new Map(
+      defaultPromptValidationRules.map((rule: PromptValidationRule) => [rule.id, rule])
+    );
     const mergedRules = result.data.promptValidation.rules.map((rule: PromptValidationRule) => {
       const defaults = defaultById.get(rule.id);
       if (hadAutofixInStorage || !defaults?.autofix || defaults.autofix.operations.length === 0) {
@@ -515,17 +631,26 @@ export function parsePromptEngineSettings(raw: string | null | undefined): Promp
   }
 }
 
-export function parsePromptValidationRules(raw: string): { ok: true; rules: PromptValidationRule[] } | { ok: false; error: string } {
+export function parsePromptValidationRules(
+  raw: string
+): { ok: true; rules: PromptValidationRule[] } | { ok: false; error: string } {
   try {
     const parsed = JSON.parse(raw) as unknown;
     const result = z.array(promptValidationRuleSchema).safeParse(parsed);
     if (result.success) {
       const hadAutofix = Array.isArray(parsed)
-        ? parsed.some((rule: unknown) => Boolean(rule) && typeof rule === 'object' && 'autofix' in (rule as Record<string, unknown>))
+        ? parsed.some(
+            (rule: unknown) =>
+              Boolean(rule) &&
+              typeof rule === 'object' &&
+              'autofix' in (rule as Record<string, unknown>)
+          )
         : false;
       if (hadAutofix) return { ok: true, rules: result.data };
 
-      const defaultById = new Map(defaultPromptValidationRules.map((rule: PromptValidationRule) => [rule.id, rule]));
+      const defaultById = new Map(
+        defaultPromptValidationRules.map((rule: PromptValidationRule) => [rule.id, rule])
+      );
       const mergedRules = result.data.map((rule: PromptValidationRule) => {
         const defaults = defaultById.get(rule.id);
         if (!defaults?.autofix || defaults.autofix.operations.length === 0) return rule;

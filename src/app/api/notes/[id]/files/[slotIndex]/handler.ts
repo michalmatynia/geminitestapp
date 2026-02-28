@@ -28,7 +28,7 @@ export async function DELETE_handler(
 
   // Get the file to find its filepath
   const files = await noteService.getNoteFiles(noteId);
-  const file = files.find( (f: NoteFileDto) => f.slotIndex === slotIndex);
+  const file = files.find((f: NoteFileDto) => f.slotIndex === slotIndex);
 
   if (!file) {
     throw notFoundError('File not found in this slot', { noteId, slotIndex });

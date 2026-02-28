@@ -117,7 +117,8 @@ describe('case-resolver settings', () => {
       'detached-doc-root',
     ]);
     expect(
-      workspace.files.find((file: CaseResolverFile): boolean => file.id === 'detached-doc-root')?.parentCaseId
+      workspace.files.find((file: CaseResolverFile): boolean => file.id === 'detached-doc-root')
+        ?.parentCaseId
     ).toBeNull();
     expect(workspace.activeFileId).toBe('detached-doc-root');
   });
@@ -156,7 +157,7 @@ describe('case-resolver settings', () => {
         ],
         assets: [],
         activeFileId: 'doc-a',
-      }),
+      })
     );
 
     const doc = workspace.files.find((file: CaseResolverFile): boolean => file.id === 'doc-a');
@@ -195,14 +196,16 @@ describe('case-resolver settings', () => {
         ],
         assets: [],
         activeFileId: 'case-a',
-      }),
+      })
     );
 
+    expect(workspace.files.map((file: CaseResolverFile): string => file.id).sort()).toEqual([
+      'case-a',
+      'doc-owned',
+    ]);
     expect(
-      workspace.files.map((file: CaseResolverFile): string => file.id).sort(),
-    ).toEqual(['case-a', 'doc-owned']);
-    expect(
-      workspace.files.find((file: CaseResolverFile): boolean => file.id === 'doc-owned')?.parentCaseId,
+      workspace.files.find((file: CaseResolverFile): boolean => file.id === 'doc-owned')
+        ?.parentCaseId
     ).toBe('case-a');
   });
 
@@ -351,10 +354,18 @@ describe('case-resolver settings', () => {
     expect(workspace.files[0]?.createdAt).toBe(CASE_RESOLVER_NORMALIZATION_FALLBACK_TIMESTAMP);
     expect(workspace.files[0]?.updatedAt).toBe(CASE_RESOLVER_NORMALIZATION_FALLBACK_TIMESTAMP);
     expect(Object.keys(workspace.folderTimestamps).sort()).toEqual(['Root_A', 'Root_A/Sub__']);
-    expect(Number.isNaN(Date.parse(workspace.folderTimestamps['Root_A']?.createdAt ?? ''))).toBe(false);
-    expect(Number.isNaN(Date.parse(workspace.folderTimestamps['Root_A']?.updatedAt ?? ''))).toBe(false);
-    expect(Number.isNaN(Date.parse(workspace.folderTimestamps['Root_A/Sub__']?.createdAt ?? ''))).toBe(false);
-    expect(Number.isNaN(Date.parse(workspace.folderTimestamps['Root_A/Sub__']?.updatedAt ?? ''))).toBe(false);
+    expect(Number.isNaN(Date.parse(workspace.folderTimestamps['Root_A']?.createdAt ?? ''))).toBe(
+      false
+    );
+    expect(Number.isNaN(Date.parse(workspace.folderTimestamps['Root_A']?.updatedAt ?? ''))).toBe(
+      false
+    );
+    expect(
+      Number.isNaN(Date.parse(workspace.folderTimestamps['Root_A/Sub__']?.createdAt ?? ''))
+    ).toBe(false);
+    expect(
+      Number.isNaN(Date.parse(workspace.folderTimestamps['Root_A/Sub__']?.updatedAt ?? ''))
+    ).toBe(false);
 
     expect(workspace.files[0]!.graph!.nodeMeta!['n1']).toEqual({
       role: 'text_note',
@@ -376,7 +387,8 @@ describe('case-resolver settings', () => {
       plainTextFormatterEnabled: DEFAULT_CASE_RESOLVER_NODE_META.plainTextFormatterEnabled,
       plainTextValidationStackId: DEFAULT_CASE_RESOLVER_NODE_META.plainTextValidationStackId,
     });
-    expect(workspace.files[0]!.graph!.pdfExtractionPresetId).toBe('plain_text');  });
+    expect(workspace.files[0]!.graph!.pdfExtractionPresetId).toBe('plain_text');
+  });
 
   it('retains owner-scoped folder records for case-isolated empty folders', () => {
     const workspace = parseCaseResolverWorkspace(
@@ -757,21 +769,21 @@ describe('case-resolver settings', () => {
     const workspace = parseCaseResolverWorkspace(raw);
     const relationGraph = workspace.relationGraph;
 
-    expect(
-      relationGraph.nodes.some((node: AiNode): boolean => node.id === 'case:case-a')
-    ).toBe(true);
-    expect(
-      relationGraph.nodes.some((node: AiNode): boolean => node.id === 'case:case-b')
-    ).toBe(true);
+    expect(relationGraph.nodes.some((node: AiNode): boolean => node.id === 'case:case-a')).toBe(
+      true
+    );
+    expect(relationGraph.nodes.some((node: AiNode): boolean => node.id === 'case:case-b')).toBe(
+      true
+    );
     expect(
       relationGraph.nodes.some((node: AiNode): boolean => node.id === 'file:case:case-a')
     ).toBe(false);
     expect(
       relationGraph.nodes.some((node: AiNode): boolean => node.id === 'file:asset:asset-1')
     ).toBe(true);
-    expect(
-      relationGraph.nodes.some((node: AiNode): boolean => node.id === 'custom-link')
-    ).toBe(true);
+    expect(relationGraph.nodes.some((node: AiNode): boolean => node.id === 'custom-link')).toBe(
+      true
+    );
 
     const preservedCaseNode = relationGraph.nodes.find(
       (node: AiNode): boolean => node.id === 'case:case-a'
@@ -782,22 +794,20 @@ describe('case-resolver settings', () => {
       relationGraph.edges.some(
         (edge: Edge): boolean =>
           edge.from === 'case:case-a' &&
-                edge.to === 'case:case-b' &&
-                relationGraph.edgeMeta?.[edge.id]?.relationType === 'parent_case'
+          edge.to === 'case:case-b' &&
+          relationGraph.edgeMeta?.[edge.id]?.relationType === 'parent_case'
       )
     ).toBe(true);
     expect(
       relationGraph.edges.some(
         (edge: Edge): boolean =>
           edge.from === 'case:case-a' &&
-                edge.to === 'case:case-b' &&
-                relationGraph.edgeMeta?.[edge.id]?.relationType === 'references'
+          edge.to === 'case:case-b' &&
+          relationGraph.edgeMeta?.[edge.id]?.relationType === 'references'
       )
     ).toBe(true);
-    
-    expect(
-      relationGraph.edges.some((edge: Edge): boolean => edge.id === 'custom-edge')
-    ).toBe(true);
+
+    expect(relationGraph.edges.some((edge: Edge): boolean => edge.id === 'custom-edge')).toBe(true);
     expect(relationGraph.edgeMeta?.['custom-edge']?.relationType).toBe('custom');
 
     expect(relationGraph.edgeMeta!['custom-edge']?.isStructural).toBe(false);
@@ -854,9 +864,11 @@ describe('case-resolver settings', () => {
     });
 
     const workspace = parseCaseResolverWorkspace(raw);
-    const unknownNode = workspace.relationGraph.nodes.find((node: AiNode): boolean => node.id === 'custom-unknown');
+    const unknownNode = workspace.relationGraph.nodes.find(
+      (node: AiNode): boolean => node.id === 'custom-unknown'
+    );
     expect(unknownNode).toBeDefined();
-    
+
     expect(unknownNode?.type).toBe('template');
   });
 
@@ -956,7 +968,7 @@ describe('case-resolver settings', () => {
     const workspace = parseCaseResolverWorkspace(raw);
     const relationGraph = workspace.relationGraph;
     const edgeIds = relationGraph.edges.map((edge: Edge) => edge.id);
-    
+
     expect(edgeIds.includes('stale-edge')).toBe(false);
     expect(edgeIds.includes('custom-edge-keep')).toBe(true);
   });
@@ -1015,7 +1027,9 @@ describe('case-resolver settings', () => {
     });
 
     const workspace = parseCaseResolverWorkspace(raw);
-    const caseFile = workspace.files.find((file: CaseResolverFile): boolean => file.id === 'case-a');
+    const caseFile = workspace.files.find(
+      (file: CaseResolverFile): boolean => file.id === 'case-a'
+    );
     const docA = workspace.files.find((file: CaseResolverFile): boolean => file.id === 'doc-a');
     const docB = workspace.files.find((file: CaseResolverFile): boolean => file.id === 'doc-b');
     const docC = workspace.files.find((file: CaseResolverFile): boolean => file.id === 'doc-c');
@@ -1068,9 +1082,13 @@ describe('case-resolver settings', () => {
     });
 
     const workspace = parseCaseResolverWorkspace(raw);
-    const keptDoc = workspace.files.find((file: CaseResolverFile): boolean => file.id === 'doc-kept');
+    const keptDoc = workspace.files.find(
+      (file: CaseResolverFile): boolean => file.id === 'doc-kept'
+    );
 
-    expect(workspace.files.some((file: CaseResolverFile): boolean => file.id === 'doc-orphan')).toBe(true);
+    expect(
+      workspace.files.some((file: CaseResolverFile): boolean => file.id === 'doc-orphan')
+    ).toBe(true);
     expect(keptDoc?.relatedFileIds).toBeUndefined();
   });
 
@@ -1167,9 +1185,9 @@ describe('case-resolver settings', () => {
     expect(
       parseCaseResolverDefaultDocumentFormat(JSON.stringify({ defaultDocumentFormat: 'wysiwyg' }))
     ).toBe('wysiwyg');
-    expect(
-      parseCaseResolverDefaultDocumentFormat(JSON.stringify({ editorType: 'wysiwyg' }))
-    ).toBe('wysiwyg');
+    expect(parseCaseResolverDefaultDocumentFormat(JSON.stringify({ editorType: 'wysiwyg' }))).toBe(
+      'wysiwyg'
+    );
     expect(parseCaseResolverDefaultDocumentFormat('invalid-value')).toBe('wysiwyg');
     expect(parseCaseResolverDefaultDocumentFormat('invalid-value', 'wysiwyg')).toBe('wysiwyg');
   });
@@ -1206,10 +1224,12 @@ describe('case-resolver settings', () => {
       })
     );
 
-    const defaultScan = workspace.files.find((file: CaseResolverFile) => file.id === 'scan-default');
+    const defaultScan = workspace.files.find(
+      (file: CaseResolverFile) => file.id === 'scan-default'
+    );
     expect(defaultScan?.scanOcrModel).toBe('');
     expect(defaultScan?.scanOcrPrompt).toBe(DEFAULT_CASE_RESOLVER_SCANFILE_OCR_PROMPT);
-    
+
     const customScan = workspace.files.find((file: CaseResolverFile) => file.id === 'scan-custom');
     expect(customScan?.scanOcrModel).toBe('llama3.2-vision');
     expect(customScan?.scanOcrPrompt).toBe('Use this custom OCR prompt.');
@@ -1232,17 +1252,24 @@ describe('case-resolver settings', () => {
       { id: 'cycle-a', name: 'Cycle A', parentId: 'cycle-b' },
       { id: 'cycle-b', name: 'Cycle B', parentId: 'cycle-a' },
     ]);
-  
-    const byId = new Map<string, typeof tags[number]>(tags.map((tag) => [tag.id, tag]));
+
+    const byId = new Map<string, (typeof tags)[number]>(tags.map((tag) => [tag.id, tag]));
     expect(byId.get('child')?.parentId).toBe('parent');
     expect(byId.get('parent')?.parentId).toBeNull();
     expect(byId.get('orphan')?.parentId).toBeNull();
     expect(byId.get('self')?.parentId).toBeNull();
     expect(byId.get('cycle-a')?.parentId).toBeNull();
     expect(byId.get('cycle-b')?.parentId).toBeNull();
-    expect(tags.map((tag) => tag.id)).toEqual(['cycle-a', 'cycle-b', 'orphan', 'parent', 'child', 'self']);
+    expect(tags.map((tag) => tag.id)).toEqual([
+      'cycle-a',
+      'cycle-b',
+      'orphan',
+      'parent',
+      'child',
+      'self',
+    ]);
   });
-  
+
   it('normalizes hierarchical case identifiers and parses safely', () => {
     const identifiers = normalizeCaseResolverIdentifiers([
       { id: 'child', name: 'Child', parentId: 'parent' },
@@ -1252,15 +1279,17 @@ describe('case-resolver settings', () => {
       { id: 'cycle-a', name: 'Cycle A', parentId: 'cycle-b' },
       { id: 'cycle-b', name: 'Cycle B', parentId: 'cycle-a' },
     ]);
-  
-    const byId = new Map<string, typeof identifiers[number]>(identifiers.map((identifier) => [identifier.id, identifier]));
+
+    const byId = new Map<string, (typeof identifiers)[number]>(
+      identifiers.map((identifier) => [identifier.id, identifier])
+    );
     expect(byId.get('child')?.parentId).toBe('parent');
     expect(byId.get('parent')?.parentId).toBeNull();
     expect(byId.get('orphan')?.parentId).toBeNull();
     expect(byId.get('self')?.parentId).toBeNull();
     expect(byId.get('cycle-a')?.parentId).toBeNull();
     expect(byId.get('cycle-b')?.parentId).toBeNull();
-  
+
     expect(identifiers.map((identifier) => identifier.id)).toEqual([
       'cycle-a',
       'cycle-b',
@@ -1351,7 +1380,9 @@ describe('case-resolver settings', () => {
     );
 
     const graph = workspace.files[0]?.graph;
-    const explanatoryNode = graph?.nodes.find((node: AiNode): boolean => node.id === 'explanatory-node');
+    const explanatoryNode = graph?.nodes.find(
+      (node: AiNode): boolean => node.id === 'explanatory-node'
+    );
 
     expect(explanatoryNode?.inputs).toEqual(CASE_RESOLVER_EXPLANATORY_NODE_INPUT_PORTS);
     expect(explanatoryNode?.outputs).toEqual(CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS);
@@ -1393,7 +1424,7 @@ describe('case-resolver settings', () => {
     const legacyNode = graph?.nodes.find((node: AiNode): boolean => node.id === 'legacy-doc-node');
 
     expect(legacyNode?.type).toBe('prompt');
-    expect(((legacyNode?.config as any)?.prompt)?.template).toBe('<p>Legacy template text</p>');
+    expect(legacyNode?.config?.prompt?.template).toBe('<p>Legacy template text</p>');
     expect(legacyNode?.inputs).toEqual(CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS);
     expect(legacyNode?.outputs).toEqual(CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS);
   });
@@ -1634,7 +1665,9 @@ describe('case-resolver settings', () => {
       })
     );
 
-    const legacyNodeFile = workspace.assets.find((asset: CaseResolverAssetFile) => asset.id === 'node-file-legacy');
+    const legacyNodeFile = workspace.assets.find(
+      (asset: CaseResolverAssetFile) => asset.id === 'node-file-legacy'
+    );
     expect(legacyNodeFile).toBeDefined();
     expect(legacyNodeFile?.sourceFileId).toBeNull();
     const snapshot = parseNodeFileSnapshot(legacyNodeFile?.textContent ?? '');
@@ -1723,15 +1756,18 @@ describe('case-resolver settings', () => {
     );
 
     const graph = workspace.files[0]?.graph;
-    const edgeById = new Map<string, Edge>((graph?.edges ?? []).map((edge: Edge) => [edge.id, edge]));
+    const edgeById = new Map<string, Edge>(
+      (graph?.edges ?? []).map((edge: Edge) => [edge.id, edge])
+    );
     expect(edgeById.get('edge-in-prompt')?.toPort).toBe('plaintextContent');
     expect(edgeById.get('edge-in-unknown')?.toPort).toBe('plaintextContent');
-    expect(edgeById.get('edge-in-legacy-textfield')?.toPort).toBe(CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[0]);
+    expect(edgeById.get('edge-in-legacy-textfield')?.toPort).toBe(
+      CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[0]
+    );
     expect(edgeById.get('edge-out-result')?.fromPort).toBe('plaintextContent');
     expect(edgeById.get('edge-out-prompt')?.fromPort).toBe('plaintextContent');
     expect(edgeById.get('edge-out-legacy-textfield')?.fromPort).toBe(
       CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[0]
     );
-          
   });
 });

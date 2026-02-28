@@ -5,15 +5,14 @@ import {
   countImageStudioSlots,
   createImageStudioSlots,
   listImageStudioSlots,
-} from '@/features/ai/image-studio/server/slot-repository';
+} from '@/shared/lib/ai/image-studio/server/slot-repository';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, quotaExceededError } from '@/shared/errors/app-error';
 
 const MAX_PROJECT_SLOTS = 5000;
 const MAX_SLOTS_PER_REQUEST = 250;
 
-const sanitizeProjectId = (value: string): string =>
-  value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
+const sanitizeProjectId = (value: string): string => value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
 
 const sanitizeFolderPath = (value: string): string => {
   const normalized = value.replace(/\\/g, '/').trim();
@@ -85,7 +84,11 @@ export async function POST_handler(
     metadata?: Record<string, unknown>;
   };
 
-  const slotsToCreate = (incomingSlots.length > 0 ? (incomingSlots as SlotInput[]) : new Array<SlotInput>(maxCreate).fill({}))
+  const slotsToCreate = (
+    incomingSlots.length > 0
+      ? (incomingSlots as SlotInput[])
+      : new Array<SlotInput>(maxCreate).fill({})
+  )
     .slice(0, maxCreate)
     .map((slot: SlotInput, index: number) => ({
       projectId,

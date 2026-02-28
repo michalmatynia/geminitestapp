@@ -1,11 +1,11 @@
 ---
-owner: "Case Resolver Team"
-last_reviewed: "2026-02-20"
-status: "active"
+owner: 'Case Resolver Team'
+last_reviewed: '2026-02-20'
+status: 'active'
 related_components:
-  - "src/app/api/case-resolver/assets/extract-pdf/handler.ts"
-  - "src/features/case-resolver/server/ocr-runtime.ts"
-  - "src/app/api/case-resolver/documents/export-pdf/handler.ts"
+  - 'src/app/api/case-resolver/assets/extract-pdf/handler.ts'
+  - 'src/features/case-resolver/server/ocr-runtime.ts'
+  - 'src/app/api/case-resolver/documents/export-pdf/handler.ts'
 ---
 
 # Case Resolver Security Notes

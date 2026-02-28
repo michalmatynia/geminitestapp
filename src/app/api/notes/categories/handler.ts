@@ -35,9 +35,11 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
 
   const resolvedNotebookId =
     parsed.data.notebookId ?? (await noteService.getOrCreateDefaultNotebook()).id;
-  const category = await noteService.createCategory(removeUndefined({
-    ...parsed.data,
-    notebookId: resolvedNotebookId,
-  }) as CategoryCreateInput);
+  const category = await noteService.createCategory(
+    removeUndefined({
+      ...parsed.data,
+      notebookId: resolvedNotebookId,
+    }) as CategoryCreateInput
+  );
   return NextResponse.json(category, { status: 201 });
 }

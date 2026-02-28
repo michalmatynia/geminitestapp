@@ -11,21 +11,23 @@ import {
   internalError,
   notFoundError,
 } from '@/shared/errors/app-error';
-import { apiHandlerWithParams, type ApiHandlerContext as _ApiHandlerContext } from '@/shared/lib/api/api-handler';
+import {
+  apiHandlerWithParams,
+  type ApiHandlerContext as _ApiHandlerContext,
+} from '@/shared/lib/api/api-handler';
 import prisma from '@/shared/lib/db/prisma';
 
 import type { Prisma } from '@prisma/client';
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 
-async function GET_handler(_req: NextRequest,
+async function GET_handler(
+  _req: NextRequest,
   { params }: { params: Promise<{ runId: string }> }
 ): Promise<Response> {
   const requestStart = Date.now();
   if (!('chatbotAgentRun' in prisma)) {
-    throw internalError(
-      'Agent runs not initialized. Run prisma generate/db push.'
-    );
+    throw internalError('Agent runs not initialized. Run prisma generate/db push.');
   }
   const { runId } = await params;
   const run = await prisma.chatbotAgentRun.findUnique({
@@ -45,14 +47,13 @@ async function GET_handler(_req: NextRequest,
   return NextResponse.json({ run });
 }
 
-async function POST_handler(req: NextRequest,
+async function POST_handler(
+  req: NextRequest,
   { params }: { params: Promise<{ runId: string }> }
 ): Promise<Response> {
   const requestStart = Date.now();
   if (!('chatbotAgentRun' in prisma)) {
-    throw internalError(
-      'Agent runs not initialized. Run prisma generate/db push.'
-    );
+    throw internalError('Agent runs not initialized. Run prisma generate/db push.');
   }
   const { runId } = await params;
   let body: {
@@ -69,9 +70,7 @@ async function POST_handler(req: NextRequest,
   }
   if (
     !body.action ||
-    !['stop', 'resume', 'retry_step', 'override_step', 'approve_step'].includes(
-      body.action
-    )
+    !['stop', 'resume', 'retry_step', 'override_step', 'approve_step'].includes(body.action)
   ) {
     throw badRequestError('Unsupported action.');
   }
@@ -96,26 +95,22 @@ async function POST_handler(req: NextRequest,
       return NextResponse.json({ status: run.status });
     }
     const nextPrompt =
-      typeof body.prompt === 'string' && body.prompt.trim()
-        ? body.prompt.trim()
-        : null;
+      typeof body.prompt === 'string' && body.prompt.trim() ? body.prompt.trim() : null;
     const resumeStepId =
-      typeof body.stepId === 'string' && body.stepId.trim()
-        ? body.stepId.trim()
-        : null;
+      typeof body.stepId === 'string' && body.stepId.trim() ? body.stepId.trim() : null;
     const resumePlanState =
       run.planState && typeof run.planState === 'object'
         ? {
-          ...(run.planState as Record<string, unknown>),
-          resumeRequestedAt: new Date().toISOString(),
-          ...(nextPrompt ? { promptUpdatedAt: new Date().toISOString() } : {}),
-          ...(resumeStepId ? { activeStepId: resumeStepId } : {}),
-        }
+            ...(run.planState as Record<string, unknown>),
+            resumeRequestedAt: new Date().toISOString(),
+            ...(nextPrompt ? { promptUpdatedAt: new Date().toISOString() } : {}),
+            ...(resumeStepId ? { activeStepId: resumeStepId } : {}),
+          }
         : {
-          resumeRequestedAt: new Date().toISOString(),
-          ...(nextPrompt ? { promptUpdatedAt: new Date().toISOString() } : {}),
-          ...(resumeStepId ? { activeStepId: resumeStepId } : {}),
-        };
+            resumeRequestedAt: new Date().toISOString(),
+            ...(nextPrompt ? { promptUpdatedAt: new Date().toISOString() } : {}),
+            ...(resumeStepId ? { activeStepId: resumeStepId } : {}),
+          };
     const updated = await prisma.chatbotAgentRun.update({
       where: { id: runId },
       data: {
@@ -245,12 +240,14 @@ async function POST_handler(req: NextRequest,
     });
     const nextActive =
       body.status === 'completed'
-        ? (nextSteps.find(
-          (step) =>
-            step &&
-              typeof step === 'object' &&
-              (step as { status?: string }).status !== 'completed'
-        ) as { id?: string } | undefined)?.id ?? null
+        ? ((
+            nextSteps.find(
+              (step) =>
+                step &&
+                typeof step === 'object' &&
+                (step as { status?: string }).status !== 'completed'
+            ) as { id?: string } | undefined
+          )?.id ?? null)
         : body.stepId;
     const now = new Date().toISOString();
     const nextPlanState = {
@@ -369,14 +366,13 @@ async function POST_handler(req: NextRequest,
   return NextResponse.json({ status: updated.status });
 }
 
-async function DELETE_handler(req: NextRequest,
+async function DELETE_handler(
+  req: NextRequest,
   { params }: { params: Promise<{ runId: string }> }
 ): Promise<Response> {
   const requestStart = Date.now();
   if (!('chatbotAgentRun' in prisma)) {
-    throw internalError(
-      'Agent runs not initialized. Run prisma generate/db push.'
-    );
+    throw internalError('Agent runs not initialized. Run prisma generate/db push.');
   }
   const { runId } = await params;
   const run = await prisma.chatbotAgentRun.findUnique({
@@ -421,6 +417,7 @@ export const POST = apiHandlerWithParams<{ runId: string }>(
   { source: 'chatbot.agent.[runId].POST' }
 );
 export const DELETE = apiHandlerWithParams<{ runId: string }>(
-  async (req: NextRequest, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }),
+  async (req: NextRequest, _ctx, params) =>
+    DELETE_handler(req, { params: Promise.resolve(params) }),
   { source: 'chatbot.agent.[runId].DELETE' }
 );

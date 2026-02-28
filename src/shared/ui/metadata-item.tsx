@@ -35,14 +35,21 @@ export function MetadataItem({
     return (
       <div className={cn('flex items-center gap-2 text-[11px]', className)}>
         {icon && <div className='shrink-0 text-gray-500'>{icon}</div>}
-        <span className={cn('uppercase font-bold tracking-wider text-gray-500 shrink-0', labelClassName)}>
+        <span
+          className={cn(
+            'uppercase font-bold tracking-wider text-gray-500 shrink-0',
+            labelClassName
+          )}
+        >
           {label}:
         </span>
-        <div className={cn(
-          'text-gray-300 truncate',
-          mono && 'font-mono text-gray-200',
-          valueClassName
-        )}>
+        <div
+          className={cn(
+            'text-gray-300 truncate',
+            mono && 'font-mono text-gray-200',
+            valueClassName
+          )}
+        >
           {content}
         </div>
       </div>
@@ -53,15 +60,22 @@ export function MetadataItem({
     <div className={cn('p-3 rounded-lg bg-card/40 border border-border/60', className)}>
       <div className='flex items-center gap-1.5 mb-1'>
         {icon && <div className='shrink-0 text-gray-500'>{icon}</div>}
-        <span className={cn('block text-gray-500 text-[10px] uppercase font-bold tracking-wider leading-none', labelClassName)}>
+        <span
+          className={cn(
+            'block text-gray-500 text-[10px] uppercase font-bold tracking-wider leading-none',
+            labelClassName
+          )}
+        >
           {label}
         </span>
       </div>
-      <div className={cn(
-        'text-gray-200 text-sm truncate',
-        mono && 'font-mono text-gray-300',
-        valueClassName
-      )}>
+      <div
+        className={cn(
+          'text-gray-200 text-sm truncate',
+          mono && 'font-mono text-gray-300',
+          valueClassName
+        )}
+      >
         {content}
       </div>
       {hint && (

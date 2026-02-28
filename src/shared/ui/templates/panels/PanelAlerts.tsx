@@ -4,9 +4,7 @@ import { AlertCircle } from 'lucide-react';
 import React from 'react';
 
 import { PanelAlert } from '@/shared/contracts/ui';
-import { cn } from '@/shared/utils/ui-utils';
-
-
+import { cn } from '@/shared/utils';
 
 interface PanelAlertsProps {
   alerts: PanelAlert[];
@@ -55,8 +53,7 @@ export const PanelAlerts: React.FC<PanelAlertsProps> = ({
   }
 
   const getAlertStyles = (type: PanelAlert['type']) => {
-    const baseStyles =
-      'flex gap-3 rounded-lg border px-4 py-3 text-sm items-start';
+    const baseStyles = 'flex gap-3 rounded-lg border px-4 py-3 text-sm items-start';
     switch (type) {
       case 'error':
         return cn(baseStyles, 'border-red-200 bg-red-50 text-red-800');

@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest';
 
-import { getValueAtMappingPath, parsePathTokens, normalizeMappingPath } from '@/shared/lib/ai-paths/core/utils/json';
+import {
+  getValueAtMappingPath,
+  parsePathTokens,
+  normalizeMappingPath,
+} from '@/shared/lib/ai-paths/core/utils/json';
 
 describe('JSON Utils', () => {
   describe('normalizeMappingPath', () => {
@@ -27,7 +31,7 @@ describe('JSON Utils', () => {
     const obj = {
       name: 'Test',
       details: { price: 100 },
-      images: [{ url: 'http://example.com/1.jpg' }]
+      images: [{ url: 'http://example.com/1.jpg' }],
     };
 
     it('should get top level value', () => {

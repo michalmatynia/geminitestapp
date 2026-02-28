@@ -7,8 +7,8 @@ import { Button, Hint } from '@/shared/ui';
 
 import { useVersionGraphInspectorContext } from './VersionGraphInspectorContext';
 import { useSettingsState } from '../context/SettingsContext';
-import { readMeta } from '../utils/metadata';
-import { getImageStudioDocTooltip } from '../utils/studio-docs';
+import { readMeta } from '@/shared/lib/ai/image-studio/utils/metadata';
+import { getImageStudioDocTooltip } from '@/shared/lib/ai/image-studio/utils/studio-docs';
 
 // ── Component ────────────────────────────────────────────────────────────────
 
@@ -34,7 +34,9 @@ export function VersionGraphInspector(): React.JSX.Element {
     () => ({
       openDetails: getImageStudioDocTooltip('version_graph_inspector_open_details'),
       flattenComposite: getImageStudioDocTooltip('version_graph_inspector_flatten_composite'),
-      refreshCompositePreview: getImageStudioDocTooltip('version_graph_inspector_refresh_composite_preview'),
+      refreshCompositePreview: getImageStudioDocTooltip(
+        'version_graph_inspector_refresh_composite_preview'
+      ),
       goToParent: getImageStudioDocTooltip('version_graph_inspector_go_to_parent'),
       focusNode: getImageStudioDocTooltip('version_graph_inspector_focus_node'),
       isolateBranch: getImageStudioDocTooltip('version_graph_inspector_isolate_branch'),
@@ -92,9 +94,7 @@ export function VersionGraphInspector(): React.JSX.Element {
 
         {/* Details */}
         <div className='min-w-0 flex-1 space-y-1'>
-          <div className='truncate text-xs font-medium text-gray-200'>
-            {selectedNode.label}
-          </div>
+          <div className='truncate text-xs font-medium text-gray-200'>{selectedNode.label}</div>
           <div className='text-[10px] text-gray-500'>
             {selectedNode.type === 'composite'
               ? 'Composite'
@@ -105,16 +105,18 @@ export function VersionGraphInspector(): React.JSX.Element {
                   : 'Base'}{' '}
             {selectedNode.hasMask ? '· Has mask' : ''}
           </div>
-          {selectedNode.type === 'composite' ? (() => {
-            const layerCount = meta.compositeConfig?.layers?.length ?? 0;
-            return layerCount > 0 ? (
-              <div className='text-[10px] text-teal-400'>
-                <Layers className='mr-0.5 inline size-2.5' />
-                {layerCount} layers
-                {compositeLoading ? ' · Loading...' : ''}
-              </div>
-            ) : null;
-          })() : null}
+          {selectedNode.type === 'composite'
+            ? (() => {
+                const layerCount = meta.compositeConfig?.layers?.length ?? 0;
+                return layerCount > 0 ? (
+                  <div className='text-[10px] text-teal-400'>
+                    <Layers className='mr-0.5 inline size-2.5' />
+                    {layerCount} layers
+                    {compositeLoading ? ' · Loading...' : ''}
+                  </div>
+                ) : null;
+              })()
+            : null}
           {selectedNode.parentIds.length > 0 ? (
             <div className='text-[10px] text-gray-500'>
               {selectedNode.parentIds.length} parent{selectedNode.parentIds.length !== 1 ? 's' : ''}
@@ -129,7 +131,10 @@ export function VersionGraphInspector(): React.JSX.Element {
             </div>
           ) : null}
           {meta.generationParams?.prompt ? (
-            <div className='truncate text-[10px] text-gray-500' title={meta.generationParams.prompt}>
+            <div
+              className='truncate text-[10px] text-gray-500'
+              title={meta.generationParams.prompt}
+            >
               Prompt: {meta.generationParams.prompt.slice(0, 60)}
               {meta.generationParams.prompt.length > 60 ? '...' : ''}
             </div>
@@ -150,19 +155,23 @@ export function VersionGraphInspector(): React.JSX.Element {
 
       <div className='mt-2 flex gap-2'>
         {selectedNode.type === 'composite' ? (
-          <Button size='xs'
+          <Button
+            size='xs'
             variant='outline'
             className='flex-1 border-teal-400/40 text-xs text-teal-400 hover:bg-teal-500/10'
             disabled={compositeBusy || compositeLoading}
             title={versionGraphTooltipsEnabled ? tooltipContent.flattenComposite : undefined}
-            onClick={() => { onFlattenComposite(selectedNode.id); }}
+            onClick={() => {
+              onFlattenComposite(selectedNode.id);
+            }}
           >
             <Layers className='mr-1.5 size-3' />
             Flatten
           </Button>
         ) : null}
         {selectedNode.type === 'composite' && onRefreshCompositePreview ? (
-          <Button size='xs'
+          <Button
+            size='xs'
             variant='ghost'
             className='size-7 text-teal-400'
             title={versionGraphTooltipsEnabled ? tooltipContent.refreshCompositePreview : undefined}
@@ -178,7 +187,9 @@ export function VersionGraphInspector(): React.JSX.Element {
       {/* Composite layer controls */}
       {selectedNode.type === 'composite' && meta.compositeConfig?.layers ? (
         <div className='mt-2 space-y-1'>
-          <Hint size='xxs' uppercase className='text-gray-500'>Layers</Hint>
+          <Hint size='xxs' uppercase className='text-gray-500'>
+            Layers
+          </Hint>
           {meta.compositeConfig.layers.map((layer, idx) => (
             <div key={layer.slotId} className='flex items-center gap-1.5 text-[10px] text-gray-400'>
               <span className='w-4 text-right text-gray-600'>{idx + 1}</span>
@@ -186,9 +197,7 @@ export function VersionGraphInspector(): React.JSX.Element {
               <span className='text-[9px] text-gray-600'>
                 {Math.round((layer.opacity ?? 1) * 100)}%
               </span>
-              <span className='text-[9px] text-gray-600'>
-                {layer.blendMode ?? 'normal'}
-              </span>
+              <span className='text-[9px] text-gray-600'>{layer.blendMode ?? 'normal'}</span>
             </div>
           ))}
         </div>

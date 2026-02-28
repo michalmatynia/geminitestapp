@@ -1,19 +1,19 @@
-import prisma from "@/shared/lib/db/prisma";
+import prisma from '@/shared/lib/db/prisma';
 
 async function main() {
   try {
     const count = await prisma.user.count();
-    console.log("User count:", count);
+    console.log('User count:', count);
     const users = await prisma.user.findMany({ select: { email: true } });
-    console.log("Users:", users);
+    console.log('Users:', users);
   } catch (error) {
-    console.error("Error checking users:", error);
+    console.error('Error checking users:', error);
   } finally {
     process.exit();
   }
 }
 
 main().catch((err) => {
-  console.error("Fatal error:", err);
+  console.error('Fatal error:', err);
   process.exit(1);
 });

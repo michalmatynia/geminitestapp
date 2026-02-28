@@ -1,7 +1,5 @@
-import { supportsImageSequenceGeneration } from '@/features/ai/image-studio/utils/image-models';
-import {
-  type ImageStudioSequenceStep,
-} from '@/features/ai/image-studio/utils/studio-settings';
+import { supportsImageSequenceGeneration } from '@/shared/lib/ai/image-studio/image-models';
+import { type ImageStudioSequenceStep } from '@/shared/lib/ai/image-studio/studio-settings';
 import {
   DEFAULT_PRODUCT_STUDIO_SEQUENCE_READINESS,
   type ProductStudioExecutionRoute,
@@ -39,7 +37,7 @@ const PRODUCT_STUDIO_STRICT_SEQUENCE_MODE =
   process.env['PRODUCT_STUDIO_STRICT_SEQUENCE_MODE'] !== 'false';
 
 export const resolvePostProductionRoute = (
-  input: ResolvePostProductionRouteInput,
+  input: ResolvePostProductionRouteInput
 ): ResolvePostProductionRouteResult => {
   const warnings: string[] = [];
   const modelSupportsFullSequence = supportsImageSequenceGeneration(input.modelId);
@@ -67,7 +65,7 @@ export const resolvePostProductionRoute = (
   if (sequencerEnabled && PRODUCT_STUDIO_STRICT_SEQUENCE_MODE) {
     if (input.requestedMode === 'model_full_sequence') {
       warnings.push(
-        'Project sequencing is enabled, so Product Studio runs the Image Studio sequence exactly as configured.',
+        'Project sequencing is enabled, so Product Studio runs the Image Studio sequence exactly as configured.'
       );
     }
     return {
@@ -90,7 +88,7 @@ export const resolvePostProductionRoute = (
       }
       if (hasConfiguredSequenceSteps) {
         warnings.push(
-          `Model "${input.modelId || 'selected model'}" does not support full-sequence generation and persisted project sequencing is disabled, so Product Studio will run direct generation only.`,
+          `Model "${input.modelId || 'selected model'}" does not support full-sequence generation and persisted project sequencing is disabled, so Product Studio will run direct generation only.`
         );
       }
       return {
@@ -112,14 +110,15 @@ export const resolvePostProductionRoute = (
 
     if (hasConfiguredSequenceSteps) {
       warnings.push(
-        'Persisted project sequencing is disabled, so Product Studio cannot run project sequence steps until Image Studio Sequencing defaults are saved.',
+        'Persisted project sequencing is disabled, so Product Studio cannot run project sequence steps until Image Studio Sequencing defaults are saved.'
       );
     }
 
     return {
       executionRoute: 'ai_direct_generation',
       runKind: 'generation',
-      resolvedMode: input.requestedMode === 'auto' ? 'studio_prompt_then_sequence' : input.requestedMode,
+      resolvedMode:
+        input.requestedMode === 'auto' ? 'studio_prompt_then_sequence' : input.requestedMode,
       warnings,
     };
   }
@@ -135,7 +134,7 @@ export const resolvePostProductionRoute = (
     }
     const modelLabel = input.modelId || 'selected model';
     warnings.push(
-      `Model "${modelLabel}" does not support full-sequence generation. Falling back to native Image Studio sequencer with prior generation.`,
+      `Model "${modelLabel}" does not support full-sequence generation. Falling back to native Image Studio sequencer with prior generation.`
     );
     return {
       executionRoute: 'studio_native_sequencer_prior_generation',
@@ -162,15 +161,13 @@ export const resolvePostProductionRoute = (
   };
 };
 
-export const validateProductStudioSequenceSteps = (
-  inputSteps: ImageStudioSequenceStep[],
-): void => {
+export const validateProductStudioSequenceSteps = (inputSteps: ImageStudioSequenceStep[]): void => {
   const errors: string[] = [];
   if (inputSteps.length === 0) {
     errors.push('No enabled sequence steps are available for execution.');
   } else if (inputSteps.length > 20) {
     errors.push(
-      `Project sequence has ${inputSteps.length} enabled steps. Product Studio supports up to 20 enabled sequence steps.`,
+      `Project sequence has ${inputSteps.length} enabled steps. Product Studio supports up to 20 enabled sequence steps.`
     );
   }
 
@@ -187,21 +184,20 @@ export const validateProductStudioSequenceSteps = (
 
     if (step.runtime !== 'server') {
       errors.push(
-        `Step "${step.id}" (${step.type}) is configured for "${step.runtime}" runtime. Product Studio executes project sequences on server runtime only.`,
+        `Step "${step.id}" (${step.type}) is configured for "${step.runtime}" runtime. Product Studio executes project sequences on server runtime only.`
       );
     }
 
     if (step.type !== 'crop_center') continue;
     if (step.config.kind !== 'selected_shape') continue;
     const hasBbox = Boolean(step.config.bbox);
-    const hasPolygon =
-      Array.isArray(step.config.polygon) && step.config.polygon.length >= 3;
+    const hasPolygon = Array.isArray(step.config.polygon) && step.config.polygon.length >= 3;
     if (hasBbox || hasPolygon) continue;
     const selectedShapeId = trimString(step.config.selectedShapeId);
     errors.push(
       selectedShapeId
         ? `Sequence step "${step.id}" uses selected shape "${selectedShapeId}" but no crop geometry snapshot was saved. Open Image Studio for this project, re-select the shape in the sequence step, save project, and retry.`
-        : `Sequence step "${step.id}" uses selected shape crop but has no selected shape. Configure the shape in Image Studio and retry.`,
+        : `Sequence step "${step.id}" uses selected shape crop but has no selected shape. Configure the shape in Image Studio and retry.`
     );
   }
 
@@ -212,9 +208,7 @@ export const validateProductStudioSequenceSteps = (
   }
 };
 
-export const stepProducesRenderableOutput = (
-  step: ImageStudioSequenceStep,
-): boolean => {
+export const stepProducesRenderableOutput = (step: ImageStudioSequenceStep): boolean => {
   if (step.type === 'mask') {
     return Boolean(step.config.persistMaskSlot);
   }
@@ -227,13 +221,12 @@ export const stepProducesRenderableOutput = (
 };
 
 export const buildProductStudioSequenceStepPlan = (
-  steps: ImageStudioSequenceStep[],
+  steps: ImageStudioSequenceStep[]
 ): ProductStudioSequenceStepPlanEntry[] => {
   let hasProducedOutput = false;
   return steps.map((step, index) => {
     const inputSource = step.inputSource === 'source' ? 'source' : 'previous';
-    const resolvedInput =
-      inputSource === 'source' || hasProducedOutput ? inputSource : 'source';
+    const resolvedInput = inputSource === 'source' || hasProducedOutput ? inputSource : 'source';
     const producesOutput = stepProducesRenderableOutput(step);
     if (producesOutput) {
       hasProducedOutput = true;
@@ -250,31 +243,25 @@ export const buildProductStudioSequenceStepPlan = (
 };
 
 export const buildSequenceStepPlanWarnings = (
-  plan: ProductStudioSequenceStepPlanEntry[],
+  plan: ProductStudioSequenceStepPlanEntry[]
 ): string[] =>
   plan
     .filter(
       (entry) =>
-        entry.index > 0 &&
-        entry.inputSource === 'previous' &&
-        entry.resolvedInput === 'source',
+        entry.index > 0 && entry.inputSource === 'previous' && entry.resolvedInput === 'source'
     )
     .map(
       (entry) =>
-        `Step ${entry.index + 1} (${entry.stepType}) is set to use previous output, but no prior step output exists yet. It will run on the source image.`,
+        `Step ${entry.index + 1} (${entry.stepType}) is set to use previous output, but no prior step output exists yet. It will run on the source image.`
     );
 
-export const isSequenceExecutionRoute = (
-  route: ProductStudioExecutionRoute,
-): boolean =>
-  route === 'studio_sequencer' ||
-  route === 'studio_native_sequencer_prior_generation';
+export const isSequenceExecutionRoute = (route: ProductStudioExecutionRoute): boolean =>
+  route === 'studio_sequencer' || route === 'studio_native_sequencer_prior_generation';
 
 export const doesRequestedModeRequireProjectSequence = (
-  mode: ProductStudioSequenceGenerationMode,
+  mode: ProductStudioSequenceGenerationMode
 ): boolean =>
-  mode === 'studio_prompt_then_sequence' ||
-  mode === 'studio_native_sequencer_prior_generation';
+  mode === 'studio_prompt_then_sequence' || mode === 'studio_native_sequencer_prior_generation';
 
 export const resolveSequenceReadiness = (params: {
   sequencing: ProductStudioSequencingConfig;
@@ -348,7 +335,7 @@ export const resolveSequenceReadiness = (params: {
 };
 
 export const resolveFirstSequenceCropRect = (
-  steps: ImageStudioSequenceStep[],
+  steps: ImageStudioSequenceStep[]
 ): { x: number; y: number; width: number; height: number } | null => {
   for (const step of steps) {
     if (step.type !== 'crop_center') continue;

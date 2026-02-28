@@ -18,13 +18,15 @@ export const authUserSchema = dtoBaseSchema.extend({
 
 export type AuthUser = z.infer<typeof authUserSchema>;
 
-export const createUserSchema = authUserSchema.omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-}).extend({
-  password: z.string(),
-});
+export const createUserSchema = authUserSchema
+  .omit({
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+  })
+  .extend({
+    password: z.string(),
+  });
 
 export type AuthUserCreateInput = z.infer<typeof createUserSchema>;
 

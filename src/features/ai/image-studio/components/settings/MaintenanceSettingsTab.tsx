@@ -2,14 +2,7 @@
 
 import React from 'react';
 
-import {
-  Button,
-  FormField,
-  FormSection,
-  Input,
-  Label,
-  ToggleRow,
-} from '@/shared/ui';
+import { Button, FormField, FormSection, Input, Label, ToggleRow } from '@/shared/ui';
 
 import { useImageStudioSettingsContext } from '../../context/ImageStudioSettingsContext';
 
@@ -34,7 +27,10 @@ export function MaintenanceSettingsTab(): React.JSX.Element {
       >
         <div className='space-y-4'>
           <div className='grid gap-4 md:grid-cols-2'>
-            <FormField label='Project ID (Optional)' description='Limit backfill to a single project.'>
+            <FormField
+              label='Project ID (Optional)'
+              description='Limit backfill to a single project.'
+            >
               <Input
                 value={backfillProjectId}
                 onChange={(e) => setBackfillProjectId(e.target.value)}
@@ -59,7 +55,9 @@ export function MaintenanceSettingsTab(): React.JSX.Element {
 
           <div className='flex justify-end'>
             <Button
-              onClick={() => { void runCardBackfill(); }}
+              onClick={() => {
+                void runCardBackfill();
+              }}
               loading={backfillRunning}
               disabled={backfillRunning}
               variant='warning'

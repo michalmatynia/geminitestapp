@@ -1,11 +1,8 @@
-import type { 
+import type {
   ParamSpecDto as ParamSpec,
   ParamIssueDto as ParamIssue,
 } from '@/shared/contracts/prompt-engine';
-import { 
-  validateParamsAgainstSpecs,
-  getDeepValue,
-} from '@/shared/utils/prompt-params';
+import { validateParamsAgainstSpecs, getDeepValue } from '@/shared/utils/prompt-params';
 
 export * from '@/shared/utils/prompt-params';
 
@@ -43,7 +40,8 @@ export function validateImageStudioParams(
         path: 'background_policy.mode',
         severity: 'error',
         code: 'white_bg_mode',
-        message: 'For ecommerce_strict/editorial_white, background_policy.mode cannot be allow_editorial_vignette.',
+        message:
+          'For ecommerce_strict/editorial_white, background_policy.mode cannot be allow_editorial_vignette.',
       });
     }
   }
@@ -55,7 +53,8 @@ export function validateImageStudioParams(
       path: 'preserve_original_shadows',
       severity: 'warning',
       code: 'double_shadow',
-      message: 'preserve_original_shadows=true with add_new_ground_shadow=true can create double shadows.',
+      message:
+        'preserve_original_shadows=true with add_new_ground_shadow=true can create double shadows.',
     });
   }
 
@@ -65,7 +64,8 @@ export function validateImageStudioParams(
       path: 'shadow_control.distribution_model',
       severity: 'warning',
       code: 'shadow_directional_cast',
-      message: 'directional_cast is discouraged for flat-lay prompts (prefer flat_lay_contact/compact_under_base).',
+      message:
+        'directional_cast is discouraged for flat-lay prompts (prefer flat_lay_contact/compact_under_base).',
     });
   }
 
@@ -86,7 +86,8 @@ export function validateImageStudioParams(
       path: 'lighting_style',
       severity: 'warning',
       code: 'lighting_manual_overrides',
-      message: 'lighting_style_overrides=true with lighting_style=manual is inconsistent (manual implies no preset override).',
+      message:
+        'lighting_style_overrides=true with lighting_style=manual is inconsistent (manual implies no preset override).',
     });
   }
 
@@ -96,7 +97,8 @@ export function validateImageStudioParams(
       path: 'shadow_style',
       severity: 'warning',
       code: 'shadow_style_none',
-      message: 'add_new_ground_shadow=true with shadow_style=none will likely produce no visible shadow.',
+      message:
+        'add_new_ground_shadow=true with shadow_style=none will likely produce no visible shadow.',
     });
   }
 

@@ -45,9 +45,7 @@ const resolveCandidate = (
     return { token: decrypted, error: null };
   } catch (error: unknown) {
     const message =
-      error instanceof Error && error.message.trim()
-        ? error.message
-        : 'Unknown decryption error';
+      error instanceof Error && error.message.trim() ? error.message : 'Unknown decryption error';
     return {
       token: null,
       error: `Failed to decrypt ${source}: ${message}. Re-save the connection token.`,
@@ -55,9 +53,7 @@ const resolveCandidate = (
   }
 };
 
-export const resolveBaseConnectionToken = (
-  connection: BaseTokenCarrier
-): ResolvedBaseToken => {
+export const resolveBaseConnectionToken = (connection: BaseTokenCarrier): ResolvedBaseToken => {
   const fromBaseToken = resolveCandidate(connection.baseApiToken, 'baseApiToken');
   if (fromBaseToken.token) {
     return { token: fromBaseToken.token, source: 'baseApiToken', error: null };

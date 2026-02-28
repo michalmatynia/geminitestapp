@@ -8,24 +8,17 @@ import {
   VALIDATOR_PATTERN_LISTS_KEY,
 } from '@/shared/contracts/validator';
 import { recordPromptValidationCounter } from '@/shared/lib/prompt-core/runtime-observability';
+import { parsePromptEngineSettings } from '@/shared/lib/prompt-engine/settings';
 import {
-  parsePromptEngineSettings,
-} from '@/shared/lib/prompt-engine/settings';
-import { 
   PROMPT_ENGINE_SETTINGS_KEY,
-  type PromptValidationRule 
+  type PromptValidationRule,
 } from '@/shared/contracts/prompt-engine';
-import {
-  useSettingsMap,
-  useUpdateSetting,
-} from '@/shared/hooks/use-settings';
+import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
-import {
-  type PromptExploderBenchmarkReport,
-} from '../benchmark';
+import { type PromptExploderBenchmarkReport } from '../benchmark';
 import {
   savePromptExploderApplyPrompt,
   savePromptExploderApplyPromptForCaseResolver,
@@ -35,20 +28,14 @@ import {
   isPromptValidationStrictStackMode,
   resolvePromptExploderOrchestratorRollout,
 } from '../feature-flags';
-import {
-  promptExploderClampNumber,
-} from '../helpers/formatting';
-import {
-  promptExploderCreateApprovalDraftFromSegment,
-} from '../helpers/segment-helpers';
+import { promptExploderClampNumber } from '../helpers/formatting';
+import { promptExploderCreateApprovalDraftFromSegment } from '../helpers/segment-helpers';
 import {
   explodePromptText,
   reassemblePromptSegments,
   updatePromptExploderDocument,
 } from '../parser';
-import {
-  type PromptExploderParserTuningRuleDraft,
-} from '../parser-tuning';
+import { type PromptExploderParserTuningRuleDraft } from '../parser-tuning';
 import {
   parsePromptExploderLibrary,
   PROMPT_EXPLODER_LIBRARY_KEY,
@@ -58,18 +45,12 @@ import {
   explodePromptWithValidationRuntime,
   resolvePromptValidationRuntime,
 } from '../prompt-validation-orchestrator';
-import {
-  leavePromptRuntimeScope,
-  tryEnterPromptRuntimeScope,
-} from '../runtime-load-shedder';
-import {
-  parsePromptExploderSettings,
-  PROMPT_EXPLODER_SETTINGS_KEY,
-} from '../settings';
+import { leavePromptRuntimeScope, tryEnterPromptRuntimeScope } from '../runtime-load-shedder';
+import { parsePromptExploderSettings, PROMPT_EXPLODER_SETTINGS_KEY } from '../settings';
 import {
   buildCaseResolverSegmentCaptureRules,
   resolveCaseResolverBridgePayloadForTransfer,
-} from '../utils/case-resolver-extraction';
+} from '@/features/prompt-exploder/utils/case-resolver-extraction';
 import {
   buildPromptExploderValidationRuleStackOptions,
   DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK,
@@ -100,8 +81,9 @@ export function usePromptExploderState() {
   const [promptText, setPromptText] = useState('');
   const [documentState, setDocumentState] = useState<PromptExploderDocument | null>(null);
   const [selectedSegmentId, setSelectedSegmentId] = useState<string | null>(null);
-  const [benchmarkReport, setBenchmarkReport] =
-    useState<PromptExploderBenchmarkReport | null>(null);
+  const [benchmarkReport, setBenchmarkReport] = useState<PromptExploderBenchmarkReport | null>(
+    null
+  );
   const [manualBindings, setManualBindings] = useState<PromptExploderBinding[]>([]);
   const [sessionLearnedRules] = useState<PromptValidationRule[]>([]);
   const [sessionLearnedTemplates] = useState<PromptExploderLearnedTemplate[]>([]);
@@ -120,8 +102,9 @@ export function usePromptExploderState() {
     PromptExploderParserTuningRuleDraft[]
   >([]);
   const [isParserTuningOpen, setIsParserTuningOpen] = useState(false);
-  const [dismissedBenchmarkSuggestionIds, setDismissedBenchmarkSuggestionIds] =
-    useState<string[]>([]);
+  const [dismissedBenchmarkSuggestionIds, setDismissedBenchmarkSuggestionIds] = useState<string[]>(
+    []
+  );
   const [snapshotDraftName, setSnapshotDraftName] = useState('');
   const [selectedSnapshotId, setSelectedSnapshotId] = useState('');
   const [approvalDraft, setApprovalDraft] = useState(
@@ -144,14 +127,14 @@ export function usePromptExploderState() {
     sourceLabel: '',
     targetLabel: '',
   });
-  const [incomingBridgeSource] =
-    useState<'image-studio' | 'case-resolver' | null>(null);
+  const [incomingBridgeSource] = useState<'image-studio' | 'case-resolver' | null>(null);
   const [incomingCaseResolverContext] = useState<{
     fileId: string;
     fileName: string;
   } | null>(null);
-  const [caseResolverPartySelection, setCaseResolverPartySelection] =
-    useState(EMPTY_CASE_RESOLVER_PARTY_SELECTION);
+  const [caseResolverPartySelection, setCaseResolverPartySelection] = useState(
+    EMPTY_CASE_RESOLVER_PARTY_SELECTION
+  );
   const [selectedCaseResolverStructuredDraft, setSelectedCaseResolverStructuredDraft] =
     useState<Record<string, unknown> | null>(null);
   const explodeInFlightRef = useRef(false);
@@ -161,17 +144,17 @@ export function usePromptExploderState() {
   } | null>(null);
 
   const returnTo = searchParams?.get('returnTo') || '/admin/image-studio';
-  const returnTarget = returnTo.startsWith('/admin/case-resolver') ? 'case-resolver' : 'image-studio';
+  const returnTarget = returnTo.startsWith('/admin/case-resolver')
+    ? 'case-resolver'
+    : 'image-studio';
   const shouldPreferCaseResolverValidationStack =
     incomingBridgeSource === 'case-resolver' || returnTarget === 'case-resolver';
 
   const rawPromptSettings = settingsQuery.data?.get(PROMPT_ENGINE_SETTINGS_KEY) ?? null;
   const rawExploderSettings = settingsQuery.data?.get(PROMPT_EXPLODER_SETTINGS_KEY) ?? null;
-  const rawPromptLibrary =
-    settingsQuery.data?.get(PROMPT_EXPLODER_LIBRARY_KEY) ?? null;
-  const rawValidatorPatternLists =
-    settingsQuery.data?.get(VALIDATOR_PATTERN_LISTS_KEY) ?? null;
-  
+  const rawPromptLibrary = settingsQuery.data?.get(PROMPT_EXPLODER_LIBRARY_KEY) ?? null;
+  const rawValidatorPatternLists = settingsQuery.data?.get(VALIDATOR_PATTERN_LISTS_KEY) ?? null;
+
   const promptSettings = useMemo(
     () => parsePromptEngineSettings(rawPromptSettings),
     [rawPromptSettings]
@@ -196,10 +179,7 @@ export function usePromptExploderState() {
     () => sortPromptExploderLibraryItemsByUpdated(promptLibraryState.items),
     [promptLibraryState.items]
   );
-  const strictStackMode = useMemo(
-    () => isPromptValidationStrictStackMode(),
-    []
-  );
+  const strictStackMode = useMemo(() => isPromptValidationStrictStackMode(), []);
   const runtimeResolution = useMemo(() => {
     const preferredValidatorScope = shouldPreferCaseResolverValidationStack
       ? 'case-resolver-prompt-exploder'
@@ -282,11 +262,17 @@ export function usePromptExploderState() {
 
   const selectedSegment = useMemo(() => {
     if (!documentState || !selectedSegmentId) return null;
-    return documentState.segments.find((segment: PromptExploderSegment) => segment.id === selectedSegmentId) ?? null;
+    return (
+      documentState.segments.find(
+        (segment: PromptExploderSegment) => segment.id === selectedSegmentId
+      ) ?? null
+    );
   }, [documentState, selectedSegmentId]);
 
   const segmentById = useMemo(() => {
-    return new Map<string, PromptExploderSegment>((documentState?.segments ?? []).map((segment: PromptExploderSegment) => [segment.id, segment]));
+    return new Map<string, PromptExploderSegment>(
+      (documentState?.segments ?? []).map((segment: PromptExploderSegment) => [segment.id, segment])
+    );
   }, [documentState?.segments]);
 
   // Handle auto-settings sync
@@ -298,14 +284,15 @@ export function usePromptExploderState() {
     const preferredStack = shouldPreferCaseResolverValidationStack
       ? promptExploderValidationStackFromBridgeSource('case-resolver', validatorPatternLists)
       : persistedStack;
-    
+
     setLearningDraft({
       runtimeRuleProfile: promptExploderSettings.runtime.ruleProfile,
       runtimeValidationRuleStack: preferredStack,
       enabled: promptExploderSettings.learning.enabled,
       similarityThreshold: promptExploderSettings.learning.similarityThreshold,
       templateMergeThreshold: promptExploderSettings.learning.templateMergeThreshold,
-      benchmarkSuggestionUpsertTemplates: promptExploderSettings.learning.benchmarkSuggestionUpsertTemplates ?? true,
+      benchmarkSuggestionUpsertTemplates:
+        promptExploderSettings.learning.benchmarkSuggestionUpsertTemplates ?? true,
       minApprovalsForMatching: promptExploderSettings.learning.minApprovalsForMatching,
       maxTemplates: promptExploderSettings.learning.maxTemplates,
       autoActivateLearnedTemplates: promptExploderSettings.learning.autoActivateLearnedTemplates,
@@ -375,19 +362,20 @@ export function usePromptExploderState() {
       const orchestratorEnabled = isPromptExploderOrchestratorEnabled(
         promptExploderSettings.runtime.orchestratorEnabled ?? true,
         runtimeResolution.runtime.identity.cacheKey
-      );      const nextDocument = orchestratorEnabled
+      );
+      const nextDocument = orchestratorEnabled
         ? explodePromptWithValidationRuntime({
-          prompt: trimmed,
-          runtime: runtimeResolution.runtime,
-          similarityThreshold,
-        })
+            prompt: trimmed,
+            runtime: runtimeResolution.runtime,
+            similarityThreshold,
+          })
         : explodePromptText({
-          prompt: trimmed,
-          validationRules: runtimeResolution.runtime.runtimeValidationRules,
-          learnedTemplates: runtimeResolution.runtime.runtimeLearnedTemplates,
-          similarityThreshold,
-          validationScope: runtimeResolution.runtime.identity.scope,
-        });
+            prompt: trimmed,
+            validationRules: runtimeResolution.runtime.runtimeValidationRules,
+            learnedTemplates: runtimeResolution.runtime.runtimeLearnedTemplates,
+            similarityThreshold,
+            validationScope: runtimeResolution.runtime.identity.scope,
+          });
       lastExplosionRef.current = {
         signature: runtimeSignature,
         document: nextDocument,
@@ -427,10 +415,9 @@ export function usePromptExploderState() {
           level: 'error',
         },
       });
-      toast(
-        error instanceof Error ? error.message : 'Prompt explosion failed.',
-        { variant: 'error' }
-      );
+      toast(error instanceof Error ? error.message : 'Prompt explosion failed.', {
+        variant: 'error',
+      });
     } finally {
       explodeInFlightRef.current = false;
       leavePromptRuntimeScope(runtimeResolution.runtime.identity.scope);
@@ -443,42 +430,51 @@ export function usePromptExploderState() {
     toast,
   ]);
 
-  const handleSaveDocument = useCallback(async (name: string): Promise<void> => {
-    if (!documentState) return;
-    try {
-      const now = new Date().toISOString();
-      const newItem = {
-        id: `lib_${Date.now()}`,
-        name,
-        prompt: promptText,
-        segments: documentState.segments,
-        manualBindings,
-        createdAt: now,
-        updatedAt: now,
-      };
-      const nextLibrary = {
-        ...promptLibraryState,
-        items: [...promptLibraryState.items, newItem],
-      };
-      await updateSetting.mutateAsync({
-        key: PROMPT_EXPLODER_LIBRARY_KEY,
-        value: serializeSetting(nextLibrary),
-      });
-      toast('Project saved: ' + name, { variant: 'success' });
-    } catch {
-      toast('Failed to save project.', { variant: 'error' });
-    }
-  }, [documentState, promptText, manualBindings, promptLibraryState, updateSetting, toast]);
+  const handleSaveDocument = useCallback(
+    async (name: string): Promise<void> => {
+      if (!documentState) return;
+      try {
+        const now = new Date().toISOString();
+        const newItem = {
+          id: `lib_${Date.now()}`,
+          name,
+          prompt: promptText,
+          segments: documentState.segments,
+          manualBindings,
+          createdAt: now,
+          updatedAt: now,
+        };
+        const nextLibrary = {
+          ...promptLibraryState,
+          items: [...promptLibraryState.items, newItem],
+        };
+        await updateSetting.mutateAsync({
+          key: PROMPT_EXPLODER_LIBRARY_KEY,
+          value: serializeSetting(nextLibrary),
+        });
+        toast('Project saved: ' + name, { variant: 'success' });
+      } catch {
+        toast('Failed to save project.', { variant: 'error' });
+      }
+    },
+    [documentState, promptText, manualBindings, promptLibraryState, updateSetting, toast]
+  );
 
-  const updateSegment = useCallback((segmentId: string, updater: (segment: PromptExploderSegment) => PromptExploderSegment): void => {
-    setDocumentState((current: PromptExploderDocument | null) => {
-      if (!current) return current;
-      const nextSegments = current.segments.map((segment: PromptExploderSegment) =>
-        segment.id === segmentId ? updater(segment) : segment
-      );
-      return updatePromptExploderDocument(current, nextSegments, manualBindings);
-    });
-  }, [manualBindings]);
+  const updateSegment = useCallback(
+    (
+      segmentId: string,
+      updater: (segment: PromptExploderSegment) => PromptExploderSegment
+    ): void => {
+      setDocumentState((current: PromptExploderDocument | null) => {
+        if (!current) return current;
+        const nextSegments = current.segments.map((segment: PromptExploderSegment) =>
+          segment.id === segmentId ? updater(segment) : segment
+        );
+        return updatePromptExploderDocument(current, nextSegments, manualBindings);
+      });
+    },
+    [manualBindings]
+  );
 
   const handleApplyToBridge = useCallback((): void => {
     if (!documentState) return;

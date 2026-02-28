@@ -12,7 +12,8 @@ export const formatPathNumber = (value: number): string => {
 
 export const toSvgCoord = (value: number, viewBoxSize: number): number => value * viewBoxSize;
 export const clampUnit = (value: number): number => Math.max(0, Math.min(1, value));
-export const resolveSignedAxisLimit = (origin: number, direction: number): number => (direction >= 0 ? 1 - origin : origin);
+export const resolveSignedAxisLimit = (origin: number, direction: number): number =>
+  direction >= 0 ? 1 - origin : origin;
 
 export function resolveRectDragPoints(
   anchor: VectorPoint,
@@ -27,13 +28,16 @@ export function resolveRectDragPoints(
 ): [VectorPoint, VectorPoint] {
   const scaleFromCenter = options?.scaleFromCenter ?? false;
   const lockSquare = options?.lockSquare ?? false;
-  const viewportWidth = Number.isFinite(options?.viewportWidth) && (options?.viewportWidth ?? 0) > 0
-    ? (options?.viewportWidth as number)
-    : 1;
-  const viewportHeight = Number.isFinite(options?.viewportHeight) && (options?.viewportHeight ?? 0) > 0
-    ? (options?.viewportHeight as number)
-    : 1;
-  const centeredSquareExponent = options?.centeredSquareExponent ?? CENTERED_SQUARE_SENSITIVITY_EXPONENT;
+  const viewportWidth =
+    Number.isFinite(options?.viewportWidth) && (options?.viewportWidth ?? 0) > 0
+      ? (options?.viewportWidth as number)
+      : 1;
+  const viewportHeight =
+    Number.isFinite(options?.viewportHeight) && (options?.viewportHeight ?? 0) > 0
+      ? (options?.viewportHeight as number)
+      : 1;
+  const centeredSquareExponent =
+    options?.centeredSquareExponent ?? CENTERED_SQUARE_SENSITIVITY_EXPONENT;
   const rawDx = pointer.x - anchor.x;
   const rawDy = pointer.y - anchor.y;
   const directionX = rawDx < 0 ? -1 : 1;
@@ -52,7 +56,8 @@ export function resolveRectDragPoints(
       const limitYPx = limitY * viewportHeight;
       const maxHalfSidePx = Math.min(limitXPx, limitYPx);
       const requestedHalfSidePx = Math.min(Math.min(deltaXPx, deltaYPx), maxHalfSidePx);
-      const progress = maxHalfSidePx > 0 ? Math.max(0, Math.min(1, requestedHalfSidePx / maxHalfSidePx)) : 0;
+      const progress =
+        maxHalfSidePx > 0 ? Math.max(0, Math.min(1, requestedHalfSidePx / maxHalfSidePx)) : 0;
       const easedHalfSidePx = maxHalfSidePx * Math.pow(progress, centeredSquareExponent);
       deltaX = easedHalfSidePx / viewportWidth;
       deltaY = easedHalfSidePx / viewportHeight;
@@ -60,12 +65,12 @@ export function resolveRectDragPoints(
 
     return [
       {
-        x: clampUnit(anchor.x - (directionX * deltaX)),
-        y: clampUnit(anchor.y - (directionY * deltaY)),
+        x: clampUnit(anchor.x - directionX * deltaX),
+        y: clampUnit(anchor.y - directionY * deltaY),
       },
       {
-        x: clampUnit(anchor.x + (directionX * deltaX)),
-        y: clampUnit(anchor.y + (directionY * deltaY)),
+        x: clampUnit(anchor.x + directionX * deltaX),
+        y: clampUnit(anchor.y + directionY * deltaY),
       },
     ];
   }
@@ -82,8 +87,8 @@ export function resolveRectDragPoints(
   return [
     anchor,
     {
-      x: clampUnit(anchor.x + (directionX * (sidePx / viewportWidth))),
-      y: clampUnit(anchor.y + (directionY * (sidePx / viewportHeight))),
+      x: clampUnit(anchor.x + directionX * (sidePx / viewportWidth)),
+      y: clampUnit(anchor.y + directionY * (sidePx / viewportHeight)),
     },
   ];
 }
@@ -111,9 +116,7 @@ export function resolveRectResizePoints(
     viewportHeight?: number;
     centeredSquareExponent?: number;
   } = {
-    ...(typeof options?.viewportWidth === 'number'
-      ? { viewportWidth: options.viewportWidth }
-      : {}),
+    ...(typeof options?.viewportWidth === 'number' ? { viewportWidth: options.viewportWidth } : {}),
     ...(typeof options?.viewportHeight === 'number'
       ? { viewportHeight: options.viewportHeight }
       : {}),
@@ -167,7 +170,10 @@ export interface VectorCanvasImageContentFrame {
 
 export const toRadians = (degrees: number): number => (degrees * Math.PI) / 180;
 
-export const rotatePoint = (point: { x: number; y: number }, angleRad: number): { x: number; y: number } => {
+export const rotatePoint = (
+  point: { x: number; y: number },
+  angleRad: number
+): { x: number; y: number } => {
   const cos = Math.cos(angleRad);
   const sin = Math.sin(angleRad);
   return {
@@ -206,7 +212,10 @@ export const worldPointToScreen = (
   };
 };
 
-export function vectorShapeToPath(shape: VectorShape, viewBoxSize = DEFAULT_VECTOR_VIEWBOX): string | null {
+export function vectorShapeToPath(
+  shape: VectorShape,
+  viewBoxSize = DEFAULT_VECTOR_VIEWBOX
+): string | null {
   if (!shape.visible || shape.points.length === 0) return null;
   if (shape.type === 'rect' && shape.points.length >= 2) {
     const a = shape.points[0]!;
@@ -243,13 +252,18 @@ export function vectorShapeToPath(shape: VectorShape, viewBoxSize = DEFAULT_VECT
   ];
   for (let i = 1; i < points.length; i += 1) {
     const p = points[i]!;
-    commands.push(`L ${formatPathNumber(toSvgCoord(p.x, viewBoxSize))} ${formatPathNumber(toSvgCoord(p.y, viewBoxSize))}`);
+    commands.push(
+      `L ${formatPathNumber(toSvgCoord(p.x, viewBoxSize))} ${formatPathNumber(toSvgCoord(p.y, viewBoxSize))}`
+    );
   }
   if (shape.closed && points.length >= 3) commands.push('Z');
   return commands.join(' ');
 }
 
-export function vectorShapesToPath(shapes: VectorShape[], viewBoxSize = DEFAULT_VECTOR_VIEWBOX): string {
+export function vectorShapesToPath(
+  shapes: VectorShape[],
+  viewBoxSize = DEFAULT_VECTOR_VIEWBOX
+): string {
   return shapes
     .map((shape) => vectorShapeToPath(shape, viewBoxSize))
     .filter((value): value is string => Boolean(value))

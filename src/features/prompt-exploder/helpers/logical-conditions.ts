@@ -7,7 +7,6 @@ import type {
   PromptExploderLogicalOperator,
 } from '../types';
 
-
 // ── ID generation ───────────────────────────────────────────────────────────
 
 export const createLogicalConditionId = (): string =>
@@ -107,7 +106,7 @@ export const parseLogicalValueText = (value: string | null | undefined): unknown
   if (/^-?\d+(?:\.\d+)?$/.test(trimmed)) return Number(trimmed);
   if (
     (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
-    (trimmed.startsWith('\'') && trimmed.endsWith('\''))
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
   ) {
     return trimmed.slice(1, -1);
   }
@@ -138,9 +137,8 @@ export const parseSubsectionConditionText = (
   const operator = normalizeLogicalOperatorText(operatorMatch[1] ?? '');
   if (!operator) return null;
   const expression = (operatorMatch[2] ?? '').trim();
-  const expressionMatch = /^([A-Za-z_][A-Za-z0-9_.[\]]*)(?:\s*(==|=|!=|>=|<=|>|<|contains)\s*(.+))?$/i.exec(
-    expression
-  );
+  const expressionMatch =
+    /^([A-Za-z_][A-Za-z0-9_.[\]]*)(?:\s*(==|=|!=|>=|<=|>|<|contains)\s*(.+))?$/i.exec(expression);
   if (!expressionMatch) return null;
   const paramPath = (expressionMatch[1] ?? '').trim().replace(/^params\./i, '');
   if (!paramPath) return null;
@@ -168,15 +166,24 @@ export const buildSubsectionConditionText = (input: {
   const operator = input.operator;
   const paramPath = input.paramPath.trim();
   if (!operator || !paramPath) return null;
-  const operatorLabel = operator === 'only_if' ? 'Only if' : `${operator.slice(0, 1).toUpperCase()}${operator.slice(1)}`;
+  const operatorLabel =
+    operator === 'only_if'
+      ? 'Only if'
+      : `${operator.slice(0, 1).toUpperCase()}${operator.slice(1)}`;
   if (input.comparator === 'truthy') return `${operatorLabel} ${paramPath}:`;
   if (input.comparator === 'falsy') return `${operatorLabel} ${paramPath}=false:`;
-  if (input.comparator === 'equals') return `${operatorLabel} ${paramPath}=${formatLogicalValueText(input.value)}:`;
-  if (input.comparator === 'not_equals') return `${operatorLabel} ${paramPath}!=${formatLogicalValueText(input.value)}:`;
-  if (input.comparator === 'gt') return `${operatorLabel} ${paramPath}>${formatLogicalValueText(input.value)}:`;
-  if (input.comparator === 'gte') return `${operatorLabel} ${paramPath}>=${formatLogicalValueText(input.value)}:`;
-  if (input.comparator === 'lt') return `${operatorLabel} ${paramPath}<${formatLogicalValueText(input.value)}:`;
-  if (input.comparator === 'lte') return `${operatorLabel} ${paramPath}<=${formatLogicalValueText(input.value)}:`;
+  if (input.comparator === 'equals')
+    return `${operatorLabel} ${paramPath}=${formatLogicalValueText(input.value)}:`;
+  if (input.comparator === 'not_equals')
+    return `${operatorLabel} ${paramPath}!=${formatLogicalValueText(input.value)}:`;
+  if (input.comparator === 'gt')
+    return `${operatorLabel} ${paramPath}>${formatLogicalValueText(input.value)}:`;
+  if (input.comparator === 'gte')
+    return `${operatorLabel} ${paramPath}>=${formatLogicalValueText(input.value)}:`;
+  if (input.comparator === 'lt')
+    return `${operatorLabel} ${paramPath}<${formatLogicalValueText(input.value)}:`;
+  if (input.comparator === 'lte')
+    return `${operatorLabel} ${paramPath}<=${formatLogicalValueText(input.value)}:`;
   if (input.comparator === 'contains') {
     return `${operatorLabel} ${paramPath} contains ${formatLogicalValueText(input.value)}:`;
   }

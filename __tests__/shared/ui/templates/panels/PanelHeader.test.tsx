@@ -10,22 +10,12 @@ describe('PanelHeader', () => {
   });
 
   it('renders description when provided', () => {
-    render(
-      <PanelHeader 
-        title='Test' 
-        description='Test description'
-      />
-    );
+    render(<PanelHeader title='Test' description='Test description' />);
     expect(screen.getByText('Test description')).toBeInTheDocument();
   });
 
   it('renders refresh button when refreshable is true', () => {
-    render(
-      <PanelHeader 
-        title='Test' 
-        refreshable={true}
-      />
-    );
+    render(<PanelHeader title='Test' refreshable={true} />);
     const buttons = screen.getAllByRole('button');
     expect(buttons.length).toBeGreaterThan(0);
   });
@@ -35,36 +25,19 @@ describe('PanelHeader', () => {
       { key: 'edit', label: 'Edit', onClick: vi.fn() },
       { key: 'delete', label: 'Delete', onClick: vi.fn() },
     ];
-    render(
-      <PanelHeader 
-        title='Test'
-        actions={actions}
-        refreshable={false}
-      />
-    );
+    render(<PanelHeader title='Test' actions={actions} refreshable={false} />);
     expect(screen.getByText('Edit')).toBeInTheDocument();
     expect(screen.getByText('Delete')).toBeInTheDocument();
   });
 
   it('disables refresh button when isRefreshing is true', () => {
-    render(
-      <PanelHeader 
-        title='Test'
-        refreshable={true}
-        isRefreshing={true}
-      />
-    );
+    render(<PanelHeader title='Test' refreshable={true} isRefreshing={true} />);
     const refreshButton = screen.getAllByRole('button')[0];
     expect(refreshButton).toBeDisabled();
   });
 
   it('renders icon when provided', () => {
-    render(
-      <PanelHeader 
-        title='Test'
-        icon={<span data-testid='icon'>📊</span>}
-      />
-    );
+    render(<PanelHeader title='Test' icon={<span data-testid='icon'>📊</span>} />);
     expect(screen.getByTestId('icon')).toBeInTheDocument();
   });
 });

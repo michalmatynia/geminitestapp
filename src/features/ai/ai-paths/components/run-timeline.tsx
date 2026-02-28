@@ -10,7 +10,6 @@ import type {
 import { formatDurationMs } from '@/shared/lib/ai-paths';
 import { Button, Tooltip, StatusBadge, Alert, type StatusVariant } from '@/shared/ui';
 
-
 type TimelineItem = {
   id: string;
   timestamp: Date;
@@ -39,7 +38,14 @@ const statusToVariant = (status: string | null | undefined): StatusVariant => {
   if (s === 'completed' || s === 'cached' || s === 'success') return 'success';
   if (s === 'failed' || s === 'canceled' || s === 'timeout' || s === 'error') return 'error';
   if (s === 'queued' || s === 'pending' || s === 'blocked') return 'warning';
-  if (s === 'running' || s === 'paused' || s === 'polling' || s === 'waiting_callback' || s === 'advance_pending' || s === 'processing') {
+  if (
+    s === 'running' ||
+    s === 'paused' ||
+    s === 'polling' ||
+    s === 'waiting_callback' ||
+    s === 'advance_pending' ||
+    s === 'processing'
+  ) {
     return 'processing';
   }
   return 'neutral';
@@ -60,7 +66,10 @@ const toDate = (value?: Date | string | null): Date | null => {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 };
 
-const formatDuration = (start?: Date | string | null, end?: Date | string | null): string | null => {
+const formatDuration = (
+  start?: Date | string | null,
+  end?: Date | string | null
+): string | null => {
   const startDate = toDate(start);
   const endDate = toDate(end);
   if (!startDate || !endDate) return null;
@@ -75,20 +84,14 @@ const formatDuration = (start?: Date | string | null, end?: Date | string | null
 
 // formatDurationMs imported from @/features/ai/ai-paths/lib
 
-const getDurationMs = (
-  start?: Date | string | null,
-  end?: Date | string | null
-): number | null => {
+const getDurationMs = (start?: Date | string | null, end?: Date | string | null): number | null => {
   const startDate = toDate(start);
   const endDate = toDate(end);
   if (!startDate || !endDate) return null;
   return Math.max(endDate.getTime() - startDate.getTime(), 0);
 };
 
-const buildTimelineItems = (
-  run: AiPathRunRecord,
-  nodes: AiPathRunNodeRecord[]
-): TimelineItem[] => {
+const buildTimelineItems = (run: AiPathRunRecord, nodes: AiPathRunNodeRecord[]): TimelineItem[] => {
   const items: TimelineItem[] = [];
   const createdAt = toDate(run.createdAt);
   if (createdAt) {
@@ -158,7 +161,9 @@ const buildTimelineItems = (
 
   return items
     .filter((item: TimelineItem): boolean => Number.isFinite(item.timestamp.getTime()))
-    .sort((a: TimelineItem, b: TimelineItem): number => a.timestamp.getTime() - b.timestamp.getTime());
+    .sort(
+      (a: TimelineItem, b: TimelineItem): number => a.timestamp.getTime() - b.timestamp.getTime()
+    );
 };
 
 const formatMetadata = (metadata?: Record<string, unknown> | null): string | null => {
@@ -191,7 +196,8 @@ export function RunTimeline({
   const sortedEvents = React.useMemo(
     (): AiPathRunEventRecord[] =>
       [...events].sort(
-        (a: AiPathRunEventRecord, b: AiPathRunEventRecord): number => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+        (a: AiPathRunEventRecord, b: AiPathRunEventRecord): number =>
+          new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
       ),
     [events]
   );
@@ -221,7 +227,8 @@ export function RunTimeline({
   }, [visibleSections]);
 
   const filteredTimelineItems = React.useMemo(
-    (): TimelineItem[] => timelineItems.filter((item: TimelineItem): boolean => visibleSections[item.kind]),
+    (): TimelineItem[] =>
+      timelineItems.filter((item: TimelineItem): boolean => visibleSections[item.kind]),
     [timelineItems, visibleSections]
   );
 
@@ -231,7 +238,8 @@ export function RunTimeline({
   );
 
   const nodeEntryCount = React.useMemo(
-    (): number => timelineItems.filter((item: TimelineItem): boolean => item.kind === 'node').length,
+    (): number =>
+      timelineItems.filter((item: TimelineItem): boolean => item.kind === 'node').length,
     [timelineItems]
   );
 
@@ -252,7 +260,14 @@ export function RunTimeline({
     [nodes]
   );
 
-  const durationStats = React.useMemo((): { total: number; average: number | null; min: number | null; max: number | null; timedCount: number; totalCount: number } => {
+  const durationStats = React.useMemo((): {
+    total: number;
+    average: number | null;
+    min: number | null;
+    max: number | null;
+    timedCount: number;
+    totalCount: number;
+  } => {
     const durations = nodeDurationRows
       .map((row: NodeDurationRow): number | null => row.durationMs)
       .filter((duration: number | null): duration is number => typeof duration === 'number');
@@ -270,15 +285,34 @@ export function RunTimeline({
     };
   }, [nodeDurationRows]);
 
-  const durationByStatus = React.useMemo((): Array<{ status: string; count: number; timedCount: number; totalMs: number; averageMs: number | null; min: NodeDurationRow | null; max: NodeDurationRow | null }> => {
+  const durationByStatus = React.useMemo((): Array<{
+    status: string;
+    count: number;
+    timedCount: number;
+    totalMs: number;
+    averageMs: number | null;
+    min: NodeDurationRow | null;
+    max: NodeDurationRow | null;
+  }> => {
     const buckets = new Map<
       string,
-      { count: number; timedCount: number; totalMs: number; min: NodeDurationRow | null; max: NodeDurationRow | null }
+      {
+        count: number;
+        timedCount: number;
+        totalMs: number;
+        min: NodeDurationRow | null;
+        max: NodeDurationRow | null;
+      }
     >();
     nodeDurationRows.forEach((row: NodeDurationRow): void => {
       const key = row.status ?? 'unknown';
-      const bucket =
-        buckets.get(key) ?? { count: 0, timedCount: 0, totalMs: 0, min: null, max: null };
+      const bucket = buckets.get(key) ?? {
+        count: 0,
+        timedCount: 0,
+        totalMs: 0,
+        min: null,
+        max: null,
+      };
       bucket.count += 1;
       if (typeof row.durationMs === 'number') {
         bucket.timedCount += 1;
@@ -293,15 +327,26 @@ export function RunTimeline({
       buckets.set(key, bucket);
     });
 
-    return Array.from(buckets.entries()).map(([status, data]: [string, { count: number; timedCount: number; totalMs: number; min: NodeDurationRow | null; max: NodeDurationRow | null }]) => ({
-      status,
-      count: data.count,
-      timedCount: data.timedCount,
-      totalMs: data.totalMs,
-      averageMs: data.timedCount > 0 ? Math.round(data.totalMs / data.timedCount) : null,
-      min: data.min,
-      max: data.max,
-    }));
+    return Array.from(buckets.entries()).map(
+      ([status, data]: [
+        string,
+        {
+          count: number;
+          timedCount: number;
+          totalMs: number;
+          min: NodeDurationRow | null;
+          max: NodeDurationRow | null;
+        },
+      ]) => ({
+        status,
+        count: data.count,
+        timedCount: data.timedCount,
+        totalMs: data.totalMs,
+        averageMs: data.timedCount > 0 ? Math.round(data.totalMs / data.timedCount) : null,
+        min: data.min,
+        max: data.max,
+      })
+    );
   }, [nodeDurationRows]);
 
   const [statusSort, setStatusSort] = React.useState<'count' | 'avg' | 'total' | 'alpha'>(
@@ -320,34 +365,52 @@ export function RunTimeline({
     window.localStorage.setItem(STATUS_SORT_STORAGE_KEY, statusSort);
   }, [statusSort]);
 
-  const sortedDurationByStatus = React.useMemo((): Array<{ status: string; count: number; timedCount: number; totalMs: number; averageMs: number | null; min: NodeDurationRow | null; max: NodeDurationRow | null }> => {
+  const sortedDurationByStatus = React.useMemo((): Array<{
+    status: string;
+    count: number;
+    timedCount: number;
+    totalMs: number;
+    averageMs: number | null;
+    min: NodeDurationRow | null;
+    max: NodeDurationRow | null;
+  }> => {
     const list = [...durationByStatus];
     if (statusSort === 'count') {
-      list.sort((a: { count: number; status: string }, b: { count: number; status: string }): number => {
-        if (b.count !== a.count) return b.count - a.count;
-        return a.status.localeCompare(b.status);
-      });
+      list.sort(
+        (a: { count: number; status: string }, b: { count: number; status: string }): number => {
+          if (b.count !== a.count) return b.count - a.count;
+          return a.status.localeCompare(b.status);
+        }
+      );
       return list;
     }
-    list.sort((a: { averageMs: number | null; totalMs: number; count: number; status: string }, b: { averageMs: number | null; totalMs: number; count: number; status: string }): number => {
-      if (statusSort === 'alpha') {
-        return a.status.localeCompare(b.status);
-      }
-      if (statusSort === 'total') {
-        if (b.totalMs !== a.totalMs) return b.totalMs - a.totalMs;
+    list.sort(
+      (
+        a: { averageMs: number | null; totalMs: number; count: number; status: string },
+        b: { averageMs: number | null; totalMs: number; count: number; status: string }
+      ): number => {
+        if (statusSort === 'alpha') {
+          return a.status.localeCompare(b.status);
+        }
+        if (statusSort === 'total') {
+          if (b.totalMs !== a.totalMs) return b.totalMs - a.totalMs;
+          if (b.count !== a.count) return b.count - a.count;
+          return a.status.localeCompare(b.status);
+        }
+        const aAvg = a.averageMs ?? -1;
+        const bAvg = b.averageMs ?? -1;
+        if (bAvg !== aAvg) return bAvg - aAvg;
         if (b.count !== a.count) return b.count - a.count;
         return a.status.localeCompare(b.status);
       }
-      const aAvg = a.averageMs ?? -1;
-      const bAvg = b.averageMs ?? -1;
-      if (bAvg !== aAvg) return bAvg - aAvg;
-      if (b.count !== a.count) return b.count - a.count;
-      return a.status.localeCompare(b.status);
-    });
+    );
     return list;
   }, [durationByStatus, statusSort]);
 
-  const minMaxNodeDuration = React.useMemo((): { min: NodeDurationRow | null; max: NodeDurationRow | null } => {
+  const minMaxNodeDuration = React.useMemo((): {
+    min: NodeDurationRow | null;
+    max: NodeDurationRow | null;
+  } => {
     const timed = nodeDurationRows.filter(
       (row: NodeDurationRow): boolean => typeof row.durationMs === 'number'
     );
@@ -364,7 +427,12 @@ export function RunTimeline({
   }, [nodeDurationRows]);
 
   const toggleSection = (section: TimelineFilter): void => {
-    setVisibleSections((prev: Record<TimelineFilter, boolean>): Record<TimelineFilter, boolean> => ({ ...prev, [section]: !prev[section] }));
+    setVisibleSections(
+      (prev: Record<TimelineFilter, boolean>): Record<TimelineFilter, boolean> => ({
+        ...prev,
+        [section]: !prev[section],
+      })
+    );
   };
 
   return (
@@ -456,89 +524,96 @@ export function RunTimeline({
             <div className='mt-2 space-y-2 text-[11px] text-gray-400'>
               <div className='flex flex-wrap items-center gap-2 text-gray-500'>
                 <span className='uppercase'>Sort by</span>
-                {([
-                  { id: 'count', label: 'Count' },
-                  { id: 'avg', label: 'Avg duration' },
-                  { id: 'total', label: 'Total duration' },
-                  { id: 'alpha', label: 'A-Z' },
-                ] as const).map((option: { id: 'count' | 'total' | 'avg' | 'alpha'; label: string }): React.JSX.Element => {
-                  const active = statusSort === option.id;
-                  return (
-                    <Button
-                      key={option.id}
-                      type='button'
-                      className={`rounded-md border px-2 py-1 text-[10px] ${
-                        active
-                          ? 'border-emerald-500/50 text-emerald-200'
-                          : 'text-gray-300 hover:bg-muted/60'
-                      }`}
-                      onClick={() => setStatusSort(option.id)}
-                    >
-                      {option.label}
-                    </Button>
-                  );
-                })}
+                {(
+                  [
+                    { id: 'count', label: 'Count' },
+                    { id: 'avg', label: 'Avg duration' },
+                    { id: 'total', label: 'Total duration' },
+                    { id: 'alpha', label: 'A-Z' },
+                  ] as const
+                ).map(
+                  (option: {
+                    id: 'count' | 'total' | 'avg' | 'alpha';
+                    label: string;
+                  }): React.JSX.Element => {
+                    const active = statusSort === option.id;
+                    return (
+                      <Button
+                        key={option.id}
+                        type='button'
+                        className={`rounded-md border px-2 py-1 text-[10px] ${
+                          active
+                            ? 'border-emerald-500/50 text-emerald-200'
+                            : 'text-gray-300 hover:bg-muted/60'
+                        }`}
+                        onClick={() => setStatusSort(option.id)}
+                      >
+                        {option.label}
+                      </Button>
+                    );
+                  }
+                )}
               </div>
               <div className='flex flex-wrap gap-2'>
-                {sortedDurationByStatus.map((bucket: { status: string; count: number; timedCount: number; totalMs: number; averageMs: number | null; min: NodeDurationRow | null; max: NodeDurationRow | null }): React.JSX.Element => {
-                  const tooltipContent =
-                    bucket.min || bucket.max
-                      ? [
-                        bucket.min
-                          ? `Fastest: ${bucket.min.label} · ${formatDurationMs(
-                            bucket.min.durationMs
-                          )}`
-                          : 'Fastest: —',
-                        bucket.max
-                          ? `Slowest: ${bucket.max.label} · ${formatDurationMs(
-                            bucket.max.durationMs
-                          )}`
-                          : 'Slowest: —',
-                      ].join('\n')
-                      : null;
-                  const chip = (
-                    <div
-                      key={bucket.status}
-                      className='flex items-center gap-2 rounded-full border border-border/60 bg-black/30 px-3 py-1'
-                    >
-                      <StatusBadge
-                        status={bucket.status}
-                        variant={statusToVariant(bucket.status)}
-                        size='sm'
-                        className='font-bold'
-                      />
-                      <span>
-                        Avg {formatDurationMs(bucket.averageMs) ?? '—'}
-                      </span>
-                      <span>
-                        Total {formatDurationMs(bucket.totalMs) ?? '—'}
-                      </span>
-                      <span>
-                        Min {formatDurationMs(bucket.min?.durationMs ?? null) ?? '—'}
-                      </span>
-                      <span>
-                        Max {formatDurationMs(bucket.max?.durationMs ?? null) ?? '—'}
-                      </span>
-                      <span>
-                        Timed {bucket.timedCount}/{bucket.count}
-                      </span>
-                    </div>
-                  );
-                  return tooltipContent ? (
-                    <Tooltip key={bucket.status} content={tooltipContent}>
-                      {chip}
-                    </Tooltip>
-                  ) : (
-                    chip
-                  );
-                })}
+                {sortedDurationByStatus.map(
+                  (bucket: {
+                    status: string;
+                    count: number;
+                    timedCount: number;
+                    totalMs: number;
+                    averageMs: number | null;
+                    min: NodeDurationRow | null;
+                    max: NodeDurationRow | null;
+                  }): React.JSX.Element => {
+                    const tooltipContent =
+                      bucket.min || bucket.max
+                        ? [
+                            bucket.min
+                              ? `Fastest: ${bucket.min.label} · ${formatDurationMs(
+                                  bucket.min.durationMs
+                                )}`
+                              : 'Fastest: —',
+                            bucket.max
+                              ? `Slowest: ${bucket.max.label} · ${formatDurationMs(
+                                  bucket.max.durationMs
+                                )}`
+                              : 'Slowest: —',
+                          ].join('\n')
+                        : null;
+                    const chip = (
+                      <div
+                        key={bucket.status}
+                        className='flex items-center gap-2 rounded-full border border-border/60 bg-black/30 px-3 py-1'
+                      >
+                        <StatusBadge
+                          status={bucket.status}
+                          variant={statusToVariant(bucket.status)}
+                          size='sm'
+                          className='font-bold'
+                        />
+                        <span>Avg {formatDurationMs(bucket.averageMs) ?? '—'}</span>
+                        <span>Total {formatDurationMs(bucket.totalMs) ?? '—'}</span>
+                        <span>Min {formatDurationMs(bucket.min?.durationMs ?? null) ?? '—'}</span>
+                        <span>Max {formatDurationMs(bucket.max?.durationMs ?? null) ?? '—'}</span>
+                        <span>
+                          Timed {bucket.timedCount}/{bucket.count}
+                        </span>
+                      </div>
+                    );
+                    return tooltipContent ? (
+                      <Tooltip key={bucket.status} content={tooltipContent}>
+                        {chip}
+                      </Tooltip>
+                    ) : (
+                      chip
+                    );
+                  }
+                )}
               </div>
             </div>
           ) : null}
           {nodeDurationRows.length === 0 ? (
-            <div className='mt-2 text-[11px] text-gray-500'>
-              No node timing data available yet.
-            </div>
+            <div className='mt-2 text-[11px] text-gray-500'>No node timing data available yet.</div>
           ) : (
             <div className='mt-2 max-h-[200px] overflow-auto space-y-2'>
               {nodeDurationRows.map((row: NodeDurationRow): React.JSX.Element => {
@@ -547,9 +622,7 @@ export function RunTimeline({
                     key={row.id}
                     className='flex flex-wrap items-center justify-between gap-2 rounded-md border border-border/60 bg-black/30 px-3 py-2'
                   >
-                    <div className='min-w-[180px] flex-1 text-sm text-white'>
-                      {row.label}
-                    </div>
+                    <div className='min-w-[180px] flex-1 text-sm text-white'>{row.label}</div>
                     <div className='flex items-center gap-2 text-[11px] text-gray-400'>
                       <StatusBadge
                         status={row.status ?? 'unknown'}
@@ -570,9 +643,7 @@ export function RunTimeline({
       <div>
         <div className='flex items-center justify-between'>
           <div className='text-[11px] uppercase text-gray-500'>Runtime timeline</div>
-          <div className='text-[11px] text-gray-500'>
-            {filteredTimelineItems.length} entries
-          </div>
+          <div className='text-[11px] text-gray-500'>{filteredTimelineItems.length} entries</div>
         </div>
         {filteredTimelineItems.length === 0 ? (
           <div className='mt-3 rounded-md border border-border bg-card/40 p-4 text-xs text-gray-400'>
@@ -595,9 +666,7 @@ export function RunTimeline({
                         size='sm'
                         className='font-medium'
                       />
-                      <span className='text-[11px] uppercase text-gray-500'>
-                        {item.kind}
-                      </span>
+                      <span className='text-[11px] uppercase text-gray-500'>{item.kind}</span>
                     </div>
                     <div className='mt-1 text-sm text-white'>{item.label}</div>
                     {item.description ? (
@@ -641,7 +710,9 @@ export function RunTimeline({
                   return (
                     <div key={event.id} className='p-3'>
                       <div className='flex flex-wrap items-center gap-2 text-xs text-gray-400'>
-                        <span>{event.createdAt ? new Date(event.createdAt).toLocaleString() : '-'}</span>
+                        <span>
+                          {event.createdAt ? new Date(event.createdAt).toLocaleString() : '-'}
+                        </span>
                         <StatusBadge
                           status={event.level}
                           variant={levelToVariant(event.level)}

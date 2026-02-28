@@ -1,26 +1,34 @@
 'use client';
 
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
-import { 
-  extractParamsFromPrompt, 
-  inferParamSpecs, 
-  setDeepValue, 
-  type ParamIssue, 
-  type ParamSpec, 
-  type ExtractParamsResult 
+import {
+  extractParamsFromPrompt,
+  inferParamSpecs,
+  setDeepValue,
+  type ParamIssue,
+  type ParamSpec,
+  type ExtractParamsResult,
 } from '@/shared/utils/prompt-params';
-import { validateImageStudioParams } from '@/shared/lib/prompt-engine/prompt-params';
+import { validateImageStudioParams } from '@/shared/lib/prompt-engine';
 import { consumePromptExploderApplyPrompt } from '@/features/prompt-exploder/bridge';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
 import { useToast } from '@/shared/ui';
 
 import { useProjectsState } from './ProjectsContext';
-import { type ParamUiControl } from '../utils/param-ui';
+import { type ParamUiControl } from '@/shared/lib/ai/image-studio/utils/param-ui';
 import {
   getImageStudioProjectSessionKey,
   resolveImageStudioProjectSession,
-} from '../utils/project-session';
+} from '@/shared/lib/ai/image-studio/utils/project-session';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -47,8 +55,13 @@ export interface PromptActions {
   onParamUiControlChange: (path: string, control: ParamUiControl) => void;
   setExtractReviewOpen: (o: boolean) => void;
   setExtractDraftPrompt: (s: string) => void;
-  setExtractPreviewUiOverrides: React.Dispatch<React.SetStateAction<Record<string, ParamUiControl>>>;
-  applyProgrammaticExtraction: (sourcePrompt: string, options?: { toast?: boolean }) => ExtractParamsResult;
+  setExtractPreviewUiOverrides: React.Dispatch<
+    React.SetStateAction<Record<string, ParamUiControl>>
+  >;
+  applyProgrammaticExtraction: (
+    sourcePrompt: string,
+    options?: { toast?: boolean }
+  ) => ExtractParamsResult;
 }
 
 // ── Contexts ─────────────────────────────────────────────────────────────────
@@ -71,7 +84,9 @@ export function PromptProvider({ children }: { children: React.ReactNode }): Rea
 
   const [extractReviewOpen, setExtractReviewOpen] = useState<boolean>(false);
   const [extractDraftPrompt, setExtractDraftPrompt] = useState<string>('');
-  const [extractPreviewUiOverrides, setExtractPreviewUiOverrides] = useState<Record<string, ParamUiControl>>({});
+  const [extractPreviewUiOverrides, setExtractPreviewUiOverrides] = useState<
+    Record<string, ParamUiControl>
+  >({});
   const [extractResult, setExtractResult] = useState<ExtractParamsResult | null>(null);
   const hydratedSessionSignatureRef = useRef<string | null>(null);
 
@@ -86,7 +101,7 @@ export function PromptProvider({ children }: { children: React.ReactNode }): Rea
 
     const session = resolveImageStudioProjectSession(projectSessionRaw, projectId);
     setPromptText(session?.promptText ?? '');
-    setParamsState((session?.paramsState ?? null));
+    setParamsState(session?.paramsState ?? null);
     setParamSpecs((session?.paramSpecs ?? null) as Record<string, ParamSpec> | null);
     setParamUiOverrides((session?.paramUiOverrides ?? {}) as Record<string, ParamUiControl>);
     setParamFlipMap({});
@@ -118,11 +133,11 @@ export function PromptProvider({ children }: { children: React.ReactNode }): Rea
   }, [projectId]);
 
   const handleParamChange = useCallback((path: string, value: unknown) => {
-    setParamsState(prev => prev ? setDeepValue(prev, path, value) : null);
+    setParamsState((prev) => (prev ? setDeepValue(prev, path, value) : null));
   }, []);
 
   const handleParamUiControlChange = useCallback((path: string, nextControl: ParamUiControl) => {
-    setParamUiOverrides(prev => {
+    setParamUiOverrides((prev) => {
       if (nextControl === 'auto') {
         const { [path]: _, ...rest } = prev;
         return rest;
@@ -132,7 +147,7 @@ export function PromptProvider({ children }: { children: React.ReactNode }): Rea
   }, []);
 
   const handleParamFlip = useCallback((path: string) => {
-    setParamFlipMap(prev => ({ ...prev, [path]: !prev[path] }));
+    setParamFlipMap((prev) => ({ ...prev, [path]: !prev[path] }));
   }, []);
 
   const validationIssues = useMemo(() => {
@@ -142,38 +157,70 @@ export function PromptProvider({ children }: { children: React.ReactNode }): Rea
 
   const issuesByPath = useMemo(() => {
     const map: Record<string, ParamIssue[]> = {};
-    validationIssues.forEach(i => { map[i.path] ??= []; map[i.path]!.push(i); });
+    validationIssues.forEach((i) => {
+      map[i.path] ??= [];
+      map[i.path]!.push(i);
+    });
     return map;
   }, [validationIssues]);
 
-  const applyProgrammaticExtraction = useCallback((sourcePrompt: string, options?: { toast?: boolean }) => {
-    const result = extractParamsFromPrompt(sourcePrompt);
-    setExtractResult(result);
-    if (!result.ok) {
-      setParamsState(null);
-      setParamSpecs(null);
-      if (options?.toast !== false) toast(String(result.error), { variant: 'error' });
+  const applyProgrammaticExtraction = useCallback(
+    (sourcePrompt: string, options?: { toast?: boolean }) => {
+      const result = extractParamsFromPrompt(sourcePrompt);
+      setExtractResult(result);
+      if (!result.ok) {
+        setParamsState(null);
+        setParamSpecs(null);
+        if (options?.toast !== false) toast(String(result.error), { variant: 'error' });
+        return result;
+      }
+      setParamsState(result.params);
+      setParamSpecs(inferParamSpecs(result.params, result.rawObjectText));
+      if (options?.toast !== false) toast('Params extracted.', { variant: 'success' });
       return result;
-    }
-    setParamsState(result.params);
-    setParamSpecs(inferParamSpecs(result.params, result.rawObjectText));
-    if (options?.toast !== false) toast('Params extracted.', { variant: 'success' });
-    return result;
-  }, [toast]);
+    },
+    [toast]
+  );
 
   const state = useMemo<PromptState>(
     () => ({
-      promptText, paramsState, paramSpecs, paramUiOverrides, paramFlipMap, issuesByPath,
-      extractReviewOpen, extractDraftPrompt, extractPreviewUiOverrides, extractResult,
+      promptText,
+      paramsState,
+      paramSpecs,
+      paramUiOverrides,
+      paramFlipMap,
+      issuesByPath,
+      extractReviewOpen,
+      extractDraftPrompt,
+      extractPreviewUiOverrides,
+      extractResult,
     }),
-    [promptText, paramsState, paramSpecs, paramUiOverrides, paramFlipMap, issuesByPath, extractReviewOpen, extractDraftPrompt, extractPreviewUiOverrides, extractResult]
+    [
+      promptText,
+      paramsState,
+      paramSpecs,
+      paramUiOverrides,
+      paramFlipMap,
+      issuesByPath,
+      extractReviewOpen,
+      extractDraftPrompt,
+      extractPreviewUiOverrides,
+      extractResult,
+    ]
   );
 
   const actions = useMemo<PromptActions>(
     () => ({
-      setPromptText, setParamsState, setParamSpecs, setParamUiOverrides,
-      onParamChange: handleParamChange, onParamFlip: handleParamFlip, onParamUiControlChange: handleParamUiControlChange,
-      setExtractReviewOpen, setExtractDraftPrompt, setExtractPreviewUiOverrides,
+      setPromptText,
+      setParamsState,
+      setParamSpecs,
+      setParamUiOverrides,
+      onParamChange: handleParamChange,
+      onParamFlip: handleParamFlip,
+      onParamUiControlChange: handleParamUiControlChange,
+      setExtractReviewOpen,
+      setExtractDraftPrompt,
+      setExtractPreviewUiOverrides,
       applyProgrammaticExtraction,
     }),
     [handleParamChange, handleParamFlip, handleParamUiControlChange, applyProgrammaticExtraction]
@@ -181,9 +228,7 @@ export function PromptProvider({ children }: { children: React.ReactNode }): Rea
 
   return (
     <PromptActionsContext.Provider value={actions}>
-      <PromptStateContext.Provider value={state}>
-        {children}
-      </PromptStateContext.Provider>
+      <PromptStateContext.Provider value={state}>{children}</PromptStateContext.Provider>
     </PromptActionsContext.Provider>
   );
 }

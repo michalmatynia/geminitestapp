@@ -7,9 +7,7 @@ const asRecord = (value: unknown): Record<string, unknown> | null =>
     ? (value as Record<string, unknown>)
     : null;
 
-export const normalizeAiPathsCollectionMap = (
-  value: unknown
-): AiPathsCollectionMap => {
+export const normalizeAiPathsCollectionMap = (value: unknown): AiPathsCollectionMap => {
   const record = asRecord(value);
   if (!record) return {};
 
@@ -28,9 +26,7 @@ export const resolveAiPathsCollectionName = (
   requestedCollection: string,
   collectionMap?: AiPathsCollectionMap | null
 ): { collection: string; mappedFrom?: string } => {
-  const requested = typeof requestedCollection === 'string'
-    ? requestedCollection.trim()
-    : '';
+  const requested = typeof requestedCollection === 'string' ? requestedCollection.trim() : '';
   if (!requested) return { collection: requested };
 
   const map = collectionMap ?? {};
@@ -87,8 +83,6 @@ export const getAiPathsCollectionMapFromInputs = (
   inputs: Record<string, unknown> | null | undefined
 ): AiPathsCollectionMap | undefined => {
   if (!inputs) return undefined;
-  const map = normalizeAiPathsCollectionMap(
-    inputs[AI_PATHS_RUNTIME_COLLECTION_MAP_INPUT_KEY]
-  );
+  const map = normalizeAiPathsCollectionMap(inputs[AI_PATHS_RUNTIME_COLLECTION_MAP_INPUT_KEY]);
   return Object.keys(map).length > 0 ? map : undefined;
 };

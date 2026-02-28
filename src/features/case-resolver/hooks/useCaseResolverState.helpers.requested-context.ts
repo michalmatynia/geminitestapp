@@ -6,13 +6,11 @@ const normalizeRequestedFileId = (value: string | null | undefined): string =>
 
 export const hasRequestedCaseFile = (
   files: CaseResolverFile[],
-  requestedFileId: string | null | undefined,
+  requestedFileId: string | null | undefined
 ): boolean => {
   const normalizedRequestedFileId = normalizeRequestedFileId(requestedFileId);
   if (!normalizedRequestedFileId) return false;
-  return files.some(
-    (file: CaseResolverFile): boolean => file.id === normalizedRequestedFileId,
-  );
+  return files.some((file: CaseResolverFile): boolean => file.id === normalizedRequestedFileId);
 };
 
 export const resolveRequestedCaseIssueAfterRefresh = ({
@@ -38,7 +36,7 @@ export const stripCaseContextQueryParams = (search: string): string => {
 
 export const buildRequestedContextRequestKey = (
   requestedFileId: string,
-  retryTick: number,
+  retryTick: number
 ): string => `${requestedFileId.trim()}|${retryTick}`;
 
 export const shouldStartRequestedContextFetch = ({

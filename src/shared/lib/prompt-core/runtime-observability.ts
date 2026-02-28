@@ -28,8 +28,7 @@ const timings: PromptValidationTimingMetric[] = [];
 const counters: PromptValidationCounterMetric[] = [];
 const errorCounters = new Map<PromptValidationErrorName, number>();
 
-const clampDuration = (value: number): number =>
-  Number.isFinite(value) ? Math.max(0, value) : 0;
+const clampDuration = (value: number): number => (Number.isFinite(value) ? Math.max(0, value) : 0);
 
 const clampCounterValue = (value: number): number =>
   Number.isFinite(value) ? Math.max(0, value) : 0;
@@ -37,10 +36,7 @@ const clampCounterValue = (value: number): number =>
 const percentile = (values: number[], ratio: number): number => {
   if (values.length === 0) return 0;
   const sorted = [...values].sort((a, b) => a - b);
-  const index = Math.min(
-    sorted.length - 1,
-    Math.max(0, Math.floor((sorted.length - 1) * ratio))
-  );
+  const index = Math.min(sorted.length - 1, Math.max(0, Math.floor((sorted.length - 1) * ratio)));
   return sorted[index] ?? 0;
 };
 
@@ -84,16 +80,12 @@ export const recordPromptValidationCounter = (
   });
 };
 
-export const recordPromptValidationError = (
-  name: PromptValidationErrorName
-): void => {
+export const recordPromptValidationError = (name: PromptValidationErrorName): void => {
   errorCounters.set(name, (errorCounters.get(name) ?? 0) + 1);
 };
 
 const getCounterValue = (name: PromptValidationCounterName): number =>
-  counters
-    .filter((metric) => metric.name === name)
-    .reduce((acc, metric) => acc + metric.value, 0);
+  counters.filter((metric) => metric.name === name).reduce((acc, metric) => acc + metric.value, 0);
 
 export const PROMPT_VALIDATION_RUNTIME_SLO_TARGETS: PromptValidationRuntimeSloTargets = {
   p95PipelineMs: 120,
@@ -211,9 +203,7 @@ export const getPromptValidationObservabilitySnapshot = (
     runtime_execution: errorCounters.get('runtime_execution') ?? 0,
   };
   const totalErrors =
-    errorValues.scope_resolution +
-    errorValues.rule_compile +
-    errorValues.runtime_execution;
+    errorValues.scope_resolution + errorValues.rule_compile + errorValues.runtime_execution;
   const health = evaluateRuntimeHealth({
     timingByName: grouped,
     totalErrors,

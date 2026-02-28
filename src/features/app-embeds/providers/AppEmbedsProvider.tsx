@@ -24,7 +24,7 @@ export function AppEmbedsProvider({ children }: { children: React.ReactNode }): 
   const { toast } = useToast();
   const settingsQuery = useSettingsMap();
   const updateSetting = useUpdateSetting();
-  
+
   const initialEnabled = useMemo(() => {
     if (!settingsQuery.data) return new Set<AppEmbedId>();
     const stored = parseJsonSetting<AppEmbedId[]>(
@@ -42,18 +42,21 @@ export function AppEmbedsProvider({ children }: { children: React.ReactNode }): 
     setUserEnabled(null);
   }, [initialEnabled]);
 
-  const toggleOption = useCallback((id: AppEmbedId, checked: boolean): void => {
-    setUserEnabled((prev) => {
-      const current = prev ?? initialEnabled;
-      const next = new Set(current);
-      if (checked) {
-        next.add(id);
-      } else {
-        next.delete(id);
-      }
-      return next;
-    });
-  }, [initialEnabled]);
+  const toggleOption = useCallback(
+    (id: AppEmbedId, checked: boolean): void => {
+      setUserEnabled((prev) => {
+        const current = prev ?? initialEnabled;
+        const next = new Set(current);
+        if (checked) {
+          next.add(id);
+        } else {
+          next.delete(id);
+        }
+        return next;
+      });
+    },
+    [initialEnabled]
+  );
 
   const save = useCallback(async (): Promise<void> => {
     try {
@@ -70,19 +73,18 @@ export function AppEmbedsProvider({ children }: { children: React.ReactNode }): 
     }
   }, [enabled, updateSetting, toast]);
 
-  const value = useMemo(() => ({
-    enabled,
-    toggleOption,
-    save,
-    isLoading: settingsQuery.isLoading,
-    isSaving: updateSetting.isPending,
-  }), [enabled, settingsQuery.isLoading, updateSetting.isPending, save, toggleOption]);
-
-  return (
-    <AppEmbedsContext.Provider value={value}>
-      {children}
-    </AppEmbedsContext.Provider>
+  const value = useMemo(
+    () => ({
+      enabled,
+      toggleOption,
+      save,
+      isLoading: settingsQuery.isLoading,
+      isSaving: updateSetting.isPending,
+    }),
+    [enabled, settingsQuery.isLoading, updateSetting.isPending, save, toggleOption]
   );
+
+  return <AppEmbedsContext.Provider value={value}>{children}</AppEmbedsContext.Provider>;
 }
 
 export function useAppEmbeds(): AppEmbedsContextType {

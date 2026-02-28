@@ -28,7 +28,10 @@ export function CaseFileEditorModal({
       onClose={onClose}
       title={draft.fileType === 'scanfile' ? 'Scan File Inspector' : 'Document Editor'}
       size='xl'
-      onSave={() => { onSave(); onSuccess?.(); }}
+      onSave={() => {
+        onSave();
+        onSuccess?.();
+      }}
       saveText='Save Changes'
       cancelText='Close'
     >

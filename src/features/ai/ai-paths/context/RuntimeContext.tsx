@@ -32,17 +32,14 @@ export interface LastErrorInfo {
   pathId?: string | null;
 }
 
-export type RuntimeRunStatus =
-  | 'idle'
-  | 'running'
-  | 'paused'
-  | 'stepping'
-  | 'completed'
-  | 'failed';
+export type RuntimeRunStatus = 'idle' | 'running' | 'paused' | 'stepping' | 'completed' | 'failed';
 
 export interface RuntimeControlHandlers {
   fireTrigger?: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void | Promise<void>;
-  fireTriggerPersistent?: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void | Promise<void>;
+  fireTriggerPersistent?: (
+    node: AiNode,
+    event?: React.MouseEvent<HTMLButtonElement>
+  ) => void | Promise<void>;
   pauseActiveRun?: () => void;
   resumeActiveRun?: () => void;
   stepActiveRun?: (triggerNode?: AiNode) => void;
@@ -51,7 +48,11 @@ export interface RuntimeControlHandlers {
 }
 
 export interface RuntimeNodeConfigHandlers {
-  fetchParserSample?: (nodeId: string, entityType: string, entityId: string) => void | Promise<void>;
+  fetchParserSample?: (
+    nodeId: string,
+    entityType: string,
+    entityId: string
+  ) => void | Promise<void>;
   fetchUpdaterSample?: (
     nodeId: string,
     entityType: string,
@@ -101,7 +102,11 @@ export interface RuntimeActions {
   clearAllRuntime: () => void;
 
   /** Set the map of node statuses */
-  setRuntimeNodeStatuses: (statuses: AiPathRuntimeNodeStatusMap | ((prev: AiPathRuntimeNodeStatusMap) => AiPathRuntimeNodeStatusMap)) => void;
+  setRuntimeNodeStatuses: (
+    statuses:
+      | AiPathRuntimeNodeStatusMap
+      | ((prev: AiPathRuntimeNodeStatusMap) => AiPathRuntimeNodeStatusMap)
+  ) => void;
   /** Add a new runtime event */
   addRuntimeEvent: (event: AiPathRuntimeEvent) => void;
   /** Replace the full runtime events array */
@@ -109,7 +114,9 @@ export interface RuntimeActions {
   /** Clear all runtime events */
   clearRuntimeEvents: () => void;
   /** Set node execution durations map */
-  setNodeDurations: (durations: Record<string, number> | ((prev: Record<string, number>) => Record<string, number>)) => void;
+  setNodeDurations: (
+    durations: Record<string, number> | ((prev: Record<string, number>) => Record<string, number>)
+  ) => void;
 
   // History actions
   appendHistory: (nodeId: string, entry: RuntimeHistoryEntry) => void;
@@ -117,13 +124,25 @@ export interface RuntimeActions {
   clearNodeHistory: (nodeId: string) => void;
 
   // Sample state actions
-  setParserSamples: (samples: Record<string, ParserSampleState> | ((prev: Record<string, ParserSampleState>) => Record<string, ParserSampleState>)) => void;
-  setUpdaterSamples: (samples: Record<string, UpdaterSampleState> | ((prev: Record<string, UpdaterSampleState>) => Record<string, UpdaterSampleState>)) => void;
+  setParserSamples: (
+    samples:
+      | Record<string, ParserSampleState>
+      | ((prev: Record<string, ParserSampleState>) => Record<string, ParserSampleState>)
+  ) => void;
+  setUpdaterSamples: (
+    samples:
+      | Record<string, UpdaterSampleState>
+      | ((prev: Record<string, UpdaterSampleState>) => Record<string, UpdaterSampleState>)
+  ) => void;
   updateParserSample: (nodeId: string, sample: ParserSampleState) => void;
   updateUpdaterSample: (nodeId: string, sample: UpdaterSampleState) => void;
 
   // Debug snapshot actions
-  setPathDebugSnapshots: (snapshots: Record<string, PathDebugSnapshot> | ((prev: Record<string, PathDebugSnapshot>) => Record<string, PathDebugSnapshot>)) => void;
+  setPathDebugSnapshots: (
+    snapshots:
+      | Record<string, PathDebugSnapshot>
+      | ((prev: Record<string, PathDebugSnapshot>) => Record<string, PathDebugSnapshot>)
+  ) => void;
   updatePathDebugSnapshot: (pathId: string, snapshot: PathDebugSnapshot) => void;
 
   // Execution tracking actions
@@ -134,7 +153,10 @@ export interface RuntimeActions {
   ) => void;
   setRunControlHandlers: (handlers: RuntimeControlHandlers) => void;
   fireTrigger: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => Promise<void>;
-  fireTriggerPersistent: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => Promise<void>;
+  fireTriggerPersistent: (
+    node: AiNode,
+    event?: React.MouseEvent<HTMLButtonElement>
+  ) => Promise<void>;
   pauseActiveRun: () => void;
   resumeActiveRun: () => void;
   stepActiveRun: (triggerNode?: AiNode) => void;
@@ -191,15 +213,20 @@ export function RuntimeProvider({
 }: RuntimeProviderProps): React.ReactNode {
   // Core runtime state
   const [runtimeState, setRuntimeStateInternal] = useState<RuntimeState>(initialRuntimeState);
-  const [runtimeNodeStatuses, setRuntimeNodeStatusesInternal] = useState<AiPathRuntimeNodeStatusMap>({});
+  const [runtimeNodeStatuses, setRuntimeNodeStatusesInternal] =
+    useState<AiPathRuntimeNodeStatusMap>({});
   const [runtimeEvents, setRuntimeEventsInternal] = useState<AiPathRuntimeEvent[]>([]);
 
   // Sample states
   const [parserSamples, setParserSamplesInternal] = useState<Record<string, ParserSampleState>>({});
-  const [updaterSamples, setUpdaterSamplesInternal] = useState<Record<string, UpdaterSampleState>>({});
+  const [updaterSamples, setUpdaterSamplesInternal] = useState<Record<string, UpdaterSampleState>>(
+    {}
+  );
 
   // Debug snapshots
-  const [pathDebugSnapshots, setPathDebugSnapshotsInternal] = useState<Record<string, PathDebugSnapshot>>({});
+  const [pathDebugSnapshots, setPathDebugSnapshotsInternal] = useState<
+    Record<string, PathDebugSnapshot>
+  >({});
 
   // Execution tracking
   const [lastRunAt, setLastRunAtInternal] = useState<string | null>(null);
@@ -321,13 +348,19 @@ export function RuntimeProvider({
     runControlHandlersRef.current = handlers;
   }, []);
 
-  const fireTrigger = useCallback(async (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => {
-    await runControlHandlersRef.current.fireTrigger?.(node, event);
-  }, []);
+  const fireTrigger = useCallback(
+    async (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => {
+      await runControlHandlersRef.current.fireTrigger?.(node, event);
+    },
+    []
+  );
 
-  const fireTriggerPersistent = useCallback(async (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => {
-    await runControlHandlersRef.current.fireTriggerPersistent?.(node, event);
-  }, []);
+  const fireTriggerPersistent = useCallback(
+    async (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => {
+      await runControlHandlersRef.current.fireTriggerPersistent?.(node, event);
+    },
+    []
+  );
 
   const pauseActiveRun = useCallback(() => {
     runControlHandlersRef.current.pauseActiveRun?.();
@@ -358,8 +391,11 @@ export function RuntimeProvider({
 
   const fetchParserSample = useCallback(
     async (nodeId: string, entityType: string, entityId: string): Promise<void> => {
-      await (runtimeNodeConfigHandlersRef.current.fetchParserSample?.(nodeId, entityType, entityId)
-        ?? Promise.resolve());
+      await (runtimeNodeConfigHandlersRef.current.fetchParserSample?.(
+        nodeId,
+        entityType,
+        entityId
+      ) ?? Promise.resolve());
     },
     []
   );
@@ -381,23 +417,17 @@ export function RuntimeProvider({
     []
   );
 
-  const runSimulation = useCallback(
-    async (node: AiNode, triggerEvent?: string): Promise<void> => {
-      const result = runtimeNodeConfigHandlersRef.current.runSimulation?.(node, triggerEvent);
-      if (result && typeof (result as Promise<unknown>).then === 'function') {
-        await (result as Promise<unknown>);
-      }
-    },
-    []
-  );
+  const runSimulation = useCallback(async (node: AiNode, triggerEvent?: string): Promise<void> => {
+    const result = runtimeNodeConfigHandlersRef.current.runSimulation?.(node, triggerEvent);
+    if (result && typeof (result as Promise<unknown>).then === 'function') {
+      await (result as Promise<unknown>);
+    }
+  }, []);
 
-  const sendToAi = useCallback(
-    async (databaseNodeId: string, prompt: string): Promise<void> => {
-      await (runtimeNodeConfigHandlersRef.current.sendToAi?.(databaseNodeId, prompt)
-        ?? Promise.resolve());
-    },
-    []
-  );
+  const sendToAi = useCallback(async (databaseNodeId: string, prompt: string): Promise<void> => {
+    await (runtimeNodeConfigHandlersRef.current.sendToAi?.(databaseNodeId, prompt) ??
+      Promise.resolve());
+  }, []);
 
   // Actions are stable
   const actions = useMemo<RuntimeActions>(
@@ -519,9 +549,7 @@ export function RuntimeProvider({
 
   return (
     <RuntimeActionsContext.Provider value={actions}>
-      <RuntimeStateContext.Provider value={state}>
-        {children}
-      </RuntimeStateContext.Provider>
+      <RuntimeStateContext.Provider value={state}>{children}</RuntimeStateContext.Provider>
     </RuntimeActionsContext.Provider>
   );
 }

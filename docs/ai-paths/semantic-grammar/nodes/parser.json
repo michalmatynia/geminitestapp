@@ -4,16 +4,8 @@
   "nodeType": "parser",
   "title": "JSON Parser",
   "purpose": "Extract fields into outputs or a single bundle.",
-  "inputs": [
-    "entityJson",
-    "context"
-  ],
-  "outputs": [
-    "productId",
-    "title",
-    "images",
-    "content_en"
-  ],
+  "inputs": ["entityJson", "context"],
+  "outputs": ["productId", "title", "images", "content_en"],
   "configFields": [
     {
       "path": "parser.outputMode",
@@ -50,16 +42,8 @@
       "x": 100,
       "y": 100
     },
-    "inputs": [
-      "entityJson",
-      "context"
-    ],
-    "outputs": [
-      "productId",
-      "title",
-      "images",
-      "content_en"
-    ],
+    "inputs": ["entityJson", "context"],
+    "outputs": ["productId", "title", "images", "content_en"],
     "data": {},
     "connections": {
       "incoming": [],

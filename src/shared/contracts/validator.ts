@@ -27,7 +27,7 @@ export type ValidatorPatternListDto = ValidatorPatternList;
 export const VALIDATOR_PATTERN_LISTS_KEY = 'validator_pattern_lists';
 
 export const VALIDATOR_SCOPE_LABELS: Record<ValidatorScope, string> = {
-  'products': 'Products',
+  products: 'Products',
   'image-studio': 'Image Studio',
   'prompt-exploder': 'Prompt Exploder',
   'case-resolver-prompt-exploder': 'Case Resolver (Prompt)',
@@ -36,7 +36,7 @@ export const VALIDATOR_SCOPE_LABELS: Record<ValidatorScope, string> = {
 };
 
 export const VALIDATOR_SCOPE_DESCRIPTIONS: Record<ValidatorScope, string> = {
-  'products': 'Standard product field validations.',
+  products: 'Standard product field validations.',
   'image-studio': 'Image generation and analysis prompts.',
   'prompt-exploder': 'Complex prompt structural integrity.',
   'case-resolver-prompt-exploder': 'Legal case prompt validation.',

@@ -158,9 +158,9 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
     );
     const currencies = currencyIds.length
       ? await db
-        .collection<CurrencyDoc>(CURRENCIES_COLLECTION)
-        .find({ id: { $in: currencyIds } })
-        .toArray()
+          .collection<CurrencyDoc>(CURRENCIES_COLLECTION)
+          .find({ id: { $in: currencyIds } })
+          .toArray()
       : [];
     const currencyMap = new Map(
       currencies.map((currency: WithId<CurrencyDoc>) => [currency.id, currency])
@@ -219,14 +219,12 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
         code: countryData.code,
       });
     }
-    const requestedCurrencyIds = Array.from(
-      new Set(currencyIds ?? [])
-    );
+    const requestedCurrencyIds = Array.from(new Set(currencyIds ?? []));
     const currencyDocs = requestedCurrencyIds.length
       ? await db
-        .collection<CurrencyDoc>(CURRENCIES_COLLECTION)
-        .find({ id: { $in: requestedCurrencyIds } })
-        .toArray()
+          .collection<CurrencyDoc>(CURRENCIES_COLLECTION)
+          .find({ id: { $in: requestedCurrencyIds } })
+          .toArray()
       : [];
     const validCurrencyIds = new Set(
       currencyDocs.map((currency: WithId<CurrencyDoc>) => currency.id)
@@ -236,9 +234,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
       id: countryData.code,
       code: countryData.code,
       name: countryData.name,
-      currencyIds: requestedCurrencyIds.filter((id: string) =>
-        validCurrencyIds.has(id)
-      ),
+      currencyIds: requestedCurrencyIds.filter((id: string) => validCurrencyIds.has(id)),
       createdAt: now,
       updatedAt: now,
     };
@@ -246,9 +242,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     const currencyMap = new Map(
       currencyDocs.map((currency: WithId<CurrencyDoc>) => [currency.id, currency])
     );
-    return NextResponse.json(
-      normalizeCountryResponse(country, currencyMap)
-    );
+    return NextResponse.json(normalizeCountryResponse(country, currencyMap));
   }
 
   if (!process.env['DATABASE_URL']) {
@@ -259,13 +253,15 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     data: {
       // countryData.code is a zod enum union; Prisma code is an enum too (compatible)
       ...(countryData as unknown as { code: CountryCode; name: string }),
-      ...(currencyIds?.length ? {
-        currencies: {
-          createMany: {
-            data: currencyIds.map((currencyId: string) => ({ currencyId })),
-          },
-        },
-      } : {}),
+      ...(currencyIds?.length
+        ? {
+            currencies: {
+              createMany: {
+                data: currencyIds.map((currencyId: string) => ({ currencyId })),
+              },
+            },
+          }
+        : {}),
     },
     include: {
       currencies: {
@@ -276,4 +272,3 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
 
   return NextResponse.json(country);
 }
-

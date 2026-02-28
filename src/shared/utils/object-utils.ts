@@ -21,7 +21,10 @@ export function isObject(item: unknown): item is Record<string, unknown> {
 /**
  * Deeply merges two or more objects.
  */
-export function deepMerge<T extends Record<string, unknown>>(target: T, ...sources: Partial<T>[]): T {
+export function deepMerge<T extends Record<string, unknown>>(
+  target: T,
+  ...sources: Partial<T>[]
+): T {
   if (!sources.length) return target;
   const source = sources.shift();
 

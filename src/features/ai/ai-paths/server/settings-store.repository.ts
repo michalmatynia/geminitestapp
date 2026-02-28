@@ -5,10 +5,7 @@ import {
   type AiPathsSettingRecord,
   type MongoAiPathsSettingDoc,
 } from './settings-store.constants';
-import {
-  assertMongoConfigured,
-  withMongoOperationTimeout,
-} from './settings-store.helpers';
+import { assertMongoConfigured, withMongoOperationTimeout } from './settings-store.helpers';
 
 let mongoIndexesEnsured: Promise<void> | null = null;
 
@@ -30,7 +27,9 @@ export const ensureMongoIndexes = async (timeoutMs: number): Promise<void> => {
   }
 };
 
-export const listMongoAiPathsSettings = async (timeoutMs: number): Promise<AiPathsSettingRecord[]> => {
+export const listMongoAiPathsSettings = async (
+  timeoutMs: number
+): Promise<AiPathsSettingRecord[]> => {
   await ensureMongoIndexes(timeoutMs);
   const mongo = await withMongoOperationTimeout(getMongoDb(), timeoutMs);
   const docs = await withMongoOperationTimeout(

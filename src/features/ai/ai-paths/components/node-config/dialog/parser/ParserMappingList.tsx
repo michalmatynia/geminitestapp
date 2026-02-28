@@ -44,7 +44,8 @@ export function ParserMappingList({
               }
               placeholder='$.path.to.value'
             />
-            <SelectSimple size='sm'
+            <SelectSimple
+              size='sm'
               onValueChange={(value: string) => updateMappingPath(index, value)}
               options={uniqueSuggestedPathOptions}
               placeholder='Pick a suggested path'

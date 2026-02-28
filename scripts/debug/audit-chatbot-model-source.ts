@@ -30,18 +30,14 @@ const walk = async (dir: string): Promise<string[]> => {
     entries.map(async (entry) => {
       const fullPath = path.join(dir, entry.name);
       if (entry.isDirectory()) {
-        if (
-          entry.name === 'node_modules' ||
-          entry.name === '.next' ||
-          entry.name === 'dist'
-        ) {
+        if (entry.name === 'node_modules' || entry.name === '.next' || entry.name === 'dist') {
           return [] as string[];
         }
         return walk(fullPath);
       }
       if (!/\.(ts|tsx)$/.test(entry.name)) return [] as string[];
       return [fullPath];
-    }),
+    })
   );
   return files.flat();
 };
@@ -78,8 +74,8 @@ async function main(): Promise<void> {
         passed: matches.length === 0,
       },
       null,
-      2,
-    ),
+      2
+    )
   );
 }
 

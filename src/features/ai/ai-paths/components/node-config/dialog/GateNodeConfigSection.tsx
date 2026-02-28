@@ -1,10 +1,7 @@
 'use client';
 
-
-
-
 import type { GateConfig } from '@/shared/lib/ai-paths';
-import { Input,  SelectSimple, FormField } from '@/shared/ui';
+import { Input, SelectSimple, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -21,7 +18,8 @@ export function GateNodeConfigSection(): React.JSX.Element | null {
   return (
     <div className='space-y-4'>
       <FormField label='Mode'>
-        <SelectSimple size='sm'
+        <SelectSimple
+          size='sm'
           variant='subtle'
           value={gateConfig.mode}
           onValueChange={(value: string): void =>
@@ -34,12 +32,12 @@ export function GateNodeConfigSection(): React.JSX.Element | null {
           }
           options={[
             { value: 'block', label: 'Block on invalid' },
-            { value: 'pass', label: 'Pass-through' }
+            { value: 'pass', label: 'Pass-through' },
           ]}
           placeholder='Select mode'
         />
       </FormField>
-      
+
       <FormField label='Fail Message'>
         <Input
           variant='subtle'

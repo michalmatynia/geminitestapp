@@ -3,12 +3,12 @@ import 'server-only';
 import { logActivity } from '@/shared/utils/observability/activity-service';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { ActivityTypes } from '@/shared/constants/observability';
-import type { 
-  Page, 
-  Slug, 
-  PageComponent, 
-  CmsTheme, 
-  CmsThemeCreateInput, 
+import type {
+  Page,
+  Slug,
+  PageComponent,
+  CmsTheme,
+  CmsThemeCreateInput,
   CmsThemeUpdateInput,
   CmsDomainDto,
   CreateCmsDomainDto,
@@ -28,10 +28,8 @@ const repoCall = async <K extends keyof CmsRepository>(
 ): Promise<Awaited<ReturnType<CmsRepository[K]>>> => {
   try {
     const repo = await getCmsRepository();
-    const fn = repo[key] as (
-      ...args: Parameters<CmsRepository[K]>
-    ) => ReturnType<CmsRepository[K]>;
-    return await fn(...args) as Promise<Awaited<ReturnType<CmsRepository[K]>>>;
+    const fn = repo[key] as (...args: Parameters<CmsRepository[K]>) => ReturnType<CmsRepository[K]>;
+    return (await fn(...args)) as Promise<Awaited<ReturnType<CmsRepository[K]>>>;
   } catch (error) {
     await ErrorSystem.captureException(error, {
       service: 'cms-service',
@@ -47,14 +45,17 @@ export const cmsService: CmsRepository = {
   getPages: (): Promise<Page[]> => repoCall('getPages'),
   getPageById: (id: string): Promise<Page | null> => repoCall('getPageById', id),
   getPageBySlug: (slug: string): Promise<Page | null> => repoCall('getPageBySlug', slug),
-  createPage: async (data: { name: string; themeId?: string | null | undefined }): Promise<Page> => {
+  createPage: async (data: {
+    name: string;
+    themeId?: string | null | undefined;
+  }): Promise<Page> => {
     const page = await repoCall('createPage', data);
     void logActivity({
       type: ActivityTypes.CMS.PAGE_CREATED,
       description: `Created page ${page.name}`,
       entityId: page.id,
       entityType: 'page',
-      metadata: { name: page.name }
+      metadata: { name: page.name },
     }).catch(() => {});
     return page;
   },
@@ -66,7 +67,7 @@ export const cmsService: CmsRepository = {
         description: `Updated page ${page.name}`,
         entityId: page.id,
         entityType: 'page',
-        metadata: { changes: Object.keys(data) }
+        metadata: { changes: Object.keys(data) },
       }).catch(() => {});
     }
     return page;
@@ -79,26 +80,39 @@ export const cmsService: CmsRepository = {
         description: `Deleted page ${page.name}`,
         entityId: page.id,
         entityType: 'page',
-        metadata: { name: page.name }
+        metadata: { name: page.name },
       }).catch(() => {});
     }
     return page;
   },
-  replacePageSlugs: (pageId: string, slugIds: string[]): Promise<void> => repoCall('replacePageSlugs', pageId, slugIds),
-  replacePageComponents: (pageId: string, components: Array<Partial<PageComponent> & Pick<PageComponent, 'type' | 'order' | 'content'>>): Promise<void> => repoCall('replacePageComponents', pageId, components),
+  replacePageSlugs: (pageId: string, slugIds: string[]): Promise<void> =>
+    repoCall('replacePageSlugs', pageId, slugIds),
+  replacePageComponents: (
+    pageId: string,
+    components: Array<Partial<PageComponent> & Pick<PageComponent, 'type' | 'order' | 'content'>>
+  ): Promise<void> => repoCall('replacePageComponents', pageId, components),
 
   // Slugs
   getSlugs: (): Promise<Slug[]> => repoCall('getSlugs'),
   getSlugsByIds: (ids: string[]): Promise<Slug[]> => repoCall('getSlugsByIds', ids),
   getSlugById: (id: string): Promise<Slug | null> => repoCall('getSlugById', id),
   getSlugByValue: (slug: string): Promise<Slug | null> => repoCall('getSlugByValue', slug),
-  createSlug: (data: { slug: string; pageId?: string | null; isDefault?: boolean }): Promise<Slug> => repoCall('createSlug', data),
-  updateSlug: (id: string, data: Partial<{ slug: string; pageId: string | null; isDefault: boolean }>): Promise<Slug | null> => repoCall('updateSlug', id, data),
+  createSlug: (data: {
+    slug: string;
+    pageId?: string | null;
+    isDefault?: boolean;
+  }): Promise<Slug> => repoCall('createSlug', data),
+  updateSlug: (
+    id: string,
+    data: Partial<{ slug: string; pageId: string | null; isDefault: boolean }>
+  ): Promise<Slug | null> => repoCall('updateSlug', id, data),
   deleteSlug: (id: string): Promise<Slug | null> => repoCall('deleteSlug', id),
 
   // Relationships
-  addSlugToPage: (pageId: string, slugId: string): Promise<void> => repoCall('addSlugToPage', pageId, slugId),
-  removeSlugFromPage: (pageId: string, slugId: string): Promise<void> => repoCall('removeSlugFromPage', pageId, slugId),
+  addSlugToPage: (pageId: string, slugId: string): Promise<void> =>
+    repoCall('addSlugToPage', pageId, slugId),
+  removeSlugFromPage: (pageId: string, slugId: string): Promise<void> =>
+    repoCall('removeSlugFromPage', pageId, slugId),
 
   // Themes
   getThemes: (): Promise<CmsTheme[]> => repoCall('getThemes'),
@@ -110,7 +124,7 @@ export const cmsService: CmsRepository = {
       description: `Created theme ${theme.name}`,
       entityId: theme.id,
       entityType: 'theme',
-      metadata: { name: theme.name }
+      metadata: { name: theme.name },
     }).catch(() => {});
     return theme;
   },
@@ -122,7 +136,7 @@ export const cmsService: CmsRepository = {
         description: `Updated theme ${theme.name}`,
         entityId: theme.id,
         entityType: 'theme',
-        metadata: { changes: Object.keys(data) }
+        metadata: { changes: Object.keys(data) },
       }).catch(() => {});
     }
     return theme;
@@ -135,7 +149,7 @@ export const cmsService: CmsRepository = {
         description: `Deleted theme ${theme.name}`,
         entityId: theme.id,
         entityType: 'theme',
-        metadata: { name: theme.name }
+        metadata: { name: theme.name },
       }).catch(() => {});
     }
     return theme;
@@ -147,6 +161,7 @@ export const cmsService: CmsRepository = {
   getDomains: (): Promise<CmsDomainDto[]> => repoCall('getDomains'),
   getDomainById: (id: string): Promise<CmsDomainDto | null> => repoCall('getDomainById', id),
   createDomain: (data: CreateCmsDomainDto): Promise<CmsDomainDto> => repoCall('createDomain', data),
-  updateDomain: (id: string, data: UpdateCmsDomainDto): Promise<CmsDomainDto> => repoCall('updateDomain', id, data),
+  updateDomain: (id: string, data: UpdateCmsDomainDto): Promise<CmsDomainDto> =>
+    repoCall('updateDomain', id, data),
   deleteDomain: (id: string): Promise<void> => repoCall('deleteDomain', id),
 };

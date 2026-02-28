@@ -1,9 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import {
-  useCallback,
-  useMemo,
-  useState,
-} from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type {
@@ -83,10 +79,7 @@ export function useValidatorSettingsController() {
   const reorderPatterns = useReorderValidationPatternsMutation();
   const updateSettings = useUpdateValidatorSettingsMutation();
 
-  const sequenceGroups = useMemo(
-    () => buildSequenceGroups(orderedPatterns),
-    [orderedPatterns]
-  );
+  const sequenceGroups = useMemo(() => buildSequenceGroups(orderedPatterns), [orderedPatterns]);
 
   const sequenceScopedPatternIds = useMemo(() => {
     const ids = new Set<string>();
@@ -142,10 +135,18 @@ export function useValidatorSettingsController() {
     setGroupDrafts,
     createPattern,
     updatePattern,
-    invalidateConfig: async () => { await invalidateValidatorConfig(queryClient); },
-    notifySuccess: (msg) => { toast(msg, { variant: 'success' }); },
-    notifyError: (msg) => { toast(msg, { variant: 'error' }); },
-    notifyInfo: (msg) => { toast(msg, { variant: 'info' }); },
+    invalidateConfig: async () => {
+      await invalidateValidatorConfig(queryClient);
+    },
+    notifySuccess: (msg) => {
+      toast(msg, { variant: 'success' });
+    },
+    notifyError: (msg) => {
+      toast(msg, { variant: 'error' });
+    },
+    notifyInfo: (msg) => {
+      toast(msg, { variant: 'info' });
+    },
   });
 
   const handleAddPattern = useCallback((target?: string): void => {
@@ -165,14 +166,20 @@ export function useValidatorSettingsController() {
     setShowModal(true);
   }, []);
 
-  const handleDuplicatePattern = useCallback((pattern: ProductValidationPattern): void => {
-    setEditingPattern(null);
-    const duplicated = buildFormDataFromPattern(pattern);
-    duplicated.label = buildDuplicateLabel(pattern.label, new Set(patterns.map(p => p.label.toLowerCase())));
-    setFormData(duplicated);
-    setTestResult(null);
-    setShowModal(true);
-  }, [patterns]);
+  const handleDuplicatePattern = useCallback(
+    (pattern: ProductValidationPattern): void => {
+      setEditingPattern(null);
+      const duplicated = buildFormDataFromPattern(pattern);
+      duplicated.label = buildDuplicateLabel(
+        pattern.label,
+        new Set(patterns.map((p) => p.label.toLowerCase()))
+      );
+      setFormData(duplicated);
+      setTestResult(null);
+      setShowModal(true);
+    },
+    [patterns]
+  );
 
   const handleSavePattern = async (): Promise<void> => {
     if (!formData.label.trim() || !formData.regex.trim() || !formData.message.trim()) {
@@ -204,20 +211,15 @@ export function useValidatorSettingsController() {
         return parsed;
       };
 
-      const parsedSequence = formData.sequence.trim().length === 0
-        ? null
-        : parseStrictInt(formData.sequence);
+      const parsedSequence =
+        formData.sequence.trim().length === 0 ? null : parseStrictInt(formData.sequence);
       if (formData.sequence.trim().length > 0 && (parsedSequence === null || parsedSequence < 0)) {
         toast('Sequence must be a whole number greater than or equal to 0.', { variant: 'error' });
         return;
       }
 
       const parsedMaxExecutions = parseStrictInt(formData.maxExecutions);
-      if (
-        parsedMaxExecutions === null ||
-        parsedMaxExecutions < 1 ||
-        parsedMaxExecutions > 20
-      ) {
+      if (parsedMaxExecutions === null || parsedMaxExecutions < 1 || parsedMaxExecutions > 20) {
         toast('Max executions must be a whole number between 1 and 20.', {
           variant: 'error',
         });
@@ -251,13 +253,13 @@ export function useValidatorSettingsController() {
       const runtimeConfig = formData.runtimeConfig;
       const selectedSequenceGroupId = formData.sequenceGroupId.trim() || null;
       const selectedSequenceGroup = selectedSequenceGroupId
-        ? sequenceGroups.get(selectedSequenceGroupId) ?? null
+        ? (sequenceGroups.get(selectedSequenceGroupId) ?? null)
         : null;
       const sequenceGroupLabel = selectedSequenceGroupId
-        ? selectedSequenceGroup?.label ?? editingPattern?.sequenceGroupLabel?.trim() ?? null
+        ? (selectedSequenceGroup?.label ?? editingPattern?.sequenceGroupLabel?.trim() ?? null)
         : null;
       const sequenceGroupDebounceMs = selectedSequenceGroupId
-        ? selectedSequenceGroup?.debounceMs ?? editingPattern?.sequenceGroupDebounceMs ?? 0
+        ? (selectedSequenceGroup?.debounceMs ?? editingPattern?.sequenceGroupDebounceMs ?? 0)
         : 0;
 
       const payload: UpdateValidationPatternPayload = {
@@ -280,9 +282,7 @@ export function useValidatorSettingsController() {
         ),
         postAcceptBehavior: formData.postAcceptBehavior,
         denyBehaviorOverride:
-          formData.denyBehaviorOverride === 'inherit'
-            ? null
-            : (formData.denyBehaviorOverride),
+          formData.denyBehaviorOverride === 'inherit' ? null : formData.denyBehaviorOverride,
         sequenceGroupId: selectedSequenceGroupId,
         sequenceGroupLabel,
         sequenceGroupDebounceMs,
@@ -324,16 +324,20 @@ export function useValidatorSettingsController() {
         const changedPayload: UpdateValidationPatternPayload = {};
         if (payload.label !== editingPattern.label) changedPayload.label = payload.label;
         if (payload.target !== editingPattern.target) changedPayload.target = payload.target;
-        if (payload.locale !== (editingPattern.locale ?? null)) changedPayload.locale = payload.locale;
+        if (payload.locale !== (editingPattern.locale ?? null))
+          changedPayload.locale = payload.locale;
         if (payload.regex !== editingPattern.regex) changedPayload.regex = payload.regex;
         if (payload.flags !== (editingPattern.flags ?? null)) changedPayload.flags = payload.flags;
         if (payload.message !== editingPattern.message) changedPayload.message = payload.message;
-        if (payload.severity !== editingPattern.severity) changedPayload.severity = payload.severity;
+        if (payload.severity !== editingPattern.severity)
+          changedPayload.severity = payload.severity;
         if (payload.enabled !== editingPattern.enabled) changedPayload.enabled = payload.enabled;
         if (payload.replacementEnabled !== editingPattern.replacementEnabled) {
           changedPayload.replacementEnabled = payload.replacementEnabled;
         }
-        if ((payload.replacementAutoApply ?? false) !== (editingPattern.replacementAutoApply ?? false)) {
+        if (
+          (payload.replacementAutoApply ?? false) !== (editingPattern.replacementAutoApply ?? false)
+        ) {
           changedPayload.replacementAutoApply = payload.replacementAutoApply;
         }
         if (
@@ -348,12 +352,7 @@ export function useValidatorSettingsController() {
         if (!areStringArraysEqual(payload.replacementFields, editingPattern.replacementFields)) {
           changedPayload.replacementFields = payload.replacementFields;
         }
-        if (
-          !areStringArraysEqual(
-            payload.replacementAppliesToScopes,
-            currentReplacementScopes
-          )
-        ) {
+        if (!areStringArraysEqual(payload.replacementAppliesToScopes, currentReplacementScopes)) {
           changedPayload.replacementAppliesToScopes = payload.replacementAppliesToScopes;
         }
         if (payload.postAcceptBehavior !== editingPattern.postAcceptBehavior) {
@@ -371,8 +370,10 @@ export function useValidatorSettingsController() {
           changedPayload.sequenceGroupLabel = payload.sequenceGroupLabel;
           changedPayload.sequenceGroupDebounceMs = payload.sequenceGroupDebounceMs;
         }
-        if (payload.sequence !== (editingPattern.sequence ?? null)) changedPayload.sequence = payload.sequence;
-        if (payload.chainMode !== editingPattern.chainMode) changedPayload.chainMode = payload.chainMode;
+        if (payload.sequence !== (editingPattern.sequence ?? null))
+          changedPayload.sequence = payload.sequence;
+        if (payload.chainMode !== editingPattern.chainMode)
+          changedPayload.chainMode = payload.chainMode;
         if ((payload.maxExecutions ?? 1) !== (editingPattern.maxExecutions ?? 1)) {
           changedPayload.maxExecutions = payload.maxExecutions;
         }
@@ -396,9 +397,7 @@ export function useValidatorSettingsController() {
         ) {
           changedPayload.launchSourceMode = payload.launchSourceMode;
         }
-        if (
-          (payload.launchSourceField ?? null) !== (editingPattern.launchSourceField ?? null)
-        ) {
+        if ((payload.launchSourceField ?? null) !== (editingPattern.launchSourceField ?? null)) {
           changedPayload.launchSourceField = payload.launchSourceField;
         }
         if (payload.launchOperator !== editingPattern.launchOperator) {
@@ -440,43 +439,65 @@ export function useValidatorSettingsController() {
       }
       setShowModal(false);
     } catch (error) {
-      logClientError(error, { context: { source: 'useValidatorSettingsController', action: 'savePattern', editingId: editingPattern?.id } });
+      logClientError(error, {
+        context: {
+          source: 'useValidatorSettingsController',
+          action: 'savePattern',
+          editingId: editingPattern?.id,
+        },
+      });
       toast(error instanceof Error ? error.message : 'Failed to save pattern.', {
         variant: 'error',
       });
     }
   };
 
-  const handleTogglePattern = useCallback(async (
-    pattern: ProductValidationPattern
-  ): Promise<void> => {
-    try {
-      await updatePattern.mutateAsync({
-        id: pattern.id,
-        data: { enabled: !pattern.enabled },
-      });
-      toast(`Pattern ${!pattern.enabled ? 'enabled' : 'disabled'}.`, {
-        variant: 'success',
-      });
-    } catch (error) {
-      logClientError(error, { context: { source: 'useValidatorSettingsController', action: 'togglePattern', patternId: pattern.id } });
-      toast(error instanceof Error ? error.message : 'Failed to update pattern.', {
-        variant: 'error',
-      });
-    }
-  }, [updatePattern.mutateAsync, toast]);
+  const handleTogglePattern = useCallback(
+    async (pattern: ProductValidationPattern): Promise<void> => {
+      try {
+        await updatePattern.mutateAsync({
+          id: pattern.id,
+          data: { enabled: !pattern.enabled },
+        });
+        toast(`Pattern ${!pattern.enabled ? 'enabled' : 'disabled'}.`, {
+          variant: 'success',
+        });
+      } catch (error) {
+        logClientError(error, {
+          context: {
+            source: 'useValidatorSettingsController',
+            action: 'togglePattern',
+            patternId: pattern.id,
+          },
+        });
+        toast(error instanceof Error ? error.message : 'Failed to update pattern.', {
+          variant: 'error',
+        });
+      }
+    },
+    [updatePattern.mutateAsync, toast]
+  );
 
-  const handleDeletePattern = useCallback(async (id: string): Promise<void> => {
-    try {
-      await deletePattern.mutateAsync(id);
-      toast('Pattern deleted.', { variant: 'success' });
-    } catch (error) {
-      logClientError(error, { context: { source: 'useValidatorSettingsController', action: 'deletePattern', patternId: id } });
-      toast(error instanceof Error ? error.message : 'Failed to delete pattern.', {
-        variant: 'error',
-      });
-    }
-  }, [deletePattern.mutateAsync, toast]);
+  const handleDeletePattern = useCallback(
+    async (id: string): Promise<void> => {
+      try {
+        await deletePattern.mutateAsync(id);
+        toast('Pattern deleted.', { variant: 'success' });
+      } catch (error) {
+        logClientError(error, {
+          context: {
+            source: 'useValidatorSettingsController',
+            action: 'deletePattern',
+            patternId: id,
+          },
+        });
+        toast(error instanceof Error ? error.message : 'Failed to delete pattern.', {
+          variant: 'error',
+        });
+      }
+    },
+    [deletePattern.mutateAsync, toast]
+  );
 
   const handleUpdateSettings = async (
     updates: Partial<{
@@ -489,7 +510,9 @@ export function useValidatorSettingsController() {
       await updateSettings.mutateAsync(updates);
       toast('Settings updated.', { variant: 'success' });
     } catch (error) {
-      logClientError(error, { context: { source: 'useValidatorSettingsController', action: 'updateSettings' } });
+      logClientError(error, {
+        context: { source: 'useValidatorSettingsController', action: 'updateSettings' },
+      });
       toast(error instanceof Error ? error.message : 'Failed to update settings.', {
         variant: 'error',
       });
@@ -515,43 +538,42 @@ export function useValidatorSettingsController() {
     await handleUpdateSettings({ instanceDenyBehavior: nextMap });
   };
 
-  const handleReorder = useCallback(async (
-    patternId: string,
-    targetIndex: number
-  ): Promise<void> => {
-    const nextPatterns = [...patterns];
-    const currentIndex = nextPatterns.findIndex((p) => p.id === patternId);
-    if (currentIndex === -1) return;
+  const handleReorder = useCallback(
+    async (patternId: string, targetIndex: number): Promise<void> => {
+      const nextPatterns = [...patterns];
+      const currentIndex = nextPatterns.findIndex((p) => p.id === patternId);
+      if (currentIndex === -1) return;
 
-    const [moved] = nextPatterns.splice(currentIndex, 1);
-    if (!moved) return;
-    nextPatterns.splice(targetIndex, 0, moved);
+      const [moved] = nextPatterns.splice(currentIndex, 1);
+      if (!moved) return;
+      nextPatterns.splice(targetIndex, 0, moved);
 
-    const updates: ReorderValidationPatternUpdatePayload[] = nextPatterns.map(
-      (p, index) => ({
+      const updates: ReorderValidationPatternUpdatePayload[] = nextPatterns.map((p, index) => ({
         id: p.id,
         sequence: (index + 1) * 10,
-      })
-    );
+      }));
 
-    try {
-      await reorderPatterns.mutateAsync({ updates });
-    } catch (error) {
-      logClientError(error, { context: { source: 'useValidatorSettingsController', action: 'reorder', patternId } });
-      toast(error instanceof Error ? error.message : 'Failed to reorder patterns.', {
-        variant: 'error',
-      });
-    }
-  }, [patterns, reorderPatterns.mutateAsync, toast]);
+      try {
+        await reorderPatterns.mutateAsync({ updates });
+      } catch (error) {
+        logClientError(error, {
+          context: { source: 'useValidatorSettingsController', action: 'reorder', patternId },
+        });
+        toast(error instanceof Error ? error.message : 'Failed to reorder patterns.', {
+          variant: 'error',
+        });
+      }
+    },
+    [patterns, reorderPatterns.mutateAsync, toast]
+  );
 
-  const handleReorderGroupInGroup = useCallback(async (
-    _groupId: string,
-    patternId: string,
-    targetIndex: number
-  ): Promise<void> => {
-    // This is simplified but should satisfy the component's need for now
-    await handleReorder(patternId, targetIndex);
-  }, [handleReorder]);
+  const handleReorderGroupInGroup = useCallback(
+    async (_groupId: string, patternId: string, targetIndex: number): Promise<void> => {
+      // This is simplified but should satisfy the component's need for now
+      await handleReorder(patternId, targetIndex);
+    },
+    [handleReorder]
+  );
 
   const handleDragStart = useCallback((e: unknown, patternId: string): void => {
     const dragEvent = e as DragEvent;
@@ -560,89 +582,93 @@ export function useValidatorSettingsController() {
     }
   }, []);
 
-  const handleDrop = useCallback((pattern: ProductValidationPattern, e: unknown): void => {
-    const dragEvent = e as DragEvent;
-    if (!dragEvent.dataTransfer) return;
-    const draggedId = dragEvent.dataTransfer.getData('text/plain') || dragEvent.dataTransfer.getData('patternId');
-    if (!draggedId || draggedId === pattern.id) return;
+  const handleDrop = useCallback(
+    (pattern: ProductValidationPattern, e: unknown): void => {
+      const dragEvent = e as DragEvent;
+      if (!dragEvent.dataTransfer) return;
+      const draggedId =
+        dragEvent.dataTransfer.getData('text/plain') || dragEvent.dataTransfer.getData('patternId');
+      if (!draggedId || draggedId === pattern.id) return;
 
-    const targetIndex = orderedPatterns.findIndex((p) => p.id === pattern.id);
-    if (targetIndex === -1) return;
+      const targetIndex = orderedPatterns.findIndex((p) => p.id === pattern.id);
+      if (targetIndex === -1) return;
 
-    const targetGroupId =
-      sequenceScopedPatternIds.has(pattern.id) ? pattern.sequenceGroupId?.trim() || null : null;
-    if (!targetGroupId) {
-      void handleReorder(draggedId, targetIndex);
-      return;
-    }
+      const targetGroupId = sequenceScopedPatternIds.has(pattern.id)
+        ? pattern.sequenceGroupId?.trim() || null
+        : null;
+      if (!targetGroupId) {
+        void handleReorder(draggedId, targetIndex);
+        return;
+      }
 
-    const targetGroup = sequenceGroups.get(targetGroupId);
-    const targetGroupLabel =
-      targetGroup?.label ?? pattern.sequenceGroupLabel ?? 'Sequence / Group';
-    const targetGroupDebounceMs =
-      targetGroup?.debounceMs ?? pattern.sequenceGroupDebounceMs ?? 0;
+      const targetGroup = sequenceGroups.get(targetGroupId);
+      const targetGroupLabel =
+        targetGroup?.label ?? pattern.sequenceGroupLabel ?? 'Sequence / Group';
+      const targetGroupDebounceMs = targetGroup?.debounceMs ?? pattern.sequenceGroupDebounceMs ?? 0;
 
-    const nextPatterns = [...patterns];
-    const currentIndex = nextPatterns.findIndex((p) => p.id === draggedId);
-    if (currentIndex === -1) return;
+      const nextPatterns = [...patterns];
+      const currentIndex = nextPatterns.findIndex((p) => p.id === draggedId);
+      if (currentIndex === -1) return;
 
-    const [moved] = nextPatterns.splice(currentIndex, 1);
-    if (!moved) return;
-    nextPatterns.splice(targetIndex, 0, moved);
+      const [moved] = nextPatterns.splice(currentIndex, 1);
+      if (!moved) return;
+      nextPatterns.splice(targetIndex, 0, moved);
 
-    const updates: ReorderValidationPatternUpdatePayload[] = nextPatterns.map((p, index) => {
-      const base: ReorderValidationPatternUpdatePayload = {
-        id: p.id,
-        sequence: (index + 1) * 10,
-      };
+      const updates: ReorderValidationPatternUpdatePayload[] = nextPatterns.map((p, index) => {
+        const base: ReorderValidationPatternUpdatePayload = {
+          id: p.id,
+          sequence: (index + 1) * 10,
+        };
 
-      if (p.id !== draggedId) return base;
+        if (p.id !== draggedId) return base;
 
-      return {
-        ...base,
-        sequenceGroupId: targetGroupId,
-        sequenceGroupLabel: targetGroupLabel,
-        sequenceGroupDebounceMs: targetGroupDebounceMs,
-      };
-    });
-
-    void reorderPatterns
-      .mutateAsync({ updates })
-      .then(() => {
-        toast('Pattern attached to sequence.', { variant: 'success' });
-      })
-      .catch((error: unknown) => {
-        logClientError(error, {
-          context: {
-            source: 'useValidatorSettingsController',
-            action: 'dropToSequence',
-            draggedId,
-            targetId: pattern.id,
-            targetGroupId,
-          },
-        });
-        toast(
-          error instanceof Error ? error.message : 'Failed to attach pattern to sequence.',
-          {
-            variant: 'error',
-          }
-        );
+        return {
+          ...base,
+          sequenceGroupId: targetGroupId,
+          sequenceGroupLabel: targetGroupLabel,
+          sequenceGroupDebounceMs: targetGroupDebounceMs,
+        };
       });
-  }, [
-    orderedPatterns,
-    handleReorder,
-    sequenceGroups,
-    patterns,
-    reorderPatterns.mutateAsync,
-    sequenceScopedPatternIds,
-    toast,
-  ]);
 
-  const summary = useMemo(() => ({
-    total: patterns.length,
-    enabled: patterns.filter(p => p.enabled).length,
-    replacementEnabled: patterns.filter(p => p.replacementEnabled).length,
-  }), [patterns]);
+      void reorderPatterns
+        .mutateAsync({ updates })
+        .then(() => {
+          toast('Pattern attached to sequence.', { variant: 'success' });
+        })
+        .catch((error: unknown) => {
+          logClientError(error, {
+            context: {
+              source: 'useValidatorSettingsController',
+              action: 'dropToSequence',
+              draggedId,
+              targetId: pattern.id,
+              targetGroupId,
+            },
+          });
+          toast(error instanceof Error ? error.message : 'Failed to attach pattern to sequence.', {
+            variant: 'error',
+          });
+        });
+    },
+    [
+      orderedPatterns,
+      handleReorder,
+      sequenceGroups,
+      patterns,
+      reorderPatterns.mutateAsync,
+      sequenceScopedPatternIds,
+      toast,
+    ]
+  );
+
+  const summary = useMemo(
+    () => ({
+      total: patterns.length,
+      enabled: patterns.filter((p) => p.enabled).length,
+      replacementEnabled: patterns.filter((p) => p.replacementEnabled).length,
+    }),
+    [patterns]
+  );
 
   return {
     patterns,
@@ -651,7 +677,9 @@ export function useValidatorSettingsController() {
     orderedPatterns,
     enabledByDefault: settings?.enabledByDefault ?? true,
     formatterEnabledByDefault: settings?.formatterEnabledByDefault ?? false,
-    instanceDenyBehavior: normalizeProductValidationInstanceDenyBehaviorMap(settings?.instanceDenyBehavior ?? {}),
+    instanceDenyBehavior: normalizeProductValidationInstanceDenyBehaviorMap(
+      settings?.instanceDenyBehavior ?? {}
+    ),
     loading: patternsQuery.isLoading || settingsQuery.isLoading,
     isUpdating:
       createPattern.isPending ||
@@ -660,7 +688,8 @@ export function useValidatorSettingsController() {
       reorderPatterns.isPending ||
       updateSettings.isPending,
     settingsBusy: updateSettings.isPending,
-    patternActionsPending: createPattern.isPending || updatePattern.isPending || deletePattern.isPending,
+    patternActionsPending:
+      createPattern.isPending || updatePattern.isPending || deletePattern.isPending,
     reorderPending: reorderPatterns.isPending,
     showModal,
     setShowModal,

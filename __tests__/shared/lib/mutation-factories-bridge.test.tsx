@@ -57,7 +57,10 @@ describe('mutation-factories-v2', () => {
     const invalidateFn = vi.fn();
     const updateHook = renderHook(
       () =>
-        createUpdateMutationV2<{ id: string; data: { name: string } }, { id: string; data: { name: string } }>({
+        createUpdateMutationV2<
+          { id: string; data: { name: string } },
+          { id: string; data: { name: string } }
+        >({
           mutationFn: async (payload: { id: string; data: { name: string } }) => payload,
           meta: {
             source: 'tests.shared.mutation-factories-v2.update',

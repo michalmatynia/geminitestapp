@@ -1,9 +1,6 @@
 'use client';
 
-import {
-  useQueryClient,
-  type UseQueryResult,
-} from '@tanstack/react-query';
+import { useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 import {
   createContext,
   useCallback,
@@ -29,11 +26,7 @@ import {
   useUserPreferences,
 } from '@/features/auth/hooks/useUserPreferences';
 import type { ImageStudioProjectRecord } from '@/shared/contracts/image-studio';
-import type {
-  CreateMutation,
-  DeleteMutation,
-  UpdateMutation,
-} from '@/shared/contracts/ui';
+import type { CreateMutation, DeleteMutation, UpdateMutation } from '@/shared/contracts/ui';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { ApiError } from '@/shared/lib/api-client';
 import {
@@ -45,8 +38,7 @@ import { useToast } from '@/shared/ui';
 import {
   loadImageStudioActiveProjectLocal,
   saveImageStudioActiveProjectLocal,
-} from '../utils/project-session';
-
+} from '@/shared/lib/ai/image-studio/utils/project-session';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -116,11 +108,7 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
 
   // Auto-select active project when available, otherwise fall back to first project.
   useEffect(() => {
-    if (
-      userPreferencesQuery.isLoading ||
-      projectsQuery.isLoading ||
-      projectsQuery.isFetching
-    ) {
+    if (userPreferencesQuery.isLoading || projectsQuery.isLoading || projectsQuery.isFetching) {
       return;
     }
 
@@ -130,9 +118,10 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
     }
     if (projectId && availableProjectIds.includes(projectId)) return;
 
-    const preferred = activeProjectId && availableProjectIds.includes(activeProjectId)
-      ? activeProjectId
-      : availableProjectIds[0] ?? '';
+    const preferred =
+      activeProjectId && availableProjectIds.includes(activeProjectId)
+        ? activeProjectId
+        : (availableProjectIds[0] ?? '');
     if (preferred && preferred !== projectId) {
       setProjectId(preferred);
     }
@@ -147,10 +136,7 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
 
   // Persist the active project to user profile on selection change.
   useEffect(() => {
-    if (
-      projectsQuery.isLoading ||
-      userPreferencesQuery.isLoading
-    ) {
+    if (projectsQuery.isLoading || userPreferencesQuery.isLoading) {
       return;
     }
     const normalizedProjectId = projectId.trim();
@@ -203,85 +189,93 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
 
   const { confirm, ConfirmationModal } = useConfirm();
 
-  const handleDeleteProject = useCallback(async (id: string): Promise<void> => {
-    try {
-      await deleteProjectMutation.mutateAsync(id);
-      if (projectId === id) {
-        setProjectId('');
-      }
-      toast(`Project "${id}" deleted.`, { variant: 'success' });
-    } catch (error) {
-      if (error instanceof ApiError && error.status === 404) {
-        // Treat stale-project deletion as a successful no-op.
+  const handleDeleteProject = useCallback(
+    async (id: string): Promise<void> => {
+      try {
+        await deleteProjectMutation.mutateAsync(id);
         if (projectId === id) {
           setProjectId('');
         }
-        void invalidateImageStudioProjects(queryClient);
-        void invalidateImageStudioSlots(queryClient, id);
-        toast(`Project "${id}" no longer exists.`, { variant: 'info' });
-        return;
+        toast(`Project "${id}" deleted.`, { variant: 'success' });
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 404) {
+          // Treat stale-project deletion as a successful no-op.
+          if (projectId === id) {
+            setProjectId('');
+          }
+          void invalidateImageStudioProjects(queryClient);
+          void invalidateImageStudioSlots(queryClient, id);
+          toast(`Project "${id}" no longer exists.`, { variant: 'info' });
+          return;
+        }
+        toast(error instanceof Error ? error.message : 'Failed to delete project.', {
+          variant: 'error',
+        });
+        throw error;
       }
-      toast(error instanceof Error ? error.message : 'Failed to delete project.', { variant: 'error' });
-      throw error;
-    }
-  }, [deleteProjectMutation, projectId, queryClient, toast]);
+    },
+    [deleteProjectMutation, projectId, queryClient, toast]
+  );
 
-  const handleConfirmDeleteProject = useCallback((id: string, onDeleted?: () => Promise<void>) => {
-    confirm({
-      title: 'Delete Project?',
-      message: `Delete project "${id}" and all connected cards, runs, and assets? This action cannot be undone.`,
-      confirmText: 'Delete Project',
-      isDangerous: true,
-      onConfirm: async () => {
-        await handleDeleteProject(id);
-        if (onDeleted) await onDeleted();
-      },
-    });
-  }, [confirm, handleDeleteProject]);
-
-  const handleRenameProject = useCallback(async (id: string, nextId: string): Promise<string> => {
-    const sourceId = id.trim();
-    const targetId = nextId.trim();
-    if (!sourceId) {
-      throw new Error('Project id is required.');
-    }
-    if (!targetId) {
-      throw new Error('New project id is required.');
-    }
-
-    try {
-      const result = await renameProjectMutation.mutateAsync({
-        projectId: sourceId,
-        nextProjectId: targetId,
+  const handleConfirmDeleteProject = useCallback(
+    (id: string, onDeleted?: () => Promise<void>) => {
+      confirm({
+        title: 'Delete Project?',
+        message: `Delete project "${id}" and all connected cards, runs, and assets? This action cannot be undone.`,
+        confirmText: 'Delete Project',
+        isDangerous: true,
+        onConfirm: async () => {
+          await handleDeleteProject(id);
+          if (onDeleted) await onDeleted();
+        },
       });
-      const resolvedProjectId = result.projectId?.trim() || targetId;
-      if (projectId === sourceId) {
-        setProjectId(resolvedProjectId);
+    },
+    [confirm, handleDeleteProject]
+  );
+
+  const handleRenameProject = useCallback(
+    async (id: string, nextId: string): Promise<string> => {
+      const sourceId = id.trim();
+      const targetId = nextId.trim();
+      if (!sourceId) {
+        throw new Error('Project id is required.');
       }
-      if (result.renamed === false) {
-        toast('Project id is unchanged.', { variant: 'info' });
-      } else {
-        toast(`Project renamed to "${resolvedProjectId}".`, { variant: 'success' });
+      if (!targetId) {
+        throw new Error('New project id is required.');
       }
-      return resolvedProjectId;
-    } catch (error) {
-      toast(error instanceof Error ? error.message : 'Failed to rename project.', { variant: 'error' });
-      throw error;
-    }
-  }, [projectId, renameProjectMutation, toast]);
+
+      try {
+        const result = await renameProjectMutation.mutateAsync({
+          projectId: sourceId,
+          nextProjectId: targetId,
+        });
+        const resolvedProjectId = result.projectId?.trim() || targetId;
+        if (projectId === sourceId) {
+          setProjectId(resolvedProjectId);
+        }
+        if (result.renamed === false) {
+          toast('Project id is unchanged.', { variant: 'info' });
+        } else {
+          toast(`Project renamed to "${resolvedProjectId}".`, { variant: 'success' });
+        }
+        return resolvedProjectId;
+      } catch (error) {
+        toast(error instanceof Error ? error.message : 'Failed to rename project.', {
+          variant: 'error',
+        });
+        throw error;
+      }
+    },
+    [projectId, renameProjectMutation, toast]
+  );
 
   const handleResizeProjectCanvas = useCallback(
-    async (
-      payload: ResizeStudioProjectCanvasPayload
-    ): Promise<ResizeStudioProjectCanvasResult> => {
+    async (payload: ResizeStudioProjectCanvasPayload): Promise<ResizeStudioProjectCanvasResult> => {
       const normalizedProjectId = payload.projectId.trim();
       if (!normalizedProjectId) {
         throw new Error('Project id is required.');
       }
-      if (
-        typeof payload.canvasWidthPx !== 'number' &&
-        typeof payload.canvasHeightPx !== 'number'
-      ) {
+      if (typeof payload.canvasWidthPx !== 'number' && typeof payload.canvasHeightPx !== 'number') {
         throw new Error('Enter at least one canvas dimension.');
       }
 
@@ -316,10 +310,9 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
         }
         return result;
       } catch (error) {
-        toast(
-          error instanceof Error ? error.message : 'Failed to resize canvas.',
-          { variant: 'error' }
-        );
+        toast(error instanceof Error ? error.message : 'Failed to resize canvas.', {
+          variant: 'error',
+        });
         throw error;
       }
     },
@@ -360,9 +353,7 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
 
   return (
     <ProjectsActionsContext.Provider value={actions}>
-      <ProjectsStateContext.Provider value={state}>
-        {children}
-      </ProjectsStateContext.Provider>
+      <ProjectsStateContext.Provider value={state}>{children}</ProjectsStateContext.Provider>
     </ProjectsActionsContext.Provider>
   );
 }

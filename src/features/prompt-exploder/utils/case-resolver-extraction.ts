@@ -9,9 +9,7 @@ import type {
   PromptExploderCaseResolverPartyCandidate,
   PromptExploderCaseResolverPartyRole,
 } from '../bridge';
-import type { 
-  PromptExploderSegment
-} from '../types';
+import type { PromptExploderSegment } from '../types';
 
 // --- Constants & Regex ---
 
@@ -45,15 +43,40 @@ export const COUNTRY_NORMALIZATION_MAP: Record<string, string> = {
 };
 
 export const PERSON_NAME_TOKEN_RE = /^[\p{Lu}][\p{L}'’.-]{1,40}$/u;
-export const PERSON_NAME_STOPWORDS = new Set<string>(['z', 'na', 'w', 'od', 'do', 'i', 'oraz', 'dotyczy']);
-export const BODY_SECTION_HINT_RE = /\b(wniosek|dotyczy|uzasadnienie|niniejszym|art\.|§|ust\.|pkt\.?)\b/iu;
+export const PERSON_NAME_STOPWORDS = new Set<string>([
+  'z',
+  'na',
+  'w',
+  'od',
+  'do',
+  'i',
+  'oraz',
+  'dotyczy',
+]);
+export const BODY_SECTION_HINT_RE =
+  /\b(wniosek|dotyczy|uzasadnienie|niniejszym|art\.|§|ust\.|pkt\.?)\b/iu;
 
 // --- Types ---
 
 export type CaseResolverCaptureRole = PromptExploderCaseResolverPartyRole | 'party' | 'place_date';
 export type CaseResolverCaptureField =
-  | 'kind' | 'displayName' | 'organizationName' | 'companyName' | 'firstName' | 'name' | 'middleName' | 'lastName'
-  | 'street' | 'streetNumber' | 'houseNumber' | 'city' | 'postalCode' | 'country' | 'day' | 'month' | 'year';
+  | 'kind'
+  | 'displayName'
+  | 'organizationName'
+  | 'companyName'
+  | 'firstName'
+  | 'name'
+  | 'middleName'
+  | 'lastName'
+  | 'street'
+  | 'streetNumber'
+  | 'houseNumber'
+  | 'city'
+  | 'postalCode'
+  | 'country'
+  | 'day'
+  | 'month'
+  | 'year';
 
 export type CaseResolverSegmentCaptureRule = {
   id: string;
@@ -68,9 +91,7 @@ export type CaseResolverSegmentCaptureRule = {
   sequence: number;
 };
 
-export type PromptExploderCaseResolverExtractionMode =
-  | 'rules_only'
-  | 'rules_with_heuristics';
+export type PromptExploderCaseResolverExtractionMode = 'rules_only' | 'rules_with_heuristics';
 
 // --- Utilities ---
 
@@ -102,7 +123,7 @@ export const isLikelyPersonNameLine = (line: string): boolean => {
   if (!normalized || normalized.length > 80 || /\d/.test(normalized)) return false;
   const tokens = normalized.split(/\s+/).filter(Boolean);
   if (tokens.length < 2 || tokens.length > 4) return false;
-  return tokens.every(token => PERSON_NAME_TOKEN_RE.test(token));
+  return tokens.every((token) => PERSON_NAME_TOKEN_RE.test(token));
 };
 
 export const splitSegmentLines = (segment: PromptExploderSegment): string[] => {
@@ -141,7 +162,10 @@ const hasPatternPrefix = (segment: PromptExploderSegment, prefix: string): boole
   segment.matchedPatternIds.some((id: string): boolean => id.startsWith(prefix));
 
 const hasAddressLikeLine = (lines: string[]): boolean =>
-  lines.some((line: string): boolean => STREET_NUMBER_RE.test(line) || POSTAL_CITY_RE.test(line) || isCountryLine(line));
+  lines.some(
+    (line: string): boolean =>
+      STREET_NUMBER_RE.test(line) || POSTAL_CITY_RE.test(line) || isCountryLine(line)
+  );
 
 const isLikelyAddresserSegment = (segment: PromptExploderSegment): boolean => {
   const lines = splitSegmentLines(segment);
@@ -195,7 +219,8 @@ const resolvePartySegment = (
     ) ?? null,
   ];
 
-  const resolved = candidates.find((segment): segment is PromptExploderSegment => segment !== null) ?? null;
+  const resolved =
+    candidates.find((segment): segment is PromptExploderSegment => segment !== null) ?? null;
   if (resolved) {
     usedSegmentIds.add(resolved.id);
   }
@@ -211,7 +236,8 @@ const resolvePersonNameParts = (
   middleName?: string;
   lastName?: string;
 } => {
-  const source = lines.find((line: string): boolean => isLikelyPersonNameLine(line)) ?? fallbackLine;
+  const source =
+    lines.find((line: string): boolean => isLikelyPersonNameLine(line)) ?? fallbackLine;
   const normalized = normalizeText(source);
   if (!normalized) {
     return {
@@ -256,8 +282,10 @@ const buildPartyCandidateFromSegment = (
 
   const rawText = (segment.raw || segment.text || '').trim();
   const firstLine = lines[0] ?? '';
-  const likelyPersonNameLine = lines.find((line: string): boolean => isLikelyPersonNameLine(line)) ?? null;
-  const likelyOrganizationLine = lines.find((line: string): boolean => ORGANIZATION_HINT_RE.test(line)) ?? null;
+  const likelyPersonNameLine =
+    lines.find((line: string): boolean => isLikelyPersonNameLine(line)) ?? null;
+  const likelyOrganizationLine =
+    lines.find((line: string): boolean => ORGANIZATION_HINT_RE.test(line)) ?? null;
 
   const inferredKind: 'person' | 'organization' | undefined = (() => {
     if (role === 'addressee' && likelyOrganizationLine) return 'organization';
@@ -316,7 +344,8 @@ const buildPartyCandidateFromSegment = (
     }
   });
 
-  if (!(base.displayName || '').trim() && !(base.rawText || '').trim()) return null;  return base;
+  if (!(base.displayName || '').trim() && !(base.rawText || '').trim()) return null;
+  return base;
 };
 
 const resolvePlaceDateMetadata = (
@@ -398,8 +427,8 @@ const inferSegmentRoleHint = (
   if (likelyAddressee && !likelyAddresser) return 'addressee';
 
   if (hasAddresserPattern && hasAddresseePattern) {
-    const hasOrganizationLine = splitSegmentLines(segment).some(
-      (line: string): boolean => ORGANIZATION_HINT_RE.test(line)
+    const hasOrganizationLine = splitSegmentLines(segment).some((line: string): boolean =>
+      ORGANIZATION_HINT_RE.test(line)
     );
     if (hasOrganizationLine) return 'addressee';
   }
@@ -458,7 +487,8 @@ const setPartyField = (
   };
 
   if (field === 'kind') {
-    const normalized = value === 'organization' ? 'organization' : value === 'person' ? 'person' : null;
+    const normalized =
+      value === 'organization' ? 'organization' : value === 'person' ? 'person' : null;
     if (!normalized) return;
     assign('kind', normalized);
     return;
@@ -569,22 +599,12 @@ const applyCaptureRulesToSegments = (args: {
         if (!normalizedCapture) continue;
 
         if (rule.role === 'place_date') {
-          setMetadataField(
-            draft.metadata,
-            rule.field,
-            normalizedCapture,
-            rule.overwrite,
-            segment
-          );
+          setMetadataField(draft.metadata, rule.field, normalizedCapture, rule.overwrite, segment);
           break;
         }
 
         const targetRoles: PromptExploderCaseResolverPartyRole[] =
-          rule.role === 'party'
-            ? roleHint
-              ? [roleHint]
-              : []
-            : [rule.role];
+          rule.role === 'party' ? (roleHint ? [roleHint] : []) : [rule.role];
         if (targetRoles.length === 0) continue;
 
         targetRoles.forEach((role: PromptExploderCaseResolverPartyRole): void => {
@@ -611,10 +631,11 @@ const toPartyCandidateFromDraft = (
   const nameFromParts = [firstName, middleName, lastName].filter(Boolean).join(' ');
   const displayName = explicitDisplayName || organizationName || nameFromParts;
   const rawText = normalizeRawCaptureText(draft.rawText ?? '');
-  const rawDisplayLine = rawText
-    .split('\n')
-    .map((line: string): string => line.trim())
-    .find((line: string): boolean => line.length > 0) ?? '';
+  const rawDisplayLine =
+    rawText
+      .split('\n')
+      .map((line: string): string => line.trim())
+      .find((line: string): boolean => line.length > 0) ?? '';
   if (!displayName && !rawText) return null;
 
   const candidate: PromptExploderCaseResolverPartyCandidate = {
@@ -716,46 +737,36 @@ export const extractCaseResolverBridgePayloadFromSegments = (
   const ruleMetadata = ruleDraft.metadata.placeDate ? ruleDraft.metadata : null;
   const hasAnyRuleCapture = Boolean(ruleAddresser || ruleAddressee || ruleMetadata);
 
-  const shouldUseHeuristics = (
+  const shouldUseHeuristics =
     mode === 'rules_with_heuristics' ||
-    (mode === 'rules_only' && captureRules.length > 0 && hasAnyRuleCapture)
-  );
+    (mode === 'rules_only' && captureRules.length > 0 && hasAnyRuleCapture);
   const heuristicPayload = shouldUseHeuristics
     ? (() => {
-      const usedSegmentIds = new Set<string>();
-      const addresserSegment = resolvePartySegment(segments, 'addresser', usedSegmentIds);
-      const addresseeSegment = resolvePartySegment(segments, 'addressee', usedSegmentIds);
-      return {
-        addresser: addresserSegment
-          ? buildPartyCandidateFromSegment(addresserSegment, 'addresser')
-          : null,
-        addressee: addresseeSegment
-          ? buildPartyCandidateFromSegment(addresseeSegment, 'addressee')
-          : null,
-        metadata: resolvePlaceDateMetadata(segments),
-      };
-    })()
+        const usedSegmentIds = new Set<string>();
+        const addresserSegment = resolvePartySegment(segments, 'addresser', usedSegmentIds);
+        const addresseeSegment = resolvePartySegment(segments, 'addressee', usedSegmentIds);
+        return {
+          addresser: addresserSegment
+            ? buildPartyCandidateFromSegment(addresserSegment, 'addresser')
+            : null,
+          addressee: addresseeSegment
+            ? buildPartyCandidateFromSegment(addresseeSegment, 'addressee')
+            : null,
+          metadata: resolvePlaceDateMetadata(segments),
+        };
+      })()
     : null;
 
-  const addresser = mergePartyCandidates(
-    ruleAddresser,
-    heuristicPayload?.addresser ?? null
-  );
-  const addressee = mergePartyCandidates(
-    ruleAddressee,
-    heuristicPayload?.addressee ?? null
-  );
-  const metadata = mergeMetadata(
-    ruleMetadata,
-    heuristicPayload?.metadata ?? null
-  );
+  const addresser = mergePartyCandidates(ruleAddresser, heuristicPayload?.addresser ?? null);
+  const addressee = mergePartyCandidates(ruleAddressee, heuristicPayload?.addressee ?? null);
+  const metadata = mergeMetadata(ruleMetadata, heuristicPayload?.metadata ?? null);
 
   const parties: PromptExploderCaseResolverPartyBundle | undefined =
     addresser || addressee
       ? {
-        ...(addresser ? { addresser } : {}),
-        ...(addressee ? { addressee } : {}),
-      }
+          ...(addresser ? { addresser } : {}),
+          ...(addressee ? { addressee } : {}),
+        }
       : undefined;
 
   return {
@@ -886,13 +897,12 @@ export const buildCaseResolverSegmentCaptureRules = (
         if (rule.promptExploderCaptureNormalize === 'year') return 'year';
         return 'trim';
       })();
-      const sequence = typeof rule.sequence === 'number' && Number.isFinite(rule.sequence)
-        ? rule.sequence
-        : 0;
+      const sequence =
+        typeof rule.sequence === 'number' && Number.isFinite(rule.sequence) ? rule.sequence : 0;
       const group =
         typeof rule.promptExploderCaptureGroup === 'number' &&
-          Number.isFinite(rule.promptExploderCaptureGroup) &&
-          rule.promptExploderCaptureGroup > 0
+        Number.isFinite(rule.promptExploderCaptureGroup) &&
+        rule.promptExploderCaptureGroup > 0
           ? Math.round(rule.promptExploderCaptureGroup)
           : 1;
       return {
@@ -908,7 +918,10 @@ export const buildCaseResolverSegmentCaptureRules = (
         sequence,
       };
     })
-    .filter((entry: CaseResolverSegmentCaptureRule | null): entry is CaseResolverSegmentCaptureRule => entry !== null)
+    .filter(
+      (entry: CaseResolverSegmentCaptureRule | null): entry is CaseResolverSegmentCaptureRule =>
+        entry !== null
+    )
     .sort((left: CaseResolverSegmentCaptureRule, right: CaseResolverSegmentCaptureRule): number => {
       if (left.sequence !== right.sequence) return left.sequence - right.sequence;
       return left.id.localeCompare(right.id);

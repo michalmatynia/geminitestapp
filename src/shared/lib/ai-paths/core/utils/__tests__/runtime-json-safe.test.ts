@@ -58,4 +58,3 @@ describe('safeJsonStringify', () => {
     expect(parsed['b']).toEqual({ value: 'kept' });
   });
 });
-

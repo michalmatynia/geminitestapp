@@ -117,7 +117,8 @@ export const PROMPT_EXPLODER_TOOLTIP_CATALOG: PromptExploderTooltipDocEntry[] = 
   {
     id: 'parameter_selector',
     title: 'Parameter Selector',
-    summary: 'Controls how a parameter is rendered and edited (auto, slider, select, json, rgb, etc).',
+    summary:
+      'Controls how a parameter is rendered and edited (auto, slider, select, json, rgb, etc).',
     section: 'Parameter Block',
     aliases: ['selector'],
     docPath: '/docs/PROMPT_EXPLODER_FEATURE_DOCUMENTATION.md',

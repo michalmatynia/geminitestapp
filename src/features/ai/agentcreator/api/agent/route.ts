@@ -20,9 +20,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
   const requestStart = Date.now();
   startAgentQueue();
   if (!('chatbotAgentRun' in prisma)) {
-    throw internalError(
-      'Agent runs not initialized. Run prisma generate/db push.'
-    );
+    throw internalError('Agent runs not initialized. Run prisma generate/db push.');
   }
   const runs = await prisma.chatbotAgentRun.findMany({
     orderBy: { createdAt: 'desc' },
@@ -56,19 +54,20 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
       durationMs: Date.now() - requestStart,
     });
   }
-  return NextResponse.json({ runs }, {
-    headers: {
-      'Cache-Control': 'no-store',
-    },
-  });
+  return NextResponse.json(
+    { runs },
+    {
+      headers: {
+        'Cache-Control': 'no-store',
+      },
+    }
+  );
 }
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();
   if (!('chatbotAgentRun' in prisma)) {
-    throw internalError(
-      'Agent runs not initialized. Run prisma generate/db push.'
-    );
+    throw internalError('Agent runs not initialized. Run prisma generate/db push.');
   }
   let body: {
     prompt?: string;
@@ -121,18 +120,9 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     loopBackoffMaxMs?: number;
   }) => {
     if (!input) return null;
-    const clampInt = (
-      value: unknown,
-      min: number,
-      max: number,
-      fallback: number
-    ) => {
+    const clampInt = (value: unknown, min: number, max: number, fallback: number) => {
       const numeric =
-        typeof value === 'number'
-          ? value
-          : typeof value === 'string'
-            ? Number(value)
-            : NaN;
+        typeof value === 'number' ? value : typeof value === 'string' ? Number(value) : NaN;
       if (!Number.isFinite(numeric)) return fallback;
       return Math.min(Math.max(Math.round(numeric), min), max);
     };
@@ -191,59 +181,52 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       logLines: [`[${new Date().toISOString()}] Run queued.`],
       ...(shouldAttachPlanState
         ? {
-          planState: {
-            ...(planSettings ? { settings: planSettings } : {}),
-            preferences: {
-              ignoreRobotsTxt: Boolean(body.ignoreRobotsTxt),
-              requireHumanApproval: Boolean(body.requireHumanApproval),
-              ...(body.memoryValidationModel?.trim()
-                ? {
-                  memoryValidationModel:
-                        body.memoryValidationModel.trim(),
-                }
-                : {}),
-              ...(body.plannerModel?.trim()
-                ? { plannerModel: body.plannerModel.trim() }
-                : {}),
-              ...(body.selfCheckModel?.trim()
-                ? { selfCheckModel: body.selfCheckModel.trim() }
-                : {}),
-              ...(body.extractionValidationModel?.trim()
-                ? {
-                  extractionValidationModel:
-                        body.extractionValidationModel.trim(),
-                }
-                : {}),
-              ...(body.toolRouterModel?.trim()
-                ? { toolRouterModel: body.toolRouterModel.trim() }
-                : {}),
-              ...(body.loopGuardModel?.trim()
-                ? { loopGuardModel: body.loopGuardModel.trim() }
-                : {}),
-              ...(body.approvalGateModel?.trim()
-                ? { approvalGateModel: body.approvalGateModel.trim() }
-                : {}),
-              ...(body.memorySummarizationModel?.trim()
-                ? {
-                  memorySummarizationModel:
-                        body.memorySummarizationModel.trim(),
-                }
-                : {}),
-              ...(body.selectorInferenceModel?.trim()
-                ? {
-                  selectorInferenceModel:
-                        body.selectorInferenceModel.trim(),
-                }
-                : {}),
-              ...(body.outputNormalizationModel?.trim()
-                ? {
-                  outputNormalizationModel:
-                        body.outputNormalizationModel.trim(),
-                }
-                : {}),
+            planState: {
+              ...(planSettings ? { settings: planSettings } : {}),
+              preferences: {
+                ignoreRobotsTxt: Boolean(body.ignoreRobotsTxt),
+                requireHumanApproval: Boolean(body.requireHumanApproval),
+                ...(body.memoryValidationModel?.trim()
+                  ? {
+                      memoryValidationModel: body.memoryValidationModel.trim(),
+                    }
+                  : {}),
+                ...(body.plannerModel?.trim() ? { plannerModel: body.plannerModel.trim() } : {}),
+                ...(body.selfCheckModel?.trim()
+                  ? { selfCheckModel: body.selfCheckModel.trim() }
+                  : {}),
+                ...(body.extractionValidationModel?.trim()
+                  ? {
+                      extractionValidationModel: body.extractionValidationModel.trim(),
+                    }
+                  : {}),
+                ...(body.toolRouterModel?.trim()
+                  ? { toolRouterModel: body.toolRouterModel.trim() }
+                  : {}),
+                ...(body.loopGuardModel?.trim()
+                  ? { loopGuardModel: body.loopGuardModel.trim() }
+                  : {}),
+                ...(body.approvalGateModel?.trim()
+                  ? { approvalGateModel: body.approvalGateModel.trim() }
+                  : {}),
+                ...(body.memorySummarizationModel?.trim()
+                  ? {
+                      memorySummarizationModel: body.memorySummarizationModel.trim(),
+                    }
+                  : {}),
+                ...(body.selectorInferenceModel?.trim()
+                  ? {
+                      selectorInferenceModel: body.selectorInferenceModel.trim(),
+                    }
+                  : {}),
+                ...(body.outputNormalizationModel?.trim()
+                  ? {
+                      outputNormalizationModel: body.outputNormalizationModel.trim(),
+                    }
+                  : {}),
+              },
             },
-          },
-        }
+          }
         : {}),
     },
   });
@@ -271,9 +254,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();
   if (!('chatbotAgentRun' in prisma)) {
-    throw internalError(
-      'Agent runs not initialized. Run prisma generate/db push.'
-    );
+    throw internalError('Agent runs not initialized. Run prisma generate/db push.');
   }
   const url = new URL(req.url);
   const scope = url.searchParams.get('scope') ?? 'terminal';

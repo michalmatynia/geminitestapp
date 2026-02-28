@@ -15,15 +15,12 @@ const createInitialState = () => ({
   startedAtMs: null,
 });
 
-const dispatchMany = (
-  events: RequestedContextEvent[],
-) => events.reduce(reduceRequestedContextState, createInitialState());
+const dispatchMany = (events: RequestedContextEvent[]) =>
+  events.reduce(reduceRequestedContextState, createInitialState());
 
 describe('Case Resolver runtime requested-context FSM', () => {
   it('moves to loading when requested file appears in query', () => {
-    const nextState = dispatchMany([
-      { type: 'query_changed', requestedFileId: 'case-1' },
-    ]);
+    const nextState = dispatchMany([{ type: 'query_changed', requestedFileId: 'case-1' }]);
     expect(nextState.requestedFileId).toBe('case-1');
     expect(nextState.status).toBe('loading');
     expect(nextState.issue).toBeNull();

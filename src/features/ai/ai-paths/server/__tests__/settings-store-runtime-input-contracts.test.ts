@@ -5,14 +5,13 @@ import {
   upgradeRuntimeInputContractsConfig,
 } from '@/features/ai/ai-paths/server/settings-store-runtime-input-contracts';
 
-const readNode = (
-  parsed: Record<string, unknown>,
-  nodeId: string
-): Record<string, unknown> => {
+const readNode = (parsed: Record<string, unknown>, nodeId: string): Record<string, unknown> => {
   const nodes = Array.isArray(parsed['nodes'])
     ? (parsed['nodes'] as Array<Record<string, unknown>>)
     : [];
-  const node = nodes.find((candidate: Record<string, unknown>): boolean => candidate['id'] === nodeId);
+  const node = nodes.find(
+    (candidate: Record<string, unknown>): boolean => candidate['id'] === nodeId
+  );
   if (!node) throw new Error(`Expected node ${nodeId}`);
   return node;
 };

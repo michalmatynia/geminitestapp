@@ -28,11 +28,7 @@ const normalizePageSlugValues = (slugs: unknown): string[] => {
     .filter((value: string) => value.trim().length > 0);
 };
 
-export function PageSettingsTabContent({
-  allSlugs,
-}: {
-  allSlugs: Slug[];
-}): React.JSX.Element {
+export function PageSettingsTabContent({ allSlugs }: { allSlugs: Slug[] }): React.JSX.Element {
   const { state, dispatch } = usePageBuilder();
   const page = state.currentPage!;
   const { activeDomainId } = useCmsDomainSelection();
@@ -43,7 +39,9 @@ export function PageSettingsTabContent({
   const userPreferences = preferencesQuery.data;
   const updatePreferencesMutation = useUpdateUserPreferences();
   const [userPreviewDraftsEnabled, setUserPreviewDraftsEnabled] = useState<boolean | null>(null);
-  const [userPauseSlideshowOnHoverInEditor, setUserPauseSlideshowOnHoverInEditor] = useState<boolean | null>(null);
+  const [userPauseSlideshowOnHoverInEditor, setUserPauseSlideshowOnHoverInEditor] = useState<
+    boolean | null
+  >(null);
 
   const domainSlugs = useMemo((): Slug[] => slugsQuery.data ?? [], [slugsQuery.data]);
   const allSlugByValue = useMemo((): Map<string, Slug> => {
@@ -59,7 +57,10 @@ export function PageSettingsTabContent({
       .filter((value: string | undefined): value is string => Boolean(value));
   }, [page.slugs, allSlugByValue]);
 
-  const domainSlugIds = useMemo((): Set<string> => new Set(domainSlugs.map((slug: Slug) => slug.id)), [domainSlugs]);
+  const domainSlugIds = useMemo(
+    (): Set<string> => new Set(domainSlugs.map((slug: Slug) => slug.id)),
+    [domainSlugs]
+  );
   const selectedSlugs = useMemo((): Slug[] => {
     const byId = new Map(allSlugs.map((slug: Slug) => [slug.id, slug]));
     return selectedSlugIds
@@ -80,7 +81,10 @@ export function PageSettingsTabContent({
     [domainSlugs]
   );
   const pageHomeSlug = useMemo(
-    (): Slug | null => (currentHomeSlug ? eligibleHomeSlugs.find((slug: Slug) => slug.id === currentHomeSlug.id) ?? null : null),
+    (): Slug | null =>
+      currentHomeSlug
+        ? (eligibleHomeSlugs.find((slug: Slug) => slug.id === currentHomeSlug.id) ?? null)
+        : null,
     [currentHomeSlug, eligibleHomeSlugs]
   );
 
@@ -99,7 +103,8 @@ export function PageSettingsTabContent({
   };
 
   const showMenuValue = page.showMenu !== false;
-  const previewDraftsEnabled = userPreviewDraftsEnabled ?? Boolean(userPreferences?.cmsPreviewEnabled);
+  const previewDraftsEnabled =
+    userPreviewDraftsEnabled ?? Boolean(userPreferences?.cmsPreviewEnabled);
   const pauseSlideshowOnHoverInEditor =
     userPauseSlideshowOnHoverInEditor ?? Boolean(userPreferences?.cmsSlideshowPauseOnHoverInEditor);
 
@@ -256,7 +261,10 @@ export function PageSettingsTabContent({
                 >
                   <span className='text-gray-200'>/{slug.slug}</span>
                   {isHome ? (
-                    <Badge variant='success' className='h-auto border-green-500/40 bg-green-500/10 px-2 py-0.5 text-[10px] text-green-300'>
+                    <Badge
+                      variant='success'
+                      className='h-auto border-green-500/40 bg-green-500/10 px-2 py-0.5 text-[10px] text-green-300'
+                    >
                       Home
                     </Badge>
                   ) : (
@@ -264,7 +272,9 @@ export function PageSettingsTabContent({
                       size='sm'
                       variant='outline'
                       disabled={updateSlug.isPending}
-                      onClick={(): void => { void handleSetHome(slug); }}
+                      onClick={(): void => {
+                        void handleSetHome(slug);
+                      }}
                       className='h-6 px-2 text-[10px]'
                     >
                       Set as home
@@ -294,7 +304,10 @@ export function PageSettingsTabContent({
         </label>
         <label className='flex items-center justify-between rounded border border-border/40 bg-gray-900/40 px-3 py-2 text-xs text-gray-200'>
           <span>Pause slides on hover</span>
-          <Checkbox checked={pauseSlideshowOnHoverInEditor} onCheckedChange={handlePauseSlidesOnHoverChange} />
+          <Checkbox
+            checked={pauseSlideshowOnHoverInEditor}
+            onCheckedChange={handlePauseSlidesOnHoverChange}
+          />
         </label>
       </div>
     </div>

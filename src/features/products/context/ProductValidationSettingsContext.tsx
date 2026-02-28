@@ -1,14 +1,8 @@
 'use client';
 
-import {
-  createContext,
-  useContext,
-  useMemo,
-  type Dispatch,
-  type SetStateAction,
-} from 'react';
+import { createContext, useContext, useMemo, type Dispatch, type SetStateAction } from 'react';
 
-import type { 
+import type {
   ProductValidationPattern,
   ProductValidationDenyBehavior,
   ProductValidationInstanceScope,
@@ -33,8 +27,7 @@ export interface ProductValidationStateValue {
   visibleFieldIssues: Record<string, FieldValidatorIssue[]>;
 }
 
-const ProductValidationStateContext =
-  createContext<ProductValidationStateValue | null>(null);
+const ProductValidationStateContext = createContext<ProductValidationStateValue | null>(null);
 
 export function useProductValidationState(): ProductValidationStateValue {
   const ctx = useContext(ProductValidationStateContext);
@@ -60,8 +53,7 @@ export interface ProductValidationActionsValue {
   acceptIssue: (input: ProductValidationAcceptIssueInput) => Promise<void>;
 }
 
-const ProductValidationActionsContext =
-  createContext<ProductValidationActionsValue | null>(null);
+const ProductValidationActionsContext = createContext<ProductValidationActionsValue | null>(null);
 
 export function useProductValidationActions(): ProductValidationActionsValue {
   const ctx = useContext(ProductValidationActionsContext);
@@ -76,8 +68,7 @@ export function useProductValidationActions(): ProductValidationActionsValue {
 // ── Combined type & backward-compatible hook ─────────────────────────────────
 
 export interface ProductValidationSettingsValue
-  extends ProductValidationStateValue,
-    ProductValidationActionsValue {}
+  extends ProductValidationStateValue, ProductValidationActionsValue {}
 
 /**
  * Combined hook for components that need both state and actions.

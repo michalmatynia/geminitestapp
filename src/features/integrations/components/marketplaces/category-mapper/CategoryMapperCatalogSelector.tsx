@@ -9,23 +9,21 @@ import { Label } from '@/shared/ui';
 import { GenericPickerDropdown } from '@/shared/ui/templates/pickers';
 
 export function CategoryMapperCatalogSelector(): React.JSX.Element {
-  const {
-    selectedCatalogId,
-    setSelectedCatalogId,
-    catalogsLoading,
-    catalogs,
-    internalCategories,
-  } = useCategoryMapper();
+  const { selectedCatalogId, setSelectedCatalogId, catalogsLoading, catalogs, internalCategories } =
+    useCategoryMapper();
 
-  const groups = useMemo<PickerGroup[]>(() => [
-    {
-      label: 'Available Catalogs',
-      options: catalogs.map((catalog: Catalog) => ({
-        key: catalog.id,
-        label: catalog.name,
-      }))
-    }
-  ], [catalogs]);
+  const groups = useMemo<PickerGroup[]>(
+    () => [
+      {
+        label: 'Available Catalogs',
+        options: catalogs.map((catalog: Catalog) => ({
+          key: catalog.id,
+          label: catalog.name,
+        })),
+      },
+    ],
+    [catalogs]
+  );
 
   return (
     <div className='flex items-center gap-4'>
@@ -37,9 +35,9 @@ export function CategoryMapperCatalogSelector(): React.JSX.Element {
           onSelect={(opt: PickerOption) => setSelectedCatalogId(opt.key)}
           triggerContent={
             <span className='text-sm truncate'>
-              {catalogsLoading 
-                ? 'Loading...' 
-                : (catalogs.find(c => c.id === selectedCatalogId)?.name || 'Select catalog')}
+              {catalogsLoading
+                ? 'Loading...'
+                : catalogs.find((c) => c.id === selectedCatalogId)?.name || 'Select catalog'}
             </span>
           }
           searchable={catalogs.length > 5}

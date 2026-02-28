@@ -52,13 +52,24 @@ export function GenerationPreviewModal({
         <div className='flex items-center justify-between w-full'>
           <div className='flex gap-2'>
             {selectedGenerationPreview && (
-              <StatusBadge status='AI Generated' variant='processing' size='sm' className='font-bold' />
+              <StatusBadge
+                status='AI Generated'
+                variant='processing'
+                size='sm'
+                className='font-bold'
+              />
             )}
           </div>
           <FormActions
             onCancel={onClose}
             cancelText='Close Preview'
-            onSave={selectedGenerationPreview ? (): void => { void onApplyLinkedVariantToCard(selectedGenerationPreview); } : undefined}
+            onSave={
+              selectedGenerationPreview
+                ? (): void => {
+                    void onApplyLinkedVariantToCard(selectedGenerationPreview);
+                  }
+                : undefined
+            }
             saveText='Apply to Card'
             isSaving={slotUpdateBusy}
           />
@@ -72,7 +83,7 @@ export function GenerationPreviewModal({
           onImageDimensionsChange={setGenerationModalPreviewNaturalSize}
           className='h-[400px]'
         />
-        
+
         {selectedGenerationPreview && (
           <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
             <MetadataItem
@@ -80,10 +91,7 @@ export function GenerationPreviewModal({
               value={selectedGenerationPreview.output.id}
               mono
             />
-            <MetadataItem
-              label='Dimensions'
-              value={selectedGenerationModalDimensions}
-            />
+            <MetadataItem label='Dimensions' value={selectedGenerationModalDimensions} />
             <MetadataItem
               label='File Size'
               value={formatBytes(selectedGenerationPreview.output.size)}

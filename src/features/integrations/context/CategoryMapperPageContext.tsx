@@ -1,13 +1,6 @@
 'use client';
 
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 import { useIntegrationsWithConnections } from '@/features/integrations/hooks/useIntegrationQueries';
 import type { IntegrationWithConnections } from '@/shared/contracts/integrations';
@@ -15,10 +8,7 @@ import { internalError } from '@/shared/errors/app-error';
 import { useToast } from '@/shared/ui';
 
 const BASE_MARKETPLACE_SLUGS = new Set(['baselinker', 'base', 'base-com']);
-const CATEGORY_MAPPING_MARKETPLACE_SLUGS = new Set([
-  ...BASE_MARKETPLACE_SLUGS,
-  'tradera',
-]);
+const CATEGORY_MAPPING_MARKETPLACE_SLUGS = new Set([...BASE_MARKETPLACE_SLUGS, 'tradera']);
 
 type SelectedMarketplaceConnection = {
   id: string;
@@ -35,7 +25,8 @@ export interface CategoryMapperPageData {
 const DataContext = createContext<CategoryMapperPageData | null>(null);
 export const useCategoryMapperPageData = () => {
   const context = useContext(DataContext);
-  if (!context) throw new Error('useCategoryMapperPageData must be used within CategoryMapperPageProvider');
+  if (!context)
+    throw new Error('useCategoryMapperPageData must be used within CategoryMapperPageProvider');
   return context;
 };
 
@@ -48,7 +39,10 @@ export interface CategoryMapperPageSelection {
 const SelectionContext = createContext<CategoryMapperPageSelection | null>(null);
 export const useCategoryMapperPageSelection = () => {
   const context = useContext(SelectionContext);
-  if (!context) throw new Error('useCategoryMapperPageSelection must be used within CategoryMapperPageProvider');
+  if (!context)
+    throw new Error(
+      'useCategoryMapperPageSelection must be used within CategoryMapperPageProvider'
+    );
   return context;
 };
 
@@ -100,7 +94,9 @@ export function CategoryMapperPageProvider({
   const selectedConnectionId = useMemo((): string | null => {
     if (selectedConnectionIdOverride) {
       const exists = integrations.some((integration: IntegrationWithConnections) =>
-        integration.connections.some((connection: { id: string }) => connection.id === selectedConnectionIdOverride)
+        integration.connections.some(
+          (connection: { id: string }) => connection.id === selectedConnectionIdOverride
+        )
       );
       if (exists) return selectedConnectionIdOverride;
     }
@@ -119,7 +115,10 @@ export function CategoryMapperPageProvider({
         integration,
       }))
     );
-    return allConnections.find((connection: { id: string }) => connection.id === selectedConnectionId) ?? null;
+    return (
+      allConnections.find((connection: { id: string }) => connection.id === selectedConnectionId) ??
+      null
+    );
   }, [integrations, selectedConnectionId]);
 
   const isSupportedConnection = useMemo((): boolean => {
@@ -132,17 +131,23 @@ export function CategoryMapperPageProvider({
     setSelectedConnectionIdOverride(connectionId);
   }, []);
 
-  const dataValue = useMemo<CategoryMapperPageData>(() => ({
-    integrations,
-    loading: integrationsQuery.isLoading,
-  }), [integrations, integrationsQuery.isLoading]);
+  const dataValue = useMemo<CategoryMapperPageData>(
+    () => ({
+      integrations,
+      loading: integrationsQuery.isLoading,
+    }),
+    [integrations, integrationsQuery.isLoading]
+  );
 
-  const selectionValue = useMemo<CategoryMapperPageSelection>(() => ({
-    selectedConnectionId,
-    selectedConnection,
-    isSupportedConnection,
-    setSelectedConnectionId,
-  }), [selectedConnectionId, selectedConnection, isSupportedConnection, setSelectedConnectionId]);
+  const selectionValue = useMemo<CategoryMapperPageSelection>(
+    () => ({
+      selectedConnectionId,
+      selectedConnection,
+      isSupportedConnection,
+      setSelectedConnectionId,
+    }),
+    [selectedConnectionId, selectedConnection, isSupportedConnection, setSelectedConnectionId]
+  );
 
   const aggregatedValue = useMemo<CategoryMapperPageContextType>(
     () => ({

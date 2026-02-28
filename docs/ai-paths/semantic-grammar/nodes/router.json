@@ -4,24 +4,8 @@
   "nodeType": "router",
   "title": "Router",
   "purpose": "Route payloads based on a condition.",
-  "inputs": [
-    "context",
-    "bundle",
-    "prompt",
-    "result",
-    "value",
-    "valid",
-    "errors"
-  ],
-  "outputs": [
-    "context",
-    "bundle",
-    "prompt",
-    "result",
-    "value",
-    "valid",
-    "errors"
-  ],
+  "inputs": ["context", "bundle", "prompt", "result", "value", "valid", "errors"],
+  "outputs": ["context", "bundle", "prompt", "result", "value", "valid", "errors"],
   "configFields": [
     {
       "path": "router.mode",
@@ -59,24 +43,8 @@
       "x": 100,
       "y": 100
     },
-    "inputs": [
-      "context",
-      "bundle",
-      "prompt",
-      "result",
-      "value",
-      "valid",
-      "errors"
-    ],
-    "outputs": [
-      "context",
-      "bundle",
-      "prompt",
-      "result",
-      "value",
-      "valid",
-      "errors"
-    ],
+    "inputs": ["context", "bundle", "prompt", "result", "value", "valid", "errors"],
+    "outputs": ["context", "bundle", "prompt", "result", "value", "valid", "errors"],
     "data": {},
     "connections": {
       "incoming": [],

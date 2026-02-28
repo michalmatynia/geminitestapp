@@ -52,7 +52,7 @@ describe('query-invalidation helpers', () => {
     it('invalidateCatalogScopedData should invalidate all catalog scoped keys', () => {
       const catalogId = 'cat-123';
       void helpers.invalidateCatalogScopedData(queryClient, catalogId);
-      
+
       expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
         queryKey: QUERY_KEYS.products.metadata.categories(catalogId),
       });
@@ -117,7 +117,7 @@ describe('query-invalidation helpers', () => {
     it('invalidateIntegrationConnections should invalidate connections list and specific integration if provided', () => {
       const integrationId = 'int-123';
       void helpers.invalidateIntegrationConnections(queryClient, integrationId);
-      
+
       expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
         queryKey: QUERY_KEYS.integrations.connections(),
       });
@@ -153,7 +153,9 @@ describe('query-invalidation helpers', () => {
         createRun({ id: 'run-new', status: 'queued' })
       );
 
-      const data = queryClient.getQueryData<{ runs: Array<{ id: string }>; total: number }>(queryKey);
+      const data = queryClient.getQueryData<{ runs: Array<{ id: string }>; total: number }>(
+        queryKey
+      );
       expect(data?.total).toBe(2);
       expect(data?.runs[0]?.id).toBe('run-new');
       expect(data?.runs[1]?.id).toBe('run-existing');
@@ -175,7 +177,9 @@ describe('query-invalidation helpers', () => {
         createRun({ id: 'run-new', status: 'queued' })
       );
 
-      const data = queryClient.getQueryData<{ runs: Array<{ id: string }>; total: number }>(queryKey);
+      const data = queryClient.getQueryData<{ runs: Array<{ id: string }>; total: number }>(
+        queryKey
+      );
       expect(data?.total).toBe(1);
       expect(data?.runs).toHaveLength(1);
       expect(data?.runs[0]?.id).toBe('run-completed');

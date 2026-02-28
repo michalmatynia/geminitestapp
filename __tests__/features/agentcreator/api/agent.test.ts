@@ -26,7 +26,7 @@ describe('Agent API', () => {
       body: JSON.stringify({}),
       headers: {
         'x-csrf-token': 'test-token',
-        'Cookie': '__Host-next-auth.csrf-token=test-token',
+        Cookie: '__Host-next-auth.csrf-token=test-token',
         'Content-Type': 'application/json',
       },
     });

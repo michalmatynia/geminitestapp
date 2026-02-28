@@ -18,12 +18,7 @@
     "entityType",
     "productId"
   ],
-  "outputs": [
-    "result",
-    "sources",
-    "status",
-    "bundle"
-  ],
+  "outputs": ["result", "sources", "status", "bundle"],
   "configFields": [
     {
       "path": "learnerAgent.agentId",
@@ -82,12 +77,7 @@
       "entityType",
       "productId"
     ],
-    "outputs": [
-      "result",
-      "sources",
-      "status",
-      "bundle"
-    ],
+    "outputs": ["result", "sources", "status", "bundle"],
     "config": {
       "learnerAgent": {
         "agentId": "",

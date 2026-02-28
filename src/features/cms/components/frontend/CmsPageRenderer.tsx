@@ -1,5 +1,8 @@
 import { EventEffectsWrapper } from '@/features/cms/components/shared/EventEffectsWrapper';
-import { isCmsSectionHidden, normalizePageZone } from '@/features/cms/utils/page-builder-normalization';
+import {
+  isCmsSectionHidden,
+  normalizePageZone,
+} from '@/features/cms/utils/page-builder-normalization';
 import type { GsapAnimationConfig } from '@/shared/lib/gsap';
 import type { CssAnimationConfig } from '@/shared/contracts/cms';
 import type { PageComponent, BlockInstance, PageZone } from '@/shared/contracts/cms';
@@ -29,8 +32,6 @@ import { FrontendVideoSection } from './sections/FrontendVideoSection';
 import { SectionBlockProvider } from './sections/SectionBlockContext';
 import { getHoverEffectVars } from './theme-styles';
 
-
-
 interface SectionContent {
   zone?: PageZone;
   settings?: Record<string, unknown>;
@@ -59,18 +60,29 @@ export function CmsPageRenderer({
   mediaStyles,
 }: CmsPageRendererProps): React.ReactNode {
   const hoverVars = getHoverEffectVars(hoverEffect, hoverScale);
-  
-  const sections = components.map((comp: PageComponent, idx: number) => {
-    const content = (comp.content ?? {}) as SectionContent;
-    return {
-      key: `section-${idx}`,
-      id: `section-${idx}`,
-      type: comp.type,
-      zone: normalizePageZone(content.zone),
-      settings: content.settings ?? {},
-      blocks: content.blocks ?? [],
-    };
-  }).filter((section: { key: string; id: string; type: string; zone: PageZone; settings: Record<string, unknown>; blocks: BlockInstance[] }) => !isCmsSectionHidden(section.settings['isHidden']));
+
+  const sections = components
+    .map((comp: PageComponent, idx: number) => {
+      const content = (comp.content ?? {}) as SectionContent;
+      return {
+        key: `section-${idx}`,
+        id: `section-${idx}`,
+        type: comp.type,
+        zone: normalizePageZone(content.zone),
+        settings: content.settings ?? {},
+        blocks: content.blocks ?? [],
+      };
+    })
+    .filter(
+      (section: {
+        key: string;
+        id: string;
+        type: string;
+        zone: PageZone;
+        settings: Record<string, unknown>;
+        blocks: BlockInstance[];
+      }) => !isCmsSectionHidden(section.settings['isHidden'])
+    );
 
   const sectionsByZone: Record<PageZone, typeof sections> = {
     header: [],
@@ -87,11 +99,13 @@ export function CmsPageRenderer({
       <CmsPageProvider colorSchemes={colorSchemes ?? {}} layout={layout ?? {}}>
         <div className='cms-page cms-hover-scope' style={{ ...hoverVars, ...(mediaVars ?? {}) }}>
           {ZONE_ORDER.map((zone: PageZone) =>
-            sectionsByZone[zone].map((section: typeof sections[number]) => {
+            sectionsByZone[zone].map((section: (typeof sections)[number]) => {
               return (
                 <GsapAnimationWrapper
                   key={section.key}
-                  config={section.settings['gsapAnimation'] as Partial<GsapAnimationConfig> | undefined}
+                  config={
+                    section.settings['gsapAnimation'] as Partial<GsapAnimationConfig> | undefined
+                  }
                 >
                   <CssAnimationWrapper
                     config={section.settings['cssAnimation'] as CssAnimationConfig | undefined}
@@ -122,7 +136,12 @@ interface SectionRendererProps {
   blocks: BlockInstance[];
 }
 
-export function SectionRenderer({ type, sectionId, settings, blocks }: SectionRendererProps): React.ReactNode {
+export function SectionRenderer({
+  type,
+  sectionId,
+  settings,
+  blocks,
+}: SectionRendererProps): React.ReactNode {
   return (
     <SectionBlockProvider sectionId={sectionId} settings={settings} blocks={blocks}>
       <SectionRendererInner type={type} />

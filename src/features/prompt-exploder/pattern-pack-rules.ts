@@ -112,7 +112,8 @@ const createRegexRule = (rule: {
   passOutputToNext: true,
   appliesToScopes: rule.appliesToScopes ?? [...PROMPT_EXPLODER_SCOPE],
   launchEnabled: false,
-  launchAppliesToScopes: rule.launchAppliesToScopes ?? rule.appliesToScopes ?? [...PROMPT_EXPLODER_SCOPE],
+  launchAppliesToScopes: rule.launchAppliesToScopes ??
+    rule.appliesToScopes ?? [...PROMPT_EXPLODER_SCOPE],
   launchScopeBehavior: 'gate',
   launchOperator: 'contains',
   launchValue: null,
@@ -138,14 +139,10 @@ const CASE_RESOLVER_ORGANIZATION_KEYWORD_PATTERN =
   'komisariat|komenda|policj\\p{L}*|prokuratur\\p{L}*|rzecznik|inspektorat|urz\\p{L}*|s[ąa]d\\p{L}*|minister\\p{L}*|zak[łl]ad\\p{L}*|oddzia\\p{L}*|fundacj\\p{L}*|stowarzysz\\p{L}*|sp\\.?\\s*z\\s*o\\.?\\s*o\\.?|s\\.?a\\.?|llc|ltd|inc|corp|office|depart\\p{L}*|agency|authority|institut\\p{L}*|universit\\p{L}*|bank|court|police|bureau|commission|ministry';
 const CASE_RESOLVER_PERSON_HEADING_STOPWORDS_PATTERN =
   'z|ze|na|w|we|do|od|dotyczy|wniosek|uzasadnienie|niniejszym|sincerely|regards|organ|inspektorat|komisariat|komenda|policj\\p{L}*|prokuratur\\p{L}*|rzecznik|urz\\p{L}*|s[ąa]d\\p{L}*|minister\\p{L}*|zak[łl]ad\\p{L}*|oddzia\\p{L}*|fundacj\\p{L}*|stowarzysz\\p{L}*|bank|court|police|bureau|ministry|office|agency|authority';
-const CASE_RESOLVER_PERSON_NAME_LINE_PATTERN =
-  `^\\s*(?!(?:${CASE_RESOLVER_PERSON_HEADING_STOPWORDS_PATTERN})\\b)([\\p{Lu}][\\p{L}'’.-]{1,40}(?:\\s+[\\p{Lu}][\\p{L}'’.-]{1,40}){1,3})\\s*$`;
-const CASE_RESOLVER_PERSON_NAME_CAPTURE_PATTERN =
-  `^\\s*(?!(?:${CASE_RESOLVER_PERSON_HEADING_STOPWORDS_PATTERN})\\b)([\\p{Lu}][\\p{L}'’.-]+)(?:\\s+([\\p{Lu}][\\p{L}'’.-]+(?:\\s+[\\p{Lu}][\\p{L}'’.-]+){0,2}))?\\s+([\\p{Lu}][\\p{L}'’.-]+)\\s*$`;
-const CASE_RESOLVER_ORGANIZATION_LINE_PATTERN =
-  `^\\s*(?!.*\\b(?:${CASE_RESOLVER_BODY_SENTENCE_NEGATIVE_LOOKAHEAD})\\b)(?=.*\\b(?:${CASE_RESOLVER_ORGANIZATION_KEYWORD_PATTERN})\\b)[\\p{L}0-9][\\p{L}0-9&.,'’"\\-\\p{Pd}\\/()\\s]{2,120}\\s*$`;
-const CASE_RESOLVER_ORGANIZATION_LINE_CAPTURE_PATTERN =
-  `^\\s*((?!.*\\b(?:${CASE_RESOLVER_BODY_SENTENCE_NEGATIVE_LOOKAHEAD})\\b)(?=.*\\b(?:${CASE_RESOLVER_ORGANIZATION_KEYWORD_PATTERN})\\b)[\\p{L}0-9][\\p{L}0-9&.,'’"\\-\\p{Pd}\\/()\\s]{2,120})\\s*$`;
+const CASE_RESOLVER_PERSON_NAME_LINE_PATTERN = `^\\s*(?!(?:${CASE_RESOLVER_PERSON_HEADING_STOPWORDS_PATTERN})\\b)([\\p{Lu}][\\p{L}'’.-]{1,40}(?:\\s+[\\p{Lu}][\\p{L}'’.-]{1,40}){1,3})\\s*$`;
+const CASE_RESOLVER_PERSON_NAME_CAPTURE_PATTERN = `^\\s*(?!(?:${CASE_RESOLVER_PERSON_HEADING_STOPWORDS_PATTERN})\\b)([\\p{Lu}][\\p{L}'’.-]+)(?:\\s+([\\p{Lu}][\\p{L}'’.-]+(?:\\s+[\\p{Lu}][\\p{L}'’.-]+){0,2}))?\\s+([\\p{Lu}][\\p{L}'’.-]+)\\s*$`;
+const CASE_RESOLVER_ORGANIZATION_LINE_PATTERN = `^\\s*(?!.*\\b(?:${CASE_RESOLVER_BODY_SENTENCE_NEGATIVE_LOOKAHEAD})\\b)(?=.*\\b(?:${CASE_RESOLVER_ORGANIZATION_KEYWORD_PATTERN})\\b)[\\p{L}0-9][\\p{L}0-9&.,'’"\\-\\p{Pd}\\/()\\s]{2,120}\\s*$`;
+const CASE_RESOLVER_ORGANIZATION_LINE_CAPTURE_PATTERN = `^\\s*((?!.*\\b(?:${CASE_RESOLVER_BODY_SENTENCE_NEGATIVE_LOOKAHEAD})\\b)(?=.*\\b(?:${CASE_RESOLVER_ORGANIZATION_KEYWORD_PATTERN})\\b)[\\p{L}0-9][\\p{L}0-9&.,'’"\\-\\p{Pd}\\/()\\s]{2,120})\\s*$`;
 
 export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
   createRegexRule({
@@ -217,8 +214,7 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
   createRegexRule({
     id: 'segment.heading.numeric_section',
     title: 'Numeric Section Heading',
-    description:
-      'Detects numbered section headings like "1. Preserve the Product Exactly".',
+    description: 'Detects numbered section headings like "1. Preserve the Product Exactly".',
     pattern: '^\\s*\\d+\\.\\s+[A-Z][^\\n.:]{4,}$',
     flags: 'm',
     message: 'Numeric section heading detected.',
@@ -279,8 +275,7 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
   createRegexRule({
     id: 'segment.subsection.reference_plain',
     title: 'Subsection: Plain Reference Header',
-    description:
-      'Detects RL/P/QA subsection headers without bracket labels.',
+    description: 'Detects RL/P/QA subsection headers without bracket labels.',
     pattern: '^\\s*(RL\\d+|P\\d+|QA(?:_R)?\\d+)\\b\\s*[—:-]?\\s*(.*)$',
     flags: 'mi',
     message: 'Plain reference subsection heading detected.',
@@ -295,8 +290,7 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
   createRegexRule({
     id: 'segment.subsection.qa_code',
     title: 'Subsection: QA Code Header',
-    description:
-      'Detects QA/QA_R subsection rows for QA matrix parsing.',
+    description: 'Detects QA/QA_R subsection rows for QA matrix parsing.',
     pattern: '^\\s*(QA(?:_R)?\\d+)\\b\\s*[—:-]?\\s*(.*)$',
     flags: 'mi',
     message: 'QA subsection heading detected.',
@@ -327,8 +321,7 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
   createRegexRule({
     id: 'segment.boundary.studio_relighting',
     title: 'Boundary: Studio Relighting',
-    description:
-      'Defines headings that start the studio relighting extension section.',
+    description: 'Defines headings that start the studio relighting extension section.',
     pattern: '^(\\s*===\\s*STUDIO\\s+RELIGHTING|\\s*STUDIO\\s+RELIGHTING\\b)',
     flags: 'mi',
     message: 'Studio relighting boundary heading detected.',
@@ -343,8 +336,7 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
   createRegexRule({
     id: 'segment.boundary.pipeline',
     title: 'Boundary: Pipeline',
-    description:
-      'Defines headings that should be parsed as hierarchical process lists.',
+    description: 'Defines headings that should be parsed as hierarchical process lists.',
     pattern: '^\\s*(PIPELINE|WORKFLOW|PROCESS|EXECUTION\\s+TEMPLATE)\\b',
     flags: 'mi',
     message: 'Pipeline boundary heading detected.',
@@ -359,8 +351,7 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
   createRegexRule({
     id: 'segment.boundary.final_qa',
     title: 'Boundary: Final QA',
-    description:
-      'Defines headings that should open QA matrix parsing.',
+    description: 'Defines headings that should open QA matrix parsing.',
     pattern: '^\\s*FINAL\\s+QA\\b',
     flags: 'mi',
     message: 'Final QA boundary heading detected.',
@@ -378,7 +369,7 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
     description:
       'Detects a location-and-date heading line used in legal letters (for example: "Szczecin 25.01.2026").',
     pattern:
-      '^\\s*[\\p{L}][\\p{L}\\s\\-.\'’]{1,60}?(?:,)?(?:\\s+dnia)?\\s+(?:\\d{1,2}[./-]\\d{1,2}[./-]\\d{2,4}|\\[(?:\\d{1,2}|DD)[./-](?:\\d{1,2}|MM)[./-](?:\\d{2,4}|YYYY|RRRR)\\])(?:\\s*r\\.?\\s*)?$',
+      "^\\s*[\\p{L}][\\p{L}\\s\\-.'’]{1,60}?(?:,)?(?:\\s+dnia)?\\s+(?:\\d{1,2}[./-]\\d{1,2}[./-]\\d{2,4}|\\[(?:\\d{1,2}|DD)[./-](?:\\d{1,2}|MM)[./-](?:\\d{2,4}|YYYY|RRRR)\\])(?:\\s*r\\.?\\s*)?$",
     flags: 'imu',
     message: 'Place and date heading detected.',
     sequence: 35,
@@ -410,8 +401,7 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
   createRegexRule({
     id: 'segment.case_resolver.heading.addressee_organization',
     title: 'Case Resolver Heading: Addressee Organization',
-    description:
-      'Detects organization addressee heading lines in correspondence blocks.',
+    description: 'Detects organization addressee heading lines in correspondence blocks.',
     pattern: CASE_RESOLVER_ORGANIZATION_LINE_PATTERN,
     flags: 'imu',
     message: 'Addressee organization heading detected.',
@@ -445,8 +435,7 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
   createRegexRule({
     id: 'segment.case_resolver.heading.subject_or_section',
     title: 'Case Resolver Heading: Subject/Section',
-    description:
-      'Detects common subject and section headings in legal document bodies.',
+    description: 'Detects common subject and section headings in legal document bodies.',
     pattern:
       '^\\s*(wniosek\\b|rezygnacja\\b|dotyczy\\b|uzasadnienie\\b|na\\s+zakończenie\\b|z\\s+poważaniem\\b|subject\\b|re:\\b|sincerely\\b|regards\\b).*$',
     flags: 'imu',
@@ -463,10 +452,8 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
   createRegexRule({
     id: 'segment.case_resolver.heading.dotyczy',
     title: 'Case Resolver Heading: Dotyczy Subheading',
-    description:
-      'Detects Dotyczy subheadings so they can be isolated as standalone segments.',
-    pattern:
-      '^\\s*dotyczy\\b.*$',
+    description: 'Detects Dotyczy subheadings so they can be isolated as standalone segments.',
+    pattern: '^\\s*dotyczy\\b.*$',
     flags: 'imu',
     message: 'Case Resolver Dotyczy subheading detected.',
     sequence: 38,
@@ -517,10 +504,9 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
   createRegexRule({
     id: 'segment.case_resolver.extract.place_date.city',
     title: 'Case Resolver Extract: Place Date City',
-    description:
-      'Extracts city/place from a place+date line (for example: "Szczecin 25.01.2026").',
+    description: 'Extracts city/place from a place+date line (for example: "Szczecin 25.01.2026").',
     pattern:
-      '^\\s*([\\p{L}][\\p{L}\\s\\-.\'’]{1,60}?)(?:,)?\\s+(\\d{1,2})[./-](\\d{1,2})[./-](\\d{2,4})(?:\\s*r\\.?\\s*)?$',
+      "^\\s*([\\p{L}][\\p{L}\\s\\-.'’]{1,60}?)(?:,)?\\s+(\\d{1,2})[./-](\\d{1,2})[./-](\\d{2,4})(?:\\s*r\\.?\\s*)?$",
     flags: 'imu',
     message: 'Case Resolver place/date city captured.',
     sequence: 38,
@@ -539,10 +525,9 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
   createRegexRule({
     id: 'segment.case_resolver.extract.place_date.day',
     title: 'Case Resolver Extract: Place Date Day',
-    description:
-      'Extracts day value from a place+date line.',
+    description: 'Extracts day value from a place+date line.',
     pattern:
-      '^\\s*([\\p{L}][\\p{L}\\s\\-.\'’]{1,60}?)(?:,)?\\s+(\\d{1,2})[./-](\\d{1,2})[./-](\\d{2,4})(?:\\s*r\\.?\\s*)?$',
+      "^\\s*([\\p{L}][\\p{L}\\s\\-.'’]{1,60}?)(?:,)?\\s+(\\d{1,2})[./-](\\d{1,2})[./-](\\d{2,4})(?:\\s*r\\.?\\s*)?$",
     flags: 'imu',
     message: 'Case Resolver place/date day captured.',
     sequence: 39,
@@ -561,10 +546,9 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
   createRegexRule({
     id: 'segment.case_resolver.extract.place_date.month',
     title: 'Case Resolver Extract: Place Date Month',
-    description:
-      'Extracts month value from a place+date line.',
+    description: 'Extracts month value from a place+date line.',
     pattern:
-      '^\\s*([\\p{L}][\\p{L}\\s\\-.\'’]{1,60}?)(?:,)?\\s+(\\d{1,2})[./-](\\d{1,2})[./-](\\d{2,4})(?:\\s*r\\.?\\s*)?$',
+      "^\\s*([\\p{L}][\\p{L}\\s\\-.'’]{1,60}?)(?:,)?\\s+(\\d{1,2})[./-](\\d{1,2})[./-](\\d{2,4})(?:\\s*r\\.?\\s*)?$",
     flags: 'imu',
     message: 'Case Resolver place/date month captured.',
     sequence: 40,
@@ -583,10 +567,9 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
   createRegexRule({
     id: 'segment.case_resolver.extract.place_date.year',
     title: 'Case Resolver Extract: Place Date Year',
-    description:
-      'Extracts year value from a place+date line.',
+    description: 'Extracts year value from a place+date line.',
     pattern:
-      '^\\s*([\\p{L}][\\p{L}\\s\\-.\'’]{1,60}?)(?:,)?\\s+(\\d{1,2})[./-](\\d{1,2})[./-](\\d{2,4})(?:\\s*r\\.?\\s*)?$',
+      "^\\s*([\\p{L}][\\p{L}\\s\\-.'’]{1,60}?)(?:,)?\\s+(\\d{1,2})[./-](\\d{1,2})[./-](\\d{2,4})(?:\\s*r\\.?\\s*)?$",
     flags: 'imu',
     message: 'Case Resolver place/date year captured.',
     sequence: 41,
@@ -605,8 +588,7 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
   createRegexRule({
     id: 'segment.case_resolver.extract.addresser.first_name',
     title: 'Case Resolver Extract: Addresser First Name',
-    description:
-      'Extracts addresser first name from a capitalized person name line.',
+    description: 'Extracts addresser first name from a capitalized person name line.',
     pattern: CASE_RESOLVER_PERSON_NAME_CAPTURE_PATTERN,
     flags: 'imu',
     message: 'Case Resolver addresser first name captured.',
@@ -626,8 +608,7 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
   createRegexRule({
     id: 'segment.case_resolver.extract.addresser.middle_name',
     title: 'Case Resolver Extract: Addresser Middle Name',
-    description:
-      'Extracts addresser middle name from a capitalized person name line when present.',
+    description: 'Extracts addresser middle name from a capitalized person name line when present.',
     pattern: CASE_RESOLVER_PERSON_NAME_CAPTURE_PATTERN,
     flags: 'imu',
     message: 'Case Resolver addresser middle name captured.',
@@ -647,8 +628,7 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
   createRegexRule({
     id: 'segment.case_resolver.extract.addresser.last_name',
     title: 'Case Resolver Extract: Addresser Last Name',
-    description:
-      'Extracts addresser last name from a capitalized person name line.',
+    description: 'Extracts addresser last name from a capitalized person name line.',
     pattern: CASE_RESOLVER_PERSON_NAME_CAPTURE_PATTERN,
     flags: 'imu',
     message: 'Case Resolver addresser last name captured.',
@@ -668,8 +648,7 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
   createRegexRule({
     id: 'segment.case_resolver.extract.addresser.organization_name',
     title: 'Case Resolver Extract: Addresser Organization Name',
-    description:
-      'Extracts addresser organization/company name when sender is an institution.',
+    description: 'Extracts addresser organization/company name when sender is an institution.',
     pattern: CASE_RESOLVER_ORGANIZATION_LINE_CAPTURE_PATTERN,
     flags: 'imu',
     message: 'Case Resolver addresser organization captured.',
@@ -689,10 +668,9 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
   createRegexRule({
     id: 'segment.case_resolver.extract.address.street',
     title: 'Case Resolver Extract: Address Street',
-    description:
-      'Extracts street, street number, and house number from address lines.',
+    description: 'Extracts street, street number, and house number from address lines.',
     pattern:
-      '^\\s*(?:(?:ul\\.?|al\\.?|os\\.?|pl\\.?|aleja)\\s+)?([\\p{L}][\\p{L}\\s\'’.-]+?)\\s+(\\d+[A-Za-z]?)(?:\\s*\\/\\s*([0-9A-Za-z-]+))?\\s*$',
+      "^\\s*(?:(?:ul\\.?|al\\.?|os\\.?|pl\\.?|aleja)\\s+)?([\\p{L}][\\p{L}\\s'’.-]+?)\\s+(\\d+[A-Za-z]?)(?:\\s*\\/\\s*([0-9A-Za-z-]+))?\\s*$",
     flags: 'imu',
     message: 'Case Resolver address street captured.',
     sequence: 45,
@@ -711,10 +689,9 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
   createRegexRule({
     id: 'segment.case_resolver.extract.address.street_number',
     title: 'Case Resolver Extract: Address Street Number',
-    description:
-      'Extracts street number from address lines.',
+    description: 'Extracts street number from address lines.',
     pattern:
-      '^\\s*(?:(?:ul\\.?|al\\.?|os\\.?|pl\\.?|aleja)\\s+)?([\\p{L}][\\p{L}\\s\'’.-]+?)\\s+(\\d+[A-Za-z]?)(?:\\s*\\/\\s*([0-9A-Za-z-]+))?\\s*$',
+      "^\\s*(?:(?:ul\\.?|al\\.?|os\\.?|pl\\.?|aleja)\\s+)?([\\p{L}][\\p{L}\\s'’.-]+?)\\s+(\\d+[A-Za-z]?)(?:\\s*\\/\\s*([0-9A-Za-z-]+))?\\s*$",
     flags: 'imu',
     message: 'Case Resolver address street number captured.',
     sequence: 46,
@@ -733,10 +710,9 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
   createRegexRule({
     id: 'segment.case_resolver.extract.address.house_number',
     title: 'Case Resolver Extract: Address House Number',
-    description:
-      'Extracts house/unit number from address lines.',
+    description: 'Extracts house/unit number from address lines.',
     pattern:
-      '^\\s*(?:(?:ul\\.?|al\\.?|os\\.?|pl\\.?|aleja)\\s+)?([\\p{L}][\\p{L}\\s\'’.-]+?)\\s+(\\d+[A-Za-z]?)(?:\\s*\\/\\s*([0-9A-Za-z-]+))?\\s*$',
+      "^\\s*(?:(?:ul\\.?|al\\.?|os\\.?|pl\\.?|aleja)\\s+)?([\\p{L}][\\p{L}\\s'’.-]+?)\\s+(\\d+[A-Za-z]?)(?:\\s*\\/\\s*([0-9A-Za-z-]+))?\\s*$",
     flags: 'imu',
     message: 'Case Resolver address house number captured.',
     sequence: 47,
@@ -755,10 +731,8 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
   createRegexRule({
     id: 'segment.case_resolver.extract.address.postal_code',
     title: 'Case Resolver Extract: Address Postal Code',
-    description:
-      'Extracts postal code from postal-code and city lines.',
-    pattern:
-      '^\\s*(?:PL-)?(\\d{2}-\\d{3})\\s+([\\p{L}][\\p{L}\\s\'’.-]+)\\s*$',
+    description: 'Extracts postal code from postal-code and city lines.',
+    pattern: "^\\s*(?:PL-)?(\\d{2}-\\d{3})\\s+([\\p{L}][\\p{L}\\s'’.-]+)\\s*$",
     flags: 'imu',
     message: 'Case Resolver address postal code captured.',
     sequence: 48,
@@ -777,10 +751,8 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
   createRegexRule({
     id: 'segment.case_resolver.extract.address.city',
     title: 'Case Resolver Extract: Address City',
-    description:
-      'Extracts city from postal-code and city lines.',
-    pattern:
-      '^\\s*(?:PL-)?(\\d{2}-\\d{3})\\s+([\\p{L}][\\p{L}\\s\'’.-]+)\\s*$',
+    description: 'Extracts city from postal-code and city lines.',
+    pattern: "^\\s*(?:PL-)?(\\d{2}-\\d{3})\\s+([\\p{L}][\\p{L}\\s'’.-]+)\\s*$",
     flags: 'imu',
     message: 'Case Resolver address city captured.',
     sequence: 49,
@@ -799,8 +771,7 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
   createRegexRule({
     id: 'segment.case_resolver.extract.address.country',
     title: 'Case Resolver Extract: Address Country',
-    description:
-      'Extracts country from standalone country lines (Polish and English names).',
+    description: 'Extracts country from standalone country lines (Polish and English names).',
     pattern:
       '^\\s*(polska|poland|niemcy|germany|deutschland|francja|france|hiszpania|spain|włochy|wlochy|italy|uk|united\\s+kingdom|wielka\\s+brytania|usa|u\\.s\\.a\\.|stany\\s+zjednoczone)\\s*$',
     flags: 'imu',
@@ -821,8 +792,7 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
   createRegexRule({
     id: 'segment.case_resolver.extract.addressee.organization_name',
     title: 'Case Resolver Extract: Addressee Organization Name',
-    description:
-      'Extracts addressee organization/company name.',
+    description: 'Extracts addressee organization/company name.',
     pattern: CASE_RESOLVER_ORGANIZATION_LINE_CAPTURE_PATTERN,
     flags: 'imu',
     message: 'Case Resolver addressee organization captured.',
@@ -857,7 +827,8 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
     id: 'segment.params.global_settings',
     title: 'Global Settings Block',
     description: 'Detects GLOBAL_SETTINGS blocks and key-value setting lists.',
-    pattern: '(\\[GLOBAL_SETTINGS\\]|GLOBAL[_\\s]SETTINGS)\\b[\\s\\S]{0,220}(\\[[A-Z_]+\\]\\s*=\\s*`?|\\[DRY_RUN\\]\\s*=)',
+    pattern:
+      '(\\[GLOBAL_SETTINGS\\]|GLOBAL[_\\s]SETTINGS)\\b[\\s\\S]{0,220}(\\[[A-Z_]+\\]\\s*=\\s*`?|\\[DRY_RUN\\]\\s*=)',
     flags: 'mi',
     message: 'Global settings block detected.',
     sequence: 34,

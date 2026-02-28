@@ -2,10 +2,7 @@
 
 import React from 'react';
 
-export const readDocsTooltipsEnabled = (
-  storageKey: string,
-  defaultValue = false
-): boolean => {
+export const readDocsTooltipsEnabled = (storageKey: string, defaultValue = false): boolean => {
   if (typeof window === 'undefined') return defaultValue;
   try {
     const raw = window.localStorage.getItem(storageKey);

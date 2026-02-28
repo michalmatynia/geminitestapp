@@ -2,7 +2,6 @@
 
 import React from 'react';
 
-
 import type { IteratorConfig } from '@/shared/lib/ai-paths';
 import { formatRuntimeValue } from '@/shared/lib/ai-paths';
 import { Input, Textarea, ToggleRow, FormField, Card, Badge, StatusBadge } from '@/shared/ui';
@@ -84,15 +83,15 @@ export function IteratorNodeConfigSection(): React.JSX.Element | null {
 
         <p className='mt-2 text-[11px] text-gray-500'>
           The iterator emits one item on <span className='text-gray-300'>value</span> and waits.
-          When <span className='text-gray-300'>callback</span> receives a new (changed) value, it advances.
-          Best callback tokens: <span className='text-gray-300'>jobId</span> or{' '}
+          When <span className='text-gray-300'>callback</span> receives a new (changed) value, it
+          advances. Best callback tokens: <span className='text-gray-300'>jobId</span> or{' '}
           <span className='text-gray-300'>result</span> from the processing node.
         </p>
       </Card>
 
       <Card variant='subtle-compact' padding='sm' className='border-border bg-card/50'>
         <div className='text-[11px] text-gray-400'>Behavior</div>
-        
+
         <ToggleRow
           label='Auto-continue'
           description='When enabled, the UI/runtime will try to kick off the next item automatically.'
@@ -106,10 +105,7 @@ export function IteratorNodeConfigSection(): React.JSX.Element | null {
         />
 
         <div className='mt-3'>
-          <FormField
-            label='Max steps'
-            description='Safety cap for automatic continuation loops.'
-          >
+          <FormField label='Max steps' description='Safety cap for automatic continuation loops.'>
             <Input
               variant='subtle'
               size='sm'

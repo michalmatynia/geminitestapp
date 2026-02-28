@@ -23,7 +23,7 @@ export type CaseResolverWorkspaceUpdateOptions = {
 export interface UseCaseResolverWorkspaceMutationsValue {
   updateWorkspace: (
     updater: (current: CaseResolverWorkspace) => CaseResolverWorkspace,
-    options?: CaseResolverWorkspaceUpdateOptions,
+    options?: CaseResolverWorkspaceUpdateOptions
   ) => void;
 }
 
@@ -54,7 +54,7 @@ export function useCaseResolverStateWorkspaceMutations({
   const updateWorkspace = useCallback(
     (
       updater: (current: CaseResolverWorkspace) => CaseResolverWorkspace,
-      options?: CaseResolverWorkspaceUpdateOptions,
+      options?: CaseResolverWorkspaceUpdateOptions
     ): void => {
       setWorkspace((current: CaseResolverWorkspace) => {
         const baseCurrent = options?.skipNormalization
@@ -77,17 +77,14 @@ export function useCaseResolverStateWorkspaceMutations({
           source: options?.source ?? 'case_view',
           action: 'mutation_enqueued',
           mutationId,
-          expectedRevision:
-            queuedExpectedRevisionRef.current ??
-            lastPersistedRevisionRef.current,
+          expectedRevision: queuedExpectedRevisionRef.current ?? lastPersistedRevisionRef.current,
           workspaceRevision: getCaseResolverWorkspaceRevision(stampedWorkspace),
         });
         if (options?.persistToast) {
           pendingSaveToastRef.current = options.persistToast;
         }
         const expectedRevision =
-          queuedExpectedRevisionRef.current ??
-          lastPersistedRevisionRef.current;
+          queuedExpectedRevisionRef.current ?? lastPersistedRevisionRef.current;
         enqueueWorkspacePersistMutation({
           serializedWorkspace: JSON.stringify(stampedWorkspace),
           expectedRevision,
@@ -108,7 +105,7 @@ export function useCaseResolverStateWorkspaceMutations({
       pendingSaveToastRef,
       queuedExpectedRevisionRef,
       setWorkspace,
-    ],
+    ]
   );
 
   useEffect(() => {
@@ -123,19 +120,18 @@ export function useCaseResolverStateWorkspaceMutations({
 
   const workspaceComparableSnapshot = useMemo(
     (): string => serializeWorkspaceForUnsavedChangesCheck(workspace),
-    [workspace],
+    [workspace]
   );
   const isWorkspaceDirty = useMemo(
-    (): boolean =>
-      workspaceComparableSnapshot !== persistedWorkspaceComparableSnapshot,
-    [persistedWorkspaceComparableSnapshot, workspaceComparableSnapshot],
+    (): boolean => workspaceComparableSnapshot !== persistedWorkspaceComparableSnapshot,
+    [persistedWorkspaceComparableSnapshot, workspaceComparableSnapshot]
   );
 
   useEffect(() => {
     if (isWorkspaceSaving) return;
     if (isWorkspaceDirty) {
       setWorkspaceSaveStatus((current) =>
-        current === 'conflict' || current === 'error' ? current : 'dirty',
+        current === 'conflict' || current === 'error' ? current : 'dirty'
       );
       return;
     }

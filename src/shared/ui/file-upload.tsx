@@ -55,12 +55,12 @@ const composeEventHandler =
     theirHandler: ((event: E) => void) | undefined,
     ourHandler: (event: E) => void
   ) =>
-    (event: E): void => {
-      theirHandler?.(event);
-      if (!event.defaultPrevented) {
-        ourHandler(event);
-      }
-    };
+  (event: E): void => {
+    theirHandler?.(event);
+    if (!event.defaultPrevented) {
+      ourHandler(event);
+    }
+  };
 
 export function FileUploadButton({
   accept,
@@ -154,12 +154,18 @@ export function FileUploadButton({
             event.dataTransfer.dropEffect = 'copy';
           }
         )}
-        onDrop={composeEventHandler(buttonProps.onDrop, (event: React.DragEvent<HTMLButtonElement>): void => {
-          void handleDrop(event);
-        })}
-        onPaste={composeEventHandler(buttonProps.onPaste, (event: React.ClipboardEvent<HTMLButtonElement>): void => {
-          void handlePaste(event);
-        })}
+        onDrop={composeEventHandler(
+          buttonProps.onDrop,
+          (event: React.DragEvent<HTMLButtonElement>): void => {
+            void handleDrop(event);
+          }
+        )}
+        onPaste={composeEventHandler(
+          buttonProps.onPaste,
+          (event: React.ClipboardEvent<HTMLButtonElement>): void => {
+            void handlePaste(event);
+          }
+        )}
       >
         {children}
       </Button>

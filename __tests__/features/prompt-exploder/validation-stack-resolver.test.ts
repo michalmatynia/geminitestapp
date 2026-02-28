@@ -2,9 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { parseValidatorPatternLists } from '@/features/admin/pages/validator-scope';
 import { PromptValidationScopeResolutionError } from '@/shared/lib/prompt-core/errors';
-import {
-  resolvePromptExploderValidationStack,
-} from '@/features/prompt-exploder/validation-stack';
+import { resolvePromptExploderValidationStack } from '@/features/prompt-exploder/validation-stack';
 
 describe('prompt exploder validation stack resolver', () => {
   it('resolves exact list match without fallback', () => {
@@ -44,4 +42,3 @@ describe('prompt exploder validation stack resolver', () => {
     expect(resolution.scope).toBe('prompt_exploder');
   });
 });
-

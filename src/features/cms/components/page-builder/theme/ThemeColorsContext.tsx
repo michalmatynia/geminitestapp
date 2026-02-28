@@ -1,22 +1,27 @@
 'use client';
 
-import React, { createContext, useContext, useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useMemo,
+  useRef,
+  useEffect,
+} from 'react';
 
 import { useTeachingAgents } from '@/features/ai/agentcreator/teaching/hooks/useAgentTeachingQueries';
-import { AI_BRAIN_SETTINGS_KEY, parseBrainSettings, resolveBrainAssignment } from '@/features/ai/brain';
-import { useBrainModelOptions } from '@/features/ai/brain/hooks/useBrainModelOptions';
+import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
 import type { AgentTeachingAgentRecord } from '@/shared/contracts/agent-teaching';
 import type { ChatMessage } from '@/shared/contracts/chatbot';
 import type { ColorSchemeColors, ColorScheme, ThemeSettings } from '@/shared/contracts/cms-theme';
 import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui';
 
 import { DEFAULT_SCHEME_COLORS } from './theme-constants';
 import { extractJsonBlock, parseColorSchemePayload, normalizeAiString } from './theme-utils';
 import { useThemeSettings } from '../ThemeSettingsContext';
-
 
 interface ThemeColorsContextValue {
   schemeView: 'list' | 'edit';
@@ -48,27 +53,28 @@ interface ThemeColorsContextValue {
   schemeAiError: string | null;
   schemeAiOutput: string;
   schemeAiPreview: { name?: string | undefined; colors: Partial<ColorSchemeColors> } | null;
+  brainAiProvider: 'model' | 'agent';
+  brainAiModelId: string;
+  brainAiAgentId: string;
   handleGenerateScheme: () => Promise<void>;
   handleCancelSchemeAi: () => void;
 }
 
 const ThemeColorsContext = createContext<ThemeColorsContextValue | undefined>(undefined);
 
-export function ThemeColorsProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
+export function ThemeColorsProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}): React.JSX.Element {
   const { theme, setTheme } = useThemeSettings();
   const { toast } = useToast();
-  const settingsStore = useSettingsStore();
-  const brainSettingsRaw = settingsStore.get(AI_BRAIN_SETTINGS_KEY);
-  const brainSettings = useMemo(() => parseBrainSettings(brainSettingsRaw), [brainSettingsRaw]);
-  const settingsReady = !settingsStore.isLoading && !settingsStore.error;
-  const brainAssignment = useMemo(() => resolveBrainAssignment(brainSettings, 'cms_builder'), [brainSettings]);
-  const brainAppliedRef = useRef<boolean>(false);
 
   const [schemeView, setSchemeView] = useState<'list' | 'edit'>('list');
   const [editingSchemeId, setEditingSchemeId] = useState<string | null>(null);
   const [newSchemeName, setNewSchemeName] = useState('');
   const [newSchemeColors, setNewSchemeColors] = useState<ColorSchemeColors>(DEFAULT_SCHEME_COLORS);
-  
+
   const [schemeAiProvider, setSchemeAiProvider] = useState<'model' | 'agent'>('model');
   const [schemeAiModelId, setSchemeAiModelId] = useState<string>('');
   const [schemeAiAgentId, setSchemeAiAgentId] = useState<string>('');
@@ -76,15 +82,22 @@ export function ThemeColorsProvider({ children }: { children: React.ReactNode })
   const [schemeAiOutput, setSchemeAiOutput] = useState<string>('');
   const [schemeAiError, setSchemeAiError] = useState<string | null>(null);
   const schemeAiAbortRef = useRef<AbortController | null>(null);
-  
+
   const [isGlobalPaletteOpen, setIsGlobalPaletteOpen] = useState(false);
 
   const brainModelOptions = useBrainModelOptions({
-    feature: 'cms_builder',
-    enabled: schemeView === 'edit' && schemeAiProvider === 'model',
+    capability: 'cms.css_stream',
+    enabled: schemeView === 'edit',
   });
-  const teachingAgentsQuery = useTeachingAgents({ enabled: schemeView === 'edit' && schemeAiProvider === 'agent' });
-  
+  const brainAssignment = brainModelOptions.assignment;
+  const brainAiProvider = brainAssignment.provider;
+  const brainAiModelId = brainAssignment.modelId.trim();
+  const brainAiAgentId = brainAssignment.agentId.trim();
+
+  const teachingAgentsQuery = useTeachingAgents({
+    enabled: schemeView === 'edit' && brainAiProvider === 'agent',
+  });
+
   const modelOptions = useMemo((): string[] => {
     const fromApi = brainModelOptions.models
       .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
@@ -93,7 +106,11 @@ export function ThemeColorsProvider({ children }: { children: React.ReactNode })
   }, [brainModelOptions.models]);
 
   const agentOptions = useMemo(
-    (): Array<{ label: string; value: string }> => (teachingAgentsQuery.data ?? []).map((agent: AgentTeachingAgentRecord) => ({ label: agent.name, value: agent.id })),
+    (): Array<{ label: string; value: string }> =>
+      (teachingAgentsQuery.data ?? []).map((agent: AgentTeachingAgentRecord) => ({
+        label: agent.name,
+        value: agent.id,
+      })),
     [teachingAgentsQuery.data]
   );
 
@@ -105,9 +122,17 @@ export function ThemeColorsProvider({ children }: { children: React.ReactNode })
     []
   );
 
-  const activeScheme = useMemo((): { id: string; name: string; colors: ColorSchemeColors } | null => {
+  const activeScheme = useMemo((): {
+    id: string;
+    name: string;
+    colors: ColorSchemeColors;
+  } | null => {
     if (!theme.colorSchemes.length) return null;
-    return theme.colorSchemes.find((scheme: { id: string }) => scheme.id === theme.activeColorSchemeId) ?? theme.colorSchemes[0]!;
+    return (
+      theme.colorSchemes.find(
+        (scheme: { id: string }) => scheme.id === theme.activeColorSchemeId
+      ) ?? theme.colorSchemes[0]!
+    );
   }, [theme.colorSchemes, theme.activeColorSchemeId]);
 
   const resetSchemeAiState = useCallback((): void => {
@@ -127,15 +152,18 @@ export function ThemeColorsProvider({ children }: { children: React.ReactNode })
     resetSchemeAiState();
   }, [activeScheme, resetSchemeAiState]);
 
-  const startEditScheme = useCallback((schemeId: string): void => {
-    const scheme = theme.colorSchemes.find((item: { id: string }) => item.id === schemeId);
-    if (!scheme) return;
-    setEditingSchemeId(schemeId);
-    setNewSchemeName(scheme.name);
-    setNewSchemeColors({ ...scheme.colors });
-    setSchemeView('edit');
-    resetSchemeAiState();
-  }, [theme.colorSchemes, resetSchemeAiState]);
+  const startEditScheme = useCallback(
+    (schemeId: string): void => {
+      const scheme = theme.colorSchemes.find((item: { id: string }) => item.id === schemeId);
+      if (!scheme) return;
+      setEditingSchemeId(schemeId);
+      setNewSchemeName(scheme.name);
+      setNewSchemeColors({ ...scheme.colors });
+      setSchemeView('edit');
+      resetSchemeAiState();
+    },
+    [theme.colorSchemes, resetSchemeAiState]
+  );
 
   const handleSaveScheme = useCallback((): void => {
     const trimmed = newSchemeName.trim();
@@ -174,10 +202,12 @@ export function ThemeColorsProvider({ children }: { children: React.ReactNode })
   const updateSchemeColor = useCallback(
     (key: keyof ColorSchemeColors): ((value: string) => void) => {
       return (value: string): void => {
-        setNewSchemeColors((prev: ColorSchemeColors): ColorSchemeColors => ({
-          ...prev,
-          [key]: value,
-        }));
+        setNewSchemeColors(
+          (prev: ColorSchemeColors): ColorSchemeColors => ({
+            ...prev,
+            [key]: value,
+          })
+        );
       };
     },
     []
@@ -220,70 +250,80 @@ ${schemeContext}`;
 
   const parseSchemeFromText = useCallback<
     (text: string) => { name?: string | undefined; colors: Partial<ColorSchemeColors> } | null
-      >((text: string) => {
-        const trimmed = text.trim();
-        if (!trimmed) return null;
-        const jsonBlock = extractJsonBlock(trimmed);
-        if (jsonBlock) {
-          try {
-            const payload = JSON.parse(jsonBlock) as unknown;
-            const parsed = parseColorSchemePayload(payload);
-            if (parsed) return parsed;
-          } catch {
-            // fall through to regex parsing
-          }
+  >((text: string) => {
+    const trimmed = text.trim();
+    if (!trimmed) return null;
+    const jsonBlock = extractJsonBlock(trimmed);
+    if (jsonBlock) {
+      try {
+        const payload = JSON.parse(jsonBlock) as unknown;
+        const parsed = parseColorSchemePayload(payload);
+        if (parsed) return parsed;
+      } catch {
+        // fall through to regex parsing
+      }
+    }
+
+    const pickFromText = (labels: string[]): string | undefined => {
+      for (const label of labels) {
+        const regex = new RegExp(
+          `${label}\\s*[:=]\\s*["']?([^"'
+]+)`,
+          'i'
+        );
+        const match = trimmed.match(regex);
+        if (match?.[1]) {
+          const normalized = normalizeAiString(match[1]);
+          if (normalized) return normalized;
         }
+      }
+      return undefined;
+    };
 
-        const pickFromText = (labels: string[]): string | undefined => {
-          for (const label of labels) {
-            const regex = new RegExp(`${label}\\s*[:=]\\s*["']?([^"'
-]+)`, 'i');
-            const match = trimmed.match(regex);
-            if (match?.[1]) {
-              const normalized = normalizeAiString(match[1]);
-              if (normalized) return normalized;
-            }
-          }
-          return undefined;
-        };
+    const colors: Partial<ColorSchemeColors> = {};
+    const background = pickFromText(['background', 'bg']);
+    if (background !== undefined) colors.background = background;
+    const surface = pickFromText(['surface', 'card', 'layer']);
+    if (surface !== undefined) colors.surface = surface;
+    const parsedText = pickFromText(['text', 'foreground']);
+    if (parsedText !== undefined) colors.text = parsedText;
+    const accent = pickFromText(['accent', 'primary']);
+    if (accent !== undefined) colors.accent = accent;
+    const border = pickFromText(['border', 'outline']);
+    if (border !== undefined) colors.border = border;
+    const name = pickFromText(['name', 'scheme', 'title']);
 
-        const colors: Partial<ColorSchemeColors> = {};
-        const background = pickFromText(['background', 'bg']);
-        if (background !== undefined) colors.background = background;
-        const surface = pickFromText(['surface', 'card', 'layer']);
-        if (surface !== undefined) colors.surface = surface;
-        const parsedText = pickFromText(['text', 'foreground']);
-        if (parsedText !== undefined) colors.text = parsedText;
-        const accent = pickFromText(['accent', 'primary']);
-        if (accent !== undefined) colors.accent = accent;
-        const border = pickFromText(['border', 'outline']);
-        if (border !== undefined) colors.border = border;
-        const name = pickFromText(['name', 'scheme', 'title']);
-
-        if (!Object.values(colors).some(Boolean) && name === undefined) return null;
-        return { ...(name !== undefined ? { name } : {}), colors };
-      }, []);
+    if (!Object.values(colors).some(Boolean) && name === undefined) return null;
+    return { ...(name !== undefined ? { name } : {}), colors };
+  }, []);
 
   const schemeAiPreview = useMemo(
     () => (schemeAiOutput ? parseSchemeFromText(schemeAiOutput) : null),
     [schemeAiOutput, parseSchemeFromText]
   );
 
-  const applySchemeFromAi = useCallback((parsed: { name?: string | undefined; colors: Partial<ColorSchemeColors> }): void => {
-    setNewSchemeColors((prev: ColorSchemeColors): ColorSchemeColors => {
-      const next = { ...prev };
-      (Object.keys(DEFAULT_SCHEME_COLORS) as Array<keyof ColorSchemeColors>).forEach((key: keyof ColorSchemeColors) => {
-        const value = parsed.colors[key];
-        if (typeof value === 'string' && value.trim().length) {
-          next[key] = value.trim();
-        }
+  const applySchemeFromAi = useCallback(
+    (parsed: { name?: string | undefined; colors: Partial<ColorSchemeColors> }): void => {
+      setNewSchemeColors((prev: ColorSchemeColors): ColorSchemeColors => {
+        const next = { ...prev };
+        (Object.keys(DEFAULT_SCHEME_COLORS) as Array<keyof ColorSchemeColors>).forEach(
+          (key: keyof ColorSchemeColors) => {
+            const value = parsed.colors[key];
+            if (typeof value === 'string' && value.trim().length) {
+              next[key] = value.trim();
+            }
+          }
+        );
+        return next;
       });
-      return next;
-    });
-    if (parsed.name) {
-      setNewSchemeName((prev: string): string => (prev.trim().length ? prev : parsed.name ?? prev));
-    }
-  }, []);
+      if (parsed.name) {
+        setNewSchemeName((prev: string): string =>
+          prev.trim().length ? prev : (parsed.name ?? prev)
+        );
+      }
+    },
+    []
+  );
 
   const generateSchemeMutation = createMutationV2({
     mutationKey: QUERY_KEYS.cms.mutation('page-builder.generate-scheme-ai'),
@@ -382,7 +422,7 @@ ${schemeContext}`;
 
       const sessionId = `color-ai-${Date.now()}`;
       const now = new Date().toISOString();
-      
+
       const messages: ChatMessage[] = [
         {
           id: `sys-${Date.now()}`,
@@ -390,7 +430,7 @@ ${schemeContext}`;
           timestamp: now,
           role: 'system',
           content:
-                    'You are a UI color assistant. Return only a JSON object: {"name":"...","colors":{"background":"#...","surface":"#...","text":"#...","accent":"#...","border":"#..."}}. No markdown or explanations.',
+            'You are a UI color assistant. Return only a JSON object: {"name":"...","colors":{"background":"#...","surface":"#...","text":"#...","accent":"#...","border":"#..."}}. No markdown or explanations.',
         },
         {
           id: `user-${Date.now()}`,
@@ -400,14 +440,14 @@ ${schemeContext}`;
           content: prompt,
         },
       ];
-      const provider = schemeAiProvider;
-      const modelId = schemeAiProvider === 'model' ? (schemeAiModelId.trim() || modelOptions[0] || '') : '';
-      const agentId = schemeAiProvider === 'agent' ? schemeAiAgentId.trim() : '';
+      const provider = brainAiProvider;
+      const modelId = provider === 'model' ? brainAiModelId : '';
+      const agentId = provider === 'agent' ? brainAiAgentId : '';
       if (provider === 'model' && !modelId) {
-        throw new Error('Select an AI model first.');
+        throw new Error('Configure CMS CSS Stream in AI Brain first.');
       }
       if (provider === 'agent' && !agentId) {
-        throw new Error('Select a Deepthinking agent first.');
+        throw new Error('Configure a CMS CSS Stream agent in AI Brain first.');
       }
 
       const accumulated = await generateSchemeMutation.mutateAsync({
@@ -438,10 +478,9 @@ ${schemeContext}`;
   }, [
     generateSchemeMutation,
     buildSchemeAiPrompt,
-    schemeAiProvider,
-    schemeAiModelId,
-    schemeAiAgentId,
-    modelOptions,
+    brainAiProvider,
+    brainAiModelId,
+    brainAiAgentId,
     parseSchemeFromText,
     applySchemeFromAi,
     toast,
@@ -455,83 +494,85 @@ ${schemeContext}`;
   }, []);
 
   useEffect(() => {
-    if (!settingsReady) return;
-    if (brainAppliedRef.current) return;
-    brainAppliedRef.current = true;
     if (!brainAssignment.enabled) return;
-    setSchemeAiProvider(brainAssignment.provider);
-    if (brainAssignment.provider === 'model' && brainAssignment.modelId) {
-      setSchemeAiModelId(brainAssignment.modelId);
+    setSchemeAiProvider(brainAiProvider);
+    if (brainAiProvider === 'model') {
+      setSchemeAiModelId(brainAiModelId);
     }
-    if (brainAssignment.provider === 'agent' && brainAssignment.agentId) {
-      setSchemeAiAgentId(brainAssignment.agentId);
+    if (brainAiProvider === 'agent') {
+      setSchemeAiAgentId(brainAiAgentId);
     }
-  }, [brainAssignment, settingsReady]);
+  }, [brainAssignment.enabled, brainAiAgentId, brainAiModelId, brainAiProvider]);
 
-  const value = useMemo((): ThemeColorsContextValue => ({
-    schemeView,
-    setSchemeView,
-    editingSchemeId,
-    setEditingSchemeId,
-    activeScheme,
-    startAddScheme,
-    startEditScheme,
-    handleSaveScheme,
-    newSchemeName,
-    setNewSchemeName,
-    newSchemeColors,
-    updateSchemeColor,
-    isGlobalPaletteOpen,
-    toggleGlobalPalette,
-    schemeAiProvider,
-    setSchemeAiProvider,
-    schemeProviderOptions,
-    schemeAiModelId,
-    setSchemeAiModelId,
-    modelOptions,
-    schemeAiAgentId,
-    setSchemeAiAgentId,
-    agentOptions,
-    schemeAiPrompt,
-    setSchemeAiPrompt,
-    schemeAiLoading,
-    schemeAiError,
-    schemeAiOutput,
-    schemeAiPreview,
-    handleGenerateScheme,
-    handleCancelSchemeAi,
-  }), [
-    schemeView,
-    editingSchemeId,
-    activeScheme,
-    startAddScheme,
-    startEditScheme,
-    handleSaveScheme,
-    newSchemeName,
-    newSchemeColors,
-    updateSchemeColor,
-    isGlobalPaletteOpen,
-    toggleGlobalPalette,
-    schemeAiProvider,
-    schemeProviderOptions,
-    schemeAiModelId,
-    modelOptions,
-    schemeAiAgentId,
-    agentOptions,
-    schemeAiPrompt,
-    schemeAiLoading,
-    schemeAiError,
-    schemeAiOutput,
-    schemeAiPreview,
-    handleGenerateScheme,
-    handleCancelSchemeAi,
-  ]);
-
-  return (
-    <ThemeColorsContext.Provider value={value}>
-      {children}
-    </ThemeColorsContext.Provider>
+  const value = useMemo(
+    (): ThemeColorsContextValue => ({
+      schemeView,
+      setSchemeView,
+      editingSchemeId,
+      setEditingSchemeId,
+      activeScheme,
+      startAddScheme,
+      startEditScheme,
+      handleSaveScheme,
+      newSchemeName,
+      setNewSchemeName,
+      newSchemeColors,
+      updateSchemeColor,
+      isGlobalPaletteOpen,
+      toggleGlobalPalette,
+      schemeAiProvider,
+      setSchemeAiProvider,
+      schemeProviderOptions,
+      schemeAiModelId,
+      setSchemeAiModelId,
+      modelOptions,
+      schemeAiAgentId,
+      setSchemeAiAgentId,
+      agentOptions,
+      schemeAiPrompt,
+      setSchemeAiPrompt,
+      schemeAiLoading,
+      schemeAiError,
+      schemeAiOutput,
+      schemeAiPreview,
+      brainAiProvider,
+      brainAiModelId,
+      brainAiAgentId,
+      handleGenerateScheme,
+      handleCancelSchemeAi,
+    }),
+    [
+      schemeView,
+      editingSchemeId,
+      activeScheme,
+      startAddScheme,
+      startEditScheme,
+      handleSaveScheme,
+      newSchemeName,
+      newSchemeColors,
+      updateSchemeColor,
+      isGlobalPaletteOpen,
+      toggleGlobalPalette,
+      schemeAiProvider,
+      schemeProviderOptions,
+      schemeAiModelId,
+      modelOptions,
+      schemeAiAgentId,
+      agentOptions,
+      schemeAiPrompt,
+      schemeAiLoading,
+      schemeAiError,
+      schemeAiOutput,
+      schemeAiPreview,
+      brainAiProvider,
+      brainAiModelId,
+      brainAiAgentId,
+      handleGenerateScheme,
+      handleCancelSchemeAi,
+    ]
   );
+
+  return <ThemeColorsContext.Provider value={value}>{children}</ThemeColorsContext.Provider>;
 }
 
 export function useThemeColors(): ThemeColorsContextValue {

@@ -28,17 +28,17 @@ export type TouchPointSample = {
 
 export type TouchGestureState =
   | {
-    mode: 'pinch';
-    pointerIds: [number, number];
-    startDistance: number;
-    startScale: number;
-    anchorCanvas: { x: number; y: number };
-  }
+      mode: 'pinch';
+      pointerIds: [number, number];
+      startDistance: number;
+      startScale: number;
+      anchorCanvas: { x: number; y: number };
+    }
   | {
-    mode: 'pan';
-    pointerId: number;
-    recentSamples: TouchPointSample[];
-  };
+      mode: 'pan';
+      pointerId: number;
+      recentSamples: TouchPointSample[];
+    };
 
 export type TouchLongPressSelectionState = {
   pointerId: number;
@@ -80,11 +80,9 @@ export const TOUCH_LONG_PRESS_SELECTION_MOVE_TOLERANCE_PX = 10;
 export const TOUCH_LONG_PRESS_ACTIVATED_VISIBLE_MS = 200;
 export const TOUCH_LONG_PRESS_HAPTIC_MS = 12;
 
-export const cloneValue = <T,>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
+export const cloneValue = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
 
-export const parseSubgraphClipboardPayload = (
-  value: unknown
-): SubgraphClipboardPayload | null => {
+export const parseSubgraphClipboardPayload = (value: unknown): SubgraphClipboardPayload | null => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
   const record = value as Record<string, unknown>;
   if (record['version'] !== SUBGRAPH_CLIPBOARD_VERSION) return null;
@@ -98,24 +96,28 @@ export const parseSubgraphClipboardPayload = (
   const minY = Number(boundsRecord['minY']);
   const maxX = Number(boundsRecord['maxX']);
   const maxY = Number(boundsRecord['maxY']);
-  if (!Number.isFinite(minX) || !Number.isFinite(minY) || !Number.isFinite(maxX) || !Number.isFinite(maxY)) {
+  if (
+    !Number.isFinite(minX) ||
+    !Number.isFinite(minY) ||
+    !Number.isFinite(maxX) ||
+    !Number.isFinite(maxY)
+  ) {
     return null;
   }
   return {
     version: SUBGRAPH_CLIPBOARD_VERSION,
-    sourcePathId:
-      typeof record['sourcePathId'] === 'string' ? record['sourcePathId'] : null,
+    sourcePathId: typeof record['sourcePathId'] === 'string' ? record['sourcePathId'] : null,
     capturedAt:
-      typeof record['capturedAt'] === 'string'
-        ? record['capturedAt']
-        : new Date().toISOString(),
+      typeof record['capturedAt'] === 'string' ? record['capturedAt'] : new Date().toISOString(),
     nodes: cloneValue(nodes as AiNode[]),
     edges: cloneValue(edges as Edge[]),
     bounds: { minX, minY, maxX, maxY },
   };
 };
 
-export const getMarqueeRect = (state: MarqueeSelectionState): {
+export const getMarqueeRect = (
+  state: MarqueeSelectionState
+): {
   left: number;
   top: number;
   width: number;
@@ -129,11 +131,13 @@ export const getMarqueeRect = (state: MarqueeSelectionState): {
 
 export const getPointerCaptureTarget = (
   event: React.PointerEvent<Element>
-): (Element & {
-  setPointerCapture?: (pointerId: number) => void;
-  releasePointerCapture?: (pointerId: number) => void;
-  hasPointerCapture?: (pointerId: number) => boolean;
-}) | null => {
+):
+  | (Element & {
+      setPointerCapture?: (pointerId: number) => void;
+      releasePointerCapture?: (pointerId: number) => void;
+      hasPointerCapture?: (pointerId: number) => boolean;
+    })
+  | null => {
   const nativeCurrentTarget = event.nativeEvent.currentTarget;
   const candidates: EventTarget[] = [
     event.currentTarget,
@@ -165,10 +169,12 @@ export const setPointerCaptureSafe = (
 };
 
 export const releasePointerCaptureSafe = (
-  target: (Element & {
-    releasePointerCapture?: (pointerId: number) => void;
-    hasPointerCapture?: (pointerId: number) => boolean;
-  }) | null,
+  target:
+    | (Element & {
+        releasePointerCapture?: (pointerId: number) => void;
+        hasPointerCapture?: (pointerId: number) => boolean;
+      })
+    | null,
   pointerId: number
 ): void => {
   if (!target || typeof target.releasePointerCapture !== 'function') return;

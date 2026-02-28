@@ -21,7 +21,7 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('next-auth/react', () => ({
   signIn: vi.fn(),
-  SessionProvider: ({ children }: any) => children,
+  SessionProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   useSession: vi.fn(() => ({ data: null, status: 'unauthenticated' })),
 }));
 
@@ -30,14 +30,17 @@ vi.mock('@/features/auth/hooks/useAuthQueries', () => ({
 }));
 
 vi.mock('@/shared/hooks/use-settings', () => ({
-  useSettingsMap: vi.fn(), useUpdateSetting: vi.fn(), useLiteSettingsMap: vi.fn(),
+  useSettingsMap: vi.fn(),
+  useUpdateSetting: vi.fn(),
+  useLiteSettingsMap: vi.fn(),
 }));
 
-const createTestQueryClient = () => new QueryClient({
-  defaultOptions: {
-    queries: { retry: false },
-  },
-});
+const createTestQueryClient = () =>
+  new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+    },
+  });
 
 describe('SignInPage', () => {
   let queryClient: QueryClient;
@@ -45,29 +48,28 @@ describe('SignInPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     queryClient = createTestQueryClient();
-    
+
     // Default mocks for successful initial load
     vi.mocked(useSettingsMap).mockReturnValue({
       isLoading: false,
-      data: new Map([
-        ['auth_user_pages', JSON.stringify({ allowSocialLogin: true })]
-      ]),
-    } as any);
+      data: new Map([['auth_user_pages', JSON.stringify({ allowSocialLogin: true })]]),
+    } as ReturnType<typeof useSettingsMap>);
 
     vi.mocked(useVerifyCredentials).mockReturnValue({
       mutateAsync: vi.fn(),
-    } as any);
+    } as unknown as ReturnType<typeof useVerifyCredentials>);
   });
 
-  const renderPage = () => render(
-    <SessionProvider>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <SignInPage />
-        </AuthProvider>
-      </QueryClientProvider>
-    </SessionProvider>
-  );
+  const renderPage = () =>
+    render(
+      <SessionProvider>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <SignInPage />
+          </AuthProvider>
+        </QueryClientProvider>
+      </SessionProvider>
+    );
 
   it('renders correctly', async () => {
     renderPage();
@@ -83,7 +85,9 @@ describe('SignInPage', () => {
       ok: true,
       payload: { ok: true, mfaRequired: false, challengeId: 'ch1' },
     });
-    vi.mocked(useVerifyCredentials).mockReturnValue({ mutateAsync } as any);
+    vi.mocked(useVerifyCredentials).mockReturnValue({ mutateAsync } as unknown as ReturnType<
+      typeof useVerifyCredentials
+    >);
 
     renderPage();
 
@@ -97,11 +101,14 @@ describe('SignInPage', () => {
         email: 'test@example.com',
         password: 'password123',
       });
-      expect(signIn).toHaveBeenCalledWith('credentials', expect.objectContaining({
-        email: 'test@example.com',
-        password: 'password123',
-        challengeId: 'ch1',
-      }));
+      expect(signIn).toHaveBeenCalledWith(
+        'credentials',
+        expect.objectContaining({
+          email: 'test@example.com',
+          password: 'password123',
+          challengeId: 'ch1',
+        })
+      );
     });
   });
 
@@ -111,7 +118,9 @@ describe('SignInPage', () => {
       ok: true,
       payload: { ok: false, message: 'Invalid credentials' },
     });
-    vi.mocked(useVerifyCredentials).mockReturnValue({ mutateAsync } as any);
+    vi.mocked(useVerifyCredentials).mockReturnValue({ mutateAsync } as unknown as ReturnType<
+      typeof useVerifyCredentials
+    >);
 
     renderPage();
 
@@ -129,7 +138,9 @@ describe('SignInPage', () => {
       ok: true,
       payload: { ok: true, mfaRequired: true, challengeId: 'ch-mfa' },
     });
-    vi.mocked(useVerifyCredentials).mockReturnValue({ mutateAsync } as any);
+    vi.mocked(useVerifyCredentials).mockReturnValue({ mutateAsync } as unknown as ReturnType<
+      typeof useVerifyCredentials
+    >);
 
     renderPage();
 

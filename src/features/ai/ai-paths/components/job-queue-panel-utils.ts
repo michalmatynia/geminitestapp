@@ -141,9 +141,7 @@ export const safePrettyJson = (value: unknown): string => {
   }
 };
 
-export const getLatestEventTimestamp = (
-  events: AiPathRunEventRecord[]
-): string | null => {
+export const getLatestEventTimestamp = (events: AiPathRunEventRecord[]): string | null => {
   let max = 0;
   events.forEach((event: AiPathRunEventRecord) => {
     const time = new Date(event.createdAt || Date.now()).getTime();
@@ -165,8 +163,7 @@ export const normalizeRunNodes = (value: unknown): AiPathRunNodeRecord[] => {
   return (value as AiPathRunNodeRecord[])
     .map((node: AiPathRunNodeRecord, index: number) => ({ node, index }))
     .sort((left, right) => {
-      const leftFinished =
-        toTimestamp(left.node.finishedAt) ?? toTimestamp(left.node.completedAt);
+      const leftFinished = toTimestamp(left.node.finishedAt) ?? toTimestamp(left.node.completedAt);
       const rightFinished =
         toTimestamp(right.node.finishedAt) ?? toTimestamp(right.node.completedAt);
       if (leftFinished !== null && rightFinished !== null && leftFinished !== rightFinished) {
@@ -207,9 +204,8 @@ export const normalizeRunNodes = (value: unknown): AiPathRunNodeRecord[] => {
     .map((entry) => entry.node);
 };
 
-export const normalizeRunEvents = (value: unknown): AiPathRunEventRecord[] => (
-  Array.isArray(value) ? (value as AiPathRunEventRecord[]) : []
-);
+export const normalizeRunEvents = (value: unknown): AiPathRunEventRecord[] =>
+  Array.isArray(value) ? (value as AiPathRunEventRecord[]) : [];
 
 export const normalizeRunDetail = (
   value: unknown,
@@ -230,9 +226,7 @@ export const normalizeRunDetail = (
   };
 };
 
-const readMetaRecord = (
-  meta: AiPathRunRecord['meta']
-): Record<string, unknown> | null => {
+const readMetaRecord = (meta: AiPathRunRecord['meta']): Record<string, unknown> | null => {
   if (!meta || typeof meta !== 'object' || Array.isArray(meta)) return null;
   return meta;
 };
@@ -257,14 +251,8 @@ export const resolveRunSource = (run: AiPathRunRecord): string | null => {
   }
 
   const sourceInfoRaw = meta['sourceInfo'];
-  if (
-    sourceInfoRaw &&
-    typeof sourceInfoRaw === 'object' &&
-    !Array.isArray(sourceInfoRaw)
-  ) {
-    const sourceInfoTab = readStringValue(
-      (sourceInfoRaw as Record<string, unknown>)['tab']
-    );
+  if (sourceInfoRaw && typeof sourceInfoRaw === 'object' && !Array.isArray(sourceInfoRaw)) {
+    const sourceInfoTab = readStringValue((sourceInfoRaw as Record<string, unknown>)['tab']);
     if (sourceInfoTab) return `tab:${sourceInfoTab.toLowerCase()}`;
   }
 
@@ -276,15 +264,14 @@ export const resolveRunSourceDebug = (run: AiPathRunRecord): string => {
   if (!meta) return 'src=- infoTab=-';
 
   const sourceRaw = meta['source'];
-  const sourceValue = readStringValue(sourceRaw)?.toLowerCase() ??
-    (sourceRaw && typeof sourceRaw === 'object' && !Array.isArray(sourceRaw)
-      ? 'object'
-      : '-');
+  const sourceValue =
+    readStringValue(sourceRaw)?.toLowerCase() ??
+    (sourceRaw && typeof sourceRaw === 'object' && !Array.isArray(sourceRaw) ? 'object' : '-');
 
   const sourceInfoRaw = meta['sourceInfo'];
   const sourceInfoTab =
     sourceInfoRaw && typeof sourceInfoRaw === 'object' && !Array.isArray(sourceInfoRaw)
-      ? readStringValue((sourceInfoRaw as Record<string, unknown>)['tab'])?.toLowerCase() ?? '-'
+      ? (readStringValue((sourceInfoRaw as Record<string, unknown>)['tab'])?.toLowerCase() ?? '-')
       : '-';
 
   return `src=${sourceValue} infoTab=${sourceInfoTab}`;
@@ -312,12 +299,7 @@ const resolveExecutionCandidate = (raw: unknown): RunExecutionKind | null => {
   ) {
     return 'server';
   }
-  if (
-    value === 'local' ||
-    value.includes('local') ||
-    value === 'client' ||
-    value === 'browser'
-  ) {
+  if (value === 'local' || value.includes('local') || value === 'client' || value === 'browser') {
     return 'local';
   }
   if (value === 'unknown') return 'unknown';

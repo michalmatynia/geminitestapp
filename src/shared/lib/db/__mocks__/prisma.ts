@@ -7,24 +7,27 @@ const createMockModel = () => {
 
   const model = {
     findUnique: vi.fn().mockImplementation((args: { where: Record<string, unknown> }) => {
-      const item = items.find(i => Object.entries(args.where).every(([k, v]) => i[k] === v));
+      const item = items.find((i) => Object.entries(args.where).every(([k, v]) => i[k] === v));
       return Promise.resolve(item || null);
     }),
     findUniqueOrThrow: vi.fn().mockImplementation((args: { where: Record<string, unknown> }) => {
-      const item = items.find(i => Object.entries(args.where).every(([k, v]) => i[k] === v));
+      const item = items.find((i) => Object.entries(args.where).every(([k, v]) => i[k] === v));
       if (!item) return Promise.reject(new Error('Record not found'));
       return Promise.resolve(item);
     }),
     findFirst: vi.fn().mockImplementation((args: { where?: Record<string, unknown> }) => {
       if (!args?.where) return Promise.resolve(items[0] || null);
       // Basic filter support for nextRetryAt logic
-      const item = items.find(i => {
+      const item = items.find((i) => {
         return Object.entries(args.where!).every(([k, v]) => {
           if (v && typeof v === 'object' && 'lte' in v) {
             return (i[k] as number) <= (v as { lte: number }).lte;
           }
           if (v && typeof v === 'object' && 'in' in v) {
-            return Array.isArray((v as { in: unknown[] }).in) && (v as { in: unknown[] }).in.includes(i[k]);
+            return (
+              Array.isArray((v as { in: unknown[] }).in) &&
+              (v as { in: unknown[] }).in.includes(i[k])
+            );
           }
           return i[k] === v;
         });
@@ -32,20 +35,26 @@ const createMockModel = () => {
       return Promise.resolve(item || null);
     }),
     findFirstOrThrow: vi.fn().mockImplementation((args: { where: Record<string, unknown> }) => {
-      const item = items.find(i => Object.entries(args.where).every(([k, v]) => i[k] === v));
+      const item = items.find((i) => Object.entries(args.where).every(([k, v]) => i[k] === v));
       if (!item) return Promise.reject(new Error('Record not found'));
       return Promise.resolve(item);
     }),
     findMany: vi.fn().mockImplementation((args?: { where?: Record<string, unknown> }) => {
       if (!args?.where) return Promise.resolve([...items]);
-      const filtered = items.filter(i => {
+      const filtered = items.filter((i) => {
         return Object.entries(args.where!).every(([k, v]) => {
           if (v && typeof v === 'object' && 'in' in v) {
-            return Array.isArray((v as { in: unknown[] }).in) && (v as { in: unknown[] }).in.includes(i[k]);
+            return (
+              Array.isArray((v as { in: unknown[] }).in) &&
+              (v as { in: unknown[] }).in.includes(i[k])
+            );
           }
           if (v && typeof v === 'object' && 'contains' in v) {
             const val = i[k];
-            return typeof val === 'string' && val.toLowerCase().includes((v as { contains: string }).contains.toLowerCase());
+            return (
+              typeof val === 'string' &&
+              val.toLowerCase().includes((v as { contains: string }).contains.toLowerCase())
+            );
           }
           return i[k] === v;
         });
@@ -63,7 +72,7 @@ const createMockModel = () => {
       return Promise.resolve(newItem);
     }),
     createMany: vi.fn().mockImplementation((args: { data: Record<string, unknown>[] }) => {
-      const newItems: MockItem[] = args.data.map(d => ({
+      const newItems: MockItem[] = args.data.map((d) => ({
         id: 'mock-id-' + Math.random().toString(36).slice(2, 9),
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -73,18 +82,20 @@ const createMockModel = () => {
       return Promise.resolve({ count: newItems.length });
     }),
     delete: vi.fn().mockImplementation((args: { where: { id: string } }) => {
-      const index = items.findIndex(i => i.id === args.where.id);
+      const index = items.findIndex((i) => i.id === args.where.id);
       if (index === -1) return Promise.reject(new Error('Record not found'));
       const item = items[index];
       items.splice(index, 1);
       return Promise.resolve(item);
     }),
-    update: vi.fn().mockImplementation((args: { where: { id: string }; data: Record<string, unknown> }) => {
-      const index = items.findIndex(i => i.id === args.where.id);
-      if (index === -1) return Promise.reject(new Error('Record not found'));
-      items[index] = { ...items[index], ...args.data, updatedAt: new Date() } as MockItem;
-      return Promise.resolve(items[index]);
-    }),
+    update: vi
+      .fn()
+      .mockImplementation((args: { where: { id: string }; data: Record<string, unknown> }) => {
+        const index = items.findIndex((i) => i.id === args.where.id);
+        if (index === -1) return Promise.reject(new Error('Record not found'));
+        items[index] = { ...items[index], ...args.data, updatedAt: new Date() } as MockItem;
+        return Promise.resolve(items[index]);
+      }),
     deleteMany: vi.fn().mockImplementation((args?: { where?: Record<string, unknown> }) => {
       if (!args?.where || Object.keys(args.where).length === 0) {
         const count = items.length;
@@ -92,57 +103,74 @@ const createMockModel = () => {
         return Promise.resolve({ count });
       }
       const initialCount = items.length;
-      items = items.filter(i => !Object.entries(args.where!).every(([k, v]) => i[k] === v));
+      items = items.filter((i) => !Object.entries(args.where!).every(([k, v]) => i[k] === v));
       return Promise.resolve({ count: initialCount - items.length });
     }),
-    updateMany: vi.fn().mockImplementation((args: { where: Record<string, unknown>; data: Record<string, unknown> }) => {
-      let count = 0;
-      items = items.map(i => {
-        const match = Object.entries(args.where).every(([k, v]) => {
-          if (v && typeof v === 'object' && 'in' in v) {
-            return Array.isArray((v as { in: unknown[] }).in) && (v as { in: unknown[] }).in.includes(i[k]);
-          }
-          if (v && typeof v === 'object' && 'lte' in v) {
-            return (i[k] as number) <= (v as { lte: number }).lte;
-          }
-          if (v && typeof v === 'object' && 'lt' in v) {
-            return (i[k] as number) < (v as { lt: number }).lt;
-          }
-          return i[k] === v;
-        });
-        if (match) {
-          count++;
-          return { ...i, ...args.data, updatedAt: new Date() } as MockItem;
+    updateMany: vi
+      .fn()
+      .mockImplementation(
+        (args: { where: Record<string, unknown>; data: Record<string, unknown> }) => {
+          let count = 0;
+          items = items.map((i) => {
+            const match = Object.entries(args.where).every(([k, v]) => {
+              if (v && typeof v === 'object' && 'in' in v) {
+                return (
+                  Array.isArray((v as { in: unknown[] }).in) &&
+                  (v as { in: unknown[] }).in.includes(i[k])
+                );
+              }
+              if (v && typeof v === 'object' && 'lte' in v) {
+                return (i[k] as number) <= (v as { lte: number }).lte;
+              }
+              if (v && typeof v === 'object' && 'lt' in v) {
+                return (i[k] as number) < (v as { lt: number }).lt;
+              }
+              return i[k] === v;
+            });
+            if (match) {
+              count++;
+              return { ...i, ...args.data, updatedAt: new Date() } as MockItem;
+            }
+            return i;
+          });
+          return Promise.resolve({ count });
         }
-        return i;
-      });
-      return Promise.resolve({ count });
-    }),
-    upsert: vi.fn().mockImplementation((args: { where: Record<string, unknown>; create: Record<string, unknown>; update: Record<string, unknown> }) => {
-      const index = items.findIndex(i => {
-        const where = args.where;
-        if (where?.['runId_nodeId']) {
-          const composite = where['runId_nodeId'] as { runId: string; nodeId: string };
-          return i['runId'] === composite.runId && i['nodeId'] === composite.nodeId;
+      ),
+    upsert: vi
+      .fn()
+      .mockImplementation(
+        (args: {
+          where: Record<string, unknown>;
+          create: Record<string, unknown>;
+          update: Record<string, unknown>;
+        }) => {
+          const index = items.findIndex((i) => {
+            const where = args.where;
+            if (where?.['runId_nodeId']) {
+              const composite = where['runId_nodeId'] as { runId: string; nodeId: string };
+              return i['runId'] === composite.runId && i['nodeId'] === composite.nodeId;
+            }
+            return Object.entries(args.where).every(([k, v]) => i[k] === v);
+          });
+          if (index === -1) {
+            const newItem: MockItem = {
+              id: 'mock-id-' + Math.random().toString(36).slice(2, 9),
+              createdAt: new Date(),
+              updatedAt: new Date(),
+              ...args.create,
+            };
+            items.push(newItem);
+            return Promise.resolve(newItem);
+          }
+          items[index] = { ...items[index], ...args.update, updatedAt: new Date() } as MockItem;
+          return Promise.resolve(items[index]);
         }
-        return Object.entries(args.where).every(([k, v]) => i[k] === v);
-      });
-      if (index === -1) {
-        const newItem: MockItem = {
-          id: 'mock-id-' + Math.random().toString(36).slice(2, 9),
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          ...args.create,
-        };
-        items.push(newItem);
-        return Promise.resolve(newItem);
-      }
-      items[index] = { ...items[index], ...args.update, updatedAt: new Date() } as MockItem;
-      return Promise.resolve(items[index]);
-    }),
+      ),
     count: vi.fn().mockImplementation((args?: { where?: Record<string, unknown> }) => {
       if (!args?.where) return Promise.resolve(items.length);
-      const filtered = items.filter(i => Object.entries(args.where!).every(([k, v]) => i[k] === v));
+      const filtered = items.filter((i) =>
+        Object.entries(args.where!).every(([k, v]) => i[k] === v)
+      );
       return Promise.resolve(filtered.length);
     }),
     aggregate: vi.fn(),
@@ -241,16 +269,21 @@ const prismaMock = {
     Object.values(prismaMock).forEach((model: unknown) => {
       if (model && typeof model === 'object') {
         Object.values(model).forEach((method: unknown) => {
-          if (method && typeof method === 'object' && 'mockClear' in method && typeof method.mockClear === 'function') {
+          if (
+            method &&
+            typeof method === 'object' &&
+            'mockClear' in method &&
+            typeof method.mockClear === 'function'
+          ) {
             (method as { mockClear: () => void }).mockClear();
           }
         });
       }
     });
-    (prismaMock.$executeRaw).mockClear();
-    (prismaMock.$executeRawUnsafe).mockClear();
-    (prismaMock.$queryRaw).mockClear();
-    (prismaMock.$queryRawUnsafe).mockClear();
+    prismaMock.$executeRaw.mockClear();
+    prismaMock.$executeRawUnsafe.mockClear();
+    prismaMock.$queryRaw.mockClear();
+    prismaMock.$queryRawUnsafe.mockClear();
   },
 };
 

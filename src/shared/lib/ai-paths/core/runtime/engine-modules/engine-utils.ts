@@ -1,14 +1,6 @@
-import type {
-  AiNode,
-  Edge,
-  RuntimeHistoryLink,
-} from '@/shared/contracts/ai-paths';
+import type { AiNode, Edge, RuntimeHistoryLink } from '@/shared/contracts/ai-paths';
 import type { RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
-import {
-  getNodeInputPortContract,
-  coerceInput,
-  normalizePortName,
-} from '../../utils';
+import { getNodeInputPortContract, coerceInput, normalizePortName } from '../../utils';
 
 type NodeInputReadiness = {
   ready: boolean;
@@ -76,7 +68,10 @@ export const resolveEdgeToPort = (edge: Edge): string | null =>
 
 export const checkContextMatchesSimulation = (context: Record<string, unknown>): boolean => {
   const contextSource = context['contextSource'];
-  if (typeof contextSource === 'string' && contextSource.trim().toLowerCase().startsWith('simulation')) {
+  if (
+    typeof contextSource === 'string' &&
+    contextSource.trim().toLowerCase().startsWith('simulation')
+  ) {
     return true;
   }
   const source = context['source'];
@@ -163,7 +158,7 @@ export const buildInputLinks = (
       const fromNodeId = resolveEdgeFromNodeId(edge);
       if (!fromNodeId) return null;
       const toPort = resolveEdgeToPort(edge);
-      const isPresent = toPort ? (nodeInputs)[toPort] !== undefined : hasInputs;
+      const isPresent = toPort ? nodeInputs[toPort] !== undefined : hasInputs;
       if (!isPresent) return null;
       const fromNode = nodeById.get(fromNodeId);
       return {
@@ -190,7 +185,7 @@ export const buildOutputLinks = (
       const toNodeId = resolveEdgeToNodeId(edge);
       if (!toNodeId) return null;
       const fromPort = resolveEdgeFromPort(edge);
-      const isPresent = fromPort ? (nodeOutputs)[fromPort] !== undefined : hasOutputs;
+      const isPresent = fromPort ? nodeOutputs[fromPort] !== undefined : hasOutputs;
       if (!isPresent) return null;
       const toNode = nodeById.get(toNodeId);
       return {
@@ -263,7 +258,7 @@ export const buildWaitingOnDetails = (
     const status = nodeStatusGetter(sourceNodeId);
     const sourceOutputs = nodeOutputsGetter(sourceNodeId);
     const rawWaitingOnPorts = sourceOutputs['waitingOnPorts'];
-    
+
     detail.upstream.push({
       nodeId: sourceNodeId,
       nodeType: sourceNode?.type ?? null,
@@ -275,11 +270,11 @@ export const buildWaitingOnDetails = (
         : {}),
       ...(Array.isArray(rawWaitingOnPorts)
         ? {
-          waitingOnPorts: rawWaitingOnPorts
-            .filter((p: unknown): p is string => typeof p === 'string')
-            .map((p: string): string => p.trim())
-            .filter((p: string): boolean => p.length > 0),
-        }
+            waitingOnPorts: rawWaitingOnPorts
+              .filter((p: unknown): p is string => typeof p === 'string')
+              .map((p: string): string => p.trim())
+              .filter((p: string): boolean => p.length > 0),
+          }
         : {}),
     });
   });
@@ -298,8 +293,15 @@ export const evaluateInputReadiness = (
   nodeStatusGetter: (id: string) => string,
   nodeOutputsGetter: (id: string) => Record<string, unknown>
 ): NodeInputReadiness => {
-  const buildWaitingDetails = (ports: Set<string>) => 
-    buildWaitingOnDetails(node, ports, incomingEdges, nodeById, nodeStatusGetter, nodeOutputsGetter);
+  const buildWaitingDetails = (ports: Set<string>) =>
+    buildWaitingOnDetails(
+      node,
+      ports,
+      incomingEdges,
+      nodeById,
+      nodeStatusGetter,
+      nodeOutputsGetter
+    );
 
   if (incomingEdges.length === 0) {
     const requiredPorts = resolveConfiguredRequiredInputPorts(node, new Set<string>());
@@ -355,9 +357,7 @@ export const evaluateInputReadiness = (
 
   const explicitRequiredPorts = resolveConfiguredRequiredInputPorts(node, connectedPorts);
   const requiredPorts =
-    explicitRequiredPorts.length > 0
-      ? explicitRequiredPorts
-      : Array.from(connectedPorts);
+    explicitRequiredPorts.length > 0 ? explicitRequiredPorts : Array.from(connectedPorts);
   const requiredPortSet = new Set(requiredPorts);
   const optionalPorts = Array.from(connectedPorts).filter(
     (port: string): boolean => !requiredPortSet.has(port)
@@ -386,7 +386,7 @@ export const evaluateInputReadiness = (
 
   if (node.type !== 'database') {
     requiredPorts.forEach((port: string): void => {
-      if ((rawInputs)[port] === undefined) {
+      if (rawInputs[port] === undefined) {
         waitingOnPorts.add(port);
       }
     });
@@ -396,19 +396,18 @@ export const evaluateInputReadiness = (
   const dbConfig = node.config?.database ?? { operation: 'query' };
   const operation = dbConfig.operation ?? 'query';
   const hasAnyValue = (ports: string[]): boolean =>
-    ports.some((port: string) =>
-      hasMeaningfulValue(coerceInput((rawInputs)[port]))
-    );
+    ports.some((port: string) => hasMeaningfulValue(coerceInput(rawInputs[port])));
   const anyConnected = (ports: string[]): boolean =>
     ports.some((port: string) => connectedPorts.has(port));
   const allConnectedHaveValues = (ports: string[]): boolean =>
-    ports.every((port: string) =>
-      !connectedPorts.has(port) || hasMeaningfulValue(coerceInput((rawInputs)[port]))
+    ports.every(
+      (port: string) =>
+        !connectedPorts.has(port) || hasMeaningfulValue(coerceInput(rawInputs[port]))
     );
   const markWaitingPorts = (ports: string[], connectedOnly: boolean): void => {
     ports.forEach((port: string): void => {
       if (connectedOnly && !connectedPorts.has(port)) return;
-      if (!hasMeaningfulValue(coerceInput((rawInputs)[port]))) {
+      if (!hasMeaningfulValue(coerceInput(rawInputs[port]))) {
         waitingOnPorts.add(port);
       }
     });
@@ -458,7 +457,7 @@ export const evaluateInputReadiness = (
     const sourcePorts = mappings
       .map((m) => m?.sourcePort)
       .filter((p): p is string => typeof p === 'string' && p.trim().length > 0);
-    
+
     const allPayloadPorts = [...payloadPorts, ...sourcePorts];
     if (anyConnected(allPayloadPorts) && !hasAnyValue(allPayloadPorts)) {
       markWaitingPorts(allPayloadPorts, true);

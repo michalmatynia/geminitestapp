@@ -8,7 +8,12 @@ import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { Button, Label, Textarea, SelectSimple, useToast, Card, EmptyState } from '@/shared/ui';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
-import { IMAGE_STUDIO_UI_ACTIVE_KEY, IMAGE_STUDIO_UI_PRESETS_KEY, parseImageStudioUiPresets, type ImageStudioUiPreset } from '../utils/ui-presets';
+import {
+  IMAGE_STUDIO_UI_ACTIVE_KEY,
+  IMAGE_STUDIO_UI_PRESETS_KEY,
+  parseImageStudioUiPresets,
+  type ImageStudioUiPreset,
+} from '@/shared/lib/ai/image-studio/utils/ui-presets';
 
 export function AdminImageStudioUiPresetsPage(): React.JSX.Element {
   const { toast } = useToast();
@@ -36,7 +41,9 @@ export function AdminImageStudioUiPresetsPage(): React.JSX.Element {
         });
         toast('Active UI preset updated.', { variant: 'success' });
       } catch (error) {
-        logClientError(error, { context: { source: 'AdminImageStudioUiPresetsPage', action: 'setActive' } });
+        logClientError(error, {
+          context: { source: 'AdminImageStudioUiPresetsPage', action: 'setActive' },
+        });
         toast('Failed to update active UI preset.', { variant: 'error' });
       }
     },
@@ -58,7 +65,9 @@ export function AdminImageStudioUiPresetsPage(): React.JSX.Element {
         });
         toast('UI preset deleted.', { variant: 'success' });
       } catch (error) {
-        logClientError(error, { context: { source: 'AdminImageStudioUiPresetsPage', action: 'deletePreset' } });
+        logClientError(error, {
+          context: { source: 'AdminImageStudioUiPresetsPage', action: 'deletePreset' },
+        });
         toast('Failed to delete UI preset.', { variant: 'error' });
       }
     },
@@ -66,12 +75,13 @@ export function AdminImageStudioUiPresetsPage(): React.JSX.Element {
   );
 
   const empty = presets.length === 0;
-  const activePreset = presets.find((preset: ImageStudioUiPreset) => preset.id === activeId) ?? null;
+  const activePreset =
+    presets.find((preset: ImageStudioUiPreset) => preset.id === activeId) ?? null;
   const activePresetOptions = useMemo(
-    () => ([
+    () => [
       { value: '__none__', label: 'Select an active preset' },
       ...presets.map((preset: ImageStudioUiPreset) => ({ value: preset.id, label: preset.name })),
-    ]),
+    ],
     [presets]
   );
 
@@ -95,7 +105,8 @@ export function AdminImageStudioUiPresetsPage(): React.JSX.Element {
       <Card variant='subtle' padding='lg' className='border-border/60 bg-card/40 space-y-4'>
         <div className='space-y-1'>
           <Label className='text-xs text-gray-400'>Active UI preset</Label>
-          <SelectSimple size='sm'
+          <SelectSimple
+            size='sm'
             value={activeId || '__none__'}
             onValueChange={(value: string) => {
               if (value === '__none__') return;
@@ -124,7 +135,12 @@ export function AdminImageStudioUiPresetsPage(): React.JSX.Element {
         ) : (
           <div className='grid gap-4 md:grid-cols-2'>
             {presets.map((preset: ImageStudioUiPreset) => (
-              <Card key={preset.id} variant='subtle-compact' padding='sm' className='border-border bg-card/50'>
+              <Card
+                key={preset.id}
+                variant='subtle-compact'
+                padding='sm'
+                className='border-border bg-card/50'
+              >
                 <div className='flex items-start justify-between gap-3'>
                   <div>
                     <div className='text-sm text-gray-100'>{preset.name}</div>
@@ -137,20 +153,30 @@ export function AdminImageStudioUiPresetsPage(): React.JSX.Element {
                     <div className='text-[11px] text-gray-500'>Updated: {preset.updatedAt}</div>
                   </div>
                   <div className='flex flex-col gap-2'>
-                    <Button size='xs'
+                    <Button
+                      size='xs'
                       variant={activeId === preset.id ? 'default' : 'outline'}
                       onClick={() => void handleSetActive(preset.id)}
                     >
                       {activeId === preset.id ? 'Active' : 'Set active'}
                     </Button>
-                    <Button size='sm' variant='outline' onClick={() => void handleDelete(preset.id)}>
+                    <Button
+                      size='sm'
+                      variant='outline'
+                      onClick={() => void handleDelete(preset.id)}
+                    >
                       Delete
                     </Button>
                   </div>
                 </div>
-                <Card variant='subtle-compact' padding='sm' className='mt-3 border-border bg-card/60'>
+                <Card
+                  variant='subtle-compact'
+                  padding='sm'
+                  className='mt-3 border-border bg-card/60'
+                >
                   <div className='text-[11px] text-gray-400'>Param UI overrides</div>
-                  <Textarea size='sm'
+                  <Textarea
+                    size='sm'
                     readOnly
                     className='mt-1 h-20 font-mono text-[10px]'
                     value={JSON.stringify(preset.paramUiOverrides ?? {}, null, 2)}

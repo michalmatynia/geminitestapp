@@ -37,7 +37,10 @@ const ID_PREFIX_BY_FILE: Array<{ prefix: string; test: (file: string) => boolean
       file.endsWith('/validator-settings/useValidatorSettingsController.ts'),
   },
   { prefix: 'scope', test: (file) => file.endsWith('/admin/pages/validator-scope.ts') },
-  { prefix: 'ui', test: (file) => file.includes('/components/settings/') || file.includes('/admin/pages/Admin') },
+  {
+    prefix: 'ui',
+    test: (file) => file.includes('/components/settings/') || file.includes('/admin/pages/Admin'),
+  },
 ];
 
 const resolveIdPrefix = (file: string): string => {
@@ -78,9 +81,7 @@ const collectFromFile = (workspaceRoot: string, file: string): ExportedCallable[
       continue;
     }
 
-    const constFnMatch = line.match(
-      /^export const\s+([A-Za-z0-9_]+)\s*=\s*(?:async\s*)?\(/,
-    );
+    const constFnMatch = line.match(/^export const\s+([A-Za-z0-9_]+)\s*=\s*(?:async\s*)?\(/);
     if (constFnMatch?.[1]) {
       const symbol = constFnMatch[1];
       const exportIndex = content.indexOf(`export const ${symbol}`);
@@ -98,8 +99,6 @@ const collectFromFile = (workspaceRoot: string, file: string): ExportedCallable[
   return entries;
 };
 
-export const collectValidatorExportedCallables = (
-  workspaceRoot: string,
-): ExportedCallable[] => {
+export const collectValidatorExportedCallables = (workspaceRoot: string): ExportedCallable[] => {
   return TARGET_FILES.flatMap((file: string) => collectFromFile(workspaceRoot, file));
 };

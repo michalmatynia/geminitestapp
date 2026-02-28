@@ -1,13 +1,16 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
-import { requiresHumanApproval, evaluateApprovalGateWithLLM } from '@/features/ai/agent-runtime/audit/gate';
+import {
+  requiresHumanApproval,
+  evaluateApprovalGateWithLLM,
+} from '@/features/ai/agent-runtime/audit/gate';
 
 describe('Agent Runtime - Audit Gate', () => {
   describe('requiresHumanApproval (Heuristic)', () => {
     it('should return true for sensitive keywords', () => {
       const step = { title: 'Enter login credentials', tool: 'playwright' as const } as any;
       expect(requiresHumanApproval(step, '')).toBe(true);
-      
+
       const step2 = { title: 'Complete checkout', tool: 'playwright' as const } as any;
       expect(requiresHumanApproval(step2, '')).toBe(true);
 
@@ -18,7 +21,7 @@ describe('Agent Runtime - Audit Gate', () => {
     it('should return false for safe keywords', () => {
       const step = { title: 'Browse products', tool: 'playwright' as const } as any;
       expect(requiresHumanApproval(step, '')).toBe(false);
-      
+
       const step2 = { title: 'Read news', tool: 'playwright' as const } as any;
       expect(requiresHumanApproval(step2, '')).toBe(false);
     });

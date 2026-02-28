@@ -7,11 +7,11 @@ import {
   useImportList,
   useImportRun,
 } from '@/features/data-import-export/hooks/useImportQueries';
-import type { 
-  InventoryOption, 
-  ImportListItem, 
+import type {
+  InventoryOption,
+  ImportListItem,
   ImportRunDetail,
-  WarehouseOption
+  WarehouseOption,
 } from '@/shared/contracts/data-import-export';
 
 export function useImportExportData({
@@ -104,21 +104,27 @@ export function useImportExportData({
       }
     }
     return undefined;
-  }, [inventories, inventoryId, exportInventoryId, hasInitializedInventories, setInventoryId, setExportInventoryId]);
+  }, [
+    inventories,
+    inventoryId,
+    exportInventoryId,
+    hasInitializedInventories,
+    setInventoryId,
+    setExportInventoryId,
+  ]);
 
   const warehousesQuery = useWarehouses(
     exportInventoryId,
     selectedBaseConnectionId,
     includeAllWarehouses,
-    warehousesEnabled &&
-      isBaseConnected &&
-      !!selectedBaseConnectionId &&
-      !!exportInventoryId
+    warehousesEnabled && isBaseConnected && !!selectedBaseConnectionId && !!exportInventoryId
   );
-  const warehousesData = warehousesQuery.data as { warehouses?: WarehouseOption[]; allWarehouses?: WarehouseOption[] } | undefined;
+  const warehousesData = warehousesQuery.data as
+    | { warehouses?: WarehouseOption[]; allWarehouses?: WarehouseOption[] }
+    | undefined;
   const isFetchingWarehouses = warehousesQuery.isFetching;
   const refetchWarehouses = warehousesQuery.refetch;
-  
+
   const warehouses: WarehouseOption[] = warehousesData?.warehouses ?? [];
   const allWarehouses: WarehouseOption[] = warehousesData?.allWarehouses ?? [];
 
@@ -136,21 +142,26 @@ export function useImportExportData({
     },
     importListEnabled && isBaseConnected && !!inventoryId
   );
-  const importListData = importListQuery.data as {
-    products?: ImportListItem[];
-    total?: number;
-    filtered?: number;
-    available?: number;
-    existing?: number;
-    skuDuplicates?: number;
-    page?: number;
-    pageSize?: number;
-    totalPages?: number;
-  } | undefined;
+  const importListData = importListQuery.data as
+    | {
+        products?: ImportListItem[];
+        total?: number;
+        filtered?: number;
+        available?: number;
+        existing?: number;
+        skuDuplicates?: number;
+        page?: number;
+        pageSize?: number;
+        totalPages?: number;
+      }
+    | undefined;
   const loadingImportList = importListQuery.isFetching;
   const refetchImportList = importListQuery.refetch;
-  
-  const importList: ImportListItem[] = useMemo(() => importListData?.products ?? [], [importListData]);
+
+  const importList: ImportListItem[] = useMemo(
+    () => importListData?.products ?? [],
+    [importListData]
+  );
   const importListStats = useMemo(() => {
     if (!importListData) return null;
     return {
@@ -165,18 +176,15 @@ export function useImportExportData({
     };
   }, [importListData, importListPageSize]);
 
-  const activeImportRunQuery = useImportRun(
-    activeImportRunId,
-    {
-      enabled: Boolean(activeImportRunId),
-      refetchInterval: pollImportRun ? 2000 : false,
-      page: 1,
-      pageSize: pollImportRun ? 250 : 1000,
-      includeItems: true,
-    }
-  );
+  const activeImportRunQuery = useImportRun(activeImportRunId, {
+    enabled: Boolean(activeImportRunId),
+    refetchInterval: pollImportRun ? 2000 : false,
+    page: 1,
+    pageSize: pollImportRun ? 250 : 1000,
+    includeItems: true,
+  });
   const activeImportRun = useMemo<ImportRunDetail | null>(() => {
-    return (activeImportRunQuery.data) ?? null;
+    return activeImportRunQuery.data ?? null;
   }, [activeImportRunQuery.data]);
   const loadingImportRun = activeImportRunQuery.isFetching && !!activeImportRunId;
 
@@ -184,7 +192,10 @@ export function useImportExportData({
     const status = activeImportRun?.run.status;
     if (!status) return;
     const isTerminal =
-      status === 'completed' || status === 'partial_success' || status === 'failed' || status === 'canceled';
+      status === 'completed' ||
+      status === 'partial_success' ||
+      status === 'failed' ||
+      status === 'canceled';
     if (isTerminal) {
       setPollImportRun(false);
     }

@@ -42,22 +42,19 @@ export function CaseResolverCaseOverviewWorkspace(): React.JSX.Element {
     parentCaseOptions,
     onUpdateActiveCase,
   } = useCaseResolverPageContext();
-  const activeCaseFile = React.useMemo(
-    (): (typeof activeFile) | null => {
-      if (activeFile?.fileType === 'case') return activeFile;
-      if (!activeCaseId) return null;
-      return (
-        workspace.files.find(
-          (file): boolean => file.id === activeCaseId && file.fileType === 'case'
-        ) ?? null
-      );
-    },
-    [activeCaseId, activeFile, workspace.files]
-  );
+  const activeCaseFile = React.useMemo((): typeof activeFile | null => {
+    if (activeFile?.fileType === 'case') return activeFile;
+    if (!activeCaseId) return null;
+    return (
+      workspace.files.find(
+        (file): boolean => file.id === activeCaseId && file.fileType === 'case'
+      ) ?? null
+    );
+  }, [activeCaseId, activeFile, workspace.files]);
 
   const [caseNameDraft, setCaseNameDraft] = React.useState(activeCaseFile?.name ?? '');
   const [happeningDateDraft, setHappeningDateDraft] = React.useState(
-    activeCaseFile?.happeningDate ?? '',
+    activeCaseFile?.happeningDate ?? ''
   );
   const [isRelationsVisible, setIsRelationsVisible] = React.useState(false);
 
@@ -91,7 +88,11 @@ export function CaseResolverCaseOverviewWorkspace(): React.JSX.Element {
 
   if (!activeCaseFile) {
     return (
-      <Card variant='subtle' padding='lg' className='flex flex-1 items-center justify-center border-dashed'>
+      <Card
+        variant='subtle'
+        padding='lg'
+        className='flex flex-1 items-center justify-center border-dashed'
+      >
         <EmptyState
           icon={<Network className='size-12 text-gray-600' />}
           title='No case context'
@@ -115,13 +116,17 @@ export function CaseResolverCaseOverviewWorkspace(): React.JSX.Element {
   );
 
   return (
-    <div className={`grid h-full min-h-0 gap-3 ${isRelationsVisible ? 'xl:grid-cols-[380px_minmax(0,1fr)]' : 'grid-cols-1'}`}>
-      <Card variant='subtle' padding='md' className='min-h-0 overflow-auto border-border/60 bg-card/25'>
+    <div
+      className={`grid h-full min-h-0 gap-3 ${isRelationsVisible ? 'xl:grid-cols-[380px_minmax(0,1fr)]' : 'grid-cols-1'}`}
+    >
+      <Card
+        variant='subtle'
+        padding='md'
+        className='min-h-0 overflow-auto border-border/60 bg-card/25'
+      >
         <div className='space-y-3'>
           <div className='flex items-center justify-between gap-2'>
-            <div className='text-sm font-semibold text-gray-100'>
-              Case-specific options
-            </div>
+            <div className='text-sm font-semibold text-gray-100'>Case-specific options</div>
             <div className='flex items-center gap-2'>
               {isCaseLocked ? (
                 <Badge variant='outline' className='border-amber-500/40 text-amber-200'>

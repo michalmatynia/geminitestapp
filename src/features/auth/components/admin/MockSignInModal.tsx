@@ -3,7 +3,10 @@
 import React, { useMemo } from 'react';
 
 import { useToast } from '@/shared/ui';
-import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
+import {
+  SettingsPanelBuilder,
+  type SettingsField,
+} from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import { useUsers } from '../../context/UsersContext';
 
@@ -27,11 +30,17 @@ export function MockSignInModal(): React.JSX.Element | null {
   const isSaving = mutations.mockSignIn.isPending;
   const onClose = () => setMockOpen(false);
 
-  const values = useMemo(() => ({ email: mockEmail, password: mockPassword }), [mockEmail, mockPassword]);
+  const values = useMemo(
+    () => ({ email: mockEmail, password: mockPassword }),
+    [mockEmail, mockPassword]
+  );
 
   const onSave = async () => {
     try {
-      const res = await mutations.mockSignIn.mutateAsync({ email: mockEmail, password: mockPassword });
+      const res = await mutations.mockSignIn.mutateAsync({
+        email: mockEmail,
+        password: mockPassword,
+      });
       if (res.ok) toast('Credentials valid', { variant: 'success' });
       else toast('Invalid credentials', { variant: 'error' });
     } catch (_e) {
@@ -39,20 +48,23 @@ export function MockSignInModal(): React.JSX.Element | null {
     }
   };
 
-  const fields: SettingsField<MockSignInFormState>[] = useMemo(() => [
-    {
-      key: 'email',
-      label: 'Email',
-      type: 'email',
-      required: true,
-    },
-    {
-      key: 'password',
-      label: 'Password',
-      type: 'password',
-      required: true,
-    }
-  ], []);
+  const fields: SettingsField<MockSignInFormState>[] = useMemo(
+    () => [
+      {
+        key: 'email',
+        label: 'Email',
+        type: 'email',
+        required: true,
+      },
+      {
+        key: 'password',
+        label: 'Password',
+        type: 'password',
+        required: true,
+      },
+    ],
+    []
+  );
 
   const handleChange = (vals: Partial<MockSignInFormState>) => {
     if (vals.email !== undefined) setMockEmail(vals.email);

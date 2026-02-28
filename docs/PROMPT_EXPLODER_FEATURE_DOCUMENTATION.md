@@ -1,18 +1,22 @@
 # Prompt Exploder Feature Documentation
 
 ## 1. Overview
+
 Prompt Exploder is an admin workflow for turning large prompt text into structured, editable segments, validating and improving runtime parsing quality, then reassembling and sending the updated prompt back to upstream tools.
 
 Primary routes:
+
 - `/admin/prompt-exploder`
 - `/admin/prompt-exploder/projects`
 - `/admin/prompt-exploder/settings`
 
 Primary in-app tabs (Prompt Exploder main page):
+
 - `Workspace`
 - `Docs`
 
 ## 2. Core Workflow
+
 1. Paste or load source prompt in **Source Prompt**.
 2. Run **Explode Prompt** to parse into typed segments.
 3. Refine segment structure, list items, subsections, parameter controls, and inclusion.
@@ -26,6 +30,7 @@ Primary in-app tabs (Prompt Exploder main page):
 ## 3. Feature Inventory
 
 ### Main Page (`/admin/prompt-exploder`)
+
 - **Header Actions**
   - Reload incoming draft payload from bridge context.
   - Open settings.
@@ -78,17 +83,20 @@ Primary in-app tabs (Prompt Exploder main page):
   - Apply/dismiss low-confidence suggestions.
 
 ### Projects Page (`/admin/prompt-exploder/projects`)
+
 - Create/edit/delete projects.
 - Open project directly in Prompt Exploder.
 - Table view for prompt preview, segment counts, timestamps.
 
 ### Settings Page (`/admin/prompt-exploder/settings`)
+
 - AI operation mode/provider/model settings.
 - Runtime defaults (rule stack/profile + benchmark defaults).
 - Learning defaults and auto-learning controls.
 - Save and reload behavior for persisted Prompt Exploder settings key.
 
 ## 4. Integrations
+
 - **Image Studio bridge**
   - Incoming draft prompt handoff.
   - Apply-to-studio handoff for reassembled prompt.
@@ -109,6 +117,7 @@ Primary in-app tabs (Prompt Exploder main page):
   - Supports Prompt Exploder-specific and Case Resolver Prompt Exploder stacks.
 
 ## 5. Data and Settings Keys
+
 - Prompt Exploder settings: `prompt_exploder_settings`
 - Prompt Exploder project library: `image_studio_prompt_exploder_library`
 - Bridge keys:
@@ -116,6 +125,7 @@ Primary in-app tabs (Prompt Exploder main page):
   - `prompt_exploder:apply_to_studio_prompt`
 
 ## 6. APIs and Observability
+
 - Runtime health endpoint:
   - `GET /api/prompt-runtime/health`
   - Optional reset: `?reset=true`
@@ -124,6 +134,7 @@ Primary in-app tabs (Prompt Exploder main page):
   - `/api/image-studio/prompt-extract`
 
 ## 7. Docs-Fed Tooltip System
+
 - Feature switch: **Docs Tooltips**.
 - Available on:
   - `/admin/prompt-exploder`
@@ -143,6 +154,7 @@ Primary in-app tabs (Prompt Exploder main page):
   - `src/features/prompt-exploder/components/PromptExploderDocsTab.tsx`
 
 ## 8. Troubleshooting
+
 - No segments after explode:
   - Confirm source prompt is non-empty and runtime stack has active rules.
 - Unexpected segmentation:
@@ -155,6 +167,7 @@ Primary in-app tabs (Prompt Exploder main page):
   - Inspect `/api/prompt-runtime/health`, then reset caches if necessary (`reset=true`).
 
 ## 9. Maintenance Rules
+
 - Any new Prompt Exploder action/control must:
   - Be documented in this file and in tooltip registry.
   - Have a tooltip alias or `data-doc-id` mapping.

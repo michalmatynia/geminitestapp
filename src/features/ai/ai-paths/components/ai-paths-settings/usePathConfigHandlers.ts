@@ -29,8 +29,7 @@ export interface PathConfigHandlers {
 export function usePathConfigHandlers(): PathConfigHandlers {
   const { toast } = useToast();
   const { activePathId, isPathLocked } = useGraphState();
-  const { setExecutionMode, setFlowIntensity, setRunMode, setPathConfigs } =
-    useGraphActions();
+  const { setExecutionMode, setFlowIntensity, setRunMode, setPathConfigs } = useGraphActions();
 
   const handleExecutionModeChange = useCallback(
     (mode: PathExecutionMode): void => {
@@ -45,13 +44,10 @@ export function usePathConfigHandlers(): PathConfigHandlers {
         return;
       }
       setExecutionMode(mode);
-      setPathConfigs(
-        (prev: Record<string, PathConfig>): Record<string, PathConfig> => {
-          const base =
-            prev[activePathId] ?? createDefaultPathConfig(activePathId);
-          return { ...prev, [activePathId]: { ...base, executionMode: mode } };
-        }
-      );
+      setPathConfigs((prev: Record<string, PathConfig>): Record<string, PathConfig> => {
+        const base = prev[activePathId] ?? createDefaultPathConfig(activePathId);
+        return { ...prev, [activePathId]: { ...base, executionMode: mode } };
+      });
     },
     [activePathId, isPathLocked, setExecutionMode, setPathConfigs, toast]
   );
@@ -69,16 +65,13 @@ export function usePathConfigHandlers(): PathConfigHandlers {
         return;
       }
       setFlowIntensity(intensity);
-      setPathConfigs(
-        (prev: Record<string, PathConfig>): Record<string, PathConfig> => {
-          const base =
-            prev[activePathId] ?? createDefaultPathConfig(activePathId);
-          return {
-            ...prev,
-            [activePathId]: { ...base, flowIntensity: intensity },
-          };
-        }
-      );
+      setPathConfigs((prev: Record<string, PathConfig>): Record<string, PathConfig> => {
+        const base = prev[activePathId] ?? createDefaultPathConfig(activePathId);
+        return {
+          ...prev,
+          [activePathId]: { ...base, flowIntensity: intensity },
+        };
+      });
     },
     [activePathId, isPathLocked, setFlowIntensity, setPathConfigs, toast]
   );
@@ -96,13 +89,10 @@ export function usePathConfigHandlers(): PathConfigHandlers {
         return;
       }
       setRunMode(mode);
-      setPathConfigs(
-        (prev: Record<string, PathConfig>): Record<string, PathConfig> => {
-          const base =
-            prev[activePathId] ?? createDefaultPathConfig(activePathId);
-          return { ...prev, [activePathId]: { ...base, runMode: mode } };
-        }
-      );
+      setPathConfigs((prev: Record<string, PathConfig>): Record<string, PathConfig> => {
+        const base = prev[activePathId] ?? createDefaultPathConfig(activePathId);
+        return { ...prev, [activePathId]: { ...base, runMode: mode } };
+      });
     },
     [activePathId, isPathLocked, setRunMode, setPathConfigs, toast]
   );

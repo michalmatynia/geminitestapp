@@ -56,14 +56,12 @@ describe('shared outbound URL policy', () => {
   });
 
   it('blocks redirect chains to disallowed hosts before second network call', async () => {
-    const fetchMock = vi
-      .fn<typeof fetch>()
-      .mockResolvedValueOnce(
-        new Response(null, {
-          status: 302,
-          headers: { location: 'http://169.254.169.254/latest/meta-data/' },
-        })
-      );
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValueOnce(
+      new Response(null, {
+        status: 302,
+        headers: { location: 'http://169.254.169.254/latest/meta-data/' },
+      })
+    );
 
     await expect(
       fetchWithOutboundUrlPolicy('https://example.test/start', {

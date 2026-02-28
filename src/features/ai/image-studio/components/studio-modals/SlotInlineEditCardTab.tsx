@@ -1,4 +1,4 @@
-import { } from 'lucide-react';
+import {} from 'lucide-react';
 import React from 'react';
 
 import ProductImageManager from '@/features/products/components/ProductImageManager';
@@ -7,7 +7,7 @@ import { Button, Input, Label, TabsContent, LoadingState } from '@/shared/ui';
 import { Hint } from '@/shared/ui';
 
 import { InlineImagePreviewCanvas } from './InlineImagePreviewCanvas';
-import { 
+import {
   isCardImageRemovalLocked,
   formatBytes,
   formatDateTime,
@@ -41,10 +41,11 @@ export function SlotInlineEditCardTab(): React.JSX.Element {
     onRefreshLinkedRuns,
   } = useStudioInlineEdit();
 
-  const linkedRunsErrorMessage = linkedRunsQuery.error instanceof Error
-    ? linkedRunsQuery.error.message
-    : 'Failed to load linked variants.';
-  
+  const linkedRunsErrorMessage =
+    linkedRunsQuery.error instanceof Error
+      ? linkedRunsQuery.error.message
+      : 'Failed to load linked variants.';
+
   const linkedRunsIsError = linkedRunsQuery.isError;
   const linkedRunsIsFetching = linkedRunsQuery.isFetching;
   const linkedRunsIsLoading = linkedRunsQuery.isLoading;
@@ -59,10 +60,10 @@ export function SlotInlineEditCardTab(): React.JSX.Element {
       <div className='space-y-3 rounded-lg border border-border/60 bg-card/35 p-3'>
         <div className='flex flex-wrap items-center justify-between gap-2'>
           <div className='space-y-0.5'>
-            <Hint size='xxs' uppercase className='text-gray-500'>Image Slot Preview</Hint>
-            <div className='text-xs text-gray-200'>
-              Source: {inlinePreviewSource.sourceType}
-            </div>
+            <Hint size='xxs' uppercase className='text-gray-500'>
+              Image Slot Preview
+            </Hint>
+            <div className='text-xs text-gray-200'>Source: {inlinePreviewSource.sourceType}</div>
           </div>
         </div>
 
@@ -89,10 +90,12 @@ export function SlotInlineEditCardTab(): React.JSX.Element {
             <span className='text-gray-500'>Mime type:</span> {inlinePreviewMimeType}
           </div>
           <div>
-            <span className='text-gray-500'>Filename:</span> {selectedSlot?.imageFile?.filename || 'n/a'}
+            <span className='text-gray-500'>Filename:</span>{' '}
+            {selectedSlot?.imageFile?.filename || 'n/a'}
           </div>
           <div>
-            <span className='text-gray-500'>File size:</span> {formatBytes(selectedSlot?.imageFile?.size ?? inlinePreviewBase64Bytes ?? null)}
+            <span className='text-gray-500'>File size:</span>{' '}
+            {formatBytes(selectedSlot?.imageFile?.size ?? inlinePreviewBase64Bytes ?? null)}
           </div>
           {slotBase64Draft.trim() ? (
             <div className='sm:col-span-2'>
@@ -113,14 +116,15 @@ export function SlotInlineEditCardTab(): React.JSX.Element {
             </span>
           </div>
           <div className='sm:col-span-2'>
-            <span className='text-gray-500'>Tags:</span>{' '}
-            {'n/a'}
+            <span className='text-gray-500'>Tags:</span> {'n/a'}
           </div>
           <div>
-            <span className='text-gray-500'>Created:</span> {formatDateTime(selectedSlot?.imageFile?.createdAt)}
+            <span className='text-gray-500'>Created:</span>{' '}
+            {formatDateTime(selectedSlot?.imageFile?.createdAt)}
           </div>
           <div>
-            <span className='text-gray-500'>Updated:</span> {formatDateTime(selectedSlot?.imageFile?.updatedAt)}
+            <span className='text-gray-500'>Updated:</span>{' '}
+            {formatDateTime(selectedSlot?.imageFile?.updatedAt)}
           </div>
         </div>
       </div>
@@ -128,17 +132,23 @@ export function SlotInlineEditCardTab(): React.JSX.Element {
       <div className='grid gap-3 sm:grid-cols-2'>
         <div className='space-y-1'>
           <Label className='text-xs text-gray-400'>Card Name</Label>
-          <Input size='sm'
+          <Input
+            size='sm'
             value={slotNameDraft}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSlotNameDraft(event.target.value)}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+              setSlotNameDraft(event.target.value)
+            }
             className='h-9'
           />
         </div>
         <div className='space-y-1'>
           <Label className='text-xs text-gray-400'>Folder Path</Label>
-          <Input size='sm'
+          <Input
+            size='sm'
             value={slotFolderDraft}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSlotFolderDraft(event.target.value)}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+              setSlotFolderDraft(event.target.value)
+            }
             placeholder='e.g. variants/red'
             className='h-9'
           />
@@ -157,14 +167,15 @@ export function SlotInlineEditCardTab(): React.JSX.Element {
       <div className='space-y-2'>
         <div className='flex items-center justify-between gap-2'>
           <Label className='text-xs text-gray-400'>Linked Generated Variants</Label>
-          <Button size='xs'
+          <Button
+            size='xs'
             type='button'
             variant='outline'
             onClick={onRefreshLinkedRuns}
             disabled={linkedRunsIsFetching}
             loading={linkedRunsIsFetching}
           >
-                        Refresh
+            Refresh
           </Button>
         </div>
         <div className='max-h-56 space-y-2 overflow-y-auto rounded-lg border border-border/60 bg-card/40 p-2'>
@@ -200,13 +211,15 @@ export function SlotInlineEditCardTab(): React.JSX.Element {
                       {variant.output.filename || `Variant ${variant.outputIndex}`}
                     </div>
                     <div className='truncate text-[10px] text-gray-400'>
-                      Run {variant.runId.slice(0, 8)} • Variant {variant.outputIndex}/{variant.outputCount}
+                      Run {variant.runId.slice(0, 8)} • Variant {variant.outputIndex}/
+                      {variant.outputCount}
                     </div>
                     <div className='truncate text-[10px] text-gray-500'>
                       {formatLinkedVariantTimestamp(variant.runCreatedAt)}
                     </div>
                   </div>
-                  <Button size='xs'
+                  <Button
+                    size='xs'
                     type='button'
                     variant='outline'
                     onClick={() => {
@@ -225,22 +238,21 @@ export function SlotInlineEditCardTab(): React.JSX.Element {
       </div>
 
       <div className='flex flex-wrap items-center gap-2'>
-        <Button size='xs'
-          type='button'
-          variant='outline'
-          onClick={onReplaceFromDrive}
-        >
+        <Button size='xs' type='button' variant='outline' onClick={onReplaceFromDrive}>
           Replace From Drive
         </Button>
-        <Button size='xs'
+        <Button
+          size='xs'
           type='button'
           variant='outline'
           onClick={onReplaceFromLocal}
           disabled={uploadPending}
           loading={uploadPending}
         >
-                    Replace From Local Upload
-        </Button>        <Button size='xs'
+          Replace From Local Upload
+        </Button>{' '}
+        <Button
+          size='xs'
           type='button'
           variant='outline'
           onClick={() => {

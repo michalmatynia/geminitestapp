@@ -3,10 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { AiNode } from '@/shared/contracts/ai-paths';
 
 import { palette } from '@/shared/lib/ai-paths/core/definitions';
-import {
-  createNodeInstanceId,
-  resolveNodeTypeId,
-} from '@/shared/lib/ai-paths/core/utils';
+import { createNodeInstanceId, resolveNodeTypeId } from '@/shared/lib/ai-paths/core/utils';
 
 const buildNode = (patch: Partial<AiNode>): AiNode =>
   ({
@@ -51,9 +48,7 @@ describe('useCanvasInteractions identity behavior', () => {
   });
 
   it('re-ids duplicated nodes while preserving type id', () => {
-    const parserDefinition = palette.find(
-      (definition) => definition.type === 'parser'
-    );
+    const parserDefinition = palette.find((definition) => definition.type === 'parser');
     const sourceNode = buildNode({
       id: 'node-source',
       instanceId: 'node-source',

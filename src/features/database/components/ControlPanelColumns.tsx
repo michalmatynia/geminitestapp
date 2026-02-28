@@ -5,7 +5,6 @@ import { Button, StatusBadge, DataTableSortableHeader, SelectSimple } from '@/sh
 
 import type { ColumnDef } from '@tanstack/react-table';
 
-
 export type UnifiedCollectionRow = UnifiedCollection;
 
 const ProviderBadge = ({
@@ -38,9 +37,7 @@ export function getControlPanelColumns(options: {
   return [
     {
       accessorKey: 'name',
-      header: ({ column }) => (
-        <DataTableSortableHeader label='Collection' column={column} />
-      ),
+      header: ({ column }) => <DataTableSortableHeader label='Collection' column={column} />,
       cell: ({ row }: { row: { original: UnifiedCollectionRow } }): React.JSX.Element => (
         <span className='font-mono text-sm text-gray-100'>{row.original.name}</span>
       ),
@@ -74,10 +71,7 @@ export function getControlPanelColumns(options: {
         <SelectSimple
           value={row.original.assignedProvider}
           onValueChange={(value): void => {
-            options.onProviderChange(
-              row.original.name,
-              value as 'mongodb' | 'prisma' | 'auto'
-            );
+            options.onProviderChange(row.original.name, value as 'mongodb' | 'prisma' | 'auto');
           }}
           options={[
             { value: 'auto', label: 'Auto' },

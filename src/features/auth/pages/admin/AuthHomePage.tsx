@@ -1,10 +1,8 @@
 'use client';
 
-
 import Link from 'next/link';
 
 import { SectionHeader, Card, CardHeader, CardTitle, CardDescription } from '@/shared/ui';
-
 
 const cards = [
   {
@@ -45,14 +43,13 @@ export default function AuthPage(): React.JSX.Element {
 
       <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
         {cards.map((card: { title: string; description: string; href: string }) => (
-          <Link
-            key={card.title}
-            href={card.href}
-          >
+          <Link key={card.title} href={card.href}>
             <Card className='h-full transition hover:bg-muted/60'>
               <CardHeader>
                 <CardTitle className='text-lg font-semibold text-white'>{card.title}</CardTitle>
-                <CardDescription className='mt-1 text-sm text-gray-400'>{card.description}</CardDescription>
+                <CardDescription className='mt-1 text-sm text-gray-400'>
+                  {card.description}
+                </CardDescription>
               </CardHeader>
             </Card>
           </Link>

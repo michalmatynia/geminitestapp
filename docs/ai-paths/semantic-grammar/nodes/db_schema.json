@@ -5,10 +5,7 @@
   "title": "Database Schema",
   "purpose": "Provides live database structure as context for AI.",
   "inputs": [],
-  "outputs": [
-    "schema",
-    "context"
-  ],
+  "outputs": ["schema", "context"],
   "configFields": [
     {
       "path": "db_schema.provider",
@@ -62,10 +59,7 @@
       "y": 100
     },
     "inputs": [],
-    "outputs": [
-      "schema",
-      "context"
-    ],
+    "outputs": ["schema", "context"],
     "data": {},
     "connections": {
       "incoming": [],

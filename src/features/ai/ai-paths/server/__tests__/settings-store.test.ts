@@ -51,7 +51,11 @@ describe('settings-store flag preservation and read-time seeding policy', () => 
 
   it('does not auto-apply default seed writes during reads by default', async () => {
     const applyDefaultSeeds = vi
-      .fn<(records: Array<{ key: string; value: string }>) => Promise<Array<{ key: string; value: string }>>>()
+      .fn<
+        (
+          records: Array<{ key: string; value: string }>
+        ) => Promise<Array<{ key: string; value: string }>>
+      >()
       .mockResolvedValue([]);
 
     const records = [{ key: 'ai_paths_index', value: '[]' }];
@@ -68,7 +72,11 @@ describe('settings-store flag preservation and read-time seeding policy', () => 
     const records = [{ key: 'ai_paths_index', value: '[]' }];
     const seeded = [{ key: 'ai_paths_index', value: '[{"id":"path_seeded"}]' }];
     const applyDefaultSeeds = vi
-      .fn<(items: Array<{ key: string; value: string }>) => Promise<Array<{ key: string; value: string }>>>()
+      .fn<
+        (
+          items: Array<{ key: string; value: string }>
+        ) => Promise<Array<{ key: string; value: string }>>
+      >()
       .mockResolvedValue(seeded);
 
     const next = await __testOnly.maybeAutoApplyDefaultSeedsOnRead(['ai_paths_index'], records, {

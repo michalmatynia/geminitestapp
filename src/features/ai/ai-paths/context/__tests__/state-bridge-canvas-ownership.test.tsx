@@ -17,7 +17,11 @@ const EMPTY_PATH_CONFIGS: Record<string, unknown> = {};
 const EMPTY_RUN_HISTORY: Record<string, boolean> = {};
 const EMPTY_RUN_HISTORY_SELECTION: Record<string, string> = {};
 
-const buildLegacyState = (view: { x: number; y: number; scale: number }): UseAiPathsSettingsStateReturn =>
+const buildLegacyState = (view: {
+  x: number;
+  y: number;
+  scale: number;
+}): UseAiPathsSettingsStateReturn =>
   ({
     selectedNodeId: null,
     selectedEdgeId: null,
@@ -81,8 +85,8 @@ const buildLegacyState = (view: { x: number; y: number; scale: number }): UseAiP
   }) as unknown as UseAiPathsSettingsStateReturn;
 
 function BridgeOwnershipHarness(): React.JSX.Element {
-  const [legacyState, setLegacyState] = React.useState<UseAiPathsSettingsStateReturn>(
-    () => buildLegacyState({ x: -940, y: -520, scale: 0.25 })
+  const [legacyState, setLegacyState] = React.useState<UseAiPathsSettingsStateReturn>(() =>
+    buildLegacyState({ x: -940, y: -520, scale: 0.25 })
   );
   const { updateView } = useCanvasActions();
   const { view } = useCanvasState();

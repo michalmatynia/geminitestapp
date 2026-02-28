@@ -53,7 +53,6 @@ import { useRunHistoryActions } from '../RunHistoryContext';
 import { useRuntimeActions, type RuntimeRunStatus } from '../RuntimeContext';
 import { useSelectionActions } from '../SelectionContext';
 
-
 import type { ViewState, PanState, DragState, ConnectingState } from '../CanvasContext';
 import type { SavePathConfigOptions } from '../PersistenceContext';
 import type { ClusterPresetDraft } from '../PresetsContext';
@@ -341,20 +340,28 @@ export interface StateBridgeRuntimeProps {
   lastRunAt?: string | null | undefined;
   lastError?: { message: string; time: string; pathId?: string | null } | null | undefined;
   runtimeRunStatus?: RuntimeRunStatus | undefined;
-  handleFireTrigger?: ((node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void | Promise<void>) | undefined;
-  handleFireTriggerPersistent?: ((node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void | Promise<void>) | undefined;
+  handleFireTrigger?:
+    | ((node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void | Promise<void>)
+    | undefined;
+  handleFireTriggerPersistent?:
+    | ((node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void | Promise<void>)
+    | undefined;
   handlePauseActiveRun?: (() => void) | undefined;
   handleResumeActiveRun?: (() => void) | undefined;
   handleStepActiveRun?: ((triggerNode?: AiNode) => void) | undefined;
   handleCancelActiveRun?: (() => void) | undefined;
   handleClearWires?: (() => Promise<void> | void) | undefined;
-  handleFetchParserSample?: ((nodeId: string, entityType: string, entityId: string) => Promise<void>) | undefined;
-  handleFetchUpdaterSample?: ((
-    nodeId: string,
-    entityType: string,
-    entityId: string,
-    options?: { notify?: boolean }
-  ) => Promise<void>) | undefined;
+  handleFetchParserSample?:
+    | ((nodeId: string, entityType: string, entityId: string) => Promise<void>)
+    | undefined;
+  handleFetchUpdaterSample?:
+    | ((
+        nodeId: string,
+        entityType: string,
+        entityId: string,
+        options?: { notify?: boolean }
+      ) => Promise<void>)
+    | undefined;
   handleRunSimulation?: ((node: AiNode, triggerEvent?: string) => void | Promise<void>) | undefined;
   handleSendToAi?: ((databaseNodeId: string, prompt: string) => Promise<void>) | undefined;
   nodeDurations?: Record<string, number> | undefined;
@@ -429,11 +436,11 @@ export function useStateBridgeRuntime({
 
   useEffect(() => {
     actions.setRunControlHandlers({
-      ...(handleFireTrigger !== undefined && { 
-        fireTrigger: (node, event) => handleFireTrigger(node, event)
+      ...(handleFireTrigger !== undefined && {
+        fireTrigger: (node, event) => handleFireTrigger(node, event),
       }),
       ...(handleFireTriggerPersistent !== undefined && {
-        fireTriggerPersistent: (node, event) => handleFireTriggerPersistent(node, event)
+        fireTriggerPersistent: (node, event) => handleFireTriggerPersistent(node, event),
       }),
       ...(handlePauseActiveRun !== undefined && { pauseActiveRun: handlePauseActiveRun }),
       ...(handleResumeActiveRun !== undefined && { resumeActiveRun: handleResumeActiveRun }),
@@ -454,17 +461,19 @@ export function useStateBridgeRuntime({
 
   useEffect(() => {
     actions.setRuntimeNodeConfigHandlers({
-      ...(handleFetchParserSample !== undefined && { 
-        fetchParserSample: (nodeId, entityType, entityId) => handleFetchParserSample(nodeId, entityType, entityId)
+      ...(handleFetchParserSample !== undefined && {
+        fetchParserSample: (nodeId, entityType, entityId) =>
+          handleFetchParserSample(nodeId, entityType, entityId),
       }),
-      ...(handleFetchUpdaterSample !== undefined && { 
-        fetchUpdaterSample: (nodeId, entityType, entityId, options) => handleFetchUpdaterSample(nodeId, entityType, entityId, options)
+      ...(handleFetchUpdaterSample !== undefined && {
+        fetchUpdaterSample: (nodeId, entityType, entityId, options) =>
+          handleFetchUpdaterSample(nodeId, entityType, entityId, options),
       }),
-      ...(handleRunSimulation !== undefined && { 
-        runSimulation: (node, triggerEvent) => handleRunSimulation(node, triggerEvent)
+      ...(handleRunSimulation !== undefined && {
+        runSimulation: (node, triggerEvent) => handleRunSimulation(node, triggerEvent),
       }),
-      ...(handleSendToAi !== undefined && { 
-        sendToAi: (nodeId, prompt) => handleSendToAi(nodeId, prompt)
+      ...(handleSendToAi !== undefined && {
+        sendToAi: (nodeId, prompt) => handleSendToAi(nodeId, prompt),
       }),
     });
   }, [
@@ -675,20 +684,28 @@ export interface StateBridgeAllProps {
   lastRunAt?: string | null | undefined;
   lastError?: { message: string; time: string; pathId?: string | null } | null | undefined;
   runtimeRunStatus?: RuntimeRunStatus | undefined;
-  handleFireTrigger?: ((node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void | Promise<void>) | undefined;
-  handleFireTriggerPersistent?: ((node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void | Promise<void>) | undefined;
+  handleFireTrigger?:
+    | ((node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void | Promise<void>)
+    | undefined;
+  handleFireTriggerPersistent?:
+    | ((node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void | Promise<void>)
+    | undefined;
   handlePauseActiveRun?: (() => void) | undefined;
   handleResumeActiveRun?: (() => void) | undefined;
   handleStepActiveRun?: ((triggerNode?: AiNode) => void) | undefined;
   handleCancelActiveRun?: (() => void) | undefined;
   handleClearWires?: (() => Promise<void> | void) | undefined;
-  handleFetchParserSample?: ((nodeId: string, entityType: string, entityId: string) => Promise<void>) | undefined;
-  handleFetchUpdaterSample?: ((
-    nodeId: string,
-    entityType: string,
-    entityId: string,
-    options?: { notify?: boolean }
-  ) => Promise<void>) | undefined;
+  handleFetchParserSample?:
+    | ((nodeId: string, entityType: string, entityId: string) => Promise<void>)
+    | undefined;
+  handleFetchUpdaterSample?:
+    | ((
+        nodeId: string,
+        entityType: string,
+        entityId: string,
+        options?: { notify?: boolean }
+      ) => Promise<void>)
+    | undefined;
   handleRunSimulation?: ((node: AiNode, triggerEvent?: string) => void | Promise<void>) | undefined;
   handleSendToAi?: ((databaseNodeId: string, prompt: string) => Promise<void>) | undefined;
   nodeDurations?: Record<string, number> | undefined;

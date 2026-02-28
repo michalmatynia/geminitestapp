@@ -18,7 +18,24 @@ const PATH_IDS = ['path_65mv2p', 'path_syr8f4'];
       const total = await coll.countDocuments({ pathId });
       const last24h = await coll.countDocuments({ pathId, createdAt: { $gte: dayAgo } });
       const latest = await coll
-        .find({ pathId }, { projection: { _id: 0, id: 1, status: 1, pathId: 1, createdAt: 1, startedAt: 1, finishedAt: 1, triggerEvent: 1, triggerNodeId: 1, userId: 1, meta: 1 } })
+        .find(
+          { pathId },
+          {
+            projection: {
+              _id: 0,
+              id: 1,
+              status: 1,
+              pathId: 1,
+              createdAt: 1,
+              startedAt: 1,
+              finishedAt: 1,
+              triggerEvent: 1,
+              triggerNodeId: 1,
+              userId: 1,
+              meta: 1,
+            },
+          }
+        )
         .sort({ createdAt: -1 })
         .limit(3)
         .toArray();

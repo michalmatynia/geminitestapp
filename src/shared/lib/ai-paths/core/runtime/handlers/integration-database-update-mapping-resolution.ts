@@ -1,6 +1,4 @@
-import type {
-  DatabaseConfig,
-} from '@/shared/contracts/ai-paths';
+import type { DatabaseConfig } from '@/shared/contracts/ai-paths';
 import type { UpdaterMapping } from '@/shared/contracts/ai-paths';
 
 export type ResolveDatabaseUpdateMappingsInput = {

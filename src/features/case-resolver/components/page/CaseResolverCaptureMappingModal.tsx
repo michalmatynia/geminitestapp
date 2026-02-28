@@ -19,10 +19,7 @@ export function CaseResolverCaptureMappingModal(): React.JSX.Element {
     partyOptions,
   } = useCaseResolverViewContext();
 
-  const {
-    isPromptExploderPartyProposalOpen,
-    isApplyingPromptExploderPartyProposal,
-  } = state;
+  const { isPromptExploderPartyProposalOpen, isApplyingPromptExploderPartyProposal } = state;
 
   return (
     <PromptExploderCaptureMappingModal

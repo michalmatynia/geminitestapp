@@ -1,13 +1,10 @@
-import type { PromptValidationRule } from '@/shared/lib/prompt-engine/settings';
+import type { PromptValidationRule } from '@/features/prompt-engine/settings';
 import { applyBenchmarkSuggestions } from '@/features/prompt-exploder/benchmark-apply';
 import { benchmarkSuggestionRuleId } from '@/features/prompt-exploder/benchmark-suggestions';
 import type { PromptExploderBenchmarkSuggestion } from '@/shared/contracts/prompt-exploder';
 import type { PromptExploderLearnedTemplate } from '@/shared/contracts/prompt-exploder';
 
-const buildRegexRule = (
-  id: string,
-  pattern: string
-): PromptValidationRule => ({
+const buildRegexRule = (id: string, pattern: string): PromptValidationRule => ({
   kind: 'regex',
   id,
   enabled: true,
@@ -86,9 +83,7 @@ describe('prompt exploder benchmark apply', () => {
     expect(result.updatedCount).toBe(1);
     expect(result.appliedRules).toHaveLength(2);
     expect(result.nextLearnedRules).toHaveLength(2);
-    const updatedRule = result.nextLearnedRules.find(
-      (rule) => rule.id === existingRuleId
-    );
+    const updatedRule = result.nextLearnedRules.find((rule) => rule.id === existingRuleId);
     expect(updatedRule?.kind).toBe('regex');
     if (updatedRule?.kind !== 'regex') return;
     expect(updatedRule.pattern).toBe('(?:\\blegacy\\b)|(?:\\bold\\b)');

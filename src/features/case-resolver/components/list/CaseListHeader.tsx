@@ -35,12 +35,7 @@ export const CaseListHeader = memo(function CaseListHeader({
 }: CaseListHeaderProps): React.JSX.Element {
   const renderCreateActions = (): React.JSX.Element => (
     <div className='flex flex-wrap items-center gap-2'>
-      <Button
-        onClick={onCreateCase}
-        size='icon-lg'
-        variant='outline'
-        aria-label='Create new case'
-      >
+      <Button onClick={onCreateCase} size='icon-lg' variant='outline' aria-label='Create new case'>
         <PlusIcon className='h-6 w-6' />
       </Button>
       <span className='text-xs text-muted-foreground'>
@@ -90,13 +85,9 @@ export const CaseListHeader = memo(function CaseListHeader({
           <div className='mt-3'>{renderCreateActions()}</div>
         </div>
         <div className='space-y-3'>
-          <div className='flex justify-center'>
-            {renderPaginationControl()}
-          </div>
+          <div className='flex justify-center'>{renderPaginationControl()}</div>
           {renderSearchBar()}
-          <div className='w-full'>
-            {filtersContent}
-          </div>
+          <div className='w-full'>{filtersContent}</div>
         </div>
       </div>
 
@@ -113,14 +104,10 @@ export const CaseListHeader = memo(function CaseListHeader({
           />
           <div className='mt-3'>{renderCreateActions()}</div>
         </div>
-        <div className='flex justify-center pt-1'>
-          {renderPaginationControl()}
-        </div>
+        <div className='flex justify-center pt-1'>{renderPaginationControl()}</div>
         <div className='flex w-full flex-col gap-3 pt-1'>
           {renderSearchBar()}
-          <div className='w-full'>
-            {filtersContent}
-          </div>
+          <div className='w-full'>{filtersContent}</div>
         </div>
       </div>
     </div>

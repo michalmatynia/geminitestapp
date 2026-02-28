@@ -54,7 +54,12 @@ type UseAiPathsRunHistoryResult = {
   runStreamStatus: 'connecting' | 'live' | 'stopped' | 'paused';
   runStreamPaused: boolean;
   setRunStreamPaused: React.Dispatch<React.SetStateAction<boolean>>;
-  runNodeSummary: { counts: Record<string, number>; total: number; completed: number; progress: number } | null;
+  runNodeSummary: {
+    counts: Record<string, number>;
+    total: number;
+    completed: number;
+    progress: number;
+  } | null;
   runEventsOverflow: boolean;
   runEventsBatchLimit: number | null;
   runDetailHistoryOptions: HistoryNodeOption[];
@@ -82,7 +87,9 @@ export function useAiPathsRunHistory({
   const [runHistoryNodeId, setRunHistoryNodeId] = useState<string | null>(null);
   const [expandedRunHistory, setExpandedRunHistory] = useState<Record<string, boolean>>({});
   const [runHistorySelection, setRunHistorySelection] = useState<Record<string, string>>({});
-  const [runStreamStatus, setRunStreamStatus] = useState<'connecting' | 'live' | 'stopped' | 'paused'>('stopped');
+  const [runStreamStatus, setRunStreamStatus] = useState<
+    'connecting' | 'live' | 'stopped' | 'paused'
+  >('stopped');
   const [runStreamPaused, setRunStreamPaused] = useState(false);
   const [runEventsOverflow, setRunEventsOverflow] = useState(false);
   const [runEventsBatchLimit, setRunEventsBatchLimit] = useState<number | null>(null);
@@ -101,15 +108,15 @@ export function useAiPathsRunHistory({
     const params = new URLSearchParams();
     const latestEventTimestamp = runDetail.events?.length
       ? runDetail.events.reduce<string | null>(
-        (max: string | null, event: AiPathRunEventRecord) => {
-          if (!event.createdAt) return max;
-          const time = new Date(event.createdAt).getTime();
-          if (!Number.isFinite(time)) return max;
-          if (!max) return new Date(time).toISOString();
-          return time > new Date(max).getTime() ? new Date(time).toISOString() : max;
-        },
-        null
-      )
+          (max: string | null, event: AiPathRunEventRecord) => {
+            if (!event.createdAt) return max;
+            const time = new Date(event.createdAt).getTime();
+            if (!Number.isFinite(time)) return max;
+            if (!max) return new Date(time).toISOString();
+            return time > new Date(max).getTime() ? new Date(time).toISOString() : max;
+          },
+          null
+        )
       : null;
     if (latestEventTimestamp) {
       params.set('since', latestEventTimestamp);
@@ -121,22 +128,30 @@ export function useAiPathsRunHistory({
     setRunStreamStatus('connecting');
 
     const mergeEvents = (incoming: AiPathRunEventRecord[]): void => {
-      setRunDetail((prev: { run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[] } | null) => {
-        if (!prev) return prev;
-        const existingIds = new Set(prev.events.map((event: AiPathRunEventRecord) => event.id));
-        const merged = [...prev.events];
-        incoming.forEach((event: AiPathRunEventRecord) => {
-          if (!existingIds.has(event.id)) {
-            merged.push(event);
-          }
-        });
-        merged.sort((a: AiPathRunEventRecord, b: AiPathRunEventRecord) => {
-          const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-          const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-          return aTime - bTime;
-        });
-        return { ...prev, events: merged };
-      });
+      setRunDetail(
+        (
+          prev: {
+            run: AiPathRunRecord;
+            nodes: AiPathRunNodeRecord[];
+            events: AiPathRunEventRecord[];
+          } | null
+        ) => {
+          if (!prev) return prev;
+          const existingIds = new Set(prev.events.map((event: AiPathRunEventRecord) => event.id));
+          const merged = [...prev.events];
+          incoming.forEach((event: AiPathRunEventRecord) => {
+            if (!existingIds.has(event.id)) {
+              merged.push(event);
+            }
+          });
+          merged.sort((a: AiPathRunEventRecord, b: AiPathRunEventRecord) => {
+            const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+            const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+            return aTime - bTime;
+          });
+          return { ...prev, events: merged };
+        }
+      );
     };
 
     source.addEventListener('ready', () => {
@@ -145,7 +160,15 @@ export function useAiPathsRunHistory({
     source.addEventListener('run', (event: MessageEvent) => {
       try {
         const payload = JSON.parse(event.data as string) as AiPathRunRecord;
-        setRunDetail((prev: { run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[] } | null) => (prev ? { ...prev, run: payload } : prev));
+        setRunDetail(
+          (
+            prev: {
+              run: AiPathRunRecord;
+              nodes: AiPathRunNodeRecord[];
+              events: AiPathRunEventRecord[];
+            } | null
+          ) => (prev ? { ...prev, run: payload } : prev)
+        );
       } catch {
         // ignore parse errors
       }
@@ -153,7 +176,15 @@ export function useAiPathsRunHistory({
     source.addEventListener('nodes', (event: MessageEvent) => {
       try {
         const payload = JSON.parse(event.data as string) as AiPathRunNodeRecord[];
-        setRunDetail((prev: { run: AiPathRunRecord; nodes: AiPathRunNodeRecord[]; events: AiPathRunEventRecord[] } | null) => (prev ? { ...prev, nodes: payload } : prev));
+        setRunDetail(
+          (
+            prev: {
+              run: AiPathRunRecord;
+              nodes: AiPathRunNodeRecord[];
+              events: AiPathRunEventRecord[];
+            } | null
+          ) => (prev ? { ...prev, nodes: payload } : prev)
+        );
       } catch {
         // ignore parse errors
       }
@@ -251,7 +282,7 @@ export function useAiPathsRunHistory({
     runHistoryNodeId ?? runDetailHistoryOptions.at(0)?.id ?? null;
   const runDetailSelectedHistoryEntries =
     runDetailSelectedHistoryNodeId && runDetailHistory
-      ? runDetailHistory[runDetailSelectedHistoryNodeId] ?? []
+      ? (runDetailHistory[runDetailSelectedHistoryNodeId] ?? [])
       : [];
 
   const runsQuery = createListQueryV2<
@@ -272,7 +303,12 @@ export function useAiPathsRunHistory({
     enabled: Boolean(activePathId),
     retry: 0,
     refetchInterval: (
-      query: Query<{ ok: boolean; data: { runs: AiPathRunRecord[] } }, Error, { ok: boolean; data: { runs: AiPathRunRecord[] } }, readonly unknown[]>
+      query: Query<
+        { ok: boolean; data: { runs: AiPathRunRecord[] } },
+        Error,
+        { ok: boolean; data: { runs: AiPathRunRecord[] } },
+        readonly unknown[]
+      >
     ): number | false => {
       const d = query.state['data'] as
         | { ok: boolean; data: { runs: AiPathRunRecord[] } }

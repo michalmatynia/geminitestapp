@@ -2,23 +2,16 @@
 
 import { createContext, useContext } from 'react';
 import type { PromptValidationRule } from '@/shared/contracts/prompt-engine';
-import { 
-  useUpdateSetting, 
-  useUpdateSettingsBulk 
-} from '@/shared/hooks/use-settings';
-import type { 
-  PromptExploderParserTuningRuleDraft 
-} from '../../parser-tuning';
-import type { 
-  PromptExploderLearnedTemplate 
-} from '../../types';
-import type { 
-  LearningDraft 
-} from './SettingsDraftsContext';
+import { useUpdateSetting, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
+import type { PromptExploderParserTuningRuleDraft } from '../../parser-tuning';
+import type { PromptExploderLearnedTemplate } from '../../types';
+import type { LearningDraft } from './SettingsDraftsContext';
 
 export interface SettingsActions {
   setLearningDraft: React.Dispatch<React.SetStateAction<LearningDraft>>;
-  setParserTuningDrafts: React.Dispatch<React.SetStateAction<PromptExploderParserTuningRuleDraft[]>>;
+  setParserTuningDrafts: React.Dispatch<
+    React.SetStateAction<PromptExploderParserTuningRuleDraft[]>
+  >;
   setIsParserTuningOpen: React.Dispatch<React.SetStateAction<boolean>>;
   setSnapshotDraftName: React.Dispatch<React.SetStateAction<string>>;
   setSelectedSnapshotId: React.Dispatch<React.SetStateAction<string>>;

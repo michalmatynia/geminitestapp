@@ -159,11 +159,12 @@ export type PageSeoData = CmsPageSeoDto;
  * CMS Page Builder Contracts
  */
 export type CmsBlockInstanceDto = {
-    id: string;
-    type: string;
-    settings: Record<string, unknown>;
-    blocks?: CmsBlockInstanceDto[] | undefined;
-  };export type BlockInstance = CmsBlockInstanceDto;
+  id: string;
+  type: string;
+  settings: Record<string, unknown>;
+  blocks?: CmsBlockInstanceDto[] | undefined;
+};
+export type BlockInstance = CmsBlockInstanceDto;
 
 export interface PreviewBlockItemProps {
   block: BlockInstance;
@@ -195,13 +196,13 @@ export type PageZoneDto = z.infer<typeof pageZoneSchema>;
 export type PageZone = PageZoneDto;
 
 export type CmsSectionInstanceDto = {
-      id: string;
-      type: string;
-      zone: PageZone;
-      settings: Record<string, unknown>;
-      blocks: CmsBlockInstanceDto[];
-    };
-  
+  id: string;
+  type: string;
+  zone: PageZone;
+  settings: Record<string, unknown>;
+  blocks: CmsBlockInstanceDto[];
+};
+
 export const cmsSectionInstanceSchema: z.ZodType<CmsSectionInstanceDto> = z.object({
   id: z.string(),
   type: z.string(),
@@ -209,7 +210,7 @@ export const cmsSectionInstanceSchema: z.ZodType<CmsSectionInstanceDto> = z.obje
   settings: z.record(z.string(), z.unknown()),
   blocks: z.array(cmsBlockInstanceSchema),
 });
-  
+
 export type SectionInstance = CmsSectionInstanceDto;
 export const clipboardDataSchema = z.object({
   type: z.enum(['section', 'block']),
@@ -290,60 +291,254 @@ export const pageBuilderActionSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('SET_CURRENT_PAGE'), page: z.lazy(() => cmsPageSchema) }),
   z.object({ type: z.literal('CLEAR_CURRENT_PAGE') }),
   z.object({ type: z.literal('SELECT_NODE'), nodeId: z.string().nullable() }),
-  z.object({ type: z.literal('ADD_SECTION'), sectionType: z.string(), zone: pageZoneSchema, initialSettings: z.record(z.string(), z.unknown()).optional() }),
+  z.object({
+    type: z.literal('ADD_SECTION'),
+    sectionType: z.string(),
+    zone: pageZoneSchema,
+    initialSettings: z.record(z.string(), z.unknown()).optional(),
+  }),
   z.object({ type: z.literal('REMOVE_SECTION'), sectionId: z.string() }),
   z.object({ type: z.literal('ADD_BLOCK'), sectionId: z.string(), blockType: z.string() }),
   z.object({ type: z.literal('REMOVE_BLOCK'), sectionId: z.string(), blockId: z.string() }),
-  z.object({ type: z.literal('UPDATE_SECTION_SETTINGS'), sectionId: z.string(), settings: z.record(z.string(), z.unknown()) }),
-  z.object({ type: z.literal('UPDATE_BLOCK_SETTINGS'), sectionId: z.string(), blockId: z.string(), settings: z.record(z.string(), z.unknown()) }),
-  z.object({ type: z.literal('MOVE_BLOCK'), blockId: z.string(), fromSectionId: z.string(), toSectionId: z.string(), toIndex: z.number() }),
-  z.object({ type: z.literal('REORDER_BLOCKS'), sectionId: z.string(), fromIndex: z.number(), toIndex: z.number() }),
+  z.object({
+    type: z.literal('UPDATE_SECTION_SETTINGS'),
+    sectionId: z.string(),
+    settings: z.record(z.string(), z.unknown()),
+  }),
+  z.object({
+    type: z.literal('UPDATE_BLOCK_SETTINGS'),
+    sectionId: z.string(),
+    blockId: z.string(),
+    settings: z.record(z.string(), z.unknown()),
+  }),
+  z.object({
+    type: z.literal('MOVE_BLOCK'),
+    blockId: z.string(),
+    fromSectionId: z.string(),
+    toSectionId: z.string(),
+    toIndex: z.number(),
+  }),
+  z.object({
+    type: z.literal('REORDER_BLOCKS'),
+    sectionId: z.string(),
+    fromIndex: z.number(),
+    toIndex: z.number(),
+  }),
   z.object({ type: z.literal('SET_GRID_COLUMNS'), sectionId: z.string(), columnCount: z.number() }),
   z.object({ type: z.literal('SET_GRID_ROWS'), sectionId: z.string(), rowCount: z.number() }),
   z.object({ type: z.literal('ADD_GRID_ROW'), sectionId: z.string() }),
   z.object({ type: z.literal('REMOVE_GRID_ROW'), sectionId: z.string(), rowId: z.string() }),
   z.object({ type: z.literal('ADD_COLUMN_TO_ROW'), sectionId: z.string(), rowId: z.string() }),
-  z.object({ type: z.literal('REMOVE_COLUMN_FROM_ROW'), sectionId: z.string(), columnId: z.string(), rowId: z.string().optional() }),
-  z.object({ type: z.literal('ADD_BLOCK_TO_COLUMN'), sectionId: z.string(), columnId: z.string(), blockType: z.string() }),
-  z.object({ type: z.literal('REMOVE_BLOCK_FROM_COLUMN'), sectionId: z.string(), columnId: z.string(), blockId: z.string() }),
-  z.object({ type: z.literal('UPDATE_COLUMN_SETTINGS'), sectionId: z.string(), columnId: z.string(), settings: z.record(z.string(), z.unknown()) }),
-  z.object({ type: z.literal('UPDATE_BLOCK_IN_COLUMN'), sectionId: z.string(), columnId: z.string(), blockId: z.string(), settings: z.record(z.string(), z.unknown()) }),
-  z.object({ type: z.literal('MOVE_BLOCK_TO_COLUMN'), blockId: z.string(), fromSectionId: z.string(), fromColumnId: z.string().optional(), fromParentBlockId: z.string().optional(), toSectionId: z.string(), toColumnId: z.string(), toParentBlockId: z.string().optional(), toIndex: z.number() }),
-  z.object({ type: z.literal('MOVE_BLOCK_TO_ROW'), blockId: z.string(), fromSectionId: z.string(), fromColumnId: z.string().optional(), fromParentBlockId: z.string().optional(), toSectionId: z.string(), toRowId: z.string(), toIndex: z.number() }),
-  z.object({ type: z.literal('MOVE_BLOCK_TO_SECTION'), blockId: z.string(), fromSectionId: z.string(), fromColumnId: z.string().optional(), fromParentBlockId: z.string().optional(), toSectionId: z.string(), toIndex: z.number() }),
-  z.object({ type: z.literal('CONVERT_BLOCK_TO_SECTION'), blockId: z.string(), fromSectionId: z.string(), fromColumnId: z.string().optional(), fromParentBlockId: z.string().optional(), toZone: pageZoneSchema, toIndex: z.number() }),
-  z.object({ type: z.literal('CONVERT_SECTION_TO_BLOCK'), sectionId: z.string(), toSectionId: z.string(), toIndex: z.number() }),
-  z.object({ type: z.literal('MOVE_SECTION_TO_COLUMN'), sectionId: z.string(), toSectionId: z.string(), toColumnId: z.string(), toParentBlockId: z.string().optional(), toIndex: z.number() }),
-  z.object({ type: z.literal('ADD_ELEMENT_TO_NESTED_BLOCK'), sectionId: z.string(), columnId: z.string(), parentBlockId: z.string(), elementType: z.string() }),
-  z.object({ type: z.literal('REMOVE_ELEMENT_FROM_NESTED_BLOCK'), sectionId: z.string(), columnId: z.string(), parentBlockId: z.string(), elementId: z.string() }),
-  z.object({ type: z.literal('UPDATE_NESTED_BLOCK_SETTINGS'), sectionId: z.string(), columnId: z.string(), parentBlockId: z.string(), blockId: z.string(), settings: z.record(z.string(), z.unknown()) }),
-  z.object({ type: z.literal('ADD_ELEMENT_TO_SECTION_BLOCK'), sectionId: z.string(), parentBlockId: z.string(), elementType: z.string() }),
-  z.object({ type: z.literal('REMOVE_ELEMENT_FROM_SECTION_BLOCK'), sectionId: z.string(), parentBlockId: z.string(), elementId: z.string() }),
-  z.object({ type: z.literal('UPDATE_SECTION_BLOCK_SETTINGS'), sectionId: z.string(), parentBlockId: z.string(), blockId: z.string(), settings: z.record(z.string(), z.unknown()) }),
-  z.object({ type: z.literal('REORDER_SECTIONS'), zone: pageZoneSchema, fromIndex: z.number(), toIndex: z.number() }),
-  z.object({ type: z.literal('MOVE_SECTION_TO_ZONE'), sectionId: z.string(), toZone: pageZoneSchema, toIndex: z.number() }),
+  z.object({
+    type: z.literal('REMOVE_COLUMN_FROM_ROW'),
+    sectionId: z.string(),
+    columnId: z.string(),
+    rowId: z.string().optional(),
+  }),
+  z.object({
+    type: z.literal('ADD_BLOCK_TO_COLUMN'),
+    sectionId: z.string(),
+    columnId: z.string(),
+    blockType: z.string(),
+  }),
+  z.object({
+    type: z.literal('REMOVE_BLOCK_FROM_COLUMN'),
+    sectionId: z.string(),
+    columnId: z.string(),
+    blockId: z.string(),
+  }),
+  z.object({
+    type: z.literal('UPDATE_COLUMN_SETTINGS'),
+    sectionId: z.string(),
+    columnId: z.string(),
+    settings: z.record(z.string(), z.unknown()),
+  }),
+  z.object({
+    type: z.literal('UPDATE_BLOCK_IN_COLUMN'),
+    sectionId: z.string(),
+    columnId: z.string(),
+    blockId: z.string(),
+    settings: z.record(z.string(), z.unknown()),
+  }),
+  z.object({
+    type: z.literal('MOVE_BLOCK_TO_COLUMN'),
+    blockId: z.string(),
+    fromSectionId: z.string(),
+    fromColumnId: z.string().optional(),
+    fromParentBlockId: z.string().optional(),
+    toSectionId: z.string(),
+    toColumnId: z.string(),
+    toParentBlockId: z.string().optional(),
+    toIndex: z.number(),
+  }),
+  z.object({
+    type: z.literal('MOVE_BLOCK_TO_ROW'),
+    blockId: z.string(),
+    fromSectionId: z.string(),
+    fromColumnId: z.string().optional(),
+    fromParentBlockId: z.string().optional(),
+    toSectionId: z.string(),
+    toRowId: z.string(),
+    toIndex: z.number(),
+  }),
+  z.object({
+    type: z.literal('MOVE_BLOCK_TO_SECTION'),
+    blockId: z.string(),
+    fromSectionId: z.string(),
+    fromColumnId: z.string().optional(),
+    fromParentBlockId: z.string().optional(),
+    toSectionId: z.string(),
+    toIndex: z.number(),
+  }),
+  z.object({
+    type: z.literal('CONVERT_BLOCK_TO_SECTION'),
+    blockId: z.string(),
+    fromSectionId: z.string(),
+    fromColumnId: z.string().optional(),
+    fromParentBlockId: z.string().optional(),
+    toZone: pageZoneSchema,
+    toIndex: z.number(),
+  }),
+  z.object({
+    type: z.literal('CONVERT_SECTION_TO_BLOCK'),
+    sectionId: z.string(),
+    toSectionId: z.string(),
+    toIndex: z.number(),
+  }),
+  z.object({
+    type: z.literal('MOVE_SECTION_TO_COLUMN'),
+    sectionId: z.string(),
+    toSectionId: z.string(),
+    toColumnId: z.string(),
+    toParentBlockId: z.string().optional(),
+    toIndex: z.number(),
+  }),
+  z.object({
+    type: z.literal('ADD_ELEMENT_TO_NESTED_BLOCK'),
+    sectionId: z.string(),
+    columnId: z.string(),
+    parentBlockId: z.string(),
+    elementType: z.string(),
+  }),
+  z.object({
+    type: z.literal('REMOVE_ELEMENT_FROM_NESTED_BLOCK'),
+    sectionId: z.string(),
+    columnId: z.string(),
+    parentBlockId: z.string(),
+    elementId: z.string(),
+  }),
+  z.object({
+    type: z.literal('UPDATE_NESTED_BLOCK_SETTINGS'),
+    sectionId: z.string(),
+    columnId: z.string(),
+    parentBlockId: z.string(),
+    blockId: z.string(),
+    settings: z.record(z.string(), z.unknown()),
+  }),
+  z.object({
+    type: z.literal('ADD_ELEMENT_TO_SECTION_BLOCK'),
+    sectionId: z.string(),
+    parentBlockId: z.string(),
+    elementType: z.string(),
+  }),
+  z.object({
+    type: z.literal('REMOVE_ELEMENT_FROM_SECTION_BLOCK'),
+    sectionId: z.string(),
+    parentBlockId: z.string(),
+    elementId: z.string(),
+  }),
+  z.object({
+    type: z.literal('UPDATE_SECTION_BLOCK_SETTINGS'),
+    sectionId: z.string(),
+    parentBlockId: z.string(),
+    blockId: z.string(),
+    settings: z.record(z.string(), z.unknown()),
+  }),
+  z.object({
+    type: z.literal('REORDER_SECTIONS'),
+    zone: pageZoneSchema,
+    fromIndex: z.number(),
+    toIndex: z.number(),
+  }),
+  z.object({
+    type: z.literal('MOVE_SECTION_TO_ZONE'),
+    sectionId: z.string(),
+    toZone: pageZoneSchema,
+    toIndex: z.number(),
+  }),
   z.object({ type: z.literal('SET_PAGE_STATUS'), status: cmsPageStatusSchema }),
   z.object({ type: z.literal('SET_PAGE_NAME'), name: z.string() }),
   z.object({ type: z.literal('UPDATE_SEO'), seo: cmsPageSeoSchema.partial() }),
-  z.object({ type: z.literal('UPDATE_PAGE_SLUGS'), slugIds: z.array(z.string()), slugValues: z.array(z.string()) }),
+  z.object({
+    type: z.literal('UPDATE_PAGE_SLUGS'),
+    slugIds: z.array(z.string()),
+    slugValues: z.array(z.string()),
+  }),
   z.object({ type: z.literal('SET_PAGE_MENU_VISIBILITY'), showMenu: z.boolean() }),
   z.object({ type: z.literal('TOGGLE_INSPECTOR') }),
-  z.object({ type: z.literal('UPDATE_INSPECTOR_SETTINGS'), settings: cmsInspectorSettingsSchema.partial() }),
+  z.object({
+    type: z.literal('UPDATE_INSPECTOR_SETTINGS'),
+    settings: cmsInspectorSettingsSchema.partial(),
+  }),
   z.object({ type: z.literal('SET_PREVIEW_MODE'), mode: z.enum(['desktop', 'mobile']) }),
   z.object({ type: z.literal('TOGGLE_LEFT_PANEL') }),
   z.object({ type: z.literal('TOGGLE_RIGHT_PANEL') }),
   z.object({ type: z.literal('COPY_SECTION'), sectionId: z.string() }),
   z.object({ type: z.literal('PASTE_SECTION'), zone: pageZoneSchema }),
-  z.object({ type: z.literal('COPY_BLOCK'), sectionId: z.string(), blockId: z.string(), columnId: z.string().optional(), parentBlockId: z.string().optional() }),
-  z.object({ type: z.literal('PASTE_BLOCK'), sectionId: z.string(), columnId: z.string().optional(), parentBlockId: z.string().optional() }),
+  z.object({
+    type: z.literal('COPY_BLOCK'),
+    sectionId: z.string(),
+    blockId: z.string(),
+    columnId: z.string().optional(),
+    parentBlockId: z.string().optional(),
+  }),
+  z.object({
+    type: z.literal('PASTE_BLOCK'),
+    sectionId: z.string(),
+    columnId: z.string().optional(),
+    parentBlockId: z.string().optional(),
+  }),
   z.object({ type: z.literal('DUPLICATE_SECTION'), sectionId: z.string() }),
   z.object({ type: z.literal('INSERT_TEMPLATE_SECTION'), section: cmsSectionInstanceSchema }),
   z.object({ type: z.literal('SET_PAGE_THEME'), themeId: z.string().nullable() }),
-  z.object({ type: z.literal('ADD_CAROUSEL_FRAME'), sectionId: z.string(), columnId: z.string(), carouselId: z.string() }),
-  z.object({ type: z.literal('REMOVE_CAROUSEL_FRAME'), sectionId: z.string(), columnId: z.string(), carouselId: z.string(), frameId: z.string() }),
-  z.object({ type: z.literal('ADD_ELEMENT_TO_CAROUSEL_FRAME'), sectionId: z.string(), columnId: z.string(), carouselId: z.string(), frameId: z.string(), elementType: z.string() }),
-  z.object({ type: z.literal('MOVE_BLOCK_TO_SLIDESHOW_FRAME'), blockId: z.string(), fromSectionId: z.string(), fromColumnId: z.string().optional(), fromParentBlockId: z.string().optional(), toSectionId: z.string(), toFrameId: z.string(), toIndex: z.number() }),
-  z.object({ type: z.literal('MOVE_SECTION_TO_SLIDESHOW_FRAME'), sectionId: z.string(), toSectionId: z.string(), toFrameId: z.string(), toIndex: z.number() }),
+  z.object({
+    type: z.literal('ADD_CAROUSEL_FRAME'),
+    sectionId: z.string(),
+    columnId: z.string(),
+    carouselId: z.string(),
+  }),
+  z.object({
+    type: z.literal('REMOVE_CAROUSEL_FRAME'),
+    sectionId: z.string(),
+    columnId: z.string(),
+    carouselId: z.string(),
+    frameId: z.string(),
+  }),
+  z.object({
+    type: z.literal('ADD_ELEMENT_TO_CAROUSEL_FRAME'),
+    sectionId: z.string(),
+    columnId: z.string(),
+    carouselId: z.string(),
+    frameId: z.string(),
+    elementType: z.string(),
+  }),
+  z.object({
+    type: z.literal('MOVE_BLOCK_TO_SLIDESHOW_FRAME'),
+    blockId: z.string(),
+    fromSectionId: z.string(),
+    fromColumnId: z.string().optional(),
+    fromParentBlockId: z.string().optional(),
+    toSectionId: z.string(),
+    toFrameId: z.string(),
+    toIndex: z.number(),
+  }),
+  z.object({
+    type: z.literal('MOVE_SECTION_TO_SLIDESHOW_FRAME'),
+    sectionId: z.string(),
+    toSectionId: z.string(),
+    toFrameId: z.string(),
+    toIndex: z.number(),
+  }),
 ]);
 
 export type PageBuilderActionDto = z.infer<typeof pageBuilderActionSchema>;
@@ -353,18 +548,22 @@ export type PageBuilderAction = PageBuilderActionDto;
  * CMS Page Contract
  */
 
-export const cmsPageSchema = dtoBaseSchema.extend({
-  name: z.string(),
-  status: z.enum(['draft', 'published', 'scheduled']),
-  publishedAt: z.string().optional(),
-  themeId: z.string().nullable(),
-  showMenu: z.boolean(),
-  components: z.array(cmsPageComponentSchema.partial().extend({
-    type: z.string(),
-    order: z.number(),
-  })),
-  slugs: z.union([z.array(z.string()), z.array(cmsSlugSchema)]),
-}).merge(cmsPageSeoSchema);
+export const cmsPageSchema = dtoBaseSchema
+  .extend({
+    name: z.string(),
+    status: z.enum(['draft', 'published', 'scheduled']),
+    publishedAt: z.string().optional(),
+    themeId: z.string().nullable(),
+    showMenu: z.boolean(),
+    components: z.array(
+      cmsPageComponentSchema.partial().extend({
+        type: z.string(),
+        order: z.number(),
+      })
+    ),
+    slugs: z.union([z.array(z.string()), z.array(cmsSlugSchema)]),
+  })
+  .merge(cmsPageSeoSchema);
 
 export type CmsPageDto = z.infer<typeof cmsPageSchema>;
 export type Page = CmsPageDto;
@@ -430,7 +629,9 @@ export const DEFAULT_CMS_DOMAIN_SETTINGS: CmsDomainSettings = {
   zoningEnabled: true,
 };
 
-export function normalizeCmsDomainSettings(input?: Partial<CmsDomainSettings> | null): CmsDomainSettings {
+export function normalizeCmsDomainSettings(
+  input?: Partial<CmsDomainSettings> | null
+): CmsDomainSettings {
   return {
     ...DEFAULT_CMS_DOMAIN_SETTINGS,
     ...(input ?? {}),
@@ -501,11 +702,24 @@ export const cssAnimationEffectSchema = z.enum([
 export type CssAnimationEffectDto = z.infer<typeof cssAnimationEffectSchema>;
 export type CssAnimationEffect = CssAnimationEffectDto;
 
-export const cssAnimationTriggerSchema = z.enum(['load', 'hover', 'inView', 'none', 'scroll', 'click', 'viewport']);
+export const cssAnimationTriggerSchema = z.enum([
+  'load',
+  'hover',
+  'inView',
+  'none',
+  'scroll',
+  'click',
+  'viewport',
+]);
 export type CssAnimationTriggerDto = z.infer<typeof cssAnimationTriggerSchema>;
 export type CssAnimationTrigger = CssAnimationTriggerDto;
 
-export const cssAnimationDirectionSchema = z.enum(['normal', 'reverse', 'alternate', 'alternate-reverse']);
+export const cssAnimationDirectionSchema = z.enum([
+  'normal',
+  'reverse',
+  'alternate',
+  'alternate-reverse',
+]);
 export type CssAnimationDirectionDto = z.infer<typeof cssAnimationDirectionSchema>;
 export type CssAnimationDirection = CssAnimationDirectionDto;
 
@@ -706,7 +920,10 @@ export type CmsRepository = {
   addSlugToPage(pageId: string, slugId: string): Promise<void>;
   removeSlugFromPage(pageId: string, slugId: string): Promise<void>;
   replacePageSlugs(pageId: string, slugIds: string[]): Promise<void>;
-  replacePageComponents(pageId: string, components: Array<Partial<PageComponent> & Pick<PageComponent, 'type' | 'order' | 'content'>>): Promise<void>;
+  replacePageComponents(
+    pageId: string,
+    components: Array<Partial<PageComponent> & Pick<PageComponent, 'type' | 'order' | 'content'>>
+  ): Promise<void>;
 
   // Slugs
   getSlugs(): Promise<Slug[]>;
@@ -714,7 +931,10 @@ export type CmsRepository = {
   getSlugById(id: string): Promise<Slug | null>;
   getSlugByValue(slug: string): Promise<Slug | null>;
   createSlug(data: { slug: string; pageId?: string | null; isDefault?: boolean }): Promise<Slug>;
-  updateSlug(id: string, data: Partial<{ slug: string; pageId: string | null; isDefault: boolean }>): Promise<Slug | null>;
+  updateSlug(
+    id: string,
+    data: Partial<{ slug: string; pageId: string | null; isDefault: boolean }>
+  ): Promise<Slug | null>;
   deleteSlug(id: string): Promise<Slug | null>;
 
   // Themes

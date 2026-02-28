@@ -17,7 +17,6 @@ import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
-
 const canUsePrismaSettings = (): boolean =>
   Boolean(process.env['DATABASE_URL']) && 'setting' in prisma;
 
@@ -68,7 +67,6 @@ export const getAuthDefaultRoleId = async (): Promise<string | null> => {
   if (!value) return null;
   return value.trim();
 };
-
 
 const parseNumber = (value: string | undefined, fallback: number): number => {
   if (!value) return fallback;
@@ -127,7 +125,7 @@ export const getAuthAccessForUser = async (userId: string): Promise<AuthUserAcce
       : false;
     const effectiveRoleId = isAssignedValid
       ? (assignedRoleId as string)
-      : validDefaultRoleId ?? fallbackRoleId;
+      : (validDefaultRoleId ?? fallbackRoleId);
 
     const role =
       roleList.find((item: AuthRole) => item.id === effectiveRoleId) ??

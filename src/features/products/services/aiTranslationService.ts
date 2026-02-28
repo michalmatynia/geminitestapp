@@ -1,15 +1,15 @@
 import 'server-only';
 
-import OpenAI from 'openai';
-
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import {
-  apiKeyInvalidError,
-  configurationError,
-  operationFailedError,
-} from '@/shared/errors/app-error';
-
-import { getSettingValue } from './aiDescriptionService';
+  resolveBrainExecutionConfigForCapability,
+  type BrainAppliedMeta,
+} from '@/shared/lib/ai-brain/server';
+import {
+  runBrainChatCompletion,
+  supportsBrainJsonMode,
+} from '@/shared/lib/ai-brain/server-runtime-client';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import { apiKeyInvalidError, operationFailedError } from '@/shared/errors/app-error';
 
 interface TranslateProductParams {
   productId: string;
@@ -20,38 +20,17 @@ interface TranslateProductParams {
 }
 
 interface TranslationResult {
-  translations: Record<string, {
-    name: string;
-    description: string;
-  }>;
+  translations: Record<
+    string,
+    {
+      name: string;
+      description: string;
+    }
+  >;
   translationModel?: string;
   targetLanguages?: string[];
   sourceLanguage?: string;
-}
-
-const OLLAMA_BASE_URL = process.env['OLLAMA_BASE_URL'] || 'http://localhost:11434';
-
-function getClient(modelName: string, apiKey: string | null): { openai: OpenAI; isOllama: boolean } {
-  const modelLower = modelName.toLowerCase();
-  const isOpenAI = (modelLower.startsWith('gpt-') && !modelLower.includes('oss')) ||
-                   modelLower.startsWith('ft:gpt-') ||
-                   modelLower.startsWith('o1-');
-
-  if (isOpenAI) {
-    if (!apiKey) {
-      throw configurationError('OpenAI API key is missing for GPT model.');
-    }
-    return { openai: new OpenAI({ apiKey }), isOllama: false };
-  }
-
-  // All other models use Ollama
-  return {
-    openai: new OpenAI({
-      baseURL: `${OLLAMA_BASE_URL}/v1`,
-      apiKey: 'ollama',
-    }),
-    isOllama: true
-  };
+  brainApplied?: BrainAppliedMeta;
 }
 
 /**
@@ -83,41 +62,34 @@ function extractJson(text: string): unknown {
         // Continue to fallback
       }
     }
-    
-    throw operationFailedError(`Failed to extract valid JSON from response: ${text.substring(0, 100)}...`);
+
+    throw operationFailedError(
+      `Failed to extract valid JSON from response: ${text.substring(0, 100)}...`
+    );
   }
 }
 
 export async function translateProduct(params: TranslateProductParams): Promise<TranslationResult> {
   const { sourceLanguage, targetLanguages, productName, productDescription } = params;
 
-  // Load configuration from settings
-  const [translationModelSetting, apiKeySetting] = await Promise.all([
-    getSettingValue('ai_translation_model'),
-    getSettingValue('openai_api_key'),
-  ]);
-
-  const translationModel = translationModelSetting?.trim() || 'gpt-4o';
-  const apiKey = apiKeySetting ?? process.env['OPENAI_API_KEY'] ?? null;
+  const brainConfig = await resolveBrainExecutionConfigForCapability('product.translation', {
+    defaultTemperature: 0.3,
+    defaultMaxTokens: 1200,
+    runtimeKind: 'chat',
+  });
+  const translationModel = brainConfig.modelId;
 
   await ErrorSystem.logInfo(`[aiTranslationService] Using model: ${translationModel}`, {
     service: 'ai-translation-service',
-    translationModel
+    translationModel,
+    brainApplied: brainConfig.brainApplied,
   });
-
-  const { openai, isOllama } = getClient(translationModel, apiKey);
-
-  if (isOllama) {
-    await ErrorSystem.logInfo('[aiTranslationService] Using Ollama', {
-      service: 'ai-translation-service',
-      url: OLLAMA_BASE_URL
-    });
-  }
 
   await ErrorSystem.logInfo('[aiTranslationService] Starting translation', {
     service: 'ai-translation-service',
     targetLanguages,
-    sourceLanguage
+    sourceLanguage,
+    brainApplied: brainConfig.brainApplied,
   });
 
   const translations: Record<string, { name: string; description: string }> = {};
@@ -127,7 +99,7 @@ export async function translateProduct(params: TranslateProductParams): Promise<
     if (targetLang.toLowerCase() === sourceLanguage.toLowerCase()) {
       await ErrorSystem.logInfo(`[aiTranslationService] Skipping ${targetLang} (source language)`, {
         service: 'ai-translation-service',
-        targetLanguage: targetLang
+        targetLanguage: targetLang,
       });
       continue;
     }
@@ -154,31 +126,27 @@ Important:
     try {
       await ErrorSystem.logInfo(`[aiTranslationService] Translating to ${targetLang}...`, {
         service: 'ai-translation-service',
-        targetLanguage: targetLang
+        targetLanguage: targetLang,
       });
 
-      const options: OpenAI.Chat.ChatCompletionCreateParamsNonStreaming = {
-        model: translationModel,
+      const response = await runBrainChatCompletion({
+        modelId: translationModel,
+        temperature: brainConfig.temperature,
+        maxTokens: brainConfig.maxTokens,
+        jsonMode: supportsBrainJsonMode(translationModel),
         messages: [
+          {
+            role: 'system',
+            content: brainConfig.systemPrompt,
+          },
           {
             role: 'user',
             content: prompt,
           },
         ],
-        temperature: 0.3,
-      };
+      });
 
-      // Only use response_format for OpenAI models, as Ollama models might not support it reliably via the SDK
-      const modelLower = translationModel.toLowerCase();
-      const supportsJsonMode = !isOllama && !modelLower.startsWith('o1-');
-      
-      if (supportsJsonMode) {
-        options.response_format = { type: 'json_object' };
-      }
-
-      const response = await openai.chat.completions.create(options);
-
-      const content = response.choices[0]?.message?.content;
+      const content = response.text;
       if (!content) {
         void ErrorSystem.logWarning(`No content in response for ${targetLang}`, {
           service: 'ai-translation-service',
@@ -191,7 +159,7 @@ Important:
 
       await ErrorSystem.logInfo(`[aiTranslationService] Received response for ${targetLang}`, {
         service: 'ai-translation-service',
-        targetLanguage: targetLang
+        targetLanguage: targetLang,
       });
 
       const parsed = extractJson(content) as { name?: string; description?: string };
@@ -202,30 +170,24 @@ Important:
 
       await ErrorSystem.logInfo(`[aiTranslationService] Successfully translated to ${targetLang}`, {
         service: 'ai-translation-service',
-        targetLanguage: targetLang
+        targetLanguage: targetLang,
       });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      const isConnectionError = errorMessage.includes('ECONNREFUSED') || 
-                               errorMessage.includes('fetch failed') || 
-                               errorMessage.includes('failed to fetch');
-
-      if (isOllama && isConnectionError) {
-        throw operationFailedError(
-          `Translation failed: Could not connect to Ollama server at ${OLLAMA_BASE_URL}. Please ensure the Ollama server is running and accessible.`,
-          undefined,
-          { originalError: errorMessage, url: OLLAMA_BASE_URL }
-        );
-      }
 
       await ErrorSystem.captureException(error, {
         service: 'ai-translation-service',
         targetLanguage: targetLang,
-        productName
+        productName,
+        brainApplied: brainConfig.brainApplied,
       });
-      
+
       // If this is an API key error, throw it to fail the entire job
-      if (errorMessage.includes('API key') || errorMessage.includes('401') || errorMessage.includes('authentication')) {
+      if (
+        errorMessage.includes('API key') ||
+        errorMessage.includes('401') ||
+        errorMessage.includes('authentication')
+      ) {
         throw apiKeyInvalidError(
           `Translation failed: ${errorMessage}. Please check your OpenAI API key configuration.`,
           'openai'
@@ -236,7 +198,7 @@ Important:
       await ErrorSystem.logWarning(`[aiTranslationService] Skipping ${targetLang} due to error`, {
         service: 'ai-translation-service',
         targetLanguage: targetLang,
-        error: errorMessage
+        error: errorMessage,
       });
     }
   }
@@ -250,6 +212,7 @@ Important:
     translations,
     translationModel,
     targetLanguages,
-    sourceLanguage
+    sourceLanguage,
+    brainApplied: brainConfig.brainApplied,
   };
 }

@@ -64,22 +64,15 @@ export const mongoProductAiJobRepository: ProductAiJobRepository = {
   async findJobs(productId?: string, options?: FindProductAiJobsOptions) {
     const db = await getMongoDb();
     const statuses =
-      options?.statuses && options.statuses.length > 0
-        ? options.statuses
-        : undefined;
+      options?.statuses && options.statuses.length > 0 ? options.statuses : undefined;
     const filter = {
       ...(productId ? { productId } : {}),
       ...(options?.type ? { type: options.type } : {}),
       ...(statuses ? { status: { $in: statuses } } : {}),
     };
-    const cursor = db
-      .collection<JobDocument>(JOBS_COLLECTION)
-      .find(filter)
-      .sort({ createdAt: -1 });
+    const cursor = db.collection<JobDocument>(JOBS_COLLECTION).find(filter).sort({ createdAt: -1 });
     const limit =
-      typeof options?.limit === 'number' && options.limit > 0
-        ? Math.floor(options.limit)
-        : null;
+      typeof options?.limit === 'number' && options.limit > 0 ? Math.floor(options.limit) : null;
     if (limit !== null) {
       cursor.limit(limit);
     }
@@ -132,25 +125,14 @@ export const mongoProductAiJobRepository: ProductAiJobRepository = {
     const { productId, type, payload, createdAt, ...rest } = data;
     const updateData = { ...rest, updatedAt: now };
     const filter = {
-      $or: [
-        { _id: jobId },
-        { id: jobId },
-        { _id: idString },
-        { id: idString },
-      ],
+      $or: [{ _id: jobId }, { id: jobId }, { _id: idString }, { id: idString }],
     };
     const result = await db
       .collection<JobDocument>(JOBS_COLLECTION)
-      .findOneAndUpdate(
-        filter,
-        { $set: updateData },
-        { returnDocument: 'after' }
-      );
+      .findOneAndUpdate(filter, { $set: updateData }, { returnDocument: 'after' });
 
     if (!result) {
-      const existing = await db
-        .collection<JobDocument>(JOBS_COLLECTION)
-        .findOne(filter);
+      const existing = await db.collection<JobDocument>(JOBS_COLLECTION).findOne(filter);
       if (existing) {
         const retry = await db
           .collection<JobDocument>(JOBS_COLLECTION)
@@ -223,27 +205,23 @@ export const mongoProductAiJobRepository: ProductAiJobRepository = {
 
   async deleteAllJobs() {
     const db = await getMongoDb();
-    const result = await db
-      .collection<JobDocument>(JOBS_COLLECTION)
-      .deleteMany({});
+    const result = await db.collection<JobDocument>(JOBS_COLLECTION).deleteMany({});
     return { count: result.deletedCount ?? 0 };
   },
 
   async markStaleRunningJobs(maxAgeMs: number) {
     const db = await getMongoDb();
     const cutoff = new Date(Date.now() - maxAgeMs);
-    const result = await db
-      .collection<JobDocument>(JOBS_COLLECTION)
-      .updateMany(
-        { status: 'running', startedAt: { $lt: cutoff } },
-        {
-          $set: {
-            status: 'failed',
-            finishedAt: new Date(),
-            errorMessage: 'Job marked failed due to stale running state.',
-          },
-        }
-      );
+    const result = await db.collection<JobDocument>(JOBS_COLLECTION).updateMany(
+      { status: 'running', startedAt: { $lt: cutoff } },
+      {
+        $set: {
+          status: 'failed',
+          finishedAt: new Date(),
+          errorMessage: 'Job marked failed due to stale running state.',
+        },
+      }
+    );
     return { count: result.modifiedCount ?? 0 };
   },
 };

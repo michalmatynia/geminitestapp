@@ -11,7 +11,13 @@ import type {
   ApiRouteHandler,
   ApiRouteHandlerWithParams,
 } from '@/shared/contracts/ui';
-import { badRequestError, forbiddenError, methodNotAllowedError, payloadTooLargeError, validationError } from '@/shared/errors/app-error';
+import {
+  badRequestError,
+  forbiddenError,
+  methodNotAllowedError,
+  payloadTooLargeError,
+  validationError,
+} from '@/shared/errors/app-error';
 import { resolveError } from '@/shared/errors/resolve-error';
 import { enforceRateLimit } from '@/shared/lib/api/rate-limit';
 import { runWithContext } from '@/shared/lib/observability/request-context';
@@ -24,7 +30,6 @@ import {
 import { logger } from '@/shared/utils/logger';
 
 import type { ZodSchema } from 'zod';
-
 
 const shouldEnforceRateLimit = (): boolean => {
   if (process.env['DISABLE_RATE_LIMITS'] === 'true') return false;
@@ -57,28 +62,30 @@ type ErrorFingerprintParams = {
 // Real implementations from features layer via dynamic imports to avoid circular dependencies
 const logSystemEvent = async (params: LogSystemEventParams): Promise<void> => {
   try {
-     
     const { logSystemEvent: realLogSystemEvent } = await import('@/features/observability/server');
     await realLogSystemEvent(params);
   } catch (error) {
-    logger.error('Failed to log system event via observability feature', error, { context: params });
+    logger.error('Failed to log system event via observability feature', error, {
+      context: params,
+    });
   }
 };
 
 const getErrorFingerprint = async (params: ErrorFingerprintParams): Promise<string> => {
   try {
-     
-    const { getErrorFingerprint: realGetFingerprint } = await import('@/features/observability/server');
+    const { getErrorFingerprint: realGetFingerprint } =
+      await import('@/features/observability/server');
     return realGetFingerprint(params);
   } catch (error) {
-    logger.error('Failed to get error fingerprint via observability feature', error, { context: params });
+    logger.error('Failed to get error fingerprint via observability feature', error, {
+      context: params,
+    });
     return `${params.source}-${params.statusCode}-${Date.now()}`;
   }
 };
 
 const getSessionUser = async (): Promise<{ id?: string | null } | null> => {
   try {
-     
     const { auth } = await import('@/features/auth/auth');
     const session = await auth();
     return session?.user ?? null;
@@ -87,12 +94,7 @@ const getSessionUser = async (): Promise<{ id?: string | null } | null> => {
   }
 };
 
-export type {
-  ApiHandlerOptions,
-  ApiHandlerContext,
-  ApiRouteHandler,
-  ApiRouteHandlerWithParams,
-};
+export type { ApiHandlerOptions, ApiHandlerContext, ApiRouteHandler, ApiRouteHandlerWithParams };
 
 type ParsedBodyResult = {
   body: unknown;
@@ -156,7 +158,6 @@ const parseJsonBody = async (
   let parsed: unknown;
   try {
     parsed = JSON.parse(text);
-  
   } catch {
     throw badRequestError('Invalid JSON payload');
   }
@@ -245,7 +246,9 @@ export function apiHandler(
           const queryParams = Object.fromEntries(new URL(request.url).searchParams.entries());
           const validation = options.querySchema.safeParse(queryParams);
           if (!validation.success) {
-            throw validationError('Query validation failed', { issues: validation.error.flatten() });
+            throw validationError('Query validation failed', {
+              issues: validation.error.flatten(),
+            });
           }
           context.query = validation.data;
         }
@@ -280,12 +283,7 @@ export function apiHandler(
         applyDefaultCacheHeaders(response, request.method, options.cacheControl);
         return response;
       } catch (error) {
-        const response = await createErrorResponseWithTiming(
-          error,
-          request,
-          context,
-          options
-        );
+        const response = await createErrorResponseWithTiming(error, request, context, options);
         if (context.rateLimitHeaders) {
           Object.entries(context.rateLimitHeaders).forEach(([key, value]: [string, string]) => {
             response.headers.set(key, value);
@@ -315,10 +313,7 @@ export function apiHandler(
 export function apiHandlerWithParams<P extends Record<string, string | string[]>>(
   handler: ApiRouteHandlerWithParams<P>,
   options: ApiHandlerOptions
-): (
-  request: NextRequest,
-  context: { params: Promise<P> }
-) => Promise<Response> {
+): (request: NextRequest, context: { params: Promise<P> }) => Promise<Response> {
   return async (request: NextRequest, routeContext: { params: Promise<P> }) => {
     if (options.allowedMethods && !options.allowedMethods.includes(request.method)) {
       throw methodNotAllowedError(`Method ${request.method} not allowed`, {
@@ -337,87 +332,98 @@ export function apiHandlerWithParams<P extends Record<string, string | string[]>
       getElapsedMs: () => Math.round(performance.now() - startTime),
     };
 
-    return runWithContext({ requestId, startTime, userId: handlerContext.userId ?? null }, async () => {
-      try {
-        enforceCsrf(request, options);
+    return runWithContext(
+      { requestId, startTime, userId: handlerContext.userId ?? null },
+      async () => {
+        try {
+          enforceCsrf(request, options);
 
-        let rateLimitHeaders: Record<string, string> | undefined;
-        const rateKey = options.rateLimitKey === false ? null : (options.rateLimitKey ?? 'api');
-        if (rateKey && shouldEnforceRateLimit()) {
-          const rateResult = await enforceRateLimit(request, rateKey);
-          rateLimitHeaders = rateResult.headers;
-          handlerContext.rateLimitHeaders = rateLimitHeaders;
-        }
-        if (options.parseJsonBody) {
-          const parsed = await parseJsonBody(request, {
-            maxBodyBytes: options.maxBodyBytes ?? DEFAULT_JSON_BODY_BYTES,
-            schema: options.bodySchema,
-          });
-          handlerContext.body = parsed.body;
-        }
-
-        if (options.querySchema) {
-          const queryParams = Object.fromEntries(new URL(request.url).searchParams.entries());
-          const validation = options.querySchema.safeParse(queryParams);
-          if (!validation.success) {
-            throw validationError('Query validation failed', { issues: validation.error.flatten() });
+          let rateLimitHeaders: Record<string, string> | undefined;
+          const rateKey = options.rateLimitKey === false ? null : (options.rateLimitKey ?? 'api');
+          if (rateKey && shouldEnforceRateLimit()) {
+            const rateResult = await enforceRateLimit(request, rateKey);
+            rateLimitHeaders = rateResult.headers;
+            handlerContext.rateLimitHeaders = rateLimitHeaders;
           }
-          handlerContext.query = validation.data;
-        }
-
-        const params = await routeContext.params;
-        
-        if (options.paramsSchema) {
-          const validation = options.paramsSchema.safeParse(params);
-          if (!validation.success) {
-            throw validationError('Parameter validation failed', { issues: validation.error.flatten() });
+          if (options.parseJsonBody) {
+            const parsed = await parseJsonBody(request, {
+              maxBodyBytes: options.maxBodyBytes ?? DEFAULT_JSON_BODY_BYTES,
+              schema: options.bodySchema,
+            });
+            handlerContext.body = parsed.body;
           }
-        }
 
-        const response = await handler(request, handlerContext, params);
+          if (options.querySchema) {
+            const queryParams = Object.fromEntries(new URL(request.url).searchParams.entries());
+            const validation = options.querySchema.safeParse(queryParams);
+            if (!validation.success) {
+              throw validationError('Query validation failed', {
+                issues: validation.error.flatten(),
+              });
+            }
+            handlerContext.query = validation.data;
+          }
 
-        if (options.logSuccess) {
-          void logSystemEvent({
-            level: options.successLogLevel ?? 'info',
-            message: `${options.source} completed successfully`,
-            source: options.source,
+          const params = await routeContext.params;
+
+          if (options.paramsSchema) {
+            const validation = options.paramsSchema.safeParse(params);
+            if (!validation.success) {
+              throw validationError('Parameter validation failed', {
+                issues: validation.error.flatten(),
+              });
+            }
+          }
+
+          const response = await handler(request, handlerContext, params);
+
+          if (options.logSuccess) {
+            void logSystemEvent({
+              level: options.successLogLevel ?? 'info',
+              message: `${options.source} completed successfully`,
+              source: options.source,
+              request,
+              requestId,
+              statusCode: response.status,
+              context: {
+                durationMs: handlerContext.getElapsedMs(),
+                params,
+              },
+            });
+          }
+
+          if (!response.headers.has('x-request-id')) {
+            response.headers.set('x-request-id', requestId);
+          }
+          if (handlerContext.rateLimitHeaders) {
+            Object.entries(handlerContext.rateLimitHeaders).forEach(
+              ([key, value]: [string, string]) => {
+                response.headers.set(key, value);
+              }
+            );
+          }
+          applySecurityHeaders(response);
+          applyDefaultCacheHeaders(response, request.method, options.cacheControl);
+          return response;
+        } catch (error) {
+          const response = await createErrorResponseWithTiming(
+            error,
             request,
-            requestId,
-            statusCode: response.status,
-            context: {
-              durationMs: handlerContext.getElapsedMs(),
-              params,
-            },
-          });
+            handlerContext,
+            options
+          );
+          if (handlerContext.rateLimitHeaders) {
+            Object.entries(handlerContext.rateLimitHeaders).forEach(
+              ([key, value]: [string, string]) => {
+                response.headers.set(key, value);
+              }
+            );
+          }
+          applySecurityHeaders(response);
+          return response;
         }
-
-        if (!response.headers.has('x-request-id')) {
-          response.headers.set('x-request-id', requestId);
-        }
-        if (handlerContext.rateLimitHeaders) {
-          Object.entries(handlerContext.rateLimitHeaders).forEach(([key, value]: [string, string]) => {
-            response.headers.set(key, value);
-          });
-        }
-        applySecurityHeaders(response);
-        applyDefaultCacheHeaders(response, request.method, options.cacheControl);
-        return response;
-      } catch (error) {
-        const response = await createErrorResponseWithTiming(
-          error,
-          request,
-          handlerContext,
-          options
-        );
-        if (handlerContext.rateLimitHeaders) {
-          Object.entries(handlerContext.rateLimitHeaders).forEach(([key, value]: [string, string]) => {
-            response.headers.set(key, value);
-          });
-        }
-        applySecurityHeaders(response);
-        return response;
       }
-    });
+    );
   };
 }
 
@@ -425,11 +431,7 @@ const DEFAULT_GET_CACHE_CONTROL = 'private, max-age=60, stale-while-revalidate=3
 const MAX_QUERY_KEYS = 20;
 const MAX_BODY_KEYS = 20;
 
-function applyDefaultCacheHeaders(
-  response: Response,
-  method: string,
-  override?: string
-): void {
+function applyDefaultCacheHeaders(response: Response, method: string, override?: string): void {
   if (response.headers.has('Cache-Control')) return;
   if (override?.trim()) {
     response.headers.set('Cache-Control', override.trim());
@@ -497,8 +499,7 @@ async function createErrorResponseWithTiming(
     }
   })();
   const queryKeys = getQueryKeys(request);
-  const bodyShape =
-    context.body !== undefined ? summarizeBodyShape(context.body) : null;
+  const bodyShape = context.body !== undefined ? summarizeBodyShape(context.body) : null;
 
   // Log the error with full context
   void logSystemEvent({
@@ -581,10 +582,7 @@ export function getQueryParams(request: NextRequest): URLSearchParams {
 /**
  * Helper to get a required query parameter, throws if missing.
  */
-export function getRequiredParam(
-  searchParams: URLSearchParams,
-  name: string
-): string {
+export function getRequiredParam(searchParams: URLSearchParams, name: string): string {
   const value = searchParams.get(name);
   if (!value) {
     throw badRequestError(`Missing required parameter: ${name}`);
@@ -601,10 +599,7 @@ export function getPaginationParams(searchParams: URLSearchParams): {
   skip: number;
 } {
   const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10));
-  const pageSize = Math.min(
-    100,
-    Math.max(1, parseInt(searchParams.get('pageSize') ?? '20', 10))
-  );
+  const pageSize = Math.min(100, Math.max(1, parseInt(searchParams.get('pageSize') ?? '20', 10)));
   const skip = (page - 1) * pageSize;
   return { page, pageSize, skip };
 }

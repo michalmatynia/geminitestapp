@@ -15,7 +15,10 @@ import { ExportLogViewer } from './ExportLogViewer';
 import { useListProductForm } from './hooks/useListProductForm';
 import { IntegrationAccountSummary } from './IntegrationAccountSummary';
 import { ListProductModalFormProvider } from './list-product-modal/context/ListProductModalFormContext';
-import { ListProductModalViewProvider, useListProductModalViewContext } from './list-product-modal/context/ListProductModalViewContext';
+import {
+  ListProductModalViewProvider,
+  useListProductModalViewContext,
+} from './list-product-modal/context/ListProductModalViewContext';
 import { IntegrationSelection } from './list-product-modal/IntegrationSelection';
 import { ListProductErrorPanel } from './list-product-modal/ListProductErrorPanel';
 import { TraderaListingSettings } from './TraderaListingSettings';
@@ -26,12 +29,7 @@ interface ListProductModalProps extends EntityModalProps<ProductWithImages> {
 }
 
 function ListProductModalContent(): React.JSX.Element {
-  const {
-    product,
-    onClose,
-    onSuccess,
-    hasPresetSelection,
-  } = useListProductModalViewContext();
+  const { product, onClose, onSuccess, hasPresetSelection } = useListProductModalViewContext();
   const {
     integrations,
     loadingIntegrations: loading,
@@ -40,13 +38,9 @@ function ListProductModalContent(): React.JSX.Element {
     isTraderaIntegration,
   } = useListingSettingsContext();
 
-  const {
-    error,
-    exportLogs,
-    submitting,
-    handleSubmit,
-    handleImageRetry,
-  } = useListProductForm(product.id);
+  const { error, exportLogs, submitting, handleSubmit, handleImageRetry } = useListProductForm(
+    product.id
+  );
 
   const productName = product.name_en || product.name_pl || product.name_de || 'Unnamed Product';
 
@@ -54,10 +48,7 @@ function ListProductModalContent(): React.JSX.Element {
     (i: IntegrationWithConnections) => i.connections.length > 0
   );
   const retryImageExport = (preset: ImageRetryPreset): void => {
-    void handleImageRetry(
-      preset,
-      onSuccess
-    );
+    void handleImageRetry(preset, onSuccess);
   };
 
   return (
@@ -66,9 +57,7 @@ function ListProductModalContent(): React.JSX.Element {
       onClose={onClose}
       title={`List Product - ${productName}`}
       onSave={() => {
-        void handleSubmit(
-          onSuccess
-        );
+        void handleSubmit(onSuccess);
       }}
       isSaving={submitting}
       saveText={isBaseComIntegration ? 'Export to Base.com' : 'List Product'}
@@ -87,11 +76,7 @@ function ListProductModalContent(): React.JSX.Element {
 
           {!loading && integrationsWithConnections.length > 0 ? (
             <div className='space-y-4'>
-              {hasPresetSelection ? (
-                <IntegrationAccountSummary />
-              ) : (
-                <IntegrationSelection />
-              )}
+              {hasPresetSelection ? <IntegrationAccountSummary /> : <IntegrationSelection />}
 
               {isBaseComIntegration && selectedConnectionId && (
                 <div className='pt-4 border-t border-border'>

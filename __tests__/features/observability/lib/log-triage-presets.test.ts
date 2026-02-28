@@ -9,9 +9,7 @@ import {
 
 describe('log-triage-presets', () => {
   it('resolves recent-errors preset with a rolling 24-hour date window', () => {
-    const preset = SYSTEM_LOG_TRIAGE_PRESETS.find(
-      (item) => item.id === 'recent-errors-24h'
-    );
+    const preset = SYSTEM_LOG_TRIAGE_PRESETS.find((item) => item.id === 'recent-errors-24h');
     expect(preset).toBeDefined();
 
     const now = new Date(2026, 1, 10, 12, 0, 0);
@@ -23,9 +21,7 @@ describe('log-triage-presets', () => {
   });
 
   it('matches only exact preset state including non-preset defaults', () => {
-    const preset = SYSTEM_LOG_TRIAGE_PRESETS.find(
-      (item) => item.id === 'http-500-last7d'
-    );
+    const preset = SYSTEM_LOG_TRIAGE_PRESETS.find((item) => item.id === 'http-500-last7d');
     expect(preset).toBeDefined();
 
     const now = new Date(2026, 1, 10, 12, 0, 0);

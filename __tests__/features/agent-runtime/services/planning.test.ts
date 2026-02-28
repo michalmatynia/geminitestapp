@@ -24,12 +24,10 @@ describe('Agent Runtime - Planning', () => {
     it('should build a plan from LLM response (Happy Path)', async () => {
       const mockPlan = {
         decision: { action: 'tool', toolName: 'playwright', reason: 'Need to browse' },
-        steps: [
-          { title: 'Step 1', tool: 'playwright', expectedObservation: 'Obs 1' },
-        ],
+        steps: [{ title: 'Step 1', tool: 'playwright', expectedObservation: 'Obs 1' }],
         summary: 'Plan summary',
       };
-      
+
       const mockDedupe = { steps: mockPlan.steps };
       const mockGuard = { steps: mockPlan.steps };
       const mockEval = { score: 90, revisedSteps: [] };
@@ -39,23 +37,28 @@ describe('Agent Runtime - Planning', () => {
       (global.fetch as any)
         .mockResolvedValueOnce({
           ok: true,
-          json: async () => await Promise.resolve({ message: { content: JSON.stringify(mockPlan) } }),
+          json: async () =>
+            await Promise.resolve({ message: { content: JSON.stringify(mockPlan) } }),
         })
         .mockResolvedValueOnce({
           ok: true,
-          json: async () => await Promise.resolve({ message: { content: JSON.stringify(mockDedupe) } }),
+          json: async () =>
+            await Promise.resolve({ message: { content: JSON.stringify(mockDedupe) } }),
         })
         .mockResolvedValueOnce({
           ok: true,
-          json: async () => await Promise.resolve({ message: { content: JSON.stringify(mockGuard) } }),
+          json: async () =>
+            await Promise.resolve({ message: { content: JSON.stringify(mockGuard) } }),
         })
         .mockResolvedValueOnce({
           ok: true,
-          json: async () => await Promise.resolve({ message: { content: JSON.stringify(mockEval) } }),
+          json: async () =>
+            await Promise.resolve({ message: { content: JSON.stringify(mockEval) } }),
         })
         .mockResolvedValueOnce({
           ok: true,
-          json: async () => await Promise.resolve({ message: { content: JSON.stringify(mockOptimize) } }),
+          json: async () =>
+            await Promise.resolve({ message: { content: JSON.stringify(mockOptimize) } }),
         });
 
       const result = await buildPlanWithLLM({
@@ -112,7 +115,7 @@ describe('Agent Runtime - Planning', () => {
         issues: [],
         revisedSteps: [],
       };
-      
+
       const mockResponse = {
         message: {
           content: JSON.stringify(mockEval),
@@ -132,7 +135,7 @@ describe('Agent Runtime - Planning', () => {
         hierarchy: null,
         meta: null,
         maxSteps: 10,
-        maxStepAttempts: 3
+        maxStepAttempts: 3,
       });
 
       expect(result).not.toBeNull();

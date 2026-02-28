@@ -15,7 +15,11 @@ type Params = { id: string };
  * GET /api/marketplace/mappings/[id]
  * Gets a specific category mapping by ID.
  */
-export async function GET_handler(_request: NextRequest, _ctx: ApiHandlerContext, params: Params): Promise<Response> {
+export async function GET_handler(
+  _request: NextRequest,
+  _ctx: ApiHandlerContext,
+  params: Params
+): Promise<Response> {
   const { id } = params;
 
   const repo = getCategoryMappingRepository();
@@ -32,7 +36,11 @@ export async function GET_handler(_request: NextRequest, _ctx: ApiHandlerContext
  * PUT /api/marketplace/mappings/[id]
  * Updates a category mapping.
  */
-export async function PUT_handler(request: NextRequest, _ctx: ApiHandlerContext, params: Params): Promise<Response> {
+export async function PUT_handler(
+  request: NextRequest,
+  _ctx: ApiHandlerContext,
+  params: Params
+): Promise<Response> {
   const { id } = params;
   const body = (await request.json()) as UpdateMappingRequest;
 
@@ -58,7 +66,11 @@ export async function PUT_handler(request: NextRequest, _ctx: ApiHandlerContext,
  * DELETE /api/marketplace/mappings/[id]
  * Deletes a category mapping.
  */
-export async function DELETE_handler(_request: NextRequest, _ctx: ApiHandlerContext, params: Params): Promise<Response> {
+export async function DELETE_handler(
+  _request: NextRequest,
+  _ctx: ApiHandlerContext,
+  params: Params
+): Promise<Response> {
   const { id } = params;
 
   const repo = getCategoryMappingRepository();

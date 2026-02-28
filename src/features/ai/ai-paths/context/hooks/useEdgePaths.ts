@@ -58,8 +58,7 @@ const midpoint = (a: Point, b: Point): Point => ({
   y: (a.y + b.y) / 2,
 });
 
-const toAngleDegrees = (dx: number, dy: number): number =>
-  (Math.atan2(dy, dx) * 180) / Math.PI;
+const toAngleDegrees = (dx: number, dy: number): number => (Math.atan2(dy, dx) * 180) / Math.PI;
 const ORTHOGONAL_CORNER_RADIUS = 18;
 const SEGMENT_EPSILON = 0.001;
 
@@ -88,28 +87,15 @@ const buildOrthogonalPolyline = (from: Point, to: Point): Point[] => {
   if (absDx < 28) {
     const directionY = dy >= 0 ? 1 : -1;
     const bendY = from.y + (absDy < 56 ? 24 * directionY : dy * 0.5);
-    return dedupeAdjacentPoints([
-      from,
-      { x: from.x, y: bendY },
-      { x: to.x, y: bendY },
-      to,
-    ]);
+    return dedupeAdjacentPoints([from, { x: from.x, y: bendY }, { x: to.x, y: bendY }, to]);
   }
 
   const directionX = dx >= 0 ? 1 : -1;
   const bendX = from.x + (absDx < 84 ? 34 * directionX : dx * 0.5);
-  return dedupeAdjacentPoints([
-    from,
-    { x: bendX, y: from.y },
-    { x: bendX, y: to.y },
-    to,
-  ]);
+  return dedupeAdjacentPoints([from, { x: bendX, y: from.y }, { x: bendX, y: to.y }, to]);
 };
 
-const buildRoundedOrthogonalPath = (
-  points: Point[],
-  cornerRadius: number
-): string => {
+const buildRoundedOrthogonalPath = (points: Point[], cornerRadius: number): string => {
   if (points.length === 0) return '';
   if (points.length === 1) {
     const only = points[0] as Point;
@@ -185,10 +171,7 @@ const computePolylineArrow = (points: Point[]): { x: number; y: number; angle: n
     const from = points[0] as Point;
     return { x: from.x, y: from.y, angle: 0 };
   }
-  const totalLength = segments.reduce(
-    (sum: number, segment): number => sum + segment.length,
-    0
-  );
+  const totalLength = segments.reduce((sum: number, segment): number => sum + segment.length, 0);
   const targetDistance = totalLength / 2;
   let traversed = 0;
   for (const segment of segments) {
@@ -339,12 +322,7 @@ export function useEdgePaths(routingMode: EdgeRoutingMode = 'bezier'): EdgePath[
   const cacheRef = useRef<Map<string, { signature: string; value: EdgePath }>>(new Map());
 
   return useMemo(() => {
-    const { edgePaths, nextCache } = computeEdgePaths(
-      nodes,
-      edges,
-      routingMode,
-      cacheRef.current
-    );
+    const { edgePaths, nextCache } = computeEdgePaths(nodes, edges, routingMode, cacheRef.current);
     cacheRef.current = nextCache;
     return edgePaths;
   }, [nodes, edges, routingMode]);

@@ -4,18 +4,14 @@ import React from 'react';
 import { Button, FormSection } from '@/shared/ui';
 import { SplitVariantPreview } from '@/features/ai/image-studio/components/center-preview/SplitVariantPreview';
 import { SplitViewControls } from '@/features/ai/image-studio/components/center-preview/SplitViewControls';
-import { 
-  CenterPreviewProvider, 
-  useCenterPreviewContext 
+import {
+  CenterPreviewProvider,
+  useCenterPreviewContext,
 } from '@/features/ai/image-studio/components/center-preview/CenterPreviewContext';
 import { useProductStudioContext } from '../../../context/ProductStudioContext';
 
 function StudioPreviewCanvasInner(): React.JSX.Element {
-  const {
-    variantImageSrc,
-    sourceImageSrc,
-    canCompareWithSource,
-  } = useProductStudioContext();
+  const { variantImageSrc, sourceImageSrc, canCompareWithSource } = useProductStudioContext();
 
   const {
     singleVariantView,
@@ -41,10 +37,14 @@ function StudioPreviewCanvasInner(): React.JSX.Element {
       ) : (
         <div className='relative h-full w-full overflow-hidden'>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img 
-            src={canCompareWithSource && singleVariantView === 'source' ? (sourceImageSrc as string) : (variantImageSrc as string)} 
-            alt='Studio variant preview' 
-            className='h-full w-full object-contain' 
+          <img
+            src={
+              canCompareWithSource && singleVariantView === 'source'
+                ? (sourceImageSrc as string)
+                : (variantImageSrc as string)
+            }
+            alt='Studio variant preview'
+            className='h-full w-full object-contain'
           />
         </div>
       )}
@@ -52,17 +52,52 @@ function StudioPreviewCanvasInner(): React.JSX.Element {
       {canCompareWithSource && (
         <SplitViewControls
           canCompare={canCompareWithSource}
-          onGoToSourceSlot={() => { setSplitVariantView(false); setSingleVariantView('source'); }}
-          onToggleSourceVariantView={() => setSingleVariantView(prev => prev === 'variant' ? 'source' : 'variant')}
+          onGoToSourceSlot={() => {
+            setSplitVariantView(false);
+            setSingleVariantView('source');
+          }}
+          onToggleSourceVariantView={() =>
+            setSingleVariantView((prev) => (prev === 'variant' ? 'source' : 'variant'))
+          }
           onToggleSplitVariantView={() => setSplitVariantView(!splitVariantView)}
         />
       )}
 
       {!splitVariantView && canCompareWithSource && (
         <div className='absolute right-2 top-2 z-20 flex items-center gap-1 rounded bg-black/65 px-2 py-1 text-[10px] text-gray-100'>
-          <Button size='xs' variant='outline' className='h-5 w-5 px-0 text-[10px]' onClick={() => { setLeftSplitZoom(prev => clampSplitZoom(prev - SPLIT_ZOOM_STEP)); setRightSplitZoom(prev => clampSplitZoom(prev - SPLIT_ZOOM_STEP)); }}>-</Button>
-          <Button size='xs' variant='outline' className='h-5 w-5 px-0 text-[10px]' onClick={() => { setLeftSplitZoom(prev => clampSplitZoom(prev + SPLIT_ZOOM_STEP)); setRightSplitZoom(prev => clampSplitZoom(prev + SPLIT_ZOOM_STEP)); }}>+</Button>
-          <Button size='xs' variant='outline' className='h-5 px-1 text-[10px]' onClick={() => { setLeftSplitZoom(SPLIT_ZOOM_RESET); setRightSplitZoom(SPLIT_ZOOM_RESET); }}>100%</Button>
+          <Button
+            size='xs'
+            variant='outline'
+            className='h-5 w-5 px-0 text-[10px]'
+            onClick={() => {
+              setLeftSplitZoom((prev) => clampSplitZoom(prev - SPLIT_ZOOM_STEP));
+              setRightSplitZoom((prev) => clampSplitZoom(prev - SPLIT_ZOOM_STEP));
+            }}
+          >
+            -
+          </Button>
+          <Button
+            size='xs'
+            variant='outline'
+            className='h-5 w-5 px-0 text-[10px]'
+            onClick={() => {
+              setLeftSplitZoom((prev) => clampSplitZoom(prev + SPLIT_ZOOM_STEP));
+              setRightSplitZoom((prev) => clampSplitZoom(prev + SPLIT_ZOOM_STEP));
+            }}
+          >
+            +
+          </Button>
+          <Button
+            size='xs'
+            variant='outline'
+            className='h-5 px-1 text-[10px]'
+            onClick={() => {
+              setLeftSplitZoom(SPLIT_ZOOM_RESET);
+              setRightSplitZoom(SPLIT_ZOOM_RESET);
+            }}
+          >
+            100%
+          </Button>
         </div>
       )}
     </div>
@@ -70,21 +105,26 @@ function StudioPreviewCanvasInner(): React.JSX.Element {
 }
 
 export function StudioPreviewCanvas(): React.JSX.Element {
-  const {
-    selectedVariant,
-    variantImageSrc,
-  } = useProductStudioContext();
+  const { selectedVariant, variantImageSrc } = useProductStudioContext();
 
   if (!selectedVariant || !variantImageSrc) {
     return (
-      <FormSection title='Studio Preview' description='Use split mode to compare source and generated output.'>
-        <p className='text-sm text-gray-400'>Select a generated variant to open the preview canvas.</p>
+      <FormSection
+        title='Studio Preview'
+        description='Use split mode to compare source and generated output.'
+      >
+        <p className='text-sm text-gray-400'>
+          Select a generated variant to open the preview canvas.
+        </p>
       </FormSection>
     );
   }
 
   return (
-    <FormSection title='Studio Preview' description='Use split mode to compare source and generated output.'>
+    <FormSection
+      title='Studio Preview'
+      description='Use split mode to compare source and generated output.'
+    >
       <CenterPreviewProvider>
         <StudioPreviewCanvasInner />
       </CenterPreviewProvider>

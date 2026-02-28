@@ -13,21 +13,12 @@ const searchSchema = z.object({
   queryText: z.string().trim().min(1),
   topK: z.number().int().min(1).max(50).optional().default(8),
   minScore: z.number().min(-1).max(1).optional().default(0.15),
-  maxDocsPerCollection: z
-    .number()
-    .int()
-    .min(10)
-    .max(2000)
-    .optional()
-    .default(400),
+  maxDocsPerCollection: z.number().int().min(10).max(2000).optional().default(400),
 });
 
 type Params = { collectionId: string };
 
-export async function POST_handler(
-  req: NextRequest,
-  ctx: ApiHandlerContext,
-): Promise<Response> {
+export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const params = ctx.params as unknown as Params | undefined;
   const collectionId = params?.collectionId;
   if (!collectionId) throw badRequestError('Missing collectionId.');

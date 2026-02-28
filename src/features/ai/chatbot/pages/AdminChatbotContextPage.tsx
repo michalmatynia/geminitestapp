@@ -3,19 +3,19 @@
 import { PlusIcon, FileUp, Link as LinkIcon, MessageSquareQuote, Save } from 'lucide-react';
 import React, { Suspense, useMemo, useCallback } from 'react';
 
-import { 
-  Button, 
-  Tag, 
-  FileUploadTrigger, 
-  type FileUploadHelpers, 
-  StandardDataTablePanel, 
+import {
+  Button,
+  Tag,
+  FileUploadTrigger,
+  type FileUploadHelpers,
+  StandardDataTablePanel,
   StatusToggle,
   useToast,
   PanelHeader,
   SearchInput,
   EmptyState,
   LoadingState,
-  Hint
+  Hint,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -53,72 +53,73 @@ function ChatbotContextPageInner(): React.JSX.Element {
     toggleActive,
   } = useChatbotContextState();
 
-  const columns = useMemo<ColumnDef<ContextItem>[]>(() => [
-    {
-      accessorKey: 'title',
-      header: 'Title',
-      cell: ({ row }) => <span className='font-medium text-white'>{row.original.title}</span>,
-    },
-    {
-      accessorKey: 'tags',
-      header: 'Tags',
-      cell: ({ row }) => (
-        <div className='flex flex-wrap gap-1'>
-          {(row.original.tags || []).length === 0 ? (
-            <span className='text-xs text-gray-500'>None</span>
-          ) : (
-            (row.original.tags || []).map((tag: string) => (
-              <Tag key={tag} label={tag} />
-            ))
-          )}
-        </div>
-      ),
-    },
-    {
-      accessorKey: 'source',
-      header: 'Source',
-      cell: ({ row }) => (
-        <span className='text-xs text-gray-400 capitalize'>
-          {row.original.source || 'manual'}
-        </span>
-      ),
-    },
-    {
-      id: 'active',
-      header: 'Active',
-      cell: ({ row }) => (
-        <StatusToggle
-          enabled={activeIds.includes(row.original.id)}
-          onToggle={() => toggleActive(row.original.id, !activeIds.includes(row.original.id))}
-        />
-      ),
-    },
-    {
-      id: 'actions',
-      header: () => <div className='text-right'>Actions</div>,
-      cell: ({ row }) => (
-        <div className='flex justify-end gap-2'>
-          <Button
-            type='button'
-            variant='outline'
-            size='xs'
-            onClick={() => openEditModal(row.original)}
-          >
-            Edit
-          </Button>
-          <Button
-            type='button'
-            variant='outline'
-            size='xs'
-            onClick={() => handleDeleteContext(row.original.id)}
-            className='text-red-300 hover:text-red-200'
-          >
-            Delete
-          </Button>
-        </div>
-      ),
-    },
-  ], [activeIds, toggleActive, openEditModal, handleDeleteContext]);
+  const columns = useMemo<ColumnDef<ContextItem>[]>(
+    () => [
+      {
+        accessorKey: 'title',
+        header: 'Title',
+        cell: ({ row }) => <span className='font-medium text-white'>{row.original.title}</span>,
+      },
+      {
+        accessorKey: 'tags',
+        header: 'Tags',
+        cell: ({ row }) => (
+          <div className='flex flex-wrap gap-1'>
+            {(row.original.tags || []).length === 0 ? (
+              <span className='text-xs text-gray-500'>None</span>
+            ) : (
+              (row.original.tags || []).map((tag: string) => <Tag key={tag} label={tag} />)
+            )}
+          </div>
+        ),
+      },
+      {
+        accessorKey: 'source',
+        header: 'Source',
+        cell: ({ row }) => (
+          <span className='text-xs text-gray-400 capitalize'>
+            {row.original.source || 'manual'}
+          </span>
+        ),
+      },
+      {
+        id: 'active',
+        header: 'Active',
+        cell: ({ row }) => (
+          <StatusToggle
+            enabled={activeIds.includes(row.original.id)}
+            onToggle={() => toggleActive(row.original.id, !activeIds.includes(row.original.id))}
+          />
+        ),
+      },
+      {
+        id: 'actions',
+        header: () => <div className='text-right'>Actions</div>,
+        cell: ({ row }) => (
+          <div className='flex justify-end gap-2'>
+            <Button
+              type='button'
+              variant='outline'
+              size='xs'
+              onClick={() => openEditModal(row.original)}
+            >
+              Edit
+            </Button>
+            <Button
+              type='button'
+              variant='outline'
+              size='xs'
+              onClick={() => handleDeleteContext(row.original.id)}
+              className='text-red-300 hover:text-red-200'
+            >
+              Delete
+            </Button>
+          </div>
+        ),
+      },
+    ],
+    [activeIds, toggleActive, openEditModal, handleDeleteContext]
+  );
 
   const handleCopyLink = useCallback(() => {
     const params = new URLSearchParams();
@@ -162,9 +163,11 @@ function ChatbotContextPageInner(): React.JSX.Element {
             key: 'save',
             label: saving ? 'Saving...' : 'Save Contexts',
             icon: <Save className='size-3.5' />,
-            onClick: () => { void handleSaveContexts(); },
+            onClick: () => {
+              void handleSaveContexts();
+            },
             disabled: saving || loading,
-          }
+          },
         ]}
       />
 
@@ -181,7 +184,7 @@ function ChatbotContextPageInner(): React.JSX.Element {
                 disabled={loading}
                 size='sm'
               />
-              
+
               <FileUploadTrigger
                 accept='application/pdf'
                 disabled={loading || saving || uploading}
@@ -201,7 +204,9 @@ function ChatbotContextPageInner(): React.JSX.Element {
 
             {uniqueTags.length > 0 && (
               <div className='flex flex-wrap items-center gap-2 pt-1 border-t border-white/5'>
-                <Hint uppercase variant='muted' className='mr-1 font-semibold'>Quick Filter:</Hint>
+                <Hint uppercase variant='muted' className='mr-1 font-semibold'>
+                  Quick Filter:
+                </Hint>
                 {uniqueTags.map((tag: string) => (
                   <Button
                     key={tag}
@@ -211,9 +216,7 @@ function ChatbotContextPageInner(): React.JSX.Element {
                     className='rounded-full h-6 px-3'
                     onClick={(): void => {
                       setTagFilters((prev) =>
-                        prev.includes(tag)
-                          ? prev.filter((item) => item !== tag)
-                          : [...prev, tag]
+                        prev.includes(tag) ? prev.filter((item) => item !== tag) : [...prev, tag]
                       );
                     }}
                   >
@@ -241,7 +244,11 @@ function ChatbotContextPageInner(): React.JSX.Element {
         emptyState={
           <EmptyState
             title='No contexts found'
-            description={tagQuery || tagFilters.length > 0 ? 'Try adjusting your filters.' : 'Global contexts provide instructions to the AI.'}
+            description={
+              tagQuery || tagFilters.length > 0
+                ? 'Try adjusting your filters.'
+                : 'Global contexts provide instructions to the AI.'
+            }
             icon={<MessageSquareQuote className='size-12 opacity-20' />}
           />
         }
@@ -265,7 +272,9 @@ function ChatbotContextPageInner(): React.JSX.Element {
 
 export default function ChatbotContextPage(): React.JSX.Element {
   return (
-    <Suspense fallback={<LoadingState message='Mounting context environment...' className='py-12' />}>
+    <Suspense
+      fallback={<LoadingState message='Mounting context environment...' className='py-12' />}
+    >
       <ChatbotContextPageInner />
     </Suspense>
   );

@@ -11,6 +11,7 @@
 ### Identify Migration Candidate
 
 **Checklist:**
+
 - [ ] Component has 100+ LOC of custom filter/picker logic
 - [ ] Multiple similar fields or options
 - [ ] Duplicates patterns seen in other components
@@ -18,6 +19,7 @@
 - [ ] No blockers preventing refactoring
 
 **Questions to Ask:**
+
 1. Does this component have search/filter functionality?
 2. Are there multiple similar select/option fields?
 3. Is there a grid or list picker pattern?
@@ -30,11 +32,13 @@
 Title: Refactor [ComponentName] to use FilterPanel/Picker template
 
 Scope:
+
 - Current LOC: XXX
 - Expected LOC: YYY
 - Estimated savings: ZZZ (XX%)
 
 Steps:
+
 1. Extract filter configuration
 2. Build FilterPanel/Picker integration
 3. Verify all tests pass
@@ -51,6 +55,7 @@ Backward Compatibility: 100% (no breaking changes)
 ### Measure Current Implementation
 
 **Tasks:**
+
 - [ ] Open current component file
 - [ ] Count total LOC
 - [ ] Identify filter/picker sections
@@ -84,6 +89,7 @@ Dependencies:
 ### Map to Template Pattern
 
 **For Filters (Use FilterPanel):**
+
 ```
 Current             →  FilterPanel Field Type
 ─────────────────────────────────────
@@ -97,6 +103,7 @@ Current             →  FilterPanel Field Type
 ```
 
 **For Pickers (Use GenericPickerDropdown/GridPicker):**
+
 ```
 Current                  →  Template
 ──────────────────────────────────
@@ -172,6 +179,7 @@ const filterConfig: FilterField[] = [
 ```
 
 **Checklist:**
+
 - [ ] Extracted all filter fields
 - [ ] Mapped field types correctly
 - [ ] Included all options/choices
@@ -185,6 +193,7 @@ const filterConfig: FilterField[] = [
 ### Consolidate State
 
 **Before:**
+
 ```typescript
 const [searchQuery, setSearchQuery] = useState('');
 const [filterTagIds, setFilterTagIds] = useState<string[]>([]);
@@ -196,6 +205,7 @@ const handleSortChange = (val) => setSortBy(val);
 ```
 
 **After:**
+
 ```typescript
 const [filters, setFilters] = useState({
   search: '',
@@ -204,11 +214,12 @@ const [filters, setFilters] = useState({
 });
 
 const handleFilterChange = (key: string, value: any) => {
-  setFilters(prev => ({ ...prev, [key]: value }));
+  setFilters((prev) => ({ ...prev, [key]: value }));
 };
 ```
 
 **Checklist:**
+
 - [ ] Unified related state into single object
 - [ ] Created single change handler
 - [ ] Maintained backward compatibility
@@ -284,6 +295,7 @@ export function [ComponentName]() {
 ```
 
 **Checklist:**
+
 - [ ] Imported FilterPanel/Picker
 - [ ] Extracted state properly
 - [ ] Created filter config
@@ -307,6 +319,7 @@ npm run test:ui
 ```
 
 **Checklist:**
+
 - [ ] All existing tests passing
 - [ ] No new errors in console
 - [ ] No TypeScript errors
@@ -318,18 +331,18 @@ npm run test:ui
 describe('[ComponentName] - FilterPanel Integration', () => {
   it('filters data when search changes', () => {
     const { getByRole } = render(<[ComponentName] />);
-    
+
     fireEvent.change(getByRole('textbox'), { target: { value: 'test' } });
-    
+
     expect(screen.getByText(/filtered/i)).toBeInTheDocument();
   });
 
   it('resets filters when reset button clicked', () => {
     const { getByText, getByRole } = render(<[ComponentName] />);
-    
+
     fireEvent.change(getByRole('textbox'), { target: { value: 'test' } });
     fireEvent.click(getByText(/reset/i));
-    
+
     expect(getByRole('textbox')).toHaveValue('');
   });
 
@@ -342,6 +355,7 @@ describe('[ComponentName] - FilterPanel Integration', () => {
 ```
 
 **Checklist:**
+
 - [ ] Added FilterPanel integration tests
 - [ ] Tested filter change behavior
 - [ ] Tested reset functionality
@@ -351,6 +365,7 @@ describe('[ComponentName] - FilterPanel Integration', () => {
 ### Manual Testing
 
 **Checklist:**
+
 - [ ] Render component in browser
 - [ ] Test search functionality
 - [ ] Test filter selection
@@ -377,6 +392,7 @@ npm run build
 ```
 
 **Checklist:**
+
 - [ ] Build size not increased
 - [ ] Component renders within 16ms
 - [ ] No memory leaks detected
@@ -391,6 +407,7 @@ npm run build
 4. Look for unnecessary re-renders
 
 **Targets:**
+
 - Initial render: < 50ms
 - Filter change: < 100ms
 - Reset: < 50ms
@@ -402,6 +419,7 @@ npm run build
 ### Prepare for Review
 
 **Checklist:**
+
 - [ ] Created GitHub Pull Request
 - [ ] Added clear PR description
 - [ ] Linked migration issue
@@ -417,17 +435,20 @@ npm run build
 **Scope:** Consolidate filter UI to use proven FilterPanel template
 
 **Changes:**
+
 - Extracted filter configuration from inline JSX
 - Unified state management into single `filters` object
 - Replaced custom filter UI with FilterPanel component
 - Maintained 100% backward compatibility
 
 **Metrics:**
+
 - Before: XXX LOC
 - After: YYY LOC
 - Savings: ZZZ (XX%)
 
 **Testing:**
+
 - All existing tests passing: ✅
 - New integration tests added: ✅
 - Manual testing complete: ✅
@@ -440,6 +461,7 @@ npm run build
 ### Address Feedback
 
 **Common Review Comments:**
+
 - "Missing memoization" → Add `useMemo` for filterConfig
 - "State update in effect" → Move to callback handler
 - "No error handling" → Add error state
@@ -486,6 +508,7 @@ npm run deploy:production
 ### Post-Deployment
 
 **Checklist:**
+
 - [ ] Verify component renders correctly
 - [ ] Test all filter functionality
 - [ ] Monitor error logs
@@ -500,6 +523,7 @@ npm run deploy:production
 ### Update Component Documentation
 
 **Add to COMPONENT_PATTERNS.md:**
+
 ```markdown
 ### [ComponentName]
 
@@ -509,6 +533,7 @@ npm run deploy:production
 **Status:** ✅ Deployed [date]
 
 **Key Changes:**
+
 - Replaced custom filter UI with FilterPanel
 - Unified state management
 - Added reusable configuration
@@ -520,6 +545,7 @@ npm run deploy:production
 ```
 
 **Checklist:**
+
 - [ ] Updated DEVELOPER_HANDBOOK.md if needed
 - [ ] Added real-world example to docs
 - [ ] Updated migration guide
@@ -532,19 +558,17 @@ npm run deploy:production
 ### Common Issues
 
 **Issue: TypeScript errors in filter config**
+
 ```typescript
 // Wrong: Type inference fails
-const filterConfig = [
-  { key: 'search', type: 'text' },
-];
+const filterConfig = [{ key: 'search', type: 'text' }];
 
 // Right: Explicit type
-const filterConfig: FilterField[] = [
-  { key: 'search', label: 'Search', type: 'text' },
-];
+const filterConfig: FilterField[] = [{ key: 'search', label: 'Search', type: 'text' }];
 ```
 
 **Issue: Callback not firing**
+
 ```typescript
 // Wrong: Component manages state internally
 <FilterPanel filters={config} />
@@ -557,18 +581,22 @@ const filterConfig: FilterField[] = [
 ```
 
 **Issue: Options not updating**
+
 ```typescript
 // Wrong: Options created outside component
-const options = data.map(d => ({ value: d.id, label: d.name }));
+const options = data.map((d) => ({ value: d.id, label: d.name }));
 const filterConfig = [{ key: 'category', options }];
 
 // Right: Memoize options
-const filterConfig = useMemo(() => [
-  {
-    key: 'category',
-    options: data.map(d => ({ value: d.id, label: d.name })),
-  },
-], [data]);
+const filterConfig = useMemo(
+  () => [
+    {
+      key: 'category',
+      options: data.map((d) => ({ value: d.id, label: d.name })),
+    },
+  ],
+  [data]
+);
 ```
 
 ---
@@ -618,7 +646,7 @@ npm run dev
 1. **Stuck?** Check docs/DEVELOPER_HANDBOOK.md
 2. **Best practices?** Read docs/BEST_PRACTICES.md
 3. **See real examples?** Check src/features/products/components/list/ProductFilters.tsx
-4. **Test examples?** Check __tests__/shared/ui/FilterPanel.test.tsx
+4. **Test examples?** Check **tests**/shared/ui/FilterPanel.test.tsx
 
 ---
 

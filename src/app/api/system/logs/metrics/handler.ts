@@ -36,9 +36,12 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     from: parsed.from ? new Date(parsed.from) : null,
     to: parsed.to ? new Date(parsed.to) : null,
   });
-  return NextResponse.json({ metrics }, {
-    headers: {
-      'Cache-Control': 'no-store',
-    },
-  });
+  return NextResponse.json(
+    { metrics },
+    {
+      headers: {
+        'Cache-Control': 'no-store',
+      },
+    }
+  );
 }

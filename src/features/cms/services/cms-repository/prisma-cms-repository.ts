@@ -1,6 +1,5 @@
 import 'server-only';
 
-
 import type {
   Page,
   Slug,
@@ -84,7 +83,7 @@ function mapPrismaPageComponent(c: PrismaPageComponent): PageComponent {
 }
 
 function mapPrismaPage(
-  p: PrismaPage & { 
+  p: PrismaPage & {
     slugs?: { slug: PrismaSlug }[];
     components?: PrismaPageComponent[];
   }
@@ -103,8 +102,8 @@ function mapPrismaPage(
     robotsMeta: p.robotsMeta ?? undefined,
     createdAt: p.createdAt.toISOString(),
     updatedAt: p.updatedAt.toISOString(),
-    slugs: p.slugs?.map(ps => mapPrismaSlug(ps.slug)) ?? [],
-    components: p.components?.map(c => mapPrismaPageComponent(c)) ?? [],
+    slugs: p.slugs?.map((ps) => mapPrismaSlug(ps.slug)) ?? [],
+    components: p.components?.map((c) => mapPrismaPageComponent(c)) ?? [],
   };
 }
 
@@ -149,7 +148,7 @@ export const prismaCmsRepository: CmsRepository = {
           },
         },
         components: {
-          orderBy: { order: 'asc' }
+          orderBy: { order: 'asc' },
         },
       },
     });
@@ -158,14 +157,14 @@ export const prismaCmsRepository: CmsRepository = {
 
   async createPage(data: { name: string; themeId?: string | null | undefined }): Promise<Page> {
     const page = await prisma.page.create({
-      data: { 
+      data: {
         name: data.name,
         themeId: data.themeId ?? null,
       },
       include: {
         slugs: { include: { slug: true } },
-        components: true
-      }
+        components: true,
+      },
     });
     return mapPrismaPage(page);
   },
@@ -190,14 +189,21 @@ export const prismaCmsRepository: CmsRepository = {
         },
       },
     });
-    return pageSlug?.page ? mapPrismaPage(pageSlug.page as Parameters<typeof mapPrismaPage>[0]) : null;
+    return pageSlug?.page
+      ? mapPrismaPage(pageSlug.page as Parameters<typeof mapPrismaPage>[0])
+      : null;
   },
 
   async updatePage(id: string, data: PageUpdateData): Promise<Page | null> {
     const cleanData = removeUndefined({
       name: data.name,
       status: data.status,
-      publishedAt: data.publishedAt !== undefined ? (data.publishedAt ? new Date(data.publishedAt) : null) : undefined,
+      publishedAt:
+        data.publishedAt !== undefined
+          ? data.publishedAt
+            ? new Date(data.publishedAt)
+            : null
+          : undefined,
       seoTitle: data.seoTitle,
       seoDescription: data.seoDescription,
       seoOgImage: data.seoOgImage,
@@ -242,12 +248,12 @@ export const prismaCmsRepository: CmsRepository = {
   },
 
   async deletePage(id: string): Promise<Page | null> {
-    const page = await prisma.page.delete({ 
+    const page = await prisma.page.delete({
       where: { id },
       include: {
         slugs: { include: { slug: true } },
-        components: true
-      }
+        components: true,
+      },
     });
     return mapPrismaPage(page);
   },
@@ -293,17 +299,17 @@ export const prismaCmsRepository: CmsRepository = {
   },
 
   async getSlugById(id: string): Promise<Slug | null> {
-    const slug = await prisma.slug.findUnique({ 
+    const slug = await prisma.slug.findUnique({
       where: { id },
-      include: { pages: true }
+      include: { pages: true },
     });
     return slug ? mapPrismaSlug(slug) : null;
   },
 
   async getSlugByValue(slugValue: string): Promise<Slug | null> {
-    const slug = await prisma.slug.findUnique({ 
+    const slug = await prisma.slug.findUnique({
       where: { slug: slugValue },
-      include: { pages: true }
+      include: { pages: true },
     });
     return slug ? mapPrismaSlug(slug) : null;
   },
@@ -312,17 +318,20 @@ export const prismaCmsRepository: CmsRepository = {
     const cleanData = removeUndefined(data);
     const slug = await prisma.slug.create({
       data: cleanData as Prisma.SlugCreateInput,
-      include: { pages: true }
+      include: { pages: true },
     });
     return mapPrismaSlug(slug);
   },
 
-  async updateSlug(id: string, data: { slug?: string | undefined; isDefault?: boolean | undefined }): Promise<Slug | null> {
+  async updateSlug(
+    id: string,
+    data: { slug?: string | undefined; isDefault?: boolean | undefined }
+  ): Promise<Slug | null> {
     const cleanData = removeUndefined(data);
     const slug = await prisma.slug.update({
       where: { id },
       data: cleanData as Prisma.SlugUpdateInput,
-      include: { pages: true }
+      include: { pages: true },
     });
     return slug ? mapPrismaSlug(slug) : null;
   },

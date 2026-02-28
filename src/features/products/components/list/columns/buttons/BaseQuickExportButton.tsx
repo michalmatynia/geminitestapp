@@ -59,8 +59,9 @@ export function BaseQuickExportButton({
   const quickExportMutation = useGenericExportToBaseMutation();
   const quickExportLockRef = useRef(false);
   const [quickExportLocked, setQuickExportLocked] = useState(false);
-  const [existingSkuDecision, setExistingSkuDecision] =
-    useState<ExistingSkuDecisionState | null>(null);
+  const [existingSkuDecision, setExistingSkuDecision] = useState<ExistingSkuDecisionState | null>(
+    null
+  );
   const [linkExistingPending, setLinkExistingPending] = useState(false);
 
   const resolveQuickExportContext = async (): Promise<QuickExportContext | null> => {
@@ -107,10 +108,7 @@ export function BaseQuickExportButton({
       });
 
       const availableInventoryIds = new Set(
-        (Array.isArray(inventoriesResponse.inventories)
-          ? inventoriesResponse.inventories
-          : []
-        )
+        (Array.isArray(inventoriesResponse.inventories) ? inventoriesResponse.inventories : [])
           .map((entry) => {
             const rawId = entry.inventory_id ?? entry.id;
             if (typeof rawId === 'string') return rawId.trim();
@@ -254,10 +252,9 @@ export function BaseQuickExportButton({
 
     const externalListingId = existingSkuDecision.existingProductId?.trim() || '';
     if (!externalListingId) {
-      toast(
-        'Existing Base.com product ID is missing. Use "Set up new connection" instead.',
-        { variant: 'error' }
-      );
+      toast('Existing Base.com product ID is missing. Use "Set up new connection" instead.', {
+        variant: 'error',
+      });
       return;
     }
 
@@ -299,8 +296,8 @@ export function BaseQuickExportButton({
           showMarketplaceBadge && onOpenSettings
             ? onOpenSettings
             : (): void => {
-              void runQuickExport();
-            }
+                void runQuickExport();
+              }
         }
         onMouseEnter={prefetchListings}
         onFocus={prefetchListings}
@@ -310,8 +307,7 @@ export function BaseQuickExportButton({
         title={label}
         className={cn(
           'size-8 rounded-full border border-transparent bg-transparent p-0 hover:bg-transparent',
-          !showMarketplaceBadge && quickExportPending &&
-            'cursor-not-allowed opacity-60',
+          !showMarketplaceBadge && quickExportPending && 'cursor-not-allowed opacity-60',
           getMarketplaceButtonClass(status, showMarketplaceBadge, 'base')
         )}
       >
@@ -348,8 +344,8 @@ export function BaseQuickExportButton({
 
           {!existingSkuDecision?.existingProductId && (
             <p className='text-xs text-amber-300'>
-              Could not resolve existing Base.com product ID. Linking is disabled. Use
-              "Set up new connection".
+              Could not resolve existing Base.com product ID. Linking is disabled. Use "Set up new
+              connection".
             </p>
           )}
 

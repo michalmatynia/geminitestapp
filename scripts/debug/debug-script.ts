@@ -1,25 +1,25 @@
-import { prismaNoteRepository } from "@/features/notesapp/services/notes/note-repository/prisma-note-repository";
-import { createNoteSchema } from "@/shared/contracts/notes";
+import { prismaNoteRepository } from '@/features/notesapp/services/notes/note-repository/prisma-note-repository';
+import { createNoteSchema } from '@/shared/contracts/notes';
 
 async function main() {
-  console.log("Starting debug script...");
+  console.log('Starting debug script...');
 
   // 1. Create a category
   const category = await prismaNoteRepository.createCategory({
-    name: "Debug Category " + Date.now(),
-    description: "Debug category description",
+    name: 'Debug Category ' + Date.now(),
+    description: 'Debug category description',
     color: null,
     parentId: null,
-    notebookId: null
+    notebookId: null,
   });
 
-  console.log("Created category:", category.id);
+  console.log('Created category:', category.id);
 
   // 2. Create a note
   const noteInput = createNoteSchema.parse({
-    name: "Debug Note",
-    title: "Debug Note",
-    content: "Content",
+    name: 'Debug Note',
+    title: 'Debug Note',
+    content: 'Content',
     notebookId: null,
     editorType: 'markdown',
     categoryId: category.id,
@@ -29,20 +29,20 @@ async function main() {
     isFavorite: false,
   });
   const note = await prismaNoteRepository.create(noteInput);
-  console.log("Created note:", note.id);
+  console.log('Created note:', note.id);
 
   // 3. Update note to add category
-  console.log("Updating note to add category...");
+  console.log('Updating note to add category...');
   const updatedNote = await prismaNoteRepository.update(note.id, {
     categoryId: category.id,
   });
-  
-  console.log("Updated note category:", updatedNote?.categoryId);
+
+  console.log('Updated note category:', updatedNote?.categoryId);
 
   if (updatedNote?.categoryId === category.id) {
-    console.log("SUCCESS: Category added correctly.");
+    console.log('SUCCESS: Category added correctly.');
   } else {
-    console.log("FAILURE: Category NOT added.");
+    console.log('FAILURE: Category NOT added.');
   }
 
   // Clean up

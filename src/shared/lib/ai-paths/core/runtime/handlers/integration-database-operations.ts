@@ -53,21 +53,22 @@ const queryOperationHandler: DatabaseStandardOperationHandler = async ({
   templateContext,
   aiPrompt,
   strictFlowMode,
-}) => await handleDatabaseQueryOperation({
-  nodeInputs,
-  reportAiPathsError,
-  toast,
-  simulationEntityType,
-  simulationEntityId,
-  resolvedInputs,
-  queryConfig,
-  dryRun,
-  templateInputValue,
-  templateInputs,
-  templateContext,
-  aiPrompt,
-  strictFlowMode,
-});
+}) =>
+  await handleDatabaseQueryOperation({
+    nodeInputs,
+    reportAiPathsError,
+    toast,
+    simulationEntityType,
+    simulationEntityId,
+    resolvedInputs,
+    queryConfig,
+    dryRun,
+    templateInputValue,
+    templateInputs,
+    templateContext,
+    aiPrompt,
+    strictFlowMode,
+  });
 
 const updateOperationHandler: DatabaseStandardOperationHandler = async ({
   node,
@@ -86,24 +87,25 @@ const updateOperationHandler: DatabaseStandardOperationHandler = async ({
   templateInputs,
   aiPrompt,
   ensureExistingParameterTemplateContext,
-}) => await handleDatabaseUpdateOperation({
-  node,
-  nodeInputs,
-  prevOutputs,
-  executed,
-  reportAiPathsError,
-  toast,
-  simulationEntityType,
-  simulationEntityId,
-  resolvedInputs,
-  nodeInputPorts,
-  dbConfig,
-  queryConfig,
-  dryRun,
-  templateInputs,
-  aiPrompt,
-  ensureExistingParameterTemplateContext,
-});
+}) =>
+  await handleDatabaseUpdateOperation({
+    node,
+    nodeInputs,
+    prevOutputs,
+    executed,
+    reportAiPathsError,
+    toast,
+    simulationEntityType,
+    simulationEntityId,
+    resolvedInputs,
+    nodeInputPorts,
+    dbConfig,
+    queryConfig,
+    dryRun,
+    templateInputs,
+    aiPrompt,
+    ensureExistingParameterTemplateContext,
+  });
 
 const insertOperationHandler: DatabaseStandardOperationHandler = async ({
   node,
@@ -118,20 +120,21 @@ const insertOperationHandler: DatabaseStandardOperationHandler = async ({
   templateInputValue,
   templateContext,
   aiPrompt,
-}) => await handleDatabaseInsertOperation({
-  node,
-  nodeInputs,
-  executed,
-  reportAiPathsError,
-  toast,
-  dbConfig,
-  queryConfig,
-  dryRun,
-  writeSourcePath,
-  templateInputValue,
-  templateContext,
-  aiPrompt,
-});
+}) =>
+  await handleDatabaseInsertOperation({
+    node,
+    nodeInputs,
+    executed,
+    reportAiPathsError,
+    toast,
+    dbConfig,
+    queryConfig,
+    dryRun,
+    writeSourcePath,
+    templateInputValue,
+    templateContext,
+    aiPrompt,
+  });
 
 const deleteOperationHandler: DatabaseStandardOperationHandler = async ({
   node,
@@ -144,18 +147,19 @@ const deleteOperationHandler: DatabaseStandardOperationHandler = async ({
   dbConfig,
   dryRun,
   aiPrompt,
-}) => await handleDatabaseDeleteOperation({
-  node,
-  nodeInputs,
-  executed,
-  reportAiPathsError,
-  toast,
-  simulationEntityType,
-  simulationEntityId,
-  dbConfig,
-  dryRun,
-  aiPrompt,
-});
+}) =>
+  await handleDatabaseDeleteOperation({
+    node,
+    nodeInputs,
+    executed,
+    reportAiPathsError,
+    toast,
+    simulationEntityType,
+    simulationEntityId,
+    dbConfig,
+    dryRun,
+    aiPrompt,
+  });
 
 const OPERATION_HANDLERS: Partial<Record<DatabaseOperation, DatabaseStandardOperationHandler>> = {
   query: queryOperationHandler,

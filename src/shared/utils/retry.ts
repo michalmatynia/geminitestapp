@@ -23,7 +23,6 @@ type LogSystemEventParams = {
 // Real implementation from features layer via dynamic import to avoid circular dependencies
 const logSystemEvent = async (params: LogSystemEventParams): Promise<void> => {
   try {
-     
     const mod = await import('@/features/observability/server');
     await mod.logSystemEvent(params);
   } catch (error) {
@@ -58,7 +57,9 @@ export type RetryOptions = {
   logRetries?: boolean;
 };
 
-const DEFAULT_OPTIONS: Required<Omit<RetryOptions, 'timeoutMs' | 'onRetry' | 'isRetryable' | 'source'>> = {
+const DEFAULT_OPTIONS: Required<
+  Omit<RetryOptions, 'timeoutMs' | 'onRetry' | 'isRetryable' | 'source'>
+> = {
   maxAttempts: 3,
   initialDelayMs: 1000,
   maxDelayMs: 30000,
@@ -90,26 +91,24 @@ function calculateDelay(
 /**
  * Wraps a promise with a timeout.
  */
-function withTimeout<T>(
-  promise: Promise<T>,
-  timeoutMs: number,
-  operation: string
-): Promise<T> {
-  return new Promise<T>((resolve: (value: T | PromiseLike<T>) => void, reject: (reason?: unknown) => void) => {
-    const timer = setTimeout(() => {
-      reject(timeoutError(`Operation timed out after ${timeoutMs}ms`, { operation }));
-    }, timeoutMs);
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, operation: string): Promise<T> {
+  return new Promise<T>(
+    (resolve: (value: T | PromiseLike<T>) => void, reject: (reason?: unknown) => void) => {
+      const timer = setTimeout(() => {
+        reject(timeoutError(`Operation timed out after ${timeoutMs}ms`, { operation }));
+      }, timeoutMs);
 
-    promise
-      .then((result: T) => {
-        clearTimeout(timer);
-        resolve(result);
-      })
-      .catch((error: unknown) => {
-        clearTimeout(timer);
-        reject(wrapError(error));
-      });
-  });
+      promise
+        .then((result: T) => {
+          clearTimeout(timer);
+          resolve(result);
+        })
+        .catch((error: unknown) => {
+          clearTimeout(timer);
+          reject(wrapError(error));
+        });
+    }
+  );
 }
 
 import { delay } from './time-utils';
@@ -164,8 +163,7 @@ export async function withRetry<T>(
 
       // Check if we should retry
       const shouldRetry =
-        attempt < maxAttempts &&
-        (isRetryable?.(error) ?? isRetryableError(error) ?? true);
+        attempt < maxAttempts && (isRetryable?.(error) ?? isRetryableError(error) ?? true);
 
       if (!shouldRetry) {
         throw error;
@@ -330,8 +328,6 @@ export function resetCircuitBreaker(circuitId: string): void {
 /**
  * Gets the current state of a circuit breaker.
  */
-export function getCircuitBreakerState(
-  circuitId: string
-): CircuitState | undefined {
+export function getCircuitBreakerState(circuitId: string): CircuitState | undefined {
   return circuitStates.get(circuitId);
 }

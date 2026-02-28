@@ -20,10 +20,7 @@ import {
   type UpscaleRequestStrategyPayload,
   type UpscaleSmoothingQuality,
 } from './GenerationToolbarImageUtils';
-import {
-  imageStudioCropResponseSchema,
-  type ImageStudioCropResponse,
-} from '../../contracts/crop';
+import { imageStudioCropResponseSchema, type ImageStudioCropResponse } from '../../contracts/crop';
 import {
   imageStudioUpscaleResponseSchema,
   type ImageStudioUpscaleResponse,
@@ -38,21 +35,9 @@ type Toast = (
 ) => void;
 
 type UpscaleMode = 'client_canvas' | 'server_sharp';
-type UpscaleStatus =
-  | 'idle'
-  | 'resolving'
-  | 'preparing'
-  | 'uploading'
-  | 'processing'
-  | 'persisting';
+type UpscaleStatus = 'idle' | 'resolving' | 'preparing' | 'uploading' | 'processing' | 'persisting';
 type CropMode = 'client_bbox' | 'server_bbox';
-type CropStatus =
-  | 'idle'
-  | 'resolving'
-  | 'preparing'
-  | 'uploading'
-  | 'processing'
-  | 'persisting';
+type CropStatus = 'idle' | 'resolving' | 'preparing' | 'uploading' | 'processing' | 'persisting';
 type UpscaleStrategy = 'scale' | 'target_resolution';
 
 type UpscaleActionResponse = ImageStudioUpscaleResponse;
@@ -68,7 +53,10 @@ type CreateGenerationToolbarActionHandlersDeps = {
   hasCropBoundary: boolean;
   projectId: string | null;
   queryClient: QueryClient;
-  resolveCropRect: () => Promise<{ cropRect: CropRect; diagnostics: CropRectResolutionDiagnostics | null }>;
+  resolveCropRect: () => Promise<{
+    cropRect: CropRect;
+    diagnostics: CropRectResolutionDiagnostics | null;
+  }>;
   resolveCropCanvasContext: () => Promise<CropCanvasContext | null>;
   resolveUpscaleSourceDimensions: () => Promise<{ width: number; height: number }>;
   setCropBusy: (value: boolean) => void;
@@ -125,11 +113,11 @@ const toCropDiagnosticsPayload = (
     mappedImageBounds: diagnostics.mappedImageBounds ?? null,
     imageContentFrame: diagnostics.imageContentFrame
       ? {
-        x: diagnostics.imageContentFrame.x,
-        y: diagnostics.imageContentFrame.y,
-        width: diagnostics.imageContentFrame.width,
-        height: diagnostics.imageContentFrame.height,
-      }
+          x: diagnostics.imageContentFrame.x,
+          y: diagnostics.imageContentFrame.y,
+          width: diagnostics.imageContentFrame.width,
+          height: diagnostics.imageContentFrame.height,
+        }
       : null,
     usedImageContentFrameMapping: diagnostics.usedImageContentFrameMapping,
   };
@@ -201,7 +189,10 @@ export const createGenerationToolbarActionHandlers = (
   deps: CreateGenerationToolbarActionHandlersDeps
 ): {
   handleUpscale: () => Promise<void>;
-  handleCrop: (cropRectOverride?: CropRect, options?: { includeCanvasContext?: boolean }) => Promise<void>;
+  handleCrop: (
+    cropRectOverride?: CropRect,
+    options?: { includeCanvasContext?: boolean }
+  ) => Promise<void>;
 } => {
   const handleUpscale = async (): Promise<void> => {
     if (!deps.workingSlot?.id) {
@@ -229,18 +220,26 @@ export const createGenerationToolbarActionHandlers = (
       const parsedTargetWidth = Math.floor(Number(deps.upscaleTargetWidth));
       const parsedTargetHeight = Math.floor(Number(deps.upscaleTargetHeight));
       if (!(parsedTargetWidth > 0 && parsedTargetHeight > 0)) {
-        deps.toast('Enter both target width and target height as positive integers.', { variant: 'info' });
+        deps.toast('Enter both target width and target height as positive integers.', {
+          variant: 'info',
+        });
         return;
       }
-      if (parsedTargetWidth > deps.upscaleMaxOutputSide || parsedTargetHeight > deps.upscaleMaxOutputSide) {
-        deps.toast(`Target resolution side cannot exceed ${deps.upscaleMaxOutputSide}px.`, { variant: 'info' });
+      if (
+        parsedTargetWidth > deps.upscaleMaxOutputSide ||
+        parsedTargetHeight > deps.upscaleMaxOutputSide
+      ) {
+        deps.toast(`Target resolution side cannot exceed ${deps.upscaleMaxOutputSide}px.`, {
+          variant: 'info',
+        });
         return;
       }
       const sourceDimensions = await deps.resolveUpscaleSourceDimensions();
       if (
         parsedTargetWidth < sourceDimensions.width ||
         parsedTargetHeight < sourceDimensions.height ||
-        (parsedTargetWidth === sourceDimensions.width && parsedTargetHeight === sourceDimensions.height)
+        (parsedTargetWidth === sourceDimensions.width &&
+          parsedTargetHeight === sourceDimensions.height)
       ) {
         deps.toast(
           'Target resolution must upscale at least one side and not reduce source dimensions.',
@@ -285,28 +284,25 @@ export const createGenerationToolbarActionHandlers = (
           }
 
           deps.setUpscaleStatus('uploading');
-          response = await withUpscaleRetry(
-            () => {
-              const formData = new FormData();
-              formData.append('mode', mode);
-              appendUpscaleStrategyToFormData(formData, upscaleRequestPayload);
-              formData.append('smoothingQuality', deps.upscaleSmoothingQuality);
-              formData.append('requestId', upscaleRequestId);
-              formData.append('image', uploadBlob, `upscale-client-${Date.now()}.png`);
-              return api
-                .post<unknown>(
-                  `/api/image-studio/slots/${encodeURIComponent(workingSlotId)}/upscale`,
-                  formData,
-                  {
-                    signal: abortController.signal,
-                    timeout: deps.upscaleRequestTimeoutMs,
-                    headers: { 'x-idempotency-key': upscaleRequestId },
-                  }
-                )
-                .then((raw) => imageStudioUpscaleResponseSchema.parse(raw));
-            },
-            abortController.signal
-          );
+          response = await withUpscaleRetry(() => {
+            const formData = new FormData();
+            formData.append('mode', mode);
+            appendUpscaleStrategyToFormData(formData, upscaleRequestPayload);
+            formData.append('smoothingQuality', deps.upscaleSmoothingQuality);
+            formData.append('requestId', upscaleRequestId);
+            formData.append('image', uploadBlob, `upscale-client-${Date.now()}.png`);
+            return api
+              .post<unknown>(
+                `/api/image-studio/slots/${encodeURIComponent(workingSlotId)}/upscale`,
+                formData,
+                {
+                  signal: abortController.signal,
+                  timeout: deps.upscaleRequestTimeoutMs,
+                  headers: { 'x-idempotency-key': upscaleRequestId },
+                }
+              )
+              .then((raw) => imageStudioUpscaleResponseSchema.parse(raw));
+          }, abortController.signal);
         } catch (error) {
           if (!shouldFallbackToServerUpscale(error)) {
             throw error;
@@ -358,14 +354,12 @@ export const createGenerationToolbarActionHandlers = (
         await invalidateImageStudioSlots(deps.queryClient, normalizedProjectId);
         const slotsSnapshot = await deps.fetchProjectSlots(normalizedProjectId);
         const createdSlotId = response.slot?.id ?? '';
-        const mergedSlots =
-          createdSlotId
-            ? [response.slot, ...slotsSnapshot.filter((slot) => slot.id !== createdSlotId)]
-            : slotsSnapshot;
-        deps.queryClient.setQueryData<StudioSlotsResponse>(
-          studioKeys.slots(normalizedProjectId),
-          { slots: mergedSlots }
-        );
+        const mergedSlots = createdSlotId
+          ? [response.slot, ...slotsSnapshot.filter((slot) => slot.id !== createdSlotId)]
+          : slotsSnapshot;
+        deps.queryClient.setQueryData<StudioSlotsResponse>(studioKeys.slots(normalizedProjectId), {
+          slots: mergedSlots,
+        });
       }
 
       if (response.slot?.id) {
@@ -377,16 +371,22 @@ export const createGenerationToolbarActionHandlers = (
       const modeLabel = effectiveMode === 'client_data_url' ? 'Client' : 'Server';
       const effectiveStrategy = response.strategy ?? upscaleRequestPayload.strategy;
       const fallbackTargetWidth =
-        upscaleRequestPayload.strategy === 'target_resolution' ? upscaleRequestPayload.targetWidth : null;
+        upscaleRequestPayload.strategy === 'target_resolution'
+          ? upscaleRequestPayload.targetWidth
+          : null;
       const fallbackTargetHeight =
-        upscaleRequestPayload.strategy === 'target_resolution' ? upscaleRequestPayload.targetHeight : null;
+        upscaleRequestPayload.strategy === 'target_resolution'
+          ? upscaleRequestPayload.targetHeight
+          : null;
       const upscaleLabel =
         effectiveStrategy === 'target_resolution'
           ? `${response.targetWidth ?? fallbackTargetWidth}x${response.targetHeight ?? fallbackTargetHeight}`
           : `${Number(
-            (response.scale ?? (upscaleRequestPayload.strategy === 'scale' ? upscaleRequestPayload.scale : 2))
-              .toFixed(2)
-          )}x`;
+              (
+                response.scale ??
+                (upscaleRequestPayload.strategy === 'scale' ? upscaleRequestPayload.scale : 2)
+              ).toFixed(2)
+            )}x`;
       const createdLabel = response.slot?.name?.trim() || `Upscale ${upscaleLabel}`;
       deps.toast(`Created ${createdLabel} (${modeLabel} upscale).`, { variant: 'success' });
     } catch (error) {
@@ -394,7 +394,9 @@ export const createGenerationToolbarActionHandlers = (
         deps.toast('Upscale canceled.', { variant: 'info' });
         return;
       }
-      deps.toast(error instanceof Error ? error.message : 'Failed to upscale image.', { variant: 'error' });
+      deps.toast(error instanceof Error ? error.message : 'Failed to upscale image.', {
+        variant: 'error',
+      });
     } finally {
       deps.upscaleRequestInFlightRef.current = false;
       deps.upscaleAbortControllerRef.current = null;
@@ -417,7 +419,9 @@ export const createGenerationToolbarActionHandlers = (
       return;
     }
     if (!cropRectOverride && !deps.hasCropBoundary) {
-      deps.toast('Set a valid crop boundary or move image outside canvas first.', { variant: 'info' });
+      deps.toast('Set a valid crop boundary or move image outside canvas first.', {
+        variant: 'info',
+      });
       return;
     }
     if (deps.cropRequestInFlightRef.current) {
@@ -450,7 +454,11 @@ export const createGenerationToolbarActionHandlers = (
         }
         try {
           deps.setCropStatus('preparing');
-          const croppedDataUrl = await cropCanvasImage(sourceForClientCrop, cropRect, cropCanvasContext);
+          const croppedDataUrl = await cropCanvasImage(
+            sourceForClientCrop,
+            cropRect,
+            cropCanvasContext
+          );
           let uploadBlob: Blob;
           try {
             uploadBlob = await dataUrlToUploadBlob(croppedDataUrl);
@@ -459,33 +467,30 @@ export const createGenerationToolbarActionHandlers = (
           }
 
           deps.setCropStatus('uploading');
-          response = await withCropRetry(
-            () => {
-              const formData = new FormData();
-              formData.append('mode', deps.cropMode);
-              formData.append('cropRect', JSON.stringify(cropRect));
-              formData.append('requestId', cropRequestId);
-              if (cropDiagnosticsPayload) {
-                formData.append('diagnostics', JSON.stringify(cropDiagnosticsPayload));
-              }
-              if (cropCanvasContext) {
-                formData.append('canvasContext', JSON.stringify(cropCanvasContext));
-              }
-              formData.append('image', uploadBlob, `crop-client-${Date.now()}.png`);
-              return api
-                .post<unknown>(
-                  `/api/image-studio/slots/${encodeURIComponent(workingSlotId)}/crop`,
-                  formData,
-                  {
-                    signal: abortController.signal,
-                    timeout: deps.cropRequestTimeoutMs,
-                    headers: { 'x-idempotency-key': cropRequestId },
-                  }
-                )
-                .then((raw) => imageStudioCropResponseSchema.parse(raw));
-            },
-            abortController.signal
-          );
+          response = await withCropRetry(() => {
+            const formData = new FormData();
+            formData.append('mode', deps.cropMode);
+            formData.append('cropRect', JSON.stringify(cropRect));
+            formData.append('requestId', cropRequestId);
+            if (cropDiagnosticsPayload) {
+              formData.append('diagnostics', JSON.stringify(cropDiagnosticsPayload));
+            }
+            if (cropCanvasContext) {
+              formData.append('canvasContext', JSON.stringify(cropCanvasContext));
+            }
+            formData.append('image', uploadBlob, `crop-client-${Date.now()}.png`);
+            return api
+              .post<unknown>(
+                `/api/image-studio/slots/${encodeURIComponent(workingSlotId)}/crop`,
+                formData,
+                {
+                  signal: abortController.signal,
+                  timeout: deps.cropRequestTimeoutMs,
+                  headers: { 'x-idempotency-key': cropRequestId },
+                }
+              )
+              .then((raw) => imageStudioCropResponseSchema.parse(raw));
+          }, abortController.signal);
         } catch (error) {
           if (!isClientCropCrossOriginError(error)) {
             throw error;
@@ -513,9 +518,12 @@ export const createGenerationToolbarActionHandlers = (
             abortController.signal
           );
           resolvedMode = 'server_bbox';
-          deps.toast('Client crop was blocked by cross-origin restrictions; used server crop instead.', {
-            variant: 'info',
-          });
+          deps.toast(
+            'Client crop was blocked by cross-origin restrictions; used server crop instead.',
+            {
+              variant: 'info',
+            }
+          );
         }
       } else {
         deps.setCropStatus('processing');
@@ -548,14 +556,12 @@ export const createGenerationToolbarActionHandlers = (
         await invalidateImageStudioSlots(deps.queryClient, normalizedProjectId);
         const slotsSnapshot = await deps.fetchProjectSlots(normalizedProjectId);
         const createdSlotId = response.slot?.id ?? '';
-        const mergedSlots =
-          createdSlotId
-            ? [response.slot, ...slotsSnapshot.filter((slot) => slot.id !== createdSlotId)]
-            : slotsSnapshot;
-        deps.queryClient.setQueryData<StudioSlotsResponse>(
-          studioKeys.slots(normalizedProjectId),
-          { slots: mergedSlots }
-        );
+        const mergedSlots = createdSlotId
+          ? [response.slot, ...slotsSnapshot.filter((slot) => slot.id !== createdSlotId)]
+          : slotsSnapshot;
+        deps.queryClient.setQueryData<StudioSlotsResponse>(studioKeys.slots(normalizedProjectId), {
+          slots: mergedSlots,
+        });
       }
 
       if (response.slot?.id) {
@@ -572,7 +578,9 @@ export const createGenerationToolbarActionHandlers = (
         deps.toast('Crop canceled.', { variant: 'info' });
         return;
       }
-      deps.toast(error instanceof Error ? error.message : 'Failed to crop image.', { variant: 'error' });
+      deps.toast(error instanceof Error ? error.message : 'Failed to crop image.', {
+        variant: 'error',
+      });
     } finally {
       deps.cropRequestInFlightRef.current = false;
       deps.cropAbortControllerRef.current = null;

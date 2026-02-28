@@ -170,10 +170,14 @@ export const chatbotJobPayloadSchema = z.object({
   sessionId: z.string().optional(),
   model: z.string().optional(),
   prompt: z.string().optional(),
-  messages: z.array(z.object({
-    role: z.enum(['user', 'assistant', 'system']),
-    content: z.string(),
-  })).optional(),
+  messages: z
+    .array(
+      z.object({
+        role: z.enum(['user', 'assistant', 'system']),
+        content: z.string(),
+      })
+    )
+    .optional(),
   options: z.record(z.string(), z.unknown()).optional(),
 });
 
@@ -197,10 +201,12 @@ export type ChatbotJob = ChatbotJobDto;
 export const enqueueChatbotJobRequestSchema = z.object({
   sessionId: z.string(),
   model: z.string().optional(),
-  messages: z.array(z.object({
-    role: z.enum(['user', 'assistant', 'system']),
-    content: z.string(),
-  })),
+  messages: z.array(
+    z.object({
+      role: z.enum(['user', 'assistant', 'system']),
+      content: z.string(),
+    })
+  ),
   userMessage: z.string().optional(),
 });
 

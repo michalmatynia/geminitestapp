@@ -1,6 +1,14 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+} from 'react';
 
 import {
   useImportPreference,
@@ -15,9 +23,7 @@ import {
   useImportParameterCache,
   useRefreshImportParameterCacheMutation,
 } from '@/features/data-import-export/hooks/useImportQueries';
-import {
-  getDefaultImageRetryPresets,
-} from '@/features/data-import-export/utils/image-retry-presets';
+import { getDefaultImageRetryPresets } from '@/features/data-import-export/utils/image-retry-presets';
 import { useIntegrationsWithConnections } from '@/features/integrations/hooks/useIntegrationQueries';
 import { useCatalogs } from '@/features/products/hooks/useProductSettingsQueries';
 import type {
@@ -26,16 +32,14 @@ import type {
   DebugWarehouses,
   CatalogOption,
 } from '@/shared/contracts/data-import-export';
-import type { 
+import type {
   IntegrationConnectionBasic,
   IntegrationWithConnections,
   BaseImportMode,
   ImageRetryPreset,
   ImportParameterCacheResponse,
 } from '@/shared/contracts/integrations';
-import {
-  defaultBaseImportParameterImportSettings,
-} from '@/shared/contracts/integrations';
+import { defaultBaseImportParameterImportSettings } from '@/shared/contracts/integrations';
 import { useToast } from '@/shared/ui';
 
 import { createImportExportRuntimeActions } from './import-export-runtime-actions';
@@ -47,9 +51,13 @@ import { useImportExportData } from './import-export/useImportExportData';
 
 const ImportExportContext = createContext<ImportExportContextType | undefined>(undefined);
 
-export function ImportExportProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
+export function ImportExportProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}): React.JSX.Element {
   const { toast } = useToast();
-  
+
   const [showAllWarehouses, setShowAllWarehouses] = useState(false);
   const [includeAllWarehouses, setIncludeAllWarehouses] = useState(false);
   const [inventoryId, setInventoryId] = useState('');
@@ -74,11 +82,13 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
   const [importListEnabled, setImportListEnabled] = useState(false);
   const [inventoriesEnabled, setInventoriesEnabled] = useState(false);
   const [warehousesEnabled, setWarehousesEnabled] = useState(false);
-  
+
   const [importTemplateId, setImportTemplateId] = useState('');
   const [exportStockFallbackEnabled, setExportStockFallbackEnabled] = useState(false);
-  const [imageRetryPresets, setImageRetryPresets] = useState<ImageRetryPreset[]>(getDefaultImageRetryPresets());
-  
+  const [imageRetryPresets, setImageRetryPresets] = useState<ImageRetryPreset[]>(
+    getDefaultImageRetryPresets()
+  );
+
   const [isBaseConnected, setIsBaseConnected] = useState(false);
   const [baseConnections, setBaseConnections] = useState<IntegrationConnectionBasic[]>([]);
   const [selectedBaseConnectionId, setSelectedBaseConnectionId] = useState('');
@@ -95,26 +105,29 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
   const lastHydratedImportSchemaKey = useRef('');
 
   // Queries
-  const { data: integrationsWithConnectionsData, isLoading: checkingIntegration } = useIntegrationsWithConnections();
-  const integrationsWithConnections = useMemo((): IntegrationWithConnections[] => 
-    Array.isArray(integrationsWithConnectionsData) ? integrationsWithConnectionsData : [],
-  [integrationsWithConnectionsData]
+  const { data: integrationsWithConnectionsData, isLoading: checkingIntegration } =
+    useIntegrationsWithConnections();
+  const integrationsWithConnections = useMemo(
+    (): IntegrationWithConnections[] =>
+      Array.isArray(integrationsWithConnectionsData) ? integrationsWithConnectionsData : [],
+    [integrationsWithConnectionsData]
   );
   const catalogsQuery = useCatalogs();
-  const catalogsData = useMemo<CatalogOption[]>(() => (catalogsQuery.data || []), [catalogsQuery.data]);
+  const catalogsData = useMemo<CatalogOption[]>(
+    () => catalogsQuery.data || [],
+    [catalogsQuery.data]
+  );
   const loadingCatalogs = catalogsQuery.isLoading;
-  
+
   const { data: importTemplates = [], isLoading: loadingImportTemplates } = useTemplates('import');
   const { data: exportTemplates = [], isLoading: loadingExportTemplates } = useTemplates('export');
   const normalizedSelectedBaseConnectionId = selectedBaseConnectionId.trim();
   const normalizedImportInventoryId = inventoryId.trim();
   const normalizedExportInventoryId = exportInventoryId.trim();
   const importTemplateScopeReady =
-    normalizedSelectedBaseConnectionId.length > 0 &&
-    normalizedImportInventoryId.length > 0;
+    normalizedSelectedBaseConnectionId.length > 0 && normalizedImportInventoryId.length > 0;
   const exportTemplateScopeReady =
-    normalizedSelectedBaseConnectionId.length > 0 &&
-    normalizedExportInventoryId.length > 0;
+    normalizedSelectedBaseConnectionId.length > 0 && normalizedExportInventoryId.length > 0;
   const importTemplateScopeKey = importTemplateScopeReady
     ? `${normalizedSelectedBaseConnectionId}:${normalizedImportInventoryId}`
     : '';
@@ -140,7 +153,7 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
     if (integrationsWithConnections) {
       const baseIntegration = integrationsWithConnections.find(
         (i: IntegrationWithConnections): boolean =>
-          ['baselinker', 'base-com', 'base'].includes((i.slug ?? '').trim().toLowerCase()),
+          ['baselinker', 'base-com', 'base'].includes((i.slug ?? '').trim().toLowerCase())
       );
       const connections = baseIntegration?.connections ?? [];
       timer = setTimeout(() => {
@@ -151,8 +164,7 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
           return;
         }
         const hasSelected = connections.some(
-          (connection: IntegrationConnectionBasic) =>
-            connection.id === selectedBaseConnectionId
+          (connection: IntegrationConnectionBasic) => connection.id === selectedBaseConnectionId
         );
         if (!selectedBaseConnectionId || !hasSelected) {
           setSelectedBaseConnectionId(connections[0]?.id || '');
@@ -186,28 +198,30 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
     'last-template',
     '/api/integrations/imports/base/last-template'
   );
-  const { data: activeImportTemplatePref, isFetched: hasFetchedActiveImportTemplatePref } = useImportPreference<{ templateId?: string | null }>(
-    `active-template:${importTemplateScopeKey || 'none'}`,
-    importTemplateScopeReady
-      ? buildScopedTemplatePreferenceEndpoint(
-        '/api/integrations/imports/base/active-template',
-        normalizedSelectedBaseConnectionId,
-        normalizedImportInventoryId
-      )
-      : '/api/integrations/imports/base/active-template',
-    { enabled: importTemplateScopeReady }
-  );
-  const { data: activeExportTemplatePref, isFetched: hasFetchedActiveExportTemplatePref } = useImportPreference<{ templateId?: string | null }>(
-    `export-active-template:${exportTemplateScopeKey || 'none'}`,
-    exportTemplateScopeReady
-      ? buildScopedTemplatePreferenceEndpoint(
-        '/api/integrations/exports/base/active-template',
-        normalizedSelectedBaseConnectionId,
-        normalizedExportInventoryId
-      )
-      : '/api/integrations/exports/base/active-template',
-    { enabled: exportTemplateScopeReady }
-  );
+  const { data: activeImportTemplatePref, isFetched: hasFetchedActiveImportTemplatePref } =
+    useImportPreference<{ templateId?: string | null }>(
+      `active-template:${importTemplateScopeKey || 'none'}`,
+      importTemplateScopeReady
+        ? buildScopedTemplatePreferenceEndpoint(
+            '/api/integrations/imports/base/active-template',
+            normalizedSelectedBaseConnectionId,
+            normalizedImportInventoryId
+          )
+        : '/api/integrations/imports/base/active-template',
+      { enabled: importTemplateScopeReady }
+    );
+  const { data: activeExportTemplatePref, isFetched: hasFetchedActiveExportTemplatePref } =
+    useImportPreference<{ templateId?: string | null }>(
+      `export-active-template:${exportTemplateScopeKey || 'none'}`,
+      exportTemplateScopeReady
+        ? buildScopedTemplatePreferenceEndpoint(
+            '/api/integrations/exports/base/active-template',
+            normalizedSelectedBaseConnectionId,
+            normalizedExportInventoryId
+          )
+        : '/api/integrations/exports/base/active-template',
+      { enabled: exportTemplateScopeReady }
+    );
   const { data: defaultExportInventoryPref } = useImportPreference<{ inventoryId?: string | null }>(
     'default-inventory',
     '/api/integrations/exports/base/default-inventory'
@@ -225,10 +239,10 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
     '/api/integrations/exports/base/image-retry-presets',
     { fallback: { presets: getDefaultImageRetryPresets() } }
   );
-  const { data: sampleProductPref } = useImportPreference<{ productId?: string | null; inventoryId?: string | null }>(
-    'sample-product',
-    '/api/integrations/imports/base/sample-product'
-  );
+  const { data: sampleProductPref } = useImportPreference<{
+    productId?: string | null;
+    inventoryId?: string | null;
+  }>('sample-product', '/api/integrations/imports/base/sample-product');
 
   useImportExportPreferences({
     lastImportTemplatePref,
@@ -261,7 +275,7 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
     if (lastHydratedImportActiveTemplateScope.current === importTemplateScopeKey) return;
     const preferredTemplateId = activeImportTemplatePref?.templateId?.trim() || '';
     const preferred = preferredTemplateId
-      ? importTemplates.find((t: Template) => t.id === preferredTemplateId) ?? null
+      ? (importTemplates.find((t: Template) => t.id === preferredTemplateId) ?? null)
       : null;
     skipNextImportActiveTemplatePersist.current = true;
     if (preferred) {
@@ -271,9 +285,7 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
       templates.setImportTemplateName('');
       templates.setImportTemplateDescription('');
       templates.setImportTemplateMappings([{ sourceKey: '', targetField: '' }]);
-      templates.setImportTemplateParameterImport(
-        defaultBaseImportParameterImportSettings
-      );
+      templates.setImportTemplateParameterImport(defaultBaseImportParameterImportSettings);
     }
     lastHydratedImportActiveTemplateScope.current = importTemplateScopeKey;
   }, [
@@ -291,7 +303,7 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
     if (lastHydratedExportActiveTemplateScope.current === exportTemplateScopeKey) return;
     const preferredTemplateId = activeExportTemplatePref?.templateId?.trim() || '';
     const preferred = preferredTemplateId
-      ? exportTemplates.find((t: Template) => t.id === preferredTemplateId) ?? null
+      ? (exportTemplates.find((t: Template) => t.id === preferredTemplateId) ?? null)
       : null;
     skipNextExportActiveTemplatePersist.current = true;
     if (preferred) {
@@ -318,15 +330,11 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
     return importParameterCacheQuery.data ?? null;
   }, [importParameterCacheQuery.data]);
   const importSourceFields = useMemo<string[]>(() => {
-    const rawKeys = Array.isArray(importParameterCache?.keys)
-      ? importParameterCache.keys
-      : [];
+    const rawKeys = Array.isArray(importParameterCache?.keys) ? importParameterCache.keys : [];
     const normalized = rawKeys
       .map((key: unknown): string => (typeof key === 'string' ? key.trim() : ''))
       .filter((key: string): boolean => key.length > 0);
-    return Array.from(new Set(normalized)).sort((a: string, b: string) =>
-      a.localeCompare(b)
-    );
+    return Array.from(new Set(normalized)).sort((a: string, b: string) => a.localeCompare(b));
   }, [importParameterCache?.keys]);
   const importSourceFieldValues = useMemo<Record<string, string>>(() => {
     const rawValues = importParameterCache?.values;
@@ -389,8 +397,7 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
   const cancelImportRunMutation = useCancelImportRunMutation(activeImportRunId);
   const saveExportSettingsMutation = useSaveExportSettingsMutation();
   const clearInventoryMutation = useClearInventoryMutation();
-  const refreshImportParameterCacheMutation =
-    useRefreshImportParameterCacheMutation();
+  const refreshImportParameterCacheMutation = useRefreshImportParameterCacheMutation();
 
   // Auto-save preferences
   useEffect(() => {
@@ -482,10 +489,7 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
       typeof importParameterCache?.inventoryId === 'string'
         ? importParameterCache.inventoryId.trim()
         : '';
-    if (
-      cachedInventoryId === normalizedInventoryId &&
-      importSourceFields.length > 0
-    ) {
+    if (cachedInventoryId === normalizedInventoryId && importSourceFields.length > 0) {
       lastHydratedImportSchemaKey.current = schemaCacheKey;
       return;
     }
@@ -514,8 +518,7 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
   ]);
 
   const activeRunBusy =
-    activeImportRun?.run.status === 'queued' ||
-    activeImportRun?.run.status === 'running';
+    activeImportRun?.run.status === 'queued' || activeImportRun?.run.status === 'running';
 
   const runtimeActions = createImportExportRuntimeActions({
     toast,
@@ -572,9 +575,7 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
       toast('Default Base.com connection saved.', { variant: 'success' });
     } catch (error: unknown) {
       const message =
-        error instanceof Error
-          ? error.message
-          : 'Failed to save default Base.com connection.';
+        error instanceof Error ? error.message : 'Failed to save default Base.com connection.';
       toast(message, { variant: 'error' });
     }
   }, [selectedBaseConnectionId, saveDefaultConnectionMutation, toast]);
@@ -633,8 +634,7 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
     importSourceFields,
     importSourceFieldValues,
     loadingImportSourceFields:
-      importParameterCacheQuery.isFetching ||
-      refreshImportParameterCacheMutation.isPending,
+      importParameterCacheQuery.isFetching || refreshImportParameterCacheMutation.isPending,
     templateScope,
     setTemplateScope,
     showAllWarehouses,
@@ -675,15 +675,15 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
       activeRunBusy,
     savingDefaultConnection: saveDefaultConnectionMutation.isPending,
     savingExportSettings: saveExportSettingsMutation.isPending,
-    savingImportTemplate: templates.saveImportTemplateMutation.isPending || templates.createImportTemplateMutation.isPending,
-    savingExportTemplate: templates.saveExportTemplateMutation.isPending || templates.createExportTemplateMutation.isPending,
+    savingImportTemplate:
+      templates.saveImportTemplateMutation.isPending ||
+      templates.createImportTemplateMutation.isPending,
+    savingExportTemplate:
+      templates.saveExportTemplateMutation.isPending ||
+      templates.createExportTemplateMutation.isPending,
   };
 
-  return (
-    <ImportExportContext.Provider value={value}>
-      {children}
-    </ImportExportContext.Provider>
-  );
+  return <ImportExportContext.Provider value={value}>{children}</ImportExportContext.Provider>;
 }
 
 export function useImportExport(): ImportExportContextType {

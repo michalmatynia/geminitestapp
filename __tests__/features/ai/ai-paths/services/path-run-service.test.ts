@@ -3,23 +3,20 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 vi.unmock('@/shared/lib/db/prisma');
 vi.unmock('@/features/ai/ai-paths/services/path-run-repository');
 
-const {
-  enqueuePathRunJobMock,
-  removePathRunQueueEntriesMock,
-} = vi.hoisted(() => ({
+const { enqueuePathRunJobMock, removePathRunQueueEntriesMock } = vi.hoisted(() => ({
   enqueuePathRunJobMock: vi.fn().mockResolvedValue(undefined),
   removePathRunQueueEntriesMock: vi.fn().mockResolvedValue({ removed: 0, requested: 0 }),
 }));
 
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import {
-  enqueuePathRun, 
-  resumePathRun, 
-  cancelPathRun, 
+  enqueuePathRun,
+  resumePathRun,
+  cancelPathRun,
   cancelPathRunWithRepository,
   deletePathRunWithRepository,
   deletePathRunsWithRepository,
-  retryPathRunNode 
+  retryPathRunNode,
 } from '@/features/ai/ai-paths/services/path-run-service';
 import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
 import prisma from '@/shared/lib/db/prisma';
@@ -51,8 +48,8 @@ describe('PathRunService', () => {
       position: { x: 0, y: 0 },
       inputs: [],
       outputs: ['value'],
-      config: { trigger: { event: 'manual' } }
-    }
+      config: { trigger: { event: 'manual' } },
+    },
   ];
   const disconnectedCompileNodes: AiNode[] = [
     {
@@ -107,7 +104,7 @@ describe('PathRunService', () => {
         pathName: 'Test Path',
         nodes: mockNodes,
         edges: [],
-        triggerEvent: 'manual_run'
+        triggerEvent: 'manual_run',
       });
 
       expect(run.id).toBeDefined();
@@ -129,13 +126,15 @@ describe('PathRunService', () => {
         nodes: mockNodes,
         edges: [],
         backoffMs: 5000,
-        meta: { custom: 'value' }
+        meta: { custom: 'value' },
       });
 
-      expect(run.meta).toEqual(expect.objectContaining({
-        backoffMs: 5000,
-        custom: 'value'
-      }));
+      expect(run.meta).toEqual(
+        expect.objectContaining({
+          backoffMs: 5000,
+          custom: 'value',
+        })
+      );
     });
 
     it('should block enqueue when disabled node policy is violated', async () => {
@@ -249,7 +248,7 @@ describe('PathRunService', () => {
       const run = await enqueuePathRun({
         pathId: 'test-path',
         nodes: mockNodes,
-        edges: []
+        edges: [],
       });
 
       // Manually fail it
@@ -258,7 +257,7 @@ describe('PathRunService', () => {
       const resumed = await resumePathRun(run.id, 'resume');
       expect(resumed.status).toBe('queued');
       expect(resumed.errorMessage).toBeNull();
-      
+
       const events = await repo.listRunEvents(run.id);
       expect(events.some((e: any) => e.message === 'Run resumed (resume).')).toBe(true);
     });
@@ -269,7 +268,7 @@ describe('PathRunService', () => {
       const run = await enqueuePathRun({
         pathId: 'test-path',
         nodes: mockNodes,
-        edges: []
+        edges: [],
       });
 
       const canceled = await cancelPathRun(run.id);
@@ -285,7 +284,7 @@ describe('PathRunService', () => {
       const run = await enqueuePathRun({
         pathId: 'test-path-explicit-repo',
         nodes: mockNodes,
-        edges: []
+        edges: [],
       });
 
       const canceled = await cancelPathRunWithRepository(repo, run.id);
@@ -298,7 +297,7 @@ describe('PathRunService', () => {
       const run = await enqueuePathRun({
         pathId: 'test-path-running-cancel',
         nodes: mockNodes,
-        edges: []
+        edges: [],
       });
       await repo.updateRun(run.id, { status: 'running', startedAt: new Date().toISOString() });
 
@@ -314,11 +313,9 @@ describe('PathRunService', () => {
       );
 
       const events = await repo.listRunEvents(run.id);
-      expect(
-        events.some((e: any) =>
-          String(e.message).includes('Cancellation requested')
-        )
-      ).toBe(true);
+      expect(events.some((e: any) => String(e.message).includes('Cancellation requested'))).toBe(
+        true
+      );
       expect(removePathRunQueueEntriesMock).toHaveBeenCalledWith([run.id]);
     });
 
@@ -326,7 +323,7 @@ describe('PathRunService', () => {
       const run = await enqueuePathRun({
         pathId: 'test-path-terminal-cancel',
         nodes: mockNodes,
-        edges: []
+        edges: [],
       });
       await repo.updateRun(run.id, { status: 'completed', finishedAt: new Date().toISOString() });
 
@@ -341,20 +338,20 @@ describe('PathRunService', () => {
       const run = await enqueuePathRun({
         pathId: 'test-path',
         nodes: mockNodes,
-        edges: []
+        edges: [],
       });
 
       // Mark node as failed
       await repo.upsertRunNode(run.id, 'node-1', {
         nodeType: 'trigger',
         status: 'failed',
-        errorMessage: 'Node failed'
+        errorMessage: 'Node failed',
       });
       await repo.updateRun(run.id, { status: 'failed', errorMessage: 'Run failed' });
 
       const updatedRun = await retryPathRunNode(run.id, 'node-1');
       expect(updatedRun.status).toBe('queued');
-      
+
       const nodes = await repo.listRunNodes(run.id);
       expect(nodes[0].status).toBe('pending');
       expect(nodes[0].errorMessage).toBeNull();
@@ -369,7 +366,7 @@ describe('PathRunService', () => {
       const run = await enqueuePathRun({
         pathId: 'test-path-delete-single',
         nodes: mockNodes,
-        edges: []
+        edges: [],
       });
 
       const deleted = await deletePathRunWithRepository(repo, run.id);
@@ -382,17 +379,17 @@ describe('PathRunService', () => {
       const runA = await enqueuePathRun({
         pathId: 'test-path-delete-bulk',
         nodes: mockNodes,
-        edges: []
+        edges: [],
       });
       const runB = await enqueuePathRun({
         pathId: 'test-path-delete-bulk',
         nodes: mockNodes,
-        edges: []
+        edges: [],
       });
       const runOther = await enqueuePathRun({
         pathId: 'test-path-delete-other',
         nodes: mockNodes,
-        edges: []
+        edges: [],
       });
 
       const result = await deletePathRunsWithRepository(repo, {

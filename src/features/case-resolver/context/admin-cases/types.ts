@@ -118,7 +118,7 @@ export type AdminCaseResolverCasesContextValue = {
   setCaseShowNestedContent: (showNested: boolean) => void;
   setCaseFilterPanelDefaultExpanded: (expanded: boolean) => void;
   setConfirmation: React.Dispatch<React.SetStateAction<CaseResolverCaseListConfirmationState>>;
-  
+
   // High-level Actions
   handleCreateCase: () => Promise<void>;
   handleUpdateCase: () => Promise<void>;

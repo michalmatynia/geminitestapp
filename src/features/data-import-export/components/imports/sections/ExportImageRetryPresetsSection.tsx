@@ -7,27 +7,16 @@ import {
   withImageRetryPresetLabels,
 } from '@/features/data-import-export/utils/image-retry-presets';
 import type { ImageRetryPreset } from '@/shared/contracts/integrations';
-import {
-  Button,
-  Input,
-  SectionHeader,
-  Hint,
-  FormField,
-  ToggleRow,
-  Card,
-} from '@/shared/ui';
+import { Button, Input, SectionHeader, Hint, FormField, ToggleRow, Card } from '@/shared/ui';
 
 export function ExportImageRetryPresetsSection(): React.JSX.Element {
-  const {
-    imageRetryPresets,
-    setImageRetryPresets,
-  } = useImportExport();
+  const { imageRetryPresets, setImageRetryPresets } = useImportExport();
 
   const imageRetryPresetsLoaded = true;
 
   const updateImageRetryPreset = (
     presetId: string,
-    update: Partial<ImageRetryPreset['transform']>,
+    update: Partial<ImageRetryPreset['transform']>
   ): void => {
     setImageRetryPresets((prev: ImageRetryPreset[]) =>
       prev.map((preset: ImageRetryPreset) => {
@@ -40,7 +29,7 @@ export function ExportImageRetryPresetsSection(): React.JSX.Element {
           },
         });
         return nextPreset;
-      }),
+      })
     );
   };
 
@@ -71,25 +60,16 @@ export function ExportImageRetryPresetsSection(): React.JSX.Element {
       ) : (
         <div className='mt-3 space-y-3'>
           {imageRetryPresets.map((preset: ImageRetryPreset) => (
-            <div
-              key={preset.id}
-              className='rounded-md border border-border/60 bg-card/30 p-3'
-            >
-              <div className='text-xs font-semibold text-gray-200'>
-                {preset.name}
-              </div>
-              <Hint className='mt-1'>
-                {preset.description}
-              </Hint>
+            <div key={preset.id} className='rounded-md border border-border/60 bg-card/30 p-3'>
+              <div className='text-xs font-semibold text-gray-200'>{preset.name}</div>
+              <Hint className='mt-1'>{preset.description}</Hint>
               <div className='mt-2 grid gap-3 md:grid-cols-2'>
                 <FormField label='Max dimension (px)'>
                   <Input
                     type='number'
                     min={1}
                     value={preset.transform?.maxDimension ?? ''}
-                    onChange={(
-                      event: React.ChangeEvent<HTMLInputElement>,
-                    ): void => {
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
                       const raw = event.target.value;
                       updateImageRetryPreset(preset.id, {
                         maxDimension: raw ? Number(raw) : undefined,
@@ -106,9 +86,7 @@ export function ExportImageRetryPresetsSection(): React.JSX.Element {
                     min={10}
                     max={100}
                     value={preset.transform?.jpegQuality ?? ''}
-                    onChange={(
-                      event: React.ChangeEvent<HTMLInputElement>,
-                    ): void => {
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
                       const raw = event.target.value;
                       updateImageRetryPreset(preset.id, {
                         jpegQuality: raw ? Number(raw) : undefined,

@@ -1,8 +1,4 @@
-import type {
-  DatabaseConfig,
-  DbQueryConfig,
-  RuntimePortValues,
-} from '@/shared/contracts/ai-paths';
+import type { DatabaseConfig, DbQueryConfig, RuntimePortValues } from '@/shared/contracts/ai-paths';
 import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 
 import { executeDatabaseInsert } from './integration-database-insert-execution';
@@ -78,8 +74,7 @@ export async function handleDatabaseInsertOperation({
     bundle: insertResult as Record<string, unknown>,
     ...(writeOutcome !== undefined ? { writeOutcome } : {}),
     content_en:
-      typeof (insertResult as Record<string, unknown>)?.['content_en'] ===
-      'string'
+      typeof (insertResult as Record<string, unknown>)?.['content_en'] === 'string'
         ? ((insertResult as Record<string, unknown>)['content_en'] as string)
         : undefined,
     aiPrompt,

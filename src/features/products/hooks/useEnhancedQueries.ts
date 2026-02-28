@@ -1,4 +1,3 @@
-
 'use client';
 
 import { type UseQueryResult } from '@tanstack/react-query';
@@ -10,7 +9,6 @@ import { useNormalizedQuery, useComposedQuery } from '@/shared/hooks/useQueryCom
 import { useQueryScheduler, useBackgroundQueries } from '@/shared/hooks/useQueryScheduler';
 import { api } from '@/shared/lib/api-client';
 import { productKeys, settingsKeys, authKeys } from '@/shared/lib/query-key-exports';
-
 
 interface ProductStats {
   total: number;
@@ -46,11 +44,14 @@ export function useEnhancedProducts(): EnhancedProductsQueryResult {
         return await api.get<ProductDto[]>('/api/products');
       },
     },
-    (products: ProductDto[]): { total: number; published: number; categories: number; avgPrice: number; } => ({
+    (
+      products: ProductDto[]
+    ): { total: number; published: number; categories: number; avgPrice: number } => ({
       total: products.length,
       published: products.filter((p: ProductDto) => p.published).length,
       categories: [...new Set(products.map((p: ProductDto) => p.categoryId))].length,
-      avgPrice: products.reduce((sum: number, p: ProductDto) => sum + (p.price || 0), 0) / products.length,
+      avgPrice:
+        products.reduce((sum: number, p: ProductDto) => sum + (p.price || 0), 0) / products.length,
     })
   );
 
@@ -62,7 +63,8 @@ export function useEnhancedProducts(): EnhancedProductsQueryResult {
       async (): Promise<ProductCategoryDto[]> => {
         type Catalog = { id: string };
         const catalogs = await api.get<Catalog[]>('/api/catalogs');
-        const catalogId = Array.isArray(catalogs) && catalogs.length > 0 ? catalogs[0]?.id : undefined;
+        const catalogId =
+          Array.isArray(catalogs) && catalogs.length > 0 ? catalogs[0]?.id : undefined;
         if (!catalogId) return [];
         return await api.get<ProductCategoryDto[]>(
           `/api/products/categories?catalogId=${encodeURIComponent(catalogId)}`
@@ -105,7 +107,7 @@ export function useEnhancedUsers(): {
   users: UseQueryResult<unknown>;
   permissions: UseQueryResult<unknown>;
   activity: UseQueryResult<unknown>;
-  } {
+} {
   // User list with long-term caching
   const users = useAdaptiveQuery(
     [...authKeys.users.all, 'list'],
@@ -158,7 +160,13 @@ export function useEnhancedSettings(): ReturnType<typeof useComposedQuery> {
         return { app, user, system };
       },
     },
-    (data): SettingsObject & { system: SettingsObject; theme: string | null; language: string | null } => ({
+    (
+      data
+    ): SettingsObject & {
+      system: SettingsObject;
+      theme: string | null;
+      language: string | null;
+    } => ({
       ...data.app,
       ...data.user,
       system: data.system,

@@ -5,18 +5,21 @@ import { useQueryClient } from '@tanstack/react-query';
 import type { UpdateMutation, VoidMutation } from '@/shared/contracts/ui';
 import { createCreateMutationV2, createDeleteMutationV2 } from '@/shared/lib/query-factories-v2';
 
-import { 
-  performProductAiJobAction, 
-  deleteProductAiJob, 
+import {
+  performProductAiJobAction,
+  deleteProductAiJob,
   clearProductAiJobs,
   updateChatbotJob,
   deleteChatbotJob,
   clearChatbotJobs,
-  cancelListing
+  cancelListing,
 } from '../api';
 import { jobKeys } from './useJobQueries';
 
-export function useProductAiJobMutation(): UpdateMutation<unknown, { jobId: string; action: 'retry' | 'cancel' }> {
+export function useProductAiJobMutation(): UpdateMutation<
+  unknown,
+  { jobId: string; action: 'retry' | 'cancel' }
+> {
   const queryClient = useQueryClient();
   return createCreateMutationV2({
     mutationFn: ({ jobId, action }) => performProductAiJobAction(jobId, action),
@@ -70,7 +73,10 @@ export function useClearProductAiJobsMutation(): VoidMutation<{ scope: string }>
   });
 }
 
-export function useChatbotJobMutation(): UpdateMutation<unknown, { jobId: string; action: 'retry' | 'cancel' }> {
+export function useChatbotJobMutation(): UpdateMutation<
+  unknown,
+  { jobId: string; action: 'retry' | 'cancel' }
+> {
   const queryClient = useQueryClient();
   return createCreateMutationV2({
     mutationFn: ({ jobId, action }) => updateChatbotJob(jobId, action),

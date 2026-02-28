@@ -36,10 +36,18 @@ const SETTINGS_KEY = `ai_paths_config_${PATH_ID}`;
       parserMappings = pNode?.config?.parser?.mappings ?? null;
       const edges = cfg?.edges ?? [];
       hasBundleEdgeToQuery = edges.some(
-        (e) => e.from === 'node-parser-params' && e.to === 'node-query-params' && e.fromPort === 'bundle' && e.toPort === 'bundle'
+        (e) =>
+          e.from === 'node-parser-params' &&
+          e.to === 'node-query-params' &&
+          e.fromPort === 'bundle' &&
+          e.toPort === 'bundle'
       );
       hasCatalogIdEdgeToQuery = edges.some(
-        (e) => e.from === 'node-parser-params' && e.to === 'node-query-params' && e.fromPort === 'catalogId' && e.toPort === 'catalogId'
+        (e) =>
+          e.from === 'node-parser-params' &&
+          e.to === 'node-query-params' &&
+          e.fromPort === 'catalogId' &&
+          e.toPort === 'catalogId'
       );
     } catch (e) {
       storedQueryTemplate = `PARSE ERROR: ${e.message}`;
@@ -49,10 +57,12 @@ const SETTINGS_KEY = `ai_paths_config_${PATH_ID}`;
   }
 
   // ── 2. Product from MongoDB ───────────────────────────────────────────────
-  const product = await db.collection('products').findOne(
-    { $or: [{ id: PRODUCT_ID }, { _id: PRODUCT_ID }] },
-    { projection: { id: 1, title: 1, catalogId: 1, parameters: 1 } }
-  );
+  const product = await db
+    .collection('products')
+    .findOne(
+      { $or: [{ id: PRODUCT_ID }, { _id: PRODUCT_ID }] },
+      { projection: { id: 1, title: 1, catalogId: 1, parameters: 1 } }
+    );
   const catalogId = product?.catalogId ?? null;
 
   // ── 3. Catalog parameter definitions from MongoDB ─────────────────────────
@@ -111,19 +121,23 @@ const SETTINGS_KEY = `ai_paths_config_${PATH_ID}`;
               entryCount: arr.length,
               lastType: last?.type ?? null,
               lastError: last?.error ?? null,
-              outputPreview: last?.output !== undefined
-                ? JSON.stringify(last.output).slice(0, 300)
-                : null,
+              outputPreview:
+                last?.output !== undefined ? JSON.stringify(last.output).slice(0, 300) : null,
             };
           }
         }
 
         const runEdges = graphObj?.edges ?? [];
         const runHasBundleEdge = runEdges.some(
-          (e) => e.from === 'node-parser-params' && e.to === 'node-query-params' && e.fromPort === 'bundle' && e.toPort === 'bundle'
+          (e) =>
+            e.from === 'node-parser-params' &&
+            e.to === 'node-query-params' &&
+            e.fromPort === 'bundle' &&
+            e.toPort === 'bundle'
         );
         const runQueryNode = (graphObj?.nodes ?? []).find((n) => n?.id === 'node-query-params');
-        const runQueryTemplate = runQueryNode?.config?.database?.query?.queryTemplate?.trim() ?? null;
+        const runQueryTemplate =
+          runQueryNode?.config?.database?.query?.queryTemplate?.trim() ?? null;
 
         runData = {
           id: runData.id,
@@ -150,27 +164,35 @@ const SETTINGS_KEY = `ai_paths_config_${PATH_ID}`;
     runData = { note: 'DATABASE_URL not set — skipping PostgreSQL query' };
   }
 
-  console.log(JSON.stringify({
-    storedPathConfig: {
-      version: storedVersion,
-      queryTemplate: storedQueryTemplate,
-      hasBundleEdgeToQuery,
-      hasCatalogIdEdgeToQuery,
-      parserMappingsHasCatalogId: parserMappings ? 'catalogId' in parserMappings : null,
-    },
-    product: {
-      id: product?.id ?? null,
-      title: product?.title ?? null,
-      catalogId,
-      existingParameterCount: Array.isArray(product?.parameters) ? product.parameters.length : 'none',
-    },
-    catalogParamDefs: {
-      catalogId,
-      count: paramDefCount,
-      sample: paramDefSample,
-    },
-    run: runData,
-  }, null, 2));
+  console.log(
+    JSON.stringify(
+      {
+        storedPathConfig: {
+          version: storedVersion,
+          queryTemplate: storedQueryTemplate,
+          hasBundleEdgeToQuery,
+          hasCatalogIdEdgeToQuery,
+          parserMappingsHasCatalogId: parserMappings ? 'catalogId' in parserMappings : null,
+        },
+        product: {
+          id: product?.id ?? null,
+          title: product?.title ?? null,
+          catalogId,
+          existingParameterCount: Array.isArray(product?.parameters)
+            ? product.parameters.length
+            : 'none',
+        },
+        catalogParamDefs: {
+          catalogId,
+          count: paramDefCount,
+          sample: paramDefSample,
+        },
+        run: runData,
+      },
+      null,
+      2
+    )
+  );
 })().catch((err) => {
   console.error(err.message);
   process.exit(1);

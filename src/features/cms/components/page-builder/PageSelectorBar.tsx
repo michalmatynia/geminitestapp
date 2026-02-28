@@ -12,7 +12,6 @@ import { useCmsDomainSelection } from '../../hooks/useCmsDomainSelection';
 import { useCmsPages, useCmsPage } from '../../hooks/useCmsQueries';
 import { usePageBuilderState, usePageBuilderDispatch } from '../../hooks/usePageBuilderContext';
 
-
 type PageSelectorBarProps = {
   variant?: 'bar' | 'toolbar';
 };
@@ -27,7 +26,7 @@ export function PageSelectorBar({ variant = 'bar' }: PageSelectorBarProps): Reac
   const pageIdParam = searchParams.get('pageId');
   const lastSavedPageIdRef = useRef<string | null>(null);
   const hasUserSelectedPageRef = useRef(false);
-  
+
   const preferencesQuery = useUserPreferences();
   const userPreferences = preferencesQuery.data;
   const updatePreferencesMutation = useUpdateUserPreferences();
@@ -76,7 +75,10 @@ export function PageSelectorBar({ variant = 'bar' }: PageSelectorBarProps): Reac
     if (!preferencesQuery.isFetched) return;
     if (!selectedPageId) return;
     if (!hasUserSelectedPageRef.current && !pageIdParam) {
-      if (typeof userPreferences?.cmsLastPageId === 'string' && userPreferences.cmsLastPageId.trim()) {
+      if (
+        typeof userPreferences?.cmsLastPageId === 'string' &&
+        userPreferences.cmsLastPageId.trim()
+      ) {
         lastSavedPageIdRef.current = userPreferences.cmsLastPageId;
       }
       return;
@@ -88,7 +90,13 @@ export function PageSelectorBar({ variant = 'bar' }: PageSelectorBarProps): Reac
     if (lastSavedPageIdRef.current === selectedPageId) return;
     lastSavedPageIdRef.current = selectedPageId;
     updatePreferencesMutation.mutate({ cmsLastPageId: selectedPageId });
-  }, [pageIdParam, preferencesQuery.isFetched, selectedPageId, updatePreferencesMutation, userPreferences?.cmsLastPageId]);
+  }, [
+    pageIdParam,
+    preferencesQuery.isFetched,
+    selectedPageId,
+    updatePreferencesMutation,
+    userPreferences?.cmsLastPageId,
+  ]);
 
   const handlePageChange = useCallback((value: string): void => {
     hasUserSelectedPageRef.current = true;
@@ -98,9 +106,7 @@ export function PageSelectorBar({ variant = 'bar' }: PageSelectorBarProps): Reac
   return (
     <div
       className={
-        isToolbar
-          ? 'flex items-center gap-2'
-          : 'flex w-full items-center justify-center gap-3'
+        isToolbar ? 'flex items-center gap-2' : 'flex w-full items-center justify-center gap-3'
       }
     >
       {!isToolbar && (
@@ -109,12 +115,13 @@ export function PageSelectorBar({ variant = 'bar' }: PageSelectorBarProps): Reac
           <span>Page</span>
         </div>
       )}
-      <SelectSimple size='sm'
+      <SelectSimple
+        size='sm'
         value={selectedPageId}
         onValueChange={handlePageChange}
         options={(pagesQuery.data ?? []).map((page: PageSummary) => ({
           value: page.id,
-          label: page.name
+          label: page.name,
         }))}
         placeholder='Select a page...'
         className={isToolbar ? 'w-56' : 'w-64'}

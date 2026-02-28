@@ -7,7 +7,9 @@ test.describe('Front Manage', () => {
 
   test('should display front manage page', async ({ page }) => {
     await expect(page.getByRole('heading', { name: 'Front Manage', exact: true })).toBeVisible();
-    await expect(page.getByText('Pick which app should open when users land on the home page.')).toBeVisible();
+    await expect(
+      page.getByText('Pick which app should open when users land on the home page.')
+    ).toBeVisible();
   });
 
   test('should allow selecting a front page option', async ({ page }) => {
@@ -22,11 +24,11 @@ test.describe('Front Manage', () => {
 
     // Select Chatbot
     await chatbotBtn.click();
-    
+
     // Check if it's visually selected (the code adds blue-500/60 border)
     // We can check for the presence of the route label next to it
     await expect(chatbotBtn.getByText('/admin/chatbot')).toBeVisible();
-    
+
     // Check Save button
     const saveBtn = page.getByRole('button', { name: 'Save Selection' });
     await expect(saveBtn).toBeVisible();

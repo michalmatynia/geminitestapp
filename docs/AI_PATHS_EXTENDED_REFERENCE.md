@@ -1,13 +1,16 @@
 # AI Paths Extended Reference
 
 ## Purpose
+
 This document is the detailed operator/developer reference for AI Paths:
+
 - how paths are modeled
 - how each node category behaves at runtime
 - how to safely change, test, and roll out path updates
 - how AI Paths documentation governance works
 
 ## Path Lifecycle
+
 1. Author path graph in Admin UI.
 2. Validate node inputs/outputs and edge connectivity.
 3. Run local simulation or targeted trigger.
@@ -17,6 +20,7 @@ This document is the detailed operator/developer reference for AI Paths:
 7. Observe success/error rates and runtime health.
 
 ## Runtime Model
+
 - Execution unit: one path run per trigger event.
 - Context: mutable payload shared across node execution.
 - Ports: typed IO slots (for example `prompt`, `result`, `bundle`, `entityId`).
@@ -28,13 +32,16 @@ This document is the detailed operator/developer reference for AI Paths:
   - per-node errors, retries, and timing
 
 ## Node Categories
+
 ### Input and Scoping
+
 - `trigger`
 - `context`
 - `simulation`
 - `parser`
 
 ### Transformation and Routing
+
 - `template`
 - `mapper`
 - `mutator`
@@ -48,6 +55,7 @@ This document is the detailed operator/developer reference for AI Paths:
 - `poll`
 
 ### AI and External Calls
+
 - `prompt`
 - `model`
 - `agent`
@@ -55,16 +63,19 @@ This document is the detailed operator/developer reference for AI Paths:
 - `http`
 
 ### Persistence and Schema
+
 - `database`
 - `db_schema`
 - `description_updater`
 - `ai_description`
 
 ### Diagnostics and UX
+
 - `viewer`
 - `notification`
 
 ## Runtime Guardrails
+
 - Validate required fields before side effects.
 - Keep `database` writes gated behind quality checks for AI-generated text.
 - Use explicit `idField`, `queryTemplate`, and `skipEmpty` safeguards.
@@ -73,6 +84,7 @@ This document is the detailed operator/developer reference for AI Paths:
 - Always expose observability payloads for drop/accept/write decisions.
 
 ## Prompt Design Standard
+
 - Single responsibility per prompt node.
 - Explicit output contract:
   - plain text or strict JSON schema
@@ -82,6 +94,7 @@ This document is the detailed operator/developer reference for AI Paths:
 - Include source evidence block in prompt input whenever possible.
 
 ## Testing Standard
+
 - Unit tests for handlers and helper transforms.
 - Integration tests for full path behavior on representative entities.
 - Regression matrix for known edge cases.
@@ -91,6 +104,7 @@ This document is the detailed operator/developer reference for AI Paths:
   - verify no silent success on empty/invalid prerequisites
 
 ## Rollout Standard
+
 1. Clone current active path.
 2. Apply changes in clone only.
 3. Run A/B checks on representative entities.
@@ -103,6 +117,7 @@ This document is the detailed operator/developer reference for AI Paths:
 6. Promote to default after stable monitoring window.
 
 ## Failure Playbook
+
 1. Identify failing node from run timeline.
 2. Validate node inputs and upstream edge payloads.
 3. Check output parser assumptions (JSON shape, regex extraction).
@@ -111,6 +126,7 @@ This document is the detailed operator/developer reference for AI Paths:
 6. Document root cause and guardrail change.
 
 ## Documentation Governance
+
 - Every path must have:
   - purpose and scope
   - input prerequisites
@@ -125,6 +141,7 @@ This document is the detailed operator/developer reference for AI Paths:
     - `src/features/prompt-exploder/docs/tooltip-registry.ts`
 
 ## Cross References
+
 - `docs/AI_PATHS.md`
 - `docs/PROMPT_EXPLODER_FEATURE_DOCUMENTATION.md`
 - `docs/PROMPT_EXPLODER_TOOLTIP_GUIDE.md`

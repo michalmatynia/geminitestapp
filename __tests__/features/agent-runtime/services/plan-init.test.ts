@@ -50,7 +50,7 @@ describe('Agent Runtime - Plan Initialization', () => {
     (llmPlanning.buildPlanWithLLM as any).mockResolvedValue({
       steps: [{ id: 'step-1', title: 'New Step' }],
       source: 'llm',
-      decision: { action: 'tool' }
+      decision: { action: 'tool' },
     });
 
     const result = await initializePlanState(mockInput);
@@ -93,15 +93,17 @@ describe('Agent Runtime - Plan Initialization', () => {
     (llmPlanning.buildResumePlanReview as any).mockResolvedValue({
       shouldReplan: true,
       steps: [{ id: 'new-step-1', title: 'Resumed New Step' }],
-      reason: 'Context changed'
+      reason: 'Context changed',
     });
 
     const result = await initializePlanState(inputWithResume);
 
     expect(llmPlanning.buildResumePlanReview).toHaveBeenCalled();
     expect(result.planSteps[0]?.title).toBe('Resumed New Step');
-    expect(checkpointModule.persistCheckpoint).toHaveBeenCalledWith(expect.objectContaining({
-      resumeProcessedAt: expect.any(String)
-    }));
+    expect(checkpointModule.persistCheckpoint).toHaveBeenCalledWith(
+      expect.objectContaining({
+        resumeProcessedAt: expect.any(String),
+      })
+    );
   });
 });

@@ -1,19 +1,16 @@
 import 'server-only';
 
+import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
+import {
+  runBrainChatCompletion,
+  type BrainChatMessage,
+} from '@/shared/lib/ai-brain/server-runtime-client';
 import type { AgentTeachingChatSource } from '@/shared/contracts/agent-teaching';
 import type { ChatMessage } from '@/shared/contracts/chatbot';
 
 import { generateOllamaEmbedding } from './embeddings';
 import { getTeachingAgentById } from './repository';
 import { retrieveTopContext } from './retrieval';
-
-const OLLAMA_BASE_URL = process.env['OLLAMA_BASE_URL'] ?? 'http://localhost:11434';
-
-const extractMessageContent = (payload: unknown): string => {
-  if (!payload || typeof payload !== 'object') return '';
-  const message = (payload as { message?: { content?: unknown } }).message;
-  return typeof message?.content === 'string' ? message.content : '';
-};
 
 const buildRagSystemPrompt = (params: {
   basePrompt: string;
@@ -26,7 +23,7 @@ const buildRagSystemPrompt = (params: {
   lines.push(
     'You have access to a Knowledge Base (embedded text chunks).',
     'Use it when it is relevant and cite sources by documentId in square brackets, e.g. [doc:abc123].',
-    'If the answer is not present in the provided sources, say you don\'t know (do not invent).'
+    "If the answer is not present in the provided sources, say you don't know (do not invent)."
   );
   if (params.sources.length > 0) {
     lines.push('', 'Knowledge Base Sources:');
@@ -51,19 +48,16 @@ export async function runTeachingChat(params: {
     throw new Error('Learner agent not found.');
   }
 
-  const lastUserMessage = [...params.messages].reverse().find((m: ChatMessage): boolean => m.role === 'user');
+  const lastUserMessage = [...params.messages]
+    .reverse()
+    .find((m: ChatMessage): boolean => m.role === 'user');
   const queryText = lastUserMessage?.content?.trim() ?? '';
   if (!queryText) {
     throw new Error('Missing user message.');
   }
 
-  const embeddingModel = agent.embeddingModel?.trim();
-  if (!embeddingModel) {
-    throw new Error('Learner agent has no embedding model configured.');
-  }
-
   const queryEmbedding = await generateOllamaEmbedding({
-    model: embeddingModel,
+    model: agent.embeddingModel?.trim() || '',
     text: queryText,
   });
 
@@ -72,43 +66,39 @@ export async function runTeachingChat(params: {
     collectionIds: agent.collectionIds,
     topK: agent.retrievalTopK ?? 5,
     minScore: agent.retrievalMinScore ?? 0,
-    embeddingModel,
+    embeddingModel: agent.embeddingModel?.trim() || undefined,
     maxDocsPerCollection: agent.maxDocsPerCollection ?? 400,
   });
 
-  const systemPrompt = buildRagSystemPrompt({
+  const ragSystemPrompt = buildRagSystemPrompt({
     basePrompt: agent.systemPrompt ?? '',
     sources,
   });
 
-  const temperature = typeof agent.temperature === 'number' ? agent.temperature : 0.2;
-  const maxTokens = typeof agent.maxTokens === 'number' ? agent.maxTokens : 0;
-  const ollamaOptions: Record<string, unknown> = { temperature };
-  if (Number.isFinite(maxTokens) && maxTokens > 0) {
-    // Ollama option name for generation length.
-    ollamaOptions['num_predict'] = Math.round(maxTokens);
-  }
-
-  const res = await fetch(`${OLLAMA_BASE_URL}/api/chat`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: agent.llmModel,
-      stream: false,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        ...params.messages
-          .filter((m: ChatMessage) => m.role !== 'system')
-          .map((m: ChatMessage) => ({ role: m.role, content: m.content })),
-      ],
-      options: ollamaOptions,
-    }),
+  const brainConfig = await resolveBrainExecutionConfigForCapability('agent_teaching.chat', {
+    defaultTemperature: typeof agent.temperature === 'number' ? agent.temperature : 0.2,
+    defaultMaxTokens:
+      typeof agent.maxTokens === 'number' && agent.maxTokens > 0 ? agent.maxTokens : 1200,
+    runtimeKind: 'chat',
   });
-  if (!res.ok) {
-    const text = await res.text().catch(() => '');
-    throw new Error(`LLM call failed (${res.status}): ${text || res.statusText}`);
-  }
-  const payload: unknown = await res.json();
-  const message = extractMessageContent(payload).trim();
+  const systemPrompt = [brainConfig.systemPrompt.trim(), ragSystemPrompt]
+    .filter(Boolean)
+    .join('\n\n');
+
+  const res = await runBrainChatCompletion({
+    modelId: brainConfig.modelId,
+    temperature: brainConfig.temperature,
+    maxTokens: brainConfig.maxTokens,
+    messages: [
+      { role: 'system', content: systemPrompt },
+      ...(params.messages
+        .filter((m: ChatMessage) => m.role !== 'system')
+        .map((m: ChatMessage) => ({
+          role: m.role === 'assistant' || m.role === 'system' ? m.role : 'user',
+          content: m.content,
+        })) as BrainChatMessage[]),
+    ],
+  });
+  const message = res.text.trim();
   return { message, sources };
 }

@@ -45,8 +45,7 @@ export function useNoteFileAttachments(initialFiles: NoteFileRecord[] = []): {
     });
   };
 
-  const isSlotUploading = (slotIndex: number): boolean =>
-    uploadingSlots.has(slotIndex);
+  const isSlotUploading = (slotIndex: number): boolean => uploadingSlots.has(slotIndex);
 
   const canAddMoreFiles = (): boolean => noteFiles.length < MAX_SLOTS;
 
@@ -59,19 +58,12 @@ export function useNoteFileAttachments(initialFiles: NoteFileRecord[] = []): {
   };
 
   const removeFile = (fileId: string): void => {
-    setNoteFiles((prev: NoteFileRecord[]) =>
-      prev.filter((f: NoteFileRecord) => f.id !== fileId),
-    );
+    setNoteFiles((prev: NoteFileRecord[]) => prev.filter((f: NoteFileRecord) => f.id !== fileId));
   };
 
-  const updateFile = (
-    fileId: string,
-    updates: Partial<NoteFileRecord>,
-  ): void => {
+  const updateFile = (fileId: string, updates: Partial<NoteFileRecord>): void => {
     setNoteFiles((prev: NoteFileRecord[]) =>
-      prev.map((f: NoteFileRecord) =>
-        f.id === fileId ? { ...f, ...updates } : f,
-      ),
+      prev.map((f: NoteFileRecord) => (f.id === fileId ? { ...f, ...updates } : f))
     );
   };
 

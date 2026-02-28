@@ -1,8 +1,6 @@
 'use client';
 
-import {
-  PlayIcon,
-} from 'lucide-react';
+import { PlayIcon } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -74,7 +72,10 @@ export function SqlQueryConsole({
     if (!trimmed) return;
 
     // Add to history
-    const newHistory = [trimmed, ...history.filter((h: string) => h !== trimmed)].slice(0, MAX_HISTORY);
+    const newHistory = [trimmed, ...history.filter((h: string) => h !== trimmed)].slice(
+      0,
+      MAX_HISTORY
+    );
     setHistory(newHistory);
     saveHistory(newHistory);
 
@@ -107,11 +108,10 @@ export function SqlQueryConsole({
       <div>
         <div className='flex items-center justify-between mb-2'>
           <div className='flex items-center gap-2'>
-            <SelectSimple size='sm'
+            <SelectSimple
+              size='sm'
               value={dbType}
-              onValueChange={(v: string): void =>
-                setDbType(v as DatabaseType)
-              }
+              onValueChange={(v: string): void => setDbType(v as DatabaseType)}
               options={[
                 { value: 'postgresql', label: 'PostgreSQL' },
                 { value: 'mongodb', label: 'MongoDB' },
@@ -119,11 +119,13 @@ export function SqlQueryConsole({
               triggerClassName='h-8 w-[120px] text-xs'
             />
             <span className='text-[11px] text-gray-500'>
-              {dbType === 'postgresql' ? 'Enter SQL query' : 'Use the CRUD panel for MongoDB operations'}
+              {dbType === 'postgresql'
+                ? 'Enter SQL query'
+                : 'Use the CRUD panel for MongoDB operations'}
             </span>
           </div>
           <div className='flex items-center gap-2'>
-            <SqlHistoryDropdown 
+            <SqlHistoryDropdown
               history={history}
               showHistory={showHistory}
               setShowHistory={setShowHistory}
@@ -168,9 +170,7 @@ export function SqlQueryConsole({
             <span className='text-xs text-gray-400'>
               {result.rowCount} row{result.rowCount !== 1 ? 's' : ''} affected
             </span>
-            <span className='text-xs text-gray-500'>
-              {result.executionTimeMs}ms
-            </span>
+            <span className='text-xs text-gray-500'>{result.executionTimeMs}ms</span>
           </div>
           {/* Error */}
           {result.error && (
@@ -178,62 +178,63 @@ export function SqlQueryConsole({
               {result.error}
             </Alert>
           )}
-
           {/* Results table */}
           {!result.error && result.rows.length > 0 && (
             <StandardDataTablePanel
-              columns={[
-                {
-                  id: 'index',
-                  header: '#',
-                  cell: ({ row }: { row: { index: number } }) => <span className='text-gray-600 text-[10px]'>{row.index + 1}</span>,
-                  size: 40,
-                },
-                ...(result.fields.length > 0
-                  ? result.fields.map((f: { name: string }) => ({
-                    accessorKey: f.name,
-                    header: f.name,
-                    cell: ({ row }: { row: { original: Record<string, unknown> } }) => (
-                      <span 
-                        className='font-mono text-[11px] text-gray-300 truncate block max-w-[250px]' 
-                        title={formatCellValue(row.original[f.name])}
-                      >
-                        {formatCellValue(row.original[f.name])}
-                      </span>
-                    )
-                  }))
-                  : Object.keys(result.rows[0] ?? {}).map((key) => ({
-                    accessorKey: key,
-                    header: key,
-                    cell: ({ row }: { row: { original: Record<string, unknown> } }) => (
-                      <span 
-                        className='font-mono text-[11px] text-gray-300 truncate block max-w-[250px]' 
-                        title={formatCellValue(row.original[key])}
-                      >
-                        {formatCellValue(row.original[key])}
-                      </span>
-                    )
-                  }))
-                )
-              ] as ColumnDef<Record<string, unknown>>[]}
+              columns={
+                [
+                  {
+                    id: 'index',
+                    header: '#',
+                    cell: ({ row }: { row: { index: number } }) => (
+                      <span className='text-gray-600 text-[10px]'>{row.index + 1}</span>
+                    ),
+                    size: 40,
+                  },
+                  ...(result.fields.length > 0
+                    ? result.fields.map((f: { name: string }) => ({
+                        accessorKey: f.name,
+                        header: f.name,
+                        cell: ({ row }: { row: { original: Record<string, unknown> } }) => (
+                          <span
+                            className='font-mono text-[11px] text-gray-300 truncate block max-w-[250px]'
+                            title={formatCellValue(row.original[f.name])}
+                          >
+                            {formatCellValue(row.original[f.name])}
+                          </span>
+                        ),
+                      }))
+                    : Object.keys(result.rows[0] ?? {}).map((key) => ({
+                        accessorKey: key,
+                        header: key,
+                        cell: ({ row }: { row: { original: Record<string, unknown> } }) => (
+                          <span
+                            className='font-mono text-[11px] text-gray-300 truncate block max-w-[250px]'
+                            title={formatCellValue(row.original[key])}
+                          >
+                            {formatCellValue(row.original[key])}
+                          </span>
+                        ),
+                      }))),
+                ] as ColumnDef<Record<string, unknown>>[]
+              }
               data={result.rows}
               variant='flat'
             />
           )}
-
           {/* No rows message for non-error results with 0 rowCount */}
           {!result.error && result.rows.length === 0 && result.rowCount === 0 && (
             <p className='text-xs text-gray-500'>Query returned no results.</p>
           )}
-
           {/* Success message for mutations (where rowCount > 0 but no rows returned) */}
           {!result.error && result.rows.length === 0 && result.rowCount > 0 && (
             <p className='text-xs text-emerald-400'>
-              Command completed successfully. {result.rowCount} row{result.rowCount !== 1 ? 's' : ''} affected.
+              Command completed successfully. {result.rowCount} row
+              {result.rowCount !== 1 ? 's' : ''} affected.
             </p>
-          )}        </Card>
+          )}{' '}
+        </Card>
       )}
     </div>
   );
-          
 }

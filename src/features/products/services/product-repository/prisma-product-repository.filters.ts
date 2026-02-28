@@ -26,10 +26,7 @@ const buildPrismaSingleStringCondition = (
   if (condition.operator === 'isEmpty') {
     if (nullable) {
       return {
-        OR: [
-          { [field]: null },
-          { [field]: '' },
-        ],
+        OR: [{ [field]: null }, { [field]: '' }],
       } as Prisma.ProductWhereInput;
     }
     return { [field]: '' } as Prisma.ProductWhereInput;
@@ -38,10 +35,7 @@ const buildPrismaSingleStringCondition = (
   if (condition.operator === 'isNotEmpty') {
     if (nullable) {
       return {
-        AND: [
-          { [field]: { not: null } },
-          { [field]: { not: '' } },
-        ],
+        AND: [{ [field]: { not: null } }, { [field]: { not: '' } }],
       } as Prisma.ProductWhereInput;
     }
     return { [field]: { not: '' } } as Prisma.ProductWhereInput;
@@ -354,10 +348,7 @@ const buildPrismaNumericCondition = (
     if (left === null || right === null) return null;
     const [min, max] = left <= right ? [left, right] : [right, left];
     return {
-      AND: [
-        { [field]: { gte: min } },
-        { [field]: { lte: max } },
-      ],
+      AND: [{ [field]: { gte: min } }, { [field]: { lte: max } }],
     } as Prisma.ProductWhereInput;
   }
 
@@ -404,10 +395,7 @@ const buildPrismaCreatedAtCondition = (
     if (!left || !right) return null;
     const [min, max] = left <= right ? [left, right] : [right, left];
     return {
-      AND: [
-        { createdAt: { gte: min } },
-        { createdAt: { lte: max } },
-      ],
+      AND: [{ createdAt: { gte: min } }, { createdAt: { lte: max } }],
     };
   }
 
@@ -446,10 +434,7 @@ const compileAdvancedPrismaCondition = (
     return buildPrismaSingleStringCondition('sku', condition, { nullable: true });
   }
   if (condition.field === 'name') {
-    return buildPrismaMultiStringCondition(
-      ['name_en', 'name_pl', 'name_de'],
-      condition
-    );
+    return buildPrismaMultiStringCondition(['name_en', 'name_pl', 'name_de'], condition);
   }
   if (condition.field === 'description') {
     return buildPrismaMultiStringCondition(
@@ -515,8 +500,8 @@ const compileAdvancedPrismaRule = (
     compiledRules.length === 1
       ? compiledRules[0]!
       : ({
-        [rule.combinator === 'and' ? 'AND' : 'OR']: compiledRules,
-      } as Prisma.ProductWhereInput);
+          [rule.combinator === 'and' ? 'AND' : 'OR']: compiledRules,
+        } as Prisma.ProductWhereInput);
 
   if (!rule.not) return combined;
 
@@ -543,9 +528,7 @@ export const buildAdvancedPrismaWhere = (
   return compiled;
 };
 
-export const buildProductWhere = (
-  filters: ProductFilters,
-): Prisma.ProductWhereInput => {
+export const buildProductWhere = (filters: ProductFilters): Prisma.ProductWhereInput => {
   const where: Prisma.ProductWhereInput = {};
   const andConditions: Prisma.ProductWhereInput[] = [];
 

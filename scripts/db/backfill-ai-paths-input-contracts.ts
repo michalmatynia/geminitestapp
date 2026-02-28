@@ -133,4 +133,3 @@ void main().catch((error) => {
   console.error('Failed to backfill AI Paths input contracts:', error);
   process.exit(1);
 });
-

@@ -213,9 +213,7 @@ export function CanvasProvider({
   return (
     <CanvasActionsContext.Provider value={actions}>
       <CanvasRefsContext.Provider value={refs}>
-        <CanvasStateContext.Provider value={state}>
-          {children}
-        </CanvasStateContext.Provider>
+        <CanvasStateContext.Provider value={state}>{children}</CanvasStateContext.Provider>
       </CanvasRefsContext.Provider>
     </CanvasActionsContext.Provider>
   );

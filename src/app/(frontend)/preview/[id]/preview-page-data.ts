@@ -23,12 +23,8 @@ export type PreviewRenderData = {
   layout: { fullWidth: boolean };
   mediaVars: ReturnType<typeof getMediaStyleVars>;
   mediaStyles: ReturnType<typeof getMediaInlineStyles>;
-  hoverEffect:
-    | Awaited<ReturnType<typeof getCmsThemeSettings>>['hoverEffect']
-    | undefined;
-  hoverScale:
-    | Awaited<ReturnType<typeof getCmsThemeSettings>>['hoverScale']
-    | undefined;
+  hoverEffect: Awaited<ReturnType<typeof getCmsThemeSettings>>['hoverEffect'] | undefined;
+  hoverScale: Awaited<ReturnType<typeof getCmsThemeSettings>>['hoverScale'] | undefined;
 };
 
 export const isAdminSession = (session: Session | null): boolean => {
@@ -42,9 +38,7 @@ export const isAdminSession = (session: Session | null): boolean => {
   return ['admin', 'super_admin', 'superuser'].includes(role);
 };
 
-export const loadPreviewRenderData = async (
-  id: string,
-): Promise<PreviewRenderData | null> => {
+export const loadPreviewRenderData = async (id: string): Promise<PreviewRenderData | null> => {
   const cmsRepository = await getCmsRepository();
   const page = await cmsRepository.getPageById(id);
   if (!page) {
@@ -64,24 +58,18 @@ export const loadPreviewRenderData = async (
   const layout = { fullWidth: Boolean(themeSettings.fullWidth) };
   const mediaVars = getMediaStyleVars(themeSettings);
   const mediaStyles = getMediaInlineStyles(themeSettings);
-  const hoverEffect = themeSettings.enableAnimations
-    ? themeSettings.hoverEffect
-    : undefined;
-  const hoverScale = themeSettings.enableAnimations
-    ? themeSettings.hoverScale
-    : undefined;
+  const hoverEffect = themeSettings.enableAnimations ? themeSettings.hoverEffect : undefined;
+  const hoverScale = themeSettings.enableAnimations ? themeSettings.hoverScale : undefined;
   const showMenu = page.showMenu !== false;
-  const rendererComponents: PageComponent[] = (page.components ?? []).map(
-    (component) => ({
-      id: component.id ?? `component-${Math.random().toString(36).slice(2, 9)}`,
-      type: component.type,
-      order: component.order || 0,
-      content: (component.content as Record<string, unknown>) ?? {},
-      pageId: page.id,
-      createdAt: component.createdAt ?? new Date().toISOString(),
-      updatedAt: component.updatedAt ?? null,
-    }),
-  );
+  const rendererComponents: PageComponent[] = (page.components ?? []).map((component) => ({
+    id: component.id ?? `component-${Math.random().toString(36).slice(2, 9)}`,
+    type: component.type,
+    order: component.order || 0,
+    content: (component.content as Record<string, unknown>) ?? {},
+    pageId: page.id,
+    createdAt: component.createdAt ?? new Date().toISOString(),
+    updatedAt: component.updatedAt ?? null,
+  }));
 
   return {
     theme,

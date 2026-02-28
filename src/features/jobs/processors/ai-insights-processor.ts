@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
-import { getBrainAssignmentForFeature } from '@/features/ai/brain/server';
+import { getBrainAssignmentForFeature } from '@/shared/lib/ai-brain/server';
 import {
   generateAnalyticsInsight,
   generateLogsInsight,
@@ -50,39 +50,29 @@ export async function tick(): Promise<void> {
   ]);
 
   const analyticsEnabled = schedule.analyticsEnabled && analyticsBrain.enabled;
-  const runtimeAnalyticsEnabled =
-    schedule.runtimeAnalyticsEnabled && runtimeAnalyticsBrain.enabled;
+  const runtimeAnalyticsEnabled = schedule.runtimeAnalyticsEnabled && runtimeAnalyticsBrain.enabled;
   const logsEnabled = schedule.logsEnabled && logsBrain.enabled;
   const logsAutoEnabled = schedule.logsAutoOnError && logsBrain.enabled;
 
-  if (
-    !analyticsEnabled &&
-    !runtimeAnalyticsEnabled &&
-    !logsEnabled &&
-    !logsAutoEnabled
-  ) {
+  if (!analyticsEnabled && !runtimeAnalyticsEnabled && !logsEnabled && !logsAutoEnabled) {
     return;
   }
 
-  const [
-    analyticsLastRunRaw,
-    runtimeAnalyticsLastRunRaw,
-    logsLastRunRaw,
-    logsLastErrorSeenRaw,
-  ] = await Promise.all([
-    analyticsEnabled
-      ? getAiInsightsMeta(AI_INSIGHTS_SETTINGS_KEYS.analyticsLastRunAt)
-      : Promise.resolve(null),
-    runtimeAnalyticsEnabled
-      ? getAiInsightsMeta(AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsLastRunAt)
-      : Promise.resolve(null),
-    logsEnabled
-      ? getAiInsightsMeta(AI_INSIGHTS_SETTINGS_KEYS.logsLastRunAt)
-      : Promise.resolve(null),
-    logsAutoEnabled
-      ? getAiInsightsMeta(AI_INSIGHTS_SETTINGS_KEYS.logsLastErrorSeenAt)
-      : Promise.resolve(null),
-  ]);
+  const [analyticsLastRunRaw, runtimeAnalyticsLastRunRaw, logsLastRunRaw, logsLastErrorSeenRaw] =
+    await Promise.all([
+      analyticsEnabled
+        ? getAiInsightsMeta(AI_INSIGHTS_SETTINGS_KEYS.analyticsLastRunAt)
+        : Promise.resolve(null),
+      runtimeAnalyticsEnabled
+        ? getAiInsightsMeta(AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsLastRunAt)
+        : Promise.resolve(null),
+      logsEnabled
+        ? getAiInsightsMeta(AI_INSIGHTS_SETTINGS_KEYS.logsLastRunAt)
+        : Promise.resolve(null),
+      logsAutoEnabled
+        ? getAiInsightsMeta(AI_INSIGHTS_SETTINGS_KEYS.logsLastErrorSeenAt)
+        : Promise.resolve(null),
+    ]);
 
   const analyticsLastRun = parseDate(analyticsLastRunRaw);
   const runtimeAnalyticsLastRun = parseDate(runtimeAnalyticsLastRunRaw);
@@ -90,14 +80,10 @@ export async function tick(): Promise<void> {
   const logsLastErrorSeenAt = parseDate(logsLastErrorSeenRaw);
 
   const shouldRunAnalytics =
-    analyticsEnabled &&
-    shouldRun(analyticsLastRun, schedule.analyticsMinutes);
+    analyticsEnabled && shouldRun(analyticsLastRun, schedule.analyticsMinutes);
   const shouldRunRuntimeAnalytics =
-    runtimeAnalyticsEnabled &&
-    shouldRun(runtimeAnalyticsLastRun, schedule.runtimeAnalyticsMinutes);
-  const shouldRunLogs =
-    logsEnabled &&
-    shouldRun(logsLastRun, schedule.logsMinutes);
+    runtimeAnalyticsEnabled && shouldRun(runtimeAnalyticsLastRun, schedule.runtimeAnalyticsMinutes);
+  const shouldRunLogs = logsEnabled && shouldRun(logsLastRun, schedule.logsMinutes);
 
   let shouldRunLogsAuto = false;
   let logsAutoLatestAtIso: string | null = null;
@@ -108,20 +94,14 @@ export async function tick(): Promise<void> {
     if (
       latestAt &&
       Number.isFinite(latestAt.getTime()) &&
-      (!logsLastErrorSeenAt ||
-        latestAt.getTime() > logsLastErrorSeenAt.getTime())
+      (!logsLastErrorSeenAt || latestAt.getTime() > logsLastErrorSeenAt.getTime())
     ) {
       shouldRunLogsAuto = true;
       logsAutoLatestAtIso = latestAt.toISOString();
     }
   }
 
-  if (
-    !shouldRunAnalytics &&
-    !shouldRunRuntimeAnalytics &&
-    !shouldRunLogs &&
-    !shouldRunLogsAuto
-  ) {
+  if (!shouldRunAnalytics && !shouldRunRuntimeAnalytics && !shouldRunLogs && !shouldRunLogsAuto) {
     return;
   }
 
@@ -130,7 +110,7 @@ export async function tick(): Promise<void> {
   const runEvents: string[] = [];
   const appendRunEvent = async (
     message: string,
-    level: 'info' | 'warning' | 'error' = 'info',
+    level: 'info' | 'warning' | 'error' = 'info'
   ): Promise<void> => {
     runEvents.push(message);
     if (!runId) return;
@@ -213,10 +193,7 @@ export async function tick(): Promise<void> {
       await runInsightStep('logs_auto', async () => {
         await appendRunEvent('Detected new system error log. Generating auto logs insight.');
         await generateLogsInsight({ source: 'system' });
-        await setAiInsightsMeta(
-          AI_INSIGHTS_SETTINGS_KEYS.logsLastErrorSeenAt,
-          logsAutoLatestAtIso,
-        );
+        await setAiInsightsMeta(AI_INSIGHTS_SETTINGS_KEYS.logsLastErrorSeenAt, logsAutoLatestAtIso);
         await appendRunEvent('Auto logs insight generated.');
       });
     } else if (schedule.logsAutoOnError && !logsBrain.enabled) {

@@ -3,13 +3,13 @@ import { describe, expect, it } from 'vitest';
 import {
   computeVersionGraph,
   computeTimelineLayout,
-} from '@/features/ai/image-studio/utils/version-graph';
+} from '@/shared/lib/ai/image-studio/utils/version-graph';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
 // ── Factory ──────────────────────────────────────────────────────────────────
 
 const createSlot = (
-  overrides: Partial<ImageStudioSlotRecord> & { id: string },
+  overrides: Partial<ImageStudioSlotRecord> & { id: string }
 ): ImageStudioSlotRecord => ({
   createdAt: '',
   updatedAt: null,
@@ -255,10 +255,7 @@ describe('computeTimelineLayout', () => {
   });
 
   it('roots get separate tracks', () => {
-    const slots = [
-      createSlot({ id: 'root-a' }),
-      createSlot({ id: 'root-b' }),
-    ];
+    const slots = [createSlot({ id: 'root-a' }), createSlot({ id: 'root-b' })];
     const graph = computeVersionGraph(slots);
     const result = computeTimelineLayout(graph.nodes, graph.edges, 'horizontal');
 

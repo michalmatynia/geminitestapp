@@ -6,7 +6,6 @@ export const VALIDATOR_PATTERN_LISTS_KEY = 'validator_pattern_lists';
 
 export * from './validator';
 
-
 /**
  * Admin Activity DTOs
  */
@@ -156,4 +155,3 @@ export const adminNavLeafSchema = z.object({
 });
 
 export type AdminNavLeaf = z.infer<typeof adminNavLeafSchema>;
-

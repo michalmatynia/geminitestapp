@@ -9,11 +9,7 @@ import {
   parsePlanJson,
 } from '@/features/ai/agent-runtime/planning/utils';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import type {
-  LoopSignal,
-  PlanStep,
-  PlannerMeta,
-} from '@/shared/contracts/agent-runtime';
+import type { LoopSignal, PlanStep, PlannerMeta } from '@/shared/contracts/agent-runtime';
 import prisma from '@/shared/lib/db/prisma';
 
 type PlanStepSpecInput = {
@@ -30,14 +26,7 @@ type PlanStepSpecInput = {
 
 const normalizePlanStepSpecs = (steps: PlanStepSpecInput[]): PlanStepSpecInput[] =>
   steps.map((step: PlanStepSpecInput) => {
-    const {
-      expectedObservation,
-      successCriteria,
-      phase,
-      priority,
-      dependsOn,
-      ...rest
-    } = step;
+    const { expectedObservation, successCriteria, phase, priority, dependsOn, ...rest } = step;
     return {
       ...rest,
       ...(expectedObservation != null && { expectedObservation }),
@@ -63,8 +52,7 @@ export const detectLoopPattern = (
   const titlesFour = lastFour.map((item: { title: string }) => item.title);
   const urlsThree = lastThree.map((item: { url: string | null }) => item.url);
   const statusesThree = lastThree.map((item: { status: PlanStep['status'] }) => item.status);
-  const sameTitle =
-    new Set(titlesThree.map((title: string) => title.toLowerCase())).size === 1;
+  const sameTitle = new Set(titlesThree.map((title: string) => title.toLowerCase())).size === 1;
   if (sameTitle) {
     return {
       reason: 'Repeated the same step multiple times.',
@@ -152,7 +140,7 @@ export async function buildLoopGuardReview({
           {
             role: 'system',
             content:
-              'You are a loop-guard. Output only JSON with keys: action, reason, questions, evidence, goals, critique, alternatives, taskType, summary, constraints, successSignals. action is \'continue\', \'replan\', or \'wait_human\'. Provide 2-4 questions that test whether the agent is looping. If action is \'replan\', include goals (planner schema) or steps: array of {title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}.',
+              "You are a loop-guard. Output only JSON with keys: action, reason, questions, evidence, goals, critique, alternatives, taskType, summary, constraints, successSignals. action is 'continue', 'replan', or 'wait_human'. Provide 2-4 questions that test whether the agent is looping. If action is 'replan', include goals (planner schema) or steps: array of {title, tool, expectedObservation, successCriteria, phase, priority, dependsOn}.",
           },
           {
             role: 'user',
@@ -219,22 +207,19 @@ export async function buildLoopGuardReview({
     } | null;
     if (!parsed) return { action: 'continue', steps: [] };
     const action =
-      parsed.action === 'replan' || parsed.action === 'wait_human'
-        ? parsed.action
-        : 'continue';
+      parsed.action === 'replan' || parsed.action === 'wait_human' ? parsed.action : 'continue';
     const meta = normalizePlannerMeta(parsed);
     const hierarchy = normalizePlanHierarchy(parsed);
     const hierarchySteps = hierarchy ? flattenPlanHierarchy(hierarchy) : [];
-    const stepSpecs =
-      hierarchySteps.length > 0 ? hierarchySteps : (parsed.steps ?? []);
+    const stepSpecs = hierarchySteps.length > 0 ? hierarchySteps : (parsed.steps ?? []);
     let steps =
       action === 'replan'
         ? buildPlanStepsFromSpecs(
-          normalizePlanStepSpecs(stepSpecs),
-          meta,
-          true,
-          maxStepAttempts
-        ).slice(0, maxSteps)
+            normalizePlanStepSpecs(stepSpecs),
+            meta,
+            true,
+            maxStepAttempts
+          ).slice(0, maxSteps)
         : [];
     if (action === 'replan' && steps.length === 0) {
       const fallbackBranch = buildBranchStepsFromAlternatives(

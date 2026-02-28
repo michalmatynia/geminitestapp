@@ -7,9 +7,7 @@ import type {
 } from '@/shared/contracts/ai-paths';
 import type { NodeHandler, NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 
-import {
-  ParameterInferenceGateError,
-} from './database-parameter-inference';
+import { ParameterInferenceGateError } from './database-parameter-inference';
 import { resolveDatabaseInputs } from './integration-database-input-resolution';
 import { handleDatabaseMongoAction } from './integration-database-mongo-actions';
 import { handleDatabaseStandardOperation } from './integration-database-operations';
@@ -19,7 +17,7 @@ import { DEFAULT_DB_QUERY } from '../../constants';
 import {
   extractAiPathsCollectionMapFromRunMeta,
   withAiPathsCollectionMapInput,
-} from '../../utils/collection-mapping';
+} from '@/shared/lib/ai-paths/core/utils/collection-mapping';
 
 import type { SchemaResponse } from '../../../api/client';
 
@@ -67,14 +65,11 @@ const isWriteDatabaseOperation = (config: DatabaseConfig): boolean => {
   const actionCategory = config.actionCategory ?? null;
   return Boolean(
     config.useMongoActions &&
-      (actionCategory === 'create' || actionCategory === 'update' || actionCategory === 'delete')
+    (actionCategory === 'create' || actionCategory === 'update' || actionCategory === 'delete')
   );
 };
 
-const isWriteResultOperation = (
-  config: DatabaseConfig,
-  result: RuntimePortValues,
-): boolean => {
+const isWriteResultOperation = (config: DatabaseConfig, result: RuntimePortValues): boolean => {
   if (isWriteDatabaseOperation(config)) return true;
 
   const debugPayload = result['debugPayload'];
@@ -146,9 +141,7 @@ const extractWriteOutcome = (result: RuntimePortValues): DatabaseWriteOutcome | 
   return null;
 };
 
-const extractGuardrailSeverity = (
-  result: RuntimePortValues
-): 'warning' | 'error' | null => {
+const extractGuardrailSeverity = (result: RuntimePortValues): 'warning' | 'error' | null => {
   const directMeta = result['guardrailMeta'];
   if (isPlainRecord(directMeta)) {
     const severity = directMeta['severity'];
@@ -158,7 +151,7 @@ const extractGuardrailSeverity = (
   }
   const bundle = result['bundle'];
   if (isPlainRecord(bundle) && isPlainRecord(bundle['guardrailMeta'])) {
-    const severity = (bundle['guardrailMeta'])['severity'];
+    const severity = bundle['guardrailMeta']['severity'];
     if (severity === 'warning' || severity === 'error') {
       return severity;
     }
@@ -166,9 +159,7 @@ const extractGuardrailSeverity = (
   return null;
 };
 
-const shouldTreatWriteErrorAsTerminal = (
-  result: RuntimePortValues,
-): boolean => {
+const shouldTreatWriteErrorAsTerminal = (result: RuntimePortValues): boolean => {
   const writeOutcome = extractWriteOutcome(result);
   if (writeOutcome?.status === 'failed') return true;
   if (writeOutcome?.status === 'warning') return false;
@@ -211,19 +202,17 @@ export const handleDatabase: NodeHandler = async ({
   let writeOperationDetected = isWriteDatabaseOperation(dbConfig);
 
   try {
-    const resolvedInputsBase: Record<string, unknown> = resolveDatabaseInputs(
-      {
-        nodeInputs: nodeInputs,
-        triggerContext,
-        fallbackEntityId,
-        simulationEntityType,
-        strictFlowMode,
-      }
-    );
+    const resolvedInputsBase: Record<string, unknown> = resolveDatabaseInputs({
+      nodeInputs: nodeInputs,
+      triggerContext,
+      fallbackEntityId,
+      simulationEntityType,
+      strictFlowMode,
+    });
     const collectionMap = extractAiPathsCollectionMapFromRunMeta(runMeta);
     const resolvedInputs: Record<string, unknown> = withAiPathsCollectionMapInput(
       resolvedInputsBase,
-      collectionMap,
+      collectionMap
     );
     const nodeInputPorts: string[] = Array.isArray(node.inputs) ? node.inputs : [];
     const operation: DatabaseOperation = dbConfig.operation ?? 'query';
@@ -232,7 +221,7 @@ export const handleDatabase: NodeHandler = async ({
     const writeSourcePath: string = dbConfig.writeSourcePath?.trim() ?? '';
     const aiPromptTemplate: string = dbConfig.aiPrompt ?? '';
     const useMongoActions: boolean = Boolean(
-      dbConfig.useMongoActions && dbConfig.actionCategory && dbConfig.action,
+      dbConfig.useMongoActions && dbConfig.actionCategory && dbConfig.action
     );
 
     const templateSources: string[] = [
@@ -248,8 +237,8 @@ export const handleDatabase: NodeHandler = async ({
     if (wantsSchemaPlaceholders) {
       if (
         schemaInput &&
-      typeof schemaInput === 'object' &&
-      'collections' in (schemaInput as Record<string, unknown>)
+        typeof schemaInput === 'object' &&
+        'collections' in (schemaInput as Record<string, unknown>)
       ) {
         schemaData = schemaInput as SchemaResponse;
       } else {
@@ -354,7 +343,7 @@ export const handleDatabase: NodeHandler = async ({
     reportAiPathsError(
       error,
       { action: 'handleDatabase', nodeId: node.id },
-      'Unexpected database node failure:',
+      'Unexpected database node failure:'
     );
     if (writeOperationDetected) {
       if (error instanceof Error) {

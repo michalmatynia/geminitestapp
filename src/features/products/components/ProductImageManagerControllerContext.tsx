@@ -11,7 +11,9 @@ type ProductImageManagerControllerProviderProps = {
   children: React.ReactNode;
 };
 
-const ProductImageManagerControllerContext = createContext<ProductImageManagerController | null>(null);
+const ProductImageManagerControllerContext = createContext<ProductImageManagerController | null>(
+  null
+);
 
 export function ProductImageManagerControllerProvider({
   value,

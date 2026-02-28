@@ -7,7 +7,9 @@ import { APP_EMBED_OPTIONS } from '@/features/app-embeds/lib/constants';
 import { AppEmbedsProvider, useAppEmbeds } from '@/features/app-embeds/providers/AppEmbedsProvider';
 import { Button, Checkbox, SectionHeader, SimpleSettingsList, LoadingState } from '@/shared/ui';
 
-export function AppEmbedsPanel({ showHeader = true }: { showHeader?: boolean } = {}): React.ReactNode {
+export function AppEmbedsPanel({
+  showHeader = true,
+}: { showHeader?: boolean } = {}): React.ReactNode {
   return (
     <AppEmbedsProvider>
       <AppEmbedsPanelContent showHeader={showHeader} />
@@ -19,9 +21,7 @@ function AppEmbedsPanelContent({ showHeader }: { showHeader: boolean }): React.R
   const { enabled, toggleOption, save, isLoading, isSaving } = useAppEmbeds();
 
   if (isLoading) {
-    return (
-      <LoadingState message='Loading app embeds...' className='h-full' />
-    );
+    return <LoadingState message='Loading app embeds...' className='h-full' />;
   }
 
   return (

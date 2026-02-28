@@ -8,9 +8,9 @@ const PRODUCT_ID = 'ce5bba68-b82b-4f4b-948f-3aa81bb4a05a';
   await client.connect();
   const db = client.db(process.env.MONGODB_DB || 'app');
 
-  const p = await db.collection('products').findOne(
-    { $or: [{ id: PRODUCT_ID }, { _id: PRODUCT_ID }] }
-  );
+  const p = await db
+    .collection('products')
+    .findOne({ $or: [{ id: PRODUCT_ID }, { _id: PRODUCT_ID }] });
 
   // Show the full catalogs array, categories array, and producers array
   console.log('catalogs:', JSON.stringify(p.catalogs, null, 2));
@@ -18,7 +18,9 @@ const PRODUCT_ID = 'ce5bba68-b82b-4f4b-948f-3aa81bb4a05a';
   console.log('parameters (current value):', JSON.stringify(p.parameters, null, 2));
 
   // Show a sample product that HAS a catalogId to understand the schema
-  const sampleWithCatalogId = await db.collection('products').findOne({ catalogId: { $exists: true, $ne: null } });
+  const sampleWithCatalogId = await db
+    .collection('products')
+    .findOne({ catalogId: { $exists: true, $ne: null } });
   if (sampleWithCatalogId) {
     console.log('\nSample product WITH catalogId field:');
     console.log('  catalogId:', sampleWithCatalogId.catalogId);
@@ -27,7 +29,9 @@ const PRODUCT_ID = 'ce5bba68-b82b-4f4b-948f-3aa81bb4a05a';
   } else {
     console.log('\nNo products have a top-level catalogId field');
     // Show the shape of the catalogs array from another product
-    const sampleWithCatalogs = await db.collection('products').findOne({ catalogs: { $exists: true, $not: { $size: 0 } } });
+    const sampleWithCatalogs = await db
+      .collection('products')
+      .findOne({ catalogs: { $exists: true, $not: { $size: 0 } } });
     if (sampleWithCatalogs) {
       console.log('\nSample product with catalogs array:');
       console.log('  catalogs:', JSON.stringify(sampleWithCatalogs.catalogs?.slice(0, 1)));
@@ -40,4 +44,7 @@ const PRODUCT_ID = 'ce5bba68-b82b-4f4b-948f-3aa81bb4a05a';
   if (paramDef) console.log('  full doc:', JSON.stringify(paramDef, null, 2));
 
   await client.close();
-})().catch((e) => { console.error(e.message); process.exit(1); });
+})().catch((e) => {
+  console.error(e.message);
+  process.exit(1);
+});

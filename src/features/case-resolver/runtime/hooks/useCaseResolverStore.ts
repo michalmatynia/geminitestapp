@@ -6,12 +6,12 @@ import type { CaseResolverRuntimeSelector, CaseResolverRuntimeSnapshot } from '.
 import type { CaseResolverRuntimeStore } from '../store';
 import { incrementCaseResolverCounterMetric } from '../metrics';
 
-const defaultEquality = <T,>(left: T, right: T): boolean => Object.is(left, right);
+const defaultEquality = <T>(left: T, right: T): boolean => Object.is(left, right);
 
 export function useCaseResolverSelector<T>(
   store: CaseResolverRuntimeStore,
   selector: CaseResolverRuntimeSelector<T>,
-  equalityFn: (left: T, right: T) => boolean = defaultEquality,
+  equalityFn: (left: T, right: T) => boolean = defaultEquality
 ): T {
   const cachedRef = useRef<T | null>(null);
   const hasCachedValueRef = useRef(false);
@@ -33,7 +33,7 @@ export function useCaseResolverSelector<T>(
       hasCachedValueRef.current = true;
       return nextValue;
     },
-    (): T => selector(store.getSnapshot()),
+    (): T => selector(store.getSnapshot())
   );
 
   useEffect((): void => {

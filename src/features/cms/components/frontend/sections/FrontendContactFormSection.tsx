@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useCmsPageContext } from '../CmsPageContext';
@@ -17,7 +16,12 @@ export function FrontendContactFormSection(): React.ReactNode {
 
   return (
     <section style={sectionStyles}>
-      <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth, maxWidthClass: 'max-w-xl' })}>
+      <div
+        className={getSectionContainerClass({
+          fullWidth: layout?.fullWidth,
+          maxWidthClass: 'max-w-xl',
+        })}
+      >
         <form onSubmit={(e: React.FormEvent) => e.preventDefault()} className='space-y-4'>
           {fields.map((field: string) => {
             const isTextarea = field.toLowerCase() === 'message';
@@ -25,9 +29,7 @@ export function FrontendContactFormSection(): React.ReactNode {
 
             return (
               <div key={field}>
-                <label className='mb-1.5 block text-sm font-medium text-gray-300'>
-                  {label}
-                </label>
+                <label className='mb-1.5 block text-sm font-medium text-gray-300'>{label}</label>
                 {isTextarea ? (
                   <textarea
                     rows={4}

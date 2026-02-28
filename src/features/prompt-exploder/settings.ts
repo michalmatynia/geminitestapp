@@ -1,15 +1,11 @@
-import {
-  promptExploderSettingsSchema,
-} from '@/shared/contracts/prompt-exploder';
+import { promptExploderSettingsSchema } from '@/shared/contracts/prompt-exploder';
 
 import {
   DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK,
   normalizePromptExploderValidationRuleStack,
 } from './validation-stack';
 
-import type {
-  PromptExploderSettings,
-} from './types';
+import type { PromptExploderSettings } from './types';
 
 export const PROMPT_EXPLODER_SETTINGS_KEY = 'prompt_exploder_settings';
 
@@ -47,7 +43,9 @@ export const defaultPromptExploderSettings: PromptExploderSettings = {
   patternSnapshots: [],
 };
 
-export function parsePromptExploderSettings(rawValue: string | null | undefined): PromptExploderSettings {
+export function parsePromptExploderSettings(
+  rawValue: string | null | undefined
+): PromptExploderSettings {
   if (!rawValue?.trim()) return defaultPromptExploderSettings;
 
   try {
@@ -56,17 +54,17 @@ export function parsePromptExploderSettings(rawValue: string | null | undefined)
       return defaultPromptExploderSettings;
     }
     const record = rawParsed as Record<string, unknown>;
-    
+
     const getNestedObject = (key: string): Record<string, unknown> => {
       const val = record[key];
-      return (val && typeof val === 'object' && !Array.isArray(val)) 
-        ? (val as Record<string, unknown>) 
+      return val && typeof val === 'object' && !Array.isArray(val)
+        ? (val as Record<string, unknown>)
         : {};
     };
 
     const learningRecord = getNestedObject('learning');
-    const templates = Array.isArray(learningRecord['templates']) 
-      ? (learningRecord['templates'] as unknown[]) 
+    const templates = Array.isArray(learningRecord['templates'])
+      ? (learningRecord['templates'] as unknown[])
       : [];
 
     const merged = {
@@ -99,10 +97,8 @@ export function parsePromptExploderSettings(rawValue: string | null | undefined)
         validationRuleStack: normalizePromptExploderValidationRuleStack(
           result.data.runtime.validationRuleStack
         ),
-        allowValidationStackFallback:
-          result.data.runtime.allowValidationStackFallback ?? false,
-        caseResolverCaptureMode:
-          result.data.runtime.caseResolverCaptureMode ?? 'rules_only',
+        allowValidationStackFallback: result.data.runtime.allowValidationStackFallback ?? false,
+        caseResolverCaptureMode: result.data.runtime.caseResolverCaptureMode ?? 'rules_only',
       },
       learning: {
         ...result.data.learning,

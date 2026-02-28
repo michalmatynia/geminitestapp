@@ -45,10 +45,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
         },
       });
     } catch (error) {
-      if (
-        error instanceof Error &&
-        (error as NodeJS.ErrnoException).code !== 'ENOENT'
-      ) {
+      if (error instanceof Error && (error as NodeJS.ErrnoException).code !== 'ENOENT') {
         throw error;
       }
     }

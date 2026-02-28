@@ -114,7 +114,7 @@ export function useCatalogForm({
       setDefaultLanguageId(
         nextLanguageIds.includes(normalizedDefaultLanguageId)
           ? normalizedDefaultLanguageId
-          : nextLanguageIds[0] ?? '',
+          : (nextLanguageIds[0] ?? '')
       );
       const nextPriceGroupIds = catalog.priceGroupIds?.length
         ? catalog.priceGroupIds
@@ -123,10 +123,7 @@ export function useCatalogForm({
           : [];
       setCatalogPriceGroupIds(nextPriceGroupIds);
       setCatalogDefaultPriceGroupId(
-        catalog.defaultPriceGroupId ??
-          nextPriceGroupIds[0] ??
-          defaultGroupId ??
-          '',
+        catalog.defaultPriceGroupId ?? nextPriceGroupIds[0] ?? defaultGroupId ?? ''
       );
     } else {
       setForm({
@@ -154,10 +151,7 @@ export function useCatalogForm({
       toast('Select at least one language.', { variant: 'error' });
       return;
     }
-    if (
-      !defaultLanguageId ||
-      !selectedLanguageIds.includes(defaultLanguageId)
-    ) {
+    if (!defaultLanguageId || !selectedLanguageIds.includes(defaultLanguageId)) {
       toast('Select a default language.', { variant: 'error' });
       return;
     }
@@ -165,10 +159,7 @@ export function useCatalogForm({
       toast('Select at least one price group.', { variant: 'error' });
       return;
     }
-    if (
-      !catalogDefaultPriceGroupId ||
-      !catalogPriceGroupIds.includes(catalogDefaultPriceGroupId)
-    ) {
+    if (!catalogDefaultPriceGroupId || !catalogPriceGroupIds.includes(catalogDefaultPriceGroupId)) {
       toast('Select a default price group.', { variant: 'error' });
       return;
     }
@@ -189,7 +180,9 @@ export function useCatalogForm({
 
       toast('Catalog saved.', { variant: 'success' });
     } catch (err) {
-      logClientError(err, { context: { source: 'CatalogModal', action: 'saveCatalog', catalogId: catalog?.id } });
+      logClientError(err, {
+        context: { source: 'CatalogModal', action: 'saveCatalog', catalogId: catalog?.id },
+      });
       setError(err instanceof Error ? err.message : 'Failed to save catalog.');
     }
   };

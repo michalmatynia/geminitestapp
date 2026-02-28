@@ -1,7 +1,9 @@
 # FastComet File Storage Plan
 
 ## Goal
+
 Add a switchable storage source so the app can use either:
+
 - Local disk (`/public/uploads`)
 - FastComet (external server)
 
@@ -10,11 +12,14 @@ When FastComet is selected, new uploads should be sent to FastComet.
 ## Implemented Scaffold
 
 ### 1. Settings keys
+
 - `file_storage_source_v1` (`local` | `fastcomet`)
 - `fastcomet_storage_config_v1` (JSON config)
 
 ### 2. Storage service layer
+
 Created `src/features/files/services/storage/file-storage-service.ts` with:
+
 - Provider/settings resolution from DB + env fallback
 - FastComet upload client (multipart POST)
 - FastComet delete client (POST JSON)
@@ -22,6 +27,7 @@ Created `src/features/files/services/storage/file-storage-service.ts` with:
 - Cached runtime settings (short TTL)
 
 ### 3. Upload path wiring
+
 - `src/features/files/utils/fileUploader.ts`
   - Uploads now route through `uploadToConfiguredStorage(...)`
   - In FastComet mode, uploads are sent to FastComet
@@ -30,6 +36,7 @@ Created `src/features/files/services/storage/file-storage-service.ts` with:
   - 3D uploads now use the same storage routing
 
 ### 4. Delete/preview compatibility wiring
+
 - `src/app/api/files/[id]/handler.ts`
   - Uses storage-aware delete function
 - `src/app/api/files/preview/handler.ts`
@@ -38,13 +45,16 @@ Created `src/features/files/services/storage/file-storage-service.ts` with:
   - `getDiskPathFromPublicPath` now supports URL-based filepaths via pathname mapping
 
 ### 5. Admin UI
+
 - New page: `/admin/settings/storage`
 - File: `src/features/files/pages/AdminFileStorageSettingsPage.tsx`
 - Route: `src/app/(admin)/admin/settings/storage/page.tsx`
 - Linked from Settings home (`AdminSettingsHomePage`)
 
 ### 6. Environment scaffolding
+
 Added optional env vars in `.env.example`:
+
 - `FILE_STORAGE_SOURCE`
 - `FASTCOMET_STORAGE_BASE_URL`
 - `FASTCOMET_STORAGE_UPLOAD_URL`
@@ -54,6 +64,7 @@ Added optional env vars in `.env.example`:
 - `FASTCOMET_STORAGE_TIMEOUT_MS`
 
 ### 7. Operational scripts
+
 - Configure storage settings:
   - `npm run storage:configure:fastcomet -- --source=fastcomet --upload-endpoint=https://files.example.com/api/uploads --base-url=https://files.example.com --delete-endpoint=https://files.example.com/api/uploads/delete --auth-token=... --keep-local-copy=true --timeout-ms=20000`
 - Dry run migration:
@@ -66,6 +77,7 @@ Added optional env vars in `.env.example`:
 ## FastComet Endpoint Contract (Scaffold)
 
 ### Upload endpoint
+
 - Method: `POST`
 - Body: `multipart/form-data`
 - Fields:
@@ -83,6 +95,7 @@ Added optional env vars in `.env.example`:
   - `location`
 
 ### Delete endpoint (optional)
+
 - Method: `POST`
 - Body JSON:
   - `filepath`
@@ -90,6 +103,7 @@ Added optional env vars in `.env.example`:
 - Header (optional): `Authorization: Bearer <token>`
 
 ## Current limitations
+
 - Existing files are not auto-migrated to FastComet.
 - Some legacy workflows that expect local file moves may still keep old temp paths when records are URL-based.
 - FastComet integration depends on your external endpoint implementation.

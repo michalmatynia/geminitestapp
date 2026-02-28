@@ -33,27 +33,24 @@ import {
   DEFAULT_SEQUENCE_STEP,
 } from './prompt-engine-context-utils';
 
-import { 
-  ConfigContext, 
-  type PromptEngineConfig, 
-  type PatternCollectionTab, 
-  type ExploderPatternSubTab 
+import {
+  ConfigContext,
+  type PromptEngineConfig,
+  type PatternCollectionTab,
+  type ExploderPatternSubTab,
 } from './prompt-engine/PromptEngineConfigContext';
 
 export type { PatternCollectionTab, ExploderPatternSubTab };
-import { 
-  FiltersContext, 
-  type PromptEngineFilters, 
-  type SeverityFilter, 
-  type ScopeFilter 
+import {
+  FiltersContext,
+  type PromptEngineFilters,
+  type SeverityFilter,
+  type ScopeFilter,
 } from './prompt-engine/PromptEngineFiltersContext';
-import { 
-  DataContext, 
-  type PromptEngineData 
-} from './prompt-engine/PromptEngineDataContext';
-import { 
-  ActionsContext, 
-  type PromptEngineActions 
+import { DataContext, type PromptEngineData } from './prompt-engine/PromptEngineDataContext';
+import {
+  ActionsContext,
+  type PromptEngineActions,
 } from './prompt-engine/PromptEngineActionsContext';
 import type { AdminMenuTreeContextValue } from '../../admin/components/menu/NavTree';
 
@@ -68,7 +65,8 @@ type PromptEngineProviderProps = {
   lockedScope?: ScopeFilter | undefined;
 };
 
-export interface PromptEngineContextValue extends PromptEngineConfig, PromptEngineFilters, PromptEngineData, PromptEngineActions {}
+export interface PromptEngineContextValue
+  extends PromptEngineConfig, PromptEngineFilters, PromptEngineData, PromptEngineActions {}
 
 const PromptEngineContext = createContext<PromptEngineContextValue | undefined>(undefined);
 
@@ -90,17 +88,15 @@ export function PromptEngineProvider({
   const pageContext = useOptionalPromptEngineValidationPageContext();
   const resolvedOnSaved = onSaved ?? pageContext?.onSaved;
   const resolvedInitialPatternTab = initialPatternTab ?? pageContext?.initialPatternTab;
-  const resolvedInitialExploderSubTab =
-    initialExploderSubTab ?? pageContext?.initialExploderSubTab;
+  const resolvedInitialExploderSubTab = initialExploderSubTab ?? pageContext?.initialExploderSubTab;
   const resolvedLockedPatternTab = lockedPatternTab ?? pageContext?.lockedPatternTab;
-  const resolvedLockedExploderSubTab =
-    lockedExploderSubTab ?? pageContext?.lockedExploderSubTab;
+  const resolvedLockedExploderSubTab = lockedExploderSubTab ?? pageContext?.lockedExploderSubTab;
   const resolvedInitialScope = initialScope ?? pageContext?.initialScope;
   const resolvedLockedScope = lockedScope ?? pageContext?.lockedScope;
 
   const rawSettings = settingsQuery.data?.get(PROMPT_ENGINE_SETTINGS_KEY) ?? null;
   const promptEngineSettings = useMemo(() => parsePromptEngineSettings(rawSettings), [rawSettings]);
-  
+
   const [query, setQuery] = useState<string>('');
   const [severity, setSeverity] = useState<SeverityFilter>('all');
   const [scope, setScope] = useState<ScopeFilter>(
@@ -109,12 +105,9 @@ export function PromptEngineProvider({
   const [patternTab, setPatternTab] = useState<PatternCollectionTab>(
     resolvedLockedPatternTab ?? resolvedInitialPatternTab ?? 'core'
   );
-  const [exploderSubTab, setExploderSubTab] =
-    useState<ExploderPatternSubTab>(
-      resolvedLockedExploderSubTab ??
-        resolvedInitialExploderSubTab ??
-        'prompt_exploder_rules'
-    );
+  const [exploderSubTab, setExploderSubTab] = useState<ExploderPatternSubTab>(
+    resolvedLockedExploderSubTab ?? resolvedInitialExploderSubTab ?? 'prompt_exploder_rules'
+  );
   const [includeDisabled, setIncludeDisabled] = useState<boolean>(true);
   const [drafts, setDrafts] = useState<RuleDraft[]>([]);
   const [initializedAt, setInitializedAt] = useState<number | null>(null);
@@ -149,10 +142,19 @@ export function PromptEngineProvider({
     if (settingsQuery.isSuccess && initializedAt !== settingsQuery.dataUpdatedAt) {
       setInitializedAt(settingsQuery.dataUpdatedAt);
       const settings = parsePromptEngineSettings(rawSettings);
-      const rules = settings.promptValidation.rules ?? defaultPromptEngineSettings.promptValidation.rules;
-      setDrafts(rules.map((rule: PromptValidationRule, index: number) => createRuleDraft(rule, `${rule.id}-${index}`)));
+      const rules =
+        settings.promptValidation.rules ?? defaultPromptEngineSettings.promptValidation.rules;
+      setDrafts(
+        rules.map((rule: PromptValidationRule, index: number) =>
+          createRuleDraft(rule, `${rule.id}-${index}`)
+        )
+      );
       const learnedRules = settings.promptValidation.learnedRules ?? [];
-      setLearnedDrafts(learnedRules.map((rule: PromptValidationRule, index: number) => createRuleDraft(rule, `${rule.id}-${index}`)));
+      setLearnedDrafts(
+        learnedRules.map((rule: PromptValidationRule, index: number) =>
+          createRuleDraft(rule, `${rule.id}-${index}`)
+        )
+      );
       setSaveError(null);
       setIsDirty(false);
       setLearnedDirty(false);
@@ -171,10 +173,7 @@ export function PromptEngineProvider({
         return draft.text.toLowerCase().includes(term);
       }
       if (activePatternTab === 'prompt_exploder') {
-        if (
-          activeExploderSubTab === 'image_studio_rules' &&
-          !isImageStudioRule(rule)
-        ) {
+        if (activeExploderSubTab === 'image_studio_rules' && !isImageStudioRule(rule)) {
           return false;
         }
         if (
@@ -231,10 +230,7 @@ export function PromptEngineProvider({
         return draft.text.toLowerCase().includes(term);
       }
       if (activePatternTab === 'prompt_exploder') {
-        if (
-          activeExploderSubTab === 'image_studio_rules' &&
-          !isImageStudioRule(rule)
-        ) {
+        if (activeExploderSubTab === 'image_studio_rules' && !isImageStudioRule(rule)) {
           return false;
         }
         if (
@@ -288,7 +284,12 @@ export function PromptEngineProvider({
         try {
           const parsed = JSON.parse(nextText) as unknown;
           if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-            return { ...draft, text: nextText, parsed: null, error: 'Rule JSON must be an object.' };
+            return {
+              ...draft,
+              text: nextText,
+              parsed: null,
+              error: 'Rule JSON must be an object.',
+            };
           }
           return { ...draft, text: nextText, parsed: parsed as PromptValidationRule, error: null };
         } catch (error) {
@@ -313,9 +314,12 @@ export function PromptEngineProvider({
     setSaveError(null);
   }, []);
 
-  const handleToggleRuleEnabled = useCallback((uid: string, enabled: boolean): void => {
-    handlePatchRule(uid, { enabled });
-  }, [handlePatchRule]);
+  const handleToggleRuleEnabled = useCallback(
+    (uid: string, enabled: boolean): void => {
+      handlePatchRule(uid, { enabled });
+    },
+    [handlePatchRule]
+  );
 
   const handleDuplicateRule = useCallback((uid: string): void => {
     setDrafts((prev: RuleDraft[]) => {
@@ -325,7 +329,7 @@ export function PromptEngineProvider({
       const existingIds = new Set(
         prev
           .map((item: RuleDraft) => item.parsed?.id)
-          .filter((value: string | undefined): value is string => Boolean(value)),
+          .filter((value: string | undefined): value is string => Boolean(value))
       );
       const base = `${draft.parsed.id}.copy`;
       let candidate = base;
@@ -438,23 +442,26 @@ export function PromptEngineProvider({
     setSaveError(null);
   }, []);
 
-  const handleSaveSequenceGroup = useCallback((groupId: string, label: string, debounceMs: number): void => {
-    const normalizedLabel = label.trim() || 'Sequence / Group';
-    const normalizedDebounce = normalizeSequenceGroupDebounceMs(debounceMs);
-    setDrafts((prev: RuleDraft[]) =>
-      prev.map((draft: RuleDraft) => {
-        if (!draft.parsed) return draft;
-        if (getSequenceGroupId(draft.parsed) !== groupId) return draft;
-        return applyRulePatch(draft, {
-          sequenceGroupId: groupId,
-          sequenceGroupLabel: normalizedLabel,
-          sequenceGroupDebounceMs: normalizedDebounce,
-        });
-      })
-    );
-    setIsDirty(true);
-    setSaveError(null);
-  }, []);
+  const handleSaveSequenceGroup = useCallback(
+    (groupId: string, label: string, debounceMs: number): void => {
+      const normalizedLabel = label.trim() || 'Sequence / Group';
+      const normalizedDebounce = normalizeSequenceGroupDebounceMs(debounceMs);
+      setDrafts((prev: RuleDraft[]) =>
+        prev.map((draft: RuleDraft) => {
+          if (!draft.parsed) return draft;
+          if (getSequenceGroupId(draft.parsed) !== groupId) return draft;
+          return applyRulePatch(draft, {
+            sequenceGroupId: groupId,
+            sequenceGroupLabel: normalizedLabel,
+            sequenceGroupDebounceMs: normalizedDebounce,
+          });
+        })
+      );
+      setIsDirty(true);
+      setSaveError(null);
+    },
+    []
+  );
 
   const handleUngroupSequenceGroup = useCallback((groupId: string): void => {
     setDrafts((prev: RuleDraft[]) =>
@@ -479,7 +486,12 @@ export function PromptEngineProvider({
         try {
           const parsed = JSON.parse(nextText) as unknown;
           if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-            return { ...draft, text: nextText, parsed: null, error: 'Rule JSON must be an object.' };
+            return {
+              ...draft,
+              text: nextText,
+              parsed: null,
+              error: 'Rule JSON must be an object.',
+            };
           }
           return { ...draft, text: nextText, parsed: parsed as PromptValidationRule, error: null };
         } catch (error) {
@@ -496,19 +508,28 @@ export function PromptEngineProvider({
     setSaveError(null);
   }, []);
 
-  const handleSetPatternTab = useCallback((tab: PatternCollectionTab): void => {
-    if (resolvedLockedPatternTab) return;
-    setPatternTab(tab);
-  }, [resolvedLockedPatternTab]);
+  const handleSetPatternTab = useCallback(
+    (tab: PatternCollectionTab): void => {
+      if (resolvedLockedPatternTab) return;
+      setPatternTab(tab);
+    },
+    [resolvedLockedPatternTab]
+  );
 
-  const handleSetExploderSubTab = useCallback((subTab: ExploderPatternSubTab): void => {
-    if (resolvedLockedExploderSubTab) return;
-    setExploderSubTab(subTab);
-  }, [resolvedLockedExploderSubTab]);
-  const handleSetScope = useCallback((nextScope: ScopeFilter): void => {
-    if (resolvedLockedScope) return;
-    setScope(nextScope);
-  }, [resolvedLockedScope]);
+  const handleSetExploderSubTab = useCallback(
+    (subTab: ExploderPatternSubTab): void => {
+      if (resolvedLockedExploderSubTab) return;
+      setExploderSubTab(subTab);
+    },
+    [resolvedLockedExploderSubTab]
+  );
+  const handleSetScope = useCallback(
+    (nextScope: ScopeFilter): void => {
+      if (resolvedLockedScope) return;
+      setScope(nextScope);
+    },
+    [resolvedLockedScope]
+  );
 
   const handleAddRule = useCallback((): void => {
     const preset =
@@ -556,7 +577,9 @@ export function PromptEngineProvider({
   const handleExport = useCallback((): void => {
     const invalidJson = drafts.filter((draft: RuleDraft) => draft.error || !draft.parsed);
     if (invalidJson.length > 0) {
-      toast(`Fix invalid JSON in ${invalidJson.length} rule(s) before exporting.`, { variant: 'error' });
+      toast(`Fix invalid JSON in ${invalidJson.length} rule(s) before exporting.`, {
+        variant: 'error',
+      });
       return;
     }
     const parsedRules = drafts.map((draft: RuleDraft) => draft.parsed!).filter(Boolean);
@@ -579,7 +602,9 @@ export function PromptEngineProvider({
   const handleExportLearned = useCallback((): void => {
     const invalidJson = learnedDrafts.filter((draft: RuleDraft) => draft.error || !draft.parsed);
     if (invalidJson.length > 0) {
-      toast(`Fix invalid JSON in ${invalidJson.length} learned rule(s) before exporting.`, { variant: 'error' });
+      toast(`Fix invalid JSON in ${invalidJson.length} learned rule(s) before exporting.`, {
+        variant: 'error',
+      });
       return;
     }
     const parsedRules = learnedDrafts.map((draft: RuleDraft) => draft.parsed!).filter(Boolean);
@@ -622,47 +647,69 @@ export function PromptEngineProvider({
     []
   );
 
-  const handleImport = useCallback(async (file: File): Promise<void> => {
-    const text = await file.text();
-    const result = parseImportedRules(text);
-    if (!result.ok) {
-      toast(result.error, { variant: 'error' });
-      return;
-    }
-    setDrafts(result.rules.map((rule: PromptValidationRule, index: number) => createRuleDraft(rule, `${rule.id}-${index}`)));
-    setIsDirty(true);
-    setSaveError(null);
-    toast('Validation patterns imported. Review and save to apply.', { variant: 'success' });
-  }, [parseImportedRules, toast]);
+  const handleImport = useCallback(
+    async (file: File): Promise<void> => {
+      const text = await file.text();
+      const result = parseImportedRules(text);
+      if (!result.ok) {
+        toast(result.error, { variant: 'error' });
+        return;
+      }
+      setDrafts(
+        result.rules.map((rule: PromptValidationRule, index: number) =>
+          createRuleDraft(rule, `${rule.id}-${index}`)
+        )
+      );
+      setIsDirty(true);
+      setSaveError(null);
+      toast('Validation patterns imported. Review and save to apply.', { variant: 'success' });
+    },
+    [parseImportedRules, toast]
+  );
 
-  const handleImportLearned = useCallback(async (file: File): Promise<void> => {
-    const text = await file.text();
-    const result = parseImportedRules(text);
-    if (!result.ok) {
-      toast(result.error, { variant: 'error' });
-      return;
-    }
-    setLearnedDrafts(result.rules.map((rule: PromptValidationRule, index: number) => createRuleDraft(rule, `${rule.id}-${index}`)));
-    setLearnedDirty(true);
-    setSaveError(null);
-    toast('Learned patterns imported. Review and save to apply.', { variant: 'success' });
-  }, [parseImportedRules, toast]);
+  const handleImportLearned = useCallback(
+    async (file: File): Promise<void> => {
+      const text = await file.text();
+      const result = parseImportedRules(text);
+      if (!result.ok) {
+        toast(result.error, { variant: 'error' });
+        return;
+      }
+      setLearnedDrafts(
+        result.rules.map((rule: PromptValidationRule, index: number) =>
+          createRuleDraft(rule, `${rule.id}-${index}`)
+        )
+      );
+      setLearnedDirty(true);
+      setSaveError(null);
+      toast('Learned patterns imported. Review and save to apply.', { variant: 'success' });
+    },
+    [parseImportedRules, toast]
+  );
 
   const handleSave = useCallback(async (): Promise<void> => {
     const invalidJson = drafts.filter((draft: RuleDraft) => draft.error || !draft.parsed);
     if (invalidJson.length > 0) {
-      toast(`Fix invalid JSON in ${invalidJson.length} rule(s) before saving.`, { variant: 'error' });
+      toast(`Fix invalid JSON in ${invalidJson.length} rule(s) before saving.`, {
+        variant: 'error',
+      });
       return;
     }
-    const invalidLearnedJson = learnedDrafts.filter((draft: RuleDraft) => draft.error || !draft.parsed);
+    const invalidLearnedJson = learnedDrafts.filter(
+      (draft: RuleDraft) => draft.error || !draft.parsed
+    );
     if (invalidLearnedJson.length > 0) {
-      toast(`Fix invalid JSON in ${invalidLearnedJson.length} learned rule(s) before saving.`, { variant: 'error' });
+      toast(`Fix invalid JSON in ${invalidLearnedJson.length} learned rule(s) before saving.`, {
+        variant: 'error',
+      });
       return;
     }
 
     const parsedRules = drafts.map((draft: RuleDraft) => draft.parsed!).filter(Boolean);
-    const parsedLearnedRules = learnedDrafts.map((draft: RuleDraft) => draft.parsed!).filter(Boolean);
-    
+    const parsedLearnedRules = learnedDrafts
+      .map((draft: RuleDraft) => draft.parsed!)
+      .filter(Boolean);
+
     const invalidRuleIds: string[] = [];
     parsedRules.forEach((rule, index) => {
       const result = parsePromptValidationRules(JSON.stringify([rule]));
@@ -708,8 +755,16 @@ export function PromptEngineProvider({
         key: PROMPT_ENGINE_SETTINGS_KEY,
         value: serializeSetting(nextSettings),
       });
-      setDrafts(result.rules.map((rule: PromptValidationRule, index: number) => createRuleDraft(rule, `${rule.id}-${index}`)));
-      setLearnedDrafts(learnedResult.rules.map((rule: PromptValidationRule, index: number) => createRuleDraft(rule, `${rule.id}-${index}`)));
+      setDrafts(
+        result.rules.map((rule: PromptValidationRule, index: number) =>
+          createRuleDraft(rule, `${rule.id}-${index}`)
+        )
+      );
+      setLearnedDrafts(
+        learnedResult.rules.map((rule: PromptValidationRule, index: number) =>
+          createRuleDraft(rule, `${rule.id}-${index}`)
+        )
+      );
       setIsDirty(false);
       setLearnedDirty(false);
       toast('Validation patterns saved.', { variant: 'success' });
@@ -729,69 +784,124 @@ export function PromptEngineProvider({
     }
   };
 
-  const configValue = useMemo<PromptEngineConfig>(() => ({
-    promptEngineSettings,
-    patternTab: activePatternTab,
-    exploderSubTab: activeExploderSubTab,
-    patternTabLocked,
-    exploderSubTabLocked,
-    scopeLocked,
-    isUsingDefaults: !rawSettings,
-  }), [promptEngineSettings, activePatternTab, activeExploderSubTab, patternTabLocked, exploderSubTabLocked, scopeLocked, rawSettings]);
+  const configValue = useMemo<PromptEngineConfig>(
+    () => ({
+      promptEngineSettings,
+      patternTab: activePatternTab,
+      exploderSubTab: activeExploderSubTab,
+      patternTabLocked,
+      exploderSubTabLocked,
+      scopeLocked,
+      isUsingDefaults: !rawSettings,
+    }),
+    [
+      promptEngineSettings,
+      activePatternTab,
+      activeExploderSubTab,
+      patternTabLocked,
+      exploderSubTabLocked,
+      scopeLocked,
+      rawSettings,
+    ]
+  );
 
-  const filtersValue = useMemo<PromptEngineFilters>(() => ({
-    query,
-    setQuery,
-    severity,
-    setSeverity,
-    scope,
-    setScope: handleSetScope,
-    includeDisabled,
-    setIncludeDisabled,
-  }), [query, severity, scope, handleSetScope, includeDisabled]);
+  const filtersValue = useMemo<PromptEngineFilters>(
+    () => ({
+      query,
+      setQuery,
+      severity,
+      setSeverity,
+      scope,
+      setScope: handleSetScope,
+      includeDisabled,
+      setIncludeDisabled,
+    }),
+    [query, severity, scope, handleSetScope, includeDisabled]
+  );
 
-  const dataValue = useMemo<PromptEngineData>(() => ({
-    drafts,
-    learnedDrafts,
-    filteredDrafts,
-    filteredLearnedDrafts,
-    isDirty,
-    learnedDirty,
-    saveError,
-    isLoading: settingsQuery.isLoading,
-    isSaving: updateSetting.isPending,
-  }), [drafts, learnedDrafts, filteredDrafts, filteredLearnedDrafts, isDirty, learnedDirty, saveError, settingsQuery.isLoading, updateSetting.isPending]);
+  const dataValue = useMemo<PromptEngineData>(
+    () => ({
+      drafts,
+      learnedDrafts,
+      filteredDrafts,
+      filteredLearnedDrafts,
+      isDirty,
+      learnedDirty,
+      saveError,
+      isLoading: settingsQuery.isLoading,
+      isSaving: updateSetting.isPending,
+    }),
+    [
+      drafts,
+      learnedDrafts,
+      filteredDrafts,
+      filteredLearnedDrafts,
+      isDirty,
+      learnedDirty,
+      saveError,
+      settingsQuery.isLoading,
+      updateSetting.isPending,
+    ]
+  );
 
-  const actionsValue = useMemo<PromptEngineActions>(() => ({
-    setPatternTab: handleSetPatternTab,
-    setExploderSubTab: handleSetExploderSubTab,
-    handleRuleTextChange,
-    handlePatchRule,
-    handleToggleRuleEnabled,
-    handleDuplicateRule,
-    handleSequenceDrop,
-    handleSaveSequenceGroup,
-    handleUngroupSequenceGroup,
-    handleLearnedRuleTextChange,
-    handleAddRule,
-    handleAddLearnedRule,
-    handleRemoveRule,
-    handleRemoveLearnedRule,
-    handleRefresh,
-    handleExport,
-    handleExportLearned,
-    handleImport,
-    handleImportLearned,
-    handleSave,
-    handleCopy,
-  }), [handleSetPatternTab, handleSetExploderSubTab, handleRuleTextChange, handlePatchRule, handleToggleRuleEnabled, handleDuplicateRule, handleSequenceDrop, handleSaveSequenceGroup, handleUngroupSequenceGroup, handleLearnedRuleTextChange, handleAddRule, handleAddLearnedRule, handleRemoveRule, handleRemoveLearnedRule, handleRefresh, handleExport, handleExportLearned, handleImport, handleImportLearned, handleSave, handleCopy]);
+  const actionsValue = useMemo<PromptEngineActions>(
+    () => ({
+      setPatternTab: handleSetPatternTab,
+      setExploderSubTab: handleSetExploderSubTab,
+      handleRuleTextChange,
+      handlePatchRule,
+      handleToggleRuleEnabled,
+      handleDuplicateRule,
+      handleSequenceDrop,
+      handleSaveSequenceGroup,
+      handleUngroupSequenceGroup,
+      handleLearnedRuleTextChange,
+      handleAddRule,
+      handleAddLearnedRule,
+      handleRemoveRule,
+      handleRemoveLearnedRule,
+      handleRefresh,
+      handleExport,
+      handleExportLearned,
+      handleImport,
+      handleImportLearned,
+      handleSave,
+      handleCopy,
+    }),
+    [
+      handleSetPatternTab,
+      handleSetExploderSubTab,
+      handleRuleTextChange,
+      handlePatchRule,
+      handleToggleRuleEnabled,
+      handleDuplicateRule,
+      handleSequenceDrop,
+      handleSaveSequenceGroup,
+      handleUngroupSequenceGroup,
+      handleLearnedRuleTextChange,
+      handleAddRule,
+      handleAddLearnedRule,
+      handleRemoveRule,
+      handleRemoveLearnedRule,
+      handleRefresh,
+      handleExport,
+      handleExportLearned,
+      handleImport,
+      handleImportLearned,
+      handleSave,
+      handleCopy,
+    ]
+  );
 
-  const aggregatedValue = useMemo<PromptEngineContextValue>(() => ({
-    ...configValue,
-    ...filtersValue,
-    ...dataValue,
-    ...actionsValue,
-  }), [configValue, filtersValue, dataValue, actionsValue]);
+  const aggregatedValue = useMemo<PromptEngineContextValue>(
+    () => ({
+      ...configValue,
+      ...filtersValue,
+      ...dataValue,
+      ...actionsValue,
+    }),
+    [configValue, filtersValue, dataValue, actionsValue]
+  );
 
   return (
     <ConfigContext.Provider value={configValue}>

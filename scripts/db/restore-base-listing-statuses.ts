@@ -117,7 +117,8 @@ const parseArgs = (): RestoreArgs => {
   const sourceDbName = values.get('source-db') || DEFAULT_SOURCE_DB;
   const stagingDbName = values.get('staging-db') || DEFAULT_STAGING_DB;
   const safetyDbPrefix = values.get('safety-db-prefix') || DEFAULT_SAFETY_DB_PREFIX;
-  const preferredConnectionIdRaw = values.get('connectionId') ?? values.get('connection-id') ?? null;
+  const preferredConnectionIdRaw =
+    values.get('connectionId') ?? values.get('connection-id') ?? null;
   const preferredConnectionId = preferredConnectionIdRaw?.trim() || null;
 
   return {
@@ -238,9 +239,7 @@ const resolveBaseConnection = async (
   }
 
   if (preferredConnectionId) {
-    const explicit = connections.find(
-      (entry) => toIdString(entry._id) === preferredConnectionId
-    );
+    const explicit = connections.find((entry) => toIdString(entry._id) === preferredConnectionId);
     if (!explicit) {
       throw new Error(
         `Preferred connectionId "${preferredConnectionId}" was not found for integration ${integrationId}.`
@@ -253,15 +252,12 @@ const resolveBaseConnection = async (
     (await findSetting(db, DEFAULT_CONNECTION_KEY))?.value
   );
   if (defaultConnectionId) {
-    const preferred = connections.find(
-      (entry) => toIdString(entry._id) === defaultConnectionId
-    );
+    const preferred = connections.find((entry) => toIdString(entry._id) === defaultConnectionId);
     if (preferred) return preferred;
   }
 
   return (
-    connections.find((entry) => Boolean(entry.baseApiToken || entry.password)) ??
-    connections[0]!
+    connections.find((entry) => Boolean(entry.baseApiToken || entry.password)) ?? connections[0]!
   );
 };
 
@@ -321,10 +317,10 @@ const isBaseListingCandidate = (
   )?.toLowerCase();
   return Boolean(
     marketplace &&
-      (marketplace === 'base' ||
-        marketplace === 'base.com' ||
-        marketplace === 'baselinker' ||
-        marketplace === 'base-com')
+    (marketplace === 'base' ||
+      marketplace === 'base.com' ||
+      marketplace === 'baselinker' ||
+      marketplace === 'base-com')
   );
 };
 
@@ -337,8 +333,7 @@ const normalizeListingForRebind = (
   const updatedAt = toDateOrNull(listing.updatedAt) ?? createdAt;
   const marketplaceData = {
     ...(listing.marketplaceData ?? {}),
-    marketplace:
-      normalizeOptionalString(listing.marketplaceData?.['marketplace']) ?? 'base',
+    marketplace: normalizeOptionalString(listing.marketplaceData?.['marketplace']) ?? 'base',
   };
 
   const next: ProductListingDoc = {
@@ -385,8 +380,7 @@ const restoreStagingListings = async (input: {
       console.log(`${LOG_PREFIX} mongorestore stderr:\n${stderr}`);
     }
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : 'Unknown mongorestore error.';
+    const message = error instanceof Error ? error.message : 'Unknown mongorestore error.';
     throw new Error(`mongorestore failed: ${message}`);
   }
 };
@@ -491,15 +485,12 @@ const runListingBackfill = async (input: {
       continue;
     }
 
-    await listingsCollection.updateOne(
-      { _id: listing._id } as Record<string, unknown>,
-      {
-        $set: {
-          ...patch,
-          updatedAt: new Date(),
-        },
-      }
-    );
+    await listingsCollection.updateOne({ _id: listing._id } as Record<string, unknown>, {
+      $set: {
+        ...patch,
+        updatedAt: new Date(),
+      },
+    });
     updated += 1;
   }
 
@@ -554,9 +545,7 @@ const run = async (): Promise<void> => {
     for (const collectionName of SNAPSHOT_COLLECTIONS) {
       const count = await copyCollectionSnapshot(liveDb, safetyDb, collectionName);
       safetySnapshotCounts[collectionName] = count;
-      console.log(
-        `${LOG_PREFIX} safety snapshot ${collectionName}: ${count} docs`
-      );
+      console.log(`${LOG_PREFIX} safety snapshot ${collectionName}: ${count} docs`);
     }
 
     await restoreStagingListings({
@@ -615,11 +604,7 @@ const run = async (): Promise<void> => {
 
     const dedupeMap = new Map<string, ProductListingDoc>();
     const applyListing = (listing: ProductListingDoc): void => {
-      const normalized = normalizeListingForRebind(
-        listing,
-        baseIntegrationId,
-        baseConnectionId
-      );
+      const normalized = normalizeListingForRebind(listing, baseIntegrationId, baseConnectionId);
       const productId = toIdString(normalized.productId);
       if (!productId) return;
       const key = `${productId}::${baseConnectionId}`;
@@ -676,21 +661,14 @@ const run = async (): Promise<void> => {
           ...profile,
           connectionId: baseConnectionId,
         };
-        if (
-          !normalizeOptionalString(nextProfile['inventoryId']) &&
-          resolvedInventoryId
-        ) {
+        if (!normalizeOptionalString(nextProfile['inventoryId']) && resolvedInventoryId) {
           nextProfile['inventoryId'] = resolvedInventoryId;
         }
         return nextProfile;
       })
       .filter((entry): entry is Record<string, unknown> => Boolean(entry));
     if (profilesSettingRaw || remappedProfiles.length > 0) {
-      await upsertSettingValue(
-        liveDb,
-        PRODUCT_SYNC_PROFILES_KEY,
-        JSON.stringify(remappedProfiles)
-      );
+      await upsertSettingValue(liveDb, PRODUCT_SYNC_PROFILES_KEY, JSON.stringify(remappedProfiles));
     }
 
     if (resolvedInventoryId) {

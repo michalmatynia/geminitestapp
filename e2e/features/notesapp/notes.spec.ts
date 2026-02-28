@@ -1,9 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-import type {
-  NoteRelationWithSource,
-  NoteRelationWithTarget,
-} from '@/shared/contracts/notes';
+import type { NoteRelationWithSource, NoteRelationWithTarget } from '@/shared/contracts/notes';
 
 test.describe('Notes page', () => {
   test('lists, filters, and creates notes', async ({ page }) => {
@@ -131,9 +128,7 @@ test.describe('Notes page', () => {
         ...category,
         children: [],
         notes: notes
-          .filter((note) =>
-            note.categories.some((cat) => cat.categoryId === category.id)
-          )
+          .filter((note) => note.categories.some((cat) => cat.categoryId === category.id))
           .map((note) => ({
             id: note.id,
             title: note.title,
@@ -160,9 +155,7 @@ test.describe('Notes page', () => {
         return route.fulfill({
           status: 200,
           contentType: 'application/json',
-          body: JSON.stringify([
-            { key: 'noteSettings:selectedNotebookId', value: 'notebook-1' }
-          ]),
+          body: JSON.stringify([{ key: 'noteSettings:selectedNotebookId', value: 'notebook-1' }]),
         });
       }
       return route.fulfill({
@@ -199,11 +192,11 @@ test.describe('Notes page', () => {
     await page.route('**/api/notes*', async (route) => {
       const request = route.request();
       const url = new URL(request.url());
-      
+
       // Skip other specific routes
       if (url.pathname.includes('/api/notes/')) {
         const subpath = url.pathname.split('/api/notes/')[1];
-        if (['tags', 'notebooks', 'categories', 'themes'].some(p => subpath?.startsWith(p))) {
+        if (['tags', 'notebooks', 'categories', 'themes'].some((p) => subpath?.startsWith(p))) {
           return route.fallback();
         }
       }
@@ -239,9 +232,7 @@ test.describe('Notes page', () => {
             noteId: 'temp',
             categoryId,
             assignedAt: now,
-            category:
-              categories.find((category) => category.id === categoryId) ??
-              categories[0]!,
+            category: categories.find((category) => category.id === categoryId) ?? categories[0]!,
           })),
           relationsFrom: [],
           relationsTo: [],
@@ -260,12 +251,8 @@ test.describe('Notes page', () => {
 
       if (search) {
         filtered = filtered.filter((note) => {
-          const inTitle = note.title
-            .toLowerCase()
-            .includes(search.toLowerCase());
-          const inContent = note.content
-            .toLowerCase()
-            .includes(search.toLowerCase());
+          const inTitle = note.title.toLowerCase().includes(search.toLowerCase());
+          const inContent = note.content.toLowerCase().includes(search.toLowerCase());
           if (searchScope === 'title') return inTitle;
           if (searchScope === 'content') return inContent;
           return inTitle || inContent;

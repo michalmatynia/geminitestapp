@@ -44,20 +44,14 @@ export const canDropNotesNode = ({
   targetId: MasterTreeId | null;
   nodes: MasterTreeNode[];
 }): boolean => {
-  if (
-    isNoteMasterNodeId(draggedNodeId) &&
-    targetId &&
-    isNoteMasterNodeId(targetId)
-  ) {
+  if (isNoteMasterNodeId(draggedNodeId) && targetId && isNoteMasterNodeId(targetId)) {
     return true;
   }
 
   const isInternal = isInternalMasterTreeNode(nodes, draggedNodeId);
   if (isInternal) return false;
 
-  return (
-    isNoteMasterNodeId(draggedNodeId) || isFolderMasterNodeId(draggedNodeId)
-  );
+  return isNoteMasterNodeId(draggedNodeId) || isFolderMasterNodeId(draggedNodeId);
 };
 
 export const resolveNotesExternalDropAction = ({

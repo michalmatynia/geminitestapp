@@ -1,7 +1,4 @@
-import type {
-  AiPathRunNodeRecord,
-  AiPathRunRecord,
-} from '@/shared/contracts/ai-paths';
+import type { AiPathRunNodeRecord, AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 
 type ReadCountsResult = {
@@ -66,23 +63,15 @@ const inferOperation = (
     : null;
 
   const actionFromOutcome =
-    typeof writeOutcome?.['action'] === 'string'
-      ? (writeOutcome['action'] as string)
-      : null;
+    typeof writeOutcome?.['action'] === 'string' ? (writeOutcome['action'] as string) : null;
   const actionFromDebug =
-    typeof directDebug?.['action'] === 'string'
-      ? (directDebug['action'] as string)
-      : null;
+    typeof directDebug?.['action'] === 'string' ? (directDebug['action'] as string) : null;
   const actionFromBundle =
-    typeof bundle?.['action'] === 'string'
-      ? (bundle['action'] as string)
-      : null;
+    typeof bundle?.['action'] === 'string' ? (bundle['action'] as string) : null;
   const action = actionFromOutcome ?? actionFromDebug ?? actionFromBundle;
 
   const operationFromOutcome =
-    typeof writeOutcome?.['operation'] === 'string'
-      ? (writeOutcome['operation'] as string)
-      : null;
+    typeof writeOutcome?.['operation'] === 'string' ? (writeOutcome['operation'] as string) : null;
   const categoryFromDebug =
     typeof directDebug?.['actionCategory'] === 'string'
       ? (directDebug['actionCategory'] as string)
@@ -100,8 +89,7 @@ const inferOperation = (
       ? 'insert'
       : action?.toLowerCase().includes('delete')
         ? 'delete'
-        : action?.toLowerCase().includes('update') ||
-            action?.toLowerCase().includes('replace')
+        : action?.toLowerCase().includes('update') || action?.toLowerCase().includes('replace')
           ? 'update'
           : hasWriteCounters
             ? 'write'
@@ -128,12 +116,8 @@ const detectNoopWriteFinding = (
   if (!isRecord(node.outputs)) return null;
 
   const outputs = node.outputs as Record<string, unknown>;
-  const bundle = isRecord(outputs['bundle'])
-    ? (outputs['bundle'] as Record<string, unknown>)
-    : {};
-  const result = isRecord(outputs['result'])
-    ? (outputs['result'] as Record<string, unknown>)
-    : {};
+  const bundle = isRecord(outputs['bundle']) ? (outputs['bundle'] as Record<string, unknown>) : {};
+  const result = isRecord(outputs['result']) ? (outputs['result'] as Record<string, unknown>) : {};
   const merged = {
     ...bundle,
     ...result,
@@ -166,14 +150,12 @@ const detectNoopWriteFinding = (
     operation: operationInfo.operation,
     action: operationInfo.action,
     counts,
-    reason: zeroAffectedByOutcome
-      ? 'write_outcome_zero_affected'
-      : 'counter_zero_affected',
+    reason: zeroAffectedByOutcome ? 'write_outcome_zero_affected' : 'counter_zero_affected',
   };
 };
 
 export async function collectNoopWriteFindings(
-  options: CollectNoopWriteFindingsOptions = {},
+  options: CollectNoopWriteFindingsOptions = {}
 ): Promise<CollectNoopWriteFindingsResult> {
   const repo = await getPathRunRepository();
   const limit = options.limit ?? 200;
@@ -216,4 +198,3 @@ export async function collectNoopWriteFindings(
 
 export const dedupeRunIds = (findings: NoopWriteFinding[]): string[] =>
   Array.from(new Set(findings.map((finding: NoopWriteFinding): string => finding.runId)));
-

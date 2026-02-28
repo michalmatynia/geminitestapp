@@ -21,13 +21,7 @@ export function CategoryMapperTableHeaderActions({
 }: CategoryMapperTableHeaderActionsProps): React.JSX.Element {
   return (
     <div className='flex items-center gap-2'>
-      <Button
-        variant='outline'
-        size='xs'
-        className='h-8'
-        onClick={onFetch}
-        loading={isFetching}
-      >
+      <Button variant='outline' size='xs' className='h-8' onClick={onFetch} loading={isFetching}>
         <Download className='mr-2 h-3.5 w-3.5' />
         Fetch Categories
       </Button>

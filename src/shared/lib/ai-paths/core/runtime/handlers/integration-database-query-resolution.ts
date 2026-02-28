@@ -1,29 +1,18 @@
-import type {
-  DbQueryConfig,
-  RuntimePortValues,
-} from '@/shared/contracts/ai-paths';
+import type { DbQueryConfig, RuntimePortValues } from '@/shared/contracts/ai-paths';
 import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 
 import { extractMissingTemplatePorts } from './integration-database-mongo-update-plan-helpers';
-import {
-  coerceInput,
-  parseJsonSafe,
-  renderJsonTemplate,
-} from '../../utils';
+import { coerceInput, parseJsonSafe, renderJsonTemplate } from '../../utils';
 
-export type QueryResolutionSource =
-  | 'aiQuery'
-  | 'input'
-  | 'callback'
-  | 'customTemplate';
+export type QueryResolutionSource = 'aiQuery' | 'input' | 'callback' | 'customTemplate';
 
 export type ResolveDatabaseQueryResult =
   | { output: RuntimePortValues }
   | {
-    query: Record<string, unknown>;
-    queryConfig: DbQueryConfig;
-    querySource: QueryResolutionSource;
-  };
+      query: Record<string, unknown>;
+      queryConfig: DbQueryConfig;
+      querySource: QueryResolutionSource;
+    };
 
 export type ResolveDatabaseQueryInput = {
   nodeInputs: RuntimePortValues;
@@ -74,10 +63,7 @@ const parseRenderedQueryTemplate = (args: {
   templateContext: Record<string, unknown>;
   inputValue: unknown;
 }): QueryTemplateParseResult => {
-  const missingPorts = extractMissingTemplatePorts(
-    args.template,
-    args.templateContext,
-  );
+  const missingPorts = extractMissingTemplatePorts(args.template, args.templateContext);
   if (missingPorts.length > 0) {
     return {
       ok: false,
@@ -86,11 +72,7 @@ const parseRenderedQueryTemplate = (args: {
   }
 
   const parsed: unknown = parseJsonSafe(
-    renderJsonTemplate(
-      args.template,
-      args.templateContext,
-      args.inputValue,
-    ),
+    renderJsonTemplate(args.template, args.templateContext, args.inputValue)
   );
 
   if (!isPlainRecord(parsed)) {

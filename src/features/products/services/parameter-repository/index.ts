@@ -1,7 +1,10 @@
 import 'server-only';
 
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import { getProductDataProvider, type ProductDbProvider } from '@/features/products/services/product-provider';
+import {
+  getProductDataProvider,
+  type ProductDbProvider,
+} from '@/features/products/services/product-provider';
 import type { ParameterRepository } from '@/shared/contracts/products';
 
 import { mongoParameterRepository } from './mongo-parameter-repository';
@@ -11,7 +14,7 @@ export const getParameterRepository = async (
   providerOverride?: ProductDbProvider
 ): Promise<ParameterRepository> => {
   try {
-    const provider = providerOverride ?? await getProductDataProvider();
+    const provider = providerOverride ?? (await getProductDataProvider());
     if (provider === 'mongodb') {
       return mongoParameterRepository;
     }

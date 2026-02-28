@@ -103,7 +103,9 @@ export const DEFAULT_AUTH_ROLES: AuthRole[] = [
 
 export const mergeDefaultRoles = (roles: AuthRole[] | null | undefined): AuthRole[] => {
   const incoming = Array.isArray(roles) ? roles : [];
-  const defaults = new Map<string, AuthRole>(DEFAULT_AUTH_ROLES.map((role: AuthRole) => [role.id, role]));
+  const defaults = new Map<string, AuthRole>(
+    DEFAULT_AUTH_ROLES.map((role: AuthRole) => [role.id, role])
+  );
   const merged = incoming.map((role: AuthRole) => {
     const fallback = defaults.get(role.id);
     if (!fallback) return role;
@@ -114,7 +116,7 @@ export const mergeDefaultRoles = (roles: AuthRole[] | null | undefined): AuthRol
       permissions: Array.isArray(role.permissions) ? role.permissions : fallback.permissions,
       deniedPermissions: Array.isArray(role.deniedPermissions)
         ? role.deniedPermissions
-        : fallback.deniedPermissions ?? [],
+        : (fallback.deniedPermissions ?? []),
       ...(typeof level === 'number' ? { level } : {}),
     };
   });

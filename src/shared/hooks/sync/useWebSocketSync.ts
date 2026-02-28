@@ -19,8 +19,11 @@ export function useWebSocketSync({ url, queryKeys, enabled = true }: WebSocketSy
 
     ws.onmessage = (event: MessageEvent): void => {
       try {
-        const data: { type?: string; queryKey?: unknown[] } = JSON.parse(event.data as string) as { type?: string; queryKey?: unknown[] };
-        
+        const data: { type?: string; queryKey?: unknown[] } = JSON.parse(event.data as string) as {
+          type?: string;
+          queryKey?: unknown[];
+        };
+
         // Invalidate relevant queries based on the update type
         if (data.type && data.queryKey) {
           void queryClient.invalidateQueries({ queryKey: data.queryKey });
@@ -31,12 +34,16 @@ export function useWebSocketSync({ url, queryKeys, enabled = true }: WebSocketSy
           });
         }
       } catch (error: unknown) {
-        logClientError(error instanceof Error ? error : new Error(String(error)), { context: { source: 'useWebSocketSync', action: 'messageParsingFailed', level: 'warn' } });
+        logClientError(error instanceof Error ? error : new Error(String(error)), {
+          context: { source: 'useWebSocketSync', action: 'messageParsingFailed', level: 'warn' },
+        });
       }
     };
 
     ws.onerror = (error: Event): void => {
-      logClientError(new Error(String(error)), { context: { source: 'useWebSocketSync', action: 'webSocketError', level: 'warn' } });
+      logClientError(new Error(String(error)), {
+        context: { source: 'useWebSocketSync', action: 'webSocketError', level: 'warn' },
+      });
     };
 
     return (): void => {
@@ -49,11 +56,7 @@ export function useWebSocketSync({ url, queryKeys, enabled = true }: WebSocketSy
 export function useAiJobWebSocketSync(enabled: boolean = true): void {
   useWebSocketSync({
     url: `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/api/ai-jobs/ws`,
-    queryKeys: [
-      ['ai-jobs'],
-      ['product-ai-jobs'],
-      ['chatbot-jobs'],
-    ],
+    queryKeys: [['ai-jobs'], ['product-ai-jobs'], ['chatbot-jobs']],
     enabled,
   });
 }

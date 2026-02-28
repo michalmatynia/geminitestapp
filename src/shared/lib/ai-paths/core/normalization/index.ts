@@ -5,15 +5,8 @@ export {
   migrateLegacyDbQueryProvider,
 } from './normalization.helpers';
 
-export {
-  normalizeNodes,
-  getDefaultConfigForType,
-} from './normalization.nodes';
+export { normalizeNodes, getDefaultConfigForType } from './normalization.nodes';
 
-export {
-  migrateTriggerToFetcherGraph,
-} from './normalization.edges';
+export { migrateTriggerToFetcherGraph } from './normalization.edges';
 
-export type {
-  TriggerToFetcherMigrationResult,
-} from './normalization.edges';
+export type { TriggerToFetcherMigrationResult } from './normalization.edges';

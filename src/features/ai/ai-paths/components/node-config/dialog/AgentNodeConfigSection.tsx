@@ -4,14 +4,7 @@ import Link from 'next/link';
 
 import { useAgentPersonas } from '@/features/ai/agentcreator/hooks/useAgentPersonas';
 import type { AgentConfig } from '@/shared/lib/ai-paths';
-import {
-  Button,
-  
-  SelectSimple,
-  Textarea,
-  LoadingState,
-  FormField,
-} from '@/shared/ui';
+import { Button, SelectSimple, Textarea, LoadingState, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -31,10 +24,9 @@ export function AgentNodeConfigSection(): React.JSX.Element | null {
 
   const personas = personasQuery.data ?? [];
   const agentConfig = selectedNode.config?.agent ?? DEFAULT_AGENT_CONFIG;
-  const selectedPersona =
-    agentConfig.personaId
-      ? personas.find((persona: { id: string }) => persona.id === agentConfig.personaId)
-      : null;
+  const selectedPersona = agentConfig.personaId
+    ? personas.find((persona: { id: string }) => persona.id === agentConfig.personaId)
+    : null;
 
   const personaOptions = [
     { value: RUNTIME_PERSONA_VALUE, label: 'Default (runtime settings)' },
@@ -46,21 +38,17 @@ export function AgentNodeConfigSection(): React.JSX.Element | null {
 
   return (
     <div className='space-y-4'>
-      <FormField 
-        label='Agent Persona' 
+      <FormField
+        label='Agent Persona'
         description='Choose a persona to apply the multi-step model settings.'
         actions={
-          <Button
-            asChild
-            variant='outline'
-            size='xs'
-            className='h-7'
-          >
+          <Button asChild variant='outline' size='xs' className='h-7'>
             <Link href='/admin/agentcreator/personas'>Manage Personas</Link>
           </Button>
         }
       >
-        <SelectSimple size='sm'
+        <SelectSimple
+          size='sm'
           variant='subtle'
           value={agentConfig.personaId ? agentConfig.personaId : RUNTIME_PERSONA_VALUE}
           onValueChange={(value: string): void =>
@@ -85,8 +73,8 @@ export function AgentNodeConfigSection(): React.JSX.Element | null {
           {selectedPersona.description}
         </div>
       )}
-      <FormField 
-        label='Prompt Template' 
+      <FormField
+        label='Prompt Template'
         description='Leave empty to use the incoming prompt or value input directly.'
       >
         <Textarea

@@ -35,9 +35,11 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
 
   const resolvedNotebookId =
     parsed.data.notebookId ?? (await noteService.getOrCreateDefaultNotebook()).id;
-  const tag = await noteService.createTag(removeUndefined({
-    ...parsed.data,
-    notebookId: resolvedNotebookId,
-  }) as TagCreateInput);
+  const tag = await noteService.createTag(
+    removeUndefined({
+      ...parsed.data,
+      notebookId: resolvedNotebookId,
+    }) as TagCreateInput
+  );
   return NextResponse.json(tag, { status: 201 });
 }

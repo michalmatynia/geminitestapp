@@ -15,9 +15,7 @@ import type {
   CaseResolverWorkspace,
 } from '@/shared/contracts/case-resolver';
 
-type CaseResolverAssetPatch = Partial<
-  Pick<CaseResolverAssetFile, 'textContent' | 'description'>
->;
+type CaseResolverAssetPatch = Partial<Pick<CaseResolverAssetFile, 'textContent' | 'description'>>;
 type CaseResolverAssetUpdateOptions = {
   persistToast?: string;
   persistNow?: boolean;
@@ -88,7 +86,21 @@ export type CaseResolverPageContextValue = {
   onRelationGraphChange: (nextGraph: CaseResolverRelationGraph) => void;
   onLinkRelatedFiles: (fileIdA: string, fileIdB: string) => void;
   onUnlinkRelatedFile: (sourceFileId: string, targetFileId: string) => void;
-  onUpdateActiveCase: (patch: Partial<Pick<CaseResolverFile, 'name' | 'parentCaseId' | 'referenceCaseIds' | 'tagId' | 'caseIdentifierId' | 'categoryId' | 'caseStatus' | 'happeningDate'>>) => void;
+  onUpdateActiveCase: (
+    patch: Partial<
+      Pick<
+        CaseResolverFile,
+        | 'name'
+        | 'parentCaseId'
+        | 'referenceCaseIds'
+        | 'tagId'
+        | 'caseIdentifierId'
+        | 'categoryId'
+        | 'caseStatus'
+        | 'happeningDate'
+      >
+    >
+  ) => void;
   caseTagOptions: Array<{ value: string; label: string; description?: string }>;
   caseIdentifierOptions: Array<{ value: string; label: string; description?: string }>;
   caseCategoryOptions: Array<{ value: string; label: string; description?: string }>;
@@ -109,9 +121,7 @@ export function CaseResolverPageProvider({
   children,
 }: CaseResolverPageProviderProps): React.JSX.Element {
   return (
-    <CaseResolverPageContext.Provider value={value}>
-      {children}
-    </CaseResolverPageContext.Provider>
+    <CaseResolverPageContext.Provider value={value}>{children}</CaseResolverPageContext.Provider>
   );
 }
 

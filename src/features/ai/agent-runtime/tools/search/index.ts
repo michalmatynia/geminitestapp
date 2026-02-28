@@ -8,7 +8,9 @@ const GOOGLE_SEARCH_API_URL =
 const SERPAPI_API_KEY = process.env['SERPAPI_API_KEY'];
 const SERPAPI_API_URL = process.env['SERPAPI_API_URL'] || 'https://serpapi.com/search.json';
 
-export const fetchDuckDuckGoResults = async (query: string): Promise<Array<{ title: string; url: string; snippet?: string }>> => {
+export const fetchDuckDuckGoResults = async (
+  query: string
+): Promise<Array<{ title: string; url: string; snippet?: string }>> => {
   const searchUrl = `https://duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
   const response = await fetch(searchUrl);
   if (!response.ok) {
@@ -16,8 +18,7 @@ export const fetchDuckDuckGoResults = async (query: string): Promise<Array<{ tit
   }
   const html = await response.text();
   const results: Array<{ title: string; url: string; snippet?: string }> = [];
-  const resultRegex =
-    /<a[^>]+class="result__a"[^>]+href="([^"]+)"[^>]*>(.*?)<\/a>/gi;
+  const resultRegex = /<a[^>]+class="result__a"[^>]+href="([^"]+)"[^>]*>(.*?)<\/a>/gi;
   let match: RegExpExecArray | null;
   while ((match = resultRegex.exec(html))) {
     const rawUrl = match[1];
@@ -26,9 +27,8 @@ export const fetchDuckDuckGoResults = async (query: string): Promise<Array<{ tit
     const title = rawTitle.replace(/<[^>]+>/g, '').trim();
     const url = rawUrl.includes('duckduckgo.com/l/')
       ? decodeURIComponent(
-        new URL(rawUrl, 'https://duckduckgo.com').searchParams.get('uddg') ??
-            rawUrl
-      )
+          new URL(rawUrl, 'https://duckduckgo.com').searchParams.get('uddg') ?? rawUrl
+        )
       : rawUrl;
     if (title && url) {
       results.push({ title, url });
@@ -44,7 +44,7 @@ export const fetchSearchResults = async (
   log?: (level: string, message: string, metadata?: Record<string, unknown>) => Promise<void>
 ): Promise<Array<{ title: string; url: string }>> => {
   const normalizedProvider = provider.toLowerCase();
-  
+
   if (normalizedProvider === 'brave') {
     try {
       if (!BRAVE_SEARCH_API_KEY) {
@@ -83,7 +83,7 @@ export const fetchSearchResults = async (
       return await fetchDuckDuckGoResults(query);
     }
   }
-  
+
   if (normalizedProvider === 'google') {
     try {
       if (!GOOGLE_SEARCH_API_KEY || !GOOGLE_SEARCH_ENGINE_ID) {
@@ -119,7 +119,7 @@ export const fetchSearchResults = async (
       return await fetchDuckDuckGoResults(query);
     }
   }
-  
+
   if (normalizedProvider === 'serpapi') {
     try {
       if (!SERPAPI_API_KEY) {
@@ -155,7 +155,7 @@ export const fetchSearchResults = async (
       return await fetchDuckDuckGoResults(query);
     }
   }
-  
+
   if (log) {
     await log('warning', 'Unsupported search provider; falling back to DuckDuckGo.', {
       provider,

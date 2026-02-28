@@ -120,12 +120,12 @@ export const getActionCategoryForAction = (action: DatabaseAction): DatabaseActi
 export const isProviderActionCategorySupported = (
   provider: DbActionProvider,
   category: DatabaseActionCategory
-): boolean =>
-  CATEGORY_OPTIONS_BY_PROVIDER[provider].some((option) => option.value === category);
+): boolean => CATEGORY_OPTIONS_BY_PROVIDER[provider].some((option) => option.value === category);
 
 export const getProviderActionCategoryOptions = (
   provider: DbActionProvider
-): Array<{ value: DatabaseActionCategory; label: string }> => CATEGORY_OPTIONS_BY_PROVIDER[provider];
+): Array<{ value: DatabaseActionCategory; label: string }> =>
+  CATEGORY_OPTIONS_BY_PROVIDER[provider];
 
 export const getProviderActionOptions = (
   provider: DbActionProvider,

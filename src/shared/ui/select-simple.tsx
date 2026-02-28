@@ -81,22 +81,20 @@ export function SelectSimple({
       hasVisibleGroupLabels,
     };
   }, [normalizedOptions]);
-  const hasValue = value !== undefined && normalizedOptions.some((option) => option.value === value);
+  const hasValue =
+    value !== undefined && normalizedOptions.some((option) => option.value === value);
   const safeValue = hasValue && typeof value === 'string' ? value : '';
 
   return (
     <div className={cn('w-full', className)}>
-      <Select
-        value={safeValue}
-        onValueChange={onValueChange}
-        disabled={disabled}
-      >
+      <Select value={safeValue} onValueChange={onValueChange} disabled={disabled}>
         <SelectTrigger
           className={cn(
             'w-full [&>span]:max-w-[calc(100%-1.5rem)] [&>span]:truncate [&>span]:text-left',
             size === 'sm' && 'h-8 text-xs',
             size === 'xs' && 'h-7 text-[10px]',
-            variant === 'subtle' && 'border-border/40 bg-card/40 hover:bg-card/60 hover:border-border/60',
+            variant === 'subtle' &&
+              'border-border/40 bg-card/40 hover:bg-card/60 hover:border-border/60',
             triggerClassName
           )}
           aria-label={ariaLabel}

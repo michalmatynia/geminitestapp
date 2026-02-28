@@ -62,12 +62,7 @@ export function ConnectionEditModal({
       size='lg'
       footer={
         <div className='flex justify-end gap-2'>
-          <Button
-            type='button'
-            variant='outline'
-            onClick={onClose}
-            disabled={isSaving}
-          >
+          <Button type='button' variant='outline' onClick={onClose} disabled={isSaving}>
             Cancel
           </Button>
           <Button

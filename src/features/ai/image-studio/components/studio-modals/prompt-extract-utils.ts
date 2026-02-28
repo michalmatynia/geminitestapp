@@ -1,7 +1,6 @@
-import { recommendParamUiControl, type ParamUiControl } from '../../utils/param-ui';
-import { flattenParams } from '../../utils/prompt-params';
+import { recommendParamUiControl, type ParamUiControl } from '@/shared/lib/ai/image-studio/utils/param-ui';
+import { flattenParams } from '@/shared/lib/ai/image-studio/utils/prompt-params';
 import { type ParamSpec } from '@/shared/contracts/prompt-engine';
-
 
 export type { ParamUiControl };
 
@@ -62,9 +61,7 @@ export type PromptDiffLine = {
   changed: boolean;
 };
 
-export const getPromptSourceLabel = (
-  source: PromptExtractHistoryEntry['source']
-): string => {
+export const getPromptSourceLabel = (source: PromptExtractHistoryEntry['source']): string => {
   if (source === 'programmatic_autofix') return 'Programmatic + Autofix';
   if (source === 'programmatic') return 'Programmatic';
   if (source === 'gpt') return 'AI';
@@ -86,7 +83,7 @@ export const formatHistoryTime = (timestamp: number): string =>
 
 export const buildPromptDiffLines = (
   beforePrompt: string,
-  afterPrompt: string,
+  afterPrompt: string
 ): PromptDiffLine[] => {
   const beforeLines = beforePrompt.split(/\r?\n/);
   const afterLines = afterPrompt.split(/\r?\n/);

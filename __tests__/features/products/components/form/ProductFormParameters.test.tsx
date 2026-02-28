@@ -22,11 +22,7 @@ vi.mock('@/shared/ui', () => ({
   Textarea: (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => <textarea {...props} />,
   FormSection: ({ children }: { children: React.ReactNode }) => <section>{children}</section>,
   Alert: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  Label: ({
-    children,
-    htmlFor,
-    ...props
-  }: React.LabelHTMLAttributes<HTMLLabelElement>) => (
+  Label: ({ children, htmlFor, ...props }: React.LabelHTMLAttributes<HTMLLabelElement>) => (
     <label htmlFor={htmlFor} {...props}>
       {children}
     </label>
@@ -101,9 +97,9 @@ vi.mock('@/shared/ui', () => ({
         {React.Children.map(children, (child: React.ReactNode) =>
           React.isValidElement(child)
             ? React.cloneElement(child as any, {
-              ...(activeValue !== undefined ? { activeValue } : {}),
-              ...(onValueChange !== undefined ? { onValueChange } : {}),
-            })
+                ...(activeValue !== undefined ? { activeValue } : {}),
+                ...(onValueChange !== undefined ? { onValueChange } : {}),
+              })
             : child
         )}
       </div>

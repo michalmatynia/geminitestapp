@@ -39,24 +39,17 @@ export type FolderTreeAppliedTransaction = {
 };
 
 export interface MasterFolderTreeAdapterV3 {
-  fetchState?: (
-    instanceId?: string
-  ) => Promise<{
+  fetchState?: (instanceId?: string) => Promise<{
     nodes: MasterTreeNode[];
     version?: number | undefined;
   }>;
   loadNodes?: () => Promise<MasterTreeNode[]>;
-  prepare?: (
-    tx: FolderTreeTransaction
-  ) => Promise<FolderTreePreparedTransaction>;
+  prepare?: (tx: FolderTreeTransaction) => Promise<FolderTreePreparedTransaction>;
   apply: (
     tx: FolderTreeTransaction,
     prepared: FolderTreePreparedTransaction
   ) => Promise<FolderTreeAppliedTransaction | void>;
-  commit?: (
-    tx: FolderTreeTransaction,
-    applied: FolderTreeAppliedTransaction
-  ) => Promise<void>;
+  commit?: (tx: FolderTreeTransaction, applied: FolderTreeAppliedTransaction) => Promise<void>;
   rollback?: (
     tx: FolderTreeTransaction,
     stage: 'prepare' | 'apply' | 'commit',

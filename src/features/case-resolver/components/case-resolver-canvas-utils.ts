@@ -36,9 +36,9 @@ export const buildNode = (
   );
   const mergedConfig = definition.config
     ? {
-      ...(defaultConfig ?? {}),
-      ...definition.config,
-    }
+        ...(defaultConfig ?? {}),
+        ...definition.config,
+      }
     : defaultConfig;
 
   return {
@@ -276,7 +276,7 @@ export const buildCanvasNodeFileTemplate = (
   linkedFileIds.forEach((fileId: string, index: number) => {
     const file = availableFilesById.get(fileId);
     const label = file ? file.name : fileId;
-    const folderLabel = file ? (file.folder || '(root)') : '(unknown)';
+    const folderLabel = file ? file.folder || '(root)' : '(unknown)';
     lines.push(`${index + 1}. ${label} [${folderLabel}]`);
   });
 
@@ -316,7 +316,7 @@ const hasHtmlMarkup = (value: string): boolean => /<\/?[a-z][^>]*>/i.test(value)
 const decodeBasicHtmlEntities = (value: string): string =>
   value
     .replace(/&nbsp;/gi, ' ')
-    .replace(/&apos;|&#39;/gi, '\'')
+    .replace(/&apos;|&#39;/gi, "'")
     .replace(/&quot;/gi, '"')
     .replace(/&gt;/gi, '>')
     .replace(/&lt;/gi, '<')
@@ -444,7 +444,10 @@ export const resolvePromptNodeStaticOutputs = (
   };
 };
 
-export const clampCanvasPosition = (position: { x: number; y: number }): { x: number; y: number } => ({
+export const clampCanvasPosition = (position: {
+  x: number;
+  y: number;
+}): { x: number; y: number } => ({
   x: Math.min(Math.max(position.x, 16), CANVAS_WIDTH - NODE_WIDTH - 16),
   y: Math.min(Math.max(position.y, 16), CANVAS_HEIGHT - NODE_MIN_HEIGHT - 16),
 });

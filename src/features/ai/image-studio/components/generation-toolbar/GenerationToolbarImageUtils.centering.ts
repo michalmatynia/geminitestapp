@@ -3,9 +3,7 @@ import {
   type CenterLayoutResult,
   type ClientImageObjectAnalysisResult,
 } from './GenerationToolbarImageUtils.types';
-import {
-  type ImageStudioCenterLayoutConfig as CenterLayoutConfig,
-} from '@/features/ai/image-studio/analysis/shared';
+import { type ImageStudioCenterLayoutConfig as CenterLayoutConfig } from '@/features/ai/image-studio/analysis/shared';
 import {
   CENTER_LAYOUT_DEFAULT_CHROMA_THRESHOLD,
   CENTER_LAYOUT_DEFAULT_PADDING_PERCENT,
@@ -37,10 +35,14 @@ export const isCenterAbortError = (error: unknown): boolean =>
 export const isRetryableCenterError = (error: unknown): boolean => {
   if (isCenterAbortError(error)) return false;
   if (error instanceof ApiError) {
-    return error.status === 408 || error.status === 425 || error.status === 429 || error.status >= 500;
+    return (
+      error.status === 408 || error.status === 425 || error.status === 429 || error.status >= 500
+    );
   }
   if (error instanceof Error) {
-    return /timeout|network|failed to fetch|temporarily unavailable|retry/i.test(error.message.toLowerCase());
+    return /timeout|network|failed to fetch|temporarily unavailable|retry/i.test(
+      error.message.toLowerCase()
+    );
   }
   return false;
 };
@@ -48,7 +50,7 @@ export const isRetryableCenterError = (error: unknown): boolean => {
 export const buildCenterRequestId = (): string =>
   `center_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
 
-export const withCenterRetry = async <T,>(
+export const withCenterRetry = async <T>(
   run: () => Promise<T>,
   signal: AbortSignal,
   retries = 1,
@@ -81,10 +83,14 @@ export const shouldFallbackToServerAutoScaler = (error: unknown): boolean => {
 export const isRetryableAutoScalerError = (error: unknown): boolean => {
   if (isAutoScalerAbortError(error)) return false;
   if (error instanceof ApiError) {
-    return error.status === 408 || error.status === 425 || error.status === 429 || error.status >= 500;
+    return (
+      error.status === 408 || error.status === 425 || error.status === 429 || error.status >= 500
+    );
   }
   if (error instanceof Error) {
-    return /timeout|network|failed to fetch|temporarily unavailable|retry/i.test(error.message.toLowerCase());
+    return /timeout|network|failed to fetch|temporarily unavailable|retry/i.test(
+      error.message.toLowerCase()
+    );
   }
   return false;
 };
@@ -92,7 +98,7 @@ export const isRetryableAutoScalerError = (error: unknown): boolean => {
 export const buildAutoScalerRequestId = (): string =>
   `autoscale_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
 
-export const withAutoScalerRetry = async <T,>(
+export const withAutoScalerRetry = async <T>(
   run: () => Promise<T>,
   signal: AbortSignal,
   retries = 1,
@@ -124,7 +130,7 @@ const resolveAlphaObjectBounds = (
 
   for (let y = 0; y < height; y += 1) {
     for (let x = 0; x < width; x += 1) {
-      const alpha = data[((y * width) + x) * 4 + 3];
+      const alpha = data[(y * width + x) * 4 + 3];
       if (typeof alpha !== 'number' || alpha <= 8) continue;
       if (x < minX) minX = x;
       if (x > maxX) maxX = x;
@@ -166,7 +172,9 @@ export const centerCanvasImageObject = async (src: string): Promise<string> => {
   try {
     imageData = sourceContext.getImageData(0, 0, sourceWidth, sourceHeight);
   } catch {
-    throw new Error('Client centering failed due to cross-origin restrictions. Use "Center Server: Sharp".');
+    throw new Error(
+      'Client centering failed due to cross-origin restrictions. Use "Center Server: Sharp".'
+    );
   }
   const bounds = resolveAlphaObjectBounds(imageData.data, sourceWidth, sourceHeight);
   if (!bounds) {
@@ -252,12 +260,16 @@ const normalizeTargetCanvasSide = (value: number | null | undefined): number | n
   );
 };
 
-const normalizeShadowPolicy = (value: CenterLayoutConfig['shadowPolicy']): 'auto' | 'include_shadow' | 'exclude_shadow' => {
+const normalizeShadowPolicy = (
+  value: CenterLayoutConfig['shadowPolicy']
+): 'auto' | 'include_shadow' | 'exclude_shadow' => {
   if (value === 'include_shadow' || value === 'exclude_shadow') return value;
   return 'auto';
 };
 
-const normalizeDetectionMode = (value: CenterLayoutConfig['detection']): 'auto' | 'alpha_bbox' | 'white_bg_first_colored_pixel' => {
+const normalizeDetectionMode = (
+  value: CenterLayoutConfig['detection']
+): 'auto' | 'alpha_bbox' | 'white_bg_first_colored_pixel' => {
   if (value === 'alpha_bbox' || value === 'white_bg_first_colored_pixel') return value;
   return 'auto';
 };
@@ -300,7 +312,9 @@ export const normalizeCenterLayoutConfig = (
   };
 };
 
-const normalizeLayoutForEngine = (config?: CenterLayoutConfig | null): NormalizedImageStudioAnalysisLayoutConfig => {
+const normalizeLayoutForEngine = (
+  config?: CenterLayoutConfig | null
+): NormalizedImageStudioAnalysisLayoutConfig => {
   return normalizeCenterLayoutConfig(config);
 };
 
@@ -308,13 +322,19 @@ export const layoutCanvasImageObject = async (
   src: string,
   layoutConfig?: CenterLayoutConfig | null
 ): Promise<CenterLayoutResult> => {
-  const { sourceCanvas, sourceWidth, sourceHeight, imageData } = await loadSourceCanvasWithImageData(
-    src,
-    'Client layouting failed due to cross-origin restrictions. Use "Object Layout Server".'
-  );
+  const { sourceCanvas, sourceWidth, sourceHeight, imageData } =
+    await loadSourceCanvasWithImageData(
+      src,
+      'Client layouting failed due to cross-origin restrictions. Use "Object Layout Server".'
+    );
 
   const normalizedLayout = normalizeLayoutForEngine(layoutConfig);
-  const objectBoundsResult = detectObjectBoundsForLayoutFromRgba(imageData.data, sourceWidth, sourceHeight, normalizedLayout);
+  const objectBoundsResult = detectObjectBoundsForLayoutFromRgba(
+    imageData.data,
+    sourceWidth,
+    sourceHeight,
+    normalizedLayout
+  );
   if (!objectBoundsResult) {
     throw new Error('No visible object pixels were detected to layout.');
   }
@@ -417,10 +437,11 @@ export const autoScaleCanvasImageObject = async (
   layoutConfig?: CenterLayoutConfig | null,
   options?: { preferTargetCanvas?: boolean }
 ): Promise<AutoScaleCanvasResult> => {
-  const { sourceCanvas, sourceWidth, sourceHeight, imageData } = await loadSourceCanvasWithImageData(
-    src,
-    'Client auto scaling failed due to cross-origin restrictions. Use "Auto Scaler Server".'
-  );
+  const { sourceCanvas, sourceWidth, sourceHeight, imageData } =
+    await loadSourceCanvasWithImageData(
+      src,
+      'Client auto scaling failed due to cross-origin restrictions. Use "Auto Scaler Server".'
+    );
   const normalizedLayout = normalizeLayoutForEngine(layoutConfig);
   const planned = analyzeAndPlanAutoScaleFromRgba({
     pixelData: imageData.data,

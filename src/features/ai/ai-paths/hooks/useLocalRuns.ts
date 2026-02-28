@@ -50,9 +50,11 @@ export function useLocalRuns({ sourceFilter, sourceMode }: UseLocalRunsOptions =
   }, [settingsQuery.data]);
 
   const allRuns = useMemo(() => parseLocalRuns(rawRuns), [rawRuns]);
-  
+
   const runs = useMemo(() => {
-    return allRuns.filter((run: AiPathLocalRunRecord) => shouldIncludeRun(run, sourceFilter, sourceMode));
+    return allRuns.filter((run: AiPathLocalRunRecord) =>
+      shouldIncludeRun(run, sourceFilter, sourceMode)
+    );
   }, [allRuns, sourceFilter, sourceMode]);
 
   const metrics = useMemo(() => {
@@ -63,44 +65,53 @@ export function useLocalRuns({ sourceFilter, sourceMode }: UseLocalRunsOptions =
       .map((run: AiPathLocalRunRecord) => run.durationMs)
       .filter((value: number | null | undefined): value is number => Number.isFinite(value));
     const avgDuration = durations.length
-      ? Math.round(durations.reduce((acc: number, value: number) => acc + value, 0) / durations.length)
+      ? Math.round(
+          durations.reduce((acc: number, value: number) => acc + value, 0) / durations.length
+        )
       : null;
     const p95Duration = durations.length
-      ? [...durations].sort((a: number, b: number) => a - b)[Math.max(0, Math.ceil(durations.length * 0.95) - 1)] ?? null
+      ? ([...durations].sort((a: number, b: number) => a - b)[
+          Math.max(0, Math.ceil(durations.length * 0.95) - 1)
+        ] ?? null)
       : null;
     const successRate = total > 0 ? Math.round((success / total) * 100) : 0;
     const lastRunAt = runs[0]?.startedAt ?? null;
     return { total, success, error, avgDuration, p95Duration, successRate, lastRunAt };
   }, [runs]);
 
-  const clearRuns = useCallback(async (scope: LocalRunsScope): Promise<void> => {
-    const nextRuns = allRuns.filter((run: AiPathLocalRunRecord) => {
-      const inPanel = shouldIncludeRun(run, sourceFilter, sourceMode);
-      if (!inPanel) return true;
-      if (scope === 'all') return false;
-      return !TERMINAL_LOCAL_RUN_STATUSES.has(run.status);
-    });
-
-    try {
-      await updateMutation.mutateAsync({
-        key: AI_PATHS_LOCAL_RUNS_KEY,
-        value: serializeSetting(nextRuns)
+  const clearRuns = useCallback(
+    async (scope: LocalRunsScope): Promise<void> => {
+      const nextRuns = allRuns.filter((run: AiPathLocalRunRecord) => {
+        const inPanel = shouldIncludeRun(run, sourceFilter, sourceMode);
+        if (!inPanel) return true;
+        if (scope === 'all') return false;
+        return !TERMINAL_LOCAL_RUN_STATUSES.has(run.status);
       });
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(
-          new CustomEvent('ai-paths:settings:updated', { detail: { scope: 'ai-paths' } })
+
+      try {
+        await updateMutation.mutateAsync({
+          key: AI_PATHS_LOCAL_RUNS_KEY,
+          value: serializeSetting(nextRuns),
+        });
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(
+            new CustomEvent('ai-paths:settings:updated', { detail: { scope: 'ai-paths' } })
+          );
+        }
+        toast(
+          scope === 'all'
+            ? 'Cleared all local runs in this list.'
+            : 'Cleared finished local runs in this list.',
+          { variant: 'success' }
         );
+      } catch (err) {
+        toast(err instanceof Error ? err.message : 'Failed to clear local runs.', {
+          variant: 'error',
+        });
       }
-      toast(
-        scope === 'all'
-          ? 'Cleared all local runs in this list.'
-          : 'Cleared finished local runs in this list.',
-        { variant: 'success' }
-      );
-    } catch (err) {
-      toast(err instanceof Error ? err.message : 'Failed to clear local runs.', { variant: 'error' });
-    }
-  }, [allRuns, sourceFilter, sourceMode, toast, updateMutation]);
+    },
+    [allRuns, sourceFilter, sourceMode, toast, updateMutation]
+  );
 
   return {
     runs,
@@ -108,7 +119,9 @@ export function useLocalRuns({ sourceFilter, sourceMode }: UseLocalRunsOptions =
     isLoading: settingsQuery.isLoading,
     isFetching: settingsQuery.isFetching,
     isUpdating: updateMutation.isPending,
-    refetch: () => { void settingsQuery.refetch(); },
+    refetch: () => {
+      void settingsQuery.refetch();
+    },
     clearRuns,
   };
 }

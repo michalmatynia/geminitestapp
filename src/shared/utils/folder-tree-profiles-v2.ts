@@ -39,7 +39,11 @@ export const folderTreeInstanceValues = [
 
 export type FolderTreeInstance = (typeof folderTreeInstanceValues)[number];
 
-export const folderTreePlaceholderPresetValues: FolderTreePlaceholderPreset[] = ['sublime', 'classic', 'vivid'];
+export const folderTreePlaceholderPresetValues: FolderTreePlaceholderPreset[] = [
+  'sublime',
+  'classic',
+  'vivid',
+];
 
 export type FolderTreePlaceholderClassSet = {
   rootIdle: string;
@@ -94,11 +98,22 @@ export const folderTreePlaceholderPresetOptions: Array<{
   { value: 'vivid', label: 'Vivid' },
 ];
 
-export const folderTreePlaceholderStyleValues: FolderTreePlaceholderStyle[] = ['line', 'pill', 'ghost'];
+export const folderTreePlaceholderStyleValues: FolderTreePlaceholderStyle[] = [
+  'line',
+  'pill',
+  'ghost',
+];
 
-export const folderTreePlaceholderEmphasisValues: FolderTreePlaceholderEmphasis[] = ['subtle', 'balanced', 'bold'];
+export const folderTreePlaceholderEmphasisValues: FolderTreePlaceholderEmphasis[] = [
+  'subtle',
+  'balanced',
+  'bold',
+];
 
-export const folderTreeSelectionBehaviorValues: FolderTreeSelectionBehavior[] = ['click_away', 'toggle_only'];
+export const folderTreeSelectionBehaviorValues: FolderTreeSelectionBehavior[] = [
+  'click_away',
+  'toggle_only',
+];
 
 export const folderTreeIconSlotValues: FolderTreeIconSlot[] = [
   'folderClosed',
@@ -118,10 +133,18 @@ export type CanNestTreeNodeV2Input = {
   targetFolderKind?: string | null;
 };
 
-const placeholderPresetSchema = z.enum(folderTreePlaceholderPresetValues as [string, ...string[]]) as z.ZodType<FolderTreePlaceholderPreset>;
-const placeholderStyleSchema = z.enum(folderTreePlaceholderStyleValues as [string, ...string[]]) as z.ZodType<FolderTreePlaceholderStyle>;
-const placeholderEmphasisSchema = z.enum(folderTreePlaceholderEmphasisValues as [string, ...string[]]) as z.ZodType<FolderTreePlaceholderEmphasis>;
-const selectionBehaviorSchema = z.enum(folderTreeSelectionBehaviorValues as [string, ...string[]]) as z.ZodType<FolderTreeSelectionBehavior>;
+const placeholderPresetSchema = z.enum(
+  folderTreePlaceholderPresetValues as [string, ...string[]]
+) as z.ZodType<FolderTreePlaceholderPreset>;
+const placeholderStyleSchema = z.enum(
+  folderTreePlaceholderStyleValues as [string, ...string[]]
+) as z.ZodType<FolderTreePlaceholderStyle>;
+const placeholderEmphasisSchema = z.enum(
+  folderTreePlaceholderEmphasisValues as [string, ...string[]]
+) as z.ZodType<FolderTreePlaceholderEmphasis>;
+const selectionBehaviorSchema = z.enum(
+  folderTreeSelectionBehaviorValues as [string, ...string[]]
+) as z.ZodType<FolderTreeSelectionBehavior>;
 const nodeTypeSchema = z.enum(['folder', 'file']);
 const targetTypeSchema = z.enum(['folder', 'root']);
 const iconSlotSchema = z.string().trim().min(1).nullable();
@@ -507,7 +530,14 @@ export const defaultFolderTreeProfilesV2: FolderTreeProfilesV2Map = {
         },
         {
           childType: 'file',
-          childKinds: ['case_file', 'case_file_scan', 'node_file', 'asset_image', 'asset_pdf', 'asset_file'],
+          childKinds: [
+            'case_file',
+            'case_file_scan',
+            'node_file',
+            'asset_image',
+            'asset_pdf',
+            'asset_file',
+          ],
           targetType: 'folder',
           targetKinds: ['*'],
           allow: true,
@@ -521,7 +551,14 @@ export const defaultFolderTreeProfilesV2: FolderTreeProfilesV2Map = {
         },
         {
           childType: 'file',
-          childKinds: ['case_file', 'case_file_scan', 'node_file', 'asset_image', 'asset_pdf', 'asset_file'],
+          childKinds: [
+            'case_file',
+            'case_file_scan',
+            'node_file',
+            'asset_image',
+            'asset_pdf',
+            'asset_file',
+          ],
           targetType: 'root',
           targetKinds: ['root'],
           allow: true,
@@ -601,7 +638,10 @@ const normalizeByKindIcons = (
   return normalized;
 };
 
-const coerceProfileV2 = (candidate: unknown, fallback: FolderTreeProfileV2): FolderTreeProfileV2 => {
+const coerceProfileV2 = (
+  candidate: unknown,
+  fallback: FolderTreeProfileV2
+): FolderTreeProfileV2 => {
   const parsed = profileV2Schema.safeParse(candidate);
   if (!parsed.success) {
     return cloneProfileV2(fallback);

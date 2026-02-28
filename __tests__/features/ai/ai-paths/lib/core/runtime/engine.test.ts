@@ -14,12 +14,17 @@ describe('AI Paths Runtime Engine', () => {
     reportAiPathsError: mockReportAiPathsError,
     toast: mockToast,
     resolveHandler: (type: string) => {
-      if (type === 'math') return (ctx: any) => ({ result: (ctx.nodeInputs['value'] || 0) + 1, value: (ctx.nodeInputs['value'] || 0) + 1 });
-      if (type === 'prompt') return (_ctx: any) => {
-        const val = _ctx.nodeInputs['value'] ?? 'unknown';
-        console.log(`[mock-prompt] returning prompt for value: ${val}`);
-        return { prompt: 'value is ' + val };
-      };
+      if (type === 'math')
+        return (ctx: any) => ({
+          result: (ctx.nodeInputs['value'] || 0) + 1,
+          value: (ctx.nodeInputs['value'] || 0) + 1,
+        });
+      if (type === 'prompt')
+        return (_ctx: any) => {
+          const val = _ctx.nodeInputs['value'] ?? 'unknown';
+          console.log(`[mock-prompt] returning prompt for value: ${val}`);
+          return { prompt: 'value is ' + val };
+        };
       if (type === 'bundle') return (_ctx: any) => ({ bundle: _ctx.nodeInputs });
       return null;
     },
@@ -68,7 +73,7 @@ describe('AI Paths Runtime Engine', () => {
       },
     ];
 
-    // Note: handleMapper expects context to be an object. 
+    // Note: handleMapper expects context to be an object.
     // We update node-1 to return an object.
     nodes[0]!.config!.constant!.value = JSON.stringify({ val: 'mapped' });
     nodes[0]!.config!.constant!.valueType = 'json';
@@ -143,7 +148,7 @@ describe('AI Paths Runtime Engine', () => {
       nodes,
       edges: [],
       skipNodeIds: ['node-1'],
-      seedOutputs: { 'node-1': { value: 'seeded' } }
+      seedOutputs: { 'node-1': { value: 'seeded' } },
     });
 
     // Should keep the seeded value and not run the handler
@@ -161,7 +166,10 @@ describe('AI Paths Runtime Engine', () => {
         inputs: [],
         outputs: ['value'],
         position: { x: 0, y: 0 },
-        config: { constant: { valueType: 'string', value: 'initial' }, runtime: { cache: { mode: 'force', scope: 'activation' } } },
+        config: {
+          constant: { valueType: 'string', value: 'initial' },
+          runtime: { cache: { mode: 'force', scope: 'activation' } },
+        },
       },
     ];
 
@@ -217,13 +225,17 @@ describe('AI Paths Runtime Engine', () => {
       onNodeFinish,
     });
 
-    expect(onNodeStart).toHaveBeenCalledWith(expect.objectContaining({
-      node: expect.objectContaining({ id: 'node-1' })
-    }));
-    expect(onNodeFinish).toHaveBeenCalledWith(expect.objectContaining({
-      node: expect.objectContaining({ id: 'node-1' }),
-      nextOutputs: { value: 'test' }
-    }));
+    expect(onNodeStart).toHaveBeenCalledWith(
+      expect.objectContaining({
+        node: expect.objectContaining({ id: 'node-1' }),
+      })
+    );
+    expect(onNodeFinish).toHaveBeenCalledWith(
+      expect.objectContaining({
+        node: expect.objectContaining({ id: 'node-1' }),
+        nextOutputs: { value: 'test' },
+      })
+    );
   });
 
   it('waits only for required ports when input contracts are defined', async () => {
@@ -432,11 +444,13 @@ describe('AI Paths Runtime Engine', () => {
 
     const historyEntries = result.history?.['bundle-node'];
     const skipHistory = Array.isArray(historyEntries)
-      ? historyEntries.find((entry) => entry['status'] === 'blocked' && entry['skipReason'] === 'missing_inputs')
+      ? historyEntries.find(
+          (entry) => entry['status'] === 'blocked' && entry['skipReason'] === 'missing_inputs'
+        )
       : null;
     expect(skipHistory).toBeDefined();
-    expect((skipHistory?.['requiredPorts']) ?? []).toContain('context');
-    expect((skipHistory?.['waitingOnPorts']) ?? []).toContain('context');
+    expect(skipHistory?.['requiredPorts'] ?? []).toContain('context');
+    expect(skipHistory?.['waitingOnPorts'] ?? []).toContain('context');
   });
 
   it('supports per-activation side-effect policy for notification nodes', async () => {
@@ -506,9 +520,9 @@ describe('AI Paths Runtime Engine', () => {
       ...defaultOptions,
       nodes,
       edges,
-      seedOutputs: { 
+      seedOutputs: {
         'math-node': { value: 0 },
-        'prompt-node': { prompt: 'test-direct' }
+        'prompt-node': { prompt: 'test-direct' },
       },
       recordHistory: true,
     });
@@ -591,9 +605,9 @@ describe('AI Paths Runtime Engine', () => {
       ...defaultOptions,
       nodes,
       edges,
-      seedOutputs: { 
+      seedOutputs: {
         'math-node': { value: 0 },
-        'prompt-node': { prompt: 'test-direct' }
+        'prompt-node': { prompt: 'test-direct' },
       },
       recordHistory: true,
     });

@@ -7,10 +7,8 @@ import type {
 
 export type MasterTreeRootDropZone = 'top' | 'bottom';
 
-export const isInternalMasterTreeNode = (
-  nodes: MasterTreeNode[],
-  nodeId: MasterTreeId
-): boolean => nodes.some((node: MasterTreeNode): boolean => node.id === nodeId);
+export const isInternalMasterTreeNode = (nodes: MasterTreeNode[], nodeId: MasterTreeId): boolean =>
+  nodes.some((node: MasterTreeNode): boolean => node.id === nodeId);
 
 export const applyInternalMasterTreeDrop = async ({
   controller,
@@ -26,10 +24,7 @@ export const applyInternalMasterTreeDrop = async ({
   rootDropZone?: MasterTreeRootDropZone | undefined;
 }): Promise<void> => {
   if (targetId === null) {
-    await controller.dropNodeToRoot(
-      draggedNodeId,
-      rootDropZone === 'top' ? 0 : undefined
-    );
+    await controller.dropNodeToRoot(draggedNodeId, rootDropZone === 'top' ? 0 : undefined);
     return;
   }
 

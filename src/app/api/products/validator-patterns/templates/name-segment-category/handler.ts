@@ -1,12 +1,10 @@
-
-
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getValidationPatternRepository } from '@/features/products/server';
 import { invalidateValidationPatternRuntimeCache } from '@/features/products/services/validation-pattern-runtime-cache';
-import type { 
-  ProductValidationInstanceScopeDto as ProductValidationInstanceScope, 
-  ProductValidationPatternDto as ProductValidationPattern 
+import type {
+  ProductValidationInstanceScopeDto as ProductValidationInstanceScope,
+  ProductValidationPatternDto as ProductValidationPattern,
 } from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
@@ -16,9 +14,7 @@ const TEMPLATE_SCOPES: ProductValidationInstanceScope[] = [
   'product_edit',
 ];
 
-const parseRuntimeConfig = (
-  value: string | null
-): Record<string, unknown> | null => {
+const parseRuntimeConfig = (value: string | null): Record<string, unknown> | null => {
   if (!value) return null;
   try {
     const parsed = JSON.parse(value) as unknown;
@@ -34,9 +30,7 @@ const normalizeReplacementFields = (fields: string[] | null | undefined): string
   return [...new Set(fields)];
 };
 
-const isNameSegmentCategoryPattern = (
-  pattern: ProductValidationPattern
-): boolean => {
+const isNameSegmentCategoryPattern = (pattern: ProductValidationPattern): boolean => {
   if (pattern.target !== 'category') return false;
   if (pattern.label.trim().toLowerCase() === 'name segment #4 -> category') {
     return true;
@@ -55,10 +49,7 @@ const isNameSegmentCategoryPattern = (
   return String(payload['collection'] ?? '').trim() === 'product_categories';
 };
 
-const getPatternSequence = (
-  pattern: ProductValidationPattern,
-  fallbackIndex: number,
-): number => {
+const getPatternSequence = (pattern: ProductValidationPattern, fallbackIndex: number): number => {
   if (typeof pattern.sequence === 'number' && Number.isFinite(pattern.sequence)) {
     return Math.max(0, Math.floor(pattern.sequence));
   }
@@ -72,7 +63,7 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext): 
   const maxSequence = patterns.reduce(
     (max: number, pattern: ProductValidationPattern, index: number) =>
       Math.max(max, getPatternSequence(pattern, index)),
-    0,
+    0
   );
 
   const runtimeConfig = {
@@ -173,4 +164,3 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext): 
     ensuredPattern: created,
   });
 }
-

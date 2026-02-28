@@ -19,29 +19,25 @@ import { getDatabaseEngineOperationControls } from '@/shared/lib/db/database-eng
 vi.mock('@/shared/lib/api/api-handler', () => ({
   apiHandler:
     (handler: (req: NextRequest, ctx: unknown) => Promise<Response>) =>
-      async (req: NextRequest): Promise<Response> =>
-        handler(req, {
-          requestId: 'test-request-id',
-        }),
+    async (req: NextRequest): Promise<Response> =>
+      handler(req, {
+        requestId: 'test-request-id',
+      }),
   apiHandlerWithParams:
     (
-      handler: (
-        req: NextRequest,
-        ctx: unknown,
-        params: Record<string, string>
-      ) => Promise<Response>
+      handler: (req: NextRequest, ctx: unknown, params: Record<string, string>) => Promise<Response>
     ) =>
-      async (
-        req: NextRequest,
-        routeCtx: { params: Promise<Record<string, string>> }
-      ): Promise<Response> =>
-        handler(
-          req,
-          {
-            requestId: 'test-request-id',
-          },
-          await routeCtx.params
-        ),
+    async (
+      req: NextRequest,
+      routeCtx: { params: Promise<Record<string, string>> }
+    ): Promise<Response> =>
+      handler(
+        req,
+        {
+          requestId: 'test-request-id',
+        },
+        await routeCtx.params
+      ),
 }));
 
 vi.mock('@/features/auth/server', () => ({

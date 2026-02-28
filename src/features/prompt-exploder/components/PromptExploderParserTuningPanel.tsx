@@ -24,14 +24,8 @@ const SEGMENT_TYPE_OPTIONS: Array<{
 ];
 
 export function PromptExploderParserTuningPanel(): React.JSX.Element {
-  const {
-    drafts,
-    onPatchDraft,
-    onSave,
-    onResetToPackDefaults,
-    onOpenValidationPatterns,
-    isBusy,
-  } = usePromptExploderParserTuningContext();
+  const { drafts, onPatchDraft, onSave, onResetToPackDefaults, onOpenValidationPatterns, isBusy } =
+    usePromptExploderParserTuningContext();
 
   return (
     <div className='space-y-3'>
@@ -39,12 +33,7 @@ export function PromptExploderParserTuningPanel(): React.JSX.Element {
         <Button type='button' variant='outline' onClick={onSave} disabled={isBusy}>
           Save Parser Tuning
         </Button>
-        <Button
-          type='button'
-          variant='outline'
-          onClick={onResetToPackDefaults}
-          disabled={isBusy}
-        >
+        <Button type='button' variant='outline' onClick={onResetToPackDefaults} disabled={isBusy}>
           Reset To Pack Defaults
         </Button>
         <Button type='button' variant='outline' onClick={onOpenValidationPatterns}>
@@ -87,14 +76,13 @@ export function PromptExploderParserTuningPanel(): React.JSX.Element {
               </div>
               <div className='space-y-1'>
                 <Label className='text-[10px] text-gray-500'>Type Hint</Label>
-                <SelectSimple size='sm'
+                <SelectSimple
+                  size='sm'
                   value={draft.promptExploderSegmentType ?? 'none'}
                   onValueChange={(value: string) => {
                     onPatchDraft(draft.id, {
                       promptExploderSegmentType:
-                        value === 'none'
-                          ? null
-                          : (value as PromptExploderRuleSegmentType),
+                        value === 'none' ? null : (value as PromptExploderRuleSegmentType),
                     });
                   }}
                   options={SEGMENT_TYPE_OPTIONS.map((option) => ({

@@ -40,7 +40,10 @@ export const FILTER_OPTIONS: Array<{ label: string; value: VisualFilterType }> =
   { label: 'Opacity', value: 'opacity' },
 ];
 
-export const FILTER_META: Record<VisualFilterType, { unit: string; min: number; max: number; step: number; defaultFrom: number; defaultTo: number }> = {
+export const FILTER_META: Record<
+  VisualFilterType,
+  { unit: string; min: number; max: number; step: number; defaultFrom: number; defaultTo: number }
+> = {
   none: { unit: '', min: 0, max: 100, step: 1, defaultFrom: 0, defaultTo: 0 },
   blur: { unit: 'px', min: 0, max: 30, step: 1, defaultFrom: 0, defaultTo: 10 },
   brightness: { unit: '%', min: 0, max: 200, step: 5, defaultFrom: 60, defaultTo: 100 },
@@ -81,8 +84,12 @@ export const parseNumber = (value: string, fallback: number): number => {
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
-export const parseFilterString = (value: string): { type: VisualFilterType; amount: number } | null => {
-  const match = value.match(/(blur|brightness|contrast|saturate|hue-rotate|grayscale|sepia|invert|opacity)\(([-\d.]+)(deg|px|%)?\)/i);
+export const parseFilterString = (
+  value: string
+): { type: VisualFilterType; amount: number } | null => {
+  const match = value.match(
+    /(blur|brightness|contrast|saturate|hue-rotate|grayscale|sepia|invert|opacity)\(([-\d.]+)(deg|px|%)?\)/i
+  );
   if (!match?.[1] || !match[2]) return null;
   const rawType = match[1].toLowerCase();
   const type: VisualFilterType = rawType === 'hue-rotate' ? 'hue' : (rawType as VisualFilterType);
@@ -139,9 +146,13 @@ export const buildClipString = (type: VisualClipType, amount: number): string =>
 export const hexToRgb = (hex: string): { r: number; g: number; b: number } | null => {
   const normalized = hex.replace('#', '').trim();
   if (![3, 6].includes(normalized.length)) return null;
-  const expanded = normalized.length === 3
-    ? normalized.split('').map((c: string) => c + c).join('')
-    : normalized;
+  const expanded =
+    normalized.length === 3
+      ? normalized
+          .split('')
+          .map((c: string) => c + c)
+          .join('')
+      : normalized;
   const int = Number.parseInt(expanded, 16);
   if (Number.isNaN(int)) return null;
   return {
@@ -179,7 +190,9 @@ export const parseColor = (value: string): { color: string; opacity: number } =>
 
 export const parseShadow = (value: string): VisualShadowValues => {
   if (!value) return { ...DEFAULT_SHADOW };
-  const match = value.match(/(-?\d+(?:\.\d+)?)px\s+(-?\d+(?:\.\d+)?)px\s+(\d+(?:\.\d+)?)px(?:\s+(-?\d+(?:\.\d+)?)px)?\s+(.+)$/i);
+  const match = value.match(
+    /(-?\d+(?:\.\d+)?)px\s+(-?\d+(?:\.\d+)?)px\s+(\d+(?:\.\d+)?)px(?:\s+(-?\d+(?:\.\d+)?)px)?\s+(.+)$/i
+  );
   if (!match) return { ...DEFAULT_SHADOW };
   const x = Number.parseFloat(match[1] ?? '0');
   const y = Number.parseFloat(match[2] ?? '0');

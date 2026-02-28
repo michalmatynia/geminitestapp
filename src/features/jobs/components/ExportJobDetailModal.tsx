@@ -31,12 +31,7 @@ export function ExportJobDetailModal({
   const selectedStatus = listing.status ?? 'n/a';
 
   return (
-    <DetailModal
-      isOpen={isOpen}
-      onClose={onClose}
-      title='Export Job Details'
-      size='lg'
-    >
+    <DetailModal isOpen={isOpen} onClose={onClose} title='Export Job Details' size='lg'>
       <div className='space-y-6 text-sm'>
         <Card variant='subtle-compact' padding='md' className='border-border/60 bg-card/35'>
           <h3 className='text-sm font-medium text-white mb-4'>Listing Information</h3>
@@ -68,8 +63,13 @@ export function ExportJobDetailModal({
                 <p className='text-gray-500 italic'>No history available.</p>
               ) : (
                 selectedListing.listing.exportHistory.map((entry: ListingAttempt, i: number) => (
-                  <div key={i} className='flex justify-between border-b border-border/30 pb-2 text-[11px]'>
-                    <span className='text-gray-300'>{entry.status || entry.failureReason || 'Sync attempt'}</span>
+                  <div
+                    key={i}
+                    className='flex justify-between border-b border-border/30 pb-2 text-[11px]'
+                  >
+                    <span className='text-gray-300'>
+                      {entry.status || entry.failureReason || 'Sync attempt'}
+                    </span>
                     <span className='text-gray-500'>{formatDateTime(entry.exportedAt)}</span>
                   </div>
                 ))

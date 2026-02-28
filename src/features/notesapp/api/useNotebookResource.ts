@@ -9,8 +9,5 @@ import { QUERY_KEYS } from '@/shared/lib/query-keys';
  * This provides standardized list, create, update, and remove mutations.
  */
 export function useNotebookResource() {
-  return useResource<NotebookDto>(
-    '/api/notes/notebooks',
-    QUERY_KEYS.notes.notebooks(),
-  );
+  return useResource<NotebookDto>('/api/notes/notebooks', QUERY_KEYS.notes.notebooks());
 }

@@ -1,6 +1,5 @@
 'use client';
 
-
 import { EmptyState } from '@/shared/ui';
 
 import { getSectionContainerClass, getSectionStyles } from '../theme-styles';
@@ -21,8 +20,10 @@ export function FrontendHeroSection(): React.ReactNode {
   const mediaStyles = useMediaStyles();
 
   const heightClass =
-    imageHeight === 'small' ? 'min-h-[300px]'
-      : imageHeight === 'large' ? 'min-h-[600px]'
+    imageHeight === 'small'
+      ? 'min-h-[300px]'
+      : imageHeight === 'large'
+        ? 'min-h-[600px]'
         : 'min-h-[450px]'; // medium or adapt
 
   return (

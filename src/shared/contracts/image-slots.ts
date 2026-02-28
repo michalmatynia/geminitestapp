@@ -22,10 +22,9 @@ export const managedImageSlotExistingSchema = z.object({
   originalIndex: z.number().optional(),
 });
 
-export const managedImageSlotSchema = z.union([
-  managedImageSlotFileSchema,
-  managedImageSlotExistingSchema,
-]).nullable();
+export const managedImageSlotSchema = z
+  .union([managedImageSlotFileSchema, managedImageSlotExistingSchema])
+  .nullable();
 
 export interface ManagedImageSlotFile {
   type: 'file';
@@ -46,4 +45,3 @@ export interface ManagedImageSlotExisting {
 export type ManagedImageSlot = ManagedImageSlotFile | ManagedImageSlotExisting | null;
 
 export type ManagedImageSlotDto = ManagedImageSlot;
-

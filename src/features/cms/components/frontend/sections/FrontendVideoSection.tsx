@@ -1,6 +1,5 @@
 'use client';
 
-
 import { useCmsPageContext } from '../CmsPageContext';
 import { useMediaStyles } from '../media-styles-context';
 import { useSectionBlockData } from './SectionBlockContext';
@@ -10,7 +9,9 @@ function getEmbedUrl(url: string): string | null {
   if (!url) return null;
 
   // YouTube
-  const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&?#]+)/);
+  const ytMatch = url.match(
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&?#]+)/
+  );
   if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}`;
 
   // Vimeo
@@ -47,7 +48,12 @@ export function FrontendVideoSection(): React.ReactNode {
 
   return (
     <section style={sectionStyles}>
-      <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth, maxWidthClass: 'max-w-4xl' })}>
+      <div
+        className={getSectionContainerClass({
+          fullWidth: layout?.fullWidth,
+          maxWidthClass: 'max-w-4xl',
+        })}
+      >
         {embedUrl ? (
           <div
             className='cms-media relative w-full'
@@ -64,7 +70,11 @@ export function FrontendVideoSection(): React.ReactNode {
         ) : (
           <div
             className='cms-media flex items-center justify-center bg-gray-800/50'
-            style={{ paddingBottom: getAspectPadding(aspectRatio), position: 'relative', ...(mediaStyles ?? {}) }}
+            style={{
+              paddingBottom: getAspectPadding(aspectRatio),
+              position: 'relative',
+              ...(mediaStyles ?? {}),
+            }}
           >
             <p className='absolute inset-0 flex items-center justify-center text-gray-500'>
               Enter a video URL in section settings

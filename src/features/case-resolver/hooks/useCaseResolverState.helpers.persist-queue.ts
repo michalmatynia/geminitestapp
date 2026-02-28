@@ -1,8 +1,4 @@
-export type CaseResolverWorkspacePersistQueueStatus =
-  | 'idle'
-  | 'queued'
-  | 'saving'
-  | 'retry_wait';
+export type CaseResolverWorkspacePersistQueueStatus = 'idle' | 'queued' | 'saving' | 'retry_wait';
 
 export type CaseResolverWorkspacePersistQueueState = {
   queuedSerializedWorkspace: string | null;
@@ -59,7 +55,7 @@ export const createCaseResolverWorkspacePersistQueueState =
   });
 
 export const resolveCaseResolverWorkspacePersistQueueStatus = (
-  state: CaseResolverWorkspacePersistQueueState,
+  state: CaseResolverWorkspacePersistQueueState
 ): CaseResolverWorkspacePersistQueueStatus => {
   if (state.inFlightSerializedWorkspace) return 'saving';
   if (state.retryScheduled && state.queuedSerializedWorkspace) return 'retry_wait';
@@ -73,7 +69,7 @@ export const enqueueCaseResolverWorkspacePersistMutation = (
     serializedWorkspace: string;
     expectedRevision: number;
     mutationId: string;
-  },
+  }
 ): CaseResolverWorkspacePersistQueueState => ({
   ...state,
   queuedSerializedWorkspace: input.serializedWorkspace,
@@ -83,7 +79,7 @@ export const enqueueCaseResolverWorkspacePersistMutation = (
 });
 
 export const clearCaseResolverWorkspacePersistQueue = (
-  state: CaseResolverWorkspacePersistQueueState,
+  state: CaseResolverWorkspacePersistQueueState
 ): CaseResolverWorkspacePersistQueueState => ({
   ...state,
   queuedSerializedWorkspace: null,
@@ -142,7 +138,7 @@ export const beginCaseResolverWorkspacePersistAttempt = ({
 
 export const completeCaseResolverWorkspacePersistAttemptSuccess = (
   state: CaseResolverWorkspacePersistQueueState,
-  input: { persistedRevision: number },
+  input: { persistedRevision: number }
 ): CaseResolverWorkspacePersistQueueState => {
   const hasQueuedMutation = Boolean(state.queuedSerializedWorkspace);
   return {
@@ -183,8 +179,7 @@ export const completeCaseResolverWorkspacePersistAttemptConflict = ({
   const retrySerializedWorkspace =
     state.queuedSerializedWorkspace ?? state.inFlightSerializedWorkspace;
   const retryMutationId =
-    (state.queuedMutationId?.trim() || null) ??
-    (state.inFlightMutationId?.trim() || null);
+    (state.queuedMutationId?.trim() || null) ?? (state.inFlightMutationId?.trim() || null);
 
   return {
     nextState: {
@@ -204,7 +199,7 @@ export const completeCaseResolverWorkspacePersistAttemptConflict = ({
 };
 
 export const completeCaseResolverWorkspacePersistAttemptFailure = (
-  state: CaseResolverWorkspacePersistQueueState,
+  state: CaseResolverWorkspacePersistQueueState
 ): CaseResolverWorkspacePersistQueueState => ({
   ...state,
   inFlightSerializedWorkspace: null,

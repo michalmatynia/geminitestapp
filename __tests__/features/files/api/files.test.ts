@@ -12,7 +12,6 @@ import { GET } from '@/app/api/files/route';
 import { createMockProduct } from '@/features/products/utils/productUtils';
 import prisma from '@/shared/lib/db/prisma';
 
-
 describe('Files API', () => {
   let product1: Product;
   let imageFile1: ImageFile;
@@ -82,9 +81,7 @@ describe('Files API', () => {
     });
 
     it('should filter files by filename', async () => {
-      const res = await GET(
-        new NextRequest('http://localhost/api/files?filename=test-image')
-      );
+      const res = await GET(new NextRequest('http://localhost/api/files?filename=test-image'));
       const files = (await res.json()) as ImageFile[];
       expect(res.status).toBe(200);
       expect(files.length).toBe(1);
@@ -92,9 +89,7 @@ describe('Files API', () => {
     });
 
     it('should filter files by product ID', async () => {
-      const res = await GET(
-        new NextRequest(`http://localhost/api/files?productId=${product1.id}`)
-      );
+      const res = await GET(new NextRequest(`http://localhost/api/files?productId=${product1.id}`));
       const files = (await res.json()) as ImageFile[];
       expect(res.status).toBe(200);
       expect(files.length).toBe(1);
@@ -102,9 +97,7 @@ describe('Files API', () => {
     });
 
     it('should filter files by product name', async () => {
-      const res = await GET(
-        new NextRequest('http://localhost/api/files?productName=Product A')
-      );
+      const res = await GET(new NextRequest('http://localhost/api/files?productName=Product A'));
       const files = (await res.json()) as ImageFile[];
       expect(res.status).toBe(200);
       expect(files.length).toBe(1);

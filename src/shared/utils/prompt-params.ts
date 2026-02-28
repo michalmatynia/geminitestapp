@@ -1,8 +1,8 @@
-import type { 
+import type {
   ExtractParamsResultDto,
   ParamSpecDto,
   ParamIssueDto,
-  ParamIssueSeverityDto
+  ParamIssueSeverityDto,
 } from '@/shared/contracts/prompt-engine';
 
 import { isObjectRecord } from './object';
@@ -75,7 +75,7 @@ function segmentizeJsLikeText(input: string): Segment[] {
 
     if (kind === 'single_string') {
       buf += char;
-      if (!state.escaped && char === '\'') {
+      if (!state.escaped && char === "'") {
         state.inSingle = false;
         flush();
         kind = 'code';
@@ -123,12 +123,12 @@ function segmentizeJsLikeText(input: string): Segment[] {
       index += 1;
       continue;
     }
-    if (char === '\'') {
+    if (char === "'") {
       flush();
       kind = 'single_string';
       state.inSingle = true;
       state.escaped = false;
-      buf = '\'';
+      buf = "'";
       continue;
     }
     if (char === '"') {
@@ -165,7 +165,13 @@ export function normalizeParamsObject(rawObjectText: string): string {
     if (segment.kind === 'single_string') {
       const inner = segment.text.slice(1, -1);
       // Best-effort safety: only convert simple single-quoted strings.
-      if (!inner || inner.includes('\n') || inner.includes('\r') || inner.includes('\\') || inner.includes('"')) {
+      if (
+        !inner ||
+        inner.includes('\n') ||
+        inner.includes('\r') ||
+        inner.includes('\\') ||
+        inner.includes('"')
+      ) {
         return segment.text;
       }
       return `"${inner}"`;
@@ -199,7 +205,7 @@ export function findMatchingBrace(input: string, startIndex: number): number {
     }
 
     if (state.inSingle) {
-      if (!state.escaped && char === '\'') state.inSingle = false;
+      if (!state.escaped && char === "'") state.inSingle = false;
       state.escaped = !state.escaped && char === '\\';
       continue;
     }
@@ -225,7 +231,7 @@ export function findMatchingBrace(input: string, startIndex: number): number {
       continue;
     }
 
-    if (char === '\'') {
+    if (char === "'") {
       state.inSingle = true;
       state.escaped = false;
       continue;
@@ -276,7 +282,7 @@ export function stripJsComments(input: string): string {
 
     if (state.inSingle) {
       out.push(char);
-      if (!state.escaped && char === '\'') state.inSingle = false;
+      if (!state.escaped && char === "'") state.inSingle = false;
       state.escaped = !state.escaped && char === '\\';
       continue;
     }
@@ -305,7 +311,7 @@ export function stripJsComments(input: string): string {
     }
 
     out.push(char);
-    if (char === '\'') state.inSingle = true;
+    if (char === "'") state.inSingle = true;
     if (char === '"') state.inDouble = true;
     if (char === '`') state.inTemplate = true;
   }
@@ -323,7 +329,7 @@ export function removeTrailingCommas(input: string): string {
     if (isInString(state)) {
       out.push(char);
       if (state.inSingle) {
-        if (!state.escaped && char === '\'') state.inSingle = false;
+        if (!state.escaped && char === "'") state.inSingle = false;
         state.escaped = !state.escaped && char === '\\';
         continue;
       }
@@ -340,7 +346,7 @@ export function removeTrailingCommas(input: string): string {
       continue;
     }
 
-    if (char === '\'') {
+    if (char === "'") {
       state.inSingle = true;
       out.push(char);
       continue;
@@ -378,7 +384,10 @@ export function removeTrailingCommas(input: string): string {
 export function extractParamsFromPrompt(prompt: string): ExtractParamsResult {
   const match = /\bparams\b\s*[:=]\s*\{/i.exec(prompt);
   if (!match) {
-    return { ok: false, error: 'Could not find `params = { ... }` (or `params: { ... }`) in the prompt.' };
+    return {
+      ok: false,
+      error: 'Could not find `params = { ... }` (or `params: { ... }`) in the prompt.',
+    };
   }
 
   const objectStart = prompt.indexOf('{', match.index);
@@ -421,7 +430,10 @@ export function extractParamsFromPrompt(prompt: string): ExtractParamsResult {
         rawObjectText,
       };
     } catch {
-      return { ok: false, error: 'Failed to parse params (expected JSON-like object with quoted keys/strings).' };
+      return {
+        ok: false,
+        error: 'Failed to parse params (expected JSON-like object with quoted keys/strings).',
+      };
     }
   }
 }
@@ -493,7 +505,7 @@ function splitLineCodeAndLineComment(line: string): { code: string; comment: str
     const next = line[index + 1] ?? '';
 
     if (state.inSingle) {
-      if (!state.escaped && char === '\'') state.inSingle = false;
+      if (!state.escaped && char === "'") state.inSingle = false;
       state.escaped = !state.escaped && char === '\\';
       continue;
     }
@@ -512,7 +524,7 @@ function splitLineCodeAndLineComment(line: string): { code: string; comment: str
       return { code: line.slice(0, index), comment: line.slice(index + 2) };
     }
 
-    if (char === '\'') {
+    if (char === "'") {
       state.inSingle = true;
       state.escaped = false;
       continue;
@@ -593,7 +605,11 @@ function decimalsOf(value: number | undefined): number {
 
 function inferNumberStep(value: number, constraint: NumericConstraint, integer: boolean): number {
   if (integer) return 1;
-  const decimals = Math.max(decimalsOf(value), decimalsOf(constraint.min), decimalsOf(constraint.max));
+  const decimals = Math.max(
+    decimalsOf(value),
+    decimalsOf(constraint.min),
+    decimalsOf(constraint.max)
+  );
   if (decimals >= 2) return 0.01;
   if (decimals === 1) return 0.1;
   if (constraint.min !== undefined && constraint.max !== undefined) {
@@ -672,7 +688,10 @@ function isTuple2NumberArray(value: unknown): value is [number, number] {
   return value.every((v: unknown) => typeof v === 'number' && Number.isFinite(v));
 }
 
-export function inferParamSpecs(params: Record<string, unknown>, rawObjectText: string): Record<string, ParamSpec> {
+export function inferParamSpecs(
+  params: Record<string, unknown>,
+  rawObjectText: string
+): Record<string, ParamSpec> {
   const hints = extractConstraintHintsByPath(rawObjectText);
   const leaves = flattenParams(params).filter((leaf: ParamLeaf) => Boolean(leaf.path));
   const specs: Record<string, ParamSpec> = {};
@@ -697,7 +716,10 @@ export function inferParamSpecs(params: Record<string, unknown>, rawObjectText: 
       return;
     }
 
-    if (isTuple2NumberArray(value) && (pathLower.includes('size_px') || pathLower.endsWith('target_size_px'))) {
+    if (
+      isTuple2NumberArray(value) &&
+      (pathLower.includes('size_px') || pathLower.endsWith('target_size_px'))
+    ) {
       specs[path] = {
         path,
         kind: 'tuple2',
@@ -716,7 +738,9 @@ export function inferParamSpecs(params: Record<string, unknown>, rawObjectText: 
 
     if (typeof value === 'number' && Number.isFinite(value)) {
       const constraint = hint ? parseNumericConstraintsFromHint(hint) : {};
-      const integer = Number.isInteger(value) && (pathLower.includes('_px') || hint?.toLowerCase().includes('px') || false);
+      const integer =
+        Number.isInteger(value) &&
+        (pathLower.includes('_px') || hint?.toLowerCase().includes('px') || false);
       const spec: ParamSpec = {
         path,
         kind: 'number',
@@ -761,27 +785,47 @@ export function validateParamsAgainstSpecs(
   Object.values(specs).forEach((spec: ParamSpec) => {
     const value = getDeepValue(params, spec.path);
     if (value === undefined) {
-      issues.push({ path: spec.path, severity: 'error', code: 'missing', message: 'Missing value.' });
+      issues.push({
+        path: spec.path,
+        severity: 'error',
+        code: 'missing',
+        message: 'Missing value.',
+      });
       return;
     }
 
     if (spec.kind === 'boolean') {
       if (typeof value !== 'boolean') {
-        issues.push({ path: spec.path, severity: 'error', code: 'type', message: 'Expected boolean.' });
+        issues.push({
+          path: spec.path,
+          severity: 'error',
+          code: 'type',
+          message: 'Expected boolean.',
+        });
       }
       return;
     }
 
     if (spec.kind === 'string') {
       if (typeof value !== 'string') {
-        issues.push({ path: spec.path, severity: 'error', code: 'type', message: 'Expected string.' });
+        issues.push({
+          path: spec.path,
+          severity: 'error',
+          code: 'type',
+          message: 'Expected string.',
+        });
       }
       return;
     }
 
     if (spec.kind === 'enum') {
       if (typeof value !== 'string') {
-        issues.push({ path: spec.path, severity: 'error', code: 'type', message: 'Expected string enum.' });
+        issues.push({
+          path: spec.path,
+          severity: 'error',
+          code: 'type',
+          message: 'Expected string enum.',
+        });
         return;
       }
       if (spec.enumOptions && !spec.enumOptions.includes(value)) {
@@ -797,59 +841,124 @@ export function validateParamsAgainstSpecs(
 
     if (spec.kind === 'number') {
       if (typeof value !== 'number' || !Number.isFinite(value)) {
-        issues.push({ path: spec.path, severity: 'error', code: 'type', message: 'Expected number.' });
+        issues.push({
+          path: spec.path,
+          severity: 'error',
+          code: 'type',
+          message: 'Expected number.',
+        });
         return;
       }
       if (spec.integer && !Number.isInteger(value)) {
-        issues.push({ path: spec.path, severity: 'error', code: 'integer', message: 'Must be an integer.' });
+        issues.push({
+          path: spec.path,
+          severity: 'error',
+          code: 'integer',
+          message: 'Must be an integer.',
+        });
       }
       if (spec.min !== undefined && value < spec.min) {
-        issues.push({ path: spec.path, severity: 'error', code: 'min', message: `Must be >= ${spec.min}.` });
+        issues.push({
+          path: spec.path,
+          severity: 'error',
+          code: 'min',
+          message: `Must be >= ${spec.min}.`,
+        });
       }
       if (spec.max !== undefined && value > spec.max) {
-        issues.push({ path: spec.path, severity: 'error', code: 'max', message: `Must be <= ${spec.max}.` });
+        issues.push({
+          path: spec.path,
+          severity: 'error',
+          code: 'max',
+          message: `Must be <= ${spec.max}.`,
+        });
       }
       return;
     }
 
     if (spec.kind === 'rgb') {
       if (!isRgbArray(value)) {
-        issues.push({ path: spec.path, severity: 'error', code: 'type', message: 'Expected [R,G,B] array.' });
+        issues.push({
+          path: spec.path,
+          severity: 'error',
+          code: 'type',
+          message: 'Expected [R,G,B] array.',
+        });
         return;
       }
       if (value.some((v: unknown) => typeof v !== 'number' || !Number.isFinite(v))) {
-        issues.push({ path: spec.path, severity: 'error', code: 'type', message: 'RGB must be numeric.' });
+        issues.push({
+          path: spec.path,
+          severity: 'error',
+          code: 'type',
+          message: 'RGB must be numeric.',
+        });
         return;
       }
       if (spec.integer && value.some((v: unknown) => !Number.isInteger(v))) {
-        issues.push({ path: spec.path, severity: 'error', code: 'integer', message: 'RGB values must be integers.' });
+        issues.push({
+          path: spec.path,
+          severity: 'error',
+          code: 'integer',
+          message: 'RGB values must be integers.',
+        });
       }
       const min = spec.min;
       if (min !== undefined && value.some((v: unknown) => (v as number) < min)) {
-        issues.push({ path: spec.path, severity: 'error', code: 'min', message: `RGB values must be >= ${min}.` });
+        issues.push({
+          path: spec.path,
+          severity: 'error',
+          code: 'min',
+          message: `RGB values must be >= ${min}.`,
+        });
       }
       const max = spec.max;
       if (max !== undefined && value.some((v: unknown) => (v as number) > max)) {
-        issues.push({ path: spec.path, severity: 'error', code: 'max', message: `RGB values must be <= ${max}.` });
+        issues.push({
+          path: spec.path,
+          severity: 'error',
+          code: 'max',
+          message: `RGB values must be <= ${max}.`,
+        });
       }
       return;
     }
 
     if (spec.kind === 'tuple2') {
       if (!isTuple2NumberArray(value)) {
-        issues.push({ path: spec.path, severity: 'error', code: 'type', message: 'Expected [x,y] numeric array.' });
+        issues.push({
+          path: spec.path,
+          severity: 'error',
+          code: 'type',
+          message: 'Expected [x,y] numeric array.',
+        });
         return;
       }
       if (spec.integer && value.some((v: unknown) => !Number.isInteger(v))) {
-        issues.push({ path: spec.path, severity: 'error', code: 'integer', message: 'Values must be integers.' });
+        issues.push({
+          path: spec.path,
+          severity: 'error',
+          code: 'integer',
+          message: 'Values must be integers.',
+        });
       }
       const min = spec.min;
       if (min !== undefined && value.some((v: unknown) => (v as number) < min)) {
-        issues.push({ path: spec.path, severity: 'error', code: 'min', message: `Values must be >= ${min}.` });
+        issues.push({
+          path: spec.path,
+          severity: 'error',
+          code: 'min',
+          message: `Values must be >= ${min}.`,
+        });
       }
       const max = spec.max;
       if (max !== undefined && value.some((v: unknown) => (v as number) > max)) {
-        issues.push({ path: spec.path, severity: 'error', code: 'max', message: `Values must be <= ${max}.` });
+        issues.push({
+          path: spec.path,
+          severity: 'error',
+          code: 'max',
+          message: `Values must be <= ${max}.`,
+        });
       }
       return;
     }

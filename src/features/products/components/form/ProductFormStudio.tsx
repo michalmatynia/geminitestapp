@@ -18,7 +18,10 @@ function ProductFormStudioInner(): React.JSX.Element {
 
   if (!studioProjectId) {
     return (
-      <FormSection title='Studio' description='Connect this product to an Image Studio project to enable permanent listing generations.'>
+      <FormSection
+        title='Studio'
+        description='Connect this product to an Image Studio project to enable permanent listing generations.'
+      >
         <StudioProjectField />
       </FormSection>
     );
@@ -26,7 +29,10 @@ function ProductFormStudioInner(): React.JSX.Element {
 
   if (!product?.id) {
     return (
-      <FormSection title='Studio' description='Save the product first to start permanent Studio generations.'>
+      <FormSection
+        title='Studio'
+        description='Save the product first to start permanent Studio generations.'
+      >
         <StudioProjectField />
       </FormSection>
     );
@@ -34,7 +40,10 @@ function ProductFormStudioInner(): React.JSX.Element {
 
   return (
     <div className='space-y-4'>
-      <FormSection title='Studio' description='Pick a product image, send it to Studio, preview generated variants, then accept one.'>
+      <FormSection
+        title='Studio'
+        description='Pick a product image, send it to Studio, preview generated variants, then accept one.'
+      >
         <StudioProjectField />
         <StudioActionsBar />
       </FormSection>

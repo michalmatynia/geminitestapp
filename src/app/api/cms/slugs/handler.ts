@@ -33,8 +33,7 @@ const parseBody = async (
   req: NextRequest,
   ctx: ApiHandlerContext
 ): Promise<
-  | { ok: true; data: z.infer<typeof cmsSlugCreateSchema> }
-  | { ok: false; response: Response }
+  { ok: true; data: z.infer<typeof cmsSlugCreateSchema> } | { ok: false; response: Response }
 > => {
   if (ctx.body !== undefined) {
     const parsed = cmsSlugCreateSchema.safeParse(ctx.body);
@@ -56,9 +55,13 @@ const parseBody = async (
  * GET /api/cms/slugs
  * Fetches a list of all slugs.
  */
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<NextResponse | Response> {
+export async function GET_handler(
+  req: NextRequest,
+  _ctx: ApiHandlerContext
+): Promise<NextResponse | Response> {
   const cmsRepository = await getCmsRepository();
-  const scope = req.nextUrl?.searchParams.get('scope') ?? new URL(req.url).searchParams.get('scope');
+  const scope =
+    req.nextUrl?.searchParams.get('scope') ?? new URL(req.url).searchParams.get('scope');
   if (scope === 'all') {
     await resolveCmsDomainFromRequest(req);
     const slugs = await cmsRepository.getSlugs();

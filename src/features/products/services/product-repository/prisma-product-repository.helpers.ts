@@ -26,16 +26,14 @@ export const normalizeImageFileIds = (imageFileIds: string[]): string[] => {
   return Array.from(unique);
 };
 
-export const normalizeProductParameterValues = (
-  input: unknown,
-): ProductParameterValue[] => {
+export const normalizeProductParameterValues = (input: unknown): ProductParameterValue[] => {
   if (!Array.isArray(input)) return [];
   const byParameterId = new Map<string, ProductParameterValue>();
   input.forEach((entry: unknown) => {
     if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return;
     const record = entry as Record<string, unknown>;
     const parameterId = decodeSimpleParameterStorageId(
-      typeof record['parameterId'] === 'string' ? record['parameterId'] : '',
+      typeof record['parameterId'] === 'string' ? record['parameterId'] : ''
     );
     if (!parameterId) return;
     const value = typeof record['value'] === 'string' ? record['value'] : '';
@@ -45,24 +43,21 @@ export const normalizeProductParameterValues = (
       typeof valuesByLanguageRaw === 'object' &&
       !Array.isArray(valuesByLanguageRaw)
         ? Object.entries(valuesByLanguageRaw as Record<string, unknown>).reduce(
-          (acc: Record<string, string>, [languageCode, languageValue]) => {
-            const normalizedCode = languageCode.trim().toLowerCase();
-            if (!normalizedCode || typeof languageValue !== 'string')
+            (acc: Record<string, string>, [languageCode, languageValue]) => {
+              const normalizedCode = languageCode.trim().toLowerCase();
+              if (!normalizedCode || typeof languageValue !== 'string') return acc;
+              acc[normalizedCode] = languageValue;
               return acc;
-            acc[normalizedCode] = languageValue;
-            return acc;
-          },
-          {},
-        )
+            },
+            {}
+          )
         : {};
     const current = byParameterId.get(parameterId);
     if (!current) {
       byParameterId.set(parameterId, {
         parameterId,
         value,
-        ...(Object.keys(valuesByLanguage).length > 0
-          ? { valuesByLanguage }
-          : {}),
+        ...(Object.keys(valuesByLanguage).length > 0 ? { valuesByLanguage } : {}),
       });
       return;
     }

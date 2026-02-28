@@ -10,21 +10,25 @@ import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
 const requestSchema = z.object({
   inventoryId: z.string().trim().min(1),
-  limit: z.coerce.number().int().positive().optional()
+  limit: z.coerce.number().int().positive().optional(),
 });
 
 /**
  * POST /api/integrations/[id]/connections/[connectionId]/base/products
  * Fetches products from a specific inventory in Base.com/Baselinker.
  */
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; connectionId: string }): Promise<Response> {
+export async function POST_handler(
+  req: NextRequest,
+  _ctx: ApiHandlerContext,
+  params: { id: string; connectionId: string }
+): Promise<Response> {
   const { id, connectionId } = params;
   if (!id || !connectionId) {
     throw badRequestError('Integration id and connection id are required');
   }
 
   const parsed = await parseJsonBody(req, requestSchema, {
-    logPrefix: 'integrations.base.products.POST'
+    logPrefix: 'integrations.base.products.POST',
   });
   if (!parsed.ok) {
     return parsed.response;
@@ -61,13 +65,13 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, pa
   // Update the last used inventory ID
   if (connection.baseLastInventoryId !== data.inventoryId) {
     await repo.updateConnection(connection.id, {
-      baseLastInventoryId: data.inventoryId
+      baseLastInventoryId: data.inventoryId,
     });
   }
 
   return NextResponse.json({
     products,
     count: products.length,
-    inventoryId: data.inventoryId
+    inventoryId: data.inventoryId,
   });
 }

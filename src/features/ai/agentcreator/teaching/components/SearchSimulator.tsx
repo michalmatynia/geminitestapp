@@ -3,15 +3,7 @@
 import React from 'react';
 import { Search } from 'lucide-react';
 import type { AgentTeachingChatSource } from '@/shared/contracts/agent-teaching';
-import { 
-  Button, 
-  Input, 
-  Textarea, 
-  FormSection, 
-  FormField,
-  Alert,
-  Card,
-} from '@/shared/ui';
+import { Button, Input, Textarea, FormSection, FormField, Alert, Card } from '@/shared/ui';
 
 export type SearchSimulatorProps = {
   query: string;
@@ -28,9 +20,12 @@ export type SearchSimulatorProps = {
 };
 
 export function SearchSimulator({
-  query, setQuery,
-  topK, setTopK,
-  minScore, setMinScore,
+  query,
+  setQuery,
+  topK,
+  setTopK,
+  minScore,
+  setMinScore,
   onSearch,
   isSearching,
   collectionId,
@@ -67,7 +62,7 @@ export function SearchSimulator({
             disabled={isSearching || !collectionId}
           />
         </FormField>
-        
+
         <div className='grid grid-cols-2 gap-4'>
           <FormField label='Top K'>
             <Input
@@ -98,8 +93,14 @@ export function SearchSimulator({
           </Alert>
         )}
 
-        <Card variant='subtle-compact' padding='none' className='border-border bg-black/20 overflow-hidden'>
-          <div className='px-3 py-2 border-b border-border/40 text-xs font-semibold text-gray-400'>Results</div>
+        <Card
+          variant='subtle-compact'
+          padding='none'
+          className='border-border bg-black/20 overflow-hidden'
+        >
+          <div className='px-3 py-2 border-b border-border/40 text-xs font-semibold text-gray-400'>
+            Results
+          </div>
           <div className='max-h-[200px] overflow-y-auto p-2 space-y-2'>
             {results.length === 0 ? (
               <div className='text-center py-4 text-xs text-gray-600'>
@@ -107,7 +108,12 @@ export function SearchSimulator({
               </div>
             ) : (
               results.map((src) => (
-                <Card key={src.documentId} variant='subtle-compact' padding='sm' className='text-xs bg-white/5 border-white/5'>
+                <Card
+                  key={src.documentId}
+                  variant='subtle-compact'
+                  padding='sm'
+                  className='text-xs bg-white/5 border-white/5'
+                >
                   <div className='flex justify-between mb-1 text-gray-400'>
                     <span>Score: {src.score.toFixed(3)}</span>
                     <span>{src.metadata?.title}</span>

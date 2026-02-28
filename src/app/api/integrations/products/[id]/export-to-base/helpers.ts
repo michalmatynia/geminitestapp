@@ -16,11 +16,11 @@ import {
   getProducerMappingRepository,
   getTagMappingRepository,
 } from '@/features/integrations/server';
-import { ErrorSystem } from '@/features/observability/server';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import {
   getParameterRepository,
   getProducerRepository,
-  getTagRepository
+  getTagRepository,
 } from '@/features/products/server';
 import { badRequestError } from '@/shared/errors/app-error';
 
@@ -51,9 +51,7 @@ export const isBaseImageError = (message: string | undefined): boolean => {
   if (!message) return false;
   const normalized = normalizeSearchText(message.toLowerCase());
   return (
-    normalized.includes('zdjec') ||
-    normalized.includes('image') ||
-    normalized.includes('photo')
+    normalized.includes('zdjec') || normalized.includes('image') || normalized.includes('photo')
   );
 };
 
@@ -99,21 +97,14 @@ export const logImageDiagnostics = async ({
       transform: transform ?? null,
     });
   } catch (error) {
-    void ErrorSystem.logWarning(
-      '[export-to-base][images] Failed to gather base64 diagnostics',
-      {
-        ...context,
-        error: error instanceof Error ? error.message : String(error),
-      }
-    );
+    void ErrorSystem.logWarning('[export-to-base][images] Failed to gather base64 diagnostics', {
+      ...context,
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
 };
 
-export const CATEGORY_TEMPLATE_PRODUCT_FIELDS = new Set([
-  'categoryid',
-  'category_id',
-  'category',
-]);
+export const CATEGORY_TEMPLATE_PRODUCT_FIELDS = new Set(['categoryid', 'category_id', 'category']);
 
 export const PRODUCER_ID_TEMPLATE_FIELDS = new Set([
   'producer',
@@ -133,12 +124,7 @@ export const PRODUCER_ID_TEMPLATE_FIELDS = new Set([
   'manufacturer_ids',
 ]);
 
-export const TAG_ID_TEMPLATE_FIELDS = new Set([
-  'tagid',
-  'tag_id',
-  'tagids',
-  'tag_ids',
-]);
+export const TAG_ID_TEMPLATE_FIELDS = new Set(['tagid', 'tag_id', 'tagids', 'tag_ids']);
 
 export const toTrimmedString = (value: unknown): string => {
   if (typeof value !== 'string') return '';
@@ -146,7 +132,10 @@ export const toTrimmedString = (value: unknown): string => {
 };
 
 const toTemplateFieldKey = (value: string): string =>
-  value.trim().toLowerCase().replace(/[\s_-]+/g, '');
+  value
+    .trim()
+    .toLowerCase()
+    .replace(/[\s_-]+/g, '');
 
 export const matchesTemplateField = (value: string, fields: Set<string>): boolean => {
   const normalized = value.trim().toLowerCase();
@@ -206,10 +195,10 @@ type BaseExportProductLike = {
   catalogs?: Array<{ catalogId: string }> | null | undefined;
   parameters?:
     | Array<{
-      parameterId?: string | null | undefined;
-      value?: unknown;
-      valuesByLanguage?: Record<string, unknown> | null | undefined;
-    }>
+        parameterId?: string | null | undefined;
+        value?: unknown;
+        valuesByLanguage?: Record<string, unknown> | null | undefined;
+      }>
     | null
     | undefined;
 };
@@ -227,17 +216,11 @@ export const parseMappedParameterId = (value: unknown): string => {
   return parsed?.parameterId ?? '';
 };
 
-const parseMappedParameterRef = (
-  value: unknown
-): ParsedMappedParameterRef | null => {
+const parseMappedParameterRef = (value: unknown): ParsedMappedParameterRef | null => {
   if (typeof value !== 'string') return null;
   const trimmed = value.trim();
   if (!trimmed) return null;
-  if (
-    !trimmed
-      .toLowerCase()
-      .startsWith(PRODUCT_PARAMETER_MAPPING_PREFIX)
-  ) {
+  if (!trimmed.toLowerCase().startsWith(PRODUCT_PARAMETER_MAPPING_PREFIX)) {
     return null;
   }
   const mappedValue = trimmed.slice(PRODUCT_PARAMETER_MAPPING_PREFIX.length).trim();
@@ -265,9 +248,7 @@ const normalizeLanguageCode = (value: unknown): string | null => {
   return match?.[0] ?? null;
 };
 
-const resolveProductDefaultLanguage = (
-  product: BaseExportProductLike
-): string | null => {
+const resolveProductDefaultLanguage = (product: BaseExportProductLike): string | null => {
   const catalogs = Array.isArray(product.catalogs) ? product.catalogs : [];
   for (const catalogEntry of catalogs) {
     if (!catalogEntry || typeof catalogEntry !== 'object') continue;
@@ -299,7 +280,7 @@ const collectParameterLanguages = (
       entry.valuesByLanguage &&
       typeof entry.valuesByLanguage === 'object' &&
       !Array.isArray(entry.valuesByLanguage)
-        ? (entry.valuesByLanguage)
+        ? entry.valuesByLanguage
         : null;
     if (!valuesByLanguage) return;
     Object.entries(valuesByLanguage).forEach(([key, value]) => {
@@ -321,7 +302,10 @@ const resolveParameterName = ({
   parameterId: string;
   languageCode: string | null;
   defaultLanguageCode: string | null;
-  parameterById: Map<string, { name_en?: string | null; name_pl?: string | null; name_de?: string | null }>;
+  parameterById: Map<
+    string,
+    { name_en?: string | null; name_pl?: string | null; name_de?: string | null }
+  >;
 }): string => {
   const parameterRecord = parameterById.get(parameterId.toLowerCase()) ?? null;
   const pickName = (code: string | null): string => {
@@ -332,13 +316,7 @@ const resolveParameterName = ({
     return '';
   };
 
-  const candidates = [
-    languageCode,
-    defaultLanguageCode,
-    'en',
-    'pl',
-    'de',
-  ];
+  const candidates = [languageCode, defaultLanguageCode, 'en', 'pl', 'de'];
   for (const candidate of candidates) {
     const resolved = pickName(candidate);
     if (resolved) return resolved;
@@ -391,9 +369,7 @@ const remapLegacyParameterSourceMappings = async <TProduct extends BaseExportPro
   if (legacyMappings.length === 0) return mappings;
 
   const parameterIds = Array.from(
-    new Set(
-      legacyMappings.map((entry) => entry.parsed.parameterId.toLowerCase())
-    )
+    new Set(legacyMappings.map((entry) => entry.parsed.parameterId.toLowerCase()))
   );
   const parameterRepository = await getParameterRepository();
   const parameterRecords = await Promise.all(
@@ -430,9 +406,7 @@ const remapLegacyParameterSourceMappings = async <TProduct extends BaseExportPro
     }
 
     const normalizedParameterId = parsed.parameterId.toLowerCase();
-    const primaryLanguage = parsed.languageCode
-      ? normalizeLanguageCode(parsed.languageCode)
-      : null;
+    const primaryLanguage = parsed.languageCode ? normalizeLanguageCode(parsed.languageCode) : null;
     const parameterName = resolveParameterName({
       parameterId: normalizedParameterId,
       languageCode: primaryLanguage,
@@ -453,12 +427,7 @@ const remapLegacyParameterSourceMappings = async <TProduct extends BaseExportPro
       targetField: mapping.targetField,
     });
 
-    const parameterLanguages = new Set(
-      collectParameterLanguages(
-        product,
-        normalizedParameterId
-      )
-    );
+    const parameterLanguages = new Set(collectParameterLanguages(product, normalizedParameterId));
     if (defaultLanguageCode) {
       parameterLanguages.add(defaultLanguageCode);
     }
@@ -483,15 +452,12 @@ const remapLegacyParameterSourceMappings = async <TProduct extends BaseExportPro
   });
 
   const dedupedMappings = dedupeMappings(remapped);
-  await ErrorSystem.logInfo(
-    '[export-to-base] Normalized legacy parameter source mappings',
-    {
-      productId,
-      legacyMappingCount: legacyMappings.length,
-      mappingCountBefore: mappings.length,
-      mappingCountAfter: dedupedMappings.length,
-    }
-  );
+  await ErrorSystem.logInfo('[export-to-base] Normalized legacy parameter source mappings', {
+    productId,
+    legacyMappingCount: legacyMappings.length,
+    mappingCountBefore: mappings.length,
+    mappingCountAfter: dedupedMappings.length,
+  });
   return dedupedMappings;
 };
 
@@ -509,14 +475,10 @@ const hasMappedParameterValue = (
       : null;
   if (!valuesByLanguage) return false;
 
-  return Object.values(valuesByLanguage).some((value: unknown) =>
-    Boolean(toTrimmedString(value))
-  );
+  return Object.values(valuesByLanguage).some((value: unknown) => Boolean(toTrimmedString(value)));
 };
 
-const collectTemplateParameterIds = (
-  mappings: BaseFieldMapping[]
-): string[] => {
+const collectTemplateParameterIds = (mappings: BaseFieldMapping[]): string[] => {
   const ids = new Set<string>();
   mappings.forEach((mapping: BaseFieldMapping) => {
     const targetParameterId = parseMappedParameterId(mapping.targetField);
@@ -592,9 +554,7 @@ const validateTemplateParameterMappings = <TProduct extends BaseExportProductLik
   }
 };
 
-export const prepareBaseExportMappingsAndProduct = async <
-  TProduct extends BaseExportProductLike
->({
+export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseExportProductLike>({
   data,
   imagesOnly,
   productId,
@@ -623,9 +583,7 @@ export const prepareBaseExportMappingsAndProduct = async <
   let resolvedTemplateId: string | null = null;
   const requestedTemplateId = toTrimmedString(data.templateId);
   const hasImageOverrides = Boolean(data.imageBase64Mode || data.imageTransform);
-  let exportImagesAsBase64 = imagesOnly
-    ? true
-    : data.exportImagesAsBase64 ?? hasImageOverrides;
+  let exportImagesAsBase64 = imagesOnly ? true : (data.exportImagesAsBase64 ?? hasImageOverrides);
   let imageBase64Mode: ImageBase64Mode = data.imageBase64Mode ?? 'base-only';
   let imageTransform: ImageTransformOptions | null = null;
 
@@ -646,11 +604,11 @@ export const prepareBaseExportMappingsAndProduct = async <
     const fallbackTemplateId = requestedTemplateId
       ? ''
       : toTrimmedString(
-        await getExportActiveTemplateId({
-          connectionId: data.connectionId,
-          inventoryId: resolvedInventoryId,
-        })
-      );
+          await getExportActiveTemplateId({
+            connectionId: data.connectionId,
+            inventoryId: resolvedInventoryId,
+          })
+        );
     const templateIdToUse = requestedTemplateId || fallbackTemplateId;
     if (templateIdToUse) {
       const templates = await listExportTemplates();
@@ -704,21 +662,21 @@ export const prepareBaseExportMappingsAndProduct = async <
 
   const productProducerIds = !imagesOnly
     ? Array.from(
-      new Set(
-        (product.producers ?? [])
-          .map((producer) => getProducerRefId(producer))
-          .filter((producerId): producerId is string => Boolean(producerId))
+        new Set(
+          (product.producers ?? [])
+            .map((producer) => getProducerRefId(producer))
+            .filter((producerId): producerId is string => Boolean(producerId))
+        )
       )
-    )
     : [];
   const productTagIds = !imagesOnly
     ? Array.from(
-      new Set(
-        (product.tags ?? [])
-          .map((tag) => tag.tagId?.trim())
-          .filter((tagId): tagId is string => Boolean(tagId))
+        new Set(
+          (product.tags ?? [])
+            .map((tag) => tag.tagId?.trim())
+            .filter((tagId): tagId is string => Boolean(tagId))
+        )
       )
-    )
     : [];
 
   let producerNameById: Record<string, string> | null = null;
@@ -753,14 +711,11 @@ export const prepareBaseExportMappingsAndProduct = async <
         ]);
       }
     } catch (error) {
-      await ErrorSystem.logWarning(
-        '[export-to-base] Failed to resolve producer names for export',
-        {
-          productId,
-          producerCount: productProducerIds.length,
-          error: error instanceof Error ? error.message : String(error),
-        }
-      );
+      await ErrorSystem.logWarning('[export-to-base] Failed to resolve producer names for export', {
+        productId,
+        producerCount: productProducerIds.length,
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
 
     try {
@@ -772,9 +727,7 @@ export const prepareBaseExportMappingsAndProduct = async <
       const mappedEntries = producerMappings
         .map((mapping) => {
           const internalProducerId =
-            typeof mapping.internalProducerId === 'string'
-              ? mapping.internalProducerId.trim()
-              : '';
+            typeof mapping.internalProducerId === 'string' ? mapping.internalProducerId.trim() : '';
           const externalProducerId =
             typeof mapping.externalProducer?.externalId === 'string'
               ? mapping.externalProducer.externalId.trim()
@@ -834,14 +787,11 @@ export const prepareBaseExportMappingsAndProduct = async <
         ]);
       }
     } catch (error) {
-      await ErrorSystem.logWarning(
-        '[export-to-base] Failed to resolve tag names for export',
-        {
-          productId,
-          tagCount: productTagIds.length,
-          error: error instanceof Error ? error.message : String(error),
-        }
-      );
+      await ErrorSystem.logWarning('[export-to-base] Failed to resolve tag names for export', {
+        productId,
+        tagCount: productTagIds.length,
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
 
     try {
@@ -869,14 +819,11 @@ export const prepareBaseExportMappingsAndProduct = async <
         ]);
       }
     } catch (error) {
-      await ErrorSystem.logWarning(
-        '[export-to-base] Failed to resolve tag mappings for export',
-        {
-          productId,
-          tagCount: productTagIds.length,
-          error: error instanceof Error ? error.message : String(error),
-        }
-      );
+      await ErrorSystem.logWarning('[export-to-base] Failed to resolve tag mappings for export', {
+        productId,
+        tagCount: productTagIds.length,
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 
@@ -953,16 +900,13 @@ export const prepareBaseExportMappingsAndProduct = async <
       }
 
       const categoryMappingRepo = getCategoryMappingRepository();
-      const categoryMappings = await categoryMappingRepo.listByConnection(
-        data.connectionId
-      );
+      const categoryMappings = await categoryMappingRepo.listByConnection(data.connectionId);
       const productCatalogIds = new Set(
         (product.catalogs ?? []).map((catalog) => catalog.catalogId)
       );
 
       const matchingMappings = categoryMappings.filter(
-        (mapping) =>
-          mapping.isActive && mapping.internalCategoryId === internalCategoryId
+        (mapping) => mapping.isActive && mapping.internalCategoryId === internalCategoryId
       );
       const validMappings = matchingMappings.filter((mapping) => {
         const externalCategoryId = toTrimmedString(mapping.externalCategory?.externalId);
@@ -1113,23 +1057,22 @@ export const resolveWarehouseAndStockMappings = async ({
           warehouseIdSet.add(inferred.typed);
         }
       }
-      stockWarehouseAliases =
-        Object.keys(warehouseAliases).length > 0 ? warehouseAliases : null;
+      stockWarehouseAliases = Object.keys(warehouseAliases).length > 0 ? warehouseAliases : null;
       validWarehouseIds = warehouseIdSet;
       if (warehouseId && stockWarehouseAliases?.[warehouseId]) {
         warehouseId = stockWarehouseAliases[warehouseId] ?? null;
       } else if (warehouseId) {
-        const match = warehouses.find(
-          (warehouse) => {
-            const warehouseRecord = warehouse as Record<string, unknown>;
-            const typedWarehouseId =
-              typeof warehouseRecord['typedId'] === 'string' ? warehouseRecord['typedId'] : undefined;
-            return warehouse['id'] === warehouseId || typedWarehouseId === warehouseId;
-          }
-        );
+        const match = warehouses.find((warehouse) => {
+          const warehouseRecord = warehouse as Record<string, unknown>;
+          const typedWarehouseId =
+            typeof warehouseRecord['typedId'] === 'string' ? warehouseRecord['typedId'] : undefined;
+          return warehouse['id'] === warehouseId || typedWarehouseId === warehouseId;
+        });
         const matchRecord = match as Record<string, unknown> | undefined;
         const matchTypedId =
-          matchRecord && typeof matchRecord['typedId'] === 'string' ? matchRecord['typedId'] : undefined;
+          matchRecord && typeof matchRecord['typedId'] === 'string'
+            ? matchRecord['typedId']
+            : undefined;
         if (matchTypedId) {
           warehouseId = matchTypedId;
         }

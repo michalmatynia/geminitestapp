@@ -27,7 +27,8 @@ export function ConstantNodeConfigSection(): React.JSX.Element | null {
     <div className='space-y-4'>
       <div>
         <Label className='text-xs text-gray-400'>Value Type</Label>
-        <SelectSimple size='sm'
+        <SelectSimple
+          size='sm'
           value={constantConfig.valueType}
           onValueChange={(value: string): void =>
             updateSelectedNodeConfig({

@@ -14,10 +14,7 @@ const applyMaintenancePayloadSchema = z.object({
   actionIds: z.array(z.enum(AI_PATHS_MAINTENANCE_ACTION_IDS)).optional(),
 });
 
-export async function GET_handler(
-  _req: NextRequest,
-  _ctx: ApiHandlerContext,
-): Promise<Response> {
+export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const report = await inspectAiPathsSettingsMaintenance();
   return NextResponse.json(report, {
     headers: {
@@ -26,10 +23,7 @@ export async function GET_handler(
   });
 }
 
-export async function POST_handler(
-  req: NextRequest,
-  _ctx: ApiHandlerContext,
-): Promise<Response> {
+export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const rawBody = await req.text();
   let body: unknown = {};
   if (rawBody) {
@@ -46,10 +40,10 @@ export async function POST_handler(
   }
 
   const actionIds = parsed.data.actionIds?.filter(
-    (value: AiPathsMaintenanceActionId): boolean => value.trim().length > 0,
+    (value: AiPathsMaintenanceActionId): boolean => value.trim().length > 0
   );
   const result = await applyAiPathsSettingsMaintenance(
-    actionIds && actionIds.length > 0 ? actionIds : undefined,
+    actionIds && actionIds.length > 0 ? actionIds : undefined
   );
   return NextResponse.json(result);
 }

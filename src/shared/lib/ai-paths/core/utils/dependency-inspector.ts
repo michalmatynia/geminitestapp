@@ -27,8 +27,7 @@ export type DependencyInspectorOptions = {
   scopeRootNodeIds?: string[] | Set<string>;
 };
 
-const TEMPLATE_TOKEN_REGEX: RegExp =
-  /{{\s*([^}]+)\s*}}|\[\s*([A-Za-z0-9_.$:-]+)\s*\]/g;
+const TEMPLATE_TOKEN_REGEX: RegExp = /{{\s*([^}]+)\s*}}|\[\s*([A-Za-z0-9_.$:-]+)\s*\]/g;
 
 const TEMPLATE_SYSTEM_ROOT_PREFIXES = ['Date:', 'DB Provider:', 'Collection:'];
 
@@ -50,8 +49,7 @@ const getIncomingPorts = (nodeId: string, edges: Edge[]): Set<string> => {
     const targetNodeId = resolveEdgeToNodeId(edge);
     if (targetNodeId !== nodeId) return;
     const toPort =
-      normalizeNonEmptyString(edge.toPort) ??
-      normalizeNonEmptyString(edge.targetHandle);
+      normalizeNonEmptyString(edge.toPort) ?? normalizeNonEmptyString(edge.targetHandle);
     if (!toPort) return;
     ports.add(toPort);
   });
@@ -88,7 +86,9 @@ const extractTemplateRoots = (template: string): string[] => {
   return Array.from(roots);
 };
 
-const collectDatabaseWriteTemplateRoots = (node: AiNode): {
+const collectDatabaseWriteTemplateRoots = (
+  node: AiNode
+): {
   roots: string[];
   templateLabels: string[];
 } => {
@@ -128,7 +128,9 @@ const collectDatabaseWriteTemplateRoots = (node: AiNode): {
   });
   return {
     roots: Array.from(roots),
-    templateLabels: templateSources.map((entry: { label: string; value: string }): string => entry.label),
+    templateLabels: templateSources.map(
+      (entry: { label: string; value: string }): string => entry.label
+    ),
   };
 };
 
@@ -138,7 +140,7 @@ const pushRisk = (
   category: string,
   severity: DependencyRiskSeverity,
   message: string,
-  recommendation: string,
+  recommendation: string
 ): void => {
   risks.push({
     id: `${node.id}:${category}`,
@@ -155,7 +157,7 @@ const pushRisk = (
 const resolveScopedRootNodeIds = (
   nodes: AiNode[],
   edges: Edge[],
-  options: DependencyInspectorOptions,
+  options: DependencyInspectorOptions
 ): string[] => {
   const nodeIdSet = new Set(nodes.map((node: AiNode): string => node.id));
   const explicitRootIds = (
@@ -192,7 +194,7 @@ const resolveScopedRootNodeIds = (
 const buildReachableDependencyScope = (
   nodes: AiNode[],
   edges: Edge[],
-  options: DependencyInspectorOptions,
+  options: DependencyInspectorOptions
 ): { nodes: AiNode[]; edges: Edge[] } => {
   if (nodes.length === 0) return { nodes, edges };
 
@@ -246,7 +248,7 @@ const buildReachableDependencyScope = (
 export const inspectPathDependencies = (
   nodes: AiNode[],
   edges: Edge[],
-  options: DependencyInspectorOptions = {},
+  options: DependencyInspectorOptions = {}
 ): DependencyReport => {
   if (options.scopeMode === 'reachable_from_roots') {
     const scoped = buildReachableDependencyScope(nodes, edges, options);
@@ -272,7 +274,7 @@ export const inspectPathDependencies = (
           'parser_entity_fallback',
           'warning',
           'Parser has no `entityJson` or `context` input and may run with empty source data.',
-          'Connect `entityJson` or `context` from upstream nodes.',
+          'Connect `entityJson` or `context` from upstream nodes.'
         );
       }
       return;
@@ -288,7 +290,7 @@ export const inspectPathDependencies = (
         'database_wait_for_inputs_disabled',
         'warning',
         'Database node runs without `waitForInputs` guard and can execute on partial data.',
-        'Enable `runtime.waitForInputs` in this node configuration.',
+        'Enable `runtime.waitForInputs` in this node configuration.'
       );
     }
 
@@ -301,7 +303,7 @@ export const inspectPathDependencies = (
         'database_update_mode_mapping_disallowed',
         'error',
         'Mapping-based update mode is disallowed for Database nodes.',
-        'Switch database.updatePayloadMode to `custom` and define explicit query/update templates.',
+        'Switch database.updatePayloadMode to `custom` and define explicit query/update templates.'
       );
     }
 
@@ -314,7 +316,7 @@ export const inspectPathDependencies = (
           'database_query_mode_preset_disallowed',
           'error',
           'Preset query mode is disallowed for Database nodes. Queries must be explicit.',
-          'Switch database.query.mode to `custom` and define explicit queryTemplate or query input.',
+          'Switch database.query.mode to `custom` and define explicit queryTemplate or query input.'
         );
       }
       const hasQueryInput = hasAnyPort(incomingPorts, ['query', 'queryCallback', 'aiQuery']);
@@ -326,21 +328,23 @@ export const inspectPathDependencies = (
           'database_query_missing_explicit_query',
           'error',
           'Database query has no explicit query template and no explicit query input wiring.',
-          'Define database.query.queryTemplate or connect query/queryCallback/aiQuery.',
+          'Define database.query.queryTemplate or connect query/queryCallback/aiQuery.'
         );
       }
       return;
     }
 
     if (operation === 'update' || operation === 'delete') {
-      if (!hasAnyPort(incomingPorts, ['entityId', 'productId', 'value', 'context', 'bundle', 'meta'])) {
+      if (
+        !hasAnyPort(incomingPorts, ['entityId', 'productId', 'value', 'context', 'bundle', 'meta'])
+      ) {
         pushRisk(
           risks,
           node,
           'database_write_missing_identity_inputs',
           'error',
           'Write operation has no connected identity inputs and may rely on hidden fallback IDs.',
-          'Connect `entityId`/`productId` (or `value`) from explicit upstream outputs.',
+          'Connect `entityId`/`productId` (or `value`) from explicit upstream outputs.'
         );
       }
     }
@@ -370,13 +374,15 @@ export const inspectPathDependencies = (
           )} (${templatesLabel}).`,
           `Wire incoming edges to ${missingTemplateRoots.join(
             ', '
-          )}, or rewrite templates to use currently wired ports only.`,
+          )}, or rewrite templates to use currently wired ports only.`
         );
       }
     }
   });
 
-  const warnings = risks.filter((risk: DependencyRisk): boolean => risk.severity === 'warning').length;
+  const warnings = risks.filter(
+    (risk: DependencyRisk): boolean => risk.severity === 'warning'
+  ).length;
   const errors = risks.filter((risk: DependencyRisk): boolean => risk.severity === 'error').length;
   return {
     risks,

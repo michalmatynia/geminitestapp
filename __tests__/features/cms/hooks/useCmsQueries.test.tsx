@@ -1,4 +1,3 @@
-
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react';
 import React from 'react';
@@ -121,7 +120,7 @@ describe('useCmsQueries Hooks', () => {
       it('should create a page and invalidate pages query', async () => {
         const mockPage = { id: 'new-1', name: 'New Page' };
         (pagesApi.createPage as any).mockResolvedValue({ ok: true, payload: mockPage });
-        
+
         const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
 
         const { result } = renderHook(() => useCreatePage(), { wrapper });
@@ -137,7 +136,9 @@ describe('useCmsQueries Hooks', () => {
 
         const { result } = renderHook(() => useCreatePage(), { wrapper });
 
-        await expect(result.current.mutateAsync({ name: 'Fail', slugIds: [] })).rejects.toThrow('Failed to create page');
+        await expect(result.current.mutateAsync({ name: 'Fail', slugIds: [] })).rejects.toThrow(
+          'Failed to create page'
+        );
       });
     });
 
@@ -145,7 +146,7 @@ describe('useCmsQueries Hooks', () => {
       it('should update a page and invalidate queries', async () => {
         const mockPage = { id: '1', name: 'Updated' };
         (pagesApi.updatePage as any).mockResolvedValue({ ok: true, payload: mockPage });
-        
+
         const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
 
         const { result } = renderHook(() => useUpdatePage(), { wrapper });
@@ -161,7 +162,7 @@ describe('useCmsQueries Hooks', () => {
     describe('useDeletePage', () => {
       it('should delete a page and invalidate queries', async () => {
         (pagesApi.deletePage as any).mockResolvedValue({ ok: true });
-        
+
         const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
 
         const { result } = renderHook(() => useDeletePage(), { wrapper });
@@ -230,4 +231,3 @@ describe('useCmsQueries Hooks', () => {
     });
   });
 });
-

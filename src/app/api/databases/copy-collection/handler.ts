@@ -4,8 +4,8 @@ import { auth } from '@/features/auth/server';
 import {
   copyCollection,
   getSupportedCollections,
-} from '@/features/database/services/database-collection-copy';
-import { assertDatabaseEngineOperationEnabled } from '@/features/database/services/database-engine-operation-guards';
+} from '@/shared/lib/db/services/database-collection-copy';
+import { assertDatabaseEngineOperationEnabled } from '@/shared/lib/db/services/database-engine-operation-guards';
 import type {
   DatabaseSyncCollectionResultDto,
   DatabaseSyncDirection,
@@ -17,13 +17,12 @@ const SAFE_NAME_RE = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
 export async function POST_handler(req: NextRequest): Promise<Response> {
   const session = await auth();
   const hasAccess =
-    session?.user?.isElevated ||
-    session?.user?.permissions?.includes('settings.manage');
+    session?.user?.isElevated || session?.user?.permissions?.includes('settings.manage');
   if (!hasAccess) {
     throw authError('Unauthorized.');
   }
 
-  const body = await req.json() as {
+  const body = (await req.json()) as {
     collection?: string;
     direction?: DatabaseSyncDirection;
   };
@@ -40,7 +39,10 @@ export async function POST_handler(req: NextRequest): Promise<Response> {
 
   await assertDatabaseEngineOperationEnabled('allowManualCollectionSync');
 
-  const result = (await copyCollection(collection, direction)) as unknown as DatabaseSyncCollectionResultDto;
+  const result = (await copyCollection(
+    collection,
+    direction
+  )) as unknown as DatabaseSyncCollectionResultDto;
   return NextResponse.json(result);
 }
 

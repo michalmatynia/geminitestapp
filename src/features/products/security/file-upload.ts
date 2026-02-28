@@ -23,12 +23,33 @@ type UploadConfig = {
 
 export class SecureFileUpload {
   private static readonly DANGEROUS_EXTENSIONS: string[] = [
-    '.exe', '.bat', '.cmd', '.com', '.pif', '.scr', '.vbs', '.js', '.jar',
-    '.php', '.asp', '.aspx', '.jsp', '.py', '.rb', '.pl', '.sh', '.ps1'
+    '.exe',
+    '.bat',
+    '.cmd',
+    '.com',
+    '.pif',
+    '.scr',
+    '.vbs',
+    '.js',
+    '.jar',
+    '.php',
+    '.asp',
+    '.aspx',
+    '.jsp',
+    '.py',
+    '.rb',
+    '.pl',
+    '.sh',
+    '.ps1',
   ];
 
   private static readonly IMAGE_MIME_TYPES: string[] = [
-    'image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'
+    'image/jpeg',
+    'image/jpg',
+    'image/png',
+    'image/webp',
+    'image/gif',
+    'image/svg+xml',
   ];
 
   private static readonly DEFAULT_CONFIG: UploadConfig = {
@@ -38,7 +59,7 @@ export class SecureFileUpload {
     maxFiles: 5,
     requireImageDimensions: true,
     maxWidth: 4000,
-    maxHeight: 4000
+    maxHeight: 4000,
   };
 
   static async validateFile(
@@ -104,7 +125,7 @@ export class SecureFileUpload {
       isValid: errors.length === 0,
       errors,
       sanitizedName,
-      fileHash
+      fileHash,
     };
   }
 
@@ -135,13 +156,15 @@ export class SecureFileUpload {
     const results = await Promise.all(
       files.map(async (file: File) => ({
         fileName: file.name,
-        ...(await this.validateFile(file, config))
+        ...(await this.validateFile(file, config)),
       }))
     );
 
     // Check for duplicate files
     const hashes = results.map((r: FileValidationResult) => r.fileHash).filter(Boolean);
-    const duplicates = hashes.filter((hash: string | undefined, index: number) => hashes.indexOf(hash) !== index);
+    const duplicates = hashes.filter(
+      (hash: string | undefined, index: number) => hashes.indexOf(hash) !== index
+    );
     if (duplicates.length > 0) {
       globalErrors.push('Duplicate files detected');
     }
@@ -149,7 +172,7 @@ export class SecureFileUpload {
     return {
       isValid: globalErrors.length === 0 && results.every((r: FileValidationResult) => r.isValid),
       results,
-      globalErrors
+      globalErrors,
     };
   }
 
@@ -161,39 +184,48 @@ export class SecureFileUpload {
   private static sanitizeFileName(fileName: string): string {
     // Remove path traversal attempts
     let sanitized = fileName.replace(/[/\\:*?"<>|]/g, '');
-    
+
     // Remove null bytes and control characters
     // eslint-disable-next-line no-control-regex
     sanitized = sanitized.replace(/[\x00-\x1f\x80-\x9f]/g, '');
-    
+
     // Limit length
     if (sanitized.length > 255) {
       const ext = this.getFileExtension(sanitized);
       const nameWithoutExt = sanitized.substring(0, sanitized.lastIndexOf('.'));
       sanitized = nameWithoutExt.substring(0, 255 - ext.length) + ext;
     }
-    
+
     // Ensure it's not empty or just dots
     if (!sanitized || /^\.+$/.test(sanitized)) {
       return '';
     }
-    
+
     return sanitized;
   }
 
   private static validateImageMagicBytes(bytes: Uint8Array, mimeType: string): boolean {
     const signatures: Record<string, number[][]> = {
-      'image/jpeg': [[0xFF, 0xD8, 0xFF]],
-      'image/png': [[0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]],
-      'image/gif': [[0x47, 0x49, 0x46, 0x38, 0x37, 0x61], [0x47, 0x49, 0x46, 0x38, 0x39, 0x61]],
-      'image/webp': [[0x52, 0x49, 0x46, 0x46], [0x57, 0x45, 0x42, 0x50]],
-      'image/svg+xml': [[0x3C, 0x3F, 0x78, 0x6D, 0x6C], [0x3C, 0x73, 0x76, 0x67]]
+      'image/jpeg': [[0xff, 0xd8, 0xff]],
+      'image/png': [[0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]],
+      'image/gif': [
+        [0x47, 0x49, 0x46, 0x38, 0x37, 0x61],
+        [0x47, 0x49, 0x46, 0x38, 0x39, 0x61],
+      ],
+      'image/webp': [
+        [0x52, 0x49, 0x46, 0x46],
+        [0x57, 0x45, 0x42, 0x50],
+      ],
+      'image/svg+xml': [
+        [0x3c, 0x3f, 0x78, 0x6d, 0x6c],
+        [0x3c, 0x73, 0x76, 0x67],
+      ],
     };
 
     const sigs = signatures[mimeType];
     if (!sigs) return false;
 
-    return sigs.some((sig: number[]) => 
+    return sigs.some((sig: number[]) =>
       sig.every((byte: number, index: number) => bytes[index] === byte)
     );
   }
@@ -208,7 +240,7 @@ export class SecureFileUpload {
     // This is a simplified implementation
     // In production, you'd use a proper image library like sharp
     const bytes = new Uint8Array(buffer);
-    
+
     // PNG dimensions
     if (bytes[0] === 0x89 && bytes[1] === 0x50) {
       if (bytes.length < 24) throw badRequestError('Invalid PNG buffer');
@@ -216,13 +248,13 @@ export class SecureFileUpload {
       const height = (bytes[20]! << 24) | (bytes[21]! << 16) | (bytes[22]! << 8) | bytes[23]!;
       return { width, height };
     }
-    
+
     // JPEG dimensions (simplified)
-    if (bytes[0] === 0xFF && bytes[1] === 0xD8) {
+    if (bytes[0] === 0xff && bytes[1] === 0xd8) {
       // This would require more complex parsing in production
       return { width: 1920, height: 1080 }; // Placeholder
     }
-    
+
     throw badRequestError('Unsupported image format for dimension reading');
   }
 }
@@ -240,7 +272,7 @@ export async function withSecureFileUpload(
   try {
     const formData = await req.formData();
     const files: File[] = [];
-    
+
     // Extract files from form data
     for (const [_key, value] of formData.entries()) {
       if (value instanceof File) {
@@ -253,32 +285,33 @@ export async function withSecureFileUpload(
     }
 
     const validation = await SecureFileUpload.validateMultipleFiles(files, config);
-    
+
     if (!validation.isValid) {
       const allErrors = [
         ...validation.globalErrors,
-        ...validation.results.flatMap((r: FileValidationResult) => r.errors)
+        ...validation.results.flatMap((r: FileValidationResult) => r.errors),
       ];
       return { isValid: false, errors: allErrors };
     }
 
-    const sanitizedFiles = validation.results.map((result: FileValidationResult, index: number) => ({
-      file: files[index]!,
-      sanitizedName: result.sanitizedName!,
-      hash: result.fileHash!
-    }));
+    const sanitizedFiles = validation.results.map(
+      (result: FileValidationResult, index: number) => ({
+        file: files[index]!,
+        sanitizedName: result.sanitizedName!,
+        hash: result.fileHash!,
+      })
+    );
 
     return {
       isValid: true,
       files,
       errors: [],
-      sanitizedFiles
+      sanitizedFiles,
     };
-
   } catch {
     return {
       isValid: false,
-      errors: ['Failed to process file upload']
+      errors: ['Failed to process file upload'],
     };
   }
 }

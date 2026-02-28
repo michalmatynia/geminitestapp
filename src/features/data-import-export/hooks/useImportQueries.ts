@@ -9,7 +9,7 @@ import type {
   Template,
   WarehouseOption,
 } from '@/shared/contracts/data-import-export';
-import type { 
+import type {
   IntegrationWithConnections,
   BaseImportRunDetailResponse,
   BaseImportRunRecord,
@@ -19,11 +19,7 @@ import type {
   BaseInventory,
   ImageRetryPreset,
 } from '@/shared/contracts/integrations';
-import type {
-  ListQuery,
-  MutationResult,
-  SingleQuery,
-} from '@/shared/contracts/ui';
+import type { ListQuery, MutationResult, SingleQuery } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import {
   createCreateMutationV2,
@@ -33,7 +29,11 @@ import {
   createSingleQueryV2,
   createUpdateMutationV2,
 } from '@/shared/lib/query-factories-v2';
-import { importExportKeys, integrationKeys, productMetadataKeys } from '@/shared/lib/query-key-exports';
+import {
+  importExportKeys,
+  integrationKeys,
+  productMetadataKeys,
+} from '@/shared/lib/query-key-exports';
 
 export type ImportParameterCacheResponse = IntegrationImportParameterCacheResponse;
 export type { CatalogRecord };
@@ -73,9 +73,10 @@ export function useCatalogs(): ListQuery<CatalogRecord> {
 }
 
 export function useTemplates(scope: 'import' | 'export'): ListQuery<Template> {
-  const endpoint = scope === 'import'
-    ? '/api/integrations/import-templates'
-    : '/api/integrations/export-templates';
+  const endpoint =
+    scope === 'import'
+      ? '/api/integrations/import-templates'
+      : '/api/integrations/export-templates';
   const queryKey = importExportKeys.templates(scope);
 
   return createListQueryV2({
@@ -128,12 +129,16 @@ export function useImportPreference<T>(
 
 // --- Mutations ---
 
-export function useSavePreferenceMutation(): MutationResult<unknown, { endpoint: string; data: unknown }> {
+export function useSavePreferenceMutation(): MutationResult<
+  unknown,
+  { endpoint: string; data: unknown }
+> {
   const queryClient = useQueryClient();
   const mutationKey = importExportKeys.preferences();
 
   return createUpdateMutationV2({
-    mutationFn: ({ endpoint, data }: { endpoint: string; data: unknown }) => api.post<unknown>(endpoint, data),
+    mutationFn: ({ endpoint, data }: { endpoint: string; data: unknown }) =>
+      api.post<unknown>(endpoint, data),
     mutationKey,
     meta: {
       source: 'importExport.hooks.useSavePreferenceMutation',
@@ -153,15 +158,25 @@ export function useSavePreferenceMutation(): MutationResult<unknown, { endpoint:
   });
 }
 
-export function useTemplateMutation(scope: 'import' | 'export', id?: string): MutationResult<unknown, { data?: unknown; isDelete?: boolean }> {
+export function useTemplateMutation(
+  scope: 'import' | 'export',
+  id?: string
+): MutationResult<unknown, { data?: unknown; isDelete?: boolean }> {
   const queryClient = useQueryClient();
-  const endpoint = scope === 'import'
-    ? '/api/integrations/import-templates'
-    : '/api/integrations/export-templates';
+  const endpoint =
+    scope === 'import'
+      ? '/api/integrations/import-templates'
+      : '/api/integrations/export-templates';
   const mutationKey = importExportKeys.templates(scope);
 
   return createMutationV2({
-    mutationFn: ({ data, isDelete = false }: { data?: unknown; isDelete?: boolean }): Promise<unknown> => {
+    mutationFn: ({
+      data,
+      isDelete = false,
+    }: {
+      data?: unknown;
+      isDelete?: boolean;
+    }): Promise<unknown> => {
       const url = id ? `${endpoint}/${id}` : endpoint;
       if (isDelete) return api.delete(url);
       return id ? api.put(url, data) : api.post(url, data);
@@ -188,7 +203,9 @@ export function useTemplateMutation(scope: 'import' | 'export', id?: string): Mu
           const templateId = typeof maybeTemplate.id === 'string' ? maybeTemplate.id : '';
           if (!templateId) return current;
           const nextTemplate = result as Template;
-          const existingIndex = current.findIndex((template: Template) => template.id === templateId);
+          const existingIndex = current.findIndex(
+            (template: Template) => template.id === templateId
+          );
           if (existingIndex === -1) {
             return [nextTemplate, ...current];
           }
@@ -202,12 +219,18 @@ export function useTemplateMutation(scope: 'import' | 'export', id?: string): Mu
   });
 }
 
-export function useInventories(connectionId?: string, enabled: boolean = true): ListQuery<BaseInventory> {
+export function useInventories(
+  connectionId?: string,
+  enabled: boolean = true
+): ListQuery<BaseInventory> {
   const queryKey = importExportKeys.inventories(connectionId);
   return createListQueryV2({
     queryKey,
     queryFn: async (): Promise<BaseInventory[]> => {
-      const data = await api.post<{ inventories: BaseInventory[] }>('/api/integrations/imports/base', { action: 'inventories', connectionId });
+      const data = await api.post<{ inventories: BaseInventory[] }>(
+        '/api/integrations/imports/base',
+        { action: 'inventories', connectionId }
+      );
       return data.inventories;
     },
     enabled,
@@ -232,12 +255,16 @@ export function useWarehouses(
   return createSingleQueryV2({
     id: inventoryId || null,
     queryKey,
-    queryFn: () => api.post<{ warehouses?: WarehouseOption[]; allWarehouses?: WarehouseOption[] }>('/api/integrations/imports/base', {
-      action: 'warehouses',
-      inventoryId,
-      connectionId,
-      includeAllWarehouses: includeAll,
-    }),
+    queryFn: () =>
+      api.post<{ warehouses?: WarehouseOption[]; allWarehouses?: WarehouseOption[] }>(
+        '/api/integrations/imports/base',
+        {
+          action: 'warehouses',
+          inventoryId,
+          connectionId,
+          includeAllWarehouses: includeAll,
+        }
+      ),
     enabled: enabled && !!inventoryId,
     meta: {
       source: 'importExport.hooks.useWarehouses',
@@ -259,10 +286,14 @@ export function useParameters(
   return createSingleQueryV2({
     id: inventoryId && productId ? `${inventoryId}-${productId}` : null,
     queryKey,
-    queryFn: () => api.post<{ parameters?: Array<{ id: string; name: string }> }>('/api/integrations/imports/base/parameters', {
-      inventoryId,
-      productId,
-    }),
+    queryFn: () =>
+      api.post<{ parameters?: Array<{ id: string; name: string }> }>(
+        '/api/integrations/imports/base/parameters',
+        {
+          inventoryId,
+          productId,
+        }
+      ),
     enabled: enabled && !!inventoryId && !!productId,
     meta: {
       source: 'importExport.hooks.useParameters',
@@ -283,10 +314,9 @@ export function useImportParameterCache(
     id: 'parameter-cache',
     queryKey,
     queryFn: () =>
-      api.get<ImportParameterCacheResponse>(
-        '/api/integrations/imports/base/parameters',
-        { cache: 'no-store' }
-      ),
+      api.get<ImportParameterCacheResponse>('/api/integrations/imports/base/parameters', {
+        cache: 'no-store',
+      }),
     enabled,
     meta: {
       source: 'importExport.hooks.useImportParameterCache',
@@ -302,7 +332,7 @@ export function useImportParameterCache(
 export function useRefreshImportParameterCacheMutation(): MutationResult<
   { keys?: string[]; values?: Record<string, string> },
   { inventoryId: string; connectionId?: string }
-  > {
+> {
   const queryClient = useQueryClient();
   const mutationKey = importExportKeys.lists();
 
@@ -325,9 +355,7 @@ export function useRefreshImportParameterCacheMutation(): MutationResult<
         {
           inventoryId: normalizedInventoryId,
           sampleSize: 8,
-          ...(normalizedConnectionId
-            ? { connectionId: normalizedConnectionId }
-            : {}),
+          ...(normalizedConnectionId ? { connectionId: normalizedConnectionId } : {}),
         }
       );
     },
@@ -380,7 +408,8 @@ export function useImportList(
     id: inventoryId || null,
     queryKey,
     queryFn: () => {
-      const { connectionId, catalogId, limit, uniqueOnly, page, pageSize, searchName, searchSku } = params;
+      const { connectionId, catalogId, limit, uniqueOnly, page, pageSize, searchName, searchSku } =
+        params;
       return api.post<{
         products?: ImportListItem[];
         total?: number;
@@ -416,20 +445,23 @@ export function useImportList(
   });
 }
 
-export function useImportMutation(): MutationResult<ImportResponse, {
-  connectionId?: string;
-  inventoryId: string;
-  catalogId: string;
-  templateId?: string;
-  limit?: number;
-  imageMode: 'links' | 'download';
-  uniqueOnly: boolean;
-  allowDuplicateSku: boolean;
-  selectedIds?: string[];
-  dryRun?: boolean;
-  mode?: BaseImportMode;
-  requestId?: string;
-}> {
+export function useImportMutation(): MutationResult<
+  ImportResponse,
+  {
+    connectionId?: string;
+    inventoryId: string;
+    catalogId: string;
+    templateId?: string;
+    limit?: number;
+    imageMode: 'links' | 'download';
+    uniqueOnly: boolean;
+    allowDuplicateSku: boolean;
+    selectedIds?: string[];
+    dryRun?: boolean;
+    mode?: BaseImportMode;
+    requestId?: string;
+  }
+> {
   const mutationKey = importExportKeys.lists();
   return createCreateMutationV2({
     mutationFn: (params) => api.post<ImportResponse>('/api/integrations/imports/base/runs', params),
@@ -522,7 +554,10 @@ export function useImportRun(
 
 export function useResumeImportRunMutation(
   runId: string
-): MutationResult<BaseImportStartResponse, { statuses?: Array<'pending' | 'processing' | 'imported' | 'updated' | 'skipped' | 'failed'> }> {
+): MutationResult<
+  BaseImportStartResponse,
+  { statuses?: Array<'pending' | 'processing' | 'imported' | 'updated' | 'skipped' | 'failed'> }
+> {
   const mutationKey = importExportKeys.run(runId || '__none__');
   return createMutationV2({
     mutationFn: (params) =>
@@ -564,14 +599,17 @@ export function useCancelImportRunMutation(
   });
 }
 
-export function useSaveExportSettingsMutation(): MutationResult<void, {
-  exportActiveTemplateId?: string | null;
-  exportInventoryId?: string | null;
-  selectedBaseConnectionId?: string | null;
-  exportStockFallbackEnabled?: boolean;
-  imageRetryPresets?: ImageRetryPreset[];
-  exportWarehouseId?: string | null;
-}> {
+export function useSaveExportSettingsMutation(): MutationResult<
+  void,
+  {
+    exportActiveTemplateId?: string | null;
+    exportInventoryId?: string | null;
+    selectedBaseConnectionId?: string | null;
+    exportStockFallbackEnabled?: boolean;
+    imageRetryPresets?: ImageRetryPreset[];
+    exportWarehouseId?: string | null;
+  }
+> {
   const queryClient = useQueryClient();
   const mutationKey = importExportKeys.preferences();
 
@@ -594,16 +632,26 @@ export function useSaveExportSettingsMutation(): MutationResult<void, {
           connectionId: normalizedConnectionId,
           inventoryId: normalizedInventoryId,
         }),
-        api.post('/api/integrations/exports/base/default-inventory', { inventoryId: normalizedInventoryId }),
-        api.post('/api/integrations/exports/base/default-connection', { connectionId: normalizedConnectionId }),
-        api.post('/api/integrations/exports/base/stock-fallback', { enabled: params.exportStockFallbackEnabled }),
-        api.post('/api/integrations/exports/base/image-retry-presets', { presets: params.imageRetryPresets }),
-        ...(normalizedInventoryId ? [
-          api.post('/api/integrations/imports/base/export-warehouse', {
-            warehouseId: normalizedWarehouseId,
-            inventoryId: normalizedInventoryId,
-          }),
-        ] : []),
+        api.post('/api/integrations/exports/base/default-inventory', {
+          inventoryId: normalizedInventoryId,
+        }),
+        api.post('/api/integrations/exports/base/default-connection', {
+          connectionId: normalizedConnectionId,
+        }),
+        api.post('/api/integrations/exports/base/stock-fallback', {
+          enabled: params.exportStockFallbackEnabled,
+        }),
+        api.post('/api/integrations/exports/base/image-retry-presets', {
+          presets: params.imageRetryPresets,
+        }),
+        ...(normalizedInventoryId
+          ? [
+              api.post('/api/integrations/imports/base/export-warehouse', {
+                warehouseId: normalizedWarehouseId,
+                inventoryId: normalizedInventoryId,
+              }),
+            ]
+          : []),
       ]);
     },
     mutationKey,
@@ -630,7 +678,10 @@ export function useSaveExportSettingsMutation(): MutationResult<void, {
   });
 }
 
-export function useSaveDefaultConnectionMutation(): MutationResult<{ connectionId: string | null }, { connectionId?: string | null }> {
+export function useSaveDefaultConnectionMutation(): MutationResult<
+  { connectionId: string | null },
+  { connectionId?: string | null }
+> {
   const queryClient = useQueryClient();
   const mutationKey = importExportKeys.preferences();
 
@@ -675,8 +726,15 @@ export function useClearInventoryMutation(): MutationResult<void, void> {
   return createDeleteMutationV2({
     mutationFn: async () => {
       await Promise.all([
-        api.post('/api/integrations/imports/base/sample-product', { inventoryId: '', saveOnly: true }),
-        api.post('/api/integrations/imports/base/parameters', { inventoryId: '', productId: '', clearOnly: true }),
+        api.post('/api/integrations/imports/base/sample-product', {
+          inventoryId: '',
+          saveOnly: true,
+        }),
+        api.post('/api/integrations/imports/base/parameters', {
+          inventoryId: '',
+          productId: '',
+          clearOnly: true,
+        }),
       ]);
     },
     mutationKey,

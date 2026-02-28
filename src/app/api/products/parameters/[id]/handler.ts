@@ -5,9 +5,17 @@ import { getParameterRepository } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { conflictError, notFoundError } from '@/shared/errors/app-error';
 
-const SELECTOR_TYPES = ['text', 'textarea', 'radio', 'select', 'dropdown', 'checkbox', 'checklist'] as const;
+const SELECTOR_TYPES = [
+  'text',
+  'textarea',
+  'radio',
+  'select',
+  'dropdown',
+  'checkbox',
+  'checklist',
+] as const;
 const selectorTypeSchema = z.enum(SELECTOR_TYPES);
-const SELECTOR_TYPES_REQUIRING_OPTIONS = new Set<typeof SELECTOR_TYPES[number]>([
+const SELECTOR_TYPES_REQUIRING_OPTIONS = new Set<(typeof SELECTOR_TYPES)[number]>([
   'radio',
   'select',
   'dropdown',
@@ -52,11 +60,11 @@ export async function PUT_handler(
 
   const repository = await getParameterRepository();
   const current = await repository.getParameterById(id);
-  
+
   if (!current) {
     throw notFoundError('Parameter not found', { parameterId: id });
   }
-  
+
   const nextCatalogId = catalogId ?? current.catalogId;
   const nextSelectorType = data.selectorType ?? current.selectorType;
   const nextOptionLabels =
@@ -64,23 +72,20 @@ export async function PUT_handler(
       ? normalizeOptionLabels(data.optionLabels)
       : current.optionLabels;
 
-  if (
-    SELECTOR_TYPES_REQUIRING_OPTIONS.has(nextSelectorType) &&
-    nextOptionLabels.length === 0
-  ) {
+  if (SELECTOR_TYPES_REQUIRING_OPTIONS.has(nextSelectorType) && nextOptionLabels.length === 0) {
     throw conflictError('Selector type requires at least one option label.', {
       selectorType: nextSelectorType,
       parameterId: id,
     });
   }
-  
+
   if (name_en !== undefined) {
     const existing = await repository.findByName(nextCatalogId, name_en);
     if (existing && existing.id !== id) {
-      throw conflictError(
-        'A parameter with this name already exists in this catalog',
-        { name_en, catalogId: nextCatalogId }
-      );
+      throw conflictError('A parameter with this name already exists in this catalog', {
+        name_en,
+        catalogId: nextCatalogId,
+      });
     }
   }
 

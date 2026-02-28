@@ -144,11 +144,12 @@ export const resolveCaseResolverUploadFolder = ({
 };
 
 export const createCaseResolverAssetFile = (input: {
-    id: string;
-    name: string;
-    workspaceId?: string;
-    folderId?: string | null;
-    folder?: string;  kind?: string | null | undefined;
+  id: string;
+  name: string;
+  workspaceId?: string;
+  folderId?: string | null;
+  folder?: string;
+  kind?: string | null | undefined;
   filepath?: string | null | undefined;
   sourceFileId?: string | null | undefined;
   mimeType?: string | null | undefined;
@@ -165,8 +166,13 @@ export const createCaseResolverAssetFile = (input: {
     id: input.id,
     workspaceId: input.workspaceId ?? 'default',
     folderId: input.folderId ?? null,
-    name: input.name.trim() || 'Untitled File',    folder: normalizeFolderPath(input.folder ?? ''),
-    kind: inferCaseResolverAssetKind({ kind: input.kind, mimeType: input.mimeType, name: input.name }),
+    name: input.name.trim() || 'Untitled File',
+    folder: normalizeFolderPath(input.folder ?? ''),
+    kind: inferCaseResolverAssetKind({
+      kind: input.kind,
+      mimeType: input.mimeType,
+      name: input.name,
+    }),
     filepath:
       typeof input.filepath === 'string' && input.filepath.trim().length > 0
         ? input.filepath.trim()
@@ -183,14 +189,8 @@ export const createCaseResolverAssetFile = (input: {
       typeof input.size === 'number' && Number.isFinite(input.size) && input.size >= 0
         ? Math.round(input.size)
         : null,
-    textContent:
-      typeof input.textContent === 'string'
-        ? input.textContent
-        : '',
-    description:
-      typeof input.description === 'string'
-        ? input.description
-        : '',
+    textContent: typeof input.textContent === 'string' ? input.textContent : '',
+    description: typeof input.description === 'string' ? input.description : '',
     createdAt,
     updatedAt,
   };
@@ -215,7 +215,11 @@ export const normalizeCaseResolverFolderTimestamps = ({
       : {};
 
   const contentStatsByFolder = new Map<string, { createdAt: string; updatedAt: string }>();
-  const registerContentTimestamps = (folderPath: string, createdAt: string, updatedAt: string): void => {
+  const registerContentTimestamps = (
+    folderPath: string,
+    createdAt: string,
+    updatedAt: string
+  ): void => {
     const ancestors = expandFolderPath(folderPath);
     ancestors.forEach((ancestor: string): void => {
       const current = contentStatsByFolder.get(ancestor);

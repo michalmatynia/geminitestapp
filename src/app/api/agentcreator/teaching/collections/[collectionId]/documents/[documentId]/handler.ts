@@ -6,10 +6,7 @@ import { badRequestError } from '@/shared/errors/app-error';
 
 type Params = { collectionId: string; documentId: string };
 
-export async function DELETE_handler(
-  _req: NextRequest,
-  ctx: ApiHandlerContext,
-): Promise<Response> {
+export async function DELETE_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const params = ctx.params as unknown as Params | undefined;
   const documentId = params?.documentId;
   if (!documentId) throw badRequestError('Missing documentId.');

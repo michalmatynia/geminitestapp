@@ -1,4 +1,3 @@
-
 import { render, screen, fireEvent } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
@@ -10,24 +9,31 @@ vi.mock('@/features/cms/hooks/usePageBuilderContext', () => ({
 }));
 
 // Mock templates - use absolute path to ensure Vitest catches it
-vi.mock('/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/section-templates.ts', () => ({
-  getTemplatesByCategory: () => ({
-    'Hero': [{ 
-      name: 'Standard Hero', 
-      description: 'Desc', 
-      create: () => ({ id: 'new-sec', type: 'Hero', settings: {}, blocks: [] }) 
-    }]
-  }),
-}));
+vi.mock(
+  '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/section-templates.ts',
+  () => ({
+    getTemplatesByCategory: () => ({
+      Hero: [
+        {
+          name: 'Standard Hero',
+          description: 'Desc',
+          create: () => ({ id: 'new-sec', type: 'Hero', settings: {}, blocks: [] }),
+        },
+      ],
+    }),
+  })
+);
 
 // Fallback mock if absolute path doesn't work in some environments
 vi.mock('@/features/cms/components/page-builder/section-templates', () => ({
   getTemplatesByCategory: () => ({
-    'Hero': [{ 
-      name: 'Standard Hero', 
-      description: 'Desc', 
-      create: () => ({ id: 'new-sec', type: 'Hero', settings: {}, blocks: [] }) 
-    }]
+    Hero: [
+      {
+        name: 'Standard Hero',
+        description: 'Desc',
+        create: () => ({ id: 'new-sec', type: 'Hero', settings: {}, blocks: [] }),
+      },
+    ],
   }),
 }));
 
@@ -53,7 +59,7 @@ describe('SectionTemplatePicker Component', () => {
 
   it('should show mocked template', () => {
     render(<SectionTemplatePicker zone='template' onSelect={mockOnSelect} />);
-    
+
     // If mock works, it should find "Standard Hero"
     expect(screen.getByText('Standard Hero')).toBeInTheDocument();
     expect(screen.getByText('Desc')).toBeInTheDocument();
@@ -61,13 +67,15 @@ describe('SectionTemplatePicker Component', () => {
 
   it('should call onSelect when a template is selected', () => {
     render(<SectionTemplatePicker zone='header' onSelect={mockOnSelect} />);
-    
+
     const templateItem = screen.getByText('Standard Hero').closest('[role="gridcell"]');
     expect(templateItem).toBeInTheDocument();
     fireEvent.click(templateItem!);
 
-    expect(mockOnSelect).toHaveBeenCalledWith(expect.objectContaining({
-      name: 'Standard Hero',
-    }));
+    expect(mockOnSelect).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'Standard Hero',
+      })
+    );
   });
 });

@@ -19,9 +19,7 @@ export function GenericMapperExternalCell({
   return (
     <SelectSimple
       value={value ?? '__unmapped__'}
-      onValueChange={(val) =>
-        onChange(val === '__unmapped__' ? null : val)
-      }
+      onValueChange={(val) => onChange(val === '__unmapped__' ? null : val)}
       disabled={disabled}
       options={options}
       variant='subtle'

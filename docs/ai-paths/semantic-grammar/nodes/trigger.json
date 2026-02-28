@@ -4,17 +4,8 @@
   "nodeType": "trigger",
   "title": "Trigger: Scheduled Run",
   "purpose": "Runs on a server schedule or cron.",
-  "inputs": [
-    "context"
-  ],
-  "outputs": [
-    "trigger",
-    "triggerName",
-    "context",
-    "meta",
-    "entityId",
-    "entityType"
-  ],
+  "inputs": ["context"],
+  "outputs": ["trigger", "triggerName", "context", "meta", "entityId", "entityType"],
   "configFields": [
     {
       "path": "trigger.event",
@@ -47,17 +38,8 @@
       "x": 100,
       "y": 100
     },
-    "inputs": [
-      "context"
-    ],
-    "outputs": [
-      "trigger",
-      "triggerName",
-      "context",
-      "meta",
-      "entityId",
-      "entityType"
-    ],
+    "inputs": ["context"],
+    "outputs": ["trigger", "triggerName", "context", "meta", "entityId", "entityType"],
     "config": {
       "trigger": {
         "event": "scheduled_run"

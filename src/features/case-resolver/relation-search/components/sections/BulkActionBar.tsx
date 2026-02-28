@@ -5,12 +5,8 @@ import { ListPlus } from 'lucide-react';
 import { useDocumentRelationSearchContext } from '../../context/DocumentRelationSearchContext';
 
 export function BulkActionBar(): React.JSX.Element | null {
-  const {
-    selectedFileIds,
-    isLocked,
-    handleLinkAll,
-    clearSelection,
-  } = useDocumentRelationSearchContext();
+  const { selectedFileIds, isLocked, handleLinkAll, clearSelection } =
+    useDocumentRelationSearchContext();
 
   const selectedCount = selectedFileIds.size;
   if (selectedCount === 0) return null;

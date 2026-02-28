@@ -1,4 +1,3 @@
-
 import { renderHook, act } from '@testing-library/react';
 import { vi } from 'vitest';
 
@@ -35,7 +34,7 @@ vi.mock('@/features/cms/components/page-builder/section-registry', () => ({
       };
     }
     return null;
-  }
+  },
 }));
 
 const wrapper = ({ children }: { children: React.ReactNode }) => (
@@ -45,7 +44,7 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
 describe('usePageBuilder Hook', () => {
   it('should initialize with empty state', () => {
     const { result } = renderHook(() => usePageBuilder(), { wrapper });
-    
+
     expect(result.current.state.sections).toEqual([]);
     expect(result.current.state.currentPage).toBeNull();
     expect(result.current.state.selectedNodeId).toBeNull();
@@ -127,10 +126,10 @@ describe('usePageBuilder Hook', () => {
     const sectionId = result.current.state.sections[0]!.id;
 
     act(() => {
-      result.current.dispatch({ 
-        type: 'UPDATE_SECTION_SETTINGS', 
-        sectionId, 
-        settings: { text: 'Updated' } 
+      result.current.dispatch({
+        type: 'UPDATE_SECTION_SETTINGS',
+        sectionId,
+        settings: { text: 'Updated' },
       });
     });
 
@@ -145,13 +144,17 @@ describe('usePageBuilder Hook', () => {
     });
 
     // Grid section has 1 row by default
-    expect(result.current.state.sections[0]!.blocks.length).toBe(1); 
+    expect(result.current.state.sections[0]!.blocks.length).toBe(1);
     expect(result.current.state.sections[0]!.blocks[0]!.type).toBe('Row');
     // And that row has 2 columns by default (from our mock)
     expect(result.current.state.sections[0]!.blocks[0]!.blocks?.length).toBe(2);
 
     act(() => {
-      result.current.dispatch({ type: 'SET_GRID_COLUMNS', sectionId: result.current.state.sections[0]!.id, columnCount: 3 });
+      result.current.dispatch({
+        type: 'SET_GRID_COLUMNS',
+        sectionId: result.current.state.sections[0]!.id,
+        columnCount: 3,
+      });
     });
 
     expect(result.current.state.sections[0]!.blocks[0]!.blocks?.length).toBe(3);
@@ -187,7 +190,7 @@ describe('usePageBuilder Hook', () => {
 
     act(() => {
       result.current.dispatch({ type: 'ADD_SECTION', sectionType: 'RichText', zone: 'template' }); // Index 0
-      result.current.dispatch({ type: 'ADD_SECTION', sectionType: 'Grid', zone: 'template' });     // Index 1
+      result.current.dispatch({ type: 'ADD_SECTION', sectionType: 'Grid', zone: 'template' }); // Index 1
     });
 
     expect(result.current.state.sections[0]!.type).toBe('RichText');
@@ -195,7 +198,12 @@ describe('usePageBuilder Hook', () => {
 
     act(() => {
       // To move index 0 to 1, we drop BEFORE index 2 (which is the end of the zone)
-      result.current.dispatch({ type: 'REORDER_SECTIONS', zone: 'template', fromIndex: 0, toIndex: 2 });
+      result.current.dispatch({
+        type: 'REORDER_SECTIONS',
+        zone: 'template',
+        fromIndex: 0,
+        toIndex: 2,
+      });
     });
 
     expect(result.current.state.sections[0]!.type).toBe('Grid');

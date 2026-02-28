@@ -36,7 +36,7 @@ const queue = createManagedQueue<ProductAiJobData>({
         level: 'info',
         source: LOG_SOURCE,
         message: `Marked ${staleResult.count} stale running jobs as failed`,
-        context: { staleCount: staleResult.count }
+        context: { staleCount: staleResult.count },
       });
     }
 
@@ -46,7 +46,7 @@ const queue = createManagedQueue<ProductAiJobData>({
         level: 'warn',
         source: LOG_SOURCE,
         message: `Job ${data.jobId} not found, skipping`,
-        context: { jobId: data.jobId }
+        context: { jobId: data.jobId },
       });
       return;
     }
@@ -55,7 +55,7 @@ const queue = createManagedQueue<ProductAiJobData>({
         level: 'info',
         source: LOG_SOURCE,
         message: `Job ${data.jobId} has status "${job.status}", skipping`,
-        context: { jobId: data.jobId, status: job.status }
+        context: { jobId: data.jobId, status: job.status },
       });
       return;
     }
@@ -76,7 +76,7 @@ const queue = createManagedQueue<ProductAiJobData>({
       level: 'info',
       source: LOG_SOURCE,
       message: `Processing job ${job.id} of type "${job.type}"`,
-      context: { jobId: job.id, type: job.type }
+      context: { jobId: job.id, type: job.type },
     });
 
     try {
@@ -94,7 +94,7 @@ const queue = createManagedQueue<ProductAiJobData>({
         level: 'info',
         source: LOG_SOURCE,
         message: `Job ${job.id} completed`,
-        context: { jobId: job.id }
+        context: { jobId: job.id },
       });
       return result;
     } catch (error) {
@@ -129,7 +129,7 @@ export const stopProductAiJobQueue = (reason?: string): void => {
     level: 'info',
     source: LOG_SOURCE,
     message: `Queue worker stopped${suffix}`,
-    context: { reason }
+    context: { reason },
   });
   void queue.stopWorker();
 };
@@ -159,7 +159,7 @@ export const enqueueProductAiJobToQueue = async (
   jobId: string,
   productId: string,
   type: string,
-  payload: unknown,
+  payload: unknown
 ): Promise<void> => {
   await queue.enqueue({ jobId, productId, type, payload });
 };
@@ -171,7 +171,7 @@ export const processSingleJob = async (jobId: string): Promise<void> => {
     level: 'info',
     source: SINGLE_LOG_SOURCE,
     message: `Processing job ${jobId}`,
-    context: { jobId }
+    context: { jobId },
   });
 
   const jobRepository = await getProductAiJobRepository();
@@ -180,7 +180,7 @@ export const processSingleJob = async (jobId: string): Promise<void> => {
   if (!job) {
     void ErrorSystem.logWarning(`Job ${jobId} not found`, {
       service: SINGLE_LOG_SOURCE,
-      jobId
+      jobId,
     });
     throw notFoundError('Job not found', { jobId });
   }
@@ -190,7 +190,7 @@ export const processSingleJob = async (jobId: string): Promise<void> => {
       level: 'info',
       source: SINGLE_LOG_SOURCE,
       message: `Job ${jobId} is not pending (status: ${job.status}), skipping`,
-      context: { jobId, status: job.status }
+      context: { jobId, status: job.status },
     });
     return;
   }
@@ -221,7 +221,7 @@ export const processSingleJob = async (jobId: string): Promise<void> => {
       level: 'info',
       source: SINGLE_LOG_SOURCE,
       message: `Job ${job.id} completed`,
-      context: { jobId: job.id }
+      context: { jobId: job.id },
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Job failed.';

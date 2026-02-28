@@ -1,12 +1,4 @@
-import {
-  Plus,
-  Pin,
-  Archive,
-  ChevronLeft,
-  ChevronRight,
-  FileText,
-  Palette,
-} from 'lucide-react';
+import { Plus, Pin, Archive, ChevronLeft, ChevronRight, FileText, Palette } from 'lucide-react';
 import React, { useMemo } from 'react';
 
 import { TriggerButtonBar } from '@/features/ai/ai-paths/components/trigger-buttons/TriggerButtonBar';
@@ -79,16 +71,14 @@ export function NoteListView(): React.JSX.Element {
         ],
       },
     ],
-    [themes],
+    [themes]
   );
 
   return (
     <DocumentSearchPage
       title={
         selectedFolderId
-          ? (buildBreadcrumbPath(selectedFolderId, null, folderTree).slice(
-            -1,
-          )[0]?.name ?? 'Notes')
+          ? (buildBreadcrumbPath(selectedFolderId, null, folderTree).slice(-1)[0]?.name ?? 'Notes')
           : 'Notes'
       }
       startAdornment={
@@ -126,8 +116,8 @@ export function NoteListView(): React.JSX.Element {
               <span className='text-xs'>
                 {selectedFolderThemeId
                   ? themeGroups
-                    .flatMap((g) => g.options)
-                    .find((o) => o.key === selectedFolderThemeId)?.label
+                      .flatMap((g) => g.options)
+                      .find((o) => o.key === selectedFolderThemeId)?.label
                   : 'Select theme'}
               </span>
             }
@@ -155,9 +145,7 @@ export function NoteListView(): React.JSX.Element {
         <div className='flex gap-4'>
           <NotesFilters />
           <Button
-            onClick={(): void =>
-              setFilterPinned(filterPinned === true ? undefined : true)
-            }
+            onClick={(): void => setFilterPinned(filterPinned === true ? undefined : true)}
             className={`rounded-lg border px-4 py-2 ${
               filterPinned === true
                 ? 'border-blue-500 bg-blue-600 text-white'
@@ -167,9 +155,7 @@ export function NoteListView(): React.JSX.Element {
             <Pin size={20} />
           </Button>
           <Button
-            onClick={(): void =>
-              setFilterArchived(filterArchived === true ? undefined : true)
-            }
+            onClick={(): void => setFilterArchived(filterArchived === true ? undefined : true)}
             className={`rounded-lg border px-4 py-2 ${
               filterArchived === true
                 ? 'border-gray-500 bg-gray-700 text-white'
@@ -183,16 +169,8 @@ export function NoteListView(): React.JSX.Element {
       breadcrumb={
         settings.selectedFolderId ? (
           <div className='mb-6 flex items-center gap-2 text-sm text-gray-400'>
-            {buildBreadcrumbPath(
-              settings.selectedFolderId,
-              null,
-              folderTree,
-            ).map(
-              (
-                crumb: BreadcrumbItem,
-                index: number,
-                array: BreadcrumbItem[],
-              ) => (
+            {buildBreadcrumbPath(settings.selectedFolderId, null, folderTree).map(
+              (crumb: BreadcrumbItem, index: number, array: BreadcrumbItem[]) => (
                 <React.Fragment key={index}>
                   <Button
                     variant='ghost'
@@ -210,7 +188,7 @@ export function NoteListView(): React.JSX.Element {
                     <ChevronRight size={16} className='text-gray-600' />
                   ) : null}
                 </React.Fragment>
-              ),
+              )
             )}
           </div>
         ) : null

@@ -14,7 +14,7 @@ vi.mock('next/navigation', () => ({
 
 // Mock useToast
 vi.mock('@/shared/ui', async (importOriginal) => {
-  const actual = await importOriginal() as any;
+  const actual = (await importOriginal()) as any;
   return {
     ...actual,
     useToast: () => ({ toast: vi.fn() }),
@@ -38,10 +38,10 @@ describe('DraftCreator Component', () => {
 
   it('should render the form with initial state', async () => {
     render(<DraftCreator draftId={null} onSaveSuccess={vi.fn()} onCancel={vi.fn()} />);
-    
+
     expect(screen.getByText('Draft Information')).toBeInTheDocument();
     expect(screen.getByLabelText(/Draft Name/i)).toBeInTheDocument();
-    
+
     // Check if it fetched catalogs
     await waitFor(() => {
       const fetchCalls = (global.fetch as unknown as { mock: { calls: unknown[][] } }).mock.calls;
@@ -53,33 +53,35 @@ describe('DraftCreator Component', () => {
 
   it('should update name input correctly', () => {
     render(<DraftCreator draftId={null} onSaveSuccess={vi.fn()} onCancel={vi.fn()} />);
-    
+
     const nameInput = screen.getByLabelText(/Draft Name/i);
     fireEvent.change(nameInput, { target: { value: 'My New Draft' } });
-    
+
     expect(nameInput).toHaveValue('My New Draft');
   });
 
   it('should show validation error if saving without a name', () => {
     const onSaveSuccess = vi.fn();
-    const { container } = render(<DraftCreator draftId={null} onSaveSuccess={onSaveSuccess} onCancel={vi.fn()} />);
-    
+    const { container } = render(
+      <DraftCreator draftId={null} onSaveSuccess={onSaveSuccess} onCancel={vi.fn()} />
+    );
+
     const form = container.querySelector('form');
     expect(form).not.toBeNull();
-    
+
     act(() => {
       fireEvent.submit(form!);
     });
-    
+
     expect(onSaveSuccess).not.toHaveBeenCalled();
   });
 
   it('should open icon selector modal', async () => {
     render(<DraftCreator draftId={null} onSaveSuccess={vi.fn()} onCancel={vi.fn()} />);
-    
+
     const chooseIconButton = screen.getByRole('button', { name: /Choose Icon/i });
     fireEvent.click(chooseIconButton);
-    
+
     expect(screen.getByText(/Search and pick an icon/i)).toBeInTheDocument();
   });
 });

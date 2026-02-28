@@ -15,4 +15,3 @@ export function FileUploadEventsTable(): React.JSX.Element {
     </div>
   );
 }
-

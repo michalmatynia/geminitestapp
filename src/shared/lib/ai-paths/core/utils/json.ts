@@ -102,10 +102,7 @@ export const getValueAtMappingPath = (
     if (index >= tokens.length) return source;
     if (source === null || source === undefined) return undefined;
 
-    const normalizedSource = normalizeJsonLikeValue(
-      source,
-      jsonIntegrityPolicy
-    ).value;
+    const normalizedSource = normalizeJsonLikeValue(source, jsonIntegrityPolicy).value;
     const token = tokens[index];
     if (token === undefined) return undefined;
 
@@ -123,10 +120,7 @@ export const getValueAtMappingPath = (
 
     if (typeof token === 'number') return undefined;
     if (typeof normalizedSource !== 'object') return undefined;
-    return readByTokens(
-      (normalizedSource as Record<string, unknown>)[token],
-      index + 1
-    );
+    return readByTokens((normalizedSource as Record<string, unknown>)[token], index + 1);
   };
 
   return readByTokens(obj, 0);
@@ -189,7 +183,11 @@ export const getValueAtPath = (obj: unknown, path: string): unknown => {
   }, obj);
 };
 
-export const setValueAtPath = (obj: Record<string, unknown>, path: string, value: unknown): void => {
+export const setValueAtPath = (
+  obj: Record<string, unknown>,
+  path: string,
+  value: unknown
+): void => {
   const keys = path.split('.');
   let current: Record<string, unknown> = obj;
   keys.forEach((key: string, index: number) => {
@@ -223,14 +221,14 @@ export const setValueAtMappingPath = (
           const nextArray: unknown[] = [];
           if (parent && parentKey !== null) {
             if (Array.isArray(parent)) {
-              (parent)[Number(parentKey)] = nextArray;
+              parent[Number(parentKey)] = nextArray;
             } else {
-              (parent)[String(parentKey)] = nextArray;
+              parent[String(parentKey)] = nextArray;
             }
           }
           current = nextArray;
         }
-        (current)[token] = value;
+        current[token] = value;
       } else {
         (current as Record<string, unknown>)[token] = value;
       }
@@ -242,9 +240,9 @@ export const setValueAtMappingPath = (
         const nextArray: unknown[] = [];
         if (parent && parentKey !== null) {
           if (Array.isArray(parent)) {
-            (parent)[Number(parentKey)] = nextArray;
+            parent[Number(parentKey)] = nextArray;
           } else {
-            (parent)[String(parentKey)] = nextArray;
+            parent[String(parentKey)] = nextArray;
           }
         }
         current = nextArray;
@@ -268,7 +266,10 @@ export const setValueAtMappingPath = (
   });
 };
 
-export const pickByPaths = (obj: Record<string, unknown>, paths: string[]): Record<string, unknown> => {
+export const pickByPaths = (
+  obj: Record<string, unknown>,
+  paths: string[]
+): Record<string, unknown> => {
   const result: Record<string, unknown> = {};
   paths.forEach((path: string) => {
     const value = getValueAtPath(obj, path);
@@ -292,7 +293,10 @@ export const deletePath = (obj: Record<string, unknown>, path: string): void => 
   });
 };
 
-export const omitByPaths = (obj: Record<string, unknown>, paths: string[]): Record<string, unknown> => {
+export const omitByPaths = (
+  obj: Record<string, unknown>,
+  paths: string[]
+): Record<string, unknown> => {
   const clone = cloneValue(obj);
   paths.forEach((path: string) => deletePath(clone, path));
   return clone;

@@ -5,6 +5,7 @@ vi.unmock('@/shared/lib/db/prisma');
 import { noteService } from '@/features/notesapp/services/notes';
 import { cleanupNoteFile } from '@/features/notesapp/services/notes/file-cleanup';
 import prisma from '@/shared/lib/db/prisma';
+import type { NotebookDto, NoteRelationWithTarget, CategoryWithChildren } from '@/shared/contracts/notes';
 
 // Mock file cleanup
 vi.mock('@/features/notesapp/services/notes/file-cleanup', () => ({
@@ -25,7 +26,7 @@ describe('NoteService', () => {
     await prisma.tag.deleteMany({});
     await prisma.category.deleteMany({});
     await prisma.notebook.deleteMany({});
-    
+
     await noteService.invalidateDefaultNotebookCache();
 
     vi.clearAllMocks();
@@ -42,14 +43,22 @@ describe('NoteService', () => {
       const note = await noteService.create({
         title: 'Test Note',
         content: 'Test Content',
-        color: null, notebookId: null, editorType: 'markdown', isPinned: false, isArchived: false, isFavorite: false, tagIds: [], categoryIds: [], relatedNoteIds: []
+        color: null,
+        notebookId: null,
+        editorType: 'markdown',
+        isPinned: false,
+        isArchived: false,
+        isFavorite: false,
+        tagIds: [],
+        categoryIds: [],
+        relatedNoteIds: [],
       });
 
       expect(note.title).toBe('Test Note');
       expect(note.notebookId).toBeDefined();
-      
+
       const notebook = await prisma.notebook.findUnique({
-        where: { id: note.notebookId! }
+        where: { id: note.notebookId! },
       });
       expect(notebook?.name).toBe('Default'); // Default name in repository
     });
@@ -61,7 +70,14 @@ describe('NoteService', () => {
         title: 'Find Me',
         content: 'Secret',
         isPinned: true,
-        color: null, notebookId: null, editorType: 'markdown', isArchived: false, isFavorite: false, tagIds: [], categoryIds: [], relatedNoteIds: []
+        color: null,
+        notebookId: null,
+        editorType: 'markdown',
+        isArchived: false,
+        isFavorite: false,
+        tagIds: [],
+        categoryIds: [],
+        relatedNoteIds: [],
       });
 
       const notes = await noteService.getAll({ isPinned: true });
@@ -73,8 +89,32 @@ describe('NoteService', () => {
     it('filters by isFavorite', async () => {
       if (!process.env['DATABASE_URL']) return;
 
-      await noteService.create({ title: 'Fav', content: '...', isFavorite: true, color: null, notebookId: null, editorType: 'markdown', isPinned: false, isArchived: false, tagIds: [], categoryIds: [], relatedNoteIds: [] });
-      await noteService.create({ title: 'Not Fav', content: '...', isFavorite: false, color: null, notebookId: null, editorType: 'markdown', isPinned: false, isArchived: false, tagIds: [], categoryIds: [], relatedNoteIds: [] });
+      await noteService.create({
+        title: 'Fav',
+        content: '...',
+        isFavorite: true,
+        color: null,
+        notebookId: null,
+        editorType: 'markdown',
+        isPinned: false,
+        isArchived: false,
+        tagIds: [],
+        categoryIds: [],
+        relatedNoteIds: [],
+      });
+      await noteService.create({
+        title: 'Not Fav',
+        content: '...',
+        isFavorite: false,
+        color: null,
+        notebookId: null,
+        editorType: 'markdown',
+        isPinned: false,
+        isArchived: false,
+        tagIds: [],
+        categoryIds: [],
+        relatedNoteIds: [],
+      });
 
       const favs = await noteService.getAll({ isFavorite: true });
       expect(favs).toHaveLength(1);
@@ -88,7 +128,15 @@ describe('NoteService', () => {
       await noteService.create({
         title: 'Long Note',
         content: longContent,
-        color: null, notebookId: null, editorType: 'markdown', isPinned: false, isArchived: false, isFavorite: false, tagIds: [], categoryIds: [], relatedNoteIds: []
+        color: null,
+        notebookId: null,
+        editorType: 'markdown',
+        isPinned: false,
+        isArchived: false,
+        isFavorite: false,
+        tagIds: [],
+        categoryIds: [],
+        relatedNoteIds: [],
       });
 
       const notes = await noteService.getAll({ truncateContent: true });
@@ -99,9 +147,45 @@ describe('NoteService', () => {
     it('searches notes by title or content', async () => {
       if (!process.env['DATABASE_URL']) return;
 
-      await noteService.create({ title: 'Specific Title', content: '...', color: null, notebookId: null, editorType: 'markdown', isPinned: false, isArchived: false, isFavorite: false, tagIds: [], categoryIds: [], relatedNoteIds: [] });
-      await noteService.create({ title: '...', content: 'Specific Content', color: null, notebookId: null, editorType: 'markdown', isPinned: false, isArchived: false, isFavorite: false, tagIds: [], categoryIds: [], relatedNoteIds: [] });
-      await noteService.create({ title: 'Other', content: '...', color: null, notebookId: null, editorType: 'markdown', isPinned: false, isArchived: false, isFavorite: false, tagIds: [], categoryIds: [], relatedNoteIds: [] });
+      await noteService.create({
+        title: 'Specific Title',
+        content: '...',
+        color: null,
+        notebookId: null,
+        editorType: 'markdown',
+        isPinned: false,
+        isArchived: false,
+        isFavorite: false,
+        tagIds: [],
+        categoryIds: [],
+        relatedNoteIds: [],
+      });
+      await noteService.create({
+        title: '...',
+        content: 'Specific Content',
+        color: null,
+        notebookId: null,
+        editorType: 'markdown',
+        isPinned: false,
+        isArchived: false,
+        isFavorite: false,
+        tagIds: [],
+        categoryIds: [],
+        relatedNoteIds: [],
+      });
+      await noteService.create({
+        title: 'Other',
+        content: '...',
+        color: null,
+        notebookId: null,
+        editorType: 'markdown',
+        isPinned: false,
+        isArchived: false,
+        isFavorite: false,
+        tagIds: [],
+        categoryIds: [],
+        relatedNoteIds: [],
+      });
 
       const byTitle = await noteService.getAll({ search: 'Specific Title' });
       expect(byTitle).toHaveLength(1);
@@ -115,11 +199,15 @@ describe('NoteService', () => {
     it('creates and retrieves notebooks', async () => {
       if (!process.env['DATABASE_URL']) return;
 
-      const nb = await noteService.createNotebook({ name: 'Work', color: null, defaultThemeId: null });
+      const nb = await noteService.createNotebook({
+        name: 'Work',
+        color: null,
+        defaultThemeId: null,
+      });
       expect(nb.name).toBe('Work');
 
       const all = await noteService.getAllNotebooks();
-      expect(all.some((n: any) => n.id === nb.id)).toBe(true);
+      expect(all.some((n: NotebookDto) => n.id === nb.id)).toBe(true);
     });
 
     it('gets or creates default notebook', async () => {
@@ -140,12 +228,28 @@ describe('NoteService', () => {
       const noteA = await noteService.create({
         title: 'Note A',
         content: 'Content A',
-        color: null, notebookId: null, editorType: 'markdown', isPinned: false, isArchived: false, isFavorite: false, tagIds: [], categoryIds: [], relatedNoteIds: []
+        color: null,
+        notebookId: null,
+        editorType: 'markdown',
+        isPinned: false,
+        isArchived: false,
+        isFavorite: false,
+        tagIds: [],
+        categoryIds: [],
+        relatedNoteIds: [],
       });
       const noteB = await noteService.create({
         title: 'Note B',
         content: 'Content B',
-        color: null, notebookId: null, editorType: 'markdown', isPinned: false, isArchived: false, isFavorite: false, tagIds: [], categoryIds: [], relatedNoteIds: []
+        color: null,
+        notebookId: null,
+        editorType: 'markdown',
+        isPinned: false,
+        isArchived: false,
+        isFavorite: false,
+        tagIds: [],
+        categoryIds: [],
+        relatedNoteIds: [],
       });
 
       // Relate A -> B
@@ -155,9 +259,9 @@ describe('NoteService', () => {
 
       // Check B -> A relation was created automatically by service
       const updatedB = await noteService.getById(noteB.id);
-      const bRelations = updatedB?.relationsFrom?.map((r: any) => r.targetNote?.id) || [];
+      const bRelations = updatedB?.relationsFrom?.map((r: NoteRelationWithTarget) => r.targetNote?.id) || [];
       expect(bRelations).toContain(noteA.id);
-      
+
       // Check population helper
       expect(updatedB?.relations?.map((r: { id: string }) => r.id)).toContain(noteA.id);
     });
@@ -165,12 +269,36 @@ describe('NoteService', () => {
     it('removes bidirectional relations when one side is updated', async () => {
       if (!process.env['DATABASE_URL']) return;
 
-      const noteA = await noteService.create({ title: 'A', content: '...', color: null, notebookId: null, editorType: 'markdown', isPinned: false, isArchived: false, isFavorite: false, tagIds: [], categoryIds: [], relatedNoteIds: [] });
-      const noteB = await noteService.create({ title: 'B', content: '...', color: null, notebookId: null, editorType: 'markdown', isPinned: false, isArchived: false, isFavorite: false, tagIds: [], categoryIds: [], relatedNoteIds: [] });
+      const noteA = await noteService.create({
+        title: 'A',
+        content: '...',
+        color: null,
+        notebookId: null,
+        editorType: 'markdown',
+        isPinned: false,
+        isArchived: false,
+        isFavorite: false,
+        tagIds: [],
+        categoryIds: [],
+        relatedNoteIds: [],
+      });
+      const noteB = await noteService.create({
+        title: 'B',
+        content: '...',
+        color: null,
+        notebookId: null,
+        editorType: 'markdown',
+        isPinned: false,
+        isArchived: false,
+        isFavorite: false,
+        tagIds: [],
+        categoryIds: [],
+        relatedNoteIds: [],
+      });
 
       // Add relation
       await noteService.update(noteA.id, { relatedNoteIds: [noteB.id] });
-      
+
       // Remove relation from A
       await noteService.update(noteA.id, { relatedNoteIds: [] });
 
@@ -184,8 +312,20 @@ describe('NoteService', () => {
     it('calls cleanupNoteFile when a note is deleted', async () => {
       if (!process.env['DATABASE_URL']) return;
 
-      const note = await noteService.create({ title: 'Delete Me', content: '...', color: null, notebookId: null, editorType: 'markdown', isPinned: false, isArchived: false, isFavorite: false, tagIds: [], categoryIds: [], relatedNoteIds: [] });
-      
+      const note = await noteService.create({
+        title: 'Delete Me',
+        content: '...',
+        color: null,
+        notebookId: null,
+        editorType: 'markdown',
+        isPinned: false,
+        isArchived: false,
+        isFavorite: false,
+        tagIds: [],
+        categoryIds: [],
+        relatedNoteIds: [],
+      });
+
       // Manually add a file record via prisma for testing
       await prisma.noteFile.create({
         data: {
@@ -195,11 +335,11 @@ describe('NoteService', () => {
           mimetype: 'image/png',
           size: 100,
           slotIndex: 0,
-        }
+        },
       });
 
       await noteService.delete(note.id);
-      
+
       expect(cleanupNoteFile).toHaveBeenCalledWith(note.id, 'uploads/test.png');
     });
   });
@@ -208,19 +348,28 @@ describe('NoteService', () => {
     it('manages category trees', async () => {
       if (!process.env['DATABASE_URL']) return;
 
-      const parent = await noteService.createCategory({ name: 'Parent', color: null, notebookId: null, themeId: null, sortIndex: null, parentId: null });
-      const child = await noteService.createCategory({ 
-        name: 'Child', 
+      const parent = await noteService.createCategory({
+        name: 'Parent',
+        color: null,
+        notebookId: null,
+        themeId: null,
+        sortIndex: null,
+        parentId: null,
+      });
+      const child = await noteService.createCategory({
+        name: 'Child',
         parentId: parent.id,
-        color: null, notebookId: null, themeId: null, sortIndex: null
+        color: null,
+        notebookId: null,
+        themeId: null,
+        sortIndex: null,
       });
 
       const tree = await noteService.getCategoryTree();
-      const parentInTree = tree.find((c: any) => c.id === parent.id);
-            
+      const parentInTree = tree.find((c: CategoryWithChildren) => c.id === parent.id);
+
       expect(parentInTree).toBeDefined();
-      expect(parentInTree?.children.some((c: any) => c.id === child.id)).toBe(true);
+      expect(parentInTree?.children.some((c: CategoryWithChildren) => c.id === child.id)).toBe(true);
     });
   });
 });
-      

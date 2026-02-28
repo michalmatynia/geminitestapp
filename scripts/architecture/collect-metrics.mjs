@@ -34,9 +34,7 @@ const generateMarkdown = (metrics) => {
   }
   lines.push(`- API routes: ${metrics.api.totalRoutes}`);
   lines.push(`- API delegated server routes: ${metrics.api.delegatedServerRoutes}`);
-  lines.push(
-    `- API routes without apiHandler/delegation: ${metrics.api.routesWithoutApiHandler}`
-  );
+  lines.push(`- API routes without apiHandler/delegation: ${metrics.api.routesWithoutApiHandler}`);
   lines.push(
     `- API explicit cache policy coverage: ${metrics.api.routesWithExplicitCachePolicy}/${metrics.api.totalRoutes} (${percentExplicitCache}%)`
   );

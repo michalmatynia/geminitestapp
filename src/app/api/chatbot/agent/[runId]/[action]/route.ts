@@ -19,13 +19,9 @@ type RouteParams = {
   action: string;
 };
 
-const notFound = (): Response =>
-  NextResponse.json({ error: 'Not found.' }, { status: 404 });
+const notFound = (): Response => NextResponse.json({ error: 'Not found.' }, { status: 404 });
 
-const GET_handler = async (
-  req: NextRequest,
-  params: RouteParams
-): Promise<Response> => {
+const GET_handler = async (req: NextRequest, params: RouteParams): Promise<Response> => {
   const action = params.action?.trim() ?? '';
 
   if (params.runId === 'snapshots' && action) {
@@ -61,10 +57,7 @@ const GET_handler = async (
   return notFound();
 };
 
-const POST_handler = async (
-  req: NextRequest,
-  params: RouteParams
-): Promise<Response> => {
+const POST_handler = async (req: NextRequest, params: RouteParams): Promise<Response> => {
   const action = params.action?.trim() ?? '';
   if (action === 'controls') {
     return await AgentCreatorAgentRunControlsPOST(req, {

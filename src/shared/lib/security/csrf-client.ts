@@ -55,11 +55,12 @@ export const isSameOriginUrl = (input: RequestInfo | URL): boolean => {
   if (typeof window === 'undefined') return true;
   const origin = window.location.origin;
   try {
-    const url = typeof input === 'string'
-      ? new URL(input, origin)
-      : input instanceof URL
-        ? input
-        : new URL(input.url, origin);
+    const url =
+      typeof input === 'string'
+        ? new URL(input, origin)
+        : input instanceof URL
+          ? input
+          : new URL(input.url, origin);
     return url.origin === origin;
   } catch {
     return true;

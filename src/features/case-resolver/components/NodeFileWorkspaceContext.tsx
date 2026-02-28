@@ -1,19 +1,19 @@
 'use client';
 
 import React, { createContext, useContext } from 'react';
-import type { 
-  AiNode, 
-  CaseResolverNodeMeta, 
-  CaseResolverFile, 
+import type {
+  AiNode,
+  CaseResolverNodeMeta,
+  CaseResolverFile,
   Edge,
   CaseResolverEdgeMeta,
   CaseResolverCompileResult,
   CaseResolverSnapshotNodeMeta as CaseResolverNodeFileMeta,
 } from '@/shared/contracts/case-resolver';
-import { 
-  NodeFileDocumentSearchScope, 
-  NodeFileDocumentSearchRow, 
-  NodeFileDocumentFolderTree 
+import {
+  NodeFileDocumentSearchScope,
+  NodeFileDocumentSearchRow,
+  NodeFileDocumentFolderTree,
 } from './CaseResolverNodeFileUtils';
 
 export type NodeFileWorkspaceContextValue = {
@@ -58,7 +58,7 @@ export type NodeFileWorkspaceContextValue = {
   }>;
   nodeMetaByNode: Record<string, CaseResolverNodeMeta>;
   edgeMetaByEdge: Record<string, CaseResolverEdgeMeta>;
-  
+
   // Derived / Logic
   filesById: Map<string, CaseResolverFile>;
   caseIdentifierLabelById: Map<string, string>;
@@ -71,7 +71,7 @@ export type NodeFileWorkspaceContextValue = {
   selectedNodeMeta: CaseResolverNodeMeta | null;
   selectedNodeFileMeta: CaseResolverNodeFileMeta | null;
   selectedFile: CaseResolverFile | null;
-  
+
   // Actions
   handleManualSave: () => void;
   selectNode: (nodeId: string | null, options?: { toggle?: boolean }) => void;
@@ -119,9 +119,7 @@ export function NodeFileWorkspaceProvider({
   children: React.ReactNode;
 }): React.JSX.Element {
   return (
-    <NodeFileWorkspaceContext.Provider value={value}>
-      {children}
-    </NodeFileWorkspaceContext.Provider>
+    <NodeFileWorkspaceContext.Provider value={value}>{children}</NodeFileWorkspaceContext.Provider>
   );
 }
 

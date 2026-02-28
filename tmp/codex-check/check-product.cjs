@@ -8,9 +8,9 @@ const PRODUCT_ID = 'ce5bba68-b82b-4f4b-948f-3aa81bb4a05a';
   await client.connect();
   const db = client.db(process.env.MONGODB_DB || 'app');
 
-  const p = await db.collection('products').findOne(
-    { $or: [{ id: PRODUCT_ID }, { _id: PRODUCT_ID }] }
-  );
+  const p = await db
+    .collection('products')
+    .findOne({ $or: [{ id: PRODUCT_ID }, { _id: PRODUCT_ID }] });
 
   if (!p) {
     console.log(JSON.stringify({ error: 'Product not found' }));
@@ -41,13 +41,36 @@ const PRODUCT_ID = 'ce5bba68-b82b-4f4b-948f-3aa81bb4a05a';
   if (catalogId) {
     const defs = await db.collection('product_parameters').find({ catalogId }).limit(3).toArray();
     const count = await db.collection('product_parameters').countDocuments({ catalogId });
-    console.log(JSON.stringify({ foundCatalogId: catalogId, paramDefCount: count, sample: defs.slice(0,2).map(d => ({ id: d.id, name: d.name })) }, null, 2));
+    console.log(
+      JSON.stringify(
+        {
+          foundCatalogId: catalogId,
+          paramDefCount: count,
+          sample: defs.slice(0, 2).map((d) => ({ id: d.id, name: d.name })),
+        },
+        null,
+        2
+      )
+    );
   } else {
     // Check if product_parameters collection exists at all
     const anyDefs = await db.collection('product_parameters').find({}).limit(3).toArray();
     const totalDefs = await db.collection('product_parameters').countDocuments({});
-    console.log(JSON.stringify({ noCatalogIdOnProduct: true, totalParamDefs: totalDefs, sampleDefs: anyDefs.map(d => ({ id: d.id, catalogId: d.catalogId, name: d.name })) }, null, 2));
+    console.log(
+      JSON.stringify(
+        {
+          noCatalogIdOnProduct: true,
+          totalParamDefs: totalDefs,
+          sampleDefs: anyDefs.map((d) => ({ id: d.id, catalogId: d.catalogId, name: d.name })),
+        },
+        null,
+        2
+      )
+    );
   }
 
   await client.close();
-})().catch((e) => { console.error(e.message); process.exit(1); });
+})().catch((e) => {
+  console.error(e.message);
+  process.exit(1);
+});

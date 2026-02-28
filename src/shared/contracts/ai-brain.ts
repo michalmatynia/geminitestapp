@@ -7,17 +7,14 @@ import { aiInsightRecordSchema } from './ai-insights';
  */
 
 const numberField = (min: number, max: number): z.ZodType<number | undefined> =>
-  z.preprocess(
-    (value: unknown) => {
-      if (value === '' || value === null || value === undefined) return undefined;
-      if (typeof value === 'string') {
-        const parsed = Number(value);
-        return Number.isFinite(parsed) ? parsed : undefined;
-      }
-      return value;
-    },
-    z.number().min(min).max(max).optional()
-  );
+  z.preprocess((value: unknown) => {
+    if (value === '' || value === null || value === undefined) return undefined;
+    if (typeof value === 'string') {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : undefined;
+    }
+    return value;
+  }, z.number().min(min).max(max).optional());
 
 export const aiBrainProviderSchema = z.enum(['model', 'agent']);
 export type AiBrainProvider = z.infer<typeof aiBrainProviderSchema>;
@@ -31,9 +28,47 @@ export const aiBrainFeatureSchema = z.enum([
   'image_studio',
   'ai_paths',
   'chatbot',
+  'products',
+  'case_resolver',
+  'agent_runtime',
+  'agent_teaching',
   'prompt_engine',
 ]);
 export type AiBrainFeature = z.infer<typeof aiBrainFeatureSchema>;
+
+export const aiBrainCapabilityKeySchema = z.enum([
+  'ai_paths.model',
+  'chatbot.reply',
+  'product.description.vision',
+  'product.description.generation',
+  'product.translation',
+  'product.validation.runtime',
+  'image_studio.general',
+  'image_studio.prompt_extract',
+  'image_studio.validation_pattern_learning',
+  'image_studio.ui_extractor',
+  'image_studio.mask_ai',
+  'cms.css_stream',
+  'case_resolver.ocr',
+  'agent_runtime.default',
+  'agent_runtime.memory_validation',
+  'agent_runtime.planner',
+  'agent_runtime.self_check',
+  'agent_runtime.extraction_validation',
+  'agent_runtime.tool_router',
+  'agent_runtime.loop_guard',
+  'agent_runtime.approval_gate',
+  'agent_runtime.memory_summarization',
+  'agent_runtime.selector_inference',
+  'agent_runtime.output_normalization',
+  'agent_teaching.chat',
+  'agent_teaching.embeddings',
+  'insights.analytics',
+  'insights.runtime_analytics',
+  'insights.system_logs',
+  'insights.error_logs',
+]);
+export type AiBrainCapabilityKey = z.infer<typeof aiBrainCapabilityKeySchema>;
 
 export const aiBrainAssignmentSchema = z.object({
   enabled: z.boolean().default(true),
@@ -48,10 +83,20 @@ export const aiBrainAssignmentSchema = z.object({
 
 export type AiBrainAssignment = z.infer<typeof aiBrainAssignmentSchema>;
 export type AiBrainAssignmentDto = AiBrainAssignment;
+export const aiBrainCapabilityAssignmentSchema = aiBrainAssignmentSchema;
+export type AiBrainCapabilityAssignment = AiBrainAssignment;
+export type AiBrainCapabilityAssignmentDto = AiBrainCapabilityAssignment;
 
 export const aiBrainSettingsSchema = z.object({
   defaults: aiBrainAssignmentSchema,
-  assignments: z.record(aiBrainFeatureSchema, aiBrainAssignmentSchema.optional()).optional().default({} as Record<AiBrainFeature, AiBrainAssignment>),
+  assignments: z
+    .record(aiBrainFeatureSchema, aiBrainAssignmentSchema.optional())
+    .optional()
+    .default({} as Record<AiBrainFeature, AiBrainAssignment>),
+  capabilities: z
+    .record(aiBrainCapabilityKeySchema, aiBrainCapabilityAssignmentSchema.optional())
+    .optional()
+    .default({} as Record<AiBrainCapabilityKey, AiBrainCapabilityAssignment>),
 });
 
 export type AiBrainSettings = z.infer<typeof aiBrainSettingsSchema>;
@@ -85,22 +130,52 @@ export const aiBrainProviderCatalogSchema = z.object({
 export type AiBrainProviderCatalog = z.infer<typeof aiBrainProviderCatalogSchema>;
 export type AiBrainProviderCatalogDto = AiBrainProviderCatalog;
 
+export const brainModelFamilySchema = z.enum([
+  'chat',
+  'embedding',
+  'ocr',
+  'vision_extract',
+  'image_generation',
+  'validation',
+]);
+export type BrainModelFamily = z.infer<typeof brainModelFamilySchema>;
+
+export const brainModelModalitySchema = z.enum(['text', 'image', 'multimodal']);
+export type BrainModelModality = z.infer<typeof brainModelModalitySchema>;
+
+export const brainModelDescriptorSchema = z.object({
+  id: z.string().trim().min(1),
+  family: brainModelFamilySchema,
+  modality: brainModelModalitySchema,
+  vendor: z.enum(['openai', 'ollama', 'anthropic', 'gemini']),
+  supportsStreaming: z.boolean().default(false),
+  supportsJsonMode: z.boolean().default(false),
+});
+
+export type BrainModelDescriptor = z.infer<typeof brainModelDescriptorSchema>;
+export type BrainModelDescriptorDto = BrainModelDescriptor;
+
 /**
  * AI Brain Query Response DTOs
  */
 
 export const brainModelsResponseSchema = z.object({
   models: z.array(z.string()).default([]),
-  warning: z.object({
-    code: z.string().optional(),
-    message: z.string().optional(),
-  }).optional(),
-  sources: z.object({
-    modelPresets: z.array(z.string()).default([]),
-    paidModels: z.array(z.string()).default([]),
-    configuredOllamaModels: z.array(z.string()).default([]),
-    liveOllamaModels: z.array(z.string()).default([]),
-  }).optional(),
+  descriptors: z.record(z.string(), brainModelDescriptorSchema).optional().default({}),
+  warning: z
+    .object({
+      code: z.string().optional(),
+      message: z.string().optional(),
+    })
+    .optional(),
+  sources: z
+    .object({
+      modelPresets: z.array(z.string()).default([]),
+      paidModels: z.array(z.string()).default([]),
+      configuredOllamaModels: z.array(z.string()).default([]),
+      liveOllamaModels: z.array(z.string()).default([]),
+    })
+    .optional(),
 });
 
 export type BrainModelsResponse = z.infer<typeof brainModelsResponseSchema>;

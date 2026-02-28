@@ -4,12 +4,24 @@ import { Box, Eye, EyeOff, Trash2, Plus, GripVertical, type LucideIcon } from 'l
 import React, { useMemo, useState } from 'react';
 
 import { isCmsSectionHidden } from '@/features/cms/utils/page-builder-normalization';
-import { TreeRow, TreeCaret, TreeActionButton, TreeActionSlot, TreeContextMenu, type TreeContextMenuItem, EmptyState } from '@/shared/ui';
+import {
+  TreeRow,
+  TreeCaret,
+  TreeActionButton,
+  TreeActionSlot,
+  TreeContextMenu,
+  type TreeContextMenuItem,
+  EmptyState,
+} from '@/shared/ui';
 import { DRAG_KEYS, hasDragType, resolveVerticalDropPosition } from '@/shared/utils/drag-drop';
 
 import { usePageBuilder } from '../../../hooks/usePageBuilderContext';
 import { useTreeActions } from '../../../hooks/useTreeActionsContext';
-import { readBlockDragData, readSectionDragData, setSectionDragData } from '../../../utils/page-builder-dnd';
+import {
+  readBlockDragData,
+  readSectionDragData,
+  setSectionDragData,
+} from '@/features/cms/utils/page-builder-dnd';
 import { BlockPicker } from '../BlockPicker';
 import { getSectionDefinition } from '../section-registry';
 import { BlockNodeItem } from './BlockNodeItem';
@@ -17,39 +29,23 @@ import { ColumnNodeItem } from './ColumnNodeItem';
 import { useComponentTreePanelContext } from './ComponentTreePanelContext';
 import { RowNodeItem } from './RowNodeItem';
 import { SlideshowFrameNodeItem } from './SlideshowFrameNodeItem';
-import {
-  SECTION_ICONS,
-  CONVERTIBLE_SECTION_TYPES,
-  resolveNodeLabel,
-} from './tree-constants';
+import { SECTION_ICONS, CONVERTIBLE_SECTION_TYPES, resolveNodeLabel } from './tree-constants';
 import { TreeSectionProvider } from './TreeSectionContext';
 import { useDragStateExtract } from '../../../hooks/useDragStateExtract';
 import {
   isCmsSectionSamePositionDrop,
   resolveCmsSectionTargetIndex,
-} from '../utils/cms-tree-external-drop';
+} from '@/features/cms/components/page-builder/utils/cms-tree-external-drop';
 
 import type { SectionNodeItemProps } from './tree-types';
 import type { BlockInstance, PageZone } from '../../../types/page-builder';
 
-export function SectionNodeItem({
-  section,
-  sectionIndex,
-}: SectionNodeItemProps): React.ReactNode {
-  const {
-    moveSectionByMaster,
-    startSectionMasterDrag,
-    endSectionMasterDrag,
-  } = useComponentTreePanelContext();
+export function SectionNodeItem({ section, sectionIndex }: SectionNodeItemProps): React.ReactNode {
+  const { moveSectionByMaster, startSectionMasterDrag, endSectionMasterDrag } =
+    useComponentTreePanelContext();
   const { state: pbState } = usePageBuilder();
-  const {
-    expandedIds,
-    selectNode,
-    toggleExpand,
-    blockActions,
-    sectionActions,
-    gridActions,
-  } = useTreeActions();
+  const { expandedIds, selectNode, toggleExpand, blockActions, sectionActions, gridActions } =
+    useTreeActions();
 
   const selectedNodeId = pbState.selectedNodeId;
 
@@ -122,7 +118,10 @@ export function SectionNodeItem({
   );
 
   const resolveSectionDropPosition = (clientY: number, rect: DOMRect): 'above' | 'below' | null => {
-    const position = resolveVerticalDropPosition(clientY, rect, { thresholdRatio: 0.3, thresholdPx: 8 });
+    const position = resolveVerticalDropPosition(clientY, rect, {
+      thresholdRatio: 0.3,
+      thresholdPx: 8,
+    });
     if (position === 'before') return 'above';
     if (position === 'after') return 'below';
     return null;
@@ -239,10 +238,17 @@ export function SectionNodeItem({
                 } else if (section.type === 'Grid') {
                   if (CONVERTIBLE_SECTION_TYPES.includes(dragSectionType ?? '') && !dropPosition) {
                     const firstColumn =
-                  gridRows.flatMap((row: BlockInstance) => row.blocks ?? []).find((b: BlockInstance) => b.type === 'Column') ??
-                  gridColumns.find((b: BlockInstance) => b.type === 'Column');
+                      gridRows
+                        .flatMap((row: BlockInstance) => row.blocks ?? [])
+                        .find((b: BlockInstance) => b.type === 'Column') ??
+                      gridColumns.find((b: BlockInstance) => b.type === 'Column');
                     if (firstColumn) {
-                      sectionActions.dropToColumn(dragSectionId, section.id, firstColumn.id, (firstColumn.blocks ?? []).length);
+                      sectionActions.dropToColumn(
+                        dragSectionId,
+                        section.id,
+                        firstColumn.id,
+                        (firstColumn.blocks ?? []).length
+                      );
                       endSectionDrag();
                       return;
                     }
@@ -287,8 +293,10 @@ export function SectionNodeItem({
                     );
                   } else {
                     const firstColumn =
-                  gridRows.flatMap((row: BlockInstance) => row.blocks ?? []).find((b: BlockInstance) => b.type === 'Column') ??
-                  gridColumns.find((b: BlockInstance) => b.type === 'Column');
+                      gridRows
+                        .flatMap((row: BlockInstance) => row.blocks ?? [])
+                        .find((b: BlockInstance) => b.type === 'Column') ??
+                      gridColumns.find((b: BlockInstance) => b.type === 'Column');
                     if (firstColumn) {
                       blockActions.dropToColumn(
                         dragBlockId,
@@ -413,7 +421,6 @@ export function SectionNodeItem({
           </TreeRow>
         </TreeContextMenu>
 
-
         {isExpanded && section.type === 'Grid' && (
           <div className='ml-4 border-l border-border/30 pl-1'>
             {gridRows.length > 0 ? (
@@ -444,15 +451,13 @@ export function SectionNodeItem({
             {gridLayerEntries.length > 0 && (
               <div className='mt-2 space-y-1'>
                 <div className='px-2 text-[10px] uppercase tracking-wide text-gray-500'>
-                Grid backgrounds
+                  Grid backgrounds
                 </div>
-                {gridLayerEntries.map(({ block, index }: { block: BlockInstance; index: number }) => (
-                  <BlockNodeItem
-                    key={block.id}
-                    block={block}
-                    index={index}
-                  />
-                ))}
+                {gridLayerEntries.map(
+                  ({ block, index }: { block: BlockInstance; index: number }) => (
+                    <BlockNodeItem key={block.id} block={block} index={index} />
+                  )
+                )}
               </div>
             )}
             <button
@@ -464,7 +469,7 @@ export function SectionNodeItem({
               className='mt-1 flex items-center gap-1 rounded px-2 py-1 text-xs text-gray-400 hover:bg-muted/40 hover:text-gray-200'
             >
               <Plus className='size-3' />
-            Add row
+              Add row
             </button>
           </div>
         )}
@@ -506,7 +511,14 @@ export function SectionNodeItem({
               const fromColumn = blockDrag.fromColumnId;
               const fromParent = blockDrag.fromParentBlockId;
               if (fromColumn || fromParent) {
-                blockActions.dropToSection(dragId, fromSection, fromColumn || undefined, section.id, section.blocks.length, fromParent || undefined);
+                blockActions.dropToSection(
+                  dragId,
+                  fromSection,
+                  fromColumn || undefined,
+                  section.id,
+                  section.blocks.length,
+                  fromParent || undefined
+                );
               } else {
                 blockActions.drop(dragId, fromSection, section.id, section.blocks.length);
               }
@@ -514,21 +526,13 @@ export function SectionNodeItem({
             }}
           >
             {hasBlocks ? (
-              section.blocks.map((block: BlockInstance, index: number) => (
+              section.blocks.map((block: BlockInstance, index: number) =>
                 isSlideshowSection && block.type === 'SlideshowFrame' ? (
-                  <SlideshowFrameNodeItem
-                    key={block.id}
-                    frame={block}
-                    index={index}
-                  />
+                  <SlideshowFrameNodeItem key={block.id} frame={block} index={index} />
                 ) : (
-                  <BlockNodeItem
-                    key={block.id}
-                    block={block}
-                    index={index}
-                  />
+                  <BlockNodeItem key={block.id} block={block} index={index} />
                 )
-              ))
+              )
             ) : (
               <EmptyState
                 title='No blocks yet'

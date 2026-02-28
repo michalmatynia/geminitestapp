@@ -1,7 +1,11 @@
 import 'server-only';
 
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import type { ProductDraftDto, CreateProductDraftDto, UpdateProductDraftDto } from '@/features/products/server';
+import type {
+  ProductDraftDto,
+  CreateProductDraftDto,
+  UpdateProductDraftDto,
+} from '@/features/products/server';
 
 import * as repo from './draft-repository';
 
@@ -47,7 +51,10 @@ export const createDraft = async (input: CreateProductDraftDto): Promise<Product
   }
 };
 
-export const updateDraft = async (id: string, input: UpdateProductDraftDto): Promise<ProductDraftDto | null> => {
+export const updateDraft = async (
+  id: string,
+  input: UpdateProductDraftDto
+): Promise<ProductDraftDto | null> => {
   try {
     return await repo.updateDraft(id, input);
   } catch (error) {

@@ -178,9 +178,7 @@ export const mergeRuntimePayload = (
   current: Record<string, unknown> | undefined,
   historyValue: unknown
 ): Record<string, unknown> | undefined => {
-  const historical = isPlainRecord(historyValue)
-    ? historyValue
-    : undefined;
+  const historical = isPlainRecord(historyValue) ? historyValue : undefined;
   if (!historical && !current) return undefined;
   if (!historical) return current;
   if (!current) return historical;

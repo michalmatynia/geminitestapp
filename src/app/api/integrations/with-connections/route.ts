@@ -4,6 +4,7 @@ import { apiHandler } from '@/shared/lib/api/api-handler';
 
 import { GET_handler } from './handler';
 
-export const GET = apiHandler(
-  GET_handler,
-  { source: 'integrations.with-connections.GET', requireCsrf: false });
+export const GET = apiHandler(GET_handler, {
+  source: 'integrations.with-connections.GET',
+  requireCsrf: false,
+});

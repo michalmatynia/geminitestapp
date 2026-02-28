@@ -4,10 +4,10 @@ import path from 'path';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { deleteImageStudioRunsByProject } from '@/features/ai/image-studio/server/run-repository';
-import { deleteImageStudioSlotLinksForProject } from '@/features/ai/image-studio/server/slot-link-repository';
-import { deleteImageStudioSlotsByProject } from '@/features/ai/image-studio/server/slot-repository';
-import { getImageStudioProjectSettingsKey } from '@/features/ai/image-studio/utils/studio-settings';
+import { deleteImageStudioRunsByProject } from '@/shared/lib/ai/image-studio/server/run-repository';
+import { deleteImageStudioSlotLinksForProject } from '@/shared/lib/ai/image-studio/server/slot-link-repository';
+import { deleteImageStudioSlotsByProject } from '@/shared/lib/ai/image-studio/server/slot-repository';
+import { getImageStudioProjectSettingsKey } from '@/shared/lib/ai/image-studio/studio-settings';
 import { getImageFileRepository } from '@/features/files/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError, operationFailedError } from '@/shared/errors/app-error';
@@ -43,8 +43,7 @@ const SLOT_LINK_COLLECTION = 'image_studio_slot_links';
 const PROJECT_METADATA_FILENAME = '.image-studio-project.json';
 const SETTINGS_COLLECTION = 'settings';
 
-const sanitizeProjectId = (value: string): string =>
-  value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
+const sanitizeProjectId = (value: string): string => value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
 
 const isSafeProjectIdCandidate = (value: string): boolean =>
   value.length > 0 && !value.includes('/') && !value.includes('\\');
@@ -63,8 +62,8 @@ const toProjectSettingsKeys = (projectIds: string[]): string[] =>
     new Set(
       projectIds
         .map((projectId) => getImageStudioProjectSettingsKey(projectId))
-        .filter((key): key is string => typeof key === 'string' && key.trim().length > 0),
-    ),
+        .filter((key): key is string => typeof key === 'string' && key.trim().length > 0)
+    )
   );
 
 const canUsePrismaSettings = (): boolean =>
@@ -72,7 +71,7 @@ const canUsePrismaSettings = (): boolean =>
 
 const readSettingByKey = async (
   key: string,
-  provider: 'prisma' | 'mongodb',
+  provider: 'prisma' | 'mongodb'
 ): Promise<string | null> => {
   if (provider === 'mongodb') {
     if (!process.env['MONGODB_URI']) return null;
@@ -93,7 +92,7 @@ const readSettingByKey = async (
 const upsertSettingByKey = async (
   key: string,
   value: string,
-  provider: 'prisma' | 'mongodb',
+  provider: 'prisma' | 'mongodb'
 ): Promise<void> => {
   if (provider === 'mongodb') {
     if (!process.env['MONGODB_URI']) {
@@ -101,11 +100,13 @@ const upsertSettingByKey = async (
     }
     const mongo = await getMongoDb();
     const now = new Date();
-    await mongo.collection(SETTINGS_COLLECTION).updateOne(
-      { key },
-      { $set: { value, updatedAt: now }, $setOnInsert: { createdAt: now } },
-      { upsert: true },
-    );
+    await mongo
+      .collection(SETTINGS_COLLECTION)
+      .updateOne(
+        { key },
+        { $set: { value, updatedAt: now }, $setOnInsert: { createdAt: now } },
+        { upsert: true }
+      );
     return;
   }
   if (!canUsePrismaSettings()) {
@@ -120,15 +121,13 @@ const upsertSettingByKey = async (
 
 const deleteSettingsByKeys = async (
   keys: string[],
-  provider: 'prisma' | 'mongodb',
+  provider: 'prisma' | 'mongodb'
 ): Promise<number> => {
   if (keys.length === 0) return 0;
   if (provider === 'mongodb') {
     if (!process.env['MONGODB_URI']) return 0;
     const mongo = await getMongoDb();
-    const result = await mongo
-      .collection(SETTINGS_COLLECTION)
-      .deleteMany({ key: { $in: keys } });
+    const result = await mongo.collection(SETTINGS_COLLECTION).deleteMany({ key: { $in: keys } });
     return result.deletedCount ?? 0;
   }
   if (!canUsePrismaSettings()) return 0;
@@ -223,9 +222,7 @@ const resolveProjectSummaryFromDirectory = async (
       ? dirStats.birthtimeMs
       : Date.now();
   const updatedMs =
-    Number.isFinite(dirStats.mtimeMs) && dirStats.mtimeMs > 0
-      ? dirStats.mtimeMs
-      : createdMs;
+    Number.isFinite(dirStats.mtimeMs) && dirStats.mtimeMs > 0 ? dirStats.mtimeMs : createdMs;
   const fallbackCreatedAt = new Date(createdMs).toISOString();
   const fallbackUpdatedAt = new Date(updatedMs).toISOString();
 
@@ -272,7 +269,7 @@ const upsertProjectSummary = async (
   options?: {
     canvasWidthPx?: number | null;
     canvasHeightPx?: number | null;
-  },
+  }
 ): Promise<{
   id: string;
   createdAt: string;
@@ -425,10 +422,7 @@ async function migrateSlotRecords(
       setPayload['imageUrl'] = nextImageUrl;
       updatedImageUrls += 1;
     }
-    const result = await collection.updateOne(
-      { _id: doc._id },
-      { $set: setPayload }
-    );
+    const result = await collection.updateOne({ _id: doc._id }, { $set: setPayload });
     if (result.modifiedCount > 0) {
       updatedSlots += 1;
     }
@@ -437,10 +431,7 @@ async function migrateSlotRecords(
   return { updatedSlots, updatedImageUrls };
 }
 
-async function migrateRunRecords(
-  fromProjectIds: string[],
-  toProjectId: string
-): Promise<number> {
+async function migrateRunRecords(fromProjectIds: string[], toProjectId: string): Promise<number> {
   const db = await getMongoDb();
   const collection = db.collection(RUN_COLLECTION);
   const result = await collection.updateMany(
@@ -550,7 +541,7 @@ export async function deleteImageStudioProjectHandler(
   stats.imageFileRecordsDeleted = await deleteProjectImageFileRecords(candidates);
   stats.settingsKeysDeleted = await deleteSettingsByKeys(
     toProjectSettingsKeys(candidates),
-    await getAppDbProvider(),
+    await getAppDbProvider()
   );
   if (stats.settingsKeysDeleted > 0) {
     clearSettingsCache();
@@ -618,15 +609,13 @@ export async function patchImageStudioProjectHandler(
       };
     })
   );
-  const sourceExists = sourceStates.some(
-    (state) => state.hasData || state.hasDirectory
-  );
+  const sourceExists = sourceStates.some((state) => state.hasData || state.hasDirectory);
   if (!sourceExists) {
     throw notFoundError('Project not found', { projectId: rawProjectId });
   }
   const resolvedSourceProjectId =
-    sourceStates.find((state) => state.hasData || state.hasDirectory)
-      ?.projectId ?? fromProjectIds[0]!;
+    sourceStates.find((state) => state.hasData || state.hasDirectory)?.projectId ??
+    fromProjectIds[0]!;
 
   if (parsed.data.projectId === undefined) {
     const project = await upsertProjectSummary(
@@ -656,10 +645,7 @@ export async function patchImageStudioProjectHandler(
   }
 
   if (fromProjectIds.includes(toProjectId)) {
-    const project = await upsertProjectSummary(
-      toProjectId,
-      projectSummaryUpsertOptions
-    );
+    const project = await upsertProjectSummary(toProjectId, projectSummaryUpsertOptions);
     return NextResponse.json({
       projectId: toProjectId,
       project,
@@ -682,7 +668,10 @@ export async function patchImageStudioProjectHandler(
     throw badRequestError('Invalid target project id.');
   }
   const [targetDirExists, targetHasData] = await Promise.all([
-    fs.stat(targetDir).then((stats) => stats.isDirectory()).catch(() => false),
+    fs
+      .stat(targetDir)
+      .then((stats) => stats.isDirectory())
+      .catch(() => false),
     hasProjectData(toProjectId),
   ]);
   if (targetDirExists || targetHasData) {
@@ -698,10 +687,7 @@ export async function patchImageStudioProjectHandler(
     fromProjectIds,
     toProjectId,
   });
-  const project = await upsertProjectSummary(
-    toProjectId,
-    projectSummaryUpsertOptions
-  );
+  const project = await upsertProjectSummary(toProjectId, projectSummaryUpsertOptions);
 
   return NextResponse.json({
     projectId: toProjectId,

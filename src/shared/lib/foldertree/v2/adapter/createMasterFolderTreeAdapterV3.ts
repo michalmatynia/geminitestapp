@@ -11,7 +11,6 @@ import type {
   MasterFolderTreeAdapterV3,
 } from '../types/index';
 
-
 type MoveOperation = Extract<MasterFolderTreePersistOperation, { type: 'move' }>;
 type ReorderOperation = Extract<MasterFolderTreePersistOperation, { type: 'reorder' }>;
 type RenameOperation = Extract<MasterFolderTreePersistOperation, { type: 'rename' }>;
@@ -89,9 +88,7 @@ const applyDecodedOperation = async <TEntity extends string>({
   if (operation.type === 'move') {
     const node = decodeNodeId(operation.nodeId);
     if (!node || !handlers?.onMove) return;
-    const targetParent = operation.targetParentId
-      ? decodeNodeId(operation.targetParentId)
-      : null;
+    const targetParent = operation.targetParentId ? decodeNodeId(operation.targetParentId) : null;
     const nodes = await handlers.onMove({ operation, context, node, targetParent });
     return {
       tx,
@@ -147,9 +144,9 @@ export function createMasterFolderTreeAdapterV3<TEntity extends string>({
     ...(fetchState ? { fetchState } : {}),
     loadNodes: fetchState
       ? async (): Promise<MasterTreeNode[]> => {
-        const { nodes } = await fetchState();
-        return nodes;
-      }
+          const { nodes } = await fetchState();
+          return nodes;
+        }
       : undefined,
     prepare: defaultPrepare,
     apply: async (

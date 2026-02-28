@@ -73,9 +73,7 @@ export const invalidateAuthSecurityProfileCache = (userId?: string): void => {
   securityInflight.clear();
 };
 
-export const getAuthSecurityProfile = async (
-  userId: string
-): Promise<AuthSecurityProfile> => {
+export const getAuthSecurityProfile = async (userId: string): Promise<AuthSecurityProfile> => {
   const now = Date.now();
   const cached = securityCache.get(userId);
   if (cached && now - cached.ts < AUTH_SECURITY_CACHE_TTL_MS) {

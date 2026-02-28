@@ -83,8 +83,7 @@ export const collectUiInventory = async (
         return parts.join(' > ');
       };
 
-      const visible = (el: Element): boolean =>
-        (el as HTMLElement).offsetParent !== null;
+      const visible = (el: Element): boolean => (el as HTMLElement).offsetParent !== null;
       const describe = (el: Element): UiElement => ({
         tag: el.tagName.toLowerCase(),
         id: (el as HTMLElement).id || null,
@@ -102,7 +101,7 @@ export const collectUiInventory = async (
         .filter(visible)
         .map(describe);
       const buttons = Array.from(
-        document.querySelectorAll('button, input[type=\'submit\'], input[type=\'button\']')
+        document.querySelectorAll("button, input[type='submit'], input[type='button']")
       )
         .filter(visible)
         .map(describe);
@@ -112,9 +111,7 @@ export const collectUiInventory = async (
           ...describe(el),
           href: (el as HTMLAnchorElement).href,
         }));
-      const headings = Array.from(
-        document.querySelectorAll('h1, h2, h3, h4, h5, h6')
-      )
+      const headings = Array.from(document.querySelectorAll('h1, h2, h3, h4, h5, h6'))
         .filter(visible)
         .map(describe);
       const forms = Array.from(document.querySelectorAll('form'))

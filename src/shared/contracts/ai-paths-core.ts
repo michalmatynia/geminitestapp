@@ -1,10 +1,7 @@
 import { z } from 'zod';
 import { dtoBaseSchema } from './base';
 import { playwrightSettingsSchema } from './playwright';
-import {
-  promptValidationRuleSchema,
-  promptValidationScopeSchema,
-} from './prompt-engine';
+import { promptValidationRuleSchema, promptValidationScopeSchema } from './prompt-engine';
 
 /**
  * AI Path Node Types
@@ -62,9 +59,7 @@ export type NodeType = AiNodeTypeDto;
 
 export const triggerConfigSchema = z.object({
   event: z.string(),
-  contextMode: z
-    .enum(['simulation_required', 'simulation_preferred', 'trigger_only'])
-    .optional(),
+  contextMode: z.enum(['simulation_required', 'simulation_preferred', 'trigger_only']).optional(),
 });
 
 export type TriggerConfigDto = z.infer<typeof triggerConfigSchema>;
@@ -75,9 +70,7 @@ export const simulationConfigSchema = z.object({
   productId: z.string(),
   entityType: z.string().optional(),
   entityId: z.string().optional(),
-  runBehavior: z
-    .enum(['before_connected_trigger', 'manual_only'])
-    .optional(),
+  runBehavior: z.enum(['before_connected_trigger', 'manual_only']).optional(),
 });
 
 export type SimulationConfigDto = z.infer<typeof simulationConfigSchema>;
@@ -85,9 +78,7 @@ export type SimulationConfig = SimulationConfigDto;
 export type SimulationRunBehavior = NonNullable<SimulationConfig['runBehavior']>;
 
 export const fetcherConfigSchema = z.object({
-  sourceMode: z
-    .enum(['live_context', 'simulation_id', 'live_then_simulation'])
-    .optional(),
+  sourceMode: z.enum(['live_context', 'simulation_id', 'live_then_simulation']).optional(),
   entityType: z.string().optional(),
   entityId: z.string().optional(),
   productId: z.string().optional(),
@@ -172,12 +163,12 @@ export type MapperConfigDto = z.infer<typeof mapperConfigSchema>;
 export type MapperConfig = MapperConfigDto;
 
 export const boundsNormalizerInputFormatSchema = z.enum([
-  'pixels_tlwh',          // {left,top,width,height} in pixels — pass-through (default)
-  'pixels_tlbr',          // {x1,y1,x2,y2} in pixels → convert
+  'pixels_tlwh', // {left,top,width,height} in pixels — pass-through (default)
+  'pixels_tlbr', // {x1,y1,x2,y2} in pixels → convert
   'gemini_millirelative', // [y1,x1,y2,x2] on 0-1000 scale → multiply by image dims
-  'relative_xywh',        // [cx,cy,w,h] normalised 0-1 (YOLO) → convert + multiply
-  'percentage_tlwh',      // {left,top,width,height} as 0-100 % → multiply by image dims
-  'auto',                 // Inspect input shape and infer format
+  'relative_xywh', // [cx,cy,w,h] normalised 0-1 (YOLO) → convert + multiply
+  'percentage_tlwh', // {left,top,width,height} as 0-100 % → multiply by image dims
+  'auto', // Inspect input shape and infer format
 ]);
 
 export const boundsNormalizerConfigSchema = z.object({
@@ -186,16 +177,16 @@ export const boundsNormalizerConfigSchema = z.object({
   /** Dot-path into value to locate the bounds object/array. Leave empty for root. */
   boundsPath: z.string().optional(),
   /** Field name overrides for non-standard APIs (defaults: left/top/width/height). */
-  leftField:   z.string().optional(),
-  topField:    z.string().optional(),
-  widthField:  z.string().optional(),
+  leftField: z.string().optional(),
+  topField: z.string().optional(),
+  widthField: z.string().optional(),
   heightField: z.string().optional(),
   /**
    * For relative/percentage formats: dot-path inside the context port value
    * to find the source image width/height.
    * Defaults to reading imageWidth / imageHeight directly from the context object.
    */
-  imageWidthPath:  z.string().optional(),
+  imageWidthPath: z.string().optional(),
   imageHeightPath: z.string().optional(),
   /** Optional confidence score field path in the raw bounds object. */
   confidencePath: z.string().optional(),
@@ -247,7 +238,11 @@ export type MutatorConfigDto = z.infer<typeof mutatorConfigSchema>;
 export type MutatorConfig = MutatorConfigDto;
 
 export const stringMutatorOperationSchema = z.discriminatedUnion('type', [
-  z.object({ id: z.string().optional(), type: z.literal('trim'), mode: z.enum(['both', 'start', 'end']).optional() }),
+  z.object({
+    id: z.string().optional(),
+    type: z.literal('trim'),
+    mode: z.enum(['both', 'start', 'end']).optional(),
+  }),
   z.object({
     id: z.string().optional(),
     type: z.literal('replace'),
@@ -265,9 +260,23 @@ export const stringMutatorOperationSchema = z.discriminatedUnion('type', [
     useRegex: z.boolean().optional(),
     flags: z.string().optional(),
   }),
-  z.object({ id: z.string().optional(), type: z.literal('case'), mode: z.enum(['upper', 'lower', 'title']) }),
-  z.object({ id: z.string().optional(), type: z.literal('append'), value: z.string(), position: z.enum(['prefix', 'suffix']).optional() }),
-  z.object({ id: z.string().optional(), type: z.literal('slice'), start: z.number().optional(), end: z.number().optional() }),
+  z.object({
+    id: z.string().optional(),
+    type: z.literal('case'),
+    mode: z.enum(['upper', 'lower', 'title']),
+  }),
+  z.object({
+    id: z.string().optional(),
+    type: z.literal('append'),
+    value: z.string(),
+    position: z.enum(['prefix', 'suffix']).optional(),
+  }),
+  z.object({
+    id: z.string().optional(),
+    type: z.literal('slice'),
+    start: z.number().optional(),
+    end: z.number().optional(),
+  }),
 ]);
 
 export type StringMutatorOperationDto = z.infer<typeof stringMutatorOperationSchema>;
@@ -288,29 +297,14 @@ export const validatorConfigSchema = z.object({
 export type ValidatorConfigDto = z.infer<typeof validatorConfigSchema>;
 export type ValidatorConfig = ValidatorConfigDto;
 
-export const validationPatternSourceSchema = z.enum([
-  'global_stack',
-  'path_local',
-]);
-export type ValidationPatternSourceDto = z.infer<
-  typeof validationPatternSourceSchema
->;
+export const validationPatternSourceSchema = z.enum(['global_stack', 'path_local']);
+export type ValidationPatternSourceDto = z.infer<typeof validationPatternSourceSchema>;
 
-export const validationPatternRuntimeModeSchema = z.enum([
-  'validate_only',
-  'validate_and_autofix',
-]);
-export type ValidationPatternRuntimeModeDto = z.infer<
-  typeof validationPatternRuntimeModeSchema
->;
+export const validationPatternRuntimeModeSchema = z.enum(['validate_only', 'validate_and_autofix']);
+export type ValidationPatternRuntimeModeDto = z.infer<typeof validationPatternRuntimeModeSchema>;
 
-export const validationPatternFailPolicySchema = z.enum([
-  'block_on_error',
-  'report_only',
-]);
-export type ValidationPatternFailPolicyDto = z.infer<
-  typeof validationPatternFailPolicySchema
->;
+export const validationPatternFailPolicySchema = z.enum(['block_on_error', 'report_only']);
+export type ValidationPatternFailPolicyDto = z.infer<typeof validationPatternFailPolicySchema>;
 
 export const validationPatternInputPortSchema = z.enum([
   'auto',
@@ -319,17 +313,10 @@ export const validationPatternInputPortSchema = z.enum([
   'result',
   'context',
 ]);
-export type ValidationPatternInputPortDto = z.infer<
-  typeof validationPatternInputPortSchema
->;
+export type ValidationPatternInputPortDto = z.infer<typeof validationPatternInputPortSchema>;
 
-export const validationPatternOutputPortSchema = z.enum([
-  'value',
-  'result',
-]);
-export type ValidationPatternOutputPortDto = z.infer<
-  typeof validationPatternOutputPortSchema
->;
+export const validationPatternOutputPortSchema = z.enum(['value', 'result']);
+export type ValidationPatternOutputPortDto = z.infer<typeof validationPatternOutputPortSchema>;
 
 export const validationPatternConfigSchema = z.object({
   source: validationPatternSourceSchema,
@@ -348,9 +335,7 @@ export const validationPatternConfigSchema = z.object({
   learnedRules: z.array(promptValidationRuleSchema).optional(),
 });
 
-export type ValidationPatternConfigDto = z.infer<
-  typeof validationPatternConfigSchema
->;
+export type ValidationPatternConfigDto = z.infer<typeof validationPatternConfigSchema>;
 export type ValidationPatternConfig = ValidationPatternConfigDto;
 
 export const constantConfigSchema = z.object({
@@ -500,9 +485,22 @@ export const regexConfigSchema = z.object({
   aiPrompt: z.string().optional(),
   aiAutoRun: z.boolean().optional(),
   activeVariant: z.enum(['manual', 'ai']).optional(),
-  manual: z.object({ pattern: z.string(), flags: z.string().optional(), groupBy: z.string().optional() }).optional(),
-  aiProposal: z.object({ pattern: z.string(), flags: z.string().optional(), groupBy: z.string().optional() }).optional(),
-  aiProposals: z.array(z.object({ pattern: z.string(), flags: z.string().optional(), groupBy: z.string().optional(), createdAt: z.string() })).optional(),
+  manual: z
+    .object({ pattern: z.string(), flags: z.string().optional(), groupBy: z.string().optional() })
+    .optional(),
+  aiProposal: z
+    .object({ pattern: z.string(), flags: z.string().optional(), groupBy: z.string().optional() })
+    .optional(),
+  aiProposals: z
+    .array(
+      z.object({
+        pattern: z.string(),
+        flags: z.string().optional(),
+        groupBy: z.string().optional(),
+        createdAt: z.string(),
+      })
+    )
+    .optional(),
   templates: z.array(regexTemplateSchema).optional(),
   jsonIntegrityPolicy: z.enum(['strict', 'repair']).optional(),
 });
@@ -559,40 +557,21 @@ export const advancedApiAuthModeSchema = z.enum([
 export type AdvancedApiAuthModeDto = z.infer<typeof advancedApiAuthModeSchema>;
 
 export const advancedApiApiKeyPlacementSchema = z.enum(['header', 'query']);
-export type AdvancedApiApiKeyPlacementDto = z.infer<
-  typeof advancedApiApiKeyPlacementSchema
->;
+export type AdvancedApiApiKeyPlacementDto = z.infer<typeof advancedApiApiKeyPlacementSchema>;
 
-export const advancedApiBackoffStrategySchema = z.enum([
-  'fixed',
-  'exponential',
-]);
-export type AdvancedApiBackoffStrategyDto = z.infer<
-  typeof advancedApiBackoffStrategySchema
->;
+export const advancedApiBackoffStrategySchema = z.enum(['fixed', 'exponential']);
+export type AdvancedApiBackoffStrategyDto = z.infer<typeof advancedApiBackoffStrategySchema>;
 
-export const advancedApiPaginationModeSchema = z.enum([
-  'none',
-  'page',
-  'cursor',
-  'link',
-]);
-export type AdvancedApiPaginationModeDto = z.infer<
-  typeof advancedApiPaginationModeSchema
->;
+export const advancedApiPaginationModeSchema = z.enum(['none', 'page', 'cursor', 'link']);
+export type AdvancedApiPaginationModeDto = z.infer<typeof advancedApiPaginationModeSchema>;
 
-export const advancedApiPaginationAggregateModeSchema = z.enum([
-  'first_page',
-  'concat_items',
-]);
+export const advancedApiPaginationAggregateModeSchema = z.enum(['first_page', 'concat_items']);
 export type AdvancedApiPaginationAggregateModeDto = z.infer<
   typeof advancedApiPaginationAggregateModeSchema
 >;
 
 export const advancedApiRateLimitOnLimitSchema = z.enum(['wait', 'fail']);
-export type AdvancedApiRateLimitOnLimitDto = z.infer<
-  typeof advancedApiRateLimitOnLimitSchema
->;
+export type AdvancedApiRateLimitOnLimitDto = z.infer<typeof advancedApiRateLimitOnLimitSchema>;
 
 export const advancedApiConfigSchema = z.object({
   url: z.string(),
@@ -651,14 +630,8 @@ export const advancedApiConfigSchema = z.object({
 export type AdvancedApiConfigDto = z.infer<typeof advancedApiConfigSchema>;
 export type AdvancedApiConfig = AdvancedApiConfigDto;
 
-export const playwrightBrowserEngineSchema = z.enum([
-  'chromium',
-  'firefox',
-  'webkit',
-]);
-export type PlaywrightBrowserEngineDto = z.infer<
-  typeof playwrightBrowserEngineSchema
->;
+export const playwrightBrowserEngineSchema = z.enum(['chromium', 'firefox', 'webkit']);
+export type PlaywrightBrowserEngineDto = z.infer<typeof playwrightBrowserEngineSchema>;
 export type PlaywrightBrowserEngine = PlaywrightBrowserEngineDto;
 
 export const playwrightCaptureConfigSchema = z.object({
@@ -667,9 +640,7 @@ export const playwrightCaptureConfigSchema = z.object({
   video: z.boolean().optional(),
   trace: z.boolean().optional(),
 });
-export type PlaywrightCaptureConfigDto = z.infer<
-  typeof playwrightCaptureConfigSchema
->;
+export type PlaywrightCaptureConfigDto = z.infer<typeof playwrightCaptureConfigSchema>;
 export type PlaywrightCaptureConfig = PlaywrightCaptureConfigDto;
 
 export const playwrightConfigSchema = z.object({
@@ -734,20 +705,29 @@ export type DbSchemaConfig = DbSchemaConfigDto;
 
 export const dbSchemaSnapshotSchema = z.object({
   provider: z.enum(['mongodb', 'prisma', 'multi']),
-  collections: z.array(z.object({
-    name: z.string(),
-    fields: z.array(z.object({ name: z.string(), type: z.string() })),
-    relations: z.array(z.string()).optional(),
-    provider: z.enum(['mongodb', 'prisma']).optional(),
-  })),
-  sources: z.record(z.enum(['mongodb', 'prisma']), z.object({
-    provider: z.enum(['mongodb', 'prisma']),
-    collections: z.array(z.object({
+  collections: z.array(
+    z.object({
       name: z.string(),
       fields: z.array(z.object({ name: z.string(), type: z.string() })),
       relations: z.array(z.string()).optional(),
-    })),
-  })).optional(),
+      provider: z.enum(['mongodb', 'prisma']).optional(),
+    })
+  ),
+  sources: z
+    .record(
+      z.enum(['mongodb', 'prisma']),
+      z.object({
+        provider: z.enum(['mongodb', 'prisma']),
+        collections: z.array(
+          z.object({
+            name: z.string(),
+            fields: z.array(z.object({ name: z.string(), type: z.string() })),
+            relations: z.array(z.string()).optional(),
+          })
+        ),
+      })
+    )
+    .optional(),
   syncedAt: z.string().optional(),
 });
 
@@ -763,9 +743,7 @@ export type DatabaseWriteZeroAffectedPolicy = DatabaseWriteZeroAffectedPolicyDto
 export const databaseWriteOutcomePolicySchema = z.object({
   onZeroAffected: databaseWriteZeroAffectedPolicySchema.optional(),
 });
-export type DatabaseWriteOutcomePolicyDto = z.infer<
-  typeof databaseWriteOutcomePolicySchema
->;
+export type DatabaseWriteOutcomePolicyDto = z.infer<typeof databaseWriteOutcomePolicySchema>;
 export type DatabaseWriteOutcomePolicy = DatabaseWriteOutcomePolicyDto;
 
 export const databaseWriteOutcomeSchema = z
@@ -827,25 +805,35 @@ export const databaseConfigSchema = z.object({
   updatePayloadMode: z.enum(['mapping', 'custom']).optional(),
   useMongoActions: z.boolean().optional(),
   actionCategory: z.enum(['create', 'read', 'update', 'delete', 'aggregate']).optional(),
-  action: z.enum([
-    'insertOne',
-    'insertMany',
-    'find',
-    'findOne',
-    'countDocuments',
-    'distinct',
-    'aggregate',
-    'updateOne',
-    'updateMany',
-    'replaceOne',
-    'findOneAndUpdate',
-    'deleteOne',
-    'deleteMany',
-    'findOneAndDelete',
-  ]).optional(),
+  action: z
+    .enum([
+      'insertOne',
+      'insertMany',
+      'find',
+      'findOne',
+      'countDocuments',
+      'distinct',
+      'aggregate',
+      'updateOne',
+      'updateMany',
+      'replaceOne',
+      'findOneAndUpdate',
+      'deleteOne',
+      'deleteMany',
+      'findOneAndDelete',
+    ])
+    .optional(),
   distinctField: z.string().optional(),
   updateTemplate: z.string().optional(),
-  mappings: z.array(z.object({ targetPath: z.string(), sourcePort: z.string(), sourcePath: z.string().optional() })).optional(),
+  mappings: z
+    .array(
+      z.object({
+        targetPath: z.string(),
+        sourcePort: z.string(),
+        sourcePath: z.string().optional(),
+      })
+    )
+    .optional(),
   query: dbQueryConfigSchema.optional(),
   writeSource: z.string().optional(),
   writeSourcePath: z.string().optional(),
@@ -856,14 +844,16 @@ export const databaseConfigSchema = z.object({
   aiPrompt: z.string().optional(),
   writeOutcomePolicy: databaseWriteOutcomePolicySchema.optional(),
   validationRuleIds: z.array(z.string()).optional(),
-  parameterInferenceGuard: z.object({
-    enabled: z.boolean().optional(),
-    targetPath: z.string().optional(),
-    definitionsPort: z.string().optional(),
-    definitionsPath: z.string().optional(),
-    enforceOptionLabels: z.boolean().optional(),
-    allowUnknownParameterIds: z.boolean().optional(),
-  }).optional(),
+  parameterInferenceGuard: z
+    .object({
+      enabled: z.boolean().optional(),
+      targetPath: z.string().optional(),
+      definitionsPort: z.string().optional(),
+      definitionsPath: z.string().optional(),
+      enforceOptionLabels: z.boolean().optional(),
+      allowUnknownParameterIds: z.boolean().optional(),
+    })
+    .optional(),
   schemaSnapshot: dbSchemaSnapshotSchema.optional(),
 });
 
@@ -970,20 +960,24 @@ export type NodePortContractDto = z.infer<typeof nodePortContractSchema>;
 export type NodePortContract = NodePortContractDto;
 
 export const nodeRuntimeConfigSchema = z.object({
-  cache: z.object({
-    mode: nodeCacheModeSchema.optional(),
-    scope: nodeCacheScopeSchema.optional(),
-    ttlMs: z.number().optional(),
-  }).optional(),
+  cache: z
+    .object({
+      mode: nodeCacheModeSchema.optional(),
+      scope: nodeCacheScopeSchema.optional(),
+      ttlMs: z.number().optional(),
+    })
+    .optional(),
   inputContracts: z.record(z.string(), nodePortContractSchema).optional(),
   inputCardinality: z.record(z.string(), nodePortCardinalitySchema).optional(),
   waitForInputs: z.boolean().optional(),
   sideEffectPolicy: nodeSideEffectPolicySchema.optional(),
   timeoutMs: z.number().optional(),
-  retry: z.object({
-    attempts: z.number().optional(),
-    backoffMs: z.number().optional(),
-  }).optional(),
+  retry: z
+    .object({
+      attempts: z.number().optional(),
+      backoffMs: z.number().optional(),
+    })
+    .optional(),
 });
 
 export type NodeRuntimeConfigDto = z.infer<typeof nodeRuntimeConfigSchema>;
@@ -1027,11 +1021,13 @@ export const nodeConfigSchema = z.object({
   learnerAgent: learnerAgentConfigSchema.optional(),
   database: databaseConfigSchema.optional(),
   runtime: nodeRuntimeConfigSchema.optional(),
-  notes: z.object({
-    text: z.string().optional(),
-    color: z.string().optional(),
-    showOnCanvas: z.boolean().optional(),
-  }).optional(),
+  notes: z
+    .object({
+      text: z.string().optional(),
+      color: z.string().optional(),
+      showOnCanvas: z.boolean().optional(),
+    })
+    .optional(),
 });
 
 export type NodeConfigDto = z.infer<typeof nodeConfigSchema>;

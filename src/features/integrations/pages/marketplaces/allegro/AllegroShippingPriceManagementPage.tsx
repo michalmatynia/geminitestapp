@@ -9,14 +9,14 @@ export default function AllegroShippingPriceManagementPage(): React.JSX.Element 
       <SectionHeader
         title='Shipping Price Management'
         description='Configure shipping price rules and profiles for Allegro listings.'
-        eyebrow={(
+        eyebrow={
           <Link
             href='/admin/integrations/marketplaces/allegro'
             className='text-blue-300 hover:text-blue-200'
           >
             ← Allegro
           </Link>
-        )}
+        }
         className='mb-6'
       />
 

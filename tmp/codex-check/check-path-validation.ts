@@ -2,7 +2,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { MongoClient } from 'mongodb';
 import { compileGraph } from '@/features/ai/ai-paths/lib/core/utils/graph';
-import { evaluateAiPathsValidationPreflight, normalizeAiPathsValidationConfig } from '@/features/ai/ai-paths/lib/core/validation-engine';
+import {
+  evaluateAiPathsValidationPreflight,
+  normalizeAiPathsValidationConfig,
+} from '@/features/ai/ai-paths/lib/core/validation-engine';
 
 const loadEnv = (filePath: string): void => {
   if (!fs.existsSync(filePath)) return;
@@ -15,7 +18,10 @@ const loadEnv = (filePath: string): void => {
     const key = trimmed.slice(0, index).trim();
     if (!key) continue;
     let value = trimmed.slice(index + 1).trim();
-    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
       value = value.slice(1, -1);
     }
     if (!(key in process.env)) {
@@ -53,48 +59,65 @@ async function main(): Promise<void> {
       config: normalizeAiPathsValidationConfig(cfg['aiPathsValidation'] as any),
     });
 
-    console.log(JSON.stringify({
-      path: {
-        id: cfg['id'],
-        name: cfg['name'],
-        executionMode: cfg['executionMode'],
-        nodes: nodes.length,
-        edges: edges.length,
-      },
-      compile: {
-        ok: compile.ok,
-        errors: compile.errors,
-        warnings: compile.warnings,
-        findings: compile.findings,
-      },
-      validation: {
-        enabled: validation.enabled,
-        policy: validation.policy,
-        score: validation.score,
-        blocked: validation.blocked,
-        shouldWarn: validation.shouldWarn,
-        failedRules: validation.failedRules,
-        warnThreshold: validation.warnThreshold,
-        blockThreshold: validation.blockThreshold,
-        severityCounts: validation.severityCounts,
-        findings: validation.findings,
-      },
-      diagnostics: {
-        modelNodes: nodes
-          .filter((node) => node && typeof node === 'object' && (node as Record<string, unknown>)['type'] === 'model')
-          .map((node) => ({
-            id: (node as Record<string, unknown>)['id'],
-            title: (node as Record<string, unknown>)['title'],
-            waitForResult: ((node as Record<string, any>)['config']?.['model']?.['waitForResult']) ?? null,
-          })),
-        pollNodes: nodes
-          .filter((node) => node && typeof node === 'object' && (node as Record<string, unknown>)['type'] === 'poll')
-          .map((node) => ({
-            id: (node as Record<string, unknown>)['id'],
-            title: (node as Record<string, unknown>)['title'],
-          })),
-      },
-    }, null, 2));
+    console.log(
+      JSON.stringify(
+        {
+          path: {
+            id: cfg['id'],
+            name: cfg['name'],
+            executionMode: cfg['executionMode'],
+            nodes: nodes.length,
+            edges: edges.length,
+          },
+          compile: {
+            ok: compile.ok,
+            errors: compile.errors,
+            warnings: compile.warnings,
+            findings: compile.findings,
+          },
+          validation: {
+            enabled: validation.enabled,
+            policy: validation.policy,
+            score: validation.score,
+            blocked: validation.blocked,
+            shouldWarn: validation.shouldWarn,
+            failedRules: validation.failedRules,
+            warnThreshold: validation.warnThreshold,
+            blockThreshold: validation.blockThreshold,
+            severityCounts: validation.severityCounts,
+            findings: validation.findings,
+          },
+          diagnostics: {
+            modelNodes: nodes
+              .filter(
+                (node) =>
+                  node &&
+                  typeof node === 'object' &&
+                  (node as Record<string, unknown>)['type'] === 'model'
+              )
+              .map((node) => ({
+                id: (node as Record<string, unknown>)['id'],
+                title: (node as Record<string, unknown>)['title'],
+                waitForResult:
+                  (node as Record<string, any>)['config']?.['model']?.['waitForResult'] ?? null,
+              })),
+            pollNodes: nodes
+              .filter(
+                (node) =>
+                  node &&
+                  typeof node === 'object' &&
+                  (node as Record<string, unknown>)['type'] === 'poll'
+              )
+              .map((node) => ({
+                id: (node as Record<string, unknown>)['id'],
+                title: (node as Record<string, unknown>)['title'],
+              })),
+          },
+        },
+        null,
+        2
+      )
+    );
   } finally {
     await client.close();
   }

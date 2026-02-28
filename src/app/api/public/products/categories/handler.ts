@@ -16,9 +16,7 @@ type PublicProductCategory = {
   sortIndex: number | null;
 };
 
-const toPublicProductCategory = (
-  category: ProductCategory
-): PublicProductCategory => ({
+const toPublicProductCategory = (category: ProductCategory): PublicProductCategory => ({
   id: category.id,
   name: category.name,
   name_en: category.name_en ?? null,
@@ -32,15 +30,10 @@ const toPublicProductCategory = (
  * GET /api/public/products/categories
  * Returns catalog-scoped product category metadata for public automation/runtime usage.
  */
-export async function GET_handler(
-  req: NextRequest,
-  ctx: ApiHandlerContext
-): Promise<Response> {
+export async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const query = ctx.query as CatalogIdQuery | undefined;
   const catalogId =
-    query?.catalogId ??
-    new URL(req.url).searchParams.get('catalogId')?.trim() ??
-    '';
+    query?.catalogId ?? new URL(req.url).searchParams.get('catalogId')?.trim() ?? '';
 
   if (!catalogId) {
     throw badRequestError('catalogId query parameter is required');

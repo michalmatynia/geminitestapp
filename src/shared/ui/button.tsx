@@ -12,24 +12,15 @@ const buttonVariants = cva(
       variant: {
         default:
           'border-foreground/15 bg-transparent text-foreground/90 hover:bg-foreground/8 hover:text-foreground',
-        primary:
-          'border-foreground/25 bg-transparent text-foreground hover:bg-foreground/10',
-        solid:
-          'bg-blue-600 text-white hover:bg-blue-700 border-transparent',
-        'solid-destructive':
-          'bg-red-600 text-white hover:bg-red-700 border-transparent',
-        destructive:
-          'bg-destructive/15 text-destructive hover:bg-destructive/25',
-        outline:
-          'border-foreground/15 bg-transparent hover:bg-foreground/8',
-        secondary:
-          'bg-muted/30 hover:bg-muted/45',
-        success:
-          'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 hover:bg-emerald-500/20',
-        warning:
-          'bg-amber-500/10 text-amber-500 border-amber-500/20 hover:bg-amber-500/20',
-        info:
-          'bg-sky-500/10 text-sky-500 border-sky-500/20 hover:bg-sky-500/20',
+        primary: 'border-foreground/25 bg-transparent text-foreground hover:bg-foreground/10',
+        solid: 'bg-blue-600 text-white hover:bg-blue-700 border-transparent',
+        'solid-destructive': 'bg-red-600 text-white hover:bg-red-700 border-transparent',
+        destructive: 'bg-destructive/15 text-destructive hover:bg-destructive/25',
+        outline: 'border-foreground/15 bg-transparent hover:bg-foreground/8',
+        secondary: 'bg-muted/30 hover:bg-muted/45',
+        success: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 hover:bg-emerald-500/20',
+        warning: 'bg-amber-500/10 text-amber-500 border-amber-500/20 hover:bg-amber-500/20',
+        info: 'bg-sky-500/10 text-sky-500 border-sky-500/20 hover:bg-sky-500/20',
         ghost: 'bg-transparent hover:bg-foreground/8',
         link: 'text-foreground/80 underline-offset-4 hover:underline hover:text-foreground',
       },
@@ -50,17 +41,19 @@ const buttonVariants = cva(
 );
 
 export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
   asChild?: boolean;
   loading?: boolean;
   loadingText?: string;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, loading = false, loadingText, children, ...props }, ref) => {
+  (
+    { className, variant, size, asChild = false, loading = false, loadingText, children, ...props },
+    ref
+  ) => {
     const Comp = asChild ? Slot : 'button';
-    
+
     const content = loading ? (
       <>
         <Loader2 className='size-4 animate-spin' />

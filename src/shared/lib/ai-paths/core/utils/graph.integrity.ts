@@ -45,8 +45,7 @@ export const inspectGraphIntegrity = (nodes: AiNode[], edges: Edge[]): GraphInte
   const disconnectedProcessingNodes = nodes
     .filter((node: AiNode) => PROCESSING_NODE_TYPES.has(node.type))
     .filter(
-      (node: AiNode) =>
-        !edges.some((edge: Edge) => edge.from === node.id || edge.to === node.id)
+      (node: AiNode) => !edges.some((edge: Edge) => edge.from === node.id || edge.to === node.id)
     )
     .map((node: AiNode) => ({
       nodeId: node.id,

@@ -107,7 +107,9 @@ async function ensureAdminSession(page: Page): Promise<void> {
 }
 
 test.describe('Master Folder Tree drag and drop', () => {
-  test('Notes: dragging a folder into another folder updates parent assignment', async ({ page }) => {
+  test('Notes: dragging a folder into another folder updates parent assignment', async ({
+    page,
+  }) => {
     await ensureAdminSession(page);
     await mockAuthAndSettings(page, [
       { key: 'noteSettings:selectedNotebookId', value: 'notebook-1' },
@@ -150,7 +152,9 @@ test.describe('Master Folder Tree drag and drop', () => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify([{ id: 'notebook-1', name: 'Default', color: '#3b82f6', createdAt: now, updatedAt: now }]),
+        body: JSON.stringify([
+          { id: 'notebook-1', name: 'Default', color: '#3b82f6', createdAt: now, updatedAt: now },
+        ]),
       });
     });
 
@@ -224,7 +228,9 @@ test.describe('Master Folder Tree drag and drop', () => {
     expect(patchedCategoryPayload).toMatchObject({ parentId: 'folder-b' });
   });
 
-  test('Product categories: dragging a root category into another root persists move payload', async ({ page }) => {
+  test('Product categories: dragging a root category into another root persists move payload', async ({
+    page,
+  }) => {
     await ensureAdminSession(page);
     await mockAuthAndSettings(page);
 
@@ -372,7 +378,9 @@ test.describe('Master Folder Tree drag and drop', () => {
     });
   });
 
-  test('Image Studio: dragging a folder into another folder persists nested card folder updates', async ({ page }) => {
+  test('Image Studio: dragging a folder into another folder persists nested card folder updates', async ({
+    page,
+  }) => {
     await ensureAdminSession(page);
     await mockAuthAndSettings(page);
 
@@ -458,7 +466,9 @@ test.describe('Master Folder Tree drag and drop', () => {
     expect(folderPath).toBe('folder-b/folder-a');
   });
 
-  test('Image Studio: dragging a card from folder to root persists empty folder path', async ({ page }) => {
+  test('Image Studio: dragging a card from folder to root persists empty folder path', async ({
+    page,
+  }) => {
     await ensureAdminSession(page);
     await mockAuthAndSettings(page);
 

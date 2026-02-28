@@ -28,8 +28,7 @@ describe('parseValidatorScope', () => {
     expect(
       lists.some(
         (list): boolean =>
-          list.scope === 'case-resolver-plain-text' &&
-          list.id === 'case-resolver-plain-text'
+          list.scope === 'case-resolver-plain-text' && list.id === 'case-resolver-plain-text'
       )
     ).toBe(true);
   });

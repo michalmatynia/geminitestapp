@@ -1,16 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import OpenAI from 'openai';
 import { z } from 'zod';
 
+import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
 import {
-  dbApi,
-  type DbActionPayload,
-  type DbQueryPayload,
-} from '@/shared/lib/ai-paths/api/client';
+  runBrainChatCompletion,
+  supportsBrainJsonMode,
+} from '@/shared/lib/ai-brain/server-runtime-client';
+import { dbApi, type DbActionPayload, type DbQueryPayload } from '@/shared/lib/ai-paths/api/client';
 import { getValueAtMappingPath } from '@/shared/lib/ai-paths/core/utils/json';
 import { renderTemplate } from '@/shared/lib/ai-paths/core/utils/template';
-import { ErrorSystem } from '@/features/observability/server';
-import { getSettingValue } from '@/features/products/server';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { listValidationPatternsCached } from '@/features/products/services/validation-pattern-runtime-cache';
 import {
   isPatternEnabledForValidationScope,
@@ -34,9 +33,7 @@ import type {
   ProductValidationSeverityDto as ProductValidationSeverity,
 } from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { badRequestError, configurationError } from '@/shared/errors/app-error';
-
-const OLLAMA_BASE_URL = process.env['OLLAMA_BASE_URL'] ?? 'http://localhost:11434';
+import { badRequestError } from '@/shared/errors/app-error';
 
 export const evaluateRuntimeSchema = z.object({
   values: z.record(z.string(), z.unknown()),
@@ -98,8 +95,7 @@ type RuntimeFieldEntry = {
 };
 
 type RuntimeSettingsCache = {
-  defaultModelPromise: Promise<string> | null;
-  openAiApiKeyPromise: Promise<string | null> | null;
+  _placeholder?: null;
 };
 
 const normalizeRuntimeOperator = (value: unknown): RuntimeOperator => {
@@ -258,9 +254,7 @@ const assertRuntimePayloadBounds = (body: z.infer<typeof evaluateRuntimeSchema>)
   }
 };
 
-const buildRuntimeFieldEntries = (
-  values: Record<string, unknown>
-): RuntimeFieldEntry[] =>
+const buildRuntimeFieldEntries = (values: Record<string, unknown>): RuntimeFieldEntry[] =>
   Object.entries(values).flatMap(([fieldName, rawValue]): RuntimeFieldEntry[] => {
     const resolved = resolveFieldTargetAndLocale(fieldName);
     if (!resolved.target) return [];
@@ -279,26 +273,6 @@ const buildRuntimeFieldEntries = (
       },
     ];
   });
-
-const getCachedDefaultModel = async (settingsCache: RuntimeSettingsCache): Promise<string> => {
-  if (!settingsCache.defaultModelPromise) {
-    settingsCache.defaultModelPromise = getSettingValue('openai_model').then((value) =>
-      value?.trim() || 'gpt-4o-mini'
-    );
-  }
-  return settingsCache.defaultModelPromise;
-};
-
-const getCachedOpenAiApiKey = async (
-  settingsCache: RuntimeSettingsCache
-): Promise<string | null> => {
-  if (!settingsCache.openAiApiKeyPromise) {
-    settingsCache.openAiApiKeyPromise = getSettingValue('openai_api_key').then(
-      (value) => value ?? process.env['OPENAI_API_KEY'] ?? null
-    );
-  }
-  return settingsCache.openAiApiKeyPromise;
-};
 
 const withTimeout = async <T>(
   promise: Promise<T>,
@@ -333,7 +307,10 @@ const parseAiJson = (value: string): Record<string, unknown> | null => {
   const trimmed = value.trim();
   if (!trimmed) return null;
   const stripped = trimmed.startsWith('```')
-    ? trimmed.replace(/^```[a-zA-Z]*\n?/, '').replace(/```$/, '').trim()
+    ? trimmed
+        .replace(/^```[a-zA-Z]*\n?/, '')
+        .replace(/```$/, '')
+        .trim()
     : trimmed;
   try {
     const parsed = JSON.parse(stripped) as unknown;
@@ -346,7 +323,14 @@ const parseAiJson = (value: string): Record<string, unknown> | null => {
 
 const resolveAiMatch = (parsed: Record<string, unknown> | null): boolean | null => {
   if (!parsed) return null;
-  const positiveBooleanKeys = ['match', 'isMatch', 'trigger', 'shouldValidate', 'isViolation', 'violation'];
+  const positiveBooleanKeys = [
+    'match',
+    'isMatch',
+    'trigger',
+    'shouldValidate',
+    'isViolation',
+    'violation',
+  ];
   for (const key of positiveBooleanKeys) {
     const value = parsed[key];
     if (typeof value === 'boolean') return value;
@@ -357,32 +341,6 @@ const resolveAiMatch = (parsed: Record<string, unknown> | null): boolean | null 
     if (typeof value === 'boolean') return !value;
   }
   return null;
-};
-
-const getClient = (
-  modelName: string,
-  apiKey: string | null
-): { openai: OpenAI; isOllama: boolean } => {
-  const modelLower = modelName.toLowerCase();
-  const isOpenAI =
-    (modelLower.startsWith('gpt-') && !modelLower.includes('oss')) ||
-    modelLower.startsWith('ft:gpt-') ||
-    modelLower.startsWith('o1-');
-
-  if (isOpenAI) {
-    if (!apiKey) {
-      throw configurationError('OpenAI API key is missing for GPT model.');
-    }
-    return { openai: new OpenAI({ apiKey }), isOllama: false };
-  }
-
-  return {
-    openai: new OpenAI({
-      baseURL: `${OLLAMA_BASE_URL}/v1`,
-      apiKey: 'ollama',
-    }),
-    isOllama: true,
-  };
 };
 
 const normalizeRuntimeReplacementValue = (value: unknown): string | null => {
@@ -437,9 +395,9 @@ const resolveReplacementFromResult = (
   const replacementPaths = [
     ...(Array.isArray(config['replacementPaths'])
       ? (config['replacementPaths'] as unknown[])
-        .filter((entry: unknown): entry is string => typeof entry === 'string')
-        .map((entry: string) => entry.trim())
-        .filter((entry: string) => entry.length > 0)
+          .filter((entry: unknown): entry is string => typeof entry === 'string')
+          .map((entry: string) => entry.trim())
+          .filter((entry: string) => entry.length > 0)
       : []),
     ...(typeof config['replacementPath'] === 'string' && config['replacementPath'].trim().length > 0
       ? [config['replacementPath'].trim()]
@@ -457,7 +415,10 @@ const resolveReplacementFromResult = (
     const rendered = renderTemplate(config['replacementValue'], context, currentValue).trim();
     return rendered.length > 0 ? rendered : null;
   }
-  if (typeof config['replacementValue'] === 'number' || typeof config['replacementValue'] === 'boolean') {
+  if (
+    typeof config['replacementValue'] === 'number' ||
+    typeof config['replacementValue'] === 'boolean'
+  ) {
     return String(config['replacementValue']);
   }
   return null;
@@ -477,7 +438,10 @@ const evaluateDatabaseRuntime = async ({
     config['payload'] && typeof config['payload'] === 'object' && !Array.isArray(config['payload'])
       ? (config['payload'] as Record<string, unknown>)
       : config;
-  const renderedPayload = renderUnknown(payloadSource, context, currentValue) as Record<string, unknown>;
+  const renderedPayload = renderUnknown(payloadSource, context, currentValue) as Record<
+    string,
+    unknown
+  >;
 
   if (operation === 'action') {
     const provider =
@@ -496,12 +460,15 @@ const evaluateDatabaseRuntime = async ({
       action: actionName,
     };
     if (renderedPayload['filter'] !== undefined) payload.filter = renderedPayload['filter'];
-    if (Array.isArray(renderedPayload['pipeline'])) payload.pipeline = renderedPayload['pipeline'] as unknown[];
-    if (renderedPayload['projection'] !== undefined) payload.projection = renderedPayload['projection'];
+    if (Array.isArray(renderedPayload['pipeline']))
+      payload.pipeline = renderedPayload['pipeline'] as unknown[];
+    if (renderedPayload['projection'] !== undefined)
+      payload.projection = renderedPayload['projection'];
     if (renderedPayload['sort'] !== undefined) payload.sort = renderedPayload['sort'];
     if (typeof renderedPayload['limit'] === 'number') payload.limit = renderedPayload['limit'];
     if (typeof renderedPayload['idType'] === 'string') payload.idType = renderedPayload['idType'];
-    if (typeof renderedPayload['distinctField'] === 'string') payload.distinctField = renderedPayload['distinctField'];
+    if (typeof renderedPayload['distinctField'] === 'string')
+      payload.distinctField = renderedPayload['distinctField'];
     if (!payload.collection.trim()) {
       throw badRequestError('Runtime DB action requires a collection.');
     }
@@ -535,7 +502,9 @@ const evaluateDatabaseRuntime = async ({
       ? { sort: renderedPayload['sort'] }
       : {}),
     ...(typeof renderedPayload['limit'] === 'number' ? { limit: renderedPayload['limit'] } : {}),
-    ...(typeof renderedPayload['single'] === 'boolean' ? { single: renderedPayload['single'] } : {}),
+    ...(typeof renderedPayload['single'] === 'boolean'
+      ? { single: renderedPayload['single'] }
+      : {}),
     ...(typeof renderedPayload['idType'] === 'string' ? { idType: renderedPayload['idType'] } : {}),
   };
   if (!payload.collection.trim()) {
@@ -547,9 +516,16 @@ const evaluateDatabaseRuntime = async ({
   }
   const resultData = response.data ?? {};
   const defaultResultPath = payload.single ? 'item' : 'count';
-  const resultPath = typeof config['resultPath'] === 'string' ? config['resultPath'].trim() : defaultResultPath;
-  const operator = normalizeRuntimeOperator(config['operator'] ?? (resultPath === 'count' ? 'gt' : 'truthy'));
-  const operand = config['operand'] ?? config['value'] ?? config['expected'] ?? (resultPath === 'count' ? 0 : null);
+  const resultPath =
+    typeof config['resultPath'] === 'string' ? config['resultPath'].trim() : defaultResultPath;
+  const operator = normalizeRuntimeOperator(
+    config['operator'] ?? (resultPath === 'count' ? 'gt' : 'truthy')
+  );
+  const operand =
+    config['operand'] ??
+    config['value'] ??
+    config['expected'] ??
+    (resultPath === 'count' ? 0 : null);
   const flags = typeof config['flags'] === 'string' ? config['flags'] : null;
   const candidate = resultPath ? getValueAtMappingPath(resultData, resultPath) : resultData;
   return {
@@ -562,7 +538,7 @@ const evaluateAiRuntime = async ({
   config,
   context,
   currentValue,
-  settingsCache,
+  settingsCache: _settingsCache,
 }: {
   config: Record<string, unknown>;
   context: Record<string, unknown>;
@@ -575,15 +551,6 @@ const evaluateAiRuntime = async ({
   replacementValue: string | null;
   severity: ProductValidationSeverity | null;
 }> => {
-  const modelFromConfig =
-    typeof config['model'] === 'string' && config['model'].trim()
-      ? config['model'].trim()
-      : null;
-  const defaultModel = await getCachedDefaultModel(settingsCache);
-  const model = modelFromConfig || defaultModel;
-  const apiKey = await getCachedOpenAiApiKey(settingsCache);
-  const { openai, isOllama } = getClient(model, apiKey);
-
   const systemPromptRaw =
     typeof config['systemPrompt'] === 'string'
       ? config['systemPrompt']
@@ -605,33 +572,41 @@ const evaluateAiRuntime = async ({
       : 300;
   const forceJson = config['responseFormat'] === 'json';
   const timeoutMs = resolveAiRuntimeTimeoutMs(config);
+  const brainConfig = await resolveBrainExecutionConfigForCapability('product.validation.runtime', {
+    defaultTemperature: temperature,
+    defaultMaxTokens: maxTokens,
+    defaultSystemPrompt: systemPromptRaw,
+    runtimeKind: 'validation',
+  });
 
   const completion = await withTimeout(
-    openai.chat.completions.create({
-      model,
+    runBrainChatCompletion({
+      modelId: brainConfig.modelId,
+      temperature: brainConfig.temperature,
+      maxTokens: brainConfig.maxTokens,
+      jsonMode: forceJson && supportsBrainJsonMode(brainConfig.modelId),
       messages: [
-        { role: 'system', content: systemPrompt },
+        { role: 'system', content: brainConfig.systemPrompt || systemPrompt },
         { role: 'user', content: prompt },
       ],
-      temperature,
-      max_completion_tokens: maxTokens,
-      ...(forceJson && !isOllama ? { response_format: { type: 'json_object' as const } } : {}),
     }),
     timeoutMs,
     `AI runtime request timed out after ${timeoutMs}ms`
   );
 
-  const raw = completion.choices?.[0]?.message?.content?.trim() ?? '';
+  const raw = completion.text.trim() ?? '';
   const parsed = parseAiJson(raw);
-  const resultData = parsed ? { raw, parsed, ...parsed } : { raw };
+  const resultData = parsed
+    ? { raw, parsed, ...parsed, brainApplied: brainConfig.brainApplied }
+    : { raw, brainApplied: brainConfig.brainApplied };
   const parsedMatch = resolveAiMatch(parsed);
-  
+
   let matched: boolean;
   if (parsedMatch !== null) {
     matched = parsedMatch;
   } else {
-  
-    const resultPath = typeof config['resultPath'] === 'string' ? config['resultPath'].trim() : 'raw';
+    const resultPath =
+      typeof config['resultPath'] === 'string' ? config['resultPath'].trim() : 'raw';
     const operator = normalizeRuntimeOperator(config['operator'] ?? 'truthy');
     const operand = config['operand'] ?? config['value'] ?? config['expected'] ?? null;
     const flags = typeof config['flags'] === 'string' ? config['flags'] : null;
@@ -653,7 +628,7 @@ const evaluateAiRuntime = async ({
           : null;
   const severity =
     parsed?.['severity'] === 'error' || parsed?.['severity'] === 'warning'
-      ? (parsed['severity'])
+      ? parsed['severity']
       : null;
 
   return {
@@ -730,10 +705,7 @@ const buildRuntimeIssue = ({
   };
 };
 
-export async function POST_handler(
-  _req: NextRequest,
-  ctx: ApiHandlerContext
-): Promise<Response> {
+export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const body = ctx.body as z.infer<typeof evaluateRuntimeSchema>;
   assertRuntimePayloadBounds(body);
   const values = body.values;
@@ -742,7 +714,8 @@ export async function POST_handler(
     body.validationScope ?? 'product_create'
   );
   const allPatterns = await listValidationPatternsCached();
-  const requestedPatternIds = body.patternIds && body.patternIds.length > 0 ? new Set(body.patternIds) : null;
+  const requestedPatternIds =
+    body.patternIds && body.patternIds.length > 0 ? new Set(body.patternIds) : null;
   const runtimePatterns = allPatterns.filter((pattern: ProductValidationPattern) => {
     if (!pattern.enabled) return false;
     if (!pattern.runtimeEnabled || pattern.runtimeType === 'none') return false;
@@ -754,10 +727,7 @@ export async function POST_handler(
   });
 
   const runtimeFieldEntries = buildRuntimeFieldEntries(values);
-  const fieldEntriesByTarget = new Map<
-    RuntimeFieldEntry['target'],
-    RuntimeFieldEntry[]
-  >();
+  const fieldEntriesByTarget = new Map<RuntimeFieldEntry['target'], RuntimeFieldEntry[]>();
   for (const entry of runtimeFieldEntries) {
     const current = fieldEntriesByTarget.get(entry.target) ?? [];
     current.push(entry);
@@ -765,8 +735,7 @@ export async function POST_handler(
   }
 
   const runtimeSettingsCache: RuntimeSettingsCache = {
-    defaultModelPromise: null,
-    openAiApiKeyPromise: null,
+    _placeholder: null,
   };
 
   const issues: Record<string, RuntimeFieldIssue[]> = {};

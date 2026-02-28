@@ -1,8 +1,6 @@
 'use client';
 
-import {
-  useQueryClient,
-} from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 import { z } from 'zod';
 
@@ -13,9 +11,7 @@ import type { ListQuery, SingleQuery } from '@/shared/contracts/ui';
 import { createListQueryV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
-import {
-  refetchProductsAndCounts,
-} from './productCache';
+import { refetchProductsAndCounts } from './productCache';
 
 export interface UseProductsFilters {
   search?: string | undefined;
@@ -44,7 +40,10 @@ export interface UseProductsOptions {
 
 const PRODUCTS_STALE_MS = 10_000;
 
-export function useProducts(filters: UseProductsFilters, options?: UseProductsOptions): ListQuery<ProductWithImages> {
+export function useProducts(
+  filters: UseProductsFilters,
+  options?: UseProductsOptions
+): ListQuery<ProductWithImages> {
   const queryKey = QUERY_KEYS.products.list(filters);
   const queryFn = async (): Promise<ProductWithImages[]> => {
     const data = await getProducts(filters);
@@ -68,7 +67,10 @@ export function useProducts(filters: UseProductsFilters, options?: UseProductsOp
   });
 }
 
-export function useProductsCount(filters: UseProductsFilters, options?: UseProductsOptions): SingleQuery<number> {
+export function useProductsCount(
+  filters: UseProductsFilters,
+  options?: UseProductsOptions
+): SingleQuery<number> {
   const id = JSON.stringify(filters);
   const queryKey = QUERY_KEYS.products.count(filters);
   const queryFn = async (): Promise<number> => countProducts(filters);
@@ -93,15 +95,15 @@ export function useProductsCount(filters: UseProductsFilters, options?: UseProdu
 
 export function useProductsWithCount(
   filters: UseProductsFilters,
-  options: UseProductsOptions = {},
+  options: UseProductsOptions = {}
 ): {
-    products: ProductWithImages[];
-    total: number;
-    isLoading: boolean;
-    isFetching: boolean;
-    error: unknown;
-    refetch: () => Promise<void>;
-  } {
+  products: ProductWithImages[];
+  total: number;
+  isLoading: boolean;
+  isFetching: boolean;
+  error: unknown;
+  refetch: () => Promise<void>;
+} {
   const queryClient = useQueryClient();
 
   // Single request replaces the previous two parallel queries (getProducts + countProducts).

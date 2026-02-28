@@ -15,9 +15,7 @@ interface DebugPanelProps {
   agentRunLogs?: LogEntry[];
 }
 
-export function DebugPanel({
-  agentRunLogs = [],
-}: DebugPanelProps): React.JSX.Element {
+export function DebugPanel({ agentRunLogs = [] }: DebugPanelProps): React.JSX.Element {
   const { debugState } = useChatbotUI();
 
   return (
@@ -26,7 +24,11 @@ export function DebugPanel({
       <div className='space-y-4'>
         <div>
           <h4 className='mb-1 font-medium text-gray-400'>Last Request</h4>
-          <Card variant='subtle-compact' padding='sm' className='overflow-x-auto bg-black/40 border-border/40'>
+          <Card
+            variant='subtle-compact'
+            padding='sm'
+            className='overflow-x-auto bg-black/40 border-border/40'
+          >
             <pre className='text-[11px] font-mono'>
               {JSON.stringify(debugState.lastRequest, null, 2)}
             </pre>
@@ -34,7 +36,11 @@ export function DebugPanel({
         </div>
         <div>
           <h4 className='mb-1 font-medium text-gray-400'>Last Response</h4>
-          <Card variant='subtle-compact' padding='sm' className='overflow-x-auto bg-black/40 border-border/40'>
+          <Card
+            variant='subtle-compact'
+            padding='sm'
+            className='overflow-x-auto bg-black/40 border-border/40'
+          >
             <pre className='text-[11px] font-mono'>
               {JSON.stringify(debugState.lastResponse, null, 2)}
             </pre>
@@ -42,8 +48,8 @@ export function DebugPanel({
         </div>
         <div>
           <h4 className='mb-1 font-medium text-gray-400'>Agent Logs</h4>
-          <LogList 
-            logs={agentRunLogs.map(log => ({
+          <LogList
+            logs={agentRunLogs.map((log) => ({
               id: log.id,
               timestamp: log.createdAt,
               level: log.level,
@@ -57,4 +63,3 @@ export function DebugPanel({
     </div>
   );
 }
-

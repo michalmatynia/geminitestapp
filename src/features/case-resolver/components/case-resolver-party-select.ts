@@ -9,9 +9,7 @@ export type CaseResolverPartySelectOption = {
   description?: string | undefined;
 };
 
-export type DecodedFilemakerPartyReference = ReturnType<
-  typeof decodeFilemakerPartyReference
->;
+export type DecodedFilemakerPartyReference = ReturnType<typeof decodeFilemakerPartyReference>;
 
 export const buildMissingSelectedPartyOption = (
   selectedReference: DecodedFilemakerPartyReference

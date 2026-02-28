@@ -10,7 +10,9 @@ import { SectionDataProvider } from './SectionDataContext';
 
 import type { BlockInstance } from '../../../types/page-builder';
 
-const resolveJustifyContent = (value: unknown): React.CSSProperties['justifyContent'] | undefined => {
+const resolveJustifyContent = (
+  value: unknown
+): React.CSSProperties['justifyContent'] | undefined => {
   if (value === 'center') return 'center';
   if (value === 'end') return 'flex-end';
   if (value === 'space-between') return 'space-between';
@@ -73,7 +75,12 @@ export function FrontendBlockSection(): React.ReactNode {
         style={sectionStyles}
       >
         {customCss ? <style data-cms-custom-css={sectionId}>{customCss}</style> : null}
-        <div className={getSectionContainerClass({ fullWidth: layout?.fullWidth, maxWidthClass: 'max-w-6xl' })}>
+        <div
+          className={getSectionContainerClass({
+            fullWidth: layout?.fullWidth,
+            maxWidthClass: 'max-w-6xl',
+          })}
+        >
           {linkUrl ? (
             <a href={linkUrl} target={linkTarget} rel={linkRel} className='block w-full'>
               {content}

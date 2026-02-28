@@ -50,9 +50,7 @@ describe('prompt exploder custom benchmark cases', () => {
     expect(duplicate.error).toContain('Duplicate custom case id');
 
     const noTypes = parseCustomBenchmarkCasesDraft(
-      JSON.stringify([
-        { id: 'case_2', prompt: 'Two', expectedTypes: ['unknown'], minSegments: 1 },
-      ])
+      JSON.stringify([{ id: 'case_2', prompt: 'Two', expectedTypes: ['unknown'], minSegments: 1 }])
     );
     expect(noTypes.ok).toBe(false);
     if (noTypes.ok) return;
@@ -73,10 +71,10 @@ describe('prompt exploder custom benchmark cases', () => {
     expect(upserted).toHaveLength(2);
     expect(upserted.find((value) => value.id === 'b')?.prompt).toBe('Updated B');
 
-    const merged = mergeCustomBenchmarkCases(
-      upserted,
-      [buildCase('b', { prompt: 'Template B' }), buildCase('c')]
-    );
+    const merged = mergeCustomBenchmarkCases(upserted, [
+      buildCase('b', { prompt: 'Template B' }),
+      buildCase('c'),
+    ]);
     expect(merged).toHaveLength(3);
     expect(merged.find((value) => value.id === 'b')?.prompt).toBe('Template B');
   });

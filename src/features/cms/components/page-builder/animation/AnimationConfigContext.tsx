@@ -32,9 +32,7 @@ export function AnimationConfigProvider({
   children,
 }: AnimationConfigProviderProps): React.JSX.Element {
   return (
-    <AnimationConfigContext.Provider value={value}>
-      {children}
-    </AnimationConfigContext.Provider>
+    <AnimationConfigContext.Provider value={value}>{children}</AnimationConfigContext.Provider>
   );
 }
 

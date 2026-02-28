@@ -1,11 +1,13 @@
 'use client';
 
-import type { MasterFolderTreeController, UseMasterFolderTreeOptions } from '@/shared/contracts/master-folder-tree';
+import type {
+  MasterFolderTreeController,
+  UseMasterFolderTreeOptions,
+} from '@/shared/contracts/master-folder-tree';
 import type { MasterTreeId, MasterTreeNode } from '@/shared/utils';
 
 import { useMasterFolderTree } from './useMasterFolderTree';
 import { useSyncMasterFolderTreeExternalState } from './useSyncMasterFolderTreeExternalState';
-
 
 export type UseConfiguredMasterFolderTreeOptions = Omit<
   UseMasterFolderTreeOptions,

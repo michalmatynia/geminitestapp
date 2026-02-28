@@ -1,8 +1,19 @@
 'use client';
 
-import React, { createContext, useContext, useState, useMemo, useEffect, ReactNode, useCallback } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useMemo,
+  useEffect,
+  ReactNode,
+  useCallback,
+} from 'react';
 
-import { useFileUploadEvents, type FileUploadEventRecord } from '@/features/files/hooks/useFileUploadEvents';
+import {
+  useFileUploadEvents,
+  type FileUploadEventRecord,
+} from '@/features/files/hooks/useFileUploadEvents';
 import { useToast } from '@/shared/ui';
 
 export const statusOptions = [
@@ -93,22 +104,50 @@ export function FileUploadEventsProvider({ children }: { children: ReactNode }):
     setPage(1);
   }, []);
 
-  const value = useMemo(() => ({
-    status, category, projectId, query, fromDate, toDate, page, pageSize,
-    events, total, totalPages, isFetching: eventsQuery.isFetching,
-    setStatus, setCategory, setProjectId, setQuery, setFromDate, setToDate, setPage,
-    handleResetFilters,
-    refetch: eventsQuery.refetch,
-  }), [
-    status, category, projectId, query, fromDate, toDate, page, pageSize,
-    events, total, totalPages, eventsQuery.isFetching, eventsQuery.refetch,
-    handleResetFilters
-  ]);
+  const value = useMemo(
+    () => ({
+      status,
+      category,
+      projectId,
+      query,
+      fromDate,
+      toDate,
+      page,
+      pageSize,
+      events,
+      total,
+      totalPages,
+      isFetching: eventsQuery.isFetching,
+      setStatus,
+      setCategory,
+      setProjectId,
+      setQuery,
+      setFromDate,
+      setToDate,
+      setPage,
+      handleResetFilters,
+      refetch: eventsQuery.refetch,
+    }),
+    [
+      status,
+      category,
+      projectId,
+      query,
+      fromDate,
+      toDate,
+      page,
+      pageSize,
+      events,
+      total,
+      totalPages,
+      eventsQuery.isFetching,
+      eventsQuery.refetch,
+      handleResetFilters,
+    ]
+  );
 
   return (
-    <FileUploadEventsContext.Provider value={value}>
-      {children}
-    </FileUploadEventsContext.Provider>
+    <FileUploadEventsContext.Provider value={value}>{children}</FileUploadEventsContext.Provider>
   );
 }
 

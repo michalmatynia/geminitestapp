@@ -5,14 +5,11 @@ import path from 'node:path';
 import { AI_PATHS_NODE_DOCS } from '@/shared/lib/ai-paths/core/docs/node-docs';
 
 const workspaceRoot = process.cwd();
-const nodesDir = path.join(
-  workspaceRoot,
-  'docs/ai-paths/semantic-grammar/nodes',
-);
+const nodesDir = path.join(workspaceRoot, 'docs/ai-paths/semantic-grammar/nodes');
 
 const expectedTypes = new Set<string>(AI_PATHS_NODE_DOCS.map((doc) => doc.type));
 const expectedFiles = Array.from(expectedTypes).map((nodeType) =>
-  path.join(nodesDir, `${nodeType}.json`),
+  path.join(nodesDir, `${nodeType}.json`)
 );
 
 const normalizeForHashing = (value: unknown): unknown => {
@@ -45,9 +42,7 @@ if (missingFiles.length > 0) {
 }
 
 if (!fs.existsSync(indexPath)) {
-  console.error(
-    `Missing semantic grammar index: ${path.relative(workspaceRoot, indexPath)}`,
-  );
+  console.error(`Missing semantic grammar index: ${path.relative(workspaceRoot, indexPath)}`);
   process.exit(1);
 }
 
@@ -78,11 +73,11 @@ for (const row of parsedIndex) {
 }
 
 const missingFromIndex = Array.from(expectedTypes).filter(
-  (nodeType) => !indexRowsByType.has(nodeType),
+  (nodeType) => !indexRowsByType.has(nodeType)
 );
 
 const unexpectedInIndex = Array.from(indexRowsByType.keys()).filter(
-  (nodeType) => !expectedTypes.has(nodeType),
+  (nodeType) => !expectedTypes.has(nodeType)
 );
 
 if (duplicateIndexTypes.length > 0) {
@@ -119,7 +114,7 @@ for (const nodeType of Array.from(expectedTypes).sort()) {
     parsedDoc = JSON.parse(fs.readFileSync(filePath, 'utf8')) as Record<string, unknown>;
   } catch (error) {
     hashValidationErrors.push(
-      `${path.relative(workspaceRoot, filePath)}: invalid JSON (${error instanceof Error ? error.message : 'unknown error'}).`,
+      `${path.relative(workspaceRoot, filePath)}: invalid JSON (${error instanceof Error ? error.message : 'unknown error'}).`
     );
     continue;
   }
@@ -129,27 +124,24 @@ for (const nodeType of Array.from(expectedTypes).sort()) {
     typeof declaredNodeTypeRaw === 'string' ? declaredNodeTypeRaw.trim() : '';
   if (declaredNodeType !== nodeType) {
     hashValidationErrors.push(
-      `${path.relative(workspaceRoot, filePath)}: nodeType mismatch (expected "${nodeType}", got "${declaredNodeType || 'missing'}").`,
+      `${path.relative(workspaceRoot, filePath)}: nodeType mismatch (expected "${nodeType}", got "${declaredNodeType || 'missing'}").`
     );
   }
 
   const nodeHashRaw = parsedDoc?.['nodeHash'];
-  const nodeHash =
-    typeof nodeHashRaw === 'string' ? nodeHashRaw.trim() : '';
+  const nodeHash = typeof nodeHashRaw === 'string' ? nodeHashRaw.trim() : '';
   const nodeHashAlgorithmRaw = parsedDoc?.['nodeHashAlgorithm'];
   const nodeHashAlgorithm =
-    typeof nodeHashAlgorithmRaw === 'string'
-      ? nodeHashAlgorithmRaw.trim()
-      : '';
+    typeof nodeHashAlgorithmRaw === 'string' ? nodeHashAlgorithmRaw.trim() : '';
   if (!/^[a-f0-9]{64}$/i.test(nodeHash)) {
     hashValidationErrors.push(
-      `${path.relative(workspaceRoot, filePath)}: missing or invalid nodeHash.`,
+      `${path.relative(workspaceRoot, filePath)}: missing or invalid nodeHash.`
     );
     continue;
   }
   if (nodeHashAlgorithm !== 'sha256') {
     hashValidationErrors.push(
-      `${path.relative(workspaceRoot, filePath)}: nodeHashAlgorithm must be "sha256".`,
+      `${path.relative(workspaceRoot, filePath)}: nodeHashAlgorithm must be "sha256".`
     );
     continue;
   }
@@ -160,14 +152,14 @@ for (const nodeType of Array.from(expectedTypes).sort()) {
   const computedHash = computeNodeHash(payloadForHash);
   if (computedHash !== nodeHash) {
     hashValidationErrors.push(
-      `${path.relative(workspaceRoot, filePath)}: nodeHash mismatch (expected ${computedHash}, got ${nodeHash}).`,
+      `${path.relative(workspaceRoot, filePath)}: nodeHash mismatch (expected ${computedHash}, got ${nodeHash}).`
     );
   }
 
   const existingType = hashToType.get(nodeHash);
   if (existingType && existingType !== nodeType) {
     hashValidationErrors.push(
-      `nodeHash collision: ${nodeType} and ${existingType} share hash ${nodeHash}.`,
+      `nodeHash collision: ${nodeType} and ${existingType} share hash ${nodeHash}.`
     );
   } else {
     hashToType.set(nodeHash, nodeType);
@@ -177,18 +169,15 @@ for (const nodeType of Array.from(expectedTypes).sort()) {
   const indexRowHash = indexRow?.['nodeHash'];
   const indexHash = typeof indexRowHash === 'string' ? indexRowHash.trim() : '';
   const indexRowAlgorithm = indexRow?.['nodeHashAlgorithm'];
-  const indexAlgorithm =
-    typeof indexRowAlgorithm === 'string'
-      ? indexRowAlgorithm.trim()
-      : '';
+  const indexAlgorithm = typeof indexRowAlgorithm === 'string' ? indexRowAlgorithm.trim() : '';
   if (indexHash !== nodeHash) {
     hashValidationErrors.push(
-      `nodes/index.json (${nodeType}): nodeHash mismatch (expected ${nodeHash}, got ${indexHash || 'missing'}).`,
+      `nodes/index.json (${nodeType}): nodeHash mismatch (expected ${nodeHash}, got ${indexHash || 'missing'}).`
     );
   }
   if (indexAlgorithm !== 'sha256') {
     hashValidationErrors.push(
-      `nodes/index.json (${nodeType}): nodeHashAlgorithm must be "sha256".`,
+      `nodes/index.json (${nodeType}): nodeHashAlgorithm must be "sha256".`
     );
   }
 }
@@ -202,5 +191,5 @@ if (hashValidationErrors.length > 0) {
 }
 
 console.log(
-  `Semantic grammar docs coverage + hash check passed for ${expectedTypes.size} node types.`,
+  `Semantic grammar docs coverage + hash check passed for ${expectedTypes.size} node types.`
 );

@@ -1,7 +1,7 @@
 'use client';
 
 import { DB_COLLECTION_OPTIONS } from '@/shared/lib/ai-paths';
-import { Card, Input,  SelectSimple, FormField } from '@/shared/ui';
+import { Card, Input, SelectSimple, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -37,16 +37,16 @@ export function FetcherNodeConfigSection(): React.JSX.Element | null {
   const sourceMode: FetcherSourceMode = fetcherConfig.sourceMode ?? 'live_context';
   const entityId = fetcherConfig.entityId?.trim()
     ? fetcherConfig.entityId
-    : fetcherConfig.productId ?? '';
+    : (fetcherConfig.productId ?? '');
   const needsSimulationTarget =
     sourceMode === 'simulation_id' || sourceMode === 'live_then_simulation';
 
-  const collectionOptions = DB_COLLECTION_OPTIONS
-    .filter((opt: { value: string }): boolean => opt.value !== 'custom')
-    .map((opt: { value: string; label: string }) => ({
-      value: opt.value,
-      label: opt.label,
-    }));
+  const collectionOptions = DB_COLLECTION_OPTIONS.filter(
+    (opt: { value: string }): boolean => opt.value !== 'custom'
+  ).map((opt: { value: string; label: string }) => ({
+    value: opt.value,
+    label: opt.label,
+  }));
 
   return (
     <div className='space-y-4'>
@@ -107,7 +107,8 @@ export function FetcherNodeConfigSection(): React.JSX.Element | null {
       ) : null}
 
       <Card variant='subtle' padding='sm' className='text-[11px] text-slate-200/80'>
-        Connect `Trigger.trigger` to `Fetcher.trigger`, then connect `Fetcher.context` to `Context Filter.context`.
+        Connect `Trigger.trigger` to `Fetcher.trigger`, then connect `Fetcher.context` to `Context
+        Filter.context`.
       </Card>
     </div>
   );

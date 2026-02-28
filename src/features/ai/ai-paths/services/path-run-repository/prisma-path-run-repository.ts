@@ -119,7 +119,8 @@ const mapNode = (node: MapNodeInput): AiPathRunNodeRecord => {
     inputs: (node.inputs as Record<string, unknown> | null | undefined) ?? undefined,
     outputs: (node.outputs as Record<string, unknown> | null | undefined) ?? undefined,
     errorMessage: node.errorMessage ?? null,
-    createdAt: node.createdAt instanceof Date ? node.createdAt.toISOString() : String(node.createdAt),
+    createdAt:
+      node.createdAt instanceof Date ? node.createdAt.toISOString() : String(node.createdAt),
     updatedAt: toIsoString(node.updatedAt as Date),
     startedAt: toIsoString(node.startedAt as Date),
     finishedAt: toIsoString(node.finishedAt as Date),
@@ -148,8 +149,10 @@ const mapEvent = (event: MapEventInput): AiPathRunEventRecord => {
     level: event.level as AiPathRunEventRecord['level'],
     message: String(event.message),
     metadata: metadata as AiPathRunEventRecord['metadata'],
-    createdAt: event.createdAt instanceof Date ? event.createdAt.toISOString() : String(event.createdAt),
-    updatedAt: event.createdAt instanceof Date ? event.createdAt.toISOString() : String(event.createdAt),
+    createdAt:
+      event.createdAt instanceof Date ? event.createdAt.toISOString() : String(event.createdAt),
+    updatedAt:
+      event.createdAt instanceof Date ? event.createdAt.toISOString() : String(event.createdAt),
   };
 };
 
@@ -234,9 +237,7 @@ const buildRunWhere = (options: AiPathRunListOptions = {}): Prisma.AiPathRunWher
         });
       } else {
         andFilters.push({
-          AND: [
-            { NOT: { meta: { path: ['source'], equals: source } } },
-          ],
+          AND: [{ NOT: { meta: { path: ['source'], equals: source } } }],
         });
       }
     } else if (source === 'ai_paths_ui') {
@@ -377,7 +378,9 @@ export const prismaPathRunRepository: AiPathRunRepository = {
     }
   },
 
-  async listRuns(options: AiPathRunListOptions = {}): Promise<{ runs: AiPathRunRecord[]; total: number }> {
+  async listRuns(
+    options: AiPathRunListOptions = {}
+  ): Promise<{ runs: AiPathRunRecord[]; total: number }> {
     const where = buildRunWhere(options);
     const includeTotal = options.includeTotal !== false;
     const runs = await prisma.aiPathRun.findMany({
@@ -448,10 +451,8 @@ export const prismaPathRunRepository: AiPathRunRepository = {
     nodeId: string,
     nodeData: AiPathRunNodeUpdate & { nodeType: string; nodeTitle?: string | null }
   ): Promise<AiPathRunNodeRecord> {
-     
-    const status = (
-      nodeData.status as unknown as Prisma.AiPathRunNodeCreateInput['status']
-    ) ?? 'pending';
+    const status =
+      (nodeData.status as unknown as Prisma.AiPathRunNodeCreateInput['status']) ?? 'pending';
     const node = await prisma.aiPathRunNode.upsert({
       where: { runId_nodeId: { runId, nodeId } },
       update: nodeData as Prisma.AiPathRunNodeUpdateInput,
@@ -460,7 +461,7 @@ export const prismaPathRunRepository: AiPathRunRepository = {
         nodeId,
         nodeType: nodeData.nodeType,
         nodeTitle: nodeData.nodeTitle ?? null,
-         
+
         status,
         attempt: nodeData.attempt ?? 0,
         inputs: toNullableJsonInput(nodeData.inputs),
@@ -478,7 +479,7 @@ export const prismaPathRunRepository: AiPathRunRepository = {
       where: { runId },
       orderBy: { createdAt: 'asc' },
     });
-    return (nodes).map(mapNode);
+    return nodes.map(mapNode);
   },
 
   async listRunNodesSince(
@@ -499,15 +500,12 @@ export const prismaPathRunRepository: AiPathRunRepository = {
     const nodes = await prisma.aiPathRunNode.findMany({
       where: {
         runId,
-        OR: [
-          { updatedAt: { gt: updatedAt } },
-          { updatedAt, nodeId: { gt: nodeId } },
-        ],
+        OR: [{ updatedAt: { gt: updatedAt } }, { updatedAt, nodeId: { gt: nodeId } }],
       },
       orderBy: [{ updatedAt: 'asc' }, { nodeId: 'asc' }],
       take: limit,
     });
-    return (nodes).map(mapNode);
+    return nodes.map(mapNode);
   },
 
   async createRunEvent(input: AiPathRunEventCreateInput): Promise<AiPathRunEventRecord> {
@@ -517,16 +515,24 @@ export const prismaPathRunRepository: AiPathRunRepository = {
         runId: input.runId,
         level: prismaLevel as AiPathRunEventLevel,
         message: input.message,
-        metadata: (input.metadata || input.nodeId || input.nodeType || input.nodeTitle || input.status || input.iteration)
-          ? toNullableJsonInput({
-            ...(input.metadata as Record<string, unknown> || {}),
-            ...(input.nodeId ? { nodeId: input.nodeId } : {}),
-            ...(input.nodeType ? { nodeType: input.nodeType } : {}),
-            ...(input.nodeTitle ? { nodeTitle: input.nodeTitle } : {}),
-            ...(input.status ? { status: input.status } : {}),
-            ...(input.iteration !== undefined && input.iteration !== null ? { iteration: input.iteration } : {}),
-          })
-          : undefined,
+        metadata:
+          input.metadata ||
+          input.nodeId ||
+          input.nodeType ||
+          input.nodeTitle ||
+          input.status ||
+          input.iteration
+            ? toNullableJsonInput({
+                ...((input.metadata as Record<string, unknown>) || {}),
+                ...(input.nodeId ? { nodeId: input.nodeId } : {}),
+                ...(input.nodeType ? { nodeType: input.nodeType } : {}),
+                ...(input.nodeTitle ? { nodeTitle: input.nodeTitle } : {}),
+                ...(input.status ? { status: input.status } : {}),
+                ...(input.iteration !== undefined && input.iteration !== null
+                  ? { iteration: input.iteration }
+                  : {}),
+              })
+            : undefined,
       },
     });
     return mapEvent(event);
@@ -537,11 +543,8 @@ export const prismaPathRunRepository: AiPathRunRepository = {
     options: AiPathRunEventListOptions = {}
   ): Promise<AiPathRunEventRecord[]> {
     const sinceValue = options.since ? new Date(options.since) : null;
-    const since =
-      sinceValue && !Number.isNaN(sinceValue.getTime()) ? sinceValue : null;
-    const afterDateValue = options.after?.createdAt
-      ? new Date(options.after.createdAt)
-      : null;
+    const since = sinceValue && !Number.isNaN(sinceValue.getTime()) ? sinceValue : null;
+    const afterDateValue = options.after?.createdAt ? new Date(options.after.createdAt) : null;
     const afterDate =
       afterDateValue && !Number.isNaN(afterDateValue.getTime()) ? afterDateValue : null;
     const afterId =
@@ -551,22 +554,19 @@ export const prismaPathRunRepository: AiPathRunRepository = {
     const where =
       afterDate && afterId
         ? {
-          runId,
-          OR: [
-            { createdAt: { gt: afterDate } },
-            { createdAt: afterDate, id: { gt: afterId } },
-          ],
-        }
+            runId,
+            OR: [{ createdAt: { gt: afterDate } }, { createdAt: afterDate, id: { gt: afterId } }],
+          }
         : {
-          runId,
-          ...(since ? { createdAt: { gt: since } } : {}),
-        };
+            runId,
+            ...(since ? { createdAt: { gt: since } } : {}),
+          };
     const events = await prisma.aiPathRunEvent.findMany({
       where,
       orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
       ...(typeof options.limit === 'number' ? { take: options.limit } : {}),
     });
-    return (events).map(mapEvent);
+    return events.map(mapEvent);
   },
 
   async markStaleRunningRuns(maxAgeMs: number): Promise<{ count: number }> {
@@ -592,7 +592,7 @@ export const prismaPathRunRepository: AiPathRunRepository = {
     }
   ): Promise<void> {
     const finishedAtDate = options?.finishedAt ? new Date(options.finishedAt) : new Date();
-    
+
     await prisma.$transaction(async (tx) => {
       await tx.aiPathRun.update({
         where: { id: runId },

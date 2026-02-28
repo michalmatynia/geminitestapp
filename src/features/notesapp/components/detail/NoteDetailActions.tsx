@@ -42,13 +42,9 @@ export function NoteDetailActions(): React.JSX.Element | null {
       >
         <Star
           size={16}
-          className={
-            selectedNote.isFavorite ? 'fill-yellow-400 text-yellow-500' : ''
-          }
+          className={selectedNote.isFavorite ? 'fill-yellow-400 text-yellow-500' : ''}
         />
-        <span className='text-sm'>
-          {selectedNote.isFavorite ? 'Favorited' : 'Favorite'}
-        </span>
+        <span className='text-sm'>{selectedNote.isFavorite ? 'Favorited' : 'Favorite'}</span>
       </Button>
       {!isEditing ? (
         <Button
@@ -63,9 +59,7 @@ export function NoteDetailActions(): React.JSX.Element | null {
             type='button'
             form='note-edit-form'
             onClick={(): void => {
-              const form = document.getElementById(
-                'note-edit-form',
-              ) as HTMLFormElement;
+              const form = document.getElementById('note-edit-form') as HTMLFormElement;
               form?.requestSubmit();
             }}
             className='min-w-[80px] border border-white/20 hover:border-white/40'
@@ -95,9 +89,7 @@ export function NoteDetailActions(): React.JSX.Element | null {
           location='note_modal'
           entityType='note'
           entityId={selectedNote.id}
-          getEntityJson={() =>
-            selectedNote as unknown as Record<string, unknown>
-          }
+          getEntityJson={() => selectedNote as unknown as Record<string, unknown>}
         />
       </div>
     </div>

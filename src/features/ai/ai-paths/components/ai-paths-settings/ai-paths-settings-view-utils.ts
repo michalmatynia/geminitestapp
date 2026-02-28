@@ -42,9 +42,7 @@ export const formatPercent = (value: number): string => `${value.toFixed(1)}%`;
 export const formatStatusLabel = (status: string): string =>
   status
     .split('_')
-    .map((part: string) =>
-      part ? `${part[0]!.toUpperCase()}${part.slice(1)}` : part,
-    )
+    .map((part: string) => (part ? `${part[0]!.toUpperCase()}${part.slice(1)}` : part))
     .join(' ');
 
 export const statusToVariant = (status: string): StatusVariant => {
@@ -81,22 +79,16 @@ export const sortPathMetas = (paths: PathMeta[]): PathMeta[] =>
   });
 
 export const buildSwitchPathOptions = (
-  sortedPaths: PathMeta[],
+  sortedPaths: PathMeta[]
 ): Array<{ value: string; label: string }> => {
-  const nameCounts = sortedPaths.reduce<Map<string, number>>(
-    (acc, path: PathMeta) => {
-      acc.set(path.name, (acc.get(path.name) ?? 0) + 1);
-      return acc;
-    },
-    new Map<string, number>(),
-  );
+  const nameCounts = sortedPaths.reduce<Map<string, number>>((acc, path: PathMeta) => {
+    acc.set(path.name, (acc.get(path.name) ?? 0) + 1);
+    return acc;
+  }, new Map<string, number>());
 
   return sortedPaths.map((path: PathMeta) => {
     const isDuplicateName = (nameCounts.get(path.name) ?? 0) > 1;
-    const suffix =
-      isDuplicateName || isGenericPathName(path.name)
-        ? ` · ${path.id.slice(-6)}`
-        : '';
+    const suffix = isDuplicateName || isGenericPathName(path.name) ? ` · ${path.id.slice(-6)}` : '';
     return {
       value: path.id,
       label: `${path.name}${suffix}`,
@@ -106,7 +98,7 @@ export const buildSwitchPathOptions = (
 
 export const buildHistoryRetentionOptions = (
   historyRetentionPasses: number,
-  historyRetentionOptionsMax: number,
+  historyRetentionOptionsMax: number
 ): Array<{ value: string; label: string }> => {
   const optionCount = Math.max(historyRetentionPasses, historyRetentionOptionsMax);
   return Array.from({ length: optionCount }, (_value, index) => {

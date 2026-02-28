@@ -6,7 +6,12 @@ import { FilterPanel } from '@/shared/ui/templates/FilterPanel';
 describe('FilterPanel', () => {
   const defaultProps = {
     filters: [
-      { key: 'status', label: 'Status', type: 'select' as const, options: [{ label: 'Active', value: 'active' }] },
+      {
+        key: 'status',
+        label: 'Status',
+        type: 'select' as const,
+        options: [{ label: 'Active', value: 'active' }],
+      },
       { key: 'type', label: 'Type', type: 'text' as const },
     ],
     values: { status: '', type: '' },
@@ -42,12 +47,7 @@ describe('FilterPanel', () => {
   });
 
   it('shows active filter count', () => {
-    render(
-      <FilterPanel
-        {...defaultProps}
-        values={{ status: 'active', type: 'product' }}
-      />
-    );
+    render(<FilterPanel {...defaultProps} values={{ status: 'active', type: 'product' }} />);
     expect(screen.getByText(/2 filters active/)).toBeInTheDocument();
   });
 

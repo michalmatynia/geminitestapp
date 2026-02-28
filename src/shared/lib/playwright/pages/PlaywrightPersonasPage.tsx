@@ -2,19 +2,22 @@
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { PlaywrightSettingsForm } from '@/shared/lib/playwright/components/PlaywrightSettingsForm';
-import { usePlaywrightPersonas, useSavePlaywrightPersonasMutation } from '@/shared/lib/playwright/hooks/usePlaywrightPersonas';
-import { buildPlaywrightSettings, createPlaywrightPersonaId } from '@/shared/lib/playwright/utils/personas';
-import type {
-  PlaywrightPersona,
-  PlaywrightSettings,
-} from '@/shared/contracts/playwright';
+import {
+  usePlaywrightPersonas,
+  useSavePlaywrightPersonasMutation,
+} from '@/shared/lib/playwright/hooks/usePlaywrightPersonas';
+import {
+  buildPlaywrightSettings,
+  createPlaywrightPersonaId,
+} from '@/shared/lib/playwright/utils/personas';
+import type { PlaywrightPersona, PlaywrightSettings } from '@/shared/contracts/playwright';
 import { ItemLibrary, useToast, Breadcrumbs } from '@/shared/ui';
 
 import type { SetStateAction } from 'react';
 
 export function PlaywrightPersonasPage(): React.JSX.Element {
   const { toast } = useToast();
-  
+
   const { data: personas = [], isLoading: loading } = usePlaywrightPersonas();
   const { mutateAsync: savePersonas, isPending: saving } = useSavePlaywrightPersonasMutation();
 
@@ -38,17 +41,18 @@ export function PlaywrightPersonasPage(): React.JSX.Element {
 
     const next = existing
       ? personas.map((persona: PlaywrightPersona) =>
-        persona.id === existing.id ? nextPersona : persona
-      )
+          persona.id === existing.id ? nextPersona : persona
+        )
       : [...personas, nextPersona];
 
     try {
       await savePersonas({ personas: next });
       toast(existing ? 'Persona updated.' : 'Persona created.', { variant: 'success' });
     } catch (error) {
-      logClientError(error, { context: { source: 'PlaywrightPersonasPage', action: 'savePersona', personaId: draft.id } });
-      const errorMessage =
-        error instanceof Error ? error.message : 'Failed to save personas.';
+      logClientError(error, {
+        context: { source: 'PlaywrightPersonasPage', action: 'savePersona', personaId: draft.id },
+      });
+      const errorMessage = error instanceof Error ? error.message : 'Failed to save personas.';
       toast(errorMessage, { variant: 'error' });
     }
   };
@@ -59,9 +63,14 @@ export function PlaywrightPersonasPage(): React.JSX.Element {
       await savePersonas({ personas: next });
       toast('Persona deleted.', { variant: 'success' });
     } catch (error) {
-      logClientError(error, { context: { source: 'PlaywrightPersonasPage', action: 'deletePersona', personaId: persona.id } });
-      const errorMessage =
-        error instanceof Error ? error.message : 'Failed to save personas.';
+      logClientError(error, {
+        context: {
+          source: 'PlaywrightPersonasPage',
+          action: 'deletePersona',
+          personaId: persona.id,
+        },
+      });
+      const errorMessage = error instanceof Error ? error.message : 'Failed to save personas.';
       toast(errorMessage, { variant: 'error' });
     }
   };
@@ -76,16 +85,16 @@ export function PlaywrightPersonasPage(): React.JSX.Element {
       isSaving={saving}
       onSave={handleSavePersona}
       onDelete={handleDeletePersona}
-      backLink={(
+      backLink={
         <Breadcrumbs
           items={[
             { label: 'Admin', href: '/admin' },
             { label: 'Settings', href: '/admin/settings' },
-            { label: 'Personas' }
+            { label: 'Personas' },
           ]}
           className='mb-2'
         />
-      )}
+      }
       buildDefaultItem={() => ({
         name: '',
         description: '',
@@ -104,14 +113,18 @@ export function PlaywrightPersonasPage(): React.JSX.Element {
         }
         return tags;
       }}
-      renderExtraFields={(draft: Partial<PlaywrightPersona>, onChange: (updates: Partial<PlaywrightPersona>) => void): React.JSX.Element => (
+      renderExtraFields={(
+        draft: Partial<PlaywrightPersona>,
+        onChange: (updates: Partial<PlaywrightPersona>) => void
+      ): React.JSX.Element => (
         <PlaywrightSettingsForm
           settings={draft.settings || buildPlaywrightSettings()}
           setSettings={(newSettings: SetStateAction<PlaywrightSettings>): void => {
             const current = draft.settings || buildPlaywrightSettings();
-            const nextSettings = typeof newSettings === 'function' 
-              ? (newSettings as (prev: PlaywrightSettings) => PlaywrightSettings)(current) 
-              : newSettings;
+            const nextSettings =
+              typeof newSettings === 'function'
+                ? (newSettings as (prev: PlaywrightSettings) => PlaywrightSettings)(current)
+                : newSettings;
             onChange({ settings: nextSettings });
           }}
           showSave={false}

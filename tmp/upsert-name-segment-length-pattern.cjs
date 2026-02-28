@@ -19,28 +19,30 @@ async function main() {
       ? Math.floor(maxRow.sequence) + 10
       : 10;
 
-  const recipe = '__recipe__:' + JSON.stringify({
-    version: 1,
-    sourceMode: 'form_field',
-    sourceField: 'name_en',
-    sourceRegex: '^\\s*[^|]+\\|\\s*([0-9]+(?:[.,][0-9]+)?)',
-    sourceFlags: 'i',
-    sourceMatchGroup: 1,
-    mathOperation: 'none',
-    mathOperand: null,
-    roundMode: 'none',
-    padLength: null,
-    padChar: null,
-    logicOperator: 'regex',
-    logicOperand: '^[0-9]+(?:[.,][0-9]+)?$',
-    logicFlags: null,
-    logicWhenTrueAction: 'keep',
-    logicWhenTrueValue: null,
-    logicWhenFalseAction: 'abort',
-    logicWhenFalseValue: null,
-    resultAssembly: 'segment_only',
-    targetApply: 'replace_whole_field',
-  });
+  const recipe =
+    '__recipe__:' +
+    JSON.stringify({
+      version: 1,
+      sourceMode: 'form_field',
+      sourceField: 'name_en',
+      sourceRegex: '^\\s*[^|]+\\|\\s*([0-9]+(?:[.,][0-9]+)?)',
+      sourceFlags: 'i',
+      sourceMatchGroup: 1,
+      mathOperation: 'none',
+      mathOperand: null,
+      roundMode: 'none',
+      padLength: null,
+      padChar: null,
+      logicOperator: 'regex',
+      logicOperand: '^[0-9]+(?:[.,][0-9]+)?$',
+      logicFlags: null,
+      logicWhenTrueAction: 'keep',
+      logicWhenTrueValue: null,
+      logicWhenFalseAction: 'abort',
+      logicWhenFalseValue: null,
+      resultAssembly: 'segment_only',
+      targetApply: 'replace_whole_field',
+    });
 
   const filter = { label: 'Name Segment #2 -> Length' };
   const set = {
@@ -82,7 +84,11 @@ async function main() {
     updatedAt: now,
   };
 
-  const result = await col.updateOne(filter, { $set: set, $setOnInsert: { createdAt: now } }, { upsert: true });
+  const result = await col.updateOne(
+    filter,
+    { $set: set, $setOnInsert: { createdAt: now } },
+    { upsert: true }
+  );
 
   const doc = await col.findOne(filter, {
     projection: {
@@ -109,8 +115,8 @@ async function main() {
         doc,
       },
       null,
-      2,
-    ),
+      2
+    )
   );
 
   await client.close();

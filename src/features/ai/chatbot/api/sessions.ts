@@ -1,8 +1,10 @@
-import type { ChatMessageDto as ChatMessage, ChatbotSessionDto as ChatSession } from '@/shared/contracts/chatbot';
+import type {
+  ChatMessageDto as ChatMessage,
+  ChatbotSessionDto as ChatSession,
+} from '@/shared/contracts/chatbot';
 import type { ChatbotSessionListItem } from '@/shared/contracts/chatbot';
 
 import { fetchWithTimeout, readErrorMessage, requestJson } from './client';
-
 
 export const fetchChatbotSessions = async <TSession = ChatSession>(params?: {
   scope?: 'ids';
@@ -106,10 +108,7 @@ export const persistSessionMessage = async (
     12000
   );
   if (!res.ok) {
-    const message = await readErrorMessage(
-      res,
-      'Failed to persist session message.'
-    );
+    const message = await readErrorMessage(res, 'Failed to persist session message.');
     throw new Error(message);
   }
 };

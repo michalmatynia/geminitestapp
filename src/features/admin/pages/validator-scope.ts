@@ -1,5 +1,5 @@
-import { 
-  type ValidatorScope, 
+import {
+  type ValidatorScope,
   type ValidatorPatternList,
   VALIDATOR_PATTERN_LISTS_KEY,
   VALIDATOR_SCOPE_LABELS,
@@ -18,29 +18,25 @@ const DEFAULT_PATTERN_LIST_DEFS: Array<{
   {
     id: 'products',
     name: 'Product Patterns',
-    description:
-      VALIDATOR_SCOPE_DESCRIPTIONS.products,
+    description: VALIDATOR_SCOPE_DESCRIPTIONS.products,
     scope: 'products',
   },
   {
     id: 'image-studio',
     name: 'Image Studio Patterns',
-    description:
-      VALIDATOR_SCOPE_DESCRIPTIONS['image-studio'],
+    description: VALIDATOR_SCOPE_DESCRIPTIONS['image-studio'],
     scope: 'image-studio',
   },
   {
     id: 'prompt-exploder',
     name: 'Image Studio - Prompt Exploder',
-    description:
-      VALIDATOR_SCOPE_DESCRIPTIONS['prompt-exploder'],
+    description: VALIDATOR_SCOPE_DESCRIPTIONS['prompt-exploder'],
     scope: 'prompt-exploder',
   },
   {
     id: 'case-resolver-prompt-exploder',
     name: 'Case Resolver - Prompt Exploder',
-    description:
-      VALIDATOR_SCOPE_DESCRIPTIONS['case-resolver-prompt-exploder'],
+    description: VALIDATOR_SCOPE_DESCRIPTIONS['case-resolver-prompt-exploder'],
     scope: 'case-resolver-prompt-exploder',
   },
   {
@@ -93,8 +89,7 @@ export const parseValidatorScope = (value: string | null): ValidatorScope =>
             ? 'ai-paths'
             : 'products';
 
-const normalizeString = (value: unknown): string =>
-  typeof value === 'string' ? value.trim() : '';
+const normalizeString = (value: unknown): string => (typeof value === 'string' ? value.trim() : '');
 
 const normalizeListRecord = (
   value: unknown,
@@ -126,14 +121,14 @@ const normalizeListRecord = (
         : fallback.deletionLocked,
     createdAt,
     updatedAt,
-    patterns: Array.isArray(record['patterns']) ? record['patterns'].map(String) : fallback.patterns,
+    patterns: Array.isArray(record['patterns'])
+      ? record['patterns'].map(String)
+      : fallback.patterns,
     isActive: typeof record['isActive'] === 'boolean' ? record['isActive'] : fallback.isActive,
   };
 };
 
-const ensureUniqueIds = (
-  lists: ValidatorPatternList[]
-): ValidatorPatternList[] => {
+const ensureUniqueIds = (lists: ValidatorPatternList[]): ValidatorPatternList[] => {
   const seen = new Set<string>();
   const now = nowIso();
   return lists.map((list: ValidatorPatternList, index: number) => {
@@ -197,15 +192,14 @@ export const parseValidatorPatternLists = (
   try {
     const parsed = JSON.parse(value) as unknown;
     const defaults = defaultValidatorPatternLists();
-    const rawLists =
-      Array.isArray(parsed)
-        ? parsed
-        : parsed && typeof parsed === 'object'
-          ? (() => {
+    const rawLists = Array.isArray(parsed)
+      ? parsed
+      : parsed && typeof parsed === 'object'
+        ? (() => {
             const record = parsed as Record<string, unknown>;
             return Array.isArray(record['lists']) ? (record['lists'] as unknown[]) : null;
           })()
-          : null;
+        : null;
 
     if (Array.isArray(rawLists)) {
       return normalizeValidatorPatternLists(

@@ -45,7 +45,9 @@ export function PageBuilderLeftPanel(): React.JSX.Element {
   return (
     <div
       className={`relative flex flex-shrink-0 overflow-hidden transition-all duration-300 ease-in-out ${
-        state.leftPanelCollapsed ? 'w-0 opacity-0 -translate-x-2 pointer-events-none' : 'w-72 opacity-100 translate-x-0'
+        state.leftPanelCollapsed
+          ? 'w-0 opacity-0 -translate-x-2 pointer-events-none'
+          : 'w-72 opacity-100 translate-x-0'
       }`}
     >
       <div className='flex w-72 min-h-0 flex-col border-r border-border bg-card'>
@@ -53,7 +55,7 @@ export function PageBuilderLeftPanel(): React.JSX.Element {
           title={leftPanelLabel}
           size='xs'
           className='p-3 border-b border-border'
-          actions={(
+          actions={
             <div className='flex items-center gap-1'>
               <Button
                 onClick={() => setLeftPanelMode('sections')}
@@ -122,7 +124,7 @@ export function PageBuilderLeftPanel(): React.JSX.Element {
                 <PanelLeftClose className='size-3.5' />
               </Button>
             </div>
-          )}
+          }
         />
         {leftPanelMode === 'sections' && <ComponentTreePanel />}
         {leftPanelMode === 'theme' && <ThemeSettingsPanel showHeader={false} />}

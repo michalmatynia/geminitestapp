@@ -33,7 +33,8 @@ export function CenterPreviewHeader({
           />
         ) : null}
         {previewMode === '3d' && workingSlot ? (
-          <Button size='xs'
+          <Button
+            size='xs'
             variant='outline'
             onClick={onSaveScreenshot}
             disabled={screenshotBusy}

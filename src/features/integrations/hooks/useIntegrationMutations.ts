@@ -2,7 +2,11 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 
-import type { Integration, IntegrationConnection, TestConnectionResponse } from '@/shared/contracts/integrations';
+import type {
+  Integration,
+  IntegrationConnection,
+  TestConnectionResponse,
+} from '@/shared/contracts/integrations';
 import type { MutationResult } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import {
@@ -16,7 +20,10 @@ import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import { invalidateIntegrationConnections } from './integrationCache';
 
-export function useCreateIntegration(): MutationResult<Integration, { name: string; slug: string }> {
+export function useCreateIntegration(): MutationResult<
+  Integration,
+  { name: string; slug: string }
+> {
   const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.integrations.all;
   return createCreateMutationV2<Integration, { name: string; slug: string }>({
@@ -125,7 +132,12 @@ type TestConnectionVariables = {
 export function useTestConnection() {
   const mutationKey = QUERY_KEYS.integrations.connections();
   return createCreateMutationV2<TestConnectionResponse, TestConnectionVariables>({
-    mutationFn: ({ integrationId, connectionId, type = 'test', ...rest }): Promise<TestConnectionResponse> =>
+    mutationFn: ({
+      integrationId,
+      connectionId,
+      type = 'test',
+      ...rest
+    }): Promise<TestConnectionResponse> =>
       api.post<TestConnectionResponse>(
         `/api/integrations/${integrationId}/connections/${connectionId}/${type}`,
         { integrationId, connectionId, type, ...rest }
@@ -145,7 +157,10 @@ export function useTestConnection() {
 export function useDisconnectAllegro() {
   const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.integrations.connections();
-  return createCreateMutationV2<Record<string, unknown>, { integrationId: string; connectionId: string }>({
+  return createCreateMutationV2<
+    Record<string, unknown>,
+    { integrationId: string; connectionId: string }
+  >({
     mutationFn: ({ integrationId, connectionId }): Promise<Record<string, unknown>> =>
       api.post<Record<string, unknown>>(
         `/api/integrations/connections/${connectionId}/allegro/disconnect`,
@@ -201,10 +216,11 @@ export function useAllegroApiRequest() {
         statusText: string;
         data?: unknown;
         refreshed?: boolean;
-      }>(
-        `/api/integrations/${integrationId}/connections/${connectionId}/allegro/request`,
-        { integrationId, connectionId, ...rest }
-      ),
+      }>(`/api/integrations/${integrationId}/connections/${connectionId}/allegro/request`, {
+        integrationId,
+        connectionId,
+        ...rest,
+      }),
     mutationKey,
     meta: {
       source: 'integrations.hooks.useAllegroApiRequest',
@@ -237,8 +253,7 @@ export function useUpdatePreferredTemplate() {
 export function useSyncAllBaseImagesMutation() {
   const mutationKey = QUERY_KEYS.integrations.all;
   return createCreateMutationV2<{ message?: string }, void>({
-    mutationFn: () =>
-      api.post<{ message?: string }>('/api/integrations/images/sync-base/all', {}),
+    mutationFn: () => api.post<{ message?: string }>('/api/integrations/images/sync-base/all', {}),
     mutationKey,
     meta: {
       source: 'integrations.hooks.useSyncAllBaseImagesMutation',

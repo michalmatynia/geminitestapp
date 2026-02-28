@@ -45,10 +45,7 @@ export function formDataToObject(formData: FormData): Record<string, unknown> {
   return output;
 }
 
-const toUploadFile = (
-  entry: FormDataEntryValue,
-  uploadIndex: number
-): File | null => {
+const toUploadFile = (entry: FormDataEntryValue, uploadIndex: number): File | null => {
   if (typeof entry === 'string') return null;
   const candidate = entry as BlobWithOptionalName;
   if (typeof candidate.size !== 'number' || candidate.size <= 0) return null;
@@ -75,9 +72,7 @@ const toUploadFile = (
 
 const normalizeIdEntries = (entries: FormDataEntryValue[]): string[] =>
   entries
-    .map((entry: FormDataEntryValue): string =>
-      typeof entry === 'string' ? entry.trim() : '',
-    )
+    .map((entry: FormDataEntryValue): string => (typeof entry === 'string' ? entry.trim() : ''))
     .filter((entry: string): boolean => entry.length > 0);
 
 const normalizeCategoryId = (formData: FormData): string | null => {
@@ -133,9 +128,7 @@ export function parseProductForm(formData: FormData): ParsedProductForm {
   };
 }
 
-export const getProductImageFilepath = (
-  image: ProductImageRecord,
-): string | null => {
+export const getProductImageFilepath = (image: ProductImageRecord): string | null => {
   const imageFile = image.imageFile as unknown;
   if (!imageFile || typeof imageFile !== 'object' || Array.isArray(imageFile)) {
     return null;

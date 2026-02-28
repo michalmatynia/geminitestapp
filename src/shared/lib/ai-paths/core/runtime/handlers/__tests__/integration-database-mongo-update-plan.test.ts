@@ -75,9 +75,7 @@ describe('buildMongoUpdatePlan', () => {
 
     expect(Array.isArray(parameters)).toBe(true);
     expect(parameters).toHaveLength(1);
-    expect(
-      parameters.find((entry) => entry['parameterId'] === 'param-1')?.['value']
-    ).toBe('Metal');
+    expect(parameters.find((entry) => entry['parameterId'] === 'param-1')?.['value']).toBe('Metal');
     expect(result.plan.primaryTarget).toBe('parameters');
     expect(result.plan.updates).toEqual(
       expect.objectContaining({
@@ -344,15 +342,14 @@ describe('buildMongoUpdatePlan', () => {
     expect(guardrailMeta).toEqual(
       expect.objectContaining({
         code: 'write-template-values',
-      }),
+      })
     );
     const missingTokens = guardrailMeta['missingTokens'];
     expect(Array.isArray(missingTokens)).toBe(true);
     expect(missingTokens).toContain('bundle.parameters');
-    expect(toast).toHaveBeenCalledWith(
-      expect.stringContaining('Database write blocked'),
-      { variant: 'error' }
-    );
+    expect(toast).toHaveBeenCalledWith(expect.stringContaining('Database write blocked'), {
+      variant: 'error',
+    });
     expect(reportAiPathsError).toHaveBeenCalled();
   });
 });

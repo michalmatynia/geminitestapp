@@ -84,7 +84,10 @@ export function AttachSlugModal({
       size='md'
     >
       <div className='space-y-4'>
-        <FormField label='Search Available Routes' description='Filter global routes that are not yet assigned to this zone.'>
+        <FormField
+          label='Search Available Routes'
+          description='Filter global routes that are not yet assigned to this zone.'
+        >
           <SearchInput
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -96,7 +99,9 @@ export function AttachSlugModal({
 
         <div className='space-y-2'>
           <div className='flex items-center justify-between px-1'>
-            <span className='text-[10px] uppercase font-bold text-muted-foreground'>Available Slugs</span>
+            <span className='text-[10px] uppercase font-bold text-muted-foreground'>
+              Available Slugs
+            </span>
             <div className='flex items-center gap-3 text-[10px] uppercase font-bold'>
               <button
                 type='button'
@@ -115,7 +120,11 @@ export function AttachSlugModal({
             </div>
           </div>
 
-          <Card variant='subtle-compact' padding='none' className='max-h-60 overflow-y-auto border-border/60 bg-black/20 divide-y divide-white/5'>
+          <Card
+            variant='subtle-compact'
+            padding='none'
+            className='max-h-60 overflow-y-auto border-border/60 bg-black/20 divide-y divide-white/5'
+          >
             {loading ? (
               <LoadingState message='Fetching global slug index...' className='py-8' size='sm' />
             ) : availableSlugs.length === 0 ? (
@@ -133,7 +142,9 @@ export function AttachSlugModal({
                     onCheckedChange={() => toggleSelection(slug.id)}
                   />
                   <div className='flex flex-col'>
-                    <span className='text-sm font-medium text-gray-200 group-hover:text-white transition-colors'>/{slug.slug}</span>
+                    <span className='text-sm font-medium text-gray-200 group-hover:text-white transition-colors'>
+                      /{slug.slug}
+                    </span>
                     <span className='text-[10px] text-muted-foreground font-mono'>{slug.id}</span>
                   </div>
                 </label>

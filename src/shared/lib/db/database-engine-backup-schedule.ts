@@ -35,7 +35,12 @@ const isBackupStatus = (value: unknown): value is DatabaseEngineBackupStatus =>
   value === 'success' ||
   value === 'failed';
 
-const normalizePositiveInt = (value: unknown, fallback: number, min: number, max: number): number => {
+const normalizePositiveInt = (
+  value: unknown,
+  fallback: number,
+  min: number,
+  max: number
+): number => {
   if (typeof value !== 'number' || !Number.isFinite(value)) return fallback;
   return Math.min(max, Math.max(min, Math.floor(value)));
 };
@@ -58,7 +63,7 @@ const normalizeTimeUtc = (value: unknown, fallback: string): string =>
 
 const normalizeTarget = (
   input: Record<string, unknown> | null,
-  fallback: DatabaseEngineBackupTargetSchedule,
+  fallback: DatabaseEngineBackupTargetSchedule
 ): DatabaseEngineBackupTargetSchedule => ({
   enabled: typeof input?.['enabled'] === 'boolean' ? input['enabled'] : fallback.enabled,
   cadence: isBackupCadence(input?.['cadence']) ? input['cadence'] : fallback.cadence,
@@ -80,7 +85,7 @@ const normalizeTarget = (
 });
 
 export const normalizeDatabaseEngineBackupSchedule = (
-  raw: unknown,
+  raw: unknown
 ): DatabaseEngineBackupSchedule => {
   const parsed = parseRawObject(raw);
 
@@ -96,11 +101,11 @@ export const normalizeDatabaseEngineBackupSchedule = (
     lastCheckedAt: normalizeIsoOrNull(parsed?.['lastCheckedAt']),
     mongodb: normalizeTarget(
       asRecord(parsed?.['mongodb']),
-      DEFAULT_DATABASE_ENGINE_BACKUP_SCHEDULE.mongodb,
+      DEFAULT_DATABASE_ENGINE_BACKUP_SCHEDULE.mongodb
     ),
     postgresql: normalizeTarget(
       asRecord(parsed?.['postgresql']),
-      DEFAULT_DATABASE_ENGINE_BACKUP_SCHEDULE.postgresql,
+      DEFAULT_DATABASE_ENGINE_BACKUP_SCHEDULE.postgresql
     ),
   };
 };

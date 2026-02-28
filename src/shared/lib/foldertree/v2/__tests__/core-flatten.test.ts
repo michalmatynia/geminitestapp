@@ -40,10 +40,6 @@ describe('flattenVisibleNodesV2', () => {
     expect(collapsedRows.map((row) => row.nodeId)).toEqual(['folder:a', 'folder:b']);
 
     const expandedRows = flattenVisibleNodesV2(roots, new Set(['folder:a']));
-    expect(expandedRows.map((row) => row.nodeId)).toEqual([
-      'folder:a',
-      'file:a1',
-      'folder:b',
-    ]);
+    expect(expandedRows.map((row) => row.nodeId)).toEqual(['folder:a', 'file:a1', 'folder:b']);
   });
 });

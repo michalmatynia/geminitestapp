@@ -1,7 +1,7 @@
 import type { ErrorCategory, SuggestedAction } from '@/shared/contracts/observability';
 import { classifyError, getSuggestedActions } from '@/shared/errors/error-classifier';
 
-export type ErrorCode = 
+export type ErrorCode =
   | 'VALIDATION_ERROR'
   | 'NOT_FOUND'
   | 'UNAUTHORIZED'
@@ -55,7 +55,7 @@ export class ApiErrorBuilder {
       message,
       category,
       suggestedActions,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
   }
 
@@ -88,13 +88,13 @@ export class ApiErrorBuilder {
   build(): ApiError {
     return {
       error: this.error,
-      ...(this.meta && { meta: this.meta })
+      ...(this.meta && { meta: this.meta }),
     };
   }
 
   toResponse(status: number = 400): Response {
     const headers: Record<string, string> = {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
     };
 
     // Add specific headers based on error type
@@ -112,7 +112,7 @@ export class ApiErrorBuilder {
 
     return new Response(JSON.stringify(this.build()), {
       status,
-      headers
+      headers,
     });
   }
 }
@@ -126,89 +126,101 @@ export class StandardErrors {
   }
 
   static notFound(resource: string = 'Resource'): ApiErrorBuilder {
-    return new ApiErrorBuilder('NOT_FOUND', `${resource} not found`)
-      .withDocumentation('/docs/errors#not-found');
+    return new ApiErrorBuilder('NOT_FOUND', `${resource} not found`).withDocumentation(
+      '/docs/errors#not-found'
+    );
   }
 
   static unauthorized(): ApiErrorBuilder {
-    return new ApiErrorBuilder('UNAUTHORIZED', 'Authentication required')
-      .withDocumentation('/docs/authentication');
+    return new ApiErrorBuilder('UNAUTHORIZED', 'Authentication required').withDocumentation(
+      '/docs/authentication'
+    );
   }
 
   static forbidden(action?: string): ApiErrorBuilder {
     const message = action ? `Insufficient permissions for ${action}` : 'Access forbidden';
-    return new ApiErrorBuilder('FORBIDDEN', message)
-      .withDocumentation('/docs/permissions');
+    return new ApiErrorBuilder('FORBIDDEN', message).withDocumentation('/docs/permissions');
   }
 
   static rateLimited(_retryAfter: number = 60): ApiErrorBuilder {
-    return new ApiErrorBuilder('RATE_LIMITED', 'Rate limit exceeded')
-      .withDocumentation('/docs/rate-limits');
+    return new ApiErrorBuilder('RATE_LIMITED', 'Rate limit exceeded').withDocumentation(
+      '/docs/rate-limits'
+    );
   }
 
   static duplicateResource(field: string, value: unknown): ApiErrorBuilder {
-    return new ApiErrorBuilder('DUPLICATE_RESOURCE', 'Resource already exists')
-      .withDetails([{
+    return new ApiErrorBuilder('DUPLICATE_RESOURCE', 'Resource already exists').withDetails([
+      {
         field,
         message: `${field} '${String(value)}' already exists`,
         code: 'DUPLICATE_VALUE',
-        value
-      }]);
+        value,
+      },
+    ]);
   }
 
   static invalidRequest(message: string = 'Invalid request format'): ApiErrorBuilder {
-    return new ApiErrorBuilder('INVALID_REQUEST', message)
-      .withDocumentation('/docs/api-reference');
+    return new ApiErrorBuilder('INVALID_REQUEST', message).withDocumentation('/docs/api-reference');
   }
 
   static serverError(): ApiErrorBuilder {
-    return new ApiErrorBuilder('SERVER_ERROR', 'Internal server error')
-      .withDocumentation('/docs/support');
+    return new ApiErrorBuilder('SERVER_ERROR', 'Internal server error').withDocumentation(
+      '/docs/support'
+    );
   }
 
   static serviceUnavailable(): ApiErrorBuilder {
-    return new ApiErrorBuilder('SERVICE_UNAVAILABLE', 'Service temporarily unavailable')
-      .withDocumentation('/docs/status');
+    return new ApiErrorBuilder(
+      'SERVICE_UNAVAILABLE',
+      'Service temporarily unavailable'
+    ).withDocumentation('/docs/status');
   }
 
   static unsupportedVersion(requested: string, supported: string[]): ApiErrorBuilder {
-    return new ApiErrorBuilder('UNSUPPORTED_VERSION', `API version '${requested}' is not supported`)
-      .withDetails([{
+    return new ApiErrorBuilder(
+      'UNSUPPORTED_VERSION',
+      `API version '${requested}' is not supported`
+    ).withDetails([
+      {
         field: 'version',
         message: `Supported versions: ${supported.join(', ')}`,
         code: 'UNSUPPORTED_VERSION',
-        value: requested
-      }]);
+        value: requested,
+      },
+    ]);
   }
 
   static fileTooLarge(maxSize: number): ApiErrorBuilder {
-    return new ApiErrorBuilder('FILE_TOO_LARGE', 'File size exceeds limit')
-      .withDetails([{
+    return new ApiErrorBuilder('FILE_TOO_LARGE', 'File size exceeds limit').withDetails([
+      {
         field: 'file',
         message: `Maximum file size is ${maxSize} bytes`,
         code: 'FILE_SIZE_EXCEEDED',
-        value: maxSize
-      }]);
+        value: maxSize,
+      },
+    ]);
   }
 
   static invalidFileType(allowed: string[]): ApiErrorBuilder {
-    return new ApiErrorBuilder('INVALID_FILE_TYPE', 'File type not allowed')
-      .withDetails([{
+    return new ApiErrorBuilder('INVALID_FILE_TYPE', 'File type not allowed').withDetails([
+      {
         field: 'file',
         message: `Allowed types: ${allowed.join(', ')}`,
         code: 'INVALID_MIME_TYPE',
-        value: allowed
-      }]);
+        value: allowed,
+      },
+    ]);
   }
 
   static quotaExceeded(resource: string, limit: number): ApiErrorBuilder {
-    return new ApiErrorBuilder('QUOTA_EXCEEDED', `${resource} quota exceeded`)
-      .withDetails([{
+    return new ApiErrorBuilder('QUOTA_EXCEEDED', `${resource} quota exceeded`).withDetails([
+      {
         field: resource,
         message: `Maximum ${limit} ${resource} allowed`,
         code: 'QUOTA_LIMIT_REACHED',
-        value: limit
-      }]);
+        value: limit,
+      },
+    ]);
   }
 }
 
@@ -227,19 +239,23 @@ export function createVersionedErrorResponse(
 
   // Handle generic errors
   const category = classifyError(error);
-  const builder = new ApiErrorBuilder('SERVER_ERROR', error.message || 'An unexpected error occurred')
-    .withCategory(category);
-  
+  const builder = new ApiErrorBuilder(
+    'SERVER_ERROR',
+    error.message || 'An unexpected error occurred'
+  ).withCategory(category);
+
   if (requestId) {
     builder.withRequestId(requestId);
   }
 
   // In development, include error details
   if (process.env['NODE_ENV'] === 'development') {
-    builder.withDetails([{
-      message: error.message,
-      code: 'INTERNAL_ERROR'
-    }]);
+    builder.withDetails([
+      {
+        message: error.message,
+        code: 'INTERNAL_ERROR',
+      },
+    ]);
   }
 
   return builder.toResponse(status);
@@ -247,17 +263,17 @@ export function createVersionedErrorResponse(
 
 // HTTP status code mapping
 export const ErrorStatusCodes: Record<ErrorCode, number> = {
-  'VALIDATION_ERROR': 400,
-  'NOT_FOUND': 404,
-  'UNAUTHORIZED': 401,
-  'FORBIDDEN': 403,
-  'RATE_LIMITED': 429,
-  'DUPLICATE_RESOURCE': 409,
-  'INVALID_REQUEST': 400,
-  'SERVER_ERROR': 500,
-  'SERVICE_UNAVAILABLE': 503,
-  'UNSUPPORTED_VERSION': 400,
-  'FILE_TOO_LARGE': 413,
-  'INVALID_FILE_TYPE': 415,
-  'QUOTA_EXCEEDED': 429
+  VALIDATION_ERROR: 400,
+  NOT_FOUND: 404,
+  UNAUTHORIZED: 401,
+  FORBIDDEN: 403,
+  RATE_LIMITED: 429,
+  DUPLICATE_RESOURCE: 409,
+  INVALID_REQUEST: 400,
+  SERVER_ERROR: 500,
+  SERVICE_UNAVAILABLE: 503,
+  UNSUPPORTED_VERSION: 400,
+  FILE_TOO_LARGE: 413,
+  INVALID_FILE_TYPE: 415,
+  QUOTA_EXCEEDED: 429,
 };

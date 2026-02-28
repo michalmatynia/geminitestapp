@@ -11,8 +11,8 @@ import {
 import {
   AI_BRAIN_PROVIDER_CATALOG_KEY,
   parseBrainProviderCatalog,
-} from '@/features/ai/brain/settings';
-import { useBrainModelOptions } from '@/features/ai/brain/hooks/useBrainModelOptions';
+} from '@/shared/lib/ai-brain/settings';
+import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { FormSection, SectionHeader, Button, useToast } from '@/shared/ui';
 import {
@@ -24,10 +24,7 @@ import { serializeSetting } from '@/shared/utils/settings-json';
 import { DocsTooltipEnhancer } from '../components/DocsTooltipEnhancer';
 import { PromptExploderDocsTooltipSwitch } from '../components/PromptExploderDocsTooltipSwitch';
 import { usePromptExploderDocsTooltips } from '../hooks/usePromptExploderDocsTooltips';
-import {
-  parsePromptExploderSettings,
-  PROMPT_EXPLODER_SETTINGS_KEY,
-} from '../settings';
+import { parsePromptExploderSettings, PROMPT_EXPLODER_SETTINGS_KEY } from '../settings';
 import {
   buildPromptExploderValidationRuleStackOptions,
   normalizePromptExploderValidationRuleStack,
@@ -65,10 +62,7 @@ const AI_PROVIDER_OPTIONS: Array<{
   { value: 'gemini', label: 'Gemini' },
 ];
 
-type SettingsDraft = Pick<
-  PromptExploderSettings,
-  'runtime' | 'learning' | 'ai'
->;
+type SettingsDraft = Pick<PromptExploderSettings, 'runtime' | 'learning' | 'ai'>;
 
 const toSettingsDraft = (settings: PromptExploderSettings): SettingsDraft => ({
   runtime: settings.runtime,
@@ -116,14 +110,7 @@ const normalizeModelValues = (values: unknown): string[] => {
     }
 
     const record = value as Record<string, unknown>;
-    const keyOrder = [
-      'models',
-      'data',
-      'id',
-      'model',
-      'name',
-      'value',
-    ] as const;
+    const keyOrder = ['models', 'data', 'id', 'model', 'name', 'value'] as const;
     let matchedKnownKey = false;
     keyOrder.forEach((key: (typeof keyOrder)[number]): void => {
       if (!(key in record)) return;
@@ -150,8 +137,7 @@ const normalizeModelValues = (values: unknown): string[] => {
 
 export function AdminPromptExploderSettingsPage(): React.JSX.Element {
   const { toast } = useToast();
-  const { docsTooltipsEnabled, setDocsTooltipsEnabled } =
-    usePromptExploderDocsTooltips();
+  const { docsTooltipsEnabled, setDocsTooltipsEnabled } = usePromptExploderDocsTooltips();
   const settingsQuery = useSettingsMap({ scope: 'heavy' });
   const updateSetting = useUpdateSetting();
   const brainModelOptions = useBrainModelOptions({
@@ -162,28 +148,20 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
   const [draft, setDraft] = useState<SettingsDraft | null>(null);
   const [loadedFrom, setLoadedFrom] = useState<string | null>(null);
 
-  const rawSettings =
-    settingsQuery.data?.get(PROMPT_EXPLODER_SETTINGS_KEY) ?? null;
-  const rawValidatorPatternLists =
-    settingsQuery.data?.get(VALIDATOR_PATTERN_LISTS_KEY) ?? null;
-  const parsedSettings = useMemo(
-    () => parsePromptExploderSettings(rawSettings),
-    [rawSettings],
-  );
+  const rawSettings = settingsQuery.data?.get(PROMPT_EXPLODER_SETTINGS_KEY) ?? null;
+  const rawValidatorPatternLists = settingsQuery.data?.get(VALIDATOR_PATTERN_LISTS_KEY) ?? null;
+  const parsedSettings = useMemo(() => parsePromptExploderSettings(rawSettings), [rawSettings]);
   const validatorPatternLists = useMemo(
     () => parseValidatorPatternLists(rawValidatorPatternLists),
-    [rawValidatorPatternLists],
+    [rawValidatorPatternLists]
   );
   const validationPatternStackOptions = useMemo(
     () => buildPromptExploderValidationRuleStackOptions(validatorPatternLists),
-    [validatorPatternLists],
+    [validatorPatternLists]
   );
   const providerCatalog = useMemo(
-    () =>
-      parseBrainProviderCatalog(
-        settingsQuery.data?.get(AI_BRAIN_PROVIDER_CATALOG_KEY) ?? null,
-      ),
-    [settingsQuery.data],
+    () => parseBrainProviderCatalog(settingsQuery.data?.get(AI_BRAIN_PROVIDER_CATALOG_KEY) ?? null),
+    [settingsQuery.data]
   );
 
   useEffect(() => {
@@ -195,7 +173,7 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
         ...parsedSettings.runtime,
         validationRuleStack: normalizePromptExploderValidationRuleStack(
           parsedSettings.runtime.validationRuleStack,
-          validatorPatternLists,
+          validatorPatternLists
         ),
       },
     });
@@ -207,7 +185,7 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
       if (!previous) return previous;
       const normalizedStack = normalizePromptExploderValidationRuleStack(
         previous.runtime.validationRuleStack,
-        validatorPatternLists,
+        validatorPatternLists
       );
       if (normalizedStack === previous.runtime.validationRuleStack) {
         return previous;
@@ -340,130 +318,128 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
         max: 8192,
       },
     ],
-    [modelOptions],
+    [modelOptions]
   );
 
-  const runtimeFields: SettingsField<PromptExploderSettings['runtime']>[] =
-    useMemo(
-      () => [
-        {
-          key: 'orchestratorEnabled',
-          label: 'Orchestrator Runtime',
-          type: 'switch',
-        },
-        {
-          key: 'validationRuleStack',
-          label: 'Validation Stack',
-          type: 'select',
-          options: validationPatternStackOptions.map((opt) => ({
-            label: opt.label,
-            value: typeof opt.value === 'string' ? opt.value : (opt.value.id || ''),
-          })),
-        },
-        {
-          key: 'allowValidationStackFallback',
-          label: 'Allow Validation Stack Fallback',
-          type: 'switch',
-        },
-        {
-          key: 'caseResolverCaptureMode',
-          label: 'Case Resolver Capture Mode',
-          type: 'select',
-          options: [
-            { value: 'rules_only', label: 'Rules Only (UI capture rules)' },
-            { value: 'rules_with_heuristics', label: 'Rules + Heuristics' },
-          ],
-        },
-        {
-          key: 'ruleProfile',
-          label: 'Runtime Rule Profile',
-          type: 'select',
-          options: [
-            { value: 'all', label: 'All Rules' },
-            { value: 'pattern_pack', label: 'Pattern Pack Only' },
-            { value: 'learned_only', label: 'Learned Only' },
-          ],
-        },
-        {
-          key: 'benchmarkSuite',
-          label: 'Benchmark Suite',
-          type: 'select',
-          options: [
-            { value: 'default', label: 'Default' },
-            { value: 'extended', label: 'Extended' },
-            { value: 'custom', label: 'Custom' },
-          ],
-        },
-        {
-          key: 'benchmarkLowConfidenceThreshold',
-          label: 'Low Confidence Threshold',
-          type: 'number',
-          min: 0.3,
-          max: 0.9,
-          step: 0.01,
-        },
-        {
-          key: 'benchmarkSuggestionLimit',
-          label: 'Suggestion Limit',
-          type: 'number',
-          min: 1,
-          max: 20,
-        },
-      ],
-      [validationPatternStackOptions],
-    );
+  const runtimeFields: SettingsField<PromptExploderSettings['runtime']>[] = useMemo(
+    () => [
+      {
+        key: 'orchestratorEnabled',
+        label: 'Orchestrator Runtime',
+        type: 'switch',
+      },
+      {
+        key: 'validationRuleStack',
+        label: 'Validation Stack',
+        type: 'select',
+        options: validationPatternStackOptions.map((opt) => ({
+          label: opt.label,
+          value: typeof opt.value === 'string' ? opt.value : opt.value.id || '',
+        })),
+      },
+      {
+        key: 'allowValidationStackFallback',
+        label: 'Allow Validation Stack Fallback',
+        type: 'switch',
+      },
+      {
+        key: 'caseResolverCaptureMode',
+        label: 'Case Resolver Capture Mode',
+        type: 'select',
+        options: [
+          { value: 'rules_only', label: 'Rules Only (UI capture rules)' },
+          { value: 'rules_with_heuristics', label: 'Rules + Heuristics' },
+        ],
+      },
+      {
+        key: 'ruleProfile',
+        label: 'Runtime Rule Profile',
+        type: 'select',
+        options: [
+          { value: 'all', label: 'All Rules' },
+          { value: 'pattern_pack', label: 'Pattern Pack Only' },
+          { value: 'learned_only', label: 'Learned Only' },
+        ],
+      },
+      {
+        key: 'benchmarkSuite',
+        label: 'Benchmark Suite',
+        type: 'select',
+        options: [
+          { value: 'default', label: 'Default' },
+          { value: 'extended', label: 'Extended' },
+          { value: 'custom', label: 'Custom' },
+        ],
+      },
+      {
+        key: 'benchmarkLowConfidenceThreshold',
+        label: 'Low Confidence Threshold',
+        type: 'number',
+        min: 0.3,
+        max: 0.9,
+        step: 0.01,
+      },
+      {
+        key: 'benchmarkSuggestionLimit',
+        label: 'Suggestion Limit',
+        type: 'number',
+        min: 1,
+        max: 20,
+      },
+    ],
+    [validationPatternStackOptions]
+  );
 
-  const learningFields: SettingsField<PromptExploderSettings['learning']>[] =
-    useMemo(
-      () => [
-        {
-          key: 'enabled',
-          label: 'Learning Enabled',
-          type: 'switch',
-        },
-        {
-          key: 'similarityThreshold',
-          label: 'Similarity Threshold',
-          type: 'number',
-          min: 0.3,
-          max: 0.95,
-          step: 0.01,
-        },
-        {
-          key: 'templateMergeThreshold',
-          label: 'Merge Threshold',
-          type: 'number',
-          min: 0.3,
-          max: 0.95,
-          step: 0.01,
-        },
-        {
-          key: 'minApprovalsForMatching',
-          label: 'Min Approvals',
-          type: 'number',
-          min: 1,
-          max: 20,
-        },
-        {
-          key: 'maxTemplates',
-          label: 'Template Cap',
-          type: 'number',
-          min: 50,
-          max: 5000,
-        },
-        {
-          key: 'autoActivateLearnedTemplates',
-          label: 'Auto Activate Learned',
-          type: 'switch',
-        },
-        {
-          key: 'benchmarkSuggestionUpsertTemplates',
-          label: 'Benchmark Template Upsert',
-          type: 'switch',
-        },
-      ],
-      [],
-    );
+  const learningFields: SettingsField<PromptExploderSettings['learning']>[] = useMemo(
+    () => [
+      {
+        key: 'enabled',
+        label: 'Learning Enabled',
+        type: 'switch',
+      },
+      {
+        key: 'similarityThreshold',
+        label: 'Similarity Threshold',
+        type: 'number',
+        min: 0.3,
+        max: 0.95,
+        step: 0.01,
+      },
+      {
+        key: 'templateMergeThreshold',
+        label: 'Merge Threshold',
+        type: 'number',
+        min: 0.3,
+        max: 0.95,
+        step: 0.01,
+      },
+      {
+        key: 'minApprovalsForMatching',
+        label: 'Min Approvals',
+        type: 'number',
+        min: 1,
+        max: 20,
+      },
+      {
+        key: 'maxTemplates',
+        label: 'Template Cap',
+        type: 'number',
+        min: 50,
+        max: 5000,
+      },
+      {
+        key: 'autoActivateLearnedTemplates',
+        label: 'Auto Activate Learned',
+        type: 'switch',
+      },
+      {
+        key: 'benchmarkSuggestionUpsertTemplates',
+        label: 'Benchmark Template Upsert',
+        type: 'switch',
+      },
+    ],
+    []
+  );
 
   const saveDisabled =
     !draft ||
@@ -479,35 +455,24 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
         ...draft.runtime,
         validationRuleStack: normalizePromptExploderValidationRuleStack(
           draft.runtime.validationRuleStack,
-          validatorPatternLists,
+          validatorPatternLists
         ),
         benchmarkLowConfidenceThreshold: clampNumber(
           draft.runtime.benchmarkLowConfidenceThreshold ?? 0.55,
           0.3,
-          0.9,
+          0.9
         ),
-        benchmarkSuggestionLimit: toIntInRange(
-          draft.runtime.benchmarkSuggestionLimit ?? 4,
-          1,
-          20,
-        ),
+        benchmarkSuggestionLimit: toIntInRange(draft.runtime.benchmarkSuggestionLimit ?? 4, 1, 20),
       },
       learning: {
         ...draft.learning,
-        similarityThreshold: clampNumber(
-          draft.learning.similarityThreshold ?? 0.68,
-          0.3,
-          0.95,
-        ),
+        similarityThreshold: clampNumber(draft.learning.similarityThreshold ?? 0.68, 0.3, 0.95),
         templateMergeThreshold: clampNumber(
           draft.learning.templateMergeThreshold ?? 0.63,
           0.3,
-          0.95,
-        ),        minApprovalsForMatching: toIntInRange(
-          draft.learning.minApprovalsForMatching,
-          1,
-          20,
+          0.95
         ),
+        minApprovalsForMatching: toIntInRange(draft.learning.minApprovalsForMatching, 1, 20),
         maxTemplates: toIntInRange(draft.learning.maxTemplates, 50, 5000),
       },
       ai: {
@@ -519,10 +484,7 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
       },
     };
 
-    if (
-      nextSettings.ai.operationMode !== 'rules_only' &&
-      !nextSettings.ai.modelId.trim()
-    ) {
+    if (nextSettings.ai.operationMode !== 'rules_only' && !nextSettings.ai.modelId.trim()) {
       toast('Choose an AI model when operation mode uses AI.', {
         variant: 'error',
       });
@@ -542,21 +504,15 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
       setDraft(toSettingsDraft(nextSettings));
       toast('Prompt Exploder settings saved.', { variant: 'success' });
     } catch (error) {
-      toast(
-        error instanceof Error
-          ? error.message
-          : 'Failed to save Prompt Exploder settings.',
-        { variant: 'error' },
-      );
+      toast(error instanceof Error ? error.message : 'Failed to save Prompt Exploder settings.', {
+        variant: 'error',
+      });
     }
   };
 
   if (!draft) {
     return (
-      <div
-        id='prompt-exploder-settings-docs-root'
-        className='container mx-auto py-6'
-      >
+      <div id='prompt-exploder-settings-docs-root' className='container mx-auto py-6'>
         <SectionHeader
           eyebrow='AI · Prompt Exploder'
           title='Prompt Exploder Settings'
@@ -571,10 +527,7 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
   }
 
   return (
-    <div
-      id='prompt-exploder-settings-docs-root'
-      className='container mx-auto space-y-4 py-6'
-    >
+    <div id='prompt-exploder-settings-docs-root' className='container mx-auto space-y-4 py-6'>
       <SectionHeader
         eyebrow='AI · Prompt Exploder'
         title='Prompt Exploder Settings'
@@ -626,9 +579,7 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
             fields={aiFields}
             values={draft.ai}
             onChange={(vals) =>
-              setDraft((prev) =>
-                prev ? { ...prev, ai: { ...prev.ai, ...vals } } : null,
-              )
+              setDraft((prev) => (prev ? { ...prev, ai: { ...prev.ai, ...vals } } : null))
             }
             className='grid gap-x-6 gap-y-2 md:grid-cols-3 lg:grid-cols-4'
           />
@@ -644,11 +595,7 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
             fields={runtimeFields}
             values={draft.runtime}
             onChange={(vals) =>
-              setDraft((prev) =>
-                prev
-                  ? { ...prev, runtime: { ...prev.runtime, ...vals } }
-                  : null,
-              )
+              setDraft((prev) => (prev ? { ...prev, runtime: { ...prev.runtime, ...vals } } : null))
             }
             className='grid gap-x-6 gap-y-2 md:grid-cols-2 lg:grid-cols-3'
           />
@@ -665,9 +612,7 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
             values={draft.learning}
             onChange={(vals) =>
               setDraft((prev) =>
-                prev
-                  ? { ...prev, learning: { ...prev.learning, ...vals } }
-                  : null,
+                prev ? { ...prev, learning: { ...prev.learning, ...vals } } : null
               )
             }
             className='grid gap-x-6 gap-y-2 md:grid-cols-2 lg:grid-cols-4'

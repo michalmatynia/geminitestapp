@@ -13,8 +13,7 @@ export function useHealthStatus(): SingleQuery<HealthStatus> {
   return createSingleQueryV2<HealthStatus>({
     id: 'health-status',
     queryKey: QUERY_KEYS.health.status(),
-    queryFn: async (): Promise<HealthStatus> =>
-      await api.get<HealthStatus>('/api/health'),
+    queryFn: async (): Promise<HealthStatus> => await api.get<HealthStatus>('/api/health'),
     staleTime: 1000 * 10, // data is fresh for 10 seconds
     refetchInterval: 1000 * 30, // refetch every 30 seconds
     meta: {

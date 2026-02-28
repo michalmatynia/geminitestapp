@@ -1,23 +1,8 @@
 'use client';
 
-import type {
-  DbQueryConfig,
-  Edge,
-  PollConfig,
-} from '@/shared/lib/ai-paths';
-import {
-  DB_COLLECTION_OPTIONS,
-  renderTemplate,
-  toNumber,
-} from '@/shared/lib/ai-paths';
-import {
-  Button,
-  Input,
-  
-  Textarea,
-  SelectSimple,
-  FormField,
-} from '@/shared/ui';
+import type { DbQueryConfig, Edge, PollConfig } from '@/shared/lib/ai-paths';
+import { DB_COLLECTION_OPTIONS, renderTemplate, toNumber } from '@/shared/lib/ai-paths';
+import { Button, Input, Textarea, SelectSimple, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -55,8 +40,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
   };
   const queryConfig = resolvedPollConfig.dbQuery!;
   const collectionOption = DB_COLLECTION_OPTIONS.some(
-    (option: { label: string; value: string }) =>
-      option.value === queryConfig.collection,
+    (option: { label: string; value: string }) => option.value === queryConfig.collection
   )
     ? queryConfig.collection
     : 'custom';
@@ -68,23 +52,19 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
       },
     });
 
-  const connections = edges.filter(
-    (edge: Edge): boolean => edge.to === selectedNode.id,
-  );
-  const resolvedRuntimeInputs = selectedNode.inputs.reduce<
-    Record<string, unknown>
-  >((acc: Record<string, unknown>, input: string): Record<string, unknown> => {
-    const runtimeInputs = runtimeState.inputs?.[selectedNode.id] ?? {};
-    const directValue = runtimeInputs[input];
-    if (directValue !== undefined) {
-      acc[input] = directValue;
-      return acc;
-    }
-    const matchingEdges = connections.filter(
-      (edge: Edge): boolean => edge.toPort === input || !edge.toPort,
-    );
-    const merged = matchingEdges.reduce<unknown>(
-      (current: unknown, edge: Edge): unknown => {
+  const connections = edges.filter((edge: Edge): boolean => edge.to === selectedNode.id);
+  const resolvedRuntimeInputs = selectedNode.inputs.reduce<Record<string, unknown>>(
+    (acc: Record<string, unknown>, input: string): Record<string, unknown> => {
+      const runtimeInputs = runtimeState.inputs?.[selectedNode.id] ?? {};
+      const directValue = runtimeInputs[input];
+      if (directValue !== undefined) {
+        acc[input] = directValue;
+        return acc;
+      }
+      const matchingEdges = connections.filter(
+        (edge: Edge): boolean => edge.toPort === input || !edge.toPort
+      );
+      const merged = matchingEdges.reduce<unknown>((current: unknown, edge: Edge): unknown => {
         const fromNodeId = edge.from;
         if (!fromNodeId) return current;
         const fromOutput = runtimeState.outputs?.[fromNodeId];
@@ -96,28 +76,27 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
         if (current === undefined) return value;
         if (Array.isArray(current)) return [...(current as unknown[]), value];
         return [current, value];
-      },
-      undefined,
-    );
-    if (merged !== undefined) {
-      acc[input] = merged;
-    }
-    return acc;
-  }, {});
+      }, undefined);
+      if (merged !== undefined) {
+        acc[input] = merged;
+      }
+      return acc;
+    },
+    {}
+  );
   const inputValue =
-    (resolvedRuntimeInputs['value'] as string) ??
-    (resolvedRuntimeInputs['jobId'] as string) ??
-    '';
+    (resolvedRuntimeInputs['value'] as string) ?? (resolvedRuntimeInputs['jobId'] as string) ?? '';
   const queryPreviewText = renderTemplate(
     queryConfig.queryTemplate ?? '{}',
     resolvedRuntimeInputs,
-    inputValue,
+    inputValue
   );
 
   return (
     <div className='space-y-4'>
       <FormField label='Mode'>
-        <SelectSimple size='sm'
+        <SelectSimple
+          size='sm'
           variant='subtle'
           value={resolvedPollConfig.mode || ''}
           onValueChange={(value: string): void =>
@@ -140,10 +119,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
             value={resolvedPollConfig.intervalMs}
             onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
               updatePollConfig({
-                intervalMs: toNumber(
-                  event.target.value,
-                  resolvedPollConfig.intervalMs,
-                ),
+                intervalMs: toNumber(event.target.value, resolvedPollConfig.intervalMs),
               })
             }
           />
@@ -157,10 +133,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
             value={resolvedPollConfig.maxAttempts}
             onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
               updatePollConfig({
-                maxAttempts: toNumber(
-                  event.target.value,
-                  resolvedPollConfig.maxAttempts,
-                ),
+                maxAttempts: toNumber(event.target.value, resolvedPollConfig.maxAttempts),
               })
             }
           />
@@ -168,15 +141,15 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
       </div>
       {resolvedPollConfig.mode === 'job' && (
         <p className='text-[11px] text-gray-500'>
-          Polls /api/products/ai-jobs/{'{{jobId}}'} until completion and outputs
-          result + status.
+          Polls /api/products/ai-jobs/{'{{jobId}}'} until completion and outputs result + status.
         </p>
       )}
       {resolvedPollConfig.mode === 'database' && (
         <div className='space-y-4 pt-2 border-t border-border/20'>
           <div className='grid gap-3 sm:grid-cols-2'>
             <FormField label='Provider'>
-              <SelectSimple size='sm'
+              <SelectSimple
+                size='sm'
                 variant='subtle'
                 value={queryConfig.provider}
                 onValueChange={(value: string): void =>
@@ -196,15 +169,15 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
               />
             </FormField>
             <FormField label='Collection'>
-              <SelectSimple size='sm'
+              <SelectSimple
+                size='sm'
                 variant='subtle'
                 value={collectionOption}
                 onValueChange={(value: string): void =>
                   updatePollConfig({
                     dbQuery: {
                       ...queryConfig,
-                      collection:
-                        value === 'custom' ? queryConfig.collection : value,
+                      collection: value === 'custom' ? queryConfig.collection : value,
                     },
                   })
                 }
@@ -237,7 +210,9 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
             </FormField>
           )}
           <div className='rounded-md border border-border bg-card/60 p-3'>
-            <div className='text-[11px] text-gray-400 font-semibold uppercase tracking-wider'>Query preview</div>
+            <div className='text-[11px] text-gray-400 font-semibold uppercase tracking-wider'>
+              Query preview
+            </div>
             <pre className='mt-2 max-h-60 overflow-auto whitespace-pre-wrap text-[11px] text-gray-200 font-mono'>
               {queryPreviewText}
             </pre>
@@ -247,7 +222,8 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
           </div>
           <div className='grid gap-3 sm:grid-cols-2'>
             <FormField label='Query mode'>
-              <SelectSimple size='sm'
+              <SelectSimple
+                size='sm'
                 variant='subtle'
                 value={queryConfig.mode}
                 onValueChange={(value: string): void =>
@@ -266,7 +242,8 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
               />
             </FormField>
             <FormField label='ID type'>
-              <SelectSimple size='sm'
+              <SelectSimple
+                size='sm'
                 variant='subtle'
                 value={queryConfig.idType}
                 onValueChange={(value: string): void =>
@@ -288,7 +265,8 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
           {queryConfig.mode === 'preset' && (
             <div className='grid gap-3 sm:grid-cols-2'>
               <FormField label='Preset'>
-                <SelectSimple size='sm'
+                <SelectSimple
+                  size='sm'
                   variant='subtle'
                   value={queryConfig.preset}
                   onValueChange={(value: string): void =>
@@ -314,9 +292,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
                   size='sm'
                   value={queryConfig.field}
                   disabled={queryConfig.preset !== 'by_field'}
-                  onChange={(
-                    event: React.ChangeEvent<HTMLInputElement>,
-                  ): void =>
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                     updatePollConfig({
                       dbQuery: {
                         ...queryConfig,
@@ -329,7 +305,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
             </div>
           )}
           {queryConfig.mode === 'custom' && (
-            <FormField 
+            <FormField
               label='Query template'
               description='Supports placeholders like {{value}}, {{entityId}}, {{jobId}}.'
             >
@@ -338,9 +314,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
                 size='sm'
                 className='min-h-[120px]'
                 value={queryConfig.queryTemplate}
-                onChange={(
-                  event: React.ChangeEvent<HTMLTextAreaElement>,
-                ): void =>
+                onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
                   updatePollConfig({
                     dbQuery: {
                       ...queryConfig,
@@ -395,9 +369,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
                 size='sm'
                 className='min-h-[80px] font-mono'
                 value={queryConfig.sort}
-                onChange={(
-                  event: React.ChangeEvent<HTMLTextAreaElement>,
-                ): void =>
+                onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
                   updatePollConfig({
                     dbQuery: {
                       ...queryConfig,
@@ -413,9 +385,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
                 size='sm'
                 className='min-h-[80px] font-mono'
                 value={queryConfig.projection}
-                onChange={(
-                  event: React.ChangeEvent<HTMLTextAreaElement>,
-                ): void =>
+                onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
                   updatePollConfig({
                     dbQuery: {
                       ...queryConfig,
@@ -438,16 +408,13 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
               />
             </FormField>
             <FormField label='Success operator'>
-              <SelectSimple size='sm'
+              <SelectSimple
+                size='sm'
                 variant='subtle'
                 value={resolvedPollConfig.successOperator ?? 'equals'}
                 onValueChange={(value: string): void =>
                   updatePollConfig({
-                    successOperator: value as
-                      | 'truthy'
-                      | 'equals'
-                      | 'contains'
-                      | 'notEquals',
+                    successOperator: value as 'truthy' | 'equals' | 'contains' | 'notEquals',
                   })
                 }
                 options={[
@@ -483,8 +450,8 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
             </FormField>
           </div>
           <p className='text-[11px] text-gray-500'>
-            Polls the selected provider using the query settings. Use Success path/value to
-            stop polling when a record matches.
+            Polls the selected provider using the query settings. Use Success path/value to stop
+            polling when a record matches.
           </p>
         </div>
       )}

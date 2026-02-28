@@ -80,7 +80,12 @@ export function CanvasControlPanel({
       <div className='flex items-center gap-1'>
         {/* eslint-disable-next-line no-restricted-syntax */}
         <Tooltip content='Fit all nodes'>
-          <Button variant='ghost' size='icon' className='h-8 w-8 rounded-full' onClick={onFitToNodes}>
+          <Button
+            variant='ghost'
+            size='icon'
+            className='h-8 w-8 rounded-full'
+            onClick={onFitToNodes}
+          >
             <Maximize className='size-4' />
           </Button>
         </Tooltip>
@@ -97,7 +102,12 @@ export function CanvasControlPanel({
         </Tooltip>
         {/* eslint-disable-next-line no-restricted-syntax */}
         <Tooltip content='Reset view'>
-          <Button variant='ghost' size='icon' className='h-8 w-8 rounded-full' onClick={onResetView}>
+          <Button
+            variant='ghost'
+            size='icon'
+            className='h-8 w-8 rounded-full'
+            onClick={onResetView}
+          >
             <Activity className='size-4' />
           </Button>
         </Tooltip>
@@ -137,7 +147,9 @@ export function CanvasControlPanel({
             variant='ghost'
             size='icon'
             className='h-8 w-8 rounded-full'
-            onClick={() => onEdgeRoutingModeChange(edgeRoutingMode === 'bezier' ? 'orthogonal' : 'bezier')}
+            onClick={() =>
+              onEdgeRoutingModeChange(edgeRoutingMode === 'bezier' ? 'orthogonal' : 'bezier')
+            }
           >
             {edgeRoutingMode === 'bezier' ? (
               <Zap className='size-4 text-amber-400/80' />

@@ -6,7 +6,7 @@ import { mongoImageFileRepository } from './mongo-image-file-repository';
 import { prismaImageFileRepository } from './prisma-image-file-repository';
 
 export const getImageFileRepository = async (
-  providerOverride?: ProductDbProvider,
+  providerOverride?: ProductDbProvider
 ): Promise<ImageFileRepository> => {
   const provider = providerOverride ?? (await getProductDataProvider());
   if (provider === 'mongodb') {

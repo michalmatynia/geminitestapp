@@ -136,10 +136,12 @@ const toPrismaProjectionValue = (value: string): string => {
   }
 };
 
-const PRISMA_PROJECTION_PRESETS: LabeledPreset[] = PROJECTION_PRESETS.map((preset: LabeledPreset) => ({
-  ...preset,
-  value: toPrismaProjectionValue(preset.value),
-}));
+const PRISMA_PROJECTION_PRESETS: LabeledPreset[] = PROJECTION_PRESETS.map(
+  (preset: LabeledPreset) => ({
+    ...preset,
+    value: toPrismaProjectionValue(preset.value),
+  })
+);
 
 const READ_QUERY_TYPES: SnippetItem[] = [
   {
@@ -168,8 +170,7 @@ const READ_QUERY_TYPES: SnippetItem[] = [
   },
   {
     label: 'Change stream (watch pipeline)',
-    value:
-      '[\n  { "$match": { "operationType": "insert" } }\n]',
+    value: '[\n  { "$match": { "operationType": "insert" } }\n]',
     disabled: true,
     note: 'Not supported in UI runtime',
   },
@@ -257,10 +258,25 @@ const QUERY_OPERATOR_GROUPS: SnippetGroup[] = [
   {
     label: 'Geospatial',
     items: [
-      { label: '$geoWithin', value: '{ "loc": { "$geoWithin": { "$centerSphere": [[0, 0], 0.1] } } }' },
-      { label: '$geoIntersects', value: '{ "loc": { "$geoIntersects": { "$geometry": { "type": "Point", "coordinates": [0, 0] } } } }' },
-      { label: '$near', value: '{ "loc": { "$near": { "$geometry": { "type": "Point", "coordinates": [0, 0] }, "$maxDistance": 1000 } } }' },
-      { label: '$nearSphere', value: '{ "loc": { "$nearSphere": { "$geometry": { "type": "Point", "coordinates": [0, 0] }, "$maxDistance": 1000 } } }' },
+      {
+        label: '$geoWithin',
+        value: '{ "loc": { "$geoWithin": { "$centerSphere": [[0, 0], 0.1] } } }',
+      },
+      {
+        label: '$geoIntersects',
+        value:
+          '{ "loc": { "$geoIntersects": { "$geometry": { "type": "Point", "coordinates": [0, 0] } } } }',
+      },
+      {
+        label: '$near',
+        value:
+          '{ "loc": { "$near": { "$geometry": { "type": "Point", "coordinates": [0, 0] }, "$maxDistance": 1000 } } }',
+      },
+      {
+        label: '$nearSphere',
+        value:
+          '{ "loc": { "$nearSphere": { "$geometry": { "type": "Point", "coordinates": [0, 0] }, "$maxDistance": 1000 } } }',
+      },
     ],
   },
   {
@@ -289,14 +305,25 @@ const PRISMA_QUERY_OPERATOR_GROUPS: SnippetGroup[] = [
       { label: 'contains', value: '{ "field": { "contains": "{{value}}" } }' },
       { label: 'startsWith', value: '{ "field": { "startsWith": "{{value}}" } }' },
       { label: 'endsWith', value: '{ "field": { "endsWith": "{{value}}" } }' },
-      { label: 'mode insensitive', value: '{ "field": { "contains": "{{value}}", "mode": "insensitive" } }' },
+      {
+        label: 'mode insensitive',
+        value: '{ "field": { "contains": "{{value}}", "mode": "insensitive" } }',
+      },
     ],
   },
   {
     label: 'Logical',
     items: [
-      { label: 'AND', value: '{ "AND": [ { "field": { "contains": "{{value}}" } }, { "field": { "contains": "{{value2}}" } } ] }' },
-      { label: 'OR', value: '{ "OR": [ { "field": { "contains": "{{value}}" } }, { "field": { "contains": "{{value2}}" } } ] }' },
+      {
+        label: 'AND',
+        value:
+          '{ "AND": [ { "field": { "contains": "{{value}}" } }, { "field": { "contains": "{{value2}}" } } ] }',
+      },
+      {
+        label: 'OR',
+        value:
+          '{ "OR": [ { "field": { "contains": "{{value}}" } }, { "field": { "contains": "{{value2}}" } } ] }',
+      },
       { label: 'NOT', value: '{ "NOT": { "field": { "contains": "{{value}}" } } }' },
     ],
   },
@@ -417,11 +444,26 @@ const AGGREGATION_STAGE_SNIPPETS: SnippetItem[] = [
   { label: '$limit', value: '{ "$limit": 10 }' },
   { label: '$group', value: '{ "$group": { "_id": "$category", "count": { "$sum": 1 } } }' },
   { label: '$count', value: '{ "$count": "total" }' },
-  { label: '$bucket', value: '{ "$bucket": { "groupBy": "$price", "boundaries": [0, 50, 100], "default": "other" } }' },
+  {
+    label: '$bucket',
+    value: '{ "$bucket": { "groupBy": "$price", "boundaries": [0, 50, 100], "default": "other" } }',
+  },
   { label: '$bucketAuto', value: '{ "$bucketAuto": { "groupBy": "$price", "buckets": 5 } }' },
-  { label: '$facet', value: '{ "$facet": { "byCategory": [ { "$group": { "_id": "$category", "count": { "$sum": 1 } } } ] } }' },
-  { label: '$lookup', value: '{ "$lookup": { "from": "other", "localField": "id", "foreignField": "refId", "as": "joined" } }' },
-  { label: '$graphLookup', value: '{ "$graphLookup": { "from": "nodes", "startWith": "$parentId", "connectFromField": "parentId", "connectToField": "_id", "as": "tree" } }' },
+  {
+    label: '$facet',
+    value:
+      '{ "$facet": { "byCategory": [ { "$group": { "_id": "$category", "count": { "$sum": 1 } } } ] } }',
+  },
+  {
+    label: '$lookup',
+    value:
+      '{ "$lookup": { "from": "other", "localField": "id", "foreignField": "refId", "as": "joined" } }',
+  },
+  {
+    label: '$graphLookup',
+    value:
+      '{ "$graphLookup": { "from": "nodes", "startWith": "$parentId", "connectFromField": "parentId", "connectToField": "_id", "as": "tree" } }',
+  },
   { label: '$unwind', value: '{ "$unwind": "$items" }' },
   { label: '$replaceRoot / $replaceWith', value: '{ "$replaceRoot": { "newRoot": "$item" } }' },
   { label: '$unionWith', value: '{ "$unionWith": "otherCollection" }' },

@@ -4,17 +4,8 @@
   "nodeType": "regex",
   "title": "Regex Grouper",
   "purpose": "Group strings with regex or extract matched fragments.",
-  "inputs": [
-    "value",
-    "prompt",
-    "regexCallback"
-  ],
-  "outputs": [
-    "grouped",
-    "matches",
-    "value",
-    "aiPrompt"
-  ],
+  "inputs": ["value", "prompt", "regexCallback"],
+  "outputs": ["grouped", "matches", "value", "aiPrompt"],
   "configFields": [
     {
       "path": "regex.pattern",
@@ -108,17 +99,8 @@
       "x": 100,
       "y": 100
     },
-    "inputs": [
-      "value",
-      "prompt",
-      "regexCallback"
-    ],
-    "outputs": [
-      "grouped",
-      "matches",
-      "value",
-      "aiPrompt"
-    ],
+    "inputs": ["value", "prompt", "regexCallback"],
+    "outputs": ["grouped", "matches", "value", "aiPrompt"],
     "config": {
       "regex": {
         "pattern": "",

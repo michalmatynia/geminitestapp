@@ -10,7 +10,7 @@ const createLegacyStreamMessage = (message: string): string => {
 export async function GET_handler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
-  params: { pathId: string },
+  params: { pathId: string }
 ): Promise<Response> {
   await requireAiPathsRunAccess();
   const legacyPathId = params.pathId;

@@ -29,7 +29,6 @@ export function StatusToggle({
   disabled,
   className,
 }: StatusToggleProps): React.JSX.Element {
-  
   const getEnabledStyles = () => {
     switch (enabledVariant) {
       case 'cyan':

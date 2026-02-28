@@ -20,45 +20,41 @@ const runtimeOperatorSchema = z.enum([
   'is_not_empty',
 ]);
 
-const dbActionSchema = z.enum([
-  'find',
-  'findOne',
-  'countDocuments',
-  'distinct',
-  'aggregate',
-]);
+const dbActionSchema = z.enum(['find', 'findOne', 'countDocuments', 'distinct', 'aggregate']);
 
-const databaseActionPayloadSchema = z.object({
-  provider: z.enum(['auto', 'mongodb', 'prisma']).optional(),
-  collection: z.string().trim().min(1),
-  action: dbActionSchema.default('find'),
-  filter: z.record(z.string(), z.unknown()).optional(),
-  pipeline: z.array(z.record(z.string(), z.unknown())).optional(),
-  projection: z.record(z.string(), z.unknown()).optional(),
-  sort: z.record(z.string(), z.unknown()).optional(),
-  limit: z.number().int().min(1).max(200).optional(),
-  idType: z.string().trim().optional(),
-  distinctField: z.string().trim().optional(),
-}).strict();
+const databaseActionPayloadSchema = z
+  .object({
+    provider: z.enum(['auto', 'mongodb', 'prisma']).optional(),
+    collection: z.string().trim().min(1),
+    action: dbActionSchema.default('find'),
+    filter: z.record(z.string(), z.unknown()).optional(),
+    pipeline: z.array(z.record(z.string(), z.unknown())).optional(),
+    projection: z.record(z.string(), z.unknown()).optional(),
+    sort: z.record(z.string(), z.unknown()).optional(),
+    limit: z.number().int().min(1).max(200).optional(),
+    idType: z.string().trim().optional(),
+    distinctField: z.string().trim().optional(),
+  })
+  .strict();
 
-const databaseQueryPayloadSchema = z.object({
-  provider: z.enum(['auto', 'mongodb', 'prisma']).optional(),
-  collection: z.string().trim().min(1),
-  query: z.record(z.string(), z.unknown()).optional(),
-  projection: z.record(z.string(), z.unknown()).optional(),
-  sort: z.record(z.string(), z.unknown()).optional(),
-  limit: z.number().int().min(1).max(200).optional(),
-  single: z.boolean().optional(),
-  idType: z.string().trim().optional(),
-}).strict();
+const databaseQueryPayloadSchema = z
+  .object({
+    provider: z.enum(['auto', 'mongodb', 'prisma']).optional(),
+    collection: z.string().trim().min(1),
+    query: z.record(z.string(), z.unknown()).optional(),
+    projection: z.record(z.string(), z.unknown()).optional(),
+    sort: z.record(z.string(), z.unknown()).optional(),
+    limit: z.number().int().min(1).max(200).optional(),
+    single: z.boolean().optional(),
+    idType: z.string().trim().optional(),
+  })
+  .strict();
 
 const databaseRuntimeConfigSchema = z
   .object({
     version: z.literal(1).optional(),
     operation: z.enum(['query', 'action']).default('query'),
-    payload: z
-      .union([databaseQueryPayloadSchema, databaseActionPayloadSchema])
-      .optional(),
+    payload: z.union([databaseQueryPayloadSchema, databaseActionPayloadSchema]).optional(),
     collection: z.string().trim().optional(),
     query: z.record(z.string(), z.unknown()).optional(),
     provider: z.enum(['auto', 'mongodb', 'prisma']).optional(),

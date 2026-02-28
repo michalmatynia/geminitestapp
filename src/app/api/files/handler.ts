@@ -13,7 +13,12 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   const productId = searchParams.get('productId')?.trim() || null;
   const productName = searchParams.get('productName')?.trim() || null;
   const tagsParam = searchParams.get('tags')?.trim() || null;
-  const tags = tagsParam ? tagsParam.split(',').map((tag) => tag.trim()).filter(Boolean) : [];
+  const tags = tagsParam
+    ? tagsParam
+        .split(',')
+        .map((tag) => tag.trim())
+        .filter(Boolean)
+    : [];
 
   const files = await imageFileService.listImageFiles({ filename: filename ?? undefined, tags });
 
@@ -24,9 +29,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   let productRepoAvailable = true;
   try {
     const productRepository = await getProductRepository();
-    products = await productRepository.getProducts(
-      productName ? { search: productName } : {}
-    );
+    products = await productRepository.getProducts(productName ? { search: productName } : {});
   } catch (_error) {
     productRepoAvailable = false;
   }
@@ -34,10 +37,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     ? products.filter((product: ProductWithImages) => product.id === productId)
     : products;
 
-  const imageFileToProducts = new Map<
-    string,
-    Array<{ product: { id: string; name: string } }>
-  >();
+  const imageFileToProducts = new Map<string, Array<{ product: { id: string; name: string } }>>();
   for (const product of filteredProducts) {
     const name = getProductDisplayName(product);
     for (const image of product.images ?? []) {
@@ -51,9 +51,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   }
 
   const allowedImageFileIds =
-    productRepoAvailable && (productId || productName)
-      ? new Set(imageFileToProducts.keys())
-      : null;
+    productRepoAvailable && (productId || productName) ? new Set(imageFileToProducts.keys()) : null;
 
   const result = files
     .filter((file: ImageFileRecord) =>

@@ -1,11 +1,6 @@
 'use client';
 
-import {
-  Eye,
-  EyeOff,
-  PlusIcon,
-  Package,
-} from 'lucide-react';
+import { Eye, EyeOff, PlusIcon, Package } from 'lucide-react';
 import { memo, useEffect, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -40,11 +35,7 @@ export const ProductListHeader = memo(function ProductListHeader({
   filtersContent,
 }: ProductListHeaderProps) {
   const { isMenuHidden, setIsMenuHidden } = useAdminLayout();
-  const {
-    onCreateProduct,
-    onCreateFromDraft,
-    activeDrafts,
-  } = useProductListActionsContext();
+  const { onCreateProduct, onCreateFromDraft, activeDrafts } = useProductListActionsContext();
   const {
     page,
     totalPages,
@@ -68,22 +59,23 @@ export const ProductListHeader = memo(function ProductListHeader({
     };
   }, [setIsMenuHidden]);
 
-  const menuToggleButton = typeof document === 'undefined'
-    ? null
-    : createPortal(
-      <Button
-        size='xs'
-        type='button'
-        variant='outline'
-        onClick={() => setIsMenuHidden(!isMenuHidden)}
-        title={isMenuHidden ? 'Show side panels' : 'Show canvas only'}
-        aria-label={isMenuHidden ? 'Show side panels' : 'Show canvas only'}
-        className='fixed left-1/2 top-0 z-40 h-8 w-10 -translate-x-1/2 rounded-b-lg rounded-t-none border-t-0 bg-background/90 px-0 shadow-md backdrop-blur-sm animate-in fade-in slide-in-from-top-2'
-      >
-        {isMenuHidden ? <EyeOff className='size-4' /> : <Eye className='size-4' />}
-      </Button>,
-      document.body,
-    );
+  const menuToggleButton =
+    typeof document === 'undefined'
+      ? null
+      : createPortal(
+          <Button
+            size='xs'
+            type='button'
+            variant='outline'
+            onClick={() => setIsMenuHidden(!isMenuHidden)}
+            title={isMenuHidden ? 'Show side panels' : 'Show canvas only'}
+            aria-label={isMenuHidden ? 'Show side panels' : 'Show canvas only'}
+            className='fixed left-1/2 top-0 z-40 h-8 w-10 -translate-x-1/2 rounded-b-lg rounded-t-none border-t-0 bg-background/90 px-0 shadow-md backdrop-blur-sm animate-in fade-in slide-in-from-top-2'
+          >
+            {isMenuHidden ? <EyeOff className='size-4' /> : <Eye className='size-4' />}
+          </Button>,
+          document.body
+        );
 
   const renderHeaderBreadcrumb = (): React.JSX.Element => (
     <Breadcrumbs
@@ -119,9 +111,15 @@ export const ProductListHeader = memo(function ProductListHeader({
               title={draft.name}
             >
               {IconComponent ? (
-                <IconComponent className='h-3.5 w-3.5' style={iconColor ? { color: iconColor } : undefined} />
+                <IconComponent
+                  className='h-3.5 w-3.5'
+                  style={iconColor ? { color: iconColor } : undefined}
+                />
               ) : (
-                <Package className='h-3.5 w-3.5' style={iconColor ? { color: iconColor } : undefined} />
+                <Package
+                  className='h-3.5 w-3.5'
+                  style={iconColor ? { color: iconColor } : undefined}
+                />
               )}
             </Button>
           );
@@ -135,9 +133,7 @@ export const ProductListHeader = memo(function ProductListHeader({
       <SelectSimple
         size='sm'
         value={nameLocale}
-        onValueChange={(value: string) =>
-          setNameLocale(value as 'name_en' | 'name_pl' | 'name_de')
-        }
+        onValueChange={(value: string) => setNameLocale(value as 'name_en' | 'name_pl' | 'name_de')}
         options={languageOptions}
         placeholder='Language'
         className='w-40 shrink-0'
@@ -206,17 +202,11 @@ export const ProductListHeader = memo(function ProductListHeader({
             </div>
 
             <div className='space-y-3'>
-              <div className='flex justify-center'>
-                {renderPaginationControl()}
-              </div>
+              <div className='flex justify-center'>{renderPaginationControl()}</div>
               <div className='flex w-full items-center justify-end gap-2 max-sm:flex-wrap'>
                 {renderSelectorsAndTriggers()}
               </div>
-              {filtersContent ? (
-                <div className='w-full'>
-                  {filtersContent}
-                </div>
-              ) : null}
+              {filtersContent ? <div className='w-full'>{filtersContent}</div> : null}
             </div>
           </div>
 
@@ -227,19 +217,13 @@ export const ProductListHeader = memo(function ProductListHeader({
               <div className='mt-3'>{renderCreateActions()}</div>
             </div>
 
-            <div className='flex justify-center pt-1'>
-              {renderPaginationControl()}
-            </div>
+            <div className='flex justify-center pt-1'>{renderPaginationControl()}</div>
 
             <div className='flex w-full flex-col gap-3 pt-1'>
               <div className='flex w-full items-center justify-end gap-2 lg:flex-nowrap'>
                 {renderSelectorsAndTriggers()}
               </div>
-              {filtersContent ? (
-                <div className='w-full'>
-                  {filtersContent}
-                </div>
-              ) : null}
+              {filtersContent ? <div className='w-full'>{filtersContent}</div> : null}
             </div>
           </div>
         </div>

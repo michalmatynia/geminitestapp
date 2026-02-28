@@ -14,8 +14,7 @@ const parseBody = async (
   req: NextRequest,
   ctx: ApiHandlerContext
 ): Promise<
-  | { ok: true; data: z.infer<typeof cmsPageCreateSchema> }
-  | { ok: false; response: Response }
+  { ok: true; data: z.infer<typeof cmsPageCreateSchema> } | { ok: false; response: Response }
 > => {
   if (ctx.body !== undefined) {
     const parsed = cmsPageCreateSchema.safeParse(ctx.body);
@@ -37,7 +36,10 @@ const parseBody = async (
  * GET /api/cms/pages
  * Fetches a list of pages.
  */
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<NextResponse | Response> {
+export async function GET_handler(
+  _req: NextRequest,
+  _ctx: ApiHandlerContext
+): Promise<NextResponse | Response> {
   const cmsRepository = await getCmsRepository();
   const pages = await cmsRepository.getPages();
   return NextResponse.json(pages);
@@ -47,7 +49,10 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
  * POST /api/cms/pages
  * Creates a new page.
  */
-export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<NextResponse | Response> {
+export async function POST_handler(
+  req: NextRequest,
+  ctx: ApiHandlerContext
+): Promise<NextResponse | Response> {
   const parsed = await parseBody(req, ctx);
   if (!parsed.ok) {
     return parsed.response;

@@ -2,26 +2,18 @@ import React from 'react';
 
 import { TabsContent } from '@/shared/ui';
 
-import { 
-  formatBytes,
-  formatDateTime,
-} from './slot-inline-edit-utils';
+import { formatBytes, formatDateTime } from './slot-inline-edit-utils';
 import { useStudioInlineEdit } from './StudioInlineEditContext';
 
 export function SlotInlineEditCompositesTab(): React.JSX.Element {
-  const {
-    compositeTabInputImages,
-    compositeTabInputSourceLabel,
-    sourceCompositeImage,
-  } = useStudioInlineEdit();
+  const { compositeTabInputImages, compositeTabInputSourceLabel, sourceCompositeImage } =
+    useStudioInlineEdit();
 
   return (
     <TabsContent value='composites' className='mt-0 space-y-4'>
       <div className='space-y-2 rounded-lg border border-border/60 bg-card/35 p-3'>
         <div className='text-[10px] uppercase tracking-wide text-gray-500'>Composite Inputs</div>
-        <div className='text-xs text-gray-300'>
-          {compositeTabInputSourceLabel}
-        </div>
+        <div className='text-xs text-gray-300'>{compositeTabInputSourceLabel}</div>
       </div>
 
       <div className='space-y-2 rounded-lg border border-border/60 bg-card/35 p-3'>
@@ -53,15 +45,23 @@ export function SlotInlineEditCompositesTab(): React.JSX.Element {
                 Source: <span className='text-gray-200'>{sourceCompositeImage.sourceType}</span>
               </div>
               <div className='text-[10px] text-gray-400'>
-                Card Slot: <span className='font-mono text-gray-300'>{sourceCompositeImage.slotId || 'n/a'}</span>
+                Card Slot:{' '}
+                <span className='font-mono text-gray-300'>
+                  {sourceCompositeImage.slotId || 'n/a'}
+                </span>
               </div>
               <div className='text-[10px] text-gray-400'>
-                File ID: <span className='font-mono text-gray-300'>{sourceCompositeImage.imageFileId || 'n/a'}</span>
+                File ID:{' '}
+                <span className='font-mono text-gray-300'>
+                  {sourceCompositeImage.imageFileId || 'n/a'}
+                </span>
               </div>
               <div className='text-[10px] text-gray-400'>
-                File: <span className='text-gray-300'>{sourceCompositeImage.filename || 'n/a'}</span>
-                {' '}• Size: <span className='text-gray-300'>{formatBytes(sourceCompositeImage.size)}</span>
-                {' '}• Dimensions:{' '}
+                File:{' '}
+                <span className='text-gray-300'>{sourceCompositeImage.filename || 'n/a'}</span> •
+                Size:{' '}
+                <span className='text-gray-300'>{formatBytes(sourceCompositeImage.size)}</span> •
+                Dimensions:{' '}
                 <span className='text-gray-300'>
                   {sourceCompositeImage.width && sourceCompositeImage.height
                     ? `${sourceCompositeImage.width} x ${sourceCompositeImage.height}`
@@ -69,7 +69,10 @@ export function SlotInlineEditCompositesTab(): React.JSX.Element {
                 </span>
               </div>
               <div className='truncate text-[10px] text-gray-500'>
-                Path: <span className='font-mono text-gray-400'>{sourceCompositeImage.filepath || 'n/a'}</span>
+                Path:{' '}
+                <span className='font-mono text-gray-400'>
+                  {sourceCompositeImage.filepath || 'n/a'}
+                </span>
               </div>
               <div className='text-[10px] text-gray-500'>
                 Updated: {formatDateTime(sourceCompositeImage.updatedAt)}
@@ -113,7 +116,8 @@ export function SlotInlineEditCompositesTab(): React.JSX.Element {
                     Type: <span className='text-gray-200'>{entry.sourceType}</span>
                     {entry.order !== null ? (
                       <>
-                        {' '}• Layer order: <span className='text-gray-200'>{entry.order + 1}</span>
+                        {' '}
+                        • Layer order: <span className='text-gray-200'>{entry.order + 1}</span>
                       </>
                     ) : null}
                   </div>
@@ -121,12 +125,12 @@ export function SlotInlineEditCompositesTab(): React.JSX.Element {
                     Slot: <span className='font-mono text-gray-300'>{entry.slotId || 'n/a'}</span>
                   </div>
                   <div className='text-[10px] text-gray-400'>
-                    File ID: <span className='font-mono text-gray-300'>{entry.imageFileId || 'n/a'}</span>
+                    File ID:{' '}
+                    <span className='font-mono text-gray-300'>{entry.imageFileId || 'n/a'}</span>
                   </div>
                   <div className='text-[10px] text-gray-400'>
-                    File: <span className='text-gray-300'>{entry.filename || 'n/a'}</span>
-                    {' '}• Size: <span className='text-gray-300'>{formatBytes(entry.size)}</span>
-                    {' '}• Dimensions:{' '}
+                    File: <span className='text-gray-300'>{entry.filename || 'n/a'}</span> • Size:{' '}
+                    <span className='text-gray-300'>{formatBytes(entry.size)}</span> • Dimensions:{' '}
                     <span className='text-gray-300'>
                       {entry.width && entry.height ? `${entry.width} x ${entry.height}` : 'n/a'}
                     </span>

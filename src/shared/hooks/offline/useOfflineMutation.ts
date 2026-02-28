@@ -1,4 +1,9 @@
-import { useQueryClient, type QueryClient, type QueryKey, type UseMutationResult } from '@tanstack/react-query';
+import {
+  useQueryClient,
+  type QueryClient,
+  type QueryKey,
+  type UseMutationResult,
+} from '@tanstack/react-query';
 import { useCallback } from 'react';
 
 import { createMutationV2 } from '@/shared/lib/query-factories-v2';
@@ -10,7 +15,7 @@ interface QueuedMutation {
   mutationFn: () => Promise<unknown>;
   queryKey: readonly unknown[];
   optimisticUpdate?: ((oldData: unknown) => unknown) | undefined;
-  invalidateKeys?: (readonly (readonly unknown[])[]) | undefined;
+  invalidateKeys?: readonly (readonly unknown[])[] | undefined;
   onProcessed?: (() => void) | undefined;
   timestamp: number;
 }
@@ -26,13 +31,13 @@ class OfflineMutationQueue {
 
   async processQueue(queryClient: QueryClient): Promise<void> {
     if (this.isProcessing || this.queue.length === 0) return;
-    
+
     this.isProcessing = true;
-    
+
     while (this.queue.length > 0) {
       const mutation = this.queue.shift();
       if (!mutation) break;
-      
+
       try {
         await mutation.mutationFn();
         void queryClient.invalidateQueries({ queryKey: mutation.queryKey });
@@ -43,12 +48,12 @@ class OfflineMutationQueue {
         }
         mutation.onProcessed?.();
       } catch (error) {
-        logClientError(error, { 
-          context: { 
-            source: 'offline-queue', 
+        logClientError(error, {
+          context: {
+            source: 'offline-queue',
             mutationId: mutation.id,
-            queryKey: mutation.queryKey
-          } 
+            queryKey: mutation.queryKey,
+          },
         });
         // Re-queue if it's a network error
         if (error instanceof Error && error.message.includes('fetch')) {
@@ -57,7 +62,7 @@ class OfflineMutationQueue {
         }
       }
     }
-    
+
     this.isProcessing = false;
     this.saveToStorage();
   }
@@ -66,7 +71,9 @@ class OfflineMutationQueue {
     if (typeof window !== 'undefined') {
       // NOTE: function serialization is not supported by JSON.stringify
       // In a real app, you'd store mutation metadata and reconstruct the fn
-      const payload = this.queue.map(({ mutationFn: _, onProcessed: __, ...rest }: QueuedMutation) => rest);
+      const payload = this.queue.map(
+        ({ mutationFn: _, onProcessed: __, ...rest }: QueuedMutation) => rest
+      );
       if (payload.length === 0) {
         localStorage.removeItem('offline-mutation-queue');
       } else {
@@ -82,7 +89,10 @@ class OfflineMutationQueue {
         try {
           // We can't really restore the function from storage this way
           const parsed = JSON.parse(stored) as QueuedMutation[];
-          this.queue = parsed.filter((item: QueuedMutation): boolean => typeof item?.mutationFn === 'function');        } catch {
+          this.queue = parsed.filter(
+            (item: QueuedMutation): boolean => typeof item?.mutationFn === 'function'
+          );
+        } catch {
           this.queue = [];
         }
       }
@@ -101,7 +111,9 @@ export function useOfflineMutation<TData, TError = Error, TVariables = void, TCo
   mutationFn: (variables: TVariables) => Promise<TData>,
   options: {
     queryKey: readonly unknown[];
-    extraInvalidateKeys?: readonly (readonly unknown[])[] | ((variables: TVariables) => readonly (readonly unknown[])[]);
+    extraInvalidateKeys?:
+      | readonly (readonly unknown[])[]
+      | ((variables: TVariables) => readonly (readonly unknown[])[]);
     optimisticUpdate?: (oldData: TContext | undefined, variables: TVariables) => TContext;
     successMessage?: string;
     errorMessage?: string;
@@ -154,20 +166,22 @@ export function useOfflineMutation<TData, TError = Error, TVariables = void, TCo
           },
           timestamp: Date.now(),
         };
-        
+
         mutationQueue.add(queuedMutation);
-        
+
         // Apply optimistic update
         if (options.optimisticUpdate) {
-          queryClient.setQueryData(options.queryKey, (old: TContext | undefined) => 
+          queryClient.setQueryData(options.queryKey, (old: TContext | undefined) =>
             options.optimisticUpdate!(old, variables)
           );
         }
-        
-        toast(options.queuedMessage || 'Changes saved offline. Will sync when online.', { variant: 'info' });
+
+        toast(options.queuedMessage || 'Changes saved offline. Will sync when online.', {
+          variant: 'info',
+        });
         return null as TData;
       }
-      
+
       return mutationFn(variables);
     },
     onSuccess: (_data: TData, variables: TVariables): void => {
@@ -185,7 +199,7 @@ export function useOfflineMutation<TData, TError = Error, TVariables = void, TCo
     onError: (error: Error): void => {
       let message = options.errorMessage || 'An error occurred';
       if (error instanceof Error) {
-        message = options.errorMessage 
+        message = options.errorMessage
           ? `${options.errorMessage}: ${error.message}`
           : error.message;
       }

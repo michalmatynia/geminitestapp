@@ -12,11 +12,26 @@ export function HeadingBlock(): React.ReactNode {
   const typoStyles = getBlockTypographyStyles(settings);
 
   if (size === 'small') {
-    return <h3 className='text-xl font-bold leading-tight tracking-tight md:text-2xl' style={typoStyles}>{text}</h3>;
+    return (
+      <h3 className='text-xl font-bold leading-tight tracking-tight md:text-2xl' style={typoStyles}>
+        {text}
+      </h3>
+    );
   }
   if (size === 'large') {
-    return <h2 className='text-3xl font-bold leading-tight tracking-tight md:text-5xl' style={typoStyles}>{text}</h2>;
+    return (
+      <h2
+        className='text-3xl font-bold leading-tight tracking-tight md:text-5xl'
+        style={typoStyles}
+      >
+        {text}
+      </h2>
+    );
   }
   // medium
-  return <h2 className='text-2xl font-bold leading-tight tracking-tight md:text-3xl' style={typoStyles}>{text}</h2>;
+  return (
+    <h2 className='text-2xl font-bold leading-tight tracking-tight md:text-3xl' style={typoStyles}>
+      {text}
+    </h2>
+  );
 }

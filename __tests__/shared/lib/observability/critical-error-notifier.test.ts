@@ -25,14 +25,17 @@ describe('critical-error-notifier', () => {
     vi.clearAllMocks();
     (getAppDbProvider as any).mockResolvedValue('prisma');
     (global as any).fetch = vi.fn().mockResolvedValue({ ok: true });
-    
+
     // Default: enabled with a webhook
-    (prisma.setting.findUnique as any).mockImplementation(({ where }: { where: { key: string } }) => {
-      if (where.key === 'critical_notifications_enabled') return { value: 'true' };
-      if (where.key === 'critical_notifications_webhook_url') return { value: 'http://webhook.test' };
-      if (where.key === 'critical_notifications_min_level') return { value: 'error' };
-      return null;
-    });
+    (prisma.setting.findUnique as any).mockImplementation(
+      ({ where }: { where: { key: string } }) => {
+        if (where.key === 'critical_notifications_enabled') return { value: 'true' };
+        if (where.key === 'critical_notifications_webhook_url')
+          return { value: 'http://webhook.test' };
+        if (where.key === 'critical_notifications_min_level') return { value: 'error' };
+        return null;
+      }
+    );
   });
 
   it('should send a notification for a critical error', async () => {
@@ -68,12 +71,15 @@ describe('critical-error-notifier', () => {
   });
 
   it('should not send if level is below threshold', async () => {
-    (prisma.setting.findUnique as any).mockImplementation(({ where }: { where: { key: string } }) => {
-      if (where.key === 'critical_notifications_min_level') return { value: 'error' };
-      if (where.key === 'critical_notifications_enabled') return { value: 'true' };
-      if (where.key === 'critical_notifications_webhook_url') return { value: 'http://webhook.test' };
-      return null;
-    });
+    (prisma.setting.findUnique as any).mockImplementation(
+      ({ where }: { where: { key: string } }) => {
+        if (where.key === 'critical_notifications_min_level') return { value: 'error' };
+        if (where.key === 'critical_notifications_enabled') return { value: 'true' };
+        if (where.key === 'critical_notifications_webhook_url')
+          return { value: 'http://webhook.test' };
+        return null;
+      }
+    );
 
     const log = {
       level: 'warn' as const,

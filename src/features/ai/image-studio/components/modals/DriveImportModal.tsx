@@ -32,7 +32,7 @@ export function DriveImportModal({
       size='xl'
       footer={
         localUploadTrigger || (
-          <Button 
+          <Button
             size='sm'
             type='button'
             variant='outline'
@@ -50,11 +50,7 @@ export function DriveImportModal({
         <p className='text-xs text-muted-foreground px-1'>
           Select existing assets from your drive or upload a new file from your device.
         </p>
-        <FileManager
-          mode='select'
-          selectionMode='single'
-          onSelectFile={onSelectFile}
-        />
+        <FileManager mode='select' selectionMode='single' onSelectFile={onSelectFile} />
       </div>
     </DetailModal>
   );

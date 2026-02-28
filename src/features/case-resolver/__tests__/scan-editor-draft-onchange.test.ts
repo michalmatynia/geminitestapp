@@ -1,13 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
 import { createCaseResolverFile } from '@/features/case-resolver/settings';
-import {
-  hasCaseResolverDraftMeaningfulChanges,
-} from '@/features/case-resolver/hooks/useCaseResolverState.helpers';
+import { hasCaseResolverDraftMeaningfulChanges } from '@/features/case-resolver/hooks/useCaseResolverState.helpers';
 import { buildFileEditDraft } from '@/features/case-resolver/utils/caseResolverUtils';
-import {
-  applyCaseResolverScanDraftContentChange,
-} from '@/features/case-resolver/hooks/useAdminCaseResolverDocumentActions';
+import { applyCaseResolverScanDraftContentChange } from '@/features/case-resolver/hooks/useAdminCaseResolverDocumentActions';
 
 describe('case resolver scan editor onchange reducer', () => {
   it('does not mutate draft for semantically empty markdown', () => {
@@ -47,7 +43,10 @@ describe('case resolver scan editor onchange reducer', () => {
       documentContentPlainText: '',
     });
     const draft = buildFileEditDraft(file);
-    const largeMarkdown = Array.from({ length: 2000 }, (_value, index) => `Line ${index}: [tag] & value`).join('\n');
+    const largeMarkdown = Array.from(
+      { length: 2000 },
+      (_value, index) => `Line ${index}: [tag] & value`
+    ).join('\n');
 
     const next = applyCaseResolverScanDraftContentChange({
       current: draft,

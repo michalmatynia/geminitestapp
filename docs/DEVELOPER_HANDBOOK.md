@@ -23,18 +23,21 @@
 The consolidation project identified and standardized three core patterns used across 450+ components:
 
 ### 1. FilterPanel Pattern
+
 **Used for:** Search, filtering, sorting, presets
 **Deployed in:** 5 components (ProductFilters, NotesFilters, FileManagerFilters, etc.)
 **LOC Savings:** 50-60% across filters
 **Status:** Production-ready ✅
 
 ### 2. Picker Patterns
+
 **Used for:** Dropdowns, grids, modal selection
 **Deployed in:** 5 components (AnimationPresetPicker, SectionTemplatePicker, etc.)
 **LOC Savings:** 10-60% per component
 **Status:** Production-ready ✅
 
 ### 3. Panel Patterns
+
 **Used for:** Headers, stats, pagination, layout structure
 **Deployed in:** Core template system (6 sub-components)
 **LOC Savings:** 25-30% potential
@@ -45,7 +48,9 @@ The consolidation project identified and standardized three core patterns used a
 ## FilterPanel Pattern
 
 ### Purpose
+
 Create consistent, maintainable filter UIs with:
+
 - Search functionality
 - Multiple filter field types
 - Preset support
@@ -53,6 +58,7 @@ Create consistent, maintainable filter UIs with:
 - State management hooks
 
 ### Architecture
+
 ```
 FilterPanel (wrapper with presets)
   ↓
@@ -130,6 +136,7 @@ export function MyFilters() {
 ### FilterField Types
 
 #### Text Field
+
 ```typescript
 {
   key: 'search',
@@ -140,6 +147,7 @@ export function MyFilters() {
 ```
 
 #### Select (Single)
+
 ```typescript
 {
   key: 'status',
@@ -153,6 +161,7 @@ export function MyFilters() {
 ```
 
 #### Select (Multi)
+
 ```typescript
 {
   key: 'tags',
@@ -167,6 +176,7 @@ export function MyFilters() {
 ```
 
 #### Number Field
+
 ```typescript
 {
   key: 'minPrice',
@@ -177,6 +187,7 @@ export function MyFilters() {
 ```
 
 #### Date Field
+
 ```typescript
 {
   key: 'dateCreated',
@@ -186,6 +197,7 @@ export function MyFilters() {
 ```
 
 #### DateRange Field
+
 ```typescript
 {
   key: 'dateRange',
@@ -196,6 +208,7 @@ export function MyFilters() {
 ```
 
 #### Checkbox Field
+
 ```typescript
 {
   key: 'includeArchived',
@@ -209,29 +222,31 @@ export function MyFilters() {
 ```typescript
 interface FilterPanelProps {
   // Required
-  filters: FilterField[];           // Field configuration
-  values: Record<string, any>;      // Current filter values
-  onChange: (key: string, value: any) => void;  // Change handler
-  onReset: () => void;              // Reset handler
+  filters: FilterField[]; // Field configuration
+  values: Record<string, any>; // Current filter values
+  onChange: (key: string, value: any) => void; // Change handler
+  onReset: () => void; // Reset handler
 
   // Optional
-  showHeader?: boolean;             // Show/hide header (default: true)
-  title?: string;                   // Header title
-  presets?: FilterPreset[];         // Quick filter presets
-  onPresetChange?: (preset: FilterPreset) => void;  // Preset handler
-  className?: string;               // Custom styling
+  showHeader?: boolean; // Show/hide header (default: true)
+  title?: string; // Header title
+  presets?: FilterPreset[]; // Quick filter presets
+  onPresetChange?: (preset: FilterPreset) => void; // Preset handler
+  className?: string; // Custom styling
 }
 ```
 
 ### Styling & Customization
 
 **Default Theme:**
+
 - Dark background (gray-800/40)
 - Light text (gray-400)
 - Lucide icons
 - Tailwind CSS utilities
 
 **Customization:**
+
 ```typescript
 <FilterPanel
   filters={filterConfig}
@@ -304,10 +319,10 @@ interface GenericPickerDropdownProps<T> {
   placeholder?: string;
   searchPlaceholder?: string;
   searchable?: boolean;
-  searchMatcher?: (item: T, query: string) => boolean;  // Custom search logic
+  searchMatcher?: (item: T, query: string) => boolean; // Custom search logic
   disabled?: boolean;
   className?: string;
-  icon?: string;  // Lucide icon name
+  icon?: string; // Lucide icon name
 }
 ```
 
@@ -362,7 +377,7 @@ interface GenericGridPickerProps<T> {
   onSelect: (item: T) => void;
 
   // Optional
-  columns?: number;  // Grid columns (default: 3)
+  columns?: number; // Grid columns (default: 3)
   searchable?: boolean;
   searchPlaceholder?: string;
   searchMatcher?: (item: T, query: string) => boolean;
@@ -429,7 +444,7 @@ const { filtered } = usePickerSearch({
     return (
       item.name.toLowerCase().includes(query) ||
       item.description.toLowerCase().includes(query) ||
-      item.tags.some(t => t.toLowerCase().includes(query))
+      item.tags.some((t) => t.toLowerCase().includes(query))
     );
   },
 });
@@ -515,7 +530,9 @@ import { PanelPagination } from '@/shared/ui/templates/panels/PanelPagination';
 ## Best Practices
 
 ### 1. State Management
+
 ✅ **DO:** Use FilterPanel's callback-based API
+
 ```typescript
 const handleFilterChange = (key: string, value: any) => {
   // Works with any state manager (useState, Redux, Zustand, etc.)
@@ -524,13 +541,16 @@ const handleFilterChange = (key: string, value: any) => {
 ```
 
 ❌ **DON'T:** Rely on component-internal state
+
 ```typescript
 // No! Component won't update external state
 <FilterPanel defaultValues={filters} />
 ```
 
 ### 2. Styling
+
 ✅ **DO:** Use Tailwind classes for customization
+
 ```typescript
 <FilterPanel
   filters={config}
@@ -542,25 +562,31 @@ const handleFilterChange = (key: string, value: any) => {
 ```
 
 ❌ **DON'T:** Override with inline styles
+
 ```typescript
 <FilterPanel style={{ backgroundColor: 'red' }} />
 ```
 
 ### 3. Search Matching
+
 ✅ **DO:** Provide custom matchers for specific needs
+
 ```typescript
 const matcher = (item, query) => item.name.toLowerCase().includes(query);
 const { filtered } = usePickerSearch({ items, searchMatcher: matcher });
 ```
 
 ❌ **DON'T:** Assume default JSON.stringify matching works everywhere
+
 ```typescript
 // Default works for simple fields, but might not for complex objects
 const { filtered } = usePickerSearch({ items });
 ```
 
 ### 4. Accessibility
+
 ✅ **DO:** Include ARIA labels and keyboard navigation
+
 ```typescript
 <GenericPickerDropdown
   groups={groups}
@@ -571,25 +597,31 @@ const { filtered } = usePickerSearch({ items });
 ```
 
 ❌ **DON'T:** Skip labels and keyboard support
+
 ```typescript
 // Missing accessibility features
 <div onClick={() => {}}>Click me</div>
 ```
 
 ### 5. Performance
+
 ✅ **DO:** Memoize filter config if it doesn't change
+
 ```typescript
 const filterConfig = useMemo(() => [...], []);
 <FilterPanel filters={filterConfig} ... />
 ```
 
 ❌ **DON'T:** Create new arrays on every render
+
 ```typescript
 <FilterPanel filters={[...]} />  // New array every render
 ```
 
 ### 6. Testing
+
 ✅ **DO:** Test state changes, not component implementation
+
 ```typescript
 const { getByRole } = render(<FilterPanel {...props} />);
 fireEvent.change(getByRole('textbox'), { target: { value: 'test' } });
@@ -597,6 +629,7 @@ expect(onChange).toHaveBeenCalledWith('search', 'test');
 ```
 
 ❌ **DON'T:** Test internal component structure
+
 ```typescript
 expect(container.querySelector('.filter-field')).toBeTruthy();
 ```
@@ -608,12 +641,14 @@ expect(container.querySelector('.filter-field')).toBeTruthy();
 ### Step 1: Identify Components to Migrate
 
 Look for components with:
+
 - Multiple filter/search fields
 - Dropdown selections
 - Grid-based pickers
 - Similar UX patterns across features
 
 Example candidates:
+
 ```
 ✅ ProductFilters → FilterPanel (done)
 ✅ NotesFilters → FilterPanel (done)
@@ -625,6 +660,7 @@ Example candidates:
 ### Step 2: Map Existing Implementation to Template
 
 Before migration, understand current component:
+
 ```
 Current: Custom filter UI
   ├── Search input
@@ -669,7 +705,7 @@ const handleCategoryChange = (val) => setCategory(val);
 // After: Single unified handler
 const [filters, setFilters] = useState({ search: '', category: '' });
 const handleFilterChange = (key, value) => {
-  setFilters(prev => ({ ...prev, [key]: value }));
+  setFilters((prev) => ({ ...prev, [key]: value }));
 };
 ```
 
@@ -716,30 +752,36 @@ git commit -m "refactor: migrate to FilterPanel"
 ## FAQ
 
 ### Q: Should I use FilterPanel for complex display toggles?
+
 **A:** No. FilterPanel is optimized for simple filters (search, select, date). Keep complex display toggles (view modes, advanced settings) separate from FilterPanel for better reusability.
 
 ### Q: Can FilterPanel work with my state manager (Redux/Zustand)?
+
 **A:** Yes! FilterPanel uses callback-based API (`onChange`). It works with any state manager:
+
 ```typescript
 const handleFilterChange = (key, value) => {
-  dispatch(updateFilter({ [key]: value }));  // Redux
-  store.setFilter(key, value);               // Zustand
-  updateSettings({ [key]: value });           // Context
+  dispatch(updateFilter({ [key]: value })); // Redux
+  store.setFilter(key, value); // Zustand
+  updateSettings({ [key]: value }); // Context
 };
 ```
 
 ### Q: How do I search for items with complex nested data?
+
 **A:** Use custom `searchMatcher` in `usePickerSearch`:
+
 ```typescript
 const matcher = (item, query) => {
-  return item.nested?.field?.value?.includes(query) ||
-         item.other?.property?.includes(query);
+  return item.nested?.field?.value?.includes(query) || item.other?.property?.includes(query);
 };
 const { filtered } = usePickerSearch({ items, searchMatcher: matcher });
 ```
 
 ### Q: Can I style FilterPanel to match my design system?
+
 **A:** Yes, use Tailwind CSS classes via `className` prop:
+
 ```typescript
 <FilterPanel
   filters={config}
@@ -750,33 +792,42 @@ const { filtered } = usePickerSearch({ items, searchMatcher: matcher });
 ```
 
 ### Q: What's the performance impact of these components?
+
 **A:** Minimal. All components use React.memo for memoization. Test with real data for your use case. Typical performance: 0-5ms render time.
 
 ### Q: Should I create new components or use templates?
+
 **A:** Always try templates first. Only create new components if:
+
 1. Template doesn't support your use case
 2. Performance requirements are extreme
 3. UI/UX significantly differs from template
 
 ### Q: How do I handle forms with these patterns?
+
 **A:** Use with custom form state management:
+
 ```typescript
 const [formData, setFormData] = useState({});
 const handleFilterChange = (key, value) => {
-  setFormData(prev => ({ ...prev, [key]: value }));
+  setFormData((prev) => ({ ...prev, [key]: value }));
 };
 // Then submit formData on button click
 ```
 
 ### Q: Can I combine FilterPanel with GenericPickerDropdown?
+
 **A:** Yes! FilterPanel uses simple select fields. For complex picker logic, use GenericPickerDropdown separately:
+
 ```typescript
 <FilterPanel {...props} />  // Standard filters
 <GenericPickerDropdown {...props} />  // Complex selection
 ```
 
 ### Q: What if my filter fields have conditional visibility?
+
 **A:** Dynamically generate filterConfig:
+
 ```typescript
 const filterConfig = useMemo(() => {
   const config = [...baseConfig];
@@ -792,11 +843,13 @@ const filterConfig = useMemo(() => {
 ## Resources
 
 ### Core Documentation
+
 - **Component Patterns Guide:** `docs/COMPONENT_PATTERNS.md`
 - **TypeScript Types:** `src/shared/ui/templates/pickers/types.ts`
 - **Shared UI Exports:** `src/shared/ui/index.ts`
 
 ### Component Files
+
 - **FilterPanel:** `src/shared/ui/templates/FilterPanel.tsx`
 - **PanelFilters:** `src/shared/ui/templates/panels/PanelFilters.tsx`
 - **GenericPickerDropdown:** `src/shared/ui/templates/pickers/GenericPickerDropdown.tsx`
@@ -804,11 +857,13 @@ const filterConfig = useMemo(() => {
 - **usePickerSearch:** `src/shared/ui/templates/pickers/usePickerSearch.ts`
 
 ### Test Examples
+
 - **FilterPanel Tests:** `__tests__/shared/ui/FilterPanel.test.tsx`
 - **Picker Tests:** `__tests__/shared/ui/templates/pickers/`
 - **Panel Tests:** `__tests__/shared/ui/templates/panels/`
 
 ### Real-World Examples
+
 - **ProductFilters:** `src/features/products/components/list/ProductFilters.tsx`
 - **NotesFilters:** `src/features/notesapp/components/NotesFilters.tsx`
 - **AnimationPresetPicker:** `src/features/gsap/components/AnimationPresetPicker.tsx`

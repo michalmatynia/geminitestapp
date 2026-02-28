@@ -40,8 +40,7 @@ const toInt = (
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) return fallback;
   const rounded = Math.floor(parsed);
-  const withMin =
-    typeof options?.min === 'number' ? Math.max(options.min, rounded) : rounded;
+  const withMin = typeof options?.min === 'number' ? Math.max(options.min, rounded) : rounded;
   return typeof options?.max === 'number' ? Math.min(options.max, withMin) : withMin;
 };
 
@@ -80,10 +79,8 @@ export const resolveTraderaSystemSettings = (lookup: SettingLookup): TraderaSyst
       defaults.allowSimulatedSuccess
     ),
     listingFormUrl:
-      lookup.get(TRADERA_SETTINGS_KEYS.listingFormUrl)?.trim() ||
-      defaults.listingFormUrl,
+      lookup.get(TRADERA_SETTINGS_KEYS.listingFormUrl)?.trim() || defaults.listingFormUrl,
     selectorProfile:
-      lookup.get(TRADERA_SETTINGS_KEYS.selectorProfile)?.trim() ||
-      defaults.selectorProfile,
+      lookup.get(TRADERA_SETTINGS_KEYS.selectorProfile)?.trim() || defaults.selectorProfile,
   };
 };

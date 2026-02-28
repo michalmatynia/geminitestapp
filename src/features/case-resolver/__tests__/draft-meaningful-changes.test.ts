@@ -38,7 +38,14 @@ describe('case resolver meaningful draft changes', () => {
       id: 'legacy-date',
       fileType: 'document',
       name: 'Legacy Date',
-      documentDate: { isoDate: '2026-02-05', source: 'text', sourceLine: null, cityHint: null, city: null, action: 'useDetectedDate' },
+      documentDate: {
+        isoDate: '2026-02-05',
+        source: 'text',
+        sourceLine: null,
+        cityHint: null,
+        city: null,
+        action: 'useDetectedDate',
+      },
       documentContent: 'Body',
     });
     const legacyFile = {

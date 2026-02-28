@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import {
   getImportActiveTemplateId,
-  setImportActiveTemplateId
+  setImportActiveTemplateId,
 } from '@/features/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
@@ -25,7 +25,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, requestSchema, {
-    logPrefix: 'imports.base.active-template.POST'
+    logPrefix: 'imports.base.active-template.POST',
   });
   if (!parsed.ok) {
     return parsed.response;

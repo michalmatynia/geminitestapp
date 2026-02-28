@@ -4,15 +4,8 @@
   "nodeType": "simulation",
   "title": "Simulation: Entity Modal",
   "purpose": "Simulate a modal action by Entity ID.",
-  "inputs": [
-    "trigger"
-  ],
-  "outputs": [
-    "context",
-    "entityId",
-    "entityType",
-    "productId"
-  ],
+  "inputs": ["trigger"],
+  "outputs": ["context", "entityId", "entityType", "productId"],
   "configFields": [
     {
       "path": "simulation.entityType",
@@ -49,15 +42,8 @@
       "x": 100,
       "y": 100
     },
-    "inputs": [
-      "trigger"
-    ],
-    "outputs": [
-      "context",
-      "entityId",
-      "entityType",
-      "productId"
-    ],
+    "inputs": ["trigger"],
+    "outputs": ["context", "entityId", "entityType", "productId"],
     "data": {},
     "connections": {
       "incoming": [],

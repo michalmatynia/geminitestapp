@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { SelectSimple } from '@/shared/ui';
+import { Input, SelectSimple } from '@/shared/ui';
 
 type SelectOption = {
   value: string;
@@ -11,18 +11,14 @@ type GenerationToolbarDefaultsSectionProps = {
   imageCount: string;
   imageCountOptions: SelectOption[];
   model: string;
-  modelOptions: SelectOption[];
   onImageCountChange: (value: string) => void;
-  onModelChange: (value: string) => void;
 };
 
 export function GenerationToolbarDefaultsSection({
   imageCount,
   imageCountOptions,
   model,
-  modelOptions,
   onImageCountChange,
-  onModelChange,
 }: GenerationToolbarDefaultsSectionProps): React.JSX.Element {
   return (
     <div className='rounded border border-border/60 bg-card/40 p-3'>
@@ -30,16 +26,17 @@ export function GenerationToolbarDefaultsSection({
         Generation Defaults
       </div>
       <div className='grid gap-2 sm:grid-cols-[minmax(0,1fr)_70px]'>
-        <SelectSimple size='sm'
+        <Input
+          size='sm'
           className='w-full min-w-0'
           value={model}
-          onValueChange={onModelChange}
-          options={modelOptions}
-          placeholder='Model'
-          triggerClassName='h-8 w-full text-xs'
-          ariaLabel='Generation model'
+          readOnly
+          disabled
+          placeholder='Not configured in AI Brain'
+          aria-label='Brain-managed generation model'
         />
-        <SelectSimple size='sm'
+        <SelectSimple
+          size='sm'
           className='w-full'
           value={imageCount}
           onValueChange={onImageCountChange}

@@ -14,11 +14,12 @@ import React, { useCallback, useRef, useState } from 'react';
 
 import type { CaseResolverFile, CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 
+import { CASE_RESOLVER_CASES_MASTER_SETTINGS_HREF, formatCaseTimestamp } from '../case-list-utils';
 import {
-  CASE_RESOLVER_CASES_MASTER_SETTINGS_HREF,
-  formatCaseTimestamp,
-} from '../case-list-utils';
-import { useCaseListSearch, type CaseListSearchEntry, type CaseListSearchMatchedFile } from './useCaseListSearch';
+  useCaseListSearch,
+  type CaseListSearchEntry,
+  type CaseListSearchMatchedFile,
+} from './useCaseListSearch';
 
 export type CaseListSearchPanelProps = {
   workspace: CaseResolverWorkspace;
@@ -60,9 +61,7 @@ function FileSubRow({
       >
         {file.name}
       </button>
-      {file.isLocked === true ? (
-        <Lock className='size-3 shrink-0 text-amber-300' />
-      ) : null}
+      {file.isLocked === true ? <Lock className='size-3 shrink-0 text-amber-300' /> : null}
       {folderPath ? (
         <span className='max-w-[160px] shrink-0 truncate text-[10px] text-gray-500'>
           {folderPath}
@@ -163,11 +162,7 @@ function CaseAccordionRow({
       {isExpanded && hasFiles ? (
         <div className='mt-0.5 space-y-0.5'>
           {matchedFiles.map((matched) => (
-            <FileSubRow
-              key={matched.file.id}
-              matched={matched}
-              onOpenFile={onOpenFile}
-            />
+            <FileSubRow key={matched.file.id} matched={matched} onOpenFile={onOpenFile} />
           ))}
         </div>
       ) : null}
@@ -182,18 +177,12 @@ export function CaseListSearchPanel({
   onOpenCase,
   onOpenFile,
 }: CaseListSearchPanelProps): React.JSX.Element {
-  const { entries } = useCaseListSearch(
-    workspace.files,
-    identifierLabelById,
-    query,
-  );
+  const { entries } = useCaseListSearch(workspace.files, identifierLabelById, query);
 
   const entriesRef = useRef(entries);
   entriesRef.current = entries;
 
-  const [expandedCaseIds, setExpandedCaseIds] = useState<Set<string>>(
-    () => new Set(),
-  );
+  const [expandedCaseIds, setExpandedCaseIds] = useState<Set<string>>(() => new Set());
 
   const toggleCase = useCallback((caseId: string): void => {
     setExpandedCaseIds((prev) => {
@@ -216,7 +205,8 @@ export function CaseListSearchPanel({
   }, []);
 
   const totalFiles = entries.reduce((sum, e) => sum + e.matchedFiles.length, 0);
-  const allExpanded = entries.length > 0 && entries.every((e) => expandedCaseIds.has(e.caseFile.id));
+  const allExpanded =
+    entries.length > 0 && entries.every((e) => expandedCaseIds.has(e.caseFile.id));
 
   return (
     <div className='relative flex min-h-0 flex-1 flex-col'>

@@ -3,14 +3,12 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import React, { useState, useCallback, useEffect } from 'react';
 
-
 import type { PreviewBlockItemProps, PreviewBlockProps } from '@/shared/contracts/cms';
 import type { BlockInstance } from '@/shared/contracts/cms';
 
 import { BlockContextProvider, useBlockContext } from './context/BlockContext';
 import { usePreviewEditor } from './context/PreviewEditorContext';
 import { normalizeSlideshowAnimationType } from './preview-utils';
-
 
 // ---------------------------------------------------------------------------
 // PreviewBlockItem is needed as a dependency - import it lazily to avoid circular deps
@@ -19,23 +17,21 @@ import { normalizeSlideshowAnimationType } from './preview-utils';
 
 let _PreviewBlockItem: React.ComponentType<PreviewBlockItemProps> | null = null;
 
-export function registerCarouselPreviewBlockItem(component: React.ComponentType<PreviewBlockItemProps>): void {
+export function registerCarouselPreviewBlockItem(
+  component: React.ComponentType<PreviewBlockItemProps>
+): void {
   _PreviewBlockItem = component;
 }
 
-
-
 function PreviewBlockItemProxy(props: PreviewBlockItemProps): React.ReactNode {
   if (!_PreviewBlockItem) {
-    throw new Error('PreviewBlockItem has not been registered. Call registerCarouselPreviewBlockItem first.');
+    throw new Error(
+      'PreviewBlockItem has not been registered. Call registerCarouselPreviewBlockItem first.'
+    );
   }
 
-  return (
-    <_PreviewBlockItem {...props} />
-  );
+  return <_PreviewBlockItem {...props} />;
 }
-
-
 
 // ---------------------------------------------------------------------------
 // Carousel preview (inside columns)
@@ -55,9 +51,7 @@ export function PreviewCarouselBlock({
 }: PreviewBlockProps): React.ReactNode {
   const { stretch: contextStretch } = useBlockContext();
   const resolvedStretch = stretch ?? contextStretch ?? false;
-  const {
-    inspectorSettings,
-  } = usePreviewEditor();
+  const { inspectorSettings } = usePreviewEditor();
   const showEditorChrome = inspectorSettings.showEditorChrome ?? false;
   const frames = (block.blocks ?? []).filter((b: BlockInstance) => b.type === 'CarouselFrame');
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -84,10 +78,13 @@ export function PreviewCarouselBlock({
     setCurrentIndex((prev: number) => (prev - 1 + frameCount) % frameCount);
   }, [frameCount, loop, currentIndex]);
 
-  const goToIndex = useCallback((index: number): void => {
-    if (index === currentIndex) return;
-    setCurrentIndex(index);
-  }, [currentIndex]);
+  const goToIndex = useCallback(
+    (index: number): void => {
+      if (index === currentIndex) return;
+      setCurrentIndex(index);
+    },
+    [currentIndex]
+  );
 
   const stretchStyle = resolvedStretch ? { height: '100%' } : undefined;
   const containerStyle: React.CSSProperties = {
@@ -115,10 +112,10 @@ export function PreviewCarouselBlock({
         style={{
           ...(transitionType === 'slide'
             ? {
-              display: 'flex',
-              transform: `translateX(-${currentIndex * 100}%)`,
-              transition: `transform ${transitionDuration}ms ease-in-out`,
-            }
+                display: 'flex',
+                transform: `translateX(-${currentIndex * 100}%)`,
+                transition: `transform ${transitionDuration}ms ease-in-out`,
+              }
             : {}),
         }}
       >
@@ -139,15 +136,18 @@ export function PreviewCarouselBlock({
             ...(transitionType === 'slide'
               ? { minWidth: '100%', flexShrink: 0 }
               : {
-                position: index === 0 ? 'relative' : 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                opacity: transitionType === 'fade' ? (isActive ? 1 : 0) : isActive ? 1 : 0,
-                visibility: isActive ? 'visible' : 'hidden',
-                transition: transitionType === 'fade' ? `opacity ${transitionDuration}ms ease-in-out` : undefined,
-              }),
+                  position: index === 0 ? 'relative' : 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  opacity: transitionType === 'fade' ? (isActive ? 1 : 0) : isActive ? 1 : 0,
+                  visibility: isActive ? 'visible' : 'hidden',
+                  transition:
+                    transitionType === 'fade'
+                      ? `opacity ${transitionDuration}ms ease-in-out`
+                      : undefined,
+                }),
           };
 
           const alignmentClass =
@@ -174,10 +174,7 @@ export function PreviewCarouselBlock({
             >
               <BlockContextProvider value={{ parentBlockId: frame.id }}>
                 {frameChildren.map((child: BlockInstance) => (
-                  <PreviewBlockItemProxy
-                    key={child.id}
-                    block={child}
-                  />
+                  <PreviewBlockItemProxy key={child.id} block={child} />
                 ))}
               </BlockContextProvider>
             </div>
@@ -239,10 +236,7 @@ export function PreviewSlideshowBlock({
 }: PreviewBlockProps): React.ReactNode {
   const { stretch: contextStretch } = useBlockContext();
   const resolvedStretch = stretch ?? contextStretch ?? false;
-  const {
-    inspectorSettings,
-    pauseSlideshowOnHoverInEditor,
-  } = usePreviewEditor();
+  const { inspectorSettings, pauseSlideshowOnHoverInEditor } = usePreviewEditor();
   const showEditorChrome = inspectorSettings.showEditorChrome ?? false;
   const transition = (block.settings['transition'] as string) || 'fade';
   const transitionDuration = (block.settings['transitionDuration'] as number) || 700;
@@ -316,11 +310,12 @@ export function PreviewSlideshowBlock({
             onMouseLeave={allowPauseOnHover ? (): void => setIsPaused(false) : undefined}
           >
             {frames.map((frame: BlockInstance, idx: number) => {
-              const frameSettings = (frame.settings ?? {});
+              const frameSettings = frame.settings ?? {};
               const backgroundColor = (frameSettings['backgroundColor'] as string) || '';
               const contentAlignment = (frameSettings['contentAlignment'] as string) || 'center';
               const verticalAlignment = (frameSettings['verticalAlignment'] as string) || 'center';
-              const fillContent = frameSettings['fillContent'] === true || frameSettings['fillContent'] === 'yes';
+              const fillContent =
+                frameSettings['fillContent'] === true || frameSettings['fillContent'] === 'yes';
               const paddingTop = (frameSettings['paddingTop'] as number) || 0;
               const paddingBottom = (frameSettings['paddingBottom'] as number) || 0;
               const paddingLeft = (frameSettings['paddingLeft'] as number) || 0;
@@ -367,14 +362,14 @@ export function PreviewSlideshowBlock({
                   style={
                     transition === 'fade'
                       ? {
-                        opacity: isActiveFrame ? 1 : 0,
-                        pointerEvents: isActiveFrame ? 'auto' : 'none',
-                        transitionDuration: `${transitionDuration}ms`,
-                      }
+                          opacity: isActiveFrame ? 1 : 0,
+                          pointerEvents: isActiveFrame ? 'auto' : 'none',
+                          transitionDuration: `${transitionDuration}ms`,
+                        }
                       : {
-                        transform: `translateX(${(idx - currentActiveIndex) * 100}%)`,
-                        transitionDuration: `${transitionDuration}ms`,
-                      }
+                          transform: `translateX(${(idx - currentActiveIndex) * 100}%)`,
+                          transitionDuration: `${transitionDuration}ms`,
+                        }
                   }
                 >
                   <div className='flex h-full w-full flex-col' style={frameStyle}>
@@ -385,20 +380,25 @@ export function PreviewSlideshowBlock({
                           const animationStyle: React.CSSProperties =
                             isActiveFrame && resolvedAnimationType !== 'none'
                               ? {
-                                animation: `cms-anim-${resolvedAnimationType} ${animationDuration}ms ${animationEasing} ${blockDelay}ms both`,
-                              }
+                                  animation: `cms-anim-${resolvedAnimationType} ${animationDuration}ms ${animationEasing} ${blockDelay}ms both`,
+                                }
                               : {};
-                          const shouldFillBlock = fillContent && (child.type === 'Image' || child.type === 'ImageElement');
+                          const shouldFillBlock =
+                            fillContent &&
+                            (child.type === 'Image' || child.type === 'ImageElement');
                           const wrapperStyle: React.CSSProperties = shouldFillBlock
-                            ? { ...animationStyle, width: '100%', height: '100%', alignSelf: 'stretch' }
+                            ? {
+                                ...animationStyle,
+                                width: '100%',
+                                height: '100%',
+                                alignSelf: 'stretch',
+                              }
                             : animationStyle;
                           const triggerKey = `${child.id}-${currentActiveIndex}-${blockIdx}`;
                           return (
                             <div key={triggerKey} style={wrapperStyle}>
                               <BlockContextProvider value={{ stretch: shouldFillBlock }}>
-                                <PreviewBlockItemProxy
-                                  block={child}
-                                />
+                                <PreviewBlockItemProxy block={child} />
                               </BlockContextProvider>
                             </div>
                           );
@@ -422,7 +422,14 @@ export function PreviewSlideshowBlock({
                   onClick={goToPrev}
                   className='rounded-full border border-gray-600 p-2 text-gray-400 hover:text-white transition'
                 >
-                  <svg className='size-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M15 19l-7-7 7-7' /></svg>
+                  <svg className='size-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      strokeWidth={2}
+                      d='M15 19l-7-7 7-7'
+                    />
+                  </svg>
                 </button>
               )}
               {showDots && (
@@ -443,7 +450,14 @@ export function PreviewSlideshowBlock({
                   onClick={goToNext}
                   className='rounded-full border border-gray-600 p-2 text-gray-400 hover:text-white transition'
                 >
-                  <svg className='size-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 5l7 7-7 7' /></svg>
+                  <svg className='size-4' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      strokeWidth={2}
+                      d='M9 5l7 7-7 7'
+                    />
+                  </svg>
                 </button>
               )}
             </div>

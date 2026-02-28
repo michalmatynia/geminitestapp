@@ -1,11 +1,11 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
-import { 
-  validateExtractionWithLLM, 
+import {
+  validateExtractionWithLLM,
   normalizeExtractionItemsWithLLM,
   inferSelectorsFromLLM,
   buildExtractionPlan,
-  decideSearchFirstWithLLM
+  decideSearchFirstWithLLM,
 } from '@/features/ai/agent-runtime/tools/llm/index';
 import prisma from '@/shared/lib/db/prisma';
 
@@ -141,8 +141,8 @@ describe('Agent Runtime - LLM Tools', () => {
             fields: ['name'],
             primarySelectors: ['.p'],
             fallbackSelectors: [],
-            notes: 'None'
-          })
+            notes: 'None',
+          }),
         },
       };
       (global.fetch as any).mockResolvedValue({
@@ -153,7 +153,7 @@ describe('Agent Runtime - LLM Tools', () => {
       const result = await buildExtractionPlan(mockContext, {
         type: 'product_names',
         domTextSample: '...',
-        uiInventory: {}
+        uiInventory: {},
       });
 
       expect(result?.target).toBe('products');
@@ -168,8 +168,8 @@ describe('Agent Runtime - LLM Tools', () => {
           content: JSON.stringify({
             useSearchFirst: true,
             query: 'example shop',
-            reason: 'Domain not found'
-          })
+            reason: 'Domain not found',
+          }),
         },
       };
       (global.fetch as any).mockResolvedValue({
@@ -177,12 +177,7 @@ describe('Agent Runtime - LLM Tools', () => {
         json: async () => await Promise.resolve(mockResponse),
       });
 
-      const result = await decideSearchFirstWithLLM(
-        mockContext,
-        'Find shop',
-        'about:blank',
-        false
-      );
+      const result = await decideSearchFirstWithLLM(mockContext, 'Find shop', 'about:blank', false);
 
       expect(result?.useSearchFirst).toBe(true);
       expect(result?.query).toBe('example shop');

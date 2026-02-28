@@ -3,10 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { summarizeRuntimeTraceAnalytics } from '@/features/ai/ai-paths/services/runtime-analytics-service';
 import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 
-const buildRun = (input: {
-  id: string;
-  nodeSpans?: unknown[];
-}): AiPathRunRecord =>
+const buildRun = (input: { id: string; nodeSpans?: unknown[] }): AiPathRunRecord =>
   ({
     id: input.id,
     status: 'completed',

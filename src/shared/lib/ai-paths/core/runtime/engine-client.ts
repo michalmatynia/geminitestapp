@@ -1,22 +1,11 @@
 'use client';
 
-import type {
-  AiNode,
-  Edge,
-} from '@/shared/contracts/ai-paths';
-import type {
-  RuntimeState,
-  NodeHandler,
-} from '@/shared/contracts/ai-paths-runtime';
+import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
+import type { RuntimeState, NodeHandler } from '@/shared/contracts/ai-paths-runtime';
 
-import {
-  evaluateGraphInternal,
-} from './engine-core';
+import { evaluateGraphInternal } from './engine-core';
 
-import {
-  type EvaluateGraphArgs,
-  type EvaluateGraphOptions,
-} from './engine-modules/engine-types';
+import { type EvaluateGraphArgs, type EvaluateGraphOptions } from './engine-modules/engine-types';
 
 import {
   handleConstant,
@@ -56,7 +45,7 @@ const CLIENT_HANDLERS: Record<string, NodeHandler> = {
   delay: handleDelay,
   viewer: handleViewer,
   context: handleContext,
-  
+
   parser: handleParser,
   mapper: handleMapper,
   mutator: handleMutator,
@@ -72,10 +61,12 @@ const CLIENT_HANDLERS: Record<string, NodeHandler> = {
 const resolveHandler = (type: string): NodeHandler | null => {
   const handler = CLIENT_HANDLERS[type];
   if (handler) return handler;
-  
+
   // For unsupported nodes in client, we return a mock handler that fails or skips
   return () => {
-    throw new Error(`Node type '${type}' is not supported in client-side execution. Use Server execution.`);
+    throw new Error(
+      `Node type '${type}' is not supported in client-side execution. Use Server execution.`
+    );
   };
 };
 

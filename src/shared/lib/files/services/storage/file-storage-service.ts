@@ -42,8 +42,7 @@ let settingsCache: CacheState | null = null;
 const canUsePrismaSettings = (): boolean =>
   Boolean(process.env['DATABASE_URL']) && 'setting' in prisma;
 
-const normalizeString = (value: unknown): string =>
-  typeof value === 'string' ? value.trim() : '';
+const normalizeString = (value: unknown): string => (typeof value === 'string' ? value.trim() : '');
 
 const normalizeNullableString = (value: unknown): string | null => {
   const trimmed = normalizeString(value);
@@ -149,14 +148,11 @@ const resolveFastCometConfig = (raw: string | null): FastCometStorageConfig => {
       stored.keepLocalCopy ?? process.env['FASTCOMET_STORAGE_KEEP_LOCAL_COPY'],
       true
     ),
-    timeoutMs: clampTimeout(
-      stored.timeoutMs ?? process.env['FASTCOMET_STORAGE_TIMEOUT_MS']
-    ),
+    timeoutMs: clampTimeout(stored.timeoutMs ?? process.env['FASTCOMET_STORAGE_TIMEOUT_MS']),
   };
 };
 
-export const isHttpFilepath = (filepath: string): boolean =>
-  /^https?:\/\//i.test(filepath.trim());
+export const isHttpFilepath = (filepath: string): boolean => /^https?:\/\//i.test(filepath.trim());
 
 export const getPublicPathFromStoredPath = (filepath: string): string | null => {
   const trimmed = filepath.trim();
@@ -186,7 +182,7 @@ const toAbsoluteUrl = (value: string, baseUrl: string): string => {
   }
 };
 
-const withTimeout = async <T,>(
+const withTimeout = async <T>(
   timeoutMs: number,
   task: (signal: AbortSignal) => Promise<T>
 ): Promise<T> => {
@@ -254,7 +250,9 @@ const uploadToFastComet = async (params: {
   const form = new FormData();
   form.append(
     'file',
-    new Blob([new Uint8Array(params.buffer)], { type: params.mimetype || 'application/octet-stream' }),
+    new Blob([new Uint8Array(params.buffer)], {
+      type: params.mimetype || 'application/octet-stream',
+    }),
     params.filename
   );
   form.append('filename', params.filename);
@@ -416,8 +414,7 @@ export const uploadBufferToFastComet = async (params: {
   folder?: string | null;
   fastComet?: FastCometStorageConfig;
 }): Promise<string> => {
-  const config =
-    params.fastComet ?? (await getFileStorageSettings()).fastComet;
+  const config = params.fastComet ?? (await getFileStorageSettings()).fastComet;
   return await uploadToFastComet({
     buffer: params.buffer,
     filename: params.filename,
@@ -440,8 +437,7 @@ export const deleteFromConfiguredStorage = async (params: {
   // Local cleanup should always run first to keep disk usage under control.
   await params.deleteLocalCopy(publicPath);
 
-  const shouldDeleteRemote =
-    settings.source === 'fastcomet' || isHttpFilepath(params.filepath);
+  const shouldDeleteRemote = settings.source === 'fastcomet' || isHttpFilepath(params.filepath);
 
   if (!shouldDeleteRemote) return;
 

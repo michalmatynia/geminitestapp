@@ -4,7 +4,7 @@ import {
   defaultPromptEngineSettings,
   type PromptEngineSettings,
   type PromptValidationScope,
-} from '@/shared/lib/prompt-engine/settings';
+} from '@/features/prompt-engine/settings';
 import {
   ensurePromptExploderPatternPack,
   getPromptExploderScopedRules,
@@ -37,8 +37,12 @@ describe('prompt exploder pattern pack', () => {
       },
     };
 
-    const promptRules = getPromptExploderScopedRules(settings, 'prompt_exploder', { includePatternPack: false });
-    const caseRules = getPromptExploderScopedRules(settings, 'case_resolver_prompt_exploder', { includePatternPack: false });
+    const promptRules = getPromptExploderScopedRules(settings, 'prompt_exploder', {
+      includePatternPack: false,
+    });
+    const caseRules = getPromptExploderScopedRules(settings, 'case_resolver_prompt_exploder', {
+      includePatternPack: false,
+    });
     expect(promptRules.map((rule) => rule.id)).toEqual(['rule.prompt', 'rule.global']);
     expect(caseRules.map((rule) => rule.id)).toEqual(['rule.case', 'rule.global']);
   });
@@ -68,9 +72,7 @@ describe('prompt exploder pattern pack', () => {
 
     expect(matchingRules.length).toBeGreaterThanOrEqual(2);
     expect(
-      matchingRules.some((rule) =>
-        (rule.appliesToScopes ?? []).includes('prompt_exploder')
-      )
+      matchingRules.some((rule) => (rule.appliesToScopes ?? []).includes('prompt_exploder'))
     ).toBe(true);
     expect(
       matchingRules.some((rule) =>

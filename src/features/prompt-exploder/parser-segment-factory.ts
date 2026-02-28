@@ -17,7 +17,8 @@ import type {
   PromptExploderSubsection,
 } from './types';
 
-const trimTrailingBlankLines = (value: string): string => value.replace(/\n{3,}$/g, '\n\n').trimEnd();
+const trimTrailingBlankLines = (value: string): string =>
+  value.replace(/\n{3,}$/g, '\n\n').trimEnd();
 
 export const inferSegmentType = (title: string, raw: string): PromptExploderSegmentType => {
   const normalizedTitle = normalizeHeadingLabel(title).toLowerCase();
@@ -84,23 +85,26 @@ export const createPromptExploderSegment = (args: {
   const matchedPatternLabels = matchedRules
     .map((rule) => rule.label.trim())
     .filter((label: string): label is string => label.length > 0);
-  const matchedSequenceLabels = [...new Set(
-    matchedRules
-      .map((rule) => rule.sequenceGroupLabel?.trim() ?? '')
-      .filter((label: string): label is string => label.length > 0)
-  )];
+  const matchedSequenceLabels = [
+    ...new Set(
+      matchedRules
+        .map((rule) => rule.sequenceGroupLabel?.trim() ?? '')
+        .filter((label: string): label is string => label.length > 0)
+    ),
+  ];
   const hintedType = inferTypeFromRuleHints(matchedRules, inferredType);
   const type = args.lockType ? inferredType : hintedType;
   const normalizedRaw = trimTrailingBlankLines(args.raw);
   const shouldParseParams = type === 'parameter_block';
   const extractedParams =
     shouldParseParams && !args.paramsObject ? extractParamsFromPrompt(normalizedRaw) : null;
-  const resolvedParamsObject = args.paramsObject
-    ?? (extractedParams?.ok ? extractedParams.params : null);
-  const resolvedParamsText =
-    shouldParseParams
-      ? (args.paramsText && args.paramsText.trim().length > 0 ? args.paramsText : normalizedRaw)
-      : (args.paramsText ?? '');
+  const resolvedParamsObject =
+    args.paramsObject ?? (extractedParams?.ok ? extractedParams.params : null);
+  const resolvedParamsText = shouldParseParams
+    ? args.paramsText && args.paramsText.trim().length > 0
+      ? args.paramsText
+      : normalizedRaw
+    : (args.paramsText ?? '');
   const confidenceBase = 0.45;
   const confidenceBoost = matchedRules.reduce(
     (total, rule) => total + Math.max(0, rule.confidenceBoost),
@@ -119,8 +123,8 @@ export const createPromptExploderSegment = (args: {
   return {
     id: args.createSegmentId(),
     type,
-    title: keepEmptyTitle ? '' : (resolvedTitle || 'Untitled Segment'),
-    includeInOutput: args.includeInOutput ?? (type !== 'metadata'),
+    title: keepEmptyTitle ? '' : resolvedTitle || 'Untitled Segment',
+    includeInOutput: args.includeInOutput ?? type !== 'metadata',
     text: normalizedRaw,
     raw: normalizedRaw,
     code: args.code ?? null,
@@ -139,7 +143,8 @@ export const createPromptExploderSegment = (args: {
     confidence,
     validationResults: [],
     segments: [],
-  };};
+  };
+};
 
 const formatHeadingWithCode = (title: string, code: string | null): string => {
   const normalizedTitle = title.trim();
@@ -188,7 +193,8 @@ export const renderPromptExploderSegment = (segment: PromptExploderSegment): str
       if (segment.type === 'referential_list') {
         lines.push(formatHeadingWithCode(segment.title, segment.code ?? null));
         return;
-      }      lines.push(segment.title.trim());
+      }
+      lines.push(segment.title.trim());
     }
   };
 
@@ -247,9 +253,11 @@ export const renderPromptExploderSegment = (segment: PromptExploderSegment): str
     case 'referential_list':
     case 'list':
       appendTitle();
-      lines.push(...flattenItemsToTextLines(segment.listItems || [], {
-        ordered: segment.type === 'list' || segment.type === 'hierarchical_list',
-      }));
+      lines.push(
+        ...flattenItemsToTextLines(segment.listItems || [], {
+          ordered: segment.type === 'list' || segment.type === 'hierarchical_list',
+        })
+      );
       break;
     case 'assigned_text':
     default:
@@ -260,7 +268,8 @@ export const renderPromptExploderSegment = (segment: PromptExploderSegment): str
           lines.push(body);
         }
       }
-      break;  }
+      break;
+  }
 
   return trimTrailingBlankLines(lines.join('\n'));
 };

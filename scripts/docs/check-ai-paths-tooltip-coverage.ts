@@ -21,7 +21,7 @@ const REQUIRED_TOOLTIP_IDS = [
   'regex_placeholder_value',
 ] as const;
 
-const unique = <T,>(items: T[]): T[] => Array.from(new Set(items));
+const unique = <T>(items: T[]): T[] => Array.from(new Set(items));
 
 const fail = (message: string): never => {
   console.error(message);
@@ -48,22 +48,18 @@ if (missingRequired.length > 0) {
   fail(`Missing required AI-Paths tooltip ids: ${missingRequired.join(', ')}`);
 }
 
-const missingNodePaletteEntries = AI_PATHS_NODE_DOCS.map((doc) => `node_palette_${doc.type}`).filter(
-  (id) => !byId.has(id),
-);
+const missingNodePaletteEntries = AI_PATHS_NODE_DOCS.map(
+  (doc) => `node_palette_${doc.type}`
+).filter((id) => !byId.has(id));
 if (missingNodePaletteEntries.length > 0) {
-  fail(
-    `Missing node palette tooltip ids for node types: ${missingNodePaletteEntries.join(', ')}`,
-  );
+  fail(`Missing node palette tooltip ids for node types: ${missingNodePaletteEntries.join(', ')}`);
 }
 
 const missingNodeConfigEntries = AI_PATHS_NODE_DOCS.map((doc) => `node_config_${doc.type}`).filter(
-  (id) => !byId.has(id),
+  (id) => !byId.has(id)
 );
 if (missingNodeConfigEntries.length > 0) {
-  fail(
-    `Missing node config tooltip ids for node types: ${missingNodeConfigEntries.join(', ')}`,
-  );
+  fail(`Missing node config tooltip ids for node types: ${missingNodeConfigEntries.join(', ')}`);
 }
 
 const malformedEntries = AI_PATHS_TOOLTIP_CATALOG.filter((entry) => {
@@ -73,12 +69,10 @@ const malformedEntries = AI_PATHS_TOOLTIP_CATALOG.filter((entry) => {
 });
 if (malformedEntries.length > 0) {
   fail(
-    `Malformed AI-Paths tooltip entries: ${malformedEntries
-      .map((entry) => entry.id)
-      .join(', ')}`,
+    `Malformed AI-Paths tooltip entries: ${malformedEntries.map((entry) => entry.id).join(', ')}`
   );
 }
 
 console.log(
-  `AI-Paths tooltip coverage check passed. Entries: ${AI_PATHS_TOOLTIP_CATALOG.length}, nodes: ${AI_PATHS_NODE_DOCS.length}.`,
+  `AI-Paths tooltip coverage check passed. Entries: ${AI_PATHS_TOOLTIP_CATALOG.length}, nodes: ${AI_PATHS_NODE_DOCS.length}.`
 );

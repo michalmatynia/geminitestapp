@@ -51,7 +51,10 @@ export function useGenerationToolbarActions(
         id: shapeId,
         name: `Crop Box ${previous.length + 1}`,
         type: 'rect' as const,
-        points: [{ x: 0.1, y: 0.1 }, { x: 0.9, y: 0.9 }],
+        points: [
+          { x: 0.1, y: 0.1 },
+          { x: 0.9, y: 0.9 },
+        ],
         closed: true,
         visible: true,
         role: 'custom' as const,
@@ -95,7 +98,9 @@ export function useGenerationToolbarActions(
         imageFrame: resolveWorkingSlotImageContentFrame(),
       });
       if (polygons.length === 0) {
-        toast('No closed polygon-compatible shapes are available for mask export.', { variant: 'info' });
+        toast('No closed polygon-compatible shapes are available for mask export.', {
+          variant: 'info',
+        });
         return;
       }
 
@@ -114,15 +119,15 @@ export function useGenerationToolbarActions(
       const payloadMasks = variants.map(({ variant, inverted }) =>
         maskAttachMode === 'client_canvas_polygon'
           ? {
-            variant,
-            inverted,
-            dataUrl: renderMaskDataUrlFromPolygons(polygons, width, height, variant, inverted),
-          }
+              variant,
+              inverted,
+              dataUrl: renderMaskDataUrlFromPolygons(polygons, width, height, variant, inverted),
+            }
           : {
-            variant,
-            inverted,
-            polygons,
-          }
+              variant,
+              inverted,
+              polygons,
+            }
       );
 
       const response = await api.post<{
@@ -146,16 +151,26 @@ export function useGenerationToolbarActions(
         return;
       }
 
-      toast(`Attached ${createdCount} linked mask slot${createdCount === 1 ? '' : 's'}.`, { variant: 'success' });
+      toast(`Attached ${createdCount} linked mask slot${createdCount === 1 ? '' : 's'}.`, {
+        variant: 'success',
+      });
     } catch (error) {
-      toast(
-        error instanceof Error
-          ? error.message
-          : 'Failed to attach mask variants.',
-        { variant: 'error' }
-      );
+      toast(error instanceof Error ? error.message : 'Failed to attach mask variants.', {
+        variant: 'error',
+      });
     }
-  }, [exportMaskShapes, maskAttachMode, projectId, queryClient, resolveWorkingSlotImageContentFrame, toast, workingSlot?.id, workingSlot?.imageFile?.height, workingSlot?.imageFile?.width, workingSlotImageSrc]);
+  }, [
+    exportMaskShapes,
+    maskAttachMode,
+    projectId,
+    queryClient,
+    resolveWorkingSlotImageContentFrame,
+    toast,
+    workingSlot?.id,
+    workingSlot?.imageFile?.height,
+    workingSlot?.imageFile?.width,
+    workingSlotImageSrc,
+  ]);
 
   const handleCancelUpscale = useCallback((): void => {
     const controller = upscaleAbortControllerRef.current;
@@ -181,71 +196,100 @@ export function useGenerationToolbarActions(
     controller.abort();
   }, [autoScaleAbortControllerRef]);
 
-  const handleSquareCrop = useCallback(async (handleCrop: (cropRect: CropRect, options: { includeCanvasContext: boolean }) => Promise<void>): Promise<void> => {
-    if (!workingSlot?.id) {
-      toast('No active source slot selected.', { variant: 'info' });
-      return;
-    }
-    if (!workingSlotImageSrc) {
-      toast('Select a slot image before cropping.', { variant: 'info' });
-      return;
-    }
-    try {
-      const squareCropRect = await resolveCenteredSquareCropRect();
-      cropDiagnosticsRef.current = null;
-      handleCrop(squareCropRect, { includeCanvasContext: false }).catch(() => {});
-    } catch (error) {
-      toast(error instanceof Error ? error.message : 'Failed to prepare square crop.', { variant: 'error' });
-    }
-  }, [resolveCenteredSquareCropRect, toast, workingSlot?.id, workingSlotImageSrc, cropDiagnosticsRef]);
+  const handleSquareCrop = useCallback(
+    async (
+      handleCrop: (cropRect: CropRect, options: { includeCanvasContext: boolean }) => Promise<void>
+    ): Promise<void> => {
+      if (!workingSlot?.id) {
+        toast('No active source slot selected.', { variant: 'info' });
+        return;
+      }
+      if (!workingSlotImageSrc) {
+        toast('Select a slot image before cropping.', { variant: 'info' });
+        return;
+      }
+      try {
+        const squareCropRect = await resolveCenteredSquareCropRect();
+        cropDiagnosticsRef.current = null;
+        handleCrop(squareCropRect, { includeCanvasContext: false }).catch(() => {});
+      } catch (error) {
+        toast(error instanceof Error ? error.message : 'Failed to prepare square crop.', {
+          variant: 'error',
+        });
+      }
+    },
+    [resolveCenteredSquareCropRect, toast, workingSlot?.id, workingSlotImageSrc, cropDiagnosticsRef]
+  );
 
-  const handlePreviewViewCrop = useCallback(async (handleCrop: (cropRect: CropRect, options: { includeCanvasContext: boolean }) => Promise<void>): Promise<void> => {
-    const activeSlotId = workingSlot?.id?.trim() ?? '';
-    if (!activeSlotId) {
-      toast('No active source slot selected.', { variant: 'info' });
-      return;
-    }
-    if (!workingSlotImageSrc) {
-      toast('Select a slot image before cropping.', { variant: 'info' });
-      return;
-    }
-
-    const previewCrop = getPreviewCanvasViewportCrop();
-    if (!previewCrop) {
-      toast('Preview Canvas crop view is unavailable. Load a slot image in Preview Canvas first.', {
-        variant: 'info',
-      });
-      return;
-    }
-    if (previewCrop.slotId !== activeSlotId) {
-      toast('Preview Canvas is showing a different slot. Switch back to the working slot and try again.', {
-        variant: 'info',
-      });
-      return;
-    }
-
-    try {
-      cropDiagnosticsRef.current = null;
-      const cropCanvasContext = await resolveWorkingCropCanvasContext();
-      if (cropCanvasContext) {
-        const sourceDimensions = await resolveWorkingSourceDimensions();
-        const canvasCropRect = mapImageCropRectToCanvasRect(
-          previewCrop.cropRect,
-          sourceDimensions.width,
-          sourceDimensions.height,
-          cropCanvasContext
-        );
-        if (canvasCropRect) {
-          handleCrop(canvasCropRect, { includeCanvasContext: true }).catch(() => {});
-          return;
-        }
+  const handlePreviewViewCrop = useCallback(
+    async (
+      handleCrop: (cropRect: CropRect, options: { includeCanvasContext: boolean }) => Promise<void>
+    ): Promise<void> => {
+      const activeSlotId = workingSlot?.id?.trim() ?? '';
+      if (!activeSlotId) {
+        toast('No active source slot selected.', { variant: 'info' });
+        return;
+      }
+      if (!workingSlotImageSrc) {
+        toast('Select a slot image before cropping.', { variant: 'info' });
+        return;
       }
 
-      handleCrop(previewCrop.cropRect, { includeCanvasContext: false }).catch(() => {});
-    } catch (error) {
-      toast(error instanceof Error ? error.message : 'Failed to prepare crop from preview view.', { variant: 'error' });
-    }
-  }, [getPreviewCanvasViewportCrop, resolveWorkingCropCanvasContext, resolveWorkingSourceDimensions, toast, workingSlot?.id, workingSlotImageSrc, cropDiagnosticsRef]);
+      const previewCrop = getPreviewCanvasViewportCrop();
+      if (!previewCrop) {
+        toast(
+          'Preview Canvas crop view is unavailable. Load a slot image in Preview Canvas first.',
+          {
+            variant: 'info',
+          }
+        );
+        return;
+      }
+      if (previewCrop.slotId !== activeSlotId) {
+        toast(
+          'Preview Canvas is showing a different slot. Switch back to the working slot and try again.',
+          {
+            variant: 'info',
+          }
+        );
+        return;
+      }
+
+      try {
+        cropDiagnosticsRef.current = null;
+        const cropCanvasContext = await resolveWorkingCropCanvasContext();
+        if (cropCanvasContext) {
+          const sourceDimensions = await resolveWorkingSourceDimensions();
+          const canvasCropRect = mapImageCropRectToCanvasRect(
+            previewCrop.cropRect,
+            sourceDimensions.width,
+            sourceDimensions.height,
+            cropCanvasContext
+          );
+          if (canvasCropRect) {
+            handleCrop(canvasCropRect, { includeCanvasContext: true }).catch(() => {});
+            return;
+          }
+        }
+
+        handleCrop(previewCrop.cropRect, { includeCanvasContext: false }).catch(() => {});
+      } catch (error) {
+        toast(
+          error instanceof Error ? error.message : 'Failed to prepare crop from preview view.',
+          { variant: 'error' }
+        );
+      }
+    },
+    [
+      getPreviewCanvasViewportCrop,
+      resolveWorkingCropCanvasContext,
+      resolveWorkingSourceDimensions,
+      toast,
+      workingSlot?.id,
+      workingSlotImageSrc,
+      cropDiagnosticsRef,
+    ]
+  );
 
   return {
     handleCreateCropBox,

@@ -4,15 +4,8 @@
   "nodeType": "context",
   "title": "Context Filter",
   "purpose": "Filter incoming context payloads into scoped entity data.",
-  "inputs": [
-    "context"
-  ],
-  "outputs": [
-    "context",
-    "entityId",
-    "entityType",
-    "entityJson"
-  ],
+  "inputs": ["context"],
+  "outputs": ["context", "entityId", "entityType", "entityJson"],
   "configFields": [
     {
       "path": "context.role",
@@ -74,15 +67,8 @@
       "x": 100,
       "y": 100
     },
-    "inputs": [
-      "context"
-    ],
-    "outputs": [
-      "context",
-      "entityId",
-      "entityType",
-      "entityJson"
-    ],
+    "inputs": ["context"],
+    "outputs": ["context", "entityId", "entityType", "entityJson"],
     "data": {},
     "connections": {
       "incoming": [],

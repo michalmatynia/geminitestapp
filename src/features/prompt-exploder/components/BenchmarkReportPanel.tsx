@@ -2,7 +2,15 @@
 
 import React from 'react';
 
-import { Button, FormSection, Input, Textarea, SelectSimple, FormField, SectionHeader } from '@/shared/ui';
+import {
+  Button,
+  FormSection,
+  Input,
+  Textarea,
+  SelectSimple,
+  FormField,
+  SectionHeader,
+} from '@/shared/ui';
 
 import {
   DEFAULT_PROMPT_EXPLODER_BENCHMARK_CASES,
@@ -52,11 +60,7 @@ export function BenchmarkReportPanel(): React.JSX.Element {
       variant='subtle'
       className='p-4'
       actions={
-        <Button
-          type='button'
-          variant='outline'
-          onClick={handleRunBenchmark}
-        >
+        <Button type='button' variant='outline' onClick={handleRunBenchmark}>
           Run Benchmark
         </Button>
       }
@@ -64,7 +68,8 @@ export function BenchmarkReportPanel(): React.JSX.Element {
       <div className='space-y-3'>
         <div className='grid gap-2 md:grid-cols-5'>
           <FormField label='Benchmark Suite' id='benchmark-suite'>
-            <SelectSimple size='sm'
+            <SelectSimple
+              size='sm'
               value={benchmarkSuiteDraft}
               onValueChange={(value: string) => {
                 setBenchmarkSuiteDraft(value as 'default' | 'extended' | 'custom');
@@ -92,7 +97,11 @@ export function BenchmarkReportPanel(): React.JSX.Element {
               min={0.3}
               max={0.9}
               step={0.01}
-              value={promptExploderClampNumber(benchmarkLowConfidenceThresholdDraft, 0.3, 0.9).toFixed(2)}
+              value={promptExploderClampNumber(
+                benchmarkLowConfidenceThresholdDraft,
+                0.3,
+                0.9
+              ).toFixed(2)}
               onChange={(event) => {
                 const value = Number(event.target.value);
                 if (!Number.isFinite(value)) return;
@@ -120,8 +129,8 @@ export function BenchmarkReportPanel(): React.JSX.Element {
             />
           </FormField>
           <div className='md:col-span-2 rounded border border-border/50 bg-card/20 p-2 text-[11px] text-gray-500'>
-            Suite controls benchmark depth only. Runtime rules/templates still follow the
-            selected Prompt Exploder runtime profile.
+            Suite controls benchmark depth only. Runtime rules/templates still follow the selected
+            Prompt Exploder runtime profile.
           </div>
         </div>
         {benchmarkSuiteDraft === 'custom' ? (
@@ -204,22 +213,20 @@ export function BenchmarkReportPanel(): React.JSX.Element {
             <div>Generated: {benchmarkReport.generatedAt}</div>
             <div>
               Suite: {benchmarkReport.suite} · cases: {benchmarkReport.aggregate.caseCount} ·
-              expected-type recall{' '}
-              {(benchmarkReport.aggregate.expectedTypeRecall * 100).toFixed(1)}% · macro F1{' '}
-              {(benchmarkReport.aggregate.macroF1 * 100).toFixed(1)}% · min-segment pass{' '}
-              {(benchmarkReport.aggregate.minSegmentPassRate * 100).toFixed(1)}%
+              expected-type recall {(benchmarkReport.aggregate.expectedTypeRecall * 100).toFixed(1)}
+              % · macro F1 {(benchmarkReport.aggregate.macroF1 * 100).toFixed(1)}% · min-segment
+              pass {(benchmarkReport.aggregate.minSegmentPassRate * 100).toFixed(1)}%
             </div>
             <div>
-              Low-confidence threshold: {benchmarkReport.config.lowConfidenceThreshold.toFixed(2)}{' '}
-              · suggestion cap/case: {benchmarkReport.config.suggestionLimit}
+              Low-confidence threshold: {benchmarkReport.config.lowConfidenceThreshold.toFixed(2)} ·
+              suggestion cap/case: {benchmarkReport.config.suggestionLimit}
             </div>
             <div>
               Low-confidence segments: {benchmarkReport.aggregate.totalLowConfidenceSegments} ·
               suggestions: {benchmarkReport.aggregate.totalLowConfidenceSuggestions}
             </div>
             <div>
-              Gate (
-              {(PROMPT_EXPLODER_BENCHMARK_RECALL_TARGET * 100).toFixed(0)}% recall):{' '}
+              Gate ({(PROMPT_EXPLODER_BENCHMARK_RECALL_TARGET * 100).toFixed(0)}% recall):{' '}
               <span
                 className={
                   benchmarkReport.aggregate.expectedTypeRecall >=
@@ -236,10 +243,7 @@ export function BenchmarkReportPanel(): React.JSX.Element {
             </div>
             <div className='max-h-[240px] space-y-2 overflow-auto rounded border border-border/50 bg-card/20 p-2'>
               {benchmarkReport.cases.map((caseReport) => (
-                <div
-                  key={caseReport.id}
-                  className='rounded border border-border/50 bg-card/30 p-2'
-                >
+                <div key={caseReport.id} className='rounded border border-border/50 bg-card/30 p-2'>
                   <div className='flex items-center justify-between gap-2'>
                     <span className='font-medium text-gray-200'>{caseReport.id}</span>
                     <span className='text-[10px] text-gray-500'>
@@ -248,8 +252,7 @@ export function BenchmarkReportPanel(): React.JSX.Element {
                   </div>
                   <div className='mt-1'>
                     precision {(caseReport.precision * 100).toFixed(1)}% · recall{' '}
-                    {(caseReport.recall * 100).toFixed(1)}% · f1{' '}
-                    {(caseReport.f1 * 100).toFixed(1)}%
+                    {(caseReport.recall * 100).toFixed(1)}% · f1 {(caseReport.f1 * 100).toFixed(1)}%
                   </div>
                   <div className='mt-1 text-[10px] text-gray-500'>
                     missing: {caseReport.missingTypes.join(', ') || 'none'} · unexpected:{' '}
@@ -271,14 +274,9 @@ export function BenchmarkReportPanel(): React.JSX.Element {
                       variant='outline'
                       size='sm'
                       onClick={() => {
-                        void handleAddBenchmarkSuggestionRules(
-                          visibleBenchmarkSuggestions
-                        );
+                        void handleAddBenchmarkSuggestionRules(visibleBenchmarkSuggestions);
                       }}
-                      disabled={
-                        isBusy ||
-                        visibleBenchmarkSuggestions.length === 0
-                      }
+                      disabled={isBusy || visibleBenchmarkSuggestions.length === 0}
                     >
                       Add All Visible
                     </Button>
@@ -304,14 +302,11 @@ export function BenchmarkReportPanel(): React.JSX.Element {
                 }
               />
               <div className='mb-2 text-[10px] text-gray-500'>
-                visible {visibleBenchmarkSuggestions.length} / total{' '}
-                {benchmarkSuggestions.length} · dismissed{' '}
-                {dismissedBenchmarkSuggestionIds.length}
+                visible {visibleBenchmarkSuggestions.length} / total {benchmarkSuggestions.length} ·
+                dismissed {dismissedBenchmarkSuggestionIds.length}
               </div>
               {visibleBenchmarkSuggestions.length === 0 ? (
-                <div className='text-[11px] text-gray-500'>
-                  No visible suggestions in this run.
-                </div>
+                <div className='text-[11px] text-gray-500'>No visible suggestions in this run.</div>
               ) : (
                 <div className='max-h-[240px] space-y-2 overflow-auto'>
                   {visibleBenchmarkSuggestions.map((suggestion) => (
@@ -328,9 +323,10 @@ export function BenchmarkReportPanel(): React.JSX.Element {
                         </div>
                       </div>
                       <div className='mt-1 text-[10px] text-gray-500'>
-                                                      type: {suggestion.segmentType} · matched:{' '}
+                        type: {suggestion.segmentType} · matched:{' '}
                         {(suggestion.matchedPatternIds || []).join(', ') || 'none'}
-                      </div>                      <div className='mt-1 rounded border border-border/50 bg-card/20 px-2 py-1 font-mono text-[10px] text-gray-300'>
+                      </div>{' '}
+                      <div className='mt-1 rounded border border-border/50 bg-card/20 px-2 py-1 font-mono text-[10px] text-gray-300'>
                         {suggestion.suggestedRulePattern}
                       </div>
                       <div className='mt-2 flex items-center justify-between gap-2'>

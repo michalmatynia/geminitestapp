@@ -1,8 +1,7 @@
-import { readMeta } from '../utils/metadata';
+import { readMeta } from '@/shared/lib/ai/image-studio/utils/metadata';
 
 import type { VersionGraphFilterType } from './version-graph-context-types';
-import type { VersionNode } from '../utils/version-graph';
-
+import type { VersionNode } from '@/shared/lib/ai/image-studio/utils/version-graph';
 
 export const VERSION_GRAPH_IMAGE_PRELOAD_LIMIT = 120;
 
@@ -34,7 +33,7 @@ export const preloadVersionGraphImage = (src: string): void => {
 
 export const collectHiddenIds = (
   collapsedIds: Set<string>,
-  allNodes: VersionNode[],
+  allNodes: VersionNode[]
 ): Set<string> => {
   const nodeById = new Map(allNodes.map((n) => [n.id, n]));
   const hidden = new Set<string>();
@@ -60,7 +59,7 @@ export const matchesFilter = (
   node: VersionNode,
   query: string,
   types: Set<VersionGraphFilterType>,
-  hasMask: boolean | null,
+  hasMask: boolean | null
 ): boolean => {
   if (types.size > 0 && !types.has(node.type)) return false;
   if (hasMask === true && !node.hasMask) return false;
@@ -120,7 +119,7 @@ const remapMetadataIdList = (value: unknown, idMap: Map<string, string>): string
 export const remapMetadataForDetachedCopy = (
   metadata: Record<string, unknown> | null,
   idMap: Map<string, string>,
-  isRoot: boolean,
+  isRoot: boolean
 ): Record<string, unknown> | null => {
   if (!metadata) {
     return isRoot ? { role: 'base' } : null;
@@ -131,8 +130,8 @@ export const remapMetadataForDetachedCopy = (
     new Set(
       readMetadataSourceIds(metadata)
         .map((sourceId: string) => idMap.get(sourceId))
-        .filter((sourceId): sourceId is string => Boolean(sourceId)),
-    ),
+        .filter((sourceId): sourceId is string => Boolean(sourceId))
+    )
   );
 
   if (isRoot || remappedSourceIds.length === 0) {
@@ -157,16 +156,16 @@ export const remapMetadataForDetachedCopy = (
   if (compositeConfig) {
     const remappedLayers = Array.isArray(compositeConfig['layers'])
       ? (compositeConfig['layers'] as unknown[])
-        .map((layer: unknown): Record<string, unknown> | null => {
-          const layerRecord = asRecord(layer);
-          if (!layerRecord) return null;
-          const rawSlotId = layerRecord['slotId'];
-          if (typeof rawSlotId !== 'string') return null;
-          const mappedSlotId = idMap.get(rawSlotId.trim());
-          if (!mappedSlotId) return null;
-          return { ...layerRecord, slotId: mappedSlotId };
-        })
-        .filter((layer): layer is Record<string, unknown> => Boolean(layer))
+          .map((layer: unknown): Record<string, unknown> | null => {
+            const layerRecord = asRecord(layer);
+            if (!layerRecord) return null;
+            const rawSlotId = layerRecord['slotId'];
+            if (typeof rawSlotId !== 'string') return null;
+            const mappedSlotId = idMap.get(rawSlotId.trim());
+            if (!mappedSlotId) return null;
+            return { ...layerRecord, slotId: mappedSlotId };
+          })
+          .filter((layer): layer is Record<string, unknown> => Boolean(layer))
       : [];
 
     const nextCompositeConfig: Record<string, unknown> = { ...compositeConfig };
@@ -175,7 +174,7 @@ export const remapMetadataForDetachedCopy = (
         (layer: Record<string, unknown>, index: number) => ({
           ...layer,
           order: index,
-        }),
+        })
       );
     } else {
       delete nextCompositeConfig['layers'];

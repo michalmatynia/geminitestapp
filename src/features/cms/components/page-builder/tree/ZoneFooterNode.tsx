@@ -13,10 +13,7 @@ interface ZoneFooterNodeProps {
   sectionCount: number;
 }
 
-export function ZoneFooterNode({
-  zone,
-  sectionCount,
-}: ZoneFooterNodeProps): React.ReactNode {
+export function ZoneFooterNode({ zone, sectionCount }: ZoneFooterNodeProps): React.ReactNode {
   const {
     currentPage,
     clipboard,
@@ -60,9 +57,7 @@ export function ZoneFooterNode({
             });
           }}
           className={`rounded border border-dashed px-3 py-3 text-center text-xs transition ${
-            isZoneDragOver
-              ? treePlaceholderClasses.rootActive
-              : treePlaceholderClasses.rootIdle
+            isZoneDragOver ? treePlaceholderClasses.rootActive : treePlaceholderClasses.rootIdle
           }`}
         >
           {isZoneDragOver ? treeRootDropLabel : 'No sections'}

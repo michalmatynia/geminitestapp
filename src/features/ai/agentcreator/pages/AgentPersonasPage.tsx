@@ -3,8 +3,14 @@
 import React from 'react';
 
 import { AgentPersonaSettingsForm } from '@/features/ai/agentcreator/components/AgentPersonaSettingsForm';
-import { useAgentPersonas, useSaveAgentPersonasMutation } from '@/features/ai/agentcreator/hooks/useAgentPersonas';
-import { buildAgentPersonaSettings, createAgentPersonaId } from '@/features/ai/agentcreator/utils/personas';
+import {
+  useAgentPersonas,
+  useSaveAgentPersonasMutation,
+} from '@/features/ai/agentcreator/hooks/useAgentPersonas';
+import {
+  buildAgentPersonaSettings,
+  createAgentPersonaId,
+} from '@/features/ai/agentcreator/utils/personas';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { AgentPersonaDto as AgentPersona } from '@/shared/contracts/agents';
 import { ItemLibrary, useToast, Button } from '@/shared/ui';
@@ -41,8 +47,12 @@ export function AgentPersonasPage(): React.JSX.Element {
       await savePersonas({ personas: next });
       toast(existing ? 'Persona updated.' : 'Persona created.', { variant: 'success' });
     } catch (error) {
-      logClientError(error, { context: { source: 'AgentPersonasPage', action: 'savePersona', personaId: draft.id } });
-      toast(error instanceof Error ? error.message : 'Failed to save personas.', { variant: 'error' });
+      logClientError(error, {
+        context: { source: 'AgentPersonasPage', action: 'savePersona', personaId: draft.id },
+      });
+      toast(error instanceof Error ? error.message : 'Failed to save personas.', {
+        variant: 'error',
+      });
     }
   };
 
@@ -52,8 +62,12 @@ export function AgentPersonasPage(): React.JSX.Element {
       await savePersonas({ personas: next });
       toast('Persona deleted.', { variant: 'success' });
     } catch (error) {
-      logClientError(error, { context: { source: 'AgentPersonasPage', action: 'deletePersona', personaId: persona.id } });
-      toast(error instanceof Error ? error.message : 'Failed to delete persona.', { variant: 'error' });
+      logClientError(error, {
+        context: { source: 'AgentPersonasPage', action: 'deletePersona', personaId: persona.id },
+      });
+      toast(error instanceof Error ? error.message : 'Failed to delete persona.', {
+        variant: 'error',
+      });
     }
   };
 
@@ -67,11 +81,15 @@ export function AgentPersonasPage(): React.JSX.Element {
       isSaving={saving}
       onSave={handleSavePersona}
       onDelete={handleDeletePersona}
-      headerActions={(
-        <Button variant='outline' size='sm' onClick={() => window.location.assign('/admin/agentcreator')}>
+      headerActions={
+        <Button
+          variant='outline'
+          size='sm'
+          onClick={() => window.location.assign('/admin/agentcreator')}
+        >
           ← Back to agent creator
         </Button>
-      )}
+      }
       buildDefaultItem={() => ({
         name: '',
         description: '',

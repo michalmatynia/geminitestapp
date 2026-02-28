@@ -34,9 +34,7 @@ describe('prompt exploder benchmark quality gate', () => {
 
     expect(defaultReport.suite).toBe('default');
     expect(extendedReport.suite).toBe('extended');
-    expect(defaultReport.aggregate.caseCount).toBe(
-      DEFAULT_PROMPT_EXPLODER_BENCHMARK_CASES.length
-    );
+    expect(defaultReport.aggregate.caseCount).toBe(DEFAULT_PROMPT_EXPLODER_BENCHMARK_CASES.length);
     expect(extendedReport.aggregate.caseCount).toBe(
       EXTENDED_PROMPT_EXPLODER_BENCHMARK_CASES.length
     );

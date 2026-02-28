@@ -13,7 +13,8 @@ import type { Row } from '@tanstack/react-table';
 const ProductListHeader = dynamic(
   () =>
     import('@/features/products/components/list/ProductListHeader').then(
-      (mod: typeof import('@/features/products/components/list/ProductListHeader')) => mod.ProductListHeader
+      (mod: typeof import('@/features/products/components/list/ProductListHeader')) =>
+        mod.ProductListHeader
     ),
   { ssr: false }
 );
@@ -21,7 +22,8 @@ const ProductListHeader = dynamic(
 const ProductFilters = dynamic(
   () =>
     import('@/features/products/components/list/ProductFilters').then(
-      (mod: typeof import('@/features/products/components/list/ProductFilters')) => mod.ProductFilters
+      (mod: typeof import('@/features/products/components/list/ProductFilters')) =>
+        mod.ProductFilters
     ),
   { ssr: false }
 );
@@ -29,7 +31,8 @@ const ProductFilters = dynamic(
 const ProductSelectionActions = dynamic(
   () =>
     import('@/features/products/components/list/ProductFilters').then(
-      (mod: typeof import('@/features/products/components/list/ProductFilters')) => mod.ProductSelectionActions
+      (mod: typeof import('@/features/products/components/list/ProductFilters')) =>
+        mod.ProductSelectionActions
     ),
   { ssr: false }
 );
@@ -51,11 +54,7 @@ export const ProductListPanel = memo(function ProductListPanel() {
     if (!loadError && !actionError) return null;
     return (
       <div className='flex flex-col gap-2'>
-        {loadError && (
-          <Alert variant='error'>
-            {loadError}
-          </Alert>
-        )}
+        {loadError && <Alert variant='error'>{loadError}</Alert>}
         {actionError && (
           <Alert variant='error'>
             <div className='flex items-center justify-between'>
@@ -80,14 +79,14 @@ export const ProductListPanel = memo(function ProductListPanel() {
         <StandardDataTablePanel
           header={<ProductListHeader filtersContent={<ProductFilters />} />}
           alerts={alerts}
-          actions={
-            <ProductSelectionActions />
-          }
+          actions={<ProductSelectionActions />}
           columns={tableProps.columns}
           data={tableProps.data}
           isLoading={tableProps.isLoading}
           getRowId={tableProps.getRowId}
-          getRowClassName={tableProps.getRowClassName as (row: Row<ProductWithImages>) => string | undefined}
+          getRowClassName={
+            tableProps.getRowClassName as (row: Row<ProductWithImages>) => string | undefined
+          }
           rowSelection={tableProps.rowSelection}
           onRowSelectionChange={tableProps.onRowSelectionChange}
           skeletonRows={tableProps.skeletonRows}

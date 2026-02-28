@@ -1,6 +1,4 @@
-import type {
-  CaseResolverFileEditDraft,
-} from '@/shared/contracts/case-resolver';
+import type { CaseResolverFileEditDraft } from '@/shared/contracts/case-resolver';
 
 const CASE_RESOLVER_EDITOR_DRAFT_STORAGE_PREFIX = 'case-resolver-editor-draft-v1';
 
@@ -53,11 +51,11 @@ const buildStoredEditorDraftPatch = (
   const primaryContentPatch: Partial<CaseResolverFileEditDraft> =
     draft.editorType === 'wysiwyg'
       ? {
-        documentContentHtml: draft.documentContentHtml ?? '',
-      }
+          documentContentHtml: draft.documentContentHtml ?? '',
+        }
       : {
-        documentContentMarkdown: draft.documentContentMarkdown ?? '',
-      };
+          documentContentMarkdown: draft.documentContentMarkdown ?? '',
+        };
 
   const patch = Object.fromEntries(
     Object.entries({

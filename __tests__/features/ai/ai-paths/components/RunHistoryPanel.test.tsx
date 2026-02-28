@@ -60,7 +60,7 @@ describe('RunHistoryPanel Component', () => {
     ];
     orchestratorMock.runList = runs as unknown[];
     renderPanel();
-    
+
     expect(screen.getByText(/completed/i)).toBeInTheDocument();
     // Use getAllByText because "Failed" also appears in filter buttons
     expect(screen.getAllByText(/failed/i).length).toBeGreaterThan(1);
@@ -73,22 +73,22 @@ describe('RunHistoryPanel Component', () => {
     ];
     orchestratorMock.runList = runs as unknown[];
     renderPanel();
-    
+
     const activeFilter = screen.getByText('Active');
     fireEvent.click(activeFilter);
-    
+
     expect(screen.queryByText(/completed/i)).not.toBeInTheDocument();
     expect(screen.getByText(/running/i)).toBeInTheDocument();
   });
 
-  it('should show \'Resume\' button only for failed/paused runs', () => {
+  it("should show 'Resume' button only for failed/paused runs", () => {
     const runs = [
       { id: 'run-failed', status: 'failed', createdAt: new Date().toISOString() },
       { id: 'run-running', status: 'running', createdAt: new Date().toISOString() },
     ];
     orchestratorMock.runList = runs as unknown[];
     renderPanel();
-    
+
     expect(screen.getByText('Resume')).toBeInTheDocument();
     // Replay button is always shown for runs, but let's check count
     const resumeButtons = screen.queryAllByText('Resume');
@@ -99,7 +99,7 @@ describe('RunHistoryPanel Component', () => {
     const runs = [{ id: 'run-failed', status: 'failed', createdAt: new Date().toISOString() }];
     orchestratorMock.runList = runs as unknown[];
     renderPanel();
-    
+
     fireEvent.click(screen.getByText('Resume'));
     expect(orchestratorMock.handleResumeRun).toHaveBeenCalledWith('run-failed', 'resume');
   });
@@ -108,7 +108,7 @@ describe('RunHistoryPanel Component', () => {
     const runs = [{ id: 'run-active', status: 'running', createdAt: new Date().toISOString() }];
     orchestratorMock.runList = runs as unknown[];
     renderPanel();
-    
+
     fireEvent.click(screen.getByText('Cancel'));
     expect(orchestratorMock.handleCancelRun).toHaveBeenCalledWith('run-active');
   });

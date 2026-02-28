@@ -19,7 +19,8 @@ async function main(): Promise<void> {
   const nodeInfo = nodes
     .filter((n) => typeof n.id === 'string' && ids.includes(n.id as string))
     .map((n) => {
-      const config = typeof n.config === 'object' && n.config ? (n.config as Record<string, unknown>) : {};
+      const config =
+        typeof n.config === 'object' && n.config ? (n.config as Record<string, unknown>) : {};
       const runtime =
         typeof config.runtime === 'object' && config.runtime
           ? (config.runtime as Record<string, unknown>)
@@ -31,17 +32,18 @@ async function main(): Promise<void> {
         waitForInputs: runtime.waitForInputs ?? false,
         cacheMode:
           typeof runtime.cache === 'object' && runtime.cache
-            ? (runtime.cache as Record<string, unknown>).mode ?? null
+            ? ((runtime.cache as Record<string, unknown>).mode ?? null)
             : null,
         inputContracts: runtime.inputContracts ?? n.inputContracts ?? null,
       };
     });
 
-  const cycleEdges = edges.filter((e) =>
-    typeof e.from === 'string' &&
-    typeof e.to === 'string' &&
-    ids.includes(e.from as string) &&
-    ids.includes(e.to as string)
+  const cycleEdges = edges.filter(
+    (e) =>
+      typeof e.from === 'string' &&
+      typeof e.to === 'string' &&
+      ids.includes(e.from as string) &&
+      ids.includes(e.to as string)
   );
 
   console.log(JSON.stringify({ nodeInfo, cycleEdges }, null, 2));

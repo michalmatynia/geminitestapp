@@ -80,8 +80,7 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
   const persistedBaseUrl =
     normalizeProductImageExternalBaseUrl(persistedBaseUrlRaw) ||
     DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL;
-  const persistedRoutesRaw =
-    settingsStore.get(PRODUCT_IMAGES_EXTERNAL_ROUTES_SETTING_KEY) ?? null;
+  const persistedRoutesRaw = settingsStore.get(PRODUCT_IMAGES_EXTERNAL_ROUTES_SETTING_KEY) ?? null;
   const persistedStudioProjectRaw =
     settingsStore.get(PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY) ?? '';
   const persistedStudioProject = persistedStudioProjectRaw.trim();
@@ -98,9 +97,7 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
     persistedStudioProject || STUDIO_PROJECT_NONE
   );
   const [sequenceGenerationMode, setSequenceGenerationMode] =
-    useState<ProductStudioSequenceGenerationMode>(
-      persistedSequenceGenerationMode
-    );
+    useState<ProductStudioSequenceGenerationMode>(persistedSequenceGenerationMode);
 
   const studioProjectOptions = useMemo(
     () => [
@@ -113,13 +110,9 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
     [studioProjectsQuery.data]
   );
   const normalizedSelectedStudioProject =
-    selectedStudioProject === STUDIO_PROJECT_NONE
-      ? ''
-      : selectedStudioProject.trim();
-  const isStudioProjectDirty =
-    normalizedSelectedStudioProject !== persistedStudioProject;
-  const isSequenceGenerationModeDirty =
-    sequenceGenerationMode !== persistedSequenceGenerationMode;
+    selectedStudioProject === STUDIO_PROJECT_NONE ? '' : selectedStudioProject.trim();
+  const isStudioProjectDirty = normalizedSelectedStudioProject !== persistedStudioProject;
+  const isSequenceGenerationModeDirty = sequenceGenerationMode !== persistedSequenceGenerationMode;
 
   useEffect(() => {
     const nextRoutes = parseRoutesSetting(persistedRoutesRaw, persistedBaseUrl);
@@ -178,12 +171,11 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
     const ensuredRoutes = normalizedRoutes.includes(normalizedDefault)
       ? normalizedRoutes
       : dedupeRoutes([normalizedDefault, ...normalizedRoutes]);
-    const routesPayload = ensuredRoutes.length > 0
-      ? ensuredRoutes
-      : [DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL];
+    const routesPayload =
+      ensuredRoutes.length > 0 ? ensuredRoutes : [DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL];
     const defaultPayload = routesPayload.includes(normalizedDefault)
       ? normalizedDefault
-      : routesPayload[0] ?? DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL;
+      : (routesPayload[0] ?? DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL);
 
     updateSettingsBulk.mutate(
       [
@@ -280,7 +272,8 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
             label='Default Image Studio Project'
             description='Used as the default project binding in product workflows.'
           >
-            <SelectSimple size='sm'
+            <SelectSimple
+              size='sm'
               value={selectedStudioProject}
               onValueChange={setSelectedStudioProject}
               options={studioProjectOptions}
@@ -305,7 +298,8 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
             isSaving={updateStudioProjectSetting.isPending}
             className='justify-start'
           >
-            <Button size='sm'
+            <Button
+              size='sm'
               type='button'
               variant='outline'
               onClick={handleStartStudioConnection}
@@ -329,7 +323,8 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
             label='Generation + Sequencing Mode'
             description='If model-native full sequencing is selected but unsupported by the current model, Product Studio falls back to Image Studio sequencing and shows a warning.'
           >
-            <SelectSimple size='sm'
+            <SelectSimple
+              size='sm'
               value={sequenceGenerationMode}
               onValueChange={(value: string) => {
                 if (
@@ -369,8 +364,7 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
             onSave={handleSaveSequenceGenerationMode}
             saveText='Save Sequence Mode'
             isDisabled={
-              updateSequenceGenerationModeSetting.isPending ||
-              !isSequenceGenerationModeDirty
+              updateSequenceGenerationModeSetting.isPending || !isSequenceGenerationModeDirty
             }
             isSaving={updateSequenceGenerationModeSetting.isPending}
             className='justify-start'
@@ -388,7 +382,9 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
           <Input
             id='productImageRoute'
             value={newRoute}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>) => setNewRoute(event.target.value)}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+              setNewRoute(event.target.value)
+            }
             placeholder={DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL}
             onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>) => {
               if (event.key === 'Enter') {
@@ -397,7 +393,8 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
               }
             }}
           />
-          <Button size='xs'
+          <Button
+            size='xs'
             type='button'
             variant='outline'
             onClick={handleAddRoute}
@@ -419,13 +416,12 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
               items={routes.map((route: string) => ({
                 id: route,
                 title: route,
-                icon: (
-                  <RadioGroupItem value={route} id={`route-${route}`} className='mt-1' />
-                ),
-                original: route
+                icon: <RadioGroupItem value={route} id={`route-${route}`} className='mt-1' />,
+                original: route,
               }))}
               renderActions={(item) => (
-                <Button size='xs'
+                <Button
+                  size='xs'
                   type='button'
                   variant='ghost'
                   className='text-red-400 hover:text-red-300 hover:bg-red-500/10'
@@ -448,7 +444,8 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
         isSaving={updateSettingsBulk.isPending}
         className='mt-6 justify-start'
       >
-        <Button size='sm'
+        <Button
+          size='sm'
           type='button'
           variant='outline'
           onClick={handleUseLocalhost}

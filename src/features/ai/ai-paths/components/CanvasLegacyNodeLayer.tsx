@@ -66,7 +66,8 @@ export function CanvasLegacyNodeLayer({
         const nodeDiagnosticsBadge = resolveNodeDiagnosticsBadgeStyle(nodeDiagnostics);
 
         const iteratorStatus = (getPortValue('output', node.id, 'status') as string) || null;
-        const iteratorProgressLabel = (getPortValue('output', node.id, 'progress_label') as string) || null;
+        const iteratorProgressLabel =
+          (getPortValue('output', node.id, 'progress_label') as string) || null;
         const iteratorStatusClasses =
           iteratorStatus === 'completed'
             ? 'border-emerald-400/60 bg-emerald-500/15 text-emerald-200'
@@ -103,7 +104,9 @@ export function CanvasLegacyNodeLayer({
               width: node.width ?? 280,
               minHeight: node.height ?? 120,
             }}
-            onPointerDown={(event) => { onPointerDownNode(node.id, event); }}
+            onPointerDown={(event) => {
+              onPointerDownNode(node.id, event);
+            }}
             onClick={(event) => {
               event.stopPropagation();
               onSelectNode(node.id);
@@ -145,11 +148,17 @@ export function CanvasLegacyNodeLayer({
                       </Tooltip>
                     ) : null}
                     {isScheduledTrigger ? (
-                      <Badge variant='outline' className='h-auto border-amber-400/60 bg-amber-500/15 px-2 py-0 text-[9px] text-amber-200 uppercase'>
+                      <Badge
+                        variant='outline'
+                        className='h-auto border-amber-400/60 bg-amber-500/15 px-2 py-0 text-[9px] text-amber-200 uppercase'
+                      >
                         Scheduled
                       </Badge>
                     ) : null}
-                    <Badge variant='outline' className='h-auto px-2 py-0 text-[10px] text-gray-400 uppercase'>
+                    <Badge
+                      variant='outline'
+                      className='h-auto px-2 py-0 text-[10px] text-gray-400 uppercase'
+                    >
                       {node.type}
                     </Badge>
                   </div>
@@ -161,7 +170,11 @@ export function CanvasLegacyNodeLayer({
                       className={`h-auto flex items-center gap-1 px-2 py-0.5 text-[9px] uppercase tracking-wide ${runtimeStatusBadgeClassName(runtimeNodeStatus ?? '')}`}
                     >
                       {runtimeNodeStatus === 'cached' && (
-                        <svg className='h-2.5 w-2.5 shrink-0' viewBox='0 0 16 16' fill='currentColor'>
+                        <svg
+                          className='h-2.5 w-2.5 shrink-0'
+                          viewBox='0 0 16 16'
+                          fill='currentColor'
+                        >
                           <path d='M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2' />
                         </svg>
                       )}
@@ -183,7 +196,7 @@ export function CanvasLegacyNodeLayer({
                   title={
                     iteratorProgressLabel && iteratorStatus
                       ? `${iteratorProgressLabel} • ${iteratorStatus}`
-                      : iteratorStatus ?? iteratorProgressLabel ?? undefined
+                      : (iteratorStatus ?? iteratorProgressLabel ?? undefined)
                   }
                 >
                   {iteratorProgressLabel ? <span>{iteratorProgressLabel}</span> : null}
@@ -202,7 +215,10 @@ export function CanvasLegacyNodeLayer({
               )}
 
               {node.type === 'viewer' && !triggerConnected.has(node.id) && (
-                <Badge variant='outline' className='h-auto border-amber-500/40 bg-amber-500/10 px-2 py-1 text-[9px] text-amber-200'>
+                <Badge
+                  variant='outline'
+                  className='h-auto border-amber-500/40 bg-amber-500/10 px-2 py-1 text-[9px] text-amber-200'
+                >
                   Not wired to a Trigger
                 </Badge>
               )}
@@ -212,7 +228,9 @@ export function CanvasLegacyNodeLayer({
                   className='self-start rounded-md border border-emerald-500/40 px-2 py-1 text-[10px] text-emerald-200 hover:bg-emerald-500/10'
                   type='button'
                   onPointerDown={(event) => event.stopPropagation()}
-                  onClick={(event) => { onFireTrigger(node, event); }}
+                  onClick={(event) => {
+                    onFireTrigger(node, event);
+                  }}
                 >
                   Fire Trigger
                 </Button>
@@ -220,9 +238,7 @@ export function CanvasLegacyNodeLayer({
 
               {node.type === 'trigger' && (
                 <div className='text-[10px] uppercase text-lime-200/80'>
-                  {isScheduledTrigger
-                    ? 'Server scheduled trigger'
-                    : 'Accepts context input'}
+                  {isScheduledTrigger ? 'Server scheduled trigger' : 'Accepts context input'}
                 </div>
               )}
 
@@ -239,7 +255,10 @@ export function CanvasLegacyNodeLayer({
               )}
 
               {node.type === 'viewer' && (
-                <Badge variant='outline' className='h-auto border-border bg-card/60 px-2 py-1 text-[10px] text-gray-400'>
+                <Badge
+                  variant='outline'
+                  className='h-auto border-border bg-card/60 px-2 py-1 text-[10px] text-gray-400'
+                >
                   Open node to view results
                 </Badge>
               )}

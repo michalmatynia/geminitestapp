@@ -1,5 +1,9 @@
 import type { DbSchemaConfig } from '@/shared/contracts/ai-paths';
-import type { NodeHandler, NodeHandlerContext, RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
+import type {
+  NodeHandler,
+  NodeHandlerContext,
+  RuntimePortValues,
+} from '@/shared/contracts/ai-paths-runtime';
 import type { CollectionSchema, CollectionSchemaDto } from '@/shared/contracts/database';
 
 import { dbApi, type ApiResponse } from '../../../api';
@@ -35,13 +39,13 @@ const formatSchemaAsText = (schema: SchemaResponse): string => {
 
   const rawCollections = schema.collections;
   const collections: CollectionSchema[] = Array.isArray(rawCollections)
-    ? (rawCollections)
+    ? rawCollections
     : Object.values(rawCollections as Record<string, CollectionSchema>);
 
   for (const collection of collections) {
     lines.push(`Collection: ${collection.name}`);
     lines.push('Fields:');
-    const fields = (collection.fields ?? []);
+    const fields = collection.fields ?? [];
     for (const field of fields) {
       const markers: string[] = [];
       if (field.isId) markers.push('ID');
@@ -63,21 +67,23 @@ const formatSchemaAsText = (schema: SchemaResponse): string => {
 
 const filterCollections = (
   schema: SchemaResponse,
-  selectedCollections: string[],
+  selectedCollections: string[]
 ): SchemaResponse => {
   if (!selectedCollections || selectedCollections.length === 0) {
     return schema;
   }
   const selectedSet = new Set(selectedCollections.map((c: string): string => c.toLowerCase()));
-  
+
   const baseCollectionsRaw = Array.isArray(schema.collections)
     ? schema.collections
     : Object.values(schema.collections);
-  const baseCollections: CollectionSchemaDto[] = Array.from(baseCollectionsRaw as unknown as CollectionSchemaDto[]);
-  
+  const baseCollections: CollectionSchemaDto[] = Array.from(
+    baseCollectionsRaw as unknown as CollectionSchemaDto[]
+  );
+
   if (schema.provider === 'multi') {
     const collections = baseCollections.filter((c): boolean =>
-      selectedSet.has(c.name.toLowerCase()),
+      selectedSet.has(c.name.toLowerCase())
     );
     return {
       ...schema,
@@ -85,13 +91,12 @@ const filterCollections = (
     } as SchemaResponse;
   }
   const collections = baseCollections.filter((c: CollectionSchemaDto): boolean =>
-    selectedSet.has(c.name.toLowerCase()),
+    selectedSet.has(c.name.toLowerCase())
   );
   return {
     provider: schema.provider,
     collections,
   } as SchemaResponse;
-  
 };
 
 export const handleDbSchema: NodeHandler = async ({
@@ -120,7 +125,7 @@ export const handleDbSchema: NodeHandler = async ({
     reportAiPathsError(
       new Error(schemaResult.error),
       { action: 'fetchDbSchema', nodeId: node.id },
-      'Database schema fetch failed:',
+      'Database schema fetch failed:'
     );
     return {
       schema: null,
@@ -141,14 +146,16 @@ export const handleDbSchema: NodeHandler = async ({
     const baseCollectionsRaw = Array.isArray(schema.collections)
       ? schema.collections
       : Object.values(schema.collections);
-    const baseCollections: CollectionSchemaDto[] = Array.from(baseCollectionsRaw as unknown as CollectionSchemaDto[]);
-    
-    (schema).collections = baseCollections.map((c): CollectionSchemaDto => {
+    const baseCollections: CollectionSchemaDto[] = Array.from(
+      baseCollectionsRaw as unknown as CollectionSchemaDto[]
+    );
+
+    schema.collections = baseCollections.map((c): CollectionSchemaDto => {
       const result: CollectionSchemaDto = {
         name: c.name,
         fields: config.includeFields ? (c.fields ?? []) : [],
       };
-    
+
       const relations = c.relations;
       if (config.includeRelations && relations) {
         result.relations = relations;
@@ -159,9 +166,7 @@ export const handleDbSchema: NodeHandler = async ({
 
   // Format for AI consumption
   const schemaText =
-    config.formatAs === 'text'
-      ? formatSchemaAsText(schema)
-      : JSON.stringify(schema, null, 2);
+    config.formatAs === 'text' ? formatSchemaAsText(schema) : JSON.stringify(schema, null, 2);
 
   executed.schema?.add(node.id);
 

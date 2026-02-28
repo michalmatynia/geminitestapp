@@ -46,8 +46,6 @@ describe('prepareDatabaseTemplateContext catalogId aliases', () => {
 
     const context = templateInputs['context'] as Record<string, unknown>;
     expect(context['catalogId']).toBe('catalog-1');
-    expect((context['entity'] as Record<string, unknown>)['catalogId']).toBe(
-      'catalog-1'
-    );
+    expect((context['entity'] as Record<string, unknown>)['catalogId']).toBe('catalog-1');
   });
 });

@@ -30,7 +30,8 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   let pdfParse: (buffer: Buffer) => Promise<{ text: string }>;
   try {
     const pdfModule = await import('pdf-parse');
-    pdfParse = (pdfModule as unknown as { default: (buffer: Buffer) => Promise<{ text: string }> }).default;
+    pdfParse = (pdfModule as unknown as { default: (buffer: Buffer) => Promise<{ text: string }> })
+      .default;
   } catch {
     throw configurationError('PDF parser not installed. Run `npm install pdf-parse`.');
   }

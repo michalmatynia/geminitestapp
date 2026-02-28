@@ -4,27 +4,27 @@ import type { ImageFileRecord } from '@/shared/contracts/files';
 import {
   executeImageStudioRun,
   type ImageStudioRunExecutionMeta,
-} from '@/features/ai/image-studio/server/run-executor';
+} from '@/shared/lib/ai/image-studio/server/run-executor';
 import {
   getImageStudioRunById,
   updateImageStudioRun,
   type ImageStudioRunRecord,
-} from '@/features/ai/image-studio/server/run-repository';
+} from '@/shared/lib/ai/image-studio/server/run-repository';
 import {
   getImageStudioSlotLinkBySourceAndRelation,
   upsertImageStudioSlotLink,
-} from '@/features/ai/image-studio/server/slot-link-repository';
+} from '@/shared/lib/ai/image-studio/server/slot-link-repository';
 import {
   createImageStudioSlots,
   getImageStudioSlotById,
   listImageStudioSlots,
   updateImageStudioSlot,
-} from '@/features/ai/image-studio/server/slot-repository';
+} from '@/shared/lib/ai/image-studio/server/slot-repository';
 import {
   estimateGenerationCost,
   type GenerationCostEstimate,
-} from '@/features/ai/image-studio/utils/generation-cost';
-import { parseImageStudioSettings } from '@/features/ai/image-studio/utils/studio-settings';
+} from '@/shared/lib/ai/image-studio/generation-cost';
+import { parseImageStudioSettings } from '@/shared/lib/ai/image-studio/studio-settings';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type { ImageStudioRunDispatchMode } from '@/shared/contracts/image-studio';
@@ -60,7 +60,7 @@ const normalizeAssetPath = (value: unknown): string | null => {
   return normalized.length > 0 ? normalized : null;
 };
 
-const toJsonSafe = <T,>(value: T): T => {
+const toJsonSafe = <T>(value: T): T => {
   try {
     return JSON.parse(JSON.stringify(value)) as T;
   } catch {
@@ -103,10 +103,7 @@ const collectGenerationSourceContext = async (
     pushRequestedSourceId(referenceId);
   });
 
-  const sourceSlotsById = new Map<
-    string,
-    Awaited<ReturnType<typeof getImageStudioSlotById>>
-  >();
+  const sourceSlotsById = new Map<string, Awaited<ReturnType<typeof getImageStudioSlotById>>>();
 
   if (requestedSourceIds.length > 0) {
     const resolvedSlots = await Promise.all(
@@ -141,19 +138,19 @@ const collectGenerationSourceContext = async (
     .filter((value): value is string => Boolean(value));
 
   const needsPathFallback =
-    sourceSlotIds.length === 0 ||
-    (baseSourceId !== null && !sourceSlotsById.has(baseSourceId));
+    sourceSlotIds.length === 0 || (baseSourceId !== null && !sourceSlotsById.has(baseSourceId));
 
   if (needsPathFallback) {
     const projectSlots = await listImageStudioSlots(run.projectId);
     const slotIdByPath = new Map<string, string>();
     projectSlots.forEach((slot) => {
-      const imagePath = normalizeAssetPath(slot.imageFile?.filepath) ?? normalizeAssetPath(slot.imageUrl);
+      const imagePath =
+        normalizeAssetPath(slot.imageFile?.filepath) ?? normalizeAssetPath(slot.imageUrl);
       if (!imagePath || slotIdByPath.has(imagePath)) return;
       slotIdByPath.set(imagePath, slot.id);
     });
 
-    const baseSourceFromPath = baseAssetPath ? slotIdByPath.get(baseAssetPath) ?? null : null;
+    const baseSourceFromPath = baseAssetPath ? (slotIdByPath.get(baseAssetPath) ?? null) : null;
     if (baseSourceFromPath) {
       pushSourceId(baseSourceFromPath);
       if (!sourceSlotsById.has(baseSourceFromPath)) {
@@ -180,21 +177,20 @@ const collectGenerationSourceContext = async (
   const primarySourceSlotId =
     (baseSourceId && sourceSlotIds.includes(baseSourceId) ? baseSourceId : null) ??
     (baseAssetPath
-      ? sourceSlotIds.find((slotId) => {
-        const slot = sourceSlotsById.get(slotId);
-        if (!slot) return false;
-        const slotPath =
-          normalizeAssetPath(slot.imageFile?.filepath) ??
-          normalizeAssetPath(slot.imageUrl);
-        return slotPath === baseAssetPath;
-      }) ?? null
+      ? (sourceSlotIds.find((slotId) => {
+          const slot = sourceSlotsById.get(slotId);
+          if (!slot) return false;
+          const slotPath =
+            normalizeAssetPath(slot.imageFile?.filepath) ?? normalizeAssetPath(slot.imageUrl);
+          return slotPath === baseAssetPath;
+        }) ?? null)
       : null) ??
     sourceSlotIds[0] ??
     null;
 
   const primarySourceSlot = primarySourceSlotId
-    ? sourceSlotsById.get(primarySourceSlotId) ??
-      (await getImageStudioSlotById(primarySourceSlotId))
+    ? (sourceSlotsById.get(primarySourceSlotId) ??
+      (await getImageStudioSlotById(primarySourceSlotId)))
     : null;
 
   if (primarySourceSlot?.projectId !== run.projectId) {
@@ -209,8 +205,7 @@ const collectGenerationSourceContext = async (
   return {
     sourceSlotIds,
     primarySourceSlotId: primarySourceSlot.id,
-    primarySourceSlotName:
-      primarySourceSlot.name?.trim() || primarySourceSlot.id || 'Generated',
+    primarySourceSlotName: primarySourceSlot.name?.trim() || primarySourceSlot.id || 'Generated',
     primarySourceSlotFolderPath: primarySourceSlot.folderPath?.trim() ?? '',
   };
 };
@@ -237,9 +232,12 @@ const createRunOutputSlotMetadata = (params: {
   const isCenterOperation = params.operation === 'center_object';
   const relationType = isCenterOperation ? 'center:output' : 'generation:output';
   const sourceReferenceIds = params.sourceContext.primarySourceSlotId
-    ? params.sourceContext.sourceSlotIds.filter((id) => id !== params.sourceContext.primarySourceSlotId)
+    ? params.sourceContext.sourceSlotIds.filter(
+        (id) => id !== params.sourceContext.primarySourceSlotId
+      )
     : params.sourceContext.sourceSlotIds;
-  const centerMeta = isCenterOperation && isRecord(params.executionMeta) ? params.executionMeta : null;
+  const centerMeta =
+    isCenterOperation && isRecord(params.executionMeta) ? params.executionMeta : null;
 
   return {
     role: 'generation',
@@ -271,26 +269,25 @@ const createRunOutputSlotMetadata = (params: {
       : {}),
     ...(!isCenterOperation && params.generationCost
       ? {
-        generationCosts: {
-          ...params.generationCost,
-          actualCostUsd: params.generationCost.totalCostUsdPerOutput,
-          tokenCostUsd: params.generationCost.promptCostUsdPerOutput,
-        },
-      }
+          generationCosts: {
+            ...params.generationCost,
+            actualCostUsd: params.generationCost.totalCostUsdPerOutput,
+            tokenCostUsd: params.generationCost.promptCostUsdPerOutput,
+          },
+        }
       : {}),
     ...(isCenterOperation
       ? {
-        center: {
-          mode: centerMeta?.operation === 'center_object' ? centerMeta.mode : 'server_alpha_bbox',
-          sourceObjectBounds:
+          center: {
+            mode: centerMeta?.operation === 'center_object' ? centerMeta.mode : 'server_alpha_bbox',
+            sourceObjectBounds:
               centerMeta?.operation === 'center_object' ? centerMeta.sourceObjectBounds : null,
-          targetObjectBounds:
+            targetObjectBounds:
               centerMeta?.operation === 'center_object' ? centerMeta.targetObjectBounds : null,
-          layout:
-              centerMeta?.operation === 'center_object' ? centerMeta.layout ?? null : null,
-          timestamp: params.finishedAt,
-        },
-      }
+            layout: centerMeta?.operation === 'center_object' ? (centerMeta.layout ?? null) : null,
+            timestamp: params.finishedAt,
+          },
+        }
       : {}),
     generationParams: {
       prompt: params.run.request.prompt,
@@ -316,10 +313,10 @@ const materializeRunOutputSlots = async (params: {
   const outputCount = params.outputs.length;
   const generationCost = model
     ? estimateGenerationCost({
-      prompt: params.run.request.prompt ?? '',
-      model,
-      outputCount,
-    })
+        prompt: params.run.request.prompt ?? '',
+        model,
+        outputCount,
+      })
     : null;
   const createdSlotIds: string[] = [];
 
@@ -328,13 +325,14 @@ const materializeRunOutputSlots = async (params: {
     if (!output) continue;
     const outputIndex = index + 1;
     const relationTypeForLink = buildRunOutputRelationType(operation, params.run.id, outputIndex);
-    const slotName = operation === 'center_object'
-      ? outputCount > 1
-        ? `${sourceContext.primarySourceSlotName} • Center ${outputIndex}`
-        : `${sourceContext.primarySourceSlotName} • Centered`
-      : outputCount > 1
-        ? `${sourceContext.primarySourceSlotName} • Gen ${outputIndex}`
-        : `${sourceContext.primarySourceSlotName} • Gen`;
+    const slotName =
+      operation === 'center_object'
+        ? outputCount > 1
+          ? `${sourceContext.primarySourceSlotName} • Center ${outputIndex}`
+          : `${sourceContext.primarySourceSlotName} • Centered`
+        : outputCount > 1
+          ? `${sourceContext.primarySourceSlotName} • Gen ${outputIndex}`
+          : `${sourceContext.primarySourceSlotName} • Gen`;
     const metadata = createRunOutputSlotMetadata({
       run: params.run,
       finishedAt: params.finishedAt,
@@ -387,7 +385,9 @@ const materializeRunOutputSlots = async (params: {
     }
 
     if (!generationSlotId) {
-      throw new Error(`Failed to materialize generation slot for run ${params.run.id} output ${outputIndex}.`);
+      throw new Error(
+        `Failed to materialize generation slot for run ${params.run.id} output ${outputIndex}.`
+      );
     }
 
     if (sourceContext.sourceSlotIds.length > 0) {
@@ -607,7 +607,10 @@ export const startImageStudioRunQueue = (): void => {
   queue.startWorker();
 };
 
-const processInlineRunInBackground = (runId: string, reason: 'redis_unavailable' | 'enqueue_failed'): void => {
+const processInlineRunInBackground = (
+  runId: string,
+  reason: 'redis_unavailable' | 'enqueue_failed'
+): void => {
   void queue.processInline({ runId }).catch(async (inlineError: unknown) => {
     await ErrorSystem.captureException(inlineError, {
       service: LOG_SOURCE,
@@ -618,7 +621,9 @@ const processInlineRunInBackground = (runId: string, reason: 'redis_unavailable'
   });
 };
 
-export const enqueueImageStudioRunJob = async (runId: string): Promise<ImageStudioRunDispatchMode> => {
+export const enqueueImageStudioRunJob = async (
+  runId: string
+): Promise<ImageStudioRunDispatchMode> => {
   if (!isRedisAvailable()) {
     await logSystemEvent({
       level: 'info',

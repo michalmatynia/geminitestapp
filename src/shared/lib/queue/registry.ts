@@ -2,15 +2,7 @@ import 'server-only';
 
 import type { ManagedQueue, QueueHealthStatus } from '@/shared/contracts/jobs';
 
-const logSystemEvent = async (params: { level: 'info' | 'warn' | 'error'; message: string; source: string; context?: Record<string, unknown> }): Promise<void> => {
-  try {
-     
-    const mod = await import('@/features/observability/server') as { logSystemEvent: (input: unknown) => Promise<void> };
-    await mod.logSystemEvent(params);
-  } catch {
-    // ignore
-  }
-};
+import { logSystemEvent } from '../observability/system-logger';
 
 const registry = new Map<string, ManagedQueue<unknown>>();
 
@@ -28,7 +20,7 @@ export const getQueueHealth = async (): Promise<Record<string, QueueHealthStatus
     entries.map(async ([name, queue]) => {
       const status = await queue.getHealthStatus();
       return [name, status] as const;
-    }),
+    })
   );
   return Object.fromEntries(results);
 };
@@ -39,7 +31,7 @@ export const startAllWorkers = (): void => {
       level: 'info',
       message: `[queue-registry] Starting queue worker: ${name}`,
       source: 'queue-registry',
-      context: { queueName: name }
+      context: { queueName: name },
     });
     queue.startWorker();
   }
@@ -51,6 +43,6 @@ export const stopAllWorkers = async (): Promise<void> => {
   void logSystemEvent({
     level: 'info',
     message: '[queue-registry] All queue workers stopped',
-    source: 'queue-registry'
+    source: 'queue-registry',
   });
 };

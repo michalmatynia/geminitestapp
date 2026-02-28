@@ -15,10 +15,12 @@ type ListPanelProps = {
   icon?: ReactNode;
   headerActions?: ReactNode;
   header?: ReactNode; // Legacy or custom header
-  refresh?: {
-    onRefresh: () => void;
-    isRefreshing: boolean;
-  } | undefined;
+  refresh?:
+    | {
+        onRefresh: () => void;
+        isRefreshing: boolean;
+      }
+    | undefined;
   alerts?: ReactNode;
   filters?: ReactNode;
   actions?: ReactNode;
@@ -89,20 +91,12 @@ export function ListPanel({
           )}
         </div>
       ) : null}
-      
-      {alerts ? (
-        <div className={cn('mb-4 space-y-3', alertsClassName)}>
-          {alerts}
-        </div>
-      ) : null}
 
-      {filters ? (
-        <div className={cn('mb-4', filtersClassName)}>{filters}</div>
-      ) : null}
+      {alerts ? <div className={cn('mb-4 space-y-3', alertsClassName)}>{alerts}</div> : null}
 
-      {actions ? (
-        <div className={cn('mb-4', actionsClassName)}>{actions}</div>
-      ) : null}
+      {filters ? <div className={cn('mb-4', filtersClassName)}>{filters}</div> : null}
+
+      {actions ? <div className={cn('mb-4', actionsClassName)}>{actions}</div> : null}
 
       <div className={cn('min-h-0', contentClassName)}>
         {isLoading ? (
@@ -117,9 +111,7 @@ export function ListPanel({
         ) : null}
       </div>
 
-      {footer ? (
-        <div className={cn('mt-4', footerClassName)}>{footer}</div>
-      ) : null}
+      {footer ? <div className={cn('mt-4', footerClassName)}>{footer}</div> : null}
     </section>
   );
 }

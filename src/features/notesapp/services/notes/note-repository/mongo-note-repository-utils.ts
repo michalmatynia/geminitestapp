@@ -39,9 +39,7 @@ export const toNoteResponse = (doc: WithId<NoteDocument>): NoteRecord => {
   const id = doc.id ?? doc._id;
   const tags = Array.isArray(doc.tags) ? doc.tags : [];
   const categories = Array.isArray(doc.categories) ? doc.categories : [];
-  const relationsFrom = Array.isArray(doc.relationsFrom)
-    ? doc.relationsFrom
-    : [];
+  const relationsFrom = Array.isArray(doc.relationsFrom) ? doc.relationsFrom : [];
   const relationsTo = Array.isArray(doc.relationsTo) ? doc.relationsTo : [];
 
   const record: NoteRecord = {
@@ -60,9 +58,7 @@ export const toNoteResponse = (doc: WithId<NoteDocument>): NoteRecord => {
     categories: [], // Populated by caller if needed
     tagIds: tags.map((t: NoteTagEmbedded) => t.tagId),
     categoryIds: categories.map((c: NoteCategoryEmbedded) => c.categoryId),
-    relatedNoteIds: relationsFrom.map(
-      (r: NoteRelationFromEmbedded) => r.targetNoteId,
-    ),
+    relatedNoteIds: relationsFrom.map((r: NoteRelationFromEmbedded) => r.targetNoteId),
     relations: [],
     relationsFrom: relationsFrom as unknown[],
     relationsTo: relationsTo as unknown[],
@@ -80,9 +76,7 @@ export const toTagResponse = (doc: WithId<TagDocument>): TagRecord => ({
   updatedAt: toIsoUpdatedAt(doc.updatedAt),
 });
 
-export const toCategoryResponse = (
-  doc: WithId<CategoryDocument>,
-): CategoryRecord => ({
+export const toCategoryResponse = (doc: WithId<CategoryDocument>): CategoryRecord => ({
   id: doc.id ?? doc._id,
   name: doc.name,
   description: doc.description ?? null,
@@ -95,9 +89,7 @@ export const toCategoryResponse = (
   updatedAt: toIsoUpdatedAt(doc.updatedAt),
 });
 
-export const toNotebookResponse = (
-  doc: WithId<NotebookDocument>,
-): NotebookRecord => ({
+export const toNotebookResponse = (doc: WithId<NotebookDocument>): NotebookRecord => ({
   id: doc.id ?? doc._id,
   name: doc.name,
   description: doc.description ?? null,
@@ -128,9 +120,7 @@ export const toThemeResponse = (doc: WithId<ThemeDocument>): ThemeRecord => ({
   updatedAt: toIsoUpdatedAt(doc.updatedAt),
 });
 
-export const toNoteFileResponse = (
-  doc: WithId<NoteFileDocument>,
-): NoteFileRecord => ({
+export const toNoteFileResponse = (doc: WithId<NoteFileDocument>): NoteFileRecord => ({
   id: doc.id ?? doc._id,
   noteId: doc.noteId,
   slotIndex: doc.slotIndex,
@@ -144,7 +134,7 @@ export const toNoteFileResponse = (
 
 export const buildTree = (
   categories: CategoryRecord[],
-  notes: NoteRecord[] = [],
+  notes: NoteRecord[] = []
 ): CategoryWithChildren[] => {
   const categoryMap: Record<string, CategoryWithChildren> = {};
   categories.forEach((cat: CategoryRecord): void => {
@@ -190,7 +180,7 @@ export const buildTree = (
 
 export const buildIncomingRelationsMap = (
   incomingDocs: NoteDocument[],
-  targetNoteIds: Set<string>,
+  targetNoteIds: Set<string>
 ): Map<string, NoteRelationToEmbedded[]> => {
   const incoming = new Map<string, NoteRelationToEmbedded[]>();
 
@@ -224,9 +214,7 @@ export const buildIncomingRelationsMap = (
   return incoming;
 };
 
-export const buildSearchFilter = (
-  filters: NoteFilters = {},
-): Filter<NoteDocument> => {
+export const buildSearchFilter = (filters: NoteFilters = {}): Filter<NoteDocument> => {
   const filter: Filter<NoteDocument> = {};
   if (filters['notebookId']) {
     filter['notebookId'] = filters['notebookId'];

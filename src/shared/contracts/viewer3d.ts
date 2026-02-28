@@ -28,20 +28,22 @@ export const asset3DRecordSchema = namedDtoSchema.extend({
 
 export type Asset3DRecord = z.infer<typeof asset3DRecordSchema>;
 
-export const asset3DCreateInputSchema = asset3DRecordSchema.omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-}).extend({
-  description: z.string().nullable().optional(),
-  fileId: z.string().optional(),
-  thumbnailId: z.string().nullable().optional(),
-  tagIds: z.array(z.string()).optional(),
-  filename: z.string().optional(),
-  filepath: z.string().optional(),
-  mimetype: z.string().optional(),
-  size: z.number().optional(),
-});
+export const asset3DCreateInputSchema = asset3DRecordSchema
+  .omit({
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+  })
+  .extend({
+    description: z.string().nullable().optional(),
+    fileId: z.string().optional(),
+    thumbnailId: z.string().nullable().optional(),
+    tagIds: z.array(z.string()).optional(),
+    filename: z.string().optional(),
+    filepath: z.string().optional(),
+    mimetype: z.string().optional(),
+    size: z.number().optional(),
+  });
 
 export type Asset3DCreateInput = z.infer<typeof asset3DCreateInputSchema>;
 
@@ -68,14 +70,11 @@ export const asset3dOrderedDitheringPresetKeySchema = z.enum([
   'custom',
 ]);
 
-export type Asset3dOrderedDitheringPresetKey = z.infer<typeof asset3dOrderedDitheringPresetKeySchema>;
+export type Asset3dOrderedDitheringPresetKey = z.infer<
+  typeof asset3dOrderedDitheringPresetKeySchema
+>;
 
-export const asset3dLightingPresetSchema = z.enum([
-  'studio',
-  'outdoor',
-  'dramatic',
-  'soft',
-]);
+export const asset3dLightingPresetSchema = z.enum(['studio', 'outdoor', 'dramatic', 'soft']);
 export type Asset3dLightingPreset = z.infer<typeof asset3dLightingPresetSchema>;
 
 export const asset3dEnvironmentPresetSchema = z.enum([

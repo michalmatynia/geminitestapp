@@ -1,11 +1,11 @@
 'use client';
 
 import React from 'react';
+import { LoadingState, Card } from '@/shared/ui';
 import {
-  LoadingState,
-  Card,
-} from '@/shared/ui';
-import { AdminAiPathsValidationProvider, useAdminAiPathsValidationContext } from '../context/AdminAiPathsValidationContext';
+  AdminAiPathsValidationProvider,
+  useAdminAiPathsValidationContext,
+} from '../context/AdminAiPathsValidationContext';
 import { ValidationHeader } from '../components/validation/ValidationHeader';
 import { ValidationEnginePanel } from '../components/validation/ValidationEnginePanel';
 import { DocsConnectionsPanel } from '../components/validation/DocsConnectionsPanel';
@@ -14,10 +14,7 @@ import { EntityCollectionMapPanel } from '../components/validation/EntityCollect
 import { ValidationRulesEditor } from '../components/validation/ValidationRulesEditor';
 
 function AdminAiPathsValidationPageInner(): React.JSX.Element {
-  const {
-    settingsQuery,
-    selectedPathConfig,
-  } = useAdminAiPathsValidationContext();
+  const { settingsQuery, selectedPathConfig } = useAdminAiPathsValidationContext();
 
   if (settingsQuery.isLoading) {
     return <LoadingState message='Loading AI-Paths validator...' className='py-12' />;
@@ -28,7 +25,11 @@ function AdminAiPathsValidationPageInner(): React.JSX.Element {
       <ValidationHeader />
 
       {!selectedPathConfig ? (
-        <Card variant='subtle' padding='lg' className='border-border/60 bg-card/40 text-sm text-gray-400'>
+        <Card
+          variant='subtle'
+          padding='lg'
+          className='border-border/60 bg-card/40 text-sm text-gray-400'
+        >
           No AI Path config found for the selected path.
         </Card>
       ) : (

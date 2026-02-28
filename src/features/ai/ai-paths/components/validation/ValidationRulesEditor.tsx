@@ -1,15 +1,7 @@
 'use client';
 
 import React from 'react';
-import {
-  Badge,
-  Button,
-  Card,
-  Input,
-  Label,
-  StatusBadge,
-  Textarea,
-} from '@/shared/ui';
+import { Badge, Button, Card, Input, Label, StatusBadge, Textarea } from '@/shared/ui';
 import { useAdminAiPathsValidationContext } from '../../context/AdminAiPathsValidationContext';
 import { AiPathsValidationRule } from '../../lib';
 

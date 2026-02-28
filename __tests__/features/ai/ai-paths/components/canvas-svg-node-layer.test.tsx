@@ -2,7 +2,10 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { CanvasSvgNodeLayer } from '@/features/ai/ai-paths/components/canvas-svg-node-layer';
-import { CanvasBoardUIProvider } from '@/features/ai/ai-paths/components/CanvasBoardUIContext';
+import {
+  CanvasBoardUIProvider,
+  type CanvasBoardUIContextValue,
+} from '@/features/ai/ai-paths/components/CanvasBoardUIContext';
 import type {
   AiNode,
   RuntimeHistoryEntry,
@@ -63,24 +66,38 @@ const createHistoryEntry = (): RuntimeHistoryEntry => ({
   durationMs: 12,
 });
 
-const baseProps = (runtimeState: RuntimeState) => {
+const defaultContextValue = (runtimeState: RuntimeState): CanvasBoardUIContextValue => {
   const node = createNode();
   return {
     nodes: [node],
     edges: [],
+    edgePaths: [],
+    edgeRoutingMode: 'smooth',
     view: { x: 0, y: 0, scale: 1 },
     viewportSize: { width: 1200, height: 800 },
+    detailLevel: 'full',
+    nodeById: new Map([[node.id, node]]),
+    edgeMetaMap: new Map(),
     selectedNodeId: null,
     selectedNodeIdSet: new Set<string>(),
+    selectedEdgeId: null,
     runtimeState,
     runtimeNodeStatuses: {},
-    runtimeRunStatus: 'idle' as const,
+    runtimeRunStatus: 'idle',
     nodeDurations: {},
+    nodeDiagnosticsById: {},
     inputPulseNodes: new Set<string>(),
     outputPulseNodes: new Set<string>(),
+    activeEdgeIds: new Set<string>(),
     triggerConnected: new Set<string>(),
+    wireFlowEnabled: true,
+    flowingIntensity: 'normal',
+    reduceVisualEffects: false,
+    enableNodeAnimations: false,
+    connectorHitTargetPx: 8,
+    openNodeConfigOnSingleClick: false,
     connecting: null,
-    connectingFromNode: null,
+    connectingPos: null,
     hoveredConnectorKey: null,
     pinnedConnectorKey: null,
     setHoveredConnectorKey: vi.fn(),
@@ -97,6 +114,13 @@ const baseProps = (runtimeState: RuntimeState) => {
     onFireTrigger: vi.fn(),
     onConnectorHover: vi.fn(),
     onConnectorLeave: vi.fn(),
+    onRemoveEdge: vi.fn(),
+    onSelectEdge: vi.fn(),
+    zoomTo: vi.fn(),
+    fitToNodes: vi.fn(),
+    fitToSelection: vi.fn(),
+    resetView: vi.fn(),
+    centerOnCanvasPoint: vi.fn(),
   };
 };
 
@@ -106,19 +130,27 @@ const getOutputHitTarget = (container: HTMLElement): SVGCircleElement => {
   return targets[0] as SVGCircleElement;
 };
 
-const renderWithContext = (props: any) => {
-  const contextValue: any = {
-    ...props,
-    nodeById: new Map(props.nodes.map((n: any) => [n.id, n])),
-    edgeMetaMap: new Map(),
-    activeEdgeIds: new Set(),
-    wireFlowEnabled: true,
-    flowingIntensity: 'normal',
-    reduceVisualEffects: false,
-    selectedEdgeId: null,
-    detailLevel: props.detailLevel || 'full',
-    nodeDiagnosticsById: {},
+const renderWithContext = (props: Partial<CanvasBoardUIContextValue> & { cullPadding?: number }) => {
+  const runtimeState: RuntimeState = props.runtimeState || {
+    status: 'idle',
+    nodeStatuses: {},
+    nodeOutputs: {},
+    variables: {},
+    events: [],
+    inputs: {},
+    outputs: {},
+    history: {},
   };
+
+  const contextValue: CanvasBoardUIContextValue = {
+    ...defaultContextValue(runtimeState),
+    ...props,
+  };
+
+  // Ensure nodeById is synced if nodes are provided
+  if (props.nodes) {
+    contextValue.nodeById = new Map(props.nodes.map((n) => [n.id, n]));
+  }
 
   return render(
     <CanvasBoardUIProvider value={contextValue}>
@@ -144,10 +176,9 @@ describe('CanvasSvgNodeLayer', () => {
         'node-db-1': [historyEntry],
       },
     };
-    const props = baseProps(runtimeState);
-    const onConnectorHover = props.onConnectorHover;
+    const onConnectorHover = vi.fn();
 
-    const { container } = renderWithContext(props);
+    const { container } = renderWithContext({ runtimeState, onConnectorHover });
 
     fireEvent.pointerEnter(getOutputHitTarget(container), {
       clientX: 200,
@@ -189,10 +220,12 @@ describe('CanvasSvgNodeLayer', () => {
         'node-db-1': [historyEntry],
       },
     };
-    const initialProps = baseProps(initialState);
-    const onConnectorHover = initialProps.onConnectorHover;
+    const onConnectorHover = vi.fn();
 
-    const { container, rerender } = renderWithContext(initialProps);
+    const { container, rerender } = renderWithContext({
+      runtimeState: initialState,
+      onConnectorHover,
+    });
 
     fireEvent.pointerEnter(getOutputHitTarget(container), {
       clientX: 200,
@@ -212,23 +245,11 @@ describe('CanvasSvgNodeLayer', () => {
         },
       },
     };
-    const updatedProps = {
-      ...initialProps,
-      runtimeState: updatedState,
-      view: { x: 60, y: 40, scale: 1.25 },
-    };
 
-    const nextContextValue: any = {
-      ...updatedProps,
-      nodeById: new Map(updatedProps.nodes.map((n: any) => [n.id, n])),
-      edgeMetaMap: new Map(),
-      activeEdgeIds: new Set(),
-      wireFlowEnabled: true,
-      flowingIntensity: 'normal',
-      reduceVisualEffects: false,
-      selectedEdgeId: null,
-      detailLevel: (updatedProps as any).detailLevel || 'full',
-      nodeDiagnosticsById: {},
+    const nextContextValue: CanvasBoardUIContextValue = {
+      ...defaultContextValue(updatedState),
+      onConnectorHover,
+      view: { x: 60, y: 40, scale: 1.25 },
     };
 
     rerender(
@@ -278,31 +299,19 @@ describe('CanvasSvgNodeLayer', () => {
         'node-db-1': [createHistoryEntry()],
       },
     };
-    const props = baseProps(runtimeState);
+
     const { rerender } = renderWithContext({
-      ...props,
+      runtimeState,
       runtimeRunStatus: 'running',
       runtimeNodeStatuses: {},
     });
 
     expect(screen.queryByText('Cached')).toBeNull();
 
-    const nextProps = {
-      ...props,
-      runtimeRunStatus: 'idle' as const,
+    const nextContextValue: CanvasBoardUIContextValue = {
+      ...defaultContextValue(runtimeState),
+      runtimeRunStatus: 'idle',
       runtimeNodeStatuses: {},
-    };
-    const nextContextValue: any = {
-      ...nextProps,
-      nodeById: new Map(nextProps.nodes.map((n: any) => [n.id, n])),
-      edgeMetaMap: new Map(),
-      activeEdgeIds: new Set(),
-      wireFlowEnabled: true,
-      flowingIntensity: 'normal',
-      reduceVisualEffects: false,
-      selectedEdgeId: null,
-      detailLevel: (nextProps as any).detailLevel || 'full',
-      nodeDiagnosticsById: {},
     };
 
     rerender(
@@ -327,39 +336,29 @@ describe('CanvasSvgNodeLayer', () => {
       outputs: {},
       history: {},
     };
-    const props = {
-      ...baseProps(runtimeState),
-      nodes: [createTriggerNode()],
-    };
+    const nodes = [createTriggerNode()];
 
     const { container, rerender } = renderWithContext({
-      ...props,
+      runtimeState,
+      nodes,
       detailLevel: 'full',
       view: { x: 0, y: 0, scale: 1 },
     });
 
     const assertFireControlVisible = (): void => {
-      const fireControls = container.querySelectorAll(
-        'rect[data-node-action="fire-trigger"]'
-      );
+      const fireControls = container.querySelectorAll('rect[data-node-action="fire-trigger"]');
       expect(fireControls).toHaveLength(1);
       expect(screen.getByText('Fire Trigger')).toBeDefined();
     };
 
     assertFireControlVisible();
 
-    const nextContextValue1: any = {
-      ...props,
-      nodeById: new Map(props.nodes.map((n: any) => [n.id, n])),
-      edgeMetaMap: new Map(),
-      activeEdgeIds: new Set(),
-      wireFlowEnabled: true,
-      flowingIntensity: 'normal',
-      reduceVisualEffects: false,
-      selectedEdgeId: null,
+    const nextContextValue1: CanvasBoardUIContextValue = {
+      ...defaultContextValue(runtimeState),
+      nodes,
+      nodeById: new Map(nodes.map((n) => [n.id, n])),
       detailLevel: 'compact',
       view: { x: 0, y: 0, scale: 0.7 },
-      nodeDiagnosticsById: {},
     };
 
     rerender(
@@ -371,18 +370,12 @@ describe('CanvasSvgNodeLayer', () => {
     );
     assertFireControlVisible();
 
-    const nextContextValue2: any = {
-      ...props,
-      nodeById: new Map(props.nodes.map((n: any) => [n.id, n])),
-      edgeMetaMap: new Map(),
-      activeEdgeIds: new Set(),
-      wireFlowEnabled: true,
-      flowingIntensity: 'normal',
-      reduceVisualEffects: false,
-      selectedEdgeId: null,
+    const nextContextValue2: CanvasBoardUIContextValue = {
+      ...defaultContextValue(runtimeState),
+      nodes,
+      nodeById: new Map(nodes.map((n) => [n.id, n])),
       detailLevel: 'skeleton',
       view: { x: 0, y: 0, scale: 0.45 },
-      nodeDiagnosticsById: {},
     };
 
     rerender(
@@ -406,25 +399,23 @@ describe('CanvasSvgNodeLayer', () => {
       outputs: {},
       history: {},
     };
-    const props = {
-      ...baseProps(runtimeState),
-      nodes: [createTriggerNode()],
-    };
+    const nodes = [createTriggerNode()];
+    const onFireTrigger = vi.fn();
 
     const { container } = renderWithContext({
-      ...props,
+      runtimeState,
+      nodes,
       detailLevel: 'compact',
       view: { x: 0, y: 0, scale: 0.7 },
+      onFireTrigger,
     });
 
-    const fireButton = container.querySelector(
-      'rect[data-node-action="fire-trigger"]'
-    );
+    const fireButton = container.querySelector('rect[data-node-action="fire-trigger"]');
     expect(fireButton).toBeDefined();
     fireEvent.click(fireButton as SVGRectElement);
 
-    expect(props.onFireTrigger).toHaveBeenCalledTimes(1);
-    expect(props.onFireTrigger).toHaveBeenCalledWith(
+    expect(onFireTrigger).toHaveBeenCalledTimes(1);
+    expect(onFireTrigger).toHaveBeenCalledWith(
       expect.objectContaining({ id: 'node-trigger-1', type: 'trigger' })
     );
   });

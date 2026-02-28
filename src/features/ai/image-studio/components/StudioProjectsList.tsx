@@ -1,20 +1,12 @@
 'use client';
 
-import {
-  Check,
-  Lock,
-  Pencil,
-  Plus,
-  Trash2,
-  Unlock,
-  X,
-} from 'lucide-react';
+import { Check, Lock, Pencil, Plus, Trash2, Unlock, X } from 'lucide-react';
 import React, { useMemo, useCallback } from 'react';
 
 import {
   defaultImageStudioSettings,
   getImageStudioProjectSettingsKey,
-} from '@/features/ai/image-studio/utils/studio-settings';
+} from '@/shared/lib/ai/image-studio/studio-settings';
 import type { ImageStudioProjectRecord } from '@/shared/contracts/image-studio';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import {
@@ -34,7 +26,7 @@ import {
   IMAGE_STUDIO_CANVAS_TEMPLATES_KEY,
   parseImageStudioCanvasTemplates,
   type ImageStudioCanvasTemplate,
-} from '../utils/canvas-templates';
+} from '@/shared/lib/ai/image-studio/utils/canvas-templates';
 import {
   IMAGE_STUDIO_PROJECT_LOCKS_KEY,
   isImageStudioProjectLocked,
@@ -42,7 +34,7 @@ import {
   parseImageStudioProjectLocks,
   serializeImageStudioProjectLocks,
   setImageStudioProjectDeletionLock,
-} from '../utils/project-locks';
+} from '@/shared/lib/ai/image-studio/utils/project-locks';
 
 import type { ColumnDef } from '@tanstack/react-table';
 
@@ -110,9 +102,7 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
 
   const projectLocks = useMemo(
     () =>
-      parseImageStudioProjectLocks(
-        settingsQuery.data?.get(IMAGE_STUDIO_PROJECT_LOCKS_KEY) ?? null
-      ),
+      parseImageStudioProjectLocks(settingsQuery.data?.get(IMAGE_STUDIO_PROJECT_LOCKS_KEY) ?? null),
     [settingsQuery.data]
   );
   const canvasTemplates = useMemo(
@@ -185,15 +175,13 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
             value: serializeSetting(defaultImageStudioSettings),
           });
         } catch {
-          toast('Project created, but failed to initialize default settings.', { variant: 'warning' });
+          toast('Project created, but failed to initialize default settings.', {
+            variant: 'warning',
+          });
         }
       }
       try {
-        const nextLocks = setImageStudioProjectDeletionLock(
-          projectLocks,
-          createdProjectId,
-          true
-        );
+        const nextLocks = setImageStudioProjectDeletionLock(projectLocks, createdProjectId, true);
         await persistProjectLocks(nextLocks);
       } catch {
         toast('Project created, but failed to persist lock state.', {
@@ -204,11 +192,16 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
       setNewProjectCanvasWidthPx('1024');
       setNewProjectCanvasHeightPx('1024');
       setProjectId(createdProjectId);
-      toast(`Project "${createdProjectId}" added (${canvasWidthPx}x${canvasHeightPx}) and locked by default.`, {
-        variant: 'success',
-      });
+      toast(
+        `Project "${createdProjectId}" added (${canvasWidthPx}x${canvasHeightPx}) and locked by default.`,
+        {
+          variant: 'success',
+        }
+      );
     } catch (error: unknown) {
-      toast(error instanceof Error ? error.message : 'Failed to create project', { variant: 'error' });
+      toast(error instanceof Error ? error.message : 'Failed to create project', {
+        variant: 'error',
+      });
     }
   };
 
@@ -243,12 +236,9 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
       await persistCanvasTemplates(nextTemplates);
       toast(`Saved canvas template "${label}".`, { variant: 'success' });
     } catch (error: unknown) {
-      toast(
-        error instanceof Error
-          ? error.message
-          : 'Failed to save canvas template.',
-        { variant: 'error' }
-      );
+      toast(error instanceof Error ? error.message : 'Failed to save canvas template.', {
+        variant: 'error',
+      });
     }
   }, [
     canvasTemplates,
@@ -268,12 +258,9 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
         await persistCanvasTemplates(nextTemplates);
         toast(`Deleted canvas template "${template.label}".`, { variant: 'success' });
       } catch (error: unknown) {
-        toast(
-          error instanceof Error
-            ? error.message
-            : 'Failed to delete canvas template.',
-          { variant: 'error' }
-        );
+        toast(error instanceof Error ? error.message : 'Failed to delete canvas template.', {
+          variant: 'error',
+        });
       }
     },
     [canvasTemplates, persistCanvasTemplates, toast]
@@ -329,26 +316,16 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
   const handleToggleLock = useCallback(
     async (id: string): Promise<void> => {
       const currentlyLocked = isImageStudioProjectLocked(projectLocks, id);
-      const nextLocks = setImageStudioProjectDeletionLock(
-        projectLocks,
-        id,
-        !currentlyLocked
-      );
+      const nextLocks = setImageStudioProjectDeletionLock(projectLocks, id, !currentlyLocked);
       try {
         await persistProjectLocks(nextLocks);
-        toast(
-          currentlyLocked
-            ? `Project "${id}" unlocked.`
-            : `Project "${id}" locked.`,
-          { variant: 'success' }
-        );
+        toast(currentlyLocked ? `Project "${id}" unlocked.` : `Project "${id}" locked.`, {
+          variant: 'success',
+        });
       } catch (error) {
-        toast(
-          error instanceof Error
-            ? error.message
-            : 'Failed to update project lock state.',
-          { variant: 'error' }
-        );
+        toast(error instanceof Error ? error.message : 'Failed to update project lock state.', {
+          variant: 'error',
+        });
       }
     },
     [persistProjectLocks, projectLocks, toast]
@@ -378,211 +355,205 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
     [onOpenProject, setProjectId]
   );
 
-  const columns = useMemo<ColumnDef<ImageStudioProjectRecord>[]>(() => [
-    {
-      accessorKey: 'id',
-      header: 'Project',
-      cell: ({ row }) => {
-        const project = row.original;
-        const id = project.id;
-        const isEditing = editingProjectId === id;
-        const isSelected = projectId === id;
+  const columns = useMemo<ColumnDef<ImageStudioProjectRecord>[]>(
+    () => [
+      {
+        accessorKey: 'id',
+        header: 'Project',
+        cell: ({ row }) => {
+          const project = row.original;
+          const id = project.id;
+          const isEditing = editingProjectId === id;
+          const isSelected = projectId === id;
 
-        if (isEditing) {
-          return (
-            <Input
-              size='sm'
-              value={editingProjectValue}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                setEditingProjectValue(event.target.value);
-              }}
-              className='h-8 text-xs max-w-[230px]'
-              autoFocus
-              onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>) => {
-                if (event.key === 'Enter') {
-                  event.preventDefault();
-                  void handleSaveEdit(id);
-                }
-                if (event.key === 'Escape') {
-                  event.preventDefault();
-                  handleCancelEdit();
-                }
-              }}
-            />
-          );
-        }
-
-        return (
-          <button
-            type='button'
-            className={cn(
-              'max-w-[230px] truncate text-left transition-colors',
-              isSelected ? 'font-medium text-primary' : 'text-gray-200 hover:text-white'
-            )}
-            onClick={() => handleOpenProject(id)}
-            title={id}
-          >
-            {id}
-          </button>
-        );
-      },
-    },
-    {
-      id: 'canvas',
-      header: 'Canvas',
-      cell: ({ row }) => (
-        <span className='text-xs text-gray-400'>
-          {formatProjectCanvasSize(row.original)}
-        </span>
-      ),
-    },
-    {
-      accessorKey: 'createdAt',
-      header: 'Created',
-      cell: ({ row }) => (
-        <span className='text-xs text-gray-400'>
-          {formatProjectTimestamp(row.original.createdAt ?? null)}
-        </span>
-      ),
-    },
-    {
-      accessorKey: 'updatedAt',
-      header: 'Updated',
-      cell: ({ row }) => (
-        <span className='text-xs text-gray-400'>
-          {formatProjectTimestamp(row.original.updatedAt ?? null)}
-        </span>
-      ),
-    },
-    {
-      id: 'lock',
-      header: () => <div className='text-center'>Lock</div>,
-      cell: ({ row }) => {
-        const id = row.original.id;
-        const locked = isImageStudioProjectLocked(projectLocks, id);
-        const rowPending = renameProjectMutation.isPending || projectLocksMutation.isPending;
-
-        return (
-          <div className='flex justify-center'>
-            <Button
-              type='button'
-              size='xs'
-              variant='outline'
-              className={cn(
-                'h-7 gap-1 px-2',
-                locked ? 'text-amber-300' : 'text-emerald-300'
-              )}
-              onClick={() => {
-                void handleToggleLock(id);
-              }}
-              disabled={rowPending}
-              title={locked ? 'Unlock project' : 'Lock project'}
-            >
-              {locked ? (
-                <Lock className='size-3.5' />
-              ) : (
-                <Unlock className='size-3.5' />
-              )}
-            </Button>
-          </div>
-        );
-      },
-    },
-    {
-      id: 'actions',
-      header: () => <div className='text-right'>Actions</div>,
-      cell: ({ row }) => {
-        const id = row.original.id;
-        const locked = isImageStudioProjectLocked(projectLocks, id);
-        const isEditing = editingProjectId === id;
-        const rowPending = renameProjectMutation.isPending || projectLocksMutation.isPending;
-
-        return (
-          <div className='flex items-center justify-end gap-1'>
-            {isEditing ? (
-              <>
-                <Button
-                  type='button'
-                  size='xs'
-                  className='h-7 px-2'
-                  onClick={() => {
+          if (isEditing) {
+            return (
+              <Input
+                size='sm'
+                value={editingProjectValue}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                  setEditingProjectValue(event.target.value);
+                }}
+                className='h-8 text-xs max-w-[230px]'
+                autoFocus
+                onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>) => {
+                  if (event.key === 'Enter') {
+                    event.preventDefault();
                     void handleSaveEdit(id);
-                  }}
-                  disabled={!editingProjectValue.trim() || rowPending}
-                  title='Save project id'
-                >
-                  <Check className='size-3.5' />
-                </Button>
-                <Button
-                  type='button'
-                  size='xs'
-                  variant='outline'
-                  className='h-7 px-2'
-                  onClick={handleCancelEdit}
-                  disabled={rowPending}
-                  title='Cancel edit'
-                >
-                  <X className='size-3.5' />
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button
-                  type='button'
-                  size='xs'
-                  variant='outline'
-                  className='h-7 px-2'
-                  onClick={() => handleOpenProject(id)}
-                  title='Open project editor'
-                >
-                  Edit
-                </Button>
-                <Button
-                  type='button'
-                  size='xs'
-                  variant='outline'
-                  className='h-7 px-2'
-                  onClick={() => handleStartEdit(id)}
-                  disabled={rowPending}
-                  title='Rename project'
-                >
-                  <Pencil className='mr-1 size-3.5' />
-                  Rename
-                </Button>
-                <Button
-                  type='button'
-                  size='xs'
-                  variant='outline'
-                  className='h-7 px-2 text-red-300 hover:text-red-200'
-                  onClick={() => {
-                    void handleDelete(id).catch(() => {});
-                  }}
-                  disabled={locked || deleteProjectMutation.isPending}
-                  title={locked ? 'Unlock project before removing' : 'Remove project'}
-                >
-                  <Trash2 className='size-3.5' />
-                </Button>
-              </>
-            )}
-          </div>
-        );
+                  }
+                  if (event.key === 'Escape') {
+                    event.preventDefault();
+                    handleCancelEdit();
+                  }
+                }}
+              />
+            );
+          }
+
+          return (
+            <button
+              type='button'
+              className={cn(
+                'max-w-[230px] truncate text-left transition-colors',
+                isSelected ? 'font-medium text-primary' : 'text-gray-200 hover:text-white'
+              )}
+              onClick={() => handleOpenProject(id)}
+              title={id}
+            >
+              {id}
+            </button>
+          );
+        },
       },
-    },
-  ], [
-    editingProjectId,
-    editingProjectValue,
-    projectId,
-    projectLocks,
-    renameProjectMutation.isPending,
-    projectLocksMutation.isPending,
-    deleteProjectMutation.isPending,
-    handleSaveEdit,
-    handleCancelEdit,
-    handleOpenProject,
-    handleToggleLock,
-    handleStartEdit,
-    handleDelete,
-  ]);
+      {
+        id: 'canvas',
+        header: 'Canvas',
+        cell: ({ row }) => (
+          <span className='text-xs text-gray-400'>{formatProjectCanvasSize(row.original)}</span>
+        ),
+      },
+      {
+        accessorKey: 'createdAt',
+        header: 'Created',
+        cell: ({ row }) => (
+          <span className='text-xs text-gray-400'>
+            {formatProjectTimestamp(row.original.createdAt ?? null)}
+          </span>
+        ),
+      },
+      {
+        accessorKey: 'updatedAt',
+        header: 'Updated',
+        cell: ({ row }) => (
+          <span className='text-xs text-gray-400'>
+            {formatProjectTimestamp(row.original.updatedAt ?? null)}
+          </span>
+        ),
+      },
+      {
+        id: 'lock',
+        header: () => <div className='text-center'>Lock</div>,
+        cell: ({ row }) => {
+          const id = row.original.id;
+          const locked = isImageStudioProjectLocked(projectLocks, id);
+          const rowPending = renameProjectMutation.isPending || projectLocksMutation.isPending;
+
+          return (
+            <div className='flex justify-center'>
+              <Button
+                type='button'
+                size='xs'
+                variant='outline'
+                className={cn('h-7 gap-1 px-2', locked ? 'text-amber-300' : 'text-emerald-300')}
+                onClick={() => {
+                  void handleToggleLock(id);
+                }}
+                disabled={rowPending}
+                title={locked ? 'Unlock project' : 'Lock project'}
+              >
+                {locked ? <Lock className='size-3.5' /> : <Unlock className='size-3.5' />}
+              </Button>
+            </div>
+          );
+        },
+      },
+      {
+        id: 'actions',
+        header: () => <div className='text-right'>Actions</div>,
+        cell: ({ row }) => {
+          const id = row.original.id;
+          const locked = isImageStudioProjectLocked(projectLocks, id);
+          const isEditing = editingProjectId === id;
+          const rowPending = renameProjectMutation.isPending || projectLocksMutation.isPending;
+
+          return (
+            <div className='flex items-center justify-end gap-1'>
+              {isEditing ? (
+                <>
+                  <Button
+                    type='button'
+                    size='xs'
+                    className='h-7 px-2'
+                    onClick={() => {
+                      void handleSaveEdit(id);
+                    }}
+                    disabled={!editingProjectValue.trim() || rowPending}
+                    title='Save project id'
+                  >
+                    <Check className='size-3.5' />
+                  </Button>
+                  <Button
+                    type='button'
+                    size='xs'
+                    variant='outline'
+                    className='h-7 px-2'
+                    onClick={handleCancelEdit}
+                    disabled={rowPending}
+                    title='Cancel edit'
+                  >
+                    <X className='size-3.5' />
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    type='button'
+                    size='xs'
+                    variant='outline'
+                    className='h-7 px-2'
+                    onClick={() => handleOpenProject(id)}
+                    title='Open project editor'
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    type='button'
+                    size='xs'
+                    variant='outline'
+                    className='h-7 px-2'
+                    onClick={() => handleStartEdit(id)}
+                    disabled={rowPending}
+                    title='Rename project'
+                  >
+                    <Pencil className='mr-1 size-3.5' />
+                    Rename
+                  </Button>
+                  <Button
+                    type='button'
+                    size='xs'
+                    variant='outline'
+                    className='h-7 px-2 text-red-300 hover:text-red-200'
+                    onClick={() => {
+                      void handleDelete(id).catch(() => {});
+                    }}
+                    disabled={locked || deleteProjectMutation.isPending}
+                    title={locked ? 'Unlock project before removing' : 'Remove project'}
+                  >
+                    <Trash2 className='size-3.5' />
+                  </Button>
+                </>
+              )}
+            </div>
+          );
+        },
+      },
+    ],
+    [
+      editingProjectId,
+      editingProjectValue,
+      projectId,
+      projectLocks,
+      renameProjectMutation.isPending,
+      projectLocksMutation.isPending,
+      deleteProjectMutation.isPending,
+      handleSaveEdit,
+      handleCancelEdit,
+      handleOpenProject,
+      handleToggleLock,
+      handleStartEdit,
+      handleDelete,
+    ]
+  );
 
   const canvasWidthDraftValid = parseCanvasDimensionInput(newProjectCanvasWidthPx) !== null;
   const canvasHeightDraftValid = parseCanvasDimensionInput(newProjectCanvasHeightPx) !== null;
@@ -592,15 +563,17 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
     canvasHeightDraftValid &&
     !createProjectMutation.isPending;
   const canSaveCanvasTemplate =
-    canvasWidthDraftValid &&
-    canvasHeightDraftValid &&
-    !canvasTemplatesMutation.isPending;
+    canvasWidthDraftValid && canvasHeightDraftValid && !canvasTemplatesMutation.isPending;
   const normalizedDraftCanvasWidth = parseCanvasDimensionInput(newProjectCanvasWidthPx);
   const normalizedDraftCanvasHeight = parseCanvasDimensionInput(newProjectCanvasHeightPx);
 
   return (
     <div className='space-y-4'>
-      <Card variant='subtle' padding='sm' className='flex flex-wrap items-end gap-2 border-border/60 bg-card/40'>
+      <Card
+        variant='subtle'
+        padding='sm'
+        className='flex flex-wrap items-end gap-2 border-border/60 bg-card/40'
+      >
         <div className='min-w-[220px] flex-1 space-y-1'>
           <div className='text-[11px] text-gray-500'>Project ID</div>
           <Input
@@ -706,11 +679,7 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
             Save Template
           </Button>
         </div>
-        <Button
-          size='xs'
-          onClick={() => void handleCreate()}
-          disabled={!canCreateProject}
-        >
+        <Button size='xs' onClick={() => void handleCreate()} disabled={!canCreateProject}>
           <Plus className='mr-2 size-4' />
           Add Project
         </Button>
@@ -743,7 +712,9 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
         emptyState={
           <div className='flex flex-col items-center justify-center py-12 text-center'>
             <p className='text-sm text-gray-500'>
-              {projectSearch ? 'No projects found matching your search.' : 'No projects found. Create one above!'}
+              {projectSearch
+                ? 'No projects found matching your search.'
+                : 'No projects found. Create one above!'}
             </p>
           </div>
         }

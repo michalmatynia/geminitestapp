@@ -17,9 +17,7 @@ export function resolveDatabaseInputs({
 }: ResolveDatabaseInputsInput): Record<string, unknown> {
   const next: Record<string, unknown> = { ...nodeInputs };
   const pickString = (value: unknown): string | undefined =>
-    typeof value === 'string' && (value).trim().length > 0
-      ? (value).trim()
-      : undefined;
+    typeof value === 'string' && value.trim().length > 0 ? value.trim() : undefined;
   const pickCatalogIdFromCatalogs = (value: unknown): string | undefined => {
     if (!Array.isArray(value)) return undefined;
     for (const entry of value) {
@@ -32,16 +30,16 @@ export function resolveDatabaseInputs({
         pickString(record['id']) ??
         pickString(record['_id']) ??
         (record['catalog'] && typeof record['catalog'] === 'object'
-          ? pickString((record['catalog'] as Record<string, unknown>)['catalogId']) ??
+          ? (pickString((record['catalog'] as Record<string, unknown>)['catalogId']) ??
             pickString((record['catalog'] as Record<string, unknown>)['id']) ??
-            pickString((record['catalog'] as Record<string, unknown>)['_id'])
+            pickString((record['catalog'] as Record<string, unknown>)['_id']))
           : undefined);
       if (nestedCatalog) return nestedCatalog;
     }
     return undefined;
   };
   const pickCatalogId = (
-    record: Record<string, unknown> | null | undefined,
+    record: Record<string, unknown> | null | undefined
   ): string | undefined => {
     if (!record || typeof record !== 'object') return undefined;
     return (
@@ -61,9 +59,7 @@ export function resolveDatabaseInputs({
         : undefined)
     );
   };
-  const pickFromContext = (
-    ctx: Record<string, unknown> | null | undefined,
-  ): void => {
+  const pickFromContext = (ctx: Record<string, unknown> | null | undefined): void => {
     if (!ctx || typeof ctx !== 'object') return;
     const entityId: string | undefined =
       pickString(ctx['entityId']) ??
@@ -133,8 +129,12 @@ export function resolveDatabaseInputs({
     }
     if (next['value'] === undefined) {
       const fallbackValue =
-        (typeof next['entityId'] === 'string' && (next['entityId']).trim() ? next['entityId'] : undefined) ??
-        (typeof next['productId'] === 'string' && (next['productId']).trim() ? next['productId'] : undefined);
+        (typeof next['entityId'] === 'string' && next['entityId'].trim()
+          ? next['entityId']
+          : undefined) ??
+        (typeof next['productId'] === 'string' && next['productId'].trim()
+          ? next['productId']
+          : undefined);
       if (fallbackValue) {
         next['value'] = fallbackValue;
       }

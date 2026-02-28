@@ -8,19 +8,17 @@ import {
   PATCH as PATCH_CATEGORY,
   DELETE as DELETE_CATEGORY,
 } from '@/app/api/notes/categories/[id]/route';
-import {
-  GET as GET_CATEGORIES,
-  POST as POST_CATEGORY,
-} from '@/app/api/notes/categories/route';
+import { GET as GET_CATEGORIES, POST as POST_CATEGORY } from '@/app/api/notes/categories/route';
 import { GET as GET_TREE } from '@/app/api/notes/categories/tree/route';
 import { noteService, invalidateNoteRepositoryCache } from '@/features/notesapp/services/notes';
 import { invalidateAppDbProviderCache } from '@/shared/lib/db/app-db-provider';
 import prisma from '@/shared/lib/db/prisma';
 
-
 const createCategory = async (name: string, parentId?: string | null) => {
   const notebook = await noteService.getOrCreateDefaultNotebook();
-  return prisma.category.create({ data: { name, parentId: parentId ?? null, notebookId: notebook.id } });
+  return prisma.category.create({
+    data: { name, parentId: parentId ?? null, notebookId: notebook.id },
+  });
 };
 
 const createNote = async (title: string, categoryId: string) => {
@@ -54,7 +52,7 @@ describe('Notes Categories API', () => {
     await prisma.note.deleteMany({});
     await prisma.category.deleteMany({});
     await prisma.notebook.deleteMany({});
-    
+
     await noteService.invalidateDefaultNotebookCache();
   });
 
@@ -67,12 +65,13 @@ describe('Notes Categories API', () => {
 
     const notebook = await noteService.getOrCreateDefaultNotebook();
     await prisma.category.createMany({
-      data: [{ name: 'Work', notebookId: notebook.id }, { name: 'Home', notebookId: notebook.id }],
+      data: [
+        { name: 'Work', notebookId: notebook.id },
+        { name: 'Home', notebookId: notebook.id },
+      ],
     });
 
-    const res = await GET_CATEGORIES(
-      new NextRequest('http://localhost/api/notes/categories')
-    );
+    const res = await GET_CATEGORIES(new NextRequest('http://localhost/api/notes/categories'));
     const categories = (await res.json()) as Category[];
 
     expect(res.status).toBe(200);
@@ -131,9 +130,7 @@ describe('Notes Categories API', () => {
     const child = await createCategory('Child', root.id);
     await createNote('Child Note', child.id);
 
-    const res = await GET_TREE(
-      new NextRequest('http://localhost/api/notes/categories/tree')
-    );
+    const res = await GET_TREE(new NextRequest('http://localhost/api/notes/categories/tree'));
     const tree = (await res.json()) as (Category & {
       children: (Category & { notes: Note[] })[];
     })[];
@@ -153,10 +150,9 @@ describe('Notes Categories API', () => {
     await createNote('Child Note', child.id);
 
     const res = await DELETE_CATEGORY(
-      new NextRequest(
-        `http://localhost/api/notes/categories/${root.id}?recursive=true`,
-        { method: 'DELETE' }
-      ),
+      new NextRequest(`http://localhost/api/notes/categories/${root.id}?recursive=true`, {
+        method: 'DELETE',
+      }),
       { params: Promise.resolve({ id: root.id }) }
     );
 

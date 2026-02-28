@@ -98,7 +98,9 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
     repo,
     abortController: runAbortController,
     pollIntervalMs: cancellationPollIntervalMs,
-    onMissingRun: () => { dbRunMissing = true; },
+    onMissingRun: () => {
+      dbRunMissing = true;
+    },
   });
 
   const updateRunSnapshot = async (
@@ -120,10 +122,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
     }
   };
 
-  const runStartedAt =
-    typeof run.startedAt === 'string'
-      ? run.startedAt
-      : new Date().toISOString();
+  const runStartedAt = typeof run.startedAt === 'string' ? run.startedAt : new Date().toISOString();
   const traceId = run.id;
   const runtimeFingerprint = getAiPathsRuntimeFingerprint();
   let runtimeProfileEventCount = 0;
@@ -219,9 +218,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
     runtimeProfileHighlights.push(toRuntimeProfileHighlight(event));
   };
 
-  const buildTraceMeta = (
-    snapshot: RuntimeProfileSnapshot | null
-  ): Record<string, unknown> => ({
+  const buildTraceMeta = (snapshot: RuntimeProfileSnapshot | null): Record<string, unknown> => ({
     traceId,
     profile: snapshot,
   });
@@ -235,12 +232,12 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
     const snapshot =
       runtimeProfileEventCount > 0 || runtimeProfileSummary || nodeSpans.length > 0
         ? buildRuntimeProfileSnapshot({
-          traceId,
-          eventCount: runtimeProfileEventCount,
-          sampledHighlights: runtimeProfileHighlights,
-          summary: runtimeProfileSummary,
-          nodeSpans,
-        })
+            traceId,
+            eventCount: runtimeProfileEventCount,
+            sampledHighlights: runtimeProfileHighlights,
+            summary: runtimeProfileSummary,
+            nodeSpans,
+          })
         : null;
     runtimeProfilePersisted = true;
     if (!snapshot || dbRunMissing) return snapshot;
@@ -272,11 +269,12 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
     }
     return snapshot;
   };
-  
+
   const graph = run.graph;
   if (!graph || !Array.isArray(graph.nodes) || !Array.isArray(graph.edges)) {
     try {
-      const errorMsg = 'Run graph is missing or invalid. This usually indicates a corrupted path configuration or a breaking change in node definitions.';
+      const errorMsg =
+        'Run graph is missing or invalid. This usually indicates a corrupted path configuration or a breaking change in node definitions.';
       await updateRunSnapshot({
         status: 'failed',
         errorMessage: errorMsg,
@@ -337,7 +335,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
 
   const buildPersistedRuntimeState = async (
     baseState: unknown,
-    runStatus: AiPathRunStatus,
+    runStatus: AiPathRunStatus
   ): Promise<RuntimeState> => {
     const parsedBase = parseRuntimeState(baseState);
     const mergedInputs = mergeRuntimePortMaps(accInputs, parsedBase.inputs);
@@ -395,22 +393,23 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
     await saveIntermediateState();
   };
 
-  const runMetaRecord =
-    run.meta && typeof run.meta === 'object'
-      ? run.meta
-      : null;
-  const runMetaWithRuntimeFingerprint = withRuntimeFingerprintMeta(
-    runMetaRecord
-  );
-  
+  const runMetaRecord = run.meta && typeof run.meta === 'object' ? run.meta : null;
+  const runMetaWithRuntimeFingerprint = withRuntimeFingerprintMeta(runMetaRecord);
+
   const strictFlowMode = runMetaRecord?.['strictFlowMode'] !== false;
-  const blockedRunPolicy = (runMetaRecord?.['blockedRunPolicy'] === 'complete_with_warning' ? 'complete_with_warning' : 'fail_run');
+  const blockedRunPolicy =
+    runMetaRecord?.['blockedRunPolicy'] === 'complete_with_warning'
+      ? 'complete_with_warning'
+      : 'fail_run';
   const validationConfig = normalizeAiPathsValidationConfig(
     runMetaRecord?.['aiPathsValidation'] as Record<string, unknown> | undefined
   );
   const nodeValidationEnabled = validationConfig.enabled !== false;
-  const resolvedHistoryLimit = typeof runMetaRecord?.['historyRetentionPasses'] === 'number' ? runMetaRecord['historyRetentionPasses'] : 20;
-  
+  const resolvedHistoryLimit =
+    typeof runMetaRecord?.['historyRetentionPasses'] === 'number'
+      ? runMetaRecord['historyRetentionPasses']
+      : 20;
+
   const nodeRecords = await repo.listRunNodes(run.id);
   const nodeStatusMap = new Map<string, string>(
     nodeRecords.map((record: AiPathRunNodeRecord) => [record.nodeId, record.status])
@@ -419,7 +418,11 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
     nodeRecords.map((record: AiPathRunNodeRecord) => [record.nodeId, record.attempt ?? 0])
   );
   const skipNodes = buildSkipSet(run, edges, nodeStatusMap);
-  const reportAiPathsError = async (error: unknown, meta: Record<string, unknown>, summary?: string): Promise<void> => {
+  const reportAiPathsError = async (
+    error: unknown,
+    meta: Record<string, unknown>,
+    summary?: string
+  ): Promise<void> => {
     await ErrorSystem.captureException(error, {
       service: 'ai-paths-runtime',
       pathRunId: run.id,
@@ -494,9 +497,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
           traceId,
         },
       });
-      throw new Error(
-        runPreflight.blockMessage ?? blockedEventMessage
-      );
+      throw new Error(runPreflight.blockMessage ?? blockedEventMessage);
     }
     if (nodeValidationEnabled && compileReport.warnings > 0) {
       const warningMessage = buildCompileWarningMessage(compileReport);
@@ -580,7 +581,8 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       historyLimit: resolvedHistoryLimit,
       skipNodeIds: Array.from(skipNodes),
       fetchEntityByType,
-      reportAiPathsError: (error: unknown, meta: Record<string, unknown>, summary?: string) => {        void reportAiPathsError(error, meta, summary);
+      reportAiPathsError: (error: unknown, meta: Record<string, unknown>, summary?: string) => {
+        void reportAiPathsError(error, meta, summary);
       },
       toast,
       profile: {
@@ -618,7 +620,10 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
           const safeInputs = cloneJsonSafe(nodeInputs) as RuntimePortValues;
           const safePrevOutputs = cloneJsonSafe(prevOutputs ?? {}) as RuntimePortValues;
           accInputs[node.id] = safeInputs;
-          accOutputs[node.id] = { ...(accOutputs[node.id] ?? {}), status: 'running' } as RuntimePortValues;
+          accOutputs[node.id] = {
+            ...(accOutputs[node.id] ?? {}),
+            status: 'running',
+          } as RuntimePortValues;
 
           const tasks: Promise<unknown>[] = [
             repo.upsertRunNode(run.id, node.id, {
@@ -693,15 +698,14 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
             typeof safeOutputs?.['status'] === 'string'
               ? safeOutputs['status'].trim().toLowerCase()
               : null;
-          const resolvedStatus =
-            cached
-              ? 'cached'
-              : rawOutputStatus === 'blocked' || rawOutputStatus === 'skipped'
-                ? rawOutputStatus
-                : 'completed';
+          const resolvedStatus = cached
+            ? 'cached'
+            : rawOutputStatus === 'blocked' || rawOutputStatus === 'skipped'
+              ? rawOutputStatus
+              : 'completed';
           accInputs[node.id] = safeInputs;
           accOutputs[node.id] = {
-            ...(safeOutputs),
+            ...safeOutputs,
             status: resolvedStatus,
           } as RuntimePortValues;
           const attempt = nodeAttemptMap.get(node.id) ?? 0;
@@ -770,9 +774,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
             return;
           }
           const terminalLevel =
-            resolvedStatus === 'blocked' || resolvedStatus === 'skipped'
-              ? 'warn'
-              : 'info';
+            resolvedStatus === 'blocked' || resolvedStatus === 'skipped' ? 'warn' : 'info';
           const terminalMessage =
             resolvedStatus === 'blocked'
               ? `Node ${node.title ?? node.id} blocked.`
@@ -836,7 +838,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
         try {
           const attempt = nodeAttemptMap.get(node.id) ?? 0;
           const nodeSpanId = `${node.id}:${attempt}:blocked`;
-          
+
           await Promise.all([
             repo.upsertRunNode(run.id, node.id, {
               nodeType: node.type,
@@ -1068,55 +1070,49 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
         );
         const updated = shouldFailOnBlocked
           ? await updateRunSnapshot({
-            status: 'failed',
-            runtimeState: terminalRuntimeState,
-            finishedAt: finishedAt.toISOString(),
-            errorMessage: blockedFailureMessage,
-            meta: withRuntimeFingerprintMeta({
-              ...(run.meta as Record<string, unknown> ?? {}),
-              runtimeTrace: buildTraceMeta(runtimeProfileSnapshot),
-              resumeMode: 'replay',
-              retryNodeIds: [],
-            }),
-          })
+              status: 'failed',
+              runtimeState: terminalRuntimeState,
+              finishedAt: finishedAt.toISOString(),
+              errorMessage: blockedFailureMessage,
+              meta: withRuntimeFingerprintMeta({
+                ...((run.meta as Record<string, unknown>) ?? {}),
+                runtimeTrace: buildTraceMeta(runtimeProfileSnapshot),
+                resumeMode: 'replay',
+                retryNodeIds: [],
+              }),
+            })
           : await updateRunSnapshot({
-            status: 'completed',
-            runtimeState: terminalRuntimeState,
-            finishedAt: finishedAt.toISOString(),
-            errorMessage: null,
-            meta: withRuntimeFingerprintMeta({
-              ...(run.meta as Record<string, unknown> ?? {}),
-              runtimeTrace: buildTraceMeta(runtimeProfileSnapshot),
-              resumeMode: 'replay',
-              retryNodeIds: [],
-            }),
-          });
+              status: 'completed',
+              runtimeState: terminalRuntimeState,
+              finishedAt: finishedAt.toISOString(),
+              errorMessage: null,
+              meta: withRuntimeFingerprintMeta({
+                ...((run.meta as Record<string, unknown>) ?? {}),
+                runtimeTrace: buildTraceMeta(runtimeProfileSnapshot),
+                resumeMode: 'replay',
+                retryNodeIds: [],
+              }),
+            });
         if (updated) {
           await repo.createRunEvent({
             runId: run.id,
-            level:
-              shouldFailOnBlocked
-                ? 'error'
-                : runBlocked
-                  ? 'warn'
-                  : 'info',
-            message:
-              shouldFailOnBlocked
-                ? 'Run failed: blocked node inputs detected.'
-                : runBlocked
-                  ? 'Run completed with blocked node warnings.'
-                  : 'Run completed successfully.',
+            level: shouldFailOnBlocked ? 'error' : runBlocked ? 'warn' : 'info',
+            message: shouldFailOnBlocked
+              ? 'Run failed: blocked node inputs detected.'
+              : runBlocked
+                ? 'Run completed with blocked node warnings.'
+                : 'Run completed successfully.',
             metadata: {
               runStartedAt,
               runtimeFingerprint,
               traceId,
               ...(runBlocked
                 ? {
-                  haltReason: runtimeHaltReason,
-                  haltIteration: runtimeHaltIteration,
-                  blockedRunPolicy,
-                  blockedNodes: blockedNodeDiagnostics.slice(0, 10),
-                }
+                    haltReason: runtimeHaltReason,
+                    haltIteration: runtimeHaltIteration,
+                    blockedRunPolicy,
+                    blockedNodes: blockedNodeDiagnostics.slice(0, 10),
+                  }
                 : {}),
             },
           });
@@ -1207,7 +1203,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       'warn',
       'Runtime profile captured before run failure.'
     );
-    
+
     try {
       const failedRuntimeState =
         error instanceof Error && error.name === 'GraphExecutionError' && 'state' in error
@@ -1219,7 +1215,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
         finishedAt: finishedAt.toISOString(),
         errorMessage,
         meta: withRuntimeFingerprintMeta({
-          ...(run.meta as Record<string, unknown> ?? {}),
+          ...((run.meta as Record<string, unknown>) ?? {}),
           runtimeTrace: buildTraceMeta(runtimeProfileSnapshot),
         }),
       });

@@ -54,10 +54,7 @@ export function useAdminFilemakerPageState() {
   const { toast } = useToast();
 
   const rawDatabase = settingsStore.get(FILEMAKER_DATABASE_KEY);
-  const database = useMemo(
-    () => parseFilemakerDatabase(rawDatabase),
-    [rawDatabase]
-  );
+  const database = useMemo(() => parseFilemakerDatabase(rawDatabase), [rawDatabase]);
 
   const { data: countries = [] } = useCountries();
 
@@ -68,7 +65,7 @@ export function useAdminFilemakerPageState() {
   const [isPersonModalOpen, setIsPersonModalOpen] = useState(false);
   const [editingPerson, setEditingPerson] = useState<FilemakerPerson | null>(null);
   const [personDraft, setPersonDraft] = useState<PersonDraft>({});
-  
+
   // Organizations
   const [isOrgModalOpen, setIsOrgModalOpen] = useState(false);
   const [editingOrg, setEditingOrg] = useState<FilemakerOrganization | null>(null);
@@ -124,15 +121,18 @@ export function useAdminFilemakerPageState() {
     setIsPersonModalOpen(true);
   }, []);
 
-  const handleDeletePerson = useCallback(async (id: string) => {
-    let nextDatabase = {
-      ...database,
-      persons: database.persons.filter((p) => p.id !== id),
-    };
-    nextDatabase = removeFilemakerPartyEmailLinks(nextDatabase, 'person', id);
-    nextDatabase = removeFilemakerPartyPhoneNumberLinks(nextDatabase, 'person', id);
-    await persistDatabase(nextDatabase, 'Person deleted.');
-  }, [database, persistDatabase]);
+  const handleDeletePerson = useCallback(
+    async (id: string) => {
+      let nextDatabase = {
+        ...database,
+        persons: database.persons.filter((p) => p.id !== id),
+      };
+      nextDatabase = removeFilemakerPartyEmailLinks(nextDatabase, 'person', id);
+      nextDatabase = removeFilemakerPartyPhoneNumberLinks(nextDatabase, 'person', id);
+      await persistDatabase(nextDatabase, 'Person deleted.');
+    },
+    [database, persistDatabase]
+  );
 
   // Organization handlers
   const openCreateOrg = useCallback(() => {
@@ -147,16 +147,19 @@ export function useAdminFilemakerPageState() {
     setIsOrgModalOpen(true);
   }, []);
 
-  const handleDeleteOrganization = useCallback(async (id: string) => {
-    let nextDatabase = {
-      ...database,
-      organizations: database.organizations.filter((o) => o.id !== id),
-    };
-    nextDatabase = removeFilemakerPartyEmailLinks(nextDatabase, 'organization', id);
-    nextDatabase = removeFilemakerPartyPhoneNumberLinks(nextDatabase, 'organization', id);
-    nextDatabase = removeFilemakerOrganizationEventLinks(nextDatabase, id);
-    await persistDatabase(nextDatabase, 'Organization deleted.');
-  }, [database, persistDatabase]);
+  const handleDeleteOrganization = useCallback(
+    async (id: string) => {
+      let nextDatabase = {
+        ...database,
+        organizations: database.organizations.filter((o) => o.id !== id),
+      };
+      nextDatabase = removeFilemakerPartyEmailLinks(nextDatabase, 'organization', id);
+      nextDatabase = removeFilemakerPartyPhoneNumberLinks(nextDatabase, 'organization', id);
+      nextDatabase = removeFilemakerOrganizationEventLinks(nextDatabase, id);
+      await persistDatabase(nextDatabase, 'Organization deleted.');
+    },
+    [database, persistDatabase]
+  );
 
   // Email handlers
   const openCreateEmail = useCallback(() => {
@@ -171,10 +174,13 @@ export function useAdminFilemakerPageState() {
     setIsEmailModalOpen(true);
   }, []);
 
-  const handleDeleteEmail = useCallback(async (id: string) => {
-    const nextDatabase = removeFilemakerEmail(database, id);
-    await persistDatabase(nextDatabase, 'Email deleted.');
-  }, [database, persistDatabase]);
+  const handleDeleteEmail = useCallback(
+    async (id: string) => {
+      const nextDatabase = removeFilemakerEmail(database, id);
+      await persistDatabase(nextDatabase, 'Email deleted.');
+    },
+    [database, persistDatabase]
+  );
 
   // Event handlers
   const openCreateEvent = useCallback(() => {
@@ -189,10 +195,13 @@ export function useAdminFilemakerPageState() {
     setIsEventModalOpen(true);
   }, []);
 
-  const handleDeleteEvent = useCallback(async (id: string) => {
-    const nextDatabase = removeFilemakerEvent(database, id);
-    await persistDatabase(nextDatabase, 'Event deleted.');
-  }, [database, persistDatabase]);
+  const handleDeleteEvent = useCallback(
+    async (id: string) => {
+      const nextDatabase = removeFilemakerEvent(database, id);
+      await persistDatabase(nextDatabase, 'Event deleted.');
+    },
+    [database, persistDatabase]
+  );
 
   const handleCreateEvent = useCallback(async (): Promise<void> => {
     if (!eventDraft.eventName) {

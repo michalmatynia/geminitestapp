@@ -3,8 +3,8 @@ import path from 'path';
 
 import { NextRequest, NextResponse } from 'next/server';
 
-import { resolveBrainModelExecutionConfig } from '@/features/ai/brain/server';
-import { listBrainModels } from '@/features/ai/brain/server-model-catalog';
+import { resolveBrainModelExecutionConfig } from '@/shared/lib/ai-brain/server';
+import { listBrainModels } from '@/shared/lib/ai-brain/server-model-catalog';
 import { runChatbotModel } from '@/features/ai/chatbot/server-model-runtime';
 import { chatbotSessionRepository } from '@/features/ai/chatbot/server';
 import { logSystemError, logSystemEvent } from '@/features/observability/server';
@@ -14,13 +14,7 @@ import { badRequestError } from '@/shared/errors/app-error';
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 
-const chatbotTempRoot = path.join(
-  process.cwd(),
-  'public',
-  'uploads',
-  'chatbot',
-  'temp',
-);
+const chatbotTempRoot = path.join(process.cwd(), 'public', 'uploads', 'chatbot', 'temp');
 
 const TEMP_CLEANUP_TTL_MS = 1000 * 60 * 60 * 24;
 const TEMP_CLEANUP_INTERVAL_MS = 1000 * 60 * 10;
@@ -62,17 +56,14 @@ const cleanupChatbotTemp = async (): Promise<void> => {
         } catch {
           // best-effort cleanup
         }
-      }),
+      })
     );
   } catch {
     // best-effort cleanup
   }
 };
 
-export async function GET_handler(
-  _req: NextRequest,
-  ctx: ApiHandlerContext,
-): Promise<Response> {
+export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();
   const catalog = await listBrainModels();
 
@@ -99,10 +90,7 @@ export async function GET_handler(
   });
 }
 
-export async function POST_handler(
-  req: NextRequest,
-  ctx: ApiHandlerContext,
-): Promise<Response> {
+export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const tempFiles: string[] = [];
   const tempDirs: string[] = [];
   const requestStart = Date.now();
@@ -136,11 +124,11 @@ export async function POST_handler(
       const files = formData.getAll('files');
       const imageFiles = files.filter(
         (file: FormDataEntryValue): file is File =>
-          file instanceof File && file.type.startsWith('image/'),
+          file instanceof File && file.type.startsWith('image/')
       );
       const otherFiles = files.filter(
         (file: FormDataEntryValue): file is File =>
-          file instanceof File && !file.type.startsWith('image/'),
+          file instanceof File && !file.type.startsWith('image/')
       );
 
       if (DEBUG_CHATBOT) {
@@ -171,7 +159,7 @@ export async function POST_handler(
               const buffer = Buffer.from(await file.arrayBuffer());
               await fs.writeFile(targetPath, buffer);
               tempFiles.push(targetPath);
-            }),
+            })
         );
       }
 
@@ -186,7 +174,7 @@ export async function POST_handler(
           imageFiles.map(async (file: File) => {
             const buffer = await file.arrayBuffer();
             return Buffer.from(buffer).toString('base64');
-          }),
+          })
         );
 
         const targetMessage = messages[targetIndex];
@@ -244,7 +232,7 @@ export async function POST_handler(
       (message: IncomingChatMessage) =>
         typeof message?.role === 'string' &&
         typeof message?.content === 'string' &&
-        message.content.trim().length > 0,
+        message.content.trim().length > 0
     );
 
     if (!hasValidMessages) {
@@ -281,18 +269,14 @@ export async function POST_handler(
         context: {
           messageCount: messages.length,
           roles: messages.map((message: IncomingChatMessage) => message.role),
-          hasImages: messages.some(
-            (message: IncomingChatMessage) => Boolean(message.images?.length),
+          hasImages: messages.some((message: IncomingChatMessage) =>
+            Boolean(message.images?.length)
           ),
           model: brainConfig.modelId,
           contentType,
           userContentChars: messages
             .filter((message: IncomingChatMessage) => message.role === 'user')
-            .reduce(
-              (sum: number, message: IncomingChatMessage) =>
-                sum + message.content.length,
-              0,
-            ),
+            .reduce((sum: number, message: IncomingChatMessage) => sum + message.content.length, 0),
           durationMs: Date.now() - requestStart,
           requestId: ctx.requestId,
           brainApplied: brainConfig.brainApplied,
@@ -368,7 +352,7 @@ export async function POST_handler(
           } catch {
             // best-effort cleanup
           }
-        }),
+        })
       );
     }
 
@@ -380,7 +364,7 @@ export async function POST_handler(
           } catch {
             // best-effort cleanup
           }
-        }),
+        })
       );
     }
   }

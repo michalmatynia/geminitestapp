@@ -7,7 +7,7 @@ import type { EntityModalProps } from '@/shared/contracts/ui';
 import { Hint } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
-import { readMeta } from '../utils/metadata';
+import { readMeta } from '@/shared/lib/ai/image-studio/utils/metadata';
 
 import type { VersionNode } from '../context/VersionGraphContext';
 
@@ -53,8 +53,18 @@ const formatBytes = (value: number | null | undefined): string => {
   return `${size.toFixed(precision)} ${units[unitIndex]}`;
 };
 
-const formatResolution = (width: number | null | undefined, height: number | null | undefined): string => {
-  if (!(typeof width === 'number' && Number.isFinite(width) && typeof height === 'number' && Number.isFinite(height))) {
+const formatResolution = (
+  width: number | null | undefined,
+  height: number | null | undefined
+): string => {
+  if (
+    !(
+      typeof width === 'number' &&
+      Number.isFinite(width) &&
+      typeof height === 'number' &&
+      Number.isFinite(height)
+    )
+  ) {
     return 'n/a';
   }
   return `${width}x${height}`;
@@ -143,7 +153,11 @@ const resolveOperationSummary = (slot: ImageStudioSlotRecord): OperationSummary 
   };
 };
 
-const DetailsGrid = ({ rows }: { rows: Array<{ label: string; value: string }> }): React.JSX.Element => (
+const DetailsGrid = ({
+  rows,
+}: {
+  rows: Array<{ label: string; value: string }>;
+}): React.JSX.Element => (
   <div className='grid grid-cols-[150px_1fr] gap-x-3 gap-y-1 text-xs'>
     {rows.map((row) => (
       <React.Fragment key={row.label}>
@@ -176,7 +190,9 @@ export function VersionNodeDetailsModal({
     const maskData = asRecord(metadataRecord['maskData']);
 
     const sourceSlotIds = Array.isArray(metadata.sourceSlotIds)
-      ? metadata.sourceSlotIds.filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+      ? metadata.sourceSlotIds.filter(
+          (value): value is string => typeof value === 'string' && value.trim().length > 0
+        )
       : [];
     const operationTimestamp =
       operationSummary.timestamp ??
@@ -188,9 +204,18 @@ export function VersionNodeDetailsModal({
 
     const imageFileRows = [
       { label: 'Image File ID', value: slot.imageFileId ?? 'n/a' },
-      { label: 'Filename', value: slot.imageFile?.filename ?? asString(outputFile?.['filename']) ?? 'n/a' },
-      { label: 'Filepath', value: slot.imageFile?.url ?? slot.imageUrl ?? asString(outputFile?.['filepath']) ?? 'n/a' },
-      { label: 'Mime Type', value: slot.imageFile?.mimetype ?? asString(outputFile?.['mimetype']) ?? 'n/a' },
+      {
+        label: 'Filename',
+        value: slot.imageFile?.filename ?? asString(outputFile?.['filename']) ?? 'n/a',
+      },
+      {
+        label: 'Filepath',
+        value: slot.imageFile?.url ?? slot.imageUrl ?? asString(outputFile?.['filepath']) ?? 'n/a',
+      },
+      {
+        label: 'Mime Type',
+        value: slot.imageFile?.mimetype ?? asString(outputFile?.['mimetype']) ?? 'n/a',
+      },
       {
         label: 'File Size',
         value: formatBytes(slot.imageFile?.size ?? asNumber(outputFile?.['size'])),
@@ -220,67 +245,110 @@ export function VersionNodeDetailsModal({
 
     const lineageRows = [
       { label: 'Primary Source Slot', value: metadata.sourceSlotId ?? 'n/a' },
-      { label: 'Source Slot IDs', value: sourceSlotIds.length > 0 ? sourceSlotIds.join(', ') : 'n/a' },
-      { label: 'Parent Node IDs', value: node.parentIds.length > 0 ? node.parentIds.join(', ') : 'n/a' },
-      { label: 'Child Node IDs', value: node.childIds.length > 0 ? node.childIds.join(', ') : 'n/a' },
+      {
+        label: 'Source Slot IDs',
+        value: sourceSlotIds.length > 0 ? sourceSlotIds.join(', ') : 'n/a',
+      },
+      {
+        label: 'Parent Node IDs',
+        value: node.parentIds.length > 0 ? node.parentIds.join(', ') : 'n/a',
+      },
+      {
+        label: 'Child Node IDs',
+        value: node.childIds.length > 0 ? node.childIds.join(', ') : 'n/a',
+      },
       { label: 'Descendant Count', value: String(node.descendantCount) },
     ];
 
     const promptRows = [
       { label: 'Model', value: asString(generationParams?.['model']) ?? 'n/a' },
       { label: 'Prompt', value: asString(generationParams?.['prompt']) ?? 'n/a' },
-      { label: 'Run ID', value: asString(generationParams?.['runId']) ?? asString(metadataRecord['generationRunId']) ?? 'n/a' },
-      { label: 'Output Index', value: String(asNumber(generationParams?.['outputIndex']) ?? asNumber(metadataRecord['generationOutputIndex']) ?? 'n/a') },
-      { label: 'Output Count', value: String(asNumber(generationParams?.['outputCount']) ?? asNumber(metadataRecord['generationOutputCount']) ?? 'n/a') },
+      {
+        label: 'Run ID',
+        value:
+          asString(generationParams?.['runId']) ??
+          asString(metadataRecord['generationRunId']) ??
+          'n/a',
+      },
+      {
+        label: 'Output Index',
+        value: String(
+          asNumber(generationParams?.['outputIndex']) ??
+            asNumber(metadataRecord['generationOutputIndex']) ??
+            'n/a'
+        ),
+      },
+      {
+        label: 'Output Count',
+        value: String(
+          asNumber(generationParams?.['outputCount']) ??
+            asNumber(metadataRecord['generationOutputCount']) ??
+            'n/a'
+        ),
+      },
     ];
 
     const operationMetadataJson = JSON.stringify(operationSummary.operationMetadata ?? {}, null, 2);
     const metadataJson = JSON.stringify(metadataRecord, null, 2);
-    const generationRequestJson = generationRequest ? JSON.stringify(generationRequest, null, 2) : null;
-    const generationSettingsJson = generationSettings ? JSON.stringify(generationSettings, null, 2) : null;
+    const generationRequestJson = generationRequest
+      ? JSON.stringify(generationRequest, null, 2)
+      : null;
+    const generationSettingsJson = generationSettings
+      ? JSON.stringify(generationSettings, null, 2)
+      : null;
 
     return (
       <div className='space-y-4 text-xs text-gray-200'>
         <div className='grid grid-cols-1 gap-4 lg:grid-cols-[220px_1fr]'>
           <div className='rounded border border-border/60 bg-card/30 p-2'>
-            <Hint size='xxs' uppercase className='text-gray-500'>Preview</Hint>
+            <Hint size='xxs' uppercase className='text-gray-500'>
+              Preview
+            </Hint>
             <div className='mt-2 aspect-square overflow-hidden rounded border border-border/50 bg-black/30'>
               {imageSrc ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={imageSrc}
-                  alt={node.label}
-                  className='h-full w-full object-cover'
-                />
+                <img src={imageSrc} alt={node.label} className='h-full w-full object-cover' />
               ) : (
-                <div className='flex h-full items-center justify-center text-[10px] text-gray-500'>No image</div>
+                <div className='flex h-full items-center justify-center text-[10px] text-gray-500'>
+                  No image
+                </div>
               )}
             </div>
           </div>
           <div className='space-y-4'>
             <div className='rounded border border-border/60 bg-card/30 p-3'>
-              <Hint size='xxs' uppercase className='mb-2 text-gray-500'>Node Summary</Hint>
+              <Hint size='xxs' uppercase className='mb-2 text-gray-500'>
+                Node Summary
+              </Hint>
               <DetailsGrid rows={baseRows} />
             </div>
             <div className='rounded border border-border/60 bg-card/30 p-3'>
-              <Hint size='xxs' uppercase className='mb-2 text-gray-500'>Lineage</Hint>
+              <Hint size='xxs' uppercase className='mb-2 text-gray-500'>
+                Lineage
+              </Hint>
               <DetailsGrid rows={lineageRows} />
             </div>
           </div>
         </div>
 
         <div className='rounded border border-border/60 bg-card/30 p-3'>
-          <Hint size='xxs' uppercase className='mb-2 text-gray-500'>Image File</Hint>
+          <Hint size='xxs' uppercase className='mb-2 text-gray-500'>
+            Image File
+          </Hint>
           <DetailsGrid rows={imageFileRows} />
         </div>
 
         <div className='rounded border border-border/60 bg-card/30 p-3'>
-          <Hint size='xxs' uppercase className='mb-2 text-gray-500'>Generation Info</Hint>
+          <Hint size='xxs' uppercase className='mb-2 text-gray-500'>
+            Generation Info
+          </Hint>
           <DetailsGrid rows={promptRows} />
         </div>
 
         <div className='rounded border border-border/60 bg-card/30 p-3'>
-          <Hint size='xxs' uppercase className='mb-2 text-gray-500'>Operation Metadata</Hint>
+          <Hint size='xxs' uppercase className='mb-2 text-gray-500'>
+            Operation Metadata
+          </Hint>
           <pre className='max-h-48 overflow-auto rounded border border-border/40 bg-black/30 p-2 text-[11px] text-gray-100 whitespace-pre-wrap'>
             {operationMetadataJson}
           </pre>
@@ -288,7 +356,9 @@ export function VersionNodeDetailsModal({
 
         {generationRequestJson ? (
           <div className='rounded border border-border/60 bg-card/30 p-3'>
-            <Hint size='xxs' uppercase className='mb-2 text-gray-500'>Generation Request</Hint>
+            <Hint size='xxs' uppercase className='mb-2 text-gray-500'>
+              Generation Request
+            </Hint>
             <pre className='max-h-48 overflow-auto rounded border border-border/40 bg-black/30 p-2 text-[11px] text-gray-100 whitespace-pre-wrap'>
               {generationRequestJson}
             </pre>
@@ -297,7 +367,9 @@ export function VersionNodeDetailsModal({
 
         {generationSettingsJson ? (
           <div className='rounded border border-border/60 bg-card/30 p-3'>
-            <Hint size='xxs' uppercase className='mb-2 text-gray-500'>Generation Settings</Hint>
+            <Hint size='xxs' uppercase className='mb-2 text-gray-500'>
+              Generation Settings
+            </Hint>
             <pre className='max-h-48 overflow-auto rounded border border-border/40 bg-black/30 p-2 text-[11px] text-gray-100 whitespace-pre-wrap'>
               {generationSettingsJson}
             </pre>
@@ -305,7 +377,9 @@ export function VersionNodeDetailsModal({
         ) : null}
 
         <div className='rounded border border-border/60 bg-card/30 p-3'>
-          <Hint size='xxs' uppercase className='mb-2 text-gray-500'>Raw Metadata</Hint>
+          <Hint size='xxs' uppercase className='mb-2 text-gray-500'>
+            Raw Metadata
+          </Hint>
           <pre className='max-h-56 overflow-auto rounded border border-border/40 bg-black/30 p-2 text-[11px] text-gray-100 whitespace-pre-wrap'>
             {metadataJson}
           </pre>
@@ -321,9 +395,7 @@ export function VersionNodeDetailsModal({
       title={node ? `Node Details: ${node.label}` : 'Node Details'}
       size='lg'
     >
-      {content ?? (
-        <div className='text-sm text-gray-400'>No node selected.</div>
-      )}
+      {content ?? <div className='text-sm text-gray-400'>No node selected.</div>}
     </DetailModal>
   );
 }

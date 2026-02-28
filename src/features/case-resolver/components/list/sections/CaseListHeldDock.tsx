@@ -29,9 +29,7 @@ export function CaseListHeldDock({
             <Pin className='size-3.5' />
             Held Case
           </div>
-          <div className='truncate text-sm font-medium text-gray-100'>
-            {heldCaseFile.name}
-          </div>
+          <div className='truncate text-sm font-medium text-gray-100'>{heldCaseFile.name}</div>
           <div className='truncate text-[10px] text-cyan-100/80'>
             {isHierarchyLocked
               ? 'Unlock hierarchy to nest this case under a new parent.'

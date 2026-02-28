@@ -25,10 +25,7 @@ export type ExternalCategoryRepository = {
 /**
  * Builds a full path string for a category based on its parent chain.
  */
-function buildCategoryPath(
-  categoryId: string,
-  categoriesById: Map<string, BaseCategory>
-): string {
+function buildCategoryPath(categoryId: string, categoriesById: Map<string, BaseCategory>): string {
   const parts: string[] = [];
   let currentId: string | null = categoryId;
   const visited = new Set<string>();
@@ -47,10 +44,7 @@ function buildCategoryPath(
 /**
  * Calculates the depth of a category in the hierarchy.
  */
-function calculateDepth(
-  categoryId: string,
-  categoriesById: Map<string, BaseCategory>
-): number {
+function calculateDepth(categoryId: string, categoriesById: Map<string, BaseCategory>): number {
   let depth = 0;
   let currentId: string | null = categoryId;
   const visited = new Set<string>();
@@ -83,7 +77,9 @@ function buildTree(
       ...cat,
       children: buildTree(categories, cat.externalId),
     }))
-    .sort((a: ExternalCategoryWithChildren, b: ExternalCategoryWithChildren) => a.name.localeCompare(b.name));
+    .sort((a: ExternalCategoryWithChildren, b: ExternalCategoryWithChildren) =>
+      a.name.localeCompare(b.name)
+    );
 }
 
 type ExternalCategoryDoc = Prisma.ExternalCategoryGetPayload<Record<string, never>>;

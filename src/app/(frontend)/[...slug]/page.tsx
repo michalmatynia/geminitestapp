@@ -5,11 +5,7 @@ import { CmsPageRenderer } from '@/features/cms/components/frontend/CmsPageRende
 import { CmsPageShell } from '@/features/cms/components/frontend/CmsPageShell';
 import { ThemeProvider } from '@/features/cms/components/frontend/ThemeProvider';
 
-import {
-  buildSlugMetadata,
-  loadSlugRenderData,
-  resolveSlugToPage,
-} from './slug-page-data';
+import { buildSlugMetadata, loadSlugRenderData, resolveSlugToPage } from './slug-page-data';
 
 import type { Metadata } from 'next';
 
@@ -19,9 +15,7 @@ interface SlugPageProps {
   params: Promise<{ slug: string[] }>;
 }
 
-export async function generateMetadata({
-  params,
-}: SlugPageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: SlugPageProps): Promise<Metadata> {
   const { slug } = await params;
   const page = await resolveSlugToPage(slug);
 
@@ -32,9 +26,7 @@ export async function generateMetadata({
   return buildSlugMetadata(page);
 }
 
-export default async function CmsSlugPage({
-  params,
-}: SlugPageProps): Promise<JSX.Element> {
+export default async function CmsSlugPage({ params }: SlugPageProps): Promise<JSX.Element> {
   const { slug } = await params;
   const page = await resolveSlugToPage(slug);
 

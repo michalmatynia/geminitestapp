@@ -25,14 +25,13 @@ const toOperationJob = (job: DatabaseEngineOperationJobRecord): DatabaseEngineOp
     job.payload && typeof job.payload === 'object'
       ? (job.payload as Record<string, unknown>)
       : null;
-  const result =
-    job.result && typeof job.result === 'object'
-      ? (job.result)
-      : null;
+  const result = job.result && typeof job.result === 'object' ? job.result : null;
 
   const rawDbType = payload?.['dbType'];
   const dbType =
-    rawDbType === 'mongodb' || rawDbType === 'postgresql' ? (rawDbType as DatabaseEngineOperationJobDto['dbType']) : null;
+    rawDbType === 'mongodb' || rawDbType === 'postgresql'
+      ? (rawDbType as DatabaseEngineOperationJobDto['dbType'])
+      : null;
   const rawDirection = payload?.['direction'];
   const direction =
     rawDirection === 'mongo_to_prisma' || rawDirection === 'prisma_to_mongo'
@@ -64,14 +63,9 @@ const toOperationJob = (job: DatabaseEngineOperationJobRecord): DatabaseEngineOp
       typeof job.updatedAt === 'string' && job.updatedAt.length > 0
         ? new Date(job.updatedAt).toISOString()
         : null,
-    startedAt:
-      typeof job.startedAt === 'string' && job.startedAt.length > 0
-        ? job.startedAt
-        : null,
+    startedAt: typeof job.startedAt === 'string' && job.startedAt.length > 0 ? job.startedAt : null,
     finishedAt:
-      typeof job.finishedAt === 'string' && job.finishedAt.length > 0
-        ? job.finishedAt
-        : null,
+      typeof job.finishedAt === 'string' && job.finishedAt.length > 0 ? job.finishedAt : null,
     errorMessage: job.errorMessage ?? null,
     resultSummary,
     payload: payload ?? {},
@@ -84,8 +78,7 @@ const toOperationJob = (job: DatabaseEngineOperationJobRecord): DatabaseEngineOp
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const session = await auth();
   const hasAccess =
-    session?.user?.isElevated ||
-    session?.user?.permissions?.includes('settings.manage');
+    session?.user?.isElevated || session?.user?.permissions?.includes('settings.manage');
   if (!hasAccess) {
     throw authError('Unauthorized.');
   }

@@ -23,7 +23,7 @@ export function reducePageBuilderMoveActions(
 ): PageBuilderState | null {
   switch (action.type) {
     case 'MOVE_BLOCK_TO_COLUMN': {
-    // Remove block from source (section direct, column, row, or nested inside a parent block)
+      // Remove block from source (section direct, column, row, or nested inside a parent block)
       const removeFromSource = (
         sections: SectionInstance[],
         fromSectionId: string,
@@ -35,37 +35,52 @@ export function reducePageBuilderMoveActions(
         const nextSections = sections.map((s: SectionInstance) => {
           if (s.id !== fromSectionId) return s;
           if (fromColumnId) {
-            const result = removeBlockFromColumnBlocks(s.blocks, fromColumnId, action.blockId, fromParentBlockId);
+            const result = removeBlockFromColumnBlocks(
+              s.blocks,
+              fromColumnId,
+              action.blockId,
+              fromParentBlockId
+            );
             if (result.moved) moved = result.moved;
             return { ...s, blocks: result.blocks };
           }
           // Remove from section's direct blocks (could be from a row)
           const removeFromBlocks = (blocks: BlockInstance[]): BlockInstance[] => {
-            return blocks.map((b: BlockInstance) => {
-              if (b.id === action.blockId) {
-                moved = b;
-                return null as unknown as BlockInstance;
-              }
-              if (b.type === 'Row' && b.blocks) {
-                const idx = b.blocks.findIndex((rb: BlockInstance) => rb.id === action.blockId);
-                if (idx !== -1) {
-                  const foundBlock = b.blocks[idx];
-                  if (foundBlock) moved = foundBlock;
-                  return { ...b, blocks: b.blocks.filter((rb: BlockInstance) => rb.id !== action.blockId) };
+            return blocks
+              .map((b: BlockInstance) => {
+                if (b.id === action.blockId) {
+                  moved = b;
+                  return null as unknown as BlockInstance;
                 }
-              }
-              if (b.blocks) {
-                return { ...b, blocks: removeFromBlocks(b.blocks) };
-              }
-              return b;
-            }).filter(Boolean);
+                if (b.type === 'Row' && b.blocks) {
+                  const idx = b.blocks.findIndex((rb: BlockInstance) => rb.id === action.blockId);
+                  if (idx !== -1) {
+                    const foundBlock = b.blocks[idx];
+                    if (foundBlock) moved = foundBlock;
+                    return {
+                      ...b,
+                      blocks: b.blocks.filter((rb: BlockInstance) => rb.id !== action.blockId),
+                    };
+                  }
+                }
+                if (b.blocks) {
+                  return { ...b, blocks: removeFromBlocks(b.blocks) };
+                }
+                return b;
+              })
+              .filter(Boolean);
           };
           return { ...s, blocks: removeFromBlocks(s.blocks) };
         });
         return { sections: nextSections, moved };
       };
 
-      let removal = removeFromSource(state.sections, action.fromSectionId, action.fromColumnId, action.fromParentBlockId);
+      let removal = removeFromSource(
+        state.sections,
+        action.fromSectionId,
+        action.fromColumnId,
+        action.fromParentBlockId
+      );
       if (!removal.moved) {
         const found = findBlock(state.sections, action.blockId);
         if (!found) return state;
@@ -83,14 +98,20 @@ export function reducePageBuilderMoveActions(
         if (s.id !== action.toSectionId) return s;
         return {
           ...s,
-          blocks: insertBlockIntoColumnBlocks(s.blocks, action.toColumnId, removal.moved!, action.toIndex, action.toParentBlockId),
+          blocks: insertBlockIntoColumnBlocks(
+            s.blocks,
+            action.toColumnId,
+            removal.moved!,
+            action.toIndex,
+            action.toParentBlockId
+          ),
         };
       });
       return { ...state, sections: sectionsAfterInsert };
     }
 
     case 'MOVE_BLOCK_TO_ROW': {
-    // Remove block from source (section direct, column, or nested inside a parent block in a column)
+      // Remove block from source (section direct, column, or nested inside a parent block in a column)
       const removeFromSource = (
         sections: SectionInstance[],
         fromSectionId: string,
@@ -101,37 +122,52 @@ export function reducePageBuilderMoveActions(
         const nextSections = sections.map((s: SectionInstance) => {
           if (s.id !== fromSectionId) return s;
           if (fromColumnId) {
-            const result = removeBlockFromColumnBlocks(s.blocks, fromColumnId, action.blockId, fromParentBlockId);
+            const result = removeBlockFromColumnBlocks(
+              s.blocks,
+              fromColumnId,
+              action.blockId,
+              fromParentBlockId
+            );
             if (result.moved) moved = result.moved;
             return { ...s, blocks: result.blocks };
           }
           // Remove from section's direct blocks (could be from a row)
           const removeFromBlocks = (blocks: BlockInstance[]): BlockInstance[] => {
-            return blocks.map((b: BlockInstance) => {
-              if (b.id === action.blockId) {
-                moved = b;
-                return null as unknown as BlockInstance;
-              }
-              if (b.type === 'Row' && b.blocks) {
-                const idx = b.blocks.findIndex((rb: BlockInstance) => rb.id === action.blockId);
-                if (idx !== -1) {
-                  const foundBlock = b.blocks[idx];
-                  if (foundBlock) moved = foundBlock;
-                  return { ...b, blocks: b.blocks.filter((rb: BlockInstance) => rb.id !== action.blockId) };
+            return blocks
+              .map((b: BlockInstance) => {
+                if (b.id === action.blockId) {
+                  moved = b;
+                  return null as unknown as BlockInstance;
                 }
-              }
-              if (b.blocks) {
-                return { ...b, blocks: removeFromBlocks(b.blocks) };
-              }
-              return b;
-            }).filter(Boolean);
+                if (b.type === 'Row' && b.blocks) {
+                  const idx = b.blocks.findIndex((rb: BlockInstance) => rb.id === action.blockId);
+                  if (idx !== -1) {
+                    const foundBlock = b.blocks[idx];
+                    if (foundBlock) moved = foundBlock;
+                    return {
+                      ...b,
+                      blocks: b.blocks.filter((rb: BlockInstance) => rb.id !== action.blockId),
+                    };
+                  }
+                }
+                if (b.blocks) {
+                  return { ...b, blocks: removeFromBlocks(b.blocks) };
+                }
+                return b;
+              })
+              .filter(Boolean);
           };
           return { ...s, blocks: removeFromBlocks(s.blocks) };
         });
         return { sections: nextSections, moved };
       };
 
-      let removal = removeFromSource(state.sections, action.fromSectionId, action.fromColumnId, action.fromParentBlockId);
+      let removal = removeFromSource(
+        state.sections,
+        action.fromSectionId,
+        action.fromColumnId,
+        action.fromParentBlockId
+      );
       if (!removal.moved) {
         const found = findBlock(state.sections, action.blockId);
         if (!found) return state;
@@ -176,37 +212,52 @@ export function reducePageBuilderMoveActions(
         const nextSections = sections.map((s: SectionInstance) => {
           if (s.id !== fromSectionId) return s;
           if (fromColumnId) {
-            const result = removeBlockFromColumnBlocks(s.blocks, fromColumnId, action.blockId, fromParentBlockId);
+            const result = removeBlockFromColumnBlocks(
+              s.blocks,
+              fromColumnId,
+              action.blockId,
+              fromParentBlockId
+            );
             if (result.moved) moved = result.moved;
             return { ...s, blocks: result.blocks };
           }
           // Remove from section's direct blocks (could be from a row)
           const removeFromBlocks = (blocks: BlockInstance[]): BlockInstance[] => {
-            return blocks.map((b: BlockInstance) => {
-              if (b.id === action.blockId) {
-                moved = b;
-                return null as unknown as BlockInstance;
-              }
-              if (b.type === 'Row' && b.blocks) {
-                const idx = b.blocks.findIndex((rb: BlockInstance) => rb.id === action.blockId);
-                if (idx !== -1) {
-                  const foundBlock = b.blocks[idx];
-                  if (foundBlock) moved = foundBlock;
-                  return { ...b, blocks: b.blocks.filter((rb: BlockInstance) => rb.id !== action.blockId) };
+            return blocks
+              .map((b: BlockInstance) => {
+                if (b.id === action.blockId) {
+                  moved = b;
+                  return null as unknown as BlockInstance;
                 }
-              }
-              if (b.blocks) {
-                return { ...b, blocks: removeFromBlocks(b.blocks) };
-              }
-              return b;
-            }).filter(Boolean);
+                if (b.type === 'Row' && b.blocks) {
+                  const idx = b.blocks.findIndex((rb: BlockInstance) => rb.id === action.blockId);
+                  if (idx !== -1) {
+                    const foundBlock = b.blocks[idx];
+                    if (foundBlock) moved = foundBlock;
+                    return {
+                      ...b,
+                      blocks: b.blocks.filter((rb: BlockInstance) => rb.id !== action.blockId),
+                    };
+                  }
+                }
+                if (b.blocks) {
+                  return { ...b, blocks: removeFromBlocks(b.blocks) };
+                }
+                return b;
+              })
+              .filter(Boolean);
           };
           return { ...s, blocks: removeFromBlocks(s.blocks) };
         });
         return { sections: nextSections, moved };
       };
 
-      let removal = removeFromSource(state.sections, action.fromSectionId, action.fromColumnId, action.fromParentBlockId);
+      let removal = removeFromSource(
+        state.sections,
+        action.fromSectionId,
+        action.fromColumnId,
+        action.fromParentBlockId
+      );
       if (!removal.moved) {
         const found = findBlock(state.sections, action.blockId);
         if (!found) return state;
@@ -228,7 +279,7 @@ export function reducePageBuilderMoveActions(
     }
 
     case 'MOVE_BLOCK_TO_SLIDESHOW_FRAME': {
-    // Remove block from source (similar to MOVE_BLOCK_TO_SECTION)
+      // Remove block from source (similar to MOVE_BLOCK_TO_SECTION)
       const removeFromSource = (
         sections: SectionInstance[],
         fromSectionId: string,
@@ -239,35 +290,50 @@ export function reducePageBuilderMoveActions(
         const nextSections = sections.map((s: SectionInstance) => {
           if (s.id !== fromSectionId) return s;
           if (fromColumnId) {
-            const result = removeBlockFromColumnBlocks(s.blocks, fromColumnId, action.blockId, fromParentBlockId);
+            const result = removeBlockFromColumnBlocks(
+              s.blocks,
+              fromColumnId,
+              action.blockId,
+              fromParentBlockId
+            );
             if (result.moved) moved = result.moved;
             return { ...s, blocks: result.blocks };
           }
           // Remove from section's direct blocks (including from SlideshowFrames)
           const removeFromBlocks = (blocks: BlockInstance[]): BlockInstance[] => {
-            return blocks.map((b: BlockInstance) => {
-              if (b.id === action.blockId) {
-                moved = b;
-                return null as unknown as BlockInstance;
-              }
-              if (b.blocks) {
-                const idx = b.blocks.findIndex((rb: BlockInstance) => rb.id === action.blockId);
-                if (idx !== -1) {
-                  const foundBlock = b.blocks[idx];
-                  if (foundBlock) moved = foundBlock;
-                  return { ...b, blocks: b.blocks.filter((rb: BlockInstance) => rb.id !== action.blockId) };
+            return blocks
+              .map((b: BlockInstance) => {
+                if (b.id === action.blockId) {
+                  moved = b;
+                  return null as unknown as BlockInstance;
                 }
-                return { ...b, blocks: removeFromBlocks(b.blocks) };
-              }
-              return b;
-            }).filter(Boolean);
+                if (b.blocks) {
+                  const idx = b.blocks.findIndex((rb: BlockInstance) => rb.id === action.blockId);
+                  if (idx !== -1) {
+                    const foundBlock = b.blocks[idx];
+                    if (foundBlock) moved = foundBlock;
+                    return {
+                      ...b,
+                      blocks: b.blocks.filter((rb: BlockInstance) => rb.id !== action.blockId),
+                    };
+                  }
+                  return { ...b, blocks: removeFromBlocks(b.blocks) };
+                }
+                return b;
+              })
+              .filter(Boolean);
           };
           return { ...s, blocks: removeFromBlocks(s.blocks) };
         });
         return { sections: nextSections, moved };
       };
 
-      let removal = removeFromSource(state.sections, action.fromSectionId, action.fromColumnId, action.fromParentBlockId);
+      let removal = removeFromSource(
+        state.sections,
+        action.fromSectionId,
+        action.fromColumnId,
+        action.fromParentBlockId
+      );
       if (!removal.moved) {
         const found = findBlock(state.sections, action.blockId);
         if (!found) return state;
@@ -297,14 +363,26 @@ export function reducePageBuilderMoveActions(
     }
 
     case 'MOVE_SECTION_TO_SLIDESHOW_FRAME': {
-      const CONVERTIBLE_TYPES = ['ImageWithText', 'RichText', 'Hero', 'Block', 'TextElement', 'ImageElement', 'TextAtom', 'ButtonElement', 'Model3DElement', 'Slideshow'];
+      const CONVERTIBLE_TYPES = [
+        'ImageWithText',
+        'RichText',
+        'Hero',
+        'Block',
+        'TextElement',
+        'ImageElement',
+        'TextAtom',
+        'ButtonElement',
+        'Model3DElement',
+        'Slideshow',
+      ];
       const sourceSection = state.sections.find((s: SectionInstance) => s.id === action.sectionId);
       if (!sourceSection) return state;
       if (!CONVERTIBLE_TYPES.includes(sourceSection.type)) return state;
       // Prevent dropping into its own frames
       if (action.sectionId === action.toSectionId) return state;
 
-      const resolvedBlockType = sourceSection.type === 'ButtonElement' ? 'Button' : sourceSection.type;
+      const resolvedBlockType =
+        sourceSection.type === 'ButtonElement' ? 'Button' : sourceSection.type;
       const convertedBlock: BlockInstance = {
         id: uid(),
         type: resolvedBlockType,
@@ -364,11 +442,13 @@ export function reducePageBuilderMoveActions(
         if (located.parentRow) {
           const updatedBlocks = s.blocks.map((block: BlockInstance) => {
             if (block.id !== located.parentRow!.id) return block;
-            const hasBlockInRow = (block.blocks ?? []).some((b: BlockInstance) => b.id === action.blockId);
+            const hasBlockInRow = (block.blocks ?? []).some(
+              (b: BlockInstance) => b.id === action.blockId
+            );
             if (hasBlockInRow) didRemove = true;
             return {
               ...block,
-              blocks: (block.blocks ?? []).filter((b: BlockInstance) => b.id !== action.blockId)
+              blocks: (block.blocks ?? []).filter((b: BlockInstance) => b.id !== action.blockId),
             };
           });
           return { ...s, blocks: updatedBlocks };
@@ -377,11 +457,13 @@ export function reducePageBuilderMoveActions(
         if (located.parentBlock) {
           const updatedBlocks = s.blocks.map((block: BlockInstance) => {
             if (block.id !== located.parentBlock!.id) return block;
-            const hasBlockInParent = (block.blocks ?? []).some((b: BlockInstance) => b.id === action.blockId);
+            const hasBlockInParent = (block.blocks ?? []).some(
+              (b: BlockInstance) => b.id === action.blockId
+            );
             if (hasBlockInParent) didRemove = true;
             return {
               ...block,
-              blocks: (block.blocks ?? []).filter((b: BlockInstance) => b.id !== action.blockId)
+              blocks: (block.blocks ?? []).filter((b: BlockInstance) => b.id !== action.blockId),
             };
           });
           return { ...s, blocks: updatedBlocks };
@@ -396,7 +478,10 @@ export function reducePageBuilderMoveActions(
       const baseSettings = { ...(located.block.settings ?? {}) };
       const resolvedBlocks =
         located.block.type === TEXT_ATOM_BLOCK_TYPE
-          ? buildTextAtomLetterBlocks(normalizeTextAtomText(baseSettings['text']), located.block.blocks)
+          ? buildTextAtomLetterBlocks(
+              normalizeTextAtomText(baseSettings['text']),
+              located.block.blocks
+            )
           : located.block.blocks
             ? [...located.block.blocks]
             : [];
@@ -431,11 +516,15 @@ export function reducePageBuilderMoveActions(
         sourceSection.type !== 'ImageElement' &&
         sourceSection.type !== 'ButtonElement' &&
         sourceSection.type !== TEXT_ATOM_BLOCK_TYPE
-      ) return state;
-      const targetSection = state.sections.find((s: SectionInstance) => s.id === action.toSectionId);
+      )
+        return state;
+      const targetSection = state.sections.find(
+        (s: SectionInstance) => s.id === action.toSectionId
+      );
       if (!targetSection) return state;
 
-      const resolvedBlockType = sourceSection.type === 'ButtonElement' ? 'Button' : sourceSection.type;
+      const resolvedBlockType =
+        sourceSection.type === 'ButtonElement' ? 'Button' : sourceSection.type;
       const blockDef = getBlockDefinition(resolvedBlockType);
       const baseSettings = {
         ...(blockDef?.defaultSettings ?? {}),
@@ -444,9 +533,9 @@ export function reducePageBuilderMoveActions(
       const textAtomBlocks =
         sourceSection.type === TEXT_ATOM_BLOCK_TYPE
           ? buildTextAtomLetterBlocks(
-            normalizeTextAtomText(baseSettings['text']),
-            sourceSection.blocks
-          )
+              normalizeTextAtomText(baseSettings['text']),
+              sourceSection.blocks
+            )
           : undefined;
       const convertedBlock: BlockInstance = {
         id: uid(),
@@ -467,14 +556,26 @@ export function reducePageBuilderMoveActions(
     }
 
     case 'MOVE_SECTION_TO_COLUMN': {
-      const CONVERTIBLE_TYPES = ['ImageWithText', 'RichText', 'Hero', 'Block', 'TextElement', 'ImageElement', 'TextAtom', 'ButtonElement', 'Model3DElement', 'Slideshow'];
+      const CONVERTIBLE_TYPES = [
+        'ImageWithText',
+        'RichText',
+        'Hero',
+        'Block',
+        'TextElement',
+        'ImageElement',
+        'TextAtom',
+        'ButtonElement',
+        'Model3DElement',
+        'Slideshow',
+      ];
       const sourceSection = state.sections.find((s: SectionInstance) => s.id === action.sectionId);
       if (!sourceSection) return state;
       if (!CONVERTIBLE_TYPES.includes(sourceSection.type)) return state;
       // Prevent dropping a Grid into its own columns
       if (action.sectionId === action.toSectionId) return state;
 
-      const resolvedBlockType = sourceSection.type === 'ButtonElement' ? 'Button' : sourceSection.type;
+      const resolvedBlockType =
+        sourceSection.type === 'ButtonElement' ? 'Button' : sourceSection.type;
       const convertedBlock: BlockInstance = {
         id: uid(),
         type: resolvedBlockType,
@@ -490,7 +591,13 @@ export function reducePageBuilderMoveActions(
         if (s.id !== action.toSectionId) return s;
         return {
           ...s,
-          blocks: insertBlockIntoColumnBlocks(s.blocks, action.toColumnId, convertedBlock, action.toIndex, action.toParentBlockId),
+          blocks: insertBlockIntoColumnBlocks(
+            s.blocks,
+            action.toColumnId,
+            convertedBlock,
+            action.toIndex,
+            action.toParentBlockId
+          ),
         };
       });
 

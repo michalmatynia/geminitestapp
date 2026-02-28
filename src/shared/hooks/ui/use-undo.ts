@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useRef } from 'react';
 
 interface UseUndoResult<T> {
@@ -11,10 +10,7 @@ interface UseUndoResult<T> {
   resetHistory: (initialState: T) => void;
 }
 
-export function useUndo<T>(
-  initialState: T,
-  limit: number = 50,
-): UseUndoResult<T> {
+export function useUndo<T>(initialState: T, limit: number = 50): UseUndoResult<T> {
   const [state, setInnerState] = useState<T>(initialState);
   const [history, setHistory] = useState<T[]>([initialState]);
   const [index, setIndex] = useState(0);
@@ -43,7 +39,7 @@ export function useUndo<T>(
         return next >= limitRef.current ? limitRef.current - 1 : next;
       });
     },
-    [index],
+    [index]
   );
 
   const undo = useCallback((): void => {

@@ -26,11 +26,12 @@ const normalizeArtifactUrlFromPath = (relativePath: string): string | null => {
   return `/api/ai-paths/playwright/${encodeURIComponent(runId)}/artifacts/${encodeURIComponent(file)}`;
 };
 
-const readArtifactsArray = (value: unknown): Array<Record<string, unknown>> => (
-  Array.isArray(value) ? value.filter(isRecord) : []
-);
+const readArtifactsArray = (value: unknown): Array<Record<string, unknown>> =>
+  Array.isArray(value) ? value.filter(isRecord) : [];
 
-const getArtifactCandidates = (outputs: Record<string, unknown>): Array<Record<string, unknown>> => {
+const getArtifactCandidates = (
+  outputs: Record<string, unknown>
+): Array<Record<string, unknown>> => {
   const fromBundle = isRecord(outputs['bundle'])
     ? readArtifactsArray(outputs['bundle']['artifacts'])
     : [];
@@ -63,10 +64,7 @@ export const extractPlaywrightArtifactsFromNode = (
         name: nameValue,
         path: pathValue,
         url: explicitUrl ?? normalizeArtifactUrlFromPath(pathValue),
-        mimeType:
-          typeof artifact['mimeType'] === 'string'
-            ? artifact['mimeType']
-            : null,
+        mimeType: typeof artifact['mimeType'] === 'string' ? artifact['mimeType'] : null,
         kind: typeof artifact['kind'] === 'string' ? artifact['kind'] : null,
       },
     ];

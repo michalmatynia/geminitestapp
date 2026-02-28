@@ -7,7 +7,13 @@ import { cn } from '@/shared/utils';
 import { DataTable } from '../data-table';
 import { ListPanel } from '../list-panel';
 
-import type { ColumnDef, ExpandedState, OnChangeFn, Row, SortingState } from '@tanstack/react-table';
+import type {
+  ColumnDef,
+  ExpandedState,
+  OnChangeFn,
+  Row,
+  SortingState,
+} from '@tanstack/react-table';
 
 export interface StandardDataTablePanelProps<TData> {
   // ListPanel props
@@ -15,10 +21,12 @@ export interface StandardDataTablePanelProps<TData> {
   description?: string | undefined;
   headerActions?: React.ReactNode | undefined;
   header?: React.ReactNode | undefined;
-  refresh?: {
-    onRefresh: () => void;
-    isRefreshing: boolean;
-  } | undefined;
+  refresh?:
+    | {
+        onRefresh: () => void;
+        isRefreshing: boolean;
+      }
+    | undefined;
   alerts?: React.ReactNode | undefined;
   filters?: React.ReactNode | undefined;
   actions?: React.ReactNode | undefined;
@@ -26,7 +34,7 @@ export interface StandardDataTablePanelProps<TData> {
   className?: string | undefined;
   contentClassName?: string | undefined;
   variant?: 'default' | 'flat' | undefined;
-  
+
   // DataTable props
   columns: ColumnDef<TData, unknown>[];
   data: TData[];
@@ -41,15 +49,17 @@ export interface StandardDataTablePanelProps<TData> {
   maxHeight?: string | number | undefined;
   stickyHeader?: boolean | undefined;
   rowSelection?: import('@tanstack/react-table').RowSelectionState | undefined;
-  onRowSelectionChange?: import('@tanstack/react-table').OnChangeFn<import('@tanstack/react-table').RowSelectionState> | undefined;
+  onRowSelectionChange?:
+    | import('@tanstack/react-table').OnChangeFn<import('@tanstack/react-table').RowSelectionState>
+    | undefined;
   skeletonRows?: React.ReactNode | undefined;
   expanded?: ExpandedState | undefined;
   onExpandedChange?: OnChangeFn<ExpandedState> | undefined;
   renderRowDetails?: (props: { row: Row<TData> }) => React.ReactNode | undefined;
   enableVirtualization?: boolean | undefined;
-  
+
   /**
-   * Whether to use the full ListPanel loading state (centered spinner) 
+   * Whether to use the full ListPanel loading state (centered spinner)
    * or the DataTable inline loading state (skeleton/spinner in table).
    * Defaults to 'panel' for true isLoading.
    */
@@ -79,7 +89,7 @@ export function StandardDataTablePanel<TData>({
   className,
   contentClassName,
   variant,
-  
+
   columns,
   data,
   isLoading = false,
@@ -133,7 +143,9 @@ export function StandardDataTablePanel<TData>({
           {...(emptyState !== undefined ? { emptyState } : {})}
           {...(initialSorting !== undefined ? { initialSorting } : {})}
           {...(sortingStorageKey !== undefined ? { sortingStorageKey } : {})}
-          {...(getRowId !== undefined ? { getRowId: getRowId as (row: TData) => string | number } : {})}
+          {...(getRowId !== undefined
+            ? { getRowId: getRowId as (row: TData) => string | number }
+            : {})}
           {...(getSubRows !== undefined ? { getSubRows } : {})}
           {...(getRowClassName !== undefined ? { getRowClassName } : {})}
           {...(maxHeight !== undefined ? { maxHeight } : {})}

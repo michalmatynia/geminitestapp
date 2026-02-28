@@ -1,32 +1,28 @@
-import {
-  type AiPathRunNodeRecord,
-  type RuntimeState,
-} from '@/shared/contracts/ai-paths';
-import {
-  type RuntimeProfileSummaryDto,
-} from '@/shared/contracts/ai-paths-runtime';
-import {
-  RUNTIME_PROFILE_HIGHLIGHT_LIMIT,
-} from './path-run-executor.helpers';
+import { type AiPathRunNodeRecord, type RuntimeState } from '@/shared/contracts/ai-paths';
+import { type RuntimeProfileSummaryDto } from '@/shared/contracts/ai-paths-runtime';
+import { RUNTIME_PROFILE_HIGHLIGHT_LIMIT } from './path-run-executor.helpers';
 
 export const buildRunProfileSummary = (
   runId: string,
   _runtimeState: RuntimeState,
   nodeRecords: AiPathRunNodeRecord[]
 ): RuntimeProfileSummaryDto => {
-  const nodeStatsMap = new Map<string, {
-    nodeId: string;
-    nodeType: string;
-    count: number;
-    totalMs: number;
-    maxMs: number;
-    cachedCount: number;
-    skippedCount: number;
-    errorCount: number;
-    hashCount: number;
-    hashTotalMs: number;
-    hashMaxMs: number;
-  }>();
+  const nodeStatsMap = new Map<
+    string,
+    {
+      nodeId: string;
+      nodeType: string;
+      count: number;
+      totalMs: number;
+      maxMs: number;
+      cachedCount: number;
+      skippedCount: number;
+      errorCount: number;
+      hashCount: number;
+      hashTotalMs: number;
+      hashMaxMs: number;
+    }
+  >();
 
   nodeRecords.forEach((record) => {
     const key = `${record.nodeId}:${record.nodeType}`;

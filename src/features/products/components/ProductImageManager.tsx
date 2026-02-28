@@ -3,9 +3,11 @@
 import type { ProductImageManagerController } from '@/shared/contracts/product-image-manager';
 
 import { ProductImageManagerHeader } from './ProductImageManagerHeader';
-import { ProductImageManagerUIProvider, useProductImageManagerUI } from './ProductImageManagerUIContext';
+import {
+  ProductImageManagerUIProvider,
+  useProductImageManagerUI,
+} from './ProductImageManagerUIContext';
 import { ProductImageSlot } from './ProductImageSlot';
-
 
 export type { ProductImageManagerController };
 
@@ -31,10 +33,7 @@ function ProductImageManagerGrid() {
       <ProductImageManagerHeader />
       <div className={gridClass}>
         {imageSlots.map((_, index) => (
-          <ProductImageSlot
-            key={`slot-${index}`}
-            index={index}
-          />
+          <ProductImageSlot key={`slot-${index}`} index={index} />
         ))}
       </div>
     </div>
@@ -43,7 +42,7 @@ function ProductImageManagerGrid() {
 
 export default function ProductImageManager(props: ProductImageManagerProps) {
   return (
-    <ProductImageManagerUIProvider 
+    <ProductImageManagerUIProvider
       explicitController={props.controller}
       minimalUi={props.minimalUi}
       showDragHandle={props.showDragHandle}

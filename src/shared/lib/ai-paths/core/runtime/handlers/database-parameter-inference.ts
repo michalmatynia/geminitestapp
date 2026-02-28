@@ -1,11 +1,7 @@
 import type { DatabaseConfig } from '@/shared/contracts/ai-paths';
 import type { RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
 
-import {
-  coerceInput,
-  getValueAtMappingPath,
-  parseJsonSafe,
-} from '../../utils';
+import { coerceInput, getValueAtMappingPath, parseJsonSafe } from '../../utils';
 
 type ParameterDefinitionRecord = {
   id: string;
@@ -106,11 +102,7 @@ export const coerceArrayLike = (value: unknown): unknown[] => {
   if (Array.isArray(value)) return value;
   if (value && typeof value === 'object' && !Array.isArray(value)) {
     const record = value as Record<string, unknown>;
-    const nested =
-      record['items'] ??
-      record['rows'] ??
-      record['results'] ??
-      record['data'];
+    const nested = record['items'] ?? record['rows'] ?? record['results'] ?? record['data'];
     if (Array.isArray(nested)) return nested;
   }
   if (typeof value === 'string') {
@@ -170,28 +162,18 @@ export const resolveObjectPathValue = (
   return getValueAtMappingPath(source, path);
 };
 
-const normalizeParameterId = (value: unknown): string | null =>
-  normalizeNonEmptyString(value);
+const normalizeParameterId = (value: unknown): string | null => normalizeNonEmptyString(value);
 
 const resolveParameterDefinitionRows = (
   definitionsValue: unknown,
   definitionsPath: string
 ): unknown[] => {
   let source: unknown = definitionsValue;
-  if (
-    definitionsPath &&
-    source &&
-    typeof source === 'object' &&
-    !Array.isArray(source)
-  ) {
+  if (definitionsPath && source && typeof source === 'object' && !Array.isArray(source)) {
     const resolved = getValueAtMappingPath(source, definitionsPath);
     source = resolved ?? source;
   }
-  if (
-    source &&
-    typeof source === 'object' &&
-    !Array.isArray(source)
-  ) {
+  if (source && typeof source === 'object' && !Array.isArray(source)) {
     const nested =
       (source as Record<string, unknown>)['items'] ??
       (source as Record<string, unknown>)['rows'] ??
@@ -216,8 +198,7 @@ const normalizeParameterDefinitions = (
       normalizeNonEmptyString(record['_id']) ??
       normalizeNonEmptyString(record['parameterId']);
     if (!id) return;
-    const selectorType =
-      normalizeNonEmptyString(record['selectorType'])?.toLowerCase() ?? 'text';
+    const selectorType = normalizeNonEmptyString(record['selectorType'])?.toLowerCase() ?? 'text';
     const optionLabels = coerceArrayLike(record['optionLabels'])
       .map((option: unknown): string | null => normalizeNonEmptyString(option))
       .filter((option: string | null): option is string => Boolean(option));
@@ -269,14 +250,14 @@ export const normalizeParameterEntries = (
   options: { allowEmptyValue: boolean }
 ): Array<{ parameterId: string; value: string; raw: Record<string, unknown> }> => {
   const entries = coerceArrayLike(value);
-  const normalized: Array<{ parameterId: string; value: string; raw: Record<string, unknown> }> = [];
+  const normalized: Array<{ parameterId: string; value: string; raw: Record<string, unknown> }> =
+    [];
   const seen = new Set<string>();
   entries.forEach((entry: unknown) => {
     const record = toRecord(entry);
     if (!record) return;
     const parameterId =
-      normalizeParameterId(record['parameterId']) ??
-      normalizeParameterId(record['id']);
+      normalizeParameterId(record['parameterId']) ?? normalizeParameterId(record['id']);
     if (!parameterId || seen.has(parameterId)) return;
     const resolvedValue = resolveParameterValue(record['value']);
     if (!resolvedValue && !options.allowEmptyValue) return;
@@ -299,15 +280,7 @@ export const resolveExistingParameterValueFromInputs = (
     const record = toRecord(value);
     if (!record) return;
     candidates.push(resolveObjectPathValue(record, targetPath));
-    const nestedKeys = [
-      'entity',
-      'entityJson',
-      'product',
-      'item',
-      'data',
-      'current',
-      'value',
-    ];
+    const nestedKeys = ['entity', 'entityJson', 'product', 'item', 'data', 'current', 'value'];
     nestedKeys.forEach((key: string) => {
       candidates.push(resolveObjectPathValue(toRecord(record[key]), targetPath));
     });
@@ -471,15 +444,9 @@ export const materializeParameterInferenceUpdates = (args: {
     args.templateInputs[args.definitionsPort],
     args.definitionsPath
   );
-  const hasTargetPathInput = Object.prototype.hasOwnProperty.call(
-    args.updates,
-    args.targetPath
-  );
+  const hasTargetPathInput = Object.prototype.hasOwnProperty.call(args.updates, args.targetPath);
   const shouldApply =
-    hasTargetPathInput ||
-    inferred.length > 0 ||
-    existing.length > 0 ||
-    definitions.size > 0;
+    hasTargetPathInput || inferred.length > 0 || existing.length > 0 || definitions.size > 0;
   if (!shouldApply) {
     return { updates: args.updates, applied: false };
   }
@@ -634,17 +601,14 @@ export const applyParameterInferenceGuard = (args: {
     return { updates: args.updates, applied: false };
   }
 
-  const targetPath =
-    normalizeNonEmptyString(guard.targetPath) ?? 'parameters';
+  const targetPath = normalizeNonEmptyString(guard.targetPath) ?? 'parameters';
   const rawCandidate = args.updates[targetPath];
   if (rawCandidate === undefined) {
     return { updates: args.updates, applied: false };
   }
 
-  const definitionsPort =
-    normalizeNonEmptyString(guard.definitionsPort) ?? 'result';
-  const definitionsPath =
-    normalizeNonEmptyString(guard.definitionsPath) ?? '';
+  const definitionsPort = normalizeNonEmptyString(guard.definitionsPort) ?? 'result';
+  const definitionsPath = normalizeNonEmptyString(guard.definitionsPath) ?? '';
   const definitions = normalizeParameterDefinitions(
     args.templateInputs[definitionsPort],
     definitionsPath
@@ -652,10 +616,8 @@ export const applyParameterInferenceGuard = (args: {
   const allowUnknownParameterIds = Boolean(guard.allowUnknownParameterIds);
   const enforceOptionLabels = guard.enforceOptionLabels !== false;
 
-  const {
-    candidates,
-    repaired: candidateRepairApplied,
-  } = coerceParameterInferenceCandidates(rawCandidate);
+  const { candidates, repaired: candidateRepairApplied } =
+    coerceParameterInferenceCandidates(rawCandidate);
   const accepted: Array<{ parameterId: string; value: string }> = [];
   const acceptedIds = new Set<string>();
   let unknownParameterIdCount = 0;
@@ -696,8 +658,7 @@ export const applyParameterInferenceGuard = (args: {
       return;
     }
     const parameterId =
-      normalizeNonEmptyString(record['parameterId']) ??
-      normalizeNonEmptyString(record['id']);
+      normalizeNonEmptyString(record['parameterId']) ?? normalizeNonEmptyString(record['id']);
     if (!parameterId) {
       unknownParameterIdCount += 1;
       return;

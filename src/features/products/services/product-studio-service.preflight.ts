@@ -1,9 +1,7 @@
 import 'server-only';
 
-import {
-  resolveImageStudioSequenceActiveSteps,
-} from '@/features/ai/image-studio/utils/studio-settings';
-import type { ImageStudioSlotRecord } from '@/features/ai/image-studio/server/slot-repository';
+import { resolveImageStudioSequenceActiveSteps } from '@/shared/lib/ai/image-studio/studio-settings';
+import type { ImageStudioSlotRecord } from '@/shared/lib/ai/image-studio/server/slot-repository';
 import {
   normalizeProductStudioSequenceGenerationMode,
   type ProductStudioExecutionRoute,
@@ -72,21 +70,18 @@ export const resolveProductStudioSequencePreflight = async (params: {
     modelId,
   } = await resolveStudioSettingsBundle(resolved.projectId);
   const activeSequenceSteps = resolveImageStudioSequenceActiveSteps(
-    parsedStudioSettings.projectSequencing,
+    parsedStudioSettings.projectSequencing
   ).filter((step) => step.enabled);
   const sequenceStepPlan = buildProductStudioSequenceStepPlan(activeSequenceSteps);
   const requestedSequenceMode = normalizeProductStudioSequenceGenerationMode(
-    params.sequenceGenerationMode ?? sequenceGenerationMode,
+    params.sequenceGenerationMode ?? sequenceGenerationMode
   );
   const routeDecision = resolvePostProductionRoute({
     sequencing,
     requestedMode: requestedSequenceMode,
     modelId,
   });
-  const warnings = [
-    ...routeDecision.warnings,
-    ...buildSequenceStepPlanWarnings(sequenceStepPlan),
-  ];
+  const warnings = [...routeDecision.warnings, ...buildSequenceStepPlanWarnings(sequenceStepPlan)];
   const sequenceReadiness = resolveSequenceReadiness({
     sequencing,
     sequencingDiagnostics,
@@ -120,22 +115,19 @@ export async function getProductStudioVariants(params: {
     imageSlotIndex: params.imageSlotIndex,
     projectId: params.projectId,
   });
-  const sourceSlotId = resolveSourceSlotIdForIndex(
-    preflight.config,
-    preflight.imageSlotIndex,
-  );
+  const sourceSlotId = resolveSourceSlotIdForIndex(preflight.config, preflight.imageSlotIndex);
   const sourceSlotHistory = Array.isArray(
-    preflight.config.sourceSlotHistoryByImageIndex[String(preflight.imageSlotIndex)],
+    preflight.config.sourceSlotHistoryByImageIndex[String(preflight.imageSlotIndex)]
   )
-    ? preflight.config.sourceSlotHistoryByImageIndex[String(preflight.imageSlotIndex)] ?? []
+    ? (preflight.config.sourceSlotHistoryByImageIndex[String(preflight.imageSlotIndex)] ?? [])
     : [];
   const sourceSlotCandidates = Array.from(
     new Set<string>(
       [sourceSlotId, ...sourceSlotHistory]
         .filter((value): value is string => typeof value === 'string')
         .map((value) => value.trim())
-        .filter(Boolean),
-    ),
+        .filter(Boolean)
+    )
   );
 
   if (sourceSlotCandidates.length === 0) {

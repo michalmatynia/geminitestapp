@@ -1,12 +1,7 @@
 'use client';
 
 import React from 'react';
-import {
-  Input,
-  MultiSelect,
-  SelectSimple,
-  FormField,
-} from '@/shared/ui';
+import { Input, MultiSelect, SelectSimple, FormField } from '@/shared/ui';
 import { PATTERN_SCOPE_OPTIONS } from '../constants';
 import {
   LOCALE_OPTIONS,
@@ -17,9 +12,7 @@ import {
 } from '../validator-pattern-modal-options';
 import { ValidatorDocTooltip } from '../ValidatorDocsTooltips';
 import { useValidatorSettingsContext } from '../ValidatorSettingsContext';
-import { 
-  normalizeProductValidationPatternScopes 
-} from '@/features/products/utils/validator-instance-behavior';
+import { normalizeProductValidationPatternScopes } from '@/features/products/utils/validator-instance-behavior';
 import type { PatternFormData, ReplacementMode } from '@/shared/contracts/products';
 import type { DynamicReplacementSourceMode } from '@/features/products/utils/validator-replacement-recipe';
 
@@ -48,12 +41,15 @@ export function ValidatorPatternModalBasicSection(): React.JSX.Element {
       <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
         <FormField label='Target'>
           <ValidatorDocTooltip docId='validator.modal.target'>
-            <SelectSimple size='sm'
+            <SelectSimple
+              size='sm'
               value={formData.target}
               onValueChange={(value: string): void =>
                 setFormData((prev: PatternFormData) => {
                   const nextTarget = value as PatternFormData['target'];
-                  const allowed = new Set<string>(getReplacementFieldsForTarget(nextTarget).map(o => o.value));
+                  const allowed = new Set<string>(
+                    getReplacementFieldsForTarget(nextTarget).map((o) => o.value)
+                  );
                   const nextSourceOptions = getSourceFieldOptionsForTarget(nextTarget);
                   const hasSourceField = nextSourceOptions.some(
                     (option) => option.value === prev.sourceField
@@ -65,7 +61,9 @@ export function ValidatorPatternModalBasicSection(): React.JSX.Element {
                     ...prev,
                     target: nextTarget,
                     locale: isLocaleTarget(nextTarget) ? prev.locale : '',
-                    replacementFields: prev.replacementFields.filter((field: string) => allowed.has(field)),
+                    replacementFields: prev.replacementFields.filter((field: string) =>
+                      allowed.has(field)
+                    ),
                     sourceField: hasSourceField ? prev.sourceField : '',
                     launchSourceField: hasLaunchSourceField ? prev.launchSourceField : '',
                   };
@@ -77,7 +75,8 @@ export function ValidatorPatternModalBasicSection(): React.JSX.Element {
         </FormField>
 
         <FormField label='Locale Context'>
-          <SelectSimple size='sm'
+          <SelectSimple
+            size='sm'
             value={isLocaleTarget(formData.target) ? formData.locale || 'any' : 'any'}
             onValueChange={(value: string): void =>
               setFormData((prev: PatternFormData) => ({
@@ -114,7 +113,8 @@ export function ValidatorPatternModalBasicSection(): React.JSX.Element {
 
       <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
         <FormField label='Severity'>
-          <SelectSimple size='sm'
+          <SelectSimple
+            size='sm'
             value={formData.severity}
             onValueChange={(value: string): void =>
               setFormData((prev: PatternFormData) => ({
@@ -126,7 +126,8 @@ export function ValidatorPatternModalBasicSection(): React.JSX.Element {
           />
         </FormField>
         <FormField label='Replacer Mode'>
-          <SelectSimple size='sm'
+          <SelectSimple
+            size='sm'
             value={formData.replacementMode}
             onValueChange={(value: string): void =>
               setFormData((prev: PatternFormData) => ({
@@ -154,7 +155,8 @@ export function ValidatorPatternModalBasicSection(): React.JSX.Element {
             </FormField>
           ) : (
             <FormField label='Source Mode'>
-              <SelectSimple size='sm'
+              <SelectSimple
+                size='sm'
                 value={formData.sourceMode}
                 onValueChange={(value: string): void =>
                   setFormData((prev: PatternFormData) => ({

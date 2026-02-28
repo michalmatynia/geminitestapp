@@ -11,10 +11,7 @@ export const relinkSchema = z.object({
   limit: z.number().int().min(1).max(100_000).optional(),
 });
 
-export async function POST_handler(
-  _req: NextRequest,
-  ctx: ApiHandlerContext
-): Promise<Response> {
+export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const body = ctx.body as z.infer<typeof relinkSchema>;
   const jobId = await enqueueProductSyncBackfillJob({
     ...(body.connectionId ? { connectionId: body.connectionId } : {}),

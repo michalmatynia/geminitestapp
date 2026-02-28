@@ -14,4 +14,3 @@ export * from '@/shared/lib/observability/transient-recovery/settings';
 export * from '@/shared/lib/observability/transient-recovery/with-recovery';
 export { ActivityTypes } from '@/shared/constants/observability';
 export { isAbortLikeError } from '@/shared/utils/observability/is-abort-like-error';
-

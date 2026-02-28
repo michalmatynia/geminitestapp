@@ -1,5 +1,9 @@
 import type { CanvasOutputConfig } from '@/shared/contracts/ai-paths-core';
-import type { NodeHandler, NodeHandlerContext, RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
+import type {
+  NodeHandler,
+  NodeHandlerContext,
+  RuntimePortValues,
+} from '@/shared/contracts/ai-paths-runtime';
 import { coerceInput, getValueAtMappingPath } from '../../../utils';
 
 // ---------------------------------------------------------------------------
@@ -11,7 +15,11 @@ const toFinite = (v: unknown): number | null => {
   return Number.isFinite(n) ? n : null;
 };
 
-const readField = (obj: unknown, customPath: string | undefined, defaultKey: string): number | null => {
+const readField = (
+  obj: unknown,
+  customPath: string | undefined,
+  defaultKey: string
+): number | null => {
   if (obj === null || obj === undefined || typeof obj !== 'object') return null;
   const key = customPath?.trim() || defaultKey;
   return toFinite(getValueAtMappingPath(obj, key));
@@ -48,7 +56,7 @@ export const handleCanvasOutput: NodeHandler = ({
   try {
     const cfg: CanvasOutputConfig = {
       outputKey: 'image_studio_bounds',
-      ...((node.config?.canvasOutput) ?? {}),
+      ...(node.config?.canvasOutput ?? {}),
     };
 
     const outputKey = cfg.outputKey?.trim() || 'image_studio_bounds';
@@ -60,15 +68,15 @@ export const handleCanvasOutput: NodeHandler = ({
     const rawBounds = resolvePath(rawInput, cfg.boundsPath);
 
     // Extract the four required coordinate fields
-    const left   = readField(rawBounds, cfg.leftField,   'left');
-    const top    = readField(rawBounds, cfg.topField,    'top');
-    const width  = readField(rawBounds, cfg.widthField,  'width');
+    const left = readField(rawBounds, cfg.leftField, 'left');
+    const top = readField(rawBounds, cfg.topField, 'top');
+    const width = readField(rawBounds, cfg.widthField, 'width');
     const height = readField(rawBounds, cfg.heightField, 'height');
 
     if (left === null || top === null || width === null || height === null) {
       toast(
         `Canvas Output "${node.title ?? node.id}": could not extract left/top/width/height from input.`,
-        { variant: 'info' },
+        { variant: 'info' }
       );
       return {};
     }
@@ -76,7 +84,7 @@ export const handleCanvasOutput: NodeHandler = ({
     if (width <= 0 || height <= 0) {
       toast(
         `Canvas Output "${node.title ?? node.id}": bounds have non-positive dimensions (width=${width}, height=${height}).`,
-        { variant: 'info' },
+        { variant: 'info' }
       );
       return {};
     }
@@ -120,7 +128,7 @@ export const handleCanvasOutput: NodeHandler = ({
     reportAiPathsError(
       error,
       { service: 'ai-paths-runtime', nodeId: node.id, nodeType: node.type },
-      `Node ${node.id} failed`,
+      `Node ${node.id} failed`
     );
     return {};
   }

@@ -7,7 +7,15 @@ import {
   TRADERA_SETTINGS_KEYS,
 } from '@/features/integrations/constants/tradera';
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
-import { Input, FormSection, FormField, SectionHeader, useToast, ToggleRow, FormActions } from '@/shared/ui';
+import {
+  Input,
+  FormSection,
+  FormField,
+  SectionHeader,
+  useToast,
+  ToggleRow,
+  FormActions,
+} from '@/shared/ui';
 
 export default function TraderaSettingsPage(): React.JSX.Element {
   const { toast } = useToast();
@@ -157,7 +165,9 @@ export default function TraderaSettingsPage(): React.JSX.Element {
       ]);
       toast('Tradera settings saved successfully.', { variant: 'success' });
     } catch (error) {
-      toast(error instanceof Error ? error.message : 'Failed to save settings.', { variant: 'error' });
+      toast(error instanceof Error ? error.message : 'Failed to save settings.', {
+        variant: 'error',
+      });
     }
   };
 
@@ -171,7 +181,10 @@ export default function TraderaSettingsPage(): React.JSX.Element {
       <div className='grid gap-6'>
         <FormSection title='Listing Defaults' className='p-6'>
           <div className='grid gap-4 md:grid-cols-2'>
-            <FormField label='Default Duration (Hours)' description='Maximum time a listing remains active.'>
+            <FormField
+              label='Default Duration (Hours)'
+              description='Maximum time a listing remains active.'
+            >
               <Input
                 variant='subtle'
                 size='sm'
@@ -183,7 +196,10 @@ export default function TraderaSettingsPage(): React.JSX.Element {
               />
             </FormField>
 
-            <FormField label='Relist Lead (Minutes)' description='Buffer time before relisting expires.'>
+            <FormField
+              label='Relist Lead (Minutes)'
+              description='Buffer time before relisting expires.'
+            >
               <Input
                 variant='subtle'
                 size='sm'
@@ -199,7 +215,10 @@ export default function TraderaSettingsPage(): React.JSX.Element {
 
         <FormSection title='Automation & Scheduling' className='p-6'>
           <div className='space-y-4'>
-            <FormField label='Scheduler Interval (ms)' description='Frequency of background relist checks.'>
+            <FormField
+              label='Scheduler Interval (ms)'
+              description='Frequency of background relist checks.'
+            >
               <Input
                 variant='subtle'
                 size='sm'
@@ -261,7 +280,9 @@ export default function TraderaSettingsPage(): React.JSX.Element {
         </FormSection>
 
         <FormActions
-          onSave={() => { void handleSave(); }}
+          onSave={() => {
+            void handleSave();
+          }}
           saveText='Save Tradera Settings'
           isSaving={saveMutation.isPending}
           className='pt-4'

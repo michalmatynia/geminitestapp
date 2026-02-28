@@ -7,7 +7,7 @@ import { TRIGGER_EVENTS, triggerButtonsApi } from '@/shared/lib/ai-paths';
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import {  SelectSimple, Card, FormField } from '@/shared/ui';
+import { SelectSimple, Card, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -81,7 +81,8 @@ export function TriggerNodeConfigSection(): React.JSX.Element | null {
   return (
     <div className='space-y-4'>
       <FormField label='Trigger Action'>
-        <SelectSimple size='sm'
+        <SelectSimple
+          size='sm'
           variant='subtle'
           value={triggerConfig.event}
           onValueChange={(value: string): void =>
@@ -94,12 +95,12 @@ export function TriggerNodeConfigSection(): React.JSX.Element | null {
           }
           options={triggerEventOptions.map((event: { id: string; label: string }) => ({
             value: event.id,
-            label: event.label
+            label: event.label,
           }))}
           placeholder='Select action'
         />
       </FormField>
-      
+
       <FormField label='Context Source'>
         <SelectSimple
           size='sm'
@@ -140,8 +141,8 @@ export function TriggerNodeConfigSection(): React.JSX.Element | null {
             Server Schedule
           </div>
           <div className='mt-1 text-amber-100/80'>
-            This trigger runs from server schedules or cron. Context input is optional,
-            and manual runs are allowed for testing.
+            This trigger runs from server schedules or cron. Context input is optional, and manual
+            runs are allowed for testing.
           </div>
         </Card>
       ) : null}

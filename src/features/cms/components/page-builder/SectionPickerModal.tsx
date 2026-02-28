@@ -28,8 +28,9 @@ type SectionPickerSelectionContextValue = {
   onSelect: (sectionType: string) => void;
 };
 
-const SectionPickerSelectionContext =
-  createContext<SectionPickerSelectionContextValue | null>(null);
+const SectionPickerSelectionContext = createContext<SectionPickerSelectionContextValue | null>(
+  null
+);
 
 const useSectionPickerSelectionContext = (): SectionPickerSelectionContextValue => {
   const context = useContext(SectionPickerSelectionContext);
@@ -43,12 +44,18 @@ const renderBlockTypes = (blockTypes: string[]): React.ReactNode => {
   const items = blockTypes.slice(0, 4);
   const columns = Math.max(1, Math.min(items.length, 4));
   return (
-    <div className='grid gap-1 rounded-md border border-border/40 bg-gray-900/60 p-2' style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
+    <div
+      className='grid gap-1 rounded-md border border-border/40 bg-gray-900/60 p-2'
+      style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
+    >
       {items.length === 0 ? (
         <div className='col-span-full h-6 rounded bg-gray-800/60' />
       ) : (
         items.map((type: string, idx: number) => (
-          <div key={`${type}-${idx}`} className='flex h-6 items-center justify-center rounded bg-gray-800/60 text-[9px] uppercase tracking-wide text-gray-400'>
+          <div
+            key={`${type}-${idx}`}
+            className='flex h-6 items-center justify-center rounded bg-gray-800/60 text-[9px] uppercase tracking-wide text-gray-400'
+          >
             {type}
           </div>
         ))
@@ -64,13 +71,14 @@ interface CategorySectionProps {
 
 const CategorySection = ({ title, items }: CategorySectionProps): React.ReactNode => {
   const { onSelect } = useSectionPickerSelectionContext();
-  
+
   const pickerItems: GridPickerItem<SectionDefinition>[] = useMemo(
-    () => items.map(def => ({
-      id: def.type,
-      label: def.label,
-      value: def,
-    })),
+    () =>
+      items.map((def) => ({
+        id: def.type,
+        label: def.label,
+        value: def,
+      })),
     [items]
   );
 
@@ -91,11 +99,15 @@ const CategorySection = ({ title, items }: CategorySectionProps): React.ReactNod
             <div className='flex w-full flex-col gap-2 p-3 text-left'>
               <div className='flex items-center justify-between'>
                 <span className='text-sm font-medium text-gray-200'>{def.label}</span>
-                <span className='text-[10px] uppercase tracking-wide text-gray-500'>{def.type}</span>
+                <span className='text-[10px] uppercase tracking-wide text-gray-500'>
+                  {def.type}
+                </span>
               </div>
               {renderBlockTypes(def.allowedBlockTypes)}
               <span className='text-xs text-gray-500'>
-                {def.allowedBlockTypes.length > 0 ? `Blocks: ${def.allowedBlockTypes.join(', ')}` : 'No blocks'}
+                {def.allowedBlockTypes.length > 0
+                  ? `Blocks: ${def.allowedBlockTypes.join(', ')}`
+                  : 'No blocks'}
               </span>
             </div>
           );
@@ -118,13 +130,7 @@ export function SectionPickerModal({
   onDeleteTemplate,
 }: SectionPickerModalProps): React.JSX.Element | null {
   return (
-    <DetailModal
-      isOpen={isOpen}
-      onClose={onClose}
-      title='Add a section'
-      size='lg'
-      footer={null}
-    >
+    <DetailModal isOpen={isOpen} onClose={onClose} title='Add a section' size='lg' footer={null}>
       <SectionPickerSelectionContext.Provider value={{ onSelect }}>
         <div className='space-y-6'>
           <CategorySection title='Primitives' items={primitives} />
@@ -133,7 +139,9 @@ export function SectionPickerModal({
 
           {Object.entries(groupedTemplates).length > 0 && (
             <div>
-              <div className='mb-2 text-xs font-medium uppercase tracking-wide text-gray-400'>Saved templates</div>
+              <div className='mb-2 text-xs font-medium uppercase tracking-wide text-gray-400'>
+                Saved templates
+              </div>
               <div className='space-y-3'>
                 {Object.entries(groupedTemplates).map(([category, categoryTemplates]) => (
                   <div key={category}>
@@ -142,7 +150,10 @@ export function SectionPickerModal({
                         <div className='text-xs font-medium text-gray-300'>{category}</div>
                         <div className='grid gap-3 md:grid-cols-2'>
                           {categoryTemplates.map((template) => (
-                            <div key={template.name} className='flex items-center justify-between rounded-md border border-border/50 bg-card/60 p-3'>
+                            <div
+                              key={template.name}
+                              className='flex items-center justify-between rounded-md border border-border/50 bg-card/60 p-3'
+                            >
                               <button
                                 type='button'
                                 onClick={() => {
@@ -151,10 +162,18 @@ export function SectionPickerModal({
                                 }}
                                 className='flex-1 text-left transition hover:text-gray-100'
                               >
-                                <span className='text-sm font-medium text-gray-200'>{template.name}</span>
-                                <span className='block text-xs text-gray-500'>{template.description}</span>
+                                <span className='text-sm font-medium text-gray-200'>
+                                  {template.name}
+                                </span>
+                                <span className='block text-xs text-gray-500'>
+                                  {template.description}
+                                </span>
                               </button>
-                              <button type='button' onClick={() => onDeleteTemplate(template.name)} className='ml-2 text-gray-400 hover:text-red-400'>
+                              <button
+                                type='button'
+                                onClick={() => onDeleteTemplate(template.name)}
+                                className='ml-2 text-gray-400 hover:text-red-400'
+                              >
                                 <Trash2 className='size-4' />
                               </button>
                             </div>

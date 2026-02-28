@@ -1,26 +1,36 @@
 'use client';
 
-import React, { createContext, useContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { usePathname } from 'next/navigation';
 import { runsApi } from '@/shared/lib/ai-paths';
-import type {
-  AiPathRunRecord,
-} from '@/shared/lib/ai-paths';
+import type { AiPathRunRecord } from '@/shared/lib/ai-paths';
 import { fetchAiPathsSettingsCached } from '@/shared/lib/ai-paths/settings-store-client';
-import { createDeleteMutationV2, createListQueryV2, createMutationV2 } from '@/shared/lib/query-factories-v2';
+import {
+  createDeleteMutationV2,
+  createListQueryV2,
+  createMutationV2,
+} from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useToast } from '@/shared/ui';
-import { 
-  getLatestEventTimestamp, 
-  getPanelDescription, 
-  getPanelLabel, 
-  normalizeRunDetail, 
-  normalizeRunEvents, 
-  normalizeRunNodes, 
+import {
+  getLatestEventTimestamp,
+  getPanelDescription,
+  getPanelLabel,
+  normalizeRunDetail,
+  normalizeRunEvents,
+  normalizeRunNodes,
   type QueueHistoryEntry,
   type QueueStatus,
   type RunDetail,
-  type StreamConnectionStatus
+  type StreamConnectionStatus,
 } from './job-queue-panel-utils';
 import { internalError } from '@/shared/errors/app-error';
 
@@ -206,16 +216,38 @@ export function JobQueueProvider({
 
   const isQueueRoute = pathname?.startsWith('/admin/ai-paths/queue') ?? false;
   const isPanelActive = isQueueRoute && isActive;
-  const effectiveAutoRefreshEnabled = preferencesHydrated && autoRefreshEnabled && isDocumentVisible && isWindowFocused && isPanelActive;
+  const effectiveAutoRefreshEnabled =
+    preferencesHydrated &&
+    autoRefreshEnabled &&
+    isDocumentVisible &&
+    isWindowFocused &&
+    isPanelActive;
 
-  const resolveRunsRefetchInterval = useCallback((query: { state: { data?: { runs?: AiPathRunRecord[] } } }): number | false => {
-    if (!effectiveAutoRefreshEnabled) return false;
-    const runs = query.state.data?.runs ?? [];
-    const hasActiveRuns = runs.some((run) => ACTIVE_RUN_STATUSES.has(String(run.status ?? '').trim().toLowerCase()));
-    return (hasActiveRuns ? Math.max(ACTIVE_RUN_REFRESH_MIN_MS, autoRefreshInterval) : Math.max(IDLE_RUN_REFRESH_MIN_MS, autoRefreshInterval)) + Math.floor(Math.random() * POLLING_JITTER_MS);
-  }, [autoRefreshInterval, effectiveAutoRefreshEnabled]);
+  const resolveRunsRefetchInterval = useCallback(
+    (query: { state: { data?: { runs?: AiPathRunRecord[] } } }): number | false => {
+      if (!effectiveAutoRefreshEnabled) return false;
+      const runs = query.state.data?.runs ?? [];
+      const hasActiveRuns = runs.some((run) =>
+        ACTIVE_RUN_STATUSES.has(
+          String(run.status ?? '')
+            .trim()
+            .toLowerCase()
+        )
+      );
+      return (
+        (hasActiveRuns
+          ? Math.max(ACTIVE_RUN_REFRESH_MIN_MS, autoRefreshInterval)
+          : Math.max(IDLE_RUN_REFRESH_MIN_MS, autoRefreshInterval)) +
+        Math.floor(Math.random() * POLLING_JITTER_MS)
+      );
+    },
+    [autoRefreshInterval, effectiveAutoRefreshEnabled]
+  );
 
-  const runsQuery = createListQueryV2<{ runs: AiPathRunRecord[]; total: number }, { runs: AiPathRunRecord[]; total: number }>({
+  const runsQuery = createListQueryV2<
+    { runs: AiPathRunRecord[]; total: number },
+    { runs: AiPathRunRecord[]; total: number }
+  >({
     queryKey: QUERY_KEYS.ai.aiPaths.jobQueue({
       pathId: normalizedPathFilter,
       source: normalizedSourceFilter,
@@ -280,7 +312,12 @@ export function JobQueueProvider({
   const clearRunsMutation = createDeleteMutationV2({
     mutationKey: QUERY_KEYS.ai.aiPaths.mutation('job-queue.clear-runs'),
     mutationFn: async (scope: 'terminal' | 'all') => {
-      const res = await runsApi.clear({ scope, pathId: normalizedPathFilter || undefined, source: normalizedSourceFilter || undefined, sourceMode });
+      const res = await runsApi.clear({
+        scope,
+        pathId: normalizedPathFilter || undefined,
+        source: normalizedSourceFilter || undefined,
+        sourceMode,
+      });
       if (!res.ok) throw new Error(res.error);
       return res.data as { deleted: number; scope: 'all' | 'terminal' };
     },
@@ -368,17 +405,20 @@ export function JobQueueProvider({
     }
   }, []);
 
-  const handleToggleRun = useCallback(async (runId: string) => {
-    setExpandedRunIds(prev => {
-      const next = new Set(prev);
-      if (next.has(runId)) next.delete(runId);
-      else next.add(runId);
-      return next;
-    });
-    if (!runDetails[runId]) {
-      await loadRunDetail(runId);
-    }
-  }, [loadRunDetail, runDetails]);
+  const handleToggleRun = useCallback(
+    async (runId: string) => {
+      setExpandedRunIds((prev) => {
+        const next = new Set(prev);
+        if (next.has(runId)) next.delete(runId);
+        else next.add(runId);
+        return next;
+      });
+      if (!runDetails[runId]) {
+        await loadRunDetail(runId);
+      }
+    },
+    [loadRunDetail, runDetails]
+  );
 
   const handleToggleStream = useCallback((runId: string): void => {
     const source = streamSourcesRef.current.get(runId);
@@ -461,13 +501,13 @@ export function JobQueueProvider({
     expandedRunIds.forEach((runId) => {
       if (streamSourcesRef.current.has(runId)) return;
       if (pausedStreams.has(runId)) return;
-      
+
       const existing = runDetails[runId];
       const since = existing ? getLatestEventTimestamp(existing.events) : null;
       const params = new URLSearchParams();
       if (since) params.set('since', since);
       const url = `/api/ai-paths/runs/${encodeURIComponent(runId)}/stream${params.toString() ? `?${params.toString()}` : ''}`;
-      
+
       const source = new EventSource(url);
       streamSourcesRef.current.set(runId, source);
       setStreamStatuses((prev) => ({ ...prev, [runId]: 'connecting' }));
@@ -510,7 +550,7 @@ export function JobQueueProvider({
           const payload = JSON.parse(messageEvent.data as string) as unknown;
           const incoming = Array.isArray(payload)
             ? payload
-            : ((payload as Record<string, unknown>)['events'] || []);
+            : (payload as Record<string, unknown>)['events'] || [];
           const safeIncoming = normalizeRunEvents(incoming);
           if (safeIncoming.length === 0) return;
 
@@ -522,7 +562,9 @@ export function JobQueueProvider({
             safeIncoming.forEach((e) => {
               if (!existingIds.has(e.id)) merged.push(e);
             });
-            merged.sort((a, b) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime());
+            merged.sort(
+              (a, b) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime()
+            );
             return { ...prev, [runId]: { ...current, events: merged } };
           });
         } catch (error) {
@@ -541,54 +583,115 @@ export function JobQueueProvider({
     });
   }, [expandedRunIds, pausedStreams, runDetails]);
 
-  const value: JobQueueContextValue = useMemo((): JobQueueContextValue => ({
-    pathFilter, setPathFilter,
-    searchQuery, setSearchQuery,
-    statusFilter, setStatusFilter,
-    pageSize, setPageSize,
-    page, setPage,
-    expandedRunIds, toggleRun: (runId: string) => { void handleToggleRun(runId); },
-    runDetails, runDetailLoading, runDetailErrors,
-    historySelection, setHistorySelection: (runId: string, nodeId: string) => setHistorySelection(prev => ({ ...prev, [runId]: nodeId })),
-    streamStatuses, pausedStreams,
-    toggleStream: handleToggleStream,
-    pauseAllStreams,
-    resumeAllStreams,
-    autoRefreshEnabled, setAutoRefreshEnabled,
-    autoRefreshInterval, setAutoRefreshInterval,
-    showMetricsPanel, setShowMetricsPanel,
-    queueHistory, setQueueHistory,
-    clearScope, setClearScope,
-    runToDelete, setRunToDelete,
-    panelLabel: getPanelLabel(sourceFilter, sourceMode),
-    panelDescription: getPanelDescription(sourceFilter, sourceMode),
-    lagThresholdMs: Number(heavyMap.get(QUEUE_LAG_THRESHOLD_KEY)) || 60000,
-    runs: runsQuery.data?.runs ?? [],
-    total: runsQuery.data?.total ?? 0,
-    totalPages: Math.max(1, Math.ceil((runsQuery.data?.total ?? 0) / pageSize)),
-    queueStatus: queueStatusQuery.data?.status,
-    isLoadingRuns: runsQuery.isLoading,
-    isLoadingQueueStatus: queueStatusQuery.isLoading,
-    runsQueryError: runsQuery.error,
-    isClearingRuns: clearRunsMutation.isPending,
-    isCancelingRun: (id: string) => cancelRunMutation.isPending && cancelRunMutation.variables === id,
-    isDeletingRun: (id: string) => deleteRunMutation.isPending && deleteRunMutation.variables === id,
-    refetchQueueData: () => { void runsQuery.refetch(); void queueStatusQuery.refetch(); },
-    handleClearRuns: async (scope: 'terminal' | 'all') => { await clearRunsMutation.mutateAsync(scope); },
-    handleCancelRun: async (id: string) => { await cancelRunMutation.mutateAsync(id); },
-    handleDeleteRun: async (id: string) => { await deleteRunMutation.mutateAsync(id); },
-    loadRunDetail,
-  }), [
-    pathFilter, searchQuery, statusFilter, pageSize, page, expandedRunIds, runDetails,
-    runDetailLoading, runDetailErrors, historySelection, streamStatuses, pausedStreams,
-    autoRefreshEnabled, autoRefreshInterval, showMetricsPanel, queueHistory, clearScope,
-    runToDelete, sourceFilter, sourceMode, heavyMap, runsQuery.data, runsQuery.isLoading,
-    runsQuery.error, queueStatusQuery.data, queueStatusQuery.isLoading,
-    clearRunsMutation.isPending, cancelRunMutation.isPending, cancelRunMutation.variables,
-    deleteRunMutation.isPending, deleteRunMutation.variables, runsQuery.refetch,
-    queueStatusQuery.refetch, clearRunsMutation.mutateAsync, cancelRunMutation.mutateAsync,
-    deleteRunMutation.mutateAsync, loadRunDetail,
-  ]);
+  const value: JobQueueContextValue = useMemo(
+    (): JobQueueContextValue => ({
+      pathFilter,
+      setPathFilter,
+      searchQuery,
+      setSearchQuery,
+      statusFilter,
+      setStatusFilter,
+      pageSize,
+      setPageSize,
+      page,
+      setPage,
+      expandedRunIds,
+      toggleRun: (runId: string) => {
+        void handleToggleRun(runId);
+      },
+      runDetails,
+      runDetailLoading,
+      runDetailErrors,
+      historySelection,
+      setHistorySelection: (runId: string, nodeId: string) =>
+        setHistorySelection((prev) => ({ ...prev, [runId]: nodeId })),
+      streamStatuses,
+      pausedStreams,
+      toggleStream: handleToggleStream,
+      pauseAllStreams,
+      resumeAllStreams,
+      autoRefreshEnabled,
+      setAutoRefreshEnabled,
+      autoRefreshInterval,
+      setAutoRefreshInterval,
+      showMetricsPanel,
+      setShowMetricsPanel,
+      queueHistory,
+      setQueueHistory,
+      clearScope,
+      setClearScope,
+      runToDelete,
+      setRunToDelete,
+      panelLabel: getPanelLabel(sourceFilter, sourceMode),
+      panelDescription: getPanelDescription(sourceFilter, sourceMode),
+      lagThresholdMs: Number(heavyMap.get(QUEUE_LAG_THRESHOLD_KEY)) || 60000,
+      runs: runsQuery.data?.runs ?? [],
+      total: runsQuery.data?.total ?? 0,
+      totalPages: Math.max(1, Math.ceil((runsQuery.data?.total ?? 0) / pageSize)),
+      queueStatus: queueStatusQuery.data?.status,
+      isLoadingRuns: runsQuery.isLoading,
+      isLoadingQueueStatus: queueStatusQuery.isLoading,
+      runsQueryError: runsQuery.error,
+      isClearingRuns: clearRunsMutation.isPending,
+      isCancelingRun: (id: string) =>
+        cancelRunMutation.isPending && cancelRunMutation.variables === id,
+      isDeletingRun: (id: string) =>
+        deleteRunMutation.isPending && deleteRunMutation.variables === id,
+      refetchQueueData: () => {
+        void runsQuery.refetch();
+        void queueStatusQuery.refetch();
+      },
+      handleClearRuns: async (scope: 'terminal' | 'all') => {
+        await clearRunsMutation.mutateAsync(scope);
+      },
+      handleCancelRun: async (id: string) => {
+        await cancelRunMutation.mutateAsync(id);
+      },
+      handleDeleteRun: async (id: string) => {
+        await deleteRunMutation.mutateAsync(id);
+      },
+      loadRunDetail,
+    }),
+    [
+      pathFilter,
+      searchQuery,
+      statusFilter,
+      pageSize,
+      page,
+      expandedRunIds,
+      runDetails,
+      runDetailLoading,
+      runDetailErrors,
+      historySelection,
+      streamStatuses,
+      pausedStreams,
+      autoRefreshEnabled,
+      autoRefreshInterval,
+      showMetricsPanel,
+      queueHistory,
+      clearScope,
+      runToDelete,
+      sourceFilter,
+      sourceMode,
+      heavyMap,
+      runsQuery.data,
+      runsQuery.isLoading,
+      runsQuery.error,
+      queueStatusQuery.data,
+      queueStatusQuery.isLoading,
+      clearRunsMutation.isPending,
+      cancelRunMutation.isPending,
+      cancelRunMutation.variables,
+      deleteRunMutation.isPending,
+      deleteRunMutation.variables,
+      runsQuery.refetch,
+      queueStatusQuery.refetch,
+      clearRunsMutation.mutateAsync,
+      cancelRunMutation.mutateAsync,
+      deleteRunMutation.mutateAsync,
+      loadRunDetail,
+    ]
+  );
 
   return <JobQueueContext.Provider value={value}>{children}</JobQueueContext.Provider>;
 }

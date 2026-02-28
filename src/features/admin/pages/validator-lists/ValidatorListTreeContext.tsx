@@ -15,8 +15,9 @@ export interface ValidatorListTreeContextValue {
   isPending: boolean;
 }
 
-export const ValidatorListTreeContext =
-  React.createContext<ValidatorListTreeContextValue | null>(null);
+export const ValidatorListTreeContext = React.createContext<ValidatorListTreeContextValue | null>(
+  null
+);
 
 export function useValidatorListTreeContext(): ValidatorListTreeContextValue {
   const ctx = React.useContext(ValidatorListTreeContext);

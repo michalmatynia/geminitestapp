@@ -157,8 +157,13 @@ export function normalizeMenuSettings(input: unknown): MenuSettings {
     return {
       ...DEFAULT_MENU_SETTINGS,
       ...record,
-      items: Array.isArray(record['items']) ? (record['items'] as MenuItemDto[]) : DEFAULT_MENU_SETTINGS.items,
-      showMenu: typeof record['showMenu'] === 'boolean' ? record['showMenu'] : DEFAULT_MENU_SETTINGS.showMenu,
+      items: Array.isArray(record['items'])
+        ? (record['items'] as MenuItemDto[])
+        : DEFAULT_MENU_SETTINGS.items,
+      showMenu:
+        typeof record['showMenu'] === 'boolean'
+          ? record['showMenu']
+          : DEFAULT_MENU_SETTINGS.showMenu,
     } as MenuSettings;
   }
   return DEFAULT_MENU_SETTINGS;

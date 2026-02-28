@@ -1,13 +1,6 @@
 'use client';
 
-import { 
-  Star, 
-  Heart, 
-  Check, 
-  ArrowRight, 
-  Circle,
-  type LucideIcon 
-} from 'lucide-react';
+import { Star, Heart, Check, ArrowRight, Circle, type LucideIcon } from 'lucide-react';
 import React from 'react';
 
 import { getBlockTypographyStyles } from '../theme-styles';
@@ -45,13 +38,25 @@ export function DividerBlock(): React.ReactNode {
   const thickness = (settings['thickness'] as number) || 1;
   const color = (settings['dividerColor'] as string) || '#4b5563';
 
-  return <hr className='my-2 border-0' style={{ borderTopStyle: style as 'solid' | 'dashed' | 'dotted', borderTopWidth: `${thickness}px`, borderTopColor: color }} />;
+  return (
+    <hr
+      className='my-2 border-0'
+      style={{
+        borderTopStyle: style as 'solid' | 'dashed' | 'dotted',
+        borderTopWidth: `${thickness}px`,
+        borderTopColor: color,
+      }}
+    />
+  );
 }
 
 export function SocialLinksBlock(): React.ReactNode {
   const settings = useRequiredBlockSettings();
   const platforms = (settings['platforms'] as string) || '';
-  const links = platforms.split(',').map((l: string) => l.trim()).filter(Boolean);
+  const links = platforms
+    .split(',')
+    .map((l: string) => l.trim())
+    .filter(Boolean);
 
   if (links.length === 0) {
     return <p className='text-sm text-gray-500'>Add social media URLs in settings</p>;
@@ -100,11 +105,7 @@ export function IconBlock(): React.ReactNode {
 
   return (
     <div className='flex items-center justify-center'>
-      <IconComponent 
-        size={iconSize} 
-        color={iconColor} 
-        strokeWidth={2}
-      />
+      <IconComponent size={iconSize} color={iconColor} strokeWidth={2} />
     </div>
   );
 }
@@ -117,7 +118,9 @@ export function VideoEmbedBlock(): React.ReactNode {
 
   let embedUrl: string | null = null;
   if (url) {
-    const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&?#]+)/);
+    const ytMatch = url.match(
+      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&?#]+)/
+    );
     if (ytMatch) embedUrl = `https://www.youtube.com/embed/${ytMatch[1]}`;
     else {
       const vimeoMatch = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
@@ -134,7 +137,10 @@ export function VideoEmbedBlock(): React.ReactNode {
 
   if (!embedUrl) {
     return (
-      <div className='cms-media flex items-center justify-center bg-gray-800/50 py-8 text-gray-500 text-sm' style={containerStyle}>
+      <div
+        className='cms-media flex items-center justify-center bg-gray-800/50 py-8 text-gray-500 text-sm'
+        style={containerStyle}
+      >
         Enter a video URL
       </div>
     );

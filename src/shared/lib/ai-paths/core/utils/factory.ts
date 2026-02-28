@@ -16,11 +16,9 @@ import {
 } from '../validation-engine';
 import { repairPathNodeIdentities } from './node-identity';
 
-export const createPathId = (): string =>
-  `path_${Math.random().toString(36).slice(2, 8)}`;
+export const createPathId = (): string => `path_${Math.random().toString(36).slice(2, 8)}`;
 
-export const createPresetId = (): string =>
-  `preset_${Math.random().toString(36).slice(2, 8)}`;
+export const createPresetId = (): string => `preset_${Math.random().toString(36).slice(2, 8)}`;
 
 export const createDefaultPathConfig = (id: string): PathConfig => {
   const now = new Date().toISOString();
@@ -35,9 +33,7 @@ export const createDefaultPathConfig = (id: string): PathConfig => {
     runMode: 'block',
     strictFlowMode: true,
     blockedRunPolicy: 'fail_run',
-    aiPathsValidation: normalizeAiPathsValidationConfig(
-      DEFAULT_AI_PATHS_VALIDATION_CONFIG
-    ),
+    aiPathsValidation: normalizeAiPathsValidationConfig(DEFAULT_AI_PATHS_VALIDATION_CONFIG),
     nodes: initialNodes,
     edges: initialEdges,
     updatedAt: now,
@@ -162,7 +158,7 @@ export const createAiDescriptionPath = (id: string): PathConfig => {
       updatedAt: null,
       data: {},
       ...(node as Omit<AiNode, 'createdAt' | 'updatedAt' | 'data'>),
-    }),
+    })
   );
 
   const edges: Edge[] = [
@@ -228,9 +224,7 @@ export const createAiDescriptionPath = (id: string): PathConfig => {
     runMode: 'block',
     strictFlowMode: true,
     blockedRunPolicy: 'fail_run',
-    aiPathsValidation: normalizeAiPathsValidationConfig(
-      DEFAULT_AI_PATHS_VALIDATION_CONFIG
-    ),
+    aiPathsValidation: normalizeAiPathsValidationConfig(DEFAULT_AI_PATHS_VALIDATION_CONFIG),
     nodes,
     edges,
     updatedAt: now,

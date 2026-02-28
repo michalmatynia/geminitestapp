@@ -12,7 +12,9 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 from playwright.async_api import async_playwright, Page, BrowserContext
 
 # =============================================================================
+
 # CONFIG (from your MASTER v0.9.3.3)
+
 # =============================================================================
 
 TIMEZONE = "Europe/Warsaw"
@@ -51,14 +53,14 @@ BASE_FILTER_SUMMARY_HEADER = "PODSUMOWANIE WYBRANYCH FILTRÓW"
 BASE_FILTER_TRADERA_WYSTAWKA = "TRADERA - Wystawka"
 
 BASE_FILTER_EXPECTED_SUMMARY_TOKENS = [
-    "Tradera",
-    "różne",
-    "Yes",
-    "Stan",
-    "0",
-    "Market Exclusion",
-    "nie zawiera",
-    "Tradera",
+"Tradera",
+"różne",
+"Yes",
+"Stan",
+"0",
+"Market Exclusion",
+"nie zawiera",
+"Tradera",
 ]
 
 BASE_ROW_EDIT_ACTION_LABEL = "Edytuj"
@@ -94,90 +96,93 @@ ACTIVITY_LOG_INCLUDE_SELECTORS = True
 ACTIVITY_LOG_INCLUDE_URLS = True
 ACTIVITY_LOG_SANITIZE_URL_QUERY = True
 
-
 # =============================================================================
+
 # SCHEMAS (mirroring your JSON contract) - we don't enforce via jsonschema here,
+
 # but we produce objects that match required fields.
+
 # =============================================================================
 
 def now_iso() -> str:
-    return datetime.now(tz=LOCAL_TZ).isoformat()
+return datetime.now(tz=LOCAL_TZ).isoformat()
 
 def sanitize_url(url: Optional[str]) -> Optional[str]:
-    if url is None:
-        return None
-    if not ACTIVITY_LOG_SANITIZE_URL_QUERY:
-        return url
-    return url.split("?", 1)[0]
+if url is None:
+return None
+if not ACTIVITY_LOG_SANITIZE_URL_QUERY:
+return url
+return url.split("?", 1)[0]
 
 def safe_text_preview(text: Optional[str]) -> Optional[str]:
-    if text is None:
-        return None
-    return text[:ACTIVITY_LOG_TEXT_PREVIEW_CHARS]
+if text is None:
+return None
+return text[:ACTIVITY_LOG_TEXT_PREVIEW_CHARS]
 
 def eprint(*args):
-    print(*args, file=sys.stderr)
+print(*args, file=sys.stderr)
 
 @dataclass
 class ActivityEvent:
-    seq: int
-    ts: str
-    platform: str
-    tab_id: str
-    module: str
-    base_product_id: Optional[str]
-    event_type: str
-    action: str
-    target: Optional[str]
-    url_before: Optional[str]
-    url_after: Optional[str]
-    attempt: int
-    max_attempts: int
-    outcome: str
-    redacted: bool
-    value_preview: Optional[str]
-    value_len: Optional[int]
-    duration_ms: Optional[int]
-    context: Dict[str, Any]
+seq: int
+ts: str
+platform: str
+tab_id: str
+module: str
+base_product_id: Optional[str]
+event_type: str
+action: str
+target: Optional[str]
+url_before: Optional[str]
+url_after: Optional[str]
+attempt: int
+max_attempts: int
+outcome: str
+redacted: bool
+value_preview: Optional[str]
+value_len: Optional[int]
+duration_ms: Optional[int]
+context: Dict[str, Any]
 
 @dataclass
 class PerProductLogEntry:
-    base_product_id: str
-    sku: Optional[str]
-    title: str
-    base_language_used: str  # EN|PL|unknown
-    downloaded_images_count: int
-    action: str  # created_on_tradera|already_listed_marked|skipped_filter|would_set_stargater|error
-    tradera_status: str  # created|already_active|not_found|would_create|error_search|error_publish|error_auth|error_missing_images
-    tradera_listing_id: Optional[str]
-    tradera_listing_url: Optional[str]
-    base_tradera_stargater_set: bool
-    base_price_eur: Optional[float]
-    tradera_price_eur: Optional[float]
-    shipping_eur: Optional[float]
-    size_class: str  # small|large|unknown
-    activity_seq_start: Optional[int] = None
-    activity_seq_end: Optional[int] = None
-    errors: List[str] = field(default_factory=list)
+base_product_id: str
+sku: Optional[str]
+title: str
+base_language_used: str # EN|PL|unknown
+downloaded_images_count: int
+action: str # created_on_tradera|already_listed_marked|skipped_filter|would_set_stargater|error
+tradera_status: str # created|already_active|not_found|would_create|error_search|error_publish|error_auth|error_missing_images
+tradera_listing_id: Optional[str]
+tradera_listing_url: Optional[str]
+base_tradera_stargater_set: bool
+base_price_eur: Optional[float]
+tradera_price_eur: Optional[float]
+shipping_eur: Optional[float]
+size_class: str # small|large|unknown
+activity_seq_start: Optional[int] = None
+activity_seq_end: Optional[int] = None
+errors: List[str] = field(default_factory=list)
 
 @dataclass
 class RunReport:
-    meta: Dict[str, Any]
-    counters: Dict[str, Any]
-    products: List[Dict[str, Any]]
-    activity_meta: Dict[str, Any]
-    activity: List[Dict[str, Any]]
-
+meta: Dict[str, Any]
+counters: Dict[str, Any]
+products: List[Dict[str, Any]]
+activity_meta: Dict[str, Any]
+activity: List[Dict[str, Any]]
 
 # =============================================================================
+
 # LOGGING
+
 # =============================================================================
 
 class Logger:
-    def __init__(self):
-        self.seq = 0
-        self.events: List[ActivityEvent] = []
-        self.dropped = 0
+def **init**(self):
+self.seq = 0
+self.events: List[ActivityEvent] = []
+self.dropped = 0
 
     def log(self, *, platform: str, tab_id: str, module: str, base_product_id: Optional[str],
             event_type: str, action: str, target: Optional[str] = None,
@@ -230,67 +235,64 @@ class Logger:
             "max_events": MAX_ACTIVITY_EVENTS,
         }
 
-
 # =============================================================================
+
 # UTILITIES: identity guards, retries, modal/popup closing
+
 # =============================================================================
 
-async def close_common_popups(page: Page, logger: Logger, platform: str, tab_id: str, base_product_id: Optional[str], module: str):
-    # Non-destructive best-effort: cookie banners, discounts, newsletters
-    # Adjust selectors per real UI.
-    candidates = [
-        ("button:has-text('No thanks')", "close_no_thanks"),
-        ("button:has-text('Maybe later')", "close_maybe_later"),
-        ("button:has-text('Nie, dziękuję')", "close_nie_dziekuje"),
-        ("button:has-text('Zamknij')", "close_zamknij"),
-        ("button[aria-label='Close']", "close_aria"),
-        ("[role='dialog'] button:has-text('Close')", "close_dialog_close"),
-    ]
-    for sel, action in candidates:
-        try:
-            el = page.locator(sel).first
-            if await el.count():
-                if await el.is_visible():
-                    await el.click(timeout=1000)
-                    logger.log(platform=platform, tab_id=tab_id, module=module, base_product_id=base_product_id,
-                               event_type="modal", action=action, target=sel, outcome="ok")
-        except Exception:
-            pass
+async def close_common_popups(page: Page, logger: Logger, platform: str, tab_id: str, base_product_id: Optional[str], module: str): # Non-destructive best-effort: cookie banners, discounts, newsletters # Adjust selectors per real UI.
+candidates = [
+("button:has-text('No thanks')", "close_no_thanks"),
+("button:has-text('Maybe later')", "close_maybe_later"),
+("button:has-text('Nie, dziękuję')", "close_nie_dziekuje"),
+("button:has-text('Zamknij')", "close_zamknij"),
+("button[aria-label='Close']", "close_aria"),
+("[role='dialog'] button:has-text('Close')", "close_dialog_close"),
+]
+for sel, action in candidates:
+try:
+el = page.locator(sel).first
+if await el.count():
+if await el.is_visible():
+await el.click(timeout=1000)
+logger.log(platform=platform, tab_id=tab_id, module=module, base_product_id=base_product_id,
+event_type="modal", action=action, target=sel, outcome="ok")
+except Exception:
+pass
 
 async def assert_identity_base(page: Page, logger: Logger, tab_id: str, module: str, base_product_id: Optional[str]) -> bool:
-    url = page.url
-    ok = "panel.base.com" in url
-    if not ok:
-        # Sometimes Base uses different subpaths but same domain; we keep strict domain check.
-        pass
-    logger.log(platform="Base.com", tab_id=tab_id, module=module, base_product_id=base_product_id,
-               event_type="assert", action="identity_guard_base",
-               url_before=url, url_after=url, outcome="ok" if ok else "fail",
-               context={"url": sanitize_url(url)})
-    return ok
+url = page.url
+ok = "panel.base.com" in url
+if not ok: # Sometimes Base uses different subpaths but same domain; we keep strict domain check.
+pass
+logger.log(platform="Base.com", tab_id=tab_id, module=module, base_product_id=base_product_id,
+event_type="assert", action="identity_guard_base",
+url_before=url, url_after=url, outcome="ok" if ok else "fail",
+context={"url": sanitize_url(url)})
+return ok
 
 async def assert_identity_tradera(page: Page, logger: Logger, tab_id: str, module: str, base_product_id: Optional[str]) -> bool:
-    url = page.url
-    ok = "tradera.com" in url
-    logger.log(platform="Tradera", tab_id=tab_id, module=module, base_product_id=base_product_id,
-               event_type="assert", action="identity_guard_tradera",
-               url_before=url, url_after=url, outcome="ok" if ok else "fail",
-               context={"url": sanitize_url(url)})
-    return ok
+url = page.url
+ok = "tradera.com" in url
+logger.log(platform="Tradera", tab_id=tab_id, module=module, base_product_id=base_product_id,
+event_type="assert", action="identity_guard_tradera",
+url_before=url, url_after=url, outcome="ok" if ok else "fail",
+context={"url": sanitize_url(url)})
+return ok
 
 def is_login_page_base(url: str) -> bool:
-    return "login.baselinker.com" in url or "login" in url and "baselinker" in url
+return "login.baselinker.com" in url or "login" in url and "baselinker" in url
 
 def is_login_page_tradera(url: str) -> bool:
-    return "/login" in url or "login" in url
+return "/login" in url or "login" in url
 
 async def manual_login_handoff(page: Page, logger: Logger, platform: str, tab_id: str, module: str,
-                               login_url: str, success_url: str,
-                               base_product_id: Optional[str],
-                               hint_once_flag: Dict[str, bool], hint_key: str) -> bool:
-    # Return True if logged in successfully, else False on timeout.
-    start = time.time()
-    checks = 0
+login_url: str, success_url: str,
+base_product_id: Optional[str],
+hint_once_flag: Dict[str, bool], hint_key: str) -> bool: # Return True if logged in successfully, else False on timeout.
+start = time.time()
+checks = 0
 
     if not hint_once_flag.get(hint_key, False):
         eprint(f"[LOGIN REQUIRED] Please log in manually in the opened browser tab ({platform}).")
@@ -347,61 +349,59 @@ async def manual_login_handoff(page: Page, logger: Logger, platform: str, tab_id
                        redacted=True, context={"elapsed_sec": int(time.time() - start)})
             return False
 
-
 # =============================================================================
+
 # DOMAIN-SPECIFIC HELPERS
+
 # =============================================================================
 
-def parse_stock(text: str) -> Optional[int]:
-    # Examples: "4 szt.", "0", "0 szt."
-    m = re.search(r"(\d+)", text or "")
-    if not m:
-        return None
-    try:
-        return int(m.group(1))
-    except Exception:
-        return None
+def parse_stock(text: str) -> Optional[int]: # Examples: "4 szt.", "0", "0 szt."
+m = re.search(r"(\d+)", text or "")
+if not m:
+return None
+try:
+return int(m.group(1))
+except Exception:
+return None
 
 def parse_price_eur(text: str) -> Optional[float]:
-    if not text:
-        return None
-    # tolerate "12,34" or "12.34"
-    cleaned = text.strip().replace(" ", "")
-    cleaned = cleaned.replace("\u00a0", "")
-    m = re.search(r"(\d+(?:[.,]\d+)?)", cleaned)
-    if not m:
-        return None
-    num = m.group(1).replace(",", ".")
-    try:
-        return float(num)
-    except Exception:
-        return None
+if not text:
+return None # tolerate "12,34" or "12.34"
+cleaned = text.strip().replace(" ", "")
+cleaned = cleaned.replace("\u00a0", "")
+m = re.search(r"(\d+(?:[.,]\d+)?)", cleaned)
+if not m:
+return None
+num = m.group(1).replace(",", ".")
+try:
+return float(num)
+except Exception:
+return None
 
 def compute_shipping_and_size(dim_cm: Optional[float]) -> Tuple[str, Optional[float]]:
-    if dim_cm is None:
-        return ("unknown", None)
-    if dim_cm <= SMALL_ITEM_MAX_LENGTH_CM:
-        return ("small", SMALL_ITEM_SHIPPING_EUR)
-    return ("large", LARGE_ITEM_SHIPPING_EUR)
+if dim_cm is None:
+return ("unknown", None)
+if dim_cm <= SMALL_ITEM_MAX_LENGTH_CM:
+return ("small", SMALL_ITEM_SHIPPING_EUR)
+return ("large", LARGE_ITEM_SHIPPING_EUR)
 
-def translate_pl_to_en_best_effort(pl_text: str) -> Optional[str]:
-    # Stub: you can wire this to your internal translator / OpenAI API if desired.
-    # Contract says "best-effort, no guessing"; if you don't have a translator, return None.
-    pl_text = (pl_text or "").strip()
-    if not pl_text:
-        return None
-    return None  # intentionally disabled by default
-
+def translate_pl_to_en_best_effort(pl_text: str) -> Optional[str]: # Stub: you can wire this to your internal translator / OpenAI API if desired. # Contract says "best-effort, no guessing"; if you don't have a translator, return None.
+pl_text = (pl_text or "").strip()
+if not pl_text:
+return None
+return None # intentionally disabled by default
 
 # =============================================================================
+
 # MAIN AGENT (M0..M18)
+
 # =============================================================================
 
 class CrossLister:
-    def __init__(self):
-        self.logger = Logger()
-        self.timestamp_start = now_iso()
-        self.timestamp_end = None
+def **init**(self):
+self.logger = Logger()
+self.timestamp_start = now_iso()
+self.timestamp_end = None
 
         self.processed_base_product_ids: Set[str] = set()
         self.skipped_base_product_ids: Set[str] = set()
@@ -1403,13 +1403,15 @@ class CrossLister:
         return json.dumps(asdict(report), ensure_ascii=False)
 
 # =============================================================================
+
 # ENTRYPOINT
+
 # =============================================================================
 
 async def main():
-    agent = CrossLister()
-    out_json = await agent.run()
-    sys.stdout.write(out_json)
+agent = CrossLister()
+out_json = await agent.run()
+sys.stdout.write(out_json)
 
-if __name__ == "__main__":
-    asyncio.run(main())
+if **name** == "**main**":
+asyncio.run(main())

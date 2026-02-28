@@ -11,7 +11,11 @@ import { SlotsProvider } from './SlotsContext';
 import { UiProvider } from './UiContext';
 import { VersionGraphProvider } from './VersionGraphContext';
 
-export function ImageStudioProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
+export function ImageStudioProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}): React.JSX.Element {
   return (
     <ProjectsProvider>
       <SettingsProvider>
@@ -20,9 +24,7 @@ export function ImageStudioProvider({ children }: { children: React.ReactNode })
             <VersionGraphProvider>
               <MaskingProvider>
                 <PromptProvider>
-                  <GenerationProvider>
-                    {children}
-                  </GenerationProvider>
+                  <GenerationProvider>{children}</GenerationProvider>
                 </PromptProvider>
               </MaskingProvider>
             </VersionGraphProvider>

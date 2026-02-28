@@ -16,10 +16,7 @@ type TraderaQueueHealthResponse = {
   };
 };
 
-export async function GET_handler(
-  _req: NextRequest,
-  _ctx: ApiHandlerContext
-): Promise<Response> {
+export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   initializeQueues();
   await Promise.all([
     import('@/features/jobs/workers/traderaListingQueue'),
@@ -27,13 +24,9 @@ export async function GET_handler(
   ]);
 
   const redisAvailable = isRedisAvailable();
-  const mode: TraderaQueueHealthResponse['mode'] = redisAvailable
-    ? 'bullmq'
-    : 'inline';
+  const mode: TraderaQueueHealthResponse['mode'] = redisAvailable ? 'bullmq' : 'inline';
   const healthMap =
-    (await getQueueHealth().catch(
-      () => ({}) as Record<string, QueueHealthStatus>
-    )) ?? {};
+    (await getQueueHealth().catch(() => ({}) as Record<string, QueueHealthStatus>)) ?? {};
 
   const listings = healthMap['tradera-listings'] ?? null;
   const relistScheduler = healthMap['tradera-relist-scheduler'] ?? null;

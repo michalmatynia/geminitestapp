@@ -2,7 +2,7 @@
 
 import type { MathConfig } from '@/shared/lib/ai-paths';
 import { toNumber } from '@/shared/lib/ai-paths';
-import { Input,  SelectSimple, FormField } from '@/shared/ui';
+import { Input, SelectSimple, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -29,7 +29,8 @@ export function MathNodeConfigSection(): React.JSX.Element | null {
   return (
     <div className='space-y-4'>
       <FormField label='Operation'>
-        <SelectSimple size='sm'
+        <SelectSimple
+          size='sm'
           variant='subtle'
           value={mathConfig.operation}
           onValueChange={(value: string): void =>

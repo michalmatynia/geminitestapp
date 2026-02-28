@@ -71,14 +71,10 @@ export function normalizePlannerMeta(parsed: {
     ...(critique?.safetyChecks ?? []),
     ...(safetyChecks ?? []),
   ]);
-  const normalizedQuestions = uniqStrings([
-    ...(critique?.questions ?? []),
-    ...(questions ?? []),
-  ]);
+  const normalizedQuestions = uniqStrings([...(critique?.questions ?? []), ...(questions ?? [])]);
   const alternatives = normalizeAlternatives(parsed.alternatives);
   const taskType = normalizeTaskType(parsed.taskType);
-  const summary =
-    typeof parsed.summary === 'string' ? parsed.summary.trim() : null;
+  const summary = typeof parsed.summary === 'string' ? parsed.summary.trim() : null;
   const constraints = normalizeStringList(parsed.constraints);
   const successSignals = normalizeStringList(parsed.successSignals);
   return {
@@ -147,8 +143,7 @@ export function normalizeAlternatives(value: unknown): PlannerAlternative[] | nu
       if (!title || steps.length === 0) return null;
       return {
         title,
-        rationale:
-          typeof typed.rationale === 'string' ? typed.rationale.trim() : null,
+        rationale: typeof typed.rationale === 'string' ? typed.rationale.trim() : null,
         steps,
       } satisfies PlannerAlternative;
     })
@@ -165,10 +160,7 @@ export function buildSafetyCheckSteps(
   meta?: PlannerMeta,
   maxStepAttempts: number = MAX_STEP_ATTEMPTS
 ): PlanStep[] {
-  const checks = [
-    ...(meta?.safetyChecks ?? []),
-    ...(meta?.critique?.safetyChecks ?? []),
-  ]
+  const checks = [...(meta?.safetyChecks ?? []), ...(meta?.critique?.safetyChecks ?? [])]
     .map((check: string) => check.trim())
     .filter(Boolean);
   if (checks.length === 0) return [];
@@ -295,10 +287,7 @@ export function buildBranchStepsFromAlternatives(
     return [];
   });
   if (specs.length === 0) return [];
-  return buildPlanStepsFromSpecs(specs, null, true, maxStepAttempts).slice(
-    0,
-    maxSteps
-  );
+  return buildPlanStepsFromSpecs(specs, null, true, maxStepAttempts).slice(0, maxSteps);
 }
 
 export function normalizePhase(
@@ -320,9 +309,7 @@ export function normalizeDependencies(
   if (!Array.isArray(value) || value.length === 0) return null;
   if (typeof value[0] === 'number') {
     return (value as number[])
-      .filter(
-        (idx: number) => Number.isInteger(idx) && idx >= 0 && idx < stepSpecs.length
-      )
+      .filter((idx: number) => Number.isInteger(idx) && idx >= 0 && idx < stepSpecs.length)
       .map((idx: number) => `step-${idx}`);
   }
   if (typeof value[0] === 'string') {
@@ -367,36 +354,13 @@ export function normalizePlanHierarchy(parsed: {
   if (!Array.isArray(parsed.goals) || parsed.goals.length === 0) {
     return null;
   }
-  const goals: PlanHierarchy['goals'] = parsed.goals.map((goal: {
-    title?: string;
-    successCriteria?: string | null;
-    priority?: number | null;
-    dependsOn?: number[] | string[] | null;
-    subgoals?: Array<{
+  const goals: PlanHierarchy['goals'] = parsed.goals.map(
+    (goal: {
       title?: string;
       successCriteria?: string | null;
       priority?: number | null;
       dependsOn?: number[] | string[] | null;
-      steps?: Array<{
-        title?: string;
-        tool?: string;
-        expectedObservation?: string | null;
-        successCriteria?: string | null;
-        phase?: string | null;
-        priority?: number | null;
-        dependsOn?: number[] | string[] | null;
-      }>;
-    }>;
-  }) => {
-    const goalId = randomUUID();
-    const subgoals = Array.isArray(goal.subgoals) ? goal.subgoals : [];
-    return {
-      id: goalId,
-      title: goal.title?.trim() || 'Primary objective',
-      successCriteria: goal.successCriteria?.trim() || null,
-      priority: typeof goal.priority === 'number' ? goal.priority : null,
-      dependsOn: Array.isArray(goal.dependsOn) ? goal.dependsOn : null,
-      subgoals: subgoals.map((subgoal: {
+      subgoals?: Array<{
         title?: string;
         successCriteria?: string | null;
         priority?: number | null;
@@ -410,39 +374,65 @@ export function normalizePlanHierarchy(parsed: {
           priority?: number | null;
           dependsOn?: number[] | string[] | null;
         }>;
-      }) => {
-        const subgoalId = randomUUID();
-        const steps = Array.isArray(subgoal.steps) ? subgoal.steps : [];
-        return {
-          id: subgoalId,
-          title: subgoal.title?.trim() || 'Supporting task',
-          successCriteria: subgoal.successCriteria?.trim() || null,
-          priority:
-            typeof subgoal.priority === 'number' ? subgoal.priority : null,
-          dependsOn: Array.isArray(subgoal.dependsOn)
-            ? subgoal.dependsOn
-            : null,
-          steps: steps.map((step: {
+      }>;
+    }) => {
+      const goalId = randomUUID();
+      const subgoals = Array.isArray(goal.subgoals) ? goal.subgoals : [];
+      return {
+        id: goalId,
+        title: goal.title?.trim() || 'Primary objective',
+        successCriteria: goal.successCriteria?.trim() || null,
+        priority: typeof goal.priority === 'number' ? goal.priority : null,
+        dependsOn: Array.isArray(goal.dependsOn) ? goal.dependsOn : null,
+        subgoals: subgoals.map(
+          (subgoal: {
             title?: string;
-            tool?: string;
-            expectedObservation?: string | null;
             successCriteria?: string | null;
-            phase?: string | null;
             priority?: number | null;
             dependsOn?: number[] | string[] | null;
-          }) => ({
-            title: step.title?.trim() || 'Review the page state.',
-            tool: step.tool === 'none' ? 'none' : 'playwright' as const,
-            expectedObservation: step.expectedObservation?.trim() || null,
-            successCriteria: step.successCriteria?.trim() || null,
-            phase: step.phase ?? null,
-            priority: step.priority ?? null,
-            dependsOn: step.dependsOn ?? null,
-          })),
-        };
-      }),
-    };
-  });
+            steps?: Array<{
+              title?: string;
+              tool?: string;
+              expectedObservation?: string | null;
+              successCriteria?: string | null;
+              phase?: string | null;
+              priority?: number | null;
+              dependsOn?: number[] | string[] | null;
+            }>;
+          }) => {
+            const subgoalId = randomUUID();
+            const steps = Array.isArray(subgoal.steps) ? subgoal.steps : [];
+            return {
+              id: subgoalId,
+              title: subgoal.title?.trim() || 'Supporting task',
+              successCriteria: subgoal.successCriteria?.trim() || null,
+              priority: typeof subgoal.priority === 'number' ? subgoal.priority : null,
+              dependsOn: Array.isArray(subgoal.dependsOn) ? subgoal.dependsOn : null,
+              steps: steps.map(
+                (step: {
+                  title?: string;
+                  tool?: string;
+                  expectedObservation?: string | null;
+                  successCriteria?: string | null;
+                  phase?: string | null;
+                  priority?: number | null;
+                  dependsOn?: number[] | string[] | null;
+                }) => ({
+                  title: step.title?.trim() || 'Review the page state.',
+                  tool: step.tool === 'none' ? 'none' : ('playwright' as const),
+                  expectedObservation: step.expectedObservation?.trim() || null,
+                  successCriteria: step.successCriteria?.trim() || null,
+                  phase: step.phase ?? null,
+                  priority: step.priority ?? null,
+                  dependsOn: step.dependsOn ?? null,
+                })
+              ),
+            };
+          }
+        ),
+      };
+    }
+  );
   return { goals };
 }
 
@@ -491,10 +481,7 @@ export function flattenPlanHierarchy(hierarchy: PlanHierarchy): Array<{
   return steps;
 }
 
-export function decideNextAction(
-  prompt: string,
-  memory: string[]
-): AgentDecision {
+export function decideNextAction(prompt: string, memory: string[]): AgentDecision {
   const lower = prompt.toLowerCase();
   if (lower.includes('browse') || lower.includes('website')) {
     return {
@@ -625,8 +612,7 @@ export function isExtractionStep(
   taskType: PlannerMeta['taskType'] | null
 ): boolean {
   if (taskType === 'extract_info') return true;
-  const combined =
-    `${step.title} ${step.expectedObservation ?? ''} ${prompt}`.toLowerCase();
+  const combined = `${step.title} ${step.expectedObservation ?? ''} ${prompt}`.toLowerCase();
   const mentionsExtract = /(extract|collect|find|list|get)\b/.test(combined);
   const mentionsTarget = /(product|email)/.test(combined);
   return mentionsExtract && mentionsTarget;

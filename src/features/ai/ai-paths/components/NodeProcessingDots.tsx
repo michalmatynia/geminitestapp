@@ -30,11 +30,17 @@ export const NodeProcessingDots = React.memo(function NodeProcessingDots({
       />
       <span
         className='block h-[5px] w-[5px] rounded-full bg-sky-400'
-        style={{ animation: 'ai-paths-dot-bounce 1.2s ease-in-out infinite', animationDelay: '0.2s' }}
+        style={{
+          animation: 'ai-paths-dot-bounce 1.2s ease-in-out infinite',
+          animationDelay: '0.2s',
+        }}
       />
       <span
         className='block h-[5px] w-[5px] rounded-full bg-sky-400'
-        style={{ animation: 'ai-paths-dot-bounce 1.2s ease-in-out infinite', animationDelay: '0.4s' }}
+        style={{
+          animation: 'ai-paths-dot-bounce 1.2s ease-in-out infinite',
+          animationDelay: '0.4s',
+        }}
       />
     </span>
   );

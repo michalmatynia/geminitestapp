@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterAll } from 'vitest';
 
 import * as api from '@/shared/lib/ai-paths/api';
-import { 
-  handleTemplate, 
-  handlePrompt, 
-  handleModel, 
-  handleAiDescription, 
-  handleDescriptionUpdater 
+import {
+  handleTemplate,
+  handlePrompt,
+  handleModel,
+  handleAiDescription,
+  handleDescriptionUpdater,
 } from '@/shared/lib/ai-paths/core/runtime/handlers/generation';
 
 import { createMockContext } from '../../test-utils';
@@ -51,9 +51,9 @@ describe('Generation Handlers', () => {
         node: {
           id: 'n1',
           type: 'template',
-          config: { template: { template: 'Hello {{name}}' } }
+          config: { template: { template: 'Hello {{name}}' } },
         } as any,
-        nodeInputs: { name: 'World' }
+        nodeInputs: { name: 'World' },
       });
       const result = await handleTemplate(ctx);
       expect(result['prompt']).toBe('Hello World');
@@ -66,9 +66,9 @@ describe('Generation Handlers', () => {
         node: {
           id: 'n1',
           type: 'prompt',
-          config: { prompt: { template: 'Task: {{value}}' } }
+          config: { prompt: { template: 'Task: {{value}}' } },
         } as any,
-        nodeInputs: { value: 'Translate this' }
+        nodeInputs: { value: 'Translate this' },
       });
       const result = await handlePrompt(ctx);
       expect(result['prompt']).toBe('Task: Translate this');
@@ -79,7 +79,7 @@ describe('Generation Handlers', () => {
     it('should enqueue AI model job', async () => {
       vi.mocked(api.aiJobsApi.enqueue).mockResolvedValue({
         ok: true,
-        data: { jobId: 'job-123' }
+        data: { jobId: 'job-123' },
       } as any);
 
       const ctx = createMockContext({
@@ -87,9 +87,9 @@ describe('Generation Handlers', () => {
           id: 'n1',
           type: 'model',
           inputs: ['prompt'],
-          config: { model: { modelId: 'gpt-4o', waitForResult: false } }
+          config: { model: { modelId: 'gpt-4o', waitForResult: false } },
         } as any,
-        nodeInputs: { prompt: 'Do something' }
+        nodeInputs: { prompt: 'Do something' },
       });
       const result = await handleModel(ctx);
       expect(result['jobId']).toBe('job-123');
@@ -100,7 +100,7 @@ describe('Generation Handlers', () => {
     it('should filter blocked image URLs by outbound policy before enqueue', async () => {
       vi.mocked(api.aiJobsApi.enqueue).mockResolvedValue({
         ok: true,
-        data: { jobId: 'job-123' }
+        data: { jobId: 'job-123' },
       } as any);
       const reportAiPathsError = vi.fn();
       const toast = vi.fn();
@@ -110,7 +110,7 @@ describe('Generation Handlers', () => {
           id: 'n1',
           type: 'model',
           inputs: ['prompt', 'images'],
-          config: { model: { modelId: 'gpt-4o', waitForResult: false } }
+          config: { model: { modelId: 'gpt-4o', waitForResult: false } },
         } as any,
         nodeInputs: {
           prompt: 'Do something',
@@ -153,7 +153,7 @@ describe('Generation Handlers', () => {
           id: 'n1',
           type: 'model',
           inputs: ['prompt'],
-          config: { model: { modelId: 'gpt-4o', waitForResult: false } }
+          config: { model: { modelId: 'gpt-4o', waitForResult: false } },
         } as any,
         nodeInputs: {},
       });
@@ -170,7 +170,7 @@ describe('Generation Handlers', () => {
           id: 'n1',
           type: 'model',
           inputs: ['prompt'],
-          config: { model: { modelId: 'gpt-4o', waitForResult: false } }
+          config: { model: { modelId: 'gpt-4o', waitForResult: false } },
         } as any,
         nodeInputs: { prompt: 'Do something' },
         skipAiJobs: true,
@@ -187,11 +187,11 @@ describe('Generation Handlers', () => {
     it('should call generateDescription API', async () => {
       vi.mocked(api.aiGenerationApi.generateDescription).mockResolvedValue({
         ok: true,
-        data: { description: 'Generated description' }
+        data: { description: 'Generated description' },
       } as any);
 
       const ctx = createMockContext({
-        nodeInputs: { entityJson: { id: 'p1' } }
+        nodeInputs: { entityJson: { id: 'p1' } },
       });
       const result = await handleAiDescription(ctx);
       expect(result['description_en']).toBe('Generated description');
@@ -201,7 +201,7 @@ describe('Generation Handlers', () => {
     it('should filter blocked image URLs by outbound policy before description generation', async () => {
       vi.mocked(api.aiGenerationApi.generateDescription).mockResolvedValue({
         ok: true,
-        data: { description: 'Generated description' }
+        data: { description: 'Generated description' },
       } as any);
       const reportAiPathsError = vi.fn();
       const toast = vi.fn();
@@ -214,10 +214,7 @@ describe('Generation Handlers', () => {
         nodeInputs: {
           entityJson: {
             id: 'p1',
-            images: [
-              'https://cdn.example.com/image-2.jpg',
-              'http://127.0.0.1/private.jpg',
-            ],
+            images: ['https://cdn.example.com/image-2.jpg', 'http://127.0.0.1/private.jpg'],
           },
         },
         reportAiPathsError,
@@ -248,15 +245,18 @@ describe('Generation Handlers', () => {
   describe('handleDescriptionUpdater', () => {
     it('should call updateProductDescription API', async () => {
       vi.mocked(api.aiGenerationApi.updateProductDescription).mockResolvedValue({
-        ok: true
+        ok: true,
       } as any);
 
       const ctx = createMockContext({
-        nodeInputs: { productId: 'p1', description_en: 'New description' }
+        nodeInputs: { productId: 'p1', description_en: 'New description' },
       });
       const result = await handleDescriptionUpdater(ctx);
       expect(result['description_en']).toBe('New description');
-      expect(api.aiGenerationApi.updateProductDescription).toHaveBeenCalledWith('p1', 'New description');
+      expect(api.aiGenerationApi.updateProductDescription).toHaveBeenCalledWith(
+        'p1',
+        'New description'
+      );
     });
   });
 });

@@ -73,11 +73,26 @@ export function CanvasOutputNodeConfigSection(): React.JSX.Element | null {
           Image Studio Field Mapping Paths
         </p>
         <div className='space-y-0.5 font-mono text-[11px] text-sky-300/80'>
-          <div><span className='text-gray-500'>Left    </span>{key}.left</div>
-          <div><span className='text-gray-500'>Top     </span>{key}.top</div>
-          <div><span className='text-gray-500'>Width   </span>{key}.width</div>
-          <div><span className='text-gray-500'>Height  </span>{key}.height</div>
-          <div><span className='text-gray-500'>Confidence </span>{key}.confidence</div>
+          <div>
+            <span className='text-gray-500'>Left </span>
+            {key}.left
+          </div>
+          <div>
+            <span className='text-gray-500'>Top </span>
+            {key}.top
+          </div>
+          <div>
+            <span className='text-gray-500'>Width </span>
+            {key}.width
+          </div>
+          <div>
+            <span className='text-gray-500'>Height </span>
+            {key}.height
+          </div>
+          <div>
+            <span className='text-gray-500'>Confidence </span>
+            {key}.confidence
+          </div>
         </div>
         <p className='mt-2 text-[10px] text-sky-400/60'>
           When field mapping is left blank in Image Studio, these paths are used automatically.

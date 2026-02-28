@@ -5,11 +5,7 @@ import { CaseResolverCaseOverviewWorkspace } from '@/features/case-resolver/comp
 import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
 
 vi.mock('@/features/case-resolver/components/CaseResolverRelationsWorkspace', () => ({
-  CaseResolverRelationsWorkspace: ({
-    focusCaseId,
-  }: {
-    focusCaseId?: string | null;
-  }) => (
+  CaseResolverRelationsWorkspace: ({ focusCaseId }: { focusCaseId?: string | null }) => (
     <div data-testid='relations-workspace'>{focusCaseId ?? 'none'}</div>
   ),
 }));
@@ -19,32 +15,33 @@ type SelectOption = {
   label: string;
 };
 
-const buildCaseFile = (input?: Partial<Pick<CaseResolverFile, 'id' | 'name' | 'isLocked'>>): CaseResolverFile =>
-  ({
-    id: input?.id ?? 'case-a',
-    workspaceId: 'workspace-1',
-    name: input?.name ?? 'Case Alpha',
-    fileType: 'case',
-    folder: '/',
-    documentContent: '',
-    version: 1,
-    isLocked: input?.isLocked ?? false,
-    scanSlots: [],
-    documentContentVersion: 1,
-    documentContentFormatVersion: 1,
-    activeDocumentVersion: 'original',
-    editorType: 'wysiwyg',
-    documentContentPlainText: '',
-    documentContentHtml: '',
-    documentContentMarkdown: '',
-    documentHistory: [],
-    documentConversionWarnings: [],
-    scanOcrModel: '',
-    scanOcrPrompt: '',
-    referenceCaseIds: [],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  });
+const buildCaseFile = (
+  input?: Partial<Pick<CaseResolverFile, 'id' | 'name' | 'isLocked'>>
+): CaseResolverFile => ({
+  id: input?.id ?? 'case-a',
+  workspaceId: 'workspace-1',
+  name: input?.name ?? 'Case Alpha',
+  fileType: 'case',
+  folder: '/',
+  documentContent: '',
+  version: 1,
+  isLocked: input?.isLocked ?? false,
+  scanSlots: [],
+  documentContentVersion: 1,
+  documentContentFormatVersion: 1,
+  activeDocumentVersion: 'original',
+  editorType: 'wysiwyg',
+  documentContentPlainText: '',
+  documentContentHtml: '',
+  documentContentMarkdown: '',
+  documentHistory: [],
+  documentConversionWarnings: [],
+  scanOcrModel: '',
+  scanOcrPrompt: '',
+  referenceCaseIds: [],
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+});
 
 const BASE_OPTIONS: SelectOption[] = [
   { value: '__none__', label: 'None' },
@@ -52,7 +49,10 @@ const BASE_OPTIONS: SelectOption[] = [
   { value: 'case-b', label: 'Case Beta' },
 ];
 
-import { CaseResolverPageProvider, type CaseResolverPageContextValue } from '../context/CaseResolverPageContext';
+import {
+  CaseResolverPageProvider,
+  type CaseResolverPageContextValue,
+} from '../context/CaseResolverPageContext';
 
 const renderWorkspace = (
   activeCaseFile: CaseResolverFile | null,
@@ -64,7 +64,8 @@ const renderWorkspace = (
       id: 'workspace-1',
       files: workspaceFiles,
       assets: [],
-    } as unknown as CaseResolverPageContextValue['workspace'],    activeCaseId: activeCaseFile?.id ?? null,
+    } as unknown as CaseResolverPageContextValue['workspace'],
+    activeCaseId: activeCaseFile?.id ?? null,
     activeFile: activeCaseFile,
     caseTagOptions: BASE_OPTIONS,
     caseIdentifierOptions: BASE_OPTIONS,

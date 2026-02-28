@@ -13,21 +13,10 @@ import {
   PROMPT_ENGINE_SETTINGS_KEY,
   parsePromptEngineSettings,
 } from '@/shared/lib/prompt-engine/settings';
-import type {
-  PromptValidationRule,
-  PromptValidationScope,
-} from '@/shared/contracts/prompt-engine';
+import type { PromptValidationRule, PromptValidationScope } from '@/shared/contracts/prompt-engine';
 import { promptValidationRuleSchema } from '@/shared/contracts/prompt-engine';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
-import {
-  Badge,
-  Button,
-  Input,
-  SelectSimple,
-  Textarea,
-  ToggleRow,
-  FormField,
-} from '@/shared/ui';
+import { Badge, Button, Input, SelectSimple, Textarea, ToggleRow, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -140,10 +129,7 @@ const safeParseRuleArray = (
   }
 };
 
-const ruleAppliesToScope = (
-  rule: PromptValidationRule,
-  scope: PromptValidationScope
-): boolean => {
+const ruleAppliesToScope = (rule: PromptValidationRule, scope: PromptValidationScope): boolean => {
   const appliesToScopes = rule.appliesToScopes ?? [];
   if (appliesToScopes.length === 0) return true;
   return appliesToScopes.includes(scope) || appliesToScopes.includes('global');
@@ -201,23 +187,20 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
       ? persistedConfig.includeRuleIds
       : DEFAULT_CONFIG.includeRuleIds,
     localListName: persistedConfig.localListName ?? DEFAULT_CONFIG.localListName,
-    localListDescription: persistedConfig.localListDescription ?? DEFAULT_CONFIG.localListDescription,
-    rules: Array.isArray(persistedConfig.rules)
-      ? persistedConfig.rules
-      : DEFAULT_CONFIG.rules,
+    localListDescription:
+      persistedConfig.localListDescription ?? DEFAULT_CONFIG.localListDescription,
+    rules: Array.isArray(persistedConfig.rules) ? persistedConfig.rules : DEFAULT_CONFIG.rules,
     learnedRules: Array.isArray(persistedConfig.learnedRules)
       ? persistedConfig.learnedRules
       : DEFAULT_CONFIG.learnedRules,
   };
 
-  const rawPromptEngineSettings =
-    settingsQuery.data?.get(PROMPT_ENGINE_SETTINGS_KEY) ?? null;
+  const rawPromptEngineSettings = settingsQuery.data?.get(PROMPT_ENGINE_SETTINGS_KEY) ?? null;
   const promptEngineSettings = React.useMemo(
     () => parsePromptEngineSettings(rawPromptEngineSettings),
     [rawPromptEngineSettings]
   );
-  const rawPatternLists =
-    settingsQuery.data?.get(VALIDATOR_PATTERN_LISTS_KEY) ?? null;
+  const rawPatternLists = settingsQuery.data?.get(VALIDATOR_PATTERN_LISTS_KEY) ?? null;
   const patternLists = React.useMemo(
     () => parseValidatorPatternLists(rawPatternLists),
     [rawPatternLists]
@@ -256,13 +239,9 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
     JSON.stringify(config.learnedRules ?? [], null, 2)
   );
   const [rulesDraftError, setRulesDraftError] = React.useState<string | null>(null);
-  const [learnedRulesDraftError, setLearnedRulesDraftError] =
-    React.useState<string | null>(null);
+  const [learnedRulesDraftError, setLearnedRulesDraftError] = React.useState<string | null>(null);
 
-  const rulesSignature = React.useMemo(
-    () => JSON.stringify(config.rules ?? []),
-    [config.rules]
-  );
+  const rulesSignature = React.useMemo(() => JSON.stringify(config.rules ?? []), [config.rules]);
   const learnedRulesSignature = React.useMemo(
     () => JSON.stringify(config.learnedRules ?? []),
     [config.learnedRules]
@@ -301,13 +280,10 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
       ? VALIDATOR_SCOPE_TO_PROMPT_SCOPE[activeStack.scope]
       : config.scope;
     const scopedRules = (promptEngineSettings.promptValidation.rules ?? []).filter(
-      (rule: PromptValidationRule): boolean =>
-        ruleAppliesToScope(rule, inferredScope)
+      (rule: PromptValidationRule): boolean => ruleAppliesToScope(rule, inferredScope)
     );
-    const scopedLearnedRules = (
-      promptEngineSettings.promptValidation.learnedRules ?? []
-    ).filter((rule: PromptValidationRule): boolean =>
-      ruleAppliesToScope(rule, inferredScope)
+    const scopedLearnedRules = (promptEngineSettings.promptValidation.learnedRules ?? []).filter(
+      (rule: PromptValidationRule): boolean => ruleAppliesToScope(rule, inferredScope)
     );
     updateConfig({
       scope: inferredScope,
@@ -353,7 +329,7 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
 
   const totalRuleCount =
     (config.rules?.length ?? 0) +
-    (config.includeLearnedRules ? config.learnedRules?.length ?? 0 : 0);
+    (config.includeLearnedRules ? (config.learnedRules?.length ?? 0) : 0);
   const includeRuleIdsText = (config.includeRuleIds ?? []).join('\n');
 
   return (
@@ -377,10 +353,7 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
           value={config.source}
           onValueChange={(value: string): void =>
             updateConfig({
-              source:
-                value === 'path_local'
-                  ? 'path_local'
-                  : 'global_stack',
+              source: value === 'path_local' ? 'path_local' : 'global_stack',
             })
           }
           options={SOURCE_OPTIONS}
@@ -400,9 +373,7 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
                 );
                 updateConfig({
                   stackId: value,
-                  ...(list
-                    ? { scope: VALIDATOR_SCOPE_TO_PROMPT_SCOPE[list.scope] }
-                    : {}),
+                  ...(list ? { scope: VALIDATOR_SCOPE_TO_PROMPT_SCOPE[list.scope] } : {}),
                 });
               }}
               options={stackOptions}
@@ -410,20 +381,10 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
             />
           </FormField>
           <div className='flex flex-wrap items-center gap-2'>
-            <Button
-              type='button'
-              variant='outline'
-              size='xs'
-              onClick={syncRulesFromGlobalStack}
-            >
+            <Button type='button' variant='outline' size='xs' onClick={syncRulesFromGlobalStack}>
               Sync Rules From Global Stack
             </Button>
-            <Button
-              type='button'
-              variant='outline'
-              size='xs'
-              onClick={handleOpenValidatorPatterns}
-            >
+            <Button type='button' variant='outline' size='xs' onClick={handleOpenValidatorPatterns}>
               Open AI-Paths Node Validator
             </Button>
           </div>
@@ -466,12 +427,7 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
             >
               Add Regex Rule
             </Button>
-            <Button
-              type='button'
-              variant='outline'
-              size='xs'
-              onClick={handleOpenValidatorPatterns}
-            >
+            <Button type='button' variant='outline' size='xs' onClick={handleOpenValidatorPatterns}>
               Open AI-Paths Node Validator
             </Button>
           </div>
@@ -486,9 +442,7 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
             value={config.scope}
             onValueChange={(value: string): void =>
               updateConfig({
-                scope:
-                  SCOPE_OPTIONS.find((option) => option.value === value)?.value ??
-                  'global',
+                scope: SCOPE_OPTIONS.find((option) => option.value === value)?.value ?? 'global',
               })
             }
             options={SCOPE_OPTIONS}
@@ -502,9 +456,7 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
             onValueChange={(value: string): void =>
               updateConfig({
                 runtimeMode:
-                  value === 'validate_and_autofix'
-                    ? 'validate_and_autofix'
-                    : 'validate_only',
+                  value === 'validate_and_autofix' ? 'validate_and_autofix' : 'validate_only',
               })
             }
             options={RUNTIME_MODE_OPTIONS}
@@ -517,8 +469,7 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
             value={config.failPolicy}
             onValueChange={(value: string): void =>
               updateConfig({
-                failPolicy:
-                  value === 'report_only' ? 'report_only' : 'block_on_error',
+                failPolicy: value === 'report_only' ? 'report_only' : 'block_on_error',
               })
             }
             options={FAIL_POLICY_OPTIONS}
@@ -531,9 +482,8 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
             value={config.inputPort}
             onValueChange={(value: string): void =>
               updateConfig({
-                inputPort:
-                  (INPUT_PORT_OPTIONS.find((option) => option.value === value)?.value ??
-                    'auto') as ValidationPatternConfigDraft['inputPort'],
+                inputPort: (INPUT_PORT_OPTIONS.find((option) => option.value === value)?.value ??
+                  'auto') as ValidationPatternConfigDraft['inputPort'],
               })
             }
             options={INPUT_PORT_OPTIONS}
@@ -546,9 +496,8 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
             value={config.outputPort}
             onValueChange={(value: string): void =>
               updateConfig({
-                outputPort:
-                  (OUTPUT_PORT_OPTIONS.find((option) => option.value === value)?.value ??
-                    'value') as ValidationPatternConfigDraft['outputPort'],
+                outputPort: (OUTPUT_PORT_OPTIONS.find((option) => option.value === value)?.value ??
+                  'value') as ValidationPatternConfigDraft['outputPort'],
               })
             }
             options={OUTPUT_PORT_OPTIONS}
@@ -565,10 +514,7 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
             onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
               const parsed = Number.parseInt(event.target.value, 10);
               updateConfig({
-                maxAutofixPasses:
-                  Number.isFinite(parsed) && parsed > 0
-                    ? Math.min(10, parsed)
-                    : 1,
+                maxAutofixPasses: Number.isFinite(parsed) && parsed > 0 ? Math.min(10, parsed) : 1,
               });
             }}
           />
@@ -580,13 +526,11 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
         label='Include learned rules'
         description='When enabled, learned rules are merged with base rules.'
         checked={config.includeLearnedRules}
-        onCheckedChange={(checked: boolean): void =>
-          updateConfig({ includeLearnedRules: checked })
-        }
+        onCheckedChange={(checked: boolean): void => updateConfig({ includeLearnedRules: checked })}
       />
 
-      <FormField 
-        label='Rule ID Allowlist (optional)' 
+      <FormField
+        label='Rule ID Allowlist (optional)'
         description='One rule ID per line. Leave empty to run all configured rules.'
       >
         <Textarea
@@ -600,9 +544,11 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
         />
       </FormField>
 
-      <FormField 
-        label='Rules JSON' 
-        description={rulesDraftError ? undefined : 'Edit on-canvas rule list directly in this path node.'}
+      <FormField
+        label='Rules JSON'
+        description={
+          rulesDraftError ? undefined : 'Edit on-canvas rule list directly in this path node.'
+        }
         error={rulesDraftError ?? undefined}
       >
         <Textarea
@@ -617,9 +563,13 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
         />
       </FormField>
 
-      <FormField 
-        label='Learned Rules JSON' 
-        description={learnedRulesDraftError ? undefined : 'Optional learned rules that can be merged at runtime.'}
+      <FormField
+        label='Learned Rules JSON'
+        description={
+          learnedRulesDraftError
+            ? undefined
+            : 'Optional learned rules that can be merged at runtime.'
+        }
         error={learnedRulesDraftError ?? undefined}
       >
         <Textarea

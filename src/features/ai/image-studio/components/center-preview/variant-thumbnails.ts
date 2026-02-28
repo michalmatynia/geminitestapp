@@ -1,10 +1,13 @@
-import { estimateGenerationCost } from '@/features/ai/image-studio/utils/generation-cost';
+import { estimateGenerationCost } from '@/shared/lib/ai/image-studio/generation-cost';
 import {
   getImageStudioSlotImageSrc,
   isLikelyImageStudioErrorText,
-} from '@/features/ai/image-studio/utils/image-src';
+} from '@/shared/lib/ai/image-studio/image-src';
 import type { ImageFileRecord } from '@/shared/contracts/files';
-import type { ImageStudioSlotRecord, SlotGenerationMetadata } from '@/shared/contracts/image-studio';
+import type {
+  ImageStudioSlotRecord,
+  SlotGenerationMetadata,
+} from '@/shared/contracts/image-studio';
 
 import {
   asFiniteNumber,
@@ -17,8 +20,8 @@ import {
 
 import type { VersionNode } from '../../context/VersionGraphContext';
 
-
-const GENERATED_SOURCE_PATH_REGEX = /^\/uploads\/studio\/(?:center|crops|upscale|autoscale)\/[^/]+\/([^/]+)\//i;
+const GENERATED_SOURCE_PATH_REGEX =
+  /^\/uploads\/studio\/(?:center|crops|upscale|autoscale)\/[^/]+\/([^/]+)\//i;
 
 type LandingSlotLike = {
   index: number;
@@ -49,7 +52,7 @@ const normalizeVariantStatus = (value: string): VariantThumbnailInfo['status'] =
 
 const toVariantOutput = (
   output: LandingSlotLike['output'],
-  fallbackFilename: string,
+  fallbackFilename: string
 ): VariantThumbnailInfo['output'] => {
   if (!output) return null;
   return {
@@ -62,7 +65,9 @@ const toVariantOutput = (
   };
 };
 
-export const resolveSourceSlotIdFromGeneratedPath = (slot: ImageStudioSlotRecord | null): string | null => {
+export const resolveSourceSlotIdFromGeneratedPath = (
+  slot: ImageStudioSlotRecord | null
+): string | null => {
   if (!slot) return null;
   const sourcePath = normalizeImagePath(slot.imageFile?.url ?? slot.imageUrl ?? null);
   if (!sourcePath) return null;
@@ -77,9 +82,10 @@ export const isTreeRevealableCardSlot = (slot: ImageStudioSlotRecord | null): bo
   if (!metadata) return true;
 
   const role = typeof metadata['role'] === 'string' ? metadata['role'].trim().toLowerCase() : '';
-  const relationType = typeof metadata['relationType'] === 'string'
-    ? metadata['relationType'].trim().toLowerCase()
-    : '';
+  const relationType =
+    typeof metadata['relationType'] === 'string'
+      ? metadata['relationType'].trim().toLowerCase()
+      : '';
 
   const isGenerationDerived =
     role === 'generation' ||
@@ -95,7 +101,7 @@ export const isTreeRevealableCardSlot = (slot: ImageStudioSlotRecord | null): bo
 const isGenerationSlotLinkedToRoot = (
   slot: ImageStudioSlotRecord,
   rootSourceSlotId: string,
-  productImagesExternalBaseUrl: string,
+  productImagesExternalBaseUrl: string
 ): boolean => {
   const metadata = asObjectRecord(slot.metadata) as SlotGenerationMetadata | null;
   if (!metadata) return false;
@@ -104,8 +110,8 @@ const isGenerationSlotLinkedToRoot = (
   const source = typeof metadata.sourceSlotId === 'string' ? metadata.sourceSlotId.trim() : '';
   const sourceIds = Array.isArray(metadata.sourceSlotIds)
     ? metadata.sourceSlotIds.filter(
-      (value): value is string => typeof value === 'string' && value.trim().length > 0,
-    )
+        (value): value is string => typeof value === 'string' && value.trim().length > 0
+      )
     : [];
 
   const linkedToSource = source === rootSourceSlotId || sourceIds.includes(rootSourceSlotId);
@@ -124,7 +130,7 @@ const isGenerationSlotLinkedToRoot = (
 const buildVariantFromSlot = (
   slot: ImageStudioSlotRecord,
   fallbackIndex: number,
-  productImagesExternalBaseUrl: string,
+  productImagesExternalBaseUrl: string
 ): VariantThumbnailInfo => {
   const metadata = asObjectRecord(slot.metadata) as SlotGenerationMetadata | null;
   const generationParams = asObjectRecord(metadata?.generationParams);
@@ -137,7 +143,9 @@ const buildVariantFromSlot = (
     null;
   const timestamp =
     (typeof generationParams?.['timestamp'] === 'string' ? generationParams['timestamp'] : null) ??
-    (typeof generationRequest?.['timestamp'] === 'string' ? generationRequest['timestamp'] : null) ??
+    (typeof generationRequest?.['timestamp'] === 'string'
+      ? generationRequest['timestamp']
+      : null) ??
     null;
   const prompt =
     (typeof generationParams?.['prompt'] === 'string' ? generationParams['prompt'] : null) ??
@@ -168,27 +176,25 @@ const buildVariantFromSlot = (
   const resolvedSlotImageSrc = getImageStudioSlotImageSrc(slot, productImagesExternalBaseUrl);
   const rawSlotImageUrl = typeof slot.imageUrl === 'string' ? slot.imageUrl.trim() : '';
   const safeSlotImageUrl =
-    rawSlotImageUrl && !isLikelyImageStudioErrorText(rawSlotImageUrl)
-      ? rawSlotImageUrl
-      : '';
+    rawSlotImageUrl && !isLikelyImageStudioErrorText(rawSlotImageUrl) ? rawSlotImageUrl : '';
   const output = slotImageFile
     ? {
-      id: slotImageFile.id,
-      filepath: slotImageFile.filepath,
-      filename: slotImageFile.filename || slot.name || `Generated ${fallbackIndex}`,
-      size: slotImageFile.size,
-      width: slotImageFile.width ?? null,
-      height: slotImageFile.height ?? null,
-    }
+        id: slotImageFile.id,
+        filepath: slotImageFile.filepath,
+        filename: slotImageFile.filename || slot.name || `Generated ${fallbackIndex}`,
+        size: slotImageFile.size,
+        width: slotImageFile.width ?? null,
+        height: slotImageFile.height ?? null,
+      }
     : slot.imageFileId || safeSlotImageUrl
       ? {
-        id: slot.imageFileId ?? `slot:${slot.id}`,
-        filepath: safeSlotImageUrl,
-        filename: slot.name || `Generated ${fallbackIndex}`,
-        size: 0,
-        width: null,
-        height: null,
-      }
+          id: slot.imageFileId ?? `slot:${slot.id}`,
+          filepath: safeSlotImageUrl,
+          filename: slot.name || `Generated ${fallbackIndex}`,
+          size: 0,
+          width: null,
+          height: null,
+        }
       : null;
 
   const imageSrc = resolvedSlotImageSrc || output?.filepath || null;
@@ -227,7 +233,9 @@ export const buildVariantThumbnails = ({
   if (!rootSourceSlotId) return [];
 
   const historicalVariants: VariantThumbnailInfo[] = slots
-    .filter((slot) => isGenerationSlotLinkedToRoot(slot, rootSourceSlotId, productImagesExternalBaseUrl))
+    .filter((slot) =>
+      isGenerationSlotLinkedToRoot(slot, rootSourceSlotId, productImagesExternalBaseUrl)
+    )
     .map((slot, index) => buildVariantFromSlot(slot, index + 1, productImagesExternalBaseUrl))
     .sort((a, b) => {
       const aTs = a.timestamp ? Date.parse(a.timestamp) : Number.NaN;
@@ -241,7 +249,7 @@ export const buildVariantThumbnails = ({
   const historicalSlotIds = new Set<string>(
     historicalVariants
       .map((variant) => variant.slotId)
-      .filter((slotId): slotId is string => typeof slotId === 'string' && slotId.length > 0),
+      .filter((slotId): slotId is string => typeof slotId === 'string' && slotId.length > 0)
   );
   const normalizedRootSourceSlotId = rootSourceSlotId.trim();
   const normalizedActiveRunSourceSlotId = activeRunSourceSlotId?.trim() ?? '';
@@ -255,10 +263,12 @@ export const buildVariantThumbnails = ({
       const normalizedOutputPath = normalizeImagePath(output?.filepath);
       const matchingSlots = slots.filter((slot) => {
         const metadata = asObjectRecord(slot.metadata);
-        const runId = typeof metadata?.['generationRunId'] === 'string' ? metadata['generationRunId'] : null;
-        const outputIndex = typeof metadata?.['generationOutputIndex'] === 'number'
-          ? metadata['generationOutputIndex']
-          : null;
+        const runId =
+          typeof metadata?.['generationRunId'] === 'string' ? metadata['generationRunId'] : null;
+        const outputIndex =
+          typeof metadata?.['generationOutputIndex'] === 'number'
+            ? metadata['generationOutputIndex']
+            : null;
 
         if (activeRunId && runId === activeRunId && outputIndex === landingSlot.index) {
           return true;
@@ -280,16 +290,24 @@ export const buildVariantThumbnails = ({
         return false;
       });
 
-      const matchedSlot = matchingSlots.find((slot) => {
-        const metadata = asObjectRecord(slot.metadata);
-        const runId = typeof metadata?.['generationRunId'] === 'string' ? metadata['generationRunId'] : null;
-        const outputIndex = typeof metadata?.['generationOutputIndex'] === 'number'
-          ? metadata['generationOutputIndex']
-          : null;
-        return Boolean(activeRunId && runId === activeRunId && outputIndex === landingSlot.index);
-      }) ?? matchingSlots[0] ?? null;
+      const matchedSlot =
+        matchingSlots.find((slot) => {
+          const metadata = asObjectRecord(slot.metadata);
+          const runId =
+            typeof metadata?.['generationRunId'] === 'string' ? metadata['generationRunId'] : null;
+          const outputIndex =
+            typeof metadata?.['generationOutputIndex'] === 'number'
+              ? metadata['generationOutputIndex']
+              : null;
+          return Boolean(activeRunId && runId === activeRunId && outputIndex === landingSlot.index);
+        }) ??
+        matchingSlots[0] ??
+        null;
 
-      if (!matchedSlot || !isGenerationSlotLinkedToRoot(matchedSlot, rootSourceSlotId, productImagesExternalBaseUrl)) {
+      if (
+        !matchedSlot ||
+        !isGenerationSlotLinkedToRoot(matchedSlot, rootSourceSlotId, productImagesExternalBaseUrl)
+      ) {
         if (!canShowActiveRunLandingSlots) {
           return null;
         }
@@ -316,7 +334,9 @@ export const buildVariantThumbnails = ({
       }
 
       const imageSrc =
-        getImageStudioSlotImageSrc(matchedSlot, productImagesExternalBaseUrl) ?? output?.filepath ?? null;
+        getImageStudioSlotImageSrc(matchedSlot, productImagesExternalBaseUrl) ??
+        output?.filepath ??
+        null;
 
       const metadata = asObjectRecord(matchedSlot.metadata) as SlotGenerationMetadata | null;
       const generationParams = asObjectRecord(metadata?.generationParams);
@@ -328,8 +348,12 @@ export const buildVariantThumbnails = ({
         (typeof generationRequest?.['model'] === 'string' ? generationRequest['model'] : null) ??
         null;
       const timestamp =
-        (typeof generationParams?.['timestamp'] === 'string' ? generationParams['timestamp'] : null) ??
-        (typeof generationRequest?.['timestamp'] === 'string' ? generationRequest['timestamp'] : null) ??
+        (typeof generationParams?.['timestamp'] === 'string'
+          ? generationParams['timestamp']
+          : null) ??
+        (typeof generationRequest?.['timestamp'] === 'string'
+          ? generationRequest['timestamp']
+          : null) ??
         null;
       const prompt =
         (typeof generationParams?.['prompt'] === 'string' ? generationParams['prompt'] : null) ??
@@ -412,29 +436,32 @@ export const resolveVariantSlotIdForCenterPreview = ({
   }
 
   const runIdFromVariantId = variant.id.startsWith('run:')
-    ? variant.id.split(':')[1]?.trim() ?? ''
+    ? (variant.id.split(':')[1]?.trim() ?? '')
     : '';
   const normalizedRunId = runIdFromVariantId || activeRunId?.trim() || '';
   const normalizedRootSourceId = rootVariantSourceSlotId?.trim() ?? '';
   if (normalizedRunId) {
     const matchedByRunMetadata = candidateSlots.find((slot) => {
       const metadata = asObjectRecord(slot.metadata);
-      const runId = typeof metadata?.['generationRunId'] === 'string' ? metadata['generationRunId'].trim() : '';
+      const runId =
+        typeof metadata?.['generationRunId'] === 'string' ? metadata['generationRunId'].trim() : '';
       if (!runId || runId !== normalizedRunId) return false;
       const outputIndex =
-        typeof metadata?.['generationOutputIndex'] === 'number' && Number.isFinite(metadata['generationOutputIndex'])
+        typeof metadata?.['generationOutputIndex'] === 'number' &&
+        Number.isFinite(metadata['generationOutputIndex'])
           ? metadata['generationOutputIndex']
           : null;
       if (outputIndex !== variant.index) return false;
       if (!normalizedRootSourceId) return true;
 
-      const sourceSlotId = typeof metadata?.['sourceSlotId'] === 'string' ? metadata['sourceSlotId'].trim() : '';
+      const sourceSlotId =
+        typeof metadata?.['sourceSlotId'] === 'string' ? metadata['sourceSlotId'].trim() : '';
       if (sourceSlotId && sourceSlotId === normalizedRootSourceId) return true;
       const sourceSlotIds = Array.isArray(metadata?.['sourceSlotIds'])
         ? metadata['sourceSlotIds']
-          .filter((value): value is string => typeof value === 'string')
-          .map((value: string) => value.trim())
-          .filter(Boolean)
+            .filter((value): value is string => typeof value === 'string')
+            .map((value: string) => value.trim())
+            .filter(Boolean)
         : [];
       return sourceSlotIds.includes(normalizedRootSourceId);
     });
@@ -446,30 +473,31 @@ export const resolveVariantSlotIdForCenterPreview = ({
 
 export const buildDetailsNodeForCenterPreview = (
   detailsSlot: ImageStudioSlotRecord | null,
-  slots: ImageStudioSlotRecord[],
+  slots: ImageStudioSlotRecord[]
 ): VersionNode | null => {
   if (!detailsSlot) return null;
 
   const metadata = asObjectRecord(detailsSlot.metadata) as SlotGenerationMetadata | null;
   const sourceSlotIds = Array.isArray(metadata?.sourceSlotIds)
-    ? metadata.sourceSlotIds.filter((id): id is string => typeof id === 'string' && id.trim().length > 0)
+    ? metadata.sourceSlotIds.filter(
+        (id): id is string => typeof id === 'string' && id.trim().length > 0
+      )
     : [];
   const sourceSlotId =
     typeof metadata?.sourceSlotId === 'string' && metadata.sourceSlotId.trim().length > 0
       ? metadata.sourceSlotId.trim()
       : null;
-  const parentIds = sourceSlotIds.length > 0
-    ? sourceSlotIds
-    : sourceSlotId
-      ? [sourceSlotId]
-      : [];
+  const parentIds = sourceSlotIds.length > 0 ? sourceSlotIds : sourceSlotId ? [sourceSlotId] : [];
   const childIds = slots
     .filter((slot) => {
       if (slot.id === detailsSlot.id) return false;
       const slotMetadata = asObjectRecord(slot.metadata) as SlotGenerationMetadata | null;
       if (!slotMetadata) return false;
       if (slotMetadata.sourceSlotId === detailsSlot.id) return true;
-      return Array.isArray(slotMetadata.sourceSlotIds) && slotMetadata.sourceSlotIds.includes(detailsSlot.id);
+      return (
+        Array.isArray(slotMetadata.sourceSlotIds) &&
+        slotMetadata.sourceSlotIds.includes(detailsSlot.id)
+      );
     })
     .map((slot) => slot.id);
 

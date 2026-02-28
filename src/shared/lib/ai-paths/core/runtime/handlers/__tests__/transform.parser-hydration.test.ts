@@ -28,9 +28,7 @@ const buildParserNode = (): AiNode =>
     },
   }) as AiNode;
 
-const buildContext = (
-  overrides: Partial<NodeHandlerContext> = {},
-): NodeHandlerContext =>
+const buildContext = (overrides: Partial<NodeHandlerContext> = {}): NodeHandlerContext =>
   ({
     node: buildParserNode(),
     nodeInputs: {},
@@ -127,16 +125,10 @@ describe('handleParser strict context hydration', () => {
 
     const output = await handleParser(ctx);
 
-    expect(output['images']).toEqual([
-      'https://cdn.example.com/lamp-a.jpg',
-      '/uploads/lamp-b.png',
-    ]);
+    expect(output['images']).toEqual(['https://cdn.example.com/lamp-a.jpg', '/uploads/lamp-b.png']);
     expect(output['bundle']).toMatchObject({
       title: 'Desk Lamp',
-      images: [
-        'https://cdn.example.com/lamp-a.jpg',
-        '/uploads/lamp-b.png',
-      ],
+      images: ['https://cdn.example.com/lamp-a.jpg', '/uploads/lamp-b.png'],
     });
     expect(Array.isArray(output['bundle'])).toBe(false);
     expect(Array.isArray(output['images'])).toBe(true);
@@ -167,17 +159,11 @@ describe('handleParser strict context hydration', () => {
 
     const output = await handleParser(ctx);
 
-    expect(output['images']).toEqual([
-      'https://cdn.example.com/lamp-a.jpg',
-      '/uploads/lamp-b.png',
-    ]);
+    expect(output['images']).toEqual(['https://cdn.example.com/lamp-a.jpg', '/uploads/lamp-b.png']);
     expect(output['title']).toBe('Desk Lamp');
     expect(output['bundle']).toMatchObject({
       title: 'Desk Lamp',
-      images: [
-        'https://cdn.example.com/lamp-a.jpg',
-        '/uploads/lamp-b.png',
-      ],
+      images: ['https://cdn.example.com/lamp-a.jpg', '/uploads/lamp-b.png'],
     });
   });
 

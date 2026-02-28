@@ -1,6 +1,5 @@
 'use client';
 
-
 import { Button } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';

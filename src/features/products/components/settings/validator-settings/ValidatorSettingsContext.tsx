@@ -5,7 +5,6 @@ import React from 'react';
 import type { ValidatorSettingsController } from '@/shared/contracts/products';
 import { internalError } from '@/shared/errors/app-error';
 
-
 const ValidatorSettingsContext = React.createContext<ValidatorSettingsController | null>(null);
 
 /**
@@ -19,9 +18,7 @@ export function ValidatorSettingsProvider({
   children: React.ReactNode;
 }): React.JSX.Element {
   return (
-    <ValidatorSettingsContext.Provider value={value}>
-      {children}
-    </ValidatorSettingsContext.Provider>
+    <ValidatorSettingsContext.Provider value={value}>{children}</ValidatorSettingsContext.Provider>
   );
 }
 

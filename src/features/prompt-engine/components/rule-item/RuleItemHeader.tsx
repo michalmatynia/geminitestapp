@@ -2,37 +2,31 @@
 
 import React from 'react';
 import { ChevronDown, ChevronRight, Copy, GripVertical } from 'lucide-react';
-import {
-  Button,
-  Tooltip,
-  Badge,
-  StatusBadge,
-} from '@/shared/ui';
+import { Button, Tooltip, Badge, StatusBadge } from '@/shared/ui';
 import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
 import { getDocumentationTooltip } from '@/shared/lib/tooltip-engine';
 import { usePromptEngine } from '../../context/PromptEngineContext';
 import { useRuleItemContext } from '../context/RuleItemContext';
 import { useRuleItemDragState } from '../context/RuleListDragContext';
-import { formatSeverityLabel, isImageStudioRuleFromScopes, normalizeRuleScopes } from '../rule-item-utils';
+import {
+  formatSeverityLabel,
+  isImageStudioRuleFromScopes,
+  normalizeRuleScopes,
+} from '../rule-item-utils';
 
 export type RuleItemHeaderProps = {
   isCollapsed: boolean;
   setCollapsed: (val: boolean) => void;
 };
 
-export function RuleItemHeader({ isCollapsed, setCollapsed }: RuleItemHeaderProps): React.JSX.Element {
+export function RuleItemHeader({
+  isCollapsed,
+  setCollapsed,
+}: RuleItemHeaderProps): React.JSX.Element {
   const { draft, rule } = useRuleItemContext();
-  const {
-    draggableEnabled,
-    onDragStart,
-    onDragEnd,
-  } = useRuleItemDragState(draft.uid);
-  const {
-    handleToggleRuleEnabled,
-    handleDuplicateRule,
-    handleRemoveRule,
-    handleCopy,
-  } = usePromptEngine();
+  const { draggableEnabled, onDragStart, onDragEnd } = useRuleItemDragState(draft.uid);
+  const { handleToggleRuleEnabled, handleDuplicateRule, handleRemoveRule, handleCopy } =
+    usePromptEngine();
 
   const appliesToScopes = normalizeRuleScopes(rule?.appliesToScopes);
   const launchAppliesToScopes = normalizeRuleScopes(rule?.launchAppliesToScopes);
@@ -42,10 +36,9 @@ export function RuleItemHeader({ isCollapsed, setCollapsed }: RuleItemHeaderProp
     launchAppliesToScopes
   );
 
-  const copyJsonTooltip = getDocumentationTooltip(
-    DOCUMENTATION_MODULE_IDS.promptEngine,
-    'rule_item_copy_json'
-  ) ?? 'Copy JSON';
+  const copyJsonTooltip =
+    getDocumentationTooltip(DOCUMENTATION_MODULE_IDS.promptEngine, 'rule_item_copy_json') ??
+    'Copy JSON';
 
   return (
     <div className='flex flex-wrap items-start justify-between gap-2'>
@@ -57,7 +50,11 @@ export function RuleItemHeader({ isCollapsed, setCollapsed }: RuleItemHeaderProp
           title={isCollapsed ? 'Expand pattern details' : 'Collapse pattern details'}
           aria-label={isCollapsed ? 'Expand pattern details' : 'Collapse pattern details'}
         >
-          {isCollapsed ? <ChevronRight className='size-3.5' /> : <ChevronDown className='size-3.5' />}
+          {isCollapsed ? (
+            <ChevronRight className='size-3.5' />
+          ) : (
+            <ChevronDown className='size-3.5' />
+          )}
         </button>
         <button
           type='button'
@@ -72,8 +69,8 @@ export function RuleItemHeader({ isCollapsed, setCollapsed }: RuleItemHeaderProp
             onDragEnd?.();
           }}
           className={`rounded border p-1 ${
-            draggableEnabled 
-              ? 'cursor-grab border-border/60 bg-card/50 text-slate-300 hover:bg-card/70 active:cursor-grabbing' 
+            draggableEnabled
+              ? 'cursor-grab border-border/60 bg-card/50 text-slate-300 hover:bg-card/70 active:cursor-grabbing'
               : 'cursor-not-allowed border-slate-600/70 bg-slate-800/60 text-slate-300 opacity-50'
           }`}
           title='Drag and drop onto another rule to create/join a sequence group'
@@ -83,17 +80,21 @@ export function RuleItemHeader({ isCollapsed, setCollapsed }: RuleItemHeaderProp
           <GripVertical className='size-3.5' />
         </button>
         {rule ? (
-          <Badge variant={rule.severity === 'error' ? 'error' : rule.severity === 'warning' ? 'warning' : 'info'} className='font-bold uppercase'>
+          <Badge
+            variant={
+              rule.severity === 'error' ? 'error' : rule.severity === 'warning' ? 'warning' : 'info'
+            }
+            className='font-bold uppercase'
+          >
             {formatSeverityLabel(rule.severity)}
           </Badge>
         ) : (
-          <Badge variant='neutral' className='font-bold uppercase'>Invalid</Badge>
+          <Badge variant='neutral' className='font-bold uppercase'>
+            Invalid
+          </Badge>
         )}
         {rule ? (
-          <button
-            type='button'
-            onClick={() => handleToggleRuleEnabled(draft.uid, !rule.enabled)}
-          >
+          <button type='button' onClick={() => handleToggleRuleEnabled(draft.uid, !rule.enabled)}>
             <StatusBadge
               status={rule.enabled ? 'Enabled' : 'Disabled'}
               variant={rule.enabled ? 'active' : 'neutral'}
@@ -103,13 +104,14 @@ export function RuleItemHeader({ isCollapsed, setCollapsed }: RuleItemHeaderProp
           </button>
         ) : null}
         {isImageStudioRule ? (
-          <Badge variant='info' className='border-teal-500/45 bg-teal-500/10 text-teal-200 font-bold uppercase'>
+          <Badge
+            variant='info'
+            className='border-teal-500/45 bg-teal-500/10 text-teal-200 font-bold uppercase'
+          >
             Image Studio Rule
           </Badge>
         ) : null}
-        <span className='text-sm font-medium text-gray-100'>
-          {rule?.title ?? 'Invalid rule'}
-        </span>
+        <span className='text-sm font-medium text-gray-100'>{rule?.title ?? 'Invalid rule'}</span>
       </div>
       <div className='flex items-center gap-2'>
         <Tooltip content={copyJsonTooltip}>
@@ -122,10 +124,21 @@ export function RuleItemHeader({ isCollapsed, setCollapsed }: RuleItemHeaderProp
             <Copy className='size-4' />
           </Button>
         </Tooltip>
-        <Button type='button' variant='outline' size='sm' onClick={() => handleDuplicateRule(draft.uid)} disabled={!rule}>
+        <Button
+          type='button'
+          variant='outline'
+          size='sm'
+          onClick={() => handleDuplicateRule(draft.uid)}
+          disabled={!rule}
+        >
           Duplicate
         </Button>
-        <Button type='button' variant='outline' size='sm' onClick={() => handleRemoveRule(draft.uid)}>
+        <Button
+          type='button'
+          variant='outline'
+          size='sm'
+          onClick={() => handleRemoveRule(draft.uid)}
+        >
           Remove
         </Button>
       </div>

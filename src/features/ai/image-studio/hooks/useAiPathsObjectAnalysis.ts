@@ -9,7 +9,7 @@ import { useUiActions, useUiCanvasState } from '../context/UiContext';
 import {
   saveImageStudioAnalysisApplyIntent,
   type ImageStudioAnalysisApplyTarget,
-} from '../utils/analysis-bridge';
+} from '@/shared/lib/ai/image-studio/utils/analysis-bridge';
 import {
   buildDefaultSharedLayout,
   computeCanvasOffsetFromObjectBounds,
@@ -22,7 +22,7 @@ import {
   type AiPathsObjectAnalysisAutoApplyTarget,
   type AiPathsObjectAnalysisConfig,
   type ExtractedObjectBounds,
-} from '../utils/ai-paths-object-analysis';
+} from '@/shared/lib/ai/image-studio/utils/ai-paths-object-analysis';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -64,6 +64,8 @@ export type UseAiPathsObjectAnalysisReturn = {
   pathMetasLoading: boolean;
   setConfig: (updater: (prev: AiPathsObjectAnalysisConfig) => AiPathsObjectAnalysisConfig) => void;
   triggerAnalysis: () => Promise<void>;
+  /** Fire analysis for an explicit pathId (used by custom trigger buttons). */
+  triggerAnalysisForPath: (pathId: string) => Promise<void>;
   cancelAnalysis: () => void;
 };
 
@@ -89,12 +91,7 @@ type GetRunResponse = {
   };
 };
 
-const TERMINAL_STATUSES = new Set([
-  'completed',
-  'failed',
-  'canceled',
-  'dead_lettered',
-]);
+const TERMINAL_STATUSES = new Set(['completed', 'failed', 'canceled', 'dead_lettered']);
 
 const POLL_INTERVAL_MS = 2_000;
 const POLL_MAX_MS = 120_000;
@@ -104,7 +101,7 @@ const POLL_MAX_MS = 120_000;
 // ---------------------------------------------------------------------------
 
 export function useAiPathsObjectAnalysis(
-  options: UseAiPathsObjectAnalysisOptions,
+  options: UseAiPathsObjectAnalysisOptions
 ): UseAiPathsObjectAnalysisReturn {
   const {
     projectId,
@@ -125,7 +122,7 @@ export function useAiPathsObjectAnalysis(
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [lastResult, setLastResult] = useState<AiPathsObjectAnalysisResult | null>(null);
   const [config, setConfigState] = useState<AiPathsObjectAnalysisConfig>(() =>
-    loadAiPathsObjectAnalysisConfig(projectId),
+    loadAiPathsObjectAnalysisConfig(projectId)
   );
   const [pathMetas, setPathMetas] = useState<AiPathMeta[]>([]);
   const [pathMetasLoading, setPathMetasLoading] = useState(false);
@@ -182,7 +179,7 @@ export function useAiPathsObjectAnalysis(
         return next;
       });
     },
-    [],
+    []
   );
 
   const cancelAnalysis = useCallback(() => {
@@ -204,7 +201,7 @@ export function useAiPathsObjectAnalysis(
       runId: string,
       cfg: AiPathsObjectAnalysisConfig,
       slotId: string,
-      imageUrl: string,
+      imageUrl: string
     ) => {
       const pid = activeProjectIdRef.current;
       let appliedPreviewOffset = false;
@@ -213,11 +210,15 @@ export function useAiPathsObjectAnalysis(
       if (bounds && cfg.applyPreviewOffset) {
         const frameBinding = getPreviewCanvasImageFrame();
         const imgW =
-          typeof workingSlotImageWidth === 'number' && Number.isFinite(workingSlotImageWidth) && workingSlotImageWidth > 0
+          typeof workingSlotImageWidth === 'number' &&
+          Number.isFinite(workingSlotImageWidth) &&
+          workingSlotImageWidth > 0
             ? workingSlotImageWidth
             : null;
         const imgH =
-          typeof workingSlotImageHeight === 'number' && Number.isFinite(workingSlotImageHeight) && workingSlotImageHeight > 0
+          typeof workingSlotImageHeight === 'number' &&
+          Number.isFinite(workingSlotImageHeight) &&
+          workingSlotImageHeight > 0
             ? workingSlotImageHeight
             : null;
         const cvW =
@@ -237,7 +238,7 @@ export function useAiPathsObjectAnalysis(
             imgH,
             cvW,
             cvH,
-            canvasImageOffset,
+            canvasImageOffset
           );
           setCanvasImageOffset(newOffset);
           setCenterGuidesEnabled(true);
@@ -251,9 +252,7 @@ export function useAiPathsObjectAnalysis(
         const sourceSignature = `ai_paths_run|${runId}|slot:${slotId}|src:${imageUrl.slice(0, 80)}`;
         const layout = buildDefaultSharedLayout();
         const targets: ImageStudioAnalysisApplyTarget[] =
-          target === 'both'
-            ? ['object_layout', 'auto_scaler']
-            : [target];
+          target === 'both' ? ['object_layout', 'auto_scaler'] : [target];
 
         for (const t of targets) {
           saveImageStudioAnalysisApplyIntent(pid, {
@@ -284,180 +283,206 @@ export function useAiPathsObjectAnalysis(
       setCanvasImageOffset,
       workingSlotImageHeight,
       workingSlotImageWidth,
-    ],
+    ]
+  );
+
+  // Internal: shared analysis runner — accepts pathId explicitly so both
+  // triggerAnalysis (uses config.pathId) and triggerAnalysisForPath (uses param) can reuse it.
+  const runAnalysis = useCallback(
+    async (pathId: string): Promise<void> => {
+      const imageUrl = workingSlotImageSrc?.trim() ?? '';
+      const slotId = workingSlotId?.trim() ?? '';
+
+      if (!imageUrl) {
+        toast('No image source available for analysis.', { variant: 'info' });
+        return;
+      }
+      if (status === 'running' || status === 'fetching_path' || status === 'queuing') {
+        return;
+      }
+
+      // Cancel any existing run
+      abortRef.current?.abort();
+      if (pollTimerRef.current !== null) {
+        clearTimeout(pollTimerRef.current);
+        pollTimerRef.current = null;
+      }
+
+      const abort = new AbortController();
+      abortRef.current = abort;
+
+      setStatus('fetching_path');
+      setErrorMessage(null);
+
+      try {
+        // 1. Fetch path config (nodes + edges) from AI-Paths settings
+        const settings = await api.get<AiPathsSettingItem[]>('/api/ai-paths/settings');
+        if (abort.signal.aborted) return;
+
+        const pathGraph = parseAiPathNodesAndEdgesFromSettings(
+          Array.isArray(settings) ? settings : [],
+          pathId
+        );
+        if (!pathGraph) {
+          throw new Error(
+            `AI Path "${pathId}" not found. Make sure the path exists in AI-Paths settings.`
+          );
+        }
+
+        // 2. Enqueue run
+        setStatus('queuing');
+        const enqueuePayload: Record<string, unknown> = {
+          pathId,
+          nodes: pathGraph.nodes,
+          edges: pathGraph.edges,
+          triggerContext: {
+            imageUrl,
+            ...(typeof workingSlotImageWidth === 'number' && Number.isFinite(workingSlotImageWidth)
+              ? { imageWidth: workingSlotImageWidth }
+              : {}),
+            ...(typeof workingSlotImageHeight === 'number' &&
+            Number.isFinite(workingSlotImageHeight)
+              ? { imageHeight: workingSlotImageHeight }
+              : {}),
+            ...(slotId ? { slotId } : {}),
+            ...(activeProjectIdRef.current ? { projectId: activeProjectIdRef.current } : {}),
+          },
+          meta: {
+            source: 'image_studio_object_analysis',
+          },
+        };
+        if (config.triggerNodeId) {
+          enqueuePayload['triggerNodeId'] = config.triggerNodeId;
+        }
+        if (config.triggerEvent) {
+          enqueuePayload['triggerEvent'] = config.triggerEvent;
+        }
+
+        const enqueueResult = await api.post<EnqueueRunResponse>(
+          '/api/ai-paths/runs/enqueue',
+          enqueuePayload
+        );
+        if (abort.signal.aborted) return;
+
+        const runId = enqueueResult?.run?.id;
+        if (!runId || typeof runId !== 'string') {
+          throw new Error('Failed to enqueue AI path run: no run ID returned.');
+        }
+
+        // 3. Poll for completion
+        setStatus('running');
+        pollStartedAtRef.current = Date.now();
+
+        const poll = async (): Promise<void> => {
+          if (abort.signal.aborted) return;
+
+          const elapsed = Date.now() - pollStartedAtRef.current;
+          if (elapsed > POLL_MAX_MS) {
+            setStatus('error');
+            setErrorMessage(
+              `Analysis timed out after ${POLL_MAX_MS / 1000}s. The path may still be running.`
+            );
+            return;
+          }
+
+          let runData: GetRunResponse | null;
+          try {
+            runData = await api.get<GetRunResponse>(
+              `/api/ai-paths/runs/${encodeURIComponent(runId)}`
+            );
+          } catch {
+            if (abort.signal.aborted) return;
+            // Transient fetch error — keep polling
+            pollTimerRef.current = setTimeout(() => void poll(), POLL_INTERVAL_MS);
+            return;
+          }
+
+          if (abort.signal.aborted) return;
+
+          const runStatus = runData?.run?.status ?? '';
+          if (!TERMINAL_STATUSES.has(runStatus)) {
+            pollTimerRef.current = setTimeout(() => void poll(), POLL_INTERVAL_MS);
+            return;
+          }
+
+          // Terminal state reached
+          if (runStatus !== 'completed') {
+            const errMsg = runData?.run?.error ?? `Path run ended with status "${runStatus}".`;
+            setStatus('error');
+            setErrorMessage(typeof errMsg === 'string' ? errMsg : String(errMsg));
+            toast(
+              `AI path analysis failed: ${typeof errMsg === 'string' ? errMsg : String(errMsg)}`,
+              {
+                variant: 'error',
+              }
+            );
+            return;
+          }
+
+          // Completed successfully — extract bounds
+          const rawResult = runData.run.result ?? null;
+          const bounds = extractObjectBoundsFromRunResult(
+            rawResult,
+            config.fieldMapping,
+            typeof workingSlotImageWidth === 'number' ? workingSlotImageWidth : null,
+            typeof workingSlotImageHeight === 'number' ? workingSlotImageHeight : null
+          );
+          const confidence: number | null = null; // extractConfidenceFromRunResult can be added if needed
+
+          if (!bounds) {
+            setStatus('error');
+            const noMatchMsg =
+              'AI path completed but no object bounds were found. ' +
+              'Check the field mapping configuration matches your path output.';
+            setErrorMessage(noMatchMsg);
+            toast(noMatchMsg, { variant: 'info' });
+            return;
+          }
+
+          applyResults(bounds, confidence, rawResult, runId, config, slotId, imageUrl);
+          setStatus('completed');
+          toast('AI object analysis complete. Canvas repositioned.', { variant: 'success' });
+        };
+
+        pollTimerRef.current = setTimeout(() => void poll(), POLL_INTERVAL_MS);
+      } catch (err) {
+        if (abort.signal.aborted) return;
+        const msg = err instanceof Error ? err.message : 'Failed to run AI path analysis.';
+        setStatus('error');
+        setErrorMessage(msg);
+        toast(msg, { variant: 'error' });
+      }
+    },
+    [
+      applyResults,
+      config,
+      status,
+      toast,
+      workingSlotId,
+      workingSlotImageHeight,
+      workingSlotImageSrc,
+      workingSlotImageWidth,
+    ]
   );
 
   const triggerAnalysis = useCallback(async (): Promise<void> => {
-    const imageUrl = workingSlotImageSrc?.trim() ?? '';
-    const slotId = workingSlotId?.trim() ?? '';
-
-    if (!imageUrl) {
-      toast('No image source available for analysis.', { variant: 'info' });
-      return;
-    }
     if (!config.pathId) {
       toast('Select an AI Path before running analysis.', { variant: 'info' });
       return;
     }
-    if (status === 'running' || status === 'fetching_path' || status === 'queuing') {
-      return;
-    }
+    return runAnalysis(config.pathId);
+  }, [config.pathId, runAnalysis, toast]);
 
-    // Cancel any existing run
-    abortRef.current?.abort();
-    if (pollTimerRef.current !== null) {
-      clearTimeout(pollTimerRef.current);
-      pollTimerRef.current = null;
-    }
-
-    const abort = new AbortController();
-    abortRef.current = abort;
-
-    setStatus('fetching_path');
-    setErrorMessage(null);
-
-    try {
-      // 1. Fetch path config (nodes + edges) from AI-Paths settings
-      const settings = await api.get<AiPathsSettingItem[]>('/api/ai-paths/settings');
-      if (abort.signal.aborted) return;
-
-      const pathGraph = parseAiPathNodesAndEdgesFromSettings(
-        Array.isArray(settings) ? settings : [],
-        config.pathId,
-      );
-      if (!pathGraph) {
-        throw new Error(
-          `AI Path "${config.pathId}" not found. Make sure the path exists in AI-Paths settings.`,
-        );
+  const triggerAnalysisForPath = useCallback(
+    async (pathId: string): Promise<void> => {
+      if (!pathId) {
+        toast('Select an AI Path before running analysis.', { variant: 'info' });
+        return;
       }
-
-      // 2. Enqueue run
-      setStatus('queuing');
-      const enqueuePayload: Record<string, unknown> = {
-        pathId: config.pathId,
-        nodes: pathGraph.nodes,
-        edges: pathGraph.edges,
-        triggerContext: {
-          imageUrl,
-          ...(typeof workingSlotImageWidth === 'number' && Number.isFinite(workingSlotImageWidth)
-            ? { imageWidth: workingSlotImageWidth }
-            : {}),
-          ...(typeof workingSlotImageHeight === 'number' && Number.isFinite(workingSlotImageHeight)
-            ? { imageHeight: workingSlotImageHeight }
-            : {}),
-          ...(slotId ? { slotId } : {}),
-          ...(activeProjectIdRef.current ? { projectId: activeProjectIdRef.current } : {}),
-        },
-        meta: {
-          source: 'image_studio_object_analysis',
-        },
-      };
-      if (config.triggerNodeId) {
-        enqueuePayload['triggerNodeId'] = config.triggerNodeId;
-      }
-      if (config.triggerEvent) {
-        enqueuePayload['triggerEvent'] = config.triggerEvent;
-      }
-
-      const enqueueResult = await api.post<EnqueueRunResponse>(
-        '/api/ai-paths/runs/enqueue',
-        enqueuePayload,
-      );
-      if (abort.signal.aborted) return;
-
-      const runId = enqueueResult?.run?.id;
-      if (!runId || typeof runId !== 'string') {
-        throw new Error('Failed to enqueue AI path run: no run ID returned.');
-      }
-
-      // 3. Poll for completion
-      setStatus('running');
-      pollStartedAtRef.current = Date.now();
-
-      const poll = async (): Promise<void> => {
-        if (abort.signal.aborted) return;
-
-        const elapsed = Date.now() - pollStartedAtRef.current;
-        if (elapsed > POLL_MAX_MS) {
-          setStatus('error');
-          setErrorMessage(`Analysis timed out after ${POLL_MAX_MS / 1000}s. The path may still be running.`);
-          return;
-        }
-
-        let runData: GetRunResponse | null;
-        try {
-          runData = await api.get<GetRunResponse>(
-            `/api/ai-paths/runs/${encodeURIComponent(runId)}`,
-          );
-        } catch {
-          if (abort.signal.aborted) return;
-          // Transient fetch error — keep polling
-          pollTimerRef.current = setTimeout(() => void poll(), POLL_INTERVAL_MS);
-          return;
-        }
-
-        if (abort.signal.aborted) return;
-
-        const runStatus = runData?.run?.status ?? '';
-        if (!TERMINAL_STATUSES.has(runStatus)) {
-          pollTimerRef.current = setTimeout(() => void poll(), POLL_INTERVAL_MS);
-          return;
-        }
-
-        // Terminal state reached
-        if (runStatus !== 'completed') {
-          const errMsg = runData?.run?.error ?? `Path run ended with status "${runStatus}".`;
-          setStatus('error');
-          setErrorMessage(typeof errMsg === 'string' ? errMsg : String(errMsg));
-          toast(`AI path analysis failed: ${typeof errMsg === 'string' ? errMsg : String(errMsg)}`, {
-            variant: 'error',
-          });
-          return;
-        }
-
-        // Completed successfully — extract bounds
-        const rawResult = runData.run.result ?? null;
-        const bounds = extractObjectBoundsFromRunResult(
-          rawResult,
-          config.fieldMapping,
-          typeof workingSlotImageWidth === 'number' ? workingSlotImageWidth : null,
-          typeof workingSlotImageHeight === 'number' ? workingSlotImageHeight : null,
-        );
-        const confidence: number | null = null; // extractConfidenceFromRunResult can be added if needed
-
-        if (!bounds) {
-          setStatus('error');
-          const noMatchMsg =
-            'AI path completed but no object bounds were found. ' +
-            'Check the field mapping configuration matches your path output.';
-          setErrorMessage(noMatchMsg);
-          toast(noMatchMsg, { variant: 'info' });
-          return;
-        }
-
-        applyResults(bounds, confidence, rawResult, runId, config, slotId, imageUrl);
-        setStatus('completed');
-        toast('AI object analysis complete. Canvas repositioned.', { variant: 'success' });
-      };
-
-      pollTimerRef.current = setTimeout(() => void poll(), POLL_INTERVAL_MS);
-    } catch (err) {
-      if (abort.signal.aborted) return;
-      const msg = err instanceof Error ? err.message : 'Failed to run AI path analysis.';
-      setStatus('error');
-      setErrorMessage(msg);
-      toast(msg, { variant: 'error' });
-    }
-  }, [
-    applyResults,
-    config,
-    status,
-    toast,
-    workingSlotId,
-    workingSlotImageHeight,
-    workingSlotImageSrc,
-    workingSlotImageWidth,
-  ]);
+      return runAnalysis(pathId);
+    },
+    [runAnalysis, toast]
+  );
 
   return {
     status,
@@ -468,6 +493,7 @@ export function useAiPathsObjectAnalysis(
     pathMetasLoading,
     setConfig,
     triggerAnalysis,
+    triggerAnalysisForPath,
     cancelAnalysis,
   };
 }

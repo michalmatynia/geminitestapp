@@ -14,7 +14,6 @@ import {
   createDefaultFolderTreeUiStateV1,
 } from '@/shared/utils/folder-tree-ui-state-v1';
 
-
 vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
   useSettingsStore: vi.fn(),
 }));
@@ -103,7 +102,9 @@ describe('useMasterFolderTreeInstance', () => {
     );
 
     expect(useMasterFolderTreeConfig).toHaveBeenCalledWith('notes');
-    expect(result.current.controller.nodes.map((node: MasterTreeNode) => node.id)).toEqual(['folder-a']);
+    expect(result.current.controller.nodes.map((node: MasterTreeNode) => node.id)).toEqual([
+      'folder-a',
+    ]);
     expect(result.current.controller.selectedNodeId).toBe('folder-a');
 
     rerender({
@@ -111,7 +112,9 @@ describe('useMasterFolderTreeInstance', () => {
       selectedNodeId: null as any,
     });
 
-    expect(result.current.controller.nodes.map((node: MasterTreeNode) => node.id)).toEqual(['folder-b']);
+    expect(result.current.controller.nodes.map((node: MasterTreeNode) => node.id)).toEqual([
+      'folder-b',
+    ]);
     expect(result.current.controller.selectedNodeId as any).toEqual(null);
   });
 
@@ -127,7 +130,8 @@ describe('useMasterFolderTreeInstance', () => {
       isLoading: false,
       isFetching: false,
       error: null,
-      get: (key: string) => (key === FOLDER_TREE_UI_STATE_V1_SETTING_KEY ? serializedUiState : undefined),
+      get: (key: string) =>
+        key === FOLDER_TREE_UI_STATE_V1_SETTING_KEY ? serializedUiState : undefined,
       getBoolean: (_key: string, fallback: boolean = false) => fallback,
       getNumber: (_key: string, fallback?: number) => fallback,
       refetch: () => {},

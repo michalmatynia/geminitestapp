@@ -60,10 +60,7 @@ export type CaseResolverWorkspaceObservabilitySnapshot = {
 const percentile = (values: number[], ratio: number): number => {
   if (values.length === 0) return 0;
   const sorted = [...values].sort((a, b) => a - b);
-  const index = Math.min(
-    sorted.length - 1,
-    Math.max(0, Math.floor((sorted.length - 1) * ratio))
-  );
+  const index = Math.min(sorted.length - 1, Math.max(0, Math.floor((sorted.length - 1) * ratio)));
   return sorted[index] ?? 0;
 };
 
@@ -118,10 +115,7 @@ const parsePositiveIntegerToken = (value: string | undefined): number => {
   return Math.floor(parsed);
 };
 
-const sumCounterMetric = (
-  events: CaseResolverWorkspaceDebugEvent[],
-  action: string,
-): number =>
+const sumCounterMetric = (events: CaseResolverWorkspaceDebugEvent[], action: string): number =>
   events.reduce((count: number, event: CaseResolverWorkspaceDebugEvent): number => {
     if (event.action !== action) return count;
     const tokens = parseEventMessageTokens(event.message);
@@ -131,7 +125,7 @@ const sumCounterMetric = (
 
 const collectDurationMetricValues = (
   events: CaseResolverWorkspaceDebugEvent[],
-  action: string,
+  action: string
 ): number[] =>
   events
     .filter((event: CaseResolverWorkspaceDebugEvent): boolean => event.action === action)
@@ -139,12 +133,13 @@ const collectDurationMetricValues = (
     .filter((value: number): boolean => Number.isFinite(value) && value >= 0);
 
 const getLatestHydrationSelection = (
-  events: CaseResolverWorkspaceDebugEvent[],
+  events: CaseResolverWorkspaceDebugEvent[]
 ): WorkspaceHydrationSelectionSnapshot | null => {
   const latestEvent = [...events]
     .reverse()
-    .find((event: CaseResolverWorkspaceDebugEvent): boolean =>
-      event.action === 'hydrate_workspace_source_selected',
+    .find(
+      (event: CaseResolverWorkspaceDebugEvent): boolean =>
+        event.action === 'hydrate_workspace_source_selected'
     );
   if (!latestEvent) return null;
   const messageTokens = parseEventMessageTokens(latestEvent.message);
@@ -163,12 +158,12 @@ const getLatestHydrationSelection = (
 };
 
 const getLatestRequestedContext = (
-  events: CaseResolverWorkspaceDebugEvent[],
+  events: CaseResolverWorkspaceDebugEvent[]
 ): RequestedContextSnapshot | null => {
   const latestEvent = [...events]
     .reverse()
     .find((event: CaseResolverWorkspaceDebugEvent): boolean =>
-      event.action.startsWith('requested_context_'),
+      event.action.startsWith('requested_context_')
     );
   if (!latestEvent) return null;
   const messageTokens = parseEventMessageTokens(latestEvent.message);
@@ -197,11 +192,12 @@ export const buildCaseResolverWorkspaceObservabilitySnapshot = (
   const saveSuccessRate = persistAttempts > 0 ? persistSuccesses / persistAttempts : 0;
 
   const persistDurations = events
-    .filter((event): boolean => (
-      event.action === 'persist_success' ||
-      event.action === 'persist_conflict' ||
-      event.action === 'persist_failed'
-    ))
+    .filter(
+      (event): boolean =>
+        event.action === 'persist_success' ||
+        event.action === 'persist_conflict' ||
+        event.action === 'persist_failed'
+    )
     .map((event): number => event.durationMs ?? 0)
     .filter((value): boolean => Number.isFinite(value) && value >= 0);
   const payloadSizes = events

@@ -47,9 +47,7 @@ type BaseImportParametersResponse = {
 describe('base import parameters handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    listIntegrationsMock.mockResolvedValue([
-      { id: 'integration-base', slug: 'base-com' },
-    ]);
+    listIntegrationsMock.mockResolvedValue([{ id: 'integration-base', slug: 'base-com' }]);
     listConnectionsMock.mockResolvedValue([
       { id: 'conn-1', baseApiToken: 'encrypted-token', password: null },
     ]);
@@ -58,41 +56,36 @@ describe('base import parameters handler', () => {
   });
 
   it('hydrates cache from multiple sample products when productId is not provided', async () => {
-    callBaseApiMock.mockImplementation(
-      async (_token: string, method: string): Promise<unknown> => {
-        if (method === 'getInventoryProductsList') {
-          return {
-            products: [
-              { product_id: 'p-1' },
-              { product_id: 'p-2' },
-            ],
-          };
-        }
-        if (method === 'getInventoryProductsData') {
-          return {
-            products: [
-              {
-                product_id: 'p-1',
-                text_fields: {
-                  features: {
-                    Material: 'Steel',
-                  },
-                },
-              },
-              {
-                product_id: 'p-2',
-                text_fields: {
-                  features: {
-                    Color: 'Black',
-                  },
-                },
-              },
-            ],
-          };
-        }
-        throw new Error(`Unexpected method: ${method}`);
+    callBaseApiMock.mockImplementation(async (_token: string, method: string): Promise<unknown> => {
+      if (method === 'getInventoryProductsList') {
+        return {
+          products: [{ product_id: 'p-1' }, { product_id: 'p-2' }],
+        };
       }
-    );
+      if (method === 'getInventoryProductsData') {
+        return {
+          products: [
+            {
+              product_id: 'p-1',
+              text_fields: {
+                features: {
+                  Material: 'Steel',
+                },
+              },
+            },
+            {
+              product_id: 'p-2',
+              text_fields: {
+                features: {
+                  Color: 'Black',
+                },
+              },
+            },
+          ],
+        };
+      }
+      throw new Error(`Unexpected method: ${method}`);
+    });
 
     const response = await postBaseImportParametersHandler(
       new NextRequest('http://localhost/api/integrations/imports/base/parameters', {
@@ -109,10 +102,7 @@ describe('base import parameters handler', () => {
 
     expect(response.status).toBe(200);
     expect(payload.keys).toEqual(
-      expect.arrayContaining([
-        'text_fields.features.Material',
-        'text_fields.features.Color',
-      ])
+      expect.arrayContaining(['text_fields.features.Material', 'text_fields.features.Color'])
     );
     expect(payload.values).toMatchObject({
       'text_fields.features.Material': 'Steel',
@@ -124,18 +114,14 @@ describe('base import parameters handler', () => {
         productId: 'p-1',
       })
     );
-    expect(callBaseApiMock).toHaveBeenNthCalledWith(
-      1,
-      'token-1',
-      'getInventoryProductsList',
-      { inventory_id: 'inventory-1', limit: 2 }
-    );
-    expect(callBaseApiMock).toHaveBeenNthCalledWith(
-      2,
-      'token-1',
-      'getInventoryProductsData',
-      { inventory_id: 'inventory-1', products: ['p-1', 'p-2'] }
-    );
+    expect(callBaseApiMock).toHaveBeenNthCalledWith(1, 'token-1', 'getInventoryProductsList', {
+      inventory_id: 'inventory-1',
+      limit: 2,
+    });
+    expect(callBaseApiMock).toHaveBeenNthCalledWith(2, 'token-1', 'getInventoryProductsData', {
+      inventory_id: 'inventory-1',
+      products: ['p-1', 'p-2'],
+    });
   });
 
   it('keeps explicit productId flow for single-product key extraction', async () => {
@@ -167,14 +153,11 @@ describe('base import parameters handler', () => {
 
     expect(response.status).toBe(200);
     expect(payload.productId).toBe('p-99');
-    expect(payload.keys).toEqual(
-      expect.arrayContaining(['text_fields.features.Brand'])
-    );
+    expect(payload.keys).toEqual(expect.arrayContaining(['text_fields.features.Brand']));
     expect(callBaseApiMock).toHaveBeenCalledTimes(1);
-    expect(callBaseApiMock).toHaveBeenCalledWith(
-      'token-1',
-      'getInventoryProductsData',
-      { inventory_id: 'inventory-1', products: ['p-99'] }
-    );
+    expect(callBaseApiMock).toHaveBeenCalledWith('token-1', 'getInventoryProductsData', {
+      inventory_id: 'inventory-1',
+      products: ['p-99'],
+    });
   });
 });

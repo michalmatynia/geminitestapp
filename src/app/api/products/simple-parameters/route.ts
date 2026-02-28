@@ -3,11 +3,7 @@ export const revalidate = 300;
 
 import { apiHandler } from '@/shared/lib/api/api-handler';
 
-import {
-  GET_handler,
-  POST_handler,
-  productSimpleParameterCreateSchema,
-} from './handler';
+import { GET_handler, POST_handler, productSimpleParameterCreateSchema } from './handler';
 
 export const GET = apiHandler(GET_handler, {
   source: 'products.simple-parameters.GET',

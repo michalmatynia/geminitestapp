@@ -6,11 +6,7 @@ import React from 'react';
 import { cn } from '@/shared/utils';
 
 import { ActionMenu } from './ActionMenu';
-import {
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-} from './dropdown-menu';
+import { DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from './dropdown-menu';
 
 interface SelectionBarProps<T> {
   data: T[];
@@ -45,7 +41,7 @@ export function SelectionBar<T>({
 
   return (
     <div className={cn('flex flex-wrap items-center gap-2 sm:gap-3', className)}>
-      <ActionMenu 
+      <ActionMenu
         align='start'
         className='w-56'
         trigger={
@@ -87,7 +83,7 @@ export function SelectionBar<T>({
       </ActionMenu>
 
       {(actions || onDeleteSelected) && (
-        <ActionMenu 
+        <ActionMenu
           align='start'
           className='w-56'
           disabled={!hasSelection}
@@ -115,11 +111,7 @@ export function SelectionBar<T>({
         </ActionMenu>
       )}
 
-      {rightActions ? (
-        <div className='ml-auto flex items-center gap-2'>
-          {rightActions}
-        </div>
-      ) : null}
+      {rightActions ? <div className='ml-auto flex items-center gap-2'>{rightActions}</div> : null}
     </div>
   );
 }

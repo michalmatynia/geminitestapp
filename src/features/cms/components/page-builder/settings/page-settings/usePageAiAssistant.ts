@@ -8,14 +8,17 @@ import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { getSectionDefinition } from '../../section-registry';
 import type { PageZone, SectionInstance } from '@/shared/contracts/cms';
-import { usePageBuilderState, usePageBuilderDispatch } from '../../../../hooks/usePageBuilderContext';
+import {
+  usePageBuilderState,
+  usePageBuilderDispatch,
+} from '../../../../hooks/usePageBuilderContext';
 
 export function usePageAiAssistant() {
   const state = usePageBuilderState();
   const dispatch = usePageBuilderDispatch();
   const page = state.currentPage;
   const { toast } = useToast();
-  
+
   const [pageAiProvider, setPageAiProvider] = useState<'model' | 'agent'>('model');
   const [pageAiModelId, setPageAiModelId] = useState<string>('');
   const [pageAiAgentId, setPageAiAgentId] = useState<string>('');
@@ -37,7 +40,12 @@ export function usePageAiAssistant() {
       };
     });
     const firstSlug = Array.isArray(page.slugs) ? page.slugs[0] : null;
-    const slugValue = typeof firstSlug === 'string' ? firstSlug : (firstSlug && typeof firstSlug === 'object' && 'slug' in firstSlug ? (firstSlug as { slug: string }).slug : '');
+    const slugValue =
+      typeof firstSlug === 'string'
+        ? firstSlug
+        : firstSlug && typeof firstSlug === 'object' && 'slug' in firstSlug
+          ? (firstSlug as { slug: string }).slug
+          : '';
 
     return JSON.stringify({
       pageId: page.id,
@@ -59,14 +67,22 @@ export function usePageAiAssistant() {
 
   const generatePageAiMutation = createMutationV2<
     { accumulated: string; provider: string },
-    { provider: 'model' | 'agent'; modelId?: string; agentId?: string; task: string; prompt: string; context: string }
+    {
+      provider: 'model' | 'agent';
+      modelId?: string;
+      agentId?: string;
+      task: string;
+      prompt: string;
+      context: string;
+    }
   >({
     mutationFn: async (variables) => {
       const { provider, modelId, agentId, task, prompt, context } = variables;
-      const endpoint = provider === 'model' 
-        ? `/api/cms/pages/${page?.id}/ai/generate-layout`
-        : `/api/cms/pages/${page?.id}/ai/agent-layout`;
-      
+      const endpoint =
+        provider === 'model'
+          ? `/api/cms/pages/${page?.id}/ai/generate-layout`
+          : `/api/cms/pages/${page?.id}/ai/agent-layout`;
+
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -76,13 +92,16 @@ export function usePageAiAssistant() {
 
       if (!response.ok) {
         const error = (await response.json()) as Record<string, unknown>;
-        throw new ApiError(String(error['message'] || 'Failed to generate AI output'), response.status);
+        throw new ApiError(
+          String(error['message'] || 'Failed to generate AI output'),
+          response.status
+        );
       }
 
       if (response.headers.get('Content-Type')?.includes('text/event-stream')) {
         const reader = response.body?.getReader();
         if (!reader) throw new ApiError('Failed to read stream', 500);
-        
+
         let accumulated = '';
         const decoder = new TextDecoder();
         while (true) {
@@ -192,11 +211,16 @@ export function usePageAiAssistant() {
   }, []);
 
   return {
-    pageAiProvider, setPageAiProvider,
-    pageAiModelId, setPageAiModelId,
-    pageAiAgentId, setPageAiAgentId,
-    pageAiPrompt, setPageAiPrompt,
-    pageAiTask, setPageAiTask,
+    pageAiProvider,
+    setPageAiProvider,
+    pageAiModelId,
+    setPageAiModelId,
+    pageAiAgentId,
+    setPageAiAgentId,
+    pageAiPrompt,
+    setPageAiPrompt,
+    pageAiTask,
+    setPageAiTask,
     pageAiOutput,
     pageAiError,
     generatePageAiMutation,

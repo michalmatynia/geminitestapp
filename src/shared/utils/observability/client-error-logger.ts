@@ -1,10 +1,6 @@
 'use client';
 
-import {
-  isSensitiveKey,
-  REDACTED_VALUE,
-  truncateString,
-} from './client-redaction';
+import { isSensitiveKey, REDACTED_VALUE, truncateString } from './client-redaction';
 import { isAbortLikeError } from './is-abort-like-error';
 import { getLastUserAction, initUserActionTracker } from './user-action-tracker';
 
@@ -84,8 +80,7 @@ const buildPayload = (
   } else if (typeof error === 'string') {
     payload.message = error;
   } else if (error && typeof error === 'object') {
-    payload.message =
-      (error as { message?: string }).message ?? 'Unknown client error';
+    payload.message = (error as { message?: string }).message ?? 'Unknown client error';
     const errorName = (error as { name?: string }).name;
     if (errorName) payload.name = errorName;
   }
@@ -94,7 +89,7 @@ const buildPayload = (
     extra?.context || Object.keys(baseContext).length > 0
       ? { ...baseContext, ...(extra?.context ?? {}) }
       : null;
-  
+
   if (mergedContext || getLastUserAction()) {
     const contextToSerialize = {
       ...(mergedContext || {}),
@@ -171,7 +166,8 @@ export const initClientErrorReporting = (): void => {
 
   // Expose for Playwright tests in non-production environments
   if (process.env['NODE_ENV'] !== 'production') {
-    (window as Window & { _logClientError?: typeof logClientError })._logClientError = logClientError;
+    (window as Window & { _logClientError?: typeof logClientError })._logClientError =
+      logClientError;
   }
 
   window.addEventListener('error', (event: ErrorEvent): void => {

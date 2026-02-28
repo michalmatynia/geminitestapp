@@ -2,9 +2,13 @@
 
 import React, { useState, useMemo } from 'react';
 
-import { Viewer3D } from '@/features/viewer3d';
-import { Asset3DPreviewModal } from '@/features/viewer3d';
-import { useAssets3D, useAsset3DCategories, useAsset3DTags } from '@/features/viewer3d/hooks/useAsset3dQueries';
+import { Viewer3D } from '@/shared/lib/viewer3d';
+import { Asset3DPreviewModal } from '@/shared/lib/viewer3d';
+import {
+  useAssets3D,
+  useAsset3DCategories,
+  useAsset3DTags,
+} from '@/shared/lib/viewer3d/hooks/useAsset3dQueries';
 import type { EntityModalProps } from '@/shared/contracts/ui';
 import type { Asset3DListFilters, Asset3DRecord } from '@/shared/contracts/viewer3d';
 import { FilterPanel, Button, FormSection, EmptyState } from '@/shared/ui';
@@ -34,29 +38,32 @@ export function Asset3DPickerModal({
   const categories = categoriesQuery.data ?? [];
   const tags = tagsQuery.data ?? [];
 
-  const filterConfig = useMemo<FilterField[]>(() => [
-    {
-      key: 'category',
-      label: 'Category',
-      type: 'select',
-      options: [
-        { value: '__all__', label: 'All categories' },
-        ...categories.map((cat: string) => ({ value: cat, label: cat }))
-      ],
-    },
-    {
-      key: 'tags',
-      label: 'Tags',
-      type: 'select',
-      multi: true,
-      options: tags.map((tag: string) => ({ value: tag, label: tag })),
-    },
-    {
-      key: 'isPublicOnly',
-      label: 'Public only',
-      type: 'checkbox',
-    }
-  ], [categories, tags]);
+  const filterConfig = useMemo<FilterField[]>(
+    () => [
+      {
+        key: 'category',
+        label: 'Category',
+        type: 'select',
+        options: [
+          { value: '__all__', label: 'All categories' },
+          ...categories.map((cat: string) => ({ value: cat, label: cat })),
+        ],
+      },
+      {
+        key: 'tags',
+        label: 'Tags',
+        type: 'select',
+        multi: true,
+        options: tags.map((tag: string) => ({ value: tag, label: tag })),
+      },
+      {
+        key: 'isPublicOnly',
+        label: 'Public only',
+        type: 'checkbox',
+      },
+    ],
+    [categories, tags]
+  );
 
   const apiFilters: Asset3DListFilters = {
     search: filters.search.trim() || undefined,
@@ -68,7 +75,7 @@ export function Asset3DPickerModal({
   const assets = assetsQuery.data ?? [];
 
   const handleFilterChange = (key: string, value: unknown) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+    setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
   const handleReset = () => {
@@ -119,7 +126,9 @@ export function Asset3DPickerModal({
                     <FormSection key={asset.id} variant='subtle' className='p-2'>
                       <div className='flex items-center justify-between gap-2'>
                         <div className='min-w-0'>
-                          <div className='truncate text-sm text-gray-100'>{asset.name || asset.filename}</div>
+                          <div className='truncate text-sm text-gray-100'>
+                            {asset.name || asset.filename}
+                          </div>
                           <div className='text-[11px] text-gray-400'>
                             {asset.categoryId ? `${asset.categoryId} • ` : ''}
                             {asset.tags?.length ? asset.tags.join(', ') : 'No tags'}

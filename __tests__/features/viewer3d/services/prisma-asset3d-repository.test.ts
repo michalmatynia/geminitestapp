@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterAll, vi } from 'vitest';
 
 vi.unmock('@/shared/lib/db/prisma');
 
-import { prismaAsset3DRepository } from '@/features/viewer3d/services/asset3d-repository/prisma-asset3d-repository';
+import { prismaAsset3DRepository } from '@/shared/lib/viewer3d/services/asset3d-repository/prisma-asset3d-repository';
 import prisma from '@/shared/lib/db/prisma';
 
 describe('prismaAsset3DRepository', () => {

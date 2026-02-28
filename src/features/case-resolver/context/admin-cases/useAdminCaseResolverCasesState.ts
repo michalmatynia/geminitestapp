@@ -2,11 +2,8 @@
 
 import { useState, useMemo, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
-import type {
-  CaseResolverWorkspace,
-  CaseResolverFile,
-} from '@/shared/contracts/case-resolver';
-import { 
+import type { CaseResolverWorkspace, CaseResolverFile } from '@/shared/contracts/case-resolver';
+import {
   type CaseResolverCaseListConfirmationState,
   type CaseSearchScope,
   type CaseFileTypeFilter,
@@ -17,19 +14,18 @@ import {
   type CaseReferencesFilter,
   type CaseViewMode,
   type CaseSortKey,
-  type CaseSortOrder
+  type CaseSortOrder,
 } from './types';
-import { 
-  DEFAULT_CASE_LIST_VIEW_DEFAULTS, 
-  getCaseResolverWorkspaceRevision 
-} from './utils';
+import { DEFAULT_CASE_LIST_VIEW_DEFAULTS, getCaseResolverWorkspaceRevision } from './utils';
 
 export function useAdminCaseResolverCasesState(parsedWorkspace: CaseResolverWorkspace) {
   const searchParams = useSearchParams();
-  
+
   const [workspace, setWorkspace] = useState<CaseResolverWorkspace>(parsedWorkspace);
   const lastPersistedWorkspaceValueRef = useRef<string>(JSON.stringify(parsedWorkspace));
-  const lastPersistedWorkspaceRevisionRef = useRef<number>(getCaseResolverWorkspaceRevision(parsedWorkspace));
+  const lastPersistedWorkspaceRevisionRef = useRef<number>(
+    getCaseResolverWorkspaceRevision(parsedWorkspace)
+  );
   const [isCreatingCase, setIsCreatingCase] = useState(false);
   const createCaseMutationIdRef = useRef<string | null>(null);
 
@@ -40,13 +36,17 @@ export function useAdminCaseResolverCasesState(parsedWorkspace: CaseResolverWork
   const [editingCaseParentId, setEditingCaseParentId] = useState<string | null>(null);
   const [editingCaseReferenceCaseIds, setEditingCaseReferenceCaseIds] = useState<string[]>([]);
   const [editingCaseTagId, setEditingCaseTagId] = useState<string | null>(null);
-  const [editingCaseCaseIdentifierId, setEditingCaseCaseIdentifierId] = useState<string | null>(null);
+  const [editingCaseCaseIdentifierId, setEditingCaseCaseIdentifierId] = useState<string | null>(
+    null
+  );
   const [pendingCaseIdentifierIds, setPendingCaseIdentifierIds] = useState<string[]>([]);
   const [editingCaseCategoryId, setEditingCaseCategoryId] = useState<string | null>(null);
   const [collapsedCaseIds, setCollapsedCaseIds] = useState<Set<string>>(new Set<string>());
   const [heldCaseId, setHeldCaseId] = useState<string | null>(null);
   const [caseSearchQuery, setCaseSearchQuery] = useState('');
-  const [caseSearchScope, setCaseSearchScope] = useState<CaseSearchScope>(DEFAULT_CASE_LIST_VIEW_DEFAULTS.searchScope);
+  const [caseSearchScope, setCaseSearchScope] = useState<CaseSearchScope>(
+    DEFAULT_CASE_LIST_VIEW_DEFAULTS.searchScope
+  );
   const [caseFileTypeFilter, setCaseFileTypeFilter] = useState<CaseFileTypeFilter>('all');
   const [caseFilterTagIds, setCaseFilterTagIds] = useState<string[]>([]);
   const [caseFilterCaseIdentifierIds, setCaseFilterCaseIdentifierIds] = useState<string[]>([]);
@@ -55,19 +55,23 @@ export function useAdminCaseResolverCasesState(parsedWorkspace: CaseResolverWork
   const [caseFilterStatus, setCaseFilterStatus] = useState<CaseStatusFilter>('all');
   const [caseFilterLocked, setCaseFilterLocked] = useState<CaseLockedFilter>('all');
   const [caseFilterSent, setCaseFilterSent] = useState<CaseSentFilter>('all');
-  const [caseFilterHierarchy, setCaseFilterHierarchy] =
-    useState<CaseHierarchyFilter>('all');
-  const [caseFilterReferences, setCaseFilterReferences] =
-    useState<CaseReferencesFilter>('all');
+  const [caseFilterHierarchy, setCaseFilterHierarchy] = useState<CaseHierarchyFilter>('all');
+  const [caseFilterReferences, setCaseFilterReferences] = useState<CaseReferencesFilter>('all');
   const [caseSortBy, setCaseSortBy] = useState<CaseSortKey>(DEFAULT_CASE_LIST_VIEW_DEFAULTS.sortBy);
-  const [caseSortOrder, setCaseSortOrder] = useState<CaseSortOrder>(DEFAULT_CASE_LIST_VIEW_DEFAULTS.sortOrder);
-  const [caseViewMode, setCaseViewMode] = useState<CaseViewMode>(DEFAULT_CASE_LIST_VIEW_DEFAULTS.viewMode);
-  const [caseShowNestedContent, setCaseShowNestedContent] =
-    useState<boolean>(DEFAULT_CASE_LIST_VIEW_DEFAULTS.showNestedContent);
-  const [caseFilterPanelDefaultExpanded, setCaseFilterPanelDefaultExpanded] = useState<boolean>(!DEFAULT_CASE_LIST_VIEW_DEFAULTS.filtersCollapsedByDefault);
+  const [caseSortOrder, setCaseSortOrder] = useState<CaseSortOrder>(
+    DEFAULT_CASE_LIST_VIEW_DEFAULTS.sortOrder
+  );
+  const [caseViewMode, setCaseViewMode] = useState<CaseViewMode>(
+    DEFAULT_CASE_LIST_VIEW_DEFAULTS.viewMode
+  );
+  const [caseShowNestedContent, setCaseShowNestedContent] = useState<boolean>(
+    DEFAULT_CASE_LIST_VIEW_DEFAULTS.showNestedContent
+  );
+  const [caseFilterPanelDefaultExpanded, setCaseFilterPanelDefaultExpanded] = useState<boolean>(
+    !DEFAULT_CASE_LIST_VIEW_DEFAULTS.filtersCollapsedByDefault
+  );
   const [didHydrateCaseListViewDefaults, setDidHydrateCaseListViewDefaults] = useState(false);
-  const [confirmation, setConfirmation] =
-    useState<CaseResolverCaseListConfirmationState>(null);
+  const [confirmation, setConfirmation] = useState<CaseResolverCaseListConfirmationState>(null);
 
   const requestedCaseIdentifierFilterFromQuery = useMemo((): string | null => {
     const rawCaseIdentifierId = searchParams.get('caseIdentifierId');
@@ -78,42 +82,75 @@ export function useAdminCaseResolverCasesState(parsedWorkspace: CaseResolverWork
   const appliedCaseIdentifierFilterFromQueryRef = useRef<string | null>(null);
 
   return {
-    workspace, setWorkspace,
+    workspace,
+    setWorkspace,
     lastPersistedWorkspaceValueRef,
     lastPersistedWorkspaceRevisionRef,
-    isCreatingCase, setIsCreatingCase,
+    isCreatingCase,
+    setIsCreatingCase,
     createCaseMutationIdRef,
-    caseDraft, setCaseDraft,
-    isCreateCaseModalOpen, setIsCreateCaseModalOpen,
-    editingCaseId, setEditingCaseId,
-    editingCaseName, setEditingCaseName,
-    editingCaseParentId, setEditingCaseParentId,
-    editingCaseReferenceCaseIds, setEditingCaseReferenceCaseIds,
-    editingCaseTagId, setEditingCaseTagId,
-    editingCaseCaseIdentifierId, setEditingCaseCaseIdentifierId,
-    pendingCaseIdentifierIds, setPendingCaseIdentifierIds,
-    editingCaseCategoryId, setEditingCaseCategoryId,
-    collapsedCaseIds, setCollapsedCaseIds,
-    heldCaseId, setHeldCaseId,
-    caseSearchQuery, setCaseSearchQuery,
-    caseSearchScope, setCaseSearchScope,
-    caseFileTypeFilter, setCaseFileTypeFilter,
-    caseFilterTagIds, setCaseFilterTagIds,
-    caseFilterCaseIdentifierIds, setCaseFilterCaseIdentifierIds,
-    caseFilterCategoryIds, setCaseFilterCategoryIds,
-    caseFilterFolder, setCaseFilterFolder,
-    caseFilterStatus, setCaseFilterStatus,
-    caseFilterLocked, setCaseFilterLocked,
-    caseFilterSent, setCaseFilterSent,
-    caseFilterHierarchy, setCaseFilterHierarchy,
-    caseFilterReferences, setCaseFilterReferences,
-    caseSortBy, setCaseSortBy,
-    caseSortOrder, setCaseSortOrder,
-    caseViewMode, setCaseViewMode,
-    caseShowNestedContent, setCaseShowNestedContent,
-    caseFilterPanelDefaultExpanded, setCaseFilterPanelDefaultExpanded,
-    didHydrateCaseListViewDefaults, setDidHydrateCaseListViewDefaults,
-    confirmation, setConfirmation,
+    caseDraft,
+    setCaseDraft,
+    isCreateCaseModalOpen,
+    setIsCreateCaseModalOpen,
+    editingCaseId,
+    setEditingCaseId,
+    editingCaseName,
+    setEditingCaseName,
+    editingCaseParentId,
+    setEditingCaseParentId,
+    editingCaseReferenceCaseIds,
+    setEditingCaseReferenceCaseIds,
+    editingCaseTagId,
+    setEditingCaseTagId,
+    editingCaseCaseIdentifierId,
+    setEditingCaseCaseIdentifierId,
+    pendingCaseIdentifierIds,
+    setPendingCaseIdentifierIds,
+    editingCaseCategoryId,
+    setEditingCaseCategoryId,
+    collapsedCaseIds,
+    setCollapsedCaseIds,
+    heldCaseId,
+    setHeldCaseId,
+    caseSearchQuery,
+    setCaseSearchQuery,
+    caseSearchScope,
+    setCaseSearchScope,
+    caseFileTypeFilter,
+    setCaseFileTypeFilter,
+    caseFilterTagIds,
+    setCaseFilterTagIds,
+    caseFilterCaseIdentifierIds,
+    setCaseFilterCaseIdentifierIds,
+    caseFilterCategoryIds,
+    setCaseFilterCategoryIds,
+    caseFilterFolder,
+    setCaseFilterFolder,
+    caseFilterStatus,
+    setCaseFilterStatus,
+    caseFilterLocked,
+    setCaseFilterLocked,
+    caseFilterSent,
+    setCaseFilterSent,
+    caseFilterHierarchy,
+    setCaseFilterHierarchy,
+    caseFilterReferences,
+    setCaseFilterReferences,
+    caseSortBy,
+    setCaseSortBy,
+    caseSortOrder,
+    setCaseSortOrder,
+    caseViewMode,
+    setCaseViewMode,
+    caseShowNestedContent,
+    setCaseShowNestedContent,
+    caseFilterPanelDefaultExpanded,
+    setCaseFilterPanelDefaultExpanded,
+    didHydrateCaseListViewDefaults,
+    setDidHydrateCaseListViewDefaults,
+    confirmation,
+    setConfirmation,
     requestedCaseIdentifierFilterFromQuery,
     appliedCaseIdentifierFilterFromQueryRef,
   };

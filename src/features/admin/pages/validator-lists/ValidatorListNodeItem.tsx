@@ -32,8 +32,7 @@ export function ValidatorListNodeItem({
   isDragging,
   select,
 }: ValidatorListNodeItemProps): React.JSX.Element | null {
-  const { listById, onEdit, onToggleLock, onRemove, isPending } =
-    useValidatorListTreeContext();
+  const { listById, onEdit, onToggleLock, onRemove, isPending } = useValidatorListTreeContext();
 
   const listId = fromValidatorListNodeId(node.id);
   const list = listId ? (listById.get(listId) ?? null) : null;
@@ -162,11 +161,7 @@ export function ValidatorListNodeItem({
               title={list.deletionLocked ? 'Unlock' : 'Lock'}
               aria-hidden='true'
             >
-              {list.deletionLocked ? (
-                <Unlock className='size-3' />
-              ) : (
-                <Lock className='size-3' />
-              )}
+              {list.deletionLocked ? <Unlock className='size-3' /> : <Lock className='size-3' />}
             </span>
             <span
               className={cn(
@@ -184,11 +179,7 @@ export function ValidatorListNodeItem({
                 event.stopPropagation();
                 if (!list.deletionLocked) onRemove(list);
               }}
-              title={
-                list.deletionLocked
-                  ? 'Unlock list before removing'
-                  : 'Remove list'
-              }
+              title={list.deletionLocked ? 'Unlock list before removing' : 'Remove list'}
               aria-hidden='true'
             >
               <Trash2 className='size-3' />

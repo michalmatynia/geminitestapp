@@ -34,8 +34,8 @@ export const CanvasSvgEdgeLayer = React.memo(function CanvasSvgEdgeLayer({
   const worldViewport = React.useMemo(() => {
     if (!viewportSize) return null;
     return {
-      minX: (-view.x) / view.scale - cullPadding,
-      minY: (-view.y) / view.scale - cullPadding,
+      minX: -view.x / view.scale - cullPadding,
+      minY: -view.y / view.scale - cullPadding,
       maxX: (-view.x + viewportSize.width) / view.scale + cullPadding,
       maxY: (-view.y + viewportSize.height) / view.scale + cullPadding,
     };
@@ -77,13 +77,7 @@ export const CanvasSvgEdgeLayer = React.memo(function CanvasSvgEdgeLayer({
     ) {
       return null;
     }
-    return buildConnectingPreviewPath(
-      fromX,
-      fromY,
-      toX,
-      toY,
-      edgeRoutingMode
-    );
+    return buildConnectingPreviewPath(fromX, fromY, toX, toY, edgeRoutingMode);
   }, [connecting, connectingPos, edgeRoutingMode]);
 
   return (
@@ -102,8 +96,7 @@ export const CanvasSvgEdgeLayer = React.memo(function CanvasSvgEdgeLayer({
           edgeMeta?.fromPort === 'aiPrompt' || edgeMeta?.toPort === 'queryCallback';
         const fromNode = nodeById.get(fromNodeId);
         const toNode = nodeById.get(toNodeId);
-        const isSchemaConnection =
-          fromNode?.type === 'db_schema' && toNode?.type === 'database';
+        const isSchemaConnection = fromNode?.type === 'db_schema' && toNode?.type === 'database';
         const isActivePath =
           !isManualConnector &&
           !isSchemaConnection &&
@@ -116,12 +109,12 @@ export const CanvasSvgEdgeLayer = React.memo(function CanvasSvgEdgeLayer({
               ? 'text-sky-400/80'
               : 'text-sky-400/55'
           : `transition-all duration-150 ${
-            isSelected
-              ? 'text-sky-300'
-              : isActivePath || isFlowing
-                ? 'text-sky-400/80 group-hover:text-sky-300/90'
-                : 'text-sky-400/55 group-hover:text-sky-300/80'
-          }`;
+              isSelected
+                ? 'text-sky-300'
+                : isActivePath || isFlowing
+                  ? 'text-sky-400/80 group-hover:text-sky-300/90'
+                  : 'text-sky-400/55 group-hover:text-sky-300/80'
+            }`;
         const arrowSize = isSelected ? 9 : 8;
         const arrowWidth = isSelected ? 6 : 5;
         const arrowPath = `M 0 0 L -${arrowSize} ${arrowWidth / 2} L -${arrowSize} -${arrowWidth / 2} Z`;

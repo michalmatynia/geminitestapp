@@ -18,9 +18,7 @@ export function TreeSectionProvider({
   children,
 }: TreeSectionProviderProps): React.JSX.Element {
   return (
-    <TreeSectionContext.Provider value={{ sectionId }}>
-      {children}
-    </TreeSectionContext.Provider>
+    <TreeSectionContext.Provider value={{ sectionId }}>{children}</TreeSectionContext.Provider>
   );
 }
 
@@ -30,7 +28,9 @@ export function useTreeSectionId(explicitSectionId?: string): string {
   }
   const context = useContext(TreeSectionContext);
   if (!context?.sectionId) {
-    throw new Error('useTreeSectionId must be used within TreeSectionProvider or receive a sectionId prop');
+    throw new Error(
+      'useTreeSectionId must be used within TreeSectionProvider or receive a sectionId prop'
+    );
   }
   return context.sectionId;
 }

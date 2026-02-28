@@ -29,10 +29,7 @@ const LOCAL_HOSTS = new Set<string>([
   'metadata',
 ]);
 
-const PRIVATE_METADATA_IPS = new Set<string>([
-  '169.254.169.254',
-  '100.100.100.200',
-]);
+const PRIVATE_METADATA_IPS = new Set<string>(['169.254.169.254', '100.100.100.200']);
 
 const parseHostRules = (raw: string | undefined): OutboundHostRule[] => {
   if (!raw || raw.trim().length === 0) return [];
@@ -40,11 +37,13 @@ const parseHostRules = (raw: string | undefined): OutboundHostRule[] => {
     .split(',')
     .map((entry: string): string => entry.trim().toLowerCase())
     .filter((entry: string): boolean => entry.length > 0)
-    .map((entry: string): OutboundHostRule => ({
-      raw: entry,
-      suffix: entry.startsWith('*.') && entry.length > 2,
-      value: entry.startsWith('*.') ? entry.slice(1) : entry,
-    }));
+    .map(
+      (entry: string): OutboundHostRule => ({
+        raw: entry,
+        suffix: entry.startsWith('*.') && entry.length > 2,
+        value: entry.startsWith('*.') ? entry.slice(1) : entry,
+      })
+    );
 };
 
 const matchesHostRule = (hostname: string, rule: OutboundHostRule): boolean => {
@@ -58,7 +57,9 @@ const isPrivateIpv4 = (hostname: string): boolean => {
   if (!IPV4_PATTERN.test(hostname)) return false;
   const octets = hostname.split('.').map((entry: string): number => Number.parseInt(entry, 10));
   if (octets.length !== 4) return false;
-  if (octets.some((entry: number): boolean => !Number.isFinite(entry) || entry < 0 || entry > 255)) {
+  if (
+    octets.some((entry: number): boolean => !Number.isFinite(entry) || entry < 0 || entry > 255)
+  ) {
     return false;
   }
   const [a, b] = octets;
@@ -92,9 +93,7 @@ const normalizeHostname = (hostname: string): string => {
 const isRedirectStatus = (status: number): boolean =>
   status === 301 || status === 302 || status === 303 || status === 307 || status === 308;
 
-export const evaluateOutboundUrlPolicy = (
-  rawUrl: string
-): OutboundUrlPolicyDecision => {
+export const evaluateOutboundUrlPolicy = (rawUrl: string): OutboundUrlPolicyDecision => {
   const trimmedUrl = rawUrl.trim();
   if (!trimmedUrl) {
     return {
@@ -139,8 +138,12 @@ export const evaluateOutboundUrlPolicy = (
 
   const allowRules = parseHostRules(process.env['AI_PATHS_OUTBOUND_ALLOWED_HOSTS']);
   const denyRules = parseHostRules(process.env['AI_PATHS_OUTBOUND_DENY_HOSTS']);
-  const allowMatched = allowRules.some((rule: OutboundHostRule): boolean => matchesHostRule(hostname, rule));
-  const denyMatched = denyRules.some((rule: OutboundHostRule): boolean => matchesHostRule(hostname, rule));
+  const allowMatched = allowRules.some((rule: OutboundHostRule): boolean =>
+    matchesHostRule(hostname, rule)
+  );
+  const denyMatched = denyRules.some((rule: OutboundHostRule): boolean =>
+    matchesHostRule(hostname, rule)
+  );
 
   if (denyMatched) {
     return {
@@ -195,9 +198,7 @@ export const evaluateOutboundUrlPolicy = (
   };
 };
 
-export const assertOutboundUrlAllowed = (
-  rawUrl: string
-): OutboundUrlPolicyDecision => {
+export const assertOutboundUrlAllowed = (rawUrl: string): OutboundUrlPolicyDecision => {
   const decision = evaluateOutboundUrlPolicy(rawUrl);
   if (decision.allowed) return decision;
   throw new OutboundUrlPolicyError(

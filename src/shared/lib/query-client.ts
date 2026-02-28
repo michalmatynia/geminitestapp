@@ -1,7 +1,10 @@
 import { MutationCache, QueryCache, QueryClient, type QueryKey } from '@tanstack/react-query';
 
 import { classifyError } from '@/shared/errors/error-classifier';
-import { emitTanstackTelemetry, getTanstackFactoryMetaFromBag } from '@/shared/lib/observability/tanstack-telemetry';
+import {
+  emitTanstackTelemetry,
+  getTanstackFactoryMetaFromBag,
+} from '@/shared/lib/observability/tanstack-telemetry';
 import { logClientError, isLoggableObject } from '@/shared/utils/observability/client-error-logger';
 import { isAbortLikeError } from '@/shared/utils/observability/is-abort-like-error';
 import { getTraceId } from '@/shared/utils/observability/trace';

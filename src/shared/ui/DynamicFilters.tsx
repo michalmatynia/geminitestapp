@@ -56,13 +56,13 @@ export function DynamicFilters({
     >
       {fields.map((field) => (
         <div key={field.key} className={field.colSpan}>
-          <Label 
+          <Label
             htmlFor={`filter-${field.key}`}
             className='text-[11px] font-medium text-gray-400 mb-1.5 block'
           >
             {field.label}
           </Label>
-          
+
           {field.type === 'multi-select' ? (
             <MultiSelect
               options={field.options ?? []}

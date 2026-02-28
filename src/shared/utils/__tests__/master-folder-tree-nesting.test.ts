@@ -1,15 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  defaultFolderTreeProfilesV2,
-} from '@/shared/utils/folder-tree-profiles-v2';
+import { defaultFolderTreeProfilesV2 } from '@/shared/utils/folder-tree-profiles-v2';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 import {
   canDropMasterTreeNode,
   moveMasterTreeNode,
 } from '@/shared/utils/master-folder-tree-engine';
 
-const node = (overrides: Partial<MasterTreeNode> & Pick<MasterTreeNode, 'id' | 'name'>): MasterTreeNode => ({
+const node = (
+  overrides: Partial<MasterTreeNode> & Pick<MasterTreeNode, 'id' | 'name'>
+): MasterTreeNode => ({
   id: overrides.id,
   type: overrides.type ?? 'file',
   kind: overrides.kind ?? 'file',
@@ -83,7 +83,13 @@ describe('cross-profile nesting rules', () => {
     it('allows folder drop to root', () => {
       const nestedNodes: MasterTreeNode[] = [
         node({ id: 'folder-parent', type: 'folder', kind: 'folder', name: 'Parent' }),
-        node({ id: 'folder-child', type: 'folder', kind: 'folder', name: 'Child', parentId: 'folder-parent' }),
+        node({
+          id: 'folder-child',
+          type: 'folder',
+          kind: 'folder',
+          name: 'Child',
+          parentId: 'folder-parent',
+        }),
       ];
       const result = canDropMasterTreeNode({
         nodes: nestedNodes,
@@ -194,7 +200,13 @@ describe('cross-profile nesting rules', () => {
     it('prevents dropping folder into its own subtree', () => {
       const nestedNodes: MasterTreeNode[] = [
         node({ id: 'folder:parent', type: 'folder', kind: 'folder', name: 'Parent' }),
-        node({ id: 'folder:child', type: 'folder', kind: 'folder', name: 'Child', parentId: 'folder:parent' }),
+        node({
+          id: 'folder:child',
+          type: 'folder',
+          kind: 'folder',
+          name: 'Child',
+          parentId: 'folder:parent',
+        }),
       ];
       const result = canDropMasterTreeNode({
         nodes: nestedNodes,

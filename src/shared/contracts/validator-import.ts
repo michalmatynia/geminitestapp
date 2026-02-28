@@ -11,11 +11,7 @@ export const validatorImportScopeSchema = z.enum([
 
 export type ValidatorImportScope = z.infer<typeof validatorImportScopeSchema>;
 
-export const validatorImportModeSchema = z.enum([
-  'append',
-  'upsert',
-  'replace_scope',
-]);
+export const validatorImportModeSchema = z.enum(['append', 'upsert', 'replace_scope']);
 
 export type ValidatorImportMode = z.infer<typeof validatorImportModeSchema>;
 
@@ -23,7 +19,10 @@ export const validatorSemanticCodeSchema = z
   .string()
   .trim()
   .min(1)
-  .regex(/^[a-zA-Z0-9._:-]+$/, 'Semantic code must contain only letters, numbers, dot, underscore, colon, or dash.');
+  .regex(
+    /^[a-zA-Z0-9._:-]+$/,
+    'Semantic code must contain only letters, numbers, dot, underscore, colon, or dash.'
+  );
 
 export type ValidatorSemanticCode = z.infer<typeof validatorSemanticCodeSchema>;
 

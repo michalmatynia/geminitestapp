@@ -1,7 +1,5 @@
 import type { UserPreferences } from '@/shared/contracts/auth';
-import type {
-  CaseResolverFile,
-} from '@/shared/contracts/case-resolver';
+import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
 import { type CaseListViewDefaults } from './types';
 
 export const CASE_RESOLVER_CASE_READY_MAX_ATTEMPTS = 15;
@@ -92,10 +90,9 @@ export const isDescendantCaseId = (
 };
 
 export const normalizeCaseListViewDefaults = (
-  preferences?: UserPreferences,
+  preferences?: UserPreferences
 ): CaseListViewDefaults => ({
-  viewMode:
-    preferences?.caseResolverCaseListViewMode === 'list' ? 'list' : 'hierarchy',
+  viewMode: preferences?.caseResolverCaseListViewMode === 'list' ? 'list' : 'hierarchy',
   sortBy:
     preferences?.caseResolverCaseListSortBy === 'created' ||
     preferences?.caseResolverCaseListSortBy === 'happeningDate' ||
@@ -106,23 +103,20 @@ export const normalizeCaseListViewDefaults = (
     preferences?.caseResolverCaseListSortBy === 'sent'
       ? preferences.caseResolverCaseListSortBy
       : 'updated',
-  sortOrder:
-    preferences?.caseResolverCaseListSortOrder === 'asc' ? 'asc' : 'desc',
+  sortOrder: preferences?.caseResolverCaseListSortOrder === 'asc' ? 'asc' : 'desc',
   searchScope:
     preferences?.caseResolverCaseListSearchScope === 'name' ||
     preferences?.caseResolverCaseListSearchScope === 'folder' ||
     preferences?.caseResolverCaseListSearchScope === 'content'
       ? preferences.caseResolverCaseListSearchScope
       : 'all',
-  filtersCollapsedByDefault:
-    preferences?.caseResolverCaseListFiltersCollapsedByDefault ?? true,
-  showNestedContent:
-    preferences?.caseResolverCaseListShowNestedContent ?? true,
+  filtersCollapsedByDefault: preferences?.caseResolverCaseListFiltersCollapsedByDefault ?? true,
+  showNestedContent: preferences?.caseResolverCaseListShowNestedContent ?? true,
 });
 
-export const getCaseResolverWorkspaceRevision = (
-  workspace: { workspaceRevision?: unknown }
-): number => {
+export const getCaseResolverWorkspaceRevision = (workspace: {
+  workspaceRevision?: unknown;
+}): number => {
   const candidate = workspace.workspaceRevision;
   if (typeof candidate !== 'number' || !Number.isFinite(candidate)) return 0;
   if (candidate <= 0) return 0;

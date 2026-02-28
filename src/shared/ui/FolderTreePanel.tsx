@@ -28,9 +28,7 @@ export function FolderTreePanel({
   return (
     <div className={cn('relative flex h-full flex-col', className)} {...props}>
       {header}
-      <div className={cn('flex-1 min-h-0', bodyClassName)}>
-        {children}
-      </div>
+      <div className={cn('flex-1 min-h-0', bodyClassName)}>{children}</div>
       {masterInstance ? (
         <button
           type='button'
@@ -48,7 +46,9 @@ export function FolderTreePanel({
               return;
             }
             if (typeof window === 'undefined') return;
-            window.location.assign(masterSettingsHref ?? getMasterInstanceSettingsHref(masterInstance));
+            window.location.assign(
+              masterSettingsHref ?? getMasterInstanceSettingsHref(masterInstance)
+            );
           }}
         >
           m

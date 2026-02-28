@@ -42,7 +42,7 @@ const isMongoAvailable = (): boolean => {
     void logSystemEvent({
       level: 'warn',
       message: 'MONGODB_URI missing; agent teaching data will be empty.',
-      source: 'agent-teaching'
+      source: 'agent-teaching',
     });
     warnedNoMongo = true;
   }
@@ -60,7 +60,9 @@ const ensureIndexesOnce = (() => {
       await Promise.all([
         db.collection<AgentDoc>(AGENTS_COLLECTION).createIndex({ updatedAt: -1 }),
         db.collection<CollectionDoc>(COLLECTIONS_COLLECTION).createIndex({ updatedAt: -1 }),
-        db.collection<DocumentDoc>(DOCUMENTS_COLLECTION).createIndex({ collectionId: 1, updatedAt: -1 }),
+        db
+          .collection<DocumentDoc>(DOCUMENTS_COLLECTION)
+          .createIndex({ collectionId: 1, updatedAt: -1 }),
       ]);
     } catch {
       // best-effort; indexing failures should not block the app
@@ -91,13 +93,16 @@ export async function listTeachingAgents(): Promise<AgentTeachingAgentRecord[]> 
     maxTokens: typeof doc.maxTokens === 'number' ? doc.maxTokens : 800,
     retrievalTopK: typeof doc.retrievalTopK === 'number' ? doc.retrievalTopK : 5,
     retrievalMinScore: typeof doc.retrievalMinScore === 'number' ? doc.retrievalMinScore : 0,
-    maxDocsPerCollection: typeof doc.maxDocsPerCollection === 'number' ? doc.maxDocsPerCollection : 400,
+    maxDocsPerCollection:
+      typeof doc.maxDocsPerCollection === 'number' ? doc.maxDocsPerCollection : 400,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
   }));
 }
 
-export async function getTeachingAgentById(agentId: string): Promise<AgentTeachingAgentRecord | null> {
+export async function getTeachingAgentById(
+  agentId: string
+): Promise<AgentTeachingAgentRecord | null> {
   if (!isMongoAvailable()) return null;
   await ensureIndexesOnce();
   const db = await getMongoDb();
@@ -115,13 +120,16 @@ export async function getTeachingAgentById(agentId: string): Promise<AgentTeachi
     maxTokens: typeof doc.maxTokens === 'number' ? doc.maxTokens : 800,
     retrievalTopK: typeof doc.retrievalTopK === 'number' ? doc.retrievalTopK : 5,
     retrievalMinScore: typeof doc.retrievalMinScore === 'number' ? doc.retrievalMinScore : 0,
-    maxDocsPerCollection: typeof doc.maxDocsPerCollection === 'number' ? doc.maxDocsPerCollection : 400,
+    maxDocsPerCollection:
+      typeof doc.maxDocsPerCollection === 'number' ? doc.maxDocsPerCollection : 400,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
   };
 }
 
-export async function upsertTeachingAgent(input: Partial<AgentTeachingAgentRecord>): Promise<AgentTeachingAgentRecord> {
+export async function upsertTeachingAgent(
+  input: Partial<AgentTeachingAgentRecord>
+): Promise<AgentTeachingAgentRecord> {
   if (!isMongoAvailable()) {
     throw new Error('MongoDB is not configured for agent teaching data.');
   }
@@ -129,7 +137,7 @@ export async function upsertTeachingAgent(input: Partial<AgentTeachingAgentRecor
   const db = await getMongoDb();
 
   const now = new Date().toISOString();
-  const id = (typeof input.id === 'string' && input.id.trim()) ? input.id.trim() : createId();
+  const id = typeof input.id === 'string' && input.id.trim() ? input.id.trim() : createId();
   const existing = await db.collection<AgentDoc>(AGENTS_COLLECTION).findOne({ _id: id });
 
   const next: AgentTeachingAgentRecord = {
@@ -138,15 +146,34 @@ export async function upsertTeachingAgent(input: Partial<AgentTeachingAgentRecor
     enabled: input.enabled ?? true,
     name: (input.name ?? '').trim(),
     description: typeof input.description === 'string' ? input.description.trim() || null : null,
-    llmModel: typeof input.llmModel === 'string' && input.llmModel.trim() ? input.llmModel.trim() : (existing?.llmModel ?? ''),
-    embeddingModel: typeof input.embeddingModel === 'string' && input.embeddingModel.trim() ? input.embeddingModel.trim() : (existing?.embeddingModel ?? ''),
-    systemPrompt: typeof input.systemPrompt === 'string' ? input.systemPrompt : (existing?.systemPrompt ?? ''),
-    collectionIds: Array.isArray(input.collectionIds) ? input.collectionIds : (existing?.collectionIds ?? []),
-    temperature: typeof input.temperature === 'number' ? input.temperature : (existing?.temperature ?? 0.2),
+    llmModel:
+      typeof input.llmModel === 'string' && input.llmModel.trim()
+        ? input.llmModel.trim()
+        : (existing?.llmModel ?? ''),
+    embeddingModel:
+      typeof input.embeddingModel === 'string' && input.embeddingModel.trim()
+        ? input.embeddingModel.trim()
+        : (existing?.embeddingModel ?? ''),
+    systemPrompt:
+      typeof input.systemPrompt === 'string' ? input.systemPrompt : (existing?.systemPrompt ?? ''),
+    collectionIds: Array.isArray(input.collectionIds)
+      ? input.collectionIds
+      : (existing?.collectionIds ?? []),
+    temperature:
+      typeof input.temperature === 'number' ? input.temperature : (existing?.temperature ?? 0.2),
     maxTokens: typeof input.maxTokens === 'number' ? input.maxTokens : (existing?.maxTokens ?? 800),
-    retrievalTopK: typeof input.retrievalTopK === 'number' ? input.retrievalTopK : (existing?.retrievalTopK ?? 5),
-    retrievalMinScore: typeof input.retrievalMinScore === 'number' ? input.retrievalMinScore : (existing?.retrievalMinScore ?? 0),
-    maxDocsPerCollection: typeof input.maxDocsPerCollection === 'number' ? input.maxDocsPerCollection : (existing?.maxDocsPerCollection ?? 400),
+    retrievalTopK:
+      typeof input.retrievalTopK === 'number'
+        ? input.retrievalTopK
+        : (existing?.retrievalTopK ?? 5),
+    retrievalMinScore:
+      typeof input.retrievalMinScore === 'number'
+        ? input.retrievalMinScore
+        : (existing?.retrievalMinScore ?? 0),
+    maxDocsPerCollection:
+      typeof input.maxDocsPerCollection === 'number'
+        ? input.maxDocsPerCollection
+        : (existing?.maxDocsPerCollection ?? 400),
     createdAt: existing?.createdAt ?? now,
     updatedAt: now,
   };
@@ -185,7 +212,9 @@ export async function deleteTeachingAgent(agentId: string): Promise<boolean> {
   return result.deletedCount > 0;
 }
 
-export async function listEmbeddingCollections(): Promise<AgentTeachingEmbeddingCollectionRecord[]> {
+export async function listEmbeddingCollections(): Promise<
+  AgentTeachingEmbeddingCollectionRecord[]
+> {
   if (!isMongoAvailable()) return [];
   await ensureIndexesOnce();
   const db = await getMongoDb();
@@ -204,11 +233,15 @@ export async function listEmbeddingCollections(): Promise<AgentTeachingEmbedding
   }));
 }
 
-export async function getEmbeddingCollectionById(collectionId: string): Promise<AgentTeachingEmbeddingCollectionRecord | null> {
+export async function getEmbeddingCollectionById(
+  collectionId: string
+): Promise<AgentTeachingEmbeddingCollectionRecord | null> {
   if (!isMongoAvailable()) return null;
   await ensureIndexesOnce();
   const db = await getMongoDb();
-  const doc = await db.collection<CollectionDoc>(COLLECTIONS_COLLECTION).findOne({ _id: collectionId });
+  const doc = await db
+    .collection<CollectionDoc>(COLLECTIONS_COLLECTION)
+    .findOne({ _id: collectionId });
   if (!doc) return null;
   return {
     id: doc._id,
@@ -220,7 +253,9 @@ export async function getEmbeddingCollectionById(collectionId: string): Promise<
   };
 }
 
-export async function upsertEmbeddingCollection(input: Partial<AgentTeachingEmbeddingCollectionRecord> & { name: string }): Promise<AgentTeachingEmbeddingCollectionRecord> {
+export async function upsertEmbeddingCollection(
+  input: Partial<AgentTeachingEmbeddingCollectionRecord> & { name: string }
+): Promise<AgentTeachingEmbeddingCollectionRecord> {
   if (!isMongoAvailable()) {
     throw new Error('MongoDB is not configured for agent teaching data.');
   }
@@ -228,14 +263,17 @@ export async function upsertEmbeddingCollection(input: Partial<AgentTeachingEmbe
   const db = await getMongoDb();
 
   const now = new Date().toISOString();
-  const id = (typeof input.id === 'string' && input.id.trim()) ? input.id.trim() : createId();
+  const id = typeof input.id === 'string' && input.id.trim() ? input.id.trim() : createId();
   const existing = await db.collection<CollectionDoc>(COLLECTIONS_COLLECTION).findOne({ _id: id });
 
   const next: AgentTeachingEmbeddingCollectionRecord = {
     id,
     name: input.name.trim(),
     description: typeof input.description === 'string' ? input.description.trim() || null : null,
-    embeddingModel: typeof input.embeddingModel === 'string' && input.embeddingModel.trim() ? input.embeddingModel.trim() : (existing?.embeddingModel ?? ''),
+    embeddingModel:
+      typeof input.embeddingModel === 'string' && input.embeddingModel.trim()
+        ? input.embeddingModel.trim()
+        : (existing?.embeddingModel ?? ''),
     createdAt: existing?.createdAt ?? now,
     updatedAt: now,
   };
@@ -258,16 +296,25 @@ export async function upsertEmbeddingCollection(input: Partial<AgentTeachingEmbe
   return next;
 }
 
-export async function deleteEmbeddingCollection(collectionId: string): Promise<{ deleted: boolean; deletedDocuments: number }> {
+export async function deleteEmbeddingCollection(
+  collectionId: string
+): Promise<{ deleted: boolean; deletedDocuments: number }> {
   if (!isMongoAvailable()) return { deleted: false, deletedDocuments: 0 };
   await ensureIndexesOnce();
   const db = await getMongoDb();
-  const deleteCollection = await db.collection<CollectionDoc>(COLLECTIONS_COLLECTION).deleteOne({ _id: collectionId });
-  const deleteDocs = await db.collection<DocumentDoc>(DOCUMENTS_COLLECTION).deleteMany({ collectionId });
+  const deleteCollection = await db
+    .collection<CollectionDoc>(COLLECTIONS_COLLECTION)
+    .deleteOne({ _id: collectionId });
+  const deleteDocs = await db
+    .collection<DocumentDoc>(DOCUMENTS_COLLECTION)
+    .deleteMany({ collectionId });
   return { deleted: deleteCollection.deletedCount > 0, deletedDocuments: deleteDocs.deletedCount };
 }
 
-export async function listEmbeddingDocuments(collectionId: string, options?: { limit?: number; skip?: number }): Promise<{ items: AgentTeachingEmbeddingDocumentListItem[]; total: number }> {
+export async function listEmbeddingDocuments(
+  collectionId: string,
+  options?: { limit?: number; skip?: number }
+): Promise<{ items: AgentTeachingEmbeddingDocumentListItem[]; total: number }> {
   if (!isMongoAvailable()) return { items: [], total: 0 };
   await ensureIndexesOnce();
   const db = await getMongoDb();
@@ -285,23 +332,26 @@ export async function listEmbeddingDocuments(collectionId: string, options?: { l
     db.collection<DocumentDoc>(DOCUMENTS_COLLECTION).countDocuments({ collectionId }),
   ]);
 
-  const items: AgentTeachingEmbeddingDocumentListItem[] = itemsRaw.map((doc: Omit<DocumentDoc, 'embedding'>) => {
-    const docMetadata: AgentTeachingEmbeddingDocumentMetadata = doc.metadata ?? {};
-    const docName = docMetadata.title ?? (doc.text.slice(0, 50).trim() || 'Untitled');
-    return {
-      id: doc._id,
-      name: docName,
-      description: docMetadata.source ?? null,
-      collectionId: doc.collectionId,
-      content: doc.text,
-      text: doc.text,
-      metadata: docMetadata,
-      embeddingModel: doc.embeddingModel,
-      embeddingDimensions: typeof doc.embeddingDimensions === 'number' ? doc.embeddingDimensions : 0,
-      createdAt: doc.createdAt,
-      updatedAt: doc.updatedAt,
-    };
-  });
+  const items: AgentTeachingEmbeddingDocumentListItem[] = itemsRaw.map(
+    (doc: Omit<DocumentDoc, 'embedding'>) => {
+      const docMetadata: AgentTeachingEmbeddingDocumentMetadata = doc.metadata ?? {};
+      const docName = docMetadata.title ?? (doc.text.slice(0, 50).trim() || 'Untitled');
+      return {
+        id: doc._id,
+        name: docName,
+        description: docMetadata.source ?? null,
+        collectionId: doc.collectionId,
+        content: doc.text,
+        text: doc.text,
+        metadata: docMetadata,
+        embeddingModel: doc.embeddingModel,
+        embeddingDimensions:
+          typeof doc.embeddingDimensions === 'number' ? doc.embeddingDimensions : 0,
+        createdAt: doc.createdAt,
+        updatedAt: doc.updatedAt,
+      };
+    }
+  );
 
   return { items, total };
 }
@@ -353,7 +403,9 @@ export async function deleteEmbeddingDocument(documentId: string): Promise<boole
   if (!isMongoAvailable()) return false;
   await ensureIndexesOnce();
   const db = await getMongoDb();
-  const result = await db.collection<DocumentDoc>(DOCUMENTS_COLLECTION).deleteOne({ _id: documentId });
+  const result = await db
+    .collection<DocumentDoc>(DOCUMENTS_COLLECTION)
+    .deleteOne({ _id: documentId });
   return result.deletedCount > 0;
 }
 
@@ -385,12 +437,14 @@ export async function listEmbeddingDocumentsForRetrieval(params: {
     .limit(limit * Math.max(1, ids.length))
     .toArray();
 
-  return docs.map((doc: DocumentDoc): RetrievalDocumentItem => ({
-    id: doc._id,
-    collectionId: doc.collectionId,
-    text: doc.text,
-    embedding: Array.isArray(doc.embedding) ? doc.embedding : [],
-    embeddingModel: doc.embeddingModel,
-    metadata: doc.metadata ?? null,
-  }));
+  return docs.map(
+    (doc: DocumentDoc): RetrievalDocumentItem => ({
+      id: doc._id,
+      collectionId: doc.collectionId,
+      text: doc.text,
+      embedding: Array.isArray(doc.embedding) ? doc.embedding : [],
+      embeddingModel: doc.embeddingModel,
+      metadata: doc.metadata ?? null,
+    })
+  );
 }

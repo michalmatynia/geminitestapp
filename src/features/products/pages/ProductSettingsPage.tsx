@@ -2,7 +2,11 @@
 
 import { useEffect, useState } from 'react';
 
-import { InternationalizationSettings, InternationalizationProvider, useInternationalizationContext } from '@/shared/lib/internationalization';
+import {
+  InternationalizationSettings,
+  InternationalizationProvider,
+  useInternationalizationContext,
+} from '@/shared/lib/internationalization';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { ProductSyncSettings } from '@/shared/lib/product-sync/components/ProductSyncSettings';
 import { ParametersSettings } from '@/features/products/components/constructor/ParametersSettings';
@@ -34,9 +38,7 @@ import { Catalog, PriceGroup } from '@/shared/contracts/products';
 import { Button, PageLayout, useToast, Card } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
-import {
-  settingSections,
-} from './ProductSettingsConstants';
+import { settingSections } from './ProductSettingsConstants';
 
 function InternationalizationModals(): React.JSX.Element | null {
   const intCtx = useInternationalizationContext();
@@ -54,7 +56,7 @@ function InternationalizationModals(): React.JSX.Element | null {
 export function ProductSettingsPage(): React.JSX.Element {
   const [activeSection, setActiveSection] =
     useState<(typeof settingSections)[number]>('Categories');
-  
+
   // Modal State
   const [showCatalogModal, setShowCatalogModal] = useState(false);
   const [editingCatalog, setEditingCatalog] = useState<Catalog | null>(null);
@@ -66,7 +68,7 @@ export function ProductSettingsPage(): React.JSX.Element {
     onConfirm: () => void | Promise<void>;
     confirmText?: string;
     isDangerous?: boolean;
-      } | null>(null);
+  } | null>(null);
 
   const { toast } = useToast();
 
@@ -78,16 +80,30 @@ export function ProductSettingsPage(): React.JSX.Element {
   const [selectedTagCatalogId, setSelectedTagCatalogId] = useState<string | null>(null);
   const [selectedParameterCatalogId, setSelectedParameterCatalogId] = useState<string | null>(null);
 
-  const { data: productCategories = [], isLoading: loadingCategories, refetch: refetchCategories } = useCategories(selectedCategoryCatalogId);
-  const { data: productTags = [], isLoading: loadingTags, refetch: refetchTags } = useTags(selectedTagCatalogId);
-  const { data: productParameters = [], isLoading: loadingParameters, refetch: refetchParameters } = useParameters(selectedParameterCatalogId);
+  const {
+    data: productCategories = [],
+    isLoading: loadingCategories,
+    refetch: refetchCategories,
+  } = useCategories(selectedCategoryCatalogId);
+  const {
+    data: productTags = [],
+    isLoading: loadingTags,
+    refetch: refetchTags,
+  } = useTags(selectedTagCatalogId);
+  const {
+    data: productParameters = [],
+    isLoading: loadingParameters,
+    refetch: refetchParameters,
+  } = useParameters(selectedParameterCatalogId);
 
   // Mutations
   const updatePriceGroupMutation = useUpdatePriceGroupMutation();
   const deletePriceGroupMutation = useDeletePriceGroupMutation();
   const deleteCatalogMutation = useDeleteCatalogMutation();
 
-  const defaultGroupId = priceGroups.find((g: import('@/shared/contracts/products').PriceGroup) => g.isDefault)?.id ?? '';
+  const defaultGroupId =
+    priceGroups.find((g: import('@/shared/contracts/products').PriceGroup) => g.isDefault)?.id ??
+    '';
 
   useEffect(() => {
     let timer: NodeJS.Timeout | null = null;
@@ -110,12 +126,7 @@ export function ProductSettingsPage(): React.JSX.Element {
     return (): void => {
       if (timer) clearTimeout(timer);
     };
-  }, [
-    catalogs,
-    selectedCategoryCatalogId,
-    selectedTagCatalogId,
-    selectedParameterCatalogId,
-  ]);
+  }, [catalogs, selectedCategoryCatalogId, selectedTagCatalogId, selectedParameterCatalogId]);
 
   const handleSetDefaultGroup = async (groupId: string): Promise<void> => {
     const group = priceGroups.find((g: PriceGroup) => g.id === groupId);
@@ -124,7 +135,9 @@ export function ProductSettingsPage(): React.JSX.Element {
       await updatePriceGroupMutation.mutateAsync({ ...group, isDefault: true });
       toast('Default price group updated.', { variant: 'success' });
     } catch (error) {
-      logClientError(error, { context: { source: 'ProductSettingsPage', action: 'handleSetDefaultGroup', groupId } });
+      logClientError(error, {
+        context: { source: 'ProductSettingsPage', action: 'handleSetDefaultGroup', groupId },
+      });
     }
   };
 
@@ -139,10 +152,16 @@ export function ProductSettingsPage(): React.JSX.Element {
           await deleteCatalogMutation.mutateAsync(catalog.id);
           toast('Catalog deleted.', { variant: 'success' });
         } catch (err) {
-          logClientError(err, { context: { source: 'ProductSettingsPage', action: 'handleDeleteCatalog', catalogId: catalog.id } });
+          logClientError(err, {
+            context: {
+              source: 'ProductSettingsPage',
+              action: 'handleDeleteCatalog',
+              catalogId: catalog.id,
+            },
+          });
           toast('Failed to delete catalog.', { variant: 'error' });
         }
-      }
+      },
     });
   };
 
@@ -161,10 +180,16 @@ export function ProductSettingsPage(): React.JSX.Element {
           await deletePriceGroupMutation.mutateAsync(group.id);
           toast('Price group deleted.', { variant: 'success' });
         } catch (err) {
-          logClientError(err, { context: { source: 'ProductSettingsPage', action: 'handleDeleteGroup', groupId: group.id } });
+          logClientError(err, {
+            context: {
+              source: 'ProductSettingsPage',
+              action: 'handleDeleteGroup',
+              groupId: group.id,
+            },
+          });
           toast('Failed to delete price group.', { variant: 'error' });
         }
-      }
+      },
     });
   };
   const sharedSettingsContextValue = {
@@ -230,18 +255,18 @@ export function ProductSettingsPage(): React.JSX.Element {
 
   return (
     <InternationalizationProvider>
-      <PageLayout
-        title='Product Settings'
-      >
+      <PageLayout title='Product Settings'>
         <Card variant='subtle-compact' padding='sm' className='mb-4 border-border/60 bg-card/30'>
           <div className='flex flex-wrap items-center justify-between gap-3'>
             <div>
               <p className='text-sm font-medium text-gray-100'>Image Studio Integration</p>
               <p className='text-xs text-gray-400'>
-                Configure default Studio project binding and start Product to Image Studio connection.
+                Configure default Studio project binding and start Product to Image Studio
+                connection.
               </p>
             </div>
-            <Button size='xs'
+            <Button
+              size='xs'
               type='button'
               variant='outline'
               onClick={(): void => setActiveSection('Images & Studio')}
@@ -253,8 +278,9 @@ export function ProductSettingsPage(): React.JSX.Element {
         <div className='grid gap-6 md:grid-cols-[240px_1fr]'>
           <Card variant='subtle' padding='md' className='border-border/60 bg-card/40'>
             <div className='flex flex-col gap-2'>
-              {settingSections.map((section: typeof settingSections[number]) => (
-                <Button size='xs'
+              {settingSections.map((section: (typeof settingSections)[number]) => (
+                <Button
+                  size='xs'
                   key={section}
                   variant={activeSection === section ? 'secondary' : 'ghost'}
                   onClick={() => setActiveSection(section)}
@@ -283,18 +309,10 @@ export function ProductSettingsPage(): React.JSX.Element {
                   }}
                 />
               )}
-              {activeSection === 'Price Groups' && (
-                <PriceGroupsSettings />
-              )}
-              {activeSection === 'Catalogs' && (
-                <CatalogsSettings />
-              )}
-              {activeSection === 'Sync Settings' && (
-                <ProductSyncSettings />
-              )}
-              {activeSection === 'Images & Studio' && (
-                <ProductImageRoutingSettings />
-              )}
+              {activeSection === 'Price Groups' && <PriceGroupsSettings />}
+              {activeSection === 'Catalogs' && <CatalogsSettings />}
+              {activeSection === 'Sync Settings' && <ProductSyncSettings />}
+              {activeSection === 'Images & Studio' && <ProductImageRoutingSettings />}
               {activeSection === 'Validator' && (
                 <ValidatorDocsTooltipsProvider>
                   <div className='space-y-5'>
@@ -303,9 +321,7 @@ export function ProductSettingsPage(): React.JSX.Element {
                   </div>
                 </ValidatorDocsTooltipsProvider>
               )}
-              {activeSection === 'Internationalization' && (
-                <InternationalizationSettings />
-              )}
+              {activeSection === 'Internationalization' && <InternationalizationSettings />}
             </Card>
           </ProductSettingsProvider>
         </div>
@@ -314,7 +330,9 @@ export function ProductSettingsPage(): React.JSX.Element {
         <CatalogModal
           isOpen={showCatalogModal}
           onClose={() => setShowCatalogModal(false)}
-          onSuccess={(): void => { setShowCatalogModal(false); }}
+          onSuccess={(): void => {
+            setShowCatalogModal(false);
+          }}
           item={editingCatalog}
           items={priceGroups}
           loading={loadingGroups}
@@ -324,7 +342,9 @@ export function ProductSettingsPage(): React.JSX.Element {
         <PriceGroupModal
           isOpen={showPriceGroupModal}
           onClose={() => setShowPriceGroupModal(false)}
-          onSuccess={(): void => { setShowPriceGroupModal(false); }}
+          onSuccess={(): void => {
+            setShowPriceGroupModal(false);
+          }}
           item={editingPriceGroup}
           items={priceGroups}
         />

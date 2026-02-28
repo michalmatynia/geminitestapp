@@ -19,4 +19,3 @@ export const getPromptExploderRuntimeGuardrailIssue = (args: {
   const reason = formatResolutionReason(runtimeSelection.stackResolution.reason);
   return `Prompt Exploder blocked runtime execution because validation stack "${runtimeSelection.stackResolution.stack}" was resolved via ${reason}. Select an explicit stack in the UI or enable "Allow Validation Stack Fallback".`;
 };
-

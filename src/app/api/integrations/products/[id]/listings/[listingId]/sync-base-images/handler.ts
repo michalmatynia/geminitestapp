@@ -7,7 +7,7 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 
 const syncSchema = z.object({
-  inventoryId: z.string().min(1).optional()
+  inventoryId: z.string().min(1).optional(),
 });
 
 export async function POST_handler(
@@ -22,7 +22,7 @@ export async function POST_handler(
 
   const parsed = await parseJsonBody(_req, syncSchema, {
     logPrefix: 'integrations.products.listings.SYNC_BASE_IMAGES',
-    allowEmpty: true
+    allowEmpty: true,
   });
   if (!parsed.ok) {
     return parsed.response;

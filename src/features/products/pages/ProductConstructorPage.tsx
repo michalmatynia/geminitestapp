@@ -10,13 +10,15 @@ export function ProductConstructorPage(): React.JSX.Element {
   const { toast } = useToast();
   const catalogsQuery = useCatalogs();
   const catalogs = useMemo(() => catalogsQuery.data || [], [catalogsQuery.data]);
-  
+
   const [selectedCatalogId, setSelectedCatalogId] = useState<string | null>(null);
 
   useEffect(() => {
     let timer: NodeJS.Timeout | null = null;
     if (catalogs.length > 0 && !selectedCatalogId) {
-      const defaultCatalog = catalogs.find((catalog: import('@/shared/contracts/products').CatalogRecord) => catalog.isDefault);
+      const defaultCatalog = catalogs.find(
+        (catalog: import('@/shared/contracts/products').CatalogRecord) => catalog.isDefault
+      );
       timer = setTimeout(() => {
         setSelectedCatalogId(defaultCatalog?.id ?? (catalogs[0]?.id || null));
       }, 0);

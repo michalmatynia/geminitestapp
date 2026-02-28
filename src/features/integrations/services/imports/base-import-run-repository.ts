@@ -62,8 +62,7 @@ const isRunTerminal = (status: BaseImportRunStatus): boolean =>
 
 const runKey = (runId: string): string => `${RUN_KEY_PREFIX}${runId}`;
 
-const itemKey = (runId: string, itemId: string): string =>
-  `${ITEM_KEY_PREFIX}${runId}:${itemId}`;
+const itemKey = (runId: string, itemId: string): string => `${ITEM_KEY_PREFIX}${runId}:${itemId}`;
 
 const parseJson = <T>(value: string | null | undefined): T | null => {
   if (!value) return null;
@@ -85,14 +84,13 @@ const toNonNegativeInt = (value: unknown): number => {
   return 0;
 };
 
-const createEmptyRunParameterImportSummary =
-  (): BaseImportRunParameterImportSummary => ({
-    itemsApplied: 0,
-    extracted: 0,
-    resolved: 0,
-    created: 0,
-    written: 0,
-  });
+const createEmptyRunParameterImportSummary = (): BaseImportRunParameterImportSummary => ({
+  itemsApplied: 0,
+  extracted: 0,
+  resolved: 0,
+  created: 0,
+  written: 0,
+});
 
 const normalizeParameterImportSummary = (
   value: unknown
@@ -149,10 +147,7 @@ const normalizeRunStats = (value: unknown): BaseImportRunStats => {
   const skipped = toNonNegativeInt(record['skipped']);
   const failed = toNonNegativeInt(record['failed']);
   const pendingRaw = toNonNegativeInt(record['pending']);
-  const pendingMax = Math.max(
-    0,
-    total - processing - imported - updated - skipped - failed
-  );
+  const pendingMax = Math.max(0, total - processing - imported - updated - skipped - failed);
   return {
     total,
     pending: Math.min(pendingRaw, pendingMax),
@@ -161,9 +156,7 @@ const normalizeRunStats = (value: unknown): BaseImportRunStats => {
     updated,
     skipped,
     failed,
-    parameterImportSummary: normalizeRunParameterImportSummary(
-      record['parameterImportSummary']
-    ),
+    parameterImportSummary: normalizeRunParameterImportSummary(record['parameterImportSummary']),
   };
 };
 
@@ -303,9 +296,7 @@ export const createBaseImportRun = async (input: {
   return normalizeRunRecord(record);
 };
 
-export const getBaseImportRun = async (
-  runId: string
-): Promise<BaseImportRunRecord | null> => {
+export const getBaseImportRun = async (runId: string): Promise<BaseImportRunRecord | null> => {
   const raw = await readSettingValue(runKey(runId));
   const parsed = parseJson<BaseImportRunRecord>(raw);
   return parsed ? normalizeRunRecord(parsed) : null;
@@ -336,16 +327,11 @@ export const listBaseImportRuns = async (
   const values = await listSettingValuesByPrefix(RUN_KEY_PREFIX, limit);
   return values
     .map((value: string) => parseJson<BaseImportRunRecord>(value))
-    .filter(
-      (record: BaseImportRunRecord | null): record is BaseImportRunRecord =>
-        Boolean(record)
-    )
+    .filter((record: BaseImportRunRecord | null): record is BaseImportRunRecord => Boolean(record))
     .map((record: BaseImportRunRecord) => normalizeRunRecord(record));
 };
 
-export const putBaseImportRunItems = async (
-  items: BaseImportItemRecord[]
-): Promise<number> => {
+export const putBaseImportRunItems = async (items: BaseImportItemRecord[]): Promise<number> => {
   if (items.length === 0) return 0;
   const provider = await resolveProvider();
   const now = nowIso();
@@ -356,9 +342,7 @@ export const putBaseImportRunItems = async (
     retryable: item.retryable ?? null,
     nextRetryAt: item.nextRetryAt ?? null,
     lastErrorAt: item.lastErrorAt ?? null,
-    parameterImportSummary: normalizeParameterImportSummary(
-      item.parameterImportSummary
-    ),
+    parameterImportSummary: normalizeParameterImportSummary(item.parameterImportSummary),
     updatedAt: now,
   }));
 
@@ -408,15 +392,10 @@ export const putBaseImportRunItem = async (
     retryable: item.retryable ?? null,
     nextRetryAt: item.nextRetryAt ?? null,
     lastErrorAt: item.lastErrorAt ?? null,
-    parameterImportSummary: normalizeParameterImportSummary(
-      item.parameterImportSummary
-    ),
+    parameterImportSummary: normalizeParameterImportSummary(item.parameterImportSummary),
     updatedAt: nowIso(),
   };
-  await writeSettingValue(
-    itemKey(item.runId, item.itemId),
-    JSON.stringify(normalized)
-  );
+  await writeSettingValue(itemKey(item.runId, item.itemId), JSON.stringify(normalized));
   return normalized;
 };
 
@@ -462,9 +441,7 @@ export const getBaseImportRunItem = async (
     retryable: typeof parsed.retryable === 'boolean' ? parsed.retryable : null,
     nextRetryAt: parsed.nextRetryAt ?? null,
     lastErrorAt: parsed.lastErrorAt ?? null,
-    parameterImportSummary: normalizeParameterImportSummary(
-      parsed.parameterImportSummary
-    ),
+    parameterImportSummary: normalizeParameterImportSummary(parsed.parameterImportSummary),
   };
 };
 
@@ -528,19 +505,17 @@ export const listBaseImportRunItems = async (
   );
   const items = values
     .map((value: string) => parseJson<BaseImportItemRecord>(value))
-    .filter(
-      (item: BaseImportItemRecord | null): item is BaseImportItemRecord => Boolean(item)
+    .filter((item: BaseImportItemRecord | null): item is BaseImportItemRecord => Boolean(item))
+    .map(
+      (item: BaseImportItemRecord): BaseImportItemRecord => ({
+        ...item,
+        errorClass: normalizeItemErrorClass(item),
+        retryable: typeof item.retryable === 'boolean' ? item.retryable : null,
+        nextRetryAt: item.nextRetryAt ?? null,
+        lastErrorAt: item.lastErrorAt ?? null,
+        parameterImportSummary: normalizeParameterImportSummary(item.parameterImportSummary),
+      })
     )
-    .map((item: BaseImportItemRecord): BaseImportItemRecord => ({
-      ...item,
-      errorClass: normalizeItemErrorClass(item),
-      retryable: typeof item.retryable === 'boolean' ? item.retryable : null,
-      nextRetryAt: item.nextRetryAt ?? null,
-      lastErrorAt: item.lastErrorAt ?? null,
-      parameterImportSummary: normalizeParameterImportSummary(
-        item.parameterImportSummary
-      ),
-    }))
     .sort((a: BaseImportItemRecord, b: BaseImportItemRecord) => a.itemId.localeCompare(b.itemId));
   return filterItems(items, options);
 };
@@ -593,15 +568,11 @@ export const listBaseImportRunItemsPage = async (
 export const deleteBaseImportRunItems = async (runId: string): Promise<void> => {
   const items = await listBaseImportRunItems(runId);
   await Promise.all(
-    items.map((item: BaseImportItemRecord) =>
-      deleteSettingByKey(itemKey(runId, item.itemId))
-    )
+    items.map((item: BaseImportItemRecord) => deleteSettingByKey(itemKey(runId, item.itemId)))
   );
 };
 
-export const computeBaseImportRunStats = (
-  items: BaseImportItemRecord[]
-): BaseImportRunStats => {
+export const computeBaseImportRunStats = (items: BaseImportItemRecord[]): BaseImportRunStats => {
   const stats: BaseImportRunStats = initialStats(items.length);
   const parameterImportSummary =
     stats.parameterImportSummary ?? createEmptyRunParameterImportSummary();
@@ -628,9 +599,7 @@ export const computeBaseImportRunStats = (
   return stats;
 };
 
-export const recomputeBaseImportRunStats = async (
-  runId: string
-): Promise<BaseImportRunRecord> => {
+export const recomputeBaseImportRunStats = async (runId: string): Promise<BaseImportRunRecord> => {
   const run = await getBaseImportRun(runId);
   if (!run) {
     throw new Error(`Base import run not found: ${runId}`);
@@ -653,7 +622,9 @@ export const getBaseImportRunDetail = async (
   if (!run) return null;
   if (options?.includeItems === false) {
     const pageSize =
-      typeof options.pageSize === 'number' && Number.isFinite(options.pageSize) && options.pageSize > 0
+      typeof options.pageSize === 'number' &&
+      Number.isFinite(options.pageSize) &&
+      options.pageSize > 0
         ? Math.floor(options.pageSize)
         : 200;
     return {

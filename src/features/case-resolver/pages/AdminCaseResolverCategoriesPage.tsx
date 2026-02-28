@@ -1,6 +1,15 @@
 'use client';
 
-import { ArrowDown, ArrowUp, ChevronDown, ChevronRight, Folder, FolderOpen, Plus, Trash2 } from 'lucide-react';
+import {
+  ArrowDown,
+  ArrowUp,
+  ChevronDown,
+  ChevronRight,
+  Folder,
+  FolderOpen,
+  Plus,
+  Trash2,
+} from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -27,7 +36,6 @@ import {
   parseCaseResolverCategories,
 } from '../settings';
 
-
 type CategoryFormData = {
   name: string;
   description: string;
@@ -48,7 +56,10 @@ export function AdminCaseResolverCategoriesPage(): React.JSX.Element {
   const { toast } = useToast();
 
   const rawCategories = settingsStore.get(CASE_RESOLVER_CATEGORIES_KEY);
-  const categories = useMemo((): CaseResolverCategory[] => parseCaseResolverCategories(rawCategories), [rawCategories]);
+  const categories = useMemo(
+    (): CaseResolverCategory[] => parseCaseResolverCategories(rawCategories),
+    [rawCategories]
+  );
   const categoryTree = useMemo(() => buildCaseResolverCategoryTree(categories), [categories]);
 
   const [showModal, setShowModal] = useState(false);
@@ -64,27 +75,47 @@ export function AdminCaseResolverCategoriesPage(): React.JSX.Element {
 
   const categoryById = useMemo(
     (): Map<string, CaseResolverCategory> =>
-      new Map(categories.map((category: CaseResolverCategory): [string, CaseResolverCategory] => [category.id, category])),
+      new Map(
+        categories.map((category: CaseResolverCategory): [string, CaseResolverCategory] => [
+          category.id,
+          category,
+        ])
+      ),
     [categories]
   );
 
-  const collectDescendantIds = useCallback((categoryId: string): string[] => {
-    const children = categories.filter((category: CaseResolverCategory) => category.parentId === categoryId);
-    return children.flatMap((category: CaseResolverCategory) => [category.id, ...collectDescendantIds(category.id)]);
-  }, [categories]);
+  const collectDescendantIds = useCallback(
+    (categoryId: string): string[] => {
+      const children = categories.filter(
+        (category: CaseResolverCategory) => category.parentId === categoryId
+      );
+      return children.flatMap((category: CaseResolverCategory) => [
+        category.id,
+        ...collectDescendantIds(category.id),
+      ]);
+    },
+    [categories]
+  );
 
-  const persistCategories = useCallback(async (nextCategories: CaseResolverCategory[], successMessage: string): Promise<void> => {
-    try {
-      await updateSetting.mutateAsync({
-        key: CASE_RESOLVER_CATEGORIES_KEY,
-        value: serializeSetting(normalizeCaseResolverCategories(nextCategories)),
-      });
-      toast(successMessage, { variant: 'success' });
-    } catch (error) {
-      logClientError(error, { context: { source: 'AdminCaseResolverCategoriesPage', action: 'persistCategories' } });
-      toast(error instanceof Error ? error.message : 'Failed to save categories.', { variant: 'error' });
-    }
-  }, [toast, updateSetting]);
+  const persistCategories = useCallback(
+    async (nextCategories: CaseResolverCategory[], successMessage: string): Promise<void> => {
+      try {
+        await updateSetting.mutateAsync({
+          key: CASE_RESOLVER_CATEGORIES_KEY,
+          value: serializeSetting(normalizeCaseResolverCategories(nextCategories)),
+        });
+        toast(successMessage, { variant: 'success' });
+      } catch (error) {
+        logClientError(error, {
+          context: { source: 'AdminCaseResolverCategoriesPage', action: 'persistCategories' },
+        });
+        toast(error instanceof Error ? error.message : 'Failed to save categories.', {
+          variant: 'error',
+        });
+      }
+    },
+    [toast, updateSetting]
+  );
 
   const openCreateModal = useCallback((parentId: string | null): void => {
     setEditingCategoryId(null);
@@ -118,7 +149,10 @@ export function AdminCaseResolverCategoriesPage(): React.JSX.Element {
     }
 
     const byId = new Map<string, CaseResolverCategory>(
-      categories.map((category: CaseResolverCategory): [string, CaseResolverCategory] => [category.id, category])
+      categories.map((category: CaseResolverCategory): [string, CaseResolverCategory] => [
+        category.id,
+        category,
+      ])
     );
     const resolveDepth = (category: CaseResolverCategory): number => {
       let depth = 0;
@@ -149,24 +183,27 @@ export function AdminCaseResolverCategoriesPage(): React.JSX.Element {
 
     const now = new Date().toISOString();
     if (editableCategory) {
-      const nextCategories = categories.map((category: CaseResolverCategory): CaseResolverCategory =>
-        category.id === editableCategory.id
-          ? {
-            ...category,
-            name: normalizedName,
-            description: formData.description,
-            color: formData.color.trim() || '#10b981',
-            parentId: formData.parentId,
-            updatedAt: now,
-          }
-          : category
+      const nextCategories = categories.map(
+        (category: CaseResolverCategory): CaseResolverCategory =>
+          category.id === editableCategory.id
+            ? {
+                ...category,
+                name: normalizedName,
+                description: formData.description,
+                color: formData.color.trim() || '#10b981',
+                parentId: formData.parentId,
+                updatedAt: now,
+              }
+            : category
       );
       await persistCategories(nextCategories, 'Category updated.');
       setShowModal(false);
       return;
     }
 
-    const siblingCount = categories.filter((category: CaseResolverCategory) => category.parentId === formData.parentId).length;
+    const siblingCount = categories.filter(
+      (category: CaseResolverCategory) => category.parentId === formData.parentId
+    ).length;
     const nextCategory: CaseResolverCategory = {
       id: createCategoryId(),
       name: normalizedName,
@@ -179,12 +216,26 @@ export function AdminCaseResolverCategoriesPage(): React.JSX.Element {
     };
     await persistCategories([...categories, nextCategory], 'Category created.');
     setShowModal(false);
-  }, [categories, editableCategory, formData.color, formData.description, formData.name, formData.parentId, persistCategories, toast]);
+  }, [
+    categories,
+    editableCategory,
+    formData.color,
+    formData.description,
+    formData.name,
+    formData.parentId,
+    persistCategories,
+    toast,
+  ]);
 
   const handleDeleteCategory = useCallback(async (): Promise<void> => {
     if (!categoryToDelete) return;
-    const removedIds = new Set<string>([categoryToDelete.id, ...collectDescendantIds(categoryToDelete.id)]);
-    const nextCategories = categories.filter((category: CaseResolverCategory) => !removedIds.has(category.id));
+    const removedIds = new Set<string>([
+      categoryToDelete.id,
+      ...collectDescendantIds(categoryToDelete.id),
+    ]);
+    const nextCategories = categories.filter(
+      (category: CaseResolverCategory) => !removedIds.has(category.id)
+    );
     await persistCategories(nextCategories, 'Category deleted.');
     setCategoryToDelete(null);
   }, [categories, categoryToDelete, collectDescendantIds, persistCategories]);
@@ -201,36 +252,51 @@ export function AdminCaseResolverCategoriesPage(): React.JSX.Element {
     });
   }, []);
 
-  const handleMoveCategory = useCallback(async (categoryId: string, direction: -1 | 1): Promise<void> => {
-    const target = categoryById.get(categoryId);
-    if (!target) return;
-    const siblings = categories
-      .filter((category: CaseResolverCategory) => category.parentId === target.parentId)
-      .sort((left: CaseResolverCategory, right: CaseResolverCategory) => left.sortOrder - right.sortOrder);
-    const currentIndex = siblings.findIndex((category: CaseResolverCategory) => category.id === categoryId);
-    if (currentIndex < 0) return;
-    const targetIndex = currentIndex + direction;
-    if (targetIndex < 0 || targetIndex >= siblings.length) return;
+  const handleMoveCategory = useCallback(
+    async (categoryId: string, direction: -1 | 1): Promise<void> => {
+      const target = categoryById.get(categoryId);
+      if (!target) return;
+      const siblings = categories
+        .filter((category: CaseResolverCategory) => category.parentId === target.parentId)
+        .sort(
+          (left: CaseResolverCategory, right: CaseResolverCategory) =>
+            left.sortOrder - right.sortOrder
+        );
+      const currentIndex = siblings.findIndex(
+        (category: CaseResolverCategory) => category.id === categoryId
+      );
+      if (currentIndex < 0) return;
+      const targetIndex = currentIndex + direction;
+      if (targetIndex < 0 || targetIndex >= siblings.length) return;
 
-    const reordered = [...siblings];
-    const [moved] = reordered.splice(currentIndex, 1);
-    reordered.splice(targetIndex, 0, moved!);
-    const sortOrderById = new Map<string, number>(
-      reordered.map((category: CaseResolverCategory, index: number): [string, number] => [category.id, index])
-    );
-    const nextCategories = categories.map((category: CaseResolverCategory): CaseResolverCategory =>
-      sortOrderById.has(category.id)
-        ? {
-          ...category,
-          sortOrder: sortOrderById.get(category.id)!,
-          updatedAt: new Date().toISOString(),
-        }
-        : category
-    );
-    await persistCategories(nextCategories, 'Category order updated.');
-  }, [categories, categoryById, persistCategories]);
+      const reordered = [...siblings];
+      const [moved] = reordered.splice(currentIndex, 1);
+      reordered.splice(targetIndex, 0, moved!);
+      const sortOrderById = new Map<string, number>(
+        reordered.map((category: CaseResolverCategory, index: number): [string, number] => [
+          category.id,
+          index,
+        ])
+      );
+      const nextCategories = categories.map(
+        (category: CaseResolverCategory): CaseResolverCategory =>
+          sortOrderById.has(category.id)
+            ? {
+                ...category,
+                sortOrder: sortOrderById.get(category.id)!,
+                updatedAt: new Date().toISOString(),
+              }
+            : category
+      );
+      await persistCategories(nextCategories, 'Category order updated.');
+    },
+    [categories, categoryById, persistCategories]
+  );
 
-  const renderTree = (nodes: ReturnType<typeof buildCaseResolverCategoryTree>, depth: number): React.JSX.Element => (
+  const renderTree = (
+    nodes: ReturnType<typeof buildCaseResolverCategoryTree>,
+    depth: number
+  ): React.JSX.Element => (
     <div className='space-y-0.5'>
       {nodes.map((node) => {
         const hasChildren = node.children.length > 0;
@@ -250,10 +316,16 @@ export function AdminCaseResolverCategoriesPage(): React.JSX.Element {
                   onClick={(): void => toggleCollapsed(node.id)}
                   aria-label={isCollapsed ? `Expand ${node.name}` : `Collapse ${node.name}`}
                 >
-                  {isCollapsed ? <ChevronRight className='size-3.5' /> : <ChevronDown className='size-3.5' />}
+                  {isCollapsed ? (
+                    <ChevronRight className='size-3.5' />
+                  ) : (
+                    <ChevronDown className='size-3.5' />
+                  )}
                 </button>
               ) : (
-                <span className='inline-flex size-4 items-center justify-center text-xs opacity-30'>•</span>
+                <span className='inline-flex size-4 items-center justify-center text-xs opacity-30'>
+                  •
+                </span>
               )}
               <Icon className='size-3.5 shrink-0 text-gray-400' />
               <span className='flex-1 truncate'>{node.name}</span>
@@ -330,15 +402,15 @@ export function AdminCaseResolverCategoriesPage(): React.JSX.Element {
     <div className='container mx-auto space-y-6 py-8'>
       <SectionHeader
         title='Case Resolver Categories'
-        subtitle={(
+        subtitle={
           <Breadcrumbs
             items={[
               { label: 'Admin', href: '/admin' },
               { label: 'Case Resolver', href: '/admin/case-resolver' },
-              { label: 'Categories' }
+              { label: 'Categories' },
             ]}
           />
-        )}
+        }
       />
 
       <div className='flex justify-start'>
@@ -354,10 +426,7 @@ export function AdminCaseResolverCategoriesPage(): React.JSX.Element {
         </Button>
       </div>
 
-      <FormSection
-        title='Category Tree'
-        className='p-4'
-      >
+      <FormSection title='Category Tree' className='p-4'>
         <div className='mt-4'>
           {settingsStore.isLoading ? (
             <div className='space-y-2'>
@@ -369,12 +438,12 @@ export function AdminCaseResolverCategoriesPage(): React.JSX.Element {
             <EmptyState
               title='No categories yet'
               description='Create your first category to start organizing documents.'
-              action={(
+              action={
                 <Button onClick={(): void => openCreateModal(null)} variant='outline'>
                   <Plus className='mr-2 size-4' />
                   Create First Category
                 </Button>
-              )}
+              }
             />
           ) : (
             <div className='rounded-md border border-border bg-gray-900 p-2'>

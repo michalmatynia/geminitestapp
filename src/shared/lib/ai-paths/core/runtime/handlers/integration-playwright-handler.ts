@@ -5,24 +5,14 @@ import type {
   RuntimePortValues,
 } from '@/shared/contracts/ai-paths-runtime';
 
-import {
-  playwrightNodeApi,
-  type PlaywrightNodeRunSnapshot,
-} from '../../../api';
+import { playwrightNodeApi, type PlaywrightNodeRunSnapshot } from '../../../api';
 import { normalizePlaywrightConfig } from '../../playwright/default-config';
-import {
-  coerceInput,
-  parseJsonSafe,
-  renderTemplate,
-} from '../../utils';
+import { coerceInput, parseJsonSafe, renderTemplate } from '../../utils';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 
-const parseObjectJson = (
-  value: string | undefined,
-  fieldName: string
-): Record<string, unknown> => {
+const parseObjectJson = (value: string | undefined, fieldName: string): Record<string, unknown> => {
   if (!value?.trim()) return {};
   const parsed = parseJsonSafe(value);
   if (!isRecord(parsed)) {
@@ -33,10 +23,7 @@ const parseObjectJson = (
 
 const buildInputPayload = (nodeInputs: RuntimePortValues): Record<string, unknown> =>
   Object.fromEntries(
-    Object.entries(nodeInputs).map(([port, value]: [string, unknown]) => [
-      port,
-      coerceInput(value),
-    ])
+    Object.entries(nodeInputs).map(([port, value]: [string, unknown]) => [port, coerceInput(value)])
   );
 
 const normalizeCaptureConfig = (
@@ -84,9 +71,7 @@ const mapArtifactsWithUrls = (
 const mapRunToOutputs = (run: PlaywrightNodeRunSnapshot): RuntimePortValues => {
   const resultPayload = run.result;
   const resultRecord = isRecord(resultPayload) ? resultPayload : {};
-  const outputPorts = isRecord(resultRecord['outputs'])
-    ? (resultRecord['outputs'])
-    : {};
+  const outputPorts = isRecord(resultRecord['outputs']) ? resultRecord['outputs'] : {};
   const returnValue = resultRecord['returnValue'] ?? resultPayload ?? null;
   const resultValue = outputPorts['result'] ?? returnValue;
   const valueValue = outputPorts['value'] ?? returnValue;
@@ -122,9 +107,7 @@ export const handlePlaywright: NodeHandler = async ({
   if (skipAiJobs) return prevOutputs;
   if (executed.ai.has(node.id)) return prevOutputs;
 
-  const playwrightConfig: PlaywrightConfig = normalizePlaywrightConfig(
-    node.config?.playwright
-  );
+  const playwrightConfig: PlaywrightConfig = normalizePlaywrightConfig(node.config?.playwright);
   const script = playwrightConfig.script?.trim();
   if (!script) {
     return {
@@ -138,19 +121,11 @@ export const handlePlaywright: NodeHandler = async ({
   }
 
   const startUrlTemplate = playwrightConfig.startUrlTemplate?.trim() ?? '';
-  const startUrl = startUrlTemplate
-    ? renderTemplate(startUrlTemplate, nodeInputs, '')
-    : undefined;
+  const startUrl = startUrlTemplate ? renderTemplate(startUrlTemplate, nodeInputs, '') : undefined;
 
   try {
-    const launchOptions = parseObjectJson(
-      playwrightConfig.launchOptionsJson,
-      'Launch options'
-    );
-    const contextOptions = parseObjectJson(
-      playwrightConfig.contextOptionsJson,
-      'Context options'
-    );
+    const launchOptions = parseObjectJson(playwrightConfig.launchOptionsJson, 'Launch options');
+    const contextOptions = parseObjectJson(playwrightConfig.contextOptionsJson, 'Context options');
     const settingsOverrides = isRecord(playwrightConfig.settingsOverrides)
       ? playwrightConfig.settingsOverrides
       : {};
@@ -171,9 +146,7 @@ export const handlePlaywright: NodeHandler = async ({
     });
 
     if (!enqueueResult.ok) {
-      throw new Error(
-        enqueueResult.error || 'Failed to enqueue Playwright node run.'
-      );
+      throw new Error(enqueueResult.error || 'Failed to enqueue Playwright node run.');
     }
 
     const initialRun = enqueueResult.data.run;

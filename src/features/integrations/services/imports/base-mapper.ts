@@ -56,10 +56,7 @@ const pickInt = (record: BaseProductRecord, keys: string[]): number | null => {
   return null;
 };
 
-const pickNested = (
-  record: BaseProductRecord,
-  path: string[]
-): unknown => {
+const pickNested = (record: BaseProductRecord, path: string[]): unknown => {
   let current: unknown = record;
   for (const key of path) {
     if (!current || typeof current !== 'object') return null;
@@ -93,9 +90,7 @@ const pickFirstIntFromObject = (record: BaseProductRecord, key: string): number 
     if (typeof v === 'string') return toInt(v);
     if (typeof v === 'object' && v) {
       const pObj = v as Record<string, unknown>;
-      const p = toInt(
-        pObj['price'] ?? pObj['price_brutto'] ?? pObj['price_gross']
-      );
+      const p = toInt(pObj['price'] ?? pObj['price_brutto'] ?? pObj['price_gross']);
       if (p !== null) return p;
     }
   }
@@ -142,7 +137,10 @@ const pickPriceByPreferredCurrency = (
   const rawPrices = record['prices'];
   if (!rawPrices) return null;
 
-  const tryValue = (entry: unknown, keyHint?: string): { value: number | null; currency: string | null } => {
+  const tryValue = (
+    entry: unknown,
+    keyHint?: string
+  ): { value: number | null; currency: string | null } => {
     const parsed = readPriceFromPriceEntry(entry);
     if (parsed === null) return { value: null, currency: null };
     let detectedCurrency: string | null = null;
@@ -257,10 +255,7 @@ const IMAGE_LINK_KEYS = [
   'link',
 ];
 
-const extractImageUrlsFromRecordKeys = (
-  record: BaseProductRecord,
-  keys: string[]
-): string[] => {
+const extractImageUrlsFromRecordKeys = (record: BaseProductRecord, keys: string[]): string[] => {
   const urls: string[] = [];
   keys.forEach((key: string) => collectUrls(record[key], urls));
   return Array.from(new Set(urls));
@@ -323,14 +318,7 @@ export function extractBaseImageUrls(record: BaseProductRecord): string[] {
   return Array.from(new Set(urls));
 }
 
-const NUMBER_FIELDS = new Set([
-  'price',
-  'stock',
-  'sizeLength',
-  'sizeWidth',
-  'weight',
-  'length',
-]);
+const NUMBER_FIELDS = new Set(['price', 'stock', 'sizeLength', 'sizeWidth', 'weight', 'length']);
 
 const PRODUCER_TARGET_FIELDS = new Set([
   'producerids',
@@ -472,9 +460,7 @@ const getByPath = (record: BaseProductRecord, path: string[]): unknown => {
   return current;
 };
 
-const collectTemplateParameterBuckets = (
-  record: BaseProductRecord
-): unknown[] => {
+const collectTemplateParameterBuckets = (record: BaseProductRecord): unknown[] => {
   const buckets: unknown[] = [];
   const pushBucket = (value: unknown): void => {
     if (value === null || value === undefined) return;
@@ -515,10 +501,7 @@ const collectTemplateParameterBuckets = (
   return buckets;
 };
 
-const findParameterValue = (
-  params: unknown,
-  sourceKey: string
-): unknown => {
+const findParameterValue = (params: unknown, sourceKey: string): unknown => {
   if (!params) return null;
   const normalizedSourceKey = sourceKey.trim().toLowerCase();
   if (!normalizedSourceKey) return null;
@@ -570,10 +553,7 @@ const findParameterValue = (
   return null;
 };
 
-const resolveTemplateValue = (
-  record: BaseProductRecord,
-  sourceKey: string
-): unknown => {
+const resolveTemplateValue = (record: BaseProductRecord, sourceKey: string): unknown => {
   if (!sourceKey) return null;
   const normalized = sourceKey.trim().toLowerCase();
   if (normalized === 'image_slots_all') {
@@ -701,7 +681,7 @@ const applyTemplateMappings = (
     }
     (mapped as Record<string, unknown>)[targetField] = stringValue;
   }
-  
+
   // Clean up any empty slots if we created a sparse array
   if (mapped.imageLinks) {
     mapped.imageLinks = mapped.imageLinks.filter(Boolean);
@@ -719,11 +699,7 @@ export function mapBaseProduct(
   }
 ): ProductCreateInput {
   // Extend this mapper as new Base.com fields are needed.
-  const baseProductId = pickString(record, [
-    'base_product_id',
-    'product_id',
-    'id',
-  ]);
+  const baseProductId = pickString(record, ['base_product_id', 'product_id', 'id']);
 
   const nameEn =
     pickString(record, ['name_en', 'title_en', 'name|en']) ??
@@ -747,11 +723,7 @@ export function mapBaseProduct(
   const nameDe = pickString(record, ['name_de']);
 
   const descriptionEn =
-    pickString(record, [
-      'description_en',
-      'description_en_long',
-      'description|en',
-    ]) ??
+    pickString(record, ['description_en', 'description_en_long', 'description|en']) ??
     pickNestedString(record, [
       ['text_fields', 'description_en'],
       ['text_fields', 'description|en'],
@@ -774,7 +746,9 @@ export function mapBaseProduct(
   const price =
     pickPriceByPreferredCurrency(record, preferredCurrencies) ??
     pickInt(record, [
-      ...(preferredCurrencies.includes('PLN') ? ['price_pln', 'price_gross_pln', 'price_brutto_pln'] : []),
+      ...(preferredCurrencies.includes('PLN')
+        ? ['price_pln', 'price_gross_pln', 'price_brutto_pln']
+        : []),
       'price',
       'price_gross',
       'price_brutto',
@@ -782,13 +756,13 @@ export function mapBaseProduct(
     pickNestedInt(record, [
       ...(preferredCurrencies.includes('PLN')
         ? [
-          ['prices', 'pln'],
-          ['prices', 'PLN'],
-          ['prices', 'pln', 'price'],
-          ['prices', 'PLN', 'price'],
-          ['prices', 'pln', 'price_brutto'],
-          ['prices', 'PLN', 'price_brutto'],
-        ]
+            ['prices', 'pln'],
+            ['prices', 'PLN'],
+            ['prices', 'pln', 'price'],
+            ['prices', 'PLN', 'price'],
+            ['prices', 'pln', 'price_brutto'],
+            ['prices', 'PLN', 'price_brutto'],
+          ]
         : []),
       ['prices', '0', 'price'],
       ['prices', '0', 'price_brutto'],

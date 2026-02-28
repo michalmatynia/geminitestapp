@@ -1,19 +1,17 @@
 import { createHash } from 'crypto';
-import { sanitizeImageStudioProjectId } from '@/features/ai/image-studio/server/run-executor';
+import { sanitizeImageStudioProjectId } from '@/shared/lib/ai/image-studio/server/run-executor';
 import { DEFAULT_IMAGE_SLOT_COUNT } from '@/shared/lib/image-slots';
 import {
   parseImageStudioSettings,
   type ImageStudioSettings,
-} from '@/features/ai/image-studio/utils/studio-settings';
+} from '@/shared/lib/ai/image-studio/studio-settings';
 import {
   type ProductStudioSequencingDiagnostics,
   type ProductWithImages,
 } from '@/shared/contracts/products';
 import { badRequestError } from '@/shared/errors/app-error';
 
-export const normalizeProjectId = (
-  value: string | null | undefined,
-): string | null => {
+export const normalizeProjectId = (value: string | null | undefined): string | null => {
   if (typeof value !== 'string') return null;
   const normalized = sanitizeImageStudioProjectId(value);
   return normalized.length > 0 ? normalized : null;
@@ -26,7 +24,7 @@ export const normalizeImageSlotIndex = (value: number): number => {
   const normalized = Math.floor(value);
   if (normalized < 0 || normalized >= DEFAULT_IMAGE_SLOT_COUNT) {
     throw badRequestError(
-      `Image slot index must be between 0 and ${DEFAULT_IMAGE_SLOT_COUNT - 1}.`,
+      `Image slot index must be between 0 and ${DEFAULT_IMAGE_SLOT_COUNT - 1}.`
     );
   }
   return normalized;
@@ -38,9 +36,8 @@ export const trimString = (value: unknown): string | null => {
   return normalized.length > 0 ? normalized : null;
 };
 
-export const hasPersistedSettingValue = (
-  value: unknown,
-): value is string => typeof value === 'string' && value.trim().length > 0;
+export const hasPersistedSettingValue = (value: unknown): value is string =>
+  typeof value === 'string' && value.trim().length > 0;
 
 export const buildSequencingDiagnostics = (params: {
   projectId: string;
@@ -59,12 +56,8 @@ export const buildSequencingDiagnostics = (params: {
   const hasGlobalSettings = globalSettingsRaw !== null;
   const selectedScope = hasProjectSettings ? 'project' : 'default';
   const selectedSettingsKey = params.projectSettingsKey;
-  const projectSettings = projectSettingsRaw
-    ? parseImageStudioSettings(projectSettingsRaw)
-    : null;
-  const globalSettings = globalSettingsRaw
-    ? parseImageStudioSettings(globalSettingsRaw)
-    : null;
+  const projectSettings = projectSettingsRaw ? parseImageStudioSettings(projectSettingsRaw) : null;
+  const globalSettings = globalSettingsRaw ? parseImageStudioSettings(globalSettingsRaw) : null;
 
   return {
     projectId: trimString(params.projectId),
@@ -75,26 +68,15 @@ export const buildSequencingDiagnostics = (params: {
     hasGlobalSettings,
     projectSequencingEnabled: Boolean(projectSettings?.projectSequencing.enabled),
     globalSequencingEnabled: Boolean(globalSettings?.projectSequencing.enabled),
-    selectedSequencingEnabled: Boolean(
-      params.selectedSettings.projectSequencing.enabled,
-    ),
-    selectedSnapshotHash: trimString(
-      params.selectedSettings.projectSequencing.snapshotHash,
-    ),
-    selectedSnapshotSavedAt: trimString(
-      params.selectedSettings.projectSequencing.snapshotSavedAt,
-    ),
+    selectedSequencingEnabled: Boolean(params.selectedSettings.projectSequencing.enabled),
+    selectedSnapshotHash: trimString(params.selectedSettings.projectSequencing.snapshotHash),
+    selectedSnapshotSavedAt: trimString(params.selectedSettings.projectSequencing.snapshotSavedAt),
     selectedSnapshotStepCount: Number.isFinite(
-      params.selectedSettings.projectSequencing.snapshotStepCount,
+      params.selectedSettings.projectSequencing.snapshotStepCount
     )
-      ? Math.max(
-        0,
-        Math.floor(params.selectedSettings.projectSequencing.snapshotStepCount),
-      )
+      ? Math.max(0, Math.floor(params.selectedSettings.projectSequencing.snapshotStepCount))
       : 0,
-    selectedSnapshotModelId: trimString(
-      params.selectedSettings.projectSequencing.snapshotModelId,
-    ),
+    selectedSnapshotModelId: trimString(params.selectedSettings.projectSequencing.snapshotModelId),
   };
 };
 

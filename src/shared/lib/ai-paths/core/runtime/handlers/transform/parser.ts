@@ -1,4 +1,8 @@
-import type { NodeHandler, NodeHandlerContext, RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
+import type {
+  NodeHandler,
+  NodeHandlerContext,
+  RuntimePortValues,
+} from '@/shared/contracts/ai-paths-runtime';
 import { coerceInput, getValueAtMappingPath } from '../../../utils';
 import { extractImageUrls } from '../../utils';
 
@@ -22,7 +26,7 @@ export const handleParser: NodeHandler = async ({
     const contextInput = coerceInput(nodeInputs['context']);
     const contextEntity =
       contextInput && typeof contextInput === 'object'
-        ? ((contextInput as Record<string, unknown>)['entity'] as
+        ? (((contextInput as Record<string, unknown>)['entity'] as
             | Record<string, unknown>
             | undefined) ??
           ((contextInput as Record<string, unknown>)['entityJson'] as
@@ -30,7 +34,7 @@ export const handleParser: NodeHandler = async ({
             | undefined) ??
           ((contextInput as Record<string, unknown>)['product'] as
             | Record<string, unknown>
-            | undefined)
+            | undefined))
         : undefined;
     let source =
       (coerceInput(nodeInputs['entityJson']) as Record<string, unknown> | undefined) ??
@@ -41,8 +45,7 @@ export const handleParser: NodeHandler = async ({
     if (!source && contextInput && typeof contextInput === 'object') {
       const contextRecord = contextInput as Record<string, unknown>;
       const contextEntityId =
-        typeof contextRecord['entityId'] === 'string' &&
-        contextRecord['entityId'].trim().length > 0
+        typeof contextRecord['entityId'] === 'string' && contextRecord['entityId'].trim().length > 0
           ? contextRecord['entityId'].trim()
           : typeof contextRecord['productId'] === 'string' &&
               contextRecord['productId'].trim().length > 0
@@ -69,7 +72,7 @@ export const handleParser: NodeHandler = async ({
               contextEntityId,
               contextEntityType,
             },
-            `Parser context hydration failed for ${contextEntityType}:${contextEntityId}`,
+            `Parser context hydration failed for ${contextEntityType}:${contextEntityId}`
           );
         }
       }
@@ -91,7 +94,7 @@ export const handleParser: NodeHandler = async ({
       value === null ||
       (typeof value === 'string' && value.trim() === '') ||
       (Array.isArray(value) && value.length === 0);
-    
+
     const fallbackForKey = (key: string): unknown => {
       const normalized = key.trim().toLowerCase();
       if (normalized === 'title' || normalized === 'name') {
@@ -114,17 +117,8 @@ export const handleParser: NodeHandler = async ({
           source['photos']
         );
       }
-      if (
-        normalized === 'productid' ||
-        normalized === 'entityid' ||
-        normalized === 'id'
-      ) {
-        return (
-          source['id'] ??
-          source['_id'] ??
-          source['productId'] ??
-          source['entityId']
-        );
+      if (normalized === 'productid' || normalized === 'entityid' || normalized === 'id') {
+        return source['id'] ?? source['_id'] ?? source['productId'] ?? source['entityId'];
       }
       if (normalized === 'content_en' || normalized === 'description_en') {
         return (
@@ -142,11 +136,8 @@ export const handleParser: NodeHandler = async ({
       const key = output.trim();
       if (!key) return;
       const mapping = mappings[output]?.trim() ?? '';
-      const value = mapping
-        ? getValueAtMappingPath(source, mapping)
-        : source[key];
-      const resolved =
-        isEmptyValue(value) ? fallbackForKey(key) ?? value : value;
+      const value = mapping ? getValueAtMappingPath(source, mapping) : source[key];
+      const resolved = isEmptyValue(value) ? (fallbackForKey(key) ?? value) : value;
       if (resolved !== undefined) {
         parsed[key] = normalizeParserOutputValue(key, resolved);
       }
@@ -159,7 +150,7 @@ export const handleParser: NodeHandler = async ({
           const outputKey = output.trim();
           if (!outputKey) return acc;
           const direct = sourceRecord[outputKey];
-          const resolved = isEmptyValue(direct) ? fallbackForKey(outputKey) ?? direct : direct;
+          const resolved = isEmptyValue(direct) ? (fallbackForKey(outputKey) ?? direct) : direct;
           if (resolved !== undefined) {
             acc[outputKey] = normalizeParserOutputValue(outputKey, resolved);
           }
@@ -171,14 +162,15 @@ export const handleParser: NodeHandler = async ({
     if (outputMode === 'bundle') {
       if (!hasMappings || Object.keys(parsed).length === 0) {
         const fullBundle: Record<string, unknown> =
-          typeof source === 'object' && source !== null
-            ? { ...source }
-            : {};
+          typeof source === 'object' && source !== null ? { ...source } : {};
         if (fullBundle['images'] !== undefined) {
           fullBundle['images'] = normalizeParserOutputValue('images', fullBundle['images']);
         }
         if (fullBundle['imageUrls'] !== undefined) {
-          fullBundle['imageUrls'] = normalizeParserOutputValue('imageUrls', fullBundle['imageUrls']);
+          fullBundle['imageUrls'] = normalizeParserOutputValue(
+            'imageUrls',
+            fullBundle['imageUrls']
+          );
         }
         const declaredOutputs = buildDeclaredOutputs(fullBundle);
         return { bundle: fullBundle, ...declaredOutputs };
@@ -189,11 +181,15 @@ export const handleParser: NodeHandler = async ({
       return parsed;
     }
   } catch (error) {
-    reportAiPathsError(error, {
-      service: 'ai-paths-runtime',
-      nodeId: node.id,
-      nodeType: node.type,
-    }, `Node ${node.id} failed`);
+    reportAiPathsError(
+      error,
+      {
+        service: 'ai-paths-runtime',
+        nodeId: node.id,
+        nodeType: node.type,
+      },
+      `Node ${node.id} failed`
+    );
     return {};
   }
 };

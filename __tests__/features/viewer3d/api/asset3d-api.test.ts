@@ -9,7 +9,7 @@ import {
   deleteAsset3DById,
   fetchCategories,
   fetchTags,
-} from '@/features/viewer3d/api';
+} from '@/shared/lib/viewer3d/api';
 import { server } from '@/mocks/server';
 
 vi.mock('@/shared/utils/upload-with-progress', () => ({
@@ -57,7 +57,7 @@ describe('Asset3D API', () => {
     );
 
     await fetchAssets3D({ filename: 'test', categoryId: 'c1', tags: ['t1', 't2'], isPublic: true });
-    
+
     expect(capturedParams!.get('filename')).toBe('test');
     expect(capturedParams!.get('categoryId')).toBe('c1');
     expect(capturedParams!.get('tags')).toBe('t1,t2');
@@ -90,7 +90,7 @@ describe('Asset3D API', () => {
   it('should update an asset', async () => {
     server.use(
       http.patch('/api/assets3d/1', async ({ request }) => {
-        const body = await request.json() as any;
+        const body = (await request.json()) as any;
         expect(body.name).toBe('Updated');
         return HttpResponse.json({ ...mockAsset, name: 'Updated' });
       })

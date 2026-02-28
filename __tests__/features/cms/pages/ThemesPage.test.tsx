@@ -31,11 +31,7 @@ describe('ThemesPage Component', () => {
   });
 
   const renderWithProviders = (ui: React.ReactNode) => {
-    return render(
-      <QueryClientProvider client={queryClient}>
-        {ui}
-      </QueryClientProvider>
-    );
+    return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
   };
 
   it('should render empty state when no themes exist', () => {
@@ -50,7 +46,7 @@ describe('ThemesPage Component', () => {
       { id: 't2', name: 'Minimal Light', colors: { primary: '#fff' }, updatedAt: '2024-01-01' },
     ];
     (useCmsThemes as any).mockReturnValue({ data: mockThemes, isLoading: false });
-    
+
     renderWithProviders(<ThemesPage />);
     expect(screen.getByText('Modern Dark')).toBeInTheDocument();
     expect(screen.getByText('Minimal Light')).toBeInTheDocument();
@@ -60,10 +56,10 @@ describe('ThemesPage Component', () => {
     const user = userEvent.setup();
     (useCmsThemes as any).mockReturnValue({ data: [], isLoading: false });
     renderWithProviders(<ThemesPage />);
-    
+
     const createBtn = screen.getByRole('button', { name: /Create Theme/i });
     await user.click(createBtn);
-    
+
     expect(mockPush).toHaveBeenCalledWith('/admin/cms/themes/create');
   });
 
@@ -71,25 +67,25 @@ describe('ThemesPage Component', () => {
     const user = userEvent.setup();
     const mockDelete = vi.fn().mockResolvedValue({});
     (useDeleteTheme as any).mockReturnValue({ mutateAsync: mockDelete });
-    (useCmsThemes as any).mockReturnValue({ 
-      data: [{ id: 't1', name: 'Dark', colors: { p: '#000' }, updatedAt: '2024-01-01' }], 
-      isLoading: false 
+    (useCmsThemes as any).mockReturnValue({
+      data: [{ id: 't1', name: 'Dark', colors: { p: '#000' }, updatedAt: '2024-01-01' }],
+      isLoading: false,
     });
-    
+
     renderWithProviders(<ThemesPage />);
-    
+
     // 1. Open the ActionMenu
     const actionsBtn = screen.getByLabelText(/Actions for theme Dark/i);
     await user.click(actionsBtn);
-    
+
     // 2. Click the Delete item in dropdown
     const deleteItem = screen.getByText('Delete');
     await user.click(deleteItem);
-    
+
     // 3. Confirm in the modal
     const confirmBtn = screen.getByRole('button', { name: /Destroy Theme/i });
     await user.click(confirmBtn);
-    
+
     expect(mockDelete).toHaveBeenCalledWith('t1');
   });
 });

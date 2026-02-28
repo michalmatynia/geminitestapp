@@ -4,10 +4,7 @@ import React, { useEffect, useRef } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useJobQueueContext } from './JobQueueContext';
 import { JobQueueRunCard } from './job-queue-run-card';
-import { 
-  Pagination, 
-  Alert 
-} from '@/shared/ui';
+import { Pagination, Alert } from '@/shared/ui';
 
 const PAGE_SIZES = [10, 25, 50];
 
@@ -70,7 +67,13 @@ export function JobQueueList(): React.JSX.Element {
         </div>
       ) : (
         <div ref={parentRef} className='space-y-3 overflow-auto' style={{ maxHeight: '75vh' }}>
-          <div style={{ height: `${rowVirtualizer.getTotalSize()}px`, width: '100%', position: 'relative' }}>
+          <div
+            style={{
+              height: `${rowVirtualizer.getTotalSize()}px`,
+              width: '100%',
+              position: 'relative',
+            }}
+          >
             {rowVirtualizer.getVirtualItems().map((virtualRow) => {
               const run = runs[virtualRow.index];
               if (!run) return null;
@@ -89,10 +92,7 @@ export function JobQueueList(): React.JSX.Element {
                     paddingBottom: '12px',
                   }}
                 >
-                  <JobQueueRunCard
-                    runId={run.id}
-                    run={run}
-                  />
+                  <JobQueueRunCard runId={run.id} run={run} />
                 </div>
               );
             })}

@@ -17,8 +17,7 @@ type MetadataItem = {
 
 const ROOT_PARENT_KEY = '__root__';
 
-const toTrimmedString = (value: unknown): string =>
-  typeof value === 'string' ? value.trim() : '';
+const toTrimmedString = (value: unknown): string => (typeof value === 'string' ? value.trim() : '');
 
 const toNumberOrNull = (value: unknown): number | null => {
   if (typeof value === 'number' && Number.isFinite(value)) {
@@ -80,8 +79,7 @@ const buildCategoryTreeOptions = (
 
   normalizedItems.forEach((item: MetadataItem): void => {
     const parentId = toTrimmedString(item.parentId);
-    const hasValidParent =
-      parentId.length > 0 && parentId !== item.id && byId.has(parentId);
+    const hasValidParent = parentId.length > 0 && parentId !== item.id && byId.has(parentId);
     appendChild(hasValidParent ? parentId : ROOT_PARENT_KEY, item);
   });
 
@@ -107,11 +105,9 @@ const buildCategoryTreeOptions = (
     });
   };
 
-  (childrenByParent.get(ROOT_PARENT_KEY) ?? []).forEach(
-    (rootItem: MetadataItem): void => {
-      visit(rootItem, 0);
-    }
-  );
+  (childrenByParent.get(ROOT_PARENT_KEY) ?? []).forEach((rootItem: MetadataItem): void => {
+    visit(rootItem, 0);
+  });
 
   normalizedItems
     .slice()
@@ -133,13 +129,21 @@ export interface ProductMetadataMultiSelectFieldProps {
   placeholder?: string | undefined;
   searchPlaceholder?: string | undefined;
   emptyMessage?: string | undefined;
-  
+
   // Mapping keys for context retrieval
   contextItemsKey: 'catalogs' | 'producers' | 'tags' | 'categories';
-  contextSelectedKey: 'selectedCatalogIds' | 'selectedProducerIds' | 'selectedTagIds' | 'selectedCategoryId';
+  contextSelectedKey:
+    | 'selectedCatalogIds'
+    | 'selectedProducerIds'
+    | 'selectedTagIds'
+    | 'selectedCategoryId';
   contextLoadingKey: 'catalogsLoading' | 'producersLoading' | 'tagsLoading' | 'categoriesLoading';
-  contextOnChangeKey: 'onCatalogsChange' | 'onProducersChange' | 'onTagsChange' | 'onCategoryChange';
-  
+  contextOnChangeKey:
+    | 'onCatalogsChange'
+    | 'onProducersChange'
+    | 'onTagsChange'
+    | 'onCategoryChange';
+
   // Form context toggle helper name
   formContextToggleName?: 'toggleCatalog' | 'toggleProducer' | 'toggleTag';
 
@@ -190,7 +194,7 @@ export function ProductMetadataMultiSelectField({
     itemsProp ??
     (metadataContext?.[contextItemsKey] as MetadataItem[]) ??
     (contextItems as MetadataItem[]);
-  
+
   // Handle both single string/null and string[]
   const contextSelected = (() => {
     if (!formMetadataContext) return null;
@@ -213,9 +217,7 @@ export function ProductMetadataMultiSelectField({
     (metadataContext?.[contextSelectedKey] as string[] | string | null) ??
     contextSelected;
 
-  const selectedIds = Array.isArray(rawSelected) 
-    ? rawSelected 
-    : (rawSelected ? [rawSelected] : []);
+  const selectedIds = Array.isArray(rawSelected) ? rawSelected : rawSelected ? [rawSelected] : [];
 
   const contextLoading = (() => {
     if (!formMetadataContext) return loading;
@@ -302,14 +304,14 @@ export function ProductMetadataMultiSelectField({
     ? onChangeProp
     : single
       ? (() => {
-        const singleHandler = resolveSingleChangeHandler();
-        if (!singleHandler) return null;
-        return (nextIds: string[]): void => {
-          singleHandler(nextIds[0] || null);
-        };
-      })()
-      : (metadataContext?.[contextOnChangeKey] as (nextIds: string[]) => void) ??
-        resolveFormContextMultiHandler();
+          const singleHandler = resolveSingleChangeHandler();
+          if (!singleHandler) return null;
+          return (nextIds: string[]): void => {
+            singleHandler(nextIds[0] || null);
+          };
+        })()
+      : ((metadataContext?.[contextOnChangeKey] as (nextIds: string[]) => void) ??
+        resolveFormContextMultiHandler());
 
   if (!resolvedOnChange) {
     throw internalError(

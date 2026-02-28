@@ -4,13 +4,24 @@ import { AlertTriangleIcon, DatabaseIcon, Table2Icon, TerminalSquareIcon } from 
 import Link from 'next/link';
 
 import type { DatabaseType } from '@/shared/contracts/database';
-import { Alert, Badge, EmptyState, FormSection, ListPanel, Tabs, TabsContent, TabsList, TabsTrigger, SimpleSettingsList, Card } from '@/shared/ui';
+import {
+  Alert,
+  Badge,
+  EmptyState,
+  FormSection,
+  ListPanel,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+  SimpleSettingsList,
+  Card,
+} from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { CrudPanel } from './CrudPanel';
 import { SqlQueryConsole } from './SqlQueryConsole';
 import { DatabaseProvider, useDatabase } from '../context/DatabaseContext';
-
 
 const DATABASE_OPTIONS: Array<{
   value: DatabaseType;
@@ -32,7 +43,8 @@ const DATABASE_OPTIONS: Array<{
 function DatabaseOperationsPanelContent(): React.JSX.Element {
   const { dbType, setDbType, tableDetails, isLoading: previewLoading } = useDatabase();
   const isProduction = process.env['NODE_ENV'] === 'production';
-  const selectedDatabase = DATABASE_OPTIONS.find((option) => option.value === dbType) ?? DATABASE_OPTIONS[0]!;
+  const selectedDatabase =
+    DATABASE_OPTIONS.find((option) => option.value === dbType) ?? DATABASE_OPTIONS[0]!;
 
   return (
     <ListPanel
@@ -41,12 +53,18 @@ function DatabaseOperationsPanelContent(): React.JSX.Element {
           <div className='flex flex-wrap items-start justify-between gap-3'>
             <div className='space-y-1'>
               <h2 className='text-2xl font-bold tracking-tight text-white'>Operations Console</h2>
-              <nav aria-label='Breadcrumb' className='flex flex-wrap items-center gap-1 text-xs text-gray-400'>
+              <nav
+                aria-label='Breadcrumb'
+                className='flex flex-wrap items-center gap-1 text-xs text-gray-400'
+              >
                 <Link href='/admin' className='transition-colors hover:text-gray-200'>
                   Admin
                 </Link>
                 <span>/</span>
-                <Link href='/admin/databases/engine' className='transition-colors hover:text-gray-200'>
+                <Link
+                  href='/admin/databases/engine'
+                  className='transition-colors hover:text-gray-200'
+                >
                   Databases
                 </Link>
                 <span>/</span>
@@ -80,14 +98,23 @@ function DatabaseOperationsPanelContent(): React.JSX.Element {
             title: option.label,
             description: option.description,
             icon: (
-              <div className={cn(
-                'rounded-md border p-2',
-                dbType === option.value ? 'border-emerald-400/40 bg-emerald-500/20' : 'border-white/10 bg-white/5'
-              )}>
-                <DatabaseIcon className={cn('size-4', dbType === option.value ? 'text-emerald-200' : 'text-gray-400')} />
+              <div
+                className={cn(
+                  'rounded-md border p-2',
+                  dbType === option.value
+                    ? 'border-emerald-400/40 bg-emerald-500/20'
+                    : 'border-white/10 bg-white/5'
+                )}
+              >
+                <DatabaseIcon
+                  className={cn(
+                    'size-4',
+                    dbType === option.value ? 'text-emerald-200' : 'text-gray-400'
+                  )}
+                />
               </div>
             ),
-            original: option
+            original: option,
           }))}
           selectedId={dbType}
           onSelect={(item) => setDbType(item.original.value)}
@@ -123,9 +150,11 @@ function DatabaseOperationsPanelContent(): React.JSX.Element {
           {!previewLoading && tableDetails.length === 0 && (
             <EmptyState
               title='No tables found'
-              description={dbType === 'mongodb'
-                ? 'Table metadata is not available for MongoDB. Use the SQL Console tab for MongoDB operations.'
-                : 'No tables found in the database.'}
+              description={
+                dbType === 'mongodb'
+                  ? 'Table metadata is not available for MongoDB. Use the SQL Console tab for MongoDB operations.'
+                  : 'No tables found in the database.'
+              }
               icon={<Table2Icon className='size-12 opacity-20' />}
             />
           )}

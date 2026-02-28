@@ -2,34 +2,35 @@
 
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 
-import { 
-  buildPresetQueryTemplate 
-} from '@/features/ai/ai-paths/config/query-presets';
-import { 
-  renderTemplate, 
-  safeParseJson, 
+import { buildPresetQueryTemplate } from '@/features/ai/ai-paths/config/query-presets';
+import {
+  renderTemplate,
+  safeParseJson,
   createPresetId,
   extractJsonPathEntries,
   createParserMappings,
 } from '@/shared/lib/ai-paths';
-import type { 
-  AiNode, 
-  Edge, 
-  DatabaseConfig, 
-  DbQueryConfig, 
+import type {
+  AiNode,
+  Edge,
+  DatabaseConfig,
+  DbQueryConfig,
   UpdaterMapping,
   DbQueryPreset,
   DatabaseAction,
-  DatabaseActionCategory
+  DatabaseActionCategory,
 } from '@/shared/lib/ai-paths';
 import { dbApi } from '@/shared/lib/ai-paths/api';
-import { 
-  resolveDbActionProvider, 
+import {
+  resolveDbActionProvider,
   isProviderActionCategorySupported,
   resolveProviderAction,
-  getDefaultProviderAction
+  getDefaultProviderAction,
 } from '@/shared/lib/ai-paths/core/utils/provider-actions';
-import { PROMPT_ENGINE_SETTINGS_KEY, parsePromptEngineSettings } from '@/shared/lib/prompt-engine/settings';
+import {
+  PROMPT_ENGINE_SETTINGS_KEY,
+  parsePromptEngineSettings,
+} from '@/shared/lib/prompt-engine/settings';
 import type { SchemaData, AiQuery, DatabasePresetOption } from '@/shared/contracts/database';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
@@ -37,13 +38,8 @@ import { createListQueryV2, createMutationV2 } from '@/shared/lib/query-factorie
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import { useAiPathConfig } from '../components/AiPathConfigContext';
-import { 
-  toDbSchemaSnapshot,
-  applySchemaSelection,
-} from '../utils/database-node-utils';
+import { toDbSchemaSnapshot, applySchemaSelection } from '@/features/ai/ai-paths/utils/database-node-utils';
 import { extractCodeSnippets } from '../components/node-config/database/database-constructor-tab-helpers';
-
-
 
 type SchemaConfig = {
   provider?: 'auto' | 'mongodb' | 'prisma' | 'all';
@@ -112,7 +108,7 @@ const normalizeLegacyQueryProvider = (query: DbQueryConfig): DbQueryConfig => {
 };
 
 const mapOperationFromActionCategory = (
-  category: DatabaseActionCategory,
+  category: DatabaseActionCategory
 ): DatabaseConfig['operation'] =>
   category === 'create'
     ? 'insert'
@@ -140,7 +136,9 @@ export function useDatabaseNodeConfigState() {
 
   const { confirm, ConfirmationModal } = useConfirm();
 
-  const [databaseTab, setDatabaseTab] = useState<'settings' | 'constructor' | 'presets'>('settings');
+  const [databaseTab, setDatabaseTab] = useState<'settings' | 'constructor' | 'presets'>(
+    'settings'
+  );
   const [selectedQueryPresetId, setSelectedQueryPresetId] = useState<string>('');
   const [queryPresetName, setQueryPresetName] = useState<string>('');
   const [saveQueryPresetModalOpen, setSaveQueryPresetModalOpen] = useState(false);
@@ -160,7 +158,7 @@ export function useDatabaseNodeConfigState() {
   }, [pendingAiQuery]);
 
   useEffect((): void => {
-    setSelectedSnippetIndex((_prev: number): number => codeSnippets.length > 0 ? 0 : -1);
+    setSelectedSnippetIndex((_prev: number): number => (codeSnippets.length > 0 ? 0 : -1));
   }, [pendingAiQuery, codeSnippets.length]);
 
   const queryTemplateRef = useRef<HTMLTextAreaElement | null>(null);
@@ -181,10 +179,16 @@ export function useDatabaseNodeConfigState() {
     if (!isDatabaseSelected || !selectedNodeId) {
       return { hasSchemaConnection: false, schemaConfig: null as SchemaConfig | null };
     }
-    const schemaEdge = edges.find((edge: Edge) => edge.to === selectedNodeId && nodes.find(n => n.id === edge.from)?.type === 'db_schema');
+    const schemaEdge = edges.find(
+      (edge: Edge) =>
+        edge.to === selectedNodeId && nodes.find((n) => n.id === edge.from)?.type === 'db_schema'
+    );
     if (!schemaEdge) return { hasSchemaConnection: false, schemaConfig: null };
-    const schemaNode = nodes.find(n => n.id === schemaEdge.from);
-    return { hasSchemaConnection: true, schemaConfig: schemaNode?.config?.db_schema as SchemaConfig };
+    const schemaNode = nodes.find((n) => n.id === schemaEdge.from);
+    return {
+      hasSchemaConnection: true,
+      schemaConfig: schemaNode?.config?.db_schema as SchemaConfig,
+    };
   }, [edges, nodes, isDatabaseSelected, selectedNodeId]);
 
   const schemaProvider = schemaConnection.schemaConfig?.provider ?? 'auto';
@@ -197,55 +201,84 @@ export function useDatabaseNodeConfigState() {
       return res.data;
     },
     enabled: schemaConnection.hasSchemaConnection && isDatabaseSelected,
-    meta: { source: 'ai.ai-paths.node-config.database.schema', operation: 'list', resource: 'databases.schema', domain: 'global' },
+    meta: {
+      source: 'ai.ai-paths.node-config.database.schema',
+      operation: 'list',
+      resource: 'databases.schema',
+      domain: 'global',
+    },
   });
 
-  const fetchedDbSchema = useMemo(() => (schemaConnection.hasSchemaConnection && schemaQuery.data ? applySchemaSelection(schemaQuery.data, schemaConnection.schemaConfig) : null), [schemaConnection, schemaQuery.data]);
+  const fetchedDbSchema = useMemo(
+    () =>
+      schemaConnection.hasSchemaConnection && schemaQuery.data
+        ? applySchemaSelection(schemaQuery.data, schemaConnection.schemaConfig)
+        : null,
+    [schemaConnection, schemaQuery.data]
+  );
 
   const persistedDatabase = selectedNode?.config?.database;
-  const databaseConfig: DatabaseConfig = useMemo(() => ({
-    operation: persistedDatabase?.operation ?? 'query',
-    entityType: persistedDatabase?.entityType ?? 'product',
-    idField: persistedDatabase?.idField ?? 'entityId',
-    mode: persistedDatabase?.mode ?? 'replace',
-    updateStrategy: persistedDatabase?.updateStrategy ?? 'one',
-    useMongoActions: persistedDatabase?.useMongoActions ?? Boolean(persistedDatabase?.actionCategory || persistedDatabase?.action),
-    actionCategory: persistedDatabase?.actionCategory,
-    action: persistedDatabase?.action,
-    distinctField: persistedDatabase?.distinctField ?? '',
-    updateTemplate: normalizeTemplateText(persistedDatabase?.updateTemplate ?? ''),
-    mappings: persistedDatabase?.mappings && persistedDatabase.mappings.length > 0 ? persistedDatabase.mappings : [],
-    query: normalizeLegacyQueryProvider(
-      { ...DEFAULT_QUERY, ...(persistedDatabase?.query ?? {}) } as DbQueryConfig
-    ),
-    updatePayloadMode: persistedDatabase?.updatePayloadMode ?? 'custom',
-    writeSource: persistedDatabase?.writeSource ?? 'bundle',
-    writeSourcePath: persistedDatabase?.writeSourcePath ?? '',
-    dryRun: persistedDatabase?.dryRun ?? false,
-    writeOutcomePolicy: {
-      onZeroAffected:
-        persistedDatabase?.writeOutcomePolicy?.onZeroAffected ?? 'fail',
-    },
-    presetId: persistedDatabase?.presetId,
-    skipEmpty: persistedDatabase?.skipEmpty ?? false,
-    trimStrings: persistedDatabase?.trimStrings ?? false,
-    aiPrompt: persistedDatabase?.aiPrompt ?? '',
-    validationRuleIds: persistedDatabase?.validationRuleIds ?? [],
-    schemaSnapshot: persistedDatabase?.schemaSnapshot,
-  }), [persistedDatabase]);
+  const databaseConfig: DatabaseConfig = useMemo(
+    () => ({
+      operation: persistedDatabase?.operation ?? 'query',
+      entityType: persistedDatabase?.entityType ?? 'product',
+      idField: persistedDatabase?.idField ?? 'entityId',
+      mode: persistedDatabase?.mode ?? 'replace',
+      updateStrategy: persistedDatabase?.updateStrategy ?? 'one',
+      useMongoActions:
+        persistedDatabase?.useMongoActions ??
+        Boolean(persistedDatabase?.actionCategory || persistedDatabase?.action),
+      actionCategory: persistedDatabase?.actionCategory,
+      action: persistedDatabase?.action,
+      distinctField: persistedDatabase?.distinctField ?? '',
+      updateTemplate: normalizeTemplateText(persistedDatabase?.updateTemplate ?? ''),
+      mappings:
+        persistedDatabase?.mappings && persistedDatabase.mappings.length > 0
+          ? persistedDatabase.mappings
+          : [],
+      query: normalizeLegacyQueryProvider({
+        ...DEFAULT_QUERY,
+        ...(persistedDatabase?.query ?? {}),
+      } as DbQueryConfig),
+      updatePayloadMode: persistedDatabase?.updatePayloadMode ?? 'custom',
+      writeSource: persistedDatabase?.writeSource ?? 'bundle',
+      writeSourcePath: persistedDatabase?.writeSourcePath ?? '',
+      dryRun: persistedDatabase?.dryRun ?? false,
+      writeOutcomePolicy: {
+        onZeroAffected: persistedDatabase?.writeOutcomePolicy?.onZeroAffected ?? 'fail',
+      },
+      presetId: persistedDatabase?.presetId,
+      skipEmpty: persistedDatabase?.skipEmpty ?? false,
+      trimStrings: persistedDatabase?.trimStrings ?? false,
+      aiPrompt: persistedDatabase?.aiPrompt ?? '',
+      validationRuleIds: persistedDatabase?.validationRuleIds ?? [],
+      schemaSnapshot: persistedDatabase?.schemaSnapshot,
+    }),
+    [persistedDatabase]
+  );
 
   const queryConfig = databaseConfig.query ?? DEFAULT_QUERY;
-  const appDbProvider = settingsQuery.data?.get('app_db_provider') === 'prisma' ? 'prisma' : 'mongodb';
+  const appDbProvider =
+    settingsQuery.data?.get('app_db_provider') === 'prisma' ? 'prisma' : 'mongodb';
   const resolvedProvider = resolveDbActionProvider(queryConfig.provider, appDbProvider);
 
   const queryTemplateValue = useMemo(() => {
     const raw = queryConfig.queryTemplate ?? '';
-    return raw.trim().length ? raw : queryConfig.mode === 'preset' ? buildPresetQueryTemplate(queryConfig) : raw;
+    return raw.trim().length
+      ? raw
+      : queryConfig.mode === 'preset'
+        ? buildPresetQueryTemplate(queryConfig)
+        : raw;
   }, [queryConfig]);
 
-  const isUpdateAction = useMemo(() =>
-    databaseConfig.actionCategory === 'update' && ['updateOne', 'updateMany', 'replaceOne', 'findOneAndUpdate'].includes(databaseConfig.action || ''),
-  [databaseConfig.action, databaseConfig.actionCategory]);
+  const isUpdateAction = useMemo(
+    () =>
+      databaseConfig.actionCategory === 'update' &&
+      ['updateOne', 'updateMany', 'replaceOne', 'findOneAndUpdate'].includes(
+        databaseConfig.action || ''
+      ),
+    [databaseConfig.action, databaseConfig.actionCategory]
+  );
 
   const schemaSyncMutation = createMutationV2<SchemaData, 'auto' | 'mongodb' | 'prisma' | 'all'>({
     mutationKey: QUERY_KEYS.ai.aiPaths.mutation('node-config.database.schema-sync'),
@@ -277,13 +310,11 @@ export function useDatabaseNodeConfigState() {
   }, [queryConfig.provider, schemaConnection.schemaConfig?.provider, schemaSyncMutation]);
 
   const handleRunQuery = useCallback(async () => {
-
     setTestQueryLoading(true);
 
     setTestQueryResult('');
 
     try {
-
       const inputs = runtimeState.inputs?.[selectedNodeId];
 
       const ctx = { ...runtimeState.outputs?.[selectedNodeId], ...inputs };
@@ -297,11 +328,7 @@ export function useDatabaseNodeConfigState() {
       let actionPayload: Record<string, unknown> = {};
 
       if (actionCategory === 'update') {
-        const renderedFilter = renderTemplate(
-          queryConfig.queryTemplate || '{}',
-          ctx,
-          val ?? ''
-        );
+        const renderedFilter = renderTemplate(queryConfig.queryTemplate || '{}', ctx, val ?? '');
         const parsedFilter = safeParseJson(renderedFilter);
         if (parsedFilter.error) throw new Error(parsedFilter.error);
 
@@ -348,292 +375,432 @@ export function useDatabaseNodeConfigState() {
     } finally {
       setTestQueryLoading(false);
     }
-  }, [databaseConfig.action, databaseConfig.actionCategory, databaseConfig.updateTemplate, isUpdateAction, queryConfig, queryTemplateValue, runtimeState, selectedNodeId, toast]);
+  }, [
+    databaseConfig.action,
+    databaseConfig.actionCategory,
+    databaseConfig.updateTemplate,
+    isUpdateAction,
+    queryConfig,
+    queryTemplateValue,
+    runtimeState,
+    selectedNodeId,
+    toast,
+  ]);
 
-  const updateQueryConfig = useCallback((patch: Partial<DbQueryConfig>, options?: { syncPreset?: boolean }) => {
-    const nextQuery = { ...queryConfig, ...patch };
-    if (options?.syncPreset && nextQuery.mode === 'preset') {
-      nextQuery.queryTemplate = buildPresetQueryTemplate(nextQuery);
-    }
-    updateSelectedNodeConfig({
-      database: { ...databaseConfig, query: nextQuery },
-    });
-  }, [databaseConfig, queryConfig, updateSelectedNodeConfig]);
+  const updateQueryConfig = useCallback(
+    (patch: Partial<DbQueryConfig>, options?: { syncPreset?: boolean }) => {
+      const nextQuery = { ...queryConfig, ...patch };
+      if (options?.syncPreset && nextQuery.mode === 'preset') {
+        nextQuery.queryTemplate = buildPresetQueryTemplate(nextQuery);
+      }
+      updateSelectedNodeConfig({
+        database: { ...databaseConfig, query: nextQuery },
+      });
+    },
+    [databaseConfig, queryConfig, updateSelectedNodeConfig]
+  );
 
-  const applyQueryTemplateUpdate = useCallback((nextQuery: string): void => {
-    if (isUpdateAction) {
+  const applyQueryTemplateUpdate = useCallback(
+    (nextQuery: string): void => {
+      if (isUpdateAction) {
+        updateSelectedNodeConfig({
+          database: {
+            ...databaseConfig,
+            updateTemplate: nextQuery,
+          },
+        });
+        return;
+      }
+      const currentPresetId = databaseConfig.presetId ?? 'custom';
+      const currentAiQueryId = selectedAiQueryId;
+
+      if (currentPresetId !== 'custom' || currentAiQueryId) {
+        setSelectedAiQueryId('');
+        updateSelectedNodeConfig({
+          database: {
+            ...databaseConfig,
+            presetId: 'custom',
+            query: {
+              ...queryConfig,
+              mode: 'custom',
+              queryTemplate: nextQuery,
+            },
+          },
+        });
+      } else {
+        updateQueryConfig({
+          mode: 'custom',
+          queryTemplate: nextQuery,
+        });
+      }
+    },
+    [
+      databaseConfig,
+      isUpdateAction,
+      queryConfig,
+      selectedAiQueryId,
+      setSelectedAiQueryId,
+      updateQueryConfig,
+      updateSelectedNodeConfig,
+    ]
+  );
+
+  const insertTemplateSnippet = useCallback(
+    (placeholder: string): void => {
+      const currentTemplate = queryTemplateValue ?? '';
+      const textArea = queryTemplateRef?.current;
+      const selectionStart =
+        typeof textArea?.selectionStart === 'number'
+          ? textArea.selectionStart
+          : currentTemplate.length;
+      const selectionEnd =
+        typeof textArea?.selectionEnd === 'number' ? textArea.selectionEnd : currentTemplate.length;
+      const rangeStart = Math.max(
+        0,
+        Math.min(selectionStart, selectionEnd, currentTemplate.length)
+      );
+      const rangeEnd = Math.max(
+        rangeStart,
+        Math.min(Math.max(selectionStart, selectionEnd), currentTemplate.length)
+      );
+      const nextQuery = `${currentTemplate.slice(0, rangeStart)}${placeholder}${currentTemplate.slice(rangeEnd)}`;
+
+      applyQueryTemplateUpdate(nextQuery);
+
+      window.setTimeout(() => {
+        const node = queryTemplateRef?.current;
+        if (!node) return;
+        const cursorPosition = rangeStart + placeholder.length;
+        node.focus();
+        node.setSelectionRange(cursorPosition, cursorPosition);
+      }, 0);
+    },
+    [applyQueryTemplateUpdate, queryTemplateRef, queryTemplateValue]
+  );
+
+  const insertQueryPlaceholder = useCallback(
+    (placeholder: string): void => {
+      const currentTemplate = queryTemplateValue ?? '';
+      const textArea = queryTemplateRef?.current;
+      const selectionStart =
+        typeof textArea?.selectionStart === 'number'
+          ? textArea.selectionStart
+          : currentTemplate.length;
+      const selectionEnd =
+        typeof textArea?.selectionEnd === 'number' ? textArea.selectionEnd : currentTemplate.length;
+      const rangeStart = Math.max(
+        0,
+        Math.min(selectionStart, selectionEnd, currentTemplate.length)
+      );
+      const rangeEnd = Math.max(
+        rangeStart,
+        Math.min(Math.max(selectionStart, selectionEnd), currentTemplate.length)
+      );
+      const nextQuery = `${currentTemplate.slice(0, rangeStart)}${placeholder}${currentTemplate.slice(rangeEnd)}`;
+
+      applyQueryTemplateUpdate(nextQuery);
+
+      window.setTimeout(() => {
+        const node = queryTemplateRef?.current;
+        if (!node) return;
+        const cursorPosition = rangeStart + placeholder.length;
+        node.focus();
+        node.setSelectionRange(cursorPosition, cursorPosition);
+      }, 0);
+    },
+    [applyQueryTemplateUpdate, queryTemplateRef, queryTemplateValue]
+  );
+
+  const insertAiPromptPlaceholder = useCallback(
+    (placeholder: string): void => {
+      const currentValue = databaseConfig.aiPrompt ?? '';
+      const textArea = aiPromptRef?.current;
+      const selectionStart =
+        typeof textArea?.selectionStart === 'number'
+          ? textArea.selectionStart
+          : currentValue.length;
+      const selectionEnd =
+        typeof textArea?.selectionEnd === 'number' ? textArea.selectionEnd : currentValue.length;
+      const rangeStart = Math.max(0, Math.min(selectionStart, selectionEnd, currentValue.length));
+      const rangeEnd = Math.max(
+        rangeStart,
+        Math.min(Math.max(selectionStart, selectionEnd), currentValue.length)
+      );
+      const nextValue = `${currentValue.slice(0, rangeStart)}${placeholder}${currentValue.slice(rangeEnd)}`;
+
       updateSelectedNodeConfig({
         database: {
           ...databaseConfig,
-          updateTemplate: nextQuery,
+          aiPrompt: nextValue,
         },
       });
-      return;
-    }
-    const currentPresetId = databaseConfig.presetId ?? 'custom';
-    const currentAiQueryId = selectedAiQueryId;
 
-    if (currentPresetId !== 'custom' || currentAiQueryId) {
-      setSelectedAiQueryId('');
+      window.setTimeout(() => {
+        const node = aiPromptRef?.current;
+        if (!node) return;
+        const cursorPosition = rangeStart + placeholder.length;
+        node.focus();
+        node.setSelectionRange(cursorPosition, cursorPosition);
+      }, 0);
+    },
+    [databaseConfig, updateSelectedNodeConfig, aiPromptRef]
+  );
+
+  const handleProviderChange = useCallback(
+    (nextProvider: DbQueryConfig['provider']) => {
+      const normalizedRequestedProvider: DbQueryConfig['provider'] =
+        nextProvider === 'mongodb' || nextProvider === 'prisma' ? nextProvider : 'auto';
+      const nextResolvedProvider = resolveDbActionProvider(
+        normalizedRequestedProvider,
+        appDbProvider
+      );
+      const currentCategory = databaseConfig.actionCategory ?? 'read';
+      const normalizedCategory = isProviderActionCategorySupported(
+        nextResolvedProvider,
+        currentCategory
+      )
+        ? currentCategory
+        : 'read';
+      const fallbackAction = getDefaultProviderAction(
+        nextResolvedProvider,
+        normalizedCategory,
+        queryConfig.single ?? false
+      );
+      const normalizedAction = resolveProviderAction(
+        nextResolvedProvider,
+        normalizedCategory,
+        databaseConfig.action ?? fallbackAction,
+        queryConfig.single ?? false
+      );
+
       updateSelectedNodeConfig({
         database: {
           ...databaseConfig,
-          presetId: 'custom',
           query: {
             ...queryConfig,
-            mode: 'custom',
-            queryTemplate: nextQuery,
+            provider: normalizedRequestedProvider,
           },
+          actionCategory: normalizedCategory,
+          action: normalizedAction,
+          operation:
+            databaseConfig.useMongoActions === false
+              ? (databaseConfig.operation ?? 'query')
+              : mapOperationFromActionCategory(normalizedCategory),
         },
       });
-    } else {
-      updateQueryConfig({
-        mode: 'custom',
-        queryTemplate: nextQuery,
-      });
-    }
-  }, [databaseConfig, isUpdateAction, queryConfig, selectedAiQueryId, setSelectedAiQueryId, updateQueryConfig, updateSelectedNodeConfig]);
+    },
+    [appDbProvider, databaseConfig, queryConfig, updateSelectedNodeConfig]
+  );
 
-  const insertTemplateSnippet = useCallback((placeholder: string): void => {
-    const currentTemplate = queryTemplateValue ?? '';
-    const textArea = queryTemplateRef?.current;
-    const selectionStart =
-      typeof textArea?.selectionStart === 'number' ? textArea.selectionStart : currentTemplate.length;
-    const selectionEnd =
-      typeof textArea?.selectionEnd === 'number' ? textArea.selectionEnd : currentTemplate.length;
-    const rangeStart = Math.max(0, Math.min(selectionStart, selectionEnd, currentTemplate.length));
-    const rangeEnd = Math.max(rangeStart, Math.min(Math.max(selectionStart, selectionEnd), currentTemplate.length));
-    const nextQuery = `${currentTemplate.slice(0, rangeStart)}${placeholder}${currentTemplate.slice(rangeEnd)}`;
+  const applyActionConfig = useCallback(
+    (nextCategory: DatabaseActionCategory, nextAction: DatabaseAction) => {
+      const normalizedCategory = isProviderActionCategorySupported(resolvedProvider, nextCategory)
+        ? nextCategory
+        : 'read';
+      const nextActionResolved = resolveProviderAction(
+        resolvedProvider,
+        normalizedCategory,
+        nextAction,
+        queryConfig.single ?? false
+      );
 
-    applyQueryTemplateUpdate(nextQuery);
-
-    window.setTimeout(() => {
-      const node = queryTemplateRef?.current;
-      if (!node) return;
-      const cursorPosition = rangeStart + placeholder.length;
-      node.focus();
-      node.setSelectionRange(cursorPosition, cursorPosition);
-    }, 0);
-  }, [applyQueryTemplateUpdate, queryTemplateRef, queryTemplateValue]);
-
-  const insertQueryPlaceholder = useCallback((placeholder: string): void => {
-    const currentTemplate = queryTemplateValue ?? '';
-    const textArea = queryTemplateRef?.current;
-    const selectionStart =
-      typeof textArea?.selectionStart === 'number' ? textArea.selectionStart : currentTemplate.length;
-    const selectionEnd =
-      typeof textArea?.selectionEnd === 'number' ? textArea.selectionEnd : currentTemplate.length;
-    const rangeStart = Math.max(0, Math.min(selectionStart, selectionEnd, currentTemplate.length));
-    const rangeEnd = Math.max(rangeStart, Math.min(Math.max(selectionStart, selectionEnd), currentTemplate.length));
-    const nextQuery = `${currentTemplate.slice(0, rangeStart)}${placeholder}${currentTemplate.slice(rangeEnd)}`;
-
-    applyQueryTemplateUpdate(nextQuery);
-
-    window.setTimeout(() => {
-      const node = queryTemplateRef?.current;
-      if (!node) return;
-      const cursorPosition = rangeStart + placeholder.length;
-      node.focus();
-      node.setSelectionRange(cursorPosition, cursorPosition);
-    }, 0);
-  }, [applyQueryTemplateUpdate, queryTemplateRef, queryTemplateValue]);
-
-  const insertAiPromptPlaceholder = useCallback((placeholder: string): void => {
-    const currentValue = databaseConfig.aiPrompt ?? '';
-    const textArea = aiPromptRef?.current;
-    const selectionStart =
-      typeof textArea?.selectionStart === 'number' ? textArea.selectionStart : currentValue.length;
-    const selectionEnd =
-      typeof textArea?.selectionEnd === 'number' ? textArea.selectionEnd : currentValue.length;
-    const rangeStart = Math.max(0, Math.min(selectionStart, selectionEnd, currentValue.length));
-    const rangeEnd = Math.max(rangeStart, Math.min(Math.max(selectionStart, selectionEnd), currentValue.length));
-    const nextValue = `${currentValue.slice(0, rangeStart)}${placeholder}${currentValue.slice(rangeEnd)}`;
-
-    updateSelectedNodeConfig({
-      database: {
-        ...databaseConfig,
-        aiPrompt: nextValue,
-      },
-    });
-
-    window.setTimeout(() => {
-      const node = aiPromptRef?.current;
-      if (!node) return;
-      const cursorPosition = rangeStart + placeholder.length;
-      node.focus();
-      node.setSelectionRange(cursorPosition, cursorPosition);
-    }, 0);
-  }, [databaseConfig, updateSelectedNodeConfig, aiPromptRef]);
-
-  const handleProviderChange = useCallback((nextProvider: DbQueryConfig['provider']) => {
-    const normalizedRequestedProvider: DbQueryConfig['provider'] =
-      nextProvider === 'mongodb' || nextProvider === 'prisma' ? nextProvider : 'auto';
-    const nextResolvedProvider = resolveDbActionProvider(
-      normalizedRequestedProvider,
-      appDbProvider
-    );
-    const currentCategory = databaseConfig.actionCategory ?? 'read';
-    const normalizedCategory = isProviderActionCategorySupported(
-      nextResolvedProvider,
-      currentCategory
-    )
-      ? currentCategory
-      : 'read';
-    const fallbackAction = getDefaultProviderAction(
-      nextResolvedProvider,
-      normalizedCategory,
-      queryConfig.single ?? false
-    );
-    const normalizedAction = resolveProviderAction(
-      nextResolvedProvider,
-      normalizedCategory,
-      databaseConfig.action ?? fallbackAction,
-      queryConfig.single ?? false
-    );
-
-    updateSelectedNodeConfig({
-      database: {
-        ...databaseConfig,
-        query: {
-          ...queryConfig,
-          provider: normalizedRequestedProvider,
-        },
-        actionCategory: normalizedCategory,
-        action: normalizedAction,
-        operation:
-          databaseConfig.useMongoActions === false
-            ? databaseConfig.operation ?? 'query'
-            : mapOperationFromActionCategory(normalizedCategory),
-      },
-    });
-  }, [appDbProvider, databaseConfig, queryConfig, updateSelectedNodeConfig]);
-
-  const applyActionConfig = useCallback((nextCategory: DatabaseActionCategory, nextAction: DatabaseAction) => {
-    const normalizedCategory = isProviderActionCategorySupported(resolvedProvider, nextCategory) ? nextCategory : 'read';
-    const nextActionResolved = resolveProviderAction(resolvedProvider, normalizedCategory, nextAction, queryConfig.single ?? false);
-    
-    updateSelectedNodeConfig({
-      database: {
-        ...databaseConfig,
-        useMongoActions: true,
-        actionCategory: normalizedCategory,
-        action: nextActionResolved,
-        operation: mapOperationFromActionCategory(normalizedCategory),
-      },
-    });
-  }, [databaseConfig, queryConfig.single, resolvedProvider, updateSelectedNodeConfig]);
-
-  const handleActionCategoryChange = useCallback((value: DatabaseActionCategory) => {
-    const defaultAction = getDefaultProviderAction(resolvedProvider, value, queryConfig.single ?? false);
-    applyActionConfig(value, defaultAction);
-  }, [applyActionConfig, queryConfig.single, resolvedProvider]);
-
-  const applyDatabasePreset = useCallback((id: string) => {
-    const patch: Partial<DatabaseConfig> = { presetId: id };
-    if (id === 'query_by_id') {
-      Object.assign(patch, {
-        useMongoActions: true,
-        actionCategory: 'read',
-        action: 'findOne',
-        operation: 'query',
-        entityType: 'product',
-        query: {
-          ...DEFAULT_QUERY,
-          collection: 'products',
-          mode: 'custom',
-          preset: 'by_id',
-          idType: 'string',
-          queryTemplate: '{\n  "id": "{{value}}"\n}',
-          single: true,
+      updateSelectedNodeConfig({
+        database: {
+          ...databaseConfig,
+          useMongoActions: true,
+          actionCategory: normalizedCategory,
+          action: nextActionResolved,
+          operation: mapOperationFromActionCategory(normalizedCategory),
         },
       });
-    }
-    updateSelectedNodeConfig({ database: { ...databaseConfig, ...patch } });
-  }, [databaseConfig, updateSelectedNodeConfig]);
+    },
+    [databaseConfig, queryConfig.single, resolvedProvider, updateSelectedNodeConfig]
+  );
 
-  const handleSaveQueryPreset = useCallback(async (name?: string, opts?: { forceNew?: boolean }) => {
-    const finalName = (name ?? queryPresetName).trim();
-    if (!finalName) { toast('Name required', { variant: 'error' }); return; }
-    const now = new Date().toISOString();
-    const next = [...dbQueryPresets];
-    const idx = opts?.forceNew ? -1 : next.findIndex(p => p.id === selectedQueryPresetId);
-    if (idx >= 0) {
-      next[idx] = { ...next[idx]!, name: finalName, queryTemplate: queryTemplateValue, updateTemplate: databaseConfig.updateTemplate || '', updatedAt: now };
-    } else {
-      const p: DbQueryPreset = { id: createPresetId(), name: finalName, queryTemplate: queryTemplateValue || '{}', updateTemplate: databaseConfig.updateTemplate || '', createdAt: now, updatedAt: now };
-      next.push(p);
-      setSelectedQueryPresetId(p.id);
-    }
-    setDbQueryPresets(next);
-    await saveDbQueryPresets(next);
-    toast('Saved', { variant: 'success' });
-  }, [dbQueryPresets, queryPresetName, selectedQueryPresetId, queryTemplateValue, databaseConfig.updateTemplate, setDbQueryPresets, saveDbQueryPresets, toast]);
+  const handleActionCategoryChange = useCallback(
+    (value: DatabaseActionCategory) => {
+      const defaultAction = getDefaultProviderAction(
+        resolvedProvider,
+        value,
+        queryConfig.single ?? false
+      );
+      applyActionConfig(value, defaultAction);
+    },
+    [applyActionConfig, queryConfig.single, resolvedProvider]
+  );
 
-  const handleRenameQueryPreset = useCallback(async (presetId: string, nextName: string) => {
-    const trimmed = nextName.trim();
-    if (!trimmed) {
-      toast('Query preset name is required.', { variant: 'error' });
-      return;
-    }
-    const nextPresets = dbQueryPresets.map(p => p.id === presetId ? { ...p, name: trimmed, updatedAt: new Date().toISOString() } : p);
-    setDbQueryPresets(nextPresets);
-    try {
-      await saveDbQueryPresets(nextPresets);
-      if (selectedQueryPresetId === presetId) setQueryPresetName(trimmed);
-      toast('Query preset renamed.', { variant: 'success' });
-    } catch {
-      setDbQueryPresets(dbQueryPresets);
-    }
-  }, [dbQueryPresets, saveDbQueryPresets, selectedQueryPresetId, setDbQueryPresets, toast]);
-
-  const handleDeleteQueryPresetById = useCallback(async (presetId: string) => {
-    const target = dbQueryPresets.find(p => p.id === presetId);
-    if (!target) return;
-
-    confirm({
-      title: 'Delete Preset?',
-      message: `Are you sure you want to delete preset "${target.name}"? This action cannot be undone.`,
-      confirmText: 'Delete',
-      isDangerous: true,
-      onConfirm: async () => {
-        const nextPresets = dbQueryPresets.filter(p => p.id !== presetId);
-        setDbQueryPresets(nextPresets);
-        if (selectedQueryPresetId === presetId) {
-          setSelectedQueryPresetId('');
-          setQueryPresetName('');
-        }
-        try {
-          await saveDbQueryPresets(nextPresets);
-          toast('Query preset deleted.', { variant: 'success' });
-        } catch {
-          setDbQueryPresets(dbQueryPresets);
-        }
+  const applyDatabasePreset = useCallback(
+    (id: string) => {
+      const patch: Partial<DatabaseConfig> = { presetId: id };
+      if (id === 'query_by_id') {
+        Object.assign(patch, {
+          useMongoActions: true,
+          actionCategory: 'read',
+          action: 'findOne',
+          operation: 'query',
+          entityType: 'product',
+          query: {
+            ...DEFAULT_QUERY,
+            collection: 'products',
+            mode: 'custom',
+            preset: 'by_id',
+            idType: 'string',
+            queryTemplate: '{\n  "id": "{{value}}"\n}',
+            single: true,
+          },
+        });
       }
-    });
-  }, [dbQueryPresets, saveDbQueryPresets, selectedQueryPresetId, setDbQueryPresets, toast, confirm]);
+      updateSelectedNodeConfig({ database: { ...databaseConfig, ...patch } });
+    },
+    [databaseConfig, updateSelectedNodeConfig]
+  );
+
+  const handleSaveQueryPreset = useCallback(
+    async (name?: string, opts?: { forceNew?: boolean }) => {
+      const finalName = (name ?? queryPresetName).trim();
+      if (!finalName) {
+        toast('Name required', { variant: 'error' });
+        return;
+      }
+      const now = new Date().toISOString();
+      const next = [...dbQueryPresets];
+      const idx = opts?.forceNew ? -1 : next.findIndex((p) => p.id === selectedQueryPresetId);
+      if (idx >= 0) {
+        next[idx] = {
+          ...next[idx]!,
+          name: finalName,
+          queryTemplate: queryTemplateValue,
+          updateTemplate: databaseConfig.updateTemplate || '',
+          updatedAt: now,
+        };
+      } else {
+        const p: DbQueryPreset = {
+          id: createPresetId(),
+          name: finalName,
+          queryTemplate: queryTemplateValue || '{}',
+          updateTemplate: databaseConfig.updateTemplate || '',
+          createdAt: now,
+          updatedAt: now,
+        };
+        next.push(p);
+        setSelectedQueryPresetId(p.id);
+      }
+      setDbQueryPresets(next);
+      await saveDbQueryPresets(next);
+      toast('Saved', { variant: 'success' });
+    },
+    [
+      dbQueryPresets,
+      queryPresetName,
+      selectedQueryPresetId,
+      queryTemplateValue,
+      databaseConfig.updateTemplate,
+      setDbQueryPresets,
+      saveDbQueryPresets,
+      toast,
+    ]
+  );
+
+  const handleRenameQueryPreset = useCallback(
+    async (presetId: string, nextName: string) => {
+      const trimmed = nextName.trim();
+      if (!trimmed) {
+        toast('Query preset name is required.', { variant: 'error' });
+        return;
+      }
+      const nextPresets = dbQueryPresets.map((p) =>
+        p.id === presetId ? { ...p, name: trimmed, updatedAt: new Date().toISOString() } : p
+      );
+      setDbQueryPresets(nextPresets);
+      try {
+        await saveDbQueryPresets(nextPresets);
+        if (selectedQueryPresetId === presetId) setQueryPresetName(trimmed);
+        toast('Query preset renamed.', { variant: 'success' });
+      } catch {
+        setDbQueryPresets(dbQueryPresets);
+      }
+    },
+    [dbQueryPresets, saveDbQueryPresets, selectedQueryPresetId, setDbQueryPresets, toast]
+  );
+
+  const handleDeleteQueryPresetById = useCallback(
+    async (presetId: string) => {
+      const target = dbQueryPresets.find((p) => p.id === presetId);
+      if (!target) return;
+
+      confirm({
+        title: 'Delete Preset?',
+        message: `Are you sure you want to delete preset "${target.name}"? This action cannot be undone.`,
+        confirmText: 'Delete',
+        isDangerous: true,
+        onConfirm: async () => {
+          const nextPresets = dbQueryPresets.filter((p) => p.id !== presetId);
+          setDbQueryPresets(nextPresets);
+          if (selectedQueryPresetId === presetId) {
+            setSelectedQueryPresetId('');
+            setQueryPresetName('');
+          }
+          try {
+            await saveDbQueryPresets(nextPresets);
+            toast('Query preset deleted.', { variant: 'success' });
+          } catch {
+            setDbQueryPresets(dbQueryPresets);
+          }
+        },
+      });
+    },
+    [dbQueryPresets, saveDbQueryPresets, selectedQueryPresetId, setDbQueryPresets, toast, confirm]
+  );
 
   const actionCategory = databaseConfig.actionCategory || 'read';
   const action = databaseConfig.action || 'find';
   const operation = databaseConfig.operation;
 
-  const incomingEdges = useMemo(() => edges.filter(e => e.to === selectedNodeId), [edges, selectedNodeId]);
-  const incomingPorts = useMemo(() => Array.from(new Set(incomingEdges.map(e => e.toPort).filter((p): p is string => !!p))), [incomingEdges]);
+  const incomingEdges = useMemo(
+    () => edges.filter((e) => e.to === selectedNodeId),
+    [edges, selectedNodeId]
+  );
+  const incomingPorts = useMemo(
+    () => Array.from(new Set(incomingEdges.map((e) => e.toPort).filter((p): p is string => !!p))),
+    [incomingEdges]
+  );
 
-  const sampleState = useMemo(() => updaterSamples[selectedNodeId] ?? {
-    entityType: databaseConfig.entityType ?? 'product',
-    entityId: '',
-    json: '',
-    mappingMode: 'top' as const,
-    depth: 2,
-    keyStyle: 'path' as const,
-    includeContainers: false,
-  }, [updaterSamples, selectedNodeId, databaseConfig.entityType]);
+  const sampleState = useMemo(
+    () =>
+      updaterSamples[selectedNodeId] ?? {
+        entityType: databaseConfig.entityType ?? 'product',
+        entityId: '',
+        json: '',
+        mappingMode: 'top' as const,
+        depth: 2,
+        keyStyle: 'path' as const,
+        includeContainers: false,
+      },
+    [updaterSamples, selectedNodeId, databaseConfig.entityType]
+  );
 
   const parsedSample = useMemo(() => safeParseJson(sampleState.json), [sampleState.json]);
-  const sampleEntries = useMemo(() => (parsedSample.value ? extractJsonPathEntries(parsedSample.value, sampleState.depth ?? 2) : []), [parsedSample.value, sampleState.depth]);
-  const targetPaths = useMemo(() => sampleEntries.filter(e => sampleState.includeContainers || e.type === 'value' || e.type === 'array').map(e => e.path), [sampleEntries, sampleState.includeContainers]);
-  const uniqueTargetPathOptions = useMemo(() => Array.from(new Map(targetPaths.map(path => [path, { label: path, value: path }])).values()), [targetPaths]);
-  const availablePorts = useMemo(() => (incomingPorts.length ? incomingPorts : (selectedNode?.inputs ?? [])), [incomingPorts, selectedNode?.inputs]);
+  const sampleEntries = useMemo(
+    () =>
+      parsedSample.value ? extractJsonPathEntries(parsedSample.value, sampleState.depth ?? 2) : [],
+    [parsedSample.value, sampleState.depth]
+  );
+  const targetPaths = useMemo(
+    () =>
+      sampleEntries
+        .filter((e) => sampleState.includeContainers || e.type === 'value' || e.type === 'array')
+        .map((e) => e.path),
+    [sampleEntries, sampleState.includeContainers]
+  );
+  const uniqueTargetPathOptions = useMemo(
+    () =>
+      Array.from(new Map(targetPaths.map((path) => [path, { label: path, value: path }])).values()),
+    [targetPaths]
+  );
+  const availablePorts = useMemo(
+    () => (incomingPorts.length ? incomingPorts : (selectedNode?.inputs ?? [])),
+    [incomingPorts, selectedNode?.inputs]
+  );
 
   const bundleKeys = useMemo(() => {
     const keys = new Set<string>();
@@ -642,7 +809,8 @@ export function useDatabaseNodeConfigState() {
       const fromNode = nodes.find((node: AiNode) => node.id === edge.from);
       if (!fromNode) return;
       if (fromNode.type === 'parser') {
-        const mappings = fromNode.config?.parser?.mappings ?? createParserMappings(fromNode.outputs);
+        const mappings =
+          fromNode.config?.parser?.mappings ?? createParserMappings(fromNode.outputs);
         Object.keys(mappings).forEach((key: string) => {
           const trimmed = key.trim();
           if (trimmed) keys.add(trimmed);
@@ -673,12 +841,12 @@ export function useDatabaseNodeConfigState() {
         placeholders.push(t);
       }
     };
-    incomingPorts.forEach(port => {
+    incomingPorts.forEach((port) => {
       if (port !== 'bundle' && (port !== 'result' || operation === 'update')) {
         add(`{{${port}}}`);
       }
     });
-    bundleKeys.forEach(key => add(`{{bundle.${key}}}`));
+    bundleKeys.forEach((key) => add(`{{bundle.${key}}}`));
     if (incomingPorts.includes('context')) {
       add('{{context.entityId}}');
       add('{{context.entityType}}');
@@ -690,51 +858,109 @@ export function useDatabaseNodeConfigState() {
     return placeholders;
   }, [incomingPorts, operation, bundleKeys]);
 
-  const mappings = databaseConfig.mappings && databaseConfig.mappings.length > 0 ? databaseConfig.mappings : [];
+  const mappings =
+    databaseConfig.mappings && databaseConfig.mappings.length > 0 ? databaseConfig.mappings : [];
 
-  const updateMapping = useCallback((index: number, patch: Partial<UpdaterMapping>) => {
-    const nextMappings = mappings.map((m, idx) => idx === index ? { ...m, ...patch } : m);
-    updateSelectedNodeConfig({ database: { ...databaseConfig, mappings: nextMappings } });
-  }, [databaseConfig, mappings, updateSelectedNodeConfig]);
+  const updateMapping = useCallback(
+    (index: number, patch: Partial<UpdaterMapping>) => {
+      const nextMappings = mappings.map((m, idx) => (idx === index ? { ...m, ...patch } : m));
+      updateSelectedNodeConfig({ database: { ...databaseConfig, mappings: nextMappings } });
+    },
+    [databaseConfig, mappings, updateSelectedNodeConfig]
+  );
 
-  const removeMapping = useCallback((index: number) => {
-    updateSelectedNodeConfig({ database: { ...databaseConfig, mappings: mappings.filter((_, idx) => idx !== index) } });
-  }, [databaseConfig, mappings, updateSelectedNodeConfig]);
+  const removeMapping = useCallback(
+    (index: number) => {
+      updateSelectedNodeConfig({
+        database: { ...databaseConfig, mappings: mappings.filter((_, idx) => idx !== index) },
+      });
+    },
+    [databaseConfig, mappings, updateSelectedNodeConfig]
+  );
 
   const addMapping = useCallback(() => {
-    updateSelectedNodeConfig({ database: { ...databaseConfig, mappings: [...mappings, { targetPath: '', sourcePort: availablePorts[0] ?? 'result', sourcePath: '' }] } });
+    updateSelectedNodeConfig({
+      database: {
+        ...databaseConfig,
+        mappings: [
+          ...mappings,
+          { targetPath: '', sourcePort: availablePorts[0] ?? 'result', sourcePath: '' },
+        ],
+      },
+    });
   }, [availablePorts, databaseConfig, mappings, updateSelectedNodeConfig]);
 
   const mapInputsToTargets = useCallback(() => {
     const nextMappings: UpdaterMapping[] = [];
-    availablePorts.forEach(port => {
+    availablePorts.forEach((port) => {
       if (port === databaseConfig.idField) return;
       if (port === 'bundle') {
-        bundleKeys.forEach(key => nextMappings.push({ targetPath: key, sourcePort: 'bundle', sourcePath: key }));
+        bundleKeys.forEach((key) =>
+          nextMappings.push({ targetPath: key, sourcePort: 'bundle', sourcePath: key })
+        );
       } else {
         const normalized = port.toLowerCase();
-        const target = targetPaths.find(p => p.toLowerCase().endsWith(normalized) || p.toLowerCase().includes(normalized)) ?? port;
+        const target =
+          targetPaths.find(
+            (p) => p.toLowerCase().endsWith(normalized) || p.toLowerCase().includes(normalized)
+          ) ?? port;
         nextMappings.push({ targetPath: target, sourcePort: port });
       }
     });
-    if (nextMappings.length > 0) updateSelectedNodeConfig({ database: { ...databaseConfig, mappings: nextMappings } });
+    if (nextMappings.length > 0)
+      updateSelectedNodeConfig({ database: { ...databaseConfig, mappings: nextMappings } });
   }, [availablePorts, bundleKeys, databaseConfig, targetPaths, updateSelectedNodeConfig]);
 
-  const presetOptions: DatabasePresetOption[] = useMemo(() => [
-    { id: 'custom', label: 'Custom', description: 'Keep current settings and customize manually.' },
-    { id: 'query_by_id', label: 'Query by ID', description: 'Flexible ID query (supports UUID, ObjectId, entityId).' },
-    { id: 'query_recent_products', label: 'Query recent', description: 'Fetches newest documents sorted by createdAt.' },
-    { id: 'query_name_contains', label: 'Search by name', description: 'Regex search on name field.' },
-    { id: 'update_content_en_from_result', label: 'Update from result', description: 'Updates document field using incoming result.' },
-    { id: 'delete_product_by_entity', label: 'Delete by ID', description: 'Deletes document using connected ID input.' },
-    { id: 'insert_from_bundle', label: 'Insert from bundle', description: 'Creates new document from bundle payload.' },
-  ], []);
+  const presetOptions: DatabasePresetOption[] = useMemo(
+    () => [
+      {
+        id: 'custom',
+        label: 'Custom',
+        description: 'Keep current settings and customize manually.',
+      },
+      {
+        id: 'query_by_id',
+        label: 'Query by ID',
+        description: 'Flexible ID query (supports UUID, ObjectId, entityId).',
+      },
+      {
+        id: 'query_recent_products',
+        label: 'Query recent',
+        description: 'Fetches newest documents sorted by createdAt.',
+      },
+      {
+        id: 'query_name_contains',
+        label: 'Search by name',
+        description: 'Regex search on name field.',
+      },
+      {
+        id: 'update_content_en_from_result',
+        label: 'Update from result',
+        description: 'Updates document field using incoming result.',
+      },
+      {
+        id: 'delete_product_by_entity',
+        label: 'Delete by ID',
+        description: 'Deletes document using connected ID input.',
+      },
+      {
+        id: 'insert_from_bundle',
+        label: 'Insert from bundle',
+        description: 'Creates new document from bundle payload.',
+      },
+    ],
+    []
+  );
 
   // Sync logic
   useEffect(() => {
     if (!isDatabaseSelected || !selectedNodeId) return;
-    const runtimeInputs = (runtimeState.inputs?.[selectedNodeId] ?? {});
-    const detectedId = (runtimeInputs['entityId'] as string || runtimeInputs['productId'] as string || runtimeInputs['value'] as string)?.trim?.();
+    const runtimeInputs = runtimeState.inputs?.[selectedNodeId] ?? {};
+    const detectedId = (
+      (runtimeInputs['entityId'] as string) ||
+      (runtimeInputs['productId'] as string) ||
+      (runtimeInputs['value'] as string)
+    )?.trim?.();
     if (!detectedId) return;
 
     const queryCollection = databaseConfig.query?.collection ?? 'products';
@@ -746,32 +972,100 @@ export function useDatabaseNodeConfigState() {
 
     lastAutoFetchedRef.current = fetchKey;
     void handleFetchUpdaterSample(selectedNodeId, queryCollection, detectedId, { notify: false });
-  }, [selectedNodeId, isDatabaseSelected, databaseConfig.query?.collection, runtimeState, updaterSamples, handleFetchUpdaterSample]);
+  }, [
+    selectedNodeId,
+    isDatabaseSelected,
+    databaseConfig.query?.collection,
+    runtimeState,
+    updaterSamples,
+    handleFetchUpdaterSample,
+  ]);
 
   return {
-    selectedNode, databaseConfig, queryConfig, databaseTab, setDatabaseTab,
-    selectedQueryPresetId, setSelectedQueryPresetId, queryPresetName, setQueryPresetName,
-    saveQueryPresetModalOpen, setSaveQueryPresetModalOpen, newQueryPresetName, setNewQueryPresetName,
-    pendingAiQuery, setPendingAiQuery, aiQueries, setAiQueries, selectedAiQueryId, setSelectedAiQueryId,
-    testQueryResult, setTestQueryResult, testQueryLoading, setTestQueryLoading,
-    queryValidatorEnabled, setQueryValidatorEnabled, queryFormatterEnabled, setQueryFormatterEnabled,
-    codeSnippets, selectedSnippetIndex, setSelectedSnippetIndex,
-    schemaQuery, promptEngineSettings, schemaConnection, fetchedDbSchema,
-    updateSelectedNodeConfig, updateQueryConfig, handleSyncSchema,
-    toast, appDbProvider, resolvedProvider, runtimeState, pathDebugSnapshot, nodes, edges,
-    queryTemplateRef, aiPromptRef, dbQueryPresets, setDbQueryPresets, saveDbQueryPresets,
-    operation, actionCategory, action,
-    connectedPlaceholders, sampleState, parsedSampleError: parsedSample.error || undefined,
-    uniqueTargetPathOptions, availablePorts, mappings,
-    updateMapping, removeMapping, addMapping,
-    mapInputsToTargets, presetOptions, applyDatabasePreset,
-    insertTemplateSnippet, applyQueryTemplateUpdate,
-    insertQueryPlaceholder, insertAiPromptPlaceholder,
-    openSaveQueryPresetModal: () => { setNewQueryPresetName(''); setSaveQueryPresetModalOpen(true); },
+    selectedNode,
+    databaseConfig,
+    queryConfig,
+    databaseTab,
+    setDatabaseTab,
+    selectedQueryPresetId,
+    setSelectedQueryPresetId,
+    queryPresetName,
+    setQueryPresetName,
+    saveQueryPresetModalOpen,
+    setSaveQueryPresetModalOpen,
+    newQueryPresetName,
+    setNewQueryPresetName,
+    pendingAiQuery,
+    setPendingAiQuery,
+    aiQueries,
+    setAiQueries,
+    selectedAiQueryId,
+    setSelectedAiQueryId,
+    testQueryResult,
+    setTestQueryResult,
+    testQueryLoading,
+    setTestQueryLoading,
+    queryValidatorEnabled,
+    setQueryValidatorEnabled,
+    queryFormatterEnabled,
+    setQueryFormatterEnabled,
+    codeSnippets,
+    selectedSnippetIndex,
+    setSelectedSnippetIndex,
+    schemaQuery,
+    promptEngineSettings,
+    schemaConnection,
+    fetchedDbSchema,
+    updateSelectedNodeConfig,
+    updateQueryConfig,
+    handleSyncSchema,
+    toast,
+    appDbProvider,
+    resolvedProvider,
+    runtimeState,
+    pathDebugSnapshot,
+    nodes,
+    edges,
+    queryTemplateRef,
+    aiPromptRef,
+    dbQueryPresets,
+    setDbQueryPresets,
+    saveDbQueryPresets,
+    operation,
+    actionCategory,
+    action,
+    connectedPlaceholders,
+    sampleState,
+    parsedSampleError: parsedSample.error || undefined,
+    uniqueTargetPathOptions,
+    availablePorts,
+    mappings,
+    updateMapping,
+    removeMapping,
+    addMapping,
+    mapInputsToTargets,
+    presetOptions,
+    applyDatabasePreset,
+    insertTemplateSnippet,
+    applyQueryTemplateUpdate,
+    insertQueryPlaceholder,
+    insertAiPromptPlaceholder,
+    openSaveQueryPresetModal: () => {
+      setNewQueryPresetName('');
+      setSaveQueryPresetModalOpen(true);
+    },
     closeSaveQueryPresetModal: () => setSaveQueryPresetModalOpen(false),
-    handleSaveQueryPreset, handleRunQuery, isUpdateAction, queryTemplateValue,
-    handleRenameQueryPreset, handleDeleteQueryPresetById,
-    handleActionCategoryChange, applyActionConfig, handleProviderChange, schemaSyncMutation, bundleKeys,
-    ConfirmationModal
+    handleSaveQueryPreset,
+    handleRunQuery,
+    isUpdateAction,
+    queryTemplateValue,
+    handleRenameQueryPreset,
+    handleDeleteQueryPresetById,
+    handleActionCategoryChange,
+    applyActionConfig,
+    handleProviderChange,
+    schemaSyncMutation,
+    bundleKeys,
+    ConfirmationModal,
   };
 }

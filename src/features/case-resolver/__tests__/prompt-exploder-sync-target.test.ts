@@ -59,9 +59,7 @@ describe('case resolver prompt exploder manual apply flow', () => {
 
   const createWorkspaceHarness = (): {
     getWorkspace: () => CaseResolverWorkspace;
-    updateWorkspace: (
-      updater: (current: CaseResolverWorkspace) => CaseResolverWorkspace
-    ) => void;
+    updateWorkspace: (updater: (current: CaseResolverWorkspace) => CaseResolverWorkspace) => void;
     setEditingDocumentDraft: Dispatch<SetStateAction<CaseResolverFileEditDraft | null>>;
   } => {
     const documentFile = createCaseResolverFile({
@@ -84,7 +82,9 @@ describe('case resolver prompt exploder manual apply flow', () => {
       updater
     ): void => {
       if (typeof updater === 'function') {
-        draft = (updater as (current: CaseResolverFileEditDraft | null) => CaseResolverFileEditDraft | null)(draft);
+        draft = (
+          updater as (current: CaseResolverFileEditDraft | null) => CaseResolverFileEditDraft | null
+        )(draft);
         return;
       }
       draft = updater;
@@ -143,9 +143,11 @@ describe('case resolver prompt exploder manual apply flow', () => {
       expect(result.diagnostics.payloadStatus).toBe('pending');
     }
 
-    const updatedDocument = harness.getWorkspace().files.find((file: CaseResolverFile) => file.id === 'doc-1');
+    const updatedDocument = harness
+      .getWorkspace()
+      .files.find((file: CaseResolverFile) => file.id === 'doc-1');
     expect(updatedDocument?.name).toBe('Document');
-    
+
     expect(updatedDocument?.documentContentPlainText).toContain('Exploded output body');
     expect(readPendingCaseResolverPromptExploderPayload()).toBeNull();
   });
@@ -187,7 +189,9 @@ describe('case resolver prompt exploder manual apply flow', () => {
     ): void => {
       workspace = updater(workspace);
     };
-    const setEditingDocumentDraft: Dispatch<SetStateAction<CaseResolverFileEditDraft | null>> = () => {};
+    const setEditingDocumentDraft: Dispatch<
+      SetStateAction<CaseResolverFileEditDraft | null>
+    > = () => {};
 
     savePromptExploderApplyPromptForCaseResolver('Locked payload', {
       fileId: 'doc-1',
@@ -228,7 +232,9 @@ describe('case resolver prompt exploder manual apply flow', () => {
     ): void => {
       queuedUpdater = updater;
     };
-    const setEditingDocumentDraft: Dispatch<SetStateAction<CaseResolverFileEditDraft | null>> = () => {};
+    const setEditingDocumentDraft: Dispatch<
+      SetStateAction<CaseResolverFileEditDraft | null>
+    > = () => {};
 
     savePromptExploderApplyPromptForCaseResolver('Deferred mutation payload', {
       fileId: 'doc-1',
@@ -273,7 +279,9 @@ describe('case resolver prompt exploder manual apply flow', () => {
     ): void => {
       liveWorkspace = updater(liveWorkspace);
     };
-    const setEditingDocumentDraft: Dispatch<SetStateAction<CaseResolverFileEditDraft | null>> = () => {};
+    const setEditingDocumentDraft: Dispatch<
+      SetStateAction<CaseResolverFileEditDraft | null>
+    > = () => {};
 
     savePromptExploderApplyPromptForCaseResolver('Recovered from precheck snapshot', {
       fileId: 'doc-1',
@@ -294,7 +302,9 @@ describe('case resolver prompt exploder manual apply flow', () => {
       expect(result.diagnostics.mutationResolutionStrategy).toBe('unresolved');
       expect(result.diagnostics.mutationMissingAfterPrecheck).toBe(true);
     }
-    const updatedDocument = liveWorkspace.files.find((file: CaseResolverFile) => file.id === 'doc-1');
+    const updatedDocument = liveWorkspace.files.find(
+      (file: CaseResolverFile) => file.id === 'doc-1'
+    );
     expect(updatedDocument).toBeUndefined();
     expect(readPendingCaseResolverPromptExploderPayload()?.prompt).toBe(
       'Recovered from precheck snapshot'
@@ -353,7 +363,9 @@ describe('case resolver prompt exploder manual apply flow', () => {
     ): void => {
       workspace = updater(workspace);
     };
-    const setEditingDocumentDraft: Dispatch<SetStateAction<CaseResolverFileEditDraft | null>> = () => {};
+    const setEditingDocumentDraft: Dispatch<
+      SetStateAction<CaseResolverFileEditDraft | null>
+    > = () => {};
 
     savePromptExploderApplyPromptForCaseResolver('Normalized payload', {
       fileId: 'doc-spaced',
@@ -371,19 +383,18 @@ describe('case resolver prompt exploder manual apply flow', () => {
     if (result.applied) {
       expect(result.diagnostics.resolutionStrategy).toBe('requested_id');
     }
-    const updatedDocument = workspace.files.find((file: CaseResolverFile) => file.id === '  doc-spaced  ');
+    const updatedDocument = workspace.files.find(
+      (file: CaseResolverFile) => file.id === '  doc-spaced  '
+    );
     expect(updatedDocument?.documentContentPlainText).toContain('Normalized payload');
   });
 
   it('uses payload context target when it points to an existing file', () => {
     const harness = createWorkspaceHarness();
-    savePromptExploderApplyPromptForCaseResolver(
-      'Context fallback payload',
-      {
-        fileId: 'doc-1',
-        fileName: 'Document',
-      }
-    );
+    savePromptExploderApplyPromptForCaseResolver('Context fallback payload', {
+      fileId: 'doc-1',
+      fileName: 'Document',
+    });
 
     const result = applyPendingPromptExploderPayloadToCaseResolver({
       workspaceFiles: harness.getWorkspace().files,
@@ -397,7 +408,9 @@ describe('case resolver prompt exploder manual apply flow', () => {
     if (result.applied) {
       expect(result.diagnostics.resolutionStrategy).toBe('requested_id');
     }
-    const updatedDocument = harness.getWorkspace().files.find((file: CaseResolverFile) => file.id === 'doc-1');
+    const updatedDocument = harness
+      .getWorkspace()
+      .files.find((file: CaseResolverFile) => file.id === 'doc-1');
     expect(updatedDocument?.documentContentPlainText).toContain('Context fallback payload');
     expect(readPendingCaseResolverPromptExploderPayload()).toBeNull();
   });
@@ -413,7 +426,9 @@ describe('case resolver prompt exploder manual apply flow', () => {
     ): void => {
       workspace = updater(workspace);
     };
-    const setEditingDocumentDraft: Dispatch<SetStateAction<CaseResolverFileEditDraft | null>> = () => {};
+    const setEditingDocumentDraft: Dispatch<
+      SetStateAction<CaseResolverFileEditDraft | null>
+    > = () => {};
 
     savePromptExploderApplyPromptForCaseResolver('Recovered payload body', {
       fileId: 'doc-recover',
@@ -483,26 +498,28 @@ describe('case resolver prompt exploder manual apply flow', () => {
       }
     );
 
-    const disabledMappings = parseCaseResolverCaptureSettings(JSON.stringify({
-      enabled: true,
-      autoOpenProposalModal: true,
-      roleMappings: {
-        addresser: {
-          enabled: false,
-          targetRole: 'addresser',
-          defaultAction: 'keepText',
-          autoMatchPartyReference: false,
-          autoMatchAddress: false,
+    const disabledMappings = parseCaseResolverCaptureSettings(
+      JSON.stringify({
+        enabled: true,
+        autoOpenProposalModal: true,
+        roleMappings: {
+          addresser: {
+            enabled: false,
+            targetRole: 'addresser',
+            defaultAction: 'keepText',
+            autoMatchPartyReference: false,
+            autoMatchAddress: false,
+          },
+          addressee: {
+            enabled: false,
+            targetRole: 'addressee',
+            defaultAction: 'keepText',
+            autoMatchPartyReference: false,
+            autoMatchAddress: false,
+          },
         },
-        addressee: {
-          enabled: false,
-          targetRole: 'addressee',
-          defaultAction: 'keepText',
-          autoMatchPartyReference: false,
-          autoMatchAddress: false,
-        },
-      },
-    }));
+      })
+    );
 
     const result = applyPendingPromptExploderPayloadToCaseResolver({
       workspaceFiles: harness.getWorkspace().files,

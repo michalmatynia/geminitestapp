@@ -29,7 +29,10 @@ export const createDefaultFilemakerPerson = (id: string, name?: string): Filemak
   };
 };
 
-export const createDefaultFilemakerOrganization = (id: string, name?: string): FilemakerOrganization => {
+export const createDefaultFilemakerOrganization = (
+  id: string,
+  name?: string
+): FilemakerOrganization => {
   const now = new Date().toISOString();
   return {
     id,

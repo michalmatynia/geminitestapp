@@ -24,7 +24,10 @@ describe('GenerationToolbarImageUtils coordinate mapping', () => {
       {
         id: 'rect-1',
         type: 'rect',
-        points: [{ x: 0.25, y: 0.25 }, { x: 0.75, y: 0.75 }],
+        points: [
+          { x: 0.25, y: 0.25 },
+          { x: 0.75, y: 0.75 },
+        ],
         closed: true,
         visible: true,
       },
@@ -57,7 +60,10 @@ describe('GenerationToolbarImageUtils coordinate mapping', () => {
       {
         id: 'rect-outside',
         type: 'rect',
-        points: [{ x: 0.02, y: 0.2 }, { x: 0.1, y: 0.8 }],
+        points: [
+          { x: 0.02, y: 0.2 },
+          { x: 0.1, y: 0.8 },
+        ],
         closed: true,
         visible: true,
       },

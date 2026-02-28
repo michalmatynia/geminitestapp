@@ -9,13 +9,8 @@ import { ProductListingItem } from './ProductListingItem';
 import { ProductListingsSyncPanel } from './ProductListingsSyncPanel';
 
 export function ProductListingsContent(): React.JSX.Element {
-  const {
-    filteredListings,
-    statusTargetLabel,
-    filterIntegrationSlug,
-    isBaseFilter,
-    showSync,
-  } = useProductListingsViewContext();
+  const { filteredListings, statusTargetLabel, filterIntegrationSlug, isBaseFilter, showSync } =
+    useProductListingsViewContext();
 
   return (
     <div className='space-y-3'>

@@ -1,4 +1,3 @@
-
 import type { CmsTheme } from '@/shared/contracts/cms';
 
 interface ThemeProviderProps {
@@ -24,9 +23,5 @@ export function ThemeProvider({ theme, children }: ThemeProviderProps): React.Re
     '--cms-spacing-container': theme.spacing.containerMaxWidth,
   };
 
-  return (
-    <div style={cssVars as React.CSSProperties}>
-      {children}
-    </div>
-  );
+  return <div style={cssVars as React.CSSProperties}>{children}</div>;
 }

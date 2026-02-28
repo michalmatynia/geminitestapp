@@ -23,7 +23,7 @@ export interface UseChatbotMessagesStateReturn {
 
 export function useChatbotMessagesState(
   sessionId: string | null,
-  model: string,
+  model: string
 ): UseChatbotMessagesStateReturn {
   const { toast } = useToast();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -74,10 +74,7 @@ export function useChatbotMessagesState(
           content: data.message,
           timestamp: new Date().toISOString(),
         };
-        setMessages((prev: ChatMessage[]): ChatMessage[] => [
-          ...prev,
-          assistantMessage,
-        ]);
+        setMessages((prev: ChatMessage[]): ChatMessage[] => [...prev, assistantMessage]);
       }
     } catch (error: unknown) {
       logClientError(error, {

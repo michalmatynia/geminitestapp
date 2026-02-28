@@ -17,7 +17,9 @@ export function MassListProgressPanel({
   return (
     <div className='space-y-4'>
       <div className='flex items-center justify-between gap-2'>
-        <p className='text-sm text-gray-300'>Processing {current} of {total}...</p>
+        <p className='text-sm text-gray-300'>
+          Processing {current} of {total}...
+        </p>
         <LoadingState size='sm' className='p-0' />
       </div>
       <div className='h-2 w-full rounded-full bg-card/40'>

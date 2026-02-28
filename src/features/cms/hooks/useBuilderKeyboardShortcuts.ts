@@ -74,11 +74,9 @@ export function useBuilderKeyboardShortcuts(): void {
         }
         if (state.clipboard.type === 'block') {
           const targetSectionId =
-            selectedParentSection?.id ??
-            selectedColumnParentSection?.id ??
-            selectedSection?.id;
+            selectedParentSection?.id ?? selectedColumnParentSection?.id ?? selectedSection?.id;
           if (!targetSectionId) return;
-          
+
           const columnId = selectedParentColumn?.id ?? selectedColumn?.id;
           const parentBlockId = selectedParentBlock?.id;
 
@@ -131,13 +129,19 @@ export function useBuilderKeyboardShortcuts(): void {
             return;
           }
 
-          dispatch({ type: 'REMOVE_BLOCK', sectionId: selectedParentSection.id, blockId: selectedBlock.id });
+          dispatch({
+            type: 'REMOVE_BLOCK',
+            sectionId: selectedParentSection.id,
+            blockId: selectedBlock.id,
+          });
         }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
-    return (): void => { window.removeEventListener('keydown', handleKeyDown); };
+    return (): void => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, [
     dispatch,
     selectedSection,

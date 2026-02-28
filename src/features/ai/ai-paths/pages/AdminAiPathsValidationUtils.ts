@@ -1,17 +1,7 @@
-import type {
-  AiNode,
-  AiPathsValidationRule,
-  PathConfig,
-  PathMeta,
-} from '@/shared/lib/ai-paths';
-import {
-  PATH_CONFIG_PREFIX,
-  PATH_INDEX_KEY,
-} from '@/shared/lib/ai-paths/core/constants';
+import type { AiNode, AiPathsValidationRule, PathConfig, PathMeta } from '@/shared/lib/ai-paths';
+import { PATH_CONFIG_PREFIX, PATH_INDEX_KEY } from '@/shared/lib/ai-paths/core/constants';
 import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factory';
-import {
-  normalizeAiPathsValidationConfig,
-} from '@/shared/lib/ai-paths/core/validation-engine';
+import { normalizeAiPathsValidationConfig } from '@/shared/lib/ai-paths/core/validation-engine';
 
 export type SettingsRecord = { key: string; value: string };
 
@@ -71,8 +61,8 @@ export const parseDocsSourcesText = (value: string): string[] =>
       value
         .split(',')
         .map((entry: string): string => entry.trim())
-        .filter((entry: string): boolean => entry.length > 0),
-    ),
+        .filter((entry: string): boolean => entry.length > 0)
+    )
   );
 
 export const serializeDocsSources = (sources: string[]): string =>
@@ -80,8 +70,8 @@ export const serializeDocsSources = (sources: string[]): string =>
     new Set(
       sources
         .map((entry: string): string => entry.trim())
-        .filter((entry: string): boolean => entry.length > 0),
-    ),
+        .filter((entry: string): boolean => entry.length > 0)
+    )
   ).join('\n');
 
 export const parseCollectionMapText = (value: string): Record<string, string> => {
@@ -124,8 +114,8 @@ export const uniqueStringList = (values: string[]): string[] =>
     new Set(
       values
         .map((value: string): string => value.trim())
-        .filter((value: string): boolean => value.length > 0),
-    ),
+        .filter((value: string): boolean => value.length > 0)
+    )
   );
 
 export const getAssertionIdFromRule = (rule: AiPathsValidationRule): string | null => {
@@ -151,9 +141,7 @@ export const coercePathConfig = (pathId: string, raw: unknown): PathConfig | nul
   const fallback = createDefaultPathConfig(pathId);
   const name = normalizeString(record['name']) || fallback.name || `Path ${pathId.slice(0, 6)}`;
   const updatedAt = normalizeIso(record['updatedAt'], new Date().toISOString());
-  const nodes = Array.isArray(record['nodes'])
-    ? (record['nodes'] as AiNode[])
-    : fallback.nodes;
+  const nodes = Array.isArray(record['nodes']) ? (record['nodes'] as AiNode[]) : fallback.nodes;
   const edges = Array.isArray(record['edges'])
     ? (record['edges'] as PathConfig['edges'])
     : fallback.edges;
@@ -168,7 +156,7 @@ export const coercePathConfig = (pathId: string, raw: unknown): PathConfig | nul
     edges,
     aiPathsValidation: normalizeAiPathsValidationConfig(
       (record['aiPathsValidation'] as PathConfig['aiPathsValidation'] | undefined) ??
-        fallback.aiPathsValidation,
+        fallback.aiPathsValidation
     ),
   };
 };
@@ -197,10 +185,10 @@ export const parsePathIndex = (raw: string | undefined): PathMeta[] => {
 
 export const parseAiPathsSettings = (records: SettingsRecord[]): ParsedAiPathsSettings => {
   const settingsMap = new Map<string, string>(
-    records.map((record: SettingsRecord): [string, string] => [record.key, record.value]),
+    records.map((record: SettingsRecord): [string, string] => [record.key, record.value])
   );
   const configEntries = Array.from(settingsMap.entries()).filter(([key]: [string, string]) =>
-    key.startsWith(PATH_CONFIG_PREFIX),
+    key.startsWith(PATH_CONFIG_PREFIX)
   );
 
   const parsedConfigById = new Map<string, PathConfig>();
@@ -226,20 +214,23 @@ export const parseAiPathsSettings = (records: SettingsRecord[]): ParsedAiPathsSe
 
   const fallbackMetas: PathMeta[] = Array.from(parsedConfigById.values())
     .filter(
-      (config: PathConfig): boolean => !metasFromIndex.some((meta: PathMeta) => meta.id === config.id),
+      (config: PathConfig): boolean =>
+        !metasFromIndex.some((meta: PathMeta) => meta.id === config.id)
     )
-    .map((config: PathConfig): PathMeta => ({
-      id: config.id,
-      name: config.name || `Path ${config.id.slice(0, 6)}`,
-      createdAt: config.updatedAt,
-      updatedAt: config.updatedAt,
-    }));
+    .map(
+      (config: PathConfig): PathMeta => ({
+        id: config.id,
+        name: config.name || `Path ${config.id.slice(0, 6)}`,
+        createdAt: config.updatedAt,
+        updatedAt: config.updatedAt,
+      })
+    );
 
   const pathMetas = [...metasFromIndex, ...fallbackMetas].sort((left, right) =>
-    left.name.localeCompare(right.name),
+    left.name.localeCompare(right.name)
   );
   const pathConfigs = Object.fromEntries(
-    Array.from(parsedConfigById.entries()).map(([id, config]: [string, PathConfig]) => [id, config]),
+    Array.from(parsedConfigById.entries()).map(([id, config]: [string, PathConfig]) => [id, config])
   );
 
   return {

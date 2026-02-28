@@ -1,13 +1,8 @@
 import { logAgentAudit } from '@/features/ai/agent-runtime/audit';
 import { getBrowserContextSummary } from '@/features/ai/agent-runtime/browsing/context';
 import { persistCheckpoint } from '@/features/ai/agent-runtime/memory/checkpoint';
-import {
-  buildPlanWithLLM,
-  buildResumePlanReview,
-} from '@/features/ai/agent-runtime/planning/llm';
-import {
-  buildBranchStepsFromAlternatives,
-} from '@/features/ai/agent-runtime/planning/utils';
+import { buildPlanWithLLM, buildResumePlanReview } from '@/features/ai/agent-runtime/planning/llm';
+import { buildBranchStepsFromAlternatives } from '@/features/ai/agent-runtime/planning/utils';
 import type { PlanHierarchy } from '@/features/ai/agent-runtime/planning/utils';
 import type {
   AgentDecision,
@@ -63,14 +58,10 @@ export async function initializePlanState(
     taskType = checkpoint.taskType ?? null;
     const checkpointPreferences = checkpoint.preferences ?? null;
     if (checkpointPreferences?.['ignoreRobotsTxt'] !== undefined) {
-      nextPreferences['ignoreRobotsTxt'] = Boolean(
-        checkpointPreferences['ignoreRobotsTxt']
-      );
+      nextPreferences['ignoreRobotsTxt'] = Boolean(checkpointPreferences['ignoreRobotsTxt']);
     }
     if (checkpointPreferences?.requireHumanApproval !== undefined) {
-      nextPreferences['requireHumanApproval'] = Boolean(
-        checkpointPreferences.requireHumanApproval
-      );
+      nextPreferences['requireHumanApproval'] = Boolean(checkpointPreferences.requireHumanApproval);
     }
     if (typeof checkpointPreferences?.['plannerModel'] === 'string') {
       nextPreferences['plannerModel'] = checkpointPreferences['plannerModel'];
@@ -99,12 +90,12 @@ export async function initializePlanState(
       const rawResumeContext = await getBrowserContextSummary(run.id);
       const resumeContext: AgentExecutionContext['browserContext'] = rawResumeContext
         ? {
-          url: rawResumeContext.url ?? '',
-          title: rawResumeContext.title ?? null,
-          domTextSample: rawResumeContext.domTextSample ?? '',
-          logs: rawResumeContext.logs ?? [],
-          uiInventory: rawResumeContext.uiInventory,
-        }
+            url: rawResumeContext.url ?? '',
+            title: rawResumeContext.title ?? null,
+            domTextSample: rawResumeContext.domTextSample ?? '',
+            logs: rawResumeContext.logs ?? [],
+            uiInventory: rawResumeContext.uiInventory,
+          }
         : null;
       const resumeReview = await buildResumePlanReview({
         prompt: run.prompt,
@@ -112,12 +103,12 @@ export async function initializePlanState(
         model: memorySummarizationModel,
         browserContext: resumeContext
           ? {
-            url: resumeContext.url ?? '',
-            title: resumeContext.title ?? null,
-            domTextSample: resumeContext.domTextSample ?? '',
-            logs: resumeContext.logs ?? [],
-            uiInventory: resumeContext.uiInventory,
-          }
+              url: resumeContext.url ?? '',
+              title: resumeContext.title ?? null,
+              domTextSample: resumeContext.domTextSample ?? '',
+              logs: resumeContext.logs ?? [],
+              uiInventory: resumeContext.uiInventory,
+            }
           : null,
         currentPlan: planSteps,
         completedIndex: Math.max(stepIndex, 0),
@@ -168,9 +159,7 @@ export async function initializePlanState(
       );
       stepIndex = activeIndex === -1 ? 0 : activeIndex;
     } else {
-      const firstPending = planSteps.findIndex(
-        (step: PlanStep) => step.status !== 'completed'
-      );
+      const firstPending = planSteps.findIndex((step: PlanStep) => step.status !== 'completed');
       stepIndex = firstPending === -1 ? 0 : firstPending;
     }
     decision = {
@@ -191,12 +180,12 @@ export async function initializePlanState(
       guardModel: loopGuardModel,
       browserContext: browserContext
         ? {
-          url: browserContext.url ?? '',
-          title: browserContext.title ?? null,
-          domTextSample: browserContext.domTextSample ?? '',
-          logs: browserContext.logs ?? [],
-          uiInventory: browserContext.uiInventory,
-        }
+            url: browserContext.url ?? '',
+            title: browserContext.title ?? null,
+            domTextSample: browserContext.domTextSample ?? '',
+            logs: browserContext.logs ?? [],
+            uiInventory: browserContext.uiInventory,
+          }
         : null,
       maxSteps: settings.maxSteps,
       maxStepAttempts: settings.maxStepAttempts,

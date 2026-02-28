@@ -44,7 +44,7 @@ async function ensureSectionExpanded(page: Page, sectionType: string): Promise<v
 
 test.describe('CMS and Page Builder', () => {
   // Global timeout for this suite
-  test.setTimeout(180000); 
+  test.setTimeout(180000);
 
   const timestamp = Date.now();
   const testSlug = `test-page-${timestamp}`;
@@ -55,22 +55,22 @@ test.describe('CMS and Page Builder', () => {
 
     // 1. Create a Slug
     await page.goto('/admin/cms/slugs/create');
-    
+
     const slugInput = page.locator('input#slug');
     await slugInput.waitFor({ state: 'visible' });
     await slugInput.fill(testSlug);
     await page.click('button[type="submit"]');
-    
+
     await expect(page).toHaveURL('/admin/cms/slugs', { timeout: 30000 });
     await expect(page.getByText(`/${testSlug}`)).toBeVisible({ timeout: 30000 });
 
     // 2. Create a Page
     await page.goto('/admin/cms/pages/create');
-    
+
     const nameInput = page.locator('input#name');
     await nameInput.waitFor({ state: 'visible' });
     await nameInput.fill(testPageName);
-    
+
     // Select slug (supports both legacy dropdown and current checklist UI).
     const slugSelectButton = page.locator('button:has-text("Select a slug")').first();
     const hasLegacySlugPicker = await slugSelectButton.isVisible().catch(() => false);
@@ -94,16 +94,16 @@ test.describe('CMS and Page Builder', () => {
         await slugCheckboxByRow.check();
       }
     }
-    
+
     await page.click('button:has-text("Create")');
-    
+
     await expect(page).toHaveURL('/admin/cms/pages', { timeout: 30000 });
     await expect(page.getByText(testPageName)).toBeVisible({ timeout: 30000 });
 
     // 3. Use Page Builder
     await page.goto('/admin/cms/builder');
     await page.waitForLoadState('networkidle');
-    
+
     // Select page (legacy picker) when present; current builder may already open the selected page.
     const selectPageButton = page.locator('button:has-text("Select a page...")').first();
     const hasLegacyPagePicker = await selectPageButton.isVisible().catch(() => false);
@@ -112,11 +112,13 @@ test.describe('CMS and Page Builder', () => {
       await page.waitForSelector('div[role="option"], [role="option"]', { timeout: 15000 });
       await page.getByRole('option', { name: testPageName }).click();
     } else {
-      await expect(page.locator('text=Playwright Test Page').first()).toBeVisible({ timeout: 15000 });
+      await expect(page.locator('text=Playwright Test Page').first()).toBeVisible({
+        timeout: 15000,
+      });
     }
 
     // Wait for builder content to load after selection
-    await page.waitForTimeout(3000); 
+    await page.waitForTimeout(3000);
 
     // Add a section
     await page.click('button:has-text("Add section")');
@@ -131,17 +133,17 @@ test.describe('CMS and Page Builder', () => {
 
     // Add a block to the section
     await page.getByRole('button', { name: 'Add block' }).first().click();
-    
+
     // Select the block type
     await page.waitForSelector('button:has-text("Heading")', { timeout: 15000 });
     await page.click('button:has-text("Heading")');
-    
+
     // WAIT for re-render
     await page.waitForTimeout(1000);
 
     // Check if Heading block appears in tree
     await expect(page.locator('main').getByText('Heading').first()).toBeVisible({ timeout: 20000 });
-    
+
     // Verify preview switched from empty state to rendered canvas
     await expect(page.getByTestId('preview-canvas')).toBeVisible({ timeout: 20000 });
     await expect(page.getByTestId('preview-empty')).toHaveCount(0);
@@ -157,7 +159,9 @@ test.describe('CMS and Page Builder', () => {
     await expect(textElementLabel).toBeVisible({ timeout: 20000 });
 
     const richTextRow = richTextLabel.locator('xpath=ancestor::div[.//*[@draggable="true"]][1]');
-    const textElementRow = textElementLabel.locator('xpath=ancestor::div[.//*[@draggable="true"]][1]');
+    const textElementRow = textElementLabel.locator(
+      'xpath=ancestor::div[.//*[@draggable="true"]][1]'
+    );
 
     await textElementRow.hover();
     const textElementDragHandle = textElementRow.locator('[draggable="true"]').first();
@@ -172,16 +176,16 @@ test.describe('CMS and Page Builder', () => {
 
     await page.goto('/admin/front-manage');
     await page.waitForLoadState('networkidle');
-    
+
     // Select "Chatbot"
     await page.click('button:has-text("Chatbot")');
-    
+
     // Save
     await page.click('button:has-text("Save Selection")', { force: true });
-    
+
     // Expect success toast
     await expect(page.locator('text=Front page updated')).toBeVisible({ timeout: 30000 });
-    
+
     // Switch back to Products
     await page.click('button:has-text("Products")');
     await page.click('button:has-text("Save Selection")', { force: true });

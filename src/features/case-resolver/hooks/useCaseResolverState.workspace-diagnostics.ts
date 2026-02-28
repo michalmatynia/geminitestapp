@@ -39,17 +39,17 @@ export function useCaseResolverStateWorkspaceDiagnostics({
 
   const selectedCaseScopeIds = useMemo(
     (): Set<string> | null => collectCaseScopeIds(workspace.files, activeCaseId),
-    [activeCaseId, workspace.files],
+    [activeCaseId, workspace.files]
   );
 
   const workspaceIndexes = useMemo(
     () => getCachedCaseResolverRuntimeIndexes(workspace),
-    [workspace.assets, workspace.files, workspace.folderRecords, workspace.folders],
+    [workspace.assets, workspace.files, workspace.folderRecords, workspace.folders]
   );
 
   const workspaceNormalizationDiagnostics = useMemo(
     () => getCaseResolverWorkspaceNormalizationDiagnostics(workspace),
-    [workspace],
+    [workspace]
   );
 
   const treeWorkspace = useMemo(
@@ -61,7 +61,7 @@ export function useCaseResolverStateWorkspaceDiagnostics({
         workspace,
         indexes: workspaceIndexes,
       }),
-    [activeCaseId, requestedFileId, selectedFileId, workspace, workspaceIndexes],
+    [activeCaseId, requestedFileId, selectedFileId, workspace, workspaceIndexes]
   );
 
   const unresolvedOwnershipInActiveScopeCount = useMemo((): number => {
@@ -75,8 +75,7 @@ export function useCaseResolverStateWorkspaceDiagnostics({
       indexes: workspaceIndexes,
     });
     return scopedWorkspace.files.filter(
-      (file: CaseResolverFile): boolean =>
-        file.fileType !== 'case' && !file.parentCaseId,
+      (file: CaseResolverFile): boolean => file.fileType !== 'case' && !file.parentCaseId
     ).length;
   }, [activeCaseId, workspace, workspaceIndexes]);
 

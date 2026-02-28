@@ -20,10 +20,7 @@ const normalizeEdgePortName = (value: unknown): string | null => {
   return trimmed.length > 0 ? trimmed : null;
 };
 
-const createUniqueId = (
-  base: string,
-  usedIds: Set<string>
-): string => {
+const createUniqueId = (base: string, usedIds: Set<string>): string => {
   if (!usedIds.has(base)) {
     usedIds.add(base);
     return base;
@@ -57,11 +54,8 @@ const resolveFetcherForTrigger = (
     const hasSignalEdge = edges.some((edge: Edge): boolean => {
       if (edge.from !== triggerNodeId || edge.to !== fetcherId) return false;
       const fromPort =
-        normalizeEdgePortName(edge.fromPort) ??
-        normalizeEdgePortName(edge.sourceHandle);
-      const toPort =
-        normalizeEdgePortName(edge.toPort) ??
-        normalizeEdgePortName(edge.targetHandle);
+        normalizeEdgePortName(edge.fromPort) ?? normalizeEdgePortName(edge.sourceHandle);
+      const toPort = normalizeEdgePortName(edge.toPort) ?? normalizeEdgePortName(edge.targetHandle);
       const fromIsSignal = fromPort === 'trigger' || fromPort === null;
       const toIsSignal = toPort === 'trigger' || toPort === null;
       return fromIsSignal && toIsSignal;
@@ -105,11 +99,8 @@ export const migrateTriggerToFetcherGraph = (
       const targetNode = nodeById.get(edge.to);
       if (!targetNode || targetNode.type === 'fetcher') return false;
       const fromPort =
-        normalizeEdgePortName(edge.fromPort) ??
-        normalizeEdgePortName(edge.sourceHandle);
-      const toPort =
-        normalizeEdgePortName(edge.toPort) ??
-        normalizeEdgePortName(edge.targetHandle);
+        normalizeEdgePortName(edge.fromPort) ?? normalizeEdgePortName(edge.sourceHandle);
+      const toPort = normalizeEdgePortName(edge.toPort) ?? normalizeEdgePortName(edge.targetHandle);
       if (fromPort && LEGACY_TRIGGER_DATA_PORT_SET.has(fromPort)) return true;
       if (!fromPort && (!toPort || LEGACY_TRIGGER_DATA_PORT_SET.has(toPort))) return true;
       return false;
@@ -181,11 +172,8 @@ export const migrateTriggerToFetcherGraph = (
     const hasSignalEdge = edges.some((edge: Edge): boolean => {
       if (edge.from !== triggerNode.id || edge.to !== fetcherNode?.id) return false;
       const fromPort =
-        normalizeEdgePortName(edge.fromPort) ??
-        normalizeEdgePortName(edge.sourceHandle);
-      const toPort =
-        normalizeEdgePortName(edge.toPort) ??
-        normalizeEdgePortName(edge.targetHandle);
+        normalizeEdgePortName(edge.fromPort) ?? normalizeEdgePortName(edge.sourceHandle);
+      const toPort = normalizeEdgePortName(edge.toPort) ?? normalizeEdgePortName(edge.targetHandle);
       const fromIsSignal = fromPort === 'trigger' || fromPort === null;
       const toIsSignal = toPort === 'trigger' || toPort === null;
       return fromIsSignal && toIsSignal;
@@ -206,11 +194,9 @@ export const migrateTriggerToFetcherGraph = (
       const targetNode = edge.to ? nodeById.get(edge.to) : null;
       if (!targetNode) return;
       const currentFromPort =
-        normalizeEdgePortName(edge.fromPort) ??
-        normalizeEdgePortName(edge.sourceHandle);
+        normalizeEdgePortName(edge.fromPort) ?? normalizeEdgePortName(edge.sourceHandle);
       const currentToPort =
-        normalizeEdgePortName(edge.toPort) ??
-        normalizeEdgePortName(edge.targetHandle);
+        normalizeEdgePortName(edge.toPort) ?? normalizeEdgePortName(edge.targetHandle);
       let migratedPort =
         currentFromPort && LEGACY_TRIGGER_DATA_PORT_SET.has(currentFromPort)
           ? currentFromPort
@@ -233,9 +219,7 @@ export const migrateTriggerToFetcherGraph = (
       const nextFromPort = migratedPort;
       const nextToPort = migratedPort;
       const changedEdge =
-        edge.from !== nextFrom ||
-        currentFromPort !== nextFromPort ||
-        currentToPort !== nextToPort;
+        edge.from !== nextFrom || currentFromPort !== nextFromPort || currentToPort !== nextToPort;
       if (!changedEdge) return;
 
       edge.from = nextFrom;
@@ -256,13 +240,9 @@ export const migrateTriggerToFetcherGraph = (
   const seenEdgeSignatures = new Set<string>();
   edges.forEach((edge: Edge): void => {
     const fromPort =
-      normalizeEdgePortName(edge.fromPort) ??
-      normalizeEdgePortName(edge.sourceHandle) ??
-      '';
+      normalizeEdgePortName(edge.fromPort) ?? normalizeEdgePortName(edge.sourceHandle) ?? '';
     const toPort =
-      normalizeEdgePortName(edge.toPort) ??
-      normalizeEdgePortName(edge.targetHandle) ??
-      '';
+      normalizeEdgePortName(edge.toPort) ?? normalizeEdgePortName(edge.targetHandle) ?? '';
     const signature = `${edge.from ?? ''}|${edge.to ?? ''}|${fromPort}|${toPort}`;
     if (seenEdgeSignatures.has(signature)) {
       changed = true;

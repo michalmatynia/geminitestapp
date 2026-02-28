@@ -5,14 +5,14 @@ import React from 'react';
 
 import { useInternationalizationContext } from '@/shared/lib/internationalization/context/InternationalizationContext';
 import { countryFlagMap } from '@/shared/constants/internationalization';
-import { 
-  Button, 
+import {
+  Button,
   SearchInput,
   FormSection,
   StatusBadge,
   SimpleSettingsList,
   Badge,
-  Hint
+  Hint,
 } from '@/shared/ui';
 
 import { CountryModal } from './country-modal/CountryModal';
@@ -45,11 +45,7 @@ export function InternationalizationSettings(): React.JSX.Element {
           title='Currencies'
           description='Manage currency codes available for price groups.'
           actions={
-            <Button
-              size='xs'
-              type='button'
-              onClick={(): void => handleOpenCurrencyModal()}
-            >
+            <Button size='xs' type='button' onClick={(): void => handleOpenCurrencyModal()}>
               Add Currency
             </Button>
           }
@@ -57,7 +53,7 @@ export function InternationalizationSettings(): React.JSX.Element {
           className='p-6'
         >
           <SimpleSettingsList
-            items={currencyOptions.map(currency => ({
+            items={currencyOptions.map((currency) => ({
               id: currency.id,
               title: currency.code,
               subtitle: currency.symbol,
@@ -67,7 +63,7 @@ export function InternationalizationSettings(): React.JSX.Element {
                   <Coins className='size-4' />
                 </div>
               ),
-              original: currency
+              original: currency,
             }))}
             isLoading={loadingCurrencies}
             onEdit={(item) => handleOpenCurrencyModal(item.original)}
@@ -81,11 +77,7 @@ export function InternationalizationSettings(): React.JSX.Element {
           title='Countries'
           description='Manage countries for regional settings.'
           actions={
-            <Button
-              size='xs'
-              type='button'
-              onClick={(): void => handleOpenCountryModal()}
-            >
+            <Button size='xs' type='button' onClick={(): void => handleOpenCountryModal()}>
               Add Country
             </Button>
           }
@@ -96,14 +88,16 @@ export function InternationalizationSettings(): React.JSX.Element {
             <SearchInput
               placeholder='Search countries...'
               value={countrySearch}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setCountrySearch(event.target.value)}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                setCountrySearch(event.target.value)
+              }
               onClear={() => setCountrySearch('')}
               size='sm'
             />
           </div>
-          
+
           <SimpleSettingsList
-            items={filteredCountries.map(country => ({
+            items={filteredCountries.map((country) => ({
               id: country.id,
               title: country.code,
               subtitle: country.name,
@@ -112,7 +106,7 @@ export function InternationalizationSettings(): React.JSX.Element {
                   {countryFlagMap[country.code] ?? null}
                 </span>
               ),
-              original: country
+              original: country,
             }))}
             isLoading={loadingCountries}
             onEdit={(item) => handleOpenCountryModal(item.original)}
@@ -120,16 +114,18 @@ export function InternationalizationSettings(): React.JSX.Element {
             emptyMessage='No countries yet.'
             renderCustomContent={(item) => (
               <div className='flex flex-wrap gap-1.5'>
-                {item.original.currencies?.length ? (
-                  item.original.currencies.map((entry: { currencyId: string; currency: { code: string } }) => (
-                    <StatusBadge
-                      key={entry.currencyId}
-                      status={entry.currency.code}
-                      variant='neutral'
-                      size='sm'
-                    />
-                  ))
-                ) : null}
+                {item.original.currencies?.length
+                  ? item.original.currencies.map(
+                      (entry: { currencyId: string; currency: { code: string } }) => (
+                        <StatusBadge
+                          key={entry.currencyId}
+                          status={entry.currency.code}
+                          variant='neutral'
+                          size='sm'
+                        />
+                      )
+                    )
+                  : null}
               </div>
             )}
           />
@@ -141,11 +137,7 @@ export function InternationalizationSettings(): React.JSX.Element {
         title='Languages'
         description='Configure system languages and localizations.'
         actions={
-          <Button
-            size='xs'
-            type='button'
-            onClick={(): void => handleOpenLanguageModal()}
-          >
+          <Button size='xs' type='button' onClick={(): void => handleOpenLanguageModal()}>
             Add Language
           </Button>
         }
@@ -154,7 +146,7 @@ export function InternationalizationSettings(): React.JSX.Element {
       >
         <SimpleSettingsList
           columns={3}
-          items={languages.map(language => ({
+          items={languages.map((language) => ({
             id: language.id,
             title: language.name,
             subtitle: language.code,
@@ -164,7 +156,7 @@ export function InternationalizationSettings(): React.JSX.Element {
                 <Languages className='size-3.5' />
               </div>
             ),
-            original: language
+            original: language,
           }))}
           isLoading={languagesLoading}
           onEdit={(item) => handleOpenLanguageModal(item.original)}
@@ -187,7 +179,9 @@ export function InternationalizationSettings(): React.JSX.Element {
                   </Badge>
                 ))
               ) : (
-                <Hint size='xxs' italic>No countries</Hint>
+                <Hint size='xxs' italic>
+                  No countries
+                </Hint>
               )}
             </div>
           )}

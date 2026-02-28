@@ -1,7 +1,4 @@
-import {
-  type AiNode,
-  type RuntimePortValues,
-} from '@/shared/contracts/ai-paths';
+import { type AiNode, type RuntimePortValues } from '@/shared/contracts/ai-paths';
 
 export type BlockedNodeDiagnostic = {
   nodeId: string;
@@ -30,9 +27,7 @@ export const collectBlockedNodeDiagnostics = (
   return Object.entries(outputs)
     .map(([nodeId, value]): BlockedNodeDiagnostic | null => {
       const status =
-        typeof value?.['status'] === 'string'
-          ? value['status'].trim().toLowerCase()
-          : '';
+        typeof value?.['status'] === 'string' ? value['status'].trim().toLowerCase() : '';
       if (status !== 'blocked') return null;
       const node = nodeById.get(nodeId);
       const blockedReason =
@@ -55,23 +50,19 @@ export const collectBlockedNodeDiagnostics = (
         waitingOnPorts: normalizePortList(value['waitingOnPorts']),
       };
     })
-    .filter(
-      (entry: BlockedNodeDiagnostic | null): entry is BlockedNodeDiagnostic => Boolean(entry)
+    .filter((entry: BlockedNodeDiagnostic | null): entry is BlockedNodeDiagnostic =>
+      Boolean(entry)
     );
 };
 
-export const buildBlockedRunFailureMessage = (
-  blockedNodes: BlockedNodeDiagnostic[]
-): string => {
+export const buildBlockedRunFailureMessage = (blockedNodes: BlockedNodeDiagnostic[]): string => {
   const [first] = blockedNodes;
   if (!first) {
     return 'Run blocked: one or more nodes are missing required inputs.';
   }
   const title = first.nodeTitle ?? first.nodeId;
   const waiting =
-    first.waitingOnPorts.length > 0
-      ? ` (waiting on: ${first.waitingOnPorts.join(', ')})`
-      : '';
+    first.waitingOnPorts.length > 0 ? ` (waiting on: ${first.waitingOnPorts.join(', ')})` : '';
   const suffix =
     blockedNodes.length > 1
       ? ` (+${blockedNodes.length - 1} more blocked node${blockedNodes.length === 2 ? '' : 's'})`
@@ -84,6 +75,4 @@ export const shouldFailBlockedRun = (args: {
   blockedRunPolicy: 'fail_run' | 'complete_with_warning';
   nodeValidationEnabled: boolean;
 }): boolean =>
-  args.runBlocked &&
-  args.nodeValidationEnabled &&
-  args.blockedRunPolicy === 'fail_run';
+  args.runBlocked && args.nodeValidationEnabled && args.blockedRunPolicy === 'fail_run';

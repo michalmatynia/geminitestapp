@@ -1,13 +1,7 @@
 import { z } from 'zod';
 
 import { dtoBaseSchema, namedDtoSchema } from './base';
-import {
-  aiEdgeSchema,
-  aiNodeSchema,
-  edgeSchema,
-  type AiNode,
-  type Edge,
-} from './ai-paths-core';
+import { aiEdgeSchema, aiNodeSchema, edgeSchema, type AiNode, type Edge } from './ai-paths-core';
 export * from './ai-paths-core';
 
 import {
@@ -64,15 +58,20 @@ export const aiPathRunRecordSchema = aiPathRunSchema.extend({
   planState: z.record(z.string(), z.unknown()).nullable().optional(),
   activeStepId: z.string().nullable().optional(),
   checkpointedAt: z.string().nullable().optional(),
-  graph: z.object({
-    nodes: z.array(aiNodeSchema),
-    edges: z.array(aiEdgeSchema),
-  }).nullable().optional(),
+  graph: z
+    .object({
+      nodes: z.array(aiNodeSchema),
+      edges: z.array(aiEdgeSchema),
+    })
+    .nullable()
+    .optional(),
   runtimeState: z.unknown().nullable().optional(), // Avoid circular dependency with ai-paths-runtime
-  _count: z.object({
-    browserSnapshots: z.number().optional(),
-    browserLogs: z.number().optional(),
-  }).optional(),
+  _count: z
+    .object({
+      browserSnapshots: z.number().optional(),
+      browserLogs: z.number().optional(),
+    })
+    .optional(),
 });
 
 export type AiPathRunRecordDto = z.infer<typeof aiPathRunRecordSchema>;
@@ -209,9 +208,7 @@ export const aiPathRuntimeTraceSlowNodeSchema = z.object({
   totalDurationMs: z.number(),
 });
 
-export type AiPathRuntimeTraceSlowNodeDto = z.infer<
-  typeof aiPathRuntimeTraceSlowNodeSchema
->;
+export type AiPathRuntimeTraceSlowNodeDto = z.infer<typeof aiPathRuntimeTraceSlowNodeSchema>;
 export type AiPathRuntimeTraceSlowNode = AiPathRuntimeTraceSlowNodeDto;
 
 export const aiPathRuntimeTraceFailedNodeSchema = z.object({
@@ -221,9 +218,7 @@ export const aiPathRuntimeTraceFailedNodeSchema = z.object({
   spanCount: z.number(),
 });
 
-export type AiPathRuntimeTraceFailedNodeDto = z.infer<
-  typeof aiPathRuntimeTraceFailedNodeSchema
->;
+export type AiPathRuntimeTraceFailedNodeDto = z.infer<typeof aiPathRuntimeTraceFailedNodeSchema>;
 export type AiPathRuntimeTraceFailedNode = AiPathRuntimeTraceFailedNodeDto;
 
 export const aiPathRuntimeTraceAnalyticsSchema = z.object({
@@ -241,9 +236,7 @@ export const aiPathRuntimeTraceAnalyticsSchema = z.object({
   truncated: z.boolean(),
 });
 
-export type AiPathRuntimeTraceAnalyticsDto = z.infer<
-  typeof aiPathRuntimeTraceAnalyticsSchema
->;
+export type AiPathRuntimeTraceAnalyticsDto = z.infer<typeof aiPathRuntimeTraceAnalyticsSchema>;
 export type AiPathRuntimeTraceAnalytics = AiPathRuntimeTraceAnalyticsDto;
 
 export const aiPathRuntimeAnalyticsSummarySchema = z.object({
@@ -308,9 +301,7 @@ export type PathUiStateDto = z.infer<typeof pathUiStateSchema>;
 export type PathUiState = PathUiStateDto;
 
 export const aiPathsValidationSeveritySchema = z.enum(['error', 'warning', 'info']);
-export type AiPathsValidationSeverityDto = z.infer<
-  typeof aiPathsValidationSeveritySchema
->;
+export type AiPathsValidationSeverityDto = z.infer<typeof aiPathsValidationSeveritySchema>;
 export type AiPathsValidationSeverity = AiPathsValidationSeverityDto;
 
 export const aiPathsValidationModuleSchema = z.enum([
@@ -327,9 +318,7 @@ export const aiPathsValidationModuleSchema = z.enum([
   'validation_pattern',
   'custom',
 ]);
-export type AiPathsValidationModuleDto = z.infer<
-  typeof aiPathsValidationModuleSchema
->;
+export type AiPathsValidationModuleDto = z.infer<typeof aiPathsValidationModuleSchema>;
 export type AiPathsValidationModule = AiPathsValidationModuleDto;
 
 export const aiPathsValidationOperatorSchema = z.enum([
@@ -353,9 +342,7 @@ export const aiPathsValidationOperatorSchema = z.enum([
   'edge_ids_unique',
   'node_positions_finite',
 ]);
-export type AiPathsValidationOperatorDto = z.infer<
-  typeof aiPathsValidationOperatorSchema
->;
+export type AiPathsValidationOperatorDto = z.infer<typeof aiPathsValidationOperatorSchema>;
 export type AiPathsValidationOperator = AiPathsValidationOperatorDto;
 
 export const aiPathsValidationConditionSchema = z.object({
@@ -376,9 +363,7 @@ export const aiPathsValidationConditionSchema = z.object({
   collectionMapKey: z.string().optional(),
   negate: z.boolean().optional(),
 });
-export type AiPathsValidationConditionDto = z.infer<
-  typeof aiPathsValidationConditionSchema
->;
+export type AiPathsValidationConditionDto = z.infer<typeof aiPathsValidationConditionSchema>;
 export type AiPathsValidationCondition = AiPathsValidationConditionDto;
 
 export const aiPathsValidationRuleSchema = z.object({
@@ -436,9 +421,7 @@ export const aiPathsValidationPolicySchema = z.enum([
   'warn_below_threshold',
   'block_below_threshold',
 ]);
-export type AiPathsValidationPolicyDto = z.infer<
-  typeof aiPathsValidationPolicySchema
->;
+export type AiPathsValidationPolicyDto = z.infer<typeof aiPathsValidationPolicySchema>;
 export type AiPathsValidationPolicy = AiPathsValidationPolicyDto;
 
 export const aiPathsValidationConfigSchema = z.object({
@@ -455,18 +438,11 @@ export const aiPathsValidationConfigSchema = z.object({
   inferredCandidates: z.array(aiPathsValidationRuleSchema).optional(),
   docsSyncState: aiPathsValidationDocsSyncStateSchema.optional(),
 });
-export type AiPathsValidationConfigDto = z.infer<
-  typeof aiPathsValidationConfigSchema
->;
+export type AiPathsValidationConfigDto = z.infer<typeof aiPathsValidationConfigSchema>;
 export type AiPathsValidationConfig = AiPathsValidationConfigDto;
 
-export const pathBlockedRunPolicySchema = z.enum([
-  'fail_run',
-  'complete_with_warning',
-]);
-export type PathBlockedRunPolicyDto = z.infer<
-  typeof pathBlockedRunPolicySchema
->;
+export const pathBlockedRunPolicySchema = z.enum(['fail_run', 'complete_with_warning']);
+export type PathBlockedRunPolicyDto = z.infer<typeof pathBlockedRunPolicySchema>;
 export type PathBlockedRunPolicy = PathBlockedRunPolicyDto;
 
 export const pathConfigSchema = z.object({
@@ -573,10 +549,13 @@ export type ConnectionValidation = ConnectionValidationDto;
  */
 export const aiPathRunEventListOptionsSchema = z.object({
   since: z.string().nullable().optional(),
-  after: z.object({
-    createdAt: z.string(),
-    id: z.string(),
-  }).nullable().optional(),
+  after: z
+    .object({
+      createdAt: z.string(),
+      id: z.string(),
+    })
+    .nullable()
+    .optional(),
   limit: z.number().optional(),
 });
 
@@ -676,7 +655,10 @@ export type AiPathRunRepository = {
     options?: { limit?: number }
   ): Promise<AiPathRunNodeRecord[]>;
   createRunEvent(input: AiPathRunEventCreateInput): Promise<AiPathRunEventRecord>;
-  listRunEvents(runId: string, options?: AiPathRunEventListOptions): Promise<AiPathRunEventRecord[]>;
+  listRunEvents(
+    runId: string,
+    options?: AiPathRunEventListOptions
+  ): Promise<AiPathRunEventRecord[]>;
   markStaleRunningRuns(maxAgeMs: number): Promise<{ count: number }>;
   finalizeRun(
     runId: string,

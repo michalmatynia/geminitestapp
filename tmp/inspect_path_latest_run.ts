@@ -70,8 +70,8 @@ async function main(): Promise<void> {
         nodeStatusEvents,
       },
       null,
-      2,
-    ),
+      2
+    )
   );
 }
 

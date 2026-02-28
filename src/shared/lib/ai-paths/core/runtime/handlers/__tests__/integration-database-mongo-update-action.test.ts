@@ -1,24 +1,27 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const {
-  buildMongoUpdatePlanMock,
-  executeMongoCollectionUpdateMock,
-} = vi.hoisted(() => ({
+const { buildMongoUpdatePlanMock, executeMongoCollectionUpdateMock } = vi.hoisted(() => ({
   buildMongoUpdatePlanMock: vi.fn(),
   executeMongoCollectionUpdateMock: vi.fn(),
 }));
 
-vi.mock('@/shared/lib/ai-paths/core/runtime/handlers/integration-database-mongo-update-plan', () => ({
-  buildMongoUpdatePlan: buildMongoUpdatePlanMock,
-}));
+vi.mock(
+  '@/shared/lib/ai-paths/core/runtime/handlers/integration-database-mongo-update-plan',
+  () => ({
+    buildMongoUpdatePlan: buildMongoUpdatePlanMock,
+  })
+);
 
-vi.mock('@/shared/lib/ai-paths/core/runtime/handlers/integration-database-mongo-update-collection-executor', () => ({
-  executeMongoCollectionUpdate: executeMongoCollectionUpdateMock,
-}));
+vi.mock(
+  '@/shared/lib/ai-paths/core/runtime/handlers/integration-database-mongo-update-collection-executor',
+  () => ({
+    executeMongoCollectionUpdate: executeMongoCollectionUpdateMock,
+  })
+);
 
 import { handleDatabaseMongoUpdateAction } from '@/shared/lib/ai-paths/core/runtime/handlers/integration-database-mongo-update-action';
 import type { HandleDatabaseMongoUpdateActionInput } from '@/shared/lib/ai-paths/core/runtime/handlers/integration-database-mongo-update-action';
-import type { AiNode } from '@/shared/contracts/ai-paths';
+import type { AiNode, DatabaseConfig } from '@/shared/contracts/ai-paths';
 
 const basePlan = {
   plan: {
@@ -77,7 +80,7 @@ describe('handleDatabaseMongoUpdateAction', () => {
       entityType: 'product',
       updatePayloadMode: 'custom' as const,
       mappings: [{ targetPath: 'parameters', sourcePort: 'value' }],
-    } as any,
+    } as DatabaseConfig,
     queryConfig: {
       provider: 'auto' as const,
       collection: 'products',
@@ -124,9 +127,11 @@ describe('handleDatabaseMongoUpdateAction', () => {
         updatePayloadMode: 'mapping' as const,
       },
     };
-      
-    const result = await handleDatabaseMongoUpdateAction(args as HandleDatabaseMongoUpdateActionInput);
-      
+
+    const result = await handleDatabaseMongoUpdateAction(
+      args as HandleDatabaseMongoUpdateActionInput
+    );
+
     expect(executeMongoCollectionUpdateMock).not.toHaveBeenCalled();
     expect(result['bundle']).toEqual(
       expect.objectContaining({

@@ -3,11 +3,26 @@
 import { ChangeEvent, ReactElement, useMemo } from 'react';
 
 import { playwrightDeviceOptions } from '@/shared/lib/playwright/constants/playwright';
-import { usePlaywrightSettings, PlaywrightSettingsProvider } from '@/shared/lib/playwright/context/PlaywrightSettingsContext';
+import {
+  usePlaywrightSettings,
+  PlaywrightSettingsProvider,
+} from '@/shared/lib/playwright/context/PlaywrightSettingsContext';
 import type { PlaywrightSettings } from '@/shared/contracts/playwright';
-import { Input, SelectSimple, FormSection, FormField, ToggleRow, Hint, FormActions, CollapsibleSection } from '@/shared/ui';
+import {
+  Input,
+  SelectSimple,
+  FormSection,
+  FormField,
+  ToggleRow,
+  Hint,
+  FormActions,
+  CollapsibleSection,
+} from '@/shared/ui';
 
-import { PlaywrightSettingsFormViewProvider, usePlaywrightSettingsFormView } from './context/PlaywrightSettingsFormViewContext';
+import {
+  PlaywrightSettingsFormViewProvider,
+  usePlaywrightSettingsFormView,
+} from './context/PlaywrightSettingsFormViewContext';
 
 import type { Dispatch, SetStateAction } from 'react';
 
@@ -64,7 +79,8 @@ function EmulationSection(): ReactElement {
       />
       {settings.emulateDevice && (
         <FormField label='Device'>
-          <SelectSimple size='sm'
+          <SelectSimple
+            size='sm'
             value={settings.deviceName}
             onValueChange={(v: string): void =>
               setSettings((prev: PlaywrightSettings) => ({
@@ -124,10 +140,7 @@ function TimeoutsSection(): ReactElement {
             onChange={(e: ChangeEvent<HTMLInputElement>): void =>
               setSettings((prev: PlaywrightSettings) => ({
                 ...prev,
-                navigationTimeout: toNumber(
-                  e.target.value,
-                  prev.navigationTimeout
-                ),
+                navigationTimeout: toNumber(e.target.value, prev.navigationTimeout),
               }))
             }
           />
@@ -173,14 +186,14 @@ function HumanizeSection(): ReactElement {
   );
 }
 
-function DelayInputs({ 
-  label, 
-  minKey, 
-  maxKey 
-}: { 
-  label: string; 
-  minKey: keyof PlaywrightSettings; 
-  maxKey: keyof PlaywrightSettings 
+function DelayInputs({
+  label,
+  minKey,
+  maxKey,
+}: {
+  label: string;
+  minKey: keyof PlaywrightSettings;
+  maxKey: keyof PlaywrightSettings;
 }): ReactElement {
   const { settings, setSettings } = usePlaywrightSettings();
   return (
@@ -194,10 +207,7 @@ function DelayInputs({
             onChange={(e: ChangeEvent<HTMLInputElement>): void =>
               setSettings((prev: PlaywrightSettings) => ({
                 ...prev,
-                [minKey]: toNumber(
-                  e.target.value,
-                  prev[minKey] as number
-                ),
+                [minKey]: toNumber(e.target.value, prev[minKey] as number),
               }))
             }
           />
@@ -212,10 +222,7 @@ function DelayInputs({
             onChange={(e: ChangeEvent<HTMLInputElement>): void =>
               setSettings((prev: PlaywrightSettings) => ({
                 ...prev,
-                [maxKey]: toNumber(
-                  e.target.value,
-                  prev[maxKey] as number
-                ),
+                [maxKey]: toNumber(e.target.value, prev[maxKey] as number),
               }))
             }
           />
@@ -307,7 +314,7 @@ function AdvancedSettingsSection(): ReactElement {
         <DelayInputs label='Click delay' minKey='clickDelayMin' maxKey='clickDelayMax' />
         <DelayInputs label='Input delay' minKey='inputDelayMin' maxKey='inputDelayMax' />
         <DelayInputs label='Action delay' minKey='actionDelayMin' maxKey='actionDelayMax' />
-        
+
         <ProxySection />
       </div>
     </CollapsibleSection>
@@ -315,13 +322,7 @@ function AdvancedSettingsSection(): ReactElement {
 }
 
 export function PlaywrightSettingsFormContent(): ReactElement {
-  const {
-    onSave,
-    saveLabel,
-    showSave,
-    title,
-    description,
-  } = usePlaywrightSettingsFormView();
+  const { onSave, saveLabel, showSave, title, description } = usePlaywrightSettingsFormView();
   const shouldShowSave = showSave ?? Boolean(onSave);
 
   return (
@@ -348,8 +349,6 @@ export function PlaywrightSettingsFormContent(): ReactElement {
     </FormSection>
   );
 }
-
-
 
 export function PlaywrightSettingsForm({
   settings,

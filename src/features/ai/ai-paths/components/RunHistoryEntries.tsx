@@ -31,10 +31,7 @@ const formatPortData = (value: unknown): string => {
 };
 
 const formatSkipReason = (value: string): string =>
-  value
-    .replace(/[_-]+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+  value.replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim();
 
 export function RunHistoryEntries({
   entries,
@@ -42,7 +39,8 @@ export function RunHistoryEntries({
   showNodeLabel,
 }: RunHistoryEntriesProps): React.JSX.Element {
   const sortedEntries = [...entries].sort(
-    (a: RuntimeHistoryEntry, b: RuntimeHistoryEntry) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    (a: RuntimeHistoryEntry, b: RuntimeHistoryEntry) =>
+      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
   );
 
   if (sortedEntries.length === 0) {
@@ -69,17 +67,16 @@ export function RunHistoryEntries({
         };
         const variant = (variantMap[entry.status] as StatusVariant) ?? 'neutral';
         return (
-          <div key={`${entry.timestamp}-${index}`} className='rounded-md border border-border bg-card/40 p-4'>
+          <div
+            key={`${entry.timestamp}-${index}`}
+            className='rounded-md border border-border bg-card/40 p-4'
+          >
             <div className='flex flex-wrap items-center justify-between gap-2'>
               <div className='text-xs text-gray-400'>
                 {new Date(entry.timestamp).toLocaleString()}
               </div>
               <div className='flex flex-wrap items-center gap-2 text-xs text-gray-400'>
-                <StatusBadge
-                  status={entry.status}
-                  variant={variant}
-                  size='sm'
-                />
+                <StatusBadge status={entry.status} variant={variant} size='sm' />
                 {showNodeLabel ? (
                   <span className='text-gray-200'>
                     Node: {nodeLabel}
@@ -103,9 +100,7 @@ export function RunHistoryEntries({
               </div>
             )}
             {entry.delayMs !== null && entry.delayMs !== undefined && (
-              <div className='mt-2 text-xs text-amber-200'>
-                Delay: {entry.delayMs}ms
-              </div>
+              <div className='mt-2 text-xs text-amber-200'>Delay: {entry.delayMs}ms</div>
             )}
             {entry.durationMs != null && entry.durationMs > 0 && (
               <div className='mt-1 text-[10px] text-gray-400'>

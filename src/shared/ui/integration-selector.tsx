@@ -31,10 +31,9 @@ export function IntegrationSelector({
   return (
     <div className={className}>
       <div>
-        <Label className='mb-2 block text-sm font-medium text-gray-300'>
-          Integration
-        </Label>
-        <SelectSimple size='sm'
+        <Label className='mb-2 block text-sm font-medium text-gray-300'>Integration</Label>
+        <SelectSimple
+          size='sm'
           value={selectedIntegrationId}
           onValueChange={onIntegrationChange}
           disabled={disabled || loading}
@@ -42,7 +41,7 @@ export function IntegrationSelector({
             .filter((integration) => !!integration.id)
             .map((integration) => ({
               value: integration.id,
-              label: integration.name
+              label: integration.name,
             }))}
           placeholder='Select an integration...'
         />
@@ -53,7 +52,8 @@ export function IntegrationSelector({
           <Label className='mb-2 block text-sm font-medium text-gray-300'>
             Account / Connection
           </Label>
-          <SelectSimple size='sm'
+          <SelectSimple
+            size='sm'
             value={selectedConnectionId}
             onValueChange={onConnectionChange}
             disabled={disabled || loading}
@@ -61,7 +61,7 @@ export function IntegrationSelector({
               .filter((connection) => !!connection.id)
               .map((connection) => ({
                 value: connection.id,
-                label: connection.name
+                label: connection.name,
               }))}
             placeholder='Select an account...'
           />

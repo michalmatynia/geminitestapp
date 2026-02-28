@@ -3,13 +3,7 @@ import path from 'node:path';
 
 import { describe, it } from 'vitest';
 
-const IMAGE_STUDIO_ROOT = path.join(
-  process.cwd(),
-  'src',
-  'features',
-  'ai',
-  'image-studio'
-);
+const IMAGE_STUDIO_ROOT = path.join(process.cwd(), 'src', 'features', 'ai', 'image-studio');
 
 const SOURCE_FILE_PATTERN = /\.(ts|tsx|js|jsx)$/;
 

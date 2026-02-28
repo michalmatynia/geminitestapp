@@ -22,15 +22,47 @@ export const COMMON_RUNTIME_FIELDS: NodeConfigDocField[] = [
 ];
 
 export const dbQueryFields = (prefix: string): NodeConfigDocField[] => [
-  { path: `${prefix}.provider`, description: 'Database provider (mongodb|prisma).', defaultValue: 'mongodb' },
-  { path: `${prefix}.collection`, description: 'Collection to query (example: products).', defaultValue: '"products"' },
-  { path: `${prefix}.mode`, description: 'preset uses a predefined query; custom uses queryTemplate.', defaultValue: 'preset' },
-  { path: `${prefix}.preset`, description: 'Preset query shape (by_id/by_productId/by_entityId/by_field).', defaultValue: 'by_id' },
-  { path: `${prefix}.field`, description: 'Field used by preset queries (example: _id, productId).', defaultValue: '"_id"' },
-  { path: `${prefix}.idType`, description: 'How to treat IDs: string vs objectId.', defaultValue: 'string' },
-  { path: `${prefix}.queryTemplate`, description: 'JSON query template (string) with {{placeholders}}.', defaultValue: '"{...}"' },
+  {
+    path: `${prefix}.provider`,
+    description: 'Database provider (mongodb|prisma).',
+    defaultValue: 'mongodb',
+  },
+  {
+    path: `${prefix}.collection`,
+    description: 'Collection to query (example: products).',
+    defaultValue: '"products"',
+  },
+  {
+    path: `${prefix}.mode`,
+    description: 'preset uses a predefined query; custom uses queryTemplate.',
+    defaultValue: 'preset',
+  },
+  {
+    path: `${prefix}.preset`,
+    description: 'Preset query shape (by_id/by_productId/by_entityId/by_field).',
+    defaultValue: 'by_id',
+  },
+  {
+    path: `${prefix}.field`,
+    description: 'Field used by preset queries (example: _id, productId).',
+    defaultValue: '"_id"',
+  },
+  {
+    path: `${prefix}.idType`,
+    description: 'How to treat IDs: string vs objectId.',
+    defaultValue: 'string',
+  },
+  {
+    path: `${prefix}.queryTemplate`,
+    description: 'JSON query template (string) with {{placeholders}}.',
+    defaultValue: '"{...}"',
+  },
   { path: `${prefix}.limit`, description: 'Limit for multi-result queries.', defaultValue: '20' },
   { path: `${prefix}.sort`, description: 'Sort JSON (string).', defaultValue: '""' },
   { path: `${prefix}.projection`, description: 'Projection JSON (string).', defaultValue: '""' },
-  { path: `${prefix}.single`, description: 'If true, treat result as a single document.', defaultValue: 'false' },
+  {
+    path: `${prefix}.single`,
+    description: 'If true, treat result as a single document.',
+    defaultValue: 'false',
+  },
 ];

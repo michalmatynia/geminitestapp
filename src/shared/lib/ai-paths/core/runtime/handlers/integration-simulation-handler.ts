@@ -1,4 +1,8 @@
-import type { NodeHandler, NodeHandlerContext, RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
+import type {
+  NodeHandler,
+  NodeHandlerContext,
+  RuntimePortValues,
+} from '@/shared/contracts/ai-paths-runtime';
 
 import { coerceInput } from '../../utils';
 
@@ -15,8 +19,10 @@ export const handleSimulation: NodeHandler = async ({
   activePathId,
 }: NodeHandlerContext): Promise<RuntimePortValues> => {
   const simulationConfig = (node.config?.simulation ?? {}) as Record<string, unknown>;
-  
-  const entityId = pickString(simulationConfig['entityId'] as string ?? simulationConfig['productId'] as string);
+
+  const entityId = pickString(
+    (simulationConfig['entityId'] as string) ?? (simulationConfig['productId'] as string)
+  );
   const entityType = pickString(simulationConfig['entityType'] as string) ?? 'product';
 
   const triggerInput = coerceInput(node.inputs.includes('trigger') ? nodeInputs['trigger'] : true);

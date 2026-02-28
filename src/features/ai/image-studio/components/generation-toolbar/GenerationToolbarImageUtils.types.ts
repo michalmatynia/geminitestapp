@@ -1,27 +1,27 @@
-import type { 
-  ImageStudioCenterLayoutConfig, 
-  ImageStudioCenterShadowPolicy, 
+import type {
+  ImageStudioCenterLayoutConfig,
+  ImageStudioCenterShadowPolicy,
   ImageStudioCenterDetectionMode,
   NormalizedImageStudioAnalysisLayoutConfig,
   ImageStudioDetectionDetails,
   ImageStudioDetectionCandidateSummary,
   ImageStudioObjectWhitespaceMetrics,
   ImageStudioCenterObjectBounds,
-  ImageStudioAutoScalePlan
+  ImageStudioAutoScalePlan,
 } from '@/features/ai/image-studio/analysis/shared';
 
 export type UpscaleSmoothingQuality = 'low' | 'medium' | 'high';
 
 export type UpscaleRequestStrategyPayload =
   | {
-    strategy: 'scale';
-    scale: number;
-  }
+      strategy: 'scale';
+      scale: number;
+    }
   | {
-    strategy: 'target_resolution';
-    targetWidth: number;
-    targetHeight: number;
-  };
+      strategy: 'target_resolution';
+      targetWidth: number;
+      targetHeight: number;
+    };
 
 export type CropRect = {
   x: number;
@@ -103,5 +103,9 @@ export type AutoScaleCanvasResult = CenterLayoutResult & {
   objectAreaPercentAfter: number;
 };
 
-export type CenterMode = 'client_alpha_bbox' | 'server_alpha_bbox' | 'client_object_layout_v1' | 'server_object_layout_v1';
+export type CenterMode =
+  | 'client_alpha_bbox'
+  | 'server_alpha_bbox'
+  | 'client_object_layout_v1'
+  | 'server_object_layout_v1';
 export type AutoScalerMode = 'client_auto_scaler_v1' | 'server_auto_scaler_v1';

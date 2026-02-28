@@ -25,9 +25,12 @@ export type { SystemSetting };
 const selectSettingsMap = (data: SystemSetting[]): Map<string, string> =>
   new Map(data.map((item) => [item.key, item.value]));
 
-const fetchSettingsWithFallback = async (scope: SettingsScope, source: string): Promise<SystemSetting[]> => {
+const fetchSettingsWithFallback = async (
+  scope: SettingsScope,
+  source: string
+): Promise<SystemSetting[]> => {
   try {
-    return (await fetchSettingsCached({ scope }));
+    return await fetchSettingsCached({ scope });
   } catch (error) {
     logClientError(error instanceof Error ? error : new Error(String(error)), {
       context: { source, action: 'fetchSettings', scope, level: 'warn' },
@@ -38,7 +41,7 @@ const fetchSettingsWithFallback = async (scope: SettingsScope, source: string): 
 
 const fetchLiteSettingsWithFallback = async (): Promise<SystemSetting[]> => {
   try {
-    return (await fetchLiteSettingsCached());
+    return await fetchLiteSettingsCached();
   } catch (error) {
     logClientError(error instanceof Error ? error : new Error(String(error)), {
       context: { source: 'useLiteSettingsMap', action: 'fetchLiteSettings', level: 'warn' },
@@ -47,11 +50,15 @@ const fetchLiteSettingsWithFallback = async (): Promise<SystemSetting[]> => {
   }
 };
 
-export function useSettings(options?: { scope?: SettingsScope; enabled?: boolean }): ListQuery<SystemSetting, SystemSetting[]> {
+export function useSettings(options?: {
+  scope?: SettingsScope;
+  enabled?: boolean;
+}): ListQuery<SystemSetting, SystemSetting[]> {
   const scope = options?.scope ?? 'light';
   return createListQueryV2<SystemSetting, SystemSetting[]>({
     queryKey: QUERY_KEYS.settings.scope(scope),
-    queryFn: async (): Promise<SystemSetting[]> => await fetchSettingsWithFallback(scope, 'useSettings'),
+    queryFn: async (): Promise<SystemSetting[]> =>
+      await fetchSettingsWithFallback(scope, 'useSettings'),
     enabled: options?.enabled ?? true,
     staleTime: 1000 * 60 * 5,
     refetchOnMount: false,
@@ -68,12 +75,16 @@ export function useSettings(options?: { scope?: SettingsScope; enabled?: boolean
   });
 }
 
-export function useSettingsMap(options?: { scope?: SettingsScope; enabled?: boolean }): SingleQuery<Map<string, string>> {
+export function useSettingsMap(options?: {
+  scope?: SettingsScope;
+  enabled?: boolean;
+}): SingleQuery<Map<string, string>> {
   const scope = options?.scope ?? 'light';
   return createSingleQueryV2<SystemSetting[], Map<string, string>>({
     id: `settings-map:${scope}`,
     queryKey: QUERY_KEYS.settings.scope(scope),
-    queryFn: async (): Promise<SystemSetting[]> => await fetchSettingsWithFallback(scope, 'useSettingsMap'),
+    queryFn: async (): Promise<SystemSetting[]> =>
+      await fetchSettingsWithFallback(scope, 'useSettingsMap'),
     select: selectSettingsMap,
     enabled: options?.enabled ?? true,
     staleTime: 1000 * 60 * 5,
@@ -91,7 +102,9 @@ export function useSettingsMap(options?: { scope?: SettingsScope; enabled?: bool
   });
 }
 
-export function useLiteSettingsMap(options?: { enabled?: boolean }): SingleQuery<Map<string, string>> {
+export function useLiteSettingsMap(options?: {
+  enabled?: boolean;
+}): SingleQuery<Map<string, string>> {
   return createSingleQueryV2<SystemSetting[], Map<string, string>>({
     id: 'settings-map:lite',
     queryKey: QUERY_KEYS.settings.scope('lite'),
@@ -118,13 +131,7 @@ export function useUpdateSetting(): MutationResult<SystemSetting, { key: string;
 
   return createUpdateMutationV2<SystemSetting, { key: string; value: string }>({
     mutationKey: QUERY_KEYS.settings.mutation('update-setting'),
-    mutationFn: async ({
-      key,
-      value,
-    }: {
-      key: string;
-      value: string;
-    }): Promise<SystemSetting> => {
+    mutationFn: async ({ key, value }: { key: string; value: string }): Promise<SystemSetting> => {
       const res = await api.post<SystemSetting>('/api/settings', { key, value });
       invalidateSettingsCache();
       return res;
@@ -142,13 +149,16 @@ export function useUpdateSetting(): MutationResult<SystemSetting, { key: string;
   });
 }
 
-export function useUpdateSettingsBulk(): MutationResult<SystemSetting[], Array<{ key: string; value: string }>> {
+export function useUpdateSettingsBulk(): MutationResult<
+  SystemSetting[],
+  Array<{ key: string; value: string }>
+> {
   const queryClient = useQueryClient();
 
   return createUpdateMutationV2<SystemSetting[], Array<{ key: string; value: string }>>({
     mutationKey: QUERY_KEYS.settings.mutation('update-settings-bulk'),
     mutationFn: async (
-      payloads: Array<{ key: string; value: string }>,
+      payloads: Array<{ key: string; value: string }>
     ): Promise<SystemSetting[]> => {
       // Keep bulk writes sequential to avoid write-rate spikes and ordering races
       // when multiple settings are persisted together.

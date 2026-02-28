@@ -5,7 +5,6 @@ import type {
 } from '@/shared/contracts/case-resolver';
 import type { MasterTreeId, MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
-
 const FOLDER_NODE_PREFIX = 'folder:';
 const FILE_NODE_PREFIX = 'file:';
 const ASSET_NODE_PREFIX = 'asset:';
@@ -42,25 +41,17 @@ export type CaseResolverCaseContentFileMasterNodeRef = {
 export const toCaseResolverFolderNodeId = (folderPath: string): string =>
   `${FOLDER_NODE_PREFIX}${folderPath}`;
 
-export const toCaseResolverFileNodeId = (fileId: string): string =>
-  `${FILE_NODE_PREFIX}${fileId}`;
+export const toCaseResolverFileNodeId = (fileId: string): string => `${FILE_NODE_PREFIX}${fileId}`;
 
 export const toCaseResolverAssetNodeId = (assetId: string): string =>
   `${ASSET_NODE_PREFIX}${assetId}`;
 
-export const toCaseResolverCaseNodeId = (caseId: string): string =>
-  `${CASE_NODE_PREFIX}${caseId}`;
+export const toCaseResolverCaseNodeId = (caseId: string): string => `${CASE_NODE_PREFIX}${caseId}`;
 
-export const toCaseResolverCaseContentFolderNodeId = (
-  caseId: string,
-  folderPath: string
-): string =>
+export const toCaseResolverCaseContentFolderNodeId = (caseId: string, folderPath: string): string =>
   `${CASE_CONTENT_FOLDER_NODE_PREFIX}${encodeURIComponent(caseId)}${CASE_CONTENT_NODE_SEPARATOR}${encodeURIComponent(folderPath)}`;
 
-export const toCaseResolverCaseContentFileNodeId = (
-  caseId: string,
-  fileId: string
-): string =>
+export const toCaseResolverCaseContentFileNodeId = (caseId: string, fileId: string): string =>
   `${CASE_CONTENT_FILE_NODE_PREFIX}${encodeURIComponent(caseId)}${CASE_CONTENT_NODE_SEPARATOR}${encodeURIComponent(fileId)}`;
 
 export const fromCaseResolverFolderNodeId = (value: string): string | null =>
@@ -75,10 +66,7 @@ export const fromCaseResolverAssetNodeId = (value: string): string | null =>
 export const fromCaseResolverCaseNodeId = (value: string): string | null =>
   value.startsWith(CASE_NODE_PREFIX) ? value.slice(CASE_NODE_PREFIX.length) : null;
 
-const decodeCaseContentNodePayload = (
-  value: string,
-  prefix: string
-): [string, string] | null => {
+const decodeCaseContentNodePayload = (value: string, prefix: string): [string, string] | null => {
   if (!value.startsWith(prefix)) return null;
   const payload = value.slice(prefix.length);
   const separatorIndex = payload.indexOf(CASE_CONTENT_NODE_SEPARATOR);
@@ -114,9 +102,7 @@ export const fromCaseResolverCaseContentFileNodeId = (
   return { caseId, fileId };
 };
 
-export const decodeCaseResolverMasterNodeId = (
-  value: string
-): CaseResolverMasterNodeRef | null => {
+export const decodeCaseResolverMasterNodeId = (value: string): CaseResolverMasterNodeRef | null => {
   const folderId = fromCaseResolverFolderNodeId(value);
   if (folderId !== null) return { entity: 'folder', id: folderId, nodeId: value };
   const fileId = fromCaseResolverFileNodeId(value);

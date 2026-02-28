@@ -26,7 +26,6 @@ import { serializeSetting } from '@/shared/utils/settings-json';
 import { CaseResolverTagModal } from '../components/modals/CaseResolverTagModal';
 import { CASE_RESOLVER_TAGS_KEY, parseCaseResolverTags } from '../settings';
 
-
 type TagFormData = {
   name: string;
   color: string;
@@ -174,20 +173,20 @@ export function AdminCaseResolverTagsPage(): React.JSX.Element {
       formData.parentId && formData.parentId !== editingTag?.id ? formData.parentId : null;
     const nextTag: CaseResolverTag = editingTag
       ? {
-        ...editingTag,
-        label: normalizedName,
-        parentId: normalizedParentId,
-        color: formData.color.trim() || '#38bdf8',
-        updatedAt: now,
-      }
+          ...editingTag,
+          label: normalizedName,
+          parentId: normalizedParentId,
+          color: formData.color.trim() || '#38bdf8',
+          updatedAt: now,
+        }
       : {
-        id: createTagId(),
-        label: normalizedName,
-        parentId: normalizedParentId,
-        color: formData.color.trim() || '#38bdf8',
-        createdAt: now,
-        updatedAt: now,
-      };
+          id: createTagId(),
+          label: normalizedName,
+          parentId: normalizedParentId,
+          color: formData.color.trim() || '#38bdf8',
+          createdAt: now,
+          updatedAt: now,
+        };
 
     const nextTags = editingTag
       ? tags.map((tag: CaseResolverTag) => (tag.id === editingTag.id ? nextTag : tag))
@@ -201,7 +200,9 @@ export function AdminCaseResolverTagsPage(): React.JSX.Element {
       toast(editingTag ? 'Tag updated.' : 'Tag created.', { variant: 'success' });
       setShowModal(false);
     } catch (error) {
-      logClientError(error, { context: { source: 'AdminCaseResolverTagsPage', action: 'saveTag', tagId: editingTag?.id } });
+      logClientError(error, {
+        context: { source: 'AdminCaseResolverTagsPage', action: 'saveTag', tagId: editingTag?.id },
+      });
       toast(error instanceof Error ? error.message : 'Failed to save tag.', { variant: 'error' });
     }
   }, [editingTag, formData.color, formData.name, formData.parentId, tags, toast, updateSetting]);
@@ -211,14 +212,15 @@ export function AdminCaseResolverTagsPage(): React.JSX.Element {
     const now = new Date().toISOString();
     const nextTags = tags
       .filter((tag: CaseResolverTag) => tag.id !== tagToDelete.id)
-      .map((tag: CaseResolverTag): CaseResolverTag =>
-        tag.parentId === tagToDelete.id
-          ? {
-            ...tag,
-            parentId: null,
-            updatedAt: now,
-          }
-          : tag
+      .map(
+        (tag: CaseResolverTag): CaseResolverTag =>
+          tag.parentId === tagToDelete.id
+            ? {
+                ...tag,
+                parentId: null,
+                updatedAt: now,
+              }
+            : tag
       );
     try {
       await updateSetting.mutateAsync({
@@ -228,7 +230,11 @@ export function AdminCaseResolverTagsPage(): React.JSX.Element {
       toast('Tag deleted.', { variant: 'success' });
     } catch (error) {
       logClientError(error, {
-        context: { source: 'AdminCaseResolverTagsPage', action: 'deleteTag', tagId: tagToDelete.id },
+        context: {
+          source: 'AdminCaseResolverTagsPage',
+          action: 'deleteTag',
+          tagId: tagToDelete.id,
+        },
       });
       toast(error instanceof Error ? error.message : 'Failed to delete tag.', { variant: 'error' });
     } finally {
@@ -240,15 +246,15 @@ export function AdminCaseResolverTagsPage(): React.JSX.Element {
     <div className='container mx-auto space-y-6 py-8'>
       <SectionHeader
         title='Case Resolver Tags'
-        subtitle={(
+        subtitle={
           <Breadcrumbs
             items={[
               { label: 'Admin', href: '/admin' },
               { label: 'Case Resolver', href: '/admin/case-resolver' },
-              { label: 'Tags' }
+              { label: 'Tags' },
             ]}
           />
-        )}
+        }
       />
 
       <div className='flex justify-start'>
@@ -274,12 +280,12 @@ export function AdminCaseResolverTagsPage(): React.JSX.Element {
             <EmptyState
               title='No tags yet'
               description='Create tags to classify Case Resolver documents.'
-              action={(
+              action={
                 <Button onClick={openCreateModal} variant='outline'>
                   <Plus className='mr-2 size-4' />
                   Create First Tag
                 </Button>
-              )}
+              }
             />
           ) : (
             <div className='space-y-2'>
@@ -289,19 +295,19 @@ export function AdminCaseResolverTagsPage(): React.JSX.Element {
                   className='flex items-center justify-between gap-3 rounded-md border border-border/40 bg-gray-900/40 p-3'
                 >
                   <div className='min-w-0'>
-                    <UiTag
-                      label={tag.label}
-                      color={tag.color || '#38bdf8'}
-                      dot
+                    <UiTag label={tag.label} color={tag.color || '#38bdf8'} dot />
+                    <PropertyRow
+                      label='Path'
+                      value={tagPathById.get(tag.id) ?? tag.label}
+                      className='mt-1'
                     />
-                    <PropertyRow label='Path' value={tagPathById.get(tag.id) ?? tag.label} className='mt-1' />
                   </div>
                   <ActionMenu ariaLabel={`Actions for tag ${tag.label}`}>
-                  
-                    <DropdownMenuItem onSelect={() => openEditModal(tag)}>
-                      Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className='text-destructive focus:text-destructive' onSelect={() => setTagToDelete(tag)}>
+                    <DropdownMenuItem onSelect={() => openEditModal(tag)}>Edit</DropdownMenuItem>
+                    <DropdownMenuItem
+                      className='text-destructive focus:text-destructive'
+                      onSelect={() => setTagToDelete(tag)}
+                    >
                       Delete
                     </DropdownMenuItem>
                   </ActionMenu>
@@ -317,7 +323,8 @@ export function AdminCaseResolverTagsPage(): React.JSX.Element {
         onClose={() => setTagToDelete(null)}
         onConfirm={handleConfirmDelete}
         title='Delete Tag'
-        message={`Delete tag "${tagToDelete?.label ?? ''}"? This action cannot be undone.`}        confirmText='Delete'
+        message={`Delete tag "${tagToDelete?.label ?? ''}"? This action cannot be undone.`}
+        confirmText='Delete'
         isDangerous={true}
       />
 

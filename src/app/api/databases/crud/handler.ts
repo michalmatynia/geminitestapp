@@ -1,5 +1,3 @@
-
-
 import { ObjectId } from 'mongodb';
 import { NextRequest, NextResponse } from 'next/server';
 import { Client } from 'pg';
@@ -17,7 +15,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     throw forbiddenError('Database operations are disabled in production.');
   }
 
-  const parsed = await req.json() as {
+  const parsed = (await req.json()) as {
     table?: string;
     operation?: 'insert' | 'update' | 'delete';
     type?: 'postgresql' | 'mongodb' | 'auto';
@@ -139,7 +137,11 @@ async function handlePostgresCrud(
 
 function toObjectId(value: unknown): ObjectId | unknown {
   if (typeof value === 'string' && /^[a-f0-9]{24}$/i.test(value)) {
-    try { return new ObjectId(value); } catch { return value; }
+    try {
+      return new ObjectId(value);
+    } catch {
+      return value;
+    }
   }
   return value;
 }
@@ -199,4 +201,3 @@ async function handleMongoCrud(
     rowCount: result.deletedCount,
   });
 }
-

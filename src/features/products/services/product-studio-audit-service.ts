@@ -12,7 +12,6 @@ import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 import type { Collection } from 'mongodb';
 
-
 export type ProductStudioRunAuditStatus = 'completed' | 'failed';
 
 export type ProductStudioRunAuditTimings = {
@@ -83,9 +82,7 @@ const toFiniteNumber = (value: unknown): number | null => {
 
 const normalizeWarnings = (input: unknown): string[] => {
   if (!Array.isArray(input)) return [];
-  return input
-    .map((entry) => asTrimmedString(entry))
-    .filter(Boolean);
+  return input.map((entry) => asTrimmedString(entry)).filter(Boolean);
 };
 
 const normalizeStepOrderUsed = (input: unknown): string[] => {
@@ -97,7 +94,7 @@ const normalizeStepOrderUsed = (input: unknown): string[] => {
 };
 
 const normalizeCropRect = (
-  input: unknown,
+  input: unknown
 ): {
   x: number;
   y: number;
@@ -119,9 +116,7 @@ const normalizeCropRect = (
   };
 };
 
-const normalizeSourceImageSize = (
-  input: unknown,
-): { width: number; height: number } | null => {
+const normalizeSourceImageSize = (input: unknown): { width: number; height: number } | null => {
   if (!input || typeof input !== 'object' || Array.isArray(input)) return null;
   const record = input as Record<string, unknown>;
   const width = toFiniteNumber(record['width']);
@@ -259,7 +254,7 @@ const getCollection = async (): Promise<Collection<ProductStudioRunAuditDocument
 };
 
 export async function createProductStudioRunAudit(
-  input: CreateProductStudioRunAuditInput,
+  input: CreateProductStudioRunAuditInput
 ): Promise<void> {
   const productId = asTrimmedString(input.productId);
   const projectId = asTrimmedString(input.projectId);

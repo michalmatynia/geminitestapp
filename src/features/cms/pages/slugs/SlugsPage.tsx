@@ -53,10 +53,7 @@ export default function SlugsPage(): React.JSX.Element {
   const updateSetting = useUpdateSetting();
   const domainSettingsRaw = settingsStore.get(CMS_DOMAIN_SETTINGS_KEY);
   const domainSettings = useMemo(
-    () =>
-      normalizeCmsDomainSettings(
-        parseJsonSetting(domainSettingsRaw, null)
-      ),
+    () => normalizeCmsDomainSettings(parseJsonSetting(domainSettingsRaw, null)),
     [domainSettingsRaw]
   );
   const zoningToggleValue = domainSettings.zoningEnabled;
@@ -101,70 +98,85 @@ export default function SlugsPage(): React.JSX.Element {
     try {
       await deleteSlug.mutateAsync({ id: slugToDelete.id, domainId: activeDomainId });
     } catch (error) {
-      logClientError(error, { context: { source: 'slugs-page', action: 'deleteSlug', slugId: slugToDelete.id } });
+      logClientError(error, {
+        context: { source: 'slugs-page', action: 'deleteSlug', slugId: slugToDelete.id },
+      });
     } finally {
       setSlugToDelete(null);
     }
   };
 
-  const columns = useMemo<ColumnDef<Slug>[]>(() => [
-    {
-      accessorKey: 'slug',
-      header: 'Route Path',
-      cell: ({ row }) => (
-        <div className='flex flex-col gap-1'>
-          <Link 
-            href={buildDomainHref(`/admin/cms/slugs/${row.original.id}/edit`)}
-            className='font-medium text-gray-200 hover:text-blue-300 transition-colors'
-          >
-            /{row.original.slug}
-          </Link>
-          <div className='flex items-center gap-2'>
-            {row.original.isDefault && <StatusBadge status='Default' variant='info' size='sm' className='font-bold' />}
-            {(canonicalDomain || sharedWithDomains.length > 0) && (
-              <StatusBadge status='Shared' variant='active' size='sm' className='font-bold' />
-            )}
+  const columns = useMemo<ColumnDef<Slug>[]>(
+    () => [
+      {
+        accessorKey: 'slug',
+        header: 'Route Path',
+        cell: ({ row }) => (
+          <div className='flex flex-col gap-1'>
+            <Link
+              href={buildDomainHref(`/admin/cms/slugs/${row.original.id}/edit`)}
+              className='font-medium text-gray-200 hover:text-blue-300 transition-colors'
+            >
+              /{row.original.slug}
+            </Link>
+            <div className='flex items-center gap-2'>
+              {row.original.isDefault && (
+                <StatusBadge status='Default' variant='info' size='sm' className='font-bold' />
+              )}
+              {(canonicalDomain || sharedWithDomains.length > 0) && (
+                <StatusBadge status='Shared' variant='active' size='sm' className='font-bold' />
+              )}
+            </div>
           </div>
-        </div>
-      ),
-    },
-    {
-      id: 'sharing',
-      header: 'Sharing Status',
-      cell: ({ row: _row }) => {
-        if (canonicalDomain) return <span className='text-xs text-gray-500'>Inherited from {canonicalDomain.domain}</span>;
-        if (sharedWithDomains.length > 0) return <span className='text-xs text-gray-500'>Pushed to {sharedWithDomains.length} domains</span>;
-        return <span className='text-xs text-gray-600 italic'>Local only</span>;
-      }
-    },
-    {
-      id: 'actions',
-      header: () => <div className='text-right'>Actions</div>,
-      cell: ({ row }) => (
-        <div className='flex justify-end'>
-          <ActionMenu ariaLabel={`Actions for slug /${row.original.slug}`}>
-            <DropdownMenuItem
-              onSelect={(event: Event): void => {
-                event.preventDefault();
-                router.push(buildDomainHref(`/admin/cms/slugs/${row.original.id}/edit`));
-              }}
-            >
-              Edit Settings
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              className='text-destructive focus:text-destructive'
-              onSelect={(event: Event): void => {
-                event.preventDefault();
-                handleDelete(row.original);
-              }}
-            >
-              Detach from Zone
-            </DropdownMenuItem>
-          </ActionMenu>
-        </div>
-      )
-    }
-  ], [buildDomainHref, canonicalDomain, sharedWithDomains, handleDelete]);
+        ),
+      },
+      {
+        id: 'sharing',
+        header: 'Sharing Status',
+        cell: ({ row: _row }) => {
+          if (canonicalDomain)
+            return (
+              <span className='text-xs text-gray-500'>Inherited from {canonicalDomain.domain}</span>
+            );
+          if (sharedWithDomains.length > 0)
+            return (
+              <span className='text-xs text-gray-500'>
+                Pushed to {sharedWithDomains.length} domains
+              </span>
+            );
+          return <span className='text-xs text-gray-600 italic'>Local only</span>;
+        },
+      },
+      {
+        id: 'actions',
+        header: () => <div className='text-right'>Actions</div>,
+        cell: ({ row }) => (
+          <div className='flex justify-end'>
+            <ActionMenu ariaLabel={`Actions for slug /${row.original.slug}`}>
+              <DropdownMenuItem
+                onSelect={(event: Event): void => {
+                  event.preventDefault();
+                  router.push(buildDomainHref(`/admin/cms/slugs/${row.original.id}/edit`));
+                }}
+              >
+                Edit Settings
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className='text-destructive focus:text-destructive'
+                onSelect={(event: Event): void => {
+                  event.preventDefault();
+                  handleDelete(row.original);
+                }}
+              >
+                Detach from Zone
+              </DropdownMenuItem>
+            </ActionMenu>
+          </div>
+        ),
+      },
+    ],
+    [buildDomainHref, canonicalDomain, sharedWithDomains, handleDelete]
+  );
 
   return (
     <PageLayout
@@ -179,7 +191,7 @@ export default function SlugsPage(): React.JSX.Element {
           items={[
             { label: 'Admin', href: '/admin' },
             { label: 'CMS', href: '/admin/cms' },
-            { label: 'Slugs' }
+            { label: 'Slugs' },
           ]}
           className='mb-2'
         />
@@ -201,7 +213,7 @@ export default function SlugsPage(): React.JSX.Element {
               options={domains.map((item: CmsDomain) => ({
                 value: item.id,
                 label: item.domain,
-                description: hostDomainId === item.id ? 'host' : undefined
+                description: hostDomainId === item.id ? 'host' : undefined,
               }))}
               placeholder='Select domain...'
               className='w-[200px]'
@@ -210,7 +222,12 @@ export default function SlugsPage(): React.JSX.Element {
           ) : null}
           <div className='flex gap-2'>
             {zoningEnabled && (
-              <Button variant='outline' size='xs' className='h-8' onClick={() => setAttachOpen(true)}>
+              <Button
+                variant='outline'
+                size='xs'
+                className='h-8'
+                onClick={() => setAttachOpen(true)}
+              >
                 <Link2 className='size-3.5 mr-2' />
                 Attach Existing
               </Button>
@@ -237,9 +254,7 @@ export default function SlugsPage(): React.JSX.Element {
                   Attach Existing
                 </Button>
                 <Button asChild size='sm'>
-                  <Link href={buildDomainHref('/admin/cms/slugs/create')}>
-                    Create First Slug
-                  </Link>
+                  <Link href={buildDomainHref('/admin/cms/slugs/create')}>Create First Slug</Link>
                 </Button>
               </div>
             }
@@ -253,7 +268,7 @@ export default function SlugsPage(): React.JSX.Element {
         onSuccess={() => setAttachOpen(false)}
         items={allSlugs}
         loading={allSlugsQuery.isLoading}
-        alreadyAssignedIds={new Set(slugs.map(s => s.id))}
+        alreadyAssignedIds={new Set(slugs.map((s) => s.id))}
         onAttach={async (selectedIds) => {
           const selected = allSlugs.filter((item: Slug) => selectedIds.includes(item.id));
           for (const slug of selected) {

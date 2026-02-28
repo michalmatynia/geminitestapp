@@ -1,10 +1,11 @@
-
-
 import { ObjectId } from 'mongodb';
 import { NextRequest, NextResponse } from 'next/server';
 
-import { ErrorSystem } from '@/features/observability/server';
-import type { DatabaseBrowseParamsDto as BrowseParams, DatabaseBrowseDto as BrowseResponse } from '@/shared/contracts/database';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import type {
+  DatabaseBrowseParamsDto as BrowseParams,
+  DatabaseBrowseDto as BrowseResponse,
+} from '@/shared/contracts/database';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 import { resolveCollectionProviderForRequest } from '@/shared/lib/db/collection-provider-map';
@@ -40,26 +41,28 @@ async function browseMongoCollection(params: BrowseParams): Promise<BrowseRespon
   ]);
 
   // Convert ObjectId and Date to strings for JSON serialization
-  const serializedDocs = (documents as Record<string, unknown>[]).map((doc: Record<string, unknown>) => {
-    const serialized: Record<string, unknown> = {};
-    for (const [key, value] of Object.entries(doc)) {
-      if (value instanceof ObjectId) {
-        serialized[key] = value.toString();
-      } else if (value instanceof Date) {
-        serialized[key] = value.toISOString();
-      } else if (Array.isArray(value)) {
-        serialized[key] = (value as unknown[]).map((item: unknown) => {
-          if (item instanceof ObjectId) {
-            return item.toString();
-          }
-          return item;
-        });
-      } else {
-        serialized[key] = value;
+  const serializedDocs = (documents as Record<string, unknown>[]).map(
+    (doc: Record<string, unknown>) => {
+      const serialized: Record<string, unknown> = {};
+      for (const [key, value] of Object.entries(doc)) {
+        if (value instanceof ObjectId) {
+          serialized[key] = value.toString();
+        } else if (value instanceof Date) {
+          serialized[key] = value.toISOString();
+        } else if (Array.isArray(value)) {
+          serialized[key] = (value as unknown[]).map((item: unknown) => {
+            if (item instanceof ObjectId) {
+              return item.toString();
+            }
+            return item;
+          });
+        } else {
+          serialized[key] = value;
+        }
       }
+      return serialized;
     }
-    return serialized;
-  });
+  );
 
   return {
     provider: 'mongodb',
@@ -76,10 +79,15 @@ async function browsePrismaCollection(params: BrowseParams): Promise<BrowseRespo
 
   // Get the Prisma model dynamically
   const modelName = collection.charAt(0).toLowerCase() + collection.slice(1);
-  const model = (prisma as unknown as Record<string, {
-    findMany: (args: unknown) => Promise<unknown[]>;
-    count: (args: unknown) => Promise<number>;
-  }>)[modelName];
+  const model = (
+    prisma as unknown as Record<
+      string,
+      {
+        findMany: (args: unknown) => Promise<unknown[]>;
+        count: (args: unknown) => Promise<number>;
+      }
+    >
+  )[modelName];
 
   if (!model) {
     return {
@@ -140,7 +148,10 @@ async function browsePrismaCollection(params: BrowseParams): Promise<BrowseRespo
   }
 }
 
-export async function GET_handler(request: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function GET_handler(
+  request: NextRequest,
+  _ctx: ApiHandlerContext
+): Promise<Response> {
   const { searchParams } = new URL(request.url);
   const collection = searchParams.get('collection');
   const limit = parseInt(searchParams.get('limit') ?? '20', 10);
@@ -154,9 +165,7 @@ export async function GET_handler(request: NextRequest, _ctx: ApiHandlerContext)
 
   const provider = await resolveCollectionProviderForRequest(
     collection,
-    providerParam === 'mongodb' || providerParam === 'prisma'
-      ? providerParam
-      : 'auto'
+    providerParam === 'mongodb' || providerParam === 'prisma' ? providerParam : 'auto'
   );
 
   const params: BrowseParams = { collection, limit, skip };
@@ -180,4 +189,3 @@ export async function GET_handler(request: NextRequest, _ctx: ApiHandlerContext)
     });
   }
 }
-

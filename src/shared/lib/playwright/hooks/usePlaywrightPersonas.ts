@@ -27,7 +27,9 @@ export function usePlaywrightPersonas(): ListQuery<PlaywrightPersona> {
   });
 }
 
-export function useSavePlaywrightPersonasMutation(): VoidMutation<{ personas: PlaywrightPersona[] }> {
+export function useSavePlaywrightPersonasMutation(): VoidMutation<{
+  personas: PlaywrightPersona[];
+}> {
   const queryClient = useQueryClient();
   const mutationKey = playwrightKeys.personas();
   return createUpdateMutationV2({

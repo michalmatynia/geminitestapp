@@ -5,7 +5,6 @@ import { useEffect, useRef } from 'react';
 import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
 import type { MasterTreeId, MasterTreeNode } from '@/shared/utils';
 
-
 type UseSyncMasterFolderTreeExternalStateOptions = {
   controller: Pick<
     MasterFolderTreeController,

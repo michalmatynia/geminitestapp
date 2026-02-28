@@ -2,10 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { executePathRun } from '@/features/ai/ai-paths/services/path-run-executor';
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
-import {
-  computeBackoffMs,
-  processRun,
-} from '@/features/jobs/processors/ai-path-run-processor';
+import { computeBackoffMs, processRun } from '@/features/jobs/processors/ai-path-run-processor';
 import {
   computeAiPathRunQueueSlo,
   enqueuePathRunJob,
@@ -165,27 +162,37 @@ describe('AI Path Run Queue Worker', () => {
         })
       );
 
-      expect(mockRepo.updateRunIfStatus).toHaveBeenCalledWith('run-1', ['running', 'queued'], expect.objectContaining({
-        status: 'queued',
-        retryCount: 1,
-        errorMessage: 'Network Error',
-        nextRetryAt: expect.any(String),
-      }));
-      expect(mockRepo.createRunEvent).toHaveBeenCalledWith(expect.objectContaining({
-        runId: 'run-1',
-        level: 'warn',
-      }));
+      expect(mockRepo.updateRunIfStatus).toHaveBeenCalledWith(
+        'run-1',
+        ['running', 'queued'],
+        expect.objectContaining({
+          status: 'queued',
+          retryCount: 1,
+          errorMessage: 'Network Error',
+          nextRetryAt: expect.any(String),
+        })
+      );
+      expect(mockRepo.createRunEvent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          runId: 'run-1',
+          level: 'warn',
+        })
+      );
     });
 
     it('moves to dead-letter on max retries', async () => {
       const run = { id: 'run-1', pathId: 'path-1', retryCount: 2, maxAttempts: 3 } as any;
       vi.mocked(executePathRun).mockRejectedValue(new Error('Fatal Error'));
-      
+
       await processRun(run);
 
-      expect(mockRepo.finalizeRun).toHaveBeenCalledWith('run-1', 'dead_lettered', expect.objectContaining({
-        errorMessage: 'Fatal Error',
-      }));
+      expect(mockRepo.finalizeRun).toHaveBeenCalledWith(
+        'run-1',
+        'dead_lettered',
+        expect.objectContaining({
+          errorMessage: 'Fatal Error',
+        })
+      );
     });
   });
 

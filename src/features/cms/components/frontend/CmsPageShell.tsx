@@ -23,14 +23,20 @@ export function CmsPageShell({
   const basePadding = typeof theme.pagePadding === 'number' ? theme.pagePadding : 0;
   const baseMargin = typeof theme.pageMargin === 'number' ? theme.pageMargin : 0;
   const paddingTop = typeof theme.pagePaddingTop === 'number' ? theme.pagePaddingTop : basePadding;
-  const paddingRight = typeof theme.pagePaddingRight === 'number' ? theme.pagePaddingRight : basePadding;
-  const paddingBottom = typeof theme.pagePaddingBottom === 'number' ? theme.pagePaddingBottom : basePadding;
-  const paddingLeft = typeof theme.pagePaddingLeft === 'number' ? theme.pagePaddingLeft : basePadding;
+  const paddingRight =
+    typeof theme.pagePaddingRight === 'number' ? theme.pagePaddingRight : basePadding;
+  const paddingBottom =
+    typeof theme.pagePaddingBottom === 'number' ? theme.pagePaddingBottom : basePadding;
+  const paddingLeft =
+    typeof theme.pagePaddingLeft === 'number' ? theme.pagePaddingLeft : basePadding;
   const marginTop = typeof theme.pageMarginTop === 'number' ? theme.pageMarginTop : baseMargin;
-  const marginRight = typeof theme.pageMarginRight === 'number' ? theme.pageMarginRight : baseMargin;
-  const marginBottom = typeof theme.pageMarginBottom === 'number' ? theme.pageMarginBottom : baseMargin;
+  const marginRight =
+    typeof theme.pageMarginRight === 'number' ? theme.pageMarginRight : baseMargin;
+  const marginBottom =
+    typeof theme.pageMarginBottom === 'number' ? theme.pageMarginBottom : baseMargin;
   const marginLeft = typeof theme.pageMarginLeft === 'number' ? theme.pageMarginLeft : baseMargin;
-  const isSideMenu = menuVisible && (menu.menuPlacement === 'left' || menu.menuPlacement === 'right');
+  const isSideMenu =
+    menuVisible && (menu.menuPlacement === 'left' || menu.menuPlacement === 'right');
   const sideOffset = isSideMenu ? menu.sideWidth : 0;
   const pageRadius = typeof theme.borderRadius === 'number' ? theme.borderRadius : 0;
   const pageStyle: CSSProperties = {
@@ -66,7 +72,9 @@ export function CmsPageShell({
           animationsEnabled={theme.enableAnimations}
         />
       ) : null}
-      <main style={contentStyle} suppressHydrationWarning>{children}</main>
+      <main style={contentStyle} suppressHydrationWarning>
+        {children}
+      </main>
     </div>
   );
 }

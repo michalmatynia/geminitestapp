@@ -5,19 +5,38 @@ import {
   buildBreadcrumbPath,
   renderMarkdownToHtml,
 } from '@/features/notesapp/utils';
+import type { CategoryWithChildren } from '@/shared/contracts/notes';
 
 describe('notesapp utils', () => {
-  const mockCategories: any[] = [
+  const mockCategories: CategoryWithChildren[] = [
     {
       id: 'root',
       name: 'Root',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
       children: [
         {
           id: 'child-1',
           name: 'Child 1',
-          children: [{ id: 'grandchild-1', name: 'Grandchild 1' }],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          children: [
+            {
+              id: 'grandchild-1',
+              name: 'Grandchild 1',
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              children: [],
+            },
+          ],
         },
-        { id: 'child-2', name: 'Child 2' },
+        {
+          id: 'child-2',
+          name: 'Child 2',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          children: [],
+        },
       ],
     },
   ];

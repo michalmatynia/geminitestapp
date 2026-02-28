@@ -23,7 +23,10 @@ export type ProductSettingsCategoriesSection = {
 const CategoriesContext = createContext<ProductSettingsCategoriesSection | null>(null);
 export const useProductSettingsCategoriesSection = () => {
   const context = useContext(CategoriesContext);
-  if (!context) throw new Error('useProductSettingsCategoriesSection must be used within ProductSettingsPageProvider');
+  if (!context)
+    throw new Error(
+      'useProductSettingsCategoriesSection must be used within ProductSettingsPageProvider'
+    );
   return context;
 };
 
@@ -38,7 +41,10 @@ export type ProductSettingsTagsSection = {
 const TagsContext = createContext<ProductSettingsTagsSection | null>(null);
 export const useProductSettingsTagsSection = () => {
   const context = useContext(TagsContext);
-  if (!context) throw new Error('useProductSettingsTagsSection must be used within ProductSettingsPageProvider');
+  if (!context)
+    throw new Error(
+      'useProductSettingsTagsSection must be used within ProductSettingsPageProvider'
+    );
   return context;
 };
 
@@ -55,7 +61,10 @@ export type ProductSettingsPriceGroupsSection = {
 const PriceGroupsContext = createContext<ProductSettingsPriceGroupsSection | null>(null);
 export const useProductSettingsPriceGroupsSection = () => {
   const context = useContext(PriceGroupsContext);
-  if (!context) throw new Error('useProductSettingsPriceGroupsSection must be used within ProductSettingsPageProvider');
+  if (!context)
+    throw new Error(
+      'useProductSettingsPriceGroupsSection must be used within ProductSettingsPageProvider'
+    );
   return context;
 };
 
@@ -69,7 +78,10 @@ export type ProductSettingsCatalogsSection = {
 const CatalogsContext = createContext<ProductSettingsCatalogsSection | null>(null);
 export const useProductSettingsCatalogsSection = () => {
   const context = useContext(CatalogsContext);
-  if (!context) throw new Error('useProductSettingsCatalogsSection must be used within ProductSettingsPageProvider');
+  if (!context)
+    throw new Error(
+      'useProductSettingsCatalogsSection must be used within ProductSettingsPageProvider'
+    );
   return context;
 };
 
@@ -85,7 +97,10 @@ export type ProductSettingsCatalogModalSection = {
 const CatalogModalContext = createContext<ProductSettingsCatalogModalSection | null>(null);
 export const useProductSettingsCatalogModalSection = () => {
   const context = useContext(CatalogModalContext);
-  if (!context) throw new Error('useProductSettingsCatalogModalSection must be used within ProductSettingsPageProvider');
+  if (!context)
+    throw new Error(
+      'useProductSettingsCatalogModalSection must be used within ProductSettingsPageProvider'
+    );
   return context;
 };
 
@@ -99,7 +114,10 @@ export type ProductSettingsPriceGroupModalSection = {
 const PriceGroupModalContext = createContext<ProductSettingsPriceGroupModalSection | null>(null);
 export const useProductSettingsPriceGroupModalSection = () => {
   const context = useContext(PriceGroupModalContext);
-  if (!context) throw new Error('useProductSettingsPriceGroupModalSection must be used within ProductSettingsPageProvider');
+  if (!context)
+    throw new Error(
+      'useProductSettingsPriceGroupModalSection must be used within ProductSettingsPageProvider'
+    );
   return context;
 };
 

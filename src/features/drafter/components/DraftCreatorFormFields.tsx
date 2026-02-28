@@ -8,15 +8,21 @@ import { CategorySingleSelectField } from '@/features/products/components/form/C
 import { ProducerMultiSelectField } from '@/features/products/components/form/ProducerMultiSelectField';
 import { ProductMetadataFieldProvider } from '@/features/products/components/form/ProductMetadataFieldContext';
 import { TagMultiSelectField } from '@/features/products/components/form/TagMultiSelectField';
-import type {
-  ProductParameter,
-  ProductParameterValue,
-} from '@/shared/contracts/products';
+import type { ProductParameter, ProductParameterValue } from '@/shared/contracts/products';
 import {
   PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS,
   type ProductDraftOpenFormTab,
 } from '@/shared/contracts/products';
-import { Button, Input, Textarea, SelectSimple, FormField, FormSection, Card, EmptyState } from '@/shared/ui';
+import {
+  Button,
+  Input,
+  Textarea,
+  SelectSimple,
+  FormField,
+  FormSection,
+  Card,
+  EmptyState,
+} from '@/shared/ui';
 
 import {
   useDraftCreatorBasicInfo,
@@ -71,11 +77,7 @@ export function DraftCreatorDraftInfoSection(): React.JSX.Element {
 
   return (
     <FormSection title='Draft Information' className='p-4'>
-      <FormField
-        label='Draft Name'
-        required
-        id='name'
-      >
+      <FormField label='Draft Name' required id='name'>
         <Input
           id='name'
           value={name}
@@ -84,14 +86,13 @@ export function DraftCreatorDraftInfoSection(): React.JSX.Element {
         />
       </FormField>
 
-      <FormField
-        label='Draft Description'
-        id='description'
-      >
+      <FormField label='Draft Description' id='description'>
         <Textarea
           id='description'
           value={description}
-          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void => setDescription(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void =>
+            setDescription(e.target.value)
+          }
           placeholder='Describe what this draft is for...'
           rows={2}
         />
@@ -102,13 +103,12 @@ export function DraftCreatorDraftInfoSection(): React.JSX.Element {
         description='Used when creating a product via Create from Draft.'
         id='openProductFormTab'
       >
-        <SelectSimple size='sm'
-          options={PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS.map(
-            (value: ProductDraftOpenFormTab) => ({
-              value,
-              label: OPEN_PRODUCT_FORM_TAB_LABELS[value],
-            })
-          )}
+        <SelectSimple
+          size='sm'
+          options={PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS.map((value: ProductDraftOpenFormTab) => ({
+            value,
+            label: OPEN_PRODUCT_FORM_TAB_LABELS[value],
+          }))}
           value={openProductFormTab}
           onValueChange={(value: string): void =>
             setOpenProductFormTab(value as ProductDraftOpenFormTab)
@@ -155,11 +155,12 @@ export function DraftCreatorDraftInfoSection(): React.JSX.Element {
         </div>
       </FormField>
 
-      <FormField
-        label='Icon'
-        description='Icons are shown only after you click Choose Icon.'
-      >
-        <Card variant='subtle-compact' padding='sm' className='flex items-center gap-3 border-border bg-card/40'>
+      <FormField label='Icon' description='Icons are shown only after you click Choose Icon.'>
+        <Card
+          variant='subtle-compact'
+          padding='sm'
+          className='flex items-center gap-3 border-border bg-card/40'
+        >
           <div
             className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-gray-800 ${
               iconColorMode === 'custom' ? '' : 'text-gray-200'
@@ -173,19 +174,11 @@ export function DraftCreatorDraftInfoSection(): React.JSX.Element {
             )}
           </div>
           <div className='flex items-center gap-2'>
-            <Button
-              type='button'
-              variant='outline'
-              onClick={openIconLibrary}
-            >
+            <Button type='button' variant='outline' onClick={openIconLibrary}>
               Choose Icon
             </Button>
             {icon ? (
-              <Button
-                type='button'
-                variant='ghost'
-                onClick={(): void => setIcon(null)}
-              >
+              <Button type='button' variant='ghost' onClick={(): void => setIcon(null)}>
                 Clear
               </Button>
             ) : null}
@@ -193,7 +186,8 @@ export function DraftCreatorDraftInfoSection(): React.JSX.Element {
         </Card>
         <div className='grid grid-cols-1 gap-3 md:grid-cols-[12rem_minmax(0,1fr)] mt-3'>
           <FormField label='Icon Color' id='iconColorMode'>
-            <SelectSimple size='sm'
+            <SelectSimple
+              size='sm'
               options={[
                 { value: 'theme', label: 'Match Theme' },
                 { value: 'custom', label: 'Custom Color' },
@@ -212,15 +206,21 @@ export function DraftCreatorDraftInfoSection(): React.JSX.Element {
                   id='iconColorPicker'
                   type='color'
                   value={resolvedIconColor}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setIconColor(event.target.value)}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                    setIconColor(event.target.value)
+                  }
                   className='h-10 w-14 cursor-pointer p-1'
                   aria-label='Pick icon color'
                 />
                 <Input
                   id='iconColor'
                   value={iconColor}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setIconColor(event.target.value)}
-                  onBlur={(): void => setIconColor(normalizeIconColor(iconColor) || DEFAULT_ICON_COLOR)}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                    setIconColor(event.target.value)
+                  }
+                  onBlur={(): void =>
+                    setIconColor(normalizeIconColor(iconColor) || DEFAULT_ICON_COLOR)
+                  }
                   placeholder='#60a5fa'
                   className='font-mono uppercase'
                 />
@@ -280,7 +280,8 @@ export function DraftCreatorProductDefaultsSection(): React.JSX.Element {
         </FormField>
         <FormField label='Product Identifier'>
           <div className='flex gap-2'>
-            <SelectSimple size='sm'
+            <SelectSimple
+              size='sm'
               options={[
                 { value: 'ean', label: 'EAN' },
                 { value: 'gtin', label: 'GTIN' },
@@ -338,7 +339,9 @@ export function DraftCreatorProductDefaultsSection(): React.JSX.Element {
             type='number'
             step='0.01'
             value={sizeLength}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSizeLength(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+              setSizeLength(e.target.value)
+            }
             placeholder='0.00'
           />
         </FormField>
@@ -348,7 +351,9 @@ export function DraftCreatorProductDefaultsSection(): React.JSX.Element {
             type='number'
             step='0.01'
             value={sizeWidth}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSizeWidth(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+              setSizeWidth(e.target.value)
+            }
             placeholder='0.00'
           />
         </FormField>
@@ -396,7 +401,9 @@ export function DraftCreatorProductDefaultsSection(): React.JSX.Element {
           <Textarea
             id='descEn'
             value={descEn}
-            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void => setDescEn(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void =>
+              setDescEn(e.target.value)
+            }
             placeholder='Product description'
             rows={3}
           />
@@ -405,7 +412,9 @@ export function DraftCreatorProductDefaultsSection(): React.JSX.Element {
           <Textarea
             id='descPl'
             value={descPl}
-            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void => setDescPl(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void =>
+              setDescPl(e.target.value)
+            }
             placeholder='Opis produktu'
             rows={3}
           />
@@ -414,7 +423,9 @@ export function DraftCreatorProductDefaultsSection(): React.JSX.Element {
           <Textarea
             id='descDe'
             value={descDe}
-            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void => setDescDe(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void =>
+              setDescDe(e.target.value)
+            }
             placeholder='Produktbeschreibung'
             rows={3}
           />
@@ -466,7 +477,9 @@ export function DraftCreatorPricingSupplierSection(): React.JSX.Element {
         <Input
           id='supplierName'
           value={supplierName}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSupplierName(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+            setSupplierName(e.target.value)
+          }
           placeholder='Supplier name'
         />
       </FormField>
@@ -475,7 +488,9 @@ export function DraftCreatorPricingSupplierSection(): React.JSX.Element {
         <Input
           id='supplierLink'
           value={supplierLink}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSupplierLink(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+            setSupplierLink(e.target.value)
+          }
           placeholder='https://...'
         />
       </FormField>
@@ -484,7 +499,9 @@ export function DraftCreatorPricingSupplierSection(): React.JSX.Element {
         <Input
           id='priceComment'
           value={priceComment}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setPriceComment(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+            setPriceComment(e.target.value)
+          }
           placeholder='Additional price information'
         />
       </FormField>
@@ -505,7 +522,9 @@ export function DraftCreatorImportInfoSection(): React.JSX.Element {
         <Input
           id='baseProductId'
           value={baseProductId}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setBaseProductId(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+            setBaseProductId(e.target.value)
+          }
           placeholder='Imported from Base.com'
         />
       </FormField>
@@ -566,9 +585,7 @@ export function DraftCreatorDetailsTab(): React.JSX.Element {
             <CategorySingleSelectField
               disabled={selectedCatalogIds.length === 0}
               placeholder={
-                selectedCatalogIds.length > 0
-                  ? 'Select category'
-                  : 'Select a catalog first'
+                selectedCatalogIds.length > 0 ? 'Select category' : 'Select a catalog first'
               }
             />
           </FormSection>
@@ -578,11 +595,7 @@ export function DraftCreatorDetailsTab(): React.JSX.Element {
           <FormSection title='Tags' className='p-4'>
             <TagMultiSelectField
               disabled={selectedCatalogIds.length === 0}
-              placeholder={
-                selectedCatalogIds.length > 0
-                  ? 'Select tags'
-                  : 'Select a catalog first'
-              }
+              placeholder={selectedCatalogIds.length > 0 ? 'Select tags' : 'Select a catalog first'}
             />
           </FormSection>
         ) : null}
@@ -592,11 +605,15 @@ export function DraftCreatorDetailsTab(): React.JSX.Element {
         </FormSection>
 
         {selectedCatalogIds.length > 0 ? (
-          <FormSection title='Price Group Information' variant='subtle' className='bg-blue-950/20 border-blue-900/50 p-4'>
+          <FormSection
+            title='Price Group Information'
+            variant='subtle'
+            className='bg-blue-950/20 border-blue-900/50 p-4'
+          >
             <p className='text-sm text-blue-300/70'>
               Products created from this draft will automatically use the default price group from
-              the selected catalog(s). Price groups are configured per catalog and cannot be manually
-              overridden in drafts.
+              the selected catalog(s). Price groups are configured per catalog and cannot be
+              manually overridden in drafts.
             </p>
           </FormSection>
         ) : null}
@@ -670,8 +687,7 @@ export function DraftCreatorParametersTab(): React.JSX.Element {
           {parameterValues.map((entry: ProductParameterValue, index: number): React.JSX.Element => {
             const availableOptions: ProductParameter[] = parameters.filter(
               (parameter: ProductParameter): boolean =>
-                !selectedParameterIds.includes(parameter.id) ||
-                parameter.id === entry.parameterId
+                !selectedParameterIds.includes(parameter.id) || parameter.id === entry.parameterId
             );
             return (
               <Card
@@ -681,7 +697,8 @@ export function DraftCreatorParametersTab(): React.JSX.Element {
                 className='flex flex-col gap-3 border-border bg-card/60 md:flex-row md:items-center'
               >
                 <div className='w-full md:w-64'>
-                  <SelectSimple size='sm'
+                  <SelectSimple
+                    size='sm'
                     options={availableOptions.map((parameter: ProductParameter) => ({
                       value: parameter.id,
                       label: getParameterLabel(parameter),

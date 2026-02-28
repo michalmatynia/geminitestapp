@@ -1,9 +1,7 @@
 'use client';
 
 import React from 'react';
-import {
-  isTraderaIntegrationSlug,
-} from '@/features/integrations/constants/slugs';
+import { isTraderaIntegrationSlug } from '@/features/integrations/constants/slugs';
 import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
 import { IntegrationConnection } from '@/shared/contracts/integrations';
 import { Button, FormSection, SimpleSettingsList } from '@/shared/ui';
@@ -11,8 +9,9 @@ import { Button, FormSection, SimpleSettingsList } from '@/shared/ui';
 import { ConnectionEditModal } from './ConnectionEditModal';
 
 export function ConnectionList(): React.JSX.Element {
-  const [connectionToEdit, setConnectionToEdit] =
-    React.useState<IntegrationConnection | null>(null);
+  const [connectionToEdit, setConnectionToEdit] = React.useState<IntegrationConnection | null>(
+    null
+  );
 
   const {
     activeIntegration,
@@ -42,10 +41,13 @@ export function ConnectionList(): React.JSX.Element {
           id: connection.id,
           title: connection.name,
           subtitle: connection.username,
-          description: editingConnectionId === connection.id ? (
-            <span className='text-[10px] uppercase tracking-wide text-emerald-300 font-bold'>Active connection</span>
-          ) : undefined,
-          original: connection
+          description:
+            editingConnectionId === connection.id ? (
+              <span className='text-[10px] uppercase tracking-wide text-emerald-300 font-bold'>
+                Active connection
+              </span>
+            ) : undefined,
+          original: connection,
         }))}
         emptyMessage='No connections yet.'
         renderActions={(item) => (

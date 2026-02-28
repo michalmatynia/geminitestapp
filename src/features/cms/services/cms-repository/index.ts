@@ -57,7 +57,7 @@ export async function getCmsRepository(): Promise<CmsRepository> {
   if (provider === 'mongodb') {
     cachedRepository = mongoCmsRepository;
     if (shouldLogCms()) {
-      void logSystemEvent({
+      void (logSystemEvent as any)({
         level: 'info',
         source: LOG_SOURCE,
         message: 'repository',
@@ -71,7 +71,7 @@ export async function getCmsRepository(): Promise<CmsRepository> {
   if (prismaReady) {
     cachedRepository = prismaCmsRepository;
     if (shouldLogCms()) {
-      void logSystemEvent({
+      void (logSystemEvent as any)({
         level: 'info',
         source: LOG_SOURCE,
         message: 'repository',

@@ -29,7 +29,7 @@ async function GET_handler(
     take,
   });
   if (DEBUG_CHATBOT) {
-    void ErrorSystem.logInfo('Snapshots loaded', {
+    void (ErrorSystem as any).logInfo('Snapshots loaded', {
       service: 'agent-api',
       runId,
       count: snapshots.length,

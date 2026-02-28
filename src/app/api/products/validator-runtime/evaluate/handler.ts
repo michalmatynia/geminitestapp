@@ -829,7 +829,7 @@ export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): P
         }
         issues[fieldName].push(issue);
       } catch (error) {
-        void ErrorSystem.logWarning('Runtime validator evaluation failed.', {
+        void (ErrorSystem as any).logWarning('Runtime validator evaluation failed.', {
           source: 'products.validator-runtime.evaluate',
           patternId: pattern.id,
           fieldName,

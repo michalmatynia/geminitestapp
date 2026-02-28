@@ -6,7 +6,7 @@ import {
   analyzeAndPlanAutoScaleFromRgba,
   normalizeImageStudioAnalysisLayoutConfig,
   type ImageStudioDetectionDetails,
-} from '@/features/ai/image-studio/analysis/shared';
+} from '@/shared/lib/ai/image-studio/analysis/shared';
 import {
   IMAGE_STUDIO_CENTER_ALPHA_THRESHOLD,
   IMAGE_STUDIO_CENTER_MAX_OUTPUT_PIXELS,
@@ -17,7 +17,7 @@ import {
   type ImageStudioCenterMode,
   type ImageStudioCenterObjectBounds,
   type ImageStudioCenterShadowPolicy,
-} from '@/features/ai/image-studio/contracts/center';
+} from '@/shared/contracts/image-studio';
 
 type CenterSourceLimitValidation = {
   ok: boolean;

@@ -46,7 +46,7 @@ export const sanitizeRuntimeState = (state: RuntimeState): RuntimeState => {
     const dropSummary = collectDroppedRuntimePorts(state, sanitized);
     if (dropSummary.total > 0 && sanitizeDropWarningCount < SANITIZE_DROP_WARNING_LIMIT) {
       sanitizeDropWarningCount += 1;
-      void ErrorSystem.logWarning('sanitizeRuntimeState dropped runtime port keys', {
+      void (ErrorSystem as any).logWarning('sanitizeRuntimeState dropped runtime port keys', {
         service: 'ai-paths-executor',
         droppedPortCounts: {
           inputs: dropSummary.inputs,

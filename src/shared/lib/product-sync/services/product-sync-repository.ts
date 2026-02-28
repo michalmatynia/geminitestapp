@@ -4,7 +4,7 @@ import { randomUUID } from 'crypto';
 
 import { ObjectId } from 'mongodb';
 
-import { getProductDataProvider } from '@/features/products/server';
+import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 import {
   DEFAULT_PRODUCT_SYNC_FIELD_RULES,
   PRODUCT_SYNC_APP_FIELDS,

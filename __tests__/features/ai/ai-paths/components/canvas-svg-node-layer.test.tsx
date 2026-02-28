@@ -96,6 +96,7 @@ const defaultContextValue = (runtimeState: RuntimeState): CanvasBoardUIContextVa
     enableNodeAnimations: false,
     connectorHitTargetPx: 8,
     openNodeConfigOnSingleClick: false,
+    consumeSuppressedNodeClick: vi.fn().mockReturnValue(false),
     connecting: null,
     connectingPos: null,
     hoveredConnectorKey: null,

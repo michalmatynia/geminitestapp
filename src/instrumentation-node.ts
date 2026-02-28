@@ -81,25 +81,25 @@ export async function registerNodeInstrumentation() {
 
   // Register centralized logging handler for shared logger
   const { registerLogHandler } = await import('@/shared/utils/logger');
-  const { ErrorSystem } = await import('@/features/observability/server');
+  const { ErrorSystem } = await import('@/shared/lib/observability/system-logger');
 
   registerLogHandler((level, message, error, context) => {
     void (async () => {
       try {
         const service = (context?.['service'] as string) || 'shared-logger';
         if (level === 'error') {
-          await ErrorSystem.captureException(error || message, {
+          await (ErrorSystem as any).captureException(error || message, {
             service,
             message,
             ...context,
           });
         } else if (level === 'warn') {
-          await ErrorSystem.logWarning(message, {
+          await (ErrorSystem as any).logWarning(message, {
             service,
             ...context,
           });
         } else {
-          await ErrorSystem.logInfo(message, {
+          await (ErrorSystem as any).logInfo(message, {
             service,
             ...context,
           });
@@ -126,7 +126,7 @@ export async function registerNodeInstrumentation() {
 
     void (async () => {
       try {
-        const { logSystemError } = await import('@/features/observability/server');
+        const { logSystemError } = await import('@/shared/lib/observability/system-logger');
         await logSystemError({
           message: 'Unhandled Promise Rejection',
           error: reason,
@@ -146,7 +146,7 @@ export async function registerNodeInstrumentation() {
 
     void (async () => {
       try {
-        const { logSystemError } = await import('@/features/observability/server');
+        const { logSystemError } = await import('@/shared/lib/observability/system-logger');
         await logSystemError({
           message: 'Uncaught Exception',
           error,

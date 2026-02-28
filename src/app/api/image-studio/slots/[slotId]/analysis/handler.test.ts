@@ -31,7 +31,7 @@ vi.mock('@/shared/lib/ai/image-studio/server/source-image-utils', () => ({
   parseImageDataUrl: parseImageDataUrlMock,
 }));
 
-vi.mock('@/features/observability/server', () => ({
+vi.mock('@/shared/lib/observability/system-logger', () => ({
   logSystemEvent: logSystemEventMock,
 }));
 

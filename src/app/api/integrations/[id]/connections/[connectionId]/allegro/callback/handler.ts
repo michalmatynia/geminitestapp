@@ -137,7 +137,7 @@ export async function GET_handler(
   } catch (error) {
     const mapped = mapErrorToAppError(error, 'Allegro authorization failed.');
     const message = mapped?.message ?? 'Allegro OAuth callback failed';
-    void logSystemEvent({
+    void (logSystemEvent as any)({
       level: mapped?.expected ? 'warn' : 'error',
       message,
       source: 'integrations.[id].connections.[connectionId].allegro.callback.GET',

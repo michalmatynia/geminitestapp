@@ -8,7 +8,7 @@ import {
   processProductAiJob,
   startProductAiJobQueue,
 } from '@/features/jobs/server';
-import { logActivity, logSystemError } from '@/features/observability/server';
+import { logActivity, logSystemError } from '@/shared/lib/observability/system-logger';
 import { ActivityTypes } from '@/shared/constants/observability';
 import type { ProductAiJobTypeDto as ProductAiJobType } from '@/shared/contracts/jobs';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';

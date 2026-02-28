@@ -79,13 +79,13 @@ export async function translateProduct(params: TranslateProductParams): Promise<
   });
   const translationModel = brainConfig.modelId;
 
-  await ErrorSystem.logInfo(`[aiTranslationService] Using model: ${translationModel}`, {
+  await (ErrorSystem as any).logInfo(`[aiTranslationService] Using model: ${translationModel}`, {
     service: 'ai-translation-service',
     translationModel,
     brainApplied: brainConfig.brainApplied,
   });
 
-  await ErrorSystem.logInfo('[aiTranslationService] Starting translation', {
+  await (ErrorSystem as any).logInfo('[aiTranslationService] Starting translation', {
     service: 'ai-translation-service',
     targetLanguages,
     sourceLanguage,
@@ -97,7 +97,7 @@ export async function translateProduct(params: TranslateProductParams): Promise<
   // Translate to each target language
   for (const targetLang of targetLanguages) {
     if (targetLang.toLowerCase() === sourceLanguage.toLowerCase()) {
-      await ErrorSystem.logInfo(`[aiTranslationService] Skipping ${targetLang} (source language)`, {
+      await (ErrorSystem as any).logInfo(`[aiTranslationService] Skipping ${targetLang} (source language)`, {
         service: 'ai-translation-service',
         targetLanguage: targetLang,
       });
@@ -124,7 +124,7 @@ Important:
 - Only respond with the JSON, no additional text`;
 
     try {
-      await ErrorSystem.logInfo(`[aiTranslationService] Translating to ${targetLang}...`, {
+      await (ErrorSystem as any).logInfo(`[aiTranslationService] Translating to ${targetLang}...`, {
         service: 'ai-translation-service',
         targetLanguage: targetLang,
       });
@@ -148,7 +148,7 @@ Important:
 
       const content = response.text;
       if (!content) {
-        void ErrorSystem.logWarning(`No content in response for ${targetLang}`, {
+        void (ErrorSystem as any).logWarning(`No content in response for ${targetLang}`, {
           service: 'ai-translation-service',
           targetLanguage: targetLang,
         });
@@ -157,7 +157,7 @@ Important:
         });
       }
 
-      await ErrorSystem.logInfo(`[aiTranslationService] Received response for ${targetLang}`, {
+      await (ErrorSystem as any).logInfo(`[aiTranslationService] Received response for ${targetLang}`, {
         service: 'ai-translation-service',
         targetLanguage: targetLang,
       });
@@ -168,14 +168,14 @@ Important:
         description: parsed.description || '',
       };
 
-      await ErrorSystem.logInfo(`[aiTranslationService] Successfully translated to ${targetLang}`, {
+      await (ErrorSystem as any).logInfo(`[aiTranslationService] Successfully translated to ${targetLang}`, {
         service: 'ai-translation-service',
         targetLanguage: targetLang,
       });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
-      await ErrorSystem.captureException(error, {
+      await (ErrorSystem as any).captureException(error, {
         service: 'ai-translation-service',
         targetLanguage: targetLang,
         productName,
@@ -195,7 +195,7 @@ Important:
       }
 
       // For other errors, continue with other languages but don't save fallback
-      await ErrorSystem.logWarning(`[aiTranslationService] Skipping ${targetLang} due to error`, {
+      await (ErrorSystem as any).logWarning(`[aiTranslationService] Skipping ${targetLang} due to error`, {
         service: 'ai-translation-service',
         targetLanguage: targetLang,
         error: errorMessage,

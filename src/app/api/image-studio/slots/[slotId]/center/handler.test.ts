@@ -94,7 +94,7 @@ vi.mock('@/features/files/server', () => ({
   getImageFileRepository: getImageFileRepositoryMock,
 }));
 
-vi.mock('@/features/observability/server', () => ({
+vi.mock('@/shared/lib/observability/system-logger', () => ({
   logSystemEvent: logSystemEventMock,
 }));
 

@@ -758,7 +758,7 @@ export const processTraderaListingJob = async (input: TraderaListingJobInput): P
   const existingTraderaData = toRecord(existingMarketplaceData['tradera']);
   const listingMode = isTraderaApiIntegrationSlug(integration.slug) ? 'api' : 'browser';
 
-  await ErrorSystem.logInfo('Tradera listing job started', {
+  await (ErrorSystem as any).logInfo('Tradera listing job started', {
     service: 'tradera-listing-service',
     listingId: listing.id,
     productId: listing.productId,
@@ -848,7 +848,7 @@ export const processTraderaListingJob = async (input: TraderaListingJobInput): P
       expiresAt,
       relist: input.action === 'relist',
     });
-    await ErrorSystem.logInfo('Tradera listing job completed', {
+    await (ErrorSystem as any).logInfo('Tradera listing job completed', {
       service: 'tradera-listing-service',
       listingId: listing.id,
       productId: listing.productId,
@@ -890,7 +890,7 @@ export const processTraderaListingJob = async (input: TraderaListingJobInput): P
       failureReason: message,
       relist: input.action === 'relist',
     });
-    await ErrorSystem.captureException(error, {
+    await (ErrorSystem as any).captureException(error, {
       service: 'tradera-listing-service',
       listingId: listing.id,
       action: input.action,

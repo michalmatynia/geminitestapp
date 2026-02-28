@@ -36,7 +36,7 @@ export async function getDatabaseEngineProviderPreview(input?: {
   try {
     appProvider = await getAppDbProvider();
   } catch (error: unknown) {
-    void ErrorSystem.logWarning(
+    void (ErrorSystem as any).logWarning(
       '[database-engine-provider-preview] Failed to get app DB provider',
       {
         service: 'database-engine-provider-preview',
@@ -86,7 +86,7 @@ export async function getDatabaseEngineProviderPreview(input?: {
           error: null,
         };
       } catch (error: unknown) {
-        void ErrorSystem.logWarning(
+        void (ErrorSystem as any).logWarning(
           '[database-engine-provider-preview] Failed to get collection provider',
           {
             service: 'database-engine-provider-preview',

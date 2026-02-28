@@ -7,7 +7,7 @@ import { resolveBrainModelExecutionConfig } from '@/shared/lib/ai-brain/server';
 import { listBrainModels } from '@/shared/lib/ai-brain/server-model-catalog';
 import { runChatbotModel } from '@/features/ai/chatbot/server-model-runtime';
 import { chatbotSessionRepository } from '@/features/ai/chatbot/server';
-import { logSystemError, logSystemEvent } from '@/features/observability/server';
+import { logSystemError, logSystemEvent } from '@/shared/lib/observability/system-logger';
 import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
@@ -68,7 +68,7 @@ export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Pr
   const catalog = await listBrainModels();
 
   if (DEBUG_CHATBOT) {
-    await logSystemEvent({
+    await (logSystemEvent as any)({
       level: 'info',
       message: '[chatbot][models] Loaded via Brain catalog',
       context: {
@@ -132,7 +132,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
       );
 
       if (DEBUG_CHATBOT) {
-        await logSystemEvent({
+        await (logSystemEvent as any)({
           level: 'info',
           message: '[chatbot][chat] Multipart payload',
           context: {
@@ -251,7 +251,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
 
     const normalizedRequestedModel = requestedModel?.trim() || '';
     if (normalizedRequestedModel && normalizedRequestedModel !== brainConfig.modelId) {
-      await logSystemEvent({
+      await (logSystemEvent as any)({
         level: 'info',
         message: '[chatbot][chat] Ignored legacy requested model in favor of Brain',
         context: {
@@ -263,7 +263,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
     }
 
     if (DEBUG_CHATBOT) {
-      await logSystemEvent({
+      await (logSystemEvent as any)({
         level: 'info',
         message: '[chatbot][chat] Request summary',
         context: {
@@ -315,7 +315,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
         }
 
         if (DEBUG_CHATBOT) {
-          await logSystemEvent({
+          await (logSystemEvent as any)({
             level: 'info',
             message: '[chatbot][chat] Saved to session',
             context: {

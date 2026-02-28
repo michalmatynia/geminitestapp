@@ -496,9 +496,9 @@ Rejected when visual coherence does not hold.`;
     );
 
     const headings = document.segments.map((segment: PromptExploderSegment) => segment.title);
-    expect(headings.some((title: string | null) => title?.includes('GLOBAL_SETTINGS'))).toBe(true);
-    expect(headings.some((title: string | null) => title?.includes('EXECUTION_TEMPLATE'))).toBe(true);
-    expect(headings.some((title: string | null) => title?.includes('VALIDATION_MODULE'))).toBe(true);
+    expect(headings.some((title: any) => title?.includes('GLOBAL_SETTINGS'))).toBe(true);
+    expect(headings.some((title: any) => title?.includes('EXECUTION_TEMPLATE'))).toBe(true);
+    expect(headings.some((title: any) => title?.includes('VALIDATION_MODULE'))).toBe(true);
   });
 
   it('splits numbered section prompts into multiple heading-driven segments', () => {

@@ -127,8 +127,8 @@ export async function postDatabasesRestoreHandler(
       const logFile = await fs.readFile(restoreLogPath, 'utf-8');
       logData = JSON.parse(logFile) as Record<string, { date: string; logFile: string }>;
     } catch (error) {
-      const { ErrorSystem } = await import('@/features/observability/server');
-      void ErrorSystem.logWarning('Failed to load restore-log.json', { error, stage, backupName });
+      const { ErrorSystem } = await import('@/shared/lib/observability/system-logger');
+      void (ErrorSystem as any).logWarning('Failed to load restore-log.json', { error, stage, backupName });
       // No log yet.
     }
 
@@ -240,8 +240,8 @@ export async function postDatabasesRestoreHandler(
         END $$;
       `);
     } catch (error) {
-      const { ErrorSystem } = await import('@/features/observability/server');
-      void ErrorSystem.logWarning('Sequence reset failed after restore', {
+      const { ErrorSystem } = await import('@/shared/lib/observability/system-logger');
+      void (ErrorSystem as any).logWarning('Sequence reset failed after restore', {
         error,
         stage,
         backupName,
@@ -262,8 +262,8 @@ export async function postDatabasesRestoreHandler(
       const logFile = await fs.readFile(restoreLogPath, 'utf-8');
       logData = JSON.parse(logFile) as Record<string, { date: string; logFile: string }>;
     } catch (error) {
-      const { ErrorSystem } = await import('@/features/observability/server');
-      void ErrorSystem.logWarning('Failed to load restore-log.json', { error, stage, backupName });
+      const { ErrorSystem } = await import('@/shared/lib/observability/system-logger');
+      void (ErrorSystem as any).logWarning('Failed to load restore-log.json', { error, stage, backupName });
       // No log yet.
     }
 

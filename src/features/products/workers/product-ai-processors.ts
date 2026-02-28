@@ -6,8 +6,8 @@ import path from 'path';
 import { ObjectId } from 'mongodb';
 
 import {
+  resolveAiPathsNodeExecutionConfig,
   resolveBrainExecutionConfigForCapability,
-  resolveBrainModelExecutionConfig,
 } from '@/shared/lib/ai-brain/server';
 import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
 import { createMongoBackup, createPostgresBackup } from '@/shared/lib/db/services/database-backup';
@@ -145,43 +145,21 @@ export async function processGraphModel(job: Job): Promise<Record<string, unknow
     : [];
   const attachImages = Boolean(payload.vision) && imageUrls.length > 0;
   if (source === 'ai_paths') {
-    // Node-level values are used as defaults when Brain has not been configured.
-    // When Brain has a modelId set, it takes full precedence over the node config.
-    const brainConfig = await resolveBrainModelExecutionConfig('ai_paths', {
-      defaultTemperature: requestedTemperature ?? 0.7,
-      defaultMaxTokens: requestedMaxTokens ?? 800,
-      defaultSystemPrompt: requestedSystemPrompt || 'You are an AI assistant.',
-      defaultModelId: requestedModelId || undefined,
+    const brainConfig = await resolveAiPathsNodeExecutionConfig({
+      requestedModelId: requestedModelId || undefined,
+      requestedTemperature,
+      requestedMaxTokens,
+      requestedSystemPrompt: requestedSystemPrompt || undefined,
+      defaultTemperature: 0.7,
+      defaultMaxTokens: 800,
+      defaultSystemPrompt: 'You are an AI assistant.',
+      runtimeKind: payload.vision ? 'vision' : 'chat',
     });
     modelId = brainConfig.modelId;
     temperature = brainConfig.temperature;
     maxTokens = brainConfig.maxTokens;
     systemMessage = brainConfig.systemPrompt;
     brainApplied = brainConfig.brainApplied;
-
-    // Only log when Brain has a model configured and node values were overridden.
-    const brainHasModel = Boolean(brainConfig.assignment.modelId?.trim());
-    const overrideAttempted =
-      brainHasModel &&
-      (Boolean(requestedModelId) ||
-        requestedTemperature !== undefined ||
-        requestedMaxTokens !== undefined ||
-        Boolean(requestedSystemPrompt));
-    if (overrideAttempted) {
-      await logSystemEvent({
-        level: 'info',
-        message: '[brain][ai_paths] Brain config took precedence over graph_model payload',
-        context: {
-          jobId: job.id,
-          productId,
-          requestedModelId: requestedModelId || null,
-          requestedTemperature: requestedTemperature ?? null,
-          requestedMaxTokens: requestedMaxTokens ?? null,
-          requestedSystemPrompt: Boolean(requestedSystemPrompt),
-          enforcedModelId: modelId,
-        },
-      });
-    }
   } else {
     const capability = payload.vision
       ? 'product.description.vision'
@@ -439,7 +417,7 @@ const fetchAllLanguages = async (): Promise<LanguageRecord[]> => {
 
 const resolveFallbackLanguages = async (): Promise<string[]> => {
   const allLanguages = await fetchAllLanguages();
-  void logSystemEvent({
+  void (logSystemEvent as any)({
     level: 'info',
     source: 'product-ai-processors',
     message: `Found ${allLanguages.length} available languages`,
@@ -452,7 +430,7 @@ const resolveFallbackLanguages = async (): Promise<string[]> => {
   const defaults = defaultLanguages
     .filter((lang: { code: string }) => lang.code !== 'EN')
     .map((lang: { name: string }) => lang.name);
-  void logSystemEvent({
+  void (logSystemEvent as any)({
     level: 'info',
     source: 'product-ai-processors',
     message: 'Using default languages fallback',
@@ -473,7 +451,7 @@ export async function processDescriptionGeneration(job: Job): Promise<{ descript
     const product = await productRepository.getProductById(productId);
 
     if (!product) {
-      void ErrorSystem.logWarning(`Product not found for ID: "${productId}" (possibly a SKU)`, {
+      void (ErrorSystem as any).logWarning(`Product not found for ID: "${productId}" (possibly a SKU)`, {
         service: 'product-ai-queue',
         productId,
       });
@@ -516,7 +494,7 @@ export async function processTranslation(job: Job): Promise<Record<string, unkno
   const product = await productRepository.getProductById(productId);
 
   if (!product) {
-    void ErrorSystem.logWarning(`Product not found for ID: "${productId}"`, {
+    void (ErrorSystem as any).logWarning(`Product not found for ID: "${productId}"`, {
       service: 'product-ai-queue-translation',
       productId,
     });

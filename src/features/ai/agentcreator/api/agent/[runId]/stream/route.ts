@@ -34,8 +34,8 @@ async function GET_handler(
           controller.enqueue(encoder.encode(`data: ${JSON.stringify(payload)}\n\n`));
         } catch (error) {
           try {
-            const { ErrorSystem } = await import('@/features/observability/server');
-            void ErrorSystem.captureException(error, {
+            const { ErrorSystem } = await import('@/shared/lib/observability/system-logger');
+            void (ErrorSystem as any).captureException(error, {
               service: 'agent-stream',
               action: 'sendSnapshot',
               runId,

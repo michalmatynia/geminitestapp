@@ -1,8 +1,3 @@
-import {
-  getQueueHealth,
-  startAllWorkers,
-} from './registry';
-
 export { getRedisConnection, isRedisAvailable, closeRedisConnection } from './redis-connection';
 export { createManagedQueue } from './queue-factory';
 export {
@@ -19,15 +14,11 @@ export type {
   ManagedQueue,
 } from '@/shared/contracts/jobs';
 
-// Legacy aliases for backward compatibility
-export const startProductAiJobQueue = startAllWorkers;
-export const getQueueStatus = getQueueHealth;
-
 /**
  * Process a single job by name and ID.
  * Finds the registered queue and calls processInline.
  */
-export async function processSingleJob(queueName: string, data: any): Promise<unknown> {
+export async function processSingleJob(queueName: string, data: unknown): Promise<unknown> {
   const { getRegisteredQueue } = await import('./registry');
   const queue = getRegisteredQueue(queueName);
   if (!queue) {

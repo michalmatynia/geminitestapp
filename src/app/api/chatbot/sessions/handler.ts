@@ -74,7 +74,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
   const { title, settings } = parsed.data as CreateSessionBody;
 
   if (DEBUG_CHATBOT) {
-    await logSystemEvent({
+    await (logSystemEvent as any)({
       level: 'info',
       message: '[chatbot][sessions][POST] Request',
       context: {
@@ -92,7 +92,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
   });
 
   if (DEBUG_CHATBOT) {
-    await logSystemEvent({
+    await (logSystemEvent as any)({
       level: 'info',
       message: '[chatbot][sessions][POST] Created',
       context: {
@@ -111,7 +111,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
   const sessions = await chatbotSessionRepository.findAll();
 
   if (DEBUG_CHATBOT) {
-    await logSystemEvent({
+    await (logSystemEvent as any)({
       level: 'info',
       message: '[chatbot][sessions][GET] Listed',
       context: {
@@ -141,7 +141,7 @@ export async function PATCH_handler(req: NextRequest, ctx: ApiHandlerContext): P
   const { sessionId, title } = parsed.data as UpdateSessionBody;
 
   if (DEBUG_CHATBOT) {
-    await logSystemEvent({
+    await (logSystemEvent as any)({
       level: 'info',
       message: '[chatbot][sessions][PATCH] Request',
       context: {
@@ -163,7 +163,7 @@ export async function PATCH_handler(req: NextRequest, ctx: ApiHandlerContext): P
   }
 
   if (DEBUG_CHATBOT) {
-    await logSystemEvent({
+    await (logSystemEvent as any)({
       level: 'info',
       message: '[chatbot][sessions][PATCH] Updated',
       context: {
@@ -186,7 +186,7 @@ export async function DELETE_handler(req: NextRequest, ctx: ApiHandlerContext): 
   const { sessionId } = parsed.data as DeleteSessionBody;
 
   if (DEBUG_CHATBOT) {
-    await logSystemEvent({
+    await (logSystemEvent as any)({
       level: 'info',
       message: '[chatbot][sessions][DELETE] Request',
       context: {
@@ -202,7 +202,7 @@ export async function DELETE_handler(req: NextRequest, ctx: ApiHandlerContext): 
   }
 
   if (DEBUG_CHATBOT) {
-    await logSystemEvent({
+    await (logSystemEvent as any)({
       level: 'info',
       message: '[chatbot][sessions][DELETE] Deleted',
       context: {

@@ -208,7 +208,7 @@ describe('ai-paths-slo-notifier', () => {
       set: vi.fn().mockResolvedValueOnce('OK').mockResolvedValueOnce(null),
       del: vi.fn().mockResolvedValue(1),
     };
-    vi.mocked(getRedisConnection).mockReturnValue(redis as any);
+    vi.mocked(getRedisConnection).mockReturnValue(redis as unknown as any);
 
     const status = buildStatus('critical', {
       indicator: 'queueLag',
@@ -239,7 +239,7 @@ describe('ai-paths-slo-notifier', () => {
       set: vi.fn().mockResolvedValue('OK'),
       del: vi.fn().mockResolvedValue(1),
     };
-    vi.mocked(getRedisConnection).mockReturnValue(redis as any);
+    vi.mocked(getRedisConnection).mockReturnValue(redis as unknown as any);
 
     const result = await notifyAiPathsSloBreach({
       status: buildStatus('critical', {

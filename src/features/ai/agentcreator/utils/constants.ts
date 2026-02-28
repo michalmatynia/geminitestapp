@@ -1,4 +1,5 @@
 import type { AgentSettingsPayload, ModelTaskRule } from '@/shared/contracts/chatbot';
+import { DEFAULT_AGENT_SETTINGS as SHARED_DEFAULT_AGENT_SETTINGS } from '@/shared/contracts/chatbot';
 
 export const MODEL_TASK_RULES: Record<string, ModelTaskRule> = {
   main: { preferLarge: true, minSize: 7, preferReasoning: true },
@@ -14,27 +15,4 @@ export const MODEL_TASK_RULES: Record<string, ModelTaskRule> = {
   outputNormalization: { preferSmall: true, targetSize: 3, maxSize: 7 },
 };
 
-export const DEFAULT_AGENT_SETTINGS: AgentSettingsPayload = {
-  agentBrowser: 'chromium',
-  runHeadless: true,
-  ignoreRobotsTxt: false,
-  requireHumanApproval: false,
-  memoryValidationModel: '',
-  plannerModel: '',
-  selfCheckModel: '',
-  extractionValidationModel: '',
-  toolRouterModel: '',
-  loopGuardModel: '',
-  approvalGateModel: '',
-  memorySummarizationModel: '',
-  selectorInferenceModel: '',
-  outputNormalizationModel: '',
-  maxSteps: 12,
-  maxStepAttempts: 2,
-  maxReplanCalls: 2,
-  replanEverySteps: 2,
-  maxSelfChecks: 4,
-  loopGuardThreshold: 2,
-  loopBackoffBaseMs: 2000,
-  loopBackoffMaxMs: 12000,
-};
+export const DEFAULT_AGENT_SETTINGS: AgentSettingsPayload = SHARED_DEFAULT_AGENT_SETTINGS;

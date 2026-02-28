@@ -37,6 +37,7 @@ const buildContextValue = (
     onNodeDiagnosticsLeave?: CanvasBoardUIContextValue['onNodeDiagnosticsLeave'];
     onSelectNode?: CanvasBoardUIContextValue['onSelectNode'];
     onOpenNodeConfig?: CanvasBoardUIContextValue['onOpenNodeConfig'];
+    consumeSuppressedNodeClick?: CanvasBoardUIContextValue['consumeSuppressedNodeClick'];
     openNodeConfigOnSingleClick?: boolean;
     node?: AiNode;
   }
@@ -89,6 +90,7 @@ const buildContextValue = (
     onPointerDownNode: vi.fn(),
     onPointerMoveNode: vi.fn(),
     onPointerUpNode: vi.fn(),
+    consumeSuppressedNodeClick: handlers?.consumeSuppressedNodeClick ?? vi.fn(() => false),
     onSelectNode: handlers?.onSelectNode ?? vi.fn(),
     onOpenNodeConfig: handlers?.onOpenNodeConfig ?? vi.fn(),
     onStartConnection: vi.fn(),
@@ -228,5 +230,34 @@ describe('Canvas node diagnostics badges', () => {
     expect(selectSpy).toHaveBeenCalled();
     expect(selectSpy.mock.calls[0]?.[0]).toBe('node-1');
     expect(openConfigSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('suppresses node click selection immediately after a drag interaction', () => {
+    const selectSpy = vi.fn();
+    const consumeSuppressedNodeClick = vi.fn(() => true);
+    const value = buildContextValue(
+      {},
+      {
+        onSelectNode: selectSpy,
+        consumeSuppressedNodeClick,
+      }
+    );
+
+    const { container } = render(
+      <svg>
+        <CanvasBoardUIProvider value={value}>
+          <CanvasSvgNodeLayer />
+        </CanvasBoardUIProvider>
+      </svg>
+    );
+
+    const nodeBody = container.querySelector('[data-node-body="node-1"]');
+    expect(nodeBody).toBeTruthy();
+    if (nodeBody) {
+      fireEvent.click(nodeBody);
+    }
+
+    expect(consumeSuppressedNodeClick).toHaveBeenCalledWith('node-1');
+    expect(selectSpy).not.toHaveBeenCalled();
   });
 });

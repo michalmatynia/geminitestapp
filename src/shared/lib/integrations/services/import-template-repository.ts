@@ -4,7 +4,7 @@ import { randomUUID } from 'crypto';
 
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import { getProductDataProvider } from '@/features/products/server';
+import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 import type {
   ImportExportTemplate as DomainImportExportTemplate,
   ImportExportTemplateMapping as DomainImportExportTemplateMapping,
@@ -23,7 +23,7 @@ const LOG_SOURCE = 'import-template-repository';
 
 const getImportTemplateProvider = async (): Promise<ImportTemplateProvider> => {
   const provider = await getProductDataProvider();
-  await logSystemEvent({
+  await (logSystemEvent as any)({
     level: 'info',
     source: LOG_SOURCE,
     message: `Provider: ${provider}`,
@@ -70,7 +70,7 @@ const parseTemplates = async (value: string | null): Promise<Template[]> => {
   try {
     const parsed = JSON.parse(value) as unknown;
     if (!Array.isArray(parsed)) {
-      void ErrorSystem.logWarning('[ImportTemplateRepository] Parsed value is not an array', {
+      void (ErrorSystem as any).logWarning('[ImportTemplateRepository] Parsed value is not an array', {
         service: 'import-template-repository',
         parsed,
       });
@@ -83,7 +83,7 @@ const parseTemplates = async (value: string | null): Promise<Template[]> => {
     })) as Template[];
   } catch (error: unknown) {
     try {
-      const { logSystemError } = await import('@/features/observability/server');
+      const { logSystemError } = await import('@/shared/lib/observability/system-logger');
       await logSystemError({
         message: '[ImportTemplateRepository] Failed to parse templates',
         error,
@@ -224,7 +224,7 @@ const readTemplatesValue = async (): Promise<string | null> => {
       $or: [{ _id: SETTINGS_KEY }, { key: SETTINGS_KEY }],
     } as Filter<Document>);
     const val = doc && typeof doc['value'] === 'string' ? doc['value'] : null;
-    await logSystemEvent({
+    await (logSystemEvent as any)({
       level: 'info',
       source: LOG_SOURCE,
       message: 'Read templates (Mongo)',
@@ -236,7 +236,7 @@ const readTemplatesValue = async (): Promise<string | null> => {
     where: { key: SETTINGS_KEY },
     select: { value: true },
   });
-  await logSystemEvent({
+  await (logSystemEvent as any)({
     level: 'info',
     source: LOG_SOURCE,
     message: 'Read templates (Prisma)',
@@ -359,7 +359,7 @@ const readExportWarehouseMapValue = async (): Promise<string | null> => {
 
 const writeTemplatesValue = async (value: string): Promise<void> => {
   const provider = await getImportTemplateProvider();
-  await logSystemEvent({
+  await (logSystemEvent as any)({
     level: 'info',
     source: LOG_SOURCE,
     message: 'Writing templates...',
@@ -386,7 +386,7 @@ const writeTemplatesValue = async (value: string): Promise<void> => {
     update: { value },
     create: { key: SETTINGS_KEY, value },
   });
-  await logSystemEvent({
+  await (logSystemEvent as any)({
     level: 'info',
     source: LOG_SOURCE,
     message: 'Wrote templates (Prisma)',

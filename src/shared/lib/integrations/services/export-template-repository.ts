@@ -10,7 +10,7 @@ import {
 } from '@/features/data-import-export/utils/image-retry-presets';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import { getProductDataProvider } from '@/features/products/server';
+import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 import type {
   ImageRetryPreset,
   Template as DomainImportExportTemplate,
@@ -37,7 +37,7 @@ const LOG_SOURCE = 'export-template-repository';
 
 const getExportTemplateProvider = async (): Promise<ExportTemplateProvider> => {
   const provider = await getProductDataProvider();
-  await logSystemEvent({
+  await (logSystemEvent as any)({
     level: 'info',
     source: LOG_SOURCE,
     message: `Provider: ${provider}`,
@@ -81,7 +81,7 @@ const parseTemplates = async (value: string | null): Promise<Template[]> => {
   try {
     const parsed = JSON.parse(value) as unknown;
     if (!Array.isArray(parsed)) {
-      void ErrorSystem.logWarning('[ExportTemplateRepository] Parsed value is not an array', {
+      void (ErrorSystem as any).logWarning('[ExportTemplateRepository] Parsed value is not an array', {
         service: 'export-template-repository',
         parsed,
       });
@@ -93,7 +93,7 @@ const parseTemplates = async (value: string | null): Promise<Template[]> => {
     })) as Template[];
   } catch (error) {
     try {
-      const { logSystemError } = await import('@/features/observability/server');
+      const { logSystemError } = await import('@/shared/lib/observability/system-logger');
       await logSystemError({
         message: '[ExportTemplateRepository] Failed to parse templates',
         error,
@@ -207,7 +207,7 @@ const readTemplatesValue = async (): Promise<string | null> => {
       $or: [{ _id: toMongoId(SETTINGS_KEY) }, { key: SETTINGS_KEY }],
     });
     const val = typeof doc?.value === 'string' ? doc.value : null;
-    await logSystemEvent({
+    await (logSystemEvent as any)({
       level: 'info',
       source: LOG_SOURCE,
       message: 'Read templates (Mongo)',
@@ -219,7 +219,7 @@ const readTemplatesValue = async (): Promise<string | null> => {
     where: { key: SETTINGS_KEY },
     select: { value: true },
   });
-  await logSystemEvent({
+  await (logSystemEvent as any)({
     level: 'info',
     source: LOG_SOURCE,
     message: 'Read templates (Prisma)',
@@ -310,7 +310,7 @@ const readImageRetryPresetsValue = async (): Promise<string | null> => {
 
 const writeTemplatesValue = async (value: string): Promise<void> => {
   const provider = await getExportTemplateProvider();
-  await logSystemEvent({
+  await (logSystemEvent as any)({
     level: 'info',
     source: LOG_SOURCE,
     message: 'Writing templates...',
@@ -337,7 +337,7 @@ const writeTemplatesValue = async (value: string): Promise<void> => {
     update: { value },
     create: { key: SETTINGS_KEY, value },
   });
-  await logSystemEvent({
+  await (logSystemEvent as any)({
     level: 'info',
     source: LOG_SOURCE,
     message: 'Wrote templates (Prisma)',
@@ -608,7 +608,7 @@ export const getExportImageRetryPresets = async (): Promise<ImageRetryPreset[]> 
     return normalizeImageRetryPresets(parsed);
   } catch (error) {
     try {
-      const { logSystemError } = await import('@/features/observability/server');
+      const { logSystemError } = await import('@/shared/lib/observability/system-logger');
       await logSystemError({
         message: '[ExportTemplateRepository] Failed to parse image presets',
         error,

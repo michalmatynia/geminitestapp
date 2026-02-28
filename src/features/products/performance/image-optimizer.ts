@@ -105,7 +105,7 @@ export class ImageOptimizer {
             fileSize: buffer.length,
           });
         } catch (error) {
-          void ErrorSystem.logWarning(`Failed to optimize image for ${format}/${sizeName}`, {
+          void (ErrorSystem as any).logWarning(`Failed to optimize image for ${format}/${sizeName}`, {
             service: 'image-optimizer',
             format,
             sizeName,

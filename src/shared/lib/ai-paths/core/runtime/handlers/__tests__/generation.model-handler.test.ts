@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { handleModel } from '@/shared/lib/ai-paths/core/runtime/handlers/generation';
-import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
+import type { AiNode, Edge, ModelConfig } from '@/shared/contracts/ai-paths';
 import type { NodeHandlerContext, RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
 
 import { aiJobsApi } from '../../../../api';
@@ -22,7 +22,10 @@ vi.mock('../../../../api', async () => {
   };
 });
 
-const buildModelNode = (patch: Partial<AiNode> = {}): AiNode =>
+const buildModelNode = (
+  patch: Partial<AiNode> = {},
+  modelPatch: Partial<ModelConfig> = {}
+): AiNode =>
   ({
     id: 'model-1',
     type: 'model',
@@ -37,6 +40,7 @@ const buildModelNode = (patch: Partial<AiNode> = {}): AiNode =>
         temperature: 0.2,
         maxTokens: 256,
         waitForResult: false,
+        ...modelPatch,
       },
     },
     ...(patch as Record<string, unknown>),
@@ -114,6 +118,7 @@ const buildContext = (input: {
 
 describe('handleModel prompt routing', () => {
   afterEach(() => {
+    vi.clearAllMocks();
     vi.restoreAllMocks();
   });
 
@@ -192,6 +197,62 @@ describe('handleModel prompt routing', () => {
     expect(result['debugPayload']).toEqual(
       expect.objectContaining({
         prompt: 'Generate localized name and description.',
+      })
+    );
+  });
+
+  it('includes the node-selected modelId in the queued graph_model payload', async () => {
+    vi.mocked(aiJobsApi.enqueue).mockResolvedValueOnce({
+      ok: true,
+      data: { jobId: 'job-queued-2' },
+    } as Awaited<ReturnType<typeof aiJobsApi.enqueue>>);
+
+    const modelNode = {
+      ...buildModelNode(),
+      config: {
+        model: {
+          modelId: 'gpt-4o-mini',
+          temperature: 0.2,
+          maxTokens: 256,
+          waitForResult: false,
+          vision: false,
+        },
+      },
+    } as AiNode;
+    const promptNode = buildPromptNode('prompt-node');
+    const edges: Edge[] = [
+      {
+        id: 'edge-prompt',
+        from: 'prompt-node',
+        fromPort: 'prompt',
+        to: 'model-1',
+        toPort: 'prompt',
+      } as Edge,
+    ];
+    const context = buildContext({
+      node: modelNode,
+      nodes: [promptNode, modelNode],
+      edges,
+      allOutputs: {
+        'prompt-node': {
+          prompt: 'Generate localized description.',
+        },
+      },
+    });
+
+    const result = await handleModel(context);
+    const enqueueArgs = vi.mocked(aiJobsApi.enqueue).mock.calls.at(-1)?.[0] as
+      | { type: string; payload: Record<string, unknown> }
+      | undefined;
+
+    expect(result['status']).toBe('queued');
+    expect(enqueueArgs?.type).toBe('graph_model');
+    expect(enqueueArgs?.payload).toMatchObject({
+      modelId: 'gpt-4o-mini',
+    });
+    expect(result['debugPayload']).toEqual(
+      expect.objectContaining({
+        modelId: 'gpt-4o-mini',
       })
     );
   });

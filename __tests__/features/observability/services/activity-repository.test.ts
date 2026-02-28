@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { prismaActivityRepository } from '@/shared/lib/observability/activity-repository/prisma-activity-repository';
 import prisma from '@/shared/lib/db/prisma';
+import type { SystemLogRecordDto as SystemLogRecord } from '@/shared/contracts/observability';
 
 vi.mock('@/shared/lib/db/prisma', () => ({
   default: {
@@ -36,7 +37,7 @@ describe('prismaActivityRepository', () => {
         createdAt: new Date(),
       },
     ];
-    (prisma.systemLog.findMany as any).mockResolvedValue(mockLogs);
+    vi.mocked(prisma.systemLog.findMany).mockResolvedValue(mockLogs as unknown as SystemLogRecord[]);
 
     const result = await prismaActivityRepository.listActivity({ limit: 10 });
 
@@ -64,7 +65,7 @@ describe('prismaActivityRepository', () => {
       },
       createdAt: new Date(),
     };
-    (prisma.systemLog.create as any).mockResolvedValue(mockLog);
+    vi.mocked(prisma.systemLog.create).mockResolvedValue(mockLog as unknown as SystemLogRecord);
 
     const result = await prismaActivityRepository.createActivity({
       type: 'test',

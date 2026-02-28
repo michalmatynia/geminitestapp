@@ -59,7 +59,7 @@ export const buildImageDiagnosticsLogger = (
   context: Record<string, unknown>
 ): ImageExportLogger => ({
   log: (message: string, data?: Record<string, unknown>) => {
-    void ErrorSystem.logWarning(`[export-to-base][images] ${message}`, {
+    void (ErrorSystem as any).logWarning(`[export-to-base][images] ${message}`, {
       ...context,
       ...(data ?? {}),
     });
@@ -82,7 +82,7 @@ export const logImageDiagnostics = async ({
   context: Record<string, unknown>;
 }): Promise<void> => {
   const urlDiagnostics = collectProductImageDiagnostics(product, imageBaseUrl);
-  void ErrorSystem.logWarning('[export-to-base][images] Image candidates', {
+  void (ErrorSystem as any).logWarning('[export-to-base][images] Image candidates', {
     ...context,
     images: urlDiagnostics,
   });
@@ -97,7 +97,7 @@ export const logImageDiagnostics = async ({
       transform: transform ?? null,
     });
   } catch (error) {
-    void ErrorSystem.logWarning('[export-to-base][images] Failed to gather base64 diagnostics', {
+    void (ErrorSystem as any).logWarning('[export-to-base][images] Failed to gather base64 diagnostics', {
       ...context,
       error: error instanceof Error ? error.message : String(error),
     });
@@ -452,7 +452,7 @@ const remapLegacyParameterSourceMappings = async <TProduct extends BaseExportPro
   });
 
   const dedupedMappings = dedupeMappings(remapped);
-  await ErrorSystem.logInfo('[export-to-base] Normalized legacy parameter source mappings', {
+  await (ErrorSystem as any).logInfo('[export-to-base] Normalized legacy parameter source mappings', {
     productId,
     legacyMappingCount: legacyMappings.length,
     mappingCountBefore: mappings.length,
@@ -522,7 +522,7 @@ const validateTemplateParameterMappings = <TProduct extends BaseExportProductLik
     return !lookup.has(parameterId.toLowerCase());
   });
   if (missingParameterIds.length > 0) {
-    void ErrorSystem.logWarning(
+    void (ErrorSystem as any).logWarning(
       '[export-to-base] Some mapped parameters are not present on this product and will be skipped',
       {
         productId,
@@ -544,7 +544,7 @@ const validateTemplateParameterMappings = <TProduct extends BaseExportProductLik
     return lookup.get(parameterId.toLowerCase())?.hasValue === false;
   });
   if (emptyParameterIds.length > 0) {
-    void ErrorSystem.logWarning(
+    void (ErrorSystem as any).logWarning(
       '[export-to-base] Some mapped parameters are empty and will be skipped',
       {
         productId,
@@ -619,7 +619,7 @@ export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseE
             `Export template "${requestedTemplateId}" was not found. Select an existing template and retry.`
           );
         }
-        await ErrorSystem.logWarning(
+        await (ErrorSystem as any).logWarning(
           '[export-to-base] Active export template not found; continuing without template mappings.',
           {
             productId,
@@ -711,7 +711,7 @@ export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseE
         ]);
       }
     } catch (error) {
-      await ErrorSystem.logWarning('[export-to-base] Failed to resolve producer names for export', {
+      await (ErrorSystem as any).logWarning('[export-to-base] Failed to resolve producer names for export', {
         productId,
         producerCount: productProducerIds.length,
         error: error instanceof Error ? error.message : String(error),
@@ -749,7 +749,7 @@ export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseE
         ]);
       }
     } catch (error) {
-      await ErrorSystem.logWarning(
+      await (ErrorSystem as any).logWarning(
         '[export-to-base] Failed to resolve producer mappings for export',
         {
           productId,
@@ -787,7 +787,7 @@ export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseE
         ]);
       }
     } catch (error) {
-      await ErrorSystem.logWarning('[export-to-base] Failed to resolve tag names for export', {
+      await (ErrorSystem as any).logWarning('[export-to-base] Failed to resolve tag names for export', {
         productId,
         tagCount: productTagIds.length,
         error: error instanceof Error ? error.message : String(error),
@@ -819,7 +819,7 @@ export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseE
         ]);
       }
     } catch (error) {
-      await ErrorSystem.logWarning('[export-to-base] Failed to resolve tag mappings for export', {
+      await (ErrorSystem as any).logWarning('[export-to-base] Failed to resolve tag mappings for export', {
         productId,
         tagCount: productTagIds.length,
         error: error instanceof Error ? error.message : String(error),
@@ -970,7 +970,7 @@ export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseE
         categoryId: mappedExternalCategoryId,
       } as TProduct;
 
-      await ErrorSystem.logInfo('[export-to-base] Resolved category mapping for export', {
+      await (ErrorSystem as any).logInfo('[export-to-base] Resolved category mapping for export', {
         productId,
         connectionId: data.connectionId,
         internalCategoryId,
@@ -1085,7 +1085,7 @@ export const resolveWarehouseAndStockMappings = async ({
               ? firstWarehouse['typedId']
               : undefined;
           const fallbackWarehouseId = fallbackTypedWarehouseId ?? warehouses[0]?.id ?? null;
-          await ErrorSystem.logWarning(
+          await (ErrorSystem as any).logWarning(
             '[export-to-base] Warehouse not in inventory, using fallback',
             {
               productId,
@@ -1105,7 +1105,7 @@ export const resolveWarehouseAndStockMappings = async ({
         warehouseId = fallbackTypedWarehouseId ?? warehouses[0]?.id ?? null;
       }
     } catch (error) {
-      await ErrorSystem.logWarning(
+      await (ErrorSystem as any).logWarning(
         '[export-to-base] Failed to verify warehouse, skipping stock export',
         {
           productId,

@@ -11,18 +11,18 @@ import {
   type ImageStudioDetectionDetails,
   type ImageStudioObjectAnalysisResult,
   type NormalizedImageStudioAnalysisLayoutConfig,
-} from '@/features/ai/image-studio/analysis/shared';
-import type { ImageStudioAutoScalerMode } from '@/features/ai/image-studio/contracts/autoscaler';
+} from '@/shared/lib/ai/image-studio/analysis/shared';
+import type { ImageStudioAutoScalerMode } from '@/shared/contracts/image-studio';
 import {
   IMAGE_STUDIO_CENTER_MAX_OUTPUT_PIXELS,
   IMAGE_STUDIO_CENTER_MAX_SOURCE_PIXELS,
   IMAGE_STUDIO_CENTER_MAX_SOURCE_SIDE_PX,
-} from '@/features/ai/image-studio/contracts/center';
+} from '@/shared/contracts/image-studio';
 import type {
   ImageStudioCenterDetectionMode,
   ImageStudioCenterLayoutConfig,
   ImageStudioCenterObjectBounds,
-} from '@/features/ai/image-studio/contracts/center';
+} from '@/shared/contracts/image-studio';
 
 export type ImageStudioAutoScalerResult = {
   outputBuffer: Buffer;

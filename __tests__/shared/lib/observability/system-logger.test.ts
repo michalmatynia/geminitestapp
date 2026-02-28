@@ -27,7 +27,7 @@ describe('system-logger', () => {
   });
 
   it('should log a system event', async () => {
-    await logSystemEvent({
+    await (logSystemEvent as any)({
       level: 'info',
       message: 'Something happened',
       source: 'test',
@@ -112,7 +112,7 @@ describe('system-logger', () => {
     const logResult = { id: 'log-critical', level: 'error', message: 'Critical!' };
     (createSystemLog as any).mockResolvedValue(logResult);
 
-    await logSystemEvent({
+    await (logSystemEvent as any)({
       level: 'error',
       message: 'Critical!',
       critical: true,
@@ -128,7 +128,7 @@ describe('system-logger', () => {
       headers: { 'x-request-id': 'req-123' },
     });
 
-    await logSystemEvent({
+    await (logSystemEvent as any)({
       message: 'Request log',
       request: req,
     });

@@ -139,14 +139,77 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
     [local]
   );
 
+  const resolvePreviewModelNode = useCallback(
+    (
+      sourceNodeId: string
+    ): { kind: 'resolved'; node: AiNode } | { kind: 'missing' } | { kind: 'ambiguous' } => {
+      const visited = new Set<string>([sourceNodeId]);
+      let frontier = [sourceNodeId];
+
+      while (frontier.length > 0) {
+        const nextFrontier: string[] = [];
+        const candidateIds = new Set<string>();
+
+        frontier.forEach((nodeId: string): void => {
+          sanitizedEdges.forEach((edge: Edge): void => {
+            if (edge.from !== nodeId || !edge.to) return;
+            const targetId = edge.to;
+            const targetNode = normalizedNodes.find((node: AiNode): boolean => node.id === targetId);
+            if (!targetNode) return;
+            if (targetNode.type === 'model') {
+              candidateIds.add(targetId);
+              return;
+            }
+            if (visited.has(targetId)) return;
+            visited.add(targetId);
+            nextFrontier.push(targetId);
+          });
+        });
+
+        if (candidateIds.size === 1) {
+          const targetId = Array.from(candidateIds)[0];
+          const targetNode = normalizedNodes.find((node: AiNode): boolean => node.id === targetId);
+          if (targetNode) {
+            return { kind: 'resolved', node: targetNode };
+          }
+        }
+        if (candidateIds.size > 1) {
+          return { kind: 'ambiguous' };
+        }
+        frontier = nextFrontier;
+      }
+
+      return { kind: 'missing' };
+    },
+    [normalizedNodes, sanitizedEdges]
+  );
+
   const handleSendToAi = async (sourceNodeId: string, prompt: string): Promise<void> => {
-    const aiNode = normalizedNodes.find((n) => n.type === 'model');
-    if (!aiNode) {
-      args.toast('No AI Model found in path.', { variant: 'error' });
+    const modelResolution = resolvePreviewModelNode(sourceNodeId);
+    if (modelResolution.kind === 'missing') {
+      args.toast('No AI Model found downstream from this node.', { variant: 'error' });
       return;
     }
+    if (modelResolution.kind === 'ambiguous') {
+      args.toast(
+        'Could not resolve a unique AI model node for preview. Connect or select a specific Model node.',
+        { variant: 'error' }
+      );
+      return;
+    }
+    const aiNode = modelResolution.node;
+    const modelConfig = aiNode.config?.model ?? {
+      temperature: 0.7,
+      maxTokens: 800,
+      vision: aiNode.inputs.includes('images'),
+    };
+    const selectedModelId = modelConfig.modelId?.trim() || '';
     const aiModelId = brainAssignment.effectiveModelId.trim();
-    if (!brainAssignment.assignment.enabled || brainAssignment.assignment.provider !== 'model' || !aiModelId) {
+    if (
+      !brainAssignment.assignment.enabled ||
+      brainAssignment.assignment.provider !== 'model' ||
+      (selectedModelId === '' && !aiModelId)
+    ) {
       args.toast('Configure AI Paths in AI Brain first.', { variant: 'error' });
       return;
     }
@@ -159,13 +222,29 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
       const sourceOutputs = args.runtimeState.outputs?.[sourceNodeId] ?? {};
       const payload = {
         prompt,
-        model: aiModelId,
+        ...(selectedModelId ? { modelId: selectedModelId } : {}),
+        temperature: modelConfig.temperature,
+        maxTokens: modelConfig.maxTokens,
+        vision: modelConfig.vision ?? false,
+        ...(modelConfig.systemPrompt?.trim()
+          ? { systemPrompt: modelConfig.systemPrompt.trim() }
+          : {}),
+        source: 'ai_paths',
+        graph: {
+          pathId: args.activePathId ?? undefined,
+          nodeId: aiNode.id,
+          nodeTitle: aiNode.title,
+          runId: `preview-${createRunId()}`,
+        },
         context: sourceOutputs,
       };
 
       const res = await aiJobsApi.enqueue({
-        productId: (sourceOutputs['productId'] as string) ?? 'direct',
-        type: 'direct_prompt',
+        productId:
+          (typeof sourceOutputs['productId'] === 'string' ? sourceOutputs['productId'] : '') ||
+          args.activePathId ||
+          'direct',
+        type: 'graph_model',
         payload,
       });
 
@@ -181,10 +260,18 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
           throw new Error(statusRes.error || 'Failed to fetch AI job status.');
         }
         if (statusRes.data.status === 'completed') {
-          result =
-            typeof statusRes.data.result === 'string'
-              ? statusRes.data.result
-              : JSON.stringify(statusRes.data.result ?? '');
+          const rawResult = statusRes.data.result;
+          if (typeof rawResult === 'string') {
+            result = rawResult;
+          } else if (rawResult && typeof rawResult === 'object') {
+            const nestedResult = (rawResult as Record<string, unknown>)['result'];
+            result =
+              typeof nestedResult === 'string'
+                ? nestedResult
+                : JSON.stringify(rawResult ?? '');
+          } else {
+            result = JSON.stringify(rawResult ?? '');
+          }
           break;
         }
         if (statusRes.data.status === 'failed') {
@@ -213,6 +300,7 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
               result,
               jobId: directJobId!,
               status: 'completed',
+              modelId: selectedModelId || aiModelId,
             },
           },
         };

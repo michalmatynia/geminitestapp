@@ -89,7 +89,7 @@ export async function withTransientRecovery<T>(
     return await execute();
   } catch (error) {
     if (options?.fallback && isTransientError(error)) {
-      void logSystemEvent({
+      void (logSystemEvent as any)({
         level: 'warn',
         message: '[transient-recovery] fallback executed',
         source: options?.source ?? 'transient-recovery',

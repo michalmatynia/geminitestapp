@@ -14,7 +14,7 @@ import {
   type ImageStudioCenterDetectionMode,
   type ImageStudioCenterMode,
   type ImageStudioCenterObjectBounds,
-} from '@/features/ai/image-studio/contracts/center';
+} from '@/shared/contracts/image-studio';
 import {
   centerAndScaleObjectByLayout,
   centerObjectByAlpha,

@@ -27,7 +27,7 @@ export const getQueueHealth = async (): Promise<Record<string, QueueHealthStatus
 
 export const startAllWorkers = (): void => {
   for (const [name, queue] of registry.entries()) {
-    void logSystemEvent({
+    void (logSystemEvent as any)({
       level: 'info',
       message: `[queue-registry] Starting queue worker: ${name}`,
       source: 'queue-registry',
@@ -40,7 +40,7 @@ export const startAllWorkers = (): void => {
 export const stopAllWorkers = async (): Promise<void> => {
   const entries = Array.from(registry.values());
   await Promise.all(entries.map((queue) => queue.stopWorker()));
-  void logSystemEvent({
+  void (logSystemEvent as any)({
     level: 'info',
     message: '[queue-registry] All queue workers stopped',
     source: 'queue-registry',

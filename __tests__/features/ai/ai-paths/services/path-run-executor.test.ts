@@ -10,7 +10,6 @@ import type {
   AiPathRunRepository,
   AiPathRunUpdate,
   AiPathRunStatus,
-  AiPathRunCreateInput,
 } from '@/shared/contracts/ai-paths';
 import type { EvaluateGraphArgs } from '@/shared/lib/ai-paths/core/runtime/engine-modules/engine-types';
 
@@ -24,7 +23,7 @@ let runStore: Record<string, AiPathRunRecord> = {};
 
 const mockRepo = vi.hoisted(() => {
   const repo: Partial<AiPathRunRepository> = {
-    createRun: vi.fn().mockImplementation((args: AiPathRunCreateInput) => {
+    createRun: vi.fn().mockImplementation((args: any) => {
       const id = args.id || 'mock-run-id';
       const run: AiPathRunRecord = {
         id,
@@ -41,7 +40,7 @@ const mockRepo = vi.hoisted(() => {
         graph: args.graph || null,
         meta: args.meta || {},
         runtimeState: args.runtimeState || null,
-      };
+      } as any;
       runStore[id] = run;
       return Promise.resolve(run);
     }),
@@ -60,13 +59,12 @@ const mockRepo = vi.hoisted(() => {
       .fn()
       .mockImplementation((id: string, statuses: AiPathRunStatus[], data: AiPathRunUpdate) => {
         const run = runStore[id];
-        if (run && statuses.includes(run.status as AiPathRunStatus)) {
+        if (run && statuses.includes(run.status)) {
           runStore[id] = { ...run, ...data, updatedAt: new Date().toISOString() };
           return Promise.resolve(runStore[id]);
         }
         return Promise.resolve(null);
       }),
-    updateRunNode: vi.fn().mockResolvedValue(undefined as any),
     upsertRunNode: vi.fn().mockResolvedValue(undefined as any),
   };
   return repo as AiPathRunRepository;

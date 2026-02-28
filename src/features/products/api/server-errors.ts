@@ -53,7 +53,7 @@ export function withErrorHandling<T extends unknown[]>(handler: (...args: T) => 
     } catch (error: unknown) {
       const requestDiagnostics = extractRequestDiagnostics(args);
       // Centralized error logging
-      await ErrorSystem.captureException(error, {
+      await (ErrorSystem as any).captureException(error, {
         service: 'product-api',
         source: 'products.api.withErrorHandling',
         ...requestDiagnostics,

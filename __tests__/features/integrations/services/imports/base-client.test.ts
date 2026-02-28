@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('@/features/observability/server', () => ({
+vi.mock('@/shared/lib/observability/system-logger', () => ({
   withTransientRecovery: vi.fn(async (operation: () => Promise<unknown>) => operation()),
 }));
 

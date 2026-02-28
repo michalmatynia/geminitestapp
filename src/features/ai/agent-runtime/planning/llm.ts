@@ -346,7 +346,7 @@ export async function buildPlanWithLLM({
           : {}),
     };
   } catch (error) {
-    void ErrorSystem.logWarning('[chatbot][agent][engine] Planner fallback', {
+    void (ErrorSystem as any).logWarning('[chatbot][agent][engine] Planner fallback', {
       runId,
       error,
     });
@@ -504,7 +504,7 @@ export async function buildAdaptivePlanReview({
     }
     return result;
   } catch (error) {
-    void ErrorSystem.logWarning('[chatbot][agent][engine] Planner review fallback', {
+    void (ErrorSystem as any).logWarning('[chatbot][agent][engine] Planner review fallback', {
       ...(runId && { runId }),
       error,
     });
@@ -720,7 +720,7 @@ export async function buildSelfCheckReview({
     }
     return result;
   } catch (error) {
-    void ErrorSystem.logWarning('[chatbot][agent][engine] Self-check fallback', {
+    void (ErrorSystem as any).logWarning('[chatbot][agent][engine] Self-check fallback', {
       ...(runId && { runId }),
       error,
     });
@@ -874,7 +874,7 @@ export async function buildResumePlanReview({
     }
     return result;
   } catch (error) {
-    void ErrorSystem.logWarning('[chatbot][agent][engine] Resume planner fallback', {
+    void (ErrorSystem as any).logWarning('[chatbot][agent][engine] Resume planner fallback', {
       ...(runId && { runId }),
       error,
     });

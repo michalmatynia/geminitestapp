@@ -20,7 +20,7 @@ export async function GET_handler(
   }
 
   if (DEBUG_CHATBOT) {
-    await logSystemEvent({
+    await (logSystemEvent as any)({
       level: 'info',
       message: '[chatbot][sessions][GET:sessionId] Found',
       context: {

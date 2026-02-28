@@ -12,7 +12,7 @@ interface CmsActivityLogInput {
 }
 
 export async function logCmsActivity(input: CmsActivityLogInput): Promise<void> {
-  await ErrorSystem.logInfo(input.description, {
+  await (ErrorSystem as any).logInfo(input.description, {
     service: 'cms',
     event: input.event,
     userId: input.userId,

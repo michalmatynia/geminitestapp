@@ -113,6 +113,15 @@ export function CanvasBoard({
     return 'skeleton' as const;
   }, [view.scale]);
 
+  const shouldIgnoreCanvasPanStart = React.useCallback((target: EventTarget | null): boolean => {
+    if (!(target instanceof Element)) return false;
+    return Boolean(
+      target.closest(
+        '[data-node-body], [data-node-root], [data-port], [data-node-diagnostics-badge], [data-node-action]'
+      )
+    );
+  }, []);
+
   const edgeMetaMap = React.useMemo(
     () => new Map(state.edges.map((edge) => [edge.id, edge])),
     [state.edges]
@@ -159,6 +168,9 @@ export function CanvasBoard({
       },
       onPointerUpNode: (event, nodeId) => {
         state.handlePointerUpNode(nodeId, event);
+      },
+      consumeSuppressedNodeClick: (nodeId) => {
+        return state.consumeSuppressedNodeClick(nodeId);
       },
       onSelectNode: (nodeId, options) => {
         state.handleSelectNode(nodeId, options);
@@ -211,6 +223,7 @@ export function CanvasBoard({
       handleConnectorLeave,
       handleNodeDiagnosticsHover,
       handleNodeDiagnosticsLeave,
+      shouldIgnoreCanvasPanStart,
       onFocusNodeDiagnostics,
     ]
   );
@@ -250,7 +263,10 @@ export function CanvasBoard({
         <div
           ref={canvasRef}
           className='relative h-full w-full touch-none select-none overscroll-none'
-          onPointerDown={handlePanStart}
+          onPointerDown={(event) => {
+            if (shouldIgnoreCanvasPanStart(event.target)) return;
+            handlePanStart(event);
+          }}
           onPointerMove={handlePanMove}
           onPointerUp={handlePanEnd}
           onWheel={handleWheel}

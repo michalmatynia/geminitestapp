@@ -83,7 +83,7 @@ vi.mock('@/features/files/server', () => ({
   getDiskPathFromPublicPath: getDiskPathFromPublicPathMock,
 }));
 
-vi.mock('@/features/observability/server', () => ({
+vi.mock('@/shared/lib/observability/system-logger', () => ({
   logSystemEvent: logSystemEventMock,
 }));
 

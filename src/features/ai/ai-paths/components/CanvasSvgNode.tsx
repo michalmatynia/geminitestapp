@@ -37,6 +37,7 @@ export function CanvasSvgNode({ node }: CanvasSvgNodeProps): React.JSX.Element {
     onPointerDownNode,
     onPointerMoveNode,
     onPointerUpNode,
+    consumeSuppressedNodeClick,
     onSelectNode,
     onOpenNodeConfig,
     openNodeConfigOnSingleClick,
@@ -183,8 +184,9 @@ export function CanvasSvgNode({ node }: CanvasSvgNodeProps): React.JSX.Element {
       : node.title;
   const showNodeAnimations =
     enableNodeAnimations && (detailLevel !== 'skeleton' || isSelected || isPrimarySelected);
-  const handleNodeDoubleClick = (event: React.MouseEvent<SVGGElement | SVGRectElement>): void => {
+  const handleNodeDoubleClick = (event: React.MouseEvent<SVGRectElement>): void => {
     event.stopPropagation();
+    event.preventDefault();
     void onSelectNode(node.id);
     onOpenNodeConfig();
   };
@@ -192,9 +194,9 @@ export function CanvasSvgNode({ node }: CanvasSvgNodeProps): React.JSX.Element {
   return (
     <g
       key={node.id}
+      data-node-root={node.id}
       transform={`translate(${node.position.x} ${node.position.y})`}
       style={{ cursor: 'pointer' }}
-      onDoubleClick={handleNodeDoubleClick}
     >
       {isBlockerProcessing ? (
         <rect
@@ -233,7 +235,15 @@ export function CanvasSvgNode({ node }: CanvasSvgNodeProps): React.JSX.Element {
         onPointerUp={(event: React.PointerEvent<SVGRectElement>) => {
           onPointerUpNode(event, node.id);
         }}
+        onPointerCancel={(event: React.PointerEvent<SVGRectElement>) => {
+          onPointerUpNode(event, node.id);
+        }}
         onClick={(event: React.MouseEvent<SVGRectElement>) => {
+          event.stopPropagation();
+          if (consumeSuppressedNodeClick(node.id)) {
+            event.preventDefault();
+            return;
+          }
           const isToggleSelection = event.shiftKey || event.metaKey || event.ctrlKey;
           void onSelectNode(node.id, {
             toggle: isToggleSelection,
@@ -242,6 +252,7 @@ export function CanvasSvgNode({ node }: CanvasSvgNodeProps): React.JSX.Element {
             onOpenNodeConfig();
           }
         }}
+        onDoubleClick={handleNodeDoubleClick}
       />
 
       <text

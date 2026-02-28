@@ -44,7 +44,7 @@ export async function getBrowserContextSummary(runId: string): Promise<{
     };
   } catch (error) {
     if (DEBUG_CHATBOT) {
-      void ErrorSystem.logWarning('Failed to load browser context', {
+      void (ErrorSystem as any).logWarning('Failed to load browser context', {
         service: 'agent-engine',
         action: 'get-browser-context',
         runId,

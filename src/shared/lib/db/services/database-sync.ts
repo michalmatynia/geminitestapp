@@ -186,7 +186,7 @@ export async function runDatabaseSync(
       collections,
     };
   } catch (error) {
-    await ErrorSystem.captureException(error, {
+    await (ErrorSystem as any).captureException(error, {
       service: 'database-sync',
       direction,
       options,

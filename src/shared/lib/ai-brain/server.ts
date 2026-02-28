@@ -36,6 +36,8 @@ export type BrainAppliedMeta = {
   temperature: number;
   maxTokens: number;
   systemPromptApplied: boolean;
+  modelSelectionSource?: 'node' | 'brain_default';
+  defaultModelId?: string;
   enforced: true;
 };
 
@@ -52,6 +54,17 @@ export type BrainExecutionConfig = {
   brainApplied: BrainAppliedMeta;
 };
 export type BrainModelExecutionConfig = BrainExecutionConfig;
+
+export type AiPathsNodeExecutionInput = {
+  requestedModelId?: string;
+  requestedTemperature?: number;
+  requestedMaxTokens?: number;
+  requestedSystemPrompt?: string;
+  defaultTemperature?: number;
+  defaultMaxTokens?: number;
+  defaultSystemPrompt?: string;
+  runtimeKind?: BrainAppliedMeta['runtimeKind'];
+};
 
 type SettingDoc = { key?: string; value?: string; _id?: string };
 
@@ -261,4 +274,74 @@ export const resolveBrainModelExecutionConfig = async (
   }
 ): Promise<BrainModelExecutionConfig> => {
   return resolveBrainExecutionConfigForCapability(getDefaultCapabilityForFeature(feature), options);
+};
+
+export const resolveAiPathsNodeExecutionConfig = async (
+  options?: AiPathsNodeExecutionInput
+): Promise<BrainExecutionConfig> => {
+  const capability: AiBrainCapabilityKey = 'ai_paths.model';
+  const assignment = await getBrainAssignmentForCapability(capability);
+  const definition = getBrainCapabilityDefinition(capability);
+  const capabilityLabel = definition.label;
+
+  if (!assignment.enabled) {
+    throw configurationError(
+      `${capabilityLabel} is disabled in AI Brain. Enable it in /admin/settings/brain before running this action.`
+    );
+  }
+
+  if (assignment.provider !== 'model') {
+    throw configurationError(
+      `${capabilityLabel} requires AI Brain provider=Model in this release. Update /admin/settings/brain to continue.`
+    );
+  }
+
+  const defaultModelId = assignment.modelId.trim();
+  const requestedModelId = options?.requestedModelId?.trim() || '';
+  const modelId = requestedModelId || defaultModelId;
+  if (!modelId) {
+    throw configurationError(
+      `${capabilityLabel} has no model assigned in AI Brain, and this Model node did not select one. Set a default model in AI Brain or choose a model on the node.`
+    );
+  }
+
+  const temperature =
+    options?.requestedTemperature ?? assignment.temperature ?? options?.defaultTemperature ?? 0.7;
+  const maxTokens =
+    options?.requestedMaxTokens ?? assignment.maxTokens ?? options?.defaultMaxTokens ?? 800;
+  const requestedSystemPrompt = options?.requestedSystemPrompt?.trim() || '';
+  const systemPrompt =
+    requestedSystemPrompt ||
+    assignment.systemPrompt?.trim() ||
+    options?.defaultSystemPrompt ||
+    'You are an AI assistant.';
+  const modelSelectionSource: BrainAppliedMeta['modelSelectionSource'] = requestedModelId
+    ? 'node'
+    : 'brain_default';
+
+  return {
+    assignment,
+    capability,
+    feature: definition.feature,
+    provider: 'model',
+    agentId: '',
+    modelId,
+    temperature,
+    maxTokens,
+    systemPrompt,
+    brainApplied: {
+      capability,
+      feature: definition.feature,
+      modelFamily: definition.modelFamily,
+      runtimeKind: options?.runtimeKind ?? 'chat',
+      provider: 'model',
+      modelId,
+      temperature,
+      maxTokens,
+      systemPromptApplied: systemPrompt.trim().length > 0,
+      modelSelectionSource,
+      defaultModelId,
+      enforced: true,
+    },
+  };
 };

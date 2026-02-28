@@ -20,7 +20,7 @@ vi.mock('next/navigation', () => ({
 
 // Mock SystemLogsContext (override global mock from vitest.setup.ts if needed)
 vi.mock('@/features/observability/context/SystemLogsContext', async (importOriginal) => {
-  const actual = (await importOriginal()) as any;
+  const actual = (await importOriginal());
   return {
     ...actual,
     SystemLogsProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
@@ -45,7 +45,7 @@ vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
 
 // Mock useToast and UI components
 vi.mock('@/shared/ui', async (importOriginal) => {
-  const actual = (await importOriginal()) as any;
+  const actual = (await importOriginal());
   return {
     ...actual,
     useToast: vi.fn(() => ({ toast: vi.fn() })),
@@ -179,14 +179,18 @@ describe('SystemLogsPage', () => {
 
     // Default context mock
     vi.mocked(useSystemLogsContext).mockReturnValue({
-      logsQuery: { isPending: false, isFetching: false, refetch: vi.fn() } as any,
-      metricsQuery: { isPending: false, isFetching: false, refetch: vi.fn() } as any,
-      insightsQuery: { isLoading: false, data: { insights: [] } } as any,
-      mongoDiagnosticsQuery: { isLoading: false, data: { collections: [] }, refetch: vi.fn() } as any,
-      runInsightMutation: { isPending: false, mutate: vi.fn() } as any,
-      interpretLogMutation: { isPending: false } as any,
-      clearLogsMutation: { isPending: false } as any,
-      rebuildIndexesMutation: { isPending: false } as any,
+      logsQuery: { isPending: false, isFetching: false, refetch: vi.fn() } as unknown as any,
+      metricsQuery: { isPending: false, isFetching: false, refetch: vi.fn() } as unknown as any,
+      insightsQuery: { isLoading: false, data: { insights: [] } } as unknown as any,
+      mongoDiagnosticsQuery: {
+        isLoading: false,
+        data: { collections: [] },
+        refetch: vi.fn(),
+      } as unknown as any,
+      runInsightMutation: { isPending: false, mutate: vi.fn() } as unknown as any,
+      interpretLogMutation: { isPending: false } as unknown as any,
+      clearLogsMutation: { isPending: false } as unknown as any,
+      rebuildIndexesMutation: { isPending: false } as unknown as any,
       confirmAction: mockConfirmAction,
       ConfirmationModal: () => null,
       handleClearLogs: vi.fn(),

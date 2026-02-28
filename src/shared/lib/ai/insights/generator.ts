@@ -384,7 +384,7 @@ const withTransientModelRetry = async <T>(
         throw error;
       }
       const delayMs = AI_INSIGHTS_MODEL_RETRY_BASE_MS * Math.pow(2, attempt);
-      await ErrorSystem.logWarning('AI insights model call failed; retrying transient error.', {
+      await (ErrorSystem as any).logWarning('AI insights model call failed; retrying transient error.', {
         service: 'ai-insights',
         context: {
           provider: context.provider,
@@ -629,7 +629,7 @@ export const generateAnalyticsInsight = async (params: {
   }
 
   if (parsed.status !== 'ok' || parsed.warnings.length > 0) {
-    await ErrorSystem.logWarning('AI analytics insight reported warnings.', {
+    await (ErrorSystem as any).logWarning('AI analytics insight reported warnings.', {
       service: 'ai-insights',
       context: {
         type: 'analytics',
@@ -637,7 +637,7 @@ export const generateAnalyticsInsight = async (params: {
       },
     });
   } else {
-    await ErrorSystem.logInfo('AI analytics insight completed.', {
+    await (ErrorSystem as any).logInfo('AI analytics insight completed.', {
       service: 'ai-insights',
       context: { type: 'analytics' },
     });
@@ -715,7 +715,7 @@ export const generateLogsInsight = async (params: {
   }
 
   if (parsed.status !== 'ok' || parsed.warnings.length > 0) {
-    await ErrorSystem.logWarning('AI log insight reported warnings.', {
+    await (ErrorSystem as any).logWarning('AI log insight reported warnings.', {
       service: 'ai-insights',
       context: {
         type: 'logs',
@@ -723,7 +723,7 @@ export const generateLogsInsight = async (params: {
       },
     });
   } else {
-    await ErrorSystem.logInfo('AI log insight completed.', {
+    await (ErrorSystem as any).logInfo('AI log insight completed.', {
       service: 'ai-insights',
       context: { type: 'logs' },
     });
@@ -803,7 +803,7 @@ export const generateRuntimeAnalyticsInsight = async (params: {
       warnings: parsed.warnings,
       recommendations: parsed.recommendations,
     });
-    await ErrorSystem.logWarning('AI runtime analytics insight reported warnings.', {
+    await (ErrorSystem as any).logWarning('AI runtime analytics insight reported warnings.', {
       service: 'ai-insights',
       context: {
         type: 'runtime_analytics',
@@ -811,7 +811,7 @@ export const generateRuntimeAnalyticsInsight = async (params: {
       },
     });
   } else {
-    await ErrorSystem.logInfo('AI runtime analytics insight completed.', {
+    await (ErrorSystem as any).logInfo('AI runtime analytics insight completed.', {
       service: 'ai-insights',
       context: { type: 'runtime_analytics' },
     });

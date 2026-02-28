@@ -23,7 +23,7 @@ async function GET_handler(
     throw notFoundError('Snapshot not found.');
   }
   if (DEBUG_CHATBOT) {
-    void ErrorSystem.logInfo('Snapshot loaded', {
+    void (ErrorSystem as any).logInfo('Snapshot loaded', {
       service: 'agent-api',
       snapshotId,
       durationMs: Date.now() - requestStart,

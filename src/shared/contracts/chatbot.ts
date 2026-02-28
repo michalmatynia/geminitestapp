@@ -438,6 +438,31 @@ export const agentSettingsPayloadSchema = z.object({
 export type AgentSettingsPayloadDto = z.infer<typeof agentSettingsPayloadSchema>;
 export type AgentSettingsPayload = AgentSettingsPayloadDto;
 
+export const DEFAULT_AGENT_SETTINGS: AgentSettingsPayload = {
+  agentBrowser: 'chromium',
+  runHeadless: true,
+  ignoreRobotsTxt: false,
+  requireHumanApproval: false,
+  memoryValidationModel: '',
+  plannerModel: '',
+  selfCheckModel: '',
+  extractionValidationModel: '',
+  toolRouterModel: '',
+  loopGuardModel: '',
+  approvalGateModel: '',
+  memorySummarizationModel: '',
+  selectorInferenceModel: '',
+  outputNormalizationModel: '',
+  maxSteps: 12,
+  maxStepAttempts: 2,
+  maxReplanCalls: 2,
+  replanEverySteps: 2,
+  maxSelfChecks: 4,
+  loopGuardThreshold: 2,
+  loopBackoffBaseMs: 2000,
+  loopBackoffMaxMs: 12000,
+};
+
 /**
  * Legacy support / Additional types
  */

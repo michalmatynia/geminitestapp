@@ -2,7 +2,7 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 
-import { PRODUCT_SIMPLE_PARAMETERS_SETTING_KEY } from '@/features/products/constants';
+import { PRODUCT_SIMPLE_PARAMETERS_SETTING_KEY } from '@/shared/lib/products/constants';
 import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 import type { ProductSimpleParameter } from '@/shared/contracts/products';
 import { conflictError, notFoundError } from '@/shared/errors/app-error';

@@ -5,8 +5,8 @@ const captureException = async (
   context: { source: string; context?: Record<string, unknown>; critical?: boolean }
 ): Promise<void> => {
   try {
-    const mod = await import('@/features/observability/server');
-    await mod.ErrorSystem.captureException(error, {
+    const mod = await import('@/shared/lib/observability/system-logger');
+    await  mod.ErrorSystem.captureException(error, {
       service: context.source,
       ...context.context,
       critical: context.critical,

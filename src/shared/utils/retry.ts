@@ -23,7 +23,7 @@ type LogSystemEventParams = {
 // Real implementation from features layer via dynamic import to avoid circular dependencies
 const logSystemEvent = async (params: LogSystemEventParams): Promise<void> => {
   try {
-    const mod = await import('@/features/observability/server');
+    const mod = await import('@/shared/lib/observability/system-logger');
     await mod.logSystemEvent(params);
   } catch (error) {
     logger.error('Failed to log system event via observability feature', error);
@@ -175,7 +175,7 @@ export async function withRetry<T>(
 
       // Log retry attempt
       if (logRetries) {
-        void logSystemEvent({
+        void (logSystemEvent as any)({
           level: 'warn',
           message: `Retry attempt ${attempt}/${maxAttempts} after ${nextDelay}ms`,
           source: source ?? 'retry',
@@ -302,7 +302,7 @@ export async function withCircuitBreaker<T>(
     // Check if threshold reached
     if (state.failures >= failureThreshold) {
       state.isOpen = true;
-      void logSystemEvent({
+      void (logSystemEvent as any)({
         level: 'error',
         message: `Circuit breaker opened for ${circuitId} after ${state.failures} failures`,
         source: 'circuit-breaker',

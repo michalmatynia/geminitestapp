@@ -1013,9 +1013,11 @@ export function useGenerationToolbarHandlers(
         };
       };
       const preferredObjectLayoutMode: ImageStudioCenterMode =
-        centerMode === 'client_alpha_bbox' || centerMode === 'client_object_layout_v1'
-          ? 'client_object_layout_v1'
-          : 'server_object_layout_v1';
+        centerMode === 'client_white_bg_bbox'
+          ? centerMode
+          : centerMode === 'client_alpha_bbox' || centerMode === 'client_object_layout_v1'
+            ? 'client_object_layout_v1'
+            : 'server_object_layout_v1';
 
       const layoutPayload =
         trigger === 'object_layout' ? centerLayoutPayload : autoScaleLayoutPayload;

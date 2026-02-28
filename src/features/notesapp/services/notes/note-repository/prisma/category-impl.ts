@@ -223,7 +223,7 @@ export const deleteCategory = async (id: string, recursive?: boolean): Promise<b
     }
     return true;
   } catch (error) {
-    const { logSystemError } = await import('@/features/observability/server');
+    const { logSystemError } = await import('@/shared/lib/observability/system-logger');
     await logSystemError({
       message: '[PrismaNoteRepository][deleteCategory] Error',
       error,

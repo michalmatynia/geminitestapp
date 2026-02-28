@@ -198,7 +198,7 @@ const acquireRedisThrottle = async (
     );
     return result === 'OK';
   } catch (error) {
-    void ErrorSystem.captureException(error, {
+    void (ErrorSystem as any).captureException(error, {
       service: 'ai-paths-slo-notifier',
       action: 'acquireRedisThrottle',
       signature,
@@ -213,7 +213,7 @@ const releaseRedisThrottle = async (signature: string): Promise<void> => {
   try {
     await redis.del(getThrottleKey(signature));
   } catch (error) {
-    void ErrorSystem.captureException(error, {
+    void (ErrorSystem as any).captureException(error, {
       service: 'ai-paths-slo-notifier',
       action: 'releaseRedisThrottle',
       signature,
@@ -365,7 +365,7 @@ export const notifyAiPathsSloBreach = async (
 
     if (!res.ok) {
       await releaseThrottleSlot(signature, throttleState.storage);
-      void ErrorSystem.logWarning('[ai-paths-slo-notifier] Webhook failed', {
+      void (ErrorSystem as any).logWarning('[ai-paths-slo-notifier] Webhook failed', {
         service: 'ai-paths-slo-notifier',
         status: res.status,
         statusText: res.statusText,
@@ -389,7 +389,7 @@ export const notifyAiPathsSloBreach = async (
     if (signature && throttleStorage !== 'none') {
       await releaseThrottleSlot(signature, throttleStorage);
     }
-    void ErrorSystem.captureException(error, {
+    void (ErrorSystem as any).captureException(error, {
       service: 'ai-paths-slo-notifier',
       action: 'notifyAiPathsSloBreach',
     });

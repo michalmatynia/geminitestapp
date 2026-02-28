@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import type { AiNode, Edge, NodeDefinition, RuntimeState } from '@/shared/lib/ai-paths';
 import {
   createNodeInstanceId,
@@ -19,18 +19,40 @@ export interface UseCanvasInteractionsNodesValue {
   handlePointerDownNode: (event: React.PointerEvent<Element>, nodeId: string) => Promise<void>;
   handlePointerMoveNode: (event: React.PointerEvent<Element>, nodeId: string) => void;
   handlePointerUpNode: (event: React.PointerEvent<Element>, nodeId: string) => void;
+  consumeSuppressedNodeClick: (nodeId: string) => boolean;
   handleSelectNode: (nodeId: string, options?: HandleSelectNodeOptions) => Promise<void>;
   handleDeleteSelectedNode: () => void;
   handleDragStart: (event: React.DragEvent<HTMLDivElement>, node: NodeDefinition) => void;
   handleDragOver: (event: React.DragEvent<HTMLDivElement>) => void;
   handleDrop: (event: React.DragEvent<HTMLDivElement>) => void;
   rafIdRef: React.MutableRefObject<number | null>;
-  dragSelectionRef: React.MutableRefObject<{
-    basePositions: Map<string, { x: number; y: number }>;
-    anchorCanvasX: number;
-    anchorCanvasY: number;
-  } | null>;
+  dragSelectionRef: React.MutableRefObject<DragSelectionState | null>;
 }
+
+const NODE_DRAG_START_THRESHOLD_PX = 4;
+
+type DragSelectionState = {
+  basePositions: Map<string, { x: number; y: number }>;
+  anchorCanvasX: number;
+  anchorCanvasY: number;
+};
+
+type DragCandidateState = {
+  nodeId: string;
+  pointerId: number;
+  startClientX: number;
+  startClientY: number;
+  offsetX: number;
+  offsetY: number;
+  dragSelection: DragSelectionState | null;
+};
+
+type ActiveDragSessionState = {
+  nodeId: string;
+  pointerId: number;
+  offsetX: number;
+  offsetY: number;
+};
 
 export function useCanvasInteractionsNodes({
   nodes,
@@ -113,12 +135,21 @@ export function useCanvasInteractionsNodes({
   toast: Toast;
 }): UseCanvasInteractionsNodesValue {
   const pendingDragRef = useRef<{ nodeId: string; x: number; y: number } | null>(null);
-  const dragSelectionRef = useRef<{
-    basePositions: Map<string, { x: number; y: number }>;
-    anchorCanvasX: number;
-    anchorCanvasY: number;
-  } | null>(null);
+  const dragSelectionRef = useRef<DragSelectionState | null>(null);
+  const dragCandidateRef = useRef<DragCandidateState | null>(null);
+  const activeDragSessionRef = useRef<ActiveDragSessionState | null>(null);
+  const suppressedClickNodeIdRef = useRef<string | null>(null);
   const rafIdRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      pendingDragRef.current = null;
+      dragSelectionRef.current = null;
+      dragCandidateRef.current = null;
+      activeDragSessionRef.current = null;
+      suppressedClickNodeIdRef.current = null;
+    };
+  }, []);
 
   const handlePointerDownNode = useCallback(
     async (event: React.PointerEvent<Element>, nodeId: string): Promise<void> => {
@@ -157,6 +188,7 @@ export function useCanvasInteractionsNodes({
         selectEdge(null);
       }
 
+      let dragSelection: DragSelectionState | null = null;
       if (shouldGroupDrag) {
         const basePositions = new Map<string, { x: number; y: number }>();
         nodes.forEach((item: AiNode): void => {
@@ -166,16 +198,24 @@ export function useCanvasInteractionsNodes({
             y: item.position.y,
           });
         });
-        dragSelectionRef.current = {
+        dragSelection = {
           basePositions,
           anchorCanvasX: canvasX,
           anchorCanvasY: canvasY,
         };
-      } else {
-        dragSelectionRef.current = null;
       }
-
-      startDrag(nodeId, canvasX - node.position.x, canvasY - node.position.y);
+      dragSelectionRef.current = null;
+      dragCandidateRef.current = {
+        nodeId,
+        pointerId,
+        startClientX: clientX,
+        startClientY: clientY,
+        offsetX: canvasX - node.position.x,
+        offsetY: canvasY - node.position.y,
+        dragSelection,
+      };
+      activeDragSessionRef.current = null;
+      suppressedClickNodeIdRef.current = null;
     },
     [
       confirmNodeSwitch,
@@ -185,7 +225,6 @@ export function useCanvasInteractionsNodes({
       selectEdge,
       selectedNodeIdSet,
       setNodeSelection,
-      startDrag,
       stopViewAnimation,
       updateLastPointerCanvasPosFromClient,
     ]
@@ -193,11 +232,45 @@ export function useCanvasInteractionsNodes({
 
   const handlePointerMoveNode = useCallback(
     (event: React.PointerEvent<Element>, nodeId: string): void => {
-      if (dragState?.nodeId !== nodeId) return;
       const pointerCanvas = updateLastPointerCanvasPosFromClient(event.clientX, event.clientY);
       if (!pointerCanvas) return;
       const canvasX = pointerCanvas.x;
       const canvasY = pointerCanvas.y;
+      let activeDragSession =
+        activeDragSessionRef.current?.nodeId === nodeId &&
+        activeDragSessionRef.current.pointerId === event.pointerId
+          ? activeDragSessionRef.current
+          : null;
+
+      if (!activeDragSession && dragState?.nodeId !== nodeId) {
+        const dragCandidate = dragCandidateRef.current;
+        if (
+          dragCandidate?.nodeId !== nodeId ||
+          dragCandidate?.pointerId !== event.pointerId
+        ) {
+          return;
+        }
+        const movedDistance = Math.hypot(
+          event.clientX - dragCandidate.startClientX,
+          event.clientY - dragCandidate.startClientY
+        );
+        if (movedDistance < NODE_DRAG_START_THRESHOLD_PX) return;
+        dragSelectionRef.current = dragCandidate.dragSelection;
+        activeDragSession = {
+          nodeId,
+          pointerId: event.pointerId,
+          offsetX: dragCandidate.offsetX,
+          offsetY: dragCandidate.offsetY,
+        };
+        activeDragSessionRef.current = activeDragSession;
+        dragCandidateRef.current = null;
+        startDrag(nodeId, dragCandidate.offsetX, dragCandidate.offsetY);
+      }
+
+      const activeOffsetX = activeDragSession?.offsetX ?? dragState?.offsetX;
+      const activeOffsetY = activeDragSession?.offsetY ?? dragState?.offsetY;
+      if (activeOffsetX == null || activeOffsetY == null) return;
+
       const dragSelection = dragSelectionRef.current;
       if (dragSelection && dragSelection.basePositions.size > 1) {
         const deltaX = canvasX - dragSelection.anchorCanvasX;
@@ -222,13 +295,13 @@ export function useCanvasInteractionsNodes({
         );
         return;
       }
-      const nextX = Math.min(
-        Math.max(canvasX - dragState.offsetX, 16),
-        2000 - 200 - 16 // CANVAS_WIDTH - NODE_WIDTH - 16
-      );
       const nextY = Math.min(
-        Math.max(canvasY - dragState.offsetY, 16),
+        Math.max(canvasY - activeOffsetY, 16),
         2000 - 100 - 16 // CANVAS_HEIGHT - NODE_MIN_HEIGHT - 16
+      );
+      const nextX = Math.min(
+        Math.max(canvasX - activeOffsetX, 16),
+        2000 - 200 - 16 // CANVAS_WIDTH - NODE_WIDTH - 16
       );
 
       // RAF throttling
@@ -238,18 +311,33 @@ export function useCanvasInteractionsNodes({
           if (pendingDragRef.current) {
             const { nodeId: id, x, y } = pendingDragRef.current;
             updateNode(id, { position: { x, y } });
+            pendingDragRef.current = null;
           }
           rafIdRef.current = null;
         });
       }
     },
-    [dragState, setNodes, updateLastPointerCanvasPosFromClient, updateNode]
+    [dragState, setNodes, startDrag, updateLastPointerCanvasPosFromClient, updateNode]
   );
 
   const handlePointerUpNode = useCallback(
     (event: React.PointerEvent<Element>, nodeId: string): void => {
-      if (dragState?.nodeId !== nodeId) return;
+      const dragCandidate = dragCandidateRef.current;
+      const isPendingClickOnlyInteraction =
+        dragCandidate?.nodeId === nodeId && dragCandidate.pointerId === event.pointerId;
+      const isActiveDragInteraction =
+        (activeDragSessionRef.current?.nodeId === nodeId &&
+          activeDragSessionRef.current.pointerId === event.pointerId) ||
+        dragState?.nodeId === nodeId;
+
+      if (!isPendingClickOnlyInteraction && !isActiveDragInteraction) return;
       releasePointerCaptureSafe(getPointerCaptureTarget(event), event.pointerId);
+      dragCandidateRef.current = null;
+
+      if (!isActiveDragInteraction) {
+        dragSelectionRef.current = null;
+        return;
+      }
 
       // Flush any pending RAF drag update
       if (rafIdRef.current !== null) {
@@ -262,11 +350,19 @@ export function useCanvasInteractionsNodes({
         pendingDragRef.current = null;
       }
 
+      activeDragSessionRef.current = null;
       dragSelectionRef.current = null;
+      suppressedClickNodeIdRef.current = nodeId;
       endDrag();
     },
     [dragState, endDrag, updateNode]
   );
+
+  const consumeSuppressedNodeClick = useCallback((nodeId: string): boolean => {
+    if (suppressedClickNodeIdRef.current !== nodeId) return false;
+    suppressedClickNodeIdRef.current = null;
+    return true;
+  }, []);
 
   const handleSelectNode = useCallback(
     async (nodeId: string, options?: HandleSelectNodeOptions): Promise<void> => {
@@ -477,6 +573,7 @@ export function useCanvasInteractionsNodes({
     handlePointerDownNode,
     handlePointerMoveNode,
     handlePointerUpNode,
+    consumeSuppressedNodeClick,
     handleSelectNode,
     handleDeleteSelectedNode,
     handleDragStart,

@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { Db } from 'mongodb';
 
 import {
   createSystemLog,
@@ -50,18 +51,18 @@ describe('system-log-repository', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    (getMongoDb as any).mockResolvedValue(mockMongoDb);
+    vi.mocked(getMongoDb).mockResolvedValue(mockMongoDb as unknown as Db);
   });
 
   describe('createSystemLog', () => {
     it('should create a log using Prisma when provider is prisma', async () => {
-      (getAppDbProvider as any).mockResolvedValue('prisma');
-      (prisma.systemLog.create as any).mockResolvedValue({
+      vi.mocked(getAppDbProvider).mockResolvedValue('prisma');
+      vi.mocked(prisma.systemLog.create).mockResolvedValue({
         id: '1',
         level: 'info',
         message: 'test',
         createdAt: new Date(),
-      });
+      } as any);
 
       await createSystemLog({ message: 'test', level: 'info' });
 
@@ -69,7 +70,7 @@ describe('system-log-repository', () => {
     });
 
     it('should create a log using MongoDB when provider is mongodb', async () => {
-      (getAppDbProvider as any).mockResolvedValue('mongodb');
+      vi.mocked(getAppDbProvider).mockResolvedValue('mongodb');
 
       await createSystemLog({ message: 'test', level: 'info' });
 
@@ -79,9 +80,9 @@ describe('system-log-repository', () => {
 
   describe('listSystemLogs', () => {
     it('should list logs using Prisma when provider is prisma', async () => {
-      (getAppDbProvider as any).mockResolvedValue('prisma');
-      (prisma.systemLog.count as any).mockResolvedValue(10);
-      (prisma.systemLog.findMany as any).mockResolvedValue([]);
+      vi.mocked(getAppDbProvider).mockResolvedValue('prisma');
+      vi.mocked(prisma.systemLog.count).mockResolvedValue(10);
+      vi.mocked(prisma.systemLog.findMany).mockResolvedValue([]);
 
       const result = await listSystemLogs({});
 
@@ -90,7 +91,7 @@ describe('system-log-repository', () => {
     });
 
     it('should list logs using MongoDB when provider is mongodb', async () => {
-      (getAppDbProvider as any).mockResolvedValue('mongodb');
+      vi.mocked(getAppDbProvider).mockResolvedValue('mongodb');
       mockMongoCollection.countDocuments.mockResolvedValue(5);
       mockMongoCollection.toArray.mockResolvedValue([]);
 
@@ -103,9 +104,9 @@ describe('system-log-repository', () => {
 
   describe('getSystemLogMetrics', () => {
     it('should get metrics using Prisma', async () => {
-      (getAppDbProvider as any).mockResolvedValue('prisma');
-      (prisma.systemLog.count as any).mockResolvedValue(100);
-      (prisma.systemLog.groupBy as any).mockResolvedValue([]);
+      vi.mocked(getAppDbProvider).mockResolvedValue('prisma');
+      vi.mocked(prisma.systemLog.count).mockResolvedValue(100);
+      vi.mocked(prisma.systemLog.groupBy).mockResolvedValue([]);
 
       const result = await getSystemLogMetrics({});
 
@@ -116,8 +117,8 @@ describe('system-log-repository', () => {
 
   describe('clearSystemLogs', () => {
     it('should clear logs using Prisma', async () => {
-      (getAppDbProvider as any).mockResolvedValue('prisma');
-      (prisma.systemLog.deleteMany as any).mockResolvedValue({ count: 50 });
+      vi.mocked(getAppDbProvider).mockResolvedValue('prisma');
+      vi.mocked(prisma.systemLog.deleteMany).mockResolvedValue({ count: 50 });
 
       const result = await clearSystemLogs();
 

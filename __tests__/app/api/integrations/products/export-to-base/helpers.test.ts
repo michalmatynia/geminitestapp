@@ -35,7 +35,7 @@ vi.mock('@/features/products/server', () => ({
   })),
 }));
 
-vi.mock('@/features/observability/server', () => ({
+vi.mock('@/shared/lib/observability/system-logger', () => ({
   ErrorSystem: {
     logInfo: vi.fn(async () => undefined),
     logWarning: vi.fn(async () => undefined),

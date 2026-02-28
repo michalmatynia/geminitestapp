@@ -25,7 +25,7 @@ vi.mock('@/shared/lib/integrations/server', () => ({
   setImportParameterCache: setImportParameterCacheMock,
 }));
 
-vi.mock('@/features/observability/server', () => ({
+vi.mock('@/shared/lib/observability/system-logger', () => ({
   ErrorSystem: {
     captureException: vi.fn(),
   },

@@ -521,7 +521,7 @@ export async function postBaseImportParametersHandler(
       values,
     });
   } catch (cacheError) {
-    void ErrorSystem.captureException(cacheError, {
+    void (ErrorSystem as any).captureException(cacheError, {
       service: 'api/integrations/imports/base/parameters',
       inventoryId: data.inventoryId,
       productId: sampleProductId,

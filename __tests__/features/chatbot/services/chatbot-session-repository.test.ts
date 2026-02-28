@@ -25,7 +25,7 @@ vi.mock('@/shared/lib/db/mongo-client', () => ({
 }));
 
 vi.mock('mongodb', async (importOriginal) => {
-  const actual = (await importOriginal()) as typeof import('mongodb');
+  const actual = (await importOriginal());
   class MockObjectId {
     id: string;
     constructor(id: string) {

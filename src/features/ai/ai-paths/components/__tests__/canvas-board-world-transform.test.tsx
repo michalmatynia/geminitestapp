@@ -1,5 +1,5 @@
 import React from 'react';
-import { render } from '@testing-library/react';
+import { fireEvent, render } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AiNode } from '@/shared/lib/ai-paths';
@@ -47,6 +47,19 @@ const connectorInfoStub: ConnectorInfo = {
   nodeOutputs: undefined,
 };
 
+const buildNode = (patch: Partial<AiNode> = {}): AiNode =>
+  ({
+    id: 'node-1',
+    type: 'template',
+    title: 'Node 1',
+    description: '',
+    inputs: [],
+    outputs: [],
+    position: { x: 24, y: 24 },
+    data: {},
+    ...patch,
+  }) as AiNode;
+
 const buildState = (): CanvasBoardState =>
   ({
     view: { x: 128, y: -64, scale: 1.25 },
@@ -93,6 +106,7 @@ const buildState = (): CanvasBoardState =>
     handlePointerDownNode: noop,
     handlePointerMoveNode: noop,
     handlePointerUpNode: noop,
+    consumeSuppressedNodeClick: () => false,
     handlePanStart: noop as unknown as (event: React.PointerEvent) => void,
     handlePanMove: noop as unknown as (event: React.PointerEvent) => void,
     handlePanEnd: noop as unknown as (event: React.PointerEvent) => void,
@@ -168,5 +182,28 @@ describe('CanvasBoard world transform', () => {
     const worldGroup = container.querySelector('[data-canvas-world="true"]');
     expect(worldGroup).toBeTruthy();
     expect(worldGroup?.getAttribute('transform')).toBe('translate(128 -64) scale(1.25)');
+  });
+
+  it('does not start canvas pan when node body pointer events bubble to the canvas root', () => {
+    const handlePanStart = vi.fn();
+    const handlePointerDownNode = vi.fn();
+    const node = buildNode();
+    useCanvasBoardStateMock.mockReturnValue({
+      ...buildState(),
+      nodes: [node],
+      nodeById: new Map([[node.id, node]]),
+      handlePanStart,
+      handlePointerDownNode,
+    });
+
+    const { container } = render(<CanvasBoard />);
+    const nodeBody = container.querySelector('[data-node-body="node-1"]');
+    expect(nodeBody).toBeTruthy();
+    if (!nodeBody) return;
+
+    fireEvent.pointerDown(nodeBody, { clientX: 180, clientY: 120 });
+
+    expect(handlePointerDownNode).toHaveBeenCalledTimes(1);
+    expect(handlePanStart).not.toHaveBeenCalled();
   });
 });

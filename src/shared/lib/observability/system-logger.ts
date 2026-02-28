@@ -441,9 +441,9 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
         });
 
         if (critical) {
-          const notifyCriticalError = await loadNotifyCriticalError();
-          if (notifyCriticalError) {
-            await notifyCriticalError(created, critical);
+          const notifyFn = await loadNotifyCriticalError();
+          if (notifyFn) {
+            await notifyFn(created, critical);
           }
         }
       } catch (err) {
@@ -456,6 +456,8 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
 }
 
 export async function logSystemError(input: Omit<SystemLogInput, 'level'>): Promise<void> {
+   
+   
   await logSystemEvent({ ...input, level: 'error' });
 }
 

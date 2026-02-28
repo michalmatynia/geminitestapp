@@ -11,7 +11,7 @@ export const findAuthUserByEmail = async (email: string) => {
   try {
     return await repoFindByEmail(email);
   } catch (error) {
-    await ErrorSystem.captureException(error, {
+    await (ErrorSystem as any).captureException(error, {
       service: 'auth-user-service',
       action: 'findAuthUserByEmail',
       email,
@@ -24,7 +24,7 @@ export const findAuthUserById = async (userId: string) => {
   try {
     return await repoFindById(userId);
   } catch (error) {
-    await ErrorSystem.captureException(error, {
+    await (ErrorSystem as any).captureException(error, {
       service: 'auth-user-service',
       action: 'findAuthUserById',
       userId,

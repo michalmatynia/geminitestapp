@@ -30,14 +30,15 @@ export {
 export { startTraderaRelistSchedulerQueue } from '@/shared/lib/integrations/workers/traderaRelistSchedulerQueue';
 
 export {
-  startProductAiJobQueue,
-  getQueueStatus,
+  getQueueHealth as getGenericQueueStatus,
   processSingleJob as processGenericQueueJob,
 } from '@/shared/lib/queue';
 
 export { 
+  startProductAiJobQueue,
   enqueueProductAiJobToQueue,
-  processProductAiJob
+  processProductAiJob,
+  getQueueStatus,
 } from '@/features/products/workers/productAiQueue';
 
 export { startProductSyncSchedulerQueue } from '@/shared/lib/product-sync/workers/productSyncSchedulerQueue';

@@ -47,7 +47,7 @@ vi.mock('@/features/ai/chatbot/server', () => ({
   },
 }));
 
-vi.mock('@/features/observability/server', () => ({
+vi.mock('@/shared/lib/observability/system-logger', () => ({
   logSystemError: vi.fn(),
   logSystemEvent: vi.fn(),
 }));

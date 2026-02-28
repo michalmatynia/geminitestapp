@@ -1,6 +1,6 @@
 import { getProductAiJobRepository } from './product-ai-job-repository';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
-import { productService } from '@/features/products/server';
+import { productService } from './productService';
 import type { ProductAiJobRecord, ProductAiJobUpdate } from '@/shared/contracts/jobs';
 import type { ProductAiJobType, ProductAiJob, ProductAiJobResult } from '@/shared/contracts/jobs';
 import { invalidStateError, notFoundError } from '@/shared/errors/app-error';
@@ -118,8 +118,8 @@ export async function enqueueProductAiJob(
   payload: unknown
 ): Promise<ProductAiJob> {
   try {
-    const { ErrorSystem } = await import('@/features/observability/server');
-    void ErrorSystem.logInfo('[enqueueProductAiJob] Creating job', {
+    const { ErrorSystem } = await import('@/shared/lib/observability/system-logger');
+    void (ErrorSystem as any).logInfo('[enqueueProductAiJob] Creating job', {
       service: 'product-ai-service',
       productId,
       context: {
@@ -129,7 +129,7 @@ export async function enqueueProductAiJob(
     });
   } catch {
     // Fallback to console if logging fails
-    void logSystemEvent({
+    void (logSystemEvent as any)({
       level: 'info',
       source: LOG_SOURCE,
       message: 'Creating job',
@@ -151,15 +151,15 @@ export async function enqueueProductAiJob(
       );
       if (reusable) {
         try {
-          const { ErrorSystem } = await import('@/features/observability/server');
-          void ErrorSystem.logInfo('[enqueueProductAiJob] Reusing graph_model job by cache key', {
+          const { ErrorSystem } = await import('@/shared/lib/observability/system-logger');
+          void (ErrorSystem as any).logInfo('[enqueueProductAiJob] Reusing graph_model job by cache key', {
             service: 'product-ai-service',
             productId,
             jobId: reusable.id,
             context: { type, cacheKey, status: reusable.status },
           });
         } catch {
-          void logSystemEvent({
+          void (logSystemEvent as any)({
             level: 'info',
             source: LOG_SOURCE,
             message: 'Reusing graph_model job',
@@ -174,15 +174,15 @@ export async function enqueueProductAiJob(
   const jobRecord = await jobRepository.createJob(productId, type, payload);
 
   try {
-    const { ErrorSystem } = await import('@/features/observability/server');
-    void ErrorSystem.logInfo('[enqueueProductAiJob] Job created', {
+    const { ErrorSystem } = await import('@/shared/lib/observability/system-logger');
+    void (ErrorSystem as any).logInfo('[enqueueProductAiJob] Job created', {
       service: 'product-ai-service',
       productId,
       jobId: jobRecord.id,
       context: { type },
     });
   } catch {
-    void logSystemEvent({
+    void (logSystemEvent as any)({
       level: 'info',
       source: LOG_SOURCE,
       message: 'Job created',
@@ -233,7 +233,7 @@ export async function getProductAiJobs(
           return { id, product: isRecord(product) ? product : null };
         } catch (error: unknown) {
           try {
-            const { logSystemError } = await import('@/features/observability/server');
+            const { logSystemError } = await import('@/shared/lib/observability/system-logger');
             await logSystemError({
               message: '[product-ai-service] Failed to fetch product in getProductAiJobs',
               error,
@@ -241,7 +241,7 @@ export async function getProductAiJobs(
               context: { action: 'getProductAiJobs', productId: id },
             });
           } catch (logError) {
-            void logSystemEvent({
+            void (logSystemEvent as any)({
               level: 'error',
               source: LOG_SOURCE,
               message: 'Failed to fetch product in getProductAiJobs',
@@ -306,7 +306,7 @@ export async function getProductAiJob(
       product = isRecord(result) ? result : null;
     } catch (error: unknown) {
       try {
-        const { logSystemError } = await import('@/features/observability/server');
+        const { logSystemError } = await import('@/shared/lib/observability/system-logger');
         await logSystemError({
           message: '[product-ai-service] Failed to fetch product in getProductAiJob',
           error,
@@ -314,7 +314,7 @@ export async function getProductAiJob(
           context: { action: 'getProductAiJob', productId: job.productId, jobId: job.id },
         });
       } catch (logError) {
-        void logSystemEvent({
+        void (logSystemEvent as any)({
           level: 'error',
           source: LOG_SOURCE,
           message: 'Failed to fetch product in getProductAiJob',

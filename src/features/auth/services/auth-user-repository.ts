@@ -3,7 +3,7 @@ import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 
-type AuthUserRecord = {
+export type AuthUserRecord = {
   id: string;
   email: string;
   name?: string | null;
@@ -25,7 +25,7 @@ const normalizeEmail = (email: string): string => email.trim().toLowerCase();
 export const findAuthUserByEmail = async (email: string): Promise<AuthUserRecord | null> => {
   const normalized = normalizeEmail(email);
   const provider = requireAuthProvider(await getAuthDataProvider());
-  await logSystemEvent({
+  await (logSystemEvent as any)({
     level: 'info',
     message: `[AUTH-REPO] Finding user ${normalized} using ${provider}`,
     context: { email: normalized, provider },
@@ -53,7 +53,7 @@ export const findAuthUserByEmail = async (email: string): Promise<AuthUserRecord
     };
   }
   if (!process.env['MONGODB_URI']) {
-    await logSystemEvent({
+    await (logSystemEvent as any)({
       level: 'warn',
       message: '[AUTH-REPO] MONGODB_URI missing',
     });
@@ -62,7 +62,7 @@ export const findAuthUserByEmail = async (email: string): Promise<AuthUserRecord
   const db = await getMongoDb();
   const user = await db.collection<MongoUserDoc>('users').findOne({ email: normalized });
   if (!user || !user.email) {
-    await logSystemEvent({
+    await (logSystemEvent as any)({
       level: 'info',
       message: '[AUTH-REPO] MongoDB user not found',
       context: { email: normalized },

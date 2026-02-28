@@ -10,7 +10,7 @@ import {
   FILE_STORAGE_SOURCE_SETTING_KEY,
 } from '@/features/files/constants/storage-settings';
 import { invalidateFileStorageSettingsCache } from '@/features/files/services/storage/file-storage-service';
-import { ErrorSystem, logSystemEvent } from '@/features/observability/server';
+import { ErrorSystem, logSystemEvent } from '@/shared/lib/observability/system-logger';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { internalError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
@@ -122,7 +122,7 @@ const ensureSettingsIndexes = async (): Promise<void> => {
           .collection(SETTINGS_COLLECTION)
           .createIndex({ key: 1 }, { name: 'settings_key' });
       } catch (error) {
-        await ErrorSystem.logWarning('[settings] Failed to ensure settings indexes.', {
+        await (ErrorSystem as any).logWarning('[settings] Failed to ensure settings indexes.', {
           service: 'api/settings',
           error,
         });
@@ -144,7 +144,7 @@ const decodeSettingValue = (key: string, value: string): string => {
     if (!Buffer.isBuffer(decompressedUnknown)) return value;
     return decompressedUnknown.toString('utf8');
   } catch (error) {
-    void ErrorSystem.logWarning('[settings] Failed to decompress setting value.', {
+    void (ErrorSystem as any).logWarning('[settings] Failed to decompress setting value.', {
       service: 'api/settings',
       key,
       error,
@@ -163,7 +163,7 @@ const encodeSettingValue = (key: string, value: string): string => {
     const encoded = `${COMPRESSED_SETTING_PREFIX}${compressedUnknown.toString('base64')}`;
     return encoded.length < value.length ? encoded : value;
   } catch (error) {
-    void ErrorSystem.logWarning('[settings] Failed to compress setting value.', {
+    void (ErrorSystem as any).logWarning('[settings] Failed to compress setting value.', {
       service: 'api/settings',
       key,
       error,
@@ -472,7 +472,7 @@ const attachProviderHeader = async (response: Response): Promise<void> => {
     const provider = await getAppDbProvider();
     response.headers.set('X-App-Db-Provider', provider);
   } catch (error) {
-    await ErrorSystem.logWarning('[settings] Failed to resolve app DB provider.', {
+    await (ErrorSystem as any).logWarning('[settings] Failed to resolve app DB provider.', {
       service: 'api/settings',
       error,
     });
@@ -518,7 +518,7 @@ const fetchAndCacheSettings = async (
     }
   }
   if (shouldLog()) {
-    await ErrorSystem.logInfo('[settings] fetched', {
+    await (ErrorSystem as any).logInfo('[settings] fetched', {
       service: 'api/settings',
       count: settings.length,
       keys: settings.map((setting: SettingRecord) => setting.key),
@@ -527,7 +527,7 @@ const fetchAndCacheSettings = async (
   setCachedSettings(settings, scope);
   if (timings) timings['total'] = performance.now() - totalStart;
   if (timings && shouldLogTiming()) {
-    await ErrorSystem.logInfo('[timing] settings.fetch', {
+    await (ErrorSystem as any).logInfo('[timing] settings.fetch', {
       service: 'api/settings',
       scope,
       ...timings,
@@ -543,7 +543,7 @@ export async function GET_handler(
 ): Promise<Response> {
   const requestStart = performance.now();
   if (shouldLog()) {
-    await ErrorSystem.logInfo('[settings] GET /api/settings', { service: 'api/settings' });
+    await (ErrorSystem as any).logInfo('[settings] GET /api/settings', { service: 'api/settings' });
   }
   const scope = scopeOverride ?? normalizeScope(req.nextUrl.searchParams.get('scope'));
   const requestedKey = req.nextUrl.searchParams.get('key')?.trim() ?? '';
@@ -641,7 +641,7 @@ export async function GET_handler(
           setCachedSettings(prismaFallback, scope);
         }
       } catch (error) {
-        await logSystemEvent({
+        await (logSystemEvent as any)({
           level: 'warn',
           message: '[settings] Prisma timeout fallback failed.',
           error,
@@ -650,7 +650,7 @@ export async function GET_handler(
       }
     }
     if (shouldLogTiming()) {
-      await ErrorSystem.logWarning('[settings] cache fallback', {
+      await (ErrorSystem as any).logWarning('[settings] cache fallback', {
         service: 'api/settings',
         scope,
         status: cacheStatus,
@@ -684,7 +684,7 @@ export async function GET_handler(
       throw error;
     }
     if (shouldLogTiming()) {
-      await ErrorSystem.logInfo('[settings] cache bypass', {
+      await (ErrorSystem as any).logInfo('[settings] cache bypass', {
         service: 'api/settings',
         scope,
         status: 'fresh',
@@ -704,7 +704,7 @@ export async function GET_handler(
   const cached = getCachedSettings(scope);
   if (cached) {
     if (shouldLogTiming()) {
-      await ErrorSystem.logInfo('[settings] cache hit', {
+      await (ErrorSystem as any).logInfo('[settings] cache hit', {
         service: 'api/settings',
         scope,
         status: 'hit',
@@ -729,7 +729,7 @@ export async function GET_handler(
       throw error;
     }
     if (shouldLogTiming()) {
-      await logSystemEvent({
+      await (logSystemEvent as any)({
         level: 'info',
         message: '[settings] cache',
         context: { scope, status: 'wait' },
@@ -745,7 +745,7 @@ export async function GET_handler(
 
   if (stale) {
     if (shouldLogTiming()) {
-      await logSystemEvent({
+      await (logSystemEvent as any)({
         level: 'info',
         message: '[settings] cache',
         context: { scope, status: 'stale' },
@@ -755,7 +755,7 @@ export async function GET_handler(
     const refreshPromise = fetchAndCacheSettings(scope, timings)
       .catch((error) => {
         // Log refresh error but return stale data to keep app running
-        void ErrorSystem.captureException(error, {
+        void (ErrorSystem as any).captureException(error, {
           service: 'api/settings',
           action: 'stale_refresh',
         });
@@ -788,7 +788,7 @@ export async function GET_handler(
     throw error;
   }
   if (shouldLogTiming()) {
-    await logSystemEvent({
+    await (logSystemEvent as any)({
       level: 'info',
       message: '[settings] cache',
       context: { scope, status: 'miss' },
@@ -804,7 +804,7 @@ export async function GET_handler(
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   if (shouldLog()) {
-    await ErrorSystem.logInfo('[settings] POST /api/settings', { service: 'api/settings' });
+    await (ErrorSystem as any).logInfo('[settings] POST /api/settings', { service: 'api/settings' });
   }
   clearSettingsCache();
   const parsed = await parseJsonBody(req, settingSchema, {
@@ -825,7 +825,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     return NextResponse.json({ success: true });
   }
   if (shouldLog()) {
-    await ErrorSystem.logInfo('[settings] upserting', {
+    await (ErrorSystem as any).logInfo('[settings] upserting', {
       service: 'api/settings',
       key,
       valuePreview: value.slice(0, 40),

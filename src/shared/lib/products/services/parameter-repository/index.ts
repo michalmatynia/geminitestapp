@@ -20,7 +20,7 @@ export const getParameterRepository = async (
     }
     return prismaParameterRepository;
   } catch (error) {
-    await ErrorSystem.captureException(error, {
+    await (ErrorSystem as any).captureException(error, {
       service: 'parameter-repository',
       action: 'getParameterRepository',
       providerOverride,

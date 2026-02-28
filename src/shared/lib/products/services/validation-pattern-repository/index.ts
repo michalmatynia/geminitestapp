@@ -20,7 +20,7 @@ export const getValidationPatternRepository = async (
     }
     return prismaValidationPatternRepository;
   } catch (error) {
-    await ErrorSystem.captureException(error, {
+    await (ErrorSystem as any).captureException(error, {
       service: 'validation-pattern-repository',
       action: 'getValidationPatternRepository',
       providerOverride,

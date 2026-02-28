@@ -17,10 +17,12 @@ import { auth } from '@/features/auth/server';
 import { execFileAsync } from '@/shared/lib/db/utils/postgres';
 import {
   enqueueProductAiJob,
+  enqueueProductAiJobToQueue,
   startProductAiJobQueue,
 } from '@/features/jobs/server';
 import { getDatabaseEngineOperationControls } from '@/shared/lib/db/database-engine-policy';
 import prisma from '@/shared/lib/db/prisma';
+import type { ProductAiJobDto } from '@/shared/contracts/jobs';
 
 vi.mock('@/shared/lib/db/utils/postgres', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/shared/lib/db/utils/postgres')>();
@@ -33,6 +35,8 @@ vi.mock('@/shared/lib/db/utils/postgres', async (importOriginal) => {
 vi.mock('@/features/jobs/server', () => ({
   enqueueProductAiJob: vi.fn(),
   startProductAiJobQueue: vi.fn(),
+  enqueueProductAiJobToQueue: vi.fn().mockResolvedValue(undefined),
+  processProductAiJob: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock('@/features/auth/server', () => ({
@@ -71,14 +75,9 @@ describe('Databases API', () => {
       payload: {},
       result: null,
       errorMessage: null,
-      error: null,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      startedAt: null,
-      finishedAt: null,
-      completedAt: null,
-    });
-    vi.mocked(enqueueProductAiJob).mockResolvedValue(undefined);
+    } as unknown as ProductAiJobDto);
     vi.mocked(startProductAiJobQueue).mockImplementation(() => {});
     process.env['DATABASE_URL'] = 'postgresql://localhost:5432/test';
     vi.mocked(prisma.$queryRaw).mockResolvedValue([]);
@@ -111,7 +110,7 @@ describe('Databases API', () => {
         })
       );
       expect(startProductAiJobQueue).toHaveBeenCalledTimes(1);
-      expect(enqueueProductAiJob).toHaveBeenCalledWith(
+      expect(enqueueProductAiJobToQueue).toHaveBeenCalledWith(
         'job-backup-1',
         'system',
         'db_backup',

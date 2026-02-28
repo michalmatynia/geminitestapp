@@ -4,7 +4,7 @@ import { randomUUID } from 'crypto';
 
 import { ObjectId } from 'mongodb';
 
-import { getProductDataProvider } from '@/features/products/server';
+import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 import type {
   BaseImportItemRecord,
   BaseImportItemStatus,

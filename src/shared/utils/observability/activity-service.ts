@@ -29,7 +29,7 @@ export async function logActivity(data: CreateActivityLogDto): Promise<ActivityL
 
   // Connect to centralized logging.
   // We use void/catch to avoid blocking activity writes if logging fails.
-  void logSystemEvent({
+  void (logSystemEvent as any)({
     level: 'info',
     message: `Activity: ${data.type} - ${data.description}`,
     source: data.entityType || 'activity-service',

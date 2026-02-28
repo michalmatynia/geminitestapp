@@ -1,8 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { Integration, IntegrationConnection } from '@prisma/client';
 
 import { getIntegrationRepository } from '@/shared/lib/integrations/services/integration-repository';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import prisma from '@/shared/lib/db/prisma';
+import {
+  ConnectionCreateInputDto,
+  ConnectionUpdateInputDto,
+} from '@/shared/contracts/integrations';
 
 // Mocks
 vi.mock('@/shared/lib/db/prisma', () => ({
@@ -134,7 +139,9 @@ describe('Integration Repository', () => {
       const mockIntegrations = [
         { id: '1', name: 'Int 1', slug: 'int-1', createdAt: now, updatedAt: now },
       ];
-      vi.mocked(prisma.integration.findMany).mockResolvedValue(mockIntegrations as any);
+      vi.mocked(prisma.integration.findMany).mockResolvedValue(
+        mockIntegrations as unknown as Integration[]
+      );
 
       const repo = await getIntegrationRepository();
       const result = await repo.listIntegrations();
@@ -147,14 +154,16 @@ describe('Integration Repository', () => {
 
     it('createConnection calls prisma.integrationConnection.create', async () => {
       const mockConnection = { id: 'c1', name: 'Conn 1', createdAt: now, updatedAt: now };
-      vi.mocked(prisma.integrationConnection.create).mockResolvedValue(mockConnection as any);
+      vi.mocked(prisma.integrationConnection.create).mockResolvedValue(
+        mockConnection as unknown as IntegrationConnection
+      );
 
       const repo = await getIntegrationRepository();
       const result = await repo.createConnection('int-1', {
         name: 'Conn 1',
         username: 'user',
         password: 'pass',
-      } as any);
+      } as ConnectionCreateInputDto);
 
       expect(prisma.integrationConnection.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
@@ -173,7 +182,9 @@ describe('Integration Repository', () => {
         createdAt: now,
         updatedAt: now,
       };
-      vi.mocked(prisma.integration.upsert).mockResolvedValue(mockIntegration as any);
+      vi.mocked(prisma.integration.upsert).mockResolvedValue(
+        mockIntegration as unknown as Integration
+      );
 
       const repo = await getIntegrationRepository();
       const result = await repo.upsertIntegration({ name: 'Updated', slug: 'int-1' });
@@ -190,11 +201,11 @@ describe('Integration Repository', () => {
       vi.mocked(prisma.integrationConnection.findUnique).mockResolvedValue({
         id: 'c1',
         integrationId: 'int-1',
-      } as any);
+      } as unknown as IntegrationConnection);
       vi.mocked(prisma.integration.findUnique).mockResolvedValue({
         id: 'int-1',
         slug: 'allegro',
-      } as any);
+      } as unknown as Integration);
       vi.mocked(prisma.setting.findUnique).mockResolvedValue(null);
       const repo = await getIntegrationRepository();
       await repo.deleteConnection('c1');
@@ -217,21 +228,21 @@ describe('Integration Repository', () => {
       vi.mocked(prisma.integrationConnection.findUnique).mockResolvedValue({
         id: 'c1',
         integrationId: 'int-base',
-      } as any);
+      } as unknown as IntegrationConnection);
       vi.mocked(prisma.integration.findUnique).mockResolvedValue({
         id: 'int-base',
         slug: 'baselinker',
-      } as any);
-      vi.mocked(prisma.productListing.count).mockResolvedValue(1 as any);
-      vi.mocked(prisma.categoryMapping.count).mockResolvedValue(0 as any);
-      vi.mocked(prisma.externalCategory.count).mockResolvedValue(0 as any);
-      vi.mocked(prisma.producerMapping.count).mockResolvedValue(0 as any);
-      vi.mocked(prisma.externalProducer.count).mockResolvedValue(0 as any);
-      vi.mocked(prisma.tagMapping.count).mockResolvedValue(0 as any);
-      vi.mocked(prisma.externalTag.count).mockResolvedValue(0 as any);
+      } as unknown as Integration);
+      vi.mocked(prisma.productListing.count).mockResolvedValue(1);
+      vi.mocked(prisma.categoryMapping.count).mockResolvedValue(0);
+      vi.mocked(prisma.externalCategory.count).mockResolvedValue(0);
+      vi.mocked(prisma.producerMapping.count).mockResolvedValue(0);
+      vi.mocked(prisma.externalProducer.count).mockResolvedValue(0);
+      vi.mocked(prisma.tagMapping.count).mockResolvedValue(0);
+      vi.mocked(prisma.externalTag.count).mockResolvedValue(0);
       vi.mocked(prisma.integrationConnection.findFirst).mockResolvedValue({
         id: 'c2',
-      } as any);
+      } as unknown as IntegrationConnection);
       vi.mocked(prisma.setting.findUnique).mockResolvedValue(null);
 
       const repo = await getIntegrationRepository();
@@ -250,19 +261,19 @@ describe('Integration Repository', () => {
       vi.mocked(prisma.integrationConnection.findUnique).mockResolvedValue({
         id: 'c1',
         integrationId: 'int-base',
-      } as any);
+      } as unknown as IntegrationConnection);
       vi.mocked(prisma.integration.findUnique).mockResolvedValue({
         id: 'int-base',
         slug: 'base',
-      } as any);
-      vi.mocked(prisma.productListing.count).mockResolvedValue(2 as any);
-      vi.mocked(prisma.categoryMapping.count).mockResolvedValue(0 as any);
-      vi.mocked(prisma.externalCategory.count).mockResolvedValue(0 as any);
-      vi.mocked(prisma.producerMapping.count).mockResolvedValue(0 as any);
-      vi.mocked(prisma.externalProducer.count).mockResolvedValue(0 as any);
-      vi.mocked(prisma.tagMapping.count).mockResolvedValue(0 as any);
-      vi.mocked(prisma.externalTag.count).mockResolvedValue(0 as any);
-      vi.mocked(prisma.integrationConnection.findFirst).mockResolvedValue(null as any);
+      } as unknown as Integration);
+      vi.mocked(prisma.productListing.count).mockResolvedValue(2);
+      vi.mocked(prisma.categoryMapping.count).mockResolvedValue(0);
+      vi.mocked(prisma.externalCategory.count).mockResolvedValue(0);
+      vi.mocked(prisma.producerMapping.count).mockResolvedValue(0);
+      vi.mocked(prisma.externalProducer.count).mockResolvedValue(0);
+      vi.mocked(prisma.tagMapping.count).mockResolvedValue(0);
+      vi.mocked(prisma.externalTag.count).mockResolvedValue(0);
+      vi.mocked(prisma.integrationConnection.findFirst).mockResolvedValue(null);
 
       const repo = await getIntegrationRepository();
       await expect(repo.deleteConnection('c1')).rejects.toThrow(
@@ -300,7 +311,7 @@ describe('Integration Repository', () => {
         name: 'Conn 1',
         username: 'user',
         password: 'pass',
-      } as any);
+      } as ConnectionCreateInputDto);
 
       expect(mockCollection).toHaveBeenCalledWith('integration_connections');
       expect(mockInsertOne).toHaveBeenCalled();
@@ -378,7 +389,7 @@ describe('Integration Repository', () => {
       const repo = await getIntegrationRepository();
       await repo.updateConnection(legacyId, {
         name: 'Conn Updated',
-      } as any);
+      } as ConnectionUpdateInputDto);
 
       const filter = mockFindOneAndUpdate.mock.calls[0]?.[0] as {
         _id?: { $in?: unknown[] };

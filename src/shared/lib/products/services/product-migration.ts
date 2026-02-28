@@ -533,7 +533,7 @@ export async function migrateProductBatch({
       missingCatalogIds,
     };
   } catch (error) {
-    void ErrorSystem.captureException(error, {
+    void (ErrorSystem as any).captureException(error, {
       service: 'product-migration',
       direction,
       cursor,

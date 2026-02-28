@@ -4,6 +4,34 @@ import { dtoBaseSchema } from './base';
 import { imageFileSchema } from './files';
 import { asset3DRecordSchema } from './viewer3d';
 
+export type ImageStudioProjectListItem = {
+  id: string;
+  name: string;
+  slug: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export interface StudioProjectDetail extends ImageStudioProjectListItem {
+  description?: string;
+  settings?: Record<string, unknown>;
+}
+
+export type LandingSlotLike = {
+  index: number;
+  status: string;
+  output?: ImageFileRecord | null;
+};
+
+export type MaskShapeForExport = {
+  id: string;
+  type: string;
+  points: Array<{ x: number; y: number }>;
+  closed?: boolean;
+  visible?: boolean;
+  metadata?: Record<string, unknown>;
+};
+
 /**
  * Image Studio DTOs
  */

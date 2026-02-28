@@ -25,7 +25,7 @@ export const fetchEntityByType = async (
       return (await noteService.getById(entityId)) as Record<string, unknown> | null;
     }
   } catch (error) {
-    void ErrorSystem.logWarning(`Failed to fetch entity ${entityType} ${entityId}`, {
+    void (ErrorSystem as any).logWarning(`Failed to fetch entity ${entityType} ${entityId}`, {
       service: 'ai-paths-runtime',
       error,
       entityType,

@@ -23,6 +23,7 @@ import {
   startDatabaseBackupSchedulerQueue,
 } from '@/shared/lib/db/workers/databaseBackupSchedulerQueue';
 import { getDatabaseEngineOperationControls } from '@/shared/lib/db/database-engine-policy';
+import type { ProductAiJobDto } from '@/shared/contracts/jobs';
 
 vi.mock('@/shared/lib/api/api-handler', () => ({
   apiHandler:
@@ -56,9 +57,11 @@ vi.mock('@/shared/lib/db/workers/databaseBackupSchedulerQueue', () => ({
 vi.mock('@/features/jobs/server', () => ({
   enqueueProductAiJob: vi.fn(),
   startProductAiJobQueue: vi.fn(),
+  processProductAiJob: vi.fn().mockResolvedValue(undefined),
+  enqueueProductAiJobToQueue: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock('@/features/observability/server', () => ({
+vi.mock('@/shared/lib/observability/system-logger', () => ({
   logSystemError: vi.fn().mockResolvedValue(undefined),
 }));
 
@@ -164,13 +167,12 @@ describe('Database Engine backup scheduler actions', () => {
         id: 'job-mongo-1',
         productId: 'system',
         status: 'pending',
-      } as Awaited<ReturnType<typeof enqueueProductAiJob>>)
+      } as unknown as ProductAiJobDto)
       .mockResolvedValueOnce({
         id: 'job-pg-1',
         productId: 'system',
         status: 'pending',
-      } as Awaited<ReturnType<typeof enqueueProductAiJob>>);
-    vi.mocked(enqueueProductAiJob).mockResolvedValue(undefined);
+      } as unknown as ProductAiJobDto);
 
     const res = await POST_RUN_NOW(
       new NextRequest('http://localhost/api/databases/engine/backup-scheduler/run-now', {

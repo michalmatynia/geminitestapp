@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { SystemLog, Prisma } from '@prisma/client';
 
 import { GET, POST, DELETE } from '@/app/api/system/logs/route';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
@@ -31,7 +32,7 @@ describe('System Logs API', () => {
   it('GET /api/system/logs should list logs with pagination', async () => {
     vi.mocked(prisma.systemLog.count).mockResolvedValue(100);
     vi.mocked(prisma.systemLog.findMany).mockResolvedValue([
-      { id: '1', level: 'error', message: 'Err 1', createdAt: new Date() } as any,
+      { id: '1', level: 'error', message: 'Err 1', createdAt: new Date() } as unknown as SystemLog,
     ]);
 
     const req = new NextRequest('http://localhost/api/system/logs?page=1&pageSize=10');
@@ -59,10 +60,10 @@ describe('System Logs API', () => {
     const res = await GET(req);
 
     expect(res.status).toBe(200);
-    const call = vi.mocked(prisma.systemLog.findMany).mock.calls[0]?.[0];
-    const where = call?.where as any;
+    const call = vi.mocked(prisma.systemLog.findMany).mock.calls[0]?.[0] as Prisma.SystemLogFindManyArgs;
+    const where = call?.where;
     expect(where).toBeTruthy();
-    expect(where.AND).toEqual(
+    expect((where as any).AND).toEqual(
       expect.arrayContaining([
         { statusCode: 500 },
         { method: { equals: 'GET', mode: 'insensitive' } },
@@ -89,7 +90,7 @@ describe('System Logs API', () => {
       id: 'new-id',
       ...logData,
       createdAt: new Date(),
-    } as any);
+    } as unknown as SystemLog);
 
     const req = new NextRequest('http://localhost/api/system/logs', {
       method: 'POST',

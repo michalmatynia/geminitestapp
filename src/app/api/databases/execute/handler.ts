@@ -58,8 +58,8 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
           return await handleMongoOperation(parsed);
         } catch (error) {
           try {
-            const { ErrorSystem } = await import('@/features/observability/server');
-            void ErrorSystem.captureException(error, {
+            const { ErrorSystem } = await import('@/shared/lib/observability/system-logger');
+            void (ErrorSystem as any).captureException(error, {
               service: 'api/databases/execute',
               provider: 'mongodb',
               collection: parsed.collection,
@@ -84,8 +84,8 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     return await handlePostgresQuery(parsed.sql);
   } catch (error) {
     try {
-      const { ErrorSystem } = await import('@/features/observability/server');
-      void ErrorSystem.captureException(error, {
+      const { ErrorSystem } = await import('@/shared/lib/observability/system-logger');
+      void (ErrorSystem as any).captureException(error, {
         service: 'api/databases/execute',
         provider: 'postgresql',
         sql: parsed.sql,

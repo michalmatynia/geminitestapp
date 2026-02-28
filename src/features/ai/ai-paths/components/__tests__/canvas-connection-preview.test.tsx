@@ -83,6 +83,7 @@ const buildContextValue = (): CanvasBoardUIContextValue => {
     onPointerDownNode: vi.fn(),
     onPointerMoveNode: vi.fn(),
     onPointerUpNode: vi.fn(),
+    consumeSuppressedNodeClick: vi.fn(() => false),
     onSelectNode: vi.fn(),
     onOpenNodeConfig: vi.fn(),
     onStartConnection: vi.fn(),

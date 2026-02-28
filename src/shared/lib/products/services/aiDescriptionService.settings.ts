@@ -55,7 +55,7 @@ export async function getSettingValue(key: string): Promise<string | null> {
       const mongoValue = await readMongoSettingValue(key);
       if (mongoValue !== null) return mongoValue;
     } catch (err) {
-      void ErrorSystem.logWarning(`Mongo setting fetch failed for ${key}`, {
+      void (ErrorSystem as any).logWarning(`Mongo setting fetch failed for ${key}`, {
         service: 'ai-description-service',
         key,
         error: err,
@@ -64,7 +64,7 @@ export async function getSettingValue(key: string): Promise<string | null> {
     try {
       return await readPrismaSettingValue(key);
     } catch (err) {
-      void ErrorSystem.logWarning(`Prisma setting fetch failed for ${key}`, {
+      void (ErrorSystem as any).logWarning(`Prisma setting fetch failed for ${key}`, {
         service: 'ai-description-service',
         key,
         error: err,
@@ -77,7 +77,7 @@ export async function getSettingValue(key: string): Promise<string | null> {
     const prismaValue = await readPrismaSettingValue(key);
     if (prismaValue !== null) return prismaValue;
   } catch (err) {
-    void ErrorSystem.logWarning(`Prisma setting fetch failed for ${key}`, {
+    void (ErrorSystem as any).logWarning(`Prisma setting fetch failed for ${key}`, {
       service: 'ai-description-service',
       key,
       error: err,
@@ -88,7 +88,7 @@ export async function getSettingValue(key: string): Promise<string | null> {
     try {
       return await readMongoSettingValue(key);
     } catch (err) {
-      void ErrorSystem.logWarning(`Mongo fallback setting fetch failed for ${key}`, {
+      void (ErrorSystem as any).logWarning(`Mongo fallback setting fetch failed for ${key}`, {
         service: 'ai-description-service',
         key,
         error: err,

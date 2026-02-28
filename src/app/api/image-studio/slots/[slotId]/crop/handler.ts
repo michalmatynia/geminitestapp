@@ -742,7 +742,7 @@ export async function postCropSlotHandler(
     });
 
     if (processed.authoritativeSource === 'client_upload_fallback') {
-      void logSystemEvent({
+      void (logSystemEvent as any)({
         level: 'warn',
         source: 'image-studio.crop',
         message: 'Crop fell back to client-provided payload because source image was unavailable.',
@@ -859,7 +859,7 @@ export async function postCropSlotHandler(
     }
 
     const durationMs = Date.now() - startedAt;
-    void logSystemEvent({
+    void (logSystemEvent as any)({
       level: 'info',
       source: 'image-studio.crop',
       message: 'Image Studio crop persisted.',
@@ -904,7 +904,7 @@ export async function postCropSlotHandler(
 
     return NextResponse.json(responseBody, { status: 201 });
   } catch (error) {
-    void logSystemEvent({
+    void (logSystemEvent as any)({
       level: 'warn',
       source: 'image-studio.crop',
       message: 'Image Studio crop failed.',

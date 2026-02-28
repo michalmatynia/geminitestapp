@@ -131,7 +131,7 @@ describe('Products API', () => {
 
     // Using any-casts to satisfy Prisma client return types which are complex
     vi.mocked(prisma.product.create).mockImplementation(((args: any) => {
-      const data = args.data as any;
+      const data = args.data;
       return Promise.resolve({
         id: `created-${Date.now()}`,
         ...data,
@@ -146,7 +146,7 @@ describe('Products API', () => {
 
     vi.mocked(prisma.product.update).mockImplementation(((args: any) => {
       return Promise.resolve({
-        ...(args.data as any),
+        ...(args.data),
         id: args.where.id,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -169,7 +169,7 @@ describe('Products API', () => {
     vi.mocked(prisma.imageFile.create).mockImplementation(((args: any) =>
       Promise.resolve({
         id: `image-${Date.now()}`,
-        ...(args.data as any),
+        ...(args.data),
         createdAt: new Date(),
         updatedAt: new Date(),
       })) as any

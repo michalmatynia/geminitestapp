@@ -34,13 +34,13 @@ describe('System Logs Metrics API', () => {
         return Promise.resolve([
           { level: 'info', _count: { _all: 7 } },
           { level: 'error', _count: { _all: 3 } },
-        ] as unknown as any);
+        ] as any);
       }
       if (by.includes('source')) {
-        return Promise.resolve([{ source: 'web', _count: { _all: 10 } }] as unknown as any);
+        return Promise.resolve([{ source: 'web', _count: { _all: 10 } }] as any);
       }
       if (by.includes('path')) {
-        return Promise.resolve([{ path: '/api/test', _count: { _all: 5 } }] as unknown as any);
+        return Promise.resolve([{ path: '/api/test', _count: { _all: 5 } }] as any);
       }
       return Promise.resolve([]);
     });

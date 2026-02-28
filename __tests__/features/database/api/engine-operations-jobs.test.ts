@@ -82,12 +82,19 @@ describe('Database Engine operations jobs API', () => {
       },
     ] as Awaited<ReturnType<typeof getProductAiJobs>>);
     vi.mocked(getQueueStatus).mockResolvedValue({
-      running: true,
-      healthy: true,
-      processing: false,
-      lastPollTime: 1700000000000,
-      timeSinceLastPoll: 1200,
-    } as Awaited<ReturnType<typeof getQueueStatus>>);
+      'product-ai': {
+        name: 'product-ai',
+        running: true,
+        healthy: true,
+        processing: false,
+        waitingCount: 0,
+        activeCount: 0,
+        completedCount: 10,
+        failedCount: 0,
+        lastPollTime: 1700000000000,
+        timeSinceLastPoll: 1200,
+      }
+    } as any);
 
     const res = await GET_JOBS(
       new NextRequest('http://localhost/api/databases/engine/operations/jobs?limit=10')

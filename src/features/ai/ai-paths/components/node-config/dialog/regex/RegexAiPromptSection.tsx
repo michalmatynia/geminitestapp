@@ -10,6 +10,8 @@ export type RegexAiPromptSectionProps = {
   connectedModel: {
     modelNode: AiNode | null | undefined;
     modelLabel?: string;
+    usesBrainDefault?: boolean;
+    isStale?: boolean;
   };
   onSendToAi?: (nodeId: string, prompt: string) => void | Promise<void>;
   sendingToAi: boolean;
@@ -40,6 +42,8 @@ export function RegexAiPromptSection({
           <div className='text-[11px] text-emerald-200'>
             Connected:{' '}
             <span className='text-emerald-100'>{connectedModel.modelLabel || 'Model'}</span>
+            {connectedModel.usesBrainDefault ? ' (AI Brain default)' : ''}
+            {connectedModel.isStale ? ' (not currently in Brain catalog)' : ''}
           </div>
         ) : (
           <div className='text-[11px] text-amber-200'>Not connected to AI Model</div>

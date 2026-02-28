@@ -3,7 +3,7 @@
 import React from 'react';
 
 import type { AiNode, Edge } from '@/shared/lib/ai-paths';
-import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
+import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
 import { Button } from '@/shared/ui';
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -18,7 +18,11 @@ export function DatabaseAiPromptConnectionStatus({
 }: DatabaseAiPromptConnectionStatusProps): React.JSX.Element {
   const { edges, nodes, selectedNode, runtimeState, sendingToAi, onSendToAi, toast } =
     useAiPathConfig();
-  const brainModelId = useBrainAssignment({ capability: 'ai_paths.model' }).effectiveModelId.trim();
+  const brainModel = useBrainModelOptions({
+    capability: 'ai_paths.model',
+    enabled: Boolean(selectedNode),
+  });
+  const brainModelId = brainModel.effectiveModelId.trim();
 
   if (!selectedNode) return <></>;
   const selectedNodeId = selectedNode.id;
@@ -36,6 +40,13 @@ export function DatabaseAiPromptConnectionStatus({
         (node: AiNode): boolean => node.id === aiPromptEdges[0]?.to && node.type === 'model'
       )
       : null;
+  const selectedModelId = aiNode?.config?.model?.modelId?.trim() || '';
+  const modelLabel = selectedModelId
+    ? selectedModelId
+    : `Use Brain default (${brainModelId || 'Not configured'})`;
+  const modelMissingFromCatalog =
+    Boolean(selectedModelId) &&
+    !brainModel.models.some((modelId: string): boolean => modelId === selectedModelId);
 
   const hasValidConnection = aiNode && callbackEdges.length > 0;
 
@@ -53,10 +64,15 @@ export function DatabaseAiPromptConnectionStatus({
             <span className='text-[11px] text-emerald-100'>
               Connected to AI Model:{' '}
               <span className='font-medium text-emerald-200'>
-                {brainModelId || 'Not configured in AI Brain'}
+                {modelLabel}
               </span>
             </span>
           </div>
+          {modelMissingFromCatalog ? (
+            <div className='mt-1 text-[10px] text-amber-200'>
+              This node&apos;s selected model is not currently in the AI Brain catalog.
+            </div>
+          ) : null}
           {hasAiResponse && (
             <Button
               type='button'

@@ -7,6 +7,7 @@ import {
   findPlaywrightPersonaMatch,
   buildPlaywrightSettings,
 } from '@/shared/lib/playwright/utils/personas';
+import type { PlaywrightPersona } from '@/shared/contracts/playwright';
 
 describe('Playwright Persona Utils', () => {
   describe('normalizePlaywrightPersonas', () => {
@@ -52,10 +53,10 @@ describe('Playwright Persona Utils', () => {
   describe('findPlaywrightPersonaMatch', () => {
     it('returns the matching persona', () => {
       const settings = buildPlaywrightSettings({ slowMo: 500 });
-      const personas = [
+      const personas: PlaywrightPersona[] = [
         { id: 'p1', name: 'P1', settings: buildPlaywrightSettings({ slowMo: 100 }) },
         { id: 'p2', name: 'P2', settings: buildPlaywrightSettings({ slowMo: 500 }) },
-      ] as any;
+      ];
 
       const match = findPlaywrightPersonaMatch(settings, personas);
       expect(match?.id).toBe('p2');

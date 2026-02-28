@@ -82,7 +82,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
   try {
     repo = await getPathRunRepository();
   } catch (error) {
-    void ErrorSystem.captureException(error, {
+    void (ErrorSystem as any).captureException(error, {
       service: 'ai-paths-executor',
       action: 'getRepository',
       runId: run.id,
@@ -261,7 +261,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
         runtimeProfile: snapshot,
       });
     } catch (error) {
-      void ErrorSystem.logWarning('Failed to persist runtime profile snapshot', {
+      void (ErrorSystem as any).logWarning('Failed to persist runtime profile snapshot', {
         service: 'ai-paths-executor',
         error,
         runId: run.id,
@@ -289,7 +289,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
         });
       }
     } catch (dbError) {
-      void ErrorSystem.logWarning('Failed to update failed status for invalid graph', {
+      void (ErrorSystem as any).logWarning('Failed to update failed status for invalid graph', {
         service: 'ai-paths-executor',
         error: dbError,
         runId: run.id,
@@ -324,7 +324,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       runtimeRepairNodes = await repo.listRunNodes(run.id);
       return runtimeRepairNodes;
     } catch (error) {
-      void ErrorSystem.logWarning('Failed to load run nodes for runtime state repair', {
+      void (ErrorSystem as any).logWarning('Failed to load run nodes for runtime state repair', {
         service: 'ai-paths-executor',
         error,
         runId: run.id,
@@ -372,7 +372,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
         }),
       });
     } catch (error) {
-      void ErrorSystem.logWarning('Failed to save intermediate state', {
+      void (ErrorSystem as any).logWarning('Failed to save intermediate state', {
         service: 'ai-paths-executor',
         error,
         runId: run.id,
@@ -423,7 +423,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
     meta: Record<string, unknown>,
     summary?: string
   ): Promise<void> => {
-    await ErrorSystem.captureException(error, {
+    await (ErrorSystem as any).captureException(error, {
       service: 'ai-paths-runtime',
       pathRunId: run.id,
       summary,
@@ -675,7 +675,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
             iteration,
           });
         } catch (error) {
-          void ErrorSystem.logWarning(`onNodeStart failed for node ${node.id}`, {
+          void (ErrorSystem as any).logWarning(`onNodeStart failed for node ${node.id}`, {
             service: 'ai-paths-executor',
             error,
             runId: run.id,
@@ -826,7 +826,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
             iteration,
           });
         } catch (error) {
-          void ErrorSystem.logWarning(`onNodeFinish failed for node ${node.id}`, {
+          void (ErrorSystem as any).logWarning(`onNodeFinish failed for node ${node.id}`, {
             service: 'ai-paths-executor',
             error,
             runId: run.id,
@@ -880,7 +880,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
             waitingOnPorts,
           });
         } catch (error) {
-          void ErrorSystem.logWarning(`onNodeBlocked failed for node ${node.id}`, {
+          void (ErrorSystem as any).logWarning(`onNodeBlocked failed for node ${node.id}`, {
             service: 'ai-paths-executor',
             error,
             runId: run.id,
@@ -969,7 +969,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
             iteration,
           });
         } catch (dbError) {
-          void ErrorSystem.logWarning(`onNodeError failed for node ${node.id}`, {
+          void (ErrorSystem as any).logWarning(`onNodeError failed for node ${node.id}`, {
             service: 'ai-paths-executor',
             error: dbError,
             runId: run.id,
@@ -1012,7 +1012,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
             }),
           });
         } catch (error) {
-          void ErrorSystem.logWarning(`onIterationEnd failed for run ${run.id}`, {
+          void (ErrorSystem as any).logWarning(`onIterationEnd failed for run ${run.id}`, {
             service: 'ai-paths-executor',
             error,
             runId: run.id,
@@ -1121,7 +1121,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
         }
       }
     } catch (finalDbError) {
-      void ErrorSystem.logWarning('Failed to record run completion in DB', {
+      void (ErrorSystem as any).logWarning('Failed to record run completion in DB', {
         service: 'ai-paths-executor',
         error: finalDbError,
         runId: run.id,
@@ -1151,7 +1151,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
           timestamp: finishedAt,
         });
       } catch (analyticsError) {
-        void ErrorSystem.logWarning('Failed to record finalization analytics', {
+        void (ErrorSystem as any).logWarning('Failed to record finalization analytics', {
           service: 'ai-paths-executor',
           error: analyticsError,
           runId: run.id,
@@ -1176,7 +1176,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
             ...(latestRun.finishedAt ? {} : { finishedAt }),
           });
         } catch (cancelUpdateError) {
-          void ErrorSystem.logWarning('Failed to finalize cancelled run snapshot', {
+          void (ErrorSystem as any).logWarning('Failed to finalize cancelled run snapshot', {
             service: 'ai-paths-executor',
             error: cancelUpdateError,
             runId: run.id,
@@ -1186,7 +1186,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       }
     }
 
-    void ErrorSystem.captureException(error, {
+    void (ErrorSystem as any).captureException(error, {
       service: 'ai-paths-executor',
       action: 'executePathRun',
       runId: run.id,
@@ -1220,7 +1220,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
         }),
       });
     } catch (dbUpdateError) {
-      void ErrorSystem.logWarning('Failed to update run status to failed in DB', {
+      void (ErrorSystem as any).logWarning('Failed to update run status to failed in DB', {
         service: 'ai-paths-executor',
         error: dbUpdateError,
         runId: run.id,
@@ -1241,7 +1241,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
           },
         });
       } catch (eventError) {
-        void ErrorSystem.logWarning('Failed to create error event for run failure', {
+        void (ErrorSystem as any).logWarning('Failed to create error event for run failure', {
           service: 'ai-paths-executor',
           error: eventError,
           runId: run.id,
@@ -1263,7 +1263,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
         timestamp: finishedAt,
       });
     } catch (analyticsError) {
-      void ErrorSystem.logWarning('Failed to record failure analytics', {
+      void (ErrorSystem as any).logWarning('Failed to record failure analytics', {
         service: 'ai-paths-executor',
         error: analyticsError,
         runId: run.id,

@@ -89,6 +89,7 @@ export interface CanvasBoardUIContextValue {
   onPointerDownNode: (event: React.PointerEvent<Element>, nodeId: string) => void | Promise<void>;
   onPointerMoveNode: (event: React.PointerEvent<Element>, nodeId: string) => void;
   onPointerUpNode: (event: React.PointerEvent<Element>, nodeId: string) => void;
+  consumeSuppressedNodeClick: (nodeId: string) => boolean;
   onSelectNode: (nodeId: string, options?: { toggle?: boolean }) => void | Promise<void>;
   onOpenNodeConfig: () => void;
   onStartConnection: (

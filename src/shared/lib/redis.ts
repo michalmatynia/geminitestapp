@@ -35,8 +35,8 @@ const captureException = async (
   context: { service: string; action: string }
 ): Promise<void> => {
   try {
-    const mod = await import('@/features/observability/server');
-    await mod.ErrorSystem.captureException(error, context);
+    const mod = await import('@/shared/lib/observability/system-logger');
+    await  mod.ErrorSystem.captureException(error, context);
   } catch {
     // ignore
   }

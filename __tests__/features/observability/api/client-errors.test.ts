@@ -2,9 +2,9 @@ import { NextRequest } from 'next/server';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { POST } from '@/app/api/client-errors/route';
-import { ErrorSystem } from '@/features/observability/server';
+import { ErrorSystem } from '@/shared/lib/observability/system-logger';
 
-vi.mock('@/features/observability/server', () => ({
+vi.mock('@/shared/lib/observability/system-logger', () => ({
   logSystemEvent: vi.fn().mockResolvedValue(undefined),
   logSystemError: vi.fn().mockResolvedValue(undefined),
   getErrorFingerprint: vi.fn().mockResolvedValue('test-fingerprint'),

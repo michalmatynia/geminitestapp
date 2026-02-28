@@ -326,6 +326,19 @@ describe('useGenerationToolbarHandlers analysis layout integration', () => {
     expect(state.setCenterMode).not.toHaveBeenCalled();
   });
 
+  it('preserves client_white_bg_bbox mode when analysis runs — does not switch to object layout', async () => {
+    const state = createState({
+      centerMode: 'client_white_bg_bbox',
+    });
+    const response = createAnalysisResponse();
+    vi.spyOn(api, 'post').mockResolvedValueOnce(response as never);
+
+    const { result } = renderHook(() => useGenerationToolbarHandlers(state));
+    await result.current.handleRunAnalysisFromCenter();
+
+    expect(state.setCenterMode).not.toHaveBeenCalled();
+  });
+
   it('blocks run analysis when working source signature is missing', async () => {
     const state = createState({
       workingSourceSignature: '',

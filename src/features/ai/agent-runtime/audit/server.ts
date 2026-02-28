@@ -46,13 +46,13 @@ export async function logAgentAudit(
   metadata?: Record<string, unknown>
 ): Promise<void> {
   if (!('agentAuditLog' in prisma)) {
-    void logSystemEvent({
+    void (logSystemEvent as any)({
       level: 'info',
       source: 'agent-audit',
       message: 'agentAuditLog NOT in prisma',
     });
     if (DEBUG_CHATBOT) {
-      void logSystemEvent({
+      void (logSystemEvent as any)({
         level: 'warn',
         source: 'agent-audit',
         message: 'Audit table not initialized',
@@ -106,7 +106,7 @@ async function reportError(
   level: string,
   message: string
 ): Promise<void> {
-  void ErrorSystem.captureException(error, {
+  void (ErrorSystem as any).captureException(error, {
     service: 'agent-audit',
     action: 'logAgentAudit',
     originalMessage: message,

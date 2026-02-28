@@ -31,7 +31,7 @@ export const startProductSyncRun = async (input: {
     limit: 200,
   });
   if (staleRecovery.recoveredRuns > 0) {
-    await ErrorSystem.logWarning('Recovered stale product sync runs before starting a new run', {
+    await (ErrorSystem as any).logWarning('Recovered stale product sync runs before starting a new run', {
       service: 'product-sync-run-starter',
       profileId: profile.id,
       trigger: input.trigger,
@@ -61,7 +61,7 @@ export const startProductSyncRun = async (input: {
   const queuedRun = await assignQueueJobToProductSyncRun(run.id, queueJobId);
 
   void pruneProductSyncRunsForProfile({ profileId: profile.id }).catch((error) => {
-    void ErrorSystem.captureException(error, {
+    void (ErrorSystem as any).captureException(error, {
       service: 'product-sync-run-starter',
       action: 'pruneProductSyncRunsForProfile',
       profileId: profile.id,

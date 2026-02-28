@@ -1,7 +1,7 @@
 import type {
   ImageStudioCenterDetectionMode,
   ImageStudioCenterShadowPolicy,
-} from '@/features/ai/image-studio/contracts/center';
+} from '@/shared/contracts/image-studio';
 
 import type { ImageStudioAnalysisSharedLayout } from './analysis-bridge';
 import { sanitizeStudioProjectId } from './project-session';

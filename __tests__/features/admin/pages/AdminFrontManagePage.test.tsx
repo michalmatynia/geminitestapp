@@ -24,7 +24,7 @@ const createTestQueryClient = () =>
 
 // Mock useToast
 vi.mock('@/shared/ui', async (importOriginal) => {
-  const actual = (await importOriginal()) as typeof import('@/shared/ui');
+  const actual = (await importOriginal());
   return {
     ...actual,
     useToast: vi.fn(() => ({ toast: vi.fn() })),

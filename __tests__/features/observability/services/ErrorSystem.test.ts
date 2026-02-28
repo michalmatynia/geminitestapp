@@ -84,6 +84,7 @@ describe('ErrorSystem', () => {
   });
 
   it('logs info messages', async () => {
+     
     await ErrorSystem.logInfo('User logged in', { userId: 'user-1' });
     expect(logSystemEvent).toHaveBeenCalledWith(
       expect.objectContaining({

@@ -39,7 +39,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     } catch (error) {
       failed += pendingBatch.length;
       const message = error instanceof Error ? error.message : 'Batch creation failed';
-      void ErrorSystem.logWarning(`Failed to import batch of ${pendingBatch.length} products`, {
+      void (ErrorSystem as any).logWarning(`Failed to import batch of ${pendingBatch.length} products`, {
         service: 'csv-import',
         error: message,
       });

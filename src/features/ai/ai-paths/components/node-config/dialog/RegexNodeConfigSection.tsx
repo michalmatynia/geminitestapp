@@ -29,7 +29,7 @@ import {
   normalizeRegexFlags,
   parseRegexCandidate,
 } from './regex-node-config-preview';
-import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
+import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
 import { RegexPendingAiProposal } from './RegexPendingAiProposal';
 import { RegexTemplatesTabContent } from './RegexTemplatesTabContent';
 import { useAiPathConfig } from '../../AiPathConfigContext';
@@ -50,7 +50,11 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
     sendingToAi,
     toast,
   } = useAiPathConfig();
-  const brainModelId = useBrainAssignment({ capability: 'ai_paths.model' }).effectiveModelId.trim();
+  const brainModel = useBrainModelOptions({
+    capability: 'ai_paths.model',
+    enabled: selectedNode?.type === 'regex',
+  });
+  const brainModelId = brainModel.effectiveModelId.trim();
 
   if (selectedNode?.type !== 'regex') return null;
 
@@ -528,12 +532,20 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
       return targetNode?.type === 'model';
     });
     const modelNode = aiEdge ? nodes.find((n) => n.id === aiEdge.to && n.type === 'model') : null;
+    const selectedModelId = modelNode?.config?.model?.modelId?.trim() || '';
     return {
       aiEdge,
       modelNode,
-      modelLabel: modelNode ? brainModelId : undefined,
+      modelLabel: modelNode
+        ? selectedModelId || `Use Brain default (${brainModelId || 'Not configured'})`
+        : undefined,
+      usesBrainDefault: modelNode ? !selectedModelId : undefined,
+      isStale:
+        modelNode && selectedModelId
+          ? !brainModel.models.some((modelId: string): boolean => modelId === selectedModelId)
+          : false,
     };
-  }, [brainModelId, edges, nodes, selectedNode.id]);
+  }, [brainModel.models, brainModelId, edges, nodes, selectedNode.id]);
 
   const sampleTextForAi = React.useMemo((): string => {
     if (typeof sampleSource === 'string') return sampleSource;

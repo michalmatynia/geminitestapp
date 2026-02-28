@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getCmsRepository } from '@/features/cms/services/cms-repository';
 import { cmsPageCreateSchema } from '@/features/cms/validations/api';
-import { ActivityTypes, logActivity } from '@/features/observability/server';
+import { ActivityTypes, logActivity } from '@/shared/lib/observability/system-logger';
 import { parseJsonBody } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { validationError } from '@/shared/errors/app-error';

@@ -65,7 +65,7 @@ export async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Pro
     timings['total'] = ctx.getElapsedMs();
 
     if (shouldLogTiming()) {
-      await logSystemEvent({
+      await (logSystemEvent as any)({
         level: 'info',
         message: '[timing] products.GET',
         context: { provider, ...timings },
@@ -78,7 +78,7 @@ export async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Pro
   } catch (error) {
     timings['total'] = ctx.getElapsedMs();
     if (shouldLogTiming()) {
-      await logSystemEvent({
+      await (logSystemEvent as any)({
         level: 'info',
         message: '[timing] products.GET error',
         context: timings,

@@ -17,8 +17,8 @@ const logWarning = async (
   }
 ): Promise<void> => {
   try {
-    const mod = await import('@/features/observability/server');
-    await mod.ErrorSystem.logWarning(message, context);
+    const mod = await import('@/shared/lib/observability/system-logger');
+    await  mod.ErrorSystem.logWarning(message, context);
   } catch {
     // ignore
   }
@@ -29,8 +29,8 @@ const captureException = async (
   context: { source: string; context: { action: string } }
 ): Promise<void> => {
   try {
-    const mod = await import('@/features/observability/server');
-    await mod.ErrorSystem.captureException(error, {
+    const mod = await import('@/shared/lib/observability/system-logger');
+    await  mod.ErrorSystem.captureException(error, {
       service: context.source,
       ...context.context,
     });

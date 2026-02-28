@@ -903,6 +903,7 @@ export type PromptConfigDto = z.infer<typeof promptConfigSchema>;
 export type PromptConfig = PromptConfigDto;
 
 export const modelConfigSchema = z.object({
+  // Empty/undefined means inherit the AI Brain default for AI Paths.
   modelId: z.string().optional(),
   temperature: z.number(),
   maxTokens: z.number(),

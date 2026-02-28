@@ -10,7 +10,7 @@ import {
 } from '@/shared/lib/ai/insights/generator';
 import { getAiInsightsMeta, setAiInsightsMeta } from '@/shared/lib/ai/insights/repository';
 import { tick } from '@/shared/lib/ai/insights/workers/ai-insights-processor';
-import { listSystemLogs } from '@/features/observability/server';
+import { listSystemLogs } from '@/shared/lib/observability/system-logger';
 
 vi.mock('@/features/ai/ai-paths/services/path-run-repository', () => ({
   getPathRunRepository: vi.fn(),
@@ -32,7 +32,7 @@ vi.mock('@/shared/lib/ai/insights/repository', () => ({
   setAiInsightsMeta: vi.fn(),
 }));
 
-vi.mock('@/features/observability/server', () => ({
+vi.mock('@/shared/lib/observability/system-logger', () => ({
   listSystemLogs: vi.fn(),
 }));
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { selectTriggerCandidates } from '@/features/ai/ai-paths/hooks/useAiPathTriggerEvent';
+import { selectTriggerCandidates } from '@/shared/lib/ai-paths/hooks/useAiPathTriggerEvent';
 
 type Candidate = {
   id: string;
@@ -20,7 +20,7 @@ describe('selectTriggerCandidates', () => {
       activePathId: null,
     });
 
-    expect(selection.activeTriggerCandidates.map((candidate) => candidate.id)).toEqual(['path-b']);
+    expect(selection.activeTriggerCandidates.map((candidate: any) => candidate.id)).toEqual(['path-b']);
     expect(selection.selectedConfig?.id).toBe('path-b');
   });
 

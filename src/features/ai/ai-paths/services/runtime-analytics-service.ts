@@ -408,7 +408,7 @@ const loadRuntimeTraceAnalytics = async (input: {
       total: result.total,
     });
   } catch (error) {
-    void ErrorSystem.logWarning('Failed to load runtime trace analytics sample', {
+    void (ErrorSystem as any).logWarning('Failed to load runtime trace analytics sample', {
       service: 'ai-paths-analytics',
       error,
     });
@@ -502,7 +502,7 @@ export const recordRuntimeRunQueued = async (input: {
     multi.hincrby(keyTotals(), 'runs_queued', 1);
     await multi.exec();
   } catch (error) {
-    void ErrorSystem.logWarning('Failed to record run queued analytics', {
+    void (ErrorSystem as any).logWarning('Failed to record run queued analytics', {
       service: 'ai-paths-analytics',
       error,
       runId: input.runId,
@@ -529,7 +529,7 @@ export const recordRuntimeRunStarted = async (input: {
     multi.hincrby(keyTotals(), 'runs_started', 1);
     await multi.exec();
   } catch (error) {
-    void ErrorSystem.logWarning('Failed to record run started analytics', {
+    void (ErrorSystem as any).logWarning('Failed to record run started analytics', {
       service: 'ai-paths-analytics',
       error,
       runId: input.runId,
@@ -574,7 +574,7 @@ export const recordRuntimeRunFinished = async (input: {
     }
     await multi.exec();
   } catch (error) {
-    void ErrorSystem.logWarning('Failed to record run finished analytics', {
+    void (ErrorSystem as any).logWarning('Failed to record run finished analytics', {
       service: 'ai-paths-analytics',
       error,
       runId: input.runId,
@@ -619,7 +619,7 @@ export const recordRuntimeNodeStatus = async (input: {
     multi.hincrby(keyTotals(), `nodes_${statusKey}`, 1);
     await multi.exec();
   } catch (error) {
-    void ErrorSystem.logWarning('Failed to record node status analytics', {
+    void (ErrorSystem as any).logWarning('Failed to record node status analytics', {
       service: 'ai-paths-analytics',
       error,
       runId: input.runId,
@@ -676,7 +676,7 @@ export const recordBrainInsightAnalytics = async (input: {
     }
     await multi.exec();
   } catch (error) {
-    void ErrorSystem.logWarning('Failed to record brain insight analytics', {
+    void (ErrorSystem as any).logWarning('Failed to record brain insight analytics', {
       service: 'ai-paths-analytics',
       error,
     });
@@ -820,7 +820,7 @@ export const getRuntimeAnalyticsSummary = async (input: {
       setCachedSummary(cacheKey, summary, Date.now());
       return summary;
     } catch (error) {
-      void ErrorSystem.logWarning('Failed to load runtime analytics summary', {
+      void (ErrorSystem as any).logWarning('Failed to load runtime analytics summary', {
         service: 'ai-paths-analytics',
         error,
         range,

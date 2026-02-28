@@ -37,6 +37,9 @@ export const normalizeModelNode = (node: AiNode): AiNode => {
     config: {
       ...node.config,
       model: {
+        ...(node.config?.model?.modelId !== undefined
+          ? { modelId: node.config.model.modelId }
+          : {}),
         temperature: node.config?.model?.temperature ?? 0.7,
         maxTokens: node.config?.model?.maxTokens ?? 800,
         vision: node.config?.model?.vision ?? (node.inputs ?? []).includes('images'),

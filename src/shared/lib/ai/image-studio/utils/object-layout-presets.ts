@@ -1,7 +1,7 @@
 import type {
   ImageStudioCenterDetectionMode,
   ImageStudioCenterShadowPolicy,
-} from '@/features/ai/image-studio/contracts/center';
+} from '@/shared/contracts/image-studio';
 import {
   IMAGE_STUDIO_CENTER_LAYOUT_DEFAULT_CHROMA_THRESHOLD,
   IMAGE_STUDIO_CENTER_LAYOUT_DEFAULT_WHITE_THRESHOLD,
@@ -9,7 +9,7 @@ import {
   IMAGE_STUDIO_CENTER_LAYOUT_MAX_WHITE_THRESHOLD,
   IMAGE_STUDIO_CENTER_LAYOUT_MIN_CHROMA_THRESHOLD,
   IMAGE_STUDIO_CENTER_LAYOUT_MIN_WHITE_THRESHOLD,
-} from '@/features/ai/image-studio/contracts/center';
+} from '@/shared/contracts/image-studio';
 import { sanitizeStudioProjectId } from '@/shared/lib/ai/image-studio/utils/project-session';
 
 export type ObjectLayoutPresetId =

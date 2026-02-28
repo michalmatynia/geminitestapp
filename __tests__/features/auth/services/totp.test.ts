@@ -13,7 +13,7 @@ import {
 
 // Mock crypto module
 vi.mock('crypto', async (importOriginal) => {
-  const actual = (await importOriginal()) as typeof import('crypto');
+  const actual = (await importOriginal());
 
   const randomBytes = vi.fn((size: number) => {
     if (size === 20) return Buffer.from('01234567890123456789');
@@ -44,12 +44,6 @@ vi.mock('crypto', async (importOriginal) => {
     randomBytes,
     createHmac,
     createHash,
-    default: {
-      ...actual.default,
-      randomBytes,
-      createHmac,
-      createHash,
-    },
   };
 });
 

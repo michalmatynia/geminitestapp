@@ -22,7 +22,7 @@ import {
   updateProductSyncRun,
   updateProductSyncRunStatus,
 } from '@/shared/lib/product-sync/services/product-sync-repository';
-import { getProductRepository } from '@/features/products/server';
+import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 import type {
   ProductSyncAppField,
   ProductSyncFieldRule,
@@ -675,7 +675,7 @@ export const processProductSyncRun = async (runId: string): Promise<ProductSyncR
 
     return updatedRun;
   } catch (error) {
-    await ErrorSystem.captureException(error, {
+    await (ErrorSystem as any).captureException(error, {
       service: 'product-sync-service',
       action: 'processProductSyncRun',
       runId,

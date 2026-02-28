@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { type ImageStudioSlotRecord } from '@/features/ai/image-studio/types';
+import { type ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import { buildRunRequestPreview } from '@/shared/lib/ai/image-studio/utils/run-request-preview';
 import { parseImageStudioSettings } from '@/shared/lib/ai/image-studio/utils/studio-settings';
 

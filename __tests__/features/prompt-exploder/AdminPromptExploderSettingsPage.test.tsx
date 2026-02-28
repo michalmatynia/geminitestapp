@@ -63,8 +63,8 @@ vi.mock('@/shared/ui', async (importOriginal) => {
       </section>
     ),
     FormField: ({ label, description, children }: { label: string; description?: string; children: React.ReactNode }) => {
-      const child = React.isValidElement(children)
-        ? React.cloneElement(children as React.ReactElement<any>, { 'aria-label': label })
+      const child = React.isValidElement<{ 'aria-label'?: string }>(children)
+        ? React.cloneElement(children, { 'aria-label': label })
         : children;
       return (
         <label>
@@ -99,12 +99,13 @@ vi.mock('@/shared/ui', async (importOriginal) => {
       value,
       onValueChange,
       options,
+      ...props
     }: {
       value: string;
       onValueChange: (value: string) => void;
       options: Array<{ value: string; label: string }>;
-    }) => (
-      <select value={value} onChange={(event) => onValueChange(event.target.value)}>
+    } & React.SelectHTMLAttributes<HTMLSelectElement>) => (
+      <select {...props} value={value} onChange={(event) => onValueChange(event.target.value)}>
         {options.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}
@@ -164,7 +165,7 @@ const mockBrainOptions = (overrides?: Partial<BrainOptionsReturn>): void => {
       modelId: '',
       temperature: 0.2,
       maxTokens: 1200,
-      systemPrompt: '',
+      systemPrompt: '', agentId: '', notes: null,
     },
     effectiveModelId: '',
     sourceWarnings: [],
@@ -193,14 +194,14 @@ describe('AdminPromptExploderSettingsPage', () => {
     );
     mockUpdateSetting();
     mockBrainOptions({
-      models: [{ id: 'gpt-4o-mini', label: 'GPT-4o Mini' }] as BrainOptionsReturn['models'],
+      models: ['gpt-4o-mini'],
       assignment: {
         enabled: true,
         provider: 'model',
         modelId: 'gpt-4o-mini',
         temperature: 0.7,
         maxTokens: 2048,
-        systemPrompt: '',
+        systemPrompt: '', agentId: '', notes: null,
       },
       effectiveModelId: 'gpt-4o-mini',
     });
@@ -250,7 +251,7 @@ describe('AdminPromptExploderSettingsPage', () => {
         modelId: '',
         temperature: 0.2,
         maxTokens: 1200,
-        systemPrompt: '',
+        systemPrompt: '', agentId: '', notes: null,
       },
       effectiveModelId: '',
     });
@@ -265,6 +266,52 @@ describe('AdminPromptExploderSettingsPage', () => {
       });
     });
     expect(mutateAsync).not.toHaveBeenCalled();
+  });
+
+  it('allows saving in rules-only mode without a Brain model and preserves existing compatibility snapshots', async () => {
+    mockSettingsQuery(
+      buildSettings({
+        ai: {
+          operationMode: 'hybrid',
+          provider: 'ollama',
+          modelId: 'legacy-model',
+          fallbackModelId: 'legacy-fallback',
+          temperature: 0.35,
+          maxTokens: 900,
+        },
+      })
+    );
+    const mutateAsync = mockUpdateSetting();
+    mockBrainOptions({
+      assignment: {
+        enabled: false,
+        provider: 'model',
+        modelId: '',
+        temperature: 0.2,
+        maxTokens: 1200,
+        systemPrompt: '', agentId: '', notes: null,
+      },
+      effectiveModelId: '',
+    });
+
+    render(<AdminPromptExploderSettingsPage />);
+
+    fireEvent.change(await screen.findByLabelText('Operation Mode'), {
+      target: { value: 'rules_only' },
+    });
+    fireEvent.click(screen.getByText('Save Prompt Exploder Settings'));
+
+    await waitFor(() => expect(mutateAsync).toHaveBeenCalledTimes(1));
+
+    const payload = mutateAsync.mock.calls[0]?.[0] as { key: string; value: string };
+    const saved = JSON.parse(payload.value) as typeof defaultPromptExploderSettings;
+
+    expect(saved.ai.operationMode).toBe('rules_only');
+    expect(saved.ai.provider).toBe('ollama');
+    expect(saved.ai.modelId).toBe('legacy-model');
+    expect(saved.ai.fallbackModelId).toBe('legacy-fallback');
+    expect(saved.ai.temperature).toBe(0.35);
+    expect(saved.ai.maxTokens).toBe(900);
   });
 
   it('persists Brain-derived compatibility snapshots and preserves the legacy fallback model', async () => {
@@ -282,14 +329,14 @@ describe('AdminPromptExploderSettingsPage', () => {
     );
     const mutateAsync = mockUpdateSetting();
     mockBrainOptions({
-      models: [{ id: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash' }] as BrainOptionsReturn['models'],
+      models: ['gemini-2.0-flash'],
       assignment: {
         enabled: true,
         provider: 'model',
         modelId: 'gemini-2.0-flash',
         temperature: 0.8,
         maxTokens: 2222,
-        systemPrompt: '',
+        systemPrompt: '', agentId: '', notes: null,
       },
       effectiveModelId: 'gemini-2.0-flash',
     });

@@ -45,7 +45,7 @@ export const GET = apiHandlerWithParams<{ runId: string }>(
       })
       : audits;
     if (DEBUG_CHATBOT) {
-      void ErrorSystem.logInfo('Audits loaded', {
+      void (ErrorSystem as any).logInfo('Audits loaded', {
         service: 'agent-api',
         runId,
         count: filtered.length,

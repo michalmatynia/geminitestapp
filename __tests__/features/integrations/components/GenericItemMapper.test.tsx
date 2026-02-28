@@ -10,6 +10,8 @@ vi.mock('@/shared/lib/integrations/context/CategoryMapperContext', () => ({
   useCategoryMapper: vi.fn(),
 }));
 
+type CategoryMapperContextValue = ReturnType<typeof useCategoryMapper>;
+
 // Mock types and data
 interface MockInternalItem {
   id: string;
@@ -49,7 +51,7 @@ describe('GenericItemMapper', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(useCategoryMapper).mockReturnValue(defaultMockContext as any);
+    vi.mocked(useCategoryMapper).mockReturnValue(defaultMockContext as unknown as CategoryMapperContextValue);
   });
 
   const createConfig = (overrides = {}) => ({

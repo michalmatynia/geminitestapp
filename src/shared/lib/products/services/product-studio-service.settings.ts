@@ -9,7 +9,7 @@ import {
   resolveImageStudioSequenceActiveSteps,
   type ImageStudioSettings,
 } from '@/shared/lib/ai/image-studio/studio-settings';
-import { PRODUCT_STUDIO_SEQUENCE_GENERATION_MODE_SETTING_KEY } from '@/features/products/constants';
+import { PRODUCT_STUDIO_SEQUENCE_GENERATION_MODE_SETTING_KEY } from '@/shared/lib/products/constants';
 import { getSettingValue } from '@/shared/lib/products/services/aiDescriptionService';
 import {
   normalizeProductStudioSequenceGenerationMode,

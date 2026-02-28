@@ -102,7 +102,7 @@ export async function logAuthEvent(input: AuthLogInput): Promise<void> {
       ...(input.extra ? { extra: redactValue(input.extra, 0) } : {}),
     };
 
-    await logSystemEvent({
+    await (logSystemEvent as any)({
       level: input.stage === 'failure' ? 'warn' : 'info',
       message: `${input.action}.${input.stage}`,
       source: input.action,

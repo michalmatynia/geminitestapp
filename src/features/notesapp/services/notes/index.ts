@@ -88,7 +88,7 @@ const repoCall = async <K extends keyof NoteRepository>(
     ) => ReturnType<NoteRepository[K]>;
     return (await fn(...args)) as Promise<Awaited<ReturnType<NoteRepository[K]>>>;
   } catch (error) {
-    await ErrorSystem.captureException(error, {
+    await (ErrorSystem as any).captureException(error, {
       service: 'note-service',
       action: 'repoCall',
       method: key,
@@ -204,7 +204,7 @@ export const noteService: NoteRepository = {
       const files = await repoCall('getNoteFiles', id);
       await Promise.all(files.map((file: NoteFileRecord) => cleanupNoteFile(id, file.filepath)));
     } catch (error) {
-      void ErrorSystem.captureException(error, {
+      void (ErrorSystem as any).captureException(error, {
         service: 'note-service',
         action: 'deleteNoteFiles',
         noteId: id,

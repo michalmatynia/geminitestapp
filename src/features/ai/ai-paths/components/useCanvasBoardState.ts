@@ -352,6 +352,9 @@ export function useCanvasBoardState({
     handlePointerUpNode: (nodeId, event) => {
       canvasInteractions.handlePointerUpNode(event, nodeId);
     },
+    consumeSuppressedNodeClick: (nodeId) => {
+      return canvasInteractions.consumeSuppressedNodeClick(nodeId);
+    },
     handlePanStart: (event) => {
       canvasInteractions.handlePanStart(event);
     },

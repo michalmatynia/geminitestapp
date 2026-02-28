@@ -6,12 +6,13 @@
  */
 
 import {
-  aiTriggerButtonCreateSchema,
-  aiTriggerButtonReorderSchema,
-  aiTriggerButtonUpdateSchema,
+  aiTriggerButtonCreatePayloadSchema as aiTriggerButtonCreateSchema,
+  aiTriggerButtonReorderPayloadSchema as aiTriggerButtonReorderSchema,
+  aiTriggerButtonUpdatePayloadSchema as aiTriggerButtonUpdateSchema,
   type AiTriggerButtonCreatePayload,
   type AiTriggerButtonUpdatePayload,
-} from '@/features/ai/ai-paths/validations/trigger-buttons';
+  type AiTriggerButtonReorderPayload,
+} from '@/shared/contracts/ai-trigger-buttons';
 import type {
   AgentTeachingAgentRecord,
   AgentTeachingChatSource,

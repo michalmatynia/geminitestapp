@@ -32,7 +32,7 @@ const fetchAsDataUrl = async (url: string): Promise<string | null> => {
     return toDataUrl(buffer, contentType);
   } catch (error) {
     if (error instanceof OutboundUrlPolicyError) {
-      await ErrorSystem.logWarning('Blocked outbound image fetch by URL policy.', {
+      await (ErrorSystem as any).logWarning('Blocked outbound image fetch by URL policy.', {
         service: 'product-image-base64',
         url,
         reason: error.decision.reason ?? 'unknown',

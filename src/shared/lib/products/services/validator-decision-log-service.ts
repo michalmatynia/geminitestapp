@@ -2,7 +2,7 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 
-import { PRODUCT_VALIDATOR_DECISION_LOG_SETTING_KEY } from '@/features/products/constants';
+import { PRODUCT_VALIDATOR_DECISION_LOG_SETTING_KEY } from '@/shared/lib/products/constants';
 import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 import type { ProductValidationDenyBehavior } from '@/shared/contracts/products';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';

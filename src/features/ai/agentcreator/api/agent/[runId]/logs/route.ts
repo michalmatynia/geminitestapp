@@ -27,7 +27,7 @@ async function GET_handler(
     take: 50,
   });
   if (DEBUG_CHATBOT) {
-    void ErrorSystem.logInfo('Logs loaded', {
+    void (ErrorSystem as any).logInfo('Logs loaded', {
       service: 'agent-api',
       runId,
       stepId,

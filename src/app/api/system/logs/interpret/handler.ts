@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { generateLogInterpretation } from '@/shared/lib/ai/insights/generator';
 import { startAiInsightsQueue } from '@/features/jobs/server';
-import { getSystemLogById } from '@/features/observability/server';
+import { getSystemLogById } from '@/shared/lib/observability/system-logger';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { notFoundError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';

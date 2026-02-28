@@ -112,7 +112,7 @@ const queue = createManagedQueue<ImageStudioSequenceJobData>({
   processor: async (data) => {
     const run = await getImageStudioSequenceRunById(data.runId);
     if (!run) {
-      await logSystemEvent({
+      await (logSystemEvent as any)({
         level: 'warn',
         source: LOG_SOURCE,
         message: `Sequence run ${data.runId} not found, skipping`,
@@ -122,7 +122,7 @@ const queue = createManagedQueue<ImageStudioSequenceJobData>({
     }
 
     if (run.status === 'completed' || run.status === 'failed' || run.status === 'cancelled') {
-      await logSystemEvent({
+      await (logSystemEvent as any)({
         level: 'info',
         source: LOG_SOURCE,
         message: `Sequence run ${run.id} already terminal (${run.status}), skipping`,
@@ -516,7 +516,7 @@ const queue = createManagedQueue<ImageStudioSequenceJobData>({
         ts: Date.now(),
       });
 
-      await ErrorSystem.captureException(error, {
+      await (ErrorSystem as any).captureException(error, {
         service: LOG_SOURCE,
         runId: run.id,
       });
@@ -525,7 +525,7 @@ const queue = createManagedQueue<ImageStudioSequenceJobData>({
     }
   },
   onFailed: async (jobId, error, data) => {
-    await ErrorSystem.captureException(error, {
+    await (ErrorSystem as any).captureException(error, {
       service: LOG_SOURCE,
       action: 'onFailed',
       jobId,
@@ -542,7 +542,7 @@ export const enqueueImageStudioSequenceJob = async (
   runId: string
 ): Promise<ImageStudioSequenceDispatchMode> => {
   if (!isRedisAvailable()) {
-    await logSystemEvent({
+    await (logSystemEvent as any)({
       level: 'info',
       source: LOG_SOURCE,
       message: `Redis unavailable for sequence run ${runId}; processing inline`,
@@ -556,7 +556,7 @@ export const enqueueImageStudioSequenceJob = async (
     await queue.enqueue({ runId }, { jobId: runId });
     return 'queued';
   } catch (enqueueError) {
-    await logSystemEvent({
+    await (logSystemEvent as any)({
       level: 'warn',
       source: LOG_SOURCE,
       message: `Queue enqueue failed for sequence run ${runId}; falling back to inline processing`,
@@ -570,7 +570,7 @@ export const enqueueImageStudioSequenceJob = async (
       await queue.processInline({ runId });
       return 'inline';
     } catch (inlineError) {
-      await ErrorSystem.captureException(inlineError, {
+      await (ErrorSystem as any).captureException(inlineError, {
         service: LOG_SOURCE,
         action: 'inline-fallback-failed',
         runId,

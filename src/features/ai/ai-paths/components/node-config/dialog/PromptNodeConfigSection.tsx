@@ -4,7 +4,7 @@ import React from 'react';
 
 import type { AiNode, Edge, PromptConfig } from '@/shared/lib/ai-paths';
 import { buildPromptOutput, createParserMappings, formatRuntimeValue } from '@/shared/lib/ai-paths';
-import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
+import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
 import { formatPlaceholderLabel, formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
 import { Button, Textarea, Alert, FormField } from '@/shared/ui';
 
@@ -29,7 +29,11 @@ export function PromptNodeConfigSection(): React.JSX.Element | null {
   const promptTemplateRef = React.useRef<HTMLTextAreaElement | null>(null);
   const [placeholderMatrixOpen, setPlaceholderMatrixOpen] = React.useState<boolean>(false);
   const [placeholderTarget, setPlaceholderTarget] = React.useState<PlaceholderTarget>('prompt');
-  const brainModelId = useBrainAssignment({ capability: 'ai_paths.model' }).effectiveModelId.trim();
+  const brainModel = useBrainModelOptions({
+    capability: 'ai_paths.model',
+    enabled: selectedNode?.type === 'prompt',
+  });
+  const brainModelId = brainModel.effectiveModelId.trim();
 
   const promptConfig: PromptConfig = selectedNode?.config?.prompt ?? {
     template: '',
@@ -288,6 +292,13 @@ export function PromptNodeConfigSection(): React.JSX.Element | null {
           ? nodes.find((n: AiNode) => n.id === aiEdge.to && n.type === 'model')
           : null;
         const hasPromptContent = promptConfig.template && promptConfig.template.trim().length > 0;
+        const selectedModelId = aiNode?.config?.model?.modelId?.trim() || '';
+        const modelLabel = selectedModelId
+          ? selectedModelId
+          : `Use Brain default (${brainModelId || 'Not configured'})`;
+        const modelMissingFromCatalog =
+          Boolean(selectedModelId) &&
+          !brainModel.models.some((modelId: string): boolean => modelId === selectedModelId);
 
         return (
           <div className='mt-4 space-y-2'>
@@ -297,10 +308,15 @@ export function PromptNodeConfigSection(): React.JSX.Element | null {
                   <span className='text-[11px] text-emerald-100'>
                     Connected to AI Model:{' '}
                     <span className='font-medium text-emerald-200'>
-                      {brainModelId || 'Not configured in AI Brain'}
+                      {modelLabel}
                     </span>
                   </span>
                 </div>
+                {modelMissingFromCatalog ? (
+                  <div className='mt-1 text-[10px] text-amber-200'>
+                    This node&apos;s selected model is not currently in the AI Brain catalog.
+                  </div>
+                ) : null}
                 {onSendToAi && hasPromptContent && (
                   <Button
                     type='button'

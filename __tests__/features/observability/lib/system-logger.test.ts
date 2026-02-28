@@ -3,6 +3,8 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+vi.unmock('@/shared/lib/observability/system-logger');
+
 import { notifyCriticalError } from '@/shared/lib/observability/critical-error-notifier';
 import { REDACTED_VALUE } from '@/shared/lib/observability/log-redaction';
 import { createSystemLog } from '@/shared/lib/observability/system-log-repository';
@@ -13,7 +15,7 @@ import {
 } from '@/shared/lib/observability/system-logger';
 
 vi.mock('@/shared/lib/observability/system-log-repository', () => ({
-  createSystemLog: vi.fn().mockResolvedValue({ id: 'log-1', level: 'info', message: 'test' }),
+  createSystemLog: vi.fn().mockResolvedValue({ id: 'log-1', level: 'info', message: 'test', createdAt: new Date().toISOString() }),
 }));
 
 vi.mock('@/shared/lib/observability/critical-error-notifier', () => ({
@@ -51,21 +53,25 @@ describe('system-logger', () => {
 
   describe('log-redaction integration', () => {
     it('should redact sensitive keys in context', async () => {
+       
+       
       await logSystemEvent({
         message: 'Test message',
+        source: 'test',
         context: { password: 'secret123', token: 'abc-123', safe: 'value' },
       });
-      await new Promise((resolve) => setTimeout(resolve, 0));
 
-      expect(createSystemLog).toHaveBeenCalledWith(
-        expect.objectContaining({
-          context: expect.objectContaining({
-            password: REDACTED_VALUE,
-            token: REDACTED_VALUE,
-            safe: 'value',
-          }),
-        })
-      );
+      await vi.waitFor(() => {
+        expect(createSystemLog).toHaveBeenCalledWith(
+          expect.objectContaining({
+            context: expect.objectContaining({
+              password: REDACTED_VALUE,
+              token: REDACTED_VALUE,
+              safe: 'value',
+            }),
+          })
+        );
+      });
     });
   });
 
@@ -92,32 +98,42 @@ describe('system-logger', () => {
 
   describe('logSystemEvent', () => {
     it('should call createSystemLog with default info level', async () => {
-      await logSystemEvent({ message: 'Hello' });
-      await new Promise((resolve) => setTimeout(resolve, 0));
-      expect(createSystemLog).toHaveBeenCalledWith(
-        expect.objectContaining({
-          level: 'info',
-          message: 'Hello',
-        })
-      );
+       
+       
+      await logSystemEvent({ message: 'Hello', source: 'test' });
+      await vi.waitFor(() => {
+        expect(createSystemLog).toHaveBeenCalledWith(
+          expect.objectContaining({
+            level: 'info',
+            message: 'Hello',
+          })
+        );
+      });
     });
 
     it('should notify critical errors', async () => {
-      await logSystemEvent({ message: 'Critical fail', critical: true });
-      await new Promise((resolve) => setTimeout(resolve, 0));
-      expect(notifyCriticalError).toHaveBeenCalled();
+       
+       
+      await logSystemEvent({ message: 'Critical fail', source: 'test', level: 'error', critical: true });
+      await vi.waitFor(() => {
+        expect(notifyCriticalError).toHaveBeenCalled();
+      });
     });
 
     it('should handle circular references in context', async () => {
       const context: Record<string, unknown> = { a: 1 };
       context['self'] = context;
 
-      await logSystemEvent({ message: 'Circular', context });
-      await new Promise((resolve) => setTimeout(resolve, 0));
+       
+       
+      await logSystemEvent({ message: 'Circular', source: 'test', context });
 
-      const calls = vi.mocked(createSystemLog).mock.calls;
-      const actualContext = (calls[0]?.[0] as any).context;
-      expect(actualContext.self.self).toBe('[Circular]');
+      await vi.waitFor(() => {
+        const calls = vi.mocked(createSystemLog).mock.calls;
+        expect(calls.length).toBeGreaterThan(0);
+        const actualContext = calls[0]?.[0].context as any;
+        expect(actualContext.self.self).toBe('[Circular]');
+      });
     });
   });
 });

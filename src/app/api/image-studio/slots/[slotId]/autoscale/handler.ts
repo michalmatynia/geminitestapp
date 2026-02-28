@@ -1061,7 +1061,7 @@ export async function postAutoScaleSlotHandler(
     });
 
     if (processed.authoritativeSource === 'client_upload_fallback') {
-      void logSystemEvent({
+      void (logSystemEvent as any)({
         level: 'warn',
         source: 'image-studio.autoscale',
         message:
@@ -1201,7 +1201,7 @@ export async function postAutoScaleSlotHandler(
     }
 
     const durationMs = Date.now() - startedAt;
-    void logSystemEvent({
+    void (logSystemEvent as any)({
       level: 'info',
       source: 'image-studio.autoscale',
       message: 'Image Studio auto scaler persisted.',
@@ -1281,7 +1281,7 @@ export async function postAutoScaleSlotHandler(
         )
         : error;
 
-    void logSystemEvent({
+    void (logSystemEvent as any)({
       level: 'warn',
       source: 'image-studio.autoscale',
       message: 'Image Studio auto scaler failed.',

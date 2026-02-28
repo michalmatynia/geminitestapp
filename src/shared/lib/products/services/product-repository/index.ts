@@ -19,7 +19,7 @@ export const getProductRepository = async (
     }
     return prismaProductRepository;
   } catch (error) {
-    await ErrorSystem.captureException(error, {
+    await (ErrorSystem as any).captureException(error, {
       service: 'product-repository',
       action: 'getProductRepository',
       providerOverride,

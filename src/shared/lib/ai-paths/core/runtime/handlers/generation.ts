@@ -392,6 +392,7 @@ export const handleModel: NodeHandler = async ({
   const payload = {
     prompt,
     imageUrls,
+    ...(modelConfig.modelId?.trim() ? { modelId: modelConfig.modelId.trim() } : {}),
     temperature: modelConfig.temperature,
     maxTokens: modelConfig.maxTokens,
     vision: modelConfig.vision,

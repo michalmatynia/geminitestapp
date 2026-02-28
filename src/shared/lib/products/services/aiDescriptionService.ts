@@ -61,7 +61,7 @@ export async function getSettingValue(key: string): Promise<string | null> {
       const mongoValue = await readMongoSettingValue(key);
       if (mongoValue !== null) return mongoValue;
     } catch (err) {
-      void ErrorSystem.logWarning(`Mongo setting fetch failed for ${key}`, {
+      void (ErrorSystem as any).logWarning(`Mongo setting fetch failed for ${key}`, {
         service: 'ai-description-service',
         key,
         error: err,
@@ -70,7 +70,7 @@ export async function getSettingValue(key: string): Promise<string | null> {
     try {
       return await readPrismaSettingValue(key);
     } catch (err) {
-      void ErrorSystem.logWarning(`Prisma setting fetch failed for ${key}`, {
+      void (ErrorSystem as any).logWarning(`Prisma setting fetch failed for ${key}`, {
         service: 'ai-description-service',
         key,
         error: err,
@@ -83,7 +83,7 @@ export async function getSettingValue(key: string): Promise<string | null> {
     const prismaValue = await readPrismaSettingValue(key);
     if (prismaValue !== null) return prismaValue;
   } catch (err) {
-    void ErrorSystem.logWarning(`Prisma setting fetch failed for ${key}`, {
+    void (ErrorSystem as any).logWarning(`Prisma setting fetch failed for ${key}`, {
       service: 'ai-description-service',
       key,
       error: err,
@@ -94,7 +94,7 @@ export async function getSettingValue(key: string): Promise<string | null> {
     try {
       return await readMongoSettingValue(key);
     } catch (err) {
-      void ErrorSystem.logWarning(`Mongo fallback setting fetch failed for ${key}`, {
+      void (ErrorSystem as any).logWarning(`Mongo fallback setting fetch failed for ${key}`, {
         service: 'ai-description-service',
         key,
         error: err,
@@ -261,7 +261,7 @@ export const generateProductAiDescription = async (params: {
         analysisFinal = refineCompletion.message.trim() || '';
       }
     } catch (error) {
-      await ErrorSystem.captureException(error, {
+      await (ErrorSystem as any).captureException(error, {
         service: 'aiDescriptionService',
         action: 'vision_analysis',
         productId: params.productId,
@@ -317,7 +317,7 @@ export const generateProductAiDescription = async (params: {
         descriptionFinal = refineGenCompletion.message.trim() || '';
       }
     } catch (error) {
-      await ErrorSystem.captureException(error, {
+      await (ErrorSystem as any).captureException(error, {
         service: 'aiDescriptionService',
         action: 'description_generation',
         productId: params.productId,

@@ -76,6 +76,7 @@ export interface CanvasBoardState {
   handlePointerDownNode: (nodeId: string, event: React.PointerEvent) => void;
   handlePointerMoveNode: (nodeId: string, event: React.PointerEvent) => void;
   handlePointerUpNode: (nodeId: string, event: React.PointerEvent) => void;
+  consumeSuppressedNodeClick: (nodeId: string) => boolean;
   handlePanStart: (event: React.PointerEvent) => void;
   handlePanMove: (event: React.PointerEvent) => void;
   handlePanEnd: (event: React.PointerEvent) => void;

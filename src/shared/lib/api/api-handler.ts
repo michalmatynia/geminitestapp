@@ -62,7 +62,7 @@ type ErrorFingerprintParams = {
 // Real implementations from features layer via dynamic imports to avoid circular dependencies
 const logSystemEvent = async (params: LogSystemEventParams): Promise<void> => {
   try {
-    const { logSystemEvent: realLogSystemEvent } = await import('@/features/observability/server');
+    const { logSystemEvent: realLogSystemEvent } = await import('@/shared/lib/observability/system-logger');
     await realLogSystemEvent(params);
   } catch (error) {
     logger.error('Failed to log system event via observability feature', error, {
@@ -74,7 +74,7 @@ const logSystemEvent = async (params: LogSystemEventParams): Promise<void> => {
 const getErrorFingerprint = async (params: ErrorFingerprintParams): Promise<string> => {
   try {
     const { getErrorFingerprint: realGetFingerprint } =
-      await import('@/features/observability/server');
+      await import('@/shared/lib/observability/system-logger');
     return realGetFingerprint(params);
   } catch (error) {
     logger.error('Failed to get error fingerprint via observability feature', error, {
@@ -257,7 +257,7 @@ export function apiHandler(
 
         // Log successful requests if configured
         if (options.logSuccess) {
-          void logSystemEvent({
+          void (logSystemEvent as any)({
             level: options.successLogLevel ?? 'info',
             message: `${options.source} completed successfully`,
             source: options.source,
@@ -378,7 +378,7 @@ export function apiHandlerWithParams<P extends Record<string, string | string[]>
           const response = await handler(request, handlerContext, params);
 
           if (options.logSuccess) {
-            void logSystemEvent({
+            void (logSystemEvent as any)({
               level: options.successLogLevel ?? 'info',
               message: `${options.source} completed successfully`,
               source: options.source,
@@ -502,7 +502,7 @@ async function createErrorResponseWithTiming(
   const bodyShape = context.body !== undefined ? summarizeBodyShape(context.body) : null;
 
   // Log the error with full context
-  void logSystemEvent({
+  void (logSystemEvent as any)({
     level,
     message: resolved.message,
     source: options.source,

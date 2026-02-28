@@ -3,20 +3,22 @@
 import { useMemo } from 'react';
 
 import type { AiNode, Edge, ModelConfig } from '@/shared/lib/ai-paths';
-import { useBrainAssignment } from '@/shared/lib/ai-brain/hooks/useBrainAssignment';
-import { Button, Card, FormField, Textarea } from '@/shared/ui';
+import { useBrainModelOptions } from '@/shared/lib/ai-brain/hooks/useBrainModelOptions';
+import { Button, Card, FormField, Input, SelectSimple, Textarea } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
 export function ModelNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode, nodes, edges, updateSelectedNodeConfig } = useAiPathConfig();
-  const brainAssignment = useBrainAssignment({
+  const brainModelOptions = useBrainModelOptions({
     capability: 'ai_paths.model',
-  }).assignment;
+    enabled: selectedNode?.type === 'model',
+  });
 
   const modelConfig: ModelConfig = useMemo(
     () =>
       selectedNode?.config?.model ?? {
+        modelId: '',
         temperature: 0.7,
         maxTokens: 800,
         vision: selectedNode?.inputs.includes('images') ?? false,
@@ -26,67 +28,145 @@ export function ModelNodeConfigSection(): React.JSX.Element | null {
 
   if (selectedNode?.type !== 'model') return null;
 
-  const effectiveModelId = brainAssignment.modelId?.trim() || '';
-  const effectiveTemperature = brainAssignment.temperature ?? modelConfig.temperature;
-  const effectiveMaxTokens = brainAssignment.maxTokens ?? modelConfig.maxTokens;
-  const effectiveSystemPrompt = brainAssignment.systemPrompt?.trim() ?? '';
-  const routingMisconfigured = !brainAssignment.enabled || brainAssignment.provider !== 'model' || !effectiveModelId;
+  const effectiveModelId = brainModelOptions.effectiveModelId.trim();
+  const selectedModelId = modelConfig.modelId?.trim() || '';
+  const routingMisconfigured =
+    !brainModelOptions.assignment.enabled ||
+    brainModelOptions.assignment.provider !== 'model' ||
+    (!selectedModelId && !effectiveModelId);
+  const knownModels = brainModelOptions.models;
+  const selectedModelMissingFromCatalog =
+    Boolean(selectedModelId) && !knownModels.some((modelId: string): boolean => modelId === selectedModelId);
+  const modelOptions = [
+    {
+      value: '',
+      label: `Use Brain default (${effectiveModelId || 'Not configured'})`,
+    },
+    ...knownModels.map((modelId: string) => ({
+      value: modelId,
+      label: modelId,
+    })),
+    ...(selectedModelMissingFromCatalog
+      ? [
+        {
+          value: selectedModelId,
+          label: `${selectedModelId} (not currently in Brain catalog)`,
+        },
+      ]
+      : []),
+  ];
   const hasPollConsumer = edges.some((edge: Edge): boolean => {
     if (edge.from !== selectedNode.id) return false;
     if (edge.fromPort !== 'jobId') return false;
     const targetNode = nodes.find((node: AiNode): boolean => node.id === edge.to);
     return targetNode?.type === 'poll';
   });
+  const updateModelConfig = (patch: Partial<ModelConfig>): void =>
+    updateSelectedNodeConfig({
+      model: {
+        ...modelConfig,
+        ...patch,
+      },
+    });
+  const updateTemperature = (rawValue: string): void => {
+    const nextValue = Number.parseFloat(rawValue);
+    updateModelConfig({
+      temperature: Number.isFinite(nextValue) ? nextValue : 0.7,
+    });
+  };
+  const updateMaxTokens = (rawValue: string): void => {
+    const nextValue = Number.parseInt(rawValue, 10);
+    updateModelConfig({
+      maxTokens: Number.isFinite(nextValue) ? Math.max(1, nextValue) : 800,
+    });
+  };
 
   return (
     <div className='space-y-4'>
-      <FormField label='Model (Brain managed)'>
-        <Card
-          variant='subtle-compact'
-          padding='sm'
-          className='border-border/60 bg-card/30 text-xs text-gray-300'
-        >
-          <div className='font-medium text-gray-100'>{effectiveModelId}</div>
-          <div className='mt-1 text-[11px] text-gray-500'>
-            AI Brain is authoritative for AI Paths model routing.
-          </div>
-        </Card>
+      <FormField
+        label='Model'
+        description='Brain provides the model catalog and execution engine. This node chooses its runtime model and AI parameters.'
+      >
+        <SelectSimple
+          size='sm'
+          variant='subtle'
+          value={selectedModelId}
+          onValueChange={(value: string): void => {
+            updateModelConfig({ modelId: value.trim() });
+          }}
+          options={modelOptions}
+          placeholder='Select a model'
+          disabled={brainModelOptions.isLoading}
+        />
       </FormField>
-      <FormField label='System Prompt (Brain managed)'>
+      <FormField label='System Prompt'>
         <Textarea
           className='min-h-[80px] resize-y text-xs'
-          value={effectiveSystemPrompt}
-          placeholder='Using Brain default system prompt.'
-          readOnly
+          value={modelConfig.systemPrompt ?? ''}
+          placeholder='Leave blank to inherit the AI Brain default system prompt.'
+          onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
+            updateModelConfig({ systemPrompt: event.target.value })
+          }
         />
         <p className='text-[11px] text-gray-500 mt-1'>
-          Sent from AI Brain. Empty means provider default prompt.
+          A non-empty node prompt overrides AI Brain. Leave blank to inherit the AI Paths default.
         </p>
       </FormField>
       <div className='grid gap-3 sm:grid-cols-2'>
-        <FormField label='Temperature (Brain managed)'>
-          <Card
-            variant='subtle-compact'
-            padding='sm'
-            className='border-border/60 bg-card/30 text-xs text-gray-300'
-          >
-            {effectiveTemperature}
-          </Card>
+        <FormField label='Temperature'>
+          <Input
+            type='number'
+            min='0'
+            max='2'
+            step='0.1'
+            variant='subtle'
+            size='sm'
+            value={modelConfig.temperature}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+              updateTemperature(event.target.value)
+            }
+          />
         </FormField>
-        <FormField label='Max Tokens (Brain managed)'>
-          <Card
-            variant='subtle-compact'
-            padding='sm'
-            className='border-border/60 bg-card/30 text-xs text-gray-300'
-          >
-            {effectiveMaxTokens}
-          </Card>
+        <FormField label='Max Tokens'>
+          <Input
+            type='number'
+            min='1'
+            step='1'
+            variant='subtle'
+            size='sm'
+            value={modelConfig.maxTokens}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+              updateMaxTokens(event.target.value)
+            }
+          />
         </FormField>
       </div>
       {routingMisconfigured ? (
         <Card variant='warning' padding='sm' className='text-[11px] text-amber-100'>
           AI Brain routing for <code>ai_paths</code> is not ready. Enable the feature, keep
-          provider set to Model, and set a model ID in AI Brain.
+          provider set to Model, and set a default model ID in AI Brain.
+        </Card>
+      ) : null}
+      {selectedModelId ? (
+        <Card variant='subtle-compact' padding='sm' className='text-[11px] text-gray-300'>
+          This node will run with <span className='text-gray-100'>{selectedModelId}</span>.
+          {' '}If cleared, it will inherit <span className='text-gray-100'>{effectiveModelId || 'the AI Brain default'}</span>.
+        </Card>
+      ) : (
+        <Card variant='subtle-compact' padding='sm' className='text-[11px] text-gray-300'>
+          This node inherits the AI Brain default model:
+          {' '}<span className='text-gray-100'>{effectiveModelId || 'Not configured'}</span>.
+        </Card>
+      )}
+      {selectedModelMissingFromCatalog ? (
+        <Card variant='warning' padding='sm' className='text-[11px] text-amber-100'>
+          The selected model is not currently in the AI Brain catalog. It will still run if the
+          provider accepts it, but reselecting from the Brain catalog is recommended.
+        </Card>
+      ) : null}
+      {brainModelOptions.sourceWarnings.length > 0 ? (
+        <Card variant='warning' padding='sm' className='text-[11px] text-amber-100'>
+          {brainModelOptions.sourceWarnings[0]}
         </Card>
       ) : null}
       <Card
@@ -100,9 +180,7 @@ export function ModelNodeConfigSection(): React.JSX.Element | null {
           size='xs'
           type='button'
           onClick={(): void =>
-            updateSelectedNodeConfig({
-              model: { ...modelConfig, vision: !modelConfig.vision },
-            })
+            updateModelConfig({ vision: !modelConfig.vision })
           }
         >
           {modelConfig.vision ? 'Enabled' : 'Disabled'}
@@ -119,11 +197,8 @@ export function ModelNodeConfigSection(): React.JSX.Element | null {
           size='xs'
           type='button'
           onClick={(): void =>
-            updateSelectedNodeConfig({
-              model: {
-                ...modelConfig,
-                waitForResult: modelConfig.waitForResult === false,
-              },
+            updateModelConfig({
+              waitForResult: modelConfig.waitForResult === false,
             })
           }
         >

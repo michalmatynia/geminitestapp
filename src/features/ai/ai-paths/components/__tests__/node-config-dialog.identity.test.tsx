@@ -151,4 +151,12 @@ describe('NodeConfigDialog identity fields', () => {
     expect(screen.getByText('prompt')).toBeTruthy();
     expect(screen.getByText('node-prompt-1')).toBeTruthy();
   });
+
+  it('renders the dialog when config is open and the selected node is present', () => {
+    render(<NodeConfigDialog />);
+
+    expect(screen.getByText('Config Sections')).toBeTruthy();
+    expect(screen.getAllByText('History').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Notes').length).toBeGreaterThan(0);
+  });
 });

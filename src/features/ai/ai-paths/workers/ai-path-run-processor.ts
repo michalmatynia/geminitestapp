@@ -18,7 +18,7 @@ const LOG_SOURCE = 'ai-path-run-processor';
 
 const debugQueueLog = (message: string, context?: Record<string, unknown>): void => {
   if (!DEBUG_AI_PATH_QUEUE) return;
-  void logSystemEvent({
+  void (logSystemEvent as any)({
     level: 'info',
     source: LOG_SOURCE,
     message,
@@ -128,7 +128,7 @@ export const processRun = async (run: AiPathRunRecord): Promise<ProcessRunResult
     return;
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Run failed.';
-    await ErrorSystem.captureException(error, {
+    await (ErrorSystem as any).captureException(error, {
       service: 'ai-paths-queue',
       pathRunId: run.id,
       pathId: run.pathId,
@@ -230,14 +230,14 @@ export const processStaleRunRecovery = async (): Promise<void> => {
     });
     if (count > 0) {
       debugQueueLog(`Recovery: marked ${count} stale running run(s) as failed`, { count });
-      void ErrorSystem.logWarning(`Stale run recovery: marked ${count} run(s) as failed`, {
+      void (ErrorSystem as any).logWarning(`Stale run recovery: marked ${count} run(s) as failed`, {
         service: 'ai-paths-queue',
         action: 'staleRunRecovery',
         count,
       });
     }
   } catch (error) {
-    void ErrorSystem.logWarning('Stale run recovery failed', {
+    void (ErrorSystem as any).logWarning('Stale run recovery failed', {
       service: 'ai-paths-queue',
       action: 'staleRunRecovery',
       error: error instanceof Error ? error.message : String(error),

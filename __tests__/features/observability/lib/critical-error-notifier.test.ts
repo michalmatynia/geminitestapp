@@ -95,8 +95,8 @@ describe('critical-error-notifier', () => {
     process.env['CRITICAL_ERROR_WEBHOOK_URL'] = 'http://webhook.test';
     process.env['CRITICAL_ERROR_MIN_LEVEL'] = 'error';
 
-    const infoLog = { ...mockLog, level: 'info' };
-    const result = await notifyCriticalError(infoLog as any, true);
+    const infoLog: SystemLogRecord = { ...mockLog, level: 'info' as any };
+    const result = await notifyCriticalError(infoLog, true);
 
     expect(result.delivered).toBe(false);
     expect(fetch).not.toHaveBeenCalled();

@@ -10,7 +10,7 @@ import {
   processProductAiJob,
   startProductAiJobQueue,
 } from '@/features/jobs/server';
-import { logSystemError } from '@/features/observability/server';
+import { logSystemError } from '@/shared/lib/observability/system-logger';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { authError, badRequestError, forbiddenError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';

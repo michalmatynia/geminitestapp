@@ -50,7 +50,7 @@ describe('Chatbot Job Queue Worker', () => {
     // Check if any instance's startWorker was called
     const instances = vi.mocked(createManagedQueue).mock.results.map((r) => r.value);
     const startWorkerCalled = instances.some(
-      (i: { startWorker: vi.Mock }) => i.startWorker && i.startWorker.mock.calls.length > 0
+      (i: any) => i.startWorker && i.startWorker.mock.calls.length > 0
     );
     expect(startWorkerCalled).toBe(true);
   });

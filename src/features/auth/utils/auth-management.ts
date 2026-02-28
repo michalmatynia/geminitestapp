@@ -1,18 +1,8 @@
+import { AUTH_SETTINGS_KEYS } from '@/shared/lib/auth/constants';
 import type { AuthPermission, AuthRole } from '@/shared/contracts/auth';
 
+export { AUTH_SETTINGS_KEYS };
 export type { AuthPermission, AuthRole };
-
-export type AuthUserRoleMap = Record<string, string>;
-
-export const AUTH_SETTINGS_KEYS = {
-  roles: 'auth_roles',
-  permissions: 'auth_permissions',
-  userRoles: 'auth_user_roles',
-  userPages: 'auth_user_pages',
-  defaultRole: 'auth_default_role',
-  securityPolicy: 'auth_security_policy',
-  provider: 'auth_db_provider',
-} as const;
 
 export const DEFAULT_AUTH_PERMISSIONS: AuthPermission[] = [
   {

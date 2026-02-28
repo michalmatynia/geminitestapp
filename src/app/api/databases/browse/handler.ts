@@ -136,7 +136,7 @@ async function browsePrismaCollection(params: BrowseParams): Promise<BrowseRespo
       skip,
     };
   } catch (error) {
-    void ErrorSystem.captureException(error, { service: 'api/databases/browse', collection });
+    void (ErrorSystem as any).captureException(error, { service: 'api/databases/browse', collection });
     return {
       provider: 'prisma',
       collection,

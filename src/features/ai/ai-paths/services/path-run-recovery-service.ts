@@ -38,7 +38,7 @@ export const recoverStaleRunningRuns = async (input?: {
     const result = await repo.markStaleRunningRuns(maxAgeMs);
     return result.count;
   } catch (error) {
-    void ErrorSystem.logWarning(`[${source}] Failed to cleanup stale running runs.`, {
+    void (ErrorSystem as any).logWarning(`[${source}] Failed to cleanup stale running runs.`, {
       service: 'ai-paths',
       source,
       error,

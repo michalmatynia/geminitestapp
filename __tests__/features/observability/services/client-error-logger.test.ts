@@ -14,27 +14,23 @@ vi.mock('@/shared/lib/observability/log-redaction', () => ({
 }));
 
 describe('client-error-logger', () => {
-  const originalNavigator = global.navigator;
-  const originalWindow = global.window;
-
   beforeEach(() => {
     vi.clearAllMocks();
 
     // Mock navigator and window
-    (global as any).navigator = {
+    vi.stubGlobal('navigator', {
       userAgent: 'TestAgent',
       sendBeacon: vi.fn(() => true),
-    };
-    (global as any).window = {
+    });
+    vi.stubGlobal('window', {
       location: { href: 'http://localhost/test' },
       addEventListener: vi.fn(),
-    };
-    (global as any).fetch = vi.fn().mockResolvedValue({ ok: true });
+    });
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true }));
   });
 
   afterEach(() => {
-    global.navigator = originalNavigator;
-    global.window = originalWindow;
+    vi.unstubAllGlobals();
   });
 
   it('builds correct payload for Error object and sends via beacon', () => {
@@ -44,7 +40,7 @@ describe('client-error-logger', () => {
     logClientError(error);
 
     expect(navigator.sendBeacon).toHaveBeenCalled();
-    const [url] = (navigator.sendBeacon as any).mock.calls[0];
+    const [url] = vi.mocked(navigator.sendBeacon).mock.calls[0]!;
     expect(url).toBe('/api/client-errors');
   });
 
@@ -52,7 +48,10 @@ describe('client-error-logger', () => {
     setClientErrorBaseContext({ appVersion: '1.0.0' });
 
     // Switch to fetch by making sendBeacon fail
-    (navigator as any).sendBeacon = undefined;
+    vi.stubGlobal('navigator', {
+      ...navigator,
+      sendBeacon: undefined,
+    });
 
     logClientError('String error', { context: { component: 'Header' } });
 
@@ -64,7 +63,7 @@ describe('client-error-logger', () => {
       })
     );
 
-    const body = JSON.parse((global.fetch as any).mock.calls[0][1].body);
+    const body = JSON.parse(vi.mocked(global.fetch).mock.calls[0]![1]!.body as string);
     expect(body.context).toMatchObject({
       appVersion: '1.0.0',
       component: 'Header',
@@ -75,11 +74,14 @@ describe('client-error-logger', () => {
     const mockedIsSensitive = vi.mocked(isSensitiveKey);
     mockedIsSensitive.mockImplementation((key: string) => key === 'password');
 
-    (navigator as any).sendBeacon = undefined; // Force fetch
+    vi.stubGlobal('navigator', {
+      ...navigator,
+      sendBeacon: undefined,
+    }); // Force fetch
 
     logClientError('Login fail', { context: { password: 'secret123', user: 'admin' } });
 
-    const body = JSON.parse((global.fetch as any).mock.calls[0][1].body);
+    const body = JSON.parse(vi.mocked(global.fetch).mock.calls[0]![1]!.body as string);
     expect(body.context.password).toBe('[REDACTED]');
     expect(body.context.user).toBe('admin');
   });

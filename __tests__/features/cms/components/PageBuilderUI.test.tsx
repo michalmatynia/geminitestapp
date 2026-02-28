@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, UseQueryResult } from '@tanstack/react-query';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
@@ -13,7 +13,7 @@ import type {
   MasterTreeNode,
   MasterTreeViewNodeDto as MasterTreeViewNode,
 } from '@/shared/contracts/master-folder-tree';
-import type { Page, PageSummary } from '@/shared/contracts/cms';
+import type { Page, PageSummary, CmsSlugDto as CmsSlug } from '@/shared/contracts/cms';
 
 // Mock dependencies
 vi.mock('next/navigation', () => ({
@@ -248,12 +248,19 @@ describe('PageBuilder UI Integration', () => {
       http.patch('/api/user/preferences', () => HttpResponse.json({})),
       http.post('/api/client-errors', () => HttpResponse.json({ success: true }))
     );
-    vi.mocked(useCmsPages).mockReturnValue({ data: mockPages, isLoading: false } as any);
+    vi.mocked(useCmsPages).mockReturnValue({ data: mockPages, isLoading: false } as UseQueryResult<
+      PageSummary[],
+      Error
+    >);
     vi.mocked(useCmsPage).mockImplementation((id?: string) => {
-      if (id === '1') return { data: mockFullPage, isLoading: false } as any;
-      return { data: null, isLoading: false } as any;
+      if (id === '1')
+        return { data: mockFullPage, isLoading: false } as UseQueryResult<Page | null, Error>;
+      return { data: null, isLoading: false } as UseQueryResult<Page | null, Error>;
     });
-    vi.mocked(useCmsSlugs).mockReturnValue({ data: [], isLoading: false } as any);
+    vi.mocked(useCmsSlugs).mockReturnValue({ data: [], isLoading: false } as UseQueryResult<
+      CmsSlug[],
+      Error
+    >);
   });
 
   it('should allow adding a section and see it in the preview', async () => {

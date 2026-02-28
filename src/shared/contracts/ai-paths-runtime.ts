@@ -88,6 +88,7 @@ export const aiPathRunSchema = dtoBaseSchema.extend({
   pathId: z.string().nullable().optional(),
   pathName: z.string().nullable().optional(),
   userId: z.string().nullable().optional(),
+  requestId: z.string().nullable().optional(),
   status: aiPathRunStatusSchema,
   triggerNodeId: z.string().nullable().optional(),
   triggerEvent: z.string().nullable().optional(),

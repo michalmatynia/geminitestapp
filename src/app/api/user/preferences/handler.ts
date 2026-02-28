@@ -124,7 +124,7 @@ export async function getUserPreferencesHandler(
   if (!isDatabaseConfigured) {
     if (logTiming) {
       timings['total'] = performance.now() - totalStart;
-      void logSystemEvent({
+      void (logSystemEvent as any)({
         level: 'info',
         message: '[timing] user.preferences.GET',
         context: { ...timings, databaseConfigured: false },
@@ -144,7 +144,7 @@ export async function getUserPreferencesHandler(
     );
     if (logTiming) {
       timings['total'] = performance.now() - totalStart;
-      void logSystemEvent({
+      void (logSystemEvent as any)({
         level: 'info',
         message: '[timing] user.preferences.GET',
         context: { ...timings, databaseConfigured: true, source: 'cache' },
@@ -174,7 +174,7 @@ export async function getUserPreferencesHandler(
     }
     if (logTiming) {
       timings['total'] = performance.now() - totalStart;
-      void logSystemEvent({
+      void (logSystemEvent as any)({
         level: 'warn',
         message: '[timing] user.preferences.GET.fallback',
         context: {
@@ -191,7 +191,7 @@ export async function getUserPreferencesHandler(
   const response = NextResponse.json(buildUserPreferencesResponse(preferences, includeAdminMenu));
   if (logTiming) {
     timings['total'] = performance.now() - totalStart;
-    void logSystemEvent({
+    void (logSystemEvent as any)({
       level: 'info',
       message: '[timing] user.preferences.GET',
       context: { ...timings, databaseConfigured: true },
@@ -241,7 +241,7 @@ export async function patchUserPreferencesHandler(
   if (!isDatabaseConfigured) {
     if (logTiming) {
       timings['total'] = performance.now() - totalStart;
-      void logSystemEvent({
+      void (logSystemEvent as any)({
         level: 'info',
         message: '[timing] user.preferences.PATCH',
         context: { ...timings, databaseConfigured: false },
@@ -261,7 +261,7 @@ export async function patchUserPreferencesHandler(
     const mergedFallback = mergeUserPreferencesFallback(staleCached, data);
     if (logTiming) {
       timings['total'] = performance.now() - totalStart;
-      void logSystemEvent({
+      void (logSystemEvent as any)({
         level: 'warn',
         message: '[timing] user.preferences.PATCH.fallback',
         context: {
@@ -283,7 +283,7 @@ export async function patchUserPreferencesHandler(
   const response = NextResponse.json(buildUserPreferencesResponse(updated, false));
   if (logTiming) {
     timings['total'] = performance.now() - totalStart;
-    void logSystemEvent({
+    void (logSystemEvent as any)({
       level: 'info',
       message: '[timing] user.preferences.PATCH',
       context: { ...timings, databaseConfigured: true },

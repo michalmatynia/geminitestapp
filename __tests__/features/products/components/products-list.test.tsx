@@ -20,7 +20,6 @@ import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { DataTable } from '@/shared/ui';
 import { ToastProvider } from '@/shared/ui/toast';
 import type { ProductWithImages } from '@/shared/contracts/products';
-import type { ProductWithRelations } from '@/shared/contracts/products';
 
 const createTestQueryClient = (): QueryClient =>
   new QueryClient({
@@ -50,7 +49,7 @@ vi.mock('@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar', () 
   TriggerButtonBar: () => null,
 }));
 
-const mockProducts: ProductWithRelations[] = [
+const mockProducts: ProductWithImages[] = [
   {
     id: 'product-1',
     name_en: 'Product Alpha',
@@ -61,8 +60,8 @@ const mockProducts: ProductWithRelations[] = [
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     images: [],
-    name: 'Product Alpha',
-    description: '',
+    name: { en: 'Product Alpha' },
+    description: { en: '' },
     categoryId: '',
     baseProductId: null,
     defaultPriceGroupId: null,
@@ -77,7 +76,7 @@ const mockProducts: ProductWithRelations[] = [
     catalogs: [],
     categories: [],
     producers: [],
-  },
+  } as any,
   {
     id: 'product-2',
     name_en: 'Product Beta',
@@ -88,8 +87,8 @@ const mockProducts: ProductWithRelations[] = [
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     images: [],
-    name: 'Product Beta',
-    description: '',
+    name: { en: 'Product Beta' },
+    description: { en: '' },
     categoryId: '',
     baseProductId: null,
     defaultPriceGroupId: null,
@@ -104,7 +103,7 @@ const mockProducts: ProductWithRelations[] = [
     catalogs: [],
     categories: [],
     producers: [],
-  },
+  } as any,
 ];
 
 const buildContextValue = (

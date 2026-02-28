@@ -190,23 +190,33 @@ export const promptDocs: NodeConfigDocField[] = [
 
 export const modelDocs: NodeConfigDocField[] = [
   {
+    path: 'model.modelId',
+    description:
+      'Optional node-selected model ID. Empty means inherit the AI Brain default model for AI Paths. The picker uses the Brain model catalog.',
+    defaultValue: '"" (inherit Brain default)',
+  },
+  {
     path: 'model.temperature',
-    description: 'Brain-managed sampling temperature (0-2). Node value is ignored at runtime.',
-    defaultValue: 'AI Brain assignment',
+    description:
+      'Node-level sampling temperature (0-2). When set, it overrides the AI Brain default for this node.',
+    defaultValue: '0.7',
   },
   {
     path: 'model.maxTokens',
-    description: 'Brain-managed maximum output tokens. Node value is ignored at runtime.',
-    defaultValue: 'AI Brain assignment',
+    description:
+      'Node-level maximum output tokens. When set, it overrides the AI Brain default for this node.',
+    defaultValue: '800',
   },
   {
     path: 'model.systemPrompt',
-    description: 'Brain-managed system prompt. Empty uses the provider default prompt.',
-    defaultValue: 'AI Brain assignment',
+    description:
+      'Optional node-level system prompt. A non-empty value overrides the AI Brain default; empty inherits the AI Brain prompt.',
+    defaultValue: '"" (inherit Brain default)',
   },
   {
     path: 'model.vision',
-    description: 'When true, image URLs are included as vision inputs if connected.',
+    description:
+      'When true, image URLs are included as vision inputs if connected. Provider execution still routes through AI Brain.',
     defaultValue: 'false',
   },
   {

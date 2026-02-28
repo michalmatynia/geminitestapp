@@ -4,7 +4,7 @@ import { randomUUID } from 'crypto';
 
 import { Prisma } from '@prisma/client';
 
-import { getProductDataProvider } from '@/features/products/server';
+import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 import {
   PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS,
   type ProductDraftDto,

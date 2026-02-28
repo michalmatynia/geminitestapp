@@ -105,7 +105,7 @@ export async function evaluateApprovalGateWithLLM({
     };
   } catch (error) {
     if (runId && DEBUG_CHATBOT) {
-      void ErrorSystem.logWarning('Approval gate model failed', {
+      void (ErrorSystem as any).logWarning('Approval gate model failed', {
         service: 'agent-engine',
         action: 'approval-gate',
         runId,

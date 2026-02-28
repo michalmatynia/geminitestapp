@@ -337,7 +337,7 @@ const defaultDeps: DeleteImageStudioVariantDeps = {
     }
   },
   logMetric: async (input) => {
-    await logSystemEvent({
+    await (logSystemEvent as any)({
       level: input.level,
       source: 'image-studio.variant-delete',
       message: input.message,

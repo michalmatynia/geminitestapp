@@ -159,7 +159,7 @@ export async function POST_handler(
     service: 'client-error-reporter',
   };
 
-  await ErrorSystem.captureException(normalizedError, {
+  await (ErrorSystem as any).captureException(normalizedError, {
     ...context,
   });
 

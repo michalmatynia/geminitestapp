@@ -95,7 +95,7 @@ const queue = createManagedQueue<ProductSyncSchedulerJobData>({
         skipReasons.set(reason, (skipReasons.get(reason) ?? 0) + 1);
 
         if (!isExpectedSkipReason(reason)) {
-          await ErrorSystem.captureException(error, {
+          await (ErrorSystem as any).captureException(error, {
             service: 'product-sync-scheduler-queue',
             action: 'startProductSyncRun',
             profileId: profile.id,
@@ -109,7 +109,7 @@ const queue = createManagedQueue<ProductSyncSchedulerJobData>({
       .map(([reason, count]) => ({ reason, count }));
 
     if (staleRecovery.recoveredRuns > 0 || skippedByReason.length > 0) {
-      await ErrorSystem.logInfo('Product sync scheduler tick processed', {
+      await (ErrorSystem as any).logInfo('Product sync scheduler tick processed', {
         service: 'product-sync-scheduler-queue',
         dueProfiles: dueProfiles.length,
         started,
@@ -130,7 +130,7 @@ const queue = createManagedQueue<ProductSyncSchedulerJobData>({
     };
   },
   onFailed: async (_jobId, error) => {
-    await ErrorSystem.captureException(error, {
+    await (ErrorSystem as any).captureException(error, {
       service: 'product-sync-scheduler-queue',
     });
   },
@@ -155,7 +155,7 @@ export const startProductSyncSchedulerQueue = (): void => {
     )
     .catch(async (error) => {
       queueState.schedulerRegistered = false;
-      await ErrorSystem.captureException(error, {
+      await (ErrorSystem as any).captureException(error, {
         service: 'product-sync-scheduler-queue',
         action: 'registerScheduler',
       });

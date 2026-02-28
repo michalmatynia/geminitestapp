@@ -105,12 +105,12 @@ describe('useCmsDomainSelection Hook', () => {
 
   it('should handle setting active domain', async () => {
     let capturedBody: unknown = null;
-          server.use(
-            http.patch('/api/user/preferences', async ({ request }) => {
-              capturedBody = await request.json();
-              return HttpResponse.json(capturedBody as any);
-            })
-          );
+    server.use(
+      http.patch('/api/user/preferences', async ({ request }) => {
+        capturedBody = await request.json();
+        return HttpResponse.json(capturedBody as any);
+      })
+    );
     const { result } = renderHook(() => useCmsDomainSelection(), { wrapper });
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));

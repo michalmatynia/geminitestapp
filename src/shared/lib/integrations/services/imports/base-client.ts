@@ -601,7 +601,7 @@ export async function checkBaseSkuExists(
     return { exists: false };
   } catch (error: unknown) {
     try {
-      const { logSystemError } = await import('@/features/observability/server');
+      const { logSystemError } = await import('@/shared/lib/observability/system-logger');
       await logSystemError({
         message: '[base-client] Error checking SKU existence',
         error,

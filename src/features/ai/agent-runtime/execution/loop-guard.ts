@@ -260,7 +260,7 @@ export async function buildLoopGuardReview({
     };
   } catch (error) {
     if (DEBUG_CHATBOT) {
-      void ErrorSystem.logWarning('Loop guard failed', {
+      void (ErrorSystem as any).logWarning('Loop guard failed', {
         service: 'agent-engine',
         action: 'loop-guard',
         runId,

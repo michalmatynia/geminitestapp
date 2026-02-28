@@ -51,7 +51,7 @@ vi.mock('bcryptjs', () => ({
   hash: vi.fn().mockResolvedValue('hashed_password'),
 }));
 
-vi.mock('@/features/observability/server', () => ({
+vi.mock('@/shared/lib/observability/system-logger', () => ({
   ActivityTypes: { AUTH: { REGISTERED: 'auth.registered' } },
   logActivity: vi.fn().mockResolvedValue(undefined),
   logSystemEvent: vi.fn().mockResolvedValue(undefined),

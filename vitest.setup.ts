@@ -40,9 +40,9 @@ vi.mock('@/shared/lib/db/prisma', () => {
       const s = getModelStore(modelName);
       const newItem = {
         id: 'mock-id-' + Math.random().toString(36).slice(2, 9),
-        createdAt: new Date(),
-        updatedAt: new Date(),
         ...args.data,
+        createdAt: args.data?.createdAt ? new Date(args.data.createdAt) : new Date(),
+        updatedAt: args.data?.updatedAt ? new Date(args.data.updatedAt) : new Date(),
       };
       s.push(newItem);
       return Promise.resolve(newItem);
@@ -189,7 +189,7 @@ vi.mock('@/shared/lib/db/mongo-client', () => {
 });
 
 // Mock observability server module
-vi.mock('@/features/observability/server', async (importOriginal) => {
+vi.mock('@/shared/lib/observability/system-logger', async (importOriginal) => {
   const actual = (await importOriginal()) as any;
   return {
     ...actual,

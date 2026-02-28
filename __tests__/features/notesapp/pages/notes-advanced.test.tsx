@@ -89,7 +89,7 @@ describe('Notes Advanced UI', () => {
         const body = (await request.json()) as Partial<NoteWithRelations>;
         const index = notes.findIndex((n) => n.id === params['id']);
         if (index !== -1) {
-          notes[index] = { ...notes[index], ...body };
+          notes[index] = { ...notes[index], ...body } as any;
           return HttpResponse.json(notes[index]);
         }
         return HttpResponse.json({ error: 'Not found' }, { status: 404 });

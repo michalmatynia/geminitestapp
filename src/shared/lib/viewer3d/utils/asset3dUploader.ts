@@ -76,7 +76,7 @@ export async function uploadAsset3D(
 
     return asset;
   } catch (error) {
-    await ErrorSystem.captureException(error, {
+    await (ErrorSystem as any).captureException(error, {
       service: 'asset3dUploader',
       action: 'uploadAsset3D',
       filename,
@@ -103,7 +103,7 @@ export async function deleteAsset3D(id: string): Promise<boolean> {
 
     return true;
   } catch (error) {
-    await ErrorSystem.captureException(error, {
+    await (ErrorSystem as any).captureException(error, {
       service: 'asset3dUploader',
       action: 'deleteAsset3D',
       id,

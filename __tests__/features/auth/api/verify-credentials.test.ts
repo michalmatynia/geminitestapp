@@ -5,7 +5,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { POST } from '@/app/api/auth/verify-credentials/route';
 import type { AuthSecurityProfile } from '@/features/auth/services/auth-security-profile';
 import type { AuthUserRecord } from '@/features/auth/services/auth-user-repository';
-import type { LoginChallengeDto } from '@/shared/contracts/auth';
 
 vi.mock('bcryptjs', () => ({
   compare: vi.fn(),

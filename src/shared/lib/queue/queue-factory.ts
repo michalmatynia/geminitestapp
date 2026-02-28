@@ -68,7 +68,7 @@ export function createManagedQueue<TJobData>(
       if (isTransientRedisTransportError(err)) {
         const normalizedMessage = err.message.trim() || 'Redis transport error';
         if (shouldLogTransientQueueError(config.name, normalizedMessage)) {
-          void logSystemEvent({
+          void (logSystemEvent as any)({
             level: 'warn',
             source: 'queue-factory',
             message: `[queue-factory:${config.name}] transient queue transport error: ${normalizedMessage}`,
@@ -77,7 +77,7 @@ export function createManagedQueue<TJobData>(
         }
         return;
       }
-      void ErrorSystem.captureException(err, {
+      void (ErrorSystem as any).captureException(err, {
         service: `queue:${config.name}`,
         category: 'SYSTEM',
       });
@@ -115,7 +115,7 @@ export function createManagedQueue<TJobData>(
     if (workerStarted) return;
     const connection = getRedisConnection();
     if (!connection) {
-      void logSystemEvent({
+      void (logSystemEvent as any)({
         level: 'info',
         message: `[queue-factory:${config.name}] Redis not available, using inline processing mode`,
         source: 'queue-factory',
@@ -165,7 +165,7 @@ export function createManagedQueue<TJobData>(
       if (isTransientRedisTransportError(err)) {
         const normalizedMessage = err.message.trim() || 'Redis transport error';
         if (shouldLogTransientQueueError(config.name, normalizedMessage)) {
-          void logSystemEvent({
+          void (logSystemEvent as any)({
             level: 'warn',
             source: 'queue-factory',
             message: `[queue-factory:${config.name}] transient worker transport error: ${normalizedMessage}`,
@@ -174,13 +174,13 @@ export function createManagedQueue<TJobData>(
         }
         return;
       }
-      void ErrorSystem.captureException(err, {
+      void (ErrorSystem as any).captureException(err, {
         service: `queue-worker:${config.name}`,
         category: 'SYSTEM',
       });
     });
 
-    void logSystemEvent({
+    void (logSystemEvent as any)({
       level: 'info',
       message: `[queue-factory:${config.name}] BullMQ worker started (concurrency: ${config.concurrency})`,
       source: 'queue-factory',
@@ -198,7 +198,7 @@ export function createManagedQueue<TJobData>(
       queue = null;
     }
     workerStarted = false;
-    void logSystemEvent({
+    void (logSystemEvent as any)({
       level: 'info',
       message: `[queue-factory:${config.name}] Worker stopped`,
       source: 'queue-factory',

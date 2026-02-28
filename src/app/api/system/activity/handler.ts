@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { getActivityRepository } from '@/features/observability/server';
+import { getActivityRepository } from '@/shared/lib/observability/system-logger';
 import type { ActivityFilters } from '@/shared/contracts/system';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { commonListQuerySchema } from '@/shared/validations/api-schemas';

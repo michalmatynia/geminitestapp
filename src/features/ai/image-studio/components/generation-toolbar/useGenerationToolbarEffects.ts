@@ -47,9 +47,11 @@ export function useGenerationToolbarEffects(
 
   const { handleCenterObject, handleAutoScale } = actions;
   const preferredObjectLayoutMode =
-    centerMode === 'client_alpha_bbox' || centerMode === 'client_object_layout_v1'
-      ? 'client_object_layout_v1'
-      : 'server_object_layout_v1';
+    centerMode === 'client_white_bg_bbox'
+      ? centerMode
+      : centerMode === 'client_alpha_bbox' || centerMode === 'client_object_layout_v1'
+        ? 'client_object_layout_v1'
+        : 'server_object_layout_v1';
   const centerModeIsObjectLayout =
     centerMode === 'client_object_layout_v1' || centerMode === 'server_object_layout_v1';
 

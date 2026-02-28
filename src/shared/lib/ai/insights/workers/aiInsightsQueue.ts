@@ -58,7 +58,7 @@ const queue = createManagedQueue<AiInsightsJobData>({
     await tick();
   },
   onFailed: async (_jobId, error) => {
-    void ErrorSystem.captureException(error, {
+    void (ErrorSystem as any).captureException(error, {
       service: 'ai-insights-queue',
     });
   },
@@ -125,7 +125,7 @@ export const startAiInsightsQueue = (): void => {
       .then(async (shouldRegister) => {
         if (shouldRegister) return;
         await removeInsightsTickRepeatJobs().catch(async (error) => {
-          void ErrorSystem.captureException(error, {
+          void (ErrorSystem as any).captureException(error, {
             service: 'ai-insights-queue',
             action: 'removeScheduler',
           });
@@ -133,7 +133,7 @@ export const startAiInsightsQueue = (): void => {
         aiInsightsQueueState.schedulerRegistered = false;
       })
       .catch(async (error) => {
-        void ErrorSystem.captureException(error, {
+        void (ErrorSystem as any).captureException(error, {
           service: 'ai-insights-queue',
           action: 'validateScheduler',
         });
@@ -146,7 +146,7 @@ export const startAiInsightsQueue = (): void => {
     .then(async (shouldRegister) => {
       if (!shouldRegister) {
         await removeInsightsTickRepeatJobs().catch(async (error) => {
-          void ErrorSystem.captureException(error, {
+          void (ErrorSystem as any).captureException(error, {
             service: 'ai-insights-queue',
             action: 'removeScheduler',
           });
@@ -161,7 +161,7 @@ export const startAiInsightsQueue = (): void => {
     })
     .catch(async (error) => {
       aiInsightsQueueState.schedulerRegistered = false;
-      void ErrorSystem.captureException(error, {
+      void (ErrorSystem as any).captureException(error, {
         service: 'ai-insights-queue',
         action: 'registerScheduler',
       });

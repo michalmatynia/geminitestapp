@@ -12,7 +12,7 @@ import {
 import { SettingsFieldsRenderer, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 import { useThemeSettings } from '../ThemeSettingsContext';
 export function ThemeLogoSection(): React.JSX.Element {
-  const { theme, update } = useThemeSettings();
+  useThemeSettings();
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null);
   const [logoWidth, setLogoWidth] = useState<number>(180);

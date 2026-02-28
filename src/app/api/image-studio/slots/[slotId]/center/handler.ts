@@ -8,6 +8,11 @@ import {
   IMAGE_STUDIO_CENTER_ERROR_CODES,
   imageStudioCenterRequestSchema,
   type ImageStudioCenterRequest,
+  type ImageStudioCenterMode,
+  type ImageStudioCenterObjectBounds,
+  type ImageStudioCenterLayoutMetadata,
+  type ImageStudioObjectDetectionUsed,
+  type ImageStudioDetectionDetails,
 } from '@/features/ai/image-studio/contracts/center';
 import {
   buildCenterFingerprint,
@@ -29,9 +34,9 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { notFoundError } from '@/shared/errors/app-error';
 
 import { 
-  autoScaleBadRequest as centerBadRequest, 
+  centerBadRequest, 
   guessExtension, 
-  isClientAutoScaleMode as isClientCenterMode, 
+  isClientCenterMode, 
   readIdempotencyKey, 
   sanitizeFilename, 
   sanitizeSegment 
@@ -60,7 +65,7 @@ export async function postCenterSlotHandler(
   const slotId = params.slotId?.trim() ?? '';
   if (!slotId) {
     throw centerBadRequest(
-      IMAGE_STUDIO_CENTER_ERROR_CODES.INVALID_PAYLOAD as any,
+      IMAGE_STUDIO_CENTER_ERROR_CODES.INVALID_PAYLOAD,
       'Slot id is required.'
     );
   }
@@ -71,7 +76,7 @@ export async function postCenterSlotHandler(
   const parsed = imageStudioCenterRequestSchema.safeParse(normalizedBody);
   if (!parsed.success) {
     throw centerBadRequest(
-      IMAGE_STUDIO_CENTER_ERROR_CODES.INVALID_PAYLOAD as any,
+      IMAGE_STUDIO_CENTER_ERROR_CODES.INVALID_PAYLOAD,
       'Invalid centering payload.',
       { errors: parsed.error.format() }
     );
@@ -92,13 +97,13 @@ export async function postCenterSlotHandler(
   };
 
   if (
-    isClientCenterMode(payload.mode as any) &&
+    isClientCenterMode(payload.mode) &&
     !payload.dataUrl &&
     !uploadedClientImage &&
     STRICT_SERVER_CENTER_ENABLED === false
   ) {
     throw centerBadRequest(
-      IMAGE_STUDIO_CENTER_ERROR_CODES.CLIENT_IMAGE_REQUIRED as any,
+      IMAGE_STUDIO_CENTER_ERROR_CODES.CLIENT_IMAGE_REQUIRED,
       'Client centering requires uploaded image or dataUrl when authoritative server mode is disabled.'
     );
   }
@@ -118,7 +123,7 @@ export async function postCenterSlotHandler(
     mode: payload.mode,
     layoutSignature,
     clientPayloadSignature:
-      isClientCenterMode(payload.mode as any) && !STRICT_SERVER_CENTER_ENABLED
+      isClientCenterMode(payload.mode) && !STRICT_SERVER_CENTER_ENABLED
         ? clientPayloadSignature
         : null,
   });
@@ -140,14 +145,14 @@ export async function postCenterSlotHandler(
             sourceSlotId: sourceSlot.id,
             slot: existingSlot,
             mode: payload.mode,
-            effectiveMode: existingCenter.effectiveMode ?? payload.mode,
-            sourceObjectBounds: existingCenter.sourceObjectBounds,
-            targetObjectBounds: existingCenter.targetObjectBounds,
-            layout: existingCenter.layout,
-            detectionUsed: existingCenter.detectionUsed,
-            confidenceBefore: existingCenter.confidenceBefore,
-            detectionDetails: existingCenter.detectionDetails,
-            scale: existingCenter.scale,
+            effectiveMode: (existingCenter['effectiveMode'] as ImageStudioCenterMode) ?? payload.mode,
+            sourceObjectBounds: existingCenter['sourceObjectBounds'] as ImageStudioCenterObjectBounds,
+            targetObjectBounds: existingCenter['targetObjectBounds'] as ImageStudioCenterObjectBounds,
+            layout: existingCenter['layout'] as ImageStudioCenterLayoutMetadata,
+            detectionUsed: existingCenter['detectionUsed'] as ImageStudioObjectDetectionUsed,
+            confidenceBefore: existingCenter['confidenceBefore'] as number,
+            detectionDetails: existingCenter['detectionDetails'] as ImageStudioDetectionDetails,
+            scale: existingCenter['scale'] as number,
             requestId: idempotencyKey,
             fingerprint,
             deduplicated: true,
@@ -181,14 +186,14 @@ export async function postCenterSlotHandler(
             sourceSlotId: sourceSlot.id,
             slot: existingSlot,
             mode: payload.mode,
-            effectiveMode: existingCenter.effectiveMode ?? payload.mode,
-            sourceObjectBounds: existingCenter.sourceObjectBounds,
-            targetObjectBounds: existingCenter.targetObjectBounds,
-            layout: existingCenter.layout,
-            detectionUsed: existingCenter.detectionUsed,
-            confidenceBefore: existingCenter.confidenceBefore,
-            detectionDetails: existingCenter.detectionDetails,
-            scale: existingCenter.scale,
+            effectiveMode: (existingCenter['effectiveMode'] as ImageStudioCenterMode) ?? payload.mode,
+            sourceObjectBounds: existingCenter['sourceObjectBounds'] as ImageStudioCenterObjectBounds,
+            targetObjectBounds: existingCenter['targetObjectBounds'] as ImageStudioCenterObjectBounds,
+            layout: existingCenter['layout'] as ImageStudioCenterLayoutMetadata,
+            detectionUsed: existingCenter['detectionUsed'] as ImageStudioObjectDetectionUsed,
+            confidenceBefore: existingCenter['confidenceBefore'] as number,
+            detectionDetails: existingCenter['detectionDetails'] as ImageStudioDetectionDetails,
+            scale: existingCenter['scale'] as number,
             requestId: idempotencyKey,
             fingerprint,
             deduplicated: true,
@@ -293,7 +298,7 @@ export async function postCenterSlotHandler(
     const createdSlot = createdSlots[0];
     if (!createdSlot) {
       throw centerBadRequest(
-        IMAGE_STUDIO_CENTER_ERROR_CODES.OUTPUT_PERSIST_FAILED as any,
+        IMAGE_STUDIO_CENTER_ERROR_CODES.OUTPUT_PERSIST_FAILED,
         'Failed to create centered slot.'
       );
     }
@@ -409,7 +414,7 @@ export async function postCenterSlotHandler(
     const normalizedError =
       error instanceof z.ZodError
         ? centerBadRequest(
-          IMAGE_STUDIO_CENTER_ERROR_CODES.OUTPUT_INVALID as any,
+          IMAGE_STUDIO_CENTER_ERROR_CODES.OUTPUT_INVALID,
           'Center scaler schema validation failed.',
           { responseErrors: error.format() }
         )

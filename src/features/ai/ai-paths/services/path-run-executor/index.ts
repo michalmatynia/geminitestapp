@@ -22,6 +22,7 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type {
   AiPathRunNodeRecord,
   AiPathRunRecord,
+  AiPathRunRepository,
   AiPathRunStatus,
   RuntimePortValues,
   RuntimeState,
@@ -63,7 +64,7 @@ import { createPathRunProfiling } from './profiling';
 import { runExecutorPreflight } from './preflight';
 
 export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
-  let repo: any;
+  let repo: AiPathRunRepository;
   try {
     repo = await getPathRunRepository();
   } catch (error) {
@@ -96,7 +97,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       if (updated) {
         publishRunUpdate(run.id, 'run', data);
       }
-      return updated;
+      return !!updated;
     } catch (error) {
       if (isMissingRunUpdateError(error)) {
         return false;
@@ -263,7 +264,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       seedRunId: runtimeState.runId ?? undefined,
       seedRunStartedAt: runtimeState.runStartedAt ?? undefined,
       recordHistory: true,
-      historyLimit: (run.meta as any)?.historyRetentionPasses ?? 20,
+      historyLimit: (run.meta?.['historyRetentionPasses'] as number | undefined) ?? 20,
       skipNodeIds: Array.from(skipNodes),
       fetchEntityByType,
       reportAiPathsError: (error: unknown, meta: Record<string, unknown>, summary?: string) => {
@@ -494,7 +495,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
     } else if (runtimeHaltReason === 'blocked') {
       if (shouldFailBlockedRun({
         runBlocked: true,
-        blockedRunPolicy: ((run.meta as any)?.blockedRunPolicy as 'fail_run' | 'complete_with_warning') ?? 'complete_with_warning',
+        blockedRunPolicy: (run.meta?.['blockedRunPolicy'] as 'fail_run' | 'complete_with_warning') ?? 'complete_with_warning',
         nodeValidationEnabled,
       })) {
         finalStatus = 'failed';

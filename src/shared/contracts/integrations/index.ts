@@ -123,28 +123,38 @@ export type BaseParameterImportSummary = {
   written: number;
 };
 
+import {
+  type ProductParameterDto as ProductParameter,
+  type ProductParameterValueDto as ProductParameterValue,
+} from '../products';
+
 export type ApplyBaseParameterImportInput = {
   settings: ImportTemplateParameterImport;
   record: Record<string, unknown>;
   templateMappings: Array<{ sourceKey: string; targetField: string }>;
-  existingValues: any[];
+  existingValues: ProductParameterValue[];
   catalogId: string;
   catalogLanguageCodes: string[];
   defaultLanguageCode?: string | null;
   connectionId?: string | null;
   inventoryId?: string | null;
-  prefetchedParameters?: any[] | null;
+  prefetchedParameters?: ProductParameter[] | null;
   prefetchedLinks?: Record<string, string> | null;
   parameterRepository: {
-    listParameters: (input: { catalogId: string }) => Promise<any[]>;
-    createParameter: (input: any) => Promise<any>;
+    listParameters: (input: { catalogId: string }) => Promise<ProductParameter[]>;
+    createParameter: (input: Record<string, unknown>) => Promise<ProductParameter>;
   };
 };
 
 export type ApplyBaseParameterImportResult = {
   applied: boolean;
-  parameters: any[];
-  summary: any;
+  parameters: ProductParameterValue[];
+  summary: {
+    extracted: number;
+    resolved: number;
+    created: number;
+    written: number;
+  };
 };
 
 /**
@@ -468,15 +478,15 @@ export type ImageTransformOptionsDto = ImageTransformOptions;
 export type ImageRetryPresetDto = ImageRetryPreset;
 export type TemplateMappingDto = TemplateMapping;
 export type TemplateDto = Template;
-export type BaseInventoryDto = any;
-export type FetchMarketplaceCategoriesRequestDto = any;
-export type BulkCategoryMappingRequestDto = any;
-export type BaseImportItemStatusDto = any;
-export type BaseImportModeDto = any;
-export type BaseImportRunRecordDto = any;
-export type BaseImportStartResponseDto = any;
-export type BaseImportRunDetailResponseDto = any;
-export type BaseImportParameterImportSettingsDto = any;
+export type BaseInventoryDto = unknown;
+export type FetchMarketplaceCategoriesRequestDto = unknown;
+export type BulkCategoryMappingRequestDto = unknown;
+export type BaseImportItemStatusDto = BaseImportItemStatus;
+export type BaseImportModeDto = unknown;
+export type BaseImportRunRecordDto = BaseImportRunRecord;
+export type BaseImportStartResponseDto = BaseImportStartResponse;
+export type BaseImportRunDetailResponseDto = BaseImportRunDetailResponse;
+export type BaseImportParameterImportSettingsDto = ImportTemplateParameterImport;
 export type SessionCookieDto = SessionCookie;
 export type ImageUrlDiagnosticDto = ImageUrlDiagnostic;
 export type ImageExportDiagnosticsDto = ImageExportDiagnostics;

@@ -514,7 +514,6 @@ export const processBaseImportRun = async (
         });
         const canceledAt = nowIso();
         return updateBaseImportRunStatus(runId, 'canceled', {
-          canceledAt,
           finishedAt: canceledAt,
           summaryMessage: 'Import canceled.',
         });
@@ -833,7 +832,6 @@ export const resumeBaseImportRun = async (
   return updateBaseImportRun(runId, {
     status: 'queued',
     finishedAt: null,
-    canceledAt: null,
     cancellationRequestedAt: null,
     lockOwnerId: null,
     lockToken: null,

@@ -34,7 +34,7 @@ export type MaskShapeForExport = {
   id: string;
   type: string;
   points: Array<{ x: number; y: number }>;
-  closed: boolean;
+  closed?: boolean;
   visible: boolean;
 };
 

@@ -245,8 +245,8 @@ export const applyBaseParameterImport = async (
           name_de: names.name_de ?? null,
         });
         if (!matched) continue;
-        byId.set((matched as any).id, matched);
-        [(matched as any).name_en, (matched as any).name_pl, (matched as any).name_de]
+        byId.set(matched.id, matched);
+        [matched.name_en, matched.name_pl, matched.name_de]
           .map((name: string | null) => (typeof name === 'string' ? name.trim() : ''))
           .filter((name: string): boolean => name.length > 0)
           .forEach((name: string) => {

@@ -22,17 +22,18 @@ export const handleMutator: NodeHandler = ({
   if (!contextValue) {
     return {};
   }
-  const mutatorConfig = node.config?.mutator ?? {
+  const mutatorConfigRaw = node.config?.['mutator'];
+  const mutatorConfig = (mutatorConfigRaw as Record<string, unknown>) ?? {
     path: 'entity.title',
     valueTemplate: '{{value}}',
   };
-  const targetPath = normalizeMappingPath(mutatorConfig.path ?? '', contextValue);
+  const targetPath = normalizeMappingPath((mutatorConfig['path'] as string) ?? '', contextValue);
   if (!targetPath) {
     return { context: contextValue };
   }
   const currentValue = getValueAtMappingPath(contextValue, targetPath);
   const rendered = renderTemplate(
-    mutatorConfig.valueTemplate ?? '{{value}}',
+    (mutatorConfig['valueTemplate'] as string) ?? '{{value}}',
     { ...contextValue, ...nodeInputs } as Record<string, unknown>,
     currentValue
   );
@@ -95,16 +96,17 @@ export const handleStringMutator: NodeHandler = ({
   if (rawInput === undefined || rawInput === null) {
     return {};
   }
-  const stringConfig = node.config?.stringMutator ?? { operations: [] };
-  const operations = Array.isArray(stringConfig.operations) ? stringConfig.operations : [];
+  const stringConfigRaw = node.config?.['stringMutator'];
+  const stringConfig = (stringConfigRaw as Record<string, unknown>) ?? { operations: [] };
+  const operations = Array.isArray(stringConfig['operations']) ? (stringConfig['operations'] as StringMutatorOperation[]) : [];
   let current = safeStringify(rawInput);
   operations.forEach((operation: StringMutatorOperation): void => {
     switch (operation.type) {
       case 'trim': {
-        const mode = operation.mode ?? 'both';
-        if ((mode as any) === 'start' || (mode as any) === 'left') {
+        const mode = (operation.mode as string) ?? 'both';
+        if (mode === 'start' || mode === 'left') {
           current = current.trimStart();
-        } else if ((mode as any) === 'end' || (mode as any) === 'right') {
+        } else if (mode === 'end' || mode === 'right') {
           current = current.trimEnd();
         } else {
           current = current.trim();
@@ -117,10 +119,10 @@ export const handleStringMutator: NodeHandler = ({
         break;
       }
       case 'case': {
-        const mode = operation.mode ?? 'lower';
-        if ((mode as any) === 'upper') {
+        const mode = (operation.mode as string) ?? 'lower';
+        if (mode === 'upper') {
           current = current.toUpperCase();
-        } else if ((mode as any) === 'title') {
+        } else if (mode === 'title') {
           current = current.replace(
             /\w\S*/g,
             (token: string) => token.charAt(0).toUpperCase() + token.slice(1).toLowerCase()

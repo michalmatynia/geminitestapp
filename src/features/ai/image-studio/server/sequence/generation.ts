@@ -4,6 +4,7 @@ import {
 } from '@/features/ai/image-studio/server/run-repository';
 import {
   listImageStudioSlots,
+  type ImageStudioSlotRecord
 } from '@/features/ai/image-studio/server/slot-repository';
 import { resolvePromptPlaceholders } from '@/features/ai/image-studio/utils/run-request-preview';
 import {
@@ -11,9 +12,11 @@ import {
 } from '@/features/ai/image-studio/workers/imageStudioRunQueue';
 import { 
   type ImageStudioSequenceGenerateStep,
-  type ImageStudioSequenceMaskContext
 } from '@/features/ai/image-studio/utils/studio-settings';
-import type { ImageStudioSequenceRunRecord } from '../sequence-run-repository';
+import type { 
+  ImageStudioSequenceRunRecord,
+  ImageStudioSequenceMaskContext
+} from '../sequence-run-repository';
 import { sleep } from './utils';
 
 const POLL_INTERVAL_MS = 1200;
@@ -22,49 +25,46 @@ const DEFAULT_GENERATION_WAIT_MS = 18 * 60 * 1000;
 export async function executeGenerateStep(params: {
   run: ImageStudioSequenceRunRecord;
   step: ImageStudioSequenceGenerateStep;
-  currentSlot: any;
-  runtimeMask?: any | null;
+  currentSlot: ImageStudioSlotRecord;
+  _runtimeMask?: ImageStudioSequenceMaskContext | null;
 }): Promise<{ nextSlotId: string; producedSlotIds: string[]; generatedRunId: string }> {
   const { run, step, currentSlot, runtimeMask } = params;
-  const config = step.config as any;
+  const config = step.config;
   
-  const prompt = resolvePromptPlaceholders(config.promptTemplate || '', {
+  const promptTemplate = config.promptTemplate || '';
+  const prompt = resolvePromptPlaceholders(promptTemplate, {
     projectId: run.projectId,
     slotId: currentSlot.id,
   });
 
-  const genRun = await createImageStudioRun(run.projectId, {
-    mode: config.promptMode === 'override' ? 'server_authoritative' : 'server_assisted',
-    model: config.modelOverride || undefined,
-    prompt,
-    negativePrompt: config.negativePrompt || undefined,
-    inputSlotId: currentSlot.id,
-    maskSlotId: runtimeMask?.slotId ?? config.maskSlotId ?? null,
-    strength: config.strength ?? 0.75,
-    guidance: config.guidance ?? 7.5,
-    steps: config.steps ?? 30,
-    seed: config.seed ?? null,
-    outputCount: config.outputCount ?? 1,
-    scheduler: config.scheduler || undefined,
+  const genRun = await createImageStudioRun({
+    projectId: run.projectId,
+    request: {
+      projectId: run.projectId,
+      prompt,
+    },
+    expectedOutputs: config.outputCount ?? 1,
   });
 
-  await enqueueImageStudioRunJob({ runId: genRun.id });
+  await enqueueImageStudioRunJob(genRun.id);
 
   const startTime = Date.now();
-  const timeout = step.config.timeoutMs || DEFAULT_GENERATION_WAIT_MS;
 
-  while (Date.now() - startTime < timeout) {
-    const status = await getImageStudioRunById(genRun.id) as any;
+  while (Date.now() - startTime < DEFAULT_GENERATION_WAIT_MS) {
+    const status = await getImageStudioRunById(genRun.id);
     if (status?.status === 'completed') break;
     if (status?.status === 'failed') {
-      throw new Error(`Generation failed: ${status.error || 'Unknown error'}`);
+      throw new Error(`Generation failed: ${status.errorMessage || 'Unknown error'}`);
     }
     await sleep(POLL_INTERVAL_MS);
   }
 
   const producedSlots = await listImageStudioSlots(run.projectId);
   const newSlots = producedSlots
-    .filter(s => (s as any).runId === genRun.id)
+    .filter(s => {
+      const metadata = s.metadata;
+      return metadata?.['generationRunId'] === genRun.id;
+    })
     .map(s => s.id);
 
   if (newSlots.length === 0) {

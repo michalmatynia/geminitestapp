@@ -24,6 +24,7 @@ export type ImageStudioSequenceMaskContext = {
   polygons: Array<Array<{ x: number; y: number }>>;
   invert: boolean;
   feather: number;
+  slotId?: string | null;
 } | null;
 
 export type ImageStudioSequenceRunRequest = {

@@ -32,11 +32,11 @@ import { useAiPathsSettingsDocsActions } from './useAiPathsSettingsDocsActions';
 import { useAiPathsSettingsModeActions } from './useAiPathsSettingsModeActions';
 import { useAiPathsSettingsPathActions } from './useAiPathsSettingsPathActions';
 import { useAiPathsSettingsSamples } from './useAiPathsSettingsSamples';
-import { 
-  DOCS_OVERVIEW_SNIPPET, 
-  DOCS_WIRING_SNIPPET, 
-  DOCS_DESCRIPTION_SNIPPET, 
-  DOCS_JOBS_SNIPPET 
+import {
+  DOCS_OVERVIEW_SNIPPET,
+  DOCS_WIRING_SNIPPET,
+  DOCS_DESCRIPTION_SNIPPET,
+  DOCS_JOBS_SNIPPET,
 } from './docs-snippets';
 import { useCoreSettingsState } from './hooks/state/useCoreSettingsState';
 import { useExecutionSettingsState } from './hooks/state/useExecutionSettingsState';
@@ -238,12 +238,25 @@ export function useAiPathsSettingsState({
   });
 
   const {
+    clusterPresets,
     setClusterPresets,
+    dbQueryPresets,
     setDbQueryPresets,
     saveDbQueryPresets,
+    dbNodePresets,
     setDbNodePresets,
     saveDbNodePresets,
+    editingPresetId,
+    presetDraft,
+    setPresetDraft,
+    handleSavePreset,
+    handleLoadPreset,
+    handleDeletePreset,
+    handleApplyPreset,
+    handleExportPresets,
     handleImportPresets,
+    handlePresetFromSelection,
+    handleResetPresetDraft,
     presetsModalOpen,
     setPresetsModalOpen,
     presetsJson,
@@ -252,6 +265,7 @@ export function useAiPathsSettingsState({
     setExpandedPaletteGroups,
     paletteCollapsed,
     setPaletteCollapsed,
+    togglePaletteGroup,
     normalizeDbQueryPreset,
     normalizeDbNodePreset,
   } = useAiPathsPresets({
@@ -580,10 +594,50 @@ export function useAiPathsSettingsState({
     reportAiPathsError,
   });
 
+  const autoSaveLabel = useMemo((): string => {
+    switch (persistence.autoSaveStatus) {
+      case 'saving': return 'Saving...';
+      case 'saved': return 'Saved';
+      case 'error': return 'Save error';
+      default: return '';
+    }
+  }, [persistence.autoSaveStatus]);
+
+  const autoSaveClasses = useMemo((): string => {
+    switch (persistence.autoSaveStatus) {
+      case 'saving': return 'text-yellow-500';
+      case 'saved': return 'text-green-500';
+      case 'error': return 'text-red-500';
+      default: return '';
+    }
+  }, [persistence.autoSaveStatus]);
+
   return {
+    // Docs
+    docsOverviewSnippet: DOCS_OVERVIEW_SNIPPET,
+    docsWiringSnippet: DOCS_WIRING_SNIPPET,
+    docsDescriptionSnippet: DOCS_DESCRIPTION_SNIPPET,
+    docsJobsSnippet: DOCS_JOBS_SNIPPET,
+    // Docs actions
+    ...docsActions,
+    // AutoSave
+    autoSaveLabel,
+    autoSaveClasses,
+    autoSaveStatus: persistence.autoSaveStatus,
+    autoSaveAt: persistence.autoSaveAt,
+    // Canvas
     viewportRef,
     canvasRef,
     view,
+    panState,
+    dragState,
+    connecting,
+    connectingPos,
+    lastDrop,
+    selectedEdgeId,
+    edgePaths,
+    connectingFromNode,
+    // Graph
     nodes,
     setNodes,
     edges,
@@ -593,91 +647,130 @@ export function useAiPathsSettingsState({
     isPathLocked,
     isPathActive,
     pathName,
+    setPathName,
     pathDescription,
+    setPathDescription,
     activeTrigger,
+    triggers,
     executionMode,
     flowIntensity,
     runMode,
     strictFlowMode,
     blockedRunPolicy,
     aiPathsValidation: aiPathsValidationState,
+    setAiPathsValidation: setAiPathsValidationState,
     historyRetentionPasses,
     historyRetentionOptionsMax,
+    // Loading / Saving
     loading,
     saving: persistence.saving,
+    // Samples
     parserSamples,
+    setParserSamples,
+    parserSampleLoading,
     updaterSamples,
+    setUpdaterSamples,
+    updaterSampleLoading,
+    // Run / Error
     lastRunAt,
     lastError,
+    setLastError,
+    pathDebugSnapshots,
+    // UI State
     selectedNodeId,
     configOpen,
     setConfigOpen,
-    pathDebugSnapshots,
+    nodeConfigDirty,
+    setNodeConfigDirty,
+    setLoadNonce,
+    simulationOpenNodeId,
+    setSimulationOpenNodeId,
     selectedNode,
-    panState,
-    dragState,
-    connecting,
-    connectingPos,
-    lastDrop,
-    selectedEdgeId,
-    edgePaths,
-    connectingFromNode,
-    palette: paletteWithTriggerButtons,
-    parserSampleLoading,
-    updaterSampleLoading,
-    pathFlagsById,
-    ...validation,
-    ...nodeConfig,
-    ...runtimeMgmt,
-    ...runHistory,
-    ...cleanup,
-    ...pathActions,
-    ...modeActions,
-    ...docsActions,
-    setLastError,
-    setPathDescription,
+    // Path flags
     pathConfigs,
+    pathFlagsById,
+    // Palette
+    palette: paletteWithTriggerButtons,
     paletteCollapsed,
-    historyRetentionOptionsMax,
-    setHistoryRetentionPasses,
-    setHistoryRetentionOptionsMax,
-    setPathName,
-    setPaths,
-    setEdges,
-    setNodes,
     setPaletteCollapsed,
-    setParserSamples,
-    setPathConfigs,
-    setPathDebugSnapshots,
-    setUpdaterSamples,
-    docsOverviewSnippet: DOCS_OVERVIEW_SNIPPET,
-    docsWiringSnippet: DOCS_WIRING_SNIPPET,
-    docsDescriptionSnippet: DOCS_DESCRIPTION_SNIPPET,
-    docsJobsSnippet: DOCS_JOBS_SNIPPET,
-    autoSaveLabel: 'Last saved', // Default or derived
-    autoSaveClasses: '',
-    autoSaveStatus: persistence.autoSaveStatus,
-    autoSaveAt: persistence.autoSaveAt,
-    triggers,
-    handleTogglePathLock: () => setIsPathLocked(!isPathLocked),
-    handleTogglePathActive: () => setIsPathActive(!isPathActive),
-    lastGraphModelPayload: null, // Default
-    runList: runHistory.runList,
+    expandedPaletteGroups,
+    togglePaletteGroup,
+    // Presets
+    clusterPresets,
+    dbQueryPresets,
+    setDbQueryPresets,
+    saveDbQueryPresets,
+    dbNodePresets,
+    setDbNodePresets,
+    saveDbNodePresets,
+    editingPresetId,
+    presetDraft,
+    setPresetDraft,
+    handleSavePreset,
+    handleLoadPreset,
+    handleDeletePreset,
+    handleApplyPreset,
+    handleExportPresets,
+    handleImportPresets,
+    handlePresetFromSelection,
+    handleResetPresetDraft,
+    presetsModalOpen,
+    setPresetsModalOpen,
+    presetsJson,
+    setPresetsJson,
+    // Validation
+    ...validation,
+    persistLastError,
+    reportAiPathsError,
+    // Node config
+    ...nodeConfig,
+    // Runtime management
+    ...runtimeMgmt,
+    // Run history
     runsQuery: runHistory.runsQuery,
+    runList: runHistory.runList,
     runFilter: runHistory.runFilter,
     setRunFilter: runHistory.setRunFilter,
     expandedRunHistory: runHistory.expandedRunHistory,
     setExpandedRunHistory: runHistory.setExpandedRunHistory,
     runHistorySelection: runHistory.runHistorySelection,
     setRunHistorySelection: runHistory.setRunHistorySelection,
+    handleOpenRunDetail: runHistory.handleOpenRunDetail,
+    handleResumeRun: runHistory.handleResumeRun,
+    handleCancelRun: runHistory.handleCancelRun,
+    handleRequeueDeadLetter: runHistory.handleRequeueDeadLetter,
+    runDetailOpen: runHistory.runDetailOpen,
+    setRunDetailOpen: runHistory.setRunDetailOpen,
+    runDetailLoading: runHistory.runDetailLoading,
+    runDetail: runHistory.runDetail,
+    setRunDetail: runHistory.setRunDetail,
+    runStreamStatus: runHistory.runStreamStatus,
+    runStreamPaused: runHistory.runStreamPaused,
+    setRunStreamPaused: runHistory.setRunStreamPaused,
+    runNodeSummary: runHistory.runNodeSummary,
+    runEventsOverflow: runHistory.runEventsOverflow,
+    runEventsBatchLimit: runHistory.runEventsBatchLimit,
+    runDetailHistoryOptions: runHistory.runDetailHistoryOptions,
+    runDetailSelectedHistoryNodeId: runHistory.runDetailSelectedHistoryNodeId,
+    setRunHistoryNodeId: runHistory.setRunHistoryNodeId,
+    runDetailSelectedHistoryEntries: runHistory.runDetailSelectedHistoryEntries,
+    // Cleanup
+    ...cleanup,
+    // Path actions
+    ...pathActions,
+    // Mode actions (handleTogglePathLock, handleTogglePathActive, handleExecutionModeChange, etc.)
+    ...modeActions,
+    // Persistence
     handleSave: persistence.handleSave,
     persistActivePathPreference: persistence.persistActivePathPreference,
     persistPathSettings: persistPathSettingsVoid,
     persistRuntimePathState: persistence.persistRuntimePathState as unknown as (pathId: string, runtimeState: RuntimeState) => Promise<void>,
     persistSettingsBulk: persistence.persistSettingsBulk,
     savePathIndex: persistence.savePathIndex,
+    // Samples fetch
     handleFetchParserSample,
     handleFetchUpdaterSample,
+    // Canvas interactions
     handlePointerDown,
     handlePointerMove,
     handlePointerUp,
@@ -698,17 +791,13 @@ export function useAiPathsSettingsState({
     zoomTo,
     fitToNodes,
     resetView,
-    ConfirmationModal,
-    setAiPathsValidation: setAiPathsValidationState,
-    setLoadNonce,
-    setPathName,
-    updateActivePathMeta: (name: string) => setPathName(name),
+    ensureNodeVisible,
+    getCanvasCenterPosition,
+    // Runtime
     runtimeState,
-    setNodeConfigDirty,
-    nodeConfigDirty,
-    setParserSamples,
-    setUpdaterSamples,
     handleRunSimulation: runtime.handleRunSimulation,
+    handleFireTrigger: runtime.handleFireTrigger,
+    handleFireTriggerPersistent: runtime.handleFireTriggerPersistent,
     handlePauseActiveRun: runtime.handlePauseRun,
     handleResumeActiveRun: runtime.handleResumeRun,
     handleStepActiveRun: runtime.handleStepRun,
@@ -717,44 +806,16 @@ export function useAiPathsSettingsState({
     runtimeNodeStatuses: runtime.runtimeNodeStatuses,
     runtimeEvents: runtime.runtimeEvents,
     nodeDurations: runtime.nodeDurations,
+    clearNodeCache: runtime.clearNodeCache,
     handleSendToAi: runtime.handleSendToAi,
     sendingToAi: runtime.sendingToAi,
-    setDbQueryPresets,
-    saveDbQueryPresets,
-    setDbNodePresets,
-    saveDbNodePresets,
-    presetDraft: presets.presetDraft,
-    setPresetDraft: presets.setPresetDraft,
-    editingPresetId: presets.editingPresetId,
-    clusterPresets: presets.clusterPresets,
-    handleLoadPreset: presets.handleLoadPreset,
-    handleApplyPreset: presets.handleApplyPreset,
-    handleDeletePreset: presets.handleDeletePreset,
-    handleExportPresets: presets.handleExportPresets,
-    runDetailOpen: runHistory.runDetailOpen,
-    setRunDetailOpen: runHistory.setRunDetailOpen,
-    runDetailLoading: runHistory.runDetailLoading,
-    runDetail: runHistory.runDetail,
-    setRunDetail: runHistory.setRunDetail,
-    runStreamStatus: runHistory.runStreamStatus,
-    runStreamPaused: runHistory.runStreamPaused,
-    setRunStreamPaused: runHistory.setRunStreamPaused,
-    runNodeSummary: runHistory.runNodeSummary,
-    runEventsOverflow: runHistory.runEventsOverflow,
-    runEventsBatchLimit: runHistory.runEventsBatchLimit,
-    runDetailHistoryOptions: runHistory.runDetailHistoryOptions,
-    runDetailSelectedHistoryNodeId: runHistory.runDetailSelectedHistoryNodeId,
-    setRunHistoryNodeId: runHistory.setRunHistoryNodeId,
-    runDetailSelectedHistoryEntries: runHistory.runDetailSelectedHistoryEntries,
-    presetsModalOpen,
-    setPresetsModalOpen,
-    presetsJson,
-    setPresetsJson,
-    handleImportPresets,
-    simulationOpenNodeId,
-    setSimulationOpenNodeId,
+    lastGraphModelPayload: null,
+    // Path meta
+    updateActivePathMeta: (name: string) => setPathName(name),
+    // Confirm modal
+    ConfirmationModal,
+    confirmNodeSwitch,
+    // Toast
     toast,
-    ensureNodeVisible,
-    getCanvasCenterPosition,
   };
 }

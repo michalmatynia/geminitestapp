@@ -3,7 +3,6 @@ import { api } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 import {
   type StudioSlotsResponse,
-  type ImageStudioSlotRecord,
 } from '@/shared/contracts/image-studio';
 import {
   buildCenterRequestId,
@@ -12,7 +11,6 @@ import {
   centerCanvasImageObject,
   dataUrlToUploadBlob,
   withCenterRetry,
-  isClientCenterCrossOriginError,
   isCenterAbortError,
 } from '../GenerationToolbarImageUtils';
 import {

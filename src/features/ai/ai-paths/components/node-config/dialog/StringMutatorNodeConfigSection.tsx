@@ -85,7 +85,7 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
     const next = operations.map((operation, idx) => {
       if (idx !== index) return operation;
       const base = createOperation(type);
-      return operation.id ? { ...base, id: operation.id } : base;
+      return (operation as any).id ? ({ ...base, id: (operation as any).id } as unknown as StringMutatorOperation) : base;
     });
     updateOperations(next);
   };
@@ -153,12 +153,12 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
                         variant='subtle'
                         value={operation.mode ?? 'both'}
                         onValueChange={(value: string): void =>
-                          updateOperation(index, { mode: value as 'both' | 'start' | 'end' })
+                          updateOperation(index, { mode: value as 'both' | 'left' | 'right' })
                         }
                         options={[
                           { value: 'both', label: 'Both' },
-                          { value: 'start', label: 'Start' },
-                          { value: 'end', label: 'End' },
+                          { value: 'left', label: 'Start (Left)' },
+                          { value: 'right', label: 'End (Right)' },
                         ]}
                         triggerClassName='w-[200px]'
                       />
@@ -243,12 +243,11 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
                         variant='subtle'
                         value={operation.mode ?? 'lower'}
                         onValueChange={(value: string): void =>
-                          updateOperation(index, { mode: value as 'upper' | 'lower' | 'title' })
+                          updateOperation(index, { mode: value as 'upper' | 'lower' })
                         }
                         options={[
                           { value: 'lower', label: 'Lowercase' },
                           { value: 'upper', label: 'Uppercase' },
-                          { value: 'title', label: 'Title Case' },
                         ]}
                         triggerClassName='w-[200px]'
                       />

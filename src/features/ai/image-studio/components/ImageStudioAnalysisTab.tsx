@@ -503,9 +503,7 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
           throw new Error('No client image source is available for analysis.');
         }
         setStatus('processing');
-        const analysis = await analyzeCanvasImageObject(source, layoutPayload, {
-          preferTargetCanvas: true,
-        });
+        const analysis = await analyzeCanvasImageObject(source, layoutPayload);
         nextResult = {
           ...analysis,
           effectiveMode: 'client_analysis_v1',

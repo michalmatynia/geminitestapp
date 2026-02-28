@@ -159,7 +159,7 @@ export const handleValidationPattern: NodeHandler = ({
 
   if (sourceText.trim().length === 0) {
     const outputs = buildValidationPatternOutputPorts({
-      outputPort: config.outputPort as any,
+      outputPort: config.outputPort as 'value' | 'result',
       inputText: sourceText,
       outputText: sourceText,
     });
@@ -180,15 +180,15 @@ export const handleValidationPattern: NodeHandler = ({
     .map((value: string): string => value.trim())
     .filter(Boolean);
   const includeRuleIdSet = includeRuleIds.length > 0 ? new Set<string>(includeRuleIds) : null;
-  const runtimeRules = normalizeValidationPatternRules(config.rules as any[], includeRuleIdSet);
+  const runtimeRules = normalizeValidationPatternRules(config.rules as ValidationPatternRule[], includeRuleIdSet);
   const runtimeLearnedRules =
     config.includeLearnedRules === false
       ? []
-      : normalizeValidationPatternRules(config.learnedRules as any[], includeRuleIdSet);
+      : normalizeValidationPatternRules(config.learnedRules as ValidationPatternRule[], includeRuleIdSet);
 
   if (runtimeRules.length === 0 && runtimeLearnedRules.length === 0) {
     const outputs = buildValidationPatternOutputPorts({
-      outputPort: config.outputPort as any,
+      outputPort: config.outputPort as 'value' | 'result',
       inputText: sourceText,
       outputText: sourceText,
     });
@@ -212,7 +212,7 @@ export const handleValidationPattern: NodeHandler = ({
     rules: runtimeRules,
     learnedRules: runtimeLearnedRules,
   };
-  const scope: PromptValidationScopeDto = (config.scope as any) ?? 'global';
+  const scope: PromptValidationScopeDto = (config.scope as PromptValidationScopeDto) ?? 'global';
   const runtime = preparePromptValidationRuntime(validationSettings, { scope });
 
   try {
@@ -259,7 +259,7 @@ export const handleValidationPattern: NodeHandler = ({
     const valid = config.failPolicy === 'report_only' ? true : blockingIssueCount === 0;
     const errors = summarizeValidationIssues(issues);
     const outputs = buildValidationPatternOutputPorts({
-      outputPort: config.outputPort as any,
+      outputPort: config.outputPort as 'value' | 'result',
       inputText: sourceText,
       outputText: workingText,
     });
@@ -296,7 +296,7 @@ export const handleValidationPattern: NodeHandler = ({
       `Node ${node.id} failed`
     );
     const outputs = buildValidationPatternOutputPorts({
-      outputPort: config.outputPort as any,
+      outputPort: config.outputPort as 'value' | 'result',
       inputText: sourceText,
       outputText: sourceText,
     });

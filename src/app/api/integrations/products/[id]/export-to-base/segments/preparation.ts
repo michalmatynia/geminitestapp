@@ -68,9 +68,9 @@ const remapLegacyParameterSourceMappings = async (args: {
     const allParameters = await parameterRepository.listParameters({});
     const paramNameById = new Map<string, string>();
     allParameters.forEach((p) => {
-      paramNameById.set(p.id, p.name_en as string);
-      if ((p.name_en as string).toLowerCase() !== p.id.toLowerCase()) {
-        paramNameById.set(p.id.toLowerCase(), p.name_en as string);
+      paramNameById.set(p.id, p.name_en);
+      if ((p.name_en).toLowerCase() !== p.id.toLowerCase()) {
+        paramNameById.set(p.id.toLowerCase(), p.name_en);
       }
     });
 
@@ -293,7 +293,7 @@ export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseE
       if (mappedEntries.length > 0) {
         producerNameById = Object.fromEntries([
           ...mappedEntries,
-          ...mappedEntries.map(([id, name]) => [id.toLowerCase() as string, name] as const),
+          ...mappedEntries.map(([id, name]) => [id.toLowerCase(), name] as const),
         ]);
       }
     } catch (error) {
@@ -331,7 +331,7 @@ export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseE
       if (mappedEntries.length > 0) {
         producerExternalIdByInternalId = Object.fromEntries([
           ...mappedEntries,
-          ...mappedEntries.map(([id, externalId]) => [id.toLowerCase() as string, externalId] as const),
+          ...mappedEntries.map(([id, externalId]) => [id.toLowerCase(), externalId] as const),
         ]);
       }
     } catch (error) {
@@ -369,7 +369,7 @@ export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseE
       if (mappedEntries.length > 0) {
         tagNameById = Object.fromEntries([
           ...mappedEntries,
-          ...mappedEntries.map(([id, name]) => [id.toLowerCase() as string, name] as const),
+          ...mappedEntries.map(([id, name]) => [id.toLowerCase(), name] as const),
         ]);
       }
     } catch (error) {
@@ -401,7 +401,7 @@ export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseE
       if (mappedEntries.length > 0) {
         tagExternalIdByInternalId = Object.fromEntries([
           ...mappedEntries,
-          ...mappedEntries.map(([id, externalId]) => [id.toLowerCase() as string, externalId] as const),
+          ...mappedEntries.map(([id, externalId]) => [id.toLowerCase(), externalId] as const),
         ]);
       }
     } catch (error) {

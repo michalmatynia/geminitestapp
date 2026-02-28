@@ -413,12 +413,16 @@ export const layoutCanvasImageObject = async (
   }
 
   const bounds = objectBoundsResult.bounds;
+  const finalLayout = {
+    ...normalizedLayout,
+    targetCanvasWidth: normalizedLayout.targetCanvasWidth ?? undefined,
+    targetCanvasHeight: normalizedLayout.targetCanvasHeight ?? undefined,
+  };
   const planned = analyzeAndPlanAutoScaleFromRgba({
     pixelData: imageData.data,
     width: sourceWidth,
     height: sourceHeight,
-    layout: normalizedLayout,
-    preferTargetCanvas: false,
+    layout: finalLayout,
   });
   if (!planned) {
     throw new Error('No visible object pixels were detected to layout.');
@@ -469,20 +473,23 @@ export const layoutCanvasImageObject = async (
 
 export const analyzeCanvasImageObject = async (
   src: string,
-  layoutConfig?: CenterLayoutConfig | null,
-  options?: { preferTargetCanvas?: boolean }
+  layoutConfig?: CenterLayoutConfig | null
 ): Promise<ClientImageObjectAnalysisResult> => {
   const { sourceWidth, sourceHeight, imageData } = await loadSourceCanvasWithImageData(
     src,
     'Client analysis failed due to cross-origin restrictions. Use "Analysis Server".'
   );
   const normalizedLayout = normalizeLayoutForEngine(layoutConfig);
+  const finalLayout = {
+    ...normalizedLayout,
+    targetCanvasWidth: normalizedLayout.targetCanvasWidth ?? undefined,
+    targetCanvasHeight: normalizedLayout.targetCanvasHeight ?? undefined,
+  };
   const planned = analyzeAndPlanAutoScaleFromRgba({
     pixelData: imageData.data,
     width: sourceWidth,
     height: sourceHeight,
-    layout: normalizedLayout,
-    preferTargetCanvas: options?.preferTargetCanvas !== false,
+    layout: finalLayout,
   });
   if (!planned) {
     throw new Error('No visible object pixels were detected to analyze.');
@@ -507,8 +514,7 @@ export const analyzeCanvasImageObject = async (
 
 export const autoScaleCanvasImageObject = async (
   src: string,
-  layoutConfig?: CenterLayoutConfig | null,
-  options?: { preferTargetCanvas?: boolean }
+  layoutConfig?: CenterLayoutConfig | null
 ): Promise<AutoScaleCanvasResult> => {
   const { sourceCanvas, sourceWidth, sourceHeight, imageData } =
     await loadSourceCanvasWithImageData(
@@ -516,12 +522,16 @@ export const autoScaleCanvasImageObject = async (
       'Client auto scaling failed due to cross-origin restrictions. Use "Auto Scaler Server".'
     );
   const normalizedLayout = normalizeLayoutForEngine(layoutConfig);
+  const finalLayout = {
+    ...normalizedLayout,
+    targetCanvasWidth: normalizedLayout.targetCanvasWidth ?? undefined,
+    targetCanvasHeight: normalizedLayout.targetCanvasHeight ?? undefined,
+  };
   const planned = analyzeAndPlanAutoScaleFromRgba({
     pixelData: imageData.data,
     width: sourceWidth,
     height: sourceHeight,
-    layout: normalizedLayout,
-    preferTargetCanvas: options?.preferTargetCanvas !== false,
+    layout: finalLayout,
   });
   if (!planned) {
     throw new Error('No visible object pixels were detected to auto scale.');

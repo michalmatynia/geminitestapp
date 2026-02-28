@@ -2,7 +2,6 @@ import { useCallback, useRef } from 'react';
 import type { AiNode, RuntimeState, Edge } from '@/shared/lib/ai-paths';
 import { 
   getMarqueeRect, 
-  releasePointerCaptureSafe, 
   setPointerCaptureSafe 
 } from '../useCanvasInteractions.helpers';
 import type { MarqueeMode, MarqueeSelectionState } from '../useCanvasInteractions.helpers';
@@ -21,7 +20,7 @@ export function useCanvasStateHandlers(args: {
   toggleNodeSelection: (id: string) => void;
   startPan: (x: number, y: number) => void;
 }) {
-  const { isPathLocked, toast, viewportRef, startPan } = args;
+  const { toast, viewportRef, startPan } = args;
 
   const lastPointerCanvasPosRef = useRef({ x: 0, y: 0 });
   const hasCanvasKeyboardFocusRef = useRef(false);
@@ -108,9 +107,9 @@ export function useCanvasStateHandlers(args: {
           const nodeRight = node.position.x + nodeWidth;
           const nodeBottom = node.position.y + nodeHeight;
           return (
-            node.position.x < rect.right &&
+            node.position.x < rect.left + rect.width &&
             nodeRight > rect.left &&
-            node.position.y < rect.bottom &&
+            node.position.y < rect.top + rect.height &&
             nodeBottom > rect.top
           );
         })
@@ -121,7 +120,6 @@ export function useCanvasStateHandlers(args: {
 
   const resolveNodeSelectionByScope = useCallback(
     (currentSelection: string[], marqueeNodes: string[]): string[] => {
-      const marqueeSet = new Set(marqueeNodes);
       if (args.selectionScopeMode === 'add') {
         return Array.from(new Set([...currentSelection, ...marqueeNodes]));
       }

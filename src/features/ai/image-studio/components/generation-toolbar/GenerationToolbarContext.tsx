@@ -16,7 +16,7 @@ import type {
 export type MaskAttachMode = 'client_canvas_polygon' | 'server_polygon';
 export type UpscaleMode = 'client_canvas' | 'server_sharp';
 export type UpscaleStrategy = 'scale' | 'target_resolution';
-export type CropMode = 'client_bbox' | 'server_bbox';
+export type CropMode = 'client_bbox' | 'server_bbox' | 'canvas_overflow';
 export type CenterMode =
   | 'client_alpha_bbox'
   | 'server_alpha_bbox'

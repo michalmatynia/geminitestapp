@@ -1,8 +1,5 @@
 import {
-  type ImageStudioCenterDetectionMode,
-  type ImageStudioCenterLayoutConfig,
   type ImageStudioCenterObjectBounds,
-  type ImageStudioCenterShadowPolicy,
 } from '@/shared/contracts/image-studio';
 import {
   type PixelData,
@@ -61,21 +58,21 @@ export const detectObjectBoundsForLayoutFromRgba = (
   const decision = decideObjectDetectionCandidate({
     alphaCandidate: alphaBounds
       ? {
-          bounds: alphaBounds,
-          confidence: 1,
-          detectionUsed: 'alpha_bbox',
-          detectionDetails: { touchesBorder: false },
-          details: { touchesBorder: false },
-        }
+        bounds: alphaBounds,
+        confidence: 1,
+        detectionUsed: 'alpha_bbox',
+        detectionDetails: { touchesBorder: false },
+        details: { touchesBorder: false },
+      }
       : null,
     whiteCandidate: whiteForeground
       ? {
-          bounds: whiteForeground.bounds,
-          confidence: whiteForeground.confidence,
-          detectionUsed: 'white_bg_first_colored_pixel',
-          detectionDetails: { touchesBorder: whiteForeground.details.touchesBorder },
-          details: { touchesBorder: whiteForeground.details.touchesBorder },
-        }
+        bounds: whiteForeground.bounds,
+        confidence: whiteForeground.confidence,
+        detectionUsed: 'white_bg_first_colored_pixel',
+        detectionDetails: { touchesBorder: whiteForeground.details.touchesBorder },
+        details: { touchesBorder: whiteForeground.details.touchesBorder },
+      }
       : whiteSimpleBounds
         ? {
           bounds: whiteSimpleBounds,

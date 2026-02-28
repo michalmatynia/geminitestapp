@@ -232,8 +232,7 @@ export async function centerAndScaleObjectByLayout(
     pixelData: data,
     width,
     height,
-    layout: normalizedLayout,
-    preferTargetCanvas: false,
+    layout: normalizedLayout as Partial<ImageStudioCenterLayoutConfig>,
   });
   if (!planned) {
     throw new Error('No visible object pixels were detected to center.');

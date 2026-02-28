@@ -125,12 +125,11 @@ export const captureSnapshot = async (
   runDir: string,
   label: string,
   log?: (level: string, message: string, metadata?: Record<string, unknown>) => Promise<void>,
-  activeStepId?: string | null
-): Promise<{ domText: string; domHtml: string; url: string }> => {
-  if (!page) {
-    return { domText: '', domHtml: '', url: '' };
-  }
-  const domHtml = await page.content();
+      activeStepId?: string | null
+      ): Promise<{ id: string; domText: string; domHtml: string; url: string }> => {
+        if (!page) {
+          return { id: '', domText: '', domHtml: '', url: '' };
+        }  const domHtml = await page.content();
   const domText = await page.evaluate(
     () => document.body?.innerText || document.documentElement?.innerText || ''
   );
@@ -143,7 +142,7 @@ export const captureSnapshot = async (
   await fs.writeFile(screenshotPath, screenshotBuffer);
   const viewport = page.viewportSize();
 
-  await prisma.agentBrowserSnapshot.create({
+  const snapshot = await prisma.agentBrowserSnapshot.create({
     data: {
       runId,
       url: snapshotUrl,
@@ -174,5 +173,5 @@ export const captureSnapshot = async (
   // to avoid circular dependency and keep functions focused.
   // Caller should call them if needed.
 
-  return { domText, domHtml, url: snapshotUrl };
+  return { id: snapshot.id, domText, domHtml, url: snapshotUrl };
 };

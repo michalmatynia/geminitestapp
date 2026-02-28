@@ -291,7 +291,7 @@ export const createBaseImportRun = async (input: {
     createdAt: timestamp,
     updatedAt: timestamp,
     summaryMessage: input.summaryMessage ?? null,
-  } as any;
+  } as unknown as BaseImportRunRecord;
   await writeSettingValue(runKey(record.id), JSON.stringify(record));
   return normalizeRunRecord(record);
 };
@@ -627,14 +627,15 @@ export const getBaseImportRunDetail = async (
       options.pageSize > 0
         ? Math.floor(options.pageSize)
         : 200;
+    const stats = normalizeRunStats(run.stats);
     return {
       run,
       items: [],
       pagination: {
         page: 1,
         pageSize,
-        totalItems: (run.stats as any)?.total ?? 0,
-        totalPages: Math.max(1, Math.ceil(((run.stats as any)?.total ?? 0) / pageSize)),
+        totalItems: stats.total,
+        totalPages: Math.max(1, Math.ceil(stats.total / pageSize)),
       },
     };
   }
@@ -671,7 +672,7 @@ export const updateBaseImportRunStatus = async (
       ? { finishedAt: patch?.finishedAt ?? now }
       : {}),
   };
-  return updateBaseImportRun(runId, { ...basePatch, ...(patch ?? {}) } as any);
+  return updateBaseImportRun(runId, { ...basePatch, ...(patch ?? {}) });
 };
 
 export const requestBaseImportRunCancellation = async (

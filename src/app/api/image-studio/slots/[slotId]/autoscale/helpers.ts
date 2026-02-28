@@ -4,7 +4,14 @@ import {
   type ImageStudioAutoScalerRequest,
   type ImageStudioAutoScalerResponse,
   imageStudioAutoScalerResponseSchema,
-  type ImageStudioSlotRecord
+  type ImageStudioSlotRecord,
+  type ImageStudioCenterObjectBounds,
+  type ImageStudioNormalizedCenterLayout,
+  type ImageStudioDetectionDetails,
+  type ImageStudioWhitespaceMetrics,
+  type ImageStudioAutoScalerMode,
+  type ImageStudioCenterShadowPolicy,
+  type ImageStudioCenterDetectionMode
 } from '@/shared/contracts/image-studio';
 import { 
   coerceBoolean,
@@ -81,30 +88,39 @@ export async function parseAutoScalerRequestPayload(
   };
 }
 
-export function normalizeAutoScaleRequestBody(body: any): any {
+export function normalizeAutoScaleRequestBody(body: unknown): Partial<ImageStudioAutoScalerRequest> {
   if (!body || typeof body !== 'object') return {};
   
+  const b = body as Record<string, unknown>;
+  const autoscale = b['autoscale'];
   // Handle nested autoscale property if present (common in some client wrappers)
-  const root = body.autoscale && typeof body.autoscale === 'object' ? body.autoscale : body;
+  const root = (autoscale && typeof autoscale === 'object' ? autoscale : b) as Record<string, unknown>;
   
-  const layout = root.layout || {};
+  const layout = (root['layout'] || {}) as Record<string, unknown>;
   
+  const modeRaw = root['mode'];
+  const dataUrlRaw = root['dataUrl'];
+  const nameRaw = root['name'];
+  const requestIdRaw = root['requestId'];
+  const shadowPolicyRaw = layout['shadowPolicy'];
+  const detectionRaw = layout['detection'];
+
   return {
-    mode: typeof root.mode === 'string' ? root.mode.trim() : root.mode,
-    dataUrl: typeof root.dataUrl === 'string' ? root.dataUrl.trim() : root.dataUrl,
-    name: typeof root.name === 'string' ? root.name.trim() : root.name,
-    requestId: typeof root.requestId === 'string' ? root.requestId.trim() : root.requestId,
+    mode: (typeof modeRaw === 'string' ? modeRaw.trim() : modeRaw) as ImageStudioAutoScalerMode,
+    dataUrl: typeof dataUrlRaw === 'string' ? dataUrlRaw.trim() : (dataUrlRaw as string | undefined),
+    name: typeof nameRaw === 'string' ? nameRaw.trim() : (nameRaw as string | undefined),
+    requestId: typeof requestIdRaw === 'string' ? requestIdRaw.trim() : (requestIdRaw as string | undefined),
     layout: {
-      paddingPercent: coerceFiniteNumber(layout.paddingPercent),
-      paddingXPercent: coerceFiniteNumber(layout.paddingXPercent),
-      paddingYPercent: coerceFiniteNumber(layout.paddingYPercent),
-      fillMissingCanvasWhite: coerceBoolean(layout.fillMissingCanvasWhite),
-      targetCanvasWidth: coerceFiniteNumber(layout.targetCanvasWidth),
-      targetCanvasHeight: coerceFiniteNumber(layout.targetCanvasHeight),
-      whiteThreshold: coerceFiniteNumber(layout.whiteThreshold),
-      chromaThreshold: coerceFiniteNumber(layout.chromaThreshold),
-      shadowPolicy: typeof layout.shadowPolicy === 'string' ? layout.shadowPolicy.trim() : layout.shadowPolicy,
-      detection: typeof layout.detection === 'string' ? layout.detection.trim() : layout.detection,
+      paddingPercent: coerceFiniteNumber(layout['paddingPercent']) ?? undefined,
+      paddingXPercent: coerceFiniteNumber(layout['paddingXPercent']) ?? undefined,
+      paddingYPercent: coerceFiniteNumber(layout['paddingYPercent']) ?? undefined,
+      fillMissingCanvasWhite: coerceBoolean(layout['fillMissingCanvasWhite']) ?? undefined,
+      targetCanvasWidth: coerceFiniteNumber(layout['targetCanvasWidth']) ?? undefined,
+      targetCanvasHeight: coerceFiniteNumber(layout['targetCanvasHeight']) ?? undefined,
+      whiteThreshold: coerceFiniteNumber(layout['whiteThreshold']) ?? undefined,
+      chromaThreshold: coerceFiniteNumber(layout['chromaThreshold']) ?? undefined,
+      shadowPolicy: (typeof shadowPolicyRaw === 'string' ? shadowPolicyRaw.trim() : shadowPolicyRaw) as ImageStudioCenterShadowPolicy,
+      detection: (typeof detectionRaw === 'string' ? detectionRaw.trim() : detectionRaw) as ImageStudioCenterDetectionMode,
     }
   };
 }
@@ -122,13 +138,29 @@ export const buildClientPayloadSignature = (
   return null;
 };
 
-export function readAutoScaleMetadataFromSlot(slot: ImageStudioSlotRecord): any {
-  const metadata = slot.metadata || {};
-  return metadata.autoscale || {};
+export type ImageStudioAutoScaleMetadata = {
+  effectiveMode?: string;
+  sourceObjectBounds?: ImageStudioCenterObjectBounds | null;
+  targetObjectBounds?: ImageStudioCenterObjectBounds | null;
+  layout?: ImageStudioNormalizedCenterLayout | null;
+  detectionUsed?: string | null;
+  confidenceBefore?: number | null;
+  detectionDetails?: ImageStudioDetectionDetails | null;
+  scale?: number | null;
+  whitespaceBefore?: ImageStudioWhitespaceMetrics | null;
+  whitespaceAfter?: ImageStudioWhitespaceMetrics | null;
+  objectAreaPercentBefore?: number | null;
+  objectAreaPercentAfter?: number | null;
+};
+
+export function readAutoScaleMetadataFromSlot(slot: ImageStudioSlotRecord): ImageStudioAutoScaleMetadata {
+  const metadata = (slot.metadata || {}) as Record<string, unknown>;
+  const autoscale = metadata['autoscale'];
+  return (autoscale || {}) as ImageStudioAutoScaleMetadata;
 }
 
 export function parseAutoScaleResponsePayload(
-  data: any,
+  data: unknown,
   context?: { responseStage: string; sourceSlotId: string; targetSlotId: string; requestId?: string }
 ): ImageStudioAutoScalerResponse {
   try {
@@ -136,14 +168,19 @@ export function parseAutoScaleResponsePayload(
   } catch (error) {
     // If validation fails, we still want to return a response but maybe with some context
     // This matches the error handling observed in tests
-    const err = error as any;
-    const validationError = new Error('Auto scaler response validation failed');
-    (validationError as any).code = 'BAD_REQUEST';
-    (validationError as any).httpStatus = 400;
-    (validationError as any).meta = {
+    const validationError = new Error('Auto scaler response validation failed') as Error & {
+      code?: string;
+      httpStatus?: number;
+      meta?: Record<string, unknown>;
+    };
+    const err = error as { format?: () => unknown };
+    
+    validationError.code = 'BAD_REQUEST';
+    validationError.httpStatus = 400;
+    validationError.meta = {
       autoScaleErrorCode: 'IMAGE_STUDIO_AUTOSCALER_OUTPUT_INVALID',
       responseStage: context?.responseStage || 'unknown',
-      errors: err.format ? err.format() : err,
+      errors: typeof err?.format === 'function' ? err.format() : error,
     };
     throw validationError;
   }

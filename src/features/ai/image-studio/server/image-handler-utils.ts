@@ -1,11 +1,10 @@
 import { NextRequest } from 'next/server';
-import { z } from 'zod';
-import { ObjectId } from 'mongodb';
-import { 
-  IMAGE_STUDIO_AUTOSCALER_ERROR_CODES, 
+import {
   type ImageStudioAutoScalerErrorCode,
-  type ImageStudioAutoScalerMode 
-} from '@/features/ai/image-studio/contracts/autoscaler';
+  type ImageStudioAutoScalerMode,
+  type ImageStudioCenterErrorCode,
+  type ImageStudioCenterMode,
+} from '@/features/ai/image-studio/contracts/center';
 import { badRequestError } from '@/shared/errors/app-error';
 
 export const isFileLike = (value: FormDataEntryValue | null): value is File => {
@@ -22,15 +21,29 @@ export const autoScaleBadRequest = (
   return badRequestError(message, { autoScaleErrorCode: code, ...meta });
 };
 
-export const sanitizeSegment = (value: string): string => value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
+export const centerBadRequest = (
+  code: ImageStudioCenterErrorCode,
+  message: string,
+  meta?: Record<string, unknown>
+): Error => {
+  return badRequestError(message, { centerErrorCode: code, ...meta });
+};
+
+export const isClientCenterMode = (mode: ImageStudioCenterMode): boolean =>
+  mode === 'client_alpha_bbox' || mode === 'client_object_layout_v1' || mode === 'client_white_bg_bbox';
+
+export const isServerCenterMode = (mode: ImageStudioCenterMode): boolean =>
+  mode === 'server_alpha_bbox' || mode === 'server_object_layout_v1';
 
 export const sanitizeFilename = (value: string): string => value.replace(/[^a-zA-Z0-9._-]/g, '_');
 
+export const sanitizeSegment = (value: string): string => value.replace(/[^a-zA-Z0-9_-]/g, '_');
+
 export const isClientAutoScaleMode = (mode: ImageStudioAutoScalerMode): boolean =>
-  mode === 'client_canvas' || mode === 'client_layout';
+  mode === 'client_auto_scaler_v1';
 
 export const isServerAutoScaleMode = (mode: ImageStudioAutoScalerMode): boolean =>
-  mode === 'server_authoritative' || mode === 'server_assisted';
+  mode === 'server_auto_scaler_v1';
 
 export const readIdempotencyKey = (req: NextRequest): string | null => {
   const headerValue =

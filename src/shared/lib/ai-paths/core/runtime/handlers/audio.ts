@@ -108,7 +108,7 @@ const getAudioState = (): AudioPlaybackState => {
   const root = globalThis as unknown as Record<string, unknown>;
   const current = root[AUDIO_STATE_KEY];
   if (isRecord(current) && current['activeByNode'] instanceof Map) {
-    return current as AudioPlaybackState;
+    return current as unknown as AudioPlaybackState;
   }
   const created: AudioPlaybackState = {
     context: null,
@@ -179,8 +179,8 @@ const playSignalOnMonoSpeaker = async (
   const effectiveGain = clampNumber(signal.gain * speakerGain, 0, 1);
 
   oscillator.type = signal.waveform;
-  oscillator.frequency.setValueAtTime((signal.frequencyHz as number) ?? 440, now);
-  gainNode.gain.setValueAtTime((effectiveGain as number) ?? 0.25, now);
+  oscillator.frequency.setValueAtTime(signal.frequencyHz, now);
+  gainNode.gain.setValueAtTime(effectiveGain, now);
 
   oscillator.connect(gainNode);
   gainNode.connect(context.destination);
@@ -199,7 +199,7 @@ const playSignalOnMonoSpeaker = async (
 
   state.activeByNode.set(nodeId, { oscillator, gainNode });
   oscillator.start(now);
-  oscillator.stop(now + ((signal.durationMs as number) ?? 400) / 1000);
+  oscillator.stop(now + signal.durationMs / 1000);
   return 'playing';
 };
 
@@ -207,15 +207,16 @@ export const handleAudioOscillator: NodeHandler = ({
   node,
   nodeInputs,
 }: NodeHandlerContext): RuntimePortValues => {
-  const config = node.config?.audioOscillator ?? DEFAULT_OSCILLATOR_SIGNAL;
+  const configRaw = node.config?.['audioOscillator'];
+  const config = (isRecord(configRaw) ? configRaw : DEFAULT_OSCILLATOR_SIGNAL) as unknown as OscillatorSignal;
   const triggerValue = coerceInput(nodeInputs['trigger']);
   const armed = triggerValue === undefined ? true : Boolean(triggerValue);
 
   const signal = buildOscillatorSignal({
     waveform: normalizeWaveform(coerceInput(nodeInputs['waveform']), config.waveform),
-    frequencyHz: toFiniteNumber(coerceInput(nodeInputs['frequency']), config.frequencyHz as any),
-    gain: toFiniteNumber(coerceInput(nodeInputs['gain']), config.gain as any),
-    durationMs: toFiniteNumber(coerceInput(nodeInputs['durationMs']), config.durationMs as any),
+    frequencyHz: toFiniteNumber(coerceInput(nodeInputs['frequency']), config.frequencyHz),
+    gain: toFiniteNumber(coerceInput(nodeInputs['gain']), config.gain),
+    durationMs: toFiniteNumber(coerceInput(nodeInputs['durationMs']), config.durationMs),
   });
 
   if (!armed) {
@@ -242,14 +243,15 @@ export const handleAudioSpeaker: NodeHandler = async ({
   node,
   nodeInputs,
 }: NodeHandlerContext): Promise<RuntimePortValues> => {
-  const config = node.config?.audioSpeaker ?? {
+  const configRaw = node.config?.['audioSpeaker'];
+  const config = (isRecord(configRaw) ? configRaw : {
     enabled: true,
     autoPlay: true,
     gain: 1,
     stopPrevious: true,
-  };
+  }) as Record<string, unknown>;
 
-  if (!config.enabled) {
+  if (config['enabled'] === false) {
     stopActivePlayback(node.id);
     return { status: 'disabled' };
   }
@@ -283,9 +285,9 @@ export const handleAudioSpeaker: NodeHandler = async ({
     return { status: 'idle' };
   }
   const signal = providedSignal ?? fallbackSignal;
-  const speakerGain = clampNumber(toFiniteNumber(config.gain, 1), 0, 1);
+  const speakerGain = clampNumber(toFiniteNumber(config['gain'], 1), 0, 1);
 
-  if (!config.autoPlay) {
+  if (config['autoPlay'] === false) {
     return {
       status: 'ready',
       audioSignal: signal,
@@ -298,7 +300,7 @@ export const handleAudioSpeaker: NodeHandler = async ({
     node.id,
     signal,
     speakerGain,
-    config.stopPrevious as any
+    Boolean(config['stopPrevious'] ?? true)
   );
 
   const statusLabel =

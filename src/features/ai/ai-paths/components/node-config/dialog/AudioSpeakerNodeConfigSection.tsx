@@ -21,7 +21,7 @@ export function AudioSpeakerNodeConfigSection(): React.JSX.Element | null {
       <ToggleRow
         label='Enabled'
         description='Mute/unmute this speaker node.'
-        checked={speakerConfig.enabled}
+        checked={speakerConfig.enabled ?? true}
         onCheckedChange={(checked: boolean): void =>
           updateSelectedNodeConfig({
             audioSpeaker: {
@@ -36,7 +36,7 @@ export function AudioSpeakerNodeConfigSection(): React.JSX.Element | null {
       <ToggleRow
         label='Auto Play'
         description='Play immediately when a signal arrives.'
-        checked={speakerConfig.autoPlay}
+        checked={speakerConfig.autoPlay ?? false}
         onCheckedChange={(checked: boolean): void =>
           updateSelectedNodeConfig({
             audioSpeaker: {
@@ -51,7 +51,7 @@ export function AudioSpeakerNodeConfigSection(): React.JSX.Element | null {
       <ToggleRow
         label='Stop Previous Tone'
         description='Keep mono output clean on repeated signals.'
-        checked={speakerConfig.stopPrevious}
+        checked={speakerConfig.stopPrevious ?? true}
         onCheckedChange={(checked: boolean): void =>
           updateSelectedNodeConfig({
             audioSpeaker: {
@@ -71,12 +71,12 @@ export function AudioSpeakerNodeConfigSection(): React.JSX.Element | null {
           step='0.01'
           variant='subtle'
           size='sm'
-          value={speakerConfig.gain}
+          value={speakerConfig.gain ?? 0.5}
           onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
             updateSelectedNodeConfig({
               audioSpeaker: {
                 ...speakerConfig,
-                gain: toNumber(event.target.value, speakerConfig.gain),
+                gain: toNumber(event.target.value, speakerConfig.gain ?? 0.5),
               },
             })
           }

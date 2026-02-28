@@ -54,7 +54,7 @@ export function AudioOscillatorNodeConfigSection(): React.JSX.Element | null {
             updateSelectedNodeConfig({
               audioOscillator: {
                 ...oscillatorConfig,
-                frequencyHz: toNumber(event.target.value, oscillatorConfig.frequencyHz),
+                frequencyHz: toNumber(event.target.value, oscillatorConfig.frequencyHz ?? 440),
               },
             })
           }
@@ -74,7 +74,7 @@ export function AudioOscillatorNodeConfigSection(): React.JSX.Element | null {
             updateSelectedNodeConfig({
               audioOscillator: {
                 ...oscillatorConfig,
-                gain: toNumber(event.target.value, oscillatorConfig.gain),
+                gain: toNumber(event.target.value, oscillatorConfig.gain ?? 0.5),
               },
             })
           }
@@ -94,7 +94,7 @@ export function AudioOscillatorNodeConfigSection(): React.JSX.Element | null {
             updateSelectedNodeConfig({
               audioOscillator: {
                 ...oscillatorConfig,
-                durationMs: toNumber(event.target.value, oscillatorConfig.durationMs),
+                durationMs: toNumber(event.target.value, oscillatorConfig.durationMs ?? 1000),
               },
             })
           }

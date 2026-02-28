@@ -38,6 +38,7 @@ const toMaskContext = (
       typeof value.feather === 'number' && Number.isFinite(value.feather)
         ? Number(Math.max(0, Math.min(50, value.feather)).toFixed(2))
         : 0,
+    slotId: value.slotId ?? null,
   };
 };
 
@@ -250,10 +251,8 @@ const queue = createManagedQueue<ImageStudioSequenceJobData>({
             const result = await executeImageStudioSequenceStep({
               run,
               step,
-              stepIndex: index,
               inputSlotId: stepInputSlotId,
               runtimeMask,
-              outputSlotIds,
             });
 
             currentSlotId =

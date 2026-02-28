@@ -95,6 +95,7 @@ const toMaskContext = (
       typeof value.feather === 'number' && Number.isFinite(value.feather)
         ? Math.max(0, Math.min(50, Number(value.feather.toFixed(2))))
         : 0,
+    slotId: value.slotId ?? null,
   };
 };
 

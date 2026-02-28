@@ -70,12 +70,12 @@ export function LogicalConditionNodeConfigSection(): React.JSX.Element | null {
   };
 
   const updateCondition = (index: number, patch: Partial<LogicalConditionItem>): void => {
-    const next = config.conditions.map((c, i) => (i === index ? { ...c, ...patch } : c));
+    const next = (config.conditions ?? []).map((c, i) => (i === index ? { ...c, ...patch } : c));
     updateConfig({ conditions: next });
   };
 
   const removeCondition = (index: number): void => {
-    updateConfig({ conditions: config.conditions.filter((_, i) => i !== index) });
+    updateConfig({ conditions: (config.conditions ?? []).filter((_, i) => i !== index) });
   };
 
   const addCondition = (): void => {
@@ -84,7 +84,7 @@ export function LogicalConditionNodeConfigSection(): React.JSX.Element | null {
       inputPort: 'value',
       operator: 'notEmpty',
     };
-    updateConfig({ conditions: [...config.conditions, newCondition] });
+    updateConfig({ conditions: [...(config.conditions ?? []), newCondition] });
   };
 
   return (
@@ -104,12 +104,12 @@ export function LogicalConditionNodeConfigSection(): React.JSX.Element | null {
 
       <div className='space-y-3'>
         <Label className='text-xs text-gray-400'>Conditions</Label>
-        {config.conditions.length === 0 && (
+        {(config.conditions ?? []).length === 0 && (
           <div className='rounded-md border border-border bg-card/30 px-3 py-2 text-xs text-gray-500'>
             No conditions — node always passes (valid: true).
           </div>
         )}
-        {config.conditions.map((condition, index) => {
+        {(config.conditions ?? []).map((condition, index) => {
           const showCompareTo = !NO_COMPARE_TO_OPERATORS.has(condition.operator);
           const showCaseSensitive = STRING_OPERATORS.has(condition.operator);
           return (
@@ -137,7 +137,7 @@ export function LogicalConditionNodeConfigSection(): React.JSX.Element | null {
                   value={condition.inputPort}
                   onValueChange={(value: string): void =>
                     updateCondition(index, {
-                      inputPort: value as LogicalConditionItem['inputPort'],
+                      inputPort: value,
                     })
                   }
                   options={inputPortOptions}

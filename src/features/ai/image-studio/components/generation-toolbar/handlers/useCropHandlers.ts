@@ -42,22 +42,19 @@ export function useCropHandlers(state: GenerationToolbarState, helpers: any) {
     setWorkingSlotId,
     setSelectedSlotId,
     workingSlotImageSrc,
-    canvasRenderSize,
-    resolvedImageOffset,
+    projectCanvasSize,
     maskShapes,
+    getPreviewCanvasImageFrame,
   } = state;
 
   const { fetchProjectSlots } = helpers;
 
   const resolveWorkingSlotImageContentFrame = useCallback((): ImageContentFrame | null => {
     if (!workingSlot?.id || !workingSlotImageSrc) return null;
-    return {
-      width: canvasRenderSize.width,
-      height: canvasRenderSize.height,
-      offsetX: resolvedImageOffset.x,
-      offsetY: resolvedImageOffset.y,
-    };
-  }, [workingSlot?.id, workingSlotImageSrc, canvasRenderSize, resolvedImageOffset]);
+    const binding = getPreviewCanvasImageFrame();
+    if (binding?.slotId !== workingSlot.id) return null;
+    return binding.frame;
+  }, [workingSlot?.id, workingSlotImageSrc, getPreviewCanvasImageFrame]);
 
   const resolveWorkingSourceDimensions = useCallback(async (): Promise<{
     width: number;
@@ -74,27 +71,41 @@ export function useCropHandlers(state: GenerationToolbarState, helpers: any) {
   }> => {
     const frame = resolveWorkingSlotImageContentFrame();
     if (!frame) throw new Error('Unable to resolve image content frame for cropping.');
+    if (!projectCanvasSize) throw new Error('Canvas size is not available.');
     const sourceDim = await resolveWorkingSourceDimensions();
     const context: CropCanvasContext = {
-      canvasWidth: frame.width,
-      canvasHeight: frame.height,
-      imageWidth: sourceDim.width,
-      imageHeight: sourceDim.height,
-      imageOffsetX: frame.offsetX,
-      imageOffsetY: frame.offsetY,
+      canvasWidth: projectCanvasSize.width,
+      canvasHeight: projectCanvasSize.height,
+      imageFrame: frame,
     };
 
     if (cropMode === 'canvas_overflow') {
-      return { rect: resolveCanvasOverflowCropRect(context), context };
+      const rect = resolveCanvasOverflowCropRect(context);
+      if (!rect) throw new Error('Image is fully inside canvas.');
+      return { rect, context };
     }
 
-    const { rect, diagnostics } = resolveCropRectFromShapesWithDiagnostics(maskShapes, context);
+    const { cropRect: rect, diagnostics } = resolveCropRectFromShapesWithDiagnostics(
+      maskShapes,
+      projectCanvasSize.width,
+      projectCanvasSize.height,
+      sourceDim.width,
+      sourceDim.height,
+      null,
+      frame
+    );
     if (!rect) {
       console.error('[GenerationToolbar] Crop rect resolution failed', diagnostics);
       throw new Error('No valid crop area defined by selection.');
     }
     return { rect, context };
-  }, [cropMode, maskShapes, resolveWorkingSlotImageContentFrame, resolveWorkingSourceDimensions]);
+  }, [
+    cropMode,
+    maskShapes,
+    resolveWorkingSlotImageContentFrame,
+    resolveWorkingSourceDimensions,
+    projectCanvasSize,
+  ]);
 
   const handleCancelCrop = useCallback((): void => {
     setCropBusy(false);
@@ -115,7 +126,10 @@ export function useCropHandlers(state: GenerationToolbarState, helpers: any) {
     try {
       const { rect, context } = await resolveCropRect();
       setCropStatus('preparing');
-      const canvasRect = mapImageCropRectToCanvasRect(rect, context);
+      const sourceDim = await resolveWorkingSourceDimensions();
+      const canvasRect = mapImageCropRectToCanvasRect(rect, sourceDim.width, sourceDim.height, context);
+      if (!canvasRect) throw new Error('Failed to map image crop to canvas.');
+      
       const polygons = polygonsFromShapes(maskShapes, 1000);
       const maskDataUrl = renderMaskDataUrlFromPolygons(polygons, 1000, 1000);
       const uploadBlob = await dataUrlToUploadBlob(maskDataUrl);
@@ -172,6 +186,7 @@ export function useCropHandlers(state: GenerationToolbarState, helpers: any) {
     setCropBusy,
     setCropStatus,
     resolveCropRect,
+    resolveWorkingSourceDimensions,
     maskShapes,
     cropMode,
     projectId,

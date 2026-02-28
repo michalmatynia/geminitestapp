@@ -150,7 +150,7 @@ export const normalizeAutoScalerLayoutConfig = (
 export async function analyzeImageByAutoScalerLayout(
   sourceBuffer: Buffer,
   layout: ImageStudioCenterLayoutConfig | null | undefined,
-  options?: { preferTargetCanvas?: boolean }
+  _options?: { preferTargetCanvas?: boolean }
 ): Promise<ImageStudioAnalysisSummary> {
   const normalizedLayout = normalizeAutoScalerLayoutConfig(layout);
   const sourceWithAlpha = sharp(sourceBuffer).ensureAlpha();
@@ -159,11 +159,11 @@ export async function analyzeImageByAutoScalerLayout(
   const height = info.height ?? 0;
   ensureValidDimensions(width, height);
 
-  const analysis: ImageStudioAnalysisResult | null = analyzeImageObjectFromRgba({
+  const analysis: ImageStudioAutoScaleAnalysis | null = analyzeImageObjectFromRgba({
     pixelData: data,
     width,
     height,
-    layout: normalizedLayout,
+    layout: normalizedLayout as Partial<ImageStudioCenterLayoutConfig>,
   });
 
   if (!analysis) {
@@ -174,8 +174,7 @@ export async function analyzeImageByAutoScalerLayout(
     pixelData: data,
     width,
     height,
-    layout: normalizedLayout,
-    preferTargetCanvas: options?.preferTargetCanvas !== false,
+    layout: normalizedLayout as Partial<ImageStudioCenterLayoutConfig>,
   });
 
   if (!planned) {
@@ -185,17 +184,17 @@ export async function analyzeImageByAutoScalerLayout(
   return {
     width,
     height,
-    sourceObjectBounds: analysis.sourceObjectBounds,
-    detectionUsed: analysis.detectionUsed,
-    confidence: analysis.confidence,
-    detectionDetails: analysis.detectionDetails,
-    policyVersion: analysis.policyVersion,
-    policyReason: analysis.policyReason,
-    fallbackApplied: analysis.fallbackApplied,
-    candidateDetections: analysis.candidateDetections,
-    whitespace: analysis.whitespace,
-    objectAreaPercent: analysis.objectAreaPercent,
-    layout: analysis.layout,
+    sourceObjectBounds: analysis.analysis.sourceObjectBounds,
+    detectionUsed: analysis.analysis.detectionUsed,
+    confidence: analysis.analysis.confidence,
+    detectionDetails: analysis.analysis.detectionDetails,
+    policyVersion: analysis.analysis.policyVersion,
+    policyReason: analysis.analysis.policyReason,
+    fallbackApplied: analysis.analysis.fallbackApplied,
+    candidateDetections: analysis.analysis.candidateDetections,
+    whitespace: analysis.analysis.whitespace,
+    objectAreaPercent: analysis.analysis.objectAreaPercent,
+    layout: analysis.analysis.layout,
     suggestedPlan: planned.plan,
   };
 }
@@ -203,7 +202,7 @@ export async function analyzeImageByAutoScalerLayout(
 export async function autoScaleObjectByAnalysis(
   sourceBuffer: Buffer,
   layout: ImageStudioCenterLayoutConfig | null | undefined,
-  options?: { preferTargetCanvas?: boolean }
+  _options?: { preferTargetCanvas?: boolean }
 ): Promise<ImageStudioAutoScalerResult> {
   const normalizedLayout = normalizeAutoScalerLayoutConfig(layout);
   const sourceWithAlpha = sharp(sourceBuffer).ensureAlpha();
@@ -216,19 +215,17 @@ export async function autoScaleObjectByAnalysis(
     pixelData: data,
     width: sourceWidth,
     height: sourceHeight,
-    layout: normalizedLayout,
-    preferTargetCanvas: options?.preferTargetCanvas !== false,
+    layout: normalizedLayout as Partial<ImageStudioCenterLayoutConfig>,
   });
 
   if (!planned) {
     throw new Error('No visible object pixels were detected to auto scale.');
   }
 
-  const p = planned as any;
-  const sourceObjectBounds = p.analysis.sourceObjectBounds;
-  const targetObjectBounds = p.plan.targetObjectBounds;
-  const outputWidth = p.plan.outputWidth;
-  const outputHeight = p.plan.outputHeight;
+  const sourceObjectBounds = planned.analysis.sourceObjectBounds;
+  const targetObjectBounds = planned.plan.targetObjectBounds;
+  const outputWidth = planned.plan.outputWidth;
+  const outputHeight = planned.plan.outputHeight;
 
   const extracted = await sharp(sourceBuffer)
     .ensureAlpha()

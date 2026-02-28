@@ -23,9 +23,9 @@ import {
   parseImageDataUrl,
 } from '@/features/ai/image-studio/server/source-image-utils';
 import { 
-  autoScaleBadRequest as centerBadRequest, 
-  isClientAutoScaleMode as isClientCenterMode, 
-  isServerAutoScaleMode as isServerCenterMode 
+  centerBadRequest, 
+  isClientCenterMode, 
+  isServerCenterMode 
 } from './image-handler-utils';
 
 const SOURCE_FETCH_TIMEOUT_MS = 15_000;
@@ -76,31 +76,31 @@ export async function processCenterPayload(input: {
   const { payload, sourceSlot, uploadedClientImage } = input;
   const normalizedLayout = normalizeCenterLayoutConfig(payload.layout);
   const preferAuthoritativeSource =
-    STRICT_SERVER_CENTER_ENABLED || isServerCenterMode(payload.mode as any);
+    STRICT_SERVER_CENTER_ENABLED || isServerCenterMode(payload.mode);
 
   let sourceBuffer: Buffer | null = null;
   let sourceWidth = 0;
   let sourceHeight = 0;
   let sourceLoadError: unknown = null;
 
-  if (preferAuthoritativeSource || isClientCenterMode(payload.mode as any)) {
+  if (preferAuthoritativeSource || isClientCenterMode(payload.mode)) {
     try {
       const source = await loadSourceBufferFromSlot({
         slot: sourceSlot,
         sourceFetchTimeoutMs: SOURCE_FETCH_TIMEOUT_MS,
         onMissingSource: () =>
           centerBadRequest(
-            IMAGE_STUDIO_CENTER_ERROR_CODES.SOURCE_IMAGE_MISSING as any,
+            IMAGE_STUDIO_CENTER_ERROR_CODES.SOURCE_IMAGE_MISSING,
             'Slot has no source image to center.'
           ),
         onInvalidSource: () =>
           centerBadRequest(
-            IMAGE_STUDIO_CENTER_ERROR_CODES.SOURCE_IMAGE_INVALID as any,
+            IMAGE_STUDIO_CENTER_ERROR_CODES.SOURCE_IMAGE_INVALID,
             'Slot source image path is invalid.'
           ),
         onRemoteFetchFailed: (status) =>
           centerBadRequest(
-            IMAGE_STUDIO_CENTER_ERROR_CODES.SOURCE_IMAGE_INVALID as any,
+            IMAGE_STUDIO_CENTER_ERROR_CODES.SOURCE_IMAGE_INVALID,
             `Failed to fetch source image (${status}).`,
             { status }
           ),
@@ -110,14 +110,14 @@ export async function processCenterPayload(input: {
       sourceHeight = metadata.height ?? sourceSlot.imageFile?.height ?? 0;
       if (!(sourceWidth > 0 && sourceHeight > 0)) {
         throw centerBadRequest(
-          IMAGE_STUDIO_CENTER_ERROR_CODES.SOURCE_DIMENSIONS_INVALID as any,
+          IMAGE_STUDIO_CENTER_ERROR_CODES.SOURCE_DIMENSIONS_INVALID,
           'Source image dimensions are invalid.'
         );
       }
       const sourceValidation = validateCenterSourceDimensions(sourceWidth, sourceHeight);
       if (!sourceValidation.ok) {
         throw centerBadRequest(
-          IMAGE_STUDIO_CENTER_ERROR_CODES.SOURCE_IMAGE_TOO_LARGE as any,
+          IMAGE_STUDIO_CENTER_ERROR_CODES.SOURCE_IMAGE_TOO_LARGE,
           'Source image exceeds centering processing limits.',
           {
             reason: sourceValidation.reason,
@@ -133,7 +133,7 @@ export async function processCenterPayload(input: {
   }
 
   if (sourceBuffer && sourceWidth > 0 && sourceHeight > 0) {
-    if (payload.mode === 'server_alpha_center_v1') {
+    if (payload.mode === 'server_alpha_bbox') {
       const centered = await centerObjectByAlpha(sourceBuffer);
       return {
         outputBuffer: centered.outputBuffer,
@@ -142,7 +142,7 @@ export async function processCenterPayload(input: {
         outputHeight: centered.height,
         sourceObjectBounds: centered.sourceObjectBounds,
         targetObjectBounds: centered.targetObjectBounds,
-        effectiveMode: 'server_alpha_center_v1',
+        effectiveMode: 'server_alpha_bbox',
         authoritativeSource: 'source_slot',
         detectionUsed: 'alpha_bbox',
         confidenceBefore: null,
@@ -154,31 +154,29 @@ export async function processCenterPayload(input: {
 
     let centered: Awaited<ReturnType<typeof centerAndScaleObjectByLayout>>;
     try {
-      centered = await centerAndScaleObjectByLayout(sourceBuffer, payload.layout, {
-        preferTargetCanvas: true,
-      });
+      centered = await centerAndScaleObjectByLayout(sourceBuffer, payload.layout);
     } catch (error) {
       if (error instanceof Error && /No visible object pixels were detected/i.test(error.message)) {
         throw centerBadRequest(
-          IMAGE_STUDIO_CENTER_ERROR_CODES.SOURCE_OBJECT_NOT_FOUND as any,
+          IMAGE_STUDIO_CENTER_ERROR_CODES.SOURCE_OBJECT_NOT_FOUND,
           'No visible object pixels were detected to center.'
         );
       }
       if (error instanceof Error && /dimensions are invalid/i.test(error.message)) {
         throw centerBadRequest(
-          IMAGE_STUDIO_CENTER_ERROR_CODES.SOURCE_DIMENSIONS_INVALID as any,
+          IMAGE_STUDIO_CENTER_ERROR_CODES.SOURCE_DIMENSIONS_INVALID,
           'Source image dimensions are invalid.'
         );
       }
       throw centerBadRequest(
-        IMAGE_STUDIO_CENTER_ERROR_CODES.OUTPUT_INVALID as any,
+        IMAGE_STUDIO_CENTER_ERROR_CODES.OUTPUT_INVALID,
         error instanceof Error ? error.message : 'Failed to process centered output.'
       );
     }
 
     if (!validateCenterOutputDimensions(centered.width, centered.height)) {
       throw centerBadRequest(
-        IMAGE_STUDIO_CENTER_ERROR_CODES.OUTPUT_INVALID as any,
+        IMAGE_STUDIO_CENTER_ERROR_CODES.OUTPUT_INVALID,
         'Centering output exceeds limits.',
         { width: centered.width, height: centered.height }
       );
@@ -191,35 +189,35 @@ export async function processCenterPayload(input: {
       outputHeight: centered.height,
       sourceObjectBounds: centered.sourceObjectBounds,
       targetObjectBounds: centered.targetObjectBounds,
-      effectiveMode: 'server_center_scaler_v2',
+      effectiveMode: 'server_object_layout_v1',
       authoritativeSource: 'source_slot',
       detectionUsed: centered.detectionUsed,
       confidenceBefore: centered.confidenceBefore,
       detectionDetails: centered.detectionDetails,
       scale: centered.scale,
       layout: {
-        paddingPercent: centered.layout.paddingPercent,
-        paddingXPercent: centered.layout.paddingXPercent,
-        paddingYPercent: centered.layout.paddingYPercent,
-        fillMissingCanvasWhite: centered.layout.fillMissingCanvasWhite,
-        targetCanvasWidth: centered.layout.targetCanvasWidth,
-        targetCanvasHeight: centered.layout.targetCanvasHeight,
-        whiteThreshold: centered.layout.whiteThreshold,
-        chromaThreshold: centered.layout.chromaThreshold,
-        shadowPolicy: centered.layout.shadowPolicy,
-        layoutPolicyVersion: centered.policyVersion,
-        detectionPolicyDecision: centered.policyReason,
+        paddingPercent: normalizedLayout.paddingPercent,
+        paddingXPercent: normalizedLayout.paddingXPercent,
+        paddingYPercent: normalizedLayout.paddingYPercent,
+        fillMissingCanvasWhite: normalizedLayout.fillMissingCanvasWhite,
+        targetCanvasWidth: normalizedLayout.targetCanvasWidth,
+        targetCanvasHeight: normalizedLayout.targetCanvasHeight,
+        whiteThreshold: normalizedLayout.whiteThreshold,
+        chromaThreshold: normalizedLayout.chromaThreshold,
+        shadowPolicy: normalizedLayout.shadowPolicy,
+        layoutPolicyVersion: centered.layoutPolicyVersion,
+        detectionPolicyDecision: centered.detectionPolicyDecision,
         detectionUsed: centered.detectionUsed,
         scale: centered.scale,
       },
     };
   }
 
-  if (!isClientCenterMode(payload.mode as any)) {
+  if (!isClientCenterMode(payload.mode)) {
     throw sourceLoadError instanceof Error
       ? sourceLoadError
       : centerBadRequest(
-        IMAGE_STUDIO_CENTER_ERROR_CODES.SOURCE_IMAGE_MISSING as any,
+        IMAGE_STUDIO_CENTER_ERROR_CODES.SOURCE_IMAGE_MISSING,
         'Server centering requires a resolvable source image.'
       );
   }
@@ -232,7 +230,7 @@ export async function processCenterPayload(input: {
     const outputHeight = metadata?.height ?? null;
     if (outputWidth && outputHeight && !validateCenterOutputDimensions(outputWidth, outputHeight)) {
       throw centerBadRequest(
-        IMAGE_STUDIO_CENTER_ERROR_CODES.OUTPUT_INVALID as any,
+        IMAGE_STUDIO_CENTER_ERROR_CODES.OUTPUT_INVALID,
         'Uploaded centered output exceeds limits.',
         { width: outputWidth, height: outputHeight }
       );
@@ -245,7 +243,7 @@ export async function processCenterPayload(input: {
       outputHeight,
       sourceObjectBounds: null,
       targetObjectBounds: null,
-      effectiveMode: 'client_center_scaler_v2',
+      effectiveMode: 'client_object_layout_v1',
       authoritativeSource: 'client_upload_fallback',
       detectionUsed: null,
       confidenceBefore: null,
@@ -272,7 +270,7 @@ export async function processCenterPayload(input: {
   const parsedData = parseImageDataUrl(payload.dataUrl ?? '');
   if (!parsedData) {
     throw centerBadRequest(
-      IMAGE_STUDIO_CENTER_ERROR_CODES.CLIENT_DATA_URL_INVALID as any,
+      IMAGE_STUDIO_CENTER_ERROR_CODES.CLIENT_DATA_URL_INVALID,
       'Invalid centering image data URL.'
     );
   }
@@ -284,7 +282,7 @@ export async function processCenterPayload(input: {
   const outputHeight = metadata?.height ?? null;
   if (outputWidth && outputHeight && !validateCenterOutputDimensions(outputWidth, outputHeight)) {
     throw centerBadRequest(
-      IMAGE_STUDIO_CENTER_ERROR_CODES.OUTPUT_INVALID as any,
+      IMAGE_STUDIO_CENTER_ERROR_CODES.OUTPUT_INVALID,
       'Data URL centered output exceeds limits.',
       { width: outputWidth, height: outputHeight }
     );
@@ -297,7 +295,7 @@ export async function processCenterPayload(input: {
     outputHeight,
     sourceObjectBounds: null,
     targetObjectBounds: null,
-    effectiveMode: 'client_center_scaler_v2',
+    effectiveMode: 'client_object_layout_v1',
     authoritativeSource: 'client_upload_fallback',
     layout: {
       paddingPercent: normalizedLayout.paddingPercent,

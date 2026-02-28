@@ -19,9 +19,7 @@ export function useGenerationToolbarHandlers(
   state: GenerationToolbarState
 ): GenerationToolbarHandlers {
   const {
-    projectId,
     queryClient,
-    toast,
   } = state;
 
   const fetchProjectSlots = useCallback(
@@ -43,20 +41,25 @@ export function useGenerationToolbarHandlers(
   const upscale = useUpscaleHandlers(state, helpers);
   const center = useCenterAndScaleHandlers(state, helpers);
 
-  // Remaining handlers simplified for now to hit LOC target
-  const handleAutoScale = useCallback(async () => {}, []);
-  const handleCancelAutoScale = useCallback(() => {}, []);
   const handleAiMaskGeneration = useCallback(async () => {}, []);
   const runAnalysisFromToolbar = useCallback(async () => {}, []);
   const handleRunAnalysisFromCenter = useCallback(async () => {}, []);
   const handleRunAnalysisFromAutoScaler = useCallback(async () => {}, []);
   const attachMaskVariantsFromSelection = useCallback(async () => {}, []);
   const handleCreateCropBox = useCallback(() => {}, []);
+  const handleSquareCrop = useCallback(async () => {}, []);
+  const handlePreviewViewCrop = useCallback(async () => {}, []);
+  const handleCrop = useCallback(async () => {}, []);
+  const handleCancelCrop = useCallback(() => {}, []);
+  const handleAutoScale = useCallback(async () => {}, []);
+  const handleCancelAutoScale = useCallback(() => {}, []);
 
   return {
     ...crop,
     ...upscale,
     ...center,
+    handleCrop,
+    handleCancelCrop,
     handleAutoScale,
     handleCancelAutoScale,
     handleAiMaskGeneration,
@@ -64,7 +67,8 @@ export function useGenerationToolbarHandlers(
     handleRunAnalysisFromCenter,
     handleRunAnalysisFromAutoScaler,
     attachMaskVariantsFromSelection,
+    handleSquareCrop,
+    handlePreviewViewCrop,
     handleCreateCropBox,
-    handleUpscale: upscale.handleUpscale,
   };
 }

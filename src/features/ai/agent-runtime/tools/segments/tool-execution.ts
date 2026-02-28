@@ -69,9 +69,9 @@ export async function runAgentTool(
     runId,
     stepId: stepId ?? null,
     model: resolvedModel,
-    outputNormalizationModel,
+    outputNormalizationModel: outputNormalizationModel ?? '',
     prompt: prompt ?? '',
-  } as any);
+  });
 
   const activeStepId = stepId ?? null;
 
@@ -103,8 +103,8 @@ export async function runAgentTool(
   };
 
   let page: Page | null = null;
-  if (injectedContext && context!.pages().length > 0) {
-    page = context!.pages()[0] ?? null;
+  if (injectedContext && context.pages().length > 0) {
+    page = context.pages()[0] ?? null;
     if (page) {
       await page.bringToFront().catch(() => {});
       page.removeAllListeners('console');
@@ -113,7 +113,7 @@ export async function runAgentTool(
       page.removeAllListeners('response');
     }
   } else {
-    page = await context!.newPage();
+    page = await context.newPage();
   }
 
   if (!page) {
@@ -134,10 +134,10 @@ export async function runAgentTool(
     });
   });
 
-  let cloudflareDetected = false;
+  const detectionState = { cloudflareDetected: false };
   const flagCloudflare = async (source: string, detail?: string): Promise<void> => {
-    if (cloudflareDetected) return;
-    cloudflareDetected = true;
+    if (detectionState.cloudflareDetected) return;
+    detectionState.cloudflareDetected = true;
     await log('warning', 'Cloudflare challenge detected.', {
       source,
       detail,
@@ -160,14 +160,14 @@ export async function runAgentTool(
     targetUrl,
   });
 
-  let finalUrl = targetUrl;
+  let finalUrl: string;
 
   const llmContext: ToolLlmContext = {
     model: resolvedModel,
     runId,
     log,
-    ...(activeStepId && { activeStepId }),
-    ...(stepLabel && { stepLabel }),
+    activeStepId,
+    stepLabel: stepLabel || undefined,
   };
   const toolLlmContext = {
     ...llmContext,
@@ -337,7 +337,7 @@ export async function runAgentTool(
       targetHostname,
       domText: '', // Will be extracted if empty
       finalUrl,
-      llmContext: llmContext as any,
+      llmContext,
       resolvedModel,
       selectorInferenceModel: selectorInferenceModel ?? null,
       outputNormalizationModel: outputNormalizationModel ?? null,
@@ -356,8 +356,9 @@ export async function runAgentTool(
       output: {
         url: finalUrl,
         domText: safeText(snapshot.domText),
-        snapshotId: (snapshot as any).id ?? null,
+        snapshotId: snapshot.id,
         logCount: 0, 
+        cloudflareDetected: detectionState.cloudflareDetected,
         ...extractionResult.output,
       },
     };
@@ -368,8 +369,8 @@ export async function runAgentTool(
     
     let snapshotId: string | null = null;
     if (page) {
-      const errorSnapshot = await captureSnapshot(page, runId, _runDir, 'error', log, activeStepId).catch(() => null);
-      snapshotId = (errorSnapshot as any)?.id ?? null;
+      const errorSnapshot = await (captureSnapshot(page, runId, _runDir, 'error', log, activeStepId) as Promise<{ id: string } | null>).catch(() => null);
+      snapshotId = errorSnapshot?.id ?? null;
     }
 
     return {
@@ -379,6 +380,7 @@ export async function runAgentTool(
       output: {
         url: page?.url(),
         snapshotId,
+        cloudflareDetected: detectionState.cloudflareDetected,
       },
     };
   } finally {

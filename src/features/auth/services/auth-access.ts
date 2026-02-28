@@ -102,7 +102,7 @@ export const getAuthAccessForUser = async (userId: string): Promise<AuthUserAcce
   if (inflight) return inflight;
 
   const promise = (async (): Promise<AuthUserAccess> => {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+     
     const [roles, userRoles, defaultRoleId]: [AuthRole[], AuthUserRoleMap, string | null] =
       await Promise.all([getAuthRoles(), getAuthUserRoles(), getAuthDefaultRoleId()]);
     const roleList: AuthRole[] = roles.length > 0 ? roles : DEFAULT_AUTH_ROLES;
@@ -117,7 +117,7 @@ export const getAuthAccessForUser = async (userId: string): Promise<AuthUserAcce
       roleList[0]?.id ??
       'admin';
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+     
     const assignedRoleId = userRoles[userId];
     const isAssignedValid = assignedRoleId
       ? roleList.some((role: AuthRole) => role.id === assignedRoleId)

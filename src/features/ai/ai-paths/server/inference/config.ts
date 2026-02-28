@@ -21,7 +21,7 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
     flowIntensity: 'medium',
     runMode: 'block',
     strictFlowMode: true,
-    nodes: getParameterInferenceNodes(timestamp),
+    nodes: getParameterInferenceNodes(timestamp) as any,
     edges: PARAMETER_INFERENCE_PATH_EDGES,
     updatedAt: timestamp,
     isLocked: false,

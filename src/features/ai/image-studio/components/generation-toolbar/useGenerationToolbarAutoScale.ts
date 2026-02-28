@@ -119,9 +119,7 @@ export function useGenerationToolbarAutoScale({
         try {
           setAutoScaleStatus('preparing');
           const autoScaledDataUrl = (
-            await autoScaleCanvasImageObject(sourceForClientAutoScale, autoScaleLayoutPayload, {
-              preferTargetCanvas: true,
-            })
+            await autoScaleCanvasImageObject(sourceForClientAutoScale, autoScaleLayoutPayload)
           ).dataUrl;
           let uploadBlob: Blob;
           try {

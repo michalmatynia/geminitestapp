@@ -98,28 +98,39 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
     operation: state.operation,
     queryTemplateValue: state.queryTemplateValue,
     queryTemplateRef: state.queryTemplateRef,
-    sampleState: state.sampleState,
+    sampleState: state.sampleState ?? {
+      entityType: 'product',
+      entityId: '',
+      json: '{}',
+      mappingMode: 'top',
+      depth: 1,
+      keyStyle: 'leaf',
+      includeContainers: false,
+    },
     parsedSampleError: state.parsedSampleError ?? '',
     updateQueryConfig: (patch) => state.updateQueryConfig(patch),
     connectedPlaceholders: state.connectedPlaceholders,
-    hasSchemaConnection: state.schemaConnection.hasSchemaConnection,
-    fetchedDbSchema: state.fetchedDbSchema,
-    schemaMatrix: state.fetchedDbSchema,
+    hasSchemaConnection: !!state.schemaConnection.snapshot,
+    fetchedDbSchema: state.fetchedDbSchema ?? null,
+    schemaMatrix: state.fetchedDbSchema ?? null,
     onSyncSchema: state.handleSyncSchema,
     schemaSyncing: state.schemaSyncMutation.isPending,
     schemaLoading: state.schemaQuery.isFetching,
     mapInputsToTargets: state.mapInputsToTargets,
-    bundleKeys: state.bundleKeys,
+    bundleKeys: new Set(state.bundleKeys),
     aiPromptRef: state.aiPromptRef,
     mappings: state.mappings,
     updateMapping: state.updateMapping,
     removeMapping: state.removeMapping,
     addMapping: state.addMapping,
     availablePorts: state.availablePorts,
-    uniqueTargetPathOptions: state.uniqueTargetPathOptions,
+    uniqueTargetPathOptions: state.uniqueTargetPathOptions.map((path) => ({
+      label: path,
+      value: path,
+    })),
     codeSnippets: state.codeSnippets,
-    selectedSnippetIndex: state.selectedSnippetIndex,
-    setSelectedSnippetIndex: state.setSelectedSnippetIndex,
+    selectedSnippetIndex: state.selectedSnippetIndex ?? 0,
+    setSelectedSnippetIndex: state.setSelectedSnippetIndex as React.Dispatch<React.SetStateAction<number>>,
     insertTemplateSnippet: state.insertTemplateSnippet,
     applyQueryTemplateUpdate: state.applyQueryTemplateUpdate,
     insertQueryPlaceholder: state.insertQueryPlaceholder,
@@ -229,7 +240,7 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
             <Tabs
               value={state.databaseTab}
               onValueChange={(value: string) =>
-                state.setDatabaseTab(value as 'settings' | 'constructor' | 'presets')
+                state.setDatabaseTab(value as 'query' | 'advanced' | 'constructor')
               }
               className='space-y-4'
             >

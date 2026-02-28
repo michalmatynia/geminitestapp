@@ -83,13 +83,13 @@ export function MapperNodeConfigSection(): React.JSX.Element | null {
   if (selectedNode?.type !== 'mapper') return null;
 
   const mapperConfig = selectedNode.config?.mapper ?? {
-    outputs: selectedNode.outputs.length ? selectedNode.outputs : ['value'],
-    mappings: createParserMappings(selectedNode.outputs.length ? selectedNode.outputs : ['value']),
+    outputs: (selectedNode.outputs ?? []).length ? selectedNode.outputs : ['value'],
+    mappings: createParserMappings((selectedNode.outputs ?? []).length ? selectedNode.outputs : ['value']),
     jsonIntegrityPolicy: 'repair',
   };
-  const outputs = mapperConfig.outputs.length
-    ? mapperConfig.outputs
-    : selectedNode.outputs.length
+  const outputs = (mapperConfig.outputs ?? []).length
+    ? (mapperConfig.outputs ?? [])
+    : (selectedNode.outputs ?? []).length
       ? selectedNode.outputs
       : ['value'];
   const runtimeInputs = runtimeState.inputs?.[selectedNode.id] ?? {};

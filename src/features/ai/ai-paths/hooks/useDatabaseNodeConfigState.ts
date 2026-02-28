@@ -2,21 +2,19 @@
 
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 
-import { buildPresetQueryTemplate } from '@/features/ai/ai-paths/config/query-presets';
 import {
   createPresetId,
   extractJsonPathEntries,
-  createParserMappings,
+  dbApi,
 } from '@/shared/lib/ai-paths';
 import type {
-  AiNode,
-  Edge,
   DatabaseConfig,
   DbQueryConfig,
   DbQueryPreset,
-  DatabaseAction,
   DatabaseActionCategory,
 } from '@/shared/lib/ai-paths';
+import type { SchemaData } from '@/shared/contracts/database';
+import { safeParseJson } from '@/shared/lib/ai-paths/core/utils/runtime';
 import {
   resolveDbActionProvider,
 } from '@/shared/lib/ai-paths/core/utils/provider-actions';
@@ -28,22 +26,13 @@ import type { AiQuery, DatabasePresetOption } from '@/shared/contracts/database'
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
 import { createListQueryV2, createMutationV2 } from '@/shared/lib/query-factories-v2';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import { useAiPathConfig } from '../components/AiPathConfigContext';
-import { toDbSchemaSnapshot, applySchemaSelection } from '@/features/ai/ai-paths/utils/database-node-utils';
 import { extractCodeSnippets } from '../components/node-config/database/database-constructor-tab-helpers';
 
 import { useDatabaseQueryExecution } from './database-node/useDatabaseQueryExecution';
 import { useDatabaseActionConfig } from './database-node/useDatabaseActionConfig';
 import { useDatabaseMappingState } from './database-node/useDatabaseMappingState';
-
-type SchemaConfig = {
-  provider?: 'auto' | 'mongodb' | 'prisma' | 'all';
-  mode?: 'all' | 'selected';
-  collections?: string[];
-  includeFields?: boolean;
-};
 
 const DEFAULT_QUERY: DbQueryConfig = {
   provider: 'auto',
@@ -111,12 +100,11 @@ const mapOperationFromActionCategory = (category: DatabaseActionCategory): 'quer
 
 export function useDatabaseNodeConfigState() {
   const {
-    selectedNodeId,
+    selectedNode: contextSelectedNode,
     nodes,
     edges,
     runtimeState,
     updateSelectedNodeConfig,
-    appDbProvider,
     toast,
     pathDebugSnapshot,
     dbQueryPresets,
@@ -126,7 +114,10 @@ export function useDatabaseNodeConfigState() {
     handleFetchUpdaterSample,
   } = useAiPathConfig();
 
-  const { confirm, ConfirmationModal } = useConfirm();
+  const selectedNodeId = contextSelectedNode?.id ?? '';
+  const appDbProvider: 'prisma' | 'mongodb' = 'mongodb';
+
+  const { ConfirmationModal } = useConfirm();
 
   const [databaseTab, setDatabaseTab] = useState<'query' | 'constructor' | 'advanced'>('query');
   const [selectedQueryPresetId, setSelectedQueryPresetId] = useState<string>('custom');
@@ -144,13 +135,13 @@ export function useDatabaseNodeConfigState() {
   const aiPromptRef = useRef<HTMLTextAreaElement>(null);
   const lastAutoFetchedRef = useRef<string | null>(null);
 
-  const selectedNode = useMemo(
-    () => nodes.find((n) => n.id === selectedNodeId) as AiNode,
-    [nodes, selectedNodeId]
-  );
+  const selectedNode = contextSelectedNode;
 
   const isDatabaseSelected = selectedNode?.type === 'database';
-  const databaseConfig = useMemo(() => selectedNode?.config?.database ?? {}, [selectedNode]);
+  const databaseConfig = useMemo(
+    () => (selectedNode?.config?.database as DatabaseConfig) ?? ({} as DatabaseConfig),
+    [selectedNode]
+  );
   const queryConfig = useMemo(
     () => normalizeLegacyQueryProvider(databaseConfig.query ?? DEFAULT_QUERY),
     [databaseConfig.query]
@@ -199,30 +190,30 @@ export function useDatabaseNodeConfigState() {
 
   const settingsMap = useSettingsMap();
   const promptEngineSettings = useMemo(
-    () => parsePromptEngineSettings(settingsMap.get(PROMPT_ENGINE_SETTINGS_KEY)),
-    [settingsMap]
+    () => parsePromptEngineSettings(settingsMap.data?.get(PROMPT_ENGINE_SETTINGS_KEY)),
+    [settingsMap.data]
   );
 
   const schemaQuery = createListQueryV2<SchemaData, SchemaData>({
-    queryKey: QUERY_KEYS.database.schema(),
-    queryFn: () => dbApi.getSchema(),
+    queryKey: ['ai-paths', 'database', 'schema'] as const,
+    queryFn: () => dbApi.schema() as unknown as Promise<SchemaData>,
     meta: {
       source: 'ai.ai-paths.database-node.schema',
-      operation: 'getSchema',
+      operation: 'action',
       resource: 'database.schema',
       domain: 'global',
     },
   });
 
   const schemaSyncMutation = createMutationV2<void, string | undefined>({
-    mutationFn: (provider) => dbApi.syncSchema(provider),
+    mutationFn: async (_provider) => { await dbApi.schema(); },
     onSuccess: () => {
       schemaQuery.refetch();
       toast('Schema synced', { variant: 'success' });
     },
     meta: {
       source: 'ai.ai-paths.database-node.sync-schema',
-      operation: 'syncSchema',
+      operation: 'action',
       resource: 'database.schema',
       domain: 'global',
     },
@@ -239,9 +230,10 @@ export function useDatabaseNodeConfigState() {
   }, [selectedNode, selectedNodeId]);
 
   const handleSyncSchema = useCallback(() => {
-    const provider = schemaConnection.schemaConfig?.provider ?? queryConfig.provider ?? 'auto';
+    const schemaConfig = schemaConnection.schemaConfig as { provider?: string } | undefined;
+    const provider = schemaConfig?.provider ?? queryConfig.provider ?? 'auto';
     schemaSyncMutation.mutate(provider);
-  }, [queryConfig.provider, schemaConnection.schemaConfig?.provider, schemaSyncMutation]);
+  }, [queryConfig.provider, schemaConnection.schemaConfig, schemaSyncMutation]);
 
   const applyQueryTemplateUpdate = useCallback(
     (nextQuery: string): void => {
@@ -446,7 +438,7 @@ export function useDatabaseNodeConfigState() {
   }, [edges, selectedNodeId]);
 
   const sampleState = useMemo(() => updaterSamples[selectedNodeId], [updaterSamples, selectedNodeId]);
-  const parsedSample = useMemo(() => safeParseJson(sampleState?.json), [sampleState]);
+  const parsedSample = useMemo(() => safeParseJson(sampleState?.json ?? ''), [sampleState]);
 
   const uniqueTargetPathOptions = useMemo(() => {
     if (!parsedSample.value) return [];

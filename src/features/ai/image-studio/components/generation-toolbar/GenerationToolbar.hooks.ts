@@ -48,7 +48,7 @@ import { useGenerationToolbarContext } from './GenerationToolbarContext';
 import { type GenerationToolbarState } from './GenerationToolbar.types';
 
 export function useGenerationToolbarState(): GenerationToolbarState {
-  const { maskPreviewEnabled, centerGuidesEnabled } = useUiState();
+  const { maskPreviewEnabled, centerGuidesEnabled, canvasImageOffset } = useUiState();
   const uiActions = useUiActions();
   const { setMaskPreviewEnabled, setCenterGuidesEnabled, setCanvasSelectionEnabled } = uiActions;
   const { projectId, projectsQuery } = useProjectsState();
@@ -627,6 +627,7 @@ export function useGenerationToolbarState(): GenerationToolbarState {
     exportMaskShapes,
     exportMaskCount,
     hasShapeCropBoundary,
+    canvasImageOffset,
     workingSlotImageSrc,
     clientProcessingImageSrc,
     workingSourceSignature,

@@ -3,7 +3,6 @@ import {
   type TouchPointSample,
   type TouchGestureState,
   type TouchLongPressSelectionState,
-  TOUCH_PINCH_MIN_DISTANCE,
 } from '../useCanvasInteractions.helpers';
 
 export function useCanvasTouchHandlers(args: {
@@ -18,8 +17,9 @@ export function useCanvasTouchHandlers(args: {
   const maybeStartTouchPanInertia = useCallback(
     (lastSample: TouchPointSample): void => {
       const now = performance.now();
-      if (now - lastSample.ts > 100) return;
-      args.nav.startPanInertia(lastSample.vx, lastSample.vy);
+      const s = lastSample as any;
+      if (now - (s.ts ?? s.time) > 100) return;
+      args.nav.startPanInertia(s.vx ?? 0, s.vy ?? 0);
     },
     [args.nav]
   );

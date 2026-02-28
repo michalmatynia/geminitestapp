@@ -4,11 +4,12 @@ import {
   evaluateDisabledNodeTypesPolicy,
   formatDisabledNodeTypesPolicyMessage,
 } from '../path-run-policy';
-import type { 
+import { 
   AiNode, 
   Edge, 
   RuntimeState, 
-  AiPathRunRecord 
+  AiPathRunRecord,
+  AiPathRunRepository
 } from '@/shared/contracts/ai-paths';
 import { normalizeAiPathsValidationConfig } from '@/shared/lib/ai-paths/core/validation-engine/defaults';
 
@@ -18,7 +19,7 @@ export async function runExecutorPreflight(input: {
   edges: Edge[];
   triggerNodeId: string | null;
   runtimeState: RuntimeState;
-  repo: any;
+  repo: AiPathRunRepository;
   runStartedAt: string;
   traceId: string;
 }) {

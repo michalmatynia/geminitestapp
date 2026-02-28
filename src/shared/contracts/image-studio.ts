@@ -584,7 +584,9 @@ export const studioSlotsResponseSchema = z.object({
 
 export type StudioSlotsResponse = z.infer<typeof studioSlotsResponseSchema>;
 
-const imageStudioObjectDetectionUsedSchema = z.enum(['alpha_bbox', 'white_bg_first_colored_pixel']);
+export const imageStudioObjectDetectionUsedSchema = z.enum(['alpha_bbox', 'white_bg_first_colored_pixel']);
+
+export type ImageStudioObjectDetectionUsed = z.infer<typeof imageStudioObjectDetectionUsedSchema>;
 
 export const imageStudioWhitespaceMetricsSchema = z.object({
   px: z.object({

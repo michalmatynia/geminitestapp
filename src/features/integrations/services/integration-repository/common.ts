@@ -209,7 +209,6 @@ export const toConnectionRecord = (doc: unknown): IntegrationConnectionRecord =>
     throw new Error('Invalid connection document');
   }
   const d = doc as Record<string, unknown>;
-  const _isPrisma = 'id' in d;
   const rawId = d['id'] ?? d['_id'];
   const id = rawId && typeof rawId === 'object' && 'toString' in rawId ? rawId.toString() : String(rawId ?? '');
 

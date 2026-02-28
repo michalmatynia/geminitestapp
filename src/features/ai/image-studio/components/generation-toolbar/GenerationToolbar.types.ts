@@ -33,6 +33,7 @@ export interface GenerationToolbarHandlers {
   handleAutoScale: () => Promise<void>;
   handleCancelAutoScale: () => void;
   handleAiMaskGeneration: (mode: 'ai-polygon' | 'ai-bbox' | 'threshold' | 'edges') => Promise<void>;
+  runAnalysisFromToolbar: () => Promise<void>;
   handleRunAnalysisFromCenter: () => Promise<void>;
   handleRunAnalysisFromAutoScaler: () => Promise<void>;
 }
@@ -88,6 +89,7 @@ export interface GenerationToolbarState extends GenerationToolbarContextValue {
   exportMaskShapes: MaskShapeForExport[];
   exportMaskCount: number;
   hasShapeCropBoundary: boolean;
+  canvasImageOffset: { x: number; y: number };
   workingSlotImageSrc: string | null;
   clientProcessingImageSrc: string | null;
   workingSourceSignature: string;

@@ -81,11 +81,10 @@ export async function parseCenterRequestPayload(
   };
 }
 
-export function normalizeCenterRequestBody(body: any): any {
+export function normalizeCenterRequestBody(body: unknown): Partial<ImageStudioCenterRequest> {
   if (!body || typeof body !== 'object') return {};
   
-  // Handle nested center property if present
-  const root = body.center && typeof body.center === 'object' ? body.center : body;
+  const root = (body as any).center && typeof (body as any).center === 'object' ? (body as any).center : (body as any);
   
   const layout = root.layout || {};
   
@@ -95,16 +94,16 @@ export function normalizeCenterRequestBody(body: any): any {
     name: typeof root.name === 'string' ? root.name.trim() : root.name,
     requestId: typeof root.requestId === 'string' ? root.requestId.trim() : root.requestId,
     layout: {
-      paddingPercent: coerceFiniteNumber(layout.paddingPercent),
-      paddingXPercent: coerceFiniteNumber(layout.paddingXPercent),
-      paddingYPercent: coerceFiniteNumber(layout.paddingYPercent),
-      fillMissingCanvasWhite: coerceBoolean(layout.fillMissingCanvasWhite),
-      targetCanvasWidth: coerceFiniteNumber(layout.targetCanvasWidth),
-      targetCanvasHeight: coerceFiniteNumber(layout.targetCanvasHeight),
-      whiteThreshold: coerceFiniteNumber(layout.whiteThreshold),
-      chromaThreshold: coerceFiniteNumber(layout.chromaThreshold),
-      shadowPolicy: typeof layout.shadowPolicy === 'string' ? layout.shadowPolicy.trim() : layout.shadowPolicy,
-      detection: typeof layout.detection === 'string' ? layout.detection.trim() : layout.detection,
+      paddingPercent: coerceFiniteNumber(layout.paddingPercent) ?? undefined,
+      paddingXPercent: coerceFiniteNumber(layout.paddingXPercent) ?? undefined,
+      paddingYPercent: coerceFiniteNumber(layout.paddingYPercent) ?? undefined,
+      fillMissingCanvasWhite: coerceBoolean(layout.fillMissingCanvasWhite) ?? undefined,
+      targetCanvasWidth: coerceFiniteNumber(layout.targetCanvasWidth) ?? undefined,
+      targetCanvasHeight: coerceFiniteNumber(layout.targetCanvasHeight) ?? undefined,
+      whiteThreshold: coerceFiniteNumber(layout.whiteThreshold) ?? undefined,
+      chromaThreshold: coerceFiniteNumber(layout.chromaThreshold) ?? undefined,
+      shadowPolicy: typeof layout.shadowPolicy === 'string' ? (layout.shadowPolicy.trim()) : layout.shadowPolicy,
+      detection: typeof layout.detection === 'string' ? (layout.detection.trim()) : layout.detection,
     }
   };
 }
@@ -122,14 +121,14 @@ export const buildClientPayloadSignature = (
   return null;
 };
 
-export function readCenterMetadataFromSlot(slot: ImageStudioSlotRecord): any {
+export function readCenterMetadataFromSlot(slot: ImageStudioSlotRecord): Record<string, any> {
   const metadata = slot.metadata || {};
-  return metadata.center || {};
+  return (metadata.center as Record<string, any>) || {};
 }
 
 export function parseCenterResponsePayload(
-  data: any,
-  context?: { responseStage: string; sourceSlotId: string; targetSlotId: string; requestId?: string }
+  data: unknown,
+  context?: { responseStage: string; sourceSlotId: string; targetSlotId: string; requestId?: string | null }
 ): ImageStudioCenterResponse {
   try {
     return imageStudioCenterResponseSchema.parse(data);
@@ -141,7 +140,7 @@ export function parseCenterResponsePayload(
     (validationError as any).meta = {
       centerErrorCode: 'IMAGE_STUDIO_CENTER_OUTPUT_INVALID',
       responseStage: context?.responseStage || 'unknown',
-      errors: err.format ? err.format() : err,
+      errors: typeof err.format === 'function' ? err.format() : err,
     };
     throw validationError;
   }

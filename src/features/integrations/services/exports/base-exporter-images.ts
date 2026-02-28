@@ -47,6 +47,19 @@ export type ImageTransformOptions = {
 
 export type { ImageUrlDiagnostic };
 
+type ProductImageDiagnostic = {
+  sourceType: 'slot' | 'link';
+  index: number;
+  filepath: string | null;
+  resolvedUrl: string | null;
+  mimetype?: string | null;
+  size?: number | null;
+  supported: boolean;
+  reason?: string;
+  extension?: string | null;
+  normalizedMime?: string | null;
+};
+
 const SUPPORTED_IMAGE_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/gif']);
 
 const SUPPORTED_IMAGE_EXTENSIONS = new Set(['.jpg', '.jpeg', '.jpe', '.jfif', '.png', '.gif']);
@@ -183,8 +196,8 @@ export const shouldIncludeImageUrl = (
 export const collectProductImageDiagnostics = (
   product: ProductWithImages,
   imageBaseUrl?: string | null
-): ImageUrlDiagnostic[] => {
-  const diagnostics: ImageUrlDiagnostic[] = [];
+): ProductImageDiagnostic[] => {
+  const diagnostics: ProductImageDiagnostic[] = [];
 
   const slotImages = product.images ?? [];
   slotImages.forEach(

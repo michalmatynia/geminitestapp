@@ -19,13 +19,13 @@ import {
 import {
   buildImageStudioAnalysisSourceSignature,
   type ImageStudioAnalysisSharedLayout,
-} from '@/shared/lib/ai/image-studio/utils/analysis-bridge';
-import { getImageStudioSlotImageSrc } from '@/shared/lib/ai/image-studio/utils/image-src';
+} from '@/features/ai/image-studio/utils/analysis-bridge';
+import { getImageStudioSlotImageSrc } from '@/features/ai/image-studio/utils/image-src';
 import {
   loadObjectLayoutAdvancedDefaults,
   loadObjectLayoutCustomPresets,
   resolveObjectLayoutPresetOptionValue,
-} from '@/shared/lib/ai/image-studio/utils/object-layout-presets';
+} from '@/features/ai/image-studio/utils/object-layout-presets';
 import {
   resolveClientProcessingImageSrc,
   shapeHasUsableCropGeometry,

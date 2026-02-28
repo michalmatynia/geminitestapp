@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { fetchBaseTags } from '@/shared/lib/integrations/server';
-import { getExternalTagRepository } from '@/shared/lib/integrations/server';
-import { getIntegrationRepository } from '@/shared/lib/integrations/server';
-import { resolveBaseConnectionToken } from '@/shared/lib/integrations/services/base-token-resolver';
+import { fetchBaseTags } from '@/features/integrations/server';
+import { getExternalTagRepository } from '@/features/integrations/server';
+import { getIntegrationRepository } from '@/features/integrations/server';
+import { resolveBaseConnectionToken } from '@/features/integrations/services/base-token-resolver';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 

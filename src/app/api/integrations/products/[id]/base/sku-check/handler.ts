@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { getIntegrationRepository, checkBaseSkuExists } from '@/shared/lib/integrations/server';
-import { resolveBaseConnectionToken } from '@/shared/lib/integrations/services/base-token-resolver';
+import { getIntegrationRepository, checkBaseSkuExists } from '@/features/integrations/server';
+import { resolveBaseConnectionToken } from '@/features/integrations/services/base-token-resolver';
 import { parseJsonBody } from '@/features/products/server';
 import { getProductRepository } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';

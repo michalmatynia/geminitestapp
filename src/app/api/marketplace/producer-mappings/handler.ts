@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getProducerMappingRepository } from '@/shared/lib/integrations/server';
+import { getProducerMappingRepository } from '@/features/integrations/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 

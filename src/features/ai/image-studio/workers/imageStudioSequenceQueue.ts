@@ -3,13 +3,13 @@ import 'server-only';
 import {
   executeImageStudioSequenceStep,
   resolveSequenceStepsForExecution,
-} from '@/shared/lib/ai/image-studio/server/sequence-executor';
+} from '@/features/ai/image-studio/server/sequence-executor';
 import {
   getImageStudioSequenceRunById,
   updateImageStudioSequenceRun,
   type ImageStudioSequenceMaskContext,
   type ImageStudioSequenceRunRecord,
-} from '@/shared/lib/ai/image-studio/server/sequence-run-repository';
+} from '@/features/ai/image-studio/server/sequence-run-repository';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { createManagedQueue, isRedisAvailable } from '@/shared/lib/queue';

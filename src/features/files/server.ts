@@ -1,12 +1,12 @@
 import 'server-only';
 
-export * from '@/shared/lib/files/services/image-file-repository';
-export * from '@/shared/lib/files/services/image-file-service';
-export * from '@/shared/lib/files/services/image-file-repository/mongo-image-file-repository';
-export * from '@/shared/lib/files/services/image-file-repository/prisma-image-file-repository';
-export * from '@/shared/lib/files/services/file-upload-events';
-export * from '@/shared/lib/files/services/storage/file-storage-service';
-export * from '@/shared/lib/files/file-uploader';
+export * from '@/features/files/services/image-file-repository';
+export * from '@/features/files/services/image-file-service';
+export * from '@/features/files/services/image-file-repository/mongo-image-file-repository';
+export * from '@/features/files/services/image-file-repository/prisma-image-file-repository';
+export * from '@/features/files/services/file-upload-events';
+export * from '@/features/files/services/storage/file-storage-service';
+export * from '@/features/files/file-uploader';
 export type {
   ImageFileCreateInput,
   ImageFileListFilters,

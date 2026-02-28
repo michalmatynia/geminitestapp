@@ -4,6 +4,10 @@ type CounterMetricName = 'selector_recompute_count' | 'context_state_transition_
 
 type DurationMetricName =
   | 'tree_scope_resolve_ms'
+  | 'case_open_bootstrap_ms'
+  | 'case_open_first_tree_ready_ms'
+  | 'case_list_search_index_build_ms'
+  | 'case_tree_master_nodes_build_ms'
   | 'case_search_filter_ms'
   | 'editor_dirty_eval_ms';
 

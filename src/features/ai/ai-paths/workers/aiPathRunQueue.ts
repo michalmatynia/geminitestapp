@@ -12,7 +12,7 @@ import {
   processRun,
   processStaleRunRecovery,
 } from '@/features/ai/ai-paths/workers/ai-path-run-processor';
-import { getAiInsightsQueueStatus } from '@/shared/lib/ai/insights/workers/aiInsightsQueue';
+import { getAiInsightsQueueStatus } from '@/features/ai/insights/workers/aiInsightsQueue';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import type {
   AiPathRunQueueSloStatusDto,

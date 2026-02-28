@@ -9,8 +9,8 @@ import {
   saveObjectLayoutCustomPreset,
   deleteObjectLayoutCustomPreset,
   type ObjectLayoutPresetOptionValue,
-} from '@/shared/lib/ai/image-studio/utils/object-layout-presets';
-import { getImageStudioDocTooltip } from '@/shared/lib/ai/image-studio/utils/studio-docs';
+} from '@/features/ai/image-studio/utils/object-layout-presets';
+import { getImageStudioDocTooltip } from '@/features/ai/image-studio/utils/studio-docs';
 import { useGenerationToolbarHandlers } from './GenerationToolbar.handlers';
 import { type GenerationToolbarHandlers } from './GenerationToolbar.types';
 import { useGenerationToolbarEffects } from './useGenerationToolbarEffects';

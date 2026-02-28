@@ -8,7 +8,7 @@ import {
   CASE_RESOLVER_CAPTURE_SETTINGS_KEY,
   parseCaseResolverCaptureSettings,
   type CaseResolverCaptureSettings as CaseResolverCaptureSettingsType,
-} from '@/shared/lib/case-resolver-capture/settings';
+} from '@/features/case-resolver-capture/settings';
 import { FILEMAKER_DATABASE_KEY, parseFilemakerDatabase } from '@/shared/lib/filemaker/settings';
 import { useCountries } from '@/shared/lib/internationalization/hooks/useInternationalizationQueries';
 import type {
@@ -23,7 +23,6 @@ import type {
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { usePrompt } from '@/shared/hooks/ui/usePrompt';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { useSettings } from '@/shared/hooks/use-settings';
 import { useToast } from '@/shared/ui';
 
 import {
@@ -72,7 +71,6 @@ const CASE_RESOLVER_TREE_SAVE_TOAST = 'Case Resolver tree changes saved.';
  */
 export function useCaseResolverState(): CaseResolverStateValue {
   const settingsStore = useSettingsStore();
-  const heavySettingsQuery = useSettings({ scope: 'heavy', enabled: true });
   const settingsStoreRef = useRef(settingsStore);
   settingsStoreRef.current = settingsStore;
   const { toast } = useToast();
@@ -95,11 +93,6 @@ export function useCaseResolverState(): CaseResolverStateValue {
     searchParams.get('promptExploderSessionId')?.trim() ?? '';
 
   const rawWorkspaceFromStore = settingsStore.get(CASE_RESOLVER_WORKSPACE_KEY) ?? null;
-  const rawWorkspaceFromHeavyScope = useMemo((): string | null => {
-    const records = heavySettingsQuery.data ?? [];
-    const record = records.find((entry): boolean => entry.key === CASE_RESOLVER_WORKSPACE_KEY);
-    return typeof record?.value === 'string' ? record.value : null;
-  }, [heavySettingsQuery.data]);
   const rawCaseResolverTags = settingsStore.get(CASE_RESOLVER_TAGS_KEY);
   const rawCaseResolverIdentifiers = settingsStore.get(CASE_RESOLVER_IDENTIFIERS_KEY);
   const rawCaseResolverCategories = settingsStore.get(CASE_RESOLVER_CATEGORIES_KEY);
@@ -114,34 +107,18 @@ export function useCaseResolverState(): CaseResolverStateValue {
     (): boolean => hasCaseResolverWorkspaceFilesArray(rawWorkspaceFromStore),
     [rawWorkspaceFromStore]
   );
-  const hasWorkspaceFromHeavyScope = useMemo(
-    (): boolean => hasCaseResolverWorkspaceFilesArray(rawWorkspaceFromHeavyScope),
-    [rawWorkspaceFromHeavyScope]
-  );
   const parsedWorkspaceFromStore = useMemo(
     (): CaseResolverWorkspace => parseCaseResolverWorkspace(rawWorkspaceFromStore),
     [rawWorkspaceFromStore]
-  );
-  const parsedWorkspaceFromHeavyScope = useMemo(
-    (): CaseResolverWorkspace => parseCaseResolverWorkspace(rawWorkspaceFromHeavyScope),
-    [rawWorkspaceFromHeavyScope]
   );
   const preferredWorkspaceSelection = useMemo(
     () =>
       resolvePreferredCaseResolverWorkspace({
         storeWorkspace: parsedWorkspaceFromStore,
-        heavyWorkspace: parsedWorkspaceFromHeavyScope,
         hasStoreWorkspace: hasWorkspaceFromStore,
-        hasHeavyWorkspace: hasWorkspaceFromHeavyScope,
         requestedFileId,
       }),
-    [
-      hasWorkspaceFromHeavyScope,
-      hasWorkspaceFromStore,
-      parsedWorkspaceFromHeavyScope,
-      parsedWorkspaceFromStore,
-      requestedFileId,
-    ]
+    [hasWorkspaceFromStore, parsedWorkspaceFromStore, requestedFileId]
   );
   const parsedWorkspace = preferredWorkspaceSelection.workspace;
   const canHydrateWorkspaceFromStore = preferredWorkspaceSelection.source !== 'none';
@@ -235,7 +212,6 @@ export function useCaseResolverState(): CaseResolverStateValue {
     handledRequestedFileIdRef,
     syncPersistedWorkspaceTracking,
     clearQueuedWorkspacePersistMutation,
-    settingsStoreRef,
   });
   const {
     requestedCaseStatus,
@@ -293,7 +269,6 @@ export function useCaseResolverState(): CaseResolverStateValue {
   });
 
   useCaseResolverStateWorkspaceHydration({
-    workspace,
     workspaceRef,
     setWorkspace,
     isMountedRef,
@@ -302,15 +277,10 @@ export function useCaseResolverState(): CaseResolverStateValue {
     preferredWorkspaceSource: preferredWorkspaceSelection.source,
     preferredWorkspaceReason: preferredWorkspaceSelection.reason,
     hasWorkspaceFromStore,
-    hasWorkspaceFromHeavyScope,
     parsedWorkspace,
     isApplyingPromptExploderPartyProposal: promptExploder.isApplyingPromptExploderPartyProposal,
-    heavySettingsIsFetching: heavySettingsQuery.isFetching,
-    heavySettingsIsLoading: heavySettingsQuery.isLoading,
-    refetchHeavySettings: heavySettingsQuery.refetch,
     syncPersistedWorkspaceTracking,
     clearQueuedWorkspacePersistMutation,
-    settingsStoreRef,
   });
 
   const editorActions = useCaseResolverStateEditorActions({

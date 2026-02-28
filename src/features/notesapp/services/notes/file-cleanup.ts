@@ -6,7 +6,7 @@ import path from 'path';
 import {
   deleteFileFromStorage,
   getPublicPathFromStoredPath,
-} from '@/shared/lib/files/services/image-file-service';
+} from '@/features/files/services/image-file-service';
 
 const uploadsRoot = path.join(process.cwd(), 'public', 'uploads');
 const notesRoot = path.join(uploadsRoot, 'notes');

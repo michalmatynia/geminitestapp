@@ -8,7 +8,7 @@ import {
   normalizeCropRectForFingerprint,
   validateCropOutputDimensions,
   validateCropSourceDimensions,
-} from '@/shared/lib/ai/image-studio/server/crop-utils';
+} from '@/features/ai/image-studio/server/crop-utils';
 
 describe('crop-utils', () => {
   it('normalizes crop rect values for deterministic fingerprints', () => {

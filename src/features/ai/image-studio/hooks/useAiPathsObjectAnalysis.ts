@@ -9,7 +9,7 @@ import { useUiActions, useUiCanvasState } from '../context/UiContext';
 import {
   saveImageStudioAnalysisApplyIntent,
   type ImageStudioAnalysisApplyTarget,
-} from '@/shared/lib/ai/image-studio/utils/analysis-bridge';
+} from '@/features/ai/image-studio/utils/analysis-bridge';
 import {
   buildDefaultSharedLayout,
   computeCanvasOffsetFromObjectBounds,
@@ -22,7 +22,7 @@ import {
   type AiPathsObjectAnalysisAutoApplyTarget,
   type AiPathsObjectAnalysisConfig,
   type ExtractedObjectBounds,
-} from '@/shared/lib/ai/image-studio/utils/ai-paths-object-analysis';
+} from '@/features/ai/image-studio/utils/ai-paths-object-analysis';
 
 // ---------------------------------------------------------------------------
 // Types

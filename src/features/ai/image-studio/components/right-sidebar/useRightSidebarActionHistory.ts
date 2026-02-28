@@ -10,7 +10,7 @@ import {
   type StudioActionHistorySnapshot,
 } from './right-sidebar-utils';
 
-import type { ParamUiControl } from '@/shared/lib/ai/image-studio/utils/param-ui';
+import type { ParamUiControl } from '@/features/ai/image-studio/utils/param-ui';
 
 type BuildActionHistorySnapshotInput = {
   activeMaskId: string | null;

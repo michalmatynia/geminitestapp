@@ -1,17 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 
 import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
-import type { SettingsStoreValue } from '@/shared/providers/SettingsStoreProvider';
 
+import { logCaseResolverDurationMetric } from '../runtime/metrics';
 import { shouldAdoptIncomingWorkspace } from './useCaseResolverState.helpers.hydration';
 import {
-  fetchCaseResolverWorkspaceSnapshot,
+  fetchCaseResolverWorkspaceMetadata,
+  fetchCaseResolverWorkspaceRecord,
   getCaseResolverWorkspaceRevision,
   logCaseResolverWorkspaceEvent,
 } from '../workspace-persistence';
 
 export function useCaseResolverStateWorkspaceHydration({
-  workspace,
   workspaceRef,
   setWorkspace,
   isMountedRef,
@@ -20,17 +20,11 @@ export function useCaseResolverStateWorkspaceHydration({
   preferredWorkspaceSource,
   preferredWorkspaceReason,
   hasWorkspaceFromStore,
-  hasWorkspaceFromHeavyScope,
   parsedWorkspace,
   isApplyingPromptExploderPartyProposal,
-  heavySettingsIsFetching,
-  heavySettingsIsLoading,
-  refetchHeavySettings,
   syncPersistedWorkspaceTracking,
   clearQueuedWorkspacePersistMutation,
-  settingsStoreRef,
 }: {
-  workspace: CaseResolverWorkspace;
   workspaceRef: React.MutableRefObject<CaseResolverWorkspace>;
   setWorkspace: React.Dispatch<React.SetStateAction<CaseResolverWorkspace>>;
   isMountedRef: React.MutableRefObject<boolean>;
@@ -39,15 +33,10 @@ export function useCaseResolverStateWorkspaceHydration({
   preferredWorkspaceSource: string;
   preferredWorkspaceReason: string;
   hasWorkspaceFromStore: boolean;
-  hasWorkspaceFromHeavyScope: boolean;
   parsedWorkspace: CaseResolverWorkspace;
   isApplyingPromptExploderPartyProposal: boolean;
-  heavySettingsIsFetching: boolean;
-  heavySettingsIsLoading: boolean;
-  refetchHeavySettings: () => Promise<unknown>;
   syncPersistedWorkspaceTracking: (workspace: CaseResolverWorkspace) => void;
   clearQueuedWorkspacePersistMutation: () => void;
-  settingsStoreRef: React.MutableRefObject<SettingsStoreValue>;
 }): void {
   const [bootstrapRefreshRetryTick, setBootstrapRefreshRetryTick] = useState(0);
   const bootstrapRefreshRetryAttemptRef = useRef(0);
@@ -59,7 +48,6 @@ export function useCaseResolverStateWorkspaceHydration({
       preferredWorkspaceSource,
       preferredWorkspaceReason,
       hasWorkspaceFromStore ? 'store:1' : 'store:0',
-      hasWorkspaceFromHeavyScope ? 'heavy:1' : 'heavy:0',
       getCaseResolverWorkspaceRevision(parsedWorkspace),
     ].join('|');
     if (lastWorkspaceSourceSelectionSignatureRef.current === selectionSignature) return;
@@ -72,16 +60,9 @@ export function useCaseResolverStateWorkspaceHydration({
         `source=${preferredWorkspaceSource}`,
         `reason=${preferredWorkspaceReason}`,
         `has_store=${hasWorkspaceFromStore ? 'true' : 'false'}`,
-        `has_heavy=${hasWorkspaceFromHeavyScope ? 'true' : 'false'}`,
       ].join(' '),
     });
-  }, [
-    hasWorkspaceFromHeavyScope,
-    hasWorkspaceFromStore,
-    parsedWorkspace,
-    preferredWorkspaceReason,
-    preferredWorkspaceSource,
-  ]);
+  }, [hasWorkspaceFromStore, parsedWorkspace, preferredWorkspaceReason, preferredWorkspaceSource]);
 
   useEffect(() => {
     const workspaceHasTreeData =
@@ -94,9 +75,31 @@ export function useCaseResolverStateWorkspaceHydration({
     if (!shouldBootstrapRefresh) return;
     let cancelled = false;
     void (async (): Promise<void> => {
-      const snapshot = await fetchCaseResolverWorkspaceSnapshot('case_view_bootstrap');
+      const bootstrapStartedAtMs = Date.now();
+      const finishBootstrap = (message?: string): void => {
+        logCaseResolverDurationMetric('case_open_bootstrap_ms', Date.now() - bootstrapStartedAtMs, {
+          source: 'case_view_bootstrap',
+          minDurationMs: 1,
+          message,
+        });
+      };
+      const currentRevision = getCaseResolverWorkspaceRevision(workspaceRef.current);
+      const metadata = await fetchCaseResolverWorkspaceMetadata('case_view_bootstrap');
+      if (!isMountedRef.current || cancelled) return;
+      const shouldFetchRecord =
+        metadata === null
+          ? true
+          : metadata.exists !== false && metadata.revision >= currentRevision;
+      const snapshot = shouldFetchRecord
+        ? await fetchCaseResolverWorkspaceRecord('case_view_bootstrap')
+        : null;
       if (!isMountedRef.current || cancelled) return;
       if (!snapshot) {
+        finishBootstrap(
+          metadata
+            ? `metadata_revision=${metadata.revision} exists=${metadata.exists ? 'true' : 'false'}`
+            : 'metadata=unavailable'
+        );
         if (canHydrateWorkspaceFromStore) {
           logCaseResolverWorkspaceEvent({
             source: 'case_view_bootstrap',
@@ -123,6 +126,7 @@ export function useCaseResolverStateWorkspaceHydration({
         });
         return;
       }
+      finishBootstrap(`snapshot_revision=${getCaseResolverWorkspaceRevision(snapshot)}`);
       bootstrapRefreshRetryAttemptRef.current = 0;
       if (bootstrapRefreshRetryTimerRef.current !== null) {
         window.clearTimeout(bootstrapRefreshRetryTimerRef.current);
@@ -148,7 +152,6 @@ export function useCaseResolverStateWorkspaceHydration({
         clearQueuedWorkspacePersistMutation();
         return snapshot;
       });
-      settingsStoreRef.current.refetch();
     })();
     return (): void => {
       cancelled = true;
@@ -161,29 +164,8 @@ export function useCaseResolverStateWorkspaceHydration({
     preferredWorkspaceSource,
     requestedFileId,
     setWorkspace,
-    settingsStoreRef,
     syncPersistedWorkspaceTracking,
     workspaceRef,
-  ]);
-
-  useEffect((): (() => void) | void => {
-    const hasWorkspaceData =
-      workspace.files.length > 0 || workspace.assets.length > 0 || workspace.folders.length > 0;
-    if (hasWorkspaceData) return;
-    if (heavySettingsIsFetching || heavySettingsIsLoading) return;
-    const refreshTimer = window.setTimeout((): void => {
-      void refetchHeavySettings();
-    }, 1_500);
-    return (): void => {
-      window.clearTimeout(refreshTimer);
-    };
-  }, [
-    heavySettingsIsFetching,
-    heavySettingsIsLoading,
-    refetchHeavySettings,
-    workspace.assets.length,
-    workspace.files.length,
-    workspace.folders.length,
   ]);
 
   useEffect(() => {

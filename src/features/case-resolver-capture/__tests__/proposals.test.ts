@@ -1,0 +1,856 @@
+import { describe, expect, it } from 'vitest';
+
+import {
+  buildCaseResolverCaptureProposalState,
+  stripAcceptedCaptureContentFromText,
+  stripAcceptedCaptureContentFromTextWithReport,
+  stripAcceptedDateLineFromText,
+  stripCapturedAddressLinesFromText,
+} from '@/features/case-resolver-capture/proposals';
+import {
+  DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS,
+  type CaseResolverCaptureSettings,
+} from '@/features/case-resolver-capture/settings';
+import type { FilemakerDatabase } from '@/shared/contracts/filemaker';
+import type {
+  PromptExploderCaseResolverPartyBundle,
+  PromptExploderCaseResolverPartyCandidate,
+} from '@/shared/contracts/prompt-exploder';
+
+const createDatabase = (): FilemakerDatabase => ({
+  version: 2,
+  persons: [
+    {
+      id: 'p-1',
+      firstName: 'Michał',
+      lastName: 'Matynia',
+      street: 'Fioletowa',
+      streetNumber: '71/2',
+      city: 'Szczecin',
+      postalCode: '70-781',
+      country: 'Poland',
+      countryId: 'country-pl',
+      addressId: 'addr-1',
+      nip: '',
+      regon: '',
+      phoneNumbers: [],
+      createdAt: '2026-02-16T00:00:00.000Z',
+      updatedAt: '2026-02-16T00:00:00.000Z',
+    },
+  ],
+  organizations: [
+    {
+      id: 'org-1',
+      name: 'Inspektorat ZUS w Gryficach',
+      street: 'Dąbskiego',
+      streetNumber: '5',
+      city: 'Gryfice',
+      postalCode: '72-300',
+      country: 'Poland',
+      countryId: 'country-pl',
+      addressId: 'addr-2',
+      createdAt: '2026-02-16T00:00:00.000Z',
+      updatedAt: '2026-02-16T00:00:00.000Z',
+    },
+  ],
+  events: [],
+  addresses: [
+    {
+      id: 'addr-1',
+      street: 'Fioletowa',
+      streetNumber: '71/2',
+      city: 'Szczecin',
+      postalCode: '70-781',
+      country: 'Poland',
+      countryId: 'country-pl',
+      createdAt: '2026-02-16T00:00:00.000Z',
+      updatedAt: '2026-02-16T00:00:00.000Z',
+    },
+    {
+      id: 'addr-2',
+      street: 'Dąbskiego',
+      streetNumber: '5',
+      city: 'Gryfice',
+      postalCode: '72-300',
+      country: 'Poland',
+      countryId: 'country-pl',
+      createdAt: '2026-02-16T00:00:00.000Z',
+      updatedAt: '2026-02-16T00:00:00.000Z',
+    },
+  ],
+  addressLinks: [],
+  phoneNumbers: [],
+  phoneNumberLinks: [],
+  emails: [],
+  emailLinks: [],
+  eventOrganizationLinks: [],
+});
+const createAddresserCandidate = (): PromptExploderCaseResolverPartyCandidate => ({
+  id: 'cand-1',
+  name: 'Michał Matynia',
+  score: 1,
+  role: 'addresser',
+  displayName: 'Michał Matynia',
+  rawText: 'Michał Matynia\nFioletowa 71/2\n70-781 Szczecin\nPoland',
+  kind: 'person',
+  firstName: 'Michał',
+  lastName: 'Matynia',
+  street: 'Fioletowa',
+  streetNumber: '71',
+  houseNumber: '2',
+  city: 'Szczecin',
+  postalCode: '70-781',
+  country: 'Poland',
+});
+
+const createAddresseeCandidate = (): PromptExploderCaseResolverPartyCandidate => ({
+  id: 'cand-2',
+  name: 'Inspektorat ZUS w Gryficach',
+  score: 1,
+  role: 'addressee',
+  displayName: 'Inspektorat ZUS w Gryficach',
+  rawText: 'Inspektorat ZUS w Gryficach\nDąbskiego 5\n72-300 Gryfice\nPoland',
+  kind: 'organization',
+  organizationName: 'Inspektorat ZUS w Gryficach',
+  street: 'Dąbskiego',
+  streetNumber: '5',
+  city: 'Gryfice',
+  postalCode: '72-300',
+  country: 'Poland',
+});
+
+const createSettings = (): CaseResolverCaptureSettings => ({
+  ...DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS,
+  roleMappings: {
+    addresser: { ...DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.addresser },
+    addressee: { ...DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.addressee },
+    subject: { ...DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.subject },
+    reference: { ...DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.reference },
+    other: { ...DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.other },
+  },
+});
+
+describe('case-resolver-capture proposals', () => {
+  it('maps captured addresser to filemaker person + address by default', () => {
+    const payload: PromptExploderCaseResolverPartyBundle = {
+      addresser: createAddresserCandidate(),
+    };
+
+    const state = buildCaseResolverCaptureProposalState(
+      payload,
+      'file-1',
+      createDatabase(),
+      createSettings()
+    );
+
+    expect(state?.addresser?.sourceRole).toBe('addresser');
+    expect(state?.addresser?.action).toBe('useMatched');
+    expect(state?.addresser?.matchKind).toBe('party_and_address');
+    expect(state?.addresser?.existingReference).toEqual(
+      expect.objectContaining({
+        kind: 'person',
+        id: 'p-1',
+      })
+    );
+    expect(state?.addresser?.existingAddressId).toBe('addr-1');
+    expect(state?.addressee).toBeNull();
+  });
+
+  it('supports role remapping and default action override', () => {
+    const payload: PromptExploderCaseResolverPartyBundle = {
+      addresser: createAddresserCandidate(),
+    };
+
+    const settings = createSettings();
+    settings.roleMappings.addresser.targetRole = 'addressee';
+    settings.roleMappings.addresser.defaultAction = 'keepText';
+    settings.roleMappings.addresser.autoMatchPartyReference = false;
+    settings.roleMappings.addresser.autoMatchAddress = false;
+
+    const state = buildCaseResolverCaptureProposalState(
+      payload,
+      'file-1',
+      createDatabase(),
+      settings
+    );
+
+    expect(state?.addresser).toBeNull();
+    expect(state?.addressee?.sourceRole).toBe('addresser');
+    expect(state?.addressee?.role).toBe('addressee');
+    expect(state?.addressee?.action).toBe('createInFilemaker');
+    expect(state?.addressee?.matchKind).toBe('none');
+    expect(state?.addressee?.existingReference).toBeNull();
+    expect(state?.addressee?.existingAddressId).toBeNull();
+  });
+
+  it('returns null when capture pipeline is disabled', () => {
+    const payload: PromptExploderCaseResolverPartyBundle = {
+      addresser: createAddresserCandidate(),
+    };
+
+    const settings = createSettings();
+    settings.enabled = false;
+
+    expect(
+      buildCaseResolverCaptureProposalState(payload, 'file-1', createDatabase(), settings)
+    ).toBeNull();
+  });
+
+  it('removes captured addresser block lines from exploded text for mapped parties', () => {
+    const payload: PromptExploderCaseResolverPartyBundle = {
+      addresser: createAddresserCandidate(),
+    };
+    const state = buildCaseResolverCaptureProposalState(
+      payload,
+      'file-1',
+      createDatabase(),
+      createSettings()
+    );
+    const sourceText = [
+      'Michał Matynia',
+      'Fioletowa 71/2',
+      '70-781 Szczecin',
+      'Poland',
+      '',
+      'Wniosek o ponowne rozpatrzenie sprawy',
+    ].join('\n');
+
+    expect(stripCapturedAddressLinesFromText(sourceText, state)).toBe(
+      'Wniosek o ponowne rozpatrzenie sprawy'
+    );
+  });
+
+  it('keeps exploded text unchanged when role action is ignore', () => {
+    const payload: PromptExploderCaseResolverPartyBundle = {
+      addresser: createAddresserCandidate(),
+    };
+    const state = buildCaseResolverCaptureProposalState(
+      payload,
+      'file-1',
+      createDatabase(),
+      createSettings()
+    );
+    const sourceText = [
+      'Michał Matynia',
+      'Fioletowa 71/2',
+      '70-781 Szczecin',
+      'Poland',
+      '',
+      'Wniosek o ponowne rozpatrzenie sprawy',
+    ].join('\n');
+
+    if (state?.addresser) {
+      state.addresser.action = 'ignore';
+    }
+    expect(stripCapturedAddressLinesFromText(sourceText, state)).toBe(sourceText);
+  });
+
+  it('prefers create-in-filemaker when address is captured but no match exists', () => {
+    const payload: PromptExploderCaseResolverPartyBundle = {
+      addresser: {
+        ...createAddresserCandidate(),
+        id: 'cand-new',
+        name: 'Jan Kowalski',
+        displayName: 'Jan Kowalski',
+        firstName: 'Jan',
+        lastName: 'Kowalski',
+      },
+    };
+
+    const state = buildCaseResolverCaptureProposalState(
+      payload,
+      'file-1',
+      createDatabase(),
+      createSettings()
+    );
+
+    expect(state?.addresser?.existingReference).toBeNull();
+    expect(state?.addresser?.action).toBe('createInFilemaker');
+    expect(state?.addresser?.hasAddressCandidate).toBe(true);
+  });
+
+  it('supports mixed matched and unmatched parties in a single proposal', () => {
+    const payload: PromptExploderCaseResolverPartyBundle = {
+      addresser: createAddresserCandidate(),
+      addressee: {
+        id: 'cand-org-new',
+        name: 'Urzad Miasta',
+        score: 1,
+        role: 'addressee',
+        displayName: 'Urzad Miasta',
+        rawText: 'Urzad Miasta\nNowa 7\n00-001 Warszawa\nPoland',
+        kind: 'organization',
+        organizationName: 'Urzad Miasta',
+        street: 'Nowa',
+        streetNumber: '7',
+        city: 'Warszawa',
+        postalCode: '00-001',
+        country: 'Poland',
+      },
+    };
+
+    const state = buildCaseResolverCaptureProposalState(
+      payload,
+      'file-1',
+      createDatabase(),
+      createSettings()
+    );
+
+    expect(state?.addresser?.action).toBe('useMatched');
+    expect(state?.addresser?.existingReference).toEqual(
+      expect.objectContaining({
+        kind: 'person',
+        id: 'p-1',
+      })
+    );
+    expect(state?.addressee?.action).toBe('createInFilemaker');
+    expect(state?.addressee?.existingReference).toBeNull();
+  });
+
+  it('deduplicates equivalent addresser/addressee candidates and keeps organization as addressee', () => {
+    const duplicatedOrganizationCandidate: PromptExploderCaseResolverPartyCandidate = {
+      id: 'cand-dup-1',
+      name: 'Zakład Ubezpieczeń Społecznych Oddział w Szczecinie',
+      score: 1,
+      role: 'addresser',
+      displayName: 'Zakład Ubezpieczeń Społecznych Oddział w Szczecinie',
+      rawText:
+        'Zakład Ubezpieczeń Społecznych Oddział w Szczecinie\nul. Matejki 22\n70-530 Szczecin',
+      kind: 'organization',
+      organizationName: 'Zakład Ubezpieczeń Społecznych Oddział w Szczecinie',
+      sourcePatternLabels: ['Case Resolver Extract: Addresser Organization Name'],
+      sourceSequenceLabels: ['Case Resolver Structure'],
+    };
+    const payload: PromptExploderCaseResolverPartyBundle = {
+      addresser: duplicatedOrganizationCandidate,
+      addressee: {
+        ...duplicatedOrganizationCandidate,
+        id: 'cand-dup-2',
+        role: 'addressee',
+        sourcePatternLabels: ['Case Resolver Extract: Addressee Organization Name'],
+      },
+    };
+
+    const state = buildCaseResolverCaptureProposalState(
+      payload,
+      'file-1',
+      createDatabase(),
+      createSettings()
+    );
+
+    expect(state?.addresser).toBeNull();
+    expect(state?.addressee?.sourceRole).toBe('addressee');
+    expect(state?.addressee?.candidate.organizationName).toBe(
+      'Zakład Ubezpieczeń Społecznych Oddział w Szczecinie'
+    );
+  });
+
+  it('keeps exploded text unchanged when role action is keepText', () => {
+    const payload: PromptExploderCaseResolverPartyBundle = {
+      addresser: createAddresserCandidate(),
+    };
+    const state = buildCaseResolverCaptureProposalState(
+      payload,
+      'file-1',
+      createDatabase(),
+      createSettings()
+    );
+    const sourceText = [
+      'Michał Matynia',
+      'Fioletowa 71/2',
+      '70-781 Szczecin',
+      'Poland',
+      '',
+      'Wniosek o ponowne rozpatrzenie sprawy',
+    ].join('\n');
+
+    if (state?.addresser) {
+      state.addresser.action = 'keepText';
+    }
+    expect(stripCapturedAddressLinesFromText(sourceText, state)).toBe(sourceText);
+  });
+
+  it('builds document-date proposal from metadata and resolves source line', () => {
+    const sourceText = [
+      'Szczecin 25.01.2026',
+      'Michał Matynia',
+      'Wniosek o ponowne rozpatrzenie sprawy',
+    ].join('\n');
+
+    const state = buildCaseResolverCaptureProposalState(
+      undefined,
+      'file-1',
+      createDatabase(),
+      createSettings(),
+      {
+        metadata: {
+          placeDate: {
+            city: 'Szczecin',
+            day: '25',
+            month: '01',
+            year: '2026',
+          },
+        },
+        sourceText,
+      }
+    );
+
+    expect(state?.documentDate).toEqual({
+      isoDate: '2026-01-25',
+      source: 'metadata',
+      sourceLine: 'Szczecin 25.01.2026',
+      cityHint: 'Szczecin',
+      city: 'Szczecin',
+      action: 'useDetectedDate',
+    });
+  });
+
+  it('falls back to source date line when metadata city is missing', () => {
+    const sourceText = [
+      'Warszawa, dnia 25.01.2026',
+      'Michał Matynia',
+      'Wniosek o ponowne rozpatrzenie sprawy',
+    ].join('\n');
+
+    const state = buildCaseResolverCaptureProposalState(
+      undefined,
+      'file-1',
+      createDatabase(),
+      createSettings(),
+      {
+        metadata: {
+          placeDate: {
+            day: '25',
+            month: '01',
+            year: '2026',
+          },
+        },
+        sourceText,
+      }
+    );
+
+    expect(state?.documentDate?.cityHint).toBeNull();
+    expect(state?.documentDate?.city).toBe('Warszawa');
+  });
+
+  it('removes detected date line when date action is useDetectedDate', () => {
+    const sourceText = [
+      'Szczecin 25.01.2026',
+      'Michał Matynia',
+      '',
+      'Wniosek o ponowne rozpatrzenie sprawy',
+    ].join('\n');
+
+    const state = buildCaseResolverCaptureProposalState(
+      undefined,
+      'file-1',
+      createDatabase(),
+      createSettings(),
+      {
+        metadata: {
+          placeDate: {
+            city: 'Szczecin',
+            day: '25',
+            month: '01',
+            year: '2026',
+          },
+        },
+        sourceText,
+      }
+    );
+
+    expect(stripAcceptedDateLineFromText(sourceText, state)).toBe(
+      ['Michał Matynia', '', 'Wniosek o ponowne rozpatrzenie sprawy'].join('\n')
+    );
+  });
+
+  it('keeps detected date line when date action is keepText', () => {
+    const sourceText = [
+      'Szczecin 25.01.2026',
+      'Michał Matynia',
+      '',
+      'Wniosek o ponowne rozpatrzenie sprawy',
+    ].join('\n');
+
+    const state = buildCaseResolverCaptureProposalState(
+      undefined,
+      'file-1',
+      createDatabase(),
+      createSettings(),
+      {
+        metadata: {
+          placeDate: {
+            city: 'Szczecin',
+            day: '25',
+            month: '01',
+            year: '2026',
+          },
+        },
+        sourceText,
+      }
+    );
+    if (state?.documentDate) {
+      state.documentDate.action = 'keepText';
+    }
+
+    expect(stripAcceptedDateLineFromText(sourceText, state)).toBe(sourceText);
+  });
+
+  it('strips accepted addresses and date in one pass', () => {
+    const sourceText = [
+      'Szczecin 25.01.2026',
+      'Michał Matynia',
+      'Fioletowa 71/2',
+      '70-781 Szczecin',
+      'Poland',
+      '',
+      'Wniosek o ponowne rozpatrzenie sprawy',
+    ].join('\n');
+    const payload: PromptExploderCaseResolverPartyBundle = {
+      addresser: createAddresserCandidate(),
+    };
+
+    const state = buildCaseResolverCaptureProposalState(
+      payload,
+      'file-1',
+      createDatabase(),
+      createSettings(),
+      {
+        metadata: {
+          placeDate: {
+            city: 'Szczecin',
+            day: '25',
+            month: '01',
+            year: '2026',
+          },
+        },
+        sourceText,
+      }
+    );
+
+    expect(stripAcceptedCaptureContentFromText(sourceText, state)).toBe(
+      'Wniosek o ponowne rozpatrzenie sprawy'
+    );
+  });
+
+  it('keeps repeated name mentions in document body while removing header mapping lines', () => {
+    const payload: PromptExploderCaseResolverPartyBundle = {
+      addresser: createAddresserCandidate(),
+    };
+    const state = buildCaseResolverCaptureProposalState(
+      payload,
+      'file-1',
+      createDatabase(),
+      createSettings()
+    );
+    const sourceText = [
+      'Michał Matynia',
+      'Fioletowa 71/2',
+      '70-781 Szczecin',
+      'Poland',
+      '',
+      'Michał Matynia potwierdził odbiór dokumentu i wnosi o rozpoznanie sprawy.',
+    ].join('\n');
+
+    expect(stripCapturedAddressLinesFromText(sourceText, state)).toBe(
+      'Michał Matynia potwierdził odbiór dokumentu i wnosi o rozpoznanie sprawy.'
+    );
+  });
+
+  it('is idempotent when capture cleanup is applied multiple times', () => {
+    const sourceText = [
+      'Szczecin 25.01.2026',
+      'Michał Matynia',
+      'Fioletowa 71/2',
+      '70-781 Szczecin',
+      'Poland',
+      '',
+      'Wniosek o ponowne rozpatrzenie sprawy',
+    ].join('\n');
+    const payload: PromptExploderCaseResolverPartyBundle = {
+      addresser: createAddresserCandidate(),
+    };
+
+    const state = buildCaseResolverCaptureProposalState(
+      payload,
+      'file-1',
+      createDatabase(),
+      createSettings(),
+      {
+        metadata: {
+          placeDate: {
+            city: 'Szczecin',
+            day: '25',
+            month: '01',
+            year: '2026',
+          },
+        },
+        sourceText,
+      }
+    );
+
+    const firstPass = stripAcceptedCaptureContentFromText(sourceText, state);
+    const secondPass = stripAcceptedCaptureContentFromText(firstPass, state);
+    expect(firstPass).toBe('Wniosek o ponowne rozpatrzenie sprawy');
+    expect(secondPass).toBe(firstPass);
+  });
+
+  it('removes only header date occurrence and keeps matching body date mentions', () => {
+    const sourceText = [
+      'Szczecin 25.01.2026',
+      'Michał Matynia',
+      '',
+      'Wniosek o ponowne rozpatrzenie sprawy',
+      'W dniu 25.01.2026 r. otrzymano pismo.',
+    ].join('\n');
+
+    const state = buildCaseResolverCaptureProposalState(
+      undefined,
+      'file-1',
+      createDatabase(),
+      createSettings(),
+      {
+        metadata: {
+          placeDate: {
+            city: 'Szczecin',
+            day: '25',
+            month: '01',
+            year: '2026',
+          },
+        },
+        sourceText,
+      }
+    );
+
+    expect(stripAcceptedDateLineFromText(sourceText, state)).toBe(
+      [
+        'Michał Matynia',
+        '',
+        'Wniosek o ponowne rozpatrzenie sprawy',
+        'W dniu 25.01.2026 r. otrzymano pismo.',
+      ].join('\n')
+    );
+  });
+
+  it('removes accepted capture lines from HTML source text and reports cleanup stats', () => {
+    const sourceHtml = [
+      '<p>Szczecin 25.01.2026</p>',
+      '<p>Michał Matynia</p>',
+      '<p>Fioletowa 71/2</p>',
+      '<p>70-781 Szczecin</p>',
+      '<p>Poland</p>',
+      '<p>Wniosek o ponowne rozpatrzenie sprawy</p>',
+    ].join('');
+    const payload: PromptExploderCaseResolverPartyBundle = {
+      addresser: createAddresserCandidate(),
+    };
+    const state = buildCaseResolverCaptureProposalState(
+      payload,
+      'file-1',
+      createDatabase(),
+      createSettings(),
+      {
+        metadata: {
+          placeDate: {
+            city: 'Szczecin',
+            day: '25',
+            month: '01',
+            year: '2026',
+          },
+        },
+        sourceText: sourceHtml,
+      }
+    );
+
+    const result = stripAcceptedCaptureContentFromTextWithReport(sourceHtml, state);
+    expect(result.text).toBe('Wniosek o ponowne rozpatrzenie sprawy');
+    expect(result.report.changed).toBe(true);
+    expect(result.report.sourceWasHtml).toBe(true);
+    expect(result.report.removedAddresserLineCount).toBeGreaterThanOrEqual(1);
+    expect(result.report.removedDateLineCount).toBe(1);
+  });
+
+  it('removes both addresser and addressee header blocks in one pass', () => {
+    const sourceText = [
+      'Michał Matynia',
+      'Fioletowa 71/2',
+      '70-781 Szczecin',
+      'Poland',
+      '',
+      'Inspektorat ZUS w Gryficach',
+      'Dąbskiego 5',
+      '72-300 Gryfice',
+      '',
+      'Wniosek o ponowne rozpatrzenie sprawy',
+    ].join('\n');
+    const payload: PromptExploderCaseResolverPartyBundle = {
+      addresser: createAddresserCandidate(),
+      addressee: createAddresseeCandidate(),
+    };
+
+    const state = buildCaseResolverCaptureProposalState(
+      payload,
+      'file-1',
+      createDatabase(),
+      createSettings(),
+      {
+        sourceText,
+      }
+    );
+
+    expect(stripAcceptedCaptureContentFromText(sourceText, state)).toBe(
+      'Wniosek o ponowne rozpatrzenie sprawy'
+    );
+  });
+
+  it('removes contiguous address continuation lines after matched party-name anchor', () => {
+    const sourceText = [
+      'Inspektorat ZUS w Gryficach',
+      'Dąbskiego 5',
+      '72-300 Gryfice',
+      '',
+      'Wniosek o ponowne rozpatrzenie sprawy',
+    ].join('\n');
+    const payload: PromptExploderCaseResolverPartyBundle = {
+      addressee: {
+        ...createAddresseeCandidate(),
+        id: 'cand-addr-short',
+        name: 'Inspektorat ZUS w Gryficach',
+        rawText: 'Inspektorat ZUS w Gryficach',
+        street: undefined,
+        streetNumber: undefined,
+        city: undefined,
+        postalCode: undefined,
+      },
+    };
+
+    const state = buildCaseResolverCaptureProposalState(
+      payload,
+      'file-1',
+      createDatabase(),
+      createSettings(),
+      {
+        sourceText,
+      }
+    );
+
+    expect(stripCapturedAddressLinesFromText(sourceText, state)).toBe(
+      'Wniosek o ponowne rozpatrzenie sprawy'
+    );
+  });
+
+  it('keeps document heading lines even when candidate raw text includes them', () => {
+    const sourceText = [
+      'Michał Matynia',
+      'Fioletowa 71/2',
+      '70-781 Szczecin',
+      'Poland',
+      '',
+      'Wniosek o ponowne rozpatrzenie sprawy',
+      'Treść uzasadnienia wniosku.',
+    ].join('\n');
+    const payload: PromptExploderCaseResolverPartyBundle = {
+      addresser: {
+        ...createAddresserCandidate(),
+        id: 'cand-long-raw',
+        name: 'Michał Matynia',
+        rawText: [
+          'Michał Matynia',
+          'Fioletowa 71/2',
+          '70-781 Szczecin',
+          'Poland',
+          'Wniosek o ponowne rozpatrzenie sprawy',
+        ].join('\n'),
+      },
+    };
+
+    const state = buildCaseResolverCaptureProposalState(
+      payload,
+      'file-1',
+      createDatabase(),
+      createSettings(),
+      {
+        sourceText,
+      }
+    );
+
+    expect(stripCapturedAddressLinesFromText(sourceText, state)).toBe(
+      ['Wniosek o ponowne rozpatrzenie sprawy', 'Treść uzasadnienia wniosku.'].join('\n')
+    );
+  });
+
+  it('removes split header lines when captured addressee text is flattened into one line', () => {
+    const sourceText = [
+      'Zakład Ubezpieczeń Społecznych',
+      'Oddział w Szczecinie',
+      'ul. Matejki 22',
+      '70-530 Szczecin',
+      '',
+      'Wniosek o ponowne rozpatrzenie sprawy',
+    ].join('\n');
+    const payload: PromptExploderCaseResolverPartyBundle = {
+      addressee: {
+        id: 'cand-flat',
+        name: 'Zakład Ubezpieczeń Społecznych Oddział w Szczecinie',
+        score: 1,
+        role: 'addressee',
+        displayName: 'Zakład Ubezpieczeń Społecznych Oddział w Szczecinie',
+        rawText:
+          'Zakład Ubezpieczeń Społecznych Oddział w Szczecinie ul. Matejki 22 70-530 Szczecin',
+        kind: 'organization',
+        organizationName: 'Zakład Ubezpieczeń Społecznych',
+        street: 'ul. Matejki',
+        streetNumber: '22',
+        city: 'Szczecin',
+        postalCode: '70-530',
+      },
+    };
+
+    const state = buildCaseResolverCaptureProposalState(
+      payload,
+      'file-1',
+      createDatabase(),
+      createSettings(),
+      {
+        sourceText,
+      }
+    );
+
+    expect(stripCapturedAddressLinesFromText(sourceText, state)).toBe(
+      'Wniosek o ponowne rozpatrzenie sprawy'
+    );
+  });
+
+  it('removes accepted header address lines even when header block starts after long preface', () => {
+    const longPreface = Array.from({ length: 95 }, (_, index): string => `Nagłówek ${index + 1}`);
+    const sourceText = [
+      ...longPreface,
+      'Michał Matynia',
+      'Fioletowa 71/2',
+      '70-781 Szczecin',
+      'Poland',
+      '',
+      'Wniosek o ponowne rozpatrzenie sprawy',
+    ].join('\n');
+    const payload: PromptExploderCaseResolverPartyBundle = {
+      addresser: createAddresserCandidate(),
+    };
+
+    const state = buildCaseResolverCaptureProposalState(
+      payload,
+      'file-1',
+      createDatabase(),
+      createSettings(),
+      {
+        sourceText,
+      }
+    );
+
+    const result = stripAcceptedCaptureContentFromTextWithReport(sourceText, state);
+    expect(result.text).toBe(
+      [...longPreface, '', 'Wniosek o ponowne rozpatrzenie sprawy'].join('\n')
+    );
+    expect(result.report.removedAddresserLineCount).toBeGreaterThanOrEqual(4);
+    expect(result.report.removedAddressLineCount).toBeGreaterThanOrEqual(4);
+  });
+});

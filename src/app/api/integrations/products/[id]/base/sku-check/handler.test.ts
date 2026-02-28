@@ -46,12 +46,12 @@ vi.mock('@/features/products/server', () => ({
   getProductRepository: getProductRepositoryMock,
 }));
 
-vi.mock('@/shared/lib/integrations/server', () => ({
+vi.mock('@/features/integrations/server', () => ({
   getIntegrationRepository: getIntegrationRepositoryMock,
   checkBaseSkuExists: checkBaseSkuExistsMock,
 }));
 
-vi.mock('@/shared/lib/integrations/services/base-token-resolver', () => ({
+vi.mock('@/features/integrations/services/base-token-resolver', () => ({
   resolveBaseConnectionToken: resolveBaseConnectionTokenMock,
 }));
 

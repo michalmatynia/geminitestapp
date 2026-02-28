@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   cancelBaseImportRun,
   toStartResponse,
-} from '@/shared/lib/integrations/services/imports/base-import-service';
+} from '@/features/integrations/services/imports/base-import-service';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 export async function POST_handler(

@@ -18,7 +18,7 @@ import {
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
-import { IMAGE_STUDIO_SEQUENCE_OPERATIONS } from '@/shared/lib/ai/image-studio/utils/studio-settings';
+import { IMAGE_STUDIO_SEQUENCE_OPERATIONS } from '@/features/ai/image-studio/utils/studio-settings';
 import { useImageStudioSettingsContext } from '../../context/ImageStudioSettingsContext';
 
 export function PromptSettingsTab(): React.JSX.Element {

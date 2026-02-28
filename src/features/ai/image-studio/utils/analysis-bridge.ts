@@ -1,8 +1,8 @@
 import type {
   ImageStudioCenterDetectionMode,
   ImageStudioCenterShadowPolicy,
-} from '@/features/ai/image-studio/contracts/center';
-import { sanitizeStudioProjectId } from '@/shared/lib/ai/image-studio/utils/project-session';
+} from '@/shared/contracts/image-studio';
+import { sanitizeStudioProjectId } from '@/features/ai/image-studio/utils/project-session';
 
 export const IMAGE_STUDIO_ANALYSIS_PLAN_CHANGED_EVENT =
   'image-studio:analysis-plan-changed';

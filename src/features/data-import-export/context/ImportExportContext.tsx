@@ -24,7 +24,7 @@ import {
   useRefreshImportParameterCacheMutation,
 } from '@/features/data-import-export/hooks/useImportQueries';
 import { getDefaultImageRetryPresets } from '@/features/data-import-export/utils/image-retry-presets';
-import { useIntegrationsWithConnections } from '@/shared/lib/integrations/hooks/useIntegrationQueries';
+import { useIntegrationsWithConnections } from '@/features/integrations/hooks/useIntegrationQueries';
 import { useCatalogs } from '@/features/products/hooks/useProductSettingsQueries';
 import type {
   ImportResponse,

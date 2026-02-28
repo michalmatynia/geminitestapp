@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { listDrafts, createDraft } from '@/shared/lib/drafter/server';
+import { listDrafts, createDraft } from '@/features/drafter/server';
 import {
   createDraftPayloadSchema,
   resolveDraftCategoryId,
-} from '@/shared/lib/drafter/validations/draft-payload';
+} from '@/features/drafter/validations/draft-payload';
 import type { CreateProductDraftDto } from '@/features/products/server';
 import { parseJsonBody } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';

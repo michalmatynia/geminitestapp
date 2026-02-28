@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getImageStudioSequenceRunById } from '@/shared/lib/ai/image-studio/server/sequence-run-repository';
-import { getImageStudioSlotById } from '@/shared/lib/ai/image-studio/server/slot-repository';
+import { getImageStudioSequenceRunById } from '@/features/ai/image-studio/server/sequence-run-repository';
+import { getImageStudioSlotById } from '@/features/ai/image-studio/server/slot-repository';
 import {
   resolveStudioSlotIdCandidates,
   slotHasRenderableImage,
-} from '@/shared/lib/ai/image-studio/utils/sequence-slot-resolution';
+} from '@/features/ai/image-studio/utils/sequence-slot-resolution';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 

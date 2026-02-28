@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { createExportTemplate, listExportTemplates } from '@/shared/lib/integrations/server';
+import { createExportTemplate, listExportTemplates } from '@/features/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 

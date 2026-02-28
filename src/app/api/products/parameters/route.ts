@@ -1,5 +1,4 @@
 export const runtime = 'nodejs';
-export const revalidate = 300;
 
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import { catalogIdQuerySchema } from '@/shared/validations/product-metadata-api-schemas';
@@ -10,6 +9,7 @@ export const GET = apiHandler(GET_handler, {
   source: 'products.parameters.GET',
   querySchema: catalogIdQuerySchema,
   rateLimitKey: 'search',
+  cacheControl: 'no-store',
 });
 
 export const POST = apiHandler(POST_handler, {

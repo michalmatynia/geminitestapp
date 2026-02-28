@@ -32,6 +32,8 @@ export type MaskShapeForExport = {
   metadata?: Record<string, unknown>;
 };
 
+export const IMAGE_STUDIO_OPENAI_API_KEY_KEY = 'image_studio_openai_api_key';
+
 /**
  * Image Studio DTOs
  */

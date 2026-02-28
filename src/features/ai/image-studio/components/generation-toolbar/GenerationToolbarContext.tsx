@@ -2,11 +2,11 @@
 
 import React, { createContext, useContext, useState, useMemo } from 'react';
 
-import type { ObjectLayoutCustomPreset } from '@/shared/lib/ai/image-studio/utils/object-layout-presets';
+import type { ObjectLayoutCustomPreset } from '@/features/ai/image-studio/utils/object-layout-presets';
 import type {
   ImageStudioAnalysisPlanSnapshot,
   ImageStudioAnalysisApplyTarget,
-} from '@/shared/lib/ai/image-studio/utils/analysis-bridge';
+} from '@/features/ai/image-studio/utils/analysis-bridge';
 import type { UpscaleSmoothingQuality } from './GenerationToolbarImageUtils';
 import type {
   ImageStudioCenterDetectionMode,

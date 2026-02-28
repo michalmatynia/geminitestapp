@@ -8,8 +8,8 @@ import {
 import {
   parseImageStudioSettings,
   normalizeImageStudioModelPresets,
-} from '@/shared/lib/ai/image-studio/utils/studio-settings';
-import type { ImageStudioSettings } from '@/shared/lib/ai/image-studio/utils/studio-settings';
+} from '@/features/ai/image-studio/utils/studio-settings';
+import type { ImageStudioSettings } from '@/features/ai/image-studio/utils/studio-settings';
 import type { UseQueryResult } from '@tanstack/react-query';
 
 export function useSettingsHydration({

@@ -2,16 +2,16 @@
 
 import dynamic from 'next/dynamic';
 
-import { ListProductModal } from '@/shared/lib/integrations/components/listings/ListProductModal';
-import { MassListProductModal } from '@/shared/lib/integrations/components/listings/MassListProductModal';
-import { ProductListingsModal } from '@/shared/lib/integrations/components/listings/ProductListingsModal';
+import { ListProductModal } from '@/features/integrations/components/listings/ListProductModal';
+import { MassListProductModal } from '@/features/integrations/components/listings/MassListProductModal';
+import { ProductListingsModal } from '@/features/integrations/components/listings/ProductListingsModal';
 import { ProductFormProvider } from '@/features/products/context/ProductFormContext';
 import { useProductListModalsContext } from '@/features/products/context/ProductListContext';
 
 import { ProductFormModal } from './modals/ProductFormModal';
 
 const SelectIntegrationModal = dynamic(
-  () => import('@/shared/lib/integrations/components/listings/SelectIntegrationModal'),
+  () => import('@/features/integrations/components/listings/SelectIntegrationModal'),
   {
     ssr: false,
   }

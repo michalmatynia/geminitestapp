@@ -8,7 +8,7 @@ import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
 import {
   fetchProductListings,
   productListingsQueryKey,
-} from '@/shared/lib/integrations/hooks/useListingQueries';
+} from '@/features/integrations/hooks/useListingQueries';
 import { ProductImageCell } from '@/features/products/components/cells/ProductImageCell';
 import { EditableCell } from '@/features/products/components/EditableCell';
 import { useProductListActionsContext } from '@/features/products/context/ProductListContext';

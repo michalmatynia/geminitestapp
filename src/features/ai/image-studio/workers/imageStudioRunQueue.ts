@@ -4,27 +4,27 @@ import type { ImageFileRecord } from '@/shared/contracts/files';
 import {
   executeImageStudioRun,
   type ImageStudioRunExecutionMeta,
-} from '@/shared/lib/ai/image-studio/server/run-executor';
+} from '@/features/ai/image-studio/server/run-executor';
 import {
   getImageStudioRunById,
   updateImageStudioRun,
   type ImageStudioRunRecord,
-} from '@/shared/lib/ai/image-studio/server/run-repository';
+} from '@/features/ai/image-studio/server/run-repository';
 import {
   getImageStudioSlotLinkBySourceAndRelation,
   upsertImageStudioSlotLink,
-} from '@/shared/lib/ai/image-studio/server/slot-link-repository';
+} from '@/features/ai/image-studio/server/slot-link-repository';
 import {
   createImageStudioSlots,
   getImageStudioSlotById,
   listImageStudioSlots,
   updateImageStudioSlot,
-} from '@/shared/lib/ai/image-studio/server/slot-repository';
+} from '@/features/ai/image-studio/server/slot-repository';
 import {
   estimateGenerationCost,
   type GenerationCostEstimate,
-} from '@/shared/lib/ai/image-studio/generation-cost';
-import { parseImageStudioSettings } from '@/shared/lib/ai/image-studio/studio-settings';
+} from '@/features/ai/image-studio/generation-cost';
+import { parseImageStudioSettings } from '@/features/ai/image-studio/studio-settings';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type { ImageStudioRunDispatchMode } from '@/shared/contracts/image-studio';

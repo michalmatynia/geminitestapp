@@ -47,12 +47,12 @@ import { useProjectsState } from './ProjectsContext';
 import {
   getImageStudioProjectSessionKey,
   resolveImageStudioProjectSession,
-} from '@/shared/lib/ai/image-studio/utils/project-session';
+} from '@/features/ai/image-studio/utils/project-session';
 import {
   expandFolderPath,
   normalizeFolderPaths,
   IMAGE_STUDIO_TREE_KEY_PREFIX,
-} from '@/shared/lib/ai/image-studio/utils/studio-tree';
+} from '@/features/ai/image-studio/utils/studio-tree';
 
 // ── Utilities ────────────────────────────────────────────────────────────────
 

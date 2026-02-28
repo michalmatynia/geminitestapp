@@ -25,8 +25,8 @@ import {
   type ImageStudioAnalysisPlanSnapshot,
   type ImageStudioAnalysisSharedLayout,
   saveImageStudioAnalysisPlanSnapshot,
-} from '@/shared/lib/ai/image-studio/utils/analysis-bridge';
-import { getImageStudioSlotImageSrc } from '@/shared/lib/ai/image-studio/utils/image-src';
+} from '@/features/ai/image-studio/utils/analysis-bridge';
+import { getImageStudioSlotImageSrc } from '@/features/ai/image-studio/utils/image-src';
 import { useRightSidebarContext } from './RightSidebarContext';
 import {
   buildObjectLayoutPresetOptions,
@@ -41,7 +41,7 @@ import {
   saveObjectLayoutAdvancedDefaults,
   type ObjectLayoutCustomPreset,
   type ObjectLayoutPresetOptionValue,
-} from '@/shared/lib/ai/image-studio/utils/object-layout-presets';
+} from '@/features/ai/image-studio/utils/object-layout-presets';
 
 import {
   type AnalysisMode,

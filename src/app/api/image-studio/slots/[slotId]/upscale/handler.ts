@@ -20,11 +20,11 @@ import {
 import {
   getImageStudioSlotLinkBySourceAndRelation,
   upsertImageStudioSlotLink,
-} from '@/shared/lib/ai/image-studio/server/slot-link-repository';
+} from '@/features/ai/image-studio/server/slot-link-repository';
 import {
   createImageStudioSlots,
   getImageStudioSlotById,
-} from '@/shared/lib/ai/image-studio/server/slot-repository';
+} from '@/features/ai/image-studio/server/slot-repository';
 import {
   buildUpscaleFingerprint,
   buildUpscaleFingerprintRelationType,
@@ -34,7 +34,7 @@ import {
   upscaleImageWithSharp,
   validateUpscaleOutputDimensions,
   validateUpscaleSourceDimensions,
-} from '@/shared/lib/ai/image-studio/server/upscale-utils';
+} from '@/features/ai/image-studio/server/upscale-utils';
 import { getDiskPathFromPublicPath, getImageFileRepository } from '@/features/files/server';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';

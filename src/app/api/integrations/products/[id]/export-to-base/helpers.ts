@@ -10,12 +10,12 @@ import {
   type ImageBase64Mode,
   type ImageExportLogger,
   type ImageTransformOptions,
-} from '@/shared/lib/integrations/server';
+} from '@/features/integrations/server';
 import {
   getCategoryMappingRepository,
   getProducerMappingRepository,
   getTagMappingRepository,
-} from '@/shared/lib/integrations/server';
+} from '@/features/integrations/server';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import {
   getParameterRepository,

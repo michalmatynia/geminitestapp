@@ -271,6 +271,8 @@ export const syncProductParameters: SyncHandler = async ({ mongo, prisma, normal
         name_en: doc.name_en ?? '',
         name_pl: doc.name_pl ?? null,
         name_de: doc.name_de ?? null,
+        selectorType: doc.selectorType ?? 'text',
+        optionLabels: doc.optionLabels ?? [],
         createdAt: doc.createdAt ?? new Date(),
         updatedAt: doc.updatedAt ?? new Date(),
       };
@@ -411,6 +413,8 @@ export const syncProductParametersPrismaToMongo: SyncHandler = async ({ mongo, p
     name_en: row.name_en,
     name_pl: row.name_pl,
     name_de: row.name_de,
+    selectorType: row.selectorType,
+    optionLabels: row.optionLabels,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   }));

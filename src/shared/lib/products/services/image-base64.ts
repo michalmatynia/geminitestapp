@@ -1,7 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 
-import { getDiskPathFromPublicPath } from '@/shared/lib/files/file-uploader';
+import { getDiskPathFromPublicPath } from '@/features/files/file-uploader';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import {
   fetchWithOutboundUrlPolicy,

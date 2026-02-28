@@ -12,7 +12,7 @@ import {
 import {
   isImageStudioSlotImageLocked,
   setImageStudioSlotImageLocked,
-} from '@/shared/lib/ai/image-studio/utils/slot-image-lock';
+} from '@/features/ai/image-studio/utils/slot-image-lock';
 import type {
   ImageStudioSlotDto as ImageStudioSlot,
   ImageStudioAssetDto as ImageStudioUploadedAsset,

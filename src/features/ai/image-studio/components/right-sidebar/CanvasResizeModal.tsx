@@ -18,7 +18,7 @@ import { useMaskingState, useMaskingActions } from '../../context/MaskingContext
 import {
   applyCanvasResizeLocalTransform,
   type CanvasResizeDirection,
-} from '@/shared/lib/ai/image-studio/utils/canvas-resize';
+} from '@/features/ai/image-studio/utils/canvas-resize';
 import { useToast } from '@/shared/ui';
 
 export function CanvasResizeModal({

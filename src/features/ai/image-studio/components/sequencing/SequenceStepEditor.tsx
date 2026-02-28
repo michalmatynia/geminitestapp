@@ -10,7 +10,7 @@ import {
   UPSCALE_SCALE_OPTIONS,
   UPSCALE_STRATEGY_OPTIONS,
 } from './sequencing-constants';
-import { getImageStudioDocTooltip } from '@/shared/lib/ai/image-studio/utils/studio-docs';
+import { getImageStudioDocTooltip } from '@/features/ai/image-studio/utils/studio-docs';
 
 import type {
   ImageStudioSequenceCropStep,
@@ -21,7 +21,7 @@ import type {
   ImageStudioSequenceStepInputSource,
   ImageStudioSequenceStepRuntime,
   ImageStudioSequenceUpscaleStep,
-} from '@/shared/lib/ai/image-studio/utils/studio-settings';
+} from '@/features/ai/image-studio/utils/studio-settings';
 
 type SequenceStepEditorProps = {
   stepId: string;

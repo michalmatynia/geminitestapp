@@ -12,8 +12,8 @@ import {
   normalizeAutoScalerLayoutConfig,
   validateAutoScalerOutputDimensions,
   validateAutoScalerSourceDimensions,
-} from '@/shared/lib/ai/image-studio/server/auto-scaler-utils';
-import { centerAndScaleObjectByLayout } from '@/shared/lib/ai/image-studio/server/center-utils';
+} from '@/features/ai/image-studio/server/auto-scaler-utils';
+import { centerAndScaleObjectByLayout } from '@/features/ai/image-studio/server/center-utils';
 
 const createWhiteProductImage = async (params: {
   width: number;

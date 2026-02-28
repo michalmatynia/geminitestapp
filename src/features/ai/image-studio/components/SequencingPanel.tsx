@@ -26,16 +26,16 @@ import { useSettingsActions, useSettingsState } from '../context/SettingsContext
 import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
 import { useUiActions } from '../context/UiContext';
 import { studioKeys } from '../hooks/useImageStudioQueries';
-import { resolvePromptPlaceholders } from '@/shared/lib/ai/image-studio/utils/run-request-preview';
+import { resolvePromptPlaceholders } from '@/features/ai/image-studio/utils/run-request-preview';
 import {
   resolveRenderableSlotById,
   slotHasRenderableImage,
-} from '@/shared/lib/ai/image-studio/utils/sequence-slot-resolution';
+} from '@/features/ai/image-studio/utils/sequence-slot-resolution';
 import {
   normalizeImageStudioSequenceSteps,
   resolveImageStudioSequenceActiveSteps,
   type ImageStudioSequenceStep,
-} from '@/shared/lib/ai/image-studio/utils/studio-settings';
+} from '@/features/ai/image-studio/utils/studio-settings';
 
 import {
   type SequenceRunStatus,

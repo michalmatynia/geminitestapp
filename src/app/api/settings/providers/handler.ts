@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthDataProvider, requireAuthProvider } from '@/features/auth/server';
 import { AUTH_SETTINGS_KEYS } from '@/features/auth/server';
 import { getCmsDataProvider } from '@/features/cms/services/cms-provider';
-import { getIntegrationDataProvider } from '@/shared/lib/integrations/services/integration-provider';
+import { getIntegrationDataProvider } from '@/features/integrations/services/integration-provider';
 import { PRODUCT_DB_PROVIDER_SETTING_KEY } from '@/features/products/constants';
 import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 import type {

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
 'use client';
 
 import { UserPlusIcon, ShieldAlertIcon, ShieldCheck, Key, Users } from 'lucide-react';

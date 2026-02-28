@@ -3,7 +3,7 @@
 import type {
   ImageStudioSettings,
   ImageStudioSequenceOperation,
-} from '@/shared/lib/ai/image-studio/utils/studio-settings';
+} from '@/features/ai/image-studio/utils/studio-settings';
 
 export type StudioSettingsTab = 'prompt' | 'generation' | 'validation' | 'maintenance';
 

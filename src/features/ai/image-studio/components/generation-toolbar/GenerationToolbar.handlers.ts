@@ -54,7 +54,7 @@ import {
 import {
   saveImageStudioAnalysisPlanSnapshot,
   type ImageStudioAnalysisSharedLayout,
-} from '@/shared/lib/ai/image-studio/utils/analysis-bridge';
+} from '@/features/ai/image-studio/utils/analysis-bridge';
 import { createGenerationToolbarActionHandlers } from './generation-toolbar-action-handlers';
 import { studioKeys } from '../../hooks/useImageStudioQueries';
 import {

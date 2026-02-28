@@ -7,12 +7,12 @@ import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { cn } from '@/shared/utils';
 import { Button, SelectSimple } from '@/shared/ui';
 
-import type { AiPathMeta } from '@/shared/lib/ai/image-studio/utils/ai-paths-object-analysis';
+import type { AiPathMeta } from '@/features/ai/image-studio/utils/ai-paths-object-analysis';
 import {
   loadCustomTriggerButtons,
   saveCustomTriggerButtons,
   type ImageStudioCustomTriggerButton,
-} from '@/shared/lib/ai/image-studio/utils/ai-paths-object-analysis';
+} from '@/features/ai/image-studio/utils/ai-paths-object-analysis';
 
 // ---------------------------------------------------------------------------
 // Props

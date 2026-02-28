@@ -12,7 +12,7 @@ import {
   IMAGE_STUDIO_PROMPT_LIBRARY_KEY,
   parseImageStudioPromptLibrary,
   type ImageStudioPromptEntry,
-} from '@/shared/lib/ai/image-studio/utils/prompt-library';
+} from '@/features/ai/image-studio/utils/prompt-library';
 
 function createPromptId(): string {
   return typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'

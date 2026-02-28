@@ -5,29 +5,29 @@ import path from 'path';
 
 import sharp from 'sharp';
 
-import { resolveExpectedOutputCount } from '@/shared/lib/ai/image-studio/server/run-executor';
+import { resolveExpectedOutputCount } from '@/features/ai/image-studio/server/run-executor';
 import {
   createImageStudioRun,
   getImageStudioRunById,
   type ImageStudioRunRecord,
-} from '@/shared/lib/ai/image-studio/server/run-repository';
+} from '@/features/ai/image-studio/server/run-repository';
 import {
   upsertImageStudioSlotLink,
-} from '@/shared/lib/ai/image-studio/server/slot-link-repository';
+} from '@/features/ai/image-studio/server/slot-link-repository';
 import {
   getImageStudioSlotById,
   listImageStudioSlots,
   createImageStudioSlots,
   type ImageStudioSlotRecord,
-} from '@/shared/lib/ai/image-studio/server/slot-repository';
+} from '@/features/ai/image-studio/server/slot-repository';
 import {
   validateUpscaleSourceDimensions,
   upscaleImageWithSharp,
-} from '@/shared/lib/ai/image-studio/server/upscale-utils';
-import { resolvePromptPlaceholders } from '@/shared/lib/ai/image-studio/utils/run-request-preview';
+} from '@/features/ai/image-studio/server/upscale-utils';
+import { resolvePromptPlaceholders } from '@/features/ai/image-studio/utils/run-request-preview';
 import {
   slotHasRenderableImage,
-} from '@/shared/lib/ai/image-studio/utils/sequence-slot-resolution';
+} from '@/features/ai/image-studio/utils/sequence-slot-resolution';
 import {
   normalizeImageStudioSequenceSteps,
   parseImageStudioSettings,
@@ -37,8 +37,8 @@ import {
   type ImageStudioSequenceMaskStep,
   type ImageStudioSequenceStep,
   type ImageStudioSequenceUpscaleStep,
-} from '@/shared/lib/ai/image-studio/utils/studio-settings';
-import { getImageFileRepository, getDiskPathFromPublicPath } from '@/shared/lib/files/services/image-file-service';
+} from '@/features/ai/image-studio/utils/studio-settings';
+import { getImageFileRepository, getDiskPathFromPublicPath } from '@/features/files/services/image-file-service';
 import {
   enqueueImageStudioRunJob,
   startImageStudioRunQueue,

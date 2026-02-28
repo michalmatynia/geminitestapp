@@ -1,13 +1,13 @@
 'use client';
 
 import { useEffect } from 'react';
-import { saveObjectLayoutAdvancedDefaults } from '@/shared/lib/ai/image-studio/utils/object-layout-presets';
+import { saveObjectLayoutAdvancedDefaults } from '@/features/ai/image-studio/utils/object-layout-presets';
 import {
   IMAGE_STUDIO_ANALYSIS_PLAN_CHANGED_EVENT,
   clearImageStudioAnalysisApplyIntent,
   loadImageStudioAnalysisApplyIntent,
   loadImageStudioAnalysisPlanSnapshot,
-} from '@/shared/lib/ai/image-studio/utils/analysis-bridge';
+} from '@/features/ai/image-studio/utils/analysis-bridge';
 import { type GenerationToolbarState } from './GenerationToolbar.types';
 
 export function useGenerationToolbarEffects(

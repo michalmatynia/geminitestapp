@@ -7,8 +7,8 @@ import { Button, Hint } from '@/shared/ui';
 
 import { useVersionGraphInspectorContext } from './VersionGraphInspectorContext';
 import { useSettingsState } from '../context/SettingsContext';
-import { readMeta } from '@/shared/lib/ai/image-studio/utils/metadata';
-import { getImageStudioDocTooltip } from '@/shared/lib/ai/image-studio/utils/studio-docs';
+import { readMeta } from '@/features/ai/image-studio/utils/metadata';
+import { getImageStudioDocTooltip } from '@/features/ai/image-studio/utils/studio-docs';
 
 // ── Component ────────────────────────────────────────────────────────────────
 

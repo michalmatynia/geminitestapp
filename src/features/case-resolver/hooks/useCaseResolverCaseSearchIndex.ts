@@ -14,11 +14,13 @@ import {
 } from '../runtime';
 
 export type CaseSearchScope = 'all' | 'name' | 'folder' | 'content';
+export type CaseSearchIndexMode = 'metadata_only' | 'full_text';
 
 export type UseCaseResolverCaseSearchIndexInput = {
   workspace: CaseResolverWorkspace;
   caseSearchQuery: string;
   caseSearchScope: CaseSearchScope;
+  indexMode?: CaseSearchIndexMode;
   caseFileTypeFilter: 'all' | 'case';
   caseFilterTagIds: string[];
   caseFilterCaseIdentifierIds: string[];
@@ -189,11 +191,13 @@ const resolveCaseRowMatchesToken = (
 
 const buildSearchIndex = ({
   workspace,
+  includeFullText,
   caseTagPathById,
   caseIdentifierPathById,
   caseCategoryPathById,
 }: {
   workspace: CaseResolverWorkspace;
+  includeFullText: boolean;
   caseTagPathById: Map<string, string>;
   caseIdentifierPathById: Map<string, string>;
   caseCategoryPathById: Map<string, string>;
@@ -207,34 +211,35 @@ const buildSearchIndex = ({
   );
 
   const indexedRows = caseFiles.map((caseFile: CaseResolverFile): IndexedCaseSearchRow => {
-    const subtreeCaseIds = getCaseSubtreeIds(indexes, caseFile.id);
     const textFragments: string[] = [];
-
-    subtreeCaseIds.forEach((subtreeCaseId: string): void => {
-      const subtreeCaseFile = indexes.caseFilesById.get(subtreeCaseId) ?? null;
-      if (subtreeCaseFile) {
-        const subtreeCaseText = indexes.plainTextByFileId.get(subtreeCaseId) ?? '';
-        if (subtreeCaseText.length > 0) textFragments.push(subtreeCaseText);
-      }
-
-      const subtreeFiles = indexes.nonCaseFilesByOwnerCaseId.get(subtreeCaseId) ?? [];
-      subtreeFiles.forEach((file: CaseResolverFile): void => {
-        const fileText = indexes.plainTextByFileId.get(file.id) ?? '';
-        if (fileText.length > 0) textFragments.push(fileText);
-      });
-
-      const subtreeAssets = indexes.assetsByOwnerCaseId.get(subtreeCaseId) ?? [];
-      subtreeAssets.forEach((asset: CaseResolverAssetFile): void => {
-        const assetTextContent = typeof asset.textContent === 'string' ? asset.textContent : '';
-        if (assetTextContent.trim().length > 0) {
-          textFragments.push(assetTextContent);
+    if (includeFullText) {
+      const subtreeCaseIds = getCaseSubtreeIds(indexes, caseFile.id);
+      subtreeCaseIds.forEach((subtreeCaseId: string): void => {
+        const subtreeCaseFile = indexes.caseFilesById.get(subtreeCaseId) ?? null;
+        if (subtreeCaseFile) {
+          const subtreeCaseText = indexes.plainTextByFileId.get(subtreeCaseId) ?? '';
+          if (subtreeCaseText.length > 0) textFragments.push(subtreeCaseText);
         }
-        const assetDescription = typeof asset.description === 'string' ? asset.description : '';
-        if (assetDescription.trim().length > 0) {
-          textFragments.push(assetDescription);
-        }
+
+        const subtreeFiles = indexes.nonCaseFilesByOwnerCaseId.get(subtreeCaseId) ?? [];
+        subtreeFiles.forEach((file: CaseResolverFile): void => {
+          const fileText = indexes.plainTextByFileId.get(file.id) ?? '';
+          if (fileText.length > 0) textFragments.push(fileText);
+        });
+
+        const subtreeAssets = indexes.assetsByOwnerCaseId.get(subtreeCaseId) ?? [];
+        subtreeAssets.forEach((asset: CaseResolverAssetFile): void => {
+          const assetTextContent = typeof asset.textContent === 'string' ? asset.textContent : '';
+          if (assetTextContent.trim().length > 0) {
+            textFragments.push(assetTextContent);
+          }
+          const assetDescription = typeof asset.description === 'string' ? asset.description : '';
+          if (assetDescription.trim().length > 0) {
+            textFragments.push(assetDescription);
+          }
+        });
       });
-    });
+    }
 
     const hasParentCase = (indexes.parentCaseIdByCaseId.get(caseFile.id) ?? null) !== null;
     const hasReferences =
@@ -288,6 +293,7 @@ export function useCaseResolverCaseSearchIndex({
   workspace,
   caseSearchQuery,
   caseSearchScope,
+  indexMode = 'metadata_only',
   caseFileTypeFilter,
   caseFilterTagIds,
   caseFilterCaseIdentifierIds,
@@ -303,23 +309,45 @@ export function useCaseResolverCaseSearchIndex({
   caseCategoryPathById,
 }: UseCaseResolverCaseSearchIndexInput): UseCaseResolverCaseSearchIndexResult {
   const deferredCaseSearchQuery = useDeferredValue(caseSearchQuery);
+  const caseSearchIndexBuildDurationMsRef = useRef<number | null>(null);
   const caseSearchFilterDurationMsRef = useRef<number | null>(null);
-
-  const builtSearchIndex = useMemo(
-    (): BuiltSearchIndex =>
-      buildSearchIndex({
-        workspace,
-        caseTagPathById,
-        caseIdentifierPathById,
-        caseCategoryPathById,
-      }),
-    [caseCategoryPathById, caseIdentifierPathById, caseTagPathById, workspace]
-  );
 
   const searchTokens = useMemo(
     (): ParsedCaseSearchToken[] => parseCaseSearchQuery(deferredCaseSearchQuery),
     [deferredCaseSearchQuery]
   );
+  const shouldBuildFullTextIndex = useMemo((): boolean => {
+    if (indexMode === 'full_text') return true;
+    if (deferredCaseSearchQuery.trim().length === 0) return false;
+    if (caseSearchScope === 'content' || caseSearchScope === 'all') return true;
+    return searchTokens.some((token: ParsedCaseSearchToken): boolean => token.field === 'text');
+  }, [caseSearchScope, deferredCaseSearchQuery, indexMode, searchTokens]);
+
+  const builtSearchIndex = useMemo((): BuiltSearchIndex => {
+    const startedAtMs =
+      typeof performance !== 'undefined' && typeof performance.now === 'function'
+        ? performance.now()
+        : Date.now();
+    const nextIndex = buildSearchIndex({
+      workspace,
+      includeFullText: shouldBuildFullTextIndex,
+      caseTagPathById,
+      caseIdentifierPathById,
+      caseCategoryPathById,
+    });
+    const completedAtMs =
+      typeof performance !== 'undefined' && typeof performance.now === 'function'
+        ? performance.now()
+        : Date.now();
+    caseSearchIndexBuildDurationMsRef.current = completedAtMs - startedAtMs;
+    return nextIndex;
+  }, [
+    caseCategoryPathById,
+    caseIdentifierPathById,
+    caseTagPathById,
+    shouldBuildFullTextIndex,
+    workspace,
+  ]);
 
   const tagFilterSet = useMemo(() => new Set(caseFilterTagIds), [caseFilterTagIds]);
   const identifierFilterSet = useMemo(
@@ -429,6 +457,16 @@ export function useCaseResolverCaseSearchIndex({
     searchTokens,
     tagFilterSet,
   ]);
+
+  useEffect((): void => {
+    const durationMs = caseSearchIndexBuildDurationMsRef.current;
+    if (typeof durationMs !== 'number') return;
+    logCaseResolverDurationMetric('case_list_search_index_build_ms', durationMs, {
+      source: 'case_search',
+      minDurationMs: 1,
+      message: `mode=${shouldBuildFullTextIndex ? 'full_text' : 'metadata_only'} rows=${builtSearchIndex.indexedRows.length}`,
+    });
+  }, [builtSearchIndex.indexedRows.length, shouldBuildFullTextIndex]);
 
   useEffect((): void => {
     const durationMs = caseSearchFilterDurationMsRef.current;

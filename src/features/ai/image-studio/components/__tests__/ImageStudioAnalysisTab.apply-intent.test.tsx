@@ -7,7 +7,7 @@ import {
   loadImageStudioAnalysisApplyIntent,
   saveImageStudioAnalysisPlanSnapshot,
   type ImageStudioAnalysisPlanSnapshot,
-} from '@/shared/lib/ai/image-studio/utils/analysis-bridge';
+} from '@/features/ai/image-studio/utils/analysis-bridge';
 
 import { ImageStudioAnalysisTab } from '../ImageStudioAnalysisTab';
 

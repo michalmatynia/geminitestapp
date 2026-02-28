@@ -145,7 +145,8 @@ export async function deleteTag(id: string): Promise<void> {
 
 export async function getParameters(catalogId: string | null): Promise<ProductParameter[]> {
   return api.get<ProductParameter[]>('/api/products/parameters', {
-    params: { catalogId: catalogId || undefined },
+    params: { catalogId: catalogId || undefined, fresh: 1 },
+    cache: 'no-store',
   });
 }
 

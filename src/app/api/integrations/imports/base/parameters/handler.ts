@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { getIntegrationRepository } from '@/shared/lib/integrations/server';
-import { decryptSecret } from '@/shared/lib/integrations/server';
-import { callBaseApi } from '@/shared/lib/integrations/server';
-import { getImportParameterCache, setImportParameterCache } from '@/shared/lib/integrations/server';
+import { getIntegrationRepository } from '@/features/integrations/server';
+import { decryptSecret } from '@/features/integrations/server';
+import { callBaseApi } from '@/features/integrations/server';
+import { getImportParameterCache, setImportParameterCache } from '@/features/integrations/server';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { parseJsonBody } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';

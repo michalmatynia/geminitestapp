@@ -382,30 +382,33 @@ export const fetchCaseResolverWorkspaceMetadata = async (
   }
 };
 
-export const fetchCaseResolverWorkspaceSnapshot = async (
-  source: string
+export const fetchCaseResolverWorkspaceRecord = async (
+  source: string,
+  options?: {
+    fresh?: boolean;
+  }
 ): Promise<CaseResolverWorkspace | null> => {
   const startedAt = Date.now();
-  const attempts: Array<{ key: string; url: string }> = [
-    {
-      key: 'light_fresh_key',
-      url: `/api/settings?scope=light&fresh=1&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`,
-    },
-    {
+  const attempts: Array<{ key: string; url: string }> = [];
+  if (options?.fresh === false) {
+    attempts.push({
       key: 'light_cached_key',
       url: `/api/settings?scope=light&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`,
-    },
-    {
-      key: 'all_cached_scope',
-      url: '/api/settings?scope=all',
-    },
-    {
-      key: 'all_fresh_scope',
-      url: '/api/settings?scope=all&fresh=1',
-    },
-  ];
+    });
+  } else {
+    attempts.push(
+      {
+        key: 'light_fresh_key',
+        url: `/api/settings?scope=light&fresh=1&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`,
+      },
+      {
+        key: 'light_cached_key',
+        url: `/api/settings?scope=light&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`,
+      }
+    );
+  }
 
-  let lastFailureMessage = 'Workspace snapshot request failed.';
+  let lastFailureMessage = 'Workspace record request failed.';
   for (const attempt of attempts) {
     try {
       const response = await fetchSettingsPayloadWithTimeout({
@@ -462,6 +465,12 @@ export const fetchCaseResolverWorkspaceSnapshot = async (
     durationMs: Date.now() - startedAt,
   });
   return null;
+};
+
+export const fetchCaseResolverWorkspaceSnapshot = async (
+  source: string
+): Promise<CaseResolverWorkspace | null> => {
+  return await fetchCaseResolverWorkspaceRecord(source, { fresh: true });
 };
 
 /**

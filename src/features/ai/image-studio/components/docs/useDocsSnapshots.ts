@@ -7,18 +7,18 @@ import type {
   RunStudioEnqueueResult,
   RunStudioPayload,
 } from '@/features/ai/image-studio/hooks/useImageStudioMutations';
-import type { ImageStudioSettings } from '@/shared/lib/ai/image-studio/utils/studio-settings';
+import type { ImageStudioSettings } from '@/features/ai/image-studio/utils/studio-settings';
 import {
   PROMPT_ENGINE_SETTINGS_KEY,
   parsePromptEngineSettings,
 } from '@/shared/lib/prompt-engine/settings';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
-import { parseImageStudioFolderTree } from '@/shared/lib/ai/image-studio/utils/studio-tree';
+import { parseImageStudioFolderTree } from '@/features/ai/image-studio/utils/studio-tree';
 import {
   IMAGE_STUDIO_UI_ACTIVE_KEY,
   IMAGE_STUDIO_UI_PRESETS_KEY,
   parseImageStudioUiPresets,
-} from '@/shared/lib/ai/image-studio/utils/ui-presets';
+} from '@/features/ai/image-studio/utils/ui-presets';
 
 interface UseDocsSnapshotsProps {
   projectId: string;

@@ -4,16 +4,16 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'next/navigation';
 import { ProfilerOnRenderCallback, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { useDraftQueries, draftKeys } from '@/shared/lib/drafter/hooks/useDraftQueries';
+import { useDraftQueries, draftKeys } from '@/features/drafter/hooks/useDraftQueries';
 import {
   fetchIntegrationsWithConnections,
   fetchPreferredBaseConnection,
   integrationSelectionQueryKeys,
-} from '@/shared/lib/integrations/components/listings/hooks/useIntegrationSelection';
+} from '@/features/integrations/components/listings/hooks/useIntegrationSelection';
 import {
   fetchProductListings,
   productListingsQueryKey,
-} from '@/shared/lib/integrations/hooks/useListingQueries';
+} from '@/features/integrations/hooks/useListingQueries';
 import { getProductColumns } from '@/features/products/components/list/ProductColumns';
 import { ProductTableSkeleton } from '@/features/products/components/list/ProductTableSkeleton';
 import {
@@ -94,7 +94,7 @@ export function useProductListState(): ProductListContextType & {
   const queryClient = useQueryClient();
 
   const prefetchIntegrationSelectionData = useCallback((): void => {
-    void import('@/shared/lib/integrations/components/listings/SelectIntegrationModal');
+    void import('@/features/integrations/components/listings/SelectIntegrationModal');
     void queryClient.prefetchQuery({
       queryKey: normalizeQueryKey(integrationSelectionQueryKeys.withConnections),
       queryFn: fetchIntegrationsWithConnections,

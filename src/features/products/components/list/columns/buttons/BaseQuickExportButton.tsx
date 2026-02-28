@@ -6,8 +6,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import {
   fetchPreferredBaseConnection,
   integrationSelectionQueryKeys,
-} from '@/shared/lib/integrations/components/listings/hooks/useIntegrationSelection';
-import { useGenericExportToBaseMutation } from '@/shared/lib/integrations/hooks/useProductListingMutations';
+} from '@/features/integrations/components/listings/hooks/useIntegrationSelection';
+import { useGenericExportToBaseMutation } from '@/features/integrations/hooks/useProductListingMutations';
 import type { ProductWithImages } from '@/shared/contracts/products';
 import { api } from '@/shared/lib/api-client';
 import { invalidateProductListingsAndBadges } from '@/shared/lib/query-invalidation';

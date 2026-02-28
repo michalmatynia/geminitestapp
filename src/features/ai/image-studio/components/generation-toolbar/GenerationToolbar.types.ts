@@ -6,17 +6,17 @@ import {
 } from '@/shared/contracts/image-studio';
 import { type VectorShape, type VectorToolMode } from '@/shared/contracts/vector';
 import { type SettingsStoreValue } from '@/shared/providers/SettingsStoreProvider';
-import { type ImageStudioSettings } from '@/shared/lib/ai/image-studio/utils/studio-settings';
+import { type ImageStudioSettings } from '@/features/ai/image-studio/utils/studio-settings';
 import { type GenerationToolbarContextValue } from './GenerationToolbarContext';
 import {
   type MaskShapeForExport,
   type CropRectResolutionDiagnostics,
   type CropRect,
 } from './GenerationToolbarImageUtils';
-import { type ImageStudioAnalysisSharedLayout } from '@/shared/lib/ai/image-studio/utils/analysis-bridge';
+import { type ImageStudioAnalysisSharedLayout } from '@/features/ai/image-studio/utils/analysis-bridge';
 import { type ImageStudioCenterLayoutConfig } from '../../contracts/center';
 import { type PreviewCanvasImageFrameBinding } from '../../context/UiContext';
-import { type ObjectLayoutCustomPreset } from '@/shared/lib/ai/image-studio/utils/object-layout-presets';
+import { type ObjectLayoutCustomPreset } from '@/features/ai/image-studio/utils/object-layout-presets';
 import { type ImageStudioAnalysisSummaryChipData } from '@/features/ai/image-studio/components/ImageStudioAnalysisSummaryChip';
 
 export interface GenerationToolbarHandlers {

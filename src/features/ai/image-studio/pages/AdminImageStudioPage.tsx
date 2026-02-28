@@ -28,7 +28,7 @@ import { useProjectsActions, useProjectsState } from '../context/ProjectsContext
 import { useSettingsActions } from '../context/SettingsContext';
 import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
 import { useUiActions, useUiState, type PreviewCanvasSize } from '../context/UiContext';
-import { getImageStudioDocTooltip } from '@/shared/lib/ai/image-studio/utils/studio-docs';
+import { getImageStudioDocTooltip } from '@/features/ai/image-studio/utils/studio-docs';
 
 type StudioTab = 'studio' | 'projects' | 'settings' | 'prompts' | 'docs';
 const PREVIEW_CANVAS_SIZE_OPTIONS: Array<{ value: PreviewCanvasSize; label: string }> = [

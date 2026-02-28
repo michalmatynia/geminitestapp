@@ -8,7 +8,7 @@ import { useToast } from '@/shared/ui';
 
 import { useProjectsState } from './ProjectsContext';
 import { useSlotsState } from './SlotsContext';
-import { sanitizeStudioProjectId } from '@/shared/lib/ai/image-studio/utils/project-session';
+import { sanitizeStudioProjectId } from '@/features/ai/image-studio/utils/project-session';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 

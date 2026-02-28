@@ -7,7 +7,7 @@ import type { EntityModalProps } from '@/shared/contracts/ui';
 import { Hint } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
-import { readMeta } from '@/shared/lib/ai/image-studio/utils/metadata';
+import { readMeta } from '@/features/ai/image-studio/utils/metadata';
 
 import type { VersionNode } from '../context/VersionGraphContext';
 

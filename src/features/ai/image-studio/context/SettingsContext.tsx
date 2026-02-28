@@ -25,7 +25,7 @@ import {
   type ImageStudioSettings,
   defaultImageStudioSettings,
   normalizeImageStudioModelPresets,
-} from '@/shared/lib/ai/image-studio/utils/studio-settings';
+} from '@/features/ai/image-studio/utils/studio-settings';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 

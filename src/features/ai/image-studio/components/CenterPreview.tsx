@@ -42,7 +42,7 @@ import { useProjectsState } from '../context/ProjectsContext';
 import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
 import { useUiActions, useUiState, type PreviewCanvasSize } from '../context/UiContext';
 import { useVersionGraphState } from '../context/VersionGraphContext';
-import { getImageStudioSlotImageSrc } from '@/shared/lib/ai/image-studio/utils/image-src';
+import { getImageStudioSlotImageSrc } from '@/features/ai/image-studio/utils/image-src';
 import { asObjectRecord, type VariantThumbnailInfo } from './center-preview/preview-utils';
 import {
   buildDetailsNodeForCenterPreview,

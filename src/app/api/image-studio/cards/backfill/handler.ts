@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { runImageStudioCardLinkBackfill } from '@/shared/lib/ai/image-studio/server/card-link-backfill';
+import { runImageStudioCardLinkBackfill } from '@/features/ai/image-studio/server/card-link-backfill';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 

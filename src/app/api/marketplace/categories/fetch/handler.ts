@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { fetchBaseCategories } from '@/shared/lib/integrations/server';
-import { fetchTraderaCategoriesForConnection } from '@/shared/lib/integrations/server';
-import { getExternalCategoryRepository } from '@/shared/lib/integrations/server';
-import { getIntegrationRepository } from '@/shared/lib/integrations/server';
-import { resolveBaseConnectionToken } from '@/shared/lib/integrations/services/base-token-resolver';
+import { fetchBaseCategories } from '@/features/integrations/server';
+import { fetchTraderaCategoriesForConnection } from '@/features/integrations/server';
+import { getExternalCategoryRepository } from '@/features/integrations/server';
+import { getIntegrationRepository } from '@/features/integrations/server';
+import { resolveBaseConnectionToken } from '@/features/integrations/services/base-token-resolver';
 import type { FetchMarketplaceCategoriesRequest as FetchCategoriesRequest } from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';

@@ -3,11 +3,11 @@ import { describe, expect, it } from 'vitest';
 import {
   toFolderMasterNodeId,
   toSlotMasterNodeId,
-} from '@/shared/lib/ai/image-studio/utils/master-folder-tree';
+} from '@/features/ai/image-studio/utils/master-folder-tree';
 import {
   canDropImageStudioExternalNode,
   resolveImageStudioExternalDropAction,
-} from '@/shared/lib/ai/image-studio/utils/studio-master-tree-external-drop';
+} from '@/features/ai/image-studio/utils/studio-master-tree-external-drop';
 import {
   defaultFolderTreeProfilesV2,
 } from '@/shared/utils/folder-tree-profiles-v2';

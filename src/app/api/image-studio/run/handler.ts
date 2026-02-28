@@ -4,12 +4,12 @@ import {
   imageStudioRunRequestSchema,
   resolveExpectedOutputCount,
   sanitizeImageStudioProjectId,
-} from '@/shared/lib/ai/image-studio/server/run-executor';
+} from '@/features/ai/image-studio/server/run-executor';
 import {
   createImageStudioRun,
   getImageStudioRunById,
   updateImageStudioRun,
-} from '@/shared/lib/ai/image-studio/server/run-repository';
+} from '@/features/ai/image-studio/server/run-repository';
 import {
   enqueueImageStudioRunJob,
   startImageStudioRunQueue,

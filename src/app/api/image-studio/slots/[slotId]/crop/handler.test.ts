@@ -59,7 +59,7 @@ vi.mock('fs/promises', () => ({
   readFile: readFileMock,
 }));
 
-vi.mock('@/shared/lib/ai/image-studio/server/crop-utils', () => ({
+vi.mock('@/features/ai/image-studio/server/crop-utils', () => ({
   buildCropFingerprint: buildCropFingerprintMock,
   buildCropFingerprintRelationType: buildCropFingerprintRelationTypeMock,
   buildCropRequestRelationType: buildCropRequestRelationTypeMock,
@@ -68,12 +68,12 @@ vi.mock('@/shared/lib/ai/image-studio/server/crop-utils', () => ({
   validateCropSourceDimensions: validateCropSourceDimensionsMock,
 }));
 
-vi.mock('@/shared/lib/ai/image-studio/server/slot-link-repository', () => ({
+vi.mock('@/features/ai/image-studio/server/slot-link-repository', () => ({
   getImageStudioSlotLinkBySourceAndRelation: getImageStudioSlotLinkBySourceAndRelationMock,
   upsertImageStudioSlotLink: upsertImageStudioSlotLinkMock,
 }));
 
-vi.mock('@/shared/lib/ai/image-studio/server/slot-repository', () => ({
+vi.mock('@/features/ai/image-studio/server/slot-repository', () => ({
   createImageStudioSlots: createImageStudioSlotsMock,
   getImageStudioSlotById: getImageStudioSlotByIdMock,
 }));

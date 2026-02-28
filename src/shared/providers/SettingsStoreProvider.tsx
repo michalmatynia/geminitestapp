@@ -1,5 +1,6 @@
 'use client';
 
+import { usePathname } from 'next/navigation';
 import React, { createContext, useContext, useMemo } from 'react';
 
 import { useLiteSettingsMap, useSettingsMap } from '@/shared/hooks/use-settings';
@@ -45,13 +46,19 @@ const parseNumber = (value: string | undefined, fallback?: number): number | und
 export function SettingsStoreProvider({
   children,
   mode = 'lite',
+  suppressOwnQuery = false,
 }: {
   children: React.ReactNode;
   mode?: 'admin' | 'lite';
+  suppressOwnQuery?: boolean;
 }): React.JSX.Element {
+  const pathname = usePathname();
   const useAdmin = mode === 'admin';
-  const adminQuery = useSettingsMap({ scope: 'light', enabled: useAdmin });
-  const liteQuery = useLiteSettingsMap({ enabled: !useAdmin });
+  const isAdminRoute = pathname.startsWith('/admin');
+  const shouldSuppressLiteQuery = !useAdmin && (suppressOwnQuery || isAdminRoute);
+  const shouldSuppressAdminQuery = useAdmin && suppressOwnQuery;
+  const adminQuery = useSettingsMap({ scope: 'light', enabled: useAdmin && !shouldSuppressAdminQuery });
+  const liteQuery = useLiteSettingsMap({ enabled: !useAdmin && !shouldSuppressLiteQuery });
   const settingsQuery = useAdmin ? adminQuery : liteQuery;
   const mapData = settingsQuery.data;
   const isLoading = settingsQuery.isLoading;

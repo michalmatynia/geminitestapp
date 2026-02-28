@@ -8,7 +8,7 @@ import {
   IMAGE_STUDIO_SETTINGS_KEY,
   getImageStudioProjectSettingsKey,
   parseImageStudioSettings,
-} from '@/shared/lib/ai/image-studio/studio-settings';
+} from '@/features/ai/image-studio/studio-settings';
 import type { ImageStudioProjectRecord } from '@/shared/contracts/image-studio';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, operationFailedError } from '@/shared/errors/app-error';

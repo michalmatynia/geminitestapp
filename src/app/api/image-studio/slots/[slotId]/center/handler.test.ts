@@ -63,7 +63,7 @@ vi.mock('fs/promises', () => ({
   writeFile: writeFileMock,
 }));
 
-vi.mock('@/shared/lib/ai/image-studio/server/center-utils', () => ({
+vi.mock('@/features/ai/image-studio/server/center-utils', () => ({
   buildCenterFingerprint: buildCenterFingerprintMock,
   buildCenterFingerprintRelationType: buildCenterFingerprintRelationTypeMock,
   buildCenterLayoutSignature: buildCenterLayoutSignatureMock,
@@ -75,17 +75,17 @@ vi.mock('@/shared/lib/ai/image-studio/server/center-utils', () => ({
   validateCenterSourceDimensions: validateCenterSourceDimensionsMock,
 }));
 
-vi.mock('@/shared/lib/ai/image-studio/server/slot-link-repository', () => ({
+vi.mock('@/features/ai/image-studio/server/slot-link-repository', () => ({
   getImageStudioSlotLinkBySourceAndRelation: getImageStudioSlotLinkBySourceAndRelationMock,
   upsertImageStudioSlotLink: upsertImageStudioSlotLinkMock,
 }));
 
-vi.mock('@/shared/lib/ai/image-studio/server/slot-repository', () => ({
+vi.mock('@/features/ai/image-studio/server/slot-repository', () => ({
   createImageStudioSlots: createImageStudioSlotsMock,
   getImageStudioSlotById: getImageStudioSlotByIdMock,
 }));
 
-vi.mock('@/shared/lib/ai/image-studio/server/source-image-utils', () => ({
+vi.mock('@/features/ai/image-studio/server/source-image-utils', () => ({
   loadSourceBufferFromSlot: loadSourceBufferFromSlotMock,
   parseImageDataUrl: parseImageDataUrlMock,
 }));

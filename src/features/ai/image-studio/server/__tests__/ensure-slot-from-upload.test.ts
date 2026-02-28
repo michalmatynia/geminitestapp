@@ -3,8 +3,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   clearEnsureImageStudioSlotFromUploadInFlightStateForTests,
   ensureImageStudioSlotFromUploadedAsset,
-} from '@/shared/lib/ai/image-studio/server/ensure-slot-from-upload';
-import type { ImageStudioSlotRecord } from '@/shared/lib/ai/image-studio/server/slot-repository';
+} from '@/features/ai/image-studio/server/ensure-slot-from-upload';
+import type { ImageStudioSlotRecord } from '@/features/ai/image-studio/server/slot-repository';
 
 const makeSlot = (overrides: Partial<ImageStudioSlotRecord> = {}): ImageStudioSlotRecord => ({
   id: overrides.id ?? 'slot-1',

@@ -14,8 +14,8 @@ import {
   LogCapture,
   findProductListingByIdAcrossProviders,
   findProductListingByProductAndConnectionAcrossProviders,
-} from '@/shared/lib/integrations/server';
-import { resolveBaseConnectionToken } from '@/shared/lib/integrations/services/base-token-resolver';
+} from '@/features/integrations/server';
+import { resolveBaseConnectionToken } from '@/features/integrations/services/base-token-resolver';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { parseJsonBody } from '@/features/products/server';
 import { getProductRepository } from '@/features/products/server';

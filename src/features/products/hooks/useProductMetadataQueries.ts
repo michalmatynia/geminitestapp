@@ -199,9 +199,13 @@ export function useParameters(catalogId?: string): ListQuery<ProductParameter> {
     queryKey,
     queryFn: async (): Promise<ProductParameter[]> => {
       if (!catalogId) return [];
-      return await api.get<ProductParameter[]>(
-        `/api/products/parameters?catalogId=${encodeURIComponent(catalogId)}`
-      );
+      return await api.get<ProductParameter[]>('/api/products/parameters', {
+        params: {
+          catalogId,
+          fresh: 1,
+        },
+        cache: 'no-store',
+      });
     },
     enabled: Boolean(catalogId),
     meta: {
@@ -242,9 +246,13 @@ export function useMultiParameters(catalogIds: string[]): UseQueryResult<Product
     queries: catalogIds.map((catalogId) => ({
       queryKey: normalizeQueryKey(productMetadataKeys.parameters(catalogId)),
       queryFn: async (): Promise<ProductParameter[]> =>
-        await api.get<ProductParameter[]>(
-          `/api/products/parameters?catalogId=${encodeURIComponent(catalogId)}`
-        ),
+        await api.get<ProductParameter[]>('/api/products/parameters', {
+          params: {
+            catalogId,
+            fresh: 1,
+          },
+          cache: 'no-store',
+        }),
     })),
   });
 }

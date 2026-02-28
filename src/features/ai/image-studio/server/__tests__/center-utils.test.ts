@@ -12,7 +12,7 @@ import {
   normalizeCenterLayoutConfig,
   validateCenterOutputDimensions,
   validateCenterSourceDimensions,
-} from '@/shared/lib/ai/image-studio/server/center-utils';
+} from '@/features/ai/image-studio/server/center-utils';
 
 describe('center-utils', () => {
   it('normalizes object bounds values for deterministic fingerprints', () => {

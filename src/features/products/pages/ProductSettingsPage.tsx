@@ -8,7 +8,7 @@ import {
   useInternationalizationContext,
 } from '@/shared/lib/internationalization';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { ProductSyncSettings } from '@/shared/lib/product-sync/components/ProductSyncSettings';
+import { ProductSyncSettings } from '@/features/product-sync/components/ProductSyncSettings';
 import { ParametersSettings } from '@/features/products/components/constructor/ParametersSettings';
 import { CatalogsSettings } from '@/features/products/components/settings/catalogs/CatalogsSettings';
 import { CategoriesSettings } from '@/features/products/components/settings/CategoriesSettings';

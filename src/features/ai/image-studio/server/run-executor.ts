@@ -14,20 +14,20 @@ import {
   type ImageStudioCenterDetectionMode,
   type ImageStudioCenterMode,
   type ImageStudioCenterObjectBounds,
-} from '@/features/ai/image-studio/contracts/center';
+} from '@/shared/contracts/image-studio';
 import {
   centerAndScaleObjectByLayout,
   centerObjectByAlpha,
   normalizeCenterLayoutConfig,
   validateCenterOutputDimensions,
   validateCenterSourceDimensions,
-} from '@/shared/lib/ai/image-studio/server/center-utils';
-import { getImageModelCapabilities } from '@/shared/lib/ai/image-studio/utils/image-models';
+} from '@/features/ai/image-studio/server/center-utils';
+import { getImageModelCapabilities } from '@/features/ai/image-studio/utils/image-models';
 import {
   IMAGE_STUDIO_OPENAI_API_KEY_KEY,
   parseImageStudioSettings,
-} from '@/shared/lib/ai/image-studio/utils/studio-settings';
-import { getImageFileRepository } from '@/shared/lib/files/services/image-file-repository';
+} from '@/features/ai/image-studio/utils/studio-settings';
+import { getImageFileRepository } from '@/features/files/services/image-file-repository';
 import { getSettingValue } from '@/shared/lib/products/services/aiDescriptionService';
 import type { ImageFileRecord } from '@/shared/contracts/files';
 import { badRequestError, configurationError, operationFailedError } from '@/shared/errors/app-error';

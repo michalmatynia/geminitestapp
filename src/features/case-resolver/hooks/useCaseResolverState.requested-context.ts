@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
-import type { SettingsStoreValue } from '@/shared/providers/SettingsStoreProvider';
 
 import type { CaseResolverRequestedCaseIssue, CaseResolverRequestedCaseStatus } from '../types';
 import {
-  fetchCaseResolverWorkspaceSnapshot,
+  fetchCaseResolverWorkspaceRecord,
   getCaseResolverWorkspaceRevision,
   logCaseResolverWorkspaceEvent,
 } from '../workspace-persistence';
@@ -95,7 +94,6 @@ export function useCaseResolverStateRequestedContext({
   handledRequestedFileIdRef,
   syncPersistedWorkspaceTracking,
   clearQueuedWorkspacePersistMutation,
-  settingsStoreRef,
 }: {
   requestedFileId: string | null;
   workspace: CaseResolverWorkspace;
@@ -105,7 +103,6 @@ export function useCaseResolverStateRequestedContext({
   handledRequestedFileIdRef: React.MutableRefObject<string | null>;
   syncPersistedWorkspaceTracking: (workspace: CaseResolverWorkspace) => void;
   clearQueuedWorkspacePersistMutation: () => void;
-  settingsStoreRef: React.MutableRefObject<SettingsStoreValue>;
 }): UseCaseResolverRequestedContextValue {
   const initialRequestedContextRuntimeState = useMemo(
     (): CaseResolverRuntimeRequestedContextSlice =>
@@ -425,7 +422,7 @@ export function useCaseResolverStateRequestedContext({
     });
 
     void (async (): Promise<void> => {
-      const refreshedWorkspace = await fetchCaseResolverWorkspaceSnapshot(
+      const refreshedWorkspace = await fetchCaseResolverWorkspaceRecord(
         'case_view_requested_context_resolve'
       );
       if (!isMountedRef.current) return;
@@ -509,7 +506,6 @@ export function useCaseResolverStateRequestedContext({
           clearQueuedWorkspacePersistMutation();
           return refreshedWorkspace;
         });
-        settingsStoreRef.current.refetch();
         requestedWorkspaceRefreshFileIdRef.current = null;
         requestedWorkspaceMissingFileIdRef.current = null;
         handledRequestedFileIdRef.current = null;
@@ -551,7 +547,6 @@ export function useCaseResolverStateRequestedContext({
     requestedContextRetryTick,
     requestedFileId,
     setWorkspace,
-    settingsStoreRef,
     syncPersistedWorkspaceTracking,
     workspaceRef,
   ]);

@@ -5,7 +5,7 @@ import React, { useEffect, useState } from 'react';
 import {
   DEFAULT_TRADERA_SYSTEM_SETTINGS,
   TRADERA_SETTINGS_KEYS,
-} from '@/shared/lib/integrations/constants/tradera';
+} from '@/features/integrations/constants/tradera';
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import {
   Input,

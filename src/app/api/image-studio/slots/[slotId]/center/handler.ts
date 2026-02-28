@@ -28,19 +28,19 @@ import {
   normalizeCenterLayoutConfig,
   validateCenterOutputDimensions,
   validateCenterSourceDimensions,
-} from '@/shared/lib/ai/image-studio/server/center-utils';
+} from '@/features/ai/image-studio/server/center-utils';
 import {
   getImageStudioSlotLinkBySourceAndRelation,
   upsertImageStudioSlotLink,
-} from '@/shared/lib/ai/image-studio/server/slot-link-repository';
+} from '@/features/ai/image-studio/server/slot-link-repository';
 import {
   createImageStudioSlots,
   getImageStudioSlotById,
-} from '@/shared/lib/ai/image-studio/server/slot-repository';
+} from '@/features/ai/image-studio/server/slot-repository';
 import {
   loadSourceBufferFromSlot,
   parseImageDataUrl,
-} from '@/shared/lib/ai/image-studio/server/source-image-utils';
+} from '@/features/ai/image-studio/server/source-image-utils';
 import { getImageFileRepository } from '@/features/files/server';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';

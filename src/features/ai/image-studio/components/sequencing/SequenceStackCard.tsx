@@ -11,7 +11,7 @@ import {
   IMAGE_STUDIO_SEQUENCE_OPERATIONS,
   type ImageStudioSequenceOperation,
   type ImageStudioSequenceStep,
-} from '@/shared/lib/ai/image-studio/utils/studio-settings';
+} from '@/features/ai/image-studio/utils/studio-settings';
 
 type SequenceStackCardProps = {
   editableSequenceSteps: ImageStudioSequenceStep[];

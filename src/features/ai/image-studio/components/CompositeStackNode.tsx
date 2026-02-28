@@ -8,7 +8,7 @@ import {
   NODE_WIDTH,
   COMPOSITE_LAYER_ROW_HEIGHT,
   getCompositeNodeHeight,
-} from '@/shared/lib/ai/image-studio/utils/version-graph';
+} from '@/features/ai/image-studio/utils/version-graph';
 
 import type { VersionNode } from '../context/VersionGraphContext';
 

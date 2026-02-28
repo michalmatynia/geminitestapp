@@ -38,7 +38,7 @@ import { useToast } from '@/shared/ui';
 import {
   loadImageStudioActiveProjectLocal,
   saveImageStudioActiveProjectLocal,
-} from '@/shared/lib/ai/image-studio/utils/project-session';
+} from '@/features/ai/image-studio/utils/project-session';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 

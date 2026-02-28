@@ -85,50 +85,19 @@ export const shouldAdoptIncomingWorkspace = ({
 
 export const resolvePreferredCaseResolverWorkspace = ({
   storeWorkspace,
-  heavyWorkspace,
   hasStoreWorkspace,
-  hasHeavyWorkspace,
-  requestedFileId,
 }: {
   storeWorkspace: CaseResolverWorkspace;
-  heavyWorkspace: CaseResolverWorkspace;
+  heavyWorkspace?: CaseResolverWorkspace;
   hasStoreWorkspace: boolean;
-  hasHeavyWorkspace: boolean;
-  requestedFileId: string | null;
+  hasHeavyWorkspace?: boolean;
+  requestedFileId?: string | null;
 }): CaseResolverWorkspaceHydrationSourceSelection => {
-  if (hasStoreWorkspace && hasHeavyWorkspace) {
-    const decision = shouldAdoptIncomingWorkspace({
-      current: storeWorkspace,
-      incoming: heavyWorkspace,
-      requestedFileId,
-    });
-    if (decision.adopt) {
-      return {
-        workspace: heavyWorkspace,
-        source: 'heavy',
-        reason: decision.reason,
-      };
-    }
-    return {
-      workspace: storeWorkspace,
-      source: 'store',
-      reason: 'store_preferred',
-    };
-  }
-
   if (hasStoreWorkspace) {
     return {
       workspace: storeWorkspace,
       source: 'store',
       reason: 'store_only',
-    };
-  }
-
-  if (hasHeavyWorkspace) {
-    return {
-      workspace: heavyWorkspace,
-      source: 'heavy',
-      reason: 'heavy_only',
     };
   }
 

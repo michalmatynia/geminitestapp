@@ -9,7 +9,7 @@ import {
   resolveObjectLayoutPresetId,
   resolveObjectLayoutPresetOptionValue,
   saveObjectLayoutCustomPreset,
-} from '@/shared/lib/ai/image-studio/utils/object-layout-presets';
+} from '@/features/ai/image-studio/utils/object-layout-presets';
 
 describe('object layout presets', () => {
   beforeEach(() => {

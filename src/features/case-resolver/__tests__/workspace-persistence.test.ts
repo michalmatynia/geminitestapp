@@ -193,6 +193,25 @@ describe('case-resolver workspace persistence', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  it('does not fall back to full scope reads when keyed workspace fetches fail', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(toJsonResponse(500, { error: 'fresh key failed' }))
+      .mockResolvedValueOnce(toJsonResponse(500, { error: 'cached key failed' }));
+    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+
+    const result = await fetchCaseResolverWorkspaceSnapshot('test_source');
+
+    expect(result).toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls[0]?.[0]).toBe(
+      `/api/settings?scope=light&fresh=1&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`
+    );
+    expect(fetchMock.mock.calls[1]?.[0]).toBe(
+      `/api/settings?scope=light&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`
+    );
+  });
+
   it('fetches workspace metadata via key meta endpoint', async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       toJsonResponse(200, {

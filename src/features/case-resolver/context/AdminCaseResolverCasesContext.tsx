@@ -27,7 +27,8 @@ import {
   parseCaseResolverWorkspace,
 } from '../settings';
 import {
-  fetchCaseResolverWorkspaceSnapshot,
+  fetchCaseResolverWorkspaceMetadata,
+  fetchCaseResolverWorkspaceRecord,
   getCaseResolverWorkspaceRevision,
   logCaseResolverWorkspaceEvent,
 } from '../workspace-persistence';
@@ -288,20 +289,45 @@ export function AdminCaseResolverCasesProvider({
   }, [setHeldCaseId]);
 
   const handleRefreshWorkspace = useCallback(async (): Promise<void> => {
-    settingsStoreRefetchRef.current();
-    const snapshot = await fetchCaseResolverWorkspaceSnapshot('cases_page_manual_refresh');
-    if (snapshot) {
-      setWorkspace(snapshot);
-      toast('Workspace refreshed.', { variant: 'success' });
+    const currentRevision = getCaseResolverWorkspaceRevision(workspace);
+    const metadata = await fetchCaseResolverWorkspaceMetadata('cases_page_manual_refresh');
+    const shouldFetchWorkspace =
+      metadata === null
+        ? true
+        : metadata.exists !== false && metadata.revision >= currentRevision;
+    if (!shouldFetchWorkspace) {
+      toast('Workspace already up to date.', { variant: 'success' });
+      return;
     }
-  }, [setWorkspace, toast]);
+    const snapshot = await fetchCaseResolverWorkspaceRecord('cases_page_manual_refresh');
+    if (!snapshot) return;
+    setWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace => {
+      const currentStateRevision = getCaseResolverWorkspaceRevision(current);
+      const nextRevision = getCaseResolverWorkspaceRevision(snapshot);
+      if (nextRevision <= currentStateRevision) return current;
+      lastPersistedWorkspaceValueRef.current = JSON.stringify(snapshot);
+      lastPersistedWorkspaceRevisionRef.current = nextRevision;
+      return snapshot;
+    });
+    toast('Workspace refreshed.', { variant: 'success' });
+  }, [setWorkspace, toast, workspace]);
 
   useEffect(() => {
     if (pathname !== '/admin/case-resolver/cases') return;
-    settingsStoreRefetchRef.current();
     let isCancelled = false;
     void (async (): Promise<void> => {
-      const latestWorkspace = await fetchCaseResolverWorkspaceSnapshot('cases_page_route_sync');
+      const inMemoryRevision = Math.max(
+        getCaseResolverWorkspaceRevision(parsedWorkspace),
+        lastPersistedWorkspaceRevisionRef.current
+      );
+      const metadata = await fetchCaseResolverWorkspaceMetadata('cases_page_route_sync');
+      if (isCancelled) return;
+      const shouldFetchWorkspace =
+        metadata === null
+          ? !canHydrateWorkspaceFromStore
+          : metadata.exists !== false && metadata.revision > inMemoryRevision;
+      if (!shouldFetchWorkspace) return;
+      const latestWorkspace = await fetchCaseResolverWorkspaceRecord('cases_page_route_sync');
       if (!latestWorkspace || isCancelled) return;
       const latestRevision = getCaseResolverWorkspaceRevision(latestWorkspace);
       setWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace => {
@@ -320,7 +346,7 @@ export function AdminCaseResolverCasesProvider({
     return (): void => {
       isCancelled = true;
     };
-  }, [pathname, setWorkspace]);
+  }, [canHydrateWorkspaceFromStore, lastPersistedWorkspaceRevisionRef, parsedWorkspace, pathname, setWorkspace]);
 
   useEffect(() => {
     if (pathname !== '/admin/case-resolver/cases') return;

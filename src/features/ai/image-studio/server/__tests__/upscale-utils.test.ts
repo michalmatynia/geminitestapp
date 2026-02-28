@@ -10,7 +10,7 @@ import {
   resolveUpscaleOutputDimensions,
   validateUpscaleOutputDimensions,
   validateUpscaleSourceDimensions,
-} from '@/shared/lib/ai/image-studio/server/upscale-utils';
+} from '@/features/ai/image-studio/server/upscale-utils';
 
 describe('upscale-utils', () => {
   it('normalizes scale to stable precision', () => {

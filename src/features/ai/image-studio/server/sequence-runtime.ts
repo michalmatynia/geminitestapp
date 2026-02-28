@@ -7,8 +7,8 @@ import {
   type ImageStudioSequenceMaskContext,
   type ImageStudioSequenceRunRecord,
   type ImageStudioSequenceRunStatus,
-} from '@/shared/lib/ai/image-studio/server/sequence-run-repository';
-import { getImageStudioSlotById } from '@/shared/lib/ai/image-studio/server/slot-repository';
+} from '@/features/ai/image-studio/server/sequence-run-repository';
+import { getImageStudioSlotById } from '@/features/ai/image-studio/server/slot-repository';
 import {
   IMAGE_STUDIO_SETTINGS_KEY,
   getImageStudioProjectSettingsKey,
@@ -16,7 +16,7 @@ import {
   parseImageStudioSettings,
   resolveImageStudioSequenceActiveSteps,
   type ImageStudioSequenceStep,
-} from '@/shared/lib/ai/image-studio/utils/studio-settings';
+} from '@/features/ai/image-studio/utils/studio-settings';
 import {
   enqueueImageStudioSequenceJob,
   startImageStudioSequenceQueue,

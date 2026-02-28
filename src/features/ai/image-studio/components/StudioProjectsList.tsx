@@ -6,7 +6,7 @@ import React, { useMemo, useCallback } from 'react';
 import {
   defaultImageStudioSettings,
   getImageStudioProjectSettingsKey,
-} from '@/shared/lib/ai/image-studio/studio-settings';
+} from '@/features/ai/image-studio/studio-settings';
 import type { ImageStudioProjectRecord } from '@/shared/contracts/image-studio';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import {
@@ -26,7 +26,7 @@ import {
   IMAGE_STUDIO_CANVAS_TEMPLATES_KEY,
   parseImageStudioCanvasTemplates,
   type ImageStudioCanvasTemplate,
-} from '@/shared/lib/ai/image-studio/utils/canvas-templates';
+} from '@/features/ai/image-studio/utils/canvas-templates';
 import {
   IMAGE_STUDIO_PROJECT_LOCKS_KEY,
   isImageStudioProjectLocked,
@@ -34,7 +34,7 @@ import {
   parseImageStudioProjectLocks,
   serializeImageStudioProjectLocks,
   setImageStudioProjectDeletionLock,
-} from '@/shared/lib/ai/image-studio/utils/project-locks';
+} from '@/features/ai/image-studio/utils/project-locks';
 
 import type { ColumnDef } from '@tanstack/react-table';
 

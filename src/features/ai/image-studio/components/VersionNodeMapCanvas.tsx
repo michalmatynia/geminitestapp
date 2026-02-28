@@ -7,15 +7,15 @@ import type { CompositeLayerConfig } from '@/shared/contracts/image-studio';
 import { CompositeStackNode } from './CompositeStackNode';
 import { useVersionNodeMapContext } from './VersionNodeMapContext';
 import { useSettingsState } from '../context/SettingsContext';
-import { readMeta } from '@/shared/lib/ai/image-studio/utils/metadata';
-import { getImageStudioDocTooltip } from '@/shared/lib/ai/image-studio/utils/studio-docs';
+import { readMeta } from '@/features/ai/image-studio/utils/metadata';
+import { getImageStudioDocTooltip } from '@/features/ai/image-studio/utils/studio-docs';
 import {
   CONTENT_OFFSET_X,
   CONTENT_OFFSET_Y,
   NODE_HEIGHT,
   NODE_WIDTH,
   getCompositeNodeHeight,
-} from '@/shared/lib/ai/image-studio/utils/version-graph';
+} from '@/features/ai/image-studio/utils/version-graph';
 
 import type { VersionNode } from '../context/VersionGraphContext';
 

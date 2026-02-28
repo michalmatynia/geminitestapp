@@ -4,7 +4,7 @@ import React from 'react';
 import { Button, Card } from '@/shared/ui';
 import { ImageStudioAnalysisSummaryChip } from '../../ImageStudioAnalysisSummaryChip';
 import type { AnalysisResult } from '../analysis-types';
-import type { ImageStudioAnalysisPlanSnapshot } from '@/shared/lib/ai/image-studio/utils/analysis-bridge';
+import type { ImageStudioAnalysisPlanSnapshot } from '@/features/ai/image-studio/utils/analysis-bridge';
 
 export interface AnalysisResultSectionProps {
   result: AnalysisResult | null;

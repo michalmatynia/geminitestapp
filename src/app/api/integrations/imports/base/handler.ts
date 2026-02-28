@@ -15,8 +15,8 @@ import {
   mapBaseProduct,
   extractBaseImageUrls,
   startBaseImportRunResponse,
-} from '@/shared/lib/integrations/server';
-import type { BaseProductRecord } from '@/shared/lib/integrations/server';
+} from '@/features/integrations/server';
+import type { BaseProductRecord } from '@/features/integrations/server';
 import {
   getCatalogRepository,
   getProductDataProvider,

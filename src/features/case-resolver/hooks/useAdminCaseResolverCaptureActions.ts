@@ -4,9 +4,9 @@ import type {
   CaseResolverCaptureDocumentDateAction,
   CaseResolverCaptureProposal,
   CaseResolverCaptureProposalState,
-} from '@/shared/lib/case-resolver-capture/proposals';
-import { stripAcceptedCaptureContentFromTextWithReport } from '@/shared/lib/case-resolver-capture/proposals';
-import { type CaseResolverCaptureAction } from '@/shared/lib/case-resolver-capture/settings';
+} from '@/features/case-resolver-capture/proposals';
+import { stripAcceptedCaptureContentFromTextWithReport } from '@/features/case-resolver-capture/proposals';
+import { type CaseResolverCaptureAction } from '@/features/case-resolver-capture/settings';
 import { deriveDocumentContentSync, toStorageDocumentValue } from '@/shared/lib/document-editor';
 import type { FilemakerDatabase } from '@/shared/contracts/filemaker';
 import {
@@ -30,7 +30,7 @@ import {
   buildFileEditDraft,
   createCaseResolverHistorySnapshotEntry,
 } from '@/features/case-resolver/utils/caseResolverUtils';
-import { upsertFilemakerCaptureCandidate } from '@/shared/lib/case-resolver-capture/filemaker-upsert';
+import { upsertFilemakerCaptureCandidate } from '@/features/case-resolver-capture/filemaker-upsert';
 import { resolveCaptureMappingApplyGuardReason } from '../capture-mapping-apply-guard';
 import { type CaseResolverFileEditDraft } from '../types';
 

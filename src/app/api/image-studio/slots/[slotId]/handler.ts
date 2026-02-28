@@ -4,7 +4,7 @@ import { z } from 'zod';
 import {
   deleteImageStudioSlotCascade,
   updateImageStudioSlot,
-} from '@/shared/lib/ai/image-studio/server/slot-repository';
+} from '@/features/ai/image-studio/server/slot-repository';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 

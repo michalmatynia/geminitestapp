@@ -63,7 +63,7 @@ vi.mock('fs/promises', () => ({
   readFile: readFileMock,
 }));
 
-vi.mock('@/shared/lib/ai/image-studio/server/upscale-utils', () => ({
+vi.mock('@/features/ai/image-studio/server/upscale-utils', () => ({
   buildUpscaleFingerprint: buildUpscaleFingerprintMock,
   buildUpscaleFingerprintRelationType: buildUpscaleFingerprintRelationTypeMock,
   buildUpscaleRequestRelationType: buildUpscaleRequestRelationTypeMock,
@@ -74,12 +74,12 @@ vi.mock('@/shared/lib/ai/image-studio/server/upscale-utils', () => ({
   validateUpscaleSourceDimensions: validateUpscaleSourceDimensionsMock,
 }));
 
-vi.mock('@/shared/lib/ai/image-studio/server/slot-link-repository', () => ({
+vi.mock('@/features/ai/image-studio/server/slot-link-repository', () => ({
   getImageStudioSlotLinkBySourceAndRelation: getImageStudioSlotLinkBySourceAndRelationMock,
   upsertImageStudioSlotLink: upsertImageStudioSlotLinkMock,
 }));
 
-vi.mock('@/shared/lib/ai/image-studio/server/slot-repository', () => ({
+vi.mock('@/features/ai/image-studio/server/slot-repository', () => ({
   createImageStudioSlots: createImageStudioSlotsMock,
   getImageStudioSlotById: getImageStudioSlotByIdMock,
 }));

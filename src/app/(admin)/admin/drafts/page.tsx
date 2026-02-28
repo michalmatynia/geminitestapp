@@ -1,6 +1,6 @@
 import { JSX } from 'react';
 
-import { AdminDraftsPage } from '@/shared/lib/drafter/public';
+import { AdminDraftsPage } from '@/features/drafter/public';
 
 export default function Page(): JSX.Element {
   return <AdminDraftsPage />;

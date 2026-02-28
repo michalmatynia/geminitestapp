@@ -6,7 +6,7 @@ import { TreeCaret, TreeContextMenu, TreeRow } from '@/shared/ui';
 import { cn, type MasterTreeNode } from '@/shared/utils';
 import { canNestTreeNodeV2 } from '@/shared/utils';
 import { useSlotTreeContext } from './SlotTreeContext';
-import { fromFolderMasterNodeId } from '@/shared/lib/ai/image-studio/utils/master-folder-tree';
+import { fromFolderMasterNodeId } from '@/features/ai/image-studio/utils/master-folder-tree';
 
 export interface FolderNodeItemProps {
   node: MasterTreeNode;

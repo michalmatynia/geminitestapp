@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { ImageStudioSlotRecord } from '@/shared/lib/ai/image-studio/server/slot-repository';
-import { deleteImageStudioVariant } from '@/shared/lib/ai/image-studio/server/variant-delete';
+import type { ImageStudioSlotRecord } from '@/features/ai/image-studio/server/slot-repository';
+import { deleteImageStudioVariant } from '@/features/ai/image-studio/server/variant-delete';
 
 const makeSlot = (overrides: Partial<ImageStudioSlotRecord> = {}): ImageStudioSlotRecord => ({
   id: overrides.id ?? 'slot-1',

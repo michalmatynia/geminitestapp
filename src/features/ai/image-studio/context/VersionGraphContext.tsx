@@ -14,16 +14,16 @@ import {
   preloadVersionGraphImage,
   remapMetadataForDetachedCopy,
 } from './version-graph-context-utils';
-import { getImageStudioSlotImageSrc } from '@/shared/lib/ai/image-studio/utils/image-src';
-import { readMeta } from '@/shared/lib/ai/image-studio/utils/metadata';
+import { getImageStudioSlotImageSrc } from '@/features/ai/image-studio/utils/image-src';
+import { readMeta } from '@/features/ai/image-studio/utils/metadata';
 import {
   computeVersionGraph,
   computeTimelineLayout,
   type VersionNode,
   type VersionEdge,
   type LayoutMode,
-} from '@/shared/lib/ai/image-studio/utils/version-graph';
-import { resolveScopedVersionGraphSlots } from '@/shared/lib/ai/image-studio/utils/version-graph-scope';
+} from '@/features/ai/image-studio/utils/version-graph';
+import { resolveScopedVersionGraphSlots } from '@/features/ai/image-studio/utils/version-graph-scope';
 
 import type {
   VersionGraphActions,

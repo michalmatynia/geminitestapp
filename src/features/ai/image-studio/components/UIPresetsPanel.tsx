@@ -11,7 +11,7 @@ import {
   IMAGE_STUDIO_PROMPT_LIBRARY_KEY,
   parseImageStudioPromptLibrary,
   type ImageStudioPromptEntry,
-} from '@/shared/lib/ai/image-studio/utils/prompt-library';
+} from '@/features/ai/image-studio/utils/prompt-library';
 
 const CUSTOM_OPTION_VALUE = '__custom__';
 

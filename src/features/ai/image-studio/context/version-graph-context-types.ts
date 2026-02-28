@@ -1,4 +1,4 @@
-import type { LayoutMode, VersionEdge, VersionNode } from '@/shared/lib/ai/image-studio/utils/version-graph';
+import type { LayoutMode, VersionEdge, VersionNode } from '@/features/ai/image-studio/utils/version-graph';
 
 export type VersionGraphFilterType = 'base' | 'generation' | 'merge' | 'composite';
 

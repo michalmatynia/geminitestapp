@@ -5,7 +5,7 @@ import {
   loadImageStudioAnalysisApplyIntent,
   saveImageStudioAnalysisApplyIntent,
   saveImageStudioAnalysisPlanSnapshot,
-} from '@/shared/lib/ai/image-studio/utils/analysis-bridge';
+} from '@/features/ai/image-studio/utils/analysis-bridge';
 
 import { useGenerationToolbarEffects } from '../useGenerationToolbarEffects';
 import { type GenerationToolbarState } from '../GenerationToolbar.types';

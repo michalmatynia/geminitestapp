@@ -19,8 +19,8 @@ type TraderaQueueHealthResponse = {
 export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   initializeQueues();
   await Promise.all([
-    import('@/shared/lib/integrations/workers/traderaListingQueue'),
-    import('@/shared/lib/integrations/workers/traderaRelistSchedulerQueue'),
+    import('@/features/integrations/workers/traderaListingQueue'),
+    import('@/features/integrations/workers/traderaRelistSchedulerQueue'),
   ]);
 
   const redisAvailable = isRedisAvailable();

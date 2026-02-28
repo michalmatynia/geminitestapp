@@ -8,7 +8,7 @@ import {
   type ImageStudioCropMode,
   type ImageStudioCropPoint,
   type ImageStudioCropRect,
-} from '@/features/ai/image-studio/contracts/crop';
+} from '@/shared/contracts/image-studio';
 
 import type { Region } from 'sharp';
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getIntegrationsWithConnections } from '@/shared/lib/integrations/server';
+import { getIntegrationsWithConnections } from '@/features/integrations/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 /**

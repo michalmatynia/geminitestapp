@@ -17,7 +17,7 @@ import { api } from '@/shared/lib/api-client';
 
 import { useProjectsState } from '../context/ProjectsContext';
 import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
-import { isLikelyImageStudioErrorText } from '@/shared/lib/ai/image-studio/utils/image-src';
+import { isLikelyImageStudioErrorText } from '@/features/ai/image-studio/utils/image-src';
 
 import {
   OBJECT_SLOT_INDEX,

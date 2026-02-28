@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   listImageStudioSequenceRuns,
   type ImageStudioSequenceRunStatus,
-} from '@/shared/lib/ai/image-studio/server/sequence-run-repository';
+} from '@/features/ai/image-studio/server/sequence-run-repository';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const RUN_STATUSES = new Set<ImageStudioSequenceRunStatus>([

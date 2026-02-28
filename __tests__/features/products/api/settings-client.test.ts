@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { getCategories, getCategoriesFlat } from '@/features/products/api/settings';
+import { getCategories, getCategoriesFlat, getParameters } from '@/features/products/api/settings';
 import { api } from '@/shared/lib/api-client';
 
 vi.mock('@/shared/lib/api-client', () => ({
@@ -38,6 +38,23 @@ describe('product settings api client', () => {
     expect(api.get).toHaveBeenNthCalledWith(
       2,
       '/api/products/categories',
+      expect.objectContaining({
+        params: {
+          catalogId: 'catalog-1',
+          fresh: 1,
+        },
+        cache: 'no-store',
+      })
+    );
+  });
+
+  it('requests fresh parameter lists so new parameters appear in draft and product forms', async () => {
+    vi.mocked(api.get).mockResolvedValueOnce([]);
+
+    await getParameters('catalog-1');
+
+    expect(api.get).toHaveBeenCalledWith(
+      '/api/products/parameters',
       expect.objectContaining({
         params: {
           catalogId: 'catalog-1',

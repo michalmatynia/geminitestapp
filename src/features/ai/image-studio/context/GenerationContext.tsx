@@ -28,7 +28,7 @@ import { useProjectsState } from './ProjectsContext';
 import { usePromptState, usePromptActions } from './PromptContext';
 import { useSettingsState } from './SettingsContext';
 import { useSlotsState, useSlotsActions } from './SlotsContext';
-import { buildRunRequestPreview } from '@/shared/lib/ai/image-studio/utils/run-request-preview';
+import { buildRunRequestPreview } from '@/features/ai/image-studio/utils/run-request-preview';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getExternalTagRepository } from '@/shared/lib/integrations/server';
+import { getExternalTagRepository } from '@/features/integrations/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 

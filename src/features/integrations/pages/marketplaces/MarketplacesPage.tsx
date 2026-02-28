@@ -6,7 +6,7 @@ import React, { useState } from 'react';
 import { Button, SectionHeader, useToast, Card } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals/ConfirmModal';
 
-import { useSyncAllBaseImagesMutation } from '@/shared/lib/integrations/hooks/useIntegrationMutations';
+import { useSyncAllBaseImagesMutation } from '@/features/integrations/hooks/useIntegrationMutations';
 
 const marketplaces = [
   {

@@ -228,12 +228,14 @@ export interface MongoCatalogDoc {
 }
 
 export interface MongoProductParameterDoc {
-  _id?: ObjectId;
+  _id?: ObjectId | string;
   id?: string;
   catalogId?: string;
   name_en?: string;
   name_pl?: string | null;
   name_de?: string | null;
+  selectorType?: string;
+  optionLabels?: string[];
   createdAt?: Date;
   updatedAt?: Date;
 }

@@ -5,7 +5,7 @@ import path from 'node:path';
 
 import { getAuthDataProvider } from '@/shared/lib/auth/services/auth-provider';
 import { getCmsDataProvider } from '@/shared/lib/cms/services/cms-provider';
-import { getIntegrationDataProvider } from '@/shared/lib/integrations/services/integration-provider';
+import { getIntegrationDataProvider } from '@/features/integrations/services/integration-provider';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { getProductDataProvider } from '@/shared/lib/products/services/product-provider';
 import type {

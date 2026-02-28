@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { deleteImageStudioVariant } from '@/shared/lib/ai/image-studio/server/variant-delete';
+import { deleteImageStudioVariant } from '@/features/ai/image-studio/server/variant-delete';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 

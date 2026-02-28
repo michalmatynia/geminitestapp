@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { cancelImageStudioSequenceRun } from '@/shared/lib/ai/image-studio/server/sequence-runtime';
+import { cancelImageStudioSequenceRun } from '@/features/ai/image-studio/server/sequence-runtime';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 

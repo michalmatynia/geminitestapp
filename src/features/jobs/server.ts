@@ -2,7 +2,7 @@ import 'server-only';
 
 export * from '@/shared/lib/products/services/productAiService';
 export { startAgentQueue, stopAgentQueue, enqueueAgentRun } from '@/features/ai/agent-runtime/workers/agentQueue';
-export { startAiInsightsQueue } from '@/shared/lib/ai/insights/workers/aiInsightsQueue';
+export { startAiInsightsQueue } from '@/features/ai/insights/workers/aiInsightsQueue';
 export { 
   startAiPathRunQueue, 
   enqueuePathRunJob, 
@@ -26,8 +26,8 @@ export {
 export { 
   startTraderaListingQueue, 
   enqueueTraderaListingJob 
-} from '@/shared/lib/integrations/workers/traderaListingQueue';
-export { startTraderaRelistSchedulerQueue } from '@/shared/lib/integrations/workers/traderaRelistSchedulerQueue';
+} from '@/features/integrations/workers/traderaListingQueue';
+export { startTraderaRelistSchedulerQueue } from '@/features/integrations/workers/traderaRelistSchedulerQueue';
 
 export {
   getQueueHealth as getGenericQueueStatus,
@@ -41,9 +41,9 @@ export {
   getQueueStatus,
 } from '@/features/products/workers/productAiQueue';
 
-export { startProductSyncSchedulerQueue } from '@/shared/lib/product-sync/workers/productSyncSchedulerQueue';
+export { startProductSyncSchedulerQueue } from '@/features/product-sync/workers/productSyncSchedulerQueue';
 export {
   startProductSyncBackfillQueue,
   stopProductSyncBackfillQueue,
   enqueueProductSyncBackfillJob,
-} from '@/shared/lib/product-sync/workers/productSyncBackfillQueue';
+} from '@/features/product-sync/workers/productSyncBackfillQueue';

@@ -1,6 +1,6 @@
 import { JSX } from 'react';
 
-import { AllegroConnectionsPage } from '@/shared/lib/integrations/public';
+import { AllegroConnectionsPage } from '@/features/integrations/public';
 
 export default function Page(): JSX.Element {
   return <AllegroConnectionsPage />;

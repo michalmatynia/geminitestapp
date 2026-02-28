@@ -4,10 +4,10 @@ import path from 'path';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { deleteImageStudioRunsByProject } from '@/shared/lib/ai/image-studio/server/run-repository';
-import { deleteImageStudioSlotLinksForProject } from '@/shared/lib/ai/image-studio/server/slot-link-repository';
-import { deleteImageStudioSlotsByProject } from '@/shared/lib/ai/image-studio/server/slot-repository';
-import { getImageStudioProjectSettingsKey } from '@/shared/lib/ai/image-studio/studio-settings';
+import { deleteImageStudioRunsByProject } from '@/features/ai/image-studio/server/run-repository';
+import { deleteImageStudioSlotLinksForProject } from '@/features/ai/image-studio/server/slot-link-repository';
+import { deleteImageStudioSlotsByProject } from '@/features/ai/image-studio/server/slot-repository';
+import { getImageStudioProjectSettingsKey } from '@/features/ai/image-studio/studio-settings';
 import { getImageFileRepository } from '@/features/files/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError, operationFailedError } from '@/shared/errors/app-error';

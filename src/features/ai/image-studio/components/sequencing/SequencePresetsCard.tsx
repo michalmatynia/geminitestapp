@@ -7,7 +7,7 @@ import { useSettingsState, useSettingsActions } from '../../context/SettingsCont
 import {
   normalizeImageStudioSequenceSteps,
   type ImageStudioSequencePreset,
-} from '@/shared/lib/ai/image-studio/utils/studio-settings';
+} from '@/features/ai/image-studio/utils/studio-settings';
 import { PRESET_NAME_MAX_LENGTH } from './sequencing-constants';
 
 const normalizePresetIdFragment = (value: string): string =>

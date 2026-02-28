@@ -18,15 +18,15 @@ const {
   logSystemEventMock: vi.fn(),
 }));
 
-vi.mock('@/shared/lib/ai/image-studio/server/auto-scaler-utils', () => ({
+vi.mock('@/features/ai/image-studio/server/auto-scaler-utils', () => ({
   analyzeImageByAutoScalerLayout: analyzeImageByAutoScalerLayoutMock,
 }));
 
-vi.mock('@/shared/lib/ai/image-studio/server/slot-repository', () => ({
+vi.mock('@/features/ai/image-studio/server/slot-repository', () => ({
   getImageStudioSlotById: getImageStudioSlotByIdMock,
 }));
 
-vi.mock('@/shared/lib/ai/image-studio/server/source-image-utils', () => ({
+vi.mock('@/features/ai/image-studio/server/source-image-utils', () => ({
   loadSourceBufferFromSlot: loadSourceBufferFromSlotMock,
   parseImageDataUrl: parseImageDataUrlMock,
 }));

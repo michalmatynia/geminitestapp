@@ -3,7 +3,7 @@
 import React from 'react';
 
 import type { VersionNode } from '../context/VersionGraphContext';
-import type { LayoutMode } from '@/shared/lib/ai/image-studio/utils/version-graph';
+import type { LayoutMode } from '@/features/ai/image-studio/utils/version-graph';
 
 type VersionGraphControlsContextValue = {
   nodeCount: number;

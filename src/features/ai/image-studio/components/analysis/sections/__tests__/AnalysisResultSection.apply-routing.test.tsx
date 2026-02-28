@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { AnalysisResultSection } from '../AnalysisResultSection';
-import type { ImageStudioAnalysisPlanSnapshot } from '@/shared/lib/ai/image-studio/utils/analysis-bridge';
+import type { ImageStudioAnalysisPlanSnapshot } from '@/features/ai/image-studio/utils/analysis-bridge';
 
 vi.mock('@/shared/ui', () => ({
   Button: ({

@@ -12,7 +12,7 @@ import {
   type ImageStudioUpscaleMode,
   type ImageStudioUpscaleStrategy,
   type ImageStudioUpscaleSmoothingQuality,
-} from '@/features/ai/image-studio/contracts/upscale';
+} from '@/shared/contracts/image-studio';
 
 type UpscaleSourceLimitValidation = {
   ok: boolean;

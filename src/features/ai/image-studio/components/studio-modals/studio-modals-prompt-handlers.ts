@@ -9,8 +9,8 @@ import {
   type PromptExtractValidationIssue,
   type UiExtractorSuggestion,
 } from './prompt-extract-utils';
-import { isParamUiControl, type ParamUiControl } from '@/shared/lib/ai/image-studio/utils/param-ui';
-import { flattenParams, inferParamSpecs } from '@/shared/lib/ai/image-studio/utils/prompt-params';
+import { isParamUiControl, type ParamUiControl } from '@/features/ai/image-studio/utils/param-ui';
+import { flattenParams, inferParamSpecs } from '@/features/ai/image-studio/utils/prompt-params';
 import { type ParamSpec } from '@/shared/contracts/prompt-engine';
 
 import type { Dispatch, SetStateAction } from 'react';

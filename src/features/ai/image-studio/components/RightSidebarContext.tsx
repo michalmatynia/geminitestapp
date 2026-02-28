@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { RequestPreviewImage } from '@/shared/lib/ai/image-studio/utils/run-request-preview';
+import type { RequestPreviewImage } from '@/features/ai/image-studio/utils/run-request-preview';
 
 export interface ActionHistoryEntrySummary {
   id: string;

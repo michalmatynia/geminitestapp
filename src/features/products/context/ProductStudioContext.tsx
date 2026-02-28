@@ -20,7 +20,7 @@ import {
   studioKeys,
   useStudioProjects,
 } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
-import { getImageStudioSlotImageSrc } from '@/shared/lib/ai/image-studio/image-src';
+import { getImageStudioSlotImageSrc } from '@/features/ai/image-studio/image-src';
 import { invalidateProductsAndCounts } from '@/features/products/hooks/productCache';
 
 import type { ImageStudioSlotDto as ImageStudioSlotRecord } from '@/shared/contracts/image-studio';

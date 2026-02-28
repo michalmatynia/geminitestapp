@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import type { ImageStudioSlotRecord } from '@/features/ai/image-studio/types';
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import {
   normalizeStudioSlotId,
   resolveRenderableSlotById,
   resolveStudioSlotIdCandidates,
   slotHasRenderableImage,
-} from '@/shared/lib/ai/image-studio/utils/sequence-slot-resolution';
+} from '@/features/ai/image-studio/utils/sequence-slot-resolution';
 
 const createSlot = (overrides: Partial<ImageStudioSlotRecord> = {}): ImageStudioSlotRecord => ({
   id: 'slot-1',

@@ -8,7 +8,7 @@ import {
   CONTENT_OFFSET_Y,
   NODE_HEIGHT,
   NODE_WIDTH,
-} from '@/shared/lib/ai/image-studio/utils/version-graph';
+} from '@/features/ai/image-studio/utils/version-graph';
 
 import type { VersionEdge } from '../context/VersionGraphContext';
 

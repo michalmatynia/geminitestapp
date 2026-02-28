@@ -2,7 +2,7 @@ import 'server-only';
 
 import fs from 'fs/promises';
 
-import { getDiskPathFromPublicPath } from '@/shared/lib/files/file-uploader';
+import { getDiskPathFromPublicPath } from '@/features/files/file-uploader';
 
 type SourceSlotLike = {
   imageBase64?: string | null;

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { getIntegrationRepository } from '@/shared/lib/integrations/server';
-import { encryptSecret } from '@/shared/lib/integrations/server';
+import { getIntegrationRepository } from '@/features/integrations/server';
+import { encryptSecret } from '@/features/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';

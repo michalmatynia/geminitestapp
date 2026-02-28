@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { isTraderaIntegrationSlug } from '@/shared/lib/integrations/constants/slugs';
+import { isTraderaIntegrationSlug } from '@/features/integrations/constants/slugs';
 import {
   findProductListingByIdAcrossProviders,
   getExportDefaultConnectionId,
@@ -9,8 +9,8 @@ import {
   getProductListingRepository,
   listingExistsAcrossProviders,
   listProductListingsByProductIdAcrossProviders,
-} from '@/shared/lib/integrations/server';
-import { getIntegrationRepository } from '@/shared/lib/integrations/server';
+} from '@/features/integrations/server';
+import { getIntegrationRepository } from '@/features/integrations/server';
 import { enqueueTraderaListingJob } from '@/features/jobs/server';
 import { getProductRepository } from '@/features/products/server';
 import { parseJsonBody } from '@/features/products/server';

@@ -1,6 +1,6 @@
 import { JSX } from 'react';
 
-import { TraderaSettingsPage } from '@/shared/lib/integrations/public';
+import { TraderaSettingsPage } from '@/features/integrations/public';
 
 export const dynamic = 'force-dynamic';
 

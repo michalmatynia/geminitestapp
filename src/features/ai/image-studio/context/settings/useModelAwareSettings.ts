@@ -5,9 +5,9 @@ import {
   getImageModelCapabilities,
   isGpt52ImageModel,
   uniqueSortedModelIds,
-} from '@/shared/lib/ai/image-studio/utils/image-models';
-import { normalizeImageStudioModelPresets } from '@/shared/lib/ai/image-studio/utils/studio-settings';
-import type { ImageStudioSettings } from '@/shared/lib/ai/image-studio/utils/studio-settings';
+} from '@/features/ai/image-studio/utils/image-models';
+import { normalizeImageStudioModelPresets } from '@/features/ai/image-studio/utils/studio-settings';
+import type { ImageStudioSettings } from '@/features/ai/image-studio/utils/studio-settings';
 import type { UseQueryResult } from '@tanstack/react-query';
 
 export function useModelAwareSettings({

@@ -57,8 +57,8 @@ import { usePromptActions, usePromptState } from '../../context/PromptContext';
 import { useSettingsState } from '../../context/SettingsContext';
 import { useSlotsActions, useSlotsState } from '../../context/SlotsContext';
 import { studioKeys } from '../../hooks/useImageStudioQueries';
-import { type ParamUiControl } from '@/shared/lib/ai/image-studio/utils/param-ui';
-import { type ParamSpec, flattenParams } from '@/shared/lib/ai/image-studio/utils/prompt-params';
+import { type ParamUiControl } from '@/features/ai/image-studio/utils/param-ui';
+import { type ParamSpec, flattenParams } from '@/features/ai/image-studio/utils/prompt-params';
 
 import type {
   CompositeTabImageViewModel as CompositeTabImage,
@@ -68,7 +68,7 @@ import type {
   InlinePreviewSourceViewModel,
   LinkedMaskSlotViewModel,
 } from './slot-inline-edit-tab-types';
-import type { ImageStudioSettings } from '@/shared/lib/ai/image-studio/utils/studio-settings';
+import type { ImageStudioSettings } from '@/features/ai/image-studio/utils/studio-settings';
 
 export type EditCardTab = 'card' | 'generations' | 'environment' | 'masks' | 'composites';
 

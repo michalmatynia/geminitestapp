@@ -8,12 +8,12 @@ import {
   type ImageStudioAnalysisMode,
   type ImageStudioAnalysisRequest,
 } from '@/features/ai/image-studio/contracts/analysis';
-import { analyzeImageByAutoScalerLayout } from '@/shared/lib/ai/image-studio/server/auto-scaler-utils';
-import { getImageStudioSlotById } from '@/shared/lib/ai/image-studio/server/slot-repository';
+import { analyzeImageByAutoScalerLayout } from '@/features/ai/image-studio/server/auto-scaler-utils';
+import { getImageStudioSlotById } from '@/features/ai/image-studio/server/slot-repository';
 import {
   loadSourceBufferFromSlot,
   parseImageDataUrl,
-} from '@/shared/lib/ai/image-studio/server/source-image-utils';
+} from '@/features/ai/image-studio/server/source-image-utils';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, isAppError, notFoundError } from '@/shared/errors/app-error';

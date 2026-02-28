@@ -17,7 +17,7 @@ import {
   type ImageStudioCenterMode,
   type ImageStudioCenterObjectBounds,
   type ImageStudioCenterShadowPolicy,
-} from '@/features/ai/image-studio/contracts/center';
+} from '@/shared/contracts/image-studio';
 
 type CenterSourceLimitValidation = {
   ok: boolean;

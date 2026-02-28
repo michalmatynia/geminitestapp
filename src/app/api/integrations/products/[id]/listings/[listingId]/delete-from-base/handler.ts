@@ -3,10 +3,10 @@ import { z } from 'zod';
 
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import { auth } from '@/features/auth/server';
-import { findProductListingByIdAcrossProviders } from '@/shared/lib/integrations/server';
-import { getIntegrationRepository } from '@/shared/lib/integrations/server';
-import { deleteBaseProduct } from '@/shared/lib/integrations/server';
-import { decryptSecret } from '@/shared/lib/integrations/server';
+import { findProductListingByIdAcrossProviders } from '@/features/integrations/server';
+import { getIntegrationRepository } from '@/features/integrations/server';
+import { deleteBaseProduct } from '@/features/integrations/server';
+import { decryptSecret } from '@/features/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';

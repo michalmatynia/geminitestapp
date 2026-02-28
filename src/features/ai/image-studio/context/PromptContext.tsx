@@ -24,11 +24,11 @@ import { useSettingsMap } from '@/shared/hooks/use-settings';
 import { useToast } from '@/shared/ui';
 
 import { useProjectsState } from './ProjectsContext';
-import { type ParamUiControl } from '@/shared/lib/ai/image-studio/utils/param-ui';
+import { type ParamUiControl } from '@/features/ai/image-studio/utils/param-ui';
 import {
   getImageStudioProjectSessionKey,
   resolveImageStudioProjectSession,
-} from '@/shared/lib/ai/image-studio/utils/project-session';
+} from '@/features/ai/image-studio/utils/project-session';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 

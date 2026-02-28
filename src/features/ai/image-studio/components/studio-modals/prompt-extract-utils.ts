@@ -1,5 +1,5 @@
-import { recommendParamUiControl, type ParamUiControl } from '@/shared/lib/ai/image-studio/utils/param-ui';
-import { flattenParams } from '@/shared/lib/ai/image-studio/utils/prompt-params';
+import { recommendParamUiControl, type ParamUiControl } from '@/features/ai/image-studio/utils/param-ui';
+import { flattenParams } from '@/features/ai/image-studio/utils/prompt-params';
 import { type ParamSpec } from '@/shared/contracts/prompt-engine';
 
 export type { ParamUiControl };

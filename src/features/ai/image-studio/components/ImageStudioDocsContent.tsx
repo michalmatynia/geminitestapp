@@ -18,9 +18,9 @@ import {
   IMAGE_STUDIO_OBJECT_LAYOUT_DOC_KEYS,
   IMAGE_STUDIO_SEQUENCE_DOC_KEYS,
   IMAGE_STUDIO_VERSION_GRAPH_DOC_KEYS,
-} from '@/shared/lib/ai/image-studio/utils/studio-docs';
-import { IMAGE_STUDIO_TREE_KEY_PREFIX } from '@/shared/lib/ai/image-studio/utils/studio-tree';
-import { IMAGE_STUDIO_OPENAI_API_KEY_KEY } from '@/shared/lib/ai/image-studio/utils/studio-settings';
+} from '@/features/ai/image-studio/utils/studio-docs';
+import { IMAGE_STUDIO_TREE_KEY_PREFIX } from '@/features/ai/image-studio/utils/studio-tree';
+import { IMAGE_STUDIO_OPENAI_API_KEY_KEY } from '@/features/ai/image-studio/utils/studio-settings';
 
 import { useDocsSnapshots } from './docs/useDocsSnapshots';
 import { DocsRuntimeStateSection } from './docs/sections/DocsRuntimeStateSection';

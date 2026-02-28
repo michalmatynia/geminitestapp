@@ -1,4 +1,4 @@
-import type { ImageStudioSequenceStep } from '@/shared/lib/ai/image-studio/utils/studio-settings';
+import type { ImageStudioSequenceStep } from '@/features/ai/image-studio/utils/studio-settings';
 
 export type SequenceRunStatus = 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
 

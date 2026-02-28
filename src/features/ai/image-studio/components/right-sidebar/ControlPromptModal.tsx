@@ -18,7 +18,7 @@ import {
   getImageStudioProjectSessionKey,
   saveImageStudioProjectSessionLocal,
   type ImageStudioProjectSession,
-} from '@/shared/lib/ai/image-studio/utils/project-session';
+} from '@/features/ai/image-studio/utils/project-session';
 import {
   parsePromptEngineSettings,
   PROMPT_ENGINE_SETTINGS_KEY,

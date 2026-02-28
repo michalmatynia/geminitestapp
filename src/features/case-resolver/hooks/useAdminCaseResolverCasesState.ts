@@ -268,6 +268,7 @@ export function useAdminCaseResolverCasesState() {
     workspace,
     caseSearchQuery,
     caseSearchScope,
+    indexMode: 'metadata_only',
     caseFileTypeFilter: caseFileTypeFilter === 'case' ? 'case' : 'all',
     caseFilterTagIds,
     caseFilterCaseIdentifierIds,

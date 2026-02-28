@@ -30,12 +30,12 @@ import {
   fromSlotMasterNodeId,
   toFolderMasterNodeId,
   toSlotMasterNodeId,
-} from '@/shared/lib/ai/image-studio/utils/master-folder-tree';
-import { createImageStudioMasterTreeAdapter } from '@/shared/lib/ai/image-studio/utils/studio-master-tree-adapter';
+} from '@/features/ai/image-studio/utils/master-folder-tree';
+import { createImageStudioMasterTreeAdapter } from '@/features/ai/image-studio/utils/studio-master-tree-adapter';
 import {
   canDropImageStudioExternalNode,
   resolveImageStudioExternalDropAction,
-} from '@/shared/lib/ai/image-studio/utils/studio-master-tree-external-drop';
+} from '@/features/ai/image-studio/utils/studio-master-tree-external-drop';
 
 import { SlotTreeContext, type SlotTreeContextValue } from './slot-tree/SlotTreeContext';
 import { FolderNodeItem } from './slot-tree/FolderNodeItem';

@@ -20,15 +20,15 @@ import {
   clampCropRect,
   validateCropOutputDimensions,
   validateCropSourceDimensions,
-} from '@/shared/lib/ai/image-studio/server/crop-utils';
+} from '@/features/ai/image-studio/server/crop-utils';
 import {
   getImageStudioSlotLinkBySourceAndRelation,
   upsertImageStudioSlotLink,
-} from '@/shared/lib/ai/image-studio/server/slot-link-repository';
+} from '@/features/ai/image-studio/server/slot-link-repository';
 import {
   createImageStudioSlots,
   getImageStudioSlotById,
-} from '@/shared/lib/ai/image-studio/server/slot-repository';
+} from '@/features/ai/image-studio/server/slot-repository';
 import { getImageFileRepository, getDiskPathFromPublicPath } from '@/features/files/server';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';

@@ -16,7 +16,8 @@ import type { Filter, UpdateFilter, Document } from 'mongodb';
 const COLLECTION = 'product_parameters';
 
 interface ProductParameterDoc extends Document {
-  _id: ObjectId;
+  _id: ObjectId | string;
+  id?: string;
   name_en: string;
   name_pl: string | null;
   name_de: string | null;
@@ -60,7 +61,7 @@ const normalizeOptionLabels = (input: unknown): string[] => {
 };
 
 const toParameterDomain = (doc: ProductParameterDoc): ProductParameter => ({
-  id: doc._id.toString(),
+  id: String(doc.id ?? doc._id),
   name: doc.name_en,
   name_en: doc.name_en,
   name_pl: doc.name_pl ?? null,
@@ -71,6 +72,20 @@ const toParameterDomain = (doc: ProductParameterDoc): ProductParameter => ({
   createdAt: doc.createdAt?.toISOString() ?? new Date().toISOString(),
   updatedAt: doc.updatedAt?.toISOString() ?? new Date().toISOString(),
 });
+
+const buildParameterIdFilter = (id: string): Filter<ProductParameterDoc> => {
+  const trimmed = id.trim();
+  const filters: Filter<ProductParameterDoc>[] = [
+    { _id: trimmed } as Filter<ProductParameterDoc>,
+    { id: trimmed } as Filter<ProductParameterDoc>,
+  ];
+
+  if (/^[0-9a-fA-F]{24}$/.test(trimmed)) {
+    filters.push({ _id: new ObjectId(trimmed) } as Filter<ProductParameterDoc>);
+  }
+
+  return { $or: filters };
+};
 
 export const mongoParameterRepository: ParameterRepository = {
   async listParameters(filters: ParameterFilters): Promise<ProductParameter[]> {
@@ -97,7 +112,7 @@ export const mongoParameterRepository: ParameterRepository = {
     const db = await getMongoDb();
     const doc = await db
       .collection<ProductParameterDoc>(COLLECTION)
-      .findOne({ _id: new ObjectId(id) });
+      .findOne(buildParameterIdFilter(id));
     return doc ? toParameterDomain(doc) : null;
   },
 
@@ -105,6 +120,7 @@ export const mongoParameterRepository: ParameterRepository = {
     const db = await getMongoDb();
     const now = new Date();
     const doc: Omit<ProductParameterDoc, '_id'> = {
+      id: randomUUID(),
       name_en: data.name_en,
       name_pl: data.name_pl ?? null,
       name_de: data.name_de ?? null,
@@ -135,7 +151,7 @@ export const mongoParameterRepository: ParameterRepository = {
 
     await db
       .collection<ProductParameterDoc>(COLLECTION)
-      .updateOne({ _id: new ObjectId(id) }, { $set: set } as UpdateFilter<ProductParameterDoc>);
+      .updateOne(buildParameterIdFilter(id), { $set: set } as UpdateFilter<ProductParameterDoc>);
 
     const updated = await this.getParameterById(id);
     if (!updated) throw internalError('Failed to update parameter', { parameterId: id });
@@ -144,7 +160,7 @@ export const mongoParameterRepository: ParameterRepository = {
 
   async deleteParameter(id: string): Promise<void> {
     const db = await getMongoDb();
-    await db.collection<ProductParameterDoc>(COLLECTION).deleteOne({ _id: new ObjectId(id) });
+    await db.collection<ProductParameterDoc>(COLLECTION).deleteOne(buildParameterIdFilter(id));
   },
 
   async findByName(catalogId: string, name_en: string): Promise<ProductParameter | null> {
@@ -162,12 +178,11 @@ export const mongoParameterRepository: ParameterRepository = {
       _id: new ObjectId(),
       id: randomUUID(),
       catalogId: item.catalogId,
-      name_en: item.name,
-      name_pl: null,
-      name_de: null,
-      description: null,
-      selectorType: item.selectorType ?? 'text',
-      optionLabels: item.optionLabels ?? [],
+      name_en: item.name_en,
+      name_pl: item.name_pl ?? null,
+      name_de: item.name_de ?? null,
+      selectorType: normalizeSelectorType(item.selectorType),
+      optionLabels: normalizeOptionLabels(item.optionLabels ?? []),
       createdAt: now,
       updatedAt: now,
     }));

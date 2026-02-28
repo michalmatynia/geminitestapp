@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { listProductSyncRuns } from '@/shared/lib/product-sync/services/product-sync-repository';
+import { listProductSyncRuns } from '@/features/product-sync/services/product-sync-repository';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 export const querySchema = z.object({

@@ -6,7 +6,7 @@ import type {
   ChatCompletionMessageParam,
 } from 'openai/resources/chat/completions';
 
-import { IMAGE_STUDIO_OPENAI_API_KEY_KEY } from '@/shared/lib/ai/image-studio/studio-settings';
+import { IMAGE_STUDIO_OPENAI_API_KEY_KEY } from '@/features/ai/image-studio/studio-settings';
 import { configurationError, operationFailedError } from '@/shared/errors/app-error';
 
 import {

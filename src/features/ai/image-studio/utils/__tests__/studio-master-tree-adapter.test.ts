@@ -3,8 +3,8 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   toFolderMasterNodeId,
   toSlotMasterNodeId,
-} from '@/shared/lib/ai/image-studio/utils/master-folder-tree';
-import { createImageStudioMasterTreeAdapter } from '@/shared/lib/ai/image-studio/utils/studio-master-tree-adapter';
+} from '@/features/ai/image-studio/utils/master-folder-tree';
+import { createImageStudioMasterTreeAdapter } from '@/features/ai/image-studio/utils/studio-master-tree-adapter';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type { MasterFolderTreePersistContextDto as MasterFolderTreePersistContext } from '@/shared/contracts/master-folder-tree';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';

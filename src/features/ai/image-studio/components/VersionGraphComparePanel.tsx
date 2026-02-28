@@ -7,8 +7,8 @@ import { Button } from '@/shared/ui';
 
 import { useVersionGraphCompareContext } from './VersionGraphCompareContext';
 import { useSettingsState } from '../context/SettingsContext';
-import { getImageStudioDocTooltip } from '@/shared/lib/ai/image-studio/utils/studio-docs';
-import { compareGenerationParams } from '@/shared/lib/ai/image-studio/utils/version-graph-compare';
+import { getImageStudioDocTooltip } from '@/features/ai/image-studio/utils/studio-docs';
+import { compareGenerationParams } from '@/features/ai/image-studio/utils/version-graph-compare';
 
 // ── Component ────────────────────────────────────────────────────────────────
 

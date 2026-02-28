@@ -11,7 +11,6 @@ import {
   aiTriggerButtonUpdatePayloadSchema as aiTriggerButtonUpdateSchema,
   type AiTriggerButtonCreatePayload,
   type AiTriggerButtonUpdatePayload,
-  type AiTriggerButtonReorderPayload,
 } from '@/shared/contracts/ai-trigger-buttons';
 import type {
   AgentTeachingAgentRecord,

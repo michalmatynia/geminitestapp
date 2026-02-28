@@ -3,8 +3,8 @@ import React from 'react';
 import type {
   CaseResolverCaptureDocumentDateAction,
   CaseResolverCaptureProposalState,
-} from '@/shared/lib/case-resolver-capture/proposals';
-import { type CaseResolverCaptureAction } from '@/shared/lib/case-resolver-capture/settings';
+} from '@/features/case-resolver-capture/proposals';
+import { type CaseResolverCaptureAction } from '@/features/case-resolver-capture/settings';
 import { encodeFilemakerPartyReference } from '@/shared/lib/filemaker/settings';
 import { Badge, Button, FormField, SelectSimple } from '@/shared/ui';
 import { ConfirmDialog } from '@/shared/ui/confirm-dialog';

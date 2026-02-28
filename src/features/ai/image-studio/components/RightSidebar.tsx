@@ -26,12 +26,12 @@ import { usePromptActions, usePromptState } from '../context/PromptContext';
 import { useSettingsState, useSettingsActions } from '../context/SettingsContext';
 import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
 import { useUiActions, useUiState } from '../context/UiContext';
-import { supportsImageSequenceGeneration } from '@/shared/lib/ai/image-studio/utils/image-models';
-import { buildRunRequestPreview } from '@/shared/lib/ai/image-studio/utils/run-request-preview';
+import { supportsImageSequenceGeneration } from '@/features/ai/image-studio/utils/image-models';
+import { buildRunRequestPreview } from '@/features/ai/image-studio/utils/run-request-preview';
 import {
   normalizeImageStudioModelPresets,
   resolveImageStudioSequenceActiveSteps,
-} from '@/shared/lib/ai/image-studio/utils/studio-settings';
+} from '@/features/ai/image-studio/utils/studio-settings';
 import {
   formatCanvasSizeLabel,
   CANVAS_SIZE_PRESET_OPTIONS,
@@ -44,8 +44,8 @@ import { CanvasResizeModal } from './right-sidebar/CanvasResizeModal';
 import { ControlPromptModal } from './right-sidebar/ControlPromptModal';
 import { ParamRow } from './ParamRow';
 import { flattenParams, type ParamSpec } from '@/shared/lib/prompt-engine';
-import { type ParamUiControl } from '@/shared/lib/ai/image-studio/utils/param-ui';
-import { type ImageStudioSettings } from '@/shared/lib/ai/image-studio/utils/studio-settings';
+import { type ParamUiControl } from '@/features/ai/image-studio/utils/param-ui';
+import { type ImageStudioSettings } from '@/features/ai/image-studio/utils/studio-settings';
 
 const IMAGE_STUDIO_QUICK_ACTIONS_HOST_ID = 'image-studio-quick-actions-host';
 

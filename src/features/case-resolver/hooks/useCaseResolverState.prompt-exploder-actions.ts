@@ -4,7 +4,7 @@ import type {
   CaseResolverFile,
   CaseResolverCaptureSettings,
 } from '@/shared/contracts/case-resolver';
-import type { CaseResolverCaptureProposalState } from '@/shared/lib/case-resolver-capture/proposals';
+import type { CaseResolverCaptureProposalState } from '@/features/case-resolver-capture/proposals';
 import {
   discardPendingCaseResolverPromptExploderPayload,
   readCaseResolverPromptExploderPayloadState,

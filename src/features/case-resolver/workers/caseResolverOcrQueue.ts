@@ -7,7 +7,7 @@ import { UnrecoverableError } from 'bullmq';
 import OpenAI from 'openai';
 
 import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
-import { IMAGE_STUDIO_OPENAI_API_KEY_KEY } from '@/shared/lib/ai/image-studio/studio-settings';
+import { IMAGE_STUDIO_OPENAI_API_KEY_KEY } from '@/features/ai/image-studio/studio-settings';
 import {
   detectCaseResolverOcrProvider,
   type CaseResolverOcrProvider,

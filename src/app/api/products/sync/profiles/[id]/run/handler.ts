@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { startProductSyncRun } from '@/shared/lib/product-sync/services/product-sync-run-starter';
+import { startProductSyncRun } from '@/features/product-sync/services/product-sync-run-starter';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 export async function POST_handler(

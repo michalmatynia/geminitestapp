@@ -9,7 +9,7 @@ import {
   type UseAiPathsObjectAnalysisReturn,
   type AiPathsObjectAnalysisStatus,
 } from '../../../hooks/useAiPathsObjectAnalysis';
-import type { AiPathsObjectAnalysisAutoApplyTarget } from '@/shared/lib/ai/image-studio/utils/ai-paths-object-analysis';
+import type { AiPathsObjectAnalysisAutoApplyTarget } from '@/features/ai/image-studio/utils/ai-paths-object-analysis';
 
 // ---------------------------------------------------------------------------
 // Types

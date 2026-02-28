@@ -2,12 +2,12 @@
 
 import { Suspense, useEffect, useState } from 'react';
 
-import { IntegrationList } from '@/shared/lib/integrations/components/connections/IntegrationList';
-import { IntegrationModal } from '@/shared/lib/integrations/components/connections/IntegrationModal';
+import { IntegrationList } from '@/features/integrations/components/connections/IntegrationList';
+import { IntegrationModal } from '@/features/integrations/components/connections/IntegrationModal';
 import {
   IntegrationsProvider,
   useIntegrationsContext,
-} from '@/shared/lib/integrations/context/IntegrationsContext';
+} from '@/features/integrations/context/IntegrationsContext';
 import { Button, DetailModal, Input, LoadingState } from '@/shared/ui';
 
 function IntegrationsContent(): React.JSX.Element {

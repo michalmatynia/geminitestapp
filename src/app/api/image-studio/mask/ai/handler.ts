@@ -10,7 +10,7 @@ import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-cli
 import {
   IMAGE_STUDIO_SETTINGS_KEY,
   parseImageStudioSettings,
-} from '@/shared/lib/ai/image-studio/studio-settings';
+} from '@/features/ai/image-studio/studio-settings';
 import { auth } from '@/features/auth/server';
 import { getSettingValue } from '@/shared/lib/products/services/aiDescriptionService.settings';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';

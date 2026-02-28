@@ -18,7 +18,7 @@ import { useProjectsState } from '../../context/ProjectsContext';
 import { useSlotsActions, useSlotsState } from '../../context/SlotsContext';
 import { useUiActions, useUiState } from '../../context/UiContext';
 import { useAiPathsObjectAnalysis } from '../../hooks/useAiPathsObjectAnalysis';
-import { getImageStudioSlotImageSrc } from '@/shared/lib/ai/image-studio/utils/image-src';
+import { getImageStudioSlotImageSrc } from '@/features/ai/image-studio/utils/image-src';
 import { AiPathAnalysisTriggerSection } from '../analysis/sections/AiPathAnalysisTriggerSection';
 import { GenerationToolbar } from '../GenerationToolbar';
 import { LabeledSlider } from '../LabeledSlider';

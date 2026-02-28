@@ -11,9 +11,9 @@ import {
   type SequenceRequestPreview,
   type SequenceRunStartResponse,
 } from './right-sidebar-utils';
-import { resolvePromptPlaceholders } from '@/shared/lib/ai/image-studio/utils/run-request-preview';
+import { resolvePromptPlaceholders } from '@/features/ai/image-studio/utils/run-request-preview';
 
-import type { ImageStudioSequenceStep } from '@/shared/lib/ai/image-studio/utils/studio-settings';
+import type { ImageStudioSequenceStep } from '@/features/ai/image-studio/utils/studio-settings';
 
 type Toast = (
   message: string,

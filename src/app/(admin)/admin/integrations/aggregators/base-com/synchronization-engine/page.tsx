@@ -1,6 +1,6 @@
 import { JSX } from 'react';
 
-import { BaseSynchronizationEnginePage } from '@/shared/lib/integrations/public';
+import { BaseSynchronizationEnginePage } from '@/features/integrations/public';
 
 export default function Page(): JSX.Element {
   return <BaseSynchronizationEnginePage />;

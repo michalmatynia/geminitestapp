@@ -7,7 +7,7 @@ import { Button, FormSection, LoadingState, StatusBadge } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 import { useProductStudioContext } from '../../../context/ProductStudioContext';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { getImageStudioSlotImageSrc } from '@/shared/lib/ai/image-studio/image-src';
+import { getImageStudioSlotImageSrc } from '@/features/ai/image-studio/image-src';
 import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,

@@ -34,7 +34,7 @@ import {
   normalizeImageStudioModelPresets,
   parseImageStudioSettings,
   type ImageStudioSettings,
-} from '@/shared/lib/ai/image-studio/utils/studio-settings';
+} from '@/features/ai/image-studio/utils/studio-settings';
 
 import {
   type StudioSettingsTab,

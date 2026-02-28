@@ -5,7 +5,7 @@ import {
   decodeImageStudioMasterNodeId,
   toFolderMasterNodeId,
   toSlotMasterNodeId,
-} from '@/shared/lib/ai/image-studio/utils/master-folder-tree';
+} from '@/features/ai/image-studio/utils/master-folder-tree';
 
 describe('decodeImageStudioMasterNodeId', () => {
   it('decodes folder node ids with normalized path', () => {

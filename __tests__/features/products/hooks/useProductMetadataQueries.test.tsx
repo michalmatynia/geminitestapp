@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   productMetadataKeys,
+  useParameters,
   useDeleteProducerMutation,
   useSaveProducerMutation,
 } from '@/features/products/hooks/useProductMetadataQueries';
@@ -12,6 +13,7 @@ import { api } from '@/shared/lib/api-client';
 
 vi.mock('@/shared/lib/api-client', () => ({
   api: {
+    get: vi.fn(),
     post: vi.fn(),
     put: vi.fn(),
     delete: vi.fn(),
@@ -101,5 +103,29 @@ describe('useProductMetadataQueries invalidation', () => {
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: productMetadataKeys.all,
     });
+  });
+
+  it('useParameters requests a fresh parameter list for the selected catalog', async () => {
+    vi.mocked(api.get).mockResolvedValue([
+      {
+        id: 'param-1',
+        catalogId: 'catalog-1',
+        name_en: 'Material',
+      },
+    ] as never);
+
+    const { result } = renderHook(() => useParameters('catalog-1'), { wrapper });
+
+    await waitFor(() => expect(result.current.data).toHaveLength(1));
+    expect(api.get).toHaveBeenCalledWith(
+      '/api/products/parameters',
+      expect.objectContaining({
+        params: {
+          catalogId: 'catalog-1',
+          fresh: 1,
+        },
+        cache: 'no-store',
+      })
+    );
   });
 });

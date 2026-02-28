@@ -7,7 +7,7 @@ import { Card } from '@/shared/ui';
 
 import { useVersionGraphContextMenuContext } from './VersionGraphContextMenuContext';
 import { useSettingsState } from '../context/SettingsContext';
-import { getImageStudioDocTooltip } from '@/shared/lib/ai/image-studio/utils/studio-docs';
+import { getImageStudioDocTooltip } from '@/features/ai/image-studio/utils/studio-docs';
 
 // ── Component ────────────────────────────────────────────────────────────────
 

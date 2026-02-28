@@ -12,8 +12,8 @@ import {
   paramUiControlLabel,
   recommendParamUiControl,
   type ParamUiControl,
-} from '@/shared/lib/ai/image-studio/utils/param-ui';
-import { type ParamLeaf } from '@/shared/lib/ai/image-studio/utils/prompt-params';
+} from '@/features/ai/image-studio/utils/param-ui';
+import { type ParamLeaf } from '@/features/ai/image-studio/utils/prompt-params';
 import { type ParamSpec } from '@/shared/contracts/prompt-engine';
 
 function safeJsonStringify(value: unknown): string {

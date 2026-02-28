@@ -1,6 +1,6 @@
 import 'server-only';
 
-import type { ImageStudioSequenceStep } from '@/shared/lib/ai/image-studio/utils/studio-settings';
+import type { ImageStudioSequenceStep } from '@/features/ai/image-studio/utils/studio-settings';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 

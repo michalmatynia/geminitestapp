@@ -7,7 +7,7 @@ import {
   loadImageStudioAnalysisPlanSnapshot,
   saveImageStudioAnalysisApplyIntent,
   saveImageStudioAnalysisPlanSnapshot,
-} from '@/shared/lib/ai/image-studio/utils/analysis-bridge';
+} from '@/features/ai/image-studio/utils/analysis-bridge';
 
 describe('analysis bridge utils', () => {
   beforeEach(() => {

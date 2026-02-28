@@ -18,12 +18,12 @@ import {
   markDatabaseBackupJobRunning,
   markDatabaseBackupJobSucceeded,
 } from '@/shared/lib/db/services/database-backup-scheduler';
-import type { ImageFileRecord } from '@/shared/lib/files/services/image-file-service';
-import { getImageFileRepository } from '@/shared/lib/files/services/image-file-repository';
+import type { ImageFileRecord } from '@/features/files/services/image-file-service';
+import { getImageFileRepository } from '@/features/files/services/image-file-repository';
 import {
   listBaseListingsForSync,
   syncBaseImagesForListing,
-} from '@/shared/lib/integrations/services/base-image-sync';
+} from '@/features/integrations/services/base-image-sync';
 import { defaultLanguages } from '@/shared/lib/internationalization/server';
 import { getInternationalizationProvider } from '@/shared/lib/internationalization/services/internationalization-provider';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';

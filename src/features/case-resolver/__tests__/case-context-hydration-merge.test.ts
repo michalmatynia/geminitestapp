@@ -113,35 +113,22 @@ describe('case resolver workspace hydration merge', () => {
     });
   });
 
-  it('prefers heavy workspace when store snapshot is placeholder and heavy has real data', () => {
+  it('prefers store workspace when store snapshot is available', () => {
     const storeWorkspace = createDefaultCaseResolverWorkspace();
-    const caseFile = createCaseResolverFile({
-      id: 'case-heavy',
-      fileType: 'case',
-      name: 'Case Heavy',
-    });
-    const heavyWorkspace = {
-      ...createDefaultCaseResolverWorkspace(),
-      id: 'workspace-heavy',
-      files: [caseFile],
-      activeFileId: caseFile.id,
-      workspaceRevision: 0,
-    };
 
     const selection = resolvePreferredCaseResolverWorkspace({
       storeWorkspace,
-      heavyWorkspace,
       hasStoreWorkspace: true,
       hasHeavyWorkspace: true,
-      requestedFileId: caseFile.id,
+      requestedFileId: 'case-heavy',
     });
 
-    expect(selection.source).toBe('heavy');
-    expect(selection.reason).toBe('equal_revision_current_placeholder');
-    expect(selection.workspace.files.map((file) => file.id)).toEqual([caseFile.id]);
+    expect(selection.source).toBe('store');
+    expect(selection.reason).toBe('store_only');
+    expect(selection.workspace.files).toEqual([]);
   });
 
-  it('keeps store workspace when both sources are present but heavy is not better', () => {
+  it('keeps store workspace when additional fallback sources are present', () => {
     const caseFile = createCaseResolverFile({
       id: 'case-store',
       fileType: 'case',
@@ -171,35 +158,22 @@ describe('case resolver workspace hydration merge', () => {
     });
 
     expect(selection.source).toBe('store');
-    expect(selection.reason).toBe('store_preferred');
+    expect(selection.reason).toBe('store_only');
     expect(selection.workspace.workspaceRevision).toBe(4);
   });
 
-  it('uses heavy workspace when store snapshot is unavailable', () => {
-    const caseFile = createCaseResolverFile({
-      id: 'case-heavy',
-      fileType: 'case',
-      name: 'Case Heavy',
-    });
-    const heavyWorkspace = {
-      ...createDefaultCaseResolverWorkspace(),
-      id: 'workspace-heavy',
-      files: [caseFile],
-      activeFileId: caseFile.id,
-      workspaceRevision: 1,
-    };
-
+  it('returns no source when store snapshot is unavailable', () => {
     const selection = resolvePreferredCaseResolverWorkspace({
       storeWorkspace: createDefaultCaseResolverWorkspace(),
-      heavyWorkspace,
+      heavyWorkspace: createDefaultCaseResolverWorkspace(),
       hasStoreWorkspace: false,
       hasHeavyWorkspace: true,
       requestedFileId: null,
     });
 
-    expect(selection.source).toBe('heavy');
-    expect(selection.reason).toBe('heavy_only');
-    expect(selection.workspace.files.map((file) => file.id)).toEqual([caseFile.id]);
+    expect(selection.source).toBe('none');
+    expect(selection.reason).toBe('no_workspace_source');
+    expect(selection.workspace.files).toEqual([]);
   });
 
   it('returns no source when both snapshots are unavailable', () => {

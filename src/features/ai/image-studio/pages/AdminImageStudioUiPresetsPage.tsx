@@ -13,7 +13,7 @@ import {
   IMAGE_STUDIO_UI_PRESETS_KEY,
   parseImageStudioUiPresets,
   type ImageStudioUiPreset,
-} from '@/shared/lib/ai/image-studio/utils/ui-presets';
+} from '@/features/ai/image-studio/utils/ui-presets';
 
 export function AdminImageStudioUiPresetsPage(): React.JSX.Element {
   const { toast } = useToast();

@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { TRADERA_INTEGRATION_SLUGS } from '@/shared/lib/integrations/constants/slugs';
+import { TRADERA_INTEGRATION_SLUGS } from '@/features/integrations/constants/slugs';
 import {
   getIntegrationRepository,
   listAllProductListingsAcrossProviders,
-} from '@/shared/lib/integrations/server';
+} from '@/features/integrations/server';
 import { getProductRepository } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 

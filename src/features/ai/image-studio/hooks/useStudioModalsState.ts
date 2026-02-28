@@ -28,7 +28,7 @@ import type {
   PromptExtractHistoryEntry,
   PromptExtractValidationIssue,
 } from '../components/studio-modals/prompt-extract-utils';
-import type { ParamUiControl } from '@/shared/lib/ai/image-studio/utils/param-ui';
+import type { ParamUiControl } from '@/features/ai/image-studio/utils/param-ui';
 
 export function useStudioModalsState() {
   const { toast } = useToast();

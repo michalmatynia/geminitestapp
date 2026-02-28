@@ -1,7 +1,7 @@
 import type {
   ImageStudioCenterDetectionMode,
   ImageStudioCenterShadowPolicy,
-} from '@/features/ai/image-studio/contracts/center';
+} from '@/shared/contracts/image-studio';
 
 import type { ImageStudioAnalysisSharedLayout } from './analysis-bridge';
 import { sanitizeStudioProjectId } from './project-session';
@@ -68,6 +68,12 @@ export type AiPathMeta = {
   name: string;
 };
 
+export type ImageStudioCustomTriggerButton = {
+  id: string;
+  label: string;
+  pathId: string;
+};
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -94,6 +100,48 @@ export const getValueAtPath = (obj: unknown, path: string): unknown => {
     current = (current as Record<string, unknown>)[part];
   }
   return current;
+};
+
+// ---------------------------------------------------------------------------
+// Custom trigger buttons persistence
+// ---------------------------------------------------------------------------
+
+const BUTTONS_LOCAL_KEY_PREFIX = 'image_studio_custom_trigger_buttons_';
+
+export const loadCustomTriggerButtons = (
+  projectId: string,
+): ImageStudioCustomTriggerButton[] => {
+  if (typeof window === 'undefined') return [];
+  const key = BUTTONS_LOCAL_KEY_PREFIX + sanitizeStudioProjectId(projectId);
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (item): item is ImageStudioCustomTriggerButton =>
+        item !== null &&
+        typeof item === 'object' &&
+        typeof (item as Record<string, unknown>)['id'] === 'string' &&
+        typeof (item as Record<string, unknown>)['label'] === 'string' &&
+        typeof (item as Record<string, unknown>)['pathId'] === 'string',
+    );
+  } catch {
+    return [];
+  }
+};
+
+export const saveCustomTriggerButtons = (
+  projectId: string,
+  buttons: ImageStudioCustomTriggerButton[],
+): void => {
+  if (typeof window === 'undefined') return;
+  const key = BUTTONS_LOCAL_KEY_PREFIX + sanitizeStudioProjectId(projectId);
+  try {
+    localStorage.setItem(key, JSON.stringify(buttons));
+  } catch {
+    // ignore
+  }
 };
 
 // ---------------------------------------------------------------------------
@@ -293,7 +341,9 @@ export const parseAiPathMetasFromSettings = (
           typeof (item as Record<string, unknown>)['id'] === 'string' &&
           typeof (item as Record<string, unknown>)['name'] === 'string',
       )
-      .map((item) => ({ id: item['id'] as string, name: item['name'] as string }));
+      .map((item) => {
+        return { id: item['id'] as string, name: item['name'] as string };
+      });
   } catch {
     return [];
   }

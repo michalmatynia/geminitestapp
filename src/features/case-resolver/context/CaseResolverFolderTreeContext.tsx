@@ -20,6 +20,7 @@ import {
 import {
   buildMasterNodesFromCaseResolverWorkspace,
   fromCaseResolverCaseNodeId,
+  toCaseResolverCaseNodeId,
   toCaseResolverFileNodeId,
   toCaseResolverAssetNodeId,
   toCaseResolverFolderNodeId,
@@ -178,6 +179,9 @@ export function CaseResolverFolderTreeProvider({
   const [showChildCaseFolders, setShowChildCaseFolders] = useState(true);
   const [highlightedNodeFileAssetIds, setHighlightedNodeFileAssetIds] = useState<string[]>([]);
   const treeScopeResolveDurationMsRef = React.useRef<number | null>(null);
+  const masterNodesBuildDurationMsRef = React.useRef<number | null>(null);
+  const loggedFirstTreeReadyCaseIdRef = React.useRef<string | null>(null);
+  const caseOpenStartedAtMsRef = React.useRef<number | null>(null);
 
   const workspaceIndexes = useMemo(
     () => getCachedCaseResolverRuntimeIndexes(workspace),
@@ -351,6 +355,7 @@ export function CaseResolverFolderTreeProvider({
 
   useEffect((): void => {
     setShowChildCaseFolders(true);
+    caseOpenStartedAtMsRef.current = nowMs();
   }, [activeCaseFile?.id]);
 
   const caseNameById = useMemo((): Map<string, string> => {
@@ -460,6 +465,7 @@ export function CaseResolverFolderTreeProvider({
   ]);
 
   const masterNodes = useMemo((): MasterTreeNode[] => {
+    const buildStartedAtMs = nowMs();
     const baseNodes = buildMasterNodesFromCaseResolverWorkspace(treeWorkspace);
     const rootCaseId = activeCaseFile?.id ?? null;
 
@@ -516,7 +522,10 @@ export function CaseResolverFolderTreeProvider({
         parentId: CHILD_CASE_STRUCTURE_NODE_ID,
       };
     });
-    if (!hasUnassignedNodes && !hasChildStructureRoots) return baseNodes;
+    if (!hasUnassignedNodes && !hasChildStructureRoots) {
+      masterNodesBuildDurationMsRef.current = nowMs() - buildStartedAtMs;
+      return baseNodes;
+    }
 
     const virtualNodes: MasterTreeNode[] = [];
     if (hasUnassignedNodes) {
@@ -555,7 +564,9 @@ export function CaseResolverFolderTreeProvider({
         },
       });
     }
-    return [...remappedNodes, ...virtualNodes];
+    const nextNodes = [...remappedNodes, ...virtualNodes];
+    masterNodesBuildDurationMsRef.current = nowMs() - buildStartedAtMs;
+    return nextNodes;
   }, [
     activeCaseFile?.id,
     childCaseIdSet,
@@ -582,12 +593,87 @@ export function CaseResolverFolderTreeProvider({
   }, [selectedAssetId, selectedFileId, selectedFolderPath]);
 
   const initialExpandedFolderNodeIds = useMemo(
-    () =>
-      masterNodes
-        .filter((node: MasterTreeNode) => node.type === 'folder')
-        .map((node: MasterTreeNode) => node.id),
-    [masterNodes]
+    (): string[] => {
+      const expandedNodeIds = new Set<string>();
+      const normalizedActiveCaseId = activeCaseFile?.id?.trim() ?? '';
+      if (normalizedActiveCaseId) {
+        expandedNodeIds.add(toCaseResolverCaseNodeId(normalizedActiveCaseId));
+      }
+      if (
+        selectedFolderPath !== null &&
+        !isChildCaseStructureFolderPath(selectedFolderPath) &&
+        !isUnassignedFolderPath(selectedFolderPath)
+      ) {
+        resolveFolderAncestorNodeIds(selectedFolderPath).forEach((nodeId: string): void => {
+          expandedNodeIds.add(nodeId);
+        });
+      }
+      if (selectedFileId) {
+        const selectedFile = treeWorkspace.files.find(
+          (file: CaseResolverFile): boolean => file.id === selectedFileId
+        );
+        if (selectedFile) {
+          resolveFolderAncestorNodeIds(selectedFile.folder).forEach((nodeId: string): void => {
+            expandedNodeIds.add(nodeId);
+          });
+        }
+      }
+      if (selectedAssetId) {
+        const selectedAsset = treeWorkspace.assets.find(
+          (asset: CaseResolverAssetFile): boolean => asset.id === selectedAssetId
+        );
+        if (selectedAsset) {
+          resolveFolderAncestorNodeIds(selectedAsset.folder).forEach((nodeId: string): void => {
+            expandedNodeIds.add(nodeId);
+          });
+        }
+      }
+      return Array.from(expandedNodeIds);
+    },
+    [
+      activeCaseFile?.id,
+      selectedAssetId,
+      selectedFileId,
+      selectedFolderPath,
+      treeWorkspace.assets,
+      treeWorkspace.files,
+    ]
   );
+
+  useEffect((): void => {
+    const durationMs = masterNodesBuildDurationMsRef.current;
+    if (typeof durationMs !== 'number') return;
+    logCaseResolverDurationMetric('case_tree_master_nodes_build_ms', durationMs, {
+      source: 'case_tree',
+      minDurationMs: 1,
+      message: `workspace_revision=${workspaceIndexes.workspaceRevision} nodes=${masterNodes.length}`,
+    });
+  }, [masterNodes.length, workspaceIndexes.workspaceRevision]);
+
+  useEffect((): void => {
+    const activeCaseIdValue = activeCaseFile?.id?.trim() ?? '';
+    if (!activeCaseIdValue) return;
+    const hasTreeData =
+      treeWorkspace.files.length > 0 ||
+      treeWorkspace.assets.length > 0 ||
+      treeWorkspace.folders.length > 0;
+    if (!hasTreeData) return;
+    if (loggedFirstTreeReadyCaseIdRef.current === activeCaseIdValue) return;
+    loggedFirstTreeReadyCaseIdRef.current = activeCaseIdValue;
+    const startedAtMs = caseOpenStartedAtMsRef.current;
+    const durationMs = typeof startedAtMs === 'number' ? Math.max(0, nowMs() - startedAtMs) : 0;
+    logCaseResolverDurationMetric('case_open_first_tree_ready_ms', durationMs, {
+      source: 'case_tree',
+      minDurationMs: 0,
+      message: `case_id=${activeCaseIdValue} workspace_revision=${workspaceIndexes.workspaceRevision}`,
+    });
+  }, [
+    activeCaseFile?.id,
+    treeWorkspace.assets.length,
+    treeWorkspace.files.length,
+    treeWorkspace.folders.length,
+    workspaceIndexes.workspaceRevision,
+  ]);
 
   const fileLockById = useMemo((): Map<string, boolean> => {
     return new Map(

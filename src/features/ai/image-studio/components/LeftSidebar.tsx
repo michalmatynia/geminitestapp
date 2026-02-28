@@ -23,15 +23,15 @@ import { usePromptState } from '../context/PromptContext';
 import { useSettingsActions, useSettingsState } from '../context/SettingsContext';
 import { useSlotsState, useSlotsActions } from '../context/SlotsContext';
 import { useUiState } from '../context/UiContext';
-import { getImageStudioSlotImageSrc } from '@/shared/lib/ai/image-studio/utils/image-src';
+import { getImageStudioSlotImageSrc } from '@/features/ai/image-studio/utils/image-src';
 import {
   getImageStudioProjectSessionKey,
   saveImageStudioProjectSessionLocal,
   serializeImageStudioProjectSession,
   type ImageStudioProjectSession,
-} from '@/shared/lib/ai/image-studio/utils/project-session';
-import { getImageStudioDocTooltip } from '@/shared/lib/ai/image-studio/utils/studio-docs';
-import { buildImageStudioSequenceSnapshot } from '@/shared/lib/ai/image-studio/utils/studio-settings';
+} from '@/features/ai/image-studio/utils/project-session';
+import { getImageStudioDocTooltip } from '@/features/ai/image-studio/utils/studio-docs';
+import { buildImageStudioSequenceSnapshot } from '@/features/ai/image-studio/utils/studio-settings';
 
 const REVEAL_IN_TREE_EVENT = 'image-studio:reveal-in-tree';
 

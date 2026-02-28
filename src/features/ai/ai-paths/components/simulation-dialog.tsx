@@ -64,10 +64,11 @@ export function SimulationDialog(): React.JSX.Element | null {
     async (node: AiNode, entityId: string): Promise<void> => {
       const nextNode = applySimulationEntityId(node, entityId);
       await handleConfigChange(node.id, entityId);
-      handleRunSimulation(nextNode);
+      await handleRunSimulation(nextNode);
     },
     [handleConfigChange, handleRunSimulation]
   );
+
 
   const simulationConfig = simulationNode?.config?.simulation ?? { productId: '' };
   const simulationEntityValue = simulationConfig.entityId?.trim()

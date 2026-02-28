@@ -24,6 +24,9 @@ export type TouchPointSample = {
   x: number;
   y: number;
   time: number;
+  ts?: number;
+  vx?: number;
+  vy?: number;
 };
 
 export type TouchGestureState =

@@ -6,11 +6,13 @@ import {
   getCategoryMappingRepository,
   getProducerMappingRepository,
   getTagMappingRepository,
+  type Template,
 } from '@/features/integrations/server';
 import {
   getParameterRepository,
   getProducerRepository,
   getTagRepository,
+  type ProducerRepository,
 } from '@/features/products/server';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { badRequestError } from '@/shared/errors/app-error';
@@ -31,13 +33,15 @@ import {
 export const getProducerRefId = (value: unknown): string => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return '';
   const record = value as Record<string, unknown>;
-  const id = record['producerId'] ?? record['producer_id'] ?? record['manufacturerId'] ?? record['id'];
-  return typeof id === 'string' ? id.trim() : typeof id === 'number' ? String(id) : '';
+  const idValue = record['producerId'] ?? record['producer_id'] ?? record['manufacturerId'] ?? record['id'];
+  if (typeof idValue === 'string') return idValue.trim();
+  if (typeof idValue === 'number') return String(idValue);
+  return '';
 };
 
 const toBaseFieldMappings = (value: unknown): BaseFieldMapping[] => {
   if (!Array.isArray(value)) return [];
-  return value.filter(
+  return (value as unknown[]).filter(
     (item): item is BaseFieldMapping =>
       item && typeof item === 'object' && !Array.isArray(item) && 'targetField' in item
   );
@@ -197,7 +201,7 @@ export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseE
       );
     const templateIdToUse = requestedTemplateId || fallbackTemplateId;
     if (templateIdToUse) {
-      const templates = await listExportTemplates();
+      const templates: Template[] = await listExportTemplates();
       const template = templates.find((entry) => entry.id === templateIdToUse);
       if (!template) {
         if (requestedTemplateId) {
@@ -214,7 +218,7 @@ export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseE
           }
         );
       } else {
-        const templateRecord = template as {
+        const templateRecord = template as unknown as {
           mappings?: unknown;
           exportImagesAsBase64?: unknown;
         };
@@ -272,7 +276,7 @@ export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseE
 
   if (!imagesOnly && productProducerIds.length > 0) {
     try {
-      const producerRepository = await getProducerRepository();
+      const producerRepository: ProducerRepository = await getProducerRepository();
       const resolvedProducers = await Promise.all(
         productProducerIds.map(async (producerId: string) => {
           try {
@@ -488,7 +492,7 @@ export const prepareBaseExportMappingsAndProduct = async <TProduct extends BaseE
       const categoryMappingRepo = getCategoryMappingRepository();
       const categoryMappings = await categoryMappingRepo.listByConnection(data.connectionId);
       const productCatalogIds = new Set(
-        (product.catalogs ?? []).map((catalog) => catalog.catalogId)
+        (product.catalogs ?? []).map((catalog) => (catalog as { catalogId: string }).catalogId)
       );
 
       const matchingMappings = categoryMappings.filter(

@@ -6,6 +6,8 @@ import type {
   AiNode,
   NodeDefinition,
   RuntimeState,
+  PathMeta,
+  PathConfig,
 } from '@/shared/lib/ai-paths';
 import {
   palette,

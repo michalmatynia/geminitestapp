@@ -72,11 +72,6 @@
     "node_modules",
     ".next",
     ".next-dev",
-    "tmp",
-    "**/__tests__/**",
-    "**/*.test.ts",
-    "**/*.test.tsx",
-    "**/*.spec.ts",
-    "**/*.spec.tsx"
+    "tmp"
   ]
 }

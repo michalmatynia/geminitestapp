@@ -1,11 +1,12 @@
 import { useCallback, useRef } from 'react';
 import { clampScale } from '@/shared/lib/ai-paths';
+import { type UseCanvasInteractionsNavigationValue } from '../useCanvasInteractions.navigation';
 
 export function useCanvasEventHandlers(args: {
   viewportRef: React.RefObject<HTMLDivElement>;
   canvasRef: React.RefObject<HTMLCanvasElement>;
   view: { scale: number; panX: number; panY: number };
-  nav: any;
+  nav: UseCanvasInteractionsNavigationValue;
   updateLastPointerCanvasPosFromClient: (x: number, y: number) => void;
   resolveViewportPointFromClient: (x: number, y: number) => { x: number; y: number } | null;
 }) {

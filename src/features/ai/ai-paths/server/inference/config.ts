@@ -1,6 +1,6 @@
 import { normalizeNodes } from '@/shared/lib/ai-paths/core/normalization';
 import { sanitizeEdges } from '@/shared/lib/ai-paths/core/utils/graph';
-import type { PathConfig } from '@/shared/contracts/ai-paths';
+import type { PathConfig, AiNode } from '@/shared/contracts/ai-paths';
 import { 
   PARAMETER_INFERENCE_PATH_ID, 
   PARAMETER_INFERENCE_PATH_NAME, 
@@ -21,7 +21,7 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
     flowIntensity: 'medium',
     runMode: 'block',
     strictFlowMode: true,
-    nodes: getParameterInferenceNodes(timestamp) as any,
+    nodes: getParameterInferenceNodes(timestamp) as AiNode[],
     edges: PARAMETER_INFERENCE_PATH_EDGES,
     updatedAt: timestamp,
     isLocked: false,

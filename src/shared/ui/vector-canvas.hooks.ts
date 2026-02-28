@@ -32,8 +32,8 @@ export interface UseVectorCanvasInteractionsProps {
   enableTwoFingerRotate: boolean;
   baseCanvasWidthPx?: number | null;
   baseCanvasHeightPx?: number | null;
-  onViewCropRectChange?: (cropRect: any | null) => void;
-  onImageContentFrameChange?: (frame: any | null) => void;
+  onViewCropRectChange?: (cropRect: { x: number; y: number; width: number; height: number } | null) => void;
+  onImageContentFrameChange?: (frame: { x: number; y: number; width: number; height: number } | null) => void;
   imageMoveEnabled: boolean;
   onImageOffsetChange?: (offset: { x: number; y: number }) => void;
   minViewScale: number;

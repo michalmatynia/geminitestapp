@@ -235,7 +235,7 @@ export interface UseAiPathsSettingsStateReturn {
     entityId: string,
     options?: { notify?: boolean }
   ) => Promise<void>;
-  handleRunSimulation: (node: AiNode, triggerEvent?: string) => void;
+  handleRunSimulation: (node: AiNode, triggerEvent?: string) => Promise<void>;
   handlePauseActiveRun: () => void;
   handleResumeActiveRun: () => void;
   handleStepActiveRun: (triggerNode?: AiNode) => void;

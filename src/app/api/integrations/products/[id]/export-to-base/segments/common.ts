@@ -83,9 +83,9 @@ export type BaseExportProductLike = {
   id: string;
   sku?: string | null;
   categoryId?: string | null;
-  producers?: unknown[];
-  tags?: unknown[];
-  catalogs?: unknown[];
+  producers?: Array<{ id: string; [key: string]: unknown }>;
+  tags?: Array<{ tagId?: string; id?: string }>;
+  catalogs?: Array<{ catalogId: string; [key: string]: unknown }>;
   parameters?: Array<{ name?: string; id?: string; value?: unknown }>;
   [key: string]: unknown;
 };

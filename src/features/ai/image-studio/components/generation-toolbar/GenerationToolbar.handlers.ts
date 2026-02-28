@@ -24,7 +24,7 @@ export function useGenerationToolbarHandlers(
 
   const fetchProjectSlots = useCallback(
     async (id: string): Promise<ImageStudioSlotRecord[]> => {
-      const data = await queryClient.fetchQuery<any>({
+      const data = await queryClient.fetchQuery<{ slots: ImageStudioSlotRecord[] }>({
         queryKey: studioKeys.slots(id),
       });
       return data?.slots ?? [];

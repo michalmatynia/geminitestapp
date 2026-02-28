@@ -85,7 +85,7 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
     const next = operations.map((operation, idx) => {
       if (idx !== index) return operation;
       const base = createOperation(type);
-      return (operation as any).id ? ({ ...base, id: (operation as any).id } as unknown as StringMutatorOperation) : base;
+      return 'id' in operation ? ({ ...base, id: (operation as { id: string }).id } as unknown as StringMutatorOperation) : base;
     });
     updateOperations(next);
   };

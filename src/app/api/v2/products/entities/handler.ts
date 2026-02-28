@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCatalogRepository, getProductDataProvider } from '@/features/products/server';
+import { 
+  getCatalogRepository, 
+  getProductDataProvider,
+  type CatalogUpdateInputDto 
+} from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import prisma from '@/shared/lib/db/prisma';
@@ -33,7 +37,7 @@ export async function PUT_products_entity_handler(
   if (type === 'catalogs') {
     const provider = await getProductDataProvider();
     const repo = await getCatalogRepository(provider);
-    return NextResponse.json(await repo.updateCatalog(id, data as any));
+    return NextResponse.json(await repo.updateCatalog(id, data as unknown as CatalogUpdateInputDto));
   }
   
   throw badRequestError(`Invalid products entity type for PUT: ${type}`);

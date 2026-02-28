@@ -1,0 +1,1371 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/api/ai-paths-legacy-run-stream-handler.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/api/ai-paths-legacy-run-stream-handler.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/api/ai-paths-runs-cancel-handler.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/api/ai-paths-runs-cancel-handler.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/api/ai-paths-runs-delete-handlers.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/api/ai-paths-runs-delete-handlers.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/api/ai-paths-runs-list-handler.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/api/ai-paths-runs-list-handler.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/api/ai-paths-runtime-analytics-summary-handler.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/api/ai-paths-runtime-analytics-summary-handler.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/api/analytics/events-route.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/api/analytics/events-route.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/api/auth/register.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/api/auth/register.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/api/integrations/base-import-parameters-handler.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/api/integrations/base-import-parameters-handler.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/api/integrations/base-import-routes.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/api/integrations/base-import-routes.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/api/integrations/base-import-run-routes.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/api/integrations/base-import-run-routes.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/api/integrations/default-export-connection-handler.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/api/integrations/default-export-connection-handler.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/api/integrations/product-listings.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/api/integrations/product-listings.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/api/notes/notebooks.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/api/notes/notebooks.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/api/products/ai-jobs.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/api/products/ai-jobs.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/api/products/categories.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/api/products/categories.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/api/products/count.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/api/products/count.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/api/products/migration.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/api/products/migration.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/api/products/paged.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/api/products/paged.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/api/products/parameters.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/api/products/parameters.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/api/products/products.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/api/products/products.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/api/products/studio.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/api/products/studio.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/api/products/tags.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/api/products/tags.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/api/products/validator-patterns-reorder.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/api/products/validator-patterns-reorder.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/api/products/validator-patterns.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/api/products/validator-patterns.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/app/api/integrations/products/export-to-base/helpers.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/app/api/integrations/products/export-to-base/helpers.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/app/api/integrations/products/listings/delete-from-base/helpers.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/app/api/integrations/products/listings/delete-from-base/helpers.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/debug-get-products.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/debug-get-products.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/admin/components/AdminLayout.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/admin/components/AdminLayout.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/admin/components/Menu.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/admin/components/Menu.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/admin/pages/AdminFrontManagePage.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/admin/pages/AdminFrontManagePage.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/admin/pages/AdminGlobalValidatorPage.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/admin/pages/AdminGlobalValidatorPage.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/admin/pages/SystemLogsPage.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/admin/pages/SystemLogsPage.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/agent-runtime/execution/loop-guard.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/agent-runtime/execution/loop-guard.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/agent-runtime/planning/utils.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/agent-runtime/planning/utils.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/agent-runtime/services/audit-logging.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/agent-runtime/services/audit-logging.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/agent-runtime/services/audit.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/agent-runtime/services/audit.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/agent-runtime/services/browser-tools.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/agent-runtime/services/browser-tools.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/agent-runtime/services/checkpoint.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/agent-runtime/services/checkpoint.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/agent-runtime/services/engine.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/agent-runtime/services/engine.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/agent-runtime/services/execution.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/agent-runtime/services/execution.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/agent-runtime/services/finalize.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/agent-runtime/services/finalize.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/agent-runtime/services/llm-tools.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/agent-runtime/services/llm-tools.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/agent-runtime/services/memory-context.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/agent-runtime/services/memory-context.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/agent-runtime/services/memory.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/agent-runtime/services/memory.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/agent-runtime/services/plan-init.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/agent-runtime/services/plan-init.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/agent-runtime/services/planning.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/agent-runtime/services/planning.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/agent-runtime/services/step-runner.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/agent-runtime/services/step-runner.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/agent-runtime/services/tools.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/agent-runtime/services/tools.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/agent-runtime/utils/core-utils.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/agent-runtime/utils/core-utils.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/agent-runtime/utils/utils.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/agent-runtime/utils/utils.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/agentcreator/api/agent-creator.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/agentcreator/api/agent-creator.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/agentcreator/api/agent-run-id.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/agentcreator/api/agent-run-id.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/agentcreator/api/agent.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/agentcreator/api/agent.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/agentcreator/components/AgentCreatorSettingsSection.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/agentcreator/components/AgentCreatorSettingsSection.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/ai/agentcreator/hooks/useAgentPersonas.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/ai/agentcreator/hooks/useAgentPersonas.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/ai/ai-paths/api/db-query.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/ai/ai-paths/api/db-query.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/ai/ai-paths/api/update-handler.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/ai/ai-paths/api/update-handler.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/ai/ai-paths/components/RunHistoryPanel.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/ai/ai-paths/components/RunHistoryPanel.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/ai/ai-paths/components/SignalDots.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/ai/ai-paths/components/SignalDots.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/ai/ai-paths/components/TriggerButtonListManager.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/ai/ai-paths/components/TriggerButtonListManager.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/ai/ai-paths/components/canvas-svg-node-layer.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/ai/ai-paths/components/canvas-svg-node-layer.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/ai/ai-paths/lib/core/runtime/engine.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/ai/ai-paths/lib/core/runtime/engine.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/ai/ai-paths/lib/run-sources.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/ai/ai-paths/lib/run-sources.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/ai/ai-paths/lib/utils-json.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/ai/ai-paths/lib/utils-json.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/ai/ai-paths/lib/validation-engine.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/ai/ai-paths/lib/validation-engine.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/ai/ai-paths/runtime/buildPromptOutput.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/ai/ai-paths/runtime/buildPromptOutput.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/ai/ai-paths/runtime/evaluate-graph.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/ai/ai-paths/runtime/evaluate-graph.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/ai/ai-paths/runtime/handlers/agent.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/ai/ai-paths/runtime/handlers/agent.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/ai/ai-paths/runtime/handlers/common.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/ai/ai-paths/runtime/handlers/common.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/ai/ai-paths/runtime/handlers/generation.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/ai/ai-paths/runtime/handlers/generation.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/ai/ai-paths/runtime/handlers/integration-database-mongo-update-plan-helpers.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/ai/ai-paths/runtime/handlers/integration-database-mongo-update-plan-helpers.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/ai/ai-paths/runtime/handlers/integration.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/ai/ai-paths/runtime/handlers/integration.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/ai/ai-paths/runtime/handlers/transform.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/ai/ai-paths/runtime/handlers/transform.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/ai/ai-paths/server/access.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/ai/ai-paths/server/access.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/ai/ai-paths/services/path-run-executor.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/ai/ai-paths/services/path-run-executor.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/ai/ai-paths/services/path-run-repository.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/ai/ai-paths/services/path-run-repository.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/ai/ai-paths/services/path-run-service.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/ai/ai-paths/services/path-run-service.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/ai/ai-paths/services/runtime-analytics-service.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/ai/ai-paths/services/runtime-analytics-service.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/ai/ai-paths/test-utils.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/ai/ai-paths/test-utils.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/ai/image-studio/hooks/useImageStudioMutations.delete.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/ai/image-studio/hooks/useImageStudioMutations.delete.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/ai/image-studio/no-escaped-template-interpolation.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/ai/image-studio/no-escaped-template-interpolation.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/ai/image-studio/utils/master-folder-tree.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/ai/image-studio/utils/master-folder-tree.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/ai/image-studio/utils/metadata.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/ai/image-studio/utils/metadata.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/ai/image-studio/utils/studio-settings.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/ai/image-studio/utils/studio-settings.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/ai/image-studio/utils/version-graph-compare.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/ai/image-studio/utils/version-graph-compare.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/ai/image-studio/utils/version-graph.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/ai/image-studio/utils/version-graph.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/app-embeds/lib/constants.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/app-embeds/lib/constants.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/auth/api/register.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/auth/api/register.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/auth/api/verify-credentials.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/auth/api/verify-credentials.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/auth/pages/register-page.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/auth/pages/register-page.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/auth/pages/signin-page.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/auth/pages/signin-page.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/auth/services/auth-user-repository.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/auth/services/auth-user-repository.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/auth/services/totp.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/auth/services/totp.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/auth/utils/auth-encryption.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/auth/utils/auth-encryption.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/auth/utils/auth-security.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/auth/utils/auth-security.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/chatbot/api/chatbot-sessions.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/chatbot/api/chatbot-sessions.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/chatbot/api/chatbot-settings.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/chatbot/api/chatbot-settings.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/chatbot/api/chatbot.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/chatbot/api/chatbot.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/chatbot/components/chatbot-interface.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/chatbot/components/chatbot-interface.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/chatbot/hooks/useChatbotLogic.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/chatbot/hooks/useChatbotLogic.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/chatbot/hooks/useChatbotMutations.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/chatbot/hooks/useChatbotMutations.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/chatbot/hooks/useChatbotQueries.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/chatbot/hooks/useChatbotQueries.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/chatbot/services/chatbot-job-repository.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/chatbot/services/chatbot-job-repository.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/chatbot/services/chatbot-session-repository.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/chatbot/services/chatbot-session-repository.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/cms/api/api-pages.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/cms/api/api-pages.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/cms/api/api-slugs.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/cms/api/api-slugs.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/cms/api/cms-pages.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/cms/api/cms-pages.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/cms/api/cms-themes.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/cms/api/cms-themes.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/cms/api/cms.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/cms/api/cms.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/cms/components/BlockPicker.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/cms/components/BlockPicker.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/cms/components/CmsDomainSelector.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/cms/components/CmsDomainSelector.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/cms/components/CmsPageRenderer.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/cms/components/CmsPageRenderer.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/cms/components/ComponentSettingsPanel.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/cms/components/ComponentSettingsPanel.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/cms/components/ComponentTreePanel.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/cms/components/ComponentTreePanel.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/cms/components/FrontendBlockRenderer.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/cms/components/FrontendBlockRenderer.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/cms/components/MediaLibraryPanel.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/cms/components/MediaLibraryPanel.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/cms/components/PageBuilderLayout.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/cms/components/PageBuilderLayout.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/cms/components/PageBuilderUI.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/cms/components/PageBuilderUI.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/cms/components/SectionPicker.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/cms/components/SectionPicker.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/cms/components/SectionTemplatePicker.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/cms/components/SectionTemplatePicker.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/cms/components/SettingsFieldRenderer.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/cms/components/SettingsFieldRenderer.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/cms/components/page-builder/InspectorAiContext.brain-only.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/cms/components/page-builder/InspectorAiContext.brain-only.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/cms/components/page-builder/ThemeColorsContext.brain-only.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/cms/components/page-builder/ThemeColorsContext.brain-only.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/cms/hooks/useBuilderKeyboardShortcuts.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/cms/hooks/useBuilderKeyboardShortcuts.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/cms/hooks/useCmsDomainSelection.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/cms/hooks/useCmsDomainSelection.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/cms/hooks/useCmsQueries.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/cms/hooks/useCmsQueries.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/cms/hooks/usePageBuilderContext.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/cms/hooks/usePageBuilderContext.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/cms/pages/ThemesPage.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/cms/pages/ThemesPage.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/cms/services/cms-domain.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/cms/services/cms-domain.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/cms/services/cms-theme-settings.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/cms/services/cms-theme-settings.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/cms/services/mongo-cms-repository.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/cms/services/mongo-cms-repository.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/cms/services/page-builder-reducer.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/cms/services/page-builder-reducer.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/cms/services/repository.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/cms/services/repository.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/cms/services/selection.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/cms/services/selection.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/cms/utils/page-builder-dnd.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/cms/utils/page-builder-dnd.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/cms/validations/slug.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/cms/validations/slug.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/data-import-export/utils/image-retry-presets.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/data-import-export/utils/image-retry-presets.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/database/api/databases.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/database/api/databases.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/database/api/engine-backup-scheduler-actions.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/database/api/engine-backup-scheduler-actions.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/database/api/engine-backup-scheduler-status.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/database/api/engine-backup-scheduler-status.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/database/api/engine-operations-jobs.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/database/api/engine-operations-jobs.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/database/api/engine-provider-preview.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/database/api/engine-provider-preview.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/database/api/engine-routing.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/database/api/engine-routing.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/database/hooks/useDatabaseBackupsState.schedule.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/database/hooks/useDatabaseBackupsState.schedule.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/database/utils/backup-schedule-time.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/database/utils/backup-schedule-time.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/database/utils/mongo.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/database/utils/mongo.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/database/utils/postgres.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/database/utils/postgres.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/document-editor/content-format.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/document-editor/content-format.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/drafter/components/DraftCreator.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/drafter/components/DraftCreator.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/drafter/services/draft-repository-mongo.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/drafter/services/draft-repository-mongo.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/drafter/services/draft-repository.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/drafter/services/draft-repository.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/files/api/files.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/files/api/files.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/files/components/FileManager.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/files/components/FileManager.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/files/services/image-file-repository.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/files/services/image-file-repository.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/files/utils/fileUploader.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/files/utils/fileUploader.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/foldertree/hooks/useMasterFolderTreeAppearance.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/foldertree/hooks/useMasterFolderTreeAppearance.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/foldertree/hooks/useMasterFolderTreeConfig.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/foldertree/hooks/useMasterFolderTreeConfig.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/foldertree/hooks/useMasterFolderTreeInstance.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/foldertree/hooks/useMasterFolderTreeInstance.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/foldertree/master/MasterFolderTree.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/foldertree/master/MasterFolderTree.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/foldertree/master/useConfiguredMasterFolderTree.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/foldertree/master/useConfiguredMasterFolderTree.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/foldertree/master/useMasterFolderTree.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/foldertree/master/useMasterFolderTree.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/foldertree/master/useSyncMasterFolderTreeExternalState.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/foldertree/master/useSyncMasterFolderTreeExternalState.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/foldertree/services/folder-importer.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/foldertree/services/folder-importer.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/foldertree/utils/tree-utils.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/foldertree/utils/tree-utils.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/gsap/utils/presets.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/gsap/utils/presets.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/integrations/components/GenericApiConsole.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/integrations/components/GenericApiConsole.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/integrations/components/GenericItemMapper.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/integrations/components/GenericItemMapper.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/integrations/components/listings/useImageRetryPresets.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/integrations/components/listings/useImageRetryPresets.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/integrations/hooks/listingCache.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/integrations/hooks/listingCache.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/integrations/hooks/useIntegrationMutations.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/integrations/hooks/useIntegrationMutations.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/integrations/hooks/useMarketplaceMutations.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/integrations/hooks/useMarketplaceMutations.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/integrations/services/base-token-resolver.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/integrations/services/base-token-resolver.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/integrations/services/category-mapping-repository-mongo.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/integrations/services/category-mapping-repository-mongo.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/integrations/services/category-mapping-repository.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/integrations/services/category-mapping-repository.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/integrations/services/export-template-repository.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/integrations/services/export-template-repository.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/integrations/services/exports/base-exporter.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/integrations/services/exports/base-exporter.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/integrations/services/imports/base-client-parsers.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/integrations/services/imports/base-client-parsers.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/integrations/services/imports/base-client.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/integrations/services/imports/base-client.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/integrations/services/imports/base-import-item-processor.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/integrations/services/imports/base-import-item-processor.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/integrations/services/imports/base-import-run-starter.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/integrations/services/imports/base-import-run-starter.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/integrations/services/imports/base-import-service-shared.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/integrations/services/imports/base-import-service-shared.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/integrations/services/imports/base-import-service.helpers.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/integrations/services/imports/base-import-service.helpers.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/integrations/services/imports/base-mapper.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/integrations/services/imports/base-mapper.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/integrations/services/imports/parameter-import.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/integrations/services/imports/parameter-import.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/integrations/services/integration-repository.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/integrations/services/integration-repository.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/integrations/utils/connections.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/integrations/utils/connections.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/internationalization/api/countries.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/internationalization/api/countries.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/internationalization/api/currencies.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/internationalization/api/currencies.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/internationalization/api/languages.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/internationalization/api/languages.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/internationalization/api/price-groups.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/internationalization/api/price-groups.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/internationalization/lib/internationalizationDefaults.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/internationalization/lib/internationalizationDefaults.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/jobs/processors/ai-insights-processor.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/jobs/processors/ai-insights-processor.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/jobs/workers/agentQueue.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/jobs/workers/agentQueue.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/jobs/workers/aiPathRunQueue.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/jobs/workers/aiPathRunQueue.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/jobs/workers/chatbotJobQueue.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/jobs/workers/chatbotJobQueue.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/jobs/workers/productAiQueue.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/jobs/workers/productAiQueue.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/notesapp/api/categories.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/notesapp/api/categories.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/notesapp/api/notes.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/notesapp/api/notes.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/notesapp/api/tags.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/notesapp/api/tags.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/notesapp/pages/notes-advanced.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/notesapp/pages/notes-advanced.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/notesapp/pages/notes-page.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/notesapp/pages/notes-page.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/notesapp/services/mongo-note-repository.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/notesapp/services/mongo-note-repository.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/notesapp/services/note-service.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/notesapp/services/note-service.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/notesapp/utils/index.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/notesapp/utils/index.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/notesapp/utils/master-folder-tree.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/notesapp/utils/master-folder-tree.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/observability/api/client-errors.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/observability/api/client-errors.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/observability/api/logs/logs.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/observability/api/logs/logs.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/observability/api/logs/metrics.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/observability/api/logs/metrics.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/observability/lib/ai-paths-slo-notifier.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/observability/lib/ai-paths-slo-notifier.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/observability/lib/critical-error-notifier.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/observability/lib/critical-error-notifier.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/observability/lib/log-triage-presets.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/observability/lib/log-triage-presets.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/observability/lib/system-log-filter-url-state.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/observability/lib/system-log-filter-url-state.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/observability/lib/system-logger.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/observability/lib/system-logger.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/observability/services/ErrorSystem.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/observability/services/ErrorSystem.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/observability/services/activity-repository.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/observability/services/activity-repository.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/observability/services/client-error-logger.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/observability/services/client-error-logger.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/observability/services/system-log-repository.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/observability/services/system-log-repository.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/playwright/context/PlaywrightSettingsContext.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/playwright/context/PlaywrightSettingsContext.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/playwright/services/persona-utils.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/playwright/services/persona-utils.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/playwright/utils/personas.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/playwright/utils/personas.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/products/api/pagination.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/products/api/pagination.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/products/api/products-client.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/products/api/products-client.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/products/api/settings-client.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/products/api/settings-client.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/products/components/advanced-filter-builder.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/products/components/advanced-filter-builder.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/products/components/form/CategorySingleSelectField.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/products/components/form/CategorySingleSelectField.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/products/components/form/ProductFormParameters.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/products/components/form/ProductFormParameters.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/products/components/form/ProductMetadataMultiSelectField.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/products/components/form/ProductMetadataMultiSelectField.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/products/components/product-filters.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/products/components/product-filters.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/products/components/product-image-cell.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/products/components/product-image-cell.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/products/components/product-list-header.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/products/components/product-list-header.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/products/components/product-table-footer.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/products/components/product-table-footer.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/products/components/products-list.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/products/components/products-list.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/products/components/settings/category-master-tree.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/products/components/settings/category-master-tree.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/products/components/settings/validator-documentation-clipboard.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/products/components/settings/validator-documentation-clipboard.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/products/components/settings/validator-settings-helpers.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/products/components/settings/validator-settings-helpers.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/products/contracts/advanced-filter-schema.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/products/contracts/advanced-filter-schema.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/products/guards/formdata-parsing.guard.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/products/guards/formdata-parsing.guard.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/products/hooks/useAiPathSettings.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/products/hooks/useAiPathSettings.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/products/hooks/useProductData.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/products/hooks/useProductData.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/products/hooks/useProductFormValidator.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/products/hooks/useProductFormValidator.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/products/hooks/useProductMetadata.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/products/hooks/useProductMetadata.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/products/hooks/useProductMetadataQueries.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/products/hooks/useProductMetadataQueries.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/products/hooks/useProductSettingsQueries.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/products/hooks/useProductSettingsQueries.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/products/hooks/useProductValidatorIssues.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/products/hooks/useProductValidatorIssues.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/products/pages/product-edit-page.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/products/pages/product-edit-page.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/products/services/getSettingValue.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/products/services/getSettingValue.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/products/services/image-base64.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/products/services/image-base64.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/products/services/mongo-parameter-repository.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/products/services/mongo-parameter-repository.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/products/services/mongo-product-repository.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/products/services/mongo-product-repository.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/products/services/prisma-category-repository.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/products/services/prisma-category-repository.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/products/services/prismaProductRepository.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/products/services/prismaProductRepository.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/products/services/product-service-form-utils.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/products/services/product-service-form-utils.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/products/services/productMigration.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/products/services/productMigration.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/products/services/productService.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/products/services/productService.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/products/utils/validator-regex-safety.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/products/utils/validator-regex-safety.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/products/utils/validator-replacement-recipe.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/products/utils/validator-replacement-recipe.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/products/validation-engine/core.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/products/validation-engine/core.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/products/validations/middleware.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/products/validations/middleware.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/products/validations/product.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/products/validations/product.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/products/validations/validator-runtime-config.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/products/validations/validator-runtime-config.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/prompt-core/runtime-observability.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/prompt-core/runtime-observability.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/prompt-engine/PromptEngineFilters.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/prompt-engine/PromptEngineFilters.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/prompt-engine/prompt-formatter-runtime.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/prompt-engine/prompt-formatter-runtime.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/prompt-engine/prompt-validator-scopes.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/prompt-engine/prompt-validator-scopes.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/prompt-exploder/AdminPromptExploderSettingsPage.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/prompt-exploder/AdminPromptExploderSettingsPage.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/prompt-exploder/benchmark-apply.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/prompt-exploder/benchmark-apply.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/prompt-exploder/benchmark-suggestions.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/prompt-exploder/benchmark-suggestions.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/prompt-exploder/benchmark.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/prompt-exploder/benchmark.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/prompt-exploder/custom-benchmark-cases.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/prompt-exploder/custom-benchmark-cases.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/prompt-exploder/feature-flags.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/prompt-exploder/feature-flags.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/prompt-exploder/helpers/drag-reorder.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/prompt-exploder/helpers/drag-reorder.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/prompt-exploder/helpers/formatting.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/prompt-exploder/helpers/formatting.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/prompt-exploder/helpers/logical-conditions.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/prompt-exploder/helpers/logical-conditions.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/prompt-exploder/helpers/rgb.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/prompt-exploder/helpers/rgb.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/prompt-exploder/helpers/segment-helpers.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/prompt-exploder/helpers/segment-helpers.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/prompt-exploder/hierarchy-master-tree.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/prompt-exploder/hierarchy-master-tree.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/prompt-exploder/manual-bindings.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/prompt-exploder/manual-bindings.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/prompt-exploder/params-editor.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/prompt-exploder/params-editor.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/prompt-exploder/parser-tuning.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/prompt-exploder/parser-tuning.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/prompt-exploder/parser.stability.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/prompt-exploder/parser.stability.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/prompt-exploder/parser.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/prompt-exploder/parser.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/prompt-exploder/pattern-pack.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/prompt-exploder/pattern-pack.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/prompt-exploder/pattern-snapshots.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/prompt-exploder/pattern-snapshots.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/prompt-exploder/prompt-library.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/prompt-exploder/prompt-library.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/prompt-exploder/prompt-validation-orchestrator.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/prompt-exploder/prompt-validation-orchestrator.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/prompt-exploder/rule-drafts.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/prompt-exploder/rule-drafts.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/prompt-exploder/rule-learning.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/prompt-exploder/rule-learning.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/prompt-exploder/rule-merge.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/prompt-exploder/rule-merge.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/prompt-exploder/runtime-refresh.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/prompt-exploder/runtime-refresh.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/prompt-exploder/settings.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/prompt-exploder/settings.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/prompt-exploder/template-learning.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/prompt-exploder/template-learning.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/prompt-exploder/validation-stack-resolver.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/prompt-exploder/validation-stack-resolver.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/tooltip-engine/docs-tooltip-settings.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/tooltip-engine/docs-tooltip-settings.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/viewer3d/api/asset3d-api.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/viewer3d/api/asset3d-api.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/viewer3d/components/Asset3DCard.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/viewer3d/components/Asset3DCard.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/viewer3d/components/Asset3DEditModal.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/viewer3d/components/Asset3DEditModal.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/viewer3d/hooks/useAsset3dQueries.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/viewer3d/hooks/useAsset3dQueries.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/viewer3d/services/asset3dUploader.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/viewer3d/services/asset3dUploader.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/viewer3d/services/prisma-asset3d-repository.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/viewer3d/services/prisma-asset3d-repository.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/viewer3d/services/validateAsset3d.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/features/viewer3d/services/validateAsset3d.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/mocks/server-only.js
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/mocks/server-only.js
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/shared/api/settings-client.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/shared/api/settings-client.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/shared/contracts/products-contracts.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/shared/contracts/products-contracts.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/shared/hooks/useFormState.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/shared/hooks/useFormState.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/shared/hooks/useQueryErrorHandling.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/shared/hooks/useQueryErrorHandling.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/shared/lib/ai-brain/useBrainAssignment.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/shared/lib/ai-brain/useBrainAssignment.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/shared/lib/ai-paths-constants-exports.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/shared/lib/ai-paths-constants-exports.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/shared/lib/ai-paths-definitions-import.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/shared/lib/ai-paths-definitions-import.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/shared/lib/api-hooks-bridge.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/shared/lib/api-hooks-bridge.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/shared/lib/mutation-factories-bridge.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/shared/lib/mutation-factories-bridge.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/shared/lib/observability/critical-error-notifier.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/shared/lib/observability/critical-error-notifier.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/shared/lib/observability/log-redaction.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/shared/lib/observability/log-redaction.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/shared/lib/observability/system-logger.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/shared/lib/observability/system-logger.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/shared/lib/offline-support.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/shared/lib/offline-support.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/shared/lib/query-client.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/shared/lib/query-client.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/shared/lib/query-factories-compat.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/shared/lib/query-factories-compat.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/shared/lib/query-factories-v2.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/shared/lib/query-factories-v2.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/shared/lib/query-invalidation.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/shared/lib/query-invalidation.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/shared/lib/tanstack-telemetry.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/shared/lib/tanstack-telemetry.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/shared/lib/transient-recovery-settings.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/shared/lib/transient-recovery-settings.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/shared/ui/FilterPanel.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/shared/ui/FilterPanel.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/shared/ui/templates/modals/ConfirmModal.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/shared/ui/templates/modals/ConfirmModal.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/shared/ui/templates/modals/DetailModal.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/shared/ui/templates/modals/DetailModal.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/shared/ui/templates/modals/SelectModal.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/shared/ui/templates/modals/SelectModal.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/shared/ui/templates/panels/PanelHeader.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/shared/ui/templates/panels/PanelHeader.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/shared/ui/templates/panels/PanelPagination.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/shared/ui/templates/panels/PanelPagination.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/shared/ui/templates/panels/usePanelState.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/shared/ui/templates/panels/usePanelState.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/shared/ui/templates/pickers/GenericGridPicker.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/shared/ui/templates/pickers/GenericGridPicker.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/shared/ui/templates/pickers/GenericPickerDropdown.test.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/shared/ui/templates/pickers/GenericPickerDropdown.test.tsx
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/shared/ui/templates/pickers/usePickerSearch.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/shared/ui/templates/pickers/usePickerSearch.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/shared/ui/vector-canvas.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/shared/ui/vector-canvas.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/shared/utils/color-utils.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/shared/utils/color-utils.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/shared/utils/drag-drop.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/shared/utils/drag-drop.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/shared/utils/error-logging.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/shared/utils/error-logging.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/shared/utils/folder-tree-profiles-v2.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/shared/utils/folder-tree-profiles-v2.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/shared/utils/folder-tree-profiles.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/shared/utils/folder-tree-profiles.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/shared/utils/markdown-utils.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/shared/utils/markdown-utils.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/shared/utils/master-folder-tree-engine.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/shared/utils/master-folder-tree-engine.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/shared/utils/retry.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/shared/utils/retry.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/shared/utils/tree-operations.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/shared/utils/tree-operations.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/shared/validations/user-preferences.test.ts
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/shared/validations/user-preferences.test.ts
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/test-utils.tsx
+  0:0  error  Parsing error: "parserOptions.project" has been provided for @typescript-eslint/parser.
+The file was not found in any of the provided project(s): __tests__/test-utils.tsx
+
+✖ 342 problems (342 errors, 0 warnings)
+

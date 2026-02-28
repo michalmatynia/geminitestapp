@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type {
   PathConfig,
   PathMeta,
+  AiPathsValidationConfig,
 } from '@/shared/lib/ai-paths';
 import {
   AI_PATHS_HISTORY_RETENTION_KEY,

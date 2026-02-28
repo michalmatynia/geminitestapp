@@ -3,6 +3,7 @@ import {
   getCurrencyRepository,
   getInternationalizationProvider 
 } from '@/features/internationalization/server';
+import { type CreateCurrencyDto } from '@/shared/contracts/internationalization';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 import prisma from '@/shared/lib/db/prisma';
@@ -47,7 +48,7 @@ export async function POST_intl_handler(
 
   if (type === 'currencies') {
     const repo = await getCurrencyRepository();
-    return NextResponse.json(await repo.createCurrency(data as any));
+    return NextResponse.json(await repo.createCurrency(data as unknown as CreateCurrencyDto));
   }
 
   if (type === 'countries') {

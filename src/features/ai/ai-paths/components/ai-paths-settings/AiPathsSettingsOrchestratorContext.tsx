@@ -2,12 +2,12 @@
 
 import { createContext, useContext, type ReactNode } from 'react';
 
-import type { AiPathsSettingsState } from './useAiPathsSettingsState';
+import type { UseAiPathsSettingsStateReturn } from './types';
 
-const AiPathsSettingsOrchestratorContext = createContext<AiPathsSettingsState | null>(null);
+const AiPathsSettingsOrchestratorContext = createContext<UseAiPathsSettingsStateReturn | null>(null);
 
 interface AiPathsSettingsOrchestratorProviderProps {
-  value: AiPathsSettingsState;
+  value: UseAiPathsSettingsStateReturn;
   children: ReactNode;
 }
 
@@ -22,7 +22,7 @@ export function AiPathsSettingsOrchestratorProvider({
   );
 }
 
-export function useAiPathsSettingsOrchestrator(): AiPathsSettingsState {
+export function useAiPathsSettingsOrchestrator(): UseAiPathsSettingsStateReturn {
   const context = useContext(AiPathsSettingsOrchestratorContext);
   if (!context) {
     throw new Error(

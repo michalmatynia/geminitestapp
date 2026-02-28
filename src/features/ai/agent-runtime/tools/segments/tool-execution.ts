@@ -1,5 +1,4 @@
 import { randomUUID } from 'crypto';
-import { promises as fs } from 'fs';
 import {
   type Browser,
   type BrowserContext,
@@ -10,31 +9,22 @@ import {
 } from 'playwright';
 
 import {
-  inferSelectorsFromLLM,
-  buildFailureRecoveryPlan,
   buildSearchQueryWithLLM,
   pickSearchResultWithLLM,
   decideSearchFirstWithLLM,
 } from '../llm';
 import {
   dismissConsent,
-  ensureLoginFormVisible,
   checkForChallenge,
-  inferLoginCandidates,
-  findFirstVisible,
 } from '../playwright/actions';
 import {
-  createBrowserContext,
   captureSnapshot,
-  captureSessionContext,
 } from '../playwright/browser';
-import { collectUiInventory } from '../playwright/inventory';
 import { runExtractionRequest } from '../run-agent-tool-extraction';
 import { fetchSearchResults } from '../search';
 import {
   isAllowedUrl,
   safeText,
-  parseCredentials,
   hasExplicitUrl,
   loadRobotsTxt,
   parseRobotsRules,
@@ -44,7 +34,6 @@ import {
 import { 
   type AgentToolRequest, 
   type AgentToolResult, 
-  type FailureRecoveryPlan,
   type ToolLlmContext
 } from './types';
 import { resolveToolContext } from './tool-context';
@@ -62,7 +51,7 @@ export async function runAgentTool(
     return { ok: false, error: error instanceof Error ? error.message : String(error) };
   }
 
-  const { runId, prompt, stepId, stepLabel, targetUrl, targetHostname, runDir, launch, context, config } = contextData;
+  const { runId, prompt, stepId, stepLabel, targetUrl, targetHostname, runDir: _runDir, launch, context, config } = contextData;
   const { 
     resolvedModel, 
     resolvedSearchProvider, 
@@ -71,7 +60,9 @@ export async function runAgentTool(
     memoryValidationModel, 
     memorySummarizationModel,
     outputNormalizationModel,
-    toolRouterModel
+    toolRouterModel,
+    selectorInferenceModel,
+    extractionValidationModel
   } = config;
 
   const log = createToolLogger({
@@ -80,7 +71,7 @@ export async function runAgentTool(
     model: resolvedModel,
     outputNormalizationModel,
     prompt: prompt ?? '',
-  });
+  } as any);
 
   const activeStepId = stepId ?? null;
 
@@ -169,7 +160,6 @@ export async function runAgentTool(
     targetUrl,
   });
 
-  let domText = '';
   let finalUrl = targetUrl;
 
   const llmContext: ToolLlmContext = {
@@ -330,37 +320,43 @@ export async function runAgentTool(
     }
 
     finalUrl = page.url();
-    await dismissConsent(page).catch(() => {});
+    await dismissConsent(page, 'auto', log, activeStepId).catch(() => {});
 
-    const challenge = await checkForChallenge(page);
-    if (challenge.detected) {
-      await flagCloudflare('challenge-detected', challenge.reason ?? undefined);
+    const challengeDetected = await checkForChallenge(page, 'auto', log, activeStepId);
+    if (challengeDetected) {
+      await flagCloudflare('challenge-detected', 'Challenge detected on page');
     }
 
     const extractionResult = await runExtractionRequest({
       page,
       prompt: prompt ?? '',
       runId,
-      stepId: activeStepId,
-      stepLabel,
-      model: resolvedModel,
+      runDir: _runDir,
+      activeStepId,
+      stepLabel: stepLabel || undefined,
+      targetHostname,
+      domText: '', // Will be extracted if empty
+      finalUrl,
+      llmContext: llmContext as any,
+      resolvedModel,
+      selectorInferenceModel: selectorInferenceModel ?? null,
+      outputNormalizationModel: outputNormalizationModel ?? null,
+      extractionValidationModel: extractionValidationModel ?? null,
       log,
-      enforceRobotsPolicy,
     });
 
     if (!extractionResult) {
       throw new Error('Extraction failed to produce a result.');
     }
 
-    domText = extractionResult.domText;
-    const snapshotId = await captureSnapshot(page, runId, activeStepId);
+    const snapshot = await captureSnapshot(page, runId, _runDir, 'auto', log, activeStepId);
     
     return {
       ok: true,
       output: {
         url: finalUrl,
-        domText: safeText(domText, 10000),
-        snapshotId,
+        domText: safeText(snapshot.domText),
+        snapshotId: (snapshot as any).id ?? null,
         logCount: 0, 
         ...extractionResult.output,
       },
@@ -372,7 +368,8 @@ export async function runAgentTool(
     
     let snapshotId: string | null = null;
     if (page) {
-      snapshotId = await captureSnapshot(page, runId, activeStepId).catch(() => null);
+      const errorSnapshot = await captureSnapshot(page, runId, _runDir, 'error', log, activeStepId).catch(() => null);
+      snapshotId = (errorSnapshot as any)?.id ?? null;
     }
 
     return {

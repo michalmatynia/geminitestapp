@@ -36,14 +36,17 @@ export function useAiPathsValidationActions(args: {
   );
 
   const reportAiPathsError = useCallback(
-    async (message: string, meta?: Record<string, unknown>): Promise<void> => {
-      const fullMessage = `[ai-paths] ${message}`;
-      console.error(fullMessage, meta);
-      toast(message, { variant: 'error' });
-      await persistLastError(message);
-      void logClientError(fullMessage, {
-        service: 'ai-paths',
-        ...meta,
+    (error: unknown, context: Record<string, unknown>, fallbackMessage?: string): void => {
+      const message = error instanceof Error ? error.message : String(error);
+      const fullMessage = `[ai-paths] ${fallbackMessage ? fallbackMessage + ' ' : ''}${message}`;
+      console.error(fullMessage, context, error);
+      toast(fallbackMessage || message, { variant: 'error' });
+      void persistLastError(fallbackMessage || message);
+      void logClientError(error, {
+        context: {
+          service: 'ai-paths',
+          ...context,
+        },
       });
     },
     [toast, persistLastError]

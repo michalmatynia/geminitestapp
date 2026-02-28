@@ -1,36 +1,64 @@
-import { NextRequest } from 'next/server';
-import { PUT_handler as putCatalog, DELETE_handler as deleteCatalog } from '../../../../catalogs/[id]/handler';
-import { GET_handler as getDraft, DELETE_handler as deleteDraft } from '../../../../drafts/[id]/handler';
+import { NextRequest, NextResponse } from 'next/server';
+import { getCatalogRepository, getProductDataProvider } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { badRequestError } from '@/shared/errors/app-error';
+import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import prisma from '@/shared/lib/db/prisma';
 
 export async function GET_products_entity_handler(
-  req: NextRequest, 
-  ctx: ApiHandlerContext,
+  _req: NextRequest, 
+  _ctx: ApiHandlerContext,
   params: { type: string, id: string }
 ): Promise<Response> {
   const { type, id } = params;
-  if (type === 'drafts') return getDraft(req, ctx, { id });
+  
+  if (type === 'drafts') {
+    const draft = await prisma.productDraft.findUnique({
+      where: { id },
+    });
+    if (!draft) throw notFoundError(`Draft not found: ${id}`);
+    return NextResponse.json(draft);
+  }
+  
   throw badRequestError(`Invalid products entity type for GET: ${type}`);
 }
 
 export async function PUT_products_entity_handler(
   req: NextRequest, 
-  ctx: ApiHandlerContext,
+  _ctx: ApiHandlerContext,
   params: { type: string, id: string }
 ): Promise<Response> {
   const { type, id } = params;
-  if (type === 'catalogs') return putCatalog(req, ctx, { id });
+  const data = await req.json();
+
+  if (type === 'catalogs') {
+    const provider = await getProductDataProvider();
+    const repo = await getCatalogRepository(provider);
+    return NextResponse.json(await repo.updateCatalog(id, data));
+  }
+  
   throw badRequestError(`Invalid products entity type for PUT: ${type}`);
 }
 
 export async function DELETE_products_entity_handler(
-  req: NextRequest, 
-  ctx: ApiHandlerContext,
+  _req: NextRequest, 
+  _ctx: ApiHandlerContext,
   params: { type: string, id: string }
 ): Promise<Response> {
   const { type, id } = params;
-  if (type === 'catalogs') return deleteCatalog(req, ctx, { id });
-  if (type === 'drafts') return deleteDraft(req, ctx, { id });
+
+  if (type === 'catalogs') {
+    const provider = await getProductDataProvider();
+    const repo = await getCatalogRepository(provider);
+    await repo.deleteCatalog(id);
+    return new Response(null, { status: 204 });
+  }
+  
+  if (type === 'drafts') {
+    await prisma.productDraft.delete({
+      where: { id },
+    });
+    return new Response(null, { status: 204 });
+  }
+  
   throw badRequestError(`Invalid products entity type for DELETE: ${type}`);
 }

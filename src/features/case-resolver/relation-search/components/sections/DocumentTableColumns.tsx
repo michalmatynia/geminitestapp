@@ -1,4 +1,4 @@
-'use client';
+
 
 import React from 'react';
 import { Lock, Plus } from 'lucide-react';

@@ -6,7 +6,7 @@ Loaded Prisma config from prisma.config.ts.
 
 Prisma schema loaded from prisma/schema.prisma.
 
-✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 215ms
+✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 226ms
 
 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
 
@@ -20,7 +20,7 @@ Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
   Creating an optimized production build ...
 Turbopack build encountered 7 warnings:
 ./src/app/api/databases/schema/handler.ts:77:9
-The file pattern ('/ROOT/' <dynamic> | '/ROOT' <dynamic>) matches 10976 files in [project]/
+The file pattern ('/ROOT/' <dynamic> | '/ROOT' <dynamic>) matches 10920 files in [project]/
 [0m [90m 75 |[39m     [33m?[39m path[33m.[39misAbsolute([33mPRISMA_SCHEMA_ENV_PATH[39m)
  [90m 76 |[39m       [33m?[39m [33mPRISMA_SCHEMA_ENV_PATH[39m
 [31m[1m>[22m[39m[90m 77 |[39m       [33m:[39m path[33m.[39mjoin(process[33m.[39mcwd()[33m,[39m [33mPRISMA_SCHEMA_ENV_PATH[39m)
@@ -38,7 +38,7 @@ Import trace:
 
 
 ./src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts:325:24
-The file pattern ('/ROOT/' <dynamic> | '/ROOT' <dynamic>) matches 10976 files in [project]/
+The file pattern ('/ROOT/' <dynamic> | '/ROOT' <dynamic>) matches 10920 files in [project]/
 [0m [90m 323 |[39m
  [90m 324 |[39m [36mexport[39m [36mconst[39m readAiPathsDocsManifest [33m=[39m [36masync[39m (warnings[33m:[39m string[])[33m:[39m [33mPromise[39m[33m<[39m[33mAiPathsDocsManifest[39m[33m>[39m [33m=>[39m {
 [31m[1m>[22m[39m[90m 325 |[39m   [36mconst[39m absolutePath [33m=[39m path[33m.[39mresolve(process[33m.[39mcwd()[33m,[39m [33mDOCS_MANIFEST_PATH[39m)[33m;[39m
@@ -63,7 +63,7 @@ Import traces:
 
 
 ./src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts:363:24
-The file pattern ('/ROOT/' <dynamic> | '/ROOT' <dynamic>) matches 10976 files in [project]/
+The file pattern ('/ROOT/' <dynamic> | '/ROOT' <dynamic>) matches 10920 files in [project]/
 [0m [90m 361 |[39m })[33m:[39m [33mPromise[39m[33m<[39m{ hash[33m:[39m string[33m;[39m assertions[33m:[39m [33mAiPathsDocAssertion[39m[] }[33m>[39m [33m=>[39m {
  [90m 362 |[39m   [36mconst[39m { source[33m,[39m warnings } [33m=[39m args[33m;[39m
 [31m[1m>[22m[39m[90m 363 |[39m   [36mconst[39m absolutePath [33m=[39m path[33m.[39mresolve(process[33m.[39mcwd()[33m,[39m source[33m.[39mpath)[33m;[39m
@@ -88,7 +88,7 @@ Import traces:
 
 
 ./src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts:443:24
-The file pattern ('/ROOT/' <dynamic> | '/ROOT' <dynamic>) matches 10976 files in [project]/
+The file pattern ('/ROOT/' <dynamic> | '/ROOT' <dynamic>) matches 10920 files in [project]/
 [0m [90m 441 |[39m })[33m:[39m [33mPromise[39m[33m<[39m{ hash[33m:[39m string[33m;[39m assertions[33m:[39m [33mAiPathsDocAssertion[39m[] }[33m>[39m [33m=>[39m {
  [90m 442 |[39m   [36mconst[39m { source[33m,[39m warnings } [33m=[39m args[33m;[39m
 [31m[1m>[22m[39m[90m 443 |[39m   [36mconst[39m absolutePath [33m=[39m path[33m.[39mresolve(process[33m.[39mcwd()[33m,[39m source[33m.[39mpath)[33m;[39m
@@ -113,7 +113,7 @@ Import traces:
 
 
 ./src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts:584:24
-The file pattern ('/ROOT/' <dynamic> | '/ROOT' <dynamic>) matches 10976 files in [project]/
+The file pattern ('/ROOT/' <dynamic> | '/ROOT' <dynamic>) matches 10920 files in [project]/
 [0m [90m 582 |[39m })[33m:[39m [33mPromise[39m[33m<[39m{ hash[33m:[39m string[33m;[39m assertions[33m:[39m [33mAiPathsDocAssertion[39m[] }[33m>[39m [33m=>[39m {
  [90m 583 |[39m   [36mconst[39m { source[33m,[39m warnings } [33m=[39m args[33m;[39m
 [31m[1m>[22m[39m[90m 584 |[39m   [36mconst[39m absolutePath [33m=[39m path[33m.[39mresolve(process[33m.[39mcwd()[33m,[39m source[33m.[39mpath)[33m;[39m
@@ -138,7 +138,7 @@ Import traces:
 
 
 ./src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.loaders.ts:660:24
-The file pattern ('/ROOT/' <dynamic> | '/ROOT' <dynamic>) matches 10976 files in [project]/
+The file pattern ('/ROOT/' <dynamic> | '/ROOT' <dynamic>) matches 10920 files in [project]/
 [0m [90m 658 |[39m })[33m:[39m [33mPromise[39m[33m<[39m{ hash[33m:[39m string[33m;[39m assertions[33m:[39m [33mAiPathsDocAssertion[39m[] }[33m>[39m [33m=>[39m {
  [90m 659 |[39m   [36mconst[39m { source[33m,[39m warnings } [33m=[39m args[33m;[39m
 [31m[1m>[22m[39m[90m 660 |[39m   [36mconst[39m absolutePath [33m=[39m path[33m.[39mresolve(process[33m.[39mcwd()[33m,[39m source[33m.[39mpath)[33m;[39m
@@ -163,7 +163,7 @@ Import traces:
 
 
 ./src/shared/lib/db/services/database-engine-status.ts:38:55
-The file pattern ('/ROOT/' <dynamic> | '/ROOT' <dynamic>) matches 10976 files in [project]/
+The file pattern ('/ROOT/' <dynamic> | '/ROOT' <dynamic>) matches 10920 files in [project]/
 [0m [90m 36 |[39m   [36mconst[39m schemaPath [33m=[39m process[33m.[39menv[[32m'PRISMA_SCHEMA_PATH'[39m][33m;[39m
  [90m 37 |[39m   [36mif[39m (schemaPath) {
 [31m[1m>[22m[39m[90m 38 |[39m     [36mreturn[39m path[33m.[39misAbsolute(schemaPath) [33m?[39m schemaPath [33m:[39m path[33m.[39mjoin(process[33m.[39mcwd()[33m,[39m schemaPath)[33m;[39m
@@ -186,18 +186,21 @@ Import traces:
     ./src/app/api/databases/engine/status/route.ts
 
 
-✓ Compiled successfully in 25.6s
+✓ Compiled successfully in 27.7s
   Running TypeScript ...
 Failed to compile.
 
-./src/app/api/integrations/products/[id]/export-to-base/segments/preparation.ts:68:53
-Type error: Expected 1 arguments, but got 0.
+./src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsState.ts:121:5
+Type error: Type 'Dispatch<SetStateAction<{ message: string; time: string; pathId?: string | null | undefined; } | null>>' is not assignable to type '(error: string | null) => void'.
+  Types of parameters 'value' and 'error' are incompatible.
+    Type 'string | null' is not assignable to type 'SetStateAction<{ message: string; time: string; pathId?: string | null | undefined; } | null>'.
+      Type 'string' is not assignable to type 'SetStateAction<{ message: string; time: string; pathId?: string | null | undefined; } | null>'.
 
-[0m [90m 66 |[39m   [36mtry[39m {
- [90m 67 |[39m     [36mconst[39m parameterRepository [33m=[39m [36mawait[39m getParameterRepository()[33m;[39m
-[31m[1m>[22m[39m[90m 68 |[39m     [36mconst[39m allParameters [33m=[39m [36mawait[39m parameterRepository[33m.[39mlistParameters()[33m;[39m
- [90m    |[39m                                                     [31m[1m^[22m[39m
- [90m 69 |[39m     [36mconst[39m paramNameById [33m=[39m [36mnew[39m [33mMap[39m[33m<[39m[33mstring[39m[33m,[39m string[33m>[39m()[33m;[39m
- [90m 70 |[39m     allParameters[33m.[39mforEach((p) [33m=>[39m {
- [90m 71 |[39m       paramNameById[33m.[39m[36mset[39m(p[33m.[39mid[33m,[39m p[33m.[39mname_en [36mas[39m string)[33m;[39m[0m
+[0m [90m 119 |[39m   [36mconst[39m validation [33m=[39m useAiPathsValidationActions({
+ [90m 120 |[39m     setAiPathsValidation[33m:[39m setAiPathsValidationState[33m,[39m
+[31m[1m>[22m[39m[90m 121 |[39m     setLastError[33m,[39m
+ [90m     |[39m     [31m[1m^[22m[39m
+ [90m 122 |[39m     toast[33m,[39m
+ [90m 123 |[39m   })[33m;[39m
+ [90m 124 |[39m[0m
 Next.js build worker exited with code: 1 and signal: null

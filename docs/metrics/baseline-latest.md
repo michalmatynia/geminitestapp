@@ -1,19 +1,19 @@
 # Architecture & Performance Baseline
 
-Generated at: 2026-02-28T10:24:14.413Z
+Generated at: 2026-02-28T10:36:15.456Z
 
 ## Snapshot
 
-- Source files: 3720
-- Source lines: 599515
-- use client files: 1268
+- Source files: 3718
+- Source lines: 599632
+- use client files: 1233
 - Files >= 1000 LOC: 5
 - Files >= 1500 LOC: 1
 - Largest file: `src/features/case-resolver/__tests__/settings.test.ts` (1774 LOC)
-- API routes: 293
+- API routes: 292
 - API delegated server routes: 15
 - API routes without apiHandler/delegation: 0
-- API explicit cache policy coverage: 293/293 (100.0%)
+- API explicit cache policy coverage: 292/292 (100.0%)
 - Cross-feature dependency pairs: 72
 - Shared -> features imports: 7
 - setInterval occurrences: 22
@@ -29,8 +29,8 @@ Generated at: 2026-02-28T10:24:14.413Z
 | `src/app/api/products/[id]/route.ts` | 31 |
 | `src/app/api/auth/users/[id]/route.ts` | 23 |
 | `src/app/api/products/sync/profiles/[id]/route.ts` | 23 |
-| `src/app/api/v2/products/entities/\[type\]/\[id\]/route.ts` | 22 |
-| `src/app/api/v2/products/metadata/\[type\]/\[id\]/route.ts` | 22 |
+| `src/app/api/v2/products/entities/[type]/[id]/route.ts` | 22 |
+| `src/app/api/v2/products/metadata/[type]/[id]/route.ts` | 22 |
 | `src/app/api/auth/users/[id]/security/route.ts` | 21 |
 | `src/app/api/products/validator-patterns/route.ts` | 21 |
 | `src/app/api/integrations/imports/base/runs/route.ts` | 20 |

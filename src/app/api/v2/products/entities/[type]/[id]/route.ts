@@ -6,7 +6,7 @@ import {
   GET_products_entity_handler, 
   PUT_products_entity_handler, 
   DELETE_products_entity_handler 
-} from '../handler';
+} from '@/app/api/v2/products/entities/handler';
 
 export const GET = apiHandlerWithParams(GET_products_entity_handler, {
   source: 'products-entity.GET',

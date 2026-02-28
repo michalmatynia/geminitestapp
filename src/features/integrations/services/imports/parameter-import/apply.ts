@@ -244,8 +244,9 @@ export const applyBaseParameterImport = async (
           name_pl: names.name_pl ?? null,
           name_de: names.name_de ?? null,
         });
-        byId.set(matched.id, matched);
-        [matched.name_en, matched.name_pl, matched.name_de]
+        if (!matched) continue;
+        byId.set((matched as any).id, matched);
+        [(matched as any).name_en, (matched as any).name_pl, (matched as any).name_de]
           .map((name: string | null) => (typeof name === 'string' ? name.trim() : ''))
           .filter((name: string): boolean => name.length > 0)
           .forEach((name: string) => {
@@ -271,7 +272,7 @@ export const applyBaseParameterImport = async (
 
     const nextValuePayload = buildParameterValuePayload({
       extracted: entry,
-      settingsLanguageScope: input.settings.languageScope,
+      settingsLanguageScope: input.settings.languageScope || 'catalog_languages',
       catalogLanguageCodes: input.catalogLanguageCodes,
       defaultLanguageCode: input.defaultLanguageCode ?? null,
     });

@@ -82,7 +82,8 @@
       "Bash(git log:*)",
       "Bash(npx jest:*)",
       "Bash(\"/Users/michalmatynia/Desktop/NPM/2026/Gemini new:*)",
-      "Bash(test:*)"
+      "Bash(test:*)",
+      "Bash(xxd:*)"
     ]
   }
 }

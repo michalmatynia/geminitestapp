@@ -1,4 +1,4 @@
-'use client';
+
 
 import React from 'react';
 import { ClockIcon, ChevronDownIcon, Trash2Icon } from 'lucide-react';

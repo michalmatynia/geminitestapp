@@ -213,9 +213,9 @@ export const handleAudioOscillator: NodeHandler = ({
 
   const signal = buildOscillatorSignal({
     waveform: normalizeWaveform(coerceInput(nodeInputs['waveform']), config.waveform),
-    frequencyHz: toFiniteNumber(coerceInput(nodeInputs['frequency']), config.frequencyHz),
-    gain: toFiniteNumber(coerceInput(nodeInputs['gain']), config.gain),
-    durationMs: toFiniteNumber(coerceInput(nodeInputs['durationMs']), config.durationMs),
+    frequencyHz: toFiniteNumber(coerceInput(nodeInputs['frequency']), config.frequencyHz as any),
+    gain: toFiniteNumber(coerceInput(nodeInputs['gain']), config.gain as any),
+    durationMs: toFiniteNumber(coerceInput(nodeInputs['durationMs']), config.durationMs as any),
   });
 
   if (!armed) {

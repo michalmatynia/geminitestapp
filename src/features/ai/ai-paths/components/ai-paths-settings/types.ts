@@ -103,6 +103,8 @@ export interface UseAiPathsSettingsStateReturn {
   lastRunAt: string | null;
   pathName: string;
   setPathName: React.Dispatch<React.SetStateAction<string>>;
+  pathDescription: string;
+  setPathDescription: React.Dispatch<React.SetStateAction<string>>;
   updateActivePathMeta: (name: string) => void;
   paths: PathMeta[];
   pathConfigs: Record<string, PathConfig>;
@@ -289,7 +291,7 @@ export interface UseAiPathsSettingsStateReturn {
   handleImportPresets: (mode: 'merge' | 'replace') => Promise<void>;
   simulationOpenNodeId: string | null;
   ConfirmationModal: React.ComponentType;
-  confirmNodeSwitch: (nodeId: string) => boolean | Promise<boolean>;
+  confirmNodeSwitch: (nextNodeId: string) => Promise<boolean>;
   reportAiPathsError: (
     error: unknown,
     context: Record<string, unknown>,
@@ -301,4 +303,10 @@ export interface UseAiPathsSettingsStateReturn {
       variant?: 'default' | 'success' | 'error' | 'warning' | 'info';
     }
   ) => void;
+  ensureNodeVisible: (node: AiNode) => void;
+  getCanvasCenterPosition: () => { x: number; y: number };
+  persistActivePathPreference: (pathId: string | null) => Promise<void>;
+  persistPathSettings: (nextPaths: any, configId: string, config: any) => Promise<void>;
+  persistRuntimePathState: (pathId: string, runtimeState: RuntimeState) => Promise<void>;
+  persistSettingsBulk: (items: Array<{ key: string; value: string }>) => Promise<void>;
 }

@@ -224,10 +224,11 @@ export async function autoScaleObjectByAnalysis(
     throw new Error('No visible object pixels were detected to auto scale.');
   }
 
-  const sourceObjectBounds = planned.analysis.sourceObjectBounds;
-  const targetObjectBounds = planned.plan.targetObjectBounds;
-  const outputWidth = planned.plan.outputWidth;
-  const outputHeight = planned.plan.outputHeight;
+  const p = planned as any;
+  const sourceObjectBounds = p.analysis.sourceObjectBounds;
+  const targetObjectBounds = p.plan.targetObjectBounds;
+  const outputWidth = p.plan.outputWidth;
+  const outputHeight = p.plan.outputHeight;
 
   const extracted = await sharp(sourceBuffer)
     .ensureAlpha()

@@ -1,7 +1,7 @@
 'use client';
 
 import { useStateBridgeAll } from '../../context';
-import { type UseAiPathsSettingsStateReturn } from './useAiPathsSettingsState';
+import { type UseAiPathsSettingsStateReturn } from './types';
 
 export function AiPathsStateBridger({ state }: { state: UseAiPathsSettingsStateReturn }): null {
   // Sync state to domain contexts

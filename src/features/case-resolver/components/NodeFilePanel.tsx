@@ -1,4 +1,4 @@
-'use client';
+
 
 import React from 'react';
 import { ScanLine, FileText, ExternalLink } from 'lucide-react';

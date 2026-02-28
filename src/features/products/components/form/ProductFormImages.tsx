@@ -1,4 +1,4 @@
-'use client';
+
 
 import { ProductImagesTabContent } from '@/features/products/components/form/ProductImagesTabContent';
 

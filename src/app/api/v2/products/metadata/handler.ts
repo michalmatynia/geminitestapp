@@ -1,36 +1,48 @@
-import { NextRequest } from 'next/server';
-import { GET_handler as getProducers, POST_handler as postProducers } from '../../products/producers/handler';
-import { GET_handler as getTags, POST_handler as postTags } from '../../products/tags/handler';
-import { GET_handler as getParameters, POST_handler as postParameters } from '../../products/parameters/handler';
-import { GET_handler as getSimpleParameters, POST_handler as postSimpleParameters } from '../../products/simple-parameters/handler';
-import { getPriceGroupsHandler, postPriceGroupsHandler } from '../../price-groups/handler';
+import { NextRequest, NextResponse } from 'next/server';
+import { 
+  getProducerRepository,
+  getTagRepository,
+  getParameterRepository,
+} from '@/features/products/server';
+import { listSimpleParameters } from '@/shared/lib/products/services/simple-parameter-service';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 
 export async function GET_products_metadata_handler(
-  req: NextRequest, 
-  ctx: ApiHandlerContext,
+  _req: NextRequest, 
+  _ctx: ApiHandlerContext,
   params: { type: string }
 ): Promise<Response> {
   const { type } = params;
-  if (type === 'producers') return getProducers(req, ctx);
-  if (type === 'tags') return getTags(req, ctx);
-  if (type === 'parameters') return getParameters(req, ctx);
-  if (type === 'simple-parameters') return getSimpleParameters(req, ctx);
-  if (type === 'price-groups') return getPriceGroupsHandler(req, ctx);
+  const searchParams = _req.nextUrl.searchParams;
+  const catalogId = searchParams.get('catalogId') || '';
+
+  if (type === 'producers') {
+    const repo = await getProducerRepository();
+    return NextResponse.json(await repo.listProducers({}));
+  }
+  if (type === 'tags') {
+    const repo = await getTagRepository();
+    return NextResponse.json(await repo.listTags({}));
+  }
+  if (type === 'parameters') {
+    const repo = await getParameterRepository();
+    return NextResponse.json(await repo.listParameters({}));
+  }
+  if (type === 'simple-parameters') {
+    if (!catalogId) throw badRequestError('catalogId is required for simple-parameters');
+    return NextResponse.json(await listSimpleParameters({ catalogId }));
+  }
+  // Price groups handled by separate route for now if missing
   throw badRequestError(`Invalid products metadata type: ${type}`);
 }
 
 export async function POST_products_metadata_handler(
-  req: NextRequest, 
-  ctx: ApiHandlerContext,
+  _req: NextRequest, 
+  _ctx: ApiHandlerContext,
   params: { type: string }
 ): Promise<Response> {
   const { type } = params;
-  if (type === 'producers') return postProducers(req, ctx);
-  if (type === 'tags') return postTags(req, ctx);
-  if (type === 'parameters') return postParameters(req, ctx);
-  if (type === 'simple-parameters') return postSimpleParameters(req, ctx);
-  if (type === 'price-groups') return postPriceGroupsHandler(req, ctx);
-  throw badRequestError(`Invalid products metadata type: ${type}`);
+  // Implement POST logic if needed, currently fallback to error
+  throw badRequestError(`POST not implemented for products metadata type: ${type}`);
 }

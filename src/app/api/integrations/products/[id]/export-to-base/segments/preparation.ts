@@ -65,7 +65,7 @@ const remapLegacyParameterSourceMappings = async (args: {
 
   try {
     const parameterRepository = await getParameterRepository();
-    const allParameters = await parameterRepository.listParameters();
+    const allParameters = await parameterRepository.listParameters({});
     const paramNameById = new Map<string, string>();
     allParameters.forEach((p) => {
       paramNameById.set(p.id, p.name_en as string);

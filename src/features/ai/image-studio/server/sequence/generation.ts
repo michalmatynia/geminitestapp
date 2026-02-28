@@ -23,28 +23,29 @@ export async function executeGenerateStep(params: {
   run: ImageStudioSequenceRunRecord;
   step: ImageStudioSequenceGenerateStep;
   currentSlot: any;
-  runtimeMask?: ImageStudioSequenceMaskContext | null;
+  runtimeMask?: any | null;
 }): Promise<{ nextSlotId: string; producedSlotIds: string[]; generatedRunId: string }> {
   const { run, step, currentSlot, runtimeMask } = params;
+  const config = step.config as any;
   
-  const prompt = resolvePromptPlaceholders(step.config.prompt, {
+  const prompt = resolvePromptPlaceholders(config.promptTemplate || '', {
     projectId: run.projectId,
     slotId: currentSlot.id,
   });
 
   const genRun = await createImageStudioRun(run.projectId, {
-    mode: step.config.mode,
-    model: step.config.model,
+    mode: config.promptMode === 'override' ? 'server_authoritative' : 'server_assisted',
+    model: config.modelOverride || undefined,
     prompt,
-    negativePrompt: step.config.negativePrompt,
+    negativePrompt: config.negativePrompt || undefined,
     inputSlotId: currentSlot.id,
-    maskSlotId: runtimeMask?.slotId ?? step.config.maskSlotId ?? null,
-    strength: step.config.strength,
-    guidance: step.config.guidance,
-    steps: step.config.steps,
-    seed: step.config.seed,
-    outputCount: step.config.outputCount,
-    scheduler: step.config.scheduler,
+    maskSlotId: runtimeMask?.slotId ?? config.maskSlotId ?? null,
+    strength: config.strength ?? 0.75,
+    guidance: config.guidance ?? 7.5,
+    steps: config.steps ?? 30,
+    seed: config.seed ?? null,
+    outputCount: config.outputCount ?? 1,
+    scheduler: config.scheduler || undefined,
   });
 
   await enqueueImageStudioRunJob({ runId: genRun.id });
@@ -53,7 +54,7 @@ export async function executeGenerateStep(params: {
   const timeout = step.config.timeoutMs || DEFAULT_GENERATION_WAIT_MS;
 
   while (Date.now() - startTime < timeout) {
-    const status = await getImageStudioRunById(genRun.id);
+    const status = await getImageStudioRunById(genRun.id) as any;
     if (status?.status === 'completed') break;
     if (status?.status === 'failed') {
       throw new Error(`Generation failed: ${status.error || 'Unknown error'}`);
@@ -63,7 +64,7 @@ export async function executeGenerateStep(params: {
 
   const producedSlots = await listImageStudioSlots(run.projectId);
   const newSlots = producedSlots
-    .filter(s => s.runId === genRun.id)
+    .filter(s => (s as any).runId === genRun.id)
     .map(s => s.id);
 
   if (newSlots.length === 0) {

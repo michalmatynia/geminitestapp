@@ -1,16 +1,39 @@
-import { NextRequest } from 'next/server';
-import { POST_handler as postCategory } from '../../../../products/validator-patterns/templates/name-segment-category/handler';
-import { POST_handler as postDimensions } from '../../../../products/validator-patterns/templates/name-segment-dimensions/handler';
+import { NextRequest, NextResponse } from 'next/server';
+import { getValidationPatternRepository } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 
 export async function POST_validator_template_handler(
-  req: NextRequest, 
-  ctx: ApiHandlerContext,
+  _req: NextRequest, 
+  _ctx: ApiHandlerContext,
   params: { type: string }
 ): Promise<Response> {
   const { type } = params;
-  if (type === 'name-segment-category') return postCategory(req, ctx);
-  if (type === 'name-segment-dimensions') return postDimensions(req, ctx);
+  const repo = await getValidationPatternRepository();
+
+  if (type === 'name-segment-category') {
+    const pattern = await repo.createPattern({
+      label: 'Name Segment: Category',
+      target: 'name',
+      regex: '^\\[.*\\]',
+      message: 'Product name must start with a category in brackets.',
+      severity: 'error',
+      enabled: true,
+    });
+    return NextResponse.json(pattern);
+  }
+
+  if (type === 'name-segment-dimensions') {
+    const pattern = await repo.createPattern({
+      label: 'Name Segment: Dimensions',
+      target: 'name',
+      regex: '\\d+x\\d+',
+      message: 'Product name must contain dimensions.',
+      severity: 'warning',
+      enabled: true,
+    });
+    return NextResponse.json(pattern);
+  }
+
   throw badRequestError(`Invalid validator template type: ${type}`);
 }

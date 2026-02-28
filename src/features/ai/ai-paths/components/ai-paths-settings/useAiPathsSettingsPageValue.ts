@@ -11,7 +11,7 @@ import { buildSwitchPathOptions, sortPathMetas } from './ai-paths-settings-view-
 import { useAiPathsDocsTooltips } from '@/features/ai/ai-paths/hooks/useAiPathsDocsTooltips';
 import type { AiPathsSettingsPageContextValue } from './AiPathsSettingsPageContext';
 import type { AiPathsSettingsProps } from '../AiPathsSettings';
-import type { UseAiPathsSettingsStateReturn } from './useAiPathsSettingsState';
+import type { UseAiPathsSettingsStateReturn } from './types';
 
 export function useAiPathsSettingsPageValue(
   props: AiPathsSettingsProps,

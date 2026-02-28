@@ -1,4 +1,4 @@
-'use client';
+
 
 import type { RuntimeHistoryEntry, RuntimeHistoryLink } from '@/shared/lib/ai-paths';
 import { formatDurationMs, formatRuntimeValue } from '@/shared/lib/ai-paths';

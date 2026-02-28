@@ -42,20 +42,21 @@ export async function executeCropStep(params: {
   await fs.mkdir(outputDir, { recursive: true });
   const outputPath = path.join(outputDir, outputFilename);
 
+  const config = step.config as any;
   await sharp(diskPath)
     .extract({
-      left: Math.round((step.config.x / 100) * (metadata.width ?? 0)),
-      top: Math.round((step.config.y / 100) * (metadata.height ?? 0)),
-      width: Math.round((step.config.width / 100) * (metadata.width ?? 0)),
-      height: Math.round((step.config.height / 100) * (metadata.height ?? 0)),
+      left: Math.round(((config.bbox?.x ?? 0) / 100) * (metadata.width ?? 0)),
+      top: Math.round(((config.bbox?.y ?? 0) / 100) * (metadata.height ?? 0)),
+      width: Math.round(((config.bbox?.width ?? 100) / 100) * (metadata.width ?? 0)),
+      height: Math.round(((config.bbox?.height ?? 100) / 100) * (metadata.height ?? 0)),
     })
     .toFile(outputPath);
 
-  const imageRepo = getImageFileRepository();
+  const imageRepo = await getImageFileRepository();
   const imageFile = await imageRepo.createImageFile({
     filepath: normalizePublicPath(path.join('uploads/studio', relativeDir, outputFilename)),
     filename: outputFilename,
-    mime: 'image/png',
+    mimetype: 'image/png',
     size: (await fs.stat(outputPath)).size,
     width: metadata.width ?? 0,
     height: metadata.height ?? 0,
@@ -64,8 +65,8 @@ export async function executeCropStep(params: {
   const [newSlot] = await createImageStudioSlots(run.projectId, [
     {
       imageFileId: imageFile.id,
-      label: `Cropped (${step.config.kind})`,
-      metadata: { sourceSlotId: currentSlot.id, stepId: step.id },
+      name: `Cropped (${step.config.kind})`,
+      metadata: { sourceSlotId: currentSlot.id, stepId: step.id } as any,
     },
   ]);
 
@@ -91,28 +92,28 @@ export async function executeUpscaleStep(params: {
     strategy: step.config.strategy,
   });
 
-  const outputFilename = `upscale_${Date.now()}${guessExtensionFromMime(upscaleResult.mime)}`;
+  const outputFilename = `upscale_${Date.now()}${guessExtensionFromMime((upscaleResult as any).mimetype ?? (upscaleResult as any).mime ?? 'image/png')}`;
   const relativeDir = path.join(sanitizeSegment(run.projectId), 'sequences', run.id);
   const outputDir = path.join(STUDIO_UPLOADS_ROOT, relativeDir);
   await fs.mkdir(outputDir, { recursive: true });
   const outputPath = path.join(outputDir, outputFilename);
-  await fs.writeFile(outputPath, upscaleResult.buffer);
+  await fs.writeFile(outputPath, (upscaleResult as any).buffer);
 
-  const imageRepo = getImageFileRepository();
+  const imageRepo = await getImageFileRepository();
   const imageFile = await imageRepo.createImageFile({
     filepath: normalizePublicPath(path.join('uploads/studio', relativeDir, outputFilename)),
     filename: outputFilename,
-    mime: upscaleResult.mime,
-    size: upscaleResult.buffer.length,
-    width: upscaleResult.width,
-    height: upscaleResult.height,
+    mimetype: (upscaleResult as any).mimetype ?? (upscaleResult as any).mime ?? 'image/png',
+    size: (upscaleResult as any).buffer.length,
+    width: (upscaleResult as any).width,
+    height: (upscaleResult as any).height,
   });
 
   const [newSlot] = await createImageStudioSlots(run.projectId, [
     {
       imageFileId: imageFile.id,
-      label: `Upscaled (x${step.config.scale})`,
-      metadata: { sourceSlotId: currentSlot.id, stepId: step.id },
+      name: `Upscaled (x${step.config.scale})`,
+      metadata: { sourceSlotId: currentSlot.id, stepId: step.id } as any,
     },
   ]);
 

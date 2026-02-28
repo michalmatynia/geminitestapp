@@ -10,7 +10,7 @@ import {
   formatStatusLabel,
   statusToVariant,
 } from '../ai-paths-settings-view-utils';
-import { runsApi } from '@/shared/lib/ai-paths';
+import { runsApi, type AiNode } from '@/shared/lib/ai-paths';
 import type {
   AiPathRuntimeTraceSlowNode,
   AiPathRuntimeTraceFailedNode,
@@ -28,7 +28,7 @@ export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
 
   const nodeTitleById = useMemo((): Map<string, string> => {
     const map = new Map<string, string>();
-    nodes.forEach((node) => {
+    nodes.forEach((node: AiNode) => {
       map.set(node.id, node.title ?? node.id);
     });
     return map;

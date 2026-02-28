@@ -295,6 +295,7 @@ export const prepareBaseImportRun = async (
     updatedAt: createdAt,
     startedAt: null,
     finishedAt: null,
+    parameterImportSummary: null,
   }));
 
   // Batch insert items to avoid thousands of serial database calls

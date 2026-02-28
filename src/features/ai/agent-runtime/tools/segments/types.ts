@@ -1,10 +1,3 @@
-import { Prisma } from '@prisma/client';
-import type {
-  Browser,
-  BrowserContext,
-  Page,
-} from 'playwright';
-
 export type AgentToolRequest = {
   name: 'playwright';
   input: {

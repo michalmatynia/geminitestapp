@@ -1,4 +1,4 @@
-'use client';
+
 
 import React from 'react';
 import { Download, Save } from 'lucide-react';

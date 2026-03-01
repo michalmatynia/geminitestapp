@@ -7,7 +7,7 @@ import { useEffect, useMemo, useCallback, useState } from 'react';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { StandardDataTablePanel } from '../StandardDataTablePanel';
 import { EmptyState } from '../../empty-state';
-import { useToast } from '../../use-toast';
+import { useToast } from '../../toast';
 
 import { GenericMapperHeaderActions } from './GenericMapperHeaderActions';
 import { GenericMapperStats } from './GenericMapperStats';

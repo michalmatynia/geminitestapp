@@ -8,6 +8,11 @@ import type { Db } from 'mongodb';
 import type { MongoClient } from 'mongodb';
 import type { MongoClientOptions } from 'mongodb';
 
+const parsePositiveInt = (value: string | undefined, fallback: number): number => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : fallback;
+};
+
 // ---------------------------------------------------------------------------
 // Observability helpers — dynamic import to avoid circular dependency with the
 // observability layer (which itself may use MongoDB for storage).
@@ -132,11 +137,6 @@ type MongoGlobalState = {
 };
 
 const globalForMongo = globalThis as typeof globalThis & MongoGlobalState;
-
-const parsePositiveInt = (value: string | undefined, fallback: number): number => {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : fallback;
-};
 
 const getMongoClientCtor = (): { MongoClient: MongoClientCtor } => {
   // Turbopack currently struggles to bundle the MongoDB driver (Node built-ins like tls, timers/promises).

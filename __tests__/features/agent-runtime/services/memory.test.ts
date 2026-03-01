@@ -1,11 +1,30 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 import {
+  runBrainChatCompletion,
+} from '@/shared/lib/ai-brain/server-runtime-client';
+
+import {
   addAgentMemory,
   listAgentMemory,
   validateAgentLongTermMemory,
 } from '@/features/ai/agent-runtime/memory/index';
 import prisma from '@/shared/lib/db/prisma';
+
+// Mock Brain server utilities
+vi.mock('@/shared/lib/ai-brain/server', () => ({
+  resolveBrainExecutionConfigForCapability: vi.fn(async () => ({
+    modelId: 'mock-model',
+    temperature: 0.7,
+    maxTokens: 1000,
+  })),
+}));
+
+// Mock Brain runtime client
+vi.mock('@/shared/lib/ai-brain/server-runtime-client', () => ({
+  runBrainChatCompletion: vi.fn(),
+  supportsBrainJsonMode: vi.fn(() => true),
+}));
 
 // Mock Prisma
 vi.mock('@/shared/lib/db/prisma', () => ({
@@ -23,13 +42,9 @@ vi.mock('@/shared/lib/db/prisma', () => ({
   },
 }));
 
-// Mock fetch for Ollama inside tests
-// global.fetch = vi.fn(); // Removed top level
-
 describe('Agent Runtime - Memory', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    global.fetch = vi.fn();
   });
 
   describe('addAgentMemory', () => {
@@ -77,18 +92,13 @@ describe('Agent Runtime - Memory', () => {
   describe('validateAgentLongTermMemory', () => {
     it('should validate valid memory content via Ollama', async () => {
       const mockResponse = {
-        message: {
-          content: JSON.stringify({
-            valid: true,
-            issues: [],
-            reason: 'Looks good',
-          }),
-        },
+        text: JSON.stringify({
+          valid: true,
+          issues: [],
+          reason: 'Looks good',
+        }),
       };
-      (global.fetch as any).mockResolvedValue({
-        ok: true,
-        json: async () => await Promise.resolve(mockResponse),
-      });
+      vi.mocked(runBrainChatCompletion).mockResolvedValueOnce(mockResponse as any);
 
       const result = await validateAgentLongTermMemory({
         content: 'Valid memory',
@@ -97,29 +107,28 @@ describe('Agent Runtime - Memory', () => {
 
       expect(result.valid).toBe(true);
       expect(result.reason).toBe('Looks good');
-      expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/chat'),
+      expect(runBrainChatCompletion).toHaveBeenCalledWith(
         expect.objectContaining({
-          method: 'POST',
-          body: expect.stringContaining('You validate long-term memory entries'),
+          modelId: 'llama3',
+          messages: expect.arrayContaining([
+            expect.objectContaining({
+              role: 'user',
+              content: expect.stringContaining('Valid memory'),
+            }),
+          ]),
         })
       );
     });
 
     it('should return invalid when Ollama reports issues', async () => {
       const mockResponse = {
-        message: {
-          content: JSON.stringify({
-            valid: false,
-            issues: ['Too vague'],
-            reason: 'Bad',
-          }),
-        },
+        text: JSON.stringify({
+          valid: false,
+          issues: ['Too vague'],
+          reason: 'Bad',
+        }),
       };
-      (global.fetch as any).mockResolvedValue({
-        ok: true,
-        json: async () => await Promise.resolve(mockResponse),
-      });
+      vi.mocked(runBrainChatCompletion).mockResolvedValueOnce(mockResponse as any);
 
       const result = await validateAgentLongTermMemory({
         content: 'Bad memory',
@@ -131,7 +140,7 @@ describe('Agent Runtime - Memory', () => {
     });
 
     it('should handle fetch errors gracefully', async () => {
-      (global.fetch as any).mockRejectedValue(new Error('Network error'));
+      vi.mocked(runBrainChatCompletion).mockRejectedValueOnce(new Error('Network error'));
 
       const result = await validateAgentLongTermMemory({
         content: 'Any memory',

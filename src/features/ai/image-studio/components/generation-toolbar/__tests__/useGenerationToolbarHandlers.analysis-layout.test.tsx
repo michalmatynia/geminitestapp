@@ -221,7 +221,8 @@ describe('useGenerationToolbarHandlers analysis layout integration', () => {
         mode: 'server_analysis_v1',
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         layout: expect.objectContaining(CENTER_LAYOUT_PAYLOAD),
-      })
+      }),
+      expect.anything()
     );
     expect(state.setAnalysisBusy).toHaveBeenNthCalledWith(1, true);
     expect(state.setAnalysisStatus).toHaveBeenNthCalledWith(1, 'resolving');
@@ -270,7 +271,8 @@ describe('useGenerationToolbarHandlers analysis layout integration', () => {
         mode: 'server_analysis_v1',
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         layout: expect.objectContaining(AUTO_SCALE_LAYOUT_PAYLOAD),
-      })
+      }),
+      expect.anything()
     );
     expect(state.applyAnalysisLayoutToCenter).toHaveBeenCalledTimes(1);
     expect(state.applyAnalysisLayoutToAutoScaler).toHaveBeenCalledTimes(1);

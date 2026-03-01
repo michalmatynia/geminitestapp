@@ -232,7 +232,7 @@ export async function autoScaleObjectByAnalysis(
       width: sourceObjectBounds.width,
       height: sourceObjectBounds.height,
     })
-    .resize(targetObjectBounds.width, targetObjectBounds.height, {
+    .resize(Math.round(targetObjectBounds.width), Math.round(targetObjectBounds.height), {
       fit: 'fill',
       kernel: 'lanczos3',
     })
@@ -241,8 +241,8 @@ export async function autoScaleObjectByAnalysis(
 
   const outputBuffer = await sharp({
     create: {
-      width: outputWidth,
-      height: outputHeight,
+      width: Math.round(outputWidth),
+      height: Math.round(outputHeight),
       channels: 4,
       background: { r: 255, g: 255, b: 255, alpha: 1 },
     },
@@ -250,8 +250,8 @@ export async function autoScaleObjectByAnalysis(
     .composite([
       {
         input: extracted,
-        left: targetObjectBounds.left,
-        top: targetObjectBounds.top,
+        left: Math.round(targetObjectBounds.left),
+        top: Math.round(targetObjectBounds.top),
       },
     ])
     .png()

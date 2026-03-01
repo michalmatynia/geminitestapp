@@ -10,6 +10,7 @@ import { type ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import { useCropHandlers } from './handlers/useCropHandlers';
 import { useUpscaleHandlers } from './handlers/useUpscaleHandlers';
 import { useCenterAndScaleHandlers } from './handlers/useCenterAndScaleHandlers';
+import { useAnalysisHandlers } from './handlers/useAnalysisHandlers';
 
 export function useGenerationToolbarHandlers(
   state: GenerationToolbarState
@@ -37,11 +38,10 @@ export function useGenerationToolbarHandlers(
   const crop = useCropHandlers(state, helpers);
   const upscale = useUpscaleHandlers(state, helpers);
   const center = useCenterAndScaleHandlers(state, helpers);
+  const analysis = useAnalysisHandlers(state, helpers);
 
   const handleAiMaskGeneration = useCallback(async () => {}, []);
   const runAnalysisFromToolbar = useCallback(async () => {}, []);
-  const handleRunAnalysisFromCenter = useCallback(async () => {}, []);
-  const handleRunAnalysisFromAutoScaler = useCallback(async () => {}, []);
   const attachMaskVariantsFromSelection = useCallback(async () => {}, []);
   const handleCreateCropBox = useCallback(() => {}, []);
   const handleSquareCrop = useCallback(async () => {}, []);
@@ -55,14 +55,13 @@ export function useGenerationToolbarHandlers(
     ...crop,
     ...upscale,
     ...center,
+    ...analysis,
     handleCrop,
     handleCancelCrop,
     handleAutoScale,
     handleCancelAutoScale,
     handleAiMaskGeneration,
     runAnalysisFromToolbar,
-    handleRunAnalysisFromCenter,
-    handleRunAnalysisFromAutoScaler,
     attachMaskVariantsFromSelection,
     handleSquareCrop,
     handlePreviewViewCrop,

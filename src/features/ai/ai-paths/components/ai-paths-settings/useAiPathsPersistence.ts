@@ -252,8 +252,14 @@ export function useAiPathsPersistence(
         }
         setUiStateLoaded(true);
       } catch (error) {
-        reportAiPathsError(error, { action: 'loadConfig' }, 'Failed to load AI Paths settings:');
-        toast('Failed to load AI Paths settings.', { variant: 'error' });
+        const errorDetail =
+          error instanceof Error && error.message ? `: ${error.message}` : '';
+        reportAiPathsError(
+          error,
+          { action: 'loadConfig' },
+          `Failed to load AI Paths settings${errorDetail}`
+        );
+        toast(`Failed to load AI Paths settings${errorDetail}`, { variant: 'error' });
       } finally {
         loadInFlightRef.current = false;
         setLoading(false);

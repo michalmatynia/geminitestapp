@@ -316,7 +316,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
               inputs: safeInputs,
               outputs: safePrevOutputs,
               startedAt: nodeStartedAt,
-              errorMessage: null,
+              error: null,
             }),
             throttledSaveIntermediateState(),
           ];
@@ -385,7 +385,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
               outputs: safeOutputs,
               finishedAt,
               nodeType: node.type,
-              errorMessage: status === 'failed' ? (nextOutputs['message'] as string) : null,
+              error: status === 'failed' ? (nextOutputs['message'] as string) : null,
             }),
             repo.createRunEvent({
               runId: run.id,
@@ -434,7 +434,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
               outputs: safeOutputs,
               finishedAt,
               nodeType: node.type,
-              errorMessage: message,
+              error: message,
             }),
             repo.createRunEvent({
               runId: run.id,
@@ -485,7 +485,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
               outputs: errorOutputs ?? undefined,
               finishedAt,
               nodeType: node.type,
-              errorMessage: message,
+              error: message,
             }),
             repo.createRunEvent({
               runId: run.id,

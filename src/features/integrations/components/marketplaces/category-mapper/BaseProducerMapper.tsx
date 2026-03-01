@@ -14,7 +14,7 @@ import { type ProducerMapping } from '@/shared/contracts/integrations';
 import { GenericMapper, type GenericItemMapperConfig } from '@/shared/ui';
 
 export function BaseProducerMapper(): React.JSX.Element {
-  const { connectionId, connectionName, catalogId } = useCategoryMapper();
+  const { connectionId, connectionName } = useCategoryMapper();
 
   const producersQuery = useProducers();
   const externalProducersQuery = useFetchExternalProducersMutation();
@@ -32,7 +32,7 @@ export function BaseProducerMapper(): React.JSX.Element {
       externalColumnHeader: 'Marketplace Producer',
       internalItems: producersQuery.data ?? [],
       externalItems: externalProducersQuery.data ?? [],
-      currentMappings: mappingsQuery.data ?? [],
+      currentMappings: (mappingsQuery.data ?? []) as unknown as ProducerMapping[],
       getInternalId: (item) => item.id,
       getInternalLabel: (item) => item.name,
       getExternalId: (item) => String(item.id),

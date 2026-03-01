@@ -365,7 +365,7 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
                     >
                         Clear
                     </Button>
-                    {lastError.message === 'Failed to load AI Paths settings' && (
+                    {lastError.message.startsWith('Failed to load AI Paths settings') && (
                       <Button
                         type='button'
                         className='rounded-md border border-rose-400/50 px-2 py-1 text-[10px] text-rose-100 hover:bg-rose-500/20'

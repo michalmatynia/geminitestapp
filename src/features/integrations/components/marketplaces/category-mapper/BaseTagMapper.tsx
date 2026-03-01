@@ -14,9 +14,9 @@ import { type TagMapping } from '@/shared/contracts/integrations';
 import { GenericMapper, type GenericItemMapperConfig } from '@/shared/ui';
 
 export function BaseTagMapper(): React.JSX.Element {
-  const { connectionId, connectionName, catalogId } = useCategoryMapper();
+  const { connectionId, connectionName, selectedCatalogId: catalogId } = useCategoryMapper();
 
-  const tagsQuery = useTags({ catalogId: catalogId ?? '' });
+  const tagsQuery = useTags(catalogId);
   const externalTagsQuery = useFetchExternalTagsMutation();
   const mappingsQuery = useTagMappings(connectionId ?? '');
 
@@ -32,7 +32,7 @@ export function BaseTagMapper(): React.JSX.Element {
       externalColumnHeader: 'Marketplace Tag',
       internalItems: tagsQuery.data ?? [],
       externalItems: externalTagsQuery.data ?? [],
-      currentMappings: mappingsQuery.data ?? [],
+      currentMappings: (mappingsQuery.data ?? []) as unknown as TagMapping[],
       getInternalId: (item) => item.id,
       getInternalLabel: (item) => item.name,
       getExternalId: (item) => String(item.id),

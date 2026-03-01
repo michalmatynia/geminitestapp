@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { TRADERA_INTEGRATION_SLUGS } from '@/features/integrations/constants/slugs';
 import {
@@ -7,6 +8,7 @@ import {
   listAllProductListingsAcrossProviders,
 } from '@/features/integrations/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
 const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);
 type MarketplaceBadgeKey = 'base' | 'tradera';
@@ -44,6 +46,9 @@ const inferMarketplaceFromListingMetadata = (value: unknown): MarketplaceBadgeKe
 };
 
 const PRODUCT_IDS_PARAM_LIMIT = 250;
+const productIdsBodySchema = z.object({
+  productIds: z.array(z.string().trim().min(1)).min(1).max(PRODUCT_IDS_PARAM_LIMIT),
+});
 
 const safeDecode = (value: string): string => {
   try {
@@ -53,31 +58,31 @@ const safeDecode = (value: string): string => {
   }
 };
 
+const normalizeRequestedProductIds = (productIds: readonly string[]): string[] =>
+  return Array.from(
+    new Set(
+      productIds
+        .map((value) => safeDecode(value).trim())
+        .filter((value) => value.length > 0)
+    )
+  );
+
 const parseRequestedProductIds = (req: NextRequest): string[] => {
   const raw = req.nextUrl.searchParams.get('productIds');
   if (!raw) return [];
-
-  return Array.from(
-    new Set(
-      raw
-        .split(',')
-        .map((value) => safeDecode(value).trim())
-        .filter((value) => value.length > 0)
-        .slice(0, PRODUCT_IDS_PARAM_LIMIT)
-    )
-  );
+  return normalizeRequestedProductIds(raw.split(',')).slice(0, PRODUCT_IDS_PARAM_LIMIT);
 };
 
-/**
- * GET /api/integrations/product-listings
- * Returns listing badge statuses grouped by marketplace for each product.
- */
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+const buildPayload = async (requestedProductIds: string[]): Promise<Response> => {
+  const normalizedRequestedProductIds = normalizeRequestedProductIds(requestedProductIds).slice(
+    0,
+    PRODUCT_IDS_PARAM_LIMIT
+  );
+
   const integrationRepository = await getIntegrationRepository();
-  const requestedProductIds = parseRequestedProductIds(_req);
   const listingsPromise =
-    requestedProductIds.length > 0
-      ? listProductListingsByProductIdsAcrossProviders(requestedProductIds)
+    normalizedRequestedProductIds.length > 0
+      ? listProductListingsByProductIdsAcrossProviders(normalizedRequestedProductIds)
       : listAllProductListingsAcrossProviders();
   const [listings, integrations] = await Promise.all([
     listingsPromise,
@@ -140,4 +145,27 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
   }
 
   return NextResponse.json(Object.fromEntries(byProduct.entries()) as ProductListingBadgesPayload);
+};
+
+/**
+ * GET /api/integrations/product-listings
+ * Returns listing badge statuses grouped by marketplace for each product.
+ */
+export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  return buildPayload(parseRequestedProductIds(req));
+}
+
+/**
+ * POST /api/integrations/product-listings
+ * Returns listing badge statuses grouped by marketplace for requested products.
+ */
+export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  const parsed = await parseJsonBody(req, productIdsBodySchema, {
+    logPrefix: 'integrations.product-listings.POST',
+  });
+  if (!parsed.ok) {
+    return parsed.response;
+  }
+
+  return buildPayload(parsed.data.productIds);
 }

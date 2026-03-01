@@ -140,31 +140,35 @@ export const enforceAiPathsRunRateLimit = async (access: AiPathsAccessContext): 
   const windowMs = RUN_RATE_WINDOW_SECONDS * 1000;
   const activeStatuses: AiPathRunStatus[] = ['queued', 'running', 'paused'];
 
-  // Run both rate-limit queries in parallel
+  // Run both rate-limit queries in parallel.
+  // Use includeTotal: false + limit: threshold — avoids countDocuments() which scans the full
+  // collection even when limit: 1 is set.  Check runs.length against the threshold instead.
   const [recent, active, queueStats] = await Promise.all([
     RUN_RATE_MAX > 0
       ? repo.listRuns({
         userId: access.userId,
         createdAfter: new Date(now - windowMs).toISOString(),
-        limit: 1,
+        limit: RUN_RATE_MAX,
         offset: 0,
+        includeTotal: false,
       })
       : null,
     RUN_ACTIVE_MAX > 0
       ? repo.listRuns({
         userId: access.userId,
         statuses: activeStatuses,
-        limit: 1,
+        limit: RUN_ACTIVE_MAX,
         offset: 0,
+        includeTotal: false,
       })
       : null,
     RUN_GLOBAL_QUEUED_MAX > 0 ? repo.getQueueStats() : null,
   ]);
 
-  if (recent && recent.total >= RUN_RATE_MAX) {
+  if (recent && recent.runs.length >= RUN_RATE_MAX) {
     throw rateLimitedError('Too many runs queued. Please wait before trying again.', windowMs);
   }
-  if (active && active.total >= RUN_ACTIVE_MAX) {
+  if (active && active.runs.length >= RUN_ACTIVE_MAX) {
     throw rateLimitedError(
       'Too many active runs. Wait for one to finish before starting another.',
       windowMs

@@ -164,16 +164,26 @@ function NodeConfigDialogContent(): React.JSX.Element | null {
     }
     updateSelectedNode(draftNode, { nodeId: draftNode.id });
     setDraftNode(null);
-    void savePathConfig({
-      silent: true,
-      includeNodeConfig: true,
-      force: true,
-      nodeOverride: draftNode,
-    }).then((saved: boolean): void => {
-      toast(saved ? 'Node settings saved.' : 'Failed to save node settings.', {
-        variant: saved ? 'success' : 'error',
+    void (async (): Promise<void> => {
+      const savedWithNodeOverride = await savePathConfig({
+        silent: true,
+        includeNodeConfig: true,
+        force: true,
+        nodeOverride: draftNode,
       });
-    });
+      if (savedWithNodeOverride) {
+        toast('Node settings saved.', { variant: 'success' });
+        return;
+      }
+      const savedWithFallback = await savePathConfig({
+        silent: true,
+        includeNodeConfig: true,
+        force: true,
+      });
+      toast(savedWithFallback ? 'Node settings saved.' : 'Failed to save node settings.', {
+        variant: savedWithFallback ? 'success' : 'error',
+      });
+    })();
   }, [draftNode, isPathLocked, toast, updateSelectedNode, savePathConfig]);
 
   const handleDiscardChanges = useCallback((): void => {

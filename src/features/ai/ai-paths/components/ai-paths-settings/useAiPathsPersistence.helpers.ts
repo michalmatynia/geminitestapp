@@ -59,15 +59,11 @@ export const mergeNodeOverride = (baseNodes: AiNode[], nodeOverride?: AiNode): A
   if (!nodeOverride) {
     return baseNodes;
   }
-  let replaced = false;
-  const nextNodes = baseNodes.map((node: AiNode): AiNode => {
-    if (node.id !== nodeOverride.id) {
-      return node;
-    }
-    replaced = true;
-    return nodeOverride;
-  });
-  return replaced ? nextNodes : [...nextNodes, nodeOverride];
+  // Node override is an in-place edit path (node config dialog), not node creation.
+  // Never append unknown ids here; that can create phantom duplicates and break save linting.
+  return baseNodes.map((node: AiNode): AiNode =>
+    node.id === nodeOverride.id ? nodeOverride : node
+  );
 };
 
 export const resolvePathSaveBlockedMessage = (

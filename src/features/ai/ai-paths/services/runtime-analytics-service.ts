@@ -3,6 +3,7 @@ import 'server-only';
 import { randomUUID } from 'crypto';
 
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
+import { getBrainAssignmentForCapability } from '@/shared/lib/ai-brain/server';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type {
   AiPathRuntimeAnalyticsRange,
@@ -63,6 +64,12 @@ const TRACE_NODE_HIGHLIGHT_LIMIT = parseEnvNumber(
   25
 );
 const SUMMARY_RANGE_BUCKET_MS = Math.max(1_000, SUMMARY_CACHE_TTL_MS);
+const RUNTIME_ANALYTICS_CAPABILITY_CACHE_TTL_MS = parseEnvNumber(
+  'AI_PATHS_RUNTIME_ANALYTICS_CAPABILITY_CACHE_TTL_MS',
+  5_000,
+  500,
+  60_000
+);
 
 type SummaryCacheEntry = {
   value: AiPathRuntimeAnalyticsSummary;
@@ -71,6 +78,7 @@ type SummaryCacheEntry = {
 
 const summaryCache = new Map<string, SummaryCacheEntry>();
 const summaryInFlight = new Map<string, Promise<AiPathRuntimeAnalyticsSummary>>();
+let runtimeAnalyticsCapabilityCache: { enabled: boolean; expiresAt: number } | null = null;
 
 const toTimestampMs = (value?: Date | string | number | null): number => {
   if (typeof value === 'number' && Number.isFinite(value)) return value;
@@ -169,6 +177,36 @@ const setCachedSummary = (
     expiresAt: now + SUMMARY_CACHE_TTL_MS,
   });
   pruneSummaryCache(now);
+};
+
+const isRuntimeAnalyticsCapabilityEnabled = async (): Promise<boolean> => {
+  const now = Date.now();
+  if (runtimeAnalyticsCapabilityCache && runtimeAnalyticsCapabilityCache.expiresAt > now) {
+    return runtimeAnalyticsCapabilityCache.enabled;
+  }
+  try {
+    const [runtimeAnalyticsAssignment, aiPathsAssignment] = await Promise.all([
+      getBrainAssignmentForCapability('insights.runtime_analytics'),
+      getBrainAssignmentForCapability('ai_paths.model'),
+    ]);
+    const enabled = runtimeAnalyticsAssignment.enabled && aiPathsAssignment.enabled;
+    runtimeAnalyticsCapabilityCache = {
+      enabled,
+      expiresAt: now + RUNTIME_ANALYTICS_CAPABILITY_CACHE_TTL_MS,
+    };
+    return enabled;
+  } catch (error) {
+    // Fail closed to avoid analytics execution leaks when Brain settings are unavailable.
+    void ErrorSystem.logWarning('Failed to resolve Brain runtime analytics capability gate.', {
+      service: 'ai-paths-analytics',
+      error,
+    });
+    runtimeAnalyticsCapabilityCache = {
+      enabled: false,
+      expiresAt: now + Math.min(1_000, RUNTIME_ANALYTICS_CAPABILITY_CACHE_TTL_MS),
+    };
+    return false;
+  }
 };
 
 const toPipelineCount = (value: unknown): number => {
@@ -693,6 +731,10 @@ export const getRuntimeAnalyticsSummary = async (input: {
   const from = input.from;
   const to = input.to;
   const range = input.range ?? 'custom';
+  const analyticsEnabled = await isRuntimeAnalyticsCapabilityEnabled();
+  if (!analyticsEnabled) {
+    return emptySummary(from, to, range);
+  }
   const redis = getRedisConnection();
   if (!redis) {
     return emptySummary(from, to, range);

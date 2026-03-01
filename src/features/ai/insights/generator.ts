@@ -8,7 +8,7 @@ import {
   recordBrainInsightAnalytics,
   resolveRuntimeAnalyticsRangeWindow,
 } from '@/features/ai/ai-paths/services/runtime-analytics-service';
-import { getBrainAssignmentForFeature } from '@/shared/lib/ai-brain/server';
+import { getBrainAssignmentForCapability } from '@/shared/lib/ai-brain/server';
 import { listAnalyticsEvents, getAnalyticsSummary } from '@/shared/lib/analytics/server';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { listSystemLogs, getSystemLogMetrics } from '@/shared/lib/observability/system-logger';
@@ -559,7 +559,7 @@ export const generateAnalyticsInsight = async (params: {
   scope?: 'all' | 'public' | 'admin';
 }): Promise<AiInsightRecord> => {
   await assertScheduledInsightEnabled(params.source, 'analytics');
-  const brainAssignment = await getBrainAssignmentForFeature('analytics');
+  const brainAssignment = await getBrainAssignmentForCapability('insights.analytics');
   if (!brainAssignment.enabled) {
     throw new Error('AI Brain is disabled for Analytics.');
   }
@@ -651,7 +651,7 @@ export const generateLogsInsight = async (params: {
   windowHours?: number;
 }): Promise<AiInsightRecord> => {
   await assertScheduledInsightEnabled(params.source, 'logs');
-  const brainAssignment = await getBrainAssignmentForFeature('system_logs');
+  const brainAssignment = await getBrainAssignmentForCapability('insights.system_logs');
   if (!brainAssignment.enabled) {
     throw new Error('AI Brain is disabled for System Logs.');
   }
@@ -737,9 +737,15 @@ export const generateRuntimeAnalyticsInsight = async (params: {
   range?: AiPathRuntimeAnalyticsRange;
 }): Promise<AiInsightRecord> => {
   await assertScheduledInsightEnabled(params.source, 'runtime_analytics');
-  const brainAssignment = await getBrainAssignmentForFeature('runtime_analytics');
+  const [brainAssignment, aiPathsAssignment] = await Promise.all([
+    getBrainAssignmentForCapability('insights.runtime_analytics'),
+    getBrainAssignmentForCapability('ai_paths.model'),
+  ]);
   if (!brainAssignment.enabled) {
     throw new Error('AI Brain is disabled for Runtime Analytics.');
+  }
+  if (!aiPathsAssignment.enabled) {
+    throw new Error('AI Brain AI Paths model capability is disabled.');
   }
   const provider = brainAssignment.provider;
   const modelId =
@@ -835,7 +841,7 @@ export const generateLogInterpretation = async (params: {
     createdAt?: string | null;
   };
 }): Promise<AiInsightRecord> => {
-  const brainAssignment = await getBrainAssignmentForFeature('error_logs');
+  const brainAssignment = await getBrainAssignmentForCapability('insights.error_logs');
   if (!brainAssignment.enabled) {
     throw new Error('AI Brain is disabled for Error Logs.');
   }

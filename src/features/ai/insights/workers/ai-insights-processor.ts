@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
-import { getBrainAssignmentForFeature } from '@/shared/lib/ai-brain/server';
+import { getBrainAssignmentForCapability } from '@/shared/lib/ai-brain/server';
 import {
   generateAnalyticsInsight,
   generateLogsInsight,
@@ -43,14 +43,16 @@ export async function tick(): Promise<void> {
     jobType: 'scheduled_tick',
   };
   const schedule = await getScheduleSettings();
-  const [analyticsBrain, runtimeAnalyticsBrain, logsBrain] = await Promise.all([
-    getBrainAssignmentForFeature('analytics'),
-    getBrainAssignmentForFeature('runtime_analytics'),
-    getBrainAssignmentForFeature('system_logs'),
+  const [analyticsBrain, runtimeAnalyticsBrain, logsBrain, aiPathsBrain] = await Promise.all([
+    getBrainAssignmentForCapability('insights.analytics'),
+    getBrainAssignmentForCapability('insights.runtime_analytics'),
+    getBrainAssignmentForCapability('insights.system_logs'),
+    getBrainAssignmentForCapability('ai_paths.model'),
   ]);
 
   const analyticsEnabled = schedule.analyticsEnabled && analyticsBrain.enabled;
-  const runtimeAnalyticsEnabled = schedule.runtimeAnalyticsEnabled && runtimeAnalyticsBrain.enabled;
+  const runtimeAnalyticsEnabled =
+    schedule.runtimeAnalyticsEnabled && runtimeAnalyticsBrain.enabled && aiPathsBrain.enabled;
   const logsEnabled = schedule.logsEnabled && logsBrain.enabled;
   const logsAutoEnabled = schedule.logsAutoOnError && logsBrain.enabled;
 
@@ -174,8 +176,14 @@ export async function tick(): Promise<void> {
       await generateRuntimeAnalyticsInsight({ source: 'scheduled_job', range: '24h' });
       await appendRunEvent('Runtime analytics insight generated.');
     });
-  } else if (schedule.runtimeAnalyticsEnabled && !runtimeAnalyticsBrain.enabled) {
-    await appendRunEvent('Skipping runtime analytics insight: disabled in Brain settings.', 'info');
+  } else if (
+    schedule.runtimeAnalyticsEnabled &&
+    (!runtimeAnalyticsBrain.enabled || !aiPathsBrain.enabled)
+  ) {
+    await appendRunEvent(
+      'Skipping runtime analytics insight: disabled in Brain settings (runtime analytics or AI Paths).',
+      'info'
+    );
   }
 
   if (shouldRunLogs) {

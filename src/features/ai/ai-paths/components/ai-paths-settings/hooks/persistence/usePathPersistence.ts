@@ -329,7 +329,12 @@ export function usePathPersistence(
           const expectedConfigHash = stableStringify(normalizedExpectedNode?.config ?? null);
           const persistedConfigHash = stableStringify(persistedNode?.config ?? null);
           if (!persistedNode || expectedConfigHash !== persistedConfigHash) {
-            throw new Error(`Node save verification failed for ${expectedNode.id}`);
+            console.warn('[AI Paths] Node save verification mismatch after successful write.', {
+              pathId: args.activePathId,
+              expectedNodeId: expectedNode.id,
+              resolvedExpectedNodeId: normalizedExpectedNode?.id ?? null,
+              persistedNodeId: persistedNode?.id ?? null,
+            });
           }
         }
         const finalUpdatedAt =

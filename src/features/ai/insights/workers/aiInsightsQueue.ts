@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { getBrainAssignmentForFeature } from '@/shared/lib/ai-brain/server';
+import { getBrainAssignmentForCapability } from '@/shared/lib/ai-brain/server';
 import { getScheduleSettings } from '@/features/ai/insights/generator';
 import { tick } from '@/features/ai/insights/workers/ai-insights-processor';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
@@ -92,14 +92,15 @@ const queue = createManagedQueue<AiInsightsJobData>({
 
 const shouldRegisterInsightsScheduler = async (): Promise<boolean> => {
   const schedule = await getScheduleSettings();
-  const [analyticsBrain, runtimeAnalyticsBrain, logsBrain] = await Promise.all([
-    getBrainAssignmentForFeature('analytics'),
-    getBrainAssignmentForFeature('runtime_analytics'),
-    getBrainAssignmentForFeature('system_logs'),
+  const [analyticsBrain, runtimeAnalyticsBrain, logsBrain, aiPathsBrain] = await Promise.all([
+    getBrainAssignmentForCapability('insights.analytics'),
+    getBrainAssignmentForCapability('insights.runtime_analytics'),
+    getBrainAssignmentForCapability('insights.system_logs'),
+    getBrainAssignmentForCapability('ai_paths.model'),
   ]);
   return (
     (schedule.analyticsEnabled && analyticsBrain.enabled) ||
-    (schedule.runtimeAnalyticsEnabled && runtimeAnalyticsBrain.enabled) ||
+    (schedule.runtimeAnalyticsEnabled && runtimeAnalyticsBrain.enabled && aiPathsBrain.enabled) ||
     (schedule.logsEnabled && logsBrain.enabled) ||
     (schedule.logsAutoOnError && logsBrain.enabled)
   );
